@@ -1,3 +1,235 @@
+2004-02-05  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/13086
+	* init.c (build_delete): Emit a more informative error message in
+	case of an incomplete type, and on the correct source line.
+
+2004-01-30  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/13683
+	* call.c (convert_arg_to_ellipsis): Don't emit a warning if within
+	a sizeof expression.block
+
+2004-01-29  Aldy Hernandez  <aldyh@redhat.com>
+
+	Backport:
+
+	2004-01-17  Fred Fish  <fnf@intrinsity.com>
+
+	PR c++/11895
+	* cp/decl.c (reshape_init): Handle VECTOR_TYPE like ARRAY_TYPE,
+	except don't call array_type_nelts() with a VECTOR_TYPE.
+
+2004-01-29  Aldy Hernandez  <aldyh@redhat.com>
+
+	Backport:
+	2003-06-03  Jason Merrill  <jason@redhat.com>
+
+	* cp/cp-tree.h (CP_AGGREGATE_TYPE_P): Accept vectors.
+
+	* cp/decl.c (reshape_init): Handle vectors.
+
+	* testsuite/g++.dg/init/array10.C: New.
+
+2004-01-25  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/13797
+	* pt.c (instantiate_class_template): Add an error_mark_node
+	check.
+	(tsubst_decl) <TEMPLATE_DECL case>: Likewise.
+
+	Backport from mainline
+	2003-05-09  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/10555, c++/10576
+	* pt.c (lookup_template_class): Handle class template with
+	multiple levels of parameters when one of the levels contain
+	errors.
+
+2004-01-21  Gabriel Dos Reis <gdr@integrable-solutions.net>
+
+	Backport from mainline
+	2004-01-16  Mark Mitchell  <mark@codesourcery.com>
+ 
+	PR c++/13574
+	* decl.c (compute_array_index_type): Fix grammar in comment.
+	* init.c (build_zero_init): Handle zero-sized arrays correctly.
+	
+2004-01-21  Gabriel Dos Reis <gdr@integrable-solutions.net>
+
+	Backport from mainline
+	2004-01-16  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/13478
+	* call.c (initialize_reference): Pass -1 for inner parameter to
+	convert_like_real.
+	
+2004-01-21  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	Backport from mainline
+	2004-01-05  Mark Mitchell  <mark@codesourcery.com>
+
+        PR c++/13057
+        * class.c (build_clone): Copy type attributes from the original
+        function to the clone.
+	
+2004-01-21  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	Backport from mainline
+	2003-12-28  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/13009
+	* call.c (build_special_member_call): Do not assume that we have a
+        pointer to the complete object in an assignment operator.
+	
+2004-01-20  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/13289
+	* pt.c (instantiate_decl): Set DECL_TEMPLATE_INSTANTIATED before
+	calling regenerate_decl_from_template.
+	
+2004-01-14  Gabriel Dos Reis <gdr@integrable-solutions.net>
+
+	Backport from mainline
+	2004-01-05  Mark Mitchell  <mark@codesourcery.com>
+ 
+	PR c++/12816
+	* class.c (build_vtbl_ref_1): Do not unconditionally mark vtable
+	references as constant.	
+	
+2004-01-11  Gabriel Dos Reis <gdr@integrable-solutions.net>
+
+	PR c++/13544
+	* decl.c (build_enumerator): Set DECL_CONTEXT after the enumerator
+	has been pushed.
+	(pushdecl): Don't use DECL_NAMESPACE_SCOPE_P to test whether a
+	decl has a namespace-scope; that isn't really what it means.
+
+2004-01-02  Matthias Klose  <doko@debian.org>
+
+	Backport from mainline:
+	2003-12-28  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/13081
+	* decl.c (duplicate_decls): Preserve inline-ness when redeclaring
+	a function template.
+
+2003-12-20  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	Backport from mainline:
+	2003-12-30  Nathan Sidwell  <nathan@codesourcery.com>
+
+		PR c++/13507
+		* decl.c (duplicate_decls): Use build_type_attribute_variant to
+		merge attributes.
+
+2003-12-30  Nathan Sidwell  <nathan@codesourcery.com>
+
+	PR c++/13445
+	* pt.c (instantiate_class_template): Push to class's scope before
+	tsubsting base.
+
+2003-12-28  Roger Sayle  <roger@eyesopen.com>
+
+	PR c++/13070
+	* decl.c (duplicate_decls): When setting the type of an anticipated
+	declaration, merge the existing type attributes.
+
+2003-12-27  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	Backport from mainline:
+	2003-12-16  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/2294
+	* decl.c (push_overloaded_decl): always	construct an OVERLOAD
+	if the declaration comes from an using declaration.
+
+2003-12-26  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	Backport from mainline:
+	2003-12-16  Mark Mitchell  <mark@codesourcery.com>
+
+        PR c++/12696
+        * decl.c (reshape_init): Recover quickly from errors.
+	
+2003-12-26  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	Backport from mainline:
+	2003-12-22  Mark Mitchell  <mark@codesourcery.com>
+
+	PR C++/12862
+	* decl.c (pushdecl): Look up all namespace-scope entities in their 
+	corresponding namespace.
+
+2003-12-22  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR c++/5050
+	* tree.c (cp_start_inlining): Remove.
+	(cp_end_inlining): Remove.
+	* cp-lang.c (LANG_HOOKS_TREE_INLINING_START_INLINING): Do not define.
+	(LANG_HOOKS_TREE_INLINING_END_INLINING): Do not define.
+	* cp-tree.h (cp_start_inlining): Do not declare.
+	(cp_end_inlining): Do not declare.
+
+2003-12-21  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11554
+	* init.c (sort_mem_initializers): Add warning.
+
+2003-12-19  Jason Merrill  <jason@redhat.com>
+
+	PR c++/13371
+	* typeck.c (build_modify_expr): Stabilize lhs if we're narrowing.
+
+2003-12-18  Jason Merrill  <jason@redhat.com>
+
+	PR c++/12253
+	* init.c (build_vec_init): Initialization of an element from
+	an initializer list is also a full-expression.
+
+2003-12-18  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/13262
+	* pt.c (instantiate_decl): Wrap push_nested_class and
+	pop_nested_class around cp_finish_decl call for static member
+	variable.
+
+2003-12-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/13323
+	* class.c (same_signature_p): Handle conversion operators
+	correctly.
+	(check_for_override): Likewise.
+
+2003-11-14  Bernardo Innocenti  <bernie@develer.com>
+
+	Backport from 3.4-branch.
+
+	2003-06-25  Giovanni Bajo  <giovannibajo@libero.it>
+
+        PR c++/2094
+        * pt.c (unify): Add support for PTRMEM_CST and
+        FIELD_DECL unification.
+
+2003-11-08  Bernardo Innocenti  <bernie@develer.com>
+
+	Backport from 3.4-branch.
+
+	2003-10-08  Giovanni Bajo  <giovannibajo@libero.it>
+
+	* cp_tree.h: Added TFF_NO_FUNCTION_ARGUMENTS.
+	* error.c (dump_function_decl): Use it to skip the dump of the
+	arguments.
+	(dump_expr): When dumping a declaration found within an
+	expression, always set TFF_NO_FUNCTION_ARGUMENTS
+	in the flags.
+
+2003-10-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/12726
+	* tree.c (build_target_expr_with_type): Don't call force_rvalue
+	for CONSTRUCTORs.
+
 2003-10-16  Release Manager
 
 	* GCC 3.3.2 Released.
