@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.15 1995/07/23 20:27:48 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.16 1995/07/23 20:54:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -444,16 +444,20 @@ eginit(sc)
 	if (sc->eg_outbuf == NULL)
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 
+	outb(sc->eg_ctl, EG_CTL_CMDE);
+
+	sc->eg_incount = 0;
+	egrecv(sc);
+
+	/* Interface is now `running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	outb(sc->eg_ctl, EG_CTL_CMDE);
-
+	/* Attempt to start output, if any. */
 	egstart(ifp);
-	egrecv(sc);
 }
 
-static int
+static void
 egrecv(sc)
 	struct eg_softc *sc;
 {
@@ -469,10 +473,9 @@ egrecv(sc)
 		sc->eg_pcb[7] = EG_BUFLEN >> 8;
 		sc->eg_pcb[8] = 0; /* timeout, 0 == none */
 		sc->eg_pcb[9] = 0;
-		if (egwritePCB(sc) == 0)
-			sc->eg_incount++;
-		else
+		if (egwritePCB(sc) != 0)
 			break;
+		sc->eg_incount++;
 	}
 }
 
@@ -500,7 +503,7 @@ loop:
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("ed_start: no header mbuf");
+		panic("egstart: no header mbuf");
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
 
 #if NBPFILTER > 0
@@ -508,9 +511,6 @@ loop:
 		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-	/* set direction bit: host -> adapter */
-	outb(sc->eg_ctl, inb(sc->eg_ctl) & ~EG_CTL_DIR); 
-	
 	sc->eg_pcb[0] = EG_CMD_SENDPACKET;
 	sc->eg_pcb[1] = 0x06;
 	sc->eg_pcb[2] = 0; /* address not used, we send zero */
@@ -532,6 +532,9 @@ loop:
 		buffer += m->m_len;
 	}
 
+	/* set direction bit: host -> adapter */
+	outb(sc->eg_ctl, inb(sc->eg_ctl) & ~EG_CTL_DIR); 
+	
 	for (ptr = (u_short *) sc->eg_outbuf; len > 0; len -= 2) {
 		outw(sc->eg_data, *ptr++);
 		while (!(inb(sc->eg_stat) & EG_STAT_HRDY))
@@ -539,9 +542,6 @@ loop:
 	}
 	
 	m_freem(m0);
-	
-	/* Set direction bit : Adapter -> host */
-	outb(sc->eg_ctl, inb(sc->eg_ctl) | EG_CTL_DIR); 
 }
 
 int
@@ -557,16 +557,22 @@ egintr(arg)
 		switch (sc->eg_pcb[0]) {
 		case EG_RSP_RECVPACKET:
 			len = sc->eg_pcb[6] | (sc->eg_pcb[7] << 8);
+	
+			/* Set direction bit : Adapter -> host */
+			outb(sc->eg_ctl, inb(sc->eg_ctl) | EG_CTL_DIR); 
+
 			for (ptr = (u_short *) sc->eg_inbuf; len > 0; len -= 2) {
 				while (!(inb(sc->eg_stat) & EG_STAT_HRDY))
 					;
 				*ptr++ = inw(sc->eg_data);
 			}
+
 			len = sc->eg_pcb[8] | (sc->eg_pcb[9] << 8);
-			egrecv(sc);
 			sc->sc_arpcom.ac_if.if_ipackets++;
 			egread(sc, sc->eg_inbuf, len);
+
 			sc->eg_incount--;
+			egrecv(sc);
 			break;
 
 		case EG_RSP_SENDPACKET:
