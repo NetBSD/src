@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dkbad.h	7.2 (Berkeley) 2/15/91
- *	$Id: dkbad.h,v 1.3 1993/05/20 16:22:03 cgd Exp $
+ *	from: @(#)dkbad.h	8.1 (Berkeley) 6/2/93
+ *	$Id: dkbad.h,v 1.4 1994/05/21 04:08:26 cgd Exp $
  */
-
-#ifndef _SYS_DKBAD_H_
-#define _SYS_DKBAD_H_
 
 /*
  * Definitions needed to perform bad sector revectoring ala DEC STD 144.
@@ -70,5 +67,3 @@ struct dkbad {
 #define	SSE	1
 #define	BSE	2
 #define	CONT	3
-
-#endif /* !_SYS_DKBAD_H_ */
