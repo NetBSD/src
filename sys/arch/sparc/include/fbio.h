@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.5 1996/09/30 23:45:11 abrown Exp $ */
+/*	$NetBSD: fbio.h,v 1.6 1999/08/01 00:23:49 matt Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -70,8 +70,9 @@
 #define FBTYPE_SUNGT            18      /* gt graphics accelerator */
 #define FBTYPE_SUNLEO           19      /* zx graphics accelerator */
 #define FBTYPE_MDICOLOR         20      /* cgfourteen framebuffer */
+#define	FBTYPE_P9100		21	/* tadpole 3gx p9100 controller */
 
-#define	FBTYPE_LASTPLUSONE	21	/* max number of fbs (change as add) */
+#define	FBTYPE_LASTPLUSONE	22	/* max number of fbs (change as add) */
 
 /*
  * Frame buffer descriptor as returned by FBIOGTYPE.
