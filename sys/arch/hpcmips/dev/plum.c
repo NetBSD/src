@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.8 2003/09/26 14:30:15 simonb Exp $ */
+/*	$NetBSD: plum.c,v 1.9 2003/11/07 23:04:15 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.8 2003/09/26 14:30:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.9 2003/11/07 23:04:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ plum_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_csmemt	= ca->ca_csmem.cstag;
 	sc->sc_irq	= ca->ca_irq1;
 
-	switch (plum_idcheck(sc->sc_csregt)) {
+	switch (reg = plum_idcheck(sc->sc_csregt)) {
 	default:
 		printf(": unknown revision %#x\n", reg);
 		return;
