@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.186 2001/04/19 17:32:41 uch Exp $
+#	$NetBSD: files.i386,v 1.187 2001/04/22 18:39:49 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -283,6 +283,8 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 device	mca {[slot = -1]} : bioscall
 include	"dev/mca/files.mca"
 file	arch/i386/mca/mca_machdep.c	mca
+
+major	{ ed = 20 }
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp
