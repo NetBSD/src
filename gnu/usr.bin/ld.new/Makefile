@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/09 17:59:36 tv Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/14 13:01:09 lukem Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -108,7 +108,10 @@ ldemul-list.h: Makefile
 .endif
 
 afterinstall:
-	pax -rw ldscripts ${DESTDIR}${SCRIPTDIR}
+	(cd ldscripts ; pax -rw . ${DESTDIR}${SCRIPTDIR})
+	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}${SCRIPTDIR}
+	find ${DESTDIR}${SCRIPTDIR} -type f | xargs chmod a=rX
+	find ${DESTDIR}${SCRIPTDIR} -type d | xargs chmod u=rwX,go=rX
 
 cleanprog: __cleanldscripts
 __cleanldscripts:
