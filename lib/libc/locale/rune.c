@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.11 2001/03/26 19:55:42 tshiozak Exp $	*/
+/*	$NetBSD: rune.c,v 1.12 2001/04/17 20:12:31 kleink Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.11 2001/03/26 19:55:42 tshiozak Exp $");
+__RCSID("$NetBSD: rune.c,v 1.12 2001/04/17 20:12:31 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -330,6 +330,7 @@ _NukeRune(rl)
  * read in old LC_CTYPE declaration file, convert into runelocale info
  */
 #define _CTYPE_PRIVATE
+#include <limits.h>
 #include <ctype.h>
 
 _RuneLocale *

@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.34 2001/01/25 01:25:07 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.35 2001/04/17 20:12:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.34 2001/01/25 01:25:07 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.35 2001/04/17 20:12:32 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: setlocale.c,v 1.34 2001/01/25 01:25:07 itojun Exp $");
 
 #include "namespace.h"
 #include <sys/localedef.h>
-#include <ctype.h>
 #include <limits.h>
+#include <ctype.h>
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
 #include <paths.h>
