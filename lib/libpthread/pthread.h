@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.8 2003/02/13 02:50:48 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.9 2003/02/26 22:02:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@ int	pthread_attr_setschedparam(pthread_attr_t *,
     const struct sched_param *);
 int	pthread_attr_getdetachstate(const pthread_attr_t *, int *);
 int	pthread_attr_setdetachstate(pthread_attr_t *, int);
+int	pthread_attr_getname_np(const pthread_attr_t *, char *,
+	    size_t, void **);
+int	pthread_attr_setname_np(pthread_attr_t *, const char *, void *);
 
 int	pthread_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
 int	pthread_mutex_destroy(pthread_mutex_t *);
@@ -101,6 +104,9 @@ int	pthread_cancel(pthread_t);
 int	pthread_setcancelstate(int, int *);
 int	pthread_setcanceltype(int, int *);
 void	pthread_testcancel(void);
+
+int	pthread_getname_np(pthread_t, char *, size_t);
+int	pthread_setname_np(pthread_t, const char *, void *);
 
 struct pthread_cleanup_store {
 	void	*pad[4];
@@ -175,6 +181,11 @@ __END_DECLS
 #define PTHREAD_KEYS_MAX	256
 #define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
 #define PTHREAD_THREADS_MAX	64		/* Min. required */
+
+/*
+ * Maximum length of a thread's name, including the terminating NUL.
+ */
+#define	PTHREAD_MAX_NAMELEN_NP	32
 
 /*
  * Mutex attributes.
