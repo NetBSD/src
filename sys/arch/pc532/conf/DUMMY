@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.21 2002/09/18 02:44:06 lukem Exp $
+#	$NetBSD: DUMMY,v 1.21.8.1 2004/07/15 20:20:32 he Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -30,6 +30,7 @@ options 	INSECURE		# allow lkms in multiuser mode
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # compatibility options
 options 	COMPAT_10		# NetBSD 1.0,

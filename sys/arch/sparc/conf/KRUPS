@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.20 2003/12/14 17:26:58 martin Exp $
+# $NetBSD: KRUPS,v 1.20.2.1 2004/07/15 20:20:33 he Exp $
 # From: NetBSD: GENERIC,v 1.148 2003/10/07 09:43:58 tron Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.20 $"
+#ident 		"KRUPS-$Revision: 1.20.2.1 $"
 
 maxusers	32
 
@@ -69,6 +69,7 @@ options 	SYSVSHM		# System V shared memory
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
