@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.37 2003/03/25 23:55:37 pooka Exp $
+# $NetBSD: shl.elf,v 1.38 2003/04/22 20:35:23 elric Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -21,6 +21,7 @@
 ./usr/lib/i18n/libMSKanji.so	comp-i18n-lib
 ./usr/lib/i18n/libUTF8.so	comp-i18n-lib
 ./usr/lib/libasn1.so		comp-c-lib
+./usr/lib/libbsdmalloc.so	comp-c-lib
 ./usr/lib/libbz2.so		comp-c-lib
 ./usr/lib/libc.so		comp-c-lib
 ./usr/lib/libcdk.so		comp-c-lib
