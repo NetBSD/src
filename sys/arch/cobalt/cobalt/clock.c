@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2000/03/22 20:38:22 soren Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2000/03/23 08:09:54 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h> 
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -40,7 +40,7 @@ void	inittodr(time_t);
 void	resettodr(void);
 void	setstatclockrate(int);
 
-void    
+void
 cpu_initclocks()
 {
 	return;
@@ -52,7 +52,7 @@ mc146818_read(sc, reg)
 	u_int reg;
 {
 	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000070))) = reg;
-	return (*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0xb0000071)));
+	return (*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000071)));
 }
 
 void
@@ -68,7 +68,7 @@ mc146818_write(sc, reg, datum)
 void
 inittodr(base)
 	time_t base;
-{  
+{
 	struct clock_ymdhms dt;
 	mc_todregs regs;
 	int s;
@@ -78,37 +78,37 @@ inittodr(base)
 	splx(s);
 
 	dt.dt_year = FROMBCD(regs[MC_YEAR]) + 2000;
-        dt.dt_mon = FROMBCD(regs[MC_MONTH]);
-        dt.dt_day = FROMBCD(regs[MC_DOM]);
-        dt.dt_wday = FROMBCD(regs[MC_DOW]);
-        dt.dt_hour = FROMBCD(regs[MC_HOUR]);
-        dt.dt_min = FROMBCD(regs[MC_MIN]);
-        dt.dt_sec = FROMBCD(regs[MC_SEC]);
+	dt.dt_mon = FROMBCD(regs[MC_MONTH]);
+	dt.dt_day = FROMBCD(regs[MC_DOM]);
+	dt.dt_wday = FROMBCD(regs[MC_DOW]);
+	dt.dt_hour = FROMBCD(regs[MC_HOUR]);
+	dt.dt_min = FROMBCD(regs[MC_MIN]);
+	dt.dt_sec = FROMBCD(regs[MC_SEC]);
 
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 
 	return;
 }
 
-void    
-resettodr(void)     
-{               
+void
+resettodr()
+{
 	mc_todregs regs;
 	struct clock_ymdhms dt;
 	int s;
 
 	s = splclock();
 	MC146818_GETTOD(NULL, &regs);
-	splx(s); 
+	splx(s);
 
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 	regs[MC_YEAR] = TOBCD(dt.dt_year % 100);
-        regs[MC_MONTH] = TOBCD(dt.dt_mon);
-        regs[MC_DOM] = TOBCD(dt.dt_day);
-        regs[MC_DOW] = TOBCD(dt.dt_wday);
-        regs[MC_HOUR] = TOBCD(dt.dt_hour);
-        regs[MC_MIN] = TOBCD(dt.dt_min);
-        regs[MC_SEC] = TOBCD(dt.dt_sec);
+	regs[MC_MONTH] = TOBCD(dt.dt_mon);
+	regs[MC_DOM] = TOBCD(dt.dt_day);
+	regs[MC_DOW] = TOBCD(dt.dt_wday);
+	regs[MC_HOUR] = TOBCD(dt.dt_hour);
+	regs[MC_MIN] = TOBCD(dt.dt_min);
+	regs[MC_SEC] = TOBCD(dt.dt_sec);
 
 	s = splclock();
 	MC146818_PUTTOD(NULL, &regs);
