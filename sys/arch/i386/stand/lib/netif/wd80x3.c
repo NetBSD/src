@@ -1,4 +1,4 @@
-/*	$NetBSD: wd80x3.c,v 1.6 1999/02/19 19:30:47 drochner Exp $	*/
+/*	$NetBSD: wd80x3.c,v 1.7 2002/02/17 19:47:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include "etherdrv.h"
 #include <dev/ic/dp8390reg.h>
 #include "dp8390.h"
-#include <dev/isa/if_wereg.h>
+#include <dev/ic/wereg.h>
 
 #ifndef BASEREG
 #define BASEREG 0x240
