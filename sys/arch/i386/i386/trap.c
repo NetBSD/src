@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.38 1994/05/05 05:35:54 cgd Exp $
+ *	$Id: trap.c,v 1.39 1994/05/07 00:52:44 cgd Exp $
  */
 
 /*
@@ -84,7 +84,7 @@ userret(p, pc, oticks)
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
-		psig(sig);
+		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
@@ -101,7 +101,7 @@ userret(p, pc, oticks)
 		swtch();
 		(void) spl0();
 		while ((sig = CURSIG(p)) != 0)
-			psig(sig);
+			postsig(sig);
 	}
 
 #ifdef notdef
