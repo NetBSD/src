@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_verbose.c,v 1.4 1998/07/01 17:18:45 mjacob Exp $	*/
+/*	$NetBSD: scsi_verbose.c,v 1.5 1998/07/10 19:37:18 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -340,7 +340,7 @@ scsi_print_sense_data(sense, verbosity)
 	 */
 
 	/* enough for command specific information? */
-	if (s[7] < 4) {
+	if (((unsigned int) s[7]) < 4) {
 		printf("\n");
 		return;
 	}
