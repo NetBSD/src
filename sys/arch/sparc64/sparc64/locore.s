@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.195 2004/03/23 00:17:12 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.196 2004/03/26 23:18:42 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7764,16 +7764,14 @@ Lcopyfault:
 	 mov	EFAULT, %o0
 
 
-	.data
-	_ALIGN
-	.comm	_C_LABEL(want_resched),4
-
 /*
  * Switch statistics (for later tweaking):
  *	nswitchdiff = p1 => p2 (i.e., chose different process)
  *	nswitchexit = number of calls to switchexit()
  *	_cnt.v_swtch = total calls to swtch+swtchexit
  */
+	.data
+	_ALIGN
 	.comm	_C_LABEL(nswitchdiff), 4
 	.comm	_C_LABEL(nswitchexit), 4
 	.text
@@ -8190,8 +8188,8 @@ cpu_loadproc:
 #endif
 	mov	LSONPROC, %o0			! l->l_stat = SONPROC
 	st	%o0, [%l3 + L_STAT]
-	sethi	%hi(_C_LABEL(want_resched)), %o0
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
+	sethi	%hi(CPUINFO_VA+CI_WANT_RESCHED), %o0
+	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]	! want_resched = 0;
 	LDPTR	[%l3 + L_ADDR], %l1		! newpcb = p->p_addr;
 	STPTR	%g0, [%l3 + L_BACK]		! p->p_back = NULL;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
