@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.7 2003/03/24 08:03:40 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.8 2003/03/24 08:20:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb.h,v 1.4 2002/02/21 16:10:42 bp Exp
+ * FreeBSD: src/sys/netsmb/smb.h,v 1.5 2002/04/17 03:14:28 bp Exp
  */
 
 /*
@@ -340,6 +340,7 @@ enum smb_dialects {
 #define ERRbaddevice	66	/* Bad Device Type */
 #define ERRbadnetname	67	/* Bad Network Name */	
 #define ERRfilexists	80	/* The file named in the request already exists */
+#define ERRquota	112	/* W2K returns this if quota space exceeds */
 #define ERRinvname	123	/* Invalid Name */
 #define ERRdirnempty	145	/* Directory Not Empty */
 #define ERReexists	183	/* Already Exists */
@@ -373,6 +374,11 @@ enum smb_dialects {
 #define ERRusempx	250	/* Temporarily unable to support Raw, use MPX mode */
 #define ERRusestd	251	/* Temporarily unable to support Raw, use standard r/w */
 #define ERRcontmpx	252	/* Continue in MPX mode */
+#define ERRbadPassword	254
+#define ERRaccountExpired	2239
+#define ERRbadClient		2240	/* Cannot access the server from this workstation */
+#define ERRbadLogonTime		2241	/* Cannot access the server at this time */
+#define ERRpasswordExpired	2242
 #define ERRnosupport	65535	/* Invalid function */
 
 /*
