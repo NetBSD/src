@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.25 1996/10/13 18:30:05 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.26 1998/01/24 12:32:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -91,7 +91,7 @@ struct emul emul_linux_aout = {
 	linux_syscallnames,
 	LINUX_AOUT_AUX_ARGSIZ,
 	linux_aout_copyargs,
-	setregs,
+	linux_setregs,
 	linux_sigcode,
 	linux_esigcode,
 };
@@ -106,7 +106,7 @@ struct emul emul_linux_elf = {
 	linux_syscallnames,
 	LINUX_ELF_AUX_ARGSIZ,
 	elf32_copyargs,
-	setregs,
+	linux_setregs,
 	linux_sigcode,
 	linux_esigcode,
 };
