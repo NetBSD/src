@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.3 1998/06/26 08:59:03 fair Exp $	*/
+/*	$NetBSD: libsa.h,v 1.4 1998/06/29 20:03:14 gwr Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -30,6 +30,7 @@ long getticks __P((void));
 
 /* exec_sun.c */
 int exec_sun __P((char *file, char *loadaddr));
+int load_sun __P((int io, char *loadaddr, char **entry));
 
 /* promboot.c */
 extern int debug;
