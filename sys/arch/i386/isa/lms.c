@@ -19,7 +19,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.2 1993/09/29 08:25:09 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.3 1993/09/29 08:28:18 mycroft Exp $
  */
 
 #include "param.h"
@@ -57,7 +57,7 @@ struct lms_softc {		/* Driver status information */
 	struct	selinfo sc_rsel;
 	u_short	sc_iobase;	/* I/O port base */
 	u_char	sc_flags;	/* Driver flags */
-#define	LMS_BLOCK	0x01
+#define	LMS_NOBLOCK	0x01
 	u_char	sc_state;	/* Mouse driver state */
 #define LMS_OPEN	0x01	/* Device is open */
 #define LMS_ASLP	0x02	/* Waiting for mouse data */
@@ -197,7 +197,7 @@ lmsread(dev, uio, flag)
 
 	s = spltty();
 	while (sc->sc_q.rb_count == 0) {
-		if (sc->sc_flags & LMS_BLOCK) {
+		if (sc->sc_flags & LMS_NOBLOCK) {
 			splx(s);
 			return EWOULDBLOCK;
 		}
