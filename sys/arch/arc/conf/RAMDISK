@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 2000/03/22 00:58:18 cgd Exp $
+#	$NetBSD: RAMDISK,v 1.7 2000/05/27 02:19:35 soren Exp $
 #	$OpenBSD: RAMDISK,v 1.9 1999/08/29 12:14:03 niklas Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
@@ -238,8 +238,8 @@ lpt0		at isa? port 0x378 irq 7
 #pci*		at pbcpcibr?
 
 #pcivga* 	at pci? dev ? function ?
-#ncr*		at pci? dev ? function ?
-#scsibus* 	at ncr?
+#siop*		at pci? dev ? function ?
+#scsibus* 	at siop?
 #de*		at pci? dev ? function ?
 
 #### SCSI bus devices
