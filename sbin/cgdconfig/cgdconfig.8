@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.17 2004/03/17 01:29:13 dan Exp $
+.\" $NetBSD: cgdconfig.8,v 1.18 2004/03/17 01:40:34 wiz Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,9 +142,10 @@ RSA Laboratories, March 25, 1999, pages 8-10.
 PKCS #5 was also republished as RFC 2898.
 .It pkcs5_pbkdf2
 This is an earlier, slightly incorrect and deprecated implementation
-of the above algorithm. 
+of the above algorithm.
 It is retained for backwards compatibility with existing parameters
-files, and will be removed. Existing parameters files should be
+files, and will be removed.
+Existing parameters files should be
 converted to use the correct method using the
 .Fl G
 option, and a new passphrase.
@@ -168,7 +169,7 @@ If the newly configured disk fails to verify, then
 .Nm
 will regenerate the key and re-configure the device.
 It only makes sense to specify a verification method if at least of the
-key generation methods is error prone, e.g. uses a user-entered passphrase.
+key generation methods is error prone, e.g., uses a user-entered passphrase.
 The following verification methods are supported:
 .Pp
 .Bl -tag -width indentxxx -compact
@@ -181,7 +182,7 @@ scan for a valid FFS file system.
 .It re-enter
 prompt for passphrase twice, and ensure entered passphrases are
 identical.
-This method only works with the pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2 key 
+This method only works with the pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2 key
 generators.
 .El
 .Ss /etc/cgd/cgd.conf
@@ -274,11 +275,14 @@ contains statements that are specific to the key generation method.
 The keygen statement's statement block may contain the following statements:
 .Bl -tag -width indentxx
 .It key Ar string
-The key.  Only used for the storedkey key generation method.
+The key.
+Only used for the storedkey key generation method.
 .It iterations Ar integer
-The number of iterations.  Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
+The number of iterations.
+Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
 .It salt Ar base64
-The salt.  Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
+The salt.
+Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
 .El
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxxxxxxxxx -compact
@@ -299,9 +303,11 @@ in CBC mode with the IV Method
 .Ed
 .Pp
 When using verification methods, the first time that we configure the
-disk the verification method will fail.  We overcome this by supplying
+disk the verification method will fail.
+We overcome this by supplying
 .Fl V Ar none
-when we configure the first time to set up the disk.  Here is the
+when we configure the first time to set up the disk.
+Here is the
 sequence of commands that is recommended:
 .Bd -literal
              # cgdconfig -g -o /etc/cgd/wd0e -V disklabel aes-cbc
