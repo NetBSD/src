@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.2 1997/03/15 22:15:02 perry Exp $	*/
 	
 /* ROM startup
  mostly from freebsd:sys/arch/i396/boot/netboot/start2.S
@@ -29,6 +29,23 @@ bootstack = BOOTSTACK
 	.byte	0			/* no. of 512B blocks - set by genprom */
 	jmp	1f			/* enter from bios here */
 	.byte	0			/* checksum */
+#ifdef PCIROM
+	. = 0x18			/* required offset of pointer */
+	.word	(pcidata - reloc)
+pcidata:
+	.ascii	"PCIR"
+	.word	PCI_VID
+	.word	PCI_DID
+	.word	0			/* pointer to vital product data */
+	.word	(pcidataend - pcidata)
+	.long	(0 + (PCI_CLASS << 8))	/* class, revision */
+	.word	0			/* no. of 512B blocks - set by genprom */
+	.word	0			/* revision */
+	.byte	0			/* code type */
+	.byte	0x80			/* "indicator" - last image */
+	.word	0			/* reserved */
+pcidataend:
+#endif
 1:	push	%eax
 	push	%ds
 	xor	%eax,%eax
