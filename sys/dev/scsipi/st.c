@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.87 1998/01/12 09:49:18 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.88 1998/02/07 23:00:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -176,6 +176,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     {0, 12, {
+		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
+		{0, 0, QIC_150},			/* minor 4-7 */
+		{0, 0, QIC_120},			/* minor 8-11 */
+		{0, 0, QIC_24}				/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "VIPER 150  21531", ""},     {0, 12, {
 		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
@@ -1748,7 +1755,7 @@ st_space(st, number, what, flags)
 
 	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, 0, 900000, NULL, flags));
+	    0, 0, 0, 1800000, NULL, flags));
 }
 
 /*
@@ -1962,7 +1969,7 @@ st_setpos(st, hard, blkptr)
 		cmd.bytes[0] = 1 << 2;
 	_lto4b(*blkptr, &cmd.bytes[2]);
 	error = scsipi_command(st->sc_link, &cmd, sizeof(cmd),
-	    NULL, 0, ST_RETRIES, 900000, NULL, 0);
+	    NULL, 0, ST_RETRIES, 1800000, NULL, 0);
 	/*
 	 * XXX: Note file && block number position now unknown (if
 	 * XXX: these things ever start being maintained in this driver)
