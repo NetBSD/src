@@ -1,3 +1,5 @@
+/*	$NetBSD: ldexp.c,v 1.4 1997/07/13 18:38:58 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,10 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)ldexp.c	5.1 (Berkeley) 4/23/90";*/
-static char rcsid[] = "$Id: ldexp.c,v 1.3 1996/12/20 20:35:48 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)ldexp.c	5.1 (Berkeley) 4/23/90";
+#else
+__RCSID("$NetBSD: ldexp.c,v 1.4 1997/07/13 18:38:58 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
+
+#include <math.h>
 
 /*
  * ldexp(value, exp): return value * (2 ** exp).
