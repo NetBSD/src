@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.5 2001/02/05 00:27:35 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.6 2002/09/19 03:15:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-__RCSID("$NetBSD: timer.c,v 1.5 2001/02/05 00:27:35 christos Exp $");
+__RCSID("$NetBSD: timer.c,v 1.6 2002/09/19 03:15:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 
 #include <curses.h>
 #include <setjmp.h>
@@ -105,23 +106,20 @@ static int
 waitch(delay)
 	long delay;
 {
-	fd_set fdbits;
-	struct timeval duration;
+	struct pollfd set[1];
 
-	duration.tv_sec = 0;
-	duration.tv_usec = delay;
-	FD_ZERO(&fdbits);
-	FD_SET(STDIN_FILENO, &fdbits);
-	return (select(32, &fdbits, NULL, NULL, &duration));
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
+	return (poll(set, 1, delay / 1000));
 }
 
 void
 delay(tenths)
 	int tenths;
 {
-	struct timeval duration;
+	struct timespec duration;
 
-	duration.tv_usec = (tenths % 10 ) * 100000L;
+	duration.tv_nsec = (tenths % 10 ) * 100000000L;
 	duration.tv_sec = (long) (tenths / 10);
-	select(32, 0, 0, 0, &duration);
+	nanosleep(&duration, NULL);
 }
