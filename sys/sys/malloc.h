@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	7.25 (Berkeley) 5/15/91
- *	$Id: malloc.h,v 1.6 1993/05/25 18:09:41 deraadt Exp $
+ *	$Id: malloc.h,v 1.7 1993/05/26 08:59:17 cgd Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -91,11 +91,11 @@
 #define	M_LOCKF		40	/* Byte-range locking structures */
 #define	M_PROC		41	/* Proc structures */
 #define	M_SUBPROC	42	/* Proc sub-structures */
-#define	M_TEMP		49	/* misc temporary data buffers */
-#define	M_PCFSMNT	50	/* PCFS mount structure */
-#define	M_PCFSFAT	51	/* PCFS fat table */
-#define M_TTYS		52	/* allocated tty structures */
-#define	M_LAST		M_TTYS
+#define	M_PCFSMNT	43	/* PCFS mount structure */
+#define	M_PCFSFAT	44	/* PCFS fat table */
+#define	M_TTYS		45	/* allocated tty structures */
+#define	M_TEMP		46	/* misc temporary data buffers */
+#define	M_LAST		M_TEMP
 
 #define INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -141,11 +141,10 @@
 	"lockf",	/* 40 M_LOCKF */ \
 	"proc",		/* 41 M_PROC */ \
 	"subproc",	/* 42 M_PROC */ \
-	0, 0, 0, 0, 0, 0, \
-	"temp",		/* 49 M_TEMP */ \
-	"PCFS mount",	/* 50 M_PCFSMNT */ \
-	"PCFS fat",	/* 51 M_PCFSFAT */ \
-	"ttys",	/* 52 M_TTYS */ \
+	"PCFS mount",	/* 43 M_PCFSMNT */ \
+	"PCFS fat",	/* 44 M_PCFSFAT */ \
+	"ttys",		/* 45 M_TTYS */ \
+	"temp",		/* 46 M_TEMP */ \
 }
 
 struct kmemstats {
