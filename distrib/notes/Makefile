@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/05/18 17:32:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.25 2002/06/15 21:32:43 itojun Exp $
 #
 
 TARGETS+=	release
@@ -17,9 +17,11 @@ SUBDIR+= cats
 SUBDIR+= evbarm
 SUBDIR+= hp300
 SUBDIR+= hpcmips
+SUBDIR+= hpcsh
 SUBDIR+= i386
 SUBDIR+= mac68k
 SUBDIR+= macppc
+SUBDIR+= mmeye
 SUBDIR+= mvme68k
 SUBDIR+= news68k
 SUBDIR+= next68k
