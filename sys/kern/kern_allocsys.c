@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.22 2003/02/01 21:07:01 erh Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.23 2003/02/04 01:21:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,16 +71,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.22 2003/02/01 21:07:01 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.23 2003/02/04 01:21:04 thorpej Exp $");
 
 #include "opt_bufcache.h"
-#include "opt_callout.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/callout.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -130,14 +128,6 @@ caddr_t
 allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 {
 
-	/* Calculate the number of callwheels if necessary. */
-	if (callwheelsize == 0)
-		callout_setsize();
-
-	ALLOCSYS(v, callwheel, struct callout_queue, callwheelsize);
-#ifdef CALLWHEEL_STATS
-	ALLOCSYS(v, callwheel_sizes, int, callwheelsize);
-#endif
 #ifdef SYSVSHM
 	ALLOCSYS(v, shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif

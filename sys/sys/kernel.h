@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.18 2003/01/21 13:56:53 kleink Exp $	*/
+/*	$NetBSD: kernel.h,v 1.19 2003/02/04 01:21:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,6 +59,7 @@ extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 
 extern int cold;		/* still working on startup */
 extern int tick;		/* usec per tick (1000000 / hz) */
+extern int hardclock_ticks;	/* # of hardclock ticks */
 extern int tickfix;		/* periodic tick adj. tick not integral */
 extern int tickfixinterval;	/* interval at which to apply adjustment */
 extern int tickadj;		/* "standard" clock skew, us./tick */
@@ -71,18 +72,5 @@ extern int profsrc;		/* profiling source */
 #if defined(_KERNEL)
 #define PROFSRC_CLOCK	0
 #endif
-
-/*
- * These globals indicate the number of times hardlock() has ticked,
- * and the successive attempt of softclock() to catch up with it.  These
- * are large unsigned numbers so that arithmetic can be performed on them
- * with no reasonable worry about an overflow occurring (we get over 500
- * million years with this).
- *
- * IMPORTANT NOTE: you *must* be at splclock() in order to read both
- * hardclock_ticks and softclock_ticks.  This is because the 64-bit
- * quantities may not be readable in an atomic fashion on all CPU types.
- */
-extern u_int64_t hardclock_ticks, softclock_ticks;
 
 #endif /* _SYS_KERNEL_H_ */

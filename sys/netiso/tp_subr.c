@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.14 2001/11/13 01:10:51 lukem Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.15 2003/02/04 01:21:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.14 2001/11/13 01:10:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.15 2003/02/04 01:21:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,9 +172,7 @@ tp_rtt_rtv(tpcb)
 	int             old = tpcb->tp_rtt;
 	int             s, elapsed, delta = 0;
 
-	s = splclock();
-	elapsed = (int)(hardclock_ticks - tpcb->tp_rttemit);
-	splx(s);
+	elapsed = hardclock_ticks - tpcb->tp_rttemit;
 
 	if (tpcb->tp_rtt != 0) {
 		/*
@@ -499,12 +497,8 @@ tp_send(tpcb)
 	SeqNum          highseq, checkseq;
 	int             s, idle, idleticks, off, cong_win;
 #ifdef TP_PERF_MEAS
-	u_int64_t       send_start_time;
+	int             send_start_time = hardclock_ticks;
 	SeqNum          oldnxt = tpcb->tp_sndnxt;
-
-	s = splclock();
-	send_start_time = hardclock_ticks;
-	splx(s);
 #endif /* TP_PERF_MEAS */
 
 	idle = (tpcb->tp_snduna == tpcb->tp_sndnew);
@@ -607,9 +601,7 @@ tp_send(tpcb)
 			 * not currently timing anything.
 			 */
 			if (tpcb->tp_rttemit == 0) {
-				s = splclock();
 				tpcb->tp_rttemit = hardclock_ticks;
-				splx(s);
 				tpcb->tp_rttseq = tpcb->tp_sndnxt;
 			}
 			tpcb->tp_sndnxt = tpcb->tp_sndnew;
@@ -637,9 +629,7 @@ tp_send(tpcb)
 		int             s, elapsed, *t;
 		struct timeval  now;
 
-		s = splclock();
-		elapsed = (int)(hardclock_ticks - send_start_time);
-		splx(s);
+		elapsed = hardclock_ticks - send_start_time;
 
 		npkts = SEQ_SUB(tpcb, tpcb->tp_sndnxt, oldnxt);
 
