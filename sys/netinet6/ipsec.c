@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.55 2002/06/13 05:10:13 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.56 2002/06/14 14:17:55 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.55 2002/06/13 05:10:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.56 2002/06/14 14:17:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1137,8 +1137,6 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 	new->sp_in->refcnt++;
 	new->sp_out = out;
 	new->sp_out->refcnt++;
-
-	new->sp_out->policy = IPSEC_POLICY_ENTRUST;
 
 	*pcb_sp = new;
 
