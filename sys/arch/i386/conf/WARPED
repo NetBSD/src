@@ -1,4 +1,4 @@
-#	$Id: WARPED,v 1.1 1995/10/20 21:24:37 jtc Exp $
+#	$Id: WARPED,v 1.2 1996/02/28 02:02:46 cgd Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -55,15 +55,15 @@ pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
 fdc0    at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy controllers
 fd*     at fdc? drive ?
 
-ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
-ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 
-de*	at pci? bus ? dev ?
+de*	at pci? dev ? function ?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter
