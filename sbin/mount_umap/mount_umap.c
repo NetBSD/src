@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.7 1997/09/16 12:32:33 lukem Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.8 1999/06/01 19:16:49 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.7 1997/09/16 12:32:33 lukem Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.8 1999/06/01 19:16:49 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,8 +219,6 @@ main(argc, argv)
 			errx(1, "%s: illegal format (line %d)%s",
 			    gmapfile, count + 2, not);
 		}
-		gmapdata[count][0] = d1;
-		gmapdata[count][1] = d2;
 	}
 
 
