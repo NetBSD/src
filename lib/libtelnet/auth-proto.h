@@ -1,3 +1,5 @@
+/*	$NetBSD: auth-proto.h,v 1.6 1998/02/27 10:33:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)auth-proto.h	8.1 (Berkeley) 6/4/93
- *	$NetBSD: auth-proto.h,v 1.5 1996/02/24 01:15:16 jtk Exp $
  */
 
 /*
@@ -76,7 +77,7 @@ int auth_enable __P((char *));
 int auth_disable __P((char *));
 int auth_onoff __P((char *, int));
 int auth_togdebug __P((int));
-int auth_status __P((void));
+int auth_status __P((char *));
 void auth_name __P((unsigned char *, int));
 int auth_sendname __P((unsigned char *, int));
 void auth_finished __P((Authenticator *, int));
