@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.2 2000/07/20 16:23:17 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.3 2000/10/02 17:46:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -68,7 +68,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.2 2000/07/20 16:23:17 itojun Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.3 2000/10/02 17:46:42 itojun Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -134,6 +134,9 @@ static struct val2str ipsec_espnames[] = {
 #endif
 	{ SADB_X_EALG_CAST128CBC, "cast128-cbc", },
 	{ SADB_X_EALG_BLOWFISHCBC, "blowfish-cbc", },
+#ifdef SADB_X_EALG_RIJNDAELCBC
+	{ SADB_X_EALG_RIJNDAELCBC, "rijndael-cbc", },
+#endif
 	{ -1, NULL },
 };
 
