@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.13 1998/08/08 23:39:40 mycroft Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.14 1998/08/25 03:10:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -637,6 +637,17 @@ initarm(bootconf)
 	/* Switch tables */
 
 	setttb(bootconfig.scratchphysicalbase + 0x4000);
+	/*
+	 * We must now clean the cache again....
+	 * Cleaning may be done by reading new data to displace any
+	 * dirty data in the cache. This will have happened in setttb()
+	 * but since we are boot strapping the addresses used for the read
+	 * may have just been remapped and thus the cache could be out
+	 * of sync. A re-clean after the switch will cure this.
+	 * After booting there are no gross reloations of the kernel thus
+	 * this problem wil not occur after initarm().
+	 */
+	cpu_cache_cleanID();
 
 	/*
 	 * Since we have mapped the VRAM up into kernel space we must now update the
@@ -1040,8 +1051,19 @@ initarm(bootconf)
 	bcopy((char *)KERNEL_BASE, (char *)0x00000000, kerneldatasize);
 
 	/* Switch tables */
-
 	setttb(kernel_pt_table[KERNEL_PT_PAGEDIR]);
+
+	/*
+	 * We must now clean the cache again....
+	 * Cleaning may be done by reading new data to displace any
+	 * dirty data in the cache. This will have happened in setttb()
+	 * but since we are boot strapping the addresses used for the read
+	 * may have just been remapped and thus the cache could be out
+	 * of sync. A re-clean after the switch will cure this.
+	 * After booting there are no gross reloations of the kernel thus
+	 * this problem wil not occur after initarm().
+	 */
+	cpu_cache_cleanID();
 
 	if (videodram_size != 0) {
 		bootconfig.display_start = VMEM_VBASE;
