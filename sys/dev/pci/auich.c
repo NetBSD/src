@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.41 2003/09/28 13:37:19 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.42 2003/10/02 07:41:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.41 2003/09/28 13:37:19 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.42 2003/10/02 07:41:53 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,8 @@ int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void	auich_powerhook(int, void *);
 int	auich_set_rate(struct auich_softc *, int, u_long);
-void	auich_calibrate(struct device *);
+void	auich_finish_attach(struct device *);
+void	auich_calibrate(struct auich_softc *);
 
 
 struct audio_hw_if auich_hw_if = {
@@ -504,15 +505,22 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
-	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
-
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
 
-	if (!IS_FIXED_RATE(sc->codec_if)) {
-		config_interrupts(self, auich_calibrate);
-	}
+	config_interrupts(self, auich_finish_attach);
+}
+
+void
+auich_finish_attach(struct device *self)
+{
+	struct auich_softc *sc = (void *)self;
+
+	if (!IS_FIXED_RATE(sc->codec_if))
+		auich_calibrate(sc);
+
+	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 }
 
 #define ICH_CODECIO_INTERVAL	10
@@ -728,8 +736,10 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 
 		if ((p->sample_rate !=  8000) &&
 		    (p->sample_rate != 11025) &&
+		    (p->sample_rate != 12000) &&
 		    (p->sample_rate != 16000) &&
 		    (p->sample_rate != 22050) &&
+		    (p->sample_rate != 24000) &&
 		    (p->sample_rate != 32000) &&
 		    (p->sample_rate != 44100) &&
 		    (p->sample_rate != 48000))
@@ -1135,7 +1145,7 @@ auich_intr(void *v)
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI + sc->sc_sts_reg,
 		    sts & (ICH_LVBCI | ICH_CELV | ICH_BCIS | ICH_FIFOE));
-		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_POINT);
+		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_PIINT);
 		ret++;
 	}
 
@@ -1429,16 +1439,14 @@ auich_powerhook(int why, void *addr)
 /* Calibrate card (some boards are overclocked and need scaling) */
 
 void
-auich_calibrate(struct device *self)
+auich_calibrate(struct auich_softc *sc)
 {
-	struct auich_softc *sc;
 	struct timeval t1, t2;
 	u_int8_t ociv, nciv;
 	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
 
-	sc = (struct auich_softc*)self;
 	/*
 	 * Grab audio from input for fixed interval and compare how
 	 * much we actually get with what we expect.  Interval needs
@@ -1456,7 +1464,7 @@ auich_calibrate(struct device *self)
 		return;
 	}
 	sc->dmalist_pcmi[0].base = DMAADDR(p);
-	sc->dmalist_pcmi[0].len = (bytes / sc->sc_sample_size) | ICH_DMAF_IOC;
+	sc->dmalist_pcmi[0].len = (bytes / sc->sc_sample_size);
 
 	/*
 	 * our data format is stereo, 16 bit so each sample is 4 bytes.
@@ -1472,7 +1480,6 @@ auich_calibrate(struct device *self)
 
 	/* prepare */
 	ociv = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CIV);
-	nciv = ociv;
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_BDBAR,
 			  sc->sc_cddma + ICH_PCMI_OFF(0));
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_LVI,
@@ -1483,14 +1490,13 @@ auich_calibrate(struct device *self)
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, ICH_RPBM);
 
 	/* wait */
-	while (nciv == ociv) {
+	do {
 		microtime(&t2);
 		if (t2.tv_sec - t1.tv_sec > 1)
 			break;
 		nciv = bus_space_read_1(sc->iot, sc->aud_ioh,
 					ICH_PCMI + ICH_CIV);
-	}
-	microtime(&t2);
+	} while (nciv == ociv);
 
 	/* stop */
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, 0);
