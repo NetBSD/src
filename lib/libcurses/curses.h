@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)curses.h	8.2 (Berkeley) 11/29/93
- *	$Id: curses.h,v 1.10 1993/12/04 23:03:46 cgd Exp $
+ *	from: @(#)curses.h	8.2 (Berkeley) 1/2/94
+ *	$Id: curses.h,v 1.11 1994/01/24 08:36:51 cgd Exp $
  */
 
 #ifndef _CURSES_H_

@@ -32,13 +32,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)cr_put.c	8.1 (Berkeley) 6/11/93"; */
-static char *rcsid = "$Id: cr_put.c,v 1.6 1993/11/09 04:07:04 cgd Exp $";
+/* from: static char sccsid[] = "@(#)cr_put.c	8.2 (Berkeley) 1/9/94"; */
+static char *rcsid = "$Id: cr_put.c,v 1.7 1994/01/24 08:36:42 cgd Exp $";
 #endif	/* not lint */
 
 #include <curses.h>
 #include <string.h>
-#include <termios.h>
 
 #define	HARDTABS	8
 

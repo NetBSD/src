@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)curses.c	8.2 (Berkeley) 11/29/93"; */
-static char *rcsid = "$Id: curses.c,v 1.6 1993/12/04 23:03:43 cgd Exp $";
+/* from: static char sccsid[] = "@(#)curses.c	8.2 (Berkeley) 1/2/94"; */
+static char *rcsid = "$Id: curses.c,v 1.7 1994/01/24 08:36:50 cgd Exp $";
 #endif /* not lint */
 
 #include <curses.h>
@@ -73,4 +73,3 @@ char	*Def_term = "unknown";		/* Default terminal type. */
 char	 GT;				/* Gtty indicates tabs. */
 char	 NONL;				/* Term can't hack LF doing a CR. */
 char	 UPPERCASE;			/* Terminal is uppercase only. */
-

@@ -32,12 +32,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)addbytes.c	8.1 (Berkeley) 6/11/93"; */
-static char *rcsid = "$Id: addbytes.c,v 1.8 1993/11/09 04:06:46 cgd Exp $";
+/* from: static char sccsid[] = "@(#)addbytes.c	8.2 (Berkeley) 1/9/94"; */
+static char *rcsid = "$Id: addbytes.c,v 1.9 1994/01/24 08:36:41 cgd Exp $";
 #endif	/* not lint */
 
 #include <curses.h>
-#include <termios.h>
 
 #define	SYNCH_IN	{y = win->cury; x = win->curx;}
 #define	SYNCH_OUT	{win->cury = y; win->curx = x;}

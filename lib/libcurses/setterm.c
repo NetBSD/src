@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)setterm.c	8.2 (Berkeley) 11/29/93"; */
-static char *rcsid = "$Id: setterm.c,v 1.4 1993/12/04 23:03:48 cgd Exp $";
+/* from: static char sccsid[] = "@(#)setterm.c	8.3 (Berkeley) 1/2/94"; */
+static char *rcsid = "$Id: setterm.c,v 1.5 1994/01/24 08:36:57 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -115,7 +115,7 @@ setterm(type)
 	}
 
 	/* POSIX 1003.2 requires that the environment override. */
-	if ((p = getenv("ROWS")) != NULL)
+	if ((p = getenv("LINES")) != NULL)
 		LINES = strtol(p, NULL, 10);
 	if ((p = getenv("COLUMNS")) != NULL)
 		COLS = strtol(p, NULL, 10);
