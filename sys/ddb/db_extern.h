@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.2 1997/06/26 01:14:16 thorpej Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.3 1997/11/16 22:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -68,6 +68,7 @@ int db_expression __P((db_expr_t *));
 void db_putstring __P((char *, int));
 void db_putnchars __P((int, int));
 void db_delete __P((int, int));
+void db_delete_line __P((void));
 int db_inputchar __P((int));
 int db_readline __P((char *, int));
 void db_check_interrupt __P((void));
