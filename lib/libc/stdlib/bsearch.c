@@ -1,4 +1,4 @@
-/*	$NetBSD: bsearch.c,v 1.8 1998/02/03 18:44:13 perry Exp $	*/
+/*	$NetBSD: bsearch.c,v 1.9 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bsearch.c,v 1.8 1998/02/03 18:44:13 perry Exp $");
+__RCSID("$NetBSD: bsearch.c,v 1.9 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,8 +77,10 @@ bsearch(key, base0, nmemb, size, compar)
 		p = base + (lim >> 1) * size;
 		cmp = (*compar)(key, p);
 		if (cmp == 0)
+			/* LINTED interface spec */
 			return ((void *)p);
 		if (cmp > 0) {	/* key > p: move right */
+			/* LINTED we don't touch base */
 			base = (char *)p + size;
 			lim--;
 		}		/* else move left */

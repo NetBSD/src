@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.14 1998/09/11 21:03:18 kleink Exp $	*/
+/*	$NetBSD: setenv.c,v 1.15 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.14 1998/09/11 21:03:18 kleink Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.15 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,13 +71,15 @@ setenv(name, value, rewrite)
 	extern char **environ;
 	static int alloced;			/* if allocated space before */
 	char *c;
+	const char *cc;
 	int l_value, offset;
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
 	l_value = strlen(value);
 	rwlock_wrlock(&__environ_lock);
-	if ((c = __findenv(name, &offset))) {	/* find if already exists */
+	/* find if already exists */
+	if ((c = __findenv(name, &offset)) != NULL) {
 		if (!rewrite) {
 			rwlock_unlock(&__environ_lock);
 			return (0);
@@ -93,7 +95,7 @@ setenv(name, value, rewrite)
 
 		for (p = environ, cnt = 0; *p; ++p, ++cnt);
 		if (alloced) {			/* just increase size */
-			environ = (char **)realloc((char *)environ,
+			environ = realloc(environ,
 			    (size_t)(sizeof(char *) * (cnt + 2)));
 			if (!environ) {
 				rwlock_unlock(&__environ_lock);
@@ -113,9 +115,10 @@ setenv(name, value, rewrite)
 		environ[cnt + 1] = NULL;
 		offset = cnt;
 	}
-	for (c = (char *)name; *c && *c != '='; ++c);	/* no `=' in name */
+	for (cc = name; *cc && *cc != '='; ++cc)/* no `=' in name */
+		continue;
 	if (!(environ[offset] =			/* name + `=' + value */
-	    malloc((size_t)((int)(c - name) + l_value + 2)))) {
+	    malloc((size_t)((int)(cc - name) + l_value + 2)))) {
 		rwlock_unlock(&__environ_lock);
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.9 1998/02/03 18:44:18 perry Exp $	*/
+/*	$NetBSD: qsort.c,v 1.10 1998/11/15 17:13:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.9 1998/02/03 18:44:18 perry Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.10 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: qsort.c,v 1.9 1998/02/03 18:44:18 perry Exp $");
 
 static __inline char	*med3 __P((char *, char *, char *,
     int (*)(const void *, const void *)));
-static __inline void	 swapfunc __P((char *, char *, int, int));
+static __inline void	 swapfunc __P((char *, char *, size_t, int));
 
 #define min(a, b)	(a) < (b) ? a : b
 
@@ -55,11 +55,11 @@ static __inline void	 swapfunc __P((char *, char *, int, int));
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
 #define swapcode(TYPE, parmi, parmj, n) { 		\
-	long i = (n) / sizeof (TYPE); 			\
-	TYPE *pi = (TYPE *) (parmi); 		\
-	TYPE *pj = (TYPE *) (parmj); 		\
+	size_t i = (n) / sizeof (TYPE); 		\
+	TYPE *pi = (TYPE *)(void *)(parmi); 		\
+	TYPE *pj = (TYPE *)(void *)(parmj); 		\
 	do { 						\
-		TYPE	t = *pi;		\
+		TYPE	t = *pi;			\
 		*pi++ = *pj;				\
 		*pj++ = t;				\
         } while (--i > 0);				\
@@ -71,7 +71,8 @@ static __inline void	 swapfunc __P((char *, char *, int, int));
 static __inline void
 swapfunc(a, b, n, swaptype)
 	char *a, *b;
-	int n, swaptype;
+	size_t n;
+	int swaptype;
 {
 	if (swaptype <= 1) 
 		swapcode(long, a, b, n)
@@ -79,15 +80,15 @@ swapfunc(a, b, n, swaptype)
 		swapcode(char, a, b, n)
 }
 
-#define swap(a, b)					\
-	if (swaptype == 0) {				\
-		long t = *(long *)(a);			\
-		*(long *)(a) = *(long *)(b);		\
-		*(long *)(b) = t;			\
-	} else						\
+#define swap(a, b)						\
+	if (swaptype == 0) {					\
+		long t = *(long *)(void *)(a);			\
+		*(long *)(void *)(a) = *(long *)(void *)(b);	\
+		*(long *)(void *)(b) = t;			\
+	} else							\
 		swapfunc(a, b, es, swaptype)
 
-#define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
+#define vecswap(a, b, n) if ((n) > 0) swapfunc((a), (b), (size_t)(n), swaptype)
 
 static __inline char *
 med3(a, b, c, cmp)
