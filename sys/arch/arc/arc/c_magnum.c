@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.8 2005/01/22 07:56:28 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.8 2005/01/22 07:56:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,9 +165,7 @@ static const uint32_t magnum_ipl_sr_bits[_IPL_N] = {
 };
 
 int
-timer_magnum_intr(mask, cf)
-	u_int mask;
-	struct clockframe *cf;
+timer_magnum_intr(u_int mask, struct clockframe *cf)
 {
 	int temp;
 
@@ -183,6 +181,7 @@ timer_magnum_intr(mask, cf)
 void
 timer_magnum_init(int interval)
 {
+
 	if (interval <= 0)
 		panic("timer_magnum_init: invalid interval %d", interval);
 
