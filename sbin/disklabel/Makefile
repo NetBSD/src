@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2003/11/08 09:25:01 dsl Exp $
+#	$NetBSD: Makefile,v 1.49 2003/11/10 09:22:09 fvdl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -6,6 +6,18 @@ SRCS=	disklabel.c dkcksum.c interact.c printlabel.c
 MAN=	disklabel.5 disklabel.8
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}
+
+.if (${MACHINE} == "i386" || ${MACHINE} == "amd64")
+# recognize old partition ID for a while
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
+# use MBR partition info
+CPPFLAGS+= -DUSE_MBR
+.endif
+
+.if (${MACHINE} == "hp300") || (${MACHINE} == "vax") \
+	|| (${MACHINE} == "arm32")
+CPPFLAGS+= -DNUMBOOT=1
+.endif
 
 # these have additional requirements on the alignment of a partition
 .if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \
@@ -25,7 +37,6 @@ CPPFLAGS+= -DSAVEBOOTAREA
 	|| (${MACHINE} == "evbarm") || (${MACHINE} == "hpcarm") \
 	|| (${MACHINE} == "netwinder") || (${MACHINE} == "acorn32") \
 	|| (${MACHINE} == "cats") || (${MACHINE} == "shark") \
-	|| (${MACHINE} == "i386") || (${MACHINE} == "amd64") \
 	|| (${MACHINE} == "playstation2")
 # recognize old partition ID for a while
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
