@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.8 2001/05/05 05:45:30 takemura Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.9 2001/05/16 11:06:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -578,6 +578,10 @@ platid_t platid_mask_MACH_VICTOR_INTERLINK_MP = {{
 platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC101 = {{
 	PLATID_CPU_MIPS_TX_3922,
 	PLATID_MACH_VICTOR_INTERLINK_MPC101
+}};
+platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC303 = {{
+	PLATID_CPU_MIPS_VR_4122,
+	PLATID_MACH_VICTOR_INTERLINK_MPC303
 }};
 #endif /* hpcmips */
 #ifdef hpcmips
