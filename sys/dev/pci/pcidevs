@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.141 1999/07/28 22:36:10 soren Exp $
+$NetBSD: pcidevs,v 1.142 1999/07/29 20:56:55 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -891,6 +891,12 @@ product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (\"NICStAR\")
+
+/* Initio products */
+product INITIO I920	0x0002	INIC-920 SCSI
+product INITIO I940	0x9400	INIC-940 SCSI
+product INITIO I935	0x9401	INIC-935 SCSI
+product INITIO I950	0x9500	INIC-950 SCSI
 
 /* Integrated Micro Solutions products */
 product IMS 8849	0x8849	8849
