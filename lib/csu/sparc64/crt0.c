@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.19 2002/03/29 18:11:55 eeh Exp $ */
+/* $NetBSD: crt0.c,v 1.20 2002/04/04 08:22:11 jmc Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -66,10 +66,10 @@ __start:\n\
 	mov	%g1, %o3			! ps_strings XXXX\n\
 ");
 
-static void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
+void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
 
-static void
+void
 ___start(sp, cleanup, obj, ps_strings)
 	char **sp;
 	void (*cleanup) __P((void));		/* from shared loader */
@@ -114,7 +114,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.19 2002/03/29 18:11:55 eeh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.20 2002/04/04 08:22:11 jmc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
