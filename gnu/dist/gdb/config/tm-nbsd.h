@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Return non-zero if we are in a shared library trampoline code stub. */
 
 #define IN_SOLIB_CALL_TRAMPOLINE(pc, name) \
-  (name && !strcmp(name, "_DYNAMIC"))
+  (name && \
+   (!strcmp(name, "_DYNAMIC") || !strcmp(name, "_PROCEDURE_LINKAGE_TABLE_")))
 
 #endif /* !SVR4_SHARED_LIBS */
