@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.4 2000/06/04 22:21:09 gmcgarry Exp $ */
+/* $NetBSD: bba.c,v 1.5 2000/06/05 23:02:04 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,9 +35,6 @@
 
 /* maxine/alpha baseboard audio (bba) */
 
-#include "audio.h"
-#if NAUDIO > 0
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -67,6 +64,7 @@
 #endif  /* AUDIO_DEBUG */
 
 #define BBA_MAX_DMA_SEGMENTS	16
+#define BBA_REGISTER_SHIFT	6
 
 struct bba_mem {
 	bus_addr_t addr;
@@ -750,7 +748,8 @@ bba_codec_dwrite(asc, reg, val)
 
 	DPRINTF(("bba_codec_dwrite(): sc=%p, reg=%d, val=%d\n",sc,reg,val));
 
-	bus_space_write_4(sc->sc_bst, sc->sc_codec_bsh, (reg<<6), val);
+	bus_space_write_4(sc->sc_bst, sc->sc_codec_bsh,
+		(reg<<BBA_REGISTER_SHIFT), val);
 
 	for (i=0; i<TIMETOWASTE; i++) {};
 }
@@ -767,11 +766,10 @@ bba_codec_dread(asc, reg)
 
 	DPRINTF(("bba_codec_dread(): sc=%p, reg=%d\n",sc,reg));
 
-	val = bus_space_read_1(sc->sc_bst, sc->sc_codec_bsh, (reg<<6));
+	val = bus_space_read_1(sc->sc_bst, sc->sc_codec_bsh,
+		(reg<<BBA_REGISTER_SHIFT));
 
 	for (i=0; i<TIMETOWASTE; i++) {};
 
 	return val;
 }
-
-#endif /* NAUDIO > 0 */
