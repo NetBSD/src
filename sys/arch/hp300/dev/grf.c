@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.46 2002/10/02 05:15:50 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.47 2002/10/10 22:33:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2002/10/02 05:15:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47 2002/10/10 22:33:16 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2002/10/02 05:15:50 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
@@ -101,12 +100,11 @@ extern struct cfdriver grf_cd;
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
-dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap,
+	nostop, notty, nopoll, grfmmap,
 };
 
 int	grfprint __P((void *, const char *));
@@ -294,17 +292,6 @@ grfioctl(dev, cmd, data, flag, p)
 
 	}
 	return(error);
-}
-
-/*ARGSUSED*/
-int
-grfpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (events & (POLLOUT | POLLWRNORM));
 }
 
 /*ARGSUSED*/
