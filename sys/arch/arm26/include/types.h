@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5 2001/01/24 00:03:21 bjh21 Exp $ */
+/* $NetBSD: types.h,v 1.6 2001/02/25 23:08:33 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,6 +42,7 @@
 #include <machine/int_types.h>
 
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define __HAVE_MINIMAL_EMUL
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
