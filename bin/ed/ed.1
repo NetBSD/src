@@ -2,7 +2,7 @@
 .SH NAME
 ed \- text editor
 .SH SYNOPSIS
-ed [-] [-sx] [-p string] [file]
+ed [-] [-sx] [-p \fIstring\fR] [\fIfile\fR]
 .SH DESCRIPTION
 .B ed
 is a line-oriented text editor.
@@ -375,7 +375,12 @@ their left delimiter.
 .TP 8
 *
 Matches the single character regular expression or subexpression
-immediately preceding it zero or more times.
+immediately preceding it zero or more times.  If '*' is the first
+character of a regular expression or subexpression, then it matches
+itself.  The `*' operator sometimes yields unexpected results.  
+For example, the regular expression `b*' matches the beginning of
+the string `abbb' (as opposed to the substring `bbb'), since a null match
+is the only left-most match.
 
 .TP 8
 \fR\\{\fIn,m\fR\\}\fR or \fR\\{\fIn,\fR\\}\fR or \fR\\{\fIn\fR\\}\fR
@@ -681,8 +686,8 @@ if they are escaped with a backslash (\\).
 and 
 .I replacement
 may be delimited by any character other than space and newline.
-If one or two of the last delimiters is omitted, then the affected lines
-are printed as though the print suffix
+If one or two of the last delimiters is omitted, then the last line
+affected is printed as though the print suffix
 .I `p' 
 were specified.
 
@@ -721,7 +726,8 @@ copied.
 
 .TP 8
 u
-Undoes the last command.  
+Undoes the last command and restores the current address
+to what it was before the command.
 The global commands 
 .IR `g' ,
 .IR `G' ,

@@ -39,10 +39,10 @@
 
 #include <unistd.h>
 #include <errno.h>
-#include <regex.h>
 #if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
 # include <sys/param.h>		/* for MAXPATHLEN */
 #endif
+#include <regex.h>
 
 #define BITSPERBYTE 8
 #define BITS(type)  (BITSPERBYTE * (int)sizeof(type))
