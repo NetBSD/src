@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnwreg.h,v 1.2 1999/11/29 12:54:00 itojun Exp $	*/
+/*	$NetBSD: if_cnwreg.h,v 1.2.4.1 2000/07/07 07:31:29 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 
 /* I/O area */
 #define CNW_IO_SIZE		0x10
+/* I/O area can be accessed via mapped memory too */
+#define CNW_IOM_ADDR		0x28000
+#define CNW_IOM_SIZE		CNW_IO_SIZE
+#define CNW_IOM_OFF		(CNW_IOM_ADDR - CNW_MEM_ADDR)
 
 /* I/O registers */
 #define CNW_REG_COR		0x0
