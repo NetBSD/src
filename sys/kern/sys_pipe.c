@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.51 2004/02/26 08:15:31 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.52 2004/03/03 21:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.51 2004/02/26 08:15:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.52 2004/03/03 21:35:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ sys_pipe(l, v, retval)
 	register_t *retval;
 {
 	struct file *rf, *wf;
-	struct pipe *rpipe, *wpipe;
+	struct pipe *rpipe = NULL, *wpipe = NULL;
 	int fd, error;
 	struct proc *p;
 
