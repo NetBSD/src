@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro PCI
  *	=====================================================================
  *
- *	$Id: isic_pci_elsa_qs1p.c,v 1.5 2002/03/25 16:39:56 martin Exp $
+ *	$Id: isic_pci_elsa_qs1p.c,v 1.6 2002/03/27 07:39:37 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.5 2002/03/25 16:39:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.6 2002/03/27 07:39:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -410,9 +410,9 @@ isic_attach_Eqs1pp(psc, pa)
 	MALLOC_MAPS(sc);
 	sc->sc_maps[0].size = 0;
 	if (pci_mapreg_map(pa, ELSA_PORT0_MEM_MAPOFF, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0
 	   && pci_mapreg_map(pa, ELSA_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0) {
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0) {
 		printf("%s: can't map card registers\n", sc->sc_dev.dv_xname);
 		return;
 	}

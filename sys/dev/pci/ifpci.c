@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.1 2002/03/25 16:39:55 martin Exp $
+ *	$Id: ifpci.c,v 1.2 2002/03/27 07:39:37 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.1 2002/03/25 16:39:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.2 2002/03/27 07:39:37 martin Exp $");
 
 
 #include <sys/param.h>
@@ -110,6 +110,9 @@ struct ifpci_softc {
 
 	/* PCI-specific goo */
 	void *sc_ih;				/* interrupt handler */
+	bus_addr_t sc_base;
+	bus_size_t sc_size;
+	pci_chipset_tag_t sc_pc;
 };
 
 /* prototypes */
@@ -132,9 +135,12 @@ static void avma1pp_bchannel_setup(isdn_layer1token, int h_chan, int bprot, int 
 static void avma1pp_init_linktab(struct isic_softc *);
 static int ifpci_match(struct device *parent, struct cfdata *match, void *aux);
 static void ifpci_attach(struct device *parent, struct device *self, void *aux);
+static int ifpci_detach(struct device *self, int flags);
+static int ifpci_activate(struct device *self, enum devact act);
 
 struct cfattach ifpci_ca = {
-	sizeof(struct ifpci_softc), ifpci_match, ifpci_attach
+	sizeof(struct ifpci_softc), ifpci_match, ifpci_attach,
+	ifpci_detach, ifpci_activate
 };
 
 /*---------------------------------------------------------------------------*
@@ -289,9 +295,9 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	MALLOC_MAPS(sc);
 	sc->sc_maps[0].size = 0;
 	if (pci_mapreg_map(pa, FRITZPCI_PORT0_MEM_MAPOFF, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0
 	   && pci_mapreg_map(pa, FRITZPCI_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0) {
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0) {
 		printf("%s: can't map card\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -388,6 +394,45 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_l2.l1_token = sc;
 	sc->sc_l2.bri = drv->bri;
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+}
+
+static int
+ifpci_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct ifpci_softc *psc = (struct ifpci_softc *)self;
+
+	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+
+	return (0);
+}
+
+int
+ifpci_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct ifpci_softc *psc = (struct ifpci_softc *)self;
+	int error = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		psc->sc_isic.sc_dying = 1;
+		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, STI_ATTACH, 0);
+		isdn_detach_bri(psc->sc_isic.sc_l3token);
+		psc->sc_isic.sc_l3token = NULL;
+		break;
+	}
+	splx(s);
+	return (error);
 }
 
 /*---------------------------------------------------------------------------*
@@ -879,6 +924,9 @@ avma1pp_intr(void * parm)
 #define OURS	ret = 1
 	u_char stat;
 
+	if (sc->sc_dying)
+		return 0;
+
 	stat = bus_space_read_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET);
 	NDBGL1(L1_H_IRQ, "stat %x", stat);
 	/* was there an interrupt from this card ? */
@@ -923,6 +971,7 @@ avma1pp_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 		avma1pp_disable(sc);
 		return;
 	}
+	psc->sc_pc = pc;
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, avma1pp_intr, sc);
 	if (psc->sc_ih == NULL) {
