@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.17 2001/11/21 10:26:22 itojun Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.18 2002/08/20 14:01:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.17 2001/11/21 10:26:22 itojun Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.18 2002/08/20 14:01:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,14 @@ __RCSID("$NetBSD: uucpd.c,v 1.17 2001/11/21 10:26:22 itojun Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
+#include <time.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #include "pathnames.h"
 
@@ -236,24 +243,33 @@ readline(p, n)
 /* Note that SCPYN is only used on strings that may not be nul terminated */
 #define	SCPYN(a, b)	strncpy(a, b, sizeof (a))
 
-struct	utmp utmp;
+#ifdef SUPPORT_UTMP
+struct utmp utmp;
+#endif
+#ifdef SUPPORT_UTMPX
+struct utmpx utmpx;
+#endif
 
 void
 dologout()
 {
-	int pid, wtmp;
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
+	int status;
+	char line[MAXPATHLEN];
+	pid_t pid;
 
-	while ((pid = wait(NULL)) > 0) {
-		wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
-		if (wtmp >= 0) {
-			sprintf(utmp.ut_line, "uucp%.4d", pid);
-			SCPYN(utmp.ut_name, "");
-			SCPYN(utmp.ut_host, "");
-			(void)time(&utmp.ut_time);
-			(void)write(wtmp, (char *)&utmp, sizeof (utmp));
-			(void)close(wtmp);
-		}
+	while ((pid = wait(&status)) > 0) {
+		sprintf(line, "uucp%.4d", pid);
+#ifdef SUPPORT_UTMPX
+		if (logoutx(line, status, DEAD_PROCESS))
+			logwtmpx(line, "", "", status, DEAD_PROCESS);
+#endif
+#ifdef SUPPORT_UTMP
+		if (logout(line))
+			logwtmp(line, "", "");
+#endif
 	}
+#endif
 }
 
 /*
@@ -264,34 +280,40 @@ dologin(pw, sa)
 	struct passwd *pw;
 	struct sockaddr *sa;
 {
-	char line[UT_LINESIZE+1];
-	char remotehost[UT_HOSTSIZE+1];
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 	char hbuf[NI_MAXHOST];
-	int wtmp, f;
+	struct timeval tv;
+	char line[MAXPATHLEN];
+	pid_t pid = getpid();
 
-	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0)) {
-		strlcpy(remotehost, "?", sizeof(remotehost));
-	} else
-		strlcpy(remotehost, hbuf, sizeof(remotehost));
-	wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
-	if (wtmp >= 0) {
-		/* hack, but must be unique and no tty line */
-		sprintf(line, "uucp%.4d", getpid());
-		SCPYN(utmp.ut_line, line);
-		SCPYN(utmp.ut_name, pw->pw_name);
-		SCPYN(utmp.ut_host, remotehost);
-		time(&utmp.ut_time);
-		(void)write(wtmp, (char *)&utmp, sizeof (utmp));
-		(void)close(wtmp);
+	/* hack, but must be unique and no tty line */
+	sprintf(line, "uucp%.4d", pid = getpid());
+	(void)gettimeofday(&tv, NULL);
+	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0))
+		(void)strcpy(hbuf, "?");
+#endif
+#ifdef SUPPORT_UTMPX
+	SCPYN(utmpx.ut_line, line);
+	SCPYN(utmpx.ut_name, pw->pw_name);
+	SCPYN(utmpx.ut_host, hbuf);
+	if (strlen(line) > sizeof(utmpx.ut_id)) {
+		SCPYN(utmpx.ut_id, line + strlen(line) - sizeof(utmpx.ut_id));
+	} else {
+		SCPYN(utmpx.ut_id, line);
 	}
-	if ((f = open(_PATH_LASTLOG, O_RDWR)) >= 0) {
-		struct lastlog ll;
-
-		time(&ll.ll_time);
-		lseek(f, pw->pw_uid * sizeof(struct lastlog), 0);
-		SCPYN(ll.ll_line, remotehost);
-		SCPYN(ll.ll_host, remotehost);
-		(void)write(f, (char *) &ll, sizeof ll);
-		(void)close(f);
-	}
+	utmpx.ut_tv = tv;
+	utmpx.ut_type = USER_PROCESS;
+	utmpx.ut_pid = pid;
+	(void)memcpy(&utmpx.ut_ss, sa, sizeof(*sa));
+	loginx(&utmpx);
+	logwtmpx(line, pw->pw_name, hbuf, 0, USER_PROCESS);
+#endif
+#ifdef SUPPORT_UTMP
+	SCPYN(utmp.ut_line, line);
+	SCPYN(utmp.ut_name, pw->pw_name);
+	SCPYN(utmp.ut_host, hbuf);
+	utmp.ut_time = (time_t)tv.tv_sec;
+	login(&utmp);
+	logwtmp(line, pw->pw_name, hbuf);
+#endif
 }
