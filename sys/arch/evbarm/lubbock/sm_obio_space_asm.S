@@ -1,4 +1,4 @@
-/*	$NetBSD: sm_obio_space_asm.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
+/*	$NetBSD: sm_obio_space_asm.S,v 1.2 2004/02/21 23:20:53 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -140,5 +140,3 @@ ENTRY(smobio16_bs_w_1)
 	add	r1, r1, r2, LSL #2
 	strh	r3, [r1]
 	mov	pc, lr
-
-	
