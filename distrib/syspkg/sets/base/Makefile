@@ -44,6 +44,7 @@ SUBDIR+=base-krb5-root
 SUBDIR+=base-krb5-shlib
 SUBDIR+=base-locale-Pig
 SUBDIR+=base-locale-bin
+SUBDIR+=base-locale-ca
 SUBDIR+=base-locale-cs
 SUBDIR+=base-locale-da
 SUBDIR+=base-locale-de
