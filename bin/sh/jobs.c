@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.44 2002/04/03 14:30:44 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.45 2002/04/10 15:52:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.44 2002/04/03 14:30:44 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.45 2002/04/10 15:52:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,8 +152,15 @@ setjobctl(on)
 		int err;
 		if (ttyfd != -1)
 			close(ttyfd);
-		if ((ttyfd = open("/dev/tty", O_RDWR)) == -1)
-			goto out;
+		if ((ttyfd = open("/dev/tty", O_RDWR)) == -1) {
+			int i;
+			for (i = 0; i < 3; i++) {
+				if (isatty(i) && (ttyfd = dup(i)) != -1)
+					break;
+			}
+			if (i == 3)
+				goto out;
+		}
 #ifdef FIOCLEX
 		err = ioctl(ttyfd, FIOCLEX, 0);
 #elif FD_CLOEXEC
