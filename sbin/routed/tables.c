@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tables.c	5.17 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 /*
@@ -195,14 +195,14 @@ rtadd(dst, gate, metric, state)
 	 * from this host, discard the entry.  This should only
 	 * occur because of an incorrect entry in /etc/gateways.
 	 */
-	if (install && (rt->rt_state & (RTS_INTERNAL | RTS_EXTERNAL)) == 0 &&
-	    ioctl(s, SIOCADDRT, (char *)&rt->rt_rt) < 0) {
+	if ((rt->rt_state & (RTS_INTERNAL | RTS_EXTERNAL)) == 0 &&
+	    rtioctl(ADD, &rt->rt_rt) < 0) {
 		if (errno != EEXIST && gate->sa_family < af_max)
 			syslog(LOG_ERR,
 			"adding route to net/host %s through gateway %s: %m\n",
 			   (*afswitch[dst->sa_family].af_format)(dst),
 			   (*afswitch[gate->sa_family].af_format)(gate));
-		perror("SIOCADDRT");
+		perror("ADD ROUTE");
 		if (errno == ENETUNREACH) {
 			TRACE_ACTION("DELETE", rt);
 			remque(rt);
@@ -217,7 +217,7 @@ rtchange(rt, gate, metric)
 	short metric;
 {
 	int add = 0, delete = 0, newgateway = 0;
-	struct rtentry oldroute;
+	struct rtuentry oldroute;
 
 	FIXLEN(gate);
 	FIXLEN(&(rt->rt_router));
@@ -252,7 +252,7 @@ rtchange(rt, gate, metric)
 		if (metric > rt->rt_metric && delete)
 			syslog(LOG_ERR, "%s route to interface %s (timed out)",
 			    add? "changing" : "deleting",
-			    rt->rt_ifp->int_name);
+			    rt->rt_ifp ? rt->rt_ifp->int_name : "?");
 	}
 	if (add) {
 		rt->rt_router = *gate;
@@ -265,19 +265,20 @@ rtchange(rt, gate, metric)
 	if (newgateway)
 		TRACE_ACTION("CHANGE TO   ", rt);
 #ifndef RTM_ADD
-	if (add && install)
-		if (ioctl(s, SIOCADDRT, (char *)&rt->rt_rt) < 0)
-			perror("SIOCADDRT");
-	if (delete && install)
-		if (ioctl(s, SIOCDELRT, (char *)&oldroute) < 0)
-			perror("SIOCDELRT");
+	if (add && rtioctl(ADD, &rt->rt_rt) < 0)
+		perror("ADD ROUTE");
+	if (delete && rtioctl(DELETE, &oldroute) < 0)
+		perror("DELETE ROUTE");
 #else
-	if (delete && install)
-		if (ioctl(s, SIOCDELRT, (char *)&oldroute) < 0)
-			perror("SIOCDELRT");
-	if (add && install) {
-		if (ioctl(s, SIOCADDRT, (char *)&rt->rt_rt) < 0)
-			perror("SIOCADDRT");
+	if (delete && !add) {
+		if (rtioctl(DELETE, &oldroute) < 0)
+			perror("DELETE ROUTE");
+	} else if (!delete && add) {
+		if (rtioctl(ADD, &rt->rt_rt) < 0)
+			perror("ADD ROUTE");
+	} else if (delete && add) {
+		if (rtioctl(CHANGE, &rt->rt_rt) < 0)
+			perror("CHANGE ROUTE");
 	}
 #endif
 }
@@ -294,10 +295,9 @@ rtdelete(rt)
 		syslog(LOG_ERR,
 		    "deleting route to interface %s? (timed out?)",
 		    rt->rt_ifp->int_name);
-	    if (install &&
-		(rt->rt_state & (RTS_INTERNAL | RTS_EXTERNAL)) == 0 &&
-		ioctl(s, SIOCDELRT, (char *)&rt->rt_rt))
-		    perror("SIOCDELRT");
+	    if ((rt->rt_state & (RTS_INTERNAL | RTS_EXTERNAL)) == 0 &&
+					    rtioctl(DELETE, &rt->rt_rt) < 0)
+		    perror("rtdelete");
 	}
 	remque(rt);
 	free((char *)rt);
@@ -320,8 +320,8 @@ again:
 				continue;
 			TRACE_ACTION("DELETE", rt);
 			if ((rt->rt_state & (RTS_INTERNAL|RTS_EXTERNAL)) == 0 &&
-			    ioctl(s, SIOCDELRT, (char *)&rt->rt_rt))
-				perror("SIOCDELRT");
+			    rtioctl(DELETE, &rt->rt_rt) < 0)
+				perror("rtdeleteall");
 		}
 	}
 	if (doinghost) {
@@ -357,27 +357,72 @@ rtinit()
 		rh->rt_forw = rh->rt_back = (struct rt_entry *)rh;
 }
 
-
-/* ffrom /sys/i386/i386/machdep.c */
-/*
- * insert an element into a queue 
- */
-insque(element, head)
-	register struct rthash *element, *head;
+rtioctl(action, ort)
+	int action;
+	struct rtuentry *ort;
 {
-	element->rt_forw = head->rt_forw;
-	head->rt_forw = (struct rt_entry *)element;
-	element->rt_back = (struct rt_entry *)head;
-	((struct rthash *)(element->rt_forw))->rt_back=(struct rt_entry *)element;
-}
+#ifndef RTM_ADD
+	if (install == 0)
+		return (errno = 0);
+	ort->rtu_rtflags = ort->rtu_flags;
+	switch (action) {
 
-/*
- * remove an element from a queue
- */
-remque(element)
-	register struct rthash *element;
-{
-	((struct rthash *)(element->rt_forw))->rt_back = element->rt_back;
-	((struct rthash *)(element->rt_back))->rt_forw = element->rt_forw;
-	element->rt_back = (struct rt_entry *)0;
+	case ADD:
+		return (ioctl(s, SIOCADDRT, (char *)ort));
+
+	case DELETE:
+		return (ioctl(s, SIOCDELRT, (char *)ort));
+
+	default:
+		return (-1);
+	}
+#else /* RTM_ADD */
+	struct {
+		struct rt_msghdr w_rtm;
+		struct sockaddr_in w_dst;
+		struct sockaddr w_gate;
+		struct sockaddr_in w_netmask;
+	} w;
+#define rtm w.w_rtm
+
+	bzero((char *)&w, sizeof(w));
+	rtm.rtm_msglen = sizeof(w);
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = (action == ADD ? RTM_ADD :
+				(action == DELETE ? RTM_DELETE : RTM_CHANGE));
+#undef rt_dst
+	rtm.rtm_flags = ort->rtu_flags;
+	rtm.rtm_seq = ++seqno;
+	rtm.rtm_addrs = RTA_DST|RTA_GATEWAY;
+	bcopy((char *)&ort->rtu_dst, (char *)&w.w_dst, sizeof(w.w_dst));
+	bcopy((char *)&ort->rtu_router, (char *)&w.w_gate, sizeof(w.w_gate));
+	w.w_dst.sin_family = AF_INET;
+	w.w_dst.sin_len = sizeof(w.w_dst);
+	w.w_gate.sa_family = AF_INET;
+	w.w_gate.sa_len = sizeof(w.w_gate);
+	if (rtm.rtm_flags & RTF_HOST) {
+		rtm.rtm_msglen -= sizeof(w.w_netmask);
+	} else {
+		register char *cp;
+		int len;
+
+		rtm.rtm_addrs |= RTA_NETMASK;
+		w.w_netmask.sin_addr.s_addr =
+			inet_maskof(w.w_dst.sin_addr.s_addr);
+		for (cp = (char *)(1 + &w.w_netmask.sin_addr);
+				    --cp > (char *) &w.w_netmask; )
+			if (*cp)
+				break;
+		len = cp - (char *)&w.w_netmask;
+		if (len) {
+			len++;
+			w.w_netmask.sin_len = len;
+			len = 1 + ((len - 1) | (sizeof(long) - 1));
+		} else 
+			len = sizeof(long);
+		rtm.rtm_msglen -= (sizeof(w.w_netmask) - len);
+	}
+	errno = 0;
+	return (install ? write(r, (char *)&w, rtm.rtm_msglen) : (errno = 0));
+#endif  /* RTM_ADD */
 }

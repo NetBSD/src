@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)inet.c	5.8 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)inet.c	8.2 (Berkeley) 8/14/93";
 #endif /* not lint */
 
 /*
@@ -126,6 +126,35 @@ inet_lnaof(in)
 		if ((ifp->int_netmask & net) == ifp->int_net)
 			return (host &~ ifp->int_subnetmask);
 	return (host);
+}
+
+/*
+ * Return the netmask pertaining to an internet address.
+ */
+inet_maskof(inaddr)
+	u_long inaddr;
+{
+	register u_long i = ntohl(inaddr);
+	register u_long mask;
+	register struct interface *ifp;
+
+	if (i == 0) {
+		mask = 0;
+	} else if (IN_CLASSA(i)) {
+		mask = IN_CLASSA_NET;
+	} else if (IN_CLASSB(i)) {
+		mask = i & IN_CLASSB_NET;
+	} else
+		mask = i & IN_CLASSC_NET;
+
+	/*
+	 * Check whether network is a subnet;
+	 * if so, use the modified interpretation of `host'.
+	 */
+	for (ifp = ifnet; ifp; ifp = ifp->int_next)
+		if ((ifp->int_netmask & i) == ifp->int_net)
+			mask = ifp->int_subnetmask;
+	return (htonl(mask));
 }
 
 /*
