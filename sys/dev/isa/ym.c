@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.14.4.1 2000/08/07 00:22:56 augustss Exp $	*/
+/*	$NetBSD: ym.c,v 1.14.4.2 2000/09/04 02:44:46 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,8 +124,15 @@
 #define YM_VOL_OPL3		184
 #endif
 
-#ifndef YM_VOL_EQUAL
-#define YM_VOL_EQUAL		128
+/*
+ * The equalizer is ``flat'' if the 3D Enhance is turned off,
+ * but you can set other default values.
+ */
+#ifndef YM_ENHANCE_TREBLE
+#define YM_ENHANCE_TREBLE	0
+#endif
+#ifndef YM_ENHANCE_BASS
+#define YM_ENHANCE_BASS		0
 #endif
 
 #ifdef __i386__		/* XXX */
@@ -206,7 +213,9 @@ ym_attach(sc)
 	static struct ad1848_volume vol_master = {YM_VOL_MASTER, YM_VOL_MASTER};
 	static struct ad1848_volume vol_dac    = {YM_VOL_DAC,    YM_VOL_DAC};
 	static struct ad1848_volume vol_opl3   = {YM_VOL_OPL3,   YM_VOL_OPL3};
+#if YM_ENHANCE_TREBLE || YM_ENHANCE_BASS
 	mixer_ctrl_t mctl;
+#endif
 	struct audio_attach_args arg;
 
 	callout_init(&sc->sc_powerdown_ch);
@@ -238,14 +247,6 @@ ym_attach(sc)
 	/* Override ad1848 settings. */
 	ad1848_set_channel_gain(ac, AD1848_DAC_CHANNEL, &vol_dac);
 	ad1848_set_channel_gain(ac, AD1848_AUX2_CHANNEL, &vol_opl3);
-
-	/* Set tone control to middle position. */
-	mctl.un.value.num_channels = 1;
-	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_VOL_EQUAL;
-	mctl.dev = YM_MASTER_BASS;
-	ym_mixer_set_port(sc, &mctl);
-	mctl.dev = YM_MASTER_TREBLE;
-	ym_mixer_set_port(sc, &mctl);
 
 	/*
 	 * Mute all external sources.  If you change this, you must
@@ -313,6 +314,21 @@ ym_attach(sc)
 		ym_mute(sc, SA3_VOL_L, sc->master_mute);
 		ym_mute(sc, SA3_VOL_R, sc->master_mute);
 	}
+
+#if YM_ENHANCE_TREBLE || YM_ENHANCE_BASS
+	/* Set tone control to the default position. */
+	mctl.un.value.num_channels = 1;
+#if YM_ENHANCE_TREBLE
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_ENHANCE_TREBLE;
+	mctl.dev = YM_MASTER_TREBLE;
+	ym_mixer_set_port(sc, &mctl);
+#endif
+#if YM_ENHANCE_BASS
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_ENHANCE_BASS;
+	mctl.dev = YM_MASTER_BASS;
+	ym_mixer_set_port(sc, &mctl);
+#endif
+#endif
 }
 
 static __inline int
