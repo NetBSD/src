@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.15 2002/05/31 15:04:14 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.16 2002/05/31 20:10:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -347,8 +347,15 @@ cpu_identify(char *str, size_t len)
 
 	asm ("mfpvr %0" : "=r"(pvr));
 	vers = pvr >> 16;
-	maj = (pvr >>  8) & 0xff;
-	min = (pvr >>  0) & 0xff;
+	switch (vers) {
+	case MPC7410:
+		min = (pvr >> 0) & 0xff;
+		maj = min <= 4 ? 1 : 2;
+		break;
+	default:
+		maj = (pvr >>  8) & 0xff;
+		min = (pvr >>  0) & 0xff;
+	}
 
 	for (cp = models; cp->name != NULL; cp++) {
 		if (cp->version == vers)
