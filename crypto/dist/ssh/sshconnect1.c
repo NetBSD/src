@@ -517,6 +517,8 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
   
   problem = krb5_init_context(context);
   if (problem) {
+     debug("Kerberos 5: krb5_init_context failed: %s",
+       krb5_get_err_text(*context, problem));
      ret = 0;
      goto out;
   }
@@ -533,6 +535,8 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
   
   problem = krb5_cc_default(*context, &ccache);
   if (problem) { 
+    debug("Kerberos 5: krb5_cc_default failed: %s",
+      krb5_get_err_text(*context, problem));
     ret = 0; 
     goto out;
   }
@@ -542,6 +546,8 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
   problem = krb5_mk_req(*context, auth_context, AP_OPTS_MUTUAL_REQUIRED,
 			"host", remotehost, NULL, ccache, &ap);
   if (problem) { 
+     debug("Kerberos 5: krb5_mk_req failed: %s",
+       krb5_get_err_text(*context, problem));
      ret = 0;
      goto out;
   }
