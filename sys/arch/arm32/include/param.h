@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1998/04/29 23:11:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.13 1998/06/02 20:33:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -144,10 +144,11 @@
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
-/* Define various base addresses */
+/* Define various base addresses and sizes */
 
 #define KERNEL_BASE            0xf0000000
 #define KERNEL_VM_BASE         0xf1000000
+#define KERNEL_VM_SIZE         0x01ffffff
 #define PAGE_DIRS_BASE         0xf3000000
 #define ALT_PAGE_TBLS_BASE     0xf3c00000
 #define CURRENT_PAGEDIR_BASE   0xeffd4000
