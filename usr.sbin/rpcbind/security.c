@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.6 2001/01/16 02:43:37 cgd Exp $	*/
+/*	$NetBSD: security.c,v 1.7 2003/07/13 12:16:05 itojun Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -212,7 +212,7 @@ logit(int severity, struct sockaddr *addr, rpcproc_t procnum, rpcprog_t prognum,
 		/* Write syslog record. */
 
 		if (addr->sa_family == AF_LOCAL)
-			strcpy(fromname, "local");
+			strlcpy(fromname, "local", sizeof(fromname));
 		else
 			getnameinfo(addr, addr->sa_len, fromname,
 			    sizeof fromname, NULL, 0, NI_NUMERICHOST);

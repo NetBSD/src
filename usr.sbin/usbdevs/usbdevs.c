@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.20 2003/01/20 01:14:35 simonb Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.21 2003/07/13 12:08:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 
 	if (dev == 0) {
 		for (ncont = 0, i = 0; i < 10; i++) {
-			sprintf(buf, "%s%d", USBDEV, i);
+			snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
 				dumpone(buf, f, addr);
