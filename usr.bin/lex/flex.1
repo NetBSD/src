@@ -1,4 +1,4 @@
-.\" $NetBSD: flex.1,v 1.15 2003/07/09 14:47:33 wiz Exp $
+.\" $NetBSD: flex.1,v 1.16 2003/11/18 21:37:39 christos Exp $
 .\"
 .TH FLEX 1 "April 1995" "Version 2.5"
 .SH NAME
@@ -3394,7 +3394,7 @@ Also provided are member functions equivalent to
 .B yy_switch_to_buffer(),
 .B yy_create_buffer()
 (though the first argument is an
-.B istream*
+.B std::istream*
 object pointer and not a
 .B FILE*),
 .B yy_flush_buffer(),
@@ -3402,7 +3402,7 @@ object pointer and not a
 and
 .B yyrestart()
 (again, the first argument is a
-.B istream*
+.B std::istream*
 object pointer).
 .PP
 The second class defined in
@@ -3414,7 +3414,7 @@ which is derived from
 It defines the following additional member functions:
 .TP
 .B
-yyFlexLexer( istream* arg_yyin = 0, ostream* arg_yyout = 0 )
+yyFlexLexer( std::istream* arg_yyin = 0, std::ostream* arg_yyout = 0 )
 constructs a
 .B yyFlexLexer
 object using the given streams for input and output.
@@ -3455,9 +3455,9 @@ that calls
 if called).
 .TP
 .B
-virtual void switch_streams(istream* new_in = 0,
+virtual void switch_streams(std::istream* new_in = 0,
 .B
-ostream* new_out = 0)
+std::ostream* new_out = 0)
 reassigns
 .B yyin
 to
@@ -3472,7 +3472,7 @@ to
 is reassigned.
 .TP
 .B
-int yylex( istream* new_in, ostream* new_out = 0 )
+int yylex( std::istream* new_in, std::ostream* new_out = 0 )
 first switches the input streams via
 .B switch_streams( new_in, new_out )
 and then returns the value of
