@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.5 2001/03/09 12:13:15 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.6 2001/03/13 20:52:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -700,7 +700,12 @@ initarm(bi)
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #else
-	install_coproc_handler(0, db_trapper);
+	{
+		static struct undefined_handler uh;
+
+		uh.uh_handler = db_trapper;
+		install_coproc_handler_static(0, &uh);
+	}
 #endif
 
 	printf("kernsize=0x%x", kerneldatasize);
