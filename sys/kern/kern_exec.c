@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.135 2001/02/06 17:01:53 eeh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.136 2001/02/14 18:21:43 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -230,6 +230,14 @@ check_exec(struct proc *p, struct exec_package *epp)
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
 
 	/*
+	 * Set up default address space limits.  Can be overridden
+	 * by individual exec packages.
+	 * 
+	 * XXX probably shoul be all done in the exec pakages.
+	 */
+	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS;
+	/*
 	 * set up the vmcmds for creation of the process
 	 * address space
 	 */
@@ -453,7 +461,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(p, VM_MIN_ADDRESS, (vaddr_t)pack.ep_minsaddr);
+	uvmspace_exec(p, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -533,7 +541,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
 #ifdef DEBUG
-		printf("execve: ps_strings copyout failed\n");
+		printf("execve: ps_strings copyout %p->%p size %ld failed\n",
+		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo));
 #endif
 		goto exec_abort;
 	}
