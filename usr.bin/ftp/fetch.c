@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.12 1997/07/20 09:45:50 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.13 1997/07/20 12:49:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.12 1997/07/20 09:45:50 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.13 1997/07/20 12:49:26 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ url_get(origline, proxyenv)
 	int i, out, isftpurl;
 	u_int16_t port;
 	volatile int s;
-	size_t buflen, len;
+	size_t len;
 	char c, *cp, *ep, *portnum, *path, buf[4096];
 	const char *savefile;
 	char *line, *proxy, *host;
@@ -235,23 +235,24 @@ url_get(origline, proxyenv)
 		printf("Requesting %s\n", origline);
 	else
 		printf("Requesting %s (via %s)\n", origline, proxyenv);
-	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\n\n",
+	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\n\r\n",
 	    proxy ? "" : "/", path);
-	buflen = strlen(buf);
-	if (write(s, buf, buflen) < buflen) {
+	len = strlen(buf);
+	if (write(s, buf, len) < len) {
 		warn("Writing HTTP request");
 		goto cleanup_url_get;
 	}
 	memset(buf, 0, sizeof(buf));
-	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
+	for (cp = buf; cp < buf + sizeof(buf); ) {
 		if (read(s, cp, 1) != 1)
 			goto improper;
 		if (*cp == '\r')
 			continue;
 		if (*cp == '\n')
 			break;
+		cp++;
 	}
-	buf[buflen - 1] = '\0';		/* sanity */
+	buf[sizeof(buf) - 1] = '\0';		/* sanity */
 	cp = strchr(buf, ' ');
 	if (cp == NULL)
 		goto improper;
@@ -267,7 +268,7 @@ url_get(origline, proxyenv)
 	 */
 	memset(buf, 0, sizeof(buf));
 	c = '\0';
-	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
+	for (cp = buf; cp < buf + sizeof(buf); ) {
 		if (read(s, cp, 1) != 1)
 			goto improper;
 		if (*cp == '\r')
@@ -275,8 +276,9 @@ url_get(origline, proxyenv)
 		if (*cp == '\n' && c == '\n')
 			break;
 		c = *cp;
+		cp++;
 	}
-	buf[buflen - 1] = '\0';		/* sanity */
+	buf[sizeof(buf) - 1] = '\0';		/* sanity */
 
 	/*
 	 * Look for the "Content-length: " header.
@@ -287,17 +289,18 @@ url_get(origline, proxyenv)
 		    strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0)
 			break;
 	}
-	if (*cp == '\0')
-		goto improper;
-	cp += sizeof(CONTENTLEN) - 1;
-	ep = strchr(cp, '\n');
-	if (ep == NULL)
-		goto improper;
-	else
-		*ep = '\0';
-	filesize = strtol(cp, &ep, 10);
-	if (filesize < 1 || *ep != '\0')
-		goto improper;
+	if (*cp != '\0') {
+		cp += sizeof(CONTENTLEN) - 1;
+		ep = strchr(cp, '\n');
+		if (ep == NULL)
+			goto improper;
+		else
+			*ep = '\0';
+		filesize = strtol(cp, &ep, 10);
+		if (filesize < 1 || *ep != '\0')
+			goto improper;
+	} else
+		filesize = -1;
 
 	/* Open the output file. */
 	out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
