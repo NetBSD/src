@@ -1,7 +1,7 @@
-/*	$NetBSD: route6d.c,v 1.3 1999/07/04 21:59:19 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.4 1999/07/06 13:08:12 itojun Exp $	*/
 
 /*
- * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/route6d/Attic/route6d.c,v 1.1.2.12.2.5.2.8.2.10.2.30 1999/07/02 11:44:48 itojun Exp
+ * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/route6d/Attic/route6d.c,v 1.1.2.12.2.5.2.8.2.10.2.32 1999/07/06 09:23:36 itojun Exp
  */
 
 /*
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.3 1999/07/04 21:59:19 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.4 1999/07/06 13:08:12 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -367,17 +367,17 @@ int main(argc, argv)
 	ripbuf->rip6_res1[0] = 0;
 	ripbuf->rip6_res1[1] = 0;
 
-	if ((int)signal(SIGALRM, (void *)ripalarm) == -1)
+	if (signal(SIGALRM, (void *)ripalarm) == (void *)-1)
 		fatal("signal: SIGALRM");
-	if ((int)signal(SIGQUIT, (void *)rtdexit) == -1)
+	if (signal(SIGQUIT, (void *)rtdexit) == (void *)-1)
 		fatal("signal: SIGQUIT");
-	if ((int)signal(SIGTERM, (void *)rtdexit) == -1)
+	if (signal(SIGTERM, (void *)rtdexit) == (void *)-1)
 		fatal("signal: SIGTERM");
-	if ((int)signal(SIGUSR1, (void *)ifrtdump) == -1)
+	if (signal(SIGUSR1, (void *)ifrtdump) == (void *)-1)
 		fatal("signal: SIGUSR1");
-	if ((int)signal(SIGHUP, (void *)ifrtdump) == -1)
+	if (signal(SIGHUP, (void *)ifrtdump) == (void *)-1)
 		fatal("signal: SIGHUP");
-	if ((int)signal(SIGINT, (void *)ifrtdump) == -1)
+	if (signal(SIGINT, (void *)ifrtdump) == (void *)-1)
 		fatal("signal: SIGINT");
 	/*
 	 * To avoid rip packet congestion (not on a cable but in this
