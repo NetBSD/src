@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2003/10/20 00:12:10 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9 2003/10/20 00:12:10 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $"
 #include <machine/trap.h>
 #include <machine/pmap.h>
 
-#include <powerpc/bat.h>
+#include <powerpc/oea/bat.h>
 
 /*
  * Determine if the memory at va..(va+len) is valid.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2003/07/15 02:54:42 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/10/20 00:12:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/15 02:54:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/10/20 00:12:10 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/15 02:54:42 lukem Exp $");
 
 #include <net/netisr.h>
 
-#include <powerpc/bat.h>
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <machine/intr.h>
@@ -114,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/15 02:54:42 lukem Exp $");
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/pmppc.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <ddb/db_extern.h>
 

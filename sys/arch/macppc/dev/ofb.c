@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.36 2003/07/15 02:43:30 lukem Exp $	*/
+/*	$NetBSD: ofb.c,v 1.37 2003/10/20 00:12:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.36 2003/07/15 02:43:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.37 2003/10/20 00:12:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -53,10 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.36 2003/07/15 02:43:30 lukem Exp $");
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
-#include <machine/bat.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/grfioctl.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <macppc/dev/ofbvar.h>
 

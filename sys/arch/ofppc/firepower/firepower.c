@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.10 2003/07/15 02:46:30 lukem Exp $	*/
+/*	$NetBSD: firepower.c,v 1.11 2003/10/20 00:12:10 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.10 2003/07/15 02:46:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.11 2003/10/20 00:12:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.10 2003/07/15 02:46:30 lukem Exp $")
 #include <dev/ic/wdcvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
 
+#include <powerpc/oea/bat.h>
 #include <powerpc/pio.h>
 
 #include <ofppc/firepower/firepowerreg.h>
