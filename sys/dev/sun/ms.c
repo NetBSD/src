@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.16 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: ms.c,v 1.17 1999/08/02 01:50:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -231,8 +231,13 @@ ms_input(ms, c)
 		ms->ms_byteno = -1;
 		return;
 	}
-	if ((c & ~7) == 0x80)	/* if in 0x80..0x87 */
-		ms->ms_byteno = 0;
+	if ((c & ~0x0f) == 0x80) {	/* if in 0x80..0x8f */
+		if (c & 8) {
+			ms->ms_byteno = 1;	/* short form (3 bytes) */
+		} else {
+			ms->ms_byteno = 0;	/* long form (5 bytes) */
+		}
+	}
 
 	/*
 	 * Run the decode loop, adding to the current information.
@@ -245,31 +250,37 @@ ms_input(ms, c)
 		return;
 
 	case 0:
-		/* buttons */
-		ms->ms_byteno = 1;
+		/* buttons (long form) */
+		ms->ms_byteno = 2;
 		ms->ms_mb = (~c) & 0x7;
 		return;
 
 	case 1:
-		/* first delta-x */
-		ms->ms_byteno = 2;
-		ms->ms_dx += (char)c;
+		/* buttons (short form) */
+		ms->ms_byteno = 4;
+		ms->ms_mb = (~c) & 0x7;
 		return;
 
 	case 2:
-		/* first delta-y */
+		/* first delta-x */
 		ms->ms_byteno = 3;
-		ms->ms_dy += (char)c;
+		ms->ms_dx += (char)c;
 		return;
 
 	case 3:
-		/* second delta-x */
+		/* first delta-y */
 		ms->ms_byteno = 4;
-		ms->ms_dx += (char)c;
+		ms->ms_dy += (char)c;
 		return;
 
 	case 4:
 		/* second delta-x */
+		ms->ms_byteno = 5;
+		ms->ms_dx += (char)c;
+		return;
+
+	case 5:
+		/* second delta-y */
 		ms->ms_byteno = -1;	/* wait for button-byte again */
 		ms->ms_dy += (char)c;
 		break;
