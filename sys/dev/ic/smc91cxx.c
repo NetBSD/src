@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.26 2000/07/30 21:34:48 briggs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.27 2000/07/31 02:14:47 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -687,8 +687,9 @@ smc91cxx_start(ifp)
 	 */
 	for (top = m; m != NULL; m = m->m_next) {
 		/* Words... */
-		bus_space_write_multi_2(bst, bsh, DATA_REG_W,
-		    mtod(m, u_int16_t *), m->m_len >> 1);
+		if (m->m_len > 1)
+			bus_space_write_multi_2(bst, bsh, DATA_REG_W,
+			    mtod(m, u_int16_t *), m->m_len >> 1);
 
 		/* ...and the remaining byte, if any. */
 		if (m->m_len & 1)
@@ -1019,8 +1020,9 @@ smc91cxx_read(sc)
 	 */
 	eh = mtod(m, struct ether_header *);
 	data = mtod(m, u_int8_t *);
-	bus_space_read_multi_2(bst, bsh, DATA_REG_W, (u_int16_t *)data,
-	    packetlen >> 1);
+	if (packetlen > 1)
+		bus_space_read_multi_2(bst, bsh, DATA_REG_W, (u_int16_t *)data,
+		    packetlen >> 1);
 	if (packetlen & 1) {
 		data += packetlen & ~1;
 		*data = bus_space_read_1(bst, bsh, DATA_REG_B);
