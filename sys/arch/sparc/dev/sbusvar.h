@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.5 1998/03/21 20:10:07 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.6 1998/03/21 22:03:33 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,12 +145,8 @@ int	sbus_setup_attach_args __P((
 		int,			/*node*/
 		struct bootpath *,
 		struct sbus_attach_args *));
-int	sbus_bus_map __P((
-		bus_space_tag_t,
-		int,			/*slot*/
-		int,			/*offset*/
-		int,			/*size*/
-		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
-		bus_space_handle_t *));
+
+#define sbus_bus_map(t, bt, a, s, f, v, hp) \
+	bus_space_map2(t, bt, a, s, f, v, hp)
+
 #endif /* _SBUS_VAR_H */
