@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.2 1995/03/06 11:38:33 mycroft Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.3 1995/04/29 05:42:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -42,6 +42,10 @@ static char rcsid[] =
 #include <pcap.h>
 #include <pcap-namedb.h>
 #include <stdio.h>
+#ifdef __NetBSD__
+#include <stdlib.h>
+#include <string.h>
+#endif
 
 #include "gencode.h"
 
