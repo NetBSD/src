@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.11 2002/10/04 03:40:29 soren Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.11.6.1 2004/08/03 10:48:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11 2002/10/04 03:40:29 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11.6.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,14 +110,14 @@ pckbc_isa_match(parent, match, aux)
 		t.t_ioh_c = ioh_c;
 
 		/* flush KBC */
-		(void) pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
+		(void) pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
 
 		/* KBC selftest */
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0) {
 			ok = 0;
 			goto out;
 		}
-		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
+		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
 		if (res != 0x55) {
 #ifdef DEBUG
 			printf("kbc selftest: %x\n", res);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.79 2003/06/23 13:34:28 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.79.2.1 2004/08/03 10:41:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -58,6 +58,9 @@
  *	- rework range flush
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.79.2.1 2004/08/03 10:41:05 skrll Exp $");
+
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
 
@@ -74,7 +77,21 @@
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/cpuvar.h>
 
-struct cachestats cachestats;
+struct evcnt vcache_flush_pg =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","pg");
+EVCNT_ATTACH_STATIC(vcache_flush_pg);
+struct evcnt vcache_flush_seg =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","seg");
+EVCNT_ATTACH_STATIC(vcache_flush_seg);
+struct evcnt vcache_flush_reg =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","reg");
+EVCNT_ATTACH_STATIC(vcache_flush_reg);
+struct evcnt vcache_flush_ctx =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","ctx");
+EVCNT_ATTACH_STATIC(vcache_flush_ctx);
+struct evcnt vcache_flush_range =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","rng");
+EVCNT_ATTACH_STATIC(vcache_flush_range);
 
 int cache_alias_dist;		/* Cache anti-aliasing constants */
 int cache_alias_bits;
@@ -230,11 +247,7 @@ hypersparc_cache_enable()
 	 * Enable instruction cache and, on single-processor machines,
 	 * disable `Unimplemented Flush Traps'.
 	 */
-#if defined(MULTIPROCESSOR)
-	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
-#else
-	v = HYPERSPARC_ICCR_ICE | HYPERSPARC_ICCR_FTD;
-#endif
+	v = HYPERSPARC_ICCR_ICE | (ncpu <= 1 ? HYPERSPARC_ICCR_FTD : 0);
 	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
 }
 
@@ -251,8 +264,6 @@ swift_cache_enable()
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
-	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
-	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 
 	/* Now reset cache tag memory if cache not yet enabled */
 	ls = CACHEINFO.ic_linesize;
@@ -267,6 +278,8 @@ swift_cache_enable()
 		for (i = 0; i < ts; i += ls)
 			sta(i, ASI_DCACHETAG, 0);
 
+	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 }
 
@@ -340,15 +353,6 @@ turbosparc_cache_enable()
 #endif /* SUN4M || SUN4D */
 
 
-/* XXX - should inline */
-void
-cache_flush(base, len)
-	caddr_t base;
-	u_int len;
-{
-	cpuinfo.cache_flush(base, len, getcontext());
-}
-
 /*
  * Note: the sun4 & sun4c the cache flush functions ignore the `ctx'
  * parameter. This can be done since the pmap operations that need
@@ -371,7 +375,7 @@ sun4_vcache_flush_context(ctx)
 	char *p;
 	int i, ls;
 
-	cachestats.cs_ncxflush++;
+	vcache_flush_ctx.ev_count++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	if (CACHEINFO.c_hwflush) {
 		ls = PAGE_SIZE;
@@ -404,7 +408,7 @@ sun4_vcache_flush_region(vreg, ctx)
 	int i, ls;
 	char *p;
 
-	cachestats.cs_nrgflush++;
+	vcache_flush_reg.ev_count++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -429,7 +433,7 @@ sun4_vcache_flush_segment(vreg, vseg, ctx)
 	int i, ls;
 	char *p;
 
-	cachestats.cs_nsgflush++;
+	vcache_flush_seg.ev_count++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	if (CACHEINFO.c_hwflush) {
 		ls = PAGE_SIZE;
@@ -462,7 +466,7 @@ sun4_vcache_flush_page(va, ctx)
 		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
-	cachestats.cs_npgflush++;
+	vcache_flush_pg.ev_count++;
 	p = (char *)va;
 	ls = CACHEINFO.c_linesize;
 	i = PAGE_SIZE >> CACHEINFO.c_l2linesize;
@@ -488,7 +492,7 @@ sun4_vcache_flush_page_hw(va, ctx)
 		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
-	cachestats.cs_npgflush++;
+	vcache_flush_pg.ev_count++;
 	p = (char *)va;
 	sta(p, ASI_HWFLUSHPG, 0);
 }
@@ -504,10 +508,9 @@ sun4_vcache_flush_page_hw(va, ctx)
 #define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
 
 void
-sun4_cache_flush(base, len, ctx)
+sun4_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
 	int i, ls, baseoff;
 	char *p;
@@ -536,12 +539,9 @@ sun4_cache_flush(base, len, ctx)
 	baseoff = (int)base & PGOFSET;
 	i = (baseoff + len + PGOFSET) >> PGSHIFT;
 
-	cachestats.cs_nraflush++;
-#ifdef notyet
-	cachestats.cs_ra[min(i, MAXCACHERANGE)]++;
-#endif
+	vcache_flush_range.ev_count++;
 
-	if (i < CACHE_FLUSH_MAGIC) {
+	if (__predict_true(i < CACHE_FLUSH_MAGIC)) {
 		/* cache_flush_page, for i pages */
 		p = (char *)((int)base & ~baseoff);
 		if (CACHEINFO.c_hwflush) {
@@ -558,19 +558,20 @@ sun4_cache_flush(base, len, ctx)
 
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
-	if (i == 1)
-		sun4_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), ctx);
-	else {
-		if (HASSUN4_MMU3L) {
-			baseoff = (u_int)base & RGOFSET;
-			i = (baseoff + len + RGOFSET) >> RGSHIFT;
-			if (i == 1)
-				sun4_vcache_flush_region(VA_VREG(base), ctx);
-			else
-				sun4_vcache_flush_context(ctx);
-		} else
-			sun4_vcache_flush_context(ctx);
+	if (__predict_true(i == 1)) {
+		sun4_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), 0);
+		return;
 	}
+
+	if (HASSUN4_MMU3L) {
+		baseoff = (u_int)base & RGOFSET;
+		i = (baseoff + len + RGOFSET) >> RGSHIFT;
+		if (i == 1)
+			sun4_vcache_flush_region(VA_VREG(base), 0);
+		else
+			sun4_vcache_flush_context(0);
+	} else
+		sun4_vcache_flush_context(0);
 }
 
 
@@ -590,7 +591,7 @@ srmmu_vcache_flush_context(ctx)
 	int i, ls, octx;
 	char *p;
 
-	cachestats.cs_ncxflush++;
+	vcache_flush_ctx.ev_count++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -618,7 +619,7 @@ srmmu_vcache_flush_region(vreg, ctx)
 	int i, ls, octx;
 	char *p;
 
-	cachestats.cs_nrgflush++;
+	vcache_flush_reg.ev_count++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -648,7 +649,7 @@ srmmu_vcache_flush_segment(vreg, vseg, ctx)
 	int i, ls, octx;
 	char *p;
 
-	cachestats.cs_nsgflush++;
+	vcache_flush_seg.ev_count++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -679,14 +680,20 @@ srmmu_vcache_flush_page(va, ctx)
 		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
-	cachestats.cs_npgflush++;
+	vcache_flush_pg.ev_count++;
 	p = (char *)va;
-	ls = CACHEINFO.c_linesize;
-	i = PAGE_SIZE >> CACHEINFO.c_l2linesize;
+
+	/*
+	 * XXX - if called early during bootstrap, we don't have the cache
+	 *	 info yet. Make up a cache line size (double-word aligned)
+	 */
+	if ((ls = CACHEINFO.c_linesize) == 0)
+		ls = 8;
+	i = PAGE_SIZE;
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
-	for (; --i >= 0; p += ls)
+	for (; i > 0; p += ls, i -= ls)
 		sta(p, ASI_IDCACHELFP, 0);
 #if defined(MULTIPROCESSOR)
 	/*
@@ -695,7 +702,7 @@ srmmu_vcache_flush_page(va, ctx)
 	 * functions will not always cross flush it in the MP case (because
 	 * may not be active on this CPU) we flush the TLB entry now.
 	 */
-	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS)
+	/*if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) -- more work than it's worth */
 		sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
 
 #endif
@@ -712,56 +719,68 @@ srmmu_cache_flush_all()
 	srmmu_vcache_flush_context(0);
 }
 
+void
+srmmu_vcache_flush_range(int va, int len, int ctx)
+{
+	int i, ls, offset;
+	char *p;
+	int octx;
+
+	/*
+	 * XXX - if called early during bootstrap, we don't have the cache
+	 *	 info yet. Make up a cache line size (double-word aligned)
+	 */
+	if ((ls = CACHEINFO.c_linesize) == 0)
+		ls = 8;
+
+	vcache_flush_range.ev_count++;
+
+	/* Compute # of cache lines covered by this range */
+	offset = va & (ls - 1);
+	i = len + offset;
+	p = (char *)(va & ~(ls - 1));
+
+	octx = getcontext4m();
+	trapoff();
+	setcontext4m(ctx);
+	for (; i > 0; p += ls, i -= ls)
+		sta(p, ASI_IDCACHELFP, 0);
+
+#if defined(MULTIPROCESSOR)
+	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+		/*
+		 * See hypersparc comment in srmmu_vcache_flush_page().
+		 */
+		offset = va & PGOFSET;
+		i = (offset + len + PGOFSET) >> PGSHIFT;
+
+		va = va & ~PGOFSET;
+		for (; --i >= 0; va += PAGE_SIZE)
+			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+	}
+#endif
+	setcontext4m(octx);
+	trapon();
+	return;
+}
+
 /*
  * Flush a range of virtual addresses (in the current context).
- * The first byte is at (base&~PGOFSET) and the last one is just
- * before byte (base+len).
  *
  * We choose the best of (context,segment,page) here.
  */
 
-#define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
-
 void
-srmmu_cache_flush(base, len, ctx)
+srmmu_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
-	int i, ls, baseoff;
-	char *p;
+	int ctx = getcontext4m();
+	int i, baseoff;
 
-	if (len < PAGE_SIZE) {
-		int octx;
-		/* less than a page, flush just the covered cache lines */
-		ls = CACHEINFO.c_linesize;
-		baseoff = (int)base & (ls - 1);
-		i = (baseoff + len + ls - 1) >> CACHEINFO.c_l2linesize;
-		p = (char *)((int)base & -ls);
-		octx = getcontext4m();
-		trapoff();
-		setcontext4m(ctx);
-		for (; --i >= 0; p += ls)
-			sta(p, ASI_IDCACHELFP, 0);
-#if defined(MULTIPROCESSOR)
-		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
-			/*
-			 * See hypersparc comment in srmmu_vcache_flush_page().
-			 * Just flush both possibly touched pages
-			 * fromt the TLB.
-			 */
-			int va = (int)base & ~0xfff;
-			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
-			sta((va+4096) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
-		}
-#endif
-		setcontext4m(octx);
-		trapon();
-		return;
-	}
 
 	/*
-	 * Figure out how much must be flushed.
+	 * Figure out the most efficient way to flush.
 	 *
 	 * If we need to do CACHE_FLUSH_MAGIC pages,  we can do a segment
 	 * in the same number of loop iterations.  We can also do the whole
@@ -776,62 +795,52 @@ srmmu_cache_flush(base, len, ctx)
 	 * segments), but I did not want to debug that now and it is
 	 * not clear it would help much.
 	 *
-	 * (XXX the magic number 16 is now wrong, must review policy)
 	 */
-	baseoff = (int)base & PGOFSET;
-	i = (baseoff + len + PGOFSET) >> PGSHIFT;
 
-	cachestats.cs_nraflush++;
-#ifdef notyet
-	cachestats.cs_ra[min(i, MAXCACHERANGE)]++;
-#endif
-
-	if (i < CACHE_FLUSH_MAGIC) {
-		int octx;
-		/* cache_flush_page, for i pages */
-		p = (char *)((int)base & ~baseoff);
-		ls = CACHEINFO.c_linesize;
-		i <<= PGSHIFT - CACHEINFO.c_l2linesize;
-		octx = getcontext4m();
-		trapoff();
-		setcontext4m(ctx);
-		for (; --i >= 0; p += ls)
-			sta(p, ASI_IDCACHELFP, 0);
+	if (__predict_true(len < CACHEINFO.c_totalsize)) {
 #if defined(MULTIPROCESSOR)
-		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
-			/* Just flush the segment(s) from the TLB */
-			/* XXX - assumes CACHE_FLUSH_MAGIC <= NBPSG */
-			int va = (int)base & ~SGOFSET;
-			sta(va | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
-			sta((va+NBPSG) | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
-		}
+		FXCALL3(cpuinfo.sp_vcache_flush_range,
+			cpuinfo.ft_vcache_flush_range,
+			(int)base, len, ctx, CPUSET_ALL);
+#else
+		cpuinfo.sp_vcache_flush_range((int)base, len, ctx);
 #endif
-		setcontext4m(octx);
-		trapon();
 		return;
 	}
+
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
-	if (i == 1)
+	if (__predict_true(i == 1)) {
+#if defined(MULTIPROCESSOR)
+		FXCALL3(cpuinfo.sp_vcache_flush_segment,
+			cpuinfo.ft_vcache_flush_segment,
+			VA_VREG(base), VA_VSEG(base), ctx, CPUSET_ALL);
+#else
 		srmmu_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), ctx);
-	else {
-		baseoff = (u_int)base & RGOFSET;
-		i = (baseoff + len + RGOFSET) >> RGSHIFT;
-		p = (char *)VA_VREG(base);
-		while (i--) {
-			srmmu_vcache_flush_region((int)p, ctx);
-			p += NBPRG;
-		}
+#endif
+		return;
+	}
+
+	baseoff = (u_int)base & RGOFSET;
+	i = (baseoff + len + RGOFSET) >> RGSHIFT;
+	while (i--) {
+#if defined(MULTIPROCESSOR)
+		FXCALL2(cpuinfo.sp_vcache_flush_region,
+		       cpuinfo.ft_vcache_flush_region,
+		       VA_VREG(base), ctx, CPUSET_ALL);
+#else
+		srmmu_vcache_flush_region(VA_VREG(base), ctx);
+#endif
+		base += NBPRG;
 	}
 }
 
 int ms1_cacheflush_magic = 0;
 #define MS1_CACHEFLUSH_MAGIC	ms1_cacheflush_magic
 void
-ms1_cache_flush(base, len, ctx)
+ms1_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
 	/*
 	 * Although physically tagged, we still need to flush the
@@ -925,10 +934,9 @@ cypress_cache_flush_all()
 
 
 void
-viking_cache_flush(base, len, ctx)
+viking_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
 }
 
@@ -981,10 +989,10 @@ viking_pcache_flush_page(pa, invalidate_only)
 		 * V:  line valid bit
 		 */
 
-#define VIKING_DCACHETAG_S	0x0000010000000000UL	/* line valid bit */
-#define VIKING_DCACHETAG_D	0x0001000000000000UL	/* line dirty bit */
-#define VIKING_DCACHETAG_V	0x0100000000000000UL	/* line shared bit */
-#define VIKING_DCACHETAG_PAMASK	0x0000000000ffffffUL	/* PA tag field */
+#define VIKING_DCACHETAG_S	0x0000010000000000ULL	/* line valid bit */
+#define VIKING_DCACHETAG_D	0x0001000000000000ULL	/* line dirty bit */
+#define VIKING_DCACHETAG_V	0x0100000000000000ULL	/* line shared bit */
+#define VIKING_DCACHETAG_PAMASK	0x0000000000ffffffULL	/* PA tag field */
 
 		for (set = 0; set < 128; set++) {
 			/* Set set number and access type */
@@ -1050,7 +1058,8 @@ smp_vcache_flush_page(va, ctx)
 	int va;
 	int ctx;
 {
-	XCALL2(cpuinfo.sp_vcache_flush_page, va, ctx, CPUSET_ALL);
+	FXCALL2(cpuinfo.sp_vcache_flush_page, cpuinfo.ft_vcache_flush_page,
+		va, ctx, CPUSET_ALL);
 }
 
 void
@@ -1058,7 +1067,8 @@ smp_vcache_flush_segment(vr, vs, ctx)
 	int vr, vs;
 	int ctx;
 {
-	XCALL3(cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, CPUSET_ALL);
+	FXCALL3(cpuinfo.sp_vcache_flush_segment, cpuinfo.ft_vcache_flush_segment,
+		vr, vs, ctx, CPUSET_ALL);
 }
 
 void
@@ -1066,22 +1076,15 @@ smp_vcache_flush_region(vr, ctx)
 	int vr;
 	int ctx;
 {
-	XCALL2(cpuinfo.sp_vcache_flush_region, vr, ctx, CPUSET_ALL);
+	FXCALL2(cpuinfo.sp_vcache_flush_region, cpuinfo.ft_vcache_flush_region,
+		vr, ctx, CPUSET_ALL);
 }
 
 void
 smp_vcache_flush_context(ctx)
 	int ctx;
 {
-	XCALL1(cpuinfo.sp_vcache_flush_context, ctx, CPUSET_ALL);
-}
-
-void
-smp_cache_flush(va, size, ctx)
-	caddr_t va;
-	u_int size;
-	int ctx;
-{
-	XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
+	FXCALL1(cpuinfo.sp_vcache_flush_context, cpuinfo.ft_vcache_flush_context,
+		ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */

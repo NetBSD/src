@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.17 2003/03/12 13:36:22 minoura Exp $	*/
+/*	$NetBSD: yds.c,v 1.17.2.1 2004/08/03 10:49:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17 2003/03/12 13:36:22 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17.2.1 2004/08/03 10:49:12 skrll Exp $");
 
 #include "mpu.h"
 
@@ -708,7 +708,7 @@ yds_attach(parent, self, aux)
 	int revision;
 	int ac97_id2;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	revision = PCI_REVISION(pa->pa_class);
 	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
 
@@ -788,7 +788,7 @@ yds_attach(parent, self, aux)
 		delay(1);
 	}
 	if (to == AC97_TIMEOUT) {
-		printf("%s: no AC97 avaliable\n", sc->sc_dev.dv_xname);
+		printf("%s: no AC97 available\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1209,8 +1209,6 @@ yds_close(addr)
 {
 	struct yds_softc *sc = addr;
 
-	yds_halt_output(sc);
-	yds_halt_input(sc);
 	yds_halt(sc);
 }
 

@@ -1,0 +1,11 @@
+#	$NetBSD: majors.xen,v 1.3.2.2 2004/08/03 10:43:10 skrll Exp $
+#
+# Device majors for Xen
+#
+
+device-major	xbd		char 142 block 142	xbd
+device-major	xencons		char 143		xencons
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

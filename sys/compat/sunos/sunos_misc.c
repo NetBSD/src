@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.124.2.1 2003/07/02 15:25:53 darrenr Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.124.2.2 2004/08/03 10:44:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -54,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.124.2.1 2003/07/02 15:25:53 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.124.2.2 2004/08/03 10:44:24 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -109,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.124.2.1 2003/07/02 15:25:53 darrenr
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 
-static int sunstatfs __P((struct statfs *, caddr_t));
+static int sunstatfs __P((struct statvfs *, caddr_t));
 
 int
 sunos_sys_stime(l, v, retval)
@@ -688,7 +684,7 @@ sunos_sys_setsockopt(l, v, retval)
 #define		SUNOS_IP_MULTICAST_LOOP		4
 #define		SUNOS_IP_ADD_MEMBERSHIP		5
 #define		SUNOS_IP_DROP_MEMBERSHIP	6
-		static int ipoptxlat[] = {
+		static const int ipoptxlat[] = {
 			IP_MULTICAST_IF,
 			IP_MULTICAST_TTL,
 			IP_MULTICAST_LOOP,
@@ -981,7 +977,7 @@ sunos_sys_vhangup(l, v, retval)
 
 static int
 sunstatfs(sp, buf)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 {
 	struct sunos_statfs ssfs;
@@ -994,7 +990,7 @@ sunstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
+	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }	
 
@@ -1007,7 +1003,7 @@ sunos_sys_statfs(l, v, retval)
 	struct sunos_sys_statfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 
@@ -1020,9 +1016,9 @@ sunos_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
 }
 
@@ -1036,7 +1032,7 @@ sunos_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -1044,9 +1040,9 @@ sunos_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (caddr_t)SCARG(uap, buf));
  out:
 	FILE_UNUSE(fp, p);
@@ -1182,13 +1178,13 @@ sunos_sys_setrlimit(l, v, retval)
 #define PT_SETFPREGS -1
 #endif
 
-static int sreq2breq[] = {
+static const int sreq2breq[] = {
 	PT_TRACE_ME,    PT_READ_I,      PT_READ_D,      -1,
 	PT_WRITE_I,     PT_WRITE_D,     -1,             PT_CONTINUE,
 	PT_KILL,        -1,             PT_ATTACH,      PT_DETACH,
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
-static int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
+static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 
 int
 sunos_sys_ptrace(l, v, retval)

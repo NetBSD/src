@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,10 +38,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -80,13 +83,15 @@ static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
 extern char idt_allocmap[];
 
 struct pic local_pic = {
-	{0, {NULL}, NULL, NULL, NULL, 0, "lapic", NULL, 0},
-	PIC_LAPIC,
-	__SIMPLELOCK_UNLOCKED,
-	lapic_hwmask,
-	lapic_hwunmask,
-	lapic_setup,
-	lapic_setup,
+	.pic_dev = {
+		.dv_xname = "lapic",
+	},
+	.pic_type = PIC_LAPIC,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
+	.pic_hwmask = lapic_hwmask,
+	.pic_hwunmask = lapic_hwunmask,
+	.pic_addroute =lapic_setup,
+	.pic_delroute = lapic_setup,
 };
 
 static void
@@ -230,7 +235,7 @@ u_int32_t lapic_delaytab[26];
 void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	static int microset_iter; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 
@@ -258,9 +263,22 @@ lapic_clockintr(void *arg, struct intrframe frame)
 	hardclock((struct clockframe *)&frame);
 }
 
+#ifdef NTP
+extern int fixtick;
+#endif /* NTP */
+
 void
 lapic_initclocks()
 {
+
+#ifdef NTP
+	/*
+	 * we'll actually get (lapic_per_second/lapic_tval) interrupts/sec.
+	 */
+	fixtick = 1000000 -
+	    ((int64_t)tick * lapic_per_second + lapic_tval / 2) / lapic_tval;
+#endif /* NTP */
+
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
 	 *
@@ -346,7 +364,7 @@ lapic_calibrate_timer(ci)
 	if (lapic_per_second != 0) {
 		/*
 		 * reprogram the apic timer to run in periodic mode.
-		 * XXX need to program timer on other cpu's, too.
+		 * XXX need to program timer on other CPUs, too.
 		 */
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
@@ -420,11 +438,29 @@ void lapic_delay(usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
+static __inline void i82489_icr_wait(void);
+
+static __inline void
+i82489_icr_wait()
+{
+#ifdef DIAGNOSTIC
+	unsigned j = 100000;
+#endif /* DIAGNOSTIC */
+
+	while ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+		x86_pause();
+#ifdef DIAGNOSTIC
+		j--;
+		if (j == 0)
+			panic("i82489_icr_wait: busy");
+#endif /* DIAGNOSTIC */
+	}
+}
+
 int
 x86_ipi_init(target)
 	int target;
 {
-	unsigned j;
 
 	if ((target&LAPIC_DEST_MASK)==0) {
 		i82489_writereg(LAPIC_ICRHI, target<<LAPIC_ID_SHIFT);
@@ -433,18 +469,14 @@ x86_ipi_init(target)
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	    LAPIC_DLMODE_INIT | LAPIC_LVL_ASSERT );
 
-	for (j=100000; j > 0; j--)
-		if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) == 0)
-			break;
+	i82489_icr_wait();
 
 	delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 
-	for (j=100000; j > 0; j--)
-		if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) == 0)
-			break;
+	i82489_icr_wait();
 
 	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY)?EBUSY:0;
 }
@@ -453,13 +485,9 @@ int
 x86_ipi(vec,target,dl)
 	int vec,target,dl;
 {
-	unsigned j;
 	int result;
 
-	for (j=100000;
-	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
-	     j--)
-		;
+	i82489_icr_wait();
 
 	if ((target & LAPIC_DEST_MASK) == 0)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
@@ -467,10 +495,7 @@ x86_ipi(vec,target,dl)
 	i82489_writereg(LAPIC_ICRLO,
 	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
 
-	for (j=100000;
-	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
-	     j--)
-		;
+	i82489_icr_wait();
 
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.3 2002/10/23 09:13:28 jdolecek Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.3.6.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@
  * Device Driver for an MVME68K/MVME88K board's parallel printer port
  * This driver attaches above the board-specific back-end.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.3.6.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

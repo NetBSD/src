@@ -1,0 +1,17 @@
+# $NetBSD: majors,v 1.10.2.2 2004/08/03 10:44:45 skrll Exp $
+#
+# Device majors for Machine-Independent drivers.
+#
+# Majors 0-143 are reserved for machine-dependent drivers and
+# for traditional machine-specific MI driver major mapping.
+#
+# Majors 144-159 are reserved for local/vendor use.
+#
+# Majors 160-255 are used for the MI drivers.
+
+device-major	crypto		char 160		crypto
+device-major	pf		char 161		pf
+device-major	vinum		char 162 block 162	vinum
+device-major	fss		char 163 block 163	fss
+device-major	pps		char 164		pps
+device-major	ptm		char 165		pty

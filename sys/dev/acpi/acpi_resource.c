@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.6 2003/03/05 23:00:56 christos Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.6.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -48,18 +48,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *              
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE 
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.         
+ * SUCH DAMAGE.
  */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6 2003/03/05 23:00:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,211 +80,232 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6 2003/03/05 23:00:56 christos E
 #define	_COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME("RESOURCE")
 
+static ACPI_STATUS acpi_resource_parse_callback(ACPI_RESOURCE *, void *);
+
+struct resource_parse_callback_arg {
+	const struct acpi_resource_parse_ops *ops;
+	struct device *dev;
+	void *context;
+};
+
+static ACPI_STATUS
+acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
+{
+	struct resource_parse_callback_arg *arg = context;
+	const struct acpi_resource_parse_ops *ops;
+	int i;
+
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
+
+	ops = arg->ops;
+
+	switch (res->Id) {
+	case ACPI_RSTYPE_FIXED_IO:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "FixedIo 0x%x/%d\n",
+				     res->Data.FixedIo.BaseAddress,
+				     res->Data.FixedIo.RangeLength));
+		if (ops->ioport)
+			(*ops->ioport)(arg->dev, arg->context,
+			    res->Data.FixedIo.BaseAddress,
+			    res->Data.FixedIo.RangeLength);
+		break;
+
+	case ACPI_RSTYPE_IO:
+		if (res->Data.Io.MinBaseAddress ==
+			    res->Data.Io.MaxBaseAddress) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "Io 0x%x/%d\n",
+					     res->Data.Io.MinBaseAddress,
+					     res->Data.Io.RangeLength));
+			if (ops->ioport)
+				(*ops->ioport)(arg->dev, arg->context,
+				    res->Data.Io.MinBaseAddress,
+				    res->Data.Io.RangeLength);
+		} else {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "Io 0x%x-0x%x/%d\n",
+					     res->Data.Io.MinBaseAddress,
+					     res->Data.Io.MaxBaseAddress,
+					     res->Data.Io.RangeLength));
+			if (ops->ioport)
+				(*ops->iorange)(arg->dev, arg->context,
+				    res->Data.Io.MinBaseAddress,
+				    res->Data.Io.MaxBaseAddress,
+				    res->Data.Io.RangeLength,
+				    res->Data.Io.Alignment);
+		}
+		break;
+
+	case ACPI_RSTYPE_FIXED_MEM32:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "FixedMemory32 0x%x/%d\n",
+				     res->Data.FixedMemory32.RangeBaseAddress,
+				     res->Data.FixedMemory32.RangeLength));
+		if (ops->memory)
+			(*ops->memory)(arg->dev, arg->context,
+			    res->Data.FixedMemory32.RangeBaseAddress,
+			    res->Data.FixedMemory32.RangeLength);
+		break;
+
+	case ACPI_RSTYPE_MEM32:
+		if (res->Data.Memory32.MinBaseAddress ==
+		    res->Data.Memory32.MaxBaseAddress) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "Memory32 0x%x/%d\n",
+					     res->Data.Memory32.MinBaseAddress,
+					     res->Data.Memory32.RangeLength));
+			if (ops->memory)
+				(*ops->memory)(arg->dev, arg->context,
+				    res->Data.Memory32.MinBaseAddress,
+				    res->Data.Memory32.RangeLength);
+		} else {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "Memory32 0x%x-0x%x/%d\n",
+					     res->Data.Memory32.MinBaseAddress,
+					     res->Data.Memory32.MaxBaseAddress,
+					     res->Data.Memory32.RangeLength));
+			if (ops->memrange)
+				(*ops->memrange)(arg->dev, arg->context,
+				    res->Data.Memory32.MinBaseAddress,
+				    res->Data.Memory32.MaxBaseAddress,
+				    res->Data.Memory32.RangeLength,
+				    res->Data.Memory32.Alignment);
+		}
+		break;
+
+	case ACPI_RSTYPE_MEM24:
+		if (res->Data.Memory24.MinBaseAddress ==
+		    res->Data.Memory24.MaxBaseAddress) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "Memory24 0x%x/%d\n",
+					     res->Data.Memory24.MinBaseAddress,
+					     res->Data.Memory24.RangeLength));
+			if (ops->memory)
+				(*ops->memory)(arg->dev, arg->context,
+				    res->Data.Memory24.MinBaseAddress,
+				    res->Data.Memory24.RangeLength);
+		} else {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "Memory24 0x%x-0x%x/%d\n",
+					     res->Data.Memory24.MinBaseAddress,
+					     res->Data.Memory24.MaxBaseAddress,
+					     res->Data.Memory24.RangeLength));
+			if (ops->memrange)
+				(*ops->memrange)(arg->dev, arg->context,
+				    res->Data.Memory24.MinBaseAddress,
+				    res->Data.Memory24.MaxBaseAddress,
+				    res->Data.Memory24.RangeLength,
+				    res->Data.Memory24.Alignment);
+		}
+		break;
+
+	case ACPI_RSTYPE_IRQ:
+		for (i = 0; i < res->Data.Irq.NumberOfInterrupts; i++) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "IRQ %d\n",
+					     res->Data.Irq.Interrupts[i]));
+			if (ops->irq)
+				(*ops->irq)(arg->dev, arg->context,
+				    res->Data.Irq.Interrupts[i],
+				    res->Data.Irq.EdgeLevel);
+		}
+		break;
+
+	case ACPI_RSTYPE_DMA:
+		for (i = 0; i < res->Data.Dma.NumberOfChannels; i++) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+					     "DRQ %d\n",
+					     res->Data.Dma.Channels[i]));
+			if (ops->drq)
+				(*ops->drq)(arg->dev, arg->context,
+				    res->Data.Dma.Channels[i]);
+		}
+		break;
+
+	case ACPI_RSTYPE_START_DPF:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "Start dependant functions: %d\n",
+				     res->Data.StartDpf.CompatibilityPriority));
+		if (ops->start_dep)
+			(*ops->start_dep)(arg->dev, arg->context,
+			    res->Data.StartDpf.CompatibilityPriority);
+		break;
+
+	case ACPI_RSTYPE_END_DPF:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "End dependant functions\n"));
+		if (ops->end_dep)
+			(*ops->end_dep)(arg->dev, arg->context);
+
+	case ACPI_RSTYPE_ADDRESS32:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "Address32 unimplemented\n"));
+		break;
+
+	case ACPI_RSTYPE_ADDRESS16:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "Address16 unimplemented\n"));
+		break;
+
+	case ACPI_RSTYPE_EXT_IRQ:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "ExtendedIrq unimplemented\n"));
+		break;
+
+	case ACPI_RSTYPE_VENDOR:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "VendorSpecific unimplemented\n"));
+		break;
+
+	default:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "Unknown resource type: %d\n", res->Id));
+		break;
+	}
+
+	return_ACPI_STATUS(AE_OK);
+}
+
+
 /*
  * acpi_resource_parse:
  *
  *	Parse a device node's resources and fill them in for the
  *	client.
  *
+ *	This API supports _CRS (current resources) and
+ *	_PRS (possible resources).
+ *
  *	Note that it might be nice to also locate ACPI-specific resource
  *	items, such as GPE bits.
  */
 ACPI_STATUS
-acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
+acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, char *path,
     void *arg, const struct acpi_resource_parse_ops *ops)
 {
-	ACPI_BUFFER buf;
-	ACPI_RESOURCE *res;
-	char *cur, *last;
-	ACPI_STATUS status;
-	void *context;
-	int i;
+	struct resource_parse_callback_arg cbarg;
+	ACPI_STATUS rv;
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	/*
-	 * XXX Note, this means we only get devices that are currently
-	 * decoding their address space.  This might not be what we
-	 * want, in the long term.
-	 */
+	if (ops->init)
+		(*ops->init)(dev, arg, &cbarg.context);
+	else
+		cbarg.context = arg;
+	cbarg.ops = ops;
+	cbarg.dev = dev;
 
-	status = acpi_get(ad->ad_handle, &buf, AcpiGetCurrentResources);
-	if (status != AE_OK) {
-		printf("%s: ACPI: unable to get Current Resources: %d\n",
-		    dev->dv_xname, status);
-		return_ACPI_STATUS(status);
+	rv =AcpiWalkResources(handle, path, acpi_resource_parse_callback,
+	    &cbarg);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: ACPI: unable to get %s resources: %s\n",
+		    dev->dv_xname, path, AcpiFormatException(rv));
+		return_ACPI_STATUS(rv);
 	}
 
-	ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "got %d bytes of _CRS\n",
-	    buf.Length));
-
-	(*ops->init)(dev, arg, &context);
-
-	cur = buf.Pointer;
-	last = cur + buf.Length;
-	while (cur < last) {
-		res = (ACPI_RESOURCE *) cur;
-		cur += res->Length;
-
-		switch (res->Id) {
-		case ACPI_RSTYPE_END_TAG:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "EndTag\n"));
-			cur = last;
-			break;
-
-		case ACPI_RSTYPE_FIXED_IO:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "FixedIo 0x%x/%d\n",
-			    res->Data.FixedIo.BaseAddress,
-			    res->Data.FixedIo.RangeLength));
-			(*ops->ioport)(dev, context,
-			    res->Data.FixedIo.BaseAddress,
-			    res->Data.FixedIo.RangeLength);
-			break;
-
-		case ACPI_RSTYPE_IO:
-			if (res->Data.Io.MinBaseAddress ==
-			    res->Data.Io.MaxBaseAddress) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				    "Io 0x%x/%d\n",
-				    res->Data.Io.MinBaseAddress,
-				    res->Data.Io.RangeLength));
-				(*ops->ioport)(dev, context,
-				    res->Data.Io.MinBaseAddress,
-				    res->Data.Io.RangeLength);
-			} else {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				    "Io 0x%x-0x%x/%d\n",
-				    res->Data.Io.MinBaseAddress,
-				    res->Data.Io.MaxBaseAddress,
-				    res->Data.Io.RangeLength));
-				(*ops->iorange)(dev, context,
-				    res->Data.Io.MinBaseAddress,
-				    res->Data.Io.MaxBaseAddress,
-				    res->Data.Io.RangeLength,
-				    res->Data.Io.Alignment);
-			}
-			break;
-
-		case ACPI_RSTYPE_FIXED_MEM32:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "FixedMemory32 0x%x/%d\n",
-			    res->Data.FixedMemory32.RangeBaseAddress,
-			    res->Data.FixedMemory32.RangeLength));
-			(*ops->memory)(dev, context,
-			    res->Data.FixedMemory32.RangeBaseAddress,
-			    res->Data.FixedMemory32.RangeLength);
-			break;
-
-		case ACPI_RSTYPE_MEM32:
-			if (res->Data.Memory32.MinBaseAddress ==
-			    res->Data.Memory32.MaxBaseAddress) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, 
-				    "Memory32 0x%x/%d\n",
-				    res->Data.Memory32.MinBaseAddress,
-				    res->Data.Memory32.RangeLength));
-				(*ops->memory)(dev, context,
-				    res->Data.Memory32.MinBaseAddress,
-				    res->Data.Memory32.RangeLength);
-			} else {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				    "Memory32 0x%x-0x%x/%d\n",
-				    res->Data.Memory32.MinBaseAddress,
-				    res->Data.Memory32.MaxBaseAddress,
-				    res->Data.Memory32.RangeLength));
-				(*ops->memrange)(dev, context,
-				    res->Data.Memory32.MinBaseAddress,
-				    res->Data.Memory32.MaxBaseAddress,
-				    res->Data.Memory32.RangeLength,
-				    res->Data.Memory32.Alignment);
-			}
-			break;
-
-		case ACPI_RSTYPE_MEM24:
-			if (res->Data.Memory24.MinBaseAddress ==
-			    res->Data.Memory24.MaxBaseAddress) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, 
-				    "Memory24 0x%x/%d\n",
-				    res->Data.Memory24.MinBaseAddress,
-				    res->Data.Memory24.RangeLength));
-				(*ops->memory)(dev, context,
-				    res->Data.Memory24.MinBaseAddress,
-				    res->Data.Memory24.RangeLength);
-			} else {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				    "Memory24 0x%x-0x%x/%d\n",
-				    res->Data.Memory24.MinBaseAddress,
-				    res->Data.Memory24.MaxBaseAddress,
-				    res->Data.Memory24.RangeLength));
-				(*ops->memrange)(dev, context,
-				    res->Data.Memory24.MinBaseAddress,
-				    res->Data.Memory24.MaxBaseAddress,
-				    res->Data.Memory24.RangeLength,
-				    res->Data.Memory24.Alignment);
-			}
-			break;
-
-		case ACPI_RSTYPE_IRQ:
-			for (i = 0; i < res->Data.Irq.NumberOfInterrupts; i++) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				    "IRQ %d\n", res->Data.Irq.Interrupts[i]));
-				(*ops->irq)(dev, context,
-				    res->Data.Irq.Interrupts[i],
-				    res->Data.Irq.EdgeLevel);
-			}
-			break;
-
-		case ACPI_RSTYPE_DMA:
-			for (i = 0; i < res->Data.Dma.NumberOfChannels; i++) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				    "DRQ %d\n", res->Data.Dma.Channels[i]));
-				(*ops->drq)(dev, context,
-				    res->Data.Dma.Channels[i]);
-			}
-			break;
-
-		case ACPI_RSTYPE_START_DPF:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "Start dependant functions: %d\n",
-			     res->Data.StartDpf.CompatibilityPriority));
-			(*ops->start_dep)(dev, context,
-			    res->Data.StartDpf.CompatibilityPriority);
-			break;
-
-		case ACPI_RSTYPE_END_DPF:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "End dependant functions\n"));
-			(*ops->end_dep)(dev, context);
-
-		case ACPI_RSTYPE_ADDRESS32:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "Address32 unimplemented\n"));
-			break;
-
-		case ACPI_RSTYPE_ADDRESS16:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "Address16 unimplemented\n"));
-			break;
-
-		case ACPI_RSTYPE_EXT_IRQ:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "ExtendedIrq unimplemented\n"));
-			break;
-
-		case ACPI_RSTYPE_VENDOR:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "VendorSpecific unimplemented\n"));
-			break;
-
-		default:
-			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-			    "Unknown resource type: %d\n", res->Id));
-			break;
-		}
-	}
-
-	AcpiOsFree(buf.Pointer);
-	(*ops->fini)(dev, context);
+	if (ops->fini)
+		(*ops->fini)(dev, cbarg.context);
 
 	return_ACPI_STATUS(AE_OK);
 }
@@ -366,6 +387,60 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 	printf("\n");
 }
 
+/*
+ * acpi_resource_cleanup:
+ *
+ *	Free all allocated buffers
+ */
+void
+acpi_resource_cleanup(struct acpi_resources *res)
+{
+	while (!SIMPLEQ_EMPTY(&res->ar_io)) {
+		struct acpi_io *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_io);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_io, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_iorange)) {
+		struct acpi_iorange *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_iorange);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_iorange, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_mem)) {
+		struct acpi_mem *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_mem);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_mem, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_memrange)) {
+		struct acpi_memrange *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_memrange);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_memrange, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_irq)) {
+		struct acpi_irq *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_irq);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_irq, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_drq)) {
+		struct acpi_drq *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_drq);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_drq, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	res->ar_nio = res->ar_niorange = res->ar_nmem = 
+	    res->ar_nmemrange = res->ar_nirq = res->ar_ndrq = 0;
+}
+
 struct acpi_io *
 acpi_res_io(struct acpi_resources *res, int idx)
 {
@@ -373,9 +448,9 @@ acpi_res_io(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_io, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_iorange *
@@ -385,9 +460,9 @@ acpi_res_iorange(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_iorange, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_mem *
@@ -397,9 +472,9 @@ acpi_res_mem(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_mem, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_memrange *
@@ -409,9 +484,9 @@ acpi_res_memrange(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_memrange, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_irq *
@@ -421,9 +496,9 @@ acpi_res_irq(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_irq, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_drq *
@@ -433,9 +508,9 @@ acpi_res_drq(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_drq, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*****************************************************************************
@@ -462,20 +537,20 @@ static void	acpi_res_parse_start_dep(struct device *, void *, int);
 static void	acpi_res_parse_end_dep(struct device *, void *);
 
 const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
-	acpi_res_parse_init,
-	acpi_res_parse_fini,
+	.init = acpi_res_parse_init,
+	.fini = acpi_res_parse_fini,
 
-	acpi_res_parse_ioport,
-	acpi_res_parse_iorange,
+	.ioport = acpi_res_parse_ioport,
+	.iorange = acpi_res_parse_iorange,
 
-	acpi_res_parse_memory,
-	acpi_res_parse_memrange,
+	.memory = acpi_res_parse_memory,
+	.memrange = acpi_res_parse_memrange,
 
-	acpi_res_parse_irq,
-	acpi_res_parse_drq,
+	.irq = acpi_res_parse_irq,
+	.drq = acpi_res_parse_drq,
 
-	acpi_res_parse_start_dep,
-	acpi_res_parse_end_dep,
+	.start_dep = acpi_res_parse_start_dep,
+	.end_dep = acpi_res_parse_end_dep,
 };
 
 static void
@@ -519,6 +594,29 @@ acpi_res_parse_ioport(struct device *dev, void *context, uint32_t base,
 {
 	struct acpi_resources *res = context;
 	struct acpi_io *ar;
+
+	/*
+	 * Check if there is another I/O port directly below/under
+	 * this one.
+	 */
+	SIMPLEQ_FOREACH(ar, &res->ar_io, ar_list) {
+		if (ar->ar_base == base + length ) {
+			/*
+			 * Entry just below existing entry - adjust
+			 * the entry and return.
+			 */
+			ar->ar_base = base;
+			ar->ar_length += length;
+			return;
+		} else if (ar->ar_base + ar->ar_length == base) {
+			/*
+			 * Entry just above existing entry - adjust
+			 * the entry and return.
+			 */
+			ar->ar_length += length;
+			return;
+		}
+	}
 
 	ar = AcpiOsAllocate(sizeof(*ar));
 	if (ar == NULL) {
@@ -649,7 +747,7 @@ acpi_res_parse_drq(struct device *dev, void *context, uint32_t drq)
 static void
 acpi_res_parse_start_dep(struct device *dev, void *context, int preference)
 {
-	
+
 	printf("%s: ACPI: dependant functions not supported\n",
 	    dev->dv_xname);
 }

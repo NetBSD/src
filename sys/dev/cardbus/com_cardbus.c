@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.9 2002/10/02 16:33:41 thorpej Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.9.6.1 2004/08/03 10:45:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.9 2002/10/02 16:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.9.6.1 2004/08/03 10:45:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.9 2002/10/02 16:33:41 thorpej Exp 
 #include <sys/device.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 
@@ -77,7 +77,7 @@ static int com_cardbus_detach (struct device*, int);
 
 static void com_cardbus_setup(struct com_cardbus_softc*);
 static int com_cardbus_enable (struct com_softc*);
-static void com_cardbus_disable (struct com_softc*);
+static void com_cardbus_disable(struct com_softc*);
 
 CFATTACH_DECL(com_cardbus, sizeof(struct com_cardbus_softc),
     com_cardbus_match, com_cardbus_attach, com_cardbus_detach, com_activate);
@@ -88,10 +88,16 @@ static struct csdev {
 	cardbusreg_t	reg;
 	int		type;
 } csdevs[] = {
-	{ CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
-	{ CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 };
 
 static const int ncsdevs = sizeof(csdevs) / sizeof(csdevs[0]);
@@ -322,6 +328,8 @@ com_cardbus_disable(struct com_softc *sc)
 	cardbus_function_tag_t cf = psc->sc_cf;
 
 	cardbus_intr_disestablish(cc, cf, csc->cc_ih);
+	csc->cc_ih = NULL;
+
 	Cardbus_function_disable(csc->cc_ct);
 }
 
@@ -336,7 +344,8 @@ com_cardbus_detach(struct device *self, int flags)
 	if ((error = com_detach(self, flags)) != 0)
 		return error;
 
-	cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
+	if (csc->cc_ih != NULL)
+		cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
     
 	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_iot, sc->sc_ioh, 
 			     csc->cc_size);

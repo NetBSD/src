@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.7.2.1 2004/08/03 10:41:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,6 +33,9 @@
  * Machine-dependent PCI bits for PCI controller in microSPARC-IIep.
  * References are to the microSPARC-IIep manual unless noted otherwise.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7.2.1 2004/08/03 10:41:09 skrll Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -142,7 +145,7 @@ pci_attach_hook(parent, self, pba)
 	char buf[32];
 	char *model;
 
-	model = PROM_getpropstringA(prom_findroot(), "model",
+	model = prom_getpropstringA(prom_findroot(), "model",
 				    buf, sizeof(buf));
 	if (model == NULL)
 		panic("pci_attach_hook: no \"model\" property");

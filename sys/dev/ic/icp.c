@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.10 2003/06/13 05:57:30 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.10.2.1 2004/08/03 10:46:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.10 2003/06/13 05:57:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.10.2.1 2004/08/03 10:46:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 			 */
 			gc = (struct icp_getch *)icp->icp_scr;
 
-			for (i = 0; j < binfo.bi_chan_count; j++) {
+			for (j = 0; j < binfo.bi_chan_count; j++) {
 				if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_IOCTL,
 				    ICP_SCSI_CHAN_CNT | ICP_L_CTRL_PATTERN,
 				    ICP_IO_CHANNEL | ICP_INVALID_CHANNEL,

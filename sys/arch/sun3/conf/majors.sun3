@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.5 2003/04/25 21:11:03 ragge Exp $
+#	$NetBSD: majors.sun3,v 1.5.2.1 2004/08/03 10:42:03 skrll Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -62,3 +62,7 @@ device-major	clockctl	char 84			clockctl
 device-major	systrace	char 85			systrace
 device-major	cgd		char 86  block 26	cgd
 device-major	ksyms		char 87			ksyms
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

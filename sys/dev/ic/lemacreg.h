@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacreg.h,v 1.2 2001/06/13 10:46:03 wiz Exp $ */
+/*      $NetBSD: lemacreg.h,v 1.2.22.1 2004/08/03 10:46:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -120,7 +120,7 @@
 
 #define LEMAC_TX_ISA		0x01	/* Insert Source Address (no) */
 #define LEMAC_TX_IFC		0x02	/* Insert Frame Check (yes) */
-#define LEMAC_TX_PAD		0x04	/* Zero PAD to mininum length (yes) */
+#define LEMAC_TX_PAD		0x04	/* Zero PAD to minimum length (yes) */
 #define LEMAC_TX_LAB		0x08	/* Less Agressive Backoff (no) */
 #define LEMAC_TX_QMD		0x10	/* Q-Mode (yes) */
 #define LEMAC_TX_STP		0x20	/* Stop on Error (no) */
@@ -136,7 +136,7 @@
 #define	LEMAC_TDQ_NOCOL		0x00	/*   No Collisions */
 #define	LEMAC_TDQ_ONECOL	0x01	/*   One Collision */
 #define	LEMAC_TDQ_MULCOL	0x02	/*   Multiple Collisions */
-#define	LEMAC_TDQ_EXCCOL	0x03	/*   Excesive Collisions */
+#define	LEMAC_TDQ_EXCCOL	0x03	/*   Excessive Collisions */
 #define	LEMAC_TDQ_ID		0x04	/* Initially Deferred */
 #define	LEMAC_TDQ_LCL		0x08	/* Late Collision (will TX_STP) */
 #define	LEMAC_TDQ_NCL		0x10	/* No carrier loopback */

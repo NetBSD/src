@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.19 2003/03/22 06:25:15 nakayama Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.19.2.1 2004/08/03 10:49:10 skrll Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -43,19 +43,20 @@
 /* Chipset ID */
 #define	CB_UNKNOWN	0	/* NOT Cardbus-PCI bridge */
 #define	CB_TI113X	1	/* TI PCI1130/1131 */
-#define	CB_TI12XX	2	/* TI PCI1250/1220 */
+#define	CB_TI12XX	2	/* TI PCI12xx/14xx/44xx/15xx/45xx */
 #define	CB_RX5C47X	3	/* RICOH RX5C475/476/477 */
 #define	CB_RX5C46X	4	/* RICOH RX5C465/466/467 */
 #define	CB_TOPIC95	5	/* Toshiba ToPIC95 */
 #define	CB_TOPIC95B	6	/* Toshiba ToPIC95B */
 #define	CB_TOPIC97	7	/* Toshiba ToPIC97 */
 #define	CB_CIRRUS	8	/* Cirrus Logic CL-PD683X */
-#define	CB_CHIPS_LAST	9	/* Sentinel */
+#define	CB_TI125X	9	/* TI PCI1250/1251(B)/1450 */
+#define	CB_CHIPS_LAST	10	/* Sentinel */
 
 #if 0
 static char *cb_chipset_name[CB_CHIPS_LAST] = {
 	"unknown", "TI 113X", "TI 12XX", "RF5C47X", "RF5C46X", "ToPIC95",
-	"ToPIC95B", "ToPIC97", "CL-PD 683X",
+	"ToPIC95B", "ToPIC97", "CL-PD 683X", "TI 125X",
 };
 #endif
 
@@ -153,7 +154,6 @@ struct pccbb_softc {
 	int sc_pcmcia_flags;
 #define	PCCBB_PCMCIA_IO_RELOC	0x01	/* IO addr relocatable stuff exists */
 #define	PCCBB_PCMCIA_MEM_32	0x02	/* 32-bit memory address ready */
-#define	PCCBB_PCMCIA_16BITONLY	0x04	/* 32-bit mode disable */
 
 	struct proc *sc_event_thread;
 	SIMPLEQ_HEAD(, pcic_event) sc_events;

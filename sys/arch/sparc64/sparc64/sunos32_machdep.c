@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.10 2003/01/24 16:54:34 nakayama Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.10.2.1 2004/08/03 10:41:39 skrll Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.10.2.1 2004/08/03 10:41:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -144,7 +147,7 @@ sunos32_setregs(l, pack, stack)
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
-	bzero((caddr_t)tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
 	tf->tf_global[1] = (u_int)(u_long)p->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
@@ -152,15 +155,13 @@ sunos32_setregs(l, pack, stack)
 
 	stack -= sizeof(struct rwindow32);
 	tf->tf_out[6] = stack;
-	tf->tf_out[7] = NULL;
+	tf->tf_out[7] = 0;
 }
 
 void
-sunos32_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;	/* XXX */
 	struct proc *p = l->l_proc;
 	struct sunos32_sigframe *fp;
@@ -209,7 +210,7 @@ sunos32_sendsig(sig, mask, code)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = (u_int32_t)code;
+	sf.sf_code = (u_int32_t)ksi->ksi_trap;
 	scp = &fp->sf_sc;
 	if ((u_long)scp >= 0x100000000)
 		printf("sunos32_sendsig: sf_scp overflow %p > 0x100000000\n", scp);

@@ -1,19 +1,15 @@
-#	$NetBSD: Makefile,v 1.31 2003/01/19 21:37:04 ragge Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 2004/08/03 10:42:21 skrll Exp $
 
 S=	${.CURDIR}/../../../..
-NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 PROG=	boot
-WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
 LIBC=
 
-CFLAGS+=-ffreestanding -mno-asm-pic
-AFLAGS+=-mno-asm-pic
 CLEANFILES+=${PROG} ${PROG}.sym vers.c
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
 	-DNO_MID_CHECK
@@ -35,16 +31,6 @@ KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
 
-.if ${MACHINE} == "vax"
-.PHONY: machine-links
-beforedepend: machine-links
-machine-links:
-	@rm -f machine && ln -s ${S}/arch/${MACHINE}/include machine
-	@rm -f ${MACHINE_ARCH} && ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.NOPATH: machine ${MACHINE_ARCH}
-CLEANFILES+= machine ${MACHINE_ARCH}
-.endif
-
 .if ${OBJECT_FMT} == "ELF"
 START=start
 .else
@@ -53,13 +39,13 @@ START=nisse
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${STRIP} -o ${PROG} ${PROG}.sym
-	${SIZE} ${PROG}
 
 install:
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.4 2003/01/18 07:10:34 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.4.2.1 2004/08/03 10:42:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.4.2.1 2004/08/03 10:42:36 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -54,10 +57,7 @@
 #include <compat/ibcs2/ibcs2_signal.h>
 
 void
-ibcs2_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+ibcs2_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	/* Don't need to anything special */
 	setregs(l, epp, stack);
@@ -74,19 +74,19 @@ ibcs2_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-ibcs2_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+ibcs2_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	sendsig(native_to_ibcs2_signo[sig], mask, code);
+	ksiginfo_t nksi;
+	if (ksi->ksi_signo != native_to_ibcs2_signo[ksi->ksi_signo]) {
+		nksi = *ksi;
+		nksi.ksi_signo = native_to_ibcs2_signo[ksi->ksi_signo];
+		ksi = &nksi;
+	}
+	sendsig(ksi, mask);
 }
 
 int
-ibcs2_sys_sysmachine(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+ibcs2_sys_sysmachine(struct proc *l, void *v, register_t *retval)
 {
 	return EINVAL;
 }

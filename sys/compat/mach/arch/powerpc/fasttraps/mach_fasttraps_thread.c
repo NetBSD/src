@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_fasttraps_thread.c,v 1.6 2003/02/02 19:06:31 manu Exp $ */
+/*	$NetBSD: mach_fasttraps_thread.c,v 1.6.2.1 2004/08/03 10:44:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.6 2003/02/02 19:06:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.6.2.1 2004/08/03 10:44:21 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -58,11 +58,16 @@ mach_sys_cthread_set_self(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct mach_emuldata *med;
 	struct mach_sys_cthread_set_self_args /* {
 		syscallarg(mach_cproc_t) p;
 	} */ *uap = v;
 
 	l->l_private = (void *)SCARG(uap, p);
+
+	med = l->l_proc->p_emuldata;
+	med->med_dirty_thid = 0;
+
 	return 0;
 }
 

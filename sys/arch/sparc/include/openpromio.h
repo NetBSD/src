@@ -1,4 +1,4 @@
-/*	$NetBSD: openpromio.h,v 1.3 2002/07/20 08:37:30 mrg Exp $ */
+/*	$NetBSD: openpromio.h,v 1.3.6.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,6 +40,9 @@
  *	@(#)openpromio.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _SPARC_OPENPROMIO_H_
+#define _SPARC_OPENPROMIO_H_
+
 struct opiocdesc {
 	int	op_nodeid;		/* passed or returned node id */
 	int	op_namelen;		/* length of op_name */
@@ -59,3 +58,5 @@ struct opiocdesc {
 #define	OPIOCGETNEXT	_IOWR('O', 5, int)	/* get next node of node */
 #define	OPIOCGETCHILD	_IOWR('O', 6, int)	/* get first child of node */
 #define	OPIOCFINDDEVICE	_IOWR('O', 7, struct opiocdesc) /* find a specific device */
+
+#endif /* _SPARC_OPENPROMIO_H_ */

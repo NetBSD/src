@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.17 2003/06/03 06:48:47 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.17.2.1 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	int req_selector;
 	mach_msg_type_number_t req_incount;
-	int req_in[16];
+	int req_in[0];
 	mach_msg_type_number_t req_outcount;
 } mach_io_connect_method_scalari_scalaro_request_t;
 
@@ -128,7 +128,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_property_nameoffset;
 	mach_msg_type_number_t req_property_namecount;
-	char req_propery_name[128];
+	char req_property_name[0];
 } mach_io_registry_entry_get_property_request_t;
 
 typedef struct {
@@ -142,12 +142,14 @@ typedef struct {
 
 /* io_registry_entry_create_iterator */
 
+#define MACH_IOKIT_RECURSIVE_ITERATOR	1
+#define MACH_IOKIT_PARENT_ITERATOR	2
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_planeoffset;
 	mach_msg_type_number_t req_planecount;
-	char req_plane[128];
+	char req_plane[0];
 	int req_options;
 } mach_io_registry_entry_create_iterator_request_t;
 
@@ -165,7 +167,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_classnameoffset;
 	mach_msg_type_number_t req_classnamecount;
-	char req_classname[128];
+	char req_classname[0];
 } mach_io_object_conforms_to_request_t;
 
 typedef struct {
@@ -185,9 +187,9 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_typeofinterestoffset;
 	mach_msg_type_number_t req_typeofinterestcount;
-	char req_typeofinterest[128];
+	char req_typeofinterest[0];
 	mach_msg_type_number_t req_refcount;
-	mach_natural_t req_ref[8];
+	mach_natural_t req_ref[0];
 } mach_io_service_add_interest_notification_request_t;
 
 typedef struct {
@@ -235,7 +237,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_planeoffset;
 	mach_msg_type_number_t req_planecount;
-	char req_plane[128];
+	char req_plane[0];
 } mach_io_registry_entry_get_child_iterator_request_t;
 
 typedef struct {
@@ -252,7 +254,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_planeoffset;
 	mach_msg_type_number_t req_planecount;
-	char req_plane[128];
+	char req_plane[0];
 } mach_io_registry_entry_get_name_in_plane_request_t;
 
 typedef struct {
@@ -288,7 +290,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_nameoffset;
 	mach_msg_type_number_t req_namecount;
-	char req_plane[128];
+	char req_plane[0];
 } mach_io_registry_entry_get_location_in_plane_request_t;
 
 typedef struct {
@@ -323,7 +325,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_offset;
 	mach_msg_type_number_t req_count;
-	char req_plane[128];
+	char req_plane[0];
 } mach_io_registry_entry_get_path_request_t;
 
 typedef struct {
@@ -362,8 +364,10 @@ typedef struct {
 
 typedef struct {
 	mach_msg_header_t req_msgh;
+#if 0	/* Is it optional? Darwin don't include them */
 	mach_ndr_record_t req_ndr;
 	int req_flags;
+#endif
 } mach_io_iterator_reset_request_t;
 
 typedef struct {
@@ -398,7 +402,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	int req_selector;
 	mach_msg_type_number_t req_incount;
-	int req_in[16];
+	int req_in[0];
 	mach_msg_type_number_t req_outcount;
 } mach_io_connect_method_scalari_structo_request_t;
 
@@ -418,9 +422,8 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	int req_selector;
 	mach_msg_type_number_t req_incount;
-	int req_in[4096];
+	char req_in[0];
 	mach_msg_type_number_t req_outcount;
-	
 } mach_io_connect_method_structi_structo_request_t;
 
 typedef struct {
@@ -467,9 +470,9 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	int req_selector;
 	mach_msg_type_number_t req_incount;
-	int req_in[16];
+	int req_in[0];
 	mach_msg_type_number_t req_instructcount;
-	char req_instruct[4096];
+	char req_instruct[0];
 } mach_io_connect_method_scalari_structi_request_t;
 
 typedef struct {
@@ -486,7 +489,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_pathoffset;
 	mach_msg_type_number_t req_pathcount;
-	char req_path[512];
+	char req_path[0];
 } mach_io_registry_entry_from_path_request_t;
 
 typedef struct {
@@ -503,7 +506,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_msg_type_number_t req_offset;
 	mach_msg_type_number_t req_count;
-	char req_plane[128];
+	char req_plane[0];
 } mach_io_registry_entry_get_parent_iterator_request_t; 
 
 typedef struct {
@@ -513,48 +516,26 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_registry_entry_get_parent_iterator_reply_t;
 
-int mach_io_service_get_matching_services(struct mach_trap_args *);
-int mach_io_iterator_next(struct mach_trap_args *);
-int mach_io_service_open(struct mach_trap_args *);
-int mach_io_connect_method_scalari_scalaro(struct mach_trap_args *);
-int mach_io_connect_get_service(struct mach_trap_args *);
-int mach_io_registry_entry_get_property(struct mach_trap_args *);
-int mach_io_registry_entry_create_iterator(struct mach_trap_args *);
-int mach_io_object_conforms_to(struct mach_trap_args *);
-int mach_io_service_add_interest_notification(struct mach_trap_args *);
-int mach_io_connect_set_notification_port(struct mach_trap_args *);
-int mach_io_registry_get_root_entry(struct mach_trap_args *);
-int mach_io_registry_entry_get_child_iterator(struct mach_trap_args *);
-int mach_io_registry_entry_get_name_in_plane(struct mach_trap_args *);
-int mach_io_object_get_class(struct mach_trap_args *);
-int mach_io_registry_entry_get_location_in_plane(struct mach_trap_args *);
-int mach_io_registry_entry_get_properties(struct mach_trap_args *);
-int mach_io_registry_entry_get_path(struct mach_trap_args *);
-int mach_io_connect_map_memory(struct mach_trap_args *);
-int mach_io_iterator_reset(struct mach_trap_args *);
-int mach_io_connect_set_properties(struct mach_trap_args *);
-int mach_io_connect_method_scalari_structo(struct mach_trap_args *);
-int mach_io_connect_method_structi_structo(struct mach_trap_args *);
-int mach_io_service_close(struct mach_trap_args *);
-int mach_io_connect_add_client(struct mach_trap_args *);
-int mach_io_connect_method_scalari_structi(struct mach_trap_args *);
-int mach_io_registry_entry_from_path(struct mach_trap_args *);
-int mach_io_registry_entry_get_parent_iterator(struct mach_trap_args *);
+
+/* Kernel-private structures */
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
-
-struct mach_device_iterator {
-	struct device *mdi_parent;
-	struct device *mdi_current;
-};
 
 struct mach_iokit_property {
 	const char *mip_name;
 	const char *mip_value;
 };
 
+struct mach_device_iterator {
+	int mdi_current;
+	struct mach_iokit_devclass *mdi_devices[1];
+};
+
+/* Make this dynamic if it ever gets useful */
+#define MACH_IOKIT_MAX_PARENTS	8
 struct mach_iokit_devclass {
 	char *mid_string;
+	struct mach_iokit_devclass *mid_parent[MACH_IOKIT_MAX_PARENTS];
 	char *mid_properties;
 	struct mach_iokit_property *mid_properties_array;
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
@@ -563,6 +544,11 @@ struct mach_iokit_devclass {
 	int (*mid_connect_method_scalari_structi)(struct mach_trap_args *);
 	int (*mid_connect_map_memory)(struct mach_trap_args *);
 	char *mid_name;
+	struct mach_right *mid_notify;
 };
+
+extern struct mach_iokit_devclass mach_ioroot_devclass;
+
+void mach_iokit_cleanup_notify(struct mach_right *);
 	
 #endif /* _MACH_IOKIT_H_ */

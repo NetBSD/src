@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2003/01/18 08:28:26 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.23.2.1 2004/08/03 10:44:23 skrll Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -83,7 +83,7 @@
 15	STD		{ int netbsd32_chmod(const netbsd32_charp path, mode_t mode); }
 16	STD		{ int netbsd32_chown(const netbsd32_charp path, uid_t uid, gid_t gid); }
 17	STD		{ int netbsd32_break(netbsd32_charp nsize); }
-18	STD		{ int netbsd32_getfsstat(netbsd32_statfsp_t buf, netbsd32_long bufsize, int flags); }
+18	COMPAT_20	{ int netbsd32_getfsstat(netbsd32_statfsp_t buf, netbsd32_long bufsize, int flags); }
 19	COMPAT_43	{ netbsd32_long netbsd32_olseek(int fd, netbsd32_long offset, int whence); }
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
 21	STD		{ int netbsd32_mount(const netbsd32_charp type, const netbsd32_charp path, int flags, netbsd32_voidp data); }
@@ -180,7 +180,7 @@
 106	STD		{ int netbsd32_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int netbsd32_osigvec(int signum, netbsd32_sigvecp_t nsv, netbsd32_sigvecp_t osv); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 109	COMPAT_43	{ int netbsd32_sigblock(int mask); }
 110	COMPAT_43	{ int netbsd32_sigsetmask(int mask); }
 #else
@@ -219,14 +219,14 @@
 140	STD		{ int netbsd32_adjtime(const netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
 141	COMPAT_43	{ int netbsd32_ogetpeername(int fdes, netbsd32_caddr_t asa, netbsd32_intp alen); }
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 143	COMPAT_43	{ int netbsd32_sethostid(int32_t hostid); }
 #else
 143	OBSOL		sethostid
 #endif
 144	COMPAT_43	{ int netbsd32_ogetrlimit(int which, netbsd32_orlimitp_t rlp); }
 145	COMPAT_43	{ int netbsd32_osetrlimit(int which, const netbsd32_orlimitp_t rlp); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 146	COMPAT_43	{ int netbsd32_killpg(int pgid, int signum); }
 #else
 146	OBSOL		killpg
@@ -250,8 +250,8 @@
 155	EXCL		netbsd32_nfssvc
 #endif
 156	COMPAT_43	{ int netbsd32_ogetdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
-157	STD		{ int netbsd32_statfs(const netbsd32_charp path, netbsd32_statfsp_t buf); }
-158	STD		{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
+157	COMPAT_20	{ int netbsd32_statfs(const netbsd32_charp path, netbsd32_statfsp_t buf); }
+158	COMPAT_20	{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
 159	UNIMPL
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
@@ -463,14 +463,14 @@
 			    const netbsd32_sigsetp_t set, \
 			    netbsd32_sigsetp_t oset); }
 294	STD		{ int netbsd32___sigsuspend14(const netbsd32_sigsetp_t set); }
-295	STD		{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
+295	COMPAT_16	{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
 296	STD		{ int netbsd32___getcwd(netbsd32_charp bufp, netbsd32_size_t length); }
 297	STD		{ int netbsd32_fchroot(int fd); }
 298	STD		{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
 			   int flags); }
 299	STD		{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }
-300	STD		{ int netbsd32_fhstatfs(netbsd32_fhandlep_t fhp, \
+300	COMPAT_20	{ int netbsd32_fhstatfs(netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD		{ int netbsd32___semctl14(int semid, int semnum, int cmd, \
@@ -497,8 +497,9 @@
 ;
 ; Syscalls 307 and 308 are reserved for getcontext and setcontext
 ;
-307	UNIMPL
-308	UNIMPL
+307	STD		{ int netbsd32_getcontext(netbsd32_ucontextp ucp); }
+308	STD		{ int netbsd32_setcontext(netbsd32_ucontextp ucp, \
+			    uint32_t flags, netbsd32_lwpidp new_lwp); }
 ;
 ; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
 ;
@@ -537,3 +538,26 @@
 			    const netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa, \
 			    netbsd32_voidp tramp, int vers); }
+341	UNIMPL
+342	UNIMPL
+343	UNIMPL
+344	UNIMPL
+345	UNIMPL
+346	UNIMPL
+347	UNIMPL
+348	UNIMPL
+349	UNIMPL
+350	UNIMPL
+351	UNIMPL
+352	UNIMPL
+353	UNIMPL
+354	UNIMPL
+355	UNIMPL
+356	STD		{ int netbsd32_getvfsstat(netbsd32_statvfsp_t buf, \
+			    netbsd32_size_t bufsize, int flags); }
+357	STD		{ int netbsd32_statvfs1(const netbsd32_charp path, \
+			    netbsd32_statvfsp_t buf, int flags); }
+358	STD		{ int netbsd32_fstatvfs1(int fd, netbsd32_statvfsp_t buf, \
+			    int flags); }
+359	STD		{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
+			    netbsd32_statvfsp_t buf, int flags); }

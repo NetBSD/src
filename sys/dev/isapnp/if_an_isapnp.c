@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.7 2002/10/02 16:33:59 thorpej Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.7.6.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.7 2002/10/02 16:33:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.7.6.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.7 2002/10/02 16:33:59 thorpej Exp
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -109,14 +111,14 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: can't configure isapnp resources\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	sc->an_btag = ipa->ipa_iot;
-	sc->an_bhandle = ipa->ipa_io[0].h;
+	sc->sc_iot = ipa->ipa_iot;
+	sc->sc_ioh = ipa->ipa_io[0].h;
 
-	printf("%s: %s %s\n", sc->an_dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	/* This interface is always enabled. */
@@ -127,11 +129,11 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	    ipa->ipa_irq[0].type, IPL_NET, an_intr, sc);
 	if (isc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
 	if (an_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		isa_intr_disestablish(ipa->ipa_ic, isc->sc_ih);
 		isc->sc_ih = NULL;
 	}

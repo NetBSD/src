@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.24 2002/10/02 16:02:43 thorpej Exp $	*/
+/*	$NetBSD: spc.c,v 1.24.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.24.6.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -113,8 +116,8 @@ spc_intio_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_initiator = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
 
-	if (intio_intr_establish(ia->ia_intr, "spc", spcintr, sc))
+	if (intio_intr_establish(ia->ia_intr, "spc", spc_intr, sc))
 		panic ("spcattach: interrupt vector busy");
 
-	spcattach(sc);
+	spc_attach(sc);
 }

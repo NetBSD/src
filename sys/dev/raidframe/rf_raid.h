@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.18 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.18.2.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -101,8 +101,6 @@ struct RF_Raid_s {
 	 * changed.  XXX this is no longer true.  numSpare and friends can 
 	 * change now. 
          */
-	u_int   numRow;		/* number of rows of disks, typically == # of
-				 * ranks */
 	u_int   numCol;		/* number of columns of disks, typically == #
 				 * of disks/rank */
 	u_int   numSpare;	/* number of spare disks */
@@ -117,18 +115,18 @@ struct RF_Raid_s {
 	RF_int32 sectorMask;	/* mask of bytes-per-sector */
 
 	RF_RaidLayout_t Layout;	/* all information related to layout */
-	RF_RaidDisk_t **Disks;	/* all information related to physical disks */
-	RF_DiskQueue_t **Queues;/* all information related to disk queues */
+	RF_RaidDisk_t *Disks;	/* all information related to physical disks */
+	RF_DiskQueue_t *Queues;/* all information related to disk queues */
 	const RF_DiskQueueSW_t *qType;/* pointer to the DiskQueueSW used for the
-				   component queues. */
+					 component queues. */
 	/* NOTE:  This is an anchor point via which the queues can be
 	 * accessed, but the enqueue/dequeue routines in diskqueue.c use a
 	 * local copy of this pointer for the actual accesses. */
 	/* The remainder of the structure can change, and therefore requires
 	 * locking on reads and updates */
-	        RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
-					 * the fields below */
-	RF_RowStatus_t *status;	/* the status of each row in the array */
+	RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
+				 * the fields below */
+	RF_RowStatus_t status;	/* the status of each row in the array */
 	int     valid;		/* indicates successful configuration */
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
 	RF_LockTableEntry_t *quiesceLock;	/* quiesnce table */
@@ -166,6 +164,15 @@ struct RF_Raid_s {
 	/* and a lock to protect it */
 	struct simplelock iodone_lock;
 
+
+	RF_VoidPointerListElem_t *iobuf;       /* I/O buffer free list */
+	int iobuf_count;             /* count of I/O buffers on the freelist */
+	int numEmergencyBuffers;     /* number of these buffers to pre-allocate */
+
+	RF_VoidPointerListElem_t *stripebuf;   /* Full-stripe buffer free list */
+	int stripebuf_count;           /* count of full-stripe buffers on the freelist */
+	int numEmergencyStripeBuffers; /* number of these buffers to pre-allocate */
+
 	/*
          * Cleanup stuff
          */
@@ -179,16 +186,15 @@ struct RF_Raid_s {
 	RF_HeadSepLimit_t headSepLimit;
 	int     numFloatingReconBufs;
 	int     reconInProgress;
-	        RF_DECLARE_COND(waitForReconCond)
+	RF_DECLARE_COND(waitForReconCond)
 	RF_RaidReconDesc_t *reconDesc;	/* reconstruction descriptor */
-	RF_ReconCtrl_t **reconControl;	/* reconstruction control structure
+	RF_ReconCtrl_t *reconControl;	/* reconstruction control structure
 					 * pointers for each row in the array */
 
 	/*
          * Array-quiescence stuff
          */
-	        RF_DECLARE_MUTEX(access_suspend_mutex)
-	        RF_DECLARE_COND(quiescent_cond)
+	RF_DECLARE_MUTEX(access_suspend_mutex)
 	RF_IoCount_t accesses_suspended;
 	RF_IoCount_t accs_in_flight;
 	int     access_suspend_release;
@@ -198,10 +204,6 @@ struct RF_Raid_s {
 	/*
          * Statistics
          */
-#if !defined(_KERNEL) && !defined(SIMULATE)
-	RF_ThroughputStats_t throughputstats;
-#endif				/* !KERNEL && !SIMULATE */
-	RF_CumulativeStats_t userstats;
 	int     parity_rewrite_stripes_done;
 	int     recon_stripes_done;
 	int     copyback_stripes_done;
@@ -214,15 +216,13 @@ struct RF_Raid_s {
 	/*
          * Engine thread control
          */
-	        RF_DECLARE_MUTEX(node_queue_mutex)
-	        RF_DECLARE_COND(node_queue_cond)
+	RF_DECLARE_MUTEX(node_queue_mutex)
 	RF_DagNode_t *node_queue;
 	RF_Thread_t parity_rewrite_thread;
 	RF_Thread_t copyback_thread;
 	RF_Thread_t engine_thread;
 	RF_Thread_t engine_helper_thread;
 	RF_Thread_t recon_thread;
-	RF_ThreadGroup_t engine_tg;
 	int     shutdown_engine;
 	int     shutdown_raidio;
 	int     dags_in_flight;	/* debug */
@@ -231,36 +231,34 @@ struct RF_Raid_s {
          * PSS (Parity Stripe Status) stuff
          */
 	long    pssTableSize;
-	struct pool pss_pool;
-	struct pool pss_issued_pool;
 
 	/*
          * Reconstruction stuff
          */
 	int     procsInBufWait;
 	int     numFullReconBuffers;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *recon_tracerecs;
+#endif
 	unsigned long accumXorTimeUs;
-	RF_ReconDoneProc_t *recon_done_procs;
-	        RF_DECLARE_MUTEX(recon_done_proc_mutex)
+
 	/*
          * nAccOutstanding, waitShutdown protected by desc freelist lock
          * (This may seem strange, since that's a central serialization point
          * for a per-array piece of data, but otherwise, it'd be an extra
          * per-array lock, and that'd only be less efficient...)
          */
-	        RF_DECLARE_COND(outstandingCond)
+	RF_DECLARE_COND(outstandingCond)
 	int     waitShutdown;
 	int     nAccOutstanding;
 
 	RF_DiskId_t **diskids;
-	RF_DiskId_t *sparediskids;
 
 	int     raidid;
 	RF_AccTotals_t acc_totals;
 	int     keep_acc_totals;
 
-	struct raidcinfo **raid_cinfo;	/* array of component info */
+	struct raidcinfo *raid_cinfo;	/* array of component info */
 
 	int     terminate_disk_queues;
 
@@ -271,10 +269,11 @@ struct RF_Raid_s {
          * somewhere else, or at least hung off this
          * in some generic way
          */
+#if RF_INCLUDE_CHAINDECLUSTER > 0
 
 	/* used by rf_compute_workload_shift */
-	RF_RowCol_t hist_diskreq[RF_MAXROW][RF_MAXCOL];
-
+	RF_RowCol_t hist_diskreq[RF_MAXCOL];
+#endif
 	/* used by declustering */
 	int     noRotate;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.20 2003/05/18 19:06:11 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.20.2.1 2004/08/03 10:45:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -388,6 +388,45 @@ static u_int8_t mobilepro780_keytrans[] = {
 /*58*/	IGN,	IGN,	IGN,	 42,	 62,	 61,	 60,	 59,
 };
 
+/* NEC MobilePro 8x0 */
+static u_int8_t mobilepro8x0_keytrans[] = {
+/*00	space	]	\	/	left	right	enter	l	*/
+/*08	-	[	'	;	up	down	.	o	*/
+/*10	-	-	-	Windows	v	c	x	z	*/
+/*18	-	=	\-	`	f	d	s	a	*/
+/*20	8	7	6	5	r	e	w	q	*/
+/*28	,	m	n	b	-	-	0	9	*/
+/*30	k	j	h	g	4	3	2	1	*/
+/*38	i	u	y	t	-	caps	del	esc	*/
+/*40	alt_R	-	-	-	BS	p	TAB	Fn	*/
+/*48	-	alt_L	-	-	pgdn	pgup	f10	f9	*/
+/*50	-	-	ctrl	-	f8	f7	f6	f5	*/
+/*58	-	-	-	shift	f4	f3	f2	f1	*/
+/*----------------------------------------------------------------------*/
+/*00*/	 57,	 27,	 43,	 53,	203,	205,	 28,	 38,
+/*08*/	IGN,	 26,	 40,	 39,	200,	208,	 52,	 24,
+/*10*/	IGN,	IGN,	IGN,	221,	 47,	 46,	 45,	 44,
+/*18*/	IGN,	 13,	 12,	 41,	 33,	 32,	 31,	 30,
+/*20*/	  9,	  8,	  7,	  6,	 19,	 18,	 17,	 16,
+/*28*/	 51,	 50,	 49,	 48,	IGN,	IGN,	 11,	 10,
+/*30*/	 37,	 36,	 35,	 34,	  5,	  4,	  3,	  2,
+/*38*/	 23,	 22,	 21,	 20,	IGN,	 58,	 14,	  1,
+/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	219,
+/*48*/	IGN,	 56,	IGN,	IGN,	 81,	 73,	 68,	 67,
+/*50*/	IGN,	IGN,	 29,	IGN,	 66,	 65,	 64,	 63,
+/*58*/	IGN,	IGN,	IGN,	 42,	 62,	 61,	 60,	 59,
+};
+
+static const keysym_t mobilepro8x0_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(219), KS_Cmd,		KS_Meta_L,	KS_Multi_key,
+	KC(73),  KS_Cmd_BrightnessUp,	KS_KP_Prior,	KS_KP_9,
+	KC(81),  KS_Cmd_BrightnessDown,	KS_KP_Next,	KS_KP_3,
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
+};
+
 /* FUJITSU INTERTOP CX300 */
 static u_int8_t intertop_keytrans[] = {
 /*00	space   a2      1       tab     enter   caps    left    zenkaku	*/
@@ -551,7 +590,7 @@ static const keysym_t jornada6x0_us_keydesc[] = {
     KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
     KC(3),   KS_2,           KS_at,         KS_grave,
     KC(4),   KS_3,           KS_numbersign, KS_sterling,
-#if 0 /* XXX: no keysym for Euro yet */
+#ifdef KS_euro
     KC(5),   KS_4,           KS_dollar,     KS_euro,
 #endif
     KC(25),  KS_p,           KS_P,          KS_braceleft,
@@ -559,6 +598,11 @@ static const keysym_t jornada6x0_us_keydesc[] = {
     KC(40),  KS_apostrophe,  KS_quotedbl,   KS_bracketright,
     KC(43),  KS_backslash,   KS_bar,        KS_braceright,
     KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
 
@@ -595,6 +639,11 @@ const u_int8_t jornada6x0_intl_keytrans[] = {
 static const keysym_t jornada6x0_intl_keydesc[] = {
 /*  pos      normal          shifted        altgr	*/
     KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
 /* German (ABD) */
@@ -604,7 +653,7 @@ static const keysym_t jornada6x0_de_keydesc[] = {
     KC(5),   KS_4,           KS_dollar,     KS_ccedilla,
     KC(6),   KS_5,           KS_percent,    KS_sterling,
     KC(7),   KS_6,           KS_ampersand,  KS_notsign,
-#if 0 /* XXX: no keysym for Euro yet */
+#ifdef KS_euro
     KC(18),  KS_e,           KS_E,          KS_euro,
 #endif
     KC(27),  KS_plus,        KS_asterisk,   KS_asciitilde, /* NB: not dead */
@@ -614,10 +663,80 @@ static const keysym_t jornada6x0_de_keydesc[] = {
     KC(44),  KS_y,           KS_Y,          KS_less,
     KC(45),  KS_x,           KS_X,          KS_greater,
     KC(46),  KS_c,           KS_C,          KS_cent,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
+/* French (ABF) */
+static const keysym_t jornada6x0_fr_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(2),   KS_ampersand,   KS_1,          KS_plusminus,
+#ifdef KS_euro
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(19),  KS_r,           KS_R,          KS_onequarter,
+    KC(20),  KS_t,           KS_T,          KS_onehalf,
+    KC(21),  KS_y,           KS_Y,          KS_threequarters,
+    KC(25),  KS_p,           KS_P,          KS_paragraph,
+    KC(30),  KS_q,           KS_Q,          KS_brokenbar,
+    KC(31),  KS_s,           KS_S,          KS_guillemotleft,
+    KC(32),  KS_d,           KS_D,          KS_guillemotright,
+    KC(40),  KS_ugrave,      KS_percent,    KS_dead_acute,
+    KC(41),  KS_twosuperior, KS_voidSymbol, KS_threesuperior,
+    KC(43),  KS_asterisk,    KS_mu,         KS_notsign,
+    KC(44),  KS_w,           KS_W,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_cent,
+    KC(50),  KS_comma,       KS_question,   KS_mu,
+    KC(53),  KS_exclam,      KS_section,    KS_Eacute,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+/* Scandinavian */
+static const keysym_t jornada6x0_scnv_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
+    KC(3),   KS_2,           KS_quotedbl,   KS_at,
+    KC(4),   KS_3,           KS_numbersign, KS_sterling,
+    KC(5),   KS_4,           KS_currency,   KS_dollar,
+    KC(7),   KS_6,           KS_ampersand,
+    KC(8),   KS_7,           KS_slash,      KS_braceleft,
+    KC(9),   KS_8,           KS_parenleft,  KS_bracketleft,
+    KC(10),  KS_9,           KS_parenright, KS_bracketright,
+    KC(11),  KS_0,           KS_equal,      KS_braceright,
+    KC(12),  KS_plus,        KS_question,   KS_backslash,
+    KC(13),  KS_apostrophe,  KS_grave,
+    KC(25),  KS_p,           KS_P,          KS_braceleft,
+    KC(26),  KS_aring,
+    /*
+     * XXX: KC(39) and KC(40) has odiaeresis/adiaeresis *and*
+     * oslash/ae on them.  Apparently localized WinCE uses the former
+     * for Swedish and Finnish and the latter for Danish and
+     * Norwegian.  But as the keyboard doesn't seem to have
+     * semicolon/colon and minus/underscore nowhere on the primary and
+     * altgr layers, I put them here (semicolon/colon is inherited).
+     */
+    KC(40),  KS_minus,       KS_underscore, /* XXX */
+    KC(41),  KS_paragraph,   KS_onehalf,    KS_bar,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+
 const int jornada6x0_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= 88,
+	[KEY_SPECIAL_OFF]	= -1,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
@@ -679,8 +798,44 @@ const int persona_hpw50pad_special_keymap[] = {
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
+/*
+ * HITACHI PERSONA HPW200EC
+*/
+/* US */
+const u_int8_t persona_hpw200ec_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */	SPL, UNK,   2,  3,  UNK,   5,   6, UNK,
+/* 1 */	UNK, UNK, UNK,  11, UNK, UNK, UNK, UNK,
+/* 2 */	UNK, UNK, UNK,  19, UNK,  21, UNK, UNK,
+/* 3 */	UNK, UNK,  26,  27, UNK,  29,  30, UNK,
+/* 4 */	 32, UNK,  34,  35, UNK, UNK,  26, UNK,
+/* 5 */	 40, UNK,  42,  43, UNK, UNK,  46, UNK,
+/* 6 */	 48, UNK,  50,  51, UNK,  53,  54, UNK,
+/* 7 */	 56, UNK,  58,  59, UNK,  61,  62, UNK,
+/* 8 */	UNK, UNK,  66,  67,  68,  69,  70,  71,
+/* 9 */	UNK, UNK,  74,  75,  76,  77,  78,  79,
+/*10 */	UNK, UNK,  82,  83,  84,  85, UNK, UNK,
+/*11 */	UNK, UNK,  90,  91,  92,  93,  94,  95,
+/*12 */	UNK, UNK,  98,  99, 100, 101, 102, 103,
+/*13 */	104, UNK, 106, 107, 108, 109, 110, 111,
+/*14 */	UNK, UNK, 114, 115, 124, 117, 118, 119,
+/*15 */	UNK, UNK, 122, 123, UNK, UNK, 126, UNK,
+};
+
+const int persona_hpw200ec_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	=  0,
+	[KEY_SPECIAL_LIGHT]	= -1
+};
+
 #endif /* hpcsh */
 
+
+/*
+ * REMINDER:
+ *   When adding new entry to this array, make sure that pckbd_keydesctab[]
+ *   in sys/dev/pckbport/wskbdmap_mfii.c has a placeholder KB_MACHDEP entry
+ *   for the base ht_layout that you refer.
+ */
 const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
 	const u_int8_t	*ht_keymap;
@@ -728,14 +883,14 @@ const struct hpckbd_keymap_table {
 		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_700A,
-		mobilepro_keytrans, 
+		mobilepro8x0_keytrans, 
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(mobilepro8x0_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_730A,
-		mobilepro_keytrans,
+		mobilepro8x0_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(mobilepro8x0_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_MPRO700,
 		mobilepro_keytrans,
@@ -815,12 +970,12 @@ const struct hpckbd_keymap_table {
 		CMDMAP(jornada6x0_us_keydesc),
 		KB_US },
 	/* European English (ABB) */
-	{	&platid_mask_MACH_HP_JORNADA_680HU,
+	{	&platid_mask_MACH_HP_JORNADA_680EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
 		CMDMAP(jornada6x0_intl_keydesc),
 		KB_US },
-	{	&platid_mask_MACH_HP_JORNADA_690HU,
+	{	&platid_mask_MACH_HP_JORNADA_690EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
 		CMDMAP(jornada6x0_intl_keydesc),
@@ -836,6 +991,28 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
  		CMDMAP(jornada6x0_de_keydesc),
 		KB_DE },
+	/* French (ABF) */
+	{	&platid_mask_MACH_HP_JORNADA_680FR,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+		CMDMAP(jornada6x0_fr_keydesc),
+		KB_FR },
+	{	&platid_mask_MACH_HP_JORNADA_690FR,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+ 		CMDMAP(jornada6x0_fr_keydesc),
+		KB_FR },
+	/* Scandinavian */
+	{	&platid_mask_MACH_HP_JORNADA_680SV,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+		CMDMAP(jornada6x0_scnv_keydesc),
+		KB_US },
+	{	&platid_mask_MACH_HP_JORNADA_690SV,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+ 		CMDMAP(jornada6x0_scnv_keydesc),
+		KB_US },
 	/*
 	 * HP 620LX
 	 */
@@ -854,6 +1031,17 @@ const struct hpckbd_keymap_table {
 		persona_hpw50pad_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
+
+	/*
+	 * PERSONA HPW200EC
+	 */
+	/* US */
+	{ 	&platid_mask_MACH_HITACHI_PERSONA_HPW200EC,
+		persona_hpw200ec_keytrans,
+		persona_hpw200ec_special_keymap,
+		NULLCMDMAP,
+		KB_US },
+
 #endif /* hpcsh */
 	{ NULL } /* end mark */
 };

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 114 $
+ *              xRevision: 119 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6 2003/03/04 17:25:13 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6.2.1 2004/08/03 10:45:06 skrll Exp $");
 
 #define __DSOBJECT_C__
 
@@ -274,7 +274,7 @@ AcpiDsBuildInternalBufferObj (
             return (AE_TYPE);
         }
 
-        ByteListLength = ByteList->Common.Value.Integer32;
+        ByteListLength = (UINT32) ByteList->Common.Value.Integer;
     }
 
     /*
@@ -293,7 +293,8 @@ AcpiDsBuildInternalBufferObj (
     if (ObjDesc->Buffer.Length == 0)
     {
         ObjDesc->Buffer.Pointer = NULL;
-        ACPI_REPORT_WARNING (("Buffer created with zero length in AML\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "Buffer defined with zero length in AML, creating\n"));
     }
     else
     {
@@ -691,6 +692,11 @@ AcpiDsInitObjectFromOp (
 
             ObjDesc->Reference.Opcode = AML_ARG_OP;
             ObjDesc->Reference.Offset = Opcode - AML_ARG_OP;
+
+#ifndef ACPI_NO_METHOD_EXECUTION
+            Status = AcpiDsMethodDataGetNode (AML_ARG_OP, ObjDesc->Reference.Offset,
+                        WalkState, (ACPI_NAMESPACE_NODE **) &ObjDesc->Reference.Object);
+#endif
             break;
 
         default: /* Other literals, etc.. */

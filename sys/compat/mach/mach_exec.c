@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.32.2.1 2003/07/02 15:25:49 darrenr Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.32.2.2 2004/08/03 10:44:06 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.1 2003/07/02 15:25:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.2 2004/08/03 10:44:06 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -62,12 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.1 2003/07/02 15:25:49 darrenr E
 #include <compat/mach/mach_exec.h>
 
 static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
-
-static void mach_e_proc_exec(struct proc *, struct exec_package *);
-static void mach_e_proc_fork(struct proc *, struct proc *);
 static void mach_init(void);
 
-extern char sigcode[], esigcode[];
 extern struct sysent sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
@@ -76,6 +72,11 @@ extern const char * const syscallnames[];
 void syscall(void);
 #else
 void mach_syscall_intern(struct proc *);
+#endif
+
+#ifdef COMPAT_16
+extern char sigcode[], esigcode[];
+struct uvm_object *emul_mach_object;
 #endif
 
 const struct emul emul_mach = {
@@ -94,13 +95,23 @@ const struct emul emul_mach = {
 	NULL,
 #endif
 	sendsig,
-	trapsignal,
+	mach_trapsignal,
+	NULL,
+#ifdef COMPAT_16
 	sigcode,
 	esigcode,
+	&emul_mach_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	setregs,
 	mach_e_proc_exec,
 	mach_e_proc_fork,
 	mach_e_proc_exit,
+	mach_e_lwp_fork,
+	mach_e_lwp_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	mach_syscall_intern,
 #else
@@ -181,32 +192,66 @@ exec_mach_probe(path)
 	return 0;
 }
 
-static void 
+void 
 mach_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
 	mach_e_proc_init(p, p->p_vmspace);
 
+	if (p->p_emul != epp->ep_es->es_emul)
+		mach_e_lwp_fork(NULL, proc_representative_lwp(p));
+
 	return;
 }
 
-static void 
+void
 mach_e_proc_fork(p, parent)
 	struct proc *p;
 	struct proc *parent;
 {
+	mach_e_proc_fork1(p, parent, 1);	
+	return;
+}
+
+void 
+mach_e_proc_fork1(p, parent, allocate)
+	struct proc *p;
+	struct proc *parent;
+	int allocate;
+{
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
+	int i;
 
-	p->p_emuldata = NULL;
+	/*
+	 * For Darwin binaries, p->p_emuldata has already been
+	 * allocated, no need to throw it away and allocate it again.
+	 */
+	if (allocate)
+		p->p_emuldata = NULL;
 
-	/* Use parent's vmspace because our vmspace may not be setup yet */
+	/* Use parent's vmspace because our vmspace may not be set up yet */
 	mach_e_proc_init(p, parent->p_vmspace);
 
 	med1 = p->p_emuldata;
 	med2 = parent->p_emuldata;
-	/* Nothing is inherited across forks in struct  mach_emuldata */
+
+	/* 
+	 * Exception ports are inherited between forks,
+	 * but we need to double their reference counts, 
+	 * since the ports are referenced by rights in the
+	 * parent and in the child.
+	 *
+	 * XXX we need to convert all the parent's rights
+	 * to the child namespace. This will make the
+	 * following fixup obsolete.
+	 */
+	for (i = 0; i <= MACH_EXC_MAX; i++) {
+		med1->med_exc[i] = med2->med_exc[i];
+		if (med1->med_exc[i] !=  NULL)
+			med1->med_exc[i]->mp_refcount *= 2;
+	}
 
 	return;
 }
@@ -217,53 +262,99 @@ mach_e_proc_init(p, vmspace)
 	struct vmspace *vmspace;
 {
 	struct mach_emuldata *med;
+	struct mach_right *mr;
 
 	/* 
 	 * Initialize various things if needed. 
-	 * XXX Not the best place for that. 
+	 * XXX Not the best place for this. 
 	 */
 	if (mach_cold == 1)
 		mach_init();
 
-	if (!p->p_emuldata)
+	/*
+	 * For Darwin binaries, p->p_emuldata is always allocated:
+	 * from the previous program if it had the same emulation,
+	 * or from darwin_e_proc_exec(). In the latter situation, 
+	 * everything has been set to zero.
+	 */
+	if (!p->p_emuldata) {
+#ifdef DIAGNOSTIC
+		if (p->p_emul != &emul_mach)
+			printf("mach_emuldata allocated for non Mach binary\n");
+#endif
 		p->p_emuldata = malloc(sizeof(struct mach_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
+	}
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
-	LIST_INIT(&med->med_right);
-	lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
-	/* 
-	 * For debugging purpose, it's convenient to have each process 
-	 * using distinct port names, so we prefix the first port name
-	 * by the PID. Darwin does not do that, but we can remove it 
-	 * when we want, it will not hurt.
+	/*
+	 * p->p_emudata has med_inited set if we inherited it from 
+	 * the program that called exec(). In that situation, we
+	 * must free anything that will not be used anymore.
 	 */
-	med->med_nextright = p->p_pid << 16;
+	if (med->med_inited != 0) {
+		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+		while ((mr = LIST_FIRST(&med->med_right)) != NULL)
+			mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
+		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
-	med->med_kernel = mach_port_get();
-	med->med_host = mach_port_get();
+		/*
+		 * Do not touch special ports. Some other process (eg: gdb)
+		 * might have grabbed them to control the process, and the
+		 * controller intend to keep in control even after exec().
+		 */
+	} else {
+		/* 
+		 * p->p_emuldata is uninitialized. Go ahead and initialize it.
+		 */
+		LIST_INIT(&med->med_right);
+		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
+		lockinit(&med->med_exclock, PZERO, "exclock", 0, 0);
 
-	med->med_kernel->mp_flags |= MACH_MP_INKERNEL;
-	med->med_host->mp_flags |= MACH_MP_INKERNEL;
+		/* 
+		 * For debugging purpose, it's convenient to have each process 
+		 * using distinct port names, so we prefix the first port name
+		 * by the PID. Darwin does not do that, but we can remove it 
+		 * when we want, it will not hurt.
+		 */
+		med->med_nextright = p->p_pid << 16;
 
-	med->med_kernel->mp_data = (void *)p;
-	med->med_host->mp_data = (void *)p;
+		/*
+		 * Initialize special ports. Bootstrap port is shared
+		 * among all Mach processes in our implementation.
+		 */
+		med->med_kernel = mach_port_get();
+		med->med_host = mach_port_get();
 
-	med->med_kernel->mp_datatype = MACH_MP_PROC;
-	med->med_host->mp_datatype = MACH_MP_PROC;
+		med->med_kernel->mp_flags |= MACH_MP_INKERNEL;
+		med->med_host->mp_flags |= MACH_MP_INKERNEL;
 
-	/* Make sure they will not be deallocated */
-	med->med_kernel->mp_refcount++;
-	med->med_host->mp_refcount++;
+		med->med_kernel->mp_data = (void *)p;
+		med->med_host->mp_data = (void *)p;
 
-	med->med_bootstrap = mach_bootstrap_port;
-	med->med_bootstrap->mp_refcount++;
+		med->med_kernel->mp_datatype = MACH_MP_PROC;
+		med->med_host->mp_datatype = MACH_MP_PROC;
 
-	bzero(med->med_exc, sizeof(med->med_exc));
+		MACH_PORT_REF(med->med_kernel);
+		MACH_PORT_REF(med->med_host);
+
+		med->med_bootstrap = mach_bootstrap_port;
+		MACH_PORT_REF(med->med_bootstrap);
+	}
+
+	/* 
+	 * Exception ports are inherited accross exec() calls.
+	 * If the structure is initialized, the ports are just 
+	 * here, so leave them untouched. If the structure is
+	 * uninitalized, the ports are all set to zero, which 
+	 * is the default, so do not touch them either.
+	 */
 
 	med->med_dirty_thid = 1;
 	med->med_suspend = 0;
+	med->med_inited = 1;
+
 	return;
 }
 
@@ -273,26 +364,98 @@ mach_e_proc_exit(p)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
+	int i;
 
-	mach_semaphore_cleanup(p);
+	/* There is only one lwp remaining... */
+	mach_e_lwp_exit(proc_representative_lwp(p));
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
 	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-	
 	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
-	if (--med->med_bootstrap->mp_refcount == 0)
-		mach_port_put(med->med_bootstrap);
-	if (--med->med_kernel->mp_refcount == 0) 
-		mach_port_put(med->med_kernel);
-	if (--med->med_host->mp_refcount == 0)  
-		mach_port_put(med->med_host);  
+	MACH_PORT_UNREF(med->med_bootstrap);
+
+	/*
+	 * If the lock on this task exception handler is held,
+	 * release it now as it will never be released by the
+	 * exception handler.
+	 */
+	if (lockstatus(&med->med_exclock) != 0)
+		wakeup(&med->med_exclock);
+
+	/* 
+	 * If the kernel and host port are still referenced, remove
+	 * the pointer to this process' struct proc, as it will 
+	 * become invalid once the process will exit.
+	 */
+	med->med_kernel->mp_datatype = MACH_MP_NONE;
+	med->med_kernel->mp_data = NULL;
+	MACH_PORT_UNREF(med->med_kernel);
+
+	med->med_host->mp_datatype = MACH_MP_NONE;
+	med->med_host->mp_data = NULL;
+	MACH_PORT_UNREF(med->med_host);
+
+	for (i = 0; i <= MACH_EXC_MAX; i++)
+		if (med->med_exc[i] != NULL)
+			MACH_PORT_UNREF(med->med_exc[i]);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
+
+	return;
+}
+
+void
+mach_e_lwp_fork(l1, l2)
+	struct lwp *l1;
+	struct lwp *l2;
+{
+	struct mach_lwp_emuldata *mle;
+
+	mle = malloc(sizeof(*mle), M_EMULDATA, M_WAITOK);
+	l2->l_emuldata = mle;
+
+	mle->mle_kernel = mach_port_get();
+	MACH_PORT_REF(mle->mle_kernel);
+
+	mle->mle_kernel->mp_flags |= MACH_MP_INKERNEL;
+	mle->mle_kernel->mp_datatype = MACH_MP_LWP;
+	mle->mle_kernel->mp_data = (void *)l2;
+
+#if 0
+	/* Nothing to copy from parent thread for now */
+	if (l1 != NULL);
+#endif
+
+	return;
+}
+
+void
+mach_e_lwp_exit(l)
+	struct lwp *l;
+{
+	struct mach_lwp_emuldata *mle;
+
+	mach_semaphore_cleanup(l);
+
+#ifdef DIAGNOSTIC
+	if (l->l_emuldata == NULL) {
+		printf("lwp_emuldata already freed\n");
+		return;
+	}
+#endif
+	mle = l->l_emuldata;
+
+	mle->mle_kernel->mp_data = NULL;
+	mle->mle_kernel->mp_datatype = MACH_MP_NONE;
+	MACH_PORT_UNREF(mle->mle_kernel);
+
+	free(mle, M_EMULDATA);
+	l->l_emuldata = NULL;
 
 	return;
 }

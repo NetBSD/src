@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.79 2003/06/16 19:24:51 heas Exp $
+#	$NetBSD: files.sparc64,v 1.79.2.1 2004/08/03 10:41:23 skrll Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -9,22 +9,6 @@ maxpartitions 8
 maxusers 2 8 1024
 
 defflag	opt_sparc_arch.h	SUN4U
-
-#
-# XXXXXXXXXXX
-#
-# These files must be compiled w/no omtimization in 64-bit mode
-#
-
-file dev/ic/elink3.c		compile-with "${NOOPT_C}"
-file net/if_ppp.c		compile-with "${NOOPT_C}"
-file net/if_loop.c		compile-with "${NOOPT_C}"
-file net/if_sl.c		compile-with "${NOOPT_C}"
-file ufs/lfs/lfs_debug.c	compile-with "${NOOPT_C}"
-
-#
-# XXXXXXXXXXX
-#
 
 define mainbus {}
 device mainbus: mainbus
@@ -56,11 +40,11 @@ device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 
-device clock: mk48txx
+device clock: mk48txx, mc146818
 attach clock at mainbus, sbus with clock_sbus
 attach clock at ebus with clock_ebus
 
-device rtc
+device rtc: mc146818
 attach rtc at ebus with rtc_ebus
 
 device timer
@@ -69,7 +53,6 @@ attach timer at mainbus, sbus
 device eeprom
 attach eeprom at sbus, ebus
 file	arch/sparc64/sparc64/clock.c
-file	dev/clock_subr.c
 
 device power
 attach power at sbus, ebus
@@ -79,12 +62,6 @@ device cpu
 attach cpu at mainbus
 file	arch/sparc64/sparc64/cpu.c
 
-# XXX bogus; this is in dev/isa/files.isa.  fix me please!
-# XXX we should attach a `bpp'-style device here rather than
-# `lpt' because the `bpp' driver supports DMA.
-device	lpt
-file	dev/ic/lpt.c				lpt needs-flag
-
 device	auxio
 attach	auxio at ebus with auxio_ebus
 attach	auxio at sbus with auxio_sbus
@@ -92,7 +69,7 @@ file	arch/sparc64/dev/auxio.c		auxio
 
 defflag	opt_auxio.h	BLINK
 
-attach lpt at ebus with lpt_ebus
+attach	lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 
 device fdc {}
@@ -118,7 +95,7 @@ file	arch/sparc64/sparc64/rbus_machdep.c	cardbus
 #
 
 device zs {channel = -1}
-attach zs at mainbus, sbus
+attach zs at sbus
 file	arch/sparc64/dev/zs.c			zs needs-flag
 file	dev/ic/z8530sc.c			zs
 
@@ -167,6 +144,11 @@ file	arch/sparc64/dev/ffb.c			ffb
 attach ffb at mainbus with ffb_mainbus
 file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
 
+# CP1500/1400 watchdog timer
+device	pldwdog: sysmon_wdog
+attach	pldwdog at ebus
+file	arch/sparc64/dev/pld_wdog.c		pldwdog
+
 #
 # Generic Sun stuff
 #
@@ -174,6 +156,7 @@ file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 file	kern/kern_microtime.c
+file	dev/sun/disksubr.c 
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
@@ -185,6 +168,7 @@ file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
+file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
@@ -197,14 +181,14 @@ file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
 file	arch/sparc64/sparc64/mem.c
-file	arch/sparc64/sparc64/openprom.c
-file	arch/sparc64/sparc64/openfirm.c
+file	arch/sparc/sparc/openprom.c
+file	arch/sparc/sparc/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
 file	arch/sparc64/sparc64/pmap.c
 file	arch/sparc64/sparc64/sys_machdep.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
-file	arch/sparc64/sparc64/disksubr.c
+file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb
@@ -228,6 +212,7 @@ include "dev/ieee1394/files.ieee1394"
 
 # Binary compatibility with previous NetBSD releases.
 file	arch/sparc64/sparc64/compat_13_machdep.c compat_13
+file	arch/sparc64/sparc64/compat_16_machdep.c compat_16
 
 # NetBSD/sparc 32-bit Binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
@@ -261,3 +246,6 @@ file	netns/ns_cksum.c		ns
 file	dev/md_root.c			memory_disk_hooks
 
 include "arch/sparc64/conf/majors.sparc64"
+
+# special compiler settings (no optimization if 32bit kernel)
+file	uvm/uvm_bio.c compile-with "${CC_NOOPT}"

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 2002/05/24 21:40:59 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.10.6.1 2004/08/03 10:42:21 skrll Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -78,7 +78,7 @@ devopen(f, fname, file)
 			dp = devsw + i;
 
 	x = 0;
-	if ((s = index((char *)fname, '('))) {
+	if ((s = strchr((char *)fname, '('))) {
 		*s++ = 0;
 
 		for (i = 0, dp = devsw; i < ndevs; i++, dp++)
@@ -94,7 +94,7 @@ devopen(f, fname, file)
 			return -1;
 		}
 		dev = cnvtab[i];
-		if ((c = index(s, ')')) == 0)
+		if ((c = strchr(s, ')')) == 0)
 			goto usage;
 
 		*c++ = 0;

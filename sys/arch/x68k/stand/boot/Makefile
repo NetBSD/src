@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/05 11:46:30 isaki Exp $
+#	$NetBSD: Makefile,v 1.9.10.1 2004/08/03 10:42:56 skrll Exp $
 
 NOMAN=		# defined
 
@@ -30,7 +30,7 @@ COMMONDIR=	$M/stand/common
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
-	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
 CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.8 2003/01/18 08:02:47 thorpej Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.8.2.1 2004/08/03 10:43:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.8 2003/01/18 08:02:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.8.2.1 2004/08/03 10:43:53 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -44,8 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.8 2003/01/18 08:02:47 thorpe
 int
 linux_sys_breakpoint(struct lwp *l, void *v, register_t *retval)
 {
+	ksiginfo_t ksi;
 
-	trapsignal(l, SIGTRAP, 0);
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGTRAP;
+	ksi.ksi_code = TRAP_BRKPT;
+	trapsignal(l, &ksi);
 	return ERESTART; /* Leave PC pointing back at the breakpoint. */
 }
 

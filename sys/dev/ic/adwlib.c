@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.25 2003/02/21 17:14:06 tsutsui Exp $        */
+/* $NetBSD: adwlib.c,v 1.25.2.1 2004/08/03 10:46:07 skrll Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.25 2003/02/21 17:14:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.25.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1072,6 +1072,9 @@ AdwLoadMCode(iot, ioh, bios_mem, chip_type)
 		mcode_size = (u_int16_t)adw_asc38C1600_mcode_data.mcode_size;
 		adw_memsize = ADW_38C1600_MEMSIZE;
 		break;
+
+	default:
+		return (EINVAL);
 	}
 
 	/*
@@ -1467,8 +1470,8 @@ AdwASC38C1600Cabling(iot, ioh, cfg)
 
 	/*
 	 * Each ASC-38C1600 function has two connectors. Only an HVD device
-	 * can not be connected to either connector. An LVD device or SE device
-	 * may be connected to either connecor. If an SE device is connected,
+	 * cannot be connected to either connector. An LVD device or SE device
+	 * may be connected to either connector. If an SE device is connected,
 	 * then at most Ultra speed (20 MHz) can be used on both connectors.
 	 *
 	 * If an HVD device is attached, return an error.
@@ -1725,7 +1728,6 @@ ADW_SCSI_REQ_Q	*scsiq;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	ADW_CCB		*ccb;
-	long		req_size;
 	u_int32_t	req_paddr;
 	ADW_CARRIER	*new_carrp;
 
@@ -1761,7 +1763,6 @@ ADW_SCSI_REQ_Q	*scsiq;
 	 */
 	new_carrp->next_ba = htole32(ASC_CQ_STOPPER);
 
-	req_size = sizeof(ADW_SCSI_REQ_Q);
 	req_paddr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsiq);
 
@@ -1912,7 +1913,8 @@ ADW_SOFTC	*sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int		status;
-	u_int16_t	wdtr_able, sdtr_able, ppr_able, tagqng_able;
+	u_int16_t	wdtr_able, sdtr_able, tagqng_able;
+	u_int16_t	ppr_able = 0; /* XXX: gcc */
 	u_int8_t	tid, max_cmd[ADW_MAX_TID + 1];
 	u_int16_t	bios_sig;
 
@@ -2006,7 +2008,6 @@ ADW_SOFTC	*sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t	int_stat;
-	u_int16_t	target_bit;
 	ADW_CARRIER	*free_carrp/*, *ccb_carr*/;
 	u_int32_t	irq_next_pa;
 	ADW_SCSI_REQ_Q	*scsiq;
@@ -2098,13 +2099,10 @@ ADW_SOFTC	*sc;
 		free_carrp = sc->irq_sp;
 		sc->irq_sp = ADW_CARRIER_VADDR(sc, ASC_GET_CARRP(irq_next_pa));
 
-		free_carrp->next_ba = (sc->carr_freelist == NULL)? NULL
+		free_carrp->next_ba = (sc->carr_freelist == NULL) ? 0
 					: sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
-
-
-		target_bit = ADW_TID_TO_TIDMASK(scsiq->target_id);
 
 		/*
 		 * Clear request microcode control flag.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.17 2003/05/17 08:23:14 scw Exp $	*/
+/*	$NetBSD: rbus.c,v 1.17.2.1 2004/08/03 10:45:47 skrll Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.17 2003/05/17 08:23:14 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.17.2.1 2004/08/03 10:45:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 				return 1;
 			}
 		} else if (decodesize == 0) {
-			/* maybe, the resister is overflowed. */
+			/* maybe, the register is overflowed. */
       
 			if (extent_alloc_subregion(rbt->rb_ext, addr,
 			    addr + size, size, 1, 0, exflags, &result)) {
@@ -174,13 +174,11 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			*addrp = result + rbt->rb_offset;
 		}
 		return 0;
-
 	} else {
 		/* error!! */
 		DPRINTF(("rbus: no rbus type\n"));
 		return 1;
 	}
-	return 1;
 }
 
 
@@ -241,7 +239,7 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
 		if (start < parent->rb_start || end > parent->rb_end) {
 			/*
 			 * out of range: [start, size] should be
-			 * containd in parent space
+			 * contained in parent space
 			 */
 			return 0;
 			/* Should I invoke panic? */
@@ -368,7 +366,7 @@ rbus_new_root_share(bt, ex, start, size, offset)
 	/* sanity check */
 	if (start < ex->ex_start || start + size > ex->ex_end) {
 		/*
-		 * out of range: [start, size] should be containd in
+		 * out of range: [start, size] should be contained in
 		 * parent space
 		 */
 		return 0;

@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.14 2003/01/22 23:06:37 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.14.2.1 2004/08/03 10:42:23 skrll Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -129,7 +129,7 @@
 #define	PR_RXDB3  89 /* Serial-Line Unit 3 Receive Data Buffer (KA820) */
 #define	PR_TXCS3  90 /* Serial-Line Unit 3 Transmit CSR (KA820) */
 #define	PR_TXDB3  91 /* Serial-Line Unit 3 Transmit Data Buffer (KA820) */
-#define	PR_RXCD	  92 /* Receive Console Data from another cpu (KA820) */
+#define	PR_RXCD	  92 /* Receive Console Data from another CPU (KA820) */
 #define	PR_CACHEX 93 /* Cache invalidate Register (KA820) */
 #define	PR_BINID  94 /* VAXBI node ID Register (KA820) */
 #define	PR_BISTOP 95 /* VAXBI Stop Register (KA820) */

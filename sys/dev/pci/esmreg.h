@@ -1,7 +1,7 @@
-/*	$NetBSD: esmreg.h,v 1.4 2002/12/30 05:23:27 fredette Exp $	*/
+/*	$NetBSD: esmreg.h,v 1.4.2.1 2004/08/03 10:49:07 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
+ * Copyright (c) 2000, 2001 Rene Hexel <rh@NetBSD.org>
  * All rights reserved.
  *
  * Copyright (c) 1999-2000 Taku YAMAMOTO <taku@cent.saitama-u.ac.jp>

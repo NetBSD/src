@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.33 2003/05/03 18:11:07 wiz Exp $	*/
+/*	$NetBSD: mha.c,v 1.33.2.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include "opt_ddb.h"
 

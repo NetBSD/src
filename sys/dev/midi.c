@@ -1,11 +1,11 @@
-/*	$NetBSD: midi.c,v 1.34.2.1 2003/07/02 15:26:00 darrenr Exp $	*/
+/*	$NetBSD: midi.c,v 1.34.2.2 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34.2.1 2003/07/02 15:26:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34.2.2 2004/08/03 10:44:54 skrll Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -293,7 +293,10 @@ midi_in(void *addr, int data)
 			switch(data) {
 			case 0xf0: /* Sysex */
 				sc->in_state = MIDI_IN_SYSEX;
-				break;
+				sc->in_msg[0] = data;
+				sc->in_pos = 1;
+				sc->in_left = 0;
+				goto deliver_raw;
 			case 0xf1: /* MTC quarter frame */
 			case 0xf3: /* Song select */
 				sc->in_state = MIDI_IN_DATA;
@@ -327,18 +330,25 @@ midi_in(void *addr, int data)
 				sc->in_msg[1] = data;
 				sc->in_pos = 2;
 				sc->in_left = MIDI_LENGTH(sc->in_status) - 1;
+				if (sc->in_left == 0)
+				    goto deliver;
 			}
 		}
 		return;
 	case MIDI_IN_DATA:
+	   	KASSERT(sc->in_left >= 1);
+	   	KASSERT(sc->in_pos < 3);
 		sc->in_msg[sc->in_pos++] = data;
-		if (--sc->in_left <= 0)
+		if (--sc->in_left == 0)
 			break;	/* deliver data */
 		return;
 	case MIDI_IN_SYSEX:
+		sc->in_msg[0] = data;
+		sc->in_pos = 1;
+		sc->in_left = 0;
 		if (data == MIDI_SYSEX_END)
 			sc->in_state = MIDI_IN_START;
-		return;
+		goto deliver_raw;
 	}
 deliver:
 	sc->in_state = MIDI_IN_START;
@@ -349,7 +359,7 @@ deliver:
 		return;
 	}
 #endif
-
+ deliver_raw:
 	if (mb->used + sc->in_pos > mb->usedhigh) {
 		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
 			 sc->in_msg[0]));

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16.2.1 2003/07/02 15:25:41 darrenr Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.2 2004/08/03 10:43:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.1 2003/07/02 15:25:41 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.2 2004/08/03 10:43:29 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -49,10 +49,17 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.1 2003/07/02 15:25:41 darrenr
 #include <sys/malloc.h>
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
+#include <sys/conf.h>
 #include <sys/exec_macho.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
+
+#include <dev/wscons/wsconsio.h>
+
+#include <machine/darwin_machdep.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -60,16 +67,21 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.1 2003/07/02 15:25:41 darrenr
 #include <compat/mach/mach_port.h>
 
 #include <compat/darwin/darwin_exec.h>
+#include <compat/darwin/darwin_commpage.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
 #include <compat/darwin/darwin_sysctl.h>
+#include <compat/darwin/darwin_iokit.h>
+#include <compat/darwin/darwin_iohidsystem.h>
+
+/* Redefined from sys/dev/wscons/wsdisplay.c */
+extern const struct cdevsw wsdisplay_cdevsw;
 
 static void darwin_e_proc_exec(struct proc *, struct exec_package *);
 static void darwin_e_proc_fork(struct proc *, struct proc *);
 static void darwin_e_proc_exit(struct proc *);
 static void darwin_e_proc_init(struct proc *, struct vmspace *);
 
-extern char sigcode[], esigcode[];
 extern struct sysent darwin_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const darwin_syscallnames[];
@@ -96,19 +108,22 @@ const struct emul emul_darwin = {
 	NULL,
 #endif
 	darwin_sendsig,
-	trapsignal,
-	sigcode,
-	esigcode,
+	darwin_trapsignal,
+	darwin_tracesig,
+	NULL,
+	NULL,
+	NULL,
 	setregs,
 	darwin_e_proc_exec,
 	darwin_e_proc_fork,
 	darwin_e_proc_exit,
+	mach_e_lwp_fork,
+	mach_e_lwp_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	mach_syscall_intern,
 #else
 	syscall,
 #endif
-	darwin_sysctl,
 	NULL,
 };
 
@@ -126,19 +141,33 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
+	struct proc *p = l->l_proc;
 	char **cpp, *dp, *sp, *progname;
 	size_t len;
 	void *nullp = NULL;
 	long argc, envc;
 	int error;
 
+	/* 
+	 * Prepare the comm pages
+	 */
+	if ((error = darwin_commpage_map(p)) != 0)
+		return error;
+
+	/*
+	 * Set up the stack
+	 */
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
 	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
-	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
-	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0)
-		return error;
-	*stackp += sizeof(macho_hdr);
+
+	if (emea->dynamic == 1) {
+		macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
+		error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr));
+		if (error != 0)
+			return error;
+		*stackp += sizeof(macho_hdr);
+	}
 
 	cpp = (char **)*stackp;
 	argc = arginfo->ps_nargvstr;
@@ -148,7 +177,8 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 
 	dp = (char *) (cpp + argc + envc + 4);
 
-	if ((error = copyoutstr(emea->filename, dp, ARG_MAX, &len)) != 0)
+	if ((error = copyoutstr(emea->filename, dp, 
+	    (ARG_MAX < MAXPATHLEN) ? ARG_MAX : MAXPATHLEN, &len)) != 0)
 		return error;
 	progname = dp;
 	dp += len;
@@ -204,13 +234,16 @@ darwin_e_proc_exec(p, epp)
 
 	darwin_e_proc_init(p, p->p_vmspace);
 
+	/* Setup the mach_emuldata part of darwin_emuldata */
+	mach_e_proc_exec(p, epp);
+
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 	if (p->p_pid == darwin_init_pid)
 		ded->ded_fakepid = 1;
-
 #ifdef DEBUG_DARWIN
 	printf("pid %d exec'd: fakepid = %d\n", p->p_pid, ded->ded_fakepid);
 #endif
+
 	return;
 }
 
@@ -229,12 +262,20 @@ darwin_e_proc_fork(p, parent)
 	/* Use parent's vmspace because our vmspace may not be setup yet */
 	darwin_e_proc_init(p, parent->p_vmspace);
 
+	/* 
+	 * Setup the mach_emuldata part of darwin_emuldata 
+	 * The null third argument asks to not re-allocate 
+	 * p->p_emuldata again.
+	 */
+	mach_e_proc_fork1(p, parent, 0);
+
 	ded1 = p->p_emuldata;
 	ded2 = parent->p_emuldata;
 
-	ed1 = (char *)((u_long)ded1 + sizeof(struct mach_emuldata));
-	ed2 = (char *)((u_long)ded2 + sizeof(struct mach_emuldata));
+	ed1 = (char *)ded1 + sizeof(struct mach_emuldata);;
+	ed2 = (char *)ded2 + sizeof(struct mach_emuldata);;
 	len = sizeof(struct darwin_emuldata) - sizeof(struct mach_emuldata);
+
 	(void)memcpy(ed1, ed2, len);
 
 	if ((ded2->ded_fakepid == 1) && (darwin_init_pid != 0)) {
@@ -264,7 +305,10 @@ darwin_e_proc_init(p, vmspace)
 	}
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 	ded->ded_fakepid = 0;
+	ded->ded_wsdev = NODEV;
+	ded->ded_vramoffset = NULL;
 
+	/* Initalize the mach_emuldata part of darwin_emuldata */
 	mach_e_proc_init(p, vmspace);
 
 	return;
@@ -274,7 +318,17 @@ static void
 darwin_e_proc_exit(p)
 	struct proc *p;
 {
+	struct lwp *l;
 	struct darwin_emuldata *ded;
+	int error, mode;
+	struct wsdisplay_cmap cmap;
+	u_char *red;
+	u_char *green;
+	u_char *blue;
+	u_char kred[256];
+	u_char kgreen[256];
+	u_char kblue[256];
+	caddr_t sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
 
@@ -286,7 +340,109 @@ darwin_e_proc_exit(p)
 	if (ded->ded_fakepid == 2)
 		mach_bootstrap_port = mach_saved_bootstrap_port;
 
+	l = proc_representative_lwp(p);
+
+	/*
+	 * Terminate the iohidsystem kernel thread.
+	 * We need to post a fake event in case
+	 * the thread is sleeping for an event.
+	 */
+	if (ded->ded_hidsystem_finished != NULL) {
+		*ded->ded_hidsystem_finished = 1;
+		darwin_iohidsystem_postfake(l);
+		wakeup(ded->ded_hidsystem_finished);
+	}
+
+	/* 
+	 * Restore text mode and black and white colormap 
+	 */
+	if (ded->ded_wsdev != NODEV) {
+		mode = WSDISPLAYIO_MODE_EMUL;
+		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, l);
+#ifdef DEBUG_DARWIN
+		if (error != 0)
+			printf("Unable to switch back to text mode\n");
+#endif
+		red = stackgap_alloc(p, &sg, 256);
+		green = stackgap_alloc(p, &sg, 256);
+		blue = stackgap_alloc(p, &sg, 256);
+
+		(void)memset(kred, 255, 256);
+		(void)memset(kgreen, 255, 256);
+		(void)memset(kblue, 255, 256);
+
+		kred[0] = 0;
+		kgreen[0] = 0;
+		kblue[0] = 0;
+
+		cmap.index = 0;
+		cmap.count = 256;
+		cmap.red = red;
+		cmap.green = green;
+		cmap.blue = blue;
+
+		if (((error = copyout(kred, red, 256)) != 0) ||
+		    ((error = copyout(kgreen, green, 256)) != 0) ||
+		    ((error = copyout(kblue, blue, 256)) != 0))
+			error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
+			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, l);
+#ifdef DEBUG_DARWIN
+		if (error != 0)
+			printf("Cannot revert colormap (error %d)\n", error);
+#endif
+
+	}
+		
+	/* 
+	 * Cleanup mach_emuldata part of darwin_emuldata 
+	 * It will also free p->p_emuldata.
+	 */
 	mach_e_proc_exit(p);
 
 	return;
+}
+
+int
+darwin_exec_setup_stack(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	u_long max_stack_size;
+	u_long access_linear_min, access_size;
+	u_long noaccess_linear_min, noaccess_size;
+
+	if (epp->ep_flags & EXEC_32) {
+		epp->ep_minsaddr = DARWIN_USRSTACK32;
+		max_stack_size = MAXSSIZ;
+	} else {
+		epp->ep_minsaddr = DARWIN_USRSTACK;
+		max_stack_size = MAXSSIZ;
+	}
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+		max_stack_size);
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 */
+	access_size = epp->ep_ssize;
+	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	noaccess_size = max_stack_size - access_size;
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	    access_size), noaccess_size);
+	if (noaccess_size > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+	}
+	KASSERT(access_size > 0);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
+
+	return 0;
 }

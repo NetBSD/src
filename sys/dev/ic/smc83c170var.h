@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.7 2003/01/13 17:00:18 bouyer Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.7.2.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -176,12 +176,11 @@ do {									\
 	 */								\
 	__m->m_data = __m->m_ext.ext_buf + 2;				\
 	__rxd->er_bufaddr = __ds->ds_dmamap->dm_segs[0].ds_addr + 2;	\
-	__rxd->er_buflength = __m->m_ext.ext_size - 2;			\
-	__rxd->er_control = 0;						\
+	__rxd->er_control = RXCTL_BUFLENGTH(__m->m_ext.ext_size - 2);	\
 	__rxd->er_rxstatus = ER_RXSTAT_OWNER;				\
 	__rxd->er_nextdesc = EPIC_CDRXADDR((sc), EPIC_NEXTRX((x)));	\
 	EPIC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 void	epic_attach __P((struct epic_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.9 2003/06/23 11:02:01 martin Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.9.2.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.9 2003/06/23 11:02:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.9.2.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -99,7 +99,8 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 
 	/* alloc the Wnd nodes, the xor node, and the Lpo node */
 	nWndNodes = asmap->numStripeUnitsAccessed;
-	RF_CallocAndAdd(nodes, nWndNodes + 6, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, (nWndNodes + 6) * sizeof(RF_DagNode_t), 
+			(RF_DagNode_t *), allocList);
 	i = 0;
 	wndNodes = &nodes[i];
 	i += nWndNodes;
@@ -122,7 +123,8 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 
 	rf_MapUnaccessedPortionOfStripe(raidPtr, layoutPtr, asmap, dag_h, new_asm_h, &nRodNodes, &sosBuffer, &eosBuffer, allocList);
 	if (nRodNodes > 0)
-		RF_CallocAndAdd(rodNodes, nRodNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+		RF_MallocAndAdd(rodNodes, nRodNodes * sizeof(RF_DagNode_t), 
+				(RF_DagNode_t *), allocList);
 
 	/* begin node initialization */
 	rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, nRodNodes + 1, 0, 0, 0, dag_h, "Nil", allocList);
@@ -139,7 +141,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 				rodNodes[nodeNum].params[0].p = pda;
 				rodNodes[nodeNum].params[1].p = pda->bufPtr;
 				rodNodes[nodeNum].params[2].v = parityStripeID;
-				rodNodes[nodeNum].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+				rodNodes[nodeNum].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 				nodeNum++;
 				pda = pda->next;
 			}
@@ -155,7 +157,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 		wndNodes[i].params[0].p = pda;
 		wndNodes[i].params[1].p = pda->bufPtr;
 		wndNodes[i].params[2].v = parityStripeID;
-		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		pda = pda->next;
 	}
 
@@ -181,7 +183,8 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 		if (((RF_PhysDiskAddr_t *) rodNodes[i].params[0].p)->numSector == raidPtr->Layout.sectorsPerStripeUnit)
 			break;
 	if (i == nRodNodes) {
-		RF_CallocAndAdd(xorNode->results[0], 1, rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), (void *), allocList);
+		RF_MallocAndAdd(xorNode->results[0], 
+				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), (void *), allocList);
 	} else {
 		xorNode->results[0] = rodNodes[i].params[1].p;
 	}
@@ -339,7 +342,6 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 #ifdef RAID_DIAGNOSTIC
 	long    nfaults = qfuncs ? 2 : 1;
 #endif /* RAID_DIAGNOSTIC */
-	int     lu_flag = (rf_enableAtomicRMW) ? 1 : 0;	/* lock/unlock flag */
 
 	if (rf_dagDebug)
 		printf("[Creating parity-logging small-write DAG]\n");
@@ -358,8 +360,6 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	 * parity unit a block and unblock node (2) a terminator node if
 	 * atomic RMW an unlock node for each data unit, redundancy unit */
 	totalNumNodes = (2 * numDataNodes) + numParityNodes + (2 * numParityNodes) + 3;
-	if (lu_flag)
-		totalNumNodes += numDataNodes;
 
 	nNodes = numDataNodes + numParityNodes;
 
@@ -368,7 +368,8 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	dag_h->numSuccedents = 1;
 
 	/* Step 2. create the nodes */
-	RF_CallocAndAdd(nodes, totalNumNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t), 
+			(RF_DagNode_t *), allocList);
 	i = 0;
 	blockNode = &nodes[i];
 	i += 1;
@@ -386,10 +387,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	i += numParityNodes;
 	termNode = &nodes[i];
 	i += 1;
-	if (lu_flag) {
-		unlockDataNodes = &nodes[i];
-		i += numDataNodes;
-	}
+
 	RF_ASSERT(i == totalNumNodes);
 
 	/* Step 3. initialize the nodes */
@@ -411,7 +409,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
 												 * data */
 		readDataNodes[i].params[2].v = parityStripeID;
-		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, lu_flag, 0, which_ru);
+		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		pda = pda->next;
 		readDataNodes[i].propList[0] = NULL;
 		readDataNodes[i].propList[1] = NULL;
@@ -427,7 +425,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		readParityNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
 													 * parity */
 		readParityNodes[i].params[2].v = parityStripeID;
-		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		readParityNodes[i].propList[0] = NULL;
 		pda = pda->next;
 	}
@@ -442,15 +440,8 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		writeDataNodes[i].params[1].p = pda->bufPtr;	/* buffer holding new
 								 * data to be written */
 		writeDataNodes[i].params[2].v = parityStripeID;
-		writeDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		writeDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 
-		if (lu_flag) {
-			/* initialize node to unlock the disk queue */
-			rf_InitNode(&unlockDataNodes[i], rf_wait, RF_FALSE, rf_DiskUnlockFunc, rf_DiskUnlockUndoFunc, rf_GenericWakeupFunc, 1, 1, 2, 0, dag_h, "Und", allocList);
-			unlockDataNodes[i].params[0].p = pda;	/* physical disk addr
-								 * desc */
-			unlockDataNodes[i].params[1].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, lu_flag, which_ru);
-		}
 		pda = pda->next;
 	}
 
@@ -603,28 +594,12 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	}
 
 	for (i = 0; i < numDataNodes; i++) {
-		if (lu_flag) {
-			/* connect write new data nodes to unlock nodes */
-			RF_ASSERT(writeDataNodes[i].numSuccedents == 1);
-			RF_ASSERT(unlockDataNodes[i].numAntecedents == 1);
-			writeDataNodes[i].succedents[0] = &unlockDataNodes[i];
-			unlockDataNodes[i].antecedents[0] = &writeDataNodes[i];
-			unlockDataNodes[i].antType[0] = rf_control;
-
-			/* connect unlock nodes to unblock node */
-			RF_ASSERT(unlockDataNodes[i].numSuccedents == 1);
-			RF_ASSERT(unblockNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
-			unlockDataNodes[i].succedents[0] = unblockNode;
-			unblockNode->antecedents[i] = &unlockDataNodes[i];
-			unblockNode->antType[i] = rf_control;
-		} else {
-			/* connect write new data nodes to unblock node */
-			RF_ASSERT(writeDataNodes[i].numSuccedents == 1);
-			RF_ASSERT(unblockNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
-			writeDataNodes[i].succedents[0] = unblockNode;
-			unblockNode->antecedents[i] = &writeDataNodes[i];
-			unblockNode->antType[i] = rf_control;
-		}
+		/* connect write new data nodes to unblock node */
+		RF_ASSERT(writeDataNodes[i].numSuccedents == 1);
+		RF_ASSERT(unblockNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
+		writeDataNodes[i].succedents[0] = unblockNode;
+		unblockNode->antecedents[i] = &writeDataNodes[i];
+		unblockNode->antType[i] = rf_control;
 	}
 
 	/* connect write new parity nodes to unblock node */

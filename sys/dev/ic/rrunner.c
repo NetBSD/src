@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.39.2.1 2003/07/02 15:26:06 darrenr Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.39.2.2 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.1 2003/07/02 15:26:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.2 2004/08/03 10:46:18 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.1 2003/07/02 15:26:06 darrenr Exp
 #define ESH_PRINTF
 */
 
-/* Autoconfig defintion of driver back-end */
+/* Autoconfig definition of driver back-end */
 extern struct cfdriver esh_cd;
 
 struct esh_softc *esh_softc_debug[22];  /* for gdb */
@@ -222,7 +222,7 @@ eshconfig(sc)
 		sizeof(struct rr_event) * RR_EVENT_RING_SIZE;
 	
 	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma_size, 
-				 0, RR_DMA_BOUNDRY, &sc->sc_dmaseg, 1, 
+				 0, RR_DMA_BOUNDARY, &sc->sc_dmaseg, 1, 
 				 &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error("%s: couldn't allocate space for host-side"
@@ -247,7 +247,7 @@ eshconfig(sc)
 	}
     
 	if (bus_dmamap_create(sc->sc_dmat, sc->sc_dma_size, 
-			      1, sc->sc_dma_size, RR_DMA_BOUNDRY, 
+			      1, sc->sc_dma_size, RR_DMA_BOUNDARY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 			      &sc->sc_dma)) {
 		aprint_error("%s: couldn't create DMA map\n",
@@ -302,7 +302,7 @@ eshconfig(sc)
 	 */
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
-			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 
+			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY,
 			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 			      &sc->sc_send.ec_dma)) {
 		aprint_error("%s: failed bus_dmamap_create\n", 
@@ -316,7 +316,7 @@ eshconfig(sc)
 
 	for (i = 0; i < RR_MAX_SNAP_RECV_RING_SIZE; i++)
 		if (bus_dmamap_create(sc->sc_dmat, RR_DMA_MAX, 1, RR_DMA_MAX, 
-				      RR_DMA_BOUNDRY, 
+				      RR_DMA_BOUNDARY, 
 				      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 				      &sc->sc_snap_recv.ec_dma[i])) {
 			aprint_error("%s: failed bus_dmamap_create\n", 
@@ -807,7 +807,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);
-	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, RR_DMA_BOUNDRY, 
+	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, RR_DMA_BOUNDARY, 
 				 &recv->ec_dmaseg, 1, 
 				 &rseg, BUS_DMA_WAITOK);
 
@@ -832,7 +832,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		goto bad_fp_dmamem_map;
 	}
     
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, RR_DMA_BOUNDRY, 
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, RR_DMA_BOUNDARY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK, 
 			      &recv->ec_dma)) {
 		printf("%s: couldn't create DMA map for FP receive ring\n", 
@@ -1313,10 +1313,6 @@ fpwrite_done:
 #endif
 	splx(s);
 	return error;
-
-/* To shut up compiler */
-	error = physio(esh_fpstrategy, NULL, dev, B_WRITE, minphys, uio);
-	return error;
 }
 
 void 
@@ -1465,7 +1461,7 @@ eshintr(arg)
 		int i;
 
 		buf[0] = '\0';
-		strcat(buf, "rc:  ");
+		strlcat(buf, "rc:  ", sizeof(buf));
 		rc_send_consumer = (rc_offsets >> 8) & 0xff;
 		rc_snap_ring_consumer = (rc_offsets >> 16) & 0xff;
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
@@ -1475,8 +1471,8 @@ eshintr(arg)
 			/* XXX:  should do this right! */
 			NTOHL(rc_offsets);
 			*((u_int32_t *) &fp_ring_consumer[i]) = rc_offsets;
-			sprintf(t, "%.8x|", rc_offsets);
-			strcat(buf, t);
+			snprintf(t, sizeof(t), "%.8x|", rc_offsets);
+			strlcat(buf, t, sizeof(buf));
 		}
 	}
 	start_consumer = sc->sc_event_consumer;
@@ -1883,12 +1879,12 @@ eshintr(arg)
 		u_int32_t u;
 
 		buf[0] = '\0';
-		strcat(buf, "drv: ");
+		strlcat(buf, "drv: ", sizeof(buf));
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
 			/* XXX:  should do this right! */
 			u = *((u_int32_t *) &fp_ring_consumer[i]);
-			sprintf(t, "%.8x|", u);
-			strcat(buf, t);
+			snprintf(t, sizeof(t), "%.8x|", u);
+			strlcat(buf, t, sizeof(buf));
 			NTOHL(u);
 			bus_space_write_4(iot, ioh, 
 					  RR_DRIVER_RECV_CONS + i, u);
@@ -1899,14 +1895,14 @@ eshintr(arg)
 #endif
 
 		buf[0] = '\0';
-		strcat(buf, "rcn: ");
+		strlcat(buf, "rcn: ", sizeof(buf));
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
 			u = bus_space_read_4(iot, ioh, 
 					     RR_RUNCODE_RECV_CONS + i);
 			/* XXX:  should do this right! */
 			NTOHL(u);
-			sprintf(t, "%.8x|", u);
-			strcat(buf, t);
+			snprintf(t, sizeof(t), "%.8x|", u);
+			strlcat(buf, t, sizeof(buf));
 		}
 #ifdef ESH_PRINTF
 		if (okay == 1)
@@ -3332,7 +3328,6 @@ eshstop(sc)
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct rr_ring_ctl *ring;
 	u_int32_t misc_host_ctl;
 	int i;
 
@@ -3350,7 +3345,6 @@ eshstop(sc)
 	sc->sc_flags = 0;
 	ifp->if_timer = 0;  /* turn off watchdog timer */
 
-	ring = sc->sc_recv_ring_table + HIPPI_ULP_802;
 	while (sc->sc_snap_recv.ec_consumer 
                != sc->sc_snap_recv.ec_producer) {
 		struct mbuf *m0;
@@ -3403,7 +3397,6 @@ eshstop(sc)
 
 	/* XXX:  doesn't clear bufs being sent */
 
-	ring = &sc->sc_gen_info->ri_send_ring_ctl;
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_send.ec_dma);
 	if (sc->sc_send.ec_cur_mbuf) {
 		m_freem(sc->sc_send.ec_cur_mbuf);
@@ -3498,7 +3491,7 @@ esh_write_eeprom(sc, addr, value)
 	u_int32_t value;
 {
 	int i, j;
-	u_int32_t shifted_value, tmp;
+	u_int32_t shifted_value, tmp = 0;
  
 	/* If the offset hasn't been added, add it.  Otherwise pass through */
 
@@ -3691,7 +3684,7 @@ esh_new_dmainfo(sc)
 	assert(di != NULL);
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
-			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 
+			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK, 
 			      &di->ed_dma)) {
 		printf("%s:  failed dmainfo bus_dmamap_create\n", 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.52 2002/12/21 15:48:57 kristerw Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.52.2.1 2004/08/03 10:43:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.52 2002/12/21 15:48:57 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.52.2.1 2004/08/03 10:43:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.52 2002/12/21 15:48:57 kristerw Exp
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+#include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
@@ -67,6 +68,8 @@ void syscall __P((void));
 int ibcs2_debug = 1;
 #endif
 
+struct uvm_object *emul_ibcs2_object;
+
 const struct emul emul_ibcs2 = {
 	"ibcs2",
 	"/emul/ibcs2",
@@ -80,10 +83,14 @@ const struct emul emul_ibcs2 = {
 	ibcs2_syscallnames,
 	ibcs2_sendsig,
 	trapsignal,
+	NULL,
 	ibcs2_sigcode,
 	ibcs2_esigcode,
+	&emul_ibcs2_object,
 	ibcs2_setregs,
 	ibcs2_e_proc_exec,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 #ifdef __HAVE_SYSCALL_INTERN
@@ -105,7 +112,7 @@ ibcs2_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	if (epp->ep_es->es_check == exec_ibcs2_xout_makecmds)
+	if (epp->ep_es->es_makecmds == exec_ibcs2_xout_makecmds)
 		p->p_emuldata = IBCS2_EXEC_XENIX;
 	else
 		p->p_emuldata = IBCS2_EXEC_OTHER;

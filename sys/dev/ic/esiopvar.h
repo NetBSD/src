@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.7 2002/04/27 18:46:49 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.7.14.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -53,10 +53,11 @@ struct esiop_slot {
 struct esiop_xfer {
 	struct siop_common_xfer siop_tables;
 	u_int32_t tlq; /* target/lun/tag loaded in scratchC by script */
+		      /* will also containt scratcha at end of command */
 } __attribute__((__packed__));
 
 /*
- * This decribes a command handled by the SCSI controller
+ * This describes a command handled by the SCSI controller
  * These are chained in either a free list or a active list
  * We have one queue per target
  */
@@ -155,7 +156,7 @@ struct esiop_softc {
 };
 
 /* defs for sc_flags */
-#define SCF_CHAN_NOSLOT	0x0001		/* channel out of sheduler slot */
+#define SCF_CHAN_NOSLOT	0x0001		/* channel out of scheduler slot */
 #define SCF_CHAN_ADAPTREQ 0x0002	/* esiop_scsipi_request() is running */
 
 void    esiop_attach __P((struct esiop_softc *));

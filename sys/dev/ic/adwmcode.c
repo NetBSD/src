@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.c,v 1.10 2001/11/15 09:48:04 lukem Exp $        */
+/*      $NetBSD: adwmcode.c,v 1.10.16.1 2004/08/03 10:46:07 skrll Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.10 2001/11/15 09:48:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.10.16.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ AdwInitCarriers(carr_dmap, carriers)
 	ADW_CARRIER	*carriers;
 {
 	ADW_CARRIER	*carr;
-	u_int32_t	carr_next = NULL;
+	u_int32_t	carr_next = 0;
 	int		i;
 
 	memset(carriers, 0, sizeof(ADW_CARRIER) * ADW_MAX_CARRIER);
@@ -104,7 +104,7 @@ AdwInitCarriers(carr_dmap, carriers)
 /******************************************************************************/
 
 /*
- * This is the uCode for the Wide board RISC cpu.
+ * This is the uCode for the Wide board RISC CPU.
  * This code is loaded into Lram during initialization procedure.
  */
 const u_int8_t adw_asc3550_mcode[] = {

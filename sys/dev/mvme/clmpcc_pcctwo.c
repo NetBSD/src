@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.5 2002/10/02 16:34:25 thorpej Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.5.8.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Cirrus Logic CD2401 4-channel serial chip. PCCchip2 Front-end.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.5.8.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,12 +174,12 @@ clmpcc_pcctwo_iackhook(sc, which)
 	case CLMPCC_IACK_TX:
 		offset = PCC2REG_SCC_TX_PIACK;
 		break;
-#ifdef DEBUG
 	default:
+#ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
 		    sc->sc_dev.dv_xname, which);
-		panic("clmpcc_pcctwo_iackhook");
 #endif
+		panic("clmpcc_pcctwo_iackhook %d", which);
 	}
 
 	foo = pcc2_reg_read(sys_pcctwo, offset);
@@ -206,12 +209,13 @@ clmpcc_pcctwo_consiackhook(sc, which)
 	case CLMPCC_IACK_TX:
 		offset = PCC2REG_SCC_TX_PIACK;
 		break;
-#ifdef DEBUG
 	default:
+#ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
 		    sc->sc_dev.dv_xname, which);
 		panic("clmpcc_pcctwo_consiackhook");
 #endif
+		panic("clmpcc_pcctwo_iackhook %d", which);
 	}
 
 #ifdef MVME68K

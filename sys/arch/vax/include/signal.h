@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.9 2003/04/28 23:16:25 bjh21 Exp $   */
+/*      $NetBSD: signal.h,v 1.9.2.1 2004/08/03 10:42:23 skrll Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -75,29 +71,16 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_sp = (uc)->uc_mcontext.__gregs[_REG_SP];		\
-	(sc)->sc_fp = (uc)->uc_mcontext.__gregs[_REG_FP];		\
-	(sc)->sc_ap = (uc)->uc_mcontext.__gregs[_REG_AP];		\
-	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-	(sc)->sc_ps = (uc)->uc_mcontext.__gregs[_REG_PSL];		\
-} while (/*CONSTCOND*/0)
+#ifdef _KERNEL
+void sendsig_context(int, const sigset_t *, u_long);
 
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_SP]  = (sc)->sc_sp;		\
-	(uc)->uc_mcontext.__gregs[_REG_FP]  = (sc)->sc_fp;		\
-	(uc)->uc_mcontext.__gregs[_REG_AP]  = (sc)->sc_ap;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC]  = (sc)->sc_pc;		\
-	(uc)->uc_mcontext.__gregs[_REG_PSL] = (sc)->sc_ps;		\
-} while (/*CONSTCOND*/0)
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers)	((vers) <= 3 && (vers) != 1)
+#else
+#define	SIGTRAMP_VALID(vers)	((vers) == 3)
+#endif
+
+#endif	/* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_VAX_SIGNAL_H_ */

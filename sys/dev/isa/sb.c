@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.74 2003/05/03 18:11:28 wiz Exp $	*/
+/*	$NetBSD: sb.c,v 1.74.2.1 2004/08/03 10:48:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74 2003/05/03 18:11:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include "midi.h"
 
@@ -119,11 +119,11 @@ int
 sbmatch(sc)
 	struct sbdsp_softc *sc;
 {
-	static u_char drq_conf[8] = {
+	static const u_char drq_conf[8] = {
 		0x01, 0x02, -1, 0x08, -1, 0x20, 0x40, 0x80
 	};
 
-	static u_char irq_conf[11] = {
+	static const u_char irq_conf[11] = {
 		-1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
 	};
 
@@ -151,7 +151,7 @@ sbmatch(sc)
         	/* 
                  * XXX Some ViBRA16 cards seem to have two 8 bit DMA 
                  * channels.  I've no clue how to use them, so ignore
-                 * one of them for now.  -- augustss@netbsd.org
+                 * one of them for now.  -- augustss@NetBSD.org
                  */
         	sc->sc_drq16 = -1;
 
@@ -264,21 +264,20 @@ sb_getdev(addr, retp)
 	struct audio_device *retp;
 {
 	struct sbdsp_softc *sc = addr;
-	static char *names[] = SB_NAMES;
-	char *config;
+	static const char * const names[] = SB_NAMES;
+	const char *config;
 
 	if (sc->sc_model == SB_JAZZ)
-		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
+		strlcpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
-		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
-	sprintf(retp->version, "%d.%02d", 
-		SBVER_MAJOR(sc->sc_version),
-		SBVER_MINOR(sc->sc_version));
+		strlcpy(retp->name, "SoundBlaster", sizeof(retp->name));
+	snprintf(retp->version, sizeof(retp->version), "%d.%02d",
+	    SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version));
 	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
 		config = names[sc->sc_model];
 	else
 		config = "??";
-	strncpy(retp->config, config, sizeof(retp->config));
+	strlcpy(retp->config, config, sizeof(retp->config));
 		
 	return 0;
 }

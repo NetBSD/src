@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.8 2001/06/29 11:24:42 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.8.22.1 2004/08/03 10:46:10 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -155,12 +155,14 @@
 /* Events */
 #define AN_EV_CLR_STUCK_BUSY	0x4000	/* clear stuck busy bit */
 #define AN_EV_WAKEREQUEST	0x2000	/* awaken from PSP mode */
+#define AN_EV_MIC		0x1000	/* Message Integrity Check*/
+#define AN_EV_TX_CPY		0x0400
 #define AN_EV_AWAKE		0x0100	/* station woke up from PSP mode*/
 #define AN_EV_LINKSTAT		0x0080	/* link status available */
 #define AN_EV_CMD		0x0010	/* command completed */
 #define AN_EV_ALLOC		0x0008	/* async alloc/reclaim completed */
 #define AN_EV_TX_EXC		0x0004	/* async xmit completed with failure */
-#define AN_EV_TX		0x0002	/* async xmit completed succesfully */
+#define AN_EV_TX		0x0002	/* async xmit completed successfully */
 #define AN_EV_RX		0x0001	/* async rx completed */
 
 /* Host software registers */
@@ -182,22 +184,11 @@
 #define AN_AUX_DATA		0x3E
 
 /*
- * Length, Type, Value (LTV) record definitions and RID values.
- */
-struct an_ltv_gen {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
-	u_int16_t		an_val;
-};
-
-/*
  * General configuration information.
  */
 #define AN_RID_GENCONFIG	0xFF10
-struct an_ltv_genconfig {
+struct an_rid_genconfig {
 	/* General configuration. */
-	u_int16_t		an_len;			/* 0x00 */
-	u_int16_t		an_type;		/* XXXX */
 	u_int16_t		an_opmode;		/* 0x02 */
 	u_int16_t		an_rxmode;		/* 0x04 */
 	u_int16_t		an_fragthresh;		/* 0x06 */
@@ -264,7 +255,8 @@ struct an_ltv_genconfig {
 	u_int8_t		an_magic_packet_action;	/* 0x98 */
 	u_int8_t		an_magic_packet_ctl;	/* 0x99 */
 	u_int16_t		an_rsvd9;
-};
+	u_int16_t               an_spare[16];
+} __attribute__((__packed__));
 
 #define AN_OPMODE_IBSS_ADHOC			0x0000
 #define AN_OPMODE_INFRASTRUCTURE_STATION	0x0001
@@ -273,6 +265,11 @@ struct an_ltv_genconfig {
 #define AN_OPMODE_UNMODIFIED_PAYLOAD		0x0100
 #define AN_OPMODE_AIRONET_EXTENSIONS		0x0200
 #define AN_OPMODE_AP_EXTENSIONS			0x0400
+#define	AN_OPMODE_ANTENNA_ALIGN			0x0800
+#define	AN_OPMODE_ETHER_LLC			0x1000
+#define	AN_OPMODE_LEAF_NODE			0x2000
+#define	AN_OPMODE_CF_POLLABLE			0x4000
+#define	AN_OPMODE_MIC				0x8000
 
 #define AN_RXMODE_BC_MC_ADDR			0x0000
 #define AN_RXMODE_BC_ADDR			0x0001
@@ -281,6 +278,7 @@ struct an_ltv_genconfig {
 #define AN_RXMODE_80211_MONITOR_ANYBSS		0x0004
 #define AN_RXMODE_LAN_MONITOR_CURBSS		0x0005
 #define AN_RXMODE_NO_8023_HEADER		0x0100
+#define AN_RXMODE_NORMALIZED_RSSI		0x0200
 
 #define AN_RATE_1MBPS				0x0002
 #define AN_RATE_2MBPS				0x0004
@@ -302,10 +300,9 @@ struct an_ltv_genconfig {
 #define AN_AUTHTYPE_ALLOW_UNENCRYPTED		0x0200
 #define AN_AUTHTYPE_LEAP			0x1000
 
-#define AN_PSAVE_NONE				0x0000
-#define AN_PSAVE_CAM				0x0001
-#define AN_PSAVE_PSP				0x0002
-#define AN_PSAVE_PSP_CAM			0x0003
+#define AN_PSAVE_CAM				0x0000
+#define AN_PSAVE_PSP				0x0001
+#define AN_PSAVE_PSP_CAM			0x0002
 
 #define AN_RADIOTYPE_80211_FH			0x0001
 #define AN_RADIOTYPE_80211_DS			0x0002
@@ -328,67 +325,43 @@ struct an_ltv_genconfig {
  * card.
  */
 #define AN_RID_SSIDLIST		0xFF11
-struct an_ltv_ssidlist {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
-	u_int16_t		an_ssid1_len;
-	char			an_ssid1[32];
-	u_int16_t		an_ssid2_len;
-	char			an_ssid2[32];
-	u_int16_t		an_ssid3_len;
-	char			an_ssid3[32];
-};
-
-#define AN_DEF_SSID_LEN		7
-#define AN_DEF_SSID		"tsunami"
+struct an_rid_ssidlist {
+	struct an_rid_ssid_entry {
+		u_int16_t	an_ssid_len;
+		char		an_ssid[32];
+	} __attribute__((__packed__)) an_entry[3];	/* 25 for fwver.5 */
+} __attribute__((__packed__));
 
 /*
  * Valid AP list.
  */
 #define AN_RID_APLIST		0xFF12
-struct an_ltv_aplist {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
+struct an_rid_aplist {
 	u_int8_t		an_ap1[8];
 	u_int8_t		an_ap2[8];
 	u_int8_t		an_ap3[8];
 	u_int8_t		an_ap4[8];
-};
+} __attribute__((__packed__));
 
 /*
  * Driver name.
  */
 #define AN_RID_DRVNAME		0xFF13
-struct an_ltv_drvname {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
+struct an_rid_drvname {
 	u_int8_t		an_drvname[16];
-};
+} __attribute__((__packed__));
 
 /*
  * Frame encapsulation.
  */
 #define AN_RID_ENCAP		0xFF14
+#define	AN_ENCAP_NENTS		8
 struct an_rid_encap {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
-	u_int16_t		an_ethertype_default;
-	u_int16_t		an_action_default;
-	u_int16_t		an_ethertype0;
-	u_int16_t		an_action0;
-	u_int16_t		an_ethertype1;
-	u_int16_t		an_action1;
-	u_int16_t		an_ethertype2;
-	u_int16_t		an_action2;
-	u_int16_t		an_ethertype3;
-	u_int16_t		an_action3;
-	u_int16_t		an_ethertype4;
-	u_int16_t		an_action4;
-	u_int16_t		an_ethertype5;
-	u_int16_t		an_action5;
-	u_int16_t		an_ethertype6;
-	u_int16_t		an_action6;
-};
+	struct an_rid_encap_entry {
+		u_int16_t	an_ethertype;
+		u_int16_t	an_action;
+	} __attribute__((__packed__)) an_entry[AN_ENCAP_NENTS];
+} __attribute__((__packed__));
 
 #define AN_ENCAP_ACTION_RX	0x0001
 #define AN_ENCAP_ACTION_TX	0x0002
@@ -408,9 +381,7 @@ struct an_rid_encap {
  * Card capabilities (read only).
  */
 #define AN_RID_CAPABILITIES	0xFF00
-struct an_ltv_caps {
-	u_int16_t		an_len;			/* 0x00 */
-	u_int16_t		an_type;		/* XXXX */
+struct an_rid_caps {
 	u_int8_t		an_oui[3];		/* 0x02 */
 	u_int8_t		an_rsvd0;		/* 0x05 */
 	u_int16_t		an_prodnum;		/* 0x06 */
@@ -435,28 +406,41 @@ struct an_ltv_caps {
 	u_int16_t		an_softcaps;		/* 0x7C */
 	u_int16_t		an_bootblockrev;	/* 0x7E */
 	u_int16_t		an_req_hw_support;	/* 0x80 */
-};
+	/* extended capabilities */
+	u_int16_t		an_ext_softcaps;	/* 0x82 */
+	u_int16_t		an_spare[34];
+} __attribute__((__packed__));
+
+#define	AN_REGDOMAIN_USA	0
+#define	AN_REGDOMAIN_EUROPE	1
+#define	AN_REGDOMAIN_JAPAN	2
+#define	AN_REGDOMAIN_SPAIN	3
+#define	AN_REGDOMAIN_FRANCE	4
+#define	AN_REGDOMAIN_BELGIUM	5
+#define	AN_REGDOMAIN_ISRAEL	6
+#define	AN_REGDOMAIN_CANADA	7
+#define	AN_REGDOMAIN_AUSTRALIA	8
+#define	AN_REGDOMAIN_JAPANWIDE	9
+
+#define	AN_SOFTCAPS_WEP		0x0002
+#define	AN_SOFTCAPS_RSSIMAP	0x0008
+#define	AN_SOFTCAPS_WEP128	0x0100
+
+#define	AN_EXT_SOFTCAPS_MIC	0x0001
 
 /*
  * Access point (read only)
  */
 #define AN_RID_APINFO		0xFF01
-struct an_ltv_apinfo {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
+struct an_rid_apinfo {
 	u_int16_t		an_tim_addr;
 	u_int16_t		an_airo_addr;
-};
+} __attribute__((__packed__));
 
 /*
  * Radio info (read only).
  */
 #define AN_RID_RADIOINFO	0xFF02
-struct an_ltv_radioinfo {
-	u_int16_t		an_len;
-	u_int16_t		an_type;
-	/* ??? */
-};
 
 /*
  * Status (read only). Note: the manual claims this RID is 108 bytes
@@ -470,9 +454,7 @@ struct an_ltv_radioinfo {
  * reversed. Either that, or the hop_period field is unused.
  */
 #define AN_RID_STATUS		0xFF50
-struct an_ltv_status {
-	u_int16_t		an_len;			/* 0x00 */
-	u_int16_t		an_type;		/* 0xXX */
+struct an_rid_status {
 	u_int8_t		an_macaddr[6];		/* 0x02 */
 	u_int16_t		an_opmode;		/* 0x08 */
 	u_int16_t		an_errcode;		/* 0x0A */
@@ -503,8 +485,8 @@ struct an_ltv_status {
 	u_int16_t		an_max_noise_prev_sec;	/* 0x7A */
 	u_int16_t		an_avg_noise_prev_min;	/* 0x7C */
 	u_int16_t		an_max_noise_prev_min;	/* 0x7E */
-	u_int16_t		an_spare[4];
-};
+	u_int16_t		an_spare[11];
+} __attribute__((__packed__));
 
 #define AN_STATUS_OPMODE_CONFIGURED		0x0001
 #define AN_STATUS_OPMODE_MAC_ENABLED		0x0002
@@ -512,7 +494,6 @@ struct an_ltv_status {
 #define AN_STATUS_OPMODE_IN_SYNC		0x0010
 #define AN_STATUS_OPMODE_ASSOCIATED		0x0020
 #define AN_STATUS_OPMODE_ERROR			0x8000
-
 
 /*
  * Statistics
@@ -529,9 +510,7 @@ struct an_ltv_status {
  * but the card says the record is 404 bytes. There's some padding left
  * at the end of this structure to account for any discrepancies.
  */
-struct an_ltv_stats {
-	u_int16_t		an_len;			/* 0x00 */
-	u_int16_t		an_type;		/* 0xXX */
+struct an_rid_stats {
 	u_int16_t		an_spacer;		/* 0x02 */
 	u_int32_t		an_rx_overruns;		/* 0x04 */
 	u_int32_t		an_rx_plcp_csum_errs;	/* 0x08 */
@@ -630,20 +609,18 @@ struct an_ltv_stats {
 	u_int32_t		an_uptime_secs;		/* 0x17C */
 	u_int32_t		an_lostsync_better_ap;	/* 0x180 */
 	u_int32_t		an_rsvd[10];
-};
+} __attribute__((__packed__));
 
 /*
  * Volatile WEP Key
  */
 #define AN_RID_WEP_VOLATILE	0xFF15	/* Volatile WEP Key */
-struct an_ltv_wepkey {
-	u_int16_t		an_len;			/* 0x00 */
-	u_int16_t		an_type;		/* 0xXX */
+struct an_rid_wepkey {
 	u_int16_t		an_key_index;		/* 0x02 */
 	u_int8_t		an_mac_addr[6];		/* 0x04 */
 	u_int16_t		an_key_len;		/* 0x0A */
-	u_int8_t		an_key[13];		/* 0x0C */
-};
+	u_int8_t		an_key[16];		/* 0x0C */
+} __attribute__((__packed__));
 
 /*
  * Persistent WEP Key
@@ -655,12 +632,22 @@ struct an_ltv_wepkey {
  */
 #define AN_RID_LEAP_USER	0xFF23	/* User Name for LEAP */
 #define AN_RID_LEAP_PASS	0xFF24	/* Password for LEAP */
-struct an_ltv_leapkey {
-	u_int16_t		an_len;			/* 0x00 */
-	u_int16_t		an_type;		/* 0xXX */
+struct an_rid_leapkey {
 	u_int16_t		an_key_len;		/* 0x02 */
 	u_int8_t		an_key[32];		/* 0x04 */
-};
+} __attribute__((__packed__));
+
+/*
+ * MIC
+ */
+#define AN_RID_MIC		0xFF57	/* Message Integrity Check */
+struct an_rid_mic {
+	u_int16_t		an_mic_state;		/* 0x02 */
+	u_int16_t		an_mic_mcast_valid;	/* 0x04 */
+	u_int8_t		an_mic_mcast[16];	/* 0x06 */
+	u_int16_t		an_mic_ucast_valid;	/* 0x16 */
+	u_int8_t		an_mic_ucast[16];	/* 0x18 */
+} __attribute__((__packed__));
 
 /*
  * Receive frame structure.
@@ -676,16 +663,9 @@ struct an_rxframe {
 	u_int8_t		an_rx_assoc_cnt;	/* 0x0C */
 	u_int8_t		an_rsvd1[3];		/* 0x0D */
 	u_int8_t		an_plcp_hdr[4];		/* 0x10 */
-	u_int16_t		an_frame_ctl;		/* 0x14 */
-	u_int16_t		an_duration;		/* 0x16 */
-	u_int8_t		an_addr1[6];		/* 0x18 */
-	u_int8_t		an_addr2[6];		/* 0x1E */
-	u_int8_t		an_addr3[6];		/* 0x24 */
-	u_int16_t		an_seq_ctl;		/* 0x2A */
-	u_int8_t		an_addr4[6];		/* 0x2C */
+	struct ieee80211_frame_addr4	an_whdr;
 	u_int16_t		an_gaplen;		/* 0x32 */
-};
-
+} __attribute__((__packed__));
 #define AN_RXGAP_MAX	8
 
 /*
@@ -703,33 +683,19 @@ struct an_txframe {
 	u_int8_t		an_tx_max_long_retries;	/* 0x10 */
 	u_int8_t		an_tx_max_short_retries; /*0x11 */
 	u_int8_t		an_rsvd0[2];		/* 0x12 */
-	u_int16_t		an_frame_ctl;		/* 0x14 */
-	u_int16_t		an_duration;		/* 0x16 */
-	u_int8_t		an_addr1[6];		/* 0x18 */
-	u_int8_t		an_addr2[6];		/* 0x1E */
-	u_int8_t		an_addr3[6];		/* 0x24 */
-	u_int16_t		an_seq_ctl;		/* 0x2A */
-	u_int8_t		an_addr4[6];		/* 0x2C */
+	struct ieee80211_frame_addr4	an_whdr;
 	u_int16_t		an_gaplen;		/* 0x32 */
-};
+} __attribute__((__packed__));
 
-struct an_rxframe_802_3 {
-        u_int16_t		an_rx_802_3_status;     /* 0x34 */	
-	u_int16_t		an_rx_802_3_payload_len;/* 0x36 */
-	u_int8_t		an_rx_dst_addr[6];      /* 0x38 */
-	u_int8_t		an_rx_src_addr[6];      /* 0x3E */
-};
-#define AN_RXGAP_MAX	8
+#define	AN_TXGAP_802_3	0
+#define	AN_TXGAP_802_11	6
 
-struct an_txframe_802_3 {
-/*
- * Transmit 802.3 header structure.
- */
-        u_int16_t		an_tx_802_3_status;     /* 0x34 */	
-	u_int16_t		an_tx_802_3_payload_len;/* 0x36 */
-	u_int8_t		an_tx_dst_addr[6];      /* 0x38 */
-	u_int8_t		an_tx_src_addr[6];      /* 0x3E */
-};
+struct an_802_3_hdr {
+	u_int16_t		an_802_3_status;
+	u_int16_t		an_802_3_payload_len;
+	u_int8_t		an_dst_addr[6];
+	u_int8_t		an_src_addr[6];
+} __attribute__((__packed__));
 
 #define AN_TXSTAT_EXCESS_RETRY	0x0002
 #define AN_TXSTAT_LIFE_EXCEEDED	0x0004
@@ -761,10 +727,6 @@ struct an_txframe_802_3 {
 #define AN_TXCTL_8023	\
 	(AN_TXCTL_TXOK_INTR|AN_TXCTL_TXERR_INTR|AN_HEADERTYPE_8023|	\
 	AN_PAYLOADTYPE_ETHER|AN_TXCTL_NORELEASE)
-
-#define AN_802_3_OFFSET		0x34
-#define AN_802_11_OFFSET	0x44
-#define AN_802_11_OFFSET_RAW	0x3C
 
 #define AN_STAT_BADCRC		0x0001
 #define AN_STAT_UNDECRYPTABLE	0x0002

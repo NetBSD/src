@@ -1,11 +1,11 @@
-/*	$NetBSD: ld_twe.c,v 1.13 2002/10/02 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.13.6.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran; and by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.13 2002/10/02 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.13.6.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include "rnd.h"
 
@@ -72,15 +72,23 @@ struct ld_twe_softc {
 };
 
 static void	ld_twe_attach(struct device *, struct device *, void *);
+static int	ld_twe_detach(struct device *, int);
 static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
 			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
+static int	ld_twe_flush(struct ld_softc *);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
 static int	ld_twe_start(struct ld_softc *, struct buf *);
 
+static void	ld_twe_adjqparam(struct device *, int);
+
 CFATTACH_DECL(ld_twe, sizeof(struct ld_twe_softc),
-    ld_twe_match, ld_twe_attach, NULL, NULL);
+    ld_twe_match, ld_twe_attach, ld_twe_detach, NULL);
+
+static const struct twe_callbacks ld_twe_callbacks = {
+	ld_twe_adjqparam,
+};
 
 static int
 ld_twe_match(struct device *parent, struct cfdata *match, void *aux)
@@ -96,23 +104,79 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_twe_softc *sc;
 	struct ld_softc *ld;
 	struct twe_softc *twe;
+	struct twe_drive *td;
+	const char *typestr, *stripestr, *statstr;
+	char unktype[16], stripebuf[32], unkstat[32];
+	int error;
+	uint8_t status;
 
 	sc = (struct ld_twe_softc *)self;
 	ld = &sc->sc_ld;
 	twe = (struct twe_softc *)parent;
 	twea = aux;
+	td = &twe->sc_units[twea->twea_unit];
+
+	twe_register_callbacks(twe, twea->twea_unit, &ld_twe_callbacks);
 
 	sc->sc_hwunit = twea->twea_unit;
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxxfer = twe_get_maxxfer(twe_get_maxsegs());
-	ld->sc_secperunit = twe->sc_dsize[twea->twea_unit];
+	ld->sc_secperunit = td->td_size;
 	ld->sc_secsize = TWE_SECTOR_SIZE;
-	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
+	ld->sc_maxqueuecnt = twe->sc_openings;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
+	ld->sc_flush = ld_twe_flush;
 
-	printf("\n");
+	typestr = twe_describe_code(twe_table_unittype, td->td_type);
+	if (typestr == NULL) {
+		snprintf(unktype, sizeof(unktype), "<0x%02x>", td->td_type);
+		typestr = unktype;
+	}
+	switch (td->td_type) {
+	case TWE_AD_CONFIG_RAID0:
+	case TWE_AD_CONFIG_RAID5:
+	case TWE_AD_CONFIG_RAID10:
+		stripestr = twe_describe_code(twe_table_stripedepth,
+		    td->td_stripe);
+		if (stripestr == NULL)
+			snprintf(stripebuf, sizeof(stripebuf),
+			    "<stripe code 0x%02x> ", td->td_stripe);
+		else
+			snprintf(stripebuf, sizeof(stripebuf), "%s stripe ",
+			    stripestr);
+		break;
+	default:
+		stripebuf[0] = '\0';
+	}
+
+	error = twe_param_get_1(twe, TWE_PARAM_UNITINFO + twea->twea_unit,
+	    TWE_PARAM_UNITINFO_Status, &status);
+	status &= TWE_PARAM_UNITSTATUS_MASK;
+	if (error) {
+		snprintf(unkstat, sizeof(unkstat), "<unknown>");
+		statstr = unkstat;
+	} else if ((statstr =
+		    twe_describe_code(twe_table_unitstate, status)) == NULL) {
+		snprintf(unkstat, sizeof(unkstat), "<status code 0x%02x>",
+		    status);
+		statstr = unkstat;
+	}
+
+	printf(": %s%s, status: %s\n", stripebuf, typestr, statstr);
 	ldattach(ld);
+}
+
+static int
+ld_twe_detach(struct device *self, int flags)
+{
+	int rv;
+
+	if ((rv = ldbegindetach((struct ld_softc *)self, flags)) != 0)
+		return (rv);
+	ldenddetach((struct ld_softc *)self);
+
+	return (0);
 }
 
 static int
@@ -127,8 +191,8 @@ ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
 	twe = (struct twe_softc *)sc->sc_ld.sc_dv.dv_parent;
 
 	flags = (dowrite ? TWE_CCB_DATA_OUT : TWE_CCB_DATA_IN);
-	if ((rv = twe_ccb_alloc(twe, &ccb, flags)) != 0)
-		return (rv);
+	if ((ccb = twe_ccb_alloc(twe, flags)) == NULL)
+		return (EAGAIN);
 
 	ccb->ccb_data = data;
 	ccb->ccb_datasize = datasize;
@@ -212,4 +276,47 @@ ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return (ld_twe_dobio((struct ld_twe_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));
+}
+
+static int
+ld_twe_flush(struct ld_softc *ld)
+{
+	struct ld_twe_softc *sc = (void *) ld;
+	struct twe_softc *twe = (void *) ld->sc_dv.dv_parent;
+	struct twe_ccb *ccb;
+	struct twe_cmd *tc;
+	int s, rv;
+
+	ccb = twe_ccb_alloc_wait(twe, 0);
+	KASSERT(ccb != NULL);
+
+	ccb->ccb_data = NULL;
+	ccb->ccb_datasize = 0;
+	ccb->ccb_tx.tx_handler = twe_ccb_wait_handler;
+	ccb->ccb_tx.tx_context = NULL;
+	ccb->ccb_tx.tx_dv = &ld->sc_dv;
+
+	tc = ccb->ccb_cmd;
+	tc->tc_size = 2;
+	tc->tc_opcode = TWE_OP_FLUSH;
+	tc->tc_unit = sc->sc_hwunit;
+	tc->tc_count = 0;
+
+	rv = 0;
+	twe_ccb_enqueue(twe, ccb);
+	s = splbio();
+	while ((ccb->ccb_flags & TWE_CCB_COMPLETE) == 0)
+		if ((rv = tsleep(ccb, PRIBIO, "tweflush", 60 * hz)) != 0)
+			break;
+	twe_ccb_free(twe, ccb);
+	splx(s);
+
+	return (rv);
+}
+
+static void
+ld_twe_adjqparam(struct device *self, int openings)
+{
+
+	ldadjqparam((struct ld_softc *)self, openings);
 }

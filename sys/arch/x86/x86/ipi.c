@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
+/*	$NetBSD: ipi.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>                  /* RCS ID & Copyright macro defns */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -58,7 +59,7 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 
 	x86_atomic_setbits_l(&ci->ci_ipis, ipimask);
 
-	/* Don't send IPI to cpu which isn't (yet) running. */
+	/* Don't send IPI to CPU which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return ENOENT;
 
@@ -131,11 +132,11 @@ x86_ipi_handler(void)
 
 	pending = x86_atomic_testset_ul(&ci->ci_ipis, 0);
 
-	for (bit = 0; bit < X86_NIPI && pending; bit++) {
-		if (pending & (1<<bit)) {
-			pending &= ~(1<<bit);
-			ci->ci_ipi_events[bit].ev_count++;
-			(*ipifunc[bit])(ci);
-		}
+	KDASSERT((pending >> X86_NIPI) == 0);
+	while ((bit = ffs(pending)) != 0) {
+		bit--;
+		pending &= ~(1<<bit);
+		ci->ci_ipi_events[bit].ev_count++;
+		(*ipifunc[bit])(ci);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.10 2003/03/22 11:32:38 nakayama Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.10.2.1 2004/08/03 10:45:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.10 2003/03/22 11:32:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.10.2.1 2004/08/03 10:45:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.10 2003/03/22 11:32:38 nakayama
 #endif
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ieee1394/ieee1394reg.h>
 #include <dev/ieee1394/ieee1394var.h>
@@ -107,7 +107,7 @@ fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	const char *devname = self->dv_xname;
 
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
+	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, 
 	       CARDBUS_REVISION(ca->ca_class));
 

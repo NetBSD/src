@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.3 2003/05/03 18:11:31 wiz Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.3.2.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.3.2.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -593,7 +596,7 @@ mvmebus_dmamap_load_common(sc, map)
 
 	/*
 	 * Traverse the list of segments which make up this map, and
-	 * convert the cpu-relative addresses therein to VMEbus addresses.
+	 * convert the CPU-relative addresses therein to VMEbus addresses.
 	 */
 	for (ds = &map->dm_segs[0]; ds < &map->dm_segs[map->dm_nsegs]; ds++) {
 		/*
@@ -840,7 +843,7 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate physical memory.
 	 *
-	 * Note: This fills in the segments with cpu-relative physical
+	 * Note: This fills in the segments with CPU-relative physical
 	 * addresses. A further call to bus_dmamap_load_raw() (with a
 	 * DMA map which specifies the same VMEbus address space and
 	 * constraints as the call to here) must be made. The segments
@@ -912,48 +915,33 @@ mvmebus_mod_string(addr, len, am, ds)
 	static const char *mode[] = {"BLT64)", "DATA)", "PROG)", "BLT32)"};
 	static const char *dsiz[] = {"(", "(D8,", "(D16,", "(D16-D8,",
 	"(D32,", "(D32,D8,", "(D32-D16,", "(D32-D8,"};
+	static const char *adrfmt[] = { "A32:%08x-%08x ", "USR:%08x-%08x ",
+	    "A16:%04x-%04x ", "A24:%06x-%06x " };
 	static char mstring[40];
-	char *fmt;
 
-	switch (am & VME_AM_ADRSIZEMASK) {
-	case VME_AM_A32:
-		fmt = "A32:%08x-%08x ";
-		break;
-
-	case VME_AM_A24:
-		fmt = "A24:%06x-%06x ";
-		break;
-
-	case VME_AM_A16:
-		fmt = "A16:%04x-%04x ";
-		break;
-
-	case VME_AM_USERDEF:
-		fmt = "USR:%08x-%08x ";
-		break;
-	}
-
-	sprintf(mstring, fmt, addr, addr + len - 1);
-	strcat(mstring, dsiz[ds & 0x7]);
+	snprintf(mstring, sizeof(mstring),
+	    adrfmt[(am & VME_AM_ADRSIZEMASK) >> VME_AM_ADRSIZESHIFT],
+	    addr, addr + len - 1);
+	strlcat(mstring, dsiz[ds & 0x7], sizeof(mstring));
 
 	if (MVMEBUS_AM_HAS_CAP(am)) {
 		if (am & MVMEBUS_AM_CAP_DATA)
-			strcat(mstring, "D");
+			strlcat(mstring, "D", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_PROG)
-			strcat(mstring, "P");
+			strlcat(mstring, "P", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_USER)
-			strcat(mstring, "U");
+			strlcat(mstring, "U", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_SUPER)
-			strcat(mstring, "S");
+			strlcat(mstring, "S", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_BLK)
-			strcat(mstring, "B");
+			strlcat(mstring, "B", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_BLKD64)
-			strcat(mstring, "6");
-		strcat(mstring, ")");
+			strlcat(mstring, "6", sizeof(mstring));
+		strlcat(mstring, ")", sizeof(mstring));
 	} else {
-		strcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
-		    "USER," : "SUPER,");
-		strcat(mstring, mode[am & VME_AM_MODEMASK]);
+		strlcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
+		    "USER," : "SUPER,", sizeof(mstring));
+		strlcat(mstring, mode[am & VME_AM_MODEMASK], sizeof(mstring));
 	}
 
 	return (mstring);

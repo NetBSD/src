@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.47 2003/01/06 13:05:08 wiz Exp $	*/
+/*	$NetBSD: isr.c,v 1.47.2.1 2004/08/03 10:42:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * This handles multiple attach of autovectored interrupts,
  * and the handy software interrupt request register.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.47.2.1 2004/08/03 10:42:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.17 2003/06/05 16:33:43 tsutsui Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.17.2.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17 2003/06/05 16:33:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.2.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -1317,6 +1317,12 @@ ste_init(struct ifnet *ifp)
 
 	/* Set the FIFO release threshold to 512 bytes. */
 	bus_space_write_1(st, sh, STE_TxReleaseThresh, 512 >> 4);
+
+	/* Set maximum packet size for VLAN. */
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		bus_space_write_2(st, sh, STE_MaxFrameSize, ETHER_MAX_LEN + 4);
+	else
+		bus_space_write_2(st, sh, STE_MaxFrameSize, ETHER_MAX_LEN);
 
 	/*
 	 * Initialize the interrupt mask.

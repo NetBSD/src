@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_cpcbus.c,v 1.5 2002/10/02 16:33:34 thorpej Exp $	*/
+/*	$NetBSD: timer_cpcbus.c,v 1.5.6.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.5.6.1 2004/08/03 10:46:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

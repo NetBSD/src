@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.5 2003/06/23 15:10:03 martin Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.5.2.1 2004/08/03 10:44:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.5 2003/06/23 15:10:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.5.2.1 2004/08/03 10:44:24 skrll Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -75,6 +75,8 @@ void syscall_intern(struct proc *);
 void syscall(void);
 #endif
 
+struct uvm_object *emul_pecoff_object;
+
 const struct emul emul_pecoff = {
 	"pecoff",
 	"/emul/pecoff",
@@ -92,9 +94,13 @@ const struct emul emul_pecoff = {
 #endif
 	sendsig,
 	trapsignal,
+	NULL,
 	sigcode,
 	esigcode,
+	&emul_pecoff_object,
 	setregs,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.19 2003/06/15 23:09:06 fvdl Exp $ */
+/*	$NetBSD: msiiep.c,v 1.19.2.1 2004/08/03 10:41:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.19 2003/06/15 23:09:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.19.2.1 2004/08/03 10:41:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -142,52 +142,8 @@ static paddr_t	mspcic_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 static void	*mspcic_intr_establish(bus_space_tag_t, int, int,
 				       int (*)(void *), void *, void (*)(void));
 
-static struct sparc_bus_space_tag mspcic_io_tag = {
-	&mspcic_io_cookie,	/* cookie */
-	NULL,			/* parent bus tag */
-	NULL,			/* ranges */
-	0,			/* nranges */
-	mspcic_bus_map,		/* bus_space_map */
-	NULL,			/* bus_space_unmap */
-	NULL,			/* bus_space_subregion */
-	NULL,			/* bus_space_barrier */
-	mspcic_bus_mmap,	/* bus_space_mmap */
-	mspcic_intr_establish,	/* bus_intr_establish */
-#if __FULL_SPARC_BUS_SPACE
-	NULL,			/* read_1 */
-	NULL,			/* read_2 */
-	NULL,			/* read_4 */
-	NULL,			/* read_8 */
-	NULL,			/* write_1 */
-	NULL,			/* write_2 */
-	NULL,			/* write_4 */
-	NULL			/* write_8 */
-#endif
-};
-
-static struct sparc_bus_space_tag mspcic_mem_tag = {
-	&mspcic_mem_cookie,	/* cookie */
-	NULL,			/* parent bus tag */
-	NULL,			/* ranges */
-	0,			/* nranges */
-	mspcic_bus_map,		/* bus_space_map */ 
-	NULL,			/* bus_space_unmap */
-	NULL,			/* bus_space_subregion */
-	NULL,			/* bus_space_barrier */
-	mspcic_bus_mmap,	/* bus_space_mmap */
-	mspcic_intr_establish	/* bus_intr_establish */
-#if __FULL_SPARC_BUS_SPACE
-	NULL,			/* read_1 */
-	NULL,			/* read_2 */
-	NULL,			/* read_4 */
-	NULL,			/* read_8 */
-	NULL,			/* write_1 */
-	NULL,			/* write_2 */
-	NULL,			/* write_4 */
-	NULL			/* write_8 */
-#endif
-};
-
+static struct sparc_bus_space_tag mspcic_io_tag;
+static struct sparc_bus_space_tag mspcic_mem_tag;
 
 /*
  * DMA tag
@@ -330,7 +286,7 @@ mspcic_attach(parent, self, aux)
 	struct pcibus_attach_args pba;
 
 	sc->sc_node = node;
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 33333333);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 33333333);
 
 	/* copy parent tags */
 	sc->sc_bustag = ma->ma_bustag;
@@ -343,14 +299,31 @@ mspcic_attach(parent, self, aux)
 	sc->sc_bh = (bus_space_handle_t)MSIIEP_PCIC_VA;
 
 	/* print our PCI device info and bus clock frequency */
-	pci_devinfo(mspcic->pcic_id, mspcic->pcic_class, 0, devinfo);
+	pci_devinfo(mspcic->pcic_id, mspcic->pcic_class, 0, devinfo,
+	    sizeof(devinfo));
 	printf(": %s: clock = %s MHz\n", devinfo, clockfreq(sc->sc_clockfreq));
 
 	mspcic_init_maps();
 
 	/* init cookies/parents in our statically allocated tags */
+	mspcic_io_tag = *sc->sc_bustag;
+	mspcic_io_tag.cookie = &mspcic_io_cookie;
+	mspcic_io_tag.ranges = NULL;
+	mspcic_io_tag.nranges = 0;
+	mspcic_io_tag.sparc_bus_map = mspcic_bus_map;
+	mspcic_io_tag.sparc_bus_mmap = mspcic_bus_mmap;
+	mspcic_io_tag.sparc_intr_establish = mspcic_intr_establish;
 	mspcic_io_tag.parent = sc->sc_bustag;
+
+	mspcic_mem_tag = *sc->sc_bustag;
+	mspcic_mem_tag.cookie = &mspcic_mem_cookie;
+	mspcic_mem_tag.ranges = NULL;
+	mspcic_mem_tag.nranges = 0;
+	mspcic_mem_tag.sparc_bus_map = mspcic_bus_map;
+	mspcic_mem_tag.sparc_bus_mmap = mspcic_bus_mmap;
+	mspcic_mem_tag.sparc_intr_establish = mspcic_intr_establish;
 	mspcic_mem_tag.parent = sc->sc_bustag;
+
 	mspcic_dma_tag._cookie = sc;
 	mspcic_pc_tag.cookie = sc;
 

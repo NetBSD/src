@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.6 2003/03/04 17:28:00 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.6.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6 2003/03/04 17:28:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,6 +58,31 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6 2003/03/04 17:28:00 kochi Exp $");
 #include <dev/acpi/acpi_osd.h>
 
 #include <dev/acpi/acpica/Subsystem/acdebug.h>
+/*
+ * for debugging DSDT (try this at your own risk!):
+ *
+ * 1. dump your raw DSDT (with acpidump(*1) etc.)
+ * 2. disassemble with iasl -d (*2)
+ * 3. modify the ASL file
+ * 4. compile it with iasl -tc
+ * 5. copy *.hex to /sys/dev/acpi/acpica/Osd/dsdt.hex
+ *    -or-
+ *    options ACPI_DSDT_FILE="\"yourdsdt.hex\"" in
+ *    your config file and yourdsdt.hex in the build directory
+ * 6. uncomment ACPI_DEDT_OVERRIDE or options ACPI_DSDT_OVERRIDE
+ *    in your kernel config file and rebuild the kernel
+ *
+ * (*1) /usr/pkgsrc/sysutils/acpidump
+ * (*2) /usr/pkgsrc/sysutils/acpi-iasl
+ */
+
+/* #define ACPI_DSDT_OVERRIDE */
+#ifdef ACPI_DSDT_OVERRIDE
+#ifndef ACPI_DSDT_FILE
+#define ACPI_DSDT_FILE "dsdt.hex"
+#endif
+#include ACPI_DSDT_FILE
+#endif
 
 int acpi_indebugger;
 
@@ -91,16 +116,16 @@ AcpiOsSignal(UINT32 Function, void *Info)
 		Debugger();
 #else
 		printf("ACPI: WARNING: DDB not configured into kernel.\n");
-		return (AE_NOT_EXIST);
+		return AE_NOT_EXIST;
 #endif
 		break;
 	    }
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 ACPI_STATUS
@@ -114,10 +139,10 @@ AcpiOsGetLine(char *Buffer)
 		if (*cp == '\n' || *cp == '\r')
 			*cp = 0;
 	db_output_line = 0;
-	return (AE_OK);
+	return AE_OK;
 #else
 	printf("ACPI: WARNING: DDB not configured into kernel.\n");
-	return (AE_NOT_EXIST);
+	return AE_NOT_EXIST;
 #endif
 }
 
@@ -125,8 +150,15 @@ ACPI_STATUS
 AcpiOsTableOverride(ACPI_TABLE_HEADER *ExistingTable,
 		    ACPI_TABLE_HEADER **NewTable)
 {
+#ifndef ACPI_DSDT_OVERRIDE
 	*NewTable = NULL;
-	return (AE_OK);
+#else
+	if (strncmp(ExistingTable->Signature, "DSDT", 4) == 0)
+		*NewTable = (ACPI_TABLE_HEADER *)AmlCode;
+	else
+		*NewTable = NULL;
+#endif
+	return AE_OK;
 }
 
 ACPI_STATUS
@@ -134,10 +166,10 @@ AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES *InitVal,
 			 ACPI_STRING *NewVal)
 {
 	if (!InitVal || !NewVal)
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	*NewVal = NULL;
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -148,13 +180,11 @@ AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES *InitVal,
 void
 acpi_osd_debugger(void)
 {
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	static int beenhere;
 	ACPI_PARSE_OBJECT obj;
-#ifdef DDB
 	label_t	acpi_jmpbuf;
 	label_t	*savejmp;
-#endif
 
 	if (beenhere == 0) {
 		printf("Initializing ACPICA debugger...\n");
@@ -163,18 +193,16 @@ acpi_osd_debugger(void)
 	}
 
 	printf("Entering ACPICA debugger...\n");
-#ifdef DDB
 	savejmp = db_recover;
 	setjmp(&acpi_jmpbuf);
 	db_recover = &acpi_jmpbuf;
-#endif
+
 	acpi_indebugger = 1;
 	AcpiDbUserCommands('A', &obj);
 	acpi_indebugger = 0;
-#ifdef DDB
+
 	db_recover = savejmp;
-#endif
 #else
-	printf("ACPI: WARNING: ACPCICA debugger not present.\n");
+	printf("ACPI: WARNING: ACPICA debugger not present.\n");
 #endif
 }

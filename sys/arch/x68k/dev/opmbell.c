@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.10 2002/10/23 09:12:46 jdolecek Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.10.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -38,6 +38,9 @@
  * bell device driver
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.10.6.1 2004/08/03 10:42:47 skrll Exp $");
+
 #include "bell.h"
 #if NBELL > 0
 
@@ -57,10 +60,10 @@
 #include <sys/conf.h>
 #include <sys/event.h>
 
-#include <x68k/x68k/iodevice.h>
 #include <machine/opmbellio.h>
-#include <x68k/dev/opmreg.h>
-#include <x68k/dev/opmbellvar.h>
+
+#include <x68k/x68k/iodevice.h>
+#include <x68k/dev/opmvar.h>
 
 /* In opm.c. */
 void opm_set_volume __P((int, int));
@@ -86,6 +89,8 @@ struct bell_softc *bell_softc;
 struct callout bell_ch = CALLOUT_INITIALIZER;
 
 static struct opm_voice vtab[NBELL];
+
+static struct opm_voice bell_voice = DEFAULT_BELL_VOICE;
 
 /* sc_flags values */
 #define	BELLF_READ	0x01

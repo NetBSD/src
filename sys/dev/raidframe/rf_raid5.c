@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.7 2002/09/23 02:40:09 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.7.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.7 2002/09/23 02:40:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.7.6.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -55,10 +55,8 @@ typedef struct RF_Raid5ConfigInfo_s {
 }       RF_Raid5ConfigInfo_t;
 
 int 
-rf_ConfigureRAID5(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureRAID5(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid5ConfigInfo_t *info;
@@ -69,8 +67,6 @@ rf_ConfigureRAID5(
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;
-
-	RF_ASSERT(raidPtr->numRow == 1);
 
 	/* the stripe identifier must identify the disks in each stripe, IN
 	 * THE ORDER THAT THEY APPEAR IN THE STRIPE. */
@@ -99,78 +95,59 @@ rf_ConfigureRAID5(
 }
 
 int 
-rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t * raidPtr)
+rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
 RF_HeadSepLimit_t 
-rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t * raidPtr)
+rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t *raidPtr)
 {
 	return (10);
 }
 #if !defined(__NetBSD__) && !defined(_KERNEL)
 /* not currently used */
 int 
-rf_ShutdownRAID5(RF_Raid_t * raidPtr)
+rf_ShutdownRAID5(RF_Raid_t *raidPtr)
 {
 	return (0);
 }
 #endif
 
 void 
-rf_MapSectorRAID5(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
-	*row = 0;
 	*col = (SUID % raidPtr->numCol);
 	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * raidPtr->Layout.sectorsPerStripeUnit +
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
 void 
-rf_MapParityRAID5(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
-	*row = 0;
 	*col = raidPtr->Layout.numDataCol - (SUID / raidPtr->Layout.numDataCol) % raidPtr->numCol;
 	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * raidPtr->Layout.sectorsPerStripeUnit +
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
 void 
-rf_IdentifyStripeRAID5(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+rf_IdentifyStripeRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+		       RF_RowCol_t **diskids)
 {
 	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, addr);
 	RF_Raid5ConfigInfo_t *info = (RF_Raid5ConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 
-	*outRow = 0;
 	*diskids = info->stripeIdentifier[stripeID % raidPtr->numCol];
 }
 
 void 
-rf_MapSIDToPSIDRAID5(
-    RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID,
-    RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru)
+rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;
 	*psID = stripeID;
@@ -180,108 +157,111 @@ rf_MapSIDToPSIDRAID5(
  * another to a function that will create the dag.
  */
 void 
-rf_RaidFiveDagSelect(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr * createFunc)
+rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
+		     RF_AccessStripeMap_t *asmap,
+		     RF_VoidFuncPtr *createFunc)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_PhysDiskAddr_t *failedPDA = NULL;
-	RF_RowCol_t frow, fcol;
+	RF_RowCol_t fcol;
 	RF_RowStatus_t rstat;
 	int     prior_recon;
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
-	if (asmap->numDataFailed + asmap->numParityFailed > 1) {
-		RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
-		 /* *infoFunc = */ *createFunc = NULL;
+	if ((asmap->numDataFailed + asmap->numParityFailed > 1) ||
+	    (raidPtr->numFailures > 1)){
+#if RF_DEBUG_DAG
+		if (rf_dagDebug) 
+			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
+#endif
+		*createFunc = NULL;
 		return;
-	} else
-		if (asmap->numDataFailed + asmap->numParityFailed == 1) {
+	}
 
-			/* if under recon & already reconstructed, redirect
-			 * the access to the spare drive and eliminate the
-			 * failure indication */
-			failedPDA = asmap->failedPDAs[0];
-			frow = failedPDA->row;
-			fcol = failedPDA->col;
-			rstat = raidPtr->status[failedPDA->row];
-			prior_recon = (rstat == rf_rs_reconfigured) || (
+	if (asmap->numDataFailed + asmap->numParityFailed == 1) {
+		
+		/* if under recon & already reconstructed, redirect
+		 * the access to the spare drive and eliminate the
+		 * failure indication */
+		failedPDA = asmap->failedPDAs[0];
+		fcol = failedPDA->col;
+		rstat = raidPtr->status;
+		prior_recon = (rstat == rf_rs_reconfigured) || (
 			    (rstat == rf_rs_reconstructing) ?
-			    rf_CheckRUReconstructed(raidPtr->reconControl[frow]->reconMap, failedPDA->startSector) : 0
+			    rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, failedPDA->startSector) : 0
 			    );
-			if (prior_recon) {
-				RF_RowCol_t or = failedPDA->row, oc = failedPDA->col;
-				RF_SectorNum_t oo = failedPDA->startSector;
-
-				if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
-											 * spare space */
-
-					if (failedPDA == asmap->parityInfo) {
-
-						/* parity has failed */
-						(layoutPtr->map->MapParity) (raidPtr, failedPDA->raidAddress, &failedPDA->row,
-						    &failedPDA->col, &failedPDA->startSector, RF_REMAP);
-
-						if (asmap->parityInfo->next) {	/* redir 2nd component,
-										 * if any */
-							RF_PhysDiskAddr_t *p = asmap->parityInfo->next;
-							RF_SectorNum_t SUoffs = p->startSector % layoutPtr->sectorsPerStripeUnit;
-							p->row = failedPDA->row;
-							p->col = failedPDA->col;
-							p->startSector = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, failedPDA->startSector) +
-							    SUoffs;	/* cheating:
-									 * startSector is not
-									 * really a RAID address */
-						}
-					} else
-						if (asmap->parityInfo->next && failedPDA == asmap->parityInfo->next) {
-							RF_ASSERT(0);	/* should not ever
-									 * happen */
-						} else {
-
-							/* data has failed */
-							(layoutPtr->map->MapSector) (raidPtr, failedPDA->raidAddress, &failedPDA->row,
-							    &failedPDA->col, &failedPDA->startSector, RF_REMAP);
-
-						}
-
-				} else {	/* redirect to dedicated spare
-						 * space */
-
-					failedPDA->row = raidPtr->Disks[frow][fcol].spareRow;
-					failedPDA->col = raidPtr->Disks[frow][fcol].spareCol;
-
-					/* the parity may have two distinct
-					 * components, both of which may need
-					 * to be redirected */
-					if (asmap->parityInfo->next) {
-						if (failedPDA == asmap->parityInfo) {
-							failedPDA->next->row = failedPDA->row;
-							failedPDA->next->col = failedPDA->col;
-						} else
-							if (failedPDA == asmap->parityInfo->next) {	/* paranoid:  should
-													 * never occur */
-								asmap->parityInfo->row = failedPDA->row;
-								asmap->parityInfo->col = failedPDA->col;
-							}
+		if (prior_recon) {
+#if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
+			RF_RowCol_t oc = failedPDA->col;
+			RF_SectorNum_t oo = failedPDA->startSector;
+#endif			
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
+			if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
+										 * spare space */
+				
+				if (failedPDA == asmap->parityInfo) {
+					
+					/* parity has failed */
+					(layoutPtr->map->MapParity) (raidPtr, failedPDA->raidAddress,
+								     &failedPDA->col, &failedPDA->startSector, RF_REMAP);
+					
+					if (asmap->parityInfo->next) {	/* redir 2nd component,
+									 * if any */
+						RF_PhysDiskAddr_t *p = asmap->parityInfo->next;
+						RF_SectorNum_t SUoffs = p->startSector % layoutPtr->sectorsPerStripeUnit;
+						p->col = failedPDA->col;
+						p->startSector = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, failedPDA->startSector) +
+							SUoffs;	/* cheating:
+								 * startSector is not
+								 * really a RAID address */
 					}
+				} else
+					if (asmap->parityInfo->next && failedPDA == asmap->parityInfo->next) {
+						RF_ASSERT(0);	/* should not ever
+								 * happen */
+					} else {
+						
+						/* data has failed */
+						(layoutPtr->map->MapSector) (raidPtr, failedPDA->raidAddress,
+									     &failedPDA->col, &failedPDA->startSector, RF_REMAP);
+						
+					}
+				
+			} else {
+#endif	
+				/* redirect to dedicated spare space */
+				
+				failedPDA->col = raidPtr->Disks[fcol].spareCol;
+				
+				/* the parity may have two distinct
+				 * components, both of which may need
+				 * to be redirected */
+				if (asmap->parityInfo->next) {
+					if (failedPDA == asmap->parityInfo) {
+						failedPDA->next->col = failedPDA->col;
+					} else
+						if (failedPDA == asmap->parityInfo->next) {	/* paranoid:  should
+												 * never occur */
+							asmap->parityInfo->col = failedPDA->col;
+						}
 				}
-
-				RF_ASSERT(failedPDA->col != -1);
-
-				if (rf_dagDebug || rf_mapDebug) {
-					printf("raid%d: Redirected type '%c' r %d c %d o %ld -> r %d c %d o %ld\n",
-					       raidPtr->raidid, type, or, oc, 
-					       (long) oo, failedPDA->row, 
-					       failedPDA->col,
-					       (long) failedPDA->startSector);
-				}
-				asmap->numDataFailed = asmap->numParityFailed = 0;
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 			}
+#endif
+			RF_ASSERT(failedPDA->col != -1);
+			
+#if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
+			if (rf_dagDebug || rf_mapDebug) {
+				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
+				       raidPtr->raidid, type, oc, 
+				       (long) oo, failedPDA->col,
+				       (long) failedPDA->startSector);
+			}
+#endif
+			asmap->numDataFailed = asmap->numParityFailed = 0;
 		}
+	}
 	/* all dags begin/end with block/unblock node therefore, hdrSucc &
 	 * termAnt counts should always be 1 also, these counts should not be
 	 * visible outside dag creation routines - manipulating the counts

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56 2003/06/18 08:58:42 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.56.2.1 2004/08/03 10:42:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,6 +69,9 @@
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56.2.1 2004/08/03 10:42:46 skrll Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -107,7 +106,7 @@
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/dmacvar.h>
 #include <arch/x68k/dev/fdreg.h>
-#include <arch/x68k/dev/opmreg.h> /* for CT1 access */
+#include <arch/x68k/dev/opmvar.h> /* for CT1 access */
 
 #include "locators.h"
 
@@ -519,7 +518,7 @@ fdprobe(parent, cf, aux)
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
-	int n;
+	int n = 0;
 	int found = 0;
 	int i;
 
@@ -561,11 +560,10 @@ retry:
 #endif
 
 	if (n == 2) {
-		if ((fdc->sc_status[0] & 0xf0) == 0x20) {
+		if ((fdc->sc_status[0] & 0xf0) == 0x20)
 			found = 1;
-		} else if ((fdc->sc_status[0] & 0xf0) == 0xc0) {
+		else if ((fdc->sc_status[0] & 0xf0) == 0xc0)
 			goto retry;
-		}
 	}
 
 	/* turn off motor */
@@ -660,7 +658,8 @@ fdstrategy(bp)
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
-		DPRINTF(("fdstrategy: unit=%d, blkno=%d, bcount=%ld\n", unit,
+		DPRINTF(("fdstrategy: unit=%d, blkno=%" PRId64 ", "
+			 "bcount=%ld\n", unit,
 			 bp->b_blkno, bp->b_bcount));
 		bp->b_error = EINVAL;
 		goto bad;
@@ -694,7 +693,7 @@ fdstrategy(bp)
  	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
 		/ (fd->sc_type->seccyl * (1 << (fd->sc_type->secsize - 2)));
 
-	DPRINTF(("fdstrategy: %s b_blkno %d b_bcount %ld cylin %ld\n",
+	DPRINTF(("fdstrategy: %s b_blkno %" PRId64 " b_bcount %ld cylin %ld\n",
 		 bp->b_flags & B_READ ? "read" : "write",
 		 bp->b_blkno, bp->b_bcount, bp->b_cylinder));
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1266,6 +1265,12 @@ loop:
 	case DOCOPY:
 	docopy:
 		DPRINTF(("fdcintr: DOCOPY:\n"));
+		type = fd->sc_type;
+		head = (fd->sc_blkno
+			% (type->seccyl * (1 << (type->secsize - 2))))
+			 / (type->sectrac * (1 << (type->secsize - 2)));
+		pos = fd->sc_blkno % (type->sectrac * (1 << (type->secsize - 2)));
+		sec = pos / (1 << (type->secsize - 2));
 		fdc_dmastart(fdc, B_READ, fd->sc_copybuf, 1024);
 		out_fdc(iot, ioh, NE7CMD_READ);		/* READ */
 		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
@@ -1285,7 +1290,6 @@ loop:
 	doiohalf:
 		DPRINTF((" DOIOHALF:\n"));
 
-#ifdef DIAGNOSTIC
 		type = fd->sc_type;
 		sectrac = type->sectrac;
 		pos = fd->sc_blkno % (sectrac * (1 << (type->secsize - 2)));
@@ -1293,6 +1297,7 @@ loop:
 		head = (fd->sc_blkno
 			% (type->seccyl * (1 << (type->secsize - 2))))
 			 / (type->sectrac * (1 << (type->secsize - 2)));
+#ifdef DIAGNOSTIC
 		{int block;
 		 block = ((fd->sc_cylin * type->heads + head) *
 			 type->sectrac + sec)

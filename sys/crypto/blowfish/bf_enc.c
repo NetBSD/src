@@ -1,3 +1,5 @@
+/*	$NetBSD: bf_enc.c,v 1.6.16.1 2004/08/03 10:44:45 skrll Exp $	*/
+
 /* crypto/bf/bf_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -57,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.6 2002/02/27 01:32:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.6.16.1 2004/08/03 10:44:45 skrll Exp $");
 
 #include <sys/types.h>
 #include <crypto/blowfish/blowfish.h>
@@ -75,11 +77,10 @@ to modify the code.
 
 /* XXX "data" is host endian */
 void
-BF_encrypt(data, key)
-	BF_LONG *data;
-	BF_KEY *key;
+BF_encrypt(BF_LONG *data, const BF_KEY *key)
 {
-	register BF_LONG l, r, *p, *s;
+	BF_LONG l, r;
+	const BF_LONG *p, *s;
 
 	p = key->P;
 	s= &key->S[0];
@@ -117,11 +118,10 @@ BF_encrypt(data, key)
 
 /* XXX "data" is host endian */
 void
-BF_decrypt(data, key)
-	BF_LONG *data;
-	BF_KEY *key;
+BF_decrypt(BF_LONG *data, const BF_KEY *key)
 {
-	register BF_LONG l, r, *p, *s;
+	BF_LONG l, r;
+	const BF_LONG *p, *s;
 
 	p = key->P;
 	s= &key->S[0];

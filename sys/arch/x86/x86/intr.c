@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.1 2004/08/03 10:43:05 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -35,6 +35,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)isa.c	7.2 (Berkeley) 5/13/91
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.2.1 2004/08/03 10:43:05 skrll Exp $");
+
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
@@ -54,6 +96,7 @@
 
 #include "ioapic.h"
 #include "lapic.h"
+#include "pci.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h> 
@@ -64,16 +107,24 @@
 #include <machine/i82489var.h>
 #endif
 
+#if NPCI > 0
+#include <dev/pci/ppbreg.h>
+#endif
+
 struct pic softintr_pic = {
-        {0, {0}, NULL, NULL, NULL, 0, "softintr_fakepic", NULL, 0},
-        PIC_SOFT,
-        __SIMPLELOCK_UNLOCKED,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.pic_dev = {
+		.dv_xname = "softintr_fakepic",
+	},
+	.pic_type = PIC_SOFT,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
 };
+
+#if NIOAPIC > 0
+static int intr_scan_bus(int, int, int *);
+#if NPCI > 0
+static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
+#endif
+#endif
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -167,6 +218,68 @@ intr_calculatemasks(struct cpu_info *ci)
 		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
 
+/*
+ * List to keep track of PCI buses that are probed but not known
+ * to the firmware. Used to 
+ *
+ * XXX should maintain one list, not an array and a linked list.
+ */
+#if (NPCI > 0) && (NIOAPIC > 0)
+struct intr_extra_bus {
+	int bus;
+	pcitag_t *pci_bridge_tag;
+	pci_chipset_tag_t pci_chipset_tag;
+	LIST_ENTRY(intr_extra_bus) list;
+};
+
+LIST_HEAD(, intr_extra_bus) intr_extra_buses =
+    LIST_HEAD_INITIALIZER(intr_extra_buses);
+
+
+void
+intr_add_pcibus(struct pcibus_attach_args *pba)
+{
+	struct intr_extra_bus *iebp;
+
+	iebp = malloc(sizeof(struct intr_extra_bus), M_TEMP, M_WAITOK);
+	iebp->bus = pba->pba_bus;
+	iebp->pci_chipset_tag = pba->pba_pc;
+	iebp->pci_bridge_tag = pba->pba_bridgetag;
+	LIST_INSERT_HEAD(&intr_extra_buses, iebp, list);
+}
+
+static int
+intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
+		    pci_chipset_tag_t *pci_chipset_tag)
+{
+	struct intr_extra_bus *iebp;
+	struct mp_bus *mpb;
+
+	if (bus < 0)
+		return ENOENT;
+
+	if (bus < mp_nbus) {
+		mpb = &mp_busses[bus];
+		if (mpb->mb_pci_bridge_tag == NULL)
+			return ENOENT;
+		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
+		*pci_chipset_tag = mpb->mb_pci_chipset_tag;
+		return 0;
+	}
+
+	LIST_FOREACH(iebp, &intr_extra_buses, list) {
+		if (iebp->bus == bus) {
+			if (iebp->pci_bridge_tag == NULL)
+				return ENOENT;
+			*pci_bridge_tag = *iebp->pci_bridge_tag;
+			*pci_chipset_tag = iebp->pci_chipset_tag;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+#endif
+
 
 /*
  * XXX if defined(MULTIPROCESSOR) && .. ?
@@ -175,12 +288,43 @@ intr_calculatemasks(struct cpu_info *ci)
 int
 intr_find_mpmapping(int bus, int pin, int *handle)
 {
-	struct mp_intr_map *mip;
+#if NPCI > 0
+	int dev, func;
+	pcitag_t pci_bridge_tag;
+	pci_chipset_tag_t pci_chipset_tag;
+#endif
 
-	if (bus == -1 || mp_busses[bus].mb_intrs == NULL)
+#if NPCI > 0
+	while (intr_scan_bus(bus, pin, handle) != 0) {
+		if (intr_find_pcibridge(bus, &pci_bridge_tag,
+		    &pci_chipset_tag) != 0)
+			return ENOENT;
+		dev = pin >> 2;
+		pin = pin & 3;
+		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
+		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
+		    &dev, &func);
+		pin |= (dev << 2);
+	}
+	return 0;
+#else
+	return intr_scan_bus(bus, pin, handle);
+#endif
+}
+
+static int
+intr_scan_bus(int bus, int pin, int *handle)
+{
+	struct mp_intr_map *mip, *intrs;
+
+	if (bus < 0 || bus >= mp_nbus)
 		return ENOENT;
 
-	for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
+	intrs = mp_busses[bus].mb_intrs;
+	if (intrs == NULL)
+		return ENOENT;
+
+	for (mip = intrs; mip != NULL; mip = mip->next) {
 		if (mip->bus_pin == pin) {
 			*handle = mip->ioapic_ih;
 			return 0;
@@ -259,6 +403,14 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 	 */
 	if (legacy_irq != -1) {
 		ci = &cpu_info_primary;
+		/* must check for duplicate pic + pin first */
+		for (slot = 0 ; slot < MAX_INTR_SOURCES ; slot++) {
+			isp = ci->ci_isources[slot];
+			if (isp != NULL && isp->is_pic == pic &&
+			    isp->is_pin == pin ) {
+				goto duplicate;
+			}
+		}
 		slot = legacy_irq;
 		isp = ci->ci_isources[slot];
 		if (isp == NULL) {
@@ -281,7 +433,7 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 				goto other;
 			}
 		}
-
+duplicate:
 		if (pic == &i8259_pic)
 			idtvec = ICU_OFFSET + legacy_irq;
 		else {
@@ -518,6 +670,40 @@ intr_disestablish(struct intrhand *ih)
 	simple_unlock(&ci->ci_slock);
 }
 
+const char *
+intr_string(int ih)
+{
+	static char irqstr[64];
+#if NIOAPIC > 0
+	struct pic *pic;
+#endif
+
+	if (ih == 0)
+		panic("pci_intr_string: bogus handle 0x%x", ih);
+
+
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
+		if (pic != NULL) {
+			sprintf(irqstr, "%s pin %d (irq %d)",
+			    pic->pic_name, APIC_IRQ_PIN(ih), ih&0xff);
+		} else {
+			sprintf(irqstr, "apic %d int %d (irq %d)",
+			    APIC_IRQ_APIC(ih),
+			    APIC_IRQ_PIN(ih),
+			    ih&0xff);
+		}
+	} else
+		sprintf(irqstr, "irq %d", ih&0xff);
+#else
+
+	sprintf(irqstr, "irq %d", ih&0xff);
+#endif
+	return (irqstr);
+
+}
+
 #define CONCAT(x,y)	__CONCAT(x,y)
 
 /*
@@ -623,16 +809,16 @@ cpu_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 void
-x86_intlock(struct intrframe iframe)
+x86_intlock(struct intrframe *iframe)
 {
-	if (iframe.if_ppl < IPL_SCHED)
+	if (iframe->if_ppl < IPL_SCHED)
 		spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
 }
 
 void
-x86_intunlock(struct intrframe iframe)
+x86_intunlock(struct intrframe *iframe)
 {
-	if (iframe.if_ppl < IPL_SCHED)
+	if (iframe->if_ppl < IPL_SCHED)
 		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2003/05/10 21:10:43 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.127.2.1 2004/08/03 10:42:36 skrll Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127.2.1 2004/08/03 10:42:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -82,8 +85,8 @@ vaddr_t istack;
 /*
  * Scratch pages usage:
  * Page 1: initial frame pointer during autoconfig. Stack and pcb for
- *	   processes during exit on boot cpu only.
- * Page 2: cpu_info struct for any cpu.
+ *	   processes during exit on boot CPU only.
+ * Page 2: cpu_info struct for any CPU.
  * Page 3: unused
  * Page 4: unused
  */
@@ -196,9 +199,7 @@ void free_ptp(paddr_t);
 static vsize_t
 calc_kvmsize(vsize_t usrptsize)
 {
-	extern u_int bufcache;
-	vsize_t kvmsize;
-	u_int n, bp, bc;
+	vsize_t kvmsize, bufsz;
 
 	/* All physical memory */
 	kvmsize = avail_end;
@@ -216,12 +217,10 @@ calc_kvmsize(vsize_t usrptsize)
 	/* Anon pool structures */
 	kvmsize += (physmem * sizeof(struct vm_anon));
 
-	/* allocated buffer space etc... This is a hack */
-	n = nbuf; bp = bufpages; bc = bufcache;
-	kvmsize += (u_int)allocsys(NULL, NULL);
-	/* Buffer space */
-	kvmsize += (MAXBSIZE * nbuf);
-	nbuf = n; bufpages = bp; bufcache = bc;
+	/* Buffer space - get size of buffer cache and set an upper limit */
+	bufsz = buf_memcalc();
+	buf_setvalimit(bufsz);
+	kvmsize += bufsz;
 
 	/* UBC submap space */
 	kvmsize += (UBC_NWINS << UBC_WINSHIFT);
@@ -231,6 +230,9 @@ calc_kvmsize(vsize_t usrptsize)
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/* Physmap */
 	kvmsize += VM_PHYS_SIZE;
+#endif
+#if VAX46 || VAX49
+	kvmsize += 0x800000; /* 8 MB framebuffer */
 #endif
 #ifdef LKM
 	/* LKMs are allocated out of kernel_map */
@@ -273,11 +275,7 @@ pmap_bootstrap()
 
 	physmem = btoc(avail_end);
 
-#if USE_TOPDOWN_VM==1
 	usrptsize = (1024*1024*1024)/VAX_NBPG;	/* 1GB total VM */
-#else
-	usrptsize = PROCPTSIZE * maxproc;
-#endif
 	if (vax_btop(usrptsize)* PPTESZ > avail_end/20)
 		usrptsize = (avail_end/(20 * PPTESZ)) * VAX_NBPG;
 		
@@ -398,6 +396,7 @@ pmap_bootstrap()
 	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
+	SIMPLEQ_FIRST(&cpus) = curcpu();
 #endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	simple_lock_init(&pvtable_lock);
@@ -512,6 +511,9 @@ rmpage(pmap_t pm, int *br)
 		vaddr = (br - (int *)pm->pm_p0br) * VAX_NBPG;
 	else
 		vaddr = (br - (int *)pm->pm_p1br) * VAX_NBPG + 0x40000000;
+
+	if (IOSPACE((br[0] & PG_FRAME) << VAX_PGSHIFT))
+		return; /* Forget mappings of IO space */
 
 	pv = pv_table + ((br[0] & PG_FRAME) >> LTOHPS);
 	if (((br[0] & PG_PROT) == PG_RW) && 
@@ -796,7 +798,7 @@ grow_p0(struct pmap *pm, int reqlen)
 	pm->pm_p0lr = (len/PPTESZ);
 	update_pcbs(pm);
 
-	/* Remove the old after update_pcbs() (for multicpu propagation) */
+	/* Remove the old after update_pcbs() (for multi-CPU propagation) */
 	if (inuse)
 		extent_free(ptemap, p0br, p0lr*PPTESZ, EX_WAITOK);
 }
@@ -1300,6 +1302,8 @@ pmap_protect_long(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pt = pmap->pm_p0br;
 		pr = (prot & VM_PROT_WRITE ? PROT_RW : PROT_RO);
 		break;
+	default:
+		panic("unsupported segtype: %d", SEGTYPE(start));
 	}
 
 	pts = &pt[start >> VAX_PGSHIFT];

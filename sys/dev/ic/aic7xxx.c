@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.105 2003/05/03 18:11:14 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.105.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.105 2003/05/03 18:11:14 wiz Exp $
+ * $Id: aic7xxx.c,v 1.105.2.1 2004/08/03 10:46:07 skrll Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -48,6 +48,9 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.105.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -117,7 +120,7 @@ static const u_int num_phases = NUM_ELEMENTS(ahc_phase_table) - 1;
 
 /*
  * Valid SCSIRATE values.  (p. 3-17)
- * Provides a mapping of tranfer periods in ns to the proper value to
+ * Provides a mapping of transfer periods in ns to the proper value to
  * stick in the scsixfer reg.
  */
 static struct ahc_syncrate ahc_syncrates[] =
@@ -407,7 +410,7 @@ ahc_handle_brkadrint(struct ahc_softc *ahc)
 
 	ahc_dump_card_state(ahc);
 
-	/* Tell everyone that this HBA is no longer availible */
+	/* Tell everyone that this HBA is no longer available */
 	ahc_abort_scbs(ahc, CAM_TARGET_WILDCARD, ALL_CHANNELS,
 		       CAM_LUN_WILDCARD, SCB_LIST_NULL, ROLE_UNKNOWN,
 		       CAM_NO_HBA);
@@ -545,7 +548,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			 * We can't allow the target to disconnect.
 			 * This will be an untagged transaction and
 			 * having the target disconnect will make this
-			 * transaction indestinguishable from outstanding
+			 * transaction indistinguishable from outstanding
 			 * tagged transactions.
 			 */
 			hscb->control = 0;
@@ -677,7 +680,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * that requires host assistance for completion.
 		 * While handling the message phase(s), we will be
 		 * notified by the sequencer after each byte is
-		 * transfered so we can track bus phase changes.
+		 * transferred so we can track bus phase changes.
 		 *
 		 * If this is the first time we've seen a HOST_MSG_LOOP
 		 * interrupt, initialize the state of the host message
@@ -1362,7 +1365,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 			}
 			/*
 			 * Renegotiate with this device at the
-			 * next oportunity just in case this busfree
+			 * next opportunity just in case this busfree
 			 * is due to a negotiation mismatch with the
 			 * device.
 			 */
@@ -1841,7 +1844,7 @@ ahc_validate_width(struct ahc_softc *ahc, struct ahc_initiator_tinfo *tinfo,
 
 /*
  * Update the bitmask of targets for which the controller should
- * negotiate with at the next convenient oportunity.  This currently
+ * negotiate with at the next convenient opportunity.  This currently
  * means the next time we send the initial identify messages for
  * a new transaction.
  */
@@ -2264,7 +2267,7 @@ ahc_assert_atn(struct ahc_softc *ahc)
 /*
  * When an initiator transaction with the MK_MESSAGE flag either reconnects
  * or enters the initial message out phase, we are interrupted.  Fill our
- * outgoing message buffer with the appropriate message and beging handing
+ * outgoing message buffer with the appropriate message and begin handing
  * the message phase(s) manually.
  */
 static void
@@ -3002,9 +3005,9 @@ ahc_parse_msg(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 	targ_scsirate = tinfo->scsirate;
 
 	/*
-	 * Parse as much of the message as is availible,
+	 * Parse as much of the message as is available,
 	 * rejecting it if we don't support it.  When
-	 * the entire message is availible and has been
+	 * the entire message is available and has been
 	 * handled, return MSGLOOP_MSGCOMPLETE, indicating
 	 * that we have parsed an entire message.
 	 *
@@ -3535,7 +3538,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 
 		/*
 		 * Requeue all tagged commands for this target
-		 * currently in our posession so they can be
+		 * currently in our possession so they can be
 		 * converted to untagged commands.
 		 */
 		ahc_search_qinfifo(ahc, SCB_GET_TARGET(ahc, scb),
@@ -4214,20 +4217,20 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	 */
 
 	if (ahc_createdmamem(ahc->parent_dmat,
-			     AHC_SCB_MAX * sizeof(struct hardware_scb), ahc->sc_dmaflags,
-			     &scb_data->hscb_dmamap,
-			     (caddr_t *)&scb_data->hscbs, &scb_data->hscb_busaddr,
-			     &scb_data->hscb_seg, &scb_data->hscb_nseg, ahc_name(ahc),
-			     "hardware SCB structures") < 0)
+	     AHC_SCB_MAX * sizeof(struct hardware_scb), ahc->sc_dmaflags,
+	     &scb_data->hscb_dmamap,
+	     (caddr_t *)&scb_data->hscbs, &scb_data->hscb_busaddr,
+	     &scb_data->hscb_seg, &scb_data->hscb_nseg, ahc_name(ahc),
+	     "hardware SCB structures") < 0)
 		goto error_exit;
 
 	scb_data->init_level++;
 
 	if (ahc_createdmamem(ahc->parent_dmat,
-			     AHC_SCB_MAX * sizeof(struct scsipi_sense_data), ahc->sc_dmaflags,
-			     &scb_data->sense_dmamap, (caddr_t *)&scb_data->sense,
-			     &scb_data->sense_busaddr, &scb_data->sense_seg,
-			     &scb_data->sense_nseg, ahc_name(ahc), "sense buffers") < 0)
+	     AHC_SCB_MAX * sizeof(struct scsipi_sense_data), ahc->sc_dmaflags,
+	     &scb_data->sense_dmamap, (caddr_t *)&scb_data->sense,
+	     &scb_data->sense_busaddr, &scb_data->sense_seg,
+	     &scb_data->sense_nseg, ahc_name(ahc), "sense buffers") < 0)
 		goto error_exit;
 
 	scb_data->init_level++;
@@ -4366,9 +4369,9 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		next_scb->flags = SCB_FREE;
 
 		error = bus_dmamap_create(ahc->parent_dmat, 
-					  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
-					  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
-					  &next_scb->dmamap);
+			  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
+			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
+			  &next_scb->dmamap);
 		if (error != 0)
 			break;
 
@@ -4384,14 +4387,18 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 }
 
 void
-ahc_controller_info(struct ahc_softc *ahc, char *buf)
+ahc_controller_info(struct ahc_softc *ahc, char *buf, size_t l)
 {
 	int len;
+	char *ep;
 
-	len = sprintf(buf, "%s: ", ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
+	ep = buf + l;
+
+	len = snprintf(buf, ep - buf, "%s: ",
+	    ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
 	buf += len;
 	if ((ahc->features & AHC_TWIN) != 0)
- 		len = sprintf(buf, "Twin Channel, A SCSI Id=%d, "
+ 		len = snprintf(buf, ep - buf, "Twin Channel, A SCSI Id=%d, "
 			      "B SCSI Id=%d, primary %c, ",
 			      ahc->our_id, ahc->our_id_b,
 			      (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
@@ -4412,16 +4419,16 @@ ahc_controller_info(struct ahc_softc *ahc, char *buf)
 		} else {
 			type = "Single";
 		}
-		len = sprintf(buf, "%s%s Channel %c, SCSI Id=%d, ",
+		len = snprintf(buf, ep - buf, "%s%s Channel %c, SCSI Id=%d, ",
 			      speed, type, ahc->channel, ahc->our_id);
 	}
 	buf += len;
 
 	if ((ahc->flags & AHC_PAGESCBS) != 0)
-		sprintf(buf, "%d/%d SCBs",
+		snprintf(buf, ep - buf, "%d/%d SCBs",
 			ahc->scb_data->maxhscbs, AHC_MAX_QUEUE);
 	else
-		sprintf(buf, "%d SCBs", ahc->scb_data->maxhscbs);
+		snprintf(buf, ep - buf, "%d SCBs", ahc->scb_data->maxhscbs);
 }
 
 /*
@@ -4863,7 +4870,7 @@ ahc_init(struct ahc_softc *ahc)
 		/*
 		 * Wait for up to 500ms for our transceivers
 		 * to settle.  If the adapter does not have
-		 * a cable attached, the tranceivers may
+		 * a cable attached, the transceivers may
 		 * never settle, so don't complain if we
 		 * fail here.
 		 */
@@ -6514,7 +6521,7 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 				      |	(fmt1_ins->opcode << 25);
 			}
 		}
-		/* The sequencer is a little endian cpu */
+		/* The sequencer is a little endian CPU */
 		instr.integer = ahc_htole32(instr.integer);
 		ahc_outsb(ahc, SEQRAM, instr.bytes, 4);
 		break;

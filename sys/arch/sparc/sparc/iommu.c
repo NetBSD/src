@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.75 2003/04/02 04:35:24 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.75.2.1 2004/08/03 10:41:07 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -35,6 +35,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.75.2.1 2004/08/03 10:41:07 skrll Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>
@@ -64,7 +68,7 @@ struct iommu_softc {
 	u_int		sc_range;
 	bus_addr_t	sc_dvmabase;
 	iopte_t		*sc_ptes;
-	int		sc_hasiocache;
+	int		sc_cachecoherent;
 /*
  * Note: operations on the extent map are being protected with
  * splhigh(), since we cannot predict at which interrupt priority
@@ -73,7 +77,6 @@ struct iommu_softc {
 	struct sparc_bus_dma_tag sc_dmatag;
 	struct extent *sc_dvmamap;
 };
-static int has_iocache;
 
 /* autoconfiguration driver */
 int	iommu_print __P((void *, const char *));
@@ -186,7 +189,7 @@ iommu_attach(parent, self, aux)
 	 * implicit iommu and attach that sbus node under it.
 	 */
 	node = ma->ma_node;
-	if (strcmp(PROM_getpropstring(node, "name"), "sbus") == 0)
+	if (strcmp(prom_getpropstring(node, "name"), "sbus") == 0)
 		js1_implicit_iommu = 1;
 	else
 		js1_implicit_iommu = 0;
@@ -206,14 +209,13 @@ iommu_attach(parent, self, aux)
 	}
 	sc->sc_reg = (struct iommureg *)bh;
 
-	sc->sc_hasiocache = js1_implicit_iommu ? 0
+	sc->sc_cachecoherent = js1_implicit_iommu ? 0
 				: node_has_property(node, "cache-coherence?");
 	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
-		sc->sc_hasiocache = 0;
-	has_iocache = sc->sc_hasiocache; /* Set global flag */
+		sc->sc_cachecoherent = 0;
 
 	sc->sc_pagesize = js1_implicit_iommu ? PAGE_SIZE
-				: PROM_getpropint(node, "page-size", PAGE_SIZE),
+				: prom_getpropint(node, "page-size", PAGE_SIZE),
 
 	/*
 	 * Allocate memory for I/O pagetables.
@@ -316,7 +318,7 @@ iommu_attach(parent, self, aux)
 		struct iommu_attach_args ia;
 
 		bzero(&ia, sizeof ia);
-		ia.iom_name = PROM_getpropstring(node, "name");
+		ia.iom_name = prom_getpropstring(node, "name");
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
@@ -325,8 +327,8 @@ iommu_attach(parent, self, aux)
 		ia.iom_node = node;
 
 		ia.iom_reg = NULL;
-		PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			&ia.iom_nreg, (void **)&ia.iom_reg);
+		prom_getprop(node, "reg", sizeof(struct openprom_addr),
+			&ia.iom_nreg, &ia.iom_reg);
 
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
 		if (ia.iom_reg != NULL)
@@ -408,7 +410,7 @@ iommu_enter(struct iommu_softc *sc, bus_addr_t dva, paddr_t pa)
 
 	pte = atop(pa) << IOPTE_PPNSHFT;
 	pte &= IOPTE_PPN;
-	pte |= IOPTE_V | IOPTE_W | (has_iocache ? IOPTE_C : 0);
+	pte |= IOPTE_V | IOPTE_W | (sc->sc_cachecoherent ? IOPTE_C : 0);
 	sc->sc_ptes[atop(dva - sc->sc_dvmabase)] = pte;
 	IOMMU_FLUSHPAGE(sc, dva);
 }
@@ -599,7 +601,8 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 					&dva, &sgsize)) != 0)
 		return (error);
 
-	cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
+	if (sc->sc_cachecoherent == 0)
+		cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
 	 * We always use just one segment.
@@ -620,7 +623,10 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		(void) pmap_extract(pmap, va, &pa);
+		if (!pmap_extract(pmap, va, &pa)) {
+			iommu_dmamap_unload(t, map);
+			return (EFAULT);
+		}
 
 		iommu_enter(sc, dva, pa);
 
@@ -779,6 +785,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
+	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
 	vaddr_t va;
 	bus_addr_t addr;
@@ -790,7 +797,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	if (nsegs != 1)
 		panic("iommu_dmamem_map: nsegs = %d", nsegs);
 
-	cbit = has_iocache ? 0 : PMAP_NC;
+	cbit = sc->sc_cachecoherent ? 0 : PMAP_NC;
 	align = dvma_cachealign ? dvma_cachealign : pagesz;
 
 	size = round_page(size);

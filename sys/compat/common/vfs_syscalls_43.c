@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.1 2003/07/02 15:25:40 darrenr Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.2 2004/08/03 10:43:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.1 2003/07/02 15:25:40 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.2 2004/08/03 10:43:29 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -59,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.1 2003/07/02 15:25:40 dar
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
+#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
@@ -362,6 +358,8 @@ compat_43_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
 	struct iovec aiov, kiov;
 	struct dirent *dp, *edp;
 	caddr_t dirbuf;
+	size_t count = min(MAXBSIZE, (size_t)SCARG(uap, count));
+
 	int error, eofflag, readcnt;
 	long loff;
 
@@ -379,13 +377,13 @@ unionread:
 		goto out;
 	}
 	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, count);
+	aiov.iov_len = count;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_lwp = l;
-	auio.uio_resid = SCARG(uap, count);
+	auio.uio_resid = count;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
@@ -399,14 +397,14 @@ unionread:
 		kuio = auio;
 		kuio.uio_iov = &kiov;
 		kuio.uio_segflg = UIO_SYSSPACE;
-		kiov.iov_len = SCARG(uap, count);
-		MALLOC(dirbuf, caddr_t, SCARG(uap, count), M_TEMP, M_WAITOK);
+		kiov.iov_len = count;
+		dirbuf = malloc(count, M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
 			    (off_t **)0, (int *)0);
 		fp->f_offset = kuio.uio_offset;
 		if (error == 0) {
-			readcnt = SCARG(uap, count) - kuio.uio_resid;
+			readcnt = count - kuio.uio_resid;
 			edp = (struct dirent *)&dirbuf[readcnt];
 			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 #				if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -437,7 +435,7 @@ unionread:
 			if (dp >= edp)
 				error = uiomove(dirbuf, readcnt, &auio);
 		}
-		FREE(dirbuf, M_TEMP);
+		free(dirbuf, M_TEMP);
 	}
 	VOP_UNLOCK(vp, 0);
 	if (error)
@@ -448,7 +446,7 @@ unionread:
 	extern int (**union_vnodeop_p) __P((void *));
 	extern struct vnode *union_dircache __P((struct vnode *));
 
-	if ((SCARG(uap, count) == auio.uio_resid) &&
+	if ((count == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {
 		struct vnode *lvp;
 
@@ -487,7 +485,7 @@ unionread:
 }
 #endif /* UNION */
 
-	if ((SCARG(uap, count) == auio.uio_resid) &&
+	if ((count == auio.uio_resid) &&
 	    (vp->v_flag & VROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
@@ -500,7 +498,7 @@ unionread:
 	}
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
 	    sizeof(long));
-	*retval = SCARG(uap, count) - auio.uio_resid;
+	*retval = count - auio.uio_resid;
  out:
 	FILE_UNUSE(fp, l);
 	return (error);

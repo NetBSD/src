@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.15 2003/01/30 00:28:19 matt Exp $	*/
+/*	$NetBSD: crl.c,v 1.15.2.1 2004/08/03 10:42:35 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,6 +34,9 @@
  * TO DO (tef  7/18/85):
  *	1) change printf's to log() instead???
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.15.2.1 2004/08/03 10:42:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +270,7 @@ crlintr(arg)
 		break;
 
 	case CRL_S_HWERR:
-		printf("crl: hard error sn" PRId64 "\n", bp->b_blkno);
+		printf("crl: hard error sn%" PRId64 "\n", bp->b_blkno);
 		crltab.crl_active = CRL_F_ABORT;
 		mtpr(STXCS_IE | CRL_F_ABORT, PR_STXCS);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.22 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.22.2.1 2004/08/03 10:50:43 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22 2003/02/09 10:04:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22.2.1 2004/08/03 10:50:43 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22 2003/02/09 10:04:33 jdolecek E
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_debugprint.h"
 #include "rf_shutdown.h"
 #include "rf_cvscan.h"
@@ -85,8 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22 2003/02/09 10:04:33 jdolecek E
 #include "rf_fifo.h"
 #include "rf_kintf.h"
 
-static int init_dqd(RF_DiskQueueData_t *);
-static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
 
 #ifndef RF_DEBUG_DISKQUEUE
@@ -150,54 +147,20 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
-static RF_FreeList_t *rf_dqd_freelist;
-
 #define RF_MAX_FREE_DQD 256
-#define RF_DQD_INC       16
-#define RF_DQD_INITIAL   64
+#define RF_MIN_FREE_DQD  64
 
 #include <sys/buf.h>
 
-static int 
-init_dqd(dqd)
-	RF_DiskQueueData_t *dqd;
-{
-
-	dqd->bp = (struct buf *) malloc(sizeof(struct buf), 
-					M_RAIDFRAME, M_NOWAIT);
-	if (dqd->bp == NULL) {
-		return (ENOMEM);
-	}
-	memset(dqd->bp, 0, sizeof(struct buf));	/* if you don't do it, nobody
-						 * else will.. */
-	return (0);
-}
-
-static void 
-clean_dqd(dqd)
-	RF_DiskQueueData_t *dqd;
-{
-	free(dqd->bp, M_RAIDFRAME);
-}
 /* configures a single disk queue */
 
 int 
-rf_ConfigureDiskQueue(
-      RF_Raid_t * raidPtr,
-      RF_DiskQueue_t * diskqueue,
-      RF_RowCol_t r,		/* row & col -- debug only.  BZZT not any
-				 * more... */
-      RF_RowCol_t c,
-      const RF_DiskQueueSW_t * p,
-      RF_SectorCount_t sectPerDisk,
-      dev_t dev,
-      int maxOutstanding,
-      RF_ShutdownList_t ** listp,
-      RF_AllocListElem_t * clList)
+rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
+		      RF_RowCol_t c, const RF_DiskQueueSW_t *p,
+		      RF_SectorCount_t sectPerDisk, dev_t dev,
+		      int maxOutstanding, RF_ShutdownList_t **listp,
+		      RF_AllocListElem_t *clList)
 {
-	int     rc;
-
-	diskqueue->row = r;
 	diskqueue->col = c;
 	diskqueue->qPtr = p;
 	diskqueue->qHdr = (p->Create) (sectPerDisk, clList, listp);
@@ -207,60 +170,38 @@ rf_ConfigureDiskQueue(
 	diskqueue->maxOutstanding = maxOutstanding;
 	diskqueue->curPriority = RF_IO_NORMAL_PRIORITY;
 	diskqueue->nextLockingOp = NULL;
-	diskqueue->numWaiting = 0;
 	diskqueue->flags = 0;
 	diskqueue->raidPtr = raidPtr;
-	diskqueue->rf_cinfo = &raidPtr->raid_cinfo[r][c];
-	rc = rf_create_managed_mutex(listp, &diskqueue->mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (rc);
-	}
-	rc = rf_create_managed_cond(listp, &diskqueue->cond);
-	if (rc) {
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		return (rc);
-	}
+	diskqueue->rf_cinfo = &raidPtr->raid_cinfo[c];
+	rf_mutex_init(&diskqueue->mutex);
+	diskqueue->cond = 0;
 	return (0);
 }
 
 static void 
-rf_ShutdownDiskQueueSystem(ignored)
-	void   *ignored;
+rf_ShutdownDiskQueueSystem(void *ignored)
 {
-	RF_FREELIST_DESTROY_CLEAN(rf_dqd_freelist, next, (RF_DiskQueueData_t *), clean_dqd);
+	pool_destroy(&rf_pools.dqd);
 }
 
-int 
-rf_ConfigureDiskQueueSystem(listp)
-	RF_ShutdownList_t **listp;
+int
+rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
-	RF_FREELIST_CREATE(rf_dqd_freelist, RF_MAX_FREE_DQD,
-	    RF_DQD_INC, sizeof(RF_DiskQueueData_t));
-	if (rf_dqd_freelist == NULL)
-		return (ENOMEM);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
-		rf_ShutdownDiskQueueSystem(NULL);
-		return (rc);
-	}
-	RF_FREELIST_PRIME_INIT(rf_dqd_freelist, RF_DQD_INITIAL, next,
-	    (RF_DiskQueueData_t *), init_dqd);
+	rf_pool_init(&rf_pools.dqd, sizeof(RF_DiskQueueData_t),
+		     "rf_dqd_pl", RF_MIN_FREE_DQD, RF_MAX_FREE_DQD);
+	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
+
 	return (0);
 }
 
 int 
-rf_ConfigureDiskQueues(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		       RF_Config_t *cfgPtr)
 {
-	RF_DiskQueue_t **diskQueues, *spareQueues;
+	RF_DiskQueue_t *diskQueues, *spareQueues;
 	const RF_DiskQueueSW_t *p;
-	RF_RowCol_t r, c;
+	RF_RowCol_t r,c;
 	int     rc, i;
 
 	raidPtr->maxQueueDepth = cfgPtr->maxOutstandingDiskReqs;
@@ -276,38 +217,34 @@ rf_ConfigureDiskQueues(
 		p = &diskqueuesw[0];
 	}
 	raidPtr->qType = p;
-	RF_CallocAndAdd(diskQueues, raidPtr->numRow, sizeof(RF_DiskQueue_t *), (RF_DiskQueue_t **), raidPtr->cleanupList);
-	if (diskQueues == NULL) {
+
+	RF_MallocAndAdd(diskQueues, 
+			(raidPtr->numCol + RF_MAXSPARE) *
+			sizeof(RF_DiskQueue_t), (RF_DiskQueue_t *), 
+			raidPtr->cleanupList);
+	if (diskQueues == NULL)
 		return (ENOMEM);
-	}
 	raidPtr->Queues = diskQueues;
-	for (r = 0; r < raidPtr->numRow; r++) {
-		RF_CallocAndAdd(diskQueues[r], raidPtr->numCol + 
-				 ((r == 0) ? RF_MAXSPARE : 0), 
-				sizeof(RF_DiskQueue_t), (RF_DiskQueue_t *), 
-				raidPtr->cleanupList);
-		if (diskQueues[r] == NULL)
-			return (ENOMEM);
-		for (c = 0; c < raidPtr->numCol; c++) {
-			rc = rf_ConfigureDiskQueue(raidPtr, &diskQueues[r][c],
-						   r, c, p,
-						   raidPtr->sectorsPerDisk, 
-						   raidPtr->Disks[r][c].dev,
-						   cfgPtr->maxOutstandingDiskReqs, 
-						   listp, raidPtr->cleanupList);
-			if (rc)
-				return (rc);
-		}
+
+	for (c = 0; c < raidPtr->numCol; c++) {
+		rc = rf_ConfigureDiskQueue(raidPtr, &diskQueues[c],
+					   c, p,
+					   raidPtr->sectorsPerDisk, 
+					   raidPtr->Disks[c].dev,
+					   cfgPtr->maxOutstandingDiskReqs, 
+					   listp, raidPtr->cleanupList);
+		if (rc)
+			return (rc);
 	}
 
-	spareQueues = &raidPtr->Queues[0][raidPtr->numCol];
+	spareQueues = &raidPtr->Queues[raidPtr->numCol];
 	for (r = 0; r < raidPtr->numSpare; r++) {
 		rc = rf_ConfigureDiskQueue(raidPtr, &spareQueues[r],
-		    0, raidPtr->numCol + r, p,
-		    raidPtr->sectorsPerDisk,
-		    raidPtr->Disks[0][raidPtr->numCol + r].dev,
-		    cfgPtr->maxOutstandingDiskReqs, listp,
-		    raidPtr->cleanupList);
+					   raidPtr->numCol + r, p,
+					   raidPtr->sectorsPerDisk,
+					   raidPtr->Disks[raidPtr->numCol + r].dev,
+					   cfgPtr->maxOutstandingDiskReqs, listp,
+					   raidPtr->cleanupList);
 		if (rc)
 			return (rc);
 	}
@@ -343,10 +280,7 @@ rf_ConfigureDiskQueues(
  *    Do the same as at user level, with the sleeps and wakeups suppressed.
  */
 void 
-rf_DiskIOEnqueue(queue, req, pri)
-	RF_DiskQueue_t *queue;
-	RF_DiskQueueData_t *req;
-	int     pri;
+rf_DiskIOEnqueue(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int pri)
 {
 	RF_ETIMER_START(req->qtime);
 	RF_ASSERT(req->type == RF_IO_TYPE_NOP || req->numSector);
@@ -364,14 +298,14 @@ rf_DiskIOEnqueue(queue, req, pri)
 	/* locking request */
 	if (RF_LOCKING_REQ(req)) {
 		if (RF_QUEUE_EMPTY(queue)) {
-			Dprintf3("Dispatching pri %d locking op to r %d c %d (queue empty)\n", pri, queue->row, queue->col);
+			Dprintf2("Dispatching pri %d locking op to c %d (queue empty)\n", pri, queue->col);
 			RF_LOCK_QUEUE(queue);
 			rf_DispatchKernelIO(queue, req);
 		} else {
 			queue->queueLength++;	/* increment count of number
 						 * of requests waiting in this
 						 * queue */
-			Dprintf3("Enqueueing pri %d locking op to r %d c %d (queue not empty)\n", pri, queue->row, queue->col);
+			Dprintf2("Enqueueing pri %d locking op to c %d (queue not empty)\n", pri, queue->col);
 			req->queue = (void *) queue;
 			(queue->qPtr->Enqueue) (queue->qHdr, req, pri);
 		}
@@ -380,20 +314,20 @@ rf_DiskIOEnqueue(queue, req, pri)
 	else
 		if (RF_UNLOCKING_REQ(req)) {	/* we'll do the actual unlock
 						 * when this I/O completes */
-			Dprintf3("Dispatching pri %d unlocking op to r %d c %d\n", pri, queue->row, queue->col);
+			Dprintf2("Dispatching pri %d unlocking op to c %d\n", pri, queue->col);
 			RF_ASSERT(RF_QUEUE_LOCKED(queue));
 			rf_DispatchKernelIO(queue, req);
 		}
 	/* normal request */
 		else
 			if (RF_OK_TO_DISPATCH(queue, req)) {
-				Dprintf3("Dispatching pri %d regular op to r %d c %d (ok to dispatch)\n", pri, queue->row, queue->col);
+				Dprintf2("Dispatching pri %d regular op to c %d (ok to dispatch)\n", pri, queue->col);
 				rf_DispatchKernelIO(queue, req);
 			} else {
 				queue->queueLength++;	/* increment count of
 							 * number of requests
 							 * waiting in this queue */
-				Dprintf3("Enqueueing pri %d regular op to r %d c %d (not ok to dispatch)\n", pri, queue->row, queue->col);
+				Dprintf2("Enqueueing pri %d regular op to c %d (not ok to dispatch)\n", pri, queue->col);
 				req->queue = (void *) queue;
 				(queue->qPtr->Enqueue) (queue->qHdr, req, pri);
 			}
@@ -403,10 +337,7 @@ rf_DiskIOEnqueue(queue, req, pri)
 
 /* get the next set of I/Os started, kernel version only */
 void 
-rf_DiskIOComplete(queue, req, status)
-	RF_DiskQueue_t *queue;
-	RF_DiskQueueData_t *req;
-	int     status;
+rf_DiskIOComplete(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int status)
 {
 	int     done = 0;
 
@@ -415,7 +346,7 @@ rf_DiskIOComplete(queue, req, status)
 	/* unlock the queue: (1) after an unlocking req completes (2) after a
 	 * locking req fails */
 	if (RF_UNLOCKING_REQ(req) || (RF_LOCKING_REQ(req) && status)) {
-		Dprintf2("DiskIOComplete: unlocking queue at r %d c %d\n", queue->row, queue->col);
+		Dprintf1("DiskIOComplete: unlocking queue at c %d\n", queue->col);
 		RF_ASSERT(RF_QUEUE_LOCKED(queue));
 		RF_UNLOCK_QUEUE(queue);
 	}
@@ -430,11 +361,11 @@ rf_DiskIOComplete(queue, req, status)
 		if (queue->nextLockingOp) {
 			req = queue->nextLockingOp;
 			queue->nextLockingOp = NULL;
-			Dprintf3("DiskIOComplete: a pri %d locking req was pending at r %d c %d\n", req->priority, queue->row, queue->col);
+			Dprintf2("DiskIOComplete: a pri %d locking req was pending at c %d\n", req->priority, queue->col);
 		} else {
 			req = (queue->qPtr->Dequeue) (queue->qHdr);
 			if (req != NULL) {
-				Dprintf3("DiskIOComplete: extracting pri %d req from queue at r %d c %d\n", req->priority, queue->row, queue->col);
+				Dprintf2("DiskIOComplete: extracting pri %d req from queue at c %d\n", req->priority, queue->col);
 			} else {
 				Dprintf1("DiskIOComplete: no more requests to extract.\n", "");
 			}
@@ -450,13 +381,13 @@ rf_DiskIOComplete(queue, req, status)
 		else
 			if (RF_LOCKING_REQ(req)) {
 				if (RF_QUEUE_EMPTY(queue)) {	/* dispatch it */
-					Dprintf3("DiskIOComplete: dispatching pri %d locking req to r %d c %d (queue empty)\n", req->priority, queue->row, queue->col);
+					Dprintf2("DiskIOComplete: dispatching pri %d locking req to c %d (queue empty)\n", req->priority, queue->col);
 					RF_LOCK_QUEUE(queue);
 					rf_DispatchKernelIO(queue, req);
 					done = 1;
 				} else {	/* put it aside to wait for
 						 * the queue to drain */
-					Dprintf3("DiskIOComplete: postponing pri %d locking req to r %d c %d\n", req->priority, queue->row, queue->col);
+					Dprintf2("DiskIOComplete: postponing pri %d locking req to c %d\n", req->priority, queue->col);
 					RF_ASSERT(queue->nextLockingOp == NULL);
 					queue->nextLockingOp = req;
 					done = 1;
@@ -467,19 +398,19 @@ rf_DiskIOComplete(queue, req, status)
 								 * not get queued */
 					RF_ASSERT(RF_QUEUE_LOCKED(queue));	/* support it anyway for
 										 * the future */
-					Dprintf3("DiskIOComplete: dispatching pri %d unl req to r %d c %d (SHOULD NOT SEE THIS)\n", req->priority, queue->row, queue->col);
+					Dprintf2("DiskIOComplete: dispatching pri %d unl req to c %d (SHOULD NOT SEE THIS)\n", req->priority, queue->col);
 					rf_DispatchKernelIO(queue, req);
 					done = 1;
 				} else
 					if (RF_OK_TO_DISPATCH(queue, req)) {
-						Dprintf3("DiskIOComplete: dispatching pri %d regular req to r %d c %d (ok to dispatch)\n", req->priority, queue->row, queue->col);
+						Dprintf2("DiskIOComplete: dispatching pri %d regular req to c %d (ok to dispatch)\n", req->priority, queue->col);
 						rf_DispatchKernelIO(queue, req);
 					} else {	/* we can't dispatch it,
 							 * so just re-enqueue
 							 * it.  */
 						/* potential trouble here if
 						 * disk queues batch reqs */
-						Dprintf3("DiskIOComplete: re-enqueueing pri %d regular req to r %d c %d\n", req->priority, queue->row, queue->col);
+						Dprintf2("DiskIOComplete: re-enqueueing pri %d regular req to c %d\n", req->priority, queue->col);
 						queue->queueLength++;
 						(queue->qPtr->Enqueue) (queue->qHdr, req, req->priority);
 						done = 1;
@@ -494,10 +425,8 @@ rf_DiskIOComplete(queue, req, status)
  * a queue, this routine does nothing and returns -1.
  */
 int 
-rf_DiskIOPromote(queue, parityStripeID, which_ru)
-	RF_DiskQueue_t *queue;
-	RF_StripeNum_t parityStripeID;
-	RF_ReconUnitNum_t which_ru;
+rf_DiskIOPromote(RF_DiskQueue_t *queue, RF_StripeNum_t parityStripeID,
+		 RF_ReconUnitNum_t which_ru)
 {
 	int     retval;
 
@@ -510,25 +439,32 @@ rf_DiskIOPromote(queue, parityStripeID, which_ru)
 }
 
 RF_DiskQueueData_t *
-rf_CreateDiskQueueData(
-    RF_IoType_t typ,
-    RF_SectorNum_t ssect,
-    RF_SectorCount_t nsect,
-    caddr_t buf,
-    RF_StripeNum_t parityStripeID,
-    RF_ReconUnitNum_t which_ru,
-    int (*wakeF) (void *, int),
-    void *arg,
-    RF_DiskQueueData_t * next,
-    RF_AccTraceEntry_t * tracerec,
-    void *raidPtr,
-    RF_DiskQueueDataFlags_t flags,
-    void *kb_proc)
+rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
+		       RF_SectorCount_t nsect, caddr_t buf,
+		       RF_StripeNum_t parityStripeID,
+		       RF_ReconUnitNum_t which_ru,
+		       int (*wakeF) (void *, int), void *arg,
+		       RF_DiskQueueData_t *next,
+		       RF_AccTraceEntry_t *tracerec, void *raidPtr,
+		       RF_DiskQueueDataFlags_t flags, void *kb_proc)
 {
 	RF_DiskQueueData_t *p;
+	int s;
 
-	RF_FREELIST_GET_INIT(rf_dqd_freelist, p, next, (RF_DiskQueueData_t *), init_dqd);
+	p = pool_get(&rf_pools.dqd, PR_WAITOK);
+	memset(p, 0, sizeof(RF_DiskQueueData_t));
+	/* Need to be at splbio to access bufpool! */
+	s = splbio();
+	p->bp = pool_get(&bufpool, PR_NOWAIT); /* XXX: make up our minds here.
+						  WAITOK, or NOWAIT?? */
+	splx(s);
+	if (p->bp == NULL) {
+		/* no memory for the buffer!?!? */
+		pool_put(&rf_pools.dqd, p);
+		return(NULL);
+	}
 
+	memset(p->bp, 0, sizeof(struct buf));
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;
 	p->type = typ;
@@ -547,8 +483,8 @@ rf_CreateDiskQueueData(
 }
 
 void 
-rf_FreeDiskQueueData(p)
-	RF_DiskQueueData_t *p;
+rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
-	RF_FREELIST_FREE_CLEAN(rf_dqd_freelist, p, next, clean_dqd);
+	pool_put(&bufpool, p->bp);
+	pool_put(&rf_pools.dqd, p);
 }

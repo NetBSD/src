@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.58 2003/05/09 23:51:28 fvdl Exp $	*/
+/*	$NetBSD: ess.c,v 1.58.2.1 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58 2003/05/09 23:51:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58.2.1 2004/08/03 10:47:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,7 @@ unsigned uuu;
 int	ess_setup_sc __P((struct ess_softc *, int));
 
 int	ess_open __P((void *, int));
-void	ess_1788_close __P((void *));
-void	ess_1888_close __P((void *));
+void	ess_close __P((void *));
 int	ess_getdev __P((void *, struct audio_device *));
 int	ess_drain __P((void *));
 	
@@ -209,7 +208,7 @@ struct audio_device ess_device = {
 
 struct audio_hw_if ess_1788_hw_if = {
 	ess_open,
-	ess_1788_close,
+	ess_close,
 	ess_drain,
 	ess_query_encoding,
 	ess_set_params,
@@ -239,7 +238,7 @@ struct audio_hw_if ess_1788_hw_if = {
 
 struct audio_hw_if ess_1888_hw_if = {
 	ess_open,
-	ess_1888_close,
+	ess_close,
 	ess_drain,
 	ess_query_encoding,
 	ess_set_params,
@@ -277,8 +276,8 @@ ess_printsc(sc)
 {
 	int i;
     
-	printf("open %d iobase 0x%x outport %u inport %u speaker %s\n",
-	       (int)sc->sc_open, sc->sc_iobase, sc->out_port,
+	printf("iobase 0x%x outport %u inport %u speaker %s\n",
+	       sc->sc_iobase, sc->out_port,
 	       sc->in_port, sc->spkr_state ? "on" : "off");
 
 	printf("audio1: DMA chan %d irq %d nintr %lu intr %p arg %p\n",
@@ -1018,8 +1017,10 @@ essattach(sc)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	sprintf(ess_device.name, "ES%s", essmodel[sc->sc_model]);
-	sprintf(ess_device.version, "0x%04x", sc->sc_version);
+	snprintf(ess_device.name, sizeof(ess_device.name), "ES%s",
+	    essmodel[sc->sc_model]);
+	snprintf(ess_device.version, sizeof(ess_device.version), "0x%04x",
+	    sc->sc_version);
 
 	if (ESS_USE_AUDIO1(sc->sc_model))
 		audio_attach_mi(&ess_1788_hw_if, sc, &sc->sc_dev);
@@ -1046,60 +1047,21 @@ ess_open(addr, flags)
 	void *addr;
 	int flags;
 {
-	struct ess_softc *sc = addr;
-	int i;
-
-	DPRINTF(("ess_open: sc=%p\n", sc));
-    
-	if (sc->sc_open != 0 || ess_reset(sc) != 0)
-		return ENXIO;
-
-	ess_setup(sc);		/* because we did a reset */
-
-	/* Set all mixer controls again since some change at reset. */
-	for (i = 0; i < ESS_MAX_NDEVS; i++)
-		ess_set_gain(sc, i, 1);
-
-	sc->sc_open = 1;
-
-	DPRINTF(("ess_open: opened\n"));
-
 	return (0);
 }
 
 void
-ess_1788_close(addr)
+ess_close(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTF(("ess_1788_close: sc=%p\n", sc));
+	DPRINTF(("ess_close: sc=%p\n", sc));
 
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	ess_audio1_halt(sc);
-
-	sc->sc_open = 0;
-	DPRINTF(("ess_1788_close: closed\n"));
-}
-
-void
-ess_1888_close(addr)
-	void *addr;
-{
-	struct ess_softc *sc = addr;
-
-	DPRINTF(("ess_1888_close: sc=%p\n", sc));
-
-	ess_speaker_off(sc);
-	sc->spkr_state = SPKR_OFF;
-
-	ess_audio1_halt(sc);
-	ess_audio2_halt(sc);
-
-	sc->sc_open = 0;
-	DPRINTF(("ess_1888_close: closed\n"));
+	DPRINTF(("ess_close: closed\n"));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.5 2002/02/24 01:04:27 matt Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.5.16.1 2004/08/03 10:42:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,6 +59,9 @@
  *
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.5.16.1 2004/08/03 10:42:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -126,14 +125,15 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			panic("in4_cksum: bad mbuf chain");
 #endif
 
-		__asm __volatile("
-			movzwl	16(%%ap),%0	# mov len to sum
-			addb2	8(%%ap),%0	# add proto to sum
-			rotl	$8,%0,%0	# htons, carry is preserved
-			adwc	12(%2),%0	# add src ip
-			adwc	16(%2),%0	# add dst ip
-			adwc	$0,%0		# clean up carry
-			" : "=r" (sum) : "0" (sum), "r" (mtod(m, void *)));
+		__asm __volatile(
+			"movzwl	16(%%ap),%0;"	/* mov len to sum */
+			"addb2	8(%%ap),%0;"	/* add proto to sum */
+			"rotl	$8,%0,%0;"	/* htons, carry is preserved */
+			"adwc	12(%2),%0;"	/* add src ip */
+			"adwc	16(%2),%0;"	/* add dst ip */
+			"adwc	$0,%0;"		/* clean up carry */
+			: "=r" (sum)
+			: "0" (sum), "r" (mtod(m, void *)));
 	}
 
 	/* skip unnecessary part */

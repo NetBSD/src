@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.23 2003/06/29 22:29:53 fvdl Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.23.2.1 2004/08/03 10:44:35 skrll Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23 2003/06/29 22:29:53 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23.2.1 2004/08/03 10:44:35 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23 2003/06/29 22:29:53 fvdl Exp $
  * Support gets added as things turn up....
  */
 
-static struct speedtab sptab[] = {
+static const struct speedtab sptab[] = {
 	{ 0, 0 },
 	{ 50, 1 },
 	{ 75, 2 },
@@ -87,7 +87,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = { 
+static const u_long s2btab[] = { 
 	0,
 	50,
 	75,
@@ -119,10 +119,10 @@ static u_long s2btab[] = {
  (emul_cc) ? (emul_cc) : _POSIX_VDISABLE;
 
 
-static void stios2btios __P((struct emul_termios *, struct termios *));
-static void btios2stios __P((struct termios *, struct emul_termios *));
-static void stios2stio __P((struct emul_termios *, struct emul_termio *));
-static void stio2stios __P((struct emul_termio *, struct emul_termios *));
+static void stios2btios(struct emul_termios *, struct termios *);
+static void btios2stios(struct termios *, struct emul_termios *);
+static void stios2stio(struct emul_termios *, struct emul_termio *);
+static void stio2stios(struct emul_termio *, struct emul_termios *);
 
 /*
  * these two conversion functions have mostly been done
@@ -141,9 +141,7 @@ static void stio2stios __P((struct emul_termio *, struct emul_termios *));
 
 
 static void
-stios2btios(st, bt)
-	struct emul_termios *st;
-	struct termios *bt;
+stios2btios(struct emul_termios *st, struct termios *bt)
 {
 	u_long l, r;
 
@@ -273,9 +271,7 @@ stios2btios(st, bt)
  * Convert bsd termios to "sunos" emulated termios
  */
 static void
-btios2stios(bt, st)
-	struct termios *bt;
-	struct emul_termios *st;
+btios2stios(struct termios *bt, struct emul_termios *st)
 {
 	u_long l, r;
 
@@ -420,9 +416,7 @@ btios2stios(bt, st)
  * Convert emulated struct termios to termio(?)
  */
 static void
-stios2stio(ts, t)
-	struct emul_termios *ts;
-	struct emul_termio *t;
+stios2stio(struct emul_termios *ts, struct emul_termio *t)
 {
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
@@ -436,9 +430,7 @@ stios2stio(ts, t)
  * Convert the other way
  */
 static void
-stio2stios(t, ts)
-	struct emul_termio *t;
-	struct emul_termios *ts;
+stio2stios(struct emul_termio *t, struct emul_termios *ts)
 {
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
@@ -449,10 +441,7 @@ stio2stios(t, ts)
 }
 
 int
-ultrix_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_ioctl_args *uap = v;
 	struct proc *p = l->l_proc;

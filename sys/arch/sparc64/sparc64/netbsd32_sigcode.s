@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.s,v 1.2 2002/05/05 06:07:42 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.s,v 1.2.10.1 2004/08/03 10:41:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -35,7 +35,7 @@
 
 #define SIGCODE_NAME           netbsd32_sigcode
 #define ESIGCODE_NAME          netbsd32_esigcode
-#define SIGRETURN_NAME         netbsd32_SYS_netbsd32___sigreturn14
+#define SIGRETURN_NAME         netbsd32_SYS_compat_16_netbsd32___sigreturn14
 #define EXIT_NAME              netbsd32_SYS_netbsd32_exit
 
 	.register	%g2,#scratch

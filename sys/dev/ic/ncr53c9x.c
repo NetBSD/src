@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.106 2003/04/16 18:53:50 petrov Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.106.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.106 2003/04/16 18:53:50 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.106.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ static int ecb_pool_initialized = 0;
 static struct pool ecb_pool;
 
 /*
- * Names for the NCR53c9x variants, correspnding to the variant tags
+ * Names for the NCR53c9x variants, corresponding to the variant tags
  * in ncr53c9xvar.h.
  */
 static const char *ncr53c9x_variant_names[] = {
@@ -495,7 +495,10 @@ ncr53c9x_init(sc, doreset)
 	 */
 	ncr53c9x_reset(sc);
 
+	sc->sc_flags = 0;
+	sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
+
 	for (r = 0; r < sc->sc_ntarg; r++) {
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
@@ -521,6 +524,9 @@ ncr53c9x_init(sc, doreset)
 		sc->sc_state = NCR_IDLE;
 		ncr53c9x_sched(sc);
 	}
+
+	/* Notify upper layer */
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 }
 
 /*
@@ -1042,7 +1048,7 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 /*
  * Schedule a scsi operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from ncr53c9x_scsipi_request and
- * ncr53c9x_done.  This may save us an unecessary interrupt just to get
+ * ncr53c9x_done.  This may save us an unnecessary interrupt just to get
  * things going.  Should only be called when state == NCR_IDLE and at bio pl.
  */
 void
@@ -2317,8 +2323,12 @@ again:
 				 * disconnecting, and this is necessary
 				 * to clean up their state.
 				 */
-				printf("%s: unexpected disconnect; ",
-				    sc->sc_dev.dv_xname);
+				printf("%s: unexpected disconnect "
+			"[state %d, intr %x, stat %x, phase(c %x, p %x)]; ",
+					sc->sc_dev.dv_xname, sc->sc_state,
+					sc->sc_espintr, sc->sc_espstat,
+					sc->sc_phase, sc->sc_prevphase);
+
 				if ((ecb->flags & ECB_SENSE) != 0) {
 					printf("resetting\n");
 					goto reset;
@@ -2357,14 +2367,13 @@ again:
 			sc->sc_dev.dv_xname, sc->sc_state, sc->sc_espintr);
 		ncr53c9x_init(sc, 1);
 		goto out;
-		break;
 
 	case NCR_IDENTIFIED:
 		ecb = sc->sc_nexus;
 		if (sc->sc_phase != MESSAGE_IN_PHASE) {
 			int i = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
  			/*
-			 * Things are seriously fucked up.
+			 * Things are seriously screwed up.
 			 * Pull the brakes, i.e. reset
 			 */
 			printf("%s: target didn't send tag: %d bytes in fifo\n",
@@ -2377,8 +2386,6 @@ again:
 			goto out;
 		} else
 			goto msgin;
-
-		break;
 
 	case NCR_IDLE:
 	case NCR_SELECTING:
@@ -2402,7 +2409,7 @@ again:
 			sc->sc_state = NCR_RESELECTED;
 			if (sc->sc_phase != MESSAGE_IN_PHASE) {
 				/*
-				 * Things are seriously fucked up.
+				 * Things are seriously screwed up.
 				 * Pull the brakes, i.e. reset
 				 */
 				printf("%s: target didn't identify\n",
@@ -2644,8 +2651,9 @@ again:
 		break;
 
 	default:
-		printf("%s: invalid state: %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_state);
+		printf("%s: invalid state: %d [intr %x, phase(c %x, p %x)]\n",
+			sc->sc_dev.dv_xname, sc->sc_state,
+			sc->sc_espintr, sc->sc_phase, sc->sc_prevphase);
 		goto reset;
 	}
 
@@ -2695,7 +2703,6 @@ msgin:
 		}
 		sc->sc_prevphase = MESSAGE_IN_PHASE;
 		goto shortcut;	/* i.e. expect data to be ready */
-		break;
 
 	case COMMAND_PHASE:
 		/*
@@ -2778,7 +2785,6 @@ msgin:
 		NCRCMD(sc, NCRCMD_ICCS);
 		sc->sc_prevphase = STATUS_PHASE;
 		goto shortcut;	/* i.e. expect status results soon */
-		break;
 
 	case INVALID_PHASE:
 		break;

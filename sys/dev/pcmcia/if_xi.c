@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.31 2003/06/23 11:01:59 martin Exp $ */
+/*	$NetBSD: if_xi.c,v 1.31.2.1 2004/08/03 10:50:15 skrll Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31 2003/06/23 11:01:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31.2.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -220,60 +220,41 @@ const struct xi_pcmcia_product {
 	u_int32_t	xpp_product;	/* product ID */
 	int		xpp_expfunc;	/* expected function number */
 	int		xpp_flags;	/* initial softc flags */
-	const char	*xpp_name;	/* device name */
 } xi_pcmcia_products[] = {
 #ifdef NOT_SUPPORTED
 	{ PCMCIA_VENDOR_XIRCOM,		0x0141,
-	  0,				0,
-	  PCMCIA_STR_XIRCOM_CE },
+	  0,				0 },
 #endif
 	{ PCMCIA_VENDOR_XIRCOM,		0x0141,
-	  0,				0,
-	  PCMCIA_STR_XIRCOM_CE2 },
+	  0,				0 },
 	{ PCMCIA_VENDOR_XIRCOM,		0x0142,
-	  0,				0,
-	  PCMCIA_STR_XIRCOM_CE2 },
+	  0,				0 },
 	{ PCMCIA_VENDOR_XIRCOM,		0x0143,
-	  0,				XIFLAGS_MOHAWK,
-	  PCMCIA_STR_XIRCOM_CE3 },
+	  0,				XIFLAGS_MOHAWK },
 	{ PCMCIA_VENDOR_COMPAQ2,	0x0143,
-	  0,				XIFLAGS_MOHAWK,
-	  PCMCIA_STR_COMPAQ2_CPQ_10_100 },
+	  0,				XIFLAGS_MOHAWK },
 	{ PCMCIA_VENDOR_INTEL,		0x0143,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM,
-	  PCMCIA_STR_INTEL_EEPRO100 },
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM },
 	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_XE2000,
-	  0,				XIFLAGS_MOHAWK,
-	  PCMCIA_STR_XIRCOM_XE2000 },
+	  0,				XIFLAGS_MOHAWK },
 	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_REM56,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_REM56 },
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
 #ifdef NOT_SUPPORTED
 	{ PCMCIA_VENDOR_XIRCOM,		0x1141,
-	  0,				XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_CEM },
+	  0,				XIFLAGS_MODEM },
 #endif
 	{ PCMCIA_VENDOR_XIRCOM,		0x1142,
-	  0,				XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_CEM },
+	  0,				XIFLAGS_MODEM },
 	{ PCMCIA_VENDOR_XIRCOM,		0x1143,
-	  0,				XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_CEM },
+	  0,				XIFLAGS_MODEM },
 	{ PCMCIA_VENDOR_XIRCOM,		0x1144,
-	  0,				XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_CEM33 },
+	  0,				XIFLAGS_MODEM },
 	{ PCMCIA_VENDOR_XIRCOM,		0x1145,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_CEM56 },
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM },
 	{ PCMCIA_VENDOR_XIRCOM,		0x1146,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_REM56 },
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
 	{ PCMCIA_VENDOR_XIRCOM,		0x1147,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_REM56 },
-	{ 0,				0,
-	  0,				0,
-	  NULL },
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
 };
 
 
@@ -285,6 +266,7 @@ xi_pcmcia_identify(dev, pa)
 	const struct xi_pcmcia_product *xpp;
         u_int8_t id;
 	u_int32_t prod;
+	int n;
 
 	/*
 	 * The Xircom ethernet cards swap the revision and product fields
@@ -298,11 +280,14 @@ xi_pcmcia_identify(dev, pa)
 
 	DPRINTF(XID_CONFIG, ("product=0x%x\n", prod));
 
-	for (xpp = xi_pcmcia_products; xpp->xpp_name != NULL; xpp++)
+	for (xpp = xi_pcmcia_products,
+	    n = sizeof(xi_pcmcia_products) / sizeof(xi_pcmcia_products[0]);
+	    n; xpp++, n--) {
 		if (pa->manufacturer == xpp->xpp_vendor &&
-			prod == xpp->xpp_product &&
-			pa->pf->number == xpp->xpp_expfunc)
+		    prod == xpp->xpp_product &&
+		    pa->pf->number == xpp->xpp_expfunc)
 			return (xpp);
+	}
 	return (NULL);
 }
 
@@ -383,8 +368,10 @@ xi_pcmcia_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const struct xi_pcmcia_product *xpp;
 
+	aprint_normal("\n");
+
 	if (xi_pcmcia_cis_quirks(pa->pf) < 0) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		return;
 	}
 
@@ -392,7 +379,7 @@ xi_pcmcia_attach(parent, self, aux)
 	psc->sc_pf = pa->pf;
 	pcmcia_function_init(psc->sc_pf, SIMPLEQ_FIRST(&psc->sc_pf->cfe_head));
 	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto fail;
 	}
 	psc->sc_resource |= XI_RES_PCIC;
@@ -400,7 +387,7 @@ xi_pcmcia_attach(parent, self, aux)
 	/* allocate/map ISA I/O space */
 	if (pcmcia_io_alloc(psc->sc_pf, 0, XI_IOSIZE, XI_IOSIZE,
 		&psc->sc_pcioh) != 0) {
-		printf(": I/O allocation failed\n");
+		aprint_error("%s: I/O allocation failed\n", self->dv_xname);
 		goto fail;
 	}
 	psc->sc_resource |= XI_RES_IO_ALLOC;
@@ -411,19 +398,17 @@ xi_pcmcia_attach(parent, self, aux)
 
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, XI_IOSIZE,
 		&psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map I/O space\n");
+		aprint_error("%s: can't map I/O space\n", self->dv_xname);
 		goto fail;
 	}
 	psc->sc_resource |= XI_RES_IO_MAP;
 
 	xpp = xi_pcmcia_identify(parent,pa);
 	if (xpp == NULL) {
-		printf(": unrecognised model\n");
+		aprint_error("%s: unrecognised model\n", self->dv_xname);
 		return;
 	}
 	sc->sc_flags = xpp->xpp_flags;
-
-	printf(": %s\n", xpp->xpp_name);
 
 	/*
 	 * Configuration as advised by DINGO documentation.
@@ -471,16 +456,16 @@ xi_pcmcia_attach(parent, self, aux)
 	 */
 	xi_pcmcia_funce_enaddr(parent, sc->sc_enaddr);
 	if (!sc->sc_enaddr) {
-		printf("%s: unable to get ethernet address\n",
-			sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to get ethernet address\n",
+		    self->dv_xname);
 		goto fail;
 	}
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", self->dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = xi_start;
 	ifp->if_ioctl = xi_ioctl;
@@ -518,7 +503,7 @@ xi_pcmcia_attach(parent, self, aux)
 	psc->sc_resource |= XI_RES_MI;
 
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, self->dv_xname,
 	    RND_TYPE_NET, 0);
 #endif
 
@@ -900,16 +885,16 @@ xi_intr(arg)
 	if ((tx_status & TX_ABORT) && ifp->if_opackets > 0)
 		ifp->if_oerrors++;
 
+	/* have handled the interrupt */
+#if NRND > 0    
+	rnd_add_uint32(&sc->sc_rnd_source, tx_status);  
+#endif
+
 end:
 	/* Reenable interrupts. */
 	PAGE(sc, savedpage);
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 	    ENABLE_INT);
-
-	/* have handled the interrupt */
-#if NRND > 0    
-	rnd_add_uint32(&sc->sc_rnd_source, tx_status);  
-#endif
 
 	return (1);
 }

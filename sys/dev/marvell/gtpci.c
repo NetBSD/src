@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.9 2003/06/12 19:18:49 scw Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.9.2.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.9.2.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>

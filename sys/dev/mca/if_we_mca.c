@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.8 2002/10/02 16:34:13 thorpej Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.8.6.1 2004/08/03 10:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,12 +54,13 @@
  * Device driver for the Western Digital/SMC 8003 and 8013 series,
  * and the SMC Elite Ultra (8216).
  *
- * Currently only tested with WD8003W/A. Other WD8003-based cards
- * should work without problems, the SMC Elite based ones hopefully too.
+ * Currently only tested with WD8003W/A and EtherCard PLUS Elite 10T/A
+ * (8013WP/A). Other WD8003 and SMC Elite based cards should work
+ * without problems too.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.8 2002/10/02 16:34:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.8.6.1 2004/08/03 10:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +109,7 @@ static const struct we_mca_product {
 	{ MCA_PRODUCT_WD_8013EP, "EtherCard PLUS Elite/A (8013EP/A)",
 		WD_ELITE,	WE_TYPE_WD8013EP, "WD8013EP/A" },
 	{ MCA_PRODUCT_WD_8013WP, "EtherCard PLUS Elite 10T/A (8013WP/A)",
-		WD_ELITE,	WE_TYPE_WD8013EP, "WD8013WP/A" }, /* XXX */
+		WD_ELITE,	WE_TYPE_WD8013EP, "WD8013WP/A" },
 	{ MCA_PRODUCT_IBM_WD_2,"IBM PS/2 Adapter/A for Ethernet Networks (UTP)",
 		WD_ELITE, WE_TYPE_WD8013EP, "WD8013WP/A"}, /* XXX */
 	{ MCA_PRODUCT_IBM_WD_T,"IBM PS/2 Adapter/A for Ethernet Networks (BNC)",
@@ -146,12 +147,13 @@ static const struct {
 	{ 0x90,	0xFC0000, 16384 },
 	{ 0x94,	0xFC8000, 16384 },
 	{ 0x98,	0xFD0000, 16384 },
+	{ 0x9A, 0xFD8000, 16384 },
 	{ 0x9C,	0x0C0000, 16384 },
 	{ 0x00,	0x0C0000, 8192 },
 	{ 0x01,	0x0C2000, 8192 },
-	{ 0x10,	0x0C4000, 8192 },
-	{ 0x11,	0x0C6000, 8192 },
-	{ 0x00, 0x000000, 0    },
+	{ 0x02,	0x0C4000, 8192 },
+	{ 0x03,	0x0C6000, 8192 },
+	{ 0, 0, 0 },
 };
 
 	
@@ -201,7 +203,7 @@ we_mca_attach(parent, self, aux)
 	pos5 = mca_conf_read(ma->ma_mc, ma->ma_slot, 5);
 
 	/*
-	 * POS registers differ much between 8003 and 8013, so they are
+	 * POS registers differ a lot between 8003 and 8013, so they are
 	 * divided to two sections.
 	 * 
 	 * 8003: POS register 2: (adf pos0)
@@ -259,7 +261,7 @@ we_mca_attach(parent, self, aux)
 		int i, id;
 
 		iobase = 0x800 + (((pos2 & 0xf0) >> 4) * 0x1000);
-		irq = we_mca_irq[(pos5 & 0x06) >> 2];
+		irq = we_mca_irq[(pos5 & 0x0c) >> 2];
 
 		/* find location of shared mem and it's size */
 		id = (pos3 & 0x9f);
@@ -279,7 +281,11 @@ we_mca_attach(parent, self, aux)
 	nict = asict = ma->ma_iot;
 	memt = ma->ma_memt;
 
-	printf(" slot %d irq %d: %s\n", ma->ma_slot + 1, irq, wep->we_name);
+	printf(" slot %d port %#x-%#x mem %#x-%#x irq %d: %s\n",
+		ma->ma_slot + 1,
+		iobase, iobase + WE_NPORTS - 1,
+		maddr, maddr + sc->mem_size - 1,
+		irq, wep->we_name);
 
 	/* Map the device. */
 	if (bus_space_map(asict, iobase, WE_NPORTS, 0, &asich)) {
@@ -304,8 +310,9 @@ we_mca_attach(parent, self, aux)
 	 * Map memory space.
 	 */
 	if (bus_space_map(memt, maddr, sc->mem_size, 0, &memh)) {
-		printf("%s: can't map shared memory\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: can't map shared memory %#x-%#x\n",
+		    sc->sc_dev.dv_xname,
+		    maddr, maddr + sc->mem_size - 1);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bf_cbc.S,v 1.2 2002/11/12 03:03:10 itohy Exp $ */
+/* $NetBSD: bf_cbc.S,v 1.2.6.1 2004/08/03 10:44:45 skrll Exp $ */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -59,7 +59,7 @@
 
 /*
  * Modified from the output of `perl bf-686.pl elf' by 
- * Thor Lancelot Simon <tls@netbsd.org>
+ * Thor Lancelot Simon <tls@NetBSD.org>
  */
 
 #include <i386/include/asm.h>

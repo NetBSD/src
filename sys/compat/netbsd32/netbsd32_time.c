@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.5.2.1 2004/08/03 10:44:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.5.2.1 2004/08/03 10:44:23 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -299,7 +299,7 @@ netbsd32_setitimer(l, v, retval)
 	if (itvp && (error = copyin(itvp, &s32it, sizeof(s32it))))
 		return (error);
 	netbsd32_to_itimerval(&s32it, &aitv);
-	if (SCARG(uap, oitv) != NULL) {
+	if (SCARG(uap, oitv) != 0) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = netbsd32_getitimer(l, &getargs, retval)) != 0)

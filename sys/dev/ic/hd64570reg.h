@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.8 2001/06/12 15:17:22 wiz Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.8.22.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -607,6 +607,6 @@ struct hdlc_llc_header {
  * DMA constraints
  */
 #define SCA_DMA_ALIGNMENT	(64 * 1024)	/* 64 KB alignment */
-#define SCA_DMA_BOUNDRY		(16 * 1024 * 1024)	/* 16 MB region */
+#define SCA_DMA_BOUNDARY	(16 * 1024 * 1024)	/* 16 MB region */
 
 #endif /* _DEV_IC_HD64570REG_H_ */

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstorob - AML Interpreter object store support, store to object
- *              xRevision: 50 $
+ *              xRevision: 51 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.6 2003/03/04 17:25:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.6.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #define __EXSTOROB_C__
 

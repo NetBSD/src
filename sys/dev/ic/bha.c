@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.54 2003/05/03 18:11:15 wiz Exp $	*/
+/*	$NetBSD: bha.c,v 1.54.2.1 2004/08/03 10:46:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54 2003/05/03 18:11:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54.2.1 2004/08/03 10:46:11 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -244,7 +244,7 @@ bha_intr(arg)
 #endif /* BHADEBUG */
 
 	/*
-	 * First acknowlege the interrupt, Then if it's not telling about
+	 * First acknowledge the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
 	sts = bus_space_read_1(iot, ioh, BHA_INTR_PORT);
@@ -1199,15 +1199,15 @@ bha_info(sc)
 	 */
 	if (inquire.reply.bus_type == BHA_BUS_TYPE_24BIT &&
 	    sc->sc_firmware[0] < '3')
-		sprintf(sc->sc_model, "542B");
+		snprintf(sc->sc_model, sizeof(sc->sc_model), "542B");
 	else if (inquire.reply.bus_type == BHA_BUS_TYPE_32BIT &&
 	    sc->sc_firmware[0] == '2' &&
 	    (sc->sc_firmware[2] == '1' ||
 	     (sc->sc_firmware[2] == '2' && sc->sc_firmware[3] == '0')))
-		sprintf(sc->sc_model, "742A");
+		snprintf(sc->sc_model, sizeof(sc->sc_model), "742A");
 	else if (inquire.reply.bus_type == BHA_BUS_TYPE_32BIT &&
 	    sc->sc_firmware[0] == '0')
-		sprintf(sc->sc_model, "747A");
+		snprintf(sc->sc_model, sizeof(sc->sc_model), "747A");
 	else {
 		p = sc->sc_model;
 		model.cmd.opcode = BHA_INQUIRE_MODEL;

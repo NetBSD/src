@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnerreg.h,v 1.3 1998/11/20 04:12:58 kml Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.3.44.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@
 
 /* HIPPI Transmit State */
 
-#define RR_TS_ENABLE	0x01	/* enable trasmit state machine */
+#define RR_TS_ENABLE	0x01	/* enable transmit state machine */
 #define RR_TS_PERMANENT	0x02	/* this connection permanent while set */
 
 /* External Serial Data */
@@ -521,8 +521,8 @@ struct rr_gen_info {
  * A few constants:
  */
 
-#define RR_DMA_BOUNDRY	(64 * 1024)	/* can't cross 64K boundries on DMA */
-#define RR_DMA_MAX	65535		/* maximum that can be transfered in
+#define RR_DMA_BOUNDARY	(64 * 1024)	/* can't cross 64K boundaries on DMA */
+#define RR_DMA_MAX	65535		/* maximum that can be transferred in
 					   one DMA operation */
 #define RR_ULP_COUNT	256		/* number of possible ULPs */
 #define RR_INIT_CMD	15		/* initial command index */

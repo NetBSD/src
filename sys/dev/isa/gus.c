@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.81 2003/05/09 23:51:29 fvdl Exp $	*/
+/*	$NetBSD: gus.c,v 1.81.2.1 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81 2003/05/09 23:51:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.1 2004/08/03 10:47:58 skrll Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1030,7 +1030,8 @@ gusattach(parent, self, aux)
 	 * of the board version. Simply use the revision register as
 	 * identification.
 	 */
-	sprintf(gus_device.version, "%d", sc->sc_revision);
+	snprintf(gus_device.version, sizeof(gus_device.version), "%d",
+	    sc->sc_revision);
 
 	printf("\n%s: Gravis UltraSound", sc->sc_dev.dv_xname);
 	if (sc->sc_revision >= 10)
@@ -1243,7 +1244,7 @@ stereo_dmaintr(arg)
       dmarecords[dmarecord_index].count = sa->size;
       dmarecords[dmarecord_index].channel = 1;
       dmarecords[dmarecord_index].direction = 1;
-      dmarecord_index = ++dmarecord_index % NDMARECS;
+      dmarecord_index = (dmarecord_index + 1) % NDMARECS;
     }
 #endif
 
@@ -1337,7 +1338,7 @@ gus_dma_output(addr, buf, size, intr, arg)
 	  dmarecords[dmarecord_index].count = size;
 	  dmarecords[dmarecord_index].channel = 0;
 	  dmarecords[dmarecord_index].direction = 1;
-	  dmarecord_index = ++dmarecord_index % NDMARECS;
+	  dmarecord_index = (dmarecord_index + 1) % NDMARECS;
 	}
 #endif
 
@@ -1638,7 +1639,7 @@ gus_dmaout_dointr(sc)
 		  playstats[playcntr].dmabuf = sc->sc_dmabuf;
 		  playstats[playcntr].bufcnt = sc->sc_bufcnt;
 		  playstats[playcntr].curaddr = gus_get_curaddr(sc, GUS_VOICE_LEFT);
-		  playcntr = ++playcntr % NDMARECS;
+		  playcntr = (playcntr + 1) % NDMARECS;
 		}
 #endif
 		bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, GUS_VOICE_LEFT);
@@ -1880,7 +1881,7 @@ gus_start_playing(sc, bufno)
 		playstats[playcntr].dmabuf = sc->sc_dmabuf;
 		playstats[playcntr].bufcnt = sc->sc_bufcnt;
 		playstats[playcntr].vaction = 5;
-		playcntr = ++playcntr % NDMARECS;
+		playcntr = (playcntr + 1) % NDMARECS;
 	}
 #endif
 
@@ -1978,7 +1979,7 @@ gus_continue_playing(sc, voice)
 		playstats[playcntr].playbuf = sc->sc_playbuf;
 		playstats[playcntr].dmabuf = sc->sc_dmabuf;
 		playstats[playcntr].bufcnt = sc->sc_bufcnt;
-		playcntr = ++playcntr % NDMARECS;
+		playcntr = (playcntr + 1) % NDMARECS;
 	}
 #endif
 

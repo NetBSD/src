@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.38.2.2 2003/08/19 15:40:48 skrll Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.38.2.3 2004/08/03 10:44:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.2 2003/08/19 15:40:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.3 2004/08/03 10:44:04 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -88,21 +88,28 @@ linux_sys_ioctl(l, v, retval)
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
+	int error;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
-		return oss_ioctl_mixer(l, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_mixer(l, LINUX_TO_OSS(v), retval);
+		break;
 	case 'Q':
-		return oss_ioctl_sequencer(l, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_sequencer(l, LINUX_TO_OSS(v), retval);
+		break;
 	case 'P':
-		return oss_ioctl_audio(l, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_audio(l, LINUX_TO_OSS(v), retval);
+		break;
 	case 'r': /* VFAT ioctls; not yet supported */
-		return ENOSYS;
+		error = ENOSYS;
+		break;
 	case 'S':
-		return linux_ioctl_cdrom(l, uap, retval);
+		error = linux_ioctl_cdrom(l, uap, retval);
+		break;
 	case 't':
 	case 'f':
-		return linux_ioctl_termios(l, uap, retval);
+		error = linux_ioctl_termios(l, uap, retval);
+		break;
 	case 'T':
 	{
 #if NSEQUENCER > 0
@@ -117,7 +124,6 @@ linux_sys_ioctl(l, v, retval)
 		struct filedesc *fdp;
 		struct vnode *vp;
 		struct vattr va;
-		int error;
 		extern const struct cdevsw sequencer_cdevsw;
 
 		fdp = p->p_fd;
@@ -136,21 +142,33 @@ linux_sys_ioctl(l, v, retval)
 			error = linux_ioctl_termios(l, uap, retval);
 		}
 		FILE_UNUSE(fp, l);
-		return linux_ioctl_termios(l, uap, retval);
 #else
-		return linux_ioctl_termios(l, uap, retval);
+		error = linux_ioctl_termios(l, uap, retval);
 #endif
 	}
-		return linux_ioctl_socket(l, uap, retval);
+		break;
 	case 0x89:
-		return linux_ioctl_hdio(l, uap, retval);
+		error = linux_ioctl_socket(l, uap, retval);
+		break;
 	case 0x03:
-		return linux_ioctl_fdio(l, uap, retval);
+		error = linux_ioctl_hdio(l, uap, retval);
+		break;
 	case 0x02:
-		return linux_ioctl_blkio(l, uap, retval);
+		error = linux_ioctl_fdio(l, uap, retval);
+		break;
 	case 0x12:
-		return linux_machdepioctl(l, uap, retval);
+		error = linux_ioctl_blkio(l, uap, retval);
+		break;
 	default:
-		return linux_machdepioctl(l, uap, retval);
+		error = linux_machdepioctl(l, uap, retval);
+		break;
 	}
+	if (error == EPASSTHROUGH) {
+		/*
+		 * linux returns EINVAL or ENOTTY for not supported ioctls.
+		 */ 
+		error = EINVAL;
+	}
+
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.5.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.5.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include "opt_amdpm.h"
 
@@ -151,8 +151,15 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			rnd_attach_source(&sc->sc_rnd_source,
 			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
 			    /*
-			     * We can't estimate entropy since we poll
-			     * random data periodically.
+			     * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
+			     * XXX here is unobvious: we later feed raw bits
+			     * XXX into the "entropy pool" with rnd_add_data,
+			     * XXX explicitly supplying an entropy estimate.
+			     * XXX In this context, NO_ESTIMATE serves only
+			     * XXX to prevent rnd_add_data from trying to
+			     * XXX use the *time at which we added the data*
+			     * XXX as entropy, which is not a good idea since
+			     * XXX we add data periodically from a callout.
 			     */
 			    RND_FLAG_NO_ESTIMATE);
 #ifdef AMDPM_RND_COUNTERS

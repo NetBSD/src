@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.11 2003/02/02 02:34:54 christos Exp $	*/
+/*	$NetBSD: cnode.h,v 1.11.2.1 2004/08/03 10:43:19 skrll Exp $	*/
 
 /*
  * 
@@ -102,7 +102,7 @@ do {                            \
 struct cnode {
     struct vnode	*c_vnode;
     u_short		 c_flags;	/* flags (see below) */
-    ViceFid		 c_fid;		/* file handle */
+    CodaFid		 c_fid;		/* file handle */
     struct vnode	*c_ovp;		/* open vnode pointer */
     u_short		 c_ocount;	/* count of openers */
     u_short		 c_owrite;	/* count of open for write */
@@ -154,6 +154,7 @@ struct coda_mntinfo {
     struct vnode	*mi_rootvp;
     struct mount	*mi_vfsp;
     struct vcomm	 mi_vcomm;
+    int			 mi_started;	
 };
 extern struct coda_mntinfo coda_mnttbl[]; /* indexed by minor device number */
 
@@ -161,7 +162,8 @@ extern struct coda_mntinfo coda_mnttbl[]; /* indexed by minor device number */
  * vfs pointer to mount info
  */
 #define vftomi(vfsp)    ((struct coda_mntinfo *)(vfsp->mnt_data))
-#define	CODA_MOUNTED(vfsp)   (vftomi((vfsp)) != (struct coda_mntinfo *)0)
+#define	CODA_MOUNTED(vfsp)   ((vftomi(vfsp) != (struct coda_mntinfo *)0) \
+	&& (vftomi(vfsp)->mi_started))
 
 /*
  * vnode pointer to mount info
@@ -196,7 +198,7 @@ extern void coda_unmounting(struct mount *whoIam);
 extern int  coda_vmflush(struct cnode *cp);
 
 /* cfs_vnodeops.h */
-extern struct cnode *make_coda_node(ViceFid *fid, struct mount *vfsp, short type);
+extern struct cnode *make_coda_node(CodaFid *fid, struct mount *vfsp, short type);
 extern int coda_vnodeopstats_init(void);
 
 /* coda_vfsops.h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.24 2002/12/31 12:01:27 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.24.2.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -100,8 +100,8 @@
 #define ASI_BLOCKFILL	0x1f	/* [4m] hypersparc: hardware block fill */
 #define ASI_BYPASS	0x20	/* [4m] sun ref mmu bypass,
 				        ie. direct phys access */
-#define	ASI_CSR		0x2f	/* [4d] cpu-unit CSR space */
-#define	ASI_ECSR	0x2f	/* [4d] cpu-unit ECSR space */
+#define	ASI_CSR		0x2f	/* [4d] CPU-unit CSR space */
+#define	ASI_ECSR	0x2f	/* [4d] CPU-unit ECSR space */
 #define ASI_HICACHECLR	0x31	/* [4m] hypersparc only: I-cache flash clear */
 #define ASI_ICACHECLR	0x36	/* [4m] ms1 only: I-cache flash clear */
 #define ASI_DCACHECLR	0x37	/* [4m] ms1 only: D-cache flash clear */
@@ -253,8 +253,13 @@
 /*
  * [4m] Bits in SRMMU control register. One set per module.
  */
-#define VIKING_PCR_ME	0x00000001	/* MMU Enable */
-#define VIKING_PCR_NF	0x00000002	/* Fault inhibit bit */
+
+/* Bits 0 and 1 are common between implementations */
+#define SRMMU_PCR_ME	0x00000001	/* MMU Enable */
+#define SRMMU_PCR_NF	0x00000002	/* Fault inhibit bit */
+
+#define VIKING_PCR_ME	SRMMU_PCR_ME	/* MMU Enable */
+#define VIKING_PCR_NF	SRMMU_PCR_NF	/* Fault inhibit bit */
 #define VIKING_PCR_PSO	0x00000080	/* Partial Store Ordering enable */
 #define VIKING_PCR_DCE	0x00000100	/* Data cache enable bit */
 #define VIKING_PCR_ICE	0x00000200	/* SuperSPARC instr. cache enable */
@@ -266,8 +271,8 @@
 #define VIKING_PCR_AC	0x00008000	/* 1=cache non-MMU accesses */
 #define	VIKING_PCR_TC	0x00010000	/* 1=cache table walks */
 
-#define HYPERSPARC_PCR_ME	0x00000001	/* MMU Enable */
-#define HYPERSPARC_PCR_NF	0x00000002	/* Fault inhibit bit */
+#define HYPERSPARC_PCR_ME	SRMMU_PCR_ME	/* MMU Enable */
+#define HYPERSPARC_PCR_NF	SRMMU_PCR_NF	/* Fault inhibit bit */
 #define HYPERSPARC_PCR_CE	0x00000100	/* Cache enable bit */
 #define HYPERSPARC_PCR_CM	0x00000400	/* Cache mode: 1=write-back */
 #define	HYPERSPARC_PCR_MR	0x00000800	/* Memory reflection: 1 = on */
@@ -279,8 +284,8 @@
 #define HYPERSPARC_PCR_SE	0x00100000	/* Coherent bus snoop enable */
 #define HYPERSPARC_PCR_CWR	0x00200000	/* Cache wrap enable */
 
-#define CYPRESS_PCR_ME	0x00000001	/* MMU Enable */
-#define CYPRESS_PCR_NF	0x00000002	/* Fault inhibit bit */
+#define CYPRESS_PCR_ME	SRMMU_PCR_ME	/* MMU Enable */
+#define CYPRESS_PCR_NF	SRMMU_PCR_NF	/* Fault inhibit bit */
 #define CYPRESS_PCR_CE	0x00000100	/* Cache enable bit */
 #define CYPRESS_PCR_CL	0x00000200	/* Cache Lock (604 only) */
 #define CYPRESS_PCR_CM	0x00000400	/* Cache mode: 1=write-back */
@@ -292,8 +297,8 @@
 #define CYPRESS_PCR_MCM	0x00300000	/* Multichip Mask */
 #define CYPRESS_PCR_MCA	0x00c00000	/* Multichip Address */
 
-#define MS1_PCR_ME	0x00000001	/* MMU Enable */
-#define MS1_PCR_NF	0x00000002	/* Fault inhibit bit */
+#define MS1_PCR_ME	SRMMU_PCR_ME	/* MMU Enable */
+#define MS1_PCR_NF	SRMMU_PCR_NF	/* Fault inhibit bit */
 #define MS1_PCR_DCE	0x00000100	/* Data cache enable */
 #define MS1_PCR_ICE	0x00000200	/* Instruction cache enable */
 #define MS1_PCR_RC	0x00000c00	/* DRAM Refresh control */
@@ -307,8 +312,9 @@
 #define	MS1_PCR_AV	0x00400000	/* Address View (diag) */
 #define	MS1_PCR_STW	0x00800000	/* Software Tablewalk enable */
 
-#define SWIFT_PCR_ME	0x00000001	/* MMU Enable */
-#define SWIFT_PCR_NF	0x00000002	/* Fault inhibit bit */
+#define SWIFT_PCR_ME	SRMMU_PCR_ME	/* MMU Enable */
+#define SWIFT_PCR_NF	SRMMU_PCR_NF	/* Fault inhibit bit */
+#define SWIFT_PCR_SA	0x00000080	/* Store Allocate */
 #define SWIFT_PCR_DCE	0x00000100	/* Data cache enable */
 #define SWIFT_PCR_ICE	0x00000200	/* Instruction cache enable */
 #define SWIFT_PCR_RC	0x00003c00	/* DRAM Refresh control */
@@ -322,8 +328,8 @@
 #define	SWIFT_PCR_WP	0x00400000	/* Watch point enable */
 #define	SWIFT_PCR_STW	0x00800000	/* Software Tablewalk enable */
 
-#define TURBOSPARC_PCR_ME	0x00000001	/* MMU Enable */
-#define TURBOSPARC_PCR_NF	0x00000002	/* Fault inhibit bit */
+#define TURBOSPARC_PCR_ME	SRMMU_PCR_ME	/* MMU Enable */
+#define TURBOSPARC_PCR_NF	SRMMU_PCR_NF	/* Fault inhibit bit */
 #define TURBOSPARC_PCR_ICS	0x00000004	/* I-cache snoop enable */
 #define TURBOSPARC_PCR_PSO	0x00000008	/* Partial Store order (ro!) */
 #define TURBOSPARC_PCR_DCE	0x00000100	/* Data cache enable */

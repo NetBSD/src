@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.30 2002/12/29 20:12:19 ad Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.30.2.1 2004/08/03 10:42:45 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.30.2.1 2004/08/03 10:42:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -121,6 +122,9 @@ dz_ibus_attach(parent, self, aux)
 	sc->sc_dr.dr_tcr = 8;
 	sc->sc_dr.dr_dcd = 13;
 	sc->sc_dr.dr_ring = 13;
+
+	sc->sc_dr.dr_firstreg = 0;
+	sc->sc_dr.dr_winsize = sizeof(struct ss_dz);
 
 	sc->sc_type = DZ_DZV;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.24 2002/09/27 15:36:55 provos Exp $	*/
+/*	$NetBSD: dvma.c,v 1.24.6.1 2004/08/03 10:42:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.24.6.1 2004/08/03 10:42:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

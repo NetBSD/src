@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28 2003/06/29 22:29:23 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28.2.1 2004/08/03 10:43:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2003/06/29 22:29:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.2.1 2004/08/03 10:43:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,8 @@ linux_setregs(l, epp, stack)
 #endif
 }
 
-void setup_linux_rt_sigframe(tf, sig, mask)
-	struct trapframe *tf;
-	int sig;
-	sigset_t *mask;
+void
+setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -155,7 +153,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	bzero(&sigframe.uc, sizeof(struct linux_ucontext));
+	memset(&sigframe.uc, 0, sizeof(struct linux_ucontext));
 	sigframe.uc.uc_mcontext.sc_onstack = onstack;
 
 	/* Setup potentially partial signal mask in sc_mask. */
@@ -183,7 +181,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	 * XXX Or we do the emuldata thing.
 	 * XXX -erh
 	 */
-	bzero(&sigframe.info, sizeof(struct linux_siginfo));
+	memset(&sigframe.info, 0, sizeof(struct linux_siginfo));
 	sigframe.info.lsi_signo = sig;
 	sigframe.info.lsi_code = LINUX_SI_USER;
 	sigframe.info.lsi_pid = p->p_pid;
@@ -222,7 +220,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 void setup_linux_sigframe(tf, sig, mask)
 	struct trapframe *tf;
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -256,7 +254,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	bzero(&sigframe.sf_sc, sizeof(struct linux_ucontext));
+	memset(&sigframe.sf_sc, 0, sizeof(struct linux_ucontext));
 	sigframe.sf_sc.sc_onstack = onstack;
 	native_to_linux_old_sigset(&sigframe.sf_sc.sc_mask, mask);
 	sigframe.sf_sc.sc_pc = tf->tf_regs[FRAME_PC];
@@ -318,14 +316,12 @@ void setup_linux_sigframe(tf, sig, mask)
  * specified pc, psl.
  */
 void
-linux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_tf;
+	const int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 #ifdef notyet
 	struct linux_emuldata *edp;

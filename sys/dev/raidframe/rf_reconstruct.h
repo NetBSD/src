@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.9 2002/11/23 01:58:18 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.9.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@ struct RF_ReconBuffer_s {
 	int     which_ru;	/* which reconstruction unit within the PSS */
 	RF_SectorNum_t failedDiskSectorOffset;	/* the offset into the failed
 						 * disk */
-	RF_RowCol_t row, col;	/* which disk this buffer belongs to or is
+	RF_RowCol_t col;	/* which disk this buffer belongs to or is
 				 * targeted at */
 	RF_StripeCount_t count;	/* counts the # of SUs installed so far */
 	int     priority;	/* used to force hi priority recon */
@@ -86,7 +86,10 @@ typedef enum RF_Revent_e {
 	RF_REVENT_BUFCLEAR,
 	RF_REVENT_HEADSEPCLEAR,
 	RF_REVENT_SKIP,
-	RF_REVENT_FORCEDREADDONE
+	RF_REVENT_FORCEDREADDONE,
+	RF_REVENT_READ_FAILED,
+	RF_REVENT_WRITE_FAILED,
+	RF_REVENT_FORCEDREAD_FAILED
 }       RF_Revent_t;
 
 struct RF_ReconEvent_s {
@@ -102,7 +105,7 @@ struct RF_ReconEvent_s {
  */
 struct RF_PerDiskReconCtrl_s {
 	RF_ReconCtrl_t *reconCtrl;
-	RF_RowCol_t row, col;	/* to make this structure self-identifying */
+	RF_RowCol_t col;	/* to make this structure self-identifying */
 	RF_StripeNum_t curPSID;	/* the next parity stripe ID to check on this
 				 * disk */
 	RF_HeadSepLimit_t headSepCounter;	/* counter used to control
@@ -120,8 +123,7 @@ struct RF_ReconCtrl_s {
 	RF_PerDiskReconCtrl_t *perDiskInfo;	/* information maintained
 						 * per-disk */
 	RF_ReconMap_t *reconMap;/* map of what has/has not been reconstructed */
-	RF_RowCol_t spareRow;	/* which of the spare disks we're using */
-	RF_RowCol_t spareCol;
+	RF_RowCol_t spareCol;   /* which of the spare disks we're using */
 	RF_StripeNum_t lastPSID;/* the ID of the last parity stripe we want
 				 * reconstructed */
 	int     percentComplete;/* percentage completion of reconstruction */
@@ -131,15 +133,16 @@ struct RF_ReconCtrl_s {
 	/* reconstruction event queue */
 	RF_ReconEvent_t *eventQueue;	/* queue of pending reconstruction
 					 * events */
-	        RF_DECLARE_MUTEX(eq_mutex)	/* mutex for locking event
-						 * queue */
-	        RF_DECLARE_COND(eq_cond)	/* condition variable for
-						 * signalling recon events */
+        RF_DECLARE_MUTEX(eq_mutex)	/* mutex for locking event
+					 * queue */
 	int     eq_count;	/* debug only */
 
 	/* reconstruction buffer management */
-	        RF_DECLARE_MUTEX(rb_mutex)	/* mutex for messing around
+	RF_DECLARE_MUTEX(rb_mutex)	        /* mutex for messing around
 						 * with recon buffers */
+	int rb_lock;                            /* 1 if someone is mucking
+						   with recon buffers,
+						   0 otherwise */
 	RF_ReconBuffer_t *floatingRbufs;	/* available floating
 						 * reconstruction buffers */
 	RF_ReconBuffer_t *committedRbufs;	/* recon buffers that have
@@ -170,25 +173,16 @@ struct RF_ReconCtrl_s {
 /* the default priority for reconstruction accesses */
 #define RF_IO_RECON_PRIORITY RF_IO_LOW_PRIORITY
 
-int     rf_ConfigureReconstruction(RF_ShutdownList_t ** listp);
+int rf_ConfigureReconstruction(RF_ShutdownList_t **);
+int rf_ReconstructFailedDisk(RF_Raid_t *, RF_RowCol_t);
+int rf_ReconstructFailedDiskBasic(RF_Raid_t *, RF_RowCol_t);
+int rf_ReconstructInPlace(RF_Raid_t *, RF_RowCol_t);
+int rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *);
+int rf_ForceOrBlockRecon(RF_Raid_t *, RF_AccessStripeMap_t *,
+			 void (*cbFunc) (RF_Raid_t *, void *), 
+			 void *);
+int rf_UnblockRecon(RF_Raid_t *, RF_AccessStripeMap_t *);
 
-int 
-rf_ReconstructFailedDisk(RF_Raid_t * raidPtr, RF_RowCol_t row,
-    RF_RowCol_t col);
-
-int 
-rf_ReconstructFailedDiskBasic(RF_Raid_t * raidPtr, RF_RowCol_t row,
-    RF_RowCol_t col);
-
-int 
-rf_ReconstructInPlace(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col);
-
-int     rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t * reconDesc);
-
-int 
-rf_ForceOrBlockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
-    void (*cbFunc) (RF_Raid_t *, void *), void *cbArg);
-
-	int     rf_UnblockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap);
+extern struct pool rf_reconbuffer_pool;
 
 #endif				/* !_RF__RF_RECONSTRUCT_H_ */

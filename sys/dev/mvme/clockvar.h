@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2002/02/12 20:38:41 scw Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -40,10 +40,9 @@
 #define _MVME_CLOCKVAR_H
 
 #include <dev/clock_subr.h>
-#include <dev/ic/mk48txxreg.h>
 
 /*
- * Defintions exported to ASIC-specific clock attachment.
+ * Definitions exported to ASIC-specific clock attachment.
  */
 
 extern	struct evcnt clock_profcnt;
@@ -60,8 +59,6 @@ struct clock_attach_args {
 
 void	clock_config __P((struct device *, struct clock_attach_args *,
 			struct evcnt *));
-
-void	clock_rtc_config __P((todr_chip_handle_t));
 
 /*
  * Macro to compute a new randomized interval.  The intervals are

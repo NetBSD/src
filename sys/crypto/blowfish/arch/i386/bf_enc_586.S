@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc_586.S,v 1.1 2001/09/09 11:01:01 tls Exp $	*/
+/*	$NetBSD: bf_enc_586.S,v 1.1.24.1 2004/08/03 10:44:45 skrll Exp $	*/
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -60,7 +60,7 @@
 /*
  * Modified from the output of `perl bf-586.pl elf' by
  * Jason R. Thorpe <thorpej@zembu.com> and Thor Lancelot Simon
- * <tls@netbsd.org>
+ * <tls@NetBSD.org>
  */
 
 #include <i386/include/asm.h>

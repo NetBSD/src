@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.23 2003/05/03 18:11:17 wiz Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.23.2.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.23 2003/05/03 18:11:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.23.2.1 2004/08/03 10:46:13 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -444,7 +444,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	 * attach to the network layer
 	 */
 	ifp = &scp->sp_if;
-	sprintf(ifp->if_xname, "ntwo%d", ntwo_unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "ntwo%d", ntwo_unit);
 	ifp->if_softc = scp;
 	ifp->if_mtu = SCA_MTU;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
@@ -654,10 +654,10 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	/* make sure that we won't wrap */
 	if ((desc_p & 0xffff0000) !=
 	    ((desc_p + sizeof(*desc) * scp->sp_ntxdesc) & 0xffff0000))
-		panic("sca: tx descriptors cross architecural boundry");
+		panic("sca: tx descriptors cross architecural boundary");
 	if ((buf_p & 0xff000000) !=
 	    ((buf_p + SCA_BSIZE * scp->sp_ntxdesc) & 0xff000000))
-		panic("sca: tx buffers cross architecural boundry");
+		panic("sca: tx buffers cross architecural boundary");
 #endif
 
 	for (i = 0 ; i < scp->sp_ntxdesc ; i++) {
@@ -714,10 +714,10 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	/* make sure that we won't wrap */
 	if ((desc_p & 0xffff0000) !=
 	    ((desc_p + sizeof(*desc) * scp->sp_nrxdesc) & 0xffff0000))
-		panic("sca: rx descriptors cross architecural boundry");
+		panic("sca: rx descriptors cross architecural boundary");
 	if ((buf_p & 0xff000000) !=
 	    ((buf_p + SCA_BSIZE * scp->sp_nrxdesc) & 0xff000000))
-		panic("sca: rx buffers cross architecural boundry");
+		panic("sca: rx buffers cross architecural boundary");
 #endif
 
 	for (i = 0 ; i < scp->sp_nrxdesc; i++) {
@@ -1469,7 +1469,6 @@ sca_get_packets(sca_port_t *scp)
 static int
 sca_frame_avail(sca_port_t *scp)
 {
-	struct sca_softc *sc;
 	u_int16_t cda;
 	u_int32_t desc_p;	/* physical address (lower 16 bits) */
 	sca_desc_t *desc;
@@ -1479,7 +1478,6 @@ sca_frame_avail(sca_port_t *scp)
 	/*
 	 * Read the current descriptor from the SCA.
 	 */
-	sc = scp->sca;
 	cda = dmac_read_2(scp, SCA_CDAL0);
 
 	/*
@@ -1796,7 +1794,7 @@ sca_frame_print(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 #endif
 
 /*
- * adjust things becuase we have just read the current starting
+ * adjust things because we have just read the current starting
  * frame
  *
  * must be called at splnet()
@@ -1970,11 +1968,8 @@ sca_shutdown(struct sca_softc *sca)
 static void
 sca_port_starttx(sca_port_t *scp)
 {
-	struct sca_softc *sc;
 	u_int32_t	startdesc_p, enddesc_p;
 	int enddesc;
-
-	sc = scp->sca;
 
 	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: starttx\n"));
 

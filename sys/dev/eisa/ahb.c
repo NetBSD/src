@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.38 2002/10/02 16:33:45 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.38.6.1 2004/08/03 10:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.38 2002/10/02 16:33:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.38.6.1 2004/08/03 10:45:57 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -385,7 +385,7 @@ ahbintr(arg)
 	for (;;) {
 		/*
 		 * First get all the information and then
-		 * acknowlege the interrupt
+		 * acknowledge the interrupt
 		 */
 		ahbstat = bus_space_read_1(iot, ioh, G2INTST);
 		mboxval = bus_space_read_4(iot, ioh, MBOXIN0);

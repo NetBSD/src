@@ -1,7 +1,7 @@
-/*	$NetBSD: dpt_eisa.c,v 1.10 2002/12/07 19:48:31 ad Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.10.6.1 2004/08/03 10:45:57 skrll Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.10 2002/12/07 19:48:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.10.6.1 2004/08/03 10:45:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

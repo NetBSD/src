@@ -1,19 +1,16 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/24 08:18:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2004/08/03 10:42:35 skrll Exp $
 
 NOMAN=
 
 .include <bsd.own.mk>
 
-FILES=		pcs750.bin
+FILES=		${UUDECODE_FILES}
 FILESDIR=	/
 FILESMODE=	${BINMODE}
+UUDECODE_FILES=	pcs750.bin
 CLEANFILES+=	pcs750.bin
 
 all dependall: ${FILES}
 
-UUDECODE?=	uudecode
-
-pcs750.bin:	${.CURDIR}/pcs750.bin.uue
-	${UUDECODE} ${.ALLSRC}
-
+.include <bsd.files.mk>
 .include <bsd.prog.mk>

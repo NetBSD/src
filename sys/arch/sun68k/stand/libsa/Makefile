@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/03/30 00:17:28 kristerw Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2004/08/03 10:42:21 skrll Exp $
 
 LIB=sa
 
@@ -23,18 +23,18 @@ DIR_KERN=${S}/lib/libkern
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 #  -DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG -DDEBUG_PROM
 
-DEFS= -Dsun3 -D_STANDALONE
+DEFS= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
-CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -Os -msoft-float -fno-defer-pop
+CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -Os -msoft-float -fno-defer-pop -ffreestanding
 CPPFLAGS= ${DEFS} ${DBG} ${INCL}
 CLEANFILES= SRT0.o SRT1.o vers.c
 
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
 SRC_sa = alloc.c bcopy.c close.c files.c getfile.c loadfile.c loadfile_aout.c \
-	loadfile_elf32.c lseek.c memcpy.c open.c printf.c read.c snprintf.c \
-	sprintf.c strerror.c subr_prf.c twiddle.c ctrlsp.S
+	loadfile_elf32.c lseek.c memcpy.c memmove.c open.c printf.c read.c \
+	snprintf.c sprintf.c strerror.c subr_prf.c twiddle.c ctrlsp.S
 
 SRC_kern= ashldi3.c ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
 	memcmp.c memset.c strcmp.c strlen.c strncmp.c
@@ -64,4 +64,4 @@ SOBJS=
 # Customized rules...
 
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "${MACHINE}"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "${MACHINE}"

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.1.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,15 +36,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_I82489REG_H_
-#define _X86_I82489REG_H_
+#ifndef _X86_I82489VAR_H_
+#define _X86_I82489VAR_H_
 
 /*
  * Software definitions belonging to Local APIC driver.
  */
 
-static __inline__ u_int32_t i82489_readreg __P((int));
-static __inline__ void i82489_writereg __P((int, u_int32_t));
+static __inline__ u_int32_t i82489_readreg(int);
+static __inline__ void i82489_writereg(int, u_int32_t);
 
 #ifdef _KERNEL
 extern volatile u_int32_t local_apic[];
@@ -113,10 +113,10 @@ extern void Xintr_lapic5(void);
 
 struct cpu_info;
 
-extern void lapic_boot_init __P((paddr_t));
-extern void lapic_set_lvt __P((void));
-extern void lapic_enable __P((void));
-extern void lapic_calibrate_timer __P((struct cpu_info *ci));
-extern void lapic_initclocks __P((void));
+extern void lapic_boot_init(paddr_t);
+extern void lapic_set_lvt(void);
+extern void lapic_enable(void);
+extern void lapic_calibrate_timer(struct cpu_info *ci);
+extern void lapic_initclocks(void);
 
 #endif

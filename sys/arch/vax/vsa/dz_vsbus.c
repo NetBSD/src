@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.31 2003/01/01 02:29:39 thorpej Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.31.2.1 2004/08/03 10:42:45 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.31.2.1 2004/08/03 10:42:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,6 +175,9 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dr.dr_dcd = 13;
 	sc->sc_dr.dr_ring = 13;
 
+	sc->sc_dr.dr_firstreg = 0;
+	sc->sc_dr.dr_winsize = 14;
+
 	sc->sc_type = DZ_DZV;
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
@@ -185,6 +189,9 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	dzattach(sc, NULL, consline);
 	DELAY(10000);
+
+	if (consline != -1)
+		cn_set_magic("\033D"); /* set VAX DDB escape sequence */
 
 #if NDZKBD > 0
 	/* Don't touch this port if this is the console */
@@ -257,7 +264,7 @@ dzcnprobe(struct consdev *cndev)
 	case VAX_BTYP_49:
 	case VAX_BTYP_53:
 		ioaddr = 0x25000000;
-		diagcons = 3;
+		diagcons = (vax_confdata & 8 ? 3 : 0);
 		break;
 
 	default:

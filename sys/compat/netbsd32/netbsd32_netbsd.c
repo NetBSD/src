@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.73 2003/06/29 22:29:39 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.73.2.1 2004/08/03 10:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.73 2003/06/29 22:29:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.73.2.1 2004/08/03 10:44:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.73 2003/06/29 22:29:39 fvdl Ex
 #include <net/if.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
@@ -96,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.73 2003/06/29 22:29:39 fvdl Ex
 #include <ddb/ddbvar.h>
 #endif
 
-extern char netbsd32_sigcode[], netbsd32_esigcode[];
 extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
@@ -106,6 +106,13 @@ void netbsd32_syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
+
+#ifdef COMPAT_16
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
+struct uvm_object *emul_netbsd32_object;
+#endif
+
+extern struct sysctlnode netbsd32_sysctl_root;
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -124,9 +131,19 @@ const struct emul emul_netbsd32 = {
 #endif
 	netbsd32_sendsig,
 	trapsignal,
+	NULL,
+#ifdef COMPAT_16
 	netbsd32_sigcode,
 	netbsd32_esigcode,
+	&emul_netbsd32_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	netbsd32_setregs,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -135,7 +152,7 @@ const struct emul emul_netbsd32 = {
 #else
 	syscall,
 #endif
-	NULL,
+	&netbsd32_sysctl_root,
 	NULL,
 };
 
@@ -572,7 +589,7 @@ netbsd32_lchflags(l, v, retval)
 	register_t *retval;
 {
 	struct netbsd32_lchflags_args /* {
-		syscallarg(int) fd;
+		syscallarg(const char *) path;
 		syscallarg(netbsd32_u_long) flags;
 	} */ *uap = v;
 	struct sys_lchflags_args ua;
@@ -2198,22 +2215,6 @@ int netbsd32_fhstat(l, v, retval)
 	NETBSD32TOP_UAP(fhp, const fhandle_t);
 	NETBSD32TOP_UAP(sb, struct stat);
 	return (sys_fhstat(l, &ua, retval));
-}
-
-int netbsd32_fhstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_fhstatfs_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(struct statfs *) buf;
-	} */ *uap = v;
-	struct sys_fhstatfs_args ua;
-
-	NETBSD32TOP_UAP(fhp, const fhandle_t);
-	NETBSD32TOP_UAP(buf, struct statfs);
-	return (sys_fhstatfs(l, &ua, retval));
 }
 
 /* virtual memory syscalls */

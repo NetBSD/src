@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.14 2001/10/13 00:41:49 uwe Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.14.20.1 2004/08/03 10:41:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14.20.1 2004/08/03 10:41:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>

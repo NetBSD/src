@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.9 2003/01/01 02:31:14 thorpej Exp $	*/
+/*	$NetBSD: neptune.c,v 1.9.2.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 /*
  * Neptune-X -- X68k-ISA Bus Bridge
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.9.2.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

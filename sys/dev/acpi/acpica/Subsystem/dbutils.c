@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              xRevision: 61 $
+ *              xRevision: 66 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.6 2003/03/04 17:25:12 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.6.2.1 2004/08/03 10:45:06 skrll Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -222,7 +223,8 @@ AcpiDbDumpBuffer (
     AcpiOsPrintf ("\nLocation %X:\n", Address);
 
     AcpiDbgLevel |= ACPI_LV_TABLES;
-    AcpiUtDumpBuffer (ACPI_TO_POINTER (Address), 64, DB_BYTE_DISPLAY, ACPI_UINT32_MAX);
+    AcpiUtDumpBuffer (ACPI_TO_POINTER (Address), 64, DB_BYTE_DISPLAY,
+            ACPI_UINT32_MAX);
 }
 
 
@@ -269,8 +271,7 @@ AcpiDbDumpObject (
     case ACPI_TYPE_INTEGER:
 
         AcpiOsPrintf ("[Integer] = %8.8X%8.8X\n",
-                    ACPI_HIDWORD (ObjDesc->Integer.Value),
-                    ACPI_LODWORD (ObjDesc->Integer.Value));
+                    ACPI_FORMAT_UINT64 (ObjDesc->Integer.Value));
         break;
 
 
@@ -290,7 +291,8 @@ AcpiDbDumpObject (
         AcpiOsPrintf ("[Buffer] Length %.2X = ", ObjDesc->Buffer.Length);
         if (ObjDesc->Buffer.Length)
         {
-            AcpiUtDumpBuffer ((UINT8 *) ObjDesc->Buffer.Pointer, ObjDesc->Buffer.Length, DB_DWORD_DISPLAY, _COMPONENT);
+            AcpiUtDumpBuffer ((UINT8 *) ObjDesc->Buffer.Pointer,
+                    ObjDesc->Buffer.Length, DB_DWORD_DISPLAY, _COMPONENT);
         }
         else
         {
@@ -301,7 +303,8 @@ AcpiDbDumpObject (
 
     case ACPI_TYPE_PACKAGE:
 
-        AcpiOsPrintf ("[Package]  Contains %d Elements: \n", ObjDesc->Package.Count);
+        AcpiOsPrintf ("[Package]  Contains %d Elements: \n",
+                ObjDesc->Package.Count);
 
         for (i = 0; i < ObjDesc->Package.Count; i++)
         {
@@ -429,8 +432,7 @@ AcpiDbSecondPassParse (
 
             /* Create a new walk state for the parse */
 
-            WalkState = AcpiDsCreateWalkState (TABLE_ID_DSDT,
-                                            NULL, NULL, NULL);
+            WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
             if (!WalkState)
             {
                 return (AE_NO_MEMORY);
@@ -524,10 +526,11 @@ AcpiDbLocalNsLookup (
      * (Uses root node as the search starting point)
      */
     Status = AcpiNsLookup (NULL, InternalPath, ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
-                                    ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
+                    ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
     if (ACPI_FAILURE (Status))
     {
-        AcpiOsPrintf ("Could not locate name: %s %s\n", Name, AcpiFormatException (Status));
+        AcpiOsPrintf ("Could not locate name: %s %s\n",
+                Name, AcpiFormatException (Status));
     }
 
     ACPI_MEM_FREE (InternalPath);

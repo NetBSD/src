@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.6 2003/05/01 20:18:35 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.6.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -73,6 +73,9 @@
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.6.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -825,11 +828,14 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsipi_xfer *xs)
 					ntodo = MPT_NSGL(mpt) - 1;
 					ce->NextChainOffset = (MPT_RQSL(mpt) -
 					    sizeof(SGE_SIMPLE32)) >> 2;
+					ce->Length = MPT_NSGL(mpt)
+						* sizeof(SGE_SIMPLE32);
 				} else {
 					ntodo = nleft;
 					ce->NextChainOffset = 0;
+					ce->Length = ntodo
+						* sizeof(SGE_SIMPLE32);
 				}
-				ce->Length = ntodo * sizeof(SGE_SIMPLE32);
 				ce->Address = req->req_pbuf +
 				    ((char *)se - (char *)mpt_req);
 				ce->Flags = MPI_SGE_FLAGS_CHAIN_ELEMENT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.40 2003/05/03 18:11:12 wiz Exp $	*/
+/*	$NetBSD: aha.c,v 1.40.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.40 2003/05/03 18:11:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.40.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -420,7 +420,7 @@ aha_intr(arg)
 #endif /*AHADEBUG */
 
 	/*
-	 * First acknowlege the interrupt, Then if it's not telling about
+	 * First acknowledge the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
 	sts = bus_space_read_1(iot, ioh, AHA_INTR_PORT);

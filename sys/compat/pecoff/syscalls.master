@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2003/04/08 10:57:56 oki Exp $
+	$NetBSD: syscalls.master,v 1.6.2.1 2004/08/03 10:44:24 skrll Exp $
 ; based on NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -91,8 +91,12 @@
 16	STD		{ int pecoff_sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+#ifdef COMPAT_20
+18	NOARGS		{ int compat_20_sys_getfsstat(struct statfs12 *buf, \
+			    long bufsize, int flags); }
+#else
+18	EXCL		compat_20_sys_getfsstat
+#endif
 19	EXCL		{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
 #ifdef COMPAT_43
@@ -326,8 +330,13 @@
 156	EXCL		{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	STD		{ int pecoff_sys_statfs(const char *path, \
-			    struct statfs *buf); }
-158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
+			    struct statvfs12 *buf); }
+#ifdef COMPAT_20
+158	NOARGS		{ int compat_20_sys_fstatfs(int fd, \
+			    struct statfs12 *buf); }
+#else
+158	EXCL		compat_20_sys_fstatfs
+#endif
 159	UNIMPL
 160	UNIMPL
 161	STD		{ int pecoff_sys_getfh(const char *fname, \
@@ -608,22 +617,30 @@
 290	NOARGS		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
-291	NOARGS		{ int sys___sigaction14(int signum, \
+#ifdef COMPAT_16
+291	NOARGS		{ int compat_16_sys___sigaction14(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
+#else
+291	EXCL		compat_16_sys___sigaction14
+#endif
 292	NOARGS		{ int sys___sigpending14(sigset_t *set); }
 293	NOARGS		{ int sys___sigprocmask14(int how, \
 			    const sigset_t *set, \
 			    sigset_t *oset); }
 294	NOARGS		{ int sys___sigsuspend14(const sigset_t *set); }
-295	NOARGS		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
+295	NOARGS		{ int compat_16_sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 297	NOARGS		{ int sys_fchroot(int fd); }
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	NOARGS		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
-300	NOARGS		{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs *buf); }
+#ifdef COMPAT_20
+300	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs12 *buf); }
+#else
+300	EXCL		compat_20_sys_fhstatfs
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	NOARGS		{ int sys_____semctl13(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
@@ -710,3 +727,15 @@
 351	UNIMPL		sys_sched_get_priority_max
 352	UNIMPL		sys_sched_get_priority_min
 353	UNIMPL		sys_sched_rr_get_interval
+
+354	NOARGS		{ int sys_fsync_range(int fd, int flags, off_t start, \
+			    off_t length); }
+355	NOARGS		{ int sys_uuidgen(struct uuid *store, int count); }
+356	NOARGS		{ int sys_getvfsstat(struct statvfs *buf, \
+			    size_t bufsize, int flags); }
+357	NOARGS		{ int sys_statvfs1(const char *path, \
+			    struct statvfs *buf, int flags); }
+358	NOARGS		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
+			    int flags); }
+359	NOARGS		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
+			    struct statvfs *buf, int flags); }

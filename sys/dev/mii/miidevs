@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.48 2003/07/01 22:46:08 msaitoh Exp $
+$NetBSD: miidevs,v 1.48.2.1 2004/08/03 10:48:49 skrll Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ model BROADCOM BCM5421		0x000e BCM5421 1000BASE-T media interface
 model BROADCOM BCM5701		0x0011 BCM5701 1000BASE-T media interface
 model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
+model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
@@ -145,9 +146,14 @@ model yyINTEL I82562EM		0x0032 i82562EM 10/100 media interface
 model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
 
+model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
+
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
-model LEVEL1 LXT971		0x000e LXT971 10/100 media interface
+model LEVEL1 LXT971		0x000e LXT971/2 10/100 media interface
+model LEVEL1 LXT973		0x0021 LXT973 10/100 Dual PHY
+model LEVEL1 LXT974		0x0004 LXT974 10/100 Quad PHY
+model LEVEL1 LXT975		0x0005 LXT975 10/100 Quad PHY
 model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 

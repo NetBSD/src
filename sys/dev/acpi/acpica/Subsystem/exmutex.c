@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmutex - ASL Mutex Acquire/Release functions
- *              xRevision: 18 $
+ *              xRevision: 20 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.8 2003/03/04 17:25:17 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.8.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #define __EXMUTEX_C__
 
@@ -243,7 +243,7 @@ AcpiExAcquireMutex (
     if (!WalkState->Thread)
     {
         ACPI_REPORT_ERROR (("Cannot acquire Mutex [%4.4s], null thread info\n",
-                ObjDesc->Mutex.Node->Name.Ascii));
+                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
 
@@ -254,7 +254,7 @@ AcpiExAcquireMutex (
     if (WalkState->Thread->CurrentSyncLevel > ObjDesc->Mutex.SyncLevel)
     {
         ACPI_REPORT_ERROR (("Cannot acquire Mutex [%4.4s], incorrect SyncLevel\n",
-                ObjDesc->Mutex.Node->Name.Ascii));
+                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_ORDER);
     }
 
@@ -288,6 +288,7 @@ AcpiExAcquireMutex (
     ObjDesc->Mutex.OwnerThread      = WalkState->Thread;
     ObjDesc->Mutex.AcquisitionDepth = 1;
 
+    ObjDesc->Mutex.PreviousSyncLevel = WalkState->Thread->CurrentSyncLevel;
     WalkState->Thread->CurrentSyncLevel = ObjDesc->Mutex.SyncLevel;
 
     /* Link the mutex to the current thread for force-unlock at method exit */
@@ -331,7 +332,7 @@ AcpiExReleaseMutex (
     if (!ObjDesc->Mutex.OwnerThread)
     {
         ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], not acquired\n",
-                ObjDesc->Mutex.Node->Name.Ascii));
+                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_NOT_ACQUIRED);
     }
 
@@ -340,7 +341,7 @@ AcpiExReleaseMutex (
     if (!WalkState->Thread)
     {
         ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], null thread info\n",
-                ObjDesc->Mutex.Node->Name.Ascii));
+                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
 
@@ -351,7 +352,7 @@ AcpiExReleaseMutex (
         ACPI_REPORT_ERROR ((
             "Thread %X cannot release Mutex [%4.4s] acquired by thread %X\n",
             WalkState->Thread->ThreadId,
-            ObjDesc->Mutex.Node->Name.Ascii,
+            AcpiUtGetNodeName (ObjDesc->Mutex.Node),
             ObjDesc->Mutex.OwnerThread->ThreadId));
         return_ACPI_STATUS (AE_AML_NOT_OWNER);
     }
@@ -363,7 +364,7 @@ AcpiExReleaseMutex (
     if (ObjDesc->Mutex.SyncLevel > WalkState->Thread->CurrentSyncLevel)
     {
         ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], incorrect SyncLevel\n",
-                ObjDesc->Mutex.Node->Name.Ascii));
+                AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_ORDER);
     }
 
@@ -389,7 +390,7 @@ AcpiExReleaseMutex (
     /* Update the mutex and walk state */
 
     ObjDesc->Mutex.OwnerThread = NULL;
-    WalkState->Thread->CurrentSyncLevel = ObjDesc->Mutex.SyncLevel;
+    WalkState->Thread->CurrentSyncLevel = ObjDesc->Mutex.PreviousSyncLevel;
 
     return_ACPI_STATUS (Status);
 }

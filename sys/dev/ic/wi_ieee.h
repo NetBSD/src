@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.20 2003/04/08 04:31:25 kml Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.20.2.1 2004/08/03 10:46:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -236,6 +236,7 @@ struct wi_counters {
 #define WI_RID_WEP_MAPTABLE	0xFC29
 #define WI_RID_CNFAUTHMODE	0xFC2A
 #define WI_RID_ROAMING_MODE	0xFC2D
+#define	WI_RID_ALT_RETRY_COUNT	0xFC32 /* retry count if WI_TXCNTL_ALTRTRY */
 #define WI_RID_OWN_BEACON_INT	0xFC33 /* beacon xmit time for BSS creation */
 #define WI_RID_SET_TIM		0xFC40
 #define WI_RID_DBM_ADJUST	0xFC46 /* RSSI - WI_RID_DBM_ADJUST ~ dBm */
@@ -303,7 +304,7 @@ struct wi_ltv_keys {
 #define WI_RID_CARD_ID		0xFD0B /* card identification */
 #define WI_RID_MFI_SUP_RANGE	0xFD0C /* modem supplier compatibility */
 #define WI_RID_CFI_SUP_RANGE	0xFD0D /* controller sup. compatibility */
-#define WI_RID_CHANNEL_LIST	0xFD10 /* allowd comm. frequencies. */
+#define WI_RID_CHANNEL_LIST	0xFD10 /* allowed comm. frequencies. */
 #define WI_RID_REG_DOMAINS	0xFD11 /* list of intendted regulatory doms */
 #define WI_RID_TEMP_TYPE	0xFD12 /* hw temp range code */
 #define WI_RID_CIS		0xFD13 /* PC card info struct */

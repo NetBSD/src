@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.22.2.1 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.22.2.1 2004/08/03 10:44:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
@@ -54,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $");
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_services.h>
 
 int 
 mach_host_info(args)
@@ -64,14 +66,8 @@ mach_host_info(args)
 	size_t *msglen = args->rsize;
 	mach_host_info_reply_simple_t *reps;
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
 
 	switch(req->req_flavor) {
 	case MACH_HOST_BASIC_INFO: {
@@ -82,11 +78,6 @@ mach_host_info(args)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_basic_info(info);
-		/* 
-		 * XXX this is the trailer, the way it 
-		 * is filled should be improved 
-		 */
-		rep->rep_data[rep->rep_count + 1] = 8;
 		break;
 	}
 
@@ -98,11 +89,6 @@ mach_host_info(args)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_priority_info(info);
-		/* 
-		 * XXX this is the trailer, the way it 
-		 * is filled should be improved 
-		 */
-		rep->rep_data[rep->rep_count + 1] = 8;
 		break;
 	}
 
@@ -111,11 +97,23 @@ mach_host_info(args)
 		reps = (mach_host_info_reply_simple_t *)rep;
 		reps->rep_msgh.msgh_size = 
 		    sizeof(*reps) - sizeof(reps->rep_trailer);
-		reps->rep_trailer.msgh_trailer_size = 8;
 		*msglen = sizeof(*reps);
 		break;
 
-	case MACH_HOST_SCHED_INFO:
+	case MACH_HOST_SCHED_INFO: {
+		struct mach_host_sched_info *info
+		    = (struct mach_host_sched_info *)&rep->rep_data[0];
+
+		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		    - sizeof(rep->rep_trailer) + sizeof(*info);
+		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
+
+		info->min_timeout = 1000 / hz; /* XXX timout in ms */
+		info->min_quantum = 1000 / hz; /* quantum in ms */
+
+		break;
+	}
+
 	case MACH_HOST_RESOURCE_SIZES:
 		uprintf("mach_host_info() Unimplemented host_info flavor %d\n", 
 		    req->req_flavor);
@@ -124,6 +122,8 @@ mach_host_info(args)
 		rep->rep_retval = native_to_mach_errno[EINVAL];
 		break;
 	}
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -137,15 +137,13 @@ mach_host_page_size(args)
 	mach_host_page_size_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_page_size = PAGE_SIZE;
-	rep->rep_trailer.msgh_trailer_size = 8;
-	
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_page_size = PAGE_SIZE;
+	
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -161,18 +159,11 @@ mach_host_get_clock_service(args)
 
 	mr = mach_right_get(mach_clock_port, l, MACH_PORT_TYPE_SEND, 0);
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
-	rep->rep_clock_serv.name = (mach_port_t)mr->mr_name;
-	rep->rep_clock_serv.disposition = 0x11; /* XXX */
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -205,17 +196,60 @@ mach_host_get_io_master(args)
 
 	mr = mach_right_get(mach_io_master_port, l, MACH_PORT_TYPE_SEND, 0);
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
-	rep->rep_iomaster.name = (mach_port_t)mr->mr_name;
-	rep->rep_iomaster.disposition = 0x11; /* XXX */
-	rep->rep_trailer.msgh_trailer_size = 8;
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_processor_set_default(args)
+	struct mach_trap_args *args;
+{
+	mach_processor_set_default_request_t *req = args->smsg;
+	mach_processor_set_default_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct mach_right *mr;
+	struct mach_port *mp;
+
+	mp = mach_port_get();
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_host_processor_set_priv(args)
+	struct mach_trap_args *args;
+{
+	mach_host_processor_set_priv_request_t *req = args->smsg;
+	mach_host_processor_set_priv_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_right *smr;
+	struct mach_port *smp;
+
+	mn = req->req_set.name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+
+	smp = mach_port_get();
+	smr = mach_right_get(smp, l, MACH_PORT_TYPE_SEND, 0);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, smr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }

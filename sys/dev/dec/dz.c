@@ -1,8 +1,38 @@
-/*	$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $	*/
+/*	$NetBSD: dz.c,v 1.9.6.1 2004/08/03 10:45:57 skrll Exp $	*/
 /*
- * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ralph Campbell and Rick Macklem.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -37,9 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $");
-
-#include "opt_ddb.h"
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9.6.1 2004/08/03 10:45:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $");
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>
 
+#include <dev/cons.h>
+
 #define	DZ_READ_BYTE(adr) \
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr)
 #define	DZ_READ_WORD(adr) \
@@ -68,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $");
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
 #define	DZ_WRITE_WORD(adr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
+#define	DZ_BARRIER() \
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_dr.dr_firstreg, \
+	    sc->sc_dr.dr_winsize, \
+	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ)
 
 #include "ioconf.h"
 
@@ -78,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $");
 #define DML_RI		TIOCM_RI
 #define DML_BRK		0100000		/* no equivalent, we will mask */
 
-static struct speedtab dzspeedtab[] =
+static const struct speedtab dzspeedtab[] =
 {
   {       0,	0		},
   {      50,	DZ_LPR_B50	},
@@ -125,6 +159,7 @@ const struct cdevsw dz_cdevsw = {
  */
 int	dz_timer;	/* true if timer started */
 struct callout dzscan_ch;
+static struct cnm_state dz_cnm_state;
 
 void
 dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
@@ -138,6 +173,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	DZ_WRITE_WORD(dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
 	DZ_WRITE_BYTE(dr_dtr, 0);
 	DZ_WRITE_BYTE(dr_break, 0);
+	DZ_BARRIER();
 
 	/* Initialize our softc structure. Should be done in open? */
 
@@ -151,6 +187,11 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 		sc->sc_dev.dv_xname, "rintr");
 	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
 		sc->sc_dev.dv_xname, "tintr");
+
+	/* Console magic keys */
+	cn_init_magic(&dz_cnm_state);
+	cn_set_magic("\047\001"); /* default magic is BREAK */
+				  /* VAX will change it in MD code */
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 
@@ -169,7 +210,7 @@ dzrint(void *arg)
 {
 	struct dz_softc *sc = arg;
 	struct tty *tp;
-	int cc, line;
+	int cc, mcc, line;
 	unsigned c;
 	int overrun = 0;
 
@@ -185,6 +226,13 @@ dzrint(void *arg)
 		    (*sc->sc_dz[line].dz_catch)(sc->sc_dz[line].dz_private, cc))
 			continue;
 
+		if ((c & (DZ_RBUF_FRAMING_ERR | 0xff)) == DZ_RBUF_FRAMING_ERR)
+			mcc = CNC_BREAK;
+		else
+			mcc = cc;
+
+		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
+
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
 			continue;
@@ -195,16 +243,7 @@ dzrint(void *arg)
 			    sc->sc_dev.dv_xname, line);
 			overrun = 1;
 		}
-#if defined(pmax) && defined(DDB)
-		else if (line == sc->sc_consline) {
-			/*
-			 * A BREAK key will appear as a NUL with a framing
-			 * error.
-			 */
-			if (cc == 0 && (c & DZ_RBUF_FRAMING_ERR) != 0)
-				Debugger();
-		}
-#endif
+
 		if (c & DZ_RBUF_FRAMING_ERR)
 			cc |= TTY_FE;
 		if (c & DZ_RBUF_PARITY_ERR)
@@ -257,6 +296,7 @@ dzxint(void *arg)
 			tp->t_state |= TS_BUSY;
 			ch = getc(cl);
 			DZ_WRITE_BYTE(dr_tbuf, ch);
+			DZ_BARRIER();
 			continue;
 		} 
 		/* Nothing to send; clear the scan bit */
@@ -265,6 +305,7 @@ dzxint(void *arg)
 		tcr &= 255;
 		tcr &= ~(1 << line);
 		DZ_WRITE_BYTE(dr_tcr, tcr);
+		DZ_BARRIER();
 		if (sc->sc_dz[line].dz_catch)
 			continue;
 
@@ -496,8 +537,10 @@ dzstart(struct tty *tp)
 	sc = dz_cd.cd_devs[unit];
 
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
+		splx(s);
 		return;
+	}
 	cl = &tp->t_outq;
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -506,14 +549,17 @@ dzstart(struct tty *tp)
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (cl->c_cc == 0)
+	if (cl->c_cc == 0) {
+		splx(s);
 		return;
+	}
 
 	tp->t_state |= TS_BUSY;
 
 	state = DZ_READ_WORD(dr_tcrw) & 255;
 	if ((state & (1 << line)) == 0) {
 		DZ_WRITE_BYTE(dr_tcr, state | (1 << line));
+		DZ_BARRIER();
 	}
 	dzxint(sc);
 	splx(s);
@@ -574,6 +620,7 @@ dzparam(struct tty *tp, struct termios *t)
 		lpr |= DZ_LPR_2_STOP;
 
 	DZ_WRITE_WORD(dr_lpr, lpr);
+	DZ_BARRIER();
 
 	(void) splx(s);
 	return (0);
@@ -648,6 +695,7 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
 	}
 
+	DZ_BARRIER();
 	(void) splx(s);
 	return (mbits);
 }
@@ -686,6 +734,7 @@ dzscan(void *arg)
 			    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
 				DZ_WRITE_BYTE(dr_tcr, 
 				    (DZ_READ_WORD(dr_tcrw) & 255) & ~bit);
+				DZ_BARRIER();
 			}
 	    	}
 
@@ -707,6 +756,7 @@ dzscan(void *arg)
 			if (sc->sc_rxint < 10)
 				DZ_WRITE_WORD(dr_csr, csr & ~(DZ_CSR_SAE));
 
+		DZ_BARRIER();
 		sc->sc_rxint = 0;
 	}
 	(void) splx(s);

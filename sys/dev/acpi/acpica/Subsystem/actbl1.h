@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actbl1.h - ACPI 1.0 tables
- *       xRevision: 26 $
+ *       xRevision: 28 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -124,7 +124,7 @@
  */
 typedef struct rsdt_descriptor_rev1
 {
-    ACPI_TABLE_HEADER       Header;                 /* ACPI Table header */
+    ACPI_TABLE_HEADER_DEF                           /* ACPI common table header */
     UINT32                  TableOffsetEntry [1];   /* Array of pointers to other */
                                                     /* ACPI tables */
 } RSDT_DESCRIPTOR_REV1;
@@ -152,7 +152,7 @@ typedef struct facs_descriptor_rev1
  */
 typedef struct fadt_descriptor_rev1
 {
-    ACPI_TABLE_HEADER       Header;                 /* ACPI Table header */
+    ACPI_TABLE_HEADER_DEF                           /* ACPI common table header */
     UINT32                  FirmwareCtrl;           /* Physical address of FACS */
     UINT32                  Dsdt;                   /* Physical address of DSDT */
     UINT8                   Model;                  /* System Interrupt Model */

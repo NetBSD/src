@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.13.2.2 2003/07/02 21:48:14 wrstuden Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.13.2.3 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,6 +62,9 @@
  *	   scheduling model, kttcp provides a benchmark model where
  *	   preemption of the benchmark program is not an issue.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.13.2.3 2004/08/03 10:44:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -382,7 +385,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset, moff, type;
 	long long orig_resid, resid;
-	struct protosw	*pr;
+	const struct protosw *pr;
 	struct mbuf *nextrecord;
 
 	pr = so->so_proto;

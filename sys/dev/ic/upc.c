@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.6 2003/03/02 00:21:47 bjh21 Exp $ */
+/* $NetBSD: upc.c,v 1.6.2.1 2004/08/03 10:46:21 skrll Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.6 2003/03/02 00:21:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.6.2.1 2004/08/03 10:46:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.6 2003/03/02 00:21:47 bjh21 Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <dev/ic/upcreg.h>
 #include <dev/ic/upcvar.h>

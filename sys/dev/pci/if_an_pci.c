@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.10 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.10.2.1 2004/08/03 10:49:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10.2.1 2004/08/03 10:49:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -62,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10 2003/01/31 00:07:42 thorpej Exp $
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -128,12 +130,12 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": 802.11 controller\n");
 
-        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
         aprint_normal(": %s\n", devinfo);
 
         /* Map I/O registers */
         if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->an_btag, &sc->an_bhandle, NULL, NULL) != 0) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL) != 0) {
                 aprint_error("%s: unable to map registers\n", self->dv_xname);
                 return;
         }
@@ -165,6 +167,6 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: failed to attach controller\n",
 		    self->dv_xname);
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
-		bus_space_unmap(sc->an_btag, sc->an_bhandle, AN_IOSIZ);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, AN_IOSIZ);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.12 2002/12/23 00:55:16 pk Exp $ */
+/*	$NetBSD: trap.h,v 1.12.2.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -86,12 +82,14 @@
 #define	T_L14INT	0x1e	/* (14) level 14 interrupt */
 #define	T_L15INT	0x1f	/* (13) level 15 interrupt */
 /*			0x20	   unused */
-/*	through		0x23	   unused */
+#define	T_TEXTERROR	0x21	/* (3) address fault during instr fetch */
+/*			0x22	   unused */
+/*			0x23	   unused */
 #define	T_CPDISABLED	0x24	/* (5) coprocessor instr while disabled */
 #define	T_UNIMPLFLUSH	0x25	/* Unimplemented FLUSH */
 /*	through		0x27	   unused */
-#define	T_CPEXCEPTION	0x28	/* (9) coprocessor exception */
-/*			0x29	   unused */
+#define	T_CPEXCEPTION	0x28	/* (11) coprocessor exception */
+#define	T_DATAERROR	0x29	/* (12) address error during data fetch */
 #define T_IDIV0		0x2a	/* divide by zero (from hw [su]div instr) */
 #define T_STOREBUFFAULT	0x2b	/* SuperSPARC: Store buffer copy-back fault */
 /*			0x2c	   unused */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.12 2002/05/22 15:40:51 wiz Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.12.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.12 2002/05/22 15:40:51 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.12.6.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include "rf_archs.h"
 
@@ -115,7 +115,7 @@ rf_PQDagSelect(
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 	if (ntfail > 2) {
 		RF_ERRORMSG("more than two disks failed in a single group!  Aborting I/O operation.\n");
-		 /* *infoFunc = */ *createFunc = NULL;
+		*createFunc = NULL;
 		return;
 	}
 	/* ok, we can do this I/O */
@@ -146,7 +146,6 @@ rf_PQDagSelect(
 			break;
 		case 2:
 			/* lost two data units */
-			/* *infoFunc = PQOneTwo; */
 			*createFunc = (RF_VoidFuncPtr) rf_PQ_200_CreateReadDAG;
 			break;
 		}

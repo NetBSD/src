@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.51 2002/10/18 23:32:53 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.51.6.1 2004/08/03 10:46:16 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -21,7 +21,7 @@
  *	sys/pci/isp_pci.c
  *	sys/sbus/isp_sbus.c
  *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
  * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
  * Linux versions. This tends to be an interesting maintenance problem.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.9 2003/06/19 20:11:14 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.9.2.1 2004/08/03 10:46:10 skrll Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -37,6 +37,10 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.9.2.1 2004/08/03 10:46:10 skrll Exp $");
+
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
 
@@ -95,7 +99,7 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc->sc_channel_b.chan_channel = 1;
 	}
 
-	ahc_controller_info(ahc, ahc_info);
+	ahc_controller_info(ahc, ahc_info, sizeof(ahc_info));
 	printf("%s: %s\n", ahc->sc_dev.dv_xname, ahc_info);
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
@@ -216,7 +220,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 *
 		 * Zero any sense not transferred by the
 		 * device.  The SCSI spec mandates that any
-		 * untransfered data should be assumed to be
+		 * untransferred data should be assumed to be
 		 * zero.  Complete the 'bounce' of sense information
 		 * through buffers accessible via bus-space by
 		 * copying it into the clients csio.
@@ -336,6 +340,9 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		int target_id, our_id, first;
 		u_int width;
 		char channel;
+		u_int ppr_options, period, offset;
+		struct ahc_syncrate *syncrate;
+		uint16_t old_autoneg;
 
 		target_id = xm->xm_target;	
 		our_id = chan->chan_id;
@@ -346,6 +353,8 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		ahc_compile_devinfo(&devinfo, our_id, target_id,
 		    0, channel, ROLE_INITIATOR);
 
+		old_autoneg = tstate->auto_negotiate;
+
 		/*
 		 * XXX since the period and offset are not provided here,
 		 * fake things by forcing a renegotiation using the user
@@ -354,7 +363,10 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		 * values, assuming that the user set it up that way.
 		 */
 		if (ahc->inited_target[target_id] == 0) {
-			tinfo->goal = tinfo->user;
+			period = tinfo->user.period;
+			offset = tinfo->user.offset;
+			ppr_options = tinfo->user.ppr_options;
+			width = tinfo->user.width;
 			tstate->tagenable |=
 			    (ahc->user_tagenable & devinfo.target_mask);
 			tstate->discenable |=
@@ -372,19 +384,22 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		ahc_validate_width(ahc, NULL, &width, ROLE_UNKNOWN);
 		if (width > tinfo->user.width)
 			width = tinfo->user.width;
-		tinfo->goal.width = width;
+		ahc_set_width(ahc, &devinfo, width, AHC_TRANS_GOAL, FALSE);
 
 		if (!(xm->xm_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT))) {
-			tinfo->goal.period = 0;
-			tinfo->goal.offset = 0;
-			tinfo->goal.ppr_options = 0;
+			period = 0;
+			offset = 0;
+			ppr_options = 0;
 		}
 
 		if ((xm->xm_mode & PERIPH_CAP_DT) &&
-		    (tinfo->user.ppr_options & MSG_EXT_PPR_DT_REQ))
-			tinfo->goal.ppr_options |= MSG_EXT_PPR_DT_REQ;
+		    (ppr_options & MSG_EXT_PPR_DT_REQ))
+			ppr_options |= MSG_EXT_PPR_DT_REQ;
 		else
-			tinfo->goal.ppr_options &= ~MSG_EXT_PPR_DT_REQ;
+			ppr_options &= ~MSG_EXT_PPR_DT_REQ;
+		if ((tstate->discenable & devinfo.target_mask) == 0 ||
+		    (tstate->tagenable & devinfo.target_mask) == 0)
+			ppr_options &= ~MSG_EXT_PPR_IU_REQ;
 
 		if ((xm->xm_mode & PERIPH_CAP_TQING) &&
 		    (ahc->user_tagenable & devinfo.target_mask))
@@ -392,13 +407,33 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		else
 			tstate->tagenable &= ~devinfo.target_mask;
 
+		syncrate = ahc_find_syncrate(ahc, &period, &ppr_options,
+		    AHC_SYNCRATE_MAX);
+		ahc_validate_offset(ahc, NULL, syncrate, &offset,
+		    width, ROLE_UNKNOWN);
+
+		if (offset == 0) {
+			period = 0;
+			ppr_options = 0;
+		}
+
+		if (ppr_options != 0
+		    && tinfo->user.transport_version >= 3) {
+			tinfo->goal.transport_version =
+			    tinfo->user.transport_version;
+			tinfo->curr.transport_version =
+			    tinfo->user.transport_version;
+		}
+
+		ahc_set_syncrate(ahc, &devinfo, syncrate, period, offset,
+		    ppr_options, AHC_TRANS_GOAL, FALSE);
+
 		/*
 		 * If this is the first request, and no negotiation is
 		 * needed, just confirm the state to the scsipi layer,
 		 * so that it can print a message.
 		 */
-		if (!ahc_update_neg_request(ahc, &devinfo, tstate,
-		    tinfo, AHC_NEG_IF_NON_ASYNC) && first) {
+		if (old_autoneg == tstate->auto_negotiate && first) {
 			xm->xm_mode = 0;
 			xm->xm_period = tinfo->curr.period;
 			xm->xm_offset = tinfo->curr.offset;
@@ -521,12 +556,15 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	if (xs->xs_tag_type)
 		scb->hscb->control |= xs->xs_tag_type;
 
+#if 1	/* This looks like it makes sense at first, but it can loop */
 	if ((xs->xs_control & XS_CTL_DISCOVERY) && (tinfo->goal.width == 0
 	     && tinfo->goal.offset == 0
 	     && tinfo->goal.ppr_options == 0)) {
 		scb->flags |= SCB_NEGOTIATE;
 		scb->hscb->control |= MK_MESSAGE;	
-	} else if ((tstate->auto_negotiate & mask) != 0) {
+	} else
+#endif
+	if ((tstate->auto_negotiate & mask) != 0) {
 		scb->flags |= SCB_AUTO_NEGOTIATE;
 		scb->hscb->control |= MK_MESSAGE;
 	}
@@ -762,7 +800,7 @@ bus_reset:
 		 * The target/initiator that is holding up the bus may not
 		 * be the same as the one that triggered this timeout
 		 * (different commands have different timeout lengths).
-		 * If the bus is idle and we are actiing as the initiator
+		 * If the bus is idle and we are acting as the initiator
 		 * for this request, queue a BDR message to the timed out
 		 * target.  Otherwise, if the timed out transaction is
 		 * active:
@@ -956,11 +994,10 @@ void
 ahc_platform_set_tags(struct ahc_softc *ahc,
 		      struct ahc_devinfo *devinfo, int enable)
 {
-	struct ahc_initiator_tinfo *tinfo;
         struct ahc_tmode_tstate *tstate;
 
-        tinfo = ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
-                                    devinfo->target, &tstate);
+        ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
+                            devinfo->target, &tstate);
 
         if (enable)
                 tstate->tagenable |= devinfo->target_mask;

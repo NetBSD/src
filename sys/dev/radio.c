@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.11.2.1 2003/07/02 15:26:01 darrenr Exp $ */
+/* $NetBSD: radio.c,v 1.11.2.2 2004/08/03 10:44:54 skrll Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.11.2.1 2003/07/02 15:26:01 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.11.2.2 2004/08/03 10:44:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,6 @@ radioactivate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

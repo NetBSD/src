@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.28.2.1 2003/07/02 15:26:10 darrenr Exp $	*/
+/*	$NetBSD: agp.c,v 1.28.2.2 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.28.2.1 2003/07/02 15:26:10 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.28.2.2 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,10 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82830MP_IO_1,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82845G_DRAM,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82855GM_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82865_HB,
 	  NULL,			agp_i810_attach },
 #endif
 
@@ -297,6 +301,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->as_chipc = NULL;
 }
+
 int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 {
@@ -604,7 +609,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	}
 
 	/*
-	 * Flush the cpu cache since we are providing a new mapping
+	 * Flush the CPU cache since we are providing a new mapping
 	 * for these pages.
 	 */
 	agp_flush_cache();

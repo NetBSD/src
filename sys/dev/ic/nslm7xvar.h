@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.10.6.1 2004/08/03 10:46:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #define LM_ID_MASK	0xFE
 
 /*
- * additionnal registers for the Winbond chips:
+ * additional registers for the Winbond chips:
  * WB83781D: mostly lm7x compatible; extra temp sensors in bank1 & 2
  * WB83782D & WB83627HF: voltage sensors needs different handling, more FAN
  *                       dividers; mode voltage sensors, more temp sensors.
@@ -115,6 +115,40 @@
 #define WB83781_NUM_SENSORS	13
 #define WB83697_NUM_SENSORS	14
 #define WB_NUM_SENSORS	15
+
+/*
+ * registers for the environment controller built into
+ * the IT8705F super-i/o chip
+ */
+#define ITEC_FANDIV	0x0b	/* fan divisor */
+#define ITEC_FAN1	0x0d	/* fan1 tachometer */
+#define ITEC_FAN2	0x0e	/* fan2 tachometer */
+#define ITEC_FAN3	0x0f	/* fan3 tachometer */
+#define ITEC_VIN0	0x20	/* VIN0 voltage */
+#define ITEC_VIN1	0x21	/* VIN1 voltage */
+#define ITEC_VIN2	0x22	/* VIN2 voltage */
+#define ITEC_VIN3	0x23	/* VIN3 voltage */
+#define ITEC_VIN4	0x24	/* VIN4 voltage */
+#define ITEC_VIN5	0x25	/* VIN5 voltage */
+#define ITEC_VIN6	0x26	/* VIN6 voltage */
+#define ITEC_VIN7	0x27	/* VIN7 voltage */
+#define ITEC_VBAT	0x28	/* VBAT voltage */
+#define ITEC_TEMP1	0x29	/* TMPIN1 temperature */
+#define ITEC_TEMP2	0x30	/* TMPIN1 temperature */
+#define ITEC_TEMP3	0x31	/* TMPIN1 temperature */
+#define ITEC_RES48	0x48	/* reserved, used for probing the chip */
+#define ITEC_RES52	0x52	/* reserved, used for probing the chip */
+#define ITEC_VENDID	0x58	/* vendor ID register */
+
+/*
+ * misc values
+ */
+#define ITEC_VENDID_ITE	0x90	/* iTE vendor ID */
+#define ITEC_RES48_DEFAULT	0x2d
+#define ITEC_RES52_DEFAULT	0x7f
+#define ITEC_NUM_SENSORS	15
+#define ITEC_VREF	4096		/* VREF in mV */
+
 
 struct lm_softc {
 	struct	device sc_dev;

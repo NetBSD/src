@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.32.2.1 2003/07/02 15:26:04 darrenr Exp $	*/
+/*	$NetBSD: cy.c,v 1.32.2.2 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32.2.1 2003/07/02 15:26:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32.2.2 2004/08/03 10:46:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -259,13 +259,10 @@ cy_getport(dev_t dev)
 			continue;
 		j += sc->sc_nchannels;
 		if (j > u)
-			break;
+			return (&sc->sc_ports[u - k]);
 	}
 
-	if (i == cy_cd.cd_ndevs)
-		return (NULL);
-	else
-		return (&sc->sc_ports[u - k]);
+	return (NULL);
 }
 
 /*

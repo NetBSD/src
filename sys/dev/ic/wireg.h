@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.45 2003/05/13 08:35:58 dyoung Exp $	*/
+/*	$NetBSD: wireg.h,v 1.45.2.1 2004/08/03 10:46:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -192,7 +192,7 @@
 #define WI_EV_CMD		0x0010	/* command completed */
 #define WI_EV_ALLOC		0x0008	/* async alloc/reclaim completed */
 #define WI_EV_TX_EXC		0x0004	/* async xmit completed with failure */
-#define WI_EV_TX		0x0002	/* async xmit completed succesfully */
+#define WI_EV_TX		0x0002	/* async xmit completed successfully */
 #define WI_EV_RX		0x0001	/* async rx completed */
 
 /* Host software registers */
@@ -227,6 +227,9 @@
 #define WI_HCR_RUN		0x0007
 #define WI_HCR_HOLD		0x000f
 #define WI_HCR_EEHOLD		0x00ce
+
+#define WI_TMD_COR		0x14	/* Prism COR (TMD) */
+#define WI_TMD_IO		0x18	/* Prism I/O space (TMD) */
 
 /*
  * PCI Host Interface Registers (HFA3842 Specific)
@@ -397,7 +400,7 @@ struct wi_pcf {
  * Connection control characteristics. (0xFC00)
  * 0 == IBSS (802.11 compliant mode) (Only PRISM2)
  * 1 == Basic Service Set (BSS)
- * 2 == Wireless Distribudion System (WDS)
+ * 2 == Wireless Distribution System (WDS)
  * 3 == Pseudo IBSS 
  *	(Only PRISM2; not 802.11 compliant mode, testing use only)
  * 6 == HOST AP (Only PRISM2)
@@ -409,11 +412,16 @@ struct wi_pcf {
 #define	WI_PORTTYPE_HOSTAP	0x6
 
 /*
- * Mac addresses. (0xFC01, 0xFC08)
+ * Mac addresses. (0xFC01, 0xFC08, 0xFD42)
  */
 struct wi_macaddr {
-	u_int8_t		wi_mac_addr[6];
+	union {
+		u_int16_t	wi_mu_mac_addr_aligned[3];
+		u_int8_t	wi_mu_mac_addr[6];
+	} mu;
 };
+#define	wi_mac_addr_aligned	mu.wi_mu_mac_addr_aligned
+#define	wi_mac_addr		mu.wi_mu_mac_addr
 
 /*
  * Station set identification (SSID). (0xFC02, 0xFC04)
@@ -543,6 +551,12 @@ struct wi_frame {
 	u_int16_t		wi_dat_len;	/* 0x2c */
 	struct ether_header	wi_ehdr;	/* 0x2e */
 } __attribute__((__packed__));
+
+/* Software support fields are returned untouched by TxOK, TxExc events. */
+#define	wi_tx_swsup0		wi_rx_silence
+#define	wi_tx_swsup1		wi_rx_signal
+#define	wi_tx_swsup2		wi_rx_rate
+#define	wi_tx_idx		wi_rx_flow
 
 /* Tx Status Field */
 #define	WI_TXSTAT_RET_ERR	0x0001

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
- *              xRevision: 171 $
+ *              xRevision: 177 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.6 2003/03/04 17:25:21 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.6.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #define __NSACCESS_C__
 
@@ -150,6 +150,7 @@ AcpiNsRootInitialize (void)
     const ACPI_PREDEFINED_NAMES *InitVal = NULL;
     ACPI_NAMESPACE_NODE         *NewNode;
     ACPI_OPERAND_OBJECT         *ObjDesc;
+    ACPI_STRING                 Val = NULL;
 
 
     ACPI_FUNCTION_TRACE ("NsRootInitialize");
@@ -201,9 +202,7 @@ AcpiNsRootInitialize (void)
          */
         if (InitVal->Val)
         {
-            ACPI_STRING Val;
-
-            Status = AcpiOsPredefinedOverride(InitVal, &Val);
+            Status = AcpiOsPredefinedOverride (InitVal, &Val);
             if (ACPI_FAILURE (Status))
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not override predefined %s\n",
@@ -410,8 +409,8 @@ AcpiNsLookup (
         PrefixNode = ScopeInfo->Scope.Node;
         if (ACPI_GET_DESCRIPTOR_TYPE (PrefixNode) != ACPI_DESC_TYPE_NAMED)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "[%p] Not a namespace node\n",
-                PrefixNode));
+            ACPI_REPORT_ERROR (("NsLookup: %p is not a namespace node [%s]\n",
+                    PrefixNode, AcpiUtGetDescriptorName (PrefixNode)));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
 
@@ -480,7 +479,7 @@ AcpiNsLookup (
 
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
                 "Searching relative to prefix scope [%4.4s] (%p)\n",
-                PrefixNode->Name.Ascii, PrefixNode));
+                AcpiUtGetNodeName (PrefixNode), PrefixNode));
 
             /*
              * Handle multiple Parent Prefixes (carat) by just getting
@@ -517,7 +516,7 @@ AcpiNsLookup (
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
                     "Search scope is [%4.4s], path has %d carat(s)\n",
-                    ThisNode->Name.Ascii, NumCarats));
+                    AcpiUtGetNodeName (ThisNode), NumCarats));
             }
         }
 
@@ -636,7 +635,7 @@ AcpiNsLookup (
 
         /* Extract one ACPI name from the front of the pathname */
 
-        ACPI_MOVE_UNALIGNED32_TO_32 (&SimpleName, Path);
+        ACPI_MOVE_32_TO_32 (&SimpleName, Path);
 
         /* Try to find the single (4 character) ACPI name */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.14.2.1 2003/07/02 15:26:11 darrenr Exp $	*/
+/*	$NetBSD: machfb.c,v 1.14.2.2 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,6 +32,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.14.2.2 2004/08/03 10:49:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +42,7 @@
 #include <sys/callout.h>
 
 #ifdef __sparc__
-#include <machine/openfirm.h>
+#include <machine/promlib.h>
 #endif
 
 #include <dev/ic/videomode.h>
@@ -465,7 +466,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	for (bar = 0; bar < NBARS; bar++) {
@@ -1158,7 +1159,7 @@ mach64_is_console(struct pci_attach_args *pa)
 	if (node == -1)
 		return 0;
 
-	return (node == OF_instance_to_package(OF_stdout()));
+	return (node == prom_instance_to_package(prom_stdout()));
 #else
 	return 1;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32.h,v 1.4 2003/06/29 22:29:45 fvdl Exp $	 */
+/*	$NetBSD: sunos32.h,v 1.4.2.1 2004/08/03 10:44:32 skrll Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -57,7 +57,7 @@ typedef u_int32_t sunos32_utsnamep_t;
  */
 __BEGIN_DECLS
 /* Defined in arch/<arch>/sunos_machdep.c */
-void	sunos32_sendsig __P((int, sigset_t *, u_long));
+void	sunos32_sendsig(const ksiginfo_t *, const sigset_t *);
 __END_DECLS
 
 /*

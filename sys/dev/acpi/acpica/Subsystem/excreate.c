@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              xRevision: 99 $
+ *              xRevision: 101 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.6 2003/03/04 17:25:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.6.2.1 2004/08/03 10:45:08 skrll Exp $");
 
 #define __EXCREATE_C__
 
@@ -370,7 +370,7 @@ AcpiExCreateRegion (
     ACPI_FUNCTION_TRACE ("ExCreateRegion");
 
 
-    /* Get the Node from the object stack  */
+    /* Get the Namespace Node */
 
     Node = WalkState->Op->Common.Node;
 
@@ -396,7 +396,6 @@ AcpiExCreateRegion (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_LOAD, "Region Type - %s (%X)\n",
                     AcpiUtGetRegionName (RegionSpace), RegionSpace));
-
 
     /* Create the region descriptor */
 
@@ -462,6 +461,7 @@ AcpiExCreateTableRegion (
 
     ACPI_FUNCTION_TRACE ("ExCreateTableRegion");
 
+
     /* Get the Node from the object stack  */
 
     Node = WalkState->Op->Common.Node;
@@ -480,7 +480,6 @@ AcpiExCreateTableRegion (
     Status = AcpiTbFindTable (Operand[1]->String.Pointer,
                               Operand[2]->String.Pointer,
                               Operand[3]->String.Pointer, &Table);
-
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -584,7 +583,6 @@ AcpiExCreateProcessor (
     Status = AcpiNsAttachObject ((ACPI_NAMESPACE_NODE *) Operand[0],
                     ObjDesc, ACPI_TYPE_PROCESSOR);
 
-
     /* Remove local reference to the object */
 
     AcpiUtRemoveReference (ObjDesc);
@@ -635,7 +633,6 @@ AcpiExCreatePowerResource (
 
     Status = AcpiNsAttachObject ((ACPI_NAMESPACE_NODE *) Operand[0],
                     ObjDesc, ACPI_TYPE_POWER);
-
 
     /* Remove local reference to the object */
 
@@ -707,7 +704,6 @@ AcpiExCreateMethod (
         ObjDesc->Method.Concurrency = (UINT8)
                         (((MethodFlags & METHOD_FLAGS_SYNCH_LEVEL) >> 4) + 1);
     }
-
     else
     {
         ObjDesc->Method.Concurrency = INFINITE_CONCURRENCY;

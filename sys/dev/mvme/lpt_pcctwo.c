@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.4 2002/10/02 16:34:26 thorpej Exp $	*/
+/*	$NetBSD: lpt_pcctwo.c,v 1.4.8.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Device Driver back-end for the PCCChip2's parallel printer port
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.4.8.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

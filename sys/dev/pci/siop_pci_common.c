@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.19 2003/04/09 00:29:30 thorpej Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.19.2.1 2004/08/03 10:49:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.19 2003/04/09 00:29:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.19.2.1 2004/08/03 10:49:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
+	SF_CHIP_AAIP |
 	SF_BUS_ULTRA3 | SF_BUS_WIDE, 
 	7, 62, 0, 62, 8192
 	},
@@ -311,6 +312,10 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 			bar = 0x1c;
 			break;
+		default:
+			aprint_error("%s: invalid memory type %d\n",
+			    siop_sc->sc_dev.dv_xname, memtype);
+			return 0;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,

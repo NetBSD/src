@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.39 2003/05/17 01:38:39 nakayama Exp $	*/
+/*	$NetBSD: ebus.c,v 1.39.2.1 2004/08/03 10:41:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.39.2.1 2004/08/03 10:41:23 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -126,31 +129,32 @@ ebus_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	char name[10];
+	char *name;
 	int node;
 
 	/* Only attach if there's a PROM node. */
 	node = PCITAG_NODE(pa->pa_tag);
-	if (node == -1) return (0);
+	if (node == -1)
+		return (0);
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE)
+		return (0);
 
 	/* Match a real ebus */
-	OF_getprop(node, "name", &name, sizeof(name));
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	name = prom_getpropstring(node, "name");
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 
 	/* Or a real ebus III */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUSIII &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 
 	/* Or a PCI-ISA bridge XXX I hope this is on-board. */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
 		return (1);
 	}
 
@@ -175,7 +179,7 @@ ebus_attach(parent, self, aux)
 
 	printf("\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s, revision 0x%02x\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
@@ -195,17 +199,20 @@ ebus_attach(parent, self, aux)
 	 */
 	sc->sc_intmap = NULL;
 	sc->sc_range = NULL;
-	error = PROM_getprop(node, "interrupt-map",
+	sc->sc_nintmap = 0;
+	error = prom_getprop(node, "interrupt-map",
 			sizeof(struct ebus_interrupt_map),
-			&sc->sc_nintmap, (void **)&sc->sc_intmap);
+			&sc->sc_nintmap, &sc->sc_intmap);
 	switch (error) {
 	case 0:
 		immp = &sc->sc_intmapmask;
-		error = PROM_getprop(node, "interrupt-map-mask",
+		nmapmask = sizeof(*immp);
+		error = prom_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
-			    (void *)&immp);
+			    &immp);
 		if (error)
-			panic("could not get ebus interrupt-map-mask");
+			panic("could not get ebus interrupt-map-mask, error %d",
+			    error);
 		if (nmapmask != 1)
 			panic("ebus interrupt-map-mask is broken");
 		break;
@@ -216,8 +223,8 @@ ebus_attach(parent, self, aux)
 		break;
 	}
 
-	error = PROM_getprop(node, "ranges", sizeof(struct ebus_ranges),
-	    &sc->sc_nrange, (void **)&sc->sc_range);
+	error = prom_getprop(node, "ranges", sizeof(struct ebus_ranges),
+	    &sc->sc_nrange, &sc->sc_range);
 	if (error)
 		panic("ebus ranges: error %d", error);
 
@@ -226,7 +233,7 @@ ebus_attach(parent, self, aux)
 	 */
 	DPRINTF(EDB_CHILD, ("ebus node %08x, searching children...\n", node));
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		char *name = PROM_getpropstring(node, "name");
+		char *name = prom_getpropstring(node, "name");
 
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
@@ -248,8 +255,9 @@ ebus_setup_attach_args(sc, node, ea)
 {
 	int	n, rv;
 
-	bzero(ea, sizeof(struct ebus_attach_args));
-	rv = PROM_getprop(node, "name", 1, &n, (void **)&ea->ea_name);
+	memset(ea, 0, sizeof(struct ebus_attach_args));
+	n = 0;
+	rv = prom_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (rv != 0)
 		return (rv);
 	ea->ea_name[n] = '\0';
@@ -258,13 +266,13 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_bustag = sc->sc_childbustag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
-	rv = PROM_getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nreg,
-	    (void **)&ea->ea_reg);
+	rv = prom_getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nreg,
+	    &ea->ea_reg);
 	if (rv)
 		return (rv);
 
-	rv = PROM_getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddr,
-	    (void **)&ea->ea_vaddr);
+	rv = prom_getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddr,
+	    &ea->ea_vaddr);
 	if (rv != ENOENT) {
 		if (rv)
 			return (rv);
@@ -275,8 +283,8 @@ ebus_setup_attach_args(sc, node, ea)
 	} else
 		ea->ea_nvaddr = 0;
 
-	if (PROM_getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintr,
-	    (void **)&ea->ea_intr))
+	if (prom_getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintr,
+	    &ea->ea_intr))
 		ea->ea_nintr = 0;
 	else
 		ebus_find_ino(sc, ea);
@@ -398,7 +406,7 @@ ebus_alloc_bus_tag(sc, type)
 	if (bt == NULL)
 		panic("could not allocate ebus bus tag");
 
-	bzero(bt, sizeof *bt);
+	memset(bt, 0, sizeof *bt);
 	bt->cookie = sc;
 	bt->parent = sc->sc_memtag;
 	bt->type = type;

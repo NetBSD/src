@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.7 2003/06/29 22:29:36 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.7.2.1 2004/08/03 10:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.7 2003/06/29 22:29:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.7.2.1 2004/08/03 10:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ coredump_netbsd32(struct lwp *l, struct vnode *vp, struct ucred *cred)
 	cs.core.c_midmag = 0;
 	strncpy(cs.core.c_name, p->p_comm, MAXCOMLEN);
 	cs.core.c_nseg = 0;
-	cs.core.c_signo = p->p_sigctx.ps_sig;
+	cs.core.c_signo = p->p_sigctx.ps_signo;
 	cs.core.c_ucode = p->p_sigctx.ps_code;
 	cs.core.c_cpusize = 0;
 	cs.core.c_tsize = (u_long)ctob(vm->vm_tsize);

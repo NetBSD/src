@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rscalc - Calculate stream and list lengths
- *              xRevision: 47 $
+ *              xRevision: 50 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rscalc.c,v 1.6 2003/03/04 17:25:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rscalc.c,v 1.6.2.1 2004/08/03 10:45:12 skrll Exp $");
 
 #define __RSCALC_C__
 
@@ -436,7 +436,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
             ++Buffer;
 
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
             BytesConsumed = Temp16 + 3;
 
             /*
@@ -477,7 +477,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -517,7 +517,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -557,7 +557,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -597,7 +597,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -670,7 +670,7 @@ AcpiRsGetListLength (
             /*
              * Look at the number of bits set
              */
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             for (Index = 0; Index < 16; Index++)
             {
@@ -799,7 +799,7 @@ AcpiRsGetListLength (
         default:
             /*
              * If we get here, everything is out of sync,
-             *  so exit with an error
+             * exit with an error
              */
             return_ACPI_STATUS (AE_AML_INVALID_RESOURCE_TYPE);
         }
@@ -807,7 +807,7 @@ AcpiRsGetListLength (
         /*
          * Update the return value and counter
          */
-        BufferSize += ACPI_ALIGN_RESOURCE_SIZE(StructureSize);
+        BufferSize += (UINT32) ACPI_ALIGN_RESOURCE_SIZE (StructureSize);
         BytesParsed += BytesConsumed;
 
         /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.6 2001/01/31 07:44:51 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.6.24.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -101,7 +101,36 @@
 #define RTK_RX_ER	0x0072		/* RX_ER counter */
 #define RTK_CSCFG	0x0074		/* CS configuration register */
 
+/*
+ * When operating in special C+ mode, some of the registers in an
+ * 8139C+ chip have different definitions. These are also used for
+ * the 8169 gigE chip.
+ */
+#define RTK_DUMPSTATS_LO	0x0010	/* counter dump command register */
+#define RTK_DUMPSTATS_HI	0x0014	/* counter dump command register */
+#define RTK_TXLIST_ADDR_LO	0x0020	/* 64 bits, 256 byte alignment */
+#define RTK_TXLIST_ADDR_HI	0x0024	/* 64 bits, 256 byte alignment */
+#define RTK_TXLIST_ADDR_HPRIO_LO	0x0028	/* 64 bits, 256 byte aligned */
+#define RTK_TXLIST_ADDR_HPRIO_HI	0x002C	/* 64 bits, 256 byte aligned */
+#define RTK_CFG2		0x0053
+#define RTK_TIMERINT		0x0054	/* interrupt on timer expire */
+#define RTK_TXSTART		0x00D9	/* 8 bits */
+#define RTK_CPLUS_CMD		0x00E0	/* 16 bits */
+#define RTK_RXLIST_ADDR_LO	0x00E4	/* 64 bits, 256 byte alignment */
+#define RTK_RXLIST_ADDR_HI	0x00E8	/* 64 bits, 256 byte alignment */
+#define RTK_EARLY_TX_THRESH	0x00EC	/* 8 bits */
 
+/*
+ * Registers specific to the 8169 gigE chip
+ */
+#define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
+#define RTK_PHYAR		0x0060
+#define RTK_TBICSR		0x0064
+#define RTK_TBI_ANAR		0x0068
+#define RTK_TBI_LPAR		0x006A
+#define RTK_GMEDIASTAT		0x006C	/* 8 bits */
+#define RTK_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
+#define RTK_GTXSTART		0x0038	/* 16 bits */
 /*
  * TX config register bits
  */
@@ -109,7 +138,27 @@
 #define RTK_TXCFG_MAXDMA	0x00000700	/* max DMA burst size */
 #define RTK_TXCFG_CRCAPPEND	0x00010000	/* CRC append (0 = yes) */
 #define RTK_TXCFG_LOOPBKTST	0x00060000	/* loopback test */
+#define RTK_TXCFG_IFG2		0x00080000	/* 8169 only */
 #define RTK_TXCFG_IFG		0x03000000	/* interframe gap */
+#define RTK_TXCFG_HWREV		0x7CC00000
+
+#define RTK_LOOPTEST_OFF		0x00000000
+#define RTK_LOOPTEST_ON		0x00020000
+#define RTK_LOOPTEST_ON_CPLUS	0x00060000
+
+#define RTK_HWREV_8169		0x00000000
+#define RTK_HWREV_8169S		0x04000000
+#define RTK_HWREV_8110S		0x00800000
+#define RTK_HWREV_8139		0x60000000
+#define RTK_HWREV_8139A		0x70000000
+#define RTK_HWREV_8139AG	0x70800000
+#define RTK_HWREV_8139B		0x78000000
+#define RTK_HWREV_8130		0x7C000000
+#define RTK_HWREV_8139C		0x74000000
+#define RTK_HWREV_8139D		0x74400000
+#define RTK_HWREV_8139CPLUS	0x74800000
+#define RTK_HWREV_8101		0x74c00000
+#define RTK_HWREV_8100		0x78800000
 
 #define RTK_TXDMA_16BYTES	0x00000000
 #define RTK_TXDMA_32BYTES	0x00000100
@@ -143,14 +192,25 @@
 #define RTK_ISR_TX_ERR		0x0008
 #define RTK_ISR_RX_OVERRUN	0x0010
 #define RTK_ISR_PKT_UNDERRUN	0x0020
+#define RTK_ISR_LINKCHG		0x0020	/* 8169 only */
 #define RTK_ISR_FIFO_OFLOW	0x0040	/* 8139 only */
+#define RTK_ISR_TX_DESC_UNAVAIL	0x0080	/* C+ only */
+#define RTK_ISR_SWI		0x0100	/* C+ only */
+#define RTK_ISR_CABLE_LEN_CHGD	0x2000
 #define RTK_ISR_PCS_TIMEOUT	0x4000	/* 8129 only */
+#define RTK_ISR_TIMEOUT_EXPIRED	0x4000
 #define RTK_ISR_SYSTEM_ERR	0x8000
 
 #define RTK_INTRS	\
 	(RTK_ISR_TX_OK|RTK_ISR_RX_OK|RTK_ISR_RX_ERR|RTK_ISR_TX_ERR|	\
 	RTK_ISR_RX_OVERRUN|RTK_ISR_PKT_UNDERRUN|RTK_ISR_FIFO_OFLOW|	\
 	RTK_ISR_PCS_TIMEOUT|RTK_ISR_SYSTEM_ERR)
+
+#define RTK_INTRS_CPLUS	\
+	(RTK_ISR_RX_OK|RTK_ISR_RX_ERR|RTK_ISR_TX_ERR|			\
+	RTK_ISR_RX_OVERRUN|RTK_ISR_PKT_UNDERRUN|RTK_ISR_FIFO_OFLOW|	\
+	RTK_ISR_PCS_TIMEOUT|RTK_ISR_SYSTEM_ERR|RTK_ISR_TIMEOUT_EXPIRED)
+
 
 /*
  * Media status register. (8139 only)
@@ -289,6 +349,66 @@
 #define RTK_CFG1_LED1		0x80
 
 /*
+ * 8139C+ register definitions
+ */
+
+/* RTK_DUMPSTATS_LO register */
+
+#define RTK_DUMPSTATS_START	0x00000008
+
+/* Transmit start register */
+
+#define RTK_TXSTART_SWI		0x01	/* generate TX interrupt */
+#define RTK_TXSTART_START	0x40	/* start normal queue transmit */
+#define RTK_TXSTART_HPRIO_START	0x80	/* start hi prio queue transmit */
+
+/*
+ * Config 2 register, 8139C+/8169/8169S/8110S only
+ */
+#define RTK_CFG2_BUSFREQ		0x07
+#define RTK_CFG2_BUSWIDTH	0x08
+#define RTK_CFG2_AUXPWRSTS	0x10
+
+#define RTK_BUSFREQ_33MHZ	0x00
+#define RTK_BUSFREQ_66MHZ	0x01
+                                        
+#define RTK_BUSWIDTH_32BITS	0x00
+#define RTK_BUSWIDTH_64BITS	0x08
+
+/* C+ mode command register */
+
+#define RTK_CPLUSCMD_TXENB	0x0001	/* enable C+ transmit mode */
+#define RTK_CPLUSCMD_RXENB	0x0002	/* enable C+ receive mode */
+#define RTK_CPLUSCMD_PCI_MRW	0x0008	/* enable PCI multi-read/write */
+#define RTK_CPLUSCMD_PCI_DAC	0x0010	/* PCI dual-address cycle only */
+#define RTK_CPLUSCMD_RXCSUM_ENB	0x0020	/* enable RX checksum offload */
+#define RTK_CPLUSCMD_VLANSTRIP	0x0040	/* enable VLAN tag stripping */
+
+/* C+ early transmit threshold */
+
+#define RTK_EARLYTXTHRESH_CNT	0x003F	/* byte count times 8 */ 
+
+/*
+ * Gigabit PHY access register (8169 only)
+ */
+
+#define RTK_PHYAR_PHYDATA	0x0000FFFF
+#define RTK_PHYAR_PHYREG		0x001F0000
+#define RTK_PHYAR_BUSY		0x80000000
+
+/*
+ * Gigabit media status (8169 only)
+ */
+#define RTK_GMEDIASTAT_FDX	0x01	/* full duplex */
+#define RTK_GMEDIASTAT_LINK	0x02	/* link up */
+#define RTK_GMEDIASTAT_10MBPS	0x04	/* 10mps link */
+#define RTK_GMEDIASTAT_100MBPS	0x08	/* 100mbps link */
+#define RTK_GMEDIASTAT_1000MBPS	0x10	/* gigE link */
+#define RTK_GMEDIASTAT_RXFLOW	0x20	/* RX flow control on */
+#define RTK_GMEDIASTAT_TXFLOW	0x40	/* TX flow control on */
+#define RTK_GMEDIASTAT_TBI	0x80	/* TBI enabled */
+
+/*
  * The RealTek doesn't use a fragment-based descriptor mechanism.
  * Instead, there are only four register sets, each or which represents
  * one 'descriptor.' Basically, each TX descriptor is just a contiguous
@@ -317,3 +437,133 @@
 
 #define RTK_RXCFG_CONFIG 	(RTK_RX_FIFOTHRESH|RTK_RX_MAXDMA|RTK_RX_BUF_SZ)
 #define RTK_TXCFG_CONFIG	(RTK_TXCFG_IFG|RTK_TX_MAXDMA)
+
+
+/*
+ * The 8139C+ and 8160 gigE chips support descriptor-based TX
+ * and RX. In fact, they even support TCP large send. Descriptors
+ * must be allocated in contiguous blocks that are aligned on a
+ * 256-byte boundary. The rings can hold a maximum of 64 descriptors.
+ */
+
+/*
+ * RX/TX descriptor definition. When large send mode is enabled, the
+ * lower 11 bits of the TX rtk_cmd word are used to hold the MSS, and
+ * the checksum offload bits are disabled. The structure layout is
+ * the same for RX and TX descriptors
+ */
+
+struct rtk_desc {
+	u_int32_t		rtk_cmdstat;
+	u_int32_t		rtk_vlanctl;
+	u_int32_t		rtk_bufaddr_lo;
+	u_int32_t		rtk_bufaddr_hi;
+};
+
+#define RTK_TDESC_CMD_FRAGLEN	0x0000FFFF
+#define RTK_TDESC_CMD_TCPCSUM	0x00010000	/* TCP checksum enable */
+#define RTK_TDESC_CMD_UDPCSUM	0x00020000	/* UDP checksum enable */
+#define RTK_TDESC_CMD_IPCSUM	0x00040000	/* IP header checksum enable */
+#define RTK_TDESC_CMD_MSSVAL	0x07FF0000	/* Large send MSS value */
+#define RTK_TDESC_CMD_LGSEND	0x08000000	/* TCP large send enb */
+#define RTK_TDESC_CMD_EOF	0x10000000	/* end of frame marker */
+#define RTK_TDESC_CMD_SOF	0x20000000	/* start of frame marker */
+#define RTK_TDESC_CMD_EOR	0x40000000	/* end of ring marker */
+#define RTK_TDESC_CMD_OWN	0x80000000	/* chip owns descriptor */
+
+#define RTK_TDESC_VLANCTL_TAG	0x00020000	/* Insert VLAN tag */
+#define RTK_TDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+
+/*
+ * Error bits are valid only on the last descriptor of a frame
+ * (i.e. RTK_TDESC_CMD_EOF == 1)
+ */
+
+#define RTK_TDESC_STAT_COLCNT	0x000F0000	/* collision count */
+#define RTK_TDESC_STAT_EXCESSCOL	0x00100000	/* excessive collisions */
+#define RTK_TDESC_STAT_LINKFAIL	0x00200000	/* link faulure */
+#define RTK_TDESC_STAT_OWINCOL	0x00400000	/* out-of-window collision */
+#define RTK_TDESC_STAT_TXERRSUM	0x00800000	/* transmit error summary */
+#define RTK_TDESC_STAT_UNDERRUN	0x02000000	/* TX underrun occurred */
+#define RTK_TDESC_STAT_OWN	0x80000000
+
+/*
+ * RX descriptor cmd/vlan definitions
+ */
+
+#define RTK_RDESC_CMD_EOR	0x40000000
+#define RTK_RDESC_CMD_OWN	0x80000000
+#define RTK_RDESC_CMD_BUFLEN	0x00001FFF
+
+#define RTK_RDESC_STAT_OWN	0x80000000
+#define RTK_RDESC_STAT_EOR	0x40000000
+#define RTK_RDESC_STAT_SOF	0x20000000
+#define RTK_RDESC_STAT_EOF	0x10000000
+#define RTK_RDESC_STAT_FRALIGN	0x08000000	/* frame alignment error */
+#define RTK_RDESC_STAT_MCAST	0x04000000	/* multicast pkt received */
+#define RTK_RDESC_STAT_UCAST	0x02000000	/* unicast pkt received */
+#define RTK_RDESC_STAT_BCAST	0x01000000	/* broadcast pkt received */
+#define RTK_RDESC_STAT_BUFOFLOW	0x00800000	/* out of buffer space */
+#define RTK_RDESC_STAT_FIFOOFLOW	0x00400000	/* FIFO overrun */
+#define RTK_RDESC_STAT_GIANT	0x00200000	/* pkt > 4096 bytes */
+#define RTK_RDESC_STAT_RXERRSUM	0x00100000	/* RX error summary */
+#define RTK_RDESC_STAT_RUNT	0x00080000	/* runt packet received */
+#define RTK_RDESC_STAT_CRCERR	0x00040000	/* CRC error */
+#define RTK_RDESC_STAT_PROTOID	0x00030000	/* Protocol type */
+#define RTK_RDESC_STAT_IPSUMBAD	0x00008000	/* IP header checksum bad */
+#define RTK_RDESC_STAT_UDPSUMBAD	0x00004000	/* UDP checksum bad */
+#define RTK_RDESC_STAT_TCPSUMBAD	0x00002000	/* TCP checksum bad */
+#define RTK_RDESC_STAT_FRAGLEN	0x00001FFF	/* RX'ed frame/frag len */
+#define RTK_RDESC_STAT_GFRAGLEN	0x00003FFF	/* RX'ed frame/frag len */
+
+#define RTK_RDESC_VLANCTL_TAG	0x00010000	/* VLAN tag available
+						   (rtk_vlandata valid)*/
+#define RTK_RDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+
+#define RTK_PROTOID_NONIP	0x00000000
+#define RTK_PROTOID_TCPIP	0x00010000
+#define RTK_PROTOID_UDPIP	0x00020000
+#define RTK_PROTOID_IP		0x00030000
+#define RTK_TCPPKT(x)		(((x) & RTK_RDESC_STAT_PROTOID) == \
+				 RTK_PROTOID_TCPIP)
+#define RTK_UDPPKT(x)		(((x) & RTK_RDESC_STAT_PROTOID) == \
+				 RTK_PROTOID_UDPIP)
+
+/*
+ * Statistics counter structure (8139C+ and 8169 only)
+ */
+struct rtk_stats {
+	u_int32_t		rtk_tx_pkts_lo;
+	u_int32_t		rtk_tx_pkts_hi;
+	u_int32_t		rtk_tx_errs_lo;
+	u_int32_t		rtk_tx_errs_hi;
+	u_int32_t		rtk_tx_errs;
+	u_int16_t		rtk_missed_pkts;
+	u_int16_t		rtk_rx_framealign_errs;
+	u_int32_t		rtk_tx_onecoll;
+	u_int32_t		rtk_tx_multicolls;
+	u_int32_t		rtk_rx_ucasts_hi;
+	u_int32_t		rtk_rx_ucasts_lo;
+	u_int32_t		rtk_rx_bcasts_lo;
+	u_int32_t		rtk_rx_bcasts_hi;
+	u_int32_t		rtk_rx_mcasts;
+	u_int16_t		rtk_tx_aborts;
+	u_int16_t		rtk_rx_underruns;
+};
+
+#define RTK_RX_DESC_CNT		64
+#define RTK_TX_DESC_CNT		64
+#define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
+#define RTK_TX_LIST_SZ		(RTK_TX_DESC_CNT * sizeof(struct rtk_desc))
+#define RTK_RING_ALIGN		256
+#define RTK_IFQ_MAXLEN		512
+#define RTK_DESC_INC(x)		(x = (x + 1) % RTK_TX_DESC_CNT)
+#define RTK_OWN(x)		(le32toh((x)->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
+#define RTK_RXBYTES(x)		(le32toh((x)->rtk_cmdstat) & sc->rtk_rxlenmask)
+#define RTK_PKTSZ(x)		((x)/* >> 3*/)
+
+#define RTK_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
+#define RTK_ADDR_HI(y)	((u_int64_t) (y) >> 32)
+
+#define RTK_JUMBO_FRAMELEN	9018
+#define RTK_JUMBO_MTU		(RTK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)

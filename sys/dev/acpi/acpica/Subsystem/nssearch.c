@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nssearch - Namespace search
- *              xRevision: 95 $
+ *              xRevision: 100 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.6 2003/03/04 17:25:22 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #define __NSSEARCH_C__
 
@@ -175,7 +175,7 @@ AcpiNsSearchNode (
         ScopeName = AcpiNsGetExternalPathname (Node);
         if (ScopeName)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Searching %s [%p] For %4.4s (%s)\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Searching %s (%p) For [%4.4s] (%s)\n",
                 ScopeName, Node, (char *) &TargetName, AcpiUtGetTypeName (Type)));
 
             ACPI_MEM_FREE (ScopeName);
@@ -198,8 +198,9 @@ AcpiNsSearchNode (
              * Found matching entry.
              */
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-                "Name %4.4s Type [%s] found at %p\n",
-                (char *) &TargetName, AcpiUtGetTypeName (NextNode->Type), NextNode));
+                "Name [%4.4s] (%s) %p found in scope [%4.4s] %p\n",
+                (char *) &TargetName, AcpiUtGetTypeName (NextNode->Type),
+                NextNode, AcpiUtGetNodeName (Node), Node));
 
             *ReturnNode = NextNode;
             return_ACPI_STATUS (AE_OK);
@@ -223,8 +224,10 @@ AcpiNsSearchNode (
 
     /* Searched entire namespace level, not found */
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Name %4.4s Type [%s] not found at %p\n",
-        (char *) &TargetName, AcpiUtGetTypeName (Type), NextNode));
+    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
+        "Name [%4.4s] (%s) not found in search in scope [%4.4s] %p first child %p\n",
+        (char *) &TargetName, AcpiUtGetTypeName (Type),
+        AcpiUtGetNodeName (Node), Node, Node->Child));
 
     return_ACPI_STATUS (AE_NOT_FOUND);
 }

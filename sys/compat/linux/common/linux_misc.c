@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121.2.1 2003/07/02 15:25:47 darrenr Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.121.2.2 2004/08/03 10:44:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.1 2003/07/02 15:25:47 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.2 2004/08/03 10:44:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,8 @@ static const struct mnttypes {
 #endif
 
 /* Local linux_misc.c functions: */
-static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
+static void bsd_to_linux_statfs __P((const struct statvfs *,
+    struct linux_statfs *));
 static int linux_to_bsd_limit __P((int));
 static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
     const struct linux_sys_mmap_args *));
@@ -299,7 +300,7 @@ linux_sys_brk(l, v, retval)
  */
 static void
 bsd_to_linux_statfs(bsp, lsp)
-	struct statfs *bsp;
+	const struct statvfs *bsp;
 	struct linux_statfs *lsp;
 {
 	int i;
@@ -323,8 +324,8 @@ bsd_to_linux_statfs(bsp, lsp)
 	lsp->l_ffiles = bsp->f_files;
 	lsp->l_fffree = bsp->f_ffree;
 	/* Linux sets the fsid to 0..., we don't */
-	lsp->l_ffsid.val[0] = bsp->f_fsid.val[0];
-	lsp->l_ffsid.val[1] = bsp->f_fsid.val[1];
+	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
+	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
 	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
 	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
@@ -343,21 +344,22 @@ linux_sys_statfs(l, v, retval)
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statfs btmp, *bsp;
+	struct statvfs btmp, *bsp;
 	struct linux_statfs ltmp;
-	struct sys_statfs_args bsa;
+	struct sys_statvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statfs *) stackgap_alloc(p, &sg, sizeof (struct statfs));
+	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;
+	SCARG(&bsa, flags) = ST_WAIT;
 
-	if ((error = sys_statfs(l, &bsa, retval)))
+	if ((error = sys_statvfs1(l, &bsa, retval)))
 		return error;
 
 	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
@@ -379,19 +381,20 @@ linux_sys_fstatfs(l, v, retval)
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statfs btmp, *bsp;
+	struct statvfs btmp, *bsp;
 	struct linux_statfs ltmp;
-	struct sys_fstatfs_args bsa;
+	struct sys_fstatvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statfs *) stackgap_alloc(p, &sg, sizeof (struct statfs));
+	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
+	SCARG(&bsa, flags) = ST_WAIT;
 
-	if ((error = sys_fstatfs(l, &bsa, retval)))
+	if ((error = sys_fstatvfs1(l, &bsa, retval)))
 		return error;
 
 	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
@@ -625,7 +628,7 @@ linux_sys_mprotect(l, v, retval)
 #endif
 	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
 		vm_map_unlock(map);
-		return EFAULT;
+		return ENOMEM;
 	}
 	vm_map_unlock(map);
 	return uvm_map_protect(map, start, end, prot, FALSE);
@@ -1456,14 +1459,11 @@ linux_sys_setdomainname(l, v, retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
-	int error;
+	int name[2];
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
+	name[0] = CTL_KERN;
+	name[1] = KERN_DOMAINNAME;
+	return (old_sysctl(&name[0], 2, 0, 0, SCARG(uap, domainname),
 			    SCARG(uap, len), l));
 }
 

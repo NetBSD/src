@@ -1,4 +1,4 @@
-/* $NetBSD: des_enc.S,v 1.1 2001/09/09 11:01:02 tls Exp $ */
+/* $NetBSD: des_enc.S,v 1.1.24.1 2004/08/03 10:44:46 skrll Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -59,7 +59,7 @@
 
 /*
  * Modified from the output of `perl des686.pl elf' by 
- * Thor Lancelot Simon <tls@netbsd.org>
+ * Thor Lancelot Simon <tls@NetBSD.org>
  */
 
 #include <i386/include/asm.h>

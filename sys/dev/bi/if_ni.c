@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.21 2003/04/01 01:58:14 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.21.2.1 2004/08/03 10:45:46 skrll Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21 2003/04/01 01:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21.2.1 2004/08/03 10:45:46 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21 2003/04/01 01:58:14 thorpej Exp $");
  */
 #define	NRETRIES	100
 #define	INSQTI(e, h)	({						\
-	int ret, i;							\
+	int ret = 0, i;							\
 	for (i = 0; i < NRETRIES; i++) {				\
 		if ((ret = insqti(e, h)) != ILCK_FAILED)		\
 			break;						\
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21 2003/04/01 01:58:14 thorpej Exp $");
 	ret;								\
 })
 #define	REMQHI(h)	({						\
-	int i;void *ret;						\
+	int i; void *ret = NULL;					\
 	for (i = 0; i < NRETRIES; i++) {				\
 		if ((ret = remqhi(h)) != (void *)ILCK_FAILED)		\
 			break;						\

@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.22 2003/05/03 18:11:37 wiz Exp $ */
+/*      $NetBSD: sv.c,v 1.22.2.1 2004/08/03 10:49:12 skrll Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.22 2003/05/03 18:11:37 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.22.2.1 2004/08/03 10:49:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,8 +604,6 @@ sv_open(addr, flags)
 	DPRINTF(("sv_open\n"));
 	if (!sc->sc_dmaset)
 		return (ENXIO);
-	sc->sc_pintr = 0;
-	sc->sc_rintr = 0;
 
 	return (0);
 }
@@ -617,14 +615,6 @@ void
 sv_close(addr)
 	void *addr;
 {
-	struct sv_softc *sc = addr;
-    
-	DPRINTF(("sv_close\n"));
-	sv_halt_output(sc);
-	sv_halt_input(sc);
-
-	sc->sc_pintr = 0;
-	sc->sc_rintr = 0;
 }
 
 int
@@ -981,6 +971,7 @@ sv_halt_output(addr)
 	DPRINTF(("sv: sv_halt_output\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_PLAY_ENABLE);
+	sc->sc_pintr = 0;
 
 	return (0);
 }
@@ -995,6 +986,7 @@ sv_halt_input(addr)
 	DPRINTF(("sv: sv_halt_input\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_RECORD_ENABLE);
+	sc->sc_rintr = 0;
 
 	return (0);
 }

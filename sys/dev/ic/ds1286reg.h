@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286reg.h,v 1.4 2003/01/19 22:20:43 rafal Exp $ 	*/
+/*	$NetBSD: ds1286reg.h,v 1.4.2.1 2004/08/03 10:46:13 skrll Exp $ 	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -130,8 +130,8 @@
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
  */
-u_int ds1286_read __P((void *sc, u_int reg));
-void ds1286_write __P((void *sc, u_int reg, u_int datum));
+u_int ds1286_read __P((void *, u_int));
+void ds1286_write __P((void *, u_int, u_int));
 
 /*
  * A collection of TOD/Alarm registers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.7 2003/01/22 12:58:24 rafal Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.7.2.1 2004/08/03 10:43:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.7 2003/01/22 12:58:24 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.7.2.1 2004/08/03 10:43:53 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -87,13 +87,11 @@ irix_sys_systeminfo(l, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(long) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	const char *str = NULL;
 	char strbuf[BUF_SIZE + 1];
-	int error;
-	size_t len;
+	int error = 0;
+	size_t len = 0;
 	char buf[256];
-	caddr_t sg = stackgap_init(p, 0);
 
 	u_int rlen = SCARG(uap, len);
 
@@ -132,18 +130,15 @@ irix_sys_systeminfo(l, v, retval)
 
 	case SVR4_MIPS_SI_NUM_PROCESSORS:
 	case SVR4_MIPS_SI_AVAIL_PROCESSORS: {
-		int *ncpup = stackgap_alloc(p, &sg, sizeof(int));
-		int ncpu;
-		int name = HW_NCPU;
-		int namelen = sizeof(name);
+		int ncpu, name[2];
+		size_t sz;
 
-		if ((error = hw_sysctl
-		    (&name, 1, ncpup, &namelen, NULL, 0, p)) != 0)
+		name[0] = CTL_HW;
+		name[1] = HW_NCPU;
+		sz = sizeof(ncpu);
+		error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL);
+		if (error)
 			return error;
-
-		if ((error = copyin(ncpup, &ncpu, sizeof(int))) != 0)
-			return error;
-
 		snprintf(strbuf, BUF_SIZE, "%d", ncpu);
 		str = strbuf;
 			

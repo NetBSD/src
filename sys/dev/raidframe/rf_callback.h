@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.h,v 1.4 2001/10/04 15:58:51 oster Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.4.18.1 2004/08/03 10:50:41 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,10 +50,7 @@ struct RF_CallbackDesc_s {
 	void    (*callbackFunc) (RF_CBParam_t);	/* function to call */
 	RF_CBParam_t callbackArg;	/* args to give to function, or just
 					 * info about this callback  */
-	RF_CBParam_t callbackArg2;
-	RF_RowCol_t row;	/* disk row and column IDs to give to the
-				 * callback func */
-	RF_RowCol_t col;
+	RF_RowCol_t col;	/* column IDs to give to the callback func */
 	RF_CallbackDesc_t *next;/* next entry in list */
 };
 

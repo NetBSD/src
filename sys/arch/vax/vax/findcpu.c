@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.11 2001/05/01 13:18:27 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.11.24.1 2004/08/03 10:42:36 skrll Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.11.24.1 2004/08/03 10:42:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,6 +65,9 @@ findcpu(void)
 	vax_boardtype = vax_cputype << 24;
 
 	switch (vax_cputype) {
+	case VAX_TYP_730:
+		vax_bustype = VAX_UNIBUS;
+		break;
 	case VAX_TYP_780:
 		vax_bustype = VAX_SBIBUS;
 		break;
@@ -94,7 +99,10 @@ findcpu(void)
 		case VAX_BTYP_48:
 		case VAX_BTYP_IS1:
 			vax_confdata = *(int *)(0x20020000);
+			vax_bustype = VAX_VSBUS;
+			break;
 		case VAX_BTYP_49:
+			vax_confdata = *(int *)(0x25800000);
 			vax_bustype = VAX_VSBUS;
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.6 2002/10/02 16:02:10 thorpej Exp $	*/
+/*	$NetBSD: memecc.c,v 1.6.6.1 2004/08/03 10:41:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * ECC memory control.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.6.6.1 2004/08/03 10:41:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +142,8 @@ memecc_error()
 	printf("\tMBus transaction: %s\n",
 		bitmask_snprintf(efar0, ECC_AFR_BITS, bits, sizeof(bits)));
 	printf("\taddress: 0x%x%x\n", efar0 & ECC_AFR_PAH, efar1);
+	printf("\tmodule location: %s\n",
+		prom_pa_location(efar1, efar0 & ECC_AFR_PAH));
 
 	/* Unlock registers and clear interrupt */
 	bus_space_write_4(memecc_sc->sc_bt, bh, ECC_FSR_REG, efsr);

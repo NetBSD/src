@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              xRevision: 108 $
+ *              xRevision: 112 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.6 2003/03/04 17:25:14 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.6.2.1 2004/08/03 10:45:07 skrll Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -155,9 +155,9 @@ AcpiEvInitialize (
     }
 
     /*
-     * Initialize the Fixed and General Purpose AcpiEvents prior.  This is
-     * done prior to enabling SCIs to prevent interrupts from occurring
-     * before handers are installed.
+     * Initialize the Fixed and General Purpose Events. This is
+     * done prior to enabling SCIs to prevent interrupts from
+     * occurring before handers are installed.
      */
     Status = AcpiEvFixedEventInitialize ();
     if (ACPI_FAILURE (Status))
@@ -309,7 +309,7 @@ AcpiEvFixedEventDetect (
     (void) AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1_ENABLE, &FixedEnable);
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INTERRUPTS,
-        "Fixed AcpiEvent Block: Enable %08X Status %08X\n",
+        "Fixed Event Block: Enable %08X Status %08X\n",
         FixedEnable, FixedStatus));
 
     /*
@@ -369,7 +369,7 @@ AcpiEvFixedEventDispatch (
                 0, ACPI_MTX_DO_NOT_LOCK);
 
         ACPI_REPORT_ERROR (
-            ("EvGpeDispatch: No installed handler for fixed event [%08X]\n",
+            ("No installed handler for fixed event [%08X]\n",
             Event));
 
         return (ACPI_INTERRUPT_NOT_HANDLED);

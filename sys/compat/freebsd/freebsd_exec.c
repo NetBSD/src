@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.19 2002/11/01 19:26:21 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.19.6.1 2004/08/03 10:43:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.19 2002/11/01 19:26:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.19.6.1 2004/08/03 10:43:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.19 2002/11/01 19:26:21 jdolecek E
 
 #include <compat/freebsd/freebsd_syscall.h>
 #include <compat/freebsd/freebsd_exec.h>
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/common/compat_util.h>
 
 extern struct sysent freebsd_sysent[];
@@ -49,6 +50,8 @@ void syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
+
+struct uvm_object *emul_freebsd_object;
 
 const struct emul emul_freebsd = {
 	"freebsd",
@@ -63,9 +66,13 @@ const struct emul emul_freebsd = {
 	freebsd_syscallnames,
 	freebsd_sendsig,
 	trapsignal,
+	NULL,
 	freebsd_sigcode,
 	freebsd_esigcode,
+	&emul_freebsd_object,
 	freebsd_setregs,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
