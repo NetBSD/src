@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/11/30 03:12:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2003/05/09 01:09:13 lukem Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -32,7 +32,7 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
 	tar.c tty_subs.c
 
-.ifdef SMALLPROG
+.if defined(SMALLPROG)
 CPPFLAGS+=	-DSMALL
 .else
 SRCS+=		getid.c spec.c misc.c stat_flags.c pack_dev.c
@@ -46,13 +46,15 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
 
 MAN=	pax.1 tar.1 cpio.1
 
-.if !defined(HOSTPROG)
+.if defined(HOSTPROG)
+CPPFLAGS+=	-DHOSTPROG
+.else	# {	! HOSTPROG
 LINKS+=	${BINDIR}/pax ${BINDIR}/tar
 SYMLINKS+=${BINDIR}/tar /usr/bin/tar
 
 LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
 SYMLINKS+=${BINDIR}/cpio /usr/bin/cpio
-.endif
+.endif	# }	! HOSTPROG
 
 NOHTML=doc2html-error
 

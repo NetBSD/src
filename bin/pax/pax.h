@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.17 2002/10/17 00:42:02 christos Exp $	*/
+/*	$NetBSD: pax.h,v 1.18 2003/05/09 01:09:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -246,9 +246,17 @@ typedef struct oplist {
 #ifndef MIN
 #define        MIN(a,b) (((a)<(b))?(a):(b))
 #endif
-#define MAJOR(x)        major(x)
-#define MINOR(x)        minor(x)
-#define TODEV(x, y)	makedev(x, y)
+
+#ifdef HOSTPROG
+# include "pack_dev.h"			/* explicitly use NetBSD's macros */
+# define MAJOR(x)	major_netbsd(x)
+# define MINOR(x)	minor_netbsd(x)
+# define TODEV(x, y)	makedev_netbsd((x), (y))
+#else
+# define MAJOR(x)	major(x)
+# define MINOR(x)	minor(x)
+# define TODEV(x, y)	makedev((x), (y))
+#endif
 
 /*
  * General Defines
