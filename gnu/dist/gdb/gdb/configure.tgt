@@ -296,6 +296,9 @@ x86_64-*-linux*)	gdb_target=x86-64linux
 			build_gdbserver=yes
 			;;
 
+x86_64-*-netbsd*)	gdb_target=x86-64nbsd
+			;;
+
 
 z8k-*-coff*)		gdb_target=z8k ;;
 
@@ -309,6 +312,7 @@ d10v)		gdb_multi_arch=yes ;;
 m68hc11)	gdb_multi_arch=yes ;;
 mn10300)	gdb_multi_arch=yes ;;
 x86-64linux)    gdb_multi_arch=yes ;;
+x86-64nbsd)     gdb_multi_arch=yes ;;
 v850)           gdb_multi_arch=yes ;;
 xstormy16)      gdb_multi_arch=yes ;;
 mcore)		gdb_multi_arch=yes ;;

@@ -1,7 +1,5 @@
-/* Target-dependent code for GDB, the GNU debugger.
-   Copyright 2001
-   Free Software Foundation, Inc.
-   Contributed by Jiri Smid, SuSE Labs.
+/* Parameters for execution on a i386 running NetBSD, for GDB.
+   Copyright 1994, 2000 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,19 +18,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-#ifndef X86_64_TDEP_H
-#define X86_64_TDEP_H
+/* Get generic NetBSD host definitions. */
+#include "config/xm-nbsd.h"
 
-#include "i386-tdep.h"
-
-extern int x86_64_num_regs;
-extern int x86_64_num_gregs;
-
-int x86_64_register_number (const char *name);
-const char *x86_64_register_name (int reg_nr);
-	
-
-gdbarch_frame_saved_pc_ftype x86_64_nbsd_frame_saved_pc;
-gdbarch_saved_pc_after_call_ftype x86_64_nbsd_saved_pc_after_call;
-
-#endif
+#define HOST_LONG_DOUBLE_FORMAT &floatformat_i387_ext
