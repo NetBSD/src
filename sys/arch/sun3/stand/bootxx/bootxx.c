@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 1995/08/12 18:38:52 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.5 1995/10/13 21:44:57 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -46,9 +46,6 @@
 
 #include <machine/mon.h>
 #include "stand.h"
-
-int debug;
-int netif_debug;
 
 /*
  * Boot device is derived from ROM provided information.
@@ -101,11 +98,10 @@ main()
 
 int
 copyboot(fp, addr)
-	register struct open_file	*fp;
-	register char			*addr;
+	struct open_file	*fp;
+	char			*addr;
 {
-	int	n, i;
-	int	blknum;
+	int	n, i, blknum;
 	char *buf;
 
 #ifdef	sparc
