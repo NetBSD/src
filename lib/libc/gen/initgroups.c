@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.9 1995/05/13 06:58:22 jtc Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.10 1995/06/02 21:25:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: initgroups.c,v 1.9 1995/05/13 06:58:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: initgroups.c,v 1.10 1995/06/02 21:25:09 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,13 +51,17 @@ initgroups(uname, agroup)
 	const char *uname;
 	int agroup;
 {
-	int groups[NGROUPS], ngroups;
+	int groups[NGROUPS + 1], ngroups;
 
-	ngroups = NGROUPS;
+	ngroups = NGROUPS + 1;
 	if (getgrouplist(uname, agroup, groups, &ngroups) < 0)
 		_warnx("%s is in too many groups, using first %d",
 		    uname, ngroups);
-	if (setgroups(ngroups, groups) < 0) {
+	if (setgid(agroup) < 0) {
+		_warn("setgid");
+		return (-1);
+	}
+	if (setgroups(ngroups - 1, groups + 1) < 0) {
 		_warn("setgroups");
 		return (-1);
 	}
