@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.2 1998/07/07 21:44:58 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.3 1998/07/07 22:24:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.2 1998/07/07 21:44:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.3 1998/07/07 22:24:39 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,7 +260,7 @@ eb64plus_iointr(framep, vec)
 		if (!alpha_shared_intr_dispatch(eb64plus_pci_intr, irq)) {
 			alpha_shared_intr_stray(eb64plus_pci_intr, irq,
 			    "eb64+ irq");
-			if (ALPHA_SHARED_INTR_DISABLE(&eb64plus_pci_intr[irq]))
+			if (ALPHA_SHARED_INTR_DISABLE(eb64plus_pci_intr, irq))
 				eb64plus_intr_disable(irq);
 		}
 		return;

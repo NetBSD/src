@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.12 1998/07/07 21:37:11 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.13 1998/07/07 22:24:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -103,9 +103,9 @@ struct alpha_shared_intr {
 	int	intr_maxstrays;
 };
 
-#define	ALPHA_SHARED_INTR_DISABLE(asip)					\
-	((asip)->intr_maxstrays != 0 &&					\
-	 (asip)->intr_nstrays == (asip)->intr_maxstrays)
+#define	ALPHA_SHARED_INTR_DISABLE(asi, num)				\
+	((asi)[num].intr_maxstrays != 0 &&				\
+	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
 
 struct alpha_shared_intr *alpha_shared_intr_alloc __P((unsigned int));
 int	alpha_shared_intr_dispatch __P((struct alpha_shared_intr *,
