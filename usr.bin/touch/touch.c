@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.9 1994/12/07 09:19:50 jtc Exp $	*/
+/*	$NetBSD: touch.c,v 1.10 1995/06/07 16:10:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.9 1994/12/07 09:19:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.10 1995/06/07 16:10:22 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,10 +193,12 @@ stime_arg1(arg, tvp)
 	struct timeval *tvp;
 {
 	struct tm *t;
+	time_t tmptime;
 	int yearset;
 	char *p;
 					/* Start with the current time. */
-	if ((t = localtime(&tvp[0].tv_sec)) == NULL)
+	tmptime = tvp[0].tv_sec;
+	if ((t = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 					/* [[CC]YY]MMDDhhmm[.SS] */
 	if ((p = strchr(arg, '.')) == NULL)
@@ -255,8 +257,10 @@ stime_arg2(arg, year, tvp)
 	struct timeval *tvp;
 {
 	struct tm *t;
+	time_t tmptime;
 					/* Start with the current time. */
-	if ((t = localtime(&tvp[0].tv_sec)) == NULL)
+	tmptime = tvp[0].tv_sec;
+	if ((t = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 
 	t->tm_mon = ATOI2(arg);		/* MMDDhhmm[yy] */
