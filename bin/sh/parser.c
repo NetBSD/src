@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.52 2002/02/20 21:42:35 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.53 2002/05/15 16:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.52 2002/02/20 21:42:35 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.53 2002/05/15 16:33:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1177,6 +1177,8 @@ parseredir: {
 		c = pgetc();
 		if (c == '>')
 			np->type = NAPPEND;
+		else if (c == '|')
+			np->type = NCLOBBER;
 		else if (c == '&')
 			np->type = NTOFD;
 		else {
