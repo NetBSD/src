@@ -31,7 +31,10 @@ To prepare for installing via an AmigaDOS partition:
 
 	To install NetBSD from an AmigaDOS partition, you need to
 	get the NetBSD distribution sets you wish to install
-	on your system on to an AmigaDOS partition.
+	on your system on to an AmigaDOS partition.  All of the
+	set_name.xx pieces can be placed in a single directory
+	instead of separate ones for each distribution set.  This
+	will also simplify the installation work later on.
 
 	Note where you place the files you will need this later.
 
@@ -40,8 +43,8 @@ To prepare for installing via an AmigaDOS partition:
 
 To prepare for installing via a tape:
 
-	To install NetBSD from a tape, you need to be somehow
-	to get the NetBSD filesets you wish to install on
+	To install NetBSD from a tape, you need to somehow
+	get the NetBSD filesets you wish to install on
 	your system on to the appropriate kind of tape,
 	in tar format.
 
