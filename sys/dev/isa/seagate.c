@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.36 2000/03/30 12:45:33 augustss Exp $	*/
+/*	$NetBSD: seagate.c,v 1.37 2000/05/03 21:20:07 mycroft Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -1320,36 +1320,36 @@ sea_information_transfer(sea)
 						break;
 					if (!(phase & STAT_IO)) {
 #ifdef SEA_ASSEMBLER
-						asm("shr $2, %%ecx\n\t\
-						    cld\n\t\
+						caddr_t junk;
+						asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=S" (scb->data) :
+						    "=S" (scb->data),
+						    "=c" (len),
+						    "=D" (junk) :
 						    "0" (scb->data),
-						    "D" (sea->maddr_dr),
-						    "c" (BLOCK_SIZE) :
-						    "%ecx", "%edi");
+						    "1" (BLOCK_SIZE >> 2),
+						    "2" (sea->maddr_dr));
 #else
-						for (count = 0;
-						    count < BLOCK_SIZE;
-						    count++)
+					        for (len = BLOCK_SIZE;
+						    len; len--)
 							DATA = *(scb->data++);
 #endif
 					} else {
 #ifdef SEA_ASSEMBLER
-						asm("shr $2, %%ecx\n\t\
-						    cld\n\t\
+						caddr_t junk;
+						asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=D" (scb->data) :
-						    "S" (sea->maddr_dr),
+						    "=D" (scb->data),
+						    "=c" (len),
+						    "=S" (junk) :
 						    "0" (scb->data),
-						    "c" (BLOCK_SIZE) :
-						    "%ecx", "%esi");
+						    "1" (BLOCK_SIZE >> 2),
+						    "2" (sea->maddr_dr));
 #else
-					        for (count = 0;
-						    count < BLOCK_SIZE;
-						    count++)
+					        for (len = BLOCK_SIZE;
+						    len; len--)
 							*(scb->data++) = DATA;
 #endif
 					}
