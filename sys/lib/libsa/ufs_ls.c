@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.3 2003/02/01 14:52:13 dsl Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.4 2003/02/23 12:31:29 simonb Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 
 
 #include <sys/param.h>
-#include <string.h>
+#include <lib/libkern/libkern.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 
