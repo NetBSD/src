@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 1998/07/20 10:47:50 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 1998/08/02 19:42:35 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -280,9 +280,9 @@ configure()
 	/*
 	 * XXX In order for the HIL to configure, interrupts need to be
 	 * XXX enabled.  However, we need to initialize the HIL driver's
-	 * XXX software state prior to that, since a pending might cause
-	 * XXX the HIL's interrupt handler to be run in an uninitialized
-	 * XXX environment otherwise.
+	 * XXX software state prior to that, since a pending interrupt
+	 * XXX might cause the HIL's interrupt handler to be run in an
+	 * XXX unititialized environment otherwise.
 	 *
 	 * XXX These should be consolidated into some kind of table.
 	 */
