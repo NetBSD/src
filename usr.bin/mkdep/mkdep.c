@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdep.c,v 1.1.1.1 1999/01/25 22:10:42 tron Exp $	*/
+/*	$NetBSD: mkdep.c,v 1.2 1999/03/18 22:01:48 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.1.1.1 1999/01/25 22:10:42 tron Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.2 1999/03/18 22:01:48 sommerfe Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,6 +81,10 @@ findcc(progname)
 	char   *path, *dir, *next;
 	char   buffer[MAXPATHLEN];
 
+	if ((next = strchr(progname, ' ')) != NULL) {
+		*next = '\0';
+	}
+	
 	if (strchr(progname, '/') != NULL)
 		return access(progname, X_OK) ? NULL : strdup(progname);
 
