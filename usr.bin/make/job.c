@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.41 2000/12/30 02:51:21 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.42 2000/12/30 14:21:22 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.41 2000/12/30 02:51:21 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.42 2000/12/30 14:21:22 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.41 2000/12/30 02:51:21 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.42 2000/12/30 14:21:22 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1007,8 +1007,16 @@ JobFinish(job, status)
 	done = TRUE;
     }
 
-    if (done)
-	    Trace_Log(JOBEND, job);
+    if (done) {
+	Trace_Log(JOBEND, job);
+	if (!compatMake) {
+	    if ((*status != 0) ||
+	        (aborting == ABORT_ERROR) ||
+	        (aborting == ABORT_INTERRUPT))
+		Job_TokenReturn();
+	}
+	
+    }
 
     if (done &&
 	(aborting != ABORT_ERROR) &&
@@ -1033,10 +1041,6 @@ JobFinish(job, status)
 	errors += 1;
 	free((Address)job);
     }
-    if (done && (*status != 0) && !compatMake) {
-	Job_TokenReturn();
-    }
-
     JobRestartJobs();
 
     /*
@@ -2359,7 +2363,7 @@ Job_CatchOutput()
 #endif
 
     (void) fflush(stdout);
-    Job_TokenRelease();
+    Job_TokenFlush();
 #ifdef RMT_WILL_WATCH
     pnJobs = nJobs;
 
@@ -2977,7 +2981,6 @@ JobInterrupt(runINTERRUPT, signo)
 int
 Job_Finish()
 {
-    Job_TokenRelease();
     if (postCommands != NILGNODE && !Lst_IsEmpty(postCommands->commands)) {
 	if (errors) {
 	    Error("Errors reported so .END ignored");
@@ -2992,6 +2995,7 @@ Job_Finish()
 	    }
 	}
     }
+    Job_TokenFlush();
     return(errors);
 }
 
@@ -3040,6 +3044,7 @@ Job_Wait()
 	Job_CatchChildren(!usePipes);
 #endif /* RMT_WILL_WATCH */
     }
+    Job_TokenFlush();
     aborting = 0;
 }
 
@@ -3398,14 +3403,14 @@ Job_TokenWithdraw()
 
 /*-
  *-----------------------------------------------------------------------
- * Job_TokenRelease --
+ * Job_TokenFlush --
  *	Return free tokens to the pool.
  *
  *-----------------------------------------------------------------------
  */
 
 void
-Job_TokenRelease()
+Job_TokenFlush()
 {
     if (compatMake) return;
 	
