@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.ref,v 1.4 2001/03/31 11:37:48 aymeric Exp $
+.\"	$NetBSD: vi.ref,v 1.5 2004/03/17 10:13:10 wiz Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -434,9 +434,18 @@ not to exist.
 Once all environmental variables are interpreted,
 and all startup files are read,
 the first file to be edited is read in (or a temporary file is created).
-Then, any commands specified using the
+.pp
+As soon as an existing file is loaded
+(either due to the command line parameters or from within the editor),
+any command specified using the
 .b \-c
-option are executed, in the context of that file.
+option is executed, in the context of that file.
+Note that such a command is an
+.CO ex
+command and thus obeys the
+.CO ex
+behaviour by first jumping to the end of the file, even if used with
+.CO vi .
 .SH 1 "Recovery"
 .pp
 There is no recovery program for
