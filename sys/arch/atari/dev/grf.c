@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.18 1997/01/10 21:00:36 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.19 1997/02/26 12:28:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -172,6 +172,8 @@ grfopen(dev, flags, devtype, p)
 		return(ENXIO);
 
 	gp = grfsp[GRFUNIT(dev)];
+	if (gp == NULL)
+		return(ENXIO);
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
 		return(ENXIO);
