@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2000/06/14 15:39:57 soren Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2001/07/08 20:30:13 thorpej Exp $	*/
 
 #include <sys/conf.h>
 
@@ -9,4 +9,3 @@ cdev_decl(mm);
 bdev_decl(sw);
 cdev_decl(sw);
 cdev_decl(scsibus);
-cdev_decl(arcs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2001/03/21 22:25:56 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2001/07/08 20:30:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,8 @@ cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
+cdev_decl(arcbios_tty);
+
 struct bdevsw bdevsw[] =
 {
 	bdev_notdef(),			/* 0: */
@@ -157,8 +159,8 @@ struct cdevsw cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 34: SCSI bus */
 	cdev_tty_init(NZSTTY,zs),	/* 35: Zilog 8530 serial port */
 	cdev_tty_init(NCOM,com),	/* 36: com serial port */
-	cdev_tty_init(1,arcs),		/* 37: ARCS PROM console */
-	cdev_i4b_init(NI4B, i4b),		/* 38: i4b main device */
+	cdev_tty_init(1,arcbios_tty),	/* 37: ARCS PROM console */
+	cdev_i4b_init(NI4B, i4b),	/* 38: i4b main device */
 	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 39: i4b control device */
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 40: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 41: i4b trace device */
