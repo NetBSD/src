@@ -1,3 +1,5 @@
+/*	$NetBSD: proc.h,v 1.6 1995/03/21 09:03:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)proc.h	8.1 (Berkeley) 5/31/93
- *	$Id: proc.h,v 1.5 1994/09/21 00:11:13 mycroft Exp $
+ *	@(#)proc.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

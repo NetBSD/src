@@ -1,3 +1,5 @@
+/*	$NetBSD: conv_tab.c,v 1.4 1995/03/21 09:04:03 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)conv_tab.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: conv_tab.c,v 1.3 1994/09/22 09:24:59 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)conv_tab.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: conv_tab.c,v 1.4 1995/03/21 09:04:03 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

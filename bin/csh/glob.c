@@ -1,3 +1,5 @@
+/*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)glob.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: glob.c,v 1.9 1994/09/21 00:40:40 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

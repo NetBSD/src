@@ -1,3 +1,5 @@
+/*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ln.c	8.2 (Berkeley) 3/31/94";*/
-static char *rcsid = "$Id: ln.c,v 1.9 1994/09/22 09:25:32 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
+#else
+static char rcsid[] = "$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

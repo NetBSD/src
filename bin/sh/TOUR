@@ -1,5 +1,5 @@
-#	from: @(#)TOUR	8.1 (Berkeley) 5/31/93
-#	$Id: TOUR,v 1.5 1994/06/11 16:11:37 mycroft Exp $
+#	$NetBSD: TOUR,v 1.6 1995/03/21 09:08:38 cgd Exp $
+#	@(#)TOUR	8.1 (Berkeley) 5/31/93
 
 NOTE -- This is the original TOUR paper distributed with ash and
 does not represent the current state of the shell.  It is provided anyway

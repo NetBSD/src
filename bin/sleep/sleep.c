@@ -1,3 +1,5 @@
+/*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)sleep.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: sleep.c,v 1.7 1994/09/22 09:26:04 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdio.h>

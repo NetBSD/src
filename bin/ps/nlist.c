@@ -1,3 +1,5 @@
+/*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: pax.c,v 1.4 1995/03/21 09:07:39 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -42,8 +44,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pax.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: pax.c,v 1.3 1994/06/14 00:43:06 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
+#else
+static char rcsid[] = "$NetBSD: pax.c,v 1.4 1995/03/21 09:07:39 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdio.h>

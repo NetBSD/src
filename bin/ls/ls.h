@@ -1,3 +1,5 @@
+/*	$NetBSD: ls.h,v 1.7 1995/03/21 09:06:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ls.h	8.1 (Berkeley) 5/31/93
- *	$Id: ls.h,v 1.6 1994/09/23 06:14:53 mycroft Exp $
+ *	@(#)ls.h	8.1 (Berkeley) 5/31/93
  */
 
 #define NO_PRINT	1

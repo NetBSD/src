@@ -1,3 +1,5 @@
+/*	$NetBSD: expr.c,v 1.2 1995/03/21 09:05:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
