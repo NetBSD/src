@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.116.2.1 2004/06/21 10:10:09 tron Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.116.2.2 2004/09/18 19:21:23 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116.2.1 2004/06/21 10:10:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116.2.2 2004/09/18 19:21:23 he Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -282,6 +282,7 @@ diragain:
 
 		if (uio->uio_offset != 0 &&
 		    ndp->dc_cookie == np->n_direofoffset) {
+			nfs_putdircache(np, ndp);
 			nfsstats.direofcache_hits++;
 			return (0);
 		}
@@ -299,6 +300,7 @@ diragain:
 			 * server. Punt and let the userland code
 			 * deal with it.
 			 */
+			nfs_putdircache(np, ndp);
 			brelse(bp);
 			if (error == NFSERR_BAD_COOKIE) {
 			    nfs_invaldircache(vp, 0);
@@ -317,6 +319,7 @@ diragain:
 		 */
 		if (np->n_direofoffset != 0 && 
 			ndp->dc_blkcookie == np->n_direofoffset) {
+			nfs_putdircache(np, ndp);
 			brelse(bp);
 			return (0);
 		}
@@ -351,6 +354,7 @@ diragain:
 				(unsigned long)uio->uio_offset,
 				(unsigned long)NFS_GETCOOKIE(pdp));
 #endif
+			nfs_putdircache(np, ndp);
 			brelse(bp);
 			nfs_invaldircache(vp, 0);
 			nfs_vinvalbuf(vp, 0, cred, p, 0);
@@ -393,11 +397,13 @@ diragain:
 					NFS_STASHCOOKIE32(pdp,
 					    nndp->dc_cookie32);
 				}
+				nfs_putdircache(np, nndp);
 			}
 			pdp = dp;
 			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
 			enn++;
 		}
+		nfs_putdircache(np, ndp);
 
 		/*
 		 * If the last requested entry was not the last in the
@@ -414,6 +420,7 @@ diragain:
 				NFS_STASHCOOKIE32(pdp, nndp->dc_cookie32);
 				curoff = nndp->dc_cookie32;
 			}
+			nfs_putdircache(np, nndp);
 		} else
 			curoff = bp->b_dcookie;
 
@@ -452,6 +459,7 @@ diragain:
 				brelse(rabp);
 			}
 		}
+		nfs_putdircache(np, nndp);
 		got_buf = 1;
 		break;
 	    default:
