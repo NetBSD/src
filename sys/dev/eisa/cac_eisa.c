@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.1 2000/09/01 12:15:20 ad Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.2 2000/10/19 15:31:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ static void	cac_eisa_attach(struct device *, struct device *, void *);
 static int	cac_eisa_match(struct device *, struct cfdata *, void *);
 
 static struct	cac_ccb *cac_eisa_l0_completed(struct cac_softc *);
-static void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
 static int	cac_eisa_l0_fifo_full(struct cac_softc *);
+static void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
 static int	cac_eisa_l0_intr_pending(struct cac_softc *);
 static void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
 
