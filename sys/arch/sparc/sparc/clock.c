@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 1994/12/17 05:40:24 deraadt Exp $ */
+/*	$NetBSD: clock.c,v 1.17 1994/12/17 08:45:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -920,6 +920,7 @@ out:
 }
 #endif /* SUN4 */
 
+#if defined(SUN4)
 /*
  * Return the best possible estimate of the time in the timeval
  * to which tvp points.  We do this by returning the current time
@@ -933,13 +934,11 @@ out:
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s; 
+	int s;
 	static struct timeval lasttime;
 
-#if defined(SUN4)
 	if (!oldclk)
-		return (lo_microtime());
-#endif
+		return (lo_microtime(tvp));
 	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec;
@@ -956,3 +955,4 @@ microtime(tvp)
 	lasttime = *tvp;
 	splx(s);
 }
+#endif /* SUN4 */
