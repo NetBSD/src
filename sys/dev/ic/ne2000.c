@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.32 2001/02/12 18:49:04 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.33 2001/06/05 02:31:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ ne2000_attach(nsc, myea)
 		memsize = 8192 * 2;
 		break;
 	case NE2000_TYPE_DL10019:
+	case NE2000_TYPE_DL10022:
 		memsize = 8192 * 3;
 		break;
 	}
@@ -860,8 +861,10 @@ ne2000_ipkdb_attach(kip)
 		kip->name = "ne2000";
 		break;
 	case NE2000_TYPE_DL10019:
+	case NE2000_TYPE_DL10022:
 		dp->mem_start = dp->mem_size = 8192 * 3;
-		kip->name = "dl10019";
+		kip->name = (np->sc_type == NE2000_TYPE_DL10019) ?
+		    "dl10022" : "dl10019";
 		break;
 	case NE2000_TYPE_AX88190:
 		dp->rcr_proto = ED_RCR_INTT;
