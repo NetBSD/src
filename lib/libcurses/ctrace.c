@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.7 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.8 2000/04/16 01:16:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.7 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.8 2000/04/16 01:16:43 thorpej Exp $");
 #endif
 #endif				/* not lint */
 
@@ -84,9 +84,10 @@ va_dcl
 }
 #else
 /* this kills the empty translation unit message from lint... */
+void __cursesi_make_lint_shut_up_if_debug_not_defined(void);
 void
 __cursesi_make_lint_shut_up_if_debug_not_defined(void)
 {
-  return;
+	return;
 }
 #endif
