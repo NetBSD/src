@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdirentries.3,v 1.8 2002/08/12 21:14:12 soren Exp $
+.\"	$NetBSD: getdirentries.3,v 1.9 2002/08/12 21:18:25 soren Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,10 +97,6 @@ The
 entry is the length, in bytes, of the directory record.
 .Pp
 The
-.Fa d_name
-entry contains a null terminated file name.
-.Pp
-The
 .Fa d_namlen
 entry specifies the length of the file name excluding the null byte.
 Thus the actual size of
@@ -108,6 +104,10 @@ Thus the actual size of
 may vary from 1 to
 .Dv MAXNAMELEN
 \&+ 1.
+.Pp
+The
+.Fa d_name
+entry contains a null terminated file name.
 .Pp
 Entries may be separated by extra space.
 The
