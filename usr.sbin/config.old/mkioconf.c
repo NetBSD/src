@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.25 1994/03/10 21:19:26 mycroft Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.26 1994/03/10 21:35:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -766,7 +766,8 @@ isa_devtab(fp, table)
     fprintf(fp, "%6s, %2d, C 0x%05X, %5d, %8s,  %2d, 0x%04X, %d, %d },\n",
 	    sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
 	    dp->d_msize, shandler(dp), dp->d_unit,
-	    dp->d_flags, 0, eq(mp->d_name, "isa") ? -1 : mp->d_unit);
+	    dp->d_flags, eq(mp->d_name, "isa") ? 0 : dp->d_drive,
+	    eq(mp->d_name, "isa") ? -1 : mp->d_unit);
   }
   fprintf(fp, "0\n};\n");
 }
