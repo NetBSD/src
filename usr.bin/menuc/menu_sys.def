@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.12 1998/07/01 23:02:50 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.13 1998/07/03 15:20:30 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -479,9 +479,7 @@ static void process_req (struct menudesc *m, int num, int req)
 		else if (m->topline == 0)
 			mbeep();
 		else {
-			m->topline -= m->h-1;
-			if (m->topline < 0)
-				m->topline = 0;
+			m->topline = MAX(0,m->topline-m->h-1);
 			wclear (m->mw);
 			refresh = 1;
 		}
@@ -489,10 +487,11 @@ static void process_req (struct menudesc *m, int num, int req)
 	} else if (req == REQ_SCROLLDOWN) {
 		if (!(m->mopt & SCROLL))
 			mbeep();
-		else if (m->topline + m->h - 1 > m->numopts + hasexit)
+		else if (m->topline + m->h - 1 >= m->numopts + hasexit)
 			mbeep();
 		else {
-			m->topline += m->h-1;
+			m->topline = MIN(m->topline+m->h-1,
+					 m->numopts+hasexit-m->h+1);
 			wclear (m->mw);
 			refresh = 1;
 		}
@@ -523,9 +522,10 @@ static void process_req (struct menudesc *m, int num, int req)
 
 	if (m->mopt & SCROLL && scroll_sel) {
 		while (m->cursel >= m->topline + m->h -1 )
-			m->topline += m->h -1;
+			m->topline = MIN(m->topline+m->h-1,
+					 m->numopts+hasexit-m->h+1);
 		while (m->cursel < m->topline)
-			m->topline -= m->h -1;
+			m->topline = MAX(0,m->topline-m->h+1);
 	}
 
 	if (refresh) {
@@ -606,4 +606,9 @@ void process_menu (int num)
 	/* Process the exit action */
 	process_item (&num, -1);
 }
+
+/* Control L is end of standard routines, remaining only for dynamic. */
+
+/* Beginning of routines for dynamic menus. */
+
 
