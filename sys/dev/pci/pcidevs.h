@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.698 2005/03/15 00:14:13 uwe Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.699 2005/03/15 16:08:33 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.697 2005/03/15 00:13:16 uwe Exp
+ *	NetBSD: pcidevs,v 1.698 2005/03/15 16:06:38 xtraeme Exp
  */
 
 /*
@@ -2435,6 +2435,7 @@
 #define	PCI_PRODUCT_S3_SAVAGE3D	0x8a20		/* Savage3D */
 #define	PCI_PRODUCT_S3_SAVAGE3D_MV	0x8a21		/* Savage3D+MV */
 #define	PCI_PRODUCT_S3_SAVAGE4	0x8a22		/* Savage4 */
+#define	PCI_PRODUCT_S3_PROSAVAGE_KM133	0x8a26		/* ProSavage KM133 */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE/MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE/MXP */
 #define	PCI_PRODUCT_S3_SAVAGE_MX_MV	0x8c10		/* Savage/MX+MV */
