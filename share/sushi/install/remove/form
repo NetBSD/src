@@ -1,0 +1,4 @@
+# $NetBSD: form,v 1.1 2001/01/05 02:06:58 garbled Exp $
+script:script1,NULL	Remove which pkg
+list:no,yes		Recursively delete pkgs that need this pkg?
+list:no,yes		Force deletion?

@@ -1,0 +1,41 @@
+The script endpoint can be executed either as a single endpoint (ie, when
+no forms are present) or is executed when a form is processed.  The script
+is passed all of the form field contents as arguments.  This includes any
+invisible, or uneditable fields.  If a field is left blank the script will
+recieve a argument of '' or a null string.  All variables are passed in
+the order they appear in the form.
+
+A simple example is shown below:
+
+form:
+
+script:script1,audio    Install which audio pkg?
+invis:audio             BLANK
+
+script:
+
+#!/bin/sh
+if [ -z "$PKGSRCDIR" ]; then
+        if [ -d "/usr/pkgsrc" ]; then
+                PKGSRCDIR="/usr/pkgsrc"
+        fi
+        if [ -d "/usr/src/pkgsrc" ]; then
+                PKGSRCDIR="/usr/src/pkgsrc"
+        fi
+fi
+cd $PKGSRCDIR/$2/$1
+make clean && make install && make clean
+
+Note that in the above example, the script field type, is different than
+the script that actually does the body of the work.  The script field type
+must return a list of values to the user (see the form API for more
+information).
+
+It is advised that your scripts have verbose output which will make it
+obvious to the user what work is being performed.  The output of the
+script will be displayed to the user, as will the success or failure of
+the script, based on the exit code.  A script which produces no output
+will be confusing to users.
+
+
+$NetBSD: help,v 1.1 2001/01/05 02:06:56 garbled Exp $

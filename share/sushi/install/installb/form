@@ -1,0 +1,3 @@
+# $NetBSD: form,v 1.1 2001/01/05 02:06:57 garbled Exp $
+func:ftp_pkglist,audio	Install which audio pkg
+invis:audio		BLANK

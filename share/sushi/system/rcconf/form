@@ -1,0 +1,108 @@
+# $NetBSD: form,v 1.1 2001/01/05 02:06:59 garbled Exp $
+script:script1,do_rcshutdown	Run /etc/rc.shutdown?
+escript:15,script2,hostname	Hostname, if blank use /etc/myname
+escript:15,script2,defaultroute	Default Route, if blank use /etc/mygate
+escript:15,script2,domainname	NIS Domain Name, if blank use /etc/defaultdomain
+escript:15,script2,critical_filesystems_beforenet	Filesystems to mount before network config
+escript:15,script2,critical_filesystems	Filesystems to mount early in boot process
+script:script1,no_swap		Set to yes if you have no swap configured
+script:script1,lkm		Run /etc/rc.lkm
+script:script1,savecore		Run savecore at boot?
+escript:15,script2,savecore_flags	Flags to pass to savecore
+script:script1,clear_tmp	Clear /tmp on boot?
+script:script1,update_motd	Update /etc/motd at boot?
+script:script1,dmesg		Create /var/run/dmesg.boot at boot?
+escript:15,script2,dmesg_flags	Flags to pass to dmesg
+script:script1,accounting	Start accounting?
+escript:1,script2,securelevel	If non-blank, set securelevel early in boot
+script:script1,ipfilter		Start ipfiltering?
+script:script1,ipnat		Start ipnat NAT daemon?
+script:script1,ipsec		Start ipsec security daemon?
+script:script1,ipmon		Write ipfilter messages to syslog?
+escript:15,script2,ipmon_flags	Flags to pass to ipmon
+script:script1,auto_ifconfig	Automatically configure all available interfaces?
+escript:15,script2,net_interfaces	If above is NO, configure which interfaces?
+script:script1,flushroutes	Flush routes in netstart?
+script:script1,dhclient		Behave as a DHCP client?
+escript:15,script2,dhclient_flags	Flags for DHCP, if blank, config all interfaces
+script:script1,ntpdate		Run ntpdate at boot?
+escript:15,script2,ntpdate_flags	Flags for ntpdate.
+escript:15,script2,ppp_peers	/etc/ppp/peers to call
+list:host,autohost,router	IPV6 mode
+script:script1,rtsol		IPV6 autoconfig on non routers
+escript:15,script2,rtsol_flags	Flags to pass to rtsol
+script:script1,inetd		Run inetd?
+escript:15,script2,inetd_flags	Flags for inetd
+script:script1,rpcbind		Run rpcbind? (replaces portmap)
+escript:15,script2,rpcbind_flags	Flags for rpcbind
+script:script1,syslogd		Run syslogd?
+escript:15,script2,syslogd_flags	Flags for syslogd
+script:script1,cron		Run cron?
+script:script1,named		Run named?
+escript:15,script2,named_flags	Flags for named
+script:script1,timed		Run timed?
+escript:15,script2,timed_flags	Flags for timed
+script:script1,ntpd		Run ntpd?
+escript:40,script2,ntpd_flags	Flags for ntpd
+script:script1,sendmail		Run sendmail?
+escript:15,script2,sendmail_flags	Flags for sendmail
+script:script1,postfix		Run postfix?
+script:script1,lpd		Run lpd?
+escript:15,script2,lpd_flags	Flags for lpd
+script:script1,sshd		Run sshd?
+escript:15,script2,sshd_flags	Flags for sshd
+script:script1,routed		Run routed?
+escript:15,script2,routed_flags	Flags for routed
+script:script1,gated		Run gated?
+escript:15,script2,gated_flags	Flags for gated
+script:script1,mrouted		Run mrouted?
+escript:15,script2,mrouted_flags	Flags for mrouted
+script:script1,route6d		Run IPV6 routed?
+escript:15,script2,route6d_flags	Flags for route6d
+script:script1,rtsold		Run rtsold?
+escript:15,script2,rtsold_flags	Flags for rtsold
+script:script1,rarpd		Run rarpd?
+escript:15,script2,rarpd_flags	Flags for rarpd
+script:script1,bootparamd	Run bootparamd?
+escript:15,script2,bootparamd_flags	Flags for bootparamd
+script:script1,dhcpd		Run dhcpd?
+escript:15,script2,dhcpd_flags	Flags for dhcpd
+script:script1,dhcrelay		Run dhcrelay?
+escript:15,script2,dhcrelay_flags	Flags for dhcrelay
+script:script1,rbootd		Run rbootd?
+escript:15,script2,rbootd_flags	Flags for rbootd
+script:script1,mopd		Run mopd?
+escript:15,script2,mopd_flags	Flags for mopd
+script:script1,rtadvd		Run rtadvd?
+escript:15,script2,rtadvd_flags	Flags for rtadvd
+script:script1,xfs		Run X11 Font Server (xfs)?
+escript:15,script2,xfs_flags	Flags for xfs
+script:script1,xdm		Run X11 Display Manager (xdm)?
+escript:15,script2,xdm_flags	Flags for xdm
+script:script1,ypbind		Run ypbind (NIS)?
+escript:15,script2,ypbind_flags	Flags for ypbind
+script:script1,ypserv		Run ypserv (NIS)?
+escript:15,script2,ypserv_flags	Flags for ypserv
+script:script1,yppasswdd	Run yppasswdd (NIS)?
+escript:15,script2,yppasswdd_flags	Flags for yppasswdd
+script:script1,nfs_client	Run NFS client daemons?
+script:script1,nfs_server	Run NFS server daemons?
+escript:15,script2,mountd_flags	Flags for mountd
+escript:15,script2,nfsd_flags	Flags for nfsd
+script:script1,lockd		Run lockd?
+escript:15,script2,lockd_flags	Flags for lockd
+script:script1,statd		Run statd?
+escript:15,script2,statd_flags	Flags for statd
+script:script1,amd		Run automounter (amd)?
+escript:40,script2,amd_flags	Flags for amd
+escript:15,script2,amd_dir	Mount point for amd
+escript:15,script2,amd_master	Location of amd master map file
+script:script1,kdc		Run kerberos 5 KDC?
+escript:15,script2,kdc_flags	Flags for kerberos 5
+script:script1,rwhod		Run rwhod?
+script:script1,apmd		Run apmd?
+escript:15,script2,apmd_flags	Flags for apmd
+script:script1,screenblank	Run screenblank (i386/sparc only)?
+escript:15,script2,screenblank_flags	Flags for screenblank
+script:script1,wscons		Configure wscons?
+escript:15,script2,wscons_flags	Flags to pass to /etc/rc.wscons
