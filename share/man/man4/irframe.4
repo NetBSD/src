@@ -1,4 +1,4 @@
-.\" $NetBSD: irframe.4,v 1.4 2001/12/03 23:23:47 augustss Exp $
+.\" $NetBSD: irframe.4,v 1.5 2001/12/04 23:29:14 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,8 @@
 .Sh SYNOPSIS
 .Cd "irframe* at oboe?"
 .Cd "pseudo-device irframetty"
+.Pp
+.Cd "#include <dev/irdaio.h>"
 .Sh DESCRIPTION
 The
 .Nm
@@ -51,6 +53,29 @@ It does not contain the IrDA protocol stack per se, but the stack
 can be built on top of the
 .Nm
 driver.
+.Pp
+Access to frames is via the
+.Xr read 2
+and
+.Xr write 2
+system calls.  Each write constitutes one frame, and each read yields one frame.
+The
+.Xr poll 2
+system call can be used to check for availability of frames.
+There are also a number of
+.Xr ioctl 2
+calls to manipulate the device:
+.Bl -tag -width xxxxxx
+.It Dv IRDA_RESET_PARAMS
+Reset the parameters set by
+.Dv IRDA_SET_PARAMS .
+.It Dv IRDA_SET_PARAMS Fa "(struct irda_params)"
+Set the speed, extra beginning of frame bytes, and maximum frame size.
+.It Dv IRDA_GET_SPEEDMASK Fa (int)
+Get the set of allowable speeds.
+.It Dv IRDA_GET_TURNAROUNDMASK Fa (int)
+Get the set of allowable turn around times.
+.El
 .Sh SEE ALSO
 .Xr cir 4 ,
 .Xr irframetty 4 ,
@@ -64,7 +89,3 @@ The
 driver
 appeared in
 .Nx 1.6 .
-.Sh BUGS
-This man page lacks a description of the device API.
-.Pp
-There is no access to IrDA devices via ttys.

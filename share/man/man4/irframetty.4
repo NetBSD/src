@@ -1,4 +1,4 @@
-.\" $NetBSD: irframetty.4,v 1.1 2001/12/03 23:23:47 augustss Exp $
+.\" $NetBSD: irframetty.4,v 1.2 2001/12/04 23:29:14 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,8 @@
 .Nd IrDA frame over serial line driver
 .Sh SYNOPSIS
 .Cd "pseudo-device irframetty"
+.Pp
+.Cd "#include <dev/irdaio.h>"
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,6 +55,21 @@ via an IrDA dongle.
 Access to the frames is via the
 .Xr irframe 4
 driver.
+.Pp
+Different dongles require different handling.
+The connected dongle type can be set with
+.Xr ioctl 2
+calls:
+.Bl -tag -width xxxxxx
+.It Dv IRFRAMETTY_SET_DONGLE Fa (int)
+Set the dongle type.  See the include file for possible dongles.
+.It Dv IRFRAMETTY_GET_DONGLE Fa (int)
+Get the dongle type.
+.It Dv IRFRAMETTY_GET_DEVICE Fa (int)
+Get the number of the
+.Xr irframe 4
+device that must be used to access the frames.
+.El
 .Sh SEE ALSO
 .Xr irframe 4
 .Sh HISTORY
@@ -61,5 +78,3 @@ The
 driver
 appeared in
 .Nx 1.6 .
-.Sh BUGS
-This man page is incomplete.
