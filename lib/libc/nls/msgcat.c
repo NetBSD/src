@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.3 1994/05/29 22:10:56 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.4 1994/05/29 22:14:33 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -57,6 +57,7 @@ static char *rcsid = "$Id: msgcat.c,v 1.3 1994/05/29 22:10:56 jtc Exp $";
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #ifndef True
@@ -92,7 +93,8 @@ int type;
     struct stat	sbuf;
     
     if (!name || !*name) return(NLERR);
-    if (*name == '/') {
+
+    if (strchr(name, '/')) {
 	catpath = name;
 	if (stat(catpath, &sbuf)) return(0);
     } else {
