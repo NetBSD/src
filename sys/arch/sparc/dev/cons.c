@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.10 1994/11/20 20:52:04 deraadt Exp $ */
+/*	$NetBSD: cons.c,v 1.11 1994/11/25 23:55:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -455,4 +455,10 @@ cnputc(c)
 		(*promvec->pv_putchar)('\r');
 	(*promvec->pv_putchar)(c);
 	splx(s);
+}
+
+cnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
 }
