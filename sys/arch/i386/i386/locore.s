@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.20 2002/11/11 21:59:03 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.21 2002/11/17 19:47:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2188,12 +2188,12 @@ ENTRY(cpu_preempt)
 	pushl	%edi
 
 #ifdef DEBUG
-	cmpl	$IPL_HIGH,CPL
-	je	1f
-	pushl	2f
+	cmpl	$IPL_SCHED,CPL
+	jae	1f
+	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-2:	.asciz	"not splhigh() in cpu_preempt!"
+2:	.asciz	"not splsched() in cpu_preempt!"
 
 1:	
 #endif /* DEBUG */
