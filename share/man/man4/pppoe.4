@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.9.2.1 2003/02/07 20:21:43 tron Exp $
+.\"	$NetBSD: pppoe.4,v 1.9.2.2 2003/02/07 20:22:55 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,13 +80,13 @@ interface is usable, it needs to be configured.  The following steps
 are necessary:
 .Bl -bullet
 .It
-create the interface
+Create the interface.
 .It
-connect an Ethernet interface
+Connect an Ethernet interface.
 This interface is used for the physical communication.  As noted above it
 must be marked UP, but need not have an IP address.
 .It
-configure authentication
+Configure authentication.
 The PPP session needs to identify the client to the peer.  For more details
 on the available options see
 .Xr pppoectl 8 .
@@ -143,14 +143,7 @@ For connections originating from your
 connected machines, this is accomplished by setting the sysctl
 variable
 .Dv net.inet.tcp.mss_ifmtu
-to 1, i.e., by adding this
-.Bd -literal -offset indent
-# Obey interface MTUs when calculating MSS
-net.inet.tcp.mss_ifmtu=1
-.Ed
-.Pp
-to
-.Pa /etc/sysctl.conf .
+to 1 (see above).
 For connections originating from systems behind your
 .Nm
 router, you need to set the
