@@ -305,7 +305,9 @@
 #include <sgtty.h>
 #include <sha1.h>
 #include <signal.h>
+#if HAVE_SKEY_H
 #include <skey.h>
+#endif
 #include <soundcard.h>
 #include <stab.h>
 #include <stdarg.h>
