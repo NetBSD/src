@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.4 1998/08/29 20:38:38 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.5 1998/09/07 07:58:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -956,7 +956,7 @@ cs4231_intr(arg)
 	int ret = 0;
 	int csr;
 	int reg, status;
-#ifdef AUDIO_DEBUG
+#if defined(DEBUG) || defined(AUDIO_DEBUG)
 	char bits[128];
 #endif
 
