@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/03/13 16:19:01 gwr Exp $
+#	$NetBSD: Makefile,v 1.7 1997/03/14 21:28:38 gwr Exp $
 
 SA_PROG= netboot
 SRCS=   boot.c conf.c version.c
@@ -12,7 +12,7 @@ all:	${SA_PROG}.bin
 .include <bsd.prog.mk>
 
 dev_net.o : ${S}/lib/libsa/dev_net.c
-	${CC} ${CFLAGS} ${CPPFLAGS} -DSUN_BOOTPARAMS -c ${.IMPSRC}
+	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC}
 
 globals.o : ${S}/lib/libsa/globals.c
 	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC}
