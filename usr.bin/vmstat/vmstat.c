@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.50 1998/07/26 18:12:46 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.51 1998/07/27 10:26:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.50 1998/07/26 18:12:46 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.51 1998/07/27 10:26:11 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.50 1998/07/26 18:12:46 mycroft Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
+#include <sys/pool.h>
 #include <vm/vm.h>
 #include <err.h>
 #include <time.h>
@@ -141,12 +142,14 @@ struct nlist namelist[] = {
 	{ "_bucket" },
 #define X_ALLEVENTS	11
 	{ "_allevents" },
+#define X_POOLHEAD	12
+	{ "_pool_head" },
 #if defined(UVM)
-#define X_END		12
-#else
-#define X_SUM		12
-	{ "_cnt" },
 #define X_END		13
+#else
+#define X_SUM		13
+	{ "_cnt" },
+#define X_END		14
 #endif
 #if defined(pc532)
 #define	X_IVT		(X_END)
@@ -185,6 +188,7 @@ void	cpustats __P((void));
 void	dkstats __P((void));
 void	dointr __P((void));
 void	domem __P((void));
+void	dopool __P((void));
 void	dosum __P((void));
 void	dovmstat __P((u_int, int));
 void	kread __P((int, void *, size_t));
@@ -362,8 +366,10 @@ main(argc, argv)
 #endif
 	if (todo & FORKSTAT)
 		doforkst();
-	if (todo & MEMSTAT)
+	if (todo & MEMSTAT) {
 		domem();
+		dopool();
+	}
 	if (todo & SUMSTAT)
 		dosum();
 	if (todo & INTRSTAT)
@@ -1001,6 +1007,77 @@ domem()
 	(void)printf("\nMemory Totals:  In Use    Free    Requests\n");
 	(void)printf("              %7ldK %6ldK    %8ld\n",
 	     (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
+}
+
+void
+dopool()
+{
+	int first;
+	long addr;
+	long total = 0, inuse = 0;
+	TAILQ_HEAD(,pool) pool_head;
+	struct pool pool, *pp = &pool;
+
+	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
+	addr = (long)TAILQ_FIRST(&pool_head);
+
+	for (first = 1; addr != 0; ) {
+		char name[32], maxp[32];
+		if (kvm_read(kd, addr, (void *)pp, sizeof *pp) != sizeof *pp) {
+			(void)fprintf(stderr, "vmstat: pool chain trashed: %s\n",
+			    kvm_geterr(kd));
+			exit(1);
+		}
+		if (kvm_read(kd, (long)pp->pr_wchan, name, sizeof name) < 0) {
+			(void)fprintf(stderr, "vmstat: pool name trashed: %s\n",
+			    kvm_geterr(kd));
+			exit(1);
+		}
+		name[31]='\0';
+
+		if (first) {
+			(void)printf("Memory resource pool statistics\n");
+			(void)printf(
+			"%16s %6s %8s %8s %8s %7s %7s %6s %6s %6s %6s\n",
+		 		"Name",
+				"Size",
+				"Requests",
+				"Failed",
+				"Releases",
+				"Pagereq",
+				"Pagerel",
+				"Npage",
+				"Hiwat",
+				"Minpage",
+				"Maxpage");
+			first = 0;
+		}
+		if (pp->pr_maxpages == UINT_MAX)
+			sprintf(maxp, "inf");
+		else
+			sprintf(maxp, "%6u", pp->pr_maxpages);
+		(void)printf(
+			"%16s %6u %8lu %8lu %8lu %7lu %7lu %6u %6u %6u %6s\n",
+			name, 
+			pp->pr_size,
+			pp->pr_nget,
+			pp->pr_nfail,
+			pp->pr_nput,
+			pp->pr_npagealloc,
+			pp->pr_npagefree,
+			pp->pr_npages,
+			pp->pr_hiwat,
+			pp->pr_minpages,
+			maxp);
+
+		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
+		total += pp->pr_npages * pp->pr_pagesz;
+		addr = (long)TAILQ_NEXT(pp, pr_poollist);
+	}
+
+	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
+		inuse/1024, total/1024, (double)(100 * inuse) / total);
+
 }
 
 /*
