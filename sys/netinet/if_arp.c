@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.77 2001/08/17 21:47:57 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.78 2001/08/20 03:13:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -823,8 +823,10 @@ in_arpinput(m)
 	}
 
 #if NBRIDGE > 0
-	if (ia == NULL)
+	if (ia == NULL && bridge_ia != NULL) {
 		ia = bridge_ia;
+		ifp = bridge_ia->ia_ifp;
+	}
 #endif
 
 	if (ia == NULL) {
@@ -843,12 +845,14 @@ in_arpinput(m)
 
 	myaddr = ia->ia_addr.sin_addr;
 
+	/* XXX checks for bridge case? */
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
 	    ifp->if_data.ifi_addrlen)) {
 		arpstat.as_rcvlocalsha++;
 		goto out;	/* it's from me, ignore it. */
 	}
 
+	/* XXX checks for bridge case? */
 	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
 	    ifp->if_data.ifi_addrlen)) {
 		arpstat.as_rcvbcastsha++;
