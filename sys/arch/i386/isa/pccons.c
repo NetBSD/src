@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.46 1994/02/23 22:20:40 mycroft Exp $
+ *	$Id: pccons.c,v 1.47 1994/02/25 03:48:51 mycroft Exp $
  */
 
 /*
@@ -71,6 +71,8 @@
 #include <i386/isa/ic/i8042.h>
 #include <i386/isa/kbdreg.h>
 
+#define	XFREE86_BUG_COMPAT
+
 #ifndef BEEP_FREQ
 #define BEEP_FREQ 1500
 #endif
@@ -85,7 +87,11 @@ static u_short *crtat;			/* pointer to current char */
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
 static u_char lock_state,		/* all off */
-	      typematic = 0xff;		/* don't update until set by user */
+	      old_lock_state = 0xff,
+	      typematic_rate = 0xff,	/* don't update until set by user */
+	      old_typematic_rate = 0xff;
+static u_short cursor_shape,		/* cursor shape */
+	       old_cursor_shape = 0xffff;
 int pc_xmode = 0;
 
 #define	PCUNIT(x)	(minor(x))
@@ -111,10 +117,6 @@ int pcprobe(), pcattach();
 struct	isa_driver pcdriver = {
 	pcprobe, pcattach, "pc",
 };
-
-/* block cursor so wfj does not go blind on laptop hunting for
-	the verdamnt cursor -wfj */
-#define	FAT_CURSOR
 
 #define	COL		80
 #define	ROW		25
@@ -185,17 +187,10 @@ kbd_cmd(val, polling)
 	u_int retries = 3;
 	register u_int i;
 
-	/* XXXX */
-#if 0
-	extern int ipending;
-	printf("%c%c%c%c ", (cpl & 2) ? 'm' : '-', (ipending & 2) ? 'i' : '-', kernel ? 'k' : '-', polling ? 'p' : '-');
-	if (!kernel && !polling && !(ipending & 2) && (cpl & 2))
-		Debugger();
-#endif
 #if 1
 	/*
-	 * This is a fugly backward-compatibility hack for jokers who aren't on
-	 * current-users or don't pay attention.
+	 * XXX This is a fugly backward-compatibility hack for jokers who
+	 * aren't on current-users or don't pay attention.
 	 */
 	if (!polling && (cpl & 2)) {
 		static int warned;
@@ -244,12 +239,23 @@ kbd_cmd(val, polling)
 }
 
 void
+set_cursor_shape()
+{
+	register u_short iobase = addr_6845;
+
+	outb(iobase, 10);
+	outb(iobase+1, cursor_shape>>8);
+	outb(iobase, 11);
+	outb(iobase+1, cursor_shape);
+	old_cursor_shape = cursor_shape;
+}
+
+void
 do_async_update(poll)
 	u_char poll;
 {
 	int pos = crtat - Crtat;
-	static int old_pos;
-	static u_char old_leds = 0xff, old_typematic = 0xff;
+	static int old_pos = -1;
 
 	if (pc_xmode > 0)
 		return;
@@ -264,19 +270,21 @@ do_async_update(poll)
 		outb(iobase+1, pos);
 		old_pos = pos;
 	}
+	if (cursor_shape != old_cursor_shape)
+		set_cursor_shape();
 
-	if (lock_state != old_leds) {
-		old_leds = lock_state;
+	if (lock_state != old_lock_state) {
+		old_lock_state = lock_state;
 		if (!kbd_cmd(KBC_MODEIND, poll) ||
 		    !kbd_cmd(lock_state, poll)) {
 			printf("pc: timeout updating leds\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}
-	if (typematic != old_typematic) {
-		old_typematic = typematic;
+	if (typematic_rate != old_typematic_rate) {
+		old_typematic_rate = typematic_rate;
 		if (!kbd_cmd(KBC_TYPEMATIC, poll) ||
-		    !kbd_cmd(typematic, poll)) {
+		    !kbd_cmd(typematic_rate, poll)) {
 			printf("pc: timeout updating typematic rate\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
@@ -476,6 +484,10 @@ pcioctl(dev, cmd, data, flag, p)
 		return 0;
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
+#ifdef XFREE86_BUG_COMPAT
+		/* XXX Why doesn't the X server do this? */
+		set_cursor_shape();
+#endif
 		return 0;
 	case CONSOLE_X_BELL:
 		/*
@@ -501,7 +513,7 @@ pcioctl(dev, cmd, data, flag, p)
 		 */
 		if (rate & 0x80)
 			return EINVAL;
-		typematic = rate;
+		typematic_rate = rate;
 		async_update();
 		return 0;
  	}
@@ -692,11 +704,22 @@ sput(cp, n)
 			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
 			vs.color=1;
 		}
+
 		/* Extract cursor location */
-		outb(addr_6845,14);
-		cursorat = inb(addr_6845+1)<<8 ;
-		outb(addr_6845,15);
+		outb(addr_6845, 14);
+		cursorat = inb(addr_6845+1) << 8;
+		outb(addr_6845, 15);
 		cursorat |= inb(addr_6845+1);
+
+#ifdef FAT_CURSOR
+		cursor_shape = 0x0012;
+#else
+		/* Extract cursor shape */
+		outb(addr_6845, 10);
+		cursor_shape = (inb(addr_6845+1) & 0x1f) << 8;
+		outb(addr_6845, 11);
+		cursor_shape |= (inb(addr_6845+1) & 0x1f);
+#endif
 
 		crtat = Crtat + cursorat;
 		vs.ncol = COL;
@@ -1510,11 +1533,6 @@ sget()
 top:
 	dt = inb(KBDATAP);
 
-#if 0
-	/* XXXX */
-	printf("%c%c%02x ", kernel ? 'k' : '-', polling ? 'p' : '-', dt);
-#endif
-
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
@@ -1525,6 +1543,9 @@ top:
 		capchar[1] = 0;
 		/*
 		 * Check for locking keys.
+		 *
+		 * XXX Setting the LEDs this way is a bit bogus.  What if the
+		 * keyboard has been remapped in X?
 		 */
 		switch (scan_codes[dt & 0x7f].type) {
 		case NUM:
@@ -1534,6 +1555,7 @@ top:
 			}
 			shift_state |= NUM;
 			lock_state ^= NUM;
+			async_update();
 			break;
 		case CAPS:
 			if (dt & 0x80) {
@@ -1542,6 +1564,7 @@ top:
 			}
 			shift_state |= CAPS;
 			lock_state ^= CAPS;
+			async_update();
 			break;
 		case SCROLL:
 			if (dt & 0x80) {
@@ -1552,6 +1575,7 @@ top:
 			lock_state ^= SCROLL;
 			if ((lock_state & SCROLL) == 0)
 				wakeup((caddr_t)&lock_state);
+			async_update();
 			break;
 		}
 		return capchar;
