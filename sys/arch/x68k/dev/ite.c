@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.11 1998/08/04 16:51:52 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.12 1998/08/05 15:57:43 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -282,9 +282,10 @@ iteon(dev, flag)
 	int flag;
 {
 	int unit = UNIT(dev);
-	struct ite_softc *ip = getitesp(unit);
+	struct ite_softc *ip;
 
-	if (unit < 0 || unit >= ite_cd.cd_ndevs || (ip->flags&ITE_ALIVE) == 0)
+	if (unit < 0 || unit >= ite_cd.cd_ndevs ||
+	    (ip = getitesp(unit)) == NULL || (ip->flags&ITE_ALIVE) == 0)
 		return(ENXIO);
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
@@ -316,10 +317,11 @@ iteoff(dev, flag)
 	int flag;
 {
 	int unit = UNIT(dev);
-	register struct ite_softc *ip = getitesp(unit);
+	register struct ite_softc *ip;
 
 	/* XXX check whether when call from grf.c */
-	if (unit < 0 || unit >= ite_cd.cd_ndevs || (ip->flags&ITE_ALIVE) == 0)
+	if (unit < 0 || unit >= ite_cd.cd_ndevs ||
+	    (ip = getitesp(unit)) == NULL || (ip->flags&ITE_ALIVE) == 0)
 		return;
 	if (flag & 2)
 		ip->flags |= ITE_INGRF;
@@ -566,10 +568,10 @@ ite_reinit(dev)
 	int unit = UNIT(dev);
 
 	/* XXX check whether when call from grf.c */
-	if (unit < 0 || unit >= ite_cd.cd_ndevs)
+	if (unit < 0 || unit >= ite_cd.cd_ndevs ||
+	    (ip = getitesp(unit)) == NULL)
 		return;
 
-	ip = getitesp(dev);
 	ip->flags &= ~ITE_INITED;
 	iteinit(dev);
 }
