@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.h,v 1.3 1995/03/21 15:06:30 cgd Exp $	*/
+/*	$NetBSD: tutor.h,v 1.4 1997/10/10 08:59:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,7 +35,7 @@
  *	@(#)tutor.h	8.1 (Berkeley) 5/31/93
  */
 
-struct situatn  {
+struct situatn {
 	int	brd[26];
 	int	roll1;
 	int	roll2;
@@ -45,3 +45,28 @@ struct situatn  {
 	int	new2;
 	char	*(*com[8]);
 };
+
+
+extern	char	*doubl[];
+extern	char	*endgame[];
+extern	char	*finis[];
+extern	char	*hello[];
+extern	char	*hits[];
+extern	char	*intro1[];
+extern	char	*intro2[];
+extern	char	*lastch[];
+extern	char	*list[];
+extern	int	 maxmoves;
+extern	char	*moves[];
+extern	char	*opts;
+extern	char	*prog[];
+extern	char	*prompt;
+extern	char	*removepiece[];
+extern	char	*stragy[];
+extern	struct situatn	test[];
+
+
+int	brdeq __P((int *, int *));
+void	clrest __P((void));
+void	leave __P((void));
+void	tutor __P((void));
