@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.4 1998/07/23 19:30:46 christos Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.5 1998/08/25 22:35:25 pk Exp $ */
 
 
 /*
@@ -44,11 +44,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/errno.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -103,13 +100,14 @@ ym_isapnp_attach(parent, self, aux)
 	void *aux;
 {
 	struct ym_softc *sc = (struct ym_softc *)self;
+	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	struct isapnp_attach_args *ipa = aux;
 
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", 
-		       sc->sc_dev.dv_xname);
+		       ac->sc_dev.dv_xname);
 		return;
 	}
 
@@ -123,15 +121,16 @@ ym_isapnp_attach(parent, self, aux)
 	
 	sc->sc_controlioh = ipa->ipa_io[4].h; 
 	
-	sc->sc_ad1848.sc_ic  = sc->sc_ic;
-	sc->sc_ad1848.sc_iot = sc->sc_iot;
-	sc->sc_ad1848.sc_ioh = sc->sc_ioh;
-	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
-	sc->sc_ad1848.mode = 2;
-	sc->sc_ad1848.MCE_bit = MODE_CHANGE_ENABLE;
-	sc->sc_ad1848.chip_name = "OPL3-SA3";
+	ac->sc_iot = sc->sc_iot;
+	ac->sc_ioh = sc->sc_ioh;
+	ac->mode = 2;
+	ac->MCE_bit = MODE_CHANGE_ENABLE;
+	ac->chip_name = "OPL3-SA3";
 
-	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	sc->sc_ad1848.sc_ic  = sc->sc_ic;
+	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
+
+	printf("%s: %s %s", ac->sc_dev.dv_xname, ipa->ipa_devident,
 	       ipa->ipa_devclass);
 
 	ym_attach(sc);
