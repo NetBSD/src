@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.2 1995/03/21 12:05:11 cgd Exp $	*/
+/*	$NetBSD: subr.c,v 1.3 1997/08/11 14:06:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,42 +38,50 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: subr.c,v 1.2 1995/03/21 12:05:11 cgd Exp $";
+__RCSID("$NetBSD: subr.c,v 1.3 1997/08/11 14:06:17 christos Exp $");
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: subroutines from main                 */
 
-# include "hdr.h"
+#include <stdio.h>
+#include "hdr.h"
+#include "extern.h"
 
 /*              Statement functions     */
+int
 toting(objj)
 int objj;
 {       if (place[objj] == -1) return(TRUE);
 	else return(FALSE);
 }
 
+int
 here(objj)
 int objj;
 {       if (place[objj]==loc || toting(objj)) return(TRUE);
 	else return(FALSE);
 }
 
+int
 at(objj)
 int objj;
 {       if (place[objj]==loc || fixed[objj]==loc) return(TRUE);
 	else return (FALSE);
 }
 
+int
 liq2(pbotl)
 int pbotl;
 {       return((1-pbotl)*water+(pbotl/2)*(water+oil));
 }
 
+int
 liq(foo)
 {       register int i;
 	i=prop[bottle];
@@ -81,6 +89,7 @@ liq(foo)
 	else return(liq2(-1-i));
 }
 
+int
 liqloc(locc)     /* may want to clean this one up a bit */
 int locc;
 {       register int i,j,l;
@@ -91,24 +100,28 @@ int locc;
 	return(liq2(j*l+1));
 }
 
+int
 bitset(l,n)
 int l,n;
 {       if (cond[l] & setbit[n]) return(TRUE);
 	return(FALSE);
 }
 
+int
 forced(locc)
 int locc;
 {       if (cond[locc]==2) return(TRUE);
 	return(FALSE);
 }
 
+int
 dark(foo)
 {       if ((cond[loc]%2)==0 && (prop[lamp]==0 || !here(lamp)))
 		return(TRUE);
 	return(FALSE);
 }
 
+int
 pct(n)
 int n;
 {       if (ran(100)<n) return(TRUE);
@@ -116,6 +129,7 @@ int n;
 }
 
 
+int
 fdwarf()		/* 71 */
 {	register int i,j;
 	register struct travlist *kk;
@@ -234,6 +248,7 @@ fdwarf()		/* 71 */
 }
 
 
+int
 march()                                        /* label 8              */
 {       register int ll1,ll2;
 
@@ -299,6 +314,7 @@ l12:    /* alternative to probability move      */
 
 
 
+int
 mback()                                         /* 20                   */
 {       register struct travlist *tk2,*j;
 	register int ll;
@@ -333,6 +349,7 @@ mback()                                         /* 20                   */
 }
 
 
+int
 specials()                                      /* 30000                */
 {       switch(newloc -= 300)
 	{   case 1:                             /* 30100                */
@@ -351,6 +368,7 @@ specials()                                      /* 30000                */
 }
 
 
+int
 trbridge()                                      /* 30300                */
 {       if (prop[troll]==1)
 	{       pspeak(troll,1);
@@ -378,6 +396,7 @@ trbridge()                                      /* 30300                */
 }
 
 
+int
 badmove()                                       /* 20                   */
 {       spk=12;
 	if (k>=43 && k<=50) spk=9;
@@ -391,6 +410,7 @@ badmove()                                       /* 20                   */
 	return(2);
 }
 
+int
 bug(n)
 int n;
 {       printf("Please tell jim@rand.org that fatal bug %d happened.\n",n);
@@ -398,6 +418,7 @@ int n;
 }
 
 
+int
 checkhints()                                    /* 2600 &c              */
 {       register int hint;
 	for (hint=4; hint<=hntmax; hint++)
@@ -433,13 +454,15 @@ checkhints()                                    /* 2600 &c              */
 		hinted[hint]=yes(175,hints[hint][4],54);
 	l40020: hintlc[hint]=0;
 	}
+	return 0;
 }
 
 
+int
 trsay()                                         /* 9030                 */
 {       register int i;
 	if (*wd2!=0) copystr(wd2,wd1);
-	i=vocab(wd1,-1);
+	i=vocab(wd1,-1,0);
 	if (i==62||i==65||i==71||i==2025)
 	{       *wd2=0;
 		obj=0;
@@ -450,9 +473,9 @@ trsay()                                         /* 9030                 */
 }
 
 
+int
 trtake()                                        /* 9010                 */
-{       register int i;
-	if (toting(obj)) return(2011);  /* 9010 */
+{	if (toting(obj)) return(2011);  /* 9010 */
 	spk=25;
 	if (obj==plant&&prop[plant]<=0) spk=115;
 	if (obj==bear&&prop[bear]==1) spk=169;
@@ -495,6 +518,7 @@ l9014:  if ((obj==bird||obj==cage)&&prop[bird]!=0)
 }
 
 
+int
 dropper()                                       /* 9021                 */
 {       k=liq(0);
 	if (k==obj) obj=bottle;
@@ -505,6 +529,7 @@ dropper()                                       /* 9021                 */
 	return(2012);
 }
 
+int
 trdrop()                                        /* 9020                 */
 {
 	if (toting(rod2)&&obj==rod&&!toting(rod)) obj=rod2;
@@ -551,6 +576,7 @@ trdrop()                                        /* 9020                 */
 }
 
 
+int
 tropen()                                        /* 9040                 */
 {       if (obj==clam||obj==oyster)
 	{       k=0;                            /* 9046                 */
@@ -606,6 +632,7 @@ tropen()                                        /* 9040                 */
 }
 
 
+int
 trkill()                                /* 9120                         */
 {       register int i;
 	for (i=1; i<=5; i++)
@@ -663,6 +690,7 @@ trkill()                                /* 9120                         */
 }
 
 
+int
 trtoss()                                /* 9170: throw                  */
 {       register int i;
 	if (toting(rod2)&&obj==rod&&!toting(rod)) obj=rod2;
@@ -717,6 +745,7 @@ trtoss()                                /* 9170: throw                  */
 }
 
 
+int
 trfeed()                                        /* 9210                 */
 {       if (obj==bird)
 	{       spk=100;
@@ -755,6 +784,7 @@ trfeed()                                        /* 9210                 */
 }
 
 
+int
 trfill()                                        /* 9220 */
 {       if (obj==vase)
 	{       spk=29;
@@ -779,6 +809,7 @@ trfill()                                        /* 9220 */
 }
 
 
+int
 closing()                               /* 10000 */
 {       register int i;
 
@@ -804,6 +835,7 @@ closing()                               /* 10000 */
 }
 
 
+int
 caveclose()                             /* 11000 */
 {       register int i;
 	prop[bottle]=put(bottle,115,1);

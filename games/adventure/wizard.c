@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
+/*	$NetBSD: wizard.c,v 1.4 1997/08/11 14:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,41 +38,51 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $";
+__RCSID("$NetBSD: wizard.c,v 1.4 1997/08/11 14:06:19 christos Exp $");
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: privileged operations                 */
 
-# include "hdr.h"
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include "hdr.h"
+#include "extern.h"
 
+void
 datime(d,t)
 int *d,*t;
-{       int tvec[2],*tptr;
-	int *localtime();
+{       time_t tvec;
+	struct tm *tptr;
 
-	time(tvec);
-	tptr=localtime(tvec);
-	*d=tptr[7]+365*(tptr[5]-77);    /* day since 1977  (mod leap)   */
+	time(&tvec);
+	tptr=localtime(&tvec);
+	/* day since 1977  (mod leap)   */
+	*d=tptr->tm_yday +365*(tptr->tm_year-77);
 	/* bug: this will overflow in the year 2066 AD                  */
 	/* it will be attributed to Wm the C's millenial celebration    */
-	*t=tptr[2]*60+tptr[1];          /* and minutes since midnite    */
+	/* and minutes since midnite */
+	*t=tptr->tm_hour*60+tptr->tm_min;
 }                                       /* pretty painless              */
 
 
 char magic[6];
 
+void
 poof()
 {
-	strcpy(magic, DECR(d,w,a,r,f));
+	strcpy(magic, DECR('d','w','a','r','f'));
 	latncy = 45;
 }
 
+int
 Start(n)
 {       int d,t,delay;
 
@@ -98,9 +108,9 @@ Start(n)
 	return(FALSE);
 }
 
+int
 wizard()                /* not as complex as advent/10 (for now)        */
-{       register int wiz;
-	char *word,*x;
+{	char *word,*x;
 	if (!yesm(16,0,7)) return(FALSE);
 	mspeak(17);
 	getin(&word,&x);
@@ -112,12 +122,11 @@ wizard()                /* not as complex as advent/10 (for now)        */
 	return(TRUE);
 }
 
+void
 ciao(cmdfile)
 char *cmdfile;
 {       register char *c;
-	register int outfd, size;
-	char fname[80], buf[512];
-	extern unsigned filesize;
+	char fname[80];
 
 	printf("What would you like to call the saved version?\n");
 	for (c=fname;; c++)
@@ -130,10 +139,11 @@ char *cmdfile;
 }
 
 
+int
 ran(range)
 int range;
 {
-	long rand(), i;
+	long i;
 
 	i = rand() % range;
 	return(i);
