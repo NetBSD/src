@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.11 2002/11/16 20:00:30 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.12 2002/11/26 08:10:15 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.11 2002/11/16 20:00:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.12 2002/11/26 08:10:15 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.11 2002/11/16 20:00:30 manu Exp $");
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
 
 #ifdef DEBUG_MACH
@@ -394,20 +395,6 @@ mach_sys_syscall_thread_switch(struct proc *p, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_syscall_thread_switch(0x%x, %d, %d);\n",
 	    SCARG(ap, thread_name), SCARG(ap, option), SCARG(ap, option_time)));
-	return 0;
-}
-
-
-int
-mach_sys_clock_sleep_trap(struct proc *p, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_clock_sleep_trap_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_sleep_trap(0x%x, %d, %d, %d, %p);\n",
-	    SCARG(ap, clock_name), SCARG(ap, sleep_type),
-	    SCARG(ap, sleep_sec), SCARG(ap, sleep_nsec),
-	    SCARG(ap, wakeup_time)));
 	return 0;
 }
 

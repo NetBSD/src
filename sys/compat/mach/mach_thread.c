@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.1 2002/11/26 08:10:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.1 2002/11/26 08:10:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,126 +47,21 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $");
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
-#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_syscallargs.h>
 
-int
-mach_sys_reply_port(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval; 
-{
-	static int current_port = 0x80b;
-
-	DPRINTF(("mach_sys_reply_port();\n"));
-	*retval = current_port; /* XXX */
-	return 0;
-}
-
-int
-mach_sys_thread_self_trap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	DPRINTF(("mach_sys_thread_self_trap();\n"));
-	*retval = 0; /* XXX */
-	return 0;
-}
-
-
-int
-mach_sys_task_self_trap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	DPRINTF(("mach_sys_task_self_trap();\n"));
-	*retval = 0xa07; /* XXX */
-	return 0;
-}
-
-
-int
-mach_sys_host_self_trap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	DPRINTF(("mach_sys_host_self_trap();\n"));
-	*retval = 0x90b; /* XXX */
-	return 0;
-}
-
 int 
-mach_port_deallocate(p, msgh)
+mach_thread_policy(p, msgh)
 	struct proc *p;
 	mach_msg_header_t *msgh;
 {
-	mach_port_deallocate_request_t req;
-	mach_port_deallocate_reply_t rep;
+	mach_thread_policy_request_t req;
+	mach_thread_policy_reply_t rep;
 	int error;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
-
-	DPRINTF(("mach_sys_port_deallocate();\n"));
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
-}
-
-int 
-mach_port_allocate(p, msgh)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-{
-	mach_port_allocate_request_t req;
-	mach_port_allocate_reply_t rep;
-	int error;
-
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	DPRINTF(("mach_sys_port_allocate();\n"));
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
-}
-
-int 
-mach_port_insert_right(p, msgh)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-{
-	mach_port_allocate_request_t req;
-	mach_port_allocate_reply_t rep;
-	int error;
-
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	DPRINTF(("mach_sys_port_insert_right();\n"));
 
 	bzero(&rep, sizeof(rep));
 
