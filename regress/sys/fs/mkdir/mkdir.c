@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.1 2002/01/27 21:49:46 thorpej Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.2 2002/02/20 03:52:51 enami Exp $	*/
 
 /*
  * Written by Jason R. Thorpe, Jan 27, 2002.
@@ -30,10 +30,15 @@ main(int argc, char *argv[])
 {
 	int i;
 
+	(void) rmdir("foo");
 	for (i = 0; testdirnames[i] != NULL; i++) {
 		(void) rmdir(testdirnames[i]);
 		if (mkdir(testdirnames[i], 0777))
 			err(1, "mkdir(\"%s\", 0777)", testdirnames[i]);
+		if (rename(testdirnames[i], "foo"))
+			err(1, "rename(\"%s\", \"foo\")", testdirnames[i]);
+		if (rename("foo/", testdirnames[i]))
+			err(1, "rename(\"foo/\", \"%s\")", testdirnames[i]);
 		if (rmdir(testdirnames[i]))
 			err(1, "rmdir(\"%s\")", testdirnames[i]);
 	}
