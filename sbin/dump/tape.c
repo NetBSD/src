@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.15 1997/09/16 08:37:01 mrg Exp $	*/
+/*	$NetBSD: tape.c,v 1.16 1998/03/18 16:54:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.15 1997/09/16 08:37:01 mrg Exp $");
+__RCSID("$NetBSD: tape.c,v 1.16 1998/03/18 16:54:56 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,9 +188,9 @@ writerec(dp, isspcl)
 	slp->req[trecno].count = 1;
 	*(union u_spcl *)(*(nextblock)++) = *(union u_spcl *)dp;
 	if (isspcl)
-		lastspclrec = spcl.c_tapea;
+		lastspclrec = iswap32(spcl.c_tapea);
 	trecno++;
-	spcl.c_tapea++;
+	spcl.c_tapea = iswap32(iswap32(spcl.c_tapea) +1);
 	if (trecno >= ntrec)
 		flushtape();
 }
@@ -208,7 +208,7 @@ dumpblock(blkno, size)
 		slp->req[trecno].dblk = dblkno;
 		slp->req[trecno].count = avail;
 		trecno += avail;
-		spcl.c_tapea += avail;
+		spcl.c_tapea = iswap32(iswap32(spcl.c_tapea) + avail);
 		if (trecno >= ntrec)
 			flushtape();
 		dblkno += avail << (tp_bshift - dev_bshift);
@@ -260,7 +260,7 @@ do_stats()
 
 	(void)time(&tnow);
 	ttaken = tnow - tstart_volume;
-	blocks = spcl.c_tapea - tapea_volume;
+	blocks = iswap32(spcl.c_tapea) - tapea_volume;
 	msg("Volume %d completed at: %s", tapeno, ctime(&tnow));
 	if (ttaken > 0) {
 		msg("Volume %d took %d:%02d:%02d\n", tapeno,
@@ -292,7 +292,7 @@ statussig(notused)
 	(void)snprintf(msgbuf, sizeof(msgbuf),
 	    "%3.2f%% done at %ld KB/s, finished in %d:%02d\n",
 	    (blockswritten * 100.0) / tapesize,
-	    (long)((spcl.c_tapea - tapea_volume) / (tnow - tstart_volume)),
+	    (long)((iswap32(spcl.c_tapea) - tapea_volume) / (tnow - tstart_volume)),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
 	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 }
@@ -352,13 +352,13 @@ flushtape()
 	}
 
 	blks = 0;
-	if (spcl.c_type != TS_END) {
-		for (i = 0; i < spcl.c_count; i++)
+	if (iswap32(spcl.c_type) != TS_END) {
+		for (i = 0; i < iswap32(spcl.c_count); i++)
 			if (spcl.c_addr[i] != 0)
 				blks++;
 	}
-	slp->count = lastspclrec + blks + 1 - spcl.c_tapea;
-	slp->tapea = spcl.c_tapea;
+	slp->count = lastspclrec + blks + 1 - iswap32(spcl.c_tapea);
+	slp->tapea = iswap32(spcl.c_tapea);
 	slp->firstrec = lastfirstrec + ntrec;
 	slp->inode = curino;
 	nextblock = slp->tblock;
@@ -491,10 +491,10 @@ rollforward()
 			q->count = 1;
 			trecno = 0;
 			nextblock = tslp->tblock;
-			savedtapea = spcl.c_tapea;
-			spcl.c_tapea = slp->tapea;
+			savedtapea = iswap32(spcl.c_tapea);
+			spcl.c_tapea = iswap32(slp->tapea);
 			startnewtape(0);
-			spcl.c_tapea = savedtapea;
+			spcl.c_tapea = iswap32(savedtapea);
 			lastspclrec = savedtapea - 1;
 		}
 		size = (char *)ntb - (char *)q;
@@ -577,7 +577,7 @@ startnewtape(top)
 
 	interrupt_save = signal(SIGINT, SIG_IGN);
 	parentpid = getpid();
-	tapea_volume = spcl.c_tapea;
+	tapea_volume = iswap32(spcl.c_tapea);
 	(void)time(&tstart_volume);
 
 restore_check_point:
@@ -680,17 +680,17 @@ restore_check_point:
 		blocksthisvol = 0;
 		if (top)
 			newtape++;		/* new tape signal */
-		spcl.c_count = slp->count; 
+		spcl.c_count = iswap32(slp->count);
 		/*
 		 * measure firstrec in TP_BSIZE units since restore doesn't
 		 * know the correct ntrec value...
 		 */
-		spcl.c_firstrec = slp->firstrec;
-		spcl.c_volume++;
-		spcl.c_type = TS_TAPE;
-		spcl.c_flags |= DR_NEWHEADER;
+		spcl.c_firstrec = iswap32(slp->firstrec);
+		spcl.c_volume = iswap32(iswap32(spcl.c_volume) + 1);
+		spcl.c_type = iswap32(TS_TAPE);
+		spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWHEADER);
 		writeheader((ino_t)slp->inode);
-		spcl.c_flags &=~ DR_NEWHEADER;
+		spcl.c_flags  = iswap32(iswap32(spcl.c_flags) & ~ DR_NEWHEADER);
 		msg("Volume %d started at: %s", tapeno, ctime(&tstart_volume));
 		if (tapeno > 1)
 			msg("Volume %d begins with blocks from inode %d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.5 1997/09/15 07:58:04 lukem Exp $	*/
+/*	$NetBSD: itime.c,v 1.6 1998/03/18 16:54:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.5 1997/09/15 07:58:04 lukem Exp $");
+__RCSID("$NetBSD: itime.c,v 1.6 1998/03/18 16:54:56 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,9 +162,9 @@ getdumptime()
 			continue;
 		if (ddp->dd_level >= level)
 			continue;
-		if (ddp->dd_ddate <= spcl.c_ddate)
+		if (ddp->dd_ddate <= iswap32(spcl.c_ddate))
 			continue;
-		spcl.c_ddate = ddp->dd_ddate;
+		spcl.c_ddate = iswap32(ddp->dd_ddate);
 		lastlevel = ddp->dd_level;
 	}
 }
@@ -212,7 +212,7 @@ putdumptime()
   found:
 	(void) strncpy(dtwalk->dd_name, fname, sizeof (dtwalk->dd_name));
 	dtwalk->dd_level = level;
-	dtwalk->dd_ddate = spcl.c_date;
+	dtwalk->dd_ddate = iswap32(spcl.c_date);
 
 	ITITERATE(i, dtwalk) {
 		dumprecout(df, dtwalk);
@@ -223,7 +223,7 @@ putdumptime()
 		quit("ftruncate (%s): %s\n", dumpdates, strerror(errno));
 	(void) fclose(df);
 	msg("level %c dump on %s", level,
-		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
+		spcl.c_date == 0 ? "the epoch\n" : ctime(&dtwalk->dd_ddate));
 }
 
 static void
