@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.13 2002/03/15 22:09:24 jdolecek Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.14 2002/06/18 21:05:02 jdolecek Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- multiple entry points
@@ -12,49 +12,40 @@ items todo from bill sommerfeld/thorpej:
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
 
 	- Test-compile the following ports:
-		- algor
-		- arc
-		- arm26
-		- atari
-		- bebox
-		- cats			in-progress
-		- cesfic
-		- cobalt
-		- hp300
-		- hpcarm		XXX compile problems
-		- hpcmips
-		- hpcsh			in-progress (XXX toolchain problems)
-		- luna68k
-		- mac68k
-		- macppc
-		- mipsco
-		- mmeye
-		- mvme68k
-		- news68k
-		- newsmips
-		- next68k
-		- ofppc
-		- pc532
-		- pmax
-		- prep
-		- sandpoint
-		- sgimips
-		- sparc
-		- sparc64
-		- sun2
-		- sun3
-		- vax
-		- walnut
-		- x68k
+		- acorn26	(still arm26, check aftermerge)
+		- cats		(aftermerge - isa_machdep.c missing)
+		- evbarm	(aftermerge)
+		- evbmips	(config prob, revisit aftermerge)
+		- evbsh3	(compile prob, revisit aftermerge)
+		- hpcarm	(compile prob, revisit aftermerge)
+		- hpcsh		(compile prob, revisit aftermerge)
+		- mvme68k	(config prob, revisit aftermerge)
+		- netwinder	(compile problems - missing arm/footbr/isadma)
+		- pc532			XXX not xcompile capable
+		- pmppc		(aftermerge)
+		- sandpoint	(compile prob unrelated to kq, aftermerge)
+		- sbmips	(aftermerge)
+		- shark		(aftermerge)
+		- sparc		(missing kqfilter hooks)
+		- sparc64	(compile problem, revisit aftermerge)
+		- sun2		(config incorrect, revisit aftermerge)
+		- sun3		(missing kqfilter hooks)
+		- walnut	(compile problems with obsol walnut/clock.c,
+				 revisit aftermerge)
+		- x68k		(compile problem with dev/ic/msm6258.c,
+				 revisit aftermerge)
 
 done:
+	- test compiled following ports:
+		acorn32 algor alpha arc atari bebox cesfic cobalt dreamcast
+		i386 hp300 hpcmips luna68k mac68k macppc mipsco
+		mmeye news68k newsmips next68k ofppc pmax prep sgimips vax
 	- name->id lookup
 	- why is union kn_ptr not just a void *? (added p_opaque)
 	- need more comments in kern_event.c
 	- explain fd_knlistsize better
 	- section 9 man page for internal api
 	- use pool for everything (that it can sanely be used for)
-
 
 merge in from freebsd:
 	usr.bin/tail
@@ -80,7 +71,7 @@ to fix:
 
 	- need to test bits of the tree that call closef() to determine
 	  if knote_fdclose() is required. (aka fdrelease()/fdfree()):
-		* ktrderef()		ktrace
+		* ktrderef()		ktrace [jdolecek - OK]
 		* unp_detach()
 		* nfsrv_zapsock()	nfsd
 		* portal_unmount()	mount_portal ?
