@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.64 2004/01/02 05:08:57 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.65 2004/01/09 19:12:31 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.64 2004/01/02 05:08:57 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.65 2004/01/09 19:12:31 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,8 @@ static struct disklabel *getdisklabel __P((const char *, int));
 static struct partition *getdisklabelpart __P((const char *, struct disklabel *));
 static int readsb __P((int));
 static int readappleufs __P((void));
+
+int16_t sblkpostbl[256];
 
 /*
  * Read in a superblock finding an alternate if necessary.
@@ -162,11 +164,6 @@ setup(dev)
 		printf("clean = %d\n", sblock->fs_clean);
 	if (doswap)
 		doskipclean = 0;
-	if (sblock->fs_old_postblformat == FS_42POSTBLFMT) {
-		pwarn("%sile system is in 4.2BSD format, check skipped\n",
-		    preen ? "f" : "** F");
-		return -1;
-	}
 	if (sblock->fs_clean & FS_ISCLEAN) {
 		if (doskipclean) {
 			if (!quiet)
@@ -184,6 +181,22 @@ setup(dev)
 	for (i = 0; i < NIADDR; i++) {
 		sizepb *= NINDIR(sblock);
 		maxfilesize += sizepb;
+	}
+	if ((!is_ufs2 && cvtlevel >= 4) &&
+			(sblock->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
+		if (preen)
+			pwarn("CONVERTING TO FFSv2 SUPERBLOCK\n");
+		else if (!reply("CONVERT TO FFSv2 SUPERBLOCK"))
+			return(0);
+		sblock->fs_old_flags |= FS_FLAGS_UPDATED;
+		/* Disable the postbl tables */
+		sblock->fs_old_cpc = 0;
+		sblock->fs_old_nrpos = 0;
+		sblock->fs_old_trackskew = 0;
+		/* The other fields have already been updated by
+		 * sb_oldfscompat_read
+		 */
+		sbdirty();
 	}
 	/*
 	 * Check and potentially fix certain fields in the super block.
@@ -335,14 +348,23 @@ setup(dev)
 			return(0);
 		doinglevel1++;
 		sblock->fs_old_postblformat = FS_DYNAMICPOSTBLFMT;
-		sblock->fs_old_nrpos = 0;
+		sblock->fs_old_nrpos = 8;
+		sblock->fs_old_postbloff =
+		    (char *)(&sblock->fs_old_postbl_start) -
+		    (char *)(&sblock->fs_firstfield);
+		sblock->fs_old_rotbloff =
+				(char *)(&sblock->fs_magic+1) -
+				(char *)(&sblock->fs_firstfield);
+		sblock->fs_cgsize =
+			fragroundup(sblock, CGSIZE(sblock));
 		sbdirty();
 		dirty(&asblk);
 	}
 	if (asblk.b_dirty && !bflag) {
-		memmove((struct fs*)sblk.b_un.b_fs, sblock, SBLOCKSIZE);
+		memmove(sblk.b_un.b_fs, sblock, SBLOCKSIZE);
+		sb_oldfscompat_write(sblk.b_un.b_fs, sblocksave);
 		if (needswap)
-			ffs_sb_swap(sblock, (struct fs*)sblk.b_un.b_fs);
+			ffs_sb_swap(sblk.b_un.b_fs, sblk.b_un.b_fs);
 		memmove(asblk.b_un.b_fs, sblk.b_un.b_fs, (size_t)sblock->fs_sbsize);
 		flush(fswritefd, &asblk);
 	}
@@ -684,34 +706,27 @@ readsb(listerr)
 	if (needswap)
 		ffs_sb_swap(asblk.b_un.b_fs, altsblock);
 	if (cmpsblks(sblock, altsblock)) {
+		if (debug) {
+			uint32_t *nlp, *olp, *endlp;
+
+			printf("superblock mismatches\n");
+			nlp = (uint32_t *)altsblock;
+			olp = (uint32_t *)sblock;
+			endlp = olp + (sblock->fs_sbsize / sizeof *olp);
+			for ( ; olp < endlp; olp++, nlp++) {
+				if (*olp == *nlp)
+					continue;
+				printf("offset %#x, original 0x%08x, alternate 0x%08x\n",
+				    (uint8_t *)olp-(uint8_t *)sblock, *olp, *nlp);
+			}
+		}
 		badsb(listerr,
 		"VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
 		return (0);
 	}
 out:
-        /*
-         * If not yet done, update UFS1 superblock with new wider fields.
-         */
-        if (sblock->fs_magic == FS_UFS1_MAGIC) {
-		if (sblock->fs_maxbsize != sblock->fs_bsize ||
-		    sblock->fs_time < sblock->fs_old_time) {
-			sblock->fs_cstotal.cs_ndir =
-			    sblock->fs_old_cstotal.cs_ndir;
-			sblock->fs_cstotal.cs_nbfree =
-			    sblock->fs_old_cstotal.cs_nbfree;
-			sblock->fs_cstotal.cs_nifree =
-			    sblock->fs_old_cstotal.cs_nifree;
-			sblock->fs_cstotal.cs_nffree =
-			    sblock->fs_old_cstotal.cs_nffree;
-		}
-		if (sblock->fs_maxbsize != sblock->fs_bsize) {
-			sblock->fs_maxbsize = sblock->fs_bsize;
-			sblock->fs_time = sblock->fs_old_time;
-			sblock->fs_size = sblock->fs_old_size;
-			sblock->fs_dsize = sblock->fs_old_dsize;
-			sblock->fs_csaddr = sblock->fs_old_csaddr;
-		}
-	}
+
+	sb_oldfscompat_read(sblock, &sblocksave);
 
 	/* Now we know the SB is valid, we can write it back if needed */
 	if (doswap) {
@@ -725,7 +740,13 @@ out:
 int
 cmpsblks(const struct fs *sb, struct fs *asb)
 {
-        if (asb->fs_sblkno != sb->fs_sblkno ||
+	if (!is_ufs2 && ((sb->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+		if (sb->fs_old_postblformat < FS_DYNAMICPOSTBLFMT)
+			return cmpsblks42(sb, asb);
+		else
+			return cmpsblks44(sb, asb);
+	}
+	if (asb->fs_sblkno != sb->fs_sblkno ||
 	    asb->fs_cblkno != sb->fs_cblkno ||
 	    asb->fs_iblkno != sb->fs_iblkno ||
 	    asb->fs_dblkno != sb->fs_dblkno ||
@@ -749,6 +770,116 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 		return 1;
 	return 0;
 }
+
+/* BSD 4.2 performed the following superblock comparison
+ * It should correspond to FS_42POSTBLFMT
+ * (although note that in 4.2, the fs_old_postblformat
+ * field didn't exist and the corresponding bits are
+ * located near the end of the postbl itself, where they
+ * are not likely to be used.)
+ */
+int
+cmpsblks42(const struct fs *sb, struct fs *asb)
+{
+	asb->fs_firstfield = sb->fs_firstfield; /* fs_link */
+	asb->fs_unused_1 = sb->fs_unused_1; /* fs_rlink */
+	asb->fs_old_time = sb->fs_old_time; /* fs_time */
+	asb->fs_old_cstotal = sb->fs_old_cstotal; /* fs_cstotal */
+	asb->fs_cgrotor = sb->fs_cgrotor;
+	asb->fs_fmod = sb->fs_fmod;
+	asb->fs_clean = sb->fs_clean;
+	asb->fs_ronly = sb->fs_ronly;
+	asb->fs_old_flags = sb->fs_old_flags;
+	asb->fs_maxcontig = sb->fs_maxcontig;
+	asb->fs_minfree = sb->fs_minfree;
+	asb->fs_old_rotdelay = sb->fs_old_rotdelay;
+	asb->fs_maxbpg = sb->fs_maxbpg;
+
+	/* The former fs_csp, totaling 128 bytes  */
+	memmove(asb->fs_ocsp, sb->fs_ocsp, sizeof sb->fs_ocsp);
+	asb->fs_contigdirs = sb->fs_contigdirs;
+	asb->fs_csp = sb->fs_csp;
+	asb->fs_maxcluster = sb->fs_maxcluster;
+	asb->fs_active = sb->fs_active;
+
+	/* The former fs_fsmnt, totaling 512 bytes */
+	memmove(asb->fs_fsmnt, sb->fs_fsmnt, sizeof sb->fs_fsmnt);
+	memmove(asb->fs_volname, sb->fs_volname, sizeof sb->fs_volname);
+
+	return memcmp(sb, asb, sb->fs_sbsize);
+}
+
+/* BSD 4.4 performed the following superblock comparison
+ * This was used in NetBSD through 1.6.1
+ *
+ * Note that this implementation is destructive to asb.
+ */
+int
+cmpsblks44(const struct fs *sb, struct fs *asb)
+{
+	/*
+	 * "Copy fields which we don't care if they're different in the
+	 * alternate superblocks, as they're either likely to be
+	 * different because they're per-cylinder-group specific, or
+	 * because they're transient details which are only maintained
+	 * in the primary superblock."
+	 */
+	asb->fs_firstfield = sb->fs_firstfield;
+	asb->fs_unused_1 = sb->fs_unused_1;
+	asb->fs_old_time = sb->fs_old_time;
+	asb->fs_old_cstotal = sb->fs_old_cstotal;
+	asb->fs_cgrotor = sb->fs_cgrotor;
+	asb->fs_fmod = sb->fs_fmod;
+	asb->fs_clean = sb->fs_clean;
+	asb->fs_ronly = sb->fs_ronly;
+	asb->fs_old_flags = sb->fs_old_flags;
+	asb->fs_maxcontig = sb->fs_maxcontig;
+	asb->fs_minfree = sb->fs_minfree;
+	asb->fs_optim = sb->fs_optim;
+	asb->fs_old_rotdelay = sb->fs_old_rotdelay;
+	asb->fs_maxbpg = sb->fs_maxbpg;
+
+	/* The former fs_csp and fs_maxcluster, totaling 128 bytes */
+	memmove(asb->fs_ocsp, sb->fs_ocsp, sizeof sb->fs_ocsp);
+	asb->fs_contigdirs = sb->fs_contigdirs;
+	asb->fs_csp = sb->fs_csp;
+	asb->fs_maxcluster = sb->fs_maxcluster;
+	asb->fs_active = sb->fs_active;
+
+	/* The former fs_fsmnt, totaling 512 bytes */
+	memmove(asb->fs_fsmnt, sb->fs_fsmnt, sizeof sb->fs_fsmnt);
+	memmove(asb->fs_volname, sb->fs_volname, sizeof sb->fs_volname);
+
+	/* The former fs_sparecon, totaling 200 bytes */
+	memmove(asb->fs_snapinum,
+		sb->fs_snapinum, sizeof sb->fs_snapinum);
+	asb->fs_avgfilesize = sb->fs_avgfilesize;
+	asb->fs_avgfpdir = sb->fs_avgfpdir;
+	asb->fs_save_cgsize = sb->fs_save_cgsize;
+	memmove(asb->fs_sparecon32,
+		sb->fs_sparecon32, sizeof sb->fs_sparecon32);
+	asb->fs_flags = sb->fs_flags;
+
+	/* Original comment:
+	 * "The following should not have to be copied, but need to be."
+	 */
+	asb->fs_fsbtodb = sb->fs_fsbtodb;
+	asb->fs_old_interleave = sb->fs_old_interleave;
+	asb->fs_old_npsect = sb->fs_old_npsect;
+	asb->fs_old_nrpos = sb->fs_old_nrpos;
+	asb->fs_state = sb->fs_state;
+	asb->fs_qbmask = sb->fs_qbmask;
+	asb->fs_qfmask = sb->fs_qfmask;
+	asb->fs_state = sb->fs_state;
+	asb->fs_maxfilesize = sb->fs_maxfilesize;
+
+	/*
+	 * "Compare the superblocks, effectively checking every other
+	 * field to see if they differ."
+	 */
+	return memcmp(sb, asb, sb->fs_sbsize);
+}
+
 
 static void
 badsb(listerr, s)

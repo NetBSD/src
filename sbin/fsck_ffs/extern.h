@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2003/07/13 08:16:15 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2004/01/09 19:12:31 dbj Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -42,6 +42,8 @@ int		ckinode __P((union dinode *, struct inodesc *));
 int		clearentry __P((struct inodesc *));
 void		clri __P((struct inodesc *, char *, int));
 int		cmpsblks __P((const struct fs *, struct fs *));
+int		cmpsblks42 __P((const struct fs *, struct fs *));
+int		cmpsblks44 __P((const struct fs *, struct fs *));
 union		dinode * getnextinode __P((ino_t));
 void		direrror __P((ino_t, char *));
 int		dirscan __P((struct inodesc *));
@@ -82,4 +84,5 @@ void		voidquit __P((int));
 
 void	swap_cg __P((struct cg *, struct cg *));
 void copyback_cg __P((struct bufarea *));
-void sb_oldfscompat_write(struct fs *);
+void sb_oldfscompat_write(struct fs *, struct fs *);
+void sb_oldfscompat_read(struct fs *, struct fs **);
