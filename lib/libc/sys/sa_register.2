@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_register.2,v 1.1 2004/03/14 09:18:45 yamt Exp $
+.\"     $NetBSD: sa_register.2,v 1.2 2004/03/14 10:19:59 snj Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm sa_register
-.Nd register scheduler activation upcall handler
+.Nd register a scheduler activation upcall handler
 .\" ------------------------------------------------------------
 .Sh LIBRARY
 .Lb libc
@@ -47,15 +47,15 @@
 .Sh DESCRIPTION
 .Nm
 is used to prepare scheduler activation.
-It registers upcall handler specified by
+It registers the upcall handler specified by
 .Fa new .
 If
 .Fa old
 isn't
-.Dv NULL,
+.Dv NULL ,
 the previous handler will be returned to the location pointed by it.
 If
-SA_FLAG_STACKINFO
+.Dv SA_FLAG_STACKINFO
 is specified in
 .Fa flags ,
 .Fa stackinfo_offset
