@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.55 1996/10/21 22:40:59 thorpej Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.56 1996/11/05 07:17:23 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -423,7 +423,7 @@ sl_probe(sc, ia)
 
 	default:
 		/* Anything else is not recognized or cannot be used. */
-#ifdef DIAGNOSTIC
+#ifdef IEDEBUG
 		printf("%s: unknown AT&T board type code %d\n",
 		    sc->sc_dev.dv_xname, SL_BOARD(c));
 #endif
