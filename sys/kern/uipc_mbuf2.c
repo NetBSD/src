@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.15 2003/08/07 16:31:58 agc Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.16 2003/11/13 01:48:12 jonathan Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.15 2003/08/07 16:31:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.16 2003/11/13 01:48:12 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ m_tag_delete(struct mbuf *m, struct m_tag *t)
 }
 
 /* Unlink and free a packet tag chain, starting from given tag. */
-void
+__inline void
 m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 {
 	struct m_tag *p, *q;
@@ -283,6 +283,21 @@ m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 		m_tag_delete(m, q);
 	m_tag_delete(m, p);
 }
+
+/*
+ * Strip off all tags that would normally vanish when
+ * passing through a network interface.  Only persistent
+ * tags will exist after this; these are expected to remain
+ * so long as the mbuf chain exists, regardless of the
+ * path the mbufs take.
+ */
+void
+m_tag_delete_nonpersistent(struct mbuf *m)
+{
+	/* NetBSD has no persistent tags yet, so just delete all tags. */
+	return m_tag_delete_chain(m, NULL);
+}
+
 
 /* Find a tag, starting from a given position. */
 struct m_tag *
