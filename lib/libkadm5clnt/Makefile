@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/06/21 05:43:50 thorpej Exp $
+# $NetBSD: Makefile,v 1.4 2000/08/03 03:53:38 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
 
@@ -36,7 +36,7 @@ SRCS	 =		\
 
 INCSDIR= /usr/include/kadm5
 
-INCS=	kadm5_err.h admin.h private.h
+INCS=	kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h
 
 ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
 KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
