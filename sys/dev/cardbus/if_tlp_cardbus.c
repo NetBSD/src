@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.26 2001/03/14 01:41:09 christos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.27 2001/04/13 00:18:11 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ const struct tulip_cardbus_product {
 
 	{ PCI_VENDOR_XIRCOM,		PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	  TULIP_CHIP_X3201_3 },
+
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	  TULIP_CHIP_AN985 },
 
 	{ CARDBUS_VENDOR_ACCTON,	CARDBUS_PRODUCT_ACCTON_EN2242,
 	  TULIP_CHIP_AN985 },
