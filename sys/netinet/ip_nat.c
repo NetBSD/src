@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.34.2.4 2002/02/09 16:59:16 he Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.34.2.5 2002/02/26 22:25:16 he Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -110,7 +110,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.34.2.4 2002/02/09 16:59:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.34.2.5 2002/02/26 22:25:16 he Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.58 2002/01/02 03:40:24 darrenr Exp";
@@ -2445,7 +2445,7 @@ maskloop:
 
 		if ((fin->fin_off == 0) && !(fin->fin_fl & FI_SHORT)) {
 
-			if ((nat->nat_outport != 0) && (nflags & IPN_TCPUDP)) {
+			if ((nat->nat_outport != 0) && (tcp != NULL)) {
 				tcp->th_sport = nat->nat_outport;
 				fin->fin_data[0] = ntohs(tcp->th_sport);
 			}
@@ -2654,7 +2654,7 @@ maskloop:
 #endif
 		if ((fin->fin_off == 0) && !(fin->fin_fl & FI_SHORT)) {
 
-			if ((nat->nat_inport != 0) && (nflags & IPN_TCPUDP)) {
+			if ((nat->nat_inport != 0) && (tcp != NULL)) {
 				tcp->th_dport = nat->nat_inport;
 				fin->fin_data[1] = ntohs(tcp->th_dport);
 			}
