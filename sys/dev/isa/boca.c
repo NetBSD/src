@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.12 1996/04/11 22:28:22 cgd Exp $	*/
+/*	$NetBSD: boca.c,v 1.13 1996/04/15 18:55:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 
 #ifdef i386							/* XXX */
 #include <machine/cpu.h>					/* XXX */
