@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.4 1993/11/05 12:43:02 deraadt Exp $
+ * $Id: cpu.c,v 1.5 1993/11/26 11:44:51 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -58,12 +58,8 @@
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
 
-/* the following are used externally (sysctl_hw). */
-char	machine[] = "sparc";
+/* The following are used externally */
 char	cpu_model[100];
-
-static char *psrtoname();
-static char *fsrtoname();
 
 /* The CPU configuration driver. */
 static void cpu_attach __P((struct device *, struct device *, void *));
@@ -114,7 +110,7 @@ cpu_attach(parent, dev, aux)
 	void *aux;
 {
 	register int node, clk, i, l;
-	register u_int impl, vers, fver;
+	register int impl, vers, fver;
 	register char *fpuname;
 	struct fpstate fpstate;
 	char iubuf[40], fpbuf[40];
@@ -246,8 +242,9 @@ static struct info fpu_types[] = {
 	{ 1, 0x0, ANY, 4, "L64804" },
 
 	/*
-	 * Vendor 1, IU ROSS0/1.
+	 * Vendor 1, IU ROSS0/1 or Pinnacle.
 	 */
+	{ 1, 0x1, 0xf, 0, "on-chip" },		/* Pinnacle (shhh) */
 	{ 1, 0x1, ANY, 0, "L64812 or ACT8847" },
 	{ 1, 0x1, ANY, 1, "L64814" },
 	{ 1, 0x1, ANY, 2, "TMS390C602A" },
