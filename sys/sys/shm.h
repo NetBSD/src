@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.26.2.1 2001/03/30 22:47:38 he Exp $	*/
+/*	$NetBSD: shm.h,v 1.26.2.2 2001/04/01 16:55:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -127,11 +127,11 @@ struct shmid_ds14 {
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
- * Permission definitions.
+ * Permission definitions used in shmflag arguments to shmat(2) and shmget(2).
  * Provided for source compatibility only; do not use in new code!
  */
-#define	SHM_R		IPC_R
-#define	SHM_W		IPC_W
+#define	SHM_R		0000400	/* S_IRUSR, R for owner */
+#define	SHM_W		0000200	/* S_IWUSR, W for owner */
 
 /*
  * System 5 style catch-all structure for shared memory constants that
