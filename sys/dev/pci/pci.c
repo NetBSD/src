@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.34 1998/04/17 18:40:31 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.35 1998/05/05 22:14:23 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -276,6 +276,8 @@ pciprint(aux, pnp)
 	printf(" (%si/o, %smem)",
 	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "" : "no ",
 	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "" : "no ");
+	printf(" tag %x intrtag %x intrswiz %x intrpin %x", pa->pa_tag,
+	    pa->pa_intrtag, pa->pa_intrswiz, pa->pa_intrpin);
 #endif
 	return (UNCONF);
 }
