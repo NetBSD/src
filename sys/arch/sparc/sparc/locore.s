@@ -459,9 +459,9 @@ _trapbase:
 	TRAP(T_RANGECHECK)	! 85 = ???
 	TRAP(T_FIXALIGN)	! 86 = fix up unaligned accesses
 	TRAP(T_INTOF)		! 87 = integer overflow
-	BPT_KGDB_EXEC		! 88 = enter kernel gdb on kernel startup
+	SYSCALL			! 88 = svr4 syscall
 	SYSCALL			! 89 = bsd syscall
-	STRAP(0x8a)
+	BPT_KGDB_EXEC		! 8a = enter kernel gdb on kernel startup
 	STRAP(0x8b)
 	STRAP(0x8c)
 	STRAP(0x8d)
