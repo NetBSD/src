@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.6 2002/11/25 10:34:34 schmonz Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.7 2003/01/18 21:21:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.6 2002/11/25 10:34:34 schmonz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.7 2003/01/18 21:21:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.6 2002/11/25 10:34:34 schmonz Exp
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -80,11 +81,12 @@ int linux_bus_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct proc *);
 
 int
-linux_sys___sysctl(struct proc *p, void *v, register_t *retval)
+linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys___sysctl_args /* {
 		syscallarg(struct linux___sysctl *) lsp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct linux___sysctl ls;
 	int error;
 	size_t savelen = 0, oldlen = 0;

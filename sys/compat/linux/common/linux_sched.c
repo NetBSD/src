@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.11 2002/12/22 00:00:22 gmcgarry Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,12 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.11 2002/12/22 00:00:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -60,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.11 2002/12/22 00:00:22 gmcgarry Ex
 #include <compat/linux/common/linux_sched.h>
 
 int
-linux_sys_clone(p, v, retval)
-	struct proc *p;
+linux_sys_clone(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -101,13 +102,13 @@ linux_sys_clone(p, v, retval)
 	 * or down.  So, we pass a stack size of 0, so that the code
 	 * that makes this adjustment is a noop.
 	 */
-	return (fork1(p, flags, sig, SCARG(uap, stack), 0,
+	return (fork1(l, flags, sig, SCARG(uap, stack), 0,
 	    NULL, NULL, retval, NULL));
 }
 
 int
-linux_sys_sched_setparam(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_setparam(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
@@ -115,6 +116,7 @@ linux_sys_sched_setparam(cp, v, retval)
 		syscallarg(linux_pid_t) pid;
 		syscallarg(const struct linux_sched_param *) sp;
 	} */ *uap = v;
+	struct proc *cp = cl->l_proc;
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -148,8 +150,8 @@ linux_sys_sched_setparam(cp, v, retval)
 }
 
 int
-linux_sys_sched_getparam(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_getparam(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
@@ -157,6 +159,7 @@ linux_sys_sched_getparam(cp, v, retval)
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
 	} */ *uap = v;
+	struct proc *cp = cl->l_proc;
 	struct proc *p;
 	struct linux_sched_param lp;
 
@@ -185,8 +188,8 @@ linux_sys_sched_getparam(cp, v, retval)
 }
 
 int
-linux_sys_sched_setscheduler(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_setscheduler(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
@@ -195,6 +198,7 @@ linux_sys_sched_setscheduler(cp, v, retval)
 		syscallarg(int) policy;
 		syscallarg(cont struct linux_sched_scheduler *) sp;
 	} */ *uap = v;
+	struct proc *cp = cl->l_proc;
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -234,14 +238,15 @@ linux_sys_sched_setscheduler(cp, v, retval)
 }
 
 int
-linux_sys_sched_getscheduler(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_getscheduler(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
 	} */ *uap = v;
+	struct proc *cp = cl->l_proc;
 	struct proc *p;
 
 	*retval = -1;
@@ -271,8 +276,8 @@ linux_sys_sched_getscheduler(cp, v, retval)
 }
 
 int
-linux_sys_sched_yield(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_yield(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
@@ -282,8 +287,8 @@ linux_sys_sched_yield(cp, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_max(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_get_priority_max(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
@@ -304,8 +309,8 @@ linux_sys_sched_get_priority_max(cp, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_min(cp, v, retval)
-	struct proc *cp;
+linux_sys_sched_get_priority_min(cl, v, retval)
+	struct lwp *cl;
 	void *v;
 	register_t *retval;
 {
