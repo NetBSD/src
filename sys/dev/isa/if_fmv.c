@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.22 1998/06/09 07:25:02 thorpej Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.23 1998/10/07 04:58:06 enami Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -119,7 +119,7 @@ fmv_match(parent, match, aux)
 		if (fmv_iomap[i] == ia->ia_iobase)
 			break;
 	if (i == NFMV_IOMAP) {
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 		printf("fmv_match: unknown iobase 0x%x\n", ia->ia_iobase);
 #endif
 		return (0);
@@ -127,7 +127,7 @@ fmv_match(parent, match, aux)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, FMV_NPORTS, 0, &ioh)) {
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 		printf("fmv_match: couldn't map iospace 0x%x\n",
 		    ia->ia_iobase);
 #endif
@@ -135,14 +135,14 @@ fmv_match(parent, match, aux)
 	}
 
 	if (fmv_find(iot, ioh, &iobase, &irq) == 0) {
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 		printf("fmv_match: fmv_find failed\n");
 #endif
 		goto out;
 	}
 
 	if (iobase != ia->ia_iobase) {
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 		printf("fmv_match: unexpected iobase in board: 0x%x\n",
 		    ia->ia_iobase);
 #endif
@@ -150,7 +150,7 @@ fmv_match(parent, match, aux)
 	}
 
 	if (fmv_detect(iot, ioh, myea) == 0) { /* XXX necessary? */
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 		printf("fmv_match: fmv_detect failed\n");
 #endif
 		goto out;
@@ -190,7 +190,7 @@ fe_simple_probe (iot, ioh, sp)
 	for (p = sp; p->mask != 0; p++) {
 		val = bus_space_read_1(iot, ioh, p->port);
 		if ((val & p->mask) != p->bits) {
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 			printf("fe_simple_probe: %x & %x != %x\n",
 			    val, p->mask, p->bits);
 #endif
@@ -282,7 +282,7 @@ fmv_detect(iot, ioh, enaddr)
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 		printf("fmv_detect: invalid ethernet address\n");
 #endif
 		return (0);
@@ -296,7 +296,7 @@ fmv_detect(iot, ioh, enaddr)
 		return (FE_TYPE_FMV182);
 	}
 
-#ifdef DIAGNOSTIC
+#ifdef FMV_DEBUG
 	printf("fmv_detect: unknown card\n");
 #endif
 	/* Unknown card type: maybe a new model, but... */
