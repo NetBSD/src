@@ -1,4 +1,41 @@
-/*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.17.14.1 1997/09/08 23:13:28 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,21 +81,15 @@
  */
 
 /*
- * Process signal actions and state, needed only within the process
- * (not necessarily resident).
+ * Process signal actions and state, one per POSIX process.
  */
-struct	sigacts {
-	sig_t	ps_sigact[NSIG];	/* disposition of signals */
-	sigset_t ps_catchmask[NSIG];	/* signals to be blocked */
-	sigset_t ps_sigonstack;		/* signals to take on sigstack */
-	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
-	sigset_t ps_sigreset;		/* signals that reset when caught */
+struct sigacts {
+	struct	sigaction ps_sigact[NSIG]; /* signal action information */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
-	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
-	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
+	int	ps_refcnt;		/* reference count; for sharing */
 };
 
 /* signal flags */
@@ -70,9 +101,25 @@ struct	sigacts {
 #define	SIG_HOLD	(void (*) __P((int)))3
 
 /*
- * get signal action for process and signal; currently only for current process
+ * get signal action for process and signal
  */
-#define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)])
+#define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)].sa_handler)
+
+/*
+ * Is process ignoring this signal?  Note the exported test skips
+ * SIGCONT, since we have to restart the process.
+ */
+#define	_SIGIGNORE(p, sig)	(SIGACTION((p), (sig)) == SIG_IGN ||	\
+				 ((sigprop[(sig)] & SA_IGNORE) &&	\
+				  SIGACTION((p), (sig)) == SIG_DFL))
+
+#define	SIGIGNORE(p, sig)	(_SIGIGNORE((p), (sig)) && (sig) != SIGCONT)
+
+/*
+ * Is process catching this signal?
+ */
+#define	SIGCATCH(p, sig)	(SIGACTION((p), (sig)) != SIG_IGN && \
+				 SIGACTION((p), (sig)) != SIG_DFL)
 
 /*
  * Determine signal that should be delivered to process p, the current
@@ -102,6 +149,9 @@ struct	sigacts {
 #define	SA_IGNORE	0x10		/* ignore by default */
 #define	SA_CONT		0x20		/* continue if suspended */
 #define	SA_CANTMASK	0x40		/* non-maskable, catchable */
+
+/* Needed by SIGIGNORE() above. */
+extern	int sigprop[];
 
 #ifdef	SIGPROP
 int sigprop[NSIG + 1] = {
@@ -163,6 +213,11 @@ void	trapsignal __P((struct proc *p, int sig, u_long code));
 void	sigexit __P((struct proc *, int));
 void	setsigvec __P((struct proc *, int, struct sigaction *));
 int	killpg1 __P((struct proc *, int, int, int));
+
+struct sigacts *sigacts_copy __P((struct proc *));
+void	sigacts_share __P((struct proc *, struct proc *));
+void	sigacts_unshare __P((struct proc *));
+void	sigacts_free __P((struct proc *));
 
 /*
  * Machine-dependent functions:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.7 1996/03/14 19:31:47 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.7.14.1 1997/09/08 23:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -119,8 +119,8 @@ compat_43_sys_sigstack(p, v, retval)
 	int error = 0;
 
 	psp = p->p_sigacts;
-	ss.ss_sp = psp->ps_sigstk.ss_sp;
-	ss.ss_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	ss.ss_sp = p->p_sigstk.ss_sp;
+	ss.ss_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	if (SCARG(uap, oss) && (error = copyout((caddr_t)&ss,
 	    (caddr_t)SCARG(uap, oss), sizeof (struct sigstack))))
 		return (error);
@@ -131,9 +131,9 @@ compat_43_sys_sigstack(p, v, retval)
 	if (error)
 		return (error);
 	psp->ps_flags |= SAS_ALTSTACK;
-	psp->ps_sigstk.ss_sp = ss.ss_sp;
-	psp->ps_sigstk.ss_size = 0;
-	psp->ps_sigstk.ss_flags |= ss.ss_onstack & SS_ONSTACK;
+	p->p_sigstk.ss_sp = ss.ss_sp;
+	p->p_sigstk.ss_size = 0;
+	p->p_sigstk.ss_flags |= ss.ss_onstack & SS_ONSTACK;
 	return (0);
 }
 
@@ -154,29 +154,21 @@ compat_43_sys_sigvec(p, v, retval)
 	} */ *uap = v;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
+	register struct sigaction *sa;
 	register struct sigvec *sv;
 	register int signum;
-	int bit, error;
+	int error;
 
 	signum = SCARG(uap, signum);
 	if (signum <= 0 || signum >= NSIG ||
 	    signum == SIGKILL || signum == SIGSTOP)
 		return (EINVAL);
+	sa = &ps->ps_sigact[signum];
 	sv = &vec;
 	if (SCARG(uap, osv)) {
-		*(sig_t *)&sv->sv_handler = ps->ps_sigact[signum];
-		sv->sv_mask = ps->ps_catchmask[signum];
-		bit = sigmask(signum);
-		sv->sv_flags = 0;
-		if ((ps->ps_sigonstack & bit) != 0)
-			sv->sv_flags |= SV_ONSTACK;
-		if ((ps->ps_sigintr & bit) != 0)
-			sv->sv_flags |= SV_INTERRUPT;
-		if ((ps->ps_sigreset & bit) != 0)
-			sv->sv_flags |= SV_RESETHAND;
-		if (p->p_flag & P_NOCLDSTOP)
-			sv->sv_flags |= SA_NOCLDSTOP;
-		sv->sv_mask &= ~bit;
+		*(sig_t *)&sv->sv_handler = sa->sa_handler;
+		sv->sv_mask = sa->sa_mask & ~sigmask(signum);
+		sv->sv_flags = sa->sa_flags ^ SA_RESTART;
 		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
 		    sizeof (vec));
 		if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.81 1997/08/04 09:48:10 bouyer Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.81.2.1 1997/09/08 23:17:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1207,27 +1207,26 @@ sunos_sys_sigvec(p, v, retval)
 	} */ *uap = v;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
+	register struct sigaction *sa;
 	register struct sigvec *sv;
 	register int signum;
-	int bit, error;
+	int error;
+
+	/*
+	 * XXX See comment below regarding SV_RESETHAND.  Do we
+	 * XXX handle that correctly?
+	 */
 
 	signum = SCARG(uap, signum);
 	if (signum <= 0 || signum >= NSIG ||
 	    signum == SIGKILL || signum == SIGSTOP)
 		return (EINVAL);
+	sa = &ps->ps_sigact[signum];
 	sv = &vec;
 	if (SCARG(uap, osv)) {
-		*(sig_t *)&sv->sv_handler = ps->ps_sigact[signum];
-		sv->sv_mask = ps->ps_catchmask[signum];
-		bit = sigmask(signum);
-		sv->sv_flags = 0;
-		if ((ps->ps_sigonstack & bit) != 0)
-			sv->sv_flags |= SV_ONSTACK;
-		if ((ps->ps_sigintr & bit) != 0)
-			sv->sv_flags |= SV_INTERRUPT;
-		if ((ps->ps_sigreset & bit) != 0)
-			sv->sv_flags |= SA_RESETHAND;
-		sv->sv_mask &= ~bit;
+		*(sig_t *)&sv->sv_handler = sa->sa_handler;
+		sv->sv_mask = sa->sa_mask & ~sigmask(signum);
+		sv->sv_flags = sa->sa_flags ^ SA_RESTART;
 		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
 		    sizeof (vec));
 		if (error)

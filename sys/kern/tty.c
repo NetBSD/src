@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.96 1997/06/20 10:50:11 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.96.6.1 1997/09/08 23:10:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -715,7 +715,7 @@ ttioctl(tp, cmd, data, flag, p)
 #endif
 		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
-		    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
+		    SIGIGNORE(p, SIGTTOU) == 0 &&
 		    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
 			error = ttysleep(tp,
@@ -1282,7 +1282,7 @@ loop:	lflag = tp->t_lflag;
 	 * Hang process if it's in the background.
 	 */
 	if (isbackground(p, tp)) {
-		if ((p->p_sigignore & sigmask(SIGTTIN)) ||
+		if (SIGIGNORE(p, SIGTTIN) ||
 		   (p->p_sigmask & sigmask(SIGTTIN)) ||
 		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0)
 			return (EIO);
@@ -1529,7 +1529,7 @@ loop:
 	p = curproc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
-	    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
+	    SIGIGNORE(p, SIGTTOU) == 0 &&
 	    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;

@@ -1,4 +1,41 @@
-/*	$NetBSD: kern_sig.c,v 1.66 1997/04/28 04:49:28 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.66.6.1 1997/09/08 23:10:34 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -54,6 +91,7 @@
 #include <sys/acct.h>
 #include <sys/file.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/wait.h>
 #include <sys/ktrace.h>
 #include <sys/syslog.h>
@@ -100,7 +138,7 @@ sys_sigaction(p, v, retval)
 	register struct sigaction *sa;
 	register struct sigacts *ps = p->p_sigacts;
 	register int signum;
-	int bit, error;
+	int error;
 
 	signum = SCARG(uap, signum);
 	if (signum <= 0 || signum >= NSIG ||
@@ -108,24 +146,9 @@ sys_sigaction(p, v, retval)
 		return (EINVAL);
 	sa = &vec;
 	if (SCARG(uap, osa)) {
-		sa->sa_handler = ps->ps_sigact[signum];
-		sa->sa_mask = ps->ps_catchmask[signum];
-		bit = sigmask(signum);
-		sa->sa_flags = 0;
-		if ((ps->ps_sigonstack & bit) != 0)
-			sa->sa_flags |= SA_ONSTACK;
-		if ((ps->ps_sigintr & bit) == 0)
-			sa->sa_flags |= SA_RESTART;
-		if ((ps->ps_sigreset & bit) != 0)
-			sa->sa_flags |= SA_RESETHAND;
-		if (signum == SIGCHLD) {
-			if ((p->p_flag & P_NOCLDSTOP) != 0)
-				sa->sa_flags |= SA_NOCLDSTOP;
-		}
-		if ((sa->sa_mask & bit) == 0)
-			sa->sa_flags |= SA_NODEFER;
-		sa->sa_mask &= ~bit;
-		error = copyout(sa, SCARG(uap, osa), sizeof (vec));
+		bcopy(&ps->ps_sigact[signum], sa, sizeof(vec));
+		sa->sa_mask &= ~sigmask(signum);
+		error = copyout(sa, SCARG(uap, osa), sizeof(vec));
 		if (error)
 			return (error);
 	}
@@ -139,85 +162,56 @@ sys_sigaction(p, v, retval)
 }
 
 void
-setsigvec(p, signum, sa)
+setsigvec(p, signum, nsa)
 	register struct proc *p;
 	int signum;
-	register struct sigaction *sa;
+	register struct sigaction *nsa;
 {
 	register struct sigacts *ps = p->p_sigacts;
+	register struct sigaction *sa;
 	register int bit;
 
 	bit = sigmask(signum);
+	sa = &ps->ps_sigact[signum];
+
 	/*
 	 * Change setting atomically.
 	 */
 	(void) splhigh();
-	ps->ps_sigact[signum] = sa->sa_handler;
+	bcopy(nsa, sa, sizeof(struct sigaction));
 	if ((sa->sa_flags & SA_NODEFER) == 0)
-		sa->sa_mask |= sigmask(signum);
-	ps->ps_catchmask[signum] = sa->sa_mask &~ sigcantmask;
+		sa->sa_mask |= bit;
+	sa->sa_mask &= ~sigcantmask;
 	if (signum == SIGCHLD) {
 		if (sa->sa_flags & SA_NOCLDSTOP)
 			p->p_flag |= P_NOCLDSTOP;
 		else
 			p->p_flag &= ~P_NOCLDSTOP;
-	}
-	if ((sa->sa_flags & SA_RESETHAND) != 0)
-		ps->ps_sigreset |= bit;
-	else
-		ps->ps_sigreset &= ~bit;
-	if ((sa->sa_flags & SA_RESTART) == 0)
-		ps->ps_sigintr |= bit;
-	else
-		ps->ps_sigintr &= ~bit;
-	if ((sa->sa_flags & SA_ONSTACK) != 0)
-		ps->ps_sigonstack |= bit;
-	else
-		ps->ps_sigonstack &= ~bit;
-#ifdef COMPAT_SUNOS
-	{
-		extern struct emul emul_sunos;
-		if (p->p_emul == &emul_sunos && sa->sa_flags & SA_USERTRAMP)
-			ps->ps_usertramp |= bit;
-		else
-			ps->ps_usertramp &= ~bit;
-	}
-#endif
+	} else
+		sa->sa_flags &= ~SA_NOCLDSTOP;
+
 	/*
-	 * Set bit in p_sigignore for signals that are set to SIG_IGN,
-	 * and for signals set to SIG_DFL where the default is to ignore.
-	 * However, don't put SIGCONT in p_sigignore,
-	 * as we have to restart the process.
+	 * If signal is being ignored, removing it from the "pending" list.
 	 */
-	if (sa->sa_handler == SIG_IGN ||
-	    (sigprop[signum] & SA_IGNORE && sa->sa_handler == SIG_DFL)) {
+	if (_SIGIGNORE(p, signum))
 		p->p_siglist &= ~bit;		/* never to be seen again */
-		if (signum != SIGCONT)
-			p->p_sigignore |= bit;	/* easier in psignal */
-		p->p_sigcatch &= ~bit;
-	} else {
-		p->p_sigignore &= ~bit;
-		if (sa->sa_handler == SIG_DFL)
-			p->p_sigcatch &= ~bit;
-		else
-			p->p_sigcatch |= bit;
-	}
+
 	(void) spl0();
 }
 
 /*
- * Initialize signal state for process 0;
- * set to ignore signals that are ignored by default.
+ * Initialize signal state for process 0.
  */
 void
 siginit(p)
 	struct proc *p;
 {
-	register int i;
 
-	for (i = 0; i < NSIG; i++)
-		if (sigprop[i] & SA_IGNORE && i != SIGCONT)
-			p->p_sigignore |= sigmask(i);
+	/*
+	 * Note: We don't need to set sa_mask for each signal
+	 * since it only matters if the signal is being caught
+	 * by the process, and that is handed in setsigvec().
+	 */
 }
 
 /*
@@ -228,31 +222,29 @@ execsigs(p)
 	register struct proc *p;
 {
 	register struct sigacts *ps = p->p_sigacts;
-	register int nc, mask;
+	register int nc;
 
 	/*
 	 * Reset caught signals.  Held signals remain held
 	 * through p_sigmask (unless they were caught,
 	 * and are now ignored by default).
 	 */
-	while (p->p_sigcatch) {
-		nc = ffs((long)p->p_sigcatch);
-		mask = sigmask(nc);
-		p->p_sigcatch &= ~mask;
-		if (sigprop[nc] & SA_IGNORE) {
-			if (nc != SIGCONT)
-				p->p_sigignore |= mask;
-			p->p_siglist &= ~mask;
+	for (nc = 0; nc < NSIG; nc++) {
+		if (SIGCATCH(p, nc)) {
+			if (sigprop[nc] & SA_IGNORE)
+				p->p_siglist &= ~sigmask(nc);
+			SIGACTION(p, nc) = SIG_DFL;
 		}
-		ps->ps_sigact[nc] = SIG_DFL;
 	}
+
 	/*
 	 * Reset stack state to the user stack.
 	 * Clear set of signals caught on the signal stack.
 	 */
-	ps->ps_sigstk.ss_flags = SS_DISABLE;
-	ps->ps_sigstk.ss_size = 0;
-	ps->ps_sigstk.ss_sp = 0;
+	p->p_sigstk.ss_flags = SS_DISABLE;
+	p->p_sigstk.ss_size = 0;
+	p->p_sigstk.ss_sp = 0;
+
 	ps->ps_flags = 0;
 }
 
@@ -360,8 +352,8 @@ sys_sigaltstack(p, v, retval)
 
 	psp = p->p_sigacts;
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
-		psp->ps_sigstk.ss_flags |= SS_DISABLE;
-	if (SCARG(uap, oss) && (error = copyout(&psp->ps_sigstk,
+		p->p_sigstk.ss_flags |= SS_DISABLE;
+	if (SCARG(uap, oss) && (error = copyout(&p->p_sigstk,
 	    SCARG(uap, oss), sizeof (struct sigaltstack))))
 		return (error);
 	if (SCARG(uap, nss) == 0)
@@ -370,16 +362,16 @@ sys_sigaltstack(p, v, retval)
 	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {
-		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
+		if (p->p_sigstk.ss_flags & SS_ONSTACK)
 			return (EINVAL);
 		psp->ps_flags &= ~SAS_ALTSTACK;
-		psp->ps_sigstk.ss_flags = ss.ss_flags;
+		p->p_sigstk.ss_flags = ss.ss_flags;
 		return (0);
 	}
 	if (ss.ss_size < MINSIGSTKSZ)
 		return (ENOMEM);
 	psp->ps_flags |= SAS_ALTSTACK;
-	psp->ps_sigstk= ss;
+	p->p_sigstk = ss;			/* struct copy */
 	return (0);
 }
 
@@ -457,7 +449,8 @@ killpg1(cp, signum, pgid, all)
 			if (pgrp == NULL)
 				return (ESRCH);
 		}
-		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
+		for (p = pgrp->pg_members.lh_first; p != 0;
+		    p = p->p_pglist.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
 			    !CANSIGNAL(cp, pc, p, signum))
 				continue;
@@ -494,7 +487,8 @@ pgsignal(pgrp, signum, checkctty)
 	register struct proc *p;
 
 	if (pgrp)
-		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next)
+		for (p = pgrp->pg_members.lh_first; p != 0;
+		    p = p->p_pglist.le_next)
 			if (checkctty == 0 || p->p_flag & P_CONTROLT)
 				psignal(p, signum);
 }
@@ -511,26 +505,32 @@ trapsignal(p, signum, code)
 	u_long code;
 {
 	register struct sigacts *ps = p->p_sigacts;
+	struct sigaction *sa = &ps->ps_sigact[signum];
 	int mask;
 
+	/*
+	 * If target process is exiting, don't bother posting
+	 * the signal, because signals aren't noticed until
+	 * the switch to user space, and that doesn't happen
+	 * for a zombie.
+	 */
+	if ((ps = p->p_sigacts) == NULL)
+		return;
+
 	mask = sigmask(signum);
-	if ((p->p_flag & P_TRACED) == 0 && (p->p_sigcatch & mask) != 0 &&
+	if ((p->p_flag & P_TRACED) == 0 && SIGCATCH(p, signum) &&
 	    (p->p_sigmask & mask) == 0) {
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p->p_tracep, signum, ps->ps_sigact[signum], 
+			ktrpsig(p->p_tracep, signum, sa->sa_handler, 
 				p->p_sigmask, code);
 #endif
-		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
+		(*p->p_emul->e_sendsig)(sa->sa_handler, signum,
 		    p->p_sigmask, code);
-		p->p_sigmask |= ps->ps_catchmask[signum];
-		if ((ps->ps_sigreset & mask) != 0) {
-			p->p_sigcatch &= ~mask;
-			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				p->p_sigignore |= mask;
-			ps->ps_sigact[signum] = SIG_DFL;
-		}
+		p->p_sigmask |= sa->sa_mask;
+		if (sa->sa_flags & SA_RESETHAND)
+			SIGACTION(p, signum) = SIG_DFL;
 	} else {
 		ps->ps_code = code;	/* XXX for core dump/debugger */
 		psignal(p, signum);
@@ -557,10 +557,21 @@ psignal(p, signum)
 {
 	register int s, prop;
 	register sig_t action;
+	struct sigacts *ps;
 	int mask;
 
 	if ((u_int)signum >= NSIG || signum == 0)
 		panic("psignal signal number");
+
+	/*
+	 * If target process is exiting, don't bother posting
+	 * the signal, because signals aren't noticed until
+	 * the switch to user space, and that doesn't happen
+	 * for a zombie.
+	 */
+	if ((ps = p->p_sigacts) == NULL)
+		return;
+
 	mask = sigmask(signum);
 	prop = sigprop[signum];
 
@@ -573,15 +584,15 @@ psignal(p, signum)
 		/*
 		 * If the signal is being ignored,
 		 * then we forget about it immediately.
-		 * (Note: we don't set SIGCONT in p_sigignore,
+		 * (Note: we don't ignore SIGCONT 
 		 * and if it is set to SIG_IGN,
 		 * action will be SIG_DFL here.)
 		 */
-		if (p->p_sigignore & mask)
+		if (SIGIGNORE(p, signum))
 			return;
 		if (p->p_sigmask & mask)
 			action = SIG_HOLD;
-		else if (p->p_sigcatch & mask)
+		else if (SIGCATCH(p, signum))
 			action = SIG_CATCH;
 		else {
 			action = SIG_DFL;
@@ -777,7 +788,7 @@ issignal(p)
 		 * We should see pending but ignored signals
 		 * only if P_TRACED was on when they were posted.
 		 */
-		if (mask & p->p_sigignore && (p->p_flag & P_TRACED) == 0)
+		if (SIGIGNORE(p, signum) && (p->p_flag & P_TRACED) == 0)
 			continue;
 
 		if (p->p_flag & P_TRACED && (p->p_flag & P_PPWAIT) == 0) {
@@ -818,7 +829,7 @@ issignal(p)
 		 * Return the signal's number, or fall through
 		 * to clear it from the pending mask.
 		 */
-		switch ((long)p->p_sigacts->ps_sigact[signum]) {
+		switch ((long)SIGACTION(p, signum)) {
 
 		case (long)SIG_DFL:
 			/*
@@ -914,6 +925,7 @@ postsig(signum)
 {
 	register struct proc *p = curproc;
 	register struct sigacts *ps = p->p_sigacts;
+	register struct sigaction *sa = &ps->ps_sigact[signum];
 	register sig_t action;
 	u_long code;
 	int mask, returnmask;
@@ -924,7 +936,7 @@ postsig(signum)
 #endif
 	mask = sigmask(signum);
 	p->p_siglist &= ~mask;
-	action = ps->ps_sigact[signum];
+	action = SIGACTION(p, signum);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG))
 		ktrpsig(p->p_tracep,
@@ -961,13 +973,9 @@ postsig(signum)
 			ps->ps_flags &= ~SAS_OLDMASK;
 		} else
 			returnmask = p->p_sigmask;
-		p->p_sigmask |= ps->ps_catchmask[signum];
-		if ((ps->ps_sigreset & mask) != 0) {
-			p->p_sigcatch &= ~mask;
-			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				p->p_sigignore |= mask;
-			ps->ps_sigact[signum] = SIG_DFL;
-		}
+		p->p_sigmask |= sa->sa_mask;
+		if (sa->sa_flags & SA_RESETHAND)
+			SIGACTION(p, signum) = SIG_DFL;
 		(void) spl0();
 		p->p_stats->p_ru.ru_nsignals++;
 		if (ps->ps_sig != signum) {
@@ -1144,4 +1152,71 @@ sys_nosys(p, v, retval)
 
 	psignal(p, SIGSYS);
 	return (ENOSYS);
+}
+
+/*
+ * Functions to manipulate `per-process' signal actions.  These may be
+ * shared among multiple NetBSD processes, but are common across a POSIX
+ * process, which may have multiple threads of execution.
+ */
+
+/*
+ * Duplicate one NetBSD process's signal actions.  This is the common
+ * operation done at fork() time.
+ */
+struct sigacts *
+sigacts_copy(p)
+	struct proc *p;
+{
+	struct sigacts *nsiga;
+
+	MALLOC(nsiga, struct sigacts *, sizeof(struct sigacts), M_SUBPROC,
+	    M_WAITOK);
+	bcopy(p->p_sigacts, nsiga, sizeof(struct sigacts));
+	nsiga->ps_refcnt = 1;
+	return (nsiga);
+}
+
+/*
+ * Make p2 share p1's signal actions.
+ */
+void
+sigacts_share(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_sigacts = p1->p_sigacts;
+	p1->p_sigacts->ps_refcnt++;
+}
+
+/*
+ * Make this process not share its signal actions.
+ */
+void
+sigacts_unshare(p)
+	struct proc *p;
+{
+	struct sigacts *nsiga;
+
+	if (p->p_sigacts->ps_refcnt == 1)
+		return;
+
+	nsiga = sigacts_copy(p);
+	p->p_sigacts->ps_refcnt--;
+	p->p_sigacts = nsiga;
+}
+
+/*
+ * Remove a reference to this process's sigacts.  If it
+ * is the last reference, free the structure.
+ */
+void
+sigacts_free(p)
+	struct proc *p;
+{
+
+	if (--p->p_sigacts->ps_refcnt == 0)
+		FREE(p->p_sigacts, M_SUBPROC);
+
+	p->p_sigacts = NULL;
 }

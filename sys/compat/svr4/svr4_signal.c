@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.24.12.1 1997/09/08 23:17:42 thorpej Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -632,7 +632,7 @@ svr4_sys_context(p, v, retval)
 	case 0:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_getcontext(p, &uc, p->p_sigmask,
-		    p->p_sigacts->ps_sigstk.ss_flags & SS_ONSTACK);
+		    p->p_sigstk.ss_flags & SS_ONSTACK);
 		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
 
 	case 1: 

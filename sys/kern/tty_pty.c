@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.38 1996/09/07 12:41:03 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.38.12.1 1997/09/08 23:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -188,7 +188,7 @@ ptsread(dev, uio, flag)
 again:
 	if (pti->pt_flags & PF_REMOTE) {
 		while (isbackground(p, tp)) {
-			if ((p->p_sigignore & sigmask(SIGTTIN)) ||
+			if (SIGIGNORE(p, SIGTTIN) ||
 			    (p->p_sigmask & sigmask(SIGTTIN)) ||
 			    p->p_pgrp->pg_jobc == 0 ||
 			    p->p_flag & P_PPWAIT)
