@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.12 2002/02/27 00:30:07 jmcneill Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.13 2002/03/17 19:41:01 atatat Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.12 2002/02/27 00:30:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.13 2002/03/17 19:41:01 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ pmsi_ioctl(v, cmd, data, flag, p)
 		break;
 		
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.22 2002/03/10 10:13:32 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.23 2002/03/17 19:40:41 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -523,7 +523,7 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

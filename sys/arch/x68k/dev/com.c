@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.23 2001/11/25 15:45:26 minoura Exp $	*/
+/*	$NetBSD: com.c,v 1.24 2002/03/17 19:40:52 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -673,10 +673,11 @@ comioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {
@@ -767,7 +768,7 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	default:
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
 	return 0;

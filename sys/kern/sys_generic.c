@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.60 2001/11/14 18:43:58 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.61 2002/03/17 19:41:07 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.60 2001/11/14 18:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.61 2002/03/17 19:41:07 atatat Exp $");
 
 #include "opt_ktrace.h"
 
@@ -624,7 +624,20 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		free(memp, M_IOCTLOPS);
  out:
 	FILE_UNUSE(fp, p);
-	return (error);
+	switch (error) {
+	case -1:
+		printf("sys_ioctl: _IO%s%s('%c', %lu, %lu) returned -1: "
+		    "pid=%d comm=%s\n",
+		    (com & IOC_IN) ? "W" : "", (com & IOC_OUT) ? "R" : "",
+		    (char)IOCGROUP(com), (com & 0xff), IOCPARM_LEN(com),
+		    p->p_pid, p->p_comm);
+		/* FALLTHROUGH */
+	case EPASSTHROUGH:
+		error = ENOTTY;
+		/* FALLTHROUGH */
+	default:
+		return (error);
+	}
 }
 
 int	selwait, nselcoll;

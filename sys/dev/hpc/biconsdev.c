@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.4 2002/01/02 12:57:49 uch Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.5 2002/03/17 19:40:55 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.4 2002/01/02 12:57:49 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.5 2002/03/17 19:40:55 atatat Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -236,11 +236,10 @@ biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct tty *tp = &biconsdev_tty[0];
 	int error;
 
-	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) !=
+	    EPASSTHROUGH)
 		return (error);
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
-		return (error);
-	return (ENOTTY);
+	return (ttioctl(tp, cmd, data, flag, p));
 }
 
 void

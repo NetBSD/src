@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.75 2002/03/05 04:13:01 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.76 2002/03/17 19:41:10 atatat Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.75 2002/03/05 04:13:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.76 2002/03/17 19:41:10 atatat Exp $");
 
 #include "ppp.h"
 
@@ -610,7 +610,7 @@ pppioctl(sc, cmd, data, flag, p)
 #endif /* PPP_FILTER */
 
     default:
-	return (-1);
+	return (EPASSTHROUGH);
     }
     return (0);
 }

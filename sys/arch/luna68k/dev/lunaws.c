@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.5 2000/10/19 10:35:34 nisimura Exp $ */
+/* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.5 2000/10/19 10:35:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $");
 
 #include "wsmouse.h"
 
@@ -487,7 +487,7 @@ omkbd_ioctl(v, cmd, data, flag, p)
 	    case WSKBDIO_COMPLEXBELL:	/* XXX capable of complex bell */
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 #if NWSMOUSE > 0
@@ -516,7 +516,7 @@ omms_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = 0x19991005; /* XXX */
 		return 0;
 	}
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 static void

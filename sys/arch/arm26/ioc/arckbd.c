@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.16 2001/12/03 22:46:23 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.17 2002/03/17 19:40:34 atatat Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.16 2001/12/03 22:46:23 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.17 2002/03/17 19:40:34 atatat Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -730,7 +730,7 @@ arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = arckbd_led_decode(sc->sc_leds);
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 #endif
 
@@ -761,7 +761,7 @@ arcmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
 		*(int *)data = WSMOUSE_TYPE_ARCHIMEDES;
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static void

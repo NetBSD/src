@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.1 2002/02/10 01:58:07 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.2 2002/03/17 19:40:50 atatat Exp $       */
 
 /*
  * Copyright 1997
@@ -1563,17 +1563,17 @@ pcioctl(dev_t       dev,
     ** Error > 0 means that the operation requested was known by
     ** the line discipline but something went wrong. Error = 0 means the
     ** request was successfully handled by the line discipline so
-    ** we don't need to to do anything. Error < 0 means the line
+    ** we don't need to to do anything. Error == EPASSTHROUGH means the line
     ** discipline doesn't handle this sort of operation. 
     */
     error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-    if (error < 0)
+    if (error == EPASSTHROUGH)
     {
         /* Try the common tty ioctl routine to see if it recognises the
         ** request.  
         */
         error = ttioctl(tp, cmd, data, flag, p);
-        if (error < 0)
+        if (error == EPASSTHROUGH)
         {
             /* Ok must be something specific to our device, 
             ** lets start by assuming we will succeed.
@@ -1769,7 +1769,7 @@ pcioctl(dev_t       dev,
 #endif /* SHARK */
                
                 default:
-                    error = ENOTTY;
+                    error = EPASSTHROUGH;
                 break;
             } /* End switch on ioctl command */
         } /* End need to check if this is a device specific command */
