@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2001/02/21 05:53:35 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2001/03/01 17:11:13 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 #include "opt_m680x0.h"
 #include "opt_fpuemulate.h"
@@ -132,10 +131,6 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 
 /* prototypes for local functions */
 void    identifycpu __P((void));
