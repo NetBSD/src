@@ -1,6 +1,6 @@
 #	@(#)Makefile	7.13 (Berkeley) 2/26/91
 #
-#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#	$Header: /cvsroot/src/sbin/newfs/Makefile,v 1.3 1993/03/23 00:29:15 cgd Exp $
 
 PROG=	newfs
 CFLAGS+=-DMFS

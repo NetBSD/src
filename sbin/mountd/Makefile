@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.4 (Berkeley) 6/29/90
 #
-#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#	$Header: /cvsroot/src/sbin/mountd/Attic/Makefile,v 1.3 1993/03/23 00:29:03 cgd Exp $
 
 PROG=	mountd
 CFLAGS+=-DNFS

@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)netdate.c	5.2 (Berkeley) 2/25/91";
-static char rcsid[] = "$Id: netdate.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/date/netdate.c,v 1.3 1993/03/23 00:25:33 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)cp.c	5.24 (Berkeley) 5/6/91";
-static char rcsid[] = "$Id: cp.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/cp/cp.c,v 1.3 1993/03/23 00:23:42 cgd Exp $";
 #endif /* not lint */
 
 /*

@@ -35,7 +35,7 @@
  *
  *	@(#)expand.h	5.1 (Berkeley) 3/7/91
  *
- *	$Id: expand.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/sh/expand.h,v 1.3 1993/03/23 00:28:03 cgd Exp $
  */
 
 struct strlist {

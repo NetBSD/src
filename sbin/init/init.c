@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: init.c,v 1.3 1993/03/22 08:04:00 cgd Exp $ */
+/* $Header: /cvsroot/src/sbin/init/init.c,v 1.4 1993/03/23 00:28:37 cgd Exp $ */
 
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/03/22 08:04:00 cgd Exp $
+#	$Header: /cvsroot/src/bin/expr/Makefile,v 1.4 1993/03/23 00:25:45 cgd Exp $
 
 PROG=expr
 SRCS=expr.c

@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.6 (Berkeley) 5/2/91
 #
-#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#	$Header: /cvsroot/src/sbin/dmesg/Makefile,v 1.3 1993/03/23 00:26:51 cgd Exp $
 
 PROG=	dmesg
 MAN8=	dmesg.0

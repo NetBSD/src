@@ -35,7 +35,7 @@
  *
  *	@(#)ls.h	5.11 (Berkeley) 7/22/90
  *
- *	$Id: ls.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/ls/ls.h,v 1.3 1993/03/23 00:26:09 cgd Exp $
  */
 
 typedef struct _lsstruct {

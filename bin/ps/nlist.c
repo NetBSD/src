@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)nlist.c	5.5 (Berkeley) 7/1/91";
-static char rcsid[] = "$Id: nlist.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/nlist.c,v 1.4 1993/03/23 00:26:33 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
