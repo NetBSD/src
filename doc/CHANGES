@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.145 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.146 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -368,6 +368,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	pkg_install: improve bzip2 support, especially for non-NetBSD
 		systems. [grant 20030410]
 	less: update to less-381.  [mrg 20030414]
+	kernel: added a sysctl(8) flag to check and reject packets arriving
+		on the "wrong" interface.  [christos 20030412]
 	libc: added slovak language libc message catalog. [salo 20030414]
 	df(1): add -G argument for output in gigabytes [grant 20030416]
 	mpt(4): Added device driver for LSI Fusion-MPT based SCSI and
