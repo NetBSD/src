@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.12 2000/11/13 22:12:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.12 2000/11/13 22:12:49 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,9 @@ __RCSID("$NetBSD: mount_lfs.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
+
+#include <signal.h>
 
 #include "mntopts.h"
 #include "pathnames.h"
@@ -68,10 +71,12 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_lfs __P((int argc, char **argv));
+int		main __P((int, char *[]));
+int		mount_lfs __P((int, char *[]));
 static void	invoke_cleaner __P((char *));
 static void	usage __P((void));
+static void	kill_daemon __P((char *));
+static void	kill_cleaner __P((char *));
 
 static int short_rds, cleaner_debug, cleaner_bytes;
 static char *nsegs;
@@ -92,9 +97,11 @@ mount_lfs(argc, argv)
 	char *argv[];
 {
 	struct ufs_args args;
-	int ch, mntflags, noclean;
+	int ch, mntflags, noclean, mntsize, oldflags, i;
 	char *fs_name, *options;
+
 	const char *errcause;
+	struct statfs *mntbuf;
 
 	options = NULL;
 	nsegs = "4";
@@ -141,6 +148,23 @@ mount_lfs(argc, argv)
 	} else
 		args.export.ex_flags = 0;
 
+	/*
+	 * Record the previous status of this filesystem (if any) before
+	 * performing the mount, so we can know whether to start or
+	 * kill the cleaner process below.
+	 */
+	oldflags = MNT_RDONLY; /* If not mounted, pretend r/o */
+	if (mntflags & MNT_UPDATE) {
+		if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
+			err(1, "getmntinfo");
+		for (i = 0; i < mntsize; i++) {
+			if (strcmp(mntbuf[i].f_mntfromname, args.fspec) == 0) {
+				oldflags = mntbuf[i].f_flags;
+				break;
+			}
+		}
+	}
+
 	if (mount(MOUNT_LFS, fs_name, mntflags, &args)) {
 		switch (errno) {
 		case EMFILE:
@@ -160,11 +184,60 @@ mount_lfs(argc, argv)
 		errx(1, "%s on %s: %s", args.fspec, fs_name, errcause);
 	}
 
+	/* Not mounting fresh or upgrading to r/w; don't start the cleaner */
+	if (!(oldflags & MNT_RDONLY) || (mntflags & MNT_RDONLY))
+		noclean = 1;
 	if (!noclean)
 		invoke_cleaner(fs_name);
 		/* NOTREACHED */
 
+	/* Downgrade to r/o; kill the cleaner */
+	if ((mntflags & MNT_RDONLY) && !(oldflags & MNT_RDONLY))
+		kill_cleaner(fs_name);
+
 	exit(0);
+}
+
+static void
+kill_daemon(pidname)
+	char *pidname;
+{
+	FILE *fp;
+	char s[80];
+	pid_t pid;
+
+	fp = fopen(pidname, "r");
+	if (fp) {
+		fgets(s, 80, fp);
+		pid = atoi(s);
+		if (pid)
+			kill(pid, SIGINT);
+		fclose(fp);
+	}
+}
+
+static void
+kill_cleaner(name)
+	char *name;
+{
+	char *pidname;
+	char *cp;
+	int off;
+
+	/* Parent first */
+	pidname = malloc(strlen(name) + 20 + strlen(_PATH_VARRUN));
+	sprintf(pidname, "%slfs_cleanerd:m:%s.pid", _PATH_VARRUN, name);
+	off = strlen(_PATH_VARRUN);
+	while((cp = strchr(pidname + off, '/')) != NULL)
+		*cp = '|';
+	kill_daemon(pidname);
+
+	/* Then child */
+	sprintf(pidname, "%slfs_cleanerd:s:%s.pid", _PATH_VARRUN, name);
+	off = strlen(_PATH_VARRUN);
+	while((cp = strchr(pidname + off, '/')) != NULL)
+		*cp = '|';
+	kill_daemon(pidname);
 }
 
 static void
