@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.3 1994/12/13 20:16:30 mycroft Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.4 1994/12/14 13:03:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_extern.h	8.3 (Berkeley) 4/16/94
+ *	@(#)ufs_extern.h	8.6 (Berkeley) 8/10/94
  */
 
 struct buf;
@@ -111,6 +111,7 @@ int	 ufs_start __P((struct mount *, int, struct proc *));
 int	 ufs_strategy __P((struct vop_strategy_args *));
 int	 ufs_symlink __P((struct vop_symlink_args *));
 int	 ufs_unlock __P((struct vop_unlock_args *));
+int	 ufs_whiteout __P((struct vop_whiteout_args *));
 int	 ufs_vinit __P((struct mount *,
 	    int (**)(), int (**)(), struct vnode **));
 int	 ufsspec_close __P((struct vop_close_args *));

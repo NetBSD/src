@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.5 1994/10/30 21:50:17 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.6 1994/12/14 13:04:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_vnops.c	8.10 (Berkeley) 4/1/94
+ *	@(#)ufs_vnops.c	8.14 (Berkeley) 10/26/94
  */
 
 #include <sys/param.h>
@@ -302,12 +302,9 @@ ufs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime.ts_sec = ip->i_atime.ts_sec;
-	vap->va_atime.ts_nsec = ip->i_atime.ts_nsec;
-	vap->va_mtime.ts_sec = ip->i_mtime.ts_sec;
-	vap->va_mtime.ts_nsec = ip->i_mtime.ts_nsec;
-	vap->va_ctime.ts_sec = ip->i_ctime.ts_sec;
-	vap->va_ctime.ts_nsec = ip->i_ctime.ts_nsec;
+	vap->va_atime = ip->i_atime;
+	vap->va_mtime = ip->i_mtime;
+	vap->va_ctime = ip->i_ctime;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
@@ -471,7 +468,7 @@ ufs_chown(vp, uid, gid, cred, p)
 	 * the caller must be superuser or the call fails.
 	 */
 	if ((cred->cr_uid != ip->i_uid || uid != ip->i_uid ||
-	    !groupmember((gid_t)gid, cred)) &&
+	    (gid != ip->i_gid && !groupmember((gid_t)gid, cred))) &&
 	    (error = suser(cred, &p->p_acflag)))
 		return (error);
 	ogid = ip->i_gid;
@@ -711,6 +708,64 @@ out2:
 	vput(vp);
 	return (error);
 }
+
+/*
+ * whiteout vnode call
+ */
+int
+ufs_whiteout(ap)
+	struct vop_whiteout_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+		int a_flags;
+	} */ *ap;
+{
+	struct vnode *dvp = ap->a_dvp;
+	struct componentname *cnp = ap->a_cnp;
+	struct direct newdir;
+	int error;
+
+	switch (ap->a_flags) {
+	case LOOKUP:
+		/* 4.4 format directories support whiteout operations */
+		if (dvp->v_mount->mnt_maxsymlinklen > 0)
+			return (0);
+		return (EOPNOTSUPP);
+
+	case CREATE:
+		/* create a new directory whiteout */
+#ifdef DIAGNOSTIC
+		if ((cnp->cn_flags & SAVENAME) == 0)
+			panic("ufs_whiteout: missing name");
+		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
+			panic("ufs_whiteout: old format filesystem");
+#endif
+
+		newdir.d_ino = WINO;
+		newdir.d_namlen = cnp->cn_namelen;
+		bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
+		newdir.d_type = DT_WHT;
+		error = ufs_direnter2(dvp, &newdir, cnp->cn_cred, cnp->cn_proc);
+		break;
+
+	case DELETE:
+		/* remove an existing directory whiteout */
+#ifdef DIAGNOSTIC
+		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
+			panic("ufs_whiteout: old format filesystem");
+#endif
+
+		cnp->cn_flags &= ~DOWHITEOUT;
+		error = ufs_dirremove(dvp, cnp);
+		break;
+	}
+	if (cnp->cn_flags & HASBUF) {
+		FREE(cnp->cn_pnbuf, M_NAMEI);
+		cnp->cn_flags &= ~HASBUF;
+	}
+	return (error);
+}
+
 
 /*
  * Rename system call.
@@ -1169,6 +1224,8 @@ ufs_mkdir(ap)
 	ip->i_mode = dmode;
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_nlink = 2;
+	if (cnp->cn_flags & ISWHITEOUT)
+		ip->i_flags |= UF_OPAQUE;
 	tv = time;
 	error = VOP_UPDATE(tvp, &tv, &tv, 1);
 
@@ -1940,6 +1997,9 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	if ((ip->i_mode & ISGID) && !groupmember(ip->i_gid, cnp->cn_cred) &&
 	    suser(cnp->cn_cred, NULL))
 		ip->i_mode &= ~ISGID;
+
+	if (cnp->cn_flags & ISWHITEOUT)
+		ip->i_flags |= UF_OPAQUE;
 
 	/*
 	 * Make sure inode goes to disk before directory entry.

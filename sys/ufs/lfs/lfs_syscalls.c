@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.6 1994/12/11 17:57:15 mycroft Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.7 1994/12/14 13:03:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_syscalls.c	8.5 (Berkeley) 4/20/94
+ *	@(#)lfs_syscalls.c	8.6 (Berkeley) 6/16/94
  */
 
 #include <sys/param.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: dinode.h,v 1.4 1994/10/20 04:21:16 cgd Exp $	*/
-
 /*
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dinode.h	8.3 (Berkeley) 1/21/94
+ *	@(#)dinode.h	8.6 (Berkeley) 9/13/94
  */
 
 /*
@@ -49,6 +47,14 @@
 #define	ROOTINO	((ino_t)2)
 
 /*
+ * The Whiteout inode# is a dummy non-zero inode number which will
+ * never be allocated to a real file.  It is used as a place holder
+ * in the directory entry which has been tagged as a DT_W entry.
+ * See the comments about ROOTINO above.
+ */
+#define	WINO	((ino_t)1)
+
+/*
  * A dinode contains all the meta-data associated with a UFS file.
  * This structure defines the on-disk format of a dinode.
  */
@@ -56,22 +62,17 @@
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
-struct ufs_timespec {
-	int32_t	ts_sec;			/* seconds */
-	int32_t	ts_nsec;		/* and nanoseconds */
-};
-
 struct dinode {
-	u_int16_t	di_mode;	/*   0: IFMT and permissions. */
+	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	union {
 		u_int16_t oldids[2];	/*   4: Ffs: old user and group ids. */
-		ino_t	inumber;	/*   4: Lfs: inode number. */
+		ino_t	  inumber;	/*   4: Lfs: inode number. */
 	} di_u;
 	u_int64_t	di_size;	/*   8: File byte count. */
-	struct ufs_timespec di_atime;	/*  16: Last access time. */
-	struct ufs_timespec di_mtime;	/*  24: Last modified time. */
-	struct ufs_timespec di_ctime;	/*  32: Last inode change time. */
+	struct timespec	di_atime;	/*  16: Last access time. */
+	struct timespec	di_mtime;	/*  24: Last modified time. */
+	struct timespec	di_ctime;	/*  32: Last inode change time. */
 	daddr_t		di_db[NDADDR];	/*  40: Direct disk blocks. */
 	daddr_t		di_ib[NIADDR];	/*  88: Indirect disk blocks. */
 	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
@@ -96,7 +97,7 @@ struct dinode {
 #define	di_shortlink	di_db
 #define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(daddr_t))
 
-/* File modes. */
+/* File permissions. */
 #define	IEXEC		0000100		/* Executable. */
 #define	IWRITE		0000200		/* Writeable. */
 #define	IREAD		0000400		/* Readable. */
@@ -113,3 +114,4 @@ struct dinode {
 #define	IFREG		0100000		/* Regular file. */
 #define	IFLNK		0120000		/* Symbolic link. */
 #define	IFSOCK		0140000		/* UNIX domain socket. */
+#define	IFWHT		0160000		/* Whiteout. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.4 1994/12/13 20:16:16 mycroft Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.5 1994/12/14 13:03:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_vnops.c	8.7 (Berkeley) 2/3/94
+ *	@(#)ffs_vnops.c	8.10 (Berkeley) 8/10/94
  */
 
 #include <sys/param.h>
@@ -68,6 +68,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
 	{ &vop_create_desc, ufs_create },		/* create */
+	{ &vop_whiteout_desc, ufs_whiteout },		/* whiteout */
 	{ &vop_mknod_desc, ufs_mknod },			/* mknod */
 	{ &vop_open_desc, ufs_open },			/* open */
 	{ &vop_close_desc, ufs_close },			/* close */

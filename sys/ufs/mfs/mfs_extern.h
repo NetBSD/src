@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.2 1994/06/29 06:47:10 cgd Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.3 1994/12/14 13:03:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_extern.h	8.1 (Berkeley) 6/11/93
+ *	@(#)mfs_extern.h	8.2 (Berkeley) 6/16/94
  */
 
 struct buf;
