@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.131 2001/08/02 01:47:47 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.132 2001/08/02 22:41:32 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -9300,6 +9300,12 @@ ENTRY(pseg_find)
 	.globl	block_disable
 block_disable:	.xword	1
 	.text
+
+#if 0
+#define ASI_STORE	ASI_BLK_COMMIT_P
+#else
+#define ASI_STORE	ASI_BLK_P
+#endif
 	
 #if 1
 /*
@@ -9338,9 +9344,19 @@ ENTRY(bcopy) /* src, dest, size */
 	.text
 3:
 #endif
+	/*
+	 * Check for overlaps and punt.
+	 *
+	 * If src <= dest <= src+len we have a problem.
+	 */
+
+	sub	%o1, %o0, %o3
+
+	cmp	%o3, %o2
+	blu,pn	%xcc, Lovbcopy
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
-!	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
+	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
 	 cmp	%o2, 256
 
 	mov	%o1, %o5	! Save memcpy return value
@@ -9361,6 +9377,36 @@ Lbcopy_start:
 	retl
 	 mov	%o5, %o0
 	NOTREACHED
+
+	/*
+	 * Overlapping bcopies -- punt.
+	 */
+Lovbcopy:
+
+	/*
+	 * Since src comes before dst, and the regions might overlap,
+	 * we have to do the copy starting at the end and working backwards.
+	 *
+	 * We could optimize this, but it almost never happens.
+	 */
+	mov	%o1, %o5	! Retval
+	add	%o2, %o0, %o0	! src += len
+	add	%o2, %o1, %o1	! dst += len
+	
+	deccc	%o2
+	bl,pn	%xcc, 1f
+	 dec	%o0
+0:
+	dec	%o1
+	ldsb	[%o0], %o4
+	dec	%o0
+	
+	deccc	%o2
+	bge,pt	%xcc, 0b
+	 stb	%o4, [%o1]
+1:
+	retl
+	 mov	%o5, %o0
 
 	/*
 	 * Plenty of data to copy, so try to do it optimally.
@@ -9491,7 +9537,7 @@ Lbcopy_unrolled8:
 	.align	8
 1:
 	srlx	%o1, %l3, %g1
-	inc	8*8, %l0
+	inc	6*8, %l0
 	
 	sllx	%o1, %l4, %o1
 	or	%g1, %o0, %g6
@@ -9577,7 +9623,7 @@ Lbcopy_unrolled8_cleanup:
 	mov	%o5, %o0				! Save our unused data
 	dec	5*8, %l2
 2:
-	inccc	16*8, %l2
+	inccc	12*8, %l2
 	bz,pn	%icc, Lbcopy_complete
 	
 	!! Unrolled 8 times
@@ -9639,8 +9685,8 @@ Lbcopy_noshift8:
 	ldx	[%l0+5*8], %o5
 	inc	6*8, %l0
 	stx	%o3, [%l1+3*8]
-	stx	%o4, [%l1+4*8]
 	deccc	6*8, %l2
+	stx	%o4, [%l1+4*8]
 	stx	%o5, [%l1+5*8]
 	bge,pt	%xcc, 1b
 	 inc	6*8, %l1
@@ -9714,23 +9760,19 @@ Lbcopy_complete:
 	 nop
 
 1:
-	set	block_disable, %l0
-	stx	%l0, [%l0]
-	
 	set	0f, %o0
-	call	prom_printf
+	call	printf
 	 sub	%i2, %l4, %o5
 	set	1f, %o0
 	mov	%i0, %o1
 	mov	%i1, %o2
-	call	prom_printf
+	call	printf
 	 mov	%i2, %o3
 	ta	1
 	.data
-	_ALIGN
-0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\r\n"
-1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
-	_ALIGN
+0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\n"
+1:	.asciz	"bcopy(%p, %p, %lx)\n"
+	.align 8
 	.text
 2:	
 #endif
@@ -9742,7 +9784,9 @@ Lbcopy_complete:
 /*
  * Block copy.  Useful for >256 byte copies.
  *
- * It seems the integer version is always faster.  Go figure.
+ * Benchmarking has shown this always seems to be slower than
+ * the integer version, so this is disabled.  Maybe someone will
+ * figure out why sometime.
  */
 	
 Lbcopy_block:
@@ -9806,12 +9850,6 @@ Lbcopy_block:
  * %o5		last safe fetchable address
  */
 
-#define	ASI_STORE	ASI_BLK_P
-
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
 #if 1
 	ENABLE_FPU(0)
 #else
