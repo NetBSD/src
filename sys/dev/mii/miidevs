@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.50 2003/10/26 21:34:44 fvdl Exp $
+$NetBSD: miidevs,v 1.51 2003/10/26 22:24:58 fvdl Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ model yyINTEL I82562EM		0x0032 i82562EM 10/100 media interface
 model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
 
-model yyINTEL IGP01E1000	0x0038 IGP01E1000 10/100/1000 media interface
+model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
