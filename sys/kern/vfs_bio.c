@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.133 2004/10/03 08:30:09 enami Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.134 2004/10/03 08:47:48 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.133 2004/10/03 08:30:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.134 2004/10/03 08:47:48 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1201,10 +1201,15 @@ start:
 		simple_lock(&bp->b_interlock);
 		bremfree(bp);
 	} else {
-		/* wait for a free buffer of any kind */
-		needbuffer = 1;
-		ltsleep(&needbuffer, slpflag|(PRIBIO + 1),
-			"getnewbuf", slptimeo, &bqueue_slock);
+		/*
+		 * XXX: !from_bufq should be removed.
+		 */
+		if (!from_bufq || curproc != uvm.pagedaemon_proc) {
+			/* wait for a free buffer of any kind */
+			needbuffer = 1;
+			ltsleep(&needbuffer, slpflag|(PRIBIO + 1),
+			    "getnewbuf", slptimeo, &bqueue_slock);
+		}
 		return (NULL);
 	}
 
@@ -1298,17 +1303,17 @@ buf_trim(void)
 int
 buf_drain(int n)
 {
-	int s, size = 0;
+	int s, size = 0, sz;
 
 	s = splbio();
 	simple_lock(&bqueue_slock);
 
-	/* If not asked for a specific amount, make our own estimate */
-	if (n == 0)
-		n = buf_canrelease();
-
-	while (size < n && bufmem > bufmem_lowater)
-		size += buf_trim();
+	while (size < n && bufmem > bufmem_lowater) {
+		sz = buf_trim();
+		if (sz <= 0)
+			break;
+		size += sz;
+	}
 
 	simple_unlock(&bqueue_slock);
 	splx(s);
