@@ -1,3 +1,5 @@
+/* $NetBSD: if_ehreg.h,v 1.2 1996/03/08 16:24:51 mark Exp $ */
+
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
  * All rights reserved.
@@ -32,7 +34,6 @@
  * if_ehreg.h
  *
  * Ether H register definitions.
- *
  */
 
 #define EH_RESET	(0x18<<2)
@@ -142,9 +143,9 @@
 #define RSR_DFR		(0x80)
 
 struct eh_rxhdr {
-    char rx_status;
-    char rx_nxtpkt;
-    char rx_rbc0;
-    char rx_rbc1;
+	char rx_status;
+	char rx_nxtpkt;
+	char rx_rbc0;
+	char rx_rbc1;
 };
 
