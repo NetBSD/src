@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: device.h,v 1.2 1993/11/29 00:32:29 briggs Exp $
+ * $Id: device.h,v 1.3 1994/06/26 12:58:13 briggs Exp $
  */
 
 #include "nubus.h"
@@ -114,16 +114,3 @@ struct macdriver {
   void (*init)(struct macdriver *);	/* Initialize all hardware	*/
   char *name;				/* Name of the driver		*/
 };
-
-struct scsi_subdev {
-	struct macdriver *macdriver;	/* For future NuBUS scsi support */
-	int		 unit;
-	int		 flags;
-	int		 drive;
-	int		 parentunit;
-};
-
-extern struct macdriver macdriver[];	/* In ioconf.c */
-extern int numdrivers;			/* In ioconf.c */
-extern struct scsi_subdev scsi_subs[];	/* In ioconf.c */
-extern int numscsi_subs;		/* In ioconf.c */
