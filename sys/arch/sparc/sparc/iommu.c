@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.32.2.1.2.1 1999/06/21 01:01:47 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.32.2.1.2.2 1999/08/02 20:09:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -412,7 +412,8 @@ iommu_alloc(va, len)
 	u_int va, len;
 {
 	struct iommu_softc *sc = X;
-	int off, tva, pa, iovaddr, pte;
+	int off, tva, iovaddr, pte;
+	paddr_t pa;
 
 	off = (int)va & PGOFSET;
 	len = round_page(len + off);
@@ -424,7 +425,7 @@ if ((int)sc->sc_dvmacur + len > 0)
 	iovaddr = tva = sc->sc_dvmacur;
 	sc->sc_dvmacur += len;
 	while (len) {
-		pa = pmap_extract(pmap_kernel(), va);
+		(void) pmap_extract(pmap_kernel(), va, &pa);
 
 #define IOMMU_PPNSHIFT	8
 #define IOMMU_V		0x00000002
@@ -506,10 +507,11 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 		pmap = pmap_kernel();
 
 	for (; sgsize != 0; ) {
+		paddr_t pa;
 		/*
 		 * Get the physical address for this page.
 		 */
-		paddr_t pa = pmap_extract(pmap, va);
+		(void) pmap_extract(pmap, va, &pa);
 
 		iommu_enter(dva, pa);
 

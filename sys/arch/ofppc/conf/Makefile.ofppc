@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.18 1999/01/15 23:37:07 thorpej Exp $
+#	$NetBSD: Makefile.ofppc,v 1.18.4.1 1999/08/02 20:00:47 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -57,6 +57,8 @@ AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100000 -e __start
 STRIPFLAGS=	--strip-debug
 
+%INCLUDES
+
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
@@ -110,8 +112,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

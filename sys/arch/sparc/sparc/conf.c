@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.58 1998/12/18 16:55:39 drochner Exp $ */
+/*	$NetBSD: conf.c,v 1.58.4.1 1999/08/02 20:09:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 
 #include "kbd.h"
 #include "ms.h"
+#include "com.h"
 #include "zstty.h"
 #include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
@@ -86,6 +87,7 @@
 #include "cgeight.h"
 #include "tcx.h"
 #include "cgfourteen.h"
+#include "pnozz.h"
 #include "fb.h"
 
 #include "xd.h"
@@ -164,7 +166,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
-	cdev_notdef(),			/* 36 */
+	cdev_tty_init(NCOM,com),	/* 36: NS16x50 compatible ports */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
 	cdev_fb_init(NCGFOUR,cgfour),	/* 39: /dev/cgfour */
@@ -250,6 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 119: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
+	cdev_fb_init(NPNOZZ,p9100),	/* 122: /dev/cgfourteen */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

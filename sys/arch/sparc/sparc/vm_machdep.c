@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44.4.1 1999/06/21 01:01:51 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.44.4.2 1999/08/02 20:09:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,8 +81,7 @@ pagemove(from, to, size)
 	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
 		panic("pagemove 1");
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
 			panic("pagemove 2");
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
@@ -137,8 +136,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
 	do {
-		pa = pmap_extract(upmap, uva);
-		if (pa == 0)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa | PMAP_NC,

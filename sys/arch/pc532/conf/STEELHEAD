@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.24.10.1 1999/06/21 00:56:57 thorpej Exp $
+#	$NetBSD: STEELHEAD,v 1.24.10.2 1999/08/02 20:02:17 thorpej Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -24,6 +24,7 @@ options 	"COMPAT_10"		# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 
 # file system options
 file-system 	FFS			# Berkeley fast file system

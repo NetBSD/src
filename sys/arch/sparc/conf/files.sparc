@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.70.4.2 1999/07/01 23:22:09 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.70.4.3 1999/08/02 20:09:12 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -182,6 +182,10 @@ device cgfourteen: fb, rasops32
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
+device pnozz: fb, bt_dac, rasops8, rasops16, rasops32
+attach pnozz at sbus
+file	arch/sparc/dev/p9100.c		pnozz needs-flag
+
 file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
 
@@ -191,6 +195,9 @@ file	arch/sparc/dev/if_le_obio.c	le_obio
 
 attach ie at obio with ie_obio
 file	arch/sparc/dev/if_ie_obio.c	ie_obio
+
+attach com at obio with com_obio
+file	arch/sparc/dev/com_obio.c	com_obio
 
 device si: scsi, ncr5380sbc
 attach si at vme

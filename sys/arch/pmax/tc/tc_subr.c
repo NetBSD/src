@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.21.12.2 1999/07/01 23:20:19 thorpej Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.21.12.3 1999/08/02 20:06:05 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.12.2 1999/07/01 23:20:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.12.3 1999/08/02 20:06:05 thorpej Exp $");
 
 
 #include <sys/types.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.12.2 1999/07/01 23:20:19 thorpej Ex
 #include "mfb.h"
 #include "sfb.h"
 #include "px.h"
+#include "fb.h"
+#include "xcfb.h"
 
 /*
  * Tables for table-driven TC and console configuration.
@@ -334,8 +336,9 @@ static int
 tc_consprobeslot(tc_slotaddr)
 	tc_addr_t tc_slotaddr;
 {
-
+#if NCFB > 0 || NFB > 0 || NMFB > 0 || NSFB > 0 || NXCFB > 0 || NPX > 0
 	void *slotaddr = (void *) tc_slotaddr;
+	struct fbinfo *fi;
 	char name[20];
 	int i;
 
@@ -349,6 +352,9 @@ tc_consprobeslot(tc_slotaddr)
 	if (tc_checkslot(tc_slotaddr, name) == 0)
 		return (0);
 
+	if (fballoc((caddr_t)tc_slotaddr, &fi))
+		return (0);
+
 	/*
 	 * We found an device in the given slot. Now see if it's a
 	 * framebuffer for which we have a driver.
@@ -357,10 +363,11 @@ tc_consprobeslot(tc_slotaddr)
 		if (tcfbsw[i].fbsw_initfn == 0)
 			break;
 		if (strcmp(name, tcfbsw[i].fbsw_name) == 0) {
-			if (tcfbsw[i].fbsw_initfn(NULL, slotaddr, 0, 1))
+			if (tcfbsw[i].fbsw_initfn(fi, slotaddr, 0, 1))
 				return (1);
 		}
 	}
+#endif
 
 	return (0);
 }
