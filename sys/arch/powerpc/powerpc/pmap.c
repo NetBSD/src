@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 1999/02/04 12:45:31 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 1999/02/26 14:40:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1443,4 +1443,19 @@ void
 pmap_deactivate(p)
 	struct proc *p;
 {
+}
+
+/*
+ * Synchronize caches corresponding to [addr, addr+len) in p.
+ */
+void
+pmap_procwr(p, va, len)
+	struct proc *p;
+	vaddr_t va;
+	size_t len;
+{
+	paddr_t pa;
+
+	pa = pmap_extract(p->p_vmspace->vm_map.pmap, va);
+	syncicache((void *)pa, len);
 }
