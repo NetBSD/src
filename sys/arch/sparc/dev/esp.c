@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.15 1995/01/02 20:21:01 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.16 1995/01/07 05:17:59 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -192,7 +192,7 @@ espselect(sc, target, lun, cmd, clen)
 	 * The docs say the target register is never reset, and I
 	 * can't think of a better place to set it
 	 */
-	esp[ESP_ID] = target;
+	esp[ESP_SELID] = target;
 	esp[ESP_SYNCOFF] = sc->sc_tinfo[target].offset;
 	esp[ESP_SYNCTP] = 250 / sc->sc_tinfo[target].period;
 
