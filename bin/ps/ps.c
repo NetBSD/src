@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.32 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: ps.c,v 1.33 1999/12/03 02:16:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.32 1999/11/09 15:06:31 drochner Exp $");
+__RCSID("$NetBSD: ps.c,v 1.33 1999/12/03 02:16:41 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
 int	needuser, needcomm, needenv, commandonly, use_procfs;
+uid_t	myuid;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
@@ -135,7 +136,7 @@ main(argc, argv)
 
 	fmt = prtheader = wflag = xflg = 0;
 	what = KERN_PROC_UID;
-	flag = getuid();
+	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
 	    "acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
