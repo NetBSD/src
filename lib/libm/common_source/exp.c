@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exp.c	5.7 (Berkeley) 12/2/92";*/
-static char rcsid[] = "$Id: exp.c,v 1.4 1993/08/14 19:21:14 mycroft Exp $";
+static char rcsid[] = "$Id: exp.c,v 1.5 1993/08/14 19:31:23 mycroft Exp $";
 #endif /* not lint */
 
 /* EXP(X)
@@ -159,7 +159,7 @@ double x;
 	else 
 	/* exp(INF) is INF, exp(+big#) overflows to INF */
 		if (finite(x))
-			return(scalb(1.0, 5000);
+			return(scalb(1.0, 5000));
 		else
 			return(x);
 }

@@ -33,13 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)log.c	5.10 (Berkeley) 1/10/93";*/
-static char rcsid[] = "$Id: log__D.c,v 1.1 1993/08/14 19:21:40 mycroft Exp $";
+static char rcsid[] = "$Id: log__D.c,v 1.2 1993/08/14 19:31:27 mycroft Exp $";
 #endif /* not lint */
 
 #include <math.h>
 #include <errno.h>
 
-#include "mathimpl.h"
 #include "log.h"
 
 /* Table-driven natural logarithm.
@@ -90,6 +89,7 @@ log__D(x) double x;
 {
 	int m, j;
 	double F, f, g, q, u, u2, v, zero = 0.0, one = 1.0;
+	struct Double r;
 	double logb(), ldexp();
 	volatile double u1;
 
