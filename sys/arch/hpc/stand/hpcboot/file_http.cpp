@@ -1,7 +1,7 @@
-/*	$NetBSD: file_http.cpp,v 1.5 2001/05/08 18:51:22 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.6 2002/02/04 17:32:02 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +72,7 @@ HttpFile::HttpFile(Console *&cons)
 	//    _memory_cache = FALSE; // not recomended.
 	_buffer = 0;
 	_reset_state();
-	DPRINTF((TEXT("File: HTTP\n")));
+	DPRINTF((TEXT("FileManager: HTTP\n")));
 }
 
 HttpFile::~HttpFile(void)
@@ -172,7 +172,7 @@ HttpFile::setRoot(TCHAR *server)
 	return FALSE;
   
  connected:
-	DPRINTF((TEXT(" \"%S\"\n"), _server_name));
+	DPRINTF((TEXT("(%S) connected.\n"), _server_name));
 	closesocket(h);
 
 	return TRUE;
@@ -181,7 +181,9 @@ HttpFile::setRoot(TCHAR *server)
 BOOL
 HttpFile::open(const TCHAR *name, u_int32_t flag)
 {
+
 	_reset_state();
+
 	return _to_ascii(_ascii_filename, name, MAX_PATH);
 }
 
@@ -293,13 +295,16 @@ HttpFile::_parse_header(size_t &header_size)
 			if (__stricmp(token, "content-length") == 0) {
 				token = strtok(0, sep);
 				sz = atoi(token);
-				DPRINTF((TEXT("content-length=%d\n"), sz));
+				DPRINTFN(1, (TEXT("content-length=%d\n"), sz));
 			} else
 				token = strtok(0, sep);
 		}
 	}
 	header_size = cnt;
-	DPRINTF((TEXT("header %d byte contents %d byte\n"), header_size, sz));
+
+	DPRINTF((TEXT
+	    ("open file http://%S%S - header %d byte contents %d byte\n"),
+	    _server_name, _ascii_filename, header_size, sz));
 
 	return sz;
 }
@@ -324,6 +329,7 @@ HttpFile::_recv_buffer(SOCKET h, char *buf, size_t size)
 void
 HttpFile::_set_request(void)
 {
+
 	strcat(_request, _ascii_filename);
 	strcat(_request, _req_host);
 	strcat(_request, _server_name);
@@ -347,6 +353,7 @@ __stricmp(const char *s1, const char *s2)
 Socket::Socket(struct sockaddr_in &sock)
 	: _sockaddr(sock)
 {
+
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socket != INVALID_SOCKET)
 		connect(_socket,
@@ -356,6 +363,7 @@ Socket::Socket(struct sockaddr_in &sock)
 
 Socket::~Socket(void)
 { 
+
 	if (_socket != INVALID_SOCKET)
 		closesocket(_socket);
 }
