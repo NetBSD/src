@@ -1,4 +1,4 @@
-/*	$NetBSD: mulsi3.S,v 1.2 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: mulsi3.S,v 1.3 2003/09/22 02:18:40 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(__mulsi3)
+NENTRY(__mulsi3)
 	mul.l	r4, r5
 	rts
-	sts	macl, r0
+	 sts	macl, r0
