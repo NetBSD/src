@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.96 1999/11/11 01:19:11 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.97 1999/11/26 21:41:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.96 1999/11/11 01:19:11 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.97 1999/11/26 21:41:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1385,9 +1385,16 @@ fetch_ftp(url)
 			}
 			*cp = 0;
 		}
-	} else {			/* classic style `host:file' */
+	} else {			/* classic style `[user@]host:[file]' */
 		urltype = CLASSIC_URL_T;
 		host = xstrdup(url);
+		cp = strchr(host, '@');
+		if (cp != NULL) {
+			*cp = '\0';
+			user = host;
+			anonftp = 0;	/* disable anonftp */
+			host = xstrdup(cp + 1);
+		}
 		cp = strchr(host, ':');
 		if (cp != NULL) {
 			*cp = '\0';
@@ -1401,30 +1408,26 @@ fetch_ftp(url)
 	dir = path;
 	if (! EMPTYSTRING(dir)) {
 		/*
-		 * If we are dealing with classic `host:path' syntax,
-		 * then a path of the form `/file' (resulting from
-		 * input of the form `host:/file') means that we should
-		 * do "CWD /" before retrieving the file.  So we set
-		 * dir="/" and file="file".
+		 * If we are dealing with classic `[user@]host:[path]' syntax,
+		 * then a path of the form `/file' (resulting from input of the
+		 * form `host:/file') means that we should do "CWD /" before
+		 * retrieving the file.  So we set dir="/" and file="file".
 		 *
-		 * But if we are dealing with URLs like
-		 * `ftp://host/path' then a path of the form `/file'
-		 * (resulting from a URL of the form `ftp://host//file')
-		 * means that we should do `CWD ' (with an empty
-		 * argument) before retrieving the file.  So we set
+		 * But if we are dealing with URLs like `ftp://host/path' then
+		 * a path of the form `/file' (resulting from a URL of the form
+		 * `ftp://host//file') means that we should do `CWD ' (with an
+		 * empty argument) before retrieving the file.  So we set
 		 * dir="" and file="file".
 		 *
-		 * If the path does not contain / at all, we set
-		 * dir=NULL.  (We get a path without any slashes if
-		 * we are dealing with classic `host:file' or URL
-		 * `ftp://host/file'.)
+		 * If the path does not contain / at all, we set dir=NULL.
+		 * (We get a path without any slashes if we are dealing with
+		 * classic `[user@]host:[file]' or URL `ftp://host/file'.)
 		 *
-		 * In all other cases, we set dir to a string that does
-		 * not include the final '/' that separates the dir part
-		 * from the file part of the path.  (This will be the
-		 * empty string if and only if we are dealing with a
-		 * path of the form `/file' resulting from an URL of the
-		 * form `ftp://host//file'.)
+		 * In all other cases, we set dir to a string that does not
+		 * include the final '/' that separates the dir part from the
+		 * file part of the path.  (This will be the empty string if
+		 * and only if we are dealing with a path of the form `/file'
+		 * resulting from an URL of the form `ftp://host//file'.)
 		 */
 		cp = strrchr(dir, '/');
 		if (cp == dir && urltype == CLASSIC_URL_T) {
@@ -1503,8 +1506,8 @@ fetch_ftp(url)
 		char *nextpart;
 
 		/*
-		 * If we are dealing with a classic `host:path' (urltype
-		 * is CLASSIC_URL_T) then we have a raw directory
+		 * If we are dealing with a classic `[user@]host:[path]'
+		 * (urltype is CLASSIC_URL_T) then we have a raw directory
 		 * name (not encoded in any way) and we can change
 		 * directories in one step.
 		 *
