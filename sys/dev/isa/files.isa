@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.16 1996/03/24 22:20:54 mycroft Exp $
+#	$NetBSD: files.isa,v 1.17 1996/03/29 20:53:30 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -94,11 +94,10 @@ device	uha: scsi, isadma
 attach	uha at isa
 file	dev/isa/ultra14f.c		uha
 
-# Western Digital WD7000 boards (XXX incomplete description)
-# XXX not yet working
+# Western Digital WD7000 and Future Domain TMC-7000 boards
 device	wds: scsi, isadma
 attach	wds at isa
-file	dev/isa/wd7000.c		wds
+file	dev/isa/wds.c			wds
 
 #
 # Other ISA disk controllers
