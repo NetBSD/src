@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.1.1.1.8.1 2000/10/17 19:50:40 tv Exp $	*/
 
 #ifndef DST_INTERNAL_H
 #define DST_INTERNAL_H
@@ -100,7 +100,7 @@ typedef struct dst_func {
 } dst_func;
 
 extern dst_func *dst_t_func[DST_MAX_ALGS];
-extern char *key_file_fmt_str;
+static const char key_file_fmt_str[] = "Private-key-format: v%s\nAlgorithm: %d (%s)\n";
 extern char *dst_path;
 
 #ifndef DST_HASH_SIZE

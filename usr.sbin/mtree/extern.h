@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1999/12/07 18:42:06 wennmach Exp $	*/
+/*	$NetBSD: extern.h,v 1.7.4.1 2000/10/17 19:50:26 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,8 @@
 int	 compare __P((char *, NODE *, FTSENT *));
 int	 crc __P((int, u_int32_t *, u_int32_t *));
 void	 cwalk __P((void));
-void	 mtree_err __P((const char *, ...));
+void	 mtree_err __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 char	*inotype __P((u_int));
 u_int	 parsekey __P((char *, int *));
 char	*rlink __P((char *));

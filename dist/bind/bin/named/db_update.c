@@ -1,4 +1,4 @@
-/*	$NetBSD: db_update.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_update.c,v 1.1.1.1.8.1 2000/10/17 19:50:33 tv Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_update.c	4.28 (Berkeley) 3/21/91";
@@ -233,7 +233,7 @@ db_update(const char *name,
 	struct databuf *tmpdp;
 #endif
 
-	ns_debug(ns_log_db, 3, "db_update(%s, %#x, %#x, %#x, 0%o, %#x)%s",
+	ns_debug(ns_log_db, 3, "db_update(%s, %p, %p, %p, 0%o, %p)%s",
 		 name, odp, newdp, savedpp, flags, htp,
 		 (odp && (odp->d_flags&DB_F_HINT)) ? " hint" : "");
 	np = nlookup(name, &htp, &fname, newdp != NULL);
@@ -327,7 +327,7 @@ db_update(const char *name,
 			      fcachetab, from)
 		    != OK) {
 			ns_debug(ns_log_db, 3,
-				 "db_update: hint %#x freed", dp);
+				 "db_update: hint %p freed", dp);
 			db_freedata(dp);
 		}
         }
@@ -754,7 +754,7 @@ db_update(const char *name,
 	 *	response source address here if flags&NOTAUTH.
 	 */
 	fixttl(newdp);
-	ns_debug(ns_log_db, 3, "db_update: adding%s %#x",
+	ns_debug(ns_log_db, 3, "db_update: adding%s %p",
 		 (newdp->d_flags&DB_F_HINT) ? " hint":"", newdp);
 
 	if (NS_OPTION_P(OPTION_HOSTSTATS) &&

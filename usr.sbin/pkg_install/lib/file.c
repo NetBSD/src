@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.37.4.4 2000/10/16 21:16:52 tv Exp $	*/
+/*	$NetBSD: file.c,v 1.37.4.5 2000/10/17 19:50:27 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.37.4.4 2000/10/16 21:16:52 tv Exp $");
+__RCSID("$NetBSD: file.c,v 1.37.4.5 2000/10/17 19:50:27 tv Exp $");
 #endif
 #endif
 
@@ -599,7 +599,7 @@ copy_file(char *dir, char *fname, char *to)
 		(void) snprintf(cmd, sizeof(cmd), "cp -r %s %s", fname, to);
 	else
 		(void) snprintf(cmd, sizeof(cmd), "cp -r %s/%s %s", dir, fname, to);
-	if (vsystem(cmd)) {
+	if (vsystem("%s", cmd)) {
 		cleanup(0);
 		errx(2, "could not perform '%s'", cmd);
 	}
@@ -614,7 +614,7 @@ move_file(char *dir, char *fname, char *to)
 		(void) snprintf(cmd, sizeof(cmd), "mv %s %s", fname, to);
 	else
 		(void) snprintf(cmd, sizeof(cmd), "mv %s/%s %s", dir, fname, to);
-	if (vsystem(cmd)) {
+	if (vsystem("%s", cmd)) {
 		cleanup(0);
 		errx(2, "could not perform '%s'", cmd);
 	}

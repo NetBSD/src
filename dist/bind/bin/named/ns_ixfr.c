@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ixfr.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_ixfr.c,v 1.1.1.1.8.1 2000/10/17 19:50:34 tv Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_ixfr.c,v 8.17 1999/11/05 04:48:28 vixie Exp";
@@ -384,7 +384,7 @@ int ixfr_log_maint(struct zoneinfo *zp) {
 
 	(void) strcat(tmpname, ".XXXXXX");
 	if ((fd = mkstemp(tmpname)) == -1) {
-		ns_warning(ns_log_db, "can't make tmpfile (%s): %s", 
+		ns_warning(ns_log_db, "can't make tmpfile (%s): %s", tmpname,
 				strerror(errno));
 		memput(tmpname, (strlen(zp->z_ixfr_base) + sizeof(".XXXXXX") + 1));
 	 	return (-1);
@@ -419,8 +419,8 @@ int ixfr_log_maint(struct zoneinfo *zp) {
 	}
 	(void) my_fclose(db_fp);
 	ns_debug(ns_log_default, 3, "%s, size %d blk %d", 
-	     zp->z_source, db_sb.st_size, 
-	     db_sb.st_size);
+	     zp->z_source, (int)db_sb.st_size, 
+	     (int)db_sb.st_size);	/* XXX something is fishy here */
 
 	/* open up the zone ixfr log */
     if ((from_fp = fopen(zp->z_ixfr_base, "r")) == NULL) {
@@ -445,7 +445,7 @@ int ixfr_log_maint(struct zoneinfo *zp) {
 	}
 	ns_debug(ns_log_default, 3, "%s, size %d log_s %d max %d\n", 
 	     zp->z_ixfr_base, 
-	     sb.st_size, 
+	     (int)sb.st_size, 
 	     zp->z_log_size_ixfr, 
 	     zp->z_max_log_size_ixfr);
 	if (zp->z_max_log_size_ixfr) {
@@ -558,7 +558,7 @@ int ixfr_log_maint(struct zoneinfo *zp) {
 
 	ns_debug(ns_log_default, 3, "%s, size %d log_s %d max %d\n", 
 	     zp->z_ixfr_base, 
-	     sb.st_size, 
+	     (int)sb.st_size, 
 	     zp->z_log_size_ixfr, 
 	     zp->z_max_log_size_ixfr);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.10.8.2 2000/07/22 01:56:32 enami Exp $	*/
+/*	$NetBSD: supextern.h,v 1.10.8.3 2000/10/17 19:50:30 tv Exp $	*/
 
 struct stat;
 
@@ -32,12 +32,17 @@ int filecopy __P((int, int ));
 
 /* log.c */
 void logopen __P((char *));
-void logquit __P((int, char *, ...));
-void logerr __P((char *, ...));
-void loginfo __P((char *, ...));
+void logquit __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
+void logerr __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2))) ;
+void loginfo __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 #ifdef LIBWRAP
-void logdeny __P((char *, ...));
-void logallow __P((char *, ...));
+void logdeny __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+void logallow __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 #endif
 
 /* netcryptvoid.c */
@@ -53,7 +58,8 @@ char *nxtarg __P((char **, char *));
 void path __P((char *, char *, char *));
 
 /* quit.c */
-void quit __P((int, char *, ...));
+void quit __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 
 /* read_line.c */
 char *read_line __P((FILE *, size_t *, size_t *, const char[3], int));
@@ -88,7 +94,8 @@ char *remotehost __P((void));
 int thishost __P((char *));
 int samehost __P((void));
 int matchhost __P((char *));
-int scmerr __P((int, char *, ...));
+int scmerr __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 int byteswap __P((int));
 
 /* scmio.c */
@@ -141,8 +148,10 @@ int recvsym __P((TREE *, int, struct stat *));
 int recvreg __P((TREE *, int, struct stat *));
 int copyfile __P((char *, char *));
 void finishup __P((int));
-void done __P((int, char *, ...));
-void goaway __P((char *, ...));
+void done __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
+void goaway __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 
 /* supcmisc.c */
 void prtime __P((void));
@@ -150,7 +159,8 @@ int establishdir __P((char *));
 int makedir __P((char *, int, struct stat *));
 int estabd __P((char *, char *));
 void ugconvert __P((char *, char *, int *, int *, int *));
-void notify __P((char *, ...));
+void notify __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 void lockout __P((int));
 char *fmttime __P((time_t));
 

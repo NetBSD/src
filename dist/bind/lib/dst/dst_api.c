@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1 1999/11/20 18:54:06 veego Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.1.8.1 2000/10/17 19:50:40 tv Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/dst_api.c,v 1.1.1.1 1999/11/20 18:54:06 veego Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/dst_api.c,v 1.1.1.1.8.1 2000/10/17 19:50:40 tv Exp $";
 #endif
 
 /*
@@ -64,7 +64,6 @@ static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/dst_a
 /* static variables */
 static int done_init = 0;
 dst_func *dst_t_func[DST_MAX_ALGS];
-char *key_file_fmt_str = "Private-key-format: v%s\nAlgorithm: %d (%s)\n";
 char *dst_path = "";
 
 /* internal I/O functions */
