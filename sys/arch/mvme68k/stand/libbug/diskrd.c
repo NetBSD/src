@@ -1,4 +1,4 @@
-/*	$NetBSD: diskrd.c,v 1.1 1996/05/17 19:31:50 chuck Exp $	*/
+/*	$NetBSD: diskrd.c,v 1.2 1996/05/17 19:50:35 chuck Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -6,6 +6,8 @@
  */
 #include <sys/types.h>
 #include <machine/prom.h>
+
+#include "libbug.h"
 
 /* returns 0: success, nonzero: error */
 int

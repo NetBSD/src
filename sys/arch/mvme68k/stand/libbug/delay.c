@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.c,v 1.1 1996/05/17 19:31:49 chuck Exp $	*/
+/*	$NetBSD: delay.c,v 1.2 1996/05/17 19:50:28 chuck Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -6,6 +6,8 @@
  */
 #include <sys/types.h>
 #include <machine/prom.h>
+
+#include "libbug.h"
 
 /* BUG - timing routine */
 void
