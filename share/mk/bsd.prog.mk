@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.173 2003/07/20 17:01:58 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.174 2003/07/26 14:58:11 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -120,7 +120,11 @@ _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 
 .if defined(PROG_CXX)
 _CCLINK=	${CXX}
+.if defined(CXX_SUPCXX)
+_SUPCXX=	-lsupc++ -lm
+.else
 _SUPCXX=	-lstdc++ -lm
+.endif
 .else
 _CCLINK=	${CC}
 .endif
