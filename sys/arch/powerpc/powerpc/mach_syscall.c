@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.3 2002/11/03 23:17:18 manu Exp $ */
+/*	$NetBSD: mach_syscall.c,v 1.4 2002/11/04 00:01:02 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_mach.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.3 2002/11/03 23:17:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.4 2002/11/04 00:01:02 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.3 2002/11/03 23:17:18 manu Exp $"
 #include <compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscall.h>
 #include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h>
 
-extern struct sysent mach_sysent[];
-extern struct sysent mach_ppccalls_sysent[];
-extern struct sysent mach_fasttraps_sysent[];
+extern const struct sysent mach_sysent[];
+extern const struct sysent mach_ppccalls_sysent[];
+extern const struct sysent mach_fasttraps_sysent[];
 
 #define EMULNAME(x)	__CONCAT(mach_,x)
 #define EMULNAMEU(x)	(x)	/* COMPAT_MACH uses the native syscalls */
@@ -60,50 +60,35 @@ extern struct sysent mach_fasttraps_sysent[];
 #define MACH_PPCCALLS		0x00006000
 #define MACH_ODD_SYSCALL_MASK	0x0000fff0
 
-static inline int mach_syscall_dispatch __P((register_t *, 
-    const struct sysent **, int *));
+static inline const struct sysent *mach_syscall_dispatch __P((register_t));
 
 #include "syscall.c"
 
-static inline int
-mach_syscall_dispatch(code, callp, nsysent)
-	register_t *code;
-	const struct sysent **callp;
-	int *nsysent;
+static inline const struct sysent *
+mach_syscall_dispatch(register_t code)
 {
-	int ret = 0;
-
 #ifdef DEBUG_MACH
-	if (*code >= MACH_PPCCALLS);
-		printf("->mach(0x%x)\n", *code);
+	if (code >= MACH_PPCCALLS);
+		printf("->mach(0x%x)\n", code);
 #endif
-	switch (*code & MACH_ODD_SYSCALL_MASK) {
+	switch (code & MACH_ODD_SYSCALL_MASK) {
 	case MACH_PPCCALLS:
-		*code -= MACH_PPCCALLS;
-		*callp = mach_ppccalls_sysent;
-		*nsysent = MACH_PPCCALLS_SYS_MAXSYSCALL;
-		ret = 1;
-		break;
+		return mach_ppccalls_sysent +
+		    ((code - MACH_PPCCALLS) & (MACH_PPCCALLS_SYS_NSYSENT-1));
 
 	case MACH_FASTTRAPS:
-		*code -= MACH_FASTTRAPS;
-		*callp = mach_fasttraps_sysent;
-		*nsysent = MACH_FASTTRAPS_SYS_MAXSYSCALL;
-		ret = 1;
-		break;
+		return mach_fasttraps_sysent +
+		    ((code - MACH_FASTTRAPS) & (MACH_FASTTRAPS_SYS_NSYSENT-1));
 
 	default:
-		if (*code < 0) {
+		if (code < 0) {
 #ifdef DEBUG_MACH
-			printf("->mach(%d)\n", *code);
+			printf("->mach(%d)\n", code);
 #endif /* DEBUG_MACH */
-			*code = -*code;
-			*callp = mach_sysent;
-			*nsysent = MACH_SYS_MAXSYSCALL;
-			ret = 1;
+			return mach_sysent + (-code & (MACH_SYS_NSYSENT-1));
 		}
 		break;
 	}
 
-	return ret;
+	return NULL;
 }
