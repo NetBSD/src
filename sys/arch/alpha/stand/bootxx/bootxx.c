@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.6 1998/10/15 00:55:48 ross Exp $ */
+/* $NetBSD: bootxx.c,v 1.7 1999/03/27 09:01:27 ross Exp $ */
 
 /*
  * Copyright (C) 1998 by Ross Harvey
@@ -201,5 +201,6 @@ main()
 	puts("Jumping to entry point...\n");
 	entry = (void (*)(int))loadaddr;
 	(*entry)(fd);
+	prom_close(fd);
 	puts("SECONDARY BOOT RETURNED!\n");
 }
