@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.h,v 1.11 1999/03/25 03:33:58 simonb Exp $	*/
+/*	$NetBSD: asic.h,v 1.12 1999/08/16 13:10:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -175,33 +175,16 @@
  * The following  are common on all three IOASIC Decstations,
  * (except perhaps TXDIS_1 and TXDIS_2 on xine?).
  * The enable bits appear to be valid on Alphas, also.
- * XXX CDG -- reorganize to separate out bitfields with
+ * XXX CGD -- reorganize to separate out bitfields with
  * common meaninds on Alpha, pmax?
  */
-#define IOASIC_CSR_DIAGDN		0x00008000	/* rw */	/* (all) */
+#define IOASIC_CSR_DIAGDN	0x00008000	/* rw */	/* (all) */
 #define IOASIC_CSR_TXDIS_2	0x00004000	/* rw */ 	/* kmin,kn03 */
 #define IOASIC_CSR_TXDIS_1	0x00002000	/* rw */	/* kmin,kn03 */
 #define IOASIC_CSR_SCC_ENABLE	0x00000800	/* rw */	/* (all) */
 #define IOASIC_CSR_RTC_ENABLE	0x00000400	/* rw */	/* (all) */
 #define IOASIC_CSR_SCSI_ENABLE	0x00000200	/* rw */	/* (all) */
 #define IOASIC_CSR_LANCE_ENABLE	0x00000100	/* rw */	/* (all) */
-
-
-/* kn03-specific SRR bit definitions: common bitfields above, plus: */
-#define KN03_CSR_LEDS		0x000000ff	/* rw */	/* kn03 */
-
-
-/* kmin-specific SSR bit definitions: common bitfields above, plus: */
-#define KMIN_CSR_LEDS		0x000000ff	/* rw */
-
-
-/* xine-specific SSR bit definitions: common bitfields above, plus: */
-#define XINE_CSR_ISDN_ENABLE	0x00001000	/* rw */
-#define XINE_CSR_FLOPPY_ENABLE	0x00000080	/* rw */
-#define XINE_CSR_VDAC_ENABLE	0x00000040	/* rw */
-#define XINE_CSR_DTOP_ENABLE	0x00000020	/* rw */
-#define XINE_CSR_LED		0x00000001	/* rw */
-
 
 
 /*
