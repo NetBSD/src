@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.50 2003/11/22 05:40:48 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.51 2003/11/22 06:15:29 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.50 2003/11/22 05:40:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.51 2003/11/22 06:15:29 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ void ac97_read(struct ac97_softc *, u_int8_t, u_int16_t *);
 void ac97_setup_defaults(struct ac97_softc *);
 int ac97_write(struct ac97_softc *, u_int8_t, u_int16_t);
 
-static void ac97_ad1980_init(struct ac97_softc *);
+static void ac97_ad198x_init(struct ac97_softc *);
 static void ac97_alc650_init(struct ac97_softc *);
 static void ac97_vt1616_init(struct ac97_softc *);
 
@@ -372,13 +372,13 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
-	  0xffffffff,			"Analog Devices AD1980", ac97_ad1980_init },
+	  0xffffffff,			"Analog Devices AD1980", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
 	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
 	  0xffffffff,			"Analog Devices AD1981B" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x75),
-	  0xffffffff,			"Analog Devices AD1985" },
+	  0xffffffff,			"Analog Devices AD1985", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0),
 	  AC97_VENDOR_ID_MASK,		"Analog Devices unknown" },
 
@@ -1485,7 +1485,7 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 #define		AD1981_MISC_MSPLT	0x1000  /*12 */
 #define		AD1981_MISC_DACZ	0x4000  /*14 */
 static void
-ac97_ad1980_init(struct ac97_softc *as)
+ac97_ad198x_init(struct ac97_softc *as)
 {
 	int i;
 	unsigned short misc;
