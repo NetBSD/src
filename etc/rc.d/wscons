@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.5 2000/08/21 23:02:25 lukem Exp $
+# $NetBSD: wscons,v 1.6 2000/09/19 13:04:39 lukem Exp $
 #
 
 # PROVIDE: wscons
@@ -9,7 +9,7 @@
 . /etc/rc.subr
 
 name="wscons"
-start_precmd="checkyesno wscons"
+rcvar=$name
 start_cmd="wscons_start"
 stop_cmd=":"
 

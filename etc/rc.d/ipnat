@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.5 2000/08/21 23:33:50 lukem Exp $
+# $NetBSD: ipnat,v 1.6 2000/09/19 13:04:38 lukem Exp $
 #
 
 # PROVIDE: ipnat
@@ -9,17 +9,11 @@
 . /etc/rc.subr
 
 name="ipnat"
+rcvar=$name
 config="/etc/ipnat.conf"
-
-start_precmd="checkyesno ipnat"
 start_cmd="ipnat_start"
-
-stop_precmd=$start_precmd
 stop_cmd="/usr/sbin/ipnat -F -C"
-
-reload_precmd=$start_precmd
 reload_cmd="/usr/sbin/ipnat -F -C -f ${config}"
-
 extra_commands="reload"
 
 ipnat_start()
