@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.31 2001/10/28 19:47:48 proff Exp $	*/
+/*	$NetBSD: fortune.c,v 1.32 2001/10/28 19:52:53 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.31 2001/10/28 19:47:48 proff Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.32 2001/10/28 19:52:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,8 +240,8 @@ main(ac, av)
 	        ((unsigned long)getpid()+1)   *
                 ((unsigned long)getppid()+1));
 	do {
-		get_fort(); } while ((Short_only && fortlen() >
-	SLEN) ||
+		get_fort();
+	} while ((Short_only && fortlen() > SLEN) ||
 		 (Long_only && fortlen() <= SLEN));
 
 	display(Fortfile);
