@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.11 2002/02/11 21:48:46 reinoud Exp $
+# 	$NetBSD: GENERIC,v 1.12 2002/03/10 19:56:37 lukem Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"GENERIC-$Revision: 1.11 $"
+#ident		"GENERIC-$Revision: 1.12 $"
 
 # estimated number of users
 maxusers	32
@@ -119,8 +119,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOTSIZE=4100	# Size in blocks
+#options 	MEMORY_DISK_SIZE=4100	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.8 2002/01/27 13:23:22 jdolecek Exp $
+# 	$NetBSD: INSTALL,v 1.9 2002/03/10 19:56:44 lukem Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -12,7 +12,7 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_SIZE=4096	# 2 Megabytes
 
 options 	news3400
 options 	news5000

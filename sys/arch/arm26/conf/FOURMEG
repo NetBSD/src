@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.22 2002/01/27 13:23:12 jdolecek Exp $
+# $NetBSD: FOURMEG,v 1.23 2002/03/10 19:56:39 lukem Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -187,7 +187,7 @@ wsdisplay0	at arcvideo0
 pseudo-device	loop		1
 pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
-#options 	MINIROOTSIZE=
+#options 	MEMORY_DISK_SIZE=
 #pseudo-device	ppp		4
 pseudo-device	pty
 #pseudo-device	sl		4

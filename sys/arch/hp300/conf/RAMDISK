@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.3 2002/02/23 21:48:08 gmcgarry Exp $
+# $NetBSD: RAMDISK,v 1.4 2002/03/10 19:56:41 lukem Exp $
 #
 # RAMDISK machine description file
 #
@@ -11,7 +11,7 @@ include 	"arch/hp300/conf/INSTALL"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2400	# size of memory disk, in blocks (1.2MB)
+options 	MEMORY_DISK_SIZE=2400	# size of memory disk, in blocks (1.2MB)
 
 file-system	MFS			# Memory-based filesystem
 

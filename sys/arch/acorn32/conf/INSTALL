@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 2002/02/11 21:48:47 reinoud Exp $
+#	$NetBSD: INSTALL,v 1.5 2002/03/10 19:56:38 lukem Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"INSTALL-$Revision: 1.4 $"
+#ident		"INSTALL-$Revision: 1.5 $"
 
 # estimated number of users
 maxusers	32
@@ -119,8 +119,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=4100	# Size in blocks
+options 	MEMORY_DISK_SIZE=4100	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options

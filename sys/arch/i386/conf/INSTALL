@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.185 2002/03/04 13:24:10 sommerfeld Exp $
+#	$NetBSD: INSTALL,v 1.186 2002/03/10 19:56:42 lukem Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -17,8 +17,8 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=4096	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_SIZE=4096	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=2880	# 1.44M, same as a floppy
 
 maxusers	32		# estimated number of users
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.59 2002/02/10 17:36:54 wiz Exp $
+# $NetBSD: INSTALL,v 1.60 2002/03/10 19:56:38 lukem Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -14,7 +14,7 @@ options 	DDB
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MINIROOTSIZE=9300	# 4 Megabytes
+options 	MEMORY_DISK_SIZE=9300	# 4 Megabytes
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)

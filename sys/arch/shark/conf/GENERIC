@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.1 2002/02/10 01:57:00 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.2 2002/03/10 19:56:46 lukem Exp $
 #
 # Generic Shark configuration.
 #
 
 include	"arch/shark/conf/std.shark"
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.2 $"
 
 # estimated number of users
 maxusers	32
@@ -108,8 +108,7 @@ options 	SYSVSHM		# System V-like memory sharing
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOTSIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 options 	XSERVER			# also need INSECURE for now
