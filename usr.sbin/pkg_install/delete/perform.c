@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.21 1999/03/22 03:24:04 abs Exp $	*/
+/*	$NetBSD: perform.c,v 1.22 1999/03/22 05:02:40 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.21 1999/03/22 03:24:04 abs Exp $");
+__RCSID("$NetBSD: perform.c,v 1.22 1999/03/22 05:02:40 hubertf Exp $");
 #endif
 #endif
 
@@ -57,37 +57,19 @@ __RCSID("$NetBSD: perform.c,v 1.21 1999/03/22 03:24:04 abs Exp $");
  * Added the require find and require delete code
  */
 
-#include <sys/queue.h>
 #include <err.h>
 #include <fcntl.h>
 #include "lib.h"
 #include "delete.h"
 
-/* This should only happen on 1.3 and 1.3.1, not 1.3.2 and up */
-#ifndef TAILQ_FIRST
-#define TAILQ_FIRST(head)               ((head)->tqh_first)
-#define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
-#endif
-
-
-typedef struct _rec_del_t {
-    TAILQ_ENTRY(_rec_del_t)	rd_link;
-    char	*rd_name;
-} rec_del_t;
-
-TAILQ_HEAD(_rec_del_head_t, _rec_del_t);
-typedef struct _rec_del_head_t rec_del_head_t;
 
 /* In which direction to search in require_find() */
 typedef enum {
     FIND_UP, FIND_DOWN
 } rec_find_t;
 
-static rec_del_t *alloc_rec_del(const char *);
-static rec_del_t *find_on_queue(rec_del_head_t *, const char *);
-static void free_rec_del(rec_del_t *);
-static int require_find_recursive_up(rec_del_t *);
-static int require_find_recursive_down(rec_del_t *, package_t *);
+static int require_find_recursive_up(lpkg_t *);
+static int require_find_recursive_down(lpkg_t *, package_t *);
 static int require_find(char *, rec_find_t);
 static int require_delete(char *, int);
 static void require_print(void);
@@ -99,8 +81,8 @@ static char pkgdir[FILENAME_MAX];
 
 static package_t Plist;
 
-static rec_del_head_t rdfindq;
-static rec_del_head_t rddelq;
+static lpkg_head_t lpfindq;
+static lpkg_head_t lpdelq;
 
 static void
 sanity_check(char *pkg)
@@ -180,44 +162,12 @@ undepend(const char *deppkgname, char *pkg2delname)
      return 0;
 }
 
-/* add a package to the recursive delete list */
-rec_del_t *
-alloc_rec_del(const char *pkgname)
-{
-    rec_del_t *rdp;
-
-    if ((rdp = malloc(sizeof(*rdp))) == 0)
-	err(1, "cannot allocate recursion data");
-    if ((rdp->rd_name = strdup(pkgname)) == 0)
-	err(1, "cannot allocate recursion data");
-    return (rdp);
-}
-
-void
-free_rec_del(rec_del_t *rdp)
-{
-    free(rdp->rd_name);
-    free(rdp);
-}
-
-rec_del_t *
-find_on_queue(rec_del_head_t *qp, const char *name)
-{
-    rec_del_t *rdp;
-
-    for (rdp = TAILQ_FIRST(qp); rdp; rdp = TAILQ_NEXT(rdp, rd_link))
-	if (!strcmp(name, rdp->rd_name))
-	    return (rdp);
-    return (0);
-}
-
-
-/* delete from directory 'home' all packages on rec_del_list
+/* delete from directory 'home' all packages on lpkg_list
  * if tryall is set, ignore errors from pkg_delete */
 int
 require_delete(char *home, int tryall)
 {
-    rec_del_t *rdp;
+    lpkg_t *lpp;
     int rv, fail;
     char *tmp;
     int oldcwd;
@@ -232,8 +182,8 @@ require_delete(char *home, int tryall)
 
     /* walk list of things to delete */
     fail = 0;
-    rdp = TAILQ_FIRST(&rddelq);
-    for (; rdp; rdp = TAILQ_NEXT(rdp, rd_link)) {
+    lpp = TAILQ_FIRST(&lpdelq);
+    for (; lpp; lpp = TAILQ_NEXT(lpp, lp_link)) {
 	/* go to the db dir */
 	if (chdir(pkgdir) == FAIL) {
 	    warnx("unable to change directory to %s, deinstall failed (1)",
@@ -243,8 +193,8 @@ require_delete(char *home, int tryall)
 	}
 
 	/* look to see if package was already deleted */
-	if (!fexists(rdp->rd_name)) {
-	    warnx("%s appears to have been deleted", rdp->rd_name);
+	if (!fexists(lpp->lp_name)) {
+	    warnx("%s appears to have been deleted", lpp->lp_name);
 	    continue;
 	}
 
@@ -256,7 +206,7 @@ require_delete(char *home, int tryall)
 	}
 
 	if (Verbose)
-		printf("deinstalling %s\n", rdp->rd_name);
+		printf("deinstalling %s\n", lpp->lp_name);
 
 	/* delete the package */
 	if (Fake)
@@ -270,12 +220,12 @@ require_delete(char *home, int tryall)
 		NoDeInstall ? "-D" : "",
 		CleanDirs ? "-d" : "",
 		Fake ? "-n" : "",
-		rdp->rd_name);
+		lpp->lp_name);
 
 	/* check for delete failure */
 	if (rv && !tryall) {
 	    fail = 1;
-	    warnx("had problem removing %s%s", rdp->rd_name,
+	    warnx("had problem removing %s%s", lpp->lp_name,
 		Force ? ", continuing" : "");
 	    if (!Force)
 		break;
@@ -283,9 +233,9 @@ require_delete(char *home, int tryall)
     }
 
     /* cleanup list */
-    while ((rdp = TAILQ_FIRST(&rddelq))) {
-	TAILQ_REMOVE(&rddelq, rdp, rd_link);
-	free_rec_del(rdp);
+    while ((lpp = TAILQ_FIRST(&lpdelq))) {
+	TAILQ_REMOVE(&lpdelq, lpp, lp_link);
+	free_lpkg(lpp);
     }
 
     /* return to the log dir */
@@ -300,23 +250,23 @@ require_delete(char *home, int tryall)
 /* recursively find all packages "up" the tree (follow +REQUIRED_BY)
  * return 1 on errors */
 int
-require_find_recursive_up(rec_del_t *thisrdp)
+require_find_recursive_up(lpkg_t *thislpp)
 {
-    rec_del_head_t reqq;
-    rec_del_t *rdp = NULL;
+    lpkg_head_t reqq;
+    lpkg_t *lpp = NULL;
     FILE *cfile;
     char *nl, *tmp;
 
     /* see if we are on the find queue -- circular dependency */
-    if ((rdp = find_on_queue(&rdfindq, thisrdp->rd_name))) {
-	warnx("circular dependency found for pkg %s", rdp->rd_name);
+    if ((lpp = find_on_queue(&lpfindq, thislpp->lp_name))) {
+	warnx("circular dependency found for pkg %s", lpp->lp_name);
 	return (1);
     }
 
     TAILQ_INIT(&reqq);
 
     (void)snprintf(pkgdir, sizeof(pkgdir), "%s/%s",
-	(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, thisrdp->rd_name);
+	(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, thislpp->lp_name);
 
     /* change to package's dir */
     if (chdir(pkgdir) == FAIL) {
@@ -337,39 +287,39 @@ require_find_recursive_up(rec_del_t *thisrdp)
     while (fgets(linebuf, sizeof(linebuf), cfile)) {
 	if ((nl = strrchr(linebuf, '\n')))
 	    *nl = 0;
-	rdp = alloc_rec_del(linebuf);
-	TAILQ_INSERT_TAIL(&reqq, rdp, rd_link);
+	lpp = alloc_lpkg(linebuf);
+	TAILQ_INSERT_TAIL(&reqq, lpp, lp_link);
     }
     fclose(cfile);
 
     /* put ourselves on the top of the find queue */
-    TAILQ_INSERT_HEAD(&rdfindq, thisrdp, rd_link);
+    TAILQ_INSERT_HEAD(&lpfindq, thislpp, lp_link);
 
-    while ((rdp = TAILQ_FIRST(&reqq))) {
+    while ((lpp = TAILQ_FIRST(&reqq))) {
 	/* remove a direct req from our queue */
-	TAILQ_REMOVE(&reqq, rdp, rd_link);
+	TAILQ_REMOVE(&reqq, lpp, lp_link);
 
 	/* find direct required requires */
-	if (require_find_recursive_up(rdp))
+	if (require_find_recursive_up(lpp))
 	    goto fail;
 
 	/* all requires taken care of, add to tail of delete queue
 	 * if not already there */
-	if (find_on_queue(&rddelq, rdp->rd_name))
-	    free_rec_del(rdp);
+	if (find_on_queue(&lpdelq, lpp->lp_name))
+	    free_lpkg(lpp);
 	else
-	    TAILQ_INSERT_TAIL(&rddelq, rdp, rd_link);
+	    TAILQ_INSERT_TAIL(&lpdelq, lpp, lp_link);
     }
 
     /* take ourselves off the find queue */
-    TAILQ_REMOVE(&rdfindq, thisrdp, rd_link);
+    TAILQ_REMOVE(&lpfindq, thislpp, lp_link);
 
     return (0);
 
 fail:
-    while ((rdp = TAILQ_FIRST(&reqq))) {
-	TAILQ_REMOVE(&reqq, rdp, rd_link);
-	free_rec_del(rdp);
+    while ((lpp = TAILQ_FIRST(&reqq))) {
+	TAILQ_REMOVE(&reqq, lpp, lp_link);
+	free_lpkg(lpp);
     }
     return (1);
 }
@@ -377,35 +327,35 @@ fail:
 /* recursively find all packages "down" the tree (follow @pkgdep)
  * return 1 on errors */
 int
-require_find_recursive_down(rec_del_t *thisrdp, package_t *plist)
+require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 {
     plist_t *p;
-    rec_del_t *rdp, *rdp2;
-    rec_del_head_t reqq;
+    lpkg_t *lpp, *lpp2;
+    lpkg_head_t reqq;
     int rc, fail=0;
 
     /* see if we are on the find queue -- circular dependency */
-    if ((rdp = find_on_queue(&rdfindq, thisrdp->rd_name))) {
-	warnx("circular dependency found for pkg %s", rdp->rd_name);
+    if ((lpp = find_on_queue(&lpfindq, thislpp->lp_name))) {
+	warnx("circular dependency found for pkg %s", lpp->lp_name);
 	return (1);
     }
 
     TAILQ_INIT(&reqq);
 
     /* width-first scan */
-    /* first enqueue all @pkgdep's to rddelq, then (further below)
+    /* first enqueue all @pkgdep's to lpdelq, then (further below)
      * go in recursively */
     for (p = plist->head; p ; p = p->next) {
 	switch(p->type) {
 	case PLIST_PKGDEP:
-	    rdp = alloc_rec_del(p->name);
-	    TAILQ_INSERT_TAIL(&reqq, rdp, rd_link);
+	    lpp = alloc_lpkg(p->name);
+	    TAILQ_INSERT_TAIL(&reqq, lpp, lp_link);
 
-	    rdp2 = find_on_queue(&rddelq, p->name);
-	    if (rdp2)
-		TAILQ_REMOVE(&rddelq, rdp2, rd_link);
-	    rdp = alloc_rec_del(p->name);
-	    TAILQ_INSERT_TAIL(&rddelq, rdp, rd_link);
+	    lpp2 = find_on_queue(&lpdelq, p->name);
+	    if (lpp2)
+		TAILQ_REMOVE(&lpdelq, lpp2, lp_link);
+	    lpp = alloc_lpkg(p->name);
+	    TAILQ_INSERT_TAIL(&lpdelq, lpp, lp_link);
 	    
 	    break;
 	default:
@@ -413,14 +363,14 @@ require_find_recursive_down(rec_del_t *thisrdp, package_t *plist)
 	}
     }
 
-    while ((rdp = TAILQ_FIRST(&reqq))) {
+    while ((lpp = TAILQ_FIRST(&reqq))) {
 	FILE *cfile;
 	package_t rPlist;
 	char *tmp;
 	plist_t *p;
 
 	/* remove a direct req from our queue */
-	TAILQ_REMOVE(&reqq, rdp, rd_link);
+	TAILQ_REMOVE(&reqq, lpp, lp_link);
 	
 	/* Reset some state */
 	rPlist.head = NULL;
@@ -428,8 +378,8 @@ require_find_recursive_down(rec_del_t *thisrdp, package_t *plist)
 
 	/* prepare for recursion */
 	chdir((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
-	chdir(rdp->rd_name);
-	sanity_check(rdp->rd_name);
+	chdir(lpp->lp_name);
+	sanity_check(lpp->lp_name);
 	
 	cfile = fopen(CONTENTS_FNAME, "r");
 	if (!cfile) {
@@ -444,30 +394,30 @@ require_find_recursive_down(rec_del_t *thisrdp, package_t *plist)
 	fclose(cfile);
 	p = find_plist(&rPlist, PLIST_CWD);
 	if (!p) {
-	    warnx("package '%s' doesn't have a prefix", rdp->rd_name);
+	    warnx("package '%s' doesn't have a prefix", lpp->lp_name);
 	    fail=1;
 	    goto fail;
 	}
 	
 	/* put ourselves on the top of the find queue */
-	TAILQ_INSERT_HEAD(&rdfindq, thisrdp, rd_link);
+	TAILQ_INSERT_HEAD(&lpfindq, thislpp, lp_link);
 
-	rc=require_find_recursive_down(rdp, &rPlist);
+	rc=require_find_recursive_down(lpp, &rPlist);
 	if (rc) {
 	    fail=1;
 	    goto fail;
 	}
 	
 	/* take ourselves off the find queue */
-	TAILQ_REMOVE(&rdfindq, thisrdp, rd_link);
-	free_rec_del(rdp);
+	TAILQ_REMOVE(&lpfindq, thislpp, lp_link);
+	free_lpkg(lpp);
     }
 
  fail:
     /* Clean out reqq */
-    while ((rdp = TAILQ_FIRST(&reqq))) {
-	TAILQ_REMOVE(&reqq, rdp, rd_link);
-	free_rec_del(rdp);
+    while ((lpp = TAILQ_FIRST(&reqq))) {
+	TAILQ_REMOVE(&reqq, lpp, lp_link);
+	free_lpkg(lpp);
     }
     
     return fail;
@@ -476,22 +426,22 @@ require_find_recursive_down(rec_del_t *thisrdp, package_t *plist)
 int
 require_find(char *pkg, rec_find_t updown)
 {
-    rec_del_t *rdp;
+    lpkg_t *lpp;
     int rv=0;
 
-    TAILQ_INIT(&rdfindq);
-    TAILQ_INIT(&rddelq);
+    TAILQ_INIT(&lpfindq);
+    TAILQ_INIT(&lpdelq);
 
-    rdp = alloc_rec_del(pkg);
+    lpp = alloc_lpkg(pkg);
     switch (updown) {
     case FIND_UP:
-	rv = require_find_recursive_up(rdp);
+	rv = require_find_recursive_up(lpp);
 	break;
     case FIND_DOWN:
-	rv = require_find_recursive_down(rdp, &Plist);
+	rv = require_find_recursive_down(lpp, &Plist);
 	break;
     }
-    free_rec_del(rdp);
+    free_lpkg(lpp);
 
     return (rv);
 }
@@ -499,13 +449,13 @@ require_find(char *pkg, rec_find_t updown)
 void
 require_print(void)
 {
-    rec_del_t *rdp;
+    lpkg_t *lpp;
 
     /* print all but last -- deleting if requested */
-    while ((rdp = TAILQ_FIRST(&rddelq))) {
-	TAILQ_REMOVE(&rddelq, rdp, rd_link);
-	fprintf(stderr, "\t%s\n", rdp->rd_name);
-	free_rec_del(rdp);
+    while ((lpp = TAILQ_FIRST(&lpdelq))) {
+	TAILQ_REMOVE(&lpdelq, lpp, lp_link);
+	fprintf(stderr, "\t%s\n", lpp->lp_name);
+	free_lpkg(lpp);
     }
 }
 
@@ -636,18 +586,21 @@ pkg_do(char *pkg)
 }
 
 int
-pkg_perform(char **pkgs)
+pkg_perform(lpkg_head_t *pkgs)
 {
-    int i, err_cnt = 0;
+    int err_cnt = 0;
     int oldcwd;
+    lpkg_t *lpp;
 
     /* save cwd */
     oldcwd=open(".", O_RDONLY, 0);
     if (oldcwd == -1)
 	err(1, "cannot open \".\"");
 
-    for (i = 0; pkgs[i]; i++) {
-	err_cnt += pkg_do(pkgs[i]);
+    while ((lpp = TAILQ_FIRST(pkgs))) {
+	err_cnt += pkg_do(lpp->lp_name);
+	TAILQ_REMOVE(pkgs, lpp, lp_link);
+	free_lpkg(lpp);	
 	if (fchdir(oldcwd) == FAIL)
 	    err(1,"unable to change to previous directory");
     }
