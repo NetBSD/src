@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/12/14 22:21:47 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/12/20 19:20:03 thorpej Exp $
 
 SRCS+=	rtld_start.S ppc_reloc.c
 
-COPTS+=	-fpic -msoft-float
+# XXX Should not be in CPPFLAGS!
+CPPFLAGS+= -fpic -msoft-float
 
 CPPFLAGS+= -DELFSIZE=32 -DVARPSZ -I${.CURDIR}
 
