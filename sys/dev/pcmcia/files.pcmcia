@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.23 2000/03/18 17:59:52 mycroft Exp $
+#	$NetBSD: files.pcmcia,v 1.24 2000/03/19 21:54:02 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -28,9 +28,13 @@ file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 attach	aic at pcmcia with aic_pcmcia
 file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 
-# NCR 53c406-based cards
+# NCR 53c80-based cards
 attach	nca at pcmcia with nca_pcmcia
 file	dev/pcmcia/nca_pcmcia.c			nca_pcmcia
+
+# NCR 53c406-based cards
+attach	esp at pcmcia with esp_pcmcia
+file	dev/pcmcia/esp_pcmcia.c			esp_pcmcia
 
 attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia
