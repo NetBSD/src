@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.54 1998/02/19 00:55:30 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.55 1998/02/19 23:56:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -643,10 +643,10 @@ swap_on(p, sdp)
 
 		s = splbio();
 		n = 8 * sdp->swd_maxactive;
-		(void)pool_prime(vndxfer_pool, n);
+		(void)pool_prime(vndxfer_pool, n, 0);
 
 		n = 16 * sdp->swd_maxactive;
-		(void)pool_prime(vndbuf_pool, n);
+		(void)pool_prime(vndbuf_pool, n, 0);
 
 		splx(s);
 
@@ -1193,12 +1193,12 @@ swapinit()
 	sp->b_actf = NULL;
 
 	vndxfer_pool =
-		pool_create(sizeof(struct vndxfer), 0, "swp vnx", M_DEVBUF);
+		pool_create(sizeof(struct vndxfer), 0, "swp vnx", M_DEVBUF, 0);
 	if (vndxfer_pool == NULL)
 		panic("swapinit: pool_create failed");
 
 	vndbuf_pool =
-		pool_create(sizeof(struct vndbuf), 0, "swp vnd", M_DEVBUF);
+		pool_create(sizeof(struct vndbuf), 0, "swp vnd", M_DEVBUF, 0);
 	if (vndbuf_pool == NULL)
 		panic("swapinit: pool_create failed");
 
