@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.156 2004/03/17 17:19:13 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.157 2004/03/25 06:17:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.156 2004/03/17 17:19:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.157 2004/03/25 06:17:51 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -188,7 +188,8 @@ int wi_debug = 0;
 #define	IFF_DUMPPKTS(_ifp)	0
 #endif
 
-#define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO)
+#define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO | \
+			 WI_EV_TX | WI_EV_TX_EXC)
 
 struct wi_card_ident
 wi_card_ident[] = {
