@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: signal.h,v 1.1.14.1 2002/05/30 15:36:56 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -80,7 +80,7 @@ struct sigcontext {
 	u_int64_t	sc_rip;
 	int		sc_cs;
 	int		sc_pad0;
-	u_int64_t	sc_eflags;
+	u_int64_t	sc_rflags;
 	u_int64_t	sc_rsp_onsig;
 	struct fxsave64 *sc_fpstate;	/* XXXfvdl compat with Linux, but.. */
 	int		sc_ss;

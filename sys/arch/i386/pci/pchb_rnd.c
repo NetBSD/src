@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.9 2001/11/15 07:03:34 lukem Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.9.10.1 2002/05/30 15:33:22 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.9 2001/11/15 07:03:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.9.10.1 2002/05/30 15:33:22 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,9 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
 		case PCI_PRODUCT_INTEL_82820_MCH:
 		case PCI_PRODUCT_INTEL_82840_HB:
+		case PCI_PRODUCT_INTEL_82845_HB:
+		case PCI_PRODUCT_INTEL_82850_HB:
+		case PCI_PRODUCT_INTEL_82860_HB:
 			sc->sc_st = pa->pa_memt;
 			if (bus_space_map(sc->sc_st, I82802_IOBASE,
 			    I82802_IOSIZE, 0, &sc->sc_sh) != 0) {
@@ -125,18 +128,6 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			 *
 			 *	http://csrc.nist.gov/fips/fips1401.htm
 			 */
-
-			/*
-			 * See how quickly the RNG provides entropy.
-			 */
-			for (i = 0; i < 8192; i++) {
-				while ((bus_space_read_1(sc->sc_st, sc->sc_sh,
-				    I82802_RNG_RNGST) &
-				    I82802_RNG_RNGST_DATAV) == 0)
-					/* spin */;
-				(void) bus_space_read_1(sc->sc_st, sc->sc_sh,
-				    I82802_RNG_DATA);
-			}
 
 			printf("%s: random number generator enabled\n",
 			    sc->sc_dev.dv_xname);

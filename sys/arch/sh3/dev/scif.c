@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.25.2.1 2002/05/19 07:41:26 gehenna Exp $ */
+/*	$NetBSD: scif.c,v 1.25.2.2 2002/05/30 15:35:44 gehenna Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -379,32 +379,13 @@ ScifErrCheck(void)
 /*
  * scif_getc
  */
-#if 0
-/* Old code */
 unsigned char
 scif_getc(void)
 {
 	unsigned char c, err_c;
-
-	while (((err_c = SHREG_SCSSR2)
-		& (SCSSR2_RDF | SCSSR2_ER | SCSSR2_FER | SCSSR2_PER | SCSSR2_DR)) == 0)
-		;
-	if ((err_c & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER)) != 0) {
-		SHREG_SCSSR2 &= ~SCSSR2_ER;
-		return(err_c |= 0x80);
-	}
-
-	c = SHREG_SCFRDR2;
-
-	SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR);
-
-	return(c);
-}
-#else
-unsigned char
-scif_getc(void)
-{
-	unsigned char c, err_c;
+#ifdef SH4
+	unsigned short err_c2;
+#endif
 
 	while (1) {
 		/* wait for ready */
@@ -415,14 +396,22 @@ scif_getc(void)
 		err_c = SHREG_SCSSR2;
 		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF
 		    | SCSSR2_DR);
+#ifdef SH4
+		if (CPU_IS_SH4) {
+			err_c2 = SHREG_SCLSR2;
+			SHREG_SCLSR2 &= ~SCLSR2_ORER;
+		}
+#endif
 		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
 		    | SCSSR2_PER)) == 0) {
+#ifdef SH4
+			if (CPU_IS_SH4 && ((err_c2 & SCLSR2_ORER) == 0))
+#endif
 			return(c);
 		}
 	}
 
 }
-#endif
 
 #if 0
 #define	SCIF_MAX_UNITS 2
@@ -1252,70 +1241,84 @@ scifintr(void *arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	ssr2 = SHREG_SCSSR2;
-	if (ISSET(ssr2, SCSSR2_BRK)) {
-		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
+	do {
+		ssr2 = SHREG_SCSSR2;
+		if (ISSET(ssr2, SCSSR2_BRK)) {
+			SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
 #ifdef DDB
-		if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
-			console_debugger();
-		}
+			if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
+				console_debugger();
+			}
 #endif /* DDB */
 #ifdef KGDB
-		if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB)) {
-			kgdb_connect(1);
-		}
+			if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB)) {
+				kgdb_connect(1);
+			}
 #endif /* KGDB */
-	}
-	count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
-	if (count != 0) {
-		while ((cc > 0) && (count > 0)) {
-			put[0] = SHREG_SCFRDR2;
-			put[1] = (u_char)(SHREG_SCSSR2 & 0x00ff);
-
-			SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR);
-
-			put += 2;
-			if (put >= end)
-				put = sc->sc_rbuf;
-			cc--;
-			count--;
 		}
+		count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
+		if (count != 0) {
+			while (1) {
+				u_char c = SHREG_SCFRDR2;
+				u_char err = (u_char)(SHREG_SCSSR2 & 0x00ff);
 
-		/*
-		 * Current string of incoming characters ended because
-		 * no more data was available or we ran out of space.
-		 * Schedule a receive event if any data was received.
-		 * If we're out of space, turn off receive interrupts.
-		 */
-		sc->sc_rbput = put;
-		sc->sc_rbavail = cc;
-		if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
-			sc->sc_rx_ready = 1;
-
-		/*
-		 * See if we are in danger of overflowing a buffer. If
-		 * so, use hardware flow control to ease the pressure.
-		 */
-		if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
-		    cc < sc->sc_r_hiwat) {
-			SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
-#if 0
-			scif_hwiflow(sc);
+				SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR);
+#ifdef SH4
+				if (CPU_IS_SH4)
+					SHREG_SCLSR2 &= ~SCLSR2_ORER;
 #endif
-		}
+				if ((cc > 0) && (count > 0)) {
+					put[0] = c;
+					put[1] = err;
+					put += 2;
+					if (put >= end)
+						put = sc->sc_rbuf;
+					cc--;
+					count--;
+				} else
+					break;
+			}
 
-		/*
-		 * If we're out of space, disable receive interrupts
-		 * until the queue has drained a bit.
-		 */
-		if (!cc) {
-			SHREG_SCSCR2 &= ~SCSCR2_RIE;
+			/*
+			 * Current string of incoming characters ended because
+			 * no more data was available or we ran out of space.
+			 * Schedule a receive event if any data was received.
+			 * If we're out of space, turn off receive interrupts.
+			 */
+			sc->sc_rbput = put;
+			sc->sc_rbavail = cc;
+			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
+				sc->sc_rx_ready = 1;
+
+			/*
+			 * See if we are in danger of overflowing a buffer. If
+			 * so, use hardware flow control to ease the pressure.
+			 */
+			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
+			    cc < sc->sc_r_hiwat) {
+				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+#if 0
+				scif_hwiflow(sc);
+#endif
+			}
+
+			/*
+			 * If we're out of space, disable receive interrupts
+			 * until the queue has drained a bit.
+			 */
+			if (!cc) {
+				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
+				SHREG_SCSCR2 &= ~SCSCR2_RIE;
+			}
+		} else {
+			if (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR)) {
+				SHREG_SCSCR2 &= ~(SCSCR2_TIE | SCSCR2_RIE);
+				delay(10);
+				SHREG_SCSCR2 |= SCSCR2_TIE | SCSCR2_RIE;
+				continue;
+			}
 		}
-	} else {
-		if (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR)) {
-			SHREG_SCSCR2 &= ~(SCSCR2_TIE | SCSCR2_RIE);
-		}
-	}
+	} while (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR));
 
 #if 0
 	msr = bus_space_read_1(iot, ioh, scif_msr);

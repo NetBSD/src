@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.10 2000/05/20 13:30:03 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.10.20.1 2002/05/30 15:36:31 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -43,6 +43,7 @@
 
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 
 #include "lib/libkern/libkern.h"
 
@@ -101,6 +102,10 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		nisa_rom = (u_long *)0x27800000;
 		for (i=0; i<ETHER_ADDR_LEN; i++)
 			ze_myaddr[i] = nisa_rom[i] & 0377;
+	} else if (vax_boardtype == VAX_BTYP_VXT) {
+		nisa_rom = (u_long *)0x200c4000;
+		for (i=0; i<ETHER_ADDR_LEN; i++)
+			ze_myaddr[i] = nisa_rom[i] & 0xff;
 	} else {
 		nisa_rom = (u_long *)0x20084000;
 		for (i=0; i<ETHER_ADDR_LEN; i++)
@@ -109,6 +114,7 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 			else
 				ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
 	}
+	printf("SGEC: Ethernet address %s\n", ether_sprintf(ze_myaddr));
 
 	/* initialize SGEC operating mode */
 	/* disable interrupts here */

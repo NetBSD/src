@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.2.2.1 2002/05/30 15:31:57 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2.2.1 2002/05/30 15:31:57 gehenna Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -144,12 +144,12 @@ eh_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct podulebus_attach_args *pa = aux;
 
 	switch (pa->pa_product) {
-	case PODULE_ICUBED_ETHERLAN100:
-	case PODULE_ICUBED_ETHERLAN100AEH:
-	case PODULE_ICUBED_ETHERLAN200:
-	case PODULE_ICUBED_ETHERLAN200AEH:
-	case PODULE_ICUBED_ETHERLAN500:
-	case PODULE_ICUBED_ETHERLAN500AEH:
+	case PODULE_ETHERLAN100:
+	case PODULE_ETHERLAN100AEH:
+	case PODULE_ETHERLAN200:
+	case PODULE_ETHERLAN200AEH:
+	case PODULE_ETHERLAN500:
+	case PODULE_ETHERLAN500AEH:
 		return 1;
 	}
 	return 0;
@@ -182,31 +182,31 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Canonicalise card type. */
 	switch (pa->pa_product) {
-	case PODULE_ICUBED_ETHERLAN100:
-	case PODULE_ICUBED_ETHERLAN100AEH:
-		sc->sc_type = PODULE_ICUBED_ETHERLAN100;
+	case PODULE_ETHERLAN100:
+	case PODULE_ETHERLAN100AEH:
+		sc->sc_type = PODULE_ETHERLAN100;
 		break;
-	case PODULE_ICUBED_ETHERLAN200:
-	case PODULE_ICUBED_ETHERLAN200AEH:
-		sc->sc_type = PODULE_ICUBED_ETHERLAN200;
+	case PODULE_ETHERLAN200:
+	case PODULE_ETHERLAN200AEH:
+		sc->sc_type = PODULE_ETHERLAN200;
 		break;
-	case PODULE_ICUBED_ETHERLAN500:
-	case PODULE_ICUBED_ETHERLAN500AEH:
-		sc->sc_type = PODULE_ICUBED_ETHERLAN500;
+	case PODULE_ETHERLAN500:
+	case PODULE_ETHERLAN500AEH:
+		sc->sc_type = PODULE_ETHERLAN500;
 		break;
 	}
 
 	/* Memory size and width varies. */
 	dsc->mem_start = 0;
 	switch (sc->sc_type) {
-	case PODULE_ICUBED_ETHERLAN200:
+	case PODULE_ETHERLAN200:
 		sc->sc_flags |= EHF_MAU;
 		/* FALLTHROUGH */
-	case PODULE_ICUBED_ETHERLAN100:
+	case PODULE_ETHERLAN100:
 		printf(": 8-bit, 32 KB RAM");
 		dsc->mem_size  = 0x8000;
 		break;
-	case PODULE_ICUBED_ETHERLAN500:
+	case PODULE_ETHERLAN500:
 		printf(": 16-bit, 64 KB RAM");
 		sc->sc_flags |= EHF_16BIT;
 		dsc->mem_size = 0x10000;
