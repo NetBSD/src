@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.35 1998/02/19 02:36:44 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.36 1998/03/17 23:50:30 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -426,6 +426,7 @@ void	 tcp_mtudisc __P((struct inpcb *, int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));
+u_int	 tcp_optlen __P((struct tcpcb *));
 int	 tcp_output __P((struct tcpcb *));
 void	 tcp_pulloutofband __P((struct socket *,
 	    struct tcpiphdr *, struct mbuf *));
