@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.18 1997/03/24 00:35:20 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.19 1997/04/11 20:28:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -410,6 +410,8 @@ pdq_pci_attach(
     bus_addr_t csrbase;
     bus_size_t csrsize;
     int cacheable = 0;
+
+    printf("\n");
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
