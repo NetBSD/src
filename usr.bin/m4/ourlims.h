@@ -1,8 +1,6 @@
 /*  File   : ourlims.h
     Author : Richard A. O'Keefe
     Defines: UCHAR_MAX, CHAR_BIT, LONG_BIT
-
-	$Id: ourlims.h,v 1.2 1993/08/02 17:54:46 mycroft Exp $
 */
 /*  If <limits.h> is available, use that.
     Otherwise, use 8-bit byte as the default.
