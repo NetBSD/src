@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.18 2002/03/10 19:03:08 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.19 2002/03/10 22:36:28 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.18 2002/03/10 19:03:08 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.19 2002/03/10 22:36:28 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -109,6 +109,24 @@ irix_sys_syssgi(p, v, retval)
 	case IRIX_SGI_SYSID:	/* Get HostID */
 		*retval = (register_t)hostid;
 		break;
+
+	case IRIX_SGI_SETGROUPS: {	/* setgroups(2) */
+		struct sys_setgroups_args cup;
+
+		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
+		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
+		return (sys_setgroups(p, &cup, retval));
+		break;
+	}
+
+	case IRIX_SGI_GETGROUPS: {	/* getgroups(2) */
+		struct sys_getgroups_args cup;
+
+		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
+		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
+		return (sys_getgroups(p, &cup, retval));
+		break;
+	}
 
 	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
 		struct sys_getsid_args cup;
