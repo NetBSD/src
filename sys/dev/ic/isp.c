@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.76 2001/05/16 03:58:47 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.77 2001/05/25 21:45:55 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -3367,7 +3367,7 @@ isp_parse_async(struct ispsoftc *isp, int mbox)
 		FCPARAM(isp)->isp_loopstate = LOOP_LIP_RCVD;
 		isp->isp_sendmarker = 1;
 		isp_mark_getpdb_all(isp);
-		isp_prt(isp, ISP_LOGINFO, "LIP occurred");
+		isp_async(isp, ISPASYNC_LIP, NULL);
 #ifdef	ISP_TARGET_MODE
 		isp_target_async(isp, bus, mbox);
 #endif
@@ -3400,7 +3400,7 @@ isp_parse_async(struct ispsoftc *isp, int mbox)
 		FCPARAM(isp)->isp_fwstate = FW_CONFIG_WAIT;
 		FCPARAM(isp)->isp_loopstate = LOOP_NIL;
 		isp_mark_getpdb_all(isp);
-		isp_prt(isp, ISP_LOGINFO, "Loop RESET");
+		isp_async(isp, ISPASYNC_LOOP_RESET, NULL);
 #ifdef	ISP_TARGET_MODE
 		isp_target_async(isp, bus, mbox);
 #endif
