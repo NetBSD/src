@@ -1,6 +1,8 @@
+/*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Sze-Tyan Wang.
@@ -35,13 +37,17 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)reverse.c	5.3 (Berkeley) 2/12/92";*/
-static char rcsid[] = "$Id: reverse.c,v 1.5 1994/11/23 07:11:03 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+
+#include <limits.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -85,9 +91,11 @@ reverse(fp, style, off, sbp)
 	else
 		switch(style) {
 		case FBYTES:
+		case RBYTES:
 			bytes(fp, off);
 			break;
 		case FLINES:
+		case RLINES:
 			lines(fp, off);
 			break;
 		case REVERSE:
@@ -106,7 +114,7 @@ r_reg(fp, style, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register int size;
+	register off_t size;
 	register int llen;
 	register char *p;
 	char *start;
@@ -114,9 +122,16 @@ r_reg(fp, style, off, sbp)
 	if (!(size = sbp->st_size))
 		return;
 
+	if (size > SIZE_T_MAX) {
+		err(0, "%s: %s", fname, strerror(EFBIG));
+		return;
+	}
+
 	if ((start = mmap(NULL, (size_t)size,
-	   PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1)
-		err("%s", strerror(errno));
+	    PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1) {
+		err(0, "%s: %s", fname, strerror(EFBIG));
+		return;
+	}
 	p = start + size - 1;
 
 	if (style == RBYTES && off < size)
@@ -135,7 +150,7 @@ r_reg(fp, style, off, sbp)
 	if (llen)
 		WR(p, llen);
 	if (munmap(start, (size_t)sbp->st_size))
-		err("%s", strerror(errno));
+		err(0, "%s: %s", fname, strerror(errno));
 }
 
 typedef struct bf {
@@ -174,7 +189,7 @@ r_buf(fp)
 		if (enomem || (tl = malloc(sizeof(BF))) == NULL ||
 		    (tl->l = malloc(BSZ)) == NULL) {
 			if (!mark)
-				err("%s", strerror(errno));
+				err(1, "%s", strerror(errno));
 			tl = enomem ? tl->next : mark;
 			enomem += tl->len;
 		} else if (mark) {
