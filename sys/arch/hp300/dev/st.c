@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.26 2000/01/21 23:29:04 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.27 2000/05/19 18:54:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -792,7 +792,7 @@ stgo(arg)
 			       sc->sc_dev.dv_xname, bp->b_bcount);
 #endif
 		stat = scsi_tt_oddio(sc->sc_dev.dv_parent->dv_unit,
-		    sc->sc_target, sc->sc_lun, bp->b_un.b_addr, bp->b_bcount,
+		    sc->sc_target, sc->sc_lun, bp->b_data, bp->b_bcount,
 		    bp->b_flags, 1);
 		if (stat == 0) {
 			bp->b_resid = 0;
@@ -1047,7 +1047,7 @@ stintr(arg, stat)
 					stat = scsi_tt_oddio(
 					    sc->sc_dev.dv_parent->dv_unit,
 					    sc->sc_target, sc->sc_lun,
-					    bp->b_un.b_addr,
+					    bp->b_data,
 					    bp->b_bcount - bp->b_resid,
 					    bp->b_flags, 0);
 				if (stat) {

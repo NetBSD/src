@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.59 2000/03/30 14:45:05 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.60 2000/05/19 18:54:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.59 2000/03/30 14:45:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.60 2000/05/19 18:54:26 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -270,7 +270,7 @@ rzready(sc)
 			0, 0, (ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 		sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 		sc->sc_buf.b_bcount = 0;
-		sc->sc_buf.b_un.b_addr = (caddr_t)0;
+		sc->sc_buf.b_data = (caddr_t)0;
 		BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 
 		sc->sc_cmd.cmd = sc->sc_cdb.cdb;
@@ -317,7 +317,7 @@ rzready(sc)
 			cp->control = 0;
 			sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_buf.b_bcount = 0;
-			sc->sc_buf.b_un.b_addr = (caddr_t)0;
+			sc->sc_buf.b_data = (caddr_t)0;
 			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 			rzstart(sc->sc_cmd.unit);
 			if (biowait(&sc->sc_buf))
@@ -373,7 +373,7 @@ rz_getsize(sc, flags)
 		(ScsiGroup1Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 	sc->sc_buf.b_bcount = 8; /* XXX 8 was sizeof(sc->sc_capbuf). */
-	sc->sc_buf.b_un.b_addr = (caddr_t)sc->sc_capbuf;
+	sc->sc_buf.b_data = (caddr_t)sc->sc_capbuf;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	sc->sc_flags |= RZF_ALTCMD;
 	rzstart(sc->sc_cmd.unit);
@@ -439,7 +439,7 @@ rzprobe(xxxsd)
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 	sc->sc_buf.b_bcount = sizeof(inqbuf);
-	sc->sc_buf.b_un.b_addr = (caddr_t)&inqbuf;
+	sc->sc_buf.b_data = (caddr_t)&inqbuf;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	rzstart(sd->sd_unit);
 
@@ -572,7 +572,7 @@ rzlblkstrat(bp, bsize)
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
 	resid = bp->b_bcount;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 #ifdef DEBUG
 	if (rzdebug & RZB_PARTIAL)
 		printf("rzlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
@@ -588,7 +588,7 @@ rzlblkstrat(bp, bsize)
 			count = min(resid, bsize - boff);
 			cbp->b_flags = B_BUSY | B_PHYS | B_READ;
 			cbp->b_blkno = bn - btodb(boff);
-			cbp->b_un.b_addr = cbuf;
+			cbp->b_data = cbuf;
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
@@ -615,7 +615,7 @@ rzlblkstrat(bp, bsize)
 		} else {
 			count = resid & ~(bsize - 1);
 			cbp->b_blkno = bn;
-			cbp->b_un.b_addr = addr;
+			cbp->b_data = addr;
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
@@ -728,7 +728,7 @@ rzstart(unit)
 	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int n;
 
-	sc->sc_cmd.buf = bp->b_un.b_addr;
+	sc->sc_cmd.buf = bp->b_data;
 	sc->sc_cmd.buflen = bp->b_bcount;
 
 	if (sc->sc_format_pid ||
@@ -854,7 +854,7 @@ rzdone(unit, error, resid, status)
 				(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 			sc->sc_errbuf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_errbuf.b_bcount = sizeof(sc->sc_sense.sense);
-			sc->sc_errbuf.b_un.b_addr = (caddr_t)sc->sc_sense.sense;
+			sc->sc_errbuf.b_data = (caddr_t)sc->sc_sense.sense;
 			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_errbuf);
 			rzstart(unit);
 			return;
@@ -1372,7 +1372,7 @@ rz_command(sc, scsi_cmd, cmdlen, data_addr, datalen, nretries, timeout,
 	sc->sc_buf.b_flags = B_BUSY | B_PHYS |
 	    (flags & SCSI_DATA_IN) ? B_READ : B_WRITE;
 	sc->sc_buf.b_bcount = datalen;
-	sc->sc_buf.b_un.b_addr = (caddr_t)data_addr;
+	sc->sc_buf.b_data = (caddr_t)data_addr;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	sc->sc_flags |= RZF_ALTCMD;
 	rzstart(sc->sc_cmd.unit);
@@ -1705,7 +1705,7 @@ rzdump(dev, blkno, va, size)
 		 */
 		sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_WRITE;
 		sc->sc_buf.b_bcount = nwrt * sectorsize;
-		sc->sc_buf.b_un.b_addr = va;
+		sc->sc_buf.b_data = va;
 		BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 
 		sc->sc_cmd.flags = SCSICMD_DATA_TO_DEVICE;

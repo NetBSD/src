@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.2 1998/04/13 12:10:26 ragge Exp $	*/
+/*	$NetBSD: cfl.c,v 1.3 2000/05/19 18:54:32 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -151,7 +151,7 @@ cflrw(dev, uio, flag)
 			break;
 		}
 		if (uio->uio_rw == UIO_WRITE) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
@@ -166,7 +166,7 @@ cflrw(dev, uio, flag)
 			break;
 		}
 		if (uio->uio_rw == UIO_READ) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
@@ -183,7 +183,7 @@ cflstart()
 
 	bp = cfltab.cfl_buf;
 	cfltab.cfl_errcnt = 0;
-	cfltab.cfl_xaddr = (unsigned char *) bp->b_un.b_addr;
+	cfltab.cfl_xaddr = (unsigned char *) bp->b_data;
 	cfltab.cfl_active = CFL_START;
 	bp->b_resid = 0;
 

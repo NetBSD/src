@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.24 2000/01/21 23:29:02 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.25 2000/05/19 18:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -465,7 +465,7 @@ ctcommand(dev, cmd, cnt)
 	bp->b_dev = dev;
 	if (cmd == MTFSF) {
 		nbp = (struct buf *)geteblk(MAXBSIZE);
-		bp->b_un.b_addr = nbp->b_un.b_addr;
+		bp->b_data = nbp->b_data;
 		bp->b_bcount = MAXBSIZE;
 	}
 
@@ -516,7 +516,7 @@ ctustart(sc)
 	struct buf *bp;
 
 	bp = BUFQ_FIRST(&sc->sc_tab);
-	sc->sc_addr = bp->b_un.b_addr;
+	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
 		ctstart(sc);

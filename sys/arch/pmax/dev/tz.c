@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.28 2000/03/23 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.29 2000/05/19 18:54:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -228,7 +228,7 @@ tzprobe(xxxsd)
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = sizeof(inqbuf);
-	sc->sc_buf.b_un.b_addr = (caddr_t)&inqbuf;
+	sc->sc_buf.b_data = (caddr_t)&inqbuf;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sd->sd_unit);
 	if (biowait(&sc->sc_buf) ||
@@ -243,7 +243,7 @@ tzprobe(xxxsd)
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = 0;
-	sc->sc_buf.b_un.b_addr = (caddr_t)0;
+	sc->sc_buf.b_data = (caddr_t)0;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sd->sd_unit);
 	(void) biowait(&sc->sc_buf);
@@ -354,7 +354,7 @@ tzcommand(dev, command, code, count, data)
 		sc->sc_buf.b_flags = B_BUSY | B_READ;
 	}
 	sc->sc_buf.b_bcount = data ? count : 0;
-	sc->sc_buf.b_un.b_addr = data;
+	sc->sc_buf.b_data = data;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sc->sc_sd->sd_unit);
 	error = biowait(&sc->sc_buf);
@@ -414,7 +414,7 @@ tzstart(unit)
 	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int n;
 
-	sc->sc_cmd.buf = bp->b_un.b_addr;
+	sc->sc_cmd.buf = bp->b_data;
 	sc->sc_cmd.buflen = bp->b_bcount;
 
 	if (sc->sc_flags & (TZF_SENSEINPROGRESS | TZF_ALTCMD)) {
@@ -595,7 +595,7 @@ tzdone(unit, error, resid, status)
 				(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 			sc->sc_errbuf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_errbuf.b_bcount = sizeof(sc->sc_sense.sense);
-			sc->sc_errbuf.b_un.b_addr = (caddr_t)sc->sc_sense.sense;
+			sc->sc_errbuf.b_data = (caddr_t)sc->sc_sense.sense;
 			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_errbuf);
 			tzstart(unit);
 			return;
