@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.13 2002/11/04 16:37:04 pooka Exp $
+.\" $NetBSD: eap.4,v 1.14 2002/11/04 17:07:44 pooka Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,8 +49,18 @@
 The
 .Nm
 driver provides support for the Ensoniq AudioPCI and Creative Labs
-SoundBlaster PCI series of audio cards.  All models based on the ES1370,
-ES1371, and ES1373 chips are supported.
+SoundBlaster PCI series of audio cards.
+All models based on the ES1370, ES1371, and ES1373 chips are supported.
+.Pp
+By specifying:
+.Bd -unfilled -offset indent
+options EAP_USE_BOTH_DACS
+.Ed
+.Pp
+a second audio device is attached.
+You can use it simply by directing audio output to it.
+This way it is possible for two different programs to use the "same"
+audio device simultaneously.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr midi 4 ,
