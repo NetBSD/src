@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.52 2002/05/14 00:05:56 matt Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.53 2002/07/30 07:40:07 soren Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.52 2002/05/14 00:05:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.53 2002/07/30 07:40:07 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -250,7 +250,7 @@ adosfs_mountfs(devvp, mp, p)
 	amp->dbsize = amp->bsize - (IS_FFS(amp) ? 0 : OFS_DATA_OFFSET);
 	amp->devvp = devvp;
 	
-	mp->mnt_data = (qaddr_t)amp;
+	mp->mnt_data = amp;
         mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_fs_bshift = ffs(amp->bsize) - 1;
@@ -328,7 +328,7 @@ adosfs_unmount(mp, mntflags, p)
 	if (amp->bitmap)
 		free(amp->bitmap, M_ADOSFSBITMAP);
 	free(amp, M_ADOSFSMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

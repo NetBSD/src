@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.49 2002/03/08 20:48:45 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.50 2002/07/30 07:40:15 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.49 2002/03/08 20:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.50 2002/07/30 07:40:15 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -602,7 +602,7 @@ ext2fs_mountfs(devvp, mp, p)
 		bp = NULL;
 	}
 
-	mp->mnt_data = (qaddr_t)ump;
+	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_EXT2FS);
 	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
@@ -629,7 +629,7 @@ out:
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return (error);
 }
@@ -669,7 +669,7 @@ ext2fs_unmount(mp, mntflags, p)
 	free(fs->e2fs_gd, M_UFSMNT);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

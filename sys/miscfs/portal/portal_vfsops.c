@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.29 2001/11/15 09:48:23 lukem Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.30 2002/07/30 07:40:10 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.29 2001/11/15 09:48:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.30 2002/07/30 07:40:10 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -151,7 +151,7 @@ portal_mount(mp, path, data, ndp, p)
 	fmp->pm_server = fp; fp->f_count++;
 
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t)fmp;
+	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);

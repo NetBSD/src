@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.30 2001/12/06 04:27:40 chs Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.31 2002/07/30 07:40:17 soren Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.30 2001/12/06 04:27:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.31 2002/07/30 07:40:17 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -870,7 +870,7 @@ coda_inactive(v)
 
     /* Remove it from the table so it can't be found. */
     coda_unsave(cp);
-    if ((struct coda_mntinfo *)(vp->v_mount->mnt_data) == NULL) {
+    if (vp->v_mount->mnt_data == NULL) {
 	myprintf(("Help! vfsp->vfs_data was NULL, but vnode %p wasn't dying\n", vp));
 	panic("badness in coda_inactive\n");
     }
