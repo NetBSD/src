@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.2 2002/03/10 20:23:28 lukem Exp $
+#	$NetBSD: termcap.src,v 1.3 2002/10/08 20:29:58 martin Exp $
 #
 adm+sgr|adm style highlight capabilities:\
 	:me=\EG0:mk=\EG1:mr=\EG4:se=\EG0:so=\EG4:ue=\EG0:us=\EG8:
@@ -112,6 +112,8 @@ sun|sun1|sun2|Sun Microsystems Inc. workstation console:\
 	:tc=sun-il:
 sun-ss5|Sun SparcStation 5 console:\
 	:AL@:al@:tc=sun-il:
+sun-type4|Sun Workstation console with type 4 keyboard:\
+	:kd=\E[221z:kl=\E[217z:kr=\E[219z:ku=\E[215z:tc=sun-il:
 xterm-r6|xterm-old|xterm X11R6 version:\
 	:am:bs:km:mi:ms:xn:\
 	:co#80:it#8:li#24:\
