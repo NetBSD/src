@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.3 1995/05/05 16:33:11 leo Exp $	*/
+/*	$NetBSD: genassym.c,v 1.4 1995/05/14 15:20:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -64,6 +64,7 @@ main()
 	struct vmspace *vms = (struct vmspace *)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
+	struct mdproc *mdproc = (struct mdproc *)0;
 	register unsigned i;
 
 	printf("#define\tP_FORW %d\n", &p->p_forw);
@@ -73,6 +74,9 @@ main()
 	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
+	printf("#define\tP_MD %d\n", &p->p_md);
+	printf("#define\tP_PID %d\n", &p->p_pid);
+	printf("#define\tMD_REGS %d\n", &mdproc->md_regs);
 	printf("#define\tSRUN %d\n", SRUN);
 	
 	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
@@ -81,6 +85,7 @@ main()
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
 	
 	printf("#define\tUPAGES %d\n", UPAGES);
+	printf("#define\tUSPACE %d\n", USPACE);
 	printf("#define\tNBPG %d\n", NBPG);
 	printf("#define\tPGSHIFT %d\n", PGSHIFT);
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
