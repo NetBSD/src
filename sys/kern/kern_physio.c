@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.42 2000/05/08 20:03:20 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.43 2000/06/27 17:41:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -46,8 +46,6 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

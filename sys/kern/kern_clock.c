@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.60 2000/06/03 20:42:42 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.61 2000/06/27 17:41:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/timex.h>
 #include <sys/sched.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.42 2000/04/11 04:37:51 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.43 2000/06/27 17:41:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,8 +55,6 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/poll.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
