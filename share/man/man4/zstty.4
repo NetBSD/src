@@ -1,4 +1,4 @@
-.\"	$NetBSD: zstty.4,v 1.4 2001/09/11 23:18:56 wiz Exp $
+.\"	$NetBSD: zstty.4,v 1.5 2003/03/31 03:44:32 perry Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@ serial communications interface
 .Sh DESCRIPTION
 The
 .Nm
-driver provides TTY support for Zilog 8530 Dual UARTS.
+driver provides TTY support for Zilog 8530 Dual UARTs.
 .Pp
 Input and output for each line may set to any baud rate in the
 range 50 to 38400 (and higher on some machines).
@@ -88,5 +88,5 @@ driver supplied with
 .Sh BUGS
 The old Zilog 8530 chip has a very small fifo (3 bytes?) and
 therefore has very strict latency requirements for the
-interrupt service routine.  This limits the usable baud rates
-on many machines.
+interrupt service routine.
+This limits the usable baud rates on many machines.
