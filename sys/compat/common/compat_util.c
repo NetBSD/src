@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.1 1995/06/24 20:16:03 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.2 1995/06/26 19:27:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -66,12 +66,13 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	struct vattr		 vatroot;
 	int			 error;
 	char			*ptr, *buf, *cp;
+	const char		*pr;
 	size_t			 sz, len;
 
 	buf = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	*pbuf = path;
 
-	for (ptr = buf; (*ptr = *prefix) != '\0'; ptr++, prefix++)
+	for (ptr = buf, pr = prefix; (*ptr = *pr) != '\0'; ptr++, pr++)
 		continue;
 
 	sz = MAXPATHLEN - (ptr - buf);
