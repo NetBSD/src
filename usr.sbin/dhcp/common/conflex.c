@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.5 1999/02/18 21:48:49 mellon Exp $ Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.5.2.1 1999/04/09 20:06:47 mellon Exp $ Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -354,6 +354,8 @@ static int intern (atom, dfv)
 
 	switch (tolower (atom [0])) {
 	      case 'a':
+		if (!strcasecmp (atom + 1, "lways-reply-rfc1048"))
+			return ALWAYS_REPLY_RFC1048;
 		if (!strcasecmp (atom + 1, "ppend"))
 			return APPEND;
 		if (!strcasecmp (atom + 1, "llow"))
