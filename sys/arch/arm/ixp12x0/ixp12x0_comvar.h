@@ -1,4 +1,4 @@
-/*      $NetBSD: ixp12x0_comvar.h,v 1.4 2003/02/22 05:32:01 igy Exp $        */
+/*      $NetBSD: ixp12x0_comvar.h,v 1.5 2003/03/06 06:17:43 igy Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -57,11 +57,9 @@ struct ixpcom_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t 	sc_ioh;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*sc_si;
-#endif
-	struct tty		*sc_tty;
 
+	struct tty		*sc_tty;
 
 	u_char			*sc_rbuf, *sc_ebuf;
 
@@ -95,9 +93,6 @@ struct ixpcom_softc {
 	int			enabled;
 };
 
-#if 0
-extern struct bus_space ixpcom_bs_tag;
-#endif
 extern struct ixpcom_softc* ixpcom_sc;
 
 void	ixpcom_attach_subr(struct ixpcom_softc *);
