@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.9 2001/09/21 23:44:21 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.10 2001/09/27 18:43:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ struct iop_softc {
 	int		sc_maxib;	/* Max inbound (-> IOP) queue depth */
 	int		sc_maxob;	/* Max outbound (<- IOP) queue depth */
 	int		sc_curib;	/* Current inbound queue depth */
+	int		sc_framesize;	/* Max msg frame size in bytes */
 
 	struct i2o_hrt	*sc_hrt;	/* Hardware resource table */
 	struct iop_tidmap *sc_tidmap;	/* TID map (per-LCT-entry flags) */
