@@ -34,7 +34,7 @@ is interpreted relative to the changed root directory.
 .IP "\fBinet\fR:[\fIaddr\fR], \fBinet\fR:[\fIaddr\fR]:\fIport\fR (numeric host)"
 Connect to the specified IPv4 TCP port on the specified local or
 remote host. If no port is specified, connect to the port defined as
-\fBlmtp\fR in \fBservices\fR(4).
+\fBlmtp\fR in \fBservices\fR(5).
 If no such service is found, the \fBlmtp_tcp_port\fR configuration
 parameter (default value of 24) will be used.
 
@@ -103,7 +103,7 @@ postmaster with transcripts of LMTP sessions with protocol errors.
 Do not wait for the server response after sending QUIT.
 .IP \fBlmtp_tcp_port\fR
 The TCP port to be used when connecting to a LMTP server.  Used as
-backup if the \fBlmtp\fR service is not found in \fBservices\fR(4).
+backup if the \fBlmtp\fR service is not found in \fBservices\fR(5).
 .SH "Authentication controls"
 .IP \fBlmtp_sasl_auth_enable\fR
 Enable per-session authentication as per RFC 2554 (SASL).
@@ -213,7 +213,7 @@ bounce(8) non-delivery status reports
 local(8) local mail delivery
 master(8) process manager
 qmgr(8) queue manager
-services(4) Internet services and aliases
+services(5) Internet services and aliases
 spawn(8) auxiliary command spawner
 syslogd(8) system logging
 .SH LICENSE
