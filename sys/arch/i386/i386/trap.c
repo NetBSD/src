@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 1999/03/24 05:51:02 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.132 1999/06/17 00:12:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
-#include "opt_pmap_new.h"
 #include "opt_cputype.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
@@ -478,39 +477,11 @@ trap(frame)
 			}
 		}
 
-/*
- * PMAP_NEW allocates PTPs at pmap_enter time, not here.
- */
-#if !defined(PMAP_NEW)
-		/* Create a page table page if necessary, and wire it. */
-		if ((PTD[pdei(va)] & PG_V) == 0) {
-			unsigned v;
-			v = trunc_page(vtopte(va));
-			rv = uvm_map_pageable(map, v, v + NBPG, FALSE);
-			if (rv != KERN_SUCCESS)
-				goto nogo;
-		}
-#endif	/* PMAP_NEW */
-
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, 0, ftype);
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-
-#if !defined(PMAP_NEW)
-			/*
-			 * If this is a pagefault for a PT page,
-			 * wire it. Normally we fault them in
-			 * ourselves, but this can still happen on
-			 * a 386 in copyout & friends.
-			 */
-			if (map != kernel_map && va >= UPT_MIN_ADDRESS &&
-			    va < UPT_MAX_ADDRESS) {
-				va = trunc_page(va);
-				uvm_map_pageable(map, va, va + NBPG, FALSE);
-			}
-#endif
 
 			if (type == T_PAGEFLT)
 				return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.358 1999/05/26 19:16:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.359 1999/06/17 00:12:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 #include "opt_ddb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
-#include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
 #include "opt_compat_svr4.h"
@@ -371,22 +370,15 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
-#if defined(PMAP_NEW)
 	msgbuf_vaddr = uvm_km_valloc(kernel_map, i386_round_page(MSGBUFSIZE));
 	if (msgbuf_vaddr == NULL)
 		panic("failed to valloc msgbuf_vaddr");
-#endif
+
 	/* msgbuf_paddr was init'd in pmap */
-#if defined(PMAP_NEW)
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * NBPG,
 		    msgbuf_paddr + x * NBPG, VM_PROT_READ|VM_PROT_WRITE);
-#else
-	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbuf_vaddr + x * NBPG,
-		    msgbuf_paddr + x * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-#endif
+
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
@@ -482,18 +474,9 @@ cpu_startup()
 	    panic("biostramp_image_size too big: %x vs. %x\n",
 		  biostramp_image_size, NBPG);
 #endif
-#if defined(PMAP_NEW)
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
-#else
-	pmap_enter(pmap_kernel(),
-		   (vaddr_t)BIOSTRAMP_BASE,	/* virtual */
-		   (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		   VM_PROT_ALL,			/* protection */
-		   TRUE,			/* wired down */
-		   VM_PROT_READ|VM_PROT_WRITE);
-#endif
 	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
@@ -568,13 +551,7 @@ i386_bufinit()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-#if defined(PMAP_NEW)
 			pmap_kenter_pgs(curbuf, &pg, 1);
-#else
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
-#endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1650,10 +1627,8 @@ init386(first_avail)
 	extern void consinit __P((void));
 
 	proc0.p_addr = proc0paddr;
-#if defined(PMAP_NEW)
 	/* XXX: PMAP_NEW requires valid curpcb.   also init'd in cpu_startup */
 	curpcb = &proc0.p_addr->u_pcb;
-#endif
 
 
 	/*
@@ -2306,12 +2281,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
-#if defined(PMAP_NEW)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-#else
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
-#endif
 
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
@@ -2324,11 +2294,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-#if defined(PMAP_NEW)
 			pmap_update_pg(va);
-#else
-			pmap_update();
-#endif
 		}
 	}
  
