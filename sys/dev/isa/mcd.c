@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.14 1994/05/05 08:26:13 mycroft Exp $
+ *	$Id: mcd.c,v 1.15 1994/05/11 09:49:23 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -509,6 +509,14 @@ mcdsize(dev)
 		return 0;
 	}
 	return -1;
+}
+
+int
+mcddump()
+{
+
+	/* Not implemented. */
+	return EINVAL;
 }
 
 /***************************************************************

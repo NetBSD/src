@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.30 1994/05/09 07:40:56 chopps Exp $
+ *	$Id: st.c,v 1.31 1994/05/11 09:53:45 mycroft Exp $
  */
 
 /*
@@ -1861,4 +1861,12 @@ bad:			free(buf, M_TEMP);
 	} while (readsiz != 1 && readsiz > st->blksiz);
 	free(buf, M_TEMP);
 	return 0;
+}
+
+int
+stdump()
+{
+
+	/* Not implemented. */
+	return EINVAL;
 }

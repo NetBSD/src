@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.45 1994/05/11 09:31:42 mycroft Exp $
+ *	$Id: fd.c,v 1.46 1994/05/11 09:49:17 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1106,6 +1106,14 @@ fdsize(dev)
 
 	/* Swapping to floppies would not make sense. */
 	return -1;
+}
+
+int
+fddump()
+{
+
+	/* Not implemented. */
+	return EINVAL;
 }
 
 int
