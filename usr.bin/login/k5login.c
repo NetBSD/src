@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.12.2.4 2000/11/14 16:05:34 tv Exp $	*/
+/*	$NetBSD: k5login.c,v 1.12.2.5 2000/12/14 22:49:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.12.2.4 2000/11/14 16:05:34 tv Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.12.2.5 2000/12/14 22:49:32 he Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -272,7 +272,7 @@ k5_read_creds(username)
 	}
 	have_forward = 1;
 
-	strcpy(tkt_location, getenv("KRB5CCNAME"));
+	strlcpy(tkt_location, getenv("KRB5CCNAME"), sizeof(tkt_location));
 	krb5tkfile_env = tkt_location;
 	has_ccache = 1;
 	notickets = 0;
