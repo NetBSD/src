@@ -1,4 +1,4 @@
-/*	$NetBSD: emuspeed.c,v 1.2 1998/01/09 08:03:56 perry Exp $	*/
+/*	$NetBSD: emuspeed.c,v 1.3 1998/06/15 14:43:25 is Exp $	*/
 
 #include <setjmp.h>
 #include <signal.h>
@@ -9,26 +9,26 @@
 
 #include "speed.h"
 
+#define PRECISION 500
+
 const struct test {
 	char *name; 
 	void (*func)__P((int));
 	char *comment;
-	int count;
 } testlist[] = {
-	{"Illegal", illegal, "(test: unimplemented)", 1},
-	{"mulsl Da,Db", mul32sreg, "(test: should be native)", 200000000},
-	{"mulsl sp@(8),Da", mul32smem, "(test: should be native)\n", 
-	    200000000},
+	{"Illegal", illegal, "(test: unimplemented)"},
+	{"mulsl Da,Db", mul32sreg, "(test: should be native)"},
+	{"mulsl sp@(8),Da", mul32smem, "(test: should be native)\n"},
 	
-	{"mulsl Dn,Da:Db", mul64sreg, "emulated on 68060", 2000000},
-	{"mulul Dn,Da:Db", mul64ureg, "\t\"", 2000000},
-	{"mulsl sp@(8),Da:Db", mul64smem, "\t\"", 1000000},
-	{"mulul sp@(8),Da:Db", mul64umem, "\t\"\n", 1000000},
+	{"mulsl Dn,Da:Db", mul64sreg, "emulated on 68060"},
+	{"mulul Dn,Da:Db", mul64ureg, "\t\""},
+	{"mulsl sp@(8),Da:Db", mul64smem, "\t\""},
+	{"mulul sp@(8),Da:Db", mul64umem, "\t\"\n"},
 
-	{"divsl Da:Db,Dn", div64sreg, "\t\"", 500000},
-	{"divul Da:Db,Dn", div64ureg, "\t\"", 500000},
-	{"divsl Da:Db,sp@(8)", div64smem, "\t\"", 300000},
-	{"divul Da:Db,sp@(8)", div64umem, "\t\"\n", 300000},
+	{"divsl Da:Db,Dn", div64sreg, "\t\""},
+	{"divul Da:Db,Dn", div64ureg, "\t\""},
+	{"divsl Da:Db,sp@(8)", div64smem, "\t\""},
+	{"divul Da:Db,sp@(8)", div64umem, "\t\"\n"},
 
 	{NULL, NULL, NULL}
 };
@@ -43,6 +43,7 @@ main(argc, argv)
 {
 	const struct test *t;
 	clock_t start, stop;
+	int count;
 
 
 	if (signal(SIGILL, &illhand))
@@ -60,11 +61,15 @@ main(argc, argv)
 			continue;
 		}
 			
-		start = clock();
-		t->func(t->count);
-		stop = clock();
+		count = 1000;
+		do {
+			count *= 2;
+			start = clock();
+			t->func(count);
+			stop = clock();
+		} while ((stop - start) < PRECISION);
 		printf("%13d/s    %s\n",
-		    CLOCKS_PER_SEC*(t->count /(stop - start)),
+		    CLOCKS_PER_SEC*(count /(stop - start)),
 		    t->comment);
 	}
 	exit (0);
