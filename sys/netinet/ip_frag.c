@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.14.6.1 1999/06/28 06:37:00 itojun Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.14.6.2 1999/11/30 13:35:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,15 +9,11 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.14.6.1 1999/06/28 06:37:00 itojun Exp $";
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.14.6.2 1999/11/30 13:35:29 itojun Exp $";
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19.2.6 1998/11/22 01:50:25 darrenr Exp ";
 #endif
-#endif
-
-#ifdef _KERNEL
-#include "opt_inet.h"
 #endif
 
 #include <sys/errno.h>
@@ -60,11 +56,6 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19.2.6 1998/11/22 01:50:2
 #include <net/af.h>
 #endif
 #include <net/route.h>
-#ifdef _KERNEL
-#ifndef INET
-#error ipfilter assumes options INET
-#endif
-#endif
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
