@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.10 1995/03/27 21:48:52 mycroft Exp $	*/
+/*	$NetBSD: traverse.c,v 1.11 1995/03/27 22:14:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: traverse.c,v 1.10 1995/03/27 21:48:52 mycroft Exp $";
+static char rcsid[] = "$NetBSD: traverse.c,v 1.11 1995/03/27 22:14:47 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -606,7 +606,7 @@ loop:
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if ((int)lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
+		if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
 			msg("bread: lseek2 fails!\n");
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
