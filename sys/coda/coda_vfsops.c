@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.29 2003/08/27 17:49:49 drochner Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.30 2003/10/30 02:07:38 simonb Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.29 2003/08/27 17:49:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.30 2003/10/30 02:07:38 simonb Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -338,7 +338,6 @@ coda_root(vfsp, vpp)
 	struct vnode **vpp;
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
-    struct vnode **result;
     int error;
     struct proc *p = curproc;    /* XXX - bnoble */
     CodaFid VFid;
@@ -346,7 +345,6 @@ coda_root(vfsp, vpp)
 
     ENTRY;
     MARK_ENTRY(CODA_ROOT_STATS);
-    result = NULL;
     
     if (vfsp == mi->mi_vfsp) {
     	if (memcmp(&VTOC(mi->mi_rootvp)->c_fid, &invalfid, sizeof(CodaFid)))

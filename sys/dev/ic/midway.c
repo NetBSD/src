@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $	*/
+/*	$NetBSD: midway.c,v 1.62 2003/10/30 01:58:17 simonb Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.62 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_natm.h"
 
@@ -2983,7 +2983,7 @@ struct en_softc *sc;
   struct mbuf *m, *tmp;
   u_int32_t cur, dstart, rbd, pdu, *sav, dma, bcode, count, *data, *datastop;
   u_int32_t start, stop, cnt, needalign;
-  int slot, raw, aal5, llc, vci, fill, mlen, tlen, drqneed, need, needfill, end;
+  int slot, raw, aal5, vci, fill, mlen, tlen, drqneed, need, needfill, end;
 
   aal5 = 0;		/* Silence gcc */
 next_vci:
@@ -3057,7 +3057,6 @@ defer:					/* defer processing */
 
     /* normal mode */
     aal5 = (sc->rxslot[slot].atm_flags & ATM_PH_AAL5);
-    llc = (aal5 && (sc->rxslot[slot].atm_flags & ATM_PH_LLCSNAP)) ? 1 : 0;
     rbd = EN_READ(sc, cur);
     if (MID_RBD_ID(rbd) != MID_RBD_STDID) 
       panic("en_service: id mismatch");
