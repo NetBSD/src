@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.50 2003/08/18 15:45:29 dsl Exp $	*/
+/*	$NetBSD: stand.h,v 1.51 2003/10/30 22:15:28 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -238,6 +238,7 @@ void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);
+void	*memset(void *, int, size_t);
 void	exec(char *, char *, int);
 int	open(const char *, int);
 int	close(int);
