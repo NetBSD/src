@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.2 2000/12/20 14:53:23 itojun Exp $	*/
+/*	$NetBSD: wchar.h,v 1.3 2000/12/20 22:36:25 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,6 +67,7 @@
 
 #include <sys/cdefs.h>
 #include <machine/ansi.h>
+#include <sys/null.h>
 
 #ifdef	_BSD_WCHAR_T_
 typedef	_BSD_WCHAR_T_	wchar_t;
