@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.29 1999/11/19 18:27:18 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.30 1999/12/12 02:56:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -144,15 +145,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vrreg.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
 
 #define	VR_USEIOSPACE
 
@@ -268,11 +260,11 @@ do {									\
 	struct vr_desc *__d = VR_CDRX((sc), (i));			\
 	struct vr_descsoft *__ds = VR_DSRX((sc), (i));			\
 									\
-	__d->vr_next = htopci(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
-	__d->vr_status = htopci(VR_RXSTAT_FIRSTFRAG |			\
+	__d->vr_next = htole32(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
+	__d->vr_status = htole32(VR_RXSTAT_FIRSTFRAG |			\
 	    VR_RXSTAT_LASTFRAG | VR_RXSTAT_OWN);			\
-	__d->vr_data = htopci(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
-	__d->vr_ctl = htopci(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
+	__d->vr_data = htole32(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
+	__d->vr_ctl = htole32(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
 	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
@@ -614,7 +606,7 @@ vr_rxeof(sc)
 
 		VR_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = pcitoh(d->vr_status);
+		rxstat = le32toh(d->vr_status);
 
 		if (rxstat & VR_RXSTAT_OWN) {
 			/*
@@ -671,7 +663,7 @@ vr_rxeof(sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		/* No errors; receive the packet. */
-		total_len = VR_RXBYTES(pcitoh(d->vr_status));
+		total_len = VR_RXBYTES(le32toh(d->vr_status));
 
 		/*
 		 * XXX The VIA Rhine chip includes the CRC with every
@@ -824,7 +816,7 @@ vr_txeof(sc)
 
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		txstat = pcitoh(d->vr_status);
+		txstat = le32toh(d->vr_status);
 		if (txstat & VR_TXSTAT_OWN)
 			break;
 
@@ -1038,11 +1030,12 @@ vr_start(ifp)
 		 * Fill in the transmit descriptor.  The Rhine
 		 * doesn't auto-pad, so we have to do this ourselves.
 		 */
-		d->vr_data = htopci(ds->ds_dmamap->dm_segs[0].ds_addr);
-		d->vr_ctl = htopci(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
+		d->vr_data = htole32(ds->ds_dmamap->dm_segs[0].ds_addr);
+		d->vr_ctl = htole32(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
 		    VR_MIN_FRAMELEN : m0->m_pkthdr.len);
 		d->vr_ctl |=
-		    htopci(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|VR_TXCTL_LASTFRAG);
+		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
+		    VR_TXCTL_LASTFRAG);
 		
 		/*
 		 * If this is the first descriptor we're enqueuing,
@@ -1052,7 +1045,7 @@ vr_start(ifp)
 		if (nexttx == firsttx)
 			d->vr_status = 0;
 		else
-			d->vr_status = htopci(VR_TXSTAT_OWN);
+			d->vr_status = htole32(VR_TXSTAT_OWN);
 
 		VR_CDTXSYNC(sc, nexttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1079,7 +1072,7 @@ vr_start(ifp)
 		 * Cause a transmit interrupt to happen on the
 		 * last packet we enqueued.
 		 */
-		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htopci(VR_TXCTL_FINT);
+		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htole32(VR_TXCTL_FINT);
 		VR_CDTXSYNC(sc, sc->vr_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1087,7 +1080,7 @@ vr_start(ifp)
 		 * The entire packet chain is set up.  Give the
 		 * first descriptor to the Rhine now.
 		 */
-		VR_CDTX(sc, firsttx)->vr_status = htopci(VR_TXSTAT_OWN);
+		VR_CDTX(sc, firsttx)->vr_status = htole32(VR_TXSTAT_OWN);
 		VR_CDTXSYNC(sc, firsttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1131,7 +1124,7 @@ vr_init(sc)
 	for (i = 0; i < VR_NTXDESC; i++) {
 		d = VR_CDTX(sc, i);
 		memset(d, 0, sizeof(struct vr_desc));
-		d->vr_next = htopci(VR_CDTXADDR(sc, VR_NEXTTX(i)));
+		d->vr_next = htole32(VR_CDTXADDR(sc, VR_NEXTTX(i)));
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->vr_txpending = 0;
