@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 2000/01/26 13:36:05 soren Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.24 2000/02/17 23:52:23 mycroft Exp $	*/
 
 /*
  * Mach Operating System
@@ -178,7 +178,33 @@ kdb_trap(type, tfp)
 	cnpollc(0);
 	db_active--;
 
-	tfp[21] = f->f_regs[PC]; /* XXX resume XXX */
+	if (type & T_USER)
+		*(struct frame *)curproc->p_md.md_regs = *f;
+	else {
+		/* Synthetic full scale register context when trap happens */
+		tfp[0] = f->f_regs[AST];
+		tfp[1] = f->f_regs[V0];
+		tfp[2] = f->f_regs[V1];
+		tfp[3] = f->f_regs[A0];
+		tfp[4] = f->f_regs[A1];
+		tfp[5] = f->f_regs[A2];
+		tfp[6] = f->f_regs[A3];
+		tfp[7] = f->f_regs[T0];
+		tfp[8] = f->f_regs[T1];
+		tfp[9] = f->f_regs[T2];
+		tfp[10] = f->f_regs[T3];
+		tfp[11] = f->f_regs[T4];
+		tfp[12] = f->f_regs[T5];
+		tfp[13] = f->f_regs[T6];
+		tfp[14] = f->f_regs[T7];
+		tfp[15] = f->f_regs[T8];
+		tfp[16] = f->f_regs[T9];
+		tfp[17] = f->f_regs[RA];
+		tfp[18] = f->f_regs[SR];
+		tfp[19] = f->f_regs[MULLO];
+		tfp[20] = f->f_regs[MULHI];
+		tfp[21] = f->f_regs[PC];
+	}
 
 	return (1);
 }
