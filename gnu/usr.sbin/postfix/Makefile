@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2004/02/07 05:10:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2004/04/27 05:33:55 heas Exp $
 
 # The first four of these are libraries and have to be built first.
 
@@ -6,10 +6,11 @@
 
 SUBDIR=	util global dns masterlib .WAIT \
 	README_FILES bounce cleanup error flush html \
-	lmtp local man master nqmgr pickup pipe postalias \
+	lmtp local man master oqmgr pickup pipe postalias \
 	postcat postconf postdrop postfix postkick postlock \
 	postlog postmap postqueue postsuper proxymap qmgr sendmail \
-	showq smtp smtpd spawn trivial-rewrite virtual
+	showq smtp smtpd spawn trivial-rewrite verify virtual \
+	proxymap
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
@@ -22,7 +23,7 @@ SUBDIR+=conf
 # share/examples/postfix, and postfix-etc/Makefile (only called by
 # make distribution) installs a copy in /etc/postfix
 
-# also not built: smtpstone (unneeded), qmqpd (unneeded)
+# also not built: fsstone (unneeded), smtpstone (unneeded), qmqpd (unneeded)
 
 # The distribution: target is invoked from the make distribution
 # target in src/etc/Makefile. It is there for building the /etc/
