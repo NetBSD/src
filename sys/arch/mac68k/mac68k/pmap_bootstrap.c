@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.61.4.2 2005/02/23 07:48:23 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.61.4.3 2005/02/23 10:01:03 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61.4.2 2005/02/23 07:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61.4.3 2005/02/23 10:01:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -259,7 +259,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
-		 * descriptors to map the "last PT page".
+		 * descriptors to map kptmpa and the "last PT page".
 		 */
 		pte = &(PA2VA(kstpa, u_int*))
 				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE*2];
@@ -278,14 +278,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Initialize Sysptmap
 		 */
-		pte = &(PA2VA(kstpa, u_int*))
-				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE*2];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
 		pte = PA2VA(kptmpa, u_int *);
 		epte = &pte[nptpages];
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
