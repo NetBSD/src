@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.16 2003/03/30 11:58:17 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.17 2003/03/31 20:59:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.16 2003/03/30 11:58:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.17 2003/03/31 20:59:35 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.16 2003/03/30 11:58:17 jdolecek Exp $"
 #include <netsmb/smb_rq.h>
 #include <netsmb/smb_tran.h>
 #include <netsmb/smb_trantcp.h>
-
-#define SMBIOD_SLEEP_TIMO 2
 
 #define	SMB_IOD_EVLOCKPTR(iod)	(&((iod)->iod_evlock))
 #define	SMB_IOD_EVLOCK(iod)	smb_sl_lock(&((iod)->iod_evlock))
@@ -461,6 +459,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 		if (iod->iod_muxcnt < vcp->vc_maxmux)
 			break;
 		iod->iod_muxwant++;
+		/* XXX use interruptible sleep? */
 		ltsleep(&iod->iod_muxwant, PWAIT, "smbmux", 
 			0, SMB_IOD_RQLOCKPTR(iod));
 	}
@@ -642,6 +641,7 @@ void
 smb_iod_thread(void *arg)
 {
 	struct smbiod *iod = arg;
+	int s;
 
 	/*
 	 * Here we assume that the thread structure will be the same
@@ -649,13 +649,15 @@ smb_iod_thread(void *arg)
 	 */
 	KASSERT(iod->iod_p == curproc);
 	smb_makescred(&iod->iod_scred, iod->iod_p, NULL);
+	s = splnet();
 	while ((iod->iod_flags & SMBIOD_SHUTDOWN) == 0) {
 		smb_iod_main(iod);
 		if (iod->iod_flags & SMBIOD_SHUTDOWN)
 			break;
 		SMBIODEBUG("going to sleep\n");
-		tsleep(&iod->iod_flags, PWAIT, "smbidle", SMBIOD_SLEEP_TIMO * hz);
+		tsleep(&iod->iod_flags, PSOCK, "smbidle", 0);
 	}
+	splx(s);
 	kthread_exit(0);
 }
 
