@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.13 2002/10/22 21:56:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.14 2002/10/23 18:23:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include "pthread_int.h"
 
 static void pthread_mutex_lock_slow(pthread_mutex_t *);
-static void pthread_mutex_unlock_slow(pthread_mutex_t *);
 
 int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
@@ -181,6 +180,9 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 int
 pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
+	pthread_t self, blocked; 
+
+	self = pthread__self();
 
 #ifdef ERRORCHECK
 	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
@@ -190,32 +192,21 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 		return EPERM; /* Not exactly the right error. */
 #endif
 
-	__cpu_simple_unlock(&mutex->ptm_lock);
-#ifdef ERRORCHECK
-	mutex->ptm_owner = NULL;
-#endif
-	if (__predict_false(!PTQ_EMPTY(&mutex->ptm_blocked)))
-		pthread_mutex_unlock_slow(mutex);
-	
-	return 0;
-}
-
-static void
-pthread_mutex_unlock_slow(pthread_mutex_t *mutex)
-{
-	pthread_t self, blocked; 
-
-	self = pthread__self();
-
 	pthread_spinlock(self, &mutex->ptm_interlock);
 	blocked = PTQ_FIRST(&mutex->ptm_blocked);
 	if (blocked)
 		PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
+#ifdef ERRORCHECK
+	mutex->ptm_owner = NULL;
+#endif
+	__cpu_simple_unlock(&mutex->ptm_lock);
 	pthread_spinunlock(self, &mutex->ptm_interlock);
 
 	/* Give the head of the blocked queue another try. */
 	if (blocked)
 		pthread__sched(self, blocked);
+
+	return 0;
 }
 
 int
