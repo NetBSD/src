@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.16 2003/04/02 18:00:13 atatat Exp $
+# $NetBSD: sendmail,v 1.17 2004/07/15 03:47:18 atatat Exp $
 #
 
 # PROVIDE: mail
@@ -102,5 +102,26 @@ sendmail_precmd()
 	fi
 }
 
+check_need_sendmail()
+{
+	_mta_path=$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)
+	_sendmail_path="/usr/libexec/sendmail/sendmail"
+	if [ "${sendmail}" != "check" ]; then
+		echo "${sendmail}"
+	elif [ "${_mta_path}" != "${_sendmail_path}" -o \
+	    ! -x "${_sendmail_path}" -o \
+	    $(checkyesno sendmail_suidroot; echo $?) = 0 -o \
+	    "$(stat -f "%Mp %Sg" "$_sendmail_path")" != "2 smmsp" ]; then
+		echo NO
+	else
+		echo YES
+	fi
+}
+
+# force re-evaluation of /etc/rc.conf and resetting of $sendmail
+_rc_conf_loaded=false
+_rc_d_sendmail=check
 load_rc_config $name
+unset _rc_d_sendmail
+sendmail=$(check_need_sendmail)
 run_rc_command "$1"
