@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.48 2003/10/16 03:03:04 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.49 2003/10/16 06:30:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.48 2003/10/16 03:03:04 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.49 2003/10/16 06:30:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -763,7 +763,7 @@ socksetup(int af, int options, const char *port, int *nfds)
 		/* Count max number of sockets we may open */
 		for (r = res, n = 0; r; r = r->ai_next, n++)
 			;
-		newsocks= realloc(socks, (*nfds + n) * sizeof(socks[0]));
+		newsocks = realloc(socks, (*nfds + n) * sizeof(socks[0]));
 		if (!newsocks) {
 			syslog(LOG_ERR, "couldn't allocate memory for sockets");
 			mcleanup(0);
