@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.1 2002/03/24 18:04:39 uch Exp $	*/
+/*	$NetBSD: exception.h,v 1.2 2002/04/28 17:10:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
 #define	_SH3_EXCEPTION_H_
 #include <sh3/devreg.h>
 
-#define SH3_TRA			0xffffffd0	/* 32bit */
-#define SH3_EXPEVT		0xffffffd4	/* 32bit */
-#define SH3_INTEVT		0xffffffd8	/* 32bit */
-#define SH7709_INTEVT2		0xa4000000	/* 32bit */
+#define	SH3_TRA			0xffffffd0	/* 32bit */
+#define	SH3_EXPEVT		0xffffffd4	/* 32bit */
+#define	SH3_INTEVT		0xffffffd8	/* 32bit */
+#define	SH7709_INTEVT2		0xa4000000	/* 32bit */
 
-#define SH4_TRA			0xff000020	/* 32bit */
-#define SH4_EXPEVT		0xff000024	/* 32bit */
-#define SH4_INTEVT		0xff000028	/* 32bit */
+#define	SH4_TRA			0xff000020	/* 32bit */
+#define	SH4_EXPEVT		0xff000024	/* 32bit */
+#define	SH4_INTEVT		0xff000028	/* 32bit */
 
 #define	SH_INTEVT_NMI		0x1c0
 

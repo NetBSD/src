@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.9 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: Locore.c,v 1.10 2002/04/28 17:10:37 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -225,7 +225,6 @@ sh3_switch_setup(struct proc *p)
 		md_upte->data = (*pte & PG_HW_BITS) |
 		    SH3_MMUDA_D_D | SH3_MMUDA_D_V;
 	}
-		
 }
 
 /*

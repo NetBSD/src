@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.37 2002/04/22 18:57:43 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.38 2002/04/28 17:10:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME "nodev"
+#define	KGDB_DEVNAME "nodev"
 #endif
 const char kgdb_devname[] = KGDB_DEVNAME;
 #endif /* KGDB */
@@ -110,7 +110,7 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 #include <sh3/mmu.h>
 #include <sh3/intr.h>
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 int cpu_arch;
 int cpu_product;
@@ -128,7 +128,7 @@ struct md_upte *curupte;	/* SH3 wired u-area hack */
 #ifndef IOM_RAM_BEGIN
 #error "define IOM_RAM_BEGIN"
 #endif
-#define VBR	(u_int8_t *)IOM_RAM_BEGIN
+#define	VBR	(u_int8_t *)IOM_RAM_BEGIN
 vaddr_t ram_start = IOM_RAM_BEGIN;
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
@@ -253,7 +253,7 @@ sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pageDirReg = (pt_entry_t)pagedir;
-	/* 
+	/*
 	 * u-area map:
 	 * |user| .... | ............... |
 	 * |      NBPG +  USPACE - NBPG  +
@@ -420,7 +420,7 @@ cpu_dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+#define	BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
 static vaddr_t dumpspace;
 
 vaddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2002/03/24 18:04:41 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 2002/04/28 17:10:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -77,7 +77,7 @@
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -103,13 +103,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	vaddr_t spbase;
 
 	/* XXX vtophys don't return physical addresss */
-#define P1ADDR(x)							\
+#define	P1ADDR(x)							\
 	((vtophys((vaddr_t)(x)) & SH3_PHYS_MASK) | SH3_P1SEG_BASE)
 #ifdef DIAGNOSTIC
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-	/* 
+	/*
 	 * wbinv u-area to avoid cache-aliasing, since trapframe
 	 * top is accessed from P1 instead of P3.
 	 */
@@ -189,7 +189,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 void
 cpu_exit(struct proc *p)
 {
-	
+
 	splsched();
 	uvmexp.swtch++;
 
@@ -317,7 +317,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 * XXX: unwise to expect this in a multithreaded environment.
-	 * anything can happen to a pmap between the time we lock a 
+	 * anything can happen to a pmap between the time we lock a
 	 * region, release the pmap lock, and then relock it for
 	 * the pmap_extract().
 	 *

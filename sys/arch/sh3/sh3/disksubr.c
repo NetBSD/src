@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2002/04/28 17:10:38 uch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,7 +50,7 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 		    MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
 		    -1 };
 
-#define NO_MBR_SIGNATURE ((struct mbr_partition *) -1)
+#define	NO_MBR_SIGNATURE ((struct mbr_partition *) -1)
 
 void change_endian_disk_label(struct disklabel *);
 u_int sh3_dkcksum(struct disklabel *);
@@ -63,8 +63,8 @@ change_endian_disk_label(struct disklabel *lp)
 	int i;
 	u_int16_t d;
 	/* u_int8_t t; */
-#define SW16(X) lp->X = bswap16(lp->X)
-#define SW32(X) lp->X = bswap32(lp->X)
+#define	SW16(X) lp->X = bswap16(lp->X)
+#define	SW32(X) lp->X = bswap32(lp->X)
 
 	SW32(d_magic);
 	SW16(d_type);
@@ -355,7 +355,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 				msg = "bad sector table I/O error";
 			} else {
 				db = (struct dkbad *)(bp->b_data);
-#define DKBAD_MAGIC 0x4321
+#define	DKBAD_MAGIC 0x4321
 				if (db->bt_mbz == 0
 				    && db->bt_flag == DKBAD_MAGIC) {
 					msg = NULL;

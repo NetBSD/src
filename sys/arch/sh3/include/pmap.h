@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2002/04/04 18:12:23 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2002/04/28 17:10:36 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SH3_PMAP_H_
-#define _SH3_PMAP_H_
+#define	_SH3_PMAP_H_
 
 #include <sh3/cache.h>
 #include <sh3/psl.h>
@@ -143,9 +143,9 @@
  * the following defines identify the slots used as described above.
  */
 
-#define PDSLOT_PTE	((u_int)0x33f)	/* PTDPTDI for recursive PDP map */
-#define PDSLOT_KERN	((u_int)0x340)	/* KPTDI start of kernel space */
-#define PDSLOT_APTE	((u_int)0x37f)	/* alternative recursive slot */
+#define	PDSLOT_PTE	((u_int)0x33f)	/* PTDPTDI for recursive PDP map */
+#define	PDSLOT_KERN	((u_int)0x340)	/* KPTDI start of kernel space */
+#define	PDSLOT_APTE	((u_int)0x37f)	/* alternative recursive slot */
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -155,12 +155,12 @@
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 
-#define PTE_BASE	((pt_entry_t *)  (PDSLOT_PTE * NBPD) )
-#define APTE_BASE	((pt_entry_t *)  (PDSLOT_APTE * NBPD) )
-#define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * NBPG)))
-#define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
-#define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
-#define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
+#define	PTE_BASE	((pt_entry_t *)  (PDSLOT_PTE * NBPD) )
+#define	APTE_BASE	((pt_entry_t *)  (PDSLOT_APTE * NBPD) )
+#define	PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * NBPG)))
+#define	APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
+#define	PDP_PDE		(PDP_BASE + PDSLOT_PTE)
+#define	APDP_PDE	(PDP_BASE + PDSLOT_APTE)
 
 /*
  * XXXCDC: tmp xlate from old names:
@@ -177,10 +177,10 @@
  */
 
 #ifndef NKPTP
-#define NKPTP		8	/* 32MB to start */
+#define	NKPTP		8	/* 32MB to start */
 #endif
-#define NKPTP_MIN	8	/* smallest value we allow */
-#define NKPTP_MAX	63	/* (1024 - (0xd0000000/NBPD) - 1) */
+#define	NKPTP_MIN	8	/* smallest value we allow */
+#define	NKPTP_MAX	63	/* (1024 - (0xd0000000/NBPD) - 1) */
 				/* largest value (-1 for APTP space) */
 
 /*
@@ -194,12 +194,12 @@
  * plus alternative versions of the above
  */
 
-#define vtopte(VA)	(PTE_BASE + sh3_btop(VA))
-#define kvtopte(VA)	vtopte(VA)
-#define ptetov(PT)	(sh3_ptob(PT - PTE_BASE))
-#define avtopte(VA)	(APTE_BASE + sh3_btop(VA))
-#define ptetoav(PT)	(sh3_ptob(PT - APTE_BASE))
-#define avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
+#define	vtopte(VA)	(PTE_BASE + sh3_btop(VA))
+#define	kvtopte(VA)	vtopte(VA)
+#define	ptetov(PT)	(sh3_ptob(PT - PTE_BASE))
+#define	avtopte(VA)	(APTE_BASE + sh3_btop(VA))
+#define	ptetoav(PT)	(sh3_ptob(PT - APTE_BASE))
+#define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
 			 ((unsigned)(VA) & ~PG_FRAME))
 
 /*
@@ -218,10 +218,10 @@
  *           NBPD == number of bytes a PTP can map (4MB)
  */
 
-#define ptp_i2o(I)	((I) * NBPG)	/* index => offset */
-#define ptp_o2i(O)	((O) / NBPG)	/* offset => index */
-#define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
-#define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
+#define	ptp_i2o(I)	((I) * NBPG)	/* index => offset */
+#define	ptp_o2i(O)	((O) / NBPG)	/* offset => index */
+#define	ptp_i2v(I)	((I) * NBPD)	/* index => VA */
+#define	ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
 
 #ifdef _KERNEL
 /*
@@ -303,7 +303,7 @@ struct pv_page_info {
  * (note: won't work on systems where NPBG isn't a constant)
  */
 
-#define PVE_PER_PVPAGE ((NBPG - sizeof(struct pv_page_info)) / \
+#define	PVE_PER_PVPAGE ((NBPG - sizeof(struct pv_page_info)) / \
 			sizeof(struct pv_entry))
 
 /*
@@ -320,7 +320,7 @@ struct pv_page {
  * flush TLB.  if we have more than PMAP_RR_MAX then we stop recording.
  */
 
-#define PMAP_RR_MAX	16	/* max of 16 pages (64K) */
+#define	PMAP_RR_MAX	16	/* max of 16 pages (64K) */
 
 struct pmap_remove_record {
 	int prr_npages;
@@ -350,10 +350,10 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PGA_REFERENCED)
 #define	pmap_is_modified(pg)		pmap_test_attrs(pg, PGA_MODIFIED)
 
-#define pmap_copy(DP,SP,D,L,S)
-#define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		sh3_ptob(ppn)
-#define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
+#define	pmap_copy(DP,SP,D,L,S)
+#define	pmap_move(DP,SP,D,L,S)
+#define	pmap_phys_address(ppn)		sh3_ptob(ppn)
+#define	pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 
 /*
@@ -376,7 +376,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t,
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-#define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+#define	PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
@@ -390,8 +390,8 @@ vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
  *	machdep.c:pmap_bootstrap (uvm_page_physload, etc)
  */
 /* XXX broken */
-#define PMAP_MAP_POOLPAGE(pa)	(pa)
-#define PMAP_UNMAP_POOLPAGE(va)	(va)
+#define	PMAP_MAP_POOLPAGE(pa)	(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)	(va)
 
 vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 paddr_t vtophys(vaddr_t);

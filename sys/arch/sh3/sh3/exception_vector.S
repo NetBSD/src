@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.7 2002/04/22 18:57:43 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.8 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,22 +39,22 @@
 #include <sh3/param.h>
 #include <sh3/asm.h>
 #include <sh3/locore.h>
-#include <sh3/exception.h>	
+#include <sh3/exception.h>
 #include <sh3/ubcreg.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
 /*
  * Exception vectors. following routines are copied to vector addreses.
- *	sh_vector_generic:	VBR + 0x100	
- *	sh_vector_tlbmiss:	VBR + 0x400
+ *	sh_vector_generic:	VBR + 0x100
+	 *	sh_vector_tlbmiss:	VBR + 0x400
  *	sh_vector_interrupt:	VBR + 0x600
- */ 		
-	
+ */
+
 /*
- * void sh_vector_generic(void) __attribute__((__noreturn__)):	
+ * void sh_vector_generic(void) __attribute__((__noreturn__)):
  *	copied to VBR+0x100. This code should be relocatable and max 384
- *	instructions.	
+ *	instructions.
  *		0x40 TLB miss (load)
  *		0x60 TLB miss (store)
  *		0xc0	TLB protection (store)
@@ -63,9 +63,9 @@
  *		0x80 Initial page write.
  *		 and other...
  *		  -> trap()
- */		
+ */
 	.globl	_C_LABEL(sh_vector_generic), _C_LABEL(sh_vector_generic_end)
-	.text	
+	.text
 	.align	2
 _C_LABEL(sh_vector_generic):
 	__EXCEPTION_ENTRY
@@ -92,10 +92,10 @@ _C_LABEL(sh_vector_generic):
 	mov.l	_L.TLBPROTWR, r1	/* T_TLBPRIVW */
 	cmp/eq	r0,	r1
 	bt	3b
-	
+
 	/*
 	 * General exception.
-	 */	
+	 */
 #ifdef DDB
 	mov	#0,	r2
 	MOV	(BBRA, r1)
@@ -115,13 +115,13 @@ _C_LABEL(sh_vector_generic):
 	jsr	@r0
 	 mov	r14,	r4
 
-#ifdef DDB	/* BBRA = trapframe->tf_ubc */	
+#ifdef DDB	/* BBRA = trapframe->tf_ubc */
 	__EXCEPTION_BLOCK(r0, r1)
 	mov.l	@(TF_UBC, r14), r0
 	MOV	(BBRA, r1)
 	mov.w	r0,	@r1
 #endif /* DDB */
-4:	
+4:
 	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
@@ -132,18 +132,18 @@ _L.trap:	.long	_C_LABEL(trap)
 _L.ast:		.long	_C_LABEL(ast)
 _L.tlb_handler:	.long	_C_LABEL(tlb_handler)
 _C_LABEL(sh_vector_generic_end):	.long	0
-	
+
 #ifdef SH3
-/*	
- * void sh3_vector_tlbmiss(void) __attribute__((__noreturn__)):	
+/*
+ * void sh3_vector_tlbmiss(void) __attribute__((__noreturn__)):
  *	copied to VBR+0x400. This code should be relocatable and max 256
  *	instructions.
  */
 	.globl	_C_LABEL(sh3_vector_tlbmiss), _C_LABEL(sh3_vector_tlbmiss_end)
-	.text	
+	.text
 	.align	2
 _C_LABEL(sh3_vector_tlbmiss):
-	__EXCEPTION_ENTRY	
+	__EXCEPTION_ENTRY
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 #if !defined(P1_STACK)
@@ -156,12 +156,12 @@ _C_LABEL(sh3_vector_tlbmiss):
 	mov	#UPAGES,r3
 	mov	#1,	r2
 4:	mov.l	@r1+,	r6
-	cmp/eq	r6,	r0	/* md_upte.addr: u-area VPN */	
+	cmp/eq	r6,	r0	/* md_upte.addr: u-area VPN */
 	bt	5f
 	add	#4,	r1	/* skip md_upte.data */
 	cmp/eq	r2,	r3
 	bf/s	4b
-	 add	#1,	r2		
+	 add	#1,	r2
 	bra	6f
 	 nop
 5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
@@ -199,8 +199,8 @@ _C_LABEL(sh3_vector_tlbmiss):
 	and	r3,	r1
 	tst	r1,	r1
 	bt	2f		/* (pte & PG_V) == 0 -> tlb_handler */
-	mov.l	_L.PTE_HW_BITS, r2	
-	and	r2,	r3	
+	mov.l	_L.PTE_HW_BITS, r2
+	and	r2,	r3
 	mov.l	_L.PTEL, r1
 	mov.l	r3,	@r1	/* PTEL = (pte & PG_HW_BITS) */
 	ldtlb
@@ -210,15 +210,15 @@ _C_LABEL(sh3_vector_tlbmiss):
 	mov.l	1f,	r0
 	jsr	@r0
 	 mov	r14,	r6
-3:	
+3:
 	__EXCEPTION_RETURN
 	.align	2
-1:		.long	_C_LABEL(tlb_handler)		
+1:		.long	_C_LABEL(tlb_handler)
 _L.TEA:		.long	SH3_TEA
 _L.TTB:		.long	SH3_TTB
 _L.PTEL:	.long	SH3_PTEL
 _L.PTE_HW_BITS:	.long	0x1ffff17e
-_L.PT_MASK:	.long	0x003ff000	
+_L.PT_MASK:	.long	0x003ff000
 _L.VPN_MASK:	.long	0xfffff000
 _L.CURUPTE:	.long	_C_LABEL(curupte)
 	.align	2
@@ -226,16 +226,16 @@ _C_LABEL(sh3_vector_tlbmiss_end):	.long	0
 #endif /* SH3 */
 
 #ifdef SH4
-/*	
- * void sh4_vector_tlbmiss(void) __attribute__((__noreturn__)):	
+/*
+ * void sh4_vector_tlbmiss(void) __attribute__((__noreturn__)):
  *	copied to VBR+0x400. This code should be relocatable and max 256
  *	instructions.
  */
 	.globl	_C_LABEL(sh4_vector_tlbmiss), _C_LABEL(sh4_vector_tlbmiss_end)
-	.text	
+	.text
 	.align	2
 _C_LABEL(sh4_vector_tlbmiss):
-	__EXCEPTION_ENTRY	
+	__EXCEPTION_ENTRY
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov	#0x20,	r7
@@ -315,31 +315,31 @@ _C_LABEL(sh4_vector_tlbmiss):
 	mov.l	1f,	r0
 	jsr	@r0
 	 mov	r14,	r6
-3:	
+3:
 	__EXCEPTION_RETURN
 	.align	2
-1:		.long	_C_LABEL(tlb_handler)		
+1:		.long	_C_LABEL(tlb_handler)
 __L.TEA:	.long	SH4_TEA
 __L.TTB:	.long	SH4_TTB
 __L.PTEL:	.long	SH4_PTEL
 __L.PTEA:	.long	SH4_PTEA
 __L.P3SEGBASE:	.long	0xc0000000
 __L.PTE_HW_BITS:.long	0x1ffff17e
-__L.PT_MASK:	.long	0x003ff000	
+__L.PT_MASK:	.long	0x003ff000
 __L.VPN_MASK:	.long	0xfffff000
 _C_LABEL(sh4_vector_tlbmiss_end):	.long	0
 #endif /* SH4 */
 
 /*
- * void sh_vector_interrupt(void) __attribute__((__noreturn__)):	
+ * void sh_vector_interrupt(void) __attribute__((__noreturn__)):
  *	copied to VBR+0x600. This code should be relocatable.
- */        	 	 	
+ */
 	.globl	_C_LABEL(sh_vector_interrupt), _C_LABEL(sh_vector_interrupt_end)
 	.align	2
 	.text
 _C_LABEL(sh_vector_interrupt):
 	__EXCEPTION_ENTRY
-	stc	r0_bank,r6	/* ssp */	
+	stc	r0_bank,r6	/* ssp */
 	/* Enable exception for P3 access */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
@@ -358,7 +358,7 @@ _C_LABEL(sh_vector_interrupt):
 	 mov	r14,	r4
 	__EXCEPTION_RETURN
 	.align	2
-__L.intc_intr:		.long	_C_LABEL(intc_intr)	
-__L.ast:		.long	_C_LABEL(ast)	
+__L.intc_intr:		.long	_C_LABEL(intc_intr)
+__L.ast:		.long	_C_LABEL(ast)
 __L.uvmexp.intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
 _C_LABEL(sh_vector_interrupt_end):	.long	0

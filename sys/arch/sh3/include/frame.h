@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 2002/03/24 18:04:39 uch Exp $	*/
+/*	$NetBSD: frame.h,v 1.7 2002/04/28 17:10:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #ifndef _SH3_FRAME_H_
-#define _SH3_FRAME_H_
+#define	_SH3_FRAME_H_
 
 #include <sys/signal.h>
 
