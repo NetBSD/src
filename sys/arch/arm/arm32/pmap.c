@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2001/09/29 09:39:12 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 2001/10/18 16:32:40 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2001/09/29 09:39:12 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2001/10/18 16:32:40 rearnsha Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -310,8 +310,12 @@ static __inline void pmap_map_in_l1 __P((struct pmap *pmap, vaddr_t va,
 static pt_entry_t *pmap_map_ptes __P((struct pmap *));
 static void pmap_unmap_ptes __P((struct pmap *));
 
-void pmap_vac_me_harder __P((struct pmap *, struct pv_head *,
-	    pt_entry_t *, boolean_t));
+__inline static void pmap_vac_me_harder __P((struct pmap *, struct pv_head *,
+    pt_entry_t *, boolean_t));
+static void pmap_vac_me_kpmap __P((struct pmap *, struct pv_head *,
+    pt_entry_t *, boolean_t));
+static void pmap_vac_me_user __P((struct pmap *, struct pv_head *,
+    pt_entry_t *, boolean_t));
 
 /*
  * real definition of pv_entry.
@@ -895,7 +899,6 @@ pmap_modify_pv(pmap, va, pvh, bic_mask, eor_mask)
 	return (0);
 }
 
-
 /*
  * Map the specified level 2 pagetable into the level 1 page table for
  * the given pmap to cover a chunk of virtual address space starting from the
@@ -957,7 +960,6 @@ pmap_unmap_in_l1(pmap, va)
 /*	cpu_tlb_flushD();*/
 }
 #endif
-
 
 /*
  *	Used to map a range of physical addresses into kernel
@@ -1759,7 +1761,7 @@ pmap_clean_page(pv, is_src)
 			   doesn't flush changes on pages that it
 			   has write-protected.  */
 
-			/* If the page is not writeable and this
+			/* If the page is not writable and this
 			   is the source, then there is no need
 			   to flush it from the cache.  */
 			else if (is_src && ! (npv->pv_flags & PT_Wr))
@@ -2032,92 +2034,210 @@ pmap_pte_delref(pmap, va)
  *
  * Note that the pmap must have it's ptes mapped in, and passed with ptes.
  */
-void
+__inline static void
 pmap_vac_me_harder(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
 	boolean_t clear_cache)
 {
+	if (pmap == pmap_kernel())
+		pmap_vac_me_kpmap(pmap, pvh, ptes, clear_cache);
+	else
+		pmap_vac_me_user(pmap, pvh, ptes, clear_cache);
+}
+
+static void
+pmap_vac_me_kpmap(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
+	boolean_t clear_cache)
+{
+	int user_entries = 0;
+	int user_writable = 0;
+	int user_cacheable = 0;
+	int kernel_entries = 0;
+	int kernel_writable = 0;
+	int kernel_cacheable = 0;
+	struct pv_entry *pv;
+	struct pmap *last_pmap = pmap;
+
+#ifdef DIAGNOSTIC
+	if (pmap != pmap_kernel())
+		panic("pmap_vac_me_kpmap: pmap != pmap_kernel()");
+#endif
+
+	/* 
+	 * Pass one, see if there are both kernel and user pmaps for
+	 * this page.  Calculate whether there are user-writable or
+	 * kernel-writable pages.
+	 */
+	for (pv = pvh->pvh_list; pv != NULL; pv = pv->pv_next) {
+		if (pv->pv_pmap != pmap) {
+			user_entries++;
+			if (pv->pv_flags & PT_Wr)
+				user_writable++;
+			if ((pv->pv_flags & PT_NC) == 0)
+				user_cacheable++;
+		} else {
+			kernel_entries++;
+			if (pv->pv_flags & PT_Wr)
+				kernel_writable++;
+			if ((pv->pv_flags & PT_NC) == 0)
+				kernel_cacheable++;
+		}
+	}
+
+	/* 
+	 * We know we have just been updating a kernel entry, so if
+	 * all user pages are already cacheable, then there is nothing
+	 * further to do.
+	 */
+	if (kernel_entries == 0 &&
+	    user_cacheable == user_entries)
+		return;
+
+	if (user_entries) {
+		/* 
+		 * Scan over the list again, for each entry, if it
+		 * might not be set correctly, call pmap_vac_me_user
+		 * to recalculate the settings.
+		 */
+		for (pv = pvh->pvh_list; pv; pv = pv->pv_next) {
+			/* 
+			 * We know kernel mappings will get set
+			 * correctly in other calls.  We also know
+			 * that if the pmap is the same as last_pmap
+			 * then we've just handled this entry.
+			 */
+			if (pv->pv_pmap == pmap || pv->pv_pmap == last_pmap)
+				continue;
+			/* 
+			 * If there are kernel entries and this page
+			 * is writable but non-cacheable, then we can
+			 * skip this entry also.  
+			 */
+			if (kernel_entries > 0 &&
+			    (pv->pv_flags & (PT_NC | PT_Wr)) ==
+			    (PT_NC | PT_Wr))
+				continue;
+			/* 
+			 * Similarly if there are no kernel-writable 
+			 * entries and the page is already 
+			 * read-only/cacheable.
+			 */
+			if (kernel_writable == 0 &&
+			    (pv->pv_flags & (PT_NC | PT_Wr)) == 0)
+				continue;
+			/* 
+			 * For some of the remaining cases, we know
+			 * that we must recalculate, but for others we
+			 * can't tell if they are correct or not, so
+			 * we recalculate anyway.
+			 */
+			pmap_unmap_ptes(last_pmap);
+			last_pmap = pv->pv_pmap;
+			ptes = pmap_map_ptes(last_pmap);
+			pmap_vac_me_user(last_pmap, pvh, ptes, 
+			    pmap_is_curpmap(last_pmap));
+		}
+		/* Restore the pte mapping that was passed to us.  */
+		if (last_pmap != pmap) {
+			pmap_unmap_ptes(last_pmap);
+			ptes = pmap_map_ptes(pmap);
+		}
+		if (kernel_entries == 0)
+			return;
+	}
+
+	pmap_vac_me_user(pmap, pvh, ptes, clear_cache);
+	return;
+}
+
+static void
+pmap_vac_me_user(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
+	boolean_t clear_cache)
+{
+	struct pmap *kpmap = pmap_kernel();
 	struct pv_entry *pv, *npv;
-	pt_entry_t *pte;
 	int entries = 0;
-	int writeable = 0;
+	int writable = 0;
 	int cacheable_entries = 0;
+	int kern_cacheable = 0;
+	int other_writable = 0;
 
 	pv = pvh->pvh_list;
 	KASSERT(ptes != NULL);
 
 	/*
 	 * Count mappings and writable mappings in this pmap.
+	 * Include kernel mappings as part of our own.
 	 * Keep a pointer to the first one.
 	 */
 	for (npv = pv; npv; npv = npv->pv_next) {
 		/* Count mappings in the same pmap */
-		if (pmap == npv->pv_pmap) {
+		if (pmap == npv->pv_pmap ||
+		    kpmap == npv->pv_pmap) {
 			if (entries++ == 0)
 				pv = npv;
 			/* Cacheable mappings */
-			if ((npv->pv_flags & PT_NC) == 0)
+			if ((npv->pv_flags & PT_NC) == 0) {
 				cacheable_entries++;
-			/* Writeable mappings */
+				if (kpmap == npv->pv_pmap)
+					kern_cacheable++;
+			}
+			/* Writable mappings */
 			if (npv->pv_flags & PT_Wr)
-				++writeable;
-		}
+				++writable;
+		} else if (npv->pv_flags & PT_Wr)
+			other_writable = 1;
 	}
 
 	PDEBUG(3,printf("pmap_vac_me_harder: pmap %p Entries %d, "
-		"writeable %d cacheable %d %s\n", pmap, entries, writeable,
+		"writable %d cacheable %d %s\n", pmap, entries, writable,
 	    	cacheable_entries, clear_cache ? "clean" : "no clean"));
 	
 	/*
 	 * Enable or disable caching as necessary.
-	 * We do a quick check of the first PTE to avoid walking the list if
-	 * we're already in the right state.
+	 * Note: the first entry might be part of the kernel pmap,
+	 * so we can't assume this is indicative of the state of the
+	 * other (maybe non-kpmap) entries.
 	 */
-	if (entries > 1 && writeable) {
+	if ((entries > 1 && writable) ||
+	    (entries > 0 && pmap == kpmap && other_writable)) {
 		if (cacheable_entries == 0)
 		    return;
-		if (pv->pv_flags & PT_NC) {
-#ifdef DIAGNOSTIC
-    			/* We have cacheable entries, but the first one
- 			isn't among them. Something is wrong.  */
-    			if (cacheable_entries)
-				panic("pmap_vac_me_harder: "
-	    				"cacheable inconsistent");
-#endif
-			return;
-		}
-		pte =  &ptes[arm_byte_to_page(pv->pv_va)];
-		*pte &= ~(PT_C | PT_B);
-		pv->pv_flags |= PT_NC;
-		if (clear_cache && cacheable_entries < 4) {
-			cpu_cache_purgeID_rng(pv->pv_va, NBPG);
-			cpu_tlb_flushID_SE(pv->pv_va);
-		}
-		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap && 
+		for (npv = pv; npv; npv = npv->pv_next) {
+			if ((pmap == npv->pv_pmap 
+			    || kpmap == npv->pv_pmap) && 
 			    (npv->pv_flags & PT_NC) == 0) {
 				ptes[arm_byte_to_page(npv->pv_va)] &= 
 				    ~(PT_C | PT_B);
  				npv->pv_flags |= PT_NC;
-				if (clear_cache && cacheable_entries < 4) {
+				/*
+				 * If this page needs flushing from the
+				 * cache, and we aren't going to do it
+				 * below, do it now.
+				 */
+				if ((cacheable_entries < 4 &&
+				    (clear_cache || npv->pv_pmap == kpmap)) ||
+				    (npv->pv_pmap == kpmap &&
+				    !clear_cache && kern_cacheable < 4)) {
 					cpu_cache_purgeID_rng(npv->pv_va,
 					    NBPG);
 					cpu_tlb_flushID_SE(npv->pv_va);
 				}
 			}
 		}
-		if (clear_cache && cacheable_entries >= 4) {
+		if ((clear_cache && cacheable_entries >= 4) ||
+		    kern_cacheable >= 4) {
 			cpu_cache_purgeID();
 			cpu_tlb_flushID();
 		}
 	} else if (entries > 0) {
-		if ((pv->pv_flags & PT_NC) == 0)
-			return;
-		pte = &ptes[arm_byte_to_page(pv->pv_va)];
-		*pte |= (PT_C | PT_B);
-		pv->pv_flags &= ~PT_NC;
-		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap &&
-				(npv->pv_flags & PT_NC)) {
+		/*
+		 * Turn cacheing back on for some pages.  If it is a kernel
+		 * page, only do so if there are no other writable pages.
+		 */
+		for (npv = pv; npv; npv = npv->pv_next) {
+			if ((pmap == npv->pv_pmap ||
+			    (kpmap == npv->pv_pmap && other_writable == 0)) && 
+			    (npv->pv_flags & PT_NC)) {
 				ptes[arm_byte_to_page(npv->pv_va)] |=
 				    (PT_C | PT_B);
 				npv->pv_flags &= ~PT_NC;
