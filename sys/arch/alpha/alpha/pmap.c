@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.169 2001/04/24 20:11:53 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.170 2001/04/24 20:14:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2001/04/24 20:11:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.170 2001/04/24 20:14:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1299,16 +1299,8 @@ pmap_destroy(pmap_t pmap)
 	 * Since the pmap is supposed to contain no valid
 	 * mappings at this point, this should never happen.
 	 */
-	if (pmap->pm_lev1map != kernel_lev1map) {
-		printf("pmap_destroy: pmap still contains valid mappings!\n");
-		if (pmap->pm_nlev2)
-			printf("pmap_destroy: %ld level 2 tables left\n",
-			    pmap->pm_nlev2);
-		if (pmap->pm_nlev3)
-			printf("pmap_destroy: %ld level 3 tables left\n",
-			    pmap->pm_nlev3);
-		panic("pmap_destroy");
-	}
+	if (pmap->pm_lev1map != kernel_lev1map)
+		panic("pmap_destroy: pmap still contains valid mappings");
 #endif
 
 	pool_put(&pmap_pmap_pool, pmap);
@@ -1784,7 +1776,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				panic("pmap_enter: unable to create L2 PT "
 				    "page");
 			}
-			pmap->pm_nlev2++;
 #ifdef DEBUG
 			if (pmapdebug & PDB_PTPAGE)
 				printf("pmap_enter: new level 2 table at "
@@ -1809,7 +1800,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				panic("pmap_enter: unable to create L3 PT "
 				    "page");
 			}
-			pmap->pm_nlev3++;
 #ifdef DEBUG
 			if (pmapdebug & PDB_PTPAGE)
 				printf("pmap_enter: new level 3 table at "
@@ -3925,7 +3915,6 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, long cpu_id,
 			    "0x%lx\n", pmap_pte_pa(l2pte));
 #endif
 		pmap_ptpage_free(pmap, l2pte, ptp);
-		pmap->pm_nlev3--;
 
 		/*
 		 * We've freed a level 3 table, so we must
@@ -3978,7 +3967,6 @@ pmap_l2pt_delref(pmap_t pmap, pt_entry_t *l1pte, pt_entry_t *l2pte,
 			    "0x%lx\n", pmap_pte_pa(l1pte));
 #endif
 		pmap_ptpage_free(pmap, l1pte, NULL);
-		pmap->pm_nlev2--;
 
 		/*
 		 * We've freed a level 2 table, so delete the reference
