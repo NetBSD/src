@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.15 2000/06/08 03:30:58 mycroft Exp $
+#	$NetBSD: bsd.info.mk,v 1.16 2000/06/08 03:51:56 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -16,9 +16,6 @@ INFOFLAGS?=
 INSTALL_INFO?=	install-info
 
 .PHONY:		infoinstall cleaninfo
-.if ${MKINFO} != "no"
-realinstall:	infoinstall
-.endif
 cleandir distclean: cleaninfo
 
 .SUFFIXES: .txi .texi .texinfo .info
@@ -31,6 +28,7 @@ INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
 .NOPATH:	${INFOFILES}
 
 .if ${MKINFO} != "no"
+realinstall: infoinstall
 realall: ${INFOFILES}
 .endif
 
