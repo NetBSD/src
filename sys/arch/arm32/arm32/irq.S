@@ -1,4 +1,4 @@
-/* $NetBSD: irq.S,v 1.7 1996/10/11 00:06:42 christos Exp $ */
+/* $NetBSD: irq.S,v 1.8 1996/10/13 16:52:02 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -306,7 +306,7 @@ _irqast:
 
 	stmfd	sp!, {r0-r3, lr}
 	add	r0, pc, #Lirqtext0 - . - 8
-	bl	_kprintf
+	bl	_printf
 	ldmfd	sp!, {r0-r3, lr}
 Lis:
 #endif
