@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2002/09/11 06:20:09 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.71 2002/09/26 04:07:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -864,8 +864,8 @@ devbase_has_instances(struct devbase *dev, int unit)
 static int
 hasparent(struct devi *i)
 {
+	struct pspec *p;
 	struct nvlist *nv;
-	int atunit = i->i_atunit;
 
 	/*
 	 * We determine whether or not a device has a parent in in one
@@ -879,18 +879,22 @@ hasparent(struct devi *i)
 	 *	    may be able to attach the device.
 	 */
 
+	/* No pspec, no parent (root node). */
+	if ((p = i->i_pspec) == NULL)
+		return (0);
+
 	/*
 	 * Case (1): A parent was named.  Either it's configured, or not.
 	 */
-	if (i->i_atdev != NULL)
-		return (devbase_has_instances(i->i_atdev, atunit));
+	if (p->p_atdev != NULL)
+		return (devbase_has_instances(p->p_atdev, p->p_atunit));
 
 	/*
 	 * Case (2): No parent was named.  Look for devs that provide the attr.
 	 */
-	if (i->i_atattr != NULL)
-		for (nv = i->i_atattr->a_refs; nv != NULL; nv = nv->nv_next)
-			if (devbase_has_instances(nv->nv_ptr, atunit))
+	if (p->p_iattr != NULL)
+		for (nv = p->p_iattr->a_refs; nv != NULL; nv = nv->nv_next)
+			if (devbase_has_instances(nv->nv_ptr, p->p_atunit))
 				return (1);
 	return (0);
 }
@@ -944,18 +948,19 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 int
 crosscheck(void)
 {
+	struct pspec *p;
 	struct devi *i;
 	struct config *cf;
 	int errs;
 
 	errs = 0;
 	TAILQ_FOREACH(i, &alldevi, i_next) {
-		if (i->i_at == NULL || hasparent(i))
+		if ((p = i->i_pspec) == NULL || hasparent(i))
 			continue;
 		xerror(conffile, i->i_lineno,
 		    "%s at %s is orphaned", i->i_name, i->i_at);
 		(void)fprintf(stderr, " (%s %s declared)\n",
-		    i->i_atunit == WILD ? "nothing matching" : "no",
+		    p->p_atunit == WILD ? "nothing matching" : "no",
 		    i->i_at);
 		errs++;
 	}

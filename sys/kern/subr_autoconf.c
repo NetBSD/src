@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.65 2002/09/23 23:16:06 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.66 2002/09/26 04:07:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.65 2002/09/23 23:16:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.66 2002/09/26 04:07:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -222,6 +222,58 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 }
 
 /*
+ * Determine if `parent' is a potential parent for a device spec based
+ * on `cfp'.
+ */
+static int
+cfparent_match(struct device *parent, const struct cfparent *cfp)
+{
+	struct cfdriver *pcd = parent->dv_cfdata->cf_driver;
+	const char * const *cpp;
+	const char *cp;
+
+	/*
+	 * First, ensure this parent has the correct interface
+	 * attribute.
+	 */
+	if (pcd->cd_attrs == NULL)
+		return (0);	/* no interface attributes -> no children */
+	for (cpp = pcd->cd_attrs; (cp = *cpp) != NULL; cpp++) {
+		if (cp[0] == cfp->cfp_iattr[0] &&
+		    strcmp(cp, cfp->cfp_iattr) == 0) {
+			/* Match. */
+			break;
+		}
+	}
+	if (cp == NULL)
+		return (0);	/* doesn't carry the req'd attribute */
+
+	/*
+	 * If no specific parent device instance was specified (i.e.
+	 * we're attaching to the attribute only), we're done!
+	 */
+	if (cfp->cfp_parent == NULL)
+		return (1);
+
+	/*
+	 * Check the parent device's name.
+	 */
+	if (pcd->cd_name[0] != cfp->cfp_parent[0] ||
+	    strcmp(pcd->cd_name, cfp->cfp_parent) != 0)
+		return (0);	/* not the same parent */
+
+	/*
+	 * Make sure the unit number matches.
+	 */
+	if (cfp->cfp_unit == -1 ||	/* wildcard */
+	    cfp->cfp_unit == parent->dv_unit)
+		return (1);
+
+	/* Unit numbers don't match. */
+	return (0);
+}
+
+/*
  * Iterate over all potential children of some device, calling the given
  * function (default being the child's match function) for each one.
  * Nonzero returns are matches; the highest value returned is considered
@@ -237,7 +289,6 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 {
 	struct cftable *ct;
 	struct cfdata *cf;
-	short *p;
 	struct matchinfo m;
 
 	m.fn = fn;
@@ -258,9 +309,8 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
 			    cf->cf_fstate == FSTATE_DSTAR)
 				continue;
-			for (p = cf->cf_parents; *p >= 0; p++)
-				if (parent->dv_cfdata == &(ct->ct_cfdata)[*p])
-					mapply(&m, cf);
+			if (cfparent_match(parent, cf->cf_pspec))
+				mapply(&m, cf);
 		}
 	}
 	return (m.match);
@@ -404,6 +454,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	ca = cf->cf_attach;
 	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_attach");
+
 #ifndef __BROKEN_CONFIG_UNIT_USAGE
 	if (cf->cf_fstate == FSTATE_STAR) {
 		for (myunit = cf->cf_unit; myunit < cd->cd_ndevs; myunit++)
@@ -415,15 +466,18 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 		 */
 	} else {
 		myunit = cf->cf_unit;
-#else /* __BROKEN_CONFIG_UNIT_USAGE */
+		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
+		cf->cf_fstate = FSTATE_FOUND;
+	}
+#else
 	myunit = cf->cf_unit;
 	if (cf->cf_fstate == FSTATE_STAR)
 		cf->cf_unit++;
 	else {
-#endif /* __BROKEN_CONFIG_UNIT_USAGE */
 		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
 		cf->cf_fstate = FSTATE_FOUND;
 	}
+#endif /* ! __BROKEN_CONFIG_UNIT_USAGE */
 
 	/* compute length of name and decimal expansion of unit number */
 	lname = strlen(cd->cd_name);
@@ -465,9 +519,6 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	 * Before attaching, clobber any unfound devices that are
 	 * otherwise identical.
 	 */
-#ifdef __BROKEN_CONFIG_UNIT_USAGE
-	/* bump the unit number on all starred cfdata for this device. */
-#endif /* __BROKEN_CONFIG_UNIT_USAGE */
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
 		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
 			if (cf->cf_driver == cd &&
@@ -475,6 +526,10 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 				if (cf->cf_fstate == FSTATE_NOTFOUND)
 					cf->cf_fstate = FSTATE_FOUND;
 #ifdef __BROKEN_CONFIG_UNIT_USAGE
+				/*
+				 * Bump the unit number on all starred cfdata
+				 * entries for this device.
+				 */
 				if (cf->cf_fstate == FSTATE_STAR)
 					cf->cf_unit++;
 #endif /* __BROKEN_CONFIG_UNIT_USAGE */
@@ -570,12 +625,6 @@ config_detach(struct device *dev, int flags)
 	/*
 	 * Mark cfdata to show that the unit can be reused, if possible.
 	 */
-#ifdef __BROKEN_CONFIG_UNIT_USAGE
-	/*
-	 * Note that we can only re-use a starred unit number if the unit
-	 * being detached had the last assigned unit number.
-	 */
-#endif /* __BROKEN_CONFIG_UNIT_USAGE */
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
 		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
 			if (cf->cf_driver == cd) {
@@ -583,6 +632,11 @@ config_detach(struct device *dev, int flags)
 				    cf->cf_unit == dev->dv_unit)
 					cf->cf_fstate = FSTATE_NOTFOUND;
 #ifdef __BROKEN_CONFIG_UNIT_USAGE
+				/*
+				 * Note that we can only re-use a starred
+				 * unit number if the unit being detached
+				 * had the last assigned unit number.
+				 */
 				if (cf->cf_fstate == FSTATE_STAR &&
 				    cf->cf_unit == dev->dv_unit + 1)
 					cf->cf_unit--;

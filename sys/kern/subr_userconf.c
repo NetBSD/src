@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.6 2002/09/23 05:51:11 simonb Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.7 2002/09/26 04:07:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.6 2002/09/23 05:51:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.7 2002/09/26 04:07:35 thorpej Exp $");
 
 #include "opt_userconf.h"
 
@@ -227,9 +227,9 @@ userconf_pdev(devno)
 	short devno;
 {
 	struct cfdata *cd;
-	short *p;
+	const struct cfparent *cfp;
 	int   *l;
-	const char **ln;
+	const char * const *ln;
 	char c;
 
 	if (devno > userconf_maxdev) {
@@ -243,14 +243,14 @@ userconf_pdev(devno)
 	userconf_pdevnam(devno);
 	printf(" at");
 	c = ' ';
-	p = cd->cf_parents;
-	if (*p == -1)
+	cfp = cd->cf_pspec;
+	if (cfp == NULL)
 		printf(" root");
-	while (*p != -1) {
-		printf("%c", c);
-		userconf_pdevnam(*p++);
-		c = '|';
-	}
+	else if (cfp->cfp_parent != NULL && cfp->cfp_unit != -1)
+		printf(" %s%d", cfp->cfp_parent, cfp->cfp_unit);
+	else
+		printf(" %s?", cfp->cfp_parent != NULL ? cfp->cfp_parent
+						       : cfp->cfp_iattr);
 	switch (cd->cf_fstate) {
 	case FSTATE_NOTFOUND:
 	case FSTATE_FOUND:
@@ -397,7 +397,7 @@ userconf_change(devno)
 	char c = '\0';
 	int   *l;
 	int   ln;
-	const char **locnames;
+	const char * const *locnames;
 
 	if (devno <=  userconf_maxdev) {
 
