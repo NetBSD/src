@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.32 1997/06/16 02:53:38 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.33 1997/07/07 03:54:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -727,13 +727,14 @@ dcrint(sc)
 		}
 		/* the keyboard requires special translation */
 		if (raster_console() && tp == dc_tty[DCKBD_PORT]) {
-#ifdef MDB
 			if (cc == LK_DO) {
+#ifdef DDB
 				spl0();
-				mdbpanic();
+				Debugger();
 				return;
-			}
 #endif
+			}
+
 #ifdef DEBUG
 			debugChar = cc;
 #endif

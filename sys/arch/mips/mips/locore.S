@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 1997/06/30 14:42:32 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.39 1997/07/07 03:54:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1773,7 +1773,7 @@ END(mdbpanic)
 
 #endif	/* MDB */
 
-#if defined(DEBUG) || defined(MDB)
+#if defined(DEBUG) || defined(MDB) || defined(DDB)
 /*
  * Stacktrace support hooks which use type punnign to access
  * the caller's registers.
@@ -1784,42 +1784,62 @@ END(mdbpanic)
  * stacktrace() -- print a stack backtrace to the console. 
  *	implicitly accesses caller's a0-a3.
  */
-NON_LEAF(stacktrace, 32, ra)
-	subu	sp,sp,32
+NON_LEAF(stacktrace, STAND_FRAME_SIZE+20, ra)
+
+	subu	sp, sp, STAND_FRAME_SIZE+20	# four arg-passing slots
+
+	move	t0, ra				# save caller's PC
+	addu	t1, sp, STAND_FRAME_SIZE+20	# compute caller's SP
+	move	t2, s8				# non-virtual frame pointer
+
 	la	v0, _C_LABEL(printf)
-	sw	ra,24(sp)
 
-	jal	stacktrace_subr
-	sw	v0,16(sp)
+	sw	ra, 36(sp)			# save return address
 
-	lw	ra,24(sp)
-	addu	sp,sp,32
+	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
+	sw	t0, 16(sp)			#   push caller's PC
+	sw	t1, 20(sp)			#   push caller's SP
+	sw	t2, 24(sp)			#   push caller's FP, in case
+	sw	zero, 28(sp)			#   caller's RA on stack
+	jal	_C_LABEL(stacktrace_subr)
+	sw	v0, 32(sp)			#   push printf
+
+	lw	ra, 36(sp)
+	addu	sp, sp, STAND_FRAME_SIZE+20
 	j	ra
+	nop
 END(stacktrace)
+
 
 /*
  * logstacktrace() -- log a stack traceback to msgbuf.
  *	implicitly accesses caller's a0-a3.
  */
-NON_LEAF(logstacktrace, 32, ra)
-	subu	sp,sp,32
-	la	v0, _C_LABEL(addlog)
-	sw	ra,24(sp)
+NON_LEAF(logstacktrace, STAND_FRAME_SIZE+20, ra)
 
-	jal	stacktrace_subr
-	sw	v0,16(sp)
+	subu	sp, sp, STAND_FRAME_SIZE+20	# four arg-passing slots
 
-	lw	ra,24(sp)
-	addu	sp,sp,32
+	move	t0, ra				# save caller's PC
+	addu	t1, sp, STAND_FRAME_SIZE+20	# compute caller's SP
+	move	t2, s8				# non-virtual frame pointer
+
+	la	v0, _C_LABEL(printf)
+
+	sw	ra, 36(sp)			# save return address
+
+	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
+	sw	t0, 16(sp)			#   push caller's PC
+	sw	t1, 20(sp)			#   push caller's SP
+	sw	t2, 24(sp)			#   push caller's FP, in case
+	sw	zero, 28(sp)			#   RA on stack
+	jal	_C_LABEL(stacktrace_subr)
+	sw	v0, 32(sp)			#   push printf
+
+	lw	ra, 36(sp)
+	addu	sp, sp, STAND_FRAME_SIZE+20
 	j	ra
-END(stacktrace)
-
-LEAF(cpu_getregs)
-	sw	sp, 0(a0)
-	sw	ra, 4(a0)
-	j	ra
-	sw	s8, 8(a0)
-END(cpu_getregs)
+	nop
+END(logstacktrace)
 
 #endif	/* DEBUG */
 
@@ -1830,6 +1850,10 @@ END(cpu_getregs)
  * XXX  will need reworking for  SMP.
  */
 	.data
+	.globl	_C_LABEL(esym)
+_C_LABEL(esym):
+	.word 0
+
 	.globl	_C_LABEL(cpu_id)
 	.globl	_C_LABEL(fpu_id)
 	.globl	_C_LABEL(cpu_arch)
