@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.23.2.2 2004/08/29 13:18:34 tron Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.23.2.3 2004/11/12 04:52:26 jmc Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -297,6 +297,7 @@ zeropad() {
 	3)	echo 000$2;;
 	2)	echo 00$2;;
 	1)	echo 0$2;;
+	0)	echo $2;;
 	*)	echo "$0: bad padding" 1>&2; exit 1;;
 	esac
 }
