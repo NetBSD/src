@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.3 1998/02/19 23:51:48 pk Exp $	*/
+/*	$NetBSD: pool.h,v 1.4 1998/07/23 20:34:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,29 +39,93 @@
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
 
+#include <sys/lock.h>
+#include <sys/queue.h>
+
+#define PR_HASHTABSIZE		8
+
 typedef struct pool {
-	struct pool_item	*pr_freelist;	/* Free items in pool */
-	int			pr_size;	/* Size of item */
-	int			pr_freecount;	/* # of free items */
-	int			pr_hiwat;	/* max # of pooled items */
-	char			*pr_wchan;	/* tsleep(9) identifier */
-	int			pr_mtype;	/* malloc(9) tag */
-	int			pr_flags;
+	TAILQ_ENTRY(pool)
+			pr_poollist;
+	TAILQ_HEAD(,pool_item_header)
+			pr_pagelist;	/* Allocated pages */
+	struct pool_item_header	*pr_curpage;
+	unsigned int	pr_size;	/* Size of item */
+	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
+	unsigned int	pr_itemoffset;	/* Align this offset in item */
+	unsigned int	pr_minitems;	/* minimum # of items to keep */
+	unsigned int	pr_minpages;	/* same in page units */
+	unsigned int	pr_maxpages;	/* maximum # of pages to keep */
+	unsigned int	pr_npages;	/* # of pages allocated */
+	unsigned int	pr_pagesz;	/* page size, must be 2^n */
+	unsigned long	pr_pagemask;	/* abbrev. of above */
+	unsigned int	pr_pageshift;	/* shift corr. to above */
+	unsigned int	pr_itemsperpage;/* # items that fit in a page */
+	unsigned int	pr_slack;	/* unused space in a page */
+	void		*(*pr_alloc) __P((unsigned long, int, int));
+	void		(*pr_free) __P((void *, unsigned long, int));
+	int		pr_mtype;	/* memory allocator tag */
+	char		*pr_wchan;	/* tsleep(9) identifier */
+	unsigned int	pr_flags;
 #define PR_MALLOCOK	1
 #define PR_WAITOK	2
 #define PR_WANTED	4
 #define PR_STATIC	8
+#define PR_FREEHEADER	16
+#define PR_URGENT	32
+#define PR_PHINPAGE	64
+#define PR_LOGGING	128
 	struct simplelock	pr_lock;
+
+	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
+			pr_hashtab[PR_HASHTABSIZE];
+
+	int		pr_maxcolor;	/* Cache colouring */
+	int		pr_curcolor;
+	int		pr_phoffset;	/* Offset in page of page header */
+
+	/*
+	 * Instrumentation
+	 */
+	unsigned long	pr_nget;	/* # of successful requests */
+	unsigned long	pr_nfail;	/* # of unsuccessful requests */
+	unsigned long	pr_nput;	/* # of releases */
+	unsigned long	pr_npagealloc;	/* # of pages allocated */
+	unsigned long	pr_npagefree;	/* # of pages released */
+	unsigned int	pr_hiwat;	/* max # of pages in pool */
+
+#ifdef POOL_DIAGNOSTIC
+	struct pool_log	*pr_log;
+	int		pr_curlogentry;
+	int		pr_logsize;
+#endif
 } *pool_handle_t;
 
-pool_handle_t	pool_create __P((size_t, int, char *, int, caddr_t));
+pool_handle_t	pool_create __P((size_t, u_int, u_int,
+				 int, char *, size_t,
+				 void *(*)__P((unsigned long, int, int)),
+				 void  (*)__P((void *, unsigned long, int)),
+				 int));
+void		pool_init __P((struct pool *, size_t, u_int, u_int,
+				 int, char *, size_t,
+				 void *(*)__P((unsigned long, int, int)),
+				 void  (*)__P((void *, unsigned long, int)),
+				 int));
 void		pool_destroy __P((pool_handle_t));
-void	 	*pool_get __P((pool_handle_t, int));
-void	 	pool_put __P((pool_handle_t, void *));
-int	 	pool_prime __P((pool_handle_t, int, caddr_t));
-
-#define POOL_ITEM_STORAGE_SIZE(size, nitems) (ALIGN(size) * nitems)
-#define POOL_STORAGE_SIZE(size, nitems) \
-	(ALIGN(sizeof(struct pool)) + POOL_ITEM_STORAGE_SIZE(size, nitems))
+#ifdef POOL_DIAGNOSTIC
+void		*_pool_get __P((pool_handle_t, int, const char *, long));
+void		_pool_put __P((pool_handle_t, void *, const char *, long));
+#define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
+#define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
+#else
+void		*pool_get __P((pool_handle_t, int));
+void		pool_put __P((pool_handle_t, void *));
+#endif
+int		pool_prime __P((pool_handle_t, int, caddr_t));
+void		pool_setlowat __P((pool_handle_t, int));
+void		pool_sethiwat __P((pool_handle_t, int));
+void		pool_print __P((pool_handle_t, char *));
+void		pool_reclaim __P((pool_handle_t));
+void		pool_drain __P((void *));
 
 #endif /* _SYS_POOL_H_ */
