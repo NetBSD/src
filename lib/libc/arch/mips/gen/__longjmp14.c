@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.3 2004/07/03 05:10:06 simonb Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.4 2004/07/03 05:44:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,8 +62,15 @@ __longjmp14(jmp_buf env, int val)
 	if (val == 0)
 		val = 1;
 
-	/* Set _UC_SIGMASK and _UC_CPU */
-	uc.uc_flags = _UC_SIGMASK | _UC_CPU;
+	/*
+	 * Set _UC_{SET,CLR}STACK according to SS_ONSTACK.
+	 *
+	 * Restore the signal mask with sigprocmask() instead of _UC_SIGMASK,
+	 * since libpthread may want to interpose on signal handling.
+	 */
+	uc.uc_flags = _UC_CPU | (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
+
+	sigprocmask(SIG_SETMASK, &sc->sc_mask, NULL);
 
 	/* Clear uc_link */
 	uc.uc_link = 0;
@@ -95,9 +102,6 @@ __longjmp14(jmp_buf env, int val)
 		/* XXX sc_fp_control */
 		uc.uc_flags |= _UC_FPU;
 	}
-
-	/* Copy signal mask */
-	uc.uc_sigmask = sc->sc_mask;
 
 	setcontext(&uc);
  err:
