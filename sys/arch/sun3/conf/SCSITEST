@@ -1,4 +1,5 @@
-#	$NetBSD: SCSITEST,v 1.5 1994/10/26 09:08:15 cgd Exp $
+#	$NetBSD: SCSITEST,v 1.6 1994/11/21 21:26:47 gwr Exp $
+
 #
 # new config file for SCSITEST
 #

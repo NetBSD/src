@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.2 1994/10/26 09:10:23 cgd Exp $	*/
+/*	$NetBSD: fbio.h,v 1.3 1994/11/21 21:33:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fbio.h	7.2 (Berkeley) 4/1/92
+ * from: @(#)fbio.h	7.2 (Berkeley) 4/1/92
  */
 
 /*

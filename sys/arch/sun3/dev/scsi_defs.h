@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_defs.h,v 1.2 1994/10/26 09:09:24 cgd Exp $	*/
+/*	$NetBSD: scsi_defs.h,v 1.3 1994/11/21 21:31:20 gwr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,

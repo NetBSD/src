@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.2 1994/10/26 09:09:30 cgd Exp $	*/
+/*	$NetBSD: vuid_event.h,v 1.3 1994/11/21 21:31:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,8 +42,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: vuid_event.h,v 1.4 92/11/26 01:20:27 torek Exp  (LBL)
+ *	from: Hdr: vuid_event.h,v 1.4 92/11/26 01:20:27 torek Exp  (LBL)
  */
 
 /*

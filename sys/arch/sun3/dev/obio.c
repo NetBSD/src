@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12 1994/10/26 09:09:14 cgd Exp $	*/
+/*	$NetBSD: obio.c,v 1.13 1994/11/21 21:31:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -30,6 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -138,7 +139,7 @@ static void save_prom_mappings()
 		while (pgva < segva) {
 			pte = get_pte(pgva);
 			if ((pte & (PG_VALID | PG_TYPE)) ==
-				(PG_VALID | MAKE_PGTYPE(PG_OBIO)))
+				(PG_VALID | PGT_OBIO))
 			{
 				/* Have a valid OBIO mapping. */
 				pa = PG_PA(pte);
@@ -222,7 +223,6 @@ caddr_t obio_alloc(obio_addr, obio_size)
 	int npages;
 	vm_offset_t va, high_segment_alloc(), obio_pa, obio_va, pte_proto;
 	caddr_t cp;
-	int obio_flags = OBIO_WRITE;
 	
 	cp = obio_find_mapping((vm_offset_t)obio_addr, obio_size);
 	if (cp) return (cp);
@@ -235,11 +235,8 @@ caddr_t obio_alloc(obio_addr, obio_size)
 		va = (vm_offset_t) obio_vm_alloc(npages);
 	if (!va) 
 		panic("obio_alloc: unable to allocate va for obio mapping");
-	pte_proto = PG_VALID|PG_SYSTEM|MAKE_PGTYPE(PG_OBIO);
-	if ((obio_flags & OBIO_CACHE) == 0)
-		pte_proto |= PG_NC;
-	if (obio_flags & OBIO_WRITE)
-		pte_proto |= PG_WRITE;
+	/* Drivers always get writable, non-cached mappings. */
+	pte_proto = PG_VALID | PG_WRITE | PG_SYSTEM | PGT_OBIO | PG_NC;
 	obio_va = va;
 	obio_pa = (vm_offset_t) obio_addr;
 	for (; npages ; npages--, obio_va += NBPG, obio_pa += NBPG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.5 1994/10/26 09:10:16 cgd Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.6 1994/11/21 21:33:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

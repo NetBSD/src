@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.14 1994/10/26 09:10:43 cgd Exp $	*/
+/*	$NetBSD: mon.h,v 1.15 1994/11/21 21:33:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 /*
  * This file derived from kernel/mach/sun3.md/machMon.h from the
  * sprite distribution.

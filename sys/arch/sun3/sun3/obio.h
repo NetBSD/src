@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.11 1994/10/26 09:10:50 cgd Exp $	*/
+/*	$NetBSD: obio.h,v 1.12 1994/11/21 21:33:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -71,10 +71,7 @@
 #define OBIO_DES_SIZE		0x00004		
 #define OBIO_ECCREG_SIZE	0x00100			
 
-/* flags to obio_alloc() */
-#define OBIO_CACHE 0x1
-#define OBIO_WRITE 0x2
-
+/* autoconfiguration data */
 struct obio_cf_loc {
     int obio_addr;
     int obio_level;

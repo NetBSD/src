@@ -1,4 +1,4 @@
-/*	$NetBSD: obctl.c,v 1.4 1994/10/26 09:09:12 cgd Exp $	*/
+/*	$NetBSD: obctl.c,v 1.5 1994/11/21 21:31:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.5 1994/10/26 09:09:41 cgd Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.6 1994/11/21 21:31:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
