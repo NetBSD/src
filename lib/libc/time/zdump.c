@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.6 1997/07/13 20:26:55 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.7 1997/10/17 14:23:45 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zdump.c	7.26";
 #else
-__RCSID("$NetBSD: zdump.c,v 1.6 1997/07/13 20:26:55 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.7 1997/10/17 14:23:45 lukem Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -137,6 +137,7 @@ extern char *	tzname[2];
 static char *	abbr P((struct tm * tmp));
 static long	delta P((struct tm * newp, struct tm * oldp));
 static time_t	hunt P((char * name, time_t lot, time_t	hit));
+int		main P((int, char **));
 static size_t	longest;
 static char *	progname;
 static void	show P((char * zone, time_t t, int v));
