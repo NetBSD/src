@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.124 2002/05/26 03:10:02 minoura Exp $	*/
+/*	$NetBSD: ohci.c,v 1.125 2002/05/28 12:42:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.124 2002/05/26 03:10:02 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.125 2002/05/28 12:42:38 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 		for(i = 0; i < OHCI_SED_CHUNK; i++) {
 			offs = i * OHCI_SED_SIZE;
 			sed = KERNADDR(&dma, offs);
-			sed->physaddr = DMAADDR(&dma) + offs;
+			sed->physaddr = DMAADDR(&dma, offs);
 			sed->next = sc->sc_freeeds;
 			sc->sc_freeeds = sed;
 		}
@@ -444,7 +444,7 @@ ohci_alloc_std(ohci_softc_t *sc)
 		for(i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
-			std->physaddr = DMAADDR(&dma) + offs;
+			std->physaddr = DMAADDR(&dma, offs);
 			std->nexttd = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
@@ -491,7 +491,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 
 	len = alen;
 	cur = sp;
-	dataphys = DMAADDR(dma);
+	dataphys = DMAADDR(dma, 0);
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
 	tdflags = htole32(
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
@@ -600,7 +600,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 		for(i = 0; i < OHCI_SITD_CHUNK; i++) {
 			offs = i * OHCI_SITD_SIZE;
 			sitd = KERNADDR(&dma, offs);
-			sitd->physaddr = DMAADDR(&dma) + offs;
+			sitd->physaddr = DMAADDR(&dma, offs);
 			sitd->nextitd = sc->sc_freeitds;
 			sc->sc_freeitds = sitd;
 		}
@@ -815,7 +815,7 @@ ohci_init(ohci_softc_t *sc)
 	/* The controller is now in SUSPEND state, we have 2ms to finish. */
 
 	/* Set up HC registers. */
-	OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma));
+	OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
 	OWRITE4(sc, OHCI_CONTROL_HEAD_ED, sc->sc_ctrl_head->physaddr);
 	OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
 	/* disable all interrupts and then switch on all desired interrupts */
@@ -1003,7 +1003,7 @@ ohci_power(int why, void *v)
 	case PWR_RESUME:
 		sc->sc_bus.use_polling++;
 		/* Some broken BIOSes do not recover these values */
-		OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma));
+		OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
 		OWRITE4(sc, OHCI_CONTROL_HEAD_ED, sc->sc_ctrl_head->physaddr);
 		OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
 		if (sc->sc_intre)
@@ -1456,7 +1456,7 @@ ohci_device_intr_done(usbd_xfer_handle xfer)
 			OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 		if (xfer->flags & USBD_SHORT_XFER_OK)
 			data->td.td_flags |= htole32(OHCI_TD_R);
-		data->td.td_cbp = htole32(DMAADDR(&xfer->dmabuf));
+		data->td.td_cbp = htole32(DMAADDR(&xfer->dmabuf, 0));
 		data->nexttd = tail;
 		data->td.td_nexttd = htole32(tail->physaddr);
 		data->td.td_be = htole32(le32toh(data->td.td_cbp) +
@@ -1652,7 +1652,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 
 	setup->td.td_flags = htole32(OHCI_TD_SETUP | OHCI_TD_NOCC |
 				     OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
-	setup->td.td_cbp = htole32(DMAADDR(&opipe->u.ctl.reqdma));
+	setup->td.td_cbp = htole32(DMAADDR(&opipe->u.ctl.reqdma, 0));
 	setup->nexttd = next;
 	setup->td.td_nexttd = htole32(next->physaddr);
 	setup->td.td_be = htole32(le32toh(setup->td.td_cbp) + sizeof *req - 1);
@@ -2946,7 +2946,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
 		data->td.td_flags |= htole32(OHCI_TD_R);
-	data->td.td_cbp = htole32(DMAADDR(&xfer->dmabuf));
+	data->td.td_cbp = htole32(DMAADDR(&xfer->dmabuf, 0));
 	data->nexttd = tail;
 	data->td.td_nexttd = htole32(tail->physaddr);
 	data->td.td_be = htole32(le32toh(data->td.td_cbp) + len - 1);
@@ -3154,7 +3154,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 	}
 
 	sitd = opipe->tail.itd;
-	buf = DMAADDR(&xfer->dmabuf);
+	buf = DMAADDR(&xfer->dmabuf, 0);
 	bp0 = OHCI_PAGE(buf);
 	offs = OHCI_PAGE_OFFSET(buf);
 	nframes = xfer->nframes;

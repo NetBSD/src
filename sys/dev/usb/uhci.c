@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.159 2002/05/19 06:24:32 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.160 2002/05/28 12:42:39 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.159 2002/05/19 06:24:32 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.160 2002/05/28 12:42:39 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ uhci_init(uhci_softc_t *sc)
 		return (err);
 	sc->sc_pframes = KERNADDR(&sc->sc_dma, 0);
 	UWRITE2(sc, UHCI_FRNUM, 0);		/* set frame number to 0 */
-	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma)); /* set frame list*/
+	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0)); /* set frame list*/
 
 	/*
 	 * Allocate a TD, inactive, that hangs from the last QH.
@@ -732,7 +732,7 @@ uhci_power(int why, void *v)
 			uhci_run(sc, 0); /* in case BIOS has started it */
 
 		/* restore saved state */
-		UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma));
+		UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
 		UWRITE2(sc, UHCI_FRNUM, sc->sc_saved_frnum);
 		UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
@@ -1615,7 +1615,7 @@ uhci_alloc_std(uhci_softc_t *sc)
 		for(i = 0; i < UHCI_STD_CHUNK; i++) {
 			offs = i * UHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
-			std->physaddr = DMAADDR(&dma) + offs;
+			std->physaddr = DMAADDR(&dma, offs);
 			std->link.std = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
@@ -1658,7 +1658,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
-			sqh->physaddr = DMAADDR(&dma) + offs;
+			sqh->physaddr = DMAADDR(&dma, offs);
 			sqh->hlink = sc->sc_freeqhs;
 			sc->sc_freeqhs = sqh;
 		}
@@ -1751,7 +1751,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 		p->td.td_token =
 		    htole32(rd ? UHCI_TD_IN (l, endpt, addr, tog) :
 				 UHCI_TD_OUT(l, endpt, addr, tog));
-		p->td.td_buffer = htole32(DMAADDR(dma) + i * maxp);
+		p->td.td_buffer = htole32(DMAADDR(dma, i * maxp));
 		tog ^= 1;
 	}
 	*sp = lastp;
@@ -2199,7 +2199,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 	setup->td.td_status = htole32(UHCI_TD_SET_ERRCNT(3) | ls |
 		UHCI_TD_ACTIVE);
 	setup->td.td_token = htole32(UHCI_TD_SETUP(sizeof *req, endpt, addr));
-	setup->td.td_buffer = htole32(DMAADDR(&upipe->u.ctl.reqdma));
+	setup->td.td_buffer = htole32(DMAADDR(&upipe->u.ctl.reqdma, 0));
 
 	stat->link.std = NULL;
 	stat->td.td_link = htole32(UHCI_PTR_T);
@@ -2339,7 +2339,7 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 	xfer->status = USBD_IN_PROGRESS;
 	UXFER(xfer)->curframe = next;
 
-	buf = DMAADDR(&xfer->dmabuf);
+	buf = DMAADDR(&xfer->dmabuf, 0);
 	status = UHCI_TD_ZERO_ACTLEN(UHCI_TD_SET_ERRCNT(0) |
 				     UHCI_TD_ACTIVE |
 				     UHCI_TD_IOS);

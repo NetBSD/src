@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.30 2002/05/19 06:24:30 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.31 2002/05/28 12:42:38 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.30 2002/05/19 06:24:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.31 2002/05/28 12:42:38 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,7 +899,7 @@ OOO
 #if 0
 OOO
 		/* Some broken BIOSes do not recover these values */
-		OWRITE4(sc, EHCI_HCCA, DMAADDR(&sc->sc_hccadma));
+		OWRITE4(sc, EHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
 		OWRITE4(sc, EHCI_CONTROL_HEAD_ED, sc->sc_ctrl_head->physaddr);
 		OWRITE4(sc, EHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
 		if (sc->sc_intre)
@@ -1978,7 +1978,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
 			offs = i * EHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
-			sqh->physaddr = DMAADDR(&dma) + offs;
+			sqh->physaddr = DMAADDR(&dma, offs);
 			sqh->next = sc->sc_freeqhs;
 			sc->sc_freeqhs = sqh;
 		}
@@ -2020,7 +2020,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		for(i = 0; i < EHCI_SQTD_CHUNK; i++) {
 			offs = i * EHCI_SQTD_SIZE;
 			sqtd = KERNADDR(&dma, offs);
-			sqtd->physaddr = DMAADDR(&dma) + offs;
+			sqtd->physaddr = DMAADDR(&dma, offs);
 			sqtd->nextqtd = sc->sc_freeqtds;
 			sc->sc_freeqtds = sqtd;
 		}
@@ -2064,7 +2064,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
 	len = alen;
-	dataphys = DMAADDR(dma);
+	dataphys = DMAADDR(dma, 0);
 	dataphyslastpage = EHCI_PAGE(dataphys + len - 1);
 	qtdstatus = htole32(
 	    EHCI_QTD_ACTIVE |
@@ -2512,7 +2512,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	    EHCI_QTD_SET_CERR(3) |
 	    EHCI_QTD_SET_BYTES(sizeof *req)
 	    );
-	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->u.ctl.reqdma));
+	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->u.ctl.reqdma, 0));
 	setup->nextqtd = next;
 	setup->qtd.qtd_next = setup->qtd.qtd_altnext = htole32(next->physaddr);
 	setup->xfer = xfer;
