@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.4 1994/10/26 00:56:09 cgd Exp $	*/
+/*	$NetBSD: netdb.h,v 1.5 1995/07/03 22:59:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1983, 1988 Regents of the University of California.
@@ -86,6 +86,8 @@ struct	protoent {
  * Error return codes from gethostbyname() and gethostbyaddr()
  * (left in extern int h_errno).
  */
+
+extern int h_errno;
 
 #define	HOST_NOT_FOUND	1 /* Authoritative Answer Host not found */
 #define	TRY_AGAIN	2 /* Non-Authoritive Host not found, or SERVERFAIL */
