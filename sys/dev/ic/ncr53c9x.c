@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.106 2003/04/16 18:53:50 petrov Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.107 2003/07/25 06:40:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.106 2003/04/16 18:53:50 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.107 2003/07/25 06:40:29 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2317,8 +2317,12 @@ again:
 				 * disconnecting, and this is necessary
 				 * to clean up their state.
 				 */
-				printf("%s: unexpected disconnect; ",
-				    sc->sc_dev.dv_xname);
+				printf("%s: unexpected disconnect "
+			"[state %d, intr %x, stat %x, phase(c %x, p %x)]; ",
+					sc->sc_dev.dv_xname, sc->sc_state,
+					sc->sc_espintr, sc->sc_espstat,
+					sc->sc_phase, sc->sc_prevphase);
+
 				if ((ecb->flags & ECB_SENSE) != 0) {
 					printf("resetting\n");
 					goto reset;
@@ -2644,8 +2648,9 @@ again:
 		break;
 
 	default:
-		printf("%s: invalid state: %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_state);
+		printf("%s: invalid state: %d [intr %x, phase(c %x, p %x)]\n",
+			sc->sc_dev.dv_xname, sc->sc_state,
+			sc->sc_espintr, sc->sc_phase, sc->sc_prevphase);
 		goto reset;
 	}
 
