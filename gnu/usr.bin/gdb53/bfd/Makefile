@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/17 18:03:26 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/18 22:49:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ CPPFLAGS=	-I${.CURDIR} -I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-DNETBSD_CORE \
 		${G_BFD_CPPFLAGS} 
 
+libinstall::
 
 .endif
 

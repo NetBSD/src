@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/17 18:03:29 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/18 22:49:18 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ SRCS=bind.c callback.c complete.c display.c funmap.c histexpand.c \
 histfile.c history.c histsearch.c input.c isearch.c keymaps.c \
 kill.c macro.c nls.c parens.c readline.c rltty.c search.c shell.c \
 signals.c terminal.c tilde.c undo.c util.c vi_mode.c xmalloc.c
+
+libinstall::
 
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>

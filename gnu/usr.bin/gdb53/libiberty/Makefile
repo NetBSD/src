@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/17 18:03:28 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/18 22:49:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ SRCS=argv.c concat.c cp-demangle.c cplus-dem.c dyn-string.c floatformat.c \
 getopt.c getopt1.c getruntime.c hashtab.c hex.c lbasename.c objalloc.c \
 obstack.c regex.c safe-ctype.c splay-tree.c xexit.c xstrdup.c xstrerror.c
 
+
+libinstall::
 
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
