@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.66 2000/12/03 05:56:27 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67 2001/01/09 05:05:35 joff Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1085,6 +1085,10 @@ lfs_updatemeta(sp)
 			       " has same lbn and daddr\n",
 			       VTOI(vp)->i_number, off);
 		}
+#ifdef DIAGNOSTIC
+		if((*sp->start_bpp)->b_bcount < fs->lfs_bsize && i != 0)
+			panic("lfs_updatemeta: fragment is not last block\n");
+#endif
 		bb = fragstodb(fs, numfrags(fs, (*sp->start_bpp)->b_bcount));
 		fs->lfs_offset += bb;
 		error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL);
