@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.30 2002/03/08 20:51:25 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.31 2002/03/08 21:41:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -120,6 +120,11 @@ struct pool {
 					   items */
 	struct pool_allocator *pr_alloc;/* back-end allocator */
 	TAILQ_ENTRY(pool) pr_alloc_list;/* link on allocator's pool list */
+
+	/* Drain hook. */
+	void		(*pr_drain_hook)(void *, int);
+	void		*pr_drain_hook_arg;
+
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
@@ -195,6 +200,9 @@ extern struct pool_allocator pool_allocator_nointr;
 void		pool_init(struct pool *, size_t, u_int, u_int,
 				 int, const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
+
+void		pool_set_drain_hook(struct pool *,
+		    void (*)(void *, int), void *);
 
 void		*pool_get(struct pool *, int);
 void		pool_put(struct pool *, void *);
