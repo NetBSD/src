@@ -1,3 +1,4 @@
+/*	$NetBSD: canohost.c,v 1.1.1.1.2.4 2001/12/10 23:52:55 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,14 +13,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.23 2001/02/10 01:33:32 markus Exp $");
+RCSID("$OpenBSD: canohost.c,v 1.28 2001/12/05 03:56:39 itojun Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
 #include "log.h"
 #include "canohost.h"
 
-void	check_ip_options(int socket, char *ipaddr);
+static void check_ip_options(int, char *);
 
 /*
  * Return the canonical name of the host at the other end of the socket. The
@@ -49,7 +50,7 @@ get_remote_hostname(int socket, int reverse_mapping_check)
 	     NULL, 0, NI_NUMERICHOST) != 0)
 		fatal("get_remote_hostname: getnameinfo NI_NUMERICHOST failed");
 
-	debug("Trying to reverse map address %.100s.", ntop);
+	debug3("Trying to reverse map address %.100s.", ntop);
 	/* Map the IP address to a host name. */
 	if (getnameinfo((struct sockaddr *)&from, fromlen, name, sizeof(name),
 	     NULL, 0, NI_NAMEREQD) != 0) {
@@ -118,7 +119,7 @@ get_remote_hostname(int socket, int reverse_mapping_check)
  * exit here if we detect any IP options.
  */
 /* IPv4 only */
-void
+static void
 check_ip_options(int socket, char *ipaddr)
 {
 	u_char options[200];
@@ -180,28 +181,57 @@ get_canonical_hostname(int reverse_mapping_check)
  * Returns the remote IP-address of socket as a string.  The returned
  * string must be freed.
  */
+static char *
+get_socket_address(int socket, int remote, int flags)
+{
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	char ntop[NI_MAXHOST];
+
+	/* Get IP address of client. */
+	addrlen = sizeof(addr);
+	memset(&addr, 0, sizeof(addr));
+
+	if (remote) {
+		if (getpeername(socket, (struct sockaddr *)&addr, &addrlen)
+		    < 0) {
+			debug("get_socket_ipaddr: getpeername failed: %.100s",
+			    strerror(errno));
+			return NULL;
+		}
+	} else {
+		if (getsockname(socket, (struct sockaddr *)&addr, &addrlen)
+		    < 0) {
+			debug("get_socket_ipaddr: getsockname failed: %.100s",
+			    strerror(errno));
+			return NULL;
+		}
+	}
+	/* Get the address in ascii. */
+	if (getnameinfo((struct sockaddr *)&addr, addrlen, ntop, sizeof(ntop),
+	     NULL, 0, flags) != 0) {
+		error("get_socket_ipaddr: getnameinfo %d failed", flags);
+		return NULL;
+	}
+	return xstrdup(ntop);
+}
 
 char *
 get_peer_ipaddr(int socket)
 {
-	struct sockaddr_storage from;
-	socklen_t fromlen;
-	char ntop[NI_MAXHOST];
+	return get_socket_address(socket, 1, NI_NUMERICHOST);
+}
 
-	/* Get IP address of client. */
-	fromlen = sizeof(from);
-	memset(&from, 0, sizeof(from));
-	if (getpeername(socket, (struct sockaddr *) & from, &fromlen) < 0) {
-		debug("get_peer_ipaddr: getpeername failed: %.100s", strerror(errno));
-		return NULL;
-	}
-	/* Get the IP address in ascii. */
-	if (getnameinfo((struct sockaddr *)&from, fromlen, ntop, sizeof(ntop),
-	     NULL, 0, NI_NUMERICHOST) != 0) {
-		error("get_peer_ipaddr: getnameinfo NI_NUMERICHOST failed");
-		return NULL;
-	}
-	return xstrdup(ntop);
+char *
+get_local_ipaddr(int socket)
+{
+	return get_socket_address(socket, 0, NI_NUMERICHOST);
+}
+
+char *
+get_local_name(int socket)
+{
+	return get_socket_address(socket, 0, NI_NAMEREQD);
 }
 
 /*
@@ -210,7 +240,7 @@ get_peer_ipaddr(int socket)
  */
 
 const char *
-get_remote_ipaddr()
+get_remote_ipaddr(void)
 {
 	static char *canonical_host_ip = NULL;
 
@@ -227,6 +257,17 @@ get_remote_ipaddr()
 		}
 	}
 	return canonical_host_ip;
+}
+
+const char *
+get_remote_name_or_ip(u_int utmp_len, int reverse_mapping_check)
+{
+	static const char *remote = "";
+	if (utmp_len > 0)
+		remote = get_canonical_hostname(reverse_mapping_check);
+	if (utmp_len == 0 || strlen(remote) > utmp_len)
+		remote = get_remote_ipaddr();
+	return remote;
 }
 
 /* Returns the local/remote port for the socket. */
@@ -282,13 +323,13 @@ get_peer_port(int sock)
 }
 
 int
-get_remote_port()
+get_remote_port(void)
 {
 	return get_port(0);
 }
 
 int
-get_local_port()
+get_local_port(void)
 {
 	return get_port(1);
 }
