@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga,v 1.4 1994/05/22 19:33:25 chopps Exp $
+#	$Id: files.amiga,v 1.5 1994/05/25 07:59:02 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -175,6 +175,7 @@ file	arch/amiga/amiga/sys_machdep.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
+file	arch/m68k/m68k/copy.s
 file	compat/sunos/sun_misc.c		compat_sunos
 file	compat/sunos/sun_sysent.c	compat_sunos
 file	compat/sunos/sun_ioctl.c	compat_sunos
