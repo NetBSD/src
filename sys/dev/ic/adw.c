@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.8 1999/03/04 20:15:53 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.9 1999/08/16 02:01:11 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -298,7 +298,7 @@ out:
 ADW_CCB *
 adw_ccb_phys_kv(sc, ccb_phys)
 	ADW_SOFTC	*sc;
-	u_long		ccb_phys;
+	u_int32_t	ccb_phys;
 {
 	int hashnum = CCB_HASH(ccb_phys);
 	ADW_CCB *ccb = sc->sc_ccbhash[hashnum];
@@ -715,14 +715,14 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 {
 	struct scsipi_xfer *xs = ccb->xs;
 	ADW_SOFTC      *sc = xs->sc_link->adapter_softc;
-	ulong           sg_block_next_addr;	/* block and its next */
-	ulong           sg_block_physical_addr;
+	u_long          sg_block_next_addr;	/* block and its next */
+	u_int32_t       sg_block_physical_addr;
 	int             sg_block_index, i;	/* how many SG entries */
 	bus_dma_segment_t *sg_list = &ccb->dmamap_xfer->dm_segs[0];
 	int             sg_elem_cnt = ccb->dmamap_xfer->dm_nsegs;
 
 
-	sg_block_next_addr = (ulong) sg_block;	/* allow math operation */
+	sg_block_next_addr = (u_long) sg_block;	/* allow math operation */
 	sg_block_physical_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, sg_block[0]);
 	scsiqp->sg_real_addr = sg_block_physical_addr;
@@ -752,7 +752,7 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 		sg_block_physical_addr += sizeof(ADW_SG_BLOCK);
 
 		sg_block_index += NO_OF_SG_PER_BLOCK;
-		sg_block->sg_ptr = (ADW_SG_BLOCK *) sg_block_physical_addr;
+		sg_block->sg_ptr = sg_block_physical_addr;
 		sg_block->last_entry_no = sg_block_index - 1;
 		sg_block = (ADW_SG_BLOCK *) sg_block_next_addr;	/* virt. addr */
 	}
