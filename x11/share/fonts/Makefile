@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/09 04:30:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/09 06:52:34 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ afterinstall:
 .if ${MKUNPRIVED} != "no"
 	cd ${DESTDIR} \
 	&& find ./${X11FONTDIR} -name fonts.cache-1 \
-	    | sed -e 's/$$/ type=file mode=0444 uname=root gname=wheel/' \
+	    | sed -e 's/$$/ type=file mode=0444 uname=${BINOWN} gname=${BINGRP}/' \
 	    | ${METALOG.add}
 .endif
 
