@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.91 1996/07/14 20:03:44 cgd Exp $
+#	$NetBSD: files,v 1.92 1996/08/28 18:44:53 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -9,7 +9,7 @@ define	tape
 define	ifnet
 define	tty
 define	audio
-define	scsi {}
+define	scsi { [channel = -1]}
 
 # audio device attributes
 define	mulaw
