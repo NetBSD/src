@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.6 1998/11/15 17:11:06 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.7 1998/12/01 16:07:11 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.6 1998/11/15 17:11:06 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.7 1998/12/01 16:07:11 sommerfe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -315,6 +315,7 @@ _secs(t, pt, ptlim)
 	char *p;
 	struct tm tmp;
 
+	buf[sizeof (buf) - 1] = '\0';
 	/* Make a copy, mktime(3) modifies the tm struct. */
 	tmp = *t;
 	s = mktime(&tmp);
