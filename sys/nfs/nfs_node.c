@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.21 1997/07/07 11:50:49 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.22 1997/07/07 23:34:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +47,7 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -58,6 +59,7 @@
 
 LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
 u_long nfsnodehash;
+struct lock nfs_hashlock;
 
 #define TRUE	1
 #define	FALSE	0
@@ -71,6 +73,7 @@ nfs_nhinit()
 {
 
 	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, &nfsnodehash);
+	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
 }
 
 /*
@@ -105,9 +108,7 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	int fhsize;
 	struct nfsnode **npp;
 {
-#ifdef Lite2_integrated
 	struct proc *p = curproc;	/* XXX */
-#endif
 	register struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
@@ -131,9 +132,12 @@ loop:
 		*npp = np;
 		return(0);
 	}
+	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0, p))
+		goto loop;
 	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
 	if (error) {
 		*npp = 0;
+		lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
 		return (error);
 	}
 	vp = nvp;
@@ -151,6 +155,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
 	*npp = np;
 	return (0);
 }
