@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.45 1999/10/09 12:48:12 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.46 1999/10/12 06:04:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,6 @@ int	command __P((const char *, ...));
 unsigned char complete __P((EditLine *, int));
 void	controlediting __P((void));
 #endif /* !NO_EDITCOMPLETE */
-int	confirm __P((const char *, const char *));
 FILE   *dataconn __P((const char *));
 void	delete __P((int, char **));
 void	disconnect __P((int, char **));
