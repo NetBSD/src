@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.9 1997/07/31 00:40:56 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.10 1997/10/15 00:02:19 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -62,7 +62,7 @@ struct podule_list {
 #define PODULE_DESCRIPTION_LENGTH	63
 
 typedef struct {
-/* The podule header, read from the on board ROM */
+	/* The podule header, read from the on board ROM */
 
 	u_char flags0;
 	u_char flags1;
@@ -75,7 +75,7 @@ typedef struct {
 	u_int fiq_addr;
 	u_int fiq_mask;
 
-/* The base addresses for this podule */
+	/* The base addresses for this podule */
 
 	u_int fast_base;
 	u_int medium_base;
@@ -84,17 +84,22 @@ typedef struct {
 	u_int mod_base;
 	u_int easi_base;
 
-	int dma_channel;
-	
-/* Flags */
+	/* Flags */
 
 	int podulenum; 
 	int slottype;
 	int attached;
 
-/* Other info */
+	/* Other info */
 
 	char description[PODULE_DESCRIPTION_LENGTH + 1];
+
+	/* podule specific information provided by podulebus */
+
+	int interrupt;
+
+	int dma_channel;
+	int dma_interrupt;
 } podule_t;
 
 #define PODULE_FLAGS_CD	0x01
@@ -115,16 +120,16 @@ struct podule_attach_args {
 
 /* EASI space cycle control */
 
-#define EASI_CYCLE_TYPE_A	0x00
-#define EASI_CYCLE_TYPE_C	0x01
-#define set_easi_cycle_type(podule, type) \
-	WriteByte(IOMD_ECTCR, (ReadByte(IOMD_ECTCR) & ~(1 << podule)) | (1 << type))
-
 
 #define IS_PODULE(pa, man, prod)	\
 	(pa->pa_podule->manufacturer == man && pa->pa_podule->product == prod)
 
 
+
+#define EASI_CYCLE_TYPE_A	0x00
+#define EASI_CYCLE_TYPE_C	0x01
+#define set_easi_cycle_type(podule, type) \
+	IOMD_WRITE_BYTE(IOMD_ECTCR, (IOMD_READ_BYTE(IOMD_ECTCR) & ~(1 << podule)) | (1 << type))
   
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.22 1997/07/31 00:43:28 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.23 1997/10/15 00:02:09 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -48,11 +48,11 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <machine/io.h>
-#include <machine/iomd.h>
 #include <machine/katelib.h>
 #include <machine/irqhandler.h>
+#include <machine/bootconfig.h>
+#include <arm32/iomd/iomdreg.h>
 #include <arm32/podulebus/podulebus.h>
-
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/podule_data.h>
 
@@ -82,9 +82,9 @@ u_int poduleread __P((u_int address, int offset, int slottype));
  */
  
 int
-podulebusmatch(parent, match, aux)
+podulebusmatch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
 	switch (IOMD_ID) {
@@ -342,7 +342,9 @@ podulescan(dev)
 		podule->podulenum = loop;
 		podule->attached = 0;
 		podule->slottype = SLOT_NONE;
+		podule->interrupt = IRQ_PODULE;
 		podule->dma_channel = -1;
+		podule->dma_interrupt = -1;
 		podule->description[0] = 0;
 
 		if (loop == 4) offset += PODULE_GAP;
@@ -373,9 +375,15 @@ podulescan(dev)
 			switch (loop) {
 			case 0:
 				podule->dma_channel = 2;
+#ifndef CPU_ARM7500
+				podule->dma_interrupt = IRQ_DMACH2;
+#endif
 				break;
 			case 1:
 				podule->dma_channel = 3;
+#ifndef CPU_ARM7500
+				podule->dma_interrupt = IRQ_DMACH3;
+#endif
 				break;
 			}
 		}
@@ -439,7 +447,9 @@ netslotscan(dev)
 	podule->attached = 0;
 	podule->slottype = SLOT_NONE;
 	podule->podulenum = MAX_PODULES;
+	podule->interrupt = IRQ_NETSLOT;
 	podule->dma_channel = -1;
+	podule->dma_interrupt = -1;
 	podule->description[0] = 0;
 
 	/* XXX - Really needs to be linked to a DMA manager */
@@ -496,10 +506,11 @@ podulebusattach(parent, self, aux)
 	struct podule_attach_args pa;
 	int easi_time;
 	int bit;
+	int boolean;
+	char argstring[20];
 
 #if 0
-	easi_time = ReadByte(IOMD_ECTCR);
-
+	easi_time = IOMD_READ_BYTE(IOMD_ECTCR);
 	printf(": easi timings=");
 	for (bit = 0x01; bit < 0x100; bit = bit << 1)
 		if (easi_time & bit)
@@ -515,7 +526,7 @@ podulebusattach(parent, self, aux)
 
 	map_section(PAGE_DIRS_BASE, SYNC_PODULE_BASE & 0xfff00000,
 	    SYNC_PODULE_HW_BASE & 0xfff00000);
-	tlb_flush();
+	cpu_tlb_flushD();
 
 	/* Now map the EASI space */
 
@@ -525,7 +536,7 @@ podulebusattach(parent, self, aux)
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE); loop1 += (1 << 20))
 		map_section(PAGE_DIRS_BASE, EASI_BASE + loop1, EASI_HW_BASE + loop1);
 	}
-	tlb_flush();
+	cpu_tlb_flushD();
 
 	/*
 	 * The MEDIUM and SLOW simple podules and the module space will have been
@@ -551,13 +562,21 @@ podulebusattach(parent, self, aux)
 
 	/* Look for drivers to attach */
 
-	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop)
+	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop) {
+		sprintf(argstring, "podule%d.disable", loop);
+		if (get_bootconf_option(boot_args, argstring,
+		    BOOTOPT_TYPE_BOOLEAN, &boolean)) {
+			if (boolean)
+				continue;
+		}
+		
 		if (podules[loop].slottype != SLOT_NONE) {
 			pa.pa_podule_number = loop;
 			pa.pa_podule = &podules[loop];
 			pa.pa_iot = &podulebus_bs_tag;
 			config_found_sm(self, &pa, podulebusprint, podulebussubmatch);
 		}
+	}
 }
 
 
