@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.21 2000/12/19 10:42:05 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.22 2001/01/03 15:42:48 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	16		# estimated number of users
 
@@ -120,7 +120,7 @@ mainbus0 at root
 shb*	at mainbus?
 
 # WatchDog Timer
-wdog0 at shb? port 0xffffff84
+#wdog0 at shb? port 0xffffff84
 
 com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12
