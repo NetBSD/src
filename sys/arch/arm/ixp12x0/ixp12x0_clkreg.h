@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clkreg.h,v 1.2 2003/02/17 20:51:52 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_clkreg.h,v 1.3 2003/03/06 06:14:16 igy Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -40,8 +40,8 @@
  *  TIMER_4 v0xf0010360 p0x42000360
  */
 
-#ifndef _IXP12X0_TIMERREG_H_
-#define _IXP12X0_TIMERREG_H_
+#ifndef _IXP12X0_CLKREG_H_
+#define _IXP12X0_CLKREG_H_
 
 #include <arm/ixp12x0/ixp12x0reg.h>
 
@@ -121,4 +121,4 @@
 #define RTC_ALM		0x90003000
 #define RTC_RTC_ALARM	0xffffffff
 
-#endif /* _IXP12X0_TIMERREG_H_ */
+#endif /* _IXP12X0_CLKREG_H_ */
