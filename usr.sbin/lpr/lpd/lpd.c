@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.10 1997/07/10 06:26:44 mikel Exp $	*/
+/*	$NetBSD: lpd.c,v 1.11 1997/07/17 05:49:13 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,17 +34,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
 #else
-static char rcsid[] = "$NetBSD";
+__RCSID("$NetBSD: lpd.c,v 1.11 1997/07/17 05:49:13 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +97,8 @@ static char rcsid[] = "$NetBSD";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <arpa/inet.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -105,6 +108,7 @@ int	lflag;				/* log requests flag */
 int	sflag;				/* secure (no inet) flag */
 int	from_remote;			/* from remote socket */
 
+int               main __P((int, char **));
 static void       reapchild __P((int));
 static void       mcleanup __P((int));
 static void       doit __P((void));
@@ -476,7 +480,6 @@ chkhost(f)
 	register struct hostent *hp;
 	register FILE *hostf;
 	int first = 1;
-	extern char *inet_ntoa();
 
 	f->sin_port = ntohs(f->sin_port);
 	if (f->sin_family != AF_INET || f->sin_port >= IPPORT_RESERVED)
