@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.1 1993/08/14 06:30:44 deraadt Exp $
+#	$Id: Makefile,v 1.2 1994/05/30 01:38:57 paulus Exp $
 
 PROG=	chat
 SRCS=	chat.c
-NOMAN=	noman
+MAN8=	chat.0
 BINDIR=	/usr/sbin
 
 .include <bsd.prog.mk>
