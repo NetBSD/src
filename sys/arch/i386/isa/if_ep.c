@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.36 1994/05/11 12:09:23 mycroft Exp $
+ *	$Id: if_ep.c,v 1.37 1994/05/13 06:13:52 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -76,7 +76,7 @@ struct ep_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
-	struct arpcom ep_ac;		/* Ethernet common part		*/
+	struct arpcom sc_arpcom;	/* Ethernet common part		*/
 	short   ep_iobase;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
@@ -85,7 +85,6 @@ struct ep_softc {
 	int	last_mb;		/* Last mbuf.			*/
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	int	tx_succ_ok;		/* # packets sent in sequence w/o underrun */
-	caddr_t bpf;			/* BPF  "magic cookie"		*/
 	char	bus32bit;		/* 32bit access possible */
 };
 
@@ -273,9 +272,7 @@ epattach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct ifnet *ifp = &sc->ep_ac.ac_if;
-	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short i;
 
 	printf(": ");
@@ -314,50 +311,27 @@ epattach(parent, self, aux)
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
 		if (epbusyeeprom(sc))
 			return;
-		p = (u_short *) & sc->ep_ac.ac_enaddr[i * 2];
+		p = (u_short *) & sc->sc_arpcom.ac_enaddr[i * 2];
 		*p = htons(inw(BASE + EP_W0_EEPROM_DATA));
 		GO_WINDOW(2);
 		outw(BASE + EP_W2_ADDR_0 + (i * 2), ntohs(*p));
 	}
-	printf(" address %s\n", ether_sprintf(sc->ep_ac.ac_enaddr));
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = epcd.cd_name;
-	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_MULTICAST;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_output = ether_output;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
 	ifp->if_watchdog = epwatchdog;
 
 	if_attach(ifp);
-
-	/*
-	 * Search down the ifa address list looking for the AF_LINK type entry
-	 * and initialize it.
-	 */
-	ifa = ifp->if_addrlist;
-	while (ifa && ifa->ifa_addr) {
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			/*
-			 * Fill in the link-level address for this interface.
-			 */
-			sdl = (struct sockaddr_dl *) ifa->ifa_addr;
-			sdl->sdl_type = IFT_ETHER;
-			sdl->sdl_alen = ETHER_ADDR_LEN;
-			sdl->sdl_slen = 0;
-			bcopy(sc->ep_ac.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
-			break;
-		} else
-			ifa = ifa->ifa_next;
-	}
+	ether_ifattach(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
@@ -376,7 +350,7 @@ static void
 epinit(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->ep_ac.ac_if;
+	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int     s, i;
 
 	if (ifp->if_addrlist == 0)
@@ -393,7 +367,7 @@ epinit(sc)
 
 	GO_WINDOW(2);
 	for (i = 0; i < 6; i++)	/* Reload the ether_addr. */
-		outb(BASE + EP_W2_ADDR_0 + i, sc->ep_ac.ac_enaddr[i]);
+		outb(BASE + EP_W2_ADDR_0 + i, sc->sc_arpcom.ac_enaddr[i]);
 
 	outw(BASE + EP_COMMAND, RX_RESET);
 	outw(BASE + EP_COMMAND, TX_RESET);
@@ -430,7 +404,7 @@ static void
 epsetfilter(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->ep_ac.ac_if;
+	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	outw(BASE + EP_COMMAND, SET_RX_FILTER |
@@ -443,7 +417,7 @@ static void
 epsetlink(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->ep_ac.ac_if;
+	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/*
 	 * you can `ifconfig (link0|-link0) ep0' to get the following
@@ -482,14 +456,14 @@ epstart(ifp)
 	int     s, len, pad;
 
 	s = splimp();
-	if (sc->ep_ac.ac_if.if_flags & IFF_OACTIVE) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) {
 		splx(s);
 		return (0);
 	}
 
 startagain:
 	/* Sneak a peek at the next packet */
-	m = sc->ep_ac.ac_if.if_snd.ifq_head;
+	m = sc->sc_arpcom.ac_if.if_snd.ifq_head;
 	if (m == 0) {
 		splx(s);
 		return (0);
@@ -510,8 +484,8 @@ startagain:
 	 */
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
-		+sc->ep_ac.ac_if.if_oerrors;
-		IF_DEQUEUE(&sc->ep_ac.ac_if.if_snd, m);
+		+sc->sc_arpcom.ac_if.if_oerrors;
+		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 		m_freem(m);
 		goto readcheck;
 	}
@@ -519,7 +493,7 @@ startagain:
 	outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 	if (inw(BASE + EP_W1_FREE_TX) < len + pad + 4) {
 		/* not enough room in FIFO */
-		sc->ep_ac.ac_if.if_flags |= IFF_OACTIVE;
+		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
 		splx(s);
 		return (0);
 	} else {
@@ -527,7 +501,7 @@ startagain:
 		outw(BASE + EP_COMMAND, ACK_INTR | S_TX_AVAIL);
 	}
 
-	IF_DEQUEUE(&sc->ep_ac.ac_if.if_snd, m);
+	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 	if (m == 0) {		/* not really needed */
 		splx(s);
 		return (0);
@@ -557,73 +531,12 @@ startagain:
 		outb(BASE + EP_W1_TX_PIO_WR_1, 0);	/* Padding */
 
 #if NBPFILTER > 0
-	if (sc->bpf) {
-		u_short etype;
-		int     off, datasize, resid;
-		struct ether_header *eh;
-		struct trailer_header {
-			u_short ether_type;
-			u_short ether_residual;
-		}       trailer_header;
-		char    ether_packet[ETHER_MAX_LEN];
-		char   *ep;
-
-		ep = ether_packet;
-
-		/*
-		 * We handle trailers below:
-		 * Copy ether header first, then residual data,
-		 * then data. Put all this in a temporary buffer
-		 * 'ether_packet' and send off to bpf. Since the
-		 * system has generated this packet, we assume
-		 * that all of the offsets in the packet are
-		 * correct; if they're not, the system will almost
-		 * certainly crash in m_copydata.
-		 * We make no assumptions about how the data is
-		 * arranged in the mbuf chain (i.e. how much
-		 * data is in each mbuf, if mbuf clusters are
-		 * used, etc.), which is why we use m_copydata
-		 * to get the ether header rather than assume
-		 * that this is located in the first mbuf.
-		 */
-		/* copy ether header */
-		m_copydata(top, 0, sizeof(struct ether_header), ep);
-		eh = (struct ether_header *) ep;
-		ep += sizeof(struct ether_header);
-		etype = ntohs(eh->ether_type);
-		if (etype >= ETHERTYPE_TRAIL &&
-		    etype < ETHERTYPE_TRAIL + ETHERTYPE_NTRAILER) {
-			datasize = ((etype - ETHERTYPE_TRAIL) << 9);
-			off = datasize + sizeof(struct ether_header);
-
-			/* copy trailer_header into a data structure */
-			m_copydata(top, off, sizeof(struct trailer_header),
-			    &trailer_header.ether_type);
-
-			/* copy residual data */
-			resid = trailer_header.ether_residual -
-			    sizeof(struct trailer_header);
-			resid = ntohs(resid);
-			m_copydata(top, off + sizeof(struct trailer_header),
-			    resid, ep);
-			ep += resid;
-
-			/* copy data */
-			m_copydata(top, sizeof(struct ether_header),
-			    datasize, ep);
-			ep += datasize;
-
-			/* restore original ether packet type */
-			eh->ether_type = trailer_header.ether_type;
-
-			bpf_tap(sc->bpf, ether_packet, ep - ether_packet);
-		} else
-			bpf_mtap(sc->bpf, top);
-	}
+	if (sc->sc_arpcom.ac_if.if_bpf)
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);
 #endif
 
 	m_freem(top);
-	++sc->ep_ac.ac_if.if_opackets;
+	++sc->sc_arpcom.ac_if.if_opackets;
 
 	/*
 	 * Is another packet coming in? We don't want to overflow the
@@ -641,7 +554,7 @@ int
 epintr(sc)
 	register struct ep_softc *sc;
 {
-	struct ifnet *ifp = &sc->ep_ac.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short		status;
 	int		i, ret = 0;
 
@@ -656,8 +569,8 @@ epintr(sc)
 			epread(sc);
 		if (status & S_TX_AVAIL) {
 			inw(BASE + EP_W1_FREE_TX);
-			sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
-			epstart(&sc->ep_ac.ac_if);
+			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			epstart(&sc->sc_arpcom.ac_if);
 		}
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
@@ -675,13 +588,13 @@ epintr(sc)
 				outw(BASE + EP_W1_TX_STATUS, 0x0);
 	
 				if (i & TXS_JABBER) {
-					++sc->ep_ac.ac_if.if_oerrors;
+					++sc->sc_arpcom.ac_if.if_oerrors;
 					untimeout(epmbuffill, sc);
 					printf("%s: jabber (%x %x)\n",
 					    sc->sc_dev.dv_xname, status, i);
 					epreset(sc);
 				} else if (i & TXS_UNDERRUN) {
-					++sc->ep_ac.ac_if.if_oerrors;
+					++sc->sc_arpcom.ac_if.if_oerrors;
 					untimeout(epmbuffill, sc);
 					printf("%s: fifo underrun (%x %x), correcting\n",
 					    sc->sc_dev.dv_xname, status, i);
@@ -691,9 +604,9 @@ epintr(sc)
 					sc->tx_succ_ok = 0;
 					epreset(sc);
 				} else if (i & TXS_MAX_COLLISION) {
-					++sc->ep_ac.ac_if.if_collisions;
+					++sc->sc_arpcom.ac_if.if_collisions;
 					outw(BASE + EP_COMMAND, TX_ENABLE);
-					sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
+					sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 				} else
 					sc->tx_succ_ok = (sc->tx_succ_ok+1) & 128;
 					
@@ -715,15 +628,13 @@ epread(sc)
 	struct ether_header *eh;
 	struct mbuf *mcur, *m, *m0, *top;
 	int     totlen, lenthisone;
-	int     save_totlen, off;
-	u_short etype;
+	int     save_totlen;
 
 	totlen = inw(BASE + EP_W1_RX_STATUS);
-	off = 0;
 	top = 0;
 
 	if (totlen & ERR_RX) {
-		++sc->ep_ac.ac_if.if_ierrors;
+		++sc->sc_arpcom.ac_if.if_ierrors;
 		goto out;
 	}
 	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
@@ -750,29 +661,7 @@ epread(sc)
 	    mtod(m0, caddr_t), sizeof(struct ether_header) / 2);
 	m->m_len = sizeof(struct ether_header);
 	totlen -= sizeof(struct ether_header);
-	/*
- 	 * mostly deal with trailer here.  (untested)
-	 * We do this in a couple of parts.  First we check for a trailer, if
-	 * we have one we convert the mbuf back to a regular mbuf and set the offset and
-	 * subtract sizeof(struct ether_header) from the pktlen.
-	 * After we've read the packet off the interface (all except for the trailer
-	 * header, we then get a header mbuf, read the trailer into it, and fix up
-	 * the mbuf pointer chain.
-	 */
 	eh = mtod(m, struct ether_header *);
-	etype = ntohs((u_short) eh->ether_type);
-	if (etype >= ETHERTYPE_TRAIL &&
-	    etype < ETHERTYPE_TRAIL + ETHERTYPE_NTRAILER) {
-		m->m_data = m->m_dat;	/* Convert back to regular mbuf.  */
-		m->m_flags = 0;		/* This sucks but non-trailers are the norm */
-		off = (etype - ETHERTYPE_TRAIL) * 512;
-		if (off >= ETHERMTU) {
-			m_freem(m);
-			return;	/* sanity */
-		}
-		totlen -= sizeof(struct ether_header);	/* We don't read the trailer */
-		m->m_data += 2 * sizeof(u_short);	/* Get rid of type & len */
-	}
 	while (totlen > 0) {
 		lenthisone = min(totlen, M_TRAILINGSPACE(m));
 		if (lenthisone == 0) {	/* no room in this one */
@@ -811,50 +700,25 @@ epread(sc)
 		}
 		totlen -= lenthisone;
 	}
-	if (off) {
-		top = sc->mb[sc->next_mb];
-		sc->mb[sc->next_mb] = 0;
-		if (top == 0) {
-			MGETHDR(top, M_DONTWAIT, MT_DATA);
-			if (top == 0) {
-				top = m0;   /* Fix up the chain so we can free it */
-				goto out;
-			}
-		} else {	/* Convert one of our saved mbuf's */
-			sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-			top->m_data = top->m_pktdat;
-			top->m_flags = M_PKTHDR;
-		}
-		insw(BASE + EP_W1_RX_PIO_RD_1, mtod(top, caddr_t),
-		    sizeof(struct ether_header) / 2);
-		top->m_next = m0;
-		top->m_len = sizeof(struct ether_header);
-		/* XXX Accomodate for type and len from beginning of trailer */
-		top->m_pkthdr.len = save_totlen - (2 * sizeof(u_short));
-	} else {
-		top = m0;
-		top->m_pkthdr.len = save_totlen;
-	}
-
-	top->m_pkthdr.rcvif = &sc->ep_ac.ac_if;
+	top = m0;
+	top->m_pkthdr.len = save_totlen;
+	top->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
-	++sc->ep_ac.ac_if.if_ipackets;
+	++sc->sc_arpcom.ac_if.if_ipackets;
 #if NBPFILTER > 0
-	if (sc->bpf) {
-		bpf_mtap(sc->bpf, top);
+	if (sc->sc_arpcom.ac_if.if_bpf) {
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->ep_ac.ac_if.if_flags & IFF_PROMISC) &&
+		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&
-		    bcmp(eh->ether_dhost, sc->ep_ac.ac_enaddr,
-			 sizeof(eh->ether_dhost)) != 0 &&
-		    bcmp(eh->ether_dhost, etherbroadcastaddr,
+		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			 sizeof(eh->ether_dhost)) != 0) {
 			m_freem(top);
 			return;
@@ -862,7 +726,7 @@ epread(sc)
 	}
 #endif
 	m_adj(top, sizeof(struct ether_header));
-	ether_input(&sc->ep_ac.ac_if, eh, top);
+	ether_input(&sc->sc_arpcom.ac_if, eh, top);
 	return;
 
 out:	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -905,12 +769,12 @@ epioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->ep_ac.ac_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else {
 				ifp->if_flags &= ~IFF_RUNNING;
 				bcopy(ina->x_host.c_host,
-				    sc->ep_ac.ac_enaddr,
-				    sizeof(sc->ep_ac.ac_enaddr));
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
 			}
 			epinit(sc);
 			break;

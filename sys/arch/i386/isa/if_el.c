@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.12 1994/05/11 12:09:21 mycroft Exp $
+ *	$Id: if_el.c,v 1.13 1994/05/13 06:13:48 mycroft Exp $
  */
 
 /*
@@ -77,7 +77,6 @@ struct el_softc {
 
 	struct arpcom sc_arpcom;	/* ethernet common */
 	u_short sc_iobase;		/* base I/O addr */
-	caddr_t sc_bpf;			/* BPF magic cookie */
 	char sc_pktbuf[EL_BUFSIZ]; 	/* frame buffer */
 };
 
@@ -93,7 +92,7 @@ static void el_reset __P((struct el_softc *));
 static void el_stop __P((struct el_softc *));
 static int el_xmit __P((struct el_softc *, int));
 static inline void elread __P((struct el_softc *, caddr_t, int));
-static struct mbuf *elget __P((caddr_t, int, int, struct ifnet *));
+static struct mbuf *elget __P((caddr_t, int, struct ifnet *));
 static inline void el_hardreset __P((struct el_softc *));
 
 int elprobe();
@@ -102,11 +101,6 @@ void elattach();
 /* isa_driver structure for autoconf */
 struct cfdriver elcd = {
 	NULL, "el", elprobe, elattach, DV_IFNET, sizeof(struct el_softc)
-};
-
-struct trailer_header {
-	u_short ether_type;
-	u_short ether_residual;
 };
 
 /*
@@ -185,8 +179,6 @@ elattach(parent, self, aux)
 	struct el_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
 
 	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));
 
@@ -196,10 +188,6 @@ elattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = elcd.cd_name;
-	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = el_start;
 	ifp->if_ioctl = el_ioctl;
@@ -209,27 +197,7 @@ elattach(parent, self, aux)
 	/* Now we can attach the interface. */
 	dprintf(("Attaching interface...\n"));
 	if_attach(ifp);
-
-	/*
-	 * Put the station address in the ifa address list's AF_LINK entry, if
-	 * any.
-	 */
-	ifa = ifp->if_addrlist;
-	while (ifa && ifa->ifa_addr) {
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			/*
-			 * Fill in the link-level address for this interface.
-			 */
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			sdl->sdl_type = IFT_ETHER;
-			sdl->sdl_alen = ETHER_ADDR_LEN;
-			sdl->sdl_slen = 0;
-			bcopy(sc->sc_arpcom.ac_enaddr, LLADDR(sdl),
-			    ETHER_ADDR_LEN);
-			break;
-		} else
-			ifa = ifa->ifa_next;
-	}
+	ether_ifattach(ifp);
 
 	/* Print out some information for the user. */
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
@@ -238,7 +206,7 @@ elattach(parent, self, aux)
 	/* Finally, attach to bpf filter if it is present. */
 #if NBPFILTER > 0
 	dprintf(("Attaching to BPF...\n"));
-	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih.ih_fun = elintr;
@@ -396,8 +364,8 @@ el_start(ifp)
 
 		/* Give the packet to the bpf, if any. */
 #if NBPFILTER > 0
-		if (sc->sc_bpf)
-			bpf_tap(sc->sc_bpf, sc->sc_pktbuf, len);
+		if (sc->sc_arpcom.ac_if.if_bpf)
+			bpf_tap(sc->sc_arpcom.ac_if.if_bpf, sc->sc_pktbuf, len);
 #endif
 
 		/* Transfer datagram to board. */
@@ -561,7 +529,6 @@ elintr(sc)
 		dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
 
 		/* Pass data up to upper levels. */
-		len -= sizeof(struct ether_header);
 		elread(sc, (caddr_t)sc->sc_pktbuf, len);
 
 		/* Is there another packet? */
@@ -580,7 +547,7 @@ elintr(sc)
 }
 
 /*
- * Pass a packet up to the higher levels.  Deal with trailer protocol.
+ * Pass a packet up to the higher levels.
  */
 static inline void
 elread(sc, buf, len)
@@ -590,90 +557,56 @@ elread(sc, buf, len)
 {
 	register struct ether_header *eh;
 	struct mbuf *m;
-	int off, resid;
-	u_short etype;
 
-	/*
-	 * Deal with trailer protocol: if type is trailer type get true type
-	 * from first 16-bit word past data.  Remember that type was trailer by
-	 * setting off.
-	 */
 	eh = (struct ether_header *)buf;
-	etype = ntohs(eh->ether_type);
-#define eldataaddr(eh, off, type)	((type)(((caddr_t)((eh)+1)+(off))))
-	if (etype >= ETHERTYPE_TRAIL &&
-	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (etype - ETHERTYPE_TRAIL) << 9;
-		if ((off + sizeof(struct trailer_header)) > len)
-			return;
-		eh->ether_type = *eldataaddr(eh, off, u_short *);
-		resid = ntohs(*eldataaddr(eh, off+2, u_short *));
-		if ((off + resid) > len)
-			return;
-		len = off + resid;
-	} else
-		off = 0;
-
+	len -= sizeof(struct ether_header);
 	if (len <= 0)
+		return;
+
+	/* Pull packet off interface. */
+	m = elget(buf, len, &sc->sc_arpcom.ac_if);
+	if (m == 0)
 		return;
 
 #if NBPFILTER > 0
 	/*
-	 * Check if there's a bpf filter listening on this interface.  If so,
-	 * hand off the raw packet to bpf, which must deal with trailers in its
-	 * own way.
-	 *
-	 * Comparing to if_ed, this code does bpf on trailer packets
-	 * incorrectly -- the ether type's already been copied over...
-	 * XXX - cgd
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to bpf.
 	 */
-	if (sc->sc_bpf) {
-		bpf_tap(sc->sc_bpf, buf, len + sizeof(struct ether_header));
+	if (sc->sc_arpcom.ac_if.if_bpf) {
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no bpf listeners.  And if el are in promiscuous
-		 * mode, el have to check if this packet is really ours.
-		 *
-		 * XXX This test does not support multicasts.
+		 * there are no BPF listeners.  And if we are in promiscuous
+		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0 &&
-		    bcmp(eh->ether_dhost, etherbroadcastaddr,
-			    sizeof(eh->ether_dhost)) != 0)
+			    sizeof(eh->ether_dhost)) != 0) {
+			m_freem(m);
 			return;
+		}
 	}
 #endif
-
-	/*
-	 * Pull packet off interface.  Off is nonzero if packet has trailing
-	 * header; neget will then force this header information to be at the
-	 * front, but we still have to drop the type and length which are at
-	 * the front of any trailer data.
-	 */
-	m = elget(buf, len, off, &sc->sc_arpcom.ac_if);
-	if (!m)
-		return;
 
 	ether_input(&sc->sc_arpcom.ac_if, eh, m);
 }
 
 /*
  * Pull read data off a interface.  Len is length of data, with local net
- * header stripped.  Off is non-zero if a trailer protocol was used, and gives
- * the offset of the trailer information.  We copy the trailer information and
- * then all the normal data into mbufs.  When full cluster sized units are
- * present we copy into clusters.
+ * header stripped.  We copy the data into mbufs.  When full cluster sized
+ * units are present we copy into clusters.
  */
 struct mbuf *
-elget(buf, totlen, off0, ifp)
+elget(buf, totlen, ifp)
         caddr_t buf;
-        int totlen, off0;
+        int totlen;
         struct ifnet *ifp;
 {
         struct mbuf *top, **mp, *m, *p;
-        int off = off0, len;
+        int len;
         register caddr_t cp = buf;
         char *epkt;
 
@@ -681,19 +614,15 @@ elget(buf, totlen, off0, ifp)
         cp = buf;
         epkt = cp + totlen;
 
-        if (off) {
-                cp += off + 2 * sizeof(u_short);
-                totlen -= 2 * sizeof(u_short);
-        }
-
         MGETHDR(m, M_DONTWAIT, MT_DATA);
-        if (!m)
+        if (m == 0)
                 return 0;
         m->m_pkthdr.rcvif = ifp;
         m->m_pkthdr.len = totlen;
         m->m_len = MHLEN;
         top = 0;
         mp = &top;
+
         while (totlen > 0) {
                 if (top) {
                         MGET(m, M_DONTWAIT, MT_DATA);
@@ -729,6 +658,7 @@ elget(buf, totlen, off0, ifp)
                 if (cp == epkt)
                         cp = buf;
         }
+
         return top;
 }
 
@@ -736,19 +666,19 @@ elget(buf, totlen, off0, ifp)
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
 static int
-el_ioctl(ifp, command, data)
+el_ioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int command;
+	int cmd;
 	caddr_t data;
 {
 	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
-	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splimp();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -799,14 +729,14 @@ el_ioctl(ifp, command, data)
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING)) {
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			el_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) &&
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then

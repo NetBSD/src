@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.10 1994/05/11 12:09:25 mycroft Exp $
+ *	$Id: if_ie.c,v 1.11 1994/05/13 06:13:55 mycroft Exp $
  */
 
 /*
@@ -245,9 +245,6 @@ struct ie_softc {
 
 #ifdef IEDEBUG
 	int sc_debug;
-#endif
-#if NBPFILTER > 0
-	caddr_t sc_bpf;
 #endif
 };
 
@@ -523,15 +520,9 @@ ieattach(parent, self, aux)
 	struct ie_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iecd.cd_name;
-	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
@@ -541,33 +532,14 @@ ieattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-
-	/*
-	 * Search down the ifa address list looking for the AF_LINK type entry.
-	 */
-	ifa = ifp->if_addrlist;
-	while (ifa && ifa->ifa_addr) {
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			/*
-			 * Fill in the link level address for this interface.
-			 */
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			sdl->sdl_type = IFT_ETHER;
-			sdl->sdl_alen = ETHER_ADDR_LEN;
-			sdl->sdl_slen = 0;
-			bcopy(sc->sc_arpcom.ac_enaddr, LLADDR(sdl),
-			    ETHER_ADDR_LEN);
-			break;
-		} else
-			ifa = ifa->ifa_next;
-	}
+	ether_ifattach(ifp);
 
 	printf(": address %s, type %s R%d\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ie_hardware_names[sc->hard_type], sc->hard_vers + 1);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih.ih_fun = ieintr;
@@ -823,7 +795,7 @@ check_eh(sc, eh, to_bpf)
 		 * Receiving all multicasts, but no unicasts except those destined for us.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_bpf != 0); /* BPF gets this packet if anybody cares */
+		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0); /* BPF gets this packet if anybody cares */
 #endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
@@ -835,7 +807,7 @@ check_eh(sc, eh, to_bpf)
 		 * Receiving all packets.  These need to be passed on to BPF.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_bpf != 0);
+		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
 #endif
 		/* If for us, accept and hand up to BPF */
 		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) return 1;
@@ -872,7 +844,7 @@ check_eh(sc, eh, to_bpf)
 		 * Whew!  (Hope this is a fast machine...)
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_bpf != 0);
+		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
 #endif
 		/* We want to see multicasts. */
 		if (eh->ether_dhost[0] & 1)
@@ -898,7 +870,7 @@ check_eh(sc, eh, to_bpf)
 		 * as quickly as possible.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_bpf != 0);
+		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
 #endif
 		return 1;
 	}
@@ -1139,7 +1111,6 @@ ie_readframe(sc, num)
 	struct ie_recv_frame_desc rfd;
 	struct mbuf *m = 0;
 	struct ether_header eh;
-	u_short etype;
 #if NBPFILTER > 0
 	int bpf_gets_it = 0;
 #endif
@@ -1169,10 +1140,6 @@ ie_readframe(sc, num)
 	if (sc->sc_debug & IED_READFRAME)
 		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
-	etype = ntohs(eh.ether_type);
-	if (etype >= ETHERTYPE_TRAIL &&
-	    etype < ETHERTYPE_TRAIL + ETHERTYPE_NTRAILER)
-		printf("%s: received trailer!\n", sc->sc_dev.dv_xname);
 #endif
 
 	if (!m)
@@ -1199,7 +1166,7 @@ ie_readframe(sc, num)
 		m0.m_next = m;
 	
 		/* Pass it up */
-		bpf_mtap(sc->sc_bpf, &m0);
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, &m0);
 	}
 	/*
 	 * A signal passed up from the filtering code indicating that the
@@ -1297,8 +1264,8 @@ iestart(ifp)
 		 * See if bpf is listening on this interface, let it see the packet
 		 * before we commit it to the wire.
 		 */
-		if (sc->sc_bpf)
-			bpf_tap(sc->sc_bpf, sc->xmit_cbuffs[sc->xmit_count],
+		if (sc->sc_arpcom.ac_if.if_bpf)
+			bpf_tap(sc->sc_arpcom.ac_if.if_bpf, sc->xmit_cbuffs[sc->xmit_count],
 			    len);
 #endif
 		

@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.46 1994/05/11 12:09:17 mycroft Exp $
+ *	$Id: if_ed.c,v 1.47 1994/05/13 06:13:43 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -87,7 +87,6 @@ struct ed_softc {
 	u_char	isa16bit;	/* width of access to card 0=8 or 1=16 */
 	u_char	is790;		/* set by probe if NIC is a 790 */
 
-	caddr_t	bpf;		/* BPF "magic cookie" */
 	caddr_t	mem_start;	/* NIC memory start address */
 	caddr_t	mem_end;	/* NIC memory end address */
 	u_long	mem_size;	/* total NIC memory size */
@@ -129,11 +128,6 @@ static inline caddr_t ed_ring_copy __P((/* struct ed_Softc *, caddr_t, caddr_t,
 void ed_pio_readmem __P((/* struct ed_softc *, u_short, caddr_t, u_short */));
 void ed_pio_writemem __P((/* struct ed_softc *, caddr_t, u_short, u_short */));
 u_short ed_pio_write_mbufs __P((/* struct ed_softc *, struct mbuf *, u_short */));
-
-struct trailer_header {
-	u_short ether_type;
-	u_short ether_residual;
-};
 
 struct cfdriver edcd = {
 	NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_softc)
@@ -1005,8 +999,6 @@ edattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
  
 	/* Set interface to stopped condition (reset). */
 	ed_stop(sc);
@@ -1014,10 +1006,6 @@ edattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = edcd.cd_name;
-	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
@@ -1044,27 +1032,7 @@ edattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-
-	/*
-	 * Search down the ifa address list looking for the AF_LINK type entry
-	 * and initialize it.
-	 */
- 	ifa = ifp->if_addrlist;
-	while (ifa && ifa->ifa_addr) {
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			/*
-			 * Fill in the link-level address for this interface.
-			 */
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			sdl->sdl_type = IFT_ETHER;
-			sdl->sdl_alen = ETHER_ADDR_LEN;
-			sdl->sdl_slen = 0;
-			bcopy(sc->sc_arpcom.ac_enaddr, LLADDR(sdl),
-			    ETHER_ADDR_LEN);
-			break;
-		} else
-			ifa = ifa->ifa_next;
-	}
+	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
@@ -1091,7 +1059,7 @@ edattach(parent, self, aux)
 	printf("\n");
 
 #if NBPFILTER > 0
-	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih.ih_fun = edintr;
@@ -1471,67 +1439,9 @@ outloop:
 		ed_xmit(sc);
 
 #if NBPFILTER > 0
-	/*
-	 * If there is BPF support in the configuration, tap off here.
-	 * The following has support for converting trailer packets back to
-	 * normal.
-	 * XXX - Support for trailer packets in BPF should be moved into the
-	 * bpf code proper to avoid code duplication in all of the drivers.
-	 */
-	if (sc->bpf) {
-		u_short etype;
-		int off, datasize, resid;
-		struct ether_header *eh;
-		struct trailer_header trailer_header;
-		u_char ether_packet[ETHER_MAX_LEN], *ep;
-
-		ep = ether_packet;
-
-		/*
-		 * We handle trailers below:
-		 * Copy ether header first, then residual data, then data.  Put
-		 * all this in a temporary buffer 'ether_packet' and send off
-		 * to bpf.  Since the system has generated this packet, we
-		 * assume that all of the offsets in the packet are correct; if
-		 * they're not, the system will almost certainly crash in
-		 * m_copydata.  We make no assumptions about how the data is
-		 * arranged in the mbuf chain (i.e. how much data is in each
-		 * mbuf, if mbuf clusters are used, etc.), which is why we use
-		 * m_copydata to get the ether header rather than assume that
-		 * this is located in the first mbuf.
-		 */
-		/* copy ether header */
-		m_copydata(m0, 0, sizeof(struct ether_header), ep);
-		eh = (struct ether_header *) ep;
-		ep += sizeof(struct ether_header);
-		etype = ntohs(eh->ether_type);
-		if (etype >= ETHERTYPE_TRAIL &&
-		    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-			datasize = (etype - ETHERTYPE_TRAIL) << 9;
-			off = datasize + sizeof(struct ether_header);
-
-			/* copy trailer_header into a data structure */
-			m_copydata(m0, off, sizeof(struct trailer_header),
-			    &trailer_header.ether_type);
-
-			/* copy residual data */
-			m_copydata(m0, off+sizeof(struct trailer_header),
-			    resid = ntohs(trailer_header.ether_residual) -
-			    sizeof(struct trailer_header), ep);
-			ep += resid;
-
-			/* copy data */
-			m_copydata(m0, sizeof(struct ether_header), datasize,
-			    ep);
-			ep += datasize;
-
-			/* restore original ether packet type */
-			eh->ether_type = trailer_header.ether_type;
-
-			bpf_tap(sc->bpf, ether_packet, ep - ether_packet);
-		} else
-			bpf_mtap(sc->bpf, m0);
-	}
+	/* If there is BPF support in the configuration, tap off here. */
+	if (sc->sc_arpcom.ac_if.if_bpf)
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
 #endif
 
 	m_freem(m0);
@@ -1952,10 +1862,6 @@ ed_get_packet(sc, buf, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m, *head = 0, *ed_ring_to_mbuf();
-	u_short off;
-	int resid;
-	u_short etype;
-	struct trailer_header trailer_header;
 
 	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1986,68 +1892,18 @@ ed_get_packet(sc, buf, len)
 	head->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
 
-	etype = ntohs(eh->ether_type);
-
-	/*
-	 * Deal with trailer protocol:
-	 * If trailer protocol, calculate the datasize as 'off', which is also
-	 * the offset to the trailer header.  Set resid to the amount of packet
-	 * data following the trailer header.  Finally, copy residual data into
-	 * mbuf chain.
-	 */
-	if (etype >= ETHERTYPE_TRAIL &&
-	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (etype - ETHERTYPE_TRAIL) << 9;
-		if ((off + sizeof(struct trailer_header)) > len)
-			goto bad;	/* insanity */
-
-		/*
-		 * If we have shared memory, we can get info directly from the
-		 * stored packet, otherwise we must get a local copy of the
-		 * trailer header using PIO.
-		 */
-		if (sc->mem_shared) {
-			eh->ether_type = *ringoffset(sc, buf, off, u_short *);
-			resid = ntohs(*ringoffset(sc, buf, off+2, u_short *));
-		} else {
-			struct trailer_header trailer_header;
-			ed_pio_readmem(sc,
-			    (u_short)ringoffset(sc, buf, off, caddr_t),
-			    (caddr_t) &trailer_header, sizeof(trailer_header));
-			eh->ether_type = trailer_header.ether_type;
-			resid = trailer_header.ether_residual;
-		}
-
-		if ((off + resid) > len)
-			goto bad;	/* insanity */
-
-		resid -= sizeof(struct trailer_header);
-		if (resid < 0)
-			goto bad;	/* insanity */
-
-		m = ed_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, caddr_t),
-		    head, resid);
-		if (m == 0)
-			goto bad;
-
-		len = off;
-		head->m_pkthdr.len -= 4; /* subtract trailer header */
-	}
-
-	/*
-	 * Pull packet off interface.  Or if this was a trailer packet, the
-	 * data portion is appended.
-	 */
+	/* Pull packet off interface. */
 	m = ed_ring_to_mbuf(sc, buf, m, len);
-	if (m == 0) goto bad;
+	if (m == 0)
+		goto bad;
 
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf. 
 	 */
-	if (sc->bpf) {
-		bpf_mtap(sc->bpf, head);
+	if (sc->sc_arpcom.ac_if.if_bpf) {
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, head);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
