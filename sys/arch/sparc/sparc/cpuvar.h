@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.51 2003/01/08 17:22:09 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.52 2003/01/09 05:55:31 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,20 +90,7 @@ struct module_info {
 struct xpmsg {
 	struct simplelock	lock;
 	__volatile int tag;
-#define	XPMSG_SAVEFPU			1
-#define	XPMSG_PAUSECPU			2
-#define	XPMSG_RESUMECPU			3
 #define	XPMSG_FUNC			4
-#define	XPMSG_DEMAP_TLB_PAGE		10
-#define	XPMSG_DEMAP_TLB_SEGMENT		11
-#define	XPMSG_DEMAP_TLB_REGION		12
-#define	XPMSG_DEMAP_TLB_CONTEXT		13
-#define	XPMSG_DEMAP_TLB_ALL		14
-#define	XPMSG_VCACHE_FLUSH_PAGE		20
-#define	XPMSG_VCACHE_FLUSH_SEGMENT	21
-#define	XPMSG_VCACHE_FLUSH_REGION	22
-#define	XPMSG_VCACHE_FLUSH_CONTEXT	23
-#define	XPMSG_VCACHE_FLUSH_RANGE	24
 
 	__volatile union {
 		struct xpmsg_func {
@@ -114,39 +101,17 @@ struct xpmsg {
 			int	arg3;
 			int	retval;
 		} xpmsg_func;
-		struct xpmsg_flush_page {
-			int	ctx;
-			int	va;
-		} xpmsg_flush_page;
-		struct  xpmsg_flush_segment {
-			int	ctx;
-			int	vr;
-			int	vs;
-		} xpmsg_flush_segment;
-		struct  xpmsg_flush_region {
-			int	ctx;
-			int	vr;
-		} xpmsg_flush_region;
-		struct  xpmsg_flush_context {
-			int	ctx;
-		} xpmsg_flush_context;
-		struct  xpmsg_flush_range {
-			int	ctx;
-			caddr_t	va;
-			int	size;
-		} xpmsg_flush_range;
 	} u;
 };
 
 struct xpmsg_lev15 {
 	__volatile int tag;
-#define	XPMSG11_PAUSECPU		1
+#define	XPMSG15_PAUSECPU		1
 };
 
 /*
  * This must be locked around all message transactions to ensure only
  * one CPU is generating them.
- * XXX deal with different level priority IPI's.
  */
 extern struct simplelock xpmsg_lock;
 
@@ -427,7 +392,7 @@ struct cpu_info {
 					   uncached access */
 #define CPUFLG_HATCHED		0x1000	/* CPU is alive */
 #define CPUFLG_PAUSED		0x2000	/* CPU is paused */
-#define CPUFLG_GOTMSG		0x4000	/* CPU got an IPI */
+#define CPUFLG_GOTMSG		0x4000	/* CPU got an lev13 IPI */
 #define CPUFLG_READY		0x8000	/* CPU available for IPI */
 
 
