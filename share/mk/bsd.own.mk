@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.353 2003/08/27 16:03:17 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.354 2003/08/28 12:28:34 tron Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -60,7 +60,7 @@ HAVE_GCC3?=	no
 .if ${HAVE_GCC3} == "yes"
 USE_TOOLS_TOOLCHAIN=no
 .endif
-USE_TOOLS_TOOLCHAIN?=no
+USE_TOOLS_TOOLCHAIN?=yes
 
 #
 # XXX TEMPORARY: If ns32k and not using an external toolchain, then we have
