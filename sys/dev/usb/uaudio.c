@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.62 2002/12/02 02:36:14 toshii Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.63 2003/02/16 18:16:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.62 2002/12/02 02:36:14 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.63 2003/02/16 18:16:07 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ struct uaudio_softc {
 #define UAC_OUTPUT 0
 #define UAC_INPUT  1
 #define UAC_EQUAL  2
+#define UAC_NCLASSES 3
 
 Static usbd_status	uaudio_identify_ac(struct uaudio_softc *sc,
 					   usb_config_descriptor_t *cdesc);
@@ -201,6 +202,8 @@ Static usbd_status	uaudio_process_as(struct uaudio_softc *sc,
 
 Static void		uaudio_add_alt(struct uaudio_softc *sc,
 				       struct as_info *ai);
+Static void		uaudio_mixer_alias_ctl(struct uaudio_softc *sc,
+			     struct mixerctl *mp, const char *ctl);
 
 Static usb_interface_descriptor_t *uaudio_find_iface(char *buf,
 			    int size, int *offsp, int subtype);
@@ -614,6 +617,15 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 #endif
 }
 
+void
+uaudio_mixer_alias_ctl(struct uaudio_softc *sc, struct mixerctl *mc,
+		     const char *name)
+{
+	/* XXX mark as alias? */
+	strcpy(mc->ctlname, name);
+	uaudio_mixer_add_ctl(sc, mc);
+}
+
 char *
 uaudio_id_name(struct uaudio_softc *sc, usb_descriptor_t **dps, int id)
 {
@@ -847,42 +859,46 @@ uaudio_add_feature(struct uaudio_softc *sc, usb_descriptor_t *v,
 			continue;
 		}
 #undef GET
-		mix.class = -1;	/* XXX */
+		mix.class = UAC_OUTPUT;	/* XXX we don't really know this */
 		switch (ctl) {
 		case MUTE_CONTROL:
 			mix.type = MIX_ON_OFF;
+			mix.ctlunit = "";
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNmute);
 			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmute);
-			mix.ctlunit = "";
 			break;
 		case VOLUME_CONTROL:
 			mix.type = MIX_SIGNED_16;
+			mix.ctlunit = AudioNvolume;
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNmaster);
 			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmaster);
-			mix.ctlunit = AudioNvolume;
 			break;
 		case BASS_CONTROL:
 			mix.type = MIX_SIGNED_8;
+			mix.ctlunit = AudioNbass;
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNbass);
 			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNbass);
-			mix.ctlunit = AudioNbass;
 			break;
 		case MID_CONTROL:
 			mix.type = MIX_SIGNED_8;
+			mix.ctlunit = AudioNmid;
 			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmid);
-			mix.ctlunit = AudioNmid;
 			break;
 		case TREBLE_CONTROL:
 			mix.type = MIX_SIGNED_8;
+			mix.ctlunit = AudioNtreble;
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNtreble);
 			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNtreble);
-			mix.ctlunit = AudioNtreble;
 			break;
 		case GRAPHIC_EQUALIZER_CONTROL:
 			continue; /* XXX don't add anything */
@@ -1376,30 +1392,33 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 	n = mi->index;
 	nctls = sc->sc_nctls;
 
-	if (n < 0 || n >= nctls) {
-		switch (n - nctls) {
-		case UAC_OUTPUT:
-			mi->type = AUDIO_MIXER_CLASS;
-			mi->mixer_class = nctls + UAC_OUTPUT;
-			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strcpy(mi->label.name, AudioCoutputs);
-			return (0);
-		case UAC_INPUT:
-			mi->type = AUDIO_MIXER_CLASS;
-			mi->mixer_class = nctls + UAC_INPUT;
-			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strcpy(mi->label.name, AudioCinputs);
-			return (0);
-		case UAC_EQUAL:
-			mi->type = AUDIO_MIXER_CLASS;
-			mi->mixer_class = nctls + UAC_EQUAL;
-			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strcpy(mi->label.name, AudioCequalization);
-			return (0);
-		default:
-			return (ENXIO);
-		}
+	switch (n) {
+	case UAC_OUTPUT:
+		mi->type = AUDIO_MIXER_CLASS;
+		mi->mixer_class = UAC_OUTPUT;
+		mi->next = mi->prev = AUDIO_MIXER_LAST;
+		strcpy(mi->label.name, AudioCoutputs);
+		return (0);
+	case UAC_INPUT:
+		mi->type = AUDIO_MIXER_CLASS;
+		mi->mixer_class = UAC_INPUT;
+		mi->next = mi->prev = AUDIO_MIXER_LAST;
+		strcpy(mi->label.name, AudioCinputs);
+		return (0);
+	case UAC_EQUAL:
+		mi->type = AUDIO_MIXER_CLASS;
+		mi->mixer_class = UAC_EQUAL;
+		mi->next = mi->prev = AUDIO_MIXER_LAST;
+		strcpy(mi->label.name, AudioCequalization);
+		return (0);
+	default:
+		break;
 	}
+
+	n -= UAC_NCLASSES;
+	if (n < 0 || n >= nctls)
+		return (ENXIO);
+
 	mc = &sc->sc_ctls[n];
 	strncpy(mi->label.name, mc->ctlname, MAX_AUDIO_DEV_LEN);
 	mi->mixer_class = mc->class;
@@ -1710,7 +1729,7 @@ uaudio_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 	if (sc->sc_dying)
 		return (EIO);
 
-	n = cp->dev;
+	n = cp->dev - UAC_NCLASSES;
 	if (n < 0 || n >= sc->sc_nctls)
 		return (ENXIO);
 	mc = &sc->sc_ctls[n];
@@ -1750,7 +1769,7 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	if (sc->sc_dying)
 		return (EIO);
 
-	n = cp->dev;
+	n = cp->dev - UAC_NCLASSES;
 	if (n < 0 || n >= sc->sc_nctls)
 		return (ENXIO);
 	mc = &sc->sc_ctls[n];
