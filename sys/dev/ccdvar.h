@@ -1,7 +1,7 @@
-/*	$NetBSD: ccdvar.h,v 1.13 1997/10/09 08:11:09 jtc Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.14 1998/07/31 01:23:57 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,6 +78,7 @@
  *	@(#)cdvar.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/pool.h>
 #include <sys/queue.h>
 
 /*
@@ -193,13 +194,7 @@ struct ccd_softc {
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
-	LIST_HEAD(, ccdbuf) sc_freelist;	/* component buffer freelist */
-	int		sc_freecount;		/* number of entries */
-	int		sc_hiwat;		/* freelist high water mark */
-
-	/* Statistics */
-	u_long		sc_nmisses;		/* number of freelist misses */
-	u_long		sc_ngetbuf;		/* number of ccdbuf allocs */
+	struct pool	 sc_cbufpool;		/* component buffer pool */
 };
 
 /* sc_flags */
