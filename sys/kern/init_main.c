@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.198 2002/02/11 18:11:43 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199 2002/03/04 02:30:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.198 2002/02/11 18:11:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199 2002/03/04 02:30:27 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.198 2002/02/11 18:11:43 jdolecek Exp
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -167,7 +168,6 @@ main(void)
 	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
-	extern void disk_init(void);
 #if defined(NFSSERVER) || defined(NFS)
 	extern void nfs_init(void);
 #endif
