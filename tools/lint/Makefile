@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/14 11:02:00 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/24 02:32:56 thorpej Exp $
 
-HOSTPROGNAME=	lint
+XLINT_TARGET_PREFIX=${MACHINE_GNU_PLATFORM}-
+
+HOSTPROGNAME=	${XLINT_TARGET_PREFIX}lint
 HOST_SRCDIR=	usr.bin/xlint/xlint
 HOST_CPPFLAGS=	-DPATH_LIBEXEC=\"${TOOLDIR}/libexec\"
 
