@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.2 1999/05/04 02:12:15 cgd Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.3 1999/05/05 01:51:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -83,46 +83,6 @@
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_cvt.h>
-
-/*
- * Return status information about a file descriptor.
- */
-int
-osf1_sys_fstat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_fstat_args *uap = v;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct stat ub;
-	struct osf1_stat oub;
-	int error;
-
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return (EBADF);
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
-		break;
-
-	default:
-		panic("ofstat");
-		/*NOTREACHED*/
-	}
-	osf1_cvt_stat_from_native(&ub, &oub);
-	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
-		    sizeof (oub));
-	return (error);
-}
 
 int
 osf1_sys_fcntl(p, v, retval)
@@ -215,20 +175,64 @@ osf1_sys_fcntl(p, v, retval)
 }
 
 int
-osf1_sys_lseek(p, v, retval)
+osf1_sys_fpathconf(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_lseek_args *uap = v;
-	struct sys_lseek_args a;
+	struct osf1_sys_fpathconf_args *uap = v;
+	struct sys_fpathconf_args a;
+	int error;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
-	SCARG(&a, offset) = SCARG(uap, offset);
-	SCARG(&a, whence) = SCARG(uap, whence);
 
-	return sys_lseek(p, &a, retval);
+	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
+	    &SCARG(&a, name));
+
+	if (error == 0)
+		error = sys_fpathconf(p, &a, retval);
+
+	return (error);
+}
+
+/*
+ * Return status information about a file descriptor.
+ */
+int
+osf1_sys_fstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_fstat_args *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct stat ub;
+	struct osf1_stat oub;
+	int error;
+
+	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return (EBADF);
+	switch (fp->f_type) {
+
+	case DTYPE_VNODE:
+		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		break;
+
+	case DTYPE_SOCKET:
+		error = soo_stat((struct socket *)fp->f_data, &ub);
+		break;
+
+	default:
+		panic("ofstat");
+		/*NOTREACHED*/
+	}
+	osf1_cvt_stat_from_native(&ub, &oub);
+	if (error == 0)
+		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		    sizeof (oub));
+	return (error);
 }
 
 int
@@ -248,22 +252,18 @@ osf1_sys_ftruncate(p, v, retval)
 }
 
 int
-osf1_sys_fpathconf(p, v, retval)
+osf1_sys_lseek(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_fpathconf_args *uap = v;
-	struct sys_fpathconf_args a;
-	int error;
+	struct osf1_sys_lseek_args *uap = v;
+	struct sys_lseek_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
+	SCARG(&a, pad) = 0;
+	SCARG(&a, offset) = SCARG(uap, offset);
+	SCARG(&a, whence) = SCARG(uap, whence);
 
-	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
-	    &SCARG(&a, name));
-
-	if (error == 0)
-		error = sys_fpathconf(p, &a, retval);
-
-	return (error);
+	return sys_lseek(p, &a, retval);
 }

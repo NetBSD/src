@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.1 1999/05/01 05:06:46 cgd Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.2 1999/05/05 01:51:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -122,50 +122,6 @@ punt:
 }
 
 int
-osf1_sys_writev(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_writev_args *uap = v;
-	struct sys_writev_args a;
-	struct osf1_iovec *oio;
-	struct iovec *nio;
-	caddr_t sg = stackgap_init(p->p_emul);
-	int error, osize, nsize, i;
-
-	if (SCARG(uap, iovcnt) > (STACKGAPLEN / sizeof (struct iovec)))
-		return (EINVAL);
-
-	osize = SCARG(uap, iovcnt) * sizeof (struct osf1_iovec);
-	nsize = SCARG(uap, iovcnt) * sizeof (struct iovec);
-
-	oio = malloc(osize, M_TEMP, M_WAITOK);
-	nio = malloc(nsize, M_TEMP, M_WAITOK);
-
-	error = 0;
-	if ((error = copyin(SCARG(uap, iovp), oio, osize)))
-		goto punt;
-	for (i = 0; i < SCARG(uap, iovcnt); i++) {
-		nio[i].iov_base = oio[i].iov_base;
-		nio[i].iov_len = oio[i].iov_len;
-	}
-
-	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, iovp) = stackgap_alloc(&sg, nsize);
-	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
-
-	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
-		goto punt;
-	error = sys_writev(p, &a, retval);
-
-punt:
-	free(oio, M_TEMP);
-	free(nio, M_TEMP);
-	return (error);
-}
-
-int
 osf1_sys_select(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -208,5 +164,49 @@ osf1_sys_select(p, v, retval)
 	if (error == 0)
 		error = sys_select(p, &a, retval);
 
+	return (error);
+}
+
+int
+osf1_sys_writev(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_writev_args *uap = v;
+	struct sys_writev_args a;
+	struct osf1_iovec *oio;
+	struct iovec *nio;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int error, osize, nsize, i;
+
+	if (SCARG(uap, iovcnt) > (STACKGAPLEN / sizeof (struct iovec)))
+		return (EINVAL);
+
+	osize = SCARG(uap, iovcnt) * sizeof (struct osf1_iovec);
+	nsize = SCARG(uap, iovcnt) * sizeof (struct iovec);
+
+	oio = malloc(osize, M_TEMP, M_WAITOK);
+	nio = malloc(nsize, M_TEMP, M_WAITOK);
+
+	error = 0;
+	if ((error = copyin(SCARG(uap, iovp), oio, osize)))
+		goto punt;
+	for (i = 0; i < SCARG(uap, iovcnt); i++) {
+		nio[i].iov_base = oio[i].iov_base;
+		nio[i].iov_len = oio[i].iov_len;
+	}
+
+	SCARG(&a, fd) = SCARG(uap, fd);
+	SCARG(&a, iovp) = stackgap_alloc(&sg, nsize);
+	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
+
+	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
+		goto punt;
+	error = sys_writev(p, &a, retval);
+
+punt:
+	free(oio, M_TEMP);
+	free(nio, M_TEMP);
 	return (error);
 }

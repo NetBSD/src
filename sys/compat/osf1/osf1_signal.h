@@ -1,4 +1,6 @@
-/*	$NetBSD: osf1_signal.h,v 1.5 1999/05/01 02:57:11 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.h,v 1.6 1999/05/05 01:51:36 cgd Exp $	*/
+
+/* XXX OUT OF DATE, some of the non-signal number bits here don't belong */
 
 #ifndef _OSF1_SIGNAL_H
 #define _OSF1_SIGNAL_H

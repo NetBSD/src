@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.4 1999/05/04 02:45:35 cgd Exp $ */
+/* $NetBSD: osf1_file.c,v 1.5 1999/05/05 01:51:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -86,77 +86,48 @@
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_open(p, v, retval)
+osf1_sys_access(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_open_args *uap = v;
-	struct sys_open_args a;
-	const char *path;
-	caddr_t sg;
+	struct osf1_sys_access_args *uap = v;
+	struct sys_access_args a;
 	unsigned long leftovers;
-#ifdef SYSCALL_DEBUG
-	char pnbuf[1024];
-
-	if (scdebug &&
-	    copyinstr(SCARG(uap, path), pnbuf, sizeof pnbuf, NULL) == 0)
-		printf("osf1_open: open: %s\n", pnbuf);
-#endif
-
-	sg = stackgap_init(p->p_emul);
-
-	/* translate flags */
-	SCARG(&a, flags) = emul_flags_translate(osf1_open_flags_xtab,
-	    SCARG(uap, flags), &leftovers);
-	if (leftovers != 0)
-		return (EINVAL);
-
-	/* copy mode, no translation necessary */
-	SCARG(&a, mode) = SCARG(uap, mode);
-
-	/* pick appropriate path */
-	path = SCARG(uap, path);
-	if (SCARG(&a, flags) & O_CREAT)
-		OSF1_CHECK_ALT_CREAT(p, &sg, path);
-	else
-		OSF1_CHECK_ALT_EXIST(p, &sg, path);
-	SCARG(&a, path) = path;
-
-	return sys_open(p, &a, retval);
-}
-
-/*
- * Get file status; this version follows links.
- */
-/* ARGSUSED */
-int
-osf1_sys_stat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_stat_args *uap = v;
-	struct stat sb;
-	struct osf1_stat osb;
-	int error;
-	struct nameidata nd;
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
 	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
-	if ((error = namei(&nd)))
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
-	vput(nd.ni_vp);
-	if (error)
-		return (error);
-	osf1_cvt_stat_from_native(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
-	return (error);
+	SCARG(&a, path) = SCARG(uap, path);
+
+	/* translate flags */
+	SCARG(&a, flags) = emul_flags_translate(osf1_access_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
+
+	return sys_access(p, &a, retval);
+}
+
+int
+osf1_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_execve_args *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }
 
 /*
@@ -213,6 +184,105 @@ osf1_sys_mknod(p, v, retval)
 }
 
 int
+osf1_sys_open(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_open_args *uap = v;
+	struct sys_open_args a;
+	const char *path;
+	caddr_t sg;
+	unsigned long leftovers;
+#ifdef SYSCALL_DEBUG
+	char pnbuf[1024];
+
+	if (scdebug &&
+	    copyinstr(SCARG(uap, path), pnbuf, sizeof pnbuf, NULL) == 0)
+		printf("osf1_open: open: %s\n", pnbuf);
+#endif
+
+	sg = stackgap_init(p->p_emul);
+
+	/* translate flags */
+	SCARG(&a, flags) = emul_flags_translate(osf1_open_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
+
+	/* copy mode, no translation necessary */
+	SCARG(&a, mode) = SCARG(uap, mode);
+
+	/* pick appropriate path */
+	path = SCARG(uap, path);
+	if (SCARG(&a, flags) & O_CREAT)
+		OSF1_CHECK_ALT_CREAT(p, &sg, path);
+	else
+		OSF1_CHECK_ALT_EXIST(p, &sg, path);
+	SCARG(&a, path) = path;
+
+	return sys_open(p, &a, retval);
+}
+
+int
+osf1_sys_pathconf(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_pathconf_args *uap = v;
+	struct sys_pathconf_args a;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SCARG(&a, path) = SCARG(uap, path);
+
+	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
+	    &SCARG(&a, name));
+
+	if (error == 0)
+		error = sys_pathconf(p, &a, retval);
+
+	return (error);
+}
+
+/*
+ * Get file status; this version follows links.
+ */
+/* ARGSUSED */
+int
+osf1_sys_stat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_stat_args *uap = v;
+	struct stat sb;
+	struct osf1_stat osb;
+	int error;
+	struct nameidata nd;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), p);
+	if ((error = namei(&nd)))
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	osf1_cvt_stat_from_native(&sb, &osb);
+	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	return (error);
+}
+
+int
 osf1_sys_truncate(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -230,51 +300,6 @@ osf1_sys_truncate(p, v, retval)
 	SCARG(&a, length) = SCARG(uap, length);
 
 	return sys_truncate(p, &a, retval);
-}
-
-int
-osf1_sys_execve(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_execve_args *uap = v;
-	struct sys_execve_args ap;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
-	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = SCARG(uap, envp);
-
-	return sys_execve(p, &ap, retval);
-}
-
-int
-osf1_sys_access(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_access_args *uap = v;
-	struct sys_access_args a;
-	unsigned long leftovers;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
-	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	SCARG(&a, path) = SCARG(uap, path);
-
-	/* translate flags */
-	SCARG(&a, flags) = emul_flags_translate(osf1_access_flags_xtab,
-	    SCARG(uap, flags), &leftovers);
-	if (leftovers != 0)
-		return (EINVAL);
-
-	return sys_access(p, &a, retval);
 }
 
 int
@@ -318,31 +343,6 @@ osf1_sys_utimes(p, v, retval)
 
 	if (error == 0)
 		error = sys_utimes(p, &a, retval);
-
-	return (error);
-}
-
-int
-osf1_sys_pathconf(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_pathconf_args *uap = v;
-	struct sys_pathconf_args a;
-	caddr_t sg;
-	int error;
-
-	sg = stackgap_init(p->p_emul);
-
-	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	SCARG(&a, path) = SCARG(uap, path);
-
-	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
-	    &SCARG(&a, name));
-
-	if (error == 0)
-		error = sys_pathconf(p, &a, retval);
 
 	return (error);
 }

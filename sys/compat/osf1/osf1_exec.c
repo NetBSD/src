@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.8 1999/05/01 02:57:10 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.9 1999/05/05 01:51:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -145,6 +145,80 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 	return (error);
 }
 
+/*
+ * copy arguments onto the stack in the normal way, then copy out
+ * any ELF-like AUX entries used by the dynamic loading scheme.
+ */
+static void *
+osf1_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	struct proc *p = curproc;			/* XXX !!! */
+	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
+	struct osf1_auxv ai[MAX_AUX_ENTRIES], *a;
+	char *prognameloc, *loadernameloc;
+	size_t len;
+
+	stack = copyargs(pack, arginfo, stack, argp);
+	if (!stack)
+		goto bad;
+
+	a = ai;
+	memset(ai, 0, sizeof ai);
+
+	prognameloc = (char *)stack + sizeof ai;
+	if (copyoutstr(emul_arg->exec_name, prognameloc, MAXPATHLEN + 1, NULL))
+	    goto bad;
+	a->a_type = OSF1_AT_EXEC_FILENAME;
+	a->a_un.a_ptr = prognameloc;
+	a++;
+
+	/*
+	 * if there's a loader, push additional auxv entries on the stack.
+	 */
+	if (emul_arg->flags & OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER) {
+
+		loadernameloc = prognameloc + MAXPATHLEN + 1;
+		if (copyoutstr(emul_arg->loader_name, loadernameloc,
+		    MAXPATHLEN + 1, NULL))
+			goto bad;
+		a->a_type = OSF1_AT_EXEC_LOADER_FILENAME;
+		a->a_un.a_ptr = loadernameloc;
+		a++;
+
+		a->a_type = OSF1_AT_EXEC_LOADER_FLAGS;
+		a->a_un.a_val = 0;
+                if (pack->ep_vap->va_mode & S_ISUID)
+                        a->a_un.a_val |= OSF1_LDR_EXEC_SETUID_F;
+                if (pack->ep_vap->va_mode & S_ISGID)
+                        a->a_un.a_val |= OSF1_LDR_EXEC_SETGID_F;
+	        if (p->p_flag & P_TRACED)
+                        a->a_un.a_val |= OSF1_LDR_EXEC_PTRACE_F;
+		a++;
+	}
+
+	a->a_type = OSF1_AT_NULL;
+	a->a_un.a_val = 0;
+	a++;
+
+	len = (a - ai) * sizeof(struct osf1_auxv);
+	if (copyout(ai, stack, len))
+		goto bad;
+	stack = (caddr_t)stack + len;
+
+out:
+	free(pack->ep_emul_arg, M_TEMP);
+	pack->ep_emul_arg = NULL;
+	return stack;
+
+bad:
+	stack = NULL;
+	goto out;
+}
+
 static int
 osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 {
@@ -268,78 +342,4 @@ badunlock:
 bad:
 	vrele(ldr_vp);
 	return (error);
-}
-
-/*
- * copy arguments onto the stack in the normal way, then copy out
- * any ELF-like AUX entries used by the dynamic loading scheme.
- */
-static void *
-osf1_copyargs(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
-{
-	struct proc *p = curproc;			/* XXX !!! */
-	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
-	struct osf1_auxv ai[MAX_AUX_ENTRIES], *a;
-	char *prognameloc, *loadernameloc;
-	size_t len;
-
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		goto bad;
-
-	a = ai;
-	memset(ai, 0, sizeof ai);
-
-	prognameloc = (char *)stack + sizeof ai;
-	if (copyoutstr(emul_arg->exec_name, prognameloc, MAXPATHLEN + 1, NULL))
-	    goto bad;
-	a->a_type = OSF1_AT_EXEC_FILENAME;
-	a->a_un.a_ptr = prognameloc;
-	a++;
-
-	/*
-	 * if there's a loader, push additional auxv entries on the stack.
-	 */
-	if (emul_arg->flags & OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER) {
-
-		loadernameloc = prognameloc + MAXPATHLEN + 1;
-		if (copyoutstr(emul_arg->loader_name, loadernameloc,
-		    MAXPATHLEN + 1, NULL))
-			goto bad;
-		a->a_type = OSF1_AT_EXEC_LOADER_FILENAME;
-		a->a_un.a_ptr = loadernameloc;
-		a++;
-
-		a->a_type = OSF1_AT_EXEC_LOADER_FLAGS;
-		a->a_un.a_val = 0;
-                if (pack->ep_vap->va_mode & S_ISUID)
-                        a->a_un.a_val |= OSF1_LDR_EXEC_SETUID_F;
-                if (pack->ep_vap->va_mode & S_ISGID)
-                        a->a_un.a_val |= OSF1_LDR_EXEC_SETGID_F;
-	        if (p->p_flag & P_TRACED)
-                        a->a_un.a_val |= OSF1_LDR_EXEC_PTRACE_F;
-		a++;
-	}
-
-	a->a_type = OSF1_AT_NULL;
-	a->a_un.a_val = 0;
-	a++;
-
-	len = (a - ai) * sizeof(struct osf1_auxv);
-	if (copyout(ai, stack, len))
-		goto bad;
-	stack = (caddr_t)stack + len;
-
-out:
-	free(pack->ep_emul_arg, M_TEMP);
-	pack->ep_emul_arg = NULL;
-	return stack;
-
-bad:
-	stack = NULL;
-	goto out;
 }

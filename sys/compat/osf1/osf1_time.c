@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.1 1999/05/01 05:25:37 cgd Exp $ */
+/* $NetBSD: osf1_time.c,v 1.2 1999/05/05 01:51:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -97,68 +97,6 @@ osf1_sys_gettimeofday(p, v, retval)
 }
 
 int
-osf1_sys_settimeofday(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_settimeofday_args *uap = v;
-	struct sys_settimeofday_args a;
-	struct osf1_timeval otv;
-	struct osf1_timezone otz;
-	struct timeval tv;
-	struct timezone tz;
-	int error;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
-	if (SCARG(uap, tv) == NULL)
-		SCARG(&a, tv) = NULL;
-	else {
-		SCARG(&a, tv) = stackgap_alloc(&sg, sizeof tv);
-
-		/* get the OSF/1 timeval argument */
-		error = copyin((caddr_t)SCARG(uap, tv),
-		    (caddr_t)&otv, sizeof otv);
-		if (error == 0) {
-
-			/* fill in and copy out the NetBSD timeval */
-			memset(&tv, 0, sizeof tv);
-			tv.tv_sec = otv.tv_sec;
-			tv.tv_usec = otv.tv_usec;
-
-			error = copyout((caddr_t)&tv,
-			    (caddr_t)SCARG(&a, tv), sizeof tv);
-		}
-	}
-
-	if (SCARG(uap, tzp) == NULL)
-		SCARG(&a, tzp) = NULL;
-	else {
-		SCARG(&a, tzp) = stackgap_alloc(&sg, sizeof tz);
-
-		/* get the OSF/1 timeval argument */
-		error = copyin((caddr_t)SCARG(uap, tzp),
-		    (caddr_t)&otz, sizeof otz);
-		if (error == 0) {
-
-			/* fill in and copy out the NetBSD timezone */
-			memset(&tz, 0, sizeof tz);
-			tz.tz_minuteswest = otz.tz_minuteswest;
-			tz.tz_dsttime = otz.tz_dsttime;
-
-			error = copyout((caddr_t)&tz,
-			    (caddr_t)SCARG(&a, tzp), sizeof tz);
-		}
-	}
-
-	if (error == 0)
-		error = sys_settimeofday(p, &a, retval);
-
-	return (error);
-}
-
-int
 osf1_sys_setitimer(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -233,6 +171,68 @@ osf1_sys_setitimer(p, v, retval)
 			    (caddr_t)SCARG(uap, oitv), sizeof o_oitv);
 		}
 	}
+
+	return (error);
+}
+
+int
+osf1_sys_settimeofday(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_settimeofday_args *uap = v;
+	struct sys_settimeofday_args a;
+	struct osf1_timeval otv;
+	struct osf1_timezone otz;
+	struct timeval tv;
+	struct timezone tz;
+	int error;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	if (SCARG(uap, tv) == NULL)
+		SCARG(&a, tv) = NULL;
+	else {
+		SCARG(&a, tv) = stackgap_alloc(&sg, sizeof tv);
+
+		/* get the OSF/1 timeval argument */
+		error = copyin((caddr_t)SCARG(uap, tv),
+		    (caddr_t)&otv, sizeof otv);
+		if (error == 0) {
+
+			/* fill in and copy out the NetBSD timeval */
+			memset(&tv, 0, sizeof tv);
+			tv.tv_sec = otv.tv_sec;
+			tv.tv_usec = otv.tv_usec;
+
+			error = copyout((caddr_t)&tv,
+			    (caddr_t)SCARG(&a, tv), sizeof tv);
+		}
+	}
+
+	if (SCARG(uap, tzp) == NULL)
+		SCARG(&a, tzp) = NULL;
+	else {
+		SCARG(&a, tzp) = stackgap_alloc(&sg, sizeof tz);
+
+		/* get the OSF/1 timeval argument */
+		error = copyin((caddr_t)SCARG(uap, tzp),
+		    (caddr_t)&otz, sizeof otz);
+		if (error == 0) {
+
+			/* fill in and copy out the NetBSD timezone */
+			memset(&tz, 0, sizeof tz);
+			tz.tz_minuteswest = otz.tz_minuteswest;
+			tz.tz_dsttime = otz.tz_dsttime;
+
+			error = copyout((caddr_t)&tz,
+			    (caddr_t)SCARG(&a, tzp), sizeof tz);
+		}
+	}
+
+	if (error == 0)
+		error = sys_settimeofday(p, &a, retval);
 
 	return (error);
 }
