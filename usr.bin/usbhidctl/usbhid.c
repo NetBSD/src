@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.7 1999/04/21 16:23:14 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.8 1999/04/21 17:41:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ int nnames;
 
 void prbits(int bits, char **strs, int n);
 void usage(void);
+void dumpitem(char *label, struct hid_item *h);
 void dumpitems(u_char *buf, int len);
 void rev(struct hid_item **p);
 u_long getdata(u_char *buf, int hpos, int hsize, int sign);
@@ -101,10 +102,31 @@ usage(void)
 }
 
 void
+dumpitem(char *label, struct hid_item *h)
+{
+	if ((h->flags & HIO_CONST) && !verbose)
+		return;
+	printf("%s size=%d count=%d page=%s usage=%s%s", label,
+	       h->report_size, h->report_count, 
+	       usage_page(HID_PAGE(h->usage)), 
+	       usage_in_page(h->usage),
+	       h->flags & HIO_CONST ? " Const" : "");
+	printf(", logical range %d..%d",
+	       h->logical_minimum, h->logical_maximum);
+	if (h->physical_minimum != h->physical_maximum)
+		printf(", physical range %d..%d",
+		       h->physical_minimum, h->physical_maximum);
+	if (h->unit)
+		printf(", unit=0x%02x exp=%d", h->unit, h->unit_exponent);
+	printf("\n");
+}
+
+void
 dumpitems(u_char *buf, int len)
 {
 	struct hid_data *d;
 	struct hid_item h;
+	int report_id, size;
 
 	for (d = hid_start_parse(buf, len, ~0); hid_get_item(d, &h); ) {
 		switch (h.kind) {
@@ -117,35 +139,31 @@ dumpitems(u_char *buf, int len)
 			printf("End collection\n");
 			break;
 		case hid_input:
-			printf("Input   size=%d count=%d page=%s usage=%s%s\n", 
-			       h.report_size, h.report_count, 
-			       usage_page(HID_PAGE(h.usage)), 
-			       usage_in_page(h.usage),
-			       h.flags & HIO_CONST ? " Const" : "");
+			dumpitem("Input  ", &h);
 			break;
 		case hid_output:
-			printf("Output  size=%d count=%d page=%s usage=%s%s\n", 
-			       h.report_size, h.report_count,
-			       usage_page(HID_PAGE(h.usage)), 
-			       usage_in_page(h.usage),
-			       h.flags & HIO_CONST ? " Const" : "");
+			dumpitem("Output ", &h);
 			break;
 		case hid_feature:
-			printf("Feature size=%d count=%d page=%s usage=%s%s\n",
-			       h.report_size, h.report_count,
-			       usage_page(HID_PAGE(h.usage)),
-			       usage_in_page(h.usage),
-			       h.flags & HIO_CONST ? " Const" : "");
+			dumpitem("Feature", &h);
 			break;
 		}
 	}
 	hid_end_parse(d);
-	printf("Total   input size %d bytes\n", 
-	       hid_report_size(buf, len, hid_input, 0));
-	printf("Total  output size %d bytes\n", 
-	       hid_report_size(buf, len, hid_output, 0));
-	printf("Total feature size %d bytes\n", 
-	       hid_report_size(buf, len, hid_feature, 0));
+	size = hid_report_size(buf, len, hid_input, &report_id);
+	size -= report_id != 0;
+	printf("Total   input size %s%d bytes\n", 
+	       report_id && size ? "1+" : "", size);
+	       
+	size = hid_report_size(buf, len, hid_output, &report_id);
+	size -= report_id != 0;
+	printf("Total  output size %s%d bytes\n",
+	       report_id && size ? "1+" : "", size);
+
+	size = hid_report_size(buf, len, hid_feature, &report_id);
+	size -= report_id != 0;
+	printf("Total feature size %s%d bytes\n",
+	       report_id && size ? "1+" : "", size);
 }
 
 void
@@ -196,7 +214,7 @@ prdata(u_char *buf, struct hid_item *h)
 		if (h->logical_minimum < 0)
 			printf("%ld", (long)data);
 		else
-			printf("%04lx", data);
+			printf("%lu", data);
 		pos += h->report_size;
 	}
 }
@@ -256,10 +274,6 @@ dumpdata(int f, u_char *buf, int len, int loop)
 				if (!noname)
 					printf("%s=", namebuf);
 				prdata(dbuf + (report_id != 0), n);
-				if (verbose)
-					printf(" [%d - %d]", 
-					       n->logical_minimum, 
-					       n->logical_maximum);
 				printf("\n");
 			}
 		}
@@ -317,7 +331,7 @@ main(int argc, char **argv)
 	names = argv;
 	nnames = argc;
 
-	if (nnames == 0 && !all)
+	if (nnames == 0 && !all && !repdump)
 		usage();
 
 	if (dev[0] != '/') {
@@ -343,7 +357,8 @@ main(int argc, char **argv)
 		printf("Report descriptor\n");
 		dumpitems(rep.data, rep.size);
 	}
-	dumpdata(f, rep.data, rep.size, loop);
+	if (nnames != 0 || all)
+		dumpdata(f, rep.data, rep.size, loop);
 
 	exit(0);
 }
