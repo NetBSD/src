@@ -1,4 +1,4 @@
-#	$Id: Makefile.cc1,v 1.4 1993/12/05 00:49:23 cgd Exp $
+#	$Id: Makefile.cc1,v 1.5 1993/12/20 22:46:09 davidb Exp $
 
 NOMAN=
 
@@ -8,7 +8,9 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common \
 	-I${.CURDIR}/../arch -I${.CURDIR}/../arch/${MACHINE_ARCH}
 YFLAGS=
 
-.if exists(${.CURDIR}/../common/obj)
+.if exists(${.CURDIR}/../common/obj.${MACHINE})
+LDADD+=	${.CURDIR}/../common/obj.${MACHINE}/libcc1.a
+.elif exists(${.CURDIR}/../common/obj)
 LDADD+=	${.CURDIR}/../common/obj/libcc1.a
 .else
 LDADD+=	${.CURDIR}/../common/libcc1.a
