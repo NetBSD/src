@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.297 2004/06/24 08:42:15 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.298 2004/06/24 14:15:11 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4424,3 +4424,54 @@ sys/dev/usb/ohci.c				1.147-1.148
 	ehci/USB2 now works fairly reliably.
 	[mycroft, ticket #535]
 
+distrib/amiga/stand/Makefile			1.1 (new)
+distrib/amiga/stand/device-streams.tar.gz.uue	1.1 (new)
+distrib/amiga/stand/loadbsd-2.14.gz.uue		1.1 (new)
+distrib/amiga/stand/loadbsd-2.14.uue		1.1 (new)
+distrib/amiga/stand/loadbsd-2.16.gz.uue		1.1 (new)
+distrib/amiga/stand/loadbsd.gz.uue		1.1 (new)
+distrib/amiga/stand/loadbsd.uue			1.1 (new)
+distrib/amiga/stand/rdbinfo.gz.uue		1.1 (new)
+distrib/amiga/stand/rdbinfo.uue			1.1 (new)
+distrib/amiga/stand/runbootblock.README		1.1 (new)
+distrib/amiga/stand/runbootblock.uue		1.1 (new)
+distrib/amiga/stand/xstreamtodev.gz.uue		1.1 (new)
+distrib/amiga/stand/xstreamtodev.uue		1.1 (new)
+distrib/amiga/Makefile				1.1 (new)
+etc/etc.amiga/Makefile.inc			1.22-1.23
+
+	AmigaDOS installation tools added.
+	[mhitch, tickets #540, #541, #542]
+
+sys/dev/ic/wdc.c				1.181
+
+	For now, remove the ATAPI_SOFT_RESET done at attach time,
+	which was added to get an IBM pcmcia external cdrom drive
+	working.  However, this appears to cause trouble for other
+	IDE/ATAPI devices.
+	[bouyer, ticket #543]
+
+sys/kern/kern_ktrace.c				1.89-1.90
+sys/sys/ktrace.h				1.39
+
+	Fix a panic induced by forcing ktrace to inject an emul
+	record in a ktraced file descriptor that has already been
+	invalidated.  Change all ktrace functions to propagate the
+	error from ktrwrite() and check for it.
+	Drag along revision ANSIfying function declarations.
+	[christos, ticket #544]
+
+sys/dev/scsipi/ch.c				1.60
+
+	Remove special handling of ASC/ASCQ 0x29/0x00 ("Power On,
+	Reset, or Bus Device Reset Occurred") when the device is
+	not opened.  Let the default error handler deal with that
+	instead.  This fixes the retreival of the sense page during
+	autoconfig.
+	[seb, ticket #545]
+
+xsrc/xc/programs/Xserver/hw/netbsd/hpc/hpcInit.c	1.7
+
+	For hpcarm, use wskbd, as the keyboard will not work
+	otherwise.
+	[manu, ticket #546]
