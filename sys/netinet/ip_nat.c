@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.10 1997/07/06 05:29:19 thorpej Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.11 1997/07/16 11:06:07 kleink Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -323,8 +323,8 @@ struct nat *natd;
 		}
 
 	for (natp = natd->nat_hstart[1]; (nat = *natp);
-	     natp = &nat->nat_hnext[1]) {
-		if (nat == natd)
+	     natp = &nat->nat_hnext[1])
+		if (nat == natd) {
 			*natp = nat->nat_hnext[1];
 			break;
 		}
