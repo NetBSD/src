@@ -28,7 +28,7 @@
 
 /* 
  * definition for identify VR series cpu 
- * $NetBSD: vrcpudef.h,v 1.1 2001/04/17 11:13:16 sato Exp $
+ * $NetBSD: vrcpudef.h,v 1.2 2001/04/17 15:45:20 sato Exp $
  *
  * REQUIRE #include "opt_vr41xx.h" before using this header.
  */
@@ -175,7 +175,7 @@
 #define	SINGLE_VRIP_BASE	ONLY_VR4122
 #endif /* defined ONLY_VR4122 */
 
-#if !defined SINGLE_VRIP_BASE && defined VRGROUP_4102_4121
+#if !defined VR4181 && !defined VR4122 && defined VRGROUP_4102_4121
 #define	SINGLE_VRIP_BASE	VRGROUP_4102_4121
 #endif
 
