@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.67 2003/10/13 20:43:03 scw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.68 2003/10/19 17:45:35 cl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.67 2003/10/13 20:43:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.68 2003/10/19 17:45:35 cl Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -614,8 +614,10 @@ uvm_swapout_threads()
 		if (!swappable(l))
 			continue;
 		switch (l->l_stat) {
-		case LSRUN:
 		case LSONPROC:
+			if (l->l_cpu != curcpu())
+				continue;
+		case LSRUN:
 			if (l->l_swtime > outpri2) {
 				outl2 = l;
 				outpri2 = l->l_swtime;
@@ -678,15 +680,13 @@ uvm_swapout(l)
 #endif
 
 	/*
-	 * Do any machine-specific actions necessary before swapout.
-	 * This can include saving floating point state, etc.
-	 */
-	cpu_swapout(l);
-
-	/*
 	 * Mark it as (potentially) swapped out.
 	 */
 	SCHED_LOCK(s);
+	if (l->l_stat == LSONPROC && l->l_cpu != curcpu()) {
+		SCHED_UNLOCK(s);
+		return;
+	}
 	l->l_flag &= ~L_INMEM;
 	if (l->l_stat == LSRUN)
 		remrunqueue(l);
@@ -694,6 +694,12 @@ uvm_swapout(l)
 	l->l_swtime = 0;
 	p->p_stats->p_ru.ru_nswap++;
 	++uvmexp.swapouts;
+
+	/*
+	 * Do any machine-specific actions necessary before swapout.
+	 * This can include saving floating point state, etc.
+	 */
+	cpu_swapout(l);
 
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
