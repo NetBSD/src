@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.48 2000/01/31 23:06:12 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.49 2000/02/02 07:45:13 enami Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -108,10 +108,7 @@ struct bpf_if	*bpf_iflist;
 struct bpf_d	bpf_dtab[NBPFILTER];
 
 static int	bpf_allocbufs __P((struct bpf_d *));
-static int	bpf_allocbufs __P((struct bpf_d *));
 static void	bpf_freed __P((struct bpf_d *));
-static void	bpf_freed __P((struct bpf_d *));
-static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	*bpf_mcpy __P((void *, const void *, size_t));
 static int	bpf_movein __P((struct uio *, int, int,
