@@ -1,19 +1,20 @@
 NetBSD/i386 1.2A runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The
-minimal configuration is said to require 4M of RAM and 50M of disk space,
-though we do not know of anyone running with a system quite this minimal today.
-To install the entire system requires much more disk space, and to run X
-or compile the system, more RAM is recommended.  (4M of RAM will
-actually allow you to run X and/or compile, but it won't be speedy.
-Note that until you have around 16M of RAM, getting more RAM is more
-important than getting a faster CPU.)
+minimal configuration is said to require 4M of RAM and 50M of disk
+space, though we do not know of anyone running with a system quite
+this minimal today.  To install the entire system requires much more
+disk space (the unpacked binary distribution, without sources,
+requires at least 65M without counting space needed for swap space,
+etc), and to run X or compile the system, more RAM is recommended.
+(4M of RAM will actually allow you to run X and/or compile, but it
+won't be speedy.  Note that until you have around 16M of RAM, getting
+more RAM is more important than getting a faster CPU.)
 
 Supported devices include:
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
 	SCSI host adapters:
-			[Adaptec host adapters only on kcadp floppy]
 		Adaptec AHA-154xA, -B, -C, and -CF 
 		Adaptec AHA-174x
 		Adaptec AIC-6260 and AIC-6360 based boards, including
@@ -29,9 +30,7 @@ Supported devices include:
 			targets, due to resource contention which is not
 			handled well by NetBSD's higher-level SCSI subsystem.
 		Adaptec AHA-3940[U][W] cards [b]
-		Buslogic 54x (Adaptec AHA-154x clones; driver on kcadp floppy)
-
-			[Other host adapters only on kcoth floppy]
+		Buslogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
                 Seagate/Future Domain ISA SCSI adapter cards, including
@@ -52,6 +51,8 @@ Supported devices include:
 			Tyan Yorktown
 		Ultrastor 14f, 34f, and (possibly) 24f
 		Western Digital WD7000 SCSI host adapters (ISA cards only)
+		[NOTE: The WD7000 driver is not present on the "small"
+		 floppies.]
 
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters NetBSD/i386 can work with
@@ -132,12 +133,11 @@ Supported devices include:
 		APM power management
 
 Drivers for hardware marked with "[*]" are NOT included on the
-distribution floppies.  Except as noted above, all other drivers are
-present on both kernel-copy disks.  Also, at the present time, the
-distributed kernels support only one SCSI host adapter per machine.
-NetBSD normally allows more, though, so if you have more than one, you
-can use all of them by compiling a custom kernel once NetBSD is
-installed.
+distribution floppies.  Except as noted above, all drivers are present
+on all disks.  Also, at the present time, the distributed kernels
+support only one SCSI host adapter per machine.  NetBSD normally
+allows more, though, so if you have more than one, you can use all of
+them by compiling a custom kernel once NetBSD is installed.
 
 
 Support for devices marked with "[+]" IS included in the "generic" kernels,
@@ -157,6 +157,8 @@ about:
         NCR 5380-based SCSI host adapters.
 	PCI WD-7000 SCSI host adapters.
 	PCMCIA ("PC Card") devices, including some miniature "IDE" hard disks.
+	 [Note: some higly experimental PCMCIA support is available on our
+	  FTP sites]
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
 
@@ -182,32 +184,32 @@ Floppy controller
 		fdc0	0x3f0	6	2	[supports two disks]
 
 AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
-		aha0	0x330	any	any	[only on kcadp kernel floppy]
-		aha1	0x334	any	any	[only on kcadp kernel floppy]
+		aha0	0x330	any	any
+		aha1	0x334	any	any
 
 AHA-174x SCSI host adapters (in enhanced mode)
-		ahb0	any	any	any	[only on kcadp kernel floppy]
+		ahb0	any	any	any
 
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
-                aic0    0x340   11      6       [only on kcadp kernel floppy]
+                aic0    0x340   11      6
 
 AHA-2X4X or AIC-7XXX-based SCSI host adapters
-                ahc0    any     any     any     [only on kcadp kernel floppy]
+                ahc0    any     any     any
 
 Bus Logic BT445, BT74x, or BT9xx SCSI host adapters
-		bt0	0x330	any	any	[only on kcoth kernel floppy]
+		bt0	0x330	any	any
 		bt1	0x334	any	any
 
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
-		ncr0	any	any	any	[only on kcoth kernel floppy]
+		ncr0	any	any	any
 
 Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
-                uha0    0x330   any     any     [only on kcoth kernel floppy]
-		uha1	0x334	any	any	[only on kcoth kernel floppy]
+                uha0    0x330   any     any
+		uha1	0x334	any	any
 
 Western Digital WD7000 based ISA SCSI host adapters
-		wds0	0x350	15	6	[only on kcoth kernel floppy]
-		wds1	0x358	11	5	[only on kcoth kernel floppy]
+		wds0	0x350	15	6
+		wds1	0x358	11	5
 
 SCSI disks	sd0	first SCSI disk (by SCSI id)
 		sd1	second SCSI disk (by SCSI id)
