@@ -19,11 +19,11 @@ man_MANS = as.1
 # It will disappear in a future release.
 info_TEXINFOS = as.texinfo 
 
-#asconfig.texi: $(CONFIG).texi
-#	rm -f asconfig.texi
-#	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-#	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-#	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+asconfig.texi: $(CONFIG).texi
+	rm -f asconfig.texi
+	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
 
 CPU_DOCS = \
 	c-a29k.texi \
