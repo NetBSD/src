@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.12 2003/11/12 13:16:22 grant Exp $
+#	$NetBSD: BRANCHES,v 1.13 2004/03/29 03:10:41 jmc Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -104,7 +104,7 @@ Notes:
 
 Branch:		netbsd-1-4
 Description:	The NetBSD 1.4 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	1 Apr 2000
 End Date:
 Base Tag:	netbsd-1-4-base
@@ -132,6 +132,17 @@ End Date:
 Base Tag:	netbsd-1-6-base
 Maintainer:	1.6 Release Engineering <releng-1-6@NetBSD.org>
 Scope:		Entire tree.
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-2-0
+Description:	The NetBSD 2.0 release branch
+Status:		Active
+Start Date:	28 Mar 2004
+End Date:
+Base Tag:	netbsd-2-0-base
+Maintainer:	2.0 Release Engineering <releng-2-0@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
 
