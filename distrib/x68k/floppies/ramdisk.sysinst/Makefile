@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/07 06:57:51 minoura Exp $
+#	$NetBSD: Makefile,v 1.14 2001/12/30 04:08:28 minoura Exp $
 
 TOP=		${.CURDIR}/..
 COMMONDIR=	${TOP}/ramdisk-common
@@ -31,3 +31,4 @@ includes:
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
+.include <bsd.prog.mk>
