@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.16 2000/07/30 17:26:14 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.34 2000/07/30 17:24:40 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.17 2000/08/13 00:41:30 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.35 2000/08/13 00:39:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.16 2000/07/30 17:26:14 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.17 2000/08/13 00:41:30 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -2252,7 +2252,7 @@ rt_entry(rtm, again)
 	if ((rtm->rtm_addrs & RTA_DST) == 0)
 		return;		/* ignore routes without destination address */
 	sin6_dst = (struct sockaddr_in6 *)rtmp;
-	rtmp += sin6_dst->sin6_len;
+	rtmp += ROUNDUP(sin6_dst->sin6_len);
 	if (rtm->rtm_addrs & RTA_GATEWAY) {
 		sin6_gw = (struct sockaddr_in6 *)rtmp;
 		rtmp += ROUNDUP(sin6_gw->sin6_len);
