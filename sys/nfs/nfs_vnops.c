@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.154 2002/10/22 02:19:57 simonb Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.155 2002/10/22 10:10:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.154 2002/10/22 02:19:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.155 2002/10/22 10:10:28 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -3105,7 +3105,13 @@ nfs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	nfs_delayedtruncate(vp);
+	/*
+	 * VOP_UNLOCK can be called by nfs_loadattrcache
+	 * with v_data == 0.
+	 */
+	if (VTONFS(vp)) {
+		nfs_delayedtruncate(vp);
+	}
 
 	return genfs_unlock(v);
 }
