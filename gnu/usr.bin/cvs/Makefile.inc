@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2002/03/06 02:40:06 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.3.2.1 2003/09/27 15:01:45 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,8 @@ WARNS?=	0
 
 IDIST=	${.CURDIR}/../../../dist/cvs
 
-CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/lib \
+CPPFLAGS+= -DSETXID_SUPPORT -DHAVE_CONFIG_H \
+	-I${.CURDIR}/../include -I${IDIST}/lib \
 	-I${IDIST}/diff -I${IDIST}/src
 
 DOBJDIR!=cd $(.CURDIR)/../libdiff && ${PRINTOBJDIR}

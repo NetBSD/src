@@ -1,4 +1,4 @@
-#! xPERL_PATHx
+#! @PERL@
 # -*-Perl-*-
 #
 # From: clyne@niwot.scd.ucar.EDU (John Clyne)

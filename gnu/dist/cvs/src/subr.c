@@ -10,6 +10,16 @@
 
 #include "cvs.h"
 #include "getline.h"
+#include <stdarg.h>
+
+#ifdef HAVE_NANOSLEEP
+# include "xtime.h"
+#else /* HAVE_NANOSLEEP */
+# if !defined HAVE_USLEEP && defined HAVE_SELECT
+    /* use select as a workaround */
+#   include "xselect.h"
+# endif /* !defined HAVE_USLEEP && defined HAVE_SELECT */
+#endif /* !HAVE_NANOSLEEP */
 
 extern char *getlogin ();
 
@@ -66,6 +76,21 @@ xrealloc (ptr, bytes)
     return (cp);
 }
 
+int
+xasprintf(char **buf, const char *fmt, ...)
+{
+    int len;
+    va_list ap;
+
+    va_start(ap, fmt);
+    len = vasprintf(buf, fmt, ap);
+    va_end(ap);
+
+    if (len == -1)
+	error(1, 0, "out of memory: xasprintf(..., \"%s\", ...) failed", fmt);
+    return len;
+}
+
 /* Two constants which tune expand_string.  Having MIN_INCR as large
    as 1024 might waste a bit of memory, but it shouldn't be too bad
    (CVS used to allocate arrays of, say, 3000, PATH_MAX (8192, often),
@@ -109,6 +134,19 @@ expand_string (strptr, n, newsize)
 	}
 	*strptr = xrealloc (*strptr, *n);
     }
+}
+
+/* *STR is a pointer to a malloc'd string.  *LENP is its allocated
+   length.  Add SRC to the end of it, reallocating if necessary.  */
+void
+xrealloc_and_strcat (str, lenp, src)
+    char **str;
+    size_t *lenp;
+    const char *src;
+{
+
+    expand_string (str, lenp, strlen (*str) + strlen (src) + 1);
+    strcat (*str, src);
 }
 
 /*
@@ -381,9 +419,9 @@ gca (rev1, rev2)
     const char *rev2;
 {
     int dots;
-    char *gca;
-    const char *p[2];
-    int j[2];
+    char *gca, *g;
+    const char *p1, *p2;
+    int r1, r2;
     char *retval;
 
     if (rev1 == NULL || rev2 == NULL)
@@ -395,52 +433,27 @@ gca (rev1, rev2)
     /* The greatest common ancestor will have no more dots, and numbers
        of digits for each component no greater than the arguments.  Therefore
        this string will be big enough.  */
-    gca = xmalloc (strlen (rev1) + strlen (rev2) + 100);
+    g = gca = xmalloc (strlen (rev1) + strlen (rev2) + 100);
 
     /* walk the strings, reading the common parts. */
-    gca[0] = '\0';
-    p[0] = rev1;
-    p[1] = rev2;
+    p1 = rev1;
+    p2 = rev2;
     do
     {
-	int i;
-	char c[2];
-	char *s[2];
-	
-	for (i = 0; i < 2; ++i)
-	{
-	    /* swap out the dot */
-	    s[i] = strchr (p[i], '.');
-	    if (s[i] != NULL) {
-		c[i] = *s[i];
-	    }
-	    
-	    /* read an int */
-	    j[i] = atoi (p[i]);
-	    
-	    /* swap back the dot... */
-	    if (s[i] != NULL) {
-		*s[i] = c[i];
-		p[i] = s[i] + 1;
-	    }
-	    else
-	    {
-		/* or mark us at the end */
-		p[i] = NULL;
-	    }
-	    
-	}
+	r1 = strtol (p1, (char **) &p1, 10);
+	r2 = strtol (p2, (char **) &p2, 10);
 	
 	/* use the lowest. */
-	(void) sprintf (gca + strlen (gca), "%d.",
-			j[0] < j[1] ? j[0] : j[1]);
+	(void) sprintf (g, "%d.", r1 < r2 ? r1 : r2);
+	g += strlen (g);
+	if (*p1 == '.') ++p1;
+	else break;
+	if (*p2 == '.') ++p2;
+	else break;
+    } while (r1 == r2);
 
-    } while (j[0] == j[1]
-	     && p[0] != NULL
-	     && p[1] != NULL);
-
-    /* back up over that last dot. */
-    gca[strlen(gca) - 1] = '\0';
+    /* erase that last dot. */
+    *--g = '\0';
 
     /* numbers differ, or we ran out of strings.  we're done with the
        common parts.  */
@@ -450,12 +463,8 @@ gca (rev1, rev2)
     {
 	/* revisions differ in trunk major number.  */
 
-	char *q;
-	const char *s;
-
-	s = (j[0] < j[1]) ? p[0] : p[1];
-
-	if (s == NULL)
+	if (r2 < r1) p1 = p2;
+	if (*p1 == '\0')
 	{
 	    /* we only got one number.  this is strange.  */
 	    error (0, 0, "bad revisions %s or %s", rev1, rev2);
@@ -464,13 +473,10 @@ gca (rev1, rev2)
 	else
 	{
 	    /* we have a minor number.  use it.  */
-	    q = gca + strlen (gca);
-	    
-	    *q++ = '.';
-	    for ( ; *s != '.' && *s != '\0'; )
-		*q++ = *s++;
-	    
-	    *q = '\0';
+	    *g++ = '.';
+	    while (*p1 != '.' && *p1 != '\0')
+		*g++ = *p1++;
+	    *g = '\0';
 	}
     }
     else if ((dots & 1) == 0)
@@ -478,10 +484,8 @@ gca (rev1, rev2)
 	/* if we have an even number of dots, then we have a branch.
 	   remove the last number in order to make it a revision.  */
 	
-	char *s;
-
-	s = strrchr(gca, '.');
-	*s = '\0';
+	g = strrchr (gca, '.');
+	*g = '\0';
     }
 
     retval = xstrdup (gca);
@@ -720,9 +724,6 @@ resolve_symlink (filename)
 	   But that would require editing each filesubr.c and so the
 	   expedient hack seems to be looking at HAVE_READLINK.  */
 	newname = xreadlink (*filename);
-#else
-	error (1, 0, "internal error: islink doesn't like readlink");
-#endif
 	
 	if (isabsolute (newname))
 	{
@@ -740,6 +741,9 @@ resolve_symlink (filename)
 	    free (*filename);
 	    *filename = fullnewname;
 	}
+#else
+	error (1, 0, "internal error: islink doesn't like readlink");
+#endif
     }
 }
 
@@ -776,3 +780,96 @@ backup_file (filename, suffix)
     return backup_name;
 }
 
+/*
+ * Copy a string into a buffer escaping any shell metacharacters.  The
+ * buffer should be at least twice as long as the string.
+ *
+ * Returns a pointer to the terminating NUL byte in buffer.
+ */
+
+char *
+shell_escape(buf, str)
+    char *buf;
+    const char *str;
+{
+    static const char meta[] = "$`\\\"";
+    const char *p;
+
+    for (;;)
+    {
+	p = strpbrk(str, meta);
+	if (!p) p = str + strlen(str);
+	if (p > str)
+	{
+	    memcpy(buf, str, p - str);
+	    buf += p - str;
+	}
+	if (!*p) break;
+	*buf++ = '\\';
+	*buf++ = *p++;
+	str = p;
+    }
+    *buf = '\0';
+    return buf;
+}
+
+/*
+ * We can only travel forwards in time, not backwards.  :)
+ */
+void
+sleep_past (desttime)
+    time_t desttime;
+{
+    time_t t;
+    long s;
+    long us;
+
+    while (time (&t) <= desttime)
+    {
+#ifdef HAVE_GETTIMEOFDAY
+	struct timeval tv;
+	gettimeofday (&tv, NULL);
+	if (tv.tv_sec > desttime)
+	    break;
+	s = desttime - tv.tv_sec;
+	if (tv.tv_usec > 0)
+	    us = 1000000 - tv.tv_usec;
+	else
+	{
+	    s++;
+	    us = 0;
+	}
+#else
+	/* default to 20 ms increments */
+	s = desttime - t;
+	us = 20000;
+#endif
+
+#if defined(HAVE_NANOSLEEP)
+	{
+	    struct timespec ts;
+	    ts.tv_sec = s;
+	    ts.tv_nsec = us * 1000;
+	    (void)nanosleep (&ts, NULL);
+	}
+#elif defined(HAVE_USLEEP)
+	if (s > 0)
+	    (void)sleep (s);
+	else
+	    (void)usleep (us);
+#elif defined(HAVE_SELECT)
+	{
+	    /* use select instead of sleep since it is a fairly portable way of
+	     * sleeping for ms.
+	     */
+	    struct timeval tv;
+	    tv.tv_sec = s;
+	    tv.tv_usec = us;
+	    (void)select (0, (fd_set *)NULL, (fd_set *)NULL, (fd_set *)NULL, &tv);
+	}
+#else
+	if (us > 0) s++;
+	(void)sleep(s);
+#endif
+    }
+}

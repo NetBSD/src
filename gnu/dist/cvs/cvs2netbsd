@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: cvs2netbsd,v 1.1 2000/10/26 16:30:38 wiz Exp $
+#	$NetBSD: cvs2netbsd,v 1.1.2.1 2003/09/27 14:54:11 tron Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@
 # NetBSD's tree. Works on current directory.
 
 ### Remove the $'s around the Id:
-for f in contrib/rcs2log.sh; do
+for f in contrib/rcs2log.sh mkinstalldirs; do
 	sed -e 's/\$\(Id[^\$]*\) \$/\1/' < $f > /tmp/cvstmp$$ && \
 		mv /tmp/cvstmp$$ $f && echo Removed Id tag from $f
 done
@@ -49,6 +49,6 @@ cd doc && rm -f cvs-paper.ps cvs.aux cvs.info* cvs.ps \
 		cvsclient.aux cvsclient.info* cvsclient.ps && \
 echo Removed unnecessary files. You can import now.
 
-echo Path: gnusrc/gnu/dist/cvs
+echo Path: src/gnu/dist/cvs
 echo Vendor: CVSHOME
 echo Versiontag: CVS1_XX_Y

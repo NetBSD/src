@@ -1,4 +1,4 @@
-#! xPERL_PATHx
+#! @PERL@
 # -*-Perl-*-
 #
 # XXX: FIXME: handle multiple '-f logfile' arguments
@@ -6,12 +6,13 @@
 # XXX -- I HATE Perl!  This *will* be re-written in shell/awk/sed soon!
 #
 
-# Usage:  log.pl [-u user] [[-m mailto] ...] [-s] -f logfile 'dirname file ...'
+# Usage:  log.pl [-u user] [[-m mailto] ...] [-s] [-V] -f logfile 'dirname file ...'
 #
 #	-u user		- $USER passed from loginfo
 #	-m mailto	- for each user to receive cvs log reports
 #			(multiple -m's permitted)
 #	-s		- to prevent "cvs status -v" messages
+#	-V		- without '-s', don't pass '-v' to cvs status
 #	-f logfile	- for the logfile to append to (mandatory,
 #			but only one logfile can be specified).
 
@@ -52,21 +53,30 @@
 #    	CVS-1_4A1                	(revision: 1.1.1.1)
 #    	CVS                      	(branch: 1.1.1)
 
-$cvsroot = $ENV{'CVSROOT'};
+use strict;
+use IO::File;
+
+my $cvsroot = $ENV{'CVSROOT'};
 
 # turn off setgid
 #
 $) = $(;
 
-$dostatus = 1;
+my $dostatus = 1;
+my $verbosestatus = 1;
+my $users;
+my $login;
+my $donefiles;
+my $logfile;
+my @files;
 
 # parse command line arguments
 #
 while (@ARGV) {
-        $arg = shift @ARGV;
+	my $arg = shift @ARGV;
 
 	if ($arg eq '-m') {
-                $users = "$users " . shift @ARGV;
+		$users = "$users " . shift @ARGV;
 	} elsif ($arg eq '-u') {
 		$login = shift @ARGV;
 	} elsif ($arg eq '-f') {
@@ -74,6 +84,8 @@ while (@ARGV) {
 		$logfile = shift @ARGV;
 	} elsif ($arg eq '-s') {
 		$dostatus = 0;
+	} elsif ($arg eq '-V') {
+		$verbosestatus = 0;
 	} else {
 		($donefiles) && die "Too many arguments!\n";
 		$donefiles = 1;
@@ -83,17 +95,17 @@ while (@ARGV) {
 
 # the first argument is the module location relative to $CVSROOT
 #
-$modulepath = shift @files;
+my $modulepath = shift @files;
 
-$mailcmd = "| Mail -s 'CVS update: $modulepath'";
+my $mailcmd = "| Mail -s 'CVS update: $modulepath'";
 
 # Initialise some date and time arrays
 #
-@mos = (January,February,March,April,May,June,July,August,September,
-        October,November,December);
-@days = (Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday);
+my @mos = ('January','February','March','April','May','June','July',
+	'August','September','October','November','December');
+my @days = ('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
 
-($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
 $year += 1900;
 
 # get a login name for the guy doing the commit....
@@ -104,78 +116,92 @@ if ($login eq '') {
 
 # open log file for appending
 #
-open(OUT, ">>" . $logfile) || die "Could not open(" . $logfile . "): $!\n";
+my $logfh = new IO::File ">>" . $logfile
+	or die "Could not open(" . $logfile . "): $!\n";
 
 # send mail, if there's anyone to send to!
 #
+my $mailfh;
 if ($users) {
 	$mailcmd = "$mailcmd $users";
-	open(MAIL, $mailcmd) || die "Could not Exec($mailcmd): $!\n";
+	$mailfh = new IO::File $mailcmd
+		or die "Could not Exec($mailcmd): $!\n";
 }
 
 # print out the log Header
-# 
-print OUT "\n";
-print OUT "****************************************\n";
-print OUT "Date:\t$days[$wday] $mos[$mon] $mday, $year @ $hour:" . sprintf("%02d", $min) . "\n";
-print OUT "Author:\t$login\n\n";
+#
+$logfh->print ("\n");
+$logfh->print ("****************************************\n");
+$logfh->print ("Date:\t$days[$wday] $mos[$mon] $mday, $year @ $hour:" . sprintf("%02d", $min) . "\n");
+$logfh->print ("Author:\t$login\n\n");
 
-if (MAIL) {
-	print MAIL "\n";
-	print MAIL "Date:\t$days[$wday] $mos[$mon] $mday, $year @ $hour:" . sprintf("%02d", $min) . "\n";
-	print MAIL "Author:\t$login\n\n";
+if ($mailfh) {
+	$mailfh->print ("\n");
+	$mailfh->print ("Date:\t$days[$wday] $mos[$mon] $mday, $year @ $hour:" . sprintf("%02d", $min) . "\n");
+	$mailfh->print ("Author:\t$login\n\n");
 }
 
 # print the stuff from logmsg that comes in on stdin to the logfile
 #
-open(IN, "-");
-while (<IN>) {
-	print OUT $_;
-	if (MAIL) {
-		print MAIL $_;
+my $infh = new IO::File "< -";
+foreach ($infh->getlines) {
+	$logfh->print;
+	if ($mailfh) {
+		$mailfh->print ($_);
 	}
 }
-close(IN);
+undef $infh;
 
-print OUT "\n";
+$logfh->print ("\n");
 
 # after log information, do an 'cvs -Qq status -v' on each file in the arguments.
 #
 if ($dostatus != 0) {
 	while (@files) {
-		$file = shift @files;
+		my $file = shift @files;
 		if ($file eq "-") {
-			print OUT "[input file was '-']\n";
-			if (MAIL) {
-				print MAIL "[input file was '-']\n";
+			$logfh->print ("[input file was '-']\n");
+			if ($mailfh) {
+				$mailfh->print ("[input file was '-']\n");
 			}
 			last;
 		}
-		$pid = open(RCS, "-|");
+		my $rcsfh = new IO::File;
+		my $pid = $rcsfh->open ("-|");
 		if ( !defined $pid )
 		{
 			die "fork failed: $!";
 		}
 		if ($pid == 0)
 		{
-			exec 'cvs', '-nQq', 'status', '-v', $file;
+			my @command = ('cvs', '-nQq', 'status');
+			if ($verbosestatus)
+			{
+				push @command, '-v';
+			}
+			push @command, $file;
+			exec @command;
 			die "cvs exec failed: $!";
 		}
-		while (<RCS>) {
-			print OUT;
-			if (MAIL) {
-				print MAIL;
+		my $line;
+		while ($line = $rcsfh->getline) {
+			$logfh->print ($line);
+			if ($mailfh) {
+				$mailfh->print ($line);
 			}
 		}
-		close(RCS);
+		undef $rcsfh;
 	}
 }
 
-close(OUT);
-die "Write to $logfile failed" if $?;
+$logfh->close()
+	or die "Write to $logfile failed: $!";
 
-close(MAIL);
-die "Pipe to $mailcmd failed" if $?;
+if ($mailfh)
+{
+	$mailfh->close;
+	die "Pipe to $mailcmd failed" if $?;
+}
 
 ## must exit cleanly
 ##

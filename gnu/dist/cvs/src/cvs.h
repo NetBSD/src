@@ -12,10 +12,9 @@
  */
 
 
-#include "config.h"		/* this is stuff found via autoconf */
-#include "options.h"		/* these are some larger questions which
-				   can't easily be automatically checked
-				   for */
+#ifdef HAVE_CONFIG_H
+# include <config.h>		/* this is stuff found via autoconf */
+#endif /* CONFIG_H */
 
 /* Changed from if __STDC__ to ifdef __STDC__ because of Sun's acc compiler */
 
@@ -64,7 +63,11 @@ extern char *getenv();
 char *strerror ();
 #endif
 
-#include <fnmatch.h> /* This is supposed to be available on Posix systems */
+#ifdef HAVE_FNMATCH
+# include <fnmatch.h> /* This is supposed to be available on Posix systems */
+#else /* HAVE_FNMATCH */
+# include "fnmatch.h" /* Our substitute */
+#endif /* HAVE_FNMATCH */
 
 #include <ctype.h>
 #include <pwd.h>
@@ -81,8 +84,11 @@ extern int errno;
 #include "system.h"
 
 #include "hash.h"
+
+#include "root.h"
+
 #if defined(SERVER_SUPPORT) || defined(CLIENT_SUPPORT)
-#include "client.h"
+# include "client.h"
 #endif
 
 #ifdef MY_NDBM
@@ -114,42 +120,42 @@ extern int errno;
    Here as #define's to make changing the names a simple task.  */
 
 #ifdef USE_VMS_FILENAMES
-#define CVSADM          "CVS"
-#define CVSADM_ENT      "CVS/Entries."
-#define CVSADM_ENTBAK   "CVS/Entries.Backup"
-#define CVSADM_ENTLOG   "CVS/Entries.Log"
-#define CVSADM_ENTSTAT  "CVS/Entries.Static"
-#define CVSADM_REP      "CVS/Repository."
-#define CVSADM_ROOT     "CVS/Root."
-#define CVSADM_CIPROG   "CVS/Checkin.prog"
-#define CVSADM_UPROG    "CVS/Update.prog"
-#define CVSADM_TAG      "CVS/Tag."
-#define CVSADM_NOTIFY   "CVS/Notify."
-#define CVSADM_NOTIFYTMP "CVS/Notify.tmp"
-#define CVSADM_BASE      "CVS/Base"
-#define CVSADM_BASEREV   "CVS/Baserev."
-#define CVSADM_BASEREVTMP "CVS/Baserev.tmp"
-#define CVSADM_TEMPLATE "CVS/Template."
+#define CVSADM          getCVSDir("")
+#define CVSADM_ENT      getCVSDir("/Entries.")
+#define CVSADM_ENTBAK   getCVSDir("/Entries.Backup")
+#define CVSADM_ENTLOG   getCVSDir("/Entries.Log")
+#define CVSADM_ENTSTAT  getCVSDir("/Entries.Static")
+#define CVSADM_REP      getCVSDir("/Repository.")
+#define CVSADM_ROOT     getCVSDir("/Root.")
+#define CVSADM_CIPROG   getCVSDir("/Checkin.prog")
+#define CVSADM_UPROG    getCVSDir("/Update.prog")
+#define CVSADM_TAG      getCVSDir("/Tag.")
+#define CVSADM_NOTIFY   getCVSDir("/Notify.")
+#define CVSADM_NOTIFYTMP getCVSDir("/Notify.tmp")
+#define CVSADM_BASE      getCVSDir("/Base")
+#define CVSADM_BASEREV   getCVSDir("/Baserev.")
+#define CVSADM_BASEREVTMP getCVSDir("/Baserev.tmp")
+#define CVSADM_TEMPLATE getCVSDir("/Template.")
 #else /* USE_VMS_FILENAMES */
-#define	CVSADM		"CVS"
-#define	CVSADM_ENT	"CVS/Entries"
-#define	CVSADM_ENTBAK	"CVS/Entries.Backup"
-#define CVSADM_ENTLOG	"CVS/Entries.Log"
-#define	CVSADM_ENTSTAT	"CVS/Entries.Static"
-#define	CVSADM_REP	"CVS/Repository"
-#define	CVSADM_ROOT	"CVS/Root"
-#define	CVSADM_CIPROG	"CVS/Checkin.prog"
-#define	CVSADM_UPROG	"CVS/Update.prog"
-#define	CVSADM_TAG	"CVS/Tag"
-#define CVSADM_NOTIFY	"CVS/Notify"
-#define CVSADM_NOTIFYTMP "CVS/Notify.tmp"
+#define	CVSADM		getCVSDir("")
+#define	CVSADM_ENT	getCVSDir("/Entries")
+#define	CVSADM_ENTBAK	getCVSDir("/Entries.Backup")
+#define CVSADM_ENTLOG	getCVSDir("/Entries.Log")
+#define	CVSADM_ENTSTAT	getCVSDir("/Entries.Static")
+#define	CVSADM_REP	getCVSDir("/Repository")
+#define	CVSADM_ROOT	getCVSDir("/Root")
+#define	CVSADM_CIPROG	getCVSDir("/Checkin.prog")
+#define	CVSADM_UPROG	getCVSDir("/Update.prog")
+#define	CVSADM_TAG	getCVSDir("/Tag")
+#define CVSADM_NOTIFY	getCVSDir("/Notify")
+#define CVSADM_NOTIFYTMP getCVSDir("/Notify.tmp")
 /* A directory in which we store base versions of files we currently are
    editing with "cvs edit".  */
-#define CVSADM_BASE     "CVS/Base"
-#define CVSADM_BASEREV  "CVS/Baserev"
-#define CVSADM_BASEREVTMP "CVS/Baserev.tmp"
+#define CVSADM_BASE     getCVSDir("/Base")
+#define CVSADM_BASEREV  getCVSDir("/Baserev")
+#define CVSADM_BASEREVTMP getCVSDir("/Baserev.tmp")
 /* File which contains the template for use in log messages.  */
-#define CVSADM_TEMPLATE "CVS/Template"
+#define CVSADM_TEMPLATE getCVSDir("/Template")
 #endif /* USE_VMS_FILENAMES */
 
 /* This is the special directory which we use to store various extra
@@ -160,7 +166,7 @@ extern int errno;
    
    See fileattr.h for details about file attributes, the only thing stored
    in CVSREP currently.  */
-#define CVSREP "CVS"
+#define CVSREP getCVSDir("")
 
 /*
  * Definitions for the CVSROOT Administrative directory and the files it
@@ -257,12 +263,10 @@ extern int errno;
 #define	CVSREAD_DFLT	0		/* writable files by default */
 
 #define	TMPDIR_ENV	"TMPDIR"	/* Temporary directory */
-/* #define	TMPDIR_DFLT		   Set by options.h */
 
 #define	EDITOR1_ENV	"CVSEDITOR"	/* which editor to use */
 #define	EDITOR2_ENV	"VISUAL"	/* which editor to use */
 #define	EDITOR3_ENV	"EDITOR"	/* which editor to use */
-/* #define	EDITOR_DFLT		   Set by options.h */
 
 #define	CVSROOT_ENV	"CVSROOT"	/* source directory root */
 #define	CVSROOT_DFLT	NULL		/* No dflt; must set for checkout */
@@ -271,7 +275,6 @@ extern int errno;
 #define WRAPPER_ENV     "CVSWRAPPERS"   /* name of the wrapper file */
 
 #define	CVSUMASK_ENV	"CVSUMASK"	/* Effective umask for repository */
-/* #define	CVSUMASK_DFLT		   Set by options.h */
 
 /*
  * If the beginning of the Repository matches the following string, strip it
@@ -314,7 +317,7 @@ typedef struct entnode Entnode;
 /* The type of request that is being done in do_module() */
 enum mtype
 {
-    CHECKOUT, TAG, PATCH, EXPORT
+    CHECKOUT, TAG, PATCH, EXPORT, MISC
 };
 
 /*
@@ -355,6 +358,11 @@ typedef int Dtype;
 typedef enum direnter_type Dtype;
 #endif
 
+/* Recursion processor lock types */
+#define CVS_LOCK_NONE	0
+#define CVS_LOCK_READ	1
+#define CVS_LOCK_WRITE	2
+
 extern char *program_name, *program_path, *command_name;
 extern char *Tmpdir, *Editor;
 extern int cvsadmin_root;
@@ -365,33 +373,20 @@ extern int cvswrite;
 extern mode_t cvsumask;
 extern char *RCS_citag;
 
-/* Access method specified in CVSroot. */
-typedef enum {
-  local_method, server_method, pserver_method, kserver_method, gserver_method,
-  ext_method, fork_method
-} CVSmethod;
-extern char *method_names[];	/* change this in root.c if you change
-				   the enum above */
+
 
 /* This global variable holds the global -d option.  It is NULL if -d
    was not used, which means that we must get the CVSroot information
    from the CVSROOT environment variable or from a CVS/Root file.  */
 extern char *CVSroot_cmdline;
 
-extern char *CVSroot_original;	/* the active, complete CVSroot string */
-extern int client_active;	/* nonzero if we are doing remote access */
-extern CVSmethod CVSroot_method; /* one of the enum values above */
-extern char *CVSroot_username;	/* the username or NULL if method == local */
-extern char *CVSroot_hostname;	/* the hostname or NULL if method == local */
-extern char *CVSroot_directory;	/* the directory name */
-
 /* These variables keep track of all of the CVSROOT directories that
    have been seen by the client and the current one of those selected.  */
 extern List *root_directories;
-extern char *current_root;
+extern cvsroot_t *current_parsed_root;
 
 extern char *emptydir_name PROTO ((void));
-extern int safe_location PROTO ((void));
+extern int safe_location PROTO ((char *));
 
 extern int trace;		/* Show all commands */
 extern int noexec;		/* Don't modify disk anywhere */
@@ -399,6 +394,12 @@ extern int nolock;		/* Don't create locks */
 extern int logoff;		/* Don't write history entry */
 
 extern int top_level_admin;
+
+
+#define LOGMSG_REREAD_NEVER 0	/* do_verify - never  reread message */
+#define LOGMSG_REREAD_ALWAYS 1	/* do_verify - always reread message */
+#define LOGMSG_REREAD_STAT 2	/* do_verify - reread message if changed */
+extern int RereadLogAfterVerify;
 
 #ifdef CLIENT_SUPPORT
 extern List *dirs_sent_to_server; /* used to decide which "Argument
@@ -424,12 +425,9 @@ extern int RCS_exec_rcsdiff PROTO ((RCSNode *rcsfile,
 				    char *rev1, char *rev2,
 				    char *label1, char *label2,
 				    char *workfile));
-extern int diff_exec PROTO ((char *file1, char *file2, char *options,
-			     char *out));
-extern int diff_execv PROTO ((char *file1, char *file2,
-			      char *label1, char *label2,
-			      char *options, char *out));
-
+extern int diff_exec PROTO ((char *file1, char *file2,
+			     char *label1, char *label2,
+			     char *options, char *out));
 
 
 #include "error.h"
@@ -442,18 +440,22 @@ List *Entries_Open PROTO ((int aflag, char *update_dir));
 void Subdirs_Known PROTO((List *entries));
 void Subdir_Register PROTO((List *, const char *, const char *));
 void Subdir_Deregister PROTO((List *, const char *, const char *));
+const char *getCVSDir PROTO((const char *));
 
 char *Make_Date PROTO((char *rawdate));
 char *date_from_time_t PROTO ((time_t));
-void date_to_internet PROTO ((char *, char *));
+void date_to_internet PROTO ((char *, const char *));
+void date_to_tm PROTO ((struct tm *, const char *));
+void tm_to_internet PROTO ((char *, const struct tm *));
 
 char *Name_Repository PROTO((char *dir, char *update_dir));
 char *Short_Repository PROTO((char *repository));
 void Sanitize_Repository_Name PROTO((char *repository));
 
 char *Name_Root PROTO((char *dir, char *update_dir));
-int parse_cvsroot PROTO((char *CVSroot));
-void set_local_cvsroot PROTO((char *dir));
+void free_cvsroot_t PROTO((cvsroot_t *root_in));
+cvsroot_t *parse_cvsroot PROTO((char *root));
+cvsroot_t *local_cvsroot PROTO((char *dir));
 void Create_Root PROTO((char *dir, char *rootdir));
 void root_allow_add PROTO ((char *));
 void root_allow_free PROTO ((void));
@@ -467,7 +469,10 @@ char *time_stamp PROTO((char *file));
 void *xmalloc PROTO((size_t bytes));
 void *xrealloc PROTO((void *ptr, size_t bytes));
 void expand_string PROTO ((char **, size_t *, size_t));
+void xrealloc_and_strcat PROTO ((char **, size_t *, const char *));
 char *xstrdup PROTO((const char *str));
+int xasprintf PROTO((char ** __restrict, const char * __restrict, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 void strip_trailing_newlines PROTO((char *str));
 int pathname_levels PROTO ((char *path));
 
@@ -488,7 +493,9 @@ int isabsolute PROTO((const char *filename));
 char *xreadlink PROTO((const char *link));
 char *last_component PROTO((char *path));
 char *get_homedir PROTO ((void));
+char *strcat_filename_onto_homedir PROTO ((const char *, const char *));
 char *cvs_temp_name PROTO ((void));
+FILE *cvs_temp_file PROTO ((char **filename));
 
 int numdots PROTO((const char *s));
 char *increment_revnum PROTO ((const char *));
@@ -512,7 +519,8 @@ void Lock_Cleanup PROTO((void));
 
 /* Writelock an entire subtree, well the part specified by ARGC, ARGV, LOCAL,
    and AFLAG, anyway.  */
-void lock_tree_for_write PROTO ((int argc, char **argv, int local, int aflag));
+void lock_tree_for_write PROTO ((int argc, char **argv, int local, int which,
+				 int aflag));
 
 /* See lock.c for description.  */
 extern void lock_dir_for_write PROTO ((char *));
@@ -547,9 +555,8 @@ extern int ign_case;
 void line2argv PROTO ((int *pargc, char ***argv, char *line, char *sepchars));
 void make_directories PROTO((const char *name));
 void make_directory PROTO((const char *name));
-extern int mkdir_if_needed PROTO ((char *name));
+extern int mkdir_if_needed PROTO ((const char *name));
 void rename_file PROTO((const char *from, const char *to));
-char *backup_file PROTO((const char *file, const char *suffix));
 /* Expand wildcards in each element of (ARGC,ARGV).  This is according to the
    files which exist in the current directory, and accordingly to OS-specific
    conventions regarding wildcard syntax.  It might be desirable to change the
@@ -579,7 +586,7 @@ void Update_Logfile PROTO((char *repository, char *xmessage, FILE * xlogfp,
 void do_editor PROTO((char *dir, char **messagep,
 		      char *repository, List * changes));
 
-void do_verify PROTO((char *message, char *repository));
+void do_verify PROTO((char **messagep, char *repository));
 
 typedef	int (*CALLBACKPROC)	PROTO((int argc, char *argv[], char *where,
 	char *mwhere, char *mfile, int shorten, int local_specified,
@@ -629,14 +636,15 @@ extern int init PROTO ((int argc, char **argv));
 
 int do_module PROTO((DBM * db, char *mname, enum mtype m_type, char *msg,
 		CALLBACKPROC callback_proc, char *where, int shorten,
-		int local_specified, int run_module_prog, char *extra_arg));
+		int local_specified, int run_module_prog, int build_dirs,
+		char *extra_arg));
 void history_write PROTO((int type, char *update_dir, char *revs, char *name,
 		    char *repository));
 int start_recursion PROTO((FILEPROC fileproc, FILESDONEPROC filesdoneproc,
 		     DIRENTPROC direntproc, DIRLEAVEPROC dirleaveproc,
 		     void *callerdat,
 		     int argc, char *argv[], int local, int which,
-		     int aflag, int readlock, char *update_preload,
+		     int aflag, int locktype, char *update_preload,
 		     int dosrcs));
 void SIG_beginCrSect PROTO((void));
 void SIG_endCrSect PROTO((void));
@@ -647,7 +655,10 @@ char *make_message_rcslegal PROTO((char *message));
 extern int file_has_markers PROTO ((const struct file_info *));
 extern void get_file PROTO ((const char *, const char *, const char *,
 			     char **, size_t *, size_t *));
+extern char *shell_escape PROTO((char *buf, const char *str));
+char *backup_file PROTO((const char *file, const char *suffix));
 extern void resolve_symlink PROTO ((char **filename));
+void sleep_past PROTO ((time_t desttime));
 
 /* flags for run_exec(), the fast system() for CVS */
 #define	RUN_NORMAL		0x0000	/* no special behaviour */
@@ -656,6 +667,7 @@ extern void resolve_symlink PROTO ((char **filename));
 #define	RUN_STDOUT_APPEND	0x0004	/* append to stdout, don't truncate */
 #define	RUN_STDERR_APPEND	0x0008	/* append to stderr, don't truncate */
 #define	RUN_SIGIGNORE		0x0010	/* ignore interrupts for command */
+#define	RUN_UNSETXID		0x0020	/* undo setxid in child */
 #define	RUN_TTY		(char *)0	/* for the benefit of lint */
 
 void run_arg PROTO((const char *s));
@@ -777,9 +789,7 @@ enum classify_type
     T_REMOVED,				/* R (removed file) list	 */
     T_REMOVE_ENTRY,			/* W (removed entry) list	 */
     T_UPTODATE,				/* File is up-to-date		 */
-#ifdef SERVER_SUPPORT
     T_PATCH,				/* P Like C, but can patch	 */
-#endif
     T_TITLE				/* title for node type 		 */
 };
 typedef enum classify_type Ctype;
@@ -849,8 +859,17 @@ extern int history PROTO ((int argc, char **argv));
 extern int import PROTO ((int argc, char **argv));
 extern int cvslog PROTO ((int argc, char **argv));
 #ifdef AUTH_CLIENT_SUPPORT
+/* Some systems (namely Mac OS X) have conflicting definitions for these
+ * functions.  Avoid them.
+ */
+#ifdef HAVE_LOGIN
+# define login		cvs_login
+#endif /* HAVE_LOGIN */
+#ifdef HAVE_LOGOUT
+# define logout		cvs_logout
+#endif /* HAVE_LOGOUT */
 extern int login PROTO((int argc, char **argv));
-int logout PROTO((int argc, char **argv));
+extern int logout PROTO((int argc, char **argv));
 #endif /* AUTH_CLIENT_SUPPORT */
 extern int patch PROTO((int argc, char **argv));
 extern int release PROTO((int argc, char **argv));
@@ -869,6 +888,8 @@ char *descramble PROTO ((char *str));
 
 #ifdef AUTH_CLIENT_SUPPORT
 char *get_cvs_password PROTO((void));
+int get_cvs_port_number PROTO((const cvsroot_t *root));
+char *normalize_cvsroot PROTO((const cvsroot_t *root));
 #endif /* AUTH_CLIENT_SUPPORT */
 
 extern void tag_check_valid PROTO ((char *, int, char **, int, int, char *));

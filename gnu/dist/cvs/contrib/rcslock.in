@@ -1,4 +1,4 @@
-#! xPERL_PATHx
+#! @PERL@
 # -*-Perl-*-
 
 # Author: John Rouillard (rouilj@cs.umb.edu)

@@ -67,7 +67,7 @@ cvsstatus (argc, argv)
     wrap_setup ();
 
 #ifdef CLIENT_SUPPORT
-    if (client_active)
+    if (current_parsed_root->isremote)
     {
 	start_server ();
 
@@ -77,6 +77,7 @@ cvsstatus (argc, argv)
 	    send_arg("-v");
 	if (local)
 	    send_arg("-l");
+	send_arg ("--");
 
 	/* For a while, we tried setting SEND_NO_CONTENTS here so this
 	   could be a fast operation.  That prevents the
@@ -106,7 +107,7 @@ cvsstatus (argc, argv)
     err = start_recursion (status_fileproc, (FILESDONEPROC) NULL,
 			   status_dirproc, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv, local,
-			   W_LOCAL, 0, 1, (char *) NULL, 1);
+			   W_LOCAL, 0, CVS_LOCK_READ, (char *) NULL, 1);
 
     return (err);
 }
@@ -135,11 +136,9 @@ status_fileproc (callerdat, finfo)
 	case T_CHECKOUT:
 	    sstat = "Needs Checkout";
 	    break;
-#ifdef SERVER_SUPPORT
 	case T_PATCH:
 	    sstat = "Needs Patch";
 	    break;
-#endif
 	case T_CONFLICT:
 	    /* I _think_ that "unresolved" is correct; that if it has
 	       been resolved then the status will change.  But I'm not

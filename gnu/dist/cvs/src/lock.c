@@ -97,6 +97,7 @@ static void clear_lock PROTO ((struct lock *lock));
 static void set_lockers_name PROTO((struct stat *statp));
 static int set_writelock_proc PROTO((Node * p, void *closure));
 static int unlock_proc PROTO((Node * p, void *closure));
+static int find_root PROTO((char *repository, char *rootdir));
 static int write_lock PROTO ((struct lock *lock));
 static void lock_simple_remove PROTO ((struct lock *lock));
 static void lock_wait PROTO((char *repository));
@@ -169,15 +170,21 @@ lock_name (repository, name)
     {
 	struct stat sb;
 	mode_t new_mode = 0;
+	int len;
 
 	/* The interesting part of the repository is the part relative
 	   to CVSROOT.  */
-	assert (CVSroot_directory != NULL);
-	assert (strncmp (repository, CVSroot_directory,
-			 strlen (CVSroot_directory)) == 0);
-	short_repos = repository + strlen (CVSroot_directory) + 1;
+	assert (current_parsed_root != NULL);
+	assert (current_parsed_root->directory != NULL);
+	/* 
+	 * Unfortunately, string comparisons are not enough because we
+	 * might have symlinks present
+	 */
+	len = find_root(repository, current_parsed_root->directory);
+	assert(len != -1);
+	short_repos = repository + len + 1;
 
-	if (strcmp (repository, CVSroot_directory) == 0)
+	if (strcmp (repository, current_parsed_root->directory) == 0)
 	    short_repos = ".";
 	else
 	    assert (short_repos[-1] == '/');
@@ -279,6 +286,45 @@ lock_name (repository, name)
 }
 
 /*
+ * Find the root directory in the repository directory
+ */
+static int
+find_root(repository, rootdir)
+    char *repository;
+    char *rootdir;
+{
+    struct stat strep, stroot;
+    char *p = NULL, *q = NULL;
+    size_t len;
+
+    if (stat(rootdir, &stroot) == -1)
+	return -1;
+    len = strlen(repository);
+    do {
+	if (p != NULL) {
+	    len = p - repository;
+	    *p = '\0';
+	}
+	if (q != NULL)
+	    *q = '/';
+	if (stat(repository, &strep) == -1) {
+	    if (p != NULL)
+		*p = '/';
+	    return -1;
+	}
+	if (strep.st_dev == stroot.st_dev && strep.st_ino == stroot.st_ino) {
+	    if (p != NULL)
+		*p = '/';
+	    if (q != NULL)
+		*q = '/';
+	    return len;
+	}
+	q = p;
+    } while ((p = strrchr(repository, '/')) != NULL);
+    return -1;
+}
+
+/*
  * Clean up all outstanding locks
  */
 void
@@ -289,6 +335,9 @@ Lock_Cleanup ()
        this by refusing to reenter this function (this is a kludge).  */
     /* FIXME-reentrancy: the workaround isn't reentrant.  */
     static int in_lock_cleanup = 0;
+
+    if (trace)
+	(void) fprintf (stderr, "%s-> Lock_Cleanup()\n", CLIENT_SERVER_STR);
 
     if (in_lock_cleanup)
 	return;
@@ -396,6 +445,13 @@ Reader_Lock (xrepository)
     char *tmp;
 
     if (nolock)
+	return (0);
+
+    if (trace)
+	(void) fprintf (stderr, "%s-> Reader_Lock(%s)\n", CLIENT_SERVER_STR,
+                        xrepository);
+
+    if (noexec)
 	return (0);
 
     /* we only do one directory at a time for read locks! */
@@ -553,6 +609,10 @@ write_lock (lock)
     FILE *fp;
     char *tmp;
 
+    if (trace)
+	(void) fprintf (stderr, "%s-> write_lock(%s)\n",
+                        CLIENT_SERVER_STR, lock->repository);
+
     if (writelock == NULL)
     {
 	writelock = xmalloc (strlen (hostname) + sizeof (CVSWFL) + 40);
@@ -623,64 +683,66 @@ readers_exist (repository)
     DIR *dirp;
     struct dirent *dp;
     struct stat sb;
-    int ret = 0;
-
+    int ret;
 #ifdef CVS_FUDGELOCKS
-again:
+    time_t now;
+    (void) time (&now);
 #endif
 
-    if ((dirp = CVS_OPENDIR (repository)) == NULL)
-	error (1, 0, "cannot open directory %s", repository);
+    do {
+	if ((dirp = CVS_OPENDIR (repository)) == NULL)
+	    error (1, 0, "cannot open directory %s", repository);
 
-    errno = 0;
-    while ((dp = readdir (dirp)) != NULL)
-    {
-	if (CVS_FNMATCH (CVSRFLPAT, dp->d_name, 0) == 0)
+	ret = 0;
+	errno = 0;
+	while ((dp = CVS_READDIR (dirp)) != NULL)
 	{
-#ifdef CVS_FUDGELOCKS
-	    time_t now;
-	    (void) time (&now);
-#endif
+	    if (CVS_FNMATCH (CVSRFLPAT, dp->d_name, 0) == 0)
+	    {
+		/* ignore our own readlock, if any */
+		if (readlock && strcmp (readlock, dp->d_name) == 0)
+		    continue;
 
-	    line = xmalloc (strlen (repository) + strlen (dp->d_name) + 5);
-	    (void) sprintf (line, "%s/%s", repository, dp->d_name);
-	    if ( CVS_STAT (line, &sb) != -1)
-	    {
-#ifdef CVS_FUDGELOCKS
-		/*
-		 * If the create time of the file is more than CVSLCKAGE 
-		 * seconds ago, try to clean-up the lock file, and if
-		 * successful, re-open the directory and try again.
-		 */
-		if (now >= (sb.st_ctime + CVSLCKAGE) && CVS_UNLINK (line) != -1)
+		line = xmalloc (strlen (repository) + strlen (dp->d_name) + 5);
+		(void) sprintf (line, "%s/%s", repository, dp->d_name);
+		if ( CVS_STAT (line, &sb) != -1)
 		{
-		    (void) closedir (dirp);
-		    free (line);
-		    goto again;
-		}
+#ifdef CVS_FUDGELOCKS
+		    /*
+		     * If the create time of the file is more than CVSLCKAGE 
+		     * seconds ago, try to clean-up the lock file, and if
+		     * successful, re-open the directory and try again.
+		     */
+		    if (now >= (sb.st_ctime + CVSLCKAGE) &&
+                        CVS_UNLINK (line) != -1)
+		    {
+			free (line);
+			ret = -1;
+			break;
+		    }
 #endif
-		set_lockers_name (&sb);
-	    }
-	    else
-	    {
-		/* If the file doesn't exist, it just means that it disappeared
-		   between the time we did the readdir and the time we did
-		   the stat.  */
-		if (!existence_error (errno))
-		    error (0, errno, "cannot stat %s", line);
+		    set_lockers_name (&sb);
+		}
+		else
+		{
+		    /* If the file doesn't exist, it just means that it disappeared
+		       between the time we did the readdir and the time we did
+		       the stat.  */
+		    if (!existence_error (errno))
+			error (0, errno, "cannot stat %s", line);
+		}
+		errno = 0;
+		free (line);
+		ret = 1;
+		break;
 	    }
 	    errno = 0;
-	    free (line);
-
-	    ret = 1;
-	    break;
 	}
-	errno = 0;
-    }
-    if (errno != 0)
-	error (0, errno, "error reading directory %s", repository);
+	if (errno != 0)
+	    error (0, errno, "error reading directory %s", repository);
 
-    closedir (dirp);
+	CVS_CLOSEDIR (dirp);
+    } while (ret < 0);
     return (ret);
 }
 
@@ -825,10 +887,13 @@ lock_wait (repos)
 {
     time_t now;
     char *msg;
+    struct tm *tm_p;
 
     (void) time (&now);
+    tm_p = gmtime (&now);
     msg = xmalloc (100 + strlen (lockers_name) + strlen (repos));
-    sprintf (msg, "[%8.8s] waiting for %s's lock in %s", ctime (&now) + 11,
+    sprintf (msg, "[%8.8s] waiting for %s's lock in %s",
+	     (tm_p ? asctime (tm_p) : ctime (&now)) + 11,
 	     lockers_name, repos);
     error (0, 0, "%s", msg);
     /* Call cvs_flusherr to ensure that the user sees this message as
@@ -847,10 +912,13 @@ lock_obtained (repos)
 {
     time_t now;
     char *msg;
+    struct tm *tm_p;
 
     (void) time (&now);
+    tm_p = gmtime (&now);
     msg = xmalloc (100 + strlen (repos));
-    sprintf (msg, "[%8.8s] obtained lock in %s", ctime (&now) + 11, repos);
+    sprintf (msg, "[%8.8s] obtained lock in %s",
+	     (tm_p ? asctime (tm_p) : ctime (&now)) + 11, repos);
     error (0, 0, "%s", msg);
     /* Call cvs_flusherr to ensure that the user sees this message as
        soon as possible.  */
@@ -890,10 +958,11 @@ lock_filesdoneproc (callerdat, err, repository, update_dir, entries)
 }
 
 void
-lock_tree_for_write (argc, argv, local, aflag)
+lock_tree_for_write (argc, argv, local, which, aflag)
     int argc;
     char **argv;
     int local;
+    int which;
     int aflag;
 {
     int err;
@@ -904,7 +973,8 @@ lock_tree_for_write (argc, argv, local, aflag)
     lock_tree_list = getlist ();
     err = start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
 			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL, argc,
-			   argv, local, W_LOCAL, aflag, 0, (char *) NULL, 0);
+			   argv, local, which, aflag, CVS_LOCK_NONE,
+			   (char *) NULL, 0);
     sortlist (lock_tree_list, fsortcmp);
     if (Writer_Lock (lock_tree_list) != 0)
 	error (1, 0, "lock failed - giving up");

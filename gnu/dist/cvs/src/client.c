@@ -13,7 +13,7 @@
    GNU General Public License for more details.  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+# include "config.h"
 #endif /* HAVE_CONFIG_H */
 
 #include <assert.h>
@@ -24,80 +24,68 @@
 
 #ifdef CLIENT_SUPPORT
 
-#include "md5.h"
+# include "md5.h"
 
-#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
-#  ifdef HAVE_WINSOCK_H
-#    include <winsock.h>
-#  else /* No winsock.h */
-#    include <sys/socket.h>
-#    include <netinet/in.h>
-#    include <netdb.h>
-#  endif /* No winsock.h */
-#endif
+# if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
+#   ifdef HAVE_WINSOCK_H
+#     include <winsock.h>
+#   else /* No winsock.h */
+#     include <sys/socket.h>
+#     include <netinet/in.h>
+#     include <arpa/inet.h>
+#     include <netdb.h>
+#   endif /* No winsock.h */
+# endif
 
 /* If SOCK_ERRNO is defined, then send()/recv() and other socket calls
    do not set errno, but that this macro should be used to obtain an
    error code.  This probably doesn't make sense unless
    NO_SOCKET_TO_FD is also defined. */
-#ifndef SOCK_ERRNO
-#define SOCK_ERRNO errno
-#endif
+# ifndef SOCK_ERRNO
+#   define SOCK_ERRNO errno
+# endif
 
 /* If SOCK_STRERROR is defined, then the error codes returned by
    socket operations are not known to strerror, and this macro must be
    used instead to convert those error codes to strings. */
-#ifndef SOCK_STRERROR
-#  define SOCK_STRERROR strerror
+# ifndef SOCK_STRERROR
+#   define SOCK_STRERROR strerror
 
-#  if STDC_HEADERS
-#    include <string.h>
-#  endif
+#   if STDC_HEADERS
+#     include <string.h>
+#   endif
 
-#  ifndef strerror
+#   ifndef strerror
 extern char *strerror ();
-#  endif
-#endif /* ! SOCK_STRERROR */
+#   endif
+# endif /* ! SOCK_STRERROR */
 
-#if HAVE_KERBEROS
-#define CVS_PORT 1999
+# if HAVE_KERBEROS
 
-#include <krb.h>
+#   include <krb.h>
 
 extern char *krb_realmofhost ();
-#ifndef HAVE_KRB_GET_ERR_TEXT
-#define krb_get_err_text(status) krb_err_txt[status]
-#endif /* HAVE_KRB_GET_ERR_TEXT */
+#   ifndef HAVE_KRB_GET_ERR_TEXT
+#     define krb_get_err_text(status) krb_err_txt[status]
+#   endif /* HAVE_KRB_GET_ERR_TEXT */
 
 /* Information we need if we are going to use Kerberos encryption.  */
 static C_Block kblock;
 static Key_schedule sched;
 
-#endif /* HAVE_KERBEROS */
+# endif /* HAVE_KERBEROS */
 
-#ifdef HAVE_GSSAPI
+# ifdef HAVE_GSSAPI
 
-#ifdef HAVE_GSSAPI_H
-#include <gssapi.h>
-#endif
-#ifdef HAVE_GSSAPI_GSSAPI_H
-#include <gssapi/gssapi.h>
-#endif
-#ifdef HAVE_GSSAPI_GSSAPI_GENERIC_H
-#include <gssapi/gssapi_generic.h>
-#endif
-
-#ifndef HAVE_GSS_C_NT_HOSTBASED_SERVICE
-#define GSS_C_NT_HOSTBASED_SERVICE gss_nt_service_name
-#endif
+#   include "xgssapi.h"
 
 /* This is needed for GSSAPI encryption.  */
 static gss_ctx_id_t gcontext;
 
-static int connect_to_gserver PROTO((int, const char *));
+static int connect_to_gserver PROTO((cvsroot_t *, int, const char *));
 
-#endif /* HAVE_GSSAPI */
-
+# endif /* HAVE_GSSAPI */
+
 static void add_prune_candidate PROTO((char *));
 
 /* All the commands.  */
@@ -145,9 +133,9 @@ static void handle_f PROTO((char *, int));
 static void handle_notified PROTO((char *, int));
 
 static size_t try_read_from_server PROTO ((char *, size_t));
-#endif /* CLIENT_SUPPORT */
-
-#ifdef CLIENT_SUPPORT
+
+static void auth_server PROTO ((cvsroot_t *, struct buffer *, struct buffer *,
+				int, int));
 
 /* We need to keep track of the list of directories we've sent to the
    server.  This list, along with the current CVSROOT, will help us
@@ -198,7 +186,7 @@ arg_should_not_be_sent_to_server (arg)
        4) the argument lies within one of the paths in
        dirs_sent_to_server.
 
-       4) */
+       */
 
     if (list_isempty (dirs_sent_to_server))
 	return 0;		/* always send it */
@@ -259,12 +247,13 @@ arg_should_not_be_sent_to_server (arg)
 	{
 	    /* We're at the beginning of the string.  Look at the
                CVSADM files in cwd.  */
-	    this_root = Name_Root ((char *) NULL, (char *) NULL);
+	    this_root = (CVSroot_cmdline ? xstrdup(CVSroot_cmdline)
+			 : Name_Root ((char *) NULL, (char *) NULL));
 	}
 
 	/* Now check the value for root. */
-	if (this_root && current_root
-	    && (strcmp (this_root, current_root) != 0))
+	if (this_root && current_parsed_root
+	    && (strcmp (this_root, current_parsed_root->original) != 0))
 	{
 	    /* Don't send this, since the CVSROOTs don't match. */
 	    free (this_root);
@@ -278,8 +267,11 @@ arg_should_not_be_sent_to_server (arg)
 }
 
 
+
 #endif /* CLIENT_SUPPORT */
-
+
+
+
 #if defined(CLIENT_SUPPORT) || defined(SERVER_SUPPORT)
 
 /* Shared with server.  */
@@ -449,16 +441,9 @@ static List *ignlist = (List *) NULL;
 
 /* Buffer to write to the server.  */
 static struct buffer *to_server;
-/* The stream underlying to_server, if we are using a stream.  */
-static FILE *to_server_fp;
 
 /* Buffer used to read from the server.  */
 static struct buffer *from_server;
-/* The stream underlying from_server, if we are using a stream.  */
-static FILE *from_server_fp;
-
-/* Process ID of rsh subprocess.  */
-static int rsh_pid = -1;
 
 
 /* We want to be able to log data sent between us and the server.  We
@@ -481,7 +466,7 @@ static int log_buffer_input PROTO((void *, char *, int, int, int *));
 static int log_buffer_output PROTO((void *, const char *, int, int *));
 static int log_buffer_flush PROTO((void *));
 static int log_buffer_block PROTO((void *, int));
-static int log_buffer_shutdown PROTO((void *));
+static int log_buffer_shutdown PROTO((struct buffer *));
 
 /* Create a log buffer.  */
 
@@ -605,10 +590,10 @@ log_buffer_block (closure, block)
 /* The shutdown function for a log buffer.  */
 
 static int
-log_buffer_shutdown (closure)
-     void *closure;
+log_buffer_shutdown (buf)
+     struct buffer *buf;
 {
-    struct log_buffer *lb = (struct log_buffer *) closure;
+    struct log_buffer *lb = (struct log_buffer *) buf->closure;
     int retval;
 
     retval = buf_shutdown (lb->buf);
@@ -616,7 +601,7 @@ log_buffer_shutdown (closure)
 	error (0, errno, "closing log file");
     return retval;
 }
-
+
 #ifdef NO_SOCKET_TO_FD
 
 /* Under certain circumstances, we must communicate with the server
@@ -628,9 +613,6 @@ log_buffer_shutdown (closure)
    We may also need to deal with socket routine error codes differently
    in these cases.  This is handled through the SOCK_ERRNO and
    SOCK_STRERROR macros. */
-
-static int use_socket_style = 0;
-static int server_sock;
 
 /* These routines implement a buffer structure which uses send and
    recv.  The buffer is always in blocking mode so we don't implement
@@ -655,14 +637,17 @@ static struct buffer *socket_buffer_initialize
 static int socket_buffer_input PROTO((void *, char *, int, int, int *));
 static int socket_buffer_output PROTO((void *, const char *, int, int *));
 static int socket_buffer_flush PROTO((void *));
+static int socket_buffer_shutdown PROTO((struct buffer *));
+
+
 
 /* Create a buffer based on a socket.  */
 
 static struct buffer *
 socket_buffer_initialize (socket, input, memory)
-     int socket;
-     int input;
-     void (*memory) PROTO((struct buffer *));
+    int socket;
+    int input;
+    void (*memory) PROTO((struct buffer *));
 {
     struct socket_buffer *n;
 
@@ -672,10 +657,12 @@ socket_buffer_initialize (socket, input, memory)
 			   input ? NULL : socket_buffer_output,
 			   input ? NULL : socket_buffer_flush,
 			   (int (*) PROTO((void *, int))) NULL,
-			   (int (*) PROTO((void *))) NULL,
+			   socket_buffer_shutdown,
 			   memory,
 			   n);
 }
+
+
 
 /* The buffer input function for a buffer built on a socket.  */
 
@@ -736,6 +723,8 @@ socket_buffer_input (closure, data, need, size, got)
     return 0;
 }
 
+
+
 /* The buffer output function for a buffer built on a socket.  */
 
 static int
@@ -775,6 +764,8 @@ socket_buffer_output (closure, data, have, wrote)
     return 0;
 }
 
+
+
 /* The buffer flush function for a buffer built on a socket.  */
 
 /*ARGSUSED*/
@@ -786,8 +777,61 @@ socket_buffer_flush (closure)
     return 0;
 }
 
+
+
+static int
+socket_buffer_shutdown (buf)
+    struct buffer *buf;
+{
+    struct socket_buffer *n = (struct socket_buffer *) buf->closure;
+    char tmp;
+
+    /* no need to flush children of an endpoint buffer here */
+
+    if (buf->input)
+    {
+	int err = 0;
+	if (! buf_empty_p (buf)
+	    || (err = recv (n->socket, &tmp, 1, 0)) > 0)
+	    error (0, 0, "dying gasps from %s unexpected", current_parsed_root->hostname);
+	else if (err == -1)
+	    error (0, 0, "reading from %s: %s", current_parsed_root->hostname, SOCK_STRERROR (SOCK_ERRNO));
+
+	/* shutdown() socket */
+# ifdef SHUTDOWN_SERVER
+	if (current_parsed_root->method != server_method)
+# endif
+	if (shutdown (n->socket, 0) < 0)
+	{
+	    error (1, 0, "shutting down server socket: %s", SOCK_STRERROR (SOCK_ERRNO));
+	}
+
+	buf->input = NULL;
+    }
+    else if (buf->output)
+    {
+	/* shutdown() socket */
+# ifdef SHUTDOWN_SERVER
+	/* FIXME:  Should have a SHUTDOWN_SERVER_INPUT &
+	 * SHUTDOWN_SERVER_OUTPUT
+	 */
+	if (current_parsed_root->method == server_method)
+	    SHUTDOWN_SERVER (n->socket);
+	else
+# endif
+	if (shutdown (n->socket, 1) < 0)
+	{
+	    error (1, 0, "shutting down server socket: %s", SOCK_STRERROR (SOCK_ERRNO));
+	}
+
+	buf->output = NULL;
+    }
+
+    return 0;
+}
+
 #endif /* NO_SOCKET_TO_FD */
-
+
 /*
  * Read a line from the server.  Result does not include the terminating \n.
  *
@@ -1277,6 +1321,35 @@ warning: server is not creating directories one at a time");
 	    if ( CVS_CHDIR (dir_name) < 0)
 		error (1, errno, "could not chdir to %s", dir_name);
 	}
+	else if (strcmp (command_name, "export") == 0)
+	    /* Don't create CVSADM directories if this is export.  */
+	    ;
+	else if (!isdir (CVSADM))
+	{
+	    /*
+	     * Put repository in CVS/Repository.  For historical
+	     * (pre-CVS/Root) reasons, this is an absolute pathname,
+	     * but what really matters is the part of it which is
+	     * relative to cvsroot.
+	     */
+	    char *repo;
+
+	    if (reposdirname_absolute)
+		repo = reposdirname;
+	    else
+	    {
+		repo = xmalloc (strlen (reposdirname)
+				+ strlen (toplevel_repos)
+				+ 10);
+		strcpy (repo, toplevel_repos);
+		strcat (repo, "/");
+		strcat (repo, reposdirname);
+	    }
+
+	    Create_Admin (".", ".", repo, (char *)NULL, (char *)NULL, 0, 1, 1);
+	    if (repo != reposdirname)
+		free (repo);
+	}
 
 	if (strcmp (command_name, "export") != 0)
 	{
@@ -1352,7 +1425,7 @@ handle_copy_file (args, len)
 }
 
 
-static void read_counted_file PROTO ((char *, char *));
+static void read_counted_file PROTO ((const char *, const char *));
 
 /* Read from the server the count for the length of a file, then read
    the contents of that file and write them to FILENAME.  FULLNAME is
@@ -1361,8 +1434,8 @@ static void read_counted_file PROTO ((char *, char *));
    use it.  On error, gives a fatal error.  */
 static void
 read_counted_file (filename, fullname)
-    char *filename;
-    char *fullname;
+    const char *filename;
+    const char *fullname;
 {
     char *size_string;
     size_t size;
@@ -2102,7 +2175,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	 * date.  Create a dummy timestamp which will never compare
 	 * equal to the timestamp of the file.
 	 */
-	if (vn[0] == '\0' || vn[0] == '0' || vn[0] == '-')
+	if (vn[0] == '\0' || strcmp (vn, "0") == 0 || vn[0] == '-')
 	    local_timestamp = "dummy timestamp";
 	else if (local_timestamp == NULL)
 	{
@@ -2282,7 +2355,7 @@ static int
 is_cvsroot_level (pathname)
     char *pathname;
 {
-    if (strcmp (toplevel_repos, CVSroot_directory) != 0)
+    if (strcmp (toplevel_repos, current_parsed_root->directory) != 0)
 	return 0;
 
     return strchr (pathname, '/') == NULL;
@@ -2542,8 +2615,7 @@ do_deferred_progs ()
     }
     for (p = checkin_progs; p != NULL; )
     {
-	fname = xmalloc (strlen (p->dir) + sizeof CVSADM_CIPROG + 10);
-	sprintf (fname, "%s/%s", p->dir, CVSADM_CIPROG);
+	xasprintf (&fname, "%s/%s", p->dir, CVSADM_CIPROG);
 	f = open_file (fname, "w");
 	if (fprintf (f, "%s\n", p->name) < 0)
 	    error (1, errno, "writing %s", fname);
@@ -2559,8 +2631,7 @@ do_deferred_progs ()
     checkin_progs = NULL;
     for (p = update_progs; p != NULL; )
     {
-	fname = xmalloc (strlen (p->dir) + sizeof CVSADM_UPROG + 10);
-	sprintf (fname, "%s/%s", p->dir, CVSADM_UPROG);
+	xasprintf (&fname, "%s/%s", p->dir, CVSADM_UPROG);
 	f = open_file (fname, "w");
 	if (fprintf (f, "%s\n", p->name) < 0)
 	    error (1, errno, "writing %s", fname);
@@ -2922,14 +2993,14 @@ send_a_repository (dir, repository, update_dir)
                    from REPOSITORY.  If the path elements don't exist
                    in REPOSITORY, or the removal of those path
                    elements mean that we "step above"
-                   CVSroot_directory, set toplevel_repos to
-                   CVSroot_directory. */
+                   current_parsed_root->directory, set toplevel_repos to
+                   current_parsed_root->directory. */
 		if ((repository_len > update_dir_len)
 		    && (strcmp (repository + repository_len - update_dir_len,
 				update_dir) == 0)
-		    /* TOPLEVEL_REPOS shouldn't be above CVSroot_directory */
-		    && ((repository_len - update_dir_len)
-			> strlen (CVSroot_directory)))
+		    /* TOPLEVEL_REPOS shouldn't be above current_parsed_root->directory */
+		    && ((size_t)(repository_len - update_dir_len)
+			> strlen (current_parsed_root->directory)))
 		{
 		    /* The repository name contains UPDATE_DIR.  Set
                        toplevel_repos to the repository name without
@@ -2943,7 +3014,7 @@ send_a_repository (dir, repository, update_dir)
 		}
 		else
 		{
-		    toplevel_repos = xstrdup (CVSroot_directory);
+		    toplevel_repos = xstrdup (current_parsed_root->directory);
 		}
 	    }
 	}
@@ -3001,7 +3072,7 @@ client_expand_modules (argc, argv, local)
 
     for (i = 0; i < argc; ++i)
 	send_arg (argv[i]);
-    send_a_repository ("", CVSroot_directory, "");
+    send_a_repository ("", current_parsed_root->directory, "");
 
     send_to_server ("expand-modules\012", 0);
 
@@ -3039,13 +3110,13 @@ client_send_expansions (local, where, build_dirs)
 	if (isfile (argv[0]))
 	    send_files (1, argv, local, 0, build_dirs ? SEND_BUILD_DIRS : 0);
     }
-    send_a_repository ("", CVSroot_directory, "");
+    send_a_repository ("", current_parsed_root->directory, "");
 }
 
 void
 client_nonexpanded_setup ()
 {
-    send_a_repository ("", CVSroot_directory, "");
+    send_a_repository ("", current_parsed_root->directory, "");
 }
 
 /* Receive a cvswrappers line from the server; it must be a line
@@ -3504,7 +3575,6 @@ get_server_responses ()
 }
 
 /* Get the responses and then close the connection.  */
-int server_fd = -1;
 
 /*
  * Flag var; we'll set it in start_server() and not one of its
@@ -3533,94 +3603,35 @@ get_responses_and_close ()
     if (client_prune_dirs)
 	process_prune_candidates ();
 
-    /* The calls to buf_shutdown are currently only meaningful when we
-       are using compression.  First we shut down TO_SERVER.  That
-       tells the server that its input is finished.  It then shuts
-       down the buffer it is sending to us, at which point our shut
-       down of FROM_SERVER will complete.  */
+    /* First we shut down TO_SERVER.  That tells the server that its input is
+     * finished.  It then shuts down the buffer it is sending to us, at which
+     * point our shut down of FROM_SERVER will complete.
+     */
 
     status = buf_shutdown (to_server);
     if (status != 0)
-        error (0, status, "shutting down buffer to server");
+	error (0, status, "shutting down buffer to server");
+    buf_free (to_server);
+    to_server = NULL;
+
     status = buf_shutdown (from_server);
     if (status != 0)
 	error (0, status, "shutting down buffer from server");
-
-#ifdef NO_SOCKET_TO_FD
-    if (use_socket_style)
-    {
-	if (shutdown (server_sock, 2) < 0)
-	    error (1, 0, "shutting down server socket: %s", SOCK_STRERROR (SOCK_ERRNO));
-    }
-    else
-#endif /* NO_SOCKET_TO_FD */
-    {
-#if defined(HAVE_KERBEROS) || defined(AUTH_CLIENT_SUPPORT)
-	if (server_fd != -1)
-	{
-	    if (shutdown (server_fd, 1) < 0)
-		error (1, 0, "shutting down connection to %s: %s",
-		       CVSroot_hostname, SOCK_STRERROR (SOCK_ERRNO));
-            /*
-             * This test will always be true because we dup the descriptor
-             */
-	    if (fileno (from_server_fp) != fileno (to_server_fp))
-	    {
-		if (fclose (to_server_fp) != 0)
-		    error (1, errno,
-			   "closing down connection to %s",
-			   CVSroot_hostname);
-	    }
-	}
-        else
-#endif
-          
-#ifdef SHUTDOWN_SERVER
-	    SHUTDOWN_SERVER (fileno (to_server_fp));
-#else /* ! SHUTDOWN_SERVER */
-	{
-
-#ifdef START_RSH_WITH_POPEN_RW
-	    if (pclose (to_server_fp) == EOF)
-#else /* ! START_RSH_WITH_POPEN_RW */
-		if (fclose (to_server_fp) == EOF)
-#endif /* START_RSH_WITH_POPEN_RW */
-		{
-		    error (1, errno, "closing connection to %s",
-			   CVSroot_hostname);
-		}
-        }
-
-	if (! buf_empty_p (from_server)
-	    || getc (from_server_fp) != EOF)
-	    error (0, 0, "dying gasps from %s unexpected", CVSroot_hostname);
-	else if (ferror (from_server_fp))
-	    error (0, errno, "reading from %s", CVSroot_hostname);
-
-	fclose (from_server_fp);
-#endif /* SHUTDOWN_SERVER */
-    }
-
-    if (rsh_pid != -1
-	&& waitpid (rsh_pid, (int *) 0, 0) == -1)
-	error (1, errno, "waiting for process %d", rsh_pid);
-
-    buf_free (to_server);
     buf_free (from_server);
+    from_server = NULL;
     server_started = 0;
 
     /* see if we need to sleep before returning to avoid time-stamp races */
     if (last_register_time)
     {
-	while (time ((time_t *) NULL) == last_register_time)
-	    sleep (1);
+	sleep_past (last_register_time);
     }
 
     return errs;
 }
 	
 #ifndef NO_EXT_METHOD
-static void start_rsh_server PROTO((int *, int *));
+static void start_rsh_server PROTO((cvsroot_t *, struct buffer **, struct buffer **));
 #endif
 
 int
@@ -3637,7 +3648,8 @@ supported_request (name)
     return 0;
 }
 
-
+
+
 #if defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_KERBEROS)
 static struct hostent *init_sockaddr PROTO ((struct sockaddr_in *, char *,
 					     unsigned int));
@@ -3666,80 +3678,162 @@ init_sockaddr (name, hostname, port)
 
 #endif /* defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_KERBEROS) */
 
+
+
 #ifdef AUTH_CLIENT_SUPPORT
 
-static int auth_server_port_number PROTO ((void));
-
+/* Generic function to do port number lookup tasks.
+ *
+ * In order of precedence, will return:
+ * 	getenv (envname), if defined
+ * 	getservbyname (portname), if defined
+ * 	defaultport
+ */
 static int
-auth_server_port_number ()
+get_port_number (envname, portname, defaultport)
+    const char *envname;
+    const char *portname;
+    int defaultport;
 {
-    struct servent *s = getservbyname ("cvspserver", "tcp");
+    struct servent *s;
+    char *port_s;
 
-    if (s)
+    if (envname && (port_s = getenv (envname)))
+    {
+	int port = atoi (port_s);
+	if (port <= 0)
+	{
+	    error (0, 0, "%s must be a positive integer!  If you", envname);
+	    error (0, 0, "are trying to force a connection via rsh, please");
+	    error (0, 0, "put \":server:\" at the beginning of your CVSROOT");
+	    error (1, 0, "variable.");
+	}
+	return port;
+    }
+    else if (portname && (s = getservbyname (portname, "tcp")))
 	return ntohs (s->s_port);
     else
-	return CVS_AUTH_PORT;
+	return defaultport;
 }
 
 
-/* Read a line from socket SOCK.  Result does not include the
-   terminating linefeed.  This is only used by the authentication
-   protocol, which we call before we set up all the buffering stuff.
-   It is possible it should use the buffers too, which would be faster
-   (unlike the server, there isn't really a security issue in terms of
-   separating authentication from the rest of the code).
 
-   Space for the result is malloc'd and should be freed by the caller.
-
-   Returns number of bytes read.  */
-static int
-recv_line (sock, resultp)
-    int sock;
-    char **resultp;
+/* get the port number for a client to connect to based on the port
+ * and method of a cvsroot_t.
+ *
+ * we do this here instead of in parse_cvsroot so that we can keep network
+ * code confined to a localized area and also to delay the lookup until the
+ * last possible moment so it remains possible to run cvs client commands that
+ * skip opening connections to the server (i.e. skip network operations
+ * entirely)
+ *
+ * and yes, I know none of the commands do that now, but here's to planning
+ * for the future, eh?  cheers.
+ *
+ * FIXME - We could cache the port lookup safely right now as we never change
+ * it for a single root on the fly, but we'd have to un'const some other
+ * functions - REMOVE_FIXME? This may be unecessary.  We're talking about,
+ * what, usually one, sometimes two lookups of the port per invocation.  I
+ * think twice is by far the rarer of the two cases - only the login function
+ * will need to do it to save the canonical CVSROOT. -DRP
+ */
+int
+get_cvs_port_number (root)
+    const cvsroot_t *root;
 {
-    char *result;
-    size_t input_index = 0;
-    size_t result_size = 80;
 
-    result = (char *) xmalloc (result_size);
+    if (root->port) return root->port;
 
-    while (1)
+    switch (root->method)
     {
-	char ch;
-	int n;
-	n = recv (sock, &ch, 1, 0);
-	if (n <= 0)
-	    error (1, 0, "recv() from server %s: %s", CVSroot_hostname,
-		   n == 0 ? "EOF" : SOCK_STRERROR (SOCK_ERRNO));
-
-	if (ch == '\012')
+	case gserver_method:
+	case pserver_method:
+	    return get_port_number ("CVS_CLIENT_PORT", "cvspserver", CVS_AUTH_PORT);
+#ifdef HAVE_KERBEROS
+	case kserver_method:
+	    return get_port_number ("CVS_CLIENT_PORT", "cvs", CVS_PORT);
+#endif
+	default:
+	    error(1, EINVAL, "internal error: get_cvs_port_number called for invalid connection method (%s)",
+		    method_names[root->method]);
 	    break;
-
-	result[input_index++] = ch;
-	while (input_index + 1 >= result_size)
-	{
-	    result_size *= 2;
-	    result = (char *) xrealloc (result, result_size);
-	}
     }
-
-    if (resultp)
-	*resultp = result;
-
-    /* Terminate it just for kicks, but we *can* deal with embedded NULs.  */
-    result[input_index] = '\0';
-
-    if (resultp == NULL)
-	free (result);
-    return input_index;
+    /* NOTREACHED */
+    return -1;
 }
+
+
+
+void
+make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, is_sock)
+    int tofd;
+    int fromfd;
+    int child_pid;
+    struct buffer **to_server;
+    struct buffer **from_server;
+    int is_sock;
+{
+    FILE *to_server_fp;
+    FILE *from_server_fp;
+
+#ifdef NO_SOCKET_TO_FD
+    if (is_sock)
+    {
+	assert (tofd == fromfd);
+	*to_server = socket_buffer_initialize (tofd, 0,
+					      (BUFMEMERRPROC) NULL);
+	*from_server = socket_buffer_initialize (tofd, 1,
+						(BUFMEMERRPROC) NULL);
+    }
+    else
+#endif /* NO_SOCKET_TO_FD */
+    {
+	/* todo: some OS's don't need these calls... */
+	close_on_exec (tofd);
+	close_on_exec (fromfd);
+
+	/* SCO 3 and AIX have a nasty bug in the I/O libraries which precludes
+	   fdopening the same file descriptor twice, so dup it if it is the
+	   same.  */
+	if (tofd == fromfd)
+	{
+	    fromfd = dup (tofd);
+	    if (fromfd < 0)
+		error (1, errno, "cannot dup net connection");
+	}
+
+	/* These will use binary mode on systems which have it.  */
+	/*
+	 * Also, we know that from_server is shut down second, so we pass
+	 * child_pid in there.  In theory, it should be stored in both
+	 * buffers with a ref count...
+	 */
+	to_server_fp = fdopen (tofd, FOPEN_BINARY_WRITE);
+	if (to_server_fp == NULL)
+	    error (1, errno, "cannot fdopen %d for write", tofd);
+	*to_server = stdio_buffer_initialize (to_server_fp, 0, 0,
+					     (BUFMEMERRPROC) NULL);
+
+	from_server_fp = fdopen (fromfd, FOPEN_BINARY_READ);
+	if (from_server_fp == NULL)
+	    error (1, errno, "cannot fdopen %d for read", fromfd);
+	*from_server = stdio_buffer_initialize (from_server_fp, child_pid, 1,
+					       (BUFMEMERRPROC) NULL);
+    }
+}
+
+
 
 /* Connect to a forked server process. */
 
 void
-connect_to_forked_server (tofdp, fromfdp)
-     int *tofdp, *fromfdp;
+connect_to_forked_server (to_server, from_server)
+    struct buffer **to_server;
+    struct buffer **from_server;
 {
+    int tofd, fromfd;
+    int child_pid;
+
     /* This is pretty simple.  All we need to do is choose the correct
        cvs binary and call piped_child. */
 
@@ -3747,13 +3841,21 @@ connect_to_forked_server (tofdp, fromfdp)
 
     command[0] = getenv ("CVS_SERVER");
     if (! command[0])
-	command[0] = "cvs";
+	command[0] = program_path;
     
     command[1] = "server";
     command[2] = NULL;
 
-    if (! piped_child (command, tofdp, fromfdp))
+    if (trace)
+    {
+	fprintf (stderr, " -> Forking server: %s %s\n", command[0], command[1]);
+    }
+
+    child_pid = piped_child (command, &tofd, &fromfd);
+    if (child_pid < 0)
 	error (1, 0, "could not fork server process");
+
+    make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, 0);
 }
 
 /* Connect to the authenticating server.
@@ -3769,28 +3871,28 @@ connect_to_forked_server (tofdp, fromfdp)
    If we fail to connect or if access is denied, then die with fatal
    error.  */
 void
-connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
-     int *tofdp, *fromfdp;
-     int verify_only;
-     int do_gssapi;
+connect_to_pserver (root, to_server_p, from_server_p, verify_only, do_gssapi)
+    cvsroot_t *root;
+    struct buffer **to_server_p;
+    struct buffer **from_server_p;
+    int verify_only;
+    int do_gssapi;
 {
     int sock;
-#ifndef NO_SOCKET_TO_FD
-    int tofd, fromfd;
-#endif
     int port_number;
     char no_passwd = 0;   /* gets set if no password found */
     struct addrinfo hints, *res, *res0 = NULL;
     char pbuf[10];
     int e;
+    struct buffer *to_server, *from_server;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
-    port_number = auth_server_port_number ();
+    port_number = get_cvs_port_number (root);
     snprintf(pbuf, sizeof(pbuf), "%d", port_number);
-    e = getaddrinfo(CVSroot_hostname, pbuf, &hints, &res0);
+    e = getaddrinfo(root->hostname, pbuf, &hints, &res0);
     if (e)
     {
 	error (1, 0, "%s", gai_strerror(e));
@@ -3801,6 +3903,10 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 	if (sock < 0)
 	    continue;
 
+	if (trace)
+	{
+	    fprintf (stderr, " -> Connecting to %s\n", root->hostname);
+	}
 	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
 	    close(sock);
 	    sock = -1;
@@ -3808,20 +3914,89 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 	}
 	break;
     }
+    freeaddrinfo(res0);
     if (sock < 0)
     {
-	error (1, 0, "connect to %s:%s failed: %s", CVSroot_hostname,
+	error (1, 0, "connect to %s:%s failed: %s", root->hostname,
 	       pbuf, SOCK_STRERROR (SOCK_ERRNO));
     }
+
+    make_bufs_from_fds (sock, sock, 0, &to_server, &from_server, 1);
+
+    auth_server (root, to_server, from_server, verify_only, do_gssapi);
+
+    if (verify_only)
+    {
+	int status;
+
+	status = buf_shutdown (to_server);
+	if (status != 0)
+	    error (0, status, "shutting down buffer to server");
+	buf_free (to_server);
+	to_server = NULL;
+
+	status = buf_shutdown (from_server);
+	if (status != 0)
+	    error (0, status, "shutting down buffer from server");
+	buf_free (from_server);
+	from_server = NULL;
+
+	/* Don't need to set server_started = 0 since we don't set it to 1
+	 * until returning from this call.
+	 */
+    }
+    else
+    {
+	*to_server_p = to_server;
+	*from_server_p = from_server;
+    }
+
+    return;
+}
+
+
+
+static void
+auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
+    cvsroot_t *root;
+    struct buffer *lto_server;
+    struct buffer *lfrom_server;
+    int verify_only;
+    int do_gssapi;
+{
+    char *username;			/* the username we use to connect */
+    char no_passwd = 0;			/* gets set if no password found */
+
+    /* FIXME!!!!!!!!!!!!!!!!!!
+     *
+     * THIS IS REALLY UGLY!
+     *
+     * I'm setting the globals here so we can make calls to send_to_server &
+     * read_line.  This happens again _after_ we return if we're not in
+     * verify_only mode.  We should be relying on the values we passed in, but
+     * sent_to_server and read_line don't require an outside buf yet.
+     */
+    to_server = lto_server;
+    from_server = lfrom_server;
 
     /* Run the authorization mini-protocol before anything else. */
     if (do_gssapi)
     {
 #ifdef HAVE_GSSAPI
-	if (! connect_to_gserver (sock,
-	    res0->ai_canonname ? res0->ai_canonname : CVSroot_hostname))
+	FILE *fp = stdio_buffer_get_file(lto_server);
+	int fd = fp ? fileno(fp) : -1;
+	struct stat s;
+
+	if ((fd < 0) || (fstat (fd, &s) < 0) || !S_ISSOCK(s.st_mode))
 	{
-	    goto rejected;
+	    error (1, 0, "gserver currently only enabled for socket connections");
+	}
+
+	if (! connect_to_gserver (root, fd, root->hostname))
+	{
+	    error (1, 0,
+		    "authorization failed: server %s rejected access to %s",
+		    root->hostname, root->directory);
 	}
 #else
 	error (1, 0, "This client does not support GSSAPI authentication");
@@ -3830,54 +4005,47 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     else
     {
 	char *begin      = NULL;
-	char *repository = CVSroot_directory;
-	char *username   = CVSroot_username;
 	char *password   = NULL;
 	char *end        = NULL;
-
+	
 	if (verify_only)
 	{
-	    begin = "BEGIN VERIFICATION REQUEST\012";
-	    end   = "END VERIFICATION REQUEST\012";
+	    begin = "BEGIN VERIFICATION REQUEST";
+	    end   = "END VERIFICATION REQUEST";
 	}
 	else
 	{
-	    begin = "BEGIN AUTH REQUEST\012";
-	    end   = "END AUTH REQUEST\012";
+	    begin = "BEGIN AUTH REQUEST";
+	    end   = "END AUTH REQUEST";
 	}
 
 	/* Get the password, probably from ~/.cvspass. */
 	password = get_cvs_password ();
-        
-        /* Send the empty string by default.  This is so anonymous CVS
-           access doesn't require client to have done "cvs login". */
-        if (password == NULL) 
-        {
-            no_passwd = 1;
-            password = scramble ("");
-        }
+	username = root->username ? root->username : getcaller();
+
+	/* Send the empty string by default.  This is so anonymous CVS
+	   access doesn't require client to have done "cvs login". */
+	if (password == NULL) 
+	{
+	    no_passwd = 1;
+	    password = scramble ("");
+	}
 
 	/* Announce that we're starting the authorization protocol. */
-	if (send (sock, begin, strlen (begin), 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
+	send_to_server(begin, 0);
+	send_to_server("\012", 1);
 
 	/* Send the data the server needs. */
-	if (send (sock, repository, strlen (repository), 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
-	if (send (sock, "\012", 1, 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
-	if (send (sock, username, strlen (username), 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
-	if (send (sock, "\012", 1, 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
-	if (send (sock, password, strlen (password), 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
-	if (send (sock, "\012", 1, 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
+	send_to_server(root->directory, 0);
+	send_to_server("\012", 1);
+	send_to_server(username, 0);
+	send_to_server("\012", 1);
+	send_to_server(password, 0);
+	send_to_server("\012", 1);
 
 	/* Announce that we're ending the authorization protocol. */
-	if (send (sock, end, strlen (end), 0) < 0)
-	    error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
+	send_to_server(end, 0);
+	send_to_server("\012", 1);
 
         /* Paranoia. */
         memset (password, 0, strlen (password));
@@ -3889,12 +4057,34 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 	/* Loop, getting responses from the server.  */
 	while (1)
 	{
-	    recv_line (sock, &read_buf);
+	    read_line (&read_buf);
 
 	    if (strcmp (read_buf, "I HATE YOU") == 0)
 	    {
-		/* Authorization not granted. */
-		goto rejected;
+		/* Authorization not granted.
+		 *
+		 * This is a little confusing since we can reach this while loop in GSSAPI
+		 * mode, but if GSSAPI authentication failed, we already jumped to the
+		 * rejected label (there is no case where the connect_to_gserver function
+		 * can return 1 and we will not receive "I LOVE YOU" from the server, barring
+		 * broken connections and garbled messages, of course).
+		 *
+		 * i.e. This is a pserver specific error message and should be since
+		 * GSSAPI doesn't use username.
+		 */
+		error (0, 0,
+			"authorization failed: server %s rejected access to %s for user %s",
+			root->hostname, root->directory, username);
+
+		/* Output a special error message if authentication was attempted
+		with no password -- the user should be made aware that they may
+		have missed a step. */
+		if (no_passwd)
+		{
+		    error (0, 0,
+			    "used empty password; try \"cvs login\" with a real password");
+		}
+		error_exit();
 	    }
 	    else if (strncmp (read_buf, "E ", 2) == 0)
 	    {
@@ -3917,7 +4107,7 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 
 		/* Now output the text.  */
 		fprintf (stderr, "%s\n", p);
-		goto rejected;
+		error_exit();
 	    }
 	    else if (strcmp (read_buf, "I LOVE YOU") == 0)
 	    {
@@ -3926,97 +4116,30 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 	    }
 	    else
 	    {
-		/* Unrecognized response from server. */
-		if (shutdown (sock, 2) < 0)
-		{
-		    error (0, 0,
-			   "unrecognized auth response from %s: %s", 
-			   CVSroot_hostname, read_buf);
-		    error (1, 0,
-			   "shutdown() failed, server %s: %s",
-			   CVSroot_hostname,
-			   SOCK_STRERROR (SOCK_ERRNO));
-		}
 		error (1, 0, 
 		       "unrecognized auth response from %s: %s", 
-		       CVSroot_hostname, read_buf);
+		       root->hostname, read_buf);
 	    }
 	    free (read_buf);
 	}
     }
-
-    if (verify_only)
-    {
-	if (shutdown (sock, 2) < 0)
-	    error (0, 0, "shutdown() failed, server %s: %s", CVSroot_hostname,
-		   SOCK_STRERROR (SOCK_ERRNO));
-	if (res0)
-	    freeaddrinfo(res0);
-	return;
-    }
-    else
-    {
-#ifdef NO_SOCKET_TO_FD
-	use_socket_style = 1;
-	server_sock = sock;
-	/* Try to break mistaken callers: */
-	*tofdp = 0;
-	*fromfdp = 0;
-#else /* ! NO_SOCKET_TO_FD */
-	server_fd = sock;
-	close_on_exec (server_fd);
-	tofd = fromfd = sock;
-	/* Hand them back to the caller. */
-	*tofdp   = tofd;
-	*fromfdp = fromfd;
-#endif /* NO_SOCKET_TO_FD */
-    }
-
-    if (res0)
-	freeaddrinfo(res0);
-    return;
-
-  rejected:
-    error (0, 0,
-	"authorization failed: server %s rejected access to %s for user %s",
-	CVSroot_hostname, CVSroot_directory, CVSroot_username);
-
-    error (0, 0, 
-	   "authorization failed: server %s rejected access", 
-	   CVSroot_hostname);
-
-    /* Output a special error message if authentication was attempted
-       with no password -- the user should be made aware that they may
-       have missed a step. */
-    if (no_passwd)
-    {
-        error (0, 0,
-               "used empty password; try \"cvs login\" with a real password");
-    }
-
-    if (shutdown (sock, 2) < 0)
-    {
-	error (0, 0,
-	       "shutdown() failed (server %s): %s",
-	       CVSroot_hostname,
-	       SOCK_STRERROR (SOCK_ERRNO));
-    }
-
-    error_exit();
 }
 #endif /* AUTH_CLIENT_SUPPORT */
 
-
-#if HAVE_KERBEROS
+
+
+#ifdef HAVE_KERBEROS
 
 /* This function has not been changed to deal with NO_SOCKET_TO_FD
    (i.e., systems on which sockets cannot be converted to file
    descriptors).  The first person to try building a kerberos client
    on such a system (OS/2, Windows 95, and maybe others) will have to
-   make take care of this.  */
+   take care of this.  */
 void
-start_tcp_server (tofdp, fromfdp)
-    int *tofdp, *fromfdp;
+start_tcp_server (root, to_server, from_server)
+    cvsroot_t *root;
+    struct buffer **to_server;
+    struct buffer **from_server;
 {
     int s;
     const char *portenv;
@@ -4029,42 +4152,26 @@ start_tcp_server (tofdp, fromfdp)
     if (s < 0)
 	error (1, 0, "cannot create socket: %s", SOCK_STRERROR (SOCK_ERRNO));
 
-    /* Get CVS_CLIENT_PORT or look up cvs/tcp with CVS_PORT as default */
-    portenv = getenv ("CVS_CLIENT_PORT");
-    if (portenv != NULL)
-    {
-	port = atoi (portenv);
-	if (port <= 0)
-	{
-	    error (0, 0, "CVS_CLIENT_PORT must be a positive number!  If you");
-	    error (0, 0, "are trying to force a connection via rsh, please");
-	    error (0, 0, "put \":server:\" at the beginning of your CVSROOT");
-	    error (1, 0, "variable.");
-	}
-	if (trace)
-	    fprintf(stderr, "Using TCP port %d to contact server.\n", port);
-    }
-    else
-    {
-	struct servent *sp;
+    port = get_cvs_port_number (root);
 
-	sp = getservbyname ("cvs", "tcp");
-	if (sp == NULL)
-	    port = CVS_PORT;
-	else
-	    port = ntohs (sp->s_port);
-    }
-
-    hp = init_sockaddr (&sin, CVSroot_hostname, port);
+    hp = init_sockaddr (&sin, root->hostname, port);
 
     hname = xmalloc (strlen (hp->h_name) + 1);
     strcpy (hname, hp->h_name);
   
+    if (trace)
+    {
+	fprintf (stderr, " -> Connecting to %s(%s):%d\n",
+		 root->hostname,
+		 inet_ntoa (sin.sin_addr), port);
+    }
+
     if (connect (s, (struct sockaddr *) &sin, sizeof sin) < 0)
-	error (1, 0, "connect to %s:%d failed: %s", CVSroot_hostname,
+	error (1, 0, "connect to %s(%s):%d failed: %s",
+	       root->hostname,
+	       inet_ntoa (sin.sin_addr),
 	       port, SOCK_STRERROR (SOCK_ERRNO));
 
-#ifdef HAVE_KERBEROS
     {
 	const char *realm;
 	struct sockaddr_in laddr;
@@ -4090,16 +4197,13 @@ start_tcp_server (tofdp, fromfdp)
 		   krb_get_err_text (status));
 	memcpy (kblock, cred.session, sizeof (C_Block));
     }
-#endif /* HAVE_KERBEROS */
 
-    server_fd = s;
-    close_on_exec (server_fd);
+    close_on_exec (s);
 
     free (hname);
 
     /* Give caller the values it wants. */
-    *tofdp   = s;
-    *fromfdp = s;
+    make_bufs_from_fds (s, s, 0, to_server, from_server, 1);
 }
 
 #endif /* HAVE_KERBEROS */
@@ -4119,9 +4223,10 @@ recv_bytes (sock, buf, need)
 	int got;
 
 	got = recv (sock, buf, need, 0);
-	if (got < 0)
-	    error (1, 0, "recv() from server %s: %s", CVSroot_hostname,
-		   SOCK_STRERROR (SOCK_ERRNO));
+	if (got <= 0)
+	    error (1, 0, "recv() from server %s: %s", current_parsed_root->hostname,
+		   got == 0 ? "EOF" : SOCK_STRERROR (SOCK_ERRNO));
+
 	buf += got;
 	need -= got;
     }
@@ -4129,13 +4234,29 @@ recv_bytes (sock, buf, need)
 
 /* Connect to the server using GSSAPI authentication.  */
 
+/* FIXME
+ *
+ * This really needs to be rewritten to use a buffer and not a socket.
+ * This would enable gserver to work with the SSL code I'm about to commit
+ * since the SSL connection is going to look like a FIFO and not a socket.
+ *
+ * I think, basically, it will need to use buf_output and buf_read directly
+ * since I don't think there is a read_bytes function - only read_line.
+ *
+ * recv_bytes could then be removed too.
+ *
+ * Besides, I added some cruft to reenable the socket which shouldn't be
+ * there.  This would also enable its removal.
+ */
+#define BUFSIZE 1024
 static int
-connect_to_gserver (sock, hostname)
-     int sock;
-     const char *hostname;
+connect_to_gserver (root, sock, hostname)
+    cvsroot_t *root;
+    int sock;
+    const char *hostname;
 {
     char *str;
-    char buf[1024];
+    char buf[BUFSIZE];
     gss_buffer_desc *tok_in_ptr, tok_in, tok_out;
     OM_uint32 stat_min, stat_maj;
     gss_name_t server_name;
@@ -4145,6 +4266,8 @@ connect_to_gserver (sock, hostname)
     if (send (sock, str, strlen (str), 0) < 0)
 	error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
 
+    if (strlen (hostname) > BUFSIZE - 5)
+	error (1, 0, "Internal error: hostname exceeds length of buffer");
     sprintf (buf, "cvs@%s", hostname);
     tok_in.length = strlen (buf);
     tok_in.value = buf;
@@ -4214,11 +4337,11 @@ connect_to_gserver (sock, hostname)
 		got = recv (sock, buf + 2, sizeof buf - 2, 0);
 		if (got < 0)
 		    error (1, 0, "recv() from server %s: %s",
-			   CVSroot_hostname, SOCK_STRERROR (SOCK_ERRNO));
+			   root->hostname, SOCK_STRERROR (SOCK_ERRNO));
 		buf[got + 2] = '\0';
 		if (buf[got + 1] == '\n')
 		    buf[got + 1] = '\0';
-		error (1, 0, "error from server %s: %s", CVSroot_hostname,
+		error (1, 0, "error from server %s: %s", root->hostname,
 		       buf);
 	    }
 
@@ -4255,9 +4378,8 @@ send_variable_proc (node, closure)
 void
 start_server ()
 {
-    int tofd, fromfd, rootless;
+    int rootless;
     char *log = getenv ("CVS_CLIENT_LOG");
-
 
     /* Clear our static variables for this invocation. */
     if (toplevel_repos != NULL)
@@ -4270,27 +4392,28 @@ start_server ()
        (*really* slow on a 14.4kbps link); the clean way to have a CVS
        which supports several ways of connecting is with access methods.  */
 
-    switch (CVSroot_method)
+    switch (current_parsed_root->method)
     {
 
 #ifdef AUTH_CLIENT_SUPPORT
 	case pserver_method:
-	    /* Toss the return value.  It will die with error if anything
-	       goes wrong anyway. */
-	    connect_to_pserver (&tofd, &fromfd, 0, 0);
+	    /* Toss the return value.  It will die with an error message if
+	     * anything goes wrong anyway.
+	     */
+	    connect_to_pserver (current_parsed_root, &to_server, &from_server, 0, 0);
 	    break;
 #endif
 
 #if HAVE_KERBEROS
 	case kserver_method:
-	    start_tcp_server (&tofd, &fromfd);
+	    start_tcp_server (current_parsed_root, &to_server, &from_server);
 	    break;
 #endif
 
-#if HAVE_GSSAPI
+#ifdef HAVE_GSSAPI
 	case gserver_method:
 	    /* GSSAPI authentication is handled by the pserver.  */
-	    connect_to_pserver (&tofd, &fromfd, 0, 1);
+	    connect_to_pserver (current_parsed_root, &to_server, &from_server, 0, 1);
 	    break;
 #endif
 
@@ -4299,34 +4422,34 @@ start_server ()
 	    error (0, 0, ":ext: method not supported by this port of CVS");
 	    error (1, 0, "try :server: instead");
 #else
-	    start_rsh_server (&tofd, &fromfd);
+	    start_rsh_server (current_parsed_root, &to_server, &from_server);
 #endif
 	    break;
 
 	case server_method:
 #if defined(START_SERVER)
+	    {
+	    int tofd, fromfd;
 	    START_SERVER (&tofd, &fromfd, getcaller (),
-			  CVSroot_username, CVSroot_hostname,
-			  CVSroot_directory);
-#  if defined (START_SERVER_RETURNS_SOCKET) && defined (NO_SOCKET_TO_FD)
-	    /* This is a system on which we can only write to a socket
-	       using send/recv.  Therefore its START_SERVER needs to
-	       return a socket.  */
-	    use_socket_style = 1;
-	    server_sock = tofd;
-#  endif
-
+			  current_parsed_root->username, current_parsed_root->hostname,
+			  current_parsed_root->directory);
+# ifdef START_SERVER_RETURNS_SOCKET
+	    make_bufs_from_fds (tofd, fromfd, 0, &to_server, &from_server, 1);
+# else
+	    make_bufs_from_fds (tofd, fromfd, 0, &to_server, &from_server, 0);
+# endif /* START_SERVER_RETURNS_SOCKET */
+	    }
 #else
 	    /* FIXME: It should be possible to implement this portably,
 	       like pserver, which would get rid of the duplicated code
 	       in {vms,windows-NT,...}/startserver.c.  */
-	    error (1, 0, "\
-the :server: access method is not supported by this port of CVS");
+	    error (1, 0,
+"the :server: access method is not supported by this port of CVS");
 #endif
 	    break;
 
         case fork_method:
-	    connect_to_forked_server (&tofd, &fromfd);
+	    connect_to_forked_server (&to_server, &from_server);
 	    break;
 
 	default:
@@ -4338,46 +4461,11 @@ the :server: access method is not supported by this port of CVS");
     /* "Hi, I'm Darlene and I'll be your server tonight..." */
     server_started = 1;
 
-#ifdef NO_SOCKET_TO_FD
-    if (use_socket_style)
-    {
-	to_server = socket_buffer_initialize (server_sock, 0,
-					      (BUFMEMERRPROC) NULL);
-	from_server = socket_buffer_initialize (server_sock, 1,
-						(BUFMEMERRPROC) NULL);
-    }
-    else
-#endif /* NO_SOCKET_TO_FD */
-    {
-        /* todo: some OS's don't need these calls... */
-        close_on_exec (tofd);
-        close_on_exec (fromfd);
-
-	/* SCO 3 and AIX have a nasty bug in the I/O libraries which precludes
-	   fdopening the same file descriptor twice, so dup it if it is the
-	   same.  */
-	if (tofd == fromfd)
-	{
-	    fromfd = dup (tofd);
-	    if (fromfd < 0)
-		error (1, errno, "cannot dup net connection");
-	}
-
-        /* These will use binary mode on systems which have it.  */
-        to_server_fp = fdopen (tofd, FOPEN_BINARY_WRITE);
-        if (to_server_fp == NULL)
-	    error (1, errno, "cannot fdopen %d for write", tofd);
-	to_server = stdio_buffer_initialize (to_server_fp, 0,
-					     (BUFMEMERRPROC) NULL);
-
-        from_server_fp = fdopen (fromfd, FOPEN_BINARY_READ);
-        if (from_server_fp == NULL)
-	    error (1, errno, "cannot fdopen %d for read", fromfd);
-	from_server = stdio_buffer_initialize (from_server_fp, 1,
-					       (BUFMEMERRPROC) NULL);
-    }
-
-    /* Set up logfiles, if any. */
+    /* Set up logfiles, if any.
+     *
+     * We do this _after_ authentication on purpose.  Wouldn't really like to
+     * worry about logging passwords...
+     */
     if (log)
     {
 	int len = strlen (log);
@@ -4438,7 +4526,7 @@ the :server: access method is not supported by this port of CVS");
     if (!rootless)
     {
 	send_to_server ("Root ", 0);
-	send_to_server (CVSroot_directory, 0);
+	send_to_server (current_parsed_root->directory, 0);
 	send_to_server ("\012", 1);
     }
 
@@ -4578,7 +4666,7 @@ the :server: access method is not supported by this port of CVS");
            on encryption, bomb out; don't let the user think the data
            is being encrypted when it is not.  */
 #ifdef HAVE_KERBEROS
-	if (CVSroot_method == kserver_method)
+	if (current_parsed_root->method == kserver_method)
 	{
 	    if (! supported_request ("Kerberos-encrypt"))
 		error (1, 0, "This server does not support encryption");
@@ -4593,7 +4681,7 @@ the :server: access method is not supported by this port of CVS");
 	else
 #endif /* HAVE_KERBEROS */
 #ifdef HAVE_GSSAPI
-	if (CVSroot_method == gserver_method)
+	if (current_parsed_root->method == gserver_method)
 	{
 	    if (! supported_request ("Gssapi-encrypt"))
 		error (1, 0, "This server does not support encryption");
@@ -4666,7 +4754,7 @@ the :server: access method is not supported by this port of CVS");
 	   ability to decrypt the data stream is itself a form of
 	   authentication.  */
 #ifdef HAVE_GSSAPI
-	if (CVSroot_method == gserver_method)
+	if (current_parsed_root->method == gserver_method)
 	{
 	    if (! supported_request ("Gssapi-authenticate"))
 		error (1, 0,
@@ -4713,7 +4801,7 @@ the :server: access method is not supported by this port of CVS");
    implementing piped_child)... but I'm doing something else at the
    moment, and wish to make only one change at a time.  -Karl */
 
-#ifdef START_RSH_WITH_POPEN_RW
+# ifdef START_RSH_WITH_POPEN_RW
 
 /* This is actually a crock -- it's OS/2-specific, for no one else
    uses it.  If I get time, I want to make piped_child and all the
@@ -4721,10 +4809,13 @@ the :server: access method is not supported by this port of CVS");
    up and running, and that's most important. */
 
 static void
-start_rsh_server (tofdp, fromfdp)
-    int *tofdp, *fromfdp;
+start_rsh_server (root, to_server, from_server)
+    cvsroot_t *root;
+    struct buffer **to_server;
+    struct buffer **from_server;
 {
     int pipes[2];
+    int child_pid;
 
     /* If you're working through firewalls, you can set the
        CVS_RSH environment variable to a script which uses rsh to
@@ -4737,46 +4828,26 @@ start_rsh_server (tofdp, fromfdp)
     char *rsh_argv[10];
 
     if (!cvs_rsh)
-	/* People sometimes suggest or assume that this should default
-	   to "remsh" on systems like HPUX in which that is the
-	   system-supplied name for the rsh program.  However, that
-	   causes various problems (keep in mind that systems such as
-	   HPUX might have non-system-supplied versions of "rsh", like
-	   a Kerberized one, which one might want to use).  If we
-	   based the name on what is found in the PATH of the person
-	   who runs configure, that would make it harder to
-	   consistently produce the same result in the face of
-	   different people producing binary distributions.  If we
-	   based it on "remsh" always being the default for HPUX
-	   (e.g. based on uname), that might be slightly better but
-	   would require us to keep track of what the defaults are for
-	   each system type, and probably would cope poorly if the
-	   existence of remsh or rsh varies from OS version to OS
-	   version.  Therefore, it seems best to have the default
-	   remain "rsh", and tell HPUX users to specify remsh, for
-	   example in CVS_RSH or other such mechanisms to be devised,
-	   if that is what they want (the manual already tells them
-	   that).  */
-	cvs_rsh = "rsh";
+	cvs_rsh = "ssh";
     if (!cvs_server)
 	cvs_server = "cvs";
 
     /* The command line starts out with rsh. */
     rsh_argv[i++] = cvs_rsh;
 
-#ifdef RSH_NEEDS_BINARY_FLAG
+#   ifdef RSH_NEEDS_BINARY_FLAG
     /* "-b" for binary, under OS/2. */
     rsh_argv[i++] = "-b";
-#endif /* RSH_NEEDS_BINARY_FLAG */
+#   endif /* RSH_NEEDS_BINARY_FLAG */
 
     /* Then we strcat more things on the end one by one. */
-    if (CVSroot_username != NULL)
+    if (root->username != NULL)
     {
 	rsh_argv[i++] = "-l";
-	rsh_argv[i++] = CVSroot_username;
+	rsh_argv[i++] = root->username;
     }
 
-    rsh_argv[i++] = CVSroot_hostname;
+    rsh_argv[i++] = root->hostname;
     rsh_argv[i++] = cvs_server;
     rsh_argv[i++] = "server";
 
@@ -4786,25 +4857,27 @@ start_rsh_server (tofdp, fromfdp)
     if (trace)
     {
 	fprintf (stderr, " -> Starting server: ");
+	for (i = 0; rsh_argv[i]; i++)
+	    fprintf (stderr, "%s ", rsh_argv[i]);
 	putc ('\n', stderr);
     }
 
     /* Do the deed. */
-    rsh_pid = popenRW (rsh_argv, pipes);
-    if (rsh_pid < 0)
+    child_pid = popenRW (rsh_argv, pipes);
+    if (child_pid < 0)
 	error (1, errno, "cannot start server via rsh");
 
-    /* Give caller the file descriptors. */
-    *tofdp   = pipes[0];
-    *fromfdp = pipes[1];
+    /* Give caller the file descriptors in a form it can deal with. */
+    make_bufs_from_fds (pipes[0], pipes[1], child_pid, to_server, from_server, 0);
 }
 
-#else /* ! START_RSH_WITH_POPEN_RW */
+# else /* ! START_RSH_WITH_POPEN_RW */
 
 static void
-start_rsh_server (tofdp, fromfdp)
-     int *tofdp;
-     int *fromfdp;
+start_rsh_server (root, to_server, from_server)
+    cvsroot_t *root;
+    struct buffer **to_server;
+    struct buffer **from_server;
 {
     /* If you're working through firewalls, you can set the
        CVS_RSH environment variable to a script which uses rsh to
@@ -4812,9 +4885,11 @@ start_rsh_server (tofdp, fromfdp)
     char *cvs_rsh = getenv ("CVS_RSH");
     char *cvs_server = getenv ("CVS_SERVER");
     char *command;
+    int tofd, fromfd;
+    int child_pid;
 
     if (!cvs_rsh)
-	cvs_rsh = "rsh";
+	cvs_rsh = "ssh";
     if (!cvs_server)
 	cvs_server = "cvs";
 
@@ -4822,9 +4897,7 @@ start_rsh_server (tofdp, fromfdp)
        affect most rsh servers at all, and will pacify some buggy
        versions of rsh that grab switches out of the middle of the
        command (they're calling the GNU getopt routines incorrectly).  */
-    command = xmalloc (strlen (cvs_server)
-		       + strlen (CVSroot_directory)
-		       + 50);
+    command = xmalloc (strlen (cvs_server) + 8);
 
     /* If you are running a very old (Nov 3, 1994, before 1.5)
      * version of the server, you need to make sure that your .bashrc
@@ -4837,15 +4910,15 @@ start_rsh_server (tofdp, fromfdp)
 	char **p = argv;
 
 	*p++ = cvs_rsh;
-	*p++ = CVSroot_hostname;
+	*p++ = root->hostname;
 
 	/* If the login names differ between client and server
 	 * pass it on to rsh.
 	 */
-	if (CVSroot_username != NULL)
+	if (root->username != NULL)
 	{
 	    *p++ = "-l";
-	    *p++ = CVSroot_username;
+	    *p++ = root->username;
 	}
 
 	*p++ = command;
@@ -4860,19 +4933,21 @@ start_rsh_server (tofdp, fromfdp)
 	        fprintf (stderr, "%s ", argv[i]);
 	    putc ('\n', stderr);
 	}
-	rsh_pid = piped_child (argv, tofdp, fromfdp);
+	child_pid = piped_child (argv, &tofd, &fromfd);
 
-	if (rsh_pid < 0)
+	if (child_pid < 0)
 	    error (1, errno, "cannot start server via rsh");
     }
     free (command);
+
+    make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, 0);
 }
 
-#endif /* START_RSH_WITH_POPEN_RW */
+# endif /* START_RSH_WITH_POPEN_RW */
 
 #endif /* NO_EXT_METHOD */
 
-
+
 
 /* Send an argument STRING.  */
 void
@@ -5296,8 +5371,7 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
      * This case will happen when checking out a module defined as
      * ``-a .''.
      */
-    cvsadm_name = xmalloc (strlen (dir) + sizeof (CVSADM) + 10);
-    sprintf (cvsadm_name, "%s/%s", dir, CVSADM);
+    xasprintf (&cvsadm_name, "%s/%s", dir, CVSADM);
     dir_exists = isdir (cvsadm_name);
     free (cvsadm_name);
 
@@ -5561,7 +5635,7 @@ send_files (argc, argv, local, aflag, flags)
     err = start_recursion
 	(send_fileproc, send_filesdoneproc,
 	 send_dirent_proc, send_dirleave_proc, (void *) &args,
-	 argc, argv, local, W_LOCAL, aflag, 0, (char *)NULL, 0);
+	 argc, argv, local, W_LOCAL, aflag, CVS_LOCK_NONE, (char *)NULL, 0);
     if (err)
 	error_exit ();
     if (toplevel_repos == NULL)
@@ -5572,7 +5646,7 @@ send_files (argc, argv, local, aflag, flags)
 	 * latter case; I don't think toplevel_repos matters for the
 	 * former.
 	 */
-	toplevel_repos = xstrdup (CVSroot_directory);
+	toplevel_repos = xstrdup (current_parsed_root->directory);
     send_repository ("", toplevel_repos, ".");
 }
 
@@ -5691,7 +5765,7 @@ client_import_done ()
 	 */
         /* FIXME: "can't happen" now that we call client_import_setup
 	   at the beginning.  */
-	toplevel_repos = xstrdup (CVSroot_directory);
+	toplevel_repos = xstrdup (current_parsed_root->directory);
     send_repository ("", toplevel_repos, ".");
 }
 
@@ -5871,9 +5945,9 @@ client_senddate (date)
 void
 send_init_command ()
 {
-    /* This is here because we need the CVSroot_directory variable.  */
+    /* This is here because we need the current_parsed_root->directory variable.  */
     send_to_server ("init ", 0);
-    send_to_server (CVSroot_directory, 0);
+    send_to_server (current_parsed_root->directory, 0);
     send_to_server ("\012", 0);
 }
 

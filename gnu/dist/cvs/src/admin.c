@@ -31,12 +31,12 @@ static const char *const admin_usage[] =
     "\t           (all names if omitted).\n",
     "\t-I         Run interactively.\n",
     "\t-k subst   Set keyword substitution mode:\n",
-    "\t   kv   (Default) Substitue keyword and value.\n",
-    "\t   kvl  Substitue keyword, value, and locker (if any).\n",
-    "\t   k    Substitue keyword only.\n",
+    "\t   kv   (Default) Substitute keyword and value.\n",
+    "\t   kvl  Substitute keyword, value, and locker (if any).\n",
+    "\t   k    Substitute keyword only.\n",
     "\t   o    Preserve original string.\n",
     "\t   b    Like o, but mark file as binary.\n",
-    "\t   v    Substitue value only.\n",
+    "\t   v    Substitute value only.\n",
     "\t-l[rev]    Lock revision (latest revision on branch,\n",
     "\t           latest revision on trunk if omitted).\n",
     "\t-L         Set strict locking.\n",
@@ -46,13 +46,13 @@ static const char *const admin_usage[] =
     "\t                revision on the default branch.\n",
     "\t-N tag[:[rev]]  Same as -n except override existing tag.\n",
     "\t-o range   Delete (outdate) specified range of revisions:\n",
+    "\t   rev1:rev2   Between rev1 and rev2, including rev1 and rev2.\n",
     "\t   rev1::rev2  Between rev1 and rev2, excluding rev1 and rev2.\n",
+    "\t   rev:        rev and following revisions on the same branch.\n",
     "\t   rev::       After rev on the same branch.\n",
+    "\t   :rev        rev and previous revisions on the same branch.\n",
     "\t   ::rev       Before rev on the same branch.\n",
     "\t   rev         Just rev.\n",
-    "\t   rev1:rev2   Between rev1 and rev2, including rev1 and rev2.\n",
-    "\t   rev:        rev and following revisions on the same branch.\n",
-    "\t   :rev        rev and previous revisions on the same branch.\n",
     "\t-q         Run quietly.\n",
     "\t-s state[:rev]  Set revision state (latest revision on branch,\n",
     "\t                latest revision on trunk if omitted).\n",
@@ -96,10 +96,6 @@ struct admin_data
 
     /* Interactive (-I).  Problematic with client/server.  */
     int interactive;
-
-    /* Quiet (-q).  Not the same as the global -q option, which is a bit
-       on the confusing side, perhaps.  */
-    int quiet;
 
     /* This is the cheesy part.  It is a vector with the options which
        we don't deal with above (e.g. "-afoo" "-abar,baz").  In the future
@@ -173,7 +169,7 @@ admin (argc, argv)
     while ((c = getopt (argc, argv,
 			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
-	if (c != 'k')
+	if (c != 'k' && c != 'q')
 	    only_k_option = 0;
 
 	switch (c)
@@ -337,7 +333,15 @@ admin (argc, argv)
 		break;
 
 	    case 'q':
-		admin_data.quiet = 1;
+		/* Silently set the global really_quiet flag.  This keeps admin in
+		 * sync with the RCS man page and allows us to silently support
+		 * older servers when necessary.
+		 *
+		 * Some logic says we might want to output a deprecation warning
+		 * here, but I'm opting not to in order to stay quietly in sync
+		 * with the RCS man page.
+		 */
+		really_quiet = 1;
 		break;
 
 	    case 'x':
@@ -372,31 +376,52 @@ admin (argc, argv)
     argv += optind;
 
 #ifdef CVS_ADMIN_GROUP
-    grp = getgrnam(CVS_ADMIN_GROUP);
-     /* skip usage right check if group CVS_ADMIN_GROUP does not exist */
-    if (grp != NULL)
+    /* The use of `cvs admin -k' is unrestricted.  However, any other
+       option is restricted if the group CVS_ADMIN_GROUP exists on the
+       server.  */
+    if (
+# ifdef CLIENT_SUPPORT
+        /* This is only "secure" on the server, since the user could edit the
+	 * RCS file on a local host, but some people like this kind of
+	 * check anyhow.  The alternative would be to check only when
+	 * (server_active) rather than when not on the client.
+	 */
+        !current_parsed_root->isremote &&
+# endif	/* CLIENT_SUPPORT */
+        !only_k_option
+	&& (grp = getgrnam(CVS_ADMIN_GROUP)) != NULL)
     {
-	char *me = getcaller();
-	char **grnam = grp->gr_mem;
-	/* The use of `cvs admin -k' is unrestricted.  However, any
-	   other option is restricted.  */
-	int denied = ! only_k_option;
-	
-	while (*grnam)
-	{
-	    if (strcmp(*grnam, me) == 0) 
-	    {
-		denied = 0;
-		break;
-	    }
-	    grnam++;
-	}
+#ifdef HAVE_GETGROUPS
+	gid_t *grps;
+	int n;
 
-	if (denied)
+	/* get number of auxiliary groups */
+	n = getgroups (0, NULL);
+	if (n < 0)
+	    error (1, errno, "unable to get number of auxiliary groups");
+	grps = (gid_t *) xmalloc((n + 1) * sizeof *grps);
+	n = getgroups (n, grps);
+	if (n < 0)
+	    error (1, errno, "unable to get list of auxiliary groups");
+	grps[n] = getgid();
+	for (i = 0; i <= n; i++)
+	    if (grps[i] == grp->gr_gid) break;
+	free (grps);
+	if (i > n)
 	    error (1, 0, "usage is restricted to members of the group %s",
 		   CVS_ADMIN_GROUP);
-    }
+#else
+	char *me = getcaller();
+	char **grnam;
+	
+	for (grnam = grp->gr_mem; *grnam; grnam++)
+	    if (strcmp (*grnam, me) == 0) break;
+	if (!*grnam && getgid() != grp->gr_gid)
+	    error (1, 0, "usage is restricted to members of the group %s",
+		   CVS_ADMIN_GROUP);
 #endif
+    }
+#endif /* defined CVS_ADMIN_GROUP */
 
     for (i = 0; i < admin_data.ac; ++i)
     {
@@ -427,7 +452,7 @@ admin (argc, argv)
     }
 
 #ifdef CLIENT_SUPPORT
-    if (client_active)
+    if (current_parsed_root->isremote)
     {
 	/* We're the client side.  Fire up the remote server.  */
 	start_server ();
@@ -470,7 +495,10 @@ admin (argc, argv)
 	    }
 	    send_to_server ("\012", 1);
 	}
-	if (admin_data.quiet)
+	/* Send this for all really_quiets since we know that it will be silently
+	 * ignored when unneeded.  This supports old servers.
+	 */
+	if (really_quiet)
 	    send_arg ("-q");
 	if (admin_data.kflag != NULL)
 	    send_arg (admin_data.kflag);
@@ -478,6 +506,7 @@ admin (argc, argv)
 	for (i = 0; i < admin_data.ac; ++i)
 	    send_arg (admin_data.av[i]);
 
+	send_arg ("--");
 	send_files (argc, argv, 0, 0, SEND_NO_CONTENTS);
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_to_server ("admin\012", 0);
@@ -486,12 +515,12 @@ admin (argc, argv)
     }
 #endif /* CLIENT_SUPPORT */
 
-    lock_tree_for_write (argc, argv, 0, 0);
+    lock_tree_for_write (argc, argv, 0, W_LOCAL, 0);
 
     err = start_recursion (admin_fileproc, (FILESDONEPROC) NULL, admin_dirproc,
 			   (DIRLEAVEPROC) NULL, (void *)&admin_data,
 			   argc, argv, 0,
-			   W_LOCAL, 0, 0, (char *) NULL, 1);
+			   W_LOCAL, 0, CVS_LOCK_NONE, (char *) NULL, 1);
     Lock_Cleanup ();
 
  return_it:
@@ -532,9 +561,7 @@ admin_fileproc (callerdat, finfo)
     vers = Version_TS (finfo, NULL, NULL, NULL, 0, 0);
 
     version = vers->vn_user;
-    if (version == NULL)
-	goto exitfunc;
-    else if (strcmp (version, "0") == 0)
+    if (version != NULL && strcmp (version, "0") == 0)
     {
 	error (0, 0, "cannot admin newly added file `%s'", finfo->file);
 	goto exitfunc;
@@ -546,7 +573,7 @@ admin_fileproc (callerdat, finfo)
 
     status = 0;
 
-    if (!admin_data->quiet)
+    if (!really_quiet)
     {
 	cvs_output ("RCS file: ", 0);
 	cvs_output (rcs->path, 0);
@@ -767,9 +794,10 @@ admin_fileproc (callerdat, finfo)
 		}
                 else
 		{
-		    error (0, 0,
-			  "%s: Symbolic name or revision %s is undefined",
-			   rcs->path, p);
+		    if (!really_quiet)
+			error (0, 0,
+			       "%s: Symbolic name or revision %s is undefined.",
+			       rcs->path, p);
 		    status = 1;
 		}
 		free (tag);
@@ -854,12 +882,10 @@ admin_fileproc (callerdat, finfo)
 	}
     }
 
-    /* TODO: reconcile the weird discrepancies between
-       admin_data->quiet and quiet. */
     if (status == 0)
     {
 	RCS_rewrite (rcs, NULL, NULL);
-	if (!admin_data->quiet)
+	if (!really_quiet)
 	    cvs_output ("done\n", 5);
     }
     else
@@ -868,7 +894,8 @@ admin_fileproc (callerdat, finfo)
 	   message has given a more specific error.  The point of this
 	   additional message is to make it clear that the previous problems
 	   caused CVS to forget about the idea of modifying the RCS file.  */
-	error (0, 0, "cannot modify RCS file for `%s'", finfo->file);
+	if (!really_quiet)
+	    error (0, 0, "RCS file for `%s' not modified.", finfo->file);
 	RCS_abandon (rcs);
     }
 

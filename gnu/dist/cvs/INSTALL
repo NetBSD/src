@@ -134,6 +134,8 @@ i386 family:
 	Linux (kernel 1.2.x) (1.8.86)
 	Linux (kernel 2.0.x, RedHat 4.2) (1.10)
 	Linux (kernel 2.0.x, RedHat 5.x) (1.10)
+	Linux (kernel 2.2.x, RedHat 6.x) (1.10.8)
+	Linux (kernel 2.2.x, RedHat 7.x) (1.11)
 	BSDI 4.0 (1.10.7)
 	FreeBSD 2.1.5-stable (1.8.87)
 	NextSTEP 3.3 (1.7)
@@ -146,6 +148,7 @@ i386 family:
 	Windows NT 3.51 service pack 4 (1.9)
 	Windows NT 3.51 service pack 5 (1.9) -- DOES NOT WORK (footnote 11)
 	Windows NT 4.0 (1.9 client and local)
+	Windows NT 4.0 (1.11 client and local - build & test, but no test suite)
 	Windows 95 (1.9 client and local)
 	QNX (1.9.1 + patches for strippath() and va_list)
 	OS/2 Version 3 using IBM C/C++ Tools 2.01 (1.8.86 + patches, client)
@@ -188,6 +191,7 @@ SPARC:
 	Sun UltraSPARC running Solaris 2.6 using gcc 2.8.1 (1.10)
 	NextSTEP 3.3 (1.7)
 	Sun SPARC running Linux 2.0.17, gcc 2.7.2 (1.8.87)
+	Sun UltraSPARC running Solaris 2.8 using gcc 2.95.3
 VAX:
 	VAX running VMS 6.2 (1.9+patches, client-only)
 	  (see README.VMS for information on necessary hacks).
@@ -238,7 +242,19 @@ VAX:
 
 Building from source code under Unix:
 
-1)  Run "configure":
+1)  Some combinations of Automake and Autoconf versions may break the CVS build
+    if file timestamps aren't set correctly, so you may wish to run
+    noautomake.sh to set the timestamps and avoid attempting to run the
+    autotools on your system, especially if you are building from source
+    checked out from CVS:
+
+	$ ./noautomake.sh --noautoconf
+
+    The CVS Makefiles and configure script were built using Automake 1.6.3 and
+    Autoconf 2.53, respectively.  Other combinations of autotool versions may
+    or may not work.
+
+2)  Run "configure":
 
 	$ ./configure
 
@@ -263,13 +279,36 @@ Building from source code under Unix:
 
     Typically this can reduce the size of the executable by around 30%.
 
+    If you are building CVS with the server enabled, you can disable
+    server flow control using the --disable-server-flow-control
+    If you are working with a large remote repository and a 'cvs
+    checkout' is swamping your network and memory, enable flow control.
+    You will end up with even less probability of a consistent checkout
+    (see Concurrency in cvs.texinfo), but CVS doesn't try to guarantee
+    that anyway.  The master server process will monitor how far it is
+    getting behind, if it reaches the high water mark, it will signal
+    the child process to stop generating data when convenient (ie: no
+    locks are held, currently at the beginning of a new directory).
+    Once the buffer has drained sufficiently to reach the low water
+    mark, it will be signalled to start again.  You may override the
+    default hi/low watermarks here too by passing
+    '<lowwater>,<highwater>', in bytes, as an argument to
+    --enable-server-flow-control.  The low water mark defaults to one
+    megabyte and the high water mark defaults to two megabytes.
+
+	$ ./configure --enable-server-flow-control=1M,2M
+
+    The --with-tmpdir argument to configure may be used to set a
+    specific directory for use as a default temporary directory.  If not
+    set, configure will pick the first directory it finds which it has
+    read, write, and execute permissions to from $TMPDIR, $TMP, $TEMP,
+    /tmp, and /var/tmp, in that order.  Failing that, it will use /tmp.
+
+    The --with-umask argument to configure can be used to change
+    the default umask used by the CVS server executable.
+
     Unlike previous versions of CVS, you do not need to install RCS
     or GNU diff.  
-
-    NOTE: The configure program will cache the results of the previous
-    configure execution.  If you need to re-run configure from scratch, you
-    may need to run "make distclean" first to remove the cached
-    configuration information.
 
     If you are using gcc and are planning to modify CVS, you may want to
     configure with -Wall; see the file HACKING for details.
@@ -284,6 +323,14 @@ Building from source code under Unix:
     the --enable-encryption option.  This option is disabled by
     default.
 
+    If you want to disable automatic dependency tracking in the makefiles,
+    use the '--disable-dependency-tracking' option:
+
+	$ ./configure --disable-dependency-tracking
+
+    This avoids problems on some platforms.  See the note at the end of this
+    file on BSD.
+
     Try './configure --help' for further information on its usage.
 
     NOTE ON CVS's USE OF NDBM:
@@ -291,9 +338,9 @@ Building from source code under Unix:
 	By default, CVS uses some built-in ndbm emulation code to allow
 	CVS to work in a heterogeneous environment.  However, if you have
 	a very large modules database, this may not work well.  You will
-	need to edit src/options.h to turn off the MY_NDBM #define and
-	re-run configure.  If you do this, the following comments apply.
-	If not, you may safely skip these comments.
+	need to supply the --disable-cvs-ndbm option to configure to
+	accomplish this.  If you do this, the following comments apply.  If
+	not, you may safely skip these comments.
 
 	If you configure CVS to use the real ndbm(3) libraries and
 	you do not have them installed in a "normal" place, you will
@@ -321,10 +368,10 @@ Building from source code under Unix:
 
     END OF NOTE FOR NDBM GUNK.
 
-2)  Edit src/options.h.  The defaults should be reasonable, and in fact
+3)  Edit src/options.h.  The defaults should be reasonable, and in fact
     if you are lazy you can safely skip this step.
 
-3)  Try to build it:
+4)  Try to build it:
 
 	$ make
 
@@ -335,7 +382,7 @@ Building from source code under Unix:
     compiler information, make output, and anything else you think
     will be helpful.
 
-3a)  Run the regression tests (optional).
+4a)  Run the regression tests (optional).
 
     You may also wish to validate the correctness of the new binary by
     running the regression tests.  If they succeed, that is nice to
@@ -347,7 +394,7 @@ Building from source code under Unix:
 
     If you want to run the tests, see the file TESTS for more information.
 
-4)  Install the binaries/documentation:
+5)  Install the binaries/documentation:
 
 	$ make install
 
@@ -360,7 +407,8 @@ Detailed information about your interaction with "configure":
 
 The "configure" script and its interaction with its options and the
 environment is described here.  For more detailed documentation about
-"configure", please refer to the GNU Autoconf documentation.
+"configure", please run `./configure --help' or refer to the GNU Autoconf
+documentation.
 
 Supported options are:
 
@@ -390,7 +438,7 @@ behaviour:
 
 -------------------------------------------------------------------------------
 
-Building from source code under Windows NT/95:
+Building from source code under Windows NT/95/98/2000:
 
 You may find interesting information in windows-NT/README.
 
@@ -401,6 +449,14 @@ You may find interesting information in windows-NT/README.
 3) MSVC will place the executable file cvs.exe in WinRel, or whatever
    your target directory is.
 
+* From the top level directory, with MSVC++ 6.0 installed, something like the
+following also works:
+
+	C:\> vcvars32
+	C:\> nmake /f cvsnt.mak CFG="cvsnt - Win32 Debug"
+
+* You might also try http://cvsgui.org & http://www.cvsnt.org
+
 -------------------------------------------------------------------------------
 
 Building from source code under other platforms:
@@ -409,10 +465,26 @@ For OS/2, see os2/README and emx/README.
 
 For VMS, see README.VMS
 
-For Macintosh, see macintosh/README.MacCVS
+Mac OS X: Builds fine, just like UNIX.
+
+For older versions of Mac OS, you might try http://cvsgui.org .
 
 For a Java client, see jCVS (which is a separate package from CVS
 itself, but which might be preferable to the Macintosh port mentioned
 above, for example).
+
+                                  **** ****
+
+Builds are breaking on some systems (notably,
+BSD/OS thor.sdrc.com 4.0.1 BSDI BSD/OS 4.0.1 Kernel #3: Thu Mar  9 11:29:16 EST 2000
+) due to Automake's dependency tracking code.  The work around for this is to
+comile without it by passing the '--disable-dependency-tracking' option to
+configure:
+
+	$ ./configure --disable-dependency-tracking
+
+This will allow a compile but make will no longer be tracking header
+dependencies.  This means that if you make any changes to header files you may
+have to run 'make clean' before running a 'make' to get everything to compile.
 
 -------------------------------------------------------------------------------

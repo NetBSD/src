@@ -61,24 +61,71 @@ static size_t opts_allocated = 1;
 static int diff_errors;
 static int empty_files = 0;
 
-/* FIXME: should be documenting all the options here.  They don't
-   perfectly match rcsdiff options (for example, we always support
-   --ifdef and --context, but rcsdiff only does if diff does).  */
 static const char *const diff_usage[] =
 {
-    "Usage: %s %s [-lNR] [rcsdiff-options]\n",
+    "Usage: %s %s [-lR] [-k kopt] [format_options]\n",
     "    [[-r rev1 | -D date1] [-r rev2 | -D date2]] [files...] \n",
     "\t-l\tLocal directory only, not recursive\n",
     "\t-R\tProcess directories recursively.\n",
+    "\t-k kopt\tSpecify keyword expansion mode.\n",
     "\t-D d1\tDiff revision for date against working file.\n",
     "\t-D d2\tDiff rev1/date1 against date2.\n",
-    "\t-N\tinclude diffs for added and removed files.\n",
     "\t-r rev1\tDiff revision for rev1 against working file.\n",
     "\t-r rev2\tDiff rev1/date1 against rev2.\n",
-    "\t--ifdef=arg\tOutput diffs in ifdef format.\n",
-    "(consult the documentation for your diff program for rcsdiff-options.\n",
-    "The most popular is -c for context diffs but there are many more).\n",
-    "(Specify the --help global option for a list of other help options)\n",
+    "\nformat_options:\n",
+    "  -i  --ignore-case  Consider upper- and lower-case to be the same.\n",
+    "  -w  --ignore-all-space  Ignore all white space.\n",
+    "  -b  --ignore-space-change  Ignore changes in the amount of white space.\n",
+    "  -B  --ignore-blank-lines  Ignore changes whose lines are all blank.\n",
+    "  -I RE  --ignore-matching-lines=RE  Ignore changes whose lines all match RE.\n",
+    "  --binary  Read and write data in binary mode.\n",
+    "  -a  --text  Treat all files as text.\n\n",
+    "  -c  -C NUM  --context[=NUM]  Output NUM (default 2) lines of copied context.\n",
+    "  -u  -U NUM  --unified[=NUM]  Output NUM (default 2) lines of unified context.\n",
+    "    -NUM  Use NUM context lines.\n",
+    "    -L LABEL  --label LABEL  Use LABEL instead of file name.\n",
+    "    -p  --show-c-function  Show which C function each change is in.\n",
+    "    -F RE  --show-function-line=RE  Show the most recent line matching RE.\n",
+    "  --brief  Output only whether files differ.\n",
+    "  -e  --ed  Output an ed script.\n",
+    "  -f  --forward-ed  Output something like an ed script in forward order.\n",
+    "  -n  --rcs  Output an RCS format diff.\n",
+    "  -y  --side-by-side  Output in two columns.\n",
+    "    -W NUM  --width=NUM  Output at most NUM (default 130) characters per line.\n",
+    "    --left-column  Output only the left column of common lines.\n",
+    "    --suppress-common-lines  Do not output common lines.\n",
+    "  --ifdef=NAME  Output merged file to show `#ifdef NAME' diffs.\n",
+    "  --GTYPE-group-format=GFMT  Similar, but format GTYPE input groups with GFMT.\n",
+    "  --line-format=LFMT  Similar, but format all input lines with LFMT.\n",
+    "  --LTYPE-line-format=LFMT  Similar, but format LTYPE input lines with LFMT.\n",
+    "    LTYPE is `old', `new', or `unchanged'.  GTYPE is LTYPE or `changed'.\n",
+    "    GFMT may contain:\n",
+    "      %%<  lines from FILE1\n",
+    "      %%>  lines from FILE2\n",
+    "      %%=  lines common to FILE1 and FILE2\n",
+    "      %%[-][WIDTH][.[PREC]]{doxX}LETTER  printf-style spec for LETTER\n",
+    "        LETTERs are as follows for new group, lower case for old group:\n",
+    "          F  first line number\n",
+    "          L  last line number\n",
+    "          N  number of lines = L-F+1\n",
+    "          E  F-1\n",
+    "          M  L+1\n",
+    "    LFMT may contain:\n",
+    "      %%L  contents of line\n",
+    "      %%l  contents of line, excluding any trailing newline\n",
+    "      %%[-][WIDTH][.[PREC]]{doxX}n  printf-style spec for input line number\n",
+    "    Either GFMT or LFMT may contain:\n",
+    "      %%%%  %%\n",
+    "      %%c'C'  the single character C\n",
+    "      %%c'\\OOO'  the character with octal code OOO\n\n",
+    "  -t  --expand-tabs  Expand tabs to spaces in output.\n",
+    "  -T  --initial-tab  Make tabs line up by prepending a tab.\n\n",
+    "  -N  --new-file  Treat absent files as empty.\n",
+    "  -s  --report-identical-files  Report when two files are the same.\n",
+    "  --horizon-lines=NUM  Keep NUM lines of the common prefix and suffix.\n",
+    "  -d  --minimal  Try hard to find a smaller set of changes.\n",
+    "  -H  --speed-large-files  Assume large files and many scattered small changes.\n",
+    "\n(Specify the --help global option for a list of other help options)\n",
     NULL
 };
 
@@ -86,19 +133,20 @@ static const char *const diff_usage[] =
    removing the following entries, none of which seem relevant to use
    with CVS:
      --help
-     --version
-     --recursive
-     --unidirectional-new-file
-     --starting-file
-     --exclude
-     --exclude-from
+     --version (-v)
+     --recursive (-r)
+     --unidirectional-new-file (-P)
+     --starting-file (-S)
+     --exclude (-x)
+     --exclude-from (-X)
      --sdiff-merge-assist
+     --paginate (-l)  (doesn't work with library callbacks)
 
    I changed the options which take optional arguments (--context and
    --unified) to return a number rather than a letter, so that the
    optional argument could be handled more easily.  I changed the
-   --paginate and --brief options to return a number, since -l and -q
-   mean something else to cvs diff.
+   --brief and --ifdef options to return numbers, since -q  and -D mean
+   something else to cvs diff.
 
    The numbers 129- that appear in the fourth element of some entries
    tell the big switch in `diff' how to process those options. -- Ian
@@ -117,7 +165,7 @@ static struct option const longopts[] =
     {"ignore-matching-lines", 1, 0, 'I'},
     {"label", 1, 0, 'L'},
     {"new-file", 0, 0, 'N'},
-    {"initial-tab", 0, 0, 148},
+    {"initial-tab", 0, 0, 'T'},
     {"width", 1, 0, 'W'},
     {"text", 0, 0, 'a'},
     {"ignore-space-change", 0, 0, 'b'},
@@ -125,7 +173,6 @@ static struct option const longopts[] =
     {"ed", 0, 0, 'e'},
     {"forward-ed", 0, 0, 'f'},
     {"ignore-case", 0, 0, 'i'},
-    {"paginate", 0, 0, 144},
     {"rcs", 0, 0, 'n'},
     {"show-c-function", 0, 0, 'p'},
 
@@ -138,7 +185,7 @@ static struct option const longopts[] =
     {"report-identical-files", 0, 0, 's'},
     {"expand-tabs", 0, 0, 't'},
     {"ignore-all-space", 0, 0, 'w'},
-    {"side-by-side", 0, 0, 147},
+    {"side-by-side", 0, 0, 'y'},
     {"unified", 2, 0, 146},
     {"left-column", 0, 0, 129},
     {"suppress-common-lines", 0, 0, 130},
@@ -186,28 +233,6 @@ static struct option const longopts[] =
    mostly to ignore -q.  Maybe this should be fixed, but I think it's
    a larger issue than the changes included here.  */
 
-static void strcat_and_allocate PROTO ((char **, size_t *, const char *));
-
-/* *STR is a pointer to a malloc'd string.  *LENP is its allocated
-   length.  Add SRC to the end of it, reallocating if necessary.  */
-static void
-strcat_and_allocate (str, lenp, src)
-    char **str;
-    size_t *lenp;
-    const char *src;
-{
-    size_t new_size;
-
-    new_size = strlen (*str) + strlen (src) + 1;
-    if (*str == NULL || new_size >= *lenp)
-    {
-	while (new_size >= *lenp)
-	    *lenp *= 2;
-	*str = xrealloc (*str, *lenp);
-    }
-    strcat (*str, src);
-}
-
 int
 diff (argc, argv)
     int argc;
@@ -246,18 +271,22 @@ diff (argc, argv)
 
     optind = 0;
     while ((c = getopt_long (argc, argv,
-	       "+abcdefhilnpstuw0123456789BHNRC:D:F:I:L:U:V:W:k:r:",
+	       "+abcdefhilnpstuwy0123456789BHNRTC:D:F:I:L:U:W:k:r:",
 			     longopts, &option_index)) != -1)
     {
 	switch (c)
 	{
+	    case 'y':
+		xrealloc_and_strcat (&opts, &opts_allocated, " --side-by-side");
+		break;
 	    case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 	    case 'h': case 'i': case 'n': case 'p': case 's': case 't':
-	    case 'u': case 'w': case '0': case '1': case '2':
-	    case '3': case '4': case '5': case '6': case '7': case '8':
-	    case '9': case 'B': case 'H':
+	    case 'u': case 'w':
+            case '0': case '1': case '2': case '3': case '4': case '5':
+            case '6': case '7': case '8': case '9':
+	    case 'B': case 'H': case 'T':
 		(void) sprintf (tmp, " -%c", (char) c);
-		strcat_and_allocate (&opts, &opts_allocated, tmp);
+		xrealloc_and_strcat (&opts, &opts_allocated, tmp);
 		break;
 	    case 'L':
 		if (have_rev1_label++)
@@ -267,32 +296,31 @@ diff (argc, argv)
 			break;
 		    }
 
-	        strcat_and_allocate (&opts, &opts_allocated, " -L");
-	        strcat_and_allocate (&opts, &opts_allocated, optarg);
+	        xrealloc_and_strcat (&opts, &opts_allocated, " -L");
+	        xrealloc_and_strcat (&opts, &opts_allocated, optarg);
 		break;
-	    case 'C': case 'F': case 'I': case 'U': case 'V': case 'W':
+	    case 'C': case 'F': case 'I': case 'U': case 'W':
 		(void) sprintf (tmp, " -%c", (char) c);
-		strcat_and_allocate (&opts, &opts_allocated, tmp);
-		strcat_and_allocate (&opts, &opts_allocated, optarg);
+		xrealloc_and_strcat (&opts, &opts_allocated, tmp);
+		xrealloc_and_strcat (&opts, &opts_allocated, optarg);
 		break;
 	    case 131:
 		/* --ifdef.  */
-		strcat_and_allocate (&opts, &opts_allocated, " --ifdef=");
-		strcat_and_allocate (&opts, &opts_allocated, optarg);
+		xrealloc_and_strcat (&opts, &opts_allocated, " --ifdef=");
+		xrealloc_and_strcat (&opts, &opts_allocated, optarg);
 		break;
 	    case 129: case 130:           case 132: case 133: case 134:
 	    case 135: case 136: case 137: case 138: case 139: case 140:
-	    case 141: case 142: case 143: case 144: case 145: case 146:
-	    case 147: case 148:
-		strcat_and_allocate (&opts, &opts_allocated, " --");
-		strcat_and_allocate (&opts, &opts_allocated,
+	    case 141: case 142: case 143: case 145: case 146:
+		xrealloc_and_strcat (&opts, &opts_allocated, " --");
+		xrealloc_and_strcat (&opts, &opts_allocated,
 				     longopts[option_index].name);
 		if (longopts[option_index].has_arg == 1
 		    || (longopts[option_index].has_arg == 2
 			&& optarg != NULL))
 		{
-		    strcat_and_allocate (&opts, &opts_allocated, "=");
-		    strcat_and_allocate (&opts, &opts_allocated, optarg);
+		    xrealloc_and_strcat (&opts, &opts_allocated, "=");
+		    xrealloc_and_strcat (&opts, &opts_allocated, optarg);
 		}
 		break;
 	    case 'R':
@@ -341,7 +369,7 @@ diff (argc, argv)
 	options = xstrdup ("");
 
 #ifdef CLIENT_SUPPORT
-    if (client_active) {
+    if (current_parsed_root->isremote) {
 	/* We're the client side.  Fire up the remote server.  */
 	start_server ();
 	
@@ -362,6 +390,7 @@ diff (argc, argv)
 	    option_with_arg ("-r", diff_rev2);
 	if (diff_date2)
 	    client_senddate (diff_date2);
+	send_arg ("--");
 
 	/* Send the current files unless diffing two revs from the archive */
 	if (diff_rev2 == NULL && diff_date2 == NULL)
@@ -393,7 +422,7 @@ diff (argc, argv)
     /* start the recursion processor */
     err = start_recursion (diff_fileproc, diff_filesdoneproc, diff_dirproc,
 			   diff_dirleaveproc, NULL, argc, argv, local,
-			   which, 0, 1, (char *) NULL, 1);
+			   which, 0, CVS_LOCK_READ, (char *) NULL, 1);
 
     /* clean up */
     free (options);
@@ -422,6 +451,8 @@ diff_fileproc (callerdat, finfo)
     char *tmp;
     char *tocvsPath;
     char *fname;
+    char *label1;
+    char *label2;
 
     /* Initialize these solely to avoid warnings from gcc -Wall about
        variables that might be used uninitialized.  */
@@ -457,7 +488,7 @@ diff_fileproc (callerdat, finfo)
 			(vers->vn_rcs == NULL
 			 ? NULL
 			 : RCS_branch_head (vers->srcfile, vers->vn_rcs));
-		    exists = head != NULL;
+		    exists = head != NULL && !RCS_isdead(vers->srcfile, head);
 		    if (head != NULL)
 			free (head);
 		}
@@ -467,7 +498,7 @@ diff_fileproc (callerdat, finfo)
 
 		    xvers = Version_TS (finfo, NULL, diff_rev1, diff_date1,
 					1, 0);
-		    exists = xvers->vn_rcs != NULL;
+		    exists = xvers->vn_rcs != NULL && !RCS_isdead(xvers->srcfile, xvers->vn_rcs);
 		    freevers_ts (&xvers);
 		}
 		if (exists)
@@ -619,11 +650,7 @@ diff_fileproc (callerdat, finfo)
     if (tocvsPath)
     {
 	/* Backup the current version of the file to CVS/,,filename */
-	fname = xmalloc (strlen (finfo->file)
-			 + sizeof CVSADM
-			 + sizeof CVSPREFIX
-			 + 10);
-	sprintf(fname,"%s/%s%s",CVSADM, CVSPREFIX, finfo->file);
+	xasprintf(&fname,"%s/%s%s",CVSADM, CVSPREFIX, finfo->file);
 	if (unlink_file_dir (fname) < 0)
 	    if (! existence_error (errno))
 		error (1, errno, "cannot remove %s", fname);
@@ -632,24 +659,53 @@ diff_fileproc (callerdat, finfo)
 	copy_file (tocvsPath, finfo->file);
     }
 
+    /* Set up file labels appropriate for compatibility with the Larry Wall
+     * implementation of patch if the user didn't specify.  This is irrelevant
+     * according to the POSIX.2 specification.
+     */
+    label1 = NULL;
+    label2 = NULL;
+    if (!have_rev1_label)
+    {
+	if (empty_file == DIFF_ADDED)
+	    label1 =
+		make_file_label (DEVNULL, NULL, NULL);
+	else
+	    label1 =
+		make_file_label (finfo->fullname, use_rev1, vers ? vers->srcfile : NULL);
+    }
+
+    if (!have_rev2_label)
+    {
+	if (empty_file == DIFF_REMOVED)
+	    label2 =
+		make_file_label (DEVNULL, NULL, NULL);
+	else
+	    label2 =
+		make_file_label (finfo->fullname, use_rev2, vers ? vers->srcfile : NULL);
+    }
+
     if (empty_file == DIFF_ADDED || empty_file == DIFF_REMOVED)
     {
-	/* This is file, not fullname, because it is the "Index:" line which
-	   is supposed to contain the directory.  */
+	/* This is fullname, not file, possibly despite the POSIX.2
+	 * specification, because that's the way all the Larry Wall
+	 * implementations of patch (are there other implementations?) want
+	 * things and the POSIX.2 spec appears to leave room for this.
+	 */
 	cvs_output ("\
 ===================================================================\n\
 RCS file: ", 0);
-	cvs_output (finfo->file, 0);
+	cvs_output (finfo->fullname, 0);
 	cvs_output ("\n", 1);
 
 	cvs_output ("diff -N ", 0);
-	cvs_output (finfo->file, 0);
+	cvs_output (finfo->fullname, 0);
 	cvs_output ("\n", 1);
 
 	if (empty_file == DIFF_ADDED)
 	{
 	    if (use_rev2 == NULL)
-		status = diff_exec (DEVNULL, finfo->file, opts, RUN_TTY);
+		status = diff_exec (DEVNULL, finfo->file, label1, label2, opts, RUN_TTY);
 	    else
 	    {
 		int retcode;
@@ -668,7 +724,7 @@ RCS file: ", 0);
 		    return err;
 		}
 
-		status = diff_exec (DEVNULL, tmp, opts, RUN_TTY);
+		status = diff_exec (DEVNULL, tmp, label1, label2, opts, RUN_TTY);
 	    }
 	}
 	else
@@ -687,22 +743,11 @@ RCS file: ", 0);
 		return err;
 	    }
 
-	    status = diff_exec (tmp, DEVNULL, opts, RUN_TTY);
+	    status = diff_exec (tmp, DEVNULL, label1, label2, opts, RUN_TTY);
 	}
     }
     else
     {
-	char *label1 = NULL;
-	char *label2 = NULL;
-
-	if (!have_rev1_label)
-	    label1 =
-		make_file_label (finfo->fullname, use_rev1, vers->srcfile);
-
-	if (!have_rev2_label)
-	    label2 =
-		make_file_label (finfo->fullname, use_rev2, vers->srcfile);
-
 	status = RCS_exec_rcsdiff (vers->srcfile, opts,
 				   *options ? options : vers->options,
 				   use_rev1, use_rev2,

@@ -39,46 +39,11 @@
    Include <sys/time.h> if that will be used.  */
 
 #if	defined(vms)
-
-#include <types.h>
-#include <time.h>
-
-#else
-
-#include <sys/types.h>
-
-#ifdef TIME_WITH_SYS_TIME
-#include <sys/time.h>
-#include <time.h>
-#else
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#else
-#include <time.h>
-#endif
-#endif
-
-#ifdef timezone
-#undef timezone /* needed for sgi */
-#endif
-
-#if defined(HAVE_SYS_TIMEB_H)
-#include <sys/timeb.h>
-#else
-/*
-** We use the obsolete `struct timeb' as part of our interface!
-** Since the system doesn't have it, we define it here;
-** our callers must do likewise.
-*/
-struct timeb {
-    time_t		time;		/* Seconds since the epoch	*/
-    unsigned short	millitm;	/* Field not used		*/
-    short		timezone;	/* Minutes west of GMT		*/
-    short		dstflag;	/* Field not used		*/
-};
-#endif /* defined(HAVE_SYS_TIMEB_H) */
-
-#endif	/* defined(vms) */
+# include <types.h>
+#else /* defined(vms) */
+# include <sys/types.h>
+#endif	/* !defined(vms) */
+# include "xtime.h"
 
 #if defined (STDC_HEADERS) || defined (USG)
 #include <string.h>
@@ -115,6 +80,7 @@ extern struct tm	*localtime();
 #define yylex getdate_yylex
 #define yyerror getdate_yyerror
 
+static int yyparse ();
 static int yylex ();
 static int yyerror ();
 
@@ -661,6 +627,12 @@ Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
      || Month < 1 || Month > 12
      /* Lint fluff:  "conversion from long may lose accuracy" */
      || Day < 1 || Day > DaysInMonth[(int)--Month])
+	/* FIXME:
+	 * It would be nice to set a global error string here.
+	 * "February 30 is not a valid date" is much more informative than
+	 * "Can't parse date/time: 100 months" when the user input was
+	 * "100 months" and addition resolved that to February 30, for
+	 * example.  See rcs2-7 in src/sanity.sh for more. */
 	return -1;
 
     for (Julian = Day - 1, i = 0; i < Month; i++)

@@ -189,6 +189,13 @@ run_exec (stin, stout, sterr, flags)
 #endif
     if (pid == 0)
     {
+#ifdef SETXID_SUPPORT
+	if (flags & RUN_UNSETXID) {
+	    (void) setgid (getgid ());
+	    (void) setuid (getuid ());
+	}   
+#endif 
+
 	if (shin != 0)
 	{
 	    (void) dup2 (shin, 0);
@@ -324,9 +331,19 @@ run_exec (stin, stout, sterr, flags)
   out:
     if (sterr)
 	(void) close (sherr);
+    else
+	/* ensure things are received by the parent in the correct order
+	 * relative to the protocol pipe
+	 */
+	cvs_flusherr();
   out2:
     if (stout)
 	(void) close (shout);
+    else
+	/* ensure things are received by the parent in the correct order
+	 * relative to the protocol pipe
+	 */
+	cvs_flushout();
   out1:
     if (stin)
 	(void) close (shin);
@@ -444,7 +461,7 @@ void
 close_on_exec (fd)
      int fd;
 {
-#if defined (FD_CLOEXEC) && defined (F_SETFD)
+#ifdef F_SETFD
     if (fcntl (fd, F_SETFD, 1))
 	error (1, errno, "can't set close-on-exec flag on %d", fd);
 #endif

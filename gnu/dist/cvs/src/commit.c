@@ -85,13 +85,13 @@ static time_t last_register_time;
 static const char *const commit_usage[] =
 {
     "Usage: %s %s [-nRlf] [-m msg | -F logfile] [-r rev] files...\n",
-    "\t-n\tDo not run the module program (if any).\n",
-    "\t-R\tProcess directories recursively.\n",
-    "\t-l\tLocal directory only (not recursive).\n",
-    "\t-f\tForce the file to be committed; disables recursion.\n",
-    "\t-F file\tRead the log message from file.\n",
-    "\t-m msg\tLog message.\n",
-    "\t-r rev\tCommit to this branch or trunk revision.\n",
+    "    -n          Do not run the module program (if any).\n",
+    "    -R          Process directories recursively.\n",
+    "    -l          Local directory only (not recursive).\n",
+    "    -f          Force the file to be committed; disables recursion.\n",
+    "    -F logfile  Read the log message from file.\n",
+    "    -m msg      Log message.\n",
+    "    -r rev      Commit to this branch or trunk revision.\n",
     "(Specify the --help global option for a list of other help options)\n",
     NULL
 };
@@ -248,15 +248,7 @@ find_fileproc (callerdat, finfo)
     xfinfo.rcs = NULL;
 
     vers = Version_TS (&xfinfo, NULL, saved_tag, NULL, 0, 0);
-    if (vers->ts_user == NULL
-	&& vers->vn_user != NULL
-	&& vers->vn_user[0] == '-')
-	/* FIXME: If vn_user is starts with "-" but ts_user is
-	   non-NULL, what classify_file does is print "%s should be
-	   removed and is still there".  I'm not sure what it does
-	   then.  We probably should do the same.  */
-	status = T_REMOVED;
-    else if (vers->vn_user == NULL)
+    if (vers->vn_user == NULL)
     {
 	if (vers->ts_user == NULL)
 	    error (0, 0, "nothing known about `%s'", finfo->fullname);
@@ -266,15 +258,28 @@ find_fileproc (callerdat, finfo)
 	freevers_ts (&vers);
 	return 1;
     }
-    else if (vers->ts_user != NULL
-	     && vers->vn_user != NULL
-	     && vers->vn_user[0] == '0')
-	/* FIXME: If vn_user is "0" but ts_user is NULL, what classify_file
-	   does is print "new-born %s has disappeared" and removes the entry.
-	   We probably should do the same.  */
+    if (vers->ts_user == NULL)
+    {
+	if (strcmp (vers->vn_user, "0") == 0)
+	    /* This happens when one has `cvs add'ed a file, but it no
+	       longer exists in the working directory at commit time.
+	       FIXME: What classify_file does in this case is print
+	       "new-born %s has disappeared" and removes the entry.
+	       We probably should do the same.  */
+	    status = T_ADDED;
+	else if (vers->vn_user[0] == '-')
+	    status = T_REMOVED;
+	else
+	{
+	    /* FIXME: What classify_file does in this case is print
+	       "%s was lost".  We probably should do the same.  */
+	    freevers_ts (&vers);
+	    return 0;
+	}
+    }
+    else if (strcmp (vers->vn_user, "0") == 0)
 	status = T_ADDED;
-    else if (vers->ts_user != NULL
-	     && vers->ts_rcs != NULL
+    else if (vers->ts_rcs != NULL
 	     && (args->force || strcmp (vers->ts_user, vers->ts_rcs) != 0))
 	/* If we are forcing commits, pretend that the file is
            modified.  */
@@ -344,16 +349,17 @@ commit (argc, argv)
     if (geteuid () == (uid_t) 0
 #  ifdef CLIENT_SUPPORT
 	/* Who we are on the client side doesn't affect logging.  */
-	&& !client_active
+	&& !current_parsed_root->isremote
 #  endif
 	)
     {
 	struct passwd *pw;
 
 	if ((pw = (struct passwd *) getpwnam (getcaller ())) == NULL)
-	    error (1, 0, "you are unknown to this system");
+	    error (1, 0, "your apparent username (%s) is unknown to this system",
+			 getcaller ());
 	if (pw->pw_uid == (uid_t) 0)
-	    error (1, 0, "cannot commit files as 'root'");
+	    error (1, 0, "'root' is not allowed to commit files");
     }
 #endif /* CVS_BADROOT */
 
@@ -414,10 +420,12 @@ commit (argc, argv)
     /* numeric specified revision means we ignore sticky tags... */
     if (saved_tag && isdigit ((unsigned char) *saved_tag))
     {
+	char *p = saved_tag + strlen (saved_tag);
 	aflag = 1;
-	/* strip trailing dots */
-	while (saved_tag[strlen (saved_tag) - 1] == '.')
-	    saved_tag[strlen (saved_tag) - 1] = '\0';
+	/* strip trailing dots and leading zeros */
+	while (*--p == '.') ;
+	p[1] = '\0';
+	while (*saved_tag == '0') ++saved_tag;
     }
 
     /* some checks related to the "-F logfile" option */
@@ -432,7 +440,7 @@ commit (argc, argv)
     }
 
 #ifdef CLIENT_SUPPORT
-    if (client_active)
+    if (current_parsed_root->isremote)
     {
 	struct find_data find_args;
 
@@ -453,7 +461,7 @@ commit (argc, argv)
 	err = start_recursion (find_fileproc, find_filesdoneproc,
 			       find_dirent_proc, (DIRLEAVEPROC) NULL,
 			       (void *)&find_args,
-			       argc, argv, local, W_LOCAL, 0, 0,
+			       argc, argv, local, W_LOCAL, 0, CVS_LOCK_NONE,
 			       (char *)NULL, 0);
 	if (err)
 	    error (1, 0, "correct above errors first!");
@@ -495,15 +503,8 @@ commit (argc, argv)
 	if (use_editor)
 	    do_editor (".", &saved_message, (char *)NULL, find_args.ulist);
 
-	/* Run the user-defined script to verify/check information in
-	 *the log message
-	 */
-	do_verify (saved_message, (char *)NULL);
-
 	/* We always send some sort of message, even if empty.  */
-	/* FIXME: is that true?  There seems to be some code in do_editor
-	   which can leave the message NULL.  */
-	option_with_arg ("-m", saved_message);
+	option_with_arg ("-m", saved_message ? saved_message : "");
 
 	/* OK, now process all the questionable files we have been saving
 	   up.  */
@@ -553,6 +554,7 @@ commit (argc, argv)
 	if (!run_module_prog)
 	    send_arg("-n");
 	option_with_arg ("-r", saved_tag);
+	send_arg ("--");
 
 	/* FIXME: This whole find_args.force/SEND_FORCE business is a
 	   kludge.  It would seem to be a server bug that we have to
@@ -591,8 +593,7 @@ commit (argc, argv)
 	    char *fname;
 	    FILE *fp;
 
-	    fname = cvs_temp_name ();
-	    fp = CVS_FOPEN (fname, "w+");
+	    fp = cvs_temp_file (&fname);
 	    if (fp == NULL)
 		error (1, 0, "cannot create temporary file %s", fname);
 	    if (fwrite (saved_message, 1, strlen (saved_message), fp)
@@ -601,6 +602,7 @@ commit (argc, argv)
 	    if (fclose (fp) < 0)
 		error (0, errno, "cannot close temporary file %s", fname);
 	    error (0, 0, "saving log message in %s", fname);
+	    free (fname);
 	}
 	return err;
     }
@@ -615,7 +617,7 @@ commit (argc, argv)
 
     wrap_setup ();
 
-    lock_tree_for_write (argc, argv, local, aflag);
+    lock_tree_for_write (argc, argv, local, W_LOCAL, aflag);
 
     /*
      * Set up the master update list and hard link list
@@ -640,7 +642,8 @@ commit (argc, argv)
      */
     err = start_recursion (check_fileproc, check_filesdoneproc,
 			   check_direntproc, (DIRLEAVEPROC) NULL, NULL, argc,
-			   argv, local, W_LOCAL, aflag, 0, (char *) NULL, 1);
+			   argv, local, W_LOCAL, aflag, CVS_LOCK_NONE,
+			   (char *) NULL, 1);
     if (err)
     {
 	Lock_Cleanup ();
@@ -654,7 +657,7 @@ commit (argc, argv)
     if (noexec == 0)
 	err = start_recursion (commit_fileproc, commit_filesdoneproc,
 			       commit_direntproc, commit_dirleaveproc, NULL,
-			       argc, argv, local, W_LOCAL, aflag, 0,
+			       argc, argv, local, W_LOCAL, aflag, CVS_LOCK_NONE,
 			       (char *) NULL, 1);
 
     /*
@@ -663,11 +666,15 @@ commit (argc, argv)
     Lock_Cleanup ();
     dellist (&mulist);
 
+#ifdef SERVER_SUPPORT
+    if (server_active)
+	return err;
+#endif
+
     /* see if we need to sleep before returning to avoid time-stamp races */
     if (last_register_time)
     {
-	while (time ((time_t *) NULL) == last_register_time)
-	    sleep (1);
+	sleep_past (last_register_time);
     }
 
     return (err);
@@ -778,7 +785,7 @@ check_fileproc (callerdat, finfo)
     struct commit_info *ci;
     struct logfile_info *li;
 
-    size_t cvsroot_len = strlen (CVSroot_directory);
+    size_t cvsroot_len = strlen (current_parsed_root->directory);
 
     if (!finfo->repository)
     {
@@ -786,7 +793,7 @@ check_fileproc (callerdat, finfo)
 	return (1);
     }
 
-    if (strncmp (finfo->repository, CVSroot_directory, cvsroot_len) == 0
+    if (strncmp (finfo->repository, current_parsed_root->directory, cvsroot_len) == 0
 	&& ISDIRSEP (finfo->repository[cvsroot_len])
 	&& strncmp (finfo->repository + cvsroot_len + 1,
 		    CVSROOTADM,
@@ -810,9 +817,7 @@ check_fileproc (callerdat, finfo)
     switch (status)
     {
 	case T_CHECKOUT:
-#ifdef SERVER_SUPPORT
 	case T_PATCH:
-#endif
 	case T_NEEDS_MERGE:
 	case T_CONFLICT:
 	case T_REMOVE_ENTRY:
@@ -829,7 +834,7 @@ check_fileproc (callerdat, finfo)
 	     * Also,
 	     *	- if status is T_REMOVED, can't have a numeric tag
 	     *	- if status is T_ADDED, rcs file must not exist unless on
-	     *    a branch
+	     *    a branch or head is dead
 	     *	- if status is T_ADDED, can't have a non-trunk numeric rev
 	     *	- if status is T_MODIFIED and a Conflict marker exists, don't
 	     *    allow the commit if timestamp is identical or if we find
@@ -926,29 +931,17 @@ warning: file `%s' seems to still contain conflict indicators",
 	    {
 	        if (vers->tag == NULL)
 		{
-		    char *rcs;
-
-		    rcs = xmalloc (strlen (finfo->repository)
-				   + strlen (finfo->file)
-				   + sizeof RCSEXT
-				   + 5);
-
-		    /* Don't look in the attic; if it exists there we
-		       will move it back out in checkaddfile.  */
-		    sprintf(rcs, "%s/%s%s", finfo->repository, finfo->file,
-			    RCSEXT);
-		    if (isreadable (rcs))
+		    if (finfo->rcs != NULL &&
+			!RCS_isdead (finfo->rcs, finfo->rcs->head))
 		    {
 			error (0, 0,
 		    "cannot add file `%s' when RCS file `%s' already exists",
-			       finfo->fullname, rcs);
+			       finfo->fullname, finfo->rcs->path);
 			freevers_ts (&vers);
-			free (rcs);
 			return (1);
 		    }
-		    free (rcs);
 		}
-		if (vers->tag && isdigit ((unsigned char) *vers->tag) &&
+		else if (isdigit ((unsigned char) *vers->tag) &&
 		    numdots (vers->tag) > 1)
 		{
 		    error (0, 0,
@@ -1146,7 +1139,7 @@ precommit_proc (repository, filter)
     run_setup (filter);
     run_arg (repository);
     (void) walklist (saved_ulist, precommit_list_proc, NULL);
-    return (run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY));
+    return (run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY|RUN_UNSETXID));
 }
 
 /*
@@ -1236,13 +1229,17 @@ commit_fileproc (callerdat, finfo)
      * with files as args from the command line.  In that latter case, we
      * need to get the commit message ourselves
      */
-    if (!(got_message))
+    if (!got_message)
     {
 	got_message = 1;
-	if (use_editor)
+	if (
+#ifdef SERVER_SUPPORT
+	    !server_active &&
+#endif
+	    use_editor)
 	    do_editor (finfo->update_dir, &saved_message,
 		       finfo->repository, ulist);
-	do_verify (saved_message, finfo->repository);
+	do_verify (&saved_message, finfo->repository);
     }
 
     p = findnode (cilist, finfo->file);
@@ -1313,6 +1310,12 @@ commit_fileproc (callerdat, finfo)
 	    /* find the max major rev number in this directory */
 	    maxrev = 0;
 	    (void) walklist (finfo->entries, findmaxrev, NULL);
+	    if (finfo->rcs->head) {
+		/* resurrecting: include dead revision */
+		int thisrev = atoi (finfo->rcs->head);
+		if (thisrev > maxrev)
+		    maxrev = thisrev;
+	    }
 	    if (maxrev == 0)
 		maxrev = 1;
 	    xrev = xmalloc (20);
@@ -1432,12 +1435,12 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
     {
 	char *p;
 
-	if (strncmp (CVSroot_directory, repository,
-		     strlen (CVSroot_directory)) != 0)
+	if (strncmp (current_parsed_root->directory, repository,
+		     strlen (current_parsed_root->directory)) != 0)
 	    error (0, 0,
 		 "internal error: repository (%s) doesn't begin with root (%s)",
-		   repository, CVSroot_directory);
-	p = repository + strlen (CVSroot_directory);
+		   repository, current_parsed_root->directory);
+	p = repository + strlen (current_parsed_root->directory);
 	if (*p == '/')
 	    ++p;
 	if (strcmp ("CVSROOT", p) == 0
@@ -1556,9 +1559,13 @@ commit_direntproc (callerdat, dir, repos, update_dir, entries)
     /* get commit message */
     real_repos = Name_Repository (dir, update_dir);
     got_message = 1;
-    if (use_editor)
+    if (
+#ifdef SERVER_SUPPORT
+        !server_active &&
+#endif
+        use_editor)
 	do_editor (update_dir, &saved_message, real_repos, ulist);
-    do_verify (saved_message, real_repos);
+    do_verify (&saved_message, real_repos);
     free (real_repos);
     return (R_PROCESS);
 }
@@ -1581,7 +1588,7 @@ commit_dirleaveproc (callerdat, dir, err, update_dir, entries)
        this being a confusing feature!  */
     if (err == 0 && write_dirtag != NULL)
     {
-	char *repos = Name_Repository (dir, update_dir);
+	char *repos = Name_Repository (NULL, update_dir);
 	WriteTag (NULL, write_dirtag, NULL, write_dirnonbranch,
 		  update_dir, repos);
 	free (repos);
@@ -1598,19 +1605,13 @@ findmaxrev (p, closure)
     Node *p;
     void *closure;
 {
-    char *cp;
     int thisrev;
     Entnode *entdata;
 
     entdata = (Entnode *) p->data;
     if (entdata->type != ENT_FILE)
 	return (0);
-    cp = strchr (entdata->version, '.');
-    if (cp != NULL)
-	*cp = '\0';
     thisrev = atoi (entdata->version);
-    if (cp != NULL)
-	*cp = '.';
     if (thisrev > maxrev)
 	maxrev = thisrev;
     return (0);
@@ -1795,9 +1796,8 @@ finaladd (finfo, rev, tag, options)
     ret = Checkin ('A', finfo, rcs, rev, tag, options, saved_message);
     if (ret == 0)
     {
-	char *tmp = xmalloc (strlen (finfo->file) + sizeof (CVSADM)
-			     + sizeof (CVSEXT_LOG) + 10);
-	(void) sprintf (tmp, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
+	char *tmp;
+	(void) xasprintf (&tmp, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
 	if (unlink_file (tmp) < 0
 	    && !existence_error (errno))
 	    error (0, errno, "cannot remove %s", tmp);
@@ -1821,7 +1821,7 @@ unlockrcs (rcs)
 {
     int retcode;
 
-    if ((retcode = RCS_unlock (rcs, NULL, 0)) != 0)
+    if ((retcode = RCS_unlock (rcs, NULL, 1)) != 0)
 	error (retcode == -1 ? 1 : 0, retcode == -1 ? errno : 0,
 	       "could not unlock %s", rcs->path);
     else
@@ -1958,10 +1958,8 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	       Attic.  */
 	    if (!(rcsfile->flags & INATTIC))
 	    {
-		error (0, 0, "internal error: confused about attic for %s",
+		error (0, 0, "warning: expected %s to be in Attic",
 		       rcsfile->path);
-		retval = 1;
-		goto out;
 	    }
 
 	    sprintf (rcs, "%s/%s%s", repository, file, RCSEXT);
@@ -2006,9 +2004,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	desc = NULL;
 	descalloc = 0;
 	desclen = 0;
-	fname = xmalloc (strlen (file) + sizeof (CVSADM)
-			 + sizeof (CVSEXT_LOG) + 10);
-	(void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
+	(void) xasprintf (&fname, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
 	/* If the file does not exist, no big deal.  In particular, the
 	   server does not (yet at least) create CVSEXT_LOG files.  */
 	if (isfile (fname))
@@ -2070,9 +2066,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	    FILE *fp;
 
 	    /* move the new file out of the way. */
-	    fname = xmalloc (strlen (file) + sizeof (CVSADM)
-			     + sizeof (CVSPREFIX) + 10);
-	    (void) sprintf (fname, "%s/%s%s", CVSADM, CVSPREFIX, file);
+	    (void) xasprintf (&fname, "%s/%s%s", CVSADM, CVSPREFIX, file);
 	    rename_file (file, fname);
 
 	    /* Create empty FILE.  Can't use copy_file with a DEVNULL
