@@ -22,7 +22,6 @@
 #endif
 #include <sys/cdio.h>
 #include <sys/chio.h>
-#include <sys/clockctl.h>
 #include <sys/conf.h>
 #include <sys/core.h>
 #include <sys/device.h>
@@ -161,7 +160,8 @@
 #include <sys/vnode.h>
 #include <sys/wait.h>
 #include <sys/wdog.h>
-#include <sys/syscallargs.h> /* Moved */
+#include <sys/clockctl.h>	/* Moved */
+#include <sys/syscallargs.h>	/* Moved */
 
 /*
  * XXX: We are not doing <netinet> yet, but we need
