@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.6 1998/05/20 19:37:21 augustss Exp $
+.\"	$NetBSD: isapnp.4,v 1.7 1998/05/23 16:04:40 matt Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -64,6 +64,8 @@ and driver name:
 3com 3c509B Etherlink-III Ethernet interface.
 .It le
 PCnet-PnP ethernet interfaces based on the successor to the AMD LANCE chip.
+.It ne
+NE2000-compatible ethernet interfaces.
 .El
 .\"
 .Ss Sound cards
@@ -98,6 +100,7 @@ the supported front-ends for other buses.
 .Xr ep 4 ,
 .Xr isa 4 ,
 .Xr le 4 ,
+.Xr ne 4 ,
 .Xr sb 4 ,
 .Xr guspnp 4 ,
 .Xr ym 4 .
