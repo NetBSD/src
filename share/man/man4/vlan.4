@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.8.2.3 2000/12/31 21:20:17 jhawk Exp $
+.\"	$NetBSD: vlan.4,v 1.8.2.4 2001/04/26 13:29:04 he Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ To be compatible with others 802.1Q devices, the
 .Nm
 interface shall support a 1500 bytes MTU, which means that the parent
 interface will have to handle frames that are 4 bytes larger than the
-ethernet MTU. Drivers supporting this incerased MTU are:
+ethernet MTU. Drivers supporting this increased MTU are:
 .Bl -dash -compact indent
 .It
 drivers using the dp8390 core (
@@ -85,7 +85,7 @@ possibly others)
 .It
 .Xr le 4
 .It
-.Xr tulip 4
+.Xr tlp 4
 .It
 .Xr epic 4
 .It
@@ -102,7 +102,7 @@ other 802.1Q devices, unless the MTU of the remote end is also lowered.
 The
 .Nm
 device first appeared in
-.Nx 1.5.
+.Nx 1.5.1.
 .Sh BUGS
 The
 .Nm
