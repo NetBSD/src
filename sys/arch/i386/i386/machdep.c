@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.12 1993/10/26 16:44:11 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.13 1993/10/27 05:39:55 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -999,18 +999,18 @@ init386(first_avail)
 
 	proc0.p_addr = proc0paddr;
 
-	consinit();	/* XXXX */
+	consinit();
 
 #ifndef LKM		/* don't do this if we're using LKM's */
-	/* make gdt memory segments */
-	gdt_segs[GCODE_SEL].ssd_limit = btoc((int) &etext + NBPG);
+	/* set code segment limit to end of kernel text */
+	gdt_segs[GCODE_SEL].ssd_limit = i386_btop(i386_round_page(&etext)) - 1;
 #endif
 	for (x=0; x < NGDT; x++)
 		ssdtosd(gdt_segs+x, gdt+x);
 
 	/* make ldt memory segments */
-	ldt_segs[LUCODE_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
-	ldt_segs[LUDATA_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
+	ldt_segs[LUCODE_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
+	ldt_segs[LUDATA_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
 	for (x=0; x < NLDT; x++)
 		ssdtosd(ldt_segs+x, ldt+x);
 
