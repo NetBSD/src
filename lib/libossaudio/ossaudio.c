@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.16 2001/12/24 00:10:46 mycroft Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.17 2003/01/12 08:20:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -423,10 +423,15 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		cntinfo.ptr = tmpoffs.offset;
 		*(struct count_info *)argp = cntinfo;
 		break;
+	case SNDCTL_DSP_SETDUPLEX:
+		idat = 1;
+		retval = ioctl(fd, AUDIO_SETFD, &idat);
+		if (retval < 0)
+			return retval;
+		break;
 	case SNDCTL_DSP_MAPINBUF:
 	case SNDCTL_DSP_MAPOUTBUF:
 	case SNDCTL_DSP_SETSYNCRO:
-	case SNDCTL_DSP_SETDUPLEX:
 	case SNDCTL_DSP_PROFILE:
 		errno = EINVAL;
 		return -1; /* XXX unimplemented */
