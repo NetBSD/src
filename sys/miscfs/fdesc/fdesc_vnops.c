@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.47 1998/08/13 10:06:32 kleink Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.48 1999/07/08 01:26:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,8 +87,8 @@ LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 u_long fdhash;
 
 int	fdesc_lookup	__P((void *));
-#define	fdesc_create	genfs_eopnotsupp
-#define	fdesc_mknod	genfs_eopnotsupp
+#define	fdesc_create	genfs_eopnotsupp_rele
+#define	fdesc_mknod	genfs_eopnotsupp_rele
 int	fdesc_open	__P((void *));
 #define	fdesc_close	genfs_nullop
 #define	fdesc_access	genfs_nullop
@@ -101,24 +101,24 @@ int	fdesc_poll	__P((void *));
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fsync	genfs_nullop
 #define	fdesc_seek	genfs_seek
-#define	fdesc_remove	genfs_eopnotsupp
+#define	fdesc_remove	genfs_eopnotsupp_rele
 int	fdesc_link	__P((void *));
-#define	fdesc_rename	genfs_eopnotsupp
-#define	fdesc_mkdir	genfs_eopnotsupp
-#define	fdesc_rmdir	genfs_eopnotsupp
+#define	fdesc_rename	genfs_eopnotsupp_rele
+#define	fdesc_mkdir	genfs_eopnotsupp_rele
+#define	fdesc_rmdir	genfs_eopnotsupp_rele
 int	fdesc_symlink	__P((void *));
 int	fdesc_readdir	__P((void *));
 int	fdesc_readlink	__P((void *));
 #define	fdesc_abortop	genfs_abortop
 int	fdesc_inactive	__P((void *));
 int	fdesc_reclaim	__P((void *));
-#define	fdesc_lock	genfs_nolock
-#define	fdesc_unlock	genfs_nounlock
+#define	fdesc_lock	genfs_lock
+#define	fdesc_unlock	genfs_unlock
 #define	fdesc_bmap	genfs_badop
 #define	fdesc_strategy	genfs_badop
 int	fdesc_print	__P((void *));
 int	fdesc_pathconf	__P((void *));
-#define	fdesc_islocked	genfs_noislocked
+#define	fdesc_islocked	genfs_islocked
 #define	fdesc_advlock	genfs_einval
 #define	fdesc_blkatoff	genfs_eopnotsupp
 #define	fdesc_valloc	genfs_eopnotsupp
@@ -196,6 +196,9 @@ fdesc_init()
 	fdhashtbl = hashinit(NFDCACHE, M_CACHE, M_NOWAIT, &fdhash);
 }
 
+/*
+ * Return a locked vnode of the correct type.
+ */
 int
 fdesc_allocvp(ftype, ix, mp, vpp)
 	fdntype ftype;
@@ -211,7 +214,7 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 loop:
 	for (fd = fc->lh_first; fd != 0; fd = fd->fd_hash.le_next) {
 		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
-			if (vget(fd->fd_vnode, 0))
+			if (vget(fd->fd_vnode, LK_EXCLUSIVE))
 				goto loop;
 			*vpp = fd->fd_vnode;
 			return (error);
@@ -239,6 +242,7 @@ loop:
 	fd->fd_fd = -1;
 	fd->fd_link = 0;
 	fd->fd_ix = ix;
+	VOP_LOCK(*vpp, LK_EXCLUSIVE);
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
 
 out:;
@@ -279,7 +283,6 @@ fdesc_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		vn_lock(dvp, LK_SHARED | LK_RETRY);
 		return (0);
 	}
 
@@ -298,8 +301,7 @@ fdesc_lookup(v)
 				goto bad;
 			*vpp = fvp;
 			fvp->v_type = VDIR;
-			vn_lock(dvp, LK_SHARED | LK_RETRY);
-			return (0);
+			goto good;
 		}
 
 		if (cnp->cn_namelen == 3 && memcmp(pname, "tty", 3) == 0) {
@@ -313,8 +315,7 @@ fdesc_lookup(v)
 				goto bad;
 			*vpp = fvp;
 			fvp->v_type = VCHR;
-			vn_lock(dvp, LK_SHARED | LK_RETRY);
-			return (0);
+			goto good;
 		}
 
 		ln = 0;
@@ -344,8 +345,7 @@ fdesc_lookup(v)
 			VTOFDESC(fvp)->fd_link = ln;
 			*vpp = fvp;
 			fvp->v_type = VLNK;
-			vn_lock(fvp, LK_SHARED | LK_RETRY);
-			return (0);
+			goto good;
 		} else {
 			error = ENOENT;
 			goto bad;
@@ -355,10 +355,19 @@ fdesc_lookup(v)
 
 	case Fdevfd:
 		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
 			error = fdesc_root(dvp->v_mount, vpp);
 			if (error)
 				goto bad;
-			return (0);
+			/*
+			 * If we're at the last component and need the
+			 * parent locked, undo the unlock above.
+			 */
+			if (((~cnp->cn_flags & (ISLASTCN | LOCKPARENT)) == 0) &&
+				   ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			return (error);
 		}
 
 		fd = 0;
@@ -382,15 +391,26 @@ fdesc_lookup(v)
 		if (error)
 			goto bad;
 		VTOFDESC(fvp)->fd_fd = fd;
-		vn_lock(dvp, LK_SHARED | LK_RETRY);
 		*vpp = fvp;
-		return (0);
+		goto good;
 	}
 
 bad:;
-	vn_lock(dvp, LK_SHARED | LK_RETRY);
 	*vpp = NULL;
 	return (error);
+
+good:;
+	/*
+	 * As "." was special cased above, we now unlock the parent if we're
+	 * suppoed to. We're only supposed to not unlock if this is the
+	 * last component, and the caller requested LOCKPARENT. So if either
+	 * condition is false, unlock.
+	 */
+	if (((~cnp->cn_flags) & (ISLASTCN | LOCKPARENT)) != 0) {
+		VOP_UNLOCK(dvp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
+	return (0);
 }
 
 int

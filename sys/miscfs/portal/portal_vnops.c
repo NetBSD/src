@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.33 1998/10/31 01:18:42 matt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.34 1999/07/08 01:26:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,8 +72,8 @@ static void	portal_closefd __P((struct proc *, int));
 static int	portal_connect __P((struct socket *, struct socket *));
 
 int	portal_lookup	__P((void *));
-#define	portal_create	genfs_eopnotsupp
-#define	portal_mknod	genfs_eopnotsupp
+#define	portal_create	genfs_eopnotsupp_rele
+#define	portal_mknod	genfs_eopnotsupp_rele
 int	portal_open	__P((void *));
 #define	portal_close	genfs_nullop
 #define	portal_access	genfs_nullop
@@ -87,23 +87,23 @@ int	portal_setattr	__P((void *));
 #define portal_revoke	genfs_revoke
 #define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_seek
-#define	portal_remove	genfs_eopnotsupp
+#define	portal_remove	genfs_eopnotsupp_rele
 int	portal_link	__P((void *));
-#define	portal_rename	genfs_eopnotsupp
-#define	portal_mkdir	genfs_eopnotsupp
-#define	portal_rmdir	genfs_eopnotsupp
+#define	portal_rename	genfs_eopnotsupp_rele
+#define	portal_mkdir	genfs_eopnotsupp_rele
+#define	portal_rmdir	genfs_eopnotsupp_rele
 int	portal_symlink	__P((void *));
 int	portal_readdir	__P((void *));
 #define	portal_readlink	genfs_eopnotsupp
 #define	portal_abortop	genfs_abortop
 int	portal_inactive	__P((void *));
 int	portal_reclaim	__P((void *));
-#define	portal_lock	genfs_nolock
-#define	portal_unlock	genfs_nounlock
+#define	portal_lock	genfs_lock
+#define	portal_unlock	genfs_unlock
 #define	portal_bmap	genfs_badop
 #define	portal_strategy	genfs_badop
 int	portal_print	__P((void *));
-#define	portal_islocked	genfs_noislocked
+#define	portal_islocked	genfs_islocked
 int	portal_pathconf	__P((void *));
 #define	portal_advlock	genfs_badop
 #define	portal_blkatoff	genfs_badop
@@ -214,7 +214,6 @@ portal_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		/*VOP_LOCK(dvp);*/
 		return (0);
 	}
 
@@ -242,7 +241,15 @@ portal_lookup(v)
 	pt->pt_fileid = portal_fileid++;
 
 	*vpp = fvp;
-	/*VOP_LOCK(fvp);*/
+	VOP_LOCK(fvp, LK_EXCLUSIVE);
+	/*
+	 * As we are the last component of the path name, fix up
+	 * the locking on the directory node.
+	 */
+	if ((cnp->cn_flags & LOCKPARENT) == 0) {
+		VOP_UNLOCK(dvp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
 	return (0);
 
 bad:;

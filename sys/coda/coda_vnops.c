@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.9 1998/12/10 02:22:52 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.10 1999/07/08 01:26:23 wrstuden Exp $	*/
 
 /*
  * 
@@ -56,6 +56,17 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.10  1999/07/08 01:26:23  wrstuden
+ * Bump osrelease to 1.4E. Add layerfs files, remove null_subr.c.
+ *
+ * Update coda to new struct lock in struct vnode.
+ *
+ * make fdescfs, kernfs, portalfs, and procfs actually lock their vnodes.
+ * It's not that hard.
+ *
+ * Make unionfs set v_vnlock = NULL so any overlayed fs will call its
+ * VOP_LOCK.
+ *
  * Revision 1.9  1998/12/10 02:22:52  rvb
  * Commit a couple of old fixes
  *
@@ -1080,7 +1091,7 @@ coda_inactive(v)
 	    printf("coda_inactive: cp->ovp != NULL use %d: vp %p, cp %p\n",
 	    	   vp->v_usecount, vp, cp);
 #endif
-	lockmgr(&cp->c_lock, LK_RELEASE, &vp->v_interlock);
+	lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
     } else {
 #ifdef OLD_DIAGNOSTIC
 	if (CTOV(cp)->v_usecount) {
@@ -1130,6 +1141,8 @@ coda_lookup(v)
     ViceFid VFid;
     int	vtype;
     int error = 0;
+
+    cnp->cn_flags &= ~PDIRUNLOCK;
 
     MARK_ENTRY(CODA_LOOKUP_STATS);
 
@@ -1239,6 +1252,7 @@ coda_lookup(v)
 	    if ((error = VOP_UNLOCK(dvp, 0))) {
 		return error; 
 	    }	    
+	    cnp->cn_flags |= PDIRUNLOCK;
 	    /* 
 	     * The parent is unlocked.  As long as there is a child,
 	     * lock it without bothering to check anything else. 
@@ -2043,7 +2057,7 @@ coda_lock(v)
 		  cp->c_fid.Volume, cp->c_fid.Vnode, cp->c_fid.Unique));
     }
 
-    return (lockmgr(&cp->c_lock, ap->a_flags, &vp->v_interlock));
+    return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
 }
 
 int
@@ -2063,7 +2077,7 @@ coda_unlock(v)
 		  cp->c_fid.Volume, cp->c_fid.Vnode, cp->c_fid.Unique));
     }
 
-    return (lockmgr(&cp->c_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock));
+    return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock));
 }
 
 int
@@ -2072,10 +2086,9 @@ coda_islocked(v)
 {
 /* true args */
     struct vop_islocked_args *ap = v;
-    struct cnode *cp = VTOC(ap->a_vp);
     ENTRY;
 
-    return (lockstatus(&cp->c_lock));
+    return (lockstatus(&ap->a_vp->v_lock));
 }
 
 /* How one looks up a vnode given a device/inode pair: */
@@ -2194,7 +2207,6 @@ make_coda_node(fid, vfsp, type)
 	struct vnode *vp;
 	
 	cp = coda_alloc();
-	lockinit(&cp->c_lock, PINOD, "cnode", 0, 0);
 	cp->c_fid = *fid;
 	
 	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, &vp);  

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.26 1999/03/12 18:45:40 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.27 1999/07/08 01:26:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@ static int pfsvplock;
 
 /*
  * allocate a pfsnode/vnode pair.  the vnode is
- * referenced, but not locked.
+ * referenced, and locked.
  *
  * the pid, pfs_type, and mount point uniquely
  * identify a pfsnode.  the mount point is needed
@@ -100,7 +100,7 @@ loop:
 		if (pfs->pfs_pid == pid &&
 		    pfs->pfs_type == pfs_type &&
 		    vp->v_mount == mp) {
-			if (vget(vp, 0))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			*vpp = vp;
 			return (0);
@@ -174,6 +174,8 @@ loop:
 	default:
 		panic("procfs_allocvp");
 	}
+
+	VOP_LOCK(vp, LK_EXCLUSIVE);
 
 	/* add to procfs vnode list */
 	for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next)

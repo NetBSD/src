@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.32 1999/06/25 19:05:49 perseant Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.33 1999/07/08 01:26:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -486,6 +486,7 @@ loop:
 		M_TEMP, M_WAITOK);
 
 	(*vpp)->v_flag |= vflag;
+	(*vpp)->v_vnlock = NULL;	/* Make upper layers call VOP_LOCK */
 	if (uppervp)
 		(*vpp)->v_type = uppervp->v_type;
 	else
