@@ -163,6 +163,9 @@ extern int VIA2;
 #define RBVMonIDBW	0x30	/* No internal video */
 
 #define via_reg(v, r) (*(VIA1_addr+(v)*0x2000+(r)))
+#define via_SR_input(v)	(via_reg((v), vACR) &= 0xef)
+#define via_SR_output(v)	(via_reg((v), vACR) = ((via_reg((v), vACR) & \
+								0xe3) | 0x1c))
 
 #define vDirA_ADBState	0x30
 
