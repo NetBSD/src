@@ -1,7 +1,10 @@
-#	$NetBSD: files.amiga,v 1.128 2003/04/16 20:42:35 is Exp $
+#	$NetBSD: files.amiga,v 1.129 2003/06/28 08:39:24 he Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
+
+defflag	opt_m060sp.h		M060SP
+defflag				PANICBUTTON	# panic on kbd NMI if not DDB
 
 maxusers 2 8 64
 
