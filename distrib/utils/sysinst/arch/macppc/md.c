@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2000/10/11 23:47:59 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.18 2000/12/21 21:42:01 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -350,7 +350,7 @@ md_update()
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
-	puts(CL);		/* XXX */
+	wmove(stdscr, 0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
 	return 1;

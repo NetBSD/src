@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.65 2000/12/17 22:55:53 jmc Exp $	*/
+/*	$NetBSD: net.c,v 1.66 2000/12/21 21:42:02 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -744,7 +744,7 @@ get_via_ftp()
 			/* Error getting the file.  Bad host name ... ? */
 			msg_display(MSG_ftperror_cont);
 			getchar();
-			puts(CL);		/* XXX */
+			wmove(stdscr, 0, 0);
 			touchwin(stdscr);
 			wclear(stdscr);
 			wrefresh(stdscr);
@@ -758,7 +758,7 @@ get_via_ftp()
 			list++;
 
 	}
-	puts(CL);		/* XXX */
+	wmove(stdscr, 0, 0);
 	touchwin(stdscr);
 	wclear(stdscr);
 	wrefresh(stdscr);
@@ -856,8 +856,6 @@ mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
-        char to [STRSIZE];
-        char cmd [STRSIZE];
 	FILE *f;
 
 	if (!network_up)
@@ -942,21 +940,8 @@ mnt_net_config(void)
 			}
 			fclose(f);
 		}
-	} else {
-                strncpy(to, target_expand("/etc/rc.conf"), STRSIZE);
-                sprintf(cmd, "echo dhclient=YES >> %s", to);
-                if (logging)
-                        (void)fprintf(log, "%s\n", cmd);
-                if (scripting)
-                        (void)fprintf(script, "%s\n", cmd);
-                do_system(cmd);
-                sprintf(cmd, "echo dhclient_flags=\"%s\" >> %s", net_dev, to);
-                if (logging)
-                        (void)fprintf(log, "%s\n", cmd);
-                if (scripting)
-                        (void)fprintf(script, "%s\n", cmd);
-                do_system(cmd);
-        }
+	}
+
 	fflush(NULL);
 }
 
