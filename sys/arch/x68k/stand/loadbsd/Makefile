@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/18 13:54:39 isaki Exp $
+#	$NetBSD: Makefile,v 1.10 2002/11/03 02:12:18 isaki Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -38,6 +38,9 @@ ${BASE}${i}:	${OBJS} ${LIBDOS}/libdos.a ${LIBIOCS}/libiocs.a
 .endfor
 
 .ifdef RELEASEDIR
-release: ${PROG}
-	cp -ip ${PROG} ${RELEASEDIR}/installation/misc
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+release:
+	${RELEASE_INSTALL} ${PROG} ${RELEASEDIR}/installation/misc
+	${RELEASE_INSTALL} ${DESTDIR}/usr/share/man/cat8/x68k/loadbsd.0 \
+	      ${RELEASEDIR}/installation/misc
 .endif
