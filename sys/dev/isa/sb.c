@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.60 1998/08/07 00:00:59 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.61 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,10 +103,10 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
 	0,
-	sbdsp_dma_init_output,
-	sbdsp_dma_init_input,
-	sbdsp_dma_output,
-	sbdsp_dma_input,
+	0,
+	0,
+	0,
+	0,
 	sbdsp_haltdma,
 	sbdsp_haltdma,
 	sbdsp_speaker_ctl,
@@ -120,6 +120,8 @@ struct audio_hw_if sb_hw_if = {
 	sb_round,
         sb_mappage,
 	sbdsp_get_props,
+	sbdsp_trigger_output,
+	sbdsp_trigger_input,
 };
 
 /*
