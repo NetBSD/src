@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.19 2000/07/16 22:10:12 tron Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.20 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ipcp.c,v 1.52 1999/12/23 01:25:33 paulus Exp "
+#define RCSID	"Id: ipcp.c,v 1.55 2000/06/30 04:54:20 paulus Exp "
 #else
-__RCSID("$NetBSD: ipcp.c,v 1.19 2000/07/16 22:10:12 tron Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.20 2000/09/23 22:39:35 christos Exp $");
 #endif
 #endif
 
@@ -64,11 +64,15 @@ void (*ip_up_hook) __P((void)) = NULL;
 /* Hook for a plugin to know when IP protocol has come down */
 void (*ip_down_hook) __P((void)) = NULL;
 
+/* Hook for a plugin to choose the remote IP address */
+void (*ip_choose_hook) __P((u_int32_t *)) = NULL;
+
 /* local vars */
 static int default_route_set[NUM_PPP];	/* Have set up a default route */
 static int proxy_arp_set[NUM_PPP];	/* Have created proxy arp entry */
 static bool usepeerdns;			/* Ask peer for DNS addrs */
 static int ipcp_is_up;			/* have called np_up() */
+static bool ask_for_local;		/* request our address from peer */
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -126,7 +130,7 @@ static option_t ipcp_option_list[] = {
     { "-vjccomp", o_bool, &ipcp_wantoptions[0].cflag,
       "Disable VJ connection-ID compression", OPT_A2COPY,
       &ipcp_allowoptions[0].cflag },
-    { "vj-max-slots", 1, setvjslots,
+    { "vj-max-slots", 1, (void *)setvjslots,
       "Set maximum VJ header slots" },
     { "ipcp-accept-local", o_bool, &ipcp_wantoptions[0].accept_local,
       "Accept peer's address for us", 1 },
@@ -136,9 +140,9 @@ static option_t ipcp_option_list[] = {
       "Set ip script parameter" },
     { "noipdefault", o_bool, &disable_defaultip,
       "Don't use name for default IP adrs", 1 },
-    { "ms-dns", 1, setdnsaddr,
+    { "ms-dns", 1, (void *)setdnsaddr,
       "DNS address for the peer's use" },
-    { "ms-wins", 1, setwinsaddr,
+    { "ms-wins", 1, (void *)setwinsaddr,
       "Nameserver for SMB over TCP/IP for peer" },
     { "ipcp-restart", o_int, &ipcp_fsm[0].timeouttime,
       "Set timeout for IPCP" },
@@ -460,15 +464,17 @@ ipcp_resetci(f)
     ipcp_options *go = &ipcp_gotoptions[f->unit];
 
     wo->req_addr = wo->neg_addr && ipcp_allowoptions[f->unit].neg_addr;
-    if (wo->ouraddr == 0 || disable_defaultip)
+    if (wo->ouraddr == 0)
 	wo->accept_local = 1;
     if (wo->hisaddr == 0)
 	wo->accept_remote = 1;
     wo->req_dns1 = usepeerdns;	/* Request DNS addresses from the peer */
     wo->req_dns2 = usepeerdns;
     *go = *wo;
-    if (disable_defaultip)
+    if (!ask_for_local)
 	go->ouraddr = 0;
+    if (ip_choose_hook)
+	ip_choose_hook(&wo->hisaddr);
 }
 
 
@@ -1311,7 +1317,7 @@ ip_check_options()
      * Default our local IP address based on our hostname.
      * If local IP address already given, don't bother.
      */
-    if (wo->ouraddr == 0) {
+    if (wo->ouraddr == 0 && !disable_defaultip) {
 	/*
 	 * Look up our hostname (possibly with domain name appended)
 	 * and take the first IP address as our local IP address.
@@ -1324,6 +1330,7 @@ ip_check_options()
 		wo->ouraddr = local;
 	}
     }
+    ask_for_local = wo->ouraddr != 0 || !disable_defaultip;
 }
 
 
@@ -1346,7 +1353,7 @@ ip_demand_conf(u)
 	/* make up an arbitrary address for us */
 	wo->ouraddr = htonl(0x0a404040 + ifunit);
 	wo->accept_local = 1;
-	disable_defaultip = 1;	/* don't tell the peer this address */
+	ask_for_local = 0;	/* don't tell the peer this address */
     }
     if (!sifaddr(u, wo->ouraddr, wo->hisaddr, GetMask(wo->ouraddr)))
 	return 0;
@@ -1390,25 +1397,25 @@ ipcp_up(f)
     if (!ho->neg_addr)
 	ho->hisaddr = wo->hisaddr;
 
-    if (ho->hisaddr == 0) {
-	error("Could not determine remote IP address");
-	ipcp_close(f->unit, "Could not determine remote IP address");
-	return;
-    }
     if (go->ouraddr == 0) {
 	error("Could not determine local IP address");
 	ipcp_close(f->unit, "Could not determine local IP address");
 	return;
     }
-    script_setenv("IPLOCAL", ip_ntoa(go->ouraddr));
-    script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr));
+    if (ho->hisaddr == 0) {
+	ho->hisaddr = htonl(0x0a404040 + ifunit);
+	warn("Could not determine remote IP address: defaulting to %I",
+	     ho->hisaddr);
+    }
+    script_setenv("IPLOCAL", ip_ntoa(go->ouraddr), 0);
+    script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr), 1);
 
     if (usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
-	script_setenv("USEPEERDNS", "1");
+	script_setenv("USEPEERDNS", "1", 0);
 	if (go->dnsaddr[0])
-	    script_setenv("DNS1", ip_ntoa(go->dnsaddr[0]));
+	    script_setenv("DNS1", ip_ntoa(go->dnsaddr[0]), 0);
 	if (go->dnsaddr[1])
-	    script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]));
+	    script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
     }
 
@@ -1434,13 +1441,13 @@ ipcp_up(f)
 	    ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr);
 	    if (go->ouraddr != wo->ouraddr) {
 		warn("Local IP address changed to %I", go->ouraddr);
-		script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr));
+		script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr), 0);
 		wo->ouraddr = go->ouraddr;
 	    } else
 		script_unsetenv("OLDIPLOCAL");
 	    if (ho->hisaddr != wo->hisaddr) {
 		warn("Remote IP address changed to %I", ho->hisaddr);
-		script_setenv("OLDIPREMOTE", ip_ntoa(wo->hisaddr));
+		script_setenv("OLDIPREMOTE", ip_ntoa(wo->hisaddr), 0);
 		wo->hisaddr = ho->hisaddr;
 	    } else
 		script_unsetenv("OLDIPREMOTE");
@@ -1804,7 +1811,7 @@ ipcp_printpkt(p, plen, printer, arg)
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
 	    printer(arg, " ");
-	    print_string(p, len, printer, arg);
+	    print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}
