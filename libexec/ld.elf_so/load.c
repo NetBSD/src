@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.10 1999/12/15 20:13:31 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.11 1999/12/27 15:36:36 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -170,7 +170,7 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 		case CTLTYPE_STRING:
 			break;
 		default:
-			warnx("unsupported sysctl type %d",
+			xwarnx("unsupported sysctl type %d",
 			    x->ctltype[x->ctlmax - 1]);
 			break;
 		}
@@ -187,7 +187,7 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 		}
 
 		if (i == RTLD_MAX_ENTRY) {
-			warnx("sysctl value %s not found for lib%s",
+			xwarnx("sysctl value %s not found for lib%s",
 			    val.s, name);
 			break;
 		}
@@ -198,7 +198,7 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 			libpath = _rtld_find_library(
 			    x->entry[i].library[j], obj);
 			if (libpath == NULL) {
-				warnx("could not load lib%s for lib%s",
+				xwarnx("could not load %s for %s",
 				    x->entry[i].library[j], name);
 				continue;
 			}
