@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.37 2001/06/11 01:50:58 wiz Exp $	*/
+/*	$NetBSD: make.c,v 1.38 2001/06/12 23:36:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.37 2001/06/11 01:50:58 wiz Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.38 2001/06/12 23:36:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.37 2001/06/11 01:50:58 wiz Exp $");
+__RCSID("$NetBSD: make.c,v 1.38 2001/06/12 23:36:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -645,9 +645,9 @@ Make_Update (cgn)
 	while ((ln = Lst_Next (cgn->iParents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (pgn->flags & REMAKE) {
-		Var_Set (IMPSRC, cname, pgn);
+		Var_Set (IMPSRC, cname, pgn, 0);
 		if (cpref != NULL)
-		    Var_Set (PREFIX, cpref, pgn);
+		    Var_Set (PREFIX, cpref, pgn, 0);
 	    }
 	}
 	if (p1)
@@ -770,15 +770,15 @@ Make_DoAllVar (gn)
     Lst_ForEach (gn->children, MakeAddAllSrc, (ClientData) gn);
 
     if (!Var_Exists (OODATE, gn)) {
-	Var_Set (OODATE, "", gn);
+	Var_Set (OODATE, "", gn, 0);
     }
     if (!Var_Exists (ALLSRC, gn)) {
-	Var_Set (ALLSRC, "", gn);
+	Var_Set (ALLSRC, "", gn, 0);
     }
 
     if (gn->type & OP_JOIN) {
 	char *p1;
-	Var_Set (TARGET, Var_Value (ALLSRC, gn, &p1), gn);
+	Var_Set (TARGET, Var_Value (ALLSRC, gn, &p1), gn, 0);
 	if (p1)
 	    free(p1);
     }
@@ -990,14 +990,14 @@ Make_ExpandUse (targs)
 		    continue;
 		*eoa = '\0';
 		*eon = '\0';
-		Var_Set (MEMBER, eoa + 1, gn);
-		Var_Set (ARCHIVE, gn->name, gn);
+		Var_Set (MEMBER, eoa + 1, gn, 0);
+		Var_Set (ARCHIVE, gn->name, gn, 0);
 		*eoa = '(';
 		*eon = ')';
 	    }
 
 	    (void)Dir_MTime(gn);
-	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn);
+	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn, 0);
 	    Lst_ForEach (gn->children, MakeUnmark, (ClientData)gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
 	    Suff_FindDeps (gn);
