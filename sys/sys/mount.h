@@ -76,7 +76,7 @@ struct statfs {
 #define	MOUNT_UFS	1		/* UNIX "Fast" Filesystem */
 #define	MOUNT_NFS	2		/* Network Filesystem */
 #define	MOUNT_MFS	3		/* Memory Filesystem */
-#define	MOUNT_MSDOS	4		/* MSDOS Filesystem */
+#define	MOUNT_PCFS	4		/* MSDOS Filesystem */
 #define MOUNT_ISOFS	5		/* iso9660 cdrom */
 #define MOUNT_FDESC	6		/* /dev/fd filesystem */
 #define MOUNT_KERNFS	7		/* kernel variable filesystem */
