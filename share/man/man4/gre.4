@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.29 2004/02/07 18:34:57 wiz Exp $
+.\" $NetBSD: gre.4,v 1.30 2005/03/30 17:19:52 is Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -210,6 +210,48 @@ On router B:
 Note that this is a safe situation where the link1 flag (as discussed in the
 .Sx BUGS
 section below) may (and probably should) be set.
+.Pp
+Along these lines, you can use GRE tunnels to interconnect two IPv6 
+networks over an IPv4 infrastructure, or to hook up to the IPv6 internet
+via an IPv4 tunnel to a Cisco router.
+.Bd -literal
+2001:db8:1::/64 -- NetBSD A  -----tunnel----- Cisco B --- IPv6 Internet
+                   \\                              /
+                    \\                            /
+                      +----- the Internet ------+
+
+.Ed
+The example will use the following addressing: NetBSD A has the 
+IPv4 address A and the IPv6 address 2001:db8:1::1 (connects to internal
+network 2001:db8:1::/64).  Cisco B has external IPv4 address B.  All
+the IPv6 internet world is behind B, so A wants to route 0::0/0 (the IPv6 
+default route) into the tunnel.  The GRE tunnel will use a transit 
+network: 2001:db8:ffff::1/64 on the NetBSD side, and ::2/64 on the Cisco 
+side.  
+Then the following commands will configure the tunnel:
+.Pp
+On router A (NetBSD):
+.Bd -literal
+   # ifconfig greN create
+   # ifconfig greN inet6 2001:db8:ffff::1/64 
+   # ifconfig greN tunnel A B
+   # route add -inet6 2001:db8:ffff::/64 2001:db8:ffff::2 -ifp greN
+   # route add -inet6 0::0/0 2001:db8:ffff::2 -ifp greN
+.Ed
+.Pp
+On router B (Cisco):
+.Bd -literal
+   Interface TunnelX
+     tunnel mode gre ip
+     ipv6 address 2001:db8:ffff::2/64   ! transfer network
+     tunnel source B                    ! e.g. address from LAN interface
+     tunnel destination A               ! where the tunnel is connected to
+   ipv6 route 2001:db8::/64 TunnelX     ! route this network through tunnel
+.Ed
+.Pp
+Note that this is a safe situation where the link1 flag (as discussed in the
+.Sx BUGS
+section below) may (and probably should) be set.
 .Sh NOTES
 The MTU of
 .Sy gre Ns Ar X
@@ -223,7 +265,8 @@ For correct operation, the
 device needs a route to the destination that is less specific than the
 one over the tunnel.
 (Basically, there needs to be a route to the decapsulating host that
-does not run over the tunnel, as this would be a loop.)
+does not run over the tunnel, as this would be a loop.  This is not
+relevant for IPv6-over-IPv4 tunnels, of course.)
 If the addresses are ambiguous, doing the
 .Xr ifconfig 8
 .Li tunnel
