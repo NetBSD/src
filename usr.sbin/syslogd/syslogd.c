@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.55 2002/08/02 02:23:49 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.56 2002/09/24 13:53:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.55 2002/08/02 02:23:49 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.56 2002/09/24 13:53:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,8 @@ __RCSID("$NetBSD: syslogd.c,v 1.55 2002/08/02 02:23:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+
+#include <netinet/in.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -1494,6 +1496,7 @@ socksetup(int af)
 {
 	struct addrinfo hints, *res, *r;
 	int error, maxs, *s, *socks;
+	const int on = 1;
 
 	if(SecureMode && !NumForwards)
 		return(NULL);
@@ -1512,18 +1515,24 @@ socksetup(int af)
 	/* Count max number of sockets we may open */
 	for (maxs = 0, r = res; r; r = r->ai_next, maxs++)
 		continue;
-	socks = malloc ((maxs+1) * sizeof(int));
+	socks = malloc((maxs+1) * sizeof(int));
 	if (!socks) {
 		logerror("Couldn't allocate memory for sockets");
 		die(0);
 	}
 
 	*socks = 0;   /* num of sockets counter at start of array */
-	s = socks+1;
+	s = socks + 1;
 	for (r = res; r; r = r->ai_next) {
 		*s = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
 		if (*s < 0) {
 			logerror("socket() failed");
+			continue;
+		}
+		if (r->ai_family == AF_INET6 && setsockopt(*s, IPPROTO_IPV6,
+		    IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+			logerror("setsockopt(IPV6_V6ONLY) failed");
+			close(*s);
 			continue;
 		}
 		if (!SecureMode && bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
