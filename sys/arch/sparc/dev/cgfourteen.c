@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.1 1996/09/30 22:41:01 abrown Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.2 1996/10/01 00:06:45 abrown Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -106,6 +106,7 @@ int		cgfourteenopen __P((dev_t, int, int, struct proc *));
 int		cgfourteenclose __P((dev_t, int, int, struct proc *));
 int		cgfourteenioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgfourteenmmap __P((dev_t, int, int));
+int		cgfourteenpoll __P((dev_t, int, struct proc *));
 static void	cgfourteenunblank(struct device *);
 
 struct cfattach cgfourteen_ca = {
@@ -618,6 +619,15 @@ cgfourteenmmap(dev, off, prot)
 	 */
 	return (REG2PHYS(&sc->sc_phys, off, 0) | PMAP_NC);
 }
+
+int
+cgfourteenpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	return(enodev());
+} 
 
 /*
  * Miscellaneous helper functions 
