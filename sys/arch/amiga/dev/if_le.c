@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.31 1998/08/17 00:26:32 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.32 1999/01/10 12:56:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ ariadne_copytodesc_word(sc, from, boff, len)
 	int boff, len;
 {
 	u_short *b1 = from;
-	volatile u_short *b2 = sc->sc_mem + boff;
+	volatile u_short *b2 = (u_short *)((u_char *)sc->sc_mem + boff);
 
 	for (len >>= 1; len > 0; len--)
 		*b2++ = ariadne_swapreg(*b1++);
@@ -455,7 +455,7 @@ ariadne_copyfromdesc_word(sc, to, boff, len)
 	void *to;
 	int boff, len;
 {
-	volatile u_short *b1 = sc->sc_mem + boff;
+	volatile u_short *b1 = (u_short *)((u_char *)sc->sc_mem + boff);
 	u_short *b2 = to;
 
 	for (len >>= 1; len > 0; len--)
@@ -471,7 +471,7 @@ ariadne_copytobuf_word(sc, from, boff, len)
 	int boff, len;
 {
 	u_char *a1 = from;
-	volatile u_char *a2 = sc->sc_mem + boff;
+	volatile u_char *a2 = (u_char *)sc->sc_mem + boff;
 	u_short *b1;
 	volatile u_short *b2;
 	int i;
@@ -505,7 +505,7 @@ ariadne_copyfrombuf_word(sc, to, boff, len)
 	void *to;
 	int boff, len;
 {
-	volatile u_char *a1 = sc->sc_mem + boff;
+	volatile u_char *a1 = (u_char *)sc->sc_mem + boff;
 	u_char *a2 = to;
 	volatile u_short *b1;
 	u_short *b2;
@@ -539,7 +539,7 @@ ariadne_zerobuf_word(sc, boff, len)
 	struct lance_softc *sc;
 	int boff, len;
 {
-	volatile u_char *a1 = sc->sc_mem + boff;
+	volatile u_char *a1 = (u_char *)sc->sc_mem + boff;
 	volatile u_short *b1;
 	int i;
 
