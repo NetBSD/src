@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.12 2002/10/02 16:51:26 thorpej Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.13 2002/12/26 22:59:51 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.12 2002/10/02 16:51:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.13 2002/12/26 22:59:51 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.12 2002/10/02 16:51:26 thorpej Exp 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/hmevar.h>
+
+#ifndef HME_USE_LOCAL_MAC_ADDRESS
+#ifdef __sparc__
+#define HME_USE_LOCAL_MAC_ADDRESS	0	/* use system-wide address */
+#else
+#define HME_USE_LOCAL_MAC_ADDRESS	1
+#endif
+#endif
 
 struct hme_pci_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
@@ -98,9 +106,38 @@ hmeattach_pci(parent, self, aux)
 	pcireg_t csr;
 	const char *intrstr;
 	int type;
-
+#if HME_USE_LOCAL_MAC_ADDRESS
+	struct pci_attach_args	ebus_pa;
+	pcireg_t		ebus_cl, ebus_id;
+	u_int8_t		*enaddr;
+	bus_space_tag_t		romt;
+	bus_space_handle_t	romh;
+	bus_size_t		romsize;
+	u_int8_t		buf[32];
+	int			dataoff, vpdoff;
+	struct pci_vpd		*vpd;
+	static const u_int8_t promhdr[] = { 0x55, 0xaa };
+#define PROMHDR_PTR_DATA	0x18
+	static const u_int8_t promdat[] = {
+		0x50, 0x43, 0x49, 0x52,		/* "PCIR" */
+		PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
+		PCI_PRODUCT_SUN_HMENETWORK & 0xff,
+		PCI_PRODUCT_SUN_HMENETWORK >> 8
+	};
+#define PROMDATA_PTR_VPD	0x08
+#define PROMDATA_DATA2		0x0a		
+	static const u_int8_t promdat2[] = {
+		0x18, 0x00,			/* structure length */
+		0x00,				/* structure revision */
+		0x00,				/* interface revision */
+		PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
+		PCI_CLASS_NETWORK		/* class code */
+	};
+#endif	/* HME_USE_LOCAL_MAC_ADDRESS */
+#ifdef __sparc__
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
+#endif
 
 	printf(": Sun Happy Meal Ethernet, rev. %d\n",
 	    PCI_REVISION(pa->pa_class));
@@ -174,7 +211,85 @@ hmeattach_pci(parent, self, aux)
 		return;
 	}
 
-	myetheraddr(sc->sc_enaddr);
+#if HME_USE_LOCAL_MAC_ADDRESS
+	/*
+	 * Dig out VPD (vital product data) and acquire Ethernet address.
+	 * The VPD of hme resides in the Boot PROM (PCI FCode) attached
+	 * to the EBus interface.
+	 */
+	/*
+	 * ``Writing FCode 3.x Programs'' (newer ones, dated 1997 and later)
+	 * chapter 2 describes the data structure.
+	 */
+
+	enaddr = NULL;
+
+	/* get a PCI tag for the EBus bridge (function 0 of the same device) */
+	ebus_pa = *pa;
+	ebus_pa.pa_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+
+	ebus_cl = pci_conf_read(ebus_pa.pa_pc, ebus_pa.pa_tag, PCI_CLASS_REG);
+	ebus_id = pci_conf_read(ebus_pa.pa_pc, ebus_pa.pa_tag, PCI_ID_REG);
+
+#define PCI_EBUS2_BOOTROM	0x10
+	if (PCI_CLASS(ebus_cl) == PCI_CLASS_BRIDGE &&
+	    PCI_PRODUCT(ebus_id) == PCI_PRODUCT_SUN_EBUS &&
+	    pci_mapreg_map(&ebus_pa, PCI_EBUS2_BOOTROM, PCI_MAPREG_TYPE_MEM,
+		BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE,
+		&romt, &romh, 0, &romsize) == 0) {
+
+		/* read PCI Expansion PROM Header */
+		bus_space_read_region_1(romt, romh, 0, buf, sizeof buf);
+		if (memcmp(buf, promhdr, sizeof promhdr) == 0 &&
+		    (dataoff = (buf[PROMHDR_PTR_DATA] |
+			(buf[PROMHDR_PTR_DATA + 1] << 8))) >= 0x1c) {
+
+			/* read PCI Expansion PROM Data */
+			bus_space_read_region_1(romt, romh, dataoff,
+			    buf, sizeof buf);
+			if (memcmp(buf, promdat, sizeof promdat) == 0 &&
+			    memcmp(buf + PROMDATA_DATA2, promdat2,
+				sizeof promdat2) == 0 &&
+			    (vpdoff = (buf[PROMDATA_PTR_VPD] |
+				(buf[PROMDATA_PTR_VPD + 1] << 8))) >= 0x1c) {
+
+				/*
+				 * The VPD of hme is not in PCI 2.2 standard
+				 * format.  The length in the resource header
+				 * is in big endian, and resources are not
+				 * properly terminated (only one resource
+				 * and no end tag).
+				 */
+				/* read PCI VPD */
+				bus_space_read_region_1(romt, romh,
+				    vpdoff, buf, sizeof buf);
+				vpd = (void *)(buf + 3);
+				if (PCI_VPDRES_ISLARGE(buf[0]) &&
+				    PCI_VPDRES_LARGE_NAME(buf[0])
+					== PCI_VPDRES_TYPE_VPD &&
+				    /* buf[1] == 0 && buf[2] == 9 && */ /*len*/
+				    vpd->vpd_key0 == 0x4e /* N */ &&
+				    vpd->vpd_key1 == 0x41 /* A */ &&
+				    vpd->vpd_len == ETHER_ADDR_LEN) {
+					/*
+					 * Ethernet address found
+					 */
+					enaddr = buf + 6;
+				}
+			}
+		}
+		bus_space_unmap(romt, romh, romsize);
+	}
+
+	if (enaddr)
+		memcpy(sc->sc_enaddr, enaddr, ETHER_ADDR_LEN);
+	else
+#endif	/* HME_USE_LOCAL_MAC_ADDRESS */
+#ifdef __sparc__
+		myetheraddr(sc->sc_enaddr);
+#else
+		printf("%s: no Ethernet address found\n", sc->sc_dev.dv_xname);
+#endif
 
 	/*
 	 * Map and establish our interrupt.
