@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1997/05/24 00:09:49 jeremy Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1997/05/30 03:23:11 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -467,7 +467,7 @@ fdmatch(parent, match, aux)
 	ok = (n == 2 && (fdc->sc_status[0] & 0xf8) == 0x20) ? 1 : 0;
 
 	/* turn off motor */
-	fdc->sc_fcr &= ~FCR_MTRON;
+	fdc->sc_fcr &= ~(FCR_DSEL(drive)|FCR_MTRON);
 	FCR_REG_SYNC();
 
 	return (ok);
@@ -713,7 +713,7 @@ fd_set_motor(fdc)
 	if (on) {
 		fdc->sc_fcr |= FCR_DSEL(0)|FCR_MTRON; /* XXX */
 	} else {
-		fdc->sc_fcr &= ~FCR_MTRON;
+		fdc->sc_fcr &= ~(FCR_DSEL(0)|FCR_MTRON); /* XXX */
 	}
 	FCR_REG_SYNC();
 }
