@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.12 1998/11/22 14:22:03 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.27.6.1 1999/06/28 06:36:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,8 +8,16 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
+#if defined(__NetBSD__)
+static const char rcsid[] = "$NetBSD: fil.c,v 1.27.6.1 1999/06/28 06:36:58 itojun Exp $";
+#else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.27 1998/11/22 01:50:15 darrenr Exp ";
+#endif
+#endif
+
+#ifdef _KERNEL
+#include "opt_inet.h"
 #endif
 
 #include <sys/errno.h>
@@ -46,6 +54,11 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.27 1998/11/22 01:50:15 d
 # include <net/af.h>
 #endif
 #include <net/route.h>
+#ifdef _KERNEL
+#ifndef INET
+#error ipfilter assumes options INET
+#endif
+#endif
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -946,6 +959,49 @@ register int len;
  * and the TCP header.  We also assume that data blocks aren't allocated in
  * odd sizes.
  */
+#if defined(KERNEL) && (defined(BSD) || (defined(sun) && !SOLARIS))
+u_short fr_tcpsum(m, ip, tcp, len)
+mb_t *m;
+ip_t *ip;
+tcphdr_t *tcp;
+int len;
+{
+	struct ip *ipp;
+	struct mbuf mb, *mp = &mb;
+	u_short sum;
+	int hlen;
+
+	bzero((char *)mp, sizeof(*mp));
+	hlen = ip->ip_hl << 2;
+	mp->m_next = m;
+	mp->m_len = hlen;
+	mp->m_type = MT_DATA;
+# if BSD >= 199306
+	mp->m_data = mp->m_dat;
+#else
+	mp->m_off = MMINOFF;
+# endif
+	ipp = mtod(mp, struct ip *);
+	ipp->ip_src = ip->ip_src;
+	ipp->ip_dst = ip->ip_dst;
+	ipp->ip_p = ip->ip_p;
+	ipp->ip_len = htons(ip->ip_len - hlen);
+	m->m_len -= hlen;
+# if BSD >= 199306
+	m->m_data += hlen;
+# else
+	m->m_off += hlen;
+# endif
+	sum = in_cksum(mp, len);
+	m->m_len += hlen;
+# if BSD >= 199306
+	m->m_data -= hlen;
+# else
+	m->m_off -= hlen;
+# endif
+	return sum;
+}
+#else /* KERNEL && BSD */
 u_short fr_tcpsum(m, ip, tcp, len)
 mb_t *m;
 ip_t *ip;
@@ -983,11 +1039,11 @@ int len;
 	sum += *sp++;	/* ack */
 	sum += *sp++;
 	sum += *sp++;	/* off */
-	sum += *sp;	/* win */
-	sp += 2;	/* Skip over checksum */
+	sum += *sp++;	/* win */
+	sum += *sp++;	/* sum */
 	sum += *sp++;	/* urp */
 
-#if SOLARIS
+# if SOLARIS
 	/*
 	 * In case we had to copy the IP & TCP header out of mblks,
 	 * skip over the mblk bits which are the header
@@ -1009,8 +1065,8 @@ int len;
 			}
 		}
 	}
-#endif
-#ifdef	__sgi
+# endif
+# ifdef	__sgi
 	/*
 	 * In case we had to copy the IP & TCP header out of mbufs,
 	 * skip over the mbuf bits which are the header
@@ -1032,12 +1088,12 @@ int len;
 			}
 		}
 	}
-#endif
+# endif
 
 	if (!(len -= sizeof(*tcp)))
 		goto nodata;
 	while (len > 1) {
-#if SOLARIS
+# if SOLARIS
 		if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
 			m = m->b_cont;
 			PANIC((!m),("fr_tcpsum(2): not enough data"));
@@ -1052,7 +1108,7 @@ int len;
 			sum += bytes.s;
 			sp = (u_short *)((u_char *)sp + 1);
 		}
-#else
+# else
 		if (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len) {
 			m = m->m_next;
 			PANIC((!m),("fr_tcpsum(2): not enough data"));
@@ -1067,7 +1123,7 @@ int len;
 			sum += bytes.s;
 			sp = (u_short *)((u_char *)sp + 1);
 		}
-#endif /* SOLARIS */
+# endif /* SOLARIS */
 		if ((u_long)sp & 1) {
 			bcopy((char *)sp++, (char *)&bytes.s, sizeof(bytes.s));
 			sum += bytes.s;
@@ -1083,6 +1139,7 @@ nodata:
 	sum = (u_short)(~sum & 0xffff);
 	return sum;
 }
+#endif /* KERNEL && BSD */
 
 
 #if defined(_KERNEL) && ( ((BSD < 199306) && !SOLARIS) || defined(__sgi) )

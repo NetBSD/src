@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.11 1998/11/22 14:22:02 mrg Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.34.6.1 1999/06/28 06:36:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,12 +8,20 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
+#if defined(__NetBSD__)
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.34.6.1 1999/06/28 06:36:59 itojun Exp $";
+#else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.10 1998/11/22 01:50:22 darrenr Exp ";
+#endif
 #endif
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#endif
+
+#ifdef _KERNEL
+#include "opt_inet.h"
 #endif
 
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -74,6 +82,9 @@ static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.10 1998/11/22 01:50:2
 # endif
 #endif
 #include <net/route.h>
+#ifndef INET
+#error ipfilter assumes options INET
+#endif
 #include <netinet/in.h>
 #if !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /* IRIX < 6 */
 #include <netinet/in_var.h>
@@ -193,19 +204,27 @@ char *s;
 
 
 /*
- * Try to detect the case when compiling for NetBSD with pseudo-device
+ * BSD pseudo-device attach routine; this is a no-op.
  */
-# if defined(__NetBSD__) && defined(PFIL_HOOKS)
+# if defined(__NetBSD__)
 void
 ipfilterattach(count)
 int count;
 {
-	iplattach();
+
+	/*
+	 * Do nothing here, really.  The filter will be enabled
+	 * by the SIOCFRENB ioctl.
+	 */
 }
 # endif
 
 
+# if defined(__NetBSD__)
+int ipl_enable()
+# else
 int iplattach()
+# endif
 {
 	char *defpass;
 	int s;
@@ -266,7 +285,11 @@ int iplattach()
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
+# if defined(__NetBSD__)
+int ipl_disable()
+# else
 int ipldetach()
+# endif
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -383,25 +406,40 @@ int mode;
 		       sizeof(iplused[IPL_LOGIPF]));
 #endif
 		break;
-#if !defined(IPFILTER_LKM) && defined(_KERNEL)
+#if (!defined(IPFILTER_LKM) || defined(__NetBSD__)) && defined(_KERNEL)
 	case SIOCFRENB :
 	{
 		u_int	enable;
 
+# if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
+# if defined(__NetBSD__)
+			if (enable)
+				error = ipl_enable();
+			else
+				error = ipl_disable();
+# else 
 			if (enable)
 				error = iplattach();
 			else
 				error = ipldetach();
+# endif
 		}
 		break;
 	}
 #endif
 	case SIOCSETFF :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			IRCOPY(data, (caddr_t)&fr_flags, sizeof(fr_flags));
@@ -413,7 +451,11 @@ int mode;
 	case SIOCRMAFR :
 	case SIOCADAFR :
 	case SIOCZRLST :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			error = frrequest(unit, cmd, data, fr_active);
@@ -421,13 +463,21 @@ int mode;
 	case SIOCINIFR :
 	case SIOCRMIFR :
 	case SIOCADIFR :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			error = frrequest(unit, cmd, data, 1 - fr_active);
 		break;
 	case SIOCSWAPA :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 			bzero((char *)frcache, sizeof(frcache[0]) * 2);
@@ -457,13 +507,21 @@ int mode;
 		break;
 	}
 	case	SIOCFRZST :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			frzerostats(data);
 		break;
 	case	SIOCIPFFL :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 			IRCOPY(data, (caddr_t)&tmp, sizeof(tmp));
@@ -473,7 +531,11 @@ int mode;
 		break;
 #ifdef	IPFILTER_LOG
 	case	SIOCIPFFB :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			*(int *)data = ipflog_clear(unit);
@@ -484,7 +546,11 @@ int mode;
 		break;
 	case SIOCAUTHW :
 	case SIOCAUTHR :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE)) {
+#else
 		if (!(mode & FWRITE)) {
+#endif
 			error = EPERM;
 			break;
 		}
@@ -492,7 +558,11 @@ int mode;
 		error = fr_auth_ioctl(data, cmd, NULL, NULL);
 		break;
 	case SIOCFRSYN :
+#if defined(__NetBSD__) && defined(_KERNEL)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 #if defined(_KERNEL) && defined(__sgi)
@@ -870,10 +940,14 @@ void
 #  endif
 iplinit()
 {
+#  if defined(__NetBSD__)
+	(void) ipl_enable();
+#  else
 	(void) iplattach();
+#  endif
 	ip_init();
 }
-# endif /* ! __NetBSD__ */
+# endif /* !IPFILTER_LKM && __FreeBSD_version < 300000 */
 
 
 size_t mbufchainlen(m0)
@@ -961,7 +1035,9 @@ frdest_t *fdp;
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
 # ifndef sparc
+#  ifndef __NetBSD__
 		ip->ip_id = htons(ip->ip_id);
+#  endif
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
 # endif
@@ -980,6 +1056,12 @@ frdest_t *fdp;
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & IP_DF) {
+		/* Send ICMP error here */
+		struct mbuf *mcopy;
+		mcopy = m_copy(m, 0, imin((int)ip->ip_len, 68));
+		if (mcopy)
+			icmp_error(mcopy, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
+				   ip->ip_dst.s_addr, ifp);
 		error = EMSGSIZE;
 		goto bad;
 	}
@@ -1000,7 +1082,7 @@ frdest_t *fdp;
 	m0 = m;
 	mhlen = sizeof (struct ip);
 	for (off = hlen + len; off < ip->ip_len; off += len) {
-		MGET(m, M_DONTWAIT, MT_HEADER);
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
 			error = ENOBUFS;
 			goto bad;
