@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.29 2000/10/02 19:48:34 cgd Exp $	*/
+/*	$NetBSD: gram.y,v 1.30 2001/06/08 12:47:06 fredette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ static	int	adepth;
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
 static	void	cleanup(void);
-static	void	setmachine(const char *, const char *);
+static	void	setmachine(const char *, const char *, struct nvlist *);
 static	void	check_maxpart(void);
 
 static	void	app(struct nvlist *, struct nvlist *);
@@ -108,6 +108,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD EMPTY
+%token	ENDDEFS
 
 %left '|'
 %left '&'
@@ -139,6 +140,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	defopts
 %type	<list>	defoptdeps
 %type	<str>	optfile_opt
+%type	<list>	subarches_opt subarches
 
 %%
 
@@ -154,9 +156,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 Configuration:
 	topthings			/* dirspecs, include "std.arch" */
 	machine_spec			/* "machine foo" from machine descr. */
-	dev_defs dev_eof		/* sys/conf/files */
-	dev_defs dev_eof		/* sys/arch/${MACHINE_ARCH}/... */
-	dev_defs dev_eof		/* sys/arch/${MACHINE}/... */
+	dev_defs ENDDEFS		/* all machine definition files */
 					{ check_maxpart(); }
 	specs;				/* rest of machine description */
 
@@ -171,12 +171,17 @@ topthing:
 	'\n';
 
 machine_spec:
-	XMACHINE WORD '\n'		{ setmachine($2,NULL); } |
-	XMACHINE WORD WORD '\n' 	{ setmachine($2,$3); } |
+	XMACHINE WORD '\n'		{ setmachine($2,NULL,NULL); } |
+	XMACHINE WORD WORD subarches_opt '\n'	{ setmachine($2,$3,$4); } |
 	error { stop("cannot proceed without machine specifier"); };
 
-dev_eof:
-	ENDFILE				{ enddefs(); checkfiles(); };
+subarches_opt:
+	subarches			|
+	/* empty */			{ $$ = NULL; };
+
+subarches:
+	subarches WORD			{ $$ = new_nx($2, $1); } |
+	WORD				{ $$ = new_n($1); };
 
 /*
  * Various nonterminals shared between the grammars.
@@ -234,6 +239,7 @@ prefix:
  */
 dev_defs:
 	dev_defs dev_def |
+	dev_defs ENDFILE		{ enddefs(); checkfiles(); } |
 	/* empty */;
 
 dev_def:
@@ -502,17 +508,37 @@ cleanup(void)
 }
 
 static void
-setmachine(const char *mch, const char *mcharch)
+setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 {
 	char buf[MAXPATHLEN];
+	struct nvlist *nv;
 
 	machine = mch;
 	machinearch = mcharch;
+	machinesubarches = mchsubarches;
 
+	/*
+	 * Set up the file inclusion stack.  This empty include tells
+	 * the parser there are no more device definitions coming.
+	 */
+	strcpy(buf, _PATH_DEVNULL);
+	if (include(buf, ENDDEFS, 0) != 0)
+		exit(1);
+
+	/* Include arch/${MACHINE}/conf/files.${MACHINE} */
 	(void)sprintf(buf, "arch/%s/conf/files.%s", machine, machine);
 	if (include(buf, ENDFILE, 0) != 0)
 		exit(1);
 
+	/* Include any arch/${MACHINE_SUBARCH}/conf/files.${MACHINE_SUBARCH} */
+	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
+		(void)sprintf(buf, "arch/%s/conf/files.%s",
+		    nv->nv_name, nv->nv_name);
+		if (include(buf, ENDFILE, 0) != 0)
+			exit(1);
+	}
+
+	/* Include any arch/${MACHINE_ARCH}/conf/files.${MACHINE_ARCH} */
 	if (machinearch != NULL)
 		(void)sprintf(buf, "arch/%s/conf/files.%s",
 		    machinearch, machinearch);
@@ -521,6 +547,10 @@ setmachine(const char *mch, const char *mcharch)
 	if (include(buf, ENDFILE, 0) != 0)
 		exit(1);
 
+	/*
+	 * Include the global conf/files.  As the last thing
+	 * pushed on the stack, it will be processed first.
+	 */
 	if (include("conf/files", ENDFILE, 0) != 0)
 		exit(1);
 }
