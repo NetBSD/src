@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2000/05/01 12:09:32 ragge Exp $	*/
+/*	$NetBSD: lock.h,v 1.4 2000/05/02 04:41:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -33,18 +33,19 @@
 #ifndef _VAX_LOCK_H_
 #define _VAX_LOCK_H_
 
+typedef	__volatile int		__cpu_simple_lock_t;
+
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-
 static __inline void
-__cpu_simple_lock_init(__volatile int *alp)
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline void
-__cpu_simple_lock(__volatile int *alp)
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	__asm__ __volatile ("1:;bbssi $0, (%0), 1b"
 		: /* No output */
@@ -52,13 +53,13 @@ __cpu_simple_lock(__volatile int *alp)
 }
 
 static __inline void
-__cpu_simple_unlock(__volatile int *alp)
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline int
-__cpu_simple_lock_try(__volatile int *alp)
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	register int ret;
 
