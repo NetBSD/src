@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.86 1995/12/24 02:31:27 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.87 1996/02/19 20:18:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -193,9 +193,16 @@ epprobe(parent, match, aux)
 	if (parent->dv_cfdata->cf_driver == &pcicd) {
 		struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-		if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM ||
-		    PCI_CHIPID(pa->pa_id) != PCI_PRODUCT_3COM_3C590)
+		if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM)
 			return 0;
+
+		switch (PCI_CHIPID(pa->pa_id)) {
+		case PCI_PRODUCT_3COM_3C590:
+		case PCI_PRODUCT_3COM_3C595:
+			break;
+		default:
+			return 0;
+		}
 
 		if (nepcards >= MAXEPCARDS)
 			return 0;
