@@ -1,8 +1,8 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$NetBSD: README,v 1.2 1999/07/17 13:03:28 itojun Exp $
-KAME Id: README,v 1.1.2.5.2.2.10.4 1999/07/17 12:58:44 itojun Exp
+$NetBSD: README,v 1.3 1999/12/09 15:20:02 itojun Exp $
+KAME Id: README,v 1.1.1.1 1999/08/08 23:29:27 itojun Exp
 
 
 Introduction

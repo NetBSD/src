@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.1 1999/07/13 22:16:49 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.2 1999/12/09 15:20:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -35,9 +35,6 @@
  * Usage: faithd [<port> <progpath> <arg1(progname)> <arg2> ...]
  *   e.g. faithd telnet /usr/local/v6/sbin/telnetd telnetd
  */
-
-#define ss_len		__ss_len
-#define ss_family	__ss_family
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -361,6 +358,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	int len = sizeof(dstaddr6);
 	int s_dst, error, hport, nresvport, on = 1;
 	struct timeval tv;
+	struct sockaddr *sa4;
 	
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -373,7 +371,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	if (error == -1)
 		exit_failure("getsockname: %s", ERRSTR);
 
-	getnameinfo((struct sockaddr *)&dstaddr6, dstaddr6.__ss_len,
+	getnameinfo((struct sockaddr *)&dstaddr6, len,
 		dst6, sizeof(dst6), NULL, 0, NI_NUMERICHOST);
 	syslog(LOG_INFO, "the client is connecting to %s", dst6);
 	
@@ -400,34 +398,39 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	 * Act as a translator
 	 */
 
-	if (dstaddr6.__ss_family == AF_INET6) {
+	switch (((struct sockaddr *)&dstaddr6)->sa_family) {
+	case AF_INET6:
 		if (!map6to4((struct sockaddr_in6 *)&dstaddr6,
 		    (struct sockaddr_in *)&dstaddr4)) {
 			close(s_src);
 			exit_error("map6to4 failed");
 		}
 		syslog(LOG_INFO, "translating from v6 to v4");
+		break;
 #ifdef FAITH4
-	} else if (dstaddr6.__ss_family == AF_INET) {
+	case AF_INET:
 		if (!map4to6((struct sockaddr_in *)&dstaddr6,
 		    (struct sockaddr_in6 *)&dstaddr4)) {
 			close(s_src);
 			exit_error("map4to6 failed");
 		}
 		syslog(LOG_INFO, "translating from v4 to v6");
+		break;
 #endif
-	} else {
+	default:
 		close(s_src);
 		exit_error("family not supported");
+		/*NOTREACHED*/
 	}
 
-	getnameinfo((struct sockaddr *)&dstaddr4, dstaddr4.__ss_len,
+	sa4 = (struct sockaddr *)&dstaddr4;
+	getnameinfo(sa4, sa4->sa_len,
 		dst4, sizeof(dst4), NULL, 0, NI_NUMERICHOST);
 	syslog(LOG_INFO, "the translator is connecting to %s", dst4);
 
 	setproctitle("port %s, %s -> %s", service, src, dst4);
 
-	if (dstaddr4.__ss_family == AF_INET6)
+	if (sa4->sa_family == AF_INET6)
 		hport = ntohs(((struct sockaddr_in6 *)&dstaddr4)->sin6_port);
 	else /* AF_INET */
 		hport = ntohs(((struct sockaddr_in *)&dstaddr4)->sin_port);
@@ -435,13 +438,13 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	switch (hport) {
 	case RLOGIN_PORT:
 	case RSH_PORT:
-		s_dst = rresvport_af(&nresvport, dstaddr4.__ss_family);
+		s_dst = rresvport_af(&nresvport, sa4->sa_family);
 		break;
 	default:
 		if (pflag)
-			s_dst = rresvport_af(&nresvport, dstaddr4.__ss_family);
+			s_dst = rresvport_af(&nresvport, sa4->sa_family);
 		else
-			s_dst = socket(dstaddr4.__ss_family, SOCK_STREAM, 0);
+			s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
 		break;
 	}
 	if (s_dst == -1)
@@ -458,7 +461,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	if (error == -1)
 		exit_error("setsockopt: %s", ERRSTR);
 
-	error = connect(s_dst, (struct sockaddr *)&dstaddr4, dstaddr4.__ss_len);
+	error = connect(s_dst, sa4, sa4->sa_family);
 	if (error == -1)
 		exit_failure("connect: %s", ERRSTR);
 
@@ -497,10 +500,10 @@ faith_prefix(struct sockaddr *dst)
 	if (sysctl(mib, 4, &faith_prefix, &size, NULL, 0) < 0)
 		exit_error("sysctl: %s", ERRSTR);
 
-	if (dst->sin6_addr.s6_addr32[0] == faith_prefix.s6_addr32[0]
-	 && dst->sin6_addr.s6_addr32[1] == faith_prefix.s6_addr32[1]
-	 && dst->sin6_addr.s6_addr32[2] == faith_prefix.s6_addr32[2])
+	if (memcmp(dst, &faith_prefix,
+			sizeof(struct in6_addr) - sizeof(struct in_addr) == 0) {
 		return 1;
+	}
 	return 0;
 #else
 	struct myaddrs *p;
@@ -542,7 +545,8 @@ map6to4(struct sockaddr_in6 *dst6, struct sockaddr_in *dst4)
 	dst4->sin_len = sizeof(*dst4);
 	dst4->sin_family = AF_INET;
 	dst4->sin_port = dst6->sin6_port;
-	dst4->sin_addr.s_addr = dst6->sin6_addr.s6_addr32[3];
+	memcpy(&dst4->sin_addr, &dst6->sin6_addr.s6_addr[12],
+		sizeof(dst4->sin_addr));
 
 	if (dst4->sin_addr.s_addr == INADDR_ANY
 	 || dst4->sin_addr.s_addr == INADDR_BROADCAST
@@ -726,8 +730,9 @@ grab_myaddrs()
 				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
 				 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
 					sin6->sin6_scope_id =
-						ntohs(sin6->sin6_addr.s6_addr16[1]);
-					sin6->sin6_addr.s6_addr16[1] = 0;
+						ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+					sin6->sin6_addr.s6_addr[2] = 0;
+					sin6->sin6_addr.s6_addr[3] = 0;
 				}
 			}
 #endif

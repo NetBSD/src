@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.1 1999/07/13 22:16:49 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.2 1999/12/09 15:20:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -216,6 +216,7 @@ ftp_activeconn()
 	int error;
 	fd_set set;
 	struct timeval timeout;
+	struct sockaddr *sa;
 
 	/* get active connection from server */
 	FD_ZERO(&set);
@@ -232,7 +233,8 @@ ftp_activeconn()
 	}
 
 	/* ask active connection to client */
-	port6 = socket(data6.__ss_family, SOCK_STREAM, 0);
+	sa = (struct sockaddr *)&data6;
+	port6 = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (port6 == -1) {
 		close(port4);
 		close(wport4);
@@ -240,8 +242,7 @@ ftp_activeconn()
 		syslog(LOG_INFO, "active mode data connection failed");
 		return -1;
 	}
-	error = connect(port6, (struct sockaddr *)&data6,
-			data6.__ss_len);
+	error = connect(port6, sa, sa->sa_len);
 	if (port6 == -1) {
 		close(port6);
 		close(port4);
@@ -262,6 +263,7 @@ ftp_passiveconn()
 	int error;
 	fd_set set;
 	struct timeval timeout;
+	struct sockaddr *sa;
 
 	/* get passive connection from client */
 	FD_ZERO(&set);
@@ -278,7 +280,8 @@ ftp_passiveconn()
 	}
 
 	/* ask passive connection to server */
-	port4 = socket(data4.__ss_family, SOCK_STREAM, 0);
+	sa = (struct sockaddr *)&data4;
+	port4 = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (port4 == -1) {
 		close(wport6);
 		close(port6);
@@ -286,7 +289,7 @@ ftp_passiveconn()
 		syslog(LOG_INFO, "passive mode data connection failed");
 		return -1;
 	}
-	error = connect(port4, (struct sockaddr *)&data4, data4.__ss_len);
+	error = connect(port4, sa, sa->sa_len);
 	if (port4 == -1) {
 		close(wport6);
 		close(port4);
@@ -801,7 +804,7 @@ ftp_copycommand(int src, int dst, enum state *state)
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		for (n = 0; n < 16; n++)
-			sin6->sin6_addr.s6_addr8[n] = ho[n];
+			sin6->sin6_addr.s6_addr[n] = ho[n];
 		sin6->sin6_port = htons(((po[0] & 0xff) << 8) | (po[1] & 0xff));
 
 sendport:
@@ -815,7 +818,7 @@ lprtfail:
 			write(src, sbuf, n);
 			return n;
 		}
-		if (data4.__ss_family != AF_INET)
+		if (((struct sockaddr *)&data4)->sa_family != AF_INET)
 			goto lprtfail;
 		sin = (struct sockaddr_in *)&data4;
 		sin->sin_port = 0;
@@ -843,7 +846,7 @@ lprtfail:
 			wport4 = -1;
 			goto lprtfail;
 		}
-		if (data4.__ss_family != AF_INET) {
+		if (((struct sockaddr *)&data4)->sa_family != AF_INET) {
 			close(wport4);
 			wport4 = -1;
 			goto lprtfail;
@@ -1025,14 +1028,15 @@ portfail:
 			write(src, sbuf, n);
 			return n;
 		}
-		if (data4.__ss_family != AF_INET6)
+		if (((struct sockaddr *)&data4)->sa_family != AF_INET6)
 			goto portfail;
 
 		((struct sockaddr_in6 *)&data4)->sin6_port = 0;
-		wport4 = socket(data4.__ss_family, SOCK_STREAM, 0);
+		sa = (struct sockaddr *)&data4;
+		wport4 = socket(sa->sa_family, SOCK_STREAM, 0);
 		if (wport4 == -1)
 			goto portfail;
-		error = bind(wport4, (struct sockaddr *)&data4, data4.__ss_len);
+		error = bind(wport4, sa, sa->sa_len);
 		if (error == -1) {
 			close(wport4);
 			wport4 = -1;
@@ -1054,9 +1058,9 @@ portfail:
 			goto portfail;
 		}
 		af = 2;
-		if (getnameinfo((struct sockaddr *)&data4, data4.__ss_len,
-			host, sizeof(host), serv, sizeof(serv),
-			NI_NUMERICHOST | NI_NUMERICSERV)) {
+		sa = (struct sockaddr *)&data4;
+		if (getnameinfo(sa, sa->sa_len, host, sizeof(host),
+			serv, sizeof(serv), NI_NUMERICHOST | NI_NUMERICSERV)) {
 			close(wport4);
 			wport4 = -1;
 			goto portfail;
