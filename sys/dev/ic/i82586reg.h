@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586reg.h,v 1.3 1995/01/23 04:50:56 mycroft Exp $	*/
+/*	$NetBSD: i82586reg.h,v 1.4 1995/04/03 21:17:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -211,6 +211,7 @@ struct ie_xmit_cmd {
 #define IE_XS_UNDERRUN	0x0100	/* DMA underrun */
 #define IE_XS_LOSTCTS	0x0200	/* Lost CTS */
 #define IE_XS_NOCARRIER	0x0400	/* No Carrier */
+#define	IE_XS_LATECOLL	0x0800	/* Late collision */
 
 /*
  * This is a buffer descriptor for a frame to be transmitted.
