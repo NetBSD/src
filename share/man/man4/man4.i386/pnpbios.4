@@ -1,6 +1,6 @@
-.\" $NetBSD: pnpbios.4,v 1.5 2000/07/05 16:13:49 msaitoh Exp $
+.\" $NetBSD: pnpbios.4,v 1.6 2001/01/28 00:59:27 nathanw Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -61,6 +61,8 @@ serial communications interface
 ESS Technology AudioDrive family audio device driver
 .It fdc
 floppy controller
+.It joy
+game controller
 .It lpt
 parallel port driver
 .It npx
@@ -100,6 +102,7 @@ and some newer ones do not follow the standards.
 .Xr ess 4 ,
 .Xr fdc 4 ,
 .Xr isa 4 ,
+.Xr joy 4 ,
 .Xr lpt 4 ,
 .Xr npx 4 ,
 .Xr pci 4 ,
