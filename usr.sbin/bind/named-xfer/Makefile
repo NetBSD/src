@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/10/08 07:41:57 tron Exp $
+#	$NetBSD: Makefile,v 1.3 1998/10/09 19:30:02 tron Exp $
 
 .PATH:	${.CURDIR}/../named \
 	${.CURDIR}/../man
@@ -12,11 +12,11 @@ CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
 BINDIR=	/usr/libexec
 
-tmp_version.c: ../named/version.c Makefile ../Makefile
+tmp_version.c: ${.CURDIR}/../named/version.c Makefile ../Makefile
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < ../named/version.c > tmp_version.c)
+	    < ${.CURDIR}/../named/version.c > tmp_version.c)
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

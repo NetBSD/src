@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/10/05 18:01:59 tron Exp $
+#	$NetBSD: Makefile,v 1.2 1998/10/09 19:30:02 tron Exp $
 
 .PATH:		${.CURDIR}/../man
 
@@ -18,11 +18,11 @@ SCRIPTS=	named-bootconf.sh
 
 HOSTNAMECMD=	hostname
 
-tmp_version.c: version.c Makefile ../Makefile
+tmp_version.c: ${.CURDIR}/version.c Makefile ../Makefile
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < version.c > tmp_version.c)
+	    < ${.CURDIR}/version.c > tmp_version.c)
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
