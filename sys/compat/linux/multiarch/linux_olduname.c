@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.29 1996/08/10 09:09:25 mycroft Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.30 1997/04/07 14:13:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -1161,4 +1161,21 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
+}
+
+int
+linux_sys_nice(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_nice_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
+        struct sys_setpriority_args bsa;
+
+        SCARG(&bsa, which) = PRIO_PROCESS;
+        SCARG(&bsa, who) = 0;
+	SCARG(&bsa, prio) = SCARG(uap, incr);
+        return sys_setpriority(p, &bsa, retval);
 }
