@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1996/12/07 09:24:58 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1996/12/23 08:36:11 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -189,6 +189,12 @@ __inline void pmap_remove_pv __P((pmap_t, vm_offset_t, u_int));
 __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int));
 void pmap_deactivate __P((pmap_t, struct pcb *));
 void pmap_remove_all __P((vm_offset_t));
+
+#ifdef	NKPDE
+int	nkpde = NKPDE;
+#else
+int	nkpde = 0;
+#endif
 
 #if BSDVM_COMPAT
 #include <sys/msgbuf.h>
@@ -639,7 +645,7 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], NKPDE * sizeof(pd_entry_t));
+	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], nkpde * sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
 	pmap->pm_pdir[PTDPTDI] =
