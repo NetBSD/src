@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.16 2002/07/14 15:28:00 wiz Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.17 2002/10/26 01:47:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.16 2002/07/14 15:28:00 wiz Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.17 2002/10/26 01:47:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ void
 recvjob(void)
 {
 	struct stat stb;
-	int status;
+	int status, fd;
 
 	/*
 	 * Perform lookup for printer name or abbreviation
@@ -110,11 +110,16 @@ recvjob(void)
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
 
-	(void)close(2);			/* set up log file */
-	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
+	/* Set up the log file. */
+	if ((fd = open(LF, O_WRONLY|O_APPEND, 0664)) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
-		(void)open(_PATH_DEVNULL, O_WRONLY);
+		fd = open(_PATH_DEVNULL, O_WRONLY);
 	}
+	if (fd > 0) {
+		(void) dup2(fd, STDERR_FILENO);
+		(void) close(fd);
+	} else
+		(void) close(STDERR_FILENO);
 
 	if (chdir(SD) < 0)
 		frecverr("%s: %s: %m", printer, SD);
