@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.44 2001/11/13 07:26:34 lukem Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.45 2001/12/16 17:53:17 soren Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.44 2001/11/13 07:26:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.45 2001/12/16 17:53:17 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -229,7 +229,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct wdc_pcmcia_product *wpp;
-	bus_addr_t offset;
+	bus_size_t offset;
 	int quirks;
 
 	sc->sc_pf = pa->pf;
