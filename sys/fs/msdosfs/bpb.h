@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.7 1997/11/17 15:36:24 ws Exp $	*/
+/*	$NetBSD: bpb.h,v 1.1 2002/12/26 12:31:33 jdolecek Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)

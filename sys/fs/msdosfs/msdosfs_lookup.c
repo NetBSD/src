@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.52 2001/11/10 13:26:45 lukem Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.52 2001/11/10 13:26:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.52 2001/11/10 13:26:45 lukem Ex
 #include <sys/mount.h>
 #include <sys/dirent.h>
 
-#include <msdosfs/bpb.h>
-#include <msdosfs/direntry.h>
-#include <msdosfs/denode.h>
-#include <msdosfs/msdosfsmount.h>
-#include <msdosfs/fat.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/direntry.h>
+#include <fs/msdosfs/denode.h>
+#include <fs/msdosfs/msdosfsmount.h>
+#include <fs/msdosfs/fat.h>
 
 /*
  * When we search a directory the blocks containing directory entries are

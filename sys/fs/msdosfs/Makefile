@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/11/26 23:30:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.1 2002/12/26 12:31:32 jdolecek Exp $
 
 INCSDIR= /usr/include/msdosfs
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.32 2002/01/08 20:44:13 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.32 2002/01/08 20:44:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $");
 
 /*
  * System include files.
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.32 2002/01/08 20:44:13 jdolecek E
 /*
  * MSDOSFS include files.
  */
-#include <msdosfs/direntry.h>
-#include <msdosfs/denode.h>
+#include <fs/msdosfs/direntry.h>
+#include <fs/msdosfs/denode.h>
 
 /*
  * Days in each month in a regular year.

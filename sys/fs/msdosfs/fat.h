@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.16 2000/05/13 06:04:41 cgd Exp $	*/
+/*	$NetBSD: fat.h,v 1.1 2002/12/26 12:31:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.23 2002/09/21 18:13:26 christos Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.1 2002/12/26 12:31:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
