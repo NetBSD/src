@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.9 1997/09/14 14:54:34 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.10 1998/03/06 09:13:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.9 1997/09/14 14:54:34 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.10 1998/03/06 09:13:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,10 @@ __RCSID("$NetBSD: options.c,v 1.9 1997/09/14 14:54:34 lukem Exp $");
  * Routines which handle command line options
  */
 
-static char flgch[] = FLGCH;	/* list of all possible flags */
+int cpio_mode;			/* set if we are in cpio mode */
+char *chdir_dir;		/* directory to chdir to before operating */
+
+static char *flgch = FLGCH;	/* list of all possible flags (pax) */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
 
@@ -79,10 +82,8 @@ static void pax_options __P((int, char **));
 static void pax_usage __P((void));
 static void tar_options __P((int, char **));
 static void tar_usage __P((void));
-#ifdef notdef
 static void cpio_options __P((int, char **));
 static void cpio_usage __P((void));
-#endif
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -127,15 +128,20 @@ FSUB fsub[] = {
 	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
 	NULL, rd_wrfile, wr_rdfile, bad_opt }
 };
-#define F_TAR	4	/* format when called as tar */
-#define DEFLT	5	/* default write format from list above */
+#define F_BCPIO		0	/* old binary cpio format */
+#define F_CPIO		1	/* old octal character cpio format */
+#define F_SV4CPIO	2	/* SVR4 hex cpio format */
+#define F_SV4CRC	3	/* SVR4 hex with crc cpio format */
+#define F_TAR		4	/* format when called as tar */
+#define F_USTAR		5	/* ustar format */
+#define DEFLT		F_USTAR	/* default write format from list above */
 
 /*
  * ford is the archive search order used by get_arc() to determine what kind
  * of archive we are dealing with. This helps to properly id  archive formats
  * some formats may be subsets of others....
  */
-int ford[] = {5, 4, 3, 2, 1, 0, -1 };
+int ford[] = {F_USTAR, F_TAR, F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, -1};
 
 /*
  * options()
@@ -164,10 +170,8 @@ options(argc, argv)
 
 	if (strcmp(NM_TAR, argv0) == 0)
 		return(tar_options(argc, argv));
-#	ifdef notdef
 	else if (strcmp(NM_CPIO, argv0) == 0)
 		return(cpio_options(argc, argv));
-#	endif
 	/*
 	 * assume pax as the default
 	 */
@@ -609,7 +613,7 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:moprutvwxzBHLPXZ014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:lmoprutvwxzBC:HLPXZ014578")) 
 	    != -1)  {
 		switch(c) {
 		case 'b':
@@ -626,6 +630,12 @@ tar_options(argc, argv)
 			 * create an archive
 			 */
 			act = ARCHIVE;
+			break;
+		case 'C':
+			/*
+			 * chdir here before extracting.
+			 */
+			chdir_dir = optarg;
 			break;
 		case 'e':
 			/*
@@ -647,6 +657,12 @@ tar_options(argc, argv)
 			}
 			fstdin = 0;
 			arcname = optarg;
+			break;
+		case 'l':
+			/*
+			 * do not pass over mount points in the file system
+			 */
+			Xflag = 1;
 			break;
 		case 'm':
 			/*
@@ -803,7 +819,6 @@ tar_options(argc, argv)
 	}
 }
 
-#ifdef notdef
 /*
  * cpio_options()
  *	look at the user specified flags. set globals as required and check if
@@ -820,8 +835,261 @@ cpio_options(argc, argv)
 	char **argv;
 #endif
 {
-}
+        FSUB tmp;
+	unsigned int flg = 0;
+	unsigned int bflg = 0;
+	int c, i;
+
+	cpio_mode = uflag = 1;
+	/*
+	 * process option flags
+	 */
+	while ((c = getoldopt(argc, argv, "ABC:E:H:I:LM:O:R:SVabcdfiklmoprstuv"))
+	    != -1)  {
+		switch(c) {
+		case 'A':
+			/*
+			 * append to an archive
+			 */
+			act = APPND;
+			flg |= AF;
+			break;
+		case 'B':
+			/*
+			 * set blocksize to 5120
+			 */
+			blksz = 5120;
+			break;
+		case 'C':
+			/*
+			 * specify blocksize
+			 */
+			if ((blksz = (int)str_offt(optarg)) <= 0) {
+				tty_warn(1, "Invalid block size %s", optarg);
+				tar_usage();
+			}
+			break;
+#ifdef notyet
+		case 'E':
+			arg = optarg;
+			break;
 #endif
+		case 'H':
+			/*
+			 * specify an archive format on write
+			 */
+			tmp.name = optarg;
+			frmt = (FSUB *)bsearch((void *)&tmp, (void *)fsub,
+			    sizeof(fsub)/sizeof(FSUB), sizeof(FSUB), c_frmt);
+			if (frmt != NULL) {
+				flg |= XF;
+				break;
+			}
+			tty_warn(1, "Unknown -H format: %s", optarg);
+			(void)fputs("cpio: Known -H formats are:", stderr);
+			for (i = 0; i < (sizeof(fsub)/sizeof(FSUB)); ++i)
+				(void)fprintf(stderr, " %s", fsub[i].name);
+			(void)fputs("\n\n", stderr);
+			tar_usage();
+			break;
+		case 'I':
+		case 'O':
+			/*
+			 * filename where the archive is stored
+			 */
+			if ((optarg[0] == '-') && (optarg[1]== '\0')) {
+				/*
+				 * treat a - as stdin
+				 */
+				arcname = (char *)0;
+				break;
+			}
+			arcname = optarg;
+			break;
+		case 'L':
+			/*
+			 * follow symlinks
+			 */
+			Lflag = 1;
+			flg |= CLF;
+			break;
+#ifdef notyet
+		case 'M':
+			arg = optarg;
+			break;
+		case 'R':
+			arg = optarg;
+			break;
+#endif
+		case 'S':
+			cpio_swp_head = 1;
+			break;
+#ifdef notyet
+		case 'V':
+			break;
+#endif
+		case 'a':
+			/*
+			 * preserve access time on filesystem nodes we read
+			 */
+			tflag = 1;
+			flg |= TF;
+			break;
+#ifdef notyet
+		case 'b':
+			break;
+#endif
+		case 'c':
+			frmt = &fsub[F_SV4CPIO];
+			break;
+		case 'd':
+			/*
+			 * pax does this by default ..
+			 */
+			flg |= RF;
+			break;
+		case 'f':
+			/*
+			 * inverse match on patterns
+			 */
+			cflag = 1;
+			flg |= CF;
+			break;
+		case 'i':
+			/*
+			 * read the archive
+			 */
+			flg |= RF;
+			break;
+#ifdef notyet
+		case 'k':
+			break;
+#endif
+		case 'l':
+			/*
+			 * try to link src to dest with copy (-rw)
+			 */
+			lflag = 1;
+			flg |= LF;
+			break;
+		case 'm':
+			/*
+			 * preserve mtime
+			 */
+			flg |= PF;
+			pmtime = 1;
+			break;
+		case 'o':
+			/*
+			 * write an archive
+			 */
+			flg |= WF;
+			break;
+		case 'p':
+			/*
+			 * cpio -p is like pax -rw
+			 */
+			flg |= RF | WF;
+			break;
+		case 'r':
+			/*
+			 * interactive file rename
+			 */
+			iflag = 1;
+			flg |= IF;
+			break;
+#ifdef notyet
+		case 's':
+			break;
+#endif
+		case 't':
+			act = LIST;
+			break;
+		case 'u':
+			/*
+			 * don't ignore those older files
+			 */
+			uflag = 0;
+			flg |= UF;
+			break;
+		case 'v':
+			/*
+			 * verbose operation mode
+			 */
+			vflag = 1;
+			flg |= VF;
+			break;
+		default:
+			cpio_usage();
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	/*
+	 * figure out the operation mode of cpio. check that we have not been
+	 * given a bogus set of flags for the operation mode.
+	 */
+	if (ISLIST(flg)) {
+		act = LIST;
+		bflg = flg & BDLIST;
+	} else if (ISEXTRACT(flg)) {
+		act = EXTRACT;
+		bflg = flg & BDEXTR;
+	} else if (ISARCHIVE(flg)) {
+		act = ARCHIVE;
+		bflg = flg & BDARCH;
+	} else if (ISAPPND(flg)) {
+		act = APPND;
+		bflg = flg & BDARCH;
+	} else if (ISCOPY(flg)) {
+		act = COPY;
+		bflg = flg & BDCOPY;
+	} else
+		cpio_usage();
+	if (bflg) {
+		cpio_usage();
+	}
+
+	/*
+	 * if we are writing (ARCHIVE) we use the default format if the user
+	 * did not specify a format. when we write during an APPEND, we will
+	 * adopt the format of the existing archive if none was supplied.
+	 */
+	if (!(flg & XF) && (act == ARCHIVE))
+		frmt = &(fsub[F_BCPIO]);
+
+	/*
+	 * process the args as they are interpreted by the operation mode
+	 */
+	switch (act) {
+	case LIST:
+	case EXTRACT:
+		for (; optind < argc; optind++)
+			if (pat_add(argv[optind]) < 0)
+				cpio_usage();
+		break;
+	case COPY:
+		if (optind >= argc) {
+			tty_warn(0, "Destination directory was not supplied");
+			cpio_usage();
+		}
+		--argc;
+		dirptr = argv[argc];
+		/* FALL THROUGH */
+	case ARCHIVE:
+	case APPND:
+		for (; optind < argc; optind++)
+			if (ftree_add(argv[optind]) < 0)
+				cpio_usage();
+		/*
+		 * no read errors allowed on updates/append operation!
+		 */
+		maxflt = 0;
+		break;
+	}
+}
 
 /*
  * printflg()
@@ -1135,13 +1403,12 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar -{txru}[cevfbmopwBHLPX014578] [tapefile] ",
+	(void)fputs("usage: tar -{txru}[cevfblmopwBHLPX014578] [tapefile] ",
 		 stderr);
 	(void)fputs("[blocksize] file1 file2...\n", stderr);
 	exit(1);
 }
 
-#ifdef notdef
 /*
  * cpio_usage()
  *	print the usage summary to the user
@@ -1155,6 +1422,26 @@ void
 cpio_usage()
 #endif
 {
+
+#if 1
+	(void)fputs(
+	    "usage: cpio -i [-BcdfmrStuv] [ -C blksize ] [ -H header ]\n",
+	    stderr);
+	(void)fputs("  [ -I file ] [ pattern ... ]\n", stderr);
+	(void)fputs("usage: cpio -o [-aABcLv] [ -C bufsize ] [ -H header ]\n",
+	    stderr);
+	(void)fputs("  [ -O file ]\n", stderr);
+	(void)fputs("usage: cpio -p [ adlLmuv ] directory\n", stderr);
+#else
+	/* no E, M, R, V, b, k or s */
+	(void)fputs("usage: cpio -i [-bBcdfkmrsStuvV] [ -C bufsize ]\n", stderr);
+	(void)fputs("  [ -E file ] [ -H header ] [ -I file [ -M message ] ]\n",
+	    stderr);
+	(void)fputs("  [ -R id ] [ pattern ... ]\n", stderr);
+	(void)fputs("usage: cpio -o [-aABcLvV] [ -C bufsize ] [ -H header ]\n",
+	    stderr);
+	(void)fputs("  [ -O file [ -M message ] ]\n", stderr);
+	(void)fputs("usage: cpio -p [ adlLmuvV ] [ -R id ] directory\n", stderr);
+#endif
 	exit(1);
 }
-#endif

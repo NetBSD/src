@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.6 1997/07/20 20:32:30 christos Exp $	*/
+/*	$NetBSD: ftree.c,v 1.7 1998/03/06 09:13:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.6 1997/07/20 20:32:30 christos Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.7 1998/03/06 09:13:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,6 +399,16 @@ next_file(arcn)
 		 */
 		switch(ftent->fts_info) {
 		case FTS_D:
+			/*
+			 * cpio does *not* decend directories listed in the
+			 * arguments, unlike pax/tar, so needs special handling
+			 * here.  failure to do so results in massive amounts
+			 * of duplicated files in the output.
+			 */
+			if (cpio_mode)
+				continue;
+			else
+				/* FALLTHROUGH */ ;
 		case FTS_DEFAULT:
 		case FTS_F:
 		case FTS_SL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/02/28 15:53:00 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1998/03/06 09:13:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -187,6 +187,8 @@ int getoldopt __P((int, char **, char *));
  */
 extern FSUB fsub[];
 extern int ford[];
+extern int cpio_mode;
+extern char *chdir_dir;
 void options __P((int, char **));
 OPLIST * opt_next __P((void));
 int opt_add __P((char *));
