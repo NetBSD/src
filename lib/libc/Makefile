@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 1997/05/12 16:41:03 christos Exp $
+#	$NetBSD: Makefile,v 1.64.2.1 1997/05/23 21:17:00 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -13,9 +13,12 @@
 #
 # The YP functions are always in libc. To choose that getpwent() and friends
 # actually call the YP functions, put -DYP on the CFLAGS line below.
+#
+# The Hesiod functions are always in libc. To choose that getpwent() and friends
+# actually call the Hesiod functions, put -DHESIOD on the CFLAGS line below.
 
 LIB=c
-CFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT -I${.CURDIR}/include
+CFLAGS+=-DNLS -DYP -DHESIOD -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT -I${.CURDIR}/include
 AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
