@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1995/12/10 10:07:05 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1995/12/16 20:10:12 thorpej Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.6 1995/12/10 10:07:05 mycroft Exp $";
+	"@(#) $NetBSD: main.c,v 1.7 1995/12/16 20:10:12 thorpej Exp $";
 #endif
 
 extern char *configfilename;
