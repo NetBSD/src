@@ -33,7 +33,7 @@
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
  *	from: genassym.c,v 1.2 1993/05/22 07:57:23 cgd Exp
- *	$Id: genassym.c,v 1.17 1994/05/06 22:09:49 gwr Exp $
+ *	$Id: genassym.c,v 1.18 1994/05/25 06:50:13 glass Exp $
  */
 
 #define KERNEL
@@ -44,7 +44,6 @@
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
-#include <sys/vmmeter.h>
 
 #include <vm/vm.h>
 
