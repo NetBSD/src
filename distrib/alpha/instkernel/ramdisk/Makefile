@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 2002/03/07 23:51:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/03/14 22:26:08 lukem Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	9000b
+IMAGESIZE=	4480k
 MAKEFS_FLAGS=	-o density=5k
 
 WARNS=		1
@@ -14,7 +14,7 @@ LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common #${.CURDIR}/mtree.conf
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	minimal
-IMAGEDEPENDS+=	${CRUNCHBIN} \
+IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
 		${.CURDIR}/../src/install.sh ${.CURDIR}/../src/upgrade.sh \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/bootxx_ffs \
@@ -27,7 +27,7 @@ IMAGEDEPENDS+=	${CRUNCHBIN} \
 
 INSTALLNOTES!=	cd ${DISTRIBDIR}/notes/alpha && ${MAKE} echomore 
 IMAGEDEPENDS+=	${INSTALLNOTES}
-POPULATEENV+=	INSTALLNOTES=${INSTALLNOTES:Q} PWD_MKDB=${PWD_MKDB:Q}
+PARSELISTENV=	INSTALLNOTES=${INSTALLNOTES:Q} PWD_MKDB=${PWD_MKDB:Q}
 
 
 realall: ${IMAGE}

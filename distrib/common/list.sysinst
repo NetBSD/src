@@ -1,9 +1,9 @@
-#	$NetBSD: list.sysinst,v 1.2 2002/02/08 02:18:54 lukem Exp $
+#	$NetBSD: list.sysinst,v 1.3 2002/03/14 22:26:09 lukem Exp $
 #
 
 PROG	sysinst
 
-SPECIAL	sysinst	srcdir	distrib/utils/sysinst/arch/@MACHINE@
+SPECIAL	sysinst	srcdir	distrib/utils/sysinst/arch/${MACHINE}
 
 # generate the lists of obsolete files used by sysinst
 CMD	sh ${_SRC_TOP_}/distrib/sets/makeobsolete -b -s ${_SRC_TOP_}/distrib/sets -t ./dist
