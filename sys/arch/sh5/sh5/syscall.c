@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.11 2003/07/15 03:36:01 lukem Exp $	*/
+/*	$NetBSD: syscall.c,v 1.12 2003/10/31 03:28:13 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2003/07/15 03:36:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2003/10/31 03:28:13 simonb Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -348,7 +348,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 
 	args += hidden;
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;
