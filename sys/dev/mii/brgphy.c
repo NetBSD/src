@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.9 2002/07/12 04:00:10 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.10 2002/07/13 01:23:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.9 2002/07/12 04:00:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.10 2002/07/13 01:23:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,19 @@ struct cfattach brgphy_ca = {
 int	brgphy_service(struct mii_softc *, struct mii_data *, int);
 void	brgphy_status(struct mii_softc *);
 
+void	brgphy_5401_reset(struct mii_softc *);
+void	brgphy_5411_reset(struct mii_softc *);
+
 const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
+};
+
+const struct mii_phy_funcs brgphy_5401_funcs = {
+	brgphy_service, brgphy_status, brgphy_5401_reset,
+};
+
+const struct mii_phy_funcs brgphy_5411_funcs = {
+	brgphy_service, brgphy_status, brgphy_5411_reset,
 };
 
 const struct mii_phydesc brgphys[] = {
@@ -126,6 +137,9 @@ const struct mii_phydesc brgphys[] = {
 	{ 0,				0,
 	  NULL },
 };
+
+static void bcm5401_load_dspcode(struct mii_softc *);
+static void bcm5411_load_dspcode(struct mii_softc *);
 
 int
 brgphymatch(struct device *parent, struct cfdata *match, void *aux)
@@ -151,10 +165,34 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_funcs = &brgphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
+
+	switch (MII_MODEL(ma->mii_id2)) {
+	case MII_MODEL_BROADCOM_BCM5400:
+		sc->mii_funcs = &brgphy_5401_funcs;
+		printf("%s: using BCM5401 DSP patch\n", sc->mii_dev.dv_xname);
+		break;
+
+	case MII_MODEL_BROADCOM_BCM5401:
+		if (MII_REV(ma->mii_id2) == 1 || MII_REV(ma->mii_id2) == 3) {
+			sc->mii_funcs = &brgphy_5401_funcs;
+			printf("%s: using BCM5401 DSP patch\n",
+			    sc->mii_dev.dv_xname);
+		} else
+			sc->mii_funcs = &brgphy_funcs;
+		break;
+
+	case MII_MODEL_BROADCOM_BCM5411:
+		sc->mii_funcs = &brgphy_5411_funcs;
+		printf("%s: using BCM5411 DSP patch\n", sc->mii_dev.dv_xname);
+		break;
+
+	default:
+		sc->mii_funcs = &brgphy_funcs;
+		break;
+	}
 
 	PHY_RESET(sc);
 
@@ -204,6 +242,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
+		mii_phy_reset(sc);	/* XXX hardware bug work-around */
 		mii_phy_setmedia(sc);
 		break;
 
@@ -226,8 +265,19 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/* Update the media status. */
 	mii_phy_status(sc);
 
-	/* Callback if something changed. */
-	mii_phy_update(sc, cmd);
+	/*
+	 * Callback if something changed.  Note that we need to poke
+	 * the DSP on the Broadcom PHYs if the media changes.
+	 */
+	if (sc->mii_media_active != mii->mii_media_active || 
+	    sc->mii_media_status != mii->mii_media_status ||
+	    cmd == MII_MEDIACHG) {
+		mii_phy_update(sc, cmd);
+		if (sc->mii_funcs == &brgphy_5401_funcs)
+			bcm5401_load_dspcode(sc);
+		else if (sc->mii_funcs == &brgphy_5411_funcs)
+			bcm5411_load_dspcode(sc);
+	}
 	return (0);
 }
 
@@ -308,4 +358,64 @@ brgphy_status(struct mii_softc *sc)
 		}
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+brgphy_5401_reset(struct mii_softc *sc)
+{
+
+	mii_phy_reset(sc);
+	bcm5401_load_dspcode(sc);
+}
+
+void
+brgphy_5411_reset(struct mii_softc *sc)
+{
+
+	mii_phy_reset(sc);
+	bcm5411_load_dspcode(sc);
+}
+
+static void
+bcm5401_load_dspcode(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ BRGPHY_MII_AUXCTL,		0x4c20 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x0012 },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x1804 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x0013 },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x1204 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x8006 },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x0132 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x8006 },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x0232 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x201f },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x0a20 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+static void
+bcm5411_load_dspcode(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ 0x1c,				0x8c23 },
+		{ 0x1c,				0x8ca3 },
+		{ 0x1c,				0x8c23 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.14 2002/07/12 22:29:14 enami Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.15 2002/07/13 01:23:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -181,7 +181,6 @@ void bge_miibus_writereg(struct device *, int, int, int);
 void bge_miibus_statchg(struct device *);
 
 void bge_reset(struct bge_softc *);
-void bge_phy_hack(struct bge_softc *);
 
 void bge_dump_status(struct bge_softc *);
 void bge_dump_rxbd(struct bge_rx_bd *);
@@ -489,8 +488,6 @@ bge_miibus_statchg(dev)
 	} else {
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
 	}
-
-	bge_phy_hack(sc);
 }
 
 /*
@@ -2498,46 +2495,6 @@ bge_start(ifp)
 	ifp->if_timer = 5;
 }
 
-/*
- * If we have a BCM5400 or BCM5401 PHY, we need to properly
- * program its internal DSP. Failing to do this can result in
- * massive packet loss at 1Gb speeds.
- */
-void
-bge_phy_hack(sc)
-	struct bge_softc *sc;
-{
-	struct bge_bcom_hack bhack[] = {
-	{ BRGPHY_MII_AUXCTL, 0x4C20 },
-	{ BRGPHY_MII_DSP_ADDR_REG, 0x0012 },
-	{ BRGPHY_MII_DSP_RW_PORT, 0x1804 },
-	{ BRGPHY_MII_DSP_ADDR_REG, 0x0013 },
-	{ BRGPHY_MII_DSP_RW_PORT, 0x1204 },
-	{ BRGPHY_MII_DSP_ADDR_REG, 0x8006 },
-	{ BRGPHY_MII_DSP_RW_PORT, 0x0132 },
-	{ BRGPHY_MII_DSP_ADDR_REG, 0x8006 },
-	{ BRGPHY_MII_DSP_RW_PORT, 0x0232 },
-	{ BRGPHY_MII_DSP_ADDR_REG, 0x201F },
-	{ BRGPHY_MII_DSP_RW_PORT, 0x0A20 },
-	{ 0, 0 } };
-	u_int16_t vid, did;
-	int i;
-
-	vid = bge_miibus_readreg(&sc->bge_dev, 1, MII_PHYIDR1);
-	did = bge_miibus_readreg(&sc->bge_dev, 1, MII_PHYIDR2);
-
-	if (MII_OUI(vid, did) == MII_OUI_BROADCOM &&
-	    (MII_MODEL(did) == MII_MODEL_BROADCOM_BCM5400 ||
-	     MII_MODEL(did) == MII_MODEL_BROADCOM_BCM5401)) {
-		i = 0;
-		while (bhack[i].reg) {
-			bge_miibus_writereg(&sc->bge_dev, 1, bhack[i].reg,
-					    bhack[i].val);
-			i++;
-		}
-	}
-}
-
 int
 bge_init(ifp)
 	struct ifnet *ifp;
@@ -2661,13 +2618,6 @@ bge_ifmedia_upd(ifp)
 	}
 
 	sc->bge_link = 0;
-	if (mii->mii_instance) {
-		struct mii_softc *miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
-			mii_phy_reset(miisc);
-	}
-	bge_phy_hack(sc);
 	mii_mediachg(mii);
 
 	return(0);
