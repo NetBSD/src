@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.14 1998/08/15 07:25:15 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.15 1998/08/15 16:09:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ ep_pcmcia_lookup(pa)
 
 	for (epp = ep_pcmcia_products; epp->epp_name != NULL; epp++)
 		if (pa->product == epp->epp_product &&
-		    pa->pf->function == epp->epp_expfunc)
+		    pa->pf->number == epp->epp_expfunc)
 			return (epp);
 
 	return (NULL);
