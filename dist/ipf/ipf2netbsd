@@ -1,0 +1,120 @@
+#! /bin/sh
+#
+#	$NetBSD: ipf2netbsd,v 1.1 1999/12/11 22:08:02 veego Exp $
+#
+# Copyright (c) 1999 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the NetBSD
+#	Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# ipf2netbsd:  convert a ipf source tree into a
+# netbsd ipf source tree, under basesrc/dist,
+
+if [ $# -ne 2 ]; then echo "ipf2netbsd src dest"; exit 1; fi
+
+r=$1
+d=$2/basesrc/dist/ipf
+
+case "$d" in
+	/*)
+		;;
+	*)
+		d=`/bin/pwd`/$d
+		;;
+esac
+
+case "$r" in
+	/*)
+		;;
+	*)
+		r=`/bin/pwd`/$r
+		;;
+esac
+
+echo preparing directory $d
+rm -rf $d
+
+### Copy the files and directories
+mkdir -p $d
+cd $r
+pax -rvw . $d
+
+### Remove the $'s around the Id:
+find $d -type f -print | while read f; do
+	sed -e ' s/\$\(Id.*\) \$/\1/' < $f > /tmp/ipf2f$$ && mv /tmp/ipf2f$$ $f && \
+	echo removed \$Id tag from $f
+done
+
+### Add our NetBSD RCS Id
+find $d -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/ipf2n$$
+echo "" >>/tmp/ipf2n$$
+cat $c  >> /tmp/ipf2n$$
+mv /tmp/ipf2n$$ $c && echo added RCS tag to $c
+	)
+done
+
+find $d -name '*.[0-9]' -a \! -name 'example.*' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"	\$NetBSD\$" >/tmp/ipf2m$$
+echo ".\\\"" >>/tmp/ipf2m$$
+	cat $m >> /tmp/ipf2m$$
+	mv /tmp/ipf2m$$ $m && echo added RCS tag to $m
+	)
+done
+
+find $d -name 'example.*' -print | while read e; do
+	sed 1q < $e | grep -q '\$NetBSD' || (
+echo "#	\$NetBSD\$" >/tmp/ipf2e$$
+	cat $e >> /tmp/ipf2e$$
+	mv /tmp/ipf2e$$ $e && echo added RCS tag to $e
+	)
+done
+
+echo done
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+(
+	cd $d
+	find . -type d -name "CVS" -print | xargs rm -r
+)
+echo done
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $d
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+exit 0
