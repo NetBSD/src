@@ -288,12 +288,45 @@ optimize_reg_copy_1 (insn, dest, src)
 							     PATTERN (q))))
 		    {
 		      /* We assume that a register is used exactly once per
-			 insn in the updates below.  If this is not correct,
-			 no great harm is done.  */
+			 insn in the REG_N_REFS updates below.  If this is not
+			 correct, no great harm is done.
+
+
+			 We do not undo this substitution if something later
+			 fails.  Therefore, we must update the other REG_N_*
+			 counters now to keep them accurate.  */
 		      if (sregno >= FIRST_PSEUDO_REGISTER)
-			REG_N_REFS (sregno) -= loop_depth;
+			{
+			  REG_N_REFS (sregno) -= loop_depth;
+
+			  if (REG_LIVE_LENGTH (sregno) >= 0)
+			    {
+			      REG_LIVE_LENGTH (sregno) -= length;
+			      /* REG_LIVE_LENGTH is only an approximation after
+				 combine if sched is not run, so make sure that
+				 we still have a reasonable value.  */
+			      if (REG_LIVE_LENGTH (sregno) < 2)
+				REG_LIVE_LENGTH (sregno) = 2;
+			    }
+
+			  REG_N_CALLS_CROSSED (sregno) -= n_calls;
+			}
+
 		      if (dregno >= FIRST_PSEUDO_REGISTER)
-			REG_N_REFS (dregno) += loop_depth;
+			{
+			  REG_N_REFS (dregno) += loop_depth;
+
+			  if (REG_LIVE_LENGTH (dregno) >= 0)
+			    REG_LIVE_LENGTH (dregno) += d_length;
+
+			  REG_N_CALLS_CROSSED (dregno) += d_n_calls;
+			}
+
+		      /* We've done a substitution, clear the counters.  */
+		      length = 0;
+		      d_length = 0;
+		      n_calls = 0;
+		      d_n_calls = 0;
 		    }
 		  else
 		    {
@@ -485,6 +518,18 @@ optimize_reg_copy_3 (insn, dest, src)
   rtx p, set, subreg;
   enum machine_mode old_mode;
 
+  /* This code has been disabled on the egcs-1.1 release branch due to
+     a potentially serious bug.
+
+     In a nutshell, if we perform a series of substitutions, then have a
+     later substitution fail we will not be able to undo the previous
+     substitutions, leaving bogus RTL.
+
+     A fix for this can be found in the mainline sources, but it did not
+     seem worth the trouble and potential problems to migrate the real
+     fix to the egcs-1.1 branch.  */
+  return;
+     
   if (src_no < FIRST_PSEUDO_REGISTER
       || dst_no < FIRST_PSEUDO_REGISTER
       || ! find_reg_note (insn, REG_DEAD, src_reg)
@@ -790,6 +835,8 @@ fixup_match_2 (insn, dst, src, offset, regmove_dump_file)
 			  && (NOTE_LINE_NUMBER (p) == NOTE_INSN_LOOP_BEG
 			      || NOTE_LINE_NUMBER (p) == NOTE_INSN_LOOP_END)))
 		    break;
+		  if (GET_RTX_CLASS (GET_CODE (p)) != 'i')
+		    continue;
 		  if (reg_overlap_mentioned_p (dst, PATTERN (p)))
 		    {
 		      if (try_auto_increment (p, insn, 0, dst, newconst, 0))
