@@ -12,7 +12,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_log1pf.S,v 1.9 2003/09/14 21:26:14 fvdl Exp $")
+RCSID("$NetBSD: s_log1pf.S,v 1.10 2003/09/16 18:17:11 wennmach Exp $")
 
 /*
  * The log1pf() function is provided to compute an accurate value of
@@ -40,25 +40,25 @@ RCSID("$NetBSD: s_log1pf.S,v 1.9 2003/09/14 21:26:14 fvdl Exp $")
  * 
  */
 
-.section	.rodata
-	.align 8
-BOUND:
-	.long 0x0,0x3fd00000		/* (double)0.25 */
-
 .text
-	.align 4
+	.align	4
 ENTRY(log1pf)
 	XMM_ONE_ARG_FLOAT_PROLOGUE
 	flds	ARG_FLOAT_ONE
 	fabs
-	FLDL_VAR(BOUND)
+	fld1				/* ... x 1 */
+	fadd	%st(0)			/* ... x 2 */
+	fadd	%st(0)			/* ... x 4 */
+	fld1				/* ... 4 1 */
+	fdivp				/* ... x 0.25 */
 	fcompp
-	fnstsw %ax
-	andb $69,%ah
-	jne .l1
-	jmp .l2
-	.align 4
-.l1:
+	fnstsw	%ax
+	andb	$69,%ah
+	jne	use_fyl2x
+	jmp	use_fyl2xp1
+
+	.align	4
+use_fyl2x:
 	fldln2
         flds	ARG_FLOAT_ONE
         fld1
@@ -66,8 +66,9 @@ ENTRY(log1pf)
         fyl2x
 	XMM_FLOAT_EPILOGUE
         ret
-	.align 4
-.l2:
+
+	.align	4
+use_fyl2xp1:
 	fldln2
 	flds	ARG_FLOAT_ONE
 	fyl2xp1
