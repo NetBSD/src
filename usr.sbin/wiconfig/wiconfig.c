@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.11 2001/02/19 23:22:49 cgd Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.12 2001/05/06 03:28:57 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -51,7 +51,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #ifdef __NetBSD__
-#include <dev/pcmcia/if_wi_ieee.h>
+#include <dev/ic/wi_ieee.h>
 #else
 #include <dev/pcmcia/if_wavelan_ieee.h>
 #endif
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.11 2001/02/19 23:22:49 cgd Exp $";
+	"@(#) $Id: wiconfig.c,v 1.12 2001/05/06 03:28:57 ichiro Exp $";
 #endif
 
 struct wi_table {
