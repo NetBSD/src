@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.44 1996/03/13 00:38:55 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.45 1996/03/17 02:38:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -312,7 +312,7 @@ nfs_mountroot()
 	if (error) panic("nfs_mountroot: getattr for root");
 	n = attr.va_mtime.tv_sec;
 #ifdef	DEBUG
-	printf("root time: 0x%x\n", n);
+	printf("root time: 0x%lx\n", n);
 #endif
 	inittodr(n);
 
@@ -373,7 +373,7 @@ nfs_mountroot()
 		panic("nfs_mountroot: getattr for swap");
 	n = (long) (attr.va_size >> DEV_BSHIFT);
 #ifdef	DEBUG
-	printf("swap size: 0x%x (blocks)\n", n);
+	printf("swap size: 0x%lx (blocks)\n", n);
 #endif
 	swdevt[0].sw_nblks = n;
 
@@ -441,7 +441,7 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 
 	error = mountnfs(&args, mp, m, mntname, args.hostname, vpp);
 	if (error)
-		panic("nfs_mountroot: mount %s failed: %d", mntname);
+		panic("nfs_mountroot: mount %s failed: %d", mntname, error);
 
 	return (mp);
 }
