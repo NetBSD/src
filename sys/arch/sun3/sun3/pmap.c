@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.27 1994/06/30 12:45:54 gwr Exp $
+ *	$Id: pmap.c,v 1.28 1994/07/05 03:45:14 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,10 +178,29 @@ static unsigned char *pv_cache_table = NULL;
 /* modified bits support */
 static unsigned char *pv_modified_table = NULL;
 
+#if 0
 #define save_modified_bits(pte) \
     pv_modified_table[PG_PGNUM(pte)] |= \
     (pte & (PG_OBIO|PG_VME16D|PG_VME32D) ? 0 : \
      ((pte & PG_MOD) >>PG_MOD_SHIFT))
+#else
+void save_modified_bits(pte)
+    vm_offset_t pte;
+{
+    vm_offset_t pa;
+    int pn;
+
+    pa = PG_PA(pte);
+    if (pa >= avail_end)
+	panic("save_modified_bits: bad pa=%x", pa);
+
+    pn = PG_PGNUM(pte);
+
+    pv_modified_table[pn] |= \
+	(pte & (PG_OBIO|PG_VME16D|PG_VME32D) ? 0 : \
+	 ((pte & PG_MOD) >>PG_MOD_SHIFT));
+}
+#endif
 
 int pv_initialized = 0;
 
@@ -220,7 +239,7 @@ pmeg_t pmeg_p(segnum)
 #define pmeg_p(x) &pmeg_array[x]
 #endif
 
-#define is_pmeg_wired(pmegp) (pmegp->pmeg_wired_count)
+#define is_pmeg_wired(pmegp) (pmegp->pmeg_wired_count > 0)
 
 /* context structures, and queues */
 TAILQ_HEAD(context_tailq, context_state);
@@ -579,7 +598,7 @@ void pmeg_steal(pmeg_num)
     if (pmegp->pmeg_owner)
 	mon_panic("pmeg_steal: pmeg is already owned\n");
 
-#ifdef	PMAP_DEBUG
+#if 0 /* def	PMAP_DEBUG */
     mon_printf("pmeg_steal: 0x%x\n", pmegp->pmeg_index);
 #endif
 
@@ -654,7 +673,7 @@ void pmeg_flush(pmegp)
 #endif
     for (i = 0; i < NPAGSEG; i++) {
 	if (pmegp->pmeg_owner) {
-#ifdef	PMAP_DEBUG	/* XXX */
+#ifdef	PMAP_DEBUG
 	    if (pmegp->pmeg_owner == kernel_pmap)
 		panic("pmeg_flush: kernel_pmap, pmeg=0x%x", pmegp);
 #endif
@@ -676,6 +695,36 @@ void pmeg_flush(pmegp)
 	printf("pmap: pmeg_flush() didn't result in a clean pmeg\n");
 }
 
+#ifdef	PMAP_DEBUG
+void pmeg_verify_empty(va)
+    vm_offset_t va;
+{
+    vm_offset_t pte;
+    vm_offset_t eva;
+
+    for (eva = va + NBSG;  va < eva; va += NBPG) {
+	pte = get_pte(va);
+	if (pte & PG_VALID)
+	    panic("pmeg_verify_empty");
+    }
+}
+
+void pmeg_print(pmegp)
+    pmeg_t pmegp;
+{
+    printf("link_next=0x%x  link_prev=0x%x\n",
+	   pmegp->pmeg_link.tqe_next,
+	   pmegp->pmeg_link.tqe_prev);
+    printf("index=0x%x owner=0x%x own_vers=0x%x\n",
+	   pmegp->pmeg_index, pmegp->pmeg_owner,
+	   pmegp->pmeg_owner_version);
+    printf("va=0x%x wired=0x%x reserved=0x%x vpgs=0x%x qstate=0x%x\n",
+	   pmegp->pmeg_va, pmegp->pmeg_wired_count,
+	   pmegp->pmeg_reserved, pmegp->pmeg_vpages,
+	   pmegp->pmeg_qstate);
+}
+#endif
+
 pmeg_t pmeg_allocate_invalid(pmap, va)
      pmap_t pmap;
      vm_offset_t va;
@@ -683,12 +732,18 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
     pmeg_t pmegp;    
 
     if (!TAILQ_EMPTY(&pmeg_free_queue)) {
-	    TAILQ_REMOVE_FIRST(pmegp, &pmeg_free_queue, pmeg_link);
+	TAILQ_REMOVE_FIRST(pmegp, &pmeg_free_queue, pmeg_link);
+#ifdef	PMAP_DEBUG
+	if (pmegp->pmeg_qstate != PMEGQ_FREE)
+	    panic("pmeg_alloc_inv: bad on free queue: %x", pmegp);
+#endif
     }
     else if (!TAILQ_EMPTY(&pmeg_inactive_queue)) {
 	TAILQ_REMOVE_FIRST(pmegp, &pmeg_inactive_queue, pmeg_link);
 #ifdef	PMAP_DEBUG
 	printf("pmeg_alloc_inv: take inactive %d\n", pmegp->pmeg_index);
+	if (pmegp->pmeg_qstate != PMEGQ_INACTIVE)
+	    panic("pmeg_alloc_inv: bad on inactive queue: %x", pmegp);
 #endif
 	pmeg_flush(pmegp);
     }
@@ -696,20 +751,12 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
 	TAILQ_REMOVE_FIRST(pmegp, &pmeg_active_queue, pmeg_link);
 #ifdef	PMAP_DEBUG
 	printf("pmeg_alloc_inv: take active %d\n", pmegp->pmeg_index);
+	if (pmegp->pmeg_qstate != PMEGQ_ACTIVE)
+	    panic("pmeg_alloc_inv: bad on active queue: %x", pmegp);
 #endif
-#if 0	/* XXX - Now keeping kernel pmegs on pmeg_kernel_queue */
-	while (pmegp->pmeg_owner == kernel_pmap) {
-	    TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
-	    pmegp->pmeg_qstate = PMEGQ_ACTIVE;
-	    TAILQ_REMOVE_FIRST(pmegp, &pmeg_active_queue, pmeg_link);
-	    pmegp->pmeg_qstate = PMEGQ_NONE;
-        }
-#else	/* XXX */
 	if (pmegp->pmeg_owner == kernel_pmap) {
 	    panic("pmeg_alloc_invalid: kernel pmeg: %x\n", pmegp);
 	}
-#endif	/* XXX */
-
 	pmap_remove_range(pmegp->pmeg_owner, pmegp->pmeg_va,
 			  pmegp->pmeg_va+NBSG);
     } else
@@ -738,10 +785,14 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
 	pmegp->pmeg_qstate = PMEGQ_ACTIVE;
 	pmap->pm_segmap[VA_SEGNUM(va)] = pmegp->pmeg_index;
     }
+    /* XXX - Make sure pmeg is clean (in caller). */
     return pmegp;
 }
 
-/* Put pmeg on the inactive queue. */
+/*
+ * Put pmeg on the inactive queue.
+ * It will be cleaned out when re-allocated.
+ */
 void pmeg_release(pmegp)
      pmeg_t pmegp;
 {
@@ -770,6 +821,12 @@ void pmeg_release_empty(pmegp, segnum, update)
      int segnum;
      int update;
 {
+#ifdef	PMAP_DEBUG
+    /* XXX - Caller should verify that it's empty. */
+    if (pmegp->pmeg_vpages != 0)
+	panic("pmeg_release_empty: vpages");
+#endif
+
     switch (pmegp->pmeg_qstate) {
     case PMEGQ_ACTIVE:
 	TAILQ_REMOVE(&pmeg_active_queue, pmegp, pmeg_link);
@@ -830,6 +887,7 @@ pmeg_t pmeg_cache(pmap, va, update)
     }
 #endif
 
+    /* Found a valid pmeg, make sure it's still ours. */
     if ((pmegp->pmeg_owner != pmap) || 
 	(pmegp->pmeg_owner_version != pmap->pm_version) ||
 	(pmegp->pmeg_va != va)) {
@@ -837,10 +895,19 @@ pmeg_t pmeg_cache(pmap, va, update)
 	    pmap->pm_segmap[seg] = SEGINV;
 	return PMEG_NULL; /* cache lookup failed */
     }
-    TAILQ_REMOVE(&pmeg_inactive_queue, pmegp, pmeg_link);
-    pmegp->pmeg_qstate = PMEGQ_NONE;
-    TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
-    pmegp->pmeg_qstate = PMEGQ_ACTIVE;
+
+    /* The pmeg might already be on the active queue. */
+    if (pmegp->pmeg_qstate != PMEGQ_ACTIVE) {
+#ifdef	PMAP_DEBUG
+	/* Make sure it is on the inactive queue. */
+	if (pmegp->pmeg_qstate != PMEGQ_INACTIVE)
+	    panic("pmeg_cache: pmeg was taken: %x", pmegp);
+#endif
+	TAILQ_REMOVE(&pmeg_inactive_queue, pmegp, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_NONE;
+	TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_ACTIVE;
+    }
     return pmegp;
 }
 
@@ -989,7 +1056,7 @@ unsigned char pv_link(pmap, pa, va, flags)
 	(va == pmap_db_watchva))
     {
 	printf("pv_link(%x, %x, %x, %x)\n", pmap, pa, va, flags);
-	pv_print(pa);
+	/* pv_print(pa); */
     }
 #endif
     if (!pv_initialized) return 0;
@@ -1467,8 +1534,10 @@ void pmap_remove_range_mmu(pmap, sva, eva)
 	}
     }
     if (pmegp->pmeg_vpages <= 0) {
-	if (is_pmeg_wired(pmegp))
-	    panic("pmap: removing wired pmeg");
+	if (is_pmeg_wired(pmegp)) {
+	    printf("pmap: removing wired pmeg: 0x%x\n", pmegp);
+	    Debugger(); /* XXX */
+	}
 	pmeg_release_empty(pmegp, VA_SEGNUM(sva), PM_UPDATE_CACHE);
 	if (kernel_pmap == pmap) {
 	    for (i=0; i < NCONTEXT; i++) { /* map out of all segments */
@@ -1490,10 +1559,13 @@ void pmap_remove_range_contextless(pmap, sva, eva, pmegp)
     int sp,ep,i;
     vm_offset_t pte,va;
 
-#ifdef	PMAP_DEBUG	/* XXX */
+#ifdef	PMAP_DEBUG
     /* Kernel always in a context (actually, in all contexts). */
     if (pmap == kernel_pmap)
 	panic("pmap_remove_range_contextless: kernel_pmap");
+    /* The pmeg passed here is always from the pmeg_cache */
+    if (pmegp->pmeg_qstate != PMEGQ_ACTIVE)
+	panic("pmap_remove_range_contextless: pmeg_qstate");
 #endif
 
     sp = VA_PTE_NUM(sva);
@@ -1646,6 +1718,9 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
 	    set_segmap(va,pmegp->pmeg_index);
 	}
 	set_context(c);
+#ifdef PMAP_DEBUG
+	pmeg_verify_empty(sun3_trunc_seg(va));
+#endif
 	goto add_pte;
     }
     else {
@@ -1674,13 +1749,14 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
 	pv_unlink(kernel_pmap, PG_PA(current_pte), va); 
 
 add_pte:	/* can be destructive */
-    if (wired && !is_pmeg_wired(pmegp)) {
-	kernel_pmap->pm_stats.wired_count++;
-	pmeg_wire(pmegp);
-    }
-    else if (!wired && is_pmeg_wired(pmegp)) {
-	kernel_pmap->pm_stats.wired_count--;
-	pmeg_unwire(pmegp);
+    if (wired) {
+	if (!is_pmeg_wired(pmegp))
+	    kernel_pmap->pm_stats.wired_count++;
+	pmeg_wire(pmegp);	/* XXX */
+    } else {
+	if (is_pmeg_wired(pmegp))
+	    kernel_pmap->pm_stats.wired_count--;
+	pmeg_unwire(pmegp);	/* XXX */
     }
     if (mem_type & PG_TYPE) 
 	set_pte(va, pte_proto | PG_NC);
@@ -1723,17 +1799,28 @@ void pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type)
     pte_proto |= MAKE_PGTYPE(PG_MMEM); /* unnecessary */
     PMAP_LOCK();
     saved_context = get_context();
-    if (!pmap->pm_context)
-	panic("pmap: pmap_enter_user() on pmap without a context");
+    if (!pmap->pm_context) {
+	printf("pmap: pmap_enter_user() on pmap without a context\n");
+	Debugger();
+	context_allocate(pmap);
+    }
     if (saved_context != pmap->pm_context->context_num)
 	set_context(pmap->pm_context->context_num);
 
     sme = get_segmap(va);
     if (sme == SEGINV) {
 	pmegp = pmeg_cache(pmap, sun3_trunc_seg(va),PM_UPDATE_CACHE);
-	if (!pmegp)		/* no cached pmeg */
+	if (pmegp) {
+	    /* found cached pmeg - just reinstall in segmap */
+	    set_segmap(va, pmegp->pmeg_index);
+	} else {
+	    /* no cached pmeg - get a new one */
 	    pmegp = pmeg_allocate_invalid(pmap, sun3_trunc_seg(va));
-	set_segmap(va,pmegp->pmeg_index);
+	    set_segmap(va,pmegp->pmeg_index);
+#ifdef PMAP_DEBUG
+	    pmeg_verify_empty(sun3_trunc_seg(va));
+#endif
+	}
     } else {
 	/* Found an existing pmeg.  Make sure we own it. */
 	pmegp = pmeg_p(sme);
@@ -1883,6 +1970,11 @@ void pmap_activate(pmap, pcbp)
 {
     int s, newctx;
 
+#ifdef	PMAP_DEBUG
+	if (pmap_debug & PMD_SWITCH)
+	    printf("pmap_activate(%x, %x)\n", pmap, pcbp);
+#endif
+
     if (pmap == kernel_pmap)
 	panic("pmap_activate: kernel_pmap");
 
@@ -1925,10 +2017,29 @@ pmap_change_wiring(pmap, va, wired)
 	vm_offset_t	va;
 	boolean_t	wired;
 {
+    int s, sme;
+    pmeg_t pmegp;
+
 #ifdef PMAP_DEBUG
     if (pmap_debug & PMD_WIRING)
-	printf("pmap: call to pmap_change_wiring().  ignoring.\n");
+	printf("pmap_change_wiring(0x%x, 0x%x, %x)\n",
+	       pmap, va, wired);
 #endif
+    PMAP_LOCK();
+    if (pmap == kernel_pmap) {
+	sme = get_segmap(va);
+	if (sme == SEGINV)
+	    panic("pmap_change_wiring: invalid va=0x%x", va);
+	pmegp = pmeg_p(sme);
+	if (wired)
+	    pmeg_wire(pmegp);
+	else
+	    pmeg_unwire(pmegp);
+    } else {
+	if (pmap_debug & PMD_WIRING)
+	    printf("pmap_change_wiring: user pmap (ignored)\n");
+    }
+    PMAP_UNLOCK();
 }
 /*
  *	Copy the range specified by src_addr/len
