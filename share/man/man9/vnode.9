@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.14 2003/04/04 19:39:17 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.15 2003/04/04 20:55:25 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,6 +63,7 @@
 .Nm vdevgone ,
 .Nm vwakeup ,
 .Nm vflushbuf ,
+.Nm vfs_shutdown ,
 .Nm vinvalbuf ,
 .Nm vtruncbuf ,
 .Nm vprint
@@ -118,6 +119,8 @@
 .Fn vwakeup "struct buf *bp"
 .Ft void
 .Fn vflushbuf "struct vnode *vp" "int sync"
+.Ft void
+.Fn vfs_shutdown "void"
 .Ft int
 .Fn vinvalbuf "struct vnode *vp" "int flags" "struct ucred *cred" "struct proc *p" "int slpflag" "int slptimeo"
 .Ft int
@@ -723,6 +726,10 @@ will sleep until
 is zero and
 .Em vp-\*[Gt]v_dirtyblkhd
 is empty.
+.It Fn vfs_shutdown
+Sync and unmount file systems before shutting down.
+Usually called by
+.Xr cpu_reboot 9 .
 .It Fn vinvalbuf "vp" "flags" "cred" "p" "slpflag" "slptimeo"
 Flush out and invalidate all buffers associated with locked vnode
 .Fa vp .
