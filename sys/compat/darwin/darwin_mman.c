@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.5 2002/12/24 12:13:15 manu Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.6 2003/01/22 17:47:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.5 2002/12/24 12:13:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.6 2003/01/22 17:47:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.5 2002/12/24 12:13:15 manu Exp $")
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_load_shared_file(p, v, retval) 
-	struct proc *p;
+darwin_sys_load_shared_file(l, v, retval) 
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -82,6 +82,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	struct filedesc *fdp;
 	struct vnode *vp;
 	vaddr_t base;
+	struct proc *p = l->l_proc;
 	int flags;
 	char filename[MAXPATHLEN + 1];
 	mach_sf_mapping_t *mapp;
@@ -120,7 +121,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
 	SCARG(&open_cup, mode) = 0;
-	if ((error = bsd_sys_open(p, &open_cup, &fd)) != 0)
+	if ((error = bsd_sys_open(l, &open_cup, &fd)) != 0)
 		return error;
 	
 	fdp = p->p_fd;
@@ -230,7 +231,7 @@ bad3:
 	vrele(vp);
 	FILE_UNUSE(fp, p);
 	SCARG(&close_cup, fd) = fd;
-	if ((error = sys_close(p, &close_cup, retval)) != 0)
+	if ((error = sys_close(l, &close_cup, retval)) != 0)
 		return error;
 
 	if ((error = copyout(&base, SCARG(uap, base), sizeof(base))) != 0)

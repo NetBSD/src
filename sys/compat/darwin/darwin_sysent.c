@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.18 2003/01/18 23:30:22 thorpej Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.19 2003/01/22 17:47:03 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.18 2003/01/18 23:30:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.19 2003/01/22 17:47:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -147,8 +147,8 @@ struct sysent darwin_sysent[] = {
 	    compat_13_sys_sigprocmask },	/* 48 = sigprocmask13 */
 	{ 2, s(struct sys___getlogin_args), 0,
 	    sys___getlogin },			/* 49 = __getlogin */
-	{ 1, s(struct sys_setlogin_args), 0,
-	    sys_setlogin },			/* 50 = setlogin */
+	{ 1, s(struct sys___setlogin_args), 0,
+	    sys___setlogin },			/* 50 = __setlogin */
 	{ 1, s(struct bsd_sys_acct_args), 0,
 	    bsd_sys_acct },			/* 51 = acct */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.3 2002/12/27 09:59:27 manu Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.4 2003/01/22 17:47:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.3 2002/12/27 09:59:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.4 2003/01/22 17:47:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.3 2002/12/27 09:59:27 manu Exp $
  * the parent as well as the child. 
  */
 int
-darwin_sys_fork(p, v, retval)
-	struct proc *p;
+darwin_sys_fork(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	int error;
 
-	if ((error = fork1(p, 0, SIGCHLD, NULL, 0, 
+	if ((error = fork1(l, 0, SIGCHLD, NULL, 0, 
 	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
 		return error;
 	
@@ -78,14 +78,14 @@ darwin_sys_fork(p, v, retval)
 }
 
 int
-darwin_sys_vfork(p, v, retval)
-	struct proc *p;
+darwin_sys_vfork(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	int error;
 
-	if ((error = fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, 
+	if ((error = fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, 
 	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
 		return error;
 
@@ -93,8 +93,8 @@ darwin_sys_vfork(p, v, retval)
 }
 
 int
-darwin_sys_pthread_exit(p, v, retval)
-	struct proc *p;
+darwin_sys_pthread_exit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -103,6 +103,7 @@ darwin_sys_pthread_exit(p, v, retval)
 	} */ *uap = v;
 	struct sys_exit_args cup;
 	struct mach_emuldata *med;
+	struct proc *p = l->l_proc;
 	int error;
 
 	/* Get the status or use zero if it is not possible */
@@ -114,5 +115,5 @@ darwin_sys_pthread_exit(p, v, retval)
 	med = (struct mach_emuldata *)p->p_emuldata;
 	LIST_INIT(&med->med_right);
 
-	return sys_exit(p, &cup, retval);
+	return sys_exit(l, &cup, retval);
 }
