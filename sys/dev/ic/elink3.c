@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.44 1998/08/17 23:20:39 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.45 1998/08/26 01:32:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,11 +152,15 @@ struct ep_media {
 struct ep_media ep_vortex_media[] = {
 	{ EP_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
 	  EPMEDIA_10BASE_T },
+	{ EP_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
+	  EPMEDIA_10BASE_T },
 	{ EP_PCI_AUI,		"10base5/AUI",	IFM_ETHER|IFM_10_5,
 	  EPMEDIA_AUI },
 	{ EP_PCI_BNC,		"10base2/BNC",	IFM_ETHER|IFM_10_2,
 	  EPMEDIA_10BASE_2 },
 	{ EP_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
+	  EPMEDIA_100BASE_TX },
+	{ EP_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER|IFM_100_TX|IFM_FDX,
 	  EPMEDIA_100BASE_TX },
 	{ EP_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
 	  EPMEDIA_100BASE_FX },
@@ -904,7 +908,7 @@ epsetmedia(sc)
 	case EP_CHIPSET_VORTEX:
 	case EP_CHIPSET_BOOMERANG:
 	    {
-		int config0, config1;
+		int mctl, config0, config1;
 
 		GO_WINDOW(3);
 		config0 = (u_int)bus_space_read_2(iot, ioh,
@@ -918,6 +922,13 @@ epsetmedia(sc)
 
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG, config0);
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2, config1);
+
+		mctl = bus_space_read_2(iot, ioh, EP_W3_MAC_CONTROL);
+		if (sc->sc_mii.mii_media.ifm_cur->ifm_media & IFM_FDX)
+			mctl |= MAC_CONTROL_FDX;
+		else
+			mctl &= ~MAC_CONTROL_FDX;
+		bus_space_write_2(iot, ioh, EP_W3_MAC_CONTROL, mctl);
 		break;
 	    }
 	default:
@@ -2105,7 +2116,19 @@ void
 ep_statchg(self)
 	struct device *self;
 {
+	struct ep_softc *sc = (struct ep_softc *)self;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int mctl;
 
 	/* XXX Update ifp->if_baudrate */
-	/* XXX Full-duplex control in MAC? */
+
+	GO_WINDOW(3);
+	mctl = bus_space_read_2(iot, ioh, EP_W3_MAC_CONTROL);
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		mctl |= MAC_CONTROL_FDX;
+	else
+		mctl &= ~MAC_CONTROL_FDX;
+	bus_space_write_2(iot, ioh, EP_W3_MAC_CONTROL, mctl);
+	GO_WINDOW(1);	/* back to operating window */
 }
