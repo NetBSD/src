@@ -637,3 +637,16 @@ gnu/lib/bfd/targmatch.h				patch
 share/mk/bsd.sys.mk				1.28
 
   Define STRIPPROG for use when installing binutils' 'strip'.  (simonb)
+
+sys/arch/i386/isa/clock.c			1.47-1.50, 1.53-1.55
+
+  Update the "something's wrong" base date from 1985 to 1995.  Add
+  sanity checking to prevent problems if the date in the RTC is
+  outside of the range time_t can represent.  This is a rare
+  problem, but it is devastating if it happens to someone.  Fix
+  assorted Y2K problems.  (perry)
+
+sys/sys/socket.h				1.39
+
+  Define COMPAT_OLDSOCK and MSG_COMPAT when COMPAT_ULTRIX is
+  defined.  (mrg)
