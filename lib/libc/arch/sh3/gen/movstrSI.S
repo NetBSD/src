@@ -1,4 +1,4 @@
-/*	$NetBSD: movstrSI.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
+/*	$NetBSD: movstrSI.S,v 1.5 2003/09/22 02:38:13 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo.  All rights reserved.
@@ -76,4 +76,4 @@ ALTENTRY(__movstrSI8)
 ALTENTRY(__movstrSI4)
 	mov.l	@r5, r0
 	rts
-	mov.l	r0, @r4
+	 mov.l	r0, @r4
