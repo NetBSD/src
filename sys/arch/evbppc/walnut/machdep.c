@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2002/12/09 12:16:22 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2003/01/04 18:14:48 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -258,14 +258,14 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 			memcpy((void *)(EXC_DTMISS|EXC_ALI), &errata51handler,
 				(size_t)&errata51size);
 			break;
+#if defined(DDB) || defined(IPKDB)
 		case EXC_PGM:
 #if defined(DDB)
 			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
 #elif defined(IPKDB)
 			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
-#else
-			memcpy((void *)exc, &pgmtrap, (size_t)&pgmsize);
 #endif
+#endif /* DDB | IPKDB */
 			break;
 		}
 
