@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.3 2003/01/18 19:10:41 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.4 2003/02/27 00:54:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -47,6 +47,8 @@
 #include <pthread_dbg.h>
 #include <pthread_dbg_int.h>
 #include <machine/reg.h>
+
+#define MIN(a,b)	((a)<(b) ? (a) : (b))
 
 static int td__getthread(td_proc_t *proc, caddr_t addr, td_thread_t **threadp);
 static int td__getsync(td_proc_t *proc, caddr_t addr, td_sync_t **syncp);
@@ -274,6 +276,34 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 }
 
 int
+td_thr_getname(td_thread_t *thread, char *name, int len)
+{
+	int val, tmp;
+	caddr_t nameaddr;
+	
+
+	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	if (val != 0)
+		return val;
+
+	if (tmp != PT_MAGIC)
+		return TD_ERR_BADTHREAD;
+
+	if ((val = READ(thread->proc,
+	    thread->addr + offsetof(struct pthread_st, pt_name),
+	    &nameaddr, sizeof(nameaddr))) != 0)
+		return val;
+
+	if (nameaddr == 0)
+		name[0] = '\0';
+	else if ((val = READ(thread->proc, nameaddr,
+	    name, MIN(PTHREAD_MAX_NAMELEN_NP, len))) != 0)
+		return val;
+
+	return 0;
+}
+
+int
 td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 {
 	int tmp, val;
@@ -422,7 +452,7 @@ td_thr_join_iter(td_thread_t *thread, int (*call)(td_thread_t *, void *),
 		val = td__getthread(thread->proc, next, &thread2);
 		if (val != 0)
 			return val;
-		val = (*call)(thread, arg);
+		val = (*call)(thread2, arg);
 		if (val != 0)
 			return 0;
 
