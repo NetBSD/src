@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.7 1994/05/13 20:11:06 deraadt Exp $
+ * $Id: if_le.c,v 1.8 1994/05/17 17:27:06 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -711,59 +711,7 @@ leread(sc, pkt, len)
 	m = leget(pkt, len, 0, ifp);
 	if (m == 0)
 		return;
-
-	/* XXX this code comes from ether_input() */
-	ifp->if_lastchange = time;
-	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*et);
-	if (flags) {
-		m->m_flags |= flags;
-		ifp->if_imcasts++;
-	}
-	/* XXX end of code from ether_input() */
-
-	switch (et->ether_type) {
-
-#ifdef INET
-	case ETHERTYPE_IP:
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
-		break;
-
-	case ETHERTYPE_ARP:
-		schednetisr(NETISR_ARP);
-		inq = &arpintrq;
-		break;
-#endif
-#ifdef NS
-	case ETHERTYPE_NS:
-		schednetisr(NETISR_NS);
-		inq = &nsintrq;
-		break;
-#endif
-
-#ifdef UTAHONLY
-#ifdef APPLETALK
-	case ETHERTYPE_APPLETALK:
-		schednetisr(NETISR_DDP);
-		inq = &ddpintq;
-		break;
-
-	case ETHERTYPE_AARP:
-		aarpinput(&sc->sc_ac, m);
-		return;
-#endif
-#endif
-	default:
-		m_freem(m);
-		return;
-	}
-
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
-		m_freem(m);
-		return;
-	}
-	IF_ENQUEUE(inq, m);
+	ether_input(ifp, et, m);
 }
 
 /*
