@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.15 2000/06/01 19:11:47 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.16 2000/06/02 03:26:35 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4449,7 +4449,8 @@ pause_timer(arg)
 	void *arg;
 {
 
-	wakeup_one(&proc_waiting);
+	/* XXX was wakeup_one(), but makes no difference in uniprocessor */
+	wakeup(&proc_waiting);
 }
 
 /*
