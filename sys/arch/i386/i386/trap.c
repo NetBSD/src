@@ -35,7 +35,7 @@
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.3 1993/05/07 07:10:59 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.4 1993/05/13 21:39:38 deraadt Exp $";
 
 /*
  * 386 Trap and System call handleing
@@ -397,6 +397,18 @@ int trapwrite(unsigned addr) {
 	if (va > VM_MAXUSER_ADDRESS) return(1);
 	rv = vm_fault(&curproc->p_vmspace->vm_map, va,
 		VM_PROT_READ | VM_PROT_WRITE, FALSE);
+	if (rv == KERN_SUCCESS) return(0);
+	else return(1);
+}
+
+int trapread(unsigned addr) {
+	int rv;
+	vm_offset_t va;
+
+	va = trunc_page((vm_offset_t)addr);
+	if (va > VM_MAXUSER_ADDRESS) return(1);
+	rv = vm_fault(&curproc->p_vmspace->vm_map, va,
+		VM_PROT_READ, FALSE);
 	if (rv == KERN_SUCCESS) return(0);
 	else return(1);
 }
