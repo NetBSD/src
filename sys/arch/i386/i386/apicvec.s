@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.3 2002/10/05 21:17:35 fvdl Exp $ */	
+/* $NetBSD: apicvec.s,v 1.4 2002/10/07 07:11:59 fvdl Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ XINTR(ipi):
 	call	_C_LABEL(i386_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
 
-#if defined(DDB)
+#ifdef DDB
 	.globl	XINTR(ddbipi)	
 XINTR(ddbipi):			
 	pushl	$0
@@ -69,8 +69,8 @@ XINTR(ddbipi):
         sti			/* safe to take interrupts.. */
 	call	_C_LABEL(ddb_ipi)
 	jmp	_C_LABEL(Xdoreti)
-#endif
 	.globl  XINTR_TSS(ddbipi)
+
 XINTR_TSS(ddbipi):
 1:
 	str	%ax
@@ -88,7 +88,8 @@ XINTR_TSS(ddbipi):
 	popl	CPL
 	iret
 	jmp	1b
-#endif
+#endif /* DDB */
+#endif /* MULTIPROCESSOR */
 	
 	/*
 	 * Interrupt from the local APIC timer.
