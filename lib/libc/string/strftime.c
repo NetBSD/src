@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.9 1995/12/28 23:02:42 jtc Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.10 1996/02/04 23:44:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -272,7 +272,7 @@ _fmt(format, t)
 	return(gsize);
 }
 
-static
+static int
 _secs(t)
 	struct tm *t;
 {
@@ -289,7 +289,7 @@ _secs(t)
 	return(_add(++p));
 }
 
-static
+static int
 _conv(n, digits, pad)
 	int n, digits;
 	char pad;
@@ -304,7 +304,7 @@ _conv(n, digits, pad)
 	return(_add(++p));
 }
 
-static
+static int
 _add(str)
 	register char *str;
 {
