@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.1 2001/08/17 21:37:27 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2 2001/08/17 22:10:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -738,7 +738,10 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 			goto out;
 		strcpy(bareq.ifba_ifsname, brt->brt_ifp->if_xname);
 		memcpy(bareq.ifba_dst, brt->brt_addr, sizeof(brt->brt_addr));
-		bareq.ifba_expire = brt->brt_expire - mono_time.tv_sec;
+		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC)
+			bareq.ifba_expire = brt->brt_expire - mono_time.tv_sec;
+		else
+			bareq.ifba_expire = 0;
 		bareq.ifba_flags = brt->brt_flags;
 
 		error = copyout(&bareq, bac->ifbac_req + count, sizeof(bareq));
