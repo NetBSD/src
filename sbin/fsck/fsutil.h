@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1996/09/23 16:11:32 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.1 1996/09/27 22:38:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -29,7 +29,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int debug, verbose;
+void perror __P((const char *));
+void errexit __P((const char *, ...))
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
+void pfatal __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));  
+void pwarn __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));  
+void panic __P((const char *, ...))
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
+char *rawname __P((char *));
+char *unrawname __P((char *));
+char *blockcheck __P((char *));
+const char *cdevname __P((void));
+void setcdevname __P((const char *, int));
+int  hotroot __P((void));
+void *emalloc __P((size_t));
+char *estrdup __P((const char *));
 
-int checkfstab __P((int, int, int (*)(struct fstab *), 
-    int (*) (const char *, const char *, pid_t *)));
+#define CHECK_PREEN	1
+#define	CHECK_VERBOSE	2
+#define	CHECK_DEBUG	4
+
+struct fstab;
+int checkfstab __P((int, int, void *(*)(struct fstab *), 
+    int (*) (const char *, const char *, const char *, void *)));
