@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.3 2005/03/05 14:37:15 jdolecek Exp $ */
+/* $NetBSD: if_vge.c,v 1.4 2005/03/05 14:51:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.3 2005/03/05 14:37:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.4 2005/03/05 14:51:21 jdolecek Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -873,7 +873,6 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct vge_softc	*sc = (struct vge_softc *)self;
 	struct ifnet		*ifp;
-	int			error = 0;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr;
@@ -936,12 +935,8 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->vge_dmat = pa->pa_dmat;
 
-	error = vge_allocmem(sc);
-
-	if (error) {
-printf("allocmem err %d\n", error);
+	if (vge_allocmem(sc))
 		return;
-	}
 
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
