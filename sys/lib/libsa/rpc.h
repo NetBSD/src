@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.2 1994/10/26 05:45:03 cgd Exp $	*/
+/*	$NetBSD: rpc.h,v 1.3 1995/02/20 11:04:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -43,30 +43,6 @@
 #define	PMAPVERS		2
 #define	PMAPPROC_GETPORT	3
 
-#define	RPC_MSG_VERSION		2
-#define MSG_ACCEPTED		0
-#define CALL			0
-#define REPLY			1
-
-
-/* Null rpc auth info */
-struct auth_info {
-	int	rp_atype;		/* zero (really AUTH_NULL) */
-	u_long	rp_alen;		/* zero (size of auth struct) */
-};
-
-/* Generic rpc call header */
-struct rpc_call {
-	u_long	rp_xid;			/* request transaction id */
-	int	rp_direction;		/* call direction */
-	u_long	rp_rpcvers;		/* rpc version (2) */
-	u_long	rp_prog;		/* program */
-	u_long	rp_vers;		/* version */
-	u_long	rp_proc;		/* procedure */
-	struct	auth_info rp_auth;	/* AUTH_NULL */
-	struct	auth_info rp_verf;	/* AUTH_NULL */
-};
-
 /* Generic rpc reply header */
 struct rpc_reply {
 	u_long	rp_xid;			/* request transaction id */
@@ -78,7 +54,6 @@ struct rpc_reply {
 };
 
 /* RPC functions: */
-int	callrpc __P((struct iodesc *d, u_long prog, u_long ver, u_long op,
-	    void *sdata, int slen, void *rdata, int rlen));
+size_t	callrpc __P((struct iodesc *d, u_long prog, u_long ver, u_long op,
+	    void *sdata, size_t slen, void *rdata, size_t rlen));
 u_short	getport __P((struct iodesc *d, u_long prog, u_long vers));
-

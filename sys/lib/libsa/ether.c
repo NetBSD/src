@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.3 1995/02/19 17:04:46 mycroft Exp $	*/
+/*	$NetBSD: ether.c,v 1.4 1995/02/20 11:04:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,11 +55,11 @@
 #include "netif.h"
 
 /* Caller must leave room for ethernet header in front!! */
-int
-sendether(d, buf, len, dea, etype)
+size_t
+sendether(d, pkt, len, dea, etype)
 	struct iodesc *d;
-	void *buf;
-	int len;
+	void *pkt;
+	size_t len;
 	u_char *dea;
 	int etype;
 {
@@ -69,13 +69,45 @@ sendether(d, buf, len, dea, etype)
  	if (debug)
 		printf("sendether: called\n");
 #endif
-	eh = ((struct ether_header *)buf) - 1;
-	len += ETHER_SIZE;
+
+	eh = (struct ether_header *)pkt - 1;
+	len += sizeof(*eh);
 
 	MACPY(d->myea, eh->ether_shost);		/* by byte */
 	MACPY(dea, eh->ether_dhost);			/* by byte */
 	eh->ether_type = htons(etype);
-	return (netif_put(d, eh, len) - ETHER_SIZE);
+
+	len = netif_put(d, eh, len);
+	if (len == -1 || len < sizeof(*eh))
+		return (-1);
+
+	len -= sizeof(*eh);
+	return (len);
+}
+
+size_t
+readether(d, pkt, len, tleft)
+	register struct iodesc *d;
+	register void *pkt;
+	register size_t len;
+	time_t tleft;
+{
+	register struct ether_header *eh;
+
+#ifdef ETHER_DEBUG
+ 	if (debug)
+		printf("readether: called\n");
+#endif
+
+	eh = (struct ether_header *)pkt - 1;
+	len += sizeof(*eh);
+
+	len = netif_get(d, eh, len, tleft);
+	if (len == -1 || len < sizeof(*eh))
+		return (-1);
+
+	len -= sizeof(*eh);
+	return (len);
 }
 
 /*
