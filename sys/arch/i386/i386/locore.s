@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.49 1994/04/04 03:47:20 mycroft Exp $
+ *	$Id: locore.s,v 1.50 1994/04/04 08:57:54 mycroft Exp $
  */
 
 
@@ -1396,6 +1396,10 @@ badsw:
  */
 	SUPERALIGN_TEXT	/* so profiling doesn't lump Idle with cpu_swtch */
 ENTRY(swtch)
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+
 	incl	_cnt+V_SWTCH
 
 	/* switch to new process. first, save context as needed */
@@ -1405,35 +1409,32 @@ ENTRY(swtch)
 	testl	%ecx,%ecx
 	jz	sw0
 
-	movl	P_ADDR(%ecx),%ecx
+	movl	P_ADDR(%ecx),%esi
 
-	movl	(%esp),%eax		# Hardware registers
-	movl	%eax,PCB_EIP(%ecx)
-	movl	%ebx,PCB_EBX(%ecx)
-	movl	%esp,PCB_ESP(%ecx)
-	movl	%ebp,PCB_EBP(%ecx)
-	movl	%esi,PCB_ESI(%ecx)
-	movl	%edi,PCB_EDI(%ecx)
+	movl	%esp,PCB_ESP(%esi)
+	movl	%ebp,PCB_EBP(%esi)
+	movl	%fs,%ax
+	movl	%eax,PCB_FS(%esi)
+	movl	%gs,%ax
+	movl	%eax,PCB_GS(%esi)
+
+	movl	_cpl,%eax
+	movl	%eax,PCB_IML(%esi)
 
 #if NNPX > 0
 	/* have we used fp, and need a save? */
-	mov	_curproc,%eax
-	cmp	%eax,_npxproc
+	movl	_curproc,%edi
+	cmpl	%edi,_npxproc
 	jne	1f
-	pushl	%ecx			/* h/w bugs make saving complicated */
-	leal	PCB_SAVEFPU(%ecx),%eax
-	pushl	%eax
+
+	leal	PCB_SAVEFPU(%esi),%ebx
+	pushl	%ebx
 	call	_npxsave		/* do it in a big C function */
-	popl	%eax
-	popl	%ecx
+	addl	$4,%esp
 1:
 #endif
 
 	movl	$0,_curproc		# out of process
-
-	movl	_cpl,%eax		# splhigh()
-	movl	$-1,_cpl
-	movl	%eax,PCB_IML(%ecx)	# save ipl
 
 sw0:	cli				# splhigh doesn't do a cli
 	movl	_whichqs,%edi
@@ -1453,7 +1454,7 @@ sw1:	bsfl	%edi,%ebx		# find a full q
 	movl	P_RLINK(%ecx),%eax
 	movl	%eax,P_RLINK(%edx)
 
-	cmpl	P_LINK(%ecx),%esi	# q empty
+	cmpl	%edx,%esi		# q empty
 	jne	3f
 	btrl	%ebx,%edi		# yes, clear to indicate empty
 
@@ -1477,19 +1478,18 @@ sw1:	bsfl	%edi,%ebx		# find a full q
 	movl	%ebx,%cr3
 
 	/* restore context */
-	movl	PCB_EBX(%edx),%ebx
 	movl	PCB_ESP(%edx),%esp
 	movl	PCB_EBP(%edx),%ebp
-	movl	PCB_ESI(%edx),%esi
-	movl	PCB_EDI(%edx),%edi
-	movl	PCB_EIP(%edx),%eax
-	movl	%eax,(%esp)
+	movl	PCB_FS(%edx),%eax
+	movl	%ax,%fs
+	movl	PCB_GS(%edx),%eax
+	movl	%ax,%gs
 
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
 
 #ifdef	USER_LDT
-	cmpl	$0, PCB_USERLDT(%edx)
+	cmpl	$0,PCB_USERLDT(%edx)
 	jnz	1f
 	movl	__default_ldt,%eax
 	cmpl	_currentldt,%eax
@@ -1509,10 +1509,9 @@ sw1:	bsfl	%edi,%ebx		# find a full q
 	addl	$4,%esp
 
 	movl	%edx,%eax		# return (p);
-	ret
-
-ENTRY(mvesp)
-	movl	%esp,%eax
+	popl	%edi
+	popl	%esi
+	popl	%ebx
 	ret
 
 /*
@@ -1539,16 +1538,21 @@ ENTRY(swtch_to_inactive)
  * for alternate return ala longjmp in swtch if altreturn is true.
  */
 ENTRY(savectx)
-	movl	4(%esp),%ecx
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+
+	movl	16(%esp),%esi		/* esi = p2->p_addr */
+
+	movl	%esp,PCB_ESP(%esi)
+	movl	%ebp,PCB_EBP(%esi)
+	movl	%fs,%ax
+	movl	%eax,PCB_FS(%esi)
+	movl	%gs,%ax
+	movl	%eax,PCB_GS(%esi)
+
 	movl	_cpl,%eax
-	movl	%eax,PCB_IML(%ecx)
-	movl	(%esp),%eax	
-	movl	%eax,PCB_EIP(%ecx)
-	movl	%ebx,PCB_EBX(%ecx)
-	movl	%esp,PCB_ESP(%ecx)
-	movl	%ebp,PCB_EBP(%ecx)
-	movl	%esi,PCB_ESI(%ecx)
-	movl	%edi,PCB_EDI(%ecx)
+	movl	%eax,PCB_IML(%esi)
 
 #if NNPX > 0
 	/*
@@ -1563,48 +1567,43 @@ ENTRY(savectx)
 	 * have to handle h/w bugs for reloading.  We used to lose the
 	 * parent's npx state for forks by forgetting to reload.
 	 */
-	movl	_npxproc,%eax
-	testl	%eax,%eax
-	jz	1f
+	movl	_curproc,%edi		/* edi = p1 */
+	cmpl	%edi,_npxproc
+	jne	1f
 
-	pushl	%ecx
-	movl	P_ADDR(%eax),%eax
-	leal	PCB_SAVEFPU(%eax),%eax
-	pushl	%eax
-	pushl	%eax
+	leal	PCB_SAVEFPU(%esi),%ebx	/* ebx = esi->u_pcb.pcb_savefpu */
+	pushl	%ebx
 	call	_npxsave
 	addl	$4,%esp
-	popl	%eax
-	popl	%ecx
 
-	pushl	%ecx
-	pushl	$108+8*2	/* XXX h/w state size + padding */
-	leal	PCB_SAVEFPU(%ecx),%ecx
-	pushl	%ecx
-	pushl	%eax
+	pushl	$108+8*2		/* XXX h/w state size + padding */
+	movl	P_ADDR(%edi),%edi	/* edi = p1->p_addr */
+	leal	PCB_SAVEFPU(%edi),%edi	/* edi = edi->u_pcb.pcb_savefpu */
+	pushl	%edi
+	pushl	%ebx
 	call	_bcopy
 	addl	$12,%esp
-	popl	%ecx
 1:
 #endif
 
-	cmpl	$0,8(%esp)
+	cmpl	$0,20(%esp)
 	je	1f
-	movl	%esp,%edx		# relocate current sp relative to pcb
-	subl	$(_kstack),%edx		#   (sp is relative to kstack):
-	addl	%edx,%ecx		#   pcb += sp - kstack;
-	movl	%eax,(%ecx)		# write return pc at (relocated) sp@
-	# this mess deals with replicating register state gcc hides
-	movl	12(%esp),%eax
-	movl	%eax,12(%ecx)
-	movl	16(%esp),%eax
-	movl	%eax,16(%ecx)
-	movl	20(%esp),%eax
-	movl	%eax,20(%ecx)
-	movl	24(%esp),%eax
-	movl	%eax,24(%ecx)
-1:
-	xorl	%eax,%eax		# return 0
+	movl	%esp,%eax		# eax = stack pointer
+	movl	%eax,%edx		# edx = stack offset from bottom
+	subl	$_kstack,%edx
+	movl	$(UPAGES << PGSHIFT),%ecx	# ecx = ctob(UPAGES) - offset
+	subl	%edx,%ecx
+	pushl	%ecx
+	addl	%edx,%esi		# esi = stack in p2
+	pushl	%esi
+	pushl	%eax
+	call	_bcopy
+	addl	$12,%esp
+	
+1:	xorl	%eax,%eax		# return 0
+	popl	%edi
+	popl	%esi
+	popl	%ebx
 	ret
 
 /*
