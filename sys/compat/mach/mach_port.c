@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.3 2002/11/11 09:28:00 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.4 2002/11/12 06:14:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.3 2002/11/11 09:28:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.4 2002/11/12 06:14:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,7 @@ mach_sys_reply_port(p, v, retval)
 {
 	static int current_port = 0x80b;
 
-	*retval = current_port++; /* XXX */
+	*retval = current_port; /* XXX */
 	return 0;
 }
 
