@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_mroute.h,v 1.7 2000/05/19 10:39:44 itojun Exp $	*/
-/*	$KAME: ip6_mroute.h,v 1.9 2000/04/12 07:28:20 jinmei Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.8 2001/02/10 02:10:14 itojun Exp $	*/
+/*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -79,7 +79,7 @@ typedef u_short mifi_t;		/* type of a mif index */
 #define	IF_SETSIZE	256
 #endif
 
-typedef	long	if_mask;
+typedef	u_int32_t	if_mask;
 #define	NIFBITS	(sizeof(if_mask) * NBBY)	/* bits per mask */
 
 #ifndef howmany
@@ -87,7 +87,7 @@ typedef	long	if_mask;
 #endif
 
 typedef	struct if_set {
-	fd_mask	ifs_bits[howmany(IF_SETSIZE, NIFBITS)];
+	if_mask	ifs_bits[howmany(IF_SETSIZE, NIFBITS)];
 } if_set;
 
 #define	IF_SET(n, p)	((p)->ifs_bits[(n)/NIFBITS] |= (1 << ((n) % NIFBITS)))
