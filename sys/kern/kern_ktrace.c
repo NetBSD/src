@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.62 2002/12/09 21:29:21 manu Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.63 2002/12/12 17:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.62 2002/12/09 21:29:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.63 2002/12/12 17:40:40 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -360,11 +360,10 @@ ktruser(p, id, addr, len, ustr)
 
 }
 
-#ifdef COMPAT_MACH
 void
 ktrmmsg(p, msgh, size)
 	struct proc *p;
-	const char *msgh;
+	const void *msgh;
 	size_t size;
 {
 	struct ktr_header kth;
@@ -384,7 +383,6 @@ ktrmmsg(p, msgh, size)
 	free(kp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
-#endif /* COMPAT_MACH */
 
 /* Interface and common routines */
 
