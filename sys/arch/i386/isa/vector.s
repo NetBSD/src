@@ -1,7 +1,7 @@
-/*	$NetBSD: vector.s,v 1.36 1997/02/28 16:24:08 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.36.8.1 1997/11/18 00:57:02 mellon Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -146,6 +146,9 @@
  * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 #define	INTR(irq_num, icu, ack) \
+IDTVEC(resume/**/irq_num)						;\
+	cli								;\
+	jmp	1f							;\
 IDTVEC(recurse/**/irq_num)						;\
 	pushfl								;\
 	pushl	%cs							;\
@@ -161,8 +164,7 @@ _Xintr/**/irq_num/**/:							;\
 	incl	_cnt+V_INTR		/* statistical info */		;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
 	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
-_Xresume/**/irq_num/**/:						;\
-	movl	_cpl,%eax		/* cpl to restore on exit */	;\
+1:	movl	_cpl,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax							;\
 	orl	_intrmask + (irq_num) * 4,%eax				;\
 	movl	%eax,_cpl		/* add in this intr's mask */	;\
