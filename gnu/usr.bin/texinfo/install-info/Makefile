@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2001/08/18 14:50:03 wiz Exp $
 
 PROG=		install-info
 SRCS=		install-info.c
-LDADD+=		-lz
-DPADD+=		${LIBZ}
 
 MKMAN=		no
 
