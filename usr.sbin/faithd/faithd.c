@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.26 2002/06/07 00:20:45 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.53 2002/06/07 00:16:37 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.27 2002/08/20 23:02:44 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.57 2002/08/20 23:01:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -216,9 +216,6 @@ daemon_main(int argc, char **argv)
 	int s_wld, error, i, serverargc, on = 1;
 	int family = AF_INET6;
 	int c;
-#ifdef FAITH_NS
-	char *ns;
-#endif /* FAITH_NS */
 
 	while ((c = getopt(argc, argv, "df:p")) != -1) {
 		switch (c) {
@@ -244,23 +241,6 @@ daemon_main(int argc, char **argv)
 		/*NOTREACHED*/
 	}
 
-#ifdef FAITH_NS
-	if ((ns = getenv(FAITH_NS)) != NULL) {
-		struct sockaddr_storage ss;
-		struct addrinfo hints, *res;
-		char serv[NI_MAXSERV];
-
-		memset(&ss, 0, sizeof(ss));
-		memset(&hints, 0, sizeof(hints));
-		snprintf(serv, sizeof(serv), "%u", NAMESERVER_PORT);
-		hints.ai_flags = AI_NUMERICHOST;
-		if (getaddrinfo(ns, serv, &hints, &res) ==  0) {
-			res_init();
-			memcpy(&_res_ext.nsaddr, res->ai_addr, res->ai_addrlen);
-			_res.nscount = 1;
-		}
-	}
-#endif /* FAITH_NS */
 
 #ifdef USE_ROUTE
 	grab_myaddrs();
@@ -328,6 +308,12 @@ daemon_main(int argc, char **argv)
 	if (error == -1)
 		exit_failure("setsockopt(SO_OOBINLINE): %s", strerror(errno));
 
+#ifdef IPV6_V6ONLY
+	error = setsockopt(s_wld, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
+	if (error == -1)
+		exit_failure("setsockopt(IPV6_V6ONLY): %s", strerror(errno));
+#endif
+
 	error = bind(s_wld, (struct sockaddr *)res->ai_addr, res->ai_addrlen);
 	if (error == -1)
 		exit_failure("bind: %s", strerror(errno));
@@ -376,10 +362,14 @@ again:
 	setproctitle("%s", procname);
 
 	FD_ZERO(&rfds);
+	if (s_wld >= FD_SETSIZE)
+		exit_failure("descriptor too big");
 	FD_SET(s_wld, &rfds);
 	maxfd = s_wld;
 #ifdef USE_ROUTE
 	if (sockfd) {
+		if (sockfd >= FD_SETSIZE)
+			exit_failure("descriptor too big");
 		FD_SET(sockfd, &rfds);
 		maxfd = (maxfd < sockfd) ? sockfd : maxfd;
 	}
@@ -400,13 +390,18 @@ again:
 #endif
 	if (FD_ISSET(s_wld, &rfds)) {
 		len = sizeof(srcaddr);
-		s_src = accept(s_wld, (struct sockaddr *)&srcaddr,
-			&len);
+		s_src = accept(s_wld, (struct sockaddr *)&srcaddr, &len);
 		if (s_src < 0) {
 			if (errno == ECONNABORTED)
 				goto again;
 			exit_failure("socket: %s", strerror(errno));
 			/*NOTREACHED*/
+		}
+		if (srcaddr.ss_family == AF_INET6 &&
+		    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&srcaddr)->sin6_addr)) {
+			close(s_src);
+			syslog(LOG_ERR, "connection from IPv4 mapped address?");
+			goto again;
 		}
 
 		child_pid = fork();
