@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.4 2001/10/31 19:53:07 gmcgarry Exp $
+.\"     $NetBSD: vnsubr.9,v 1.5 2002/01/06 22:15:19 deberg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -159,7 +159,7 @@ and buffer
 The vnode is unlocked on return.  If the operation is successful zero
 is returned, otherwise an appropriate error is returned.
 .It Fn vn_ioctl "fp" "com" "data" "p"
-Common code fora file table vnode ioctl operation.  The file is
+Common code for a file table vnode ioctl operation.  The file is
 specified by
 .Fa fp .
 The argument
