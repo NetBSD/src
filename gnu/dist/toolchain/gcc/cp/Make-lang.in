@@ -80,6 +80,8 @@ g++spec.o: $(srcdir)/cp/g++spec.c
 
 $(INTL_TARGETS): $(srcdir)/cp/parse.c
 $(srcdir)/cp/parse.c: $(srcdir)/cp/parse.y
+	@echo "===> Make-lang: NOT UPDATING $@"
+DISABLED_srcdir_cp_parse.c:
 	@cp_srcdir=`sed -n 's/^srcdir[ 	]*=[	 ]*//p' cp/Makefile` && \
 	echo "cd cp && $(MAKE) $$cp_srcdir/parse.c" && \
 	cd cp && \
