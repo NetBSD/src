@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.25 2000/04/16 21:41:49 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.25.4.1 2001/11/12 23:37:20 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -212,7 +212,8 @@ cache_lookup(dvp, vpp, cnp)
 				return (error);
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		goto remove;
+		*vpp = NULL;
+		return (-1);
 	}
 
 	nchstats.ncs_goodhits++;
