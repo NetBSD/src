@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.2 1996/03/17 01:42:10 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.3 1996/10/10 23:44:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -217,11 +217,11 @@ comattach(parent, self, aux)
 	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		if ((inb(iobase + com_fifo) & FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			sc->sc_hwflags |= COM_HW_FIFO;
-			printf(": ns16550a, working fifo\n");
+			kprintf(": ns16550a, working fifo\n");
 		} else
-			printf(": ns16550, broken fifo\n");
+			kprintf(": ns16550, broken fifo\n");
 	else
-		printf(": ns8250 or ns16450, no fifo\n");
+		kprintf(": ns8250 or ns16450, no fifo\n");
 	outb(iobase + com_fifo, 0);
 
 	/* disable interrupts */
@@ -241,10 +241,10 @@ comattach(parent, self, aux)
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				printf("%s: ", sc->sc_dev.dv_xname);
+				kprintf("%s: ", sc->sc_dev.dv_xname);
 				kgdb_connect(1);
 			} else
-				printf("%s: kgdb enabled\n",
+				kprintf("%s: kgdb enabled\n",
 				    sc->sc_dev.dv_xname);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_pci.c,v 1.3 1996/07/09 00:54:41 cgd Exp $	*/
+/*	$NetBSD: cia_pci.c,v 1.4 1996/10/10 23:51:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -140,7 +140,7 @@ cia_conf_read(cpv, tag, offset)
 	}
 
 #if 0
-	printf("cia_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
+	kprintf("cia_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
 	    data, datap, ba ? " (badaddr)" : "");
 #endif
 
@@ -184,7 +184,7 @@ cia_conf_write(cpv, tag, offset, data)
 	}
 
 #if 0
-	printf("cia_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
+	kprintf("cia_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
 	    reg, data, datap);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.6 1996/08/11 22:35:55 jonathan Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.7 1996/10/10 23:44:59 christos Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -131,7 +131,7 @@ __assert(file, line, failedexpr)
 	const char *file, *failedexpr;
 	int line;
 {
-	(void)printf(
+	kprintf(
 	    "assertion \"%s\" failed: file \"%s\", line %d\n",
 	    failedexpr, file, line);
 }
@@ -343,14 +343,14 @@ snattach(parent, self, aux)
 	camdump(sc);
 #endif
 	sngetaddr(sc);
-	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
+	kprintf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
 #if 0
-printf("\nsonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
+kprintf("\nsonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
 	p_rra, p_cda, p_rda, p_tda, p_rba);
-printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
+kprintf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
 	v_rra, v_cda, v_rda, v_tda, v_rba);
-printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
+kprintf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 #endif
 
 	BUS_INTR_ESTABLISH(ca, (intr_handler_t)snintr, (void *)sc);
@@ -429,7 +429,7 @@ snioctl(ifp, cmd, data)
 		if (((ifp->if_flags ^ sc->sc_iflags) & IFF_PROMISC) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 			sc->sc_iflags = ifp->if_flags;
-			printf("change in flags\n");
+			kprintf("change in flags\n");
 			temp = sc->sc_if.if_flags & IFF_UP;
 			snreset(sc);
 			sc->sc_if.if_flags |= temp;
@@ -521,7 +521,7 @@ void
 snreset(sc)
 	struct sn_softc *sc;
 {
-	printf("snreset\n");
+	kprintf("snreset\n");
 	snstop(sc);
 	sninit(sc);
 }
@@ -892,7 +892,7 @@ camprogram(sc)
 	if (csr->s_isr & ISR_LCD)
 		csr->s_isr = ISR_LCD;
 	else
-		printf("sonic: CAM initialisation without interrupt\n");
+		kprintf("sonic: CAM initialisation without interrupt\n");
 }
 
 #if 0
@@ -903,7 +903,7 @@ camdump(sc)
 	struct sonic_reg *csr = sc->sc_csr;
 	int i;
 
-	printf("CAM entries:\n");
+	kprintf("CAM entries:\n");
 	csr->s_cr = CR_RST;
 	wbflush();
 
@@ -914,9 +914,9 @@ camdump(sc)
 		ap2 = csr->s_cap2;
 		ap1 = csr->s_cap1;
 		ap0 = csr->s_cap0;
-		printf("%d: ap2=0x%x ap1=0x%x ap0=0x%x\n", i, ap2, ap1, ap0);
+		kprintf("%d: ap2=0x%x ap1=0x%x ap0=0x%x\n", i, ap2, ap1, ap0);
 	}
-	printf("CAM enable 0x%x\n", csr->s_cep);
+	kprintf("CAM enable 0x%x\n", csr->s_cep);
 
 	csr->s_cr = 0;
 	wbflush();
@@ -1014,7 +1014,7 @@ snintr(sc)
 		wbflush();
 
 		if (isr & (ISR_BR | ISR_LCD | ISR_PINT | ISR_TC))
-			printf("sonic: unexpected interrupt status 0x%x\n", isr);
+			kprintf("sonic: unexpected interrupt status 0x%x\n", isr);
 
 		if (isr & (ISR_TXDN | ISR_TXER))
 			sonictxint(sc);
@@ -1024,15 +1024,15 @@ snintr(sc)
 
 		if (isr & (ISR_HBL | ISR_RDE | ISR_RBE | ISR_RBAE | ISR_RFO)) {
 			if (isr & ISR_HBL)
-				printf("sonic: no heartbeat\n");
+				kprintf("sonic: no heartbeat\n");
 			if (isr & ISR_RDE)
-				printf("sonic: receive descriptors exhausted\n");
+				kprintf("sonic: receive descriptors exhausted\n");
 			if (isr & ISR_RBE)
-				printf("sonic: receive buffers exhausted\n");
+				kprintf("sonic: receive buffers exhausted\n");
 			if (isr & ISR_RBAE)
-				printf("sonic: receive buffer area exhausted\n");
+				kprintf("sonic: receive buffer area exhausted\n");
 			if (isr & ISR_RFO)
-				printf("sonic: receive FIFO overrun\n");
+				kprintf("sonic: receive FIFO overrun\n");
 		}
 		if (isr & (ISR_CRC | ISR_FAE | ISR_MP)) {
 #ifdef notdef
@@ -1077,12 +1077,12 @@ sonictxint(sc)
 
 		if (ethdebug) {
 			struct ether_header *eh = mtod(m, struct ether_header *);
-			printf("xmit status=0x%x len=%d type=0x%x from %s",
+			kprintf("xmit status=0x%x len=%d type=0x%x from %s",
 			    txp->status,
 			    txp->pkt_size,
 			    htons(eh->ether_type),
 			    ether_sprintf(eh->ether_shost));
-			printf(" (to %s)\n", ether_sprintf(eh->ether_dhost));
+			kprintf(" (to %s)\n", ether_sprintf(eh->ether_dhost));
 		}
 		m_freem(m);
 		mtd->mtd_mbuf = 0;
@@ -1091,10 +1091,10 @@ sonictxint(sc)
 		mtd_free(mtd);
 
 		if ((SRD(txp->status) & TCR_PTX) == 0) {
-			printf("sonic: Tx packet status=0x%x\n", txp->status);
+			kprintf("sonic: Tx packet status=0x%x\n", txp->status);
 
 			if (mtdhead != mtdnext) {
-				printf("resubmitting remaining packets\n");
+				kprintf("resubmitting remaining packets\n");
 				csr->s_ctda = LOWER(mtdhead->mtd_txp);
 				csr->s_cr = CR_TXP;
 				wbflush();
@@ -1138,7 +1138,7 @@ sonicrxint(sc)
 	while (SRD(rxp->in_use) == 0) {
 		unsigned status = SRD(rxp->status);
 		if ((status & RCR_LPKT) == 0)
-			printf("sonic: more than one packet in RBA!\n");
+			kprintf("sonic: more than one packet in RBA!\n");
 		assert(PSNSEQ(SRD(rxp->seq_no)) == 0);
 
 		if (status & RCR_PRX) {
@@ -1160,7 +1160,7 @@ sonicrxint(sc)
 		assert(SRD(rxp->pkt_ptrhi) == SRD(p_rra[orra].buff_ptrhi));
 		assert(SRD(rxp->pkt_ptrlo) == SRD(p_rra[orra].buff_ptrlo));
 if(SRD(rxp->pkt_ptrlo) != SRD(p_rra[orra].buff_ptrlo))
-printf("%x,%x\n",SRD(rxp->pkt_ptrlo),SRD(p_rra[orra].buff_ptrlo));
+kprintf("%x,%x\n",SRD(rxp->pkt_ptrlo),SRD(p_rra[orra].buff_ptrlo));
 		assert(SRD(p_rra[orra].buff_wclo));
 
 		/*
@@ -1204,7 +1204,6 @@ sonic_read(sc, rxp)
 	struct RXpkt *rxp;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	/*extern char *ether_sprintf();*/
 	struct ether_header *et;
 	struct mbuf *m;
 	int     len, off, i;
@@ -1224,13 +1223,13 @@ sonic_read(sc, rxp)
 	et = (struct ether_header *)pkt;
 
 	if (ethdebug) {
-		printf("rcvd 0x%x status=0x%x, len=%d type=0x%x from %s",
+		kprintf("rcvd 0x%x status=0x%x, len=%d type=0x%x from %s",
 		    et, rxp->status, len, htons(et->ether_type),
 		    ether_sprintf(et->ether_shost));
-		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
+		kprintf(" (to %s)\n", ether_sprintf(et->ether_dhost));
 	}
 	if (len < ETHERMIN || len > ETHERMTU) {
-		printf("sonic: invalid packet length %d bytes\n", len);
+		kprintf("sonic: invalid packet length %d bytes\n", len);
 		return (0);
 	}
 

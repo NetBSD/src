@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 1996/07/14 04:20:40 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 1996/10/10 23:50:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -156,19 +156,19 @@ machine_check(framep, vector, param)
 	return;
 
 fatal:
-	printf("\n");
-	printf("%s:\n", type);
-	printf("\n");
-	printf("    mces    = 0x%lx\n", mces);
-	printf("    vector  = 0x%lx\n", vector);
-	printf("    param   = 0x%lx\n", param);
-	printf("    pc      = 0x%lx\n", framep->tf_regs[FRAME_PC]);
-	printf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
-	printf("    curproc = %p\n", curproc);
+	kprintf("\n");
+	kprintf("%s:\n", type);
+	kprintf("\n");
+	kprintf("    mces    = 0x%lx\n", mces);
+	kprintf("    vector  = 0x%lx\n", vector);
+	kprintf("    param   = 0x%lx\n", param);
+	kprintf("    pc      = 0x%lx\n", framep->tf_regs[FRAME_PC]);
+	kprintf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+	kprintf("    curproc = %p\n", curproc);
 	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+		kprintf("        pid = %d, comm = %s\n", curproc->p_pid,
 		    curproc->p_comm);
-	printf("\n");
+	kprintf("\n");
 	panic("machine check");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1996/07/16 23:24:36 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1996/10/10 23:45:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,7 @@ setroot()
 	if (rootdev == orootdev)
 		return;
 
-	printf("changing root device to %c%c%d%c\n",
+	kprintf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
 
