@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.52 2000/05/27 00:40:47 sommerfeld Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.52.4.1 2000/12/15 00:09:10 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -138,7 +138,7 @@ sys_bind(p, v, retval)
 		FILE_UNUSE(fp, p);
 		return (error);
 	}
-	error = sobind((struct socket *)fp->f_data, nam);
+	error = sobind((struct socket *)fp->f_data, nam, p);
 	m_freem(nam);
 	FILE_UNUSE(fp, p);
 	return (error);
