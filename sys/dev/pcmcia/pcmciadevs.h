@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.81 2000/03/16 16:48:59 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.82 2000/03/18 15:01:33 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.82 2000/03/16 16:38:41 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.83 2000/03/18 15:00:31 mycroft Exp 
  */
 
 /*-
@@ -48,6 +48,7 @@
  */
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
+#define	PCMCIA_VENDOR_PANASONIC	0x0032	/* Matsushita Electric Industrial Co. */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
 #define	PCMCIA_VENDOR_INTEL	0x0089	/* Intel */
@@ -234,6 +235,11 @@
 #define	PCMCIA_CIS_MELCO_LPC3_TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
 #define	PCMCIA_STR_MELCO_LPC3_TX	"Melco LPC3-TX"
+
+/* Panasonic Products */
+#define	PCMCIA_CIS_PANASONIC_KXLC002	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PANASONIC_KXLC002	0x0304
+#define	PCMCIA_STR_PANASONIC_KXLC002	"Panasonic 4X CD-ROM Interface Card"
 
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
