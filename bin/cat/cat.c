@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.33 2002/06/11 22:01:30 bjh21 Exp $	*/
+/* $NetBSD: cat.c,v 1.34 2002/06/11 22:05:07 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.33 2002/06/11 22:01:30 bjh21 Exp $");
+__RCSID("$NetBSD: cat.c,v 1.34 2002/06/11 22:05:07 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,13 +260,14 @@ raw_args(char **argv)
 				}
 				if (!S_ISREG(st.st_mode)) {
 					close(fd);
-					errno = EFTYPE;
-					goto skip;
+					warnx("%s: not a regular file", *argv);
+					goto skipnomsg;
 				}
 			}
 			else if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
 skip:
 				warn("%s", *argv);
+skipnomsg:
 				rval = 1;
 				++argv;
 				continue;
