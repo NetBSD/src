@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2002/03/02 15:30:49 chris Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2002/04/03 00:46:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -118,6 +118,7 @@ extern pt_entry_t	pte_cache_mode;
 
 #define L1_SEC_SIZE	(1 << PDSHIFT)
 #define L2_LPAGE_SIZE	(NBPG * 16)
+#define L2_SPAGE_SIZE	(NBPG)
 
 /* Domain types */
 #define DOMAIN_FAULT		0x00
