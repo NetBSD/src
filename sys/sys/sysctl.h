@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.46 2000/05/26 02:23:14 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.47 2000/05/27 15:28:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -214,7 +214,7 @@ struct ctlname {
 	{ "defcorename", CTLTYPE_STRING }, \
 	{ "logsigexit", CTLTYPE_INT }, \
 	{ "proc2", CTLTYPE_STRUCT }, \
-	{ "proc_argv", CTLTYPE_STRING }, \
+	{ "proc_args", CTLTYPE_STRING }, \
 	{ "fscale", CTLTYPE_INT }, \
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
