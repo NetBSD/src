@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.4 1994/03/08 23:50:14 chopps Exp $
+ *	$Id: mdprologue.S,v 1.5 1994/06/13 05:28:43 chopps Exp $
  */
 
 /*
@@ -49,8 +49,8 @@ _rtl:
 	movel	a6@(8),sp@-			| version
 	addl	a5@(_rtld:w),a1			| relocate _rtld function
 	jsr	a1@				| call it
-	movel	#0x80000004,d0			| CC_EXTPURGE | CC_IPURGE
-	trap	#12				| cachectl
+|	movel	#0x80000004,d0			| CC_EXTPURGE | CC_IPURGE
+|	trap	#12				| cachectl
 	movel	a6@(-4),a5
 	unlk	a6
 	rts
@@ -66,6 +66,14 @@ _binder_entry:
 	jbsr	_binder,a1		| relocate function address
 	addql	#8,sp
 	movel	d0,sp@-			| push function address on stack
-	movel	#0x80000004,d0		| CC_EXTPURGE | CC_IPURGE
-	trap	#12			| cachectl
+|	movel	#0x80000004,d0		| CC_EXTPURGE | CC_IPURGE
+|	trap	#12			| cachectl
 	rts				| jump into function (via address on stack)
+
+	.globl	__cachectl
+__cachectl:
+	movel	sp@(4),a1		| address
+	movel	sp@(8),d1		| length
+	movel	#0x80000004,d0		| function = CC_EXTPURGE | CC_IPURGE
+	trap	#12			| cachectl "syscall"
+	rts
