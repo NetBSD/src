@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.2.10.2 2000/11/03 02:45:33 tv Exp $
+.\"	$NetBSD: install,v 1.2.10.3 2000/11/05 01:23:23 tv Exp $
 .
 .Ss2 Booting the installer
 .
@@ -62,7 +62,7 @@ SCSI disks are usually of the form:
 where
 .Sq Li scsi_devalias
 is the Open Firmware
-.Sq devalias
+.Sq Li devalias
 for your SCSI interface,
 .Sq Li i
 is the SCSI ID, and
@@ -71,6 +71,8 @@ is the partition.
 .Pp
 .(bullet
 .Em Floppy disk
+.br
+(Open Firmware 1.x, Open Firmware 2.0.x)
 .Pp
 The floppy disk has a
 .Sq partition zero
@@ -83,6 +85,8 @@ You can eject a floppy by typing:
 .Dl 0 > Ic eject fd
 .It
 .Em Ethernet
+.br
+(All Open Firmware versions)
 .Pp
 You only specify that you are booting from the ethernet:
 .Pp
@@ -110,6 +114,8 @@ Open Firmware 3
 .bullet)
 .It
 .Em CD-ROM
+.br
+(All Open Firmware versions)
 .Pp
 Open Firmware doesn't understand long filenames (created with the RockRidge
 and Joliet extensions), so you may need to figure out what your file is
@@ -153,7 +159,7 @@ Here are some examples of what you might use to boot from CD-ROM:
 .Sq partition zero
 bootloader
 .br
-(Open Firmware 1 and 2 only).
+(Open Firmware 1, Open Firmware 2)
 .Pp
 You do not specify a file to load, since the
 .Sq partition zero
@@ -175,16 +181,17 @@ Here are some examples of what you might use to boot from such a drive:
 .Dl 0 > Ic "boot ide0/disk@0:0"
 .Dl 0 > Ic "boot zip:0"
 .It
-.Em IDE or SCSI drive from an HFS(+) partition
+.Em IDE or SCSI drive from an HFS or HFS+ partition
 .br
-(Open Firmware 2.4 and 3 only)
+(Open Firmware 2.4, Open Firmware 3)
 .Pp
 .Tn MacOS
 drives have several system-level
 .Sq partitions reserved for
 .Tn MacOS
 drivers.
-You may find that your first HFS(+) partition might be as high as partition 9.
+You may find that your first HFS or HFS+ partition might be as high as
+partition 9.
 You may need to keep trying higher partition numbers until you find the one
 that has your bootloader.
 .Pp
@@ -263,15 +270,20 @@ typing and check to make sure that the media has the files you think it has.
 .Pp
 This is a general Open Firmware error message indicating that the filename
 you tried to open either doesn't exist or is in the wrong format. For
-Open Firmware 1 and 2.machines, it must be an XCOFF file (such as
+Open Firmware 1 and 2 machines, it must be an XCOFF file (such as
 .Pa ofwboot.xcf )
 and for Open Firmware 3 machines, it must be either XCOFF or ELF (such as
 a kernel).
 .It
 Black screen
 .Pp
-You need a serial console. See the section entitled
-.Sx Open Firmware 1.0.5 or 2.0.x System Preparation
+If your system is a PowerBook, 
+.Nx
+may have turned down the brightness of the backlight.  Use the buttons to
+turn your brightness back up.
+.Pp
+Otherwise, you need a serial console. See the section entitled
+.Sx Getting to the Open Firmware Prompt
 .It
 Grey screen with flashing question mark
 .Pp
@@ -292,15 +304,15 @@ You forgot to set
 in Open Firmware or it got erased by your booting into
 .Tn MacOS .
 .Pp
-.Dl 0 > "Ic setenv load-base 600000"
-.Dl 0 > "Ic setenv real-base F00000"
-.Dl 0 > "Ic reset-all"
+.Dl 0 > Ic "setenv load-base 600000"
+.Dl 0 > Ic "setenv real-base F00000"
+.Dl 0 > Ic "reset-all"
 .It
 After the kernel loads, the first key you press repeats forever
 .Pp
-Press
+Press the
 .Key SHIFT
-first.
+key first.
 .It
 Hang after configuring devices, but before doing anything else
 .Pp
@@ -310,11 +322,6 @@ Plug the USB keyboard directly into the computer (i.e. not through a hub)
 .Pp
 See
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#pciide-lost-interrupt
-.It
-.Dq Li "Panic: mesh: FIFO != 0"
-.Pp
-Try unplugging your Zip drive. If that doesn't work, see
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#mesh-fifo
 .bullet)
 .
 .so ../common/sysinst
