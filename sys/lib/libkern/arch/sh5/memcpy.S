@@ -1,194 +1,193 @@
-/*	$NetBSD: memcpy.S,v 1.1 2002/10/17 11:53:33 scw Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.2 2002/10/22 12:25:18 scw Exp $	*/
 
 /*
- * Fast SH5 memcpy, by J"orn Rennecke (joern.rennecke@superh.com)
+ * Copyright 2002 Wasabi Systems, Inc.
+ * All rights reserved.
  *
- * Copyright 2002 SuperH, Inc. All rights reserved
+ * Written by Steve C. Woodford for Wasabi Systems, Inc.
  *
- * This software is the property of SuperH, Inc (SuperH) which specifically
- * grants the user the right to modify, use and distribute this software
- * provided this notice is not removed or altered.  All other rights are
- * reserved by SuperH.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
  *
- * SUPERH MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO
- * THIS SOFTWARE.  IN NO EVENT SHALL SUPERH BE LIABLE FOR INDIRECT, SPECIAL, 
- * INCIDENTAL OR CONSEQUENTIAL DAMAGES IN CONNECTION WITH OR ARISING FROM
- * THE FURNISHING, PERFORMANCE, OR USE OF THIS SOFTWARE.
- *
- * So that all may benefit from your experience, please report any problems
- * or suggestions about this software to the SuperH Support Center via
- * e-mail at softwaresupport@superh.com .
- *
- * SuperH, Inc.
- * 405 River Oaks Parkway
- * San Jose
- * CA 95134
- * USA
- *
- * The code assumes that any quadword can be read in its
- * enirety if at least one byte is included in the copy.
- */
-
-/*
- * Slightly modified for use in NetBSD
- * by Steve Woodford (scw@wasabisystems.com):
- *  - LP64 support,
- *  - tweak register usage, mostly to avoid using r24.
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <machine/asm.h>
 
-#define LDUAQ(P,O,D0,D1) ldlo.q P,O,D0; ldhi.q P,O+7,D1
-#define STUAQ(P,O,D0,D1) stlo.q P,O,D0; sthi.q P,O+7,D1
-#define LDUAL(P,O,D0,D1) ldlo.l P,O,D0; ldhi.l P,O+3,D1
-#define STUAL(P,O,D0,D1) stlo.l P,O,D0; sthi.l P,O+3,D1
+/*
+ * void *memcpy(void *dest, void *src, size_t bytes)
+ *
+ * This is reasonably fast memcpy() routine.
+ *
+ * If the src/dest parameters are suitably aligned, it will try to align
+ * things such that "alloco" can be used to pre-allocate a cache-line for
+ * "dest".
+ *
+ * If the alignment of src and dest are different, the routine falls back
+ * to a byte-wise copy. This ain't great, but it serves the caller right.
+ *
+ * This algorithm could be improved upon, but I'm wary of trying to be
+ * too smart, given the lossage experienced with SuperH's memcpy() from
+ * newlib.
+ */
 
 ENTRY(memcpy)
 #ifndef _LP64
-	add.l	r2, r63, r2
+	add.l	r2, r63, r7
 	add.l	r3, r63, r3
 	addz.l	r4, r63, r4
+#else
+	add	r2, r63, r7
 #endif
-	ld.b	r3, 0, r63
-	pta/l	Large, tr0
-	movi	25, r0
-	bgeu/u	r4, r0, tr0
-	nsb	r4, r0
-	shlli	r0, 5, r0
-	movi	(L1 - L0 + 63*32 + 1) & 0xffff, r1
-	sub	r1, r0, r0
-L0:	ptrel	r0, tr0
-	add	r2, r4, r5
-	ptabs	r18, tr1
-	add	r3, r4, r6
-	blink	tr0, r63
+	ptabs/u	r18, tr0
+	beq/u	r4, r63, tr0		/* Bail now if bytes == 0 */
 
-	.balign 8
-L1:
-	/* 0 byte memcpy */
-	blink	tr1, r63
+	/*
+	 * First, try to align operands. This can only be done if the low 3
+	 * bits match.
+	 */
+	pta/l	Laligned, tr1
+	or	r7, r3, r1
+	andi	r1, 7, r1
+	beq/l	r1, r63, tr1		/* Operands are already aligned */
 
-L4_7:	/* 4..7 byte memcpy cntd. */
-	stlo.l	r2, 0, r0
-	or	r6, r7, r6
-	sthi.l	r5, -1, r6
-	stlo.l	r5, -4, r6
-	blink	tr1, r63
+	pta/u	Lbyte_copy, tr1
+	xor	r7, r3, r0
+	andi	r0, 7, r0		/* Operands misaligned differently? */
+	bne/u	r0, r63, tr1		/* Yup. Fallback to copying byte-wise */
 
-L2_3:	/* 2 or 3 byte memcpy cntd. */
-	st.b	r5, -1, r6
-	blink	tr1, r63
+	add	r4, r1, r0
+	movi	8, r8
+	bgtu/l	r8, r0, tr1
 
-	/* 1 byte memcpy */
-	ld.b	r3, 0, r0
-	st.b	r2, 0, r0
-	blink	tr1, r63
-
-L8_15:	/* 8..15 byte memcpy cntd. */
-	stlo.q	r2, 0, r0
-	or	r6, r7, r6
-	sthi.q	r5, -1, r6
-	stlo.q	r5, -8, r6
-	blink	tr1, r63
-	
-	/* 2 or 3 byte memcpy */
-	ld.b	r3, 0, r0
-	ld.b	r2, 0, r63
-	ld.b	r3, 1, r1
-	st.b	r2, 0, r0
-	pta/l	L2_3, tr0
-	ld.b	r6, -1, r6
-	st.b	r2, 1, r1
-	blink	tr0, r63
-
-	/* 4 .. 7 byte memcpy */
-	LDUAL	(r3, 0, r0, r1)
-	pta	L4_7, tr0
-	ldlo.l	r6, -4, r7
-	or	r0, r1, r0
-	sthi.l	r2, 3, r0
-	ldhi.l	r6, -1, r6
-	blink	tr0, r63
-
-	/* 8 .. 15 byte memcpy */
-	LDUAQ	(r3, 0, r0, r1)
-	pta	L8_15, tr0
-	ldlo.q	r6, -8, r7
-	or	r0, r1, r0
-	sthi.q	r2, 7, r0
-	ldhi.q	r6, -1, r6
-	blink	tr0, r63
-
-	/* 16 .. 24 byte memcpy */
-	LDUAQ	(r3, 0, r0, r1)
-	LDUAQ	(r3, 8, r8, r9)
-	or	r0, r1, r0
-	sthi.q	r2, 7, r0
-	or	r8, r9, r8
-	sthi.q	r2, 15, r8
-	ldlo.q	r6, -8, r7
-	ldhi.q	r6, -1, r6
-	stlo.q	r2, 8, r8
-	stlo.q	r2, 0, r0
-	or	r6, r7, r6
-	sthi.q	r5, -1, r6
-	stlo.q	r5, -8, r6
-	blink	tr1, r63
-
-Large:
-	ld.b	r2, 0, r63
-	pta/l	Loop_ua, tr1
-	ori	r3, -8, r7
-	sub	r2, r7, r22
-	sub	r3, r2, r6
-	add	r2, r4, r5
 	ldlo.q	r3, 0, r0
-	addi	r5, -16, r5
-	movi	64+8, r37		/* could subtract r7 from that. */
-	stlo.q	r2, 0, r0
-	sthi.q	r2, 7, r0
-	ldx.q	r22, r6, r0
-	bgtu/l	r37, r4, tr1
+	stlo.q	r7, 0, r0
+	sub	r8, r1, r0
+	sub	r4, r0, r4
+	add	r7, r0, r7
+	add	r3, r0, r3
 
-	addi	r5, -48, r37
-	pta/l	Loop_line, tr0
-	addi	r6, 64, r36
-	addi	r6, -24, r19
-	addi	r6, -16, r20
-	addi	r6, -8, r21
-
-Loop_line:
-	ldx.q	r22, r36, r63
-	alloco	r22, 32
-	addi	r22, 32, r22
-	ldx.q	r22, r19, r23
-	sthi.q	r22, -25, r0
-	ldx.q	r22, r20, r36
-	ldx.q	r22, r21, r25
-	stlo.q	r22, -32, r0
-	ldx.q	r22, r6,  r0
-	sthi.q	r22, -17, r23
-	sthi.q	r22,  -9, r36
-	sthi.q	r22,  -1, r25
-	stlo.q	r22, -24, r23
-	stlo.q	r22, -16, r36
-	stlo.q	r22,  -8, r25
-	bgeu	r37, r22, tr0
-
-Loop_ua:
-	addi	r22, 8, r22
-	sthi.q	r22, -1, r0
-	stlo.q	r22, -8, r0
-	ldx.q	r22, r6, r0
-	bgtu/l	r5, r22, tr1
-
-	add	r3, r4, r7
-	ldlo.q	r7, -8, r1
-	sthi.q	r22, 7, r0
-	ldhi.q	r7, -1, r7
-	ptabs	r18, tr1
-	stlo.q	r22, 0, r0
-	or	r1, r7, r1
-	sthi.q	r5, 15, r1
-	stlo.q	r5, 8, r1
+	/*
+	 * The buffers are quad aligned. Now align src to a 32-byte boundary
+	 * if possible.
+	 */
+Laligned:
+	movi	0x1f, r6
+	pta/u	Ltrailer, tr2
+	bgeu/u	r6, r4, tr2		/* Jump if less than 32 bytes left */
+	add	r7, r63, r5
+	add	r7, r6, r7
+	andc	r7, r6, r7		/* Round dst up to 32-byte boundary */
+	sub	r7, r5, r1
+	add	r3, r1, r3		/* Adjust src to match */
+	sub	r4, r1, r4
+	xor	r1, r6, r1
+	addi	r1, 2, r1
+	ptrel/l	r1, tr1	
 	blink	tr1, r63
+	ld.q	r3, -24, r0
+	st.q	r7, -24, r0
+	ld.q	r3, -16, r0
+	st.q	r7, -16, r0
+	ld.q	r3, -8, r0
+	st.q	r7, -8, r0
+
+	/*
+	 * "src" is now aligned to a multiple of 32 bytes
+	 */
+	bgeu/u	r6, r4, tr2		/* Jump if less than 32 bytes left */
+	pta/l	Lcache_enter, tr1
+	pta/u	Lcache_loop, tr2
+	ld.q	r3, 0, r63		/* Prefetch one cache-line in advance */
+	alloco	r7, 0			/* Allocate one cache-line in advance */
+	add	r7, r4, r5
+	and	r4, r6, r4
+	andc	r5, r6, r5
+	blink	tr1, r63
+
+Lcache_loop:
+	ld.q	r3, 0, r63		/* Prefetch in advance */
+	alloco	r7, 0			/* Allocate one cache-line in advance */
+	ld.q	r3, -32, r19
+	ld.q	r3, -24, r20
+	ld.q	r3, -16, r21
+	ld.q	r3, -8, r22
+	st.q	r7, -32, r19		/* Copy the previous cache-line */
+	st.q	r7, -24, r20
+	st.q	r7, -16, r21
+	st.q	r7, -8, r22
+Lcache_enter:
+	addi	r7, 32, r7		/* Next cache-line */
+	addi	r3, 32, r3
+	bne/l	r5, r7, tr2
+
+	ld.q	r3, -32, r19
+	ld.q	r3, -24, r20
+	ld.q	r3, -16, r21
+	ld.q	r3, -8, r22
+	st.q	r7, -32, r19
+	st.q	r7, -24, r20
+	st.q	r7, -16, r21
+	st.q	r7, -8, r22
+
+	/*
+	 * We have, at most, 31 bytes left to deal with.
+	 */
+Ltrailer:
+	beq/u	r4, r63, tr0		/* Return to caller if done. */
+	add	r4, r7, r8
+	add	r4, r3, r9
+	andi	r4, 0x18, r4
+	add	r7, r4, r7
+	add	r3, r4, r3
+	xori	r4, 0x1f, r4
+	addi	r4, 2, r4
+	ptrel/l	r4, tr1
+	blink	tr1, r63
+	ld.q	r3, -24, r0
+	st.q	r7, -24, r0
+	ld.q	r3, -16, r0
+	st.q	r7, -16, r0
+	ld.q	r3, -8, r0
+	st.q	r7, -8, r0
+	ldhi.q	r9, -1, r0
+	sthi.q	r8, -1, r0
+	blink	tr0, r63
+
+
+	/*
+	 * Either the alignment of src/dest is shot to pieces, or we're
+	 * dealing with a misaligned short buffer. Either way, do things
+	 * the Slow Way.
+	 */
+Lbyte_copy:
+	movi	0, r1
+	pta/l	1f, tr1
+1:	ldx.b	r3, r1, r0
+	stx.b	r7, r1, r0
+	addi	r1, 1, r1
+	bne/l	r1, r4, tr1
+	blink	tr0, r63
