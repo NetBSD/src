@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.2 2000/06/11 16:26:53 assar Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.2.2.1 2000/11/17 15:38:04 tv Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -136,7 +136,7 @@ __rpc_get_t_size(af, proto, size)
 		maxsize = 65536;	/* XXX */
 		break;
 	case IPPROTO_UDP:
-		maxsize = 8192;		/* XXX */
+		maxsize = 65508;	/* XXX */
 		break;
 	default:
 		maxsize = RPC_MAXDATASIZE;
