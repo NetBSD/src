@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.55 1999/03/24 19:03:10 mellon Exp $
+#	$NetBSD: netstart,v 1.56 1999/05/28 21:01:42 christos Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -180,8 +180,8 @@ if [ -n "$ppp_peers" ]; then
 fi
 
 if checkyesno dhclient; then
-  echo -n "starting dhcp client...";
-  dhclient $dhclient_flags
+	echo -n "starting dhcp client...";
+	dhclient $dhclient_flags
 fi
 
 if [ -s /etc/netstart.local ]; then
