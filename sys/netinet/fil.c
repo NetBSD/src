@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.66 2004/06/16 14:06:23 tron Exp $	*/
+/*	$NetBSD: fil.c,v 1.67 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,10 +135,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.66 2004/06/16 14:06:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.67 2004/07/23 05:39:04 martti Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
 #endif
 #endif
 
@@ -180,6 +180,7 @@ int	fr_chksrc = 0;	/* causes a system crash if enabled */
 int	fr_minttl = 4;
 u_long	fr_frouteok[2] = {0, 0};
 u_long	fr_userifqs = 0;
+u_long	fr_badcoalesces[2] = {0, 0};
 u_char	ipf_iss_secret[32];
 #if defined(IPFILTER_DEFAULT_BLOCK)
 int	fr_pass = FR_BLOCK|FR_NOMATCH;
@@ -247,7 +248,7 @@ static	void		frsynclist __P((frentry_t *));
 /*
  * bit values for identifying presence of individual IP options
  */
-const struct	optlist	ipopts[20] = {
+const	struct	optlist	ipopts[20] = {
 	{ IPOPT_NOP,	0x000001 },
 	{ IPOPT_RR,	0x000002 },
 	{ IPOPT_ZSU,	0x000004 },
@@ -296,7 +297,7 @@ struct optlist tcpopts[] = {
 /*
  * bit values for identifying presence of individual IP security options
  */
-const struct	optlist	secopt[8] = {
+const	struct	optlist	secopt[8] = {
 	{ IPSO_CLASS_RES4,	0x01 },
 	{ IPSO_CLASS_TOPS,	0x02 },
 	{ IPSO_CLASS_SECR,	0x04 },
@@ -936,7 +937,14 @@ fr_info_t *fin;
 		 * that to indicate a bad TCP packet.
 		 */
 		if ((flags == TH_SYN) && (tcp->th_ack != 0)) {
-			fin->fin_flx |= FI_BAD;
+			/*
+			 * Cisco PIX sets the ACK field to a random value.
+			 * In light of this, do not set FI_BAD until a patch
+			 * is available from Cisco to ensure that
+			 * interoperability between existing systems is
+			 * achieved.
+			 */
+			/*fin->fin_flx |= FI_BAD*/;
 		} else if (!(flags & (TH_RST|TH_SYN))) {
 			fin->fin_flx |= FI_BAD;
 		} else if ((flags & (TH_URG|TH_PUSH|TH_FIN)) != 0) {
@@ -1044,7 +1052,7 @@ fr_info_t *fin;
 
 	fr_checkv4sum(fin);
 
-	frpr_short(fin, sizeof(struct tcphdr));
+	frpr_short(fin, sizeof(tcphdr_t));
 
 	frpr_tcpcommon(fin);
 }
@@ -1064,7 +1072,7 @@ fr_info_t *fin;
 
 	fr_checkv4sum(fin);
 
-	frpr_short(fin, sizeof(struct udphdr));
+	frpr_short(fin, sizeof(udphdr_t));
 
 	frpr_udpcommon(fin);
 }
@@ -2004,6 +2012,10 @@ u_32_t *passp;
 			ATOMIC_INCL(frstats[out].fr_ads);
 		} else {
 			ATOMIC_INCL(frstats[out].fr_bads);
+			if (FR_ISPASS(pass)) {
+				pass &= ~FR_CMDMASK;
+				pass |= FR_BLOCK;
+			}
 		}
 	}
 
@@ -2065,9 +2077,9 @@ int out;
 	fr_info_t frinfo;
 	fr_info_t *fin = &frinfo;
 	int v = IP_V(ip), len, p;
+	u_32_t pass = fr_pass;
 	frentry_t *fr = NULL;
 	mb_t *mc = NULL;
-	u_32_t pass = fr_pass;
 	mb_t *m;
 
 	/*
@@ -2079,7 +2091,8 @@ int out;
 	 */
 #ifdef	_KERNEL
 # ifdef __sgi
-	char hbuf[MAX_IPV4HDR];
+	char hbuf[256];
+	int copied = 0;
 # endif
 	int up = 0;
 # ifdef MENTAT
@@ -2141,6 +2154,8 @@ int out;
 	m = *mp;
 #endif /* _KERNEL */
 
+	fin->fin_ipoff = (char *)ip - MTOD(m, char *);
+
 #ifdef	USE_INET6
 	if (v == 6) {
 		len = ntohs(((ip6_t*)ip)->ip6_plen);
@@ -2159,7 +2174,7 @@ int out;
 #endif
 	{
 		p = ip->ip_p;
-#if OpenBSD >= 200311    
+# if (OpenBSD >= 200311) && defined(_KERNEL)
 		ip->ip_len = ntohs(ip->ip_len);
 		ip->ip_off = ntohs(ip->ip_off);
 #endif
@@ -2225,6 +2240,7 @@ int out;
 				goto filtered;
 			}
 			m_copydata(m, 0, up, hbuf);
+			copied = 1;
 			ATOMIC_INCL(frstats[out].fr_pull[0]);
 			ip = (ip_t *)hbuf;
 # else /* __ sgi */
@@ -2318,8 +2334,12 @@ int out;
 	 * occuring until after the packet has been auth'd.
 	 */
 	fr = fr_checkauth(fin, &pass);
-	if (!out)
-		(void) fr_checknatin(fin, &pass);
+	if (!out) {
+		if (fr_checknatin(fin, &pass) == -1) {
+			RWLOCK_EXIT(&ipf_mutex);
+			goto finished;
+		}
+	}
 	if (!out)
 		(void) fr_acctpkt(fin, NULL);
 
@@ -2342,8 +2362,7 @@ int out;
 		(void) fr_acctpkt(fin, NULL);
 
 		if (fr_checknatout(fin, &pass) == -1) {
-			pass &= ~FR_CMDMASK;
-			pass |= FR_BLOCK;
+			goto finished;
 		} else if ((fr_update_ipid != 0) && (v == 4)) {
 			if (fr_updateipid(fin) == -1) {
 				ATOMIC_INCL(frstats[1].fr_ipud);
@@ -2356,8 +2375,9 @@ int out;
 	}
 
 #ifdef	IPFILTER_LOG
-	if ((fr_flags & FF_LOGGING) || (pass & FR_LOGMASK))
+	if ((fr_flags & FF_LOGGING) || (pass & FR_LOGMASK)) {
 		(void) fr_dolog(fin, &pass);
+	}
 #endif
 
 	if (fin->fin_state != NULL)
@@ -2369,7 +2389,8 @@ int out;
 	/*
 	 * Only allow FR_DUP to work if a rule matched - it makes no sense to
 	 * set FR_DUP as a "default" as there are no instructions about where
-	 * to send the packet.
+	 * to send the packet.  Use fin_m here because it may have changed
+	 * (without an update of 'm') in prior processing.
 	 */
 	if ((fr != NULL) && (pass & FR_DUP)) {
 		mc = M_DUPLICATE(fin->fin_m);
@@ -2412,6 +2433,7 @@ int out;
 	 * instructions about what to do with a packet.
 	 * Once we're finished return to our caller, freeing the packet if
 	 * we are dropping it (* BSD ONLY *).
+	 * Reassign m from fin_m as we may have a new buffer, now.
 	 */
 #if defined(USE_INET6) || (defined(__sgi) && defined(_KERNEL))
 filtered:
@@ -2463,7 +2485,7 @@ filtered:
 	}
 #if defined(_KERNEL) && defined(__sgi)
 	else {
-		if ((fin->fin_flx & FI_NATED) && up && (m != NULL)) {
+		if (copied && (fin->fin_flx & FI_NATED) && up && (m != NULL)) {
 			COPYBACK(m, 0, up, hbuf);
 		}
 	}
@@ -2889,7 +2911,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp
+ * Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -3234,14 +3256,11 @@ frentry_t **listp;
 /* Calls flushlist() for all filter rules (accounting, firewall - both IPv4 */
 /* and IPv6) as defined by the value of flags.                              */
 /* ------------------------------------------------------------------------ */
-int frflush(unit, flags)
+int frflush(unit, proto, flags)
 minor_t unit;
-int flags;
+int proto, flags;
 {
 	int flushed = 0, set;
-
-	if (unit != IPL_LOGIPF)
-		return 0;
 
 	WRITE_ENTER(&ipf_mutex);
 	bzero((char *)frcache, sizeof(frcache));
@@ -3251,18 +3270,42 @@ int flags;
 		set = 1 - set;
 
 	if (flags & FR_OUTQUE) {
-		(void) frflushlist(set, unit, &flushed, &ipfilter6[1][set]);
-		(void) frflushlist(set, unit, &flushed, &ipacct6[1][set]);
-		(void) frflushlist(set, unit, &flushed, &ipfilter[1][set]);
-		(void) frflushlist(set, unit, &flushed, &ipacct[1][set]);
+		if (proto == 0 || proto == 6) {
+			(void) frflushlist(set, unit,
+			    &flushed, &ipfilter6[1][set]);
+			(void) frflushlist(set, unit,
+			    &flushed, &ipacct6[1][set]);
+		}
+		if (proto == 0 || proto == 4) {
+			(void) frflushlist(set, unit,
+			    &flushed, &ipfilter[1][set]);
+			(void) frflushlist(set, unit,
+			    &flushed, &ipacct[1][set]);
+		}
 	}
 	if (flags & FR_INQUE) {
-		(void) frflushlist(set, unit, &flushed, &ipfilter6[0][set]);
-		(void) frflushlist(set, unit, &flushed, &ipacct6[0][set]);
-		(void) frflushlist(set, unit, &flushed, &ipfilter[0][set]);
-		(void) frflushlist(set, unit, &flushed, &ipacct[0][set]);
+		if (proto == 0 || proto == 6) {
+			(void) frflushlist(set, unit,
+			    &flushed, &ipfilter6[0][set]);
+			(void) frflushlist(set, unit,
+			    &flushed, &ipacct6[0][set]);
+		}
+		if (proto == 0 || proto == 4) {
+			(void) frflushlist(set, unit,
+			    &flushed, &ipfilter[0][set]);
+			(void) frflushlist(set, unit,
+			    &flushed, &ipacct[0][set]);
+		}
 	}
 	RWLOCK_EXIT(&ipf_mutex);
+
+	if (unit == IPL_LOGIPF) {
+		int tmp;
+
+		tmp = frflush(IPL_LOGCOUNT, proto, flags);
+		if (tmp >= 0)
+			flushed += tmp;
+	}
 	return flushed;
 }
 
@@ -3659,26 +3702,22 @@ struct in_addr *inp, *inpmask;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_lock                                                     */
-/* Returns:     int - 0 == success, else error                              */
+/* Returns:     (void)                                                      */
 /* Parameters:  data(I)  - pointer to lock value to set                     */
 /*              lockp(O) - pointer to location to store old lock value      */
 /*                                                                          */
 /* Get the new value for the lock integer, set it and return the old value  */
 /* in *lockp.                                                               */
 /* ------------------------------------------------------------------------ */
-int fr_lock(data, lockp)
+void fr_lock(data, lockp)
 caddr_t data;
 int *lockp;
 {
-	int arg, error;
+	int arg;
 
-	error = COPYIN(data, (caddr_t)&arg, sizeof(arg));
-	if (!error) {
-		error = COPYOUT((caddr_t)lockp, data, sizeof(*lockp));
-		if (!error)
-			*lockp = arg;
-	}
-	return error;
+	BCOPYIN(data, (caddr_t)&arg, sizeof(arg));
+	BCOPYOUT((caddr_t)lockp, data, sizeof(*lockp));
+	*lockp = arg;
 }
 
 
@@ -3977,9 +4016,15 @@ caddr_t data;
 	 * Check that the group number does exist and that its use (in/out)
 	 * matches what the rule is.
 	 */
+	if (!strncmp(fp->fr_grhead, "0", FR_GROUPLEN))
+		*fp->fr_grhead = '\0';
 	group = fp->fr_group;
-	if (!strcmp(group, "0"))
+	if (!strncmp(group, "0", FR_GROUPLEN))
 		*group = '\0';
+
+	if (FR_ISACCOUNT(fp->fr_flags))
+		unit = IPL_LOGCOUNT;
+
 	if ((req != (int)SIOCZRLST) && (*group != '\0')) {
 		fg = fr_findgroup(group, unit, set, NULL);
 		if (fg == NULL)
@@ -4674,6 +4719,8 @@ ipftqent_t *tqe;
 	ipftq_t *ifq;
 
 	ifq = tqe->tqe_ifq;
+	if (ifq == NULL)
+		return;
 
 	if (ifq->ifq_head != tqe) {
 		MUTEX_ENTER(&ifq->ifq_lock);
@@ -4705,20 +4752,26 @@ ipftqent_t *tqe;
 	ipftq_t *ifq;
 
 	ifq = tqe->tqe_ifq;
+	tqe->tqe_die = fr_ticks + ifq->ifq_ttl;
 
-	if (ifq->ifq_tail != NULL && *ifq->ifq_tail != tqe) {
-		MUTEX_ENTER(&ifq->ifq_lock);
-		*tqe->tqe_pnext = tqe->tqe_next;
-		tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
+	if (tqe->tqe_next == NULL)		/* at the end already ? */
+		return;
 
-		tqe->tqe_next = NULL;
-		tqe->tqe_die = fr_ticks + ifq->ifq_ttl;
-		tqe->tqe_pnext = ifq->ifq_tail;
-		*ifq->ifq_tail = tqe;
-		ifq->ifq_tail = &tqe->tqe_next;
-		tqe->tqe_die = fr_ticks + ifq->ifq_ttl;
-		MUTEX_EXIT(&ifq->ifq_lock);
-	}
+	MUTEX_ENTER(&ifq->ifq_lock);
+	/*
+	 * Remove from list
+	 */
+	*tqe->tqe_pnext = tqe->tqe_next;
+	tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
+
+	/*
+	 * Make it the last entry.
+	 */
+	tqe->tqe_next = NULL;
+	tqe->tqe_pnext = ifq->ifq_tail;
+	*ifq->ifq_tail = tqe;
+	ifq->ifq_tail = &tqe->tqe_next;
+	MUTEX_EXIT(&ifq->ifq_lock);
 }
 
 
@@ -4729,7 +4782,7 @@ ipftqent_t *tqe;
 /*              ifq(I)    - pointer to timeout queue                        */
 /*              parent(I) - owing object pointer                            */
 /*                                                                          */
-/* Move a queue entry to the back of the queue, if it isn't already there.  */
+/* Add a new item to this queue and put it on the very end.                 */
 /* ------------------------------------------------------------------------ */
 void fr_queueappend(tqe, ifq, parent)
 ipftqent_t *tqe;
@@ -5400,31 +5453,6 @@ struct in_addr *inp, *inpmask;
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    fr_coalesce                                                 */
-/* Returns:     1 == success,  -1 == failure                                */
-/* Parameters:  fin(I) - pointer to packet information                      */
-/*                                                                          */
-/* Attempt to get all of the packet data into a single, contiguous buffer.  */
-/* If this call returns a failure then the buffers have also been freed.    */
-/* ------------------------------------------------------------------------ */
-int fr_coalesce(fin)
-fr_info_t *fin;
-{
-#if !defined(__sgi) && defined(_KERNEL)
-	if (fr_pullup(fin->fin_m, fin, fin->fin_plen) == NULL) {
-# ifdef MENTAT
-		FREE_MB_T(*fin->fin_mp);
-# endif
-		fin->fin_m = NULL;
-		*fin->fin_mp = NULL;
-		return -1;
-	}
-#endif
-	return 1;
-}
-
-
-/* ------------------------------------------------------------------------ */
 /* Function:    fr_matchtag                                                 */
 /* Returns:     0 == mismatch, 1 == match.                                  */
 /* Parameters:  tag1(I) - pointer to first tag to compare                   */
@@ -5452,6 +5480,34 @@ ipftag_t *tag1, *tag2;
 	    (tag1->ipt_num[3] == tag2->ipt_num[3]))
 		return 1;
 	return 0;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_coalesce                                                 */
+/* Returns:     1 == success,  -1 == failure                                */
+/* Parameters:  fin(I) - pointer to packet information                      */
+/*                                                                          */
+/* Attempt to get all of the packet data into a single, contiguous buffer.  */
+/* If this call returns a failure then the buffers have also been freed.    */
+/* ------------------------------------------------------------------------ */
+int fr_coalesce(fin)
+fr_info_t *fin;
+{
+#if !defined(__sgi) && defined(_KERNEL)
+	if (fr_pullup(fin->fin_m, fin, fin->fin_plen) == NULL) {
+		ATOMIC_INCL(fr_badcoalesces[fin->fin_out]);
+# ifdef MENTAT
+		FREE_MB_T(*fin->fin_mp);
+# endif
+		*fin->fin_mp = NULL;
+		fin->fin_m = NULL;
+		return -1;
+	}
+#else
+	fin = fin;	/* LINT */
+#endif
+	return 1;
 }
 
 
@@ -5485,12 +5541,13 @@ int len;
 	if (m == NULL)
 		return NULL;
 
+	ip = (char *)fin->fin_ip;
 	if ((fin->fin_flx & FI_COALESCE) != 0)
-		return MTOD(m, void *);
+		return ip;
 
-	ipoff = (char *)fin->fin_ip - MTOD(m, char *);
+	ipoff = fin->fin_ipoff;
 	if (fin->fin_dp != NULL)
-		dpoff = (char *)fin->fin_dp - (char *)fin->fin_ip;
+		dpoff = (char *)fin->fin_dp - (char *)ip;
 	else
 		dpoff = 0;
 
@@ -5513,19 +5570,37 @@ int len;
 		}
 		m->b_rptr += inc;
 		ATOMIC_INCL(frstats[out].fr_pull[0]);
-		qpi->qpi_data = MTOD(m, char *) + ipoff;
+		ip = MTOD(m, char *) + ipoff;
+		qpi->qpi_data = ip;
 # else
-		m = m_pullup(m, len);
+#  ifndef linux
+#   ifdef MHLEN
+		if (len > MHLEN)
+#   else
+		if (len > MLEN)
+#   endif
+		{
+#   ifdef HAVE_M_PULLDOWN
+			m = m_pulldown(m, 0, len, NULL);
+#   else
+			FREE_MB_T(m);
+			m = NULL;
+#   endif
+		} else
+#  endif /* linux */
+		{
+			m = m_pullup(m, len);
+		}
 		*fin->fin_mp = m;
 		fin->fin_m = m;
 		if (m == NULL) {
 			ATOMIC_INCL(frstats[out].fr_pull[1]);
 			return NULL;
 		}
+		ip = MTOD(m, char *) + ipoff;
 		ATOMIC_INCL(frstats[out].fr_pull[0]);
 # endif /* MENTAT */
 	}
-	ip = MTOD(m, char *) + ipoff;
 	fin->fin_ip = (ip_t *)ip;
 	if (fin->fin_dp != NULL)
 		fin->fin_dp = (char *)fin->fin_ip + dpoff;
@@ -5902,8 +5977,10 @@ void fr_deinitialise()
 	ipfrule_remove();
 #endif
 
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
+	(void) frflush(IPL_LOGCOUNT, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGCOUNT, 0, FR_INQUE|FR_OUTQUE);
 
 #ifdef IPFILTER_LOOKUP
 	ip_lookup_unload();
@@ -5962,6 +6039,7 @@ int v;
 	void *ifp;
 
 	ifp = NULL;
+	v = v;		/* LINT */
 
 	if (*fdp->fd_ifname != '\0') {
 		ifp = GETIFP(fdp->fd_ifname, v);

@@ -1,4 +1,10 @@
 #!/bin/sh
+#
+# $NetBSD: ptest,v 1.2 2004/07/23 05:39:04 martti Exp $
+#
+TESTDIR=$1
+shift
+
 mkdir -p results
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
@@ -13,17 +19,17 @@ else
 fi
 echo "$1...";
 /bin/cp /dev/null results/$1
-if [ -f regress/$1.pool ] ; then
-	../ipftest -RD -b -P regress/$1.pool -r regress/$1.ipf -i input/$1 >> \
+if [ -f ${TESTDIR}/regress/$1.pool ] ; then
+	ipftest -RD -b -P ${TESTDIR}/regress/$1.pool -r ${TESTDIR}/regress/$1.ipf -i ${TESTDIR}/input/$1 >> \
 		results/$1
 else
-	../ipftest -RD -b -r regress/$1.ipf -i input/$1 >> results/$1
+	ipftest -RD -b -r ${TESTDIR}/regress/$1.ipf -i ${TESTDIR}/input/$1 >> results/$1
 fi
 if [ $? -ne 0 ] ; then
 	exit 1;
 fi
 echo "-------------------------------" >> results/$1
-cmp expected/$1 results/$1
+cmp ${TESTDIR}/expected/$1 results/$1
 status=$?
 if [ $status = 0 ] ; then
 	$TOUCH $1

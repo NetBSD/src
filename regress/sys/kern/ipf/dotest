@@ -1,7 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: dotest,v 1.2 2002/05/13 06:34:14 martti Exp $
+# $NetBSD: dotest,v 1.3 2004/07/23 05:39:04 martti Exp $
 #
+TESTDIR=$1
+shift
+
+format=$2
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
 else
@@ -14,11 +18,9 @@ else
 	fi
 fi
 echo "$1...";
-TESTDIR=$2
-[ -z "$2" ] && TESTDIR=${PWD}
 /bin/cp /dev/null results/$1
 ( while read rule; do
-	echo "$rule" | ipftest -br - -i ${TESTDIR}/input/$1 >> results/$1;
+	echo "$rule" | ipftest -F $format -Rbr - -i ${TESTDIR}/input/$1 >> results/$1;
 	if [ $? -ne 0 ] ; then
 		exit 1;
 	fi

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.37 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.38 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.3 2004/03/19 23:00:34 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.7 2004/07/11 10:40:54 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
@@ -319,6 +319,9 @@ nat_t *nat;
 	aproxy_t *apr;
 	ipnat_t *ipn;
 
+#if PROXY_DEBUG
+	printf("appr_match(%lx,%lx)\n", fin, nat);
+#endif
 	if ((fin->fin_flx & (FI_SHORT|FI_BAD)) != 0)
 		return -1;
 
@@ -348,6 +351,9 @@ nat_t *nat;
 	register ap_session_t *aps;
 	aproxy_t *apr;
 
+#if PROXY_DEBUG
+	printf("appr_new(%lx,%lx)\n", fin, nat);
+#endif
 	if ((nat->nat_ptr == NULL) || (nat->nat_aps != NULL))
 		return -1;
 
@@ -415,7 +421,7 @@ nat_t *nat;
 #ifndef IPFILTER_CKSUM
 	if ((fin->fin_out == 0) && (fr_checkl4sum(fin) == -1)) {
 # if PROXY_DEBUG || !defined(_KERNEL)
-		printf("proxy l4 checksum failure\n");
+		printf("proxy l4 checksum failure on %p\n", fin);
 # endif
 		if (fin->fin_p == IPPROTO_TCP)
 			frstats[fin->fin_out].fr_tcpbad++;
@@ -429,9 +435,11 @@ nat_t *nat;
 		 * If there is data in this packet to be proxied then try and
 		 * get it all into the one buffer, else drop it.
 		 */
+#if defined(MENTAT) || defined(HAVE_M_PULLDOWN)
 		if ((fin->fin_dlen > 0) && !(fin->fin_flx & FI_COALESCE))
 			if (fr_coalesce(fin) == -1)
 				return -1;
+#endif
 		ip = fin->fin_ip;
 
 		switch (fin->fin_p)
@@ -471,13 +479,14 @@ nat_t *nat;
 		rv = APR_EXIT(err);
 		if (rv == 1) {
 #if PROXY_DEBUG || !defined(_KERNEL)
-			printf("proxy says bad packet received\n");
+			printf("%d:proxy says bad packet received (%x)\n",
+				fin->fin_out, err);
 #endif
 			return -1;
 		}
 		if (rv == 2) {
 #if PROXY_DEBUG || !defined(_KERNEL)
-			printf("proxy says free app proxy data\n");
+			printf("proxy says free app proxy data (%x)\n", err);
 #endif
 			appr_free(apr);
 			nat->nat_aps = NULL;
@@ -545,6 +554,10 @@ u_int pr;
 char *name;
 {
 	aproxy_t *ap;
+
+#if PROXY_DEBUG
+	printf("appr_lookup(%d,%s)\n", pr, name);
+#endif
 
 	for (ap = ap_proxies; ap->apr_p; ap++)
 		if ((ap->apr_p == pr) &&
