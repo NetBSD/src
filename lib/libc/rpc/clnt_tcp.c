@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.7 1997/02/08 04:38:02 mycroft Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.8 1997/07/13 20:09:19 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.7 1997/02/08 04:38:02 mycroft Exp $";
+#if 0
+static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: clnt_tcp.c,v 1.8 1997/07/13 20:09:19 christos Exp $");
+#endif
 #endif
  
 /*
@@ -68,15 +72,15 @@ static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.7 1997/02/08 04:38:02 mycroft Exp 
 
 #define MCALL_MSG_SIZE 24
 
-static int	readtcp();
-static int	writetcp();
-
-static enum clnt_stat	clnttcp_call();
-static void		clnttcp_abort();
-static void		clnttcp_geterr();
-static bool_t		clnttcp_freeres();
-static bool_t           clnttcp_control();
-static void		clnttcp_destroy();
+static enum clnt_stat clnttcp_call __P((CLIENT *, u_long, xdrproc_t, caddr_t,
+    xdrproc_t, caddr_t, struct timeval));
+static void clnttcp_geterr __P((CLIENT *, struct rpc_err *));
+static bool_t clnttcp_freeres __P((CLIENT *, xdrproc_t, caddr_t));
+static void clnttcp_abort __P((CLIENT *));
+static bool_t clnttcp_control __P((CLIENT *, u_int, char *));
+static void clnttcp_destroy __P((CLIENT *));
+static int readtcp __P((caddr_t, caddr_t, int));
+static int writetcp __P((caddr_t, caddr_t, int));
 
 static struct clnt_ops tcp_ops = {
 	clnttcp_call,
@@ -86,6 +90,7 @@ static struct clnt_ops tcp_ops = {
 	clnttcp_destroy,
 	clnttcp_control
 };
+
 
 struct ct_data {
 	int		ct_sock;
@@ -98,6 +103,7 @@ struct ct_data {
 	u_int		ct_mpos;			/* pos after marshal */
 	XDR		ct_xdrs;
 };
+
 
 /*
  * Create a client handle for a tcp/ip connection.
@@ -123,7 +129,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	u_int recvsz;
 {
 	CLIENT *h;
-	register struct ct_data *ct;
+	register struct ct_data *ct = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 
@@ -221,7 +227,8 @@ fooy:
 	/*
 	 * Something goofed, free stuff and barf
 	 */
-	mem_free((caddr_t)ct, sizeof(struct ct_data));
+	if (ct)
+		mem_free((caddr_t)ct, sizeof(struct ct_data));
 	mem_free((caddr_t)h, sizeof(CLIENT));
 	return ((CLIENT *)NULL);
 }
@@ -347,15 +354,17 @@ clnttcp_freeres(cl, xdr_res, res_ptr)
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
+/*ARGSUSED*/
 static void
-clnttcp_abort()
+clnttcp_abort(cl)
+	CLIENT *cl;
 {
 }
 
 static bool_t
 clnttcp_control(cl, request, info)
 	CLIENT *cl;
-	int request;
+	u_int request;
 	char *info;
 {
 	register struct ct_data *ct = (struct ct_data *)cl->cl_private;
@@ -399,11 +408,12 @@ clnttcp_destroy(h)
  * around for the rpc level.
  */
 static int
-readtcp(ct, buf, len)
-	register struct ct_data *ct;
+readtcp(ctp, buf, len)
+	caddr_t ctp;
 	caddr_t buf;
 	register int len;
 {
+	register struct ct_data *ct = (struct ct_data *) ctp;
 	struct pollfd fd;
 	int milliseconds = (ct->ct_wait.tv_sec * 1000) +
 	    (ct->ct_wait.tv_usec / 1000);
@@ -445,11 +455,12 @@ readtcp(ct, buf, len)
 }
 
 static int
-writetcp(ct, buf, len)
-	struct ct_data *ct;
+writetcp(ctp, buf, len)
+	caddr_t ctp;
 	caddr_t buf;
 	int len;
 {
+	struct ct_data *ct = (struct ct_data *) ctp;
 	register int i, cnt;
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
