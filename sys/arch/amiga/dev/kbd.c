@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.21 1996/05/16 17:50:25 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.22 1996/05/16 20:18:01 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -134,6 +134,7 @@ void
 kbdenable()
 {
 	int s;
+
 #ifdef DRACO
 	u_char c;
 #endif
