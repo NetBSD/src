@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.42 2002/02/18 00:35:39 pk Exp $	*/
+/*	$NetBSD: make.h,v 1.43 2002/03/20 18:10:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -164,6 +164,10 @@ typedef struct GNode {
     Lst             children;  	/* Nodes on which this one depends */
     Lst	    	    successors;	/* Nodes that must be made after this one */
     Lst	    	    preds;  	/* Nodes that must be made before this one */
+    int		    unmade_cohorts;/* # of unmade instances on the
+				      cohorts list */
+    struct GNode    *centurion;	/* Pointer to the first instance of a ::
+				   node; only set when on a cohorts list */
 
     Hash_Table      context;	/* The local variables */
     Lst             commands;  	/* Creation commands */
