@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.1.2.2 1999/08/02 22:57:34 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.1.2.3 1999/08/31 21:03:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -424,6 +424,8 @@ lfs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_LFS);
 	mp->mnt_maxsymlinklen = fs->lfs_maxsymlinklen;
+	mp->mnt_fs_bshift = fs->lfs_bshift;
+	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_flags = 0;
 	ump->um_mountp = mp;

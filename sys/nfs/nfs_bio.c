@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45.4.4 1999/07/31 18:47:00 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.4.5 1999/08/31 21:03:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1389,7 +1389,7 @@ nfs_putpages(v)
 		struct vnode *a_vp;
 		vm_page_t *a_m;
 		int a_count;
-		int a_sync;
+		int a_flags;
 		int *a_rtvals;
 	} */ *ap = v;
 

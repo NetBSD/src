@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.16.4.6 1999/08/09 00:05:53 chs Exp $
+#	$NetBSD: vnode_if.src,v 1.16.4.7 1999/08/31 21:03:44 perseant Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -533,6 +533,6 @@ vop_putpages {
 	IN struct vnode *vp;
 	IN vm_page_t *m;
 	IN int count;
-	IN int sync;
+	IN int flags;
 	IN int *rtvals;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.12.4.2 1999/07/04 01:54:05 chs Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.12.4.3 1999/08/31 21:03:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,8 +98,68 @@
 
 int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
 
+/*
+ * Balloc defines the structure of file system storage
+ * by allocating the physical blocks on a device given
+ * the inode and the logical block number in a file.
+ */
+
 int
-lfs_balloc(vp, offset, iosize, lbn, bpp)
+lfs_balloc(v)
+	void *v;
+{
+	struct vop_balloc_args /* {
+		struct vnode *a_vp;
+		off_t a_offset;
+		off_t a_length;
+		struct ucred *a_cred;
+		int a_flags;
+	} */ *ap = v;
+
+	off_t off, len;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
+	int error, delta, bshift, bsize;
+
+	bshift = fs->lfs_bshift;
+	bsize = 1 << bshift;
+
+	off = ap->a_offset;
+	len = ap->a_length;
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	while (len > 0) {
+		bsize = min(bsize, len);
+
+		if ((error = lfs_balloc1(vp, blkoff(fs,off), bsize,
+					 lblkno(fs, off), NULL))) {
+			return error;
+		}
+
+		/*
+		 * increase file size now, VOP_BALLOC() requires that
+		 * EOF be up-to-date before each call.
+		 */
+
+		if (ip->i_ffs_size < off + bsize) {
+			ip->i_ffs_size = off + bsize;
+			if (vp->v_uvm.u_size < ip->i_ffs_size) {
+				uvm_vnp_setsize(vp, ip->i_ffs_size);
+			}
+		}
+
+		off += bsize;
+		len -= bsize;
+	}
+	return 0;
+}
+
+int
+lfs_balloc1(vp, offset, iosize, lbn, bpp)
 	struct vnode *vp;
 	int offset;
 	u_long iosize;
@@ -109,13 +169,16 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	struct buf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
-	struct indir indirs[NIADDR+2];
+	struct indir *ap, indirs[NIADDR+2];
 	ufs_daddr_t	daddr, lastblock;
 	int bb;		/* number of disk blocks in a block disk blocks */
 	int error, frags, i, nsize, osize, num;
 	
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
+
+	/* XXX printf("lfs_balloc1(%p,%d,%ld,%x,%p)\n",
+			 vp, offset, iosize, lbn, bpp); */
 	
 #ifdef DEBUG
 	if(!VOP_ISLOCKED(vp)) {
@@ -149,7 +212,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 		osize = blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
-						    lastblock, &bp)))
+						    lastblock, (bpp ? &bp : NULL))))
 				return(error);
 			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
@@ -159,9 +222,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	}
 	
 	bb = VFSTOUFS(vp->v_mount)->um_seqinc;
-	if (daddr == UNASSIGNED)
+	if (daddr == UNASSIGNED) {
 		/* May need to allocate indirect blocks */
-		for (i = 1; i < num; ++i)
+		for (i = 1; i < num; ++i) {
 			if (!indirs[i].in_exists) {
 				ibp = getblk(vp, indirs[i].in_lbn, fs->lfs_bsize,
 					     0, 0);
@@ -180,6 +243,8 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 						return(error);
 				}
 			}
+		}
+	}
 	
 	/*
 	 * If the block we are writing is a direct block, it's the last
@@ -199,16 +264,15 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 			if (bpp != NULL) {
 				*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 			}
-		}
-		else {
+		} else {
 			if (nsize <= osize) {
 				/* No need to extend */
 				/* XXX KS - Are we wasting space? */
-				if ((error = bread(vp, lbn, osize, NOCRED, &bp)))
+				if (bpp != NULL && (error = bread(vp, lbn, osize, NOCRED, &bp)))
 					return error;
 			} else {
 				/* Extend existing block */
-				if ((error =
+				if (bpp != NULL && (error =
 				     lfs_fragextend(vp, osize, nsize, lbn, &bp)))
 					return(error);
 			}
@@ -233,8 +297,36 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	 * in which case we need to do accounting (i.e. check
 	 * for free space and update the inode number of blocks.
 	 */
-	if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
-		if (daddr == UNASSIGNED)
+	if (bpp == NULL && daddr == UNASSIGNED) {
+		/*
+		 * If bpp is NULL we are being called from UBC.  In this
+		 * case, all we have to do is block accounting for the
+		 * inode and the filesystem.
+		 */
+		if (!ISSPACE(fs, bb, curproc->p_ucred))
+			return(ENOSPC);
+
+		ip->i_ffs_blocks += bb;
+		ip->i_lfs->lfs_bfree -= bb;
+
+		/* Assign a daddr != UNASSIGNED, so we don't overcount */
+                switch (num) {
+                case 0:
+                        ip->i_ffs_db[lbn] = UNWRITTEN;
+                        break;
+                case 1:
+                        ip->i_ffs_ib[indirs[0].in_off] = UNWRITTEN;
+                        break;
+                default:
+                        ap = &indirs[num - 1];
+                        if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
+                                panic("lfs_balloc: bread bno %d", ap->in_lbn);
+			/* The indirect block exists, no need to account it */
+                        ((ufs_daddr_t *)bp->b_data)[ap->in_off] = UNWRITTEN;
+                        VOP_BWRITE(bp);
+                }
+	} else if (bpp && !(bp->b_flags & (B_DONE | B_DELWRI))) {
+		if (daddr == UNASSIGNED) {
 			if (!ISSPACE(fs, bb, curproc->p_ucred)) {
 				bp->b_flags |= B_INVAL;
 				brelse(bp);
@@ -245,10 +337,10 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 				if (iosize != fs->lfs_bsize)
 					clrbuf(bp);
 			}
-		else if (iosize == fs->lfs_bsize)
+		} else if (iosize == fs->lfs_bsize) {
 			/* Optimization: I/O is unnecessary. */
 			bp->b_blkno = daddr;
-		else  {
+		} else  {
 			/*
 			 * We need to read the block to preserve the
 			 * existing bytes.
@@ -278,6 +370,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	extern long locked_queue_bytes;
 	struct buf *ibp;
 	SEGUSE *sup;
+	daddr_t daddr;
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
@@ -287,9 +380,16 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	if (!ISSPACE(fs, bb, curproc->p_ucred)) {
 		return(ENOSPC);
 	}
-	if ((error = bread(vp, lbn, osize, NOCRED, bpp))) {
-		brelse(*bpp);
-		return(error);
+	if (bpp) {
+		if ((error = bread(vp, lbn, osize, NOCRED, bpp))) {
+			brelse(*bpp);
+			return(error);
+		}
+		daddr = (*bpp)->b_blkno;
+	} else {
+		/* We still need the daddr, just not contents. */
+		if((error = VOP_BMAP(vp, lbn, NULL, &daddr, NULL)))
+			return (error);
 	}
 
 	/*
@@ -298,13 +398,14 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	 * but the overcount only lasts until the block in question
 	 * is written, so the on-disk live bytes count is always correct.
 	 */
-	LFS_SEGENTRY(sup, fs, datosn(fs,(*bpp)->b_blkno), ibp);
+	LFS_SEGENTRY(sup, fs, datosn(fs,daddr), ibp);
 	sup->su_nbytes += (nsize-osize);
 	VOP_BWRITE(ibp);
 
 #ifdef QUOTA
 	if ((error = chkdq(ip, bb, curproc->p_ucred, 0))) {
-		brelse(*bpp);
+		if (bpp)
+			brelse(*bpp);
 		return (error);
 	}
 #endif
@@ -312,7 +413,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	 * XXX - KS - Don't change size while we're gathered, as we could
 	 * then overlap another buffer in lfs_writeseg.
 	 */
-	if((*bpp)->b_flags & B_GATHERED) {
+	if(bpp && (*bpp)->b_flags & B_GATHERED) {
 		(*bpp)->b_flags |= B_NEEDCOMMIT; /* XXX KS - what flag to use? */
 		brelse(*bpp);
 		tsleep(*bpp, (PRIBIO+1), "lfs_fragextend", 0);
@@ -321,10 +422,11 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	ip->i_ffs_blocks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	fs->lfs_bfree -= fragstodb(fs, numfrags(fs, (nsize - osize)));
-	if((*bpp)->b_flags & B_LOCKED)
-		locked_queue_bytes += (nsize - osize);
-	allocbuf(*bpp, nsize);
-	bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
-	
+	if (bpp) {
+		if((*bpp)->b_flags & B_LOCKED)
+			locked_queue_bytes += (nsize - osize);
+		allocbuf(*bpp, nsize);
+		bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
+	}
 	return(0);
 }

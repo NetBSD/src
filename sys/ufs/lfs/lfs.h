@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.14.4.1 1999/06/21 01:31:06 thorpej Exp $	*/
+/*	$NetBSD: lfs.h,v 1.14.4.2 1999/08/31 21:03:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -334,8 +334,10 @@ struct lfs {
 #define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
 #define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
-/* Unassigned disk address. */
+/* Unassigned disk address (not accounted, not assigned). */
 #define	UNASSIGNED	-1
+/* Accounted but unassigned disk address */
+#define UNWRITTEN	-2
 
 /* Unused logical block number */
 #define LFS_UNUSED_LBN	-1

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.11.4.6 1999/08/09 00:05:54 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.11.4.7 1999/08/31 21:03:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,6 +51,7 @@
 
 #include <vm/vm.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_pager.h>
 
 #ifdef NFSSERVER
 #include <nfs/rpcv2.h>
@@ -660,7 +661,7 @@ genfs_getpages(v)
 		 * if this is a read access, mark the pages we zeroed PG_RDONLY.
 		 */
 
-		if (blkno == (daddr_t)-1) {
+		if (blkno < 0) {
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
 			sawhole = TRUE;
@@ -827,7 +828,7 @@ genfs_putpages(v)
 		struct vnode *a_vp;
 		struct vm_page **a_m;
 		int a_count;
-		int a_sync;
+		int a_flags;
 		int *a_rtvals;
 	} */ *ap = v;
 
@@ -869,7 +870,7 @@ genfs_putpages(v)
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_flags = B_BUSY|B_WRITE| (ap->a_sync ? 0 : B_CALL) |
+	mbp->b_flags = B_BUSY|B_WRITE| ((ap->a_flags & PGO_SYNCIO) ? 0 : B_CALL) |
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = vp;
@@ -925,7 +926,7 @@ genfs_putpages(v)
 		}
 	}
 	splx(s);
-	if (!ap->a_sync) {
+	if (!(ap->a_flags & PGO_SYNCIO)) {
 		return EINPROGRESS;
 	}
 

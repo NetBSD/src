@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.1.2.3 1999/08/02 22:57:34 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.1.2.4 1999/08/31 21:03:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ int	 lfs_gather __P((struct lfs *, struct segment *,
 	     struct vnode *, int (*) __P((struct lfs *, struct buf *))));
 int	 lfs_gatherblock __P((struct segment *, struct buf *, int *));
 void	 lfs_iset __P((struct inode *, ufs_daddr_t, time_t));
-int	 lfs_match_fake __P((struct lfs *, struct buf *));
+int	 lfs_match_cleaner __P((struct lfs *, struct buf *));
 int	 lfs_match_data __P((struct lfs *, struct buf *));
 int	 lfs_match_dindir __P((struct lfs *, struct buf *));
 int	 lfs_match_indir __P((struct lfs *, struct buf *));
@@ -291,7 +291,7 @@ lfs_writevnodes(fs, mp, sp, op)
 #define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
 #define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
 #define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
-	
+
 	/* Find last vnode. */
  loop:	for (vp = mp->mnt_vnodelist.lh_first;
 	     vp && vp->v_mntvnodes.le_next != NULL;
@@ -595,7 +595,7 @@ lfs_writefile(fs, sp, vp)
 	   && VTOI(vp)->i_number != LFS_IFILE_INUM
 	   && !IS_FLUSHING(fs,vp))
 	{
-		lfs_gather(fs, sp, vp, lfs_match_fake);
+		lfs_gather(fs, sp, vp, lfs_match_cleaner);
 	} else
 		lfs_gather(fs, sp, vp, lfs_match_data);
 
@@ -813,7 +813,7 @@ lfs_gather(fs, sp, vp, match)
 {
 	struct buf *bp;
 	int s, count=0;
-	
+
 	sp->vp = vp;
 	s = splbio();
 
@@ -933,7 +933,7 @@ lfs_updatemeta(sp)
 			VOP_BWRITE(bp);
 		}
 		/* Update segment usage information. */
-		if (daddr != UNASSIGNED && !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
+		if (daddr >= 0 && !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
 			LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes < (*sp->start_bpp)->b_bcount) {
@@ -1148,11 +1148,11 @@ lfs_writeseg(fs, sp)
 	 */
 	datap = dp = malloc(nblocks * sizeof(u_long), M_SEGMENT, M_WAITOK);
 	for (bpp = sp->bpp, i = nblocks - 1; i--;) {
-		if (((*++bpp)->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL)) {
+		if (lfs_isfake_bp(*++bpp)) {
 			if (copyin((*bpp)->b_saveaddr, dp++, sizeof(u_long)))
 				panic("lfs_writeseg: copyin failed [1]: ino %d blk %d", VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno);
 		} else {
-			if( !((*bpp)->b_flags & B_CALL) ) {
+			if( !lfs_iscleaner_bp(*bpp)) {
 				/*
 				 * Before we record data for a checksm,
 				 * make sure the data won't change in between
@@ -1177,6 +1177,15 @@ lfs_writeseg(fs, sp)
 				(*bpp)->b_flags |= B_BUSY;
 				splx(s);
 			}
+#if 0
+			if((*bpp)->b_vp != devvp) {
+				printf("ino %d lbn %d bcount=%ld\n",
+					VTOI((*bpp)->b_vp)->i_number,
+					(*bpp)->b_lblkno, (*bpp)->b_bcount);
+			}
+#endif
+			if((*bpp)->b_data == NULL)
+				panic("buffer has no data");
 			*dp++ = ((u_long *)(*bpp)->b_data)[0];
 		}
 	}
@@ -1226,6 +1235,9 @@ lfs_writeseg(fs, sp)
 #endif
 
 		if(fs->lfs_iocount >= LFS_THROTTLE) {
+#ifdef LFS_PROPELLER
+			printf("T\b");
+#endif
 			tsleep(&fs->lfs_iocount, PRIBIO+1, "lfs throttle", 0);
 		}
 		s = splbio();
@@ -1250,7 +1262,7 @@ lfs_writeseg(fs, sp)
 			 * from the buffer indicated.
 			 * XXX == what do I do on an error?
 			 */
-			if ((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL)) {
+			if (lfs_isfake_bp(bp)) {
 				if (copyin(bp->b_saveaddr, p, bp->b_bcount))
 					panic("lfs_writeseg: copyin failed [2]");
 			} else
@@ -1264,9 +1276,14 @@ lfs_writeseg(fs, sp)
 			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
 					 B_LOCKED | B_GATHERED);
 			vn = bp->b_vp;
-			if (bp->b_flags & B_CALL) {
-				/* if B_CALL, it was created with newbuf */
+			if (lfs_iscleaner_bp(bp)) {
+				/* it was created with newbuf */
 				lfs_freebuf(bp);
+			} else if(bp->b_flags & B_CALL) {
+				/* We've "written" it, call its iodone */
+				bp->b_flags |= B_DONE;
+				bp->b_flags &= ~B_CALL;
+				(*bp->b_iodone)(bp);
 			} else {
 				bremfree(bp);
 				bp->b_flags |= B_DONE;
@@ -1299,7 +1316,7 @@ lfs_writeseg(fs, sp)
 #endif
 		       		if(!(ip->i_flag & (IN_CLEANING|IN_MODIFIED))) {
 					fs->lfs_uinodes++;
-					if(bp->b_flags & B_CALL)
+					if(lfs_iscleaner_bp(bp))
 						ip->i_flag |= IN_CLEANING;
 					else
 						ip->i_flag |= IN_MODIFIED;
@@ -1401,7 +1418,7 @@ lfs_writesuper(fs, daddr)
  * chain.
  */
 int
-lfs_match_fake(fs, bp)
+lfs_match_cleaner(fs, bp)
 	struct lfs *fs;
 	struct buf *bp;
 {
