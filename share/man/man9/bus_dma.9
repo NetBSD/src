@@ -1,6 +1,6 @@
-.\" $NetBSD: bus_dma.9,v 1.32 2004/11/05 12:38:09 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.33 2005/03/09 21:22:59 matt Exp $
 .\"
-.\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 2004
+.Dd March 10, 2005
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -130,12 +130,17 @@ DMA controller address and length registers.
 .It Fa bus_dmamap_t
 A pointer to a structure with at least the following members:
 .Bd -literal
+	bus_size_t	dm_maxsegsz;
 	bus_size_t	dm_mapsize;
 	int		dm_nsegs;
 	bus_dma_segment_t *dm_segs;
 .Ed
 .sp
 The structure may have machine-dependent members and arbitrary layout.
+The
+.Fa  dm_maxsegsz
+member indicates the maximum number of bytes that may be transferred by
+any given DMA segment.
 The
 .Fa dm_mapsize
 member indicates the size of the mapping.
@@ -167,7 +172,9 @@ This may be the number of scatter-gather descriptors supported by the
 device.
 .It Fa maxsegsz
 The maximum number of bytes that may be transferred by any given DMA
-segment.
+segment and will be assigned to the
+.Fa dm_maxsegsz
+member.
 .It Fa boundary
 Some DMA controllers are not able to transfer data that crosses a
 particular boundary.
@@ -380,6 +387,12 @@ on resources if the handle was created with
 will not perform any implicit synchronization of DMA buffers.
 This must be done explicitly by
 .Fn bus_dmamap_sync .
+.Pp
+.Fn bus_dmamap_unload
+will restore the
+.Fa dm_maxsegsz
+member to its initial value assigned by
+.Fn bus_dmamap_create .
 .Pp
 Behavior is not defined if invalid arguments are passed to
 .Fn bus_dmamap_unload .
