@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.357 2001/09/04 21:06:08 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.358 2001/09/05 13:47:59 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.354 2001/09/04 20:51:44 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp 
  */
 
 /*
@@ -1432,6 +1432,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Myrinet LANai Interface",
 	},
 	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_CAMAC,
+	    0,
+	    "Applied Micro Circuits",
+	    "FZJ/ZEL CAMAC controller",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_VICBUS,
+	    0,
+	    "Applied Micro Circuits",
+	    "FZJ/ZEL VICBUS interface",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_PCISYNC,
+	    0,
+	    "Applied Micro Circuits",
+	    "FZJ/ZEL Synchronisation module",
+	},
+	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920,
 	    0,
 	    "Applied Micro Circuits",
@@ -2426,6 +2444,36 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Future Domain",
 	    "TMC-18C30 (36C70)",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_GIGALINK,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "Gigabit link / STR1100",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXHOTLINK,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "HOTlink interface",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXCAMAC,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "CAMAC controller",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PROFIBUS,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "PROFIBUS interface",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_AMCCHOTLINK,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "old HOTlink interface",
 	},
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF,
@@ -9289,6 +9337,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LAVA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Lava Semiconductor Manufacturing, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_FZJZEL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "FZ Juelich / ZEL",
 	    NULL,
 	},
 	{
