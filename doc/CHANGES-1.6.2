@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.205 2003/10/22 03:44:27 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.206 2003/10/22 03:48:35 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2567,3 +2567,8 @@ sys/compat/linux/common/linux_socket.c		1.47-1.48
 	[tv, ticket #1425]
 
 
+sys/compat/linux/common/linux_oldmmap.c		1.59
+sys/compat/linux/common/linux_misc.c		1.115
+
+	Don't allow non-page-aligned offsets.
+	[tv, ticket #1426]
