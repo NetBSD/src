@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.14 1997/08/25 19:31:59 kleink Exp $	*/
+/*	$NetBSD: quota.c,v 1.15 1997/10/19 04:59:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -43,8 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: quota.c,v 1.14 1997/08/25 19:31:59 kleink Exp $";
+#if 0
+static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$NetBSD: quota.c,v 1.15 1997/10/19 04:59:20 mrg Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -56,17 +59,20 @@ static char rcsid[] = "$NetBSD: quota.c,v 1.14 1997/08/25 19:31:59 kleink Exp $"
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
+
 #include <ufs/ufs/quota.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <fstab.h>
+#include <grp.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fstab.h>
-#include <ctype.h>
-#include <string.h>
-#include <pwd.h>
-#include <grp.h>
-#include <errno.h>
 
-#include <netdb.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpcsvc/rquota.h>
