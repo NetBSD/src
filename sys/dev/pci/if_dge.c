@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.1.2.1 2004/04/16 08:00:17 tron Exp $	*/
+/*	$NetBSD: if_dge.c,v 1.1.2.2 2004/04/16 08:02:53 tron Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.1.2.1 2004/04/16 08:00:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.1.2.2 2004/04/16 08:02:53 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -131,19 +131,27 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.1.2.1 2004/04/16 08:00:17 tron Exp $");
 
 #include <dev/pci/if_dgereg.h>
 
+/*
+ * The receive engine may sometimes become off-by-one when writing back
+ * chained descriptors.	 Avoid this by allocating a large chunk of
+ * memory and use if instead (to avoid chained descriptors).
+ * This only happens with chained descriptors under heavy load.
+ */
+#define DGE_OFFBYONE_RXBUG
+
 #define DGE_EVENT_COUNTERS
 #define DGE_DEBUG
 
 #ifdef DGE_DEBUG
-#define	DGE_DEBUG_LINK		0x01
-#define	DGE_DEBUG_TX		0x02
-#define	DGE_DEBUG_RX		0x04
-#define	DGE_DEBUG_CKSUM		0x08
+#define DGE_DEBUG_LINK		0x01
+#define DGE_DEBUG_TX		0x02
+#define DGE_DEBUG_RX		0x04
+#define DGE_DEBUG_CKSUM		0x08
 int	dge_debug = 0;
 
-#define	DPRINTF(x, y)	if (dge_debug & (x)) printf y
+#define DPRINTF(x, y)	if (dge_debug & (x)) printf y
 #else
-#define	DPRINTF(x, y)	/* nothing */
+#define DPRINTF(x, y)	/* nothing */
 #endif /* DGE_DEBUG */
 
 /*
@@ -151,48 +159,48 @@ int	dge_debug = 0;
  * packet (Intel reports of jumbo frame packets with as
  * many as 80 DMA segments when using 16k buffers).
  */
-#define	DGE_NTXSEGS		100
-#define	DGE_IFQUEUELEN		20000
-#define	DGE_TXQUEUELEN		2048
-#define	DGE_TXQUEUELEN_MASK	(DGE_TXQUEUELEN - 1)
-#define	DGE_TXQUEUE_GC		(DGE_TXQUEUELEN / 8)
-#define	DGE_NTXDESC		1024
-#define	DGE_NTXDESC_MASK		(DGE_NTXDESC - 1)
-#define	DGE_NEXTTX(x)		(((x) + 1) & DGE_NTXDESC_MASK)
-#define	DGE_NEXTTXS(x)		(((x) + 1) & DGE_TXQUEUELEN_MASK)
+#define DGE_NTXSEGS		100
+#define DGE_IFQUEUELEN		20000
+#define DGE_TXQUEUELEN		2048
+#define DGE_TXQUEUELEN_MASK	(DGE_TXQUEUELEN - 1)
+#define DGE_TXQUEUE_GC		(DGE_TXQUEUELEN / 8)
+#define DGE_NTXDESC		1024
+#define DGE_NTXDESC_MASK		(DGE_NTXDESC - 1)
+#define DGE_NEXTTX(x)		(((x) + 1) & DGE_NTXDESC_MASK)
+#define DGE_NEXTTXS(x)		(((x) + 1) & DGE_TXQUEUELEN_MASK)
 
 /*
  * Receive descriptor list size.
  * Packet is of size MCLBYTES, and for jumbo packets buffers may
- * be chained.  Due to the nature of the card (high-speed), keep this
+ * be chained.	Due to the nature of the card (high-speed), keep this
  * ring large. With 2k buffers the ring can store 400 jumbo packets,
  * which at full speed will be received in just under 3ms.
  */
-#define	DGE_NRXDESC		2048
-#define	DGE_NRXDESC_MASK	(DGE_NRXDESC - 1)
-#define	DGE_NEXTRX(x)		(((x) + 1) & DGE_NRXDESC_MASK)
+#define DGE_NRXDESC		2048
+#define DGE_NRXDESC_MASK	(DGE_NRXDESC - 1)
+#define DGE_NEXTRX(x)		(((x) + 1) & DGE_NRXDESC_MASK)
 /*
  * # of descriptors between head and written descriptors.
  * This is to work-around two erratas.
  */
 #define DGE_RXSPACE		10
-#define	DGE_PREVRX(x)		(((x) - DGE_RXSPACE) & DGE_NRXDESC_MASK)
+#define DGE_PREVRX(x)		(((x) - DGE_RXSPACE) & DGE_NRXDESC_MASK)
 /*
  * Receive descriptor fetch threshholds. These are values recommended
  * by Intel, do not touch them unless you know what you are doing.
  */
-#define	RXDCTL_PTHRESH_VAL	128
-#define	RXDCTL_HTHRESH_VAL	16
-#define	RXDCTL_WTHRESH_VAL	16
+#define RXDCTL_PTHRESH_VAL	128
+#define RXDCTL_HTHRESH_VAL	16
+#define RXDCTL_WTHRESH_VAL	16
 
 
 /*
  * Tweakable parameters; default values.
  */
-#define	FCRTH	0x30000	/* Send XOFF water mark */
-#define	FCRTL	0x28000	/* Send XON water mark */
-#define	RDTR	0x20	/* Interrupt delay after receive, .8192us units */
-#define	TIDV	0x20	/* Interrupt delay after send, .8192us units */
+#define FCRTH	0x30000 /* Send XOFF water mark */
+#define FCRTL	0x28000 /* Send XON water mark */
+#define RDTR	0x20	/* Interrupt delay after receive, .8192us units */
+#define TIDV	0x20	/* Interrupt delay after send, .8192us units */
 
 /*
  * Control structures are DMA'd to the i82597 chip.  We allocate them in
@@ -211,14 +219,14 @@ struct dge_control_data {
 	struct dge_rdes wcd_rxdescs[DGE_NRXDESC];
 };
 
-#define	DGE_CDOFF(x)	offsetof(struct dge_control_data, x)
-#define	DGE_CDTXOFF(x)	DGE_CDOFF(wcd_txdescs[(x)])
-#define	DGE_CDRXOFF(x)	DGE_CDOFF(wcd_rxdescs[(x)])
+#define DGE_CDOFF(x)	offsetof(struct dge_control_data, x)
+#define DGE_CDTXOFF(x)	DGE_CDOFF(wcd_txdescs[(x)])
+#define DGE_CDRXOFF(x)	DGE_CDOFF(wcd_rxdescs[(x)])
 
 /*
  * The DGE interface have a higher max MTU size than normal jumbo frames.
  */
-#define DGE_MAX_MTU     16288   /* Max MTU size for this interface */
+#define DGE_MAX_MTU	16288	/* Max MTU size for this interface */
 
 /*
  * Software state for transmit jobs.
@@ -232,8 +240,8 @@ struct dge_txsoft {
 };
 
 /*
- * Software state for receive buffers.  Each descriptor gets a
- * 2k (MCLBYTES) buffer and a DMA map.  For packets which fill
+ * Software state for receive buffers.	Each descriptor gets a
+ * 2k (MCLBYTES) buffer and a DMA map.	For packets which fill
  * more than one buffer, we chain them together.
  */
 struct dge_rxsoft {
@@ -265,7 +273,7 @@ struct dge_softc {
 	struct ifmedia sc_media;
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
-#define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+#define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
 	int		sc_align_tweak;
 
@@ -279,14 +287,14 @@ struct dge_softc {
 	 * Control data structures.
 	 */
 	struct dge_control_data *sc_control_data;
-#define	sc_txdescs	sc_control_data->wcd_txdescs
-#define	sc_rxdescs	sc_control_data->wcd_rxdescs
+#define sc_txdescs	sc_control_data->wcd_txdescs
+#define sc_rxdescs	sc_control_data->wcd_rxdescs
 
 #ifdef DGE_EVENT_COUNTERS
 	/* Event counters. */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
-	struct evcnt sc_ev_txforceintr;	/* Tx interrupts forced */
+	struct evcnt sc_ev_txforceintr; /* Tx interrupts forced */
 	struct evcnt sc_ev_txdw;	/* Tx descriptor interrupts */
 	struct evcnt sc_ev_txqe;	/* Tx queue empty interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
@@ -332,42 +340,48 @@ struct dge_softc {
 	uint16_t sc_eeprom[EEPROM_SIZE];
 
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	rndsource_element_t rnd_source; /* random source */
+#endif
+#ifdef DGE_OFFBYONE_RXBUG
+	caddr_t sc_bugbuf;
+	SLIST_HEAD(, rxbugentry) sc_buglist;
+	bus_dmamap_t sc_bugmap;
+	struct rxbugentry *sc_entry;
 #endif
 };
 
-#define	DGE_RXCHAIN_RESET(sc)						\
+#define DGE_RXCHAIN_RESET(sc)						\
 do {									\
 	(sc)->sc_rxtailp = &(sc)->sc_rxhead;				\
 	*(sc)->sc_rxtailp = NULL;					\
 	(sc)->sc_rxlen = 0;						\
 } while (/*CONSTCOND*/0)
 
-#define	DGE_RXCHAIN_LINK(sc, m)						\
+#define DGE_RXCHAIN_LINK(sc, m)						\
 do {									\
 	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
 
 /* sc_flags */
-#define	DGE_F_BUS64		0x20	/* bus is 64-bit */
-#define	DGE_F_PCIX		0x40	/* bus is PCI-X */
+#define DGE_F_BUS64		0x20	/* bus is 64-bit */
+#define DGE_F_PCIX		0x40	/* bus is PCI-X */
 
 #ifdef DGE_EVENT_COUNTERS
-#define	DGE_EVCNT_INCR(ev)	(ev)->ev_count++
+#define DGE_EVCNT_INCR(ev)	(ev)->ev_count++
 #else
-#define	DGE_EVCNT_INCR(ev)	/* nothing */
+#define DGE_EVCNT_INCR(ev)	/* nothing */
 #endif
 
-#define	CSR_READ(sc, reg)						\
+#define CSR_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
-#define	CSR_WRITE(sc, reg, val)						\
+#define CSR_WRITE(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
-#define	DGE_CDTXADDR(sc, x)	((sc)->sc_cddma + DGE_CDTXOFF((x)))
-#define	DGE_CDRXADDR(sc, x)	((sc)->sc_cddma + DGE_CDRXOFF((x)))
+#define DGE_CDTXADDR(sc, x)	((sc)->sc_cddma + DGE_CDTXOFF((x)))
+#define DGE_CDRXADDR(sc, x)	((sc)->sc_cddma + DGE_CDRXOFF((x)))
 
-#define	DGE_CDTXSYNC(sc, x, n, ops)					\
+#define DGE_CDTXSYNC(sc, x, n, ops)					\
 do {									\
 	int __x, __n;							\
 									\
@@ -388,13 +402,33 @@ do {									\
 	    DGE_CDTXOFF(__x), sizeof(struct dge_tdes) * __n, (ops));	\
 } while (/*CONSTCOND*/0)
 
-#define	DGE_CDRXSYNC(sc, x, ops)						\
+#define DGE_CDRXSYNC(sc, x, ops)						\
 do {									\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
 	   DGE_CDRXOFF((x)), sizeof(struct dge_rdes), (ops));		\
 } while (/*CONSTCOND*/0)
 
-#define	DGE_INIT_RXDESC(sc, x)						\
+#ifdef DGE_OFFBYONE_RXBUG
+#define DGE_INIT_RXDESC(sc, x)						\
+do {									\
+	struct dge_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
+	struct dge_rdes *__rxd = &(sc)->sc_rxdescs[(x)];		\
+	struct mbuf *__m = __rxs->rxs_mbuf;				\
+									\
+	__rxd->dr_baddrl = htole32(sc->sc_bugmap->dm_segs[0].ds_addr +	\
+	    (mtod((__m), char *) - (char *)sc->sc_bugbuf));		\
+	__rxd->dr_baddrh = 0;						\
+	__rxd->dr_len = 0;						\
+	__rxd->dr_cksum = 0;						\
+	__rxd->dr_status = 0;						\
+	__rxd->dr_errors = 0;						\
+	__rxd->dr_special = 0;						\
+	DGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+									\
+	CSR_WRITE((sc), DGE_RDT, (x));					\
+} while (/*CONSTCOND*/0)
+#else
+#define DGE_INIT_RXDESC(sc, x)						\
 do {									\
 	struct dge_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
 	struct dge_rdes *__rxd = &(sc)->sc_rxdescs[(x)];		\
@@ -407,7 +441,7 @@ do {									\
 	 *								\
 	 * XXX BRAINDAMAGE ALERT!					\
 	 * The stupid chip uses the same size for every buffer, which	\
-	 * is set in the Receive Control register.  We are using the 2K	\
+	 * is set in the Receive Control register.  We are using the 2K \
 	 * size option, but what we REALLY want is (2K - 2)!  For this	\
 	 * reason, we can't "scoot" packets longer than the standard	\
 	 * Ethernet MTU.  On strict-alignment platforms, if the total	\
@@ -417,7 +451,7 @@ do {									\
 	__m->m_data = __m->m_ext.ext_buf + (sc)->sc_align_tweak;	\
 									\
 	__rxd->dr_baddrl =					\
-	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr + 		\
+	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr +		\
 		(sc)->sc_align_tweak);					\
 	__rxd->dr_baddrh = 0;					\
 	__rxd->dr_len = 0;						\
@@ -429,6 +463,154 @@ do {									\
 									\
 	CSR_WRITE((sc), DGE_RDT, (x));					\
 } while (/*CONSTCOND*/0)
+#endif
+
+#ifdef DGE_OFFBYONE_RXBUG
+/*
+ * Allocation constants.  Much memory may be used for this.
+ */
+#ifndef DGE_BUFFER_SIZE
+#define DGE_BUFFER_SIZE DGE_MAX_MTU
+#endif
+#define DGE_NBUFFERS	(4*DGE_NRXDESC)
+#define DGE_RXMEM	(DGE_NBUFFERS*DGE_BUFFER_SIZE)
+
+struct rxbugentry {
+	SLIST_ENTRY(rxbugentry) rb_entry;
+	int rb_slot;
+};
+
+static int
+dge_alloc_rcvmem(struct dge_softc *sc)
+{
+	caddr_t	ptr, kva;
+	bus_dma_segment_t seg;
+	int i, rseg, state, error;
+	struct rxbugentry *entry;
+
+	state = error = 0;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, DGE_RXMEM, PAGE_SIZE, 0,
+	     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: can't alloc rx buffers\n", sc->sc_dev.dv_xname);
+		return ENOBUFS;
+	}
+
+	state = 1;
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, DGE_RXMEM, &kva,
+	    BUS_DMA_NOWAIT)) {
+		printf("%s: can't map DMA buffers (%d bytes)\n",
+		    sc->sc_dev.dv_xname, (int)DGE_RXMEM);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	state = 2;
+	if (bus_dmamap_create(sc->sc_dmat, DGE_RXMEM, 1, DGE_RXMEM, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_bugmap)) {
+		printf("%s: can't create DMA map\n", sc->sc_dev.dv_xname);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	state = 3;
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_bugmap,
+	    kva, DGE_RXMEM, NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: can't load DMA map\n", sc->sc_dev.dv_xname);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	state = 4;
+	sc->sc_bugbuf = (caddr_t)kva;
+	SLIST_INIT(&sc->sc_buglist);
+
+	/*
+	 * Now divide it up into DGE_BUFFER_SIZE pieces and save the addresses
+	 * in an array.
+	 */
+	ptr = sc->sc_bugbuf;
+	if ((entry = malloc(sizeof(*entry) * DGE_NBUFFERS,
+	    M_DEVBUF, M_NOWAIT)) == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
+	sc->sc_entry = entry;
+	for (i = 0; i < DGE_NBUFFERS; i++) {
+		entry[i].rb_slot = i;
+		SLIST_INSERT_HEAD(&sc->sc_buglist, &entry[i], rb_entry);
+	}
+out:
+	if (error != 0) {
+		switch (state) {
+		case 4:
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_bugmap);
+		case 3:
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_bugmap);
+		case 2:
+			bus_dmamem_unmap(sc->sc_dmat, kva, DGE_RXMEM);
+		case 1:
+			bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return error;
+}
+
+/*
+ * Allocate a jumbo buffer.
+ */
+static void *
+dge_getbuf(struct dge_softc *sc)
+{
+	struct rxbugentry *entry;
+
+	entry = SLIST_FIRST(&sc->sc_buglist);
+
+	if (entry == NULL) {
+		printf("%s: no free RX buffers\n", sc->sc_dev.dv_xname);
+		return(NULL);
+	}
+
+	SLIST_REMOVE_HEAD(&sc->sc_buglist, rb_entry);
+	return sc->sc_bugbuf + entry->rb_slot * DGE_BUFFER_SIZE;
+}
+
+/*
+ * Release a jumbo buffer.
+ */
+static void
+dge_freebuf(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+{
+	struct rxbugentry *entry;
+	struct dge_softc *sc;
+	int i, s;
+
+	/* Extract the softc struct pointer. */
+	sc = (struct dge_softc *)arg;
+
+	if (sc == NULL)
+		panic("dge_freebuf: can't find softc pointer!");
+
+	/* calculate the slot this buffer belongs to */
+
+	i = (buf - sc->sc_bugbuf) / DGE_BUFFER_SIZE;
+
+	if ((i < 0) || (i >= DGE_NBUFFERS))
+		panic("dge_freebuf: asked to free buffer %d!", i);
+
+	s = splvm();
+	entry = sc->sc_entry + i;
+	SLIST_INSERT_HEAD(&sc->sc_buglist, entry, rb_entry);
+
+	if (__predict_true(m != NULL))
+		pool_cache_put(&mbpool_cache, m);
+	splx(s);
+}
+#endif
 
 static void	dge_start(struct ifnet *);
 static void	dge_watchdog(struct ifnet *);
@@ -616,6 +798,10 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
 
+#ifdef DGE_OFFBYONE_RXBUG 
+	if (dge_alloc_rcvmem(sc) != 0)
+		return; /* Already complained */
+#endif
 	/*
 	 * Create the transmit buffer DMA maps.
 	 */
@@ -633,8 +819,13 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 	 * Create the receive buffer DMA maps.
 	 */
 	for (i = 0; i < DGE_NRXDESC; i++) {
+#ifdef DGE_OFFBYONE_RXBUG
+		if ((error = bus_dmamap_create(sc->sc_dmat, DGE_BUFFER_SIZE, 1,
+		    DGE_BUFFER_SIZE, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+#else
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+#endif
 			aprint_error("%s: unable to create Rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
@@ -1822,6 +2013,9 @@ dge_init(struct ifnet *ifp)
 	sc->sc_rctl = RCTL_RXEN | RCTL_RDMTS_12 | RCTL_RPDA_MC | 
 	    RCTL_CFF | RCTL_SECRC | RCTL_MO(sc->sc_mchash_type);
 
+#ifdef DGE_OFFBYONE_RXBUG
+	sc->sc_rctl |= RCTL_BSIZE_16k;
+#else
 	switch(MCLBYTES) {
 	case 2048:
 		sc->sc_rctl |= RCTL_BSIZE_2k;
@@ -1838,6 +2032,7 @@ dge_init(struct ifnet *ifp)
 	default:
 		panic("dge_init: MCLBYTES %d unsupported", MCLBYTES);
 	}
+#endif
 
 	/* Set the receive filter. */
 	/* Also sets RCTL */
@@ -1919,11 +2114,28 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 	struct dge_rxsoft *rxs = &sc->sc_rxsoft[idx];
 	struct mbuf *m;
 	int error;
+#ifdef DGE_OFFBYONE_RXBUG
+	caddr_t buf;
+#endif
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
 
+#ifdef DGE_OFFBYONE_RXBUG
+	if ((buf = dge_getbuf(sc)) == NULL)
+		return ENOBUFS;
+
+	m->m_len = m->m_pkthdr.len = DGE_BUFFER_SIZE;
+	MEXTADD(m, buf, DGE_BUFFER_SIZE, M_DEVBUF, dge_freebuf, sc);
+
+	if (rxs->rxs_mbuf != NULL)
+		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+	rxs->rxs_mbuf = m;
+
+	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap, buf,
+	    DGE_BUFFER_SIZE, NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
+#else
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
@@ -1938,12 +2150,12 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxs->rxs_dmamap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+#endif
 	if (error) {
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);
 		panic("dge_add_rxbuf");	/* XXX XXX XXX */
 	}
-
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
