@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.125 1999/06/18 05:56:45 is Exp $
+#	$NetBSD: GENERIC,v 1.126 1999/06/18 05:58:25 is Exp $
 
 #
 #if 0
@@ -365,7 +365,7 @@ pseudo-device	tun		1	# network tunnel line discipline
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 
-pseudo-device	view		10	# views
+pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		16	# pseudo ptys
 
 pseudo-device	vnd		4	# vnode pseudo-disks

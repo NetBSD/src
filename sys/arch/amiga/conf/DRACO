@@ -1,10 +1,10 @@
-# $NetBSD: DRACO,v 1.37 1999/06/18 05:57:31 is Exp $
+# $NetBSD: DRACO,v 1.38 1999/06/18 05:58:48 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.125 1999/06/18 05:56:45 is Exp $
+#$ NetBSD: GENERIC,v 1.126 1999/06/18 05:58:25 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -209,7 +209,7 @@ pseudo-device	tun		1	# network tunnel line discipline
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 
-pseudo-device	view		10	# views
+pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		16	# pseudo ptys
 
 pseudo-device	vnd		4	# vnode pseudo-disks
