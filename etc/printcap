@@ -1,5 +1,0 @@
-#	$NetBSD: printcap,v 1.3 1996/05/08 17:19:45 thorpej Exp $
-#	@(#)printcap	5.3 (Berkeley) 6/30/90
-
-#lp|local line printer:\
-#	:lp=/dev/lp:sd=/var/spool/lpd:lf=/var/log/lpd-errs:
