@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.8 1993/10/09 22:48:14 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.9 1993/10/09 23:26:30 mycroft Exp $
  */
 
 
@@ -1403,7 +1403,6 @@ ENTRY(setrq)
 	pushl	$2f
 	call	_panic
 	/*NOTREACHED*/
-2:	.asciz	"setrq"
 1:	movzbl	P_PRI(%eax),%edx
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
@@ -1415,6 +1414,7 @@ ENTRY(setrq)
 	movl	%eax,P_RLINK(%edx)
 	movl	%eax,P_LINK(%ecx)
 	ret
+2:	.asciz	"setrq"
 
 /*
  * Remrq(p)
@@ -1430,7 +1430,6 @@ ENTRY(remrq)
 	pushl	$3f
 	call	_panic
 	/*NOTREACHED*/
-3:	.asciz	"remrq"
 1:	pushl	%edx
 	movl	P_LINK(%eax),%ecx	# unlink process
 	movl	P_RLINK(%eax),%edx
@@ -1448,6 +1447,7 @@ ENTRY(remrq)
 	btsl	%edx,_whichqs
 2:	movl	$0,P_RLINK(%eax)	# zap reverse link to indicate off list
 	ret
+3:	.asciz	"remrq"
 
 /*
  * When no processes are on the runq, Swtch branches to idle
