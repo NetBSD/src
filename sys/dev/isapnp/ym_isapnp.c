@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.9 1999/03/22 14:29:14 mycroft Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.10 1999/03/22 14:32:59 mycroft Exp $ */
 
 
 /*
@@ -126,7 +126,7 @@ ym_isapnp_attach(parent, self, aux)
 	sc->sc_controlioh = ipa->ipa_io[4].h; 
 	
 	ac->sc_iot = sc->sc_iot;
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, 4,
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, AD1848_NPORT,
 	    &ac->sc_ioh)) {
 		printf("%s: bus_space_subregion failed\n", self->dv_xname);
 		return;
