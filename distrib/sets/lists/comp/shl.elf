@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.30 2002/10/07 00:53:32 lukem Exp $
+# $NetBSD: shl.elf,v 1.31 2002/10/07 22:46:25 lukem Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -24,7 +24,9 @@
 ./usr/lib/libc.so		comp-c-lib
 ./usr/lib/libcdk.so		comp-c-lib
 ./usr/lib/libcom_err.so		comp-c-lib
+./usr/lib/libcrypto.so		comp-c-lib
 ./usr/lib/libcrypt.so		comp-c-lib
+./usr/lib/libdes.so		comp-c-lib
 ./usr/lib/libcurses.so		comp-c-lib
 ./usr/lib/libedit.so		comp-c-lib
 ./usr/lib/libform.so		comp-c-lib
