@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.26 2001/05/01 06:15:42 enami Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.27 2001/05/01 06:17:23 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2527,7 +2527,9 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			iea = (struct ieee1394_softc *)
 			    config_found(&sc->sc_sc1394.sc1394_dev, &fwa, 
 			    fwohci_print);
-			LIST_INSERT_HEAD(&sc->sc_nodelist, iea, sc1394_node);
+			if (iea != NULL)
+				LIST_INSERT_HEAD(&sc->sc_nodelist, iea,
+				    sc1394_node);
 		}
 	}
 	done = 1;
