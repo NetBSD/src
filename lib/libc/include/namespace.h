@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60.2.4 2002/02/06 23:03:33 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.5 2002/02/25 00:43:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -402,6 +402,7 @@
 #define setgroupent		_setgroupent
 #define sethostent		_sethostent
 #define sethostname		_sethostname
+#define setlogin		_setlogin
 #define setlogmask		_setlogmask
 #define setmode			_setmode
 #define setnetconfig		_setnetconfig
@@ -475,7 +476,7 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define svis			_svis
-#define sysarch			_sysarch
+#define sysarch			_syscall_sysarch
 #define sysctl			_sysctl
 #define syslog			_syslog
 #define tcdrain			_tcdrain
