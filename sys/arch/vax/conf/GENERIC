@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.66 2000/05/08 19:46:12 ragge Exp $
+#	$NetBSD: GENERIC,v 1.67 2000/05/28 20:21:04 matt Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.67 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -29,7 +29,7 @@ maxusers	8
 
 # Kernel compiled-in symbolic debugger & system call tracer
 #makeoptions	DEBUG="-g"
-#options 	DDB
+options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
