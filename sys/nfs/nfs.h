@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.43 2003/12/06 02:43:17 jonathan Exp $	*/
+/*	$NetBSD: nfs.h,v 1.44 2003/12/06 02:48:35 jonathan Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
