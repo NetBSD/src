@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/02/11 01:33:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2002/06/28 16:30:10 lukem Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
@@ -15,7 +15,8 @@ MAN=	${PROG}.8
 BINDIR=	/usr/libexec
 LDSTATIC?=-static
 
-tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile
+tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile \
+		${BIND_DIST_DIR}/Version
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
