@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 2002/06/17 16:33:14 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 2002/06/17 21:08:56 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -301,7 +301,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 			}
 
 
-			if ((error = trace_enter(p, code, args, rval)) != 0)
+			if ((error = trace_enter(p, code, params, rval)) != 0)
 				goto syscall_bad;
 
 			rval[0] = 0;
@@ -331,11 +331,10 @@ syscall_bad:
 				frame->cr |= 0x10000000;
 				break;
 			}
+			KERNEL_PROC_UNLOCK(p);
+
+			trace_exit(p, code, args, rval, error);
 		}
-		KERNEL_PROC_UNLOCK(p);
-
-		trace_exit(p, code, args, rval, error);
-
 		break;
 
 	case EXC_AST|EXC_USER:
