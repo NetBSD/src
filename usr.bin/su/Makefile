@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2003/07/24 16:18:21 tron Exp $
+#	$NetBSD: Makefile,v 1.32 2003/08/20 14:11:17 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ CPPFLAGS+=-DLOGIN_CAP
 
 # Uncomment the following line to change the group that may su root to "sugroup"
 #
-#CPPFLAGS+=-DSUGROUP=\"sugroup\"
+#CPPFLAGS+=-DSU_GROUP=\"sugroup\"
 
 # Uncomment the following line to make su
 # treat group wheel (SUGROUP) and/or ROOTAUTH as an indirect
@@ -49,6 +49,6 @@ DPADD+= ${LIBSKEY}
 LDADD+= -lskey
 .endif
 
-.ifdef SUROOTAUTH
-CPPFLAGS+=-DROOTAUTH=\"${SUROOTAUTH}\"
+.ifdef SU_ROOTAUTH
+CPPFLAGS+=-DSU_ROOTAUTH=\"${SU_ROOTAUTH}\"
 .endif
