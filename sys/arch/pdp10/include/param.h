@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.1 2003/08/19 10:53:06 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.2 2003/09/03 19:35:02 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -164,6 +164,7 @@
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
 void	delay __P((int));
+void *	alloca(size_t);		/* XXX should be somewhere else */
 #endif
 
 #define	DELAY(x) delay(x)
