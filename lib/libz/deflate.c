@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.2 1996/09/13 00:29:59 cgd Exp $	*/
+/*	$NetBSD: deflate.c,v 1.3 1997/05/13 23:06:30 gwr Exp $	*/
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -48,6 +48,8 @@
  *         Data Compression with Finite Windows, Comm.ACM, 32,4 (1989) 490-595
  *
  */
+
+/* from: Id: deflate.c,v 1.15 1996/07/24 13:40:58 me Exp */
 
 #include "deflate.h"
 
