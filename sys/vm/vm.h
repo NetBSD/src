@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.22.4.1 2000/08/05 11:10:43 wiz Exp $	*/
+/*	$NetBSD: vm.h,v 1.22.4.2 2000/10/18 16:24:00 tv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -83,6 +83,7 @@ struct vmspace {
 	caddr_t	vm_taddr;	/* user virtual address of text XXX */
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
+	caddr_t vm_minsaddr;    /* user VA at top of stack */
 };
 
 #ifdef	pmap_resident_count
