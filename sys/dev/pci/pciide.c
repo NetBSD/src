@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.33.2.8 2000/07/27 17:36:40 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.33.2.9 2000/07/27 17:45:09 he Exp $	*/
 
 
 /*
@@ -2860,7 +2860,15 @@ hpt_chip_map(sc, pa)
 		wdcattach(&cp->wdc_channel);
 		hpt_setup_channel(&cp->wdc_channel);
 	}
-
+	if (revision == HPT370_REV) {
+		/*
+		 * HPT370_REV has a bit to disable interrupts, make sure
+		 * to clear it
+		 */
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT_CSEL,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_CSEL) &
+		    ~HPT_CSEL_IRQDIS);
+	}
 	return;
 }
 
