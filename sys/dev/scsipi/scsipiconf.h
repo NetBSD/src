@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.9 2001/01/15 09:22:13 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.10 2001/01/22 17:43:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -441,6 +441,7 @@ typedef enum {
 	XS_TIMEOUT,		/* The Timeout reported was caught by SW  */
 	XS_BUSY,		/* The device busy, try again later?      */
 	XS_RESET,		/* bus was reset; possible retry command  */
+	XS_REQUEUE,		/* requeue this command */
 } scsipi_xfer_result_t;
 
 
