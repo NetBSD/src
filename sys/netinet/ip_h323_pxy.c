@@ -1,8 +1,8 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.3 2002/05/02 17:12:05 martti Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.4 2002/06/09 16:33:40 itojun Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
- * 
+ *
  * This source code has been published by QNX Software Systems Ltd. (QSSL).
  * However, any use, reproduction, modification, distribution or transfer of
  * this software, or any software which includes or is based upon any of this
@@ -15,7 +15,7 @@
 
 /*
  * Simple H.323 proxy
- * 
+ *
  *      by xtang@canada.com
  *	ported to ipfilter 3.4.20 by Michael Grant mg-ipf@grant.org
  */
@@ -27,7 +27,7 @@
 # include <sys/ioctl.h>
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.3 2002/05/02 17:12:05 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.4 2002/06/09 16:33:40 itojun Exp $");
 
 #define IPF_H323_PROXY
 
@@ -62,7 +62,7 @@ unsigned short *port;
 
 	if (datlen < 6)
 		return -1;
-	
+
 	*port = 0;
 	offset = *off;
 	dp = (u_char *)data;
@@ -76,7 +76,7 @@ unsigned short *port;
 		}
 	}
 	*off = offset;
-  	return (offset > datlen - 6) ? -1 : 0;
+	return (offset > datlen - 6) ? -1 : 0;
 }
 
 /*
@@ -110,13 +110,13 @@ ap_session_t *aps;
 {
 	int i;
 	ipnat_t *ipn;
-	
+
 	if (aps->aps_data) {
 		for (i = 0, ipn = aps->aps_data;
-		     i < (aps->aps_psiz / sizeof(ipnat_t)); 
+		     i < (aps->aps_psiz / sizeof(ipnat_t));
 		     i++, ipn = (ipnat_t *)((char *)ipn + sizeof(*ipn)))
 		{
-			/* 
+			/*
 			 * Check the comment in ippr_h323_in() function,
 			 * just above nat_ioctl() call.
 			 * We are lucky here because this function is not
@@ -156,10 +156,10 @@ nat_t *nat;
 	unsigned short port;
 	unsigned char *data;
 	tcphdr_t *tcp;
-	
+
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = ip->ip_src.s_addr;
-	
+
 	data = (unsigned char *)tcp + (tcp->th_off << 2);
 	datlen = fin->fin_dlen - (tcp->th_off << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
@@ -177,17 +177,17 @@ nat_t *nat;
 		ipn = (ipnat_t *)&newarray[aps->aps_psiz];
 		bcopy(nat->nat_ptr, ipn, sizeof(ipnat_t));
 		strncpy(ipn->in_plabel, "h245", APR_LABELLEN);
-		
+
 		ipn->in_inip = nat->nat_inip.s_addr;
 		ipn->in_inmsk = 0xffffffff;
 		ipn->in_dport = htons(port);
-		/* 
+		/*
 		 * we got a problem here. we need to call nat_ioctl() to add
 		 * the h245 proxy rule, but since we already hold (READ locked)
 		 * the nat table rwlock (ipf_nat), if we go into nat_ioctl(),
 		 * it will try to WRITE lock it. This will causing dead lock
 		 * on RTP.
-		 * 
+		 *
 		 * The quick & dirty solution here is release the read lock,
 		 * call nat_ioctl() and re-lock it.
 		 * A (maybe better) solution is do a UPGRADE(), and instead
@@ -239,7 +239,7 @@ nat_t *nat;
 	u_short port;
 	unsigned char *data;
 	tcphdr_t *tcp;
-	
+
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = nat->nat_inip.s_addr;
 	data = (unsigned char *)tcp + (tcp->th_off << 2);
@@ -254,21 +254,21 @@ nat_t *nat;
 		if (ipn == NULL) {
 			struct ip newip;
 			struct udphdr udp;
-			
+
 			bcopy(ip, &newip, sizeof(newip));
 			newip.ip_len = fin->fin_hlen + sizeof(udp);
 			newip.ip_p = IPPROTO_UDP;
 			newip.ip_src = nat->nat_inip;
-			
+
 			bzero(&udp, sizeof(udp));
 			udp.uh_sport = port;
-			
+
 			bcopy(fin, &fi, sizeof(fi));
 			fi.fin_fi.fi_p = IPPROTO_UDP;
 			fi.fin_data[0] = port;
 			fi.fin_data[1] = 0;
 			fi.fin_dp = (char *)&udp;
-			
+
 			ipn = nat_new(&fi, &newip, nat->nat_ptr, NULL,
 				      IPN_UDP|FI_W_DPORT, NAT_OUTBOUND);
 			if (ipn != NULL) {

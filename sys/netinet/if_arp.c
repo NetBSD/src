@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.80 2002/06/09 05:09:26 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.81 2002/06/09 16:33:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.80 2002/06/09 05:09:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.81 2002/06/09 16:33:37 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -199,7 +199,7 @@ lla_snprintf(adrp, len)
 	    '0','1','2','3','4','5','6','7',
 	    '8','9','a','b','c','d','e','f'
 	};
-		
+
 	int i;
 	char *p;
 
@@ -229,9 +229,9 @@ struct protosw arpsw[] = {
 };
 
 
-struct domain arpdomain = 
+struct domain arpdomain =
 { 	PF_ARP,  "arp", 0, 0, 0,
-	arpsw, &arpsw[sizeof(arpsw)/sizeof(arpsw[0])] 
+	arpsw, &arpsw[sizeof(arpsw)/sizeof(arpsw[0])]
 };
 
 /*
@@ -315,12 +315,12 @@ arp_drain()
 	struct llinfo_arp *la, *nla;
 	int count = 0;
 	struct mbuf *mold;
-	
+
 	if (arp_lock_try(0) == 0) {
 		printf("arp_drain: locked; punting\n");
 		return;
 	}
-	
+
 	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
 		nla = LIST_NEXT(la, la_list);
 
@@ -366,7 +366,7 @@ arptimer(arg)
 	}
 
 	ARP_UNLOCK();
-	
+
 	splx(s);
 }
 
@@ -553,14 +553,14 @@ arp_rtrequest(req, rt, info)
 			 *
 			 * In 4.4BSD, the above "if" statement checked
 			 * rt->rt_ifa against rt_key(rt).  It was changed
-			 * to the current form so that we can provide a 
+			 * to the current form so that we can provide a
 			 * better support for multiple IPv4 addresses on a
 			 * interface.
 			 */
 			rt->rt_expire = 0;
 			Bcopy(LLADDR(rt->rt_ifp->if_sadl),
 			    LLADDR(SDL(gate)),
-			    SDL(gate)->sdl_alen = 
+			    SDL(gate)->sdl_alen =
 			    rt->rt_ifp->if_data.ifi_addrlen);
 #if NLOOP > 0
 			if (useloopback)
@@ -592,7 +592,7 @@ arp_rtrequest(req, rt, info)
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);
-		
+
 		if (mold)
 			m_freem(mold);
 
@@ -662,7 +662,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	struct sockaddr_dl *sdl;
 	struct mbuf *mold;
 	int s;
-	
+
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
@@ -704,7 +704,7 @@ arpresolve(ifp, rt, m, dst, desten)
 		arpstat.as_dfrdropped++;
 		m_freem(mold);
 	}
-	
+
 	/*
 	 * Re-send the ARP request when appropriate.
 	 */
@@ -807,7 +807,7 @@ in_arpinput(m)
 	int op;
 	struct mbuf *mold;
 	int s;
-	
+
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
@@ -939,7 +939,7 @@ in_arpinput(m)
 				    lla_snprintf(ar_sha(ah), ah->ar_hln));
 			}
 		}
-		/* 
+		/*
 		 * sanity check for the address length.
 		 * XXX this does not work for protocols with variable address
 		 * length. -is
@@ -947,13 +947,13 @@ in_arpinput(m)
 		if (sdl->sdl_alen &&
 		    sdl->sdl_alen != ah->ar_hln) {
 			arpstat.as_rcvlenchg++;
-			log(LOG_WARNING, 
+			log(LOG_WARNING,
 			    "arp from %s: new addr len %d, was %d",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_data.ifi_addrlen != ah->ar_hln) {
 			arpstat.as_rcvbadlen++;
-			log(LOG_WARNING, 
+			log(LOG_WARNING,
 			    "arp from %s: addr len: new %d, i/f %d (ignored)",
 			    in_fmtaddr(isaddr), ah->ar_hln,
 			    ifp->if_data.ifi_addrlen);
@@ -1270,7 +1270,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 	struct in_addr *clnt_in;
 {
 	int result, count = 20;
-	
+
 	myip_initialized = 0;
 	myip_ifp = ifp;
 
@@ -1285,7 +1285,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 
 	if (!myip_initialized)
 		return ENETUNREACH;
-	
+
 	bcopy((caddr_t)&srv_ip, serv_in, sizeof(*serv_in));
 	bcopy((caddr_t)&myip, clnt_in, sizeof(*clnt_in));
 	return 0;

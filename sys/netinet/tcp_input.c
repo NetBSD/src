@@ -1,9 +1,9 @@
-/*	$NetBSD: tcp_input.c,v 1.142 2002/05/28 10:11:51 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.143 2002/06/09 16:33:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,11 +31,11 @@
 
 /*
  *      @(#)COPYRIGHT   1.1 (NRL) 17 January 1995
- * 
+ *
  * NRL grants permission for redistribution and use in source and binary
  * forms, with or without modification, of the software and documentation
  * created at NRL provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -50,7 +50,7 @@
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THE SOFTWARE PROVIDED BY NRL IS PROVIDED BY NRL AND CONTRIBUTORS ``AS
  * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -62,7 +62,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation
  * are those of the authors and should not be interpreted as representing
  * official policies, either expressed or implied, of the US Naval
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.142 2002/05/28 10:11:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.143 2002/06/09 16:33:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -445,7 +445,7 @@ tcp_reass(tp, th, m, tlen)
 			continue;
 		}
 		/*
-		 * If the fragment is past the received segment, 
+		 * If the fragment is past the received segment,
 		 * it (or any following) can't be concatenated.
 		 */
 		if (SEQ_GT(q->ipqe_seq, pkt_seq + pkt_len)) {
@@ -876,7 +876,7 @@ tcp_input(m, va_alist)
 	}
 	tlen -= off;
 
-	/* 
+	/*
 	 * tcp_input() has been modified to use tlen to mean the TCP data
 	 * length throughout the function.  Other functions can use
 	 * m->m_pkthdr.len as the basis for calculating the TCP data length.
@@ -917,7 +917,7 @@ tcp_input(m, va_alist)
 #endif
 		optlen = off - sizeof (struct tcphdr);
 		optp = ((caddr_t)th) + sizeof(struct tcphdr);
-		/* 
+		/*
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's
 		 * formatted as recommended in RFC 1323 appendix A, we
@@ -1121,7 +1121,7 @@ findpcb:
 		    {
 			struct ipovly *ipov;
 			ipov = (struct ipovly *)ip;
-			bzero(ipov->ih_x1, sizeof ipov->ih_x1); 
+			bzero(ipov->ih_x1, sizeof ipov->ih_x1);
 			ipov->ih_len = htons(tlen + off);
 
 			if (in_cksum(m, len) != 0)
@@ -1251,7 +1251,7 @@ findpcb:
 	nosave:;
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
-  			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
+			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
 				if (tiflags & TH_RST) {
 					syn_cache_reset(&src.sa, &dst.sa, th);
 				} else if ((tiflags & (TH_ACK|TH_SYN)) ==
@@ -1313,7 +1313,7 @@ findpcb:
 						tiwin <<= tp->snd_scale;
 						goto after_listen;
 					}
-  				} else {
+				} else {
 					/*
 					 * None of RST, SYN or ACK was set.
 					 * This is an invalid packet for a
@@ -1321,7 +1321,7 @@ findpcb:
 					 */
 					goto badsyn;
 				}
-  			} else {
+			} else {
 				/*
 				 * Received a SYN.
 				 */
@@ -1391,7 +1391,7 @@ after_listen:
 	if (optp)
 		tcp_dooptions(tp, optp, optlen, th, &opti);
 
-	/* 
+	/*
 	 * Header prediction: check for the two common cases
 	 * of a uni-directional data xfer.  If the packet has
 	 * no control flags, is in-sequence, the window didn't
@@ -1412,7 +1412,7 @@ after_listen:
 	    tiwin && tiwin == tp->snd_wnd &&
 	    tp->snd_nxt == tp->snd_max) {
 
-		/* 
+		/*
 		 * If last ACK falls within this segment's sequence numbers,
 		 *  record the timestamp.
 		 */
@@ -1648,10 +1648,10 @@ after_listen:
 	/*
 	 * States other than LISTEN or SYN_SENT.
 	 * First check timestamp, if present.
-	 * Then check that at least some bytes of segment are within 
+	 * Then check that at least some bytes of segment are within
 	 * receive window.  If segment begins before rcv_nxt,
 	 * drop leading data (and SYN); if nothing left, just ack.
-	 * 
+	 *
 	 * RFC 1323 PAWS: If we have a timestamp reply on this segment
 	 * and it's less than ts_recent, drop it.
 	 */
@@ -1686,7 +1686,7 @@ after_listen:
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
 			th->th_seq++;
-			if (th->th_urp > 1) 
+			if (th->th_urp > 1)
 				th->th_urp--;
 			else {
 				tiflags &= ~TH_URG;
@@ -1841,7 +1841,7 @@ after_listen:
 		else
 			goto drop;
 	}
-	
+
 	/*
 	 * Ack processing.
 	 */
@@ -1909,7 +1909,7 @@ after_listen:
 				 * the new ssthresh).
 				 *
 				 * Dup acks mean that packets have left the
-				 * network (they're now cached at the receiver) 
+				 * network (they're now cached at the receiver)
 				 * so bump cwnd by the amount in the receiver
 				 * to keep a constant cwnd packets in the
 				 * network.
@@ -1920,7 +1920,7 @@ after_listen:
 				else if (++tp->t_dupacks == tcprexmtthresh) {
 					tcp_seq onxt = tp->snd_nxt;
 					u_int win =
-					    min(tp->snd_wnd, tp->snd_cwnd) / 
+					    min(tp->snd_wnd, tp->snd_cwnd) /
 					    2 /	tp->t_segsz;
 					if (tcp_do_newreno && SEQ_LT(th->th_ack,
 					    tp->snd_recover)) {
@@ -1971,7 +1971,7 @@ after_listen:
 			tp->snd_cwnd = tp->snd_ssthresh;
 			/*
 			 * Window inflation should have left us with approx.
-			 * snd_ssthresh outstanding data.  But in case we 
+			 * snd_ssthresh outstanding data.  But in case we
 			 * would be inclined to send a burst, better to do
 			 * it via the slow start mechanism.
 			 */
@@ -2157,14 +2157,14 @@ step6:
 		 * If this segment advances the known urgent pointer,
 		 * then mark the data stream.  This should not happen
 		 * in CLOSE_WAIT, CLOSING, LAST_ACK or TIME_WAIT STATES since
-		 * a FIN has been received from the remote side. 
+		 * a FIN has been received from the remote side.
 		 * In these states we ignore the URG.
 		 *
 		 * According to RFC961 (Assigned Protocols),
 		 * the urgent pointer points to the last octet
 		 * of urgent data.  We continue, however,
 		 * to consider it to indicate the first octet
-		 * of data past the urgent section as the original 
+		 * of data past the urgent section as the original
 		 * spec states (in one of two places).
 		 */
 		if (SEQ_GT(th->th_seq+th->th_urp, tp->rcv_up)) {
@@ -2283,7 +2283,7 @@ dodata:							/* XXX */
 
 	 	/*
 		 * In FIN_WAIT_2 state enter the TIME_WAIT state,
-		 * starting the time-wait timer, turning off the other 
+		 * starting the time-wait timer, turning off the other
 		 * standard timers.
 		 */
 		case TCPS_FIN_WAIT_2:
@@ -2511,7 +2511,7 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
 			NTOHL(oi->ts_ecr);
 
-			/* 
+			/*
 			 * A timestamp received in a SYN makes
 			 * it ok to send timestamp requests and replies.
 			 */
@@ -2563,7 +2563,7 @@ tcp_pulloutofband(so, th, m, off)
 	int off;
 {
 	int cnt = off + th->th_urp - 1;
-	
+
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
 			char *cp = mtod(m, caddr_t) + cnt;
@@ -2622,7 +2622,7 @@ tcp_xmit_timer(tp, rtt)
 		if ((tp->t_rttvar += delta) <= 0)
 			tp->t_rttvar = 1 << 2;
 	} else {
-		/* 
+		/*
 		 * No rtt measurement yet - use the unsmoothed rtt.
 		 * Set the variance to half the rtt (so our first
 		 * retransmit happens at 3*rtt).
@@ -2646,7 +2646,7 @@ tcp_xmit_timer(tp, rtt)
 	 */
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
 	    max(tp->t_rttmin, rtt + 2), TCPTV_REXMTMAX);
-	
+
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;
 	 * it is probably safe to discard any error indications we've
@@ -3080,7 +3080,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	 * done particularly for the case where an AF_INET6
 	 * socket is bound only to a port, and a v4 connection
 	 * comes in on that port.
-	 * we also copy the flowinfo from the original pcb 
+	 * we also copy the flowinfo from the original pcb
 	 * to the new one.
 	 */
     {
@@ -3471,7 +3471,7 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	}
 
 	sc = pool_get(&syn_cache_pool, PR_NOWAIT);
-	if (sc == NULL) {	
+	if (sc == NULL) {
 		if (ipopts)
 			(void) m_free(ipopts);
 		return (0);

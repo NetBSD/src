@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.26 2001/12/21 03:21:51 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.27 2002/06/09 16:33:38 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.26 2001/12/21 03:21:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.27 2002/06/09 16:33:38 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.26 2001/12/21 03:21:51 itojun Exp $");
 #include <netinet/ip6.h>
 #endif
 
-#include <net/if_gif.h>	
+#include <net/if_gif.h>
 
 #include "gif.h"
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: ip_output.c,v 1.96 2002/05/31 05:26:42 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.97 2002/06/09 16:33:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.96 2002/05/31 05:26:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.97 2002/06/09 16:33:42 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -308,7 +308,7 @@ ip_output(m0, va_alist)
 		 */
 		if (((m->m_flags & M_MCAST) &&
 		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
-		    ((m->m_flags & M_BCAST) && 
+		    ((m->m_flags & M_BCAST) &&
 		     (ifp->if_flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
@@ -388,7 +388,7 @@ ip_output(m0, va_alist)
 #endif
 
 	/*
-	 * packets with Class-D address as source are not valid per 
+	 * packets with Class-D address as source are not valid per
 	 * RFC 1112
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
@@ -465,7 +465,7 @@ sendit:
 	case IPSEC_POLICY_NONE:
 		/* no need to do IPsec. */
 		goto skip_ipsec;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		if (sp->req == NULL) {
 			/* XXX should be panic ? */
