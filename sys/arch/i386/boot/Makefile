@@ -22,31 +22,37 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
-#	$Id: Makefile,v 1.12 1994/01/28 08:21:24 cgd Exp $
+#	$Id: Makefile,v 1.13 1994/07/01 03:02:29 deraadt Exp $
 #
 
-all: biosboot bootbios
+S=	${.CURDIR}/../../..
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
+
+machine-links:
+	-rm -f machine && \
+	    ln -s ${.CURDIR}/../include machine
+	-rm -f ${MACHINE_ARCH} && \
+	    ln -s ${.CURDIR}/../include ${MACHINE_ARCH}
+
+all: machine-links biosboot bootbios
 
 NOPROG=	noprog
 NOMAN=	noman
 
-CFLAGS	= -O6 -DDO_BAD144 -I${.CURDIR}
-LIBS= -lc
-INC= -I${.CURDIR}/../..
+CFLAGS	= -O6 -DKERNEL -DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 
 # start.o should be first
-OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o version.o
+OBJS=	start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 
-.SUFFIXES: .S .c .o
-
-.c.o:
-	$(CC)  $(CFLAGS) $(INC) -c $<
-
-.S.o:
-	$(CC)  $(CFLAGS) -c $<
-
-boot: $(OBJS)
-	$(LD) -Bstatic -e start -N -T 0 -o boot $(OBJS) $(LIBS)
+boot:	${OBJS} ${LIBKERN}
+	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS} ${LIBKERN}
 	cp boot boot.sym
 	@strip boot
 	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
@@ -87,7 +93,6 @@ fd:	${DESTDIR}/usr/mdec/bootfd ${DESTDIR}/usr/mdec/fdboot
 
 install: wd sd fd
 
-clean cleandir:
-	/bin/rm -f *.o *.d boot bootbios biosboot boot.sym
+CLEANFILES+=bootbios boot biosboot boot.sym machine ${MACHINE_ARCH}
 
 .include <bsd.prog.mk>

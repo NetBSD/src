@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.20 1994/06/13 19:32:07 mycroft Exp $
+ *	$Id: boot.c,v 1.21 1994/07/01 03:02:30 deraadt Exp $
  */
 
 /*
@@ -52,8 +52,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/param.h>
+#include <sys/exec.h>
 #include "boot.h"
-#include <a.out.h>
 #include <sys/reboot.h>
 
 struct exec head;
