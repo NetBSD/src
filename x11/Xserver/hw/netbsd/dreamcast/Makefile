@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/02/07 08:30:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/09 00:28:25 lukem Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -10,8 +10,6 @@ LIB=	dreamcast
 SRCS=	dreamcastInit.c dreamcastScreen.c dreamcastIo.c dreamcastKbd.c \
 	dreamcastMouse.c dreamcastFB.c dreamcastColormap.c \
 	dreamcastKeymap.c dreamcastInEx.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/dreamcast \
 		-I${X11SRCDIR.xc}/programs/Xserver \
