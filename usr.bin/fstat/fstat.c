@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	5.32 (Berkeley) 6/17/91";*/
-static char rcsid[] = "$Id: fstat.c,v 1.5 1993/08/01 18:15:37 mycroft Exp $";
+static char rcsid[] = "$Id: fstat.c,v 1.6 1993/10/26 02:04:49 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -353,21 +353,21 @@ dofiles(p)
 	 * open files
 	 */
 #define FPSIZE	(sizeof (struct file *))
-	ALLOC_OFILES(filed.fd_lastfile);
+	ALLOC_OFILES(filed.fd_lastfile + 1);
 #ifdef NEWVM
 	if (filed.fd_nfiles > NDFILE) {
 		if (!KVM_READ(filed.fd_ofiles, ofiles,
-		    filed.fd_lastfile * FPSIZE)) {
+		    (filed.fd_lastfile+1) * FPSIZE)) {
 			dprintf(stderr,
 			    "can't read file structures at %x for pid %d\n",
 			    filed.fd_ofiles, Pid);
 			return;
 		}
 	} else
-		bcopy(filed0.fd_dfiles, ofiles, filed.fd_lastfile * FPSIZE);
+		bcopy(filed0.fd_dfiles, ofiles, (filed.fd_lastfile+1) * FPSIZE);
 #else
-	bcopy(filed.fd_ofile, ofiles, MIN(filed.fd_lastfile, NDFILE) * FPSIZE);
-	last = filed.fd_lastfile;
+	bcopy(filed.fd_ofile, ofiles, MIN(filed.fd_lastfile+1, NDFILE) * FPSIZE);
+	last = filed.fd_lastfile + 1;
 	if ((last > NDFILE) && !KVM_READ(filed.fd_moreofiles, &ofiles[NDFILE],
 	    (last - NDFILE) * FPSIZE)) {
 		dprintf(stderr, "can't read rest of files at %x for pid %d\n",
