@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.647 2004/09/10 13:59:07 darrenr Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.648 2004/09/16 13:09:59 ragge Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.648 2004/09/10 13:56:32 darrenr Exp 
+ *	NetBSD: pcidevs,v 1.649 2004/09/16 13:08:51 ragge Exp 
  */
 
 /*
@@ -2172,6 +2172,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "Sandburst, Inc.",
 	},
 	{
+	    PCI_VENDOR_S2IO,
+	    "S2io Technologies",
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs (2nd PCI Vendor ID)",
 	},
@@ -2296,7 +2300,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 564;
+const int pci_nvendors = 565;
 
 const struct pci_product pci_products[] = {
 	{
@@ -7608,6 +7612,10 @@ const struct pci_product pci_products[] = {
 	    "2200 FDDI",
 	},
 	{
+	    PCI_VENDOR_S2IO, PCI_PRODUCT_S2IO_XFRAME,
+	    "Xframe 10 Gigabit ethernet adapter",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
 	    "ViRGE",
 	},
@@ -9652,4 +9660,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1838;
+const int pci_nproducts = 1839;

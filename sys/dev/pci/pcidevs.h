@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.649 2004/09/10 13:59:07 darrenr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.650 2004/09/16 13:09:59 ragge Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.648 2004/09/10 13:56:32 darrenr Exp 
+ *	NetBSD: pcidevs,v 1.649 2004/09/16 13:08:51 ragge Exp 
  */
 
 /*
@@ -590,6 +590,7 @@
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst, Inc. */
+#define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
@@ -2303,6 +2304,9 @@
 
 /* RNS products */
 #define	PCI_PRODUCT_RNS_FDDI	0x2200		/* 2200 FDDI */
+
+/* S2io products */
+#define	PCI_PRODUCT_S2IO_XFRAME	0x5831		/* Xframe 10 Gigabit ethernet adapter */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
