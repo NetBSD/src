@@ -534,9 +534,25 @@ BUILDING
 
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
-               deduced from mach, unless -a is specified.  All cross builds
-               require -m, but if unset on a NetBSD host, the host's value of
-               MACHINE will be detected and used automatically.
+               deduced from mach, unless -a is specified, or mach is a special
+               case listed below.  All cross builds require -m, but if unset
+               on a NetBSD host, the host's value of MACHINE will be detected
+               and used automatically.
+
+               Some machines support multiple values for MACHINE_ARCH.  For a
+               given value of mach, the following MACHINE and MACHINE_ARCH
+               values will result:
+
+                     mach          MACHINE    MACHINE_ARCH
+                     evbmips       evbmips    (not set)
+                     evbmips-eb    evbmips    mipseb
+                     evbmips-el    evbmips    mipsel
+                     evbsh3        evbsh3     (not set)
+                     evbsh3-eb     evbsh3     sh3eb
+                     evbsh3-el     evbsh3     sh3el
+                     sbmips        sbmips     (not set)
+                     sbmips-eb     sbmips     mipseb
+                     sbmips-el     sbmips     mipsel
 
      -n        Show the commands that would be executed by build.sh, but do
                not make any changes.  This is similar in concept to ``make
@@ -626,4 +642,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           May 10, 2003                               10
+NetBSD                           May 17, 2003                               10
