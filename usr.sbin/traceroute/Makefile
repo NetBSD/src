@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/07/30 20:50:33 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.3 1994/05/16 19:15:57 mycroft Exp $
 
 PROG=	traceroute
 MAN8=	traceroute.0
