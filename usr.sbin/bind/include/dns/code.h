@@ -1,3 +1,5 @@
+/*	$NetBSD: code.h,v 1.2 2004/11/07 01:13:32 christos Exp $	*/
+
 /*
  * Copyright (C) 2004 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
