@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_new.3,v 1.5 2002/02/20 11:30:58 wiz Exp $
+.\"	$NetBSD: form_field_new.3,v 1.6 2002/08/06 12:44:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -43,11 +43,11 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]form.h\*[Gt]
 .Ft FIELD *
-.Fn dup_field "FIELD *field, int frow, int fcol"
+.Fn dup_field "FIELD *field" "int frow" "int fcol"
 .Ft int
 .Fn free_field "FIELD *field"
 .Ft FIELD *
-.Fn link_field "FIELD *field, int frow, int fcol"
+.Fn link_field "FIELD *field" "int frow" "int fcol"
 .Ft FIELD *
 .Fo new_field
 .Fa "int rows"
