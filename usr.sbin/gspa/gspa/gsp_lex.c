@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_lex.c,v 1.3 1997/10/17 06:59:02 lukem Exp $	*/
+/*	$NetBSD: gsp_lex.c,v 1.4 1998/04/09 00:32:40 tv Exp $	*/
 /*
  * Lexical analyser for GSP assembler
  *
@@ -33,12 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_lex.c,v 1.3 1997/10/17 06:59:02 lukem Exp $");
+__RCSID("$NetBSD: gsp_lex.c,v 1.4 1998/04/09 00:32:40 tv Exp $");
 #endif
 
 #include <stdio.h>
 #include "gsp_ass.h"
-#include "y.tab.h"
+#include "gsp_gram.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.9 1998/04/07 19:27:24 tv Exp $	*/
+/*	$NetBSD: func.c,v 1.10 1998/04/09 00:32:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,14 +33,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: func.c,v 1.9 1998/04/07 19:27:24 tv Exp $");
+__RCSID("$NetBSD: func.c,v 1.10 1998/04/09 00:32:38 tv Exp $");
 #endif
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "lint1.h"
-#include "y.tab.h"
+#include "cgram.h"
 
 /*
  * Contains a pointer to the symbol table entry of the current function

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.128 1998/04/01 16:58:33 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.129 1998/04/09 00:32:36 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -209,6 +209,9 @@ __archiveinstall: .USE
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS}
+.if defined(YHEADER)
+CLEANFILES+=	${SRCS:M*.y:.y=.h}
+.endif
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.7 1997/10/25 10:11:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1998/04/09 00:32:35 tv Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -10,7 +10,7 @@
 	(${MACHINE_ARCH} == "mips") 
 PROG=	cpp
 BINDIR=	/usr/libexec
-SRCS=	cccp.c cexp.c obstack.c version.c 
+SRCS=	cccp.c cexp.y obstack.c version.c 
 CPPFLAGS+=-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
 	-I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 	-DGCC_INCLUDE_DIR=\"\" \
@@ -18,9 +18,6 @@ CPPFLAGS+=-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
 	-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
 LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
-YFLAGS=
-
-CLEANFILES+= cexp.c
 
 .PATH:		$(.CURDIR)/../common
 .endif

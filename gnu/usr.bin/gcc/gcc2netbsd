@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.31 1998/02/05 23:47:24 cgd Exp $
+#	$NetBSD: gcc2netbsd,v 1.32 1998/04/09 00:32:34 tv Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -594,16 +594,14 @@ CLEANFILES+=	c-parse.c
 
 PROG=	cc1plus
 %% srcs cc1plus
+YHEADER=1
 
-lex.o pt.o spew.o: parse.h
+lex.c pt.c spew.c: parse-h
 
-CLEANFILES+=	parse.c parse.h
-
-parse.c parse.h: parse.y
-	$(YACC) -d $(.IMPSRC)
-	grep '^#define[         ]*YYEMPTY' y.tab.c >>y.tab.h
-	mv -f y.tab.c parse.c
-	mv -f y.tab.h parse.h
+parse-h: parse.h
+	grep '^#define[         ]*YYEMPTY' parse.c >>parse.h
+	@touch parse-h
+CLEANFILES+= parse-h
 
 .include "../Makefile.cc1"
 %% file cc1obj/Makefile
