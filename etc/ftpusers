@@ -1,6 +1,0 @@
-#	$NetBSD: ftpusers,v 1.2 1996/05/08 17:19:34 thorpej Exp $
-#
-# list of users disallowed any ftp access.
-# read by ftpd(8).
-root
-uucp
