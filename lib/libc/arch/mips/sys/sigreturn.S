@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.4 1998/09/27 22:59:40 jonathan Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigreturn.S,v 1.4 1998/09/27 22:59:40 jonathan Exp $")
+	ASMSTR("$NetBSD: sigreturn.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -50,5 +50,8 @@
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
+
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)

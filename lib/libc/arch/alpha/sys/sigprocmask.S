@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 1998/09/29 03:01:38 thorpej Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.4 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,6 +28,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 LEAF(sigprocmask, 3)
 	mov	a2, a5			/* safe */

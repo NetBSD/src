@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,8 +24,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsuspend.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $")
 #endif
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
 	movd	0(S_ARG0),S_ARG0	/* indirect to mask arg */

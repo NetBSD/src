@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,8 +24,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigprocmask.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $")
 #endif
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
 	movd	S_ARG1,r1		/* fetch new sigset pointer */

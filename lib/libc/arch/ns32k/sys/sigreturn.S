@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.7 1998/09/29 20:24:36 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.8 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -30,7 +30,10 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigreturn.S,v 1.7 1998/09/29 20:24:36 thorpej Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.8 1998/12/02 01:01:04 thorpej Exp $")
 #endif
+
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)

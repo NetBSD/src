@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.4 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,11 +44,14 @@
 #if 0
 	.asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.4 1998/10/08 02:27:59 eeh Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 /*
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,9 +43,12 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
 	tstl	sp@(8)			/* check new sigset pointer */

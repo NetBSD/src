@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,6 +57,9 @@
 	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
 	moveml sp@+,#0x0303
 #endif /* GPROF */
+
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
 
 /*
  * NOTE: Trap #1 is used for compat_13_sigreturn13 on the m68k!

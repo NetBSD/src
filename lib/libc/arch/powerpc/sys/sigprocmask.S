@@ -1,6 +1,9 @@
-/*	$NetBSD: sigprocmask.S,v 1.5 1998/11/24 11:14:57 tsubai Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 /*
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)

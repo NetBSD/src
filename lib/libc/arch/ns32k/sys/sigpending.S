@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,8 +24,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigpending.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $")
+	RCSID("$NetBSD: sigpending.S,v 1.5 1998/12/02 01:01:04 thorpej Exp $")
 #endif
+
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 _SYSCALL(sigpending,compat_13_sigpending13)
 	movd	r0,0(S_ARG1)		/* store old mask */

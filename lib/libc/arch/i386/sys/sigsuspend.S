@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.8 1998/09/26 23:49:34 christos Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.9 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,13 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigsuspend.S,v 1.8 1998/09/26 23:49:34 christos Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.9 1998/12/02 01:01:03 thorpej Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
 	movl	4(%esp),%eax		# fetch mask arg
