@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 1998/11/11 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 1998/11/13 09:19:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -126,15 +126,6 @@ cpu_fork(p1, p2)
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
-#ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
-		panic("cpu_fork: curproc");
-#endif
-#else
-#ifdef DIAGNOSTIC
-	if (p1 != &proc0)
-		panic("cpu_fork: curproc");
-#endif
 #endif
 
 	/* Copy the pcb */
