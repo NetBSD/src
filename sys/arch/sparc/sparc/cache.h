@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.22 2000/06/06 07:56:40 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.23 2001/11/13 03:04:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -128,6 +128,7 @@ enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
 extern int cache_alias_dist;		/* */
 extern int cache_alias_bits;
+extern u_long dvma_cachealign;
 
 /* Optimize cache alias macros on single architecture kernels */
 #if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
