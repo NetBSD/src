@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.1 2004/11/10 17:29:54 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.2 2004/11/24 22:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.1 2004/11/10 17:29:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.2 2004/11/24 22:19:27 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -65,9 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.1 2004/11/10 17:29:54 christos Exp 
  * ptc == /dev/pty[pqrs]?
  */
 
+/*
+ * All this hard-coding is really evil.
+ */
+#define TTY_GID		4	
+#define TTY_PERM	(S_IRUSR|S_IWUSR|S_IWGRP)
 #define TTY_TEMPLATE	"/dev/XtyXX"
 #define TTY_NAMESIZE	sizeof(TTY_TEMPLATE)
-/* XXX this needs to come from somewhere sane, and work with MAKEDEV */
 #define TTY_LETTERS	"pqrstuvwxyzPQRST"
 #define TTY_OLD_SUFFIX  "0123456789abcdef"
 #define TTY_NEW_SUFFIX  "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -75,10 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.1 2004/11/10 17:29:54 christos Exp 
 static int pty_makename(struct ptm_pty *, char *, size_t, dev_t, char);
 static int pty_allocvp(struct ptm_pty *, struct proc *, struct vnode **,
     dev_t, char);
+static void pty_getvattr(struct ptm_pty *, struct proc *, struct vattr *);
 
 struct ptm_pty ptm_bsdpty = {
 	pty_allocvp,
 	pty_makename,
+	pty_getvattr,
 	NULL
 };
 
@@ -126,5 +132,17 @@ pty_allocvp(struct ptm_pty *ptm, struct proc *p, struct vnode **vp, dev_t dev,
 		return error;
 	*vp = nd.ni_vp;
 	return 0;
+}
+
+
+static void
+/*ARGSUSED*/
+pty_getvattr(struct ptm_pty *ptm, struct proc *p, struct vattr *vattr)
+{
+	VATTR_NULL(vattr);
+	/* get real uid */
+	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_gid = TTY_GID;
+	vattr->va_mode = TTY_PERM;
 }
 #endif
