@@ -1,6 +1,8 @@
+/*	$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)schedule.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: schedule.c,v 1.2 1993/08/01 18:50:03 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $";
+#endif
 #endif /* not lint */
 
 # include	"trek.h"

@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.8 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.6 1994/12/22 09:36:26 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/04/22 10:58:17 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	trek
 SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \
@@ -14,5 +14,9 @@ MAN=	trek.6
 DPADD=	${LIBM}
 LDADD=	-lm
 HIDEGAME=hidegame
+
+.if make(install)
+SUBDIR+= USD.doc
+.endif
 
 .include <bsd.prog.mk>

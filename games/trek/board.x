@@ -1,3 +1,5 @@
+/*	$NetBSD: board.x,v 1.2 1995/04/22 10:58:30 cgd Exp $	*/
+
 # include	"trek.h"
 
 /*
