@@ -9,14 +9,13 @@ GDBSRCS=	blockframe.c breakpoint.c command.c copying.c core.c \
 		utils.c valarith.c valops.c valprint.c values.c \
 		version.c
 READLINESRCS=	funmap.c history.c keymaps.c readline.c
-SRCS=		$(CONFIGSRCS) $(GDBSRCS) $(READLINESRCS) init.c
+SRCS=		param.h $(CONFIGSRCS) $(GDBSRCS) $(READLINESRCS) init.c
 CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/config -I$(.CURDIR)/readline \
 		-DHAVE_VPRINTF -DVI_MODE -DKERNELDEBUG -DNEWVM
-LDADD=		-ltermcap
+LDADD+=		-ltermcap
+DPADD+=		/usr/lib/libtermcap.a
 YFLAGS=
 .PATH: $(.CURDIR)/config $(.CURDIR)/readline
-
-depend:
 
 .include "config/Makefile.$(MACHINE)"
 .include <bsd.prog.mk>
