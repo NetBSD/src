@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.25.4.1 1999/07/01 23:43:21 thorpej Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.25.4.2 1999/08/02 22:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,6 +36,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"

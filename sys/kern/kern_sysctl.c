@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.43.4.2 1999/07/01 23:43:20 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.43.4.3 1999/08/02 22:19:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -726,6 +726,8 @@ sysctl_doproc(name, namelen, where, sizep)
 	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
 		return (EINVAL);
 
+	proclist_lock_read();
+
 	pd = proclists;
 again:
 	for (p = LIST_FIRST(pd->pd_list); p != NULL;
@@ -788,6 +790,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
+	proclist_unlock_read();
 
 	if (where != NULL) {
 		*sizep = (caddr_t)dp - where;
@@ -814,7 +817,7 @@ fill_eproc(p, ep)
 	ep->e_sess = p->p_pgrp->pg_session;
 	ep->e_pcred = *p->p_cred;
 	ep->e_ucred = *p->p_ucred;
-	if (p->p_stat == SIDL || p->p_stat == SZOMB) {
+	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ep->e_vm.vm_rssize = 0;
 		ep->e_vm.vm_tsize = 0;
 		ep->e_vm.vm_dsize = 0;
