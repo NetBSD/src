@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.13 1993/10/18 07:36:13 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.14 1993/10/26 12:14:11 mycroft Exp $
  */
 
 /*
@@ -202,11 +202,11 @@ kbd_cmd(val, polling)
 		ack = nak = 0;
 		outb(KBOUTP, val);
 		if (polling)
-			for (i = 100000; i; i--)
+			for (i = 100000; i; i--) {
 				if (inb(KBSTATP) & KBS_DIB) {
 					register u_char c;
 					c = inb(KBDATAP);
-					if (c == KBR_ACK) {
+					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
 						return 1;
 					}
@@ -214,7 +214,11 @@ kbd_cmd(val, polling)
 						nak = 1;
 						break;
 					}
+#ifdef DIAGNOSTIC
+					printf("kbd_cmd: input char %x lost\n", c);
+#endif
 				}
+			}
 		else
 			for (i = 100000; i; i--) {
 				if (ack)
@@ -251,23 +255,25 @@ do_async_update(poll)
 		old_pos = pos;
 	}
 
-	if (leds != old_leds)
+	if (leds != old_leds) {
+		old_leds = leds;
 		if (!kbd_cmd(KBC_MODEIND, poll) ||
 		    !kbd_cmd(leds, poll)) {
 			printf("pc: timeout updating leds\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
-		} else
-			old_leds = leds;
-	if (typematic != old_typematic)
+		}
+	}
+	if (typematic != old_typematic) {
+		old_typematic = typematic;
 		if (!kbd_cmd(KBC_TYPEMATIC, poll) ||
 		    !kbd_cmd(typematic, poll)) {
 			printf("pc: timeout updating typematic rate\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
-		} else
-			old_typematic = typematic;
+		}
+	}
 }
 
-static inline void
+static void
 async_update()
 {
 
@@ -296,29 +302,37 @@ _pcprobe(ps)
 	 * Set Crtat to MONO_BUF if it exists; otherwise use CGA_BUF.
 	 */
 
-	cp = (u_short volatile *)ISA_HOLE_VADDR(MONO_BUF);
-	was = *cp;
-	*cp = (u_short) 0xA55A;
-	if (*cp == 0xA55A) {
-		ps->ps_iobase = iobase = MONO_BASE;
-		ps->ps_flags &= ~PSF_COLOR;
-		Crtat = (u_short *)cp;
-		goto found;
+	if (!Crtat) {
+		cp = (u_short volatile *)ISA_HOLE_VADDR(MONO_BUF);
+		was = *cp;
+		*cp = (u_short) 0xA55A;
+		if (*cp == 0xA55A) {
+			ps->ps_flags &= ~PSF_COLOR;
+			Crtat = (u_short *)cp;
+			goto found;
+		}
+
+		cp = (u_short volatile *)ISA_HOLE_VADDR(CGA_BUF);
+		was = *cp;
+		*cp = (u_short) 0xA55A;
+		if (*cp == 0xA55A) {
+			ps->ps_flags |= PSF_COLOR;
+			Crtat = (u_short *)cp;
+			goto found;
+		}
+
+		return 0;
+
+	    found:
 	}
 
-	cp = (u_short volatile *)ISA_HOLE_VADDR(CGA_BUF);
-	was = *cp;
-	*cp = (u_short) 0xA55A;
-	if (*cp == 0xA55A) {
-		ps->ps_iobase = iobase = CGA_BASE;
-		ps->ps_flags |= PSF_COLOR;
-		Crtat = (u_short *)cp;
-		goto found;
-	}
+	iobase = ps->ps_iobase;
+	if (!iobase)
+		if (ps->ps_flags & PSF_COLOR)
+			iobase = ps->ps_iobase = CGA_BASE;
+		else
+			iobase = ps->ps_iobase = MONO_BASE;
 
-	return 0;
-
-    found:
 	/* Extract cursor location */
 	outb(iobase, 14);
 	cursorat = inb(iobase + 1) << 8;
@@ -345,8 +359,10 @@ pcprobe(parent, cf, aux)
 	struct isa_attach_args *ia = aux;
 	struct pc_state *ps = &pc_state[cf->cf_unit];
 
+#ifdef DIAGNOSTIC
 	if (cf->cf_unit != 0)
 		panic("pcprobe: you are a fool");
+#endif
 
 	/* enable interrupts and keyboard, etc. */
 	if (!kbc_8042cmd(K_LDCMDBYTE)) {
@@ -366,19 +382,31 @@ pcprobe(parent, cf, aux)
 	if (inb(KBDATAP) != KBR_RSTDONE)
 		printf("pcprobe: reset error 2\n");
 
+	/* for hard-wired config */
+	/* pc0 at isa? port 0x3d4 iomem 0xb8000 flags 1 */
+	/* pc0 at isa? port 0x3b4 iomem 0xb0000 flags 0 */
+	if (ia->ia_iobase != IOBASEUNK)
+		ps->ps_iobase = ia->ia_iobase;
+	if (ia->ia_maddr != MADDRUNK)
+		Crtat = (u_short *)ISA_HOLE_VADDR(ia->ia_maddr);
+	ps->ps_flags |= cf->cf_flags & PSF_COLOR;
+
 	if (!_pcprobe(ps))
 		return 0;
 
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(pcforceintr, aux);
-		if (ia->ia_irq == IRQNONE)
-			return 0;
+		if (ia->ia_irq == IRQNONE) {
+			/* XXXX */
+			printf("pcprobe: no interrupt\n");
+			ia->ia_irq = IRQ1;
+		}
 	}
 
 	ia->ia_iobase = ps->ps_iobase;
 	ia->ia_iosize = 16;
 	ia->ia_maddr = ISA_PHYSADDR(Crtat);
-	ia->ia_msize = COL * ROW * CHR;
+	ia->ia_msize = (COL * ROW * CHR + 0x3ff) & ~0x3ff;	/* round up */
 	ia->ia_drq = DRQUNK;
 	return 1;
 }
@@ -387,8 +415,10 @@ static void
 pcforceintr(aux)
 	void *aux;
 {
+	extern unsigned imen, ipending;
 
 	(void) kbd_cmd(KBC_ECHO, 1);
+	printf("pcforceintr: %x %x %x %x\n", inb(IO_ICU1), inb(IO_ICU2), ipending, imen);
 }
 
 static void
@@ -402,10 +432,7 @@ pcattach(self, parent, aux)
 	u_short iobase = ia->ia_iobase;
 	u_int cursorat;
 
-	if (ps->ps_flags & PSF_COLOR)
-		printf(": color\n");
-	else
-		printf(": mono\n");
+	printf(": i8042, %s\n", ps->ps_flags & PSF_COLOR ? "color" : "mono");
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 
 	ps->ps_at = FG_LIGHTGREY | BG_BLACK;
@@ -1628,6 +1655,18 @@ pc_xmode_off(ps)
 
 }
 
+greybar(n)
+	int n;
+{
+	register u_char x = (n << 4) | 7;
+	register u_char *p = (u_char *)ISA_HOLE_VADDR(CGA_BUF) + 1;
+	register int i;
+
+	for (i = 2000; i; i--)
+		*p = x, p += 2;
+	for (i = 1000000; i; i--);
+}
+
 void
 pccnprobe(cp)
 	struct consdev *cp;
@@ -1653,9 +1692,10 @@ void
 pccninit(cp)
 	struct consdev *cp;
 {
-	/*
-	 * For now, don't screw with it.
-	 */
+	struct pc_state *ps = &pc_state[PCUNIT(cp->cn_dev)];
+
+	/* set a default attribute */
+	ps->ps_at = FG_LIGHTGREY | BG_BLACK;
 }
 
 int
@@ -1665,6 +1705,7 @@ pccngetc(dev)
 	struct pc_state *ps = &pc_state[PCUNIT(dev)];
 	register int s;
 	register char *cp;
+	u_char oldkernel = kernel;
 
 	if (ps->ps_flags & PSF_RAW)
 		return 0;
@@ -1672,7 +1713,7 @@ pccngetc(dev)
 	s = spltty();		/* block pcrint while we poll */
 	kernel = 1;
 	cp = sget(ps, 0);
-	kernel = 0;
+	kernel = oldkernel;
 	splx(s);
 	if (*cp == '\r')
 		return '\n';
@@ -1685,11 +1726,12 @@ pccnputc(dev, c)
 	char c;
 {
 	struct pc_state *ps = &pc_state[PCUNIT(dev)];
+	u_char oldkernel = kernel;
 
 	kernel = 1;
 	if (c == '\n')
 		sput(ps, "\r\n", 2);
 	else
 		sput(ps, &c, 1);
-	kernel = 0;
+	kernel = oldkernel;
 }
