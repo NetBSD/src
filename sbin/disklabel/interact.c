@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.9 1999/05/03 09:45:01 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.10 1999/09/05 07:27:55 abs Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.9 1999/05/03 09:45:01 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.10 1999/09/05 07:27:55 abs Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -252,7 +252,7 @@ cmd_label(lp, s, fd)
 
 	i = getinput("?", "Label disk", "n", line);
 
-	if (i <= 0 || *line != 'y')
+	if (i <= 0 || (*line != 'y' && *line != 'Y') )
 		return;
 
 	if (checklabel(lp) != 0) {
