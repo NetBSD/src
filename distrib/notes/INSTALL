@@ -232,7 +232,7 @@ Upgrading a previously-installed NetBSD System:
 Using online NetBSD documentation
 ----- ------ ------ -------------
 
-Documentation is available if you first install the "man10"
+Documentation is available if you first install the manual
 distribution set.  Traditionally, the UN*X "man pages" (documentation)
 are denoted by 'name(section)'.  Some examples of this are
 
@@ -373,6 +373,8 @@ The NetBSD core group:
 J.T. Conklin		<jtc@NetBSD.ORG>
 Charles Hannum		<mycroft@NetBSD.ORG>
 Paul Kranenburg		<pk@NetBSD.ORG>
+Jason Thorpe		<thorpej@NetBSD.ORG>
+Christos Zoulas 	<christos@NetBSD.ORG>
 
 The port-masters (and their ports):
 Allen Briggs		<briggs@mail.vt.edu>		(mac68k)
@@ -407,10 +409,9 @@ Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Scott Reynolds		<scottr@edsi.org>
-Thor Lancelot Simon	<tls@netbd.org>
+Thor Lancelot Simon	<tls@NetBSD.ORG>
 Wolfgang Solfrank	<ws@tools.de>
 Frank van der Linden	<fvdl@NetBSD.ORG>
-Christos Zoulas 	<christos@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----
