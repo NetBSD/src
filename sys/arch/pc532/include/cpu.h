@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2000/05/26 21:20:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2000/08/25 01:04:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,8 +94,8 @@ extern struct cpu_info cpu_info_store;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;	/* resched() was called */
-#define	need_resched()	(want_resched = 1, setsoftast())
+int	want_resched;		/* resched() was called */
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process from the softclock

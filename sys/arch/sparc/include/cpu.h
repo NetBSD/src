@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2000/06/05 20:47:47 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.41 2000/08/25 01:04:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,7 +151,7 @@ extern int	want_ast;
  * or after the current trap/syscall if in system mode.
  */
 extern int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, want_ast = 1)
+#define	need_resched(ci)		(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.2 2000/08/22 21:27:22 bjh21 Exp $ */
+/* $NetBSD: intr.h,v 1.3 2000/08/25 01:04:07 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -107,7 +107,8 @@ extern int hardsplx(int);
 #define signotify(p)	setsoftast()
 extern void setsoftast(void);
 
-extern void need_resched(void);
+struct cpu_info;
+extern void need_resched(struct cpu_info *);
 extern void need_proftick(struct proc *);
 
 /*

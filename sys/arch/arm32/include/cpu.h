@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2000/06/07 04:59:29 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2000/08/25 01:04:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -254,7 +254,7 @@ extern struct cpu_info cpu_info_store;
 extern int current_intr_depth;
 
 /* stubs.c */
-void need_resched	__P((void));
+void need_resched	__P((struct cpu_info *));
 void need_proftick	__P((struct proc *p));
 
 /* locore.S */

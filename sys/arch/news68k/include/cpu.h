@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2000/05/26 21:20:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2000/08/25 01:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,7 +130,7 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define need_resched()		do { want_resched++; aston(); } while(0)
+#define need_resched(ci)	do { want_resched++; aston(); } while(0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
