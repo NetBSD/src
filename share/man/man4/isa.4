@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.5.2.1 1997/11/10 23:20:29 thorpej Exp $
+.\"	$NetBSD: isa.4,v 1.5.2.2 1997/11/11 00:44:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -99,12 +99,12 @@ RT four-port serial cards.
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
-.It ed
-Western Digital/SMC 80x3 and Ultra, and 3Com 3c503 Ethernet interfaces.
+.It ec
+3Com 3c503 Ethernet interfaces.
 .It eg
-3Com 3c505 Ethernet interface.
+3Com 3c505 Ethernet interfaces.
 .It el
-3Com 3c501 Ethernet interface.
+3Com 3c501 Ethernet interfaces.
 .It ep
 3Com 3c509 Etherlink III family Ethernet interface.
 .It fe
@@ -123,6 +123,11 @@ Ethernet interfaces based on the AMD LANCE chip,
 including BICC Isolan, Novell NE2100, and Digital DEPCA.
 .It ne
 Novel NE2000 and compatible Ethernet interfaces.
+.It sm
+SMC91C9x-based Ethernet interfaces.
+.It we
+Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ Ethernet
+interfaces.
 .El
 .Ss Sound cards
 .Bl -tag -width speaker -offset indent -compact
@@ -168,6 +173,7 @@ the supported variants on other buses.
 .Xr rtfps 4 ,
 .Xr sb 4 ,
 .Xr sea 4 ,
+.Xr sm 4 ,
 .Xr uha 4 ,
 .Xr wd 4 ,
 .Xr wds 4 ,
