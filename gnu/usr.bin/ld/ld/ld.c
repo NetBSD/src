@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.34 1994/08/21 15:18:44 pk Exp $
+ *	$Id: ld.c,v 1.35 1994/10/19 20:15:35 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1353,6 +1353,10 @@ enter_global_ref(lsp, name, entry)
 		} else {
 			global_alias_count++;
 		}
+#if 0
+		if (sp->flags & GS_REFERENCED)
+			sp->alias->flags |= GS_REFERENCED;
+#endif
 	}
 
 	if (entry->flags & E_DYNAMIC) {
@@ -1510,6 +1514,14 @@ enter_global_ref(lsp, name, entry)
 
 		case N_BSS:
 			reftype = "defined in BSS section";
+			break;
+
+		case N_INDR:
+			reftype = "alias";
+			break;
+
+		case N_SIZE:
+			reftype = "size spec";
 			break;
 
 		default:
@@ -1709,11 +1721,11 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 
 #ifdef DEBUG
 printf(
-"global symbols %d (defined %d, undefined %d, aliases %d, warnings 2 * %d), \
-locals: %d, debug symbols: %d, set_symbols %d\n",
+"global symbols %d (defined %d, undefined %d, aliases %d, warnings 2 * %d, \
+size symbols %d), locals: %d, debug symbols: %d, set_symbols %d\n",
 	global_sym_count,
 	defined_global_sym_count, undefined_global_sym_count,
-	global_alias_count, warn_sym_count,
+	global_alias_count, warn_sym_count, size_sym_count,
 	local_sym_count, debugger_sym_count, set_symbol_count);
 #endif
 }
@@ -1735,6 +1747,7 @@ digest_pass1()
 	 * definition find this way.
 	 */
 	FOR_EACH_SYMBOL(i, sp) {
+		symbol *spsave;
 		struct localsymbol *lsp;
 		int             defs = 0;
 
@@ -1798,8 +1811,13 @@ digest_pass1()
 						&& (type & N_TYPE) != N_FN
 						&& (type & N_TYPE) != N_SIZE) {
 				/* non-common definition */
+#if 0
 				if (defs++ && sp->value != p->n_value
 				    && entry_symbol/*XXX*/) {
+#endif
+				if (defs++ &&
+				    sp->def_lsp &&
+				    sp->def_lsp->nzlist.nz_value != p->n_value) {
 					sp->mult_defs = 1;
 					multiple_def_count++;
 				}
@@ -1843,6 +1861,7 @@ digest_pass1()
 			continue;
 		}
 
+		spsave=sp;
 	again:
 		for (lsp = sp->sorefs; lsp; lsp = lsp->next) {
 			register struct nlist *p = &lsp->nzlist.nlist;
@@ -1855,6 +1874,7 @@ digest_pass1()
 				sp->so_defined = type;
 				sp->aux = N_AUX(p);
 				if (lsp->entry->flags & E_SECONDCLASS)
+					/* Keep looking for something better */
 					continue;
 				lsp->entry->flags |= E_SYMBOLS_USED;
 				if (sp->flags & GS_REFERENCED)
@@ -1862,7 +1882,8 @@ digest_pass1()
 				else
 					sp->flags |= GS_REFERENCED;
 #ifdef DEBUG
-printf("shr: %s gets defined to %x with value %x\n", sp->name, type, sp->value);
+printf("pass1: SO definition for %s, type %x in %s at %#x\n",
+	sp->name, type, get_file_name(lsp->entry), p->n_value);
 #endif
 				if (undefined_global_sym_count < 0)
 					errx(1,
@@ -1875,6 +1896,7 @@ printf("shr: %s gets defined to %x with value %x\n", sp->name, type, sp->value);
 				break;
 			}
 		}
+		sp=spsave;
 	} END_EACH_SYMBOL;
 
 	if (setv_fill_count != set_sect_size/sizeof(long))
@@ -2214,14 +2236,27 @@ digest_pass2()
 			continue;
 
 		if (sp->alias &&
-			(relocatable_output || building_shared_object ||
-				(sp->alias->defined && !sp->alias->so_defined)))
+		    (relocatable_output || building_shared_object ||
+		     (sp->alias->defined && !sp->alias->so_defined))) {
 			/*
 			 * The alias points at a defined symbol, so it
 			 * must itself be counted as one too, in order to
 			 * compute the correct number of symbol table entries.
 			 */
+			if (!sp->defined) {
+				/*
+				 * Change aliased symbol's definition too.
+				 * These things happen if shared object commons
+				 * or data is going into our symbol table.
+				 */
+				if (sp->so_defined != (N_INDR+N_EXT))
+					warnx( "pass2: %s: alias isn't",
+						sp->name);
+				sp->defined = sp->so_defined;
+				sp->so_defined = 0;
+			}
 			defined_global_sym_count++;
+		}
 
 		if ((sp->defined & N_TYPE) == N_SETV) {
 			/*
@@ -2281,7 +2316,11 @@ digest_pass2()
 				sp->value = sp->def_lsp->nzlist.nz_value;
 			if (sp->so_defined &&
 			    (sp->def_lsp->entry->flags & E_SECONDCLASS))
+				/* Flag second-hand definitions */
 				undefined_global_sym_count++;
+			if (sp->flags & GS_TRACE)
+				printf("symbol %s assigned to location %#x\n",
+					sp->name, sp->value);
 		}
 
 		/*
