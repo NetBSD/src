@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.187 2003/02/26 17:39:07 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.188 2003/04/08 01:51:46 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4176,12 +4176,12 @@ _C_LABEL(sparc_v8_muldiv):
 	bgu	0b;			\
 	 add	%o0, 8, %o0;		\
 
-	OVERWRITE(.mul, v8_smul, v8_smul_len)
-	OVERWRITE(.umul, v8_umul, v8_umul_len)
-	OVERWRITE(.div, v8_sdiv, v8_sdiv_len)
-	OVERWRITE(.udiv, v8_udiv, v8_udiv_len)
-	OVERWRITE(.rem, v8_srem, v8_srem_len)
-	OVERWRITE(.urem, v8_urem, v8_urem_len)
+	OVERWRITE(.mul,  v8_smul, .Lv8_smul_len)
+	OVERWRITE(.umul, v8_umul, .Lv8_umul_len)
+	OVERWRITE(.div,  v8_sdiv, .Lv8_sdiv_len)
+	OVERWRITE(.udiv, v8_udiv, .Lv8_udiv_len)
+	OVERWRITE(.rem,  v8_srem, .Lv8_srem_len)
+	OVERWRITE(.urem, v8_urem, .Lv8_urem_len)
 #undef	OVERWRITE
 	ret
 	 restore
@@ -4189,25 +4189,25 @@ _C_LABEL(sparc_v8_muldiv):
 v8_smul:
 	retl
 	 smul	%o0, %o1, %o0
-v8_smul_len = .-v8_smul
+.Lv8_smul_len = .-v8_smul
 v8_umul:
 	retl
 	 umul	%o0, %o1, %o0
 !v8_umul_len = 2 * 4
-v8_umul_len = .-v8_umul
+.Lv8_umul_len = .-v8_umul
 v8_sdiv:
 	sra	%o0, 31, %g2
 	wr	%g2, 0, %y
 	nop; nop; nop
 	retl
 	 sdiv	%o0, %o1, %o0
-v8_sdiv_len = .-v8_sdiv
+.Lv8_sdiv_len = .-v8_sdiv
 v8_udiv:
 	wr	%g0, 0, %y
 	nop; nop; nop
 	retl
 	 udiv	%o0, %o1, %o0
-v8_udiv_len = .-v8_udiv
+.Lv8_udiv_len = .-v8_udiv
 v8_srem:
 	sra	%o0, 31, %g3
 	wr	%g3, 0, %y
@@ -4216,7 +4216,7 @@ v8_srem:
 	smul	%g2, %o1, %g2
 	retl
 	 sub	%o0, %g2, %o0
-v8_srem_len = .-v8_srem
+.Lv8_srem_len = .-v8_srem
 v8_urem:
 	wr	%g0, 0, %y
 	nop; nop; nop
@@ -4224,7 +4224,7 @@ v8_urem:
 	smul	%g2, %o1, %g2
 	retl
 	 sub	%o0, %g2, %o0
-v8_urem_len = .-v8_urem
+.Lv8_urem_len = .-v8_urem
 
 #endif /* SUN4M || SUN4D */
 
