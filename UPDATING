@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.112 2004/03/16 14:33:03 keihan Exp $
+$NetBSD: UPDATING,v 1.113 2004/03/18 11:03:57 dan Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,14 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040318:
+	A bug in the cgd(4) blowfish code was corrected, without
+	provision of backwards compatibility, after several public
+	notices over several months. Users of cgd with blowfish cipher
+	ONLY must dump their data before updating their kernels, and
+	recreate cgd's and restore data using the new kernel. See
+	(recent message to current-users, URL when mail-index has updated)
 
 20040313:
 	On acorn32, the opms and qms drivers have been withdrawn, and
