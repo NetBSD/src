@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 1994/10/26 07:50:42 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 1995/03/26 17:08:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -51,7 +51,7 @@
 #endif
 #define	_ASM_LABEL(name)	name
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	_ENTRY(name) \
 	.text; .even; .globl name; .type name,@function; name:
 #else
