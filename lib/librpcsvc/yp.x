@@ -33,10 +33,10 @@
 
 #ifndef RPC_HDR
 %#include <sys/cdefs.h>
-%#ifndef lint
+%#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)yp.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: yp.x,v 1.4 1999/07/02 15:44:13 simonb Exp $");
-%#endif /* not lint */
+%__RCSID("$NetBSD: yp.x,v 1.4.12.1 2004/07/02 18:19:42 he Exp $");
+%#endif /* not __lint__ */
 #endif
 
 const YPMAXRECORD = 1024;
