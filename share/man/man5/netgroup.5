@@ -1,4 +1,4 @@
-.\"	$NetBSD: netgroup.5,v 1.4 1997/11/26 17:42:55 tv Exp $
+.\"	$NetBSD: netgroup.5,v 1.5 1998/04/29 11:33:57 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,22 +76,23 @@ should normally be used to access the
 database.
 .Pp
 These functions operate on the
-.Xr db
-version of the 
+.Xr db 3
+version of the
 .Nm netgroup
 .Nm (netgroup.db)
 file which can be generated using
-.Xr netgroup_mkdb .
+.Xr netgroup_mkdb 8 .
 If that file is not present, and the system supports
 .Sy NIS,
-then the 
+then the
 .Nm netgroup
 .Sy NIS
-maps are used. The 
+maps are used.
+The
 .Sy NIS
 maps are also used if the
 .Nm netgroup
-file contains a 
+file contains a
 .Sy +
 entry.
 .Pp
