@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.7 2001/11/25 10:39:35 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.8 2001/12/02 10:47:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,25 @@ int sigpid = 0;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
 #define SDB_FPSTATE	0x04
+#endif
+
+/*
+ * Test for a null floating point frame given a pointer to the start
+ * of an fsave'd frame.
+ */
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+#define	FPFRAME_IS_NULL(fp)						    \
+	    ((fputype == FPU_68060 &&					    \
+	      ((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL) || \
+	     (fputype != FPU_68060  &&					    \
+	      ((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0))
+#endif
+#define FPFRAME_IS_NULL(fp) \
+	    (((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0)
+#else
+#define FPFRAME_IS_NULL(fp) \
+	    (((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
 #endif
 
 /*
@@ -583,25 +602,28 @@ cpu_getmcontext(l, mcp, flags)
 
 	if (fputype != FPU_NONE) {
 		/* Save FPU context. */
-		struct fpframe fpf;
+		struct fpframe *fpf = &l->l_addr->u_pcb.pcb_fpregs;
 
-		/* At the very least, we need to save a null frame */
-		m68881_save(&fpf);
-		mcp->__mc_pad.mc_frame.fpf_u1 = fpf.FPF_u1;
+		/*
+		 * If we're dealing with the current lwp, we need to
+		 * save its FP state. Otherwise, its state is already
+		 * store in its PCB.
+		 */
+		if (l == curproc)
+			m68881_save(fpf);
+
+		mcp->__mc_pad.mc_frame.fpf_u1 = fpf->FPF_u1;
 
 		/* If it's a null frame there's no need to save/convert. */
-		if (!FPFRAME_IS_NULL(&fpf)) {
-			__fpregset_t *fpr = &mcp->__fpregs;
-
-			fpr->__fp_pcr    = fpf.fpf_fpcr;
-			fpr->__fp_psr    = fpf.fpf_fpsr;
-			fpr->__fp_piaddr = fpf.fpf_fpiar;
-			(void)memcpy(&fpr->__fp_fpregs, &fpf.fpf_regs,
-			    sizeof (fpr->__fp_fpregs));
-			mcp->__mc_pad.mc_frame.fpf_u2 = fpf.FPF_u2;
+		if (!FPFRAME_IS_NULL(fpf)) {
+			mcp->__mc_pad.mc_frame.fpf_u2 = fpf->FPF_u2;
+			(void)memcpy(mcp->__fpregs.__fp_fpregs,
+			    fpf->fpf_regs, sizeof(fpf->fpf_regs));
+			mcp->__fpregs.__fp_pcr = fpf->fpf_fpcr;
+			mcp->__fpregs.__fp_psr = fpf->fpf_fpsr;
+			mcp->__fpregs.__fp_piaddr = fpf->fpf_fpiar;
+			*flags |= _UC_FPU;
 		}
-
-		*flags |= _UC_FPU;
 	}
 }
 
@@ -661,30 +683,65 @@ cpu_setmcontext(l, mcp, flags)
 		frame->f_regs[A5] = gr[_REG_A5];
 		frame->f_regs[A6] = gr[_REG_A6];
 		frame->f_regs[SP] = gr[_REG_A7];
-		frame->f_sr       = gr[_REG_PS];
-		frame->f_pc       = gr[_REG_PC];
+		frame->f_sr = gr[_REG_PS];
+		frame->f_pc = gr[_REG_PC];
 	}
 
-	if ((flags & (_UC_FPU|_UC_M68K_UC_USER)) == _UC_FPU &&
-	    fputype != FPU_NONE) {
-		/* Restore Floating Point State */
-		struct fpframe fpf;
+	if (fputype != FPU_NONE) {
+		const __fpregset_t *fpr = &mcp->__fpregs;
+		struct fpframe *fpf = &l->l_addr->u_pcb.pcb_fpregs;
 
-		/* Copy the first section of the FP frame */
-		fpf.FPF_u1 = mcp->__mc_pad.mc_frame.fpf_u1;
+		switch (flags & (_UC_FPU | _UC_M68K_UC_USER)) {
+		case _UC_FPU:
+			/*
+			 * We're restoring FPU context saved by the above
+			 * cpu_getmcontext(). We can do a full frestore if
+			 * something other than an null frame was saved.
+			 */
+			fpf->FPF_u1 = mcp->__mc_pad.mc_frame.fpf_u1;
+			if (!FPFRAME_IS_NULL(fpf)) {
+				fpf->FPF_u2 = mcp->__mc_pad.mc_frame.fpf_u2;
+				(void)memcpy(fpf->fpf_regs,
+				    fpr->__fp_fpregs, sizeof(fpf->fpf_regs));
+				fpf->fpf_fpcr = fpr->__fp_pcr;
+				fpf->fpf_fpsr = fpr->__fp_psr;
+				fpf->fpf_fpiar = fpr->__fp_piaddr;
+			}
+			break;
 
-		/* Only copy the remainder if it's not a null frame */
-		if (!FPFRAME_IS_NULL(&fpf)) {
-			const __fpregset_t *fpr = &mcp->__fpregs;
-			fpf.fpf_fpcr  = fpr->__fp_pcr;
-			fpf.fpf_fpsr  = fpr->__fp_psr;
-			fpf.fpf_fpiar = fpr->__fp_piaddr;
-			(void)memcpy(&fpf.fpf_regs, &fpr->__fp_fpregs,
-			    sizeof (fpf.fpf_regs));
-			fpf.FPF_u2 = mcp->__mc_pad.mc_frame.fpf_u2;
+		case _UC_FPU | _UC_M68K_UC_USER:
+			/*
+			 * We're restoring FPU context saved by the
+			 * userland _getcontext_() function. Since there
+			 * is no FPU frame to restore. We assume the FPU was
+			 * "idle" when the frame was created, so use the
+			 * cached idle frame.
+			 */
+			fpf->FPF_u1 = m68k_cached_fpu_idle_frame.FPF_u1;
+			fpf->FPF_u2 = m68k_cached_fpu_idle_frame.FPF_u2;
+			(void)memcpy(fpf->fpf_regs, fpr->__fp_fpregs,
+			    sizeof(fpf->fpf_regs));
+			fpf->fpf_fpcr = fpr->__fp_pcr;
+			fpf->fpf_fpsr = fpr->__fp_psr;
+			fpf->fpf_fpiar = fpr->__fp_piaddr;
+			break;
+
+		default:
+			/*
+			 * The saved context contains no FPU state.
+			 * Restore a NULL frame.
+			 */
+			fpf->FPF_u1.FPF_null = 0;
+			break;
 		}
 
-		m68881_restore(&fpf);
+		/*
+		 * We only need to restore FP state right now if we're
+		 * dealing with curproc. Otherwise, it'll be restored
+		 * (from the PCB) when this lwp is given the cpu.
+		 */
+		if (l == curproc)
+			m68881_restore(fpf);
 	}
 
 	return (0);
