@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: symtab.h,v 1.1 1994/01/28 12:40:56 pk Exp $
+	$Id: symtab.h,v 1.2 1995/01/26 09:09:40 mycroft Exp $
 */
 
 #if !defined (SYMTAB_H)
@@ -750,7 +750,7 @@ struct symtab
        source file.  "position" means something we can lseek() to; it
        is not guaranteed to be useful any other way.  */
 
-    int *line_charpos;
+    fpos_t *line_charpos;
 
     /* Language of this source file.  */
 
