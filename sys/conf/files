@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.670 2004/05/01 19:40:39 petrov Exp $
+#	$NetBSD: files,v 1.671 2004/05/03 20:10:35 petrov Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -143,7 +143,7 @@ defparam			SB_MAX
 # UVM options
 #
 defflag	opt_uvmhist.h		UVMHIST UVMHIST_PRINT
-defflag	opt_uvm.h		USE_TOPDOWN_VM UVMMAP_COUNTERS
+defflag	opt_uvm.h		USE_TOPDOWN_VM UVMMAP_NOCOUNTERS
 
 # file system options
 #
