@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.11 2002/12/28 20:40:21 reinoud Exp $	*/
+/*	$NetBSD: stubs.c,v 1.12 2003/03/23 15:49:25 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -126,6 +126,8 @@ dumpsys()
 
 	/* Save registers. */
 	savectx(&dumppcb);
+	/* flush everything out of caches */
+	cpu_dcache_wbinv_all();
 
 	if (dumpdev == NODEV)
 		return;
@@ -164,9 +166,13 @@ dumpsys()
 		    + (bootconfig.dram[block].pages * NBPG)); addr += NBPG) {
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
-	                pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
+			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ);
+			pmap_update(pmap_kernel());
+
 			error = (*bdev->d_dump)(dumpdev,
 			    blkno, (caddr_t) dumpspace, NBPG);
+			pmap_kremove(dumpspace, NBPG);
+			pmap_update(pmap_kernel());
 			if (error) break;
 			blkno += btodb(NBPG);
 			len += NBPG;
