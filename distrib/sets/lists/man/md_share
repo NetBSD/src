@@ -1,16 +1,7 @@
-# $NetBSD: md_share,v 1.96 2000/07/28 00:17:36 wiz Exp $
+# $NetBSD: md_share,v 1.97 2000/08/03 09:52:48 ad Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
-./usr/share/man/cat1/i386/cursor.0
-./usr/share/man/cat1/i386/fed.0
-./usr/share/man/cat1/i386/fontedit.0
-./usr/share/man/cat1/i386/kcon.0
-./usr/share/man/cat1/i386/loadfont.0
-./usr/share/man/cat1/i386/mcon.0
-./usr/share/man/cat1/i386/scon.0
-./usr/share/man/cat1/i386/vt220keys.0
-./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/rtld.0
 ./usr/share/man/cat1/x68k/aout2hux.0
@@ -19,7 +10,6 @@
 ./usr/share/man/cat1/x68k/loadkmap.0
 ./usr/share/man/cat1/x68k/palette.0
 ./usr/share/man/cat1/x68k/tvctrl.0
-./usr/share/man/cat3/i386/keycap.0
 ./usr/share/man/cat4/amiga/afsc.0
 ./usr/share/man/cat4/amiga/ahsc.0
 ./usr/share/man/cat4/amiga/atzsc.0
@@ -248,7 +238,6 @@
 ./usr/share/man/cat4/x68k/mfp.0
 ./usr/share/man/cat4/x68k/neptune.0
 ./usr/share/man/cat4/x68k/pow.0
-./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot.0
 ./usr/share/man/cat8/alpha/installboot.0
@@ -290,10 +279,7 @@
 ./usr/share/man/cat8/i386/boot_console.0
 ./usr/share/man/cat8/i386/dosboot.0
 ./usr/share/man/cat8/i386/installboot.0
-./usr/share/man/cat8/i386/ispcvt.0
-./usr/share/man/cat8/i386/kbdio.0
 ./usr/share/man/cat8/i386/makedev.0
-./usr/share/man/cat8/i386/vgaio.0
 ./usr/share/man/cat8/i386/w95boot.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/iteconfig.0
@@ -350,15 +336,6 @@
 ./usr/share/man/man1/atari/edahdi.1
 ./usr/share/man/man1/atari/msconfig.1
 ./usr/share/man/man1/grfinfo.1
-./usr/share/man/man1/i386/cursor.1
-./usr/share/man/man1/i386/fed.1
-./usr/share/man/man1/i386/fontedit.1
-./usr/share/man/man1/i386/kcon.1
-./usr/share/man/man1/i386/loadfont.1
-./usr/share/man/man1/i386/mcon.1
-./usr/share/man/man1/i386/scon.1
-./usr/share/man/man1/i386/vt220keys.1
-./usr/share/man/man1/i386/vttest.1
 ./usr/share/man/man1/ld.so.1
 ./usr/share/man/man1/rtld.1
 ./usr/share/man/man1/x68k/aout2hux.1
@@ -367,7 +344,6 @@
 ./usr/share/man/man1/x68k/loadkmap.1
 ./usr/share/man/man1/x68k/palette.1
 ./usr/share/man/man1/x68k/tvctrl.1
-./usr/share/man/man3/i386/keycap.3
 ./usr/share/man/man4/amiga/afsc.4
 ./usr/share/man/man4/amiga/ahsc.4
 ./usr/share/man/man4/amiga/atzsc.4
@@ -596,7 +572,6 @@
 ./usr/share/man/man4/x68k/mfp.4
 ./usr/share/man/man4/x68k/neptune.4
 ./usr/share/man/man4/x68k/pow.4
-./usr/share/man/man5/i386/keycap.5
 ./usr/share/man/man8/alpha/MAKEDEV.8
 ./usr/share/man/man8/alpha/boot.8
 ./usr/share/man/man8/alpha/installboot.8
@@ -638,10 +613,7 @@
 ./usr/share/man/man8/i386/boot_console.8
 ./usr/share/man/man8/i386/dosboot.8
 ./usr/share/man/man8/i386/installboot.8
-./usr/share/man/man8/i386/ispcvt.8
-./usr/share/man/man8/i386/kbdio.8
 ./usr/share/man/man8/i386/makedev.8
-./usr/share/man/man8/i386/vgaio.8
 ./usr/share/man/man8/i386/w95boot.8
 ./usr/share/man/man8/i386/zzz.8
 ./usr/share/man/man8/iteconfig.8
