@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.13 2001/05/20 12:57:57 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.14 2001/05/20 13:14:54 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1411,7 +1411,9 @@ wi_init(ifp)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * Prism2 Firmware version less than 0.8 variant3
+			 * ONLY HWB3163 EVAL-CARD Firmware version
+			 * less than 0.8 variant3
+			 *
 			 *   If promiscuous mode disable, Prism2 chip
 			 *  does not work with WEP .
 			 * It is under investigation for details.
@@ -1708,7 +1710,7 @@ wi_get_id(sc)
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_PRISM2_5:
-			printf("PRISM2.5 MAC:ISL3873");
+			printf("RF:PRISM2.5 MAC:ISL3873");
 			sc->sc_prism2 = 1;
 			break;
 		default:
