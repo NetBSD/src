@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.19 2002/06/02 14:44:40 drochner Exp $	*/
+/*	$NetBSD: bus.c,v 1.20 2003/04/01 15:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -342,7 +342,7 @@ dmasync_flush(bus_addr_t addr, bus_size_t len)
 
 		do {
 			DCFP(addr);
-			addr += NBPG;
+			addr += PAGE_SIZE;
 		} while (addr < end);
 	}
 }
@@ -366,7 +366,7 @@ dmasync_inval(bus_addr_t addr, bus_size_t len)
 		do {
 			DCPL(addr);
 			ICPP(addr);
-			addr += NBPG;
+			addr += PAGE_SIZE;
 		} while (addr < end);
 	}
 }
@@ -508,7 +508,7 @@ x68k_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("x68k_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
@@ -631,7 +631,7 @@ x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - m68k_page_offset(vaddr);
+		sgsize = PAGE_SIZE - m68k_page_offset(vaddr);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
