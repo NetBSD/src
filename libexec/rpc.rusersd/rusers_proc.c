@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.19 1998/08/10 02:57:24 perry Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.20 1998/08/12 14:47:30 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.19 1998/08/10 02:57:24 perry Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.20 1998/08/12 14:47:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,7 +97,7 @@ static ut_host_t host[MAXUSERS];
 
 extern int from_inetd;
 
-static u_int getidle __P((char *, char *));
+static int getidle __P((char *, char *));
 static int *rusers_num_svc __P((void *, struct svc_req *));
 static utmp_array *do_names_3 __P((int));
 static struct utmpidlearr *do_names_2 __P((int));
@@ -160,14 +160,14 @@ XqueryIdle(display)
 }
 #endif /* XIDLE */
 
-static u_int
+static int
 getidle(tty, display)
 	char *tty, *display;
 {
 	struct stat st;
 	char devname[PATH_MAX];
 	time_t now;
-	u_long idle;
+	long idle;
 	
 	/*
 	 * If this is an X terminal or console, then try the
@@ -180,7 +180,7 @@ getidle(tty, display)
 #endif
 	idle = 0;
 	if (*tty == 'X') {
-		u_long kbd_idle, mouse_idle;
+		long kbd_idle, mouse_idle;
 #if !defined(i386)
 		kbd_idle = getidle("kbd", NULL);
 #else
@@ -193,15 +193,14 @@ getidle(tty, display)
 		idle = (kbd_idle < mouse_idle) ? kbd_idle : mouse_idle;
 	} else {
 		snprintf(devname, sizeof devname, "%s/%s", _PATH_DEV, tty);
-		if (stat(devname, &st) < 0) {
-#ifdef DEBUG
-			printf("%s: %m\n", devname);
-#endif
-			return (-1);
+		if (stat(devname, &st) == -1) {
+			syslog(LOG_WARNING, "Cannot stat %s (%m)", devname);
+			return 0;
 		}
-		time(&now);
+		(void)time(&now);
 #ifdef DEBUG
-		printf("%s: now=%d atime=%d\n", devname, now, st.st_atime);
+		printf("%s: now=%ld atime=%ld\n", devname,
+		    (long)now, (long)st.st_atime);
 #endif
 		idle = now - st.st_atime;
 		idle = (idle + 30) / 60; /* secs->mins */
@@ -209,7 +208,7 @@ getidle(tty, display)
 	if (idle < 0)
 		idle = 0;
 
-	return (idle);
+	return idle;
 }
 	
 static int *
