@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.6 1994/01/20 18:17:00 deraadt Exp $
+ *	$Id: ns_ip.c,v 1.7 1994/02/20 03:19:45 mycroft Exp $
  */
 
 /*
@@ -62,6 +62,8 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #include <netns/idp.h>
+
+#include <machine/cpu.h>
 
 struct ifnet_en {
 	struct ifnet ifen_ifnet;
