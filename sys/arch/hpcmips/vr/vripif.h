@@ -1,4 +1,4 @@
-/*	$NetBSD: vripif.h,v 1.3 2002/03/10 07:24:54 takemura Exp $	*/
+/*	$NetBSD: vripif.h,v 1.4 2003/05/01 07:02:06 igy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -42,6 +42,7 @@
 enum vrip_iochip {
 	VRIP_IOCHIP_VRGIU = 0,
 	VRIP_IOCHIP_VRC4172GPIO,
+	VRIP_IOCHIP_VR4181GIU,
 	VRIP_NIOCHIPS
 };
 

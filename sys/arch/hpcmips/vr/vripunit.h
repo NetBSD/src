@@ -1,4 +1,4 @@
-/*	$NetBSD: vripunit.h,v 1.4 2002/05/16 19:43:14 wiz Exp $	*/
+/*	$NetBSD: vripunit.h,v 1.5 2003/05/01 07:02:06 igy Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -55,6 +55,7 @@ enum vrip_unit_id {
 	VRIP_UNIT_USBU,
 	VRIP_UNIT_CARDU0,
 	VRIP_UNIT_CARDU1,
+	VRIP_UNIT_ECU,
 };
 
 #ifdef VRIPUNIT_DEFINE_UNIT_NICKNAME
@@ -79,6 +80,7 @@ enum vrip_unit_id {
 #define VRUSBU		VRIP_UNIT_USBU
 #define VRCARDU0	VRIP_UNIT_CARDU0
 #define VRCARDU1	VRIP_UNIT_CARDU1
+#define VRECU		VRIP_UNIT_ECU
 #endif /* VRIPUNIT_DEFINE_UNIT_NICKNAME */
 
 #endif /* _VRIPUNIT_H_ */
