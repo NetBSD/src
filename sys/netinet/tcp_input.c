@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.33 1997/10/10 01:51:07 explorer Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.34 1997/11/08 02:35:22 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -979,24 +979,24 @@ after_listen:
 				else if (++tp->t_dupacks == tcprexmtthresh) {
 					tcp_seq onxt = tp->snd_nxt;
 					u_int win =
-					    min(tp->snd_wnd, tp->snd_cwnd) / 2 /
-						tp->t_maxseg;
+					    min(tp->snd_wnd, tp->snd_cwnd) / 
+					    2 /	tp->t_segsz;
 
 					if (win < 2)
 						win = 2;
-					tp->snd_ssthresh = win * tp->t_maxseg;
+					tp->snd_ssthresh = win * tp->t_segsz;
 					tp->t_timer[TCPT_REXMT] = 0;
 					tp->t_rtt = 0;
 					tp->snd_nxt = ti->ti_ack;
-					tp->snd_cwnd = tp->t_maxseg;
+					tp->snd_cwnd = tp->t_segsz;
 					(void) tcp_output(tp);
 					tp->snd_cwnd = tp->snd_ssthresh +
-					       tp->t_maxseg * tp->t_dupacks;
+					       tp->t_segsz * tp->t_dupacks;
 					if (SEQ_GT(onxt, tp->snd_nxt))
 						tp->snd_nxt = onxt;
 					goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
-					tp->snd_cwnd += tp->t_maxseg;
+					tp->snd_cwnd += tp->t_segsz;
 					(void) tcp_output(tp);
 					goto drop;
 				}
@@ -1048,15 +1048,15 @@ after_listen:
 		/*
 		 * When new data is acked, open the congestion window.
 		 * If the window gives us less than ssthresh packets
-		 * in flight, open exponentially (maxseg per packet).
-		 * Otherwise open linearly: maxseg per window
-		 * (maxseg^2 / cwnd per packet), plus a constant
-		 * fraction of a packet (maxseg/8) to help larger windows
+		 * in flight, open exponentially (segsz per packet).
+		 * Otherwise open linearly: segsz per window
+		 * (segsz^2 / cwnd per packet), plus a constant
+		 * fraction of a packet (segsz/8) to help larger windows
 		 * open quickly enough.
 		 */
 		{
 		register u_int cw = tp->snd_cwnd;
-		register u_int incr = tp->t_maxseg;
+		register u_int incr = tp->t_segsz;
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
