@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.10 1997/07/29 17:46:31 veego Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.11 1998/01/12 10:39:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -179,10 +179,6 @@ static unsigned char et_sprred[2], et_sprgreen[2], et_sprblue[2];
 /* standard driver stuff */
 struct cfattach grfet_ca = {
 	sizeof(struct grf_softc), grfetmatch, grfetattach
-};
-
-struct cfdriver grfet_cd = {
-	NULL, "grfet", DV_DULL, NULL, 0
 };
 
 static struct cfdata *cfdata;

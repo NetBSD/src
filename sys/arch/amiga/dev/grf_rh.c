@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.27 1997/07/29 17:52:05 veego Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.28 1998/01/12 10:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1533,10 +1533,6 @@ int  grfrhmatch  __P((struct device *, struct cfdata *, void *));
 
 struct cfattach grfrh_ca = {
 	sizeof(struct grf_softc), grfrhmatch, grfrhattach
-};
-
-struct cfdriver grfrh_cd = {
-	NULL, "grfrh", DV_DULL, NULL, 0
 };
 
 static struct cfdata *cfdata;

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.17 1997/10/24 01:50:03 mhitch Exp $	*/
+/*	$NetBSD: flsc.c,v 1.18 1998/01/12 10:39:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -74,10 +74,6 @@ int	flscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach flsc_ca = {
 	sizeof(struct flsc_softc), flscmatch, flscattach
-};
-
-struct cfdriver flsc_cd = {
-	NULL, "flsc", DV_DULL
 };
 
 struct scsipi_adapter flsc_switch = {

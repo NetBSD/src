@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.10 1997/08/27 11:23:06 bouyer Exp $	*/
+/*	$NetBSD: drsc.c,v 1.11 1998/01/12 10:39:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -81,10 +81,6 @@ struct cfattach drsc_ca = {
 	sizeof(struct siop_softc),
 	drscmatch,
 	drscattach
-};
-
-struct cfdriver drsc_cd = {
-	NULL, "drsc", DV_DULL, NULL, 0 
 };
 
 static struct siop_softc *drsc_softc;
@@ -212,6 +208,7 @@ drsc_handler()
 void
 drsc_dump()
 {
+	extern struct cfdriver drsc_cd;
 	int i;
 
 	for (i = 0; i < drsc_cd.cd_ndevs; ++i)

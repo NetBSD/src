@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.18 1996/12/23 09:10:23 veego Exp $ */
+/*	$NetBSD: mfc.c,v 1.19 1998/01/12 10:39:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -205,27 +205,17 @@ struct cfattach mfc_ca = {
 	sizeof(struct mfc_softc), mfcmatch, mfcattach
 };
 
-struct cfdriver mfc_cd = {
-	NULL, "mfc", DV_DULL, NULL, 0
-};
-
 #if NMFCS > 0
 struct cfattach mfcs_ca = {
 	sizeof(struct mfcs_softc), mfcsmatch, mfcsattach
 };
 
-struct cfdriver mfcs_cd = {
-	NULL, "mfcs", DV_TTY, NULL, 0
-};
+extern struct cfdriver mfcs_cd;
 #endif
 
 #if NMFCP > 0
 struct cfattach mfcp_ca = {
 	sizeof(struct mfcp_softc, mfcpmatch, mfcpattach
-};
-
-struct cfdriver mfcp_cd = {
-	NULL, "mfcp", DV_DULL, NULL, 0
 };
 #endif
 

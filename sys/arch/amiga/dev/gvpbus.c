@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.15 1996/12/23 09:10:12 veego Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.16 1998/01/12 10:39:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,10 +44,6 @@ extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
 struct cfattach gvpbus_ca = {
 	sizeof(struct device), gvpbusmatch, gvpbusattach
-};
-
-struct cfdriver gvpbus_cd = {
-	NULL, "gvpbus", DV_DULL, NULL, 0
 };
 
 int

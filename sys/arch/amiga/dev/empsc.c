@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.14 1997/08/27 11:23:07 bouyer Exp $	*/
+/*	$NetBSD: empsc.c,v 1.15 1998/01/12 10:39:24 thorpej Exp $	*/
 
 /*
 
@@ -76,10 +76,6 @@ extern int sci_data_wait;
 
 struct cfattach empsc_ca = {
 	sizeof(struct sci_softc), empscmatch, empscattach
-};
-
-struct cfdriver empsc_cd = {
-	NULL, "empsc", DV_DULL, NULL, 0
 };
 
 /*

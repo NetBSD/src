@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.20 1997/08/27 11:23:23 bouyer Exp $	*/
+/*	$NetBSD: wesc.c,v 1.21 1998/01/12 10:40:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -78,10 +78,6 @@ struct scsipi_device wesc_scsidev = {
 
 struct cfattach wesc_ca = {
 	sizeof(struct siop_softc), wescmatch, wescattach
-};
-
-struct cfdriver wesc_cd = {
-	NULL, "wesc", DV_DULL, NULL, 0
 };
 
 /*
@@ -175,6 +171,7 @@ wesc_dmaintr(arg)
 void
 wesc_dump()
 {
+	extern struct cfdriver wesc_cd;
 	int i;
 
 	for (i = 0; i < wesc_cd.cd_ndevs; ++i)

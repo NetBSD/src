@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.13 1996/12/23 09:10:26 veego Exp $	*/
+/*	$NetBSD: msc.c,v 1.14 1998/01/12 10:40:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -174,11 +174,6 @@ void mscattach __P((struct device *, struct device *, void *));
 struct cfattach msc_ca = {
 	sizeof(struct device), mscmatch, mscattach
 };
-
-struct cfdriver msc_cd = {
-	NULL, "msc",DV_TTY, NULL, 0
-};
-
 
 int
 mscmatch(pdp, cfp, auxp)

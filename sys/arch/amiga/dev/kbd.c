@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28 1996/12/23 09:10:22 veego Exp $	*/
+/*	$NetBSD: kbd.c,v 1.29 1998/01/12 10:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -78,10 +78,6 @@ void kbdstuffchar __P((u_char));
 
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
-};
-
-struct cfdriver kbd_cd = {
-	NULL, "kbd", DV_DULL, NULL, 0
 };
 
 /*ARGSUSED*/

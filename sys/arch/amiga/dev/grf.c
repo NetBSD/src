@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
+/*	$NetBSD: grf.c,v 1.33 1998/01/12 10:39:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,10 +104,6 @@ struct grf_softc *grfsp[NGRF];
 
 struct cfattach grf_ca = {
 	sizeof(struct device), grfmatch, grfattach
-};
-
-struct cfdriver grf_cd = {
-	NULL, "grf", DV_DULL, NULL, 0
 };
 
 /*

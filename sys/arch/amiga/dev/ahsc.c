@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.19 1997/08/27 11:23:03 bouyer Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.20 1998/01/12 10:39:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -86,10 +86,6 @@ int	ahsc_dmadebug = 0;
 
 struct cfattach ahsc_ca = {
 	sizeof(struct sbic_softc), ahscmatch, ahscattach
-};
-
-struct cfdriver ahsc_cd = {
-	NULL, "ahsc", DV_DULL, NULL, 0
 };
 
 /*
@@ -317,6 +313,7 @@ ahsc_dmanext(dev)
 void
 ahsc_dump()
 {
+	extern struct cfdriver ahsc_cd;
 	int i;
 
 	for (i = 0; i < ahsc_cd.cd_ndevs; ++i)
