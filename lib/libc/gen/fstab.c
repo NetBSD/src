@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.22.4.1 2001/10/27 19:19:14 he Exp $	*/
+/*	$NetBSD: fstab.c,v 1.22.4.2 2002/04/17 11:30:12 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.22.4.1 2001/10/27 19:19:14 he Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.22.4.2 2002/04/17 11:30:12 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -146,7 +146,11 @@ fstabscan()
 			if ((cp = nextfld(&lp, ws)) != NULL)
 				_fs_fstab.fs_passno = atoi(cp);
 		}
-		sp = strncpy(subline, _fs_fstab.fs_mntops, sizeof(subline)-1);
+
+		/* subline truncated iff line truncated */
+		(void)strlcpy(subline, _fs_fstab.fs_mntops, sizeof(subline));
+		sp = subline;
+
 		while ((cp = nextfld(&sp, ",")) != NULL) {
 			char **tp;
 
