@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.3 2002/09/11 16:33:03 gehenna Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.4 2002/09/15 14:29:01 tsutsui Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -393,7 +393,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 			if (strlen(conv->d_name) >= devnamelen)
 				printf("devsw_name2blk: too short buffer");
 #endif /* DEVSW_DEBUG */
-			strncpy(devname, name, devnamelen);
+			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
 		}
 		return (bmajor);
