@@ -493,6 +493,24 @@ Get maximum y position on
 Get maximum x position on
 .Vn win .
 .Ds
+.Fn getnstr "char *str" \(dg
+.De
+Get a string through the window
+and put it in the location pointed to by
+.Vn str .
+A maximum of
+.Vn n
+characters is returned (including the trailing null).
+It sets tty modes if necessary,
+and then calls
+.Fn getch
+(or
+.Fn wgetch )
+to get the characters needed to fill in the string
+until a newline or EOF is encountered.
+The newline stripped off the string.
+\*(Es
+.Ds
 .Fn getstr "char *str" \(dg
 .De
 Get a string through the window
@@ -1356,6 +1374,7 @@ specification of a window, rather than the use of the default
 .Fn wdeleteln "WINDOW *win"
 .Fn werase "WINDOW *win"
 .Fn wgetch "WINDOW *win"
+.Fn wgetnstr "WINDOW *win" "char *str" "int len"
 .Fn wgetstr "WINDOW *win" "char *str"
 .Fn whline "WINDOW *win" "chtype ch" "int count"
 .Fn winch "WINDOW *win" \(dg
