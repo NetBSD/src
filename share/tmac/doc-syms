@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-syms,v 1.29 1998/02/05 04:31:21 perry Exp $
+.\"	$NetBSD: doc-syms,v 1.30 1998/02/05 18:35:18 perry Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -378,4 +378,27 @@
 .	\}
 .	el .aZ
 .\}
+..
+.\" Ns Lb macro - Formal library names for LIBRARY sections
+.\"  note: this macro does not handle punctuation
+.\"        it is really only intended for standalone use.
+.de Lb
+.nr cF \\n(.f
+.nr cZ \\n(.s
+.ds aa \&\f\\n(cF\s\\n(cZ
+.if !\\n(.$==1 .tm Usage: .Lb [library name]
+.if "\\$1"libarm32" \&ARM32 Architecture Library (libarm32, -larm32)
+.if "\\$1"libi386" \&i386 Architecture Library (libi386, -li386)
+.if "\\$1"libc" \&Standard C Library (libc, -lc)
+.if "\\$1"libcompat" \&Compatibility Library (libcompat, -lcompat)
+.if "\\$1"libcrypt" \&Crypt Library (libcrypt, -lcrypt)
+.if "\\$1"libcurses" \&Curses Library (libcurses, -lcurses)
+.if "\\$1"libedit" \&Command Line Editor Library (libedit, -ledit)
+.if "\\$1"libkvm" \&Kernel Data Access Library (libkvm, -lkvm)
+.if "\\$1"libm" \&Math Library (libm, -lm)
+.if "\\$1"libposix" \&Posix Compatibility Library (libposix, -lposix)
+.if "\\$1"libresolv" \&DNS Resolver Library (libresolv, -lresolv)
+.if "\\$1"libtermcap" \&Termcap Access Library (libtermcap, -ltermcap)
+.if "\\$1"libutil" \&System Utilities Library (libutil, -lutil)
+.if "\\$1"libz" \&Compression Library (libz, -lz)
 ..
