@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.20 2003/07/22 03:24:26 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.21 2003/08/05 12:20:35 itojun Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -77,9 +77,7 @@ struct ah_algorithm {
 	void (*result) __P((struct ah_algorithm_state *, u_int8_t *, size_t));
 };
 
-#define	AH_MAXSUMSIZE	16
-
-#define	HMACSIZE	16
+#define	AH_MAXSUMSIZE	(512 / 8)
 
 extern const struct ah_algorithm *ah_algorithm_lookup __P((int));
 
