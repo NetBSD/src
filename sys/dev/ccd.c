@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.91 2003/08/07 16:30:50 agc Exp $	*/
+/*	$NetBSD: ccd.c,v 1.92 2003/10/17 05:16:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.91 2003/08/07 16:30:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.92 2003/10/17 05:16:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1485,8 +1485,11 @@ ccdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
-	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
+	if ((cs->sc_flags & CCDF_NOLABEL) != 0)
+		errstring = "CCDF_NOLABEL set; ignoring on-disk label";
+	else
+		errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
+		    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
 	if (errstring)
 		ccdmakedisklabel(cs);
 	else {
