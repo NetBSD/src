@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.303 2001/02/11 15:33:54 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.304 2001/02/12 14:45:05 tshiozak Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1646,6 +1646,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "C-Media Electronics Inc",
 	    "CMI8738/C3DX PCI Audio Device",
+	},
+	{
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738B,
+	    0,
+	    "C-Media Electronics Inc",
+	    "CMI8738B PCI Audio Device",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_HSP56,
