@@ -1,4 +1,4 @@
-#	$KAME: Makefile.in,v 1.39 2002/09/27 06:04:59 itojun Exp $
+#	$KAME: Makefile.in,v 1.40 2003/08/19 09:09:15 itojun Exp $
 
 @SET_MAKE@
 srcdir=	@srcdir@
@@ -15,6 +15,7 @@ YFLAGS+=-d
 
 prefix=	@prefix@
 bindir=	@bindir@
+sbindir=@sbindir@
 mandir=	@mandir@
 exec_prefix=	@exec_prefix@
 sysconfdir=	@sysconfdir@
@@ -83,7 +84,7 @@ tag:
 	ctags -dtw $(srcdir)/*.[chly]
 
 install:
-	$(INSTALL) -s -o bin -g bin -m 555 racoon $(prefix)/sbin
+	$(INSTALL) -s -o bin -g bin -m 555 racoon $(sbindir)
 	$(INSTALL) -o bin -g bin -m 444 racoon.8 $(mandir)/man8
 	$(INSTALL) -o bin -g bin -m 444 racoon.conf.5 $(mandir)/man5
 	-mkdir -p ${sysconfdir}/racoon
