@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.5 2001/06/15 01:09:50 chs Exp $
+ *	$NetBSD: SYS.h,v 1.6 2001/07/23 07:26:50 thorpej Exp $
  */
 
 #include <machine/asm.h>
@@ -55,18 +55,19 @@
  * change it to be position independent later, if need be.
  */
 #ifdef PIC
-#define	ERROR() \
+#define	CALL(name) \
 	PIC_PROLOGUE(%g1,%g2); \
-	sethi %hi(_C_LABEL(__cerror)),%g2; \
-	or %g2,%lo(_C_LABEL(__cerror)),%g2; \
+	sethi %hi(name),%g2; \
+	or %g2,%lo(name),%g2; \
 	ldx [%g1+%g2],%g2; \
 	jmp %g2; \
 	nop
 #else
-#define	ERROR() \
-	sethi %hi(_C_LABEL(__cerror)),%g1; or %lo(_C_LABEL(__cerror)),%g1,%g1; \
+#define	CALL(name) \
+	sethi %hi(name),%g1; or %lo(name),%g1,%g1; \
 	jmp %g1; nop
 #endif
+#define	ERROR()	CALL(_C_LABEL(__cerror))
 
 /*
  * SYSCALL is used when further action must be taken before returning.
