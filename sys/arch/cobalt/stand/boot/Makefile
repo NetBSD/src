@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/27 21:03:18 cdi Exp $
+#	$NetBSD: Makefile,v 1.7 2004/04/10 12:30:26 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -68,7 +68,7 @@ LDSCRIPT?=	${MIPS}/conf/stand.ldscript
 PROG=		boot
 # common sources
 SRCS+=		start.S boot.c devopen.c conf.c clock.c bootinfo.c
-SRCS+=		prf.c com.c cons.c ns16550.c pciide.c wdc.c wd.c
+SRCS+=		prf.c com.c cons.c ns16550.c pciide.c tgets.c wdc.c wd.c
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
