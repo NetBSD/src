@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.24 1993/07/08 07:27:29 mycroft Exp $
+ *	$Id: pccons.c,v 1.25 1993/07/11 07:54:47 mycroft Exp $
  */
 
 /*
@@ -48,7 +48,6 @@
 #include "select.h"
 #include "tty.h"
 #include "uio.h"
-#include "malloc.h"
 #include "i386/isa/isa_device.h"
 #include "callout.h"
 #include "systm.h"
@@ -70,6 +69,8 @@
 #ifndef BEEP_TIME
 #define BEEP_TIME (hz/4)
 #endif
+
+#define PCBURST 128
 
 extern u_short *Crtat;
 
@@ -300,9 +301,7 @@ pcopen(dev, flag, mode, p)
 	if (minor(dev) != 0)
 		return (ENXIO);
 	if(!pc_tty[0]) {
-		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-		bzero(tp, sizeof(struct tty));
-		pc_tty[0] = tp;
+		tp = pc_tty[0] = ttymalloc();
 	} else {
 		tp = pc_tty[0];
 	}
@@ -459,9 +458,9 @@ pcxint(dev)
 pcstart(tp)
 register struct tty *tp;
 {
-	register struct ringb *rbp;
-	int s, len;
-	rbchar buf[64];
+	register struct clist *rbp;
+	int s, len, n;
+	char buf[PCBURST];
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -472,15 +471,17 @@ register struct tty *tp;
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
-	rbp = &tp->t_out;
-	while(len = rb_read(rbp, buf, sizeof(buf)/sizeof(buf[0]))) {
-		int n;
-		for (n = 0; n < len; n++)
-			if (buf[n]) sputc(buf[n] & 0xff, 0);
-	}
+	rbp = &tp->t_outq;
+	len = q_to_b(rbp, buf, PCBURST);
+	for (n = 0; n < len; n++)
+		if (buf[n]) sputc(buf[n] & 0xff, 0);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (RB_LEN(rbp) <= tp->t_lowat) {
+	if (rbp->c_cc) {
+		tp->t_state |= TS_TIMEOUT;
+		timeout(ttrstrt, tp, 1);
+	}
+	if (rbp->c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)rbp);
