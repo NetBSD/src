@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.73 2003/09/06 03:25:23 itojun Exp $
+# $NetBSD: INSTALL,v 1.74 2003/10/08 11:01:56 bouyer Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -283,13 +283,15 @@ cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
+# ATA bus support
+atabus* at wdc? channel ?
+atabus* at pciide? channel ?
+
 # ST506/ESDI/IDE devices
-wd*	at	pciide? channel ?
-wd*	at	wdc? drive ?
+wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	pciide? channel ?
-atapibus* at	wdc?
+atapibus* at	atabus?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices

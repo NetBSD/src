@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.233 2003/10/07 17:04:18 skd Exp $
+# $NetBSD: GENERIC,v 1.234 2003/10/08 11:01:56 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.233 $"
+#ident 		"GENERIC-$Revision: 1.234 $"
 
 maxusers 32
 
@@ -453,13 +453,15 @@ cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
+# ATA bus support
+atabus* at wdc? channel ?
+atabus* at pciide? channel ?
+
 # ST506/ESDI/IDE devices
-wd*	at	pciide? channel ?
-wd*	at	wdc? drive ?
+wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	pciide? channel ?
-atapibus* at	wdc?
+atapibus* at	atabus?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
@@ -503,7 +505,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB Ethernet adapters

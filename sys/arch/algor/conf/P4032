@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.14 2003/04/10 22:06:51 christos Exp $
+#	$NetBSD: P4032,v 1.15 2003/10/08 11:01:38 bouyer Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.14 $"
+#ident 		"P4032-$Revision: 1.15 $"
 
 maxusers 32
 
@@ -201,13 +201,15 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
+# ATA bus support
+#atabus* at pciide? channel ?
+#atabus* at wdc? channel ?
+
 # ST506/ESDI/IDE devices
-#wd*	at	pciide? channel ?
-#wd*	at	wdc? drive ?
+#wd*	at	atabus? drive ?
 
 # ATAPI bus support
-#atapibus* at	pciide? channel ?
-#atapibus* at	wdc?
+#atapibus* at	atabus?
 
 # ATAPI devices
 #sd*	at	atapibus? drive ?		# ATAPI disk devices
@@ -251,7 +253,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
+#atapibus* at umass?
 #scsibus* at umass? channel ?
 
 # USB Ethernet adapters
