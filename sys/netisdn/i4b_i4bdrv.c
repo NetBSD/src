@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.14 2002/03/24 20:35:57 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.15 2002/03/29 15:01:27 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.14 2002/03/24 20:35:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.15 2002/03/29 15:01:27 martin Exp $");
 
 #include "isdn.h"
 
@@ -364,8 +364,13 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				error = EINVAL;
 				break;
 			}
+			cd->bri = -1;
 
-			d = isdn_find_l3_by_bri(cd->bri);
+			d = isdn_find_l3_by_bri(mcr->controller);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
 
 			/* prevent dialling on leased lines */
 			if(d->protocol == PROTOCOL_D64S)
@@ -477,6 +482,10 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			NDBGL4(L4_TIMO, "I4B_CONNECT_RESP max_idle_time set to %ld seconds", (long)cd->max_idle_time);
 
 			d = isdn_find_l3_by_bri(cd->bri);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
 			d->l3driver->N_CONNECT_RESPONSE(mcrsp->cdid, mcrsp->response, mcrsp->cause);
 			break;
 		}
@@ -491,7 +500,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			if((cd = cd_by_cdid(mdr->cdid)) == NULL)/* get cd */
 			{
-				NDBGL4(L4_ERR, "I4B_DISCONNECT_REQ ioctl, cdid not found!"); 
+				NDBGL4(L4_ERR, "I4B_DISCONNECT_REQ ioctl, cdid %d not found!", mdr->cdid); 
 				error = EINVAL;
 				break;
 			}
@@ -500,6 +509,11 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			cd->cause_in = cd->cause_out = mdr->cause;
 
 			d = isdn_find_l3_by_bri(cd->bri);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
+
 			d->l3driver->N_DISCONNECT_REQUEST(mdr->cdid, mdr->cause);
 			break;
 		}
@@ -659,6 +673,10 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			T400_stop(cd);
 			
 			d = isdn_find_l3_by_bri(cd->bri);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
 			d->l3driver->N_ALERT_REQUEST(mar->cdid);
 
 			break;
@@ -687,6 +705,10 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			mpi = (msg_prot_ind_t *)data;
 
 			d = isdn_find_l3_by_bri(mpi->controller);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
 			d->protocol = mpi->protocol;
 			
 			break;
