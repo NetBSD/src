@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.19 2001/03/05 16:53:14 wiz Exp $
+.\" $NetBSD: pkg_delete.1,v 1.20 2001/04/09 12:48:09 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,14 +17,14 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd March 8rd, 1999
+.Dd March 8, 1999
 .Dt pkg_delete 1
 .Os
 .Sh NAME
 .Nm pkg_delete
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl DdFfnORrVv
 .Bk -words
 .Op Fl p Ar prefix
@@ -49,12 +49,12 @@ attacks from miscreants who create dangerous package files.
 You are advised to verify the competence and identity of those who
 provide installable package files.  For extra protection, examine all
 the package control files in the package record directory (
-.Pa /var/db/pkg/<pkg-name>/ ).
+.Pa /var/db/pkg/<pkg-name>/ ) .
 Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
 .Cm @cwd ,
-.Cm @mode 
+.Cm @mode
 (check for setuid),
 .Cm @dirrm ,
 .Cm @exec ,
@@ -70,7 +70,7 @@ The following command line options are supported:
 .Bl -tag -width indent
 .It Ar pkg-name ...
 The named packages are deinstalled, wildcards can be used, see
-.Xr pkg_info 1 . 
+.Xr pkg_info 1 .
 If no version is given, the one currently installed
 will be removed.
 If the
@@ -88,12 +88,12 @@ normal files/directories or with the
 directive) will be removed at deinstallation time.  This option tells
 .Nm
 to also remove any directories that were emptied as a result of removing
-the package.  
+the package.
 .It Fl F
 Any pkg-name given will be interpreted as pathname which is
 subsequently transformed in a (real) package name via the Package
 Database. That way, packges can be deleted by giving a filename
-instead of the package-name. 
+instead of the package-name.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
@@ -102,7 +102,7 @@ Don't actually deinstall a package, just report the steps that
 would be taken if it were.
 .It Fl O
 Only delete the package's entries from the package database, do not
-touch the package or it's files itself. 
+touch the package or it's files itself.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -117,11 +117,11 @@ option, this does a recursive delete. The
 .Fl R
 option deletes the given package and any packages required by
 it, unless some other package still needs them. This can be used
-to delete a package and all the packages it needs. 
+to delete a package and all the packages it needs.
 .It Fl r
 .Nm
 first builds a list of all packages that require (directly and indirectly)
-the one being deleted.  It then deletes these packages using 
+the one being deleted.  It then deletes these packages using
 .Nm
 with the given options before deleting the user specified package.
 .It Fl V
@@ -132,7 +132,7 @@ Turn on verbose output.
 .Pp
 .Sh TECHNICAL DETAILS
 .Nm
-does pretty much what it says.  It examines installed package records in 
+does pretty much what it says.  It examines installed package records in
 .Pa /var/db/pkg/<pkg-name> ,
 deletes the package contents, and finally removes the package records.
 .Pp
@@ -149,12 +149,12 @@ the given file belongs to can be deleted if the
 Flag is given. The filename needs to be absolute, see the output
 produced by the pkg_info
 .Fl aF
-command. 
+command.
 .Pp
 If the package contains a
 .Ar require
-file (see 
-.Xr pkg_create 1 ),
+file (see
+.Xr pkg_create 1 ) ,
 then this is executed first as
 .Bd -filled -offset indent -compact
 .Cm require
@@ -173,7 +173,7 @@ option is specified.
 .Pp
 If a
 .Cm deinstall
-script exists for the package, it is executed before and after 
+script exists for the package, it is executed before and after
 any files are removed.
 It is this script's responsibility to clean up any additional messy details
 around the package's installation, since all
@@ -229,5 +229,5 @@ refined it for
 .It "Hubert Feyrer"
 .Nx
 wildcard dependency processing, pkgdb, recursive "down"
-delete, etc. 
+delete, etc.
 .El
