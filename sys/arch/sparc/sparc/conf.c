@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.3 1993/10/13 02:38:16 deraadt Exp $
+ * $Id: conf.c,v 1.4 1993/10/13 03:28:16 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -217,7 +217,7 @@ cdev_decl(ptc);
 	dev_init(c,n,write), dev_init(c,n,ioctl), 0, \
 	0, dev_tty_init(c,n), dev_init(c,n,select), 0, 0 }
 
-ecdev_decl(log);
+cdev_decl(log);
 /* open, close, read, ioctl, select -- XXX should be a generic device */
 #define	cdev_log_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
