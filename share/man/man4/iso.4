@@ -1,4 +1,4 @@
-.\"	$NetBSD: iso.4,v 1.5 2001/06/12 12:00:20 wiz Exp $
+.\"	$NetBSD: iso.4,v 1.6 2001/09/22 00:57:41 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,7 +123,6 @@ a convenience for user level programs.
 The network part of the address, described below.
 .El
 .Sh TRANSPORT ADDRESSING
-.Pp
 An
 .Tn ISO
 transport address is similar to an Internet address in that
@@ -149,7 +148,6 @@ with the network address first, then the transport selector, and so
 on.  Thus, if you had a network address of less then 20 bytes,
 the transport selector would encroach on space normally reserved
 for the network address.
-.Pp
 .Sh NETWORK ADDRESSING
 .Tn ISO
 network addresses are limited to 20 bytes in length.
@@ -183,6 +181,6 @@ This is used for
 .Tn CLNP
 debugging only.
 .Sh SEE ALSO
-.Xr tp 4 ,
 .Xr clnp 4 ,
-.Xr cltp 4
+.Xr cltp 4 ,
+.Xr tp 4
