@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.34 1998/09/11 19:39:28 jonathan Exp $	*/
+/*	$NetBSD: isavar.h,v 1.35 1998/11/30 12:57:10 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,11 +186,13 @@ struct isa_softc {
  * To establish an ISA interrupt handler, a driver calls isa_intr_establish()
  * with the interrupt number, type, level, function, and function argument of
  * the interrupt it wants to handle.  Isa_intr_establish() returns an opaque
- * handle to an event descriptor if it succeeds, and invokes panic() if it
- * fails.  (XXX It should return NULL, then drivers should handle that, but
- * what should they do?)  Interrupt handlers should return 0 for "interrupt
- * not for me", 1  for "I took care of it", or -1 for "I guess it was mine,
- * but I wasn't expecting it."
+ * handle to an event descriptor if it succeeds, and returns NULL on failure.
+ * (XXX: some drivers can't handle this, since the former behaviour was to
+ * invoke panic() on failure). When the system does not accept any of the
+ * interrupt types supported by the driver, the driver should fail the attach.
+ * Interrupt handlers should return 0 for "interrupt not for me", 1  for
+ * "I took care of it", or -1 for "I guess it was mine, but I wasn't
+ * expecting it."
  *
  * To remove an interrupt handler, the driver calls isa_intr_disestablish() 
  * with the handle returned by isa_intr_establish() for that handler.
