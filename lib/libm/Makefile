@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.29 1996/06/26 07:38:42 jtc Exp $
+#  $NetBSD: Makefile,v 1.30 1996/06/26 14:39:49 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -57,10 +57,10 @@ ARCH_SRCS = s_copysign.S s_copysignf.S
 #	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
 .elif (${MACHINE_ARCH} == "m68k")
 .PATH:	${.CURDIR}/arch/mc68881
-ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
-	    e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S s_ceil.S \
-	    s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S s_log1p.S \
-	    s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
+ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
+	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
+	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
+	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
