@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 1999/06/20 06:08:21 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.18 1999/08/16 08:29:06 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -240,20 +240,22 @@ int md_make_bsd_partitions (void)
 		
 		/* /usr */
 		remain = fsdsize - partstart;
-		partsize = fsdsize - partstart;
-		snprintf (isize, SSTRSIZE, "%d", partsize/sizemult);
-		msg_prompt_add (MSG_askfsusr, isize, isize, SSTRSIZE,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		if (remain - partsize < sizemult)
-			partsize = remain;
-		bsdlabel[E].pi_fstype = FS_BSDFFS;
-		bsdlabel[E].pi_offset = partstart;
-		bsdlabel[E].pi_size = partsize;
-		bsdlabel[E].pi_bsize = 8192;
-		bsdlabel[E].pi_fsize = 1024;
-		strcpy (fsmount[E], "/usr");
-		partstart += partsize;
+		if (remain > 0) {
+			partsize = fsdsize - partstart;
+			snprintf (isize, SSTRSIZE, "%d", partsize/sizemult);
+			msg_prompt_add (MSG_askfsusr, isize, isize, SSTRSIZE,
+				    remain/sizemult, multname);
+			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			if (remain - partsize < sizemult)
+				partsize = remain;
+			bsdlabel[E].pi_fstype = FS_BSDFFS;
+			bsdlabel[E].pi_offset = partstart;
+			bsdlabel[E].pi_size = partsize;
+			bsdlabel[E].pi_bsize = 8192;
+			bsdlabel[E].pi_fsize = 1024;
+			strcpy (fsmount[E], "/usr");
+			partstart += partsize;
+		}
 
 		/* Others ... */
 		remain = fsdsize - partstart;
@@ -267,7 +269,7 @@ int md_make_bsd_partitions (void)
 					  partsize/sizemult);
 				msg_prompt_add (MSG_askfspart, isize, isize,
 						SSTRSIZE, diskdev,
-						partname[part],
+						partition_name(part),
 						remain/sizemult, multname);
 				partsize = NUMSEC(atoi(isize), sizemult,
 						  dlcylsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1999/06/22 00:57:09 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1999/08/16 08:29:06 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -127,7 +127,7 @@ md_post_disklabel(void)
 /*
  * MD hook called after upgrade() or install() has finished setting
  * up the target disk but immediately before the user is given the
- * ``disks are now set up'' message that, if power fails, they can
+ * ``disks are now set up'' message, so that if power fails, they can
  * continue installation by booting the target disk and doing an
  * `upgrade'.
  *
@@ -276,20 +276,22 @@ md_make_bsd_partitions()
 		
 		/* /usr */
 		remain = fsdsize - partstart;
-		partsize = fsdsize - partstart;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add (MSG_askfsusr, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		if (remain - partsize < sizemult)
-			partsize = remain;
-		bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
-		bsdlabel[PART_USR].pi_offset = partstart;
-		bsdlabel[PART_USR].pi_size = partsize;
-		bsdlabel[PART_USR].pi_bsize = 8192;
-		bsdlabel[PART_USR].pi_fsize = 1024;
-		strcpy (fsmount[PART_USR], "/usr");
-		partstart += partsize;
+		if (remain > 0) {
+			partsize = fsdsize - partstart;
+			snprintf (isize, 20, "%d", partsize/sizemult);
+			msg_prompt_add (MSG_askfsusr, isize, isize, 20,
+				    remain/sizemult, multname);
+			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			if (remain - partsize < sizemult)
+				partsize = remain;
+			bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
+			bsdlabel[PART_USR].pi_offset = partstart;
+			bsdlabel[PART_USR].pi_size = partsize;
+			bsdlabel[PART_USR].pi_bsize = 8192;
+			bsdlabel[PART_USR].pi_fsize = 1024;
+			strcpy (fsmount[PART_USR], "/usr");
+			partstart += partsize;
+		}
 
 		/* Others ... */
 		remain = fsdsize - partstart;
@@ -300,7 +302,7 @@ md_make_bsd_partitions()
 			partsize = fsdsize - partstart;
 			snprintf (isize, 20, "%d", partsize/sizemult);
 			msg_prompt_add (MSG_askfspart, isize, isize, 20,
-					diskdev, partname[part],
+					diskdev, partition_name(part),
 					remain/sizemult, multname);
 			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 			if (remain - partsize < sizemult)

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.31 1999/07/10 23:07:16 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.32 1999/08/16 08:29:05 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -331,7 +331,7 @@ custom:		ask_sizemult();
 			msg_display (MSG_otherparts);
 		while (remain > 0 && part <= H) {
 			msg_display_add(MSG_askfspart1, diskdev,
-			    partname[part], remain/sizemult, multname);
+			    partition_name(part), remain/sizemult, multname);
 			partsize = getpartsize(MSG_askfspart2, partstart,
 			    remain);
 			if (partsize > 0) {
