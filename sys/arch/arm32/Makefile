@@ -1,30 +1,29 @@
-#	$NetBSD: Makefile,v 1.3 1997/07/16 02:46:37 mark Exp $
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
+#	$NetBSD: Makefile,v 1.4 1997/10/11 09:10:25 mycroft Exp $
 
 # Makefile for arm32 tags file and boot blocks
 
-NOPROG=	noprog
-NOMAN=	noman
-
-#SUBDIR=
-
 TARM32=	../arm32/tags
-SARM32=	../arm32/arm32/*.[ch] ../arm32/include/*.h ../arm32/dev/*.[ch] \
-	../arm32/podulebus/*.[ch] ../arm32/mainbus/*.[ch]
+SARM32=	../arm32/arm32/*.[ch] ../arm32/include/*.h \
+	../arm32/dev/*.[ch] ../arm32/podulebus/*.[ch] ../arm32/mainbus/*.[ch]
 AARM32=	../arm32/arm32/*.s
 
-# Directories in which to place arm32 tags links
+# Directories in which to place tags links
 DARM32=	dev mainbus podulebus include
 
+.include "../../kern/Make.tags.inc"
+
 tags:
-	-ctags -dtf ${TARM32} ${COMM} ${SARM32}
+	-ctags -wdtf ${TARM32} ${SARM32} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AARM32} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> ${TARM32}
+	    >> ${TARM32}
 	sort -o ${TARM32} ${TARM32}
 
 links:
 	-for i in ${DARM32}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-.include <bsd.prog.mk>
+
+SUBDIR=	
+
+.include <bsd.subdir.mk>
