@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1996/10/18 02:48:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 1997/03/24 22:15:46 christos Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -61,9 +61,8 @@ SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 DPADD=	${LIBTERM} ${LIBCOMPAT}
 LDADD=	-ltermcap -lcompat
 HIDEGAME=hidegame
-
-beforeinstall:
-	(cd ${.CURDIR}/datfiles; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} \
-	    -m 444 larnmaze larnopts larn.help ${DESTDIR}/usr/share/games/larn)
+DAT=larnmaze larnopts larn.help
+FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
+FILESDIR=/usr/share/games/larn
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/10/18 02:48:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 1997/03/24 22:15:47 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	monop
@@ -9,6 +9,8 @@ DPADD+=	${LIBCOMPAT}
 LDADD+=	-lcompat
 HIDEGAME=hidegame
 CLEANFILES+=initdeck cards.pck
+FILES=cards.pck
+FILESDIR=/usr/share/games
 
 monop: cards.pck
 
@@ -17,9 +19,5 @@ cards.pck: initdeck
 
 initdeck: initdeck.c
 	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
-
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
-	    ${DESTDIR}/usr/share/games
 
 .include <bsd.prog.mk>
