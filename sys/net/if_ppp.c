@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.98 2005/03/31 17:07:39 explorer Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.99 2005/03/31 21:19:35 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.98 2005/03/31 17:07:39 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.99 2005/03/31 21:19:35 christos Exp $");
 
 #include "ppp.h"
 
@@ -1024,9 +1024,7 @@ pppoutput(ifp, m0, dst, rtp)
 	m0->m_nextpkt = NULL;
 	sc->sc_npqtail = &m0->m_nextpkt;
     } else {
-	ifq = NULL;
-	if (m0->m_flags & M_HIGHPRI)
-		ifq = &sc->sc_fastq;
+	ifq = (m0->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
 	if ((error = ifq_enqueue2(&sc->sc_if, ifq, m0
 		ALTQ_COMMA ALTQ_DECL(&pktattr))) != 0) {
 	    splx(s);
@@ -1080,9 +1078,7 @@ ppp_requeue(sc)
 	     */
 	    *mpp = m->m_nextpkt;
 	    m->m_nextpkt = NULL;
-	    ifq = NULL;
-	    if (m->m_flags & M_HIGHPRI)
-		ifq = &sc->sc_fastq;
+	    ifq = (m->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
 	    if ((error = ifq_enqueue2(&sc->sc_if, ifq, m ALTQ_COMMA
 		ALTQ_DECL(NULL))) != 0) {
 		sc->sc_if.if_oerrors++;
