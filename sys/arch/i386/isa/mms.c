@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.2 1993/09/30 17:33:03 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.3 1993/09/30 20:19:08 mycroft Exp $
  */
 
 #include "param.h"
@@ -37,6 +37,8 @@
 #include "sys/device.h"
 
 #include "i386/isa/isavar.h"
+#include "i386/isa/isa.h"
+#include "i386/isa/icu.h"
 #include "i386/include/mouse.h"
 #include "i386/include/pio.h"
 
@@ -88,6 +90,9 @@ mmsprobe(parent, cf, aux)
 	struct	isa_attach_args *ia = aux;
 	u_short	iobase = ia->ia_iobase;
 
+	if (iobase == IOBASEUNK)
+		return 0;
+
 	/* Read identification register to see if present */
 	if (inb(iobase + MMS_IDENT) != 0xde)
 		return 0;
@@ -95,7 +100,11 @@ mmsprobe(parent, cf, aux)
 	/* Seems it was there; reset */
 	outb(iobase + MMS_ADDR, 0x87);
 
-	/* XXXX isa_discoverintr */
+	if (ia->ia_irq == IRQUNK) {
+		ia->ia_irq = isa_discoverintr(mmsforceintr, aux);
+		if (ia->ia_irq == IRQNONE)
+			return 0;
+	}
 
 	/* reset again to disable interrupts */
 	outb(iobase + MMS_ADDR, 0x87);
@@ -132,8 +141,11 @@ mmsattach(parent, self, aux)
 	sc->sc_state = 0;
 
 	printf(": Microsoft mouse\n");
+	isa_establish(&sc->sc_id, &sc->sc_dev);
 
-	/* XXXX isa_establishintr */
+	sc->sc_ih.ih_fun = mmsintr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_TTY);
 }
 
 int

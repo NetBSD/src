@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.3 1993/09/30 17:32:53 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.4 1993/09/30 20:19:10 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -128,7 +128,7 @@ clockprobe(parent, cf, aux)
 	/* XXX need real probe */
 
 	ia->ia_iosize = CLOCK_NPORTS;
-	ia->ia_irq = IRQUNK;
+	ia->ia_irq = IRQNONE;
 	ia->ia_drq = DRQUNK;
 	ia->ia_msize = 0;
 	return 1;
@@ -209,7 +209,7 @@ timerprobe(parent, cf, aux)
 
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(timerforceintr, aux);
-		if (ia->ia_irq == IRQUNK)
+		if (ia->ia_irq == IRQNONE)
 			return 0;
 	}
 

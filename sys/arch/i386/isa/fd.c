@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.3 1993/09/30 17:32:58 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.4 1993/09/30 20:19:02 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -52,8 +52,10 @@
 #include "syslog.h"
 #include "sys/device.h"
 #include "machine/cpufunc.h"
-#include "i386/isa/isa.h"
+
 #include "i386/isa/isavar.h"
+#include "i386/isa/isa.h"
+#include "i386/isa/icu.h"
 #include "i386/isa/fdreg.h"
 #include "i386/isa/nvram.h"
 
@@ -206,7 +208,7 @@ fdcprobe(parent, cf, aux)
 	register struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 
-	/* XXX don't know how to search yet */
+	/* XXX maybe search for drq? */
 	if (iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
 		return 0;
 
@@ -217,7 +219,7 @@ fdcprobe(parent, cf, aux)
 
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(fdcforceintr, aux);
-		if (ia->ia_irq == IRQUNK)
+		if (ia->ia_irq == IRQNONE)
 			return 0;
 	}
 
@@ -286,7 +288,7 @@ fdcattach(parent, self, aux)
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 
 	fdc->sc_ih.ih_fun = fdcintr;
-	fdc->sc_ih.ih_arg = self;
+	fdc->sc_ih.ih_arg = fdc;
 	intr_establish(ia->ia_irq, &fdc->sc_ih, DV_DISK);
 
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);

@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.5 1993/09/30 17:33:00 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.6 1993/09/30 20:19:05 mycroft Exp $
  */
 
 #include "param.h"
@@ -37,6 +37,8 @@
 #include "sys/device.h"
 
 #include "i386/isa/isavar.h"
+#include "i386/isa/isa.h"
+#include "i386/isa/icu.h"
 #include "i386/include/mouse.h"
 #include "i386/include/pio.h"
 
@@ -90,6 +92,9 @@ lmsprobe(parent, cf, aux)
 	struct	isa_attach_args *ia = aux;
 	u_short	iobase = ia->ia_iobase;
 
+	if (iobase == IOBASEUNK)
+		return 0;
+
 	/* Configure and check for port present */
 	outb(iobase + LMS_CONFIG, 0x91);
 	delay(10);
@@ -102,7 +107,11 @@ lmsprobe(parent, cf, aux)
 	if (inb(iobase + LMS_SIGN) != 0x50)
 		return 0;
 
-	/* XXXX isa_discoverintr */
+	if (ia->ia_irq == IRQUNK) {
+		ia->ia_irq = isa_discoverintr(lmsforceintr, aux);
+		if (ia->ia_irq == IRQNONE)
+			return 0;
+	}
 
 	/* disable interrupts */
 	outb(iobase + LMS_CNTRL, 0x10);
@@ -137,8 +146,11 @@ lmsattach(parent, self, aux)
 	sc->sc_state = 0;
 
 	printf(": Logitech mouse\n");
+	isa_establish(&sc->sc_id, &sc->sc_dev);
 
-	/* XXXX isa_establishintr */
+	sc->sc_ih.ih_fun = lmsintr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_TTY);
 }
 
 int
