@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.6 1994/03/05 01:58:23 jtc Exp $";
+static char *rcsid = "$Id: parse.c,v 1.7 1994/03/07 22:22:05 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -1226,12 +1226,20 @@ Parse_DoVar (line, ctxt)
 				 * assignment. This reduces error checks */
     GNode   	    *ctxt;    	/* Context in which to do the assignment */
 {
-    register char   *cp;	/* pointer into line */
+    char	   *cp;	/* pointer into line */
     enum {
 	VAR_SUBST, VAR_APPEND, VAR_SHELL, VAR_NORMAL
     }	    	    type;   	/* Type of assignment */
     char            *opc;	/* ptr to operator character to 
 				 * null-terminate the variable name */
+    /* 
+     * Avoid clobbered variable warnings by forcing the compiler
+     * to ``unregister'' variables
+     */
+#if __GNUC__
+    (void) &cp;
+    (void) &line;
+#endif
 
     /*
      * Skip to variable name
@@ -1321,6 +1329,13 @@ Parse_DoVar (line, ctxt)
 	Boolean	freeCmd;    	/* TRUE if the command needs to be freed, i.e.
 				 * if any variable expansion was performed */
 
+	/* 
+	 * Avoid clobbered variable warnings by forcing the compiler
+	 * to ``unregister'' variables
+	 */
+#if __GNUC__
+	(void) &freeCmd;
+#endif
 
 	/*
 	 * Set up arguments for shell
@@ -2367,7 +2382,9 @@ Parse_File(name, stream)
 		 * If a line starts with a tab, it can only hope to be
 		 * a creation command.
 		 */
+#ifndef POSIX
 	    shellCommand:
+#endif
 		for (cp = line + 1; isspace (*cp); cp++) {
 		    continue;
 		}
@@ -2413,7 +2430,9 @@ Parse_File(name, stream)
 		 * whitespace are shell commands, so there's no need to check
 		 * here...
 		 */
+#ifndef POSIX
 		Boolean	nonSpace = FALSE;
+#endif
 		
 		cp = line;
 #ifndef POSIX
