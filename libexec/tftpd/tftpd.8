@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$Id: tftpd.8,v 1.2 1993/08/01 07:39:46 mycroft Exp $
+.\"	$Id: tftpd.8,v 1.3 1994/01/10 16:29:46 mycroft Exp $
 .\"
 .Dd May 13, 1991
 .Dt TFTPD 8
@@ -43,6 +43,9 @@ Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm tftpd
 .Op Ar directory ...
+.Nm tftpd
+.Fl s
+.Op Ar directory
 .Sh DESCRIPTION
 .Nm Tftpd
 is a server which supports the
@@ -83,6 +86,14 @@ as server program arguments in
 .Pa /etc/inetd.conf .
 In this case access is restricted to files whose
 names are prefixed by the one of the given directories.
+.Pp
+When using the
+.Fl s
+flag with a directory name, tftpd will
+.Xr chroot 2
+on startup; therefore the remote host is not expected to pass the directory
+as part of the file name to transfer.  This option is intended primarily for
+compatibility with SunOS boot ROMs which do not include a directory name.
 .Sh SEE ALSO
 .Xr tftp 1 ,
 .Xr inetd 8
@@ -91,3 +102,7 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Pp
+The
+.Fl s
+flag appeared in NetBSD 0.9a.
