@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.122 2001/07/09 01:43:26 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.123 2001/09/22 21:29:21 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_ultrix.h"
+#include "opt_compat_linux.h"
 #include "opt_ns.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
@@ -69,6 +70,9 @@
 #include <sys/syscall.h>
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>
+#endif
+#ifdef COMPAT_LINUX
+#include <compat/linux/linux_syscall.h>
 #endif
 
 #include <machine/param.h>
@@ -193,6 +197,15 @@ END(ultrix_sigcode)
 XLEAF(ultrix_esigcode)
 #endif
 
+#ifdef COMPAT_LINUX
+LEAF_NOPROFILE(linux_sigcode)
+	addu	a0, sp, 16		# address of sigcontext
+	li	v0, LINUX_SYS_sigreturn	# sigreturn(scp)
+	syscall
+	break	0			# just in case sigreturn fails
+END(linux_sigcode)
+XLEAF(linux_esigcode)
+#endif
 
 /*
  * The following primitives manipulate the run queues.  whichqs tells which
