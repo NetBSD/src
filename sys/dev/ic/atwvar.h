@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.3 2003/11/16 09:02:42 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.4 2003/12/07 04:19:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -177,6 +177,7 @@ struct atw_tx_radiotap_header {
 	u_int16_t				at_chan_freq;
 	u_int16_t				at_chan_flags;
 } __attribute__((__packed__));
+
 struct atw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
