@@ -1,4 +1,4 @@
-.\"	$NetBSD: timeout.9,v 1.5 1998/06/08 11:33:21 lukem Exp $
+.\"	$NetBSD: timeout.9,v 1.6 1999/03/06 22:09:30 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,8 @@ schedules a call to the function given by the argument
 .Fa fnt
 to take place after
 .Fa ticks Ns No /hz
-seconds. Non-positive values of
+seconds.
+Non-positive values of
 .Fa ticks
 are silently converted to the value
 .Sq 1 .
@@ -72,7 +73,8 @@ cancels the first scheduled call
 .Pq i.e. the one with the shortest delay left
 that matches the
 .Aq Fa fnt , Ns Fa arg
-pair. If a match can not be found in the callout queue, nothing happens.
+pair.
+If a match can not be found in the callout queue, nothing happens.
 .Sh SEE ALSO
 .Xr hz 9
 .Sh BUGS

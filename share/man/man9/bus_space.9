@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.8 1998/07/07 06:40:34 ross Exp $
+.\" $NetBSD: bus_space.9,v 1.9 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -452,8 +452,8 @@ used on many systems' I/O port spaces, and on some systems
 .Dv BUS_SPACE_MAP_LINEAR
 without
 .Dv BUS_SPACE_MAP_CACHEABLE
-may never work. When
-the system hardware or firmware provides hints as to how spaces should be
+may never work.
+When the system hardware or firmware provides hints as to how spaces should be
 mapped (e.g. the PCI memory mapping registers' "prefetchable" bit), those
 hints should be followed for maximum compatibility.  On some systems,
 requesting a mapping that cannot be satisfied (e.g. requesting a
@@ -564,8 +564,8 @@ zero, fills in the bus address pointed to by
 with the bus space address of the allocated region, and fills in
 the bus space handle pointed to by 
 .Fa handlep
-with the handle that can be used to access that region. If unsuccessful,
-it returns non-zero and leaves the bus address pointed to by
+with the handle that can be used to access that region.
+If unsuccessful, it returns non-zero and leaves the bus address pointed to by
 .Fa addrp
 and the bus space handle pointed to by 
 .Fa handlep
