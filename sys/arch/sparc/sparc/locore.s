@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.173 2002/12/31 16:17:12 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.174 2002/12/31 17:07:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5044,8 +5044,8 @@ ENTRY(proc_trampoline)
 #endif
 
 	/* Reset interrupt level */
-	rd	%psr, %o0
-	andn	%o0, PSR_PIL, %o0	! psr &= ~PSR_PIL;
+	rd	%psr, %l2
+	andn	%l2, PSR_PIL, %o0	! psr &= ~PSR_PIL;
 	wr	%o0, 0, %psr		! (void) spl0();
 	 nop				! psr delay; the next 2 instructions
 					! can safely be made part of the
@@ -5059,9 +5059,8 @@ ENTRY(proc_trampoline)
 	 * in child_return()) will have set the user-space return
 	 * address in tf_pc. In both cases, %npc should be %pc + 4.
 	 */
-	rd	%psr, %o0
 	ld	[%sp + CCFSZ + 4], %l1	! pc = tf->tf_pc from cpu_fork()
-	and	%o0, PSR_CWP, %o1	! keep current CWP
+	and	%l2, PSR_CWP, %o1	! keep current CWP
 	or	%o1, PSR_S, %l0		! user psr
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
