@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.40 1994/05/25 20:41:53 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.41 1994/06/04 01:52:28 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -591,7 +591,7 @@ epintr(sc)
 			 * in order to turn off the interrupt flag.
 			 */
 			while ((i = inb(BASE + EP_W1_TX_STATUS)) & TXS_COMPLETE) {
-				outw(BASE + EP_W1_TX_STATUS, 0x0);
+				outb(BASE + EP_W1_TX_STATUS, 0x0);
 	
 				if (i & TXS_JABBER) {
 					++sc->sc_arpcom.ac_if.if_oerrors;
@@ -614,7 +614,7 @@ epintr(sc)
 					outw(BASE + EP_COMMAND, TX_ENABLE);
 					sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 				} else
-					sc->tx_succ_ok = (sc->tx_succ_ok+1) & 128;
+					sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
 					
 			}
 			epstart(ifp);
