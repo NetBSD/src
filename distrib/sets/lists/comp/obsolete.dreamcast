@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.dreamcast,v 1.2 2002/05/11 19:23:15 wiz Exp $
-/usr/include/dreamcast/trap.h
-/usr/include/sh3/db_disasm.h

@@ -1,6 +1,0 @@
-The daily.conf file specifies which of the standard /etc/daily services
-are performed.  The /etc/daily script is run, by default, every night
-via cron on a NetBSD system.  Please see the manpage for daily.conf(5) for
-more details.
-
-$NetBSD: help,v 1.1 2001/03/06 21:15:41 garbled Exp $
