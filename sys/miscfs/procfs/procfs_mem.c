@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.12 1997/08/12 22:47:20 thorpej Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.13 1997/08/13 04:01:22 explorer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -55,6 +55,8 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#define	ISSET(t, f)	((t) & (f))
 
 static int procfs_rwmem __P((struct proc *, struct uio *));
 
@@ -243,6 +245,33 @@ procfs_findtextvp(p)
 	return (p->p_textvp);
 }
 
+int
+procfs_checkioperm(t, p)
+	struct proc *t, *p;
+{
+	int error;
+
+	/*
+	 * You cannot attach to a processes mem/regs if:
+	 *
+	 *	(1) it's not owned by you, or is set-id on exec
+	 *	    (unless you're root), or...
+	 */
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	    ISSET(t->p_flag, P_SUGID)) &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	/*
+	 *	(2) ...it's init, which controls the security level
+	 *	    of the entire system, and the system was not
+	 *	    compiled with permanetly insecure mode turned on.
+	 */
+	if (t == initproc && securelevel > -1)
+		return (EPERM);
+
+	return (0);
+}
 
 #ifdef probably_never
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.20 1997/08/12 22:47:21 thorpej Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.21 1997/08/13 04:01:23 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -322,34 +322,6 @@ vfs_findname(nm, buf, buflen)
 	for (; nm->nm_name; nm++)
 		if (bcmp(buf, nm->nm_name, buflen+1) == 0)
 			return (nm);
-
-	return (0);
-}
-
-int
-procfs_checkioperm(t, p)
-	struct proc *t, *p;
-{
-	int error;
-
-	/*
-	 * You cannot attach to a processes mem/regs if:
-	 *
-	 *	(1) it's not owned by you, or is set-id on exec
-	 *	    (unless you're root), or...
-	 */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-	    ISSET(t->p_flag, P_SUGID)) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-
-	/*
-	 *	(2) ...it's init, which controls the security level
-	 *	    of the entire system, and the system was not
-	 *	    compiled with permanetly insecure mode turned on.
-	 */
-	if (t == initproc && securelevel > -1)
-		return (EPERM);
 
 	return (0);
 }
