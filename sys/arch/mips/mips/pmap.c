@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2000/09/13 01:53:01 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2000/09/21 17:46:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2000/09/13 01:53:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2000/09/21 17:46:06 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1588,9 +1588,10 @@ pmap_zero_page(phys)
 
 /*
  *	pmap_zero_page_uncached zeros the specified page
- *	using uncached accesses.
+ *	using uncached accesses.  Returns TRUE if the page
+ *	was zero'd, FALSE if we aborted.
  */
-void
+boolean_t
 pmap_zero_page_uncached(phys)
 	paddr_t phys;
 {
@@ -1630,6 +1631,8 @@ pmap_zero_page_uncached(phys)
 		p[15] = 0;
 		p += 16;
 	} while (p != end);
+
+	return (TRUE);
 }
 
 /*
