@@ -1,4 +1,4 @@
-/*	$NetBSD: mkpar.c,v 1.7 2001/02/04 17:45:25 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.8 2002/01/30 20:38:50 tv Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,11 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: mkpar.c,v 1.7 2001/02/04 17:45:25 christos Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.8 2002/01/30 20:38:50 tv Exp $");
 #endif
 #endif /* not lint */
 
