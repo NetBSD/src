@@ -1,7 +1,7 @@
-/*	$NetBSD: ehcireg.h,v 1.4 2001/11/10 17:06:11 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.5 2001/11/15 23:25:09 augustss Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -146,10 +146,10 @@
 #define  EHCI_PS_OCC		0x00000020 /* RWC over current change */
 #define  EHCI_PS_OCA		0x00000010 /* RO over current active */
 #define  EHCI_PS_PEC		0x00000008 /* RWC port enable change */
-#define  EHCI_PS_PE		0x00000004 /* RO port enable */
+#define  EHCI_PS_PE		0x00000004 /* RW port enable */
 #define  EHCI_PS_CSC		0x00000002 /* RWC connect status change */
 #define  EHCI_PS_CS		0x00000001 /* RO connect status */
-
+#define  EHCI_PS_CLEAR		(EHCI_PS_OCC|EHCI_PS_PEC|EHCI_PS_CSC)
 
 #define EHCI_FLALIGN_ALIGN	0x1000
 
