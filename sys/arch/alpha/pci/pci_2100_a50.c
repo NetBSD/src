@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.18 1997/09/02 20:10:28 thorpej Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.19 1998/04/14 22:20:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.18 1997/09/02 20:10:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.19 1998/04/14 22:20:59 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,7 +87,7 @@ pci_2100_a50_pickintr(acp)
 	pc->pc_intr_disestablish = dec_2100_a50_intr_disestablish;
 
 #if NSIO
-        sio_intr_setup(iot);
+        sio_intr_setup(pc, iot);
 	set_iointr(&sio_iointr);
 #else
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");

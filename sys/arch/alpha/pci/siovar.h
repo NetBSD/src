@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.6 1997/04/07 02:00:08 cgd Exp $ */
+/* $NetBSD: siovar.h,v 1.7 1998/04/14 22:21:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-void	sio_intr_setup __P((bus_space_tag_t));
+void	sio_intr_setup __P((pci_chipset_tag_t, bus_space_tag_t));
 void	sio_iointr __P((void *framep, unsigned long vec));
 
 const char *sio_intr_string __P((void *, int));

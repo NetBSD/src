@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.26 1997/09/02 20:10:30 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.27 1998/04/14 22:21:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.26 1997/09/02 20:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.27 1998/04/14 22:21:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ pci_kn20aa_pickintr(ccp)
 		    PCI_STRAY_MAX);
 
 #if NSIO
-	sio_intr_setup(iot);
+	sio_intr_setup(pc, iot);
 	kn20aa_enable_intr(KN20AA_PCEB_IRQ);
 #endif
 
