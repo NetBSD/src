@@ -1,4 +1,4 @@
-/*	$NetBSD: button_vrgiu.c,v 1.2 2000/02/10 08:37:07 sato Exp $	*/
+/*	$NetBSD: button_vrgiu.c,v 1.3 2001/03/26 08:57:02 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -58,6 +58,7 @@ struct button_vrgiu_softc {
 	long sc_id;
 	int sc_active;
 	config_hook_tag sc_hook_tag;
+	config_hook_tag sc_ghook_tag;
 };
 
 static int	button_vrgiu_match __P((struct device *, struct cfdata *,
@@ -65,6 +66,8 @@ static int	button_vrgiu_match __P((struct device *, struct cfdata *,
 static void	button_vrgiu_attach __P((struct device *, struct device *,
 					void *));
 static int	button_vrgiu_intr __P((void*));
+static int	button_vrgiu_state __P((void *ctx, int type, long id,
+				      void *msg));
 
 struct cfattach button_vrgiu_ca = {
 	sizeof(struct button_vrgiu_softc), button_vrgiu_match, button_vrgiu_attach
@@ -135,7 +138,31 @@ button_vrgiu_attach(parent, self, aux)
 		sc->sc_gf->gf_intr_establish(sc->sc_gc, sc->sc_port,
 					     mode, IPL_TTY,
 					     button_vrgiu_intr, sc);
+	sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET,
+				       sc->sc_id,
+				       CONFIG_HOOK_SHARE,
+				       button_vrgiu_state,
+				       sc);	
 	printf("\n");
+}
+
+int
+button_vrgiu_state(ctx, type, id, msg)
+	void *ctx;
+	int type;
+	long id;
+	void *msg;
+{
+	struct button_vrgiu_softc *sc = ctx;
+
+	if (type != CONFIG_HOOK_GET || id != sc->sc_id)
+		return 1;
+
+	if (CONFIG_HOOK_VALUEP(msg))
+		return 1;
+
+	*(int*)msg = (sc->sc_gf->gf_portread(sc->sc_gc, sc->sc_port) == sc->sc_active);
+	return 0;
 }
 
 int
