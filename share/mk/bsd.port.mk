@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.57 1998/03/08 14:55:04 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.58 1998/03/09 18:36:51 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -494,7 +494,12 @@ PATCH_ARGS+=	-C
 PATCH_DIST_ARGS+=	-C
 .endif
 
-.if exists(/bin/pax)
+# Turn off pax on NetBSD for just now.  pax is not bug-compatible with
+# GNU tar yet, and some of the archives contain dross after the end of
+# archive.  tar ignores this, pax thinks it's valid, and asks for the
+# second volume of the archive.
+
+.if exists(/bin/pax) && (${OPSYS} != "NetBSD")
 EXTRACT_CMD?=		/bin/pax
 EXTRACT_BEFORE_ARGS?=	-zrf
 .else
