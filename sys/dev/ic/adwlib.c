@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
+/* $NetBSD: adwlib.c,v 1.21 2001/04/30 03:43:09 lukem Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -285,7 +285,9 @@ ADW_SOFTC      *sc;
 		case ADW_CHIP_ASC38C1600:
 			eep_config = adw_38C1600_Default_EEPROM;
 
-// XXX	  TODO!!!	if (ASC_PCI_ID2FUNC(sc->cfg.pci_slot_info) != 0) {
+#if 0
+XXX	  TODO!!!	if (ASC_PCI_ID2FUNC(sc->cfg.pci_slot_info) != 0) {
+#endif
 			if (sc->cfg.pci_slot_info != 0) {
 				u_int8_t lsw_msb;
 
@@ -1496,15 +1498,17 @@ AdwASC38C1600Cabling(iot, ioh, cfg)
 				break;
 
 			case 0x0:
+#if 0
 	/* !!!!TODO!!!! */
-//				if (ASC_PCI_ID2FUNC(cfg->pci_slot_info) == 0) {
+				if (ASC_PCI_ID2FUNC(cfg->pci_slot_info) == 0) {
 				/* Function 0 - TERM_SE_HI: off, TERM_SE_LO: off */
-//				}
-//				else
-//				{
+				}
+				else
+#endif
+				{
 				/* Function 1 - TERM_SE_HI: on, TERM_SE_LO: off */
 					cfg->termination |= ADW_TERM_SE_HI;
-//				}
+				}
 				break;
 			}
 	}
