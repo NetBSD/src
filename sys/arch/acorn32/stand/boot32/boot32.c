@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.9 2003/01/06 22:46:36 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.10 2003/01/08 16:10:53 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -71,8 +71,8 @@ u_int	 monitor_type, monitor_sync, ioeb_flags, lcd_flags;	/* computer knowledge	
 u_int	 superio_flags, superio_flags_basic, superio_flags_extra;
 
 int	 nbpp, memory_table_size, memory_image_size;		/* sizes			*/
-int	 reloc_tablesize, *reloc_instruction_table;		/* relocate info		*/
-int	*reloc_pos;						/* current empty entry		*/
+u_long	 reloc_tablesize, *reloc_instruction_table;		/* relocate info		*/
+u_long	*reloc_pos;						/* current empty entry		*/
 int	 reloc_entries;						/* number of relocations	*/
 int	 first_mapped_DRAM_page_index;				/* offset in RISC OS blob	*/
 int	 first_mapped_PODRAM_page_index;			/* offset in RISC OS blob	*/
@@ -175,7 +175,7 @@ void init_datastructures(void) {
 	printf("Got %ld memory pages each %d kilobytes to mess with.\n\n", totalpages, nbpp>>10);
 
 	/* allocate some space for the relocation table */
-	reloc_tablesize = (MAX_RELOCPAGES+1)*3*sizeof(int);	/* 3 entry table */
+	reloc_tablesize = (MAX_RELOCPAGES+1)*3*sizeof(u_long);	/* 3 entry table */
 	reloc_instruction_table = alloc(reloc_tablesize);
 	if (!reloc_instruction_table) panic("Can't alloc my relocate instructions pages");
 	
@@ -199,10 +199,10 @@ void init_datastructures(void) {
 
 
 void prepare_and_check_relocation_system(void) {
-	int   relocate_size, relocate_pages;
-	char *dst, *src;
-	int   pages;
-	int  *reloc_entry, last_phys, phys, logical, length;
+	int     relocate_size, relocate_pages;
+	int     bank, pages, found;
+	u_long  dst, src, base, destination, extend;
+	u_long *reloc_entry, last_src, length;
 
 	/* set the number of relocation entries in the 1st word */
 	*reloc_instruction_table = reloc_entries;
@@ -215,9 +215,9 @@ void prepare_and_check_relocation_system(void) {
 	relocate_table_pages = free_relocation_page;
 	pages = 0;
 	while (pages < relocate_pages) {
-		src = (char *)  reloc_instruction_table + pages*nbpp, nbpp;
-		dst = (void *) (relocate_table_pages + pages)->logical;
-		memcpy(dst, src, nbpp);
+		src = (u_long) reloc_instruction_table + pages*nbpp;
+		dst = (relocate_table_pages + pages)->logical;
+		memcpy((void *) dst, (void *) src, nbpp);
 
 		if (pages < relocate_pages-1) {
 			/* check if next page is sequential physically */
@@ -243,24 +243,38 @@ void prepare_and_check_relocation_system(void) {
 	 * done in flat physical memory without MMU.
 	 */
 
-	printf("checking ... ");
+	printf("shift and check ... ");
 	reloc_entry = reloc_instruction_table + 1;
-	last_phys = -1;
+	last_src = -1;
 	while (reloc_entry < reloc_pos) {
-		phys    = reloc_entry[0];
-		logical = reloc_entry[1];
-		length  = reloc_entry[2];
-		reloc_entry[1] -= pv_offset;
+		src         = reloc_entry[0];
+		destination = reloc_entry[1];
+		length      = reloc_entry[2];
 
-		if (last_phys - phys >= 0) printf("relocation sequence challenged -- booting might fail ");
-		last_phys = phys;
+		/* paranoia check */
+		if ((long) (src - last_src) <= 0) printf("relocation sequence challenged -- booting might fail ");
+		last_src = src;
 
-		if (logical > top_physdram)
-			panic("Internal error: relocating outside RAM (%x > %lx) .. ", logical, top_physdram);
+		/* check if its gonna be relocated into (PO)DRAM ! */
+		extend = destination + length;
+		found = 0;
+		for (bank = 0; (bank < dram_blocks) && !found; bank++) {
+			base   = DRAM_addr[bank];
+			found = (destination >= base) && (extend <= base + DRAM_pages[bank]*nbpp);
+		};
+		for (bank = 0; (bank < podram_blocks) && !found; bank++) {
+			base = PODRAM_addr[bank];
+			found = (destination >= base) && (extend <= base + PODRAM_pages[bank]*nbpp);
+		};
+		if (!found || (extend > top_physdram)) {
+			panic( "Internal error: relocating range [%lx +%lx => %lx] outside (PO)DRAM banks!",
+				src, length, destination
+			);
+		};
 
 		reloc_entry+=3;
 	};
-	if (reloc_entry != reloc_pos) panic("Relocation instructions table is corrupted");
+	if (reloc_entry != reloc_pos) panic("Relocation instruction table is corrupted");
 	
 	printf("OK!\n");
 }
@@ -508,7 +522,7 @@ void add_pagetables_at_top(void) {
 	u_long src, dst, fragaddr;
 
 	/* Special : destination must be on a 16 Kb boundary			*/
-	/* get 4 pages on the top of the physical memeory and copy PT's in it	*/
+	/* get 4 pages on the top of the physical memory and copy PT's in it	*/
 	new_L1_pages_phys = top_physdram - 4*nbpp;
 
 	/* If the L1 page tables are not 16 kb aligned, adjust base until it is	*/
