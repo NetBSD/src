@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.17 2001/01/04 04:44:32 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.18 2001/01/07 22:59:23 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -379,7 +379,7 @@ cpu_init_idle_pcbs()
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
-		i386_init_pcb_tss_ldt(ci->ci_idle_pcb);
+		i386_init_pcb_tss_ldt(ci);
 	}
 }
 

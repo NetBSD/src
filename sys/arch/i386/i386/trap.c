@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.11 2001/01/07 22:12:45 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.12 2001/01/07 22:59:25 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ trap(frame)
 			ADDUPROF(p);
 		}
 		/* Allow a forced task switch. */
-		if (want_resched)
+		if (curcpu()->ci_want_resched) /* XXX CSE me? */
 			preempt(NULL);
 		goto out;
 

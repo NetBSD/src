@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.22.2.3 2001/01/07 22:12:41 sommerfeld Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22.2.4 2001/01/07 22:59:23 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ tss_free(sel)
 	int sel;
 {
 
-	gdt_put_slot(IDXSEL(tss));
+	gdt_put_slot(IDXSEL(sel));
 }
 
 void

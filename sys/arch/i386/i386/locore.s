@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.18 2001/01/07 22:12:41 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.19 2001/01/07 22:59:23 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@
 #else
 	.align	12
 #endif
-	.globl _C_LABEL(local_apic)
+	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
 _C_LABEL(local_apic):
 	.space	LAPIC_ID
 _C_LABEL(lapic_id):	
@@ -2825,7 +2825,6 @@ syscall1:
 	int	$3
 #endif
 1:	
-#endif
 #endif /* DIAGNOSTIC */
 	GET_CURPROC(%edx, %eax)
 	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8.2.3 2001/01/07 22:12:40 sommerfeld Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8.2.4 2001/01/07 22:59:23 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -174,11 +174,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			/*
 			 * shoot down in case other cpu mistakenly caches page.
 			 */
-			pmap_tlb_shootdown(pmap_kernel(), va, oldpte, &cpumask);
+			pmap_tlb_shootdown(pmap_kernel(), pgva, oldpte, &cpumask);
 			pmap_tlb_shootnow(cpumask);
 		}
 #else
-		pmap_update_pg(va);
+		pmap_update_pg(pgva);
 #endif
 		
 	} while (size != 0);
