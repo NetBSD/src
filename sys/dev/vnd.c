@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.30 1996/10/13 01:37:08 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.31 1997/01/31 05:18:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -672,7 +672,7 @@ vndthrottle(vnd, vp)
 	register struct vnd_softc *vnd;
 	struct vnode *vp;
 {
-#ifdef NFSCLIENT
+#ifdef NFS
 	extern int (**nfsv2_vnodeop_p) __P((void *));
 
 	if (vp->v_op == nfsv2_vnodeop_p)
