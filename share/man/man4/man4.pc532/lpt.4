@@ -1,6 +1,6 @@
-.\"	$NetBSD: lpt.4,v 1.2 1995/11/28 08:03:29 jtc Exp $
+.\"	$NetBSD: lpt.4,v 1.3 1997/10/03 20:00:07 matthias Exp $
 .\"
-.\" Copyright (c) 1994 Matthias Pfaller.
+.\" Copyright (c) 1994, 1997 Matthias Pfaller.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lpt.4,v 1.2 1995/11/28 08:03:29 jtc Exp $
-.\"
 .Dd December 1, 1994
 .Dt LPT 4 pc532
-.Os NetBSD 1.0
+.Os
 .Sh NAME
 .Nm lpt
 .Nd Parallel port driver
 .Sh SYNOPSIS
-.Cd "lpt0 at membus? addr ? irq ?"
-.Cd "lpt1 at membus? addr ? irq ?"
+.Cd "lpt0 at mainbus? addr ? irq ?"
+.Cd "lpt1 at mainbus? addr ? irq ?"
 .Sh DESCRIPTION
 This driver provides access to centronics ports. Bit 6 in the minor number
 selects wether to omit pulling /PRIME low on opens or not. If the minor has
@@ -78,4 +76,9 @@ signal.
 .Xr plip 4
 .sp
 Contact Matthias Pfaller (leo@dachau.marco.de) to get instructions on building
-a centronics interface for your PC532.
+a centronics interface for your pc532.
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Nx 1.0 .
