@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $	*/
+/*	$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $");
+__RCSID("$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -51,18 +51,18 @@ static int checkifname(const char *);
 static void assertifname(const char *);
 
 static int
-checkifname(const char *name)
+checkifname(const char *ifname)
 {
 
-	return strncmp(name, "agr", 3) != 0 ||
-	    !isdigit((unsigned char)name[3]);
+	return strncmp(ifname, "agr", 3) != 0 ||
+	    !isdigit((unsigned char)ifname[3]);
 }
 
 static void
-assertifname(const char *name)
+assertifname(const char *ifname)
 {
 
-	if (checkifname(name)) {
+	if (checkifname(ifname)) {
 		errx(EXIT_FAILURE, "valid only with agr(4) interfaces");
 	}
 }
