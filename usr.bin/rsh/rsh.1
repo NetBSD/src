@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)rsh.1	6.10 (Berkeley) 7/24/91
+.\"	@(#)rsh.1	8.2 (Berkeley) 4/29/95
 .\"
-.Dd July 24, 1991
+.Dd April 29, 1995
 .Dt RSH 1
 .Os BSD 4.2
 .Sh NAME
@@ -43,6 +43,10 @@
 .Op Fl k Ar realm
 .Op Fl l Ar username
 .Ar host
+.Nm rsh
+.Op Fl Kdnx
+.Op Fl k Ar realm
+.Ar username@host
 .Op command
 .Sh DESCRIPTION
 .Nm Rsh
@@ -86,7 +90,9 @@ instead of the remote host's realm as determined by
 By default, the remote username is the same as the local username.
 The
 .Fl l
-option allows the remote name to be specified.
+option or the
+.Pa username@host
+format allow the remote name to be specified.
 Kerberos authentication is used, and authorization is determined
 as in
 .Xr rlogin  1  .
