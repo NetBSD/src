@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.1 1997/05/14 17:42:27 mellon Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.2 1997/05/14 18:11:28 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -2000,7 +2000,7 @@ syn_cache_get(so, m)
 	 * connection when the SYN arrived.  If we can't create
 	 * the connection, abort it.
 	 */
-	so = sonewconn(so, SS_ISCONNECTED|SS_PRIV);
+	so = sonewconn(so, SS_ISCONNECTED|SS_FORCE);
 	if (so == NULL) {
 		(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
 		    (tcp_seq)0, TH_RST|TH_ACK);
