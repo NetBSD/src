@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.34 1996/05/29 02:04:36 mrg Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.35 1996/07/02 21:19:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -188,7 +188,7 @@ again:
 			    p->p_flag & P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
-			error = ttysleep(tp, (caddr_t)&lbolt, 
+			error = ttysleep(tp, (caddr_t)&lbolt,
 					 TTIPRI | PCATCH, ttybg, 0);
 			if (error)
 				return (error);
@@ -615,8 +615,21 @@ ptyioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 
 		case TIOCGPGRP:
+#ifdef COMPAT_SUNOS
+			{
 			/*
-			 * We aviod calling ttioctl on the controller since,
+			 * I'm not sure about SunOS TIOCGPGRP semantics
+			 * on PTYs, but it's something like this:
+			 */
+			extern struct emul emul_sunos;
+			if (p->p_emul == &emul_sunos && tp->t_pgrp == 0)
+				return (EIO);
+			*(int *)data = tp->t_pgrp->pg_id;
+			return (0);
+			}
+#endif
+			/*
+			 * We avoid calling ttioctl on the controller since,
 			 * in that case, tp must be the controlling terminal.
 			 */
 			*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : 0;
@@ -649,7 +662,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			return (0);
 
 #ifdef COMPAT_OLDTTY
-		case TIOCSETP:		
+		case TIOCSETP:
 		case TIOCSETN:
 #endif
 		case TIOCSETD:
@@ -707,7 +720,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			break;
 		}
 	}
-	stop = (tp->t_iflag & IXON) && CCEQ(cc[VSTOP], CTRL('s')) 
+	stop = (tp->t_iflag & IXON) && CCEQ(cc[VSTOP], CTRL('s'))
 		&& CCEQ(cc[VSTART], CTRL('q'));
 	if (pti->pt_flags & PF_NOSTOP) {
 		if (stop) {
