@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.10.7 2001/12/29 23:31:08 sommerfeld Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.10.8 2002/06/25 01:06:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@ IDTVEC(spllower)
 	andl	_C_LABEL(ipending),%eax		# any non-masked bits left?
 	jz	2f
 	bsfl	%eax,%eax
+#ifdef MULTIPROCESSOR
+	lock
+#endif
 	btrl	%eax,_C_LABEL(ipending)
 	jnc	1b
 	jmp	*_C_LABEL(Xrecurse)(,%eax,4)
@@ -115,6 +118,9 @@ IDTVEC(doreti)
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
 	bsfl    %eax,%eax               # slow, but not worth optimizing
+#ifdef MULTIPROCESSOR
+	lock
+#endif
 	btrl    %eax,_C_LABEL(ipending)
 	jnc     1b			# some intr cleared the in-memory bit
 	jmp	*_C_LABEL(Xresume)(,%eax,4)
