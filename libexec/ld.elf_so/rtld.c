@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.72 2002/09/24 12:18:32 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.73 2002/09/24 17:51:11 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -355,6 +355,8 @@ _rtld(sp, relocbase)
 		const char     *ld_debug = getenv("LD_DEBUG");
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
+		else
+			debug = 0;
 #endif
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	}
