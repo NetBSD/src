@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.37 1998/04/17 02:45:19 mjacob Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.38 1998/07/07 08:49:12 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.37 1998/04/17 02:45:19 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.38 1998/07/07 08:49:12 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,37 @@ const struct alpha_variation_table dec_axppci_33_variations[] = {
 	{ 0, NULL },
 };
 
+static struct lca_config *lca_preinit __P((void));
+
+static struct lca_config *
+lca_preinit()
+{
+	extern struct lca_config lca_configuration;
+
+	lca_init(&lca_configuration, 0);
+	return &lca_configuration;
+}
+
+#define	NSIO_PORT  0x26e	/* Hardware enabled option: 0x398 */
+#define	NSIO_BASE  0
+#define	NSIO_INDEX NSIO_BASE
+#define	NSIO_DATA  1
+#define	NSIO_SIZE  2
+#define	NSIO_CFG0  0
+#define	NSIO_CFG1  1
+#define	NSIO_CFG2  2
+#define	NSIO_IDE_ENABLE 0x40
+
 void
 dec_axppci_33_init()
 {
+	int cfg0val;
 	u_int64_t variation;
+	bus_space_tag_t iot;
+	struct lca_config *lcp;
+	bus_space_handle_t nsio;
+#define	A33_NSIOBARRIER(type) bus_space_barrier(iot, nsio,\
+				NSIO_BASE, NSIO_SIZE, (type))
 
 	platform.family = "DEC AXPpci";
 
@@ -92,6 +119,25 @@ dec_axppci_33_init()
 	platform.iobus = "lca";
 	platform.cons_init = dec_axppci_33_cons_init;
 	platform.device_register = dec_axppci_33_device_register;
+
+	lcp = lca_preinit();
+	iot = &lcp->lc_iot;
+	if (bus_space_map(iot, NSIO_PORT, NSIO_SIZE, 0, &nsio))
+		return;
+
+	bus_space_write_1(iot, nsio, NSIO_INDEX, NSIO_CFG0);
+	A33_NSIOBARRIER(BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	cfg0val = bus_space_read_1(iot, nsio, NSIO_DATA);
+
+	cfg0val |= NSIO_IDE_ENABLE;
+
+	bus_space_write_1(iot, nsio, NSIO_INDEX, NSIO_CFG0);
+	A33_NSIOBARRIER(BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
+	A33_NSIOBARRIER(BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
+
+	/* Leave nsio mapped to catch any accidental port space collisions  */
 }
 
 static void
@@ -99,10 +145,8 @@ dec_axppci_33_cons_init()
 {
 	struct ctb *ctb;
 	struct lca_config *lcp;
-	extern struct lca_config lca_configuration;
 
-	lcp = &lca_configuration;
-	lca_init(lcp, 0);
+	lcp = lca_preinit();
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
