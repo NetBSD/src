@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.4 1997/05/17 15:48:50 christos Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.5 1997/07/23 20:22:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,13 @@
  * Screensaver daemon for the Sun 3 and SPARC.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT(
+"@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: screenblank.c,v 1.5 1997/07/23 20:22:48 thorpej Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -73,6 +80,7 @@ LIST_HEAD(ds_list, dev_stat) ds_list;
 
 extern	char *__progname;
 
+int	main __P((int, char *[]));
 static	void add_dev __P((char *, int));
 static	void change_state __P((int));
 static	void cvt_arg __P((char *, struct timeval *));
@@ -83,7 +91,7 @@ static	void usage __P((void));
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	struct dev_stat *dsp;
 	struct timeval timo_on, timo_off, *tvp;
