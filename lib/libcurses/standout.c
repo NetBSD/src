@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.14 2003/08/07 16:44:24 agc Exp $	*/
+/*	$NetBSD: standout.c,v 1.15 2004/01/20 08:30:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.14 2003/08/07 16:44:24 agc Exp $");
+__RCSID("$NetBSD: standout.c,v 1.15 2004/01/20 08:30:41 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: standout.c,v 1.14 2003/08/07 16:44:24 agc Exp $");
 #ifndef _CURSES_USE_MACROS
 
 /*
- * standout
+ * standout --
  *	Enter standout mode on stdscr.
  */
 int
@@ -66,8 +66,8 @@ standend(void)
 #endif
 
 /*
- * standout
- *	Enter standout mode.
+ * wstandout --
+ *	Enter standout mode in window win.
  */
 int
 wstandout(WINDOW *win)
@@ -83,7 +83,7 @@ wstandout(WINDOW *win)
 
 /*
  * wstandend --
- *	Exit standout mode.
+ *	Exit standout mode in window win.
  */
 int
 wstandend(WINDOW *win)
