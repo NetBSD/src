@@ -1,11 +1,10 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.10 1998/01/26 12:02:58 lukem Exp $
+#	$NetBSD: weekly,v 1.11 1998/07/16 05:21:56 mycroft Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
-PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
-export PATH
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/libexec
 host=`hostname`
 echo "Subject: $host weekly run output"
 
