@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.7 2000/01/08 01:18:36 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.8 2000/01/14 01:00:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -116,7 +116,7 @@ ReadRegionLog(
 	 * 
 	 * NON-BLOCKING */
 
-	RF_AccTraceEntry_t tracerec;
+	RF_AccTraceEntry_t *tracerec;
 	RF_DagNode_t *rrd_rdNode;
 
 	/* create DAG to read region log from disk */
@@ -136,8 +136,9 @@ ReadRegionLog(
 		printf("set rrd_pda->next to NULL\n");
 	}
 	/* initialize DAG parameters */
-	bzero((char *) &tracerec, sizeof(tracerec));
-	(*rrd_dag_h)->tracerec = &tracerec;
+	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	(*rrd_dag_h)->tracerec = tracerec;
 	rrd_rdNode = (*rrd_dag_h)->succedents[0]->succedents[0];
 	rrd_rdNode->params[0].p = *rrd_pda;
 /*  rrd_rdNode->params[1] = regionBuffer; */
@@ -161,7 +162,7 @@ WriteCoreLog(
     RF_PhysDiskAddr_t ** fwr_pda)
 {
 	RF_RegionId_t regionID = log->regionID;
-	RF_AccTraceEntry_t tracerec;
+	RF_AccTraceEntry_t *tracerec;
 	RF_SectorNum_t regionOffset;
 	RF_DagNode_t *fwr_wrNode;
 
@@ -184,8 +185,9 @@ WriteCoreLog(
 	(*fwr_pda)->numSector = raidPtr->numSectorsPerLog;
 
 	/* initialize DAG parameters */
-	bzero((char *) &tracerec, sizeof(tracerec));
-	(*fwr_dag_h)->tracerec = &tracerec;
+	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	(*fwr_dag_h)->tracerec = tracerec;
 	fwr_wrNode = (*fwr_dag_h)->succedents[0]->succedents[0];
 	fwr_wrNode->params[0].p = *fwr_pda;
 /*  fwr_wrNode->params[1] = log->bufPtr; */
@@ -213,7 +215,7 @@ ReadRegionParity(
 	 * 
 	 * NON-BLOCKING */
 
-	RF_AccTraceEntry_t tracerec;
+	RF_AccTraceEntry_t *tracerec;
 	RF_DagNode_t *prd_rdNode;
 
 	/* create DAG to read region parity from disk */
@@ -234,8 +236,9 @@ ReadRegionParity(
 		printf("set prd_pda->next to NULL\n");
 	}
 	/* initialize DAG parameters */
-	bzero((char *) &tracerec, sizeof(tracerec));
-	(*prd_dag_h)->tracerec = &tracerec;
+	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	(*prd_dag_h)->tracerec = tracerec;
 	prd_rdNode = (*prd_dag_h)->succedents[0]->succedents[0];
 	prd_rdNode->params[0].p = *prd_pda;
 	prd_rdNode->params[1].p = parityBuffer;
@@ -263,7 +266,7 @@ WriteRegionParity(
 	 * 
 	 * NON-BLOCKING */
 
-	RF_AccTraceEntry_t tracerec;
+	RF_AccTraceEntry_t *tracerec;
 	RF_DagNode_t *pwr_wrNode;
 
 	/* create DAG to write region log from disk */
@@ -278,8 +281,9 @@ WriteRegionParity(
 	rf_MapRegionParity(raidPtr, regionID, &((*pwr_pda)->row), &((*pwr_pda)->col), &((*pwr_pda)->startSector), &((*pwr_pda)->numSector));
 
 	/* initialize DAG parameters */
-	bzero((char *) &tracerec, sizeof(tracerec));
-	(*pwr_dag_h)->tracerec = &tracerec;
+	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	(*pwr_dag_h)->tracerec = tracerec;
 	pwr_wrNode = (*pwr_dag_h)->succedents[0]->succedents[0];
 	pwr_wrNode->params[0].p = *pwr_pda;
 /*  pwr_wrNode->params[1] = parityBuffer; */
@@ -552,6 +556,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 {
 	RF_ParityLog_t *reintQueue, *flushQueue;
 	int     workNeeded, done = RF_FALSE;
+	int s;
 
 	/* Main program for parity logging disk thread.  This routine waits
 	 * for work to appear in either the flush or reintegration queues and
@@ -559,6 +564,8 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	 * reintegrating parity regions.
 	 * 
 	 * BLOCKING */
+
+	s = splbio();
 
 	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 
@@ -598,7 +605,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 			/* empty flushQueue, using free'd log buffers to
 			 * process bufTail */
 			if (flushQueue)
-				FlushLogsToDisk(raidPtr, flushQueue);
+			       FlushLogsToDisk(raidPtr, flushQueue);
 
 			/* empty reintQueue, flushing from reintTail as we go */
 			if (reintQueue)
@@ -640,6 +647,8 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	raidPtr->parityLogDiskQueue.threadState |= RF_PLOG_SHUTDOWN;
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 	RF_SIGNAL_COND(raidPtr->parityLogDiskQueue.cond);
+
+	splx(s);
 
 	/*
          * In the NetBSD kernel, the thread must exit; returning would
