@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.16 1999/10/21 15:03:28 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.17 1999/10/22 08:50:59 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -289,7 +289,8 @@ fdcprobe(parent, cfp, aux)
 	if ((mb_tag = mb_alloc_bus_space_tag()) == NULL)
 		return 0;
 
-	if (bus_space_map(mb_tag, 0xfff00000, NBPG, 0, (caddr_t*)&fdio_addr)) {
+	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0,
+						(caddr_t*)&fdio_addr)) {
 		printf("fdcprobe: cannot map io-area\n");
 		mb_free_bus_space_tag(mb_tag);
 		return (0);
@@ -314,7 +315,7 @@ fdcprobe(parent, cfp, aux)
 
  out:
 	if (rv == 0) {
-		bus_space_unmap(mb_tag, (caddr_t)fdio_addr, NBPG);
+		bus_space_unmap(mb_tag, (caddr_t)fdio_addr, FD_IOSIZE);
 		mb_free_bus_space_tag(mb_tag);
 	}
 
