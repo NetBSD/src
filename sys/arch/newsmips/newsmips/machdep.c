@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2000/03/25 10:14:14 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2000/04/14 10:11:07 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2000/03/25 10:14:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2000/04/14 10:11:07 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -131,17 +131,8 @@ void (*disable_intr) __P((void));
 extern void news3400_init __P((void));
 extern void news5000_init __P((void));
 
-/*
- * Interrupt-blocking functions defined in locore. These names aren't used
- * directly except here and in interrupt handlers.
- */
-
-/* Block out nested interrupt-enable bits. */
-extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
-extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
-extern int	splhigh __P((void));
-
-void to_monitor __P((int)) __attribute__((__noreturn__));
+static void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
+u_int ssir;
 
 /*
  *  Local functions.
@@ -149,8 +140,11 @@ void to_monitor __P((int)) __attribute__((__noreturn__));
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init __P((int, int, int, int));
+
+void cpu_intr  __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+
 void prom_halt __P((int)) __attribute__((__noreturn__));
-static void newsmips_softintr __P((int));
+void to_monitor __P((int)) __attribute__((__noreturn__));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -369,8 +363,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		mips_hardware_intr = news5000_intr;
-		mips_software_intr = newsmips_softintr;
+		hardware_intr = news5000_intr;
 		strcpy(cpu_model, "news5000");
 		cpuspeed = 50;	/* ??? XXX */
 		break;
@@ -382,8 +375,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		mips_hardware_intr = news3400_intr;
-		mips_software_intr = newsmips_softintr;
+		hardware_intr = news3400_intr;
 		strcpy(cpu_model, "news3400");
 		cpuspeed = 10;
 		break;
@@ -672,6 +664,54 @@ delay(n)
 	DELAY(n);
 }
 
+#include "zsc.h"
+
+int zssoft __P((void));
+
+void
+cpu_intr(status, cause, pc, ipending)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;
+{
+	uvmexp.intrs++;
+
+	/* device interrupts */
+	(*hardware_intr)(status, cause, pc, ipending);
+
+	/* software simulated interrupt */
+	if ((ipending & MIPS_SOFT_INT_MASK_1) ||
+	    (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+
+#define DO_SIR(bit, fn)						\
+	do {							\
+		if (n & (bit)) {				\
+			uvmexp.softs++;				\
+			fn;					\
+		}						\
+	} while (0)
+
+		unsigned n;
+		n = ssir; ssir = 0;
+		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
+
+#if NZSC > 0
+		DO_SIR(SIR_SERIAL, zssoft());
+#endif
+		DO_SIR(SIR_NET, netintr());
+#undef DO_SIR
+	}
+
+	/* 'softclock' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
+		uvmexp.softs++;
+		intrcnt[SOFTCLOCK_INTR]++;
+		softclock();
+	}
+}
+
 #ifdef EXEC_ECOFF
 #include <sys/exec_ecoff.h>
 
@@ -687,17 +727,3 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif
-
-#include "zsc.h"
-
-int zssoft __P((void));
-
-void
-newsmips_softintr(sisr)
-	int sisr;
-{
-#if NZSC > 0
-	if (sisr & SOFTISR_ZS)
-		zssoft();
-#endif
-}
