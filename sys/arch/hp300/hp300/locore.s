@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 1995/05/12 12:54:48 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 1995/05/12 13:03:23 mycroft Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -1117,7 +1117,7 @@ Lnocache0:
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
 
-	jbsr	_main			| main(firstaddr, r0)
+	jra	_main			| main()
 
 	.globl	_return_to_user
 _return_to_user:
