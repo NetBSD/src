@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.32 2000/08/21 22:57:11 lukem Exp $
+#	$NetBSD: special,v 1.33 2000/09/05 05:48:54 enami Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -31,6 +31,7 @@ dhclient-script	type=file mode=0555 uname=root gname=wheel
 disklabels	type=dir mode=0755 uname=root gname=wheel ignore
 ..	#etc/disklabels
 dm.conf		type=file mode=0644 uname=root gname=wheel
+dumpdates	type=file mode=0664 uname=root gname=operator optional
 exports		type=file mode=0644 uname=root gname=wheel optional
 fstab		type=file mode=0644 uname=root gname=wheel
 ftpchroot	type=file mode=0644 uname=root gname=wheel
