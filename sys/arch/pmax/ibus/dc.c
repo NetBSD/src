@@ -1,4 +1,4 @@
-/* $NetBSD: dc.c,v 1.1.2.9 1999/11/19 09:39:37 nisimura Exp $ */
+/* $NetBSD: dc.c,v 1.1.2.10 1999/11/20 06:28:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.9 1999/11/19 09:39:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.10 1999/11/20 06:28:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ dcintr(v)
 	struct dc_softc *sc = v;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
+	struct clist *cl;
 	int cc, line;
 	struct tty *tp;
 	unsigned csr;
@@ -121,31 +122,29 @@ dcintr(v)
 			}
 		}
 		if (csr & DC_TRDY) {
-			if (sc->sc_xmit[line].p < sc->sc_xmit[line].e) {
-				cc = *sc->sc_xmit[line].p++;	
+			if (tp == NULL)
+				goto fetchnext;
+			cl = &tp->t_outq;
+			if (cl->c_cc > 0) {
+				cc = getc(cl);
 				bus_space_write_2(bst, bsh, DCTBUF, cc);
 				DELAY(10);
 				goto fetchnext;
 			}
-			if (tp == NULL)
-				goto fetchnext;
+			cc = bus_space_read_2(bst, bsh, DCTCR);
+			cc &= ~(1 << line);
+			bus_space_write_2(bst, bsh, DCTCR, cc);
+			DELAY(10);
+
 			tp->t_state &= ~TS_BUSY;
 			if (tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
-			else {
-				ndflush(&tp->t_outq,
-				    sc->sc_xmit[line].e - tp->t_outq.c_cf);
-			}
+			else
+				ndflush(&tp->t_outq, cl->c_cc);
 			if (tp->t_line)
 				(*linesw[tp->t_line].l_start)(tp);
 			else
 				dcstart(tp);
-			if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
-				cc = bus_space_read_2(bst, bsh, DCTCR);
-				cc &= ~(1 << line);
-				bus_space_write_2(bst, bsh, DCTCR, cc);
-				DELAY(10);
-			}
 		}
    fetchnext:
 		csr = bus_space_read_2(bst, bsh, DCCSR);
