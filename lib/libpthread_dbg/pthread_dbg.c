@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.18 2004/06/02 21:15:42 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.19 2004/06/02 21:18:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.18 2004/06/02 21:15:42 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.19 2004/06/02 21:18:25 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -282,6 +282,9 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	case PT_STATE_BLOCKED_QUEUE:
 		info->thread_state = TD_STATE_SLEEPING;
 		break;
+	case PT_STATE_SUSPENDED:
+		info->thread_state = TD_STATE_SUSPENDED;
+		break;
 	case PT_STATE_ZOMBIE:
 		info->thread_state = TD_STATE_ZOMBIE;
 		break;
@@ -404,6 +407,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_RUNNABLE:
+	case PT_STATE_SUSPENDED:
 	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
 		/*
@@ -499,6 +503,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_RUNNABLE:
+	case PT_STATE_SUSPENDED:
 	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
 		/*
