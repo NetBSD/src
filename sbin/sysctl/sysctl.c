@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.37 2000/06/07 04:40:47 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.38 2000/06/26 15:37:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.37 2000/06/07 04:40:47 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.38 2000/06/26 15:37:26 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.37 2000/06/07 04:40:47 itojun Exp $");
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/resource.h>
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 #include <machine/cpu.h>
 
 #include <ufs/ufs/dinode.h>
