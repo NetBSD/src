@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.122 2001/03/18 21:11:30 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -256,6 +256,7 @@ product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
 /* Aironet */
 product AIRONET PC4500		0x0005 Aironet PC4500 Wireless LAN Adapter
 product AIRONET PC4800		0x0007 Aironet PC4800 Wireless LAN Adapter
+product AIRONET 350		0x000a Aironet 350 Wireless LAN Adapter
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
