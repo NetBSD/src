@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.3.2.3 1993/11/26 22:56:29 mycroft Exp $
+ *	$Id: isofs_rrip.c,v 1.3.2.4 1993/11/26 22:58:36 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ isofs_rrip_slink(p,ana)
 			/* indicate error to caller */
 			ana->cont = 1;
 			ana->fields = 0;
-			aha->outbuf -= *ana->outlen;
+			ana->outbuf -= *ana->outlen;
 			*ana->outlen = 0;
 			return 0;
 		}
