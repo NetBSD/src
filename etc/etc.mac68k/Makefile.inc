@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/12/02 13:18:08 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2002/12/02 13:31:19 lukem Exp $
 #
-#	mac68k-specific release building goo
+#	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC GENERICSBC

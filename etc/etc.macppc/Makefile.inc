@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/12/02 13:18:09 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/12/02 13:31:19 lukem Exp $
+#
+#	etc.macppc/Makefile.inc -- macppc-specific etc Makefile targets
+#
 
 KERNEL_SETS=		GENERIC GENERIC.MP
 
