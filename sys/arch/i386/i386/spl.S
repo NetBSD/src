@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1 2002/11/22 15:01:18 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.2 2002/12/04 01:33:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include "opt_vm86.h"
+#include "opt_ddb.h"
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -84,6 +85,10 @@ _C_LABEL(splx):
  *   edi - scratch for Xsoftnet
  */
 IDTVEC(spllower)
+#ifdef DDB
+	pushl	%ebp
+	movl	%esp,%ebp
+#endif
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -101,6 +106,9 @@ IDTVEC(spllower)
 2:	popl	%edi
 	popl	%esi
 	popl	%ebx
+#ifdef DDB
+	leave
+#endif
 	ret
 
 /*
