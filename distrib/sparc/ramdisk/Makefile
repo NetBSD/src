@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2000/01/14 13:46:06 pk Exp $
+#	$NetBSD: Makefile,v 1.17 2000/03/08 06:08:37 cjs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -20,17 +20,18 @@ IMAGE?=		ramdisk.fs
 LISTS=		list
 MTREE=		mtree.conf
 
-SIZE=		1800k
+SIZE=		1980k
 DISKTYPE=	instfs
-GEOM=		512/18/2/100
+GEOM=		512/18/2/110
 INO_BYTES=	4096
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	disklabel -W ${VND_CDEV}
-	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 92 ${VND_RDEV}
+	#vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${GEOM}
+	#disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	#disklabel -W ${VND_CDEV}
+	newfs -B be -m 0 -o space -i ${INO_BYTES} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${MINIROOT} REALCURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
