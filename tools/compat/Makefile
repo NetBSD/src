@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/11 21:17:57 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/04 14:39:06 lukem Exp $
 
 HOSTLIB=	nbcompat
 
-SRCS=		err.c fparseln.c setprogname.c
+SRCS=		err.c fgetln.c fparseln.c setprogname.c
 HOST_CPPFLAGS+=	-I. -DHAVE_CONFIG_H
 
 DPSRCS=		config.h

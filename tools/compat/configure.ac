@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.1 2001/12/11 21:17:58 tv Exp $
+#	$NetBSD: configure.ac,v 1.2 2002/01/04 14:39:07 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -12,8 +12,7 @@ AC_TYPE_SIZE_T
 AC_CHECK_HEADER(stddef.h)
 AC_CHECK_HEADER(sys/types.h)
 
-AC_CHECK_FUNCS(errx)
+AC_CHECK_FUNCS(errx fgetln setprogname)
 AC_SEARCH_LIBS(fparseln, util, AC_DEFINE(HAVE_FPARSELN))
-AC_CHECK_FUNCS(setprogname)
 
 AC_OUTPUT
