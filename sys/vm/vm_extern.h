@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.10 1994/10/29 07:35:07 cgd Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.11 1994/10/30 19:11:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@ int		 smmap __P((struct proc *, void *, int *));
 int		 sstk __P((struct proc *, void *, int *));
 #endif
 
-void		 assert_wait __P((int, boolean_t));
+void		 assert_wait __P((void *, boolean_t));
 int		 grow __P((struct proc *, u_int));
 void		 iprintf __P((void (*)(const char *, ...), const char *, ...));
 int		 kernacc __P((caddr_t, int, int));
@@ -91,8 +91,8 @@ void		 swapout_threads __P((void));
 int		 swfree __P((struct proc *, int));
 void		 swstrategy __P((struct buf *));
 void		 thread_block __P((void));
-void		 thread_sleep __P((long, simple_lock_t, boolean_t));
-void		 thread_wakeup __P((long));
+void		 thread_sleep __P((void *, simple_lock_t, boolean_t));
+void		 thread_wakeup __P((void *));
 int		 useracc __P((caddr_t, int, int));
 int		 vm_allocate __P((vm_map_t,
 		    vm_offset_t *, vm_size_t, boolean_t));

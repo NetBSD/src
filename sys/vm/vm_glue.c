@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.42 1994/10/29 07:35:09 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.43 1994/10/30 19:11:14 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -548,7 +548,7 @@ swapout(p)
 
 void
 assert_wait(event, ruptible)
-	int event;
+	void *event;
 	boolean_t ruptible;
 {
 #ifdef lint
@@ -563,13 +563,13 @@ thread_block()
 	int s = splhigh();
 
 	if (curproc->p_thread)
-		tsleep((caddr_t)curproc->p_thread, PVM, "thrd_block", 0);
+		tsleep(curproc->p_thread, PVM, "thrd_block", 0);
 	splx(s);
 }
 
 void
 thread_sleep(event, lock, ruptible)
-	long event;
+	void *event;
 	simple_lock_t lock;
 	boolean_t ruptible;
 {
@@ -581,17 +581,17 @@ thread_sleep(event, lock, ruptible)
 	curproc->p_thread = event;
 	simple_unlock(lock);
 	if (curproc->p_thread)
-		tsleep((caddr_t)event, PVM, "thrd_sleep", 0);
+		tsleep(event, PVM, "thrd_sleep", 0);
 	splx(s);
 }
 
 void
 thread_wakeup(event)
-	long event;
+	void *event;
 {
 	int s = splhigh();
 
-	wakeup((caddr_t)event);
+	wakeup(event);
 	splx(s);
 }
 
