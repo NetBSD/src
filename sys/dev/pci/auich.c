@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.67 2004/10/31 06:25:55 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.68 2004/10/31 16:49:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.67 2004/10/31 06:25:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.68 2004/10/31 16:49:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1129,7 +1129,7 @@ int
 auich_intr(void *v)
 {
 	struct auich_softc *sc = v;
-	int ret = 0, sts, gsts, i, qptr;
+	int ret = 0, sts, gsts, i;
 
 #ifdef DIAGNOSTIC
 	int csts;
@@ -1159,21 +1159,23 @@ auich_intr(void *v)
 		i = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CIV);
 		if (sts & (ICH_BCIS | ICH_LVBCI | ICH_CELV)) {
 			struct auich_dmalist *q;
+			int blksize, qptr;
 
+			blksize = sc->pcmo_blksize;
 			qptr = sc->ptr_pcmo;
 
 			while (qptr != i) {
 				q = &sc->dmalist_pcmo[qptr];
 
 				q->base = sc->pcmo_p;
-				q->len = (sc->pcmo_blksize /
-				    sc->sc_sample_size) | ICH_DMAF_IOC;
+				q->len = (blksize / sc->sc_sample_size) |
+				    ICH_DMAF_IOC;
 				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
-				    &sc->dmalist_pcmo[i], q,
-				    sc->pcmo_blksize / 2, sc->pcmo_p));
+				    &sc->dmalist_pcmo[i], q, blksize / 2,
+				    sc->pcmo_p));
 
-				sc->pcmo_p += sc->pcmo_blksize;
+				sc->pcmo_p += blksize;
 				if (sc->pcmo_p >= sc->pcmo_end)
 					sc->pcmo_p = sc->pcmo_start;
 
@@ -1209,21 +1211,23 @@ auich_intr(void *v)
 		i = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CIV);
 		if (sts & (ICH_BCIS | ICH_LVBCI | ICH_CELV)) {
 			struct auich_dmalist *q;
+			int blksize, qptr;
 
+			blksize = sc->pcmi_blksize;
 			qptr = sc->ptr_pcmi;
 
 			while (qptr != i) {
 				q = &sc->dmalist_pcmi[qptr];
 
 				q->base = sc->pcmi_p;
-				q->len = (sc->pcmi_blksize /
-				    sc->sc_sample_size) | ICH_DMAF_IOC;
+				q->len = (blksize / sc->sc_sample_size) |
+				    ICH_DMAF_IOC;
 				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
-				    &sc->dmalist_pcmi[i], q,
-				    sc->pcmi_blksize / 2, sc->pcmi_p));
+				    &sc->dmalist_pcmi[i], q, blksize / 2,
+				    sc->pcmi_p));
 
-				sc->pcmi_p += sc->pcmi_blksize;
+				sc->pcmi_p += blksize;
 				if (sc->pcmi_p >= sc->pcmi_end)
 					sc->pcmi_p = sc->pcmi_start;
 
@@ -1269,6 +1273,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	struct auich_dmalist *q;
 	struct auich_dma *p;
 	size_t size;
+	int qptr;
 #ifdef DIAGNOSTIC
 	int csts;
 #endif
@@ -1301,21 +1306,31 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	 * to the scatter-gather chain.
 	 */
 	sc->pcmo_start = DMAADDR(p);
-	sc->pcmo_p = sc->pcmo_start + blksize;
+	sc->pcmo_p = sc->pcmo_start;
 	sc->pcmo_end = sc->pcmo_start + size;
 	sc->pcmo_blksize = blksize;
 
-	sc->ptr_pcmo = 0;
-	q = &sc->dmalist_pcmo[sc->ptr_pcmo];
-	q->base = sc->pcmo_start;
-	q->len = (blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
-	if (++sc->ptr_pcmo == ICH_DMALIST_MAX)
-		sc->ptr_pcmo = 0;
+	qptr = 0;
+	do {
+		q = &sc->dmalist_pcmo[qptr];
+
+		q->base = sc->pcmo_p;
+		q->len = (blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
+
+		sc->pcmo_p += blksize;
+		if (sc->pcmo_p >= sc->pcmo_end)
+			sc->pcmo_p = sc->pcmo_start;
+
+		if (++qptr == ICH_DMALIST_MAX)
+			qptr = 0;
+	} while (qptr != 0);
+
+	sc->ptr_pcmo = qptr;
+	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_LVI,
+	    (qptr - 1) & ICH_LVI_MASK);
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_BDBAR,
 	    sc->sc_cddma + ICH_PCMO_OFF(0));
-	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_LVI,
-	    (sc->ptr_pcmo - 1) & ICH_LVI_MASK);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL,
 	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
 
@@ -1335,6 +1350,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	struct auich_dmalist *q;
 	struct auich_dma *p;
 	size_t size;
+	int qptr;
 #ifdef DIAGNOSTIC
 	int csts;
 #endif
@@ -1368,21 +1384,31 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	 * to the scatter-gather chain.
 	 */
 	sc->pcmi_start = DMAADDR(p);
-	sc->pcmi_p = sc->pcmi_start + blksize;
+	sc->pcmi_p = sc->pcmi_start;
 	sc->pcmi_end = sc->pcmi_start + size;
 	sc->pcmi_blksize = blksize;
 
-	sc->ptr_pcmi = 0;
-	q = &sc->dmalist_pcmi[sc->ptr_pcmi];
-	q->base = sc->pcmi_start;
-	q->len = (blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
-	if (++sc->ptr_pcmi == ICH_DMALIST_MAX)
-		sc->ptr_pcmi = 0;
+	qptr = 0;
+	do {
+		q = &sc->dmalist_pcmi[qptr];
+
+		q->base = sc->pcmi_p;
+		q->len = (blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
+
+		sc->pcmi_p += blksize;
+		if (sc->pcmi_p >= sc->pcmi_end)
+			sc->pcmi_p = sc->pcmi_start;
+
+		if (++qptr == ICH_DMALIST_MAX)
+			qptr = 0;
+	} while (qptr != 0);
+
+	sc->ptr_pcmi = qptr;
+	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_LVI,
+	    (qptr - 1) & ICH_LVI_MASK);
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_BDBAR,
 	    sc->sc_cddma + ICH_PCMI_OFF(0));
-	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_LVI,
-	    (sc->ptr_pcmi - 1) & ICH_LVI_MASK);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL,
 	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
 
