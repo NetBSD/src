@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.6 1995/07/28 08:00:17 phil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.7 2001/06/13 10:46:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -16,7 +16,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Christopher G. Demetriou.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

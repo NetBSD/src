@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_out.c,v 1.5 1999/06/22 20:27:21 is Exp $	*/
+/*	$NetBSD: gsp_out.c,v 1.6 2001/06/13 10:46:06 wiz Exp $	*/
 /*
  * GSP assembler - binary & listing output
  *
@@ -17,7 +17,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Paul Mackerras.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_out.c,v 1.5 1999/06/22 20:27:21 is Exp $");
+__RCSID("$NetBSD: gsp_out.c,v 1.6 2001/06/13 10:46:06 wiz Exp $");
 #endif
 
 #include <stdio.h>
