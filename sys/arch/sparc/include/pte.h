@@ -42,7 +42,7 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pte.h,v 1.5 92/11/26 02:04:43 torek Exp 
- * $Id: pte.h,v 1.5 1994/11/02 23:16:59 deraadt Exp $
+ * $Id: pte.h,v 1.6 1994/11/03 04:29:53 deraadt Exp $
  */
 
 /*
@@ -119,7 +119,7 @@ extern int nptesg;
 #endif
 
 /* virtual address to virtual segment number */
-#define	VA_VSEG(va)	(((int)(va) >> SGSHIFT) & PGOFSET)
+#define	VA_VSEG(va)	(((int)(va) >> SGSHIFT) & 0xfff)
 
 /* virtual address to virtual page number, for Sun-4 and Sun-4c */
 #define	VA_SUN4_VPG(va)		(((int)(va) >> 13) & 31)
