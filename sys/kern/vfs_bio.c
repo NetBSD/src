@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.115 2004/02/11 17:36:31 tls Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.116 2004/02/16 09:34:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.115 2004/02/11 17:36:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.116 2004/02/16 09:34:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,14 +416,19 @@ buf_lotsfree(void)
 }
 
 /*
- * Return estimate of # of buffers we think need to be
+ * Return estimate of bytes we think need to be
  * released to help resolve low memory conditions.
+ *
+ * => called at splbio.
+ * => called with bqueue_slock held.
  */
 static int
 buf_canrelease(void)
 {
 	int pagedemand, ninvalid = 0;
 	struct buf *bp;
+
+	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
 
 	TAILQ_FOREACH(bp, &bufqueues[BQ_AGE], b_freelist)
 		ninvalid += bp->b_bufsize;
@@ -1240,12 +1245,13 @@ buf_drain(int n)
 {
 	int s, size = 0;
 
+	s = splbio();
+	simple_lock(&bqueue_slock);
+
 	/* If not asked for a specific amount, make our own estimate */
 	if (n == 0)
 		n = buf_canrelease();
 
-	s = splbio();
-	simple_lock(&bqueue_slock);
 	while (size < n && bufmem > bufmem_lowater)
 		size += buf_trim();
 
