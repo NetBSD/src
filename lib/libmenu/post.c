@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.5 2000/04/20 12:17:57 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.6 2000/05/05 11:28:56 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -71,8 +71,8 @@ post_menu(MENU *menu)
 	if (menu->menu_subwin == NULL) {
 		menu->we_created = 1;
 		menu->menu_subwin = derwin(menu->menu_win, menu->rows,
-					   menu->cols * menu->max_item_width,
-					   0, 0);
+					   menu->cols * menu->max_item_width
+					   + menu->cols, 0, 0);
 		if (menu->menu_subwin == NULL) {
 			menu->we_created = 0;
 			return E_SYSTEM_ERROR;
