@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.296 2002/01/09 22:33:53 thorpej Exp $
+# $NetBSD: mi,v 1.297 2002/01/11 01:36:29 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -452,6 +452,8 @@
 ./usr/include/dev		base-c-usr
 ./usr/include/dev/ofw		base-c-usr
 ./usr/include/dev/usb		base-c-usr
+./usr/include/fs		base-c-usr
+./usr/include/fs/smbfs		base-c-usr
 ./usr/include/g++		base-cxx-usr
 ./usr/include/gssapi		base-c-usr
 ./usr/include/kadm5		base-c-usr
