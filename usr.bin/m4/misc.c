@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2001/11/14 14:57:04 tv Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2002/01/21 21:49:58 tv Exp $	*/
 /*	$OpenBSD: misc.c,v 1.25 2001/10/10 11:17:37 espie Exp $	*/
 
 /*
@@ -42,12 +42,11 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.13 2001/11/14 14:57:04 tv Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2002/01/21 21:49:58 tv Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,7 +56,6 @@ __RCSID("$NetBSD: misc.c,v 1.13 2001/11/14 14:57:04 tv Exp $");
 #include "stdd.h"
 #include "extern.h"
 #include "pathnames.h"
-
 
 char *ep;		/* first free char in strspace */
 static char *strspace;	/* string space for evaluation */
