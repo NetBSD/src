@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.29 2004/04/12 14:30:47 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.30 2004/04/13 08:12:03 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.29 2004/04/12 14:30:47 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.30 2004/04/13 08:12:03 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,7 +850,7 @@ _bus_dmamap_sync_mips3(t, map, offset, len, ops)
 	int ops;
 {
 	bus_size_t minlen;
-	bus_addr_t addr;
+	bus_addr_t addr, start, end, preboundary, firstboundary, lastboundary;
 	int i, useindex;
 
 	/*
@@ -957,21 +957,33 @@ _bus_dmamap_sync_mips3(t, map, offset, len, ops)
 			continue;
  		}
 
+		/* The code that follows is more correct than that in
+		   mips/bus_dma.c. */
+		start = addr + offset;
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			mips_dcache_wbinv_range(addr + offset, minlen);
+			mips_dcache_wbinv_range(start, minlen);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-#if 1           
-			mips_dcache_wbinv_range(addr + offset, minlen);
-#else            
-			mips_dcache_inv_range(addr + offset, minlen);
-#endif           
+			end = start + minlen;
+			preboundary = start & ~mips_dcache_align_mask;
+			firstboundary = (start + mips_dcache_align_mask)
+			    & ~mips_dcache_align_mask;
+			lastboundary = end & ~mips_dcache_align_mask;
+			if (preboundary < start && preboundary < lastboundary)
+				mips_dcache_wbinv_range(preboundary,
+				    mips_dcache_align);
+			if (firstboundary < lastboundary)
+				mips_dcache_inv_range(firstboundary,
+				    lastboundary - firstboundary);
+			if (lastboundary < end)
+				mips_dcache_wbinv_range(lastboundary,
+				    mips_dcache_align);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			mips_dcache_wb_range(addr + offset, minlen);
+			mips_dcache_wb_range(start, minlen);
 			break;
 		}
 #ifdef BUS_DMA_DEBUG
