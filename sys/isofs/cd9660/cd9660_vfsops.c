@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.24 1997/01/24 00:27:34 cgd Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.25 1997/01/31 02:23:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -51,6 +51,7 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
@@ -74,6 +75,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_fhtovp,
 	cd9660_vptofh,
 	cd9660_init,
+	cd9660_mountroot,
 };
 
 /*
@@ -96,6 +98,9 @@ cd9660_mountroot()
 	size_t size;
 	int error;
 	struct iso_args args;
+
+	if (root_device->dv_class != DV_DISK)
+		return (ENODEV);
 	
 	/*
 	 * Get vnodes for swapdev and rootdev.
