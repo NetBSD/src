@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.24.2.6 1999/02/13 17:58:39 minoura Exp $
+#	$NetBSD: ALL,v 1.24.2.7 1999/03/14 08:12:17 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -197,11 +197,12 @@ fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices
-spc0	at intio0 addr 0xe96020 intr 108	# genuin SCSI
-spc1	at intio0 addr 0xea0000 intr 246	# genuin SCSI
+scsirom0 at intio0 addr 0xfc0000		# Built-in SCSI BIOS
+scsirom1 at intio0 addr 0xea0020		# External SCSI BIOS
+spc0	at scsirom0				# genuin SCSI
+spc1	at scsirom1				# genuin SCSI
 scsibus* at spc?
-#!mha0	at intio0 addr 0xea0000 intr 246	# Mankai MK-HA1 (Mach-2)
-mha0	at mainbus0				#! MK-HA1 mach-2 SCSI
+mha0	at scsirom1				# Mankai MK-HA1 (Mach-2)
 scsibus* at mha0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks

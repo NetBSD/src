@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.7.6.4 1999/02/13 18:04:55 minoura Exp $
+|	$NetBSD: vectors.s,v 1.7.6.5 1999/03/14 08:12:20 minoura Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -215,7 +215,7 @@ _vectab:
 	.long	_intiotrap	/* 243: unassigned, reserved */
 	.long	_intiotrap	/* 244: unassigned, reserved */
 	.long	_intiotrap	/* 245: unassigned, reserved */
-	.long	_exspctrap	/* 246: external SPC */
+	.long	_intiotrap	/* 246: external SPC */
 	.long	_intiotrap	/* 247: unassigned, reserved */
 	.long	_intiotrap	/* 248: unassigned, reserved */
 	.long	_intiotrap	/* 249: Neptune-X */

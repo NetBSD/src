@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.11.4.2 1999/01/30 15:07:41 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.11.4.3 1999/03/14 08:12:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -89,6 +89,8 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
+#include <machine/bus.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_message.h>
@@ -97,7 +99,8 @@
 #include <x68k/x68k/iodevice.h>
 #include <x68k/dev/mb86601reg.h>
 #include <x68k/dev/mhavar.h>
-#include <x68k/dev/dmavar.h>
+#include <x68k/dev/intiovar.h>
+#include <x68k/dev/scsiromvar.h>
 
 #if 0
 #define WAIT {if (sc->sc_pc[2]) {printf("[W_%d", __LINE__); while (sc->sc_pc[2] & 0x40);printf("]");}}
@@ -233,7 +236,7 @@ int	mha_scsi_cmd	__P((struct scsipi_xfer *));
 int	mha_poll	__P((struct mha_softc *, struct acb *));
 void	mha_sched	__P((struct mha_softc *));
 void	mha_done	__P((struct mha_softc *, struct acb *));
-int	mhaintr		__P((int));
+int	mhaintr		__P((void*));
 void	mha_timeout	__P((void *));
 void	mha_minphys	__P((struct buf *));
 void	mha_dequeue	__P((struct mha_softc *, struct acb *));
@@ -244,7 +247,6 @@ void	mha_show_scsi_cmd __P((struct acb *));
 void	mha_print_active_acb __P((void));
 void	mha_dump_driver __P((struct mha_softc *));
 #endif
-volatile void *	mha_find	__P((int));
 
 static int mha_dataio_dma __P((int, int, struct mha_softc *, u_char *, int));
 
@@ -270,32 +272,26 @@ mhamatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (strcmp(aux, "mha") || mha_find(cf->cf_unit) == 0)
+	struct intio_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_bst;
+	bus_space_handle_t ioh;
+
+	ia->ia_size=0x20;
+	if (ia->ia_addr != 0xea0000)
 		return 0;
+
+	if (intio_map_allocate_region(parent->dv_parent, ia,
+				      INTIO_MAP_TESTONLY) < 0) /* FAKE */
+		return 0;
+
+	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
+			  &ioh) < 0)
+		return 0;
+	if (!badaddr (INTIO_ADDR(ia->ia_addr + 0)))
+		return 0;
+	bus_space_unmap(iot, ioh, 0x20);
+
 	return 1;
-}
-
-/*
- * Find the board
- */
-volatile void *
-mha_find(unit)
-	int unit;
-{
-	volatile void *addr;
-
-	if (unit > 1)
-		return 0;
-	/* Find only on-board ROM */
-	if (badaddr(IODEVbase->exscsirom)
-	    || bcmp((void *)&IODEVbase->exscsirom[0x24], "SCSIEX", 6))
-	  return 0;
-
-	/* If bdid exists, this board is ``CZ-6BS1'' */
-	if (!badbaddr(&IODEVbase->io_exspc.bdid))
-		return 0;
-
-	return (void *)(&IODEVbase->exscsirom[0x60]);
 }
 
 /*
@@ -309,18 +305,23 @@ mhaattach(parent, self, aux)
 	void *aux;
 {
 	struct mha_softc *sc = (void *)self;
+	struct intio_attach_args *ia = aux;
 
 	tmpsc = sc;	/* XXX */
 
 	SPC_TRACE(("mhaattach  "));
 	sc->sc_state = SPC_INIT;
-	sc->sc_iobase = mha_find(sc->sc_dev.dv_unit); /* XXX */
+	sc->sc_iobase = INTIO_ADDR(ia->ia_addr + 0x80); /* XXX */
+	intio_map_allocate_region (parent->dv_parent, ia, INTIO_MAP_ALLOCATE);
+				/* XXX: FAKE  */
 
 	sc->sc_pc = (volatile u_char *)sc->sc_iobase;
 	sc->sc_ps = (volatile u_short *)sc->sc_iobase;
 	sc->sc_pcx = &sc->sc_pc[0x10];
 
 	sc->sc_id = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
+
+	intio_intr_establish (ia->ia_intr, "mha", mhaintr, sc);
 
 	mha_init(sc);	/* Init chip and driver */
 	sc->sc_phase  = BUSFREE_PHASE;
@@ -376,7 +377,7 @@ mhaattach(parent, self, aux)
 	SPC_TRACE(("waiting for intr..."));
 	while (!(SSR & SS_IREQUEST))
 	  delay(10);
-	mhaintr	(sc->sc_dev.dv_unit);
+	mhaintr	(sc);
 
 	tmpsc = NULL;
 
@@ -753,7 +754,7 @@ mha_poll(sc, acb)
 		 * have got an interrupt?
 		 */
 		if (SSR & SS_IREQUEST)
-			mhaintr(sc->sc_dev.dv_unit);
+			mhaintr(sc);
 		if ((xs->flags & ITSDONE) != 0)
 			break;
 		DELAY(10);
@@ -1725,10 +1726,10 @@ mha_datain(sc, p, n)
  * 1) always uses programmed I/O
  */
 int
-mhaintr(unit)
-	int unit;
+mhaintr(arg)
+	void *arg;
 {
-	struct mha_softc *sc;
+	struct mha_softc *sc = arg;
 	u_char ints;
 	struct acb *acb;
 	struct scsipi_link *sc_link;
@@ -1743,12 +1744,6 @@ mhaintr(unit)
 		sc = tmpsc;
 	} else {
 #endif
-
-	/* return if not configured */
-	if (!mha_cd.cd_devs)	/* Check if at least one unit is attached. */
-		return;		/* XXX should check if THE unit exists. */
-
-	sc = mha_cd.cd_devs[unit];
 
 #if 1	/* XXX */
 	}

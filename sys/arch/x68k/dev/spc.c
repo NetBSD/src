@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.19.4.3 1999/03/12 15:17:01 minoura Exp $	*/
+/*	$NetBSD: spc.c,v 1.19.4.4 1999/03/14 08:12:19 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,12 +51,12 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <arch/x68k/dev/intiovar.h>
+#include <arch/x68k/dev/scsiromvar.h>
 #include <arch/x68k/x68k/iodevice.h>
 
 #include <dev/ic/mb89352var.h>
 #include <dev/ic/mb89352reg.h>
 
-static int spc_intio_find __P((bus_space_tag_t, int));
 static int spc_intio_match __P((struct device *, struct cfdata *, void *));
 static void spc_intio_attach __P((struct device *, struct device *, void *));
 
@@ -64,40 +64,6 @@ struct cfattach spc_intio_ca = {
 	sizeof (struct spc_softc), spc_intio_match, spc_intio_attach
 };
 
-
-extern int *nofault;		/* XXX */
-
-static int
-spc_intio_find(iot, paddr)
-	bus_space_tag_t iot;
-	int paddr;
-{
-	bus_space_handle_t ioh;
-	label_t faultbuf;
-	int r;
-	int found = 0;
-
-	if (bus_space_map(iot, paddr, 0x20, BUS_SPACE_MAP_SHIFTED,
-			  &ioh) < 0)
-		return 0;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp(&faultbuf))
-		goto out;
-
-	r = spc_find (iot, ioh, IODEVbase->io_sram[0x70] & 0x7); /* XXX */
-	if (r == 0)
-		goto out;
-	else
-		found = 1;
- out:
-	nofault = (int *) 0;
-	bus_space_unmap(iot, ioh, 0x20);
-
-	/* it used to check the ROM. */
-
-	return found;
-}
 
 static int
 spc_intio_match(parent, cf, aux)
@@ -107,43 +73,22 @@ spc_intio_match(parent, cf, aux)
 {
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
-
-	if (strcmp (ia->ia_name, "spc") != 0)
-		return 0;
+	bus_space_handle_t ioh;
 
 	ia->ia_size=0x20;
 
-	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT) {
-		ia->ia_addr = 0xe96020; /* XXX */
-		if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
-			ia->ia_intr = 108; /* XXX */
-
-		if (intio_map_allocate_region(parent, ia,
-					      INTIO_MAP_TESTONLY) == 0 &&
-		    spc_intio_find(iot, ia->ia_addr))
-			return 1;
-
-		ia->ia_addr = 0xea0000; /* XXX */
-		if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
-			ia->ia_intr = 246; /* XXX */
-
-		if (intio_map_allocate_region(parent, ia,
-					      INTIO_MAP_TESTONLY) == 0 &&
-		    spc_intio_find(iot, ia->ia_addr))
-			return 1;
-
+	if (intio_map_allocate_region(parent->dv_parent, ia,
+				      INTIO_MAP_TESTONLY) < 0)
 		return 0;
-	}
 
-	if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
-		ia->ia_intr = 108; /* XXX */
+	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
+			  &ioh) < 0)
+		return 0;
+	if (badaddr (INTIO_ADDR(ia->ia_addr + BDID)))
+		return 0;
+	bus_space_unmap(iot, ioh, 0x20);
 
-	if (intio_map_allocate_region(parent, ia,
-				      INTIO_MAP_TESTONLY) == 0&&
-	    spc_intio_find(iot, ia->ia_addr))
-		return 1;
-	
-	return 0;
+	return 1;
 }
 
 static void
@@ -158,6 +103,8 @@ spc_intio_attach(parent, self, aux)
 
 	printf ("\n");
 
+	intio_map_allocate_region(parent->dv_parent, ia,
+				  INTIO_MAP_ALLOCATE);
 	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
 			  &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
@@ -167,10 +114,6 @@ spc_intio_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_initiator = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
-	if (!spc_find(iot, ioh, sc->sc_initiator)) {
-		printf("%s: spc_find failed", sc->sc_dev.dv_xname);
-		return;
-	}
 
 	if (intio_intr_establish(ia->ia_intr, "spc", spcintr, sc))
 		panic ("spcattach: interrupt vector busy");
