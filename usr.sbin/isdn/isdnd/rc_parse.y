@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration parser
  *	-----------------------------------------
  *
- *	$Id: rc_parse.y,v 1.3 2002/04/10 23:35:07 martin Exp $ 
+ *	$Id: rc_parse.y,v 1.4 2003/09/05 13:31:04 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -106,6 +106,7 @@ int		saw_system = 0;
 %token		EARLYHANGUP
 %token		ENTRY
 %token		EXTCALLATTR
+%token		FIRMWARE
 %token		FULLCMD
 %token		HOLIDAYFILE
 %token		IDLETIME_IN
@@ -170,7 +171,7 @@ int		saw_system = 0;
 
 %type	<num>	sysfilekeyword sysnumkeyword sysstrkeyword sysboolkeyword
 %type	<num>	filekeyword numkeyword strkeyword boolkeyword monrights monright
-%type	<num>	cstrkeyword
+%type	<num>	cstrkeyword cfilekeyword
 %type	<str>	filename
 
 %union {
@@ -507,9 +508,16 @@ strcontroller:	cstrkeyword '=' STRING '\n'
 			{ 
 			cfg_setval($1);
 			}
+		| cfilekeyword '=' filename '\n'
+			{
+			cfg_setval($1);
+			}
 		;
 
 cstrkeyword:	  PROTOCOL		{ $$ = PROTOCOL; }
+		;
+
+cfilekeyword:	  FIRMWARE		{ $$ = FIRMWARE; }
 		;
 
 
