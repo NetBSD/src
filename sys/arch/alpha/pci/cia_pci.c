@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.23 1998/07/29 01:28:44 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.24 1999/06/29 17:10:57 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.23 1998/07/29 01:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.24 1999/06/29 17:10:57 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,11 @@ cia_conf_read(cpv, tag, offset)
 		    0x3 << 3);					/* XXX */
 	}
 	data = (pcireg_t)-1;
+	alpha_mb();
 	if (!(ba = badaddr(datap, sizeof *datap)))
 		data = *datap;
+	alpha_mb();
+	alpha_mb();
 
 	if (secondary) {
 		alpha_mb();
@@ -249,7 +252,10 @@ cia_conf_write(cpv, tag, offset, data)
 		    0 << 5 |					/* XXX */
 		    0x3 << 3);					/* XXX */
 	}
+	alpha_mb();
 	*datap = data;
+	alpha_mb();
+	alpha_mb();
 
 	if (secondary) {
 		alpha_mb();
