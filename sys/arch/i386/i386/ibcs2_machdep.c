@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.5 1998/03/05 04:20:44 scottb Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.6 1998/03/06 04:12:56 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_vm86.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -51,6 +53,10 @@
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/ibcs2_machdep.h>
+
+#ifdef VM86
+#include <machine/vm86.h>
+#endif
 
 #include <compat/ibcs2/ibcs2_signal.h>
 
