@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.92 2003/06/30 03:26:28 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.93 2003/07/02 14:16:49 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1029,3 +1029,14 @@ sys/netinet/ip_output.c				1.106-1.107
 
 	freebsd code somehow crept in
 	[itojun, ticket #1358]
+
+src/sys/netinet/igmp.c				patch
+
+	Make it compilable.
+	[itojun, ticket #1360]
+
+src/sys/netinet/in.c				patch
+
+	Make it compilable.
+	[itojun, ticket #1361]
+
