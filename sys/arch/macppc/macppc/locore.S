@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 1999/01/27 14:46:28 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 1999/02/02 16:47:09 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -86,8 +86,6 @@ GLOBAL(intrcnt)
 	.long	0,0,0,0
 GLOBAL(eintrcnt)
 
-GLOBAL(ofbat)
-	.long	0,0			/* batu, batl */
 GLOBAL(ofmsr)
 	.long	0			/* msr used in Open Firmware */
 
@@ -98,6 +96,8 @@ idle_u:
 	.long	0			/* fake uarea during idle after exit */
 openfirmware_entry:
 	.long	0			/* openfirmware entry point */
+srsave:
+	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -178,21 +178,45 @@ ENTRY(openfirmware)
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
 
-	lis	4,_C_LABEL(ofbat)@ha	/* map Open Firmware work area */
-	lwz	4,_C_LABEL(ofbat)@l(4)
-	mtibatu 2,4
-	mtdbatu 2,4
-	lis	4,_C_LABEL(ofbat)+4@ha
-	lwz	4,_C_LABEL(ofbat)+4@l(4)
-	mtibatl 2,4
-	mtdbatl 2,4
-
 	lis	4,ofmsr@ha		/* Open Firmware msr */
 	lwz	4,ofmsr@l(4)
 	mtmsr	4
 	isync
 
+	lis	4,srsave@ha		/* save old SR */
+	addi	4,4,srsave@l
+	li	5,0
+1:	mfsrin	0,5
+	stw	0,0(4)
+	addi	4,4,4
+	addis	5,5,0x10000000@h
+	cmpwi	5,0
+	bne	1b
+
+	lis	4,_C_LABEL(ofw_pmap)@ha	/* load OFW SR */
+	addi	4,4,_C_LABEL(ofw_pmap)@l
+	lwz	0,PM_KERNELSR(4)
+	cmpwi	0,0			/* pm_sr[KERNEL_SR] == 0? */
+	beq	2f			/* then skip (not initialized yet) */
+	li	5,0
+1:	lwz	0,0(4)
+	mtsrin	0,5
+	addi	4,4,4
+	addis	5,5,0x10000000@h
+	cmpwi	5,0
+	bne	1b
+2:
 	blrl				/* call Open Firmware */
+
+	lis	4,srsave@ha		/* restore saved SR */
+	addi	4,4,srsave@l
+	li	5,0
+1:	mfsrin	0,5
+	stw	0,0(4)
+	addi	4,4,4
+	addis	5,5,0x10000000@h
+	cmpwi	5,0
+	bne	1b
 
 	lwz	4,8(1)			/* restore msr */
 	mtmsr	4

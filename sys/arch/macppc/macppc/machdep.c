@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1999/01/27 14:46:28 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1999/02/02 16:47:08 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 #include "opt_natm.h"
 #include "opt_uvm.h"
 #include "opt_sysv.h"
+#include "adb.h"
 #include "ipkdb.h"
 
 #include <sys/param.h>
@@ -92,8 +93,6 @@
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
 
-#include "adb.h"
-
 #if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -110,15 +109,16 @@ struct pmap *curpm;
 struct proc *fpuproc;
 
 extern struct user *proc0paddr;
+extern int ofmsr;
 
 struct bat battable[16];
 int astpending;
 char *bootpath;
 paddr_t msgbuf_paddr;
+static int chosen;
+struct pmap ofw_pmap;
 
 int msgbufmapped = 0;
-
-extern int ofmsr;
 
 #ifdef	NBUF
 int	nbuf = NBUF;
@@ -133,8 +133,6 @@ int	bufpages = 0;
 
 caddr_t allocsys __P((caddr_t));
 void install_extint __P((void (*)(void)));
-
-extern struct bat ofbat;
 
 int cold = 1;
 
@@ -162,20 +160,8 @@ initppc(startkernel, endkernel, args)
 	extern void ext_intr __P((void));
 	int exc, scratch;
 
-	int chosen, mmu, mode, exists;
-	u_int32_t ofw_pa1, ofw_pa2;
-
-	/*
-	 * Read translations for Openfirmware call.
-	 */
 	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "mmu", &mmu, 4);
-	OF_call_method("translate", mmu, 1, 3,
-		       0xff800000, &ofw_pa1, &mode, &exists);
-	OF_call_method("translate", mmu, 1, 3,
-		       0xff900000, &ofw_pa2, &mode, &exists);
-	if (exists == 0)
-		ofw_pa2 = -1;
+	save_ofw_mapping();
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -216,6 +202,15 @@ initppc(startkernel, endkernel, args)
 	battable[0].batu = BATU(0x00000000);
 
 	/*
+	 * Map PCI memory space.
+	 */
+	battable[8].batl = BATL(0x80000000, BAT_I);
+	battable[8].batu = BATU(0x80000000);
+
+	battable[9].batl = BATL(0x90000000, BAT_I);
+	battable[9].batu = BATU(0x90000000);
+
+	/*
 	 * Now setup fixed bat registers
 	 *
 	 * Note that we still run in real mode, and the BAT
@@ -230,20 +225,6 @@ initppc(startkernel, endkernel, args)
 	/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
-
-	/* BAT3 used temporarily for mapping video ram */
-	/* (XXX upper half slots only...) */
-	asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
-		      :: "r"(BATL(0x80000000, BAT_I)), "r"(BATU(0x80000000)));
-
-	/* Open Firmware working area */
-	/* iMac   ff800000 - (00200000) -> XXe00000 */
-	/* others ff800000 - (00100000) -> XXf00000 */
-	ofbat.batl = ofw_pa1 | 0x02;
-	if (ofw_pa2 == -1)
-		ofbat.batu = 0xff80001e;		/* 1MB */
-	else
-		ofbat.batu = 0xff80003e;		/* 2MB (iMac) */
 
 	/*
 	 * Set up trap vectors
@@ -351,6 +332,59 @@ initppc(startkernel, endkernel, args)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+	restore_ofw_mapping();
+}
+
+static int N_mapping;
+static struct {
+	vaddr_t va;
+	int len;
+	paddr_t pa;
+	int mode;
+} ofw_mapping[256];
+
+int
+save_ofw_mapping()
+{
+	int mmui, mmu;
+
+	OF_getprop(chosen, "mmu", &mmui, 4);
+	mmu = OF_instance_to_package(mmui);
+	bzero(ofw_mapping, sizeof(ofw_mapping));
+	N_mapping =
+	    OF_getprop(mmu, "translations", ofw_mapping, sizeof(ofw_mapping));
+	N_mapping /= sizeof(ofw_mapping[0]);
+
+	return 0;
+}
+
+int
+restore_ofw_mapping()
+{
+	int i;
+
+	pmap_pinit(&ofw_pmap);
+
+	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+
+	for (i = 0; i < N_mapping; i++) {
+		paddr_t pa = ofw_mapping[i].pa;
+		vaddr_t va = ofw_mapping[i].va;
+		int size = ofw_mapping[i].len;
+
+		if (va < 0xf8000000)			/* XXX */
+			continue;
+
+		while (size > 0) {
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1);
+			pa += NBPG;
+			va += NBPG;
+			size -= NBPG;
+		}
+	}
+
+	return 0;
 }
 
 /*
@@ -1089,12 +1123,8 @@ cninit()
 {
 	struct consdev *cp;
 	int l, node;
-	int chosen, stdout;
+	int stdout;
 	char type[16];
-
-	chosen = OF_finddevice("/chosen");
-	if (chosen == -1)
-		goto nocons;
 
 	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
 	if (l != sizeof(stdout))
