@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,25 +35,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)callout.h	7.2 (Berkeley) 2/15/91
- *	$Id: callout.h,v 1.6 1994/05/17 04:24:56 cgd Exp $
+ *	from: @(#)callout.h	8.2 (Berkeley) 1/21/94
+ *	$Id: callout.h,v 1.7 1994/05/21 03:51:51 cgd Exp $
  */
 
-#ifndef _SYS_CALLOUT_H_
-#define _SYS_CALLOUT_H_
-
-typedef void    (*callout_t)       __P((void *arg));
-
 struct callout {
-	struct callout *c_next;		/* next callout in queue */
-	caddr_t c_arg;			/* function argument */
-	callout_t c_func;		/* function to call */
-	int c_time;			/* ticks to the event */
+	struct	callout *c_next;		/* next callout in queue */
+	void	*c_arg;				/* function argument */
+	void	(*c_func) __P((void *));	/* function to call */
+	int	c_time;				/* ticks to the event */
 };
 
 #ifdef KERNEL
-struct callout *callfree, *callout, calltodo;
-int ncallout;
+struct	callout *callfree, *callout, calltodo;
+int	ncallout;
 #endif
-
-#endif /* !_SYS_CALLOUT_H_ */

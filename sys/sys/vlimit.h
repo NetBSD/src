@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vlimit.h	7.2 (Berkeley) 5/5/91
- *	$Id: vlimit.h,v 1.3 1993/05/20 16:23:49 cgd Exp $
+ *	from: @(#)vlimit.h	8.1 (Berkeley) 6/2/93
+ *	$Id: vlimit.h,v 1.4 1994/05/21 03:52:20 cgd Exp $
  */
-
-#ifndef _SYS_VLIMIT_H_
-#define _SYS_VLIMIT_H_
 
 /*
  * Limits for u.u_limit[i], per process, inherited.
@@ -51,5 +48,3 @@
 #define	NLIMITS		6
 
 #define	INFINITY	0x7fffffff
-
-#endif /* !_SYS_VLIMIT_H_ */

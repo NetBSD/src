@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)time.h	7.6 (Berkeley) 2/22/91
- *	$Id: time.h,v 1.5 1994/05/06 22:41:46 cgd Exp $
+ *	from: @(#)time.h	8.1 (Berkeley) 6/2/93
+ *	$Id: time.h,v 1.6 1994/05/21 03:52:11 cgd Exp $
  */
 
 #ifndef _SYS_TIME_H_
@@ -47,7 +47,7 @@ struct timeval {
 };
 
 /*
- * structure defined by POSIX.4 to be like a timeval.
+ * Structure defined by POSIX.4 to be like a timeval.
  */
 struct timespec {
 	long	ts_sec;		/* seconds */
@@ -58,9 +58,9 @@ struct timespec {
 	(ts)->ts_sec = (tv)->tv_sec;					\
 	(ts)->ts_nsec = (tv)->tv_usec * 1000;				\
 }
-#define	TIMESPEC_TO_TIMEVAL(ts, tv) {					\
-	(tv)->tv_sec = (ts)->tv_sec;					\
-	(tv)->tv_usec = (ts)->tv_nsec / 1000;				\
+#define	TIMESPEC_TO_TIMEVAL(tv, ts) {					\
+	(tv)->tv_sec = (ts)->ts_sec;					\
+	(tv)->tv_usec = (ts)->ts_nsec / 1000;				\
 }
 
 struct timezone {
@@ -75,16 +75,13 @@ struct timezone {
 #define	DST_EET		5	/* Eastern European dst */
 #define	DST_CAN		6	/* Canada */
 
-/*
- * Operations on timevals.
- *
- * NB: timercmp does not work for >= or <=.
- */
-#define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
-#define	timercmp(tvp, uvp, cmp)	\
-	((tvp)->tv_sec cmp (uvp)->tv_sec || \
-	 (tvp)->tv_sec == (uvp)->tv_sec && (tvp)->tv_usec cmp (uvp)->tv_usec)
+/* Operations on timevals. */
 #define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0
+#define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
+#define	timercmp(tvp, uvp, cmp)						\
+	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
+	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
+	    ((tvp)->tv_sec cmp (uvp)->tv_sec))
 
 /*
  * Names of the interval timers, and structure
@@ -99,7 +96,7 @@ struct	itimerval {
 	struct	timeval it_value;	/* current value */
 };
 
-/* 
+/*
  * Getkerninfo clock information structure
  */
 struct clockinfo {
@@ -115,7 +112,7 @@ int	itimerdecr __P((struct itimerval *itp, int usec));
 void	timevaladd __P((struct timeval *t1, struct timeval *t2));
 void	timevalsub __P((struct timeval *t1, struct timeval *t2));
 void	timevalfix __P((struct timeval *t1));
-#else
+#else /* !KERNEL */
 #include <time.h>
 
 #ifndef _POSIX_SOURCE

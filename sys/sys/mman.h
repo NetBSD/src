@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mman.h	7.5 (Berkeley) 6/27/91
- *	$Id: mman.h,v 1.4 1994/03/27 09:09:44 cgd Exp $
+ *	from: @(#)mman.h	8.1 (Berkeley) 6/2/93
+ *	$Id: mman.h,v 1.5 1994/05/21 03:52:01 cgd Exp $
  */
-
-#ifndef _SYS_MMAN_H_
-#define	_SYS_MMAN_H_
 
 /*
  * Protections are chosen from these bits, or-ed together
@@ -83,11 +80,11 @@
 __BEGIN_DECLS
 /* Some of these int's should probably be size_t's */
 caddr_t	mmap __P((caddr_t, size_t, int, int, int, off_t));
-int	mprotect __P((caddr_t, int, int));
-int	munmap __P((caddr_t, int));
-int	msync __P((caddr_t, int));
+int	mprotect __P((caddr_t, size_t, int));
+int	munmap __P((caddr_t, size_t));
+int	msync __P((caddr_t, size_t));
+int	mlock __P((caddr_t, size_t));
+int	munlock __P((caddr_t, size_t));
 __END_DECLS
 
 #endif /* !KERNEL */
-
-#endif /* !_SYS_MMAN_H_ */
