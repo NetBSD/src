@@ -1273,12 +1273,15 @@ Lpanic_red:
 #define	PTE_OF_ADDR4M(addr, pte, bad, page_offset) \
 	andn	addr, page_offset, pte
 
-/* note: the following misses the PPROT_RWX_RWX case */
+/* note: pmap currently does not use the PPROT_R_R and PPROT_RW_RW cases */
 #define CMP_PTE_USER_READ4M(pte) \
 	or	pte, ASI_SRMMUFP_L3, pte; \
 	lda	[pte] ASI_SRMMUFP, pte; \
 	and	pte, (SRMMU_TETYPE | SRMMU_PROT_MASK), pte; \
-	cmp	pte, (SRMMU_TEPTE | PPROT_RX_RX)
+	cmp	pte, (SRMMU_TEPTE | PPROT_RWX_RWX); \
+	be	8f; nop; \
+	cmp	pte, (SRMMU_TEPTE | PPROT_RX_RX); \
+8:
 
 
 /* note: PTE bit 4 set implies no user writes */
