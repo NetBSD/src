@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.7 1996/02/16 08:18:37 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.8 1996/02/17 03:35:22 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,6 +126,12 @@
 #include <dev/isa/ics2101var.h>
 #include <dev/isa/ad1848var.h>
 #include "gusreg.h"
+
+#ifdef AUDIO_DEBUG
+#define STATIC /* empty; for debugging symbols */
+#else
+#define STATIC static
+#endif
 
 /*
  * Software state of a single "voice" on the GUS
@@ -397,52 +403,52 @@ int	gusmax_set_in_port __P((void *, int));
 int	gusmax_get_in_port __P((void *));
 int	gus_getdev __P((void *, struct audio_device *));
 
-static void	gus_deinterleave __P((struct gus_softc *, void *, int));
-static void	gus_expand __P((void *, int, u_char *, int));
-static void	gusmax_expand __P((void *, int, u_char *, int));
+STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
+STATIC void	gus_expand __P((void *, int, u_char *, int));
+STATIC void	gusmax_expand __P((void *, int, u_char *, int));
 
-static int	gus_mic_ctl __P((void *, int));
-static int	gus_linein_ctl __P((void *, int));
-static int	gus_test_iobase __P((int));
-static void	guspoke __P((int, long, u_char));
-static void	gusdmaout __P((struct gus_softc *, int, u_long, caddr_t, int));
-static void	gus_init_cs4231 __P((struct gus_softc *));
-static void	gus_init_ics2101 __P((struct gus_softc *));
+STATIC int	gus_mic_ctl __P((void *, int));
+STATIC int	gus_linein_ctl __P((void *, int));
+STATIC int	gus_test_iobase __P((int));
+STATIC void	guspoke __P((int, long, u_char));
+STATIC void	gusdmaout __P((struct gus_softc *, int, u_long, caddr_t, int));
+STATIC void	gus_init_cs4231 __P((struct gus_softc *));
+STATIC void	gus_init_ics2101 __P((struct gus_softc *));
 
-static void	gus_set_chan_addrs __P((struct gus_softc *));
-static void	gusreset __P((struct gus_softc *, int));
-static void	gus_set_voices __P((struct gus_softc *, int));
-static void	gus_set_volume __P((struct gus_softc *, int, int));
-static void	gus_set_samprate __P((struct gus_softc *, int, int));
-static void	gus_set_recrate __P((struct gus_softc *, u_long));
-static void	gus_start_voice __P((struct gus_softc *, int, int)),
+STATIC void	gus_set_chan_addrs __P((struct gus_softc *));
+STATIC void	gusreset __P((struct gus_softc *, int));
+STATIC void	gus_set_voices __P((struct gus_softc *, int));
+STATIC void	gus_set_volume __P((struct gus_softc *, int, int));
+STATIC void	gus_set_samprate __P((struct gus_softc *, int, int));
+STATIC void	gus_set_recrate __P((struct gus_softc *, u_long));
+STATIC void	gus_start_voice __P((struct gus_softc *, int, int)),
 		gus_stop_voice __P((struct gus_softc *, int, int)),
 		gus_set_endaddr __P((struct gus_softc *, int, u_long)),
 		gus_set_curaddr __P((struct gus_softc *, int, u_long));
-static u_long	gus_get_curaddr __P((struct gus_softc *, int));
-static int	gus_dmaout_intr __P((struct gus_softc *));
-static void	gus_dmaout_dointr __P((struct gus_softc *));
-static void	gus_dmaout_timeout __P((void *));
-static int	gus_dmain_intr __P((struct gus_softc *));
-static int	gus_voice_intr __P((struct gus_softc *));
-static void	gus_start_playing __P((struct gus_softc *, int));
-static void	gus_continue_playing __P((struct gus_softc *, int));
-static u_char guspeek __P((int, u_long));
-static unsigned long convert_to_16bit();
-static int	gus_setfd __P((void *, int));
-static int	gus_mixer_set_port __P((void *, mixer_ctrl_t *));
-static int	gus_mixer_get_port __P((void *, mixer_ctrl_t *));
-static int	gusmax_mixer_set_port __P((void *, mixer_ctrl_t *));
-static int	gusmax_mixer_get_port __P((void *, mixer_ctrl_t *));
-static int	gus_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
-static int	gusmax_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
-static int	gus_query_encoding __P((void *, struct audio_encoding *));
+STATIC u_long	gus_get_curaddr __P((struct gus_softc *, int));
+STATIC int	gus_dmaout_intr __P((struct gus_softc *));
+STATIC void	gus_dmaout_dointr __P((struct gus_softc *));
+STATIC void	gus_dmaout_timeout __P((void *));
+STATIC int	gus_dmain_intr __P((struct gus_softc *));
+STATIC int	gus_voice_intr __P((struct gus_softc *));
+STATIC void	gus_start_playing __P((struct gus_softc *, int));
+STATIC int	gus_continue_playing __P((struct gus_softc *, int));
+STATIC u_char guspeek __P((int, u_long));
+STATIC unsigned long convert_to_16bit();
+STATIC int	gus_setfd __P((void *, int));
+STATIC int	gus_mixer_set_port __P((void *, mixer_ctrl_t *));
+STATIC int	gus_mixer_get_port __P((void *, mixer_ctrl_t *));
+STATIC int	gusmax_mixer_set_port __P((void *, mixer_ctrl_t *));
+STATIC int	gusmax_mixer_get_port __P((void *, mixer_ctrl_t *));
+STATIC int	gus_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
+STATIC int	gusmax_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
+STATIC int	gus_query_encoding __P((void *, struct audio_encoding *));
 
-static void	gusics_master_mute __P((struct ics2101_softc *, int));
-static void	gusics_dac_mute __P((struct ics2101_softc *, int));
-static void	gusics_mic_mute __P((struct ics2101_softc *, int));
-static void	gusics_linein_mute __P((struct ics2101_softc *, int));
-static void	gusics_cd_mute __P((struct ics2101_softc *, int));
+STATIC void	gusics_master_mute __P((struct ics2101_softc *, int));
+STATIC void	gusics_dac_mute __P((struct ics2101_softc *, int));
+STATIC void	gusics_mic_mute __P((struct ics2101_softc *, int));
+STATIC void	gusics_linein_mute __P((struct ics2101_softc *, int));
+STATIC void	gusics_cd_mute __P((struct ics2101_softc *, int));
 
 /*
  * ISA bus driver routines
@@ -723,7 +729,7 @@ done:
  * if it is.
  */
 
-static int
+STATIC int
 gus_test_iobase (int iobase)
 {
 	int i = splgus();
@@ -1007,7 +1013,7 @@ gusopen(dev, flags)
 	return 0;
 }
 
-static void
+STATIC void
 gusmax_expand(hdl, encoding, buf, count)
 	void *hdl;
 	int encoding;
@@ -1019,7 +1025,7 @@ gusmax_expand(hdl, encoding, buf, count)
 	gus_expand(ac->parent, encoding, buf, count);
 }
 
-static void
+STATIC void
 gus_expand(hdl, encoding, buf, count)
 	void *hdl;
 	int encoding;
@@ -1036,7 +1042,7 @@ gus_expand(hdl, encoding, buf, count)
 		gus_deinterleave(sc, (void *)buf, count);
 }
 
-static void
+STATIC void
 gus_deinterleave(sc, buf, size)
 	register struct gus_softc *sc;
 	void *buf;
@@ -1337,7 +1343,7 @@ struct playcont {
 
 int playcntr;
 
-static void
+STATIC void
 gus_dmaout_timeout(arg)
      void *arg;
 {
@@ -1366,7 +1372,7 @@ gus_dmaout_timeout(arg)
  * a DMA transfer for playback/record requests from the audio layer.
  */
 
-static int
+STATIC int
 gus_dmaout_intr(sc)
 	struct gus_softc *sc;
 {
@@ -1386,7 +1392,7 @@ gus_dmaout_intr(sc)
 	return 0;
 }
 
-static void
+STATIC void
 gus_dmaout_dointr(sc)
 	struct gus_softc *sc;
 {
@@ -1532,7 +1538,7 @@ gus_dmaout_dointr(sc)
  * Service voice interrupts
  */
 
-static int
+STATIC int
 gus_voice_intr(sc)
 	struct gus_softc *sc;
 {
@@ -1606,10 +1612,12 @@ gus_voice_intr(sc)
 			    gus_start_playing(sc, sc->sc_playbuf);
 			} else if (sc->sc_bufcnt < 0) {
 #ifdef DDB
-			    printf("negative bufcnt in stopped voice\n");
+			    printf("%s: negative bufcnt in stopped voice\n",
+				   sc->sc_dev.dv_xname);
 			    Debugger();
 #else
-			    panic("negative bufcnt in stopped voice");
+			    panic("%s: negative bufcnt in stopped voice",
+				  sc->sc_dev.dv_xname);
 #endif
 			} else {
 			    sc->sc_playbuf = -1; /* none are active */
@@ -1623,7 +1631,18 @@ gus_voice_intr(sc)
 			 * is not stopped.
 			 */
 			gus_continues++;
-			gus_continue_playing(sc, voice);
+			if (gus_continue_playing(sc, voice)) {
+				/*
+				 * we shouldn't have continued--active DMA
+				 * is in the way in the ring, for
+				 * some as-yet undebugged reason.
+				 */
+				gus_stop_voice(sc, GUS_VOICE_LEFT, 1);
+				/* also kill right voice */
+				gus_stop_voice(sc, GUS_VOICE_RIGHT, 0);
+				sc->sc_playbuf = -1;
+				gus_stops++;
+			}
 		    }
 		    /*
 		     * call the upper level to send on down another
@@ -1667,7 +1686,7 @@ gus_voice_intr(sc)
 	}
 }
 
-static void
+STATIC void
 gus_start_playing(sc, bufno)
 struct gus_softc *sc;
 int bufno;
@@ -1746,7 +1765,7 @@ int bufno;
 	sc->sc_playbuf = bufno;
 }
 
-static void
+STATIC int
 gus_continue_playing(sc, voice)
 register struct gus_softc *sc;
 int voice;
@@ -1772,8 +1791,10 @@ int voice;
     if (--sc->sc_bufcnt == 0) {
 	DPRINTF(("gus: bufcnt 0 on continuing voice?\n"));
     }
-    if (sc->sc_playbuf == sc->sc_dmabuf && (sc->sc_flags & GUS_LOCKED))
-	printf("continue into active dmabuf?\n");
+    if (sc->sc_playbuf == sc->sc_dmabuf && (sc->sc_flags & GUS_LOCKED)) {
+	printf("%s: continue into active dmabuf?\n", sc->sc_dev.dv_xname);
+	return 1;
+    }
 
     /*
      * Select the end of the buffer based on the currently active
@@ -1837,13 +1858,14 @@ int voice;
     outb(port+GUS_DATA_HIGH, sc->sc_voc[voice].voccntl);
     SELECT_GUS_REG(port, GUSREG_VOLUME_CONTROL);
     outb(port+GUS_DATA_HIGH, sc->sc_voc[voice].volcntl);
+    return 0;
 }
 
 /*
  * Send/receive data into GUS's DRAM using DMA.  Called at splgus()
  */
 
-static void
+STATIC void
 gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	struct gus_softc *sc;
 	int flags, length;
@@ -1917,7 +1939,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
  * splgus().
  */
 
-static void
+STATIC void
 gus_start_voice(sc, voice, intrs)
 	struct gus_softc *sc;
 	int voice;
@@ -2013,7 +2035,7 @@ gus_start_voice(sc, voice, intrs)
  * Stop a given voice.  called at splgus()
  */
 
-static void
+STATIC void
 gus_stop_voice(sc, voice, intrs_too)
 	struct gus_softc *sc;
 	int voice;
@@ -2055,7 +2077,7 @@ gus_stop_voice(sc, voice, intrs_too)
 /*
  * Set the volume of a given voice.  Called at splgus().
  */
-static void
+STATIC void
 gus_set_volume(sc, voice, volume)
 	struct gus_softc *sc;
 	int voice, volume;
@@ -2398,7 +2420,7 @@ gus_set_out_sr(addr, rate)
 	return 0;
 }
 
-static inline void gus_set_voices(sc, voices)
+STATIC inline void gus_set_voices(sc, voices)
 struct gus_softc *sc;
 int voices;
 {
@@ -2454,7 +2476,7 @@ gus_commit_settings(addr)
 	return 0;
 }
 
-static void
+STATIC void
 gus_set_chan_addrs(sc)
 struct gus_softc *sc;
 {
@@ -2492,7 +2514,7 @@ struct gus_softc *sc;
  * Set the sample rate of the given voice.  Called at splgus().
  */
 
-static void
+STATIC void
 gus_set_samprate(sc, voice, freq)
 	struct gus_softc *sc;
 	int voice, freq;
@@ -2559,7 +2581,7 @@ gus_set_in_sr(addr, rate)
  * SDK.  Called at splgus().
  */
 
-static void
+STATIC void
 gus_set_recrate(sc, rate)
 	struct gus_softc *sc;
 	u_long rate;
@@ -2612,7 +2634,7 @@ gus_speaker_ctl(addr, newstate)
 	return 0;
 }
 
-static int
+STATIC int
 gus_linein_ctl(addr, newstate)
 	void * addr;
 	int newstate;
@@ -2634,7 +2656,7 @@ gus_linein_ctl(addr, newstate)
 	return 0;
 }
 
-static int
+STATIC int
 gus_mic_ctl(addr, newstate)
 	void * addr;
 	int newstate;
@@ -2660,7 +2682,7 @@ gus_mic_ctl(addr, newstate)
  * Set the end address of a give voice.  Called at splgus()
  */
 
-static void
+STATIC void
 gus_set_endaddr(sc, voice, addr)
 	struct gus_softc *sc;
 	int voice;
@@ -2684,7 +2706,7 @@ gus_set_endaddr(sc, voice, addr)
 /*
  * Set current address.  called at splgus()
  */
-static void
+STATIC void
 gus_set_curaddr(sc, voice, addr)
 	struct gus_softc *sc;
 	int voice;
@@ -2710,7 +2732,7 @@ gus_set_curaddr(sc, voice, addr)
 /*
  * Get current GUS playback address.  Called at splgus().
  */
-static unsigned long
+STATIC unsigned long
 gus_get_curaddr(sc, voice)
 	struct gus_softc *sc;
 	int voice;
@@ -2738,7 +2760,7 @@ gus_get_curaddr(sc, voice)
  * have NO idea
  */
 
-static unsigned long
+STATIC unsigned long
 convert_to_16bit(address)
 	unsigned long address;
 {
@@ -2756,7 +2778,7 @@ convert_to_16bit(address)
  * Write a value into the GUS's DRAM
  */
 
-static void
+STATIC void
 guspoke(port, address, value)
 	int port;
 	long address;
@@ -2783,7 +2805,7 @@ guspoke(port, address, value)
  * Read a value from the GUS's DRAM
  */
 
-static unsigned char
+STATIC unsigned char
 guspeek(port, address)
 	int port;
 	u_long address;
@@ -2809,7 +2831,7 @@ guspeek(port, address)
  * Reset the Gravis UltraSound card, completely
  */
 
-static void
+STATIC void
 gusreset(sc, voices)
 	struct gus_softc *sc;
 	int voices;
@@ -2936,7 +2958,7 @@ gusreset(sc, voices)
 }
 
 
-static void
+STATIC void
 gus_init_cs4231(sc)
 	struct gus_softc *sc;
 {
@@ -3249,7 +3271,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	return 0;
 }
 
-static int
+STATIC int
 gus_dmain_intr(sc)
 	struct gus_softc *sc;
 {
@@ -3392,7 +3414,7 @@ gus_cont_in_dma(addr)
 }
 
 
-static int
+STATIC int
 gus_setfd(addr, flag)
 	void *addr;
 	int flag;
@@ -3403,7 +3425,7 @@ gus_setfd(addr, flag)
     return(0);				/* nothing fancy to do. */
 }
 
-static inline int
+STATIC inline int
 gus_to_vol(cp, vol)
 	mixer_ctrl_t *cp;
 	struct ad1848_volume *vol;
@@ -3420,7 +3442,7 @@ gus_to_vol(cp, vol)
 	return(0);
 }
 
-static inline int
+STATIC inline int
 gus_from_vol(cp, vol)
 	mixer_ctrl_t *cp;
 	struct ad1848_volume *vol;
@@ -3437,7 +3459,7 @@ gus_from_vol(cp, vol)
 	return(0);
 }
 
-static int
+STATIC int
 gusmax_mixer_get_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
@@ -3589,7 +3611,7 @@ gusmax_mixer_get_port(addr, cp)
 	return(error);
 }
 
-static int
+STATIC int
 gus_mixer_get_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
@@ -3715,7 +3737,7 @@ gus_mixer_get_port(addr, cp)
 	return error;
 }
 
-static void
+STATIC void
 gusics_master_mute(ic, mute)
 	struct ics2101_softc *ic;
 	int mute;
@@ -3724,7 +3746,7 @@ gusics_master_mute(ic, mute)
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MASTER, ICSMIX_RIGHT, mute);
 }
 
-static void
+STATIC void
 gusics_mic_mute(ic, mute)
 	struct ics2101_softc *ic;
 	int mute;
@@ -3733,7 +3755,7 @@ gusics_mic_mute(ic, mute)
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MIC, ICSMIX_RIGHT, mute);
 }
 
-static void
+STATIC void
 gusics_linein_mute(ic, mute)
 	struct ics2101_softc *ic;
 	int mute;
@@ -3742,7 +3764,7 @@ gusics_linein_mute(ic, mute)
 	ics2101_mix_mute(ic, GUSMIX_CHAN_LINE, ICSMIX_RIGHT, mute);
 }
 
-static void
+STATIC void
 gusics_cd_mute(ic, mute)
 	struct ics2101_softc *ic;
 	int mute;
@@ -3751,7 +3773,7 @@ gusics_cd_mute(ic, mute)
 	ics2101_mix_mute(ic, GUSMIX_CHAN_CD, ICSMIX_RIGHT, mute);
 }
 
-static void
+STATIC void
 gusics_dac_mute(ic, mute)
 	struct ics2101_softc *ic;
 	int mute;
@@ -3760,7 +3782,7 @@ gusics_dac_mute(ic, mute)
 	ics2101_mix_mute(ic, GUSMIX_CHAN_DAC, ICSMIX_RIGHT, mute);
 }
 
-static int
+STATIC int
 gusmax_mixer_set_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
@@ -3913,7 +3935,7 @@ gusmax_mixer_set_port(addr, cp)
     return error;
 }
 
-static int
+STATIC int
 gus_mixer_set_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
@@ -4074,7 +4096,7 @@ gus_mixer_set_port(addr, cp)
 	return error;
 }
 
-static int
+STATIC int
 gusmax_mixer_query_devinfo(addr, dip)
 	void *addr;
 	register mixer_devinfo_t *dip;
@@ -4287,7 +4309,7 @@ gusmax_mixer_query_devinfo(addr, dip)
 	return 0;
 }
 
-static int
+STATIC int
 gus_mixer_query_devinfo(addr, dip)
 	void *addr;
 	register mixer_devinfo_t *dip;
@@ -4433,7 +4455,7 @@ mute:
 	return 0;
 }
 
-static int
+STATIC int
 gus_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
@@ -4465,7 +4487,7 @@ gus_query_encoding(addr, fp)
  * level.  Levels as suggested by GUS SDK code.
  */
 
-static void
+STATIC void
 gus_init_ics2101(sc)
 	struct gus_softc *sc;
 {
