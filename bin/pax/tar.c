@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.46 2003/11/24 23:48:47 matt Exp $	*/
+/*	$NetBSD: tar.c,v 1.47 2004/01/30 20:46:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.46 2003/11/24 23:48:47 matt Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47 2004/01/30 20:46:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,13 +129,13 @@ tar_endwr(void)
  * tar_endrd()
  *	no cleanup needed here, just return size of trailer (for append)
  * Return:
- *	size of trailer (2 * BLKMULT)
+ *	size of trailer BLKMULT
  */
 
 off_t
 tar_endrd(void)
 {
-	return((off_t)(NULLCNT*BLKMULT));
+	return((off_t)BLKMULT);
 }
 
 /*
