@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.22 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.23 2003/08/02 14:24:30 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.22 2003/06/03 04:33:44 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.23 2003/08/02 14:24:30 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -701,13 +701,14 @@ filter_expand(char *data)
 char *
 filter_dynamicexpand(struct intercept_pid *icpid, char *data)
 {
+	extern char cwd[];
 	static char expand[2*MAXPATHLEN];
 
 	strlcpy(expand, data, sizeof(expand));
 
 	filter_replace(expand, sizeof(expand), "$HOME", icpid->home);
 	filter_replace(expand, sizeof(expand), "$USER", icpid->username);
-	filter_replace(expand, sizeof(expand), "$CWD", icpid->cwd);
+	filter_replace(expand, sizeof(expand), "$CWD", cwd);
 
 	return (expand);
 }
