@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.33 1998/10/10 02:00:51 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.34 1998/11/13 04:47:03 oster Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.33 1998/10/10 02:00:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.34 1998/11/13 04:47:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ bdev_decl(wd);
 bdev_decl(sd);
 #include "vnd.h"
 bdev_decl(vnd);
+#include "raid.h"
+bdev_decl(raid);
 #include "ccd.h"
 bdev_decl(ccd);
 #include "md.h"
@@ -87,6 +89,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
+	bdev_disk_init(NRAID,raid),	/* 16 */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -138,6 +141,7 @@ cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(md);
+cdev_decl(raid);
 #include "ss.h"
 cdev_decl(ss);
 #include "uk.h"
@@ -224,6 +228,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NA12DC,a12dc),	/* 40: Avalon A12 detached console */
 	cdev_spkr_init(NSPKR,spkr),	/* 41: PC speaker */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 42: SCSI bus */
+	cdev_disk_init(NRAID,raid),	/* 43: RAIDframe disk driver */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -308,6 +313,7 @@ static int chrtoblktbl[] = {
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
 	/* 42 */	NODEV,
+	/* 43 */	16,
 };
 
 /*
