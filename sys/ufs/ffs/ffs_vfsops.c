@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.55 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.56 1999/12/10 14:36:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -575,6 +575,8 @@ ffs_mountfs(devvp, mp, p)
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
+	ffs_oldfscompat(fs);
+
 	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
 		error = EINVAL;
 		goto out;
@@ -592,6 +594,7 @@ ffs_mountfs(devvp, mp, p)
 		error = EROFS;		/* XXX what should be returned? */
 		goto out2;
 	}
+
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset((caddr_t)ump, 0, sizeof *ump);
 	ump->um_fs = fs;
@@ -655,7 +658,6 @@ ffs_mountfs(devvp, mp, p)
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specmountpoint = mp;
-	ffs_oldfscompat(fs);
 	ump->um_savedmaxfilesize = fs->fs_maxfilesize;		/* XXX */
 	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;	/* XXX */
 	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
