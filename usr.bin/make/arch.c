@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.18 1997/05/20 22:53:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.18 1997/05/20 22:53:30 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1164,7 +1164,9 @@ Arch_LibOODate (gn)
 {
     Boolean 	  oodate;
 
-    if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
+    if (gn->type & OP_PHONY) {
+	oodate = TRUE;
+    } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
     } else if ((gn->mtime > now) || (gn->mtime < gn->cmtime)) {
 	oodate = TRUE;
