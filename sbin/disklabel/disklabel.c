@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.129 2004/03/14 00:39:53 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.130 2004/03/19 18:22:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.129 2004/03/14 00:39:53 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.130 2004/03/19 18:22:31 dyoung Exp $");
 #endif
 #endif	/* not lint */
 
@@ -122,16 +122,19 @@ static enum	{
 	UNSPEC, EDIT, READ, RESTORE, SETWRITABLE, WRITE, WRITEBOOT, INTERACT
 } op = UNSPEC;
 
+static	int	Fflag;
 static	int	rflag;
 static	int	tflag;
 	int	Cflag;
 static	int	Iflag;
 
+#define COMMON_OPTIONS	"BCFINRWb:ef:irs:tw"
+
 #ifdef DEBUG
 static int	debug;
-#define OPTIONS	"BCINRWb:def:irs:tw"
+#define OPTIONS	COMMON_OPTIONS "d"
 #else	/* ! DEBUG */
-#define OPTIONS	"BCINRWb:ef:irs:tw"
+#define OPTIONS	COMMON_OPTIONS
 #endif	/* ! DEBUG */
 
 #ifdef USE_MBR
@@ -197,6 +200,9 @@ main(int argc, char *argv[])
 #endif	/* NUMBOOT > 0 */
 		case 'C':
 			++Cflag;
+			break;
+		case 'F':
+			++Fflag;
 			break;
 		case 'I':
 			++Iflag;
@@ -477,7 +483,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 
-	if (rflag || Iflag)
+	if (Fflag || rflag || Iflag)
 	{
 #ifdef USE_MBR
 		struct partition *pp = &lp->d_partitions[2];
@@ -528,7 +534,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * disable after writing.
 		 */
 		writable = 1;
-		if (ioctl(f, DIOCWLABEL, &writable) < 0)
+		if (!Fflag && ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
 
 #ifdef __alpha__
@@ -560,13 +566,13 @@ writelabel(int f, char *boot, struct disklabel *lp)
 #endif	/* NUMBOOT > 0 */
 
 		writable = 0;
-		if (ioctl(f, DIOCWLABEL, &writable) < 0)
+		if (!Fflag && ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
 		/* 
 		 * Now issue a DIOCWDINFO. This will let the kernel convert the
 		 * disklabel to some machdep format if needed.
 		 */
-		if (ioctl(f, DIOCWDINFO, lp) < 0) {
+		if (!Fflag && ioctl(f, DIOCWDINFO, lp) < 0) {
 			l_perror("ioctl DIOCWDINFO");
 			return (1);
 		}
@@ -875,7 +881,7 @@ readlabel(int f)
 {
 	struct disklabel *lp;
 
-	if (rflag || Iflag) {
+	if (Fflag || rflag || Iflag) {
 		const char *msg;
 		off_t	 sectoffset;
 
@@ -1844,20 +1850,20 @@ usage(void)
 		const char *name;
 		const char *expn;
 	} usages[] = {
-	{ "[-rt] [-C] disk",
+	{ "[-rt] [-C] [-F] disk",
 	    "(to read label)" },
-	{ "-w [-r] [-f disktab] disk type [ packid ]",
+	{ "-w [-r] [-F] [-f disktab] disk type [ packid ]",
 #if NUMBOOT > 0
 	    "(to write label with existing boot program)"
 #else
 	    "(to write label)"
 #endif
 	},
-	{ "-e [-r] [-I] [-C] disk",
+	{ "-e [-r] [-I] [-C] [-F] disk",
 	    "(to edit label)" },
-	{ "-i [-I] [-r] disk",
+	{ "-i [-I] [-r] [-F] disk",
 	    "(to create a label interactively)" },
-	{ "-R [-r] disk protofile",
+	{ "-R [-r] [-F] disk protofile",
 #if NUMBOOT > 0
 	    "(to restore label with existing boot program)"
 #else
@@ -1868,16 +1874,16 @@ usage(void)
 # if NUMBOOT > 1
 	{ "-B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk [ type ]",
 	    "(to install boot program with existing label)" },
-	{ "-w -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
+	{ "-w -B [-F] [-f disktab] [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
 	    "(to write label and boot program)" },
-	{ "-R -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
+	{ "-R -B [-F] [-f disktab] [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
 	    "(to restore label and boot program)" },
 # else
-	{ "-B [-f disktab] [ -b bootprog ] disk [ type ]",
+	{ "-B [-F] [-f disktab] [ -b bootprog ] disk [ type ]",
 	    "(to install boot program with existing on-disk label)" },
-	{ "-w -B [-f disktab] [ -b bootprog ] disk type [ packid ]",
+	{ "-w -B [-F] [-f disktab] [ -b bootprog ] disk type [ packid ]",
 	    "(to write label and install boot program)" },
-	{ "-R -B [-f disktab] [ -b bootprog ] disk protofile [ type ]",
+	{ "-R -B [-F] [-f disktab] [ -b bootprog ] disk protofile [ type ]",
 	    "(to restore label and install boot program)" },
 # endif
 #endif
