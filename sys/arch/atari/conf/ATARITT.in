@@ -1,12 +1,12 @@
 #
-#	$NetBSD: ATARITT.in,v 1.2 2001/04/06 21:53:39 leo Exp $
+#	$NetBSD: ATARITT.in,v 1.3 2001/04/10 05:52:14 leo Exp $
 #
 # ATARI-TT
 #
 # This configuration file is for a GENERIC ATARI-TT
 #
 
-#include "GENERIC"
+#include "GENERIC.in"
 
 pseudo-device	view	4	# View (graphics mapping)
 
