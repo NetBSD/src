@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70 2000/02/06 21:45:03 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71 2000/03/15 20:40:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -228,13 +228,14 @@ mbmatch(pdp, cfp, auxp)
 	struct cfdata	*cfp;
 	void		*auxp;
 {
+	static int mainbus_matched = 0;
 
-	if (cfp->cf_unit > 0)
-		return(0);
-	/*
-	 * We are always here
-	 */
-	return(1);
+	/* Allow only one instance. */
+	if (mainbus_matched)
+		return (0);
+
+	mainbus_matched = 1;
+	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.9 2000/01/03 20:30:51 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.10 2000/03/15 20:40:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,14 @@ a2kbbc_match(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int a2kbbc_matched = 0;
+
 	if (!matchname("a2kbbc", auxp))
 		return (0);
 
-	if (cfp->cf_unit != 0)
-		return (0);	/* only one of us please */
+	/* Allow only one instance. */
+	if (a2kbbc_matched)
+		return (0);
 
 	if (/* is_a1200() || */ is_a3000() || is_a4000() 
 #ifdef DRACO
@@ -90,6 +93,7 @@ a2kbbc_match(pdp, cfp, auxp)
 	if (a2kugettod(0) == 0)
 		return (0);
 
+	a2kbbc_matched = 1;
 	return (1);
 }
 
