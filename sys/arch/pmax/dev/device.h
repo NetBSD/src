@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 1995/03/28 18:18:53 jtc Exp $	*/
+/*	$NetBSD: device.h,v 1.6 1995/09/11 08:29:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,12 +44,12 @@
  * can support multiple attached devices or a device can be attached to
  * different types of controllers.
  */
-struct driver {
+struct pmax_driver {
 	char	*d_name;	/* device driver name (e.g., "rz") */
 	int	(*d_init)();	/* routine to probe & initialize device */
 	void	(*d_start)();	/* routine to start operation */
 	void	(*d_done)();	/* routine to call when operation complete */
-	void	(*d_intr)();	/* routine to call when interrupt is seen */
+	int	(*d_intr)();	/* routine to call when interrupt is seen */
 };
 
 /*
@@ -57,7 +57,7 @@ struct driver {
  * and is partially initialized in "ioconf.c" by the 'config' program.
  */
 struct pmax_ctlr {
-	struct driver	*pmax_driver;	/* controller driver routines */
+	struct pmax_driver *pmax_driver;/* controller driver routines */
 	int		pmax_unit;	/* controller number */
 	char		*pmax_addr;	/* address of controller */
 	int		pmax_pri;	/* interrupt priority */
@@ -71,8 +71,8 @@ struct pmax_ctlr {
  * and is partially initialized in "ioconf.c" by the 'config' program.
  */
 struct scsi_device {
-	struct driver	*sd_driver;	/* SCSI device driver routines */
-	struct driver	*sd_cdriver;	/* SCSI interface driver routines */
+	struct pmax_driver *sd_driver;	/* SCSI device driver routines */
+	struct pmax_driver *sd_cdriver;	/* SCSI interface driver routines */
 	int		sd_unit;	/* device unit number */
 	int		sd_ctlr;	/* SCSI interface number */
 	int		sd_drive;	/* SCSI address number */
