@@ -1,16 +1,18 @@
-#	$NetBSD: Makefile,v 1.10 2000/11/01 15:34:28 itojun Exp $
+#	$NetBSD: Makefile,v 1.11 2001/05/08 02:15:39 sommerfeld Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR= kern fs uvm
-.if exists(arch/${MACHINE})
+.if exists(arch/${MACHINE}/Makefile)
 SUBDIR+= arch/${MACHINE}
 .endif
-.if exists(arch/${MACHINE_ARCH})
+.if exists(arch/${MACHINE_ARCH}/Makefile)
 SUBDIR+= arch/${MACHINE_ARCH}
 .endif
 .if ${MKCRYPTO} != "no"
 SUBDIR+=	crypto
 .endif
+
+SUBDIR := ${SUBDIR:O:u}
 
 .include <bsd.subdir.mk>
