@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/10/08 23:07:53 gwr Exp $
+#	$NetBSD: Makefile,v 1.2 1995/10/13 16:46:47 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,6 +40,9 @@ do_bootxx:
 do_kernel:
 	cp -p ${KERNEL} ${MOUNT_POINT}/netbsd
 
+# Do not delete this if I change my mind and kill make...
+.PRECIOUS: ${IMAGE}.fs
+
 # Rules used making ${IMAGE}.fs (do_*)
 .include "${TOP}/common/Make.fsimage"
 
@@ -47,7 +50,8 @@ do_kernel:
 .include "${TOP}/common/Make.crunch"
 
 clean cleandir:
-	echo rm -f core ${CLEANFILES} *.o
+	-rm -f a.out core *.core *.o
+	-rm -f ${CLEANFILES}
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>

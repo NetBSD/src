@@ -1,3 +1,5 @@
+/*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
@@ -24,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rdsetroot.c,v 1.1.1.1 1995/10/08 23:07:51 gwr Exp $
+ *	$Id: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $
  */
 
 /*
