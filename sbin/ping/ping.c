@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.14 1995/03/21 13:59:39 mycroft Exp $	*/
+/*	$NetBSD: ping.c,v 1.15 1995/04/22 15:27:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.14 1995/03/21 13:59:39 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.15 1995/04/22 15:27:08 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -727,7 +727,7 @@ finish()
 		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
 		    tmin, ((double)i) / 1000.0, tmax);
 	}
-	exit(0);
+	exit(nreceived ? 0 : 1);
 }
 
 #ifdef notdef
