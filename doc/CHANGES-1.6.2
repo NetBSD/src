@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.124 2003/08/26 14:47:16 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.125 2003/08/27 07:57:06 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1382,4 +1382,9 @@ sys/net/if_pppoe.c				1.45
 	When trying to (re-)establish a session cope with intermediate output
 	failures of the underlying ethernet interface - just keep trying.
 	[martin, ticket #1438]
+
+crypto/dist/kame/racoon/crypto_openssl.c	1.10 (via patch)
+
+	xx_keylen has to return bits, not bytes.  KAME-PR-488
+	[itojun, ticket #1439]
 
