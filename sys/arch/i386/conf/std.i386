@@ -1,8 +1,12 @@
-# $NetBSD: std.i386,v 1.9 1998/02/06 07:21:51 mrg Exp $
+# $NetBSD: std.i386,v 1.10 1998/02/06 08:19:23 thorpej Exp $
 #
 # standard, required NetBSD/i386 'options'
  
 machine i386
 
+options 	SWAPPAGER	# paging
+options 	VNODEPAGER	# mmap() of files
+options 	DEVPAGER	# mmap() of devices
+ 
 options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_SCRIPT	# exec #! scripts
