@@ -34,7 +34,7 @@
 #include "kdc_locl.h"
 
 __RCSID("$Heimdal: connect.c,v 1.86 2002/08/12 13:29:48 joda Exp $"
-        "$NetBSD: connect.c,v 1.8 2002/09/12 13:19:00 joda Exp $");
+        "$NetBSD: connect.c,v 1.9 2003/03/20 19:20:59 lha Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -237,7 +237,7 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     krb5_error_code ret;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
-    int sa_size;
+    int sa_size = sizeof(__ss);
 
     init_descr (d);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kdc_locl.h"
 
 __RCSID("$Heimdal: kerberos4.c,v 1.41 2002/04/18 16:08:24 joda Exp $"
-        "$NetBSD: kerberos4.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
+        "$NetBSD: kerberos4.c,v 1.2 2003/03/20 19:21:00 lha Exp $");
 
 #ifdef KRB4
 
@@ -426,6 +426,13 @@ do_version4(unsigned char *buf,
 	
 	if(strcmp(ad.prealm, realm)){
 	    kdc_log(0, "Can't hop realms %s -> %s", realm, ad.prealm);
+	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
+			   "Can't hop realms");
+	    goto out2;
+	}
+
+	if (!enable_v4_cross_realm && strcmp(realm, v4_realm) != 0) {
+	    kdc_log(0, "krb4 Cross-realm %s -> %s disabled", realm, v4_realm);
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
 			   "Can't hop realms");
 	    goto out2;
