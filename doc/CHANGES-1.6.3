@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.37 2004/03/26 23:04:38 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.38 2004/03/28 07:48:11 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -228,3 +228,11 @@ distrib/sets/lists/comp/mi		patch
 	Introduce bcrypt password scheme. Adds the arc4random API for creating 
 	cryptographically strong random numbers.
 	[provos, ticket #1386]
+
+gnu/lib/libstdc++/include/Makefile	1.4 via patch
+gnu/lib/libstdc++/io/Makefile		1.10 via patch
+
+	Add more rules to disable default '.cc -> NULL' transforms, because the 
+	default rules cause problems if "valarray.cc" is newer than "valarray"
+	(for example).
+	[junyoung, ticket #1611]
