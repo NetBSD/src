@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.65 2002/05/20 15:23:01 mycroft Exp $	*/
+/*	$NetBSD: i82557.c,v 1.65.2.1 2002/06/10 16:07:11 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.65 2002/05/20 15:23:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.65.2.1 2002/06/10 16:07:11 tv Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -603,9 +603,9 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
 		fxp_read_eeprom(sc, &data, 10, 1);
 		if (data & 0x02) {		/* STB enable */
-			printf("%s: WARNING: Disabling dynamic standby mode in EEPROM to work around a", sc->sc_dev.dv_xname);
-			printf("%s: WARNING: hardware bug.  You must reset the system before using this", sc->sc_dev.dv_xname);
-			printf("%s: WARNING: interface.", sc->sc_dev.dv_xname);
+			printf("%s: WARNING: Disabling dynamic standby mode in EEPROM to work around a\n", sc->sc_dev.dv_xname);
+			printf("%s: WARNING: hardware bug.  You must reset the system before using this\n", sc->sc_dev.dv_xname);
+			printf("%s: WARNING: interface.\n", sc->sc_dev.dv_xname);
 			data &= ~0x02;
 			fxp_write_eeprom(sc, &data, 10, 1);
 			printf("%s: new EEPROM ID: 0x%04x\n",
