@@ -1,6 +1,7 @@
-.\"	$NetBSD: ifmedia.4,v 1.24 2004/03/10 17:05:54 wiz Exp $
+.\"	$NetBSD: ifmedia.4,v 1.25 2004/05/17 00:32:26 thorpej Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 1999, 2000, 2001, 2002, 2003, 2004
+.\"	The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +36,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2004
+.Dd May 16, 2004
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -94,6 +95,8 @@ if the device is normally not full-duplex.  [full-duplex, fdx]
 .It Dv IFM_HDX
 Place the device into half-duplex mode.  This option only has meaning
 if the device is normally not half-duplex.  [half-duplex, hdx]
+.It Dv IFM_FLOW
+Hardware flow control support.  [flowcontrol, flow]
 .It Dv IFM_FLAG0
 Driver-defined flag.  [flag0]
 .It Dv IFM_FLAG1
@@ -148,9 +151,29 @@ connector.  [100baseT4, 100T4]
 .El
 .Pp
 The following media option is defined for Ethernet:
-.Bl -tag -offset indent -width IFM_ETH_MASTER
+.Bl -tag -offset indent -width IFM_ETH_TXPAUSE
 .It Dv IFM_ETH_MASTER
-Configure a 1000BASE-T PHY as a MASTER PHY.
+Configure a 1000BASE-T PHY as the clock master for a 1000BASE-T link.
+This option has no effect
+.Pq shows current status only
+if the media is
+.Dv IFM_AUTO .
+.It Dv IFM_ETH_TXPAUSE
+Configure the device to send PAUSE
+.Pq flow control
+frames.
+This option has no effect
+.Pq shows current status only
+if the media is
+.Dv IFM_AUTO .
+.It Dv IFM_ETH_RXPAUSE
+Configure the device to receive PAUSE
+.Pq flow control
+frames.
+This option has no effect
+.Pq shows current status only
+if the media is
+.Dv IFM_AUTO .
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR TOKEN RING
 The following media types are defined for Token Ring:
