@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.4 2003/10/05 10:01:49 scw Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/05 10:01:49 scw Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,43 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <stddef.h>
-#include <signal.h>
-#include <errno.h>
+#include "SYS.h"
 
-#include "extern.h"
-
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern void __sigtramp_sigcontext_1(void);
-	extern void __sigtramp_siginfo_2(void);
-	int rv;
-
-	/*
-	 * If no sigaction, use the "default" trampoline since it won't
-	 * be used.
-	 */
-	if (act == NULL)
-		return  __sigaction_sigtramp(sig, act, oact, NULL, 0);
-
-	/*
-	 * We select the non-SA_SIGINFO trampoline if SA_SIGINFO is not
-	 * set in the sigaction.
-	 */
-	if ((act->sa_flags & SA_SIGINFO) == 0) {
-		rv =  __sigaction_sigtramp(sig, act, oact,
-		    __sigtramp_sigcontext_1, 1);
-		if (rv >= 0 || errno != EINVAL)
-			return rv;
-	}
-
-	/*
-	 * If SA_SIGINFO was specificed or the compatibility trampolines
-	 * can't be used, use the siginfo trampoline.
-	 */
-	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
-}
+/*
+ * This signal trampoline is invoked only to return from the
+ * signal; the kernel calls the signal handler directly.
+ *
+ * When we get here, callee-saved register r28 points to the ucontext_t
+ * structure on the stack (this was arranged for us by the kernel).
+ */
+ENTRY_NOPROFILE(__sigtramp_sigcontext_2)
+	or	r28, r63, r2
+	SYSTRAP(setcontext)
+	SYSTRAP(exit)
