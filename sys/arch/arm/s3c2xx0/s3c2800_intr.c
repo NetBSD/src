@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.3 2003/01/03 00:38:18 thorpej Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.4 2003/05/12 07:48:37 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -75,6 +75,15 @@ static const int si_to_ipl[SI_NQUEUES] = {
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
+
+/*
+ *   Clearing interrupt pending bits affects some built-in
+ * peripherals.  For example, IIC starts transmitting next data when
+ * its interrupt pending bit is cleared.
+ *   We need to leave those bits to peripheral handlers.
+ */
+#define PENDING_CLEAR_MASK	(~((1<<S3C2800_INT_IIC0)|(1<<S3C2800_INT_IIC1)))
+
 /*
  * called from irq_entry.
  */
@@ -99,7 +108,7 @@ s3c2800_irq_handler(struct clockframe *frame)
 			s3c2xx0_setipl(handler[irqno].level);
 
 		/* clear pending bit */
-		icreg(INTCTL_SRCPND) = 1 << irqno;
+		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
 #ifdef notyet
 		/* Enable interrupt */
 #endif
@@ -120,14 +129,24 @@ s3c2800_irq_handler(struct clockframe *frame)
 		s3c2xx0_do_pending();
 }
 
+static const u_char s3c2800_ist[] = {
+	EXTINTR_LOW,		/* NONE */
+	EXTINTR_FALLING,	/* PULSE */
+	EXTINTR_FALLING,	/* EDGE */
+	EXTINTR_LOW,		/* LEVEL */
+	EXTINTR_HIGH,
+	EXTINTR_RISING,
+	EXTINTR_BOTH,
+};
 
 void *
-s3c2800_intr_establish(int irqno, int level,
+s3c2800_intr_establish(int irqno, int level, int type,
     int (* func) (void *), void *cookie)
 {
 	int save;
 
-	if (irqno < 0 || irqno >= ICU_LEN)
+	if (irqno < 0 || irqno >= ICU_LEN ||
+	    type < IST_NONE || IST_EDGE_BOTH < type)
 		panic("intr_establish: bogus irq or type");
 
 	save = disable_interrupts(I32_bit);
@@ -137,6 +156,26 @@ s3c2800_intr_establish(int irqno, int level,
 	handler[irqno].level = level;
 
 	s3c2xx0_update_intr_masks(irqno, level);
+
+	if (irqno <= S3C2800_INT_EXT(7)) {
+		/*
+		 * Update external interrupt control
+		 */
+		uint32_t reg;
+		u_int 	trig;
+
+		trig = s3c2800_ist[type];
+
+		reg = bus_space_read_4(s3c2xx0_softc->sc_iot,
+				       s3c2xx0_softc->sc_gpio_ioh,
+				       GPIO_EXTINTR);
+
+		reg = reg & ~(0x0f << (4*irqno));
+		reg |= trig << (4*irqno);
+
+		bus_space_write_4(s3c2xx0_softc->sc_iot, s3c2xx0_softc->sc_gpio_ioh,
+				  GPIO_EXTINTR, reg);
+	}
 
 	intr_mask = s3c2xx0_imask[current_spl_level];
 	*s3c2xx0_intr_mask_reg = intr_mask;
@@ -159,4 +198,5 @@ s3c2800_intr_init(struct s3c2800_softc *sc)
 	icreg(INTCTL_SRCPND) = 0xffffffff;
 
 	s3c2xx0_intr_init(handler, ICU_LEN);
+
 }
