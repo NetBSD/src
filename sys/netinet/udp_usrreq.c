@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.119 2004/04/18 23:35:56 matt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.120 2004/05/01 02:20:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.119 2004/04/18 23:35:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.120 2004/05/01 02:20:43 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,6 +185,11 @@ struct evcnt udp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 
 #define	UDP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
 
+EVCNT_ATTACH_STATIC(udp_hwcsum_bad);
+EVCNT_ATTACH_STATIC(udp_hwcsum_ok);
+EVCNT_ATTACH_STATIC(udp_hwcsum_data);
+EVCNT_ATTACH_STATIC(udp_swcsum);
+
 #else
 
 #define	UDP_CSUM_COUNTER_INCR(ev)	/* nothing */
@@ -196,13 +201,6 @@ udp_init(void)
 {
 
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
-
-#ifdef UDP_CSUM_COUNTERS
-	evcnt_attach_static(&udp_hwcsum_bad);
-	evcnt_attach_static(&udp_hwcsum_ok);
-	evcnt_attach_static(&udp_hwcsum_data);
-	evcnt_attach_static(&udp_swcsum);
-#endif /* UDP_CSUM_COUNTERS */
 
 	MOWNER_ATTACH(&udp_tx_mowner);
 	MOWNER_ATTACH(&udp_rx_mowner);
