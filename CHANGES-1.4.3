@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.83 2000/10/22 09:02:18 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.84 2000/10/25 17:28:23 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1792,3 +1792,50 @@ domestic/lib/libkrb/rd_req.c			1.6
 lib/libc/net/ns_addr.c				1.11
 
   Avoid use of variable string fmt.
+
+etc/skel/Makefile				1.1 (new)
+etc/skel/dot.cshrc				1.1 (new)
+etc/skel/dot.login				1.1 (new)
+etc/skel/dot.mailrc				1.1 (new)
+etc/skel/dot.profile				1.1 (new)
+etc/skel/dot.rhosts				1.1 (new)
+etc/Makefile					1.165
+share/Makefile					1.10 via patch
+share/skel/Makefile				delete
+share/skel/dot.cshrc				delete
+share/skel/dot.login				delete
+share/skel/dot.mailrc				delete
+share/skel/dot.profile				delete
+share/skel/dot.rhosts				delete
+distrib/sets/lists/base/mi			1.184-1.185 via patch
+distrib/sets/lists/misc/mi			1.45 via patch
+
+  Use /etc/skel only for skeleton files for useradd.  Fixes PR#10985.
+
+usr.sbin/user/Makefile                          1.7
+usr.sbin/user/dot.cshrc                         removed
+usr.sbin/user/dot.login                         removed
+usr.sbin/user/dot.profile                       removed
+usr.sbin/user/group.8                           1.4-1.5
+usr.sbin/user/groupadd.8                        1.4-1.5
+usr.sbin/user/groupdel.8                        1.5
+usr.sbin/user/groupinfo.8                       1.2-1.3
+usr.sbin/user/groupmod.8                        1.4-1.5
+usr.sbin/user/user.8                            1.5-1.7  
+usr.sbin/user/user.c                    1.12,1.14-1.24,1.26-1.29 via patch
+usr.sbin/user/useradd.8                         1.5-1.9
+usr.sbin/user/userdel.8                         1.4-1.8
+usr.sbin/user/userinfo.8                        1.2-1.4
+usr.sbin/user/usermod.8                         1.4-1.7
+
+  Synchronize to current versions of the user management tool.
+  Fixes PR#11100, PR#11103, PR#11123 and PR#10985.
+
+lib/libkvm/kvm_m68k_cmn.c	 		1.10
+
+  Use %lx instead of %x with _kvm_err when arg is u_long.
+
+sys/nfs/nfs_syscalls.c				1.45 via patch
+
+  Fix a bug where NFS async I/O requests will be lost if the number
+  of I/O daemons is ever reduced to a smaller but non-zero number.
