@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.37 1998/01/10 03:02:58 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.38 1998/01/20 12:34:35 drochner Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -603,7 +603,7 @@ vm_page_physload(start, end, avail_start, avail_end)
 	ps = &vm_physmem[lcv];
 
 	/* move back other entries, if necessary ... */
-	for (x = vm_nphysseg + 1 ; x > lcv ; x--)
+	for (x = vm_nphysseg ; x > lcv ; x--)
 		/* structure copy */
 		vm_physmem[x] = vm_physmem[x - 1];
 
@@ -618,7 +618,7 @@ vm_page_physload(start, end, avail_start, avail_end)
 	ps = &vm_physmem[lcv];
 
 	/* move back other entries, if necessary ... */
-	for (x = vm_nphysseg + 1 ; x > lcv ; x--)
+	for (x = vm_nphysseg ; x > lcv ; x--)
 		/* structure copy */
 		vm_physmem[x] = vm_physmem[x - 1];
   
