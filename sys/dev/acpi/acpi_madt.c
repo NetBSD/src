@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.8 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.9 2003/12/11 17:46:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.8 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.9 2003/12/11 17:46:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -159,7 +159,7 @@ acpi_print_lapic_nmi(MADT_LOCAL_APIC_NMI *p)
 static void
 acpi_print_lapic_addr_ovr(MADT_ADDRESS_OVERRIDE *p)
 {
-	printf("lapic addr override: %llx\n", p->Address);
+	printf("lapic addr override: %llx\n", (unsigned long long)p->Address);
 }
 
 static void
@@ -178,7 +178,7 @@ acpi_print_local_sapic(MADT_LOCAL_SAPIC *p)
 }
 
 static void
-acpi_print_platint(INT_PLATFORM *p)
+acpi_print_platint(MADT_INTERRUPT_SOURCE *p)
 {
 	printf("platform int: type %u apid %u apeid %u\n",
 	    p->InterruptType, p->ProcessorId, p->ProcessorEid);
@@ -206,9 +206,9 @@ acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *, void *), void *aux)
 void
 acpi_madt_print(void)
 {
-	APIC_TABLE *ap;
+	MULTIPLE_APIC_TABLE *ap;
 
-	ap = (APIC_TABLE *)AcpiGbl_MADT;
+	ap = (MULTIPLE_APIC_TABLE *)AcpiGbl_MADT;
 	printf("\n\nACPI MADT table:\n");
 	printf("default local APIC address: %x\n", ap->LocalApicAddress);
 	printf("system dual 8259%s present\n",
@@ -222,7 +222,7 @@ static ACPI_STATUS
 acpi_madt_print_entry(APIC_HEADER *hdrp, void *aux)
 {
 	switch (hdrp->Type) {
-	case APIC_PROC:
+	case APIC_PROCESSOR:
 		acpi_print_apic_proc((void *)hdrp);
 		break;
 	case APIC_IO:
