@@ -1,4 +1,4 @@
-/*	$NetBSD: proxy.c,v 1.1.1.1 1999/12/11 22:24:12 veego Exp $	*/
+/*	$NetBSD: proxy.c,v 1.1.1.2 2000/05/03 10:57:27 veego Exp $	*/
 
 /*
  * Sample transparent proxy program.
@@ -53,6 +53,7 @@ char *argv[];
 {
 	struct	sockaddr_in	sin, sloc, sout;
 	natlookup_t	natlook;
+	natlookup_t	*natlookp = &natlook;
 	char	buffer[512];
 	int	namelen, fd, n;
 
@@ -90,7 +91,7 @@ char *argv[];
 	 * Open the NAT device and lookup the mapping pair.
 	 */
 	fd = open(IPL_NAT, O_RDONLY);
-	if (ioctl(fd, SIOCGNATL, &natlook) == -1) {
+	if (ioctl(fd, SIOCGNATL, &natlookp) == -1) {
 		perror("ioctl");
 		exit(-1);
 	}
