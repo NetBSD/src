@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/05/07 09:14:15 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12 2002/05/14 06:21:22 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -63,7 +63,7 @@ IMAGEDEPENDS=	${KERNEL} \
 		${DISTRIBDIR}/miniroot/upgrade.sh \
 		install.sub
 
-IMAGEPOSTBUILD=		${INSTALLBOOT} -m ${MACHINE} -v ${IMAGE} \
+IMAGEPOSTBUILD=		${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
 		    	    ${DESTDIR}/usr/mdec/bootxx /ufsboot
 IMAGE_RELEASEDIR=	installation/miniroot
 

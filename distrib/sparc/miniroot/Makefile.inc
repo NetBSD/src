@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/05/07 11:35:44 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/05/14 06:21:22 lukem Exp $
 
 IMAGESIZE=	7680k
 MAKEFS_FLAGS=   -o density=4k
@@ -11,5 +11,5 @@ IMAGEDEPENDS+=	${ARCHDIR}/../install.md ${ARCHDIR}/dot.profile \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/share/misc/magic \
 		${KERNOBJDIR}/GENERIC/netbsd
 
-IMAGEPOSTBUILD=	${INSTALLBOOT} -m ${MACHINE} -v ${IMAGE} \
-		${DESTDIR}/usr/mdec/bootxx /boot
+IMAGEPOSTBUILD=	${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
+		    ${DESTDIR}/usr/mdec/bootxx /boot

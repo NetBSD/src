@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/05/12 10:49:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2002/05/14 06:21:20 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -36,7 +36,7 @@ MDEC=		${DESTDIR}/usr/mdec
 KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
 FLOPPY_BOOT=	${MDEC}/ustarboot
 FLOPPYINSTBOOT=\
-	"${INSTALLBOOT} -m ${MACHINE} -t raw -v -b 17 @IMAGE@ ${FLOPPY_BOOT}"
+	"${INSTALLBOOT} -v -m ${MACHINE} -t raw -b 17 @IMAGE@ ${FLOPPY_BOOT}"
 
 netbsd: ${FLOPPYKERNEL}
 	@echo "Copying stripped and gzipped ${.ALLSRC} to ${.TARGET}"
