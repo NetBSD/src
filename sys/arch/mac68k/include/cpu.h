@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.8 1994/04/21 23:18:55 briggs Exp $
+ *	$Id: cpu.h,v 1.9 1994/04/22 12:10:36 briggs Exp $
  */
 
 /*
@@ -218,6 +218,7 @@ extern	char	*extiobase, *extiolimit;
 extern	int	mach_processor, mach_memsize;
 extern	int	do_graybars,    serial_boot_echo;
 extern	int	booter_version;
+extern	int	mmutype,	cpu040;
 #endif
 
 /* physical memory sections */
