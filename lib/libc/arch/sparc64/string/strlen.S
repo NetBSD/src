@@ -1,7 +1,7 @@
-/*	$NetBSD: strlen.S,v 1.3 2002/04/01 15:59:26 eeh Exp $	*/
+/*	$NetBSD: strlen.S,v 1.4 2002/04/02 22:07:55 eeh Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Eduardo Horvath for Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strlen.S,v 1.3 2002/04/01 15:59:26 eeh Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.4 2002/04/02 22:07:55 eeh Exp $")
 #endif /* LIBC_SCCS and not lint */
 	
 /* The algorithm here uses the following techniques:
@@ -65,7 +65,7 @@ ENTRY(strlen)
 	/*
 	 * Calculate address for and load the first xword.
 	 */
-	andn	%o0, 0xf, %o1
+	andn	%o0, 0x7, %o1
 	ldx	[%o1], %g1
 
 	/*
@@ -78,7 +78,7 @@ ENTRY(strlen)
 	or	%o2, %lo(0x7f7f7f7f), %o2
 	
 	sllx	%o3, 32, %o5
-	andcc	%o0, 0xf, %g5	! Hoisted from below to fill a slot
+	andcc	%o0, 0x7, %g5	! Hoisted from below to fill a slot
 	
 	sllx	%o2, 32, %o4
 	or	%o3, %o5, %o3
@@ -92,11 +92,11 @@ ENTRY(strlen)
 	/*
 	 * Mask off the leading bits:
 	 *
-	 * if (ptr & 0xf)
-	 *	mask = -1 << (64 - ((ptr & 0xf) << 3));
+	 * if (ptr & 0x7)
+	 *	mask = -1 << (64 - ((ptr & 0x7) << 3));
 	 */
 	
-!	andcc	%o0, 0xf, %g5	! Hoisted above
+!	andcc	%o0, 0x7, %g5	! Hoisted above
 	bz,pt	%icc, 0f
 	
 	
