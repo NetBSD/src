@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.150 2003/11/06 12:45:26 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.151 2003/11/13 02:44:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.150 2003/11/06 12:45:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.151 2003/11/13 02:44:02 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -85,8 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.150 2003/11/06 12:45:26 yamt Exp $");
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-/* XXX uvm_map.h is included by vnode.h */
-#define	RB_AUGMENT(x)	uvm_rb_augment(x)
 #include <sys/vnode.h>
 
 #ifdef SYSVSHM
@@ -95,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.150 2003/11/06 12:45:26 yamt Exp $");
 
 #define UVM_MAP
 #include <uvm/uvm.h>
+#undef RB_AUGMENT
+#define	RB_AUGMENT(x)	uvm_rb_augment(x)
 
 #ifdef DDB
 #include <uvm/uvm_ddb.h>

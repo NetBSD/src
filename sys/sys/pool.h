@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.40 2003/09/07 11:37:13 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.41 2003/11/13 02:44:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -52,9 +52,9 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/time.h>
+#include <sys/tree.h>
 #endif
 
-#define PR_HASHTABSIZE		8
 #define	PCG_NOBJECTS		16
 
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
@@ -112,11 +112,17 @@ struct pool_allocator {
 	int		pa_pageshift;
 };
 
+LIST_HEAD(pool_pagelist,pool_item_header);
+
 struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
-	TAILQ_HEAD(,pool_item_header)
-			pr_pagelist;	/* Allocated pages */
+	struct pool_pagelist
+			pr_emptypages;	/* Empty pages */
+	struct pool_pagelist
+			pr_fullpages;	/* Full pages */
+	struct pool_pagelist
+			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
 	TAILQ_HEAD(,pool_cache)
 			pr_cachelist;	/* Caches for this pool */
@@ -162,8 +168,7 @@ struct pool {
 	 */
 	struct simplelock	pr_slock;
 
-	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
-			pr_hashtab[PR_HASHTABSIZE];
+	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
