@@ -1,4 +1,4 @@
-/*	$NetBSD: doexec.c,v 1.3 1995/04/20 22:43:13 cgd Exp $	*/
+/*	$NetBSD: doexec.c,v 1.4 1999/02/18 10:37:26 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -32,6 +32,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -45,6 +46,7 @@ main(argc, argv)
 		exit(2);
 	}
 
+	unsetenv("LANG");	/* we compare C error strings */
 	if (execve(argv[1], &argv[1], NULL) == -1) {
 		printf("%s\n", strerror(errno));
 		exit(1);
