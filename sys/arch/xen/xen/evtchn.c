@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.1.2.2 2005/01/18 14:52:15 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.1.2.3 2005/01/21 10:16:08 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.2 2005/01/18 14:52:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.3 2005/01/21 10:16:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,8 +81,12 @@ static int virq_to_irq[NR_VIRQS];
 /* IRQ <-> PIRQ mapping */
 static int pirq_to_irq[NR_PIRQS];
 /* PIRQ needing notify */
-static u_int32_t pirq_needs_unmask_notify[NR_PIRQS / 32];
-void pirq_notify(int);
+static u_int32_t irq_needs_unmask_notify[NR_IRQS / 32];
+int pirq_interrupt(void *);
+static void pirq_notify(int);
+physdev_op_t physdev_op_notify = {
+	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
+};
 #endif
 
 /* Reference counts for bindings to IRQs. */
@@ -93,6 +97,8 @@ static int xen_die_handler(void *);
 #endif
 static int xen_debug_handler(void *);
 static int xen_misdirect_handler(void *);
+
+/* #define IRQ_DEBUG -1 */
 
 void
 events_default_setup()
@@ -107,8 +113,8 @@ events_default_setup()
 	/* No PIRQ -> IRQ mappings. */
 	for (i = 0; i < NR_PIRQS; i++)
 		pirq_to_irq[i] = -1;
-	for (i = 0; i < NR_PIRQS / 32; i++)
-		pirq_needs_unmask_notify[i] = 0;
+	for (i = 0; i < NR_IRQS / 32; i++)
+		irq_needs_unmask_notify[i] = 0;
 #endif
 
 	/* No event-channel -> IRQ mappings. */
@@ -158,6 +164,10 @@ do_event(int irq, struct intrframe *regs)
 		return ENOENT;
 	}
 
+#ifdef IRQ_DEBUG
+	if (irq == IRQ_DEBUG)
+		printf("do_event: irq %d\n", irq);
+#endif
 #if 0 /* DDD */
 	if (irq >= 3 && irq != 7) {
 		ci = &cpu_info_primary;
@@ -176,8 +186,9 @@ do_event(int irq, struct intrframe *regs)
 	}
 	ilevel = ci->ci_ilevel;
 	if (ci->ci_isources[irq]->is_maxlevel <= ilevel) {
-#if 0 /* DDD */
-		if (irq != 7) printf("ci_isources[%d]->is_maxlevel %d <= ilevel %d\n", irq,
+#ifdef IRQ_DEBUG
+		if (irq == IRQ_DEBUG)
+		    printf("ci_isources[%d]->is_maxlevel %d <= ilevel %d\n", irq,
 		    ci->ci_isources[irq]->is_maxlevel, ilevel);
 #endif
 		ci->ci_ipending |= 1 << irq;
@@ -195,6 +206,10 @@ do_event(int irq, struct intrframe *regs)
 	ih = ci->ci_isources[irq]->is_handlers;
 	while (ih != NULL) {
 		if (ih->ih_level <= ilevel) {
+#ifdef IRQ_DEBUG
+		if (irq == IRQ_DEBUG)
+		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
+#endif
 #ifdef MULTIPROCESSOR
 			x86_intunlock(regs);
 #endif
@@ -317,7 +332,9 @@ bind_pirq_to_irq(int pirq)
 		evtchn = op.u.bind_pirq.port;
 
 		irq = find_unbound_irq();
+#ifdef IRQ_DEBUG
 		printf("pirq %d irq %d evtchn %d\n", pirq, irq, evtchn);
+#endif
 		evtchn_to_irq[evtchn] = irq;
 		irq_to_evtchn[irq] = evtchn;
 
@@ -367,12 +384,14 @@ pirq_establish(int pirq, int irq, int (*func)(void *), void *arg, int level)
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	if (event_set_handler(irq, func, arg, level) != 0) {
+	if (event_set_handler(irq, pirq_interrupt, ih, level) != 0) {
 		free(ih, M_DEVBUF);
 		return NULL;
 	}
 	ih->pirq = pirq;
 	ih->irq = irq;
+	ih->func = func;
+	ih->arg = arg;
 
 	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
 	physdev_op.u.irq_status_query.irq = pirq;
@@ -380,24 +399,41 @@ pirq_establish(int pirq, int irq, int (*func)(void *), void *arg, int level)
 		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
 	if (physdev_op.u.irq_status_query.flags &
 	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
-		pirq_needs_unmask_notify[pirq >> 5] |= 1 << (pirq & 0x1f);
+		irq_needs_unmask_notify[irq >> 5] |= (1 << (irq & 0x1f));
+#ifdef IRQ_DEBUG
 		printf("pirq %d needs notify\n", pirq);
+#endif
 	}
 	hypervisor_enable_irq(irq);
-	pirq_notify(pirq);
 	return ih;
 }
 
-void
+int
+pirq_interrupt(void *arg)
+{
+	struct pintrhand *ih = arg;
+	int ret;
+
+
+	ret = ih->func(ih->arg);
+#ifdef IRQ_DEBUG
+	if (ih->irq == IRQ_DEBUG)
+	    printf("pirq_interrupt irq %d/%d ret %d\n", ih->irq, ih->pirq, ret);
+#endif
+	return ret;
+}
+
+static void
 pirq_notify(int irq)
 {
-	physdev_op_t physdev_op;
 
-	if (pirq_needs_unmask_notify[irq >> 5] & (1 & (irq & 0x1f)))
-		physdev_op.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY;
-		if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-			printf("HYPERVISOR_physdev_op"
-			    "(PHYSDEVOP_IRQ_UNMASK_NOTIFY) failed\n");
+	if (irq_needs_unmask_notify[irq >> 5] & (1 << (irq & 0x1f))) {
+#ifdef  IRQ_DEBUG
+		if (irq == IRQ_DEBUG)
+		    printf("pirq_notify(%d)\n", irq);
+#endif
+		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
+	}
 }
 
 #endif /* DOM0OPS */
@@ -429,7 +465,9 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	struct intrhand *ih;
 	struct cpu_info *ci;
 
+#ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", irq, handler);
+#endif
 
 	if (irq >= NR_IRQS) {
 #ifdef DIAGNOSTIC
@@ -442,51 +480,73 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	printf("event_set_handler irq %d/%d handler %p level %d\n", irq,
 	       irq_to_evtchn[irq], handler, level);
 #endif
-	/* XXXcl handle already bound irq */
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
 	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate fixed interrupt source");
 
-	ci = &cpu_info_primary;
 
-	isp->is_recurse = xenev_stubs[irq].ist_recurse;
-	isp->is_resume = xenev_stubs[irq].ist_resume;
 	ih->ih_level = level;
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_next = NULL;
-	isp->is_handlers = ih;
-	isp->is_pic = &xenev_pic;
-	ci->ci_isources[irq] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "xenev");
+
+	ci = &cpu_info_primary;
+	if (ci->ci_isources[irq] == NULL) {
+		MALLOC(isp, struct intrsource *, sizeof (struct intrsource),
+		    M_DEVBUF, M_WAITOK|M_ZERO);
+		if (isp == NULL)
+			panic("can't allocate fixed interrupt source");
+		isp->is_recurse = xenev_stubs[irq].ist_recurse;
+		isp->is_resume = xenev_stubs[irq].ist_resume;
+		isp->is_handlers = ih;
+		isp->is_pic = &xenev_pic;
+		ci->ci_isources[irq] = isp;
+		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+		    ci->ci_dev->dv_xname, "xenev");
+	} else {
+		isp = ci->ci_isources[irq];
+		ih->ih_next = isp->is_handlers;
+		isp->is_handlers = ih;
+	}
 
 	intr_calculatemasks(ci);
 
 	return 0;
 }
 
-void hypervisor_enable_irq(unsigned int irq)
+void
+hypervisor_enable_irq(unsigned int irq)
 {
+#ifdef IRQ_DEBUG
+	if (irq == IRQ_DEBUG)
+		printf("hypervisor_enable_irq: irq %d\n", irq);
+#endif
 
 	hypervisor_unmask_event(irq_to_evtchn[irq]);
+#ifdef DOM0OPS
+	pirq_notify(irq);
+#endif
 }
 
-void hypervisor_disable_irq(unsigned int irq)
+void
+hypervisor_disable_irq(unsigned int irq)
 {
+#ifdef IRQ_DEBUG
+	if (irq == IRQ_DEBUG)
+		printf("hypervisor_disable_irq: irq %d\n", irq);
+#endif
 
 	hypervisor_mask_event(irq_to_evtchn[irq]);
 }
 
-void hypervisor_acknowledge_irq(unsigned int irq)
+void
+hypervisor_acknowledge_irq(unsigned int irq)
 {
-
+#ifdef IRQ_DEBUG
+	if (irq == IRQ_DEBUG)
+		printf("hypervisor_acknowledge_irq: irq %d\n", irq);
+#endif
 	hypervisor_mask_event(irq_to_evtchn[irq]);
 	hypervisor_clear_event(irq_to_evtchn[irq]);
 }
