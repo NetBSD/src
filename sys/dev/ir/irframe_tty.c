@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.15 2001/12/13 17:14:21 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.16 2001/12/14 12:56:58 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,6 +52,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
@@ -88,7 +89,7 @@ struct frame {
 	u_char *buf;
 	u_int len;
 };
-#define MAXFRAMES 4
+#define MAXFRAMES 8
 
 struct irframet_softc {
 	struct irframe_softc sc_irp;
@@ -103,12 +104,11 @@ struct irframet_softc {
 #define	IRT_WSLP		0x02	/* waiting for data (write) */
 #define IRT_CLOSING		0x04	/* waiting for output to drain */
 #endif
+	struct lock sc_wr_lk;
 
-	int sc_ebofs;
-	int sc_speed;
+	struct irda_params sc_params;
 
 	u_char* sc_inbuf;
-	int sc_maxsize;
 	int sc_framestate;
 #define FRAME_OUTSIDE    0
 #define FRAME_INSIDE     1
@@ -421,7 +421,7 @@ irframetinput(int c, struct tty *tp)
 				sc->sc_framestate = FRAME_INSIDE;
 				c ^= SIR_ESC_BIT;
 			}
-			if (sc->sc_inchars < sc->sc_maxsize + 2) {
+			if (sc->sc_inchars < sc->sc_params.maxsize + 2) {
 				sc->sc_inbuf[sc->sc_inchars++] = c;
 				sc->sc_inFCS = updateFCS(sc->sc_inFCS, c);
 			} else {
@@ -455,14 +455,15 @@ irframet_open(void *h, int flag, int mode, struct proc *p)
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
-	sc->sc_speed = 0;
-	sc->sc_ebofs = IRDA_DEFAULT_EBOFS;
-	sc->sc_maxsize = 0;
+	sc->sc_params.speed = 0;
+	sc->sc_params.ebofs = IRDA_DEFAULT_EBOFS;
+	sc->sc_params.maxsize = 0;
 	sc->sc_framestate = FRAME_OUTSIDE;
 	sc->sc_nframes = 0;
 	sc->sc_framei = 0;
 	sc->sc_frameo = 0;
 	callout_init(&sc->sc_timeout);
+	lockinit(&sc->sc_wr_lk, PZERO, "irfrtl", 0, 0);
 
 	return (0);
 }
@@ -527,7 +528,9 @@ irframet_read(void *h, struct uio *uio, int flag)
 	/* Do just one frame transfer per read */
 	if (!error) {
 		if (uio->uio_resid < sc->sc_frames[sc->sc_frameo].len) {
-			DPRINTF(("%s: uio buffer smaller than frame size (%d < %d)\n", __FUNCTION__, uio->uio_resid, sc->sc_frames[sc->sc_frameo].len));
+			DPRINTF(("%s: uio buffer smaller than frame size "
+				 "(%d < %d)\n", __FUNCTION__, uio->uio_resid,
+				 sc->sc_frames[sc->sc_frameo].len));
 			error = EINVAL;
 		} else {
 			DPRINTF(("%s: moving %d bytes\n", __FUNCTION__,
@@ -592,7 +595,7 @@ irframet_write(void *h, struct uio *uio, int flag)
 		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
 		 (long)uio->uio_offset));
 
-	n = irda_sir_frame(buf, MAX_IRDA_FRAME, uio, sc->sc_ebofs);
+	n = irda_sir_frame(buf, MAX_IRDA_FRAME, uio, sc->sc_params.ebofs);
 	if (n < 0) {
 #ifdef IRFRAMET_DEBUG
 		printf("%s: irda_sir_frame() error=%d\n", __FUNCTION__, -n);
@@ -605,13 +608,16 @@ irframet_write(void *h, struct uio *uio, int flag)
 int
 irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len)
 {
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error, i;
 
 	DPRINTF(("%s: tp=%p len=%d\n", __FUNCTION__, tp, len));
 
+	lockmgr(&sc->sc_wr_lk, LK_EXCLUSIVE, NULL);
 	error = 0;
 	for (i = 0; !error && i < len; i++)
 		error = irt_putc(tp, buf[i]);
+	lockmgr(&sc->sc_wr_lk, LK_RELEASE, NULL);
 
 	irframetstart(tp);
 
@@ -660,28 +666,31 @@ irframet_set_params(void *h, struct irda_params *p)
 	DPRINTF(("%s: tp=%p speed=%d ebofs=%d maxsize=%d\n",
 		 __FUNCTION__, tp, p->speed, p->ebofs, p->maxsize));
 
-	if (p->speed != sc->sc_speed) {
+	if (p->speed != sc->sc_params.speed) {
 		/* Checked in irframe.c */
+		lockmgr(&sc->sc_wr_lk, LK_EXCLUSIVE, NULL);
 		irt_dongles[sc->sc_dongle].setspeed(tp, p->speed);
-		sc->sc_speed = p->speed;
+		lockmgr(&sc->sc_wr_lk, LK_RELEASE, NULL);
+		sc->sc_params.speed = p->speed;
 	}
 
 	/* Max size checked in irframe.c */
-	sc->sc_ebofs = p->ebofs;
+	sc->sc_params.ebofs = p->ebofs;
 	/* Max size checked in irframe.c */
-	if (sc->sc_maxsize != p->maxsize) {
-		sc->sc_maxsize = p->maxsize;
+	if (sc->sc_params.maxsize != p->maxsize) {
+		sc->sc_params.maxsize = p->maxsize;
 		if (sc->sc_inbuf != NULL)
 			free(sc->sc_inbuf, M_DEVBUF);
 		for (i = 0; i < MAXFRAMES; i++)
 			if (sc->sc_frames[i].buf != NULL)
 				free(sc->sc_frames[i].buf, M_DEVBUF);
-		if (sc->sc_maxsize != 0) {
-			sc->sc_inbuf = malloc(sc->sc_maxsize+2, M_DEVBUF,
-					      M_WAITOK);
+		if (sc->sc_params.maxsize != 0) {
+			sc->sc_inbuf = malloc(sc->sc_params.maxsize+2,
+					      M_DEVBUF, M_WAITOK);
 			for (i = 0; i < MAXFRAMES; i++)
-				sc->sc_frames[i].buf = malloc(sc->sc_maxsize,
-							   M_DEVBUF, M_WAITOK);
+				sc->sc_frames[i].buf =
+					malloc(sc->sc_params.maxsize,
+					       M_DEVBUF, M_WAITOK);
 		} else {
 			sc->sc_inbuf = NULL;
 			for (i = 0; i < MAXFRAMES; i++)
