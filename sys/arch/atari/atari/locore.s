@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1995/05/28 19:17:54 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1995/06/09 19:45:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -199,7 +199,7 @@ Lstkadj:
  */
 _fpfline:
 	tstl	_cpu040		|  an 040 FPU
-	jne	fpfline_not40	|  no, do 6888? emulation
+	jeq	fpfline_not40	|  no, do 6888? emulation
 	cmpw	#0x202c,sp@(6)	|  format type 2?
 	jne	_illinst	|  no, not an FP emulation
 #ifdef FPSP
@@ -214,7 +214,7 @@ fpfline_not40:
 
 _fpunsupp:
 	tstl	_cpu040		|  an 040 FPU?
-	jne	fpunsupp_not40
+	jeq	fpunsupp_not40
 #ifdef FPSP
 	.globl	fpsp_unsupp
 	jmp	fpsp_unsupp	|  yes, go handle it
