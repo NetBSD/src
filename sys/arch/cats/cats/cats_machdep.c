@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.37 2002/11/03 21:43:31 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.38 2003/01/17 22:38:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -217,7 +217,7 @@ cpu_reboot(howto, bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
+	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
 #endif
 
 	/*

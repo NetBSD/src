@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.7 2002/04/10 19:35:22 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.7 2002/04/10 19:35:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -106,17 +106,19 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
+			struct lwp *l;
 			(*pr) ("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
 			}	
-			if (!(p->p_flag & P_INMEM)) {
+			l = LIST_FIRST(&p->p_lwps);	/* XXX NJWLWP */
+			if (!(l->l_flag & L_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
-			u = p->p_addr;
+			u = l->l_addr;
 #ifdef acorn26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
 #else

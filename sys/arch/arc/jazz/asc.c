@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.9 2002/12/28 16:25:39 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.10 2003/01/17 22:19:05 thorpej Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -681,7 +681,7 @@ asc_scsipi_request(chan, req, arg)
 		 *  mapped to UADDR. Realloc to the kva uarea address.
 		 */
 		if((u_int)(xs->data) >= UADDR) {
-			xs->data = ((u_int)(xs->data) & ~UADDR) + (u_char *)(curproc->p_addr);
+			xs->data = ((u_int)(xs->data) & ~UADDR) + (u_char *)(curlwp->l_addr);
 		}
 
 		s = splbio();

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.57 2002/11/01 11:31:53 mrg Exp $	*/
+/*	$NetBSD: sd.c,v 1.58 2003/01/17 22:53:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.57 2002/11/01 11:31:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.58 2003/01/17 22:53:07 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -722,7 +722,7 @@ sdstrategy(bp)
 	int offset;
 
 	if (sc->sc_format_pid >= 0) {
-		if (sc->sc_format_pid != curproc->p_pid) {	/* XXX */
+		if (sc->sc_format_pid != curproc->p_pid) {    /* XXX */
 			bp->b_error = EPERM;
 			goto bad;
 		}
