@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.27 2002/02/01 18:16:05 uch Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.28 2002/02/20 00:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -177,8 +177,6 @@ extern vaddr_t sa11x0_idle_mem;
 void physcon_display_base	__P((u_int addr));
 void consinit		__P((void));
 
-void map_section	__P((vaddr_t pt, vaddr_t va, vaddr_t pa,
-			     int cacheable));
 void map_pagetable	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
 void map_entry		__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
 void map_entry_nc	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));

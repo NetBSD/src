@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.1 2002/02/10 01:58:00 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.2 2002/02/20 00:10:20 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -93,8 +93,6 @@ extern int ofw_handleticks;
 /*
  *  Imported routines
  */
-extern void map_section	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-				 int cacheable));
 extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_nc    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -1422,16 +1420,11 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			int nsections = tp->size / NBPD;
 
 			while (nsections--) {
-				map_section(L1pagetable, va, pa, 0);
-
-				/*
-				 * even grosser hack:
-				 * blast B & C bits if necessary
-				 */
-				if ((tp->mode & 0xC) == 0xC)
-					((u_int *)L1pagetable)[(va >> PDSHIFT)]
-					    |= PT_B | PT_C;
-
+				/* XXXJRT prot?? */
+				pmap_map_section(L1pagetable, va, pa,
+				    VM_PROT_READ|VM_PROT_WRITE,
+				    (tp->mode & 0xC) == 0xC ? PTE_CACHE
+							    : PTE_NOCACHE);
 				va += NBPD;
 				pa += NBPD;
 			} /* END while */

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.12 2002/02/10 13:20:26 reinoud Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.13 2002/02/20 00:10:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -154,27 +154,6 @@ bootsync(void)
  * A few functions that are used to help construct the page tables
  * during the bootstrap process.
  */
-
-void
-map_section(pagetable, va, pa, cacheable)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-	int cacheable;
-{
-#ifdef	DIAGNOSTIC
-	if (((va | pa) & (L1_SEC_SIZE - 1)) != 0)
-		panic("initarm: Cannot allocate 1MB section on non 1MB boundry\n");
-#endif	/* DIAGNOSTIC */
-
-	if (cacheable)
-		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), pte_cache_mode);
-	else
-		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), 0);
-}
-
 
 void
 map_pagetable(pagetable, va, pa)
