@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.43 2000/12/12 17:32:45 jdolecek Exp $
+#	$NetBSD: makesyscalls.sh,v 1.44 2001/01/01 16:41:43 jdolecek Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -113,6 +113,8 @@ $toupper
 BEGIN {
 	# to allow nested #if/#else/#endif sets
 	savedepth = 0
+	# to track already processed syscalls
+	syscallseen[0] = 0
 
 	sysnames = \"$sysnames\"
 	sysprotos = \"$sysprotos\"
@@ -417,7 +419,9 @@ function putent(nodefs, compatwrap) {
 		    funcalias, syscall, compatwrap, funcalias) > sysnamesbottom
 
 	# output syscall number of header, if appropriate
-	if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
+	if (syscallseen[syscall]) {
+		# nop
+	} else if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
 		# output a prototype, to be used to generate lint stubs in
 		# libc.
 		printf("/* syscall: \"%s\" ret: \"%s\" args:", funcalias,
@@ -438,6 +442,7 @@ function putent(nodefs, compatwrap) {
 	} else if (nodefs != "NODEF")
 		printf("\t\t\t\t/* %d is %s %s */\n\n", syscall,
 		    compatwrap, funcalias) > sysnumhdr
+	syscallseen[syscall] = 1
 
 	# output syscall argument structure, if it has arguments
 	if (argc != 0 && nodefs != "NOARGS" && nodefs != "INDIR") {
