@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.5 2003/07/15 02:15:03 lukem Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.6 2003/09/26 12:02:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.5 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.6 2003/09/26 12:02:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ ibcs2_setregs(l, epp, stack)
 void
 ibcs2_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	sendsig(native_to_ibcs2_signo[sig], mask, code);

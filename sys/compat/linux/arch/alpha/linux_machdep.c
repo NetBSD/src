@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28 2003/06/29 22:29:23 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.29 2003/09/26 12:02:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2003/06/29 22:29:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2003/09/26 12:02:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 void setup_linux_sigframe(tf, sig, mask)
 	struct trapframe *tf;
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -320,7 +320,7 @@ void setup_linux_sigframe(tf, sig, mask)
 void
 linux_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
