@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: script,v 1.4 2000/11/05 03:30:51 lukem Exp $
+# $NetBSD: script,v 1.5 2003/03/10 16:14:37 david Exp $
 #
 
 #
@@ -12,6 +12,7 @@
 #   cp script /etc/apm/suspend
 #   cd /etc/apm
 #   for i in standby resume line battery ; do ln suspend $i ; done
+#   chmod a+x suspend standby resume line battery
 #
 # See apmd(8) for more information.
 #
