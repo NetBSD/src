@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.10 2002/06/24 22:04:36 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.11 2002/07/02 20:26:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.10 2002/06/24 22:04:36 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.11 2002/07/02 20:26:56 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -1229,11 +1229,10 @@ parityerror(fp)
 	if (!parityerrorfind())
 		printf("WARNING: transient parity error ignored\n");
 	else if (USERMODE(fp->f_sr)) {
-		struct proc *p = curproc;
-		printf("pid %d: parity error\n", p->p_pid);
+		printf("pid %d: parity error\n", curproc->p_pid);
 		uprintf("sorry, pid %d killed due to memory parity error\n",
-			p->p_pid);
-		psignal(p, SIGKILL);
+			curproc->p_pid);
+		psignal(curproc, SIGKILL);
 #ifdef DEBUG
 	} else if (ignorekperr) {
 		printf("WARNING: kernel parity error ignored\n");
