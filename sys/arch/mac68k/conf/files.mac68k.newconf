@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k.newconf,v 1.2 1993/12/15 03:04:41 briggs Exp $
+#	$Id: files.mac68k.newconf,v 1.3 1993/12/21 03:14:18 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -24,7 +24,7 @@ file	arch/mac68k/dev/grf_gb.c		grf
 device	ite at nubus
 
 device	ae at nubus: ifnet, ether
-file	arch/mac68k/dev/if_ae.c		ae
+file	arch/mac68k/dev/if_ae.c		ae needs-count
 
 # scsi driver and associated stuff
 define	scsi { target = -1 }
@@ -51,6 +51,7 @@ major {st=5}
 #file	arch/mac68k/scsi/uk.c		uk needs-flag
 #file	arch/mac68k/scsi/su.c		su needs-flag
 
+file	arch/mac68k/dev/asc.c		# this should be a real device...
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/ns_cksum.c		ns
 file	arch/mac68k/mac68k/oc_cksum.s		inet
