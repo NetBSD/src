@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2002/11/03 01:54:45 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.69 2002/12/22 02:17:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -107,7 +107,7 @@ extern	int kgdb_debug_panic;
 #endif
 
 static	int rootnode;
-char platform_type[32];
+char	machine_model[100];
 
 static	char *str2hex __P((char *, int *));
 static	int mbprint __P((void *, const char *));
@@ -628,8 +628,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
-	OF_getprop(findroot(), "name", platform_type, sizeof(platform_type));
-	printf(": %s\n", platform_type);
+	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
+	printf(": %s\n", machine_model);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
