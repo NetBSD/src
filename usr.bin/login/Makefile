@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/10/12 13:10:16 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 1997/10/12 14:07:38 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 WARNS?= 1
@@ -10,7 +10,7 @@ BINOWN=	root
 BINMODE=4555
 INSTALLFLAGS=-fschg
 
-.include <bsd.prog.mk>
+.include <bsd.own.mk>
 
 .ifdef SKEY
 CPPFLAGS+=-DSKEY
@@ -29,3 +29,5 @@ CPPFLAGS+=-DKERBEROS
 DPADD+=	${LIBKRB} ${LIBDES}
 LDADD+=	-lkrb -ldes
 .endif
+
+.include <bsd.prog.mk>
