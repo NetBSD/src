@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.126 2003/12/18 18:39:36 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.127 2004/07/02 19:53:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.126 2003/12/18 18:39:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.127 2004/07/02 19:53:31 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -2566,7 +2566,7 @@ tlp_filter_setup(sc)
 	struct tulip_txsoft *txs;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t hash, hashsize;
-	int cnt;
+	int cnt, nexttx;
 
 	DPRINTF(sc, ("%s: tlp_filter_setup: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
@@ -2760,20 +2760,39 @@ tlp_filter_setup(sc)
 	txs->txs_ndescs = 1;
 	txs->txs_mbuf = NULL;
 
-	sc->sc_txdescs[sc->sc_txnext].td_bufaddr1 =
-	    htole32(TULIP_CDSPADDR(sc));
-	sc->sc_txdescs[sc->sc_txnext].td_ctl =
+	nexttx = sc->sc_txnext;
+	sc->sc_txdescs[nexttx].td_status = 0;
+	sc->sc_txdescs[nexttx].td_bufaddr1 = htole32(TULIP_CDSPADDR(sc));
+	sc->sc_txdescs[nexttx].td_ctl =
 	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
 	    sc->sc_filtmode | TDCTL_Tx_SET | sc->sc_setup_fsls |
 	    TDCTL_Tx_IC | sc->sc_tdctl_ch |
-	    (sc->sc_txnext == (TULIP_NTXDESC - 1) ? sc->sc_tdctl_er : 0));
-	sc->sc_txdescs[sc->sc_txnext].td_status = htole32(TDSTAT_OWN);
-	TULIP_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndescs,
+	    (nexttx == (TULIP_NTXDESC - 1) ? sc->sc_tdctl_er : 0));
+	TULIP_CDTXSYNC(sc, nexttx, 1,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+#ifdef TLP_DEBUG
+	if (ifp->if_flags & IFF_DEBUG) {
+		printf("     filter_setup %p transmit chain:\n", txs);
+		printf("     descriptor %d:\n", nexttx);
+		printf("       td_status:   0x%08x\n",
+		    le32toh(sc->sc_txdescs[nexttx].td_status));
+		printf("       td_ctl:      0x%08x\n",
+		    le32toh(sc->sc_txdescs[nexttx].td_ctl));
+		printf("       td_bufaddr1: 0x%08x\n",
+		    le32toh(sc->sc_txdescs[nexttx].td_bufaddr1));
+		printf("       td_bufaddr2: 0x%08x\n",
+		    le32toh(sc->sc_txdescs[nexttx].td_bufaddr2));
+	}
+#endif
+
+	sc->sc_txdescs[nexttx].td_status = htole32(TDSTAT_OWN);
+	TULIP_CDTXSYNC(sc, nexttx, 1,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Advance the tx pointer. */
 	sc->sc_txfree -= 1;
-	sc->sc_txnext = TULIP_NEXTTX(sc->sc_txnext);
+	sc->sc_txnext = TULIP_NEXTTX(nexttx);
 
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
