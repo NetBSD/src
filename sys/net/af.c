@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)af.c	7.6 (Berkeley) 6/28/90
- *	$Id: af.c,v 1.4 1993/12/18 00:40:47 mycroft Exp $
+ *	$Id: af.c,v 1.5 1994/02/10 17:25:03 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -39,8 +39,6 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-
-#include <net/af.h>
 
 /*
  * Nothing in the file should be needed anymore.
