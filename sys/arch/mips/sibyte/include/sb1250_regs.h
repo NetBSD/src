@@ -80,7 +80,7 @@
 
 #define	A_MC_BASE(ctlid) \
 	    ((ctlid) * MC_REGISTER_SPACING + A_MC_BASE_0)
-#define	A_MC_REGISTER(ctlid,reg)	(A_MC_BASE(ctlid) + (reg))
+#define	A_MC_REGISTER(ctlid, reg)	(A_MC_BASE(ctlid) + (reg))
 
 #define	R_MC_CONFIG			0x0000000100
 #define	R_MC_DRAMCMD			0x0000000120
@@ -122,7 +122,7 @@
 #define	A_L2_READ_ADDRESS		0x0010040018
 #define	A_L2_EEC_ADDRESS		0x0010040038
 #define	A_L2_WAY_DISABLE		0x0010041000
-#define	A_L2_MAKEDISABLE(x)		(A_L2_WAY_DISABLE | (((~(x))&0x0F) << 8))
+#define	A_L2_MAKEDISABLE(x)		(A_L2_WAY_DISABLE | (((~(x)) & 0x0F) << 8))
 #define	A_L2_MGMT_TAG_BASE		0x00D0000000
 
 /*  *********************************************************************
@@ -152,29 +152,29 @@
 
 #define	A_MAC_CHANNEL_BASE(macnum)	(A_MAC_BASE_0 + MAC_SPACING * (macnum))
 
-#define	A_MAC_REGISTER(macnum,reg) \
+#define	A_MAC_REGISTER(macnum, reg) \
 	    (A_MAC_BASE_0 + MAC_SPACING * (macnum) + (reg))
 
 
 #define	R_MAC_DMA_CHANNELS		0x800 /* Relative to A_MAC_CHANNEL_BASE */
 
-#define	A_MAC_DMA_CHANNEL_BASE(macnum,txrx,chan)		\
+#define	A_MAC_DMA_CHANNEL_BASE(macnum, txrx, chan)		\
 	     ((A_MAC_CHANNEL_BASE(macnum)) +			\
 	     R_MAC_DMA_CHANNELS +				\
-	     (MAC_DMA_TXRX_SPACING*(txrx)) +			\
-	     (MAC_DMA_CHANNEL_SPACING*(chan)))
+	     (MAC_DMA_TXRX_SPACING * (txrx)) +			\
+	     (MAC_DMA_CHANNEL_SPACING * (chan)))
 
-#define	R_MAC_DMA_CHANNEL_BASE(txrx,chan)			\
+#define	R_MAC_DMA_CHANNEL_BASE(txrx, chan)			\
 	     (R_MAC_DMA_CHANNELS +				\
-	     (MAC_DMA_TXRX_SPACING*(txrx)) +			\
-	     (MAC_DMA_CHANNEL_SPACING*(chan)))
+	     (MAC_DMA_TXRX_SPACING * (txrx)) +			\
+	     (MAC_DMA_CHANNEL_SPACING * (chan)))
 
-#define	A_MAC_DMA_REGISTER(macnum,txrx,chan,reg)		\
-	    (A_MAC_DMA_CHANNEL_BASE(macnum,txrx,chan) +		\
+#define	A_MAC_DMA_REGISTER(macnum, txrx, chan, reg)		\
+	    (A_MAC_DMA_CHANNEL_BASE(macnum, txrx, chan) +	\
 	    (reg))
 
-#define	R_MAC_DMA_REGISTER(txrx,chan,reg)			\
-	    (R_MAC_DMA_CHANNEL_BASE(txrx,chan) +		\
+#define	R_MAC_DMA_REGISTER(txrx, chan, reg)			\
+	    (R_MAC_DMA_CHANNEL_BASE(txrx, chan) +		\
 	    (reg))
 
 /*
@@ -254,10 +254,10 @@
 #define	A_DUART_REG(r)
 
 #define	DUART_CHANREG_SPACING		0x100
-#define	A_DUART_CHANREG(chan,reg) \
+#define	A_DUART_CHANREG(chan, reg) \
 	    (A_DUART + DUART_CHANREG_SPACING * (chan) + (reg))
-#define	R_DUART_CHANREG(chan,reg) \
-	    (DUART_CHANREG_SPACING*(chan) + (reg))
+#define	R_DUART_CHANREG(chan, reg) \
+	    (DUART_CHANREG_SPACING * (chan) + (reg))
 
 #define	R_DUART_MODE_REG_1		0x100
 #define	R_DUART_MODE_REG_2		0x110
@@ -344,22 +344,22 @@
 
 #define	A_SER_CHANNEL_BASE(sernum)				\
 	    (A_SER_BASE_0 +					\
-	     SER_SPACING*(sernum))
+	     SER_SPACING * (sernum))
 
-#define	A_SER_REGISTER(sernum,reg)				\
+#define	A_SER_REGISTER(sernum, reg)				\
 	    (A_SER_BASE_0 +					\
-	     SER_SPACING*(sernum) + (reg))
+	     SER_SPACING * (sernum) + (reg))
 
 
 #define	R_SER_DMA_CHANNELS		0   /* Relative to A_SER_BASE_x */
 
-#define	A_SER_DMA_CHANNEL_BASE(sernum,txrx)			\
+#define	A_SER_DMA_CHANNEL_BASE(sernum, txrx)			\
 	     ((A_SER_CHANNEL_BASE(sernum)) +			\
 	     R_SER_DMA_CHANNELS +				\
-	     (SER_DMA_TXRX_SPACING*(txrx)))
+	     (SER_DMA_TXRX_SPACING * (txrx)))
 
-#define	A_SER_DMA_REGISTER(sernum,txrx,reg)			\
-	    (A_SER_DMA_CHANNEL_BASE(sernum,txrx) +		\
+#define	A_SER_DMA_REGISTER(sernum, txrx, reg)			\
+	    (A_SER_DMA_CHANNEL_BASE(sernum, txrx) +		\
 	    (reg))
 
 
@@ -440,8 +440,8 @@
 
 #define	IO_EXT_REGISTER_SPACING		8
 #define	A_IO_EXT_CS_BASE(cs) \
-	    (A_IO_EXT_CFG_BASE+IO_EXT_REGISTER_SPACING*(cs))
-#define	R_IO_EXT_REG(reg,cs)		((cs) * IO_EXT_REGISTER_SPACING + (reg))
+	    (A_IO_EXT_CFG_BASE + IO_EXT_REGISTER_SPACING * (cs))
+#define	R_IO_EXT_REG(reg, cs)		((cs) * IO_EXT_REGISTER_SPACING + (reg))
 
 #define	R_IO_EXT_CFG			0x0000
 #define	R_IO_EXT_MULT_SIZE		0x0100
@@ -525,7 +525,7 @@
 #define	A_SMB_1				0x0010060008
 #define	SMB_REGISTER_SPACING		0x8
 #define	A_SMB_BASE(idx)			(A_SMB_0 + (idx) * SMB_REGISTER_SPACING)
-#define	A_SMB_REGISTER(idx,reg)		(A_SMB_BASE(idx) + (reg))
+#define	A_SMB_REGISTER(idx, reg)	(A_SMB_BASE(idx) + (reg))
 
 #define	R_SMB_XTRA			0x0000000000
 #define	R_SMB_FREQ			0x0000000010
@@ -549,7 +549,7 @@
 #define	SCD_WDOG_SPACING		0x100
 #define	SCD_NUM_WDOGS			2
 #define	A_SCD_WDOG_BASE(w)		(A_SCD_WDOG_0 + SCD_WDOG_SPACING * (w))
-#define	A_SCD_WDOG_REGISTER(w,r)	(A_SCD_WDOG_BASE(w) + (r))
+#define	A_SCD_WDOG_REGISTER(w, r)	(A_SCD_WDOG_BASE(w) + (r))
 
 #define	R_SCD_WDOG_INIT			0x0000000000
 #define	R_SCD_WDOG_CNT			0x0000000008
@@ -574,7 +574,7 @@
 #define	SCD_NUM_TIMERS			4
 #define	A_SCD_TIMER_BASE(w) \
 	    (A_SCD_TIMER_0 + 0x08 * ((w) & 1) + 0x100 * (((w) & 2) >> 1))
-#define	A_SCD_TIMER_REGISTER(w,r)	(A_SCD_TIMER_BASE(w) + (r))
+#define	A_SCD_TIMER_REGISTER(w, r)	(A_SCD_TIMER_BASE(w) + (r))
 
 #define	R_SCD_TIMER_INIT		0x0000000000
 #define	R_SCD_TIMER_CNT			0x0000000010
@@ -633,8 +633,9 @@
 #define	A_IMR_CPU1_BASE			0x0010022000
 #define	IMR_REGISTER_SPACING		0x2000
 
-#define	A_IMR_MAPPER(cpu) (A_IMR_CPU0_BASE+(cpu)*IMR_REGISTER_SPACING)
-#define	A_IMR_REGISTER(cpu,reg) (A_IMR_MAPPER(cpu)+(reg))
+#define	A_IMR_MAPPER(cpu) \
+	    (A_IMR_CPU0_BASE + (cpu) * IMR_REGISTER_SPACING)
+#define	A_IMR_REGISTER(cpu, reg)	(A_IMR_MAPPER(cpu) + (reg))
 
 #define	R_IMR_INTERRUPT_DIAG		0x0010
 #define	R_IMR_INTERRUPT_MASK		0x0028
@@ -714,8 +715,8 @@
 #define	A_DM_3				0x0010020B60
 #define	DM_REGISTER_SPACING		0x20
 #define	DM_NUM_CHANNELS			4
-#define	A_DM_BASE(idx) (A_DM_0 + ((idx) * DM_REGISTER_SPACING))
-#define	A_DM_REGISTER(idx,reg) (A_DM_BASE(idx) + (reg))
+#define	A_DM_BASE(idx)			(A_DM_0 + ((idx) * DM_REGISTER_SPACING))
+#define	A_DM_REGISTER(idx, reg)		(A_DM_BASE(idx) + (reg))
 
 #define	R_DM_DSCR_BASE			0x0000000000
 #define	R_DM_DSCR_COUNT			0x0000000008
@@ -728,7 +729,7 @@
     ********************************************************************* */
 
 #define	A_PHYS_MEMORY_0			_SB_MAKE64(0x0000000000)
-#define	A_PHYS_MEMORY_SIZE		_SB_MAKE64((256*1024*1024))
+#define	A_PHYS_MEMORY_SIZE		_SB_MAKE64((256 * 1024 * 1024))
 #define	A_PHYS_SYSTEM_CTL		_SB_MAKE64(0x0010000000)
 #define	A_PHYS_IO_SYSTEM		_SB_MAKE64(0x0010060000)
 #define	A_PHYS_GENBUS			_SB_MAKE64(0x0010090000)
@@ -746,7 +747,7 @@
 #define	A_PHYS_LDTPCI_IO_MATCH_BITS	_SB_MAKE64(0x00FC000000)
 #define	A_PHYS_LDTPCI_CFG_MATCH_BITS	_SB_MAKE64(0x00FE000000)
 #define	A_PHYS_MEMORY_EXP		_SB_MAKE64(0x0100000000)
-#define	A_PHYS_MEMORY_EXP_SIZE		_SB_MAKE64((508*1024*1024*1024))
+#define	A_PHYS_MEMORY_EXP_SIZE		_SB_MAKE64((508 * 1024 * 1024 * 1024))
 #define	A_PHYS_LDT_EXP			_SB_MAKE64(0x8000000000)
 #define	A_PHYS_PCI_FULLACCESS_BYTES	_SB_MAKE64(0xF000000000)
 #define	A_PHYS_PCI_FULLACCESS_BITS	_SB_MAKE64(0xF100000000)
