@@ -37,7 +37,7 @@
  */
 
 #include "fd.h"
-#if NFD > 0
+#if NFDC > 0
 
 #include "param.h"
 #include "dkbad.h"
@@ -51,8 +51,6 @@
 #include "i386/isa/fdreg.h"
 #include "i386/isa/icu.h"
 #include "i386/isa/rtc.h"
-#undef NFD
-#define NFD 2
 
 #define	FDUNIT(s)	((s>>3)&1)
 #define	FDTYPE(s)	((s)&7)
@@ -107,17 +105,18 @@ static int fd_status[7];
 /****************************************************************************/
 /*                      autoconfiguration stuff                             */
 /****************************************************************************/
-int fdprobe(), fdattach(), fd_turnoff();
+int fdprobe(struct isa_device *);
+int fdattach(struct isa_device *);
+int fd_turnoff(int);
 
-struct	isa_driver fddriver = {
-	fdprobe, fdattach, "fd",
+struct	isa_driver fdcdriver = {
+	fdprobe, fdattach, "fdc",
 };
 
 /*
  * probe for existance of controller
  */
-fdprobe(dev)
-struct isa_device *dev;
+fdprobe(struct isa_device *dev)
 {
 	fdc = dev->id_iobase;
 
@@ -134,63 +133,63 @@ struct isa_device *dev;
 /*
  * wire controller into system, look for floppy units
  */
-fdattach(dev)
-struct isa_device *dev;
+fdattach(struct isa_device *dev)
 {
-	int	i, hdr;
-	unsigned fdt,st0, cyl;
+	unsigned fdt, unit, fddrive, fdunit;
+	extern struct isa_device isa_biotab_fdc[];
+	struct isa_device *fdutab;
+	unsigned st0, cyl;
 
 	fd_dmachan = dev->id_drq;
 
 	fdt = rtcin(RTC_FDISKETTE);
-	hdr = 0;
+	unit = dev->id_unit;
+	if (unit >= NFDC)
+		return;
 
-	/* check for each floppy drive */
-	for (i = 0; i < NFD; i++) {
-		/* is there a unit? */
-		if ((fdt & 0xf0) == RTCFDT_NONE)
+	printf(": controller has:\n");
+	for (fdutab = isa_biotab_fdc; fdutab->id_driver != 0; fdutab++) {
+		fdunit = fdutab->id_unit;
+		if (fdunit >= NFD)
 			continue;
+		fddrive = fdutab->id_physid;
+		if (fddrive == 1)
+			fdt <<= 4;
+	
+		/* is there a unit? */
+		if ((fdt & 0xf0) == RTCFDT_NONE) {
+			printf("fd%d: <no drive> on fdc%d slave %d\n", fddrive,
+				dev->id_unit, fdunit);
+			continue;
+		}
 
-#ifdef notyet
-		/* select it */
-		fd_turnon(i);
+		fd_turnon(fddrive);
 		DELAY(10000);
 		out_fdc(NE7CMD_RECAL);	/* Recalibrate Function */
-		out_fdc(i);
-		DELAY(10000);
-
-		/* anything responding */
-		out_fdc(NE7CMD_SENSEI);
+		out_fdc(fddrive);
+		DELAY(30000);
+		out_fdc(NE7CMD_SENSEI);	/* anything responding */
 		st0 = in_fdc();
 		cyl = in_fdc();
 		if (st0 & 0xd0)
 			continue;
 
-#endif
-		/* yes, announce it */
-		if (!hdr)
-			printf(" drives ");
-		else
-			printf(", ");
-		printf("%d: ", i);
-
 		if ((fdt & 0xf0) == RTCFDT_12M) {
-			printf("1.2M");
-			fd_unit[i].type = 1;
+			printf("fd%d: <1.2M> on fdc%d slave %d\n", fddrive,
+				dev->id_unit, fdunit);
+			fd_unit[fdunit].type = 1;
 		}
 		if ((fdt & 0xf0) == RTCFDT_144M) {
-			printf("1.44M");
-			fd_unit[i].type = 0;
+			printf("fd%d: <1.44M> on fdc%d slave %d\n", fddrive,
+				dev->id_unit, fdunit);
+			fd_unit[fdunit].type = 0;
 		}
 
-		fdt <<= 4;
-		fd_turnoff(i);
-		hdr = 1;
-	}
+		outb(fdc+fdctl,0);	/* Set transfer to 500kbps */
 
-	/* Set transfer to 500kbps */
-	outb(fdc+fdctl,0);
-	fd_turnoff(0);
+		fd_turnoff(fddrive);
+	}
+	printf("fdc%d", dev->id_unit);
 }
 
 int
