@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.69 1998/09/12 15:05:48 rvb Exp $	*/
+/*	$NetBSD: mount.h,v 1.70 1998/11/13 20:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -195,11 +195,52 @@ struct mount {
  *
  * Second level identifier specifies which filesystem. Second level
  * identifier VFS_GENERIC returns information about all filesystems.
+ *
+ * Note the slightly non-flat nature of these sysctl numbers.  Oh for
+ * a better sysctl interface.
  */
 #define VFS_GENERIC	0		/* generic filesystem information */
 #define VFS_MAXTYPENUM	1		/* int: highest defined fs type */
 #define VFS_CONF	2		/* struct: vfsconf for filesystem given
 					   as next argument */
+#define	VFSGEN_MAXID	3		/* number of valid vfs.generic ids */
+
+/*
+ * XXX NOTE!  These must be in the order of mountcompatnames[] in
+ * XXX sys/kern/vfs_syscalls.c!
+ *
+ * USE THE SAME NAMES AS MOUNT_*!
+ */
+#define	CTL_VFS_NAMES { \
+	{ "generic", CTLTYPE_NODE }, \
+	{ MOUNT_FFS, CTLTYPE_NODE }, \
+	{ MOUNT_NFS, CTLTYPE_NODE }, \
+	{ MOUNT_MFS, CTLTYPE_NODE }, \
+	{ MOUNT_MSDOS, CTLTYPE_NODE }, \
+	{ MOUNT_LFS, CTLTYPE_NODE }, \
+	{ 0, 0 }, 			/* MOUNT_LOFS */ \
+	{ MOUNT_FDESC, CTLTYPE_NODE }, \
+	{ MOUNT_PORTAL, CTLTYPE_NODE }, \
+	{ MOUNT_NULL, CTLTYPE_NODE }, \
+	{ MOUNT_UMAP, CTLTYPE_NODE }, \
+	{ MOUNT_KERNFS, CTLTYPE_NODE }, \
+	{ MOUNT_PROCFS, CTLTYPE_NODE }, \
+	{ MOUNT_AFS, CTLTYPE_NODE }, \
+	{ MOUNT_CD9660, CTLTYPE_NODE }, \
+	{ MOUNT_UNION, CTLTYPE_NODE }, \
+	{ MOUNT_ADOSFS, CTLTYPE_NODE }, \
+	{ MOUNT_EXT2FS, CTLTYPE_NODE }, \
+	{ MOUNT_CODA, CTLTYPE_NODE }, \
+	{ MOUNT_FILECORE, CTLTYPE_NODE }, \
+}
+
+#define	VFS_MAXID	20		/* number of valid vfs ids */
+
+#define	CTL_VFSGENCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "maxtypenum", CTLTYPE_INT }, \
+	{ "conf", CTLTYPE_NODE }, 	/* Special */ \
+}
 
 /*
  * Operations supported on mounted file system.
