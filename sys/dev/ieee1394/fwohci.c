@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.34 2001/06/28 14:38:56 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.35 2001/06/28 14:41:28 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -419,96 +419,63 @@ fwohci_event_thread(struct fwohci_softc *sc)
 	splx(s);
 
 	while (!sc->sc_dying) {
-		while (1) {
-			s = splbio();
-			intmask = sc->sc_intmask;
-			if (intmask) {
-				splx(s);
-				if (intmask & OHCI_Int_BusReset) {
-					s = splbio();
-					sc->sc_intmask &= ~OHCI_Int_BusReset;
-					splx(s);
-					fwohci_buf_stop(sc);
-					fwohci_buf_init(sc);
-					if (sc->sc_uidtbl != NULL) {
-						free(sc->sc_uidtbl, M_DEVBUF);
-						sc->sc_uidtbl = NULL;
-					}
-
-					callout_reset(&sc->sc_selfid_callout,
-					    OHCI_SELFID_TIMEOUT,
-					    (void (*)(void *))
-					    fwohci_phy_busreset, sc);
-					sc->sc_nodeid = 0xffff;	/* indicate
-								   invalid */
-					sc->sc_rootid = 0;
-					sc->sc_irmid = IEEE1394_BCAST_PHY_ID;
-				}
-				if (intmask & OHCI_Int_SelfIDComplete) {
-					s = splbio();
-					sc->sc_intmask &=
-					    ~OHCI_Int_SelfIDComplete;
-					OHCI_CSR_WRITE(sc,
-					    OHCI_REG_IntEventClear,
-					    OHCI_Int_BusReset);
-					OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet,
-					    OHCI_Int_BusReset);
-					splx(s);
-					callout_stop(&sc->sc_selfid_callout);
-					if (fwohci_selfid_input(sc) == 0) {
-						fwohci_buf_start(sc);
-						fwohci_uid_collect(sc);
-					}
-				}
-				if (intmask & OHCI_Int_ReqTxComplete) {
-					s = splbio();
-					sc->sc_intmask &=
-					    ~OHCI_Int_ReqTxComplete;
-					splx(s);
-					fwohci_at_done(sc, sc->sc_ctx_atrq, 0);
-				}
-				if (intmask & OHCI_Int_RespTxComplete) {
-					s = splbio();
-					sc->sc_intmask &=
-					    ~OHCI_Int_RespTxComplete;
-					splx(s);
-					fwohci_at_done(sc, sc->sc_ctx_atrs, 0);
-				}
-				if (intmask & OHCI_Int_RQPkt) {
-					s = splbio();
-					sc->sc_intmask &= ~OHCI_Int_RQPkt;
-					splx(s);
-					fwohci_arrq_input(sc, sc->sc_ctx_arrq);
-				}
-				if (intmask & OHCI_Int_RSPkt) {
-					s = splbio();
-					sc->sc_intmask &= ~OHCI_Int_RSPkt;
-					splx(s);
-					fwohci_arrs_input(sc, sc->sc_ctx_arrs);
-				}
-				if (intmask & OHCI_Int_IsochTx) {
-					s = splbio();
-					sc->sc_intmask &= ~OHCI_Int_IsochTx;
-					splx(s);
-				}
-				if (intmask & OHCI_Int_IsochRx) {
-					s = splbio();
-					sc->sc_intmask &= ~OHCI_Int_IsochRx;
-					iso = sc->sc_iso;
-					sc->sc_iso = 0;
-					splx(s);
-					for (i = 0; i < sc->sc_isoctx; i++) {
-						if ((iso & (1 << i)) &&
-						    sc->sc_ctx_ir[i] != NULL)
-							fwohci_ir_input(sc,
-							    sc->sc_ctx_ir[i]);
-					}
-				}
-			} else
-				break;
+		s = splbio();
+		intmask = sc->sc_intmask;
+		if (intmask == 0) {
+			tsleep(fwohci_event_thread, PZERO, "fwohci_event", 0);
+			splx(s);
+			continue;
 		}
-		tsleep(fwohci_event_thread, PZERO, "fwohci_event", 0);
+		sc->sc_intmask = 0;
 		splx(s);
+
+		if (intmask & OHCI_Int_BusReset) {
+			fwohci_buf_stop(sc);
+			fwohci_buf_init(sc);
+			if (sc->sc_uidtbl != NULL) {
+				free(sc->sc_uidtbl, M_DEVBUF);
+				sc->sc_uidtbl = NULL;
+			}
+
+			callout_reset(&sc->sc_selfid_callout,
+			    OHCI_SELFID_TIMEOUT,
+			    (void (*)(void *))fwohci_phy_busreset, sc);
+			sc->sc_nodeid = 0xffff;	/* indicate invalid */
+			sc->sc_rootid = 0;
+			sc->sc_irmid = IEEE1394_BCAST_PHY_ID;
+		}
+		if (intmask & OHCI_Int_SelfIDComplete) {
+			s = splbio();
+			OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
+			    OHCI_Int_BusReset);
+			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet,
+			    OHCI_Int_BusReset);
+			splx(s);
+			callout_stop(&sc->sc_selfid_callout);
+			if (fwohci_selfid_input(sc) == 0) {
+				fwohci_buf_start(sc);
+				fwohci_uid_collect(sc);
+			}
+		}
+		if (intmask & OHCI_Int_ReqTxComplete)
+			fwohci_at_done(sc, sc->sc_ctx_atrq, 0);
+		if (intmask & OHCI_Int_RespTxComplete)
+			fwohci_at_done(sc, sc->sc_ctx_atrs, 0);
+		if (intmask & OHCI_Int_RQPkt)
+			fwohci_arrq_input(sc, sc->sc_ctx_arrq);
+		if (intmask & OHCI_Int_RSPkt)
+			fwohci_arrs_input(sc, sc->sc_ctx_arrs);
+		if (intmask & OHCI_Int_IsochRx) {
+			s = splbio();
+			iso = sc->sc_iso;
+			sc->sc_iso = 0;
+			splx(s);
+			for (i = 0; i < sc->sc_isoctx; i++) {
+				if ((iso & (1 << i)) &&
+				    sc->sc_ctx_ir[i] != NULL)
+					fwohci_ir_input(sc, sc->sc_ctx_ir[i]);
+			}
+		}
 	}
 }
 
