@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.2 1999/06/04 14:29:38 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.3 1999/06/05 14:18:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -38,6 +38,7 @@
 #ifdef DEBUG
 #define	EDB_PROM	0x1
 #define EDB_CHILD	0x2
+#define	EDB_INTRMAP	0x4
 int ebus_debug = 0;
 #define DPRINTF(l, s)   do { if (ebus_debug & l) printf s; } while (0)
 #else
@@ -72,6 +73,7 @@ int	ebus_setup_attach_args __P((struct ebus_softc *, int,
 	    struct ebus_attach_args *));
 void	ebus_destroy_attach_args __P((struct ebus_attach_args *));
 int	ebus_print __P((void *, const char *));
+void	ebus_find_ino __P((struct ebus_softc *, struct ebus_attach_args *));
 int	ebus_find_node __P((struct ebus_softc *, struct pci_attach_args *));
 
 int
@@ -125,7 +127,8 @@ ebus_attach(parent, self, aux)
 	/*
 	 * fill in our softc with information from the prom
 	 */
-	sc->sc_intmap = sc->sc_range = NULL;
+	sc->sc_intmap = NULL;
+	sc->sc_range = NULL;
 	rv = getprop(node, "interrupt-map", sizeof(struct ebus_interrupt_map),
 	    &sc->sc_nintmap, (void **)&sc->sc_intmap);
 	if (rv)
@@ -194,10 +197,14 @@ ebus_setup_attach_args(sc, node, ea)
 		if (ea->ea_nregs != ea->ea_naddrs)
 			printf("ebus loses: device %s: %d regs and %d addrs\n",
 			    ea->ea_name, ea->ea_nregs, ea->ea_naddrs);
-	}
+	} else
+		ea->ea_naddrs = 0;
 
-	(void)getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
-	    (void **)&ea->ea_intrs);
+	if (getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
+	    (void **)&ea->ea_intrs))
+		ea->ea_nintrs = 0;
+	else 
+		ebus_find_ino(sc, ea);
 
 	return (0);
 }
@@ -227,6 +234,48 @@ ebus_print(aux, p)
 	if (p)
 		printf("%s at %s", ea->ea_name, p);
 	return (UNCONF);
+}
+
+/*
+ * find the INO values for each interrupt and fill them in.
+ *
+ * for each "reg" property of this device, mask it's hi and lo
+ * values with the "interrupt-map-mask"'s hi/lo values, and also
+ * mask the interrupt number with the interrupt mask.  search the
+ * "interrupt-map" list for matching values of hi, lo and interrupt
+ * to give the INO for this interrupt.
+ */
+void
+ebus_find_ino(sc, ea)
+	struct ebus_softc *sc;
+	struct ebus_attach_args *ea;
+{
+	u_int32_t hi, lo, intr;
+	int i, j, k;
+
+	DPRINTF(EDB_INTRMAP, ("ebus_find_ino: searching %d interrupts", ea->ea_nintrs));
+	for (j = 0; j < ea->ea_nintrs; j++) {
+		intr = ea->ea_intrs[j] & sc->sc_intmapmask.intr;
+
+		DPRINTF(EDB_INTRMAP, ("; intr %x masked to %x", ea->ea_intrs[j], intr));
+		for (i = 0; i < ea->ea_nregs; i++) {
+			hi = ea->ea_regs[i].hi & sc->sc_intmapmask.hi;
+			lo = ea->ea_regs[i].lo & sc->sc_intmapmask.lo;
+
+			DPRINTF(EDB_INTRMAP, ("; reg hi.lo %08x.08x masked to %08x.%08x", ea->ea_regs[i].hi, ea->ea_regs[i].lo, hi, lo));
+			for (k = 0; k < sc->sc_nintmap; k++) {
+				DPRINTF(EDB_INTRMAP, ("; checking hi.lo %08x.%08x intr %x", sc->sc_intmap[k].hi, sc->sc_intmap[k].lo, sc->sc_intmap[k].intr));
+				if (hi == sc->sc_intmap[k].hi &&
+				    lo == sc->sc_intmap[k].lo &&
+				    intr == sc->sc_intmap[k].intr) {
+					ea->ea_intrs[j] = sc->sc_intmap[k].cintr;
+					DPRINTF(EDB_INTRMAP, ("; FOUND IT! changing to %d\n", sc->sc_intmap[k].cintr));
+					goto next_intr;
+				}
+			}
+		}
+next_intr:
+	}
 }
 
 /*
