@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.1 2002/01/29 18:44:24 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.2 2002/02/07 17:05:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,34 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <sh3/cpufunc.h>
+#include <sh3/mmureg.h>
 #include <machine/kloader.h>
+
+#define SH3_CCA			0xf0000000
+
+#define SH7709A_CACHE_LINESZ		16
+#define SH7709A_CACHE_ENTRY		256
+#define SH7709A_CACHE_WAY		4
+#define SH7709A_CACHE_SIZE						\
+	(SH7709A_CACHE_LINESZ * SH7709A_CACHE_ENTRY * SH7709A_CACHE_WAY)
+
+#define SH7709A_CACHE_ENTRY_SHIFT	4
+#define SH7709A_CACHE_ENTRY_MASK	0x00000ff0
+#define SH7709A_CACHE_WAY_SHIFT		12
+#define SH7709A_CACHE_WAY_MASK		0x00003000
+
+#define _SH7709A_CACHE_FLUSH()						\
+do {									\
+	u_int32_t __e, __w, __wa, __a;					\
+									\
+	for (__w = 0; __w < SH7709A_CACHE_WAY; __w++) {			\
+		__wa = SH3_CCA | __w << SH7709A_CACHE_WAY_SHIFT;	\
+		for (__e = 0; __e < SH7709A_CACHE_ENTRY; __e++)	{	\
+			__a = __wa |(__e << SH7709A_CACHE_ENTRY_SHIFT);	\
+			(*(__volatile__ u_int32_t *)__a) &= ~0x3;	\
+		}							\
+	}								\
+} while (/*CONSTCOND*/0)
 
 void kloader_sh3_jump(kloader_bootfunc_t *, vaddr_t,
     struct kloader_bootinfo *, struct kloader_page_tag *);
@@ -60,7 +86,7 @@ kloader_sh3_jump(kloader_bootfunc_t func, vaddr_t sp,
     struct kloader_bootinfo *info, struct kloader_page_tag *tag)
 {
 
-	SH7709A_CACHE_FLUSH();
+	_SH7709A_CACHE_FLUSH();
 
 	__asm__ __volatile__(
 	    	"mov	%0, r4;"
@@ -96,7 +122,7 @@ kloader_sh3_boot(struct kloader_bootinfo *kbi, struct kloader_page_tag *p)
 			*dst++ = *src++;
 	} while ((p = (struct kloader_page_tag *)p->next) != 0);
 
-	SH7709A_CACHE_FLUSH();
+	_SH7709A_CACHE_FLUSH();
 
 	/* jump to kernel entry. */
 	__asm__ __volatile__(
