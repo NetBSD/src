@@ -1,4 +1,4 @@
-.\"	$NetBSD: mstohz.9,v 1.2 2002/04/05 23:19:31 wiz Exp $
+.\"	$NetBSD: mstohz.9,v 1.3 2002/10/14 13:37:40 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Manuel Bouyer.
 .\"
@@ -50,7 +50,8 @@ facility, in an integer-overflow safe way.
 .Pp
 This function is implemented as a define in the
 .Em \*[Lt]sys/param.h\*[Gt]
-header.  Individual ports can have a processor-specific, more efficient
+header.
+Individual ports can have a processor-specific, more efficient
 version implemented in their
 .Em \*[Lt]machine/param.h\*[Gt]
 header as a define.
@@ -60,7 +61,7 @@ The return value is the number of clock ticks for the specified value.
 .Xr callout 9
 .Sh BUGS
 The machine-independent
-.Fn
+.Fn mstohz
 function does not make use of expensive 64-bit integer arithmetic, so
 the result will be rounded down to one second if the parameter is larger
 than 131072 milliseconds.
