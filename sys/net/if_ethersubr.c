@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.116 2004/06/24 04:15:51 jonathan Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.117 2005/01/08 03:13:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.116 2004/06/24 04:15:51 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.117 2005/01/08 03:13:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1337,7 +1337,6 @@ ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
 	}
 	bcopy(addrlo, enm->enm_addrlo, 6);
 	bcopy(addrhi, enm->enm_addrhi, 6);
-	enm->enm_ec = ec;
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ec->ec_multiaddrs, enm, enm_list);
 	ec->ec_multicnt++;
