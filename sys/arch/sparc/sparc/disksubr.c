@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1996/04/22 02:50:22 christos Exp $ */
+/*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -67,7 +67,7 @@ extern struct device *bootdv;
  * (XXX is it worth ifdef'ing this?)
  */
 
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
@@ -77,7 +77,7 @@ dk_establish(dk, dev)
 	int target, lun;
 
 	if (bp == NULL)
-		return -1;
+		return;
 
 	/*
 	 * scsi: sd,cd
@@ -108,11 +108,9 @@ dk_establish(dk, dev)
 		if (sbsc->sc_link[target][lun] != NULL &&
 		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
 			bp->dev = dev;	/* got it! */
-			return 1;
+			return;
 		}
 	}
-
-	return -1;
 }
 
 /*
