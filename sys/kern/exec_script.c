@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_script.c,v 1.5 1994/04/29 08:35:29 cgd Exp $
+ *	$Id: exec_script.c,v 1.6 1994/05/24 02:39:13 cgd Exp $
  */
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
@@ -92,7 +92,7 @@ exec_script_makecmds(p, epp)
 	 * (The latter requirement means that we have to check
 	 * for both spaces and tabs later on.)
 	 */
-	hdrlinelen = MIN(epp->ep_hdrvalid, MAXINTERP);
+	hdrlinelen = min(epp->ep_hdrvalid, MAXINTERP);
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; cp < hdrstr + hdrlinelen;
 	    cp++) {
 		if (*cp == '\n') {

@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.48 1994/05/19 07:47:34 mycroft Exp $
+ *	$Id: if_ed.c,v 1.49 1994/05/24 02:38:08 cgd Exp $
  */
 
 #include "bpfilter.h"
@@ -1428,7 +1428,7 @@ outloop:
 	} else
 		len = ed_pio_write_mbufs(sc, m, (u_short)buffer);
 		
-	sc->txb_len[sc->txb_new] = MAX(len, ETHER_MIN_LEN);
+	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
 
 	sc->txb_inuse++;
 
