@@ -1,5 +1,4 @@
-/*	$NetBSD: usb.c,v 1.49 2001/01/21 02:39:53 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
+/*	$NetBSD: usb.c,v 1.50 2001/01/21 16:55:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,16 +47,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/filio.h>
-#include <sys/uio.h>
-#endif
 #include <sys/conf.h>
 #include <sys/poll.h>
 #include <sys/select.h>
@@ -69,14 +61,6 @@
 #include <dev/usb/usbdi_util.h>
 
 #define USB_DEV_MINOR 255
-
-#if defined(__FreeBSD__)
-MALLOC_DEFINE(M_USB, "USB", "USB");
-MALLOC_DEFINE(M_USBDEV, "USBdev", "USB device");
-MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
-
-#include "usb_if.h"
-#endif /* defined(__FreeBSD__) */
 
 #include <machine/bus.h>
 
@@ -109,42 +93,12 @@ struct usb_softc {
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
-#if defined(__FreeBSD__)
-	/* This part should be deleted when kthreads is available */
-	struct selinfo	sc_consel;	/* waiting for connect change */
-#else
 	struct proc    *sc_event_thread;
-#endif
 
 	char		sc_dying;
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 cdev_decl(usb);
-#elif defined(__FreeBSD__)
-d_open_t  usbopen; 
-d_close_t usbclose;
-d_read_t usbread;
-d_ioctl_t usbioctl;
-int usbpoll(dev_t, int, struct proc *);
-
-struct cdevsw usb_cdevsw = {
-	/* open */      usbopen,
-	/* close */     usbclose,
-	/* read */      noread,
-	/* write */     nowrite,
-	/* ioctl */     usbioctl,
-	/* poll */      usbpoll,
-	/* mmap */      nommap,
-	/* strategy */  nostrategy,
-	/* name */      "usb",
-	/* maj */       USB_CDEV_MAJOR,
-	/* dump */      nodump,
-	/* psize */     nopsize,
-	/* flags */     0,
-	/* bmaj */      -1
-};
-#endif
 
 Static usbd_status usb_discover(struct usb_softc *);
 Static void	usb_create_event_thread(void *);
@@ -177,22 +131,12 @@ USB_MATCH(usb)
 
 USB_ATTACH(usb)
 {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct usb_softc *sc = (struct usb_softc *)self;
-#elif defined(__FreeBSD__)
-	struct usb_softc *sc = device_get_softc(self);
-	void *aux = device_get_ivars(self);
-#endif
 	usbd_device_handle dev;
 	usbd_status err;
 	int usbrev;
 	struct usb_event ue;
 	
-#if defined(__FreeBSD__)
-	printf("%s", USBDEVNAME(sc->sc_dev));
-	sc->sc_dev = self;
-#endif
-
 	DPRINTF(("usbd_attach\n"));
 
 	usbd_init();
@@ -260,11 +204,6 @@ USB_ATTACH(usb)
 	config_pending_incr();
 	usb_kthread_create(usb_create_event_thread, sc);
 
-#if defined(__FreeBSD__)
-	make_dev(&usb_cdevsw, device_get_unit(self), UID_ROOT, GID_OPERATOR,
-		 0644, "usb%d", device_get_unit(self));
-#endif
-
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -311,7 +250,7 @@ usb_event_thread(void *arg)
 #endif
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
-	sc->sc_event_thread = 0;
+	sc->sc_event_thread = NULL;
 
 	/* In case parent is waiting for us to exit. */
 	wakeup(sc);
@@ -429,12 +368,6 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EIO);
 
 	switch (cmd) {
-#if defined(__FreeBSD__) 
-	/* This part should be deleted when kthreads is available */
-  	case USB_DISCOVER:
-  		usb_discover(sc);
-  		break;
-#endif
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
 		usbdebug  = ((*(int *)data) & 0x000000ff);
@@ -544,27 +477,7 @@ usbpoll(dev_t dev, int events, struct proc *p)
 		
 		return (revents);
 	} else {
-#if defined(__FreeBSD__)
-		/* This part should be deleted when kthreads is available */
-		struct usb_softc *sc;
-		int unit = minor(dev);
-
-		USB_GET_SC(usb, unit, sc);
-
-		revents = 0;
-		mask = POLLOUT | POLLRDNORM;
-
-		s = splusb();
-		if (events & mask && sc->sc_bus->needs_explore)
-			revents |= events & mask;
-		if (revents == 0 && events & mask)
-			selrecord(p, &sc->sc_consel);
-		splx(s);
-
-		return (revents);
-#else
 		return (ENXIO);
-#endif
 	}
 }
 
@@ -572,32 +485,15 @@ usbpoll(dev_t dev, int events, struct proc *p)
 usbd_status
 usb_discover(struct usb_softc *sc)
 {
-#if defined(__FreeBSD__)
-	/* The splxxx parts should be deleted when kthreads is available */
-	int s;
-#endif
-
 	/* 
 	 * We need mutual exclusion while traversing the device tree,
 	 * but this is guaranteed since this function is only called
 	 * from the event thread for the controller.
 	 */
-#if defined(__FreeBSD__)
-	s = splusb();
-#endif
 	while (sc->sc_bus->needs_explore && !sc->sc_dying) {
 		sc->sc_bus->needs_explore = 0;
-#if defined(__FreeBSD__)
-		splx(s);
-#endif
 		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
-#if defined(__FreeBSD__)
-		s = splusb();
-#endif
 	}
-#if defined(__FreeBSD__)
-	splx(s);
-#endif
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -606,10 +502,6 @@ void
 usb_needs_explore(usbd_bus_handle bus)
 {
 	bus->needs_explore = 1;
-#if defined(__FreeBSD__)
-	/* This part should be deleted when kthreads is available */
-	selwakeup(&bus->usbctl->sc_consel);
-#endif
 	wakeup(&bus->needs_explore);
 }
 
@@ -697,7 +589,6 @@ usb_schedsoftintr(usbd_bus_handle bus)
 #endif
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 usb_activate(device_ptr_t self, enum devact act)
 {
@@ -762,18 +653,3 @@ usb_detach(device_ptr_t self, int flags)
 
 	return (0);
 }
-#elif defined(__FreeBSD__)
-int
-usb_detach(device_t self)
-{
-	DPRINTF(("%s: unload, prevented\n", USBDEVNAME(self)));
-
-	return (EINVAL);
-}
-#endif
-
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(usb, ohci, usb_driver, usb_devclass, 0, 0);
-DRIVER_MODULE(usb, uhci, usb_driver, usb_devclass, 0, 0);
-#endif
