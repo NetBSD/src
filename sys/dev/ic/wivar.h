@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.16 2002/08/11 01:30:29 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.17 2002/08/11 06:13:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -32,11 +32,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /*
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
+
+#include <dev/ic/wi_hostap.h>
 
 struct wi_softc	{
 	struct device		sc_dev;
@@ -91,6 +92,7 @@ struct wi_softc	{
 
 	u_int16_t		wi_txbuf[1596 / 2];
 	int                     wi_use_wep;
+	int			wi_authmode;
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
@@ -99,6 +101,10 @@ struct wi_softc	{
 	struct wi_apinfo	wi_aps[MAXAPINFO];
 	int 			wi_naps;
 	int			wi_scanning;	/* scan mode */
+
+	struct wihap_info	wi_hostap_info;
+	u_int32_t		wi_icv;
+	int			wi_icv_flag;
 };
 
 /* Values for wi_flags. */
@@ -124,3 +130,5 @@ int	wi_activate __P((struct device *, enum devact));
 int	wi_intr __P((void *arg));
 void	wi_power __P((struct wi_softc *, int));
 void	wi_shutdown __P((struct wi_softc *));
+
+int	wi_mgmt_xmit(struct wi_softc *, caddr_t, int);
