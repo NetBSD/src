@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.22 1999/05/09 18:48:52 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.23 1999/08/14 13:43:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,23 +148,27 @@ struct ep_pcmcia_product {
 	int		epp_expfunc;	/* expected function */
 	const char	*epp_name;	/* device name */
 } ep_pcmcia_products[] = {
-	{ PCMCIA_PRODUCT_3COM_3C562,	ELINK_CHIPSET_3C509,
-	  0,				0,
+	{ PCMCIA_PRODUCT_3COM_3C562,		ELINK_CHIPSET_3C509,
+	  0,					0,
 	  PCMCIA_STR_3COM_3C562 },
-	{ PCMCIA_PRODUCT_3COM_3C589,	ELINK_CHIPSET_3C509,
-	  0,				0,
+	{ PCMCIA_PRODUCT_3COM_3C589,		ELINK_CHIPSET_3C509,
+	  0,					0,
 	  PCMCIA_STR_3COM_3C589 },
 
-	{ PCMCIA_PRODUCT_3COM_3CXEM556,	ELINK_CHIPSET_3C509,
-	  0,				0,
+	{ PCMCIA_PRODUCT_3COM_3CXEM556,		ELINK_CHIPSET_3C509,
+	  0,					0,
 	  PCMCIA_STR_3COM_3CXEM556 },
 
-	{ PCMCIA_PRODUCT_3COM_3C574,	ELINK_CHIPSET_ROADRUNNER,
-	  ELINK_FLAGS_MII,		0,
+	{ PCMCIA_PRODUCT_3COM_3CXEM556INT,	ELINK_CHIPSET_3C509,
+	  0,					0,
+	  PCMCIA_STR_3COM_3CXEM556INT },
+
+	{ PCMCIA_PRODUCT_3COM_3C574,		ELINK_CHIPSET_ROADRUNNER,
+	  ELINK_FLAGS_MII,			0,
 	  PCMCIA_STR_3COM_3C574 },
 
-	{ 0,				0,
-	  0,				0,
+	{ 0,					0,
+	  0,					0,
 	  NULL },
 };
 
@@ -231,7 +235,8 @@ ep_pcmcia_enable1(sc)
 		return (ret);
 
 	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
-	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556)) {
+	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556) ||
+	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556INT)) {
 		int reg;
 
 		/* turn off the serial-disable bit */
