@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 1999/02/16 23:34:12 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2000/01/15 15:04:21 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,6 +51,12 @@
 #define __GENERIC_SOFT_INTERRUPTS
 #define IPL_SOFTSERIAL 1
 #define IPL_SOFTNET 1
+
+/* not used yet, should reflect psl.h */
+#define IPL_BIO		3
+#define IPL_NET		3
+#define IPL_TTY		4
+
 
 #ifdef splaudio
 #undef splaudio
