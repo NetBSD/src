@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.202 2004/06/16 23:55:30 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.203 2004/06/27 08:53:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.202 2004/06/16 23:55:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.203 2004/06/27 08:53:03 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -888,7 +888,9 @@ nfs_lookup(v)
 	 * the time the cache entry has been created. If it has,
 	 * the cache entry has to be ignored. 
 	 */
-	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
+	error = cache_lookup_raw(dvp, vpp, cnp);
+	KASSERT(dvp != *vpp);
+	if (error >= 0) {
 		struct vattr vattr;
 		int err2;
 
@@ -897,23 +899,10 @@ nfs_lookup(v)
 			return error;
 		}
 
-		if (cnp->cn_flags & PDIRUNLOCK) {
-			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			if (err2 != 0) {
-				*vpp = NULLVP;
-				return err2;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
-		}
-
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
 		if (err2 != 0) {
-			if (error == 0) {
-				if (*vpp != dvp)
-					vput(*vpp);
-				else
-					vrele(*vpp);
-			}
+			if (error == 0)
+				vrele(*vpp);
 			*vpp = NULLVP;
 			return err2;
 		}
@@ -921,8 +910,9 @@ nfs_lookup(v)
 		if (error == ENOENT) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
 			    cnp->cn_proc) && timespeccmp(&vattr.va_mtime,
-			    &VTONFS(dvp)->n_nctime, ==))
-				return ENOENT;
+			    &VTONFS(dvp)->n_nctime, ==)) {
+				goto noentry;
+			}
 			cache_purge1(dvp, NULL, PURGE_CHILDREN);
 			timespecclear(&np->n_nctime);
 			goto dorpc;
@@ -930,24 +920,38 @@ nfs_lookup(v)
 
 		newvp = *vpp;
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc)
-			&& vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime)
-		{
+		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
-			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-				cnp->cn_flags |= SAVENAME;
-			if ((!lockparent || !(flags & ISLASTCN)) &&	
-			     newvp != dvp) {
+			if ((flags & ISDOTDOT) != 0 ||
+			    (~flags & (LOCKPARENT|ISLASTCN)) != 0) {
 				VOP_UNLOCK(dvp, 0);
 				cnp->cn_flags |= PDIRUNLOCK;
 			}
+			error = vn_lock(newvp, LK_EXCLUSIVE);
+			if (error) {
+				/* newvp has been revoked. */
+				vrele(newvp);
+				*vpp = NULL;
+				return error;
+			}
+			if ((~flags & (LOCKPARENT|ISLASTCN)) == 0
+			    && (cnp->cn_flags & PDIRUNLOCK)) {
+				KASSERT(flags & ISDOTDOT);
+				error = vn_lock(dvp, LK_EXCLUSIVE);
+				if (error) {
+					vput(newvp);
+					*vpp = NULL;
+					return error;
+				}
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			}
+			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
+				cnp->cn_flags |= SAVENAME;
 			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
 		cache_purge1(newvp, NULL, PURGE_PARENTS);
-		if (newvp != dvp)
-			vput(newvp);
-		else
-			vrele(newvp);
+		vrele(newvp);
 		*vpp = NULLVP;
 	}
 dorpc:
@@ -1114,15 +1118,16 @@ dorpc:
 			if (newvp != dvp)
 				VOP_UNLOCK(newvp, 0);
 		}
+noentry:
 		if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME) &&
 		    (flags & ISLASTCN) && error == ENOENT) {
-			if (dvp->v_mount->mnt_flag & MNT_RDONLY)
+			if (dvp->v_mount->mnt_flag & MNT_RDONLY) {
 				error = EROFS;
-			else
+			} else {
 				error = EJUSTRETURN;
+				cnp->cn_flags |= SAVENAME;
+			}
 		}
-		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-			cnp->cn_flags |= SAVENAME;
 		*vpp = NULL;
 		return error;
 	}
@@ -1684,10 +1689,14 @@ nfs_mknod(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct componentname *cnp = ap->a_cnp;
 	int error;
 
-	error = nfs_mknodrpc(ap->a_dvp, ap->a_vpp, ap->a_cnp, ap->a_vap);
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	error = nfs_mknodrpc(dvp, ap->a_vpp, cnp, ap->a_vap);
+	VN_KNOTE(dvp, NOTE_WRITE);
+	if (error == 0 || error == EEXIST)
+		cache_purge1(dvp, cnp, 0);
 	return (error);
 }
 
@@ -1789,14 +1798,19 @@ again:
 			fmode &= ~O_EXCL;
 			goto again;
 		}
-		if (newvp)
-			vput(newvp);
 	} else if (v3 && (fmode & O_EXCL))
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
-	if (!error) {
+	if (error == 0) {
 		if (cnp->cn_flags & MAKEENTRY)
 			nfs_cache_enter(dvp, newvp, cnp);
+		else
+			cache_purge1(dvp, cnp, 0);
 		*ap->a_vpp = newvp;
+	} else {
+		if (newvp)
+			vput(newvp);
+		if (error == EEXIST)
+			cache_purge1(dvp, cnp, 0);
 	}
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
@@ -1995,10 +2009,15 @@ nfs_rename(v)
 
 	VN_KNOTE(fdvp, NOTE_WRITE);
 	VN_KNOTE(tdvp, NOTE_WRITE);
-	if (fvp->v_type == VDIR) {
+	if (error == 0 || error == EEXIST) {
+		if (fvp->v_type == VDIR)
+			cache_purge(fvp);
+		else
+			cache_purge1(fdvp, fcnp, 0);
 		if (tvp != NULL && tvp->v_type == VDIR)
-			cache_purge(tdvp);
-		cache_purge(fdvp);
+			cache_purge(tvp);
+		else
+			cache_purge1(tdvp, tcnp, 0);
 	}
 out:
 	if (tdvp == tvp)
@@ -2150,6 +2169,8 @@ nfs_link(v)
 	}
 #endif
 	nfsm_reqdone;
+	if (error == 0 || error == EEXIST)
+		cache_purge1(dvp, cnp, 0);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!attrflag)
@@ -2236,6 +2257,8 @@ nfs_symlink(v)
 	 */
 	if (rexmit && error == EEXIST)
 		error = 0;
+	if (error == 0 || error == EEXIST)
+		cache_purge1(dvp, cnp, 0);
 	if (error == 0 && newvp == NULL) {
 		struct nfsnode *np = NULL;
 
