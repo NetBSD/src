@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.226 2000/05/27 17:12:36 scw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.227 2000/05/28 10:25:25 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.222 2000/05/27 17:11:37 scw Exp 
+ *	NetBSD: pcidevs,v 1.223 2000/05/28 10:24:57 drochner Exp 
  */
 
 /*
@@ -133,7 +133,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BFX,
 	    0,
 	    "3Com",
-	    "3c905B-FX 10/100 Ethernet",
+	    "3c905B-FX 100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CTX,
@@ -2578,10 +2578,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicMedia 256AV VGA",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_VGA,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256ZX VGA",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
 	    0,
 	    "Neomagic",
 	    "MagicMedia 256AV Audio",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256ZX Audio",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
