@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.32 2001/04/06 06:48:35 lukem Exp $
+# $NetBSD: rc.subr,v 1.33 2001/04/18 01:31:40 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -158,9 +158,38 @@ check_process()
 }
 
 #
+# wait_for_pids pid [pid ...]
+#	spins until none of the pids exist or loop finally terminates
+#	(~ 65 seconds)
+#
+wait_for_pids()
+{
+	_list=$*
+	if [ -z "$_list" ]; then
+		return
+	fi
+	echo -n "Waiting for PIDs: $_list"
+	for _i in 1 1 1 1 2 2 2 3 3 4 5 6 7 8 9 10; do
+		_nlist="";
+		for _j in $_list; do
+			if kill -0 $_j 2>/dev/null; then
+				_nlist="${_nlist}${_nlist:+ }$_j"
+			fi
+		done
+		if [ -z "$_nlist" ]; then
+			break
+		fi
+		_list=$_nlist
+		sleep $_i
+		echo -n ", $_list"
+	done
+	echo "."
+}
+
+#
 # run_rc_command arg
 #	Search for arg in the list of supported commands, which is:
-#		"start stop restart rcvar status ${extra_commands}"
+#		"start stop restart rcvar status poll ${extra_commands}"
 #	If there's a match, run ${arg}_cmd or the default command (see below).
 #
 #	If arg has a given prefix, then change the operation as follows:
@@ -235,8 +264,6 @@ check_process()
 #
 #	arg		default
 #	---		-------
-#	status		Show if ${command} is running, etc.
-#
 #	start		if !running && checkyesno ${rcvar}
 #				${command}
 #
@@ -250,6 +277,13 @@ check_process()
 #			$sig_reload defaults to HUP.
 #
 #	restart		Run `stop' then `start'.
+#
+#	status		Show if ${command} is running, etc.
+#
+#	poll		Wait for ${command} to exit.
+#
+#	rcvar		Display what rc.conf variable is used (if any).
+#
 #
 #
 run_rc_command()
@@ -284,7 +318,7 @@ run_rc_command()
 			_pidcmd='_pid=`check_process '$command'`'
 		fi
 		if [ -n "$_pidcmd" ]; then
-			_keywords="${_keywords} status"
+			_keywords="${_keywords} status poll"
 		fi
 	fi
 
@@ -462,10 +496,17 @@ ${_user:+\"'}"
 				return 0
 			fi
 			_rc_restart_done=YES
+
 			( $0 ${_rc_force_run:+force}stop )
-			sleep 1
+			( $0 ${_rc_force_run:+force}poll )
 			$0 ${_rc_force_run:+force}start
 
+			;;
+
+		poll)
+			if [ -n "$_pid" ]; then
+				wait_for_pids $_pid
+			fi
 			;;
 
 		rcvar)
