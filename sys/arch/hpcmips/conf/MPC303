@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.12 2002/03/05 16:16:45 simonb Exp $
+# 	$NetBSD: MPC303,v 1.13 2002/03/10 07:24:53 takemura Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 maxusers	16
 
@@ -146,9 +146,9 @@ pci*	at vrpciu?
 
 # VRC4173
 vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
-#vrc4173cmu* at vrc4173bcu?		# VRC4173 CMU
-#vrc4173piu* at vrc4173bcu?		# VRC4173 PIU
-#vrc4173kiu* at vrc4173bcu?		# VRC4173 KIU
+vrkiu* at vrc4173bcu? addr 0x100 size 0x20 unit VRKIU # VRC4173 KIU
+hpckbd*	at vrkiu?
+#vrpiu* at vrc4173bcu? addr 0x0a0 size 0x40 unit VRPIU        # VRC4173 PIU
 
 #vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
 #pcmcia*	at vrc4173cardu?
@@ -220,7 +220,7 @@ options 	MQ200_DEBUG
 bivideo0	at	mainbus0
 hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
-#wskbd*		at	hpckbd? mux 1
+wskbd*		at	hpckbd? mux 1
 #wsmouse*	at	vrpiu? mux 0
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
@@ -409,14 +409,14 @@ isa6	at vrisab6
 ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
 #wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
 hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
-hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_02 port 0 level 1 connect 1
+hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_00 port 0 level 1 connect 1
 
 #
 # MP-C303/304
 #
 hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
 hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
-hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_02 port 1 level 0 hold 1 connect 1
+hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_00 port 1 level 0 hold 1 connect 1
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?
