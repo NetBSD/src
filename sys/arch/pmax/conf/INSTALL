@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.9 1997/10/20 03:50:08 jonathan Exp $
+# 	$NetBSD: INSTALL,v 1.10 1997/12/01 15:58:34 kleink Exp $
 #
 # Distribution  install kernel (any  model)
 #    netbsd:    cut-down kernel for miniroots.
@@ -53,6 +53,7 @@ options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 
 
 options 	COMPAT_12
+options 	COMPAT_13
 
 # pmax specific
 options 	"HZ=256"	# RTC rate required
