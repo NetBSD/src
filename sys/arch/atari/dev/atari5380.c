@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.15 1996/06/18 11:10:04 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.16 1996/07/05 19:35:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -184,6 +184,7 @@ static struct ncr_softc	*cur_softc;
 #define wrong_dma_range(r,d)	tt_wrong_dma_range(r, d)
 #define poll_edma(reqp)		tt_poll_edma(reqp)
 #define get_dma_result(r, b)	tt_get_dma_result(r, b)
+#define	can_access_5380()	1
 
 #define fair_to_keep_dma()	1
 #define claimed_dma()		1
@@ -449,6 +450,7 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 #define wrong_dma_range(r,d)	falcon_wrong_dma_range(r, d)
 #define poll_edma(reqp)		falcon_poll_edma(reqp)
 #define get_dma_result(r, b)	falcon_get_dma_result(r, b)
+#define	can_access_5380()	falcon_can_access_5380()
 
 #define fair_to_keep_dma()	(!st_dmawanted())
 #define claimed_dma()		falcon_claimed_dma()
@@ -469,6 +471,7 @@ static void	fal1_dma __P((u_int, u_int, SC_REQ *));
 static void	scsi_falcon_dmasetup __P((SC_REQ  *, u_int, u_char));
 static int	falcon_poll_edma __P((SC_REQ  *));
 static int	falcon_get_dma_result __P((SC_REQ  *, u_long *));
+       int	falcon_can_access_5380 __P((void));
        void	scsi_falcon_clr_ipend __P((void));
        void	scsi_falcon_idisable __P((void));
        void	scsi_falcon_ienable __P((void));
@@ -535,6 +538,12 @@ scsi_falcon_ipending()
 		 */
 		if (MFP->mf_gpip & IO_DINT)
 		    return (0); /* XXX: Actually: we're not allowed to check */
+
+		/* LWP: 28-06, must be a dma interrupt! should the
+		 * ST-DMA unit be taken out of dma mode?????
+		 */
+		DMA->dma_mode = 0x90;
+
 	}
 	return(get_falcon_5380_reg(NCR5380_DMSTAT) & SC_IRQ_SET);
 }
@@ -693,28 +702,37 @@ u_long	*bytes_left;
 		reqp->xs->error = XS_DRIVER_STUFFUP;
 		rv = 1;
 	}
-	if (st_dmastat & 0x02) {
-		/*
-		 * Bytecount not zero.... As the fifo loads in 16 byte
-		 * chunks, check if bytes are stuck in fifo.
-		 * As we don't use DMA on chunks less than 512 bytes
-		 * on the Falcon, report any residual not a multiple of
-		 * 512 as an error...
-		 */
-		bytes_done = st_dmaaddr_get() - reqp->dm_cur->dm_addr;
-		if (bytes_done & 511) {
-			ncr_tprint(reqp, "%ld bytes of %ld stuck in fifo\n",
-					bytes_done & 15, bytes_done & ~511);
-			bytes_done &= ~511;
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+	/*
+	 * Because we NEVER start DMA on the Falcon when the data size
+	 * is not a multiple of 512 bytes, we can safely round down the
+	 * byte count on writes. We need to because in case of a disconnect,
+	 * the DMA has already prefetched the next couple of bytes.
+	 * On read, these byte counts are an error. They are logged and
+	 * should be handled by the mi-part of the driver.
+	 * NOTE: We formerly did this by using the 'byte-count-zero' bit
+	 *       of the DMA controller, but this didn't seem to work???
+         *       [lwp 29/06/96]
+	 */
+	bytes_done = st_dmaaddr_get() - reqp->dm_cur->dm_addr;
+	if (bytes_done & 511) {
+		if (PH_IN(reqp->phase)) {
+			ncr_tprint(reqp, "Byte count on read not a multiple "
+					 "of 512 (%ld)\n", bytes_done);
 		}
-		*bytes_left = reqp->dm_cur->dm_count - bytes_done; 
+		bytes_done &= ~511;
 	}
-	else {
-		*bytes_left = 0;
+	if ((*bytes_left = reqp->dm_cur->dm_count - bytes_done) == 0)
 		rv = 1;
-	}
 	return(rv);
+}
+
+static int
+falcon_can_access_5380()
+{
+	if (connected && (connected->dr_flag & DRIVER_IN_DMA)
+		&& (MFP->mf_gpip & IO_DINT))
+			return(0);
+	return(1);
 }
 
 #endif /* defined(FALCON_SCSI) */
@@ -736,6 +754,7 @@ static void	scsi_mach_init __P((struct ncr_softc *));
        int	wrong_dma_range __P((SC_REQ *, struct dma_chain *));
        int	poll_edma __P((SC_REQ *));
        int	get_dma_result __P((SC_REQ *, u_long *));
+       int	can_access_5380 __P((void));
 
 /*
  * Register access will be done through the following 2 function pointers.
@@ -834,6 +853,14 @@ u_long	*bytes_left;
 	else return(tt_get_dma_result(reqp, bytes_left));
 }
 
+extern __inline__ int
+can_access_5380()
+{
+	if (machineid & ATARI_FALCON)
+		return(falcon_can_access_5380());
+	return(1);
+}
+
 /*
  * Locking stuff. All turns into NOP's on the TT.
  */
@@ -899,6 +926,7 @@ scsi_ctrl(int sr)
 		else {
 			spl1();
 			ncr_ctrl_intr(cur_softc);
+			spl0();
 		}
 	}
 }
@@ -919,6 +947,7 @@ scsi_dma(int sr)
 		else {
 			spl1();
 			ncr_dma_intr(cur_softc);
+			spl0();
 		}
 	}
 }
