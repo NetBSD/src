@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.12 2001/08/16 15:22:32 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.13 2001/08/16 16:03:44 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -187,3 +187,9 @@ sys/ufs/lfs/lfs_syscalls.c			1.58 via patch
 sys/coda/coda_venus.c				1.9
 
   Bounds check vi.in_size in venus_ioctl().
+
+sys/miscfs/umapfs/umap_vfsops.c			1.29-1.30
+sys/kern/vfs_subr.c				1.156
+sys/nfs/nfs.h					1.30
+
+  Bounds check mount args.
