@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.14 1997/04/15 07:12:23 lukem Exp $
+.\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)restore.8	8.3 (Berkeley) 6/1/94
 .\"
-.Dd June 1, 1994
+.Dd July 1, 1997
 .Dt RESTORE 8
 .Os BSD 4
 .Sh NAME
@@ -393,6 +393,19 @@ After a dump read error,
 may have to resynchronize itself.
 This message lists the number of blocks that were skipped over.
 .El
+.Sh ENVIRONMENT
+If the following environment variable exists it will be utilized by
+.Nm restore :
+.Bl -tag -width "TMPDIR" -compact
+.It TMPDIR
+The directory given in TMPDIR will be used
+instead of
+.Pa /tmp
+to store temporary files.
+Refer to
+.Xr environ 7
+for more information.
+.El
 .Sh FILES
 .Bl -tag -width "./restoresymtable" -compact
 .It Pa /dev/rst0
@@ -407,6 +420,7 @@ owner, mode, and time stamps for directories.
 information passed between incremental restores.
 .El
 .Sh SEE ALSO
+.Xr environ 7 ,
 .Xr dump 8 ,
 .Xr newfs 8 ,
 .Xr mount 8 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.25 1997/06/03 04:27:49 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.25 1997/06/03 04:27:49 lukem Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,10 +152,10 @@ extractdirs(genmode)
 
 	vprintf(stdout, "Extract directories from tape\n");
 	(void) snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d",
-	    _PATH_TMP, dumpdate);
+	    tmpdir, dumpdate);
 	if (command != 'r' && command != 'R') {
 		(void) snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d-XXXXXX",
-		    _PATH_TMP, dumpdate);
+		    tmpdir, dumpdate);
 		if ((dfd = mkstemp(dirfile)) == -1)
 			err(1, "cannot mkstemp temporary file %s", dirfile);
 		df = fdopen(dfd, "w");
@@ -167,10 +167,10 @@ extractdirs(genmode)
 
 	if (genmode != 0) {
 		(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
-		    _PATH_TMP, dumpdate);
+		    tmpdir, dumpdate);
 		if (command != 'r' && command != 'R') {
 			(void) snprintf(modefile, sizeof(modefile),
-			    "%s/rstmode%d-XXXXXX", _PATH_TMP, dumpdate);
+			    "%s/rstmode%d-XXXXXX", tmpdir, dumpdate);
 			if ((mfd = mkstemp(modefile)) == -1)
 				err(1, "cannot mkstemp temporary file %s",
 				    modefile);
@@ -603,7 +603,7 @@ setdirmodes(flags)
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
 		(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
-		    _PATH_TMP, dumpdate);
+		    tmpdir, dumpdate);
 	if (modefile[0] == '#') {
 		panic("modefile not defined\n");
 		fprintf(stderr, "directory mode, owner, and times not set\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1997/04/15 07:12:21 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.12 1997/04/15 07:12:21 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;
 FILE 	*terminal;
+char	*tmpdir;
 uid_t	uid;		/* real uid */
 uid_t	euid;		/* effective uid */
 
@@ -103,6 +104,8 @@ main(argc, argv)
 
 	if ((inputdev = getenv("TAPE")) == NULL)
 		inputdev = _PATH_DEFTAPE;
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != EOF)
 		switch(ch) {
