@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86 1998/03/23 17:16:03 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.87 1998/03/26 16:11:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -267,7 +267,7 @@ bootstrap()
 		if (!romprop(&ra, "interrupt", node))
 		    panic("bootstrap: could not get interrupt properties");
 #endif
-		if (nvaddrs < 2 || nvaddrs > 4) {
+		if (nvaddrs < 2 || nvaddrs > 5) {
 			printf("bootstrap: cannot handle %d interrupt regs\n",
 				nvaddrs);
 			romhalt();
