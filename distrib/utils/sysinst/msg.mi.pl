@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.17 2003/06/12 11:20:01 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.18 2003/06/13 11:45:50 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -180,12 +180,11 @@ message layout
 partycji BSD.  Musisz teraz skonfigurowac BSD disklabel.
 Masz kilka mozliwosci. Sa one opisane ponizej. 
 -- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
--- Standard z Xami: miejsce na binaria X.
 -- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamountowac.
 
-Dysk NetBSD to %.2f Megabajtow. 
-Standard wymaga przynajmniej %.2f Megabajtow.
-Standard z Xami wymaga przynajmniej %.2f Megabajtow.
+Dysk NetBSD to %d Megabajtow. 
+Standard wymaga przynajmniej %d Megabajtow.
+Standard z Xami wymaga przynajmniej %d Megabajtow.
 }
 
 message sizechoice
