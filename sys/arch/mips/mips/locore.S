@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.133 2002/04/01 21:06:21 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.134 2002/04/03 04:04:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1525,7 +1525,7 @@ END(stacktrace)
 #endif	/* DEBUG || DDB */
 #endif	/* DDB_TRACE */
 
-	.sdata
+	.data
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
 	.word 0
