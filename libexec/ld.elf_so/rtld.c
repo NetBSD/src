@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.53 2002/08/26 21:09:55 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.54 2002/09/05 21:57:09 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -88,7 +88,6 @@ Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 char            _rtld_path[] = _PATH_RTLD;
-unsigned long   _rtld_curmark;	/* Current mark value */
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 #ifdef	VARPSZ
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
@@ -383,6 +382,7 @@ _rtld(sp)
 		case AT_PHNUM:
 			pAUX_phnum = auxp;
 			break;
+#ifdef AT_EUID
 		case AT_EUID:
 			pAUX_euid = auxp;
 			break;
@@ -395,6 +395,7 @@ _rtld(sp)
 		case AT_RGID:
 			pAUX_rgid = auxp;
 			break;
+#endif
 #ifdef	VARPSZ
 		case AT_PAGESZ:
 			pAUX_pagesz = auxp;
@@ -584,7 +585,6 @@ static void
 _rtld_init_dag(root)
 	Obj_Entry *root;
 {
-	_rtld_curmark++;
 	_rtld_init_dag1(root, root);
 }
 
@@ -595,9 +595,6 @@ _rtld_init_dag1(root, obj)
 {
 	const Needed_Entry *needed;
 
-	if (obj->mark == _rtld_curmark)
-		return;
-	obj->mark = _rtld_curmark;
 	_rtld_objlist_add(&obj->dldags, root);
 	_rtld_objlist_add(&root->dagmembers, obj);
 	for (needed = obj->needed; needed != NULL; needed = needed->next)
@@ -754,7 +751,6 @@ _rtld_objmain_sym(name)
 	hash = _rtld_elf_hash(name);
 	obj = _rtld_objmain;
 
-	_rtld_curmark++;
 	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, true);
 
 	if (def != NULL)
@@ -805,7 +801,6 @@ _rtld_dlsym(handle, name)
 		
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it. */
-			_rtld_curmark++;
 			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
 		} else {
 			/*
