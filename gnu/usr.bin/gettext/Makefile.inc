@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/12/12 01:49:04 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/09/19 03:09:37 lukem Exp $
 
-DIST=		${.CURDIR}/../../../dist
+NOMAN=		# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/gnu/dist
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR} -I${.CURDIR}/../include \
 		-I${DIST}/gettext/lib -DLOCALEDIR=\"/usr/share/locale\"
-
-NOMAN=		# defined
 
 BINDIR?=	/usr/bin

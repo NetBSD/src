@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/19 14:41:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.9 2002/09/19 03:09:40 lukem Exp $
 
 .include "../../Makefile.path"
 
-.PATH:		${IIDIST}/font/devps
+.PATH:		${IDIST}/font/devps
 
 DEVICE=		ps
 FONTFILES=	$(FONTS) $(SUPPORT) $(PSFILES) $(DEVGENFILES) DESC
@@ -23,7 +23,7 @@ symbolsl.pfa: symbolsl.ps
 
 ${PSFILES}:
 	@-rm -f $@
-	@sed -f ${IIDIST}/font/devps/psstrip.sed $> > $@
+	@sed -f ${IDIST}/font/devps/psstrip.sed $> > $@
 
 DESC: DESC.in
 	@cat $> >$@

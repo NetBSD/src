@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/02 23:21:47 perry Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:46 lukem Exp $
 
-DIST=	${.CURDIR}/../../../../dist/postfix/man/man1
+.include <bsd.own.mk>
+
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/man/man1
 .PATH:	${DIST}
 
 MAN=	postalias.1 postcat.1 postconf.1 postdrop.1 \

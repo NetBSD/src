@@ -1,4 +1,12 @@
-#	$NetBSD: Makefile,v 1.14 2001/12/12 01:49:06 tv Exp $
+#	$NetBSD: Makefile,v 1.15 2002/09/19 03:09:41 lukem Exp $
+
+# lint step doesn't work, because there are no .ln files here, because
+# we're only compiling c++ files in this dir
+# lint command line is: lint -Cdriver -lc
+NOLINT=		# defined
+NOMAN=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
 
 .include "../Makefile.comp"
 
@@ -7,13 +15,6 @@ DIST=		${IDIST}/src/libs/libdriver
 
 LIB=		driver
 SRCS=		printer.cc input.cc
-# lint step doesn't work, because there are no .ln files here, because
-# we're only compiling c++ files in this dir
-# lint command line is: lint -Cdriver -lc
-NOLINT=		# defined
-NOMAN=		# defined
-NOPROFILE=	# defined
-NOPIC=		# defined
 
 # only needed during build
 libinstall::
