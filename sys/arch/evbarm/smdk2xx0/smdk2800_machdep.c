@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.17 2004/02/13 11:36:12 wiz Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.18 2004/12/12 20:42:54 abs Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.17 2004/02/13 11:36:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.18 2004/12/12 20:42:54 abs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -808,7 +808,7 @@ initarm(void *arg)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
