@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.13 2000/11/16 17:14:43 tv Exp $
+.\"	$NetBSD: upgrade,v 1.14 2002/05/14 14:40:36 lukem Exp $
 .
 .so ../common/upgrade
 .Pp
@@ -26,3 +26,9 @@ If you already had a
 .Pa /emul
 directory, or a symbolic link by that name, sysinst should rename it
 and tell you about it.
+.
+.Pp
+The network bootstrap
+.Pa /usr/mdec/boot.net
+and GENERIC and INSTALL kernels now try DHCP/BOOTP before falling back
+to bootparams.
