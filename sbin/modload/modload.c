@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.47 2004/06/28 19:27:06 nathanw Exp $	*/
+/*	$NetBSD: modload.c,v 1.48 2004/09/07 13:20:41 jrf Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.47 2004/06/28 19:27:06 nathanw Exp $");
+__RCSID("$NetBSD: modload.c,v 1.48 2004/09/07 13:20:41 jrf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -321,8 +321,8 @@ main(int argc, char **argv)
 		err(3, _PATH_LKM);
 	fileopen |= DEV_OPEN;
 
-	strncpy(modout, modobj, sizeof(modout) - 1);
-	modout[sizeof(modout) - 1] = '\0';
+	if (strlcpy(modout, modobj, sizeof(modout)) >= sizeof(modout))
+		errx(1, "program name is too big for buffer");
 
 	p = strrchr(modout, '.');
 	if (!p || strcmp(p, ".o"))
