@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.7 2000/09/24 15:59:27 jdolecek Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.8 2001/07/09 15:05:22 soren Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.7 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.8 $"
 
 maxusers 64
 
@@ -195,7 +195,6 @@ fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
