@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.140 1999/07/01 08:12:46 itojun Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.141 1999/07/12 15:04:41 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.133 1999/06/30 16:52:52 fair Exp 
+ *	NetBSD: pcidevs,v 1.134 1999/07/12 15:02:46 kleink Exp 
  */
 
 /*
@@ -846,7 +846,7 @@
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
 
 /* ESS Technology Inc products */
-#define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* SOLO-1 AudioDrive */
+#define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* Solo-1 PCI AudioDrive */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E */
 
 /* 2 Micro Inc */
