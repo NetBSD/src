@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.11 1998/10/18 23:50:00 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.12 1998/11/04 07:06:05 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -773,7 +773,6 @@ uvmpd_scan_inactive(pglst)
 					/* remove page so we can get nextpg */
 					anon->u.an_page = NULL;
 
-					/* XXX needed? */
 					simple_unlock(&anon->an_lock);
 					uvm_anfree(anon);	/* kills anon */
 					pmap_page_protect(PMAP_PGARG(p),
