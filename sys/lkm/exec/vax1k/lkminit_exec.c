@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.3 2001/11/12 23:23:23 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.4 2001/12/08 00:37:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3 2001/11/12 23:23:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.4 2001/12/08 00:37:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,15 +45,23 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3 2001/11/12 23:23:23 lukem Exp $
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/vax1k/vax1k_exec.h>
 
 int exec_vax1k_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_vax1k =
-	{ sizeof(struct exec), exec_vax1k_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs };	/* vax1k a.out */
+	/* NetBSD vax1k a.out */
+	{ sizeof(struct exec),
+	  exec_vax1k_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec
