@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.117 2004/04/21 04:57:39 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.118 2004/04/21 20:03:51 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1054,6 +1054,7 @@ sys/netinet/tcp_var.h				patch
 	Respond to RST by ACK, as suggested in NISCC recommendation.
 	Rate-limit ACKs against RSTs and SYNs.
 	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
+	SA#2004-006.
 	[itojun, ticket #169]
 
 sys/compat/svr4_32/svr4_32_stat.c		1.14
