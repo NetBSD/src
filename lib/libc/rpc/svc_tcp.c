@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.17 1998/04/24 11:21:19 pk Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.18 1998/07/26 11:47:38 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.17 1998/04/24 11:21:19 pk Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.18 1998/07/26 11:47:38 mycroft Exp $");
 #endif
 #endif
 
@@ -84,7 +84,7 @@ static bool_t svctcp_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svctcp_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svctcp_reply __P((SVCXPRT *, struct rpc_msg *));
 
-static struct xp_ops svctcp_op = {
+static const struct xp_ops svctcp_op = {
 	svctcp_recv,
 	svctcp_stat,
 	svctcp_getargs,
@@ -97,7 +97,7 @@ static struct xp_ops svctcp_op = {
  * Ops vector for TCP/IP rendezvous handler
  */
 
-static struct xp_ops svctcp_rendezvous_op = {
+static const struct xp_ops svctcp_rendezvous_op = {
 	rendezvous_request,
 	rendezvous_stat,
 	(bool_t	(*) __P((SVCXPRT *, xdrproc_t, caddr_t))) abort,

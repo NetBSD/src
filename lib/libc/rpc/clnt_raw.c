@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.11 1998/02/13 05:52:17 lukem Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.12 1998/07/26 11:47:37 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.11 1998/02/13 05:52:17 lukem Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.12 1998/07/26 11:47:37 mycroft Exp $");
 #endif
 #endif
 
@@ -85,7 +85,7 @@ static void clntraw_abort __P((CLIENT *));
 static bool_t clntraw_control __P((CLIENT *, u_int, char *));
 static void clntraw_destroy __P((CLIENT *));
 
-static struct clnt_ops client_ops = {
+static const struct clnt_ops client_ops = {
 	clntraw_call,
 	clntraw_abort,
 	clntraw_geterr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.8 1998/02/13 05:52:36 lukem Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.9 1998/07/26 11:47:38 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.8 1998/02/13 05:52:36 lukem Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.9 1998/07/26 11:47:38 mycroft Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ static bool_t svcraw_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svcraw_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static void svcraw_destroy __P((SVCXPRT *));
 
-static struct xp_ops server_ops = {
+static const struct xp_ops server_ops = {
 	svcraw_recv,
 	svcraw_stat,
 	svcraw_getargs,
