@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.1 1996/01/31 23:17:11 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.2 1996/02/05 21:43:40 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 17/09/94
  * Last updated : 20/01/96
  *
- *    $Id: stubs.c,v 1.1 1996/01/31 23:17:11 mark Exp $
+ *    $Id: stubs.c,v 1.2 1996/02/05 21:43:40 mark Exp $
  */
 
 #include <sys/param.h>
@@ -85,7 +85,9 @@ extern int boothowto;
 extern int msgbufmapped;
 extern dev_t rootdev;
 extern dev_t dumpdev;
+#ifdef RAMDISK_HOOKS
 extern struct rd_conf *bootrd;
+#endif
 
 extern BootConfig bootconfig;
 extern videomemory_t videomemory;
@@ -100,7 +102,7 @@ do_mountroot()
 	int floppysize;
 	int error;
 
-#if (NFDC > 0 && NRD > 0)
+#if (NFDC > 0 && NRD > 0 && defined(RAMDISK_HOOKS))
 
 /*
  * Ok ideally the ramdisc would be loaded via the rd_open_hook() but since
