@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.57 1997/03/03 04:19:06 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.58 1997/03/04 04:11:52 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -201,8 +201,8 @@ void
 via1_intr(fp)
 	struct frame *fp;
 {
-	u_int8_t intbits;
-	u_int bitnum, mask;
+	u_int8_t intbits, bitnum;
+	u_int mask;
 
 	intbits = via_reg(VIA1, vIFR);		/* get interrupts pending */
 	intbits &= via_reg(VIA1, vIER);		/* only care about enabled */
@@ -232,8 +232,8 @@ void
 via2_intr(fp)
 	struct frame *fp;
 {
-	u_int8_t intbits;
-	u_int bitnum, mask;
+	u_int8_t intbits, bitnum;
+	u_int mask;
 
 	intbits = via2_reg(vIFR);		/* get interrupts pending */
 	intbits &= via2_reg(vIER);		/* only care about enabled */
@@ -257,8 +257,8 @@ void
 rbv_intr(fp)
 	struct frame *fp;
 {
-	u_int8_t intbits;
-	u_int bitnum, mask;
+	u_int8_t intbits, bitnum;
+	u_int mask;
 
 	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
 
@@ -345,8 +345,7 @@ void
 via2_nubus_intr(bitarg)
 	void *bitarg;
 {
-	u_int8_t intbits;
-	u_int i, mask;
+	u_int8_t i, intbits, mask;
 
 	via2_reg(vIFR) = V2IF_SLOTINT;
 	while ((intbits = (~via2_reg(vBufA)) & nubus_intr_mask)) {
@@ -367,8 +366,7 @@ void
 rbv_nubus_intr(bitarg)
 	void *bitarg;
 {
-	u_int8_t intbits;
-	u_int i, mask;
+	u_int8_t i, intbits, mask;
 
 	via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
 	while ((intbits = (~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
