@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.8 1997/05/08 00:50:02 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.9 1997/05/08 20:05:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -191,8 +191,9 @@ sys_swapon(p, v, retval)
 
 		for (spp = swap_priority.lh_first; spp != NULL && misc-- > 0;
 		    spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-			    sdp = sdp->swd_next.cqe_next) {	
+			for (sdp = spp->spi_swapdev.cqh_first;
+			     sdp != (void *)&spp->spi_swapdev;
+			     sdp = sdp->swd_next.cqe_next) {	
 				if (sdp->swd_dev == NODEV)
 					continue;
 				error = copyout((caddr_t)&sdp->swd_se,
@@ -237,7 +238,8 @@ sys_swapon(p, v, retval)
 
 		/* Check for duplicates */
 		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
+			for (sdp = spp->spi_swapdev.cqh_first;
+			     sdp != (void *)&spp->spi_swapdev;
 			     sdp = sdp->swd_next.cqe_next)
 				if (sdp->swd_vp == vp) {
 					error = EBUSY;
@@ -305,7 +307,8 @@ sys_swapon(p, v, retval)
 #ifdef SWAP_OFF_WORKS
 		for (spp = swap_priority.lh_first; spp != NULL;
 		     spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
+			for (sdp = spp->spi_swapdev.cqh_first;
+			     sdp != (void *)&spp->spi_swapdev;
 			     sdp = sdp->swd_next.cqe_next) {
 				if (sdp->swd_vp != vp)
 					continue;
@@ -370,6 +373,8 @@ swap_on(p, sdp)
 	struct vnode *vp = sdp->swd_vp;
 	int error, nblks, size;
 	long addr;
+	char *storage;
+	int storagesize;
 #define SWAP_TO_FILES
 #ifdef SWAP_TO_FILES
 	struct vattr va;
@@ -441,8 +446,11 @@ swap_on(p, sdp)
 
 	name = malloc(12, M_VMSWAP, M_WAITOK);
 	sprintf(name, "swap0x%04x", count++);
+	storagesize = EXTENT_FIXED_STORAGE_SIZE(maxproc * 2);
+	storage = malloc(storagesize, M_VMSWAP, M_WAITOK);
 	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
-				    0, 0, EX_NOCOALESCE|EX_WAITOK);
+				    storage, storagesize,
+				    EX_NOCOALESCE|EX_WAITOK);
 	swap_addmap(sdp, size);
 	nswapdev++;
 	nswap += nblks;
@@ -538,12 +546,13 @@ swap_alloc(size)
 	/* XXX THIS IS BUSTED XXX */
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
-		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
+		for (sdp = spp->spi_swapdev.cqh_first;
+		     sdp != (void *)&spp->spi_swapdev;
 		     sdp = sdp->swd_next.cqe_next) {
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
-					 EX_NOBOUNDARY, EX_NOWAIT,
+					 EX_NOBOUNDARY, EX_MALLOCOK|EX_NOWAIT,
 					 &result) != 0) {
 				/*
 				 * XXX
@@ -573,7 +582,8 @@ swap_free(size, addr)
 	if (nswapdev < 1)
 		panic("swap_free: nswapdev < 1\n");
 #endif
-	extent_free(sdp->swd_ex, addr - sdp->swd_mapoffset, size, EX_NOWAIT);
+	extent_free(sdp->swd_ex, addr - sdp->swd_mapoffset, size,
+		    EX_MALLOCOK|EX_NOWAIT);
 }
 
 /*
@@ -595,7 +605,8 @@ swap_getdevfromaddr(addr)
 	
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next)
-		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
+		for (sdp = spp->spi_swapdev.cqh_first;
+		     sdp != (void *)&spp->spi_swapdev;
 		     sdp = sdp->swd_next.cqe_next)
 			if (ADDR_IN_MAP(addr, sdp))
 				return sdp;
@@ -671,11 +682,24 @@ swstrategy(bp)
 
 	addr = bp->b_blkno;
 	sdp = swap_getdevfromaddr(addr);
-	bp->b_blkno = addr - sdp->swd_mapoffset;
+	if (sdp == NULL) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		return;
+	}
+	bp->b_lblkno = bp->b_blkno = addr - sdp->swd_mapoffset;
+
+#ifdef SWAPDEBUG
+	if (vmswapdebug & VMSDB_SWFLOW)
+		printf("swstrategy(%s): mapoff %x, addr %x, blkno %d\n",
+			((bp->b_flags & B_READ) == 0) ? "write" : "read",
+			sdp->swd_mapoffset, addr, bp->b_lblkno);
+#endif
 
 	VHOLD(sdp->swd_vp);
 	if ((bp->b_flags & B_READ) == 0) {
-		if ((vp = bp->b_vp)) {
+		if ((vp = bp->b_vp) != NULL) {
 			vp->v_numoutput--;
 			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
 				vp->v_flag &= ~VBWAIT;
