@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.85 2004/04/22 12:04:03 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.86 2004/06/17 18:29:40 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.85 2004/04/22 12:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.86 2004/06/17 18:29:40 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2215,25 +2215,6 @@ int netbsd32_fhstat(l, v, retval)
 	NETBSD32TOP_UAP(fhp, const fhandle_t);
 	NETBSD32TOP_UAP(sb, struct stat);
 	return (sys_fhstat(l, &ua, retval));
-}
-
-int netbsd32_fhstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_fhstatfs_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(struct statvfs *) buf;
-	} */ *uap = v;
-	struct sys_fhstatvfs1_args ua;
-
-	NETBSD32TOP_UAP(fhp, const fhandle_t);
-	NETBSD32TOP_UAP(buf, struct statvfs);
-#ifdef notyet
-	NETBSD32TOP_UAP(flags, int);
-#endif
-	return (sys_fhstatvfs1(l, &ua, retval));
 }
 
 /* virtual memory syscalls */
