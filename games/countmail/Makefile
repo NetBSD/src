@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/03 10:25:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 23:53:57 lukem Exp $
 
-NOPROG=	yes
-FILES=	countmail
-FILESDIR=	/usr/games
-FILESMODE=	555
-MAN=	countmail.6
+SCRIPTS=	countmail
+SCRIPTSDIR=	/usr/games
+MAN=		countmail.6
 
 .include <bsd.prog.mk>

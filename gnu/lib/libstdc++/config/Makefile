@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/11 18:20:58 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 23:53:57 lukem Exp $
 
 # Makefile for _G_config.h, a machine-dependent automatically generated
 # configuration file.
 
-NOPROG=
 DPSRCS=		_G_config.h
 INCS=		_G_config.h
 INCSDIR=	/usr/include/${MACHINE}
