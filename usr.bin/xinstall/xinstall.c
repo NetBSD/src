@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.25 1998/02/20 09:27:21 mycroft Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.26 1998/09/28 08:16:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.25 1998/02/20 09:27:21 mycroft Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.26 1998/09/28 08:16:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.25 1998/02/20 09:27:21 mycroft Exp $");
 
 struct passwd *pp;
 struct group *gp;
-int docopy, dodir, dostrip, dolink;
+int docopy, dodir, dostrip, dolink, dopreserve;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
 uid_t uid;
@@ -106,10 +106,13 @@ main(argc, argv)
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cf:g:l:m:o:sd")) != -1)
+	while ((ch = getopt(argc, argv, "cdf:g:l:m:o:ps")) != -1)
 		switch((char)ch) {
 		case 'c':
 			docopy = 1;
+			break;
+		case 'd':
+			dodir = 1;
 			break;
 		case 'f':
 			flags = optarg;
@@ -119,20 +122,6 @@ main(argc, argv)
 			break;
 		case 'g':
 			group = optarg;
-			break;
-		case 'm':
-			if (!(set = setmode(optarg)))
-				errx(1, "%s: invalid file mode", optarg);
-			mode = getmode(set, 0);
-			break;
-		case 'o':
-			owner = optarg;
-			break;
-		case 's':
-			dostrip = 1;
-			break;
-		case 'd':
-			dodir = 1;
 			break;
 		case 'l':
 			for (p = optarg; *p; p++)
@@ -161,6 +150,20 @@ main(argc, argv)
 					errx(1, "%c: invalid link type", *p);
 					break;
 				}
+			break;
+		case 'm':
+			if (!(set = setmode(optarg)))
+				errx(1, "%s: invalid file mode", optarg);
+			mode = getmode(set, 0);
+			break;
+		case 'o':
+			owner = optarg;
+			break;
+		case 'p':
+			dopreserve = 1;
+			break;
+		case 's':
+			dostrip = 1;
 			break;
 		case '?':
 		default:
@@ -393,6 +396,18 @@ install(from_name, to_name, fset, flags)
 	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
 		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
 			warn("%s: chflags", to_name);
+	}
+
+	/*
+	 * Preserve the date of the source file.
+	 */
+	if (dopreserve) {
+		struct timeval tv[2];
+
+		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
+		if (futimes(to_fd, tv) == -1)
+			warn("%s: futimes", to_name);
 	}
 
 	(void)close(to_fd);

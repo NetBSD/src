@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.10 1997/10/20 03:32:25 lukem Exp $
+.\"	$NetBSD: install.1,v 1.11 1998/09/28 08:16:15 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm
-.Op Fl cs
+.Op Fl cps
 .Op Fl f Ar flags
 .Op Fl g Ar group
 .Op Fl l Ar linkflags
@@ -49,7 +49,7 @@
 .Op Fl o Ar owner
 .Ar file1 file2
 .Nm ""
-.Op Fl cs
+.Op Fl cps
 .Op Fl f Ar flags
 .Op Fl g Ar group
 .Op Fl l Ar linkflags
@@ -59,7 +59,7 @@
 \&...
 .Ar fileN directory
 .Nm ""
-.Fl d
+.Fl pd
 .Op Fl m Ar mode
 .Op Fl o Ar owner
 .Op Fl g Ar group
@@ -118,6 +118,8 @@ are:
 are hard links for files on the same filesystem, symbolic otherwise.
 .It Fl o
 Specify an owner.
+.It Fl p
+Preserve the source files access and modification times.
 .It Fl s
 .Nm
 exec's the command
