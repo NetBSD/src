@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.22 1999/08/25 19:25:13 thorpej Exp $	*/
+/*	$NetBSD: ipc.h,v 1.23 2000/06/02 15:53:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,6 +70,19 @@ struct ipc_perm {
 	key_t		_key;	/* user specified msg/sem/shm key */
 };
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+/* Warning: 64-bit structure padding is needed here */
+struct ipc_perm_sysctl {
+	u_int64_t	_key;
+	uid_t		uid;
+	gid_t		gid;
+	uid_t		cuid;
+	gid_t		cgid;
+	mode_t		mode;
+	int16_t		_seq;
+	int16_t		pad;
+};
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
 /*
@@ -98,11 +111,18 @@ struct ipc_perm14 {
 #define	IPC_SET		1	/* set options */
 #define	IPC_STAT	2	/* get options */
 
+/*
+ * Macros to convert between ipc ids and array indices or sequence ids.
+ * The first of these is used by ipcs(1), and so is defined outside the
+ * kernel as well.
+ */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#define	IXSEQ_TO_IPCID(ix,perm)	(((perm._seq) << 16) | (ix & 0xffff))
+#endif
+
 #ifdef _KERNEL
-/* Macros to convert between ipc ids and array indices or sequence ids */
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
-#define	IXSEQ_TO_IPCID(ix,perm)	(((perm._seq) << 16) | (ix & 0xffff))
 
 /* Common access type bits, used with ipcperm(). */
 #define	IPC_R		000400	/* read permission */
