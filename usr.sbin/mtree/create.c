@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)create.c	5.19 (Berkeley) 3/2/92"; */
-static char *rcsid = "$Id: create.c,v 1.6 1993/11/17 11:00:56 cgd Exp $";
+static char *rcsid = "$Id: create.c,v 1.7 1994/03/27 09:09:49 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -150,7 +150,7 @@ statf(p)
 	if (keys & F_NLINK && p->fts_statp->st_nlink != 1)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
 	if (keys & F_SIZE)
-		output(&indent, "size=%ld", p->fts_statp->st_size);
+		output(&indent, "size=%qd", p->fts_statp->st_size);
 	if (keys & F_TIME)
 		output(&indent, "time=%ld", p->fts_statp->st_mtime);
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
