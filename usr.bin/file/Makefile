@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2002/03/05 22:07:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.37 2002/03/21 22:02:06 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -I${.CURDIR}
 CPPFLAGS+=	-DQUICK -DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
-CLEANFILES+=	mkmagic magic magic.mgc magic.mime.mgc
+CLEANFILES+=	mkmagic magic magic.mgc magic.mime magic.mime.mgc
 .if ${MKSHARE} != "no"
 realall:	file magic magic.mgc magic.mime.mgc
 .endif
