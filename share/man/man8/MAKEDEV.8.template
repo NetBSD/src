@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.1 2001/04/16 08:08:19 wiz Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.2 2002/03/14 01:33:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Nm
 .Ar special Op Ar ...
-
+.Pp
 .Nm
 .Ar device Op Ar ...
 .Sh DESCRIPTION
@@ -62,6 +62,10 @@ The script is in
 and must be called from the
 .Pa /dev
 directory.
+For the creation of the devices,
+.Xr mknod 8
+is used, which can only be used for creating devices by the
+super-user.
 .Pp
 The special targets supported on
 .Nx Ns / Ns @@@ARCH@@@
@@ -77,16 +81,27 @@ digits when calling
 .Pp
 @@@DEVICES@@@
 .Sh FILES
-.Bl -tag -width "/dev/MAKEDEV" -compact
+.Bl -tag -width "/dev/MAKEDEV.local" -compact
 .It Pa /dev
 special device files directory
 .It Pa /dev/MAKEDEV
 script described in this man page
+.It Pa /dev/MAKEDEV.local
+script for site specific devices
 .El
+.Sh DIAGNOSTICS
+If the script reports an error that is difficult to understand,
+you can get more debugging output by using
+.Dl Ic sh Fl x Ar MAKEDEV Ar argument .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr config 8 ,
 .Xr mknod 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 This man page is generated automatically from the same sources
 as
