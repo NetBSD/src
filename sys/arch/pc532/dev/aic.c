@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.8 1997/08/27 11:24:03 bouyer Exp $	*/
+/*	$NetBSD: aic.c,v 1.9 2003/04/02 02:24:14 thorpej Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -59,6 +59,9 @@
 #include <sys/user.h>
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -110,8 +113,8 @@ int aicattach(struct pc532_device *dvp)
 void aicminphys(struct buf *bp)
 {
 
-	if(bp->b_bcount > ((AIC_NSEG - 1) * NBPG))
-		bp->b_bcount = ((AIC_NSEG - 1) * NBPG);
+	if(bp->b_bcount > ((AIC_NSEG - 1) * PAGE_SIZE))
+		bp->b_bcount = ((AIC_NSEG - 1) * PAGE_SIZE);
 	minphys(bp);
 }
 
