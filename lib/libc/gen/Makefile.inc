@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.101 1999/09/12 19:04:31 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.102 1999/09/13 18:38:05 kleink Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -22,8 +22,8 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	__signame14.c signame.c __sigsetops14.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c times.c \
 	timezone.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c \
-	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
-	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
+	ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c valloc.c vis.c \
+	wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
@@ -51,7 +51,7 @@ MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 \
 	stringlist.3 sysconf.3 sysctl.3 syslog.3 time.3 times.3 \
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
-	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
+	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
