@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.9 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: siside.c,v 1.10 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -40,8 +40,8 @@
 
 static void sis_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void sis_sata_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void sis_setup_channel(struct wdc_channel *);
-static void sis96x_setup_channel(struct wdc_channel *);
+static void sis_setup_channel(struct ata_channel *);
+static void sis96x_setup_channel(struct ata_channel *);
 
 static int  sis_hostbr_match(struct pci_attach_args *);
 static int  sis_south_match(struct pci_attach_args *);
@@ -280,7 +280,8 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_REG_52) & 0xf7);
 		break;
 	}
-		
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
@@ -290,7 +291,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -299,7 +300,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sis96x_setup_channel(struct wdc_channel *chp)
+sis96x_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -307,7 +308,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 	u_int32_t idedma_ctl;
 	int regtim;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 
 	sis_tim = 0;
 	idedma_ctl = 0;
@@ -363,14 +364,14 @@ sis96x_setup_channel(struct wdc_channel *chp)
 }
 
 static void
-sis_setup_channel(struct wdc_channel *chp)
+sis_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 
 	ATADEBUG_PRINT(("sis_setup_channel: old timings reg for "
 	    "channel %d 0x%x\n", chp->ch_channel, 
@@ -504,6 +505,8 @@ sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];

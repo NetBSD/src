@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.5 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: slide.c,v 1.6 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/pci/pciide_sl82c105_reg.h>
 
 static void sl82c105_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void sl82c105_setup_channel(struct wdc_channel*);
+static void sl82c105_setup_channel(struct ata_channel*);
 
 static int  slide_match(struct device *, struct cfdata *, void *);
 static void slide_attach(struct device *, struct device *, void *);
@@ -165,6 +165,8 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0) 
@@ -173,7 +175,7 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    (channel == 1 && (idecr & IDECR_P1EN) == 0)) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -182,11 +184,11 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sl82c105_setup_channel(struct wdc_channel *chp)
+sl82c105_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int pxdx_reg, drive;
 	pcireg_t pxdx;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.10 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: acardide.c,v 1.11 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -36,7 +36,7 @@
 #include <dev/pci/pciide_acard_reg.h>
 
 static void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void acard_setup_channel(struct wdc_channel*);
+static void acard_setup_channel(struct ata_channel*);
 #if 0 /* XXX !! */
 static int  acard_pci_intr(void *);
 #endif
@@ -158,6 +158,8 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		if (pciide_chansetup(sc, i, interface) == 0)
@@ -174,11 +176,11 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-acard_setup_channel(struct wdc_channel *chp)
+acard_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int channel = chp->ch_channel;
 	int drive;
@@ -291,7 +293,7 @@ acard_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
@@ -301,8 +303,8 @@ acard_pci_intr(void *arg)
 		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if ((dmastat & IDEDMA_CTL_INTR) == 0)
 			continue;
-		wdc_cp = &cp->wdc_channel;
-		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0) {
+		wdc_cp = &cp->ata_channel;
+		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0) {
 			(void)wdcintr(wdc_cp);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);

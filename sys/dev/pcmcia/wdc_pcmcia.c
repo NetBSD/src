@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.90 2004/08/13 12:42:11 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.91 2004/08/14 15:08:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.90 2004/08/13 12:42:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.91 2004/08/14 15:08:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,9 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.90 2004/08/13 12:42:11 mycroft Exp 
 
 struct wdc_pcmcia_softc {
 	struct wdc_softc sc_wdcdev;
-	struct wdc_channel *wdc_chanlist[1];
-	struct wdc_channel wdc_channel;
+	struct ata_channel *wdc_chanlist[1];
+	struct ata_channel ata_channel;
 	struct ata_queue wdc_chqueue;
+	struct wdc_regs wdc_regs;
 
 	struct pcmcia_function *sc_pf;
 	void *sc_ih;
@@ -142,9 +143,9 @@ const size_t wdc_pcmcia_nproducts =
     sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
 
 int	wdc_pcmcia_enable __P((struct device *, int));
-void	wdc_pcmcia_datain_memory __P((struct wdc_channel *, int, void *,
+void	wdc_pcmcia_datain_memory __P((struct ata_channel *, int, void *,
 	    size_t));
-void	wdc_pcmcia_dataout_memory __P((struct wdc_channel *, int, void *,
+void	wdc_pcmcia_dataout_memory __P((struct ata_channel *, int, void *,
 	    size_t));
 
 static int
@@ -196,6 +197,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	struct wdc_regs *wdr;
 	bus_size_t offset;
 	int i;
 	int error;
@@ -217,38 +219,40 @@ wdc_pcmcia_attach(parent, self, aux)
 	cfe = pa->pf->cfe;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 
+	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
+
 	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
-		sc->wdc_channel.cmd_iot = cfe->memspace[0].handle.memt;
-		sc->wdc_channel.cmd_baseioh = cfe->memspace[0].handle.memh;
+		wdr->cmd_iot = cfe->memspace[0].handle.memt;
+		wdr->cmd_baseioh = cfe->memspace[0].handle.memh;
 		offset = cfe->memspace[0].offset;
-		sc->wdc_channel.ctl_iot = cfe->memspace[0].handle.memt;
+		wdr->ctl_iot = cfe->memspace[0].handle.memt;
 		if (bus_space_subregion(cfe->memspace[0].handle.memt,
 		    cfe->memspace[0].handle.memh,
 		    offset + WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
-		    &sc->wdc_channel.ctl_ioh))
+		    &wdr->ctl_ioh))
 			goto fail;
 	} else {
-		sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
-		sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
+		wdr->cmd_iot = cfe->iospace[0].handle.iot;
+		wdr->cmd_baseioh = cfe->iospace[0].handle.ioh;
 		offset = 0;
 		if (cfe->num_iospace == 1) {
-			sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
+			wdr->ctl_iot = cfe->iospace[0].handle.iot;
 			if (bus_space_subregion(cfe->iospace[0].handle.iot,
 			    cfe->iospace[0].handle.ioh,
 			    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
-			    &sc->wdc_channel.ctl_ioh))
+			    &wdr->ctl_ioh))
 				goto fail;
 		} else {
-			sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
-			sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
+			wdr->ctl_iot = cfe->iospace[1].handle.iot;
+			wdr->ctl_ioh = cfe->iospace[1].handle.ioh;
 		}
 	}
 
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
-		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-		    sc->wdc_channel.cmd_baseioh,
+		if (bus_space_subregion(wdr->cmd_iot,
+		    wdr->cmd_baseioh,
 		    offset + i, i == 0 ? 4 : 1,
-		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
+		    &wdr->cmd_iohs[i]) != 0) {
 			aprint_error("%s: can't subregion I/O space\n",
 			    self->dv_xname);
 			goto fail2;
@@ -257,29 +261,29 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
 		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
-		sc->wdc_channel.data32iot = cfe->memspace[0].handle.memt;
+		wdr->data32iot = cfe->memspace[0].handle.memt;
 		if (bus_space_subregion(cfe->memspace[0].handle.memt,
 		    cfe->memspace[0].handle.memh, offset + 1024, 1024,
-		    &sc->wdc_channel.data32ioh))
+		    &wdr->data32ioh))
 			goto fail;
 		sc->sc_wdcdev.datain_pio = wdc_pcmcia_datain_memory;
 		sc->sc_wdcdev.dataout_pio = wdc_pcmcia_dataout_memory;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NOIRQ;
 	} else {
 		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
-		sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-		sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[wd_data];
+		wdr->data32iot = wdr->cmd_iot;
+		wdr->data32ioh = wdr->cmd_iohs[wd_data];
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	}
 
-	wdc_init_shadow_regs(&sc->wdc_channel);
+	wdc_init_shadow_regs(&sc->ata_channel);
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->wdc_chanlist[0] = &sc->ata_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.ch_channel = 0;
-	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+	sc->ata_channel.ch_channel = 0;
+	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 
 	error = wdc_pcmcia_enable(self, 1);
 	if (error)
@@ -290,8 +294,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	    wdc_pcmcia_enable;
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_refcnt = 1;
 
-	wdcattach(&sc->wdc_channel);
-	ata_delref(&sc->wdc_channel);
+	wdcattach(&sc->ata_channel);
+	ata_delref(&sc->ata_channel);
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
 
@@ -331,7 +335,7 @@ wdc_pcmcia_enable(self, onoff)
 	if (onoff) {
 		/* Establish the interrupt handler. */
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-		    wdcintr, &sc->wdc_channel);
+		    wdcintr, &sc->ata_channel);
 		if (!sc->sc_ih)
 			return (EIO);
 
@@ -352,22 +356,23 @@ wdc_pcmcia_enable(self, onoff)
 
 void
 wdc_pcmcia_datain_memory(chp, flags, buf, len)
-	struct wdc_channel *chp;
+	struct ata_channel *chp;
 	int flags;
 	void *buf;
 	size_t len;
 {
+	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
 
 	while (len > 0) {
 		size_t n;
 
 		n = min(len, 1024);
 		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
-			bus_space_read_region_stream_4(chp->data32iot,
-			    chp->data32ioh, 0, buf, n >> 2);
+			bus_space_read_region_stream_4(wdr->data32iot,
+			    wdr->data32ioh, 0, buf, n >> 2);
 		else
-			bus_space_read_region_stream_2(chp->data32iot,
-			    chp->data32ioh, 0, buf, n >> 1);
+			bus_space_read_region_stream_2(wdr->data32iot,
+			    wdr->data32ioh, 0, buf, n >> 1);
 		buf = (char *)buf + n;
 		len -= n;
 	}
@@ -375,22 +380,23 @@ wdc_pcmcia_datain_memory(chp, flags, buf, len)
 
 void
 wdc_pcmcia_dataout_memory(chp, flags, buf, len)
-	struct wdc_channel *chp;
+	struct ata_channel *chp;
 	int flags;
 	void *buf;
 	size_t len;
 {
+	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
 
 	while (len > 0) {
 		size_t n;
 
 		n = min(len, 1024);
 		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
-			bus_space_write_region_stream_4(chp->data32iot,
-			    chp->data32ioh, 0, buf, n >> 2);
+			bus_space_write_region_stream_4(wdr->data32iot,
+			    wdr->data32ioh, 0, buf, n >> 2);
 		else
-			bus_space_write_region_stream_2(chp->data32iot,
-			    chp->data32ioh, 0, buf, n >> 1);
+			bus_space_write_region_stream_2(wdr->data32iot,
+			    wdr->data32ioh, 0, buf, n >> 1);
 		buf = (char *)buf + n;
 		len -= n;
 	}

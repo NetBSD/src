@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.3 2004/05/25 20:42:40 thorpej Exp $	*/
+/*	$NetBSD: rside.c,v 1.4 2004/08/14 15:08:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.3 2004/05/25 20:42:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.4 2004/08/14 15:08:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,14 @@ __KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.3 2004/05/25 20:42:40 thorpej Exp $");
 
 struct rside_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct wdc_channel	*wdc_chanarray[2]; /* channels definition */
+	struct ata_channel	*sc_chanarray[2]; /* channels definition */
 	struct bus_space        sc_tag;			/* custom tag */
 	struct rside_channel {
-		struct wdc_channel wdc_channel;		/* generic part */
-		struct ata_queue wdc_chqueue;		/* channel queue */
-		irqhandler_t *wdc_ih;			/* irq handler */
+		struct ata_channel rc_channel;		/* generic part */
+		struct ata_queue rc_chqueue;		/* channel queue */
+		irqhandler_t *rc_ih;			/* irq handler */
 	} rside_channels[2];
+	struct wdc_regs sc_wdc_regs[2];
 };
 
 static int	rside_probe	(struct device *, struct cfdata *, void *);
@@ -164,7 +165,8 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 	struct rsbus_attach_args *rs = aux;
 	int channel, i;
 	struct rside_channel *scp;
-	struct wdc_channel *cp;
+	struct ata_channel *cp;
+	struct wdc_regs *wdr;
 
 	printf("\n");
 
@@ -178,6 +180,7 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 	 * cookie.
 	 */
 
+	sc->sc_wdcdev.regs = sc->sc_wdc_regs;
 	sc->sc_tag = *rs->sa_iot;
 	sc->sc_tag.bs_cookie = (void *) DRIVE_REGISTER_SPACING_SHIFT;
 
@@ -186,45 +189,47 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.DMA_cap = 0;
 	sc->sc_wdcdev.UDMA_cap = 0;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.channels = sc->sc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		scp = &sc->rside_channels[channel];
-		sc->wdc_chanarray[channel] = &scp->wdc_channel;
-		cp = &scp->wdc_channel;
+		sc->sc_chanarray[channel] = &scp->rc_channel;
+		cp = &scp->rc_channel;
+		wdr = &sc->sc_wdc_regs[channel];
 
 		cp->ch_channel = channel;
 		cp->ch_wdc = &sc->sc_wdcdev;
-		cp->ch_queue = &scp->wdc_chqueue;
-		cp->cmd_iot = cp->ctl_iot = &sc->sc_tag;
-		if (bus_space_map(cp->cmd_iot,
+		cp->ch_queue = &scp->rc_chqueue;
+		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
+		if (bus_space_map(wdr->cmd_iot,
 		    rside_info[channel].drive_registers,
-		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh)) 
+		    DRIVE_REGISTERS_SPACE, 0, &wdr->cmd_baseioh)) 
 			panic("couldn't map drive registers channel = %d,"
 					"registers@0x08%x\n",
-					channel, rside_info[channel].drive_registers);
+					channel,
+					rside_info[channel].drive_registers);
 
 		for (i = 0; i < WDC_NREG; i++) {
-			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
+			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 				i * (DRIVE_REGISTER_BYTE_SPACING >> 2), 4,
-				&cp->cmd_iohs[i]) != 0) {
-				bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
+				&wdr->cmd_iohs[i]) != 0) {
+				bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 				    DRIVE_REGISTERS_SPACE);
 				continue;
 			}
 		}
 		wdc_init_shadow_regs(cp);
 
-		if (bus_space_map(cp->ctl_iot,
-		    rside_info[channel].aux_register, 0x4, 0, &cp->ctl_ioh))
+		if (bus_space_map(wdr->ctl_iot,
+		    rside_info[channel].aux_register, 0x4, 0, &wdr->ctl_ioh))
 		{
-			bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
+			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    DRIVE_REGISTERS_SPACE);
 			continue;
 		}
 
 		/* attach it to the interrupt */
-		if ((scp->wdc_ih = intr_claim((channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2),
+		if ((scp->rc_ih = intr_claim((channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2),
 						IPL_BIO, "rside", wdcintr, cp)) == NULL)
 			panic("%s: Cannot claim interrupt %d\n",
 			    self->dv_xname, (channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2));

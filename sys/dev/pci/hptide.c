@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.12 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: hptide.c,v 1.13 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #include <dev/pci/pciide_hpt_reg.h>
 
 static void hpt_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void hpt_setup_channel(struct wdc_channel*);
+static void hpt_setup_channel(struct ata_channel*);
 static int  hpt_pci_intr(void *);
 
 static int  hptide_match(struct device *, struct cfdata *, void *);
@@ -198,6 +198,9 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		else
 			sc->sc_wdcdev.UDMA_cap = 5;
 	}
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		if (sc->sc_wdcdev.nchannels > 1) {
@@ -207,7 +210,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				aprint_normal(
 				    "%s: %s channel ignored (disabled)\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-				cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+				cp->ata_channel.ch_flags |= ATACH_DISABLED;
 				continue;
 			}
 		} else {
@@ -234,11 +237,11 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		} else {
 			pciide_mapregs_compat(pa, cp, compatchan,
 			    &cmdsize, &ctlsize);
-			if ((cp->wdc_channel.ch_flags & WDCF_DISABLED) == 0)
+			if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 				pciide_map_compat_intr(pa, cp,
 				    sc->sc_cy_compatchan);
 		}
-		wdcattach(&cp->wdc_channel);
+		wdcattach(&cp->ata_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
@@ -269,7 +272,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-hpt_setup_channel(struct wdc_channel *chp)
+hpt_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -277,7 +280,7 @@ hpt_setup_channel(struct wdc_channel *chp)
 	u_int32_t before, after;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int revision =
 	     PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 	const u_int32_t *tim_pio, *tim_dma, *tim_udma;
@@ -378,7 +381,7 @@ hpt_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
@@ -389,7 +392,7 @@ hpt_pci_intr(void *arg)
 		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 			continue;
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
