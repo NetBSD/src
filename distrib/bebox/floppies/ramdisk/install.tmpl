@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.1 1998/11/19 08:58:05 sakamoto Exp $
+#	$NetBSD: install.tmpl,v 1.2 1998/11/24 06:40:31 sakamoto Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -484,14 +484,6 @@ if [ "$hname" != "" ]; then
 fi
 sync
 echo	" done."
-
-echo	""
-echo -n	"Installing boot blocks on $drivename..."
-# shouldn't be needed, but...
-$DONTDOIT rm -f /mnt/boot
-$DONTDOIT /usr/mdec/installboot /usr/mdec/biosboot.sym /dev/r${drivename}a
-echo	" done."
-
 
 echo	""
 echo	""
