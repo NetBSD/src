@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.2 1999/02/25 16:26:51 pk Exp $	*/
+/*	$NetBSD: ldd.c,v 1.2.2.1 1999/04/09 14:36:40 kleink Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -107,7 +107,7 @@ main(
 	    continue;
 	}
 
-	_rtld_objmain->path = *argv;
+	_rtld_objmain->path = xstrdup(*argv);
 	_rtld_objmain->mainprog = true;
 	_rtld_digest_dynamic(_rtld_objmain);
 
