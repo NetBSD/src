@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.525 2003/01/23 23:45:45 kleink Exp $
+#	$NetBSD: mi,v 1.526 2003/01/24 01:54:52 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -997,6 +997,8 @@
 ./usr/lib/libroken_p.a		comp-c-proflib
 ./usr/lib/librpcsvc.a		comp-c-lib
 ./usr/lib/librpcsvc_p.a		comp-c-proflib
+./usr/lib/librt.a		comp-c-lib
+./usr/lib/librt_p.a		comp-c-proflib
 ./usr/lib/libskey.a		comp-c-lib
 ./usr/lib/libskey_p.a		comp-c-proflib
 ./usr/lib/libsl.a		comp-c-lib
