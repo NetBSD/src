@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.73 2003/09/07 12:04:13 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.74 2003/10/03 20:56:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.73 2003/09/07 12:04:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.74 2003/10/03 20:56:11 itojun Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -422,6 +422,7 @@ m_prepend(struct mbuf *m, int len, int how)
 	}
 	if (m->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(mn, m);
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 	} else {
 		MCLAIM(mn, m->m_owner);
@@ -765,6 +766,7 @@ m_pullup(struct mbuf *n, int len)
 		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
 			M_COPY_PKTHDR(m, n);
+			m_tag_delete_chain(n, NULL);
 			n->m_flags &= ~M_PKTHDR;
 		}
 	}
@@ -816,6 +818,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	m->m_len = 0;
 	if (n->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(m, n);
+		m_tag_delete_chain(m, NULL);
 		n->m_flags &= ~M_PKTHDR;
 	}
 	m->m_data += dstoff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.23 2003/05/23 10:06:18 itojun Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.24 2003/10/03 20:56:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.23 2003/05/23 10:06:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.24 2003/10/03 20:56:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -441,6 +441,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 	dgl = ifh->ifh_dgl;
 	len = m0->m_pkthdr.len;
 	if (ftype & IEEE1394_FT_SUBSEQ) {
+		m_tag_delete_chain(m0, NULL);
 		m0->m_flags &= ~M_PKTHDR;
 		off = ntohs(ifh->ifh_etype_off);
 	} else
