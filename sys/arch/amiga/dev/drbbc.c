@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.7 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: drbbc.c,v 1.8 2002/01/28 09:56:53 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.8 2002/01/28 09:56:53 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

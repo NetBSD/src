@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.14 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: com_supio.c,v 1.15 2002/01/28 09:56:53 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.15 2002/01/28 09:56:53 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

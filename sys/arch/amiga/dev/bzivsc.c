@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.11 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.12 2002/01/28 09:56:52 aymeric Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.12 2002/01/28 09:56:52 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

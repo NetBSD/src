@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.29 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: aucc.c,v 1.30 2002/01/28 09:56:51 aymeric Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -51,6 +51,9 @@
 
 #include "aucc.h"
 #if NAUCC > 0
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.30 2002/01/28 09:56:51 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

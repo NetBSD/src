@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.11 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: hyper.c,v 1.12 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.12 2002/01/28 09:56:57 aymeric Exp $");
 
 /*
  * zbus HyperCom driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2002/01/26 13:24:54 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 2002/01/28 09:56:46 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,9 @@
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2002/01/28 09:56:46 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

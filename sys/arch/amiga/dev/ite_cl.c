@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cl.c,v 1.5 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: ite_cl.c,v 1.6 2002/01/28 09:56:59 aymeric Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -34,6 +34,10 @@
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_cl.c,v 1.6 2002/01/28 09:56:59 aymeric Exp $");
+
 #include "grfcl.h"
 #if NGRFCL > 0
 

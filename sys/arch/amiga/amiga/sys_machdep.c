@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.32 2002/01/27 22:37:28 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.33 2002/01/28 09:56:48 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33 2002/01/28 09:56:48 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

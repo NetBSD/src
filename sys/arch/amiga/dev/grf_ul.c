@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.29 2002/01/26 13:40:55 aymeric Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.30 2002/01/28 09:56:57 aymeric Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -38,6 +38,10 @@
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.30 2002/01/28 09:56:57 aymeric Exp $");
+
 #include "grful.h"
 #if NGRFUL > 0
 

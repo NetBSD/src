@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.21 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: empsc.c,v 1.22 2002/01/28 09:56:54 aymeric Exp $ */
 
 /*
 
@@ -36,6 +36,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.22 2002/01/28 09:56:54 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
