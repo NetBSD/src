@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.15 2002/09/11 18:18:37 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.16 2002/09/12 20:20:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -72,6 +72,8 @@
 #define	adbg(x)		/* nothing */
 #endif
 
+void _rtld_bind_start(void);
+void _rtld_bind_start_old(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 void

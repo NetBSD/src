@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.24 2002/09/11 19:11:05 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.25 2002/09/12 20:21:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ static const int reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
+void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 int

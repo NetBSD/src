@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.45 2002/09/06 15:17:54 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.46 2002/09/12 20:20:58 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -232,9 +232,6 @@ extern Objlist _rtld_list_global;
 extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
 
-/* rtld_start.S */
-void _rtld_bind_start __P((void));
-
 /* rtld.c */
 void _rtld_error __P((const char *, ...))
      __attribute__((__format__(__printf__,1,2)));
@@ -299,11 +296,6 @@ const void *_rtld_function_descriptor_function __P((const void *));
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 void	_rtld_setup_pltgot __P((const Obj_Entry *));
-
-#if defined(__alpha__)
-/* rtld_start.S */
-void	_rtld_bind_start_old __P((void));
-#endif
 
 #if defined(__hppa__)
 /* rtld_start.S */

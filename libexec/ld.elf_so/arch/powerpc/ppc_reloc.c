@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.22 2002/09/11 21:14:08 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.23 2002/09/12 20:21:01 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -46,6 +46,7 @@ void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
 #define l(x) ((u_int32_t)(x) & 0xffff)
 
+void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 /*

@@ -1,10 +1,12 @@
-/*	$NetBSD: mdreloc.c,v 1.10 2002/09/11 14:19:30 junyoung Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.11 2002/09/12 20:21:01 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "debug.h"
 #include "rtld.h"
+
+void _rtld_bind_start(void);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.18 2002/09/11 19:46:41 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.19 2002/09/12 20:21:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -205,6 +205,7 @@ static const long reloc_target_bitmask[] = {
 #define	HIVAL(v, s)	(((v) >> (s)) &  0x003fffff)
 #define LOVAL(v)	((v) & 0x000003ff)
 
+void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 int

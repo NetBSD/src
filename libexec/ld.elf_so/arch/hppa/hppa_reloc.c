@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.11 2002/09/06 15:17:56 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.12 2002/09/12 20:20:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #else
 #define	hdbg(x)		/* nothing */
 #endif
+
+void _rtld_bind_start(void);
 
 /*
  * In the runtime architecture (ABI), PLABEL function 
