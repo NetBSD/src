@@ -1,5 +1,5 @@
-This is doc/gccint.info, produced by makeinfo version 4.2 from
-doc/gccint.texi.
+Ceci est le fichier Info doc/gccint.info, produit par Makeinfo version
+4.6 à partir doc/gccint.texi.
 
 Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
@@ -57,9 +57,9 @@ File: gccint.info,  Node: Top,  Next: Contributing,  Up: (DIR)
 Introduction
 ************
 
-   This manual documents the internals of the GNU compilers, including
-how to port them to new targets and some information about how to write
-front ends for new languages.  It corresponds to GCC version 3.3.2.
+This manual documents the internals of the GNU compilers, including how
+to port them to new targets and some information about how to write
+front ends for new languages.  It corresponds to GCC version 3.3.3.
 The use of the GNU compilers is documented in a separate manual.  *Note
 Introduction: (gcc)Top.
 
@@ -111,8 +111,8 @@ File: gccint.info,  Node: Contributing,  Next: Portability,  Prev: Top,  Up: Top
 Contributing to GCC Development
 *******************************
 
-   If you would like to help pretest GCC releases to assure they work
-well, our current development sources are available by CVS (see
+If you would like to help pretest GCC releases to assure they work well,
+our current development sources are available by CVS (see
 `http://gcc.gnu.org/cvs.html').  Source and binary snapshots are also
 available for FTP; see `http://gcc.gnu.org/snapshots.html'.
 
@@ -132,8 +132,8 @@ File: gccint.info,  Node: Portability,  Next: Interface,  Prev: Contributing,  U
 GCC and Portability
 *******************
 
-   GCC itself aims to be portable to any machine where `int' is at least
-a 32-bit type.  It aims to target machines with a flat (non-segmented)
+GCC itself aims to be portable to any machine where `int' is at least a
+32-bit type.  It aims to target machines with a flat (non-segmented)
 byte addressed data address space (the code address space can be
 separate).  Target ABIs may have 8, 16, 32 or 64-bit `int' type. `char'
 can be wider than 8 bits.
@@ -167,8 +167,8 @@ File: gccint.info,  Node: Interface,  Next: Languages,  Prev: Portability,  Up: 
 Interfacing to GCC Output
 *************************
 
-   GCC is normally configured to use the same function calling
-convention normally in use on the target system.  This is done with the
+GCC is normally configured to use the same function calling convention
+normally in use on the target system.  This is done with the
 machine-description macros described (*note Target Macros::).
 
    However, returning of structure and union values is done differently
@@ -253,8 +253,8 @@ File: gccint.info,  Node: Languages,  Next: Source Tree,  Prev: Interface,  Up: 
 Language Front Ends in GCC
 **************************
 
-   The interface to front ends for languages in GCC, and in particular
-the `tree' structure (*note Trees::), was initially designed for C, and
+The interface to front ends for languages in GCC, and in particular the
+`tree' structure (*note Trees::), was initially designed for C, and
 many aspects of it are still somewhat biased towards C and C-like
 languages.  It is, however, reasonably well suited to other procedural
 languages, and front ends for many such languages have been written for
@@ -288,7 +288,7 @@ File: gccint.info,  Node: Source Tree,  Next: Passes,  Prev: Languages,  Up: Top
 Source Tree Structure and Build System
 **************************************
 
-   This chapter describes the structure of the GCC source tree, and how
+This chapter describes the structure of the GCC source tree, and how
 GCC is built.  The user documentation for building and installing GCC
 is in a separate manual (`http://gcc.gnu.org/install/'), with which it
 is presumed that you are familiar.
@@ -306,11 +306,11 @@ File: gccint.info,  Node: Configure Terms,  Next: Top Level,  Up: Source Tree
 Configure Terms and History
 ===========================
 
-   The configure and build process has a long and colorful history, and
-can be confusing to anyone who doesn't know why things are the way they
-are.  While there are other documents which describe the configuration
-process in detail, here are a few things that everyone working on GCC
-should know.
+The configure and build process has a long and colorful history, and can
+be confusing to anyone who doesn't know why things are the way they are.
+While there are other documents which describe the configuration process
+in detail, here are a few things that everyone working on GCC should
+know.
 
    There are three system names that the build knows about: the machine
 you are building on ("build"), the machine that you are building for
@@ -363,7 +363,7 @@ File: gccint.info,  Node: Top Level,  Next: gcc Directory,  Prev: Configure Term
 Top Level Source Directory
 ==========================
 
-   The top level source directory in a GCC distribution contains several
+The top level source directory in a GCC distribution contains several
 files and directories that are shared with other software distributions
 such as that of GNU Binutils.  It also contains several subdirectories
 that contain parts of GCC and its runtime libraries:
@@ -430,8 +430,8 @@ File: gccint.info,  Node: gcc Directory,  Next: Test Suites,  Prev: Top Level,  
 The `gcc' Subdirectory
 ======================
 
-   The `gcc' directory contains many files that are part of the C
-sources of GCC, other files used as part of the configuration and build
+The `gcc' directory contains many files that are part of the C sources
+of GCC, other files used as part of the configuration and build
 process, and subdirectories including documentation and a test suite.
 The files that are sources of GCC are documented in a separate chapter.
 *Note Passes and Files of the Compiler: Passes.
@@ -454,7 +454,7 @@ File: gccint.info,  Node: Subdirectories,  Next: Configuration,  Up: gcc Directo
 Subdirectories of `gcc'
 -----------------------
 
-   The `gcc' directory contains the following subdirectories:
+The `gcc' directory contains the following subdirectories:
 
 `LANGUAGE'
      Subdirectories for various languages.  Directories containing a
@@ -512,7 +512,7 @@ File: gccint.info,  Node: Configuration,  Next: Build,  Prev: Subdirectories,  U
 Configuration in the `gcc' Directory
 ------------------------------------
 
-   The `gcc' directory is configured with an Autoconf-generated script
+The `gcc' directory is configured with an Autoconf-generated script
 `configure'.  The `configure' script is generated from `configure.in'
 and `aclocal.m4'.  From the files `configure.in' and `acconfig.h',
 Autoheader generates the file `config.in'.  The file `cstamp-h.in' is
@@ -530,7 +530,7 @@ File: gccint.info,  Node: Config Fragments,  Next: System Config,  Up: Configura
 Scripts Used by `configure'
 ...........................
 
-   `configure' uses some other scripts to help in its work:
+`configure' uses some other scripts to help in its work:
 
    * The standard GNU `config.sub' and `config.guess' files, kept in
      the top level directory, are used.  FIXME: when is the
@@ -557,8 +557,8 @@ File: gccint.info,  Node: System Config,  Next: Configuration Files,  Prev: Conf
 The `config.gcc' File
 .....................
 
-   FIXME: document the contents of this file, and what variables should
-be set to control build, host and target configuration.
+FIXME: document the contents of this file, and what variables should be
+set to control build, host and target configuration.
 
 
 File: gccint.info,  Node: Configuration Files,  Prev: System Config,  Up: Configuration
@@ -566,10 +566,10 @@ File: gccint.info,  Node: Configuration Files,  Prev: System Config,  Up: Config
 Files Created by `configure'
 ............................
 
-   Here we spell out what files will be set up by `configure' in the
-`gcc' directory.  Some other files are created as temporary files in
-the configuration process, and are not used in the subsequent build;
-these are not documented.
+Here we spell out what files will be set up by `configure' in the `gcc'
+directory.  Some other files are created as temporary files in the
+configuration process, and are not used in the subsequent build; these
+are not documented.
 
    * `Makefile' is constructed from `Makefile.in', together with the
      host and target fragments (*note Makefile Fragments: Fragments.)
@@ -631,7 +631,7 @@ File: gccint.info,  Node: Build,  Next: Makefile,  Prev: Configuration,  Up: gcc
 Build System in the `gcc' Directory
 -----------------------------------
 
-   FIXME: describe the build system, including what is built in what
+FIXME: describe the build system, including what is built in what
 stages.  Also list the various source files that are used in the build
 process but aren't source files of GCC itself and so aren't documented
 below (*note Passes::).
@@ -733,17 +733,18 @@ Makefile Targets
      compiler is running properly, since it should produce the same
      object files regardless of how it itself was compiled.
 
+
 
 File: gccint.info,  Node: Library Files,  Next: Headers,  Prev: Makefile,  Up: gcc Directory
 
 Library Source Files and Headers under the `gcc' Directory
 ----------------------------------------------------------
 
-   FIXME: list here, with explanation, all the C source files and
-headers under the `gcc' directory that aren't built into the GCC
-executable but rather are part of runtime libraries and object files,
-such as `crtstuff.c' and `unwind-dw2.c'.  *Note Headers Installed by
-GCC: Headers, for more information about the `ginclude' directory.
+FIXME: list here, with explanation, all the C source files and headers
+under the `gcc' directory that aren't built into the GCC executable but
+rather are part of runtime libraries and object files, such as
+`crtstuff.c' and `unwind-dw2.c'.  *Note Headers Installed by GCC:
+Headers, for more information about the `ginclude' directory.
 
 
 File: gccint.info,  Node: Headers,  Next: Documentation,  Prev: Library Files,  Up: gcc Directory
@@ -751,7 +752,7 @@ File: gccint.info,  Node: Headers,  Next: Documentation,  Prev: Library Files,  
 Headers Installed by GCC
 ------------------------
 
-   In general, GCC expects the system C library to provide most of the
+In general, GCC expects the system C library to provide most of the
 headers to be used with it.  However, GCC will fix those headers if
 necessary to make them work with GCC, and will install some headers
 required of freestanding implementations.  These headers are installed
@@ -791,13 +792,13 @@ File: gccint.info,  Node: Documentation,  Next: Front End,  Prev: Headers,  Up: 
 Building Documentation
 ----------------------
 
-   The main GCC documentation is in the form of manuals in Texinfo
-format.  These are installed in Info format, and DVI versions may be
-generated by `make dvi'.  In addition, some man pages are generated
-from the Texinfo manuals, there are some other text files with
-miscellaneous documentation, and runtime libraries have their own
-documentation outside the `gcc' directory.  FIXME: document the
-documentation for runtime libraries somewhere.
+The main GCC documentation is in the form of manuals in Texinfo format.
+These are installed in Info format, and DVI versions may be generated
+by `make dvi'.  In addition, some man pages are generated from the
+Texinfo manuals, there are some other text files with miscellaneous
+documentation, and runtime libraries have their own documentation
+outside the `gcc' directory.  FIXME: document the documentation for
+runtime libraries somewhere.
 
 * Menu:
 
@@ -811,7 +812,7 @@ File: gccint.info,  Node: Texinfo Manuals,  Next: Man Page Generation,  Up: Docu
 Texinfo Manuals
 ...............
 
-   The manuals for GCC as a whole, and the C and C++ front ends, are in
+The manuals for GCC as a whole, and the C and C++ front ends, are in
 files `doc/*.texi'.  Other front ends have their own manuals in files
 `LANGUAGE/*.texi'.  Common files `doc/include/*.texi' are provided
 which may be included in multiple manuals; the following files are in
@@ -864,8 +865,8 @@ File: gccint.info,  Node: Man Page Generation,  Next: Miscellaneous Docs,  Prev:
 Man Page Generation
 ...................
 
-   Because of user demand, in addition to full Texinfo manuals, man
-pages are provided which contain extracts from those manuals.  These man
+Because of user demand, in addition to full Texinfo manuals, man pages
+are provided which contain extracts from those manuals.  These man
 pages are generated from the Texinfo manuals using
 `contrib/texi2pod.pl' and `pod2man'.  (The man page for `g++',
 `cp/g++.1', just contains a `.so' reference to `gcc.1', but all the
@@ -907,8 +908,8 @@ File: gccint.info,  Node: Miscellaneous Docs,  Prev: Man Page Generation,  Up: D
 Miscellaneous Documentation
 ...........................
 
-   In addition to the formal documentation that is installed by GCC,
-there are several other text files with miscellaneous documentation:
+In addition to the formal documentation that is installed by GCC, there
+are several other text files with miscellaneous documentation:
 
 `ABOUT-GCC-NLS'
      Notes on GCC's Native Language Support.  FIXME: this should be
@@ -953,7 +954,7 @@ File: gccint.info,  Node: Front End,  Next: Back End,  Prev: Documentation,  Up:
 Anatomy of a Language Front End
 -------------------------------
 
-   A front end for a language in GCC has the following parts:
+A front end for a language in GCC has the following parts:
 
    * A directory `LANGUAGE' under `gcc' containing source files for
      that front end.  *Note The Front End `LANGUAGE' Directory: Front
@@ -1040,7 +1041,7 @@ File: gccint.info,  Node: Front End Directory,  Next: Front End Config,  Up: Fro
 The Front End `LANGUAGE' Directory
 ..................................
 
-   A front end `LANGUAGE' directory contains the source files of that
+A front end `LANGUAGE' directory contains the source files of that
 front end (but not of any runtime libraries, which should be outside
 the `gcc' directory).  This includes documentation, and possibly some
 subsidiary programs build alongside the front end.  Certain files are
@@ -1154,7 +1155,7 @@ File: gccint.info,  Node: Front End Config,  Prev: Front End Directory,  Up: Fro
 The Front End `config-lang.in' File
 ...................................
 
-   Each language subdirectory contains a `config-lang.in' file.  In
+Each language subdirectory contains a `config-lang.in' file.  In
 addition the main directory contains `c-config-lang.in', which contains
 limited information for the C language.  This file is a shell script
 that may define some variables describing the language:
@@ -1214,13 +1215,14 @@ that may define some variables describing the language:
      routines for this language.  This excludes the files that are
      common to all front ends. *Note Type Information::.
 
+
 
 File: gccint.info,  Node: Back End,  Prev: Front End,  Up: gcc Directory
 
 Anatomy of a Target Back End
 ----------------------------
 
-   A back end for a target architecture in GCC has the following parts:
+A back end for a target architecture in GCC has the following parts:
 
    * A directory `MACHINE' under `gcc/config', containing a machine
      description `MACHINE.md' file (*note Machine Descriptions: Machine
@@ -1293,7 +1295,7 @@ File: gccint.info,  Node: Test Suites,  Prev: gcc Directory,  Up: Source Tree
 Test Suites
 ===========
 
-   GCC contains several test suites to help maintain compiler quality.
+GCC contains several test suites to help maintain compiler quality.
 Most of the runtime libraries and language front ends in GCC have test
 suites.  Currently only the C language test suites are documented here;
 FIXME: document the others.
@@ -1313,9 +1315,9 @@ File: gccint.info,  Node: Test Idioms,  Next: C Tests,  Up: Test Suites
 Idioms Used in Test Suite Code
 ------------------------------
 
-   In the `gcc.c-torture' test suites, test cases are commonly named
-after the date on which they were added.  This allows people to tell at
-a glance whether a test failure is because of a recently found bug that
+In the `gcc.c-torture' test suites, test cases are commonly named after
+the date on which they were added.  This allows people to tell at a
+glance whether a test failure is because of a recently found bug that
 has not yet been fixed, or whether it may be a regression.  In other
 test suites, more descriptive names are used.  In general C test cases
 have a trailing `-N.c', starting with `-1.c', in case other test cases
@@ -1384,7 +1386,7 @@ File: gccint.info,  Node: C Tests,  Next: libgcj Tests,  Prev: Test Idioms,  Up:
 C Language Test Suites
 ----------------------
 
-   GCC contains the following C language test suites, in the
+GCC contains the following C language test suites, in the
 `gcc/testsuite' directory:
 
 `gcc.dg'
@@ -1483,6 +1485,7 @@ C Language Test Suites
           Test i386-specific support for data prefetch using
           `i386-prefetch.exp'.
 
+
    FIXME: merge in `testsuite/README.gcc' and discuss the format of
 test cases and magic comments more.
 
@@ -1492,7 +1495,7 @@ File: gccint.info,  Node: libgcj Tests,  Next: gcov Testing,  Prev: C Tests,  Up
 The Java library test suites.
 -----------------------------
 
-   Runtime tests are executed via `make check' in the
+Runtime tests are executed via `make check' in the
 `TARGET/libjava/testsuite' directory in the build tree.  Additional
 runtime tests can be checked into this testsuite.
 
@@ -1522,11 +1525,11 @@ File: gccint.info,  Node: gcov Testing,  Next: profopt Testing,  Prev: libgcj Te
 Support for testing `gcov'
 --------------------------
 
-   Language-independent support for testing `gcov', and for checking
-that branch profiling produces expected values, is provided by the
-expect file `gcov.exp'.  `gcov' tests also rely on procedures in
-`gcc.dg.exp' to compile and run the test program.  A typical `gcov'
-test contains the following DejaGNU commands within comments:
+Language-independent support for testing `gcov', and for checking that
+branch profiling produces expected values, is provided by the expect
+file `gcov.exp'.  `gcov' tests also rely on procedures in `gcc.dg.exp'
+to compile and run the test program.  A typical `gcov' test contains
+the following DejaGNU commands within comments:
 
      { dg-options "-fprofile-arcs -ftest-coverage" }
      { dg-do run { target native } }
@@ -1583,7 +1586,7 @@ File: gccint.info,  Node: profopt Testing,  Next: compat Testing,  Prev: gcov Te
 Support for testing profile-directed optimizations
 --------------------------------------------------
 
-   The file `profopt.exp' provides language-independent support for
+The file `profopt.exp' provides language-independent support for
 checking correct execution of a test built with profile-directed
 optimization.  This testing requires that a test program be built and
 executed twice.  The first time it is compiled to generate profile
@@ -1623,9 +1626,9 @@ File: gccint.info,  Node: compat Testing,  Prev: profopt Testing,  Up: Test Suit
 Support for testing binary compatibility
 ----------------------------------------
 
-   The file `compat.exp' provides language-independent support for
-binary compatibility testing.  It supports testing interoperability of
-two compilers that follow the same ABI, or of multiple sets of compiler
+The file `compat.exp' provides language-independent support for binary
+compatibility testing.  It supports testing interoperability of two
+compilers that follow the same ABI, or of multiple sets of compiler
 options that should not affect binary compatibility.  It is intended to
 be used for test suites that complement ABI test suites.
 
@@ -1698,7 +1701,7 @@ File: gccint.info,  Node: Passes,  Next: Trees,  Prev: Source Tree,  Up: Top
 Passes and Files of the Compiler
 ********************************
 
-   The overall control structure of the compiler is in `toplev.c'.  This
+The overall control structure of the compiler is in `toplev.c'.  This
 file is responsible for initialization, decoding arguments, opening and
 closing files, and sequencing the passes.
 
@@ -2186,7 +2189,7 @@ File: gccint.info,  Node: Trees,  Next: RTL,  Prev: Passes,  Up: Top
 Trees: The intermediate representation used by the C and C++ front ends
 ***********************************************************************
 
-   This chapter documents the internal representation used by GCC to
+This chapter documents the internal representation used by GCC to
 represent C and C++ source programs.  When presented with a C or C++
 source program, GCC parses the program, performs semantic analysis
 (including the generation of error messages), and then produces the
@@ -2237,8 +2240,8 @@ File: gccint.info,  Node: Deficiencies,  Next: Tree overview,  Up: Trees
 Deficiencies
 ============
 
-   There are many places in which this document is incomplet and
-incorrekt.  It is, as of yet, only _preliminary_ documentation.
+There are many places in which this document is incomplet and incorrekt.
+It is, as of yet, only _preliminary_ documentation.
 
 
 File: gccint.info,  Node: Tree overview,  Next: Types,  Prev: Deficiencies,  Up: Trees
@@ -2246,7 +2249,7 @@ File: gccint.info,  Node: Tree overview,  Next: Types,  Prev: Deficiencies,  Up:
 Overview
 ========
 
-   The central data structure used by the internal representation is the
+The central data structure used by the internal representation is the
 `tree'.  These nodes, while all of the C type `tree', are of many
 varieties.  A `tree' is a pointer type, but the object to which it
 points may be of a variety of types.  From this point forward, we will
@@ -2333,7 +2336,7 @@ File: gccint.info,  Node: Macros and Functions,  Next: Identifiers,  Up: Tree ov
 Trees
 -----
 
-   This section is not here yet.
+This section is not here yet.
 
 
 File: gccint.info,  Node: Identifiers,  Next: Containers,  Prev: Macros and Functions,  Up: Tree overview
@@ -2341,7 +2344,7 @@ File: gccint.info,  Node: Identifiers,  Next: Containers,  Prev: Macros and Func
 Identifiers
 -----------
 
-   An `IDENTIFIER_NODE' represents a slightly more general concept that
+An `IDENTIFIER_NODE' represents a slightly more general concept that
 the standard C or C++ concept of identifier.  In particular, an
 `IDENTIFIER_NODE' may contain a `$', or other extraordinary characters.
 
@@ -2372,13 +2375,14 @@ same identifier.  Therefore, you may use pointer equality to compare
      the `IDENTIFIER_NODE' holds the type to which the conversion
      operator converts.
 
+
 
 File: gccint.info,  Node: Containers,  Prev: Identifiers,  Up: Tree overview
 
 Containers
 ----------
 
-   Two common container data structures can be represented directly with
+Two common container data structures can be represented directly with
 tree nodes.  A `TREE_LIST' is a singly linked list containing two trees
 per node.  These are the `TREE_PURPOSE' and `TREE_VALUE' of each node.
 (Often, the `TREE_PURPOSE' contains some kind of tag, or additional
@@ -2402,9 +2406,9 @@ File: gccint.info,  Node: Types,  Next: Scopes,  Prev: Tree overview,  Up: Trees
 Types
 =====
 
-   All types have corresponding tree nodes.  However, you should not
-assume that there is exactly one tree node corresponding to each type.
-There are often several nodes each of which correspond to the same type.
+All types have corresponding tree nodes.  However, you should not assume
+that there is exactly one tree node corresponding to each type.  There
+are often several nodes each of which correspond to the same type.
 
    For the most part, different kinds of types have different tree
 codes.  (For example, pointer types use a `POINTER_TYPE' code while
@@ -2688,7 +2692,7 @@ File: gccint.info,  Node: Scopes,  Next: Functions,  Prev: Types,  Up: Trees
 Scopes
 ======
 
-   The root of the entire intermediate representation is the variable
+The root of the entire intermediate representation is the variable
 `global_namespace'.  This is the namespace specified with `::' in C++
 source code.  All other namespaces, types, variables, functions, and so
 forth can be found starting with this namespace.
@@ -2709,7 +2713,7 @@ File: gccint.info,  Node: Namespaces,  Next: Classes,  Up: Scopes
 Namespaces
 ----------
 
-   A namespace is represented by a `NAMESPACE_DECL' node.
+A namespace is represented by a `NAMESPACE_DECL' node.
 
    However, except for the fact that it is distinguished as the root of
 the representation, the global namespace is no different from any other
@@ -2769,13 +2773,14 @@ rather than the global namespace in particular.
      This function cannot be used with namespaces that have
      `DECL_NAMESPACE_ALIAS' set.
 
+
 
 File: gccint.info,  Node: Classes,  Prev: Namespaces,  Up: Scopes
 
 Classes
 -------
 
-   A class type is represented by either a `RECORD_TYPE' or a
+A class type is represented by either a `RECORD_TYPE' or a
 `UNION_TYPE'.  A class declared with the `union' tag is represented by
 a `UNION_TYPE', while classes declared with either the `struct' or the
 `class' tag are represented by `RECORD_TYPE's.  You can use the
@@ -2848,7 +2853,6 @@ class-type.
      with default constructor.
 
 `CLASSTYPE_HAS_MUTABLE'
-
 `TYPE_HAS_MUTABLE_P'
      These predicates hold for a class-type having a mutable data
      member.
@@ -2874,14 +2878,15 @@ class-type.
      This predicate holds for a class-type for which `operator->' is
      overloaded.
 
+
 
 File: gccint.info,  Node: Declarations,  Next: Attributes,  Prev: Functions,  Up: Trees
 
 Declarations
 ============
 
-   This section covers the various kinds of declarations that appear in
-the internal representation, except for declarations of functions
+This section covers the various kinds of declarations that appear in the
+internal representation, except for declarations of functions
 (represented by `FUNCTION_DECL' nodes), which are described in *Note
 Functions::.
 
@@ -2927,6 +2932,7 @@ Functions::.
 `DECL_FUNCTION_SCOPE_P'
      This predicate holds if the entity was declared inside a function
      body.
+
 
    The various kinds of declarations include:
 `LABEL_DECL'
@@ -3021,13 +3027,14 @@ Functions::.
 `USING_DECL'
      Back ends can safely ignore these nodes.
 
+
 
 File: gccint.info,  Node: Functions,  Next: Declarations,  Prev: Scopes,  Up: Trees
 
 Functions
 =========
 
-   A function is represented by a `FUNCTION_DECL' node.  A set of
+A function is represented by a `FUNCTION_DECL' node.  A set of
 overloaded functions is sometimes represented by a `OVERLOAD' node.
 
    An `OVERLOAD' node is not a declaration, so none of the `DECL_'
@@ -3078,7 +3085,7 @@ File: gccint.info,  Node: Function Basics,  Next: Function Bodies,  Up: Function
 Function Basics
 ---------------
 
-   The following macros and functions can be used on a `FUNCTION_DECL':
+The following macros and functions can be used on a `FUNCTION_DECL':
 `DECL_MAIN_P'
      This predicate holds for a function that is the program entry point
      `::code'.
@@ -3253,13 +3260,14 @@ Function Basics
      This predicate holds if the function an overloaded `operator
      delete[]'.
 
+
 
 File: gccint.info,  Node: Function Bodies,  Prev: Function Basics,  Up: Functions
 
 Function Bodies
 ---------------
 
-   A function that has a definition in the current translation unit will
+A function that has a definition in the current translation unit will
 have a non-`NULL' `DECL_INITIAL'.  However, back ends should not make
 use of the particular value given by `DECL_INITIAL'.
 
@@ -3271,10 +3279,10 @@ outermost block of the function, but it may also be a `TRY_BLOCK', a
 Statements
 ..........
 
-   There are tree nodes corresponding to all of the source-level
-statement constructs.  These are enumerated here, together with a list
-of the various macros that can be used to obtain information about
-them.  There are a few macros that can be used with all statements:
+There are tree nodes corresponding to all of the source-level statement
+constructs.  These are enumerated here, together with a list of the
+various macros that can be used to obtain information about them.  There
+are a few macros that can be used with all statements:
 
 `STMT_LINENO'
      This macro returns the line number for the statement.  If the
@@ -3296,6 +3304,7 @@ them.  There are a few macros that can be used with all statements:
      `STMT_IS_FULL_EXPR_P' set.  Temporaries created during such
      statements should be destroyed when the innermost enclosing
      statement with `STMT_IS_FULL_EXPR_P' set is exited.
+
 
    Here is the list of the various statement nodes, and the macros used
 to access them.  This documentation describes the use of these nodes in
@@ -3455,10 +3464,9 @@ several statements chained together.
 `HANDLER'
      Used to represent a C++ `catch' block.  The `HANDLER_TYPE' is the
      type of exception that will be caught by this handler; it is equal
-     (by pointer equality) to `CATCH_ALL_TYPE' if this handler is for
-     all types.  `HANDLER_PARMS' is the `DECL_STMT' for the catch
-     parameter, and `HANDLER_BODY' is the `COMPOUND_STMT' for the block
-     itself.
+     (by pointer equality) to `NULL' if this handler is for all types.
+     `HANDLER_PARMS' is the `DECL_STMT' for the catch parameter, and
+     `HANDLER_BODY' is the `COMPOUND_STMT' for the block itself.
 
 `IF_STMT'
      Used to represent an `if' statement.  The `IF_COND' is the
@@ -3560,13 +3568,14 @@ several statements chained together.
 
      The `WHILE_BODY' is the body of the loop.
 
+
 
 File: gccint.info,  Node: Attributes,  Next: Expression trees,  Prev: Declarations,  Up: Trees
 
 Attributes in trees
 ===================
 
-   Attributes, as specified using the `__attribute__' keyword, are
+Attributes, as specified using the `__attribute__' keyword, are
 represented internally as a `TREE_LIST'.  The `TREE_PURPOSE' is the
 name of the attribute, as an `IDENTIFIER_NODE'.  The `TREE_VALUE' is a
 `TREE_LIST' of the arguments of the attribute, if any, or `NULL_TREE'
@@ -3593,14 +3602,14 @@ File: gccint.info,  Node: Expression trees,  Prev: Attributes,  Up: Trees
 Expressions
 ===========
 
-   The internal representation for expressions is for the most part
-quite straightforward.  However, there are a few facts that one must
-bear in mind.  In particular, the expression "tree" is actually a
-directed acyclic graph.  (For example there may be many references to
-the integer constant zero throughout the source program; many of these
-will be represented by the same expression node.)  You should not rely
-on certain kinds of node being shared, nor should rely on certain kinds
-of nodes being unshared.
+The internal representation for expressions is for the most part quite
+straightforward.  However, there are a few facts that one must bear in
+mind.  In particular, the expression "tree" is actually a directed
+acyclic graph.  (For example there may be many references to the integer
+constant zero throughout the source program; many of these will be
+represented by the same expression node.)  You should not rely on
+certain kinds of node being shared, nor should rely on certain kinds of
+nodes being unshared.
 
    The following macros can be used with all expression nodes:
 
@@ -3789,7 +3798,6 @@ kinds of expressions:
      These nodes represent the conjugate of their operand.
 
 `REALPART_EXPR'
-
 `IMAGPART_EXPR'
      These nodes represent respectively the real and the imaginary parts
      of complex numbers (their sole argument).
@@ -4122,13 +4130,14 @@ kinds of expressions:
      (ap, type)'.  Its `TREE_TYPE' yields the tree representation for
      `type' and its sole argument yields the representation for `ap'.
 
+
 
 File: gccint.info,  Node: RTL,  Next: Machine Desc,  Prev: Trees,  Up: Top
 
 RTL Representation
 ******************
 
-   Most of the work of the compiler is done on an intermediate
+Most of the work of the compiler is done on an intermediate
 representation called register transfer language.  In this language,
 the instructions to be output are described, pretty much one by one, in
 an algebraic form that describes what the instruction does.
@@ -4168,7 +4177,7 @@ File: gccint.info,  Node: RTL Objects,  Next: RTL Classes,  Up: RTL
 RTL Object Types
 ================
 
-   RTL uses five kinds of objects: expressions, integers, wide integers,
+RTL uses five kinds of objects: expressions, integers, wide integers,
 strings and vectors.  Expressions are the most important ones.  An RTL
 expression ("RTX", for short) is a C structure, but it is usually
 referred to with a pointer; a type that is given the typedef name `rtx'.
@@ -4244,9 +4253,9 @@ File: gccint.info,  Node: RTL Classes,  Next: Accessors,  Prev: RTL Objects,  Up
 RTL Classes and Formats
 =======================
 
-   The various expression codes are divided into several "classes",
-which are represented by single characters.  You can determine the class
-of an RTX code with the macro `GET_RTX_CLASS (CODE)'.  Currently,
+The various expression codes are divided into several "classes", which
+are represented by single characters.  You can determine the class of
+an RTX code with the macro `GET_RTX_CLASS (CODE)'.  Currently,
 `rtx.def' defines these classes:
 
 `o'
@@ -4394,9 +4403,9 @@ File: gccint.info,  Node: Accessors,  Next: Flags,  Prev: RTL Classes,  Up: RTL
 Access to Operands
 ==================
 
-   Operands of expressions are accessed using the macros `XEXP',
-`XINT', `XWINT' and `XSTR'.  Each of these macros takes two arguments:
-an expression-pointer (RTX) and an operand number (counting from zero).
+Operands of expressions are accessed using the macros `XEXP', `XINT',
+`XWINT' and `XSTR'.  Each of these macros takes two arguments: an
+expression-pointer (RTX) and an operand number (counting from zero).
 Thus,
 
      XEXP (X, 2)
@@ -4453,7 +4462,7 @@ File: gccint.info,  Node: Flags,  Next: Machine Modes,  Prev: Accessors,  Up: RT
 Flags in an RTL Expression
 ==========================
 
-   RTL expressions contain several flags (one-bit bit-fields) that are
+RTL expressions contain several flags (one-bit bit-fields) that are
 used in certain types of expression.  Most often they are accessed with
 the following macros, which expand into lvalues.
 
@@ -4819,12 +4828,11 @@ File: gccint.info,  Node: Machine Modes,  Next: Constants,  Prev: Flags,  Up: RT
 Machine Modes
 =============
 
-   A machine mode describes a size of data object and the
-representation used for it.  In the C code, machine modes are
-represented by an enumeration type, `enum machine_mode', defined in
-`machmode.def'.  Each RTL expression has room for a machine mode and so
-do certain kinds of tree expressions (declarations and types, to be
-precise).
+A machine mode describes a size of data object and the representation
+used for it.  In the C code, machine modes are represented by an
+enumeration type, `enum machine_mode', defined in `machmode.def'.  Each
+RTL expression has room for a machine mode and so do certain kinds of
+tree expressions (declarations and types, to be precise).
 
    In debugging dumps and machine descriptions, the machine mode of an
 RTL expression is written after the expression code with a colon to
@@ -5048,8 +5056,7 @@ File: gccint.info,  Node: Constants,  Next: Regs and Memory,  Prev: Machine Mode
 Constant Expression Types
 =========================
 
-   The simplest RTL expressions are those that represent constant
-values.
+The simplest RTL expressions are those that represent constant values.
 
 `(const_int I)'
      This type of expression represents the integer value I.  I is
@@ -5173,7 +5180,7 @@ File: gccint.info,  Node: Regs and Memory,  Next: Arithmetic,  Prev: Constants, 
 Registers and Memory
 ====================
 
-   Here are the RTL expression types for describing access to machine
+Here are the RTL expression types for describing access to machine
 registers and to main memory.
 
 `(reg:M N)'
@@ -5440,10 +5447,10 @@ File: gccint.info,  Node: Arithmetic,  Next: Comparisons,  Prev: Regs and Memory
 RTL Expressions for Arithmetic
 ==============================
 
-   Unless otherwise specified, all the operands of arithmetic
-expressions must be valid for mode M.  An operand is valid for mode M
-if it has mode M, or if it is a `const_int' or `const_double' and M is
-a mode of class `MODE_INT'.
+Unless otherwise specified, all the operands of arithmetic expressions
+must be valid for mode M.  An operand is valid for mode M if it has
+mode M, or if it is a `const_int' or `const_double' and M is a mode of
+class `MODE_INT'.
 
    For commutative binary operations, constants should be placed in the
 second operand.
@@ -5618,16 +5625,16 @@ File: gccint.info,  Node: Comparisons,  Next: Bit-Fields,  Prev: Arithmetic,  Up
 Comparison Operations
 =====================
 
-   Comparison operators test a relation on two operands and are
-considered to represent a machine-dependent nonzero value described by,
-but not necessarily equal to, `STORE_FLAG_VALUE' (*note Misc::) if the
-relation holds, or zero if it does not, for comparison operators whose
-results have a `MODE_INT' mode, and `FLOAT_STORE_FLAG_VALUE' (*note
-Misc::) if the relation holds, or zero if it does not, for comparison
-operators that return floating-point values.  The mode of the
-comparison operation is independent of the mode of the data being
-compared.  If the comparison operation is being tested (e.g., the first
-operand of an `if_then_else'), the mode must be `VOIDmode'.
+Comparison operators test a relation on two operands and are considered
+to represent a machine-dependent nonzero value described by, but not
+necessarily equal to, `STORE_FLAG_VALUE' (*note Misc::) if the relation
+holds, or zero if it does not, for comparison operators whose results
+have a `MODE_INT' mode, and `FLOAT_STORE_FLAG_VALUE' (*note Misc::) if
+the relation holds, or zero if it does not, for comparison operators
+that return floating-point values.  The mode of the comparison
+operation is independent of the mode of the data being compared.  If
+the comparison operation is being tested (e.g., the first operand of an
+`if_then_else'), the mode must be `VOIDmode'.
 
    There are two ways that comparison operations may be used.  The
 comparison operators may be used to compare the condition codes `(cc0)'
@@ -5714,7 +5721,7 @@ File: gccint.info,  Node: Bit-Fields,  Next: Vector Operations,  Prev: Compariso
 Bit-Fields
 ==========
 
-   Special expression codes exist to represent bit-field instructions.
+Special expression codes exist to represent bit-field instructions.
 These types of expressions are lvalues in RTL; they may appear on the
 left side of an assignment, indicating insertion of a value into the
 specified bit-field.
@@ -5749,7 +5756,7 @@ File: gccint.info,  Node: Vector Operations,  Next: Conversions,  Prev: Bit-Fiel
 Vector Operations
 =================
 
-   All normal RTL expressions can be used with vector modes; they are
+All normal RTL expressions can be used with vector modes; they are
 interpreted as operating on each part of the vector independently.
 Additionally, there are a few new expressions to describe specific
 vector operations.
@@ -5784,18 +5791,19 @@ vector operations.
      output parts must be an integer multiple of the number of input
      parts.
 
+
 
 File: gccint.info,  Node: Conversions,  Next: RTL Declarations,  Prev: Vector Operations,  Up: RTL
 
 Conversions
 ===========
 
-   All conversions between machine modes must be represented by
-explicit conversion operations.  For example, an expression which is
-the sum of a byte and a full word cannot be written as `(plus:SI
-(reg:QI 34) (reg:SI 80))' because the `plus' operation requires two
-operands of the same machine mode.  Therefore, the byte-sized operand
-is enclosed in a conversion operation, as in
+All conversions between machine modes must be represented by explicit
+conversion operations.  For example, an expression which is the sum of
+a byte and a full word cannot be written as `(plus:SI (reg:QI 34)
+(reg:SI 80))' because the `plus' operation requires two operands of the
+same machine mode.  Therefore, the byte-sized operand is enclosed in a
+conversion operation, as in
 
      (plus:SI (sign_extend:SI (reg:QI 34)) (reg:SI 80))
 
@@ -5874,8 +5882,8 @@ File: gccint.info,  Node: RTL Declarations,  Next: Side Effects,  Prev: Conversi
 Declarations
 ============
 
-   Declaration expression codes do not represent arithmetic operations
-but rather state assertions about their operands.
+Declaration expression codes do not represent arithmetic operations but
+rather state assertions about their operands.
 
 `(strict_low_part (subreg:M (reg:N R) 0))'
      This expression code is used in only one context: as the
@@ -5895,7 +5903,7 @@ File: gccint.info,  Node: Side Effects,  Next: Incdec,  Prev: RTL Declarations, 
 Side Effect Expressions
 =======================
 
-   The expression codes described so far represent values, not actions.
+The expression codes described so far represent values, not actions.
 But machine instructions never produce values; they are meaningful only
 for their side effects on the state of the machine.  Special expression
 codes are used to represent side effects.
@@ -6213,7 +6221,7 @@ File: gccint.info,  Node: Incdec,  Next: Assembler,  Prev: Side Effects,  Up: RT
 Embedded Side-Effects on Addresses
 ==================================
 
-   Six special side-effect expression codes appear as memory addresses.
+Six special side-effect expression codes appear as memory addresses.
 
 `(pre_dec:M X)'
      Represents the side effect of decrementing X by a standard amount
@@ -6247,8 +6255,8 @@ Embedded Side-Effects on Addresses
      pointers on the machine in use.
 
      The expression Y must be one of three forms:
-          `(plus:M X Z)', `(minus:M X Z)', or `(plus:M X I)', where Z
-     is an index register and I is a constant.
+          `(plus:M X Z)', `(minus:M X Z)', or `(plus:M X I)',
+     where Z is an index register and I is a constant.
 
      Here is an example of its use:
 
@@ -6290,7 +6298,7 @@ File: gccint.info,  Node: Assembler,  Next: Insns,  Prev: Incdec,  Up: RTL
 Assembler Instructions as Expressions
 =====================================
 
-   The RTX code `asm_operands' represents a value produced by a
+The RTX code `asm_operands' represents a value produced by a
 user-specified assembler instruction.  It is used to represent an `asm'
 statement with arguments.  An `asm' statement with a single output
 operand, like this:
@@ -6325,7 +6333,7 @@ File: gccint.info,  Node: Insns,  Next: Calls,  Prev: Assembler,  Up: RTL
 Insns
 =====
 
-   The RTL representation of the code for a function is a doubly-linked
+The RTL representation of the code for a function is a doubly-linked
 chain of objects called "insns".  Insns are expressions with special
 codes that are used for no other purpose.  Some insns are actual
 instructions; others represent dispatch tables for `switch' statements;
@@ -6867,7 +6875,7 @@ File: gccint.info,  Node: Calls,  Next: Sharing,  Prev: Insns,  Up: RTL
 RTL Representation of Function-Call Insns
 =========================================
 
-   Insns that call subroutines have the RTL expression code `call_insn'.
+Insns that call subroutines have the RTL expression code `call_insn'.
 These insns must satisfy special rules, and their bodies must use a
 special RTL expression code, `call'.
 
@@ -6926,11 +6934,11 @@ File: gccint.info,  Node: Sharing,  Next: Reading RTL,  Prev: Calls,  Up: RTL
 Structure Sharing Assumptions
 =============================
 
-   The compiler assumes that certain kinds of RTL expressions are
-unique; there do not exist two distinct objects representing the same
-value.  In other cases, it makes an opposite assumption: that no RTL
-expression object of a certain kind appears in more than one place in
-the containing structure.
+The compiler assumes that certain kinds of RTL expressions are unique;
+there do not exist two distinct objects representing the same value.
+In other cases, it makes an opposite assumption: that no RTL expression
+object of a certain kind appears in more than one place in the
+containing structure.
 
    These assumptions refer to a single function; except for the RTL
 objects that describe global variables and external functions, and a
@@ -6995,7 +7003,7 @@ File: gccint.info,  Node: Reading RTL,  Prev: Sharing,  Up: RTL
 Reading RTL
 ===========
 
-   To read an RTL object from a file, call `read_rtx'.  It takes one
+To read an RTL object from a file, call `read_rtx'.  It takes one
 argument, a stdio stream, and returns a single RTL object.  This routine
 is defined in `read-rtl.c'.  It is not available in the compiler
 itself, only the various programs that generate the compiler back end
@@ -7020,7 +7028,7 @@ File: gccint.info,  Node: Machine Desc,  Next: Target Macros,  Prev: RTL,  Up: T
 Machine Descriptions
 ********************
 
-   A machine description has two parts: a file of instruction patterns
+A machine description has two parts: a file of instruction patterns
 (`.md' file) and a C header file of macro definitions.
 
    The `.md' file for a target machine contains a pattern for each
@@ -7065,7 +7073,7 @@ File: gccint.info,  Node: Overview,  Next: Patterns,  Up: Machine Desc
 Overview of How the Machine Description is Used
 ===============================================
 
-   There are three main conversions that happen in the compiler:
+There are three main conversions that happen in the compiler:
 
   1. The front end reads the source code and builds a parse tree.
 
@@ -7109,7 +7117,7 @@ File: gccint.info,  Node: Patterns,  Next: Example,  Prev: Overview,  Up: Machin
 Everything about Instruction Patterns
 =====================================
 
-   Each instruction pattern contains an incomplete RTL expression, with
+Each instruction pattern contains an incomplete RTL expression, with
 pieces to be filled in later, operand constraints that restrict how the
 pieces can be filled in, and an output pattern or C code to generate
 the assembler output, all wrapped up in a `define_insn' expression.
@@ -7181,7 +7189,7 @@ File: gccint.info,  Node: Example,  Next: RTL Template,  Prev: Patterns,  Up: Ma
 Example of `define_insn'
 ========================
 
-   Here is an actual example of an instruction pattern, for the
+Here is an actual example of an instruction pattern, for the
 68000/68020.
 
      (define_insn "tstsi"
@@ -7226,7 +7234,7 @@ File: gccint.info,  Node: RTL Template,  Next: Output Template,  Prev: Example, 
 RTL Template
 ============
 
-   The RTL template is used to define which insns match the particular
+The RTL template is used to define which insns match the particular
 pattern and how to find their operands.  For named patterns, the RTL
 template also says how to construct an insn from specified operands.
 
@@ -7481,13 +7489,14 @@ substitution of the operands.
      predicate function, and that function is solely responsible for
      deciding whether the expression to be matched "has" that mode.
 
+
 
 File: gccint.info,  Node: Output Template,  Next: Output Statement,  Prev: RTL Template,  Up: Machine Desc
 
 Output Templates and Operand Substitution
 =========================================
 
-   The "output template" is a string which specifies how to output the
+The "output template" is a string which specifies how to output the
 assembler code for an instruction pattern.  Most of the template is a
 fixed string which is output literally.  The character `%' is used to
 specify where to substitute an operand; it can also be used to identify
@@ -7568,7 +7577,7 @@ File: gccint.info,  Node: Output Statement,  Next: Constraints,  Prev: Output Te
 C Statements for Assembler Output
 =================================
 
-   Often a single fixed template string cannot produce correct and
+Often a single fixed template string cannot produce correct and
 efficient assembler code for all the cases that are recognized by a
 single instruction pattern.  For example, the opcodes may depend on the
 kinds of operands; or some unfortunate combinations of operands may
@@ -7659,13 +7668,12 @@ File: gccint.info,  Node: Constraints,  Next: Standard Names,  Prev: Output Stat
 Operand Constraints
 ===================
 
-   Each `match_operand' in an instruction pattern can specify a
-constraint for the type of operands allowed.  Constraints can say
-whether an operand may be in a register, and which kinds of register;
-whether the operand can be a memory reference, and which kinds of
-address; whether the operand may be an immediate constant, and which
-possible values it may have.  Constraints can also require two operands
-to match.
+Each `match_operand' in an instruction pattern can specify a constraint
+for the type of operands allowed.  Constraints can say whether an
+operand may be in a register, and which kinds of register; whether the
+operand can be a memory reference, and which kinds of address; whether
+the operand may be an immediate constant, and which possible values it
+may have.  Constraints can also require two operands to match.
 
 * Menu:
 
@@ -7681,7 +7689,7 @@ File: gccint.info,  Node: Simple Constraints,  Next: Multi-Alternative,  Up: Con
 Simple Constraints
 ------------------
 
-   The simplest kind of constraint is a string full of letters, each of
+The simplest kind of constraint is a string full of letters, each of
 which describes one kind of operand that is permitted.  Here are the
 letters that are allowed:
 
@@ -7962,11 +7970,11 @@ File: gccint.info,  Node: Multi-Alternative,  Next: Class Preferences,  Prev: Si
 Multiple Alternative Constraints
 --------------------------------
 
-   Sometimes a single instruction has multiple alternative sets of
-possible operands.  For example, on the 68000, a logical-or instruction
-can combine register or an immediate value into memory, or it can
-combine any kind of operand into a register; but it cannot combine one
-memory location into another.
+Sometimes a single instruction has multiple alternative sets of possible
+operands.  For example, on the 68000, a logical-or instruction can
+combine register or an immediate value into memory, or it can combine
+any kind of operand into a register; but it cannot combine one memory
+location into another.
 
    These constraints are represented as multiple alternatives.  An
 alternative can be described by a series of letters for each operand.
@@ -8022,15 +8030,15 @@ File: gccint.info,  Node: Class Preferences,  Next: Modifiers,  Prev: Multi-Alte
 Register Class Preferences
 --------------------------
 
-   The operand constraints have another function: they enable the
-compiler to decide which kind of hardware register a pseudo register is
-best allocated to.  The compiler examines the constraints that apply to
-the insns that use the pseudo register, looking for the
-machine-dependent letters such as `d' and `a' that specify classes of
-registers.  The pseudo register is put in whichever class gets the most
-"votes".  The constraint letters `g' and `r' also vote: they vote in
-favor of a general register.  The machine description says which
-registers are considered general.
+The operand constraints have another function: they enable the compiler
+to decide which kind of hardware register a pseudo register is best
+allocated to.  The compiler examines the constraints that apply to the
+insns that use the pseudo register, looking for the machine-dependent
+letters such as `d' and `a' that specify classes of registers.  The
+pseudo register is put in whichever class gets the most "votes".  The
+constraint letters `g' and `r' also vote: they vote in favor of a
+general register.  The machine description says which registers are
+considered general.
 
    Of course, on some machines all registers are equivalent, and no
 register classes are defined.  Then none of this complexity is relevant.
@@ -8041,7 +8049,7 @@ File: gccint.info,  Node: Modifiers,  Next: Machine Constraints,  Prev: Class Pr
 Constraint Modifier Characters
 ------------------------------
 
-   Here are constraint modifier characters.
+Here are constraint modifier characters.
 
 `='
      Means that this operand is write-only for this instruction: the
@@ -8128,9 +8136,9 @@ File: gccint.info,  Node: Machine Constraints,  Prev: Modifiers,  Up: Constraint
 Constraints for Particular Machines
 -----------------------------------
 
-   Whenever possible, you should use the general-purpose constraint
-letters in `asm' arguments, since they will convey meaning more readily
-to people reading your code.  Failing that, use the constraint letters
+Whenever possible, you should use the general-purpose constraint letters
+in `asm' arguments, since they will convey meaning more readily to
+people reading your code.  Failing that, use the constraint letters
 that usually have very similar meanings across architectures.  The most
 commonly used constraints are `m' and `r' (for memory and
 general-purpose registers respectively; *note Simple Constraints::), and
@@ -8619,6 +8627,7 @@ _FRV--`frv.h'_
           12-bit signed integer constant that is greater than
           zero--i.e. in the range of 1 to 2047.
 
+
 _IP2K--`ip2k.h'_
 
     `a'
@@ -8845,6 +8854,7 @@ _Motorola 68HC11 & 68HC12 families--`m68hc11.h'_
     `P'
           Constants in the range -8 to 2
 
+
 _SPARC--`sparc.h'_
 
     `f'
@@ -8923,6 +8933,7 @@ _SPARC--`sparc.h'_
 
     `W'
           Memory address for `e' constraint registers.
+
 
 _TMS320C3x/C4x--`c4x.h'_
 
@@ -9006,6 +9017,7 @@ _TMS320C3x/C4x--`c4x.h'_
     `U'
           Symbolic address
 
+
 _S/390 and zSeries--`s390.h'_
 
     `a'
@@ -9034,6 +9046,7 @@ _S/390 and zSeries--`s390.h'_
 
     `S'
           Symbolic constant suitable for use with the `larl' instruction
+
 
 _Xstormy16--`stormy16.h'_
 
@@ -9101,6 +9114,7 @@ _Xstormy16--`stormy16.h'_
     `U'
           A constant that is not between 2 and 15 inclusive.
 
+
 _Xtensa--`xtensa.h'_
 
     `a'
@@ -9124,14 +9138,16 @@ _Xtensa--`xtensa.h'_
     `L'
           Unsigned constant valid for BccUI instructions
 
+
+
 
 File: gccint.info,  Node: Standard Names,  Next: Pattern Ordering,  Prev: Constraints,  Up: Machine Desc
 
 Standard Pattern Names For Generation
 =====================================
 
-   Here is a table of the instruction names that are meaningful in the
-RTL generation pass of the compiler.  Giving one of these names to an
+Here is a table of the instruction names that are meaningful in the RTL
+generation pass of the compiler.  Giving one of these names to an
 instruction pattern tells the RTL generation pass that it can use the
 pattern to accomplish a certain task.
 
@@ -10080,17 +10096,18 @@ pattern to accomplish a certain task.
      Targets that do not support write prefetches or locality hints can
      ignore the values of operands 1 and 2.
 
+
 
 File: gccint.info,  Node: Pattern Ordering,  Next: Dependent Patterns,  Prev: Standard Names,  Up: Machine Desc
 
 When the Order of Patterns Matters
 ==================================
 
-   Sometimes an insn can match more than one instruction pattern.  Then
-the pattern that appears first in the machine description is the one
-used.  Therefore, more specific patterns (patterns that will match
-fewer things) and faster instructions (those that will produce better
-code when they do match) should usually go first in the description.
+Sometimes an insn can match more than one instruction pattern.  Then the
+pattern that appears first in the machine description is the one used.
+Therefore, more specific patterns (patterns that will match fewer
+things) and faster instructions (those that will produce better code
+when they do match) should usually go first in the description.
 
    In some cases the effect of ordering the patterns can be used to hide
 a pattern when it is not valid.  For example, the 68000 has an
@@ -10110,7 +10127,7 @@ File: gccint.info,  Node: Dependent Patterns,  Next: Jump Patterns,  Prev: Patte
 Interdependence of Patterns
 ===========================
 
-   Every machine description must have a named pattern for each of the
+Every machine description must have a named pattern for each of the
 conditional branch names `bCOND'.  The recognition template must always
 have the form
 
@@ -10181,7 +10198,7 @@ File: gccint.info,  Node: Jump Patterns,  Next: Looping Patterns,  Prev: Depende
 Defining Jump Instruction Patterns
 ==================================
 
-   For most machines, GCC assumes that the machine has a condition code.
+For most machines, GCC assumes that the machine has a condition code.
 A comparison insn sets the condition code, recording the results of both
 signed and unsigned comparison of the given operands.  A separate branch
 insn tests the condition code and branches or not according its value.
@@ -10292,7 +10309,7 @@ File: gccint.info,  Node: Looping Patterns,  Next: Insn Canonicalizations,  Prev
 Defining Looping Instruction Patterns
 =====================================
 
-   Some machines have special jump instructions that can be utilized to
+Some machines have special jump instructions that can be utilized to
 make loops more efficient.  A common example is the 68000 `dbra'
 instruction which performs a decrement of a register and a branch if the
 result was greater than zero.  Other machines, in particular digital
@@ -10388,12 +10405,12 @@ File: gccint.info,  Node: Insn Canonicalizations,  Next: Expander Definitions,  
 Canonicalization of Instructions
 ================================
 
-   There are often cases where multiple RTL expressions could represent
-an operation performed by a single machine instruction.  This situation
-is most commonly encountered with logical, branch, and
-multiply-accumulate instructions.  In such cases, the compiler attempts
-to convert these multiple RTL expressions into a single canonical form
-to reduce the number of insn patterns required.
+There are often cases where multiple RTL expressions could represent an
+operation performed by a single machine instruction.  This situation is
+most commonly encountered with logical, branch, and multiply-accumulate
+instructions.  In such cases, the compiler attempts to convert these
+multiple RTL expressions into a single canonical form to reduce the
+number of insn patterns required.
 
    In addition to algebraic simplifications, following canonicalizations
 are performed:
@@ -10480,9 +10497,9 @@ File: gccint.info,  Node: Expander Definitions,  Next: Insn Splitting,  Prev: In
 Defining RTL Sequences for Code Generation
 ==========================================
 
-   On some target machines, some standard pattern names for RTL
-generation cannot be handled with single insn, but a sequence of RTL
-insns can represent them.  For these target machines, you can write a
+On some target machines, some standard pattern names for RTL generation
+cannot be handled with single insn, but a sequence of RTL insns can
+represent them.  For these target machines, you can write a
 `define_expand' to specify how to generate the sequence of RTL.
 
    A `define_expand' is an RTL expression that looks almost like a
@@ -10661,7 +10678,7 @@ File: gccint.info,  Node: Insn Splitting,  Next: Including Patterns,  Prev: Expa
 Defining How to Split Instructions
 ==================================
 
-   There are two cases where you should specify how to split a pattern
+There are two cases where you should specify how to split a pattern
 into multiple insns.  On machines that have instructions requiring
 delay slots (*note Delay Slots::) or that have instructions whose
 output is not available for multiple cycles (*note Processor pipeline
@@ -10875,7 +10892,7 @@ File: gccint.info,  Node: Including Patterns,  Next: Peephole Definitions,  Prev
 Including Patterns in Machine Descriptions.
 ===========================================
 
-   The `include' pattern tells the compiler tools where to look for
+The `include' pattern tells the compiler tools where to look for
 patterns that are in files other than in the file `.md'. This is used
 only at build time and there is no preprocessing allowed.
 
@@ -10913,7 +10930,7 @@ subsections and placed into subdirectories.
 RTL Generation Tool Options for Directory Search
 ------------------------------------------------
 
-   The `-IDIR' option specifies directories to search for machine
+The `-IDIR' option specifies directories to search for machine
 descriptions.  For example:
 
 
@@ -10933,7 +10950,7 @@ File: gccint.info,  Node: Peephole Definitions,  Next: Insn Attributes,  Prev: I
 Machine-Specific Peephole Optimizers
 ====================================
 
-   In addition to instruction patterns the `md' file may contain
+In addition to instruction patterns the `md' file may contain
 definitions of machine-specific peephole optimizations.
 
    The combiner does not notice certain peephole optimizations when the
@@ -10964,7 +10981,7 @@ File: gccint.info,  Node: define_peephole,  Next: define_peephole2,  Up: Peephol
 RTL to Text Peephole Optimizers
 -------------------------------
 
-   A definition looks like this:
+A definition looks like this:
 
      (define_peephole
        [INSN-PATTERN-1
@@ -11119,10 +11136,9 @@ File: gccint.info,  Node: define_peephole2,  Prev: define_peephole,  Up: Peephol
 RTL to RTL Peephole Optimizers
 ------------------------------
 
-   The `define_peephole2' definition tells the compiler how to
-substitute one sequence of instructions for another sequence, what
-additional scratch registers may be needed and what their lifetimes
-must be.
+The `define_peephole2' definition tells the compiler how to substitute
+one sequence of instructions for another sequence, what additional
+scratch registers may be needed and what their lifetimes must be.
 
      (define_peephole2
        [INSN-PATTERN-1
@@ -11196,7 +11212,7 @@ File: gccint.info,  Node: Insn Attributes,  Next: Conditional Execution,  Prev: 
 Instruction Attributes
 ======================
 
-   In addition to describing the instruction supported by the target
+In addition to describing the instruction supported by the target
 machine, the `md' file also defines a group of "attributes" and a set of
 values for each.  Every generated insn is assigned a value for each
 attribute.  One possible attribute would be the effect that the insn
@@ -11220,8 +11236,8 @@ File: gccint.info,  Node: Defining Attributes,  Next: Expressions,  Up: Insn Att
 Defining Attributes and their Values
 ------------------------------------
 
-   The `define_attr' expression is used to define each attribute
-required by the target machine.  It looks like:
+The `define_attr' expression is used to define each attribute required
+by the target machine.  It looks like:
 
      (define_attr NAME LIST-OF-VALUES DEFAULT)
 
@@ -11272,10 +11288,9 @@ File: gccint.info,  Node: Expressions,  Next: Tagging Insns,  Prev: Defining Att
 Attribute Expressions
 ---------------------
 
-   RTL expressions used to define attributes use the codes described
-above plus a few specific to attribute definitions, to be discussed
-below.  Attribute value expressions must have one of the following
-forms:
+RTL expressions used to define attributes use the codes described above
+plus a few specific to attribute definitions, to be discussed below.
+Attribute value expressions must have one of the following forms:
 
 `(const_int I)'
      The integer I specifies the value of a numeric attribute.  I must
@@ -11432,16 +11447,16 @@ File: gccint.info,  Node: Tagging Insns,  Next: Attr Example,  Prev: Expressions
 Assigning Attribute Values to Insns
 -----------------------------------
 
-   The value assigned to an attribute of an insn is primarily
-determined by which pattern is matched by that insn (or which
-`define_peephole' generated it).  Every `define_insn' and
-`define_peephole' can have an optional last argument to specify the
-values of attributes for matching insns.  The value of any attribute
-not specified in a particular insn is set to the default value for that
-attribute, as specified in its `define_attr'.  Extensive use of default
-values for attributes permits the specification of the values for only
-one or two attributes in the definition of most insn patterns, as seen
-in the example in the next section.
+The value assigned to an attribute of an insn is primarily determined by
+which pattern is matched by that insn (or which `define_peephole'
+generated it).  Every `define_insn' and `define_peephole' can have an
+optional last argument to specify the values of attributes for matching
+insns.  The value of any attribute not specified in a particular insn
+is set to the default value for that attribute, as specified in its
+`define_attr'.  Extensive use of default values for attributes permits
+the specification of the values for only one or two attributes in the
+definition of most insn patterns, as seen in the example in the next
+section.
 
    The optional last argument of `define_insn' and `define_peephole' is
 a vector of expressions, each of which defines the value for a single
@@ -11527,7 +11542,7 @@ File: gccint.info,  Node: Attr Example,  Next: Insn Lengths,  Prev: Tagging Insn
 Example of Attribute Specifications
 -----------------------------------
 
-   The judicious use of defaulting is important in the efficient use of
+The judicious use of defaulting is important in the efficient use of
 insn attributes.  Typically, insns are divided into "types" and an
 attribute, customarily called `type', is used to represent this value.
 This attribute is normally used only to define the default value for
@@ -11581,13 +11596,12 @@ File: gccint.info,  Node: Insn Lengths,  Next: Constant Attributes,  Prev: Attr 
 Computing the Length of an Insn
 -------------------------------
 
-   For many machines, multiple types of branch instructions are
-provided, each for different length branch displacements.  In most
-cases, the assembler will choose the correct instruction to use.
-However, when the assembler cannot do so, GCC can when a special
-attribute, the `length' attribute, is defined.  This attribute must be
-defined to have numeric values by specifying a null string in its
-`define_attr'.
+For many machines, multiple types of branch instructions are provided,
+each for different length branch displacements.  In most cases, the
+assembler will choose the correct instruction to use.  However, when
+the assembler cannot do so, GCC can when a special attribute, the
+`length' attribute, is defined.  This attribute must be defined to have
+numeric values by specifying a null string in its `define_attr'.
 
    In the case of the `length' attribute, two additional forms of
 arithmetic terms are allowed in test expressions:
@@ -11661,10 +11675,10 @@ File: gccint.info,  Node: Constant Attributes,  Next: Delay Slots,  Prev: Insn L
 Constant Attributes
 -------------------
 
-   A special form of `define_attr', where the expression for the
-default value is a `const' expression, indicates an attribute that is
-constant for a given run of the compiler.  Constant attributes may be
-used to specify which variety of processor is used.  For example,
+A special form of `define_attr', where the expression for the default
+value is a `const' expression, indicates an attribute that is constant
+for a given run of the compiler.  Constant attributes may be used to
+specify which variety of processor is used.  For example,
 
      (define_attr "cpu" "m88100,m88110,m88000"
       (const
@@ -11690,8 +11704,8 @@ File: gccint.info,  Node: Delay Slots,  Next: Processor pipeline description,  P
 Delay Slot Scheduling
 ---------------------
 
-   The insn attribute mechanism can be used to specify the requirements
-for delay slots, if any, on a target machine.  An instruction is said to
+The insn attribute mechanism can be used to specify the requirements for
+delay slots, if any, on a target machine.  An instruction is said to
 require a "delay slot" if some instructions that are physically after
 the instruction are executed as if they were located before it.
 Classic examples are branch and call instructions, which often execute
@@ -11759,14 +11773,14 @@ File: gccint.info,  Node: Processor pipeline description,  Prev: Delay Slots,  U
 Specifying processor pipeline description
 -----------------------------------------
 
-   To achieve better performance, most modern processors
-(super-pipelined, superscalar RISC, and VLIW processors) have many
-"functional units" on which several instructions can be executed
-simultaneously.  An instruction starts execution if its issue
-conditions are satisfied.  If not, the instruction is stalled until its
-conditions are satisfied.  Such "interlock (pipeline) delay" causes
-interruption of the fetching of successor instructions (or demands nop
-instructions, e.g. for some MIPS processors).
+To achieve better performance, most modern processors (super-pipelined,
+superscalar RISC, and VLIW processors) have many "functional units" on
+which several instructions can be executed simultaneously.  An
+instruction starts execution if its issue conditions are satisfied.  If
+not, the instruction is stalled until its conditions are satisfied.
+Such "interlock (pipeline) delay" causes interruption of the fetching
+of successor instructions (or demands nop instructions, e.g. for some
+MIPS processors).
 
    There are two major kinds of interlock delays in modern processors.
 The first one is a data dependence delay determining "instruction
@@ -11832,7 +11846,7 @@ File: gccint.info,  Node: Old pipeline description,  Next: Automaton pipeline de
 Specifying Function Units
 .........................
 
-   On most RISC machines, there are instructions whose results are not
+On most RISC machines, there are instructions whose results are not
 available for a specific number of cycles.  Common cases are
 instructions that load data from memory.  On many machines, a pipeline
 stall will result if the data is referenced too soon after the load
@@ -11948,7 +11962,7 @@ File: gccint.info,  Node: Automaton pipeline description,  Next: Comparison of t
 Describing instruction pipeline characteristics
 ...............................................
 
-   This section describes constructions of the automaton based processor
+This section describes constructions of the automaton based processor
 pipeline description.  The order of constructions within the machine
 description file is not important.
 
@@ -12226,7 +12240,7 @@ File: gccint.info,  Node: Comparison of the two descriptions,  Prev: Automaton p
 Drawbacks of the old pipeline description
 .........................................
 
-   The old instruction level parallelism description and the pipeline
+The old instruction level parallelism description and the pipeline
 hazards recognizer based on it have the following drawbacks in
 comparison with the DFA-based ones:
 
@@ -12268,7 +12282,7 @@ File: gccint.info,  Node: Conditional Execution,  Next: Constant Definitions,  P
 Conditional Execution
 =====================
 
-   A number of architectures provide for some form of conditional
+A number of architectures provide for some form of conditional
 execution, or predication.  The hallmark of this feature is the ability
 to nullify most of the instructions in the instruction set.  When the
 instruction set is large and not entirely symmetric, it can be quite
@@ -12337,8 +12351,8 @@ File: gccint.info,  Node: Constant Definitions,  Prev: Conditional Execution,  U
 Constant Definitions
 ====================
 
-   Using literal constants inside instruction patterns reduces
-legibility and can be a maintenance problem.
+Using literal constants inside instruction patterns reduces legibility
+and can be a maintenance problem.
 
    To overcome this problem, you may use the `define_constants'
 expression.  It contains a vector of name-value pairs.  From that point
@@ -12386,11 +12400,11 @@ File: gccint.info,  Node: Target Macros,  Next: Host Config,  Prev: Machine Desc
 Target Description Macros and Functions
 ***************************************
 
-   In addition to the file `MACHINE.md', a machine description includes
-a C header file conventionally given the name `MACHINE.h' and a C
-source file named `MACHINE.c'.  The header file defines numerous macros
-that convey the information about the target machine that does not fit
-into the scheme of the `.md' file.  The file `tm.h' should be a link to
+In addition to the file `MACHINE.md', a machine description includes a
+C header file conventionally given the name `MACHINE.h' and a C source
+file named `MACHINE.c'.  The header file defines numerous macros that
+convey the information about the target machine that does not fit into
+the scheme of the `.md' file.  The file `tm.h' should be a link to
 `MACHINE.h'.  The header file `config.h' includes `tm.h' and most
 compiler source files include `config.h'.  The source file defines a
 variable `targetm', which is a structure containing pointers to
@@ -12453,10 +12467,10 @@ The Global `targetm' Variable
           
           struct gcc_target targetm = TARGET_INITIALIZER;
 
-   Where a macro should be defined in the `.c' file in this manner to
-form part of the `targetm' structure, it is documented below as a
-"Target Hook" with a prototype.  Many macros will change in future from
-being defined in the `.h' file to being part of the `targetm' structure.
+Where a macro should be defined in the `.c' file in this manner to form
+part of the `targetm' structure, it is documented below as a "Target
+Hook" with a prototype.  Many macros will change in future from being
+defined in the `.h' file to being part of the `targetm' structure.
 
 
 File: gccint.info,  Node: Driver,  Next: Run-time Target,  Prev: Target Structure,  Up: Target Macros
@@ -12464,7 +12478,7 @@ File: gccint.info,  Node: Driver,  Next: Run-time Target,  Prev: Target Structur
 Controlling the Compilation Driver, `gcc'
 =========================================
 
-   You can control the compilation driver.
+You can control the compilation driver.
 
 `SWITCH_TAKES_ARG (CHAR)'
      A C expression which determines whether the option `-CHAR' takes
@@ -12900,7 +12914,7 @@ File: gccint.info,  Node: Run-time Target,  Next: Per-Function Data,  Prev: Driv
 Run-time Target Specification
 =============================
 
-   Here are run-time target specifications.
+Here are run-time target specifications.
 
 `TARGET_CPU_CPP_BUILTINS()'
      This function-like macro expands to a block of code that defines
@@ -13110,7 +13124,7 @@ File: gccint.info,  Node: Per-Function Data,  Next: Storage Layout,  Prev: Run-t
 Defining data structures for per-function information.
 ======================================================
 
-   If the target needs to store information on a per-function basis, GCC
+If the target needs to store information on a per-function basis, GCC
 provides a macro and a couple of variables to allow this.  Note, just
 using statics to store the information is a bad idea, since GCC supports
 nested functions, so you can be halfway through encoding one function
@@ -13162,16 +13176,17 @@ supported.
      GC.  Generally, any memory that they reference must be allocated
      by using `ggc_alloc', including the structure itself.
 
+
 
 File: gccint.info,  Node: Storage Layout,  Next: Type Layout,  Prev: Per-Function Data,  Up: Target Macros
 
 Storage Layout
 ==============
 
-   Note that the definitions of the macros in this table which are
-sizes or alignments measured in bits do not need to be constant.  They
-can be C expressions that refer to static variables, such as the
-`target_flags'.  *Note Run-time Target::.
+Note that the definitions of the macros in this table which are sizes or
+alignments measured in bits do not need to be constant.  They can be C
+expressions that refer to static variables, such as the `target_flags'.
+*Note Run-time Target::.
 
 `BITS_BIG_ENDIAN'
      Define this macro to have the value 1 if the most significant bit
@@ -13687,11 +13702,10 @@ File: gccint.info,  Node: Type Layout,  Next: Escape Sequences,  Prev: Storage L
 Layout of Source Language Data Types
 ====================================
 
-   These macros define the sizes and other characteristics of the
-standard basic data types used in programs being compiled.  Unlike the
-macros in the previous section, these apply to specific features of C
-and related languages, rather than to fundamental aspects of storage
-layout.
+These macros define the sizes and other characteristics of the standard
+basic data types used in programs being compiled.  Unlike the macros in
+the previous section, these apply to specific features of C and related
+languages, rather than to fundamental aspects of storage layout.
 
 `INT_TYPE_SIZE'
      A C expression for the size in bits of the type `int' on the
@@ -13931,7 +13945,7 @@ File: gccint.info,  Node: Escape Sequences,  Next: Registers,  Prev: Type Layout
 Target Character Escape Sequences
 =================================
 
-   By default, GCC assumes that the C character escape sequences take on
+By default, GCC assumes that the C character escape sequences take on
 their ASCII values for the target.  If this is not correct, you must
 explicitly define all of the macros below.
 
@@ -13962,8 +13976,8 @@ File: gccint.info,  Node: Registers,  Next: Register Classes,  Prev: Escape Sequ
 Register Usage
 ==============
 
-   This section explains how to describe what registers the target
-machine has, and how (in general) they can be used.
+This section explains how to describe what registers the target machine
+has, and how (in general) they can be used.
 
    The description of which registers a specific instruction can use is
 done with register classes; see *Note Register Classes::.  For
@@ -13986,7 +14000,7 @@ File: gccint.info,  Node: Register Basics,  Next: Allocation Order,  Up: Registe
 Basic Characteristics of Registers
 ----------------------------------
 
-   Registers have various characteristics.
+Registers have various characteristics.
 
 `FIRST_PSEUDO_REGISTER'
      Number of hardware registers known to the compiler.  They receive
@@ -14097,13 +14111,14 @@ Basic Characteristics of Registers
      registers need not be explicitly restored on function exit or
      during non-local gotos.
 
+
 
 File: gccint.info,  Node: Allocation Order,  Next: Values in Registers,  Prev: Register Basics,  Up: Registers
 
 Order of Allocation of Registers
 --------------------------------
 
-   Registers are allocated in order.
+Registers are allocated in order.
 
 `REG_ALLOC_ORDER'
      If defined, an initializer for a vector of integers, containing the
@@ -14139,7 +14154,7 @@ File: gccint.info,  Node: Values in Registers,  Next: Leaf Functions,  Prev: All
 How Values Fit in Registers
 ---------------------------
 
-   This section discusses the macros that describe which kinds of values
+This section discusses the macros that describe which kinds of values
 (specifically, which machine modes) each register can hold, and how many
 consecutive registers are needed for a given mode.
 
@@ -14242,8 +14257,8 @@ File: gccint.info,  Node: Leaf Functions,  Next: Stack Registers,  Prev: Values 
 Handling Leaf Functions
 -----------------------
 
-   On some machines, a leaf function (i.e., one which makes no calls)
-can run more efficiently if it does not make its own register window.
+On some machines, a leaf function (i.e., one which makes no calls) can
+run more efficiently if it does not make its own register window.
 Often this means it is required to receive its arguments in the
 registers where they are passed by the caller, instead of the registers
 where they would normally arrive.
@@ -14303,7 +14318,7 @@ File: gccint.info,  Node: Stack Registers,  Prev: Leaf Functions,  Up: Registers
 Registers That Form a Stack
 ---------------------------
 
-   There are special features to handle computers where some of the
+There are special features to handle computers where some of the
 "registers" form a stack, as in the 80387 coprocessor for the 80386.
 Stack registers are normally written by pushing onto the stack, and are
 numbered relative to the top of the stack.
@@ -14328,11 +14343,11 @@ File: gccint.info,  Node: Register Classes,  Next: Stack and Calling,  Prev: Reg
 Register Classes
 ================
 
-   On many machines, the numbered registers are not all equivalent.
-For example, certain registers may not be allowed for indexed
-addressing; certain registers may not be allowed in some instructions.
-These machine restrictions are described to the compiler using
-"register classes".
+On many machines, the numbered registers are not all equivalent.  For
+example, certain registers may not be allowed for indexed addressing;
+certain registers may not be allowed in some instructions.  These
+machine restrictions are described to the compiler using "register
+classes".
 
    You define a number of register classes, giving each one a name and
 saying which of the registers belong to it.  Then you can specify
@@ -14783,7 +14798,7 @@ File: gccint.info,  Node: Stack and Calling,  Next: Varargs,  Prev: Register Cla
 Stack Layout and Calling Conventions
 ====================================
 
-   This describes the stack layout and calling conventions.
+This describes the stack layout and calling conventions.
 
 * Menu:
 
@@ -14807,7 +14822,7 @@ File: gccint.info,  Node: Frame Layout,  Next: Exception Handling,  Up: Stack an
 Basic Stack Layout
 ------------------
 
-   Here is the basic stack layout.
+Here is the basic stack layout.
 
 `STACK_GROWS_DOWNWARD'
      Define this macro if pushing a word onto the stack moves the stack
@@ -15059,14 +15074,25 @@ Exception Handling Support
      should be updated in FS and the macro should branch to SUCCESS.
      If the frame cannot be decoded, the macro should do nothing.
 
+`MD_HANDLE_UNWABI(CONTEXT, FS)'
+     This macro allows the target to add operating system specific code
+     to the call-frame unwinder to handle the IA-64 `.unwabi' unwinding
+     directive, usually used for signal or interrupt frames.
+
+     This macro is called from `uw_update_context' in `unwind-ia64.c'.
+     CONTEXT is an `_Unwind_Context'; FS is an `_Unwind_FrameState'.
+     Examine `fs->unwabi' for the abi and context in the `.unwabi'
+     directive.  If the `.unwabi' directive can be handled, the
+     register save addresses should be updated in FS.
+
 
 File: gccint.info,  Node: Stack Checking,  Next: Frame Registers,  Prev: Exception Handling,  Up: Stack and Calling
 
 Specifying How Stack Checking is Done
 -------------------------------------
 
-   GCC will check that stack references are within the boundaries of
-the stack, if the `-fstack-check' is specified, in one of three ways:
+GCC will check that stack references are within the boundaries of the
+stack, if the `-fstack-check' is specified, in one of three ways:
 
   1. If the value of the `STACK_CHECK_BUILTIN' macro is nonzero, GCC
      will assume that you have arranged for stack checking to be done at
@@ -15142,7 +15168,7 @@ File: gccint.info,  Node: Frame Registers,  Next: Elimination,  Prev: Stack Chec
 Registers That Address the Stack Frame
 --------------------------------------
 
-   This discusses registers that address the stack frame.
+This discusses registers that address the stack frame.
 
 `STACK_POINTER_REGNUM'
      The register number of the stack pointer register, which must also
@@ -15252,13 +15278,14 @@ Registers That Address the Stack Frame
      If this macro is not defined, it defaults to
      `DWARF_FRAME_REGISTERS'.
 
+
 
 File: gccint.info,  Node: Elimination,  Next: Stack Arguments,  Prev: Frame Registers,  Up: Stack and Calling
 
 Eliminating Frame Pointer and Arg Pointer
 -----------------------------------------
 
-   This is about eliminating the frame pointer and arg pointer.
+This is about eliminating the frame pointer and arg pointer.
 
 `FRAME_POINTER_REQUIRED'
      A C expression which is nonzero if a function must have and use a
@@ -15342,7 +15369,7 @@ File: gccint.info,  Node: Stack Arguments,  Next: Register Arguments,  Prev: Eli
 Passing Function Arguments on the Stack
 ---------------------------------------
 
-   The macros in this section control how arguments are passed on the
+The macros in this section control how arguments are passed on the
 stack.  See the following section for other macros that control passing
 certain arguments in registers.
 
@@ -15499,13 +15526,14 @@ certain arguments in registers.
      property of the call site, not of the called function,
      `RETURN_POPS_ARGS' is not appropriate.
 
+
 
 File: gccint.info,  Node: Register Arguments,  Next: Scalar Return,  Prev: Stack Arguments,  Up: Stack and Calling
 
 Passing Arguments in Registers
 ------------------------------
 
-   This section describes the macros which let you control how various
+This section describes the macros which let you control how various
 types of arguments are passed in registers or how they are arranged in
 the stack.
 
@@ -15725,13 +15753,14 @@ the stack.
      argument is loaded first.  This macro only affects arguments
      passed in registers.
 
+
 
 File: gccint.info,  Node: Scalar Return,  Next: Aggregate Return,  Prev: Register Arguments,  Up: Stack and Calling
 
 How Scalar Function Values Are Returned
 ---------------------------------------
 
-   This section discusses the macros that control returning scalars as
+This section discusses the macros that control returning scalars as
 values--values that can fit in registers.
 
 `FUNCTION_VALUE (VALTYPE, FUNC)'
@@ -15820,7 +15849,7 @@ File: gccint.info,  Node: Aggregate Return,  Next: Caller Saves,  Prev: Scalar R
 How Large Values Are Returned
 -----------------------------
 
-   When a function value's mode is `BLKmode' (and in some other cases),
+When a function value's mode is `BLKmode' (and in some other cases),
 the value is not returned according to `FUNCTION_VALUE' (*note Scalar
 Return::).  Instead, the caller passes the address of a block of memory
 in which the value should be stored.  This address is called the
@@ -15902,7 +15931,7 @@ File: gccint.info,  Node: Caller Saves,  Next: Function Entry,  Prev: Aggregate 
 Caller-Saves Register Allocation
 --------------------------------
 
-   If you enable it, GCC can save registers around function calls.  This
+If you enable it, GCC can save registers around function calls.  This
 makes it possible to use call-clobbered registers to hold variables that
 must live across calls.
 
@@ -15936,7 +15965,7 @@ File: gccint.info,  Node: Function Entry,  Next: Profiling,  Prev: Caller Saves,
 Function Entry and Exit
 -----------------------
 
-   This section describes the macros that output function entry
+This section describes the macros that output function entry
 ("prologue") and exit ("epilogue") code.
 
  - Target Hook: void TARGET_ASM_FUNCTION_PROLOGUE (FILE *FILE,
@@ -16129,6 +16158,7 @@ Function Entry and Exit
      You need not define this macro if you did not define
      `DELAY_SLOTS_FOR_EPILOGUE'.
 
+
  - Target Hook: void TARGET_ASM_OUTPUT_MI_THUNK (FILE *FILE, tree
           THUNK_FNDECL, HOST_WIDE_INT DELTA, tree FUNCTION)
      A function that outputs the assembler code for a thunk function,
@@ -16184,7 +16214,7 @@ File: gccint.info,  Node: Profiling,  Next: Tail Calls,  Prev: Function Entry,  
 Generating Code for Profiling
 -----------------------------
 
-   These macros will help you generate code for profiling.
+These macros will help you generate code for profiling.
 
 `FUNCTION_PROFILER (FILE, LABELNO)'
      A C statement or compound statement to output to FILE some
@@ -16239,8 +16269,8 @@ File: gccint.info,  Node: Varargs,  Next: Trampolines,  Prev: Stack and Calling,
 Implementing the Varargs Macros
 ===============================
 
-   GCC comes with an implementation of `<varargs.h>' and `<stdarg.h>'
-that work without change on machines that pass arguments on the stack.
+GCC comes with an implementation of `<varargs.h>' and `<stdarg.h>' that
+work without change on machines that pass arguments on the stack.
 Other machines require their own implementations of varargs, and the
 two machine independent header files must have conditionals to include
 it.
@@ -16394,7 +16424,7 @@ File: gccint.info,  Node: Trampolines,  Next: Library Calls,  Prev: Varargs,  Up
 Trampolines for Nested Functions
 ================================
 
-   A "trampoline" is a small piece of code that is created at run time
+A "trampoline" is a small piece of code that is created at run time
 when the address of a nested function is taken.  It normally resides on
 the stack, in the stack frame of the containing function.  These macros
 tell GCC how to generate code to allocate and initialize a trampoline.
@@ -16545,7 +16575,7 @@ File: gccint.info,  Node: Library Calls,  Next: Addressing Modes,  Prev: Trampol
 Implicit Calls to Library Routines
 ==================================
 
-   Here is an explanation of implicit calls to library routines.
+Here is an explanation of implicit calls to library routines.
 
 `MULSI3_LIBCALL'
      A C string constant giving the name of the function to call for
@@ -16674,7 +16704,7 @@ File: gccint.info,  Node: Addressing Modes,  Next: Condition Code,  Prev: Librar
 Addressing Modes
 ================
 
-   This is about addressing modes.
+This is about addressing modes.
 
 `HAVE_PRE_INCREMENT'
 `HAVE_PRE_DECREMENT'
@@ -16911,7 +16941,7 @@ File: gccint.info,  Node: Condition Code,  Next: Costs,  Prev: Addressing Modes,
 Condition Code Status
 =====================
 
-   This describes the condition code status.
+This describes the condition code status.
 
    The file `conditions.h' defines a variable `cc_status' to describe
 how the condition code was computed (in case the interpretation of the
@@ -17063,14 +17093,15 @@ machine-specific information by defining `CC_STATUS_MDEP'.
           #define REVERSE_CONDEXEC_PREDICATES_P (x, y) \
              ((x) == reverse_condition (y))
 
+
 
 File: gccint.info,  Node: Costs,  Next: Scheduling,  Prev: Condition Code,  Up: Target Macros
 
 Describing Relative Costs of Operations
 =======================================
 
-   These macros let you describe the relative speed of various
-operations on the target machine.
+These macros let you describe the relative speed of various operations
+on the target machine.
 
 `CONST_COSTS (X, CODE, OUTER_CODE)'
      A part of a C `switch' statement that describes the relative costs
@@ -17333,7 +17364,7 @@ File: gccint.info,  Node: Scheduling,  Next: Sections,  Prev: Costs,  Up: Target
 Adjusting the Instruction Scheduler
 ===================================
 
-   The instruction scheduler may need a fair amount of machine-specific
+The instruction scheduler may need a fair amount of machine-specific
 adjustment in order to produce good code.  GCC provides several target
 hooks for this purpose.  It is usually enough to define just a few of
 them: try the first ones in this list first.
@@ -17557,13 +17588,14 @@ and can be useful for writing the hooks.
      insns described in constructions `define_insn_reservation' which
      can be issued on the same processor cycle.
 
+
 
 File: gccint.info,  Node: Sections,  Next: PIC,  Prev: Scheduling,  Up: Target Macros
 
 Dividing the Output into Sections (Texts, Data, ...)
 ====================================================
 
-   An object file is divided into sections containing different types of
+An object file is divided into sections containing different types of
 data.  In the most common case, there are three sections: the "text
 section", which holds instructions and read-only data; the "data
 section", which holds initialized writable data; and the "bss section",
@@ -17782,9 +17814,9 @@ File: gccint.info,  Node: PIC,  Next: Assembler Format,  Prev: Sections,  Up: Ta
 Position Independent Code
 =========================
 
-   This section describes macros that help implement generation of
-position independent code.  Simply defining these macros is not enough
-to generate valid PIC; you must also add support to the macros
+This section describes macros that help implement generation of position
+independent code.  Simply defining these macros is not enough to
+generate valid PIC; you must also add support to the macros
 `GO_IF_LEGITIMATE_ADDRESS' and `PRINT_OPERAND_ADDRESS', as well as
 `LEGITIMIZE_ADDRESS'.  You must modify the definition of `movsi' to do
 something appropriate when the source operand contains a symbolic
@@ -17837,8 +17869,8 @@ File: gccint.info,  Node: Assembler Format,  Next: Debugging Info,  Prev: PIC,  
 Defining the Output Assembler Language
 ======================================
 
-   This section describes macros whose principal purpose is to describe
-how to write instructions in assembler language--rather than what the
+This section describes macros whose principal purpose is to describe how
+to write instructions in assembler language--rather than what the
 instructions do.
 
 * Menu:
@@ -17863,7 +17895,7 @@ File: gccint.info,  Node: File Framework,  Next: Data Output,  Up: Assembler For
 The Overall Framework of an Assembler File
 ------------------------------------------
 
-   This describes the overall framework of an assembler file.
+This describes the overall framework of an assembler file.
 
 `ASM_FILE_START (STREAM)'
      A C expression which outputs to the stdio stream STREAM some
@@ -18133,7 +18165,7 @@ File: gccint.info,  Node: Uninitialized Data,  Next: Label Output,  Prev: Data O
 Output of Uninitialized Variables
 ---------------------------------
 
-   Each of the macros in this section is used to do the whole job of
+Each of the macros in this section is used to do the whole job of
 outputting a single uninitialized variable.
 
 `ASM_OUTPUT_COMMON (STREAM, NAME, SIZE, ROUNDED)'
@@ -18243,7 +18275,7 @@ File: gccint.info,  Node: Label Output,  Next: Initialization,  Prev: Uninitiali
 Output and Generation of Labels
 -------------------------------
 
-   This is about outputting labels.
+This is about outputting labels.
 
 `ASM_OUTPUT_LABEL (STREAM, NAME)'
      A C statement (sans semicolon) to output to the stdio stream
@@ -18637,11 +18669,11 @@ File: gccint.info,  Node: Initialization,  Next: Macros for Initialization,  Pre
 How Initialization Functions Are Handled
 ----------------------------------------
 
-   The compiled code for certain languages includes "constructors"
-(also called "initialization routines")--functions to initialize data
-in the program when the program is started.  These functions need to be
-called before the program is "started"--that is to say, before `main'
-is called.
+The compiled code for certain languages includes "constructors" (also
+called "initialization routines")--functions to initialize data in the
+program when the program is started.  These functions need to be called
+before the program is "started"--that is to say, before `main' is
+called.
 
    Compiling some languages generates "destructors" (also called
 "termination routines") that should be called when the program
@@ -18752,8 +18784,8 @@ File: gccint.info,  Node: Macros for Initialization,  Next: Instruction Output, 
 Macros Controlling Initialization Routines
 ------------------------------------------
 
-   Here are the macros that control how the compiler handles
-initialization and termination functions:
+Here are the macros that control how the compiler handles initialization
+and termination functions:
 
 `INIT_SECTION_ASM_OP'
      If defined, a C string constant, including spacing, for the
@@ -18885,7 +18917,7 @@ File: gccint.info,  Node: Instruction Output,  Next: Dispatch Tables,  Prev: Mac
 Output of Assembler Instructions
 --------------------------------
 
-   This describes assembler instruction output.
+This describes assembler instruction output.
 
 `REGISTER_NAMES'
      A C initializer containing the assembler's names for the machine
@@ -19074,7 +19106,7 @@ File: gccint.info,  Node: Dispatch Tables,  Next: Exception Region Output,  Prev
 Output of Dispatch Tables
 -------------------------
 
-   This concerns dispatch tables.
+This concerns dispatch tables.
 
 `ASM_OUTPUT_ADDR_DIFF_ELT (STREAM, BODY, VALUE, REL)'
      A C statement to output to the stdio stream STREAM an assembler
@@ -19135,7 +19167,7 @@ File: gccint.info,  Node: Exception Region Output,  Next: Alignment Output,  Pre
 Assembler Commands for Exception Regions
 ----------------------------------------
 
-   This describes commands marking the start and the end of an exception
+This describes commands marking the start and the end of an exception
 region.
 
 `EH_FRAME_SECTION_NAME'
@@ -19186,6 +19218,7 @@ region.
      DWARF::.  Only applicable if the target supports DWARF 2 frame
      unwind information.
 
+
  - Target Hook: void TARGET_ASM_EXCEPTION_SECTION ()
      If defined, a function that switches to the section in which the
      main exception table is to be placed (*note Sections::).  The
@@ -19213,7 +19246,7 @@ File: gccint.info,  Node: Alignment Output,  Prev: Exception Region Output,  Up:
 Assembler Commands for Alignment
 --------------------------------
 
-   This describes commands for alignment.
+This describes commands for alignment.
 
 `JUMP_ALIGN (LABEL)'
      The alignment (log base 2) to put in front of LABEL, which is a
@@ -19307,7 +19340,7 @@ File: gccint.info,  Node: Debugging Info,  Next: Floating Point,  Prev: Assemble
 Controlling Debugging Information Format
 ========================================
 
-   This describes how to specify debugging information.
+This describes how to specify debugging information.
 
 * Menu:
 
@@ -19324,7 +19357,7 @@ File: gccint.info,  Node: All Debuggers,  Next: DBX Options,  Up: Debugging Info
 Macros Affecting All Debugging Formats
 --------------------------------------
 
-   These macros affect all debugging formats.
+These macros affect all debugging formats.
 
 `DBX_REGISTER_NUMBER (REGNO)'
      A C expression that returns the DBX register number for the
@@ -19385,7 +19418,7 @@ File: gccint.info,  Node: DBX Options,  Next: DBX Hooks,  Prev: All Debuggers,  
 Specific Options for DBX Output
 -------------------------------
 
-   These are specific options for DBX output.
+These are specific options for DBX output.
 
 `DBX_DEBUGGING_INFO'
      Define this macro if GCC should produce debugging output for DBX
@@ -19510,7 +19543,7 @@ File: gccint.info,  Node: DBX Hooks,  Next: File Names and DBX,  Prev: DBX Optio
 Open-Ended Hooks for DBX Format
 -------------------------------
 
-   These are hooks for DBX format.
+These are hooks for DBX format.
 
 `DBX_OUTPUT_LBRAC (STREAM, NAME)'
      Define this macro to say how to output to STREAM the debugging
@@ -19595,13 +19628,14 @@ Open-Ended Hooks for DBX Format
      extension construct.  On those machines, define this macro to turn
      this feature off without disturbing the rest of the gdb extensions.
 
+
 
 File: gccint.info,  Node: File Names and DBX,  Next: SDB and DWARF,  Prev: DBX Hooks,  Up: Debugging Info
 
 File Names in DBX Format
 ------------------------
 
-   This describes file names in DBX format.
+This describes file names in DBX format.
 
 `DBX_WORKING_DIRECTORY'
      Define this if DBX wants to have the current directory recorded in
@@ -19650,7 +19684,7 @@ File: gccint.info,  Node: SDB and DWARF,  Next: VMS Debug,  Prev: File Names and
 Macros for SDB and DWARF Output
 -------------------------------
 
-   Here are macros for SDB and DWARF output.
+Here are macros for SDB and DWARF output.
 
 `SDB_DEBUGGING_INFO'
      Define this macro if GCC should produce COFF-style debugging output
@@ -19744,7 +19778,7 @@ File: gccint.info,  Node: VMS Debug,  Prev: SDB and DWARF,  Up: Debugging Info
 Macros for VMS Debug Format
 ---------------------------
 
-   Here are macros for VMS debug format.
+Here are macros for VMS debug format.
 
 `VMS_DEBUGGING_INFO'
      Define this macro if GCC should produce debugging output for VMS
@@ -19759,7 +19793,7 @@ File: gccint.info,  Node: Floating Point,  Next: Mode Switching,  Prev: Debuggin
 Cross Compilation and Floating Point
 ====================================
 
-   While all modern machines use twos-complement representation for
+While all modern machines use twos-complement representation for
 integers, there are a variety of representations for floating point
 numbers.  This means that in a cross-compiler the representation of
 floating point numbers in the compiled program may be different from
@@ -19863,7 +19897,7 @@ File: gccint.info,  Node: Mode Switching,  Next: Target Attributes,  Prev: Float
 Mode Switching Instructions
 ===========================
 
-   The following macros control mode switching optimizations:
+The following macros control mode switching optimizations:
 
 `OPTIMIZE_MODE_SWITCHING (ENTITY)'
      Define this macro if the port needs extra instructions inserted
@@ -19930,9 +19964,9 @@ File: gccint.info,  Node: Target Attributes,  Next: MIPS Coprocessors,  Prev: Mo
 Defining target-specific uses of `__attribute__'
 ================================================
 
-   Target-specific attributes may be defined for functions, data and
-types.  These are described using the following target hooks; they also
-need to be documented in `extend.texi'.
+Target-specific attributes may be defined for functions, data and types.
+These are described using the following target hooks; they also need to
+be documented in `extend.texi'.
 
  - Target Hook: const struct attribute_spec * TARGET_ATTRIBUTE_TABLE
      If defined, this target hook points to an array of `struct
@@ -20002,10 +20036,10 @@ File: gccint.info,  Node: MIPS Coprocessors,  Next: Misc,  Prev: Target Attribut
 Defining coprocessor specifics for MIPS targets.
 ================================================
 
-   The MIPS specification allows MIPS implementations to have as many
-as 4 coprocessors, each with as many as 32 private registers.  gcc
-supports accessing these registers and transferring values between the
-registers and memory using asm-ized variables.  For example:
+The MIPS specification allows MIPS implementations to have as many as 4
+coprocessors, each with as many as 32 private registers.  gcc supports
+accessing these registers and transferring values between the registers
+and memory using asm-ized variables.  For example:
 
        register unsigned int cp0count asm ("c0r1");
        unsigned int d;
@@ -20034,13 +20068,14 @@ which you may want to override in subtargets; it is described below.
           { ALTERNATENAME, REGISTER_NUMBER}
      Default: empty.
 
+
 
 File: gccint.info,  Node: Misc,  Prev: MIPS Coprocessors,  Up: Target Macros
 
 Miscellaneous Parameters
 ========================
 
-   Here are several miscellaneous parameters.
+Here are several miscellaneous parameters.
 
 `PREDICATE_CODES'
      Define this if you have defined special-purpose predicates in the
@@ -20349,7 +20384,7 @@ Miscellaneous Parameters
      are silently ignored, unless the user specifies
      `-Wunknown-pragmas'.
 
-      - Function: void cpp_register_pragma (cpp_reader *PFILE, const
+      - Fonction: void cpp_register_pragma (cpp_reader *PFILE, const
                char *SPACE, const char *NAME, void (*CALLBACK)
                (cpp_reader *))
           Each call to `cpp_register_pragma' establishes one pragma.
@@ -20591,6 +20626,7 @@ Miscellaneous Parameters
      will be added to the `struct ce_if_block' structure.  These should
      be initialized by the `IFCVT_INIT_EXTRA_FIELDS' macro.
 
+
  - Target Hook: void TARGET_INIT_BUILTINS ()
      Define this hook if you have any machine-specific built-in
      functions that need to be defined.  It should be a function that
@@ -20673,6 +20709,7 @@ Miscellaneous Parameters
                                         (get_identifier ("stdcall"),
                                          NULL))
 
+
  - Target Hook: bool TARGET_CANNOT_MODIFY_JUMPS_P (void)
      This target hook returns `true' past the point in which new jump
      instructions could be created.  On machines that require a
@@ -20692,10 +20729,10 @@ File: gccint.info,  Node: Host Config,  Next: Fragments,  Prev: Target Macros,  
 Host Configuration Headers
 **************************
 
-   Host configuration headers contain macro definitions that describe
-the machine and system on which the compiler is running.  They are
-usually unnecessary.  Most of the things GCC needs to know about the
-host system can be deduced by the `configure' script.
+Host configuration headers contain macro definitions that describe the
+machine and system on which the compiler is running.  They are usually
+unnecessary.  Most of the things GCC needs to know about the host
+system can be deduced by the `configure' script.
 
    If your host does need a special configuration header, it should be
 named `xm-MACHINE.h', where MACHINE is a short mnemonic for the
@@ -20823,11 +20860,11 @@ File: gccint.info,  Node: Fragments,  Next: Collect2,  Prev: Host Config,  Up: T
 Makefile Fragments
 ******************
 
-   When you configure GCC using the `configure' script, it will
-construct the file `Makefile' from the template file `Makefile.in'.
-When it does this, it can incorporate makefile fragments from the
-`config' directory.  These are used to set Makefile parameters that are
-not amenable to being calculated by autoconf.  The list of fragments to
+When you configure GCC using the `configure' script, it will construct
+the file `Makefile' from the template file `Makefile.in'.  When it does
+this, it can incorporate makefile fragments from the `config'
+directory.  These are used to set Makefile parameters that are not
+amenable to being calculated by autoconf.  The list of fragments to
 incorporate is set by `config.gcc'; *Note System Config::.
 
    Fragments are named either `t-TARGET' or `x-HOST', depending on
@@ -20851,7 +20888,7 @@ File: gccint.info,  Node: Target Fragment,  Next: Host Fragment,  Up: Fragments
 Target Makefile Fragments
 =========================
 
-   Target makefile fragments can set these Makefile variables.
+Target makefile fragments can set these Makefile variables.
 
 `LIBGCC2_CFLAGS'
      Compiler flags to use when compiling `libgcc2.c'.
@@ -20969,8 +21006,8 @@ File: gccint.info,  Node: Host Fragment,  Prev: Target Fragment,  Up: Fragments
 Host Makefile Fragments
 =======================
 
-   The use of `x-HOST' fragments is discouraged.  You should do so only
-if there is no other mechanism to get the behavior desired.  Host
+The use of `x-HOST' fragments is discouraged.  You should do so only if
+there is no other mechanism to get the behavior desired.  Host
 fragments should never forcibly override variables set by the configure
 script, as they may have been adjusted by the user.
 
@@ -21000,13 +21037,14 @@ script, as they may have been adjusted by the user.
      the front ends.  If you set this variable, you must also provide
      rules to build the extra programs.
 
+
 
 File: gccint.info,  Node: Collect2,  Next: Header Dirs,  Prev: Fragments,  Up: Top
 
 `collect2'
 **********
 
-   GCC uses a utility called `collect2' on nearly all systems to arrange
+GCC uses a utility called `collect2' on nearly all systems to arrange
 to call various initialization functions at start time.
 
    The program `collect2' works by linking the program once and looking
@@ -21074,7 +21112,7 @@ File: gccint.info,  Node: Header Dirs,  Next: Type Information,  Prev: Collect2,
 Standard Header File Directories
 ********************************
 
-   `GCC_INCLUDE_DIR' means the same thing for native and cross.  It is
+`GCC_INCLUDE_DIR' means the same thing for native and cross.  It is
 where GCC stores its private include files, and also where GCC stores
 the fixed include files.  A cross compiled GCC runs `fixincludes' on
 the header files in `$(tooldir)/include'.  (If the cross compilation
@@ -21105,10 +21143,9 @@ File: gccint.info,  Node: Type Information,  Next: Funding,  Prev: Header Dirs, 
 Memory Management and Type Information
 **************************************
 
-   GCC uses some fairly sophisticated memory management techniques,
-which involve determining information about GCC's data structures from
-GCC's source code and using this information to perform garbage
-collection.
+GCC uses some fairly sophisticated memory management techniques, which
+involve determining information about GCC's data structures from GCC's
+source code and using this information to perform garbage collection.
 
    A full C parser would be too overcomplicated for this task, so a
 limited subset of C is interpreted and special markers are used to
@@ -21140,9 +21177,9 @@ File: gccint.info,  Node: GTY Options,  Next: GGC Roots,  Up: Type Information
 The Inside of a `GTY(())'
 =========================
 
-   Sometimes the C code is not enough to fully describe the type
-structure.  Extra information can be provided by using more `GTY'
-markers.  These markers can be placed:
+Sometimes the C code is not enough to fully describe the type structure.
+Extra information can be provided by using more `GTY' markers.  These
+markers can be placed:
    * In a structure definition, before the open brace;
 
    * In a global variable declaration, after the keyword `static' or
@@ -21300,15 +21337,16 @@ Three special escapes may be available:
      The `special' option is used for those bizarre cases that are just
      too hard to deal with otherwise.  Don't use it for new code.
 
+
 
 File: gccint.info,  Node: GGC Roots,  Next: Files,  Prev: GTY Options,  Up: Type Information
 
 Marking Roots for the Garbage Collector
 =======================================
 
-   In addition to keeping track of types, the type machinery also
-locates the global variables that the garbage collector starts at.
-There are two syntaxes it accepts to indicate a root:
+In addition to keeping track of types, the type machinery also locates
+the global variables that the garbage collector starts at.  There are
+two syntaxes it accepts to indicate a root:
 
   1. extern GTY (([options])) [type] ID;
 
@@ -21327,7 +21365,7 @@ File: gccint.info,  Node: Files,  Prev: GGC Roots,  Up: Type Information
 Source Files Containing Type Information
 ========================================
 
-   Whenever you add `GTY' markers to a new source file, there are three
+Whenever you add `GTY' markers to a new source file, there are three
 things you need to do:
 
   1. You need to add the file to the list of source files the type
@@ -21386,7 +21424,7 @@ File: gccint.info,  Node: Funding,  Next: GNU Project,  Prev: Type Information, 
 Funding Free Software
 *********************
 
-   If you want to have more free software a few years from now, it makes
+If you want to have more free software a few years from now, it makes
 sense for you to help encourage people to contribute funds for its
 development.  The most effective approach known is to encourage
 commercial redistributors to donate.
@@ -21436,7 +21474,7 @@ File: gccint.info,  Node: GNU Project,  Next: Copying,  Prev: Funding,  Up: Top
 The GNU Project and GNU/Linux
 *****************************
 
-   The GNU Project was launched in 1984 to develop a complete Unix-like
+The GNU Project was launched in 1984 to develop a complete Unix-like
 operating system which is free software: the GNU system.  (GNU is a
 recursive acronym for "GNU's Not Unix"; it is pronounced "guh-NEW".)
 Variants of the GNU operating system, which use the kernel Linux, are
@@ -21463,9 +21501,9 @@ GNU GENERAL PUBLIC LICENSE
 Preamble
 ========
 
-   The licenses for most software are designed to take away your
-freedom to share and change it.  By contrast, the GNU General Public
-License is intended to guarantee your freedom to share and change free
+The licenses for most software are designed to take away your freedom
+to share and change it.  By contrast, the GNU General Public License is
+intended to guarantee your freedom to share and change free
 software--to make sure the software is free for all its users.  This
 General Public License applies to most of the Free Software
 Foundation's software and to any other program whose authors commit to
@@ -21746,7 +21784,7 @@ modification follow.
 How to Apply These Terms to Your New Programs
 =============================================
 
-   If you develop a new program, and you want it to be of the greatest
+If you develop a new program, and you want it to be of the greatest
 possible use to the public, the best way to achieve this is to make it
 free software which everyone can redistribute and change under these
 terms.
@@ -22210,7 +22248,7 @@ GNU Free Documentation License
 ADDENDUM: How to use this License for your documents
 ====================================================
 
-   To use this License in a document you have written, include a copy of
+To use this License in a document you have written, include a copy of
 the License in the document and put the following copyright and license
 notices just after the title page:
 
@@ -22244,7 +22282,7 @@ File: gccint.info,  Node: Contributors,  Next: Option Index,  Prev: GNU Free Doc
 Contributors to GCC
 *******************
 
-   The GCC project would like to thank its many contributors.  Without
+The GCC project would like to thank its many contributors.  Without
 them the project would not have been nearly as successful as it has
 been.  Any omissions in this list are accidental.  Feel free to contact
 <law@redhat.com> or <gerald@pfeifer.com> if you have been left out or
@@ -22261,6 +22299,9 @@ alphabetical order.
      Intel 80387 register stack.
 
    * Alasdair Baird for various bug fixes.
+
+   * Giovanni Bajo for analyzing lots of complicated C++ problem
+     reports.
 
    * Gerald Baumgartner added the signature extension to the C++ front
      end.
@@ -22465,6 +22506,9 @@ alphabetical order.
      the c30/c40 ports functional.  Lots of loop and unroll
      improvements and fixes.
 
+   * Dara Hazeghi for wading through myriads of target-specific bug
+     reports.
+
    * Kate Hedstrom for staking the g77 folks with an initial testsuite.
 
    * Richard Henderson for his ongoing SPARC, alpha, ia32, and ia64
@@ -22487,6 +22531,8 @@ alphabetical order.
    * Steve Holmgren for MachTen patches.
 
    * Jan Hubicka for his x86 port improvements.
+
+   * Falk Hueffner for working on C and optimization bug reports.
 
    * Christian Iseli for various bug fixes.
 
@@ -22717,6 +22763,8 @@ alphabetical order.
    * Gerald Pfeifer for his direction via the steering committee,
      pointing out lots of problems we need to solve, maintenance of the
      web pages, and taking care of documentation maintenance in general.
+
+   * Andrew Pinski for processing bug reports by the dozen.
 
    * Ovidiu Predescu for his work on the Objective-C front end and
      runtime libraries.
@@ -23057,8 +23105,8 @@ File: gccint.info,  Node: Option Index,  Next: Index,  Prev: Contributors,  Up: 
 Option Index
 ************
 
-   GCC's command line options are indexed here without any initial `-'
-or `--'.  Where an option has both positive and negative forms (such as
+GCC's command line options are indexed here without any initial `-' or
+`--'.  Where an option has both positive and negative forms (such as
 `-fOPTION' and `-fno-OPTION'), relevant entries in the manual are
 indexed under the most appropriate form; it may sometimes be useful to
 look up both forms.
@@ -24272,6 +24320,7 @@ Index
 * MD_CAN_REDIRECT_BRANCH:                Misc.
 * MD_EXEC_PREFIX:                        Driver.
 * MD_FALLBACK_FRAME_STATE_FOR:           Exception Handling.
+* MD_HANDLE_UNWABI:                      Exception Handling.
 * MD_STARTFILE_PREFIX:                   Driver.
 * MD_STARTFILE_PREFIX_1:                 Driver.
 * mem:                                   Regs and Memory.
@@ -25304,195 +25353,195 @@ Index
 
 
 Tag Table:
-Node: Top1251
-Node: Contributing4673
-Node: Portability5419
-Node: Interface7226
-Node: Languages11471
-Node: Source Tree13024
-Node: Configure Terms13642
-Node: Top Level16605
-Node: gcc Directory18728
-Node: Subdirectories19694
-Node: Configuration21996
-Node: Config Fragments22646
-Node: System Config23738
-Node: Configuration Files24028
-Node: Build26703
-Node: Makefile27106
-Node: Library Files30496
-Node: Headers31049
-Node: Documentation33027
-Node: Texinfo Manuals33820
-Node: Man Page Generation35941
-Node: Miscellaneous Docs37849
-Node: Front End39193
-Node: Front End Directory42626
-Node: Front End Config47137
-Node: Back End49879
-Node: Test Suites53089
-Node: Test Idioms53778
-Node: C Tests56846
-Node: libgcj Tests60972
-Node: gcov Testing62401
-Node: profopt Testing65334
-Node: compat Testing66772
-Node: Passes70117
-Node: Trees94461
-Node: Deficiencies97190
-Node: Tree overview97423
-Node: Macros and Functions101558
-Node: Identifiers101695
-Node: Containers103214
-Node: Types104361
-Node: Scopes117086
-Node: Namespaces117845
-Node: Classes120651
-Node: Declarations125252
-Node: Functions131309
-Node: Function Basics133842
-Node: Function Bodies140591
-Node: Attributes154495
-Node: Expression trees155731
-Node: RTL180693
-Node: RTL Objects182727
-Node: RTL Classes186618
-Node: Accessors191239
-Node: Flags193622
-Node: Machine Modes209760
-Node: Constants218493
-Node: Regs and Memory224456
-Node: Arithmetic237504
-Node: Comparisons244163
-Node: Bit-Fields248291
-Node: Vector Operations249712
-Node: Conversions251489
-Node: RTL Declarations254799
-Node: Side Effects255611
-Node: Incdec271473
-Node: Assembler274810
-Node: Insns276335
-Node: Calls301826
-Node: Sharing304423
-Node: Reading RTL307527
-Node: Machine Desc308513
-Node: Overview310792
-Node: Patterns312834
-Node: Example316267
-Node: RTL Template317701
-Node: Output Template330168
-Node: Output Statement334153
-Node: Constraints338127
-Node: Simple Constraints339061
-Node: Multi-Alternative351444
-Node: Class Preferences354282
-Node: Modifiers355165
-Node: Machine Constraints358928
-Node: Standard Names380191
-Ref: prologue instruction pattern420772
-Ref: epilogue instruction pattern421265
-Node: Pattern Ordering423715
-Node: Dependent Patterns424945
-Node: Jump Patterns427763
-Node: Looping Patterns433513
-Node: Insn Canonicalizations438119
-Node: Expander Definitions441937
-Node: Insn Splitting450072
-Node: Including Patterns459706
-Node: Peephole Definitions461480
-Node: define_peephole462730
-Node: define_peephole2469079
-Node: Insn Attributes472143
-Node: Defining Attributes473240
-Node: Expressions475255
-Node: Tagging Insns481847
-Node: Attr Example486212
-Node: Insn Lengths488591
-Node: Constant Attributes491853
-Node: Delay Slots493016
-Node: Processor pipeline description496246
-Node: Old pipeline description500213
-Node: Automaton pipeline description505930
-Node: Comparison of the two descriptions518237
-Node: Conditional Execution520218
-Node: Constant Definitions523077
-Node: Target Macros524658
-Node: Target Structure527421
-Node: Driver528712
-Node: Run-time Target547264
-Node: Per-Function Data557016
-Node: Storage Layout559827
-Node: Type Layout582343
-Node: Escape Sequences593093
-Node: Registers594008
-Node: Register Basics594931
-Node: Allocation Order600535
-Node: Values in Registers601951
-Node: Leaf Functions606786
-Node: Stack Registers609575
-Node: Register Classes610375
-Node: Stack and Calling633014
-Node: Frame Layout633510
-Node: Exception Handling640375
-Node: Stack Checking645163
-Node: Frame Registers648720
-Node: Elimination654171
-Node: Stack Arguments658144
-Node: Register Arguments665699
-Node: Scalar Return677131
-Node: Aggregate Return681210
-Node: Caller Saves684927
-Node: Function Entry686467
-Node: Profiling699173
-Node: Tail Calls700780
-Node: Varargs701371
-Node: Trampolines709049
-Node: Library Calls716284
-Node: Addressing Modes722125
-Node: Condition Code733426
-Node: Costs741083
-Node: Scheduling753510
-Node: Sections766044
-Node: PIC776385
-Node: Assembler Format779186
-Node: File Framework780256
-Node: Data Output785116
-Node: Uninitialized Data792711
-Node: Label Output798111
-Node: Initialization816900
-Node: Macros for Initialization822881
-Node: Instruction Output829050
-Node: Dispatch Tables838096
-Node: Exception Region Output840651
-Node: Alignment Output844313
-Node: Debugging Info848334
-Node: All Debuggers848995
-Node: DBX Options851878
-Node: DBX Hooks857253
-Node: File Names and DBX861076
-Node: SDB and DWARF863052
-Node: VMS Debug867098
-Node: Floating Point867646
-Node: Mode Switching872449
-Node: Target Attributes875699
-Node: MIPS Coprocessors879549
-Node: Misc881112
-Node: Host Config912213
-Node: Fragments918249
-Node: Target Fragment919392
-Node: Host Fragment924843
-Node: Collect2926279
-Node: Header Dirs928833
-Node: Type Information930260
-Node: GTY Options931281
-Node: GGC Roots937871
-Node: Files938572
-Node: Funding941418
-Node: GNU Project943929
-Node: Copying944583
-Node: GNU Free Documentation License963794
-Node: Contributors986206
-Node: Option Index1012603
-Node: Index1014403
+Node: Top2142
+Node: Contributing4691
+Node: Portability5434
+Node: Interface7238
+Node: Languages11480
+Node: Source Tree13030
+Node: Configure Terms13645
+Node: Top Level16604
+Node: gcc Directory18724
+Node: Subdirectories19687
+Node: Configuration21986
+Node: Config Fragments22633
+Node: System Config23722
+Node: Configuration Files24009
+Node: Build26681
+Node: Makefile27081
+Node: Library Files30472
+Node: Headers31022
+Node: Documentation32997
+Node: Texinfo Manuals33786
+Node: Man Page Generation35904
+Node: Miscellaneous Docs37809
+Node: Front End39150
+Node: Front End Directory42580
+Node: Front End Config47088
+Node: Back End49828
+Node: Test Suites53035
+Node: Test Idioms53721
+Node: C Tests56786
+Node: libgcj Tests60910
+Node: gcov Testing62336
+Node: profopt Testing65266
+Node: compat Testing66701
+Node: Passes70043
+Node: Trees94384
+Node: Deficiencies97110
+Node: Tree overview97339
+Node: Macros and Functions101471
+Node: Identifiers101605
+Node: Containers103122
+Node: Types104266
+Node: Scopes116989
+Node: Namespaces117745
+Node: Classes120549
+Node: Declarations125147
+Node: Functions131203
+Node: Function Basics133733
+Node: Function Bodies140480
+Node: Attributes154364
+Node: Expression trees155597
+Node: RTL180556
+Node: RTL Objects182587
+Node: RTL Classes186475
+Node: Accessors191093
+Node: Flags193473
+Node: Machine Modes209608
+Node: Constants218338
+Node: Regs and Memory224298
+Node: Arithmetic237343
+Node: Comparisons243999
+Node: Bit-Fields248124
+Node: Vector Operations249542
+Node: Conversions251317
+Node: RTL Declarations254624
+Node: Side Effects255433
+Node: Incdec271292
+Node: Assembler274626
+Node: Insns276148
+Node: Calls301636
+Node: Sharing304230
+Node: Reading RTL307330
+Node: Machine Desc308313
+Node: Overview310589
+Node: Patterns312628
+Node: Example316058
+Node: RTL Template317489
+Node: Output Template329954
+Node: Output Statement333936
+Node: Constraints337907
+Node: Simple Constraints338838
+Node: Multi-Alternative351218
+Node: Class Preferences354053
+Node: Modifiers354933
+Node: Machine Constraints358693
+Node: Standard Names379961
+Ref: prologue instruction pattern420539
+Ref: epilogue instruction pattern421032
+Node: Pattern Ordering423483
+Node: Dependent Patterns424709
+Node: Jump Patterns427524
+Node: Looping Patterns433271
+Node: Insn Canonicalizations437874
+Node: Expander Definitions441689
+Node: Insn Splitting449821
+Node: Including Patterns459452
+Node: Peephole Definitions461220
+Node: define_peephole462467
+Node: define_peephole2468813
+Node: Insn Attributes471874
+Node: Defining Attributes472968
+Node: Expressions474980
+Node: Tagging Insns481568
+Node: Attr Example485930
+Node: Insn Lengths488306
+Node: Constant Attributes491566
+Node: Delay Slots492726
+Node: Processor pipeline description495953
+Node: Old pipeline description499916
+Node: Automaton pipeline description505630
+Node: Comparison of the two descriptions517934
+Node: Conditional Execution519912
+Node: Constant Definitions522768
+Node: Target Macros524346
+Node: Target Structure527106
+Node: Driver528394
+Node: Run-time Target546943
+Node: Per-Function Data556692
+Node: Storage Layout559501
+Node: Type Layout582013
+Node: Escape Sequences592760
+Node: Registers593672
+Node: Register Basics594592
+Node: Allocation Order600194
+Node: Values in Registers601607
+Node: Leaf Functions606439
+Node: Stack Registers609225
+Node: Register Classes610022
+Node: Stack and Calling632660
+Node: Frame Layout633153
+Node: Exception Handling640015
+Node: Stack Checking645367
+Node: Frame Registers648921
+Node: Elimination654370
+Node: Stack Arguments658340
+Node: Register Arguments665893
+Node: Scalar Return677323
+Node: Aggregate Return681399
+Node: Caller Saves685113
+Node: Function Entry686650
+Node: Profiling699354
+Node: Tail Calls700958
+Node: Varargs701549
+Node: Trampolines709224
+Node: Library Calls716456
+Node: Addressing Modes722294
+Node: Condition Code733592
+Node: Costs741247
+Node: Scheduling753671
+Node: Sections766203
+Node: PIC776541
+Node: Assembler Format779339
+Node: File Framework780406
+Node: Data Output785263
+Node: Uninitialized Data792858
+Node: Label Output798255
+Node: Initialization817041
+Node: Macros for Initialization823019
+Node: Instruction Output829185
+Node: Dispatch Tables838228
+Node: Exception Region Output840780
+Node: Alignment Output844440
+Node: Debugging Info848458
+Node: All Debuggers849116
+Node: DBX Options851996
+Node: DBX Hooks857368
+Node: File Names and DBX861189
+Node: SDB and DWARF863162
+Node: VMS Debug867205
+Node: Floating Point867750
+Node: Mode Switching872550
+Node: Target Attributes875797
+Node: MIPS Coprocessors879643
+Node: Misc881204
+Node: Host Config912304
+Node: Fragments918337
+Node: Target Fragment919478
+Node: Host Fragment924926
+Node: Collect2926360
+Node: Header Dirs928911
+Node: Type Information930335
+Node: GTY Options931353
+Node: GGC Roots937940
+Node: Files938639
+Node: Funding941482
+Node: GNU Project943990
+Node: Copying944641
+Node: GNU Free Documentation License963846
+Node: Contributors986255
+Node: Option Index1012940
+Node: Index1014737
 
 End Tag Table
