@@ -1,4 +1,4 @@
-/* $Id: platid_generated.h,v 1.23 2000/10/21 07:30:34 takemura Exp $ */
+/* $Id: platid_generated.h,v 1.24 2000/12/28 07:10:15 sato Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000

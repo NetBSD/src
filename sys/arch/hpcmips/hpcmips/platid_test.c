@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_test.c,v 1.1.1.1 1999/09/16 12:23:21 takemura Exp $	*/
+/*	$NetBSD: platid_test.c,v 1.2 2000/12/28 07:10:15 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  *
  */
+#include <stdio.h>
 #include <machine/platid.h>
 #define PLATID_DEFINE_MASK_NICKNAME
 #include <machine/platid_mask.h>
@@ -120,6 +121,45 @@ platid_bit_test()
 	}
 }
 
+void
+platid_search_test()
+{
+	char *mcr700str = "MC-R700";
+	char *mcr500str = "MC-R500";
+	char *mcr530str = "MC/R530";
+	char *defstr = "default";
+
+	struct platid_data d_null[] = {
+		{ &platid_mask_MACH_NEC_MCR_700A, mcr700str },
+		{ &platid_mask_MACH_NEC_MCR_500, mcr500str },
+		{ &platid_mask_MACH_NEC_MCR_530, mcr530str },
+		{ NULL, NULL }
+	};
+
+	struct platid_data d_default[] = {
+		{ &platid_mask_MACH_NEC_MCR_700A, mcr700str },
+		{ &platid_mask_MACH_NEC_MCR_500, mcr500str },
+		{ &platid_mask_MACH_NEC_MCR_530, mcr530str },
+		{ NULL, defstr }
+	};
+
+	printf("search MC-R700 in no default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_700A, d_null)->data);
+	printf("search MC-R500 in no default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_500, d_null)->data);
+	printf("search MC/R530 in no default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_530, d_null)->data);
+	printf("search non exist MC-R300 in no default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_300, d_null) == NULL?"NULL":"any!!bug!");
+	printf("search MC-R700 in default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_700A, d_default)->data);
+	printf("search MC-R500 in default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_500, d_default)->data);
+	printf("search MC/R530 in default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_530, d_default)->data);
+	printf("search non exist MC-R300 in default table: %s\n",
+		(char *)platid_search(&platid_mask_MACH_NEC_MCR_300, d_default)->data);
+}
 
 void
 main()
@@ -152,5 +192,6 @@ main()
 	printf("NEC_MCR_510:\t%s\n",
 	       platid_match(&pid, NEC_MCR_510) ? "O" : "X");
 
+	platid_search_test();
 	exit(0);
 }
