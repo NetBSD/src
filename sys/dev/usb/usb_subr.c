@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.22 1998/12/29 16:02:55 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.23 1998/12/30 18:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,15 +271,24 @@ usbd_devinfo(dev, showclass, cp)
 
 /* Delay for a certain number of ms */
 void
-usbd_delay_ms(bus, ms)
+usb_delay_ms(bus, ms)
 	usbd_bus_handle bus;
-	int ms;
+	u_int ms;
 {
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->use_polling)
 		delay((ms+1) * 1000);
 	else
 		tsleep(&ms, PRIBIO, "usbdly", (ms*hz+999)/1000 + 1);
+}
+
+/* Delay given a device handle. */
+void
+usbd_delay_ms(dev, ms)
+	usbd_device_handle dev;
+	u_int ms;
+{
+	usb_delay_ms(dev->bus, ms);
 }
 
 usbd_status
@@ -305,7 +314,7 @@ usbd_reset_port(dev, port, ps)
 	n = 10;
 	do {
 		/* Wait for device to recover from reset. */
-		usbd_delay_ms(dev->bus, USB_PORT_RESET_DELAY);
+		usbd_delay_ms(dev, USB_PORT_RESET_DELAY);
 		r = usbd_get_port_status(dev, port, ps);
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("usbd_reset_port: get status failed %d\n",r));
@@ -323,7 +332,7 @@ usbd_reset_port(dev, port, ps)
 #endif
 
 	/* Wait for the device to recover from reset. */
-	usbd_delay_ms(dev->bus, USB_PORT_RESET_RECOVERY);
+	usbd_delay_ms(dev, USB_PORT_RESET_RECOVERY);
 	return (r);
 }
 
@@ -755,7 +764,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 			return (r);
 		}
 		nifaces = dev->cdesc->bNumInterface;
-		uaa.configno = confi;
+		uaa.configno = dev->cdesc->bConfigurationValue;
 		for (i = 0; i < nifaces; i++)
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
@@ -872,7 +881,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		r = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
 		if (r == USBD_NORMAL_COMPLETION)
 			break;
-		usbd_delay_ms(dev->bus, 200);
+		usbd_delay_ms(dev, 200);
 	}
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
@@ -918,7 +927,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		return (r);
 	}
 	/* Allow device time to set new address */
-	usbd_delay_ms(dev->bus, USB_SET_ADDRESS_SETTLE);
+	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 
 	dev->address = addr;	/* New device address now */
 	dev->state = USBD_DEVICE_ADDRESSED;
