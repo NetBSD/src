@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.3 2003/01/01 00:10:27 thorpej Exp $	*/
+/*	$NetBSD: xmi.c,v 1.4 2003/01/01 00:12:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.3 2003/01/01 00:10:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.4 2003/01/01 00:12:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ xmi_print(void *aux, const char *name)
 			aprint_normal("unknown device 0x%x",
 			    bus_space_read_2(xa->xa_iot, xa->xa_ioh, 0));
 		else
-			printf(xl->xl_name);
+			aprint_normal(xl->xl_name);
 		aprint_normal(" at %s", name);
 	}
 	aprint_normal(" node %d", xa->xa_nodenr);
