@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irq.S,v 1.4 1996/03/27 20:42:53 mark Exp $ */
+/* $NetBSD: iomd_irq.S,v 1.5 1996/05/06 00:25:43 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -494,12 +494,32 @@ _fiq_setregs:
 	orr	r2, r2, #(PSR_FIQ32_MODE)
         msr	cpsr_all, r2
 
-	ldr	r8,  [r0, #0x000c]	/* Update FIQ registers*/
-	ldr	r9,  [r0, #0x0010]
-	ldr	r10, [r0, #0x0014]
-	ldr	r11, [r0, #0x0018]
-	ldr	r12, [r0, #0x001c]
-	ldr	r13, [r0, #0x0020]
+	ldr	r8,  [r0, #FH_R8]	/* Update FIQ registers*/
+	ldr	r9,  [r0, #FH_R9]
+	ldr	r10, [r0, #FH_R10]
+	ldr	r11, [r0, #FH_R11]
+	ldr	r12, [r0, #FH_R12]
+	ldr	r13, [r0, #FH_R13]
+
+        msr	cpsr_all, r3		/* Back to old mode */
+
+	mov	pc, lr			/* Exit */
+
+	.global	_fiq_getregs		/* Gets the FIQ registers */
+
+_fiq_getregs:
+        mrs	r2, cpsr_all
+	mov	r3, r2
+	bic	r2, r2, #(PSR_MODE)
+	orr	r2, r2, #(PSR_FIQ32_MODE)
+        msr	cpsr_all, r2
+
+	str	r8,  [r0, #FH_R8]	/* Update FIQ registers*/
+	str	r9,  [r0, #FH_R9]
+	str	r10, [r0, #FH_R10]
+	str	r11, [r0, #FH_R11]
+	str	r12, [r0, #FH_R12]
+	str	r13, [r0, #FH_R13]
 
         msr	cpsr_all, r3		/* Back to old mode */
 
