@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.20 1997/05/19 20:58:18 leo Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.21 1997/05/30 20:29:16 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -266,8 +266,10 @@ sys_swapon(p, v, retval)
 					nsdp = sdp;
 				}
 		}
-		if (SCARG(uap, cmd) == SWAP_CTL && nsdp == NULL)
-			return (ENOENT);
+		if (SCARG(uap, cmd) == SWAP_CTL && nsdp == NULL) {
+			error = ENOENT;
+			break;
+		}
 
 		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
 			if (spp->spi_priority <= priority)
@@ -325,11 +327,6 @@ sys_swapon(p, v, retval)
 
 		/* Onto priority list */
 		CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, nsdp, swd_next);
-
-		/*
-		 * XXX do we need a vrel or vput for the vp for the
-		 * SWAP_CTL case ?
-		 */
 		break;
 	}
 
@@ -415,17 +412,11 @@ swap_on(p, sdp)
 	dev_t dev = sdp->swd_dev;
 	char *name;
 
-#if 0
-	/*
-	 * XXX
-	 *
-	 * Need to handle where root is on swap.
-	 */
+	/* If root on swap, then the skip open/close operations. */
 	if (vp != rootvp) {
 		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
 			return (error);
 	}
-#endif
 
 #ifdef SWAPDEBUG	/* this wants only for block devices */
 	if (vmswapdebug & VMSDB_INFO)
@@ -501,6 +492,28 @@ swap_on(p, sdp)
 	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
 				    storage, storagesize,
 				    EX_NOCOALESCE|EX_WAITOK);
+
+	if (vp == rootvp) {
+		struct mount *mp;
+		struct statfs *sp;
+		long firstblk;
+		int rootblks;
+
+		/* Get size from root FS (mountroot did statfs) */
+		mp = rootvnode->v_mount;
+		sp = &mp->mnt_stat;
+		rootblks = sp->f_blocks * (sp->f_bsize / DEV_BSIZE);
+		if (rootblks > nblks)
+			panic("miniroot size");
+
+		if (extent_alloc_region(sdp->swd_ex, addr, rootblks, EX_WAITOK))
+			panic("miniroot region");
+
+		printf("Preserved %d blocks of miniroot leaving %d pages of swap
+		\n",
+		rootblks, dtoc(size - rootblks));
+	}
+
 	swap_addmap(sdp, size);
 	nswapdev++;
 	nswap += nblks;
@@ -508,15 +521,11 @@ swap_on(p, sdp)
 	if (dumpdev == NULL && vp->v_type == VBLK)
 		dumpdev = dev;
 
-	/* XXX handle miniroot == (rootvp == vp) */
 	return (0);
 
 bad:
-	/* XXX see above */
-#if 0
 	if (vp != rootvp)
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
-#endif
 	return (error);
 }
 
