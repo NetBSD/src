@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 1999/02/27 02:54:05 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.104 1999/03/05 22:18:07 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 1999/02/27 02:54:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 1999/03/05 22:18:07 mhitch Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -455,7 +455,7 @@ trap(status, cause, vaddr, opc, frame)
 			if (!mips_pg_v(entry) || (entry & mips_pg_m_bit())) {
 				panic("ktlbmod: invalid pte");
 			}
-/*XXX MIPS3? */		if (entry & mips_pg_ro_bit()) {
+			if (entry & mips_pg_ro_bit()) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernelfault;
@@ -488,7 +488,7 @@ trap(status, cause, vaddr, opc, frame)
 		if (!mips_pg_v(entry) || (entry & mips_pg_m_bit()))
 			panic("utlbmod: invalid pte");
 
-/*XXX MIPS3? */	if (entry & mips_pg_ro_bit()) {
+		if (entry & mips_pg_ro_bit()) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto pagefault;
