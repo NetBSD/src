@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 1997/11/18 12:40:31 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 1997/12/04 15:33:49 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -836,13 +836,5 @@ cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	int error = ENOEXEC;
-
-#ifdef COMPAT_SUNOS
-	extern sunos_exec_aout_makecmds
-		__P((struct proc *, struct exec_package *));
-	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-		return 0;
-#endif
-	return error;
+	return ENOEXEC;
 }

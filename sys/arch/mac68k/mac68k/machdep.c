@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 1997/11/13 10:48:19 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.176 1997/12/04 15:33:33 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1179,14 +1179,6 @@ cpu_exec_aout_makecmds(p, epp)
 		return exec_aout_prep_oldzmagic(p, epp);
 #endif
 
-#ifdef COMPAT_SUNOS
-	{
-		extern sunos_exec_aout_makecmds __P((struct proc *,
-			        struct exec_package *));
-		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-			return 0;
-	}
-#endif
 	return error;
 }
 
