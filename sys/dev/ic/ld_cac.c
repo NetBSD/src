@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.3.8.2 2001/10/25 17:54:04 he Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.3.8.3 2002/01/29 23:31:32 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,26 +68,26 @@ struct ld_cac_softc {
 	int	sc_serrcnt;
 };
 
-static void	ld_cac_attach(struct device *, struct device *, void *);
-static void	ld_cac_done(struct device *, void *, int);
-static int	ld_cac_dump(struct ld_softc *, void *, int, int);
-static int	ld_cac_match(struct device *, struct cfdata *, void *);
-static int	ld_cac_start(struct ld_softc *, struct buf *);
+void	ld_cac_attach(struct device *, struct device *, void *);
+void	ld_cac_done(struct device *, void *, int);
+int	ld_cac_dump(struct ld_softc *, void *, int, int);
+int	ld_cac_match(struct device *, struct cfdata *, void *);
+int	ld_cac_start(struct ld_softc *, struct buf *);
 
-static struct	timeval ld_cac_serrintvl = { 60, 0 };
+static const struct	timeval ld_cac_serrintvl = { 60, 0 };
 
 struct cfattach ld_cac_ca = {
 	sizeof(struct ld_cac_softc), ld_cac_match, ld_cac_attach
 };
 
-static int
+int
 ld_cac_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
-static void
+void
 ld_cac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cac_drive_info dinfo;
@@ -142,7 +142,7 @@ ld_cac_attach(struct device *parent, struct device *self, void *aux)
 	ldattach(ld);
 }
 
-static int
+int
 ld_cac_start(struct ld_softc *ld, struct buf *bp)
 {
 	int flags, cmd;
@@ -169,7 +169,7 @@ ld_cac_start(struct ld_softc *ld, struct buf *bp)
 	    bp->b_rawblkno, flags, &cc));
 }
 
-static int
+int
 ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
 	struct ld_cac_softc *sc;
@@ -181,7 +181,7 @@ ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	    sc->sc_hwunit, blkno, CAC_CCB_DATA_OUT, NULL));
 }
 
-static void
+void
 ld_cac_done(struct device *dv, void *context, int error)
 {
 	struct buf *bp;
