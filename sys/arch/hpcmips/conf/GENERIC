@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.14 1999/11/21 12:47:33 shin Exp $
+# 	$NetBSD: GENERIC,v 1.15 1999/11/21 14:00:40 itojun Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -200,4 +200,4 @@ pseudo-device	biconsdev	1	# build-in console device
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
