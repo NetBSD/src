@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.29 2000/11/11 00:52:39 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.30 2000/12/14 17:36:45 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.121 2000/08/31 06:07:29 itojun Exp $	*/
 
 /*
@@ -337,6 +337,14 @@ ip6_input(m)
 		}
 		if (!m)
 			return;
+	}
+#endif
+
+#ifdef ALTQ
+	/* XXX Temporary until ALTQ is changed to use a pfil hook */
+	if (altq_input != NULL && (*altq_input)(m, AF_INET6) == 0) {
+		/* packet is dropped by traffic conditioner */
+		return;
 	}
 #endif
 
