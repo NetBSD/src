@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.15 2000/02/25 22:38:51 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.16 2000/02/26 04:02:03 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -478,15 +478,62 @@ START queue
 fifo 100
 .Ed
 .Pp
-is created in a file.  In this example, the above configuration 
-will be in a filed called
-.Sq raid0.conf .
-The above configuration file specifies a RAID
-5 set consisting of the components /dev/sd1e,
-/dev/sd2e, and /dev/sd3e, with /dev/sd4e available as a 
+is created in a file.  The above configuration file specifies a RAID 5
+set consisting of the components /dev/sd1e, /dev/sd2e, and /dev/sd3e,
+with /dev/sd4e available as a
 .Sq hot spare
 in case one of
-the three main drives should fail. 
+the three main drives should fail. A RAID 0 set would be specified in
+a similar way:
+.Bd -unfilled -offset indent
+START array
+# numRow numCol numSpare
+1 4 0
+
+START disks
+/dev/sd10e
+/dev/sd11e
+/dev/sd12e
+/dev/sd13e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_0
+64 1 1 0
+
+START queue
+fifo 100
+.Ed
+.Pp
+In this case, devices /dev/sd10e, /dev/sd11e, /dev/sd12e, and /dev/sd13e
+are the components that make up this RAID set.  Note that there are no
+hot spares for a RAID 0 set, since there is no way to recover data if
+any of the components fail.
+.Pp
+For a RAID 1 (mirror) set, the following configuration might be used:
+.Bd -unfilled -offset indent
+START array
+# numRow numCol numSpare
+1 2 0
+
+START disks
+/dev/sd20e
+/dev/sd21e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_1
+128 1 1 1
+
+START queue
+fifo 100
+.Ed
+.Pp
+In this case, /dev/sd20e and /dev/sd21e are the two components of the
+mirror set.  While no hot spares have been specified in this
+configuration, they easily could be, just as they were specified in
+the RAID 5 case above.  Note as well that RAID 1 sets are currently
+limited to only 2 components.  At present, n-way mirroring is not
+possible.
+.Pp
 The first time a RAID set is configured, the 
 .Fl C
 option must be used:
@@ -494,15 +541,19 @@ option must be used:
 raidctl -C raid0.conf raid0
 .Ed
 .Pp
-The 
+where 
+.Sq raid0.conf
+is the name of the RAID configuration file.  The 
 .Fl C
 forces the configuration to succeed, even if any of the component
-labels are incorrect.  This option should not be used lightly in
+labels are incorrect.  The
+.Fl C
+option should not be used lightly in
 situations other than initial configurations, as if
 the system is refusing to configure a RAID set, there is probably a
 very good reason for it.  After the initial configuration is done (and
 appropriate component labels are added with the 
-.Ar I
+.Fl I
 option) then raid0 can be configured normally with:
 .Bd -unfilled -offset indent
 raidctl -c raid0.conf raid0
@@ -517,24 +568,30 @@ raidctl -I 112341 raid0
 .Pp
 where 
 .Sq 112341
-is a user-specified serial number for the RAID set.  Using different
+is a user-specified serial number for the RAID set.  This
+initialization step is 
+.Ar required 
+for all RAID sets.  As well, using different
 serial numbers between RAID sets is 
 .Ar strongly encouraged , 
-as using the
-same serial number for all RAID sets will only serve to decrease the
-usefulness of the component label checking.
+as using the same serial number for all RAID sets will only serve to
+decrease the usefulness of the component label checking.
 .Pp
 Initializing the RAID set is done via:
 .Bd -unfilled -offset indent
 raidctl -i raid0
 .Ed
 .Pp
-This initialization includes ensuring that the parity (if any) on the
-RAID set is correct.  Since this initialization may be quite
-time-consuming, the 
-.Ar v
+This initialization 
+.Ar MUST
+be done for 
+.Ar all
+RAID sets, since among other things it verifies that the parity (if
+any) on the RAID set is correct.  Since this initialization may be
+quite time-consuming, the
+.Fl v
 option may be also used in conjunction with
-.Ar i .  
+.Fl i .  
 This will give more verbose output on the
 status of the initialization:
 .Bd -unfilled -offset indent
@@ -869,6 +926,78 @@ raidctl -u raid0
 .Ed
 .Pp
 at which point the device is ready to be reconfigured.
+.Pp
+.Ss Summary
+Despite the length of this man-page, configuring a RAID set is a
+relatively straight-forward process.  All that needs to be done is the
+following steps:
+.Bl -enum
+.It 
+Use 
+.Xr disklabel 8 
+to create the components (of type RAID).
+.It 
+Construct a RAID configuration file: e.g. 
+.Sq raid0.conf 
+.It 
+Configure the RAID set with: 
+.Bd -unfilled -offset indent
+raidctl -C raid0.conf raid0
+.Ed
+.Pp
+.It 
+Initialize the component labels with: 
+.Bd -unfilled -offset indent
+raidctl -I 123456 raid0
+.Ed
+.Pp
+.It 
+Initialize other important parts of the set with: 
+.Bd -unfilled -offset indent
+raidctl -i raid0
+.Ed
+.Pp
+.It
+Get the default label for the RAID set: 
+.Bd -unfilled -offset indent
+disklabel raid0 > /tmp/label
+.Ed
+.Pp
+.It 
+Edit the label: 
+.Bd -unfilled -offset indent
+vi /tmp/label
+.Ed
+.Pp
+.It 
+Put the new label on the RAID set: 
+.Bd -unfilled -offset indent
+disklabel -R -r raid0 /tmp/label
+.Ed
+.Pp
+.It 
+Create the filesystem: 
+.Bd -unfilled -offset indent
+newfs /dev/rraid0e 
+.Ed
+.Pp
+.It
+Mount the filesystem: 
+.Bd -unfilled -offset indent
+mount /dev/raid0e /mnt
+.Ed
+.Pp
+.It
+Use:
+.Bd -unfilled -offset indent
+raidctl -c raid0.conf raid0
+.Ed
+.Pp
+To re-configure the RAID set the next time it is needed, or put
+raid0.conf into /etc where it will automatically be started by 
+the /etc/rc scripts.
+.El
+.Pp
 .Sh WARNINGS
 Certain RAID levels (1, 4, 5, 6, and others) can protect against some
 data loss due to component failure.  However the loss of two
