@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.11 1997/06/06 23:23:14 veego Exp $
+.\"	$NetBSD: sysctl.8,v 1.12 1997/07/28 22:24:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,14 @@ privilege can change the value.
 .It net.inet.ip.allowsrcrt	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
+.It net.inet.tcp.sendspace	integer	yes
+.It net.inet.tcp.recvspace	integer	yes
+.It net.inet.tcp.syn_cache_limit	integer	yes
+.It net.inet.tcp.syn_bucket_limit	integer	yes
+.It net.inet.tcp.syn_cache_interval	integer	yes
 .It net.inet.udp.checksum	integer	yes
+.It net.inet.udp.sendspace	integer	yes
+.It net.inet.tcp.recvspace	integer	yes
 .It hw.machine	string	no
 .It hw.model	string	no
 .It hw.ncpu	integer	no

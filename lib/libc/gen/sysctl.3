@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.14 1997/06/06 23:24:00 veego Exp $
+.\"	$NetBSD: sysctl.3,v 1.15 1997/07/28 22:24:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -467,7 +467,14 @@ The currently defined protocols and names are:
 .It ip	directed-broadcast	integer	yes
 .It icmp	maskrepl	integer	yes
 .It tcp	rfc1323	integer	yes
+.It tcp	sendspace	integer	yes
+.It tcp	recvspace	integer	yes
+.It tcp	syn_cache_limit	integer	yes
+.It tcp	syn_bucket_limit	integer	yes
+.It tcp	syn_cache_interval	integer	yes
 .It udp	checksum	integer	yes
+.It udp	sendspace	integer	yes
+.It udp	recvspace	integer	yes
 .El
 .Pp
 The variables are as follows:
@@ -493,9 +500,25 @@ Returns 1 if directed broadcast behavior is enabled for the host.
 Returns 1 if ICMP network mask requests are to be answered.
 .It Li tcp.rfc1323
 Returns 1 if RFC1323 extensions to TCP are enabled.
+.It Li tcp.sendspace
+Returns the default TCP send buffer size.
+.It Li tcp.recvspace
+Returns the default TCP receive buffer size.
+.It Li tcp.syn_cache_limit
+Returns the maximum number of entries allowed in the TCP compressed state
+engine.
+.It Li tcp.syn_bucket_limit
+Returns the maximum number of entries allowed per hash bucket in the TCP
+compressed state engine.
+.It Li tcp.syn_cache_interval
+Returns the TCP compressed state engine's timer interval.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
+.It Li udp.sendspace
+Returns the default UDP send buffer size.
+.It Li udp.recvspace
+Returns the default UDP receive buffer size.
 .El
 .Sh CTL_USER
 The string and integer information available for the CTL_USER level
