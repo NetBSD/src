@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.31 2001/09/19 00:49:57 wiz Exp $
+.\"	$NetBSD: ep.4,v 1.32 2003/03/30 18:05:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -166,7 +166,7 @@ type sensed and saved when the configuration utility was run.
 the driver has encountered a FIFO underrun or overrun. The driver will reset
 the card and the packet will be lost. This is not fatal.
 .It "ep0: eeprom failed to come ready"
-The eeprom failed to come ready.  This probably means the card is wedged.
+The EEPROM failed to come ready.  This probably means the card is wedged.
 .It "ep0: 3c509 in test mode. Erase pencil mark!"
 This means that someone has scribbled with pencil in the test area on the
 card.  Erase the pencil mark and reboot.  (This is not a joke).
