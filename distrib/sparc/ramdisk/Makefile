@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/08/30 23:51:51 jhawk Exp $
+#	$NetBSD: Makefile,v 1.20 2000/09/04 17:04:24 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -75,8 +75,8 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/ramdisk.fs \
-		> $(RELEASEDIR)/installation/bootfs/ramdisk.fs.gz
+	gzip -c -9 < $(.OBJDIR)/$(IMAGE) \
+		> $(RELEASEDIR)/installation/bootfs/$(IMAGE).gz
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
