@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.3 2002/03/06 07:47:57 simonb Exp $ */
+/* $NetBSD: sbtimer.c,v 1.4 2002/06/27 04:09:15 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -69,8 +69,6 @@ static void	sbtimer_statclockintr(void *arg, uint32_t status,
 static void	sbtimer_miscintr(void *arg, uint32_t status, uint32_t pc);
 
 static void	sbtimer_clock_init(void *arg);
-
-int printticks = 0;
 
 static int
 sbtimer_match(struct device *parent, struct cfdata *match, void *aux)
@@ -173,8 +171,6 @@ sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc)
 	/* clear interrupt, but leave timer enabled and in repeating mode */
 	WRITE_REG(sc->sc_addr_cfg, 0x03);		/* XXX */
 
-	if (printticks)
-		printf("+");
 	cf.pc = pc;
 	cf.sr = status;
 
