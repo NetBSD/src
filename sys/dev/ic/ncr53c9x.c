@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.25 1998/05/04 14:47:48 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.26 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -264,6 +264,7 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
 	case NCR_VARIANT_ESP200:
+		sc->sc_features |= NCR_F_HASCFG3;
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 	case NCR_VARIANT_ESP100A:
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
@@ -419,15 +420,29 @@ ncr53c9x_setsync(sc, ti)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_tinfo *ti;
 {
+	u_char syncoff, synctp, cfg3 = sc->sc_cfg3;
 
 	if (ti->flags & T_SYNCMODE) {
-		NCR_WRITE_REG(sc, NCR_SYNCOFF, ti->offset);
-		NCR_WRITE_REG(sc, NCR_SYNCTP,
-		    ncr53c9x_stp2cpb(sc, ti->period));
+		syncoff = ti->offset;
+		synctp = ncr53c9x_stp2cpb(sc, ti->period);
+		if (sc->sc_features & NCR_F_FASTSCSI) {
+			/*
+			 * If the period is 200ns or less (ti->period <= 50),
+			 * put the chip in Fast SCSI mode.
+			 */
+			if (ti->period <= 50)
+				cfg3 |= NCRCFG3_FSCSI;
+		}
 	} else {
-		NCR_WRITE_REG(sc, NCR_SYNCOFF, 0);
-		NCR_WRITE_REG(sc, NCR_SYNCTP, 0);
+		syncoff = 0;
+		synctp = 0;
 	}
+
+	if (sc->sc_features & NCR_F_HASCFG3)
+		NCR_WRITE_REG(sc, NCR_CFG3, cfg3);
+
+	NCR_WRITE_REG(sc, NCR_SYNCOFF, syncoff);
+	NCR_WRITE_REG(sc, NCR_SYNCTP, synctp);
 }
 
 int ncr53c9x_dmaselect = 0;
