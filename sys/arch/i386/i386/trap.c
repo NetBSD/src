@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 1995/03/31 02:49:55 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 1995/04/07 22:29:48 fvdl Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -509,8 +509,6 @@ syscall(frame)
 	extern int nlinux_sysent;
 	extern struct sysent linux_sysent[];
 	extern int linux_error[];
-	extern char sigcode[], esigcode[];
-	int fromtramp;
 #endif
 
 	cnt.v_syscall++;
@@ -544,24 +542,8 @@ syscall(frame)
 #endif
 #ifdef COMPAT_LINUX
 	case EMUL_LINUX:
-		/*
-		 * XXXX
-		 * This is a kluge until Linux sendsig() and sigreturn() are
-		 * emulated correctly, and a Linux-compatible signal trampoline
-		 * is written.
-		 * Note that `opc' is the value of eip when the call gate is
-		 * entered, which is the address right *after* the instruction.
-		 */
-		if ((caddr_t)opc > (caddr_t)PS_STRINGS - (esigcode - sigcode) &&
-		    (caddr_t)opc <= (caddr_t)PS_STRINGS) {
-			nsys = nsysent;
-			callp = sysent;
-			fromtramp = 1;
-		} else {
-			nsys = nlinux_sysent;
-			callp = linux_sysent;
-			fromtramp = 0;
-		}
+		nsys = nlinux_sysent;
+		callp = linux_sysent;
 		break;
 #endif
 #ifdef DIAGNOSTIC
@@ -576,7 +558,7 @@ syscall(frame)
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
 		/* Linux has a special system setup call as number 0 */
-		if (p->p_emul == EMUL_LINUX && !fromtramp)
+		if (p->p_emul == EMUL_LINUX)
 			break;
 #endif
 		/*
@@ -605,7 +587,7 @@ syscall(frame)
 	argsize = callp->sy_argsize;
 #ifdef COMPAT_LINUX
 	/* XXX extra if() for every emul type.. */
-	if (p->p_emul == EMUL_LINUX && !fromtramp) {
+	if (p->p_emul == EMUL_LINUX) {
 		/*
 		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
 		 * increasing order.
@@ -672,16 +654,15 @@ syscall(frame)
 		break;
 	default:
 	bad:
-		switch (p->p_emul) {
+		switch(p->p_emul) {
 #ifdef COMPAT_SVR4
 		case EMUL_IBCS2_ELF:
-		    error = svr4_error[error];
-		    break;
+			error = svr4_error[error];
+			break;
 #endif
 #ifdef COMPAT_LINUX
 		case EMUL_LINUX:
-			if (!fromtramp)
-				error = -linux_error[error];
+			error = -linux_error[error];
 			break;
 #endif
 #ifdef COMPAT_IBCS2
