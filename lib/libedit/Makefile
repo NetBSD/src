@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/26 20:17:48 christos Exp $
+#	$NetBSD: Makefile,v 1.14 1997/11/13 04:43:07 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -16,7 +16,7 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 	editline.3 history_init.3 editline.3 history_end.3 editline.3 history.3
 
 # For speed and debugging
-#SRCS=   ${OSRCS} tokenizer.c history.c
+#SRCS=   ${OSRCS} tokenizer.c history.c readline.c
 # For protection
 SRCS=	editline.c tokenizer.c history.c readline.c
 
