@@ -27,7 +27,7 @@
  *	FSM for isdnd
  *	-------------
  *
- *	$Id: fsm.c,v 1.4 2002/12/06 15:00:15 thorpej Exp $ 
+ *	$Id: fsm.c,v 1.5 2003/01/06 12:46:14 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -191,7 +191,7 @@ F_DIAL(struct cfg_entry *cep)
 }
 
 /*---------------------------------------------------------------------------*
- *	outgoing dial successfull
+ *	outgoing dial successful
  *---------------------------------------------------------------------------*/	
 static void
 F_DOK(struct cfg_entry *cep)

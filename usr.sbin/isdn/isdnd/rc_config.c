@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.15 2002/12/06 15:00:16 thorpej Exp $ 
+ *	$Id: rc_config.c,v 1.16 2003/01/06 12:46:14 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -1559,10 +1559,10 @@ print_config(void)
 				switch(cep->remote_numbers_handling)
 				{
 					case RNH_NEXT:
-						fprintf(PFILE, "next\t\t# use next number after last successfull for new dial\n");
+						fprintf(PFILE, "next\t\t# use next number after last successful for new dial\n");
 						break;
 					case RNH_LAST:
-						fprintf(PFILE, "last\t\t# use last successfull number for new dial\n");
+						fprintf(PFILE, "last\t\t# use last successful number for new dial\n");
 						break;
 					case RNH_FIRST:
 						fprintf(PFILE, "first\t\t# always start with first number for new dial\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3 2002/09/20 15:23:06 mycroft Exp $ */
+/* $NetBSD: main.c,v 1.4 2003/01/06 12:46:15 wiz Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 
 /*---------------------------------------------------------------------------
  *	Connect via tcp/ip.
- *	Return socket if successfull, -1 on error.
+ *	Return socket if successful, -1 on error.
  ---------------------------------------------------------------------------*/
 static int
 connect_remote(char *host, int portno)
