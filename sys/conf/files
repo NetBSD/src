@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.539 2002/06/28 23:27:13 thorpej Exp $
+#	$NetBSD: files,v 1.540 2002/07/02 20:27:45 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -139,6 +139,7 @@ defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME
 				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
 defflag				LOCKDEBUG
 defflag				SYSCALL_DEBUG
+defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
 
 # memory (ram) disk options
 #
