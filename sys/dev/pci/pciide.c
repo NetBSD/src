@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.33.2.3 1999/05/05 17:13:24 perry Exp $	*/
+/*	$NetBSD: pciide.c,v 1.33.2.4 1999/06/24 00:03:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1281,6 +1281,7 @@ piix_setup_channel(chp)
 		mode[0] = mode[1] =
 		    min(drvp[0].DMA_mode, drvp[1].DMA_mode);
 		    drvp[0].DMA_mode = mode[0];
+		    drvp[1].DMA_mode = mode[1];
 		goto ok;
 	}
 	/*
@@ -1292,7 +1293,7 @@ piix_setup_channel(chp)
 		mode[1] = drvp[1].PIO_mode;
 		if (piix_isp_pio[mode[1]] != piix_isp_dma[mode[0]] ||
 		    piix_rtc_pio[mode[1]] != piix_rtc_dma[mode[0]])
-			mode[1] = 0;
+			mode[1] = drvp[1].PIO_mode = 0;
 		goto ok;
 	}
 	if (drvp[1].drive_flags & DRIVE_DMA) {
@@ -1300,7 +1301,7 @@ piix_setup_channel(chp)
 		mode[0] = drvp[0].PIO_mode;
 		if (piix_isp_pio[mode[0]] != piix_isp_dma[mode[1]] ||
 		    piix_rtc_pio[mode[0]] != piix_rtc_dma[mode[1]])
-			mode[0] = 0;
+			mode[0] = drvp[0].PIO_mode = 0;
 		goto ok;
 	}
 	/*
@@ -1308,24 +1309,24 @@ piix_setup_channel(chp)
 	 * one of them is PIO mode < 2
 	 */
 	if (drvp[0].PIO_mode < 2) {
-		mode[0] = 0;
+		mode[0] = drvp[0].PIO_mode = 0;
 		mode[1] = drvp[1].PIO_mode;
 	} else if (drvp[1].PIO_mode < 2) {
-		mode[1] = 0;
+		mode[1] = drvp[1].PIO_mode = 0;
 		mode[0] = drvp[0].PIO_mode;
 	} else {
 		mode[0] = mode[1] =
 		    min(drvp[1].PIO_mode, drvp[0].PIO_mode);
+		drvp[0].PIO_mode = mode[0];
+		drvp[1].PIO_mode = mode[1];
 	}
 ok:	/* The modes are setup */
 	for (drive = 0; drive < 2; drive++) {
 		if (drvp[drive].drive_flags & DRIVE_DMA) {
-			drvp[drive].DMA_mode = mode[drive];
 			idetim |= piix_setup_idetim_timings(
 			    mode[drive], 1, chp->channel);
 			goto end;
-		} else
-			drvp[drive].PIO_mode = mode[drive];
+		}
 	}
 	/* If we are there, none of the drives are DMA */
 	if (mode[0] >= 2)
