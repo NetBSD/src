@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/03/27 10:55:21 mycroft Exp $
+#	$NetBSD: Makefile,v 1.21 1997/04/19 07:20:13 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
@@ -29,7 +29,7 @@ hack.onames.h: makedefs def.objects.h
 	${.OBJDIR}/makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
 makedefs: makedefs.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
+	${HOST_CC} ${HOST_CFLAGS} ${HOST_LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c
 
 .if !exists(${DESTDIR}${FILESDIR}/perm)
 proginstall:: clobber
