@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.232 2000/06/07 01:58:18 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.233 2000/06/07 09:55:23 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.228 2000/06/07 01:57:30 soren Exp 
+ *	NetBSD: pcidevs,v 1.229 2000/06/07 09:52:16 mrg Exp 
  */
 
 /*
@@ -3331,13 +3331,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
 	    0,
 	    "Sun Microsystems",
-	    "SPARC Ebus",
+	    "PCIO Ebus2",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
 	    0,
 	    "Sun Microsystems",
-	    "SUNW,hme compatible Ethernet",
+	    "PCIO Happy Meal Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.234 2000/06/07 01:58:17 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.235 2000/06/07 09:55:22 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.228 2000/06/07 01:57:30 soren Exp 
+ *	NetBSD: pcidevs,v 1.229 2000/06/07 09:52:16 mrg Exp 
  */
 
 /*
@@ -1349,8 +1349,8 @@
 #define	PCI_PRODUCT_SONY_MEMSTICK	0x808a		/* Memory Stick I/F Controller */
 
 /* Sun Microsystems products */
-#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* SPARC Ebus */
-#define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* SUNW,hme compatible Ethernet */
+#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
+#define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* PCIO Happy Meal Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 
