@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.26 2001/01/16 05:32:16 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.26 2001/01/16 05:32:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $");
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG1_TO_PHYS(x)
 #endif
 
-#if defined(__alpha__) || defined(alpha)
-/*
- * Digital UNIX never supports PMAG-BA
- */
+#if defined(alpha)
 #define machine_btop(x) alpha_btop(x)
 #define MACHINE_KSEG0_TO_PHYS(x) ALPHA_K0SEG_TO_PHYS(x)
 #endif
@@ -82,14 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $");
  *		} bt_lo;
  *		...
  * Although CX has single Bt459, 32bit R/W can be done w/o any trouble.
- *
- * struct bt459reg {
- *         u_int32_t       bt_lo;
- *         u_int32_t       bt_hi;
- *         u_int32_t       bt_reg;
- *         u_int32_t       bt_cmap;
- * };
- *
+ *	struct bt459reg {
+ *		   u_int32_t	   bt_lo;
+ *		   u_int32_t	   bt_hi;
+ *		   u_int32_t	   bt_reg;
+ *		   u_int32_t	   bt_cmap;
+ *	};
  */
 
 /* Bt459 hardware registers */
@@ -108,13 +103,13 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $");
 struct fb_devconfig {
 	vaddr_t dc_vaddr;		/* memory space virtual base address */
 	paddr_t dc_paddr;		/* memory space physical base address */
-	vsize_t	dc_size;		/* size of slot memory */
+	vsize_t dc_size;		/* size of slot memory */
 	int	dc_wid;			/* width of frame buffer */
 	int	dc_ht;			/* height of frame buffer */
 	int	dc_depth;		/* depth, bits per pixel */
 	int	dc_rowbytes;		/* bytes in a FB scan line */
-	vaddr_t dc_videobase;		/* base of flat frame buffer */
-	int	    dc_blanked;		/* currently has video disabled */
+	vaddr_t	dc_videobase;		/* base of flat frame buffer */
+	int	dc_blanked;		/* currently has video disabled */
 
 	struct rasops_info rinfo;
 };
@@ -142,12 +137,8 @@ struct cfb_softc {
 	struct hwcmap256 sc_cmap;	/* software copy of colormap */
 	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
-	int sc_changed;			/* need update of colormap */
-#define	DATA_ENB_CHANGED	0x01	/* cursor enable changed */
-#define	DATA_CURCMAP_CHANGED	0x02	/* cursor colormap changed */
-#define	DATA_CURSHAPE_CHANGED	0x04	/* cursor size, image, mask changed */
-#define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
-#define	DATA_ALL_CHANGED	0x0f
+	int sc_changed;			/* need update of hardware */
+#define	WSDISPLAY_CMAP_DOLUT	0x20
 	int nscreens;
 };
 
@@ -212,7 +203,6 @@ static int  set_cmap __P((struct cfb_softc *, struct wsdisplay_cmap *));
 static int  set_cursor __P((struct cfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct cfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct cfb_softc *, struct wsdisplay_curpos *));
-static void bt459_set_curpos __P((struct cfb_softc *));
 
 /*
  * Compose 2 bit/pixel cursor image.  Bit order will be reversed.
@@ -425,7 +415,7 @@ cfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		bt459_set_curpos(sc);
+		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -523,21 +513,35 @@ cfbintr(arg)
 {
 	struct cfb_softc *sc = arg;
 	caddr_t cfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	struct bt459reg *vdac;
+	caddr_t vdac;
 	int v;
 	
 	*(u_int8_t *)(cfbbase + CX_OFFSET_IREQ) = 0;
 	if (sc->sc_changed == 0)
 		return (1);
 
-	vdac = (void *)(cfbbase + CX_BT459_OFFSET);
+	vdac = cfbbase + CX_BT459_OFFSET;
 	v = sc->sc_changed;
-	sc->sc_changed = 0;
-	if (v & DATA_ENB_CHANGED) {
+	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		SELECT(vdac, BT459_IREG_CCR);
 		REG(vdac, bt_reg) = (sc->sc_curenb) ? 0xc0 : 0x00;
 	}
-	if (v & DATA_CURCMAP_CHANGED) {
+	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		int x, y;
+
+		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+
+		x += sc->sc_cursor.cc_magic.x;
+		y += sc->sc_cursor.cc_magic.y;
+
+		SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
+		REG(vdac, bt_reg) = x;		tc_wmb();
+		REG(vdac, bt_reg) = x >> 8;	tc_wmb();
+		REG(vdac, bt_reg) = y;		tc_wmb();
+		REG(vdac, bt_reg) = y >> 8;	tc_wmb();
+	}
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		SELECT(vdac, BT459_IREG_CCOLOR_2);
@@ -549,7 +553,7 @@ cfbintr(arg)
 		REG(vdac, bt_reg) = cp[2];	tc_wmb();
 		REG(vdac, bt_reg) = cp[4];	tc_wmb();
 	}
-	if (v & DATA_CURSHAPE_CHANGED) {
+	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		u_int8_t *ip, *mp, img, msk;
 		u_int8_t u;
 		int bcnt;
@@ -584,7 +588,7 @@ cfbintr(arg)
 			bcnt += 2;
 		}
 	}
-	if (v & DATA_CMAP_CHANGED) {
+	if (v & WSDISPLAY_CMAP_DOLUT) {
 		struct hwcmap256 *cm = &sc->sc_cmap;
 		int index;
 
@@ -595,6 +599,7 @@ cfbintr(arg)
 			REG(vdac, bt_cmap) = cm->b[index];	tc_wmb();
 		}
 	}
+	sc->sc_changed = 0;
 	return (1);
 }
 
@@ -602,8 +607,7 @@ static void
 cfbinit(dc)
 	struct fb_devconfig *dc;
 {
-	caddr_t cfbbase = (caddr_t)dc->dc_vaddr;
-	struct bt459reg *vdac = (void *)(cfbbase + CX_BT459_OFFSET);
+	caddr_t vdac = (caddr_t)dc->dc_vaddr + CX_BT459_OFFSET;
 	const u_int8_t *p;
 	int i;
 
@@ -708,9 +712,7 @@ set_cmap(sc, p)
 	copyin(p->red, &sc->sc_cmap.r[index], count);
 	copyin(p->green, &sc->sc_cmap.g[index], count);
 	copyin(p->blue, &sc->sc_cmap.b[index], count);
-
-	sc->sc_changed |= DATA_CMAP_CHANGED;
-
+	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
 	return (0);
 }
 
@@ -741,32 +743,25 @@ set_cursor(sc, p)
 		    !uvm_useracc(p->mask, icount, B_READ))
 			return (EFAULT);
 	}
-	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {
-		if (v & WSDISPLAY_CURSOR_DOCUR)
-			cc->cc_hot = p->hot;
-		if (v & WSDISPLAY_CURSOR_DOPOS)
-			set_curpos(sc, &p->pos);
-		bt459_set_curpos(sc);
-	}
 
-	sc->sc_changed = 0;
-	if (v & WSDISPLAY_CURSOR_DOCUR) {
+	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
-		sc->sc_changed |= DATA_ENB_CHANGED;
-	}
+	if (v & WSDISPLAY_CURSOR_DOPOS)
+		set_curpos(sc, &p->pos);
+	if (v & WSDISPLAY_CURSOR_DOHOT)
+		cc->cc_hot = p->hot;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
-		sc->sc_changed |= DATA_CURCMAP_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
 		copyin(p->image, cc->cc_image, icount);
 		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
-		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
+	sc->sc_changed = v;
 
 	return (0);
 #undef cc
@@ -798,29 +793,4 @@ set_curpos(sc, curpos)
 		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
-}
-
-void
-bt459_set_curpos(sc)
-	struct cfb_softc *sc;
-{
-	caddr_t cfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	struct bt459reg *vdac = (void *)(cfbbase + CX_BT459_OFFSET);
-	int x, y, s;
-
-	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
-	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-
-	x += sc->sc_cursor.cc_magic.x;
-	y += sc->sc_cursor.cc_magic.y;
-
-	s = spltty();
-
-	SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
-	REG(vdac, bt_reg) = x;		tc_wmb();
-	REG(vdac, bt_reg) = x >> 8;	tc_wmb();
-	REG(vdac, bt_reg) = y;		tc_wmb();
-	REG(vdac, bt_reg) = y >> 8;	tc_wmb();
-
-	splx(s);
 }
