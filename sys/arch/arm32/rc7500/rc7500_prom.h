@@ -1,4 +1,4 @@
-/* $NetBSD: rc7500_prom.h,v 1.1 1996/08/29 22:35:45 mark Exp $ */
+/*	$NetBSD: rc7500_prom.h,v 1.2 1997/10/14 10:49:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
