@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.61 2001/03/21 07:52:13 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.62 2001/03/30 11:08:56 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.204 2001/03/20 02:44:39 itojun Exp $	*/
 
 /*
@@ -1291,18 +1291,11 @@ ni6_input(m, off)
 			    subjlen, (caddr_t)&sin6.sin6_addr);
 			/* XXX kame scope hack */
 			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-#ifdef FAKE_LOOPBACK_IF
 				if ((m->m_flags & M_PKTHDR) != 0 &&
 				    m->m_pkthdr.rcvif) {
 					sin6.sin6_addr.s6_addr16[1] =
 					    htons(m->m_pkthdr.rcvif->if_index);
 				}
-#else
-				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-					sin6.sin6_addr.s6_addr16[1] =
-					    ip6->ip6_dst.s6_addr16[1];
-				}
-#endif
 			}
 			subj = (char *)&sin6;
 			if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6.sin6_addr))
