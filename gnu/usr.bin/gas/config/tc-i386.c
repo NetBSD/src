@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.4 1993/11/20 22:16:01 pk Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.5 1994/04/07 19:14:45 mycroft Exp $";
 #endif
 
 #include "as.h"
@@ -1647,18 +1647,42 @@ char *operand_string;
 				/* missing expr becomes absolute 0 */
 				as_bad("missing or invalid displacement '%s' taken as 0",
 				       operand_string);
-				i.types[this_operand] |= (Disp|Abs);
-				exp->X_seg = SEG_ABSOLUTE;
-				exp->X_add_number = 0;
-				exp->X_add_symbol = (symbolS *) 0;
-				exp->X_subtract_symbol = (symbolS *) 0;
+				if (i.disp_reloc[this_operand] != NO_RELOC || !found_base_index_form || !i.base_reg) {
+					i.types[this_operand] |= (Disp|Abs);
+					exp->X_seg = SEG_ABSOLUTE;
+					exp->X_add_number = 0;
+					exp->X_add_symbol = (symbolS *) 0;
+					exp->X_subtract_symbol = (symbolS *) 0;
+				} else {
+#ifdef DEBUG386
+					printf("displacement removed in operand `%s'\n", operand_string);
+#endif
+					i.disp_operands--;
+					i.disps[this_operand] = 0;
+				}
 				break;
 			case SEG_ABSOLUTE:
-				i.types[this_operand] |= SMALLEST_DISP_TYPE (exp->X_add_number);
+				if (i.disp_reloc[this_operand] != NO_RELOC || !found_base_index_form || !i.base_reg || exp->X_add_symbol || exp->X_subtract_symbol || exp->X_add_number != 0)
+					i.types[this_operand] |= SMALLEST_DISP_TYPE (exp->X_add_number);
+				else {
+#ifdef DEBUG386
+					printf("displacement removed in operand `%s'\n", operand_string);
+#endif
+					i.disp_operands--;
+					i.disps[this_operand] = 0;
+				}
 				break;
 			case SEG_TEXT: case SEG_DATA: case SEG_BSS:
 			case SEG_UNKNOWN:	/* must be 32 bit displacement (i.e. address) */
-				i.types[this_operand] |= Disp32;
+				if (i.disp_reloc[this_operand] != NO_RELOC || !found_base_index_form || !i.base_reg || exp->X_add_symbol || exp->X_subtract_symbol || exp->X_add_number != 0)
+					i.types[this_operand] |= Disp32;
+				else {
+#ifdef DEBUG386
+					printf("displacement removed in operand `%s'\n", operand_string);
+#endif
+					i.disp_operands--;
+					i.disps[this_operand] = 0;
+				}
 				break;
 			default:
 				goto seg_unimplemented;
