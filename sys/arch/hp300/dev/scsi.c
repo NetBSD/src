@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.13 1996/12/09 03:16:26 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.14 1997/01/26 18:04:10 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -1174,6 +1174,7 @@ scsiintr(arg)
 		return (0);
 
 	ints = hd->scsi_ints;
+	dq = hs->sc_sq.dq_forw;
 	if ((ints & INTS_SRV_REQ) && (hs->sc_flags & SCSI_IO)) {
 		/*
 		 * this should be the normal i/o completion case.
@@ -1187,7 +1188,6 @@ scsiintr(arg)
 			len -= 4;
 		hs->sc_flags &=~ SCSI_PAD;
 #endif
-		dq = hs->sc_sq.dq_forw;
 		finishxfer(hs, hd, dq->dq_slave);
 		hs->sc_flags &=~ (SCSI_IO|SCSI_HAVEDMA);
 		dmafree(&hs->sc_dq);
