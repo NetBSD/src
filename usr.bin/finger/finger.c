@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.10 1997/10/19 08:13:32 mrg Exp $	*/
+/*	$NetBSD: finger.c,v 1.11 1998/08/10 03:11:07 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.10 1997/10/19 08:13:32 mrg Exp $");
+__RCSID("$NetBSD: finger.c,v 1.11 1998/08/10 03:11:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ loginlist()
 		if (!user.ut_name[0])
 			continue;
 		if ((pn = find_person(user.ut_name)) == NULL) {
-			bcopy(user.ut_name, name, UT_NAMESIZE);
+			memcpy(name, user.ut_name, UT_NAMESIZE);
 			if ((pw = getpwnam(name)) == NULL)
 				continue;
 			pn = enter_person(pw);

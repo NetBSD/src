@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.25 1998/07/19 17:49:19 drochner Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.26 1998/08/10 02:57:23 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.25 1998/07/19 17:49:19 drochner Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.26 1998/08/10 02:57:23 perry Exp $");
 #endif
 #endif
 
@@ -460,7 +460,7 @@ rstat_service(rqstp, transp)
 		svcerr_noproc(transp);
 		goto leave;
 	}
-	bzero((char *)&argument, sizeof(argument));
+	memset((char *)&argument, 0, sizeof(argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		goto leave;

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.11 1997/11/24 22:03:48 lukem Exp $	*/
+/*	$NetBSD: net.c,v 1.12 1998/08/10 03:11:07 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.11 1997/11/24 22:03:48 lukem Exp $");
+__RCSID("$NetBSD: net.c,v 1.12 1998/08/10 03:11:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ netfinger(name)
 			return;
 		}
 		sin.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
+		memcpy((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
 		host = hp->h_name;
 	} else
 		sin.sin_family = AF_INET;

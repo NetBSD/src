@@ -1,4 +1,4 @@
-/*	$NetBSD: kcmd.c,v 1.5 1997/10/19 14:10:27 lukem Exp $	*/
+/*	$NetBSD: kcmd.c,v 1.6 1998/08/10 03:11:07 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-__RCSID("$NetBSD: kcmd.c,v 1.5 1997/10/19 14:10:27 lukem Exp $");
+__RCSID("$NetBSD: kcmd.c,v 1.6 1998/08/10 03:11:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,9 +136,9 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 		fcntl(s, F_SETOWN, pid);
 		sin.sin_family = hp->h_addrtype;
 #if defined(ultrix) || defined(sun)
-		bcopy(hp->h_addr, (caddr_t)&sin.sin_addr, hp->h_length);
+		memcpy((caddr_t)&sin.sin_addr, hp->h_addr, hp->h_length);
 #else
-		bcopy(hp->h_addr_list[0], (caddr_t)&sin.sin_addr, hp->h_length);
+		memcpy((caddr_t)&sin.sin_addr, hp->h_addr_list[0], hp->h_length);
 #endif
 		sin.sin_port = rport;
 		if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
@@ -166,7 +166,7 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 			errno = oerrno;
 			perror(NULL);
 			hp->h_addr_list++;
-			bcopy(hp->h_addr_list[0], (caddr_t)&sin.sin_addr,
+			memcpy((caddr_t)&sin.sin_addr, hp->h_addr_list[0],
 			    hp->h_length);
 			fprintf(stderr, "Trying %s...\n",
 				inet_ntoa(sin.sin_addr));

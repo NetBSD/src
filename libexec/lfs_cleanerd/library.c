@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.6 1998/03/01 02:20:07 fvdl Exp $	*/
+/*	$NetBSD: library.c,v 1.7 1998/08/10 02:57:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.6 1998/03/01 02:20:07 fvdl Exp $");
+__RCSID("$NetBSD: library.c,v 1.7 1998/08/10 02:57:23 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ get_fs_info (lstatfsp, use_mmap)
 	fsp = (FS_INFO *)malloc(sizeof(FS_INFO));
 	if (fsp == NULL)
 		return NULL;
-	bzero(fsp, sizeof(FS_INFO));
+	memset(fsp, 0, sizeof(FS_INFO));
 
 	fsp->fi_statfsp = lstatfsp;
 	if (get_superblock (fsp, &fsp->fi_lfs))
@@ -170,7 +170,7 @@ get_superblock (fsp, sbp)
 	}
 
 	get(fid, LFS_LABELPAD, buf, LFS_SBPAD);
-	bcopy(buf, sbp, sizeof(struct lfs));
+	memcpy(sbp, buf, sizeof(struct lfs));
 	close (fid);
 
 	return (0);
