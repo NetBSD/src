@@ -29,7 +29,7 @@ SUBDIRS = doc lib intl src po m4 misc tests
 
 DISTCLEANFILES = intl/libintl.h
 
-ABOUT-NLS: $(srcdir)/doc/nls.texi $(srcdir)/doc/matrix.texi
-	rm -f $(srcdir)/ABOUT-NLS \
-	  && $(MAKEINFO) --output=$(srcdir)/ABOUT-NLS --no-header \
-	    -I $(srcdir)/doc --no-validate nls.texi
+#ABOUT-NLS: $(srcdir)/doc/nls.texi $(srcdir)/doc/matrix.texi
+#	rm -f $(srcdir)/ABOUT-NLS \
+#	  && $(MAKEINFO) --output=$(srcdir)/ABOUT-NLS --no-header \
+#	    -I $(srcdir)/doc --no-validate nls.texi

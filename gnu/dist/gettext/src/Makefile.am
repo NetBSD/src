@@ -56,20 +56,20 @@ open-po.c po.c str-list.c dir-list.c
 MAINTAINERCLEANFILES = po-gram.gen.c po-gram.gen.h po-hash.gen.c po-hash.gen.h
 
 # Some rules for yacc handling.
-po-gram.gen.c po-gram.gen.h: po-gram.y
-	$(YACC) $(YFLAGS) $(srcdir)/po-gram.y
-	if test -s y.tab.c && test -s y.tab.h; then \
-	  rm -f $(srcdir)/po-gram.gen.c $(srcdir)/po-gram.gen.h; \
-	  $(SED) 's/[yY][yY]/po_gram_/g' < y.tab.c > $(srcdir)/po-gram.gen.c; \
-	  $(SED) 's/[yY][yY]/po_gram_/g' < y.tab.h > $(srcdir)/po-gram.gen.h; \
-	fi
-	rm -f y.tab.c y.tab.h
+#po-gram.gen.c po-gram.gen.h: po-gram.y
+#	$(YACC) $(YFLAGS) $(srcdir)/po-gram.y
+#	if test -s y.tab.c && test -s y.tab.h; then \
+#	  rm -f $(srcdir)/po-gram.gen.c $(srcdir)/po-gram.gen.h; \
+#	  $(SED) 's/[yY][yY]/po_gram_/g' < y.tab.c > $(srcdir)/po-gram.gen.c; \
+#	  $(SED) 's/[yY][yY]/po_gram_/g' < y.tab.h > $(srcdir)/po-gram.gen.h; \
+#	fi
+#	rm -f y.tab.c y.tab.h
 
-po-hash.gen.c po-hash.gen.h: po-hash.y
-	$(YACC) $(YFLAGS) $(srcdir)/po-hash.y
-	if test -s y.tab.c && test -s y.tab.h; then \
-	  rm -f $(srcdir)/po-hash.gen.c $(srcdir)/po-hash.gen.h; \
-	  $(SED) 's/[yY][yY]/po_hash_/g' < y.tab.c > $(srcdir)/po-hash.gen.c; \
-	  $(SED) 's/[yY][yY]/po_hash_/g' < y.tab.h > $(srcdir)/po-hash.gen.h; \
-	fi
-	rm -f y.tab.c y.tab.h
+#po-hash.gen.c po-hash.gen.h: po-hash.y
+#	$(YACC) $(YFLAGS) $(srcdir)/po-hash.y
+#	if test -s y.tab.c && test -s y.tab.h; then \
+#	  rm -f $(srcdir)/po-hash.gen.c $(srcdir)/po-hash.gen.h; \
+#	  $(SED) 's/[yY][yY]/po_hash_/g' < y.tab.c > $(srcdir)/po-hash.gen.c; \
+#	  $(SED) 's/[yY][yY]/po_hash_/g' < y.tab.h > $(srcdir)/po-hash.gen.h; \
+#	fi
+#	rm -f y.tab.c y.tab.h
