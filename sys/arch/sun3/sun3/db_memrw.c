@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.17 1997/03/13 15:58:52 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.18 1997/06/10 19:16:13 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ db_write_text(dst, size, data)
 	if (size <= 0)
 		return;
 
-	pgva = _trunc_page((long)dst);
+	pgva = m68k_trunc_page((long)dst);
 
 	goto firstpage;
 	do {
@@ -127,7 +127,7 @@ db_write_text(dst, size, data)
 		 * for the previous page, and make the new
 		 * page writable.
 		 */
-		pgva = _trunc_page((long)dst);
+		pgva = m68k_trunc_page((long)dst);
 		if (pgva != prevpg) {
 			/*
 			 * Restore old PTE.  No cache flush,
