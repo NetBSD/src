@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.145 2000/12/06 03:21:33 sommerfeld Exp $
+#	$NetBSD: bsd.own.mk,v 1.146 2000/12/07 08:35:15 scw Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -102,7 +102,8 @@ NOLINT=1
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "i386"
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE} == "mvme68k"
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
