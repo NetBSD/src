@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.553 2003/03/20 22:00:20 wiz Exp $
+# $NetBSD: mi,v 1.554 2003/03/24 15:24:47 atatat Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1376,6 +1376,7 @@
 ./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman
 ./usr/share/man/cat8/dumpfs.0			man-sysutil-catman
 ./usr/share/man/cat8/dumplfs.0			man-sysutil-catman
+./usr/share/man/cat8/editmap.0			man-sendmail-catman
 ./usr/share/man/cat8/edquota.0			man-sysutil-catman
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman
 ./usr/share/man/cat8/envstat.0			man-sysutil-catman
@@ -3161,6 +3162,7 @@
 ./usr/share/man/man8/dump_lfs.8			man-sysutil-man
 ./usr/share/man/man8/dumpfs.8			man-sysutil-man
 ./usr/share/man/man8/dumplfs.8			man-sysutil-man
+./usr/share/man/man8/editmap.8			man-sendmail-man
 ./usr/share/man/man8/edquota.8			man-sysutil-man
 ./usr/share/man/man8/eeprom.8			man-sysutil-man
 ./usr/share/man/man8/envstat.8			man-sysutil-man
