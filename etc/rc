@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.131 1999/09/16 11:00:44 darrenr Exp $
+#	$NetBSD: rc,v 1.132 1999/09/28 14:53:17 bouyer Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -314,6 +314,12 @@ fi
 if checkyesno lkm && [ -f /etc/rc.lkm ]; then
 	lkmstage=AFTERMOUNT
 	. /etc/rc.lkm
+fi
+
+# if $defcorename is set, change it here.
+if [ -n "$defcorename" ]; then
+	echo -n 'setting default core name template: '
+	sysctl -w kern.defcorename=$defcorename
 fi
 
 # if $securelevel is set, change it here, else if it is 0, change
