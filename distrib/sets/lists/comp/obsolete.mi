@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.53 2001/07/07 11:28:22 simonb Exp $
+# $NetBSD: obsolete.mi,v 1.54 2001/09/15 21:19:36 chs Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -547,6 +547,7 @@
 /usr/include/sys/vsio.h
 /usr/include/ufs/mfs/mfsiom.h
 /usr/include/uvm/uvm_inherit.h
+/usr/include/uvm/uvm_vnode.h
 /usr/include/vm
 /usr/include/vm/device_pager.h
 /usr/include/vm/lock.h
