@@ -456,17 +456,17 @@ ahb_attach(struct isa_device *dev)
 {
 	static int firsttime;
 	int masunit = dev->id_masunit;
-	int id = dev->id_unit;
+	int r;
 
-	scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch,
-		&dev->id_physid, &id, dev->id_flags);
+	r = scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch,
+		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(firsttime==0 && masunit==0) {
 		firsttime = 1;
 		ahb_timeout(0);
 	}
-	return 0;
+	return r;
 }
 
 /*

@@ -143,10 +143,14 @@ fdattach(struct isa_device *dev)
 
 	fdt = rtcin(RTC_FDISKETTE);
 	if (dev->id_masunit >= NFDC)
-		return;
+		return 0;
 
+	if (dev->id_unit == -1) {
+		printf("fdc%d: cannot support unit ?\n", dev->id_masunit);
+		return 0;
+	}
 	if (dev->id_unit >= NFD)
-		return;
+		return 0;
 
 	if (dev->id_physid == 1)
 		fdt <<= 4;
@@ -183,6 +187,7 @@ fdattach(struct isa_device *dev)
 
 	outb(fdc+fdctl,0);	/* Set transfer to 500kbps */
 	fd_turnoff(dev->id_physid);
+	return 1;
 }
 
 int

@@ -1,6 +1,7 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
+ * Hacked by Theo de Raadt <deraadt@fsa.ca>
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
@@ -88,29 +89,35 @@ struct	cd_data *cd_data[NCD];
 #define CD_START	1
 #define CD_EJECT	-2
 
-/***********************************************************************\
-* The routine called by the low level scsi routine when it discovers	*
-* A device suitable for this driver					*
-\***********************************************************************/
-int	cdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
+/*
+ * The routine called by the low level scsi routine when it discovers
+ * A device suitable for this driver
+ */
+int
+cdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 {
 	unsigned char *tbl;
 	struct cd_data *cd;
 	struct cd_parms *dp;
-	int	targ, lun, i;
+	int targ, lun, i;
 
 	targ = physid >> 3;
 	lun = physid & 7;
 
-	if(unit >= NCD)
-		return -1;
-	if(cd_data[unit])
-		return -1;
+	if(*unit == -1) {
+		for(i=0; i<NCD && *unit==-1; i++)
+			if(cd_data[*unit]==NULL)
+				*unit = i;
+	}
+	if(*unit >= NCD || *unit == -1)
+		return 0;
+	if(cd_data[*unit])
+		return 0;
 
-	cd = cd_data[unit] = (struct cd_data *)malloc(sizeof *cd,
+	cd = cd_data[*unit] = (struct cd_data *)malloc(sizeof *cd,
 		M_TEMP, M_NOWAIT);
 	if(!cd)
-		return -1;
+		return 0;
 	bzero(cd, sizeof *cd);
 
 	dp  = &(cd->params);
@@ -127,22 +134,21 @@ int	cdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 
 
 	i = cd->cmdscount;
-	while(i-- )
-	{
-		cd_scsi_xfer[unit][i].next = cd_free_xfer[unit];
-		cd_free_xfer[unit] = &cd_scsi_xfer[unit][i];
+	while(i--) {
+		cd_scsi_xfer[*unit][i].next = cd_free_xfer[*unit];
+		cd_free_xfer[*unit] = &cd_scsi_xfer[*unit][i];
 	}
 	/*******************************************************\
 	* Use the subdriver to request information regarding	*
 	* the drive. We cannot use interrupts yet, so the	*
 	* request must specify this.				*
 	\*******************************************************/
-	cd_get_parms(unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
+	cd_get_parms(*unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
 	printf("cd%d at %s%d targ %d lun %d: %s\n",
-		unit, sw->name, masunit, targ, lun,
+		*unit, sw->name, masunit, targ, lun,
 		dp->disksize ? "loaded" : "empty");
 	cd->flags |= CDINIT;
-	return 0;
+	return 1;
 }
 
 

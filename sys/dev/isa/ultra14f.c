@@ -445,19 +445,17 @@ struct  isa_dev *dev;
 {
 	static int firsttime;
 	int masunit = dev->id_masunit;
-	int id = dev->id_unit;
+	int r;
 
-	scsi_attach(masunit, uha_data[masunit].our_id, &uha_switch,
-		&dev->id_physid, &id, dev->id_flags);
-
-	/*scsi_warn(dev->id_unit, uha_data[unit].our_id, &uha_switch);*/
+	r = scsi_attach(masunit, uha_data[masunit].our_id, &uha_switch,
+		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(firsttime==0 && masunit==0) {
 		firsttime = 1;
 		uha_timeout(0);
 	}
-	return;
+	return r;
 }
 
 /***********************************************\

@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -240,6 +240,10 @@ wdattach(struct isa_device *dvp)
 		return(0);
     
 	lunit = dvp->id_unit;
+	if (lunit == -1) {
+		printf("wdc%d: cannot support unit ?\n", dvp->id_masunit);
+		return 0;
+	}
 	if (lunit >= NWD)
 		return(0);
 	unit = dvp->id_physid;
