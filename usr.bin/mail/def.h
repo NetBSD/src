@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)def.h	5.22 (Berkeley) 6/25/90
- *	$Id: def.h,v 1.2 1993/08/01 18:13:19 mycroft Exp $
+ *	$Id: def.h,v 1.3 1994/03/06 03:03:21 cgd Exp $
  */
 
 #include <sys/param.h>		/* includes <sys/types.h> */
@@ -267,7 +267,10 @@ struct ignoretab {
  * useful just before closing an old file that was opened
  * for read/write.
  */
-#define trunc(stream)	ftruncate(fileno(stream), (long) ftell(stream))
+#define trunc(stream)	do { \
+		fflush(stream); \
+		ftruncate(fileno(stream), (long) ftell(stream)) ; \
+	} while (0)
 
 /*
  * Forward declarations of routine types to keep lint and cc happy.
