@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/31 23:04:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 2002/01/22 00:59:46 thorpej Exp $
+
+NOOBJ=# defined
 
 .include <bsd.own.mk>
 
@@ -11,6 +13,5 @@ SUBDIR+=	backend frontend cpp0 gcov .WAIT \
 
 .else
 # Do nothing. (PROG undefined)
-NOOBJ=# defined
 .include <bsd.prog.mk>
 .endif
