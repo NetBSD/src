@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn26,v 1.1 2002/03/24 15:46:51 bjh21 Exp $
+#	$NetBSD: Makefile.acorn26,v 1.2 2002/06/24 07:15:24 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -55,7 +55,7 @@ MD_SFILES=	${ARM}/arm/vectors.S ${ACORN26}/acorn26/locore.S
 locore.o: ${ACORN26}/acorn26/locore.S assym.h
 	${NORMAL_S}
 
-vectors.o: ${ARM}/arm/vectors.S
+vectors.o: ${ARM}/arm/vectors.S assym.h
 	${NORMAL_S}
 
 ##
