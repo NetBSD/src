@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.9 2001/07/31 00:12:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.10 2001/07/31 21:00:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,14 +57,20 @@ ENTRY(pthread__switch)
 	PIC_PROLOGUE
 	movl	8(%ebp), %eax  /* eax holds the current thread */
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
-	subl	$CONTEXTSIZE, %esp
-	movl	%esp, PT_UC(%eax)
 	movl	%esp, %edi
+	/* We need the ucontext structure to be on the bottom of the stack,
+         * but we also need to push a few things on the original stack 
+	 * to do some saving, and swapcontext itself uses a word on the stack.
+	 * So 4 is esi,edi,return address,swapcontext tmp
+	 * alignment/paranoia.
+	 */
+	subl	$CONTEXTSIZE+(4*4), %edi
+	movl	%edi, PT_UC(%eax)
 	movl	PT_UC(%ecx),%esi
 	pushl	%esi	/* ucontext_t *ucp */
 	pushl	%edi	/* ucontext_t *oucp */
 	call	PIC_PLT(_C_LABEL(_swapcontext_u))
-	addl	$CONTEXTSIZE+8, %esp
+	addl	$8, %esp
 	PIC_EPILOGUE
 	popl	%edi
 	popl	%esi
@@ -107,9 +113,15 @@ ENTRY(pthread__locked_switch)
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
 	movl	16(%ebp), %edx /* edx holds the pointer to the spinlock */
 	incl	PT_SPINLOCKS(%ecx) /* Make sure we get continued */
-	subl	$CONTEXTSIZE, %esp
-	movl	%esp, PT_UC(%eax)
 	movl	%esp, %edi
+	/* We need the ucontext structure to be on the bottom of the stack,
+         * but we also need to push a few things on the original stack 
+	 * to do some saving, and _getcontext itself uses a word on the stack.
+	 * So 8 is eax,ecx,edx,edi,return address,getcontext tmp, plus
+	 * alignment/paranoia.
+	 */
+	subl	$CONTEXTSIZE+(8*4), %edi
+	movl	%edi, PT_UC(%eax)
 
 	pushl	%eax	/* caller save */
 	pushl	%ecx	/* caller save */
@@ -184,7 +196,7 @@ locked_no_new_preempt:
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
-	addl	$CONTEXTSIZE+16, %esp
+	addl	$16, %esp
 	PIC_EPILOGUE
 	popl	%edi
 	popl	%esi
