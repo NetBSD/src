@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.24 1999/04/12 01:05:01 ross Exp $	*/
+/*	$NetBSD: libkern.h,v 1.25 1999/04/12 17:23:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -171,4 +171,4 @@ int	 strncmp __P((const char *, const char *, size_t));
 char	*strncpy __P((char *, const char *, size_t));
 char	*strrchr __P((const char *, int));
 int	 strncasecmp __P((const char *, const char *, size_t));
-u_long	 inet_addr __P((const char *));
+u_int32_t inet_addr __P((const char *));
