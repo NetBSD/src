@@ -1,5 +1,5 @@
-#	$NetBSD: Src-omapip,v 1.5 2001/04/06 06:39:54 simonb Exp $
+#	$NetBSD: Src-omapip,v 1.6 2001/04/06 18:53:33 mellon Exp $
 
-OMSRCS=	array.c auth.c protocol.c buffer.c alloc.OM.c result.c connection.c \
-	errwarn.c listener.c dispatch.OM.c generic.c support.OM.c handle.c \
-	message.c hash.OM.c
+OMSRCS=	array.c alloc.OM.c result.c \
+	errwarn.c dispatch.OM.c support.OM.c handle.c \
+	hash.OM.c
