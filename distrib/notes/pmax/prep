@@ -43,9 +43,9 @@ gsystems.
 
 You should familiarize yourself with the console PROM environment
 and the hardware configuration. The PROMs on the older Decstation
-2100 and 3100 one syntax. The PROMs on the TurboChannel machines
+2100 and 3100 use one syntax. The PROMs on the TurboChannel machines
 use a completely different syntax.  Be sure you know how to print
-the configuration of your machine, and how boot from disk or
+the configuration of your machine, and how to boot from disk or
 network, as appropriate.
 
 On the 2100/3100, that's
