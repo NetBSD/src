@@ -25,33 +25,28 @@
 
 #ifdef OBJ_AOUT
 #ifdef TE_NetBSD
-#define	TARGET_FORMAT "a.out-vax-netbsd"
+#define TARGET_FORMAT "a.out-vax-netbsd"
 #endif
 #ifndef TARGET_FORMAT
-#define	TARGET_FORMAT "a.out-vax-bsd"
+#define TARGET_FORMAT "a.out-vax-bsd"
 #endif
 #endif
 
 #ifdef OBJ_VMS
-#define	TARGET_FORMAT "vms-vax"
+#define TARGET_FORMAT "vms-vax"
 #endif
 
 #ifdef OBJ_ELF
-#define	TARGET_FORMAT "elf32-vax"
+#define TARGET_FORMAT "elf32-vax"
 #endif
 
-#define	BFD_ARCH	bfd_arch_vax	/* for non-BFD_ASSEMBLER */
-#define	TARGET_ARCH	bfd_arch_vax	/* BFD_ASSEMBLER */
+#define BFD_ARCH	bfd_arch_vax	/* for non-BFD_ASSEMBLER */
+#define TARGET_ARCH	bfd_arch_vax	/* BFD_ASSEMBLER */
 
 #ifdef BFD_ASSEMBLER
 #define NO_RELOC	BFD_RELOC_NONE
 #else
-enum reloc_type
-  {
-     NO_RELOC, NO_RELOC2, RELOC_32, RELOC_GLOB_DAT,
-     RELOC_JMP_TBL, RELOC_JMP_SLOT
-  };
-#define NEED_FX_R_TYPE
+#define NO_RELOC	0
 #endif
 #define NOP_OPCODE	0x01
 
@@ -71,18 +66,26 @@ extern const struct relax_type md_relax_table[];
    should never do the relocation.  */
 
 #ifdef BFD_ASSEMBLER
-#define	TC_RELOC_RTSYM_LOC_FIXUP(FIX)			\
+#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)			\
 	((FIX)->fx_addsy == NULL			\
 	 || (! S_IS_EXTERNAL ((FIX)->fx_addsy)		\
 	     && ! S_IS_WEAK ((FIX)->fx_addsy)		\
 	     && S_IS_DEFINED ((FIX)->fx_addsy)		\
 	     && ! S_IS_COMMON ((FIX)->fx_addsy)))
-#define	tc_fix_adjustable(FIX)				\
-	(((FIX)->fx_addsy == NULL			\
-	 || (!S_IS_EXTERNAL ((FIX)->fx_addsy)		\
-	     && !S_IS_WEAK ((FIX)->fx_addsy)))		\
-	 && (FIX)->fx_r_type != BFD_RELOC_32_PLT_PCREL	\
-	 && (FIX)->fx_r_type != BFD_RELOC_32_GOT_PCREL)
+#define TC_FIX_ADJUSTABLE(FIX)				\
+	(!symbol_used_in_reloc_p ((FIX)->fx_addsy) && tc_fix_adjustable ((FIX)))
+#define tc_fix_adjustable(FIX)					\
+	((FIX)->fx_r_type != BFD_RELOC_VTABLE_INHERIT		\
+	 && (FIX)->fx_r_type != BFD_RELOC_32_PLT_PCREL		\
+	 && (FIX)->fx_r_type != BFD_RELOC_32_GOT_PCREL		\
+	 && (FIX)->fx_r_type != BFD_RELOC_VTABLE_ENTRY		\
+	 && ! S_IS_EXTERNAL ((FIX)->fx_addsy)			\
+	 && ! S_IS_WEAK ((FIX)->fx_addsy)			\
+	 && ((FIX)->fx_pcrel					\
+	     || ((FIX)->fx_subsy != NULL			\
+		 && (S_GET_SEGMENT ((FIX)->fx_subsy)		\
+		     == S_GET_SEGMENT ((FIX)->fx_addsy)))	\
+	     || S_IS_LOCAL ((FIX)->fx_addsy)))
 #endif
 
 /*

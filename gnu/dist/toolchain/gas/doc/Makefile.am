@@ -19,11 +19,11 @@ man_MANS = as.1
 # It will disappear in a future release.
 info_TEXINFOS = as.texinfo 
 
-asconfig.texi: $(CONFIG).texi
-	rm -f asconfig.texi
-	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+#asconfig.texi: $(CONFIG).texi
+#	rm -f asconfig.texi
+#	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+#	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+#	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
 
 CPU_DOCS = \
 	c-a29k.texi \
@@ -57,11 +57,11 @@ CPU_DOCS = \
 	c-v850.texi \
 	c-z8k.texi
 
-gasver.texi: Makefile
-	rm -f $@
-	echo '@set VERSION $(VERSION)' > $@
+#gasver.texi: Makefile
+#	rm -f $@
+#	echo '@set VERSION $(VERSION)' > $@
 
-as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 as.dvi: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 
 # We want install to imply install-info as per GNU standards, despite the
@@ -84,11 +84,11 @@ info: $(MANS)
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
-as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
-	-($(POD2MAN) as.pod | \
-	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
-	        mv -f $@.T$$$$ $@) || \
-	        (rm -f $@.T$$$$ && exit 1)
-	rm -f as.pod
+#as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#	touch $@
+#	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
+#	-($(POD2MAN) as.pod | \
+#	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+#	        mv -f $@.T$$$$ $@) || \
+#	        (rm -f $@.T$$$$ && exit 1)
+#	rm -f as.pod

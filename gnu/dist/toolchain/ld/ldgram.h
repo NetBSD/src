@@ -4,9 +4,16 @@
 #ifndef YYSTYPE
 typedef union {
   bfd_vma integer;
+  struct big_int
+    {
+      bfd_vma integer;
+      char *str;
+    } bigint;
+  fill_type *fill;
   char *name;
   const char *cname;
   struct wildcard_spec wildcard;
+  struct wildcard_list *wildcard_list;
   struct name_list *name_list;
   int token;
   union etree_union *etree;
@@ -24,6 +31,7 @@ typedef union {
   struct bfd_elf_version_tree *versnode;
 } yystype;
 # define YYSTYPE yystype
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 # define	INT	257
 # define	NAME	258
@@ -57,77 +65,79 @@ typedef union {
 # define	SECTIONS	286
 # define	PHDRS	287
 # define	SORT	288
-# define	SIZEOF_HEADERS	289
-# define	OUTPUT_FORMAT	290
-# define	FORCE_COMMON_ALLOCATION	291
-# define	OUTPUT_ARCH	292
-# define	INCLUDE	293
-# define	MEMORY	294
-# define	DEFSYMEND	295
-# define	NOLOAD	296
-# define	DSECT	297
-# define	COPY	298
-# define	INFO	299
-# define	OVERLAY	300
-# define	DEFINED	301
-# define	TARGET_K	302
-# define	SEARCH_DIR	303
-# define	MAP	304
-# define	ENTRY	305
-# define	NEXT	306
-# define	SIZEOF	307
-# define	SIZEOF_UNADJ	308
-# define	ADDR	309
-# define	LOADADDR	310
-# define	MAX_K	311
-# define	MIN_K	312
-# define	STARTUP	313
-# define	HLL	314
-# define	SYSLIB	315
-# define	FLOAT	316
-# define	NOFLOAT	317
-# define	NOCROSSREFS	318
-# define	ORIGIN	319
-# define	FILL	320
-# define	LENGTH	321
-# define	CREATE_OBJECT_SYMBOLS	322
-# define	INPUT	323
-# define	GROUP	324
-# define	OUTPUT	325
-# define	CONSTRUCTORS	326
-# define	ALIGNMOD	327
-# define	AT	328
-# define	PROVIDE	329
-# define	CHIP	330
-# define	LIST	331
-# define	SECT	332
-# define	ABSOLUTE	333
-# define	LOAD	334
-# define	NEWLINE	335
-# define	ENDWORD	336
-# define	ORDER	337
-# define	NAMEWORD	338
-# define	ASSERT_K	339
-# define	FORMAT	340
-# define	PUBLIC	341
-# define	BASE	342
-# define	ALIAS	343
-# define	TRUNCATE	344
-# define	REL	345
-# define	INPUT_SCRIPT	346
-# define	INPUT_MRI_SCRIPT	347
-# define	INPUT_DEFSYM	348
-# define	CASE	349
-# define	EXTERN	350
-# define	START	351
-# define	VERS_TAG	352
-# define	VERS_IDENTIFIER	353
-# define	GLOBAL	354
-# define	LOCAL	355
-# define	VERSIONK	356
-# define	INPUT_VERSION_SCRIPT	357
-# define	KEEP	358
-# define	EXCLUDE_FILE	359
+# define	DATA_SEGMENT_ALIGN	289
+# define	DATA_SEGMENT_END	290
+# define	SIZEOF_HEADERS	291
+# define	OUTPUT_FORMAT	292
+# define	FORCE_COMMON_ALLOCATION	293
+# define	OUTPUT_ARCH	294
+# define	INHIBIT_COMMON_ALLOCATION	295
+# define	INCLUDE	296
+# define	MEMORY	297
+# define	DEFSYMEND	298
+# define	NOLOAD	299
+# define	DSECT	300
+# define	COPY	301
+# define	INFO	302
+# define	OVERLAY	303
+# define	DEFINED	304
+# define	TARGET_K	305
+# define	SEARCH_DIR	306
+# define	MAP	307
+# define	ENTRY	308
+# define	NEXT	309
+# define	SIZEOF	310
+# define	ADDR	311
+# define	LOADADDR	312
+# define	MAX_K	313
+# define	MIN_K	314
+# define	STARTUP	315
+# define	HLL	316
+# define	SYSLIB	317
+# define	FLOAT	318
+# define	NOFLOAT	319
+# define	NOCROSSREFS	320
+# define	ORIGIN	321
+# define	FILL	322
+# define	LENGTH	323
+# define	CREATE_OBJECT_SYMBOLS	324
+# define	INPUT	325
+# define	GROUP	326
+# define	OUTPUT	327
+# define	CONSTRUCTORS	328
+# define	ALIGNMOD	329
+# define	AT	330
+# define	PROVIDE	331
+# define	CHIP	332
+# define	LIST	333
+# define	SECT	334
+# define	ABSOLUTE	335
+# define	LOAD	336
+# define	NEWLINE	337
+# define	ENDWORD	338
+# define	ORDER	339
+# define	NAMEWORD	340
+# define	ASSERT_K	341
+# define	FORMAT	342
+# define	PUBLIC	343
+# define	BASE	344
+# define	ALIAS	345
+# define	TRUNCATE	346
+# define	REL	347
+# define	INPUT_SCRIPT	348
+# define	INPUT_MRI_SCRIPT	349
+# define	INPUT_DEFSYM	350
+# define	CASE	351
+# define	EXTERN	352
+# define	START	353
+# define	VERS_TAG	354
+# define	VERS_IDENTIFIER	355
+# define	GLOBAL	356
+# define	LOCAL	357
+# define	VERSIONK	358
+# define	INPUT_VERSION_SCRIPT	359
+# define	KEEP	360
+# define	EXCLUDE_FILE	361
 
 
 extern YYSTYPE yylval;
