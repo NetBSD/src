@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.16 2001/10/15 08:53:28 lukem Exp $
+.\"	$NetBSD: security.conf.5,v 1.17 2003/01/18 18:32:21 grant Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -37,7 +37,8 @@ The
 .Nm
 file specifies which of the standard
 .Pa /etc/security
-services are performed.  The
+services are performed.
+The
 .Pa /etc/security
 script is run, by default, every night from
 .Pa /etc/daily ,
@@ -51,14 +52,15 @@ The variables described below can be set to "NO" to disable the test:
 .It Sy check_passwd
 This checks the
 .Pa /etc/master.passwd
-file for inconsistancies.
+file for inconsistencies.
 .It Sy check_group
 This checks the
 .Pa /etc/group
 file for inconsistancies.
 .It Sy check_rootdotfiles
 This checks the root users startup files for sane settings of $PATH
-and umask.  This test is not fail safe and any warning generated from
+and umask.
+This test is not fail safe and any warning generated from
 this should be checked for correctness.
 .It Sy check_ftpusers
 This checks that the correct users are in the
