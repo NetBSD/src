@@ -1,4 +1,4 @@
-The pmax-specific portion of the NetBSD 1.1 release is found in the
+The pmax-specific portion of the NetBSD 1.2 release is found in the
 "pmax" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
@@ -17,9 +17,9 @@ The NetBSD/pmax binary distribution sets contain the binaries which
 comprise the NetBSD 1.2 release for the pmax.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in the "pmax/binary" subdirectory of
-the NetBSD 1.1 distribution tree, and are as follows:
+the NetBSD 1.2 distribution tree, and are as follows:
 
-	base12	The NetBSD/pmax 1.1 base binary distribution.  You
+	base12	The NetBSD/pmax 1.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -81,19 +81,13 @@ The pmax binary distribution sets are distributed as gzipped tar files.
 Each pmax binary distribution set also has its own "CKSUMS" file, just
 as the source distribution sets do.
 
-The initial installation of NetBSD 1.2 on a Decstatio not already running
+The initial installation of NetBSD 1.2 on a Decstation not already running
 NetBSD 1.2 is supported by the following files, which are  included in 
 the `.../install' directory:
 
 	miniroot.gz	A gzipped copy of a miniroot filesystem.
 			When unzipped, this is suitable for dd'ing
 			onto a raw disk partition.
-
-	SYS_NBOOT.gz	A gzipped copy of the network boot block.
-			This is useful if you are installing
-			a diskless NetBSD/pmax system.
-
-	inst-12.fs.gz	A gzipped copy of the miniroot filesystem.
 
 	netbsd.gz	A gzipped GENERIC kernel.
 
