@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.26 1997/10/24 07:52:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 1998/02/18 22:51:08 jtc Exp $
 
-LDADD+=	-lcurses -ltermcap -lcrypt
-DPADD+=	${LIBCURSES} ${LIBTERMCAP} ${LIBCRYPT}
+LDADD+=	-lcurses -lcrypt
+DPADD+=	${LIBCURSES} ${LIBCRYPT}
 
 PROG=	tn3270
 SRCS=	api.c api_bsd.c api_exch.c apilib.c asc_ebc.c astosc.c commands.c \
