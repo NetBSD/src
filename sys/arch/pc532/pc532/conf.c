@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.9 1994/05/31 21:54:31 phil Exp $
+ *	$Id: conf.c,v 1.10 1994/06/26 15:00:40 phil Exp $
  */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),	/* 0: scsi disk */
 	bdev_swap_init(),	/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),	/* 2: scsi tape */
-	bdev_disk_init(NRD,rd),	/* 3: ram disk */
+	bdev_rd_init(NRD,rd),	/* 3: ram disk */
 	bdev_disk_init(NCD,cd),	/* 4: concatenated disk driver */
 	bdev_disk_init(NVN,vn),	/* 5: vnode disk driver (swap to files) */
 };

@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.6 1994/04/01 23:16:54 phil Exp $
+ *	$Id: autoconf.c,v 1.7 1994/06/26 15:00:39 phil Exp $
  */
 
 /*
@@ -47,19 +47,25 @@
  * and the drivers are initialized.
  */
 
-#include "param.h"
-#include "conf.h"
-#include "systm.h"
-#include "reboot.h"
-#include "buf.h"
-#include "sl.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
+#include <sys/buf.h>
+/* #include <sys/sl.h> */
 
-#include "../dev/device.h"
+#ifdef CONFIG_NEW
+#include <sys/device.h>
+#else
+#include <dev/device.h>
+#endif
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
  * the machine.
  */
+
 int	dkn;		/* number of iostat dk numbers assigned so far */
 extern int	cold;		/* cold start flag initialized in locore.s */
 
@@ -73,6 +79,7 @@ configure()
 
 	/* select the root device */
 	setroot();
+
 	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
@@ -217,6 +224,8 @@ setroot()
 #endif
 }
 
+#ifndef CONFIG_NEW
+
 pc532_configure()
 {
 	struct pc532_device *dvp;
@@ -249,3 +258,23 @@ config_dev(struct pc532_device *dp, int *num)
 		return (1);
 	} else	return(0);
 }
+
+#else
+
+pc532_configure()
+{
+  extern struct cfdata *cfdata;
+  struct cfdata *data = cfdata;
+
+  startrtclock();
+
+  while (data->cf_driver != 0)
+    {
+      /* if (data-> */
+      data++;
+    }
+
+  spl0();
+}
+
+#endif
