@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2004/09/26 21:44:27 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2005/01/19 01:58:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -172,36 +172,36 @@ extern int want_resched; 	/* resched() was called */
 extern	int	astpending;	/* need to trap before returning to user mode */
 extern	int	want_resched;	/* resched() was called */
 
-extern	void (*vectab[]) __P((void));
+extern	void (*vectab[])(void);
 
 struct frame;
 struct fpframe;
 struct pcb;
 
 /* locore.s functions */
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 
-int	suline __P((caddr_t, caddr_t));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
-void	loadustp __P((int));
+int	suline(caddr_t, caddr_t);
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *);
+void	switch_lwp_exit(struct lwp *);
+void	proc_trampoline(void);
+void	loadustp(int);
 
-void	doboot __P((void)) __attribute__((__noreturn__));
-int   	nmihand __P((void *));
+void	doboot(void) __attribute__((__noreturn__));
+int   	nmihand(void *);
 
 /* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+void	physaccess(caddr_t, caddr_t, int, int);
+void	physunaccess(caddr_t, int);
+int	kvtop(caddr_t);
 
 /* clock.c functions */
-void	next68k_calibrate_delay __P((void));
+void	next68k_calibrate_delay(void);
 
 #endif /* _KERNEL */
 
