@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.16 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.17 2004/04/24 15:09:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.16 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.17 2004/04/24 15:09:54 uwe Exp $");
 
 #include "opt_pcibios.h"
 
@@ -296,7 +296,7 @@ pcibios_pir_init()
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		if (pcibios_pir_header.compat_router != 0) {
 			pci_devinfo(pcibios_pir_header.compat_router, 0, 0,
-			    devinfo);
+			    devinfo, sizeof(devinfo));
 			printf(" (%s compatible)", devinfo);
 		}
 		printf("\n");
