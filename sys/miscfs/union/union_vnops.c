@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.28 1996/02/13 13:13:03 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.29 1996/05/10 22:57:49 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -298,10 +298,42 @@ union_lookup(v)
 	 */
 	if (upperdvp != NULLVP) {
 		FIXUP(dun);
+		/*
+		 * If we're doing `..' in the underlying filesystem,
+		 * we must drop our lock on the union node before
+		 * going up the tree in the lower file system--if we block
+		 * on the lowervp lock, and that's held by someone else
+		 * coming down the tree and who's waiting for our lock,
+		 * we would be hosed.
+		 */
+		if (cnp->cn_flags & ISDOTDOT) {
+			/* retain lock on underlying VP: */
+			dun->un_flags |= UN_KLOCK;
+			VOP_UNLOCK(dvp);
+		}
 		uerror = union_lookup1(um->um_uppervp, &upperdvp,
-					&uppervp, cnp);
+				       &uppervp, cnp);
+		if (cnp->cn_flags & ISDOTDOT) {
+			if (dun->un_uppervp == upperdvp) {
+				/*
+				 * we got the underlying bugger back locked...
+				 * now take back the union node lock.  Since we
+				 * hold the uppervp lock, we can diddle union
+				 * locking flags at will. :)
+				 */
+				dun->un_flags |= UN_ULOCK;
+			}
+			/*
+			 * if upperdvp got swapped out, it means we did
+			 * some mount point magic, and we do not have
+			 * dun->un_uppervp locked currently--so we get it
+			 * locked here (don't set the UN_ULOCK flag).
+			 */
+			VOP_LOCK(dvp);
+		}
+
 		/*if (uppervp == upperdvp)
-			dun->un_flags |= UN_KLOCK;*/
+		  dun->un_flags |= UN_KLOCK;*/
 
 		if (cnp->cn_consume != 0) {
 			*ap->a_vpp = uppervp;
@@ -314,7 +346,8 @@ union_lookup(v)
 				iswhiteout = 1;
 			} else if (lowerdvp != NULLVP) {
 				lerror = VOP_GETATTR(upperdvp, &va,
-					cnp->cn_cred, cnp->cn_proc);
+						     cnp->cn_cred,
+						     cnp->cn_proc);
 				if (lerror == 0 && (va.va_flags & OPAQUE))
 					iswhiteout = 1;
 			}
@@ -345,6 +378,12 @@ union_lookup(v)
 			saved_cred = cnp->cn_cred;
 			cnp->cn_cred = um->um_cred;
 		}
+		/*
+		 * we shouldn't have to worry about locking interactions
+		 * between the lower layer and our union layer (w.r.t.
+		 * `..' processing) because we don't futz with lowervp
+		 * locks in the union-node instantiation code path.
+		 */
 		lerror = union_lookup1(um->um_lowervp, &lowerdvp,
 				&lowervp, cnp);
 		if (um->um_op == UNMNT_BELOW)
@@ -416,6 +455,11 @@ union_lookup(v)
 	/* case 2. */
 	if (uerror != 0 /* && (lerror == 0) */ ) {
 		if (lowervp->v_type == VDIR) { /* case 2b. */
+			/*
+			 * We may be racing another process to make the
+			 * upper-level shadow directory.  Be careful with
+			 * locks/etc!
+			 */
 			dun->un_flags &= ~UN_ULOCK;
 			VOP_UNLOCK(upperdvp);
 			uerror = union_mkshadow(um, upperdvp, cnp, &uppervp);
@@ -447,6 +491,13 @@ union_lookup(v)
 		if (*ap->a_vpp != dvp)
 			if (!lockparent || !(cnp->cn_flags & ISLASTCN))
 				VOP_UNLOCK(dvp);
+		if (cnp->cn_namelen == 1 &&
+		    cnp->cn_nameptr[0] == '.' &&
+		    *ap->a_vpp != dvp) {
+		    panic("union_lookup returning . (%x) not same as startdir (%x)",
+			  ap->a_vpp, dvp);
+		}
+
 	}
 
 	return (error);
@@ -1056,6 +1107,10 @@ union_remove(v)
 	return (error);
 }
 
+/* a_dvp: directory in which to link
+   a_vp: new target of the link
+   a_cnp: name for the link
+   */
 int
 union_link(v)
 	void *v;
@@ -1072,22 +1127,58 @@ union_link(v)
 
 	dun = VTOUNION(ap->a_dvp);
 
+#ifdef DIAGNOSTIC
+	if (!(ap->a_cnp->cn_flags & LOCKPARENT)) {
+		printf("union_link called without LOCKPARENT set!\n");
+		error = EIO; /* need some error code for "caller is a bozo" */
+	} else
+#endif
 	if (ap->a_dvp->v_op != ap->a_vp->v_op) {
 		vp = ap->a_vp;
 	} else {
 		struct union_node *un = VTOUNION(ap->a_vp);
 
 		if (un->un_uppervp == NULLVP) {
+			/*
+			 * needs to be copied up before we can link it.
+			 */
 			VOP_LOCK(ap->a_vp);
 			if (dun->un_uppervp == un->un_dirvp) {
-				dun->un_flags &= ~UN_ULOCK;
-				VOP_UNLOCK(dun->un_uppervp);
+				VOP_UNLOCK(ap->a_dvp);
 			}
 			error = union_copyup(un, 1, ap->a_cnp->cn_cred,
 						ap->a_cnp->cn_proc);
 			if (dun->un_uppervp == un->un_dirvp) {
-				VOP_LOCK(dun->un_uppervp);
-				dun->un_flags |= UN_ULOCK;
+				/* During copyup, we dropped the lock on the
+				 * dir and invalidated any saved namei lookup
+				 * state for the directory we'll be entering
+				 * the link in.  We need to re-run the lookup
+				 * in that directory to reset any state needed
+				 * for VOP_LINK.
+				 * Call relookup on the union-layer to
+				 * reset the state.
+				 */
+				vp  = NULLVP;
+				if (dun->un_uppervp == NULLVP)
+					panic("union: null upperdvp?");
+				/*
+				 * relookup starts with an unlocked node,
+				 * and since LOCKPARENT is set returns
+				 * the starting directory locked.
+				 */
+				if ((error = relookup(ap->a_dvp,
+						      &vp, ap->a_cnp))) {
+					vrele(ap->a_dvp);
+					VOP_UNLOCK(ap->a_vp);
+					return EROFS;
+				}
+				if (vp != NULLVP) {
+					/* The name we want to create has
+					   mysteriously appeared (a race?) */
+					error = EEXIST;
+					VOP_UNLOCK(ap->a_vp);
+					goto croak;
+				}
 			}
 			VOP_UNLOCK(ap->a_vp);
 		}
@@ -1099,6 +1190,7 @@ union_link(v)
 		error = EROFS;
 
 	if (error) {
+croak:
 		vput(ap->a_dvp);
 		return (error);
 	}
@@ -1484,6 +1576,12 @@ start:
 	if (un->un_uppervp != NULLVP) {
 		if (((un->un_flags & UN_ULOCK) == 0) &&
 		    (vp->v_usecount != 0)) {
+			/*
+			 * We MUST always use the order of: take upper
+			 * vp lock, manipulate union node flags, drop
+			 * upper vp lock.  This code must not be an
+			 * exception.
+			 */
 			VOP_LOCK(un->un_uppervp);
 			un->un_flags |= UN_ULOCK;
 		}
@@ -1516,6 +1614,18 @@ start:
 	un->un_flags |= UN_LOCKED;
 	return (0);
 }
+
+/*
+ * When operations want to vput() a union node yet retain a lock on
+ * the upper VP (say, to do some further operations like link(),
+ * mkdir(), ...), they set UN_KLOCK on the union node, then call
+ * vput() which calls VOP_UNLOCK() and comes here.  union_unlock()
+ * unlocks the union node (leaving the upper VP alone), clears the
+ * KLOCK flag, and then returns to vput().  The caller then does whatever
+ * is left to do with the upper VP, and insures that it gets unlocked.
+ *
+ * If UN_KLOCK isn't set, then the upper VP is unlocked here.
+ */
 
 int
 union_unlock(v)
@@ -1594,6 +1704,11 @@ union_print(v)
 		vprint("uppervp", UPPERVP(vp));
 	if (LOWERVP(vp))
 		vprint("lowervp", LOWERVP(vp));
+	if (VTOUNION(vp)->un_dircache) {
+		struct vnode **vpp;
+		for (vpp = VTOUNION(vp)->un_dircache; *vpp != NULLVP; vpp++)
+			vprint("dircache:", *vpp);
+	}
 	return (0);
 }
 
