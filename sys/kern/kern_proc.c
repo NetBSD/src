@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.59 2003/03/12 16:39:01 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.60 2003/03/12 22:54:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.59 2003/03/12 16:39:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.60 2003/03/12 22:54:44 dsl Exp $");
 
 #include "opt_kstack.h"
 
@@ -326,6 +326,32 @@ chgproccnt(uid_t uid, int diff)
 	uip->ui_uid = uid;
 	uip->ui_proccnt = diff;
 	return (diff);
+}
+
+/*
+ * Check that the specifies process group in in the session of the
+ * specified process.
+ * Treats -ve ids as process ids.
+ * Used to validate TIOCSPGRP requests.
+ */
+int
+pgid_in_session(struct proc *p, pid_t pg_id)
+{
+	struct pgrp *pgrp;
+
+	if (pg_id < 0) {
+		struct proc *p1 = pfind(-pg_id);
+	if (p1 == NULL)
+		return EINVAL;
+		pgrp = p1->p_pgrp;
+	} else {
+		pgrp = pgfind(pg_id);
+		if (pgrp == NULL)
+		    return EINVAL;
+	}
+	if (pgrp->pg_session != p->p_pgrp->pg_session)
+		return EPERM;
+	return 0;
 }
 
 /*
