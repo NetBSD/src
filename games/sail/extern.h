@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2003/08/07 09:37:42 agc Exp $ */
+/*	$NetBSD: extern.h,v 1.26 2004/01/27 20:27:29 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -30,6 +30,8 @@
  *
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
+
+#include <sys/types.h>
 
 #include "machdep.h"
 
