@@ -76,6 +76,10 @@ build kernels.
 [kernel/amiga]: Fix a problem with the A2410 driver on fast CPUs and another
 one which caused it to reject the last monitor definition.
 
-[kernel/amiga]: The driver would attempt to write a byte register with a word
+[kernel/amiga]: The "sfas" driver uses by the Fastlane and Blizzard SCSI
+boards would attempt to write a byte register with a word
 value, leading to wrong transfer counts in certain situations. Fix this.
+
+[kernel/amiga]: Fix the Cybervision driver, which used to fail on boards with
+new revisions of the S3 chipset.
 
