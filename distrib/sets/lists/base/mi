@@ -94,6 +94,7 @@
 ./sbin/newlfs
 ./sbin/nologin
 ./sbin/ping
+./sbin/raidctl
 ./sbin/rdump
 ./sbin/reboot
 ./sbin/restore
@@ -515,6 +516,7 @@
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
+./usr/sbin/mbrlabel
 ./usr/sbin/mdconfig
 ./usr/sbin/mdsetimage
 ./usr/sbin/mk-amd-map
