@@ -1292,16 +1292,15 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	struct dirent *crnt;
 	u_char dirbuf[512];	/* holds converted dos directories */
 	int i = 0;
-	u_int *end_cookies;
 
 #if defined(MSDOSFSDEBUG)
 	printf("msdosfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
 	    vp, uio, cred, eofflagp);
 #endif				/* defined(MSDOSFSDEBUG) */
 
-	if (cookies)
-		end_cookies = cookies + ncookies;
-
+	if (!cookies)
+		ncookies = 1;
+	
 	/*
 	 * msdosfs_readdir() won't operate properly on regular files since
 	 * it does i/o only with the the filesystem vnode, and hence can
@@ -1346,17 +1345,23 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 			n = 1;
 			if (!uio->uio_offset) {
 				n = 2;
-				*cookies++ = sizeof(struct direntry);
+				if (cookies) {
+					*cookies++ = sizeof(struct direntry);
+					ncookies--;
+				}
 			}
-			if (cookies >= end_cookies)
-				n--;
-			else
-				*cookies++ = 2 * sizeof(struct direntry);
+			if (cookies) {
+				if (ncookies-- <= 0)
+					n--;
+				else
+					*cookies++ = 2 * sizeof(struct direntry);
+			}
+			
 			error = uiomove((char *) rootdots + uio->uio_offset,
 					n * sizeof(struct direntry), uio);
 		}
 	}
-	while (!error && uio->uio_offset > 0 && cookies < end_cookies) {
+	while (!error && uio->uio_offset > 0 && ncookies > 0) {
 		lbn = (uio->uio_offset - bias) >> pmp->pm_cnshift;
 		on = (uio->uio_offset - bias) & pmp->pm_crbomask;
 		n = MIN((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
@@ -1401,7 +1406,10 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 			    (dentp->deAttributes & ATTR_VOLUME)) {
 				if (prev) {
 					prev->d_reclen += sizeof(struct direntry);
-					cookies--;
+					if (cookies) {
+						ncookies++;
+						cookies--;
+					}
 				}
 				else {
 					prev = crnt;
@@ -1445,9 +1453,12 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				prev = crnt;
 			}
 			dentp++;
-			if (cookies)
+			if (cookies) {
 				*cookies++ = (u_int)((char *)dentp - bp->b_un.b_addr - on)
 					     + uio->uio_offset;
+				ncookies--;
+			}
+			
 			crnt = (struct dirent *) ((char *) crnt + sizeof(struct direntry));
 			pushout = 1;
 
@@ -1468,7 +1479,7 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				prev = 0;
 				crnt = (struct dirent *) dirbuf;
 			}
-			if (cookies >= end_cookies)
+			if (ncookies <= 0)
 				break;
 		}
 		if (pushout) {
