@@ -12,12 +12,11 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series
  *   and the 3Com 3c503
  *
- *	$Id: if_ed.c,v 1.4 1993/08/01 19:25:42 mycroft Exp $
+ *	$Id: if_ed.c,v 1.5 1993/08/03 01:52:57 glass Exp $
  */
  
 #include "ed.h"
 #if	NED > 0
-#include "bpfilter.h"
 
 #include "param.h"
 #include "errno.h"
@@ -25,6 +24,9 @@
 #include "mbuf.h"
 #include "socket.h"
 #include "syslog.h"
+
+#include "select.h"
+#include "bpfilter.h"
 
 #include "net/if.h"
 #include "net/if_dl.h"
