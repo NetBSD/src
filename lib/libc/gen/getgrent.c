@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.33 1999/01/25 01:09:34 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.34 1999/01/26 01:08:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.33 1999/01/25 01:09:34 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.34 1999/01/26 01:08:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,6 +63,10 @@ __RCSID("$NetBSD: getgrent.c,v 1.33 1999/01/25 01:09:34 lukem Exp $");
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#if defined(YP) || defined(HESIOD)
+#define _GROUP_COMPAT
 #endif
 
 #ifdef __weak_alias
@@ -90,14 +94,17 @@ static __aconst char	*members[MAXGRP];
 static char		line[MAXLINELENGTH];
 
 #ifdef YP
-enum _grmode { GRMODE_NONE, GRMODE_FULL, GRMODE_NAME };
-static enum _grmode	 __grmode;
-static char		*__ypcurrent, *__ypdomain;
-static int		 __ypcurrentlen;
+static char	*__ypcurrent, *__ypdomain;
+static int	 __ypcurrentlen;
 #endif
 
 #ifdef HESIOD
 static int	__gr_hesnum;
+#endif
+
+#ifdef _GROUP_COMPAT
+enum _grmode { GRMODE_NONE, GRMODE_FULL, GRMODE_NAME };
+static enum _grmode	 __grmode;
 #endif
 
 struct group *
@@ -141,13 +148,15 @@ static int
 start_gr()
 {
 #ifdef YP
-	__grmode = GRMODE_NONE;
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
 #endif
 #ifdef HESIOD
 	__gr_hesnum = 0;
+#endif
+#ifdef _GROUP_COMPAT
+	__grmode = GRMODE_NONE;
 #endif
 	if (_gr_fp) {
 		rewind(_gr_fp);
@@ -176,13 +185,15 @@ void
 endgrent()
 {
 #ifdef YP
-	__grmode = GRMODE_NONE;
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
 #endif
 #ifdef HESIOD
 	__gr_hesnum = 0;
+#endif
+#ifdef _GROUP_COMPAT
+	__grmode = GRMODE_NONE;
 #endif
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
@@ -400,7 +411,7 @@ _nis_grscan(rv, cb_data, ap)
 }
 #endif
 
-#if defined(YP) || defined(HESIOD)
+#ifdef _GROUP_COMPAT
 /*
  * log an error if "files" or "compat" is specified in group_compat database
  */
@@ -453,6 +464,7 @@ __grscancompat(search, gid, name)
 	return (nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, "grscancompat",
 	    defaultnis, search, gid, name));
 }
+#endif
 
 
 static int _compat_grscan __P((void *, void *, va_list));
@@ -468,9 +480,12 @@ _compat_grscan(rv, cb_data, ap)
 	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
 
+#ifdef _GROUP_COMPAT
 	static char	*grname = NULL;
+#endif
 
 	for (;;) {
+#ifdef _GROUP_COMPAT
 		if(__grmode != GRMODE_NONE) {
 			int	 r;
 
@@ -506,6 +521,7 @@ _compat_grscan(rv, cb_data, ap)
 			}
 			continue;
 		}
+#endif /* _GROUP_COMPAT */
 
 		if (!fgets(line, sizeof(line), _gr_fp))
 			return NS_NOTFOUND;
@@ -518,6 +534,7 @@ _compat_grscan(rv, cb_data, ap)
 			continue;
 		}
 
+#ifdef _GROUP_COMPAT
 		if (line[0] == '+') {
 			char	*tptr, *bp;
 
@@ -536,12 +553,12 @@ _compat_grscan(rv, cb_data, ap)
 			}
 			continue;
 		}
+#endif /* _GROUP_COMPAT */
 		if (matchline(search, gid, name))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
 }
-#endif /* YP || HESIOD */
 
 static int
 grscan(search, gid, name)

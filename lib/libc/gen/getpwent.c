@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.39 1999/01/25 01:09:34 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.40 1999/01/26 01:08:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.39 1999/01/25 01:09:34 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.40 1999/01/26 01:08:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,6 +69,10 @@ __RCSID("$NetBSD: getpwent.c,v 1.39 1999/01/25 01:09:34 lukem Exp $");
 #endif
 
 #include "pw_private.h"
+
+#if defined(YP) || defined(HESIOD)
+#define _PASSWD_COMPAT
+#endif
 
 #ifdef __weak_alias
 __weak_alias(endpwent,_endpwent);
@@ -110,7 +114,7 @@ static int      __ypcurrentlen;
 static int	_pw_hesnum;
 #endif
 
-#if defined(YP) || defined(HESIOD)
+#ifdef _PASSWD_COMPAT
 enum _pwmode { PWMODE_NONE, PWMODE_FULL, PWMODE_USER, PWMODE_NETGRP };
 static enum _pwmode __pwmode;
 
@@ -367,7 +371,7 @@ __pwparse(pw, s)
 	}
 	return 0;
 }
-#endif /* YP || HESIOD */
+#endif /* _PASSWD_COMPAT */
 
 /*
  * local files implementation of getpw*()
@@ -466,7 +470,7 @@ _dns_getpw(rv, cb_data, ap)
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
 		snprintf(line, sizeof(line), "%u", (unsigned int)uid);
-		map = "uid";
+		map = "uid";		/* XXX this is `passwd' on ultrix */
 		break;
 	default:
 		abort();
@@ -620,7 +624,7 @@ _nis_getpw(rv, cb_data, ap)
 } /* _nis_getpw */
 #endif
 
-#if defined(YP) || defined(HESIOD)
+#ifdef _PASSWD_COMPAT
 /*
  * See if the compat token is in the database.  Only works if pwd_mkdb knows
  * about the token.
@@ -713,6 +717,7 @@ __getpwcompat(type, uid, name)
 		/*NOTREACHED*/
 	}
 }
+#endif /* _PASSWD_COMPAT */
 
 /*
  * compat implementation of getpwent()
@@ -730,13 +735,16 @@ _compat_getpwent(rv, cb_data, ap)
 {
 	DBT		 key;
 	char		 bf[sizeof(_pw_keynum) + 1];
+#ifdef _PASSWD_COMPAT
 	static char	*name = NULL;
 	const char	*user, *host, *dom;
 	int		 has_compatpw;
+#endif
 
 	if (!_pw_db && !__initdb())
 		return NS_UNAVAIL;
 
+#ifdef _PASSWD_COMPAT
 	has_compatpw = __has_compatpw();
 
 again:
@@ -782,6 +790,7 @@ again:
 		}
 		goto again;
 	}
+#endif
 
 	++_pw_keynum;
 	bf[0] = _PW_KEYBYNUM;
@@ -789,6 +798,7 @@ again:
 	key.data = (u_char *)bf;
 	key.size = sizeof(_pw_keynum) + 1;
 	if(__hashpw(&key) == NS_SUCCESS) {
+#ifdef _PASSWD_COMPAT
 		/* if we don't have YP at all, don't bother. */
 		if (has_compatpw) {
 			if(_pw_passwd.pw_name[0] == '+') {
@@ -830,6 +840,7 @@ again:
 				goto again;
 			}
 		}
+#endif
 		return NS_SUCCESS;
 	}
 	return NS_NOTFOUND;
@@ -847,11 +858,13 @@ _compat_getpw(rv, cb_data, ap)
 	void	*cb_data;
 	va_list	 ap;
 {
+#ifdef _PASSWD_COMPAT
 	DBT		key;
 	int		search, rval, r, s;
 	uid_t		uid;
 	char		bf[MAXLOGNAME + 1];
 	const char	*name, *host, *user, *dom;
+#endif
 
 	if (!_pw_db && !__initdb())
 		return NS_UNAVAIL;
@@ -859,9 +872,12 @@ _compat_getpw(rv, cb_data, ap)
 		/*
 		 * If there isn't a compat token in the database, use files.
 		 */
+#ifdef _PASSWD_COMPAT
 	if (! __has_compatpw())
+#endif
 		return (_local_getpw(rv, cb_data, ap));
 
+#ifdef _PASSWD_COMPAT
 	search = va_arg(ap, int);
 	uid = 0;
 	name = NULL;
@@ -980,8 +996,8 @@ pwnam_netgrp:
 			__pwexclude = (DB *)NULL;
 	}
 	return rval;
+#endif /* _PASSWD_COMPAT */
 }
-#endif /* YP || HESIOD */
 
 struct passwd *
 getpwent()
@@ -1057,7 +1073,7 @@ setpassent(stayopen)
 #ifdef HESIOD
 	_pw_hesnum = 0;
 #endif
-#if defined(YP) || defined(HESIOD)
+#ifdef _PASSWD_COMPAT
 	if(__pwexclude != (DB *)NULL) {
 		(void)(__pwexclude->close)(__pwexclude);
 		__pwexclude = (DB *)NULL;
@@ -1081,7 +1097,7 @@ endpwent()
 		(void)(_pw_db->close)(_pw_db);
 		_pw_db = (DB *)NULL;
 	}
-#if defined(YP) || defined(HESIOD)
+#ifdef _PASSWD_COMPAT
 	__pwmode = PWMODE_NONE;
 #endif
 #ifdef YP
@@ -1092,7 +1108,7 @@ endpwent()
 #ifdef HESIOD
 	_pw_hesnum = 0;
 #endif
-#if defined(YP) || defined(HESIOD)
+#ifdef _PASSWD_COMPAT
 	if(__pwexclude != (DB *)NULL) {
 		(void)(__pwexclude->close)(__pwexclude);
 		__pwexclude = (DB *)NULL;
@@ -1107,7 +1123,7 @@ __initdb()
 	static int warned;
 	char *p;
 
-#if defined(YP) || defined(HESIOD)
+#ifdef _PASSWD_COMPAT
 	__pwmode = PWMODE_NONE;
 #endif
 	if (geteuid() == 0) {
