@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.109 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.110 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -297,9 +297,9 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		version to 1.6P.  [matt 20030226]
 	libpthread: Add pthread_{,attr}_{get,set}name_np() API, compatible
 		with Tru64 Unix. [thorpej 20030227]
-	sysctl: Add hw.physpages and hw.userpages sysctl nodes, which
+	sysctl: Add hw.physmem64 and hw.usermem64 sysctl nodes, which
 		return the same data has hw.physmem and hw.usermem, but
-		as a 64-bit page count, instead of a 32-bit byte count.
+		as a 64-bit byte count, instead of a 32-bit byte count.
 		Required for reporting >=4G RAM.  [thorpej 20030227]
 	binutils: updated to FSF binutils 2.13.2.1 release.  [mrg 20030228]
 	libc: Add _Exit(), the C99 name for _exit().  [bjh21 20030301]
@@ -307,3 +307,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		A5000s.  [bjh21 20030301]
 	mdsetimage(1): only use libbfd calls to get symbol information; writing
 		is now done directly into the file. [dogcow 20030304]
+	sysctl: Make hw.physmem and hw.usermem saturate if they are used
+		on a system with >=4G RAM.  [thorpej 20030306]
