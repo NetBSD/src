@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.32 1999/04/14 15:23:27 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.33 1999/09/09 15:52:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -241,7 +241,10 @@ int	ioctl __P((int, u_long, char *));
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
 int	getopt __P((int, char * const *, const char *));
-    
+
+char	*getpass __P((const char *));
+int	checkpasswd __P((void));
+
 int	nodev __P((void));
 int	noioctl __P((struct open_file *, u_long, void *));
 void	nullsys __P((void));
