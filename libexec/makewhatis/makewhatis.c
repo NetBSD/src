@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.7 2000/01/24 23:03:54 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.7.4.1 2000/07/12 20:18:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,17 +43,20 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.7 2000/01/24 23:03:54 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.7.4.1 2000/07/12 20:18:55 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
 #include <locale.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +86,7 @@ char		*replacestring (char *, char *, char *);
 void		 catpreprocess (char *);
 char		*parsecatpage (gzFile *);
 int		 manpreprocess (char *);
+char		*nroff (gzFile *);
 char		*parsemanpage (gzFile *, int);
 char		*getwhatisdata (char *);
 void		 processmanpages (manpage **,whatis **);
@@ -135,7 +139,7 @@ main(int argc,char **argv)
 		default:
 			errx(EXIT_FAILURE, "%s: %s", fe->fts_path,
 			    strerror(fe->fts_errno));
-			/* NOTREACHED */
+
 		}
 	}
 
@@ -448,6 +452,87 @@ manpreprocess(char *line)
 }
 
 char *
+nroff(gzFile *in)
+{
+	char tempname[MAXPATHLEN], buffer[65536], *data;
+	int tempfd, bytes, pipefd[2], status;
+	pid_t child;
+
+	if (gzrewind(in) < 0) {
+		perror(__progname);
+		return NULL;
+	}
+
+	(void)strcpy(tempname, _PATH_TMP "makewhatis.XXXXXX");
+	if ((tempfd = mkstemp(tempname)) < 0) {
+		perror(__progname);
+		return NULL;
+	}
+
+	while ((bytes = gzread(in, buffer, sizeof(buffer))) > 0)
+		if (write(tempfd, buffer, bytes) != bytes) {
+			bytes = -1;
+			break;
+		}
+
+	if ((bytes < 0) ||
+            (lseek(tempfd, 0, SEEK_SET) < 0) ||
+            (pipe(pipefd) < 0)) {
+		perror(__progname);
+		(void)close(tempfd);
+		(void)unlink(tempname);
+		return NULL;
+	}
+
+	switch (child = vfork()) {
+	case -1:
+		perror(__progname);
+		(void)close(pipefd[1]);
+		(void)close(pipefd[0]);
+		(void)close(tempfd);
+		(void)unlink(tempname);
+		return NULL;
+		/* NOTREACHED */
+	case 0:
+		(void)close(pipefd[0]);
+		if (pipefd[1] != STDOUT_FILENO) {
+			(void)dup2(pipefd[1], STDOUT_FILENO);
+			(void)close(pipefd[1]);
+		}
+		(void)execlp("nroff", "nroff", "-mandoc", tempname, NULL);
+		_exit(EXIT_FAILURE);
+	default:
+		(void)close(pipefd[1]);
+		(void)close(tempfd);
+		/* NOTREACHED */
+	}
+
+	if ((in = gzdopen(pipefd[0], "r")) == NULL) {
+		if (errno == 0)
+			errno = ENOMEM;
+		perror(__progname);
+		(void)close(pipefd[0]); /* Child will be killed by SIGPIPE. */
+		(void)unlink(tempname);
+		return NULL;
+	}
+
+	data = parsecatpage(in);
+	while (gzread(in, buffer, sizeof(buffer)) > 0);
+	(void)gzclose(in);
+
+	while (waitpid(child, &status, 0) != child);
+	if ((data != NULL) &&
+	    !(WIFEXITED(status) && (WEXITSTATUS(status) == 0))) {
+		free(data);
+		data = NULL;
+	}
+
+	(void)unlink(tempname);
+
+	return data;
+}
+
+char *
 parsemanpage(gzFile *in, int defaultsection)
 {
 	char	*section, buffer[8192], *ptr;
@@ -480,6 +565,8 @@ parsemanpage(gzFile *in, int defaultsection)
 				(void) strcat(&section[2], ") - ");
 			}
 		}
+		else if (strncasecmp(buffer, ".Ds", 3) == 0)
+			return nroff(in);
 	} while ((strncasecmp(buffer, ".Sh NAME", 8) != 0));
 
 	do {
