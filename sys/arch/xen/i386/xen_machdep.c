@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.6.2 2004/12/17 11:28:38 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.2 2004/12/17 11:28:38 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -315,8 +315,8 @@ xpmap_init(void)
 
 	XENPRINTK(("text %p data %p bss %p end %p esym %p\n", &kernel_text,
 		   &_etext, &__bss_start, &end, esym));
-	XENPRINTK(("xpmap_init PTD %p nkpde %d upages %d xen_PTD %p p2m-map %p\n",
-		   (void *)PTDpaddr, nkpde, UPAGES, xen_pdp,
+	XENPRINTK(("xpmap_init PDP %p nkpde %d upages %d xen_PDP %p p2m-map %p\n",
+		   (void *)PDPpaddr, nkpde, UPAGES, xen_pdp,
 		   xpmap_phys_to_machine_mapping));
 
 	bufpos = 0;
@@ -335,7 +335,7 @@ xpmap_init(void)
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 
-	sysptp = (pt_entry_t *)(PTDpaddr + ((1 + UPAGES) << PAGE_SHIFT));
+	sysptp = (pt_entry_t *)(PDPpaddr + ((1 + UPAGES) << PAGE_SHIFT));
 
 	/* make xen's PDE and PTE pages read-only in our pagetable */
 	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
@@ -349,18 +349,18 @@ xpmap_init(void)
 
 	for (i = 0; i < 1 + UPAGES + nkpde; i++) {
 		/* mark PTE page read-only in xen's table */
-		ptp = xpmap_get_bootptep(PTDpaddr + (i << PAGE_SHIFT));
+		ptp = xpmap_get_bootptep(PDPpaddr + (i << PAGE_SHIFT));
 		xpq_queue_pte_update(
 		    (void *)xpmap_ptom((unsigned long)ptp - KERNBASE), *ptp & ~PG_RW);
 		XENPRINTK(("%03x: %p(%p) -> %08x\n", i, ptp,
 			      (unsigned long)ptp - KERNTEXTOFF, *ptp));
 
 		/* mark PTE page read-only in our table */
-		sysptp[((PTDpaddr + (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+		sysptp[((PDPpaddr + (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
 			   (PD_MASK | PT_MASK)) >> PAGE_SHIFT] &= ~PG_RW;
 
 		/* update our pte's */
-		ptp = (pt_entry_t *)(PTDpaddr + (i << PAGE_SHIFT));
+		ptp = (pt_entry_t *)(PDPpaddr + (i << PAGE_SHIFT));
 #if 0
 		pte = xpmap_ptom((uint32_t)ptp - KERNBASE);
 		XENPRINTK(("%03x: %p(%p) %08x\n", i, ptp, pte, i << PDSHIFT));
@@ -407,21 +407,21 @@ xpmap_init(void)
 	xpmap_dump_pt((pt_entry_t *)xen_start_info.pt_base, 0);
 #endif
 
-	XENPRINTK(("switching pdp: %p, %08lx, %p, %p, %p\n", (void *)PTDpaddr,
-		      PTDpaddr - KERNBASE,
-		      (void *)xpmap_ptom(PTDpaddr - KERNBASE),
-		      (void *)xpmap_get_bootpte(PTDpaddr),
-		      (void *)xpmap_mtop(xpmap_ptom(PTDpaddr - KERNBASE))));
+	XENPRINTK(("switching pdp: %p, %08lx, %p, %p, %p\n", (void *)PDPpaddr,
+		      PDPpaddr - KERNBASE,
+		      (void *)xpmap_ptom(PDPpaddr - KERNBASE),
+		      (void *)xpmap_get_bootpte(PDPpaddr),
+		      (void *)xpmap_mtop(xpmap_ptom(PDPpaddr - KERNBASE))));
 
 #if defined(XENDEBUG)
-	xpmap_dump_pt((pt_entry_t *)PTDpaddr, 0);
+	xpmap_dump_pt((pt_entry_t *)PDPpaddr, 0);
 #endif
 
 	xpq_flush_queue();
 
-	xpq_queue_pin_table(xpmap_get_bootpte(PTDpaddr) & PG_FRAME,
+	xpq_queue_pin_table(xpmap_get_bootpte(PDPpaddr) & PG_FRAME,
 	    XPQ_PIN_L2_TABLE);
-	xpq_queue_pt_switch(xpmap_get_bootpte(PTDpaddr) & PG_FRAME);
+	xpq_queue_pt_switch(xpmap_get_bootpte(PDPpaddr) & PG_FRAME);
 	xpq_queue_unpin_table(
 		xpmap_get_bootpte(xen_start_info.pt_base) & PG_FRAME);
 
