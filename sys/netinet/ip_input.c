@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.84 1999/04/07 05:34:32 proff Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.85 1999/05/03 21:14:47 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -340,6 +340,15 @@ next:
 		}
 		ip = mtod(m, struct ip *);
 	}
+	/*
+	 * we drop packets that have a multicast address as source
+	 * as wanted by rfc 1112
+	 */
+	if (IN_MULTICAST(ip->ip_src.s_addr)) {
+		ipstat.ips_odropped++;
+		goto bad;
+	}
+
 	if (in_cksum(m, hlen) != 0) {
 		ipstat.ips_badsum++;
 		goto bad;
