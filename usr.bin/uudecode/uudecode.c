@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.8 1997/10/20 02:46:37 lukem Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.9 1998/12/19 23:36:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.8 1997/10/20 02:46:37 lukem Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.9 1998/12/19 23:36:07 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -102,7 +102,6 @@ main(argc, argv)
 static int
 decode()
 {
-	extern int errno;
 	struct passwd *pw;
 	int n;
 	char ch, *p;
