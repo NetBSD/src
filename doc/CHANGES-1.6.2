@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.10 2003/06/15 13:12:45 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.11 2003/06/16 12:36:46 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -257,3 +257,8 @@ bin/csh/csh.1					1.37
 	hopefully this satisfies PR 11658
 	[fair, ticket #1243]
 
+libexec/talkd/talkd.c				1.16
+
+verify strvis() buffer length is enough.  make sure string termination before
+use.  remove extra ntohs() which is not needed.  from Charles Blundell
+	[itojun, ticket #1001]
