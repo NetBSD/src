@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.25 1998/06/30 23:34:05 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.26 1998/07/01 01:23:25 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1997 Christos Zoulas.  All rights reserved.
@@ -474,10 +474,10 @@ svr4_sys_pread(p, v, retval)
 	 * Just translate the args structure and call the NetBSD
 	 * pread(2) system call (offset type is 64-bit in NetBSD).
 	 */
-	SCARG(pra, fd) = SCARG(uap, fd);
-	SCARG(pra, buf) = SCARG(uap, buf);
-	SCARG(pra, nbyte) = SCARG(uap, nbyte);
-	SCARG(pra, offset) = SCARG(uap, offset);
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, off);
 
 	return (sys_pread(p, &pra, retval));
 }
@@ -511,10 +511,10 @@ svr4_sys_pwrite(p, v, retval)
 	 * Just translate the args structure and call the NetBSD
 	 * pwrite(2) system call (offset type is 64-bit in NetBSD).
 	 */
-	SCARG(pwa, fd) = SCARG(uap, fd);
-	SCARG(pwa, buf) = SCARG(uap, buf);
-	SCARG(pwa, nbyte) = SCARG(uap, nbyte);
-	SCARG(pwa, offset) = SCARG(uap, offset);
+	SCARG(&pwa, fd) = SCARG(uap, fd);
+	SCARG(&pwa, buf) = SCARG(uap, buf);
+	SCARG(&pwa, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pwa, offset) = SCARG(uap, off);
 
 	return (sys_pwrite(p, &pwa, retval));
 }
