@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.2 1998/11/08 22:02:25 veego Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,10 +58,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
