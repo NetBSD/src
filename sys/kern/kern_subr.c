@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.23 1997/03/26 22:42:16 gwr Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.24 1997/05/25 19:20:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -399,13 +399,6 @@ setroot(bootdv, bootpartition, nam2blk)
 #endif
 
 	/*
-	 * If wildcarded root and we the boot device wasn't determined,
-	 * ask the user.
-	 */
-	if (rootspec == NULL && bootdv == NULL)
-		boothowto |= RB_ASKNAME;
-
-	/*
 	 * If NFS is specified as the file system, and we found
 	 * a DV_DISK boot device (or no boot device at all), then
 	 * find a reasonable network interface for "rootspec".
@@ -433,6 +426,13 @@ setroot(bootdv, bootpartition, nam2blk)
 			rootspec = (const char *)ifp->if_xname;
 		}
 	}
+
+	/*
+	 * If wildcarded root and we the boot device wasn't determined,
+	 * ask the user.
+	 */
+	if (rootspec == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
 
  top:
 	if (boothowto & RB_ASKNAME) {
