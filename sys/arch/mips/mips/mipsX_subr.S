@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.3 2002/06/01 13:52:23 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.4 2002/06/04 21:44:40 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -219,46 +219,41 @@
 /*
  * CPP function renaming macros.
  */
-#if defined(LOSING_WITH_CPP)
 
 #if defined(MIPS3)
-#define	MIPSX_PREFIX	mips3
-#endif
-
-#if defined(MIPS32)
-#define	MIPSX_PREFIX	mips32
-#endif
-
-#if defined(MIPS64)
-#define	MIPSX_PREFIX	mips64
-#endif
-
 #ifdef __STDC__
-#define	MIPSX(name)	MIPSX_PREFIX ## _ ## name
+#define	MIPSX(name)	mips3_ ## name
 #else
-#define	MIPSX(name)	MIPSX_PREFIX/**/_/**/name
-#endif
-
-#else	/* LOSING_WITH_CPP */
-
-#if defined(MIPS3)
 #define	MIPSX(name)	mips3_/**/name
+#endif
 #endif
 
 #if defined(MIPS3_5900)
 #undef MIPSX
+#ifdef __STDC__
+#define	MIPSX(name)	mips5900_ ## name
+#else
 #define	MIPSX(name)	mips5900_/**/name
+#endif
 #endif
 	
 #if defined(MIPS32)
+#ifdef __STDC__
+#define	MIPSX(name)	mips32_ ## name
+#else
 #define	MIPSX(name)	mips32_/**/name
+#endif
 #endif
 
 #if defined(MIPS64)
+#ifdef __STDC__
+#define	MIPSX(name)	mips64_ ## name
+#else
 #define	MIPSX(name)	mips64_/**/name
 #endif
+#endif
 
-#endif	/* LOSING_WITH_CPP */
+#define	_VECTOR_END(name)	VECTOR_END(name)
 
 /*
  * XXX We need a cleaner way of handling the instruction hazards of
@@ -363,7 +358,7 @@ VECTOR(MIPSX(TLBMiss), unknown)
 5:	j	slowfault			#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
-VECTOR_END(MIPSX(TLBMiss))
+_VECTOR_END(MIPSX(TLBMiss))
 
 #if defined(USE_64BIT_CP0_FUNCTIONS)
 /*
@@ -416,7 +411,7 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 5:	j	slowfault			#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
-VECTOR_END(MIPSX(XTLBMiss))
+_VECTOR_END(MIPSX(XTLBMiss))
 #endif /* USE_64BIT_CP0_FUNCTIONS */
 
 /*
@@ -430,7 +425,7 @@ VECTOR(MIPSX(cache), unknown)
 	or	k0, k1
 	j	k0
 	nop
-VECTOR_END(MIPSX(cache))
+_VECTOR_END(MIPSX(cache))
 
 /*
  * Handle MIPS32/MIPS64 style interrupt exception vector.
@@ -439,7 +434,7 @@ VECTOR(MIPSX(intr), unknown)
 	la	k0, MIPSX(KernIntr)
 	j	k0
 	nop
-VECTOR_END(MIPSX(intr))
+_VECTOR_END(MIPSX(intr))
 
 /*
  *----------------------------------------------------------------------------
@@ -480,7 +475,7 @@ VECTOR(MIPSX(exception), unknown)
 	j	k0				#09: jump to the function
 	nop					#0a: branch delay slot
 	.set	at
-VECTOR_END(MIPSX(exception))
+_VECTOR_END(MIPSX(exception))
 
 /*----------------------------------------------------------------------------
  *
