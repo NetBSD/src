@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.6 1997/10/15 06:08:27 explorer Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.7 1997/10/15 16:54:39 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -67,6 +67,9 @@ static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
 
 static int		dp8390_test_mem __P((struct dp8390_softc *));
 
+int	dp8390_enable __P((struct dp8390_softc *));
+void	dp8390_disable __P((struct dp8390_softc *));
+
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
@@ -95,7 +98,7 @@ dp8390_config(sc)
 	else
 		sc->txb_cnt = 2;
 
-	sc->tx_page_start = 0;
+	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
 	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
@@ -126,12 +129,8 @@ dp8390_config(sc)
 #endif
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_enaddr));
-
-	if (sc->type_str)
-		printf("type %s ", sc->type_str);
-	else
-		printf("type unknown (0x%x) ", sc->type);
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
 
 	rv = 0;
 out:
@@ -550,10 +549,9 @@ loop:
 }
 
 /* Ethernet interface interrupt processor. */
-void
-dp8390_intr(arg, slot)
+int
+dp8390_intr(arg)
 	void *arg;
-	int slot;
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -561,13 +559,16 @@ dp8390_intr(arg, slot)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char isr;
 
+	if (sc->sc_enabled == 0)
+		return (0);
+
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
 	isr = NIC_GET(regt, regh, ED_P0_ISR);
 	if (!isr)
-		return;
+		return (0);
 
 	/* Loop until there are no more new interrupts. */
 	for (;;) {
@@ -725,7 +726,7 @@ dp8390_intr(arg, slot)
 
 		isr = NIC_GET(regt, regh, ED_P0_ISR);
 		if (!isr)
-			return;
+			return (1);
 	}
 }
 
@@ -748,6 +749,8 @@ dp8390_ioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
+		if ((error = dp8390_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -789,14 +792,17 @@ dp8390_ioctl(ifp, cmd, data)
 			 */
 			dp8390_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			dp8390_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
+			if ((error = dp8390_enable(sc)) != 0)
+				break;
 			dp8390_init(sc);
-		} else {
+		} else if (sc->sc_enabled) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
@@ -808,6 +814,11 @@ dp8390_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ec) :
@@ -1134,4 +1145,38 @@ dp8390_write_mbuf(sc, m, buf)
 	}
 
 	return (totlen);
+}
+
+/*
+ * Enable power on the interface.
+ */
+int
+dp8390_enable(sc)
+	struct dp8390_softc *sc;
+{
+
+	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+
+	sc->sc_enabled = 1;
+	return (0);
+}
+
+/*
+ * Disable power on the interface.
+ */
+void
+dp8390_disable(sc)
+	struct dp8390_softc *sc;
+{
+
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+		(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
 }
