@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/07/05 03:30:08 enami Exp $
+#	$NetBSD: Makefile,v 1.10 2000/08/23 10:43:06 enami Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -12,7 +12,7 @@ FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
 .if (${.CURDIR} == ${FILESDIR})
 CFDIR=		${.CURDIR}/..
 .else
-CFDIR=		${DIST}/sendmail/cf
+CFDIR?=		${DIST}/sendmail/cf
 .endif
 CHMOD=		chmod
 M4=		m4
