@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.10 2000/04/04 10:39:56 kleink Exp $
+.\"	$NetBSD: uvm.9,v 1.11 2000/04/05 03:21:31 enami Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -683,6 +683,7 @@ on the map before unlocking the map.
 .Fn uvm_scheduler
 .Ft void
 .Fn uvm_swapin "struct proc *p"
+.nr nS 0
 
 .Pp
 .Fn uvm_pageout
