@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.37 2000/12/01 09:54:42 chs Exp $	*/
 
 /*
  *
@@ -858,6 +858,9 @@ uvm_aio_aiodone(bp)
 			pmap_clear_modify(pgs[i]);
 			pgs[i]->flags |= PG_CLEAN;
 			pgs[i]->flags &= ~PG_FAKE;
+		}
+		if (pg->wire_count == 0) {
+			uvm_pageactivate(pg);
 		}
 		if (swap) {
 			if (pg->pqflags & PQ_ANON) {

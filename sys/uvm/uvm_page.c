@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.45 2000/11/30 11:04:44 simonb Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.46 2000/12/01 09:54:42 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1230,6 +1230,8 @@ uvm_page_unbusy(pgs, npgs)
 			}
 		} else {
 			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
+			KASSERT(pg->wire_count ||
+				(pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)));
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
