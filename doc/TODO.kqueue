@@ -1,6 +1,8 @@
-#	$NetBSD: TODO.kqueue,v 1.3 2002/11/30 13:52:14 jdolecek Exp $
+#	$NetBSD: TODO.kqueue,v 1.4 2003/08/02 20:34:26 jdolecek Exp $
 
 items todo:
+	- dir watched - what happens if something is mounted over it?
+	  should get write event
 	- multiple entry points
 	- events should remain across fork()
 	- rewrite sowakeup()
@@ -19,7 +21,6 @@ items todo:
 		- evbsh5		XXX no intree toolchain available
 		- hp700			XXX no intree toolchain available
 		- pc532			XXX not xcompile capable
-		- x86_64		XXX no intree toolchain available
 
 merge in from FreeBSD:
 	pkgsrc/net/bsdproxy
