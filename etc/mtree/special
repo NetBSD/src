@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.43 2001/10/02 01:08:11 lukem Exp $
+#	$NetBSD: special,v 1.44 2001/10/02 01:21:27 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -271,8 +271,6 @@ lib		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/local
 pkg		type=dir mode=0755 uname=root gname=wheel ignore optional
 ..	#usr/pkg
-pkgsrc		type=dir mode=0755 uname=root gname=wheel ignore optional
-..	#usr/pkgsrc
 sbin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/sbin
 share		type=dir mode=0755 uname=root gname=wheel ignore
