@@ -169,6 +169,18 @@ $ EOVERFLOW
 84 Value too large to be stored in data type
 $ EILSEQ
 85 Illegal byte sequence
+$ ENOTSUP
+86 Not supported
+$ ECANCELED
+87 Operation Canceled
+$ EBADMSG
+88 Bad or Corrupt message
+$ ENODATA
+89 No message available
+$ ENOSR
+90 No STREAM resource
+$ ENOSTR
+91 Not a STREAM
 $set 2
 $ SIGHUP
 1 Hangup
