@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.17 1997/03/28 21:55:41 cjs Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.18 1997/03/30 22:53:40 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.17 1997/03/28 21:55:41 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.18 1997/03/30 22:53:40 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,6 +125,9 @@ off_t	byte_count;
 #if !defined(CMASK) || CMASK == 0
 #undef CMASK
 #define CMASK 027
+#endif
+#if !defined(GUEST_CMASK)
+#define GUEST_CMASK 0707
 #endif
 int	defumask = CMASK;		/* default umask value */
 char	tmpline[7];
@@ -665,7 +668,12 @@ skip:
 			syslog(LOG_INFO, "FTP LOGIN FROM %s as %s",
 			    remotehost, pw->pw_name);
 	}
-	(void) umask(defumask);
+#ifndef INSECURE_GUEST
+	if (guest) 
+	    (void) umask(GUEST_CMASK);
+	else
+#endif
+	    (void) umask(defumask);
 	return;
 bad:
 	/* Forget all about it... */
