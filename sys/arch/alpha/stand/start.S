@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 1995/11/23 02:39:15 cgd Exp $	*/
+/*	$NetBSD: start.S,v 1.2 1996/09/17 21:26:45 cgd Exp $	*/
 
 /*  
  * Mach Operating System
@@ -59,6 +59,7 @@ NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
 
 	CALL(main)			/* transfer to C */
 
+XLEAF(_rtt, 0)
 XLEAF(halt, 0)
 	call_pal PAL_halt		/* halt if we ever return */
 END(start)
