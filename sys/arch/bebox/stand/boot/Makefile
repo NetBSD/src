@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/10/26 00:45:47 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:43 lukem Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -21,7 +21,7 @@ CPPFLAGS+= -DCONS_VGA
 #CPPFLAGS+= -DUSE_SCAN
 
 AFLAGS= -x assembler-with-cpp -traditional-cpp
-NOMAN=
+MKMAN=	no
 STRIPFLAG=
 BINMODE= 444
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 1997/10/22 02:26:44 lukem Exp $
+# $NetBSD: Makefile,v 1.6 1999/02/13 02:54:19 lukem Exp $
 # Small zcat (i.e. for install media)
 #
 # Note: gzio.c is compiled here so that crunchgen will assume
@@ -7,7 +7,7 @@
 # references to those functions in gzio.c (yes, it's a hack).
 
 PROG=	zcat
-NOMAN=
+MKMAN=	no
 SRCS=	zcat.c gzio.c
 
 SRCDIR= ${.CURDIR}/../../../lib/libz

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.46 1998/08/04 05:01:58 perry Exp $
+#	$NetBSD: Makefile,v 1.47 1999/02/13 02:54:51 lukem Exp $
 
 LIB=	kern
-NOPIC=
+MKPIC=	no
 
 M=	${.CURDIR}/arch/${MACHINE_ARCH}
 

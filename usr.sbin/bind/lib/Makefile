@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/10/05 18:01:57 tron Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:58 lukem Exp $
 
 LIB=bind
 
-NOPIC=
-NOPROFILE=
-NOLINT=
+MKPIC=no
+MKPROFILE=no
+MKLINT=no
 
 CPPFLAGS+=	${INCLUDE}
 

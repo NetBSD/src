@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/26 21:58:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:52 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 CPPFLAGS+=	-DVM86
 
-NOMAN=	yep
+MKMAN=	no
 
 KMOD=	compat_freebsd
 

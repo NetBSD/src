@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1997/09/30 23:15:43 is Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:31 lukem Exp $
 
 PROG=	bitstring_test
-NOMAN=	noman, no way, man
+MKMAN=	no
 
 regress:	test-8 test-27 test-32 test-49 test-64 test-67
 

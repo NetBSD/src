@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1997/12/30 23:30:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
 
-NOMAN=  noman, no way, man
+MKMAN=  no
 
 CLEANFILES+= ff_after_dnl.m4
 

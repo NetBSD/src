@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 08:03:55 perry Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:33 lukem Exp $
 #
 PROG=emuspeed
-NOMAN=none
+MKMAN=no
 
 SRCS=emuspeed.c test.s mul64.s div64.s # movepto.c movepfrom.c
 

@@ -1,9 +1,9 @@
 #
-#	$NetBSD: Makefile,v 1.14 1997/10/13 11:19:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 1999/02/13 02:54:35 lukem Exp $
 #
 
 FILES=	README syscall vfs misc
-NOOBJ=	noobj
+MKOBJ=	no
 
 install:
 	find ${FILES} -follow -name CVS -prune -o -type f -print | \

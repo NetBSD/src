@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.85 1999/02/11 17:56:46 tv Exp $
+#	$NetBSD: Makefile,v 1.86 1999/02/13 02:54:17 lukem Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
 # Configurations variables (can be set either in /etc/mk.conf or
 # as environement variable
-# NBUILDJOBS: the number of jobs to start in parallel in a 'make build'.
-#             defaults to 1
-# NOMAN: if set to 1, don't build and install man pages
-# NOSHARE: if set to 1, don't build or install /usr/share stuffs
-# UPDATE: if set to 1, don't do a 'make cleandir' before compile
-# DESTDIR: The target directory for installation (default to '/',
-#          which mean the current system is updated).
+# NBUILDJOBS:	the number of jobs to start in parallel in a 'make build'.
+#		defaults to 1
+# MKMAN:	if set to no, don't build and install man pages
+# MKSHARE:	if set to no, don't build or install /usr/share stuffs
+# UPDATE:	if set to 1, don't do a 'make cleandir' before compile
+# DESTDIR:	The target directory for installation (default to '/',
+#		which mean the current system is updated).
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -65,7 +65,7 @@ beforeinstall:
 .endif
 
 afterinstall:
-.if !defined(NOMAN) && !defined(NOSHARE) && !defined(_BUILD)
+.if ${MKMAN} != "no" && !defined(_BUILD)
 	${MAKE} whatis.db
 .endif
 
@@ -76,7 +76,7 @@ whatis.db:
 # as the build will automatically remove/replace the non-pkg entries there.
 
 build: beforeinstall
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
 .endif
@@ -91,20 +91,24 @@ build: beforeinstall
 	@false
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && \
-	    ${MAKE} NOMAN= install && ${MAKE} cleandir)
+	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} MKMAN=no install && ${MAKE} cleandir)
 .endif
 .endif
 	${MAKE} _BUILD= includes
 	(cd ${.CURDIR}/lib/csu && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} MKMAN=no install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/domestic/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} MKMAN=no install)
 .endif
 	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} _BUILD= install
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)

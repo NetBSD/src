@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 1999/02/11 22:48:11 cjs Exp $
+#	$NetBSD: Makefile,v 1.101 1999/02/13 02:54:19 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -42,7 +42,7 @@ LOCALTIME?=	US/Pacific
 
 # setting NOOBJ prevents "make obj" from doing anything;
 # an objdir would break the installation stuff below
-NOOBJ=	oobj
+MKOBJ=	no
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "=".

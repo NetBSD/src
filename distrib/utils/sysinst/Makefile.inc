@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/10/22 02:17:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1999/02/13 02:54:18 lukem Exp $
 #
 # Makefile for install
 
@@ -17,7 +17,7 @@ VER != sh ${.CURDIR}/../../../../../sys/conf/osrelease.sh
 CPPFLAGS+= -I. -I${.CURDIR}/../.. -I${.CURDIR} \
 	 -DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
 
-NOMAN=y
+MKMAN=no
 
 WARNS=1
 

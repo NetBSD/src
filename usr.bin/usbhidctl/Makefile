@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/27 17:22:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:56 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG=	usbhidctl
 SRCS=	usbhid.c hidsubr.c
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=  usb_hid_usages
 FILESDIR=/usr/share/misc
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 1999/02/05 19:22:50 perry Exp $
+#	$NetBSD: Makefile,v 1.37 1999/02/13 02:55:00 lukem Exp $
 #
 #  NetBSD Makefile
 #
@@ -11,6 +11,8 @@
 #  This Makefile is for 4.4BSD only!!!  For all other systems, use	#
 #  the "makesendmail" script.						#
 #########################################################################
+
+.include <bsd.own.mk>
 
 PROG=	sendmail
 
@@ -41,7 +43,7 @@ BINDIR=	/usr/libexec/sendmail
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=sendmail.hf
 FILESDIR=/usr/share/misc
 .endif

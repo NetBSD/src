@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/11/24 12:56:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:49 lukem Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -14,7 +14,7 @@ NM=nm
 PROG=		bootblk bootblk.text
 SRCS=		bootblk.fth
 
-NOMAN=
+MKMAN=		no
 
 # deal with Solaris vs. NetBSD build environments for now ..
 OS!=uname -s

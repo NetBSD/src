@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.2 1998/08/02 03:17:21 lukem Exp $
+# $NetBSD: Makefile,v 1.3 1999/02/13 02:54:19 lukem Exp $
 # Build a smaller ftp (i.e. for boot media)
 
 PROG=	ftp
-NOMAN=	
+MKMAN=	no
 
 # Need -lutil for: fparseln
 DPADD= ${LIBUTIL}

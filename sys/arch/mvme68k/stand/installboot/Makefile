@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1998/03/02 19:57:01 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:47 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	installboot
-NOMAN=	yes
+MKMAN=	no
 BINDIR=/usr/mdec
 
 # Need this to work in the miniroot

@@ -1,5 +1,4 @@
 PROG=	cursor
-
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>

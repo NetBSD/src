@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/02/19 02:17:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 1999/02/13 02:54:23 lukem Exp $
 #
 # This subdirectory contains Unix specific support functions.
 
@@ -16,10 +16,10 @@ SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
 CPPFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DOWNER=\"$(owner)\" -DSBINDIR=\"$(sbindir)\"
 
-NOMAN=		noman
-NOPROFILE=	noprofile
-NOPIC=		nopic
-NOLINT=		nolint (XXX lint bugs)
+MKMAN=		no
+MKPROFILE=	no
+MKPIC=		no
+MKLINT=		no
 
 # only needed during build
 libinstall::

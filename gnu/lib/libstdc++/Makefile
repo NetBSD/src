@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/11 17:30:46 tv Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/13 02:54:23 lukem Exp $
 
 LIB=		stdc++
 
@@ -30,8 +30,8 @@ SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
 DIST=		${.CURDIR}/../../dist
 CPPFLAGS+=	-I${DESTDIR}/usr/include/g++ -I${DIST}/libstdc++
 
-NOMAN=
-NOLINT=		nolint (c++)
+MKMAN=	no
+MKLINT=	no
 
 TEXINFO=	iostream.texi
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/01 11:22:53 scw Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:47 lukem Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
@@ -7,7 +7,7 @@
 
 COMPILE.s= $(AS) $(ASFLAGS) -o $*.o
 LDFLAGS=-x -N -Ttext 0x4000 -e start
-NOMAN=
+MKMAN=	no
 SRCS=	start.s clock.c console.c etherfun.c le_poll.c libc_sa.c \
 		oc_cksum.s sboot.c
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}

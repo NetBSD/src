@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 1998/06/16 19:06:31 is Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:33 lukem Exp $
 
-NOMAN=notyet
+MKMAN=no
 PROG=dotest
 SRCS=dotest.c dotestsubs.S
 AFLAGS+=-I.

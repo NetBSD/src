@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1999/02/11 16:53:39 tv Exp $
+#	$NetBSD: Makefile,v 1.25 1999/02/13 02:54:25 lukem Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -50,7 +50,7 @@ NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c ${NATDEPFILES.${MACHIN
 .if (${MACHINE_ARCH} != "arm32") && (${MACHINE_ARCH} != "powerpc")
 NATDEPFILES+= kcore-nbsd.c
 .endif
-.if !defined(NOPIC)
+.if ${MKPIC} != "no"
 NATDEPFILES+= solib.c
 .endif
 

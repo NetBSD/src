@@ -17,6 +17,6 @@ YFLAGS+= -d
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison
 
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>

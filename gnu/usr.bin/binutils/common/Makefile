@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/09 19:21:54 tv Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:24 lukem Exp $
 
 LIB=		common
 
@@ -7,9 +7,9 @@ SRCS=		arparse.y arlex.l arsup.c bucomm.c version.c filemode.c \
 CPPFLAGS+=	-DTARGET='"${MACHINE_GNU_ARCH}--netbsd"'
 YHEADER=1
 
-NOPROFILE=
-NOPIC=
-NOLINT=
+MKPROFILE=	no
+MKPIC=		no
+MKLINT=		no
 
 # only needed during build
 libinstall::

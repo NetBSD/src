@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1998/09/14 20:25:03 tv Exp $
+#	$NetBSD: Makefile,v 1.21 1999/02/13 02:54:30 lukem Exp $
 
 LIB=	compat
 CPPFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS -D__LIBCOMPAT_SOURCE__
@@ -6,7 +6,7 @@ AINC=	-I${.CURDIR}/../libc/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
-NOPIC=	nopic
+MKPIC=	no
 
 .PATH:	${.CURDIR}/4.1/${MACHINE_ARCH} ${.CURDIR}/4.1 \
 	${.CURDIR}/4.3/${MACHINE_ARCH} ${.CURDIR}/4.3 \

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1995/04/24 05:53:34 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:31 lukem Exp $
 
 PROG=	divremtest
-NOMAN=
+MKMAN=	no
 
 CLEANFILES+=	mkcases cases.c mktestcases testcases
 

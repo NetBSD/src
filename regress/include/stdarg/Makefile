@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/26 21:50:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:31 lukem Exp $
 
 PROG=	stdargtest
 SRCS=	argtest.c
-NOMAN=	noman, no way, man
+MKMAN=	no
 
 CPPFLAGS+= -DSTDARG
 

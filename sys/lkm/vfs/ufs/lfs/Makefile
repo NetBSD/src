@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/12 05:42:00 cjs Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:54 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 MKMAN=	no
 
-KMOD=		lfs
+KMOD=	lfs
 
 SRCS=	lkminit_${KMOD}.c
 SRCS+=	lfs_vfsops.c lfs_vnops.c lfs_subr.c

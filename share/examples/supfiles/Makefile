@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/01 16:02:38 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:35 lukem Exp $
 
-.if !defined(NOSHARE)
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
 FILES=	ftp.cs.umn.edu skarven.itea.unit.no sup.au.netbsd.org \
 	sup.de.netbsd.org sup.jp.netbsd.org sup.netbsd.org sup.uk.netbsd.org
 FILESDIR=/usr/share/examples/supfiles
 .endif
-NOOBJ=	noobj
+MKOBJ=	no
 
 .include <bsd.prog.mk>

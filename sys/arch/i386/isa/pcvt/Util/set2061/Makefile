@@ -1,7 +1,7 @@
 PROG=		set2061
 SRCS=		main.c ICD2061Aalt.c
 CFLAGS+= 	-DGCCUSESGAS -DPCVT_STANDALONE
-NOMAN=
+MKMAN=	no
 
 all: $(PROG)
 

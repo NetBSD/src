@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/09/06 02:54:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/02/13 02:54:56 lukem Exp $
 
 CPPFLAGS+=-I${.CURDIR}/../../api
-NOMAN=	noman
+MKMAN=	no
 KBD= unix.kbd
 
 .PATH: ${.CURDIR}/../../api

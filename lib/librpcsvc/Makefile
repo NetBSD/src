@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1997/10/09 22:26:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 1999/02/13 02:54:30 lukem Exp $
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
@@ -11,8 +11,8 @@ INCS=		${HDRS} ${RPCSRCS}
 INCSDIR=	/usr/include/rpcsvc
 
 LIB=		rpcsvc
-NOMAN=
-NOPIC=
+MKMAN=		no
+MKPIC=		no
 
 # We don't use explicit suffix rules here to avoid dependencies in the
 # Installed files.

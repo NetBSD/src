@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/09 13:19:15 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:26 lukem Exp $
 
 PROG=	fgrep
 SRCS=	fgrepmat.c
 
-NOMAN=	link to grep.1
+MKMAN=	no
 
 .include <bsd.prog.mk>

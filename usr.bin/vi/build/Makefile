@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 1999/01/08 06:16:54 abs Exp $
+#	$NetBSD: Makefile,v 1.15 1999/02/13 02:54:57 lukem Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
+
+.include <bsd.own.mk>
 
 WARNS=	0
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -DGTAGS
@@ -33,7 +35,7 @@ MLINKS= vi.1 ex.1 vi.1 view.1
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl
 .PATH: ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 cat=	dutch english german ru_SU.KOI8-R swedish
 FILES=${cat:S@^@${.CURDIR}/../catalog/@g}
 FILESDIR=/usr/share/vi/catalog

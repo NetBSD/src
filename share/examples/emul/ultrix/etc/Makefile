@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/27 17:22:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:35 lukem Exp $
 
-.if !defined(NOSHARE)
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
 FILES=	svc.conf
 FILESDIR=/usr/share/examples/emul/ultrix/etc
 .endif
-NOOBJ=	noobj
+MKOBJ=	no
 
 .include <bsd.prog.mk>

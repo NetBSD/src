@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/09/05 14:57:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:27 lukem Exp $
 
 DEVICE=		lj4
 FONTFILES=	ALBB ALBR AOB AOI AOR CB CBI CI CR GB GBI GI GR LGB LGI LGR \
@@ -6,7 +6,7 @@ FONTFILES=	ALBB ALBR AOB AOI AOR CB CBI CI CR GB GBI GI GR LGB LGI LGR \
 		CLARENDON CORONET MARIGOLD S \
 		DESC
 
-NOOBJ=		noobj
+MKOBJ=		no
 
 clean cleandir distclean:
 

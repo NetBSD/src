@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 1998/09/27 17:22:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:28 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG=		troff
 SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \
@@ -19,7 +21,7 @@ majorminor.cc: $(.CURDIR)/../VERSION
 # XXX -- this depends on ../include/defs.h
 TMACDIR=/usr/share/tmac
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=hyphen.us
 FILESDIR=${TMACDIR}
 .endif

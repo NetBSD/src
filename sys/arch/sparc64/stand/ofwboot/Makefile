@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/01/17 20:07:52 eeh Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/13 02:54:49 lukem Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -20,7 +20,7 @@ CEXTRAFLAG=	-D_LP64
 .endif
 CFLAGS+=	${COPTS} -DNETIF_DEBUG -D__ELF__ -D_STANDALONE
 
-NOMAN=
+MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
 OBJCOPY?=	objcopy

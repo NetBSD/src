@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 1997/10/22 02:11:56 lukem Exp $
+# $NetBSD: Makefile,v 1.6 1999/02/13 02:54:19 lukem Exp $
 # Build a smaller dd (i.e. for boot media)
 
 PROG=	dd
-NOMAN=	
+MKMAN=	no
 
 SRCDIR= ${.CURDIR}/../../../bin/dd
 

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/17 06:59:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:59 lukem Exp $
 
 PROG=	gspahextoc
 SRCS=	gspahextoc.l
-NOMAN=	noman
+MKMAN=	no
 CPPFLAGS+=-DYY_NO_UNPUT
 LDADD=	-ll
 DPADD=	${LIBL}

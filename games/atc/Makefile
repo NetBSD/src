@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 1998/09/29 07:33:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1999/02/13 02:54:20 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
+
+.include <bsd.own.mk>
 
 PROG=	atc
 CPPFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
@@ -14,7 +16,7 @@ GAMES=	Game_List Killer crossover default easy game_2 \
 	game_4 novice two-corners
 HIDEGAME=hidegame
 SETGIDGAME=yes
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=${GAMES:S@^@${.CURDIR}/games/@g}
 FILESDIR=/usr/share/games/atc
 FILESMODE=440

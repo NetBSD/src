@@ -1,6 +1,6 @@
 PROG=		vttest
 SRCS=		main.c esc.c
 
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1998/12/11 12:14:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:49 lukem Exp $
 
-NOMAN=		built in share/man/man8/man8.sparc64
+MKMAN=		no
 SCRIPTS=	installboot.sh
 
 .include <bsd.prog.mk>

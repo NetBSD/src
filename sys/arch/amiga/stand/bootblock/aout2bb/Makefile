@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/05 20:51:27 perry Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:37 lukem Exp $
 #
 PROG=	aout2bb
-NOMAN=	never
+MKMAN=	no
 SRCS=	aout2bb.c chksum.c
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1999/02/01 19:05:09 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.13 1999/02/13 02:54:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ CPPFLAGS += -I${.CURDIR}/../include -I${.CURDIR} -I${LIBAMU} -I. -DHAVE_CONFIG_H
 CPPFLAGS += -DDEBUG
 .if !defined(LIB) || empty(LIB)
 LDADD += -L${LIBAMU} -lamu -lrpcsvc -ll
-.if defined(NOPIC)
+.if ${MKPIC} == "no"
 DPADD += ${LIBAMU}/libamu.a
 .else
 DPADD += ${LIBAMU}/libamu_pic.a

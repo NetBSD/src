@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/22 05:48:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:39 lukem Exp $
 
 PROG=	edahdi
-NOMAN=	yes
+MKMAN=	no
 DPADD=	${LIBTERMCAP}
 LDADD=	-ltermcap
 BINDIR=	/sbin

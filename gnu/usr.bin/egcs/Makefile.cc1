@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cc1,v 1.11 1999/02/12 08:41:38 cjs Exp $
+#	$NetBSD: Makefile.cc1,v 1.12 1999/02/13 02:54:25 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ BINDIR=		/usr/libexec
 MKMAN=		no
 
 LDADD+=		-L${COMMONOBJ} -lcc1
-.if defined(NOPIC)
+.if ${MKPIC} == "no"
 DPADD+=		${COMMONOBJ}/libcc1.a
 .else
 DPADD+=		${COMMONOBJ}/libcc1_pic.a

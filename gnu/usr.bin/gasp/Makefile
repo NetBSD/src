@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1998/12/29 15:13:03 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:25 lukem Exp $
 
 DIST=		${.CURDIR}/../../dist
 
 PROG=		gasp
 SRCS=		gasp.c macro.c sb.c hash.c
-NOMAN=
+MKMAN=		no
 
 .PATH:		${DIST}/gas
 

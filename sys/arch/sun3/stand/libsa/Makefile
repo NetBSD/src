@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.19 1998/07/02 21:36:00 gwr Exp $
+#	$NetBSD: Makefile,v 1.20 1999/02/13 02:54:49 lukem Exp $
 
 LIB=sa
 
-NOLINT=		nolint (XXX should be linted)
-NOPIC=
-NOPROFILE=
+MKLINT=no
+MKPIC=no
+MKPROFILE=no
 
 # Logically src/sys
 S=${.CURDIR}/../../../..

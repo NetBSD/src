@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 1998/09/27 17:22:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1999/02/13 02:54:36 lukem Exp $
 
-NOOBJ=
+.include <bsd.own.mk>
+
+MKOBJ=no
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -72,7 +74,7 @@ posix_right: posix_only other_two
 .PHONY:	right_posix
 right_posix: right_only other_two
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
 	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES}
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}

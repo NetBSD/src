@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1998/03/02 20:02:25 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:44 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	mkboot
-NOMAN=
+MKMAN=	no
 
 LDSTATIC?=-static
 

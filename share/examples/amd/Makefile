@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1998/09/27 17:22:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:34 lukem Exp $
 
-.if !defined(NOSHARE)
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
 FILES=	cd master net
 FILESDIR=/usr/share/examples/amd
 .endif
-NOOBJ=	noobj
+MKOBJ=	no
 
 .include <bsd.prog.mk>

@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.9 1998/09/29 23:47:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:26 lukem Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR=	libgroff libdriver libbib\
 	groff troff nroff tbl pic eqn grog grops grotty grodvi grolj4 \
 	refer lookbib indxbib lkbib hpftodit tfmtodit addftinfo pfbtops psbb
 
-.if !defined(NOSHARE) || \
+.if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
 SUBDIR+=devices tmac mm man
 .endif

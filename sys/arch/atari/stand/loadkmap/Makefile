@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 1996/06/22 20:21:55 leo Exp $
+# $NetBSD: Makefile,v 1.2 1999/02/13 02:54:42 lukem Exp $
 
 PROG=loadkmap
-NOMAN=loadkmap
+MKMAN=	no
 BINDIR=/usr/sbin
 LDFLAGS+=-static
 

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 1998/04/13 14:14:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/13 02:54:20 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 PROG=	mkdict
 HOST_CPPFLAGS+=-I${.CURDIR}/../boggle
-NOMAN=	noman
+MKMAN=	no
 
 # XXX for "make depend"
 CPPFLAGS+=-I${.CURDIR}/../boggle

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1997/02/04 03:52:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:44 lukem Exp $
 
-NOMAN=
+MKMAN=	no
 
 beforeinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

@@ -1,5 +1,5 @@
 PROG=	mcon
 
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>

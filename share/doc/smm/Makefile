@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/09/27 17:22:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:34 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/10/94
 
 # The following modules do not build/install:
@@ -11,7 +11,7 @@
 # 14.uucpimpl 15.uucpnet 16.security 17.password
 
 BINDIR=	/usr/share/doc/smm
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=	00.contents Makefile Title
 .endif
 SUBDIR=	01.setup 04.quotas 05.fastfs 06.nfs 18.net

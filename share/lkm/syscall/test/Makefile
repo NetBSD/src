@@ -33,11 +33,11 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$NetBSD: Makefile,v 1.2 1997/10/13 11:20:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:35 lukem Exp $
 #
 
 PROG=	testsyscall
-NOMAN=
+MKMAN=	no
 
 load:
 	@echo "This test program will call the sample system call;"
