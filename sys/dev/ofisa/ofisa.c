@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.5 1998/06/11 08:43:01 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.6 1998/06/30 00:09:36 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -159,11 +159,12 @@ ofisa_reg_get(phandle, descp, ndescs)
 	int ndescs;
 {
 	char *buf, *bp;
-	int i, allocated, rv;
+	int i, proplen, allocated, rv;
 
 	i = ofisa_reg_count(phandle);
 	if (i < 0)
 		return (-1);
+	proplen = i * 12;
 	ndescs = min(ndescs, i);
 
 	i = ndescs * 12;
@@ -175,7 +176,7 @@ ofisa_reg_get(phandle, descp, ndescs)
 		allocated = 0;
 	}
 
-	if (OF_getprop(phandle, "reg", buf, i) != i) {
+	if (OF_getprop(phandle, "reg", buf, i) != proplen) {
 		rv = -1;
 		goto out;
 	}
@@ -236,11 +237,12 @@ ofisa_intr_get(phandle, descp, ndescs)
 	int ndescs;
 {
 	char *buf, *bp;
-	int i, allocated, rv;
+	int i, proplen, allocated, rv;
 
 	i = ofisa_intr_count(phandle);
 	if (i < 0)
 		return (-1);
+	proplen = i * 8;
 	ndescs = min(ndescs, i);
 
 	i = ndescs * 8;
@@ -252,7 +254,7 @@ ofisa_intr_get(phandle, descp, ndescs)
 		allocated = 0;
 	}
 
-	if (OF_getprop(phandle, "interrupts", buf, i) != i) {
+	if (OF_getprop(phandle, "interrupts", buf, i) != proplen) {
 		rv = -1;
 		goto out;
 	}
@@ -301,5 +303,108 @@ ofisa_intr_print(descp, ndescs)
 	for (i = 0; i < ndescs; i++) {
 		printf("%s%d (%s)", i ? ", " : "", descp[i].irq,
 		    descp[i].share == IST_LEVEL ? "level" : "edge");
+	}
+}
+
+int
+ofisa_dma_count(phandle)
+	int phandle;
+{
+	int len;
+
+	len = OF_getproplen(phandle, "dma");
+
+	/* nonexistant or obviously malformed "reg" property */
+	if (len < 0 || (len % 20) != 0)
+		return (-1);
+	return (len / 20);
+}
+
+int
+ofisa_dma_get(phandle, descp, ndescs)
+	int phandle;
+	struct ofisa_dma_desc *descp;
+	int ndescs;
+{
+	char *buf, *bp;
+	int i, proplen, allocated, rv;
+
+	i = ofisa_dma_count(phandle);
+	if (i < 0)
+		return (-1);
+	proplen = i * 20;
+	ndescs = min(ndescs, i);
+
+	i = ndescs * 20;
+	if (i > OFW_MAX_STACK_BUF_SIZE) {
+		buf = malloc(i, M_TEMP, M_WAITOK);
+		allocated = 1;
+	} else {
+		buf = alloca(i);
+		allocated = 0;
+	}
+
+	if (OF_getprop(phandle, "dma", buf, i) != proplen) {
+		rv = -1;
+		goto out;
+	}
+
+	for (i = 0, bp = buf; i < ndescs; i++, bp += 20) {
+		descp[i].drq = of_decode_int(&bp[0]);
+		descp[i].mode = of_decode_int(&bp[4]);
+		descp[i].width = of_decode_int(&bp[8]);
+		descp[i].countwidth = of_decode_int(&bp[12]);
+		descp[i].busmaster = of_decode_int(&bp[16]);
+	}
+	rv = i;		/* number of descriptors processed (== ndescs) */
+
+out:
+	if (allocated)
+		free(buf, M_TEMP);
+	return (rv);
+}
+
+void
+ofisa_dma_print(descp, ndescs)
+	struct ofisa_dma_desc *descp;
+	int ndescs;
+{
+	char unkmode[16];
+	const char *modestr;
+	int i;
+
+	if (ndescs == 0) {
+		printf("none");
+		return;
+	}
+
+	for (i = 0; i < ndescs; i++) {
+		switch (descp[i].mode) {
+		case OFISA_DMA_MODE_COMPAT:
+			modestr = "compat";
+			break;
+		case OFISA_DMA_MODE_A:
+			modestr = "A";
+			break;
+		case OFISA_DMA_MODE_B:
+			modestr = "B";
+			break;
+		case OFISA_DMA_MODE_F:
+			modestr = "F";
+			break;
+		case OFISA_DMA_MODE_C:
+			modestr = "C";
+			break;
+		default:
+			sprintf(unkmode, "??? (%d)", descp[i].mode);
+			modestr = unkmode;
+			break;
+		}
+
+		printf("%s%d %s mode %d-bit (%d-bit count)%s", i ? ", " : "",
+		    descp[i].drq, modestr, descp[i].width,
+		    descp[i].countwidth,
+		    descp[i].busmaster ? " busmaster" : "");
+
 	}
 }
