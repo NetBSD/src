@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.66 1998/09/18 18:35:16 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.67 1998/10/19 11:51:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -302,7 +302,13 @@ extern u_long pidhash;
 extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
+/*
+ * Note: <machine/proc.h> may provide a definition of `curproc' while
+ * transition to multi processor support is in progress.
+ */
+#ifndef curproc
 extern struct proc *curproc;		/* Current running proc. */
+#endif
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.132 1998/09/08 23:57:58 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.133 1998/10/19 11:51:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -121,7 +121,9 @@ struct	pcred cred0;
 struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
+#ifndef curproc
 struct	proc *curproc = &proc0;
+#endif
 struct	proc *initproc;
 
 int	cmask = CMASK;
