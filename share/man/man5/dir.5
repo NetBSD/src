@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)dir.5	6.2 (Berkeley) 4/29/91
+.\"     @(#)dir.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd April 29, 1991
+.Dd April 19, 1994
 .Dt DIR 5
 .Os BSD 4.2
 .Sh NAME
@@ -42,19 +42,19 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/dir.h>
 .Sh DESCRIPTION
-Directories provide a convienent hierarchical method of grouping
+Directories provide a convenient hierarchical method of grouping
 files while obscuring the underlying details of the storage medium.
 A directory file is differentiated from a plain file
 by a flag in its
 .Xr inode 5
 entry.
-It consists of records (directory entries) each of which contain
+It consists of records (directory entries) each of which contains
 information about a file and a pointer to the file itself.
 Directory entries may contain other directories
 as well as plain files; such nested directories are refered to as
 subdirectories. 
 A hierarchy of directories and files is formed in this manner
-and is called a file system (or refered to as a file system tree).
+and is called a file system (or referred to as a file system tree).
 .\" An entry in this tree,
 .\" nested or not nested,
 .\" is a pathname.
