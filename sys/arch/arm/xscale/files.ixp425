@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp425,v 1.6 2003/12/08 14:41:11 scw Exp $
+#       $NetBSD: files.ixp425,v 1.7 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel IXP4xx CPU support
 #
@@ -34,4 +34,3 @@ attach	com at ixpsip with ixsipcom
 file	arch/arm/xscale/ixp425_com.c		ixsipcom
 file	arch/arm/xscale/ixp425_a4x_space.c	ixsipcom
 file	arch/arm/xscale/ixp425_a4x_io.S		ixsipcom
-defflag	opt_com.h	COM_PXA2X0
