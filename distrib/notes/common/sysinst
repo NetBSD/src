@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.2.2.1 1999/05/04 22:30:52 perry Exp $
+.\" $NetBSD: sysinst,v 1.2.2.2 2000/02/08 00:10:45 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,15 +78,14 @@ of
 .Tn PCMCIA
 difficult once a machine is installed. If you do not have
 .Tn PCMCIA
-on your
-machine
-.Op Tn PCMCIA
-is only really used on laptop machines), you
-can skip this section, and ignore the
+on your machine (
+.Tn PCMCIA
+is only really used on laptop machines),
+you can skip this section, and ignore the
 .Dq Bq Tn PCMCIA
 notes.
 .Pp
-This will explains how to work around the installation problem.
+This will explain how to work around the installation problem.
 .Pp
 What is the bug: The kernel keeps careful track of what interrupts
 and i/o ports are in use during autoconfiguration. It then allows
@@ -118,7 +117,14 @@ allocated to other (typically undetected) hardware, you may use a
 workaround by booting the install kernel with "boot -d" to drop into
 DDB (the in-kernel debugger) and set pcic_isa_intr_alloc_mask to mask
 out the offending interrupt before continuing.  By default the kernel
-masks out IRQ 10, and the corresponding mask is 0xfbff.
+masks out IRQ 10, and the corresponding mask is 0xfbff.  If you can
+get your PCMCIA card to work using this hack, you may also ignore the
+.Bq Tn PCMCIA
+notes later in this document.
+.Pp
+We hope to provide a more elegant solution to this problem in a future
+.Nx
+release.
 .\}
 .\}
 .It_need
