@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.h,v 1.1 2001/03/13 07:37:59 ross Exp $ */
+/* $NetBSD: softfloat.h,v 1.2 2001/04/06 02:35:09 ross Exp $ */
 
 /* This is a derivative work. */
 
@@ -89,22 +89,22 @@ the `FLOAT128' macro and the quadruple-precision format `float128'.
 Software IEC/IEEE floating-point types.
 -------------------------------------------------------------------------------
 */
-typedef u_int32_t float32;
-typedef u_int64_t float64;
+typedef uint32_t float32;
+typedef uint64_t float64;
 #ifdef FLOATX80
 typedef struct {
 #if BYTE_ORDER == BIG_ENDIAN
-    u_int16_t high;
-    u_int64_t low;
+    uint16_t high;
+    uint64_t low;
 #else
-    u_int64_t low;
-    u_int16_t high;
+    uint64_t low;
+    uint16_t high;
 #endif
 } floatx80;
 #endif
 #ifdef FLOAT128
 typedef struct {
-    u_int64_t high, low;
+    uint64_t high, low;
 } float128;
 #endif
 

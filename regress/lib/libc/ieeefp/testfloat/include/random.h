@@ -1,4 +1,4 @@
-/* $NetBSD: random.h,v 1.2 2001/03/13 07:47:01 ross Exp $ */
+/* $NetBSD: random.h,v 1.3 2001/04/06 02:35:09 ross Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,9 +44,9 @@
 
 #include "milieu.h"
 
-#define	randomUint8() ((u_int8_t)random())
-#define	randomUint16() ((u_int16_t)random())
-#define	randomUint32() ((u_int32_t)random())
-#define	randomUint64() ((u_int64_t)random() << 32 | random())
+#define	randomUint8() ((uint8_t)random())
+#define	randomUint16() ((uint16_t)random())
+#define	randomUint32() ((uint32_t)random())
+#define	randomUint64() ((uint64_t)random() << 32 | random())
 
 #endif

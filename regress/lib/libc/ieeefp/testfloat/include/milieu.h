@@ -1,4 +1,4 @@
-/* $NetBSD: milieu.h,v 1.1 2001/03/13 07:18:38 ross Exp $ */
+/* $NetBSD: milieu.h,v 1.2 2001/04/06 02:35:08 ross Exp $ */
 
 /* This is a derivative work. */
 
@@ -106,7 +106,7 @@ typedef int int16;
 typedef unsigned int uint32;
 typedef signed int int32;
 #ifdef BITS64
-typedef u_int64_t uint64;
+typedef uint64_t uint64;
 typedef int64_t int64;
 #endif
 
@@ -118,14 +118,14 @@ implementation of C, `bits16' and `sbits16' should be `typedef'ed to
 `unsigned short int' and `signed short int' (or `short int'), respectively.
 -------------------------------------------------------------------------------
 */
-typedef u_int8_t bits8;
+typedef uint8_t bits8;
 typedef int8_t sbits8;
-typedef u_int16_t bits16;
+typedef uint16_t bits16;
 typedef int16_t sbits16;
-typedef u_int32_t bits32;
+typedef uint32_t bits32;
 typedef int32_t sbits32;
 #ifdef BITS64
-typedef u_int64_t bits64;
+typedef uint64_t bits64;
 typedef int64_t sbits64;
 #endif
 
