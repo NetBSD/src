@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.19 2004/01/12 13:39:56 mrg Exp $	*/
+/*	$NetBSD: setemul.c,v 1.20 2005/01/15 17:55:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,12 +69,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.19 2004/01/12 13:39:56 mrg Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.20 2005/01/15 17:55:38 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/queue.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -235,7 +236,7 @@ const struct emulation emulations[] = {
 struct emulation_ctx {
 	pid_t	pid;
 	const struct emulation *emulation;
-	struct emulation_ctx *next;
+	LIST_ENTRY(emulation_ctx) ctx_link;
 };
 
 const struct emulation *cur_emul;
@@ -248,8 +249,8 @@ static const struct emulation *mach_fasttraps;
 static const struct emulation *default_emul = &emulations[0];
 
 struct emulation_ctx *current_ctx;
-static struct emulation_ctx emul_0 = {0, &emulations[0], NULL};
-struct emulation_ctx *emul_ctx = &emul_0;
+static LIST_HEAD(, emulation_ctx) emul_ctx =
+	LIST_HEAD_INITIALIZER(emul_ctx);
 
 static struct emulation_ctx *ectx_find(pid_t);
 static void	ectx_update(pid_t, const struct emulation *);
@@ -300,31 +301,30 @@ setemul(const char *name, pid_t pid, int update_ectx)
 static struct emulation_ctx *
 ectx_find(pid_t pid)
 {
-	struct emulation_ctx *ctx, **pctx;
+	struct emulation_ctx *ctx;
 
-	/* Top of list is almost always right... (and list is never empty) */
-	if (emul_ctx->pid == pid)
-		return emul_ctx;
-
-	for (pctx = &emul_ctx; ; pctx = &ctx->next) {
-		ctx = *pctx;
-		if (ctx == NULL) {
-			/* create entry with default emulation */
-			ctx = malloc(sizeof *ctx);
-			if (ctx == NULL)
-				err(1, "malloc emul context");
-			ctx->pid = pid;
-			ctx->emulation = default_emul;
+	/* Find an existing entry */
+	LIST_FOREACH(ctx, &emul_ctx, ctx_link) {
+		if (ctx->pid == pid)
 			break;
-		}
-		if (ctx->pid != pid)
-			continue;
-		/* Cut out of chain */
-		*pctx = ctx->next;
 	}
-	/* Add at chain head */
-	ctx->next = emul_ctx;
-	emul_ctx = ctx;
+
+	if (ctx == NULL) {
+		/* create entry with default emulation */
+		ctx = malloc(sizeof *ctx);
+		if (ctx == NULL)
+			err(1, "malloc emul context");
+		ctx->pid = pid;
+		ctx->emulation = default_emul;
+
+		/* chain into the list */
+		LIST_INSERT_HEAD(&emul_ctx, ctx, ctx_link);
+	} else {
+		/* move entry to head to optimize lookup for syscall bursts */
+		LIST_REMOVE(ctx, ctx_link);
+		LIST_INSERT_HEAD(&emul_ctx, ctx, ctx_link);
+	}
+
 	return ctx;
 }
 
@@ -361,20 +361,19 @@ ectx_sanify(pid_t pid)
 void
 ectx_delete(void)
 {
-	static struct emulation_ctx *ctx;
-	struct emulation_ctx *nctx;
+	static struct emulation_ctx *ctx = NULL;
 
 	if (ctx != NULL)
 		free(ctx);
 
-	nctx = emul_ctx->next;
-	if (nctx == NULL) {
-		/* sanity - last item on list should never be killed */
-		ctx = NULL;
-		return;
-	}
-	ctx = emul_ctx;
-	emul_ctx = nctx;
+	/*
+	 * The emulation for current syscall entry is always on HEAD, due
+	 * to code in ectx_find().
+	 */
+	ctx = LIST_FIRST(&emul_ctx);
+
+	if (ctx)
+		LIST_REMOVE(ctx, ctx_link);
 }
 
 /*
