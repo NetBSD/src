@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pdb.c,v 1.4 1997/10/18 03:57:28 lukem Exp $");
+__RCSID("$NetBSD: pdb.c,v 1.5 1997/10/19 09:56:19 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -309,7 +309,8 @@ check_junk(cip)
 	char *cp;
 	size_t len;
 
-	fprintf(stderr, "%s (%qu) -- ", cip->ci_comm, cip->ci_calls);
+	fprintf(stderr, "%s (%qu) -- ", cip->ci_comm,
+	    (unsigned long long)cip->ci_calls);
 	cp = fgetln(stdin, &len);
 
 	return (cp && (cp[0] == 'y' || cp[0] == 'Y')) ? 1 : 0;
@@ -343,7 +344,7 @@ print_ci(cip, totalcip)
 	} else
 		uflow = 0;
 
-	printf("%8qu ", cip->ci_calls);
+	printf("%8qu ", (unsigned long long)cip->ci_calls);
 	if (cflag) {
 		if (cip != totalcip)
 			printf(" %4.2f%%  ",
@@ -407,12 +408,12 @@ print_ci(cip, totalcip)
 			printf("%8s ", "*ignore*");
 
 	if (Dflag)
-		printf("%10qutio ", cip->ci_io);
+		printf("%10qutio ", (unsigned long long)cip->ci_io);
 	else
 		printf("%8.0favio ", cip->ci_io / c);
 
 	if (Kflag)
-		printf("%10quk*sec ", cip->ci_mem);
+		printf("%10quk*sec ", (unsigned long long)cip->ci_mem);
 	else
 		printf("%8.0fk ", cip->ci_mem / t);
 
