@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.14 2001/02/02 07:08:17 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.15 2001/02/02 13:06:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -137,22 +137,24 @@ compat_43_netbsd32_stat43(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
-	struct netbsd32_stat43 *sp32;
-	struct stat43 sb43;
-	struct stat43 *sp43 = &sb43;
+	struct stat43 sb43, *sgsbp;
+	struct netbsd32_stat43 sb32;
 	struct compat_43_sys_stat_args ua;
-	caddr_t sg;
-	int rv;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int rv, error;
 
 	NETBSD32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = &sb43;
-	sg = stackgap_init(p->p_emul);
+	SCARG(&ua, ub) = sgsbp = stackgap_alloc(&sg, sizeof(sb43));
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
-
 	rv = compat_43_sys_stat(p, &ua, retval);
 
-	sp32 = (struct netbsd32_stat43 *)(u_long)SCARG(uap, ub);
-	netbsd32_from_stat43(sp43, sp32);
+	error = copyin(sgsbp, &sb43, sizeof(sb43));
+	if (error)
+		return error;
+	netbsd32_from_stat43(&sb43, &sb32);
+	error = copyout(&sb32, (char *)(u_long)SCARG(uap, ub), sizeof(sb32));
+	if (error)
+		return error;
 
 	return (rv);
 }
@@ -167,22 +169,24 @@ compat_43_netbsd32_lstat43(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
-	struct netbsd32_stat43 *sp32;
-	struct stat43 sb43;
-	struct stat43 *sp43 = &sb43;
+	struct stat43 sb43, *sgsbp;
+	struct netbsd32_stat43 sb32;
 	struct compat_43_sys_lstat_args ua;
-	caddr_t sg;
-	int rv;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int rv, error;
 
 	NETBSD32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = &sb43;
-	sg = stackgap_init(p->p_emul);
+	SCARG(&ua, ub) = sgsbp = stackgap_alloc(&sg, sizeof(sb43));
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
-
 	rv = compat_43_sys_stat(p, &ua, retval);
 
-	sp32 = (struct netbsd32_stat43 *)(u_long)SCARG(uap, ub);
-	netbsd32_from_stat43(sp43, sp32);
+	error = copyin(sgsbp, &sb43, sizeof(sb43));
+	if (error)
+		return error;
+	netbsd32_from_stat43(&sb43, &sb32);
+	error = copyout(&sb32, (char *)(u_long)SCARG(uap, ub), sizeof(sb32));
+	if (error)
+		return error;
 
 	return (rv);
 }
@@ -197,18 +201,23 @@ compat_43_netbsd32_fstat43(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(netbsd32_stat43p_t) sb;
 	} */ *uap = v;
-	struct netbsd32_stat43 *sp32;
-	struct stat43 sb43;
-	struct stat43 *sp43 = &sb43;
+	struct stat43 sb43, *sgsbp;
+	struct netbsd32_stat43 sb32;
 	struct compat_43_sys_fstat_args ua;
-	int rv;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int rv, error;
 
 	NETBSD32TO64_UAP(fd);
-	SCARG(&ua, sb) = &sb43;
+	SCARG(&ua, sb) = sgsbp = stackgap_alloc(&sg, sizeof(sb43));
 	rv = compat_43_sys_fstat(p, &ua, retval);
 
-	sp32 = (struct netbsd32_stat43 *)(u_long)SCARG(uap, sb);
-	netbsd32_from_stat43(sp43, sp32);
+	error = copyin(sgsbp, &sb43, sizeof(sb43));
+	if (error)
+		return error;
+	netbsd32_from_stat43(&sb43, &sb32);
+	error = copyout(&sb32, (char *)(u_long)SCARG(uap, sb), sizeof(sb32));
+	if (error)
+		return error;
 
 	return (rv);
 }
