@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.9 2001/11/21 22:40:59 soren Exp $
+# $NetBSD: md.prep,v 1.10 2002/05/04 10:31:45 nonaka Exp $
 ./usr/include/prep	comp-c-include
 ./usr/include/prep/_G_config.h	comp-c-include
 ./usr/include/prep/ansi.h	comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/prep/ipkdb.h	comp-c-include
 ./usr/include/prep/kcore.h	comp-c-include
 ./usr/include/prep/kgdb.h	comp-c-include
+./usr/include/prep/lock.h	comp-c-include
 ./usr/include/prep/limits.h	comp-c-include
 ./usr/include/prep/math.h	comp-c-include
 ./usr/include/prep/mouse.h	comp-c-include
