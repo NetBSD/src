@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 1996/12/20 20:18:53 sommerfe Exp $	*/
+/*	$NetBSD: param.h,v 1.32 1997/01/22 07:09:21 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)param.h	8.2 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_PARAM_H_
+#define _SYS_PARAM_H_
 
 #define	BSD	199306		/* System version (year & month). */
 #define BSD4_3	1
@@ -221,3 +224,5 @@
  */
 #define	FSHIFT	11		/* bits to right of fixed binary point */
 #define FSCALE	(1<<FSHIFT)
+
+#endif /* !_SYS_PARAM_H_ */

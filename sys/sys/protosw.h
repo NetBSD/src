@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.12 1996/05/24 11:58:54 mycroft Exp $	*/
+/*	$NetBSD: protosw.h,v 1.13 1997/01/22 07:09:22 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)protosw.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_PROTOSW_H_
+#define _SYS_PROTOSW_H_
 
 /*
  * Protocol switch table.
@@ -235,4 +238,6 @@ struct sockaddr;
 struct protosw *pffindproto __P((int, int, int));
 struct protosw *pffindtype __P((int, int));
 void pfctlinput __P((int, struct sockaddr *));
-#endif
+#endif /* _KERNEL */
+
+#endif /* !_SYS_PROTOSW_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.12 1995/03/29 22:10:07 briggs Exp $	*/
+/*	$NetBSD: mtio.h,v 1.13 1997/01/22 07:09:21 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)mtio.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_MTIO_H_
+#define _SYS_MTIO_H_
 
 /*
  * Structures and definitions for mag tape io control commands
@@ -133,4 +136,6 @@ struct mtget {
 #define	T_1600BPI	010		/* select 1600 bpi */
 #define	T_6250BPI	020		/* select 6250 bpi */
 #define	T_BADBPI	030		/* undefined selection */
-#endif
+#endif /* _KERNEL */
+
+#endif /* !_SYS_MTIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.8 1995/03/26 20:24:27 jtc Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.9 1997/01/22 07:09:20 mikel Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -35,6 +35,9 @@
  *	@(#)msgbuf.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SYS_MSGBUF_H_
+#define _SYS_MSGBUF_H_
+
 #define	MSG_BSIZE	(4096 - 3 * sizeof(long))
 struct	msgbuf {
 #define	MSG_MAGIC	0x063061
@@ -46,3 +49,5 @@ struct	msgbuf {
 #ifdef _KERNEL
 struct	msgbuf *msgbufp;
 #endif
+
+#endif /* !_SYS_MSGBUF_H_ */
