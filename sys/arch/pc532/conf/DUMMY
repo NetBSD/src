@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.1 1996/10/23 07:49:52 matthias Exp $
+#	$NetBSD: DUMMY,v 1.2 1996/11/07 07:32:10 matthias Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -23,28 +23,18 @@ options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	SHMMAXPGS=1024
-#options	LKM			# loadable kernel modules
+options		LKM			# loadable kernel modules
 
 # compatibility options
 options		COMPAT_43		# 4.3 system calls
 
-options		EXEC_SCRIPT	# #! scripts
-options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+options 	EXEC_SCRIPT		# #! scripts
+options 	EXEC_AOUT		# a.out executables
 
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
 options		LFS			# log-structered file system
-options		MFS			# memory file system; uses RAM and swap
-options		MSDOSFS			# MS-DOS file system
-options		CD9660			# ISO 9660 CD-ROM file system, with RR
-options		NULLFS			# loopback file system
-#options	UMAPFS			# NULLFS + uid and gid remapping
-options		UNION			# union file system
-#options	PORTAL			# /portal
-options		FDESC			# /dev/fd
-options		KERNFS			# /kern
-options		PROCFS			# /proc
 options		NFSSERVER		# Network File System server
 options		NFSCLIENT		# Network File System client
 
@@ -59,7 +49,6 @@ options		PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
 options		NLINES=8
-options		SCN_HSOFT
 options		CONSOLE_SPEED=B9600	# default console baud rate
 options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"
 options		NS381			# FPU installed
@@ -82,7 +71,7 @@ st0 at scsibus? target 4 lun 0		# Tandberg TDC 3620 QIC-60 Drive
 sd* at scsibus? target ? lun ?		# SCSI disks
 cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 st* at scsibus? target ? lun ?		# SCSI tapes
-#uk* at scsibus? target ? lun ?		# All the things we don't know
+uk* at scsibus? target ? lun ?		# All the things we don't know
 
 
 scn0 at membus? flags 1
