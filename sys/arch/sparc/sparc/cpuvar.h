@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.50 2003/01/08 17:19:53 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.51 2003/01/08 17:22:09 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ struct cpu_info {
 #define raise_ipi(cpi,lvl)	do {			\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
 	if ((cpi)->cpu_type == CPUTYP_HS_MBUS) {	\
-		extern int ross_pend;			\
+		volatile int ross_pend;			\
 		ross_pend = (cpi)->intreg_4m->pi_pend;	\
 	}						\
 } while (0)
