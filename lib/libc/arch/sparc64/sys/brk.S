@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 2000/07/18 22:39:25 eeh Exp $	*/
+/*	$NetBSD: brk.S,v 1.7 2000/07/21 03:14:15 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.6 2000/07/18 22:39:25 eeh Exp $")
+	RCSID("$NetBSD: brk.S,v 1.7 2000/07/21 03:14:15 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -67,18 +67,17 @@ _C_LABEL(__minbrk):
 ENTRY(_brk)
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
-	ldx	[%o5 + _C_LABEL(__minbrk)], %o4
+	set	_C_LABEL(__minbrk), %o4
+	ldx	[%o5 + %o4], %o4
 	ldx	[%o4], %o1		! %o1 = minbrk
 	cmp	%o1, %o0		! if (minbrk > %o0)
-	bg,a	0f
-	 mov	%o1, %o0		!	%o0 = minbrk
-0:
+	movg	%xcc, %o1, %o0		!	%o0 = minbrk
 	mov	%o0, %o2		! save argument to syscall
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	set	_C_LABEL(__curbrk), %o3
-	bcc,a	1f
-	ldx	[%o5 + %o3], %o4
+	bcc,a,pt	%icc, 1f
+	 ldx	[%o5 + %o3], %o4
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
@@ -86,14 +85,12 @@ ENTRY(_brk)
 #else
 	sethi	%hi(_C_LABEL(__minbrk)), %o1	! %o1 = minbrk
 	ldx	[%o1 + %lo(_C_LABEL(__minbrk))], %o1
-	cmp	%o1, %o0			! if (minbrk > %o0)
-	bg,a	0f
-	 mov	%o1, %o0			!	%o0 = minbrk
-0:
-	mov	%o0, %o2			! save argument to syscall
+	cmp	%o1, %o0		! if (minbrk > %o0)
+	movg	%xcc, %o1, %o0		!	%o0 = minbrk
+	mov	%o0, %o2		! save argument to syscall
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
-	bcc,a	1f
+	bcc,a,pt	%icc,1f
 	 sethi	%hi(_C_LABEL(__curbrk)), %g1
 	ERROR()
 1:

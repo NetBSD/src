@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.2 2000/07/18 22:39:25 eeh Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.3 2000/07/21 03:14:15 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,21 +44,18 @@
 #if 0
 	.asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.2 2000/07/18 22:39:25 eeh Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.3 2000/07/21 03:14:15 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(ptrace)
-#ifdef PIC
-	PIC_PROLOGUE(%g1,%g2)
-	ldx	[%g1 + _C_LABEL(errno)], %g1
-	st	%g0, [%g1]
-#else
-	sethi	%hi(_C_LABEL(errno)), %g1
-	st	%g0, [%g1 + %lo(_C_LABEL(errno))]
-#endif
+	save	%sp, -CC64FSZ, %sp
+	call	_C_LABEL(_errno)
+	 nop
+	st	%g0, [%o0]
+	restore
 	mov	SYS_ptrace, %g1
 	t	ST_SYSCALL
 	bcc	1f

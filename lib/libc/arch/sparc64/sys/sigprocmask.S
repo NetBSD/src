@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.6 2000/07/21 03:14:16 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.6 2000/07/21 03:14:16 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -57,8 +57,7 @@ WARN_REFERENCES(sigprocmask, \
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)
  */
 ENTRY(sigprocmask)
-	tst	%o1		! set == NULL?
-	bne,a	1f		! if not,
+	brnz,a	%o1, 1f		! if (set != NULL)
 	 ld	[%o1], %o1	!    replace it in %o1 with *set
 !	clr	%o1		! else block no signals ...
 	mov	1, %o0		! ... using sigprocmask(SIG_BLOCK)
