@@ -1,4 +1,4 @@
-#	$Id: UMAX,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#	Id: UMAX,v 8.7 1999/06/02 22:53:42 gshapiro Exp
 define(`confBEFORE', `stddef.h')
 define(`confMAPDEF', `-DNIS')
 define(`confENVDEF', `-DUMAXV')

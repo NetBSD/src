@@ -1,4 +1,4 @@
-#	$Id: UX4800,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#	Id: UX4800,v 8.13 1999/08/08 02:52:05 gshapiro Exp
 define(`confCC', `/usr/abiccs/bin/cc -KOlimit=1000')
 define(`confBEFORE', `sysexits.h ndbm.h')
 define(`confMAPDEF', `-DNDBM -DNIS')
