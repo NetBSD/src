@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.12 1998/02/05 18:49:57 perry Exp $
+.\"	$NetBSD: getopt.3,v 1.13 1998/04/28 21:19:49 fair Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -151,8 +151,8 @@ Setting
 .Va opterr
 to a zero will disable these error messages.
 If
-.Va optstring 
-has a leading 
+.Va optstring
+has a leading
 .Ql \&:
 then a missing option argument causes a
 .Ql \&:
@@ -206,13 +206,13 @@ function appeared
 The
 .Fn getopt
 function was once specified to return
-.Dv EOF 
+.Dv EOF
 instead of \-1.
 This was changed by
 .St -p1003.2-92
-to decouple 
+to decouple
 .Fn getopt
-from 
+from
 .Pa <stdio.h> .
 .Pp
 A single dash
