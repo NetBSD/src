@@ -18,7 +18,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char sccsid[] = "@(#)main.c	10.43 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)main.c	10.48 (Berkeley) 10/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)main.c	10.43 (Berkeley) 5/15/96";
 #include "../vi/vi.h"
 #include "pathnames.h"
 
+static void	 attach __P((GS *));
 static void	 v_estr __P((char *, int, char *));
 static int	 v_obsolete __P((char *, char *[]));
 
@@ -62,9 +63,8 @@ editor(gp, argc, argv)
 	SCR *sp;
 	size_t len;
 	u_int flags;
-	int ch, fd, flagchk, lflag, startup, readonly, rval, silent;
-	char *tag_f, *wsizearg;
-	char path[256];
+	int ch, flagchk, lflag, secure, startup, readonly, rval, silent;
+	char *tag_f, *wsizearg, path[256];
 
 	/* Initialize the busy routine, if not defined by the screen. */
 	if (gp->scr_busy == NULL)
@@ -107,16 +107,16 @@ editor(gp, argc, argv)
 	/* Parse the arguments. */
 	flagchk = '\0';
 	tag_f = wsizearg = NULL;
-	lflag = silent = 0;
+	lflag = secure = silent = 0;
 	startup = 1;
 
 	/* Set the file snapshot flag. */
 	F_SET(gp, G_SNAPSHOT);
 
 #ifdef DEBUG
-	while ((ch = getopt(argc, argv, "c:D:eFlRrsT:t:vw:")) != EOF)
+	while ((ch = getopt(argc, argv, "c:D:eFlRrSsT:t:vw:")) != EOF)
 #else
-	while ((ch = getopt(argc, argv, "c:eFlRrst:vw:")) != EOF)
+	while ((ch = getopt(argc, argv, "c:eFlRrSst:vw:")) != EOF)
 #endif
 		switch (ch) {
 		case 'c':		/* Run the command. */
@@ -138,20 +138,7 @@ editor(gp, argc, argv)
 				startup = 0;
 				break;
 			case 'w':
-				if ((fd = open(_PATH_TTY, O_RDONLY, 0)) < 0) {
-					v_estr(gp->progname, errno, _PATH_TTY);
-					return (1);
-				}
-		(void)printf("process %lu waiting, enter <CR> to continue: ",
-				    (u_long)getpid());
-				(void)fflush(stdout);
-				do {
-					if (read(fd, &ch, 1) != 1) {
-						(void)close(fd);
-						return (0);
-					}
-				} while (ch != '\n' && ch != '\r');
-				(void)close(fd);
+				attach(gp);
 				break;
 			default:
 				v_estr(gp->progname, 0,
@@ -180,6 +167,9 @@ editor(gp, argc, argv)
 				return (1);
 			}
 			flagchk = 'r';
+			break;
+		case 'S':
+			secure = 1;
 			break;
 		case 's':
 			silent = 1;
@@ -232,7 +222,7 @@ editor(gp, argc, argv)
 		v_estr(gp->progname, 0, "-s option is only applicable to ex.");
 		goto err;
 	}
-	if (LF_ISSET(SC_EX) && !F_ISSET(gp, G_STDIN_TTY))
+	if (LF_ISSET(SC_EX) && F_ISSET(gp, G_SCRIPTED))
 		silent = 1;
 
 	/*
@@ -255,13 +245,15 @@ editor(gp, argc, argv)
 	if (v_key_init(sp))		/* Special key initialization. */
 		goto err;
 
-	{ int oargs[4], *oargp = oargs;
-	if (readonly)			/* Command-line options. */
-		*oargp++ = O_READONLY;
-	if (lflag) {
+	{ int oargs[5], *oargp = oargs;
+	if (lflag) {			/* Command-line options. */
 		*oargp++ = O_LISP;
 		*oargp++ = O_SHOWMATCH;
 	}
+	if (readonly)
+		*oargp++ = O_READONLY;
+	if (secure)
+		*oargp++ = O_SECURE;
 	*oargp = -1;			/* Options initialization. */
 	if (opts_init(sp, oargs))
 		goto err;
@@ -417,7 +409,7 @@ editor(gp, argc, argv)
 
 	/* Switch into the right editor, regardless. */
 	F_CLR(sp, SC_EX | SC_VI);
-	F_SET(sp, LF_ISSET(SC_EX | SC_VI));
+	F_SET(sp, LF_ISSET(SC_EX | SC_VI) | SC_STATUS_CNT);
 
 	/*
 	 * Main edit loop.  Vi handles split screens itself, we only return
@@ -519,9 +511,11 @@ v_end(gp)
 	if (gp->tmp_bp != NULL)
 		free(gp->tmp_bp);
 
+#if defined(DEBUG)
 	/* Close debugging file descriptor. */
 	if (gp->tracefp != NULL)
 		(void)fclose(gp->tracefp);
+#endif
 #endif
 }
 
@@ -581,6 +575,33 @@ nomem:					v_estr(name, errno, NULL);
 					++argv;
 	return (0);
 }
+
+#ifdef DEBUG
+static void
+attach(gp)
+	GS *gp;
+{
+	int fd;
+	char ch;
+
+	if ((fd = open(_PATH_TTY, O_RDONLY, 0)) < 0) {
+		v_estr(gp->progname, errno, _PATH_TTY);
+		return;
+	}
+
+	(void)printf("process %lu waiting, enter <CR> to continue: ",
+	    (u_long)getpid());
+	(void)fflush(stdout);
+
+	do {
+		if (read(fd, &ch, 1) != 1) {
+			(void)close(fd);
+			return;
+		}
+	} while (ch != '\n' && ch != '\r');
+	(void)close(fd);
+}
+#endif
 
 static void
 v_estr(name, eno, msg)

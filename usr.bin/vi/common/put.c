@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)put.c	10.9 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)put.c	10.11 (Berkeley) 9/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,17 +125,19 @@ put(sp, cbp, namep, cp, rp, append)
 
 	/* Original line, left of the split. */
 	if (len > 0 && (clen = cp->cno + (append ? 1 : 0)) > 0) {
-		memmove(bp, p, clen);
+		memcpy(bp, p, clen);
 		p += clen;
 		t += clen;
 	}
 
 	/* First line from the CB. */
-	memmove(t, tp->lb, tp->len);
-	t += tp->len;
+	if (tp->len != 0) {
+		memcpy(t, tp->lb, tp->len);
+		t += tp->len;
+	}
 
 	/* Calculate length left in the original line. */
-	clen = len != 0 ? len - cp->cno - (append ? 1 : 0) : 0;
+	clen = len == 0 ? 0 : len - (cp->cno + (append ? 1 : 0));
 
 	/*
 	 * !!!
@@ -151,7 +153,7 @@ put(sp, cbp, namep, cp, rp, append)
 	 * behavior, and expect POSIX.2 to do so as well.
 	 */
 	rp->lno = lno;
-	rp->cno = len == 0 ? 0 : sp->cno + (append ? 1 : 0);
+	rp->cno = len == 0 ? 0 : sp->cno + (append && tp->len ? 1 : 0);
 
 	/*
 	 * If no more lines in the CB, append the rest of the original
@@ -161,7 +163,7 @@ put(sp, cbp, namep, cp, rp, append)
 	 */
 	if (tp->q.cqe_next == (void *)&cbp->textq) {
 		if (clen > 0) {
-			memmove(t, p, clen);
+			memcpy(t, p, clen);
 			t += clen;
 		}
 		if (db_set(sp, lno, bp, t - bp))
@@ -187,9 +189,9 @@ put(sp, cbp, namep, cp, rp, append)
 		t = bp + len;
 
 		/* Add in last part of the CB. */
-		memmove(t, ltp->lb, ltp->len);
+		memcpy(t, ltp->lb, ltp->len);
 		if (clen)
-			memmove(t + ltp->len, p, clen);
+			memcpy(t + ltp->len, p, clen);
 		clen += ltp->len;
 
 		/*

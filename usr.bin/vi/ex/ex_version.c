@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_version.c	10.25 (Berkeley) 4/12/96";
+static const char sccsid[] = "@(#)ex_version.c	10.31 (Berkeley) 8/22/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -34,6 +34,6 @@ ex_version(sp, cmdp)
 	SCR *sp;
 	EXCMD *cmdp;
 {
-	(void)ex_printf(sp, "%s\n", VI_VERSION);
+	msgq(sp, M_INFO, VI_VERSION);
 	return (0);
 }
