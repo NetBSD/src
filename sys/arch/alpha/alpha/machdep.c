@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.274 2003/10/07 17:04:18 skd Exp $ */
+/* $NetBSD: machdep.c,v 1.275 2003/10/08 03:10:41 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2003/10/07 17:04:18 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2003/10/08 03:10:41 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1580,7 +1580,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Build stack frame for signal trampoline. */
 
-	frame.sf_si._info = *ksi;
+	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
