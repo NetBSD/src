@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.15 1999/09/26 10:32:27 mrg Exp $	*/
+/*	$NetBSD: common.c,v 1.16 1999/12/05 22:10:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.15 1999/09/26 10:32:27 mrg Exp $");
+__RCSID("$NetBSD: common.c,v 1.16 1999/12/05 22:10:57 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,14 +112,7 @@ long	 XC;		/* flags to clear for local mode */
 long	 XS;		/* flags to set for local mode */
 
 char	line[BUFSIZ];
-char	*bp;		/* pointer into printcap buffer. */
-char	*name;		/* program name */
-char	*printer;	/* printer name */
-			/* host machine name */
-char	host[MAXHOSTNAMELEN + 1];
-char	*from = host;	/* client's machine name */
 int	remote;		/* true if sending files to a remote host */
-char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
 
 extern uid_t	uid, euid;
 
@@ -361,36 +354,4 @@ delay(n)
 	tdelay.tv_sec = n / 1000;
 	tdelay.tv_usec = n * 1000 % 1000000;
 	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-fatal(const char *msg, ...)
-#else
-fatal(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
-	if (from != host)
-		(void)printf("%s: ", host);
-	(void)printf("%s: ", name);
-	if (printer)
-		(void)printf("%s: ", printer);
-	(void)vprintf(msg, ap);
-	va_end(ap);
-	(void)putchar('\n');
-	exit(1);
 }
