@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.53 1997/10/19 22:29:21 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.54 1997/10/19 23:29:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -172,11 +172,7 @@ struct fd_type {
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
 	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
-	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,0xf6,1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
-	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,0xf6,1, "360KB/AT" }, /* 360kB in 1.2MB drive */
-	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,0xf6,1, "360KB/PC" }, /* 360kB PC diskettes */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
-	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,0xf6,1, "720KB/x"  }, /* 720kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS,0xf6,1, "1.2MB/NEC" } /* 1.2 MB japanese format */
 };
