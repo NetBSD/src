@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.22 2002/10/01 12:57:04 fvdl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.23 2003/03/04 22:43:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -263,6 +263,9 @@ breakpoint(void)
 {
 	__asm __volatile("int $3");
 }
+
+#define read_psl()	read_eflags()
+#define write_psl(x)	write_eflags(x)
 
 /*
  * XXX Maybe these don't belong here...
