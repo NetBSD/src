@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.5 1996/09/17 01:32:44 jonathan Exp $	*/
+/*	$NetBSD: fork.S,v 1.6 1999/01/14 22:48:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: fork.S,v 1.5 1996/09/17 01:32:44 jonathan Exp $")
+	ASMSTR("$NetBSD: fork.S,v 1.6 1999/01/14 22:48:21 kleink Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -61,6 +61,6 @@ LEAF(fork)
 1:
 	j	ra
 2:
-	la	t9, _C_LABEL(cerror)
+	la	t9, _C_LABEL(__cerror)
 	jr	t9
 END(fork)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.1 1998/10/05 02:34:19 thorpej Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.2 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __sigreturn14.S,v 1.1 1998/10/05 02:34:19 thorpej Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.2 1999/01/14 22:48:20 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,4 +60,4 @@
 
 ENTRY(__sigreturn14)
 	trap	#3		/* special sigreturn syscall entry point */
-	jra	cerror
+	jra	CERROR

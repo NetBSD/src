@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.10 1997/07/16 14:37:27 christos Exp $	*/
+/*	$NetBSD: brk.S,v 1.11 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,24 +40,25 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.10 1997/07/16 14:37:27 christos Exp $")
+	RCSID("$NetBSD: brk.S,v 1.11 1999/01/14 22:48:19 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_end
-	.globl	minbrk
-	.globl	curbrk
+	.globl	_C_LABEL(__minbrk)
+	.globl	CURBRK
 
 	.data
-minbrk:	.long	_end
+_C_LABEL(__minbrk):
+	.long	_end
 	.text
 
 ENTRY(brk)
 #ifdef PIC
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
-	movl	PIC_GOT(minbrk),%edx
+	movl	PIC_GOT(_C_LABEL(__minbrk)),%edx
 	PIC_EPILOGUE
 	cmpl	%ecx,(%edx)
 	jl	1f
@@ -68,28 +69,28 @@ ENTRY(brk)
 	int	$0x80
 	jc	err
 	PIC_PROLOGUE
-	movl	PIC_GOT(curbrk),%edx	# set up GOT addressing
+	movl	PIC_GOT(CURBRK),%edx	# set up GOT addressing
 	PIC_EPILOGUE
 	xorl	%eax,%eax
 	movl	%ecx,(%edx)
 	ret
 err:
-	jmp	PIC_PLT(cerror)
+	jmp	PIC_PLT(CERROR)
 
 #else
 
 	movl	4(%esp),%ecx
-	cmpl	%ecx,minbrk
+	cmpl	%ecx,_C_LABEL(__minbrk)
 	jl	1f
-	movl	minbrk,%ecx
+	movl	_C_LABEL(__minbrk),%ecx
 	movl	%ecx,4(%esp)
 1:
 	movl	$(SYS_break),%eax
 	int	$0x80
 	jc	err
 	xorl	%eax,%eax
-	movl	%ecx,curbrk
+	movl	%ecx,CURBRK
 	ret
 err:
-	jmp	cerror
+	jmp	CERROR
 #endif

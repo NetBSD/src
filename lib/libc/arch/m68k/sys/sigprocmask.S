@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,4 +71,4 @@ out:
 	clrl	d0
 	rts
 err:
-	jra	cerror
+	jra	CERROR

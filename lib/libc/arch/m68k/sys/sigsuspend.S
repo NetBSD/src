@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,4 +59,4 @@ ENTRY(sigsuspend)
 	clrl	d0			/* shouldn't happen */
 	rts
 err:
-	jra	cerror
+	jra	CERROR
