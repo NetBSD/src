@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.24 2001/04/25 17:53:11 bouyer Exp $ */
+/* $NetBSD: sbic.c,v 1.25 2001/07/08 14:50:05 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -415,20 +415,21 @@ sbic_scsi_request(struct scsipi_channel *chan,
 		if (flags & XS_CTL_DATA_IN)
 			acb->flags |= ACB_DATAIN;
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->data = xs->data;
 		acb->datalen = xs->datalen;
+
 		if (flags & XS_CTL_POLL) {
 			s = splbio();
 			/*
 			 * This has major side effects -- it locks up the
-			 * machine
+			 * machine.
 			 */
 
 			dev->sc_flags |= SBICF_ICMD;
 			do {
-				while(dev->sc_nexus)
+				while (dev->sc_nexus)
 					sbicpoll(dev);
 				dev->sc_nexus = acb;
 				dev->sc_stat[0] = -1;
@@ -437,6 +438,7 @@ sbic_scsi_request(struct scsipi_channel *chan,
 				stat = sbicicmd(dev, periph->periph_target,
 				    periph->periph_lun, acb);
 			} while (dev->sc_nexus != acb);
+
 			sbic_scsidone(acb, stat);
 			splx(s);
 			SBIC_TRACE(dev);
@@ -445,13 +447,15 @@ sbic_scsi_request(struct scsipi_channel *chan,
 
 		s = splbio();
 		TAILQ_INSERT_TAIL(&dev->ready_list, acb, chain);
+
 		if (dev->sc_nexus) {
 			splx(s);
 			SBIC_TRACE(dev);
 			return;
 		}
+
 		/*
-		 * nothing is active, try to start it now.
+		 * Nothing is active, try to start it now.
 		 */
 		sbic_sched(dev);
 		splx(s);
@@ -462,7 +466,7 @@ sbic_scsi_request(struct scsipi_channel *chan,
 
 	case ADAPTER_REQ_GROW_RESOURCES:
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX Not supported. */
+		/* XXX Not supported.  */
 		return;
 	}
 }
@@ -512,11 +516,12 @@ sbic_sched(struct sbic_softc *dev)
 
 	DBGPRINTF(("sbic_sched(%d,%d)\n", periph->periph_target,
 	    periph->periph_lun), data_pointer_debug > 1);
+
 	dev->sc_stat[0] = -1;
 	dev->target = periph->periph_target;
 	dev->lun = periph->periph_lun;
 	if ((flags & XS_CTL_POLL) ||
-	    ( !sbic_parallel_operations && (sbicdmaok(dev, xs) == 0) ) )
+	    (!sbic_parallel_operations && (sbicdmaok(dev, xs) == 0)))
 		stat = sbicicmd(dev, periph->periph_target,
 		    periph->periph_lun, acb);
 	else if (sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT) {
@@ -553,13 +558,12 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	}
 #endif
 
-	if( data_pointer_debug > 1 )
 	DBGPRINTF(("scsidone: (%d,%d)->(%d,%d)%02x\n",
 	    periph->periph_target, periph->periph_lun,
 	    dev->target,  dev->lun,  stat),
 	    data_pointer_debug > 1);
-	DBG(if( xs->xs_periph->periph_target == dev->sc_channel.chan_id )
-		panic("target == hostid"));
+	DBG(if (xs->xs_periph->periph_target == dev->sc_channel.chan_id)
+	    panic("target == hostid"));
 
 	xs->status = stat;
 	xs->resid = 0;
@@ -578,7 +582,7 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	if (acb == dev->sc_nexus) {
 		dev->sc_nexus = NULL;
 		dev->sc_tinfo[periph->periph_target].lubusy &=
-		    ~(1<<periph->periph_lun);
+		    ~(1 << periph->periph_lun);
 		if (dev->ready_list.tqh_first)
 			dosched = 1;	/* start next command */
 	} else if (dev->ready_list.tqh_last == &acb->chain.tqe_next) {
@@ -590,7 +594,7 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 			if (acb2 == acb) {
 				TAILQ_REMOVE(&dev->nexus_list, acb, chain);
 				dev->sc_tinfo[periph->periph_target].lubusy
-					&= ~(1<<periph->periph_lun);
+					&= ~(1 << periph->periph_lun);
 				break;
 			}
 		}
@@ -682,14 +686,14 @@ sbicwait(sbic_regmap_p regs, char until, int timeo, int line)
 #if defined(DDB) && defined(DEBUG)
 			Debugger();
 #endif
-			return(val); /* Maybe I should abort */
+			return val; /* Maybe I should abort */
 			break;
 		}
 		DELAY(1);
 		GET_SBIC_asr(regs,val);
 	}
 	SBIC_TRACE((struct sbic_softc *)0);
-	return(val);
+	return val;
 }
 
 static int
@@ -1133,7 +1137,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_p regs, u_char target,
 	QPRINTF(("\n"));
 
 	SBIC_TRACE(dev);
-	return(csr == SBIC_CSR_SEL_TIMEO);
+	return csr == SBIC_CSR_SEL_TIMEO;
 }
 
 static int
@@ -1203,7 +1207,7 @@ sbicxfout(sbic_regmap_p regs, int len, void *bp, int phase)
 				DBGPRINTF(("sbicxfout fail: l%d i%x w%d\n",
 				    len, asr, wait), sbic_debug);
 
-				return (len);
+				return len;
 			}
 /*			DELAY(1);*/
 			GET_SBIC_asr (regs, asr);
@@ -1319,7 +1323,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, struct sbic_acb *acb)
 #if CSR_LOG_BUF_SIZE
 	int bufptr;
 	int csrbuf[CSR_LOG_BUF_SIZE];
-	bufptr=0;
+	bufptr = 0;
 #endif
 
 	cbuf = &acb->cmd;
@@ -1440,7 +1444,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, struct sbic_acb *acb)
 			    else
 			      i = sbicxfout(regs, acb->datalen, acb->data,
 				  SBIC_PHASE(csr));
-			  acb->data += (acb->datalen - i);
+			  acb->data += acb->datalen - i;
 			  acb->datalen = i;
 			  i = 1;
 			}
@@ -1533,7 +1537,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, struct sbic_acb *acb)
 	dev->sc_flags &= ~SBICF_ICMD;
 
 	SBIC_TRACE(dev);
-	return(dev->sc_stat[0]);
+	return dev->sc_stat[0];
 }
 
 /*
@@ -2232,10 +2236,12 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 	 		 */
 		}
 #endif
+
 		DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
 		    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
 		    data_pointer_debug > 1);
 		DBG(dev->sc_dmatimo = 0);
+
 		dev->sc_dmastop(dev); /* was dmafree */
 		if (acb->flags & ACB_BBUF) {
 			if ((u_char *)kvtop(acb->sc_dmausrbuf) != acb->sc_usrbufpa)
@@ -2290,7 +2296,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 					i = sbicxfout(regs, acb->datalen,
 					    acb->data, SBIC_PHASE(csr));
 			}
-			acb->data += (acb->datalen - i);
+			acb->data += acb->datalen - i;
 			acb->datalen = i;
 		} else {
 			if (acb->datalen <= 0) {
@@ -2522,7 +2528,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 	}
 
 	SBIC_TRACE(dev);
-	return(SBIC_STATE_RUNNING);
+	return SBIC_STATE_RUNNING;
 }
 
 
@@ -2568,8 +2574,9 @@ sbictoscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int a)
 	GET_SBIC_myid(regs,fs);
 	fs = (fs >>6) + 2;		/* DIV */
 	fs = (fs * 10000) / (dev->sc_clkfreq<<1);	/* Cycle, in ns */
-	if (a < 2) a = 8;		/* map to Cycles */
-	return ((fs*a)>>2);		/* in 4 ns units */
+	if (a < 2)
+		a = 8;		/* map to Cycles */
+	return (fs * a) >> 2;		/* in 4 ns units */
 }
 
 static int
@@ -2586,7 +2593,7 @@ sbicfromscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int p)
 	ret = p << 2;			/* in ns units */
 	ret = ret / fs;			/* in Cycles */
 	if (ret < sbic_min_period)
-		return(sbic_min_period);
+		return sbic_min_period;
 
 	/* verify rounding */
 	if (sbictoscsiperiod(dev, regs, ret) < p)
