@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.53 2000/05/01 09:44:55 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.54 2000/05/01 10:35:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
 #include <histedit.h>
 #endif /* !NO_EDITCOMPLETE */
 
-typedef void (*sigfunc) __P((int));
+typedef void (*sigfunc)(int);
 
 #include "extern.h"
 
@@ -140,16 +140,16 @@ struct cmd {
 #ifndef NO_EDITCOMPLETE
 	char	*c_complete;	/* context sensitive completion list */
 #endif /* !NO_EDITCOMPLETE */
-	void	(*c_handler) __P((int, char **)); /* function to call */
+	void	(*c_handler)(int, char **); /* function to call */
 };
 
 /*
  * Format of macro table
  */
 struct macel {
-	char mac_name[9];	/* macro name */
-	char *mac_start;	/* start of macro in macbuf */
-	char *mac_end;		/* end of macro in macbuf */
+	char	 mac_name[9];	/* macro name */
+	char	*mac_start;	/* start of macro in macbuf */
+	char	*mac_end;	/* end of macro in macbuf */
 };
 
 /*

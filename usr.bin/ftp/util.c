@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.94 2000/05/01 09:44:55 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.95 2000/05/01 10:35:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.94 2000/05/01 09:44:55 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.95 2000/05/01 10:35:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -114,9 +114,7 @@ __RCSID("$NetBSD: util.c,v 1.94 2000/05/01 09:44:55 lukem Exp $");
  * auto-login, if possible.
  */
 void
-setpeer(argc, argv)
-	int argc;
-	char *argv[];
+setpeer(int argc, char *argv[])
 {
 	char *host;
 	char *port;
@@ -265,8 +263,7 @@ cleanuppeer()
  * Top-level signal handler for interrupted commands.
  */
 void
-intr(dummy)
-	int dummy;
+intr(int dummy)
 {
 
 	alarmtimer(0);
@@ -280,8 +277,7 @@ intr(dummy)
  * the connection state, and call cleanuppeer() to finish it off.
  */
 void
-lostpeer(dummy)
-	int dummy;
+lostpeer(int dummy)
 {
 	int oerrno = errno;
 
@@ -319,9 +315,7 @@ lostpeer(dummy)
  * login to remote host, using given username & password if supplied
  */
 int
-ftp_login(host, user, pass)
-	const char *host;
-	const char *user, *pass;
+ftp_login(const char *host, const char *user, const char *pass)
 {
 	char tmp[80];
 	const char *acct;
@@ -450,10 +444,7 @@ cleanup_ftp_login:
  * Returns false if no new arguments have been added.
  */
 int
-another(pargc, pargv, prompt)
-	int *pargc;
-	char ***pargv;
-	const char *prompt;
+another(int *pargc, char ***pargv, const char *prompt)
 {
 	int len = strlen(line), ret;
 
@@ -483,10 +474,7 @@ another(pargc, pargv, prompt)
  * of writing to the screen.
  */
 char *
-remglob(argv, doswitch, errbuf)
-        char *argv[];
-        int doswitch;
-	char **errbuf;
+remglob(char *argv[], int doswitch, char **errbuf)
 {
         char temp[MAXPATHLEN];
         static char buf[MAXPATHLEN];
@@ -570,8 +558,7 @@ remglob(argv, doswitch, errbuf)
  * that's the caller's responsiblity to free(3) when finished with.
  */
 char *
-globulize(pattern)
-	const char *pattern;
+globulize(const char *pattern)
 {
 	glob_t gl;
 	int flags;
@@ -596,9 +583,7 @@ globulize(pattern)
  * determine size of remote file
  */
 off_t
-remotesize(file, noisy)
-	const char *file;
-	int noisy;
+remotesize(const char *file, int noisy)
 {
 	int overbose;
 	off_t size;
@@ -633,9 +618,7 @@ remotesize(file, noisy)
  * determine last modification time (in GMT) of remote file
  */
 time_t
-remotemodtime(file, noisy)
-	const char *file;
-	int noisy;
+remotemodtime(const char *file, int noisy)
 {
 	int overbose;
 	time_t rtime;
@@ -719,7 +702,7 @@ remotemodtime(file, noisy)
  * update global `remotepwd', which contains the state of the remote cwd
  */
 void
-updateremotepwd()
+updateremotepwd(void)
 {
 	int	 overbose, ocode, i;
 	char	*cp;
@@ -760,7 +743,7 @@ updateremotepwd()
  * return non-zero if we're the current foreground process
  */
 int
-foregroundproc()
+foregroundproc(void)
 {
 	static pid_t pgrp = -1;
 
@@ -771,14 +754,13 @@ foregroundproc()
 }
 
 
-static void updateprogressmeter __P((int));
+static void updateprogressmeter(int);
 
 /*
  * SIGALRM handler to update the progress meter
  */
 static void
-updateprogressmeter(dummy)
-	int dummy;
+updateprogressmeter(int dummy)
 {
 	int oerrno = errno;
 
@@ -810,8 +792,7 @@ static struct timeval lastupdate;
 #define	BUFLEFT	(sizeof(buf) - len)
 
 void
-progressmeter(flag)
-	int flag;
+progressmeter(int flag)
 {
 	static off_t lastsize;
 #ifndef NO_PROGRESS
@@ -957,8 +938,7 @@ progressmeter(flag)
  * instead of ttyout.
  */
 void
-ptransfer(siginfo)
-	int siginfo;
+ptransfer(int siginfo)
 {
 	struct timeval now, td, wait;
 	double elapsed;
@@ -1037,8 +1017,7 @@ ptransfer(siginfo)
  * SIG{INFO,QUIT} handler to print transfer stats if a transfer is in progress
  */
 void
-psummary(notused)
-	int notused;
+psummary(int notused)
 {
 	int oerrno = errno;
 
@@ -1054,8 +1033,7 @@ psummary(notused)
  * List words in stringlist, vertically arranged
  */
 void
-list_vertical(sl)
-	StringList *sl;
+list_vertical(StringList *sl)
 {
 	int i, j, w;
 	int columns, width, lines, items;
@@ -1096,8 +1074,7 @@ list_vertical(sl)
  * Update the global ttywidth value, using TIOCGWINSZ.
  */
 void
-setttywidth(a)
-	int a;
+setttywidth(int a)
 {
 	struct winsize winsize;
 	int oerrno = errno;
@@ -1114,8 +1091,7 @@ setttywidth(a)
  * Change the rate limit up (SIGUSR1) or down (SIGUSR2)
  */
 void
-crankrate(sig)
-	int sig;
+crankrate(int sig)
 {
 
 	switch (sig) {
@@ -1141,8 +1117,7 @@ crankrate(sig)
  * Set the SIGALRM interval timer for wait seconds, 0 to disable.
  */
 void
-alarmtimer(wait)
-	int wait;
+alarmtimer(int wait)
 {
 	struct itimerval itv;
 
@@ -1157,7 +1132,7 @@ alarmtimer(wait)
  */
 #ifndef NO_EDITCOMPLETE
 void
-controlediting()
+controlediting(void)
 {
 	if (editing && el == NULL && hist == NULL) {
 		HistEvent ev;
@@ -1204,8 +1179,7 @@ controlediting()
  * (`b', `k', `m', `g'). Returns the number for success, -1 otherwise.
  */
 int
-strsuftoi(arg)
-	const char *arg;
+strsuftoi(const char *arg)
 {
 	char *cp;
 	long val;
@@ -1244,8 +1218,7 @@ strsuftoi(arg)
  * Set up socket buffer sizes before a connection is made.
  */
 void
-setupsockbufsize(sock)
-	int sock;
+setupsockbufsize(int sock)
 {
 
 	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size,
@@ -1261,11 +1234,7 @@ setupsockbufsize(sock)
  * Copy characters from src into dst, \ quoting characters that require it
  */
 void
-ftpvis(dst, dstlen, src, srclen)
-	char		*dst;
-	size_t		 dstlen;
-	const char	*src;
-	size_t		 srclen;
+ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 {
 	int	di, si;
 
@@ -1294,10 +1263,7 @@ ftpvis(dst, dstlen, src, srclen)
  * Copy src into buf (which is len bytes long), expanding % sequences.
  */
 void
-formatbuf(buf, len, src)
-	char		*buf;
-	size_t		 len;
-	const char	*src;
+formatbuf(char *buf, size_t len, const char *src)
 {
 	const char	*p;
 	char		*p2, *q;
@@ -1411,8 +1377,7 @@ formatbuf(buf, len, src)
  * Return 1 for yes, 0 for no
  */
 int
-isipv6addr(addr)
-	const char *addr;
+isipv6addr(const char *addr)
 {
 	int rv = 0;
 #ifdef INET6
@@ -1439,10 +1404,7 @@ isipv6addr(addr)
  * Internal version of connect(2); sets socket buffer sizes first.
  */
 int
-xconnect(sock, name, namelen)
-	int sock;
-	const struct sockaddr *name;
-	int namelen;
+xconnect(int sock, const struct sockaddr *name, int namelen)
 {
 
 	setupsockbufsize(sock);
@@ -1453,8 +1415,7 @@ xconnect(sock, name, namelen)
  * Internal version of listen(2); sets socket buffer sizes first.
  */
 int
-xlisten(sock, backlog)
-	int sock, backlog;
+xlisten(int sock, int backlog)
 {
 
 	setupsockbufsize(sock);
@@ -1465,8 +1426,7 @@ xlisten(sock, backlog)
  * malloc() with inbuilt error checking
  */
 void *
-xmalloc(size)
-	size_t size;
+xmalloc(size_t size)
 {
 	void *p;
 
@@ -1480,7 +1440,7 @@ xmalloc(size)
  * sl_init() with inbuilt error checking
  */
 StringList *
-xsl_init()
+xsl_init(void)
 {
 	StringList *p;
 
@@ -1494,9 +1454,7 @@ xsl_init()
  * sl_add() with inbuilt error checking
  */
 void
-xsl_add(sl, i)
-	StringList	*sl;
-	char		*i;
+xsl_add(StringList *sl, char *i)
 {
 
 	if (sl_add(sl, i) == -1)
@@ -1507,8 +1465,7 @@ xsl_add(sl, i)
  * strdup() with inbuilt error checking
  */
 char *
-xstrdup(str)
-	const char *str;
+xstrdup(const char *str)
 {
 	char *s;
 
@@ -1525,10 +1482,7 @@ xstrdup(str)
  * the signal should be restartable or not
  */
 sigfunc
-xsignal_restart(sig, func, restartable)
-	int sig;
-	sigfunc func;
-	int restartable;
+xsignal_restart(int sig, sigfunc func, int restartable)
 {
 	struct sigaction act, oact;
 	act.sa_handler = func;
@@ -1551,9 +1505,7 @@ xsignal_restart(sig, func, restartable)
  * which signal is being set. (This is a wrapper to xsignal_restart())
  */
 sigfunc
-xsignal(sig, func)
-	int sig;
-	sigfunc func;
+xsignal(int sig, sigfunc func)
 {
 	int restartable;
 
