@@ -47,7 +47,11 @@
 
 /* $Locker:  $
  * $Log: rf_configure.c,v $
+ * Revision 1.2  1998/11/23 00:18:40  mrg
+ * fix compile errors on the alpha.
+ *
  * Revision 1.1  1998/11/13 04:34:02  oster
+ *
  * RAIDframe, version 1.1, from the Parallel Data Laboratory at
  * Carnegie Mellon University.  Full RAID implementation, including
  * levels 0, 1, 4, 5, 6, parity logging, and a few other goodies.
@@ -439,7 +443,7 @@ int rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
     *p++ = (char) val;
   fclose(fp);
   if (p - cfgBuf != cfgPtr->layoutSpecificSize) {
-      RF_ERRORMSG2("Size mismatch creating layout specific data: is %d sb %d bytes\n",(p-cfgBuf),6*sizeof(int)+b*k);
+      RF_ERRORMSG2("Size mismatch creating layout specific data: is %d sb %d bytes\n",(int)(p-cfgBuf),(int)(6*sizeof(int)+b*k));
       return(EINVAL);
   }
   return(0);
