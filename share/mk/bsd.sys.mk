@@ -1,10 +1,13 @@
-#	$NetBSD: bsd.sys.mk,v 1.38 2000/02/01 06:00:35 tsutsui Exp $
+#	$NetBSD: bsd.sys.mk,v 1.39 2000/05/09 00:15:55 thorpej Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
 .if defined(WARNS)
 .if ${WARNS} > 0
 CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
+# XXX Delete -Wuninitialized by default for now -- the compiler doesn't
+# XXX always get it right.
+CFLAGS+= -Wno-uninitialized
 .endif
 .if ${WARNS} > 1
 CFLAGS+=-Wreturn-type -Wcast-qual -Wpointer-arith -Wwrite-strings
