@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.23 2000/03/10 06:10:34 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@ pckbdattach(parent, self, aux)
 	sc->id->t_sc = sc;
 
 	pckbc_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
-			       pckbd_input, sc);
+			       pckbd_input, sc, sc->sc_dev.dv_xname);
 
 	a.console = isconsole;
 

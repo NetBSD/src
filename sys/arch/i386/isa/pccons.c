@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.139 2000/03/23 06:39:15 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.140 2000/06/05 22:20:56 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -730,7 +730,7 @@ pcattach(parent, self, aux)
 	do_async_update((void *)1);
 
 #if (NPCCONSKBD > 0)
-	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc);
+	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc, sc->sc_dev.dv_xname);
 #else
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pcintr, sc);
