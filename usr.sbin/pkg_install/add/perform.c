@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31 1999/06/15 06:32:00 cgd Exp $	*/
+/*	$NetBSD: perform.c,v 1.32 1999/08/19 07:17:35 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31 1999/06/15 06:32:00 cgd Exp $");
+__RCSID("$NetBSD: perform.c,v 1.32 1999/08/19 07:17:35 tron Exp $");
 #endif
 #endif
 
@@ -271,10 +271,12 @@ pkg_do(char *pkg)
 	char installed[FILENAME_MAX];
 	char *s;
 
-	if ((s=strrchr(PkgName, '-')) != NULL){
-	    strcpy(buf, PkgName);
-	    buf[s-PkgName+1]='*';
-	    buf[s-PkgName+2]='\0';
+	if ((s = strrchr(PkgName, '-')) != NULL){
+	    int l;
+
+	    l = s-PkgName+1;
+	    memcpy(buf, PkgName, l);
+	    strcpy(&buf[l],"[0-9]*");
 
             if (findmatchingname(dbdir, buf, check_if_installed, installed) > 0) {
 		warnx("other version '%s' already installed", installed);
