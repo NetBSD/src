@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.21 2001/02/24 00:00:12 cgd Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.22 2001/11/12 22:54:04 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -28,6 +28,9 @@
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.22 2001/11/12 22:54:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
