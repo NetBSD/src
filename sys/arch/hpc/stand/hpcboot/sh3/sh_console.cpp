@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_console.cpp,v 1.1 2001/02/09 18:35:18 uch Exp $	*/
+/*	$NetBSD: sh_console.cpp,v 1.2 2001/03/13 16:31:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,13 +36,73 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hpcmenu.h>
 #include <sh3/sh_console.h>
 
 SHConsole *SHConsole::_instance = 0;
 
+struct SHConsole::console_info
+SHConsole::_console_info[] = {
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620                   , SCIFPrint },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620JP                 , SCIFPrint },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_680              , SCIFPrint },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_680JP            , SCIFPrint },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_690              , SCIFPrint },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_690JP            , SCIFPrint },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW230JC    , 0 }, // HD64461 Serial module
+	{ 0, 0, 0 } // terminator.
+};
+
+SHConsole::SHConsole()
+{
+	_print = 0;
+}
+
+SHConsole::~SHConsole()
+{
+}
+
+SHConsole *
+SHConsole::Instance()
+{
+	if (!_instance)
+		_instance = new SHConsole();
+
+	return _instance;
+}
+
+BOOL
+SHConsole::init()
+{
+	HpcMenuInterface &menu = HpcMenuInterface::Instance();
+	struct console_info *tab = _console_info;
+	u_int32_t cpu, machine;
+	
+	_kmode = SetKMode(1);
+	
+	cpu = menu._pref.platid_hi;
+	machine = menu._pref.platid_lo;
+
+	for (; tab->cpu; tab++) {
+		if (tab->cpu == cpu && tab->machine == machine) {
+			_print = tab->print;
+			break;
+		}
+	}
+
+	/* 
+	 * always open COM1 to supply clock and power for the
+	 * sake of kernel serial driver 
+	 */
+	return openCOM1();
+}
+
 void
 SHConsole::print(const TCHAR *fmt, ...)
 {
+	if (_print == 0)
+		return;
+
 	va_list ap;
 	va_start(ap, fmt);
 	wvsprintf(_bufw, fmt, ap);
@@ -51,5 +111,12 @@ SHConsole::print(const TCHAR *fmt, ...)
 	if (!setupBuffer())
 		return;
 
-	PRINT(_bufm);
+	_print(_bufm);
 }
+
+void
+SHConsole::SCIFPrint(const char *buf)
+{
+	SCIF_PRINT(buf);
+}
+

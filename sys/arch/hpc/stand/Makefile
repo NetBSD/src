@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/04 16:51:04 uch Exp $
+#	$NetBSD: Makefile,v 1.4 2001/03/13 16:31:29 uch Exp $
 #
 
 PROJECT_DIRS	= hpcboot libz libsa
@@ -52,8 +52,7 @@ clean:
 	rm -f hpcboot/hpcboot.plg
 # compile directory
 	rm -rf compile/ARMDebug compile/ARMRelease			\
-	compile/SH3Debug compile/SH3Release				\
-	compile/SHDebug compile/SHRelease				\
+	compile/SH*Debug compile/SH*Release				\
 	compile/MIPSDebug compile/MIPSRelease
 	find . -name "hpcboot.exe" -print |xargs rm -f
 
@@ -62,7 +61,7 @@ distclean: clean
 
 # WCE210 or later binary
 install:
-	for a in SH3 ARM MIPS; do					\
+	for a in SH3 SH4 ARM MIPS; do					\
 		file=`echo "compile/"$$a"Release/hpcboot.exe"`;		\
 		cp $$file binary/$$a/hpcboot.exe;			\
 	done
