@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.14 1998/07/05 00:51:28 jonathan Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.15 1998/07/05 02:12:34 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -76,6 +76,7 @@ SOFTWARE.
 #define LOCAL_CREDIT_EXPAND
 
 #include "opt_inet.h"
+#include "opt_ccitt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

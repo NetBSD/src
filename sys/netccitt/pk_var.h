@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.9 1996/05/23 23:35:29 mycroft Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.10 1998/07/05 02:12:34 jonathan Exp $	*/
 
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1985 
@@ -49,7 +49,11 @@
  *
  */
 
-struct pklcd {
+#if defined(_KERNEL) && !defined(_LKM)
+# include "opt_ccitt.h"
+#endif
+
+ struct pklcd {
 	struct 	pklcd_q {
 		struct	pklcd_q *q_forw;	/* debugging chain */
 		struct	pklcd_q *q_back;	/* debugging chain */

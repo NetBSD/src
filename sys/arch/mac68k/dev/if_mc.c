@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.7 1998/07/05 00:51:09 jonathan Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.8 1998/07/05 02:12:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,6 +36,7 @@
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
+#include "opt_ccitt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
