@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.4 2003/10/24 08:29:57 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.5 2003/10/24 10:25:08 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -586,14 +586,18 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|cgd*|raid*|sd*|vnd*)
+ccd*|cgd*|raid*|vnd*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=%ccd_blk%;	chr=%ccd_chr%;;
 	cgd*) name=cgd;	unit=${i#cgd};	blk=%cgd_blk%;	chr=%cgd_chr%;;
 	raid*) name=raid; unit=${i#raid}; blk=%raid_blk%; chr=%raid_chr%;;
-	sd*) name=sd;	unit=${i#sd};	blk=%sd_blk%;	chr=%sd_chr%;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=%vnd_blk%;	chr=%vnd_chr%;;
 	esac
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+sd*)
+	name=sd; unit=${i#sd};	blk=%sd_blk%;	chr=%sd_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
