@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 1998/09/14 16:04:10 phil Exp $
+#	$NetBSD: MAKEDEV,v 1.25 1998/10/06 02:48:18 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -44,14 +44,21 @@
 #	ccd*	contatenated disk devices
 #
 # Console ports:
+#	ttyv0	pccons or virtual console 0
 #	ttyv*	virtual console screen
+#	ttyE*	wscons
 #
 # Pointing devices:
 #	quadmouse*	"quadrature mouse"
 #	pms*		"PS/2 mouse"
+#	wsmouse* wscons mouse events
+# 
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
 # 
 # Terminal ports:
 #	tty*	serial ports
+#	fcom	DC21285 COM port
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -146,6 +153,39 @@ ttyv*)
 	rm -f ttyv$unit
 	mknod ttyv$unit c $chr $unit
 	chown root.wheel ttyv$unit
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	;;
+
+ttyE*)
+	chr=60; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	chown root.wheel ttyE$unit
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=61
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chown root.wheel $wsmouse
+	chmod 600 $wsmouse
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=62
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
 	;;
 
 fd)
