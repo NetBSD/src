@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.62 2002/02/15 11:18:26 simonb Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.63 2002/04/15 05:30:12 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62 2002/02/15 11:18:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.63 2002/04/15 05:30:12 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 
@@ -238,6 +238,9 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 		 * parents for one matching `parent', and try match function.
 		 */
 		if (cf->cf_fstate == FSTATE_FOUND)
+			continue;
+		if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+		    cf->cf_fstate == FSTATE_DSTAR)
 			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
