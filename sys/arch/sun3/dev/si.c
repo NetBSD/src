@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.17 1995/06/01 20:22:36 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.18 1995/07/24 07:39:44 cgd Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -124,7 +124,7 @@ struct ncr5380_softc {
     struct scsi_link sc_link;
 };
 
-static void		ncr5380_minphys(struct buf *bp);
+static u_int		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static int		ncr5380_reset_adapter(struct ncr5380_softc *);
 static int		ncr5380_reset_scsibus(struct ncr5380_softc *);
@@ -279,13 +279,14 @@ si_attach(parent, self, args)
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-static void
+static u_int
 ncr5380_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
 		printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
+	return (minphys(bp));
 }
 #undef MIN_PHYS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp.c,v 1.6 1994/10/26 08:24:10 cgd Exp $	*/
+/*	$NetBSD: dp.c,v 1.7 1995/07/24 07:36:51 cgd Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model. 
@@ -77,7 +77,7 @@
 int dpprobe(struct pc532_device *);
 int dpattach(struct pc532_device *);
 int dp_scsi_cmd(struct scsi_xfer *);
-void dpminphys(struct buf *);
+u_int dpminphys(struct buf *);
 long int dp_adapter_info(int);
 void dp_intr(void);
 void dp_intr_work(void);
@@ -165,10 +165,11 @@ int dpattach(struct pc532_device *dvp)
 	return(r);
 }
 
-void dpminphys(struct buf *bp)
+u_int dpminphys(struct buf *bp)
 {
 	if(bp->b_bcount > ((DP_NSEG - 1) * NBPG))
 		bp->b_bcount = ((DP_NSEG - 1) * NBPG);
+	return (minphys(bp));
 }
 
 long int dp_adapter_info(int unit)

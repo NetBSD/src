@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.15 1995/06/26 23:15:38 phil Exp $  */
+/*	$NetBSD: ncr.c,v 1.16 1995/07/24 07:36:55 cgd Exp $  */
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -126,7 +126,7 @@ struct	ncr_softc {
 	struct	scsi_link	sc_link;
 };
 
-static void	ncr5380_minphys(struct buf *bp);
+static u_int	ncr5380_minphys(struct buf *bp);
 static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
@@ -480,6 +480,7 @@ ncr5380_minphys(struct buf *bp)
 	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount=%x.\n",MIN_PHYS);
 	bp->b_bcount = MIN_PHYS;
     }
+    return (minphys(bp));
 }
 #undef MIN_PHYS
 
