@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.76 2000/08/25 23:51:43 jhawk Exp $
+.\" $NetBSD: main,v 1.77 2000/10/06 08:30:09 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -220,11 +220,17 @@ release.
 .It
 Import IPv6/IPsec stack, from KAME project.
 This includes addition of kernel code for IPv6/IPsec,
-IPv4/v6 dual-stack user applications and supporting libraries.
+IPv4/v6 dual-stack user applications,
+IPv6-ready components like NFS and PPP,
+and supporting libraries.
 Due to this, shlib major version for
 .Xr pcap 3
 is incremented and you may need a recompilation of your userland tools.
 The KAME IPv6 part includes result from unified-ipv6 effort.
+.It
+A Secure Shell
+.Pq SSH
+implementation is shipped by default.
 .El
 .Pp
 As has been noted, there have also been innumerable bug fixes.	
