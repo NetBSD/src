@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.15 2003/10/18 03:03:20 itojun Exp $	*/
+/*	$NetBSD: fields.c,v 1.16 2004/02/15 11:54:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.15 2003/10/18 03:03:20 itojun Exp $");
+__RCSID("$NetBSD: fields.c,v 1.16 2004/02/15 11:54:17 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ number(pos, bufend, line, lineend, Rflag)
 	int or_sign, parity = 0;
 	int expincr = 1, exponent = -1;
 	int bite, expsign = 1, sign = 1;
-	u_char lastvalue, *nonzero, *tline, *C_TENS;
+	u_char lastvalue='0', *nonzero=NULL, *tline, *C_TENS;
 	u_char *nweights;
 
 	if (Rflag)
