@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/04/15 20:09:11 is Exp $
+#	$NetBSD: Makefile,v 1.8 2000/04/28 22:01:14 is Exp $
 
 MKMAN=no
 PROG=dotest
@@ -14,7 +14,7 @@ CLEANFILES+=itest.S ftest.S
 
 .PATH: ${SPDIR}/dist
 
-depend dotestsubs.o: itest.S ftest.S
+realdepend dotestsubs.o: itest.S ftest.S
 
 regress: ${PROG}
 	@/usr/sbin/sysctl hw.model | grep -v -q 68060 || \
