@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.474 2002/09/20 15:03:22 pooka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.475 2002/09/24 09:25:47 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.470 2002/09/20 14:59:58 pooka Exp 
+ *	NetBSD: pcidevs,v 1.471 2002/09/24 09:24:40 pooka Exp 
  */
 
 /*
@@ -858,7 +858,7 @@
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
 
 /* Asustek products */
-#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x1043		/* Asustek ISDN */
+#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* Asustek ISDN */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
