@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.17 1997/07/20 12:39:17 is Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.18 1997/11/02 22:02:46 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -211,6 +211,11 @@ fpu_emulate(frame, fpf)
 	    /* fscale */
 	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulate: fscale\n");
+	    sig = fpu_emul_fscale(&fe, &insn);
+	} else if ((word & 0xa07f) == 0x11) {
+	    /* ftwotox */
+	    if (fpu_debug_level & DL_INSN)
+		printf("  fpu_emulate: ftwotox\n");
 	    sig = fpu_emul_fscale(&fe, &insn);
 	} else {
 	    if (fpu_debug_level & DL_INSN)
@@ -801,9 +806,11 @@ fpu_emul_arith(fe, insn)
 	res = fpu_etox(fe);
 	break;
 
+#if 0	/* handled by fscale now */
     case 0x11:			/* ftwotox */
 	res = fpu_twotox(fe);
 	break;
+#endif
 
     case 0x12:			/* ftentox */
 	res = fpu_tentox(fe);
