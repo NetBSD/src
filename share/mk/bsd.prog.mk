@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.59 1996/12/20 16:39:03 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.60 1997/01/22 01:34:13 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -89,12 +89,15 @@ MAN=	${PROG}.1
 all: ${PROG} _SUBDIRUSE
 
 .if !target(clean)
-clean: _SUBDIRUSE
+cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-.endif
 
+clean: _SUBDIRUSE cleanprog
+cleandir: _SUBDIRUSE cleanprog
+.else
 cleandir: _SUBDIRUSE clean
+.endif
 
 .if defined(SRCS)
 afterdepend: .depend

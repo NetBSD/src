@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.80 1996/12/29 19:14:32 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.81 1997/01/22 01:34:12 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -143,15 +143,18 @@ llib-l${LIB}.ln: ${LOBJS}
 	@${LINT} -C${LIB} ${LOBJS} ${LLIBS}
 
 .if !target(clean)
-clean: _SUBDIRUSE
+cleanlib:
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
 	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${SOBJS}
 	rm -f llib-l${LIB}.ln ${LOBJS}
-.endif
 
+clean: _SUBDIRUSE cleanlib
+cleandir: _SUBDIRUSE cleanlib
+.else
 cleandir: _SUBDIRUSE clean
+.endif
 
 .if defined(SRCS)
 afterdepend: .depend
