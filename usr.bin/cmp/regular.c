@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.5 1997/10/19 14:06:05 mrg Exp $	*/
+/*	$NetBSD: regular.c,v 1.6 1997/12/09 10:59:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.5 1997/10/19 14:06:05 mrg Exp $");
+__RCSID("$NetBSD: regular.c,v 1.6 1997/12/09 10:59:54 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,11 +78,11 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 	if (length > SIZE_T_MAX)
 		return (c_special(fd1, file1, skip1, fd2, file2, skip2));
 
-	if ((p1 = (u_char *)mmap(NULL,
-	    (size_t)length, PROT_READ, 0, fd1, skip1)) == (u_char *)-1)
+	if ((p1 = (u_char *)mmap(NULL, (size_t)length,
+	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd1, skip1)) == (u_char *)-1)
 		err(ERR_EXIT, "%s", file1);
-	if ((p2 = (u_char *)mmap(NULL,
-	    (size_t)length, PROT_READ, 0, fd2, skip2)) == (u_char *)-1)
+	if ((p2 = (u_char *)mmap(NULL, (size_t)length,
+	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd2, skip2)) == (u_char *)-1)
 		err(ERR_EXIT, "%s", file2);
 
 	dfound = 0;
