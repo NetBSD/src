@@ -118,10 +118,6 @@ struct pipemapping {
 #define PIPE_DIRECTW	0x400	/* Pipe direct write active. */
 #define PIPE_SIGNALR	0x800	/* Do selwakeup() on read(2) */
 
-#ifdef __NetBSD__
-#define PIPE_MOREW	0x2000	/* Writer has more data to write. */
-#endif
-
 /*
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
