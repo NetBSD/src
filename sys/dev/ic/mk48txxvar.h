@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxreg.h,v 1.7 2003/11/01 22:41:42 tsutsui Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.1 2003/11/01 22:41:42 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,51 +35,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Mostek MK48Txx clocks.
- *
- * The MK48T02 has 2KB of non-volatile memory. The time-of-day clock
- * registers start at offset 0x7f8.
- *
- * The MK48T08 and MK48T18 have 8KB of non-volatile memory
- *
- * The MK48T59 also has 8KB of non-volatile memory but in addition it
- * has a battery low detection bit and a power supply wakeup alarm for
- * power management.  It's at offset 0x1ff0 in the NVRAM.
- */
+struct mk48txx_softc;
 
-/*
- * Mostek MK48TXX register definitions
- */
+typedef u_int8_t (*mk48txx_nvrd_t)(struct mk48txx_softc *, int);
+typedef void (*mk48txx_nvwr_t)(struct mk48txx_softc *, int, u_int8_t);
 
-/*
- * The first bank of eight registers at offset (nvramsz - 16) is
- * available only on recenter (which??) MK48Txx models.
- */
-#define MK48TXX_X0	0	/* find out later */
-				/* ... */
-#define MK48TXX_X7	7	/* find out later */
-#define MK48TXX_ICSR	8	/* control register */
-#define MK48TXX_ISEC	9	/* seconds (0..59; BCD) */
-#define MK48TXX_IMIN	10	/* minutes (0..59; BCD) */
-#define MK48TXX_IHOUR	11	/* hour (0..23; BCD) */
-#define MK48TXX_IWDAY	12	/* weekday (1..7) */
-#define MK48TXX_IDAY	13	/* day in month (1..31; BCD) */
-#define MK48TXX_IMON	14	/* month (1..12; BCD) */
-#define MK48TXX_IYEAR	15	/* year (0..99; BCD) */
+struct mk48txx_softc {
+	struct device	sc_dev;
 
-/* Bits in the control register */
-#define MK48TXX_CSR_WRITE	0x80	/* want to write */
-#define MK48TXX_CSR_READ	0x40	/* want to read (freeze clock) */
+	bus_space_tag_t sc_bst;		/* bus tag & handle */
+	bus_space_handle_t sc_bsh;	/* */
 
-#define MK48T02_CLKSZ		2048
-#define MK48T02_CLKOFF		0x7f0
+	struct todr_chip_handle sc_handle; /* TODR handle */
+	const char	*sc_model;	/* chip model name */
+	bus_size_t	sc_nvramsz;	/* Size of NVRAM on the chip */
+	bus_size_t	sc_clkoffset;	/* Offset in NVRAM to clock bits */
+	u_int		sc_year0;	/* What year is represented on
+					   the system by the chip's year
+					   counter at 0 */
+	u_int		sc_flag;
+#define MK48TXX_NO_CENT_ADJUST	0x0001
 
-#define MK48T08_CLKSZ		8192
-#define MK48T08_CLKOFF		0x1ff0
+	mk48txx_nvrd_t	sc_nvrd;	/* NVRAM/RTC read function */
+	mk48txx_nvwr_t	sc_nvwr;	/* NVRAM/RTC write function */
+};
 
-#define MK48T18_CLKSZ		8192
-#define MK48T18_CLKOFF		0x1ff0
+/* Chip attach function */
+void mk48txx_attach(struct mk48txx_softc *);
 
-#define MK48T59_CLKSZ		8192
-#define MK48T59_CLKOFF		0x1ff0
+/* Retrieve size of the on-chip NVRAM area */
+int	mk48txx_get_nvram_size(todr_chip_handle_t, bus_size_t *);
