@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2003/05/21 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30 2003/06/06 10:07:07 scw Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -193,9 +193,22 @@ db_read_bytes(addr, size, data)
 	size_t	size;
 	char	*data;
 {
-	char	*src;
+	char	*src = (char *)addr;
 
-	src = (char *)addr;
+	if (db_validate_address((u_int)src)) {
+		db_printf("address %p is invalid\n", src);
+		return;
+	}
+
+	if (size == 4 && (addr & 3) == 0 && ((uintptr_t)data & 3) == 0) {
+		*((int*)data) = *((int*)src);
+		return;
+	}
+
+	if (size == 2 && (addr & 1) == 0 && ((uintptr_t)data & 1) == 0) {
+		*((short*)data) = *((short*)src);
+		return;
+	}
 
 	while (size-- > 0) {
 		if (db_validate_address((u_int)src)) {
@@ -307,14 +320,27 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	}
 
 	dst = (char *)addr;
-	loop = size;
-	while (loop-- > 0) {
-		if (db_validate_address((u_int)dst)) {
-			db_printf("address %p is invalid\n", dst);
-			return;
-		}
-		*dst++ = *data++;
+	if (db_validate_address((u_int)dst)) {
+		db_printf("address %p is invalid\n", dst);
+		return;
 	}
+
+	if (size == 4 && (addr & 3) == 0 && ((uintptr_t)data & 3) == 0)
+		*((int*)dst) = *((int*)data);
+	else
+	if (size == 2 && (addr & 1) == 0 && ((uintptr_t)data & 1) == 0)
+		*((short*)dst) = *((short*)data);
+	else {
+		loop = size;
+		while (loop-- > 0) {
+			if (db_validate_address((u_int)dst)) {
+				db_printf("address %p is invalid\n", dst);
+				return;
+			}
+			*dst++ = *data++;
+		}
+	}
+
 	/* make sure the caches and memory are in sync */
 	cpu_icache_sync_range(addr, size);
 
