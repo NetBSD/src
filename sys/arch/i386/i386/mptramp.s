@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.2 2002/10/01 12:56:58 fvdl Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.3 2002/10/01 19:36:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -180,7 +180,8 @@ _TRMP_LABEL(mp_startup)
 # ok, we're now running with paging enabled and sharing page tables with cpu0.
 # figure out which processor we really are, what stack we should be on, etc.
 
-	movzbl	_C_LABEL(local_apic)+LAPIC_ID+3,%ecx
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
+	shrl	$LAPIC_ID_SHIFT,%ecx
 	leal	0(,%ecx,4),%ecx
 	movl	_C_LABEL(cpu_info)(%ecx),%ecx
 	
