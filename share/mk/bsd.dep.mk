@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.24 1999/02/03 21:08:05 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.25 1999/02/07 17:29:40 tv Exp $
 
 .PHONY:		cleandepend
 cleandir distclean: cleandepend
@@ -16,28 +16,28 @@ depend: .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
 	if [ "$$files" != " " ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CFLAGS:M-[ID]*} ${CPPFLAGS} ${AINC} $$files; \
+	    ${CFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${AINC:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CFLAGS:M-[ID]*} ${CPPFLAGS} ${AINC} $$files; \
 	fi
 	@files="${.ALLSRC:M*.c}"; \
 	if [ "$$files" != "" ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
+	    ${CFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
 	@files="${.ALLSRC:M*.m}"; \
 	if [ "$$files" != "" ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${OBJCFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
+	    ${OBJCFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${OBJCFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
 	@files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
 	if [ "$$files" != "  " ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
+	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
