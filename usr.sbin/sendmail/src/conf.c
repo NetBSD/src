@@ -1559,7 +1559,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)Id: getloadavg.c,v 1.16 1991/06/21 12:51:15 paul Exp ";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.14 1996/09/20 02:00:51 explorer Exp $";
 #endif /* !lint */
 
 #ifdef apollo
@@ -2405,7 +2405,27 @@ vsprintf(s, fmt, ap)
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: conf.c,v 1.13 1996/09/19 02:52:13 explorer Exp $";*/
+/*static char _id[] = "$Id: conf.c,v 1.14 1996/09/20 02:00:51 explorer Exp $";*/
+static void dopr();
+static char *end;
+
+/* VARARGS3 */
+int
+/**************************************************************
+ * Original:
+ * Patrick Powell Tue Apr 11 09:48:21 PDT 1995
+ * A bombproof version of doprnt (dopr) included.
+ * Sigh.  This sort of thing is always nasty do deal with.  Note that
+ * the version here does not include floating point...
+ *
+ * snprintf() is used instead of sprintf() as it does limit checks
+ * for string length.  This covers a nasty loophole.
+ *
+ * The other functions are there to prevent NULL pointers from
+ * causing nast effects.
+ **************************************************************/
+
+/*static char _id[] = "$Id: conf.c,v 1.14 1996/09/20 02:00:51 explorer Exp $";*/
 static void dopr();
 static char *end;
 
