@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rec_get.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_get.c,v 1.4 1993/09/09 02:42:23 cgd Exp $";
+static char *rcsid = "$Id: rec_get.c,v 1.5 1994/02/24 09:03:39 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -130,14 +130,13 @@ __rec_fpipe(t, top)
 	int ch;
 	char *p;
 
-	data.data = t->bt_dbuf;
-	data.size = t->bt_reclen;
-
 	if (t->bt_dbufsz < t->bt_reclen) {
 		if ((t->bt_dbuf = realloc(t->bt_dbuf, t->bt_reclen)) == NULL)
 			return (RET_ERROR);
 		t->bt_dbufsz = t->bt_reclen;
 	}
+	data.data = t->bt_dbuf;
+	data.size = t->bt_reclen;
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
 		len = t->bt_reclen;
 		for (p = t->bt_dbuf;; *p++ = ch)
