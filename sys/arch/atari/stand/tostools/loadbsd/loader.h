@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.h,v 1.1.1.1 1995/03/26 07:12:04 leo Exp $	*/
+/*	$NetBSD: loader.h,v 1.2 1995/03/28 06:26:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -40,7 +40,7 @@
 #undef __LDPGSZ
 #endif
 
-#define __LDPGSZ	(8*1024)	/* Page size for Netbsd		*/
+#define __LDPGSZ	(8*1024)	/* Page size for NetBSD		*/
 
 #define	TTRAM_BASE	0x1000000	/* Fastram always starts here	*/
 
@@ -52,7 +52,7 @@
 #define	ADDR_P_COOKIE	((long**)0x5a0)	/* Pointer to cookie jar	*/
 
 /*
- * These should match with the values NetBsd uses!
+ * These should match with the values NetBSD uses!
  */
 #define	ATARI_68000	1		/* 68000 CPU			*/
 #define	ATARI_68010	(1<<1)		/* 68010 CPU			*/

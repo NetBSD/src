@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.1.1.1 1995/03/26 07:12:04 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.2 1995/03/28 06:26:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -117,7 +117,7 @@ char	**argv;
 		strcpy(kname, argv[0]);
 
 	/*
-	 * Get system info to pass to NetBsd
+	 * Get system info to pass to NetBSD
 	 */
 	get_sys_info();
 
