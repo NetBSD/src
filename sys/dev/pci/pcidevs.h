@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.136 1999/06/05 10:42:15 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.137 1999/06/18 04:55:27 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.129 1999/06/05 10:41:37 tron Exp 
+ *	NetBSD: pcidevs,v 1.130 1999/06/18 04:54:06 tsubai Exp 
  */
 
 /*
@@ -635,7 +635,14 @@
 #define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ethernet & SCSI */
 
 /* Apple products */
-#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI Controller */
+#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_GC	0x0002		/* Grand Central I/O Controller */
+#define	PCI_PRODUCT_APPLE_CONTROL	0x0003		/* Control */
+#define	PCI_PRODUCT_APPLE_PLANB	0x0004		/* PlanB */
+#define	PCI_PRODUCT_APPLE_OHARE	0x0007		/* OHare I/O Controller */
+#define	PCI_PRODUCT_APPLE_BANDIT2	0x0008		/* Bandit Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* MAC-IO I/O Controller (Heathrow) */
+#define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* MAC-IO I/O Controller (Paddington) */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -949,6 +956,9 @@
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
+
+/* Motorola products */
+#define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 Host-PCI Bridge (grackle) */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID controller */
