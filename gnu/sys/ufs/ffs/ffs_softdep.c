@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.9 2000/03/23 08:33:59 enami Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.10 2000/05/27 06:51:30 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4670,7 +4670,7 @@ getdirtybuf(bpp, waitfor)
 			return (0);
 		bp->b_flags |= B_WANTED;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		sleep((caddr_t)bp, PRIBIO + 1);
+		(void) tsleep(bp, PRIBIO + 1, "softgetdbuf", 0);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
 	if ((bp->b_flags & B_DELWRI) == 0) {
