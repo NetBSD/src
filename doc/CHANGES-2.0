@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.151 2004/04/29 04:20:02 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.152 2004/04/29 04:21:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1527,3 +1527,9 @@ sys/arch/sparc/sparc/machdep.c			1.248
 	Changes to fix and help diagnose MMU resource shortage on small 
 	sun4c systems.
 	[pk, ticket #211]
+
+sys/conf/Makefile.kern.inc			1.52-1.53
+
+	Add `-fno-zero-initialized-in-bss' for kernel builds using gcc 3.x
+	so zero-initialised variables remain patchable.
+	[pk, ticket #212]
