@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.8 2003/01/31 04:59:40 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.9 2003/02/15 04:34:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,22 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <lwp.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ucontext.h>
+#include <unistd.h>
+
 #include <sys/cdefs.h>
 
 #include <sched.h>
 #include "pthread.h"
 #include "pthread_int.h"
-
-
-#undef PTHREAD_MAIN_DEBUG
 
 #ifdef PTHREAD_MAIN_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -90,6 +89,7 @@ __strong_alias(__libc_thr_errno,pthread__errno)
  */
 extern int pthread__cancel_stub_binder;
 extern int pthread__sched_binder;
+extern struct pthread_queue_t pthread__nanosleeping;
 
 void *pthread__static_lib_binder[] = {
 	&pthread__cancel_stub_binder,
@@ -99,6 +99,7 @@ void *pthread__static_lib_binder[] = {
 	pthread_barrier_init,
 	pthread_key_create,
 	&pthread__sched_binder,
+	&pthread__nanosleeping
 };
 
 /*
@@ -222,7 +223,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	int ret;
 
 	PTHREADD_ADD(PTHREADD_CREATE);
-	assert(thread != NULL);
+	pthread__assert(thread != NULL);
 
 	/*
 	 * It's okay to check this without a lock because there can
@@ -299,7 +300,7 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 	pthread_exit(retval);
 
 	/*NOTREACHED*//*CONSTCOND*/
-	assert(0);
+	pthread__assert(0);
 }
 
 
@@ -338,7 +339,7 @@ pthread__idle(void)
 	self->pt_spinlocks++; /* XXX make sure we get to finish the assert! */
 	SDPRINTF(("(pthread__idle %p) Returned! Error.\n", self));
 	/* CONSTCOND */
-	assert(0);
+	pthread__assert(0);
 }
 
 
@@ -406,7 +407,7 @@ pthread_exit(void *retval)
 	}
 
 	/*NOTREACHED*//*CONSTCOND*/
-	assert(0);
+	pthread__assert(0);
 	exit(1);
 }
 
@@ -666,8 +667,10 @@ pthread_cancel(pthread_t thread)
 		} else if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
 			/*
 			 * We're blocked somewhere (pthread__block()
-			 * was called. Cause it to wake up and the
-			 * caller will check for the cancellation.
+			 * was called). Cause it to wake up; it will
+			 * check for the cancellation if the routine
+			 * is a cancellation point, and loop and reblock
+			 * otherwise.
 			 */
 			pthread_spinlock(self, thread->pt_sleeplock);
 			PTQ_REMOVE(thread->pt_sleepq, thread,
@@ -842,4 +845,27 @@ pthread__errno(void)
 	self = pthread__self();
 
 	return &(self->pt_errno);
+}
+
+void
+pthread__assertfunc(char *file, int line, char *function, char *expr)
+{
+	char buf[1024];
+	int len;
+
+	/*
+	 * snprintf should not acquire any locks, or we could
+	 * end up deadlocked if the assert caller held locks.
+	 */
+	len = snprintf(buf, 1024, 
+	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s\n",
+	    expr, file, line,
+	    function ? ", function \"" : "",
+	    function ? function : "",
+	    function ? "\"" : "");
+
+	write(STDERR_FILENO, buf, len);
+	(void)kill(getpid(), SIGABRT);
+
+	_exit(1);
 }
