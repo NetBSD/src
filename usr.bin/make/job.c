@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.35 2000/12/03 02:19:32 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.36 2000/12/04 17:45:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.35 2000/12/03 02:19:32 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.36 2000/12/04 17:45:17 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.35 2000/12/03 02:19:32 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.36 2000/12/04 17:45:17 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -246,11 +246,14 @@ STATIC Boolean	jobFull;    	/* Flag to tell when the job table is full. It
 static fd_set  	outputs;
 #else
 static struct pollfd *fds = NULL;
+static Job **jobfds = NULL;
 static int nfds = 0;
 static int maxfds = 0;
-static void watchfd __P((int));
-static void clearfd __P((int));
-static int readyfd __P((int));
+static void watchfd __P((Job *));
+static void clearfd __P((Job *));
+static int readyfd __P((Job *));
+#define JBSTART 256
+#define JBINCR 256
 #endif
 #endif
 
@@ -717,14 +720,14 @@ static void
 JobClose(job)
     Job *job;
 {
-    if (usePipes) {
+    if (usePipes && (job->flags & JOB_FIRST)) {
 #ifdef RMT_WILL_WATCH
 	Rmt_Ignore(job->inPipe);
 #else
 #ifdef USE_SELECT
 	FD_CLR(job->inPipe, &outputs);
 #else
-	clearfd(job->inPipe);
+	clearfd(job);
 #endif
 #endif
 	if (job->outPipe != job->inPipe) {
@@ -1320,7 +1323,7 @@ JobExec(job, argv)
 #endif
 	job->pid = cpid;
 
-	if (usePipes && (job->flags & JOB_FIRST) ) {
+	if (usePipes && (job->flags & JOB_FIRST)) {
 	    /*
 	     * The first time a job is run for a node, we set the current
 	     * position in the buffer to the beginning and mark another
@@ -1334,7 +1337,7 @@ JobExec(job, argv)
 #ifdef USE_SELECT
 	    FD_SET(job->inPipe, &outputs);
 #else
-	    watchfd(job->inPipe);
+	    watchfd(job);
 #endif
 #endif /* RMT_WILL_WATCH */
 	}
@@ -1745,6 +1748,11 @@ JobStart(gn, flags, previous)
 	cmdsOK = TRUE;
     }
 
+#ifndef RMT_WILL_WATCH
+#ifndef USE_SELECT
+    job->inPollfd = NULL;
+#endif
+#endif
     /*
      * If the -n flag wasn't given, we open up OUR (not the child's)
      * temporary file to stuff commands in it. The thing is rd/wr so we don't
@@ -2416,7 +2424,7 @@ Job_CatchOutput()
 #ifdef USE_SELECT
 		if (FD_ISSET(job->inPipe, &readfds))
 #else
-		if (readyfd(job->inPipe))
+		if (readyfd(job))
 #endif
 		{
 		    JobDoOutput(job, FALSE);
@@ -3203,43 +3211,68 @@ JobRestartJobs()
 #ifndef RMT_WILL_WATCH
 #ifndef USE_SELECT
 static void
-watchfd(fd)
-    int fd;
+watchfd(job)
+    Job *job;
 {
-    if (fds == NULL)
-	fds = emalloc(sizeof(struct pollfd) * (maxfds = 256));
-    else if (nfds == maxfds)
-	fds = erealloc(fds, sizeof(struct pollfd) * (maxfds += 256));
+    if (job->inPollfd != NULL)
+	Punt("Watching watched job");
+    if (fds == NULL) {
+	maxfds = JBSTART;
+	fds = emalloc(sizeof(struct pollfd) * maxfds);
+	jobfds = emalloc(sizeof(Job **) * maxfds);
+    } else if (nfds == maxfds) {
+	struct pollfd *newfds;
+	maxfds += JBINCR;
+	newfds = erealloc(fds, sizeof(struct pollfd) * maxfds);
+	jobfds = erealloc(jobfds, sizeof(Job **) * maxfds);
+	if (newfds != fds) {
+	    /* Re-thread for the new allocated pointer */
+	    LstNode ln;
+	    if (Lst_Open(jobs) == FAILURE) {
+		Punt("Cannot open job table");
+	    }
+	    while ((ln = Lst_Next(jobs)) != NILLNODE) {
+		Job *jb = (Job *) Lst_Datum(ln);
+		int i = jb->inPollfd - fds;
+		jb->inPollfd = &newfds[i];
+		jobfds[i] = jb;
+	    }
+	    Lst_Close(jobs);
+	}
+	fds = newfds;
+    }
 
-    fds[nfds].fd = fd;
+    fds[nfds].fd = job->inPipe;
+    job->inPollfd = &fds[nfds];
+    jobfds[nfds] = job;
     fds[nfds++].events = POLLIN;
 }
 
 static void
-clearfd(fd)
-    int fd;
+clearfd(job)
+    Job *job;
 {
     int i;
-    for (i = 0; i < nfds; i++)
-	if (fds[i].fd == fd) {
-	    nfds--;
-	    (void)memcpy(&fds[i], &fds[i+1], (nfds-i) * sizeof(struct pollfd));
-	    return;
-	}
-    Punt("File descriptor %d not found in set", fd);
+    if (job->inPollfd == NULL)
+	Punt("Unwatching unwatched job");
+    i = job->inPollfd - fds;
+    nfds--;
+    if (nfds != i) {
+	(void)memcpy(&fds[i], &fds[i + 1], (nfds - i) * sizeof(struct pollfd));
+	(void)memcpy(&jobfds[i], &jobfds[i + 1], (nfds - i) * sizeof(Job *));
+	while (i < nfds)
+	     jobfds[i++]->inPollfd--;
+    }
+    job->inPollfd = NULL;
 }
 
 static int
-readyfd(fd)
-    int fd;
+readyfd(job)
+    Job *job;
 {
-    int i;
-    for (i = 0; i < nfds; i++)
-	if (fds[i].fd == fd)
-	    return (fds[i].revents & POLLIN) != 0;
-    Punt("File descriptor %d not found in set", fd);
-    /*NOTREACHED*/
-    return -1;
+    if (job->inPollfd == NULL)
+	Punt("Polling unwatched job");
+    return (job->inPollfd->revents & POLLIN) != 0;
 }
 #endif
 #endif
