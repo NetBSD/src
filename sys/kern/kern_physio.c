@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.36 1999/05/26 01:08:03 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.37 1999/06/17 15:47:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -180,8 +180,13 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * restores it.
 			 */
 			PHOLD(p);
-			uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
-			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ);
+			if (uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
+			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
+			    != KERN_SUCCESS) {
+				bp->b_flags |= B_ERROR;
+				bp->b_error = EFAULT;
+				goto after_vsunlock;
+			}
 			vmapbuf(bp, todo);
 
 			/* [call strategy to start the transfer] */
@@ -213,6 +218,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			vunmapbuf(bp, todo);
 			uvm_vsunlock(p, bp->b_data, todo);
+ after_vsunlock:
 			PRELE(p);
 
 			/* remember error value (save a splbio/splx pair) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.25 1999/06/17 05:57:33 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.26 1999/06/17 15:47:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -219,16 +219,24 @@ uvm_chgkprot(addr, len, rw)
  * - XXXCDC: consider nuking this (or making it a macro?)
  */
 
-void
+int
 uvm_vslock(p, addr, len, access_type)
 	struct proc *p;
 	caddr_t	addr;
 	size_t	len;
 	vm_prot_t access_type;
 {
+	vm_map_t map;
+	vaddr_t start, end;
+	int rv;
 
-	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page(addr), 
-	    round_page(addr+len), access_type);
+	map = &p->p_vmspace->vm_map;
+	start = trunc_page(addr);
+	end = round_page(addr + len);
+
+	rv = uvm_fault_wire(map, start, end, access_type);
+
+	return (rv);
 }
 
 /*

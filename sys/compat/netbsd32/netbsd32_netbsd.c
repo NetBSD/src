@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.14 1999/06/09 04:50:10 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.15 1999/06/17 15:47:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -3786,7 +3786,17 @@ compat_netbsd32___sysctl(p, v, retval)
 			 * XXX Um, this is kind of evil.  What should
 			 * XXX we be passing here?
 			 */
-			uvm_vslock(p, SCARG(uap, old), savelen, VM_PROT_NONE);
+			if (uvm_vslock(p, SCARG(uap, old), savelen,
+			    VM_PROT_NONE) != KERN_SUCCESS) {
+#if 0 /* XXXXXXXX */
+				memlock.sl_lock = 0;
+				if (memlock.sl_want) {
+					memlock.sl_want = 0;
+					wakeup((caddr_t)&memlock);
+				}
+#endif /* XXXXXXXX */
+				return (EFAULT);
+			}
 		}
 		oldlen = savelen;
 	}

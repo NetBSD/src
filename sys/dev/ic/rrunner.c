@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.11 1999/05/26 01:09:02 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.12 1999/06/17 15:47:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1062,8 +1062,17 @@ esh_fpread(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vslock(p, iovp->iov_base, iovp->iov_len,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		if (uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ | VM_PROT_WRITE) != KERN_SUCCESS) {
+			/* Unlock what we've locked so far. */
+			for (--i; i >= 0; i--) {
+				iovp = &uio->uio_iov[i];
+				uvm_vsunlock(p, ivop->iov_base,
+				    iovp->iov_len);
+			}
+			error = EFAULT;
+			goto fpread_done;
+		}
 	}
 
 	/* 
@@ -1226,7 +1235,17 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vslock(p, iovp->iov_base, iovp->iov_len, VM_PROT_READ);
+		if (uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ) != KERN_SUCCESS) {
+			/* Unlock what we've locked so far. */
+			for (--i; i >= 0; i--) {
+				iovp = &uio->uio_iov[i];
+				uvm_vsunlock(p, ivop->iov_base,
+				    iovp->iov_len);
+			}
+			error = EFAULT;
+			goto fpwrite_done;
+		}
 	}
 
 	/* 
