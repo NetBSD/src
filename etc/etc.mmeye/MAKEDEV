@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 2001/05/10 01:29:57 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.8 2001/06/08 14:43:20 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -46,8 +46,6 @@
 #	ccd*	contatenated disk devices
 #	raid*	RAIDframe disk devices
 #
-# Console ports:
-#
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
@@ -58,8 +56,6 @@
 # Printers:
 #	lpt*	stock lp
 #	lpa*	interruptless lp
-#
-# Call units:
 #
 # Special purpose devices:
 #	fd	file descriptors
