@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.24 1994/05/08 04:35:22 cgd Exp $
+#	$Id: Makefile.inc,v 1.25 1994/06/12 22:58:03 cgd Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -13,8 +13,7 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S reboot.S \
 SRCS+=  ftruncate.c lseek.c mmap.c truncate.c
 
 # modules with default implementations on all architectures:
-ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
-	chflags.o chmod.o \
+ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o getdirentries.o getdtablesize.o getegid.o \
