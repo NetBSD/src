@@ -117,4 +117,7 @@ int	want_resched;	/* resched() was called */
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
+/* Support for init start up. */
+#define cpu_set_init_frame(p,fp) (p)->p_md.md_regs = fp
+
 #endif
