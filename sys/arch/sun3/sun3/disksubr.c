@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1997/02/10 23:40:24 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 1997/03/04 19:33:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -454,7 +454,6 @@ disklabel_bsd_to_sun(lp, cp)
 	return(0);
 }
 
-#if 0
 /*
  * Search the bad sector table looking for the specified sector.
  * Return index if found.
@@ -478,4 +477,3 @@ isbad(bt, cyl, trk, sec)
 	}
 	return (-1);
 }
-#endif
