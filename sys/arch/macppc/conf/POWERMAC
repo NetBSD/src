@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.6 1998/07/03 11:50:32 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.7 1998/07/28 23:02:07 thorpej Exp $
 #
 # POWERMAC config file
 #
@@ -37,6 +37,8 @@ file-system 	NFS		# Network File System client
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independant support
+
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
