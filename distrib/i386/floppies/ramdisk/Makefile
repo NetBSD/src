@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/06/14 18:56:05 perry Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/21 21:31:11 christos Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -36,9 +36,9 @@ all: ${AUXTARGETS} ${CBIN}
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
 	newfs -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppy3
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
@@ -53,7 +53,7 @@ unconfig:
 	cat /*bin/* > /dev/null
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/06/14 18:56:04 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/06/21 21:30:49 christos Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -13,7 +13,10 @@ KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list
-RAMDISK?=	${.CURDIR}/../ramdisk/ramdisk-${REV}.fs
+RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
+        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" | \
+	${MAKE} -s -f-
+
 
 CLEANFILES+=	netbsd.ram.gz
 
