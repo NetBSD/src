@@ -1,7 +1,5 @@
-#	$NetBSD: LAST_MINUTE,v 1.2 2002/09/23 07:52:18 lukem Exp $
+#	$NetBSD: LAST_MINUTE,v 1.2.2.1 2004/03/29 05:13:35 jmc Exp $
 
-This file contains important information on the NetBSD XXX.XXX release that
+This file contains important information on the NetBSD 2.0 release that
 did not make it into the main documentation.
 
-[all]
-	Nothing pertinent; this is NetBSD-current...
