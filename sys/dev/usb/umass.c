@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.100 2003/09/10 02:49:18 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.101 2003/09/10 05:20:21 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.100 2003/09/10 02:49:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.101 2003/09/10 05:20:21 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1052,6 +1052,8 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			}
 		}
 
+		/* FALLTHROUGH, err == 0 (no data phase or successful) */
+	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 		if (sc->transfer_dir == DIR_IN)
 			memcpy(sc->transfer_data, sc->data_buffer,
 			       sc->transfer_actlen);
@@ -1061,7 +1063,6 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 						sc->transfer_datalen, 48));
 
 		/* FALLTHROUGH, err == 0 (no data phase or successful) */
-	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 	case TSTATE_BBB_SCLEAR: /* stall clear after status phase */
 		/* Reading of CSW after bulk stall condition in data phase
 		 * (TSTATE_BBB_DATA2) or bulk-in stall condition after
