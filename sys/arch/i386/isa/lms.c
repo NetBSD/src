@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.22 1996/03/17 01:31:14 thorpej Exp $	*/
+/*	$NetBSD: lms.c,v 1.23 1996/04/09 00:53:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -37,7 +37,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 #include <machine/mouse.h>
 
 #include <dev/isa/isavar.h>
@@ -56,9 +56,11 @@ struct lms_softc {		/* driver status information */
 	struct device sc_dev;
 	void *sc_ih;
 
+	bus_chipset_tag_t sc_bc;	/* bus chipset identifier */
+	bus_io_handle_t sc_ioh;		/* bus i/o handle */
+
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	LMS_OPEN	0x01	/* device is open */
 #define	LMS_ASLP	0x02	/* waiting for mouse data */
@@ -86,26 +88,38 @@ lmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
+	int rv;
+	
+	/* Map the i/o space. */
+	if (bus_io_map(bc, ia->ia_iobase, LMS_NPORTS, &ioh))
+		return 0;
+
+	rv = 0;
 
 	/* Configure and check for port present. */
-	outb(iobase + LMS_CONFIG, 0x91);
+	bus_io_write_1(bc, ioh, LMS_CONFIG, 0x91);
 	delay(10);
-	outb(iobase + LMS_SIGN, 0x0c);
+	bus_io_write_1(bc, ioh, LMS_SIGN, 0x0c);
 	delay(10);
-	if (inb(iobase + LMS_SIGN) != 0x0c)
-		return 0;
-	outb(iobase + LMS_SIGN, 0x50);
+	if (bus_io_read_1(bc, ioh, LMS_SIGN) != 0x0c)
+		goto out;
+	bus_io_write_1(bc, ioh, LMS_SIGN, 0x50);
 	delay(10);
-	if (inb(iobase + LMS_SIGN) != 0x50)
-		return 0;
+	if (bus_io_read_1(bc, ioh, LMS_SIGN) != 0x50)
+		goto out;
 
 	/* Disable interrupts. */
-	outb(iobase + LMS_CNTRL, 0x10);
+	bus_io_write_1(bc, ioh, LMS_CNTRL, 0x10);
 
+	rv = 1;
 	ia->ia_iosize = LMS_NPORTS;
 	ia->ia_msize = 0;
-	return 1;
+
+out:
+	bus_io_unmap(bc, ioh, LMS_NPORTS);
+	return rv;
 }
 
 void
@@ -120,7 +134,10 @@ lmsattach(parent, self, aux)
 	printf("\n");
 
 	/* Other initialization was done by lmsprobe. */
-	sc->sc_iobase = iobase;
+	sc->sc_bc = ia->ia_bc;
+	if (bus_io_map(sc->sc_bc, ia->ia_iobase, LMS_NPORTS, &sc->sc_ioh))
+		panic("lmsattach: couldn't map I/O ports");
+
 	sc->sc_state = 0;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_PULSE, IPL_TTY, lmsintr,
@@ -152,7 +169,7 @@ lmsopen(dev, flag)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
-	outb(sc->sc_iobase + LMS_CNTRL, 0);
+	bus_io_write_1(sc->sc_bc, sc->sc_ioh, LMS_CNTRL, 0);
 
 	return 0;
 }
@@ -165,7 +182,7 @@ lmsclose(dev, flag)
 	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 
 	/* Disable interrupts. */
-	outb(sc->sc_iobase + LMS_CNTRL, 0x10);
+	bus_io_write_1(sc->sc_bc, sc->sc_ioh, LMS_CNTRL, 0x10);
 
 	sc->sc_state &= ~LMS_OPEN;
 
@@ -278,7 +295,8 @@ lmsintr(arg)
 	void *arg;
 {
 	struct lms_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	u_char hi, lo, buttons, changed;
 	char dx, dy;
 	u_char buffer[5];
@@ -287,22 +305,22 @@ lmsintr(arg)
 		/* Interrupts are not expected. */
 		return 0;
 
-	outb(iobase + LMS_CNTRL, 0xab);
-	hi = inb(iobase + LMS_DATA);
-	outb(iobase + LMS_CNTRL, 0x90);
-	lo = inb(iobase + LMS_DATA);
+	bus_io_write_1(bc, ioh, LMS_CNTRL, 0xab);
+	hi = bus_io_read_1(bc, ioh, LMS_DATA);
+	bus_io_write_1(bc, ioh, LMS_CNTRL, 0x90);
+	lo = bus_io_read_1(bc, ioh, LMS_DATA);
 	dx = ((hi & 0x0f) << 4) | (lo & 0x0f);
 	/* Bounding at -127 avoids a bug in XFree86. */
 	dx = (dx == -128) ? -127 : dx;
 
-	outb(iobase + LMS_CNTRL, 0xf0);
-	hi = inb(iobase + LMS_DATA);
-	outb(iobase + LMS_CNTRL, 0xd0);
-	lo = inb(iobase + LMS_DATA);
+	bus_io_write_1(bc, ioh, LMS_CNTRL, 0xf0);
+	hi = bus_io_read_1(bc, ioh, LMS_DATA);
+	bus_io_write_1(bc, ioh, LMS_CNTRL, 0xd0);
+	lo = bus_io_read_1(bc, ioh, LMS_DATA);
 	dy = ((hi & 0x0f) << 4) | (lo & 0x0f);
 	dy = (dy == -128) ? 127 : -dy;
 
-	outb(iobase + LMS_CNTRL, 0);
+	bus_io_write_1(bc, ioh, LMS_CNTRL, 0);
 
 	buttons = (~hi >> 5) & 0x07;
 	changed = ((buttons ^ sc->sc_status) & 0x07) << 3;
