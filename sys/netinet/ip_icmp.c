@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.73 2003/04/17 16:57:49 tron Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.74 2003/06/26 21:43:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.73 2003/04/17 16:57:49 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74 2003/06/26 21:43:39 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -274,7 +274,7 @@ icmp_error(n, type, code, dest, destifp)
 	icmplen = oiplen + min(icmpreturndatabytes,
 	    ntohs(oip->ip_len) - oiplen);
 	/*
-	 * Defend against mbuf chains shorter than oip->ip_len:
+	 * Defend against mbuf chains shorter than oip->ip_len - oiplen:
 	 */
 	mblen = 0;
 	for (m = n; m && (mblen < icmplen); m = m->m_next)
