@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.89.2.1 2000/01/08 17:56:11 he Exp $	*/
+/*	$NetBSD: systm.h,v 1.89.2.2 2000/02/01 22:55:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -274,6 +274,14 @@ void	*mountroothook_establish __P((void (*)(struct device *),
 void	mountroothook_disestablish __P((void *));
 void	mountroothook_destroy __P((void));
 void	domountroothook __P((void));
+
+/*
+ * Exec hooks. Subsystems may want to do cleanup when a process
+ * execs.
+ */
+void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
+void	exechook_disestablish __P((void *));
+void	doexechooks __P((struct proc *));
 
 int	uiomove __P((void *, int, struct uio *));
 
