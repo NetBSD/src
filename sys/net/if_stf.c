@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.40 2004/08/19 20:58:24 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.41 2004/12/04 18:31:43 peter Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.40 2004/08/19 20:58:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.41 2004/12/04 18:31:43 peter Exp $");
 
 #include "opt_inet.h"
 
@@ -144,7 +144,7 @@ struct stf_softc {
 LIST_HEAD(, stf_softc) stf_softc_list;
 
 int	stf_clone_create __P((struct if_clone *, int));
-void	stf_clone_destroy __P((struct ifnet *));
+int	stf_clone_destroy __P((struct ifnet *));
 
 struct if_clone stf_cloner =
     IF_CLONE_INITIALIZER("stf", stf_clone_create, stf_clone_destroy);
@@ -227,7 +227,7 @@ stf_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 stf_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -240,6 +240,8 @@ stf_clone_destroy(ifp)
 #endif
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
+
+	return (0);
 }
 
 static int

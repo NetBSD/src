@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.72 2004/08/19 20:58:24 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.73 2004/12/04 18:31:43 peter Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.72 2004/08/19 20:58:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.73 2004/12/04 18:31:43 peter Exp $");
 
 #include "tun.h"
 
@@ -80,7 +80,7 @@ int	tun_ioctl __P((struct ifnet *, u_long, caddr_t));
 int	tun_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *rt));
 int	tun_clone_create __P((struct if_clone *, int));
-void	tun_clone_destroy __P((struct ifnet *));
+int	tun_clone_destroy __P((struct ifnet *));
 
 struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
@@ -230,7 +230,7 @@ tunattach0(tp)
 #endif
 }
 
-void
+int
 tun_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -271,6 +271,8 @@ tun_clone_destroy(ifp)
 
 	if (!zombie)
 		free(tp, M_DEVBUF);
+
+	return (0);
 }
 
 /*
