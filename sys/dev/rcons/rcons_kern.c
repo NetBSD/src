@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.6 1996/10/13 01:38:31 christos Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.7 1999/04/13 18:43:17 ad Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
+
 #include <dev/rcons/raster.h>
 #include <dev/rcons/rcons.h>
 
@@ -58,9 +59,7 @@ extern struct tty *fbconstty;
 
 static void rcons_belltmr(void *);
 
-#include "rcons_subr.h"
-
-static struct rconsole *mydevicep;
+static struct rconsole *mydevicep; /* XXX */
 static void rcons_output __P((struct tty *));
 
 void
@@ -68,6 +67,11 @@ rcons_cnputc(c)
 	int c;
 {
 	char buf[1];
+	long attr;
+	
+	/* Swap in kernel attribute */
+	attr = mydevicep->rc_attr;
+	mydevicep->rc_attr = mydevicep->rc_kern_attr;
 
 	if (c == '\n')
 		rcons_puts(mydevicep, "\r\n", 2);
@@ -75,13 +79,16 @@ rcons_cnputc(c)
 		buf[0] = c;
 		rcons_puts(mydevicep, buf, 1);
 	}
+
+	/* Swap out kernel attribute */
+	mydevicep->rc_attr = attr;
 }
 
 static void
 rcons_output(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register int s, n;
+	int s, n;
 	char buf[OBUFSIZ];
 
 	s = spltty();
@@ -114,16 +121,15 @@ rcons_output(tp)
 /* Ring the console bell */
 void
 rcons_bell(rc)
-	register struct rconsole *rc;
+	struct rconsole *rc;
 {
-	register int i, s;
+	int i, s;
 
 	if (rc->rc_bits & FB_VISBELL) {
 		/* invert the screen twice */
-		for (i = 0; i < 2; ++i)
-			raster_op(rc->rc_sp, 0, 0,
-			    rc->rc_sp->width, rc->rc_sp->height,
-			    RAS_INVERT, (struct raster *) 0, 0, 0);
+		i = ((rc->rc_bits & FB_INVERT) == 0);
+		rcons_invert(rc, i);
+		rcons_invert(rc, i ^ 1);
 	}
 
 	s = splhigh();
@@ -145,8 +151,8 @@ static void
 rcons_belltmr(p)
 	void *p;
 {
-	register struct rconsole *rc = p;
-	register int s = splhigh(), i;
+	struct rconsole *rc = p;
+	int s = splhigh(), i;
 
 	if (rc->rc_ringing) {
 		rc->rc_ringing = 0;
@@ -166,39 +172,13 @@ rcons_belltmr(p)
 
 void
 rcons_init(rc)
-	register struct rconsole *rc;
+	struct rconsole *rc;
 {
 	/* XXX this should go away */
-	static struct raster xxxraster;
-	register struct raster *rp = rc->rc_sp = &xxxraster;
-	register struct winsize *ws;
-	register int i;
-	static int row, col;
+	struct winsize *ws;
 
 	mydevicep = rc;
-
-	/* XXX mostly duplicates of data in other places */
-	rp->width = rc->rc_width;
-	rp->height = rc->rc_height;
-	rp->depth = rc->rc_depth;
-	if (rc->rc_linebytes & 0x3) {
-		printf("rcons_init: linebytes assumption botched (0x%x)\n",
-		    rc->rc_linebytes);
-		return;
-	}
-	rp->linelongs = rc->rc_linebytes >> 2;
-	rp->pixels = (u_int32_t *)rc->rc_pixels;
-
-	rc->rc_ras_blank = RAS_CLEAR;
-
-	/* Impose upper bounds on rc_max{row,col} */
-	i = rc->rc_height / rc->rc_font->height;
-	if (rc->rc_maxrow > i)
-		rc->rc_maxrow = i;
-	i = rc->rc_width / rc->rc_font->width;
-	if (rc->rc_maxcol > i)
-		rc->rc_maxcol = i;
-
+	
 	/* Let the system know how big the console is */
 	ws = &fbconstty->t_winsize;
 	ws->ws_row = rc->rc_maxrow;
@@ -206,47 +186,13 @@ rcons_init(rc)
 	ws->ws_xpixel = rc->rc_width;
 	ws->ws_ypixel = rc->rc_height;
 
-	/* Center emulator screen (but align x origin to 32 bits) */
-	rc->rc_xorigin =
-	    ((rc->rc_width - rc->rc_maxcol * rc->rc_font->width) / 2) & ~0x1f;
-	rc->rc_yorigin =
-	    (rc->rc_height - rc->rc_maxrow * rc->rc_font->height) / 2;
-
-	/* Emulator width and height used for scrolling */
-	rc->rc_emuwidth = rc->rc_maxcol * rc->rc_font->width;
-	if (rc->rc_emuwidth & 0x1f) {
-		/* Pad to 32 bits */
-		i = (rc->rc_emuwidth + 0x1f) & ~0x1f;
-		/* Make sure emulator width isn't too wide */
-		if (rc->rc_xorigin + i <= rc->rc_width)
-			rc->rc_emuwidth = i;
-	}
-	rc->rc_emuheight = rc->rc_maxrow * rc->rc_font->height;
-
-#ifdef RASTERCONS_WONB
-	rc->rc_ras_blank = RAS_NOT(rc->rc_ras_blank);
-	rc->rc_bits |= FB_INVERT;
-#endif
-
-	if (rc->rc_row == NULL || rc->rc_col == NULL) {
-		/*
-		 * No address passed; use private copies
-		 * go to LL corner and scroll.
-		 */
-		rc->rc_row = &row;
-		rc->rc_col = &col;
-		row = rc->rc_maxrow;
-		col = 0;
-#if 0
-		rcons_clear2eop(rc);	/* clear the display */
-#endif
-		rcons_scroll(rc, 1);
-		rcons_cursor(rc);	/* and draw the initial cursor */
-	} else {
-		/* Prom emulator cursor is currently visible */
-		rc->rc_bits |= FB_CURSOR;
-	}
-
+	/* Initialize operations set, clear screen and turn cursor on */
+	rcons_init_ops(rc);
+	rc->rc_col = 0;
+	rc->rc_row = 0;
+	rcons_clear2eop(rc);
+	rcons_cursor(rc);
+	
 	/* Initialization done; hook us up */
 	fbconstty->t_oproc = rcons_output;
 	/*fbconstty->t_stop = (void (*)()) nullop;*/

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:22:55 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1999/04/13 18:43:17 ad Exp $
 
 INCSDIR= /usr/include/dev/rcons
 
-INCS=	raster.h rcons.h rcons_subr.h
+INCS=	raster.h rcons.h
 
 .include <bsd.kinc.mk>
