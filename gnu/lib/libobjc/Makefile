@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/08/18 17:38:38 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/08/27 21:37:52 tv Exp $
 
 LIB=		objc
 SRCS=		hash.c sarray.c class.c sendmsg.c init.c archive.c \
@@ -6,6 +6,10 @@ SRCS=		hash.c sarray.c class.c sendmsg.c init.c archive.c \
 		Object.m Protocol.m nil_method.c thr.c linking.m \
 		thr-single.c
 DPSRCS+=	runtime-info.h
+
+INCS=		hash.h objc-list.h sarray.h objc.h objc-api.h NXConstStr.h \
+		Object.h Protocol.h encoding.h typedstream.h thr.h
+INCSDIR=	/usr/include/objc
 
 CPPFLAGS+=	-I. -I${ARCH}/${MACHINE_ARCH} -I${ARCH} \
 		-I${DIST}/config -I${DIST}
