@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/30 23:45:23 augustss Exp $
+#	$NetBSD: Makefile,v 1.2 2002/05/31 10:43:28 augustss Exp $
 #	Makefile for man4/man4.pmppc
 
-MAN=	cpc.4
+MAN=	cpc.4 mainbus.4 rtc.4
 MANSUBDIR=/pmppc
-USETBL=
 
 .include <bsd.man.mk>
