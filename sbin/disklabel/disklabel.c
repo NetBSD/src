@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/5/93"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.14.2.1 1994/07/20 05:08:29 cgd Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.14.2.2 1994/07/20 21:40:19 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,7 +120,7 @@ int	debug;
 
 #ifdef i386
 struct dos_partition *dosdp;	/* i386 DOS partition, if found */
-struct dos_partition *readmbr(int);
+struct dos_partition *readmbr __P((int));
 #endif
 
 main(argc, argv)
@@ -376,9 +376,7 @@ writelabel(f, boot, lp)
 {
 	register int i;
 	int flag;
-#ifdef i386
-	off_t lbl_off; struct partition *pp = &lp->d_partitions[2];
-#endif
+	off_t sectoffset = 0;
 
 #if NUMBOOT > 0
 	setbootflag(lp);
@@ -389,6 +387,7 @@ writelabel(f, boot, lp)
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
 #ifdef i386
+		struct partition *pp = &lp->d_partitions[2];
 		/*
 		 * If NetBSD/i386 DOS partition is missing, or if 
 		 * the label to be written is not within partition,
@@ -400,7 +399,7 @@ writelabel(f, boot, lp)
 
 		if (dosdp && dosdp->dp_typ == DOSPTYP_386BSD && pp->p_size &&
 			dosdp->dp_start == pp->p_offset) {
-			lbl_off = pp->p_offset;
+		        sectoffset = (pp->p_offset * lp->d_secsize);
 		} else {
 			if (dosdp) {
 				int c;
@@ -414,9 +413,8 @@ writelabel(f, boot, lp)
 				if  (c != 'y' && c != 'Y')
 					exit(0);
 			}
-			lbl_off = 0;
+			sectoffset = 0;
 		}
-		(void)lseek(f, (off_t)(lbl_off * lp->d_secsize), L_SET);
 #endif
 		/*
 		 * First set the kernel disk label,
@@ -431,9 +429,8 @@ writelabel(f, boot, lp)
 			l_perror("ioctl DIOCSDINFO");
 			return (1);
 		}
-#ifndef i386
-		(void)lseek(f, (off_t)0, SEEK_SET);
-#endif
+		(void)lseek(f, (off_t)sectoffset, SEEK_SET);
+
 		/*
 		 * write enable label sector before write (if necessary),
 		 * disable after writing.
@@ -529,7 +526,7 @@ readmbr(f)
 	char mbr[DEV_BSIZE];
 	int i, npart, nboot, njunk;
 
-	(void)lseek(f, (off_t)DOSBBSECTOR, L_SET);
+	(void)lseek(f, (off_t)DOSBBSECTOR, SEEK_SET);
 	if (read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		Perror("can't read master boot record");
 		
@@ -553,8 +550,7 @@ readmbr(f)
 	}
 
 	/* valid partition table? */
-	if (npart == 0 || njunk)			/* 18 Sep 92*/
-/* was:	if (nboot != 1 || npart == 0 || njunk)*/
+	if (npart == 0 || njunk)
 		return (0);
 	/* if no bsd partition, pass back first one */
 	if (!bsdp) {
@@ -583,7 +579,7 @@ readlabel(f)
 			sectoffset = dosdp->dp_start * DEV_BSIZE;
 		else
 			sectoffset = 0;
-		(void)lseek(f, sectoffset, L_SET);
+		(void)lseek(f, sectoffset, SEEK_SET);
 #endif
 		if (read(f, bootarea, BBSIZE) < BBSIZE)
 			Perror(specname);
