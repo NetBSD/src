@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2002/11/22 12:21:03 wiz Exp $
+# $NetBSD: GENERIC,v 1.31 2003/02/27 19:22:43 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -260,6 +260,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38 2002/11/22 12:21:02 wiz Exp $
+# $NetBSD: GENERIC,v 1.39 2003/02/27 19:22:42 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 maxusers	8
 
@@ -168,6 +168,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tun		2	# Network "tunnel" device
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	vnd		2	# disk-like interface to files
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

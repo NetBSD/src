@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2002/11/22 12:21:03 wiz Exp $
+# $NetBSD: GENERIC,v 1.27 2003/02/27 19:22:43 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -164,6 +164,7 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device

@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.3 2003/02/15 00:46:31 perseant Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.4 2003/02/27 19:22:36 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -370,6 +370,7 @@ void
 show_config(int sock, const char *bridge, const char *prefix)
 {
 	struct ifbrparam param;
+	u_int32_t ipfflags;
 	u_int16_t pri;
 	u_int8_t ht, fd, ma;
 
@@ -391,6 +392,16 @@ show_config(int sock, const char *bridge, const char *prefix)
 
 	printf("%spriority %u hellotime %u fwddelay %u maxage %u\n",
 	    prefix, pri, ht, fd, ma);
+
+	if (do_cmd(sock, bridge, BRDGGFILT, &param, sizeof(param), 0) < 0) {
+		/* err(1, "unable to get ipfilter status"); */
+		param.ifbrp_filter = 0;
+	}
+
+	ipfflags = param.ifbrp_filter;
+	printf("%sipfilter %s flags 0x%x\n", prefix,
+		(ipfflags & IFBF_FILT_USEIPF) ? "enabled" : "disabled",
+		ipfflags);
 }
 
 void

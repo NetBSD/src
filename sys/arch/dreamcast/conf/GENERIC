@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2002/12/27 14:59:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.32 2003/02/27 19:22:40 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -186,6 +186,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

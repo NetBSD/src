@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2002/11/22 12:21:05 wiz Exp $
+# $NetBSD: GENERIC,v 1.145 2003/02/27 19:22:47 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.145 $"
 
 maxusers	32
 
@@ -555,6 +555,7 @@ pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 #### Audio and video devices
 

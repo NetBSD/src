@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.9 2003/02/15 00:46:30 perseant Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.10 2003/02/27 19:22:49 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,8 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.9 2003/02/15 00:46:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.10 2003/02/27 19:22:49 perseant Exp $");
 
+#include "opt_bridge_ipf.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

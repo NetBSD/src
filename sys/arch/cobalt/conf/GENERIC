@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2003/01/20 01:26:14 soren Exp $
+# $NetBSD: GENERIC,v 1.41 2003/02/27 19:22:40 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.40 $"
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 maxusers	32
 
@@ -273,6 +273,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
