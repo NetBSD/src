@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.11 1998/11/25 22:32:04 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.12 1998/12/10 23:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -368,11 +368,13 @@ uhci_dump_td(p)
 	       (long)p->td->td_token,
 	       (long)p->td->td_buffer);
 	if (uhci_longtd)
-		printf("  %b %b,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,D=%d,maxlen=%d\n",
+		printf("  %b %b,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,"
+		       "D=%d,maxlen=%d\n",
 		       (long)p->td->td_link,
 		       "\20\1T\2Q\3VF",
 		       (long)p->td->td_status,
-		       "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
+		       "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
+		       "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
 		       UHCI_TD_GET_ERRCNT(p->td->td_status),
 		       UHCI_TD_GET_ACTLEN(p->td->td_status),
 		       UHCI_TD_GET_PID(p->td->td_token),
@@ -571,7 +573,9 @@ uhci_remove_bulk(sc, sqh)
 	uhci_soft_qh_t *pqh;
 
 	DPRINTFN(10, ("uhci_remove_bulk: sqh=%p\n", sqh));
-	for (pqh = sc->sc_bulk_start; pqh->qh->hlink != sqh; pqh=pqh->qh->hlink)
+	for (pqh = sc->sc_bulk_start; 
+	     pqh->qh->hlink != sqh; 
+	     pqh = pqh->qh->hlink)
 #if defined(DIAGNOSTIC) || defined(USB_DEBUG)		
 		if (pqh->qh->qh_hlink & UHCI_PTR_T) {
 			printf("uhci_remove_bulk: QH not found\n");
@@ -736,7 +740,8 @@ uhci_ii_done(ii, timo)
 	if (status != 0) {
 		DPRINTFN(-1+(status==UHCI_TD_STALLED),
 			 ("uhci_intr: error, status 0x%b\n", (long)status, 
-			  "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27STALLED\30ACTIVE"));
+			  "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
+			  "STALLED\30ACTIVE"));
 		if (status == UHCI_TD_STALLED)
 			reqh->status = USBD_STALLED;
 		else
@@ -866,7 +871,8 @@ uhci_run(sc, run)
 		}
 	}
 	splx(s);
-	printf("%s: cannot %s\n", sc->sc_bus.bdev.dv_xname, run ? "start" : "stop");
+	printf("%s: cannot %s\n", sc->sc_bus.bdev.dv_xname, 
+	       run ? "start" : "stop");
 }
 
 /*
@@ -1023,7 +1029,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, dma, sp, ep)
 	DPRINTFN(15, ("uhci_alloc_std_chain: len=%d\n", len));
 	if (len == 0) {
 		*sp = *ep = 0;
-printf("uhci_alloc_std_chain: len=0\n");
+		DPRINTFN(-1,("uhci_alloc_std_chain: len=0\n"));
 		return (USBD_NORMAL_COMPLETION);
 	}
 	ls = upipe->pipe.device->lowspeed ? UHCI_TD_LS : 0;
@@ -1086,7 +1092,8 @@ uhci_device_bulk_transfer(reqh)
 	int len, isread;
 	int s;
 
-	DPRINTFN(3, ("uhci_device_bulk_transfer: reqh=%p buf=%p len=%d flags=%d\n",
+	DPRINTFN(3, ("uhci_device_bulk_transfer: reqh=%p buf=%p len=%d "
+		     "flags=%d\n",
 		     reqh, reqh->buffer, reqh->length, reqh->flags));
 
 	if (reqh->isreq)
@@ -1161,7 +1168,7 @@ uhci_device_bulk_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1);/* make sure it is done */
 	/* XXX call done */
 }
 
@@ -1213,7 +1220,8 @@ uhci_device_intr_transfer(reqh)
 	int len, i;
 	int s;
 
-	DPRINTFN(3, ("uhci_device_intr_transfer: reqh=%p buf=%p len=%d flags=%d\n",
+	DPRINTFN(3, ("uhci_device_intr_transfer: reqh=%p buf=%p len=%d "
+		     "flags=%d\n",
 		     reqh, reqh->buffer, reqh->length, reqh->flags));
 
 	if (reqh->isreq)
@@ -1249,7 +1257,8 @@ uhci_device_intr_transfer(reqh)
 	ii->isdone = 0;
 #endif
 
-DPRINTFN(10,("uhci_device_intr_transfer: qhs[0]=%p\n", upipe->u.intr.qhs[0]));
+	DPRINTFN(10,("uhci_device_intr_transfer: qhs[0]=%p\n", 
+		     upipe->u.intr.qhs[0]));
 	for (i = 0; i < upipe->u.intr.npoll; i++) {
 		sqh = upipe->u.intr.qhs[i];
 		sqh->qh->elink = xfer;
@@ -1280,7 +1289,7 @@ uhci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
 	/* XXX call done */
 }
 
@@ -1304,7 +1313,7 @@ uhci_device_intr_abort(reqh)
 
 	DPRINTFN(1, ("uhci_device_intr_abort: reqh=%p\n", reqh));
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 2);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 2); /* make sure it is done */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("uhci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;
@@ -1370,7 +1379,8 @@ uhci_device_request(reqh)
 	int isread;
 	int s;
 
-	DPRINTFN(1,("uhci_device_control type=0x%02x, request=0x%02x, wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
+	DPRINTFN(1,("uhci_device_control type=0x%02x, request=0x%02x, "
+		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), UGETW(req->wLength),
 		    addr, endpt));
@@ -2003,7 +2013,8 @@ uhci_root_ctrl_transfer(reqh)
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(3, ("uhci_root_ctrl_control: UR_CLEAR_PORT_FEATURE port=%d feature=%d\n",
+		DPRINTFN(3, ("uhci_root_ctrl_control: UR_CLEAR_PORT_FEATURE "
+			     "port=%d feature=%d\n",
 			     index, value));
 		if (index == 1)
 			port = UHCI_PORTSC1;
@@ -2224,7 +2235,8 @@ uhci_root_intr_transfer(reqh)
 	usbd_status r;
 	int len;
 
-	DPRINTFN(3, ("uhci_root_intr_transfer: reqh=%p buf=%p len=%d flags=%d\n",
+	DPRINTFN(3, ("uhci_root_intr_transfer: reqh=%p buf=%p len=%d "
+		     "flags=%d\n",
 		     reqh, reqh->buffer, reqh->length, reqh->flags));
 
 	len = reqh->length;

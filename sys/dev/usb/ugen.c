@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.2 1998/12/09 00:18:10 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.3 1998/12/10 23:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,11 +102,13 @@ int ugenread __P((dev_t, struct uio *uio, int));
 int ugenwrite __P((dev_t, struct uio *uio, int));
 int ugenioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int ugenpoll __P((dev_t, int, struct proc *));
-void ugenintr __P((usbd_request_handle reqh, usbd_private_handle addr, usbd_status status));
+void ugenintr __P((usbd_request_handle reqh, usbd_private_handle addr, 
+		   usbd_status status));
 void ugen_disco __P((void *));
 
 int ugen_set_config __P((struct ugen_softc *sc, int configno));
-usb_config_descriptor_t *ugen_get_cdesc __P((struct ugen_softc *sc, int index, int *lenp));
+usb_config_descriptor_t *ugen_get_cdesc __P((struct ugen_softc *sc, int index,
+					     int *lenp));
 usbd_status ugen_set_interface __P((struct ugen_softc *, int, int));
 int ugen_get_alt_index __P((struct ugen_softc *sc, int ifaceidx));
 
@@ -193,7 +195,8 @@ ugen_set_config(sc, configno)
 			endpt = ed->bEndpointAddress;
 			sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)]
 				               [UE_GET_IN(endpt)];
-			DPRINTFN(1,("ugen_set_config: endptno %d, endpt=0x%02x(%d,%d), sce=%p\n", 
+			DPRINTFN(1,("ugen_set_config: endptno %d, endpt=0x%02x"
+				    "(%d,%d), sce=%p\n", 
 				    endptno, endpt, UE_GET_ADDR(endpt),
 				    UE_GET_IN(endpt), sce));
 			sce->sc = sc;
@@ -256,7 +259,8 @@ ugenopen(dev, flag, mode, p)
 			return (EACCES);
 		}
 		sce = &sc->sc_endpoints[endpt][dir];
-		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n", sc, endpt, dir, sce));
+		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n", 
+			     sc, endpt, dir, sce));
 		if (sce->state & UGEN_OPEN)
 			return (EBUSY);
 		edesc = sce->edesc;
@@ -795,7 +799,8 @@ ugenioctl(dev, cmd, addr, flag, p)
 	}
 	case USB_GET_STRING_DESC:
 		si = (struct usb_string_desc *)addr;
-		r = usbd_get_string_desc(sc->sc_udev, si->string_index, si->language_id, &si->desc);
+		r = usbd_get_string_desc(sc->sc_udev, si->string_index, 
+					 si->language_id, &si->desc);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (EINVAL);
 		break;

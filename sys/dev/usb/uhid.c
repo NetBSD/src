@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.10 1998/12/09 00:18:11 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.11 1998/12/10 23:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,12 +166,14 @@ uhid_attach(parent, self, aux)
 		return;
 	}
 
-	DPRINTFN(10,("uhid_attach: \
-bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketSize=%d bInterval=%d\n",
-	       ed->bLength, ed->bDescriptorType, ed->bEndpointAddress & UE_ADDR,
-	       ed->bEndpointAddress & UE_IN ? "in" : "out",
-	       ed->bmAttributes & UE_XFERTYPE,
-	       UGETW(ed->wMaxPacketSize), ed->bInterval));
+	DPRINTFN(10,("uhid_attach: bLength=%d bDescriptorType=%d "
+		     "bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketSize=%d"
+		     " bInterval=%d\n",
+		     ed->bLength, ed->bDescriptorType, 
+		     ed->bEndpointAddress & UE_ADDR,
+		     ed->bEndpointAddress & UE_IN ? "in" : "out",
+		     ed->bmAttributes & UE_XFERTYPE,
+		     UGETW(ed->wMaxPacketSize), ed->bInterval));
 
 	if ((ed->bEndpointAddress & UE_IN) != UE_IN ||
 	    (ed->bmAttributes & UE_XFERTYPE) != UE_INTERRUPT) {
@@ -281,7 +283,8 @@ uhidopen(dev, flag, mode, p)
 				&sc->sc_intrpipe, sc, sc->sc_ibuf, 
 				sc->sc_isize, uhid_intr);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, error=%d\n",r));
+		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
+			 "error=%d\n",r));
 		sc->sc_state &= ~UHID_OPEN;
 		return (EIO);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.10 1998/12/09 00:18:12 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.11 1998/12/10 23:16:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,7 +233,8 @@ int usbd_get_interface_altindex __P((usbd_interface_handle iface));
 usb_interface_descriptor_t *usbd_find_idesc
 	__P((usb_config_descriptor_t *cd, int iindex, int ano));
 usb_endpoint_descriptor_t *usbd_find_edesc
-	__P((usb_config_descriptor_t *cd, int ifaceidx, int altidx, int endptidx));
+	__P((usb_config_descriptor_t *cd, int ifaceidx, int altidx, 
+	     int endptidx));
 
 void usbd_dopoll __P((usbd_interface_handle));
 void usbd_set_polling __P((usbd_interface_handle iface, int on));

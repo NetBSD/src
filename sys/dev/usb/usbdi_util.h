@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.8 1998/12/09 00:18:12 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.9 1998/12/10 23:16:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@ usbd_status	usbd_alloc_report_desc
 usbd_status	usbd_get_config
 	__P((usbd_device_handle dev, u_int8_t *conf));
 usbd_status usbd_get_string_desc
-	__P((usbd_device_handle dev, int sindex, int langid, usb_string_descriptor_t *sdesc));
+	__P((usbd_device_handle dev, int sindex, int langid, 
+	     usb_string_descriptor_t *sdesc));
 
 
 usbd_status usbd_set_config_no
