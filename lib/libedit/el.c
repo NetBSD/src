@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.33 2003/09/14 21:48:54 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.34 2003/09/26 17:44:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.33 2003/09/14 21:48:54 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.34 2003/09/26 17:44:51 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -253,6 +253,18 @@ el_set(EditLine *el, int op, ...)
 		el->el_data = va_arg(va, void *);
 		break;
 
+	case EL_UNBUFFERED:
+		rv = va_arg(va, int);
+		if (rv && !(el->el_flags & UNBUFFERED)) {
+			el->el_flags |= UNBUFFERED;
+			read_prepare(el);
+		} else if (!rv && (el->el_flags & UNBUFFERED)) {
+			el->el_flags &= ~UNBUFFERED;
+			read_finish(el);
+		}
+		rv = 0;
+		break;
+
 	default:
 		rv = -1;
 		break;
@@ -372,6 +384,11 @@ el_get(EditLine *el, int op, void *ret)
 
 	case EL_CLIENTDATA:
 		*((void **)ret) = el->el_data;
+		rv = 0;
+		break;
+
+	case EL_UNBUFFERED:
+		*((int *) ret) = (!(el->el_flags & UNBUFFERED));
 		rv = 0;
 		break;
 
