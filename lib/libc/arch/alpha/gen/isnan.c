@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.6 1999/08/29 18:08:30 mycroft Exp $	*/
+/*	$NetBSD: isnan.c,v 1.1 1999/08/29 18:08:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinf.c,v 1.6 1999/08/29 18:08:30 mycroft Exp $");
+__RCSID("$NetBSD: isnan.c,v 1.1 1999/08/29 18:08:28 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,15 +54,15 @@ __RCSID("$NetBSD: isinf.c,v 1.6 1999/08/29 18:08:30 mycroft Exp $");
 #include <math.h>
 
 #ifdef __weak_alias
-__weak_alias(isinf,_isinf);
+__weak_alias(isnan,_isnan);
 #endif
 
 int
-isinf(d)
+isnan(d)
 	double d;
 {
 	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
-	    (p->dbl_frach == 0 && p->dbl_fracl == 0));
+	    (p->dbl_frach != 0 || p->dbl_fracl != 0));
 }

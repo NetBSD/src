@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/01/15 13:31:15 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/08/29 18:08:27 mycroft Exp $
 
-SRCS+=	fabs.S frexp.c infinity.c isinf.c ldexp.c modf.c
+SRCS+=	fabs.S frexp.c infinity.c isinf.c isnan.c ldexp.c modf.c
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 	fpsetround.c fpsetsticky.c
 SRCS+=	_setjmp.S

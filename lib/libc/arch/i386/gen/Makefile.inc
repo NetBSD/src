@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/01/15 13:31:17 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1999/08/29 18:08:30 mycroft Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S modf.S \
@@ -10,7 +10,7 @@ SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 
 # objects built from C sources
-SRCS+=	bswap64.c frexp.c infinity.c isinf.c ldexp.c
+SRCS+=	bswap64.c frexp.c infinity.c isinf.c isnan.c ldexp.c
 
 # "internal" objects (don't provide part of the user-visible API)
 SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
