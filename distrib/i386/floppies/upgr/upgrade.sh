@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.sh,v 1.4.4.2 1996/09/16 13:37:03 perry Exp $
+#	$NetBSD: upgrade.sh,v 1.4.4.3 1997/03/13 00:48:35 mycroft Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -39,7 +39,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.2
+VERSION=1.2.1
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {

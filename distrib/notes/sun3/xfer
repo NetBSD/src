@@ -13,8 +13,8 @@ for each type of media are given below.
 
 In order to create installation media, you will need all the 
 files in these two directories:
-	.../NetBSD-1.2/sun3/install
-	.../NetBSD-1.2/sun3/binary
+	.../NetBSD-1.2.1/sun3/install
+	.../NetBSD-1.2.1/sun3/binary
 
 * Creating boot/install tapes:
 
@@ -24,7 +24,7 @@ tape, and another called the "install" tape.
 
 The boot tape is created as follows:
 
-	cd .../NetBSD-1.2/sun3/install
+	cd .../NetBSD-1.2.1/sun3/install
 	set T = /dev/nrst0
 	mt -f $T rewind
 	dd if=tapeboot of=$T obs=8k conv=sync
@@ -34,7 +34,7 @@ The boot tape is created as follows:
 
 The install tape is created as follows:
 
-	cd .../NetBSD-1.2/sun3/install
+	cd .../NetBSD-1.2.1/sun3/install
 	set T = /dev/nrst0
 	mt -f $T rewind
 	foreach f (base etc comp games man misc text)
@@ -121,7 +121,7 @@ server, you may want to keep the following information handy:
 	IP Address: ftp.NetBSD.ORG
 	Login: anonymous
 	Password: <your e-mail address>
-	Server path: /pub/NetBSD/NetBSD-1.2/sun3/binary
+	Server path: /pub/NetBSD/NetBSD-1.2.1/sun3/binary
 
 Note: if you're not using a nameserver duing installation,
 you might find 206.86.8.12 handy; it's the IP address of

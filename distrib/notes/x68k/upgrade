@@ -26,8 +26,6 @@ process.
 To upgrade your system, follow the following instructions:
 
 	Boot your machine using of the appropriate kernel-copy floppy.
-	When presented with the boot prompt (the prompt begins with
-	"Boot" and ends with ":-"), hit return.
 
 	You will be prompted to insert a file system floppy.  Remove
 	the kernel-copy floppy and insert the upgr121 floppy, then hit

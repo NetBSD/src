@@ -56,7 +56,7 @@ process again from scratch.
 
 	Once you have reached that prompt, remove the kernel-copy
 	floppy from the floppy drive.  Make sure that the installation
-	disk (the "inst-12" floppy) is writable, insert it into the
+	disk (the "inst121" floppy) is writable, insert it into the
 	floppy drive, and hit any key.
 
 	You will then be presented with the NetBSD kernel boot
@@ -223,12 +223,12 @@ process again from scratch.
 
 		Run the "Extract" command once for each distribution
 		set you wish to install.  For instance, if you wish to
-		install the "base12" distribution set, followed by the
-		"man12" distribution set, and finally the "etc12"
+		install the "base121" distribution set, followed by the
+		"man121" distribution set, and finally the "etc121"
 		distribution set, use the commands:
-			Extract base12
-			Extract man12
-			Extract etc12
+			Extract base121
+			Extract man121
+			Extract etc121
 
 		For each extraction, it will ask you if the extraction
 		should be verbose.  If you reply affirmatively, it
@@ -283,9 +283,9 @@ process again from scratch.
 		hitting return at the prompt.
 
 		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base12"
+		set.  For instance, if you're extracting the "base121"
 		set, use the command:
-			Extract base12
+			Extract base121
 		You will be asked if you wish the extraction to be
 		verbose.  If you reply affirmatively, the name of each
 		file being extracted will be printed.
@@ -403,7 +403,7 @@ process again from scratch.
 	Once you have finished extracting all of the distribution sets
 	that you wish to install, and are back at the "#" prompt, you
 	are ready to configure your system.  The configuration utility
-	expects that you have installed the "base12" and "etc12"
+	expects that you have installed the "base121" and "etc121"
 	distribution sets.  If you have not, you will not be able to
 	run it successfully (nor will you have a functional system, in
 	any case).  To configure your newly-installed NetBSD system,
@@ -415,8 +415,8 @@ process again from scratch.
 Kernel Installation:
 
 	Enter "halt" at the prompt to halt the system.  When the
-	system is halted, remove the "inst-12" floppy from the floppy
-	drive, and replace it with the NetBSD 1.2 kernel-copy floppy
+	system is halted, remove the "inst121" floppy from the floppy
+	drive, and replace it with the NetBSD 1.2.1 kernel-copy floppy
 	that you previously booted from.  Reboot with that floppy.
 	with that floppy.
 
@@ -445,13 +445,13 @@ Kernel Installation:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Congratulations, you have successfully installed NetBSD 1.2.  When you
+Congratulations, you have successfully installed NetBSD 1.2.1.  When you
 reboot into NetBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the NetBSD 1.2 distribution might need to be
+Some of the files in the NetBSD 1.2.1 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with

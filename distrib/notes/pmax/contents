@@ -1,8 +1,8 @@
-The pmax-specific portion of the NetBSD 1.2 release is found in the
+The pmax-specific portion of the NetBSD 1.2.1 release is found in the
 "pmax" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.2/pmax/
+.../NetBSD-1.2.1/pmax/
 			binary/		pmax binary distribution sets;
 					see below.
 
@@ -14,12 +14,12 @@ out as follows:
 					see below.
 
 The NetBSD/pmax binary distribution sets contain the binaries which
-comprise the NetBSD 1.2 release for the pmax.  There are seven binary
+comprise the NetBSD 1.2.1 release for the pmax.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in the "pmax/binary" subdirectory of
-the NetBSD 1.2 distribution tree, and are as follows:
+the NetBSD 1.2.1 distribution tree, and are as follows:
 
-	base12	The NetBSD/pmax 1.2 base binary distribution.  You
+	base121	The NetBSD/pmax 1.2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -27,7 +27,7 @@ the NetBSD 1.2 distribution tree, and are as follows:
 		everything described below.
 		[ 20.4M gzipped, 19M uncompressed ]
 
-	comp12	The NetBSD/pmax Compiler tools.  All of the tools
+	comp121	The NetBSD/pmax Compiler tools.  All of the tools
 		relating to C and C++.  This set includes the system
 		include files (/usr/include), the linker, the compiler
 		tool chain, and the various system libraries (except
@@ -37,7 +37,7 @@ the NetBSD 1.2 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 7.4M gzipped, 14.7M uncompressed ]
 
-	etc12	This distribution set contains the system configuration
+	etc121	This distribution set contains the system configuration
 		files that reside in /etc and in several other places.
 		This set MUST be installed if you are installing the
 		system from scratch, but should NOT be used if you are
@@ -46,22 +46,22 @@ the NetBSD 1.2 distribution tree, and are as follows:
 		configuration files by hand.)
 		[ 68K gzipped, 348K uncompressed ]
 
-	games12	This set includes the games and their manual pages.
+	games121 This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.8M uncompressed ]
 
-	man12	This set includes all of the manual pages for the
+	man121	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.9M gzipped, 3.6M uncompressed ]
 
-	misc12	This set includes the system dictionaries (which are
+	misc121	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text12	This set includes NetBSD's text processing tools,
+	text121	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 1.2M gzipped, 3.18M uncompressed ]
@@ -81,9 +81,9 @@ The pmax binary distribution sets are distributed as gzipped tar files.
 Each pmax binary distribution set also has its own "CKSUMS" file, just
 as the source distribution sets do.
 
-The initial installation of NetBSD 1.2 on a Decstation not already running
-NetBSD 1.2 is supported by the following files, which are  included in 
-the `.../install' directory:
+The initial installation of NetBSD 1.2.1 on a Decstation not already
+running NetBSD 1.2.1 is supported by the following files, which are
+included in the `.../install' directory:
 
 	miniroot.gz	A gzipped copy of a miniroot filesystem.
 			When unzipped, this is suitable for dd'ing

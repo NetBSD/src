@@ -12,7 +12,7 @@ initialize the disk on that machine and then move the disk.
 
 * Installing from tape:
 
-Create the NetBSD/sun3 1.2 boot tape as described in the section
+Create the NetBSD/sun3 1.2.1 boot tape as described in the section
 entitled "Preparing a boot tape" and boot the tape.  At the PROM
 monitor prompt, use one of the commands:
 	>b st()

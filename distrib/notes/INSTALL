@@ -1,4 +1,4 @@
-INSTALLATION NOTES for NetBSD/MACHINE 1.2
+INSTALLATION NOTES for NetBSD/MACHINE 1.2.1
 
 
 
@@ -67,6 +67,11 @@ Solaris and Ultrix compatibility), bringing NetBSD closer to the goal of
 making the emulation as accurate as possible.
 
 
+NetBSD 1.2.1 is an update of NetBSD 1.2.  It fixes many bugs, but (with
+a few small exceptions) does not support any additional hardware or add
+new features.
+
+
 #include "whatis"
 
 
@@ -122,12 +127,12 @@ Sources of NetBSD:
 
 #include "mirrors"
 
-NetBSD 1.2 Release Contents:
------- --- ------- --------
+NetBSD 1.2.1 Release Contents:
+------ ----- ------- --------
 
-The NetBSD 1.2 release is organized in the following way:
+The NetBSD 1.2.1 release is organized in the following way:
 
-.../NetBSD-1.2/
+.../NetBSD-1.2.1/
 		BUGS			Known bugs list (incomplete
 					and out of date).
 
@@ -137,7 +142,7 @@ The NetBSD 1.2 release is organized in the following way:
 		LAST_MINUTE		Last minute changes.
 
 		MIRRORS			A list of sites that mirror
-					the NetBSD 1.2 distribution.
+					the NetBSD 1.2.1 distribution.
 
 		README.files		README describing the
 					distribution's contents.
@@ -153,7 +158,7 @@ The NetBSD 1.2 release is organized in the following way:
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures that NetBSD
-1.2 has a binary distribution for.  There are also
+1.2.1 has a binary distribution for.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution (e.g. those containing crypt(3)) that should not be
@@ -165,28 +170,28 @@ The source distribution sets can be found in subdirectories of the
 complete sources to the system.  The source distribution sets 
 are as follows:
 
-	dsrc12	This set contains the "domestic" sources.  These
+	dsrc121	This set contains the "domestic" sources.  These
 		sources contain export-restricted encryption code
 		and should not be exported from the U.S.
 		[ 140K gzipped, 655K uncompressed ]
 
-	gsrc12	This set contains the "gnu" sources, including
+	gsrc121	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
-	ksrc12	This set contains the sources to the NetBSD 1.2
+	ksrc121	This set contains the sources to the NetBSD 1.2.1
 		kernel, config(8), config.old(8) and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
-	ssrc12	This set contains the "share" sources, which include
+	ssrc121	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
 		[ 2.4M gzipped, 8.9M uncompressed ]
 
-	src12	This set contains all of the NetBSD 1.2 sources which
+	src121	This set contains all of the NetBSD 1.2.1 sources which
 		are not mentioned above.
 		[ 9.3M gzipped, 41.6M uncompressed ]
 
