@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hil.c 1.33 89/12/22$
  *
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
-	$Id: hil.c,v 1.4 1993/07/07 07:07:20 cgd Exp $
+	$Id: hil.c,v 1.5 1993/07/12 11:38:11 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -170,14 +170,7 @@ hilopen(dev, flags, mode, p)
 	 * It is safe to flush the read buffer as we are guarenteed
 	 * that no one else is using it.
 	 */
-	/* ndflush(&dptr->hd_queue, RB_LEN(&dptr->hd_queue)); XXX - cgd */
-	{ /* XXX - NO FUCKING WAY TO TOSS A CERTAIN NUMBER OF CHARACTERS!!! */
-		rbchar *foo;
-		int i;
-
-		for (i = 0; i < RB_LEN(&dptr->hd_queue); i++)
-			nextc(&dptr->hd_queue, &foo);
-	}
+	ndflush(&dptr->hd_queue, dptr->hd_queue.c_cc);
 
 	send_hil_cmd(hilp->hl_addr, HIL_INTON, NULL, 0, NULL);
 	/*
@@ -241,15 +234,7 @@ hilclose(dev, flags)
 	 * Always flush the read buffer
 	 */
 	dptr->hd_flags &= ~(HIL_QUEUEIN|HIL_READIN|HIL_NOBLOCK);
-	/* ndflush(&dptr->hd_queue, RB_LEN(&dptr->hd_queue)); XXX - cgd */
-	{ /* XXX - NO FUCKING WAY TO TOSS A CERTAIN NUMBER OF CHARACTERS!!! */
-		rbchar *foo;
-		int i;
-
-		for (i = 0; i < RB_LEN(&dptr->hd_queue); i++)
-			nextc(&dptr->hd_queue, &foo);
-	}
-
+	ndflush(&dptr->hd_queue, dptr->hd_queue.c_cc);
 	/*
 	 * Set keyboard back to cooked mode when closed.
 	 */
@@ -313,7 +298,7 @@ hilread(dev, uio)
 		return(ENODEV);
 
 	(void) splhil();
-	while (RB_LEN(&dptr->hd_queue) == 0) {
+	while (dptr->hd_queue.c_cc == 0) {
 		if (dptr->hd_flags & HIL_NOBLOCK) {
 			spl0();
 			return(EWOULDBLOCK);
@@ -684,7 +669,7 @@ hilselect(dev, rw, p)
 	dptr = &hilp->hl_device[device];
 	if (dptr->hd_flags & HIL_READIN) {
 		s = splhil();
-		if (RB_LEN(&dptr->hd_queue)) {
+		if (dptr->hd_queue.c_cc) {
 			splx(s);
 			return (1);
 		}
@@ -956,14 +941,10 @@ hpuxhilevent(hilp, dptr)
 	 * room in the buffer for it, and if not, toss the packet.
 	 */
 	len = hilp->hl_pollbp - hilp->hl_pollbuf;
-	if (RB_LEN(&dptr->hd_queue) <= (HILMAXCLIST - (len+5))) {
+	if (dptr->hd_queue.c_cc <= (HILMAXCLIST - (len+5))) {
 		putc(len+5, &dptr->hd_queue);
-		rb_cwrite(&dptr->hd_queue, (char *)&tstamp, sizeof tstamp);
-		rb_cwrite(&dptr->hd_queue, (char *)&hilp->hl_pollbuf, len);
-/*	XXX	(void) b_to_q((char *)&tstamp, sizeof tstamp, &dptr->hd_queue);
+		(void) b_to_q((char *)&tstamp, sizeof tstamp, &dptr->hd_queue);
 		(void) b_to_q((char *)hilp->hl_pollbuf, len, &dptr->hd_queue);
- XXX if replacement code checked return values, we'd be fucked;
-	return values aren't the same... - cgd */
 	}
 
 	/*

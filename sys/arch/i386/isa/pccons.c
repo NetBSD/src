@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.27 1993/07/11 09:53:44 mycroft Exp $
+ *	$Id: pccons.c,v 1.28 1993/07/12 11:37:17 mycroft Exp $
  */
 
 /*
@@ -47,7 +47,6 @@
 #include "user.h"
 #include "select.h"
 #include "tty.h"
-#include "malloc.h"
 #include "uio.h"
 #include "i386/isa/isa_device.h"
 #include "callout.h"
@@ -302,9 +301,7 @@ pcopen(dev, flag, mode, p)
 	if (minor(dev) != 0)
 		return (ENXIO);
 	if(!pc_tty[0]) {
-		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-		bzero(tp, sizeof(struct tty));
-		pc_tty[0] = tp;
+		tp = pc_tty[0] = ttymalloc();
 	} else {
 		tp = pc_tty[0];
 	}
@@ -461,9 +458,9 @@ pcxint(dev)
 pcstart(tp)
 register struct tty *tp;
 {
-	register struct ringb *rbp;
+	register struct clist *rbp;
 	int s, len, n;
-	char buf[PCBURST];
+	u_char buf[PCBURST];
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -474,17 +471,17 @@ register struct tty *tp;
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
-	rbp = &tp->t_out;
-	len = rb_cread(rbp, buf, PCBURST);
+	rbp = &tp->t_outq;
+	len = q_to_b(rbp, buf, PCBURST);
 	for (n = 0; n < len; n++)
-		if (buf[n]) sputc(buf[n] & 0xff, 0);
+		if (buf[n]) sputc(buf[n], 0);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (RB_LEN(rbp)) {
+	if (rbp->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
 	}
-	if (RB_LEN(rbp) <= tp->t_lowat) {
+	if (rbp->c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)rbp);
@@ -959,7 +956,7 @@ static sputc(c, ka)
 		if (openf) {
 			(void)sgetc(1);
 			if (scroll)
-				sleep(&scroll, PUSER);
+				sleep((caddr_t)&scroll, PUSER);
 		}
 		bcopy(Crtat+vs.ncol, Crtat, vs.ncol*(vs.nrow-1)*CHR);
 		fillw ((at << 8) + ' ', Crtat + vs.ncol*(vs.nrow-1),
@@ -1474,7 +1471,8 @@ loop:
 						goto loop;
 					lock_down |= SCROLL;
 					scroll ^= 1;
-					if (!scroll) wakeup(&scroll);
+					if (!scroll)
+						wakeup((caddr_t)&scroll);
 					update_led();
 					break;
 			}
@@ -1577,7 +1575,8 @@ loop:
 					break;
 				lock_down |= SCROLL;
 				scroll ^= 1;
-				if (!scroll) wakeup(&scroll);
+				if (!scroll)
+					wakeup((caddr_t)&scroll);
 				update_led();
 				break;
 

@@ -395,7 +395,7 @@ sloutput(ifp, m, dst)
 	}
 	IF_ENQUEUE(ifq, m);
 	sc->sc_if.if_lastchange = time;
-	if (RB_LEN(&sc->sc_ttyp->t_out) == 0)
+	if (sc->sc_ttyp->t_outq.c_cc == 0)
 		slstart(sc->sc_ttyp);
 	splx(s);
 	return (0);
@@ -427,9 +427,9 @@ slstart(tp)
 		 * We are being called in lieu of ttstart and must do what
 		 * it would.
 		 */
-		if (RB_LEN(&tp->t_out) != 0) {
+		if (tp->t_outq.c_cc != 0) {
 			(*tp->t_oproc)(tp);
-			if (RB_LEN(&tp->t_out) > SLIP_HIWAT)
+			if (tp->t_outq.c_cc > SLIP_HIWAT)
 				return;
 		}
 		/*
@@ -442,11 +442,11 @@ slstart(tp)
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
 		 * current COM output queue, with a packet full of
-		 * escapes this could be as bad as SLMTU*2.  The value
-		 * of RBSZ in tty.h also has to be upped to be at least
-		 * SLMTU*2.
+		 * escapes this could be as bad as SLMTU*2.  The size
+		 * of the ring buffer must be at least SLMTU*2 to
+		 * avoid deadlock.
 		 */
-		if (RBSZ - RB_LEN(&tp->t_out) < 2 * SLMTU + 2)
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2 * SLMTU)
 			return;
 
 		/*
@@ -509,9 +509,9 @@ slstart(tp)
 		 * will flush any accumulated garbage.  We do this whenever
 		 * the line may have been idle for some time.
 		 */
-		if (RB_LEN(&tp->t_out) == 0) {
+		if (tp->t_outq.c_cc == 0) {
 			++sc->sc_bytessent;
-			(void) putc(FRAME_END, &tp->t_out);
+			(void) putc(FRAME_END, &tp->t_outq);
 		}
 
 		while (m) {
@@ -536,13 +536,12 @@ slstart(tp)
 				out:
 				if (cp > bp) {
 					/*
-					 * Put the non-special bytes
+					 * Put n characters at once
 					 * into the tty output queue.
 					 */
-					sc->sc_bytessent += rb_cwrite(
-								&tp->t_out,
-								(char *) bp,
-								cp - bp);
+					if (b_to_q((u_char *)bp, cp - bp, &tp->t_outq))
+						break;
+					sc->sc_bytessent += cp - bp;
 				}
 				/*
 				 * If there are characters left in the mbuf,
@@ -550,12 +549,12 @@ slstart(tp)
 				 * Put it out in a different form.
 				 */
 				if (cp < ep) {
-					if (putc(FRAME_ESCAPE, &tp->t_out))
+					if (putc(FRAME_ESCAPE, &tp->t_outq))
 						break;
 					if (putc(*cp++ == FRAME_ESCAPE ?
 					   TRANS_FRAME_ESCAPE : TRANS_FRAME_END,
-					   &tp->t_out)) {
-						(void) unputc(&tp->t_out);
+					   &tp->t_outq)) {
+						(void) unputc(&tp->t_outq);
 						break;
 					}
 					sc->sc_bytessent += 2;
@@ -565,7 +564,7 @@ slstart(tp)
 			m = m2;
 		}
 
-		if (putc(FRAME_END, &tp->t_out)) {
+		if (putc(FRAME_END, &tp->t_outq)) {
 			/*
 			 * Not enough room.  Remove a char to make room
 			 * and end the packet normally.
@@ -573,8 +572,8 @@ slstart(tp)
 			 * a day) you probably do not have enough clists
 			 * and you should increase "nclist" in param.c.
 			 */
-			(void) unputc(&tp->t_out);
-			(void) putc(FRAME_END, &tp->t_out);
+			(void) unputc(&tp->t_outq);
+			(void) putc(FRAME_END, &tp->t_outq);
 			sc->sc_if.if_collisions++;
 		} else {
 			++sc->sc_bytessent;
