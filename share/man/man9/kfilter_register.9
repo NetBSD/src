@@ -1,4 +1,4 @@
-.\"	$NetBSD: kfilter_register.9,v 1.8 2003/04/16 13:35:29 wiz Exp $
+.\"	$NetBSD: kfilter_register.9,v 1.9 2003/12/09 19:52:21 augustss Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,7 +77,7 @@ then the new filter number will be returned in the address pointed at by
 The
 .Fn kfilter_unregister
 function removes a kfilter named
-.Fn name
+.Fa name
 that was previously registered with
 .Fn kfilter_register .
 If a filter with the same
