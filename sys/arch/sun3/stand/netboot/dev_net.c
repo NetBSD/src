@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.4 1996/01/29 23:54:15 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.4.8.1 1997/03/07 22:10:05 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,7 +53,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include "if_ether.h"
 #include <netinet/in_systm.h>
 
 #include "stand.h"
