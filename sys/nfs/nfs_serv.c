@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.92 2004/12/09 01:48:22 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.93 2004/12/09 02:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.92 2004/12/09 01:48:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.93 2004/12/09 02:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3159,7 +3159,8 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt, cache;
+	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cache;
+	uint32_t cnt;
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	u_quad_t frev, off, end;
@@ -3177,7 +3178,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 
 	off = fxdr_hyper(tl);
 	tl += 2;
-	cnt = fxdr_unsigned(int, *tl);
+	cnt = fxdr_unsigned(uint32_t, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
