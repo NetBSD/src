@@ -1,7 +1,7 @@
-/*	$NetBSD: if_depca_isa.c,v 1.5 2000/06/28 16:27:54 mrg Exp $	*/
+/*	$NetBSD: depca.c,v 1.1 2000/08/11 02:27:09 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -105,93 +105,73 @@
 #include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
+#include <dev/ic/depcareg.h>
+#include <dev/ic/depcavar.h>
 
-#define	DEPCA_CSR	0x0
-#define	DEPCA_CSR_SHE		0x80	/* Shared memory enabled */
-#define	DEPCA_CSR_LOW32K	0x40	/* Map lower 32K chunk */
-#define	DEPCA_CSR_DUM		0x08	/* rev E compatibility */
-#define	DEPCA_CSR_IM		0x04	/* Interrupt masked */
-#define	DEPCA_CSR_IEN		0x02	/* Interrupt enabled */
-#define	DEPCA_RDP	0x4
-#define	DEPCA_RAP	0x6
-#define	DEPCA_ADP	0xc
+struct le_depca_softc {
+	struct am7990_softc sc_am7990;	/* glue to MI code */
 
-struct depca_softc {
-	struct	am7990_softc sc_am7990;	/* glue to MI code */
-
-	void	*sc_ih;
-	bus_space_tag_t sc_iot;
-	bus_space_tag_t sc_memt;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_memh;
+	void *sc_ih;
 };
 
-int depca_isa_probe __P((struct device *, struct cfdata *, void *));
-void depca_isa_attach __P((struct device *, struct device *, void *));
-int le_depca_probe __P((struct device *, struct cfdata *, void *));
-void le_depca_attach __P((struct device *, struct device *, void *));
+int	le_depca_match(struct device *, struct cfdata *, void *);
+void	le_depca_attach(struct device *, struct device *, void *);
 
-struct cfattach depca_isa_ca = {
-	sizeof(struct device), depca_isa_probe, depca_isa_attach
-}, le_depca_ca = {
-	sizeof(struct depca_softc), le_depca_probe, le_depca_attach
+struct cfattach le_depca_ca = {
+	sizeof(struct le_depca_softc), le_depca_match, le_depca_attach
 };
 
-int depca_readprom __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *));
-int depca_intredge __P((void *));
+void	depca_copytobuf(struct lance_softc *, void *, int, int);
+void	depca_copyfrombuf(struct lance_softc *, void *, int, int);
+void	depca_zerobuf(struct lance_softc *, int, int);
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_ddb.h"
-#endif
+struct depca_attach_args {
+	const char *da_name;
+};
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
+int	depca_print(void *, const char *);
 
-hide void depca_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t depca_rdcsr __P((struct lance_softc *, u_int16_t));  
-
-void	depca_copytobuf __P((struct lance_softc *, void *, int, int));
-void	depca_copyfrombuf __P((struct lance_softc *, void *, int, int));
-void	depca_zerobuf __P((struct lance_softc *, int, int));
-
-hide void
-depca_wrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+void
+depca_attach(struct depca_softc *sc)
 {
-	struct depca_softc *lesc = (struct depca_softc *)sc;
-	bus_space_tag_t iot = lesc->sc_iot;
-	bus_space_handle_t ioh = lesc->sc_ioh;
+	struct depca_attach_args da;
 
-	bus_space_write_2(iot, ioh, DEPCA_RAP, port);
-	bus_space_write_2(iot, ioh, DEPCA_RDP, val);
-}
+	da.da_name = "le";
 
-hide u_int16_t
-depca_rdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
-{
-	struct depca_softc *lesc = (struct depca_softc *)sc;
-	bus_space_tag_t iot = lesc->sc_iot;
-	bus_space_handle_t ioh = lesc->sc_ioh; 
-	u_int16_t val;
-
-	bus_space_write_2(iot, ioh, DEPCA_RAP, port);
-	val = bus_space_read_2(iot, ioh, DEPCA_RDP); 
-	return (val);
+	(void) config_found(&sc->sc_dev, &da, depca_print);
 }
 
 int
-depca_readprom(iot, ioh, laddr)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *laddr;
+depca_print(void *aux, const char *pnp)
+{
+	struct depca_attach_args *da = aux;
+
+	if (pnp)
+		printf("%s at %s", da->da_name, pnp);
+
+	return (UNCONF);
+}
+
+void
+depca_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
+{
+	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+
+	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RAP, port);
+	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RDP, val);
+}
+
+u_int16_t
+depca_rdcsr(struct lance_softc *sc, u_int16_t port)
+{
+	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+
+	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RAP, port);
+	return (bus_space_read_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RDP));
+}
+
+int
+depca_readprom(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *laddr)
 {
 	int port, i;
 
@@ -265,127 +245,50 @@ found:
 }
 
 int
-depca_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+le_depca_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
-	bus_space_handle_t memh;
-	int rv = 0;
+	struct depca_attach_args *da = aux;
 
-	/* Disallow impossible i/o address. */
-	if (ia->ia_iobase != 0x200 && ia->ia_iobase != 0x300)
-		return (0);
-
-	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
-		return 0;
-
-	if (ia->ia_maddr == MADDRUNK ||
-	    (ia->ia_msize != 32*1024 && ia->ia_msize != 64*1024))
-		goto bad;
-
-	/* Map card RAM. */
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
-		goto bad;
-
-	/* Just needed to check mapability; don't need it anymore. */
-	bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
-
-	/* Stop the LANCE chip and put it in a known state. */
-	bus_space_write_2(iot, ioh, DEPCA_RAP, LE_CSR0);
-	bus_space_write_2(iot, ioh, DEPCA_RDP, LE_C0_STOP);
-	delay(100);
-
-	bus_space_write_2(iot, ioh, DEPCA_RAP, LE_CSR0);
-	if (bus_space_read_2(iot, ioh, DEPCA_RDP) != LE_C0_STOP)
-		goto bad;
-
-	bus_space_write_2(iot, ioh, DEPCA_RAP, LE_CSR3);
-	bus_space_write_2(iot, ioh, DEPCA_RDP, LE_C3_ACON);
-
-	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_DUM);
-
-	if (depca_readprom(iot, ioh, 0))
-		goto bad;
-
-	ia->ia_iosize = 16;
-	rv = 1;
-
-bad:
-	bus_space_unmap(iot, ioh, 16);
-	return (rv);
+	return (strcmp(da->da_name, match->cf_driver->cd_name) == 0);
 }
 
 void
-depca_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_depca_attach(struct device *parent, struct device *self, void *aux)
 {
-	printf("\n");
-
-	config_found(self, aux, 0);
-}
-
-int
-le_depca_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	return (1);
-}
-
-void
-le_depca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct depca_softc *lesc = (void *)self;
+	struct depca_softc *dsc = (void *) parent;
+	struct le_depca_softc *lesc = (void *) self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_tag_t memt = ia->ia_memt;
-	bus_space_handle_t ioh, memh;
-	u_char val;
+	u_int8_t val;
 	int i;
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
-		panic("%s: can't map io", self->dv_xname);
+	/* I/O and memory spaces already mapped. */
 
-	/* Map shared memory. */
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
-		panic("%s: can't map mem space", self->dv_xname);
-
-	lesc->sc_iot = iot;
-	lesc->sc_ioh = ioh;
-	lesc->sc_memt = memt;
-	lesc->sc_memh = memh;
-
-	if (depca_readprom(iot, ioh, sc->sc_enaddr)) {
+	if (depca_readprom(dsc->sc_iot, dsc->sc_ioh, sc->sc_enaddr)) {
 		printf("%s: can't read PROM\n", self->dv_xname);
 		return;
 	}
 
-	bus_space_write_1(iot, ioh, DEPCA_CSR,
-			  DEPCA_CSR_DUM | DEPCA_CSR_IEN | DEPCA_CSR_SHE
-			  | (ia->ia_msize == 32*1024 ? DEPCA_CSR_LOW32K : 0));
+	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_CSR,
+	    DEPCA_CSR_DUM | DEPCA_CSR_IEN | DEPCA_CSR_SHE |
+	    (dsc->sc_memsize == 32*1024 ? DEPCA_CSR_LOW32K : 0));
 
 	val = 0xff;
 	for (;;) {
-		bus_space_set_region_1(memt, memh, 0, val,
-				       ia->ia_msize);
-		for (i = 0; i < ia->ia_msize; i++)
-			if (bus_space_read_1(memt, memh, 1) != val) {
-				printf("%s: failed to clear memory\n",
-				       sc->sc_dev.dv_xname);
+		u_int8_t cv;
+
+		bus_space_set_region_1(dsc->sc_memt, dsc->sc_memh, 0, val,
+		    dsc->sc_memsize);
+		for (i = 0; i < dsc->sc_memsize; i++) {
+			cv = bus_space_read_1(dsc->sc_memt, dsc->sc_memh, i);
+			if (cv != val) {
+				printf("%s: failed to clear memory at %d "
+				    "(0x%02x != 0x%02x)\n",
+				    sc->sc_dev.dv_xname, i, cv, val);
 				return;
 			}
+		}
 		if (val == 0x00)
 			break;
 		val -= 0x55;
@@ -394,7 +297,7 @@ le_depca_attach(parent, self, aux)
 	sc->sc_conf3 = LE_C3_ACON;
 	sc->sc_mem = 0;			/* Not used. */
 	sc->sc_addr = 0;
-	sc->sc_memsize = ia->ia_msize;
+	sc->sc_memsize = dsc->sc_memsize;
 
 	sc->sc_copytodesc = depca_copytobuf;
 	sc->sc_copyfromdesc = depca_copyfrombuf;
@@ -409,16 +312,14 @@ le_depca_attach(parent, self, aux)
 	printf("%s", sc->sc_dev.dv_xname);
 	am7990_config(&lesc->sc_am7990);
 
-	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, depca_intredge, sc);
+	lesc->sc_ih = (*dsc->sc_intr_establish)(dsc, sc);
 }
 
 /*
  * Controller interrupt.
  */
 int
-depca_intredge(arg)
-	void *arg;
+depca_intredge(void *arg)
 {
 
 	if (am7990_intr(arg) == 0)
@@ -433,41 +334,28 @@ depca_intredge(arg)
  */
 
 void
-depca_copytobuf(sc, from, boff, len)
-	struct lance_softc *sc;
-	void *from;
-	int boff, len;
+depca_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
-	struct depca_softc *lesc = (struct depca_softc *)sc;
+	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
 
-	bus_space_write_region_1(lesc->sc_memt, lesc->sc_memh, boff,
+	bus_space_write_region_1(dsc->sc_memt, dsc->sc_memh, boff,
 	    from, len);
 }
 
 void
-depca_copyfrombuf(sc, to, boff, len)
-	struct lance_softc *sc;  
-	void *to;
-	int boff, len;
+depca_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
-	struct depca_softc *lesc = (struct depca_softc *)sc;
+	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
 
-	bus_space_read_region_1(lesc->sc_memt, lesc->sc_memh, boff,
+	bus_space_read_region_1(dsc->sc_memt, dsc->sc_memh, boff,
 	    to, len);
 }
 
 void
-depca_zerobuf(sc, boff, len)
-	struct lance_softc *sc;
-	int boff, len;
+depca_zerobuf(struct lance_softc *sc, int boff, int len)
 {
-	struct depca_softc *lesc = (struct depca_softc *)sc;
+	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
 
-#if 0	/* XXX !! */
-	bus_space_set_region_1(lesc->sc_memt, lesc->sc_memh, boff,
+	bus_space_set_region_1(dsc->sc_memt, dsc->sc_memh, boff,
 	    0x00, len);
-#else
-	for (; len != 0; boff++, len--)
-		bus_space_write_1(lesc->sc_memt, lesc->sc_memh, boff, 0x00);
-#endif
 }
