@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.16 2002/08/30 23:58:12 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.17 2002/09/26 19:37:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,15 +48,27 @@
 
 struct sadata_upcall {
 	SIMPLEQ_ENTRY(sadata_upcall)	sau_next;
+	int	sau_flags;
 	int	sau_type;
 	size_t	sau_argsize;
 	void	*sau_arg;
 	stack_t	sau_stack;
-	struct sa_t	sau_event;
-	ucontext_t	sau_e_ctx;
-	struct sa_t	sau_interrupted;
-	ucontext_t	sau_i_ctx;
+	union {
+		struct {
+			ucontext_t	e_ctx;
+			ucontext_t	i_ctx;
+			struct sa_t	e_sa;
+			struct sa_t	i_sa;
+		} captured;
+		struct {
+			struct lwp	*e_lwp;
+			struct lwp	*i_lwp;
+		} deferred;
+	} sau_state;
 };
+
+#define SAU_FLAG_DEFERRED	0x1
+#define SA_UPCALL_DEFER		0x1000
 
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
