@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.5 1999/11/07 00:21:14 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.6 1999/11/10 18:34:50 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -91,10 +91,10 @@ _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
 		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
 		    != NULL) {
 			if ((def == NULL) ||
-			    (ELF32_ST_BIND(symp->st_info) != STB_WEAK)) {
+			    (ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 				def = symp;
 				defobj = elm->obj;
-				if (ELF32_ST_BIND(def->st_info) != STB_WEAK)
+				if (ELF_ST_BIND(def->st_info) != STB_WEAK)
 					break;
 			}
 		}
@@ -135,10 +135,9 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 			if (symp->st_shndx != SHN_UNDEF
 #if !defined(__mips__)		/* Following doesn't work on MIPS? mhitch */
 			    || (!in_plt && symp->st_value != 0 &&
-			    ELFDEFNNAME(ST_TYPE)(symp->st_info) == STT_FUNC)) {
-#else
-				) {
+			        ELF_ST_TYPE(symp->st_info) == STT_FUNC)
 #endif
+				) {
 				return symp;
 			}
 		}
@@ -191,10 +190,10 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	}
 	
 	/* Search all objects loaded at program start up. */
-	if (def == NULL || ELF32_ST_BIND(def->st_info) == STB_WEAK) {
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
 		if (symp != NULL &&
-		    (def == NULL || ELF32_ST_BIND(symp->st_info) != STB_WEAK)) {
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
 			defobj = obj;
 		}
@@ -202,22 +201,22 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	
 	/* Search all dlopened DAGs containing the referencing object. */
 	for (elm = SIMPLEQ_FIRST(&refobj->dldags); elm; elm = SIMPLEQ_NEXT(elm, link)) {
-		if (def != NULL && ELF32_ST_BIND(def->st_info) != STB_WEAK)
+		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
 			break;
 		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
 					  in_plt);
 		if (symp != NULL &&
-		    (def == NULL || ELF32_ST_BIND(symp->st_info) != STB_WEAK)) {
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
 			defobj = obj;
 		}
 	}
 	
 	/* Search all RTLD_GLOBAL objects. */
-	if (def == NULL || ELF32_ST_BIND(def->st_info) == STB_WEAK) {
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
 		if (symp != NULL &&
-		    (def == NULL || ELF32_ST_BIND(symp->st_info) != STB_WEAK)) {
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
 			defobj = obj;
 		}
@@ -227,7 +226,7 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	 * If we found no definition and the reference is weak, treat the
 	 * symbol as having the value zero.
 	 */
-	if (def == NULL && ELF32_ST_BIND(ref->st_info) == STB_WEAK) {
+	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
 		def = &_rtld_sym_zero;
 		defobj = _rtld_objmain;
 	}

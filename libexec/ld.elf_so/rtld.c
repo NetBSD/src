@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.25 1999/11/07 00:21:13 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.26 1999/11/10 18:34:49 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -428,7 +428,7 @@ _rtld(sp)
 	++_rtld_objmain->refcount;
 
 	/* Initialize a fake symbol for resolving undefined weak references. */
-	_rtld_sym_zero.st_info = ELF32_ST_INFO(STB_GLOBAL, STT_NOTYPE);
+	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
 	_rtld_sym_zero.st_shndx = SHN_ABS;
 
 	/*
