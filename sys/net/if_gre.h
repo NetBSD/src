@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.4 1998/12/22 01:33:45 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@ struct gre_h {
     struct gre_sre[] routing Routing fileds (see below)
                              Present if (rt_pres == 1)
 */
-};
+} __attribute__((__packed__));
 
 struct greip {
 	struct ip gi_i;
 	struct gre_h  gi_g;
-};
+} __attribute__((__packed__));
 
 #define gi_pr           gi_i.ip_p
 #define gi_len          gi_i.ip_len
@@ -120,12 +120,12 @@ struct mobile_h {
 	u_int16_t hcrc;			/* header checksum */
 	u_int32_t odst;			/* original destination address */
 	u_int32_t osrc;			/* original source addr, if S-bit set */
-};
+} __attribute__((__packed__));
 
 struct mobip_h {
 	struct ip       mi;
 	struct mobile_h mh;
-};
+} __attribute__((__packed__));
 
 
 #define MOB_H_SIZ_S		(sizeof(struct mobile_h) - sizeof(u_int32_t))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.5 1999/07/30 10:35:38 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.6 1999/11/19 20:41:19 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -195,14 +195,14 @@ struct ppp_header {
 	u_char address;
 	u_char control;
 	u_short protocol;
-};
+} __attribute__((__packed__));
 #define PPP_HEADER_LEN          sizeof (struct ppp_header)
 
 struct lcp_header {
 	u_char type;
 	u_char ident;
 	u_short len;
-};
+} __attribute__((__packed__));
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
 struct cisco_packet {
@@ -212,7 +212,7 @@ struct cisco_packet {
 	u_short rel;
 	u_short time0;
 	u_short time1;
-};
+} __attribute__((__packed__));
 #define CISCO_PACKET_LEN 18
 
 /*
