@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 1998/09/05 15:30:24 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.4.22.1 2000/10/25 16:12:13 tv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ char	*boot, *proto, *dev;
 #define BOOTSECTOR_OFFSET 2048
 
 #ifndef DEFAULT_ENTRY
-#define DEFAULT_ENTRY 0x6c0000
+#define DEFAULT_ENTRY 0x600000
 #endif
 
 struct nlist nl[] = {
