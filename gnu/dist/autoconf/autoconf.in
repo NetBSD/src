@@ -99,21 +99,6 @@ ac_LF_and_DOT=`echo; echo .`
 case "$M4" in
   [\\/]* | ?:[\\/]*) test -f "$M4" || M4=m4 ;;
 esac
-# Some non-GNU m4's don't reject the --help option, so give them /dev/null.
-case `$M4 --help </dev/null 2>&1` in
-*reload-state*);;
-*) echo "$me: Autoconf requires GNU m4 1.4 or later" >&2; exit 1 ;;
-esac
-
-# Set some high recursion limit as the default limit, 250, has already
-# been hit with AC_OUTPUT.
-case " $M4 " in
-  *" --nesting-limit"* | *" -L"* )
-  # Don't override the user's choice
-  ;;
-  *) M4="$M4 --nesting-limit=1024"
-  ;;
-esac
 
 
 # Find a good AWK.
@@ -279,7 +264,7 @@ test -f "$autoconf_dir/acsite.m4" && acsite_m4="$autoconf_dir/acsite.m4"
 test -f "$localdir/aclocal.m4"   && aclocal_m4="$localdir/aclocal.m4"
 m4_common="-I $autoconf_dir -I $localdir -Dm4_tmpdir=$tmp"
 m4_prefiles="                $autoconf_dir/autoconf.m4  $acsite_m4 $aclocal_m4"
-m4f_prefiles="--reload-state=$autoconf_dir/autoconf.m4f $acsite_m4 $aclocal_m4"
+m4f_prefiles=$m4_prefiles
 run_m4="$M4 $m4_common"
 
 # Find the input file.
@@ -749,8 +734,8 @@ EOF
   # traces in stderr.  This is too fragile, as it results in
   # unexpected data in the output.  autoheader has been fragile to
   # this.
-  $verbose "$me: running $run_m4_trace $trace_prefiles $infile -o $tmp/traces" >&2
-  $run_m4_trace $trace_prefiles $infile -o $tmp/traces >/dev/null ||
+  $verbose "$me: running $run_m4_trace -o $tmp/traces $trace_prefiles $infile" >&2
+  $run_m4_trace -o $tmp/traces $trace_prefiles $infile >/dev/null ||
     {
       echo "$me: tracing failed" >&2
       (exit 1); exit 1

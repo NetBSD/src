@@ -413,12 +413,11 @@ m4_define([AC_FOREACH],
 #  | column 2                |
 #  column 0                  column 26
 #
+m4_define([AC_PadLeft],
+	   [m4_if(m4_eval([$1] > [$2]),1,[[ ]AC_PadLeft([$1]-1,[$2])])])
 m4_define([AC_HELP_STRING],
 [m4_pushdef([AC_Prefix], m4_default([$3], [                          ]))dnl
-m4_pushdef([AC_Prefix_Format],
-           [  %-]m4_eval(m4_len(AC_Prefix) - 3)[s ])dnl [  %-23s ]
-m4_text_wrap([$2], AC_Prefix, m4_format(AC_Prefix_Format, [$1]))dnl
-m4_popdef([AC_Prefix_Format])dnl
+m4_text_wrap([$2], AC_Prefix, [  $1]AC_PadLeft(m4_len(AC_Prefix),m4_len([$1])+2))dnl
 m4_popdef([AC_Prefix])dnl
 ])
 

@@ -204,8 +204,8 @@ sub parse_args ()
 sub find_slaves ()
 {
   # Some non-GNU m4's don't reject the --help option, so give them /dev/null.
-  die "Autoconf requires GNU m4 1.4 or later\n"
-    if system "$m4 --help </dev/null 2>&1 | fgrep reload-state >/dev/null";
+#  die "Autoconf requires GNU m4 1.4 or later\n"
+#    if system "$m4 --help </dev/null 2>&1 | fgrep reload-state >/dev/null";
 
   # autoconf.
   (my $dir = $0) =~ s,[^\\/]*$,,;
