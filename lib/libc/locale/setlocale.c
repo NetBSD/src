@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.10 1997/04/29 16:40:19 kleink Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.11 1997/06/02 09:52:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -40,17 +40,21 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-static char rcsid[] = "$NetBSD: setlocale.c,v 1.10 1997/04/29 16:40:19 kleink Exp $";
+static char rcsid[] = "$NetBSD: setlocale.c,v 1.11 1997/06/02 09:52:50 kleink Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#define _CTYPE_PRIVATE
+
 #include <sys/localedef.h>
-#include <locale.h>
+#include <ctype.h>
 #include <limits.h>
+#include <locale.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include "ctypeio.h"
 
 /*
  * Category names for getenv()
@@ -202,28 +206,38 @@ currentlocale()
 	return (current_locale_string);
 }
 
-static char *
+char *
 loadlocale(category)
 	int category;
 {
 	char name[PATH_MAX];
 
-	if (strcmp(new_categories[category],
-	    current_categories[category]) == 0)
+	if (strcmp(new_categories[category], current_categories[category]) == 0)
 		return (current_categories[category]);
 
 	if (!strcmp(new_categories[category], "C") ||
-		!strcmp(new_categories[category], "POSIX")) {
+	    !strcmp(new_categories[category], "POSIX")) {
 
-		/*
-		 * Some day this will need to reset the locale to the default
-		 * C locale.  Since we have no way to change them as of yet,
-		 * there is no need to reset them.
-		 */
+		switch (category) {
+		case LC_CTYPE:
+			if (_ctype_ != _C_ctype_) {
+				free((void *)_ctype_);
+				_ctype_ = _C_ctype_;
+			}
+			if (_toupper_tab_ != _C_toupper_) {
+				free((void *)_toupper_tab_);
+				_toupper_tab_ = _C_toupper_;
+			}
+			if (_tolower_tab_ != _C_tolower_) {
+				free((void *)_tolower_tab_);
+				_tolower_tab_ = _C_tolower_;
+			}
+		}
+
 		(void)strncpy(current_categories[category],
 		    new_categories[category],
 		    sizeof(current_categories[category]) - 1);
-		return (current_categories[category]);
+		return current_categories[category];
 	}
 
 	/*
@@ -233,12 +247,22 @@ loadlocale(category)
 	    PathLocale, new_categories[category], categories[category]);
 
 	switch (category) {
-		case LC_CTYPE:
-		case LC_COLLATE:
-		case LC_MESSAGES:
-		case LC_MONETARY:
-		case LC_NUMERIC:
-		case LC_TIME:
-			return (NULL);
+	case LC_CTYPE:
+		if (__loadctype(name)) {
+			(void)strncpy(current_categories[category],
+			    new_categories[category],
+			    sizeof(current_categories[category]) - 1);
+			return current_categories[category];
+		}
+		return NULL;
+
+	case LC_COLLATE:
+	case LC_MESSAGES:
+	case LC_MONETARY:
+	case LC_NUMERIC:
+	case LC_TIME:
+		return NULL;
 	}
+
+	return NULL;
 }
