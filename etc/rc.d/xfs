@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: xfs,v 1.3 2000/05/13 08:45:10 lukem Exp $
+# $NetBSD: xfs,v 1.4 2000/09/19 13:04:39 lukem Exp $
 #
 
 # PROVIDE: xfs
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="xfs"
+rcvar=$name
 command="/usr/X11R6/bin/${name}"
 command_args="& sleep 2"
 required_files="/usr/X11R6/lib/X11/fs/config"

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipfilter,v 1.6 2000/07/21 01:14:23 lukem Exp $
+# $NetBSD: ipfilter,v 1.7 2000/09/19 13:04:38 lukem Exp $
 #
 
 # PROVIDE: ipfilter
@@ -9,9 +9,10 @@
 . /etc/rc.subr
 
 name="ipfilter"
+rcvar=$name
 start_precmd="ipfilter_prestart"
 start_cmd="ipfilter_start"
-stop_precmd="checkyesno ipfilter && [ -f /etc/ipf.conf ]"
+stop_precmd="test -f /etc/ipf.conf"
 stop_cmd="ipfilter_stop"
 reload_precmd="$stop_precmd"
 reload_cmd="ipfilter_reload"
@@ -21,9 +22,6 @@ extra_commands="reload status"
 
 ipfilter_prestart()
 {
-	if ! checkyesno ipfilter; then
-		return 1
-	fi
 	if [ ! -f /etc/ipf.conf ]; then
 		warn "/etc/ipf.conf not readable; ipfilter start aborted."
 			#
