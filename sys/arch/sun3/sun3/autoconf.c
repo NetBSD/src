@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1994/12/20 05:30:29 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1995/01/11 20:39:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -108,7 +108,6 @@ void configure()
 	/* Install non-device interrupt handlers. */
 	isr_add_autovect(nmi_intr, 0, 7);
 	isr_add_autovect(soft1intr, 0, 1);
-	isr_cleanup();
 
 	/* Now ready for interrupts. */
 	(void)spl0();
@@ -210,6 +209,15 @@ bus_print(args, name)
 	return(QUIET);
 }
 
+extern vm_offset_t tmp_vpages[];
+extern int fubyte(), fusword(), fuword();
+static const int bustype_to_ptetype[4] = {
+	PGT_OBMEM,
+	PGT_OBIO,
+	PGT_VME_D16,
+	PGT_VME_D32,
+};
+
 /*
  * Read addr with size len (1,2,4) into val.
  * If this generates a bus error, return -1
@@ -218,8 +226,6 @@ bus_print(args, name)
  *	Try the access using fu{byte,sword,word}
  *	Clean up temp. mapping
  */
-extern vm_offset_t tmp_vpages[];
-extern int fubyte(), fusword(), fuword();
 int bus_peek(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
@@ -227,28 +233,14 @@ int bus_peek(bustype, paddr, sz)
 	vm_offset_t pgva;
 	caddr_t va;
 
+	if (bustype & ~3)
+		return -1;
+
 	off = paddr & PGOFSET;
 	paddr -= off;
 	pte = PA_PGNUM(paddr);
-
-#define	PG_PEEK 	PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC
-	switch (bustype) {
-	case BUS_OBMEM:
-		pte |= (PG_PEEK | PGT_OBMEM);
-		break;
-	case BUS_OBIO:
-		pte |= (PG_PEEK | PGT_OBIO);
-		break;
-	case BUS_VME16:
-		pte |= (PG_PEEK | PGT_VME_D16);
-		break;
-	case BUS_VME32:
-		pte |= (PG_PEEK | PGT_VME_D32);
-		break;
-	default:
-		return (-1);
-	}
-#undef	PG_PEEK
+	pte |= bustype_to_ptetype[bustype];
+	pte |= (PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC);
 
 	pgva = tmp_vpages[0];
 	va = (caddr_t)pgva + off;
@@ -275,3 +267,40 @@ int bus_peek(bustype, paddr, sz)
 
 	return rv;
 }
+
+static const int bustype_to_pmaptype[4] = {
+	0,
+	PMAP_OBIO,
+	PMAP_VME16,
+	PMAP_VME32,
+};
+
+extern caddr_t dvma_vm_alloc();
+
+char *
+bus_mapin(bustype, paddr, sz)
+	int bustype, paddr, sz;
+{
+	int off, pa, pgs;
+	caddr_t va;
+
+	if (bustype & ~3)
+		return (NULL);
+
+	off = paddr & PGOFSET;
+	pa = paddr & ~PGOFSET;
+	pa |= bustype_to_pmaptype[bustype];
+	pa |= PMAP_NC;
+
+	/* Get some DVMA space. */
+	pgs = btoc(sz);
+	va = dvma_vm_alloc(pgs);
+	if (va == NULL)
+		return (NULL);
+
+	/* Map it to the specified bus. */
+	pmap_map((int)va, pa, pa + ctob(pgs),
+			 VM_PROT_READ | VM_PROT_WRITE);
+
+	return (va + off);
+}	

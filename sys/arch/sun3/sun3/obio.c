@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 1994/12/12 18:59:22 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 1995/01/11 20:38:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -160,8 +160,8 @@ static void save_prom_mappings()
 }
 
 /*
- * These are all the OBIO address that are required early
- * in the life of the kernel.  All are less one page long.
+ * These are all the OBIO address that are required early in
+ * the life of the kernel.  All are less than one page long.
  */
 static vm_offset_t required_mappings[] = {
 	/* Basically the first six OBIO devices. */
@@ -222,7 +222,7 @@ caddr_t obio_alloc(obio_addr, obio_size)
 		panic("obio_alloc: attempt to allocate 0 pages for obio");
 	va = high_segment_alloc(npages);
 	if (!va)
-		va = (vm_offset_t) obio_vm_alloc(npages);
+		va = (vm_offset_t) dvma_vm_alloc(npages);
 	if (!va) 
 		panic("obio_alloc: unable to allocate va for obio mapping");
 	/* Drivers always get writable, non-cached mappings. */
