@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.17 1997/11/14 12:46:38 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.18 1997/11/17 14:33:46 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -999,13 +999,13 @@ tcphdr_t *tcp;
 		goto nodata;
 	while (len > 0) {
 #if SOLARIS
-		if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
+		while ((caddr_t)sp >= (caddr_t)m->b_wptr) {
 			m = m->b_cont;
 			PANIC((!m),("fr_tcpsum: not enough data"));
 			sp = (u_short *)m->b_rptr;
 		}
 #else
-		if (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len)
+		while (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len)
 		{
 			m = m->m_next;
 			PANIC((!m),("fr_tcpsum: not enough data"));
@@ -1014,7 +1014,11 @@ tcphdr_t *tcp;
 #endif /* SOLARIS */
 		if (len < 2)
 			break;
-		sum += *sp++;
+		if((u_long)sp & 1) {
+			bcopy(sp++, &bytes.s, sizeof(bytes.s));
+			sum += bytes.s;
+		} else
+			sum += *sp++;
 		len -= 2;
 	}
 	if (len) {
