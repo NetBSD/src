@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1999/01/15 19:06:25 kml Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1999/02/08 11:34:36 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 1999/01/15 19:06:25 kml Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 1999/02/08 11:34:36 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ main(argc, argv)
 	 * from kernel memory, otherwise switch back to kmem for the
 	 * duration of the kvm_openfiles() call.
 	 */
-	if (nlistf != NULL || memf != NULL)
+	if (nlistf != NULL || memf != NULL || Pflag)
 		(void)setgid(getgid());
 	else
 		(void)setegid(egid);
