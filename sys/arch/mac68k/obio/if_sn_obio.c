@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.14 1998/01/13 19:24:55 scottr Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.15 1998/05/02 16:45:31 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -52,7 +52,7 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include <mac68k/dev/obiovar.h>
+#include <mac68k/obio/obiovar.h>
 #include <mac68k/dev/if_snreg.h>
 #include <mac68k/dev/if_snvar.h>
 

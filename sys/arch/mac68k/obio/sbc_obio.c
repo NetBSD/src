@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.7 1997/12/16 19:44:19 scottr Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.8 1998/05/02 16:45:31 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -87,6 +87,10 @@ sbc_obio_match(parent, cf, args)
 {
 	switch (current_mac_model->machineid) {
 	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
+/*
+		if (cf->cf_unit == 0)
+			return 1;
+*/
 		break;
 	case MACH_MACPB210:
 	case MACH_MACPB230:
