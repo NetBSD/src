@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.3 2002/11/29 16:01:02 uwe Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.4 2003/01/07 03:22:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,12 +49,12 @@
 	*/
 
 #define GETC(uc)					  \
-	st	%i6, [uc + UC_GREG + _REG_O6 * 4]	; \
+	st	%i6, [uc + UC_GREGS + _REG_O6 * 4]	; \
 	add	%i7, 8, %l0				; \
-	st	%l0, [uc + UC_GREG + _REG_PC * 4]	; \
+	st	%l0, [uc + UC_GREGS + _REG_PC * 4]	; \
 	/* save nPC too, so that setcontext(2) works */	  \
 	add	%i7, 12, %l0				; \
-	st	%l0, [uc + UC_GREG + _REG_nPC * 4]	; \
+	st	%l0, [uc + UC_GREGS + _REG_nPC * 4]	; \
 							  \
 	set	_UC_CPU | _UC_USER, %l1			; \
 	st	%l1, [uc + UC_FLAGS]
@@ -66,8 +66,8 @@
 	bz	1f					; \
 	 nop						; \
 							  \
-	ld	[uc + UC_GREG + _REG_PC * 4], %i7	; \
-	ld	[uc + UC_GREG + _REG_O6 * 4], %i6	; \
+	ld	[uc + UC_GREGS + _REG_PC * 4], %i7	; \
+	ld	[uc + UC_GREGS + _REG_O6 * 4], %i6	; \
 							; \
 	jmp	%i7					; \
 	 restore					; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2002/11/28 16:09:26 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2003/01/07 03:22:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ ENTRY(pthread__locked_switch)
 #else
 	set	locked_return_point, %l1
 #endif
-	st	%l1, [%l3 + UC_GREG + _REG_PC * 4]
+	st	%l1, [%l3 + UC_GREGS + _REG_PC * 4]
 
 	STACK_SWITCH(%i1, %l2)
 
