@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.655 2004/10/05 11:58:17 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.656 2004/10/11 13:05:39 jmmv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.653 2004/10/05 11:57:22 augustss Exp 
+ *	NetBSD: pcidevs,v 1.654 2004/10/11 13:01:25 jmmv Exp 
  */
 
 /*
@@ -1039,6 +1039,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_9200SE	0x5964		/* Radeon 9200SE */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 Series */
 #define	PCI_PRODUCT_ATI_RADEON_X300_S	0x5b70		/* Radeon X300 Series Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_9200SE_S	0x5d44		/* Radeon 9200SE Secondary */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
