@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.25 2000/03/27 22:44:01 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.26 2000/03/29 18:24:53 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -75,11 +75,13 @@
  * more DPRINTF
  * proper cleanup on errors
  */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
+#elif defined(__OpenBSD__)
+#include "bpfilter.h"
 #endif
 
 #include <sys/param.h>
@@ -106,11 +108,12 @@
 #endif
 
 #include <net/if.h>
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <net/if_arp.h>
+#endif
 #include <net/if_dl.h>
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-#include <net/if_ether.h>
 #define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
 #else
 #define BPF_MTAP(ifp, m) bpf_mtap((ifp), (m))
@@ -120,12 +123,25 @@
 #include <net/bpf.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
 #ifdef INET
 #include <netinet/in.h> 
 #include <netinet/if_inarp.h>
 #endif
+#endif /* defined (__NetBSD__) */
 
+#if defined(__OpenBSD__)
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
+#endif
+#endif /* defined (__OpenBSD__) */
+
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
@@ -437,7 +453,11 @@ kue_setmulti(sc)
 		i++;
 	}
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined (__NetBSD__)
 	ETHER_FIRST_MULTI(step, &sc->kue_ec, enm);
+#else
+	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+#endif
 	while (enm != NULL) {
 		if (i == KUE_MCFILTCNT(sc))
 			break;
@@ -657,7 +677,7 @@ USB_ATTACH(kue)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp, sc->kue_desc.kue_macaddr);
+	Ether_ifattach(ifp, sc->kue_desc.kue_macaddr);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
@@ -742,8 +762,10 @@ kue_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+#if defined(__NetBSD__)
 		/* Deactivate the interface. */
 		if_deactivate(&sc->kue_ec.ec_if);
+#endif
 		sc->kue_dying = 1;
 		break;
 	}
@@ -970,6 +992,7 @@ kue_rxeof(xfer, priv, status)
 	if (ifp->if_bpf) {
 		struct ether_header *eh = mtod(m, struct ether_header *);
 		BPF_MTAP(ifp, m);
+#if defined(__NetBSD__)
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			   ETHER_ADDR_LEN) &&
@@ -977,12 +1000,13 @@ kue_rxeof(xfer, priv, status)
 			m_freem(m);
 			goto done1;
 		}
+#endif
 	}
 #endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->kue_dev),
 		    __FUNCTION__, m->m_len));
-	(*ifp->if_input)(ifp, m);
+	IF_INPUT(ifp, m);
  done1:
 	splx(s);
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
@@ -1161,11 +1185,11 @@ kue_init(xsc)
 
 	s = splimp();
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
+#endif /* defined(__NetBSD__) */
 	/* Set MAC address */
 	kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SET_MAC, 0, eaddr, ETHER_ADDR_LEN);
 
@@ -1294,7 +1318,11 @@ kue_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
+#if defined(__NetBSD__)
 			arp_ifinit(ifp, ifa);
+#else
+			arp_ifinit(&sc->arpcom, ifa);
+#endif
 			break;
 #endif /* INET */
 #ifdef NS

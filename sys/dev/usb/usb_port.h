@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.25 2000/03/27 22:40:48 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.26 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -88,6 +88,12 @@ typedef struct callout usb_callout_t;
 #define usb_callout_init(h)	callout_init(&(h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
+
+#define usb_kthread_create1	kthread_create1
+#define usb_kthread_create	kthread_create
+
+#define Ether_ifattach ether_ifattach
+#define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))
 
 #define logprintf printf
 
@@ -183,8 +189,16 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define kthread_create1		kthread_create
-#define kthread_create		kthread_create_deferred
+#define usb_kthread_create1	kthread_create
+#define usb_kthread_create	kthread_create_deferred
+
+#define	config_pending_incr()
+#define	config_pending_decr()
+
+#define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
+#define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
+#define if_deactivate(x)
+#define IF_INPUT(ifp, m) ether_input((ifp), mtod((m), struct ether_header *), (m))
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
@@ -203,7 +217,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define realloc usb_realloc
 void *usb_realloc __P((void *, u_int, int, int));
 
-typedef struct device device_ptr_t;
+typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
@@ -318,9 +332,9 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define kthread_create1(function, sc, priv, string, name)
-#define kthread_create(create_function, sc)
-#define kthread_exit(err)
+#define usb_kthread_create1(function, sc, priv, string, name)
+#define usb_kthread_create(create_function, sc)
+#define usb_kthread_exit(err)
 
 typedef struct callout_handle usb_callout_t;
 #define usb_callout_init(h) callout_handle_init(&(h))

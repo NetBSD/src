@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.34 2000/03/27 12:33:57 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.35 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #elif defined(__FreeBSD__)

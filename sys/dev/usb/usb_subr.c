@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.70 2000/03/29 01:45:20 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.71 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ Static int usbd_getnewaddr __P((usbd_bus_handle bus));
 Static int usbd_print __P((void *aux, const char *pnp));
 Static int usbd_submatch __P((device_ptr_t, struct cfdata *cf, void *));
 #elif defined(__OpenBSD__)
+Static int usbd_print __P((void *aux, const char *pnp));
 Static int usbd_submatch __P((device_ptr_t, void *, void *));
 #endif
 Static void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));

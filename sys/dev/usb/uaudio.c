@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.22 2000/03/29 01:47:25 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.23 2000/03/29 18:24:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -387,7 +387,11 @@ USB_ATTACH(uaudio)
 	sc->sc_chan.sc = sc;
 
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
+#if defined(__OpenBSD__)
+	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
+#else
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
+#endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
