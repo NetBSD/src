@@ -1,7 +1,7 @@
-/*	$NetBSD: bktr_reg.h,v 1.4 2000/05/07 14:59:23 veego Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.5 2000/07/01 01:39:02 wiz Exp $	*/
 
 /*
- * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.36 1999/10/28 13:58:17 roger Exp
+ * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.38 2000/06/26 09:41:32 roger Exp
  *
  * Copyright (c) 1999 Roger Hardiman
  * Copyright (c) 1998 Amancio Hasty
@@ -57,6 +57,35 @@
 #  define	bootverbose 0
 # endif
 #endif
+
+/*
+ * The kernel options for the driver now all begin with BKTR.
+ * Support the older kernel options on FreeBSD and OpenBSD.
+ *
+ */
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(BROOKTREE_SYSTEM_DEFAULT)
+#define BKTR_SYSTEM_DEFAULT BROOKTREE_SYSTEM_DEFAULT
+#endif
+
+#if defined(OVERRIDE_CARD)
+#define BKTR_OVERRIDE_CARD OVERRIDE_CARD
+#endif
+
+#if defined(OVERRIDE_TUNER)
+#define BKTR_OVERRIDE_TUNER OVERRIDE_TUNER
+#endif
+
+#if defined(OVERRIDE_DBX)
+#define BKTR_OVERRIDE_DBX OVERRIDE_DBX
+#endif
+
+#if defined(OVERRIDE_MSP)
+#define BKTR_OVERRIDE_MSP OVERRIDE_MSP
+#endif
+
+#endif
+
 
 #ifndef PCI_LATENCY_TIMER
 #define	PCI_LATENCY_TIMER		0x0c	/* pci timer register */
@@ -512,6 +541,7 @@ struct bktr_softc {
     #if (NSMBUS > 0)
       struct bktr_i2c_softc i2c_sc;	/* bt848_i2c device */
     #endif
+    char	bktr_xname[7];	/* device name and unit number */
 #endif
 
     /* the following definitions are common over all platforms */
