@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.12 1998/03/18 16:51:31 bouyer Exp $	*/
+/*	$NetBSD: clri.c,v 1.13 1998/08/25 19:18:13 ross Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.12 1998/03/18 16:51:31 bouyer Exp $");
+__RCSID("$NetBSD: clri.c,v 1.13 1998/08/25 19:18:13 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,12 +102,13 @@ main(argc, argv)
 		errx(1, "%s: can't read superblock", fs);
 
 	sbp = (struct fs *)sblock;
-	if (sbp->fs_magic != FS_MAGIC)
+	if (sbp->fs_magic != FS_MAGIC) {
 		if (sbp->fs_magic == bswap32(FS_MAGIC))
 			needswap = 1;
 		else
 			errx(1, "%s: superblock magic number 0x%x, not 0x%x",
 		    	fs, sbp->fs_magic, FS_MAGIC);
+	}
 
 	/* check that inode numbers are valid */
 	imax = ufs_rw32(sbp->fs_ncg, needswap) *
