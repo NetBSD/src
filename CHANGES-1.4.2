@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.132 2000/02/28 20:07:23 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.133 2000/03/01 00:38:35 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3627,3 +3627,71 @@ distrib/sets/lists/misc/mi			patch
 sys/arch/sparc/stand/boot/Makefile		patch
 
   Add an include target so that ``make build'' works.
+
+sys/dev/raidframe/rf_netbsdkintf.c		patch
+
+  Protect rf_RewriteParity() with splbio().
+
+gnu/usr.bin/binutils/common/Makefile		patch
+gnu/usr.bin/gdb/Makefile			patch
+gnu/usr.bin/groff/grotty/Makefile		patch
+usr.sbin/ipf/ipmon/Makefile			patch
+
+  Work around problems with gcc optimization on vax.
+
+sys/arch/sun3/conf/GENERIC			patch
+sys/arch/sun3/conf/GENERIC3X			patch
+etc/etc.sun3/MAKEDEV				patch
+
+  Add 4 vnd pseudo-devices to GENERIC and ``MAKEDEV all'' for sun3.
+
+sys/arch/sun3/dev/md_root.c			patch
+
+  Fix a compile-time error.
+
+distrib/alpha/Makefile				patch
+distrib/alpha/floppy-GENERIC/Makefile		patch
+distrib/alpha/instkernel/cd-hd-tape/Makefile	patch
+distrib/alpha/instkernel/fdset/Makefile		patch
+distrib/alpha/instkernel/instkernel/Makefile	patch
+
+  Add support for ``release'' and ``depend'' targets in distrib/alpha.
+
+distrib/arm32/ramdisk/Makefile			patch
+sys/arch/arm32/conf/A7INST			patch
+sys/arch/arm32/conf/CATSINST			patch
+sys/arch/arm32/conf/RPCINST			patch
+sys/arch/arm32/conf/SHARKINST			patch
+
+  Increase size of install kernel ramdisk, and use a more configurable
+  method that does not use /etc/disktab, so we won't have to change
+  it.  Change kernel config files to know the new ramdisk size.
+
+distrib/macppc/floppies/Makefile		patch
+distrib/macppc/floppies/bootfloppy/Makefile	patch
+distrib/macppc/floppies/ramdisk/Makefile	patch
+
+  Support the ``release'' target.
+
+distrib/miniroot/Makefile			patch
+
+  Support the ``release'' target (used at least by sparc).
+
+distrib/sparc/bootfs.sysinst/Makefile		patch
+distrib/sparc/bootfs/Makefile			patch
+distrib/sparc/ramdisk.sysinst/Makefile		patch
+distrib/sparc/ramdisk/Makefile			patch
+sys/arch/sparc/conf/INSTALL			patch
+
+  Fix build errors in distrib/sparc, support ``release'' target,
+  increase size of ramdisk while removing dependency on /etc/disktab,
+  and notifying kernel.
+
+distrib/sun3/miniroot/Makefile
+distrib/sun3/ramdisk/Makefile
+
+  Convert sun3 miniroot/ramdisk build process to use vnd devices
+  instead of requiring a scratch partition on some local disk. Also
+  remove dependency on /etc/disktab entry.  Support recursive
+  ``depend'' makes (do nothing though).
+
