@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.26 2003/01/09 19:27:52 thorpej Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.27 2003/01/14 02:42:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -495,15 +495,15 @@ pthread__signal(pthread_t t, int sig, int code)
 	 * handler. So we borrow a bit of space from the target's
 	 * stack, which we were adjusting anyway.
 	 */
-	maskp = (sigset_t *)((char *)target->pt_uc - sizeof(sigset_t));
+	maskp = (sigset_t *)((char *)target->pt_uc - STACKSPACE - 
+	    sizeof(sigset_t));
 	*maskp = oldmask;
 
 	/*
 	 * XXX We are blatantly ignoring SIGALTSTACK. It would screw
 	 * with our notion of stack->thread mappings.
 	 */
-	uc = (ucontext_t *)((char *)maskp - 
-	    STACKSPACE - sizeof(ucontext_t));
+	uc = (ucontext_t *)((char *)maskp - sizeof(ucontext_t));
 #ifdef _UC_UCONTEXT_ALIGN
 	uc = (ucontext_t *)((uintptr_t)uc & _UC_UCONTEXT_ALIGN);
 #endif
