@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.5 2003/03/12 12:23:06 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.6 2003/03/19 17:27:43 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -335,7 +335,7 @@ nfs_readdata(d, off, addr, len)
 	if (rlen < x) {
 		printf("nfsread: short packet, %d < %ld\n", rlen, x);
 		errno = EBADRPC;
-		return(-1);
+		return (-1);
 	}
 	memcpy(addr, repl->data, x);
 	return (x);
@@ -375,7 +375,7 @@ nfs_open(path, f)
 	}
 
 	if (!(desc = socktodesc(*(int *)(f->f_devdata))))
-		return(EINVAL);
+		return (EINVAL);
 
 	/* Bind to a reserved port. */
 	desc->myport = htons(--rpc_port);
@@ -603,6 +603,7 @@ nfs_write(f, buf, size, resid)
 	size_t size;
 	size_t *resid;	/* out */
 {
+
 	return (EROFS);
 }
 
@@ -633,7 +634,7 @@ nfs_seek(f, offset, where)
 }
 
 /* NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 */
-int nfs_stat_types[8] = {
+const int nfs_stat_types[8] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0 };
 
 int
