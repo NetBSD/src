@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.15 1998/09/11 07:22:13 mycroft Exp $	*/
+/*	$NetBSD: mknod.c,v 1.16 1998/10/08 02:01:11 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.15 1998/09/11 07:22:13 mycroft Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.16 1998/10/08 02:01:11 wsanchez Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ pack_native(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev(numbers[0], numbers[1]);
@@ -92,7 +92,7 @@ pack_netbsd(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_netbsd(numbers[0], numbers[1]);
@@ -118,7 +118,7 @@ pack_freebsd(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_freebsd(numbers[0], numbers[1]);
@@ -144,7 +144,7 @@ pack_8_8(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_8_8(numbers[0], numbers[1]);
@@ -170,7 +170,7 @@ pack_12_20(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_12_20(numbers[0], numbers[1]);
@@ -196,7 +196,7 @@ pack_14_18(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_14_18(numbers[0], numbers[1]);
@@ -222,7 +222,7 @@ pack_8_24(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_8_24(numbers[0], numbers[1]);
@@ -250,7 +250,7 @@ pack_bsdos(n, numbers)
 	int n;
 	u_long numbers[];
 {
-	dev_t dev;
+	dev_t dev=0; /* Quiet -Wall */
 
 	if (n == 2) {
 		dev = makedev_12_20(numbers[0], numbers[1]);
