@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/07/12 18:06:54 veego Exp $
+#	$NetBSD: Makefile,v 1.3 1999/07/20 08:55:30 dbj Exp $
 
 # Makefile for next68k tags file and boot blocks
 
@@ -14,6 +14,7 @@ ANEXT68K=	../next68k/next68k/*.s
 # Directories in which to place tags links
 DNEXT68K=	dev next68k include
 
+SYSDIR=		../..
 .include "../../kern/Make.tags.inc"
 
 tags:
@@ -23,8 +24,12 @@ tags:
 	    >> ${TNEXT68K}
 	sort -o ${TNEXT68K} ${TNEXT68K}
 
+.ifmake TAGS
+COMM!=  find ${SYSDIR} -name "arch" -prune -o -name "*.[ch]" -print 
+.endif
+
 TAGS:
-	emacs-etags -o ${ENEXT68K} ${NEXT68K} ${SM68K} ${COMM}
+	emacs-etags -o ${ENEXT68K} ${SNEXT68K} ${SM68K} ${COMM}
 	emacs-etags -a -l none \
 		--regex='/^\(ALT\)?ENTRY\(_NOPROFILE\)?(\([a-zA-Z0-9_]*\))\|^GLOBAL(\([a-zA-Z0-9_]*\))/\3\4/' \
 		-o ${ENEXT68K} ${ANEXT68K} ${AM68K}
