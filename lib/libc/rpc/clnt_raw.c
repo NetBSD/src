@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.12 1998/07/26 11:47:37 mycroft Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.13 1998/11/15 17:27:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.12 1998/07/26 11:47:37 mycroft Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.13 1998/11/15 17:27:35 christos Exp $");
 #endif
 #endif
 
@@ -71,7 +71,10 @@ static struct clntraw_private {
 	CLIENT	client_object;
 	XDR	xdr_stream;
 	char	_raw_buf[UDPMSGSIZE];
-	char	mashl_callmsg[MCALL_MSG_SIZE];
+	union {
+	    struct rpc_msg	mashl_rpcmsg;
+	    char 		mashl_callmsg[MCALL_MSG_SIZE];
+	} u;
 	u_int	mcnt;
 } *clntraw_private;
 
@@ -118,9 +121,10 @@ clntraw_create(prog, vers)
 	 */
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	call_msg.rm_call.cb_prog = prog;
-	call_msg.rm_call.cb_vers = vers;
-	xdrmem_create(xdrs, clp->mashl_callmsg, MCALL_MSG_SIZE, XDR_ENCODE); 
+	/* XXX: prog and vers have been long historically :-( */
+	call_msg.rm_call.cb_prog = (u_int32_t)prog;
+	call_msg.rm_call.cb_vers = (u_int32_t)vers;
+	xdrmem_create(xdrs, clp->u.mashl_callmsg, MCALL_MSG_SIZE, XDR_ENCODE); 
 	if (! xdr_callhdr(xdrs, &call_msg))
 		warnx("clntraw_create - Fatal header serialization error.");
 	clp->mcnt = XDR_GETPOS(xdrs);
@@ -139,6 +143,7 @@ clntraw_create(prog, vers)
 	return (client);
 }
 
+/* ARGSUSED */
 static enum clnt_stat 
 clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	CLIENT *h;
@@ -163,9 +168,9 @@ call_again:
 	 */
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, 0);
-	((struct rpc_msg *)clp->mashl_callmsg)->rm_xid ++ ;
-	if ((! XDR_PUTBYTES(xdrs, clp->mashl_callmsg, clp->mcnt)) ||
-	    (! XDR_PUTLONG(xdrs, &proc)) ||
+	clp->u.mashl_rpcmsg.rm_xid ++ ;
+	if ((! XDR_PUTBYTES(xdrs, clp->u.mashl_callmsg, clp->mcnt)) ||
+	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp))) {
 		return (RPC_CANTENCODEARGS);
@@ -238,6 +243,7 @@ clntraw_geterr(cl, err)
 }
 
 
+/* ARGSUSED */
 static bool_t
 clntraw_freeres(cl, xdr_res, res_ptr)
 	CLIENT *cl;
