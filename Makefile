@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.203 2003/04/04 01:16:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.204 2003/04/17 00:33:44 thorpej Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -63,7 +63,6 @@
 #   includes:        installs include files.
 #   do-lib-csu:      builds and installs prerequisites from lib/csu.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
-#   do-lib-libcrypt: builds and installs prerequisites from lib/libcrypt.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
@@ -165,7 +164,7 @@ BUILDTARGETS+=	do-distrib-dirs
 BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-tools-compat
-BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib-libcrypt do-lib do-gnu-lib do-ld.so do-build
+BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib do-gnu-lib do-ld.so do-build
 BUILDTARGETS+=	do-obsolete
 
 #
@@ -291,7 +290,7 @@ do-${targ}: ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat lib/csu lib/libc lib/libcrypt lib gnu/lib
+.for dir in tools tools/compat lib/csu lib/libc lib gnu/lib
 do-${dir:S/\//-/}:
 .for targ in dependall install
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
