@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ fifoq_enqueue(ifq, m, pktattr)
 
 /*
  * dequeue routine:
- *	must be called in splimp.
+ *	must be called in splnet.
  *
  *	returns: mbuf dequeued.
  *		 NULL when no packet is available in the queue.
@@ -386,7 +386,7 @@ static int fifoq_detach(q)
 
 /*
  * fifoq_purge
- * should be called in splimp or after disabling the fifoq.
+ * should be called in splnet or after disabling the fifoq.
  */
 static void fifoq_purge(q)
 	fifoq_state_t *q;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.5 2000/03/23 07:03:27 thorpej Exp $	*/
+/*	$NetBSD: aarp.c,v 1.6 2001/04/13 23:30:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -114,7 +114,7 @@ aarptimer(ignored)
 			continue;
 		if (++aat->aat_timer < killtime)
 			continue;
-		s = splimp();
+		s = splnet();
 		aarptfree(aat);
 		splx(s);
 	}
@@ -256,7 +256,7 @@ aarpresolve(ifp, m, destsat, desten)
 			    sizeof(etherbroadcastaddr));
 		return 1;
 	}
-	s = splimp();
+	s = splnet();
 	AARPTAB_LOOK(aat, destsat->sat_addr);
 	if (aat == 0) {		/* No entry */
 		aat = aarptnew(&destsat->sat_addr);

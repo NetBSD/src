@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.14 2001/01/17 00:30:52 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.15 2001/04/13 23:30:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ ipip_input(m, va_alist)
 		m_adj(m, hlen);
 		m->m_pkthdr.rcvif = &sc->sc_if;
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			m_freem(m);

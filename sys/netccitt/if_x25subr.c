@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.23 2001/01/17 04:05:43 itojun Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.24 2001/04/13 23:30:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -218,7 +218,7 @@ x25_ifinput(m, v)
 		ifp->if_noproto++;
 		return 0;
 	}
-	s = splimp();
+	s = splnet();
 	schednetisr(isr);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
@@ -423,7 +423,7 @@ x25_iftimeout(ifp)
 {
 	struct pkcb *pkcb = 0;
 	struct pklcd **lcpp, *lcp;
-	int             s = splimp();
+	int             s = splnet();
 
 	FOR_ALL_PKCBS(pkcb)
 		if (pkcb->pk_ia->ia_ifp == ifp)

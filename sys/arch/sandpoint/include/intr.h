@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/02/04 18:32:13 briggs Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2001/04/13 23:30:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -228,7 +228,6 @@ set_sint(pending)
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
-#define splimp()	splraise(imask[IPL_IMP])
 #define splvm()		splraise(imask[IPL_IMP])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()

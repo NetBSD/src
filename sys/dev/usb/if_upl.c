@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.13 2001/01/22 21:38:35 thorpej Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.14 2001/04/13 23:30:09 thorpej Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -295,7 +295,7 @@ USB_ATTACH(upl)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	s = splimp();
+	s = splnet();
 
 	/* Initialize interface info.*/
 	ifp = &sc->sc_if;
@@ -548,7 +548,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	s = splimp();
+	s = splnet();
 
 	/* XXX ugly */
 	if (upl_newbuf(sc, c, NULL) == ENOBUFS) {
@@ -604,7 +604,7 @@ upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->sc_dying)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->sc_dev),
 		    __FUNCTION__, status));
@@ -732,7 +732,7 @@ upl_init(void *xsc)
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	/* Init TX ring. */
 	if (upl_tx_list_init(sc) == ENOBUFS) {
@@ -864,7 +864,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	DPRINTFN(5,("%s: %s: cmd=0x%08lx\n",
 		    USBDEVNAME(sc->sc_dev), __FUNCTION__, command));
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:
@@ -1037,7 +1037,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		     USBDEVNAME(((struct upl_softc *)ifp->if_softc)->sc_dev),
 		     __FUNCTION__));
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -1067,7 +1067,7 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 	schednetisr(NETISR_IP);
 	inq = &ipintrq;
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		splx(s);

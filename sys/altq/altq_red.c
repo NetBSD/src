@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
 /*	$KAME: altq_red.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ redioctl(dev, cmd, addr, flag, p)
 				break;
 			}
 
-			s = splimp();
+			s = splnet();
 			red_purgeq(rqp);
 			limit = fc->red_limit;
 			if (limit < fc->red_thmax)
@@ -916,7 +916,7 @@ mark_ecn(m, pktattr, flags)
 
 /*
  * dequeue routine:
- *	must be called in splimp.
+ *	must be called in splnet.
  *
  *	returns: mbuf dequeued.
  *		 NULL when no packet is available in the queue.
@@ -1349,7 +1349,7 @@ fv_p2f(fv, p)
  * check if an arriving packet should be pre-dropped.
  * called from red_addq() when a packet arrives.
  * returns 1 when the packet should be pre-dropped.
- * should be called in splimp.
+ * should be called in splnet.
  */
 static int
 fv_checkflow(fv, pktattr, fcache)
@@ -1429,7 +1429,7 @@ fv_checkflow(fv, pktattr, fcache)
 
 /*
  * called from red_addq when a packet is dropped by red.
- * should be called in splimp.
+ * should be called in splnet.
  */
 static void fv_dropbyred(fv, pktattr, fcache)
 	struct flowvalve *fv;

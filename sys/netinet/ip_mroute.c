@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.52 2001/01/24 09:04:15 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.53 2001/04/13 23:30:23 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1506,7 +1506,7 @@ mrt_ipip_input(m, hlen)
 	m->m_pkthdr.len -= hlen;
 	m->m_pkthdr.rcvif = vifp->v_ifp;
 	ifq = &ipintrq;
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
