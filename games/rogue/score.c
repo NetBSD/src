@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Timothy C. Stoehr.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)score.c	5.5 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -206,7 +206,8 @@ short other;
 
 	md_lock(1);
 
-	if ((fp = fopen(_PATH_SCOREFILE, "a+")) == NULL) {
+	if ((fp = fopen(_PATH_SCOREFILE, "r+")) == NULL &&
+	    (fp = fopen(_PATH_SCOREFILE, "w+")) == NULL) {
 		message("cannot read/write/create score file", 0);
 		sf_error();
 	}
