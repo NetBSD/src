@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.1,v 1.8 1997/10/19 02:16:57 lukem Exp $
+.\"	$NetBSD: getopt.1,v 1.9 1999/12/01 12:03:16 lukem Exp $
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -15,8 +15,7 @@ is used to break up options in command lines for easy parsing by
 shell procedures, and to check for legal options.
 .Op Optstring
 is a string of recognized option letters (see
-.Xr getopt 3
-);
+.Xr getopt 3) ;
 if a letter is followed by a colon, the option
 is expected to have an argument which may or may not be
 separated from it by white space.
@@ -41,27 +40,28 @@ for a command that can take the options
 and
 .Op b ,
 and the option
-.Op o ,
+.Op c ,
 which requires an argument.
 .Pp
 .Bd -literal -offset indent
-args=\`getopt abo: $*\`
-if test $? != 0
-then
+args=\`getopt abc: $*\`
+if [ $? != 0 ]; then
 	echo 'Usage: ...'
 	exit 2
 fi
 set \-\- $args
-for i
-do
-	case "$i"
-	in
+for i; do
+	shift
+	case "$i"; in
 		\-a|\-b)
-			flag=$i; shift;;
-		\-o)
-			oarg=$2; shift; shift;;
+			flag=$i
+			;;
+		\-c)
+			carg=$1; shift
+			;;
 		\-\-)
-			shift; break;;
+			break
+			;;
 	esac
 done
 .Ed
@@ -69,10 +69,10 @@ done
 This code will accept any of the following as equivalent:
 .Pp
 .Bd -literal -offset indent
-cmd \-aoarg file file
-cmd \-a \-o arg file file
-cmd \-oarg -a file file
-cmd \-a \-oarg \-\- file file
+cmd \-acarg file file
+cmd \-a \-c arg file file
+cmd \-carg -a file file
+cmd \-a \-carg \-\- file file
 .Ed
 .Pp
 .St -p1003.2
