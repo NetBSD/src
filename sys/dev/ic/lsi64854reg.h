@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854reg.h,v 1.2 1998/09/01 21:04:44 pk Exp $ */
+/*	$NetBSD: lsi64854reg.h,v 1.3 1998/09/06 21:39:33 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,13 @@
 #define D_ESC_BURST	0x00000800	/* DMA ESC: 16 byte bursts */
 #define D_ESC_AUTODRAIN	0x00040000	/* DMA ESC: Auto-drain */
 
-#define DMACSRBITS "\020\01INT\02ERR\03DR1\04DR2\05IEN\011WRITE\016ENCNT\017TC\032DMAON"
+#define DDMACSR_BITS	"\177\020"				\
+	"b\00INT\0b\01ERR\0f\02\02DRAINING\0b\04IEN\0"		\
+	"b\06SLVERR\0b\07RST\0b\10WRITE\0b\11ENDMA\0"		\
+	"b\15ENCNT\0b\16TC\0\b\20DSBL_CSR_DRN\0"		\
+	"b\21DSBL_SCSI_DRN\0f\22\2BURST\0b\25TWOCYCLE\0"	\
+	"b\26FASTER\0b\27TCIDIS\0b\30ENNXT\0b\031DMAON\0"	\
+	"b\32ALOADED\0b\33NALOADED\0"
 
 
 /*
@@ -141,6 +147,12 @@
 #define E_reserved4	0x0c800000	/* */
 #define E_DEV_ID	L64854_DEVID	/* ID bits */
 
+#define EDMACSR_BITS	"\177\020"				\
+	"b\00INT\0b\01ERR\0f\02\02DRAINING\0b\04IEN\0"		\
+	"b\06SLVERR\0b\07RST\0b\10WRITE\0b\12DRAIN\0"		\
+	"b\13DSBL_WR_DRN\0b\14DSBL_RD_DRN\0b\17ILACC\0"		\
+	"b\20DSBL_BUF_WR\0b\21DSBL_WR_INVAL\0"			\
+	"b\25LOOPTEST\0b\26TP\0"
 
 /*
  * PP DMA control bits.
@@ -167,3 +179,9 @@
 #define P_A_LOADED	0x04000000	/* addr and byte count valid */
 #define P_NA_LOADED	0x08000000	/* next addr & count valid but not used */
 #define P_DEV_ID	L64854_DEVID	/* ID bits */
+
+#define PDMACSR_BITS	"\177\020"				\
+	"b\00INT\0b\01ERR\0f\02\02DRAINING\0b\04IEN\0"		\
+	"b\06SLVERR\0b\07RST\0b\10WRITE\0b\11ENDMA\0"		\
+	"b\15ENCNT\0b\16TC\0\b\24DIAG\0b\27TCIDIS\0"		\
+	"b\30ENNXT\0b\031DMAON\0b\32ALOADED\0b\33NALOADED\0"
