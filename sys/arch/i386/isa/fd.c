@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.32 1993/12/13 10:57:09 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.33 1993/12/13 11:21:42 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -184,6 +184,7 @@ STATIC void fd_motor_on __P((struct fd_softc *fd));
 STATIC int fdc_result __P((struct fdc_softc *fdc));
 STATIC int out_fdc __P((u_short iobase, u_char x));
 STATIC void fdcstart __P((struct fdc_softc *fdc));
+STATIC void fd_status __P((struct fd_softc *fd, int n, char *s));
 STATIC void fd_timeout __P((struct fdc_softc *fdc));
 STATIC void fd_pseudointr __P((struct fdc_softc *fdc));
 STATIC int fdcstate __P((struct fdc_softc *fdc));
@@ -248,7 +249,8 @@ struct fdc_attach_args {
  * Print the location of a disk drive (called just before attaching the
  * the drive).  If `fdc' is not NULL, the drive was found but was not
  * in the system config file; print the drive name as well.
- * Return UNCONF (config_find ignores this if the device was configured).
+ * Return QUIET (config_find ignores this if the device was configured) to
+ * avoid printing `fdN not configured' messages.
  */
 STATIC int
 fdprint(args, fdc)
@@ -328,9 +330,11 @@ fdprobe(parent, cf, aux)
 	iobase = fdc->sc_iobase;
 	/* select drive and turn on motor */
 	outb(iobase + fdout, fa->fa_drive | FDO_FRST | FDO_MOEN(fa->fa_drive));
+	/* wait for motor to spin up */
 	delay(250000);
 	out_fdc(iobase, NE7CMD_RECAL);
 	out_fdc(iobase, fa->fa_drive);
+	/* wait for recalibrate */
 	delay(2000000);
 	out_fdc(iobase, NE7CMD_SENSEI);
 	n = fdc_result(fdc);
@@ -349,8 +353,7 @@ fdprobe(parent, cf, aux)
 }
 
 /*
- * Controller is working, drive was found (or, if fa_deftype == NULL,
- * not even tested for).  Attach it.
+ * Controller is working, and drive responded.  Attach it.
  */
 STATIC void
 fdattach(parent, self, aux)
@@ -555,7 +558,7 @@ fdc_result(fdc)
 		if (i == NE7_RQM)
 			return n;
 		if (i == (NE7_DIO | NE7_RQM | NE7_CB)) {
-			if (n > 7) {
+			if (n >= sizeof(fdc->sc_status)) {
 				log(LOG_ERR, "fdc_result: overrun\n");
 				return -1;
 			}
@@ -625,11 +628,11 @@ fdcstart(fdc)
 	struct fdc_softc *fdc;
 {
 
-	/* interrupt routine is responsible for running the work queue; just
-	   call it if idle */
 #ifdef DIAGNOSTIC
+	/* only got here if controller's drive queue was inactive; should
+	   be in idle state */
 	if (fdc->sc_state != DEVIDLE) {
-		printf("fdstart: not idle\n");
+		printf("fdcstart: not idle\n");
 		return;
 	}
 #endif
