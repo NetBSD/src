@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.116.2.3 2004/04/09 18:34:08 jmc Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.116.2.4 2004/04/09 20:14:31 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -976,11 +976,11 @@ void	sysctl_dump(const struct sysctlnode *);
 void	sysctl_free(struct sysctlnode *);
 void	sysctl_teardown(struct sysctllog **);
 
-#if SYSCTL_USE_DESCR
+#if SYSCTL_INCLUDE_DESCR
 #define SYSCTL_DESCR(s) s
-#else /* SYSCTL_USE_DESCR */
+#else /* SYSCTL_INCLUDE_DESCR */
 #define SYSCTL_DESCR(s) NULL
-#endif /* SYSCTL_USE_DESCR */
+#endif /* SYSCTL_INCLUDE_DESCR */
 
 /*
  * simple interface similar to old interface for in-kernel consumption
