@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/23 17:42:20 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2004/07/27 01:57:31 enami Exp $
 
-SUBDIR+= vis tfmtcheck
+SUBDIR+= humanize_number vis tfmtcheck
 
 .include <bsd.subdir.mk>
