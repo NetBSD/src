@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.53 1997/03/17 19:46:39 gwr Exp $
+#	$NetBSD: files.amiga,v 1.54 1997/03/27 21:21:12 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -140,10 +140,6 @@ file	arch/amiga/dev/if_es.c		es needs-flag
 device	qn:	ifnet, ether, arp
 attach	qn at zbus
 file	arch/amiga/dev/if_qn.c		qn needs-flag
-
-device	ae:	ifnet, ether, arp
-attach	ae at zbus
-file	arch/amiga/dev/if_ae.c		ae needs-count
 
 # A2232 msc serial ports
 device	msc:	tty
