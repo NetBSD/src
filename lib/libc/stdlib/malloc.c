@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.14 1998/08/26 00:29:29 perry Exp $	*/
+/*	$NetBSD: malloc.c,v 1.15 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.14 1998/08/26 00:29:29 perry Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.15 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,7 +108,7 @@ union	overhead {
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
 
-static	int pagesz;			/* page size */
+static	long pagesz;			/* page size */
 static	int pagebucket;			/* page size bucket */
 
 #ifdef MSTATS
@@ -158,12 +158,12 @@ malloc(nbytes)
 	 */
 	if (pagesz == 0) {
 		pagesz = n = getpagesize();
-		op = (union overhead *)sbrk(0);
+		op = (union overhead *)(void *)sbrk(0);
   		n = n - sizeof (*op) - ((long)op & (n - 1));
 		if (n < 0)
 			n += pagesz;
   		if (n) {
-  			if (sbrk(n) == (char *)-1)
+  			if (sbrk((int)n) == (char *)-1)
 				return (NULL);
 		}
 		bucket = 0;
@@ -189,7 +189,7 @@ malloc(nbytes)
 #endif
 		n = -((long)sizeof (*op) + RSLOP);
 	} else {
-		amt = pagesz;
+		amt = (unsigned)pagesz;
 		bucket = pagebucket;
 	}
 	while (nbytes > amt + n) {
@@ -223,7 +223,7 @@ malloc(nbytes)
 	op->ov_rmagic = RMAGIC;
   	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
-  	return ((char *)(op + 1));
+  	return ((char *)(void *)(op + 1));
 }
 
 /*
@@ -236,7 +236,7 @@ morecore(bucket)
   	union overhead *op;
 	long sz;		/* size of desired block */
   	long amt;			/* amount to allocate */
-  	int nblks;			/* how many blocks we get */
+  	long nblks;			/* how many blocks we get */
 
 	/*
 	 * sbrk_size <= 0 only for big, FLUFFY, requests (about
@@ -256,7 +256,7 @@ morecore(bucket)
 		amt = sz + pagesz;
 		nblks = 1;
 	}
-	op = (union overhead *)sbrk(amt);
+	op = (union overhead *)(void *)sbrk((int)amt);
 	/* no more room! */
   	if ((long)op == -1)
   		return;
@@ -266,8 +266,9 @@ morecore(bucket)
 	 */
   	nextf[bucket] = op;
   	while (--nblks > 0) {
-		op->ov_next = (union overhead *)((caddr_t)op + sz);
-		op = (union overhead *)((caddr_t)op + sz);
+		op->ov_next =
+		    (union overhead *)(void *)((caddr_t)(void *)op+(size_t)sz);
+		op = op->ov_next;
   	}
 }
 
@@ -280,7 +281,7 @@ free(cp)
 
   	if (cp == NULL)
   		return;
-	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
+	op = (union overhead *)(void *)((caddr_t)cp - sizeof (union overhead));
 #ifdef DEBUG
   	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
 #else
@@ -293,10 +294,10 @@ free(cp)
 #endif
   	size = op->ov_index;
   	ASSERT(size < NBUCKETS);
-	op->ov_next = nextf[size];	/* also clobbers ov_magic */
-  	nextf[size] = op;
+	op->ov_next = nextf[(size_t)size];	/* also clobbers ov_magic */
+  	nextf[(size_t)size] = op;
 #ifdef MSTATS
-  	nmalloc[size]--;
+  	nmalloc[(size_t)size]--;
 #endif
 }
 
@@ -330,7 +331,7 @@ realloc(cp, nbytes)
 		free (cp);
 		return NULL;
 	}
-	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
+	op = (union overhead *)(void *)((caddr_t)cp - sizeof (union overhead));
 	if (op->ov_magic == MAGIC) {
 		was_alloced++;
 		i = op->ov_index;
@@ -353,7 +354,7 @@ realloc(cp, nbytes)
 		    (i = findbucket(op, __realloc_srchlen)) < 0)
 			i = NBUCKETS;
 	}
-	onb = 1 << (i + 3);
+	onb = (u_long)1 << (u_long)(i + 3);
 	if (onb < pagesz)
 		onb -= sizeof (*op) + RSLOP;
 	else
@@ -361,7 +362,7 @@ realloc(cp, nbytes)
 	/* avoid the copy if same size block */
 	if (was_alloced) {
 		if (i) {
-			i = 1 << (i + 2);
+			i = (long)1 << (long)(i + 2);
 			if (i < pagesz)
 				i -= sizeof (*op) + RSLOP;
 			else
@@ -379,7 +380,7 @@ realloc(cp, nbytes)
   	if ((res = malloc(nbytes)) == NULL)
   		return (NULL);
   	if (cp != res)		/* common optimization if "compacting" */
-		memmove(res, cp, (nbytes < onb) ? nbytes : onb);
+		memmove(res, cp, (size_t)((nbytes < onb) ? nbytes : onb));
   	return (res);
 }
 

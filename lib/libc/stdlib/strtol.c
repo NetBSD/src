@@ -1,4 +1,4 @@
-/*	$NetBSD: strtol.c,v 1.12 1998/02/03 01:46:27 mycroft Exp $	*/
+/*	$NetBSD: strtol.c,v 1.13 1998/11/15 17:13:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtol.c,v 1.12 1998/02/03 01:46:27 mycroft Exp $");
+__RCSID("$NetBSD: strtol.c,v 1.13 1998/11/15 17:13:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,7 +109,7 @@ strtol(nptr, endptr, base)
 	 * overflow.
 	 */
 	cutoff = neg ? LONG_MIN : LONG_MAX;
-	cutlim = cutoff % base;
+	cutlim = (int)(cutoff % base);
 	cutoff /= base;
 	if (neg) {
 		if (cutlim > 0) {
@@ -152,6 +152,7 @@ strtol(nptr, endptr, base)
 		}
 	}
 	if (endptr != 0)
+		/* LINTED interface specification */
 		*endptr = (char *)(any ? s - 1 : nptr);
 	return (acc);
 }

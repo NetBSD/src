@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.15 1998/09/26 23:54:25 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.16 1998/11/15 17:13:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.15 1998/09/26 23:54:25 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.16 1998/11/15 17:13:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ system(command)
 	sig_t intsave, quitsave;
 	sigset_t nmask, omask;
 	int pstat;
-	char *argp[] = {"sh", "-c", (char *) command, NULL};
+	char *argp[] = {"sh", "-c", /* LINTED */(char *)command, NULL};
 
 	if (!command)		/* just checking... */
 		return(1);
