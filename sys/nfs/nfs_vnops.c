@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.196 2004/05/08 21:35:13 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.197 2004/05/10 10:40:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.196 2004/05/08 21:35:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.197 2004/05/10 10:40:42 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1779,14 +1779,6 @@ nfs_remove(v)
 		if (error != EINTR)
 			error = nfs_removerpc(dvp, cnp->cn_nameptr,
 				cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc);
-		/*
-		 * Kludge City: If the first reply to the remove rpc is lost..
-		 *   the reply to the retransmitted request will be ENOENT
-		 *   since the file was in fact removed
-		 *   Therefore, we cheat and return success.
-		 */
-		if (error == ENOENT)
-			error = 0;
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp);
 	PNBUF_PUT(cnp->cn_pnbuf);
@@ -1835,6 +1827,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
+	int rexmit;
 	struct nfsnode *dnp = VTONFS(dvp);
 
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
@@ -1842,13 +1835,21 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 		NFSX_FH(v3) + NFSX_UNSIGNED + nfsm_rndup(namelen));
 	nfsm_fhtom(dnp, v3);
 	nfsm_strtom(name, namelen, NFS_MAXNAMLEN);
-	nfsm_request(dnp, NFSPROC_REMOVE, proc, cred);
+	nfsm_request1(dnp, NFSPROC_REMOVE, proc, cred, &rexmit);
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag, 0);
 	nfsm_reqdone;
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
+	/*
+	 * Kludge City: If the first reply to the remove rpc is lost..
+	 *   the reply to the retransmitted request will be ENOENT
+	 *   since the file was in fact removed
+	 *   Therefore, we cheat and return success.
+	 */
+	if (rexmit && error == ENOENT)
+		error = 0;
 	return (error);
 }
 
@@ -1918,11 +1919,6 @@ out:
 		vput(tvp);
 	vrele(fdvp);
 	vrele(fvp);
-	/*
-	 * Kludge: Map ENOENT => 0 assuming that it is a reply to a retry.
-	 */
-	if (error == ENOENT)
-		error = 0;
 	return (error);
 }
 
@@ -1960,6 +1956,7 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	int error = 0, fwccflag = NFSV3_WCCRATTR, twccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(fdvp);
+	int rexmit;
 	struct nfsnode *fdnp = VTONFS(fdvp);
 
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
@@ -1970,7 +1967,7 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	nfsm_strtom(fnameptr, fnamelen, NFS_MAXNAMLEN);
 	nfsm_fhtom(VTONFS(tdvp), v3);
 	nfsm_strtom(tnameptr, tnamelen, NFS_MAXNAMLEN);
-	nfsm_request(fdnp, NFSPROC_RENAME, proc, cred);
+	nfsm_request1(fdnp, NFSPROC_RENAME, proc, cred, &rexmit);
 	if (v3) {
 		nfsm_wcc_data(fdvp, fwccflag, 0);
 		nfsm_wcc_data(tdvp, twccflag, 0);
@@ -1982,6 +1979,11 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(fdvp));
 	if (!twccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(tdvp));
+	/*
+	 * Kludge: Map ENOENT => 0 assuming that it is a reply to a retry.
+	 */
+	if (rexmit && error == ENOENT)
+		error = 0;
 	return (error);
 }
 
@@ -2008,6 +2010,7 @@ nfs_link(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	/* XXX Should be const and initialised? */
 	int v3;
+	int rexmit;
 	struct nfsnode *np;
 
 	if (dvp->v_mount != vp->v_mount) {
@@ -2039,7 +2042,7 @@ nfs_link(v)
 	nfsm_fhtom(np, v3);
 	nfsm_fhtom(VTONFS(dvp), v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
-	nfsm_request(np, NFSPROC_LINK, cnp->cn_proc, cnp->cn_cred);
+	nfsm_request1(np, NFSPROC_LINK, cnp->cn_proc, cnp->cn_cred, &rexmit);
 	if (v3) {
 		nfsm_postop_attr(vp, attrflag, 0);
 		nfsm_wcc_data(dvp, wccflag, 0);
@@ -2059,7 +2062,7 @@ nfs_link(v)
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
-	if (error == EEXIST)
+	if (rexmit && error == EEXIST)
 		error = 0;
 	return (error);
 }
@@ -2090,6 +2093,7 @@ nfs_symlink(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct vnode *newvp = (struct vnode *)0;
 	const int v3 = NFS_ISV3(dvp);
+	int rexmit;
 	struct nfsnode *dnp = VTONFS(dvp);
 
 	*ap->a_vpp = NULL;
@@ -2111,7 +2115,8 @@ nfs_symlink(v)
 		txdr_nfsv2time(&vap->va_atime, &sp->sa_atime);
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
-	nfsm_request(dnp, NFSPROC_SYMLINK, cnp->cn_proc, cnp->cn_cred);
+	nfsm_request1(dnp, NFSPROC_SYMLINK, cnp->cn_proc, cnp->cn_cred,
+	    &rexmit);
 	if (v3) {
 		if (!error)
 			nfsm_mtofh(dvp, newvp, v3, gotvp);
@@ -2121,7 +2126,7 @@ nfs_symlink(v)
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
-	if (error == EEXIST)
+	if (rexmit && error == EEXIST)
 		error = 0;
 	if (error == 0 && newvp == NULL) {
 		struct nfsnode *np = NULL;
@@ -2172,6 +2177,7 @@ nfs_mkdir(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
+	int rexmit;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -2192,7 +2198,7 @@ nfs_mkdir(v)
 		txdr_nfsv2time(&vap->va_atime, &sp->sa_atime);
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
-	nfsm_request(dnp, NFSPROC_MKDIR, cnp->cn_proc, cnp->cn_cred);
+	nfsm_request1(dnp, NFSPROC_MKDIR, cnp->cn_proc, cnp->cn_cred, &rexmit);
 	if (!error)
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 	if (v3)
@@ -2205,7 +2211,7 @@ nfs_mkdir(v)
 	 * Kludge: Map EEXIST => 0 assuming that you have a reply to a retry
 	 * if we can succeed in looking up the directory.
 	 */
-	if (error == EEXIST || (!error && !gotvp)) {
+	if ((rexmit && error == EEXIST) || (!error && !gotvp)) {
 		if (newvp) {
 			vput(newvp);
 			newvp = (struct vnode *)0;
@@ -2256,6 +2262,7 @@ nfs_rmdir(v)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
+	int rexmit;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 	struct nfsnode *dnp;
@@ -2272,7 +2279,7 @@ nfs_rmdir(v)
 		NFSX_FH(v3) + NFSX_UNSIGNED + nfsm_rndup(cnp->cn_namelen));
 	nfsm_fhtom(dnp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
-	nfsm_request(dnp, NFSPROC_RMDIR, cnp->cn_proc, cnp->cn_cred);
+	nfsm_request1(dnp, NFSPROC_RMDIR, cnp->cn_proc, cnp->cn_cred, &rexmit);
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag, 0);
 	nfsm_reqdone;
@@ -2288,7 +2295,7 @@ nfs_rmdir(v)
 	/*
 	 * Kludge: Map ENOENT => 0 assuming that you have a reply to a retry.
 	 */
-	if (error == ENOENT)
+	if (rexmit && error == ENOENT)
 		error = 0;
 	return (error);
 }
