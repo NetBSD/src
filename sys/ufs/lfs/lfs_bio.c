@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.77 2004/01/28 10:54:23 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.78 2005/02/26 05:40:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.77 2004/01/28 10:54:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.78 2005/02/26 05:40:42 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.77 2004/01/28 10:54:23 yamt Exp $");
 int	locked_queue_count   = 0;	/* Count of locked-down buffers. */
 long	locked_queue_bytes   = 0L;	/* Total size of locked buffers. */
 int	lfs_subsys_pages     = 0L;	/* Total number LFS-written pages */
+int	lfs_fs_pagetrip	     = 0;	/* # of pages to trip per-fs write */
 int	lfs_writing	     = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
 /* Lock for aboves */
@@ -162,7 +163,7 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
 	while (n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
-		lfs_flush(fs, 0);
+		lfs_flush(fs, 0, 0);
 
 		error = ltsleep(&locked_queue_count, PCATCH | PUSER,
 		    "lfsresbuf", hz * LFS_BUFWAIT, &lfs_subsys_lock);
@@ -207,7 +208,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	int error, slept;
 
 	slept = 0;
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail)) {
+	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail)) {
 #if 0
 		/*
 		 * XXX ideally, we should unlock vnodes here
@@ -226,10 +227,10 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 #endif
 
 		if (!slept) {
-#ifdef DEBUG
+#ifdef DEBUG_LFS
 			printf("lfs_reserve: waiting for %ld (bfree = %d,"
 			       " est_bfree = %d)\n",
-			       fsb + fs->lfs_ravail, fs->lfs_bfree,
+			       fsb + fs->lfs_ravail + fs->lfs_favail, fs->lfs_bfree,
 			       LFS_EST_BFREE(fs));
 #endif
 		}
@@ -250,7 +251,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		if (error)
 			return error;
 	}
-#ifdef DEBUG
+#ifdef DEBUG_LFS
 	if (slept)
 		printf("lfs_reserve: woke up\n");
 #endif
@@ -360,10 +361,11 @@ lfs_fits(struct lfs *fs, int fsb)
 		   1) << (fs->lfs_blktodb - fs->lfs_fsbtodb));
 
 	if (needed >= fs->lfs_avail) {
-#ifdef DEBUG
-		printf("lfs_fits: no fit: fsb = %d, uinodes = %d, "
-		       "needed = %d, avail = %d\n",
-		       fsb, fs->lfs_uinodes, needed, fs->lfs_avail);
+#ifdef DEBUG_LFS
+		printf("lfs_fits: no fit: fsb = %ld, uinodes = %ld, "
+		       "needed = %ld, avail = %ld\n",
+		       (long)fsb, (long)fs->lfs_uinodes, (long)needed,
+		       (long)fs->lfs_avail);
 #endif
 		return 0;
 	}
@@ -397,8 +399,10 @@ lfs_availwait(struct lfs *fs, int fsb)
 		LFS_CLEANERINFO(cip, fs, cbp);
 		LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);
 		
+#ifdef DEBUG_LFS
 		printf("lfs_availwait: out of available space, "
 		       "waiting on cleaner\n");
+#endif
 		
 		wakeup(&lfs_allclean_wakeup);
 		wakeup(&fs->lfs_nextseg);
@@ -487,11 +491,17 @@ lfs_flush_fs(struct lfs *fs, int flags)
 	if (fs->lfs_ronly)
 		return;
 
+	lfs_subsys_pages -= fs->lfs_pages; /* XXXUBC */
+	if (lfs_subsys_pages < 0)	   /* XXXUBC */
+		lfs_subsys_pages = 0;	   /* XXXUBC */
+	fs->lfs_pages = 0; /* XXXUBC need a better way to count this */
+
 	lfs_writer_enter(fs, "fldirop");
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
+	fs->lfs_favail = 0; /* XXX */
 
 	lfs_writer_leave(fs);
 }
@@ -507,8 +517,9 @@ lfs_flush_fs(struct lfs *fs, int flags)
  * called and return with lfs_subsys_lock held.
  */
 void
-lfs_flush(struct lfs *fs, int flags)
+lfs_flush(struct lfs *fs, int flags, int only_onefs)
 {
+	extern u_int64_t locked_fakequeue_count;
 	struct mount *mp, *nmp;
 
 	LOCK_ASSERT(simple_lock_held(&lfs_subsys_lock));
@@ -527,27 +538,38 @@ lfs_flush(struct lfs *fs, int flags)
 		    &lfs_subsys_lock);
 	lfs_writing = 1;
 	
-	lfs_subsys_pages = 0; /* XXXUBC need a better way to count this */
 	simple_unlock(&lfs_subsys_lock);
+
+	if (only_onefs) {
+		if (vfs_busy(fs->lfs_ivnode->v_mount, LK_NOWAIT, &mountlist_slock))
+			goto errout;
+		lfs_flush_fs(fs, flags);
+		vfs_unbusy(fs->lfs_ivnode->v_mount);
+	} else {
+		locked_fakequeue_count = 0;
+		simple_lock(&mountlist_slock);
+		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+		     mp = nmp) {
+			if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+#ifdef DEBUG_LFS
+				printf("lfs_flush: fs is vfs_busy\n");
+#endif
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
+				continue;
+			}
+			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
+			    MFSNAMELEN) == 0)
+				lfs_flush_fs(VFSTOUFS(mp)->um_lfs, flags);
+			simple_lock(&mountlist_slock);
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+			vfs_unbusy(mp);
+		}
+		simple_unlock(&mountlist_slock);
+	}
+	LFS_DEBUG_COUNTLOCKED("flush");
 	wakeup(&lfs_subsys_pages);
 
-	simple_lock(&mountlist_slock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			continue;
-		}
-		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
-		    MFSNAMELEN) == 0)
-			lfs_flush_fs(VFSTOUFS(mp)->um_lfs, flags);
-		simple_lock(&mountlist_slock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
-	}
-	simple_unlock(&mountlist_slock);
-	LFS_DEBUG_COUNTLOCKED("flush");
-
+    errout:
 	simple_lock(&lfs_subsys_lock);
 	KASSERT(lfs_writing);
 	lfs_writing = 0;
@@ -567,6 +589,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	int error;
 	struct lfs *fs;
 	struct inode *ip;
+	extern pid_t lfs_writer_daemon;
 
 	error = 0;
 	ip = VTOI(vp);
@@ -607,6 +630,8 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		    locked_queue_bytes + INOBYTES(fs), LFS_MAX_BYTES);
 	if (lfs_subsys_pages > LFS_MAX_PAGES)
 		printf("lssp = %d, max %d\n", lfs_subsys_pages, LFS_MAX_PAGES);
+	if (lfs_fs_pagetrip && fs->lfs_pages > lfs_fs_pagetrip)
+		printf("fssp = %d, trip at %d\n", fs->lfs_pages, lfs_fs_pagetrip);
 	if (lfs_dirvcount > LFS_MAX_DIROP)
 		printf("ldvc = %d, max %d\n", lfs_dirvcount, LFS_MAX_DIROP);
 	if (fs->lfs_diropwait > 0)
@@ -617,7 +642,20 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
-		lfs_flush(fs, flags);
+		lfs_flush(fs, flags, 0);
+	}
+	/*
+	 * If we didn't flush the whole thing, we might want to flush
+	 * one filesystem anyway.
+	 */
+	else if (lfs_fs_pagetrip && fs->lfs_pages > lfs_fs_pagetrip)
+	{
+#ifdef LFS_PD
+		++fs->lfs_pdflush;
+		wakeup(&lfs_writer_daemon);
+#else
+		lfs_flush(fs, flags, 1);
+#endif
 	}
 
 	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
@@ -646,7 +684,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		simple_lock(&lfs_subsys_lock);
 		if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 		    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES) {
-			lfs_flush(fs, flags | SEGM_CKP);
+			lfs_flush(fs, flags | SEGM_CKP, 0);
 		}
 	}
 	simple_unlock(&lfs_subsys_lock);

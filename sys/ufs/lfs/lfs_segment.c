@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.155 2004/09/18 16:40:11 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.156 2005/02/26 05:40:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.155 2004/09/18 16:40:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.156 2005/02/26 05:40:42 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1073,6 +1073,9 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 	/* Insert into the buffer list, update the FINFO block. */
 	bp->b_flags |= B_GATHERED;
 
+	/* This block's accounting moves from lfs_favail to lfs_avail */
+	lfs_deregister_block(sp->vp, bp->b_lblkno);
+
 	*sp->cbpp++ = bp;
 	for (j = 0; j < blksinblk; j++)
 		sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno + j;
@@ -1216,6 +1219,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	if (error)
 		panic("lfs_updatemeta: ufs_bmaparray returned %d", error);
 
+	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
 	KASSERT(daddr <= LFS_MAX_DADDR);
 	if (daddr > 0)
 		daddr = dbtofsb(fs, daddr);
@@ -1879,11 +1883,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	ssp->ss_datasum = lfs_cksum_fold(sum);
 	ssp->ss_sumsum = cksum(&ssp->ss_datasum,
 	    fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
-#ifdef DIAGNOSTIC
-	if (fs->lfs_bfree <
-	    btofsb(fs, ninos * fs->lfs_ibsize) + btofsb(fs, fs->lfs_sumsize))
-		panic("lfs_writeseg: No diskspace for summary");
-#endif
+
 	fs->lfs_bfree -= (btofsb(fs, ninos * fs->lfs_ibsize) +
 			  btofsb(fs, fs->lfs_sumsize));
 
@@ -2020,6 +2020,9 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	int s;
 	struct vnode *devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
+#ifdef DIAGNOSTIC
+	KASSERT(fs->lfs_magic == LFS_MAGIC);
+#endif
 	/*
 	 * If we can write one superblock while another is in
 	 * progress, we risk not having a complete checkpoint if we crash.

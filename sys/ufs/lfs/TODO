@@ -1,10 +1,6 @@
-#   $NetBSD: TODO,v 1.7 2003/02/23 00:22:33 perseant Exp $
+#   $NetBSD: TODO,v 1.8 2005/02/26 05:40:42 perseant Exp $
 
 - Lock audit.  Need to check locking for multiprocessor case in particular.
-
-- Get rid of the syscalls: make them into ioctl calls instead.  This would
-  allow LFS to be loaded as a module.  We would then ideally have an
-  in-kernel cleaner that runs if no userland cleaner has asserted itself.
 
 - Get rid of lfs_segclean(); the kernel should clean a dirty segment IFF it
   has passed two checkpoints containing zero live bytes.
@@ -22,9 +18,6 @@
   the inode lock when writing a segment, right?  If this is true, the
   locking problem in lfs_{bmapv,markv} goes away and lfs_reserve can go,
   too.
-
-- Fully working fsck_lfs.  (Really, need a general-purpose external
-  partial-segment writer.)
 
 - Get rid of DEV_BSIZE, pay attention to the media block size at mount time.
 

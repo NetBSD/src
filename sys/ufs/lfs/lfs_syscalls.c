@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.100 2003/12/04 14:57:47 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.101 2005/02/26 05:40:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.100 2003/12/04 14:57:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.101 2005/02/26 05:40:42 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -756,6 +756,14 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				}
 				numrefed++;
 			} else {
+				/*
+				 * Don't VFS_VGET if we're being unmounted,
+				 * since we hold vfs_busy().
+				 */
+				if (mntp->mnt_iflag & IMNT_UNMOUNT) {
+					v_daddr = LFS_UNUSED_DADDR;
+					continue;
+				}
 				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
 				if (error) {
 #ifdef DEBUG_LFS
@@ -927,7 +935,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
 	cip->bfree = fs->lfs_bfree;
-	cip->avail = fs->lfs_avail - fs->lfs_ravail;
+	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
 	(void) LFS_BWRITE_LOG(bp);
 	wakeup(&fs->lfs_avail);
 
@@ -1074,6 +1082,16 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 	if (error != 0 || *vpp != NULL)
 		return (error);
 
+	/* 
+	 * getnewvnode(9) will call vfs_busy, which will block if the
+	 * filesystem is being unmounted; but umount(9) is waiting for
+	 * us because we're already holding the fs busy.
+	 * XXXMP
+	 */
+	if (mp->mnt_iflag & IMNT_UNMOUNT) {
+		*vpp = NULL;
+		return EDEADLK;
+	}
 	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
 		return (error);
