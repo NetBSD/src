@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.4 2004/10/15 04:48:24 thorpej Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.5 2004/10/15 04:51:48 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -559,14 +559,21 @@ ethfoo_stop(struct ifnet *ifp, int disable)
  * make sure we have enough room in cd_devs to create the
  * user-specified instance.
  *
- * config_attach_pseudo can be called with unit = -1 to have
+ * config_attach_pseudo can be called with unit = DVUNIT_ANY to have
  * autoconf(9) choose a unit number for us.
  */
 static int
 ethfoo_clone_create(struct if_clone *ifc, int unit)
 {
+	struct cfdata *cf;
 
-	if (config_attach_pseudo(ethfoo_cd.cd_name, unit) == NULL) {
+	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf->cf_name = ethfoo_cd.cd_name;
+	cf->cf_atname = ethfoo_ca.ca_name;
+	cf->cf_unit = unit;
+	cf->cf_fstate = FSTATE_NOTFOUND;
+
+	if (config_attach_pseudo(cf) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
                     ethfoo_cd.cd_name, unit);
 		return (ENXIO);
@@ -584,10 +591,12 @@ static void
 ethfoo_clone_destroy(struct ifnet *ifp)
 {
 	struct device *dev = (struct device *)ifp->if_softc;
+	struct cfdata *cf = dev->dv_cfdata;
 
 	if (config_detach(dev, 0) != 0)
 		aprint_error("%s: unable to detach instance\n",
 		    dev->dv_xname);
+	free(cf, M_DEVBUF);
 }
 
 /*
