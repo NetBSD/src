@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.130 2003/12/06 04:16:33 atatat Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.131 2004/01/02 18:52:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.130 2003/12/06 04:16:33 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.131 2004/01/02 18:52:17 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -485,11 +485,11 @@ exit_lwps(struct lwp *l)
 	p->p_userret = lwp_exit_hook;
 	p->p_userret_arg = NULL;
 
-	/*
-	 * Make SA-cached LWPs normal process runnable LWPs so that
-	 * they'll also self-destruct.
-	 */
-	if (p->p_sa && p->p_sa->sa_ncached > 0) {
+	if (p->p_sa) {
+		/*
+		 * Make SA-cached LWPs normal process runnable LWPs so
+		 * that they'll also self-destruct.
+		 */
 		DPRINTF(("exit_lwps: Making cached LWPs of %d runnable: ",
 		    p->p_pid));
 		SCHED_LOCK(s);
@@ -500,6 +500,9 @@ exit_lwps(struct lwp *l)
 		}
 		DPRINTF(("\n"));
 		SCHED_UNLOCK(s);
+
+		/* Clear wokenq, the LWPs on the queue will run below */
+		p->p_sa->sa_wokenq_head = NULL;
 	}
 	
 	/*
@@ -510,8 +513,8 @@ exit_lwps(struct lwp *l)
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		l2->l_flag &= ~(L_DETACHED|L_SA);
 
-		if (l2->l_wchan == &l2->l_upcallstack)
-			wakeup(&l2->l_upcallstack);
+		if (p->p_sa && l2->l_wchan == p->p_sa)
+			l2->l_flag |= L_SINTR;
 
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {

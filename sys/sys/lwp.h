@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.16 2003/12/24 22:42:11 manu Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.17 2004/01/02 18:52:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,6 +120,8 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
+#define	L_SA_WOKEN	0x40000000 /* LWP is on sa_woken queue */
+#define	L_SA_RECYCLE	0x80000000 /* LWP should be recycled in sa_setwoken */
 
 /*
  * Status values.

@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.13 2003/11/17 22:52:09 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.14 2004/01/02 18:52:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,8 +81,7 @@ struct sadata_upcall {
 struct sastack {
 	stack_t			sast_stack;
 	SPLAY_ENTRY(sastack)	sast_node;
-	SLIST_ENTRY(sastack)	sast_list;
-	struct lwp		*sast_blocker;
+	unsigned int		sast_gen;
 };
 
 struct sadata {
@@ -90,6 +89,7 @@ struct sadata {
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
 	struct lwp	*sa_vp;		/* "virtual processor" allocation */
+	struct lwp	*sa_vp_blocker;	/* recently blocked lwp */
 	struct lwp	*sa_wokenq_head;	/* list of woken lwps */
 	struct lwp	**sa_wokenq_tailp;	/* list of woken lwps */
 	vaddr_t	sa_vp_faultaddr;	/* page fault address */
@@ -98,7 +98,8 @@ struct sadata {
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of available lwps */
 	int	sa_ncached;		/* list length */
 	SPLAY_HEAD(sasttree, sastack) sa_stackstree; /* tree of upcall stacks */
-	SLIST_HEAD(, sastack)	sa_stackslist; /* list of upcall stacks */
+	struct sastack	*sa_stacknext;	/* next free stack */
+	ssize_t	sa_stackinfo_offset;	/* offset from ss_sp to stackinfo data */
 	int	sa_nstacks;		/* number of upcall stacks */
 	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
 };
@@ -124,10 +125,7 @@ void	sa_release(struct proc *);
 void	sa_switch(struct lwp *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
-void	sa_switchcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
-int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
-	    size_t, void *, struct sadata_upcall *, stack_t *);
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct proc *);

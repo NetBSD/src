@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.3 2003/07/08 06:49:21 itojun Exp $	*/
+/*	$NetBSD: sa.h,v 1.4 2004/01/02 18:52:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,11 @@ struct sa_t {
 	int sa_cpu;
 };
 
+/* kernel known per upcall stack data */
+struct sa_stackinfo_t {
+	__volatile unsigned int sasi_stackgen; /* stack generation counter */
+};
+
 typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 
 #define SA_UPCALL_NEWPROC		0
@@ -59,5 +64,7 @@ typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 #define SA_UPCALL_NUPCALLS		7
 
 #define SA_FLAG_PREEMPT	0x0001	/* Generate upcalls on a vanilla preempt() */
+
+#define	SA_FLAG_STACKINFO 0x010000 /* Use stackinfo for upcall stack return */
 
 #endif /* !_SYS_SA_H */
