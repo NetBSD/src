@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.15 1997/09/30 20:44:35 drochner Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.16 1999/02/21 15:07:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -55,18 +55,23 @@ struct nfs_dlmount {
 	u_char		ndm_fh[NFSX_V3FHMAX]; 	/* The file's file handle */
 };
 struct nfs_diskless {
+	/* the interface used */
+	struct ifnet *nd_ifp;
 	/* A collection of IP addresses, for convenience. */
 	struct in_addr nd_myip; /* My IP address */
 	struct in_addr nd_mask; /* My netmask */
 	struct in_addr nd_gwip; /* My gateway */
 	/* Information for each mount point we need. */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
-#if 0
-	struct nfs_dlmount nd_swap; 	/* Mount info for swap */
-#endif
 };
 
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
+void nfs_boot_cleanup __P((struct nfs_diskless *nd, struct proc *procp));
+int nfs_boot_ifupdown __P((struct ifnet *, struct proc *, int));
+int nfs_boot_setaddress __P((struct ifnet *, struct proc *,
+			     u_int32_t, u_int32_t, u_int32_t));
+int nfs_boot_deladdress __P((struct ifnet *, struct proc *, u_int32_t));
+void nfs_boot_flushrt __P((struct ifnet *));
 int nfs_boot_setrecvtimo __P((struct socket *));
 int nfs_boot_enbroadcast __P((struct socket *));
 int nfs_boot_sobind_ipport __P((struct socket *, u_int16_t));
@@ -75,6 +80,6 @@ int nfs_boot_sendrecv __P((struct socket *, struct mbuf *,
 			   int (*)(struct mbuf*, void*), struct mbuf**,
 			   struct mbuf**, void*));
 
-int nfs_bootdhcp  __P((struct ifnet *, struct nfs_diskless *, struct proc *));
-int nfs_bootparam __P((struct ifnet *, struct nfs_diskless *, struct proc *));
+int nfs_bootdhcp  __P((struct nfs_diskless *, struct proc *));
+int nfs_bootparam __P((struct nfs_diskless *, struct proc *));
 
