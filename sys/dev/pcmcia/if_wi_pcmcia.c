@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.48 2004/08/08 23:17:13 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.49 2004/08/09 00:33:17 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.48 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.49 2004/08/09 00:33:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ wi_pcmcia_find(psc, pa, cfe)
 		printf("%s: can't allocate i/o space\n", sc->sc_dev.dv_xname);
 		goto fail1;
 	}
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
+	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
 	    &psc->sc_io_window) != 0) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto fail2;
