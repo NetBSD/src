@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.4 2004/03/23 08:40:12 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.5 2004/09/16 13:49:07 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -53,9 +53,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.75 2004/03/22 18:48:56 christos Exp")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.78 2004/07/24 20:38:56 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.4 2004/03/23 08:40:12 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.5 2004/09/16 13:49:07 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -102,14 +102,12 @@ private int apprentice_map(struct magic_set *, struct magic **, uint32_t *,
     const char *);
 private int apprentice_compile(struct magic_set *, struct magic **, uint32_t *,
     const char *);
+private int check_format(struct magic *);
 
 private size_t maxmagic = 0;
 private size_t magicsize = sizeof(struct magic);
 
 #ifdef COMPILE_ONLY
-const char *magicfile;
-char *progname;
-int lineno;
 
 int main(int, char *[]);
 
@@ -117,6 +115,8 @@ int
 main(int argc, char *argv[])
 {
 	int ret;
+	struct magic_set *ms;
+	char *progname;
 
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
@@ -124,12 +124,19 @@ main(int argc, char *argv[])
 		progname = argv[0];
 
 	if (argc != 2) {
-		(void)fprintf(stderr, "usage: %s file\n", progname);
-		exit(1);
+		(void)fprintf(stderr, "Usage: %s file\n", progname);
+		return 1;
 	}
-	magicfile = argv[1];
 
-	exit(file_apprentice(magicfile, COMPILE, MAGIC_CHECK) == -1 ? 1 : 0);
+	if ((ms = magic_open(MAGIC_CHECK)) == NULL) {
+		(void)fprintf(stderr, "%s: %s\n", progname, strerror(errno));
+		return 1;
+	}
+	ret = magic_compile(ms, argv[1]) == -1 ? 1 : 0;
+	if (ret == 1)
+		(void)fprintf(stderr, "%s: %s\n", progname, magic_error(ms));
+	magic_close(ms);
+	return ret;
 }
 #endif /* COMPILE_ONLY */
 
@@ -212,6 +219,7 @@ file_delmagic(struct magic *p, int type, size_t entries)
 		break;
 	case 1:
 		p--;
+		/*FALLTHROUGH*/
 	case 0:
 		free(p);
 		break;
@@ -710,6 +718,10 @@ GetDesc:
 	while ((m->desc[i++] = *l++) != '\0' && i < MAXDESC)
 		/* NULLBODY */;
 
+	if (ms->flags & MAGIC_CHECK) {
+		if (!check_format(m))
+			return -1;
+	}
 #ifndef COMPILE_ONLY
 	if (action == FILE_CHECK) {
 		file_mdump(m);
@@ -717,6 +729,57 @@ GetDesc:
 #endif
 	++(*nmagicp);		/* make room for next */
 	return 0;
+}
+
+/*
+ * Check that the optional printf format in description matches
+ * the type of the magic.
+ */
+private int
+check_format(struct magic *m)
+{
+	static const char *formats[] = { FILE_FORMAT_STRING };
+	static const char *names[] = { FILE_FORMAT_NAME };
+	char *ptr;
+
+	for (ptr = m->desc; *ptr; ptr++)
+		if (*ptr == '%')
+			break;
+	if (*ptr == '\0') {
+		/* No format string; ok */
+		return 1;
+	}
+	if (m->type >= sizeof(formats)/sizeof(formats[0])) {
+		file_magwarn("Internal error inconsistency between m->type"
+		    " and format strings");
+		return 0;
+	}
+	if (formats[m->type] == NULL) {
+		file_magwarn("No format string for `%s' with description `%s'",
+		    m->desc, names[m->type]);
+		return 0;
+	}
+	for (; *ptr; ptr++) {
+		if (*ptr == 'l' || *ptr == 'h') {
+			/* XXX: we should really fix this one day */
+			continue;
+		}
+		if (islower((unsigned char)*ptr) || *ptr == 'X')
+			break;
+	}
+	if (*ptr == '\0') {
+		/* Missing format string; bad */
+		file_magwarn("Invalid format `%s' for type `%s'",
+			m->desc, names[m->type]);
+		return 0;
+	}
+	if (strchr(formats[m->type], *ptr) == NULL) {
+		file_magwarn("Printf format `%c' is not valid for type `%s'"
+		    " in description `%s'",
+			*ptr, names[m->type], m->desc);
+		return 0;
+	}
+	return 1;
 }
 
 /* 

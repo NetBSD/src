@@ -160,6 +160,7 @@ Magdir/cisco \
 Magdir/citrus \
 Magdir/claris \
 Magdir/clipper \
+Magdir/spec \
 Magdir/commands \
 Magdir/communications \
 Magdir/compress \
@@ -218,6 +219,7 @@ Magdir/magic \
 Magdir/mail.news \
 Magdir/maple \
 Magdir/mathematica \
+Magdir/matroska \
 Magdir/mcrypt \
 Magdir/mime \
 Magdir/mips \
@@ -491,7 +493,7 @@ magic.mgc: magic
 	$(top_builddir)/src/file -C -m magic
 
 magic.mime.mgc: magic.mime
-	$(top_builddir)/src/file -C -m magic.mime
+	$(top_builddir)/src/file -C -m $(srcdir)/magic.mime
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

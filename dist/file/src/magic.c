@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.10 2004/05/21 21:18:57 ross Exp $	*/
+/*	$NetBSD: magic.c,v 1.11 2004/09/16 13:49:07 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -68,9 +68,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.20 2004/03/23 15:33:43 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.22 2004/07/24 19:55:17 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.10 2004/05/21 21:18:57 ross Exp $");
+__RCSID("$NetBSD: magic.c,v 1.11 2004/09/16 13:49:07 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -210,6 +210,7 @@ close_and_restore(const struct magic_set *ms, const char *name, int fd,
 	}
 }
 
+#ifndef COMPILE_ONLY
 /*
  * find type of named file
  */
@@ -322,6 +323,7 @@ magic_buffer(struct magic_set *ms, const void *buf, size_t nb)
 	}
 	return file_getbuffer(ms);
 }
+#endif
 
 public const char *
 magic_error(struct magic_set *ms)
