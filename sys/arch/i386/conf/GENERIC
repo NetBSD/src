@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.531 2002/12/09 15:50:57 perry Exp $
+# $NetBSD: GENERIC,v 1.532 2002/12/09 16:24:39 david Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.531 $"
+#ident 		"GENERIC-$Revision: 1.532 $"
 
 maxusers	32		# estimated number of users
 
@@ -341,7 +341,7 @@ cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 
 # CardBus bus support
-#cardbus*	at cardslot?
+cardbus*	at cardslot?
 pcmcia* 	at cardslot?
 
 # Coprocessor Support
