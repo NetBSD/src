@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1995/03/31 02:54:35 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.28 1995/04/13 14:50:26 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -663,18 +663,17 @@ out:
  * thing that made the system call, and are named that way here.
  */
 syscall(code, tf, pc)
-	register u_int code;
+	register_t code, pc;
 	register struct trapframe *tf;
-	int pc;
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
 	register struct proc *p;
 	int error, new;
 	struct args {
-		int i[8];
+		register_t i[8];
 	} args;
-	int rval[2];
+	register_t rval[2];
 	u_quad_t sticks;
 	extern int nsysent;
 	extern struct pcb *cpcb;
@@ -756,13 +755,13 @@ syscall(code, tf, pc)
 	/* Callp currently points to syscall, which returns ENOSYS. */
 	if (code < nsys) {
 		callp += code;
-		i = callp->sy_argsize / sizeof(int);
+		i = callp->sy_argsize / sizeof(register_t);
 		if (i > nap) {	/* usually false */
 			if (i > 8)
 				panic("syscall nargs");
 			error = copyin((caddr_t)tf->tf_out[6] +
 			    offsetof(struct frame, fr_argx),
-			    (caddr_t)&args.i[nap], (i - nap) * sizeof(int));
+			    (caddr_t)&args.i[nap], (i - nap) * sizeof(register_t));
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
@@ -773,7 +772,7 @@ syscall(code, tf, pc)
 			}
 			i = nap;
 		}
-		copywords(ap, args.i, i * 4);
+		copywords(ap, args.i, i * sizeof(register_t));
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
