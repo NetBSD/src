@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.217 2002/05/02 15:09:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.218 2002/05/02 22:13:31 sommerfeld Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -70,12 +70,6 @@ INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
-.endif
-
-# Use multiple jobs for kernel builds, if NBUILDJOBS set.
-# (Taken from src/Makefile.)
-.if defined(NBUILDJOBS)
-_J= -j${NBUILDJOBS}
 .endif
 
 # -rw-r--r--
@@ -271,7 +265,7 @@ distrib-dirs: check_DESTDIR
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 usr/src/sys ${DESTDIR}/sys
 
 release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
-    distribution snap_pre snap_md_pre snap_kern snap_md_post
+    distribution .WAIT snap_pre snap_md_pre .WAIT snap_kern .WAIT snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	${MAKESUMS} -t ${RELEASEDIR}/binary/kernel '*.gz'
 
@@ -348,7 +342,7 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 .if !defined(UPDATE)
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
-	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE} ${_J}
+	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE}
 .endfor # build kernels
 .endif # KERNELS_DONE							# }
 .for configfile in ${KERNEL_SETS}
