@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.2 1997/11/17 08:52:38 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.3 1998/01/12 09:28:52 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -73,10 +73,6 @@ int mii_print __P((void *, const char *));
 
 struct cfattach mii_ca = {
 	sizeof(struct mii_softc), miimatch, miiattach
-};
-
-struct cfdriver mii_cd = {
-	NULL, "mii", DV_DULL
 };
 
 int

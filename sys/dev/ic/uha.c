@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.11 1997/11/04 05:58:29 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.12 1998/01/12 09:23:36 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -146,10 +146,6 @@ struct scsipi_device uha_dev = {
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-};
-
-struct cfdriver uha_cd = {
-	NULL, "uha", DV_DULL
 };
 
 #define	UHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.5 1997/11/02 00:25:11 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.6 1998/01/12 09:23:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,10 +75,6 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
-
-struct cfdriver ne_cd = {
-	NULL, "ne", DV_IFNET
-};
 
 int	ne2000_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
 int	ne2000_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));

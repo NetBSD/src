@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.17 1997/11/04 05:58:26 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.18 1998/01/12 09:23:17 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -154,10 +154,6 @@ struct scsipi_device bha_dev = {
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-};
-
-struct cfdriver bha_cd = {
-	NULL, "bha", DV_DULL
 };
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.36 1997/10/18 00:15:02 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.37 1998/01/12 09:23:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -147,12 +147,6 @@ const u_int ep_default_to_media[8] = {
 	IFM_ETHER | IFM_100_TX,	/* XXX really MII: need to talk to PHY */
 	IFM_ETHER | IFM_100_T4,
 };
-
-/* Autoconfig defintion of driver back-end */
-struct cfdriver ep_cd = {
-	NULL, "ep", DV_IFNET
-};
-
 
 void	ep_internalconfig __P((struct ep_softc *sc));
 void	ep_vortex_probemedia __P((struct ep_softc *sc));

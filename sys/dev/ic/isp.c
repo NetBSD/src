@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.16 1997/12/05 19:41:49 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.17 1998/01/12 09:23:26 thorpej Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -70,10 +70,6 @@
 #include <dev/ic/ispmbox.h>
 
 #define	MBOX_DELAY_COUNT	1000000 / 100
-
-struct cfdriver isp_cd = {
-	NULL, "isp", DV_DULL
-};
 
 static void	ispminphys __P((struct buf *));
 static int32_t	ispscsicmd __P((struct scsipi_xfer *xs));

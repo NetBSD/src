@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.17 1997/10/15 05:51:35 explorer Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.18 1998/01/12 09:23:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -179,9 +179,6 @@ struct am7990_softc {
 	rndsource_element_t	rnd_source;
 #endif
 };
-
-/* Export this to machine-dependent drivers. */
-extern struct cfdriver le_cd;
 
 void am7990_config __P((struct am7990_softc *));
 void am7990_init __P((struct am7990_softc *));

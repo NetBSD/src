@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.6 1997/10/19 14:10:11 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.7 1998/01/12 09:23:25 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -87,10 +87,6 @@ void	pcic_detach_card __P((struct pcic_handle *));
 
 void	pcic_chip_do_mem_map __P((struct pcic_handle *, int));
 void	pcic_chip_do_io_map __P((struct pcic_handle *, int));
-
-struct cfdriver pcic_cd = {
-	NULL, "pcic", DV_DULL
-};
 
 int
 pcic_ident_ok(ident)

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.30 1997/09/29 17:40:38 chuck Exp $	*/
+/*	$NetBSD: midway.c,v 1.31 1998/01/12 09:23:31 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -203,9 +203,7 @@ int en_dma = EN_DMA;			/* use DMA (switch off for dbg) */
  * autoconfig attachments
  */
 
-struct cfdriver en_cd = {
-    0, "en", DV_IFNET,
-};
+extern struct cfdriver en_cd;
 
 /*
  * local structures

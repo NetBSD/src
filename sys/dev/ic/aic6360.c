@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.54 1997/10/06 19:49:17 christos Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.55 1998/01/12 09:23:11 thorpej Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -182,10 +182,6 @@ void	aic_dump6360	__P((struct aic_softc *));
 void	aic_show_scsi_cmd __P((struct aic_acb *));
 void	aic_print_active_acb __P((void));
 #endif
-
-struct cfdriver aic_cd = {
-	NULL, "aic", DV_DULL
-};
 
 struct scsipi_adapter aic_switch = {
 	aic_scsi_cmd,
@@ -2112,6 +2108,7 @@ aic_print_acb(acb)
 void
 aic_print_active_acb()
 {
+	extern struct cfdriver aic_cd;
 	struct aic_acb *acb;
 	struct aic_softc *sc = aic_cd.cd_devs[0];
 

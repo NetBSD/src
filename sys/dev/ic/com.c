@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.129 1997/12/16 22:52:37 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.130 1998/01/12 09:23:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -157,10 +157,7 @@ integrate void com_stsoft	__P((struct com_softc *, struct tty *));
 integrate void com_schedrx	__P((struct com_softc *));
 void	comdiag		__P((void *));
 
-
-struct cfdriver com_cd = {
-	NULL, "com", DV_TTY
-};
+extern struct cfdriver com_cd;
 
 /*
  * Make this an option variable one can patch.

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.39 1997/10/15 16:34:10 gwr Exp $	*/
+/*	$NetBSD: am7990.c,v 1.40 1998/01/12 09:23:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -196,14 +196,6 @@ ether_cmp(one, two)
 /* Make sure this is short-aligned, for ether_cmp(). */
 static u_int16_t bcast_enaddr[3] = { ~0, ~0, ~0 };
 #endif
-
-/*
- * am7990 configuration driver.  Attachments are provided by
- * machine-dependent driver front-ends.
- */
-struct cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
 
 void
 am7990_config(sc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.41 1997/11/12 22:17:10 pk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.42 1998/01/12 09:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -193,9 +193,7 @@ struct cfattach zstty_ca = {
 	sizeof(struct zstty_softc), zstty_match, zstty_attach
 };
 
-struct cfdriver zstty_cd = {
-	NULL, "zstty", DV_TTY
-};
+extern struct cfdriver zstty_cd;
 
 struct zsops zsops_tty;
 
