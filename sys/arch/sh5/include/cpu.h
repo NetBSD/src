@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2002/08/26 10:38:53 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2002/09/06 15:36:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -185,7 +185,7 @@ struct clockframe {
 #define	CLKF_BASEPRI(cf)   (((cf)->cf_state.sf_ssr&SH5_CONREG_SR_IMASK_ALL)==0)
 #define	CLKF_PC(cf)        ((cf)->cf_state.sf_spc)
 
-#define	CLKF_INTR(cf)      (curcpu()->ci_intr_depth > 0)
+#define	CLKF_INTR(cf)      (curcpu()->ci_intr_depth > 1)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
