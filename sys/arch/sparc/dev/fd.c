@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 1995/04/13 20:24:36 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.6 1995/04/25 14:44:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -104,6 +104,7 @@ struct fdc_softc {
 #define FDC_NEEDHEADSETTLE	0x02
 #define FDC_EIS			0x04
 	int		sc_errors;		/* number of retries so far */
+	int		sc_overruns;		/* number of DMA overruns */
 	int		sc_cfg;			/* current configuration */
 	struct fdcio	sc_io;
 #define sc_reg_msr	sc_io.fdcio_reg_msr
@@ -362,9 +363,9 @@ fdcattach(parent, self, aux)
 
 	/*
 	 * Configure controller; enable FIFO, Implied seek, no POLL mode?.
-	 * Note: CFG_EFIFO is active-low, initial threshold value: 0
+	 * Note: CFG_EFIFO is active-low, initial threshold value: 8
 	 */
-	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(0 & CFG_THRHLD_MASK);
+	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(8 & CFG_THRHLD_MASK);
 	fdconf(fdc);
 
 	if (fdc->sc_flags & FDC_82077) {
@@ -1150,17 +1151,28 @@ loop:
 				       fd->sc_blkno, fd->sc_nblks, fdc->sc_tc);
 			}
 #endif
-			if (st1 & ST1_OVERRUN) {
-				/* Try a higher threshold */
+			if (fdc->sc_nstat == 7 &&
+			    (st1 & ST1_OVERRUN) == ST1_OVERRUN) {
+
+				/*
+				 * Silently retry overruns if no other
+				 * error bit is set. Adjust threshold.
+				 */
 				int thr = fdc->sc_cfg & CFG_THRHLD_MASK;
-				fdc->sc_cfg &= ~CFG_THRHLD_MASK;
-				if (thr < 15) thr++;
-				fdc->sc_cfg |= (thr & CFG_THRHLD_MASK);
+				if (thr < 15) {
+					thr++;
+					fdc->sc_cfg &= ~CFG_THRHLD_MASK;
+					fdc->sc_cfg |= (thr & CFG_THRHLD_MASK);
 #ifdef FD_DEBUG
-				if (fdc_debug)
-					printf("fdc: %d -> threshold\n", thr);
+					if (fdc_debug)
+						printf("fdc: %d -> threshold\n", thr);
 #endif
-				fdconf(fdc);
+					fdconf(fdc);
+					fdc->sc_state = DOIO;
+					fdc->sc_overruns = 0;
+				}
+				if (++fdc->sc_overruns < 3)
+					goto loop;
 			}
 			fdcretry(fdc);
 			goto loop;
@@ -1170,6 +1182,21 @@ loop:
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 			printf("\n");
 			fdc->sc_errors = 0;
+		} else {
+			if (--fdc->sc_overruns < -5) {
+				int thr = fdc->sc_cfg & CFG_THRHLD_MASK;
+				if (thr > 0) {
+					thr--;
+					fdc->sc_cfg &= ~CFG_THRHLD_MASK;
+					fdc->sc_cfg |= (thr & CFG_THRHLD_MASK);
+#ifdef FD_DEBUG
+					if (fdc_debug)
+						printf("fdc: %d -> threshold\n", thr);
+#endif
+					fdconf(fdc);
+				}
+				fdc->sc_overruns = 0;
+			}
 		}
 		fd->sc_blkno += fd->sc_nblks;
 		fd->sc_skip += fd->sc_nbytes;
@@ -1257,6 +1284,8 @@ fdcretry(fdc)
 
 	fd = fdc->sc_drives.tqh_first;
 	bp = fd->sc_q.b_actf;
+
+	fdc->sc_overruns = 0;
 
 	switch (fdc->sc_errors) {
 	case 0:
