@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.15 2002/11/11 21:59:11 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.16 2002/11/14 04:31:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.15 2002/11/11 21:59:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.16 2002/11/14 04:31:51 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -479,7 +479,7 @@ copyfault:
 		 * process doing kernel-mode page fault must have
 		 * been running with big lock held
 		 */
-		if ((p->p_flag & P_BIGLOCK) == 0)
+		if ((l->l_flag & L_BIGLOCK) == 0)
 			goto we_re_toast;
 #endif
 
@@ -501,7 +501,7 @@ copyfault:
 		unsigned nss;
 
 		cr2 = rcr2();
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -564,7 +564,7 @@ copyfault:
 				KERNEL_UNLOCK();
 				return;
 			}
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
 		if (error == EACCES) {
@@ -592,7 +592,7 @@ copyfault:
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK();
 		else
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 		break;
 	}
 

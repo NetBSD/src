@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.4.10 2002/10/18 02:37:51 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.4.11 2002/11/14 04:31:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.10 2002/10/18 02:37:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.11 2002/11/14 04:31:51 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -307,9 +307,9 @@ child_return(arg)
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 }
