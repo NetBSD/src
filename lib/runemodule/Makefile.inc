@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/01/25 09:16:39 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/01/31 18:39:47 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,3 @@ LIB=		${BASENAME}
 SRCS!=		echo ${BASENAME}.c | tr A-Z a-z
 
 .PATH:	${.CURDIR}/../../libc/locale
-
-beforeinstall:
-	if [ ! -d ${SHLIBDIR} ]; then mkdir ${SHLIBDIR}; fi
