@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.56 2002/03/22 17:14:18 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.57 2002/09/05 14:32:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.56 2002/03/22 17:14:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.57 2002/09/05 14:32:49 christos Exp $");
 
 #ifndef ELFSIZE
 #define	ELFSIZE		32				/* XXX should die */
@@ -239,6 +239,11 @@ ELFNAME2(linux,signature)(p, epp, eh, itp)
 	Elf_Phdr *ph;
 	size_t phsize;
 	int error;
+	static const char linux[] = "Linux";
+
+	if (eh->e_ident[EI_OSABI] == 3 ||
+	    memcmp(&eh->e_ident[EI_ABIVERSION], linux, sizeof(linux)) == 0)
+		return 0;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
