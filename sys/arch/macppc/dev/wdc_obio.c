@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.16 2001/08/02 12:41:39 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.17 2001/09/09 16:08:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,7 +184,11 @@ wdc_obio_attach(parent, self, aux)
 			sc->sc_wdcdev.DMA_cap = 1;
 		}
 #endif
+	} else {
+		/* all non-dma controllers can use adjust_timing */
+		sc->sc_wdcdev.set_modes = adjust_timing;
 	}
+
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->wdc_chanptr = chp;
