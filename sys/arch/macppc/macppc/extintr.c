@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.14 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: extintr.c,v 1.15 2000/08/20 06:56:42 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -68,7 +68,7 @@ static void enable_irq __P((int));
 
 static __inline u_int openpic_read __P((int));
 static __inline void openpic_write __P((int, u_int));
-void openpic_enable_irq __P((int));
+void openpic_enable_irq __P((int, int));
 void openpic_disable_irq __P((int));
 void openpic_set_priority __P((int, int));
 static __inline int openpic_read_irq __P((int));
@@ -217,13 +217,17 @@ openpic_write(reg, val)
 }
 
 void
-openpic_enable_irq(irq)
-	int irq;
+openpic_enable_irq(irq, type)
+	int irq, type;
 {
 	u_int x;
 
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
-	x &= ~OPENPIC_IMASK;
+	x &= ~(OPENPIC_IMASK | OPENPIC_SENSE_LEVEL | OPENPIC_SENSE_EDGE);
+	if (type == IST_LEVEL)
+		x |= OPENPIC_SENSE_LEVEL;
+	else
+		x |= OPENPIC_SENSE_EDGE;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
@@ -366,7 +370,7 @@ intr_calculatemasks()
 	if (have_openpic) {
 		for (irq = 0; irq < NIRQ; irq++) {
 			if (irqs & (1 << irq))
-				openpic_enable_irq(hwirq[irq]);
+				openpic_enable_irq(hwirq[irq], intrtype[irq]);
 			else
 				openpic_disable_irq(hwirq[irq]);
 		}
@@ -642,7 +646,7 @@ do_pending_int()
 
 		intrcnt[hwirq[irq]]++;
 		if (have_openpic)
-			openpic_enable_irq(hwirq[irq]);
+			openpic_enable_irq(hwirq[irq], intrtype[irq]);
 	}
 
 	/*out32rb(INT_ENABLE_REG, ~imen);*/
