@@ -1,3 +1,5 @@
+/*	$NetBSD: aout_machdep.h,v 1.3 1994/10/26 08:02:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: aout_machdep.h,v 1.2 1994/08/16 23:41:53 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */

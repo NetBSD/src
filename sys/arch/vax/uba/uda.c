@@ -1,3 +1,5 @@
+/*	$NetBSD: uda.c,v 1.3 1994/10/26 08:02:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uda.c	7.32 (Berkeley) 2/13/91
- *	$Id: uda.c,v 1.2 1994/10/08 15:46:17 ragge Exp $
+ *	@(#)uda.c	7.32 (Berkeley) 2/13/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: rootfil.c,v 1.2 1994/10/26 08:03:25 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,9 +38,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: rootfil.c,v 1.1 1994/08/02 20:22:12 ragge Exp $
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ *
+ *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
  /* All bugs are subject to removal without further notice */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: float.h,v 1.2 1994/10/26 08:02:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      from: @(#)float.h     7.2 (Berkeley) 6/28/90
- *	$Id: float.h,v 1.1 1994/08/02 20:20:22 ragge Exp $
+ *      @(#)float.h     7.2 (Berkeley) 6/28/90
  */
 
 #define FLT_RADIX       2               /* b */

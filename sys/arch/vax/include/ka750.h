@@ -1,3 +1,5 @@
+/*	$NetBSD: ka750.h,v 1.2 1994/10/26 08:02:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ka750.h,v 1.1 1994/08/02 20:20:30 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */

@@ -1,3 +1,5 @@
+/*	$NetBSD: glue.c,v 1.2 1994/10/26 08:03:06 cgd Exp $	*/
+
 /* This glue file will go away SOON! */
 
 #include "vax/include/pte.h"
