@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.60 2001/05/14 19:56:22 ross Exp $ */
+/* $NetBSD: interrupt.c,v 1.61 2001/05/27 13:53:24 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.60 2001/05/14 19:56:22 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.61 2001/05/27 13:53:24 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 #endif
 
 		    microset_iter-- == 0) {
-			microset_iter = hz;
+			microset_iter = hz-1;
+			microset_time = time;
 #if defined(MULTIPROCESSOR)
 			alpha_multicast_ipi(cpus_running,
 			    ALPHA_IPI_MICROSET);
