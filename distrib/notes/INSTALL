@@ -177,7 +177,7 @@ are as follows:
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
 	ksrc12	This set contains the sources to the NetBSD 1.2
-		kernel, config(8), config.old(8) and dbsym(8).
+		kernel, config(8), and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
 	ssrc12	This set contains the "share" sources, which include

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.3 1997/02/18 07:06:00 mikel Exp $
+#	$NetBSD: makesrctars,v 1.4 1997/03/06 23:41:23 mikel Exp $
 #
 # Make source code tarballs.
 
@@ -34,7 +34,6 @@ find . \
     \! \( \( -path ./gnu -o -path ./share -o -path ./domestic \) -prune \) \
     \! \( -path ./sys -prune \) \
     \! \( -path ./usr.sbin/config -prune \) \
-    \! \( -path ./usr.sbin/config.old -prune \) \
     \! \( -path ./usr.sbin/dbsym -prune \) \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^./|./usr/src/|' | gzip | \
@@ -51,7 +50,7 @@ find gnu \
 chmod 444 ${DESTDIR}/gsrc${RELEASE}/*
 
 mkdir ${DESTDIR}/ksrc${RELEASE}
-find sys usr.sbin/config usr.sbin/config.old usr.sbin/dbsym \
+find sys usr.sbin/config usr.sbin/dbsym \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
 	split -b ${SPLITSIZE} - ${DESTDIR}/ksrc${RELEASE}/ksrc${RELEASE}.
