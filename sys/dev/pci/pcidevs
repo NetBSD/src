@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.223 2000/05/28 10:24:57 drochner Exp $
+$NetBSD: pcidevs,v 1.224 2000/05/30 00:20:41 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1149,9 +1149,9 @@ product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 /* NEC products */
 product NEC USB		0x0035	USB Host Controller
 product NEC POWERVR2	0x0046	PowerVR PCX2
-product NEC PD72872	0x0063	uPD72872 IEEE 1394 OHCI PCI Controller
-product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI PCI Controller
-product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI PCI Controller
+product NEC PD72872	0x0063	uPD72872 IEEE 1394 OHCI Host Controller
+product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
+product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
 
 /* Neomagic products */
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
@@ -1334,8 +1334,8 @@ product SOLIDUM AMD971		0x2000 SNP8023: AMD 971
 product SOLIDUM CLASS802	0x8023 SNP8023: Classifier Engine
 
 /* Sony products */
-product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
-product SONY	CXD32222	0x8039  CXD3222 OHCI i.LINK(IEEE 1394) PCI controller
+product	SONY	CXD1947A	0x8009	CXD1947A IEEE 1394 Host Controller
+product SONY	CXD32222	0x8039  CXD3222 OHCI IEEE 1394 Host Controller
 product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
 /* Sun Microsystems products */
@@ -1366,7 +1366,10 @@ product TEKRAM2	DC690C		0x690c	DC-690C
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
 product	TI	TVP4020		0x3d07	TVP4020 Permedia 2
-product	TI	PCILYNX		0x8000	LYNX FireWire Host Controller
+product	TI	TSB12LV21	0x8000	TSB12LV21 IEEE 1394 Host Controller
+product	TI	TSB12LV22	0x8009	TSB12LV22 OHCI IEEE 1394 Host Controller
+product	TI	TSB12LV23	0x8019	TSB12LV23 OHCI IEEE 1394 Host Controller
+product	TI	TSB12LV26	0x8020	TSB12LV26 OHCI IEEE 1394 Host Controller
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
 product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
