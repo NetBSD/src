@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.118 2000/02/08 23:36:27 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.119 2000/02/11 00:38:13 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3339,3 +3339,42 @@ lib/libc/locale/setlocale.c			1.17
   locale category even if the initialization for some of them fails.
   Fixes problem where e.g. LC_CTYPE category won't be initialized
   if the locale doesn't implement the LC_COLLATE category.
+
+usr.sbin/pkg_install/lib/str.c			1.21
+
+  Handle ``nb<N>'' suffix in dewey decimal comparisons.
+
+usr.bin/shar/shar.1				patch
+
+  Fix typo.
+
+share/man/man4/ti.4				1.1 (new)
+share/man/man4/Makefile				1.129 via patch
+distrib/sets/lists/man/mi			1.206
+
+  Add manual page for Alteon Gigabit driver.
+
+distrib/notes/Makefile.inc			patch
+distrib/notes/common/main			patch
+distrib/notes/common/mirrors			removed
+
+  Remove the list of mirrors, point instead to the on-line list.
+
+sys/dev/pci/pcidevs				1.191 via patch
+sys/dev/pci/pucdata.c				1.9 via patch
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcidevs.h				regenerate
+
+  Add support for US Robotics 3CP5609 PCI 16550 Modem.
+
+distrib/notes/common/main			patch
+
+  Note that Vixie Enterprises now also hosts our web server.
+
+distrib/sets/lists/man/obsolete.mi		1.6 via patch
+
+  Remove old MD le(4) manual pages.  Fixes PR#9376.
+
+distrib/notes/common/main			patch
+
+  Minor update of source set sizes.
