@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.3 2000/04/06 12:08:34 mrg Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.4 2000/04/12 04:06:42 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,15 +133,10 @@ round(register struct fpemu *fe, register struct fpn *fp)
 	}
 
 	/* Bump low bit of mantissa, with carry. */
-#ifdef sparc /* ``cheating'' (left out FPU_DECL_CARRY; know this is faster) */
 	FPU_ADDS(m3, m3, 1);
 	FPU_ADDCS(m2, m2, 0);
 	FPU_ADDCS(m1, m1, 0);
 	FPU_ADDC(m0, m0, 0);
-#else
-	if (++m3 == 0 && ++m2 == 0 && ++m1 == 0)
-		m0++;
-#endif
 	fp->fp_mant[0] = m0;
 	fp->fp_mant[1] = m1;
 	fp->fp_mant[2] = m2;
