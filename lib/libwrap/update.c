@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.5 1999/07/03 12:30:42 simonb Exp $	*/
+/*	$NetBSD: update.c,v 1.6 1999/08/31 13:58:58 itojun Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #else
-__RCSID("$NetBSD: update.c,v 1.5 1999/07/03 12:30:42 simonb Exp $");
+__RCSID("$NetBSD: update.c,v 1.6 1999/08/31 13:58:58 itojun Exp $");
 #endif
 #endif
 
@@ -56,10 +56,10 @@ va_list ap;
 	    request->fd = va_arg(ap, int);
 	    continue;
 	case RQ_CLIENT_SIN:
-	    request->client->sin = va_arg(ap, struct sockaddr_in *);
+	    request->client->sin = va_arg(ap, struct sockaddr *);
 	    continue;
 	case RQ_SERVER_SIN:
-	    request->server->sin = va_arg(ap, struct sockaddr_in *);
+	    request->server->sin = va_arg(ap, struct sockaddr *);
 	    continue;
 
 	    /*
