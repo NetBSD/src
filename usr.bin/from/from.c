@@ -1,4 +1,4 @@
-/*	$NetBSD: from.c,v 1.15 2003/08/07 11:13:49 agc Exp $	*/
+/*	$NetBSD: from.c,v 1.16 2004/10/30 17:25:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: from.c,v 1.15 2003/08/07 11:13:49 agc Exp $");
+__RCSID("$NetBSD: from.c,v 1.16 2004/10/30 17:25:34 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,8 +76,7 @@ main(int argc, char **argv)
 		case 's':
 			sender = optarg;
 			for (p = sender; *p; ++p)
-				if (isupper((unsigned char)*p))
-					*p = tolower(*p);
+				*p = tolower((unsigned char)*p);
 			break;
 		default:
 			fprintf(stderr, "usage: from [-f file] [-s sender] [user]\n");
@@ -139,15 +138,13 @@ match(const char *line, const char *sender)
 		if (isspace((unsigned char)(ch = *line)))
 			return(0);
 		++line;
-		if (isupper((unsigned char)ch))
-			ch = tolower(ch);
+		ch = tolower((unsigned char)ch);
 		if (ch != first)
 			continue;
 		for (p = sender, t = line;;) {
 			if (!(pch = *p++))
 				return(1);
-			if (isupper((unsigned char)(ch = *t++)))
-				ch = tolower(ch);
+			ch = tolower((unsigned char)*t++);
 			if (ch != pch)
 				break;
 		}
