@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.375 2000/01/26 18:49:26 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376 2000/02/04 14:21:33 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -568,7 +568,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0,
+				"MediaGX",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
 			NULL
@@ -577,8 +579,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, 0, "6x86", 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0,
+				0, 0, "6x86", 0,
+				"MMX-enhanced MediaGX (GXm)", /* or Geode? */
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86"		/* Default */
 			},
 			cyrix6x86_cpu_setup
