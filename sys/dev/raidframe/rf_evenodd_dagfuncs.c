@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.9 2001/09/01 23:50:44 thorpej Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.10 2001/10/04 15:58:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,8 @@
 
 #if RF_INCLUDE_EVENODD > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagffrd.h"
@@ -45,7 +46,6 @@
 #include "rf_dagfuncs.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_configure.h"
 #include "rf_parityscan.h"
 #include "rf_evenodd.h"
 #include "rf_evenodd_dagfuncs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$NetBSD: rf_raid1.h,v 1.4 2001/10/04 15:58:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #ifndef _RF__RF_RAID1_H_
 #define _RF__RF_RAID1_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 int 
 rf_ConfigureRAID1(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.h,v 1.2 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.h,v 1.3 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * rf_shutdown.h
  */
@@ -36,7 +36,8 @@
 #ifndef _RF__RF_SHUTDOWN_H_
 #define _RF__RF_SHUTDOWN_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.7 2001/09/01 23:50:44 thorpej Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.8 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -56,7 +56,8 @@
  * searching through stripe lock descriptors.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_stripelocks.h"
 #include "rf_alloclist.h"

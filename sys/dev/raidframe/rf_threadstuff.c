@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.5 1999/12/07 02:13:28 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.6 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -29,7 +29,8 @@
  * rights to redistribute these changes.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"

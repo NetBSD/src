@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.15 2001/01/26 02:16:24 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.16 2001/10/04 15:58:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *
  ****************************************************************************************/
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 #include <sys/time.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.4 1999/08/13 03:41:52 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.5 2001/10/04 15:58:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,9 +35,9 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dev/raidframe/raidframevar.h>
 
 #include "rf_threadstuff.h"
-#include "rf_types.h"
 #include "rf_debugMem.h"
 #include "rf_acctrace.h"
 #include "rf_general.h"
