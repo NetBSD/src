@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2001/11/12 23:16:28 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/13 04:28:28 tv Exp $
 
 MODULE=		groff
 
 ALL_TARGET=	src/include all
+
+# Add gnuwrap hack directly to the Makefile.
+_NOWRAPPER=1
+.build_done: build/Makefile
+build/Makefile: .configure_done
+	@printf '.include "${.CURDIR}/../Makefile.gnuwrap"\n' >>$@
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
