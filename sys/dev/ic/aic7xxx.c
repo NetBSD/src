@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.48 2000/05/19 04:34:41 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.49 2000/05/22 21:14:24 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1393,8 +1393,10 @@ ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo, int enable)
 
 	if (enable)
 		tstate->tagenable |= devinfo->target_mask;
-	else
+	else {
 		tstate->tagenable &= ~devinfo->target_mask;
+		tstate->tagdisable |= devinfo->target_mask;
+	}
 }
 
 /*
@@ -1878,8 +1880,10 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				}
 			}
 			break;
-		case SCSI_STATUS_BUSY:
 		case SCSI_STATUS_QUEUE_FULL:
+			scsi_print_addr(xs->sc_link);
+			printf("queue full\n");
+		case SCSI_STATUS_BUSY:
 			/*
 			 * Requeue any transactions that haven't been
 			 * sent yet.
@@ -3732,6 +3736,7 @@ ahc_init(struct ahc_softc *ahc)
 		tstate->ultraenb = ultraenb;
 		tstate->discenable = discenable;
 		tstate->tagenable = 0; /* Wait until the XPT says its okay */
+		tstate->tagdisable = 0;
 	}
 	ahc->user_discenable = discenable;
 	ahc->user_tagenable = tagenable;
@@ -5582,13 +5587,26 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 {
 	struct scsipi_inquiry_data *inq;
 	struct ahc_devinfo devinfo;
+	struct tmode_tstate *tstate;
 	int target_id, our_id;
+	char channel;
 
 	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
 		return;
 
+	if (xs->sc_link->quirks & SDEV_NOTAG)
+		return;
+
 	target_id = xs->sc_link->scsipi_scsi.target;
 	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+
+	(void)ahc_fetch_transinfo(ahc, channel, our_id, target_id, &tstate);
+	ahc_compile_devinfo(&devinfo, our_id, target_id,
+	    xs->sc_link->scsipi_scsi.lun, channel, ROLE_INITIATOR);
+
+	if (tstate->tagdisable & devinfo.target_mask)
+		return;
 
 	/*
 	 * Sneak a look at the results of the SCSI Inquiry
@@ -5600,15 +5618,12 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 	        printf("%s: target %d using tagged queuing\n",
 			ahc_name(ahc), xs->sc_link->scsipi_scsi.target);
 
-		ahc_compile_devinfo(&devinfo,
-		    our_id, target_id, xs->sc_link->scsipi_scsi.lun,	
-		    SIM_CHANNEL(ahc, xs->sc_link), ROLE_INITIATOR);
 		ahc_set_tags(ahc, &devinfo, TRUE);
 
 		if (ahc->scb_data->maxhscbs >= 16 ||
 		    (ahc->flags & AHC_PAGESCBS)) {
 			/* Default to 16 tags */
-			xs->sc_link->openings += 14;
+			xs->sc_link->openings = 16;
 		} else {
 			/*
 			 * Default to 4 tags on whimpy
@@ -5618,7 +5633,7 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 			 * slots.  We should really have a better
 			 * way of providing fairness.
 			 */
-			xs->sc_link->openings += 2;
+			xs->sc_link->openings = 4;
 		}
 	}
 }
@@ -5630,6 +5645,9 @@ ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 	u_int our_id, target;
 	struct tmode_tstate *tstate;
 	struct ahc_devinfo devinfo;
+
+	if (xs->sc_link->quirks & SDEV_NOTAG)
+		return 0;
 
 	channel = SIM_CHANNEL(ahc, xs->sc_link);
 	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
