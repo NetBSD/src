@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.33 1998/03/01 02:22:31 fvdl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.34 1998/06/25 22:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,6 +36,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfsserver.h"
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
