@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.1.2.4 1997/11/18 23:41:09 mellon Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.1.2.5 1998/11/10 06:02:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -457,7 +457,7 @@ tl_pci_attach(parent, self, aux)
 
 	ifmedia_init(&sc->tl_ifmedia, 0, tl_mediachange, tl_mediastatus);
 	mii_media_add(&sc->tl_ifmedia, &sc->mii);
-	ifmedia_set(&sc->tl_ifmedia, IFM_ETHER | IFM_NONE);
+	ifmedia_set(&sc->tl_ifmedia, IFM_ETHER | IFM_10_T);
 
 	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
 	sc->tl_if.if_softc = sc;
@@ -472,7 +472,7 @@ tl_pci_attach(parent, self, aux)
 	bpfattach(&sc->tl_bpf, &sc->tl_if, DLT_EN10MB,
 		sizeof(struct ether_header));
 #endif
-	sc->mii.mii_media_active = IFM_NONE;
+	sc->mii.mii_media_active = IFM_10_T;
 }
 
 static void
