@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)radix.c	7.9 (Berkeley) 2/4/91
- *	$Id: radix.c,v 1.4 1993/12/18 00:40:59 mycroft Exp $
+ *	$Id: radix.c,v 1.5 1994/03/14 07:46:05 glass Exp $
  */
 
 /*
@@ -119,8 +119,8 @@ static char maskedKey[MAXKEYLEN];
 
 struct radix_node *
 rn_match(v, head)
-	struct radix_node *head;
 	caddr_t v;
+	struct radix_node *head;
 {
 	register struct radix_node *t = head, *x;
 	register caddr_t cp = v, cp2, cp3;
