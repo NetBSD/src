@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.36 1999/11/26 01:39:27 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.37 1999/12/24 01:14:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ USB_ATTACH(ums)
 	usbd_status err;
 	char devinfo[1024];
 	u_int32_t flags, quirks;
-	int i;
+	int i, wheel;
 	struct hid_location loc_btn;
 	
 	sc->sc_iface = iface;
@@ -237,14 +237,19 @@ USB_ATTACH(ums)
 	}
 
 	/* Try to guess the Z activator: first check Z, then WHEEL. */
+	wheel = 0;
 	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
 		       hid_input, &sc->sc_loc_z, &flags) ||
-	    hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
-		       hid_input, &sc->sc_loc_z, &flags)) {
+	    (wheel = hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
+						       HUG_WHEEL),
+		       hid_input, &sc->sc_loc_z, &flags))) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
 		} else {
 			sc->flags |= UMS_Z;
+			/* Wheels need the Z axis reversed. */
+			if (wheel)
+				sc->flags ^= UMS_REVZ;
 		}
 	}
 
