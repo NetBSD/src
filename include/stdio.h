@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.6 1993/10/06 18:41:55 jtc Exp $
+ *	$Id: stdio.h,v 1.7 1993/10/11 18:01:45 jtc Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -246,9 +246,11 @@ __END_DECLS
  */
 #ifndef _ANSI_SOURCE
 #define	L_ctermid	1024	/* size for ctermid(); PATH_MAX */
+#define L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 
 __BEGIN_DECLS
 char	*ctermid __P((char *));
+char	*cuserid __P((char *));
 FILE	*fdopen __P((int, const char *));
 int	 fileno __P((FILE *));
 __END_DECLS
