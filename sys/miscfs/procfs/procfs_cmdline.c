@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.2 1999/03/13 01:01:30 thorpej Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -44,6 +44,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+#include <sys/malloc.h>
 #include <miscfs/procfs/procfs.h>
 
 #include <vm/vm.h>
@@ -62,15 +63,23 @@ procfs_docmdline(curp, p, pfs, uio)
 	struct uio *uio;
 {
 	struct ps_strings pss;
-	char arg[ARG_MAX];
 	int xlen, len, count, error;
 	struct uio auio;
 	struct iovec aiov;
 	vaddr_t argv;
+	char *arg;
 
 	/* Don't allow writing. */
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
+
+	/*
+	 * Allocate a temporary buffer to hold the arguments.
+	 *
+	 * XXX THIS COULD BE HANDLED MUCH MORE INTELLIGENTLY,
+	 * XXX WITHOUT REQUIRING A 256k TEMPORARY BUFFER!
+	 */
+	arg = malloc(ARG_MAX, M_TEMP, M_WAITOK);
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -175,7 +184,7 @@ procfs_docmdline(curp, p, pfs, uio)
 		len--;			/* exclude last NUL */
 
 	/*
-	 * No longer need the process to be locked down.
+	 * Release the process.
 	 */
 #if defined(UVM)
 	PRELE(p);
@@ -188,9 +197,12 @@ procfs_docmdline(curp, p, pfs, uio)
 	xlen = len - uio->uio_offset;
 	xlen = imin(xlen, uio->uio_resid);
 	if (xlen <= 0) 
-		return 0;
+		error = 0;
 	else
-		return (uiomove(arg + uio->uio_offset, xlen, uio));
+		error = uiomove(arg + uio->uio_offset, xlen, uio);
+
+	free(arg, M_TEMP);
+	return (error);
 
  bad:
 #if defined(UVM)
@@ -199,5 +211,6 @@ procfs_docmdline(curp, p, pfs, uio)
 #else
 	PRELE(p);
 #endif
+	free(arg, M_TEMP);
 	return (error);
 }
