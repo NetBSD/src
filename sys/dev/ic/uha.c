@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.26 2001/04/25 17:53:34 bouyer Exp $	*/
+/*	$NetBSD: uha.c,v 1.27 2001/07/07 15:53:21 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -471,7 +471,7 @@ uha_scsipi_request(chan, req, arg)
 			mscp->opcode = UHA_TSP;
 			/* XXX Not for tapes. */
 			mscp->ca = 0x01;
-			bcopy(xs->cmd, &mscp->scsi_cmd, mscp->scsi_cmd_length);
+			memcpy(&mscp->scsi_cmd, xs->cmd, mscp->scsi_cmd_length);
 		}
 		mscp->xdir = UHA_SDET;
 		mscp->dcn = 0x00;

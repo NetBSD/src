@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.34 2001/07/07 05:35:41 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.35 2001/07/07 15:53:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ ne2000_attach(nsc, myea)
 				    romdata[i * (useword ? 2 : 1)];
 		}
 	} else
-		bcopy(myea, dsc->sc_enaddr, sizeof(dsc->sc_enaddr));
+		memcpy(dsc->sc_enaddr, myea, sizeof(dsc->sc_enaddr));
 
 	/* Clear any pending interrupts that might have occurred above. */
 	NIC_BARRIER(nict, nich);

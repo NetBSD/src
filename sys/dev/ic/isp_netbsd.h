@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.43 2001/05/25 21:45:55 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.44 2001/07/07 15:53:18 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -126,7 +126,7 @@ struct isposinfo {
 #define	ISP2100_SCRLEN		0x400
 
 #define	MEMZERO			bzero
-#define	MEMCPY(dst, src, amt)	bcopy((src), (dst), (amt))
+#define	MEMCPY(dst, src, amt)	memcpy((dst), (src), (amt))
 #define	SNPRINTF		snprintf
 #define	STRNCAT			strncat
 #define	USEC_DELAY		DELAY
@@ -237,7 +237,7 @@ struct isposinfo {
 	if (xs->error == XS_NOERROR) {			\
 		xs->error = XS_SENSE;			\
 	}						\
-	bcopy(sp->req_sense_data, &(xs)->sense,		\
+	memcpy(&(xs)->sense, sp->req_sense_data,	\
 	    imin(XS_SNSLEN(xs), sp->req_sense_len))
 
 #define	XS_SET_STATE_STAT(a, b, c)
@@ -262,7 +262,7 @@ struct isposinfo {
 #define	ISP_UNSWIZZLE_RESPONSE(a, b, c)
 #define	ISP_SWIZZLE_ICB(a, b)
 #define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
-	if((void *)src != (void *)dest) bcopy(src, dest, sizeof (isp_pdb_t))
+	if((void *)src != (void *)dest) memcpy(dest, src, sizeof (isp_pdb_t))
 #define	ISP_SWIZZLE_SNS_REQ(a, b)
 #define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)

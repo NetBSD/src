@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.6 2001/04/25 17:53:33 bouyer Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.7 2001/07/07 15:53:19 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -496,7 +496,7 @@ spc_scsipi_request(chan, req, arg)
 			acb->scsipi_cmd_length = 0;
 			acb->data_length = 0;
 		} else {
-			bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
+			memcpy(&acb->scsipi_cmd, xs->cmd, xs->cmdlen);
 #if 1
 			acb->scsipi_cmd.bytes[0] |= periph->periph_lun << 5; /* XXX? */
 #endif

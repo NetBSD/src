@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.11 2001/06/17 16:15:41 jdolecek Exp $ */
+/* $NetBSD: pckbc.c,v 1.12 2001/07/07 15:53:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -641,7 +641,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 		return (EINVAL);
 
 	bzero(&nc, sizeof(nc));
-	bcopy(cmd, nc.cmd, len);
+	memcpy(nc.cmd, cmd, len);
 	nc.cmdlen = len;
 	nc.responselen = responselen;
 	nc.flags = (slow ? KBC_CMDFLAG_SLOW : 0);
@@ -649,7 +649,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	pckbc_poll_cmd1(t, slot, &nc);
 
 	if (nc.status == 0 && respbuf)
-		bcopy(nc.response, respbuf, responselen);
+		memcpy(respbuf, nc.response, responselen);
 
 	return (nc.status);
 }
@@ -833,7 +833,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 		return (ENOMEM);
 
 	bzero(nc, sizeof(*nc));
-	bcopy(cmd, nc->cmd, len);
+	memcpy(nc->cmd, cmd, len);
 	nc->cmdlen = len;
 	nc->responselen = responselen;
 	nc->flags = (sync ? KBC_CMDFLAG_SYNC : 0);
@@ -867,7 +867,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 
 	if (sync) {
 		if (respbuf)
-			bcopy(nc->response, respbuf, responselen);
+			memcpy(respbuf, nc->response, responselen);
 		TAILQ_INSERT_TAIL(&q->freequeue, nc, next);
 	}
 
