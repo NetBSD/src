@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.11 1994/11/04 18:34:53 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.12 1994/11/04 19:01:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -119,7 +119,6 @@
 #include <scsi/scsiconf.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 
 /* Definitions, most of them has turned out to be unneccesary, but here they
  * are anyway.

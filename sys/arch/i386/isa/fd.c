@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.59 1994/11/03 23:23:38 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.60 1994/11/04 19:01:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -60,7 +60,6 @@
 
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/fdreg.h>
 #ifdef NEWCONFIG
 #include <i386/isa/nvram.h>
