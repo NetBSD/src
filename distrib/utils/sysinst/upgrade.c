@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.4.2.7 1998/05/29 20:48:52 mycroft Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.4.2.8 1998/11/23 07:19:59 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -180,6 +180,7 @@ int merge_etc(void)
 void
 do_reinstall_sets(void)
 {
+	doingwhat = msg_string(MSG_reinstall);
 
 	unwind_mounts();
 	msg_display (MSG_reinstallusure);
