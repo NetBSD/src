@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.10 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,8 +112,8 @@ struct dl_softc {
 
 static	int	dl_match __P((struct device *, struct cfdata *, void *));
 static	void	dl_attach __P((struct device *, struct device *, void *));
-static	void	dlrint __P((int));
-static	void	dlxint __P((int));
+static	void	dlrint __P((void *));
+static	void	dlxint __P((void *));
 static	void	dlstart __P((struct tty *));
 static	int	dlparam __P((struct tty *, struct termios *));
 static	void	dlbrk __P((struct dl_softc *, int));
@@ -191,8 +191,6 @@ dl_match (parent, cf, aux)
 		return 0;
 	}
 
-	/* Register the TX interrupt handler */
-	ua->ua_ivec = dlxint;
 
         /* What else do I need to do? */
 
@@ -221,8 +219,9 @@ dl_attach (parent, self, aux)
 	sc->sc_tty = ttymalloc();
 	tty_attach(sc->sc_tty);
 
-	/* Now register the RX interrupt handler */
-	scb_vecalloc(ua->ua_cvec - 4, dlrint, self->dv_unit, SCB_ISTACK);
+	/* Now register the TX & RX interrupt handlers */
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , dlxint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4, dlrint, sc);
 
 	printf("\n");
 }
@@ -230,10 +229,10 @@ dl_attach (parent, self, aux)
 /* Receiver Interrupt Handler */
 
 static void
-dlrint(cntlr)
-	int cntlr;
+dlrint(arg)
+	void *arg;
 {
-	struct	dl_softc *sc = dl_cd.cd_devs[cntlr];
+	struct	dl_softc *sc = arg;
 	register struct tty *tp;
 	register int cc;
 	register unsigned c;
@@ -270,10 +269,10 @@ dlrint(cntlr)
 /* Transmitter Interrupt Handler */
 
 static void
-dlxint(cntlr)
-	int cntlr;
+dlxint(arg)
+	void *arg;
 {
-	struct	dl_softc *sc = dl_cd.cd_devs[cntlr];
+	struct dl_softc *sc = arg;
 	register struct tty *tp;
 	
 	tp = sc->sc_tty;
