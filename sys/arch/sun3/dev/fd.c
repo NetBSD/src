@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.26 2002/07/23 20:49:54 hannken Exp $	*/
+/*	$NetBSD: fd.c,v 1.27 2002/07/24 19:49:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -688,6 +688,7 @@ fdfinish(fd, bp)
 	 * another drive is waiting to be serviced, since there is a long motor
 	 * startup delay whenever we switch.
 	 */
+	(void)BUFQ_GET(&fd->sc_q);
 	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
@@ -698,7 +699,6 @@ fdfinish(fd, bp)
 	}
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
-	(void)BUFQ_GET(&fd->sc_q);
 
 	biodone(bp);
 	/* turn off motor 5s from now */
