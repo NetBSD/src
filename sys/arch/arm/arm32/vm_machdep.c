@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2001/09/10 21:19:35 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2001/09/20 23:32:23 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -324,11 +324,10 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	taddr = uvm_km_valloc_wait(phys_map, len);
-
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
+	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 
 	/*
