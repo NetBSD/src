@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.4 2003/02/15 00:52:18 nathanw Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.5 2003/03/08 08:03:35 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <errno.h>
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.5 2003/03/08 08:03:35 lukem Exp $");
+
+#include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
