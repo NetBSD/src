@@ -288,8 +288,9 @@ dip:
 					  nat->in_inmsk = $3.s_addr; }
 	;
 
-portspec:	YY_NUMBER		{ $$ = $1; }
-	|	YY_STR			{ $$ = getport(NULL, $1); }
+portspec:
+	YY_NUMBER			{ $$ = $1; }
+	| YY_STR			{ $$ = getport(NULL, $1); }
 	;
 
 dport:	| IPNY_PORT portspec			{ nat->in_pmin = htons($2);
@@ -306,7 +307,7 @@ nport:	IPNY_PORT portspec		{ nat->in_pnext = htons($2); }
 					}
 	;
 
-ports:	| IPNY_PORTS portspec		{ nat->in_pmin = $2; }
+ports:	| IPNY_PORTS YY_NUMBER		{ nat->in_pmin = $2; }
 	| IPNY_PORTS IPNY_AUTO		{ nat->in_flags |= IPN_AUTOPORTMAP; }
 	;
 
@@ -366,7 +367,7 @@ mapport:
 			  nat->in_pmin = htons(1024);
 			  nat->in_pmax = htons(65535);
 			}
-	| IPNY_ICMPIDMAP YY_STR YY_NUMBER ':' YY_NUMBER
+	| IPNY_ICMPIDMAP YY_STR portspec ':' portspec
 			{ if (strcmp($2, "icmp") != 0) {
 				yyerror("icmpidmap not followed by icmp");
 			  }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.8,v 1.9 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipf.8,v 1.10 2004/07/23 05:39:04 martti Exp $
 .\"
 .TH IPF 8
 .SH NAME
@@ -72,7 +72,7 @@ To flush entries from the state table, the \fB-F\fP option is used in
 conjunction with either "s" (removes state information about any non-fully
 established connections) or "S" (deletes the entire state table).  Only
 one of the two options may be given.  A fully established connection
-will show up in \fBipfstat -s\fP output as 4/4, with deviations either
+will show up in \fBipfstat -s\fP output as 5/5, with deviations either
 way indicating it is not fully established any more.
 .TP
 .BR \-f \0<filename>

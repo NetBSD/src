@@ -1,14 +1,21 @@
-#	$NetBSD: Makefile,v 1.6 2003/10/26 03:50:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/07/23 05:39:04 martti Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
-# Redistribution and use in source and binary forms are permitted
-# provided that this notice is preserved and due credit is given
-# to the original author and the contributors.
+# See the IPFILTER.LICENCE file for details on licencing.
 #
 .include <bsd.prog.mk>
 
-regress tests: first ftests ptests ntests nitests logtests intests
+regress all: results tests
+
+results:
+	mkdir -p results
+
+tests: ipf nat logtests ipv6 pools
+
+ipf: ftests ptests
+
+nat: ntests nitests intests
 
 first:
 	-mkdir -p results
@@ -17,57 +24,82 @@ first:
 ftests: f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17
 
 # Rule parsing tests
-ptests: i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12
+ptests: i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14
 
-ntests: n1 n2 n3 n4 n5 n6 n7
+ntests: n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11
 
-nitests: ni1 ni2 ni3 ni4 ni5
+nitests: ni1 ni2 ni3 ni4 ni5 ni6 ni7 ni8 ni9 ni10 ni11 ni12
 
-intests: in1 in2 in3 in4
+intests: in1 in2 in3 in4 in5
 
 logtests: l1
 
-ipv6: ipv6.1 ipv6.2
+pools: p1 p2 p3 ip1
 
-0:
-	@(cd ..; make ipftest; )
+ipv6: ipv6.1 ipv6.2 ipv6.3
 
-f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f14:
-	@${HOST_SH} ${.CURDIR}/dotest $@ ${.CURDIR}
+bpf: bpf1 bpf-f1
 
-f12 f13:
-	@${HOST_SH} ${.CURDIR}/hextest $@ ${.CURDIR}
+f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14:
+	@${HOST_SH} ${.CURDIR}/dotest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-f15 f16:
-	@${HOST_SH} ${.CURDIR}/mtest $@ ${.CURDIR}
+f15 f16 f17:
+	@${HOST_SH} ${.CURDIR}/mtest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-f17:
-	@${HOST_SH} ${.CURDIR}/mhtest $@ ${.CURDIR}
+i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 bpf1:
+	@${HOST_SH} ${.CURDIR}/itest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12:
-	@${HOST_SH} ${.CURDIR}/itest $@ ${.CURDIR}
+n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11:
+	@${HOST_SH} ${.CURDIR}/nattest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-n1 n2 n3 n4 n5 n6 n7:
-	@${HOST_SH} ${.CURDIR}/nattest $@ ${.CURDIR}
+ni1 ni2 ni3 ni4 ni5 ni7 ni8 ni9 ni10 ni11 ni12:
+	@${HOST_SH} ${.CURDIR}/natipftest ${.CURDIR} single \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-ni1 ni2 ni3 ni4 ni5:
-	@${HOST_SH} ${.CURDIR}/natipftest $@ ${.CURDIR}
+ni6:
+	@${HOST_SH} ${.CURDIR}/natipftest ${.CURDIR} multi \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-in1 in2 in3 in4:
-	@${HOST_SH} ${.CURDIR}/intest $@ ${.CURDIR}
+in1 in2 in3 in4 in5:
+	@${HOST_SH} ${.CURDIR}/intest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
 l1:
-	@${HOST_SH} ${.CURDIR}/logtest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/logtest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-ipv6.1 ipv6.2:
-	@${HOST_SH} ${.CURDIR}/dotest6 $@ ${.CURDIR}
+ipv6.1 ipv6.2 ipv6.3:
+	@${HOST_SH} ${.CURDIR}/dotest6 ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
+
+p1 p2 p3:
+	@${HOST_SH} ${.CURDIR}/ptest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
+
+ip1:
+	@${HOST_SH} ${.CURDIR}/iptest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
+
+bpf-f1:
+	@${HOST_SH} ${.CURDIR}/bpftest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
 clean:
-	/bin/rm -f f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f13 f12 f14 f15 f16 f17
-	/bin/rm -f i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12
-	/bin/rm -f n1 n2 n3 n4 n5 n6 n7
-	/bin/rm -f ni1 ni2 ni3 ni4 ni5
-	/bin/rm -f in1 in2 in3 in4
+	/bin/rm -f f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17
+	/bin/rm -f i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14
+	/bin/rm -f n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11
+	/bin/rm -f ni1 ni2 ni3 ni4 ni5 ni6 ni7 ni8 ni9 ni10 ni11 ni12
+	/bin/rm -f in1 in2 in3 in4 in5
+	/bin/rm -f p1 p2 p3 ip1
 	/bin/rm -f l1
-	/bin/rm -f ipv6.1 ipv6.2
+	/bin/rm -f ipv6.1 ipv6.2 ipv6.3
+	/bin/rm -f bpf1 bpf-f1
+	/bin/rm -f results/* logout
 	/bin/rm -rf results
+
+diffs:
+	-cd expected; for i in *; do if [ -f $$i -a ! -f ../$$i -a -f ../results/$$i ] ; then  diff -c $$i ../results/$$i >> ../diff.out; fi done

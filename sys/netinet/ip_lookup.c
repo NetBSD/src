@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.2 2004/04/01 21:54:41 martin Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.3 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -63,7 +63,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.3 2004/03/23 12:44:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.5 2004/07/06 11:16:25 darrenr Exp";
 #endif
 
 #ifdef	IPFILTER_LOOKUP
@@ -214,8 +214,8 @@ caddr_t data;
 	ip_pool_t *p;
 	int err;
 
-	BCOPYIN(data, &op, sizeof(op));
 	err = 0;
+	BCOPYIN(data, &op, sizeof(op));
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	switch (op.iplo_type)
@@ -286,6 +286,7 @@ caddr_t data;
 
 	err = 0;
 	BCOPYIN(data, &op, sizeof(op));
+
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	switch (op.iplo_type)
@@ -346,6 +347,7 @@ caddr_t data;
 
 	err = 0;
 	BCOPYIN(data, &op, sizeof(op));
+
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	switch (op.iplo_type)
@@ -386,7 +388,6 @@ caddr_t data;
 	iplookupop_t op;
 	int err;
 
-	err = 0;
 	BCOPYIN(data, &op, sizeof(op));
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 

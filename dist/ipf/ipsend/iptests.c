@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.6 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: iptests.c,v 1.7 2004/07/23 05:39:03 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.1 2004/03/23 12:58:06 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.3 2004/04/16 23:33:04 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,10 +99,10 @@ static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.1 2004/03/23 12:58:06 dar
 
 
 #ifdef USE_NANOSLEEP
-#define	PAUSE()	ts.tv_sec = 0; ts.tv_nsec = 10000000; \
+# define	PAUSE() ts.tv_sec = 0; ts.tv_nsec = 10000000; \
 		  (void) nanosleep(&ts, NULL)
 #else
-#define	PAUSE()	tv.tv_sec = 0; tv.tv_usec = 10000; \
+# define	PAUSE()	tv.tv_sec = 0; tv.tv_usec = 10000; \
 		  (void) select(0, NULL, NULL, NULL, &tv)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.33 2004/07/08 02:52:02 christos Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.34 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.3 2004/05/10 23:22:33 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.4 2004/06/20 10:25:28 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -120,11 +120,11 @@ typedef	struct	nat	{
 	u_short		nat_oport;		/* other port */
 	u_short		nat_use;
 	u_char		nat_p;			/* protocol for NAT */
-	int		nat_rev;		/* 0 = forward, 1 = reverse */
 	int		nat_dir;
 	int		nat_ref;		/* reference count */
 	int		nat_hv[2];
 	char		nat_ifnames[2][LIFNAMSIZ];
+	int		nat_rev;		/* 0 = forward, 1 = reverse */
 } nat_t;
 
 #define	nat_inip	nat_inip6.in4

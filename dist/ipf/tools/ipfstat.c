@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.5 2004/07/14 18:22:10 christos Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.6 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -70,7 +70,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.4 2004/03/19 23:06:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.8 2004/07/18 04:11:37 darrenr Exp";
 #endif
 
 #ifdef __hpux
@@ -812,7 +812,7 @@ char *comment;
 		}
 
 		printfr(fp, ioctl);
-		if (opts & OPT_VERBOSE) {
+		if (opts & OPT_DEBUG) {
 			binprint(fp, sizeof(*fp));
 			if (fp->fr_data != NULL && fp->fr_dsize > 0)
 				binprint(fp->fr_data, fp->fr_dsize);
@@ -1114,9 +1114,8 @@ int topclosed;
 				tstable = realloc(tstable,
 				    maxtsentries * sizeof(statetop_t));
 				if (tstable == NULL) {
-					errstr = "realloc";
-					ret = -1;
-					goto out;
+					perror("realloc");
+					exit(-1);
 				}
 			}
 
@@ -1499,6 +1498,7 @@ static void showgroups(fiop)
 struct friostat	*fiop;
 {
 	static char *gnames[3] = { "Filter", "Accounting", "Authentication" };
+	static int gnums[3] = { IPL_LOGIPF, IPL_LOGCOUNT, IPL_LOGAUTH };
 	frgroup_t *fp, grp;
 	int on, off, i;
 
@@ -1507,13 +1507,15 @@ struct friostat	*fiop;
 
 	for (i = 0; i < 3; i++) {
 		printf("%s groups (active):\n", gnames[i]);
-		for (fp = fiop->f_groups[i][on]; fp != NULL; fp = grp.fg_next)
+		for (fp = fiop->f_groups[gnums[i]][on]; fp != NULL;
+		     fp = grp.fg_next)
 			if (kmemcpy((char *)&grp, (u_long)fp, sizeof(grp)))
 				break;
 			else
 				printf("%s\n", grp.fg_name);
 		printf("%s groups (inactive):\n", gnames[i]);
-		for (fp = fiop->f_groups[i][off]; fp != NULL; fp = grp.fg_next)
+		for (fp = fiop->f_groups[gnums[i]][off]; fp != NULL;
+		     fp = grp.fg_next)
 			if (kmemcpy((char *)&grp, (u_long)fp, sizeof(grp)))
 				break;
 			else

@@ -449,7 +449,7 @@ done:
 
 		if ((yyvarnext == 0) && (nokey == 0)) {
 			w = yyfindkey(yystr);
-			if (w == NULL) {
+			if (w == NULL && yywordtab != NULL) {
 				yyresetdict();
 				w = yyfindkey(yystr);
 			}
@@ -461,7 +461,13 @@ done:
 			rval = YY_STR;
 	}
 
+	if (rval == YY_STR && yysavedepth > 0)
+		yyresetdict();
+
 	yytokentype = rval;
+
+	if (yydebug)
+		printf("lexed(%s) => %d\n", yystr, rval);
 
 	switch (rval)
 	{
@@ -487,6 +493,7 @@ done:
 		yylast -= yypos;
 		yypos = 0;
 	}
+
 	return rval;
 }
 
@@ -562,6 +569,12 @@ char *msg;
 void yysetdict(newdict)
 wordtab_t *newdict;
 {
+	if (yysavedepth == sizeof(yysavewords)/sizeof(yysavewords[0])) {
+		fprintf(stderr, "%d: at maximum dictionary depth\n",
+			yylineNum);
+		return;
+	}
+
 	yysavewords[yysavedepth++] = yysettab(newdict);
 	if (yydebug)
 		printf("yysavedepth++ => %d\n", yysavedepth);

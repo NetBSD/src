@@ -6,20 +6,86 @@
 # in providing a very available location for the IP Filter home page and
 # distribution center.
 #
-# Thanks to Tel.Net Media for allowing me to maintain and further develop
-# IP Filter as part of my job and supplying Sun equipment for testing the
-# move to 64bits and Gigabit Ethernet.
-#
-# Thanks to BSDI for providing object files for BSD/OS 3.1 and the means
-# to further support development of IP Filter under BSDI.
-#
-# Thanks to Craig Bishop of connect.com.au and Sun Microsystems for the
-# loan of a machine to work on a Solaris 2.x port of this software.
-#
 # Thanks also to all those who have contributed patches and other code,
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.3 - Released 18 July 2004
+
+do some more fine tuning on NAT checksum adjustments
+
+correct IP address byte order in proxy setup for ipsec/pptp
+
+man page updates
+
+fix numerous problems with ipfs operation
+
+complete new syntax for ipmon.conf in its parser and update the sample file
+
+assign error value consistantly in fastroute code
+
+rewrite allocation of mbufs in send_reset/send_icmp_err to better use
+mbuf clusters and size calculations
+
+resolve problem with linux panic'ing because the wrong flag was being
+passed to skb_clone/skb_alloc
+
+enable use of shared/exclusive locks on freebsd5 and above
+
+do not rely on m_pkthdr.len to be valid all the time for mbufs on modern BSD
+and so use mbufchainlen to get the mbuf length instead
+
+replace lots of COPYIN/COPYOUT with BCOPYIN/BCOPYOUT where the data is
+going to be on the stack and not in userland
+
+packet buffer pointers were not refreshed & used properly in fr_check()
+
+include extra bits for OpenBSD 3.4 & 3.5.
+
+fix ipf/ipnat parsing regression problems with v3.4
+
+4.1.2 - RELEASED - 27 May 2004
+
+add state top for ipv6
+
+fix numerous parsing regressions
+
+change sample proxies to use SIOCGNATL with the new API
+
+allow macro names to contain underscores (_)
+
+split the parser into a collection of dictionaries so that keywords do
+not interfere with resolving hostnames and portnames
+
+fix ipfrule LKM loading on freebsd
+
+support mapping a fixed range of ports to a single port
+
+fix timeout queue use by proxies with private queues
+
+handle space-led ftp server replies properly
+
+fix timeout queue management
+
+fix fastroute, generation of RST & ICMP packets and operation with to/fastroute
+
+resolve further linux compatibility problems
+
+replace the use of COPYIN with BCOPYIN for platforms that provide ioctl
+args on the stack
+
+allow flushing of ipv6 rules independant of ipv4 rules
+
+correct internal ipv6 checksum calculations
+
+if a 'keep state' rule fails to create state, block the packet rather
+than let it through
+
+correct all checksums in regression tests and correct NAT code to adjust
+checksums correctly.
+
+fix ipfs -R/-W
+
 4.1.1 - RELEASED - 24 March 2004
 
 allow new connections with the same port numbers as an existing one
