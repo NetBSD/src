@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.49 2003/02/26 06:31:11 matt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.50 2003/04/17 13:12:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.49 2003/02/26 06:31:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.50 2003/04/17 13:12:39 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,7 +669,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	struct mbuf *control)
 {
 	struct mbuf	*m, *n, *nlast;
-	int		space;
+	int		space, len;
 
 	space = asa->sa_len;
 
@@ -693,7 +693,12 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	if (m == 0)
 		return (0);
 	MCLAIM(m, sb->sb_mowner);
-	if (asa->sa_len > MLEN) {
+	/*
+	 * XXX avoid 'comparison always true' warning which isn't easily
+	 * avoided.
+	 */
+	len = asa->sa_len;
+	if (len > MLEN) {
 		MEXTMALLOC(m, asa->sa_len, M_NOWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
