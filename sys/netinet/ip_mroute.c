@@ -425,7 +425,7 @@ add_vif(vifcp)
 	vifp->v_flags = vifcp->vifc_flags;
 	vifp->v_threshold = vifcp->vifc_threshold;
 	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
-	vifp->v_ifp = ifa->ifa_ifp;
+	vifp->v_ifp = ifp;
 	vifp->v_rmt_addr  = vifcp->vifc_rmt_addr;
 	splx(s);
 
@@ -717,9 +717,15 @@ ip_mforward(ip, ifp, m)
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR ) {
 		/*
-		 * Packet arrived via a physical interface.
+		 * Packet arrived via a physical interface or was
+		 * decapsulated off an encapsulating tunnel.
+		 * If ifp is one of the multicast_decap_if[]
+		 * dummy interfaces, we know it arrived on an
+		 * encapsulating tunnel, and we set tunnel_src to 1.
+		 * We can detect the dummy interface easily since
+		 * it's output function is null.
 		 */
-		tunnel_src = 0;
+		tunnel_src = (ifp->if_output == 0) ? 1 : 0;
 	} else {
 		/*
 		 * Packet arrived through a tunnel.
@@ -761,6 +767,8 @@ ip_mforward(ip, ifp, m)
 		m->m_len -= TUNNEL_LEN;
 		ip->ip_len -= TUNNEL_LEN;
 		ip->ip_hl -= TUNNEL_LEN >> 2;
+
+		ifp = 0;
 	}
 
 	/*
