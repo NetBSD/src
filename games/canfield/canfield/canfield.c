@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.8 1997/10/10 12:26:39 lukem Exp $	*/
+/*	$NetBSD: canfield.c,v 1.9 1998/08/29 22:47:56 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.8 1997/10/10 12:26:39 lukem Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.9 1998/08/29 22:47:56 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -1427,7 +1427,7 @@ suspend()
 	move(21, 0);
 	refresh();
 	if (dbfd != -1) {
-		lseek(dbfd, uid * sizeof(struct betinfo), 0);
+		lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 	}
 	kill(getpid(), SIGTSTP);
@@ -1682,10 +1682,10 @@ initall()
 	uid = getuid();
 	if (uid < 0)
 		uid = 0;
-	dbfd = open(_PATH_SCORE, 2);
+	dbfd = open(_PATH_SCORE, O_RDWR);
 	if (dbfd < 0)
 		return;
-	i = lseek(dbfd, uid * sizeof(struct betinfo), 0);
+	i = lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 	if (i < 0) {
 		close(dbfd);
 		dbfd = -1;
@@ -1749,7 +1749,7 @@ cleanup(dummy)
 	status = NOBOX;
 	updatebettinginfo();
 	if (dbfd != -1) {
-		lseek(dbfd, uid * sizeof(struct betinfo), 0);
+		lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 		close(dbfd);
 	}
