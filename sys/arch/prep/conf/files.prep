@@ -1,0 +1,134 @@
+#	$NetBSD: files.prep,v 1.1 2000/02/29 15:21:25 nonaka Exp $
+#
+# prep-specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+file	arch/prep/prep/autoconf.c
+file	arch/prep/prep/bus_dma.c
+file	arch/prep/prep/clock.c
+file	arch/prep/prep/conf.c
+file	arch/prep/prep/disksubr.c		disk
+file	arch/prep/prep/extintr.c
+file	arch/prep/prep/machdep.c
+file	dev/clock_subr.c
+file	dev/cons.c
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+#
+# Machine-independent ATA drivers
+#
+
+include "dev/ata/files.ata"
+major	{wd = 0}
+
+#
+# Memory Disk for install floppy
+#
+file	arch/prep/prep/md_root.c	memory_disk_hooks
+major	{md = 17}
+
+#
+# System bus types
+#
+define	mainbus {}
+device	mainbus: pcibus, mainbus
+attach	mainbus at root
+file	arch/prep/prep/mainbus.c	mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/prep/prep/cpu.c		cpu
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+include "dev/pci/files.pci"
+file	arch/prep/pci/pci_machdep.c	pci
+
+# PCI-Host bridge chipsets
+device	pchb: pcibus
+attach	pchb at pci
+file	arch/prep/pci/pchb.c		pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/prep/pci/pcib.c		pcib
+
+#
+# ISA and mixed ISA+PCI drivers
+#
+
+include "dev/isa/files.isa"
+major	{mcd = 7}
+file	arch/prep/isa/isa_machdep.c	isa
+file	arch/prep/isa/isadma_machdep.c	isa
+
+#
+# clock
+#
+# mc146818 and compat.
+device	mcclock
+attach	mcclock at isa with mcclock_isa
+file	arch/prep/prep/mcclock.c	mcclock
+file	arch/prep/isa/mcclock_isa.c	mcclock_isa
+
+# attribute used to represent the "keyboard controller"
+# XXX should be a real device
+define pckbcport { [irq = -1], [port = -1] }
+
+# PC console support a la "pccons"
+device	pc: tty, pckbcport
+attach	pc at isa
+device	pcconskbd
+attach	pcconskbd at pckbc
+file	arch/prep/isa/pccons.c		pc | pcconskbd needs-flag
+
+include "dev/wscons/files.wscons"
+
+include "dev/pckbc/files.pckbc"
+
+# ISA speaker generates keyboard beep
+device	isabeep
+attach	isabeep at pcppi
+file	arch/prep/isa/isabeep.c
+
+# Floppy disk controller
+device	fdc {drive = -1}
+attach	fdc at isa
+device	fd: disk, isadma
+attach	fd at fdc
+file	arch/prep/isa/fd.c		fdc needs-flag
+major	{fd = 2}
+
+# Game adapter (joystick)
+device  joy
+file	arch/prep/isa/joy.c		joy needs-flag
+
+attach  joy at isa with joy_isa
+file	arch/prep/isa/joy_isa.c		joy_isa
+
+# network devices MII bus
+include	"dev/mii/files.mii"
+
+#
+# Linux binary compatibility (COMPAT_LINUX)
+#
+#include "compat/linux/files.linux"
+#include "compat/linux/arch/powerpc/files.linux_powerpc"
+
+#
+# OSS audio driver compatibility
+#
+#include "compat/ossaudio/files.ossaudio"

@@ -1,0 +1,5 @@
+#	$NetBSD: fstab.nfs,v 1.1 2000/02/29 15:23:47 nonaka Exp $
+#
+server:/export/prep/root	/	nfs	rw
+procfs				/proc	procfs	rw
+kernfs				/kern	kernfs	rw

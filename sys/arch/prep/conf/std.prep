@@ -1,0 +1,13 @@
+#	$NetBSD: std.prep,v 1.1 2000/02/29 15:21:25 nonaka Exp $
+#
+# standard, required NetBSD/prep 'options'
+
+machine		prep powerpc
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
+
+options 	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_AOUT	# exec a.out binaries
