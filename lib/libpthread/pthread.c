@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.27 2002/10/07 19:28:14 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.28 2002/10/07 19:30:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ extern struct pthread_queue_t runqueue;
 extern struct pthread_queue_t idlequeue;
 extern pthread_spin_t runqueue_lock;
 
-static int started;
+int pthread__started;
 
 static int nextthread;
 pthread_spin_t nextthread_lock;
@@ -225,9 +225,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * It's okay to check this without a lock because there can
 	 * only be one thread before it becomes true.
 	 */
-	if (started == 0) {
-		started = 1;
+	if (pthread__started == 0) {
 		pthread__start();
+		pthread__started = 1;
 	}
 
 	if (attr == NULL)
