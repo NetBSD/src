@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.31 1997/01/11 04:47:34 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.32 1997/01/13 00:15:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas (matt@3am-software.com)
@@ -4252,7 +4252,11 @@ struct cfdriver decd = {
 static int
 tulip_pci_probe(
     struct device *parent,
+#ifdef __BROKEN_INDIRECT_CONFIG
     void *match,
+#else
+    struct cfdata *match,
+#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -4318,6 +4322,7 @@ tulip_pci_attach(
     const int unit = sc->tulip_dev.dv_unit;
     bus_addr_t regbase;
     bus_size_t regsize;
+    int cacheable;
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
@@ -4461,17 +4466,21 @@ tulip_pci_attach(
 
 #if defined(__NetBSD__)
     csr_base = 0;
+
 #if defined(TULIP_IOMAPPED)
     sc->tulip_bustag = pa->pa_iot;
-#define	PCI_CBREG	PCI_CBIO
-#define	pci_space_find	pci_io_find
+    cacheable = 0;
+    if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &regbase, &regsize))
+	return;
 #else
     sc->tulip_bustag = pa->pa_memt;
-#define	PCI_CBREG	PCI_CBMA
-#define	pci_space_find	pci_mem_find
-#endif
-    if (pci_space_find(pa->pa_pc, pa->pa_tag, PCI_CBREG, &regbase, &regsize)
-	|| bus_space_map(sc->tulip_bustag, regbase, regsize, 0, &sc->tulip_bushandle))
+    if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &regbase, &regsize,
+      &cacheable))
+        return;
+#endif /* TULIP_IOMAPPED */
+
+    if(bus_space_map(sc->tulip_bustag, regbase, regsize, cacheable,
+      &sc->tulip_bushandle))
 	return;
 #endif /* __NetBSD__ */
 
