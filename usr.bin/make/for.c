@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.11 2001/06/12 23:36:17 sjg Exp $	*/
+/*	$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -34,14 +34,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: for.c,v 1.11 2001/06/12 23:36:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.11 2001/06/12 23:36:17 sjg Exp $");
+__RCSID("$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -158,6 +158,7 @@ For_Eval (line)
     if (forLevel == 0) {
 	Buffer	    buf;
 	int	    varlen;
+	static const char instr[] = "in";
 
 	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
 	    continue;
@@ -210,7 +211,11 @@ For_Eval (line)
 	}
 
 	/* At this point we should be pointing right at the "in" */
-	assert(!memcmp(ptr, "in", 2));
+	/*
+	 * compensate for hp/ux's brain damaged assert macro that
+	 * does not handle double quotes nicely.
+	 */
+	assert(!memcmp(ptr, instr, 2));
 	ptr += 2;
 
 	while (*ptr && isspace((unsigned char) *ptr))
