@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1999/07/28 06:54:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1999/08/18 03:59:37 chs Exp $	*/
 
 /*
  *
@@ -380,7 +380,6 @@ static void		 pmap_free_pv_doit __P((struct pv_entry *));
 static void		 pmap_free_pvpage __P((void));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
 static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static void		 pmap_kremove1 __P((vaddr_t));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 					     vaddr_t));
@@ -406,8 +405,6 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
 
-void			pmap_kenter_pa0 __P((vaddr_t, paddr_t, vm_prot_t,
-					     boolean_t));
 void			pmap_pinit __P((pmap_t));
 void			pmap_release __P((pmap_t));
 
@@ -524,6 +521,11 @@ pmap_map_ptes(pmap)
 {
 	pd_entry_t opde;
 
+	/* the kernel's pmap is always accessible */
+	if (pmap == pmap_kernel()) {
+		return(PTE_BASE);
+	}
+
 	/* if curpmap then we are always mapped */
 	if (pmap_is_curpmap(pmap)) {
 		simple_lock(&pmap->pm_obj.vmobjlock);
@@ -557,6 +559,9 @@ __inline static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
+	if (pmap == pmap_kernel()) {
+		return;
+	}
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	} else {
@@ -586,31 +591,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-
-	pmap_kenter_pa0(va, pa, prot, FALSE);
-}
-
-void
-pmap_kenter_pa0(va, pa, prot, islocked)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	boolean_t islocked;
-{
-	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte, opte;
-	int s;
-
-	if (islocked == FALSE) {
-		s = splimp();
-		simple_lock(&pm->pm_obj.vmobjlock);
-	}
-	pm->pm_stats.resident_count++;
-	pm->pm_stats.wired_count++;
-	if (islocked == FALSE) {
-		simple_unlock(&pm->pm_obj.vmobjlock);
-		splx(s);
-	}
 
 	pte = vtopte(va);
 	opte = *pte;
@@ -636,59 +617,19 @@ pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte;
-	int s;
 
-	len = len / NBPG;
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-
+	len >>= PAGE_SHIFT;
 	for ( /* null */ ; len ; len--, va += NBPG) {
 		pte = vtopte(va);
-
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
 			      va);
 #endif
-
-		pm->pm_stats.resident_count--;
-		pm->pm_stats.wired_count--;
-
 		*pte = 0;		/* zap! */
 		pmap_update_pg(va);
 	}
-
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
-}
-
-/*
- * pmap_kremove1: inline one page version of above
- */
-
-__inline static void
-pmap_kremove1(va)
-	vaddr_t va;
-{
-	struct pmap *pm = pmap_kernel();
-	pt_entry_t *pte;
-	int s;
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-
-	pm->pm_stats.resident_count--;
-	pm->pm_stats.wired_count--;
-
-	pte = vtopte(va);
-	*pte = 0;		/* zap! */
-	pmap_update_pg(va);
-
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
 }
 
 /*
@@ -701,17 +642,9 @@ pmap_kenter_pgs(va, pgs, npgs)
 	struct vm_page **pgs;
 	int npgs;
 {
-	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte, opte;
-	int s, lcv;
+	int lcv;
 	vaddr_t tva;
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-	pm->pm_stats.resident_count += npgs;
-	pm->pm_stats.wired_count += npgs;
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
 
 	for (lcv = 0 ; lcv < npgs ; lcv++) {
 		tva = va + lcv * NBPG;
@@ -1093,7 +1026,7 @@ pmap_alloc_pvpage(pmap, mode)
 	s = splimp();   /* must protect kmem_map/kmem_object with splimp! */
 	if (pv_cachedva == NULL) {
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-			NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
 		if (pv_cachedva == NULL) {
 			splx(s);
 			goto steal_one;
@@ -1130,11 +1063,9 @@ pmap_alloc_pvpage(pmap, mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa0(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL,
-	    (pmap == pmap_kernel()) ? TRUE : FALSE);
+	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = NULL;
-
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 
 steal_one:
@@ -1462,7 +1393,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	simple_lock(&pvh->pvh_lock);		/* lock pv_head */
 	pve->pv_next = pvh->pvh_list;		/* add to ... */
 	pvh->pvh_list = pve;			/* ... locked list */
-	simple_unlock(&pvh->pvh_lock);	/* unlock, done! */
+	simple_unlock(&pvh->pvh_lock);		/* unlock, done! */
 }
 
 /*
@@ -2269,7 +2200,6 @@ pmap_remove(pmap, sva, eva)
 		ptppa = (pmap->pm_pdir[pdei(sva)] & PG_FRAME);
 
 		/* get PTP if non-kernel mapping */
-
 		if (pmap == pmap_kernel()) {
 			/* we never free kernel PTPs */
 			ptp = NULL;
@@ -2392,6 +2322,7 @@ pmap_page_remove(pg)
 				pmap_update_pg(((vaddr_t)ptes) +
 					       pve->pv_ptp->offset);
 				pve->pv_pmap->pm_stats.resident_count--;
+				/* update hint? */
 				if (pve->pv_pmap->pm_ptphint == pve->pv_ptp)
 					pve->pv_pmap->pm_ptphint =
 					    pve->pv_pmap->pm_obj.memq.tqh_first;
@@ -2907,13 +2838,13 @@ pmap_transfer(dstpmap, srcpmap, daddr, len, saddr, move)
 			ok = pmap_transfer_ptes(srcpmap, &srcl, dstpmap, &dstl,
 						toxfer, move);
 
-			if (!ok)		/* memory shortage?   punt. */
+			if (!ok)		/* memory shortage?  punt. */
 				break;
 
 			dstvalid -= toxfer;
 			blkpgs -= toxfer;
 			len -= ns532_ptob(toxfer);
-			if (blkpgs == 0)	/* out of src PTEs?   restart */
+			if (blkpgs == 0)	/* out of src PTEs?  restart */
 				continue;
 		}
 
