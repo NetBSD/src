@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 1997/03/24 21:59:49 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1997/06/22 18:51:15 christos Exp $
 
 PROG= skey
-CFLAGS+= -I${.CURDIR}/../../lib/libskey
-MAN= skey.1 skeyinfo.1 skeyaudit.1
+MAN= skey.1 skeyaudit.1
 DPADD=	${LIBSKEY}
 LDADD=	-lskey
-SCRIPTS=skeyaudit.sh skeyinfo.sh
+SCRIPTS=skeyaudit.sh
 
 .include <bsd.prog.mk>
