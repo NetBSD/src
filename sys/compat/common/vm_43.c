@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.2 1999/04/01 18:37:33 drochner Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.3 2000/03/29 03:43:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,6 @@
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-#include <sys/conf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

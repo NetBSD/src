@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.13 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.14 2000/03/29 03:43:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -49,7 +49,6 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

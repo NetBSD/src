@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.16 1999/09/30 22:57:53 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.17 2000/03/29 03:43:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
