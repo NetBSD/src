@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.22 1993/10/31 23:42:08 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.23 1993/11/03 13:23:18 mycroft Exp $
  */
 
 /*
@@ -1430,16 +1430,6 @@ sget(ps, noblock)
 	static u_char extended = 0, lock_down = 0;
 	static u_char capchar[2];
 
-	/*
-	 *   First see if there is something in the keyboard port
-	 */
-loop:
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
-		if (noblock)
-			return 0;
-		else
-			goto loop;
-
 	dt = inb(KBDATAP);
 
 	if (ps->ps_flags & PSF_RAW) {
@@ -1483,13 +1473,13 @@ loop:
 	switch (dt) {
 	    case KBR_EXTENDED:
 		extended = 1;
-		goto loop;
+		return 0;
 	    case KBR_ACK:
 		ack = 1;
-		goto loop;
+		return 0;
 	    case KBR_RESEND:
 		nak = 1;
-		goto loop;
+		return 0;
 	}
 
 #ifdef DDB
@@ -1617,7 +1607,7 @@ loop:
 	}
 
 	extended = 0;
-	goto loop;
+	return 0;
 }
 
 int
@@ -1718,7 +1708,12 @@ pccngetc(dev)
 		return 0;
 
 	polling = 1;
-	cp = sget(ps, 0);
+	do {
+		/* wait for byte */
+		while ((inb(KBSTATP) & KBS_DIB) == 0);
+		/* see if it's worthwhile */
+		cp = sget(ps, 0);
+	} while (!cp);
 	polling = oldpolling;
 	if (*cp == '\r')
 		return '\n';
