@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 1999/03/24 05:51:08 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.22 1999/08/04 15:54:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -73,6 +73,10 @@ intr_init()
 	};
 
 	icu_init(icu_table);
+
+	/* Initialize the base software interrupt masks. */
+	imask[IPL_SOFTCLOCK] = SIR_CLOCKMASK | imask[IPL_ZERO];
+	imask[IPL_SOFTNET] = SIR_NETMASK;
 
 	for (i = 0; i < 16; i++) {
 		ivt[i].iv_vec = badhard;
@@ -222,6 +226,11 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	 * Enable this interrupt for spl0.
 	 */
 	imask[IPL_ZERO] &= ~(1 << intr);
+
+	/*
+	 * Update IPL_SOFTCLOCK to reflect the new IPL_ZERO.
+	 */
+	imask[IPL_SOFTCLOCK] = SIR_CLOCKMASK | imask[IPL_ZERO];
 
 	/*
 	 * Update run masks for all handlers.
