@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.11 1994/06/13 08:13:14 chopps Exp $
+ *	$Id: vmparam.h,v 1.12 1994/07/02 21:16:36 chopps Exp $
  */
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
@@ -97,7 +97,7 @@
  * Sizes of the system and user portions of the system page table.
  */
 /* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-#define	SYSPTSIZE	(1 * NPTEPG)	/* 16mb */
+#define	SYSPTSIZE	(2 * NPTEPG)	/* 16mb */
 #define	USRPTSIZE 	(1 * NPTEPG)	/* 16mb */
 
 /*
@@ -162,5 +162,5 @@
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)1)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
 #endif /* !_MACHINE_VMPARAM_H_ */
