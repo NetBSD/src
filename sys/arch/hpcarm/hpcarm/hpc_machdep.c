@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.39 2002/03/23 02:54:00 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.40 2002/03/24 18:12:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -196,7 +196,6 @@ void dumppages(char *, int);
 extern int db_trapper();
 
 extern void dump_spl_masks	__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vaddr_t va));
 
 extern void dumpsys	__P((void));
 
@@ -773,7 +772,7 @@ rpc_sa110_cc_setup(void)
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
-		pte = pmap_pte(pmap_kernel(), (sa110_cc_base + loop));
+		pte = vtopte(sa110_cc_base + loop);
 		*pte = L2_PTE(kaddr, AP_KR);
 	}
 	sa110_cache_clean_addr = sa110_cc_base;
