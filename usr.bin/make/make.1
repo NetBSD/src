@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.55 2001/11/12 01:31:21 tv Exp $
+.\"	$NetBSD: make.1,v 1.56 2001/11/12 01:33:49 tv Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -450,6 +450,9 @@ i.e.
 expands to a single dollar
 sign.
 .Pq Va argv[0]
+.It Va .ALLTARGETS
+The list of all targets encountered in the Makefile.  If evaluated during
+Makefile parsing, lists only those targets encountered thus far.
 .It Va .CURDIR
 A path to the directory where
 .Nm

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2001/11/11 21:40:05 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2001/11/12 01:33:48 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.77 2001/11/11 21:40:05 tv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.78 2001/11/12 01:33:48 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.77 2001/11/11 21:40:05 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.78 2001/11/12 01:33:48 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -702,6 +702,7 @@ main(argc, argv)
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL, 0);
 	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL, 0);
 	Var_Set("MFLAGS", "", VAR_GLOBAL, 0);
+	Var_Set(".ALLTARGETS", "", VAR_GLOBAL, 0);
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
