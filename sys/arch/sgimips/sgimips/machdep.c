@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2001/07/07 23:13:26 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2001/07/08 20:30:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -67,8 +67,10 @@
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
 #include <machine/intr.h>
-#include <machine/arcs.h>
 #include <mips/locore.h>
+
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
 #if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
@@ -140,7 +142,6 @@ void kgdb_connect(int);
 #endif
 
 extern int 	atoi(char *);	/* For parsing IP (archictecture) number */
-extern void	arcsinit(void);
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
@@ -185,8 +186,8 @@ mach_init(argc, argv, envp)
 	caddr_t kernend, v;
 	vsize_t size;
 	extern char edata[], end[];
-	struct arcs_mem *mem;
-	struct arcs_component *root;
+	struct arcbios_mem *mem;
+	struct arcbios_component *root;
 	char *cpufreq;
 	int i;
 
@@ -207,14 +208,22 @@ mach_init(argc, argv, envp)
 		memset(edata, 0, kernend - edata);
         }
 
-	arcsinit();
+	/*
+	 * Initialize ARCS.  This will set up the bootstrap console.
+	 */
+	arcbios_init(MIPS_PHYS_TO_KSEG0(0x00001000));
+
+	/*
+	 * Now set up the real console.
+	 * XXX Should be done later after we determine systype.
+	 */
 	consinit();
 
 #if 1 /* skidt? */
-	ARCS->FlushAllCaches();
+	ARCBIOS->FlushAllCaches();
 #endif
 
-	cpufreq = ARCS->GetEnvironmentVariable("cpufreq");
+	cpufreq = ARCBIOS->GetEnvironmentVariable("cpufreq");
 
 	if (cpufreq == 0)
 		panic("no $cpufreq");
@@ -262,7 +271,7 @@ mach_init(argc, argv, envp)
 #endif
 #endif
 
-	root = ARCS->GetChild(NULL);
+	root = ARCBIOS->GetChild(NULL);
 	for (i = 0; root->Identifier[i] != '\0'; i++) {
 		if (root->Identifier[i] >= '0' &&
 		    root->Identifier[i] <= '9') {
@@ -313,7 +322,7 @@ mach_init(argc, argv, envp)
 	mem = NULL;
 
 	do {
-	    if ((mem = ARCS->GetMemoryDescriptor(mem)) != NULL) {
+	    if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
 		i++;
 		printf("Mem block %d: type %d, base %d, size %d\n", 
 				i, mem->Type, mem->BasePage, mem->PageCount);
@@ -323,18 +332,18 @@ mach_init(argc, argv, envp)
 
 	mem = NULL;
 	for (i = 0; i < VM_PHYSSEG_MAX; i++) { 
-		mem = ARCS->GetMemoryDescriptor(mem);
+		mem = ARCBIOS->GetMemoryDescriptor(mem);
 
 		if (mem == NULL)
 			break;
 
-		first = round_page(mem->BasePage * ARCS_PAGESIZE);
-		last = trunc_page(first + mem->PageCount * ARCS_PAGESIZE);
+		first = round_page(mem->BasePage * ARCBIOS_PAGESIZE);
+		last = trunc_page(first + mem->PageCount * ARCBIOS_PAGESIZE);
 		size = last - first;
 
 		switch (mem->Type) {
-		case ARCS_MEM_CONT:
-		case ARCS_MEM_FREE:
+		case ARCBIOS_MEM_FreeContiguous:
+		case ARCBIOS_MEM_FreeMemory:
 			if (last > MIPS_KSEG0_TO_PHYS(kernend))
 				if (first < MIPS_KSEG0_TO_PHYS(kernend))
 					first = MIPS_KSEG0_TO_PHYS(kernend);
@@ -347,14 +356,14 @@ mach_init(argc, argv, envp)
 					atop(last), VM_FREELIST_DEFAULT);
 
 			break;
-		case ARCS_MEM_TEMP:
-		case ARCS_MEM_PERM:
+		case ARCBIOS_MEM_FirmwareTemporary:
+		case ARCBIOS_MEM_FirmwarePermanent:
 			arcsmem += btoc(size);
 			break;
-		case ARCS_MEM_EXCEP:
-		case ARCS_MEM_SPB:
-		case ARCS_MEM_BAD:
-		case ARCS_MEM_PROG:
+		case ARCBIOS_MEM_ExecptionBlock:
+		case ARCBIOS_MEM_SystemParameterBlock:
+		case ARCBIOS_MEM_BadMemory:
+		case ARCBIOS_MEM_LoadedProgram:
 			break;
 		default:
 			panic("unknown memory descriptor %d type %d",
@@ -569,18 +578,18 @@ haltsys:
 #if 0
 	if (howto & RB_POWERDOWN) {
 		printf("powering off...\n\n");
-		ARCS->PowerDown();
+		ARCBIOS->PowerDown();
 		printf("WARNING: powerdown failed\n");
 	}
 #endif
 
 	if (howto & RB_HALT) {
 		printf("halting...\n\n");
-		ARCS->EnterInteractiveMode();
+		ARCBIOS->EnterInteractiveMode();
 	}
 
 	printf("rebooting...\n\n");
-	ARCS->Reboot();
+	ARCBIOS->Reboot();
 
 	for (;;);
 }

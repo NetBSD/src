@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.4 2001/06/08 14:32:05 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.5 2001/07/08 20:30:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -75,7 +75,6 @@
 #define _SGIMIPS_BUS_DMA_PRIVATE
 
 #include <machine/bus.h>
-#include <machine/arcs.h>
 #include <machine/intr.h>
 
 #include <dev/ic/seeq8003reg.h>
@@ -83,6 +82,9 @@
 #include <sgimips/hpc/sqvar.h>
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
+
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
 #define static
 
@@ -264,7 +266,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if ((macaddr = ARCS->GetEnvironmentVariable("eaddr")) == NULL) {
+	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
 		printf(": unable to get MAC address!\n");
 		goto fail_6;
 	}
