@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.14.4.1 2000/07/20 00:07:05 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.14.4.2 2001/05/09 19:42:43 he Exp $	*/
 /*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
 
 /*
@@ -237,6 +237,9 @@ extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
+extern int nd6_debug;
+
+#define nd6log(x)	do { if (nd6_debug) log x; } while (0)
 
 extern struct callout nd6_timer_ch;
 
