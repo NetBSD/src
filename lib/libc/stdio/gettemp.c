@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.12 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.13 2003/12/05 00:57:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.12 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.13 2003/12/05 00:57:36 uebayasi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,9 +92,9 @@ GETTEMP(path, doopen, domkdir)
 			xcnt = 0;	
 
 	/* Use at least one from xtra.  Use 2 if more than 6 X's. */
-	if (*(trv-1) == 'X')
+	if (*(trv - 1) == 'X')
 		*--trv = xtra[0];
-	if (xcnt > 6 && *(trv-1) == 'X')
+	if (xcnt > 6 && *(trv - 1) == 'X')
 		*--trv = xtra[1];
 
 	/* Set remaining X's to pid digits with 0's to the left. */
@@ -137,7 +137,7 @@ GETTEMP(path, doopen, domkdir)
 	for (;;) {
 		if (doopen) {
 			if ((*doopen =
-			    open(path, O_CREAT|O_EXCL|O_RDWR, 0600)) >= 0)
+			    open(path, O_CREAT | O_EXCL | O_RDWR, 0600)) >= 0)
 				return (1);
 			if (errno != EEXIST)
 				return (0);
