@@ -8,4 +8,4 @@ G_INCLUDES=-D_GNU_SOURCE -I. -I${DIST}/ld -I../bfd -I${DIST}/ld/../bfd -I${DIST}
 G_OFILES=ldgram.o ldlex.o lexsup.o ldlang.o mri.o ldctor.o ldmain.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf64_sparc.o eelf32_sparc.o esparcnbsd.o 
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texinfo
-G_target_alias=sparc64-unknown-netbsd
+G_target_alias=sparc64--netbsd

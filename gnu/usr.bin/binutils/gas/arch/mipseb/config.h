@@ -234,16 +234,16 @@
 #define BFD_ASSEMBLER 1
 
 /* Target alias. */
-#define TARGET_ALIAS "mipseb-unknown-netbsd"
+#define TARGET_ALIAS "mipseb--netbsd"
 
 /* Canonical target. */
-#define TARGET_CANONICAL "mipseb-unknown-netbsd"
+#define TARGET_CANONICAL "mipseb--netbsd"
 
 /* Target CPU. */
 #define TARGET_CPU "mipseb"
 
 /* Target vendor. */
-#define TARGET_VENDOR "unknown"
+#define TARGET_VENDOR ""
 
 /* Target OS. */
 #define TARGET_OS "netbsd"
