@@ -80,11 +80,11 @@ int ssl2_enc_init(SSL *s, int client)
 
 	if ((s->enc_read_ctx == NULL) &&
 		((s->enc_read_ctx=(EVP_CIPHER_CTX *)
-		Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
 	if ((s->enc_write_ctx == NULL) &&
 		((s->enc_write_ctx=(EVP_CIPHER_CTX *)
-		Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
 
 	rs= s->enc_read_ctx;
@@ -96,7 +96,8 @@ int ssl2_enc_init(SSL *s, int client)
 	num=c->key_len;
 	s->s2->key_material_length=num*2;
 
-	ssl2_generate_key_material(s);
+	if (ssl2_generate_key_material(s) <= 0)
+		return 0;
 
 	EVP_EncryptInit(ws,c,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
@@ -111,8 +112,8 @@ err:
 	}
 
 /* read/writes from s->s2->mac_data using length for encrypt and 
- * decrypt.  It sets the s->s2->padding, s->[rw]length and
- * s->s2->pad_data ptr if we are encrypting */
+ * decrypt.  It sets s->s2->padding and s->[rw]length
+ * if we are encrypting */
 void ssl2_enc(SSL *s, int send)
 	{
 	EVP_CIPHER_CTX *ds;

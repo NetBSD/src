@@ -128,7 +128,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 
 #if !defined(NO_ASM) && !defined(NO_INLINE_ASM) && !defined(PEDANTIC) && !defined(BN_DIV3W)
 # if defined(__GNUC__) && __GNUC__>=2
-#  if defined(__i386)
+#  if defined(__i386) || defined (__i386__)
    /*
     * There were two reasons for implementing this template:
     * - GNU C generates a call to a function (__udivdi3 to be exact)
@@ -180,20 +180,20 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 	BN_CTX_start(ctx);
 	tmp=BN_CTX_get(ctx);
-	tmp->neg=0;
 	snum=BN_CTX_get(ctx);
 	sdiv=BN_CTX_get(ctx);
 	if (dv == NULL)
 		res=BN_CTX_get(ctx);
 	else	res=dv;
-	if (res == NULL) goto err;
+	if (sdiv==NULL || res == NULL) goto err;
+	tmp->neg=0;
 
 	/* First we normalise the numbers */
 	norm_shift=BN_BITS2-((BN_num_bits(divisor))%BN_BITS2);
-	BN_lshift(sdiv,divisor,norm_shift);
+	if (!(BN_lshift(sdiv,divisor,norm_shift))) goto err;
 	sdiv->neg=0;
 	norm_shift+=BN_BITS2;
-	BN_lshift(snum,num,norm_shift);
+	if (!(BN_lshift(snum,num,norm_shift))) goto err;
 	snum->neg=0;
 	div_n=sdiv->top;
 	num_n=snum->top;
@@ -205,7 +205,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_init(&wnum);
 	wnum.d=	 &(snum->d[loop]);
 	wnum.top= div_n;
-	wnum.max= snum->max+1; /* a bit of a lie */
+	wnum.dmax= snum->dmax+1; /* a bit of a lie */
 
 	/* Get the top 2 words of sdiv */
 	/* i=sdiv->top; */
@@ -237,7 +237,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	for (i=0; i<loop-1; i++)
 		{
 		BN_ULONG q,l0;
-#ifdef BN_DIV3W
+#if defined(BN_DIV3W) && !defined(NO_ASM)
+		BN_ULONG bn_div_3_words(BN_ULONG*,BN_ULONG,BN_ULONG);
 		q=bn_div_3_words(wnump,d1,d0);
 #else
 		BN_ULONG n0,n1,rem=0;
@@ -314,7 +315,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		tmp->top=j;
 
 		j=wnum.top;
-		BN_sub(&wnum,&wnum,tmp);
+		if (!BN_sub(&wnum,&wnum,tmp)) goto err;
 
 		snum->top=snum->top+wnum.top-j;
 
@@ -322,7 +323,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			{
 			q--;
 			j=wnum.top;
-			BN_add(&wnum,&wnum,sdiv);
+			if (!BN_add(&wnum,&wnum,sdiv)) goto err;
 			snum->top+=wnum.top-j;
 			}
 		*(resp--)=q;
