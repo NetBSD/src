@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1994/01/15 19:31:32 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/02/07 18:29:53 jtc Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -23,8 +23,5 @@ MLINKS+=insque.3 remque.3
 SRCS+=	regerror.c regexp.c regsub.c
 
 MAN3+=	regexp.0
-
-MLINKS+=regexp.3 regcomp.3 regexp.3 regexec.3 regexp.3 regsub.3 \
-	regexp.3 regerror.3
 
 .include <bsd.lib.mk>
