@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.3 2004/11/19 04:42:45 atatat Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.4 2004/11/25 03:46:50 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.3 2004/11/19 04:42:45 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.4 2004/11/25 03:46:50 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,6 +352,7 @@ ptyfs_getattr(void *v)
 
 	/* next do all the common fields */
 	vap->va_type = ap->a_vp->v_type;
+	vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_fileid = ptyfs->ptyfs_fileno;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
