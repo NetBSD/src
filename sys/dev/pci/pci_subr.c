@@ -1,8 +1,9 @@
-/*	$NetBSD: pci_subr.c,v 1.25 1998/05/03 19:46:15 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.26 1998/05/18 17:25:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
- * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1998
+ *	Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +49,11 @@
 #ifdef PCIVERBOSE
 #include <dev/pci/pcidevs.h>
 #endif
+
+static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
+    const pcireg_t *regs));
+static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
+    const pcireg_t *regs));
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -317,26 +323,26 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
  *		pci_conf_print(pa->pa_pc, pa->pa_tag);
  *	#endif
  */
-void
-pci_conf_print(pc, tag)
+
+#define	i2o(i)	((i) * 4)
+#define	o2i(o)	((o) / 4)
+
+static void
+pci_conf_print_common(pc, tag, regs)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
+	const pcireg_t *regs;
 {
-	pcireg_t rval, mask;
-	int reg, s;
 #ifdef PCIVERBOSE
 	struct pci_knowndev *kdp;
-	static const char on_str[] = "ON", off_str[] = "OFF";
 #endif
 	struct pci_class *classp, *subclassp;
+	pcireg_t rval;
 
-	printf("PCI configuration registers:\n");
-
-	rval = pci_conf_read(pc, tag, PCI_ID_REG);
-
+	rval = regs[o2i(PCI_ID_REG)];
 #ifndef PCIVERBOSE
-	printf("  Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
-	printf("  Device ID: 0x%04x\n", PCI_PRODUCT(rval));
+	printf("    Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
+	printf("    Device ID: 0x%04x\n", PCI_PRODUCT(rval));
 #else
 	for (kdp = pci_knowndevs; kdp->vendorname != NULL; kdp++) {
 		if (kdp->vendor == PCI_VENDOR(rval) &&
@@ -346,48 +352,41 @@ pci_conf_print(pc, tag)
 		}
 	}
 	if (kdp->vendorname != NULL)
-		printf("  Vendor Name: %s\n", kdp->vendorname);
+		printf("    Vendor Name: %s (0x%04x)\n", kdp->vendorname,
+		    PCI_VENDOR(rval));
 	else
-		printf("  Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
-
+		printf("    Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	if (kdp->productname != NULL && (kdp->flags & PCI_KNOWNDEV_NOPROD) == 0)
-		printf("  Device Name: %s\n", kdp->productname);
+		printf("    Device Name: %s (0x%04x)\n", kdp->productname,
+		    PCI_PRODUCT(rval));
 	else
-		printf("  Device ID: 0x%04x\n", PCI_PRODUCT(rval));
+		printf("    Device ID: 0x%04x\n", PCI_PRODUCT(rval));
 #endif /* PCIVERBOSE */
 
-	rval = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+#define	onoff(str, bit)							\
+	printf("      %s: %s\n", (str), (rval & (bit)) ? "on" : "off");
 
-#ifndef PCIVERBOSE
-	printf("  Command/Status Register: 0x%08x\n", rval);
-#else
+	rval = regs[o2i(PCI_COMMAND_STATUS_REG)];
 
-#define	onoff(reg)	((rval & (reg)) ? on_str : off_str)
-	printf("  Command Register:\n");
-	printf("    I/O space accesses %s\n", onoff(PCI_COMMAND_IO_ENABLE));
-	printf("    Mem space accesses %s\n", onoff(PCI_COMMAND_MEM_ENABLE));
-	printf("    Bus mastering %s\n", onoff(PCI_COMMAND_MASTER_ENABLE));
-	printf("    Special cycles %s\n", onoff(PCI_COMMAND_SPECIAL_ENABLE));
-	printf("    MWI transactions %s\n",
-	    onoff(PCI_COMMAND_INVALIDATE_ENABLE));
-	printf("    Palette snooping %s\n", onoff(PCI_COMMAND_PALETTE_ENABLE));
-	printf("    Parity error checking %s\n",
-	    onoff(PCI_COMMAND_PARITY_ENABLE));
-	printf("    Address/Data stepping %s\n",
-	    onoff(PCI_COMMAND_STEPPING_ENABLE));
-	printf("    System Error (SERR) %s\n", onoff(PCI_COMMAND_SERR_ENABLE));
-	printf("    Fast back-to-back transactions %s\n",
-	    onoff(PCI_COMMAND_BACKTOBACK_ENABLE));
-	printf("  Status Register:\n");
-	printf("    66 MHz capable %s\n", onoff(PCI_STATUS_66MHZ_SUPPORT));
-	printf("    User Definable Features (UDF) support %s\n",
-	    onoff(PCI_STATUS_UDF_SUPPORT));
-	printf("    Fast back-to-back capable %s\n",
-	    onoff(PCI_STATUS_BACKTOBACK_SUPPORT));
-	printf("    Data parity error detected %s\n",
-	    onoff(PCI_STATUS_PARITY_ERROR));
+	printf("    Command register: 0x%04x\n", rval & 0xffff);
+	onoff("I/O space accesses", PCI_COMMAND_IO_ENABLE);
+	onoff("Memory space accesses", PCI_COMMAND_MEM_ENABLE);
+	onoff("Bus mastering", PCI_COMMAND_MASTER_ENABLE);
+	onoff("Special cycles", PCI_COMMAND_SPECIAL_ENABLE);
+	onoff("MWI transactions", PCI_COMMAND_INVALIDATE_ENABLE);
+	onoff("Palette snooping", PCI_COMMAND_PALETTE_ENABLE);
+	onoff("Parity error checking", PCI_COMMAND_PARITY_ENABLE);
+	onoff("Address/data stepping", PCI_COMMAND_STEPPING_ENABLE);
+	onoff("System error (SERR)", PCI_COMMAND_SERR_ENABLE);
+	onoff("Fast back-to-back transactions", PCI_COMMAND_BACKTOBACK_ENABLE);
 
-	printf("    DEVSEL timing ");
+	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
+	onoff("66 MHz capable", PCI_STATUS_66MHZ_SUPPORT);
+	onoff("User Definable Features (UDF) support", PCI_STATUS_UDF_SUPPORT);
+	onoff("Fast back-to-back capable", PCI_STATUS_BACKTOBACK_SUPPORT);
+	onoff("Data parity error detected", PCI_STATUS_PARITY_ERROR);
+
+	printf("      DEVSEL timing: ");
 	switch (rval & PCI_STATUS_DEVSEL_MASK) {
 	case PCI_STATUS_DEVSEL_FAST:
 		printf("fast");
@@ -398,23 +397,21 @@ pci_conf_print(pc, tag)
 	case PCI_STATUS_DEVSEL_SLOW:
 		printf("slow");
 		break;
+	default:
+		printf("unknown/reserved");	/* XXX */
+		break;
 	}
-	printf("\n");
+	printf(" (0x%x)\n", (rval & PCI_STATUS_DEVSEL_MASK) >> 25);
 
-	printf("    Slave signaled Target Abort %s\n",
-	    onoff(PCI_STATUS_TARGET_TARGET_ABORT));
-	printf("    Master received Target Abort %s\n",
-	    onoff(PCI_STATUS_MASTER_TARGET_ABORT));
-	printf("    Master received Master Abort %s\n",
-	    onoff(PCI_STATUS_MASTER_ABORT));
-	printf("    Asserted System Error (SERR) %s\n",
-	    onoff(PCI_STATUS_SPECIAL_ERROR));
-	printf("    Parity error detected %s\n",
-	    onoff(PCI_STATUS_PARITY_DETECT));
-#endif /* PCIVERBOSE */
+	onoff("Slave signaled Target Abort", PCI_STATUS_TARGET_TARGET_ABORT);
+	onoff("Master received Target Abort", PCI_STATUS_MASTER_TARGET_ABORT);
+	onoff("Master received Master Abort", PCI_STATUS_MASTER_ABORT);
+	onoff("Asserted System Error (SERR)", PCI_STATUS_SPECIAL_ERROR);
+	onoff("Parity error detected", PCI_STATUS_PARITY_DETECT);
 
-	rval = pci_conf_read(pc, tag, PCI_CLASS_REG);
+#undef onoff
 
+	rval = regs[o2i(PCI_CLASS_REG)];
 	for (classp = pci_class; classp->name != NULL; classp++) {
 		if (PCI_CLASS(rval) == classp->val)
 			break;
@@ -426,26 +423,39 @@ pci_conf_print(pc, tag)
 		subclassp++;
 	}
 	if (classp->name != NULL) {
-		printf("  Class Name: %s\n", classp->name);
+		printf("    Class Name: %s (0x%02x)\n", classp->name,
+		    PCI_CLASS(rval));
 		if (subclassp != NULL && subclassp->name != NULL)
-			printf("  Subclass Name: %s\n", subclassp->name);
+			printf("    Subclass Name: %s (0x%02x)\n",
+			    subclassp->name, PCI_SUBCLASS(rval));
 		else
-			printf("  Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+			printf("    Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
 	} else {
-		printf("  Class ID: 0x%02x\n", PCI_CLASS(rval));
-		printf("  Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+		printf("    Class ID: 0x%02x\n", PCI_CLASS(rval));
+		printf("    Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
 	}
-	printf("  Interface: 0x%02x\n", PCI_INTERFACE(rval));
-	printf("  Revision ID: 0x%02x\n", PCI_REVISION(rval));
+	printf("    Interface: 0x%02x\n", PCI_INTERFACE(rval));
+	printf("    Revision ID: 0x%02x\n", PCI_REVISION(rval));
 
-	rval = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	rval = regs[o2i(PCI_BHLC_REG)];
+	printf("    BIST: 0x%02x\n", PCI_BIST(rval));
+	printf("    Header Type: 0x%02x%s (0x%02x)\n", PCI_HDRTYPE_TYPE(rval),
+	    PCI_HDRTYPE_MULTIFN(rval) ? "+multifunction" : "",
+	    PCI_HDRTYPE(rval));
+	printf("    Latency Timer: 0x%02x\n", PCI_LATTIMER(rval));
+	printf("    Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
+}
 
-	printf("  BIST: 0x%02x\n", PCI_BIST(rval));
-	printf("  Header Type: 0x%02x\n", PCI_HDRTYPE(rval));
-	printf("  Latency Timer: 0x%02x\n", PCI_LATTIMER(rval));
-	printf("  Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
+static void
+pci_conf_print_type1(pc, tag, regs)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	const pcireg_t *regs;
+{
+	int off, s;
+	pcireg_t mask, rval;
 
-	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += 4) {
 		/*
 		 * Section 6.2.5.1, `Address Maps', tells us that:
 		 *
@@ -456,51 +466,76 @@ pci_conf_print(pc, tag)
 		 * the bottom n bits of the address to 0.  As recommended,
 		 * we write all 1s and see what we get back.
 		 */
-		s = splhigh();
-		rval = pci_conf_read(pc, tag, reg);
-		pci_conf_write(pc, tag, reg, 0xffffffff);
-		mask = pci_conf_read(pc, tag, reg);
-		pci_conf_write(pc, tag, reg, rval);
-		splx(s);
+		rval = regs[o2i(off)];
+		if (rval != 0) {
+			/*
+			 * The following sequence seems to make some devices
+			 * (e.g. host bus bridges, which don't normally
+			 * have their space mapped) very unhappy, to
+			 * the point of crashing the system.
+			 *
+			 * Therefore, if the mapping register is zero to
+			 * start out with, don't bother trying.
+			 */
+			s = splhigh();
+			pci_conf_write(pc, tag, off, 0xffffffff);
+			mask = pci_conf_read(pc, tag, off);
+			pci_conf_write(pc, tag, off, rval);
+			splx(s);
+		} else
+			mask = 0;
 
-		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
-			if (PCI_MAPREG_MEM_SIZE(mask) == 0)
-				continue;
-			printf("  Mapping register 0x%02x\n", reg);
-			printf("    Base Address: 0x%08x, size 0x%08x, "
-			    "type = mem", PCI_MAPREG_MEM_ADDR(rval),
-			    PCI_MAPREG_MEM_SIZE(mask));
+		printf("    Mapping register at 0x%02x: ", off);
+		if (rval == 0) {
+			printf("not implemented(?)\n");
+		} else if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
+			const char *type, *cache;
+
 			switch (PCI_MAPREG_MEM_TYPE(rval)) {
 			case PCI_MAPREG_MEM_TYPE_32BIT:
-				printf(", 32-bit");
+				type = "32-bit";
 				break;
 			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-				printf(", 32-bit-1M");
+				type = "32-bit-1M";
 				break;
 			case PCI_MAPREG_MEM_TYPE_64BIT:
-				printf(", 64-bit");
+				type = "64-bit";
+				break;
+			default:
+				type = "unknown (XXX)";
 				break;
 			}
 			if (PCI_MAPREG_MEM_CACHEABLE(rval))
-				printf(", cacheable");
+				cache = "";
 			else
-				printf(", not cacheable");
-			printf("\n");
+				cache = "non";
+			printf("%s %scacheable memory\n", type, cache);
+			printf("      base address: 0x%08x, size: 0x%08x\n",
+			    PCI_MAPREG_MEM_ADDR(rval),
+			    PCI_MAPREG_MEM_SIZE(mask));
 		} else {
-			if (PCI_MAPREG_IO_SIZE(mask) == 0)
-				continue;
-			printf("  Mapping register 0x%02x\n", reg);
-			printf("    Base Address: 0x%08x, size 0x%08x, "
-			    "type = i/o\n", PCI_MAPREG_IO_ADDR(rval),
+			printf("i/o\n");
+			printf("      base address: 0x%08x, size: 0x%08x\n",
+			    PCI_MAPREG_IO_ADDR(rval),
 			    PCI_MAPREG_IO_SIZE(mask));
 		}
 	}
 
-	rval = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
-	printf("  Maximum Latency: 0x%08x\n", (rval >> 24) & 0xff);
-	printf("  Minimum Grant: 0x%08x\n", (rval >> 16) & 0xff);
-	printf("  Interrupt pin: 0x%08x", PCI_INTERRUPT_PIN(rval));
+	rval = regs[o2i(0x2c)];
+	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
+	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
+
+	/* XXX */
+	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
+	printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
+
+	rval = regs[o2i(PCI_INTERRUPT_REG)];
+	printf("    Maximum Latency: 0x%02x\n", (rval >> 24) & 0xff);
+	printf("    Minimum Grant: 0x%02x\n", (rval >> 16) & 0xff);
+	printf("    Interrupt pin: 0x%02x", PCI_INTERRUPT_PIN(rval));
 	switch (PCI_INTERRUPT_PIN(rval)) {
 	case PCI_INTERRUPT_PIN_NONE:
 		printf(" (none)");
@@ -519,5 +554,67 @@ pci_conf_print(pc, tag)
 		break;
 	}
 	printf("\n");
-	printf("  Interrupt line: 0x%08x\n", PCI_INTERRUPT_LINE(rval));
+	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
+}
+
+void
+pci_conf_print(pc, tag, printfn)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	void (*printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
+{
+	pcireg_t regs[o2i(256)];
+	int off, hdrtype;
+	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
+
+	printf("PCI configuration registers:\n");
+
+	for (off = 0; off < 256; off += 4)
+		regs[o2i(off)] = pci_conf_read(pc, tag, off);
+
+#define print16regs(offset)						\
+	printf("    0x%02x: 0x%08x 0x%08x 0x%08x 0x%08x\n", (offset),	\
+	    regs[o2i((offset))], regs[o2i((offset) + 4)],		\
+	    regs[o2i((offset) + 8)], regs[o2i((offset) + 12)]);
+
+	/* common header */
+	printf("  Common header:\n");
+	for (off = 0; off < 16; off += 16)
+		print16regs(off);
+	printf("\n");
+	pci_conf_print_common(pc, tag, regs);
+	printf("\n");
+
+	/* type-dependent header */
+	hdrtype = PCI_HDRTYPE_TYPE(regs[o2i(PCI_BHLC_REG)]);
+	printf("  Type %d header:\n", hdrtype);
+	for (off = 16; off < 64; off += 16)
+		print16regs(off);
+	printf("\n");
+	switch (hdrtype) {		/* XXX make a table, eventually */
+	case 0:
+		typeprintfn = &pci_conf_print_type1;
+		break;
+	case 1:
+		/* XXX */
+	default:
+		typeprintfn = 0;
+	}
+	if (typeprintfn)
+		(*typeprintfn)(pc, tag, regs);
+	else
+		printf("    Don't know how to pretty-print type %d header.\n",
+		    hdrtype);
+	printf("\n");
+
+	/* device-dependent header */
+	printf("  Device-dependent header:\n");
+	for (off = 64; off < 256; off += 16)
+		print16regs(off);
+	printf("\n");
+	if (printfn)
+		(*printfn)(pc, tag, regs);
+	else
+		printf("    Don't know how to pretty-print device-dependent header.\n");
+	printf("\n");
 }

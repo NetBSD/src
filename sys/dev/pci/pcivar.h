@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.30 1998/05/15 12:35:06 tsubai Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.31 1998/05/18 17:25:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -159,7 +159,8 @@ int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
  * Helper functions for autoconfiguration.
  */
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
-void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t));
+void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
+	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));
 void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */
