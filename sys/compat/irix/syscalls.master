@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2002/06/12 20:33:21 manu Exp $
+	$NetBSD: syscalls.master,v 1.46 2002/10/05 23:17:30 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -137,7 +137,7 @@
 55	UNIMPL		uadmin
 56	STD		{ int irix_sys_sysmp(int cmd, void *arg1, void *arg2, \
 			    void *arg3, void *arg4); }
-57	NOARGS		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
+57	STD		{ int irix_sys_utssys(void *a1, void *a2, int sel, \
 			    void *a3); }
 58	UNIMPL
 59	NOARGS		{ int svr4_sys_execve(const char *path, char **argp, \
@@ -286,7 +286,7 @@
 155	UNIMPL		socketpair
 156	STD		{ long irix_sys_systeminfo(int what, char *buf, \
 			    long len); }
-157	UNIMPL		uname
+157	STD		{ int irix_sys_uname(struct irix_utsname *name); }
 158	STD		{ int irix_sys_xstat(const int version, \
 			    const char *path, struct stat *buf); }
 159	STD		{ int irix_sys_lxstat(const int version, \
