@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/09/05 14:46:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1998/09/22 03:00:30 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -67,7 +67,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk	\
+		${CBIN}.cache *.o *.lo *.c .tmp_md_install*
 
 # libhack is listed in rd_bin.conf but is built here.
 HACKSRC=${TOP}/../../utils/libhack
