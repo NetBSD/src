@@ -1,4 +1,4 @@
-/*	$NetBSD: alarm.c,v 1.7 1998/02/03 18:23:40 perry Exp $	*/
+/*	$NetBSD: alarm.c,v 1.8 1998/11/12 15:36:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)alarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: alarm.c,v 1.7 1998/02/03 18:23:40 perry Exp $");
+__RCSID("$NetBSD: alarm.c,v 1.8 1998/11/12 15:36:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,9 +63,9 @@ alarm(secs)
 	timerclear(&itp->it_interval);
 	itp->it_value.tv_sec = secs;
 	itp->it_value.tv_usec = 0;
-	if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
-		return (-1);
+	if (setitimer(ITIMER_REAL, itp, &oitv) == -1)
+		return (unsigned int) -1;
 	if (oitv.it_value.tv_usec)
 		oitv.it_value.tv_sec++;
-	return (oitv.it_value.tv_sec);
+	return (unsigned int)oitv.it_value.tv_sec;
 }
