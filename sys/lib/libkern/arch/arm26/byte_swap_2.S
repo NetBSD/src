@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.3 2000/12/14 19:33:00 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.4 2000/12/16 14:38:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,9 +38,10 @@
 
 #include <machine/asm.h>
 
-ENTRY(bswap16)
-ALTENTRY(ntohs)
-ALTENTRY(htons)
+_ENTRY(_C_LABEL(bswap16))
+_ENTRY(_C_LABEL(ntohs))
+_ENTRY(_C_LABEL(htons))
+_PROF_PROLOGUE
 	and		r1, r0, #0xFF00
 	mov		r0, r0, lsl #8
 	orr		r0, r0, r1, lsr #8
