@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.2 1998/12/03 14:58:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -768,7 +768,11 @@ void rf_DiskIOComplete(queue, req, status)
       Dprintf3("DiskIOComplete: a pri %d locking req was pending at r %d c %d\n",req->priority,queue->row, queue->col);
     } else {
       req = (queue->qPtr->Dequeue)( queue->qHdr );
-      Dprintf3("DiskIOComplete: extracting pri %d req from queue at r %d c %d\n",req->priority,queue->row, queue->col);
+      if (req != NULL) {
+	      Dprintf3("DiskIOComplete: extracting pri %d req from queue at r %d c %d\n",req->priority,queue->row, queue->col);
+      } else {
+	      Dprintf1("DiskIOComplete: no more requests to extract.\n","");
+      }
     }
     if (req) {
 	queue->queueLength--;  /* decrement count of number of requests waiting in this queue */
