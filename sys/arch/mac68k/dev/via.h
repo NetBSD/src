@@ -30,8 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: via.h,v 1.2 1993/11/29 00:33:02 briggs Exp $
  */
-#ident "$Id: via.h,v 1.1.1.1 1993/09/29 06:09:26 briggs Exp $"
 
 /*
 	Prototype VIA control definitions

@@ -30,8 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: console.h,v 1.2 1993/11/29 00:32:27 briggs Exp $
+ *
  */
-#ident "$Id: console.h,v 1.1.1.1 1993/09/29 06:09:29 briggs Exp $"
 
 /* Must #include <sys/ioctl.h> for these to work: */
 #define CON_GETCURSOR TIOCMGET

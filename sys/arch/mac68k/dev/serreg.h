@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
  *			Lawrence A. Kesteloot
@@ -30,9 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- */
-#ident "$Id: serreg.h,v 1.1.1.1 1993/09/29 06:09:27 briggs Exp $"
-/*
+ * $Id: serreg.h,v 1.2 1993/11/29 00:33:00 briggs Exp $
+ *
  *	Mac II serial device interface
  *
  * 	Information used in this source was gleaned from low-memory
@@ -47,36 +46,41 @@ extern volatile unsigned char *sccA;
 #define SER_W0_RSTESINTS	0x10	/* Reset ext/status interrupts */
 #define SER_W0_ENBRXRDY		0x20	/* Enable interrupt on next receive */
 #define SER_W0_RSTTXPND		0x28	/* Reset transmit interrupt pending */
+#define	SER_W0_RSTERR		0x30	/* Reset error */
 #define SER_W0_RSTIUS		0x38	/* Reset highest interrupt pending */
 #define SER_W0_RSTTXUNDERRUN	0xc0	/* Reset transmit underrun/EOM latch */
-#define SER_W1_ENBTXRDY		0x02	/* Enable transmit ready interrupt */
-#define SER_W1_DISRXRDY		0	/* Disable receive interrupt */
-#define SER_W1_ENBR1RDY		0x08	/* Rx Int on first char or special cond */
-#define SER_W1_ENBRXRDY		0x10	/* Rx Int on all chars or special cond */
+
+#define	SER_W1_ENBEXTINT	0x01	/* Enable external int */
+#define SER_W1_ENBTXINT		0x02	/* Enable transmit ready interrupt */
+#define SER_W1_ENBR1INT		0x08	/* Rx Int on first char/special cond */
+#define SER_W1_ENBRXINT		0x10	/* Rx Int on all chars/special cond */
+
 #define SER_W3_ENBRX		0x01	/* Enable reception */
 #define SER_W3_RX5DBITS		0x00	/* Receive 5 data bits */
 #define SER_W3_RX6DBITS		0x80	/* Receive 6 data bits */
 #define SER_W3_RX7DBITS		0x40	/* Receive 7 data bits */
 #define SER_W3_RX8DBITS		0xC0	/* Receive 8 data bits */
+
 #define SER_W4_PARNONE		0x00	/* No parity */
 #define SER_W4_PARODD		0x01	/* Odd parity */
 #define SER_W4_PAREVEN		0x03	/* Even parity */
 #define SER_W4_1SBIT		0x04	/* 1 stop bit */
 #define SER_W4_2SBIT		0x0c	/* 2 stop bits */
-#define SER_W5_RTSON		0x02	/* Turn on RTS */
-#define SER_W5_RTSOFF		0x00	/* Turn off RTS */
+
+#define SER_W5_RTS		0x02	/* RTS enable */
 #define SER_W5_ENBTX		0x08	/* Enable transmission */
 #define SER_W5_BREAK		0x10	/* Send break */
 #define SER_W5_TX5DBITS		0x00	/* Send 5 data bits */
 #define SER_W5_TX6DBITS		0x40	/* Send 6 data bits */
 #define SER_W5_TX7DBITS		0x20	/* Send 7 data bits */
 #define SER_W5_TX8DBITS		0x60	/* Send 8 data bits */
-#define SER_W5_DTRON		0x80	/* Turn on DTR */
-#define SER_W5_DTROFF		0x00	/* Turn off DTR */
+#define SER_W5_DTR		0x80	/* DTR enable */
+
 #define SER_W9_HWRESET		0xC0	/* Force Hardware Reset */
 #define SER_W9_NV		0x02	/* There is no interrupt vector */
 #define SER_W9_DLC		0x04	/* Disable lower interrupt chain */
 #define SER_W9_MIE		0x08	/* Enable master interrupt */
+
 #define SER_W10_NRZ		0x00	/* Set NRZ encoding */
 #define SER_W11_TXBR		0x80	/* Transmit clock is BR generator */
 #define SER_W11_RXBR		0x40	/* Receive clock is BR generator */
@@ -89,10 +93,17 @@ extern volatile unsigned char *sccA;
 #define SER_R0_CTS		0x20	/* Clear to send */
 #define SER_R0_TXUNDERRUN	0x40	/* Tx Underrun/EOM */
 
-#define	SERBRD(x)	(115200 / (x) - 2)  /* Is this right? */
-/* #define	SERBRD(x)	(1996800 / (x) - 2) /* Is this right? */
+#define	SER_R1_RXOVERRUN	0x20
+#define	SER_R1_PARITYERR	0x10
+#define	SER_R1_CRCERR		0x40
+#define	SER_R1_ENDOFFRAME	0x80
+
+#define	SERBRD(x)	(115200 / (x) - 2)
 #define SCCCNTL(unit)	(sccA[2 - ((unit) << 1)])
 #define SCCRDWR(unit)	(sccA[6 - ((unit) << 1)])
 
-/* #define SER_DOCNTL(unit, reg, val)	{if((reg) != 0)SCCCNTL(unit) = (reg);SCCCNTL(unit) = (val);}
-#define SER_STATUS(unit, reg)		(((reg) != 0) ? SCCCNTL(unit) = (reg):0,SCCCNTL(unit))*/
+#define SER_DOCNTL(unit, reg, val)	\
+	{SCCCNTL(unit) = (reg); SCCCNTL(unit) = (val);}
+#define SER_STATUS(unit, reg)	\
+	(SCCCNTL(unit) = (reg), SCCCNTL(unit))
+

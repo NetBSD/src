@@ -1,5 +1,7 @@
 /* this is the VGA character set - courtesy Larry */
 
+/* $Id: chars.h,v 1.2 1993/11/29 00:32:22 briggs Exp $ */
+
 /* Character set from input file \newvga\8x14.fnt */
 /* Width = 8, Height = 14 */
  

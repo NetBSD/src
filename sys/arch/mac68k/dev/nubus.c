@@ -30,8 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: nubus.c,v 1.2 1993/11/29 00:32:51 briggs Exp $
+ *
  */
-#ident "$Id: nubus.c,v 1.1.1.1 1993/09/29 06:09:29 briggs Exp $"
 
 /* 
 	MF 8-24-93 first hack at a real nubus driver
@@ -41,6 +42,7 @@
 #include "sys/systm.h"
 #include "../include/cpu.h"
 
+#include "sys/device.h"
 #include "nubus.h"
 
 
@@ -614,3 +616,93 @@ struct imagedata *NUBUS_GetImageData(struct slot *Slot,
 
 	return Rimage;
 }
+
+struct	nubus_hw nubus_table[NUBUS_MAXSLOTS];
+
+static void
+find_nubus(void)
+{
+   /* This functions sets up the array "nubus_table" which contains the
+   basic information about each card in the Nubus slot.  When device
+   drivers are initialized later, they can look through this array to
+   see if their hardware is present and claim it. */
+
+   register struct nubus_hw *nu;
+   int nubus_num;
+
+   for (nubus_num = 0; nubus_num < NUBUS_MAXSLOTS; nubus_num++)
+     nubus_table[nubus_num].found = 0; /* Empty */
+
+   /* LAK: For now we can only check 9..F because that's all we map
+   in locore.s.  Eventually (i.e. near future) we should put THIS
+   function in locore.s before enabling the MMU and only map the
+   slots that have a card in them.  Also, the next loop should go from
+   1 to 0xF inclusive (0 is "reserved") to cover all possible hardware.
+   Even if the MacII only has 9..F, it won't hurt us to probe 1..8 also. */
+   for (nubus_num = 0; nubus_num < 6; nubus_num++)
+   {
+      nu = nubus_table + nubus_num + 9;
+      nu->addr = (caddr_t)(NBBASE + nubus_num * NBMEMSIZE);
+      nu->rom = nu->addr + NBROMOFFSET;
+
+
+      if(!badaddr(nu->rom))
+      {
+	
+	 InitNubusSlot((unsigned long) nu->addr, &(nu->Slot));
+
+         nu->found = 1;
+         nu->claimed = 0; /* No driver has claimed this slot yet */
+
+      }
+   }
+}
+
+static int
+nubus_print(aux, name)
+	void	*aux;
+	char	*name;
+{
+	struct nubus_hw	*nu = (struct nubus_hw *) aux;
+      	int		i;
+
+	if (name) {
+		i = nu - nubus_table;
+		printf ("%s: s:%d t:%d \"",
+			 name, i, nu->Slot.type);
+		printf ("%s, ",nu->Slot.name);
+		printf ("%s\"\n",nu->Slot.manufacturer);
+	}
+	return(UNCONF);
+}
+
+static void
+nubus_attach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
+{
+	struct cfdriver		 *cf;
+	register struct nubus_hw *nu;
+	int			 i;
+
+	printf("\n");
+
+	find_nubus();
+
+	for (i = 0; i < 6; i++) {
+		nu = nubus_table + i + 9;
+
+		if (!nu->found)
+			continue;
+
+		if (config_found(dev, nu, nubus_print))
+			nu->claimed = 1;
+	}
+
+}
+
+extern int matchbyname();
+
+struct cfdriver nubuscd =
+      { NULL, "nubus", matchbyname, nubus_attach,
+	DV_DULL, sizeof(struct device), NULL, 0 };
