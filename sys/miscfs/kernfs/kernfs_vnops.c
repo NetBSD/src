@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.49 1997/05/08 16:20:17 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.50 1997/05/10 22:04:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,23 +69,7 @@
 #define	WRITE_MODE	(S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH)
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 
-struct kern_target {
-	u_char kt_type;
-	u_char kt_namlen;
-	char *kt_name;
-	void *kt_data;
-#define	KTT_NULL	 1
-#define	KTT_TIME	 5
-#define KTT_INT		17
-#define	KTT_STRING	31
-#define KTT_HOSTNAME	47
-#define KTT_AVENRUN	53
-#define KTT_DEVICE	71
-#define	KTT_MSGBUF	89
-	u_char kt_tag;
-	u_char kt_vtype;
-	mode_t kt_mode;
-} kern_targets[] = {
+struct kern_target kern_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
      /*        name            data          tag           type  ro/rw */
