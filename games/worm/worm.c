@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)worm.c	5.8 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: worm.c,v 1.2 1993/08/01 18:49:30 mycroft Exp $";
+static char rcsid[] = "$Id: worm.c,v 1.3 1993/08/10 02:05:36 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -100,7 +100,7 @@ main(argc, argv)
 	initscr();
 	crmode();
 	noecho();
-	slow = (baudrate() <= B1200);
+	slow = (baudrate() <= 1200);
 	clear();
 	stw = newwin(1, COLS-1, 0, 0);
 	tv = newwin(LINES-1, COLS-1, 1, 0);
