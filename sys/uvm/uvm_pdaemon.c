@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.34 2001/05/25 04:06:16 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.35 2001/06/23 20:52:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -696,13 +696,20 @@ uvmpd_scan_inactive(pglst)
 				 * add block to cluster
 				 */
 
-				swpps[swcpages] = p;
-				if (anon)
+				if (anon) {
 					anon->an_swslot = swslot + swcpages;
-				else
-					uao_set_swslot(uobj,
+				} else {
+					result = uao_set_swslot(uobj,
 					    p->offset >> PAGE_SHIFT,
 					    swslot + swcpages);
+					if (result == -1) {
+						p->flags &= ~PG_BUSY;
+						UVM_PAGE_OWN(p, NULL);
+						simple_unlock(&uobj->vmobjlock);
+						continue;
+					}
+				}
+				swpps[swcpages] = p;
 				swcpages++;
 			}
 		} else {
