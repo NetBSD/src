@@ -73,7 +73,7 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
 
-int _kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long, char *));
+int _kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
 
 static char *
 kvm_readswap(kd, p, va, cnt)
@@ -86,13 +86,10 @@ kvm_readswap(kd, p, va, cnt)
 	register u_long offset;
 	struct vm_map_entry vme;
 	struct vm_object vmo;
-	static char *page;
-	int nbpg = getpagesize();
 
-	if (page == 0) {
-		/* XXX should be placed in kvm_t (so we can free it) */
-		page = (char *)_kvm_malloc(kd, nbpg);
-		if (page == 0)
+	if (kd->swapspc == 0) {
+		kd->swapspc = (char *)_kvm_malloc(kd, kd->nbpg);
+		if (kd->swapspc == 0)
 			return (0);
 	}
 	head = (u_long)&p->p_vmspace->vm_map.header;
@@ -126,7 +123,7 @@ kvm_readswap(kd, p, va, cnt)
 
 		/* If there is a pager here, see if it has the page. */
 		if (vmo.pager != 0 &&
-		    _kvm_readfrompager(kd, &vmo, offset, page))
+		    _kvm_readfrompager(kd, &vmo, offset))
 			break;
 
 		/* Move down the shadow chain. */
@@ -137,17 +134,16 @@ kvm_readswap(kd, p, va, cnt)
 	}
 
 	/* Found the page. */
-	offset %= nbpg;
-	*cnt = nbpg - offset;
-	return (&page[offset]);
+	offset %= kd->nbpg;
+	*cnt = kd->nbpg - offset;
+	return (&kd->swapspc[offset]);
 }
 
 int
-_kvm_readfrompager(kd, vmop, offset, buf)
+_kvm_readfrompager(kd, vmop, offset)
 	kvm_t *kd;
 	struct vm_object *vmop;
 	u_long offset;
-	char *buf;
 {	
 	u_long addr;
 	struct pager_struct pager;
@@ -155,7 +151,6 @@ _kvm_readfrompager(kd, vmop, offset, buf)
 	int ix;
 	struct swblock swb;
 	register off_t seekpoint;
-	int nbpg = getpagesize();
 
 	/* Read in the pager info and make sure it's a swap device. */
 	addr = (u_long)vmop->pager;
@@ -206,14 +201,14 @@ _kvm_readfrompager(kd, vmop, offset, buf)
 	offset %= dbtob(swap.sw_bsize);
 
 	/* Check that the page is actually present. */
-	if ((swb.swb_mask & (1 << (offset / nbpg))) == 0)
+	if ((swb.swb_mask & (1 << (offset / kd->nbpg))) == 0)
 		return (0);
 
 	/* Calculate the physical address and read the page. */
-	seekpoint = dbtob(swb.swb_block) + (offset & ~(nbpg -1));
+	seekpoint = dbtob(swb.swb_block) + (offset & ~(kd->nbpg -1));
 	if (lseek(kd->swfd, seekpoint, 0) == -1)
 		return (0);
-	if (read(kd->swfd, buf, nbpg) != nbpg)
+	if (read(kd->swfd, kd->swapspc, kd->nbpg) != kd->nbpg)
 		return (0);
 
 	return (1);
@@ -508,7 +503,6 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	register char *cp;
 	register int len, cc;
 	register char **argv;
-	int nbpg = getpagesize();
 
 	/*
 	 * Check that there aren't an unreasonable number of agruments,
@@ -534,10 +528,10 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			return (0);
 	}
 	if (kd->argspc == 0) {
-		kd->argspc = (char *)_kvm_malloc(kd, nbpg);
+		kd->argspc = (char *)_kvm_malloc(kd, kd->nbpg);
 		if (kd->argspc == 0)
 			return (0);
-		kd->arglen = nbpg;
+		kd->arglen = kd->nbpg;
 	}
 	cp = kd->argspc;
 	argv = kd->argv;
@@ -547,7 +541,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	 * Loop over pages, filling in the argument vector.
 	 */
 	while (addr < VM_MAXUSER_ADDRESS) {
-		cc = nbpg - (addr & (nbpg - 1));
+		cc = kd->nbpg - (addr & (kd->nbpg - 1));
 		if (maxcnt > 0 && cc > maxcnt - len)
 			cc = maxcnt - len;;
 		if (len + cc > kd->arglen) {
@@ -575,7 +569,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		len += cc;
 		addr += cc;
 
-		if (maxcnt == 0 && len > 16 * nbpg)
+		if (maxcnt == 0 && len > 16 * kd->nbpg)
 			/* sanity */
 			return (0);
 

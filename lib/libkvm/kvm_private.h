@@ -53,6 +53,8 @@ struct __kvm {
 	int	swfd;		/* swap file (e.g., /dev/drum) */
 	int	nlfd;		/* namelist file (e.g., /vmunix) */
 	struct kinfo_proc *procbase;
+	int	nbpg;		/* page size */
+	char	*swapspc;	/* (dynamic) storage for swapped pages */
 	char	*argspc;	/* (dynamic) storage for argv strings */
 	int	arglen;		/* length of the above */
 	char	**argv;		/* (dynamic) storage for argv pointers */
