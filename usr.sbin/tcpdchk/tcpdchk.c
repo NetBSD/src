@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.10 2002/06/06 21:28:51 itojun Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.11 2003/07/13 12:07:16 itojun Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.10 2002/06/06 21:28:51 itojun Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.11 2003/07/13 12:07:16 itojun Exp $");
 #endif
 #endif
 
@@ -296,7 +296,7 @@ char   *list;
     char   *next;
 
     fputs(title, stdout);
-    strcpy(buf, list);
+    strlcpy(buf, list, sizeof(buf));
 
     for (cp = strtok(buf, sep); cp != 0; cp = next) {
 	fputs(cp, stdout);
@@ -317,7 +317,7 @@ char   *list;
     char   *host;
     int     daemons = 0;
 
-    strcpy(buf, list);
+    strlcpy(buf, list, sizeof(buf));
 
     for (cp = strtok(buf, sep); cp != 0; cp = strtok((char *) 0, sep)) {
 	if (STR_EQ(cp, "EXCEPT")) {
@@ -348,7 +348,7 @@ char   *list;
     int l;
 #endif
 
-    strcpy(buf, list);
+    strlcpy(buf, list, sizeof(buf));
 
     for (cp = strtok(buf, sep); cp != 0; cp = strtok((char *) 0, sep)) {
 #ifdef INET6

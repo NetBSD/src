@@ -1,4 +1,4 @@
-/*	$NetBSD: inetcf.c,v 1.7 2002/06/06 21:27:49 itojun Exp $	*/
+/*	$NetBSD: inetcf.c,v 1.8 2003/07/13 12:07:16 itojun Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-__RCSID("$NetBSD: inetcf.c,v 1.7 2002/06/06 21:27:49 itojun Exp $");
+__RCSID("$NetBSD: inetcf.c,v 1.8 2003/07/13 12:07:16 itojun Exp $");
 #endif
 #endif
 
@@ -262,7 +262,7 @@ char   *arg1;
 		tcpd_warn("%s: not executable", arg0);
 	    }
 	} else {				/* look in REAL_DAEMON_DIR */
-	    sprintf(daemon, "%s/%s", REAL_DAEMON_DIR, arg0);
+	    snprintf(daemon, sizeof(daemon), "%s/%s", REAL_DAEMON_DIR, arg0);
 	    if (check_path(daemon, &st) < 0) {
 		tcpd_warn("%s: not found in %s: %m",
 			  arg0, REAL_DAEMON_DIR);
@@ -278,7 +278,7 @@ char   *arg1;
 	 * recipe. Look for a file with the same basename in REAL_DAEMON_DIR.
 	 * Draw some conservative conclusions when a distinct file is found.
 	 */
-	sprintf(daemon, "%s/%s", REAL_DAEMON_DIR, arg0);
+	snprintf(daemon, sizeof(daemon), "%s/%s", REAL_DAEMON_DIR, arg0);
 	if (STR_EQ(path, daemon)) {
 	    wrap_status = WR_NOT;
 	} else if (check_path(daemon, &st) >= 0) {
