@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.34 2000/08/25 01:11:42 hubertf Exp $
+#	$NetBSD: daily,v 1.35 2001/04/22 20:34:48 aymeric Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -47,7 +47,8 @@ echo "Uptime: " `uptime`
 #if [ -d /var/tmp -a ! -h /var/tmp ]; then
 #	cd /var/tmp && {
 #	find . ! -name . -atime +7 -exec rm -f -- {} \;
-#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	find . ! \( -name . -o -name vi.recover \) -type d \
+#		-mtime +1 -exec rmdir -- {} \; \
 #	    >/dev/null 2>&1; }
 #fi
 
