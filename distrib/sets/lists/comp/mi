@@ -1561,7 +1561,13 @@
 ./usr/share/man/cat3/fopen.0
 ./usr/share/man/cat3/forkpty.0
 ./usr/share/man/cat3/fparseln.0
+./usr/share/man/cat3/fpgetmask.0
+./usr/share/man/cat3/fpgetround.0
+./usr/share/man/cat3/fpgetsticky.0
 ./usr/share/man/cat3/fprintf.0
+./usr/share/man/cat3/fpsetmask.0
+./usr/share/man/cat3/fpsetround.0
+./usr/share/man/cat3/fpsetsticky.0
 ./usr/share/man/cat3/fpurge.0
 ./usr/share/man/cat3/fputc.0
 ./usr/share/man/cat3/fputs.0
@@ -2605,7 +2611,13 @@
 ./usr/share/man/man3/fopen.3
 ./usr/share/man/man3/forkpty.3
 ./usr/share/man/man3/fparseln.3
+./usr/share/man/man3/fpgetmask.3
+./usr/share/man/man3/fpgetround.3
+./usr/share/man/man3/fpgetsticky.3
 ./usr/share/man/man3/fprintf.3
+./usr/share/man/man3/fpsetmask.3
+./usr/share/man/man3/fpsetround.3
+./usr/share/man/man3/fpsetsticky.3
 ./usr/share/man/man3/fpurge.3
 ./usr/share/man/man3/fputc.3
 ./usr/share/man/man3/fputs.3
