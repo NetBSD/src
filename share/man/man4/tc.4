@@ -1,4 +1,4 @@
-.\" $NetBSD: tc.4,v 1.2 2001/09/21 23:53:52 ad Exp $
+.\" $NetBSD: tc.4,v 1.3 2001/09/22 16:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -33,8 +33,7 @@
 .Os
 .Sh NAME
 .Nm tc
-.Nd
-TurboChannel expansion bus driver
+.Nd TurboChannel expansion bus driver
 .Sh SYNOPSIS
 .Ss alpha
 .Cd "tc* at tcasic?"
@@ -45,7 +44,7 @@ The
 .Nm
 driver provides machine-independent support for the DEC TurboChannel
 expansion bus found on all DEC 5000-series machines with MIPS and DEC
-3000-series with Alpha processors.  
+3000-series with Alpha processors.
 .Pp
 Your system may support additional
 .Tn TurboChannel
@@ -55,12 +54,11 @@ devices not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
 for additional information.
-.Sh SUPPORTED DEVICES
+.Sh HARDWARE
 .Nx
 includes machine-independent
 .Tn TurboChannel
 drivers, sorted by device type and driver name:
-.Pp
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It asc
@@ -68,7 +66,6 @@ PMAZ-A single-channel SCSI adapter
 .It tcds
 PMAZ-DS, PMAZ-FS, PMAZB-AA and PMAZC-AA dual-channel SCSI adapters
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It fta
@@ -76,7 +73,6 @@ PMAF-F DEFTA FDDI controller
 .It le
 LANCE Ethernet interface
 .El
-.Pp
 .Ss Frame buffers
 .Bl -tag -width pcdisplay -offset indent
 .It cfb
@@ -93,19 +89,17 @@ PMAGB-BA HX colour unaccelerated 2-D framebuffer
 .It tfb
 PMAG-J TX 24-bit colour unaccelerated 2-D framebuffer
 .El
-.Pp
 .Ss Miscellaneous
 .Bl -tag -width pcdisplay -offset indent
 .It ioasic
 baseboard IO control ASIC for DEC TurboChannel systems
 .El
-.Pp
 .Sh SEE ALSO
 .Xr asc 4 ,
 .Xr cfb 4 ,
 .Xr fta 4 ,
-.Xr ioasic 4 ,
 .Xr intro 4 ,
+.Xr ioasic 4 ,
 .Xr le 4 ,
 .Xr mfb 4 ,
 .Xr px 4 ,
