@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.6 1994/08/19 11:25:29 mycroft Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.7 1994/12/13 09:58:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,8 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp
- *	@(#)fdesc.h	8.5 (Berkeley) 1/21/94
+ *	@(#)fdesc.h	8.6 (Berkeley) 8/20/94
+ *
+ * #Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp #
  */
 
 #ifdef KERNEL

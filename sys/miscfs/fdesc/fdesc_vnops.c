@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.21 1994/12/04 03:13:06 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.22 1994/12/13 09:58:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,8 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: fdesc_vnops.c,v 1.12 1993/04/06 16:17:17 jsp Exp
- *	@(#)fdesc_vnops.c	8.9 (Berkeley) 1/21/94
+ *	@(#)fdesc_vnops.c	8.12 (Berkeley) 8/20/94
+ *
+ * #Id: fdesc_vnops.c,v 1.12 1993/04/06 16:17:17 jsp Exp #
  */
 
 /*
@@ -329,10 +330,10 @@ fdesc_attr(fd, vap, cred, p)
 		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, p);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
-			 * don't allow directories to show up because
-			 * that causes loops in the namespace.
+			 * directories can cause loops in the namespace,
+			 * so turn off the 'x' bits to avoid trouble.
 			 */
-			vap->va_type = VFIFO;
+			vap->va_mode &= ~((VEXEC)|(VEXEC>>3)|(VEXEC>>6));
 		}
 		break;
 
@@ -517,12 +518,22 @@ fdesc_readdir(ap)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		struct ucred *a_cred;
+		int *a_eofflag;
+		u_long *a_cookies;
+		int a_ncookies;
 	} */ *ap;
 {
 	struct uio *uio = ap->a_uio;
 	struct filedesc *fdp;
 	int i;
 	int error;
+
+	/*
+	 * We don't allow exporting fdesc mounts, and currently local
+	 * requests do not need cookies.
+	 */
+	if (ap->a_ncookies)
+		panic("fdesc_readdir: not hungry");
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
