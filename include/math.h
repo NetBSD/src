@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.37 2004/07/01 16:09:21 drochner Exp $	*/
+/*	$NetBSD: math.h,v 1.38 2004/07/10 13:49:09 junyoung Exp $	*/
 
 /*
  * ====================================================
@@ -6,7 +6,7 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
@@ -129,15 +129,15 @@ extern int signgam;
 enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
 #define _LIB_VERSION_TYPE enum fdversion
-#define _LIB_VERSION _fdlib_version  
+#define _LIB_VERSION _fdlib_version
 
-/* if global variable _LIB_VERSION is not desirable, one may 
- * change the following to be a constant by: 
+/* if global variable _LIB_VERSION is not desirable, one may
+ * change the following to be a constant by:
  *	#define _LIB_VERSION_TYPE const enum version
  * In that case, after one initializes the value _LIB_VERSION (see
  * s_lib_version.c) during compile time, it cannot be modified
  * in the middle of a program
- */ 
+ */
 extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 
 #define _IEEE_  fdlibm_ieee
@@ -157,12 +157,12 @@ struct exception {
 
 #define	HUGE		MAXFLOAT
 
-/* 
+/*
  * set X_TLOSS = pi*2**52, which is possibly defined in <values.h>
  * (one may replace the following line by "#include <values.h>")
  */
 
-#define X_TLOSS		1.41484755040568800000e+16 
+#define X_TLOSS		1.41484755040568800000e+16
 
 #define	DOMAIN		1
 #define	SING		2
@@ -203,6 +203,7 @@ double	ceil __P((double));
 double	fabs __P((double));
 double	floor __P((double));
 double	fmod __P((double, double));
+double	round __P((double));
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 double	erf __P((double));
@@ -307,6 +308,7 @@ float	lgammaf __P((float));
 float	ceilf __P((float));
 float	floorf __P((float));
 float	rintf __P((float));
+float	roundf __P((float));
 long int	lrint __P((double));
 long int	lrintf __P((float));
 /* LONGLONG */
