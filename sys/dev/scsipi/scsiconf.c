@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.131 1999/10/20 15:22:27 enami Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.132 1999/11/14 18:06:09 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,13 +214,9 @@ void
 scsibus_config_interrupts(self)
 	struct device *self;
 {
-
-#if defined(SCSI_DELAY) && SCSI_DELAY > 2
-#else	/* SCSI_DELAY > 2 */
-#undef	SCSI_DELAY
+#ifndef SCSI_DELAY
 #define SCSI_DELAY 2
-#endif	/* SCSI_DELAY */
-
+#endif
 	if (SCSI_DELAY > 0) {
 		printf("%s: waiting %d seconds for devices to settle...\n",
 		    self->dv_xname, SCSI_DELAY);
