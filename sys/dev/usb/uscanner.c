@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.18 2001/10/11 12:05:10 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.19 2001/11/13 06:24:57 lukem Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -39,6 +39,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.19 2001/11/13 06:24:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

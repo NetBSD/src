@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.43 2001/10/08 03:37:53 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.44 2001/11/13 06:24:54 lukem Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -68,6 +68,9 @@
 /*
  * Ported to NetBSD and somewhat rewritten by Lennart Augustsson.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.44 2001/11/13 06:24:54 lukem Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"

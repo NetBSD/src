@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.6 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.7 2001/11/13 06:24:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * XXX This driver will not support multiple serial ports.
  * XXX The ucom layer needs to be extended first.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.7 2001/11/13 06:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

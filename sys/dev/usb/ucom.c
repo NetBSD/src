@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.39 2001/08/16 22:31:24 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.40 2001/11/13 06:24:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * This code is very heavily based on the 16550 driver, com.c.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.40 2001/11/13 06:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
