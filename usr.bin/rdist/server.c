@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: server.c,v 1.6 1994/03/13 13:33:28 cgd Exp $";
+static char *rcsid = "$Id: server.c,v 1.7 1994/03/27 22:07:31 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -417,7 +417,7 @@ sendf(rname, opts)
 			}
 		}
 		(void) sprintf(buf, "K%o %o %qd %ld %s %s %s\n", opts,
-			stb.st_mode & 07777, (quad_t)stb.st_size, stb.st_mtime,
+			stb.st_mode & 07777, stb.st_size, stb.st_mtime,
 			protoname(), protogroup(), rname);
 		if (debug)
 			printf("buf = %s", buf);
@@ -470,7 +470,7 @@ sendf(rname, opts)
 		return;
 	}
 	(void) sprintf(buf, "R%o %o %qd %ld %s %s %s\n", opts,
-		stb.st_mode & 07777, (quad_t)stb.st_size, stb.st_mtime,
+		stb.st_mode & 07777, stb.st_size, stb.st_mtime,
 		protoname(), protogroup(), rname);
 	if (debug)
 		printf("buf = %s", buf);
@@ -670,7 +670,7 @@ query(name)
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFREG:
-		(void) sprintf(buf, "Y%qd %ld\n", (quad_t)stb.st_size,
+		(void) sprintf(buf, "Y%qd %ld\n", stb.st_size,
 		    stb.st_mtime);
 		(void) write(rem, buf, strlen(buf));
 		break;
