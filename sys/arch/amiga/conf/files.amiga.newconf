@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga.newconf,v 1.23 1995/04/23 16:20:53 chopps Exp $
+#	$NetBSD: files.amiga.newconf,v 1.24 1995/04/27 12:08:54 christos Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -217,8 +217,9 @@ file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/m68k/m68k/copy.s
-file	compat/sunos/sunos_misc.c	compat_sunos
-file	compat/sunos/sunos_init_sysent.c	compat_sunos
-file	compat/sunos/sunos_ioctl.c	compat_sunos
-file	compat/sunos/sunos_exec.c	compat_sunos
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
