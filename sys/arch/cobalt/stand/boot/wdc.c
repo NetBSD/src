@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.5 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: wdc.c,v 1.6 2004/09/01 15:54:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@ __wdcwait_reset(chp, drv_mask)
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
-		chp->c_base[wd_sdh] = WDSD_IBM; /* master */
+		WDC_WRITE_REG(chp, wd_sdh, WDSD_IBM); /* master */
 		delay(10);
-		st0 = chp->c_base[wd_status];
-		chp->c_base[wd_sdh] = WDSD_IBM | 0x10; /* slave */
+		st0 = WDC_READ_REG(chp, wd_status);
+		WDC_WRITE_REG(chp, wd_sdh, WDSD_IBM | 0x10); /* slave */
 		delay(10);
-		st1 = chp->c_base[wd_status];
+		st1 = WDC_READ_REG(chp, wd_status);
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
@@ -129,12 +129,12 @@ wdcprobe(chp)
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
-	chp->c_base[wd_sdh] = WDSD_IBM;
+	WDC_WRITE_REG(chp, wd_sdh, WDSD_IBM);
 	delay(10);
-	st0 = chp->c_base[wd_status];
-	chp->c_base[wd_sdh] = WDSD_IBM | 0x10;
+	st0 = WDC_READ_REG(chp, wd_status);
+	WDC_WRITE_REG(chp, wd_sdh, WDSD_IBM | 0x10);
 	delay(10);
-	st1 = chp->c_base[wd_status];
+	st1 = WDC_READ_REG(chp, wd_status);
 
 	if (st0 == 0xff || st0 == WDSD_IBM)
 		ret_value &= ~0x01;
@@ -144,14 +144,14 @@ wdcprobe(chp)
 		return (ENXIO);
 
 	/* assert SRST, wait for reset to complete */
-	chp->c_base[wd_sdh] = WDSD_IBM;
+	WDC_WRITE_REG(chp, wd_sdh, WDSD_IBM);
 	delay(10);
-	chp->c_base[wd_aux_ctlr] = WDCTL_RST | WDCTL_IDS;
+	WDC_WRITE_CTLREG(chp, wd_aux_ctlr, WDCTL_RST | WDCTL_IDS);
 	delay(1000);
-	chp->c_base[wd_aux_ctlr] = WDCTL_IDS;
+	WDC_WRITE_CTLREG(chp, wd_aux_ctlr, WDCTL_IDS);
 	delay(1000);
-	(void) chp->c_base[wd_error];
-	chp->c_base[wd_aux_ctlr] = WDCTL_4BIT;
+	(void) WDC_READ_REG(chp, wd_error);
+	WDC_WRITE_CTLREG(chp, wd_aux_ctlr, WDCTL_4BIT);
 	delay(10);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
@@ -199,7 +199,7 @@ wdc_wait_for_ready(chp)
 {
 	u_int timeout;
 	for (timeout = WDC_TIMEOUT; timeout > 0; --timeout) {
-		if ((chp->c_base[wd_status] & (WDCS_BSY | WDCS_DRDY))
+		if ((WDC_READ_REG(chp, wd_status) & (WDCS_BSY | WDCS_DRDY))
 				== WDCS_DRDY)
 			return (0);
 	}
@@ -222,7 +222,7 @@ wdc_read_block(sc, wd_c)
 		return (0);
 
 	for (i = wd_c->bcount; i > 0; i -= sizeof(u_int16_t))
-		*ptr++ = *chp->c_data;
+		*ptr++ = WDC_READ_DATA(chp);
 
 	return (0);
 }
@@ -245,20 +245,21 @@ wdccommand(sc, wd_c)
 				wd_c->r_precomp));
 #endif
 
-	chp->c_base[wd_precomp] = wd_c->r_precomp;
-	chp->c_base[wd_seccnt] = wd_c->r_count;
-	chp->c_base[wd_sector] = wd_c->r_sector;
-	chp->c_base[wd_cyl_lo] = wd_c->r_cyl;
-	chp->c_base[wd_cyl_hi] = wd_c->r_cyl >> 8;
-	chp->c_base[wd_sdh] = WDSD_IBM | (wd_c->drive << 4) | wd_c->r_head;
-	chp->c_base[wd_command] = wd_c->r_command;
+	WDC_WRITE_REG(chp, wd_precomp, wd_c->r_precomp);
+	WDC_WRITE_REG(chp, wd_seccnt, wd_c->r_count);
+	WDC_WRITE_REG(chp, wd_sector, wd_c->r_sector);
+	WDC_WRITE_REG(chp, wd_cyl_lo, wd_c->r_cyl);
+	WDC_WRITE_REG(chp, wd_cyl_hi, wd_c->r_cyl >> 8);
+	WDC_WRITE_REG(chp, wd_sdh,
+	    WDSD_IBM | (wd_c->drive << 4) | wd_c->r_head);
+	WDC_WRITE_REG(chp, wd_command, wd_c->r_command);
 
 	if (wdc_wait_for_ready(chp) != 0)
 		return (ENXIO);
 
-	if (chp->c_base[wd_status] & WDCS_ERR) {
+	if (WDC_READ_REG(chp, wd_status) & WDCS_ERR) {
 		printf("wd%d: error %x\n", chp->compatchan,
-				chp->c_base[wd_error]);
+				WDC_READ_REG(chp, wd_error));
 		return (ENXIO);
 	}
 
@@ -277,31 +278,31 @@ wdccommandext(wd, wd_c)
 	struct wdc_channel *chp = &wd->sc_channel;
 
 	/* Select drive, head, and addressing mode. */
-	chp->c_base[wd_sdh] = (wd_c->drive << 4) | WDSD_LBA;
+	WDC_WRITE_REG(chp, wd_sdh, (wd_c->drive << 4) | WDSD_LBA);
 
 	/* previous */
-	chp->c_base[wd_features] = 0;
-	chp->c_base[wd_seccnt] = wd_c->r_count >> 8;
-	chp->c_base[wd_lba_hi] = wd_c->r_blkno >> 40;
-	chp->c_base[wd_lba_mi] = wd_c->r_blkno >> 32;
-	chp->c_base[wd_lba_lo] = wd_c->r_blkno >> 24;
+	WDC_WRITE_REG(chp, wd_features, 0);
+	WDC_WRITE_REG(chp, wd_seccnt, wd_c->r_count >> 8);
+	WDC_WRITE_REG(chp, wd_lba_hi, wd_c->r_blkno >> 40);
+	WDC_WRITE_REG(chp, wd_lba_mi, wd_c->r_blkno >> 32);
+	WDC_WRITE_REG(chp, wd_lba_lo, wd_c->r_blkno >> 24);
 
 	/* current */
-	chp->c_base[wd_features] = 0;
-	chp->c_base[wd_seccnt] =  wd_c->r_count;
-	chp->c_base[wd_lba_hi] = wd_c->r_blkno >> 16;
-	chp->c_base[wd_lba_mi] = wd_c->r_blkno >> 8;
-	chp->c_base[wd_lba_lo] = wd_c->r_blkno;
+	WDC_WRITE_REG(chp, wd_features, 0);
+	WDC_WRITE_REG(chp, wd_seccnt, wd_c->r_count);
+	WDC_WRITE_REG(chp, wd_lba_hi, wd_c->r_blkno >> 16);
+	WDC_WRITE_REG(chp, wd_lba_mi, wd_c->r_blkno >> 8);
+	WDC_WRITE_REG(chp, wd_lba_lo, wd_c->r_blkno);
 
 	/* Send command. */
-	chp->c_base[wd_command] = wd_c->r_command;
+	WDC_WRITE_REG(chp, wd_command, wd_c->r_command);
 
 	if (wdc_wait_for_ready(chp) != 0)
 		return (ENXIO);
 
-	if (chp->c_base[wd_status] & WDCS_ERR) {
+	if (WDC_READ_REG(chp, wd_status) & WDCS_ERR) {
 		printf("wd%d: error %x\n", chp->compatchan,
-				chp->c_base[wd_error]);
+				WDC_READ_REG(chp, wd_error));
 		return (ENXIO);
 	}
 
