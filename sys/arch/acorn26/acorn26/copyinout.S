@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.3 2002/08/11 21:19:15 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.4 2002/08/11 23:17:24 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,109 +32,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.3 2002/08/11 21:19:15 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.4 2002/08/11 23:17:24 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
-
-/* LINTSTUB: Func: int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done) */
-ENTRY(copyinstr)
-	mov	ip, sp
-	stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	adr	r4, Lcopystrfault
-	ldr	r5, Lcurproc
-	ldr	r5, [r5]
-	ldr	r5, [r5, #P_ADDR]
-	str	r4, [r5, #(U_PCB + PCB_ONFAULT)]
-	mov	r6, r1
-Lcopyinstrloop:
-	ldrbt	r4, [r0], #1
-	strb	r4, [r1], #1
-	subs	r2, r2, #1
-	teqne	r4, #0
-	bne	Lcopyinstrloop
-	teq	r3, #0
-	subne	r6, r1, r6
-	strne	r6, [r3]
-	mov	r0, #0
-	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
-	teq	r4, #0
-	movne	r0, #ENAMETOOLONG
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
-#endif
-
-/* LINTSTUB: Func: int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done) */
-ENTRY(copyoutstr)
-	mov	ip, sp
-	stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	adr	r4, Lcopystrfault
-	ldr	r5, Lcurproc
-	ldr	r5, [r5]
-	ldr	r5, [r5, #P_ADDR]
-	str	r4, [r5, #(U_PCB + PCB_ONFAULT)]
-	mov	r6, r1
-Lcopyoutstrloop:
-	ldrb	r4, [r0], #1
-	strbt	r4, [r1], #1
-	subs	r2, r2, #1
-	teqne	r4, #0
-	bne	Lcopyoutstrloop
-	teq	r3, #0
-	subne	r6, r1, r6
-	strne	r6, [r3]
-	mov	r0, #0
-	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
-	teq	r4, #0
-	movne	r0, #ENAMETOOLONG
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
-#endif
-
-/* LINTSTUB: Func: int copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done) */
-ENTRY(copystr)
-	mov	ip, sp
-	stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	adr	r4, Lcopystrfault
-	ldr	r5, Lcurproc
-	ldr	r5, [r5]
-	ldr	r5, [r5, #P_ADDR]
-	str	r4, [r5, #(U_PCB + PCB_ONFAULT)]
-	mov	r6, r1
-Lcopystrloop:
-	ldrb	r4, [r0], #1
-	strb	r4, [r1], #1
-	subs	r2, r2, #1
-	teqne	r4, #0
-	bne	Lcopystrloop
-	teq	r3, #0
-	subne	r6, r1, r6
-	strne	r6, [r3]
-	mov	r0, #0
-	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
-	teq	r4, #0
-	movne	r0, #ENAMETOOLONG
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-
-Lcopystrfault:
-	teq	r3, #0
-	subne	r6, r1, r6
-	strne	r6, [r3]
-	mov	r1, #0
-	str	r1, [r5, #(U_PCB + PCB_ONFAULT)]
-	/* Return value is provided by fault handler. */
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
-#endif
 
 /* LINTSTUB: Func: int fubyte(void *base) */
 ENTRY(fubyte)
