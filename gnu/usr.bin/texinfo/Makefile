@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/01/17 21:52:10 wiz Exp $
+#	$NetBSD: Makefile,v 1.16 2003/02/13 09:01:13 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ FILESNAME_${F}= texinfo.mo
 .endfor
 # XXX: Do we want to install the following files too?
 #FILES+= 	txi-cs.tex txi-de.tex txi-en.tex txi-es.tex txi-fr.tex txi-it.tex \
-#		txi-nl.tex txi-no.tex txi-pt.tex
+#		txi-nl.tex txi-no.tex txi-pt.tex txi-tr.tex
 .endif
 
 MAN=		info.5 texinfo.5
