@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.23 2003/08/29 02:45:57 isaki Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.24 2003/09/07 05:26:30 isaki Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.23 2003/08/29 02:45:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.24 2003/09/07 05:26:30 isaki Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -655,12 +655,6 @@ spc_select(sc, acb)
 
 #if 0
 	bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ATN);
-#endif
-#ifdef x68k			/* XXX? */
-	do {
-		asm ("nop");
-	} while (bus_space_read_1(iot, ioh, SSTS) &
-	    (SSTS_ACTIVE|SSTS_TARGET|SSTS_BUSY));
 #endif
 
 	bus_space_write_1(iot, ioh, PCTL, 0);
@@ -1664,14 +1658,8 @@ loop:
 	/*
 	 * First check for abnormal conditions, such as reset.
 	 */
-#ifdef x68k			/* XXX? */
-	while ((ints = bus_space_read_1(iot, ioh, INTS)) == 0)
-		delay(1);
-	SPC_MISC(("ints = 0x%x  ", ints));
-#else
 	ints = bus_space_read_1(iot, ioh, INTS);
 	SPC_MISC(("ints = 0x%x  ", ints));
-#endif
 
 	if ((ints & INTS_RST) != 0) {
 		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
