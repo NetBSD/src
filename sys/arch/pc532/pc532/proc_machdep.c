@@ -40,7 +40,7 @@
  * And then from:
  *	Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp 
  *
- *	$Id: proc_machdep.c,v 1.3 1994/05/17 17:31:41 phil Exp $
+ *	$Id: proc_machdep.c,v 1.4 1994/08/01 19:34:00 phil Exp $
  */
 
 /* Modified by Phil Nelson for the pc532 port.  1/12/94 */
@@ -82,38 +82,27 @@
 #include <machine/reg.h>
 #include <machine/frame.h>
 
-extern int kstack[];		/* XXX */
-
 int
 process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	void *ptr;
-	struct trapframe *tp;
-
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-/*	ptr = (char *) p->p_addr +
-		((char *) p->p_md.md_regs - (char *) kstack);
-
-	tp = ptr;
-	regs->r_es = tp->tf_es;
-	regs->r_ds = tp->tf_ds;
-	regs->r_edi = tp->tf_edi;
-	regs->r_esi = tp->tf_esi;
-	regs->r_ebp = tp->tf_ebp;
-	regs->r_ebx = tp->tf_ebx;
-	regs->r_edx = tp->tf_edx;
-	regs->r_ecx = tp->tf_ecx;
-	regs->r_eax = tp->tf_eax;
-	regs->r_eip = tp->tf_eip;
-	regs->r_cs = tp->tf_cs;
-	regs->r_eflags = tp->tf_eflags;
-	regs->r_esp = tp->tf_esp;
-	regs->r_ss = tp->tf_ss;
-*/	return (EIO); /* Temporary */
+	regs->r_r0  = p->p_md.md_regs[REG_R0];
+	regs->r_r1  = p->p_md.md_regs[REG_R1];
+	regs->r_r2  = p->p_md.md_regs[REG_R2];
+	regs->r_r3  = p->p_md.md_regs[REG_R3];
+	regs->r_r4  = p->p_md.md_regs[REG_R4];
+	regs->r_r5  = p->p_md.md_regs[REG_R5];
+	regs->r_r6  = p->p_md.md_regs[REG_R6];
+	regs->r_r7  = p->p_md.md_regs[REG_R7];
+	regs->r_sb  = p->p_md.md_regs[REG_SB];
+	regs->r_sp  = p->p_md.md_regs[REG_SP];
+	regs->r_fp  = p->p_md.md_regs[REG_FP];
+	regs->r_pc  = p->p_md.md_regs[REG_PC];
+	regs->r_psr = p->p_md.md_regs[REG_PSR] >> 16;
 
 	return (0);
 }
@@ -123,38 +112,28 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	void *ptr;
-	struct trapframe *tp;
-	int eflags;
+	int psr;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
-/*
-	ptr = (char *)p->p_addr +
-		((char *) p->p_md.md_regs - (char *) kstack);
-	tp = ptr;
 
-	eflags = regs->r_eflags;
-	if ((eflags & PSL_USERCLR) != 0 ||
-	    (eflags & PSL_USERSET) != PSL_USERSET ||
-	    (eflags & PSL_IOPL) > (tp->tf_eflags & PSL_IOPL))
+	psr = regs->r_psr;
+	if ((psr & PSL_USERSET) != PSL_USERSET)
 		return (EPERM);
 
-	tp->tf_ebp = regs->r_ebp;
-	tp->tf_esp = regs->r_esp;
-	tp->tf_eip = regs->r_eip;
-	tp->tf_eflags = eflags;
-	tp->tf_eax = regs->r_eax;
-	tp->tf_ebx = regs->r_ebx;
-	tp->tf_ecx = regs->r_ecx;
-	tp->tf_edx = regs->r_edx;
-	tp->tf_esi = regs->r_esi;
-	tp->tf_edi = regs->r_edi;
-	tp->tf_cs = regs->r_cs;
-	tp->tf_ds = regs->r_ds;
-	tp->tf_es = regs->r_es;
-	tp->tf_ss = regs->r_ss;
-*/	return (EIO); /* Temporary */
+	p->p_md.md_regs[REG_R0]  = regs->r_r0;
+	p->p_md.md_regs[REG_R1]  = regs->r_r1;
+	p->p_md.md_regs[REG_R2]  = regs->r_r2;
+	p->p_md.md_regs[REG_R3]  = regs->r_r3;
+	p->p_md.md_regs[REG_R4]  = regs->r_r4;
+	p->p_md.md_regs[REG_R5]  = regs->r_r5;
+	p->p_md.md_regs[REG_R6]  = regs->r_r6;
+	p->p_md.md_regs[REG_R7]  = regs->r_r7;
+	p->p_md.md_regs[REG_SB]  = regs->r_sb;
+	p->p_md.md_regs[REG_SP]  = regs->r_sp;
+	p->p_md.md_regs[REG_FP]  = regs->r_fp;
+	p->p_md.md_regs[REG_PC]  = regs->r_pc;
+	p->p_md.md_regs[REG_PSR] = psr << 16;
 
 	return (0);
 }
@@ -164,21 +143,13 @@ process_sstep(p, sstep)
 	struct proc *p;
 	int sstep;
 {
-	void *ptr;
-	struct trapframe *tp;
-
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
-/*
-	ptr = (char *) p->p_addr +
-		((char *) p->p_md.md_regs - (char *) kstack);
 
-	tp = ptr;
 	if (sstep)
-		tp->tf_eflags |= PSL_T;
+		p->p_md.md_regs[REG_PSR] |= (PSL_T << 16);
 	else
-		tp->tf_eflags &= ~PSL_T;
-*/	return (EIO); /* Temporary */
+		p->p_md.md_regs[REG_PSR] &= ~(PSL_T << 16);
 
 	return (0);
 }
@@ -195,18 +166,10 @@ process_set_pc(p, addr)
 	struct proc *p;
 	u_int addr;
 {
-	void *ptr;
-	struct trapframe *tp;
-
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-/*	ptr = (char *) p->p_addr +
-		((char *) p->p_md.md_regs - (char *) kstack);
-
-	tp = ptr;
-	tp->tf_eip = addr;
-*/	return (EIO); /* Temporary */
+	p->p_md.md_regs[REG_PC] = addr;
 
 	return (0);
 }
