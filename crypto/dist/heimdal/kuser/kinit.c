@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kinit.c,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $");
+RCSID("$Id: kinit.c,v 1.2 2000/10/27 14:44:08 joda Exp $");
 
 #ifdef KRB4
 /* for when the KDC tells us it's a v4 one, we try to talk that */
@@ -62,8 +62,8 @@ do_v4_fallback (krb5_context context,
 
     if (lifetime == 0)
 	lifetime = DEFAULT_TKT_LIFE;
-
-    lifetime = krb_time_to_life (0, lifetime * 60);
+    else
+	lifetime = krb_time_to_life (0, lifetime);
 
     kret = krb5_524_conv_principal (context, principal,
 				    princ.name,
