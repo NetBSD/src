@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 1995/01/11 20:38:23 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 1995/02/13 22:23:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -210,26 +210,11 @@ void obio_init()
 caddr_t obio_alloc(obio_addr, obio_size)
 	int obio_addr, obio_size;
 {
-	int npages;
-	vm_offset_t va, high_segment_alloc(), obio_pa, obio_va, pte_proto;
 	caddr_t cp;
-	
+
 	cp = obio_find_mapping((vm_offset_t)obio_addr, obio_size);
 	if (cp) return (cp);
-	
-	npages = PA_PGNUM(sun3_round_page(obio_size));
-	if (!npages)
-		panic("obio_alloc: attempt to allocate 0 pages for obio");
-	va = high_segment_alloc(npages);
-	if (!va)
-		va = (vm_offset_t) dvma_vm_alloc(npages);
-	if (!va) 
-		panic("obio_alloc: unable to allocate va for obio mapping");
-	/* Drivers always get writable, non-cached mappings. */
-	pte_proto = PG_VALID | PG_WRITE | PG_SYSTEM | PGT_OBIO | PG_NC;
-	obio_va = va;
-	obio_pa = (vm_offset_t) obio_addr;
-	for (; npages ; npages--, obio_va += NBPG, obio_pa += NBPG)
-		set_pte(obio_va, pte_proto | PA_PGNUM(obio_pa));
-	return (caddr_t) va;
+
+	cp = bus_mapin(BUS_OBIO, obio_addr, obio_size);
+	return (cp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.h,v 1.4 1995/01/26 23:23:39 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.h,v 1.5 1995/02/13 22:23:56 gwr Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -10,6 +10,8 @@
 #define	IE_RBUF_SIZE	256	/* size of each buffer, MUST BE POWER OF TWO */
 #define	NTXBUF		2	/* number of transmit buffer/command pairs */
 #define	IE_TBUF_SIZE	1536	/* length of transmit buffer */
+
+#define MEMSIZE 0x10000
 
 enum ie_hardware {
 	IE_VME,			/* multibus to VME ie card */

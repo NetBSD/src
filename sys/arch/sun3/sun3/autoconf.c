@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1995/01/24 06:18:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1995/02/13 22:24:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -220,7 +220,7 @@ static const int bustype_to_ptetype[4] = {
  * If this generates a bus error, return -1
  *
  *	Create a temporary mapping,
- *	Try the access using fu{byte,sword,word}
+ *	Try the access using peek_*
  *	Clean up temp. mapping
  */
 int bus_peek(bustype, paddr, sz)
@@ -278,7 +278,7 @@ char *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int off, pa, pgs;
+	int off, pa, pgs, pmt;
 	caddr_t va;
 
 	if (bustype & ~3)
@@ -287,19 +287,18 @@ bus_mapin(bustype, paddr, sz)
 	off = paddr & PGOFSET;
 	pa = paddr - off;
 	sz += off;
+	sz = sun3_round_page(sz);
 
-	pa |= bustype_to_pmaptype[bustype];
-	pa |= PMAP_NC;
+	pmt = bustype_to_pmaptype[bustype];
+	pmt |= PMAP_NC;	/* non-cached */
 
 	/* Get some DVMA space. */
-	pgs = btoc(sz);
-	va = dvma_vm_alloc(pgs);
+	va = dvma_vm_alloc(sz);
 	if (va == NULL)
-		return (NULL);
+		panic("bus_mapin");
 
 	/* Map it to the specified bus. */
-	pmap_map((int)va, pa, pa + ctob(pgs),
-			 VM_PROT_READ | VM_PROT_WRITE);
+	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
 
 	return (va + off);
 }	

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1995/01/24 06:11:35 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1995/02/13 22:24:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,6 +58,7 @@
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
+#include <machine/pmap.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -265,37 +266,6 @@ vunmapbuf(bp)
 #endif
 }
 
-/* idea for implementation borrowed from chris torek */
-
-caddr_t dvma_malloc(size)
-     size_t size;
-{
-    caddr_t new_mem;
-    vm_size_t new_size;
-
-    if (!size)
-	return NULL;
-    new_size = sun3_round_page(size);
-    new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
-    if (!new_mem)
-	panic("dvma_malloc: no space in phys_map");
-    /* uncache this piece of memory :) */
-    return new_mem;
-}
-
-caddr_t dvma_vm_alloc(npages)
-     int npages;
-{
-    vm_size_t size;
-    vm_offset_t va;
-
-    if (npages <= 0)
-		panic("dvma_vm_alloc(0)");
-
-	va = kmem_alloc_wait(phys_map, npages);
-    return (caddr_t) va;
-}
-
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the kernel map,
@@ -326,3 +296,104 @@ void pagemove(from, to, size)
 		size -= NBPG;
 	}
 }
+
+/*
+ * Allocate actual memory pages in DVMA space.
+ * (idea for implementation borrowed from Chris Torek.)
+ */
+caddr_t dvma_malloc(bytes)
+     size_t bytes;
+{
+    caddr_t new_mem;
+    vm_size_t new_size;
+
+    if (!bytes)
+		return NULL;
+    new_size = sun3_round_page(bytes);
+    new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
+    if (!new_mem)
+		panic("dvma_malloc: no space in phys_map");
+    /* The pmap code always makes DVMA pages non-cached. */
+    return new_mem;
+}
+
+/*
+ * Allocate virtual space from the DVMA map,
+ * but do not map anything into that space.
+ */
+caddr_t dvma_vm_alloc(bytes)
+     int bytes;
+{
+	vm_offset_t va;
+
+	if (bytes <= 0 || bytes > DVMA_SPACE_SIZE)
+		return NULL;
+	if (bytes & PGOFSET)
+		panic("dvma_vm_alloc");
+
+	va = kmem_alloc_wait(phys_map, bytes);
+    return (caddr_t) va;
+}
+
+/*
+ * Free virtual space from the DVMA map.
+ */
+void dvma_vm_free(caddr_t va, int bytes)
+{
+	kmem_free_wakeup(phys_map, (vm_offset_t)va, bytes);
+}
+
+/*
+ * Given a DVMA address, return the physical address that
+ * would be used by some OTHER bus-master besides the CPU.
+ * (Examples: on-board ie/le, VME xy board).
+ */
+long dvma_kvtopa(long kva)
+{
+	if (kva < DVMA_SPACE_START || kva >= DVMA_SPACE_END)
+		panic("dvma_kvtopa: bad dmva addr=0x%x\n", kva);
+
+	return(kva - DVMA_SLAVE_BASE);
+}
+
+/*
+ * Given a range of kernel virtual space, remap all the
+ * pages found there into the DVMA space (dup mappings).
+ * XXX - Perhaps this should take a list of pages...
+ */
+caddr_t dvma_remap(char *kva, int len)
+{
+	vm_offset_t phys, dvma;
+	caddr_t dvma1st;
+
+	/* Get sufficient DVMA space. */
+	dvma1st = dvma_vm_alloc(len);
+	if (dvma1st == NULL)
+		return(NULL);	/* EAGAIN? */
+
+	dvma = (vm_offset_t) dvma1st;
+	while (len > 0) {
+		phys = pmap_extract(kernel_pmap, (vm_offset_t)kva);
+		if (phys == 0)
+			panic("dvma_remap: phys=0");
+
+		/* Duplicate the mapping */
+		pmap_enter(kernel_pmap, dvma,
+				   phys | PMAP_NC,
+				   VM_PROT_ALL, FALSE);
+
+		kva  += NBPG;
+		dvma += NBPG;
+		len  -= NBPG;
+	}
+
+	return(dvma1st);
+}
+
+void dvma_unmap(caddr_t dvma_addr, int len)
+{
+	pmap_remove(kernel_pmap, (vm_offset_t)dvma_addr,
+			(vm_offset_t)dvma_addr + len);
+	dvma_vm_free(dvma_addr, len);
+}
+

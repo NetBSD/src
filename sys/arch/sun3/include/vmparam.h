@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 1994/11/21 21:34:30 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 1995/02/13 22:24:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -124,6 +124,9 @@
 #define DVMA_SPACE_SIZE  0x00100000
 #define DVMA_SPACE_START 0x0FD00000	
 #define DVMA_SPACE_END   0x0FE00000 /* mon start */
+
+/* This is where access by other VME masters starts. */
+#define DVMA_SLAVE_BASE  0x0F000000
 
 /*
  * Kernel VA of kernel u-area for current process

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.5 1995/01/26 23:23:38 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.c,v 1.6 1995/02/13 22:23:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -54,7 +54,7 @@
 #include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
-/* #include <machine/vme.h> */
+#include <machine/vmparam.h>
 
 #include "i82586.h"
 #include "if_ie.h"
@@ -133,8 +133,8 @@ ie_md_attach(parent, self, args)
 		sc->run_586 = ie_obrun;
 		sc->sc_bcopy = bcopy;
 		sc->sc_bzero = bzero;
-		sc->sc_iobase = (caddr_t)0xf000000;	/* XXX */
-		sc->sc_msize = 0x10000;	/* XXX */
+		sc->sc_iobase = (caddr_t)DVMA_SLAVE_BASE;
+		sc->sc_msize = MEMSIZE;
 
 		/* Map in the control register. */
 		reg = obio_alloc(ca->ca_paddr, OBIO_INTEL_ETHER_SIZE);
@@ -168,7 +168,7 @@ ie_md_attach(parent, self, args)
 		sc->run_586 = ie_vmerun;
 		sc->sc_bcopy = wcopy;
 		sc->sc_bzero = wzero;
-		sc->sc_msize = 0x10000;	/* XXX */
+		sc->sc_msize = MEMSIZE;
 		sc->sc_reg = bus_mapin(ca->ca_bustype, ca->ca_paddr,
 							   sizeof(struct ievme));
 
