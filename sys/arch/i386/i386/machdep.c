@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.6 1993/10/10 09:35:44 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.7 1993/10/12 23:19:58 mycroft Exp $
  */
 
 #include "npx.h"
@@ -83,8 +83,6 @@
 #include "i386/isa/isavar.h"
 #include "i386/isa/nvram.h"
 
-int _udatasel, _ucodesel;
-
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -114,7 +112,7 @@ static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
 static	vm_size_t avail_remaining;
 
-int	_udatasel, _ucodesel;
+int	_udatasel, _ucodesel, _gsel_tss;
 
 void dumpsys __P((void));
 
@@ -849,9 +847,6 @@ setregs(p, entry, stack, retval)
 
 union descriptor gdt[NGDT];
 
-/* interrupt descriptor table */
-struct gate_descriptor idt[NIDT];
-
 /* local descriptor table */
 #define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
 #define	LSYS5SIGR_SEL	1
@@ -994,6 +989,22 @@ struct soft_segment_descriptor ldt_segs[] = {
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ } };
 
+#define	IDTVEC(name)	__CONCAT(X, name)
+extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
+	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
+	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
+	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(rsvd0),
+	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
+	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
+	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
+	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall),
+	IDTVEC(0), IDTVEC(1), IDTVEC(2), IDTVEC(3), IDTVEC(4), IDTVEC(5),
+	IDTVEC(6), IDTVEC(7), IDTVEC(8), IDTVEC(9), IDTVEC(10), IDTVEC(11),
+	IDTVEC(12), IDTVEC(13), IDTVEC(14), IDTVEC(15);
+
+/* interrupt descriptor table */
+struct gate_descriptor idt[NIDT];
+
 setidt(idx, func, typ, dpl) char *func; {
 	struct gate_descriptor *ip = idt + idx;
 
@@ -1004,20 +1015,8 @@ setidt(idx, func, typ, dpl) char *func; {
 	ip->gd_type = typ;
 	ip->gd_dpl = dpl;
 	ip->gd_p = 1;
-	ip->gd_hioffset = ((int)func)>>16 ;
+	ip->gd_hioffset = ((int)func)>>16;
 }
-
-#define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
-	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
-	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
-	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(rsvd0),
-	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
-	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
-	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
-	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall);
-
-int _gsel_tss;
 
 init386(first_avail)
 	vm_offset_t first_avail;
@@ -1046,38 +1045,54 @@ init386(first_avail)
 	for (x=0; x < NLDT; x++) ssdtosd(ldt_segs+x, ldt+x);
 
 	/* exceptions */
-	setidt(0, &IDTVEC(div),  SDT_SYS386TGT, SEL_KPL);
-	setidt(1, &IDTVEC(dbg),  SDT_SYS386TGT, SEL_KPL);
-	setidt(2, &IDTVEC(nmi),  SDT_SYS386TGT, SEL_KPL);
- 	setidt(3, &IDTVEC(bpt),  SDT_SYS386TGT, SEL_UPL);
-	setidt(4, &IDTVEC(ofl),  SDT_SYS386TGT, SEL_KPL);
-	setidt(5, &IDTVEC(bnd),  SDT_SYS386TGT, SEL_KPL);
-	setidt(6, &IDTVEC(ill),  SDT_SYS386TGT, SEL_KPL);
-	setidt(7, &IDTVEC(dna),  SDT_SYS386TGT, SEL_KPL);
-	setidt(8, &IDTVEC(dble),  SDT_SYS386TGT, SEL_KPL);
-	setidt(9, &IDTVEC(fpusegm),  SDT_SYS386TGT, SEL_KPL);
-	setidt(10, &IDTVEC(tss),  SDT_SYS386TGT, SEL_KPL);
-	setidt(11, &IDTVEC(missing),  SDT_SYS386TGT, SEL_KPL);
-	setidt(12, &IDTVEC(stk),  SDT_SYS386TGT, SEL_KPL);
-	setidt(13, &IDTVEC(prot),  SDT_SYS386TGT, SEL_KPL);
-	setidt(14, &IDTVEC(page),  SDT_SYS386TGT, SEL_KPL);
-	setidt(15, &IDTVEC(rsvd),  SDT_SYS386TGT, SEL_KPL);
-	setidt(16, &IDTVEC(fpu),  SDT_SYS386TGT, SEL_KPL);
-	setidt(17, &IDTVEC(rsvd0),  SDT_SYS386TGT, SEL_KPL);
-	setidt(18, &IDTVEC(rsvd1),  SDT_SYS386TGT, SEL_KPL);
-	setidt(19, &IDTVEC(rsvd2),  SDT_SYS386TGT, SEL_KPL);
-	setidt(20, &IDTVEC(rsvd3),  SDT_SYS386TGT, SEL_KPL);
-	setidt(21, &IDTVEC(rsvd4),  SDT_SYS386TGT, SEL_KPL);
-	setidt(22, &IDTVEC(rsvd5),  SDT_SYS386TGT, SEL_KPL);
-	setidt(23, &IDTVEC(rsvd6),  SDT_SYS386TGT, SEL_KPL);
-	setidt(24, &IDTVEC(rsvd7),  SDT_SYS386TGT, SEL_KPL);
-	setidt(25, &IDTVEC(rsvd8),  SDT_SYS386TGT, SEL_KPL);
-	setidt(26, &IDTVEC(rsvd9),  SDT_SYS386TGT, SEL_KPL);
-	setidt(27, &IDTVEC(rsvd10),  SDT_SYS386TGT, SEL_KPL);
-	setidt(28, &IDTVEC(rsvd11),  SDT_SYS386TGT, SEL_KPL);
-	setidt(29, &IDTVEC(rsvd12),  SDT_SYS386TGT, SEL_KPL);
-	setidt(30, &IDTVEC(rsvd13),  SDT_SYS386TGT, SEL_KPL);
-	setidt(31, &IDTVEC(rsvd14),  SDT_SYS386TGT, SEL_KPL);
+	setidt(0, &IDTVEC(div), SDT_SYS386TGT, SEL_KPL);
+	setidt(1, &IDTVEC(dbg), SDT_SYS386TGT, SEL_KPL);
+	setidt(2, &IDTVEC(nmi), SDT_SYS386TGT, SEL_KPL);
+	setidt(3, &IDTVEC(bpt), SDT_SYS386TGT, SEL_KPL);
+	setidt(4, &IDTVEC(ofl), SDT_SYS386TGT, SEL_KPL);
+	setidt(5, &IDTVEC(bnd), SDT_SYS386TGT, SEL_KPL);
+	setidt(6, &IDTVEC(ill), SDT_SYS386TGT, SEL_KPL);
+	setidt(7, &IDTVEC(dna), SDT_SYS386TGT, SEL_KPL);
+	setidt(8, &IDTVEC(dble), SDT_SYS386TGT, SEL_KPL);
+	setidt(9, &IDTVEC(fpusegm), SDT_SYS386TGT, SEL_KPL);
+	setidt(10, &IDTVEC(tss), SDT_SYS386TGT, SEL_KPL);
+	setidt(11, &IDTVEC(missing), SDT_SYS386TGT, SEL_KPL);
+	setidt(12, &IDTVEC(stk), SDT_SYS386TGT, SEL_KPL);
+	setidt(13, &IDTVEC(prot), SDT_SYS386TGT, SEL_KPL);
+	setidt(14, &IDTVEC(page), SDT_SYS386TGT, SEL_KPL);
+	setidt(15, &IDTVEC(rsvd), SDT_SYS386TGT, SEL_KPL);
+	setidt(16, &IDTVEC(fpu), SDT_SYS386TGT, SEL_KPL);
+	setidt(17, &IDTVEC(rsvd0), SDT_SYS386TGT, SEL_KPL);
+	setidt(18, &IDTVEC(rsvd1), SDT_SYS386TGT, SEL_KPL);
+	setidt(19, &IDTVEC(rsvd2), SDT_SYS386TGT, SEL_KPL);
+	setidt(20, &IDTVEC(rsvd3), SDT_SYS386TGT, SEL_KPL);
+	setidt(21, &IDTVEC(rsvd4), SDT_SYS386TGT, SEL_KPL);
+	setidt(22, &IDTVEC(rsvd5), SDT_SYS386TGT, SEL_KPL);
+	setidt(23, &IDTVEC(rsvd6), SDT_SYS386TGT, SEL_KPL);
+	setidt(24, &IDTVEC(rsvd7), SDT_SYS386TGT, SEL_KPL);
+	setidt(25, &IDTVEC(rsvd8), SDT_SYS386TGT, SEL_KPL);
+	setidt(26, &IDTVEC(rsvd9), SDT_SYS386TGT, SEL_KPL);
+	setidt(27, &IDTVEC(rsvd10), SDT_SYS386TGT, SEL_KPL);
+	setidt(28, &IDTVEC(rsvd11), SDT_SYS386TGT, SEL_KPL);
+	setidt(29, &IDTVEC(rsvd12), SDT_SYS386TGT, SEL_KPL);
+	setidt(30, &IDTVEC(rsvd13), SDT_SYS386TGT, SEL_KPL);
+	setidt(31, &IDTVEC(rsvd14), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 0, &IDTVEC(0), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 1, &IDTVEC(1), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 2, &IDTVEC(2), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 3, &IDTVEC(3), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 4, &IDTVEC(4), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 5, &IDTVEC(5), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 6, &IDTVEC(6), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 7, &IDTVEC(7), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 8, &IDTVEC(8), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 9, &IDTVEC(9), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 10, &IDTVEC(10), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 11, &IDTVEC(11), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 12, &IDTVEC(12), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 13, &IDTVEC(13), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 14, &IDTVEC(14), SDT_SYS386TGT, SEL_KPL);
+	setidt(NRSVIDT + 15, &IDTVEC(15), SDT_SYS386TGT, SEL_KPL);
 
 	disable_intr();
 	r_gdt.rd_limit = sizeof(gdt)-1;
