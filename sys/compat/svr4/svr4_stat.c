@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.30 1998/12/10 17:06:13 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.31 1999/01/20 22:09:17 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -576,7 +576,8 @@ svr4_sys_systeminfo(p, v, retval)
 	size_t len;
 	char buf[256];
 	extern char ostype[], hostname[], osrelease[],
-		    version[], machine[], domainname[];
+		    version[], machine[], machine_arch[],
+		    domainname[];
 
 	u_int rlen = SCARG(uap, len);
 
@@ -602,7 +603,7 @@ svr4_sys_systeminfo(p, v, retval)
 		break;
 
 	case SVR4_SI_ARCHITECTURE:
-		str = machine;
+		str = machine_arch;
 		break;
 
 	case SVR4_SI_HW_SERIAL:
