@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 1999/02/28 04:52:07 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,75 @@ static void *intr_arg[NISR] = {
 int	intr_debug = 0;
 #endif
 
+/*
+ * Some of the below are not used yet, but might be used someday on the
+ * Q700/900/950 where the interrupt controller may be reprogrammed to
+ * interrupt on different levels as listed in locore.s
+ */
+u_short	mac68k_ttyipl;
+u_short	mac68k_bioipl;
+u_short	mac68k_netipl;
+u_short	mac68k_impipl;
+u_short	mac68k_audioipl;
+u_short	mac68k_clockipl;
+u_short	mac68k_statclockipl;
+u_short	mac68k_schedipl;
+
 extern	int intrcnt[];		/* from locore.s */
+
+void	intr_computeipl __P((void));
+
+void
+intr_init()
+{
+	/* Standard spl(9) interrupt priorities */
+	mac68k_ttyipl = (PSL_S | PSL_IPL1);
+	mac68k_bioipl = (PSL_S | PSL_IPL2);
+	mac68k_netipl = (PSL_S | PSL_IPL2);
+	mac68k_impipl = (PSL_S | PSL_IPL2);
+	mac68k_statclockipl = (PSL_S | PSL_IPL2);
+	mac68k_clockipl = (PSL_S | PSL_IPL2);
+	mac68k_schedipl = (PSL_S | PSL_IPL3);
+
+	/* Non-standard interrupt priority */
+	mac68k_audioipl = (PSL_S | PSL_IPL2);
+
+	if (current_mac_model->class == MACH_CLASSAV)
+		mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+
+	intr_computeipl();
+}
+
+
+/*
+ * Compute the interrupt levels for the spl*()
+ * calls.  This doesn't have to be fast.
+ */
+void
+intr_computeipl()
+{
+	/*
+	 * Enforce `bio <= net <= tty <= imp <= statclock <= clock <= sched'
+	 * as defined in spl(9)
+	 */
+	if (mac68k_bioipl > mac68k_netipl)
+		mac68k_netipl = mac68k_bioipl;
+
+	if (mac68k_netipl > mac68k_ttyipl)
+		mac68k_ttyipl = mac68k_netipl;
+
+	if (mac68k_ttyipl > mac68k_impipl)
+		mac68k_impipl = mac68k_ttyipl;
+
+	if (mac68k_impipl > mac68k_statclockipl)
+		mac68k_statclockipl = mac68k_impipl;
+
+	if (mac68k_statclockipl > mac68k_clockipl)
+		mac68k_clockipl = mac68k_statclockipl;
+
+	if (mac68k_clockipl > mac68k_schedipl)
+		mac68k_schedipl = mac68k_clockipl;
+}
 
 /*
  * Establish an autovectored interrupt handler.
