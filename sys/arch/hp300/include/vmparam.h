@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 1997/07/12 16:18:58 perry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 1998/02/08 18:37:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,13 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/19/94
  */
 
+#ifndef _HP300_VMPARAM_H_
+#define	_HP300_VMPARAM_H_
+
 /*
  * Machine dependent constants for HP300
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
@@ -241,3 +245,26 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+/* Use new VM page bootstrap interface. */
+#define	MACHINE_NEW_NONCONTIG
+
+#if defined(MACHINE_NEW_NONCONTIG)
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * The hp300 only has one physical memory segment.
+ */
+#define	VM_PHYSSEG_MAX		1
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+#endif /* MACHINE_NEW_NONCONTIG */
+
+#endif /* _HP300_VMPARAM_H_ */
