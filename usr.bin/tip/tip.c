@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.10 1996/12/29 10:38:20 cgd Exp $	*/
+/*	$NetBSD: tip.c,v 1.11 1997/02/11 09:24:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.10 1996/12/29 10:38:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.11 1997/02/11 09:24:06 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -135,7 +135,7 @@ main(argc, argv)
 	for (p = system; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
-	(void)sprintf(sbuf, "tip%d", BR);
+	(void)snprintf(sbuf, sizeof sbuf, "tip%d", BR);
 	system = sbuf;
 
 notnumber:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.6 1995/09/26 06:02:14 jtc Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: uucplock.c,v 1.6 1995/09/26 06:02:14 jtc Exp $";
+static char rcsid[] = "$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -63,7 +63,7 @@ uu_lock(ttyname)
 	char text_pid[81];
 	int len;
 
-	(void)sprintf(tbuf, _PATH_LOCKDIRNAME, ttyname);
+	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttyname);
 	fd = open(tbuf, O_RDWR|O_CREAT|O_EXCL, 0660);
 	if (fd < 0) {
 		/*
@@ -105,7 +105,7 @@ uu_lock(ttyname)
 		/* fall out and finish the locking process */
 	}
 	pid = getpid();
-	sprintf(text_pid, "%10d\n", pid);
+	(void)snprintf(text_pid, sizeof text_pid, "%10d\n", pid);
 	len = strlen(text_pid);
 	if (write(fd, text_pid, len) != len) {
 		(void)close(fd);
@@ -122,6 +122,6 @@ uu_unlock(ttyname)
 {
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
 
-	(void)sprintf(tbuf, _PATH_LOCKDIRNAME, ttyname);
+	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttyname);
 	return(unlink(tbuf));
 }

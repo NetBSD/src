@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.6 1995/10/29 00:49:38 pk Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cmds.c,v 1.6 1995/10/29 00:49:38 pk Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -112,7 +112,7 @@ cu_take(cc)
 		printf("\r\n%s: cannot create\r\n", argv[1]);
 		return;
 	}
-	sprintf(line, "cat %s;echo \01", argv[0]);
+	(void)snprintf(line, sizeof line, "cat %s;echo \01", argv[0]);
 	transfer(line, fd, "\01");
 }
 
@@ -399,9 +399,9 @@ cu_put(cc)
 		return;
 	}
 	if (boolean(value(ECHOCHECK)))
-		sprintf(line, "cat>%s\r", argv[1]);
+		(void)snprintf(line, sizeof line, "cat>%s\r", argv[1]);
 	else
-		sprintf(line, "stty -echo;cat>%s;stty echo\r", argv[1]);
+		(void)snprintf(line, sizeof line, "stty -echo;cat>%s;stty echo\r", argv[1]);
 	transmit(fd, "\04", line);
 }
 
@@ -823,7 +823,7 @@ expand(name)
 		/* signal(SIGINT, sigint) */
 		return(name);
 	}
-	sprintf(cmdbuf, "echo %s", name);
+	(void)snprintf(cmdbuf, sizeof cmdbuf, "echo %s", name);
 	if ((pid = vfork()) == 0) {
 		Shell = value(SHELL);
 		if (Shell == NOSTR)

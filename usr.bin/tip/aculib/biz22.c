@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.5 1996/12/29 10:41:55 cgd Exp $	*/
+/*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: biz22.c,v 1.5 1996/12/29 10:41:55 cgd Exp $";
+static char rcsid[] = "$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -72,15 +72,13 @@ biz_dialer(num, mod)
 		printf("can't initialize bizcomp...");
 		return (0);
 	}
-	strcpy(cbuf, "\02.\r");
+	(void)strncpy(cbuf, "\02.\r", sizeof(cbuf) - 1);
 	cbuf[1] = *mod;
 	if (cmd(cbuf)) {
 		printf("can't set dialing mode...");
 		return (0);
 	}
-	strcpy(cbuf, "\02D");
-	strcat(cbuf, num);
-	strcat(cbuf, "\r");
+	(void)snprintf(cbuf, sizeof cbuf, "\02D%s\r", num);
 	write(FD, cbuf, strlen(cbuf));
 	if (!detect("7\r")) {
 		printf("can't get dial tone...");
@@ -98,7 +96,7 @@ biz_dialer(num, mod)
 	if (timeout) {
 		char line[80];
 
-		sprintf(line, "%d second dial timeout",
+		(void)snprintf(line, sizeof line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "biz1022", line);
 	}
