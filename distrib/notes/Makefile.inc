@@ -1,16 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.23 2002/02/09 13:56:52 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2002/04/11 06:33:57 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
 
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 # Whether or not to regenerate tables of contents
 MKTOCS?=yes
 
 M?=	${.CURDIR:T}
-V!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh
-V_S!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
 
 MAIN=	${.CURDIR}/../common/main ${.CURDIR}/../common/macros ${EXTRA}
 TARG=	INSTALL
@@ -20,9 +19,8 @@ TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 SRCS=	${MAIN} whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
-ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
-PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1
+PRESET=	${GFLAGS} -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
 
 POST_PLAIN= -P-b -P-u -P-o
 
@@ -94,14 +92,8 @@ echosrcs! ${SRCS}
 echomore!
 	@echo ${.OBJDIR}/${TARG}.more
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release:
-	${ICMD} ${TARGS} ${RELEASEDIR}/.
-.endif
+release: check_RELEASEDIR
+	${RELINSTALL} ${TARGS} ${RELEASEDIR}/.
 
 .PATH: ${.CURDIR}/../common
 
