@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.60 2002/06/30 20:36:06 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.61 2002/07/11 18:07:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.60 2002/06/30 20:36:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.61 2002/07/11 18:07:56 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -576,6 +576,9 @@ SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
 	} card64[] = {
 		/* Asante GigaNIX */
 		{ 0x128a,	0x0002 },
+
+		/* Accton EN1407-T, Planex GN-1000TE */
+		{ 0x1113,	0x1407 },
 
 		{ 0, 0}
 	};
