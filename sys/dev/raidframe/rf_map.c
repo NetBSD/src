@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.5 2000/06/29 00:22:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -268,7 +268,6 @@ rf_MarkFailuresInASMList(raidPtr, asm_h)
 		    RF_MAX_FAILED_PDA * sizeof(RF_PhysDiskAddr_t *));
 		for (pda = asmap->physInfo; pda; pda = pda->next) {
 			if (RF_DEAD_DISK(disks[pda->row][pda->col].status)) {
-				printf("DEAD DISK BOGUSLY DETECTED!!\n");
 				asmap->numDataFailed++;
 				asmap->failedPDAs[asmap->numFailedPDAs] = pda;
 				asmap->numFailedPDAs++;
