@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.20 1996/12/17 08:40:57 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.21 1997/01/30 09:55:45 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -128,7 +128,7 @@ file	arch/hp300/dev/ppi.c		ppi needs-flag
 # Old HP SCSI layer
 device	oscsi { target = -1, lun = -1 }
 attach	oscsi at dio
-file	arch/hp300/dev/scsi.c		scsi
+file	arch/hp300/dev/scsi.c		oscsi
 
 # Old HP SCSI devices
 device	sd: disk
