@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.249 2003/12/24 04:48:34 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.250 2003/12/24 04:54:28 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3114,3 +3114,11 @@ share/man/man9/pool.9				1.29
 
 	Note that the fifth argument to pool_init() is "flags" and not "nitems".
 	[simon, ticket #1581]
+
+BUILDING					patch
+BUILDING.mdoc					patch
+
+	Change -v to -V in the following section:
+	 Print make(1)'s idea of the value of var.  Does not build any targets.
+	To reflect reality.
+	[zuntum, ticket #1582]
