@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/08/30 02:32:13 jtk Exp $
+#	$NetBSD: Makefile,v 1.3 1996/09/08 15:36:51 jtk Exp $
 #
 # LP (Laptop Package)
 #
@@ -27,11 +27,10 @@ DIR=${APMREL}${APMDIR}
 
 CC = ${APMCC} -I. -I$S/arch -I$S
 LD = ${APMLD}
-STRIP = ${APMSTRIP}
 CFLAGS += -DINITIALIZER	-I${DIR} -DKERNEL \
 	${APMCFLAGS:S@-I.@-I${KERNREL}.@g}
 
-OBJS = apm_init.o real_prot.o table.o
+OBJS = biostramp.o
 
 $(OBJS): ${I386}/include/apmvar.h
 
@@ -43,19 +42,25 @@ $(OBJS): ${I386}/include/apmvar.h
 .S.o:
 	$(CC)  $(CFLAGS) $(INC) -c $<
 
-apm_init.inc: apm_init Makefile
-	sh ${DIR}/bin2asm.sh apm_init > apm_init.inc
+DEPS=${APMDEPS}
 
-apm_init: $(OBJS)
-	$(LD) -Bstatic -N -T 0 -o apm_init $(OBJS)
-	cp apm_init apm_init.sym
-	@${STRIP} apm_init
-	@sh ${DIR}/rmaouthdr apm_init apm_init.tmp
-	@mv -f apm_init.tmp apm_init
+biostramp.inc: biostramp Makefile
+	sh ${DIR}/bin2asm.sh biostramp > biostramp.inc
+
+biostramp: $(OBJS) $(DEPS)
+	$(LD) -Bstatic -N -T 0 -o biostramp $(OBJS)
+	cp biostramp biostramp.sym
+	@${APMSTRIP} biostramp
+	@if [ `${LS} -l biostramp |awk '{print $$5}'` -gt 4096 ]; then \
+		echo "biostramp too big"; \
+		exit 1; \
+	fi
+	@sh ${DIR}/rmaouthdr biostramp biostramp.tmp
+	@mv -f biostramp.tmp biostramp
 
 #allclean: clean
 #	@rm -f apm_init.inc
 clean:
-	rm -f *.o apm_init apm_init.sym apm_init.inc
+	rm -f *.o biostramp biostramp.sym biostramp.inc
 
 #.include <bsd.prog.mk>
