@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.1 1996/09/07 12:12:19 mycroft Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.2 1996/10/21 22:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -56,9 +56,9 @@ struct aha_mbx {
 
 struct aha_softc {
 	struct device sc_dev;
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_iot;
 
-	bus_io_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh;
 	int sc_irq, sc_drq;
 	void *sc_ih;
 
@@ -74,6 +74,7 @@ struct aha_softc {
 	struct scsi_link sc_link;	/* prototype for devs */
 };
 
-int	aha_find __P((bus_chipset_tag_t, bus_io_handle_t, struct aha_softc *));
+int	aha_find __P((bus_space_tag_t, bus_space_handle_t,
+	    struct aha_softc *));
 void	aha_attach __P((struct aha_softc *));
 int	aha_intr __P((void *));

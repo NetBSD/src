@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.2 1996/09/01 00:54:42 mycroft Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.3 1996/10/21 22:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -36,9 +36,10 @@
 
 struct uha_softc {
 	struct device sc_dev;
-	bus_chipset_tag_t sc_bc;
 
-	bus_io_handle_t sc_ioh;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+
 	int sc_irq, sc_drq;
 	void *sc_ih;
 

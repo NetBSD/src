@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.88 1996/10/13 01:37:53 christos Exp $	*/
+/*	$NetBSD: isa.c,v 1.89 1996/10/21 22:41:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -80,14 +80,15 @@ isaattach(parent, self, aux)
 	isa_attach_hook(parent, self, iba);
 	printf("\n");
 
-	sc->sc_bc = iba->iba_bc;
+	sc->sc_iot = iba->iba_iot;
+	sc->sc_memt = iba->iba_memt;
 	sc->sc_ic = iba->iba_ic;
 
 	/*
 	 * Map port 0x84, which causes a 1.25us delay when read.
 	 * We do this now, since several drivers need it.
 	 */
-	if (bus_io_map(sc->sc_bc, 0x84, 1, &sc->sc_delayioh))
+	if (bus_space_map(sc->sc_iot, 0x84, 1, 0, &sc->sc_delaybah))
 		panic("isaattach: can't map `delay port'");	/* XXX */
 
 	TAILQ_INIT(&sc->sc_subdevs);
@@ -129,7 +130,8 @@ isascan(parent, match)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("clone devices not supported on ISA bus");
 
-	ia.ia_bc = sc->sc_bc;
+	ia.ia_iot = sc->sc_iot;
+	ia.ia_memt = sc->sc_memt;
 	ia.ia_ic = sc->sc_ic;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
@@ -137,7 +139,7 @@ isascan(parent, match)
 	ia.ia_msize = cf->cf_loc[3];
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
-	ia.ia_delayioh = sc->sc_delayioh;
+	ia.ia_delaybah = sc->sc_delaybah;
 
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
 		config_attach(parent, dev, &ia, isaprint);
