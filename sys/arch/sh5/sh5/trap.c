@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 2002/07/05 13:32:07 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 2002/07/10 15:52:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,6 +106,7 @@ userret(struct proc *p)
 			postsig(sig);
 	}
 
+	p->p_md.md_flags &= ~MDP_FPSAVED;
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
