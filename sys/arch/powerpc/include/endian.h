@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.1 1996/09/30 16:34:22 ws Exp $	*/
+/*	$NetBSD: endian.h,v 1.2 1996/10/13 03:16:41 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -36,22 +36,52 @@
 
 #ifndef	_POSIX_SOURCE
 
-#define	BIG_ENDIAN	0x1234
-#define	LITTLE_ENDIAN	0x4321
+#define _QUAD_HIGHWORD	0
+#define _QUAD_LOWWORD	1
 
-#define	BYTE_ORDER	BIG_ENDIAN		/* for now */
-#define	_QUAD_HIGHWORD	0
-#define	_QUAD_LOWWORD	1
+/*
+ * Definitions for byte order, according to byte significance from low
+ * address to high.
+ */
+#define	LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
+#define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
+#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
-#define	ntohs(s)	(s)
-#define	htons(s)	(s)
-#define	ntohl(l)	(l)
-#define	htonl(l)	(l)
+#define	BYTE_ORDER	BIG_ENDIAN	/* for now */
 
-#define	NTOHS(s)
-#define	HTONS(s)
-#define	NTOHL(l)
-#define	HTONL(l)
+#include <sys/cdefs.h>
+
+typedef u_int32_t	in_addr_t;
+typedef u_int16_t	in_port_t;
+
+__BEGIN_DECLS
+in_addr_t htonl __P((in_addr_t));
+in_port_t htons __P((in_port_t));
+in_addr_t ntohl __P((in_addr_t));
+in_port_t ntohs __P((in_port_t));
+__END_DECLS
+
+/*
+ * Macros for network/external number representation conversion.
+ */
+#if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
+#define	ntohl(x)	(x)
+#define	ntohs(x)	(x)
+#define	htonl(x)	(x)
+#define	htons(x)	(x)
+
+#define	NTOHL(x)	(void) (x)
+#define	NTOHS(x)	(void) (x)
+#define	HTONL(x)	(void) (x)
+#define	HTONS(x)	(void) (x)
+
+#else
+
+#define	NTOHL(x)	(x) = ntohl((in_addr_t)x)
+#define	NTOHS(x)	(x) = ntohs((in_port_t)x)
+#define	HTONL(x)	(x) = htonl((in_addr_t)x)
+#define	HTONS(x)	(x) = htons((in_port_t)x)
+#endif
 
 #endif	/* _POSIX_SOURCE */
 #endif	/* _PPC_ENDIAN_H_ */
