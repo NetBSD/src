@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.3 2002/01/05 06:45:32 takemura Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.4 2002/01/13 14:18:32 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -33,8 +33,7 @@
 #include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
 #include <machine/bus_dma_hpcmips.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
+#include <machine/config_hook.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -42,7 +41,6 @@
 #include <hpcmips/vr/icureg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrpciureg.h>
-#include <hpcmips/vr/vrc4173bcuvar.h>
 
 #include "pci.h"
 
@@ -89,12 +87,13 @@ static void	vrpciu_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
 static pcireg_t	vrpciu_conf_read(pci_chipset_tag_t, pcitag_t, int); 
 static void	vrpciu_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+static int	vrpciu_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static const char *vrpciu_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+static const struct evcnt *vrpciu_intr_evcnt(pci_chipset_tag_t,
+		    pci_intr_handle_t);
 static void	*vrpciu_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 static void	vrpciu_intr_disestablish(pci_chipset_tag_t, void *);
-static void	*vrpciu_vrcintr_establish(pci_chipset_tag_t, int,
-		    int (*)(void *), void *);
-static void	vrpciu_vrcintr_disestablish(pci_chipset_tag_t, void *);
 
 struct cfattach vrpciu_ca = {
 	sizeof(struct vrpciu_softc), vrpciu_match, vrpciu_attach
@@ -255,13 +254,11 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	pc->pc_decompose_tag = vrpciu_decompose_tag;
 	pc->pc_conf_read = vrpciu_conf_read;
 	pc->pc_conf_write = vrpciu_conf_write;
-	pc->pc_intr_map = vrc4173bcu_pci_intr_map;
-	pc->pc_intr_string = vrc4173bcu_pci_intr_string;
-	pc->pc_intr_evcnt = vrc4173bcu_pci_intr_evcnt;
+	pc->pc_intr_map = vrpciu_intr_map;
+	pc->pc_intr_string = vrpciu_intr_string;
+	pc->pc_intr_evcnt = vrpciu_intr_evcnt;
 	pc->pc_intr_establish = vrpciu_intr_establish;
 	pc->pc_intr_disestablish = vrpciu_intr_disestablish;
-	pc->pc_vrcintr_establish = vrpciu_vrcintr_establish;
-	pc->pc_vrcintr_disestablish = vrpciu_vrcintr_disestablish;
 
 #if 0
 	{
@@ -445,55 +442,65 @@ vrpciu_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	vrpciu_write(sc, VRPCIU_CONFDREG, data);
 }
 
+int
+vrpciu_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
+	int bus, dev, func;
+#ifdef DEBUG
+	int line = pa->pa_intrline;
+	int pin = pa->pa_intrpin;
+#endif
+
+	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
+	DPRINTF(("%s(%d, %d, %d): line = %d, pin = %d\n", pc->pc_dev->dv_xname,
+	    bus, dev, func, line, pin));
+
+	*ihp = CONFIG_HOOK_PCIINTR_ID(bus, dev, func);
+
+	return (0);
+}
+
+const char *
+vrpciu_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+	static char irqstr[sizeof("pciintr") + 16];
+
+	snprintf(irqstr, sizeof(irqstr), "pciintr %d:%d:%d",
+	    CONFIG_HOOK_PCIINTR_BUS((int)ih),
+	    CONFIG_HOOK_PCIINTR_DEVICE((int)ih),
+	    CONFIG_HOOK_PCIINTR_FUNCTION((int)ih));
+
+	return (irqstr);
+}
+
+const struct evcnt *
+vrpciu_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+
+	/* XXX for now, no evcnt parent reported */
+
+	return (NULL);
+}
+
 void *
 vrpciu_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
 
 	if (ih == -1)
 		return (NULL);
 	DPRINTF(("vrpciu_intr_establish: %p\n", sc));
-	return (vrc4173bcu_intr_establish(sc->sc_bcu, ih, func, arg));
+
+	return (config_hook(CONFIG_HOOK_PCIINTR, ih, CONFIG_HOOK_EXCLUSIVE,
+	    (int (*)(void *, int, long, void *))func, arg));
 }
 
 void
 vrpciu_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
 
 	DPRINTF(("vrpciu_intr_disestablish: %p\n", sc));
-	vrc4173bcu_intr_disestablish(sc->sc_bcu, cookie);
-}
-
-void *
-vrpciu_vrcintr_establish(pci_chipset_tag_t pc, int port,
-    int (*func)(void *), void *arg)
-{
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
-	struct vrip_softc *vsc = (struct vrip_softc *)sc->sc_vc;
-	void *ih;
-	int mode;
-
-	sc->sc_bcu = arg;
-
-	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_SIGMARION2))
-		mode = HPCIO_INTR_LEVEL | HPCIO_INTR_HIGH | HPCIO_INTR_THROUGH;
-	else
-		mode = HPCIO_INTR_LEVEL | HPCIO_INTR_LOW | HPCIO_INTR_HOLD;
-
-	ih = hpcio_intr_establish(vsc->sc_gpio_chips[VRIP_IOCHIP_VRGIU],
-	    port, mode, func, arg);
-
-	return (ih);
-}
-
-void
-vrpciu_vrcintr_disestablish(pci_chipset_tag_t pc, void *ih)
-{
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
-	struct vrip_softc *vsc = (struct vrip_softc *)sc->sc_vc;
-
-	return (vrip_intr_disestablish(vsc->sc_gpio_chips[VRIP_IOCHIP_VRGIU],
-	    ih));
+	config_unhook(cookie);
 }
