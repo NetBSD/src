@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 1998/02/18 02:05:33 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 1998/05/07 07:26:05 leo Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -149,13 +149,6 @@ u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
 struct pmap	kernel_pmap_store;
 
-#ifdef MACHINE_NONCONTIG
-#define	pa_index(pa)			pmap_page_index(pa)
-#else
-#define pa_index(pa)			atop(pa - vm_first_phys)
-#endif /* MACHINE_NONCONTIG */
-
-#define pa_to_pvh(pa)			(&pv_table[pa_index(pa)])
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 

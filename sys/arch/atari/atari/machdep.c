@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1998/03/13 21:05:10 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1998/05/07 07:25:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,8 +97,6 @@ static void netintr __P((void));
 void	straymfpint __P((int, u_short));
 void	straytrap __P((int, u_short));
 
-extern vm_offset_t avail_end;
-
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -107,7 +105,8 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-caddr_t	msgbufaddr;
+caddr_t		msgbufaddr;
+vm_offset_t	msgbufpa;
 
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -164,7 +163,7 @@ cpu_startup()
 #endif
 		 vm_offset_t	minaddr, maxaddr;
 		 vm_size_t	size = 0;
-		 u_long		memsize;
+	extern	 vm_size_t	mem_size;	/* from pmap.c */
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -172,10 +171,13 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
+	/*
+	 * pmap_bootstrap has positioned this at the end of kernel
+	 * memory segment - map and initialize it now.
+	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+			msgbufpa + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -184,12 +186,7 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 
-	for (i = memsize = 0; i < NMEM_SEGS; i++) {
-		if (boot_segs[i].start == boot_segs[i].end)
-			break;
-		memsize += boot_segs[i].end - boot_segs[i].start;
-	}
-	printf("real  mem = %ld (%ld pages)\n", memsize, memsize/NBPG);
+	printf("real  mem = %ld (%ld pages)\n", mem_size, mem_size/NBPG);
 
 	/*
 	 * Allocate space for system data structures.
