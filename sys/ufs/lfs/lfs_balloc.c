@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.14 1999/11/15 18:49:14 fvdl Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.15 2000/04/23 21:10:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -237,23 +237,32 @@ lfs_balloc(v)
 	 * The block we are writing may be a brand new block
 	 * in which case we need to do accounting (i.e. check
 	 * for free space and update the inode number of blocks.
+	 *
+	 * We can tell a truly new block because (1) ufs_bmaparray
+	 * will say it is UNASSIGNED; and (2) it will not be marked
+	 * with B_DELWRI.  (It might be marked B_DONE, if it was
+	 * read into the cache before it existed on disk.)
 	 */
-	if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
-		if (daddr == UNASSIGNED)
-			if (!ISSPACE(fs, bb, curproc->p_ucred)) {
-				bp->b_flags |= B_INVAL;
-				brelse(bp);
-				return(ENOSPC);
-			} else {
-				ip->i_ffs_blocks += bb;
-				ip->i_lfs->lfs_bfree -= bb;
-				if (iosize != fs->lfs_bsize)
-					clrbuf(bp);
-			}
-		else if (iosize == fs->lfs_bsize)
+	if ((!(bp->b_flags & B_DELWRI)) && daddr == UNASSIGNED) {
+		if (!ISSPACE(fs, bb, curproc->p_ucred)) {
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+			return(ENOSPC);
+		} else {
+			ip->i_ffs_blocks += bb;
+			ip->i_lfs->lfs_bfree -= bb;
+			if (iosize != fs->lfs_bsize)
+				clrbuf(bp);
+		}
+	} else if (!(bp->b_flags & (B_DONE|B_DELWRI))) {
+		/*
+		 * Not a brand new block, also not in the cache;
+		 * read it in from disk.
+		 */
+		if (iosize == fs->lfs_bsize)
 			/* Optimization: I/O is unnecessary. */
 			bp->b_blkno = daddr;
-		else  {
+		else {
 			/*
 			 * We need to read the block to preserve the
 			 * existing bytes.
