@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.44 2001/07/30 16:22:49 wiz Exp $	*/
+/*	$NetBSD: ps.c,v 1.45 2001/11/03 13:21:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.44 2001/07/30 16:22:49 wiz Exp $");
+__RCSID("$NetBSD: ps.c,v 1.45 2001/11/03 13:21:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -445,11 +445,11 @@ main(argc, argv)
 }
 
 static struct kinfo_proc2 *
-getkinfo_kvm(kd, what, flag, nentriesp)
-	kvm_t *kd;
+getkinfo_kvm(kdp, what, flag, nentriesp)
+	kvm_t *kdp;
 	int what, flag, *nentriesp;
 {
-	return (kvm_getproc2(kd, what, flag, sizeof(struct kinfo_proc2),
+	return (kvm_getproc2(kdp, what, flag, sizeof(struct kinfo_proc2),
 	    nentriesp));
 }
 
