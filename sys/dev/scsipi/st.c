@@ -22,8 +22,6 @@
  */
 
 #include "st.h"
-#undef NST
-#define NST 32
 
 #include "sys/types.h"
 #include "sys/param.h"
@@ -137,10 +135,10 @@ stopen(dev_t dev)
 	/*
 	 * Check the unit is legal
 	 */
-	if( unit >= NST ) {
-		errcode = ENXIO;
-		return errcode;
-	}
+	if( unit >= NST )
+		return ENXIO;
+	if(!st)
+		return ENXIO;
 
 	/*
 	 * Only allow one at a time
@@ -688,6 +686,11 @@ stioctl(dev_t dev, int cmd, caddr_t arg, int mode)
 	flags = 0;	/* give error messages, act on errors etc. */
 	unit = UNIT(dev);
 	st = st_data[unit];
+
+	if(unit >= NST)
+		return ENXIO;
+	if(!st)
+		return ENXIO;
 
 	switch(cmd) {
 	case MTIOCGET:
