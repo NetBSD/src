@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.6 2001/04/23 06:10:08 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.7 2001/04/24 09:15:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -196,7 +196,8 @@ edc_mca_attach(parent, self, aux)
 	iobase = (pos2 & IO_IS_ALT) ? ESDIC_IOALT : ESDIC_IOPRM;
 	drq = (pos2 & DRQ_MASK) >> 2;
 
-	printf(" slot %d irq %d: %s\n", ma->ma_slot+1, irq, typestr);
+	printf(" slot %d irq %d drq %d: %s\n", ma->ma_slot+1,
+		irq, drq, typestr);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -210,12 +211,12 @@ edc_mca_attach(parent, self, aux)
 	}
 #endif
 
-	printf("%s: Fairness %s, Release %s, DRQ %d, ",
+	printf("%s: Fairness %s, Release %s, ",
 		sc->sc_dev.dv_xname,
 		(pos2 & FAIRNESS_ENABLE) ? "On" : "Off",
 		(pos4 & RELEASE_1) ? "6ms"
-				: ((pos4 & RELEASE_2) ? "3ms" : "Immediate"),
-		drq);
+				: ((pos4 & RELEASE_2) ? "3ms" : "Immediate")
+		);
 	if ((pos4 & PACING_CTRL_DISABLE) == 0) {
 		static const char * const pacint[] =
 			{ "disabled", "16ms", "24ms", "31ms"};
