@@ -39,36 +39,36 @@ versions.
 
 Indirect:
 binutils.info-1: 1845
-binutils.info-2: 49760
-binutils.info-3: 96951
+binutils.info-2: 49762
+binutils.info-3: 96952
 
 Tag Table:
 (Indirect)
 Node: Top1845
-Node: ar3094
-Node: ar cmdline5268
-Node: ar scripts13107
-Node: nm18786
-Node: objcopy25756
-Node: objdump38583
-Node: ranlib49011
-Node: size49760
-Node: strings52491
-Node: strip54316
-Node: c++filt57281
-Ref: c++filt-Footnote-160138
-Node: addr2line60244
-Node: nlmconv62650
-Node: windres65254
-Node: dlltool70306
-Node: readelf79647
-Node: Selecting The Target System82798
-Node: Target Selection83815
-Node: Architecture Selection86516
-Node: Linker Emulation Selection87747
-Node: Reporting Bugs88625
-Node: Bug Criteria89376
-Node: Bug Reporting89922
-Node: Index96951
+Node: ar3096
+Node: ar cmdline5270
+Node: ar scripts13109
+Node: nm18788
+Node: objcopy25758
+Node: objdump38585
+Node: ranlib49013
+Node: size49762
+Node: strings52493
+Node: strip54318
+Node: c++filt57283
+Ref: c++filt-Footnote-160140
+Node: addr2line60246
+Node: nlmconv62652
+Node: windres65256
+Node: dlltool70308
+Node: readelf79649
+Node: Selecting The Target System82799
+Node: Target Selection83816
+Node: Architecture Selection86517
+Node: Linker Emulation Selection87748
+Node: Reporting Bugs88626
+Node: Bug Criteria89377
+Node: Bug Reporting89923
+Node: Index96952
 
 End Tag Table
