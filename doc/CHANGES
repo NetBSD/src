@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.333 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.334 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -60,6 +60,8 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	cvs: cvs-1.11.16 via patch [christos 20040519]
 	resolver: The libc resolver has been updated to the bind9 one
 		[christos 20040521]
+	emuxki(4): Make this driver work on big endian machines
+		(at least on macppc). [tsutsui 20040523]
 	uep(4):	Added driver for eGalax USB touchpanel controller
 		[tsarna 20040524]
 	ptm(4): pty/98 pty multiplexor device [christos 20040526]
