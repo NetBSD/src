@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.35 1997/03/17 06:45:20 scottr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.36 1997/10/09 18:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -6,7 +6,7 @@
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)bpf.c	8.2 (Berkeley) 3/28/94
+ * static char rcsid[] =
+ * "Header: bpf.c,v 1.67 96/09/26 22:00:52 leres Exp ";
  */
 
 #include "bpfilter.h"
@@ -125,7 +127,7 @@ static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_mcopy __P((const void *, void *, size_t));
-static int	bpf_movein __P((struct uio *, int,
+static int	bpf_movein __P((struct uio *, int, int,
 			        struct mbuf **, struct sockaddr *));
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
@@ -133,14 +135,15 @@ static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
-static void	catchpacket __P((struct bpf_d *, u_char *, size_t, size_t,
+static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
 				 void (*)(const void *, void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
 
 static int
-bpf_movein(uio, linktype, mp, sockp)
+bpf_movein(uio, linktype, mtu, mp, sockp)
 	register struct uio *uio;
 	int linktype;
+	int mtu;
 	register struct mbuf **mp;
 	register struct sockaddr *sockp;
 {
@@ -148,6 +151,7 @@ bpf_movein(uio, linktype, mp, sockp)
 	int error;
 	int len;
 	int hlen;
+	int align;
 
 	/*
 	 * Build a sockaddr based on the data link layer type.
@@ -163,33 +167,40 @@ bpf_movein(uio, linktype, mp, sockp)
 	case DLT_SLIP:
 		sockp->sa_family = AF_INET;
 		hlen = 0;
+		align = 0;
 		break;
 
 	case DLT_PPP:
 		sockp->sa_family = AF_UNSPEC;
 		hlen = 0;
+		align = 0;
 		break;
 
 	case DLT_EN10MB:
 		sockp->sa_family = AF_UNSPEC;
 		/* XXX Would MAXLINKHDR be better? */
+ 		/* 6(dst)+6(src)+2(type) */
 		hlen = sizeof(struct ether_header);
+		align = 2;
 		break;
 
 	case DLT_ARCNET:
 		sockp->sa_family = AF_UNSPEC;
 		hlen = ARC_HDRLEN;
+		align = 5;
 		break;
 
 	case DLT_FDDI:
 		sockp->sa_family = AF_UNSPEC;
 		/* XXX 4(FORMAC)+6(dst)+6(src)+3(LLC)+5(SNAP) */
 		hlen = 24;
+		align = 0;
 		break;
 
 	case DLT_NULL:
 		sockp->sa_family = AF_UNSPEC;
 		hlen = 0;
+		align = 0;
 		break;
 
 	default:
@@ -197,14 +208,27 @@ bpf_movein(uio, linktype, mp, sockp)
 	}
 
 	len = uio->uio_resid;
-	if ((unsigned)len > MCLBYTES)
+	/*
+	 * If there aren't enough bytes for a link level header or the
+	 * packet length exceeds the interface mtu, return an error.
+	 */
+	if (len < hlen || len - hlen > mtu)
+		return (EMSGSIZE);
+
+	/*
+	 * XXX Avoid complicated buffer chaining ---
+	 * bail if it won't fit in a single mbuf.
+	 * (Take into account possible alignment bytes)
+	 */
+	if ((unsigned)len > MCLBYTES - align)
 		return (EIO);
 
 	MGETHDR(m, M_WAIT, MT_DATA);
+	if (m == 0)
+		return (ENOBUFS);
 	m->m_pkthdr.rcvif = 0;
 	m->m_pkthdr.len = len - hlen;
-
-	if (len > MHLEN) {
+	if (len > MHLEN - align) {
 #if BSD >= 199103
 		MCLGET(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -216,25 +240,31 @@ bpf_movein(uio, linktype, mp, sockp)
 			goto bad;
 		}
 	}
-	m->m_len = len;
-	*mp = m;
-	/*
-	 * Make room for link header.
-	 */
+
+	/* Insure the data is properly aligned */
+	if (align > 0) {
+#if BSD >= 199103
+		m->m_data += align;
+#else
+		m->m_off += align;
+#endif
+		m->m_len -= align;
+	}
+
+	error = UIOMOVE(mtod(m, caddr_t), len, UIO_WRITE, uio);
+	if (error)
+		goto bad;
 	if (hlen != 0) {
-		m->m_len -= hlen;
+		bcopy(mtod(m, caddr_t), sockp->sa_data, hlen);
 #if BSD >= 199103
 		m->m_data += hlen; /* XXX */
 #else
 		m->m_off += hlen;
 #endif
-		error = UIOMOVE((caddr_t)sockp->sa_data, hlen, UIO_WRITE, uio);
-		if (error)
-			goto bad;
+		len -= hlen;
 	}
-	error = UIOMOVE(mtod(m, caddr_t), len - hlen, UIO_WRITE, uio);
-	if (!error)
-		return (0);
+	m->m_len = len;
+	*mp = m;
  bad:
 	m_freem(m);
 	return (error);
@@ -280,13 +310,15 @@ bpf_detachd(d)
 		int error;
 
 		d->bd_promisc = 0;
-		error = ifpromisc(bp->bif_ifp, 0);
+		/*
+		 * Take device out of promiscuous mode.  Since we were
+		 * able to enter promiscuous mode, we should be able
+		 * to turn it off.  But we can get an error if
+		 * the interface was configured down, so only panic
+		 * if we don't get an unexpected error.
+		 */
+  		error = ifpromisc(bp->bif_ifp, 0);
 		if (error && error != EINVAL)
-			/*
-			 * Something is really wrong if we were able to put
-			 * the driver into promiscuous mode, but can't
-			 * take it out.
-			 */
 			panic("bpf: ifpromisc failed");
 	}
 	/* Remove d from the interface's descriptor list. */
@@ -448,7 +480,11 @@ bpfread(dev, uio, ioflag)
 	 * have arrived to fill the store buffer.
 	 */
 	while (d->bd_hbuf == 0) {
-		if (d->bd_immediate && d->bd_slen != 0) {
+		if (d->bd_immediate) {
+			if (d->bd_slen == 0) {
+				splx(s);
+				return (EWOULDBLOCK);
+			}
 			/*
 			 * A packet(s) either arrived since the previous
 			 * read or arrived while we were asleep.
@@ -487,6 +523,8 @@ bpfread(dev, uio, ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
+		if (error != 0)
+			goto done;
 	}
 	/*
 	 * At this point, we know we have something in the hold slot.
@@ -504,8 +542,8 @@ bpfread(dev, uio, ioflag)
 	d->bd_fbuf = d->bd_hbuf;
 	d->bd_hbuf = 0;
 	d->bd_hlen = 0;
+done:
 	splx(s);
-
 	return (error);
 }
 
@@ -559,7 +597,7 @@ bpfwrite(dev, uio, ioflag)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, &m, &dst);
+	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, ifp->if_mtu, &m, &dst);
 	if (error)
 		return (error);
 
@@ -598,6 +636,11 @@ reset_d(d)
 	d->bd_dcount = 0;
 }
 
+#ifdef BPF_KERN_FILTER
+extern struct bpf_insn *bpf_tcp_filter;
+extern struct bpf_insn *bpf_udp_filter;
+#endif
+
 /*
  *  FIONREAD		Check for read packet available.
  *  BIOCGBLEN		Get buffer len [for read()].
@@ -624,6 +667,9 @@ bpfioctl(dev, cmd, addr, flag, p)
 {
 	register struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
+#ifdef BPF_KERN_FILTER
+	register struct bpf_insn **p;
+#endif
 
 	switch (cmd) {
 
@@ -682,6 +728,36 @@ bpfioctl(dev, cmd, addr, flag, p)
 	case BIOCSETF:
 		error = bpf_setf(d, (struct bpf_program *)addr);
 		break;
+
+#ifdef BPF_KERN_FILTER
+	/*
+	 * Set TCP or UDP reject filter.
+	 */
+	case BIOCSTCPF:
+	case BIOCSUDPF:
+		if (!suser()) {
+			error = EPERM;
+			break;
+		}
+
+		/* Validate and store filter */
+		error = bpf_setf(d, (struct bpf_program *)addr);
+
+		/* Free possible old filter */
+		if (cmd == BIOCSTCPF)
+			p = &bpf_tcp_filter;
+		else
+			p = &bpf_udp_filter;
+		if (*p != NULL)
+			free((caddr_t)*p, M_DEVBUF);
+
+		/* Steal new filter (noop if error) */
+		s = splimp();
+		*p = d->bd_filter;
+		d->bd_filter = NULL;
+		splx(s);
+		break;
+#endif
 
 	/*
 	 * Flush read packet buffer.
@@ -820,22 +896,6 @@ bpfioctl(dev, cmd, addr, flag, p)
 	case TIOCGPGRP:
 		*(int *)addr = d->bd_pgid;
 		break;
-
-	case BIOCSRSIG:		/* Set receive signal */
-		{
-		 	u_int sig;
-
-			sig = *(u_int *)addr;
-
-			if (sig >= NSIG)
-				error = EINVAL;
-			else
-				d->bd_sig = sig;
-			break;
-		}
-	case BIOCGRSIG:
-		*(u_int *)addr = d->bd_sig;
-		break;
 	}
 	return (error);
 }
@@ -871,6 +931,8 @@ bpf_setf(d, fp)
 
 	size = flen * sizeof(*fp->bf_insns);
 	fcode = (struct bpf_insn *)malloc(size, M_DEVBUF, M_WAITOK);
+	if (fcode == 0)
+		return (ENOMEM);
 	if (copyin((caddr_t)fp->bf_insns, (caddr_t)fcode, size) == 0 &&
 	    bpf_validate(fcode, (int)flen)) {
 		s = splimp();
@@ -978,7 +1040,7 @@ bpf_ifname(ifp, ifr)
 }
 
 /*
- * Support for select() system call
+ * Support for poll() system call
  *
  * Return true iff the specific operation will not block indefinitely.
  * Otherwise, return false but make a note that a selwakeup() must be done.
@@ -1020,7 +1082,7 @@ bpf_tap(arg, pkt, pktlen)
 {
 	struct bpf_if *bp;
 	register struct bpf_d *d;
-	register size_t slen;
+	register u_int slen;
 	/*
 	 * Note that the ipl does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
@@ -1072,7 +1134,7 @@ bpf_mtap(arg, m)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
-	size_t pktlen, slen;
+	u_int pktlen, slen;
 	struct mbuf *m0;
 
 	pktlen = 0;
@@ -1099,7 +1161,7 @@ static void
 catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	register struct bpf_d *d;
 	register u_char *pkt;
-	register size_t pktlen, snaplen;
+	register u_int pktlen, snaplen;
 	register void (*cpfn) __P((const void *, void *, size_t));
 {
 	register struct bpf_hdr *hp;
@@ -1275,11 +1337,15 @@ bpfattach(driverp, ifp, dlt, hdrlen)
  */
 int
 ifpromisc(ifp, pswitch)
-	struct ifnet *ifp;
-	int pswitch;
+	register struct ifnet *ifp;
+	register int pswitch;
 {
+	register int pcount, ret;
+	register short flags;
 	struct ifreq ifr;
 
+	pcount = ifp->if_pcount;
+	flags = ifp->if_flags;
 	if (pswitch) {
 		/*
 		 * If the device is not configured up, we cannot put it in
@@ -1303,8 +1369,15 @@ ifpromisc(ifp, pswitch)
 		if ((ifp->if_flags & IFF_UP) == 0)
 			return (0);
 	}
+	bzero((caddr_t)&ifr, sizeof(ifr));
 	ifr.ifr_flags = ifp->if_flags;
-	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
+	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+	/* Restore interface state if not successful */
+	if (ret != 0) {
+		ifp->if_pcount = pcount;
+		ifp->if_flags = flags;
+	}
+	return (ret);
 }
 #endif
 
@@ -1312,7 +1385,7 @@ ifpromisc(ifp, pswitch)
 /*
  * Allocate some memory for bpf.  This is temporary SunOS support, and
  * is admittedly a hack.
- * If resources unavaiable, return 0.
+ * If resources unavailable, return 0.
  */
 static caddr_t
 bpf_alloc(size, canwait)
