@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.201 2003/03/14 22:17:14 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.202 2003/04/19 19:16:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.201 2003/03/14 22:17:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.202 2003/04/19 19:16:06 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,6 +585,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "PD210S   SUN0207", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	 "QUANTUM ", "ATLAS IV 9 WLS", "0A0A"},   PQUIRK_CAP_NODT},
+	{{T_DIRECT, T_FIXED,
 	 "RODIME  ", "RO3000S         ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST125N          ", ""},     PQUIRK_NOLUNS},
@@ -879,7 +881,9 @@ scsi_probe_device(sc, target, lun)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
 		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
-		if (periph->periph_version >= 3) { /* SPC-2 */
+		/* SPC-2 */
+		if (periph->periph_version >= 3 &&
+		    !(quirks & PQUIRK_CAP_NODT)){
 			/*
 			 * Report ST clocking though CAP_WIDExx/CAP_SYNC.
 			 * If the device only supports DT, clear these
@@ -899,6 +903,8 @@ scsi_probe_device(sc, target, lun)
 				/* nothing to do */
 				break;
 			}
+		}
+		if (periph->periph_version >= 3) {
 			if (inqbuf.flags4 & SID_IUS)
 				periph->periph_cap |= PERIPH_CAP_IUS;
 			if (inqbuf.flags4 & SID_QAS)
