@@ -38,11 +38,11 @@
 
 #ifndef RPC_HDR
 %#include <sys/cdefs.h>
-%#ifndef lint
+%#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)klm_prot.x 1.7 87/07/08 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)klm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: klm_prot.x,v 1.5 2002/01/21 14:42:26 wiz Exp $");
-%#endif /* not lint */
+%__RCSID("$NetBSD: klm_prot.x,v 1.5.4.1 2004/07/02 18:19:47 he Exp $");
+%#endif /* not __lint__ */
 #endif
 
 const	LM_MAXSTRLEN = 1024;

@@ -33,11 +33,11 @@
 
 #ifndef RPC_HDR
 %#include <sys/cdefs.h>
-%#ifndef lint
+%#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)rex.x 1.3 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rex.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rex.x,v 1.5 2002/02/26 02:37:29 wiz Exp $");
-%#endif /* not lint */
+%__RCSID("$NetBSD: rex.x,v 1.5.4.1 2004/07/02 18:19:47 he Exp $");
+%#endif /* not __lint__ */
 #endif
 
 const STRINGSIZE = 1024;
