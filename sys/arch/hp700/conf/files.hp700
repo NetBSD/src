@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.6 2003/08/31 01:55:27 chs Exp $
+#	$NetBSD: files.hp700,v 1.7 2003/11/18 04:04:42 chs Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -79,10 +79,16 @@ device	fpu
 attach	fpu at mainbus
 file	arch/hp700/dev/fpu.c		fpu
 
+# Phantom PseudoBC GSC+ Port
+device	phantomas {}
+attach	phantomas at mainbus
+file	arch/hp700/dev/phantomas.c	phantomas
+
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
 device	lasi: gscbus
-attach	lasi at mainbus
+attach	lasi at mainbus with lasi_mainbus
+attach	lasi at phantomas with lasi_phantomas
 file	arch/hp700/dev/lasi.c		lasi
 
 # all the older systems
