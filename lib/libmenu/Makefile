@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/04/30 10:56:42 blymn Exp $
+#	$NetBSD: Makefile,v 1.6 2001/04/30 11:10:23 blymn Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
@@ -10,7 +10,7 @@ MAN=	menu_attributes.3 menu_item_name.3 menu_items.3 menu_userptr.3 \
         menu_opts.3 menu_hook.3 menu_item_value.3 menu_pattern.3 \
         menu_item_current.3 menu_item_visible.3 menu_post.3
 INCS=	menu.h eti.h
-INCSDIR=${DESTDIR}/usr/include
+INCSDIR=/usr/include
 #LDFLAGS += -g
 
 .include <bsd.lib.mk>
