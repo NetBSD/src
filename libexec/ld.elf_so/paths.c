@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.8 1999/12/15 05:22:37 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.9 1999/12/20 02:43:58 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -56,7 +56,7 @@
 static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
 static Search_Path **_rtld_append_path __P((Search_Path **, Search_Path **,
     const char *, const char *, bool));
-static void _rtld_process_mapping __P((Library_Xform **, char *, bool));
+static void _rtld_process_mapping __P((Library_Xform **, char *, char *, bool));
 
 static Search_Path *
 _rtld_find_path(path, pathstr, pathlen)
@@ -189,9 +189,9 @@ struct list *lists[] = {
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
  */
 static void
-_rtld_process_mapping(lib_p, bp, dodebug)
+_rtld_process_mapping(lib_p, bp, ep, dodebug)
 	Library_Xform **lib_p;
-	char *bp;
+	char *bp, *ep;
 	bool dodebug;
 {
 	static const char WS[] = " \t\n";
@@ -199,6 +199,9 @@ _rtld_process_mapping(lib_p, bp, dodebug)
 	char *ptr, *key, *lib, *l;
 	int i, j, k;
 	
+	if (bp == NULL || bp == ep || *bp == '\0')
+		return;
+
 	if (dodebug)
 		dbg((" processing mapping \"%s\"", bp));
 
@@ -381,7 +384,7 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 				path_p = _rtld_append_path(head_p, path_p, b, p,
 				    dodebug);
 			else
-				_rtld_process_mapping(lib_p, b, dodebug);
+				_rtld_process_mapping(lib_p, b, p, dodebug);
 			b = NULL;
 			break;
 
@@ -396,7 +399,7 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 					path_p = _rtld_append_path(head_p,
 					    path_p, b, sp, dodebug);
 				else
-					_rtld_process_mapping(lib_p, b,
+					_rtld_process_mapping(lib_p, b, sp,
 					    dodebug);
 				*sp = ' ';
 			}
@@ -413,7 +416,7 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 	if (doing_path)
 		path_p = _rtld_append_path(head_p, path_p, b, ebuf, dodebug);
 	else
-		_rtld_process_mapping(lib_p, b, dodebug);
+		_rtld_process_mapping(lib_p, b, ebuf, dodebug);
 
 	(void)munmap(buf, sz);
 }
