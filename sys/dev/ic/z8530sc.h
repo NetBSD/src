@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.7 1997/10/17 23:02:37 gwr Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.8 1997/11/01 17:09:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -98,6 +98,7 @@ struct zs_chanstate {
 
 	u_char	cs_rr0;			/* last rr0 processed */
 	u_char	cs_rr0_delta;		/* rr0 changes at status intr. */
+	u_char	cs_rr0_mask;		/* rr0 bits that stop output */
 	u_char	cs_rr0_dcd;		/* which bit to read as DCD */
 	u_char	cs_rr0_cts;		/* which bit to read as CTS */
 	/* the above is set only while CRTSCTS is enabled. */
