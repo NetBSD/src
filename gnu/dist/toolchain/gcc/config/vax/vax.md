@@ -294,30 +294,33 @@
 }")
 
 (define_insn "*movimmsi2"
-  [(set (match_operand:SI 0 "vax_lvalue_operand" "=g,g,g,g,g,g,g,g")
-	(match_operand:SI 1 "const_int_operand" "I,J,O,K,M,L,N,i"))]
+  [(set (match_operand:SI 0 "vax_lvalue_operand" "=g")
+	(match_operand:SI 1 "const_int_operand" "i"))]
   ""
-  "@
-   clrl %0
-   movl %1,%0
-   mnegl $%n1,%0
-   cvtbl %1,%0
-   movzbl %1,%0
-   cvtwl %1,%0
-   movzwl %1,%0
-   movl %1,%0")
+  "*
+{
+   int val = INTVAL (operands[1]);
+   if (     0 == val)			return \"clrl %0\";
+   if (     0 <  val && val <    64)	return \"movl %1,%0\";
+   if (   -63 <= val && val <     0)	return \"mnegl $%n1,%0\";
+   if (     0 <  val && val <   256)	return \"movzbl %1,%0\";
+   if (  -128 <= val && val <   128)	return \"cvtbl %1,%0\";
+   if (     0 <  val && val < 65536)	return \"movzwl %1,%0\";
+   if (-32768 <= val && val < 32768)	return \"cvtwl %1,%0\";
+   return \"movl %1,%0\";
+}")
 
 (define_insn "*pushsymsi"
   [(set (match_operand:SI 0 "push_operand" "=g")
 	(match_operand:SI 1 "vax_symbolic_operand" "p"))]
   ""
-  "pushal %a1")
+  "pushab %a1")
 
 (define_insn "*movsymsi"
   [(set (match_operand:SI 0 "vax_lvalue_operand" "=g")
 	(match_operand:SI 1 "vax_symbolic_operand" "p"))]
   ""
-  "moval %a1,%0")
+  "movab %a1,%0")
 
 (define_insn "*pushsi"
   [(set (match_operand:SI 0 "push_operand" "=g")
@@ -799,6 +802,8 @@
 	return \"movab %a2[%0],%0\";
       operands[2] = legitimize_pic_address(operands[2], NULL, CODE_FOR_nothing);
     }
+  if (GET_CODE (operands[2]) == CONST_INT && INTVAL (operands[2]) < 0)
+    return \"subl2 $%n2,%0\";
   return \"addl2 %2,%0\";
 }")
 
@@ -1024,10 +1029,52 @@
   return \"adwc $0,%0\";
 }")
 
+(define_insn "*pushaddimmdi3"
+  [(set (match_operand:DI 0 "push_operand" "=g")
+	(plus:DI (match_operand:DI 1 "general_operand" "g")
+		 (match_operand:DI 2 "const_int_operand" "i")))]
+  ""
+  "*
+{
+  rtx lo, hi;
+  if (operands[2] == const0_rtx)
+    return \"movq %D1,%0\";
+  output_asm_insn (\"movq %D1,%0\", operands);
+  lo = operand_subword (operands[2], 0, 0, DImode);
+  hi = operand_subword (operands[2], 1, 0, DImode);
+  if (lo != const0_rtx)
+    {
+      if (lo == const1_rtx)
+	output_asm_insn (\"incl (sp)\", operands);
+      else if (lo == constm1_rtx)
+	output_asm_insn (\"decl (sp)\", operands);
+      else if (INTVAL (lo) < 0)
+	output_asm_insn (\"subl2 $%n0,(sp)\", &lo);
+      else
+	output_asm_insn (\"addl2 %0,(sp)\", &lo);
+    }
+  operands[2] = hi;
+  if (lo == const0_rtx)
+    {
+      if (hi == const1_rtx)
+	return \"incl 4(sp)\";
+      else if (hi == constm1_rtx)
+	return \"decl 4(sp)\";
+      else if (INTVAL (hi) < 0)
+	return \"subl2 $%n2,4(sp)\";
+      else
+	return \"addl2 %2,4(sp)\";
+    }
+  if (hi != constm1_rtx)
+    return \"adwc %2,4(sp)\";
+  output_asm_insn (\"adwc $0,4(sp)\", operands);
+  return \"decl 4(sp)\";
+}")
+
 (define_insn "*addgendi3"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=ro>,ro>")
-	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
-		 (match_operand:DI 2 "general_operand" "IFro,IF")))]
+  [(set (match_operand:DI 0 "vax_lvalue_operand" "=ro,ro")
+	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro")
+		 (match_operand:DI 2 "general_operand" "iro,i")))]
   ""
   "*
 {
@@ -1044,6 +1091,8 @@
 	pattern = \"tstl %0\", carry = 0;
       else if (low[2] == const1_rtx)
         pattern = \"incl %0\";
+      else if (low[2] == constm1_rtx)
+        pattern = \"decl %0\";
       else
         pattern = \"addl2 %2,%0\";
     }
@@ -1051,6 +1100,8 @@
     {
       if (low[2] == const0_rtx)
 	pattern = \"movq %1,%0\";
+      else if (GET_CODE (low[2]) == CONST_INT && INTVAL (low[2]) < 0)
+	pattern = \"subl3 $%n2,%1,%0\";
       else
 	pattern = \"addl3 %2,%1,%0\";
     }
@@ -1064,6 +1115,11 @@
     output_asm_insn ((operands[1] == const0_rtx
 		      ? \"clrl %0\"
 		      : \"movl %1,%0\"), operands);
+  if (operands[2] == constm1_rtx && GET_CODE (operands[0]) != POST_INC)
+    {
+      output_asm_insn (\"adwc $0,%0\", operands);
+      return \"decl %0\";
+    }
   return \"adwc %2,%0\";
 }")
 
@@ -1122,12 +1178,13 @@
    subl3 %2,%1,%0")
 
 (define_insn "subgensi3"
-  [(set (match_operand:SI 0 "vax_lvalue_operand" "=g,=g")
-	(minus:SI (match_operand:SI 1 "vax_nonsymbolic_operand" "0,g")
-		  (match_operand:SI 2 "vax_nonsymbolic_operand" "g,g")))]
+  [(set (match_operand:SI 0 "vax_lvalue_operand" "=g,ro,g")
+	(minus:SI (match_operand:SI 1 "vax_nonsymbolic_operand" "0,O,g")
+		  (match_operand:SI 2 "vax_nonsymbolic_operand" "g,g,g")))]
   ""
   "@
    subl2 %2,%0
+   mnegl $%n1,%0; subl2 %2,%0
    subl3 %2,%1,%0")
 
 (define_insn "subhi3"
@@ -2684,6 +2741,20 @@
 (define_peephole
   [(set (match_operand:SI 0 "register_operand" "=r")
         (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
+   (set (match_operand:SI 2 "push_operand" "=g")
+        (plus:SI (match_dup 0)
+                 (match_operand:SI 3 "vax_nonsymbolic_operand" "g")))]
+  "!rtx_equal_p (operands[0], operands[3]) && dead_or_set_p (insn, operands[0])"
+  "*
+{
+  if (GET_CODE (operands[3]) == CONST_INT && INTVAL (operands[3]) < 0)
+    return \"subl3 $%n3,%1,%2\";
+  return \"addl3 %3,%1,%2\";
+}")
+
+(define_peephole
+  [(set (match_operand:SI 0 "register_operand" "=r")
+        (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
    (set (match_dup 0)
         (plus:SI (match_dup 0)
                  (match_operand:SI 2 "vax_nonsymbolic_operand" "g")))]
@@ -2713,6 +2784,33 @@
         (const_int 0))]
    "REGNO (operands[0]) == REGNO (operands[1]) + 1"
    "clrq %1")
+
+(define_peephole
+  [(set (match_operand:SI 0 "memory_operand" "=o")
+        (const_int 0))
+   (set (match_operand:SI 1 "memory_operand" "=o")
+        (const_int 0))]
+   "(GET_CODE (operands[0]) == MEM
+     && GET_CODE (XEXP (operands[0], 0)) == PLUS
+     && GET_CODE (XEXP (XEXP (operands[0], 0), 0)) == REG
+     && REGNO (XEXP (XEXP (operands[0], 0), 0)) == FRAME_POINTER_REGNUM
+     && GET_CODE (XEXP (XEXP (operands[0], 0), 1)) == CONST_INT)
+    && (GET_CODE (operands[1]) == MEM
+	&& GET_CODE (XEXP (operands[1], 0)) == PLUS
+	&& GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == REG
+	&& REGNO (XEXP (XEXP (operands[1], 0), 0)) == FRAME_POINTER_REGNUM
+	&& GET_CODE (XEXP (XEXP (operands[1], 0), 1)) == CONST_INT)
+    && (4 == INTVAL (XEXP (XEXP (operands[1], 0), 1))
+	   - INTVAL (XEXP (XEXP (operands[0], 0), 1))
+        || 4 == INTVAL (XEXP (XEXP (operands[0], 0), 1))
+	      - INTVAL (XEXP (XEXP (operands[1], 0), 1)))"
+   "*
+{
+  if (INTVAL (XEXP (XEXP (operands[0], 0), 1)) < INTVAL (XEXP (XEXP (operands[1], 0), 1)))
+    return \"clrq %0\";
+  else
+    return \"clrq %1\";
+}")
 
 (define_peephole
   [(set (match_operand:SI 0 "memory_operand" "=m")
@@ -2792,14 +2890,14 @@
 	(const:SI (plus:SI (match_operand:SI 1 "vax_symbolic_operand" "p")
 			   (match_operand:SI 2 "const_int_operand" "i"))))]
    "!flag_pic && !TARGET_HALFPIC"
-   "pushal %a1+%c2")
+   "pushab %a1+%c2")
 
 (define_peephole
   [(set (match_operand:SI 0 "vax_lvalue_operand" "=g")
 	(const:SI (plus:SI (match_operand:SI 1 "vax_symbolic_operand" "p")
 			   (match_operand:SI 2 "const_int_operand" "i"))))]
    "!flag_pic && !TARGET_HALFPIC"
-   "moval %a1+%c2,%0")
+   "movab %a1+%c2,%0")
 
 (define_peephole
   [(set (match_operand:SI 0 "register_operand" "=r")
@@ -2814,6 +2912,16 @@
 		  (match_operand:SI 2 "vax_symbolic_operand" "p")))]
   "GET_CODE (operands[1]) == REG && REGNO (operands[1]) != REGNO (operands[0])"
   "movab %a2,%0; subl3 %0,%1,%0")
+
+
+(define_peephole
+  [(set (match_operand:SI 0 "register_operand" "=r")
+        (plus:SI (match_dup 0)
+		 (const_int -1)))
+   (set (match_operand:SI 1 "vax_lvalue_operand" "=g")
+        (match_dup 0))]
+  "dead_or_set_p (insn, operands[0])"
+  "subl3 $1,%0,%1")
 
 ;;(define_peephole2
 ;;  [(match_scratch:SI 3 "r")
