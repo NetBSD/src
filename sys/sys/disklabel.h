@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.29 1994/10/14 18:27:56 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.30 1994/10/17 20:07:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988 Regents of the University of California.
@@ -69,8 +69,8 @@
 /*
  * Translate between device numbers and major/disk unit/disk partition.
  */
-#define	DISKUNIT(dev)	(minor(dev) % MAXPARTITIONS)
-#define	DISKPART(dev)	(minor(dev) * MAXPARTITIONS)
+#define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
+#define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
 #define	MAKEDISKDEV(maj, unit, part) \
     (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
 
