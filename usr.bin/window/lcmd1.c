@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd1.c,v 1.4 1995/09/28 10:34:23 tls Exp $	*/
+/*	$NetBSD: lcmd1.c,v 1.5 1995/09/29 00:44:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd1.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lcmd1.c,v 1.4 1995/09/28 10:34:23 tls Exp $";
+static char rcsid[] = "$NetBSD: lcmd1.c,v 1.5 1995/09/29 00:44:02 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$NetBSD: lcmd1.c,v 1.4 1995/09/28 10:34:23 tls Exp $";
 #include "value.h"
 #include "lcmd.h"
 #include "var.h"
+#include <string.h>
 
 struct lcmd_arg arg_window[] = {
 	{ "row",	1,	ARG_NUM },

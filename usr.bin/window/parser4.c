@@ -1,4 +1,4 @@
-/*	$NetBSD: parser4.c,v 1.4 1995/09/28 10:34:34 tls Exp $	*/
+/*	$NetBSD: parser4.c,v 1.5 1995/09/29 00:44:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,11 +40,12 @@
 #if 0
 static char sccsid[] = "@(#)parser4.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: parser4.c,v 1.4 1995/09/28 10:34:34 tls Exp $";
+static char rcsid[] = "$NetBSD: parser4.c,v 1.5 1995/09/29 00:44:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include "parser.h"
+#include <string.h>
 
 /*
  * |		3

@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.6 1995/09/28 10:34:24 tls Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.7 1995/09/29 00:44:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lcmd2.c,v 1.6 1995/09/28 10:34:24 tls Exp $";
+static char rcsid[] = "$NetBSD: lcmd2.c,v 1.7 1995/09/29 00:44:04 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$NetBSD: lcmd2.c,v 1.6 1995/09/28 10:34:24 tls Exp $";
 #include "alias.h"
 #include <sys/types.h>
 #include <sys/resource.h>
+#include <string.h>
 
 /*ARGSUSED*/
 l_iostat(v, a)
