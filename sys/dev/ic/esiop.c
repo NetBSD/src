@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.5 2002/04/23 12:55:27 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.6 2002/04/23 17:33:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.5 2002/04/23 12:55:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.6 2002/04/23 17:33:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.5 2002/04/23 12:55:27 bouyer Exp $");
 #include "opt_siop.h"
 
 #ifndef DEBUG
-#define DEBUG
+#undef DEBUG
 #endif
 #undef SIOP_DEBUG
 #undef SIOP_DEBUG_DR
@@ -160,47 +160,9 @@ void
 esiop_attach(sc)
 	struct esiop_softc *sc;
 {
-	int error, i;
-	bus_dma_segment_t seg;
-	int rseg;
+	if (siop_common_attach(&sc->sc_c) != 0 )
+		return;
 
-	/*
-	 * Allocate DMA-safe memory for the script and map it.
-	 */
-	if ((sc->sc_c.features & SF_CHIP_RAM) == 0) {
-		error = bus_dmamem_alloc(sc->sc_c.sc_dmat, PAGE_SIZE, 
-		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: unable to allocate script DMA memory, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
-		    (caddr_t *)&sc->sc_c.sc_script,
-		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-		if (error) {
-			printf("%s: unable to map script DMA memory, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamap_create(sc->sc_c.sc_dmat, PAGE_SIZE, 1,
-		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_c.sc_scriptdma);
-		if (error) {
-			printf("%s: unable to create script DMA map, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamap_load(sc->sc_c.sc_dmat, sc->sc_c.sc_scriptdma,
-		    sc->sc_c.sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: unable to load script DMA map, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		sc->sc_c.sc_scriptaddr =
-		    sc->sc_c.sc_scriptdma->dm_segs[0].ds_addr;
-		sc->sc_c.ram_size = PAGE_SIZE;
-	}
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->cmds);
 	TAILQ_INIT(&sc->free_tagtbl);
@@ -212,44 +174,9 @@ esiop_attach(sc)
 	    (u_int32_t)sc->sc_c.sc_scriptaddr, sc->sc_c.sc_script);
 #endif
 
-	sc->sc_c.sc_adapt.adapt_dev = &sc->sc_c.sc_dev;
-	sc->sc_c.sc_adapt.adapt_nchannels = 1;
-	sc->sc_c.sc_adapt.adapt_openings = 0;
-	sc->sc_c.sc_adapt.adapt_max_periph = 1 /* XXX ESIOP_NTAG - 1 */ ;
-	sc->sc_c.sc_adapt.adapt_ioctl = siop_ioctl;
-	sc->sc_c.sc_adapt.adapt_minphys = minphys;
+	sc->sc_c.sc_adapt.adapt_max_periph = ESIOP_NTAG;
 	sc->sc_c.sc_adapt.adapt_request = esiop_scsipi_request;
 
-	memset(&sc->sc_c.sc_chan, 0, sizeof(sc->sc_c.sc_chan));
-	sc->sc_c.sc_chan.chan_adapter = &sc->sc_c.sc_adapt;
-	sc->sc_c.sc_chan.chan_bustype = &scsi_bustype;
-	sc->sc_c.sc_chan.chan_channel = 0;
-	sc->sc_c.sc_chan.chan_flags = SCSIPI_CHAN_CANGROW;
-	sc->sc_c.sc_chan.chan_ntargets =
-	    (sc->sc_c.features & SF_BUS_WIDE) ? 16 : 8;
-	sc->sc_c.sc_chan.chan_nluns = 8;
-	sc->sc_c.sc_chan.chan_id =
-	    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCID);
-	if (sc->sc_c.sc_chan.chan_id == 0 ||
-	    sc->sc_c.sc_chan.chan_id >= sc->sc_c.sc_chan.chan_ntargets)
-		sc->sc_c.sc_chan.chan_id = SIOP_DEFAULT_TARGET;
-
-	for (i = 0; i < 16; i++)
-		sc->sc_c.targets[i] = NULL;
-
-	/* find min/max sync period for this chip */
-	sc->sc_c.maxsync = 0;
-	sc->sc_c.minsync = 255;
-	for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++) {
-		if (sc->sc_c.clock_period != scf_period[i].clock)
-			continue;
-		if (sc->sc_c.maxsync < scf_period[i].period)
-			sc->sc_c.maxsync = scf_period[i].period;
-		if (sc->sc_c.minsync > scf_period[i].period)
-			sc->sc_c.minsync = scf_period[i].period;
-	}
-	if (sc->sc_c.maxsync == 255 || sc->sc_c.minsync == 0)
-		panic("siop: can't find my sync parameters\n");
 	/* Do a bus reset, so that devices fall back to narrow/async */
 	siop_resetbus(&sc->sc_c);
 	/*
@@ -598,6 +525,8 @@ none:
 			else
 				printf("%s:", sc->sc_c.sc_dev.dv_xname);
 			printf("scsi gross error\n");
+			if (esiop_target)
+				esiop_target->target_c.flags &= ~TARF_DT;
 			goto reset;
 		}
 		if ((sist & SIST0_MA) && need_reset == 0) {
@@ -663,6 +592,8 @@ none:
 			else
 				printf("%s:", sc->sc_c.sc_dev.dv_xname);
 			printf("parity error\n");
+			if (esiop_target)
+				esiop_target->target_c.flags &= ~TARF_DT;
 			goto reset;
 		}
 		if ((sist & (SIST1_STO << 8)) && need_reset == 0) {
@@ -868,7 +799,8 @@ scintr:
 					esiop_target->target_c.status =
 					    TARST_SYNC_NEG;
 					siop_sdtr_msg(&esiop_cmd->cmd_c, 0,
-					    sc->sc_c.minsync, sc->sc_c.maxoff);
+					    sc->sc_c.st_minsync,
+					    sc->sc_c.maxoff);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
@@ -877,6 +809,18 @@ scintr:
 				} else if (msg == MSG_EXTENDED &&
 				    extmsg == MSG_EXT_SDTR) {
 					/* sync rejected */
+					esiop_target->target_c.offset = 0;
+					esiop_target->target_c.period = 0;
+					esiop_target->target_c.status =
+					    TARST_OK;
+					siop_update_xfer_mode(&sc->sc_c,
+					    target);
+					/* no table to flush here */
+					CALL_SCRIPT(Ent_msgin_ack);
+					return 1;
+				} else if (msg == MSG_EXTENDED &&
+				    extmsg == MSG_EXT_PPR) {
+					/* PPR rejected */
 					esiop_target->target_c.offset = 0;
 					esiop_target->target_c.period = 0;
 					esiop_target->target_c.status =
@@ -954,6 +898,27 @@ scintr:
 			printf("\n");
 			}
 #endif
+			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_PPR) {
+				switch (siop_ppr_neg(&esiop_cmd->cmd_c)) {
+				case SIOP_NEG_MSGOUT:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
+					esiop_table_sync(esiop_cmd,
+					    BUS_DMASYNC_PREREAD |
+					    BUS_DMASYNC_PREWRITE);
+					CALL_SCRIPT(Ent_send_msgout);
+					return(1);
+				case SIOP_NEG_ACK:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
+					CALL_SCRIPT(Ent_msgin_ack);
+					return(1);
+				default:
+					panic("invalid retval from "
+					    "siop_wdtr_neg()");
+				}
+				return(1);
+			}
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
@@ -1357,7 +1322,7 @@ esiop_handle_reset(sc)
 			}
 		}
 		sc->sc_c.targets[target]->status = TARST_ASYNC;
-		sc->sc_c.targets[target]->flags &= ~TARF_ISWIDE;
+		sc->sc_c.targets[target]->flags &= ~(TARF_ISWIDE | TARF_ISDT);
 		sc->sc_c.targets[target]->period =
 		    sc->sc_c.targets[target]->offset = 0;
 		siop_update_xfer_mode(&sc->sc_c, target);
@@ -1542,17 +1507,19 @@ esiop_scsipi_request(chan, req, arg)
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_WIDE;
 		if (xm->xm_mode & PERIPH_CAP_SYNC)
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_SYNC;
-		if ((xm->xm_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_WIDE16)) ||
+		if ((xm->xm_mode & PERIPH_CAP_DT) &&
+		    (sc->sc_c.features & SF_CHIP_DT))
+			sc->sc_c.targets[xm->xm_target]->flags |= TARF_DT;
+		if ((xm->xm_mode &
+		    (PERIPH_CAP_SYNC | PERIPH_CAP_WIDE16 | PERIPH_CAP_DT)) ||
 		    sc->sc_c.targets[xm->xm_target]->status == TARST_PROBING)
-			sc->sc_c.targets[xm->xm_target]->status =
-			    TARST_ASYNC;
+			sc->sc_c.targets[xm->xm_target]->status = TARST_ASYNC;
 
 		for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
 			if (sc->sc_c.sc_chan.chan_periphs[xm->xm_target][lun])
 				/* allocate a lun sw entry for this device */
 				esiop_add_dev(sc, xm->xm_target, lun);
 		}
-
 		splx(s);
 	}
 	}
