@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.6.2.11 1999/11/19 11:06:27 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.6.2.12 1999/11/30 08:49:56 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.11 1999/11/19 11:06:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.12 1999/11/30 08:49:56 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.11 1999/11/19 11:06:27 nisimura E
 #include "pm.h"
 
 void dec_3100_init __P((void));
-void dec_3100_bus_reset __P((void));
-void dec_3100_cons_init __P((void));
-void dec_3100_device_register __P((struct device *, void *));
-int  dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void dec_3100_bus_reset __P((void));
+static void dec_3100_cons_init __P((void));
+static void dec_3100_device_register __P((struct device *, void *));
+static int  dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void dec_3100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
 void dec_3100_intr_disestablish __P((struct device *, void *));
@@ -151,14 +151,14 @@ dec_3100_init()
 	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
 }
 
-void
+static void
 dec_3100_bus_reset()
 {
 	/* nothing to do */
 	kn01_wbflush();
 }
 
-void
+static void
 dec_3100_cons_init()
 {
 	int kbd, crt, screen;
@@ -187,7 +187,7 @@ dec_3100_cons_init()
 	dc_cnattach(KN01_SYS_DZ, kbd);
 }
 
-void
+static void
 dec_3100_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -226,10 +226,7 @@ dec_3100_intr_disestablish(dev, cookie)
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	}
 
-/*
- * Handle pmax interrupts.
- */
-int
+static int
 dec_3100_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;

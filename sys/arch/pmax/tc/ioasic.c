@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.14 1999/11/19 11:06:30 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.15 1999/11/30 08:49:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.14 1999/11/19 11:06:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.15 1999/11/30 08:49:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,31 @@ ioasicmatch(parent, cfdata, aux)
 	if (cfdata->cf_unit > 0)
 		return (0);
 
+	return (1);
+}
+
+void
+ioasicattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ioasic_softc *sc = (struct ioasic_softc *)self;
+	struct tc_attach_args *ta = aux;
+	int i, imsk;
+
+	sc->sc_bst = ta->ta_memt;
+	if (bus_space_map(ta->ta_memt, ta->ta_addr,
+			0x400000, 0, &sc->sc_bsh)) {
+		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
+		return;
+	}
+	sc->sc_dmat = ta->ta_dmat;
+	sc->sc_cookie = ta->ta_cookie;
+
+	sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
+
+	printf("\n");
+
 	switch (systype) {
 #if defined(DEC_MAXINE)
 	case DS_MAXINE:
@@ -107,34 +132,6 @@ ioasicmatch(parent, cfdata, aux)
 		panic("ioasicmatch: how did we get here?");
 	}
 
-	return (1);
-}
-
-void
-ioasicattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct ioasic_softc *sc = (struct ioasic_softc *)self;
-	struct tc_attach_args *ta = aux;
-#if 0
-	int i, imsk;
-#endif
-
-	sc->sc_bst = ta->ta_memt;
-	if (bus_space_map(ta->ta_memt, ta->ta_addr,
-			0x400000, 0, &sc->sc_bsh)) {
-		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
-		return;
-	}
-	sc->sc_dmat = ta->ta_dmat;
-	sc->sc_cookie = ta->ta_cookie;
-
-	sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
-
-	printf("\n");
-
-#if 0
 	/*
 	 * Turn off all device interrupt bits.
 	 * (This _does_ include TC option slot bits.
@@ -143,7 +140,6 @@ ioasicattach(parent, self, aux)
 	for (i = 0; i < ioasic_ndevs; i++)
 		imsk &= ~ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-#endif
 
 	/*
 	 * Try to configure each device.
@@ -183,8 +179,7 @@ ioasic_intr_disestablish(ioa, cookie)
 	struct device *ioa;
 	void *cookie;
 {
-	printf("device %s with cookie %d: ", ioa->dv_xname, (int)cookie);
-	panic("ioasic_intr_disestablish called");
+	panic("ioasic_intr_disestablish: cookie %d", (int)cookie);
 }
 
 /*

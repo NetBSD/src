@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.9.2.18 1999/11/19 11:06:27 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.9.2.19 1999/11/30 08:49:56 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,8 +73,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.18 1999/11/19 11:06:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.19 1999/11/30 08:49:56 nisimura Exp $");
 #include <sys/param.h>
+
 #include <sys/systm.h>
 #include <sys/device.h>	
 
@@ -97,14 +98,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.18 1999/11/19 11:06:27 nisimu
 #include "wsdisplay.h"
 
 void dec_3maxplus_init __P((void));
-void dec_3maxplus_bus_reset __P((void));
-void dec_3maxplus_cons_init __P((void));
-void dec_3maxplus_device_register __P((struct device *, void *));
-int  dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
-void kn03_wbflush __P((void));
-
+static void dec_3maxplus_bus_reset __P((void));
+static void dec_3maxplus_cons_init __P((void));
+static void dec_3maxplus_device_register __P((struct device *, void *));
+static int  dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void dec_3maxplus_memerr __P ((void));
 static unsigned kn03_clkread __P((void));
+
+void kn03_wbflush __P((void));
 static unsigned latched_cycle_cnt;
 
 extern void prom_haltbutton __P((void));
@@ -192,13 +193,10 @@ dec_3maxplus_init()
 		    (CPUISMIPS3) ? "-260" : "");
 }
 
-void
+static void
 dec_3maxplus_bus_reset()
 {
-	/*
-	 * Reset interrupts, clear any errors from newconf probes
-	 */
-
+	/* clear any memory error condition */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
@@ -206,7 +204,7 @@ dec_3maxplus_bus_reset()
 	kn03_wbflush();
 }
 
-void
+static void
 dec_3maxplus_cons_init()
 {
 	int kbd, crt, screen;
@@ -234,7 +232,7 @@ dec_3maxplus_cons_init()
 	zs_ioasic_cnattach(ioasic_base, 0x180000, 1);
 }
 
-void
+static void
 dec_3maxplus_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -250,10 +248,7 @@ dec_3maxplus_device_register(dev, aux)
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	}
 
-/*
- * Handle 3MAX+ interrupts.
- */
-int
+static int
 dec_3maxplus_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -393,7 +388,7 @@ kn03_wbflush()
  * interpolation base is the copy of the bus cycle-counter taken by
  * the RTC interrupt handler.
  */
-unsigned
+static unsigned
 kn03_clkread()
 {
 	u_int32_t usec, cycles;
@@ -437,7 +432,7 @@ static struct tc_builtin tc_ioasic_builtins[] = {
 struct tcbus_attach_args kn03_tc_desc = {	/* global not a const */
 	NULL, 0,
 	TC_SPEED_25_MHZ,
-	4, tc_kn03_slots,
+	KN03_TC_NSLOTS, tc_kn03_slots,
 	1, tc_ioasic_builtins,
 	ioasic_intr_establish, ioasic_intr_disestablish,
 	NULL,
@@ -448,7 +443,7 @@ struct tcbus_attach_args kn03_tc_desc = {	/* global not a const */
 #define IOASIC_INTR_SCSI 0x000e0200
 /* XXX XXX XXX */
 
-struct ioasic_dev kn03_ioasic_devs[] = {
+const struct ioasic_dev kn03_ioasic_devs[] = {
 	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
 	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
 	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),  IOASIC_INTR_SCC_1,	},

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.7.4.15 1999/11/19 11:06:28 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.7.4.16 1999/11/30 08:49:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.15 1999/11/19 11:06:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.16 1999/11/30 08:49:54 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,15 +96,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.15 1999/11/19 11:06:28 nisimura E
 #include "wsdisplay.h"
 
 void dec_3min_init __P((void));
-void dec_3min_bus_reset __P((void));
-void dec_3min_device_register __P((struct device *, void *));
-void dec_3min_cons_init __P((void));
-int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-void dec_3min_mcclock_cpuspeed
-	__P((struct chiptime *mcclock_addr, int clockmask));
+static void dec_3min_bus_reset __P((void));
+static void dec_3min_device_register __P((struct device *, void *));
+static void dec_3min_cons_init __P((void));
+static int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
+static unsigned kn02ba_clkread __P((void));
+
 void kn02ba_wbflush __P((void));
 
-static unsigned kn02ba_clkread __P((void));
 #ifdef MIPS3
 static unsigned latched_cycle_cnt;
 extern u_int32_t mips3_cycle_count __P((void));
@@ -113,9 +112,6 @@ extern u_int32_t mips3_cycle_count __P((void));
 extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int tcfb_cnattach __P((int));
-
-extern char cpu_model[];
-extern int physmem_boardmax;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -134,6 +130,9 @@ struct splsw spl_3min = {
 void
 dec_3min_init()
 {
+	extern char cpu_model[];
+	extern int physmem_boardmax;
+
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
@@ -166,8 +165,7 @@ dec_3min_init()
 #endif
 
 	/* calribrate cpu_mhz value */
-	dec_3min_mcclock_cpuspeed(
-	    (void *)(ioasic_base + IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
+	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -201,10 +199,7 @@ dec_3min_init()
 void
 dec_3min_bus_reset()
 {
-	/*
-	 * Reset interrupts, clear any errors from newconf probes
-	 */
-
+	/* clear any memory error condition */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
@@ -257,7 +252,9 @@ dec_3min_device_register(dev, aux)
 	}
 
 /*
- * Handle 3MIN interrupts.
+ * XXX XXX
+ * following is under development and never works.
+ * XXX XXX
  */
 int
 dec_3min_intr(cpumask, pc, status, cause)
@@ -361,37 +358,12 @@ dec_3min_intr(cpumask, pc, status, cause)
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-/*
- * Count instructions between 4ms mcclock interrupt requests,
- * using the ioasic clock-interrupt-pending bit to determine
- * when clock ticks occur. 
- * Set up ioasic to allow only clock interrupts, then
- * call
- */
-void
-dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
-	struct chiptime *mcclock_addr;
-	int clockmask;
-{
-	u_int32_t *imsk = (void *)(ioasic_base + IOASIC_IMSK);
-	u_int32_t saved_imsk;
-
-	saved_imsk = *imsk;
-	/* Allow only clock interrupts through ioasic. */
-	*imsk = KMIN_INTR_CLOCK;
-	kn02ba_wbflush();
-    
-	mc_cpuspeed(mcclock_addr, clockmask);
-
-	*imsk = saved_imsk;
-	kn02ba_wbflush();
-}
-
 void
 kn02ba_wbflush()
 {
 	/* read twice IOASIC_IMSK */
-	__asm __volatile("lw $0,%0; lw $0,%0" :: "i"(0xbc040120));
+	__asm __volatile("lw $0,%0; lw $0,%0" ::
+	    "i"(MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK)));
 }
 
 unsigned
@@ -428,7 +400,7 @@ static struct tc_builtin tc_ioasic_builtins[] = {
 struct tcbus_attach_args kmin_tc_desc = {	/* global not a const */
 	NULL, 0,
 	TC_SPEED_12_5_MHZ,
-	4, tc_kmin_slots,
+	KMIN_TC_NSLOTS, tc_kmin_slots,
 	1, tc_ioasic_builtins,
 	ioasic_intr_establish, ioasic_intr_disestablish,
 	NULL,
