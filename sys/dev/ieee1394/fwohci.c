@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.60 2002/11/30 06:09:42 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.61 2002/12/01 12:05:11 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.60 2002/11/30 06:09:42 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.61 2002/12/01 12:05:11 jmc Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3639,7 +3639,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
 	u_int64_t addr;
-	u_int32_t *cur;
+	u_int8_t *cur;
 	int i, count, ret;
 
 	ab->ab_tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
@@ -3687,7 +3687,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 			ab->ab_data[0] = pkt->fp_hdr[3];
 		else {
 			count = 0;
-			cur = ab->ab_data;
+			cur = (u_int8_t *)ab->ab_data;
 			for (i = 0; i < pkt->fp_uio.uio_iovcnt; i++) {
 				memcpy(cur, pkt->fp_iov[i].iov_base,
 				    pkt->fp_iov[i].iov_len);
