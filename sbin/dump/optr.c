@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.26 2002/08/02 02:07:09 christos Exp $	*/
+/*	$NetBSD: optr.c,v 1.27 2002/08/16 20:21:49 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.26 2002/08/02 02:07:09 christos Exp $");
+__RCSID("$NetBSD: optr.c,v 1.27 2002/08/16 20:21:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,11 +272,16 @@ sendmes(char *tty, char *message)
 	int lmsg = 1;
 	FILE *f_tty;
 
+	if (strcspn(tty, "./") != strlen(tty))
+		return;
+
 	(void)strncpy(t, _PATH_DEV, sizeof(t) - 1);
 	(void)strncat(t, tty, sizeof(t) - sizeof(_PATH_DEV) - 1);
 	t[sizeof(t) - 1] = '\0';
 
 	if ((f_tty = fopen(t, "w")) != NULL) {
+		if (!isatty(fileno(f_tty)))
+			return;
 		setbuf(f_tty, buf);
 		(void) fprintf(f_tty,
 		    "\n\

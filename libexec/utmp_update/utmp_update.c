@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.3 2002/08/09 10:01:53 soren Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.4 2002/08/16 20:21:48 itojun Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <vis.h>
 #include <err.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <utmpx.h>
 #include <stdlib.h>
@@ -56,8 +57,14 @@ main(int argc, char *argv[])
 	size_t len;
 	struct passwd *pwd;
 	struct stat st;
+	int fd;
+	uid_t euid;
 
-	if (argc != 1) {
+	euid = geteuid();
+	if (seteuid(getuid()) == -1)
+		err(1, "seteuid");
+
+	if (argc != 2) {
 		(void)fprintf(stderr, "Usage: %s <vis-utmpx-entry>\n",
 			getprogname());
 		exit(1);
@@ -90,18 +97,20 @@ main(int argc, char *argv[])
 		errx(1, "Current user `%s' does not match `%s' in utmpx entry",
 		    pwd->pw_name, utx->ut_name);
 
-	if (stat(utx->ut_line, &st) == -1)
+	fd = open(utx->ut_line, O_RDONLY, 0);
+	if (fd == -1)
+		err(1, "Cannot open `%s'", utx->ut_line);
+	if (fstat(fd, &st) == -1)
 		err(1, "Cannot stat `%s'", utx->ut_line);
+	if (st.st_uid != getuid())
+		errx(1, "%s: Is not owned by you", utx->ut_line);
+	if (!isatty(fd))
+		errx(1, "%s: Not a tty device", utx->ut_line);
+	close(fd);
+	if (access(utx->ut_line, W_OK|R_OK) == -1)
+		err(1, "%s", utx->ut_line);
 
-	if (!S_ISCHR(st.st_mode))
-		errx(1, "%s: Not a character device", utx->ut_line);
-
-	/*
-	 * to check if the tty is writable here is problematic. First we
-	 * don't even know if it is a tty, secondly we are setuid so it
-	 * is not trivial to use access
-	 */
-
+	(void)seteuid(euid);
 	pututxline(utx);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.15 2000/07/05 11:46:42 ad Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.16 2002/08/16 20:21:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.15 2000/07/05 11:46:42 ad Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.16 2002/08/16 20:21:48 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,8 +67,8 @@ __RCSID("$NetBSD: ttymsg.c,v 1.15 2000/07/05 11:46:42 ad Exp $");
 char *
 ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 {
-	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
+	char device[MAXNAMLEN];
 	int cnt, fd, left, wret;
 	struct iovec localiov[6];
 	sigset_t nset;
@@ -81,12 +81,16 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
 		return ("too many iov's (change code in libutil/ttymsg.c)");
 
-	(void)strncpy(device + sizeof(_PATH_DEV) - 1, line,
-	    sizeof(device) - sizeof(_PATH_DEV));
-	if (strchr(device + sizeof(_PATH_DEV) - 1, '/')) {
-		/* A slash is an attempt to break security... */
-		(void) snprintf(errbuf, sizeof(errbuf), "'/' in \"%s\"",
-		    device);
+	if (strlcpy(device, _PATH_DEV, sizeof(device)) >= sizeof(device) ||
+	    strlcat(device, line, sizeof(device)) >= sizeof(device)) {
+		(void) snprintf(errbuf, sizeof(errbuf), "%s: path too long",
+		    line);
+		return (errbuf);
+	}
+	if (strcspn(line, "./") != strlen(line)) {
+		/* A slash or dot is an attempt to break security... */
+		(void) snprintf(errbuf, sizeof(errbuf), "'/' or '.' in \"%s\"",
+		    line);
 		return (errbuf);
 	}
 
@@ -99,6 +103,12 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 			return (NULL);
 		(void) snprintf(errbuf, sizeof(errbuf),
 		    "%s: %s", device, strerror(errno));
+		return (errbuf);
+	}
+	if (!isatty(fd)) {
+		(void) snprintf(errbuf, sizeof(errbuf),
+		    "%s: not a tty device", device);
+		(void) close(fd);
 		return (errbuf);
 	}
 
