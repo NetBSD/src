@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.132 2001/07/05 05:03:03 mbw Exp $
+.\"	$NetBSD: main,v 1.133 2001/07/10 12:55:23 jrf Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1522,6 +1522,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Bernd Ernesti Ta Mt veego@netbsd.org
 .It Ta Erik Fair Ta Mt fair@netbsd.org
 .It Ta Hubert Feyrer Ta Mt hubertf@netbsd.org
+.It Ta Jason R. Fink Ta Mt jrf@netbsd.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@netbsd.org
 .It Ta Castor Fu Ta Mt castor@netbsd.org
 .It Ta Ichiro Fukuhara Ta Mt ichiro@netbsd.org
