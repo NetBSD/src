@@ -1,92 +1,37 @@
-#	$NetBSD: Makefile,v 1.29 2002/05/02 18:02:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2002/05/17 17:52:36 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+.include <bsd.kernobj.mk>
 
-TOP=		${.CURDIR}/..
+IMAGE=		ramdisk.fs
+IMAGESIZE=	400k
+MAKEFS_FLAGS=	-f 15 -o minfree=0,optimization=space,density=4096,cpg=20
 
-.include "${TOP}/Makefile.inc"
+WARNS=		1
+DBG=		-Os
 
-DBG=	-Os
+CRUNCHBIN=	rd_bin
+LISTS=		${.CURDIR}/list
+MTREECONF=	${.CURDIR}/mtree.conf
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	__ramdisk std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0 fd0
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		disktab fstab passwd protocols services sshrc welcome \
+		${NETBSDSRCDIR}/etc/netconfig
 
-IMAGE=	ramdisk
-CBIN=	rd_bin
-
-TREE=	${TOP}/common/${IMAGE}.tree
-
-LISTS=	${TOP}/common/${CBIN}.list \
-	${TOP}/common/${IMAGE}.list
-
-KERNEL3  = ${KERNOBJDIR}/RAMDISK/netbsd
-KERNEL3X = ${KERNOBJDIR}/RAMDISK3X/netbsd
-
-MOUNT_POINT?=	/mnt
-VND?=		vnd1
-VND_DEV?=	/dev/${VND}a
-VND_RDEV?=	/dev/r${VND}a
-
-# These are all the parameters for the root fs:
-DISKTYPE=	rdroot
-SIZE=		400k
-# bigendian, minfree, opt, b/i , cpg
-NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
-MDSETIMAGE?=	mdsetimage
-MTREE?=		mtree
-
-KERNELS= netbsd.RAMDISK netbsd.RAMDISK3X
-CLEANFILES= $(KERNELS) ${IMAGE}.fs netbsd-tmp
-
-all: $(KERNELS)
-
-netbsd.RAMDISK : ${IMAGE}.fs
-	cp ${KERNEL3} netbsd-tmp
-	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}.fs
-	-mv -f netbsd-tmp $@
-
-netbsd.RAMDISK3X : ${IMAGE}.fs
-	cp ${KERNEL3X} netbsd-tmp
-	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}.fs
-	-mv -f netbsd-tmp $@
-
-${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
-	dd if=/dev/zero of=${IMAGE}.fs bs=${SIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}.fs
-	disklabel -rw ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
-	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
-	  sh ${TOP}/common/RunList.sh ${LISTS}
-	sync
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}.fs
-
-# Do not delete this if I change my mind and kill make...
-.PRECIOUS: ${IMAGE}.fs
-
-# Rules for making ${CBIN} ...
-.include "${TOP}/common/Make.crunch"
+MDSETTARGETS=		RAMDISK		ramdisk.fs	- \
+			RAMDISK3X	ramdisk.fs	-
+MDSET_RELEASEDIR=	binary/kernel
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
-${CBIN}:	libhack.o
+${CRUNCHBIN}:	libhack.o
 
-release: check_RELEASEDIR .WAIT $(KERNELS)
-.for x in ${KERNELS}
-	gzip -c -9 < ${x} > \
-	 ${RELEASEDIR}/binary/kernel/${x}.gz
-.endfor # KERNELS
-
-.INTERRUPT: unconfig
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+.include "${DISTRIBDIR}/common/Makefile.mdset"
 
 .include <bsd.prog.mk>

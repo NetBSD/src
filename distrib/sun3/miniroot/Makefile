@@ -1,76 +1,80 @@
-#	$NetBSD: Makefile,v 1.27 2002/05/02 18:02:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2002/05/17 17:52:35 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-TOP=		${.CURDIR}/..
+.include <bsd.kernobj.mk>
 
-.include "${TOP}/Makefile.inc"
+IMAGE=		miniroot.fs
+IMAGESIZE=	12m
+MAKEFS_FLAGS=	-o minfree=0,optimization=space,density=8k,cpg=16
 
-IMAGE=	miniroot
+KERNEL3=	${KERNOBJDIR}/INSTALL/netbsd
+KERNEL3X=	${KERNOBJDIR}/INSTALL3X/netbsd
 
-TREE=	${TOP}/common/${IMAGE}.tree
+WARNS=		1
+DBG=		-Os
 
-LISTS=	${TOP}/common/${IMAGE}.list \
-	${TOP}/common/mini_sbin.list \
-	${TOP}/common/mini_bin.list \
-	${TOP}/common/mini_usr.list
+LISTS=		${.CURDIR}/list
+MTREECONF=	${.CURDIR}/mtree.conf
+IMAGEENDIAN=	be
+PARSELISTENV=	KERNEL3=${KERNEL3} KERNEL3X=${KERNEL3X}
+MAKEDEVTARGETS=	std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0 fd0
+IMAGEDEPENDS=	${KERNEL3} ${KERNEL3X} \
+		fstab install.md profile termcap \
+		${DESTDIR}/bin/cat ${DESTDIR}/bin/chmod ${DESTDIR}/bin/cp \
+		${DESTDIR}/bin/date ${DESTDIR}/bin/dd ${DESTDIR}/bin/df \
+		${DESTDIR}/bin/ed ${DESTDIR}/bin/expr ${DESTDIR}/bin/hostname \
+		${DESTDIR}/bin/kill ${DESTDIR}/bin/ln ${DESTDIR}/bin/ls \
+		${DESTDIR}/bin/mkdir ${DESTDIR}/bin/mt ${DESTDIR}/bin/mv \
+		${DESTDIR}/bin/pax ${DESTDIR}/bin/ps ${DESTDIR}/bin/pwd \
+		${DESTDIR}/bin/rm ${DESTDIR}/bin/rmdir ${DESTDIR}/bin/sh \
+		${DESTDIR}/bin/sleep ${DESTDIR}/bin/stty ${DESTDIR}/bin/sync \
+		${DESTDIR}/bin/test  \
+		${DESTDIR}/dev/MAKEDEV ${DESTDIR}/dev/MAKEDEV.local \
+		${DESTDIR}/etc/disktab ${DESTDIR}/etc/group \
+		${DESTDIR}/etc/master.passwd ${DESTDIR}/etc/netconfig \
+		${DESTDIR}/etc/passwd ${DESTDIR}/etc/protocols \
+		${DESTDIR}/etc/pwd.db ${DESTDIR}/etc/services \
+		${DESTDIR}/etc/spwd.db \
+		${DESTDIR}/sbin/dmesg ${DESTDIR}/sbin/edlabel \
+		${DESTDIR}/sbin/fsck ${DESTDIR}/sbin/fsck_ffs \
+		${DESTDIR}/sbin/ifconfig ${DESTDIR}/sbin/init \
+		${DESTDIR}/sbin/mknod ${DESTDIR}/sbin/mount \
+		${DESTDIR}/sbin/mount_cd9660 ${DESTDIR}/sbin/mount_ffs \
+		${DESTDIR}/sbin/mount_kernfs ${DESTDIR}/sbin/mount_nfs \
+		${DESTDIR}/sbin/newfs ${DESTDIR}/sbin/ping \
+		${DESTDIR}/sbin/reboot ${DESTDIR}/sbin/restore \
+		${DESTDIR}/sbin/route ${DESTDIR}/sbin/shutdown \
+		${DESTDIR}/sbin/slattach ${DESTDIR}/sbin/swapctl \
+		${DESTDIR}/sbin/sysctl ${DESTDIR}/sbin/umount \
+		${DESTDIR}/usr/bin/chflags ${DESTDIR}/usr/bin/cksum \
+		${DESTDIR}/usr/bin/cmp ${DESTDIR}/usr/bin/false \
+		${DESTDIR}/usr/bin/ftp ${DESTDIR}/usr/bin/gzip \
+		${DESTDIR}/usr/bin/less ${DESTDIR}/usr/bin/rsh \
+		${DESTDIR}/usr/bin/sed ${DESTDIR}/usr/bin/sort \
+		${DESTDIR}/usr/bin/tip ${DESTDIR}/usr/bin/true \
+		${DESTDIR}/usr/bin/vi \
+		${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/usr/mdec/bootyy \
+		${DESTDIR}/usr/mdec/netboot ${DESTDIR}/usr/mdec/tapeboot \
+		${DESTDIR}/usr/mdec/ufsboot \
+		${DESTDIR}/usr/sbin/chown ${DESTDIR}/usr/sbin/installboot \
+		${DESTDIR}/usr/sbin/rdate \
+		${DISTRIBDIR}/miniroot/install.sh \
+		${DISTRIBDIR}/miniroot/upgrade.sh \
+		install.sub
 
-KERNEL3  = ${KERNOBJDIR}/INSTALL/netbsd
-KERNEL3X = ${KERNOBJDIR}/INSTALL3X/netbsd
+# XXXDISTRIB:  need to cut sun3 over to sun68k/bootxx first...
+#IMAGEPOSTBUILD=		${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
+#		    	    ${DESTDIR}/usr/mdec/bootxx /ufsboot
+IMAGE_RELEASEDIR=	installation/miniroot
 
-MOUNT_POINT?=	/mnt
-VND?=		vnd1
-VND_DEV?=	/dev/${VND}a
-VND_RDEV?=	/dev/r${VND}a
-VND_CRDEV?=	/dev/r${VND}c
-
-# These are all the parameters for the miniroot: (12MB)
-DISKTYPE=	miniroot
-SIZE=		12
-# bigendian, old format, minfree, opt, b/i, cpg
-NEWFSARGS= -B be -O -m 0 -o space -i 8192 -c 16
-MTREE?=		mtree
-
-CLEANFILES= ${IMAGE}.gz ${IMAGE} ${IMAGE}.tmp install.sub
-
-all: ${IMAGE}.gz
-
-${IMAGE}.gz: ${TREE} ${LISTS} install.sub
-	dd if=/dev/zero of=${IMAGE} bs=1024k count=${SIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
-	cp ${KERNEL3}  ${MOUNT_POINT}/netbsd.sun3
-	cp ${KERNEL3X} ${MOUNT_POINT}/netbsd.sun3x
-	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
-	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
-	  sh ${TOP}/common/RunList.sh ${LISTS}
-	sync ; sleep 1 ; sync
-	cd ${MOUNT_POINT} ;\
-	  usr/mdec/installboot -v ufsboot usr/mdec/bootxx ${VND_CRDEV}
-	sync
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	-umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	gzip -9f ${IMAGE}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
-
-# Do not delete this if I change my mind and kill make...
-.PRECIOUS: ${IMAGE}.gz
-
-install.sub : ${TOP}/../miniroot/install.sub
+install.sub: ${DISTRIBDIR}/miniroot/install.sub
 	sed -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
 
-release: check_RELEASEDIR .WAIT ${IMAGE}.gz
-	${RELEASE_INSTALL} ${IMAGE}.gz ${RELEASEDIR}/installation/miniroot
+CLEANFILES+= install.sub
+
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
 
 .include <bsd.prog.mk>

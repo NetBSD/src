@@ -1,0 +1,169 @@
+#
+# $NetBSD: list,v 1.1 2002/05/17 17:52:36 lukem Exp $
+#
+
+COPY	${KERNEL3}			netbsd.sun3
+COPY	${KERNEL3X}			netbsd.sun3x
+
+# These are scripts:
+COPY	${DESTDIR}/usr/bin/false	bin/false
+COPY	${DESTDIR}/usr/bin/true 	bin/true
+
+# From usr/mdec:
+COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+COPY	${DESTDIR}/usr/mdec/bootyy	usr/mdec/bootyy
+SYMLINK		  /usr/sbin/installboot usr/mdec/installboot
+COPY	${DESTDIR}/usr/mdec/netboot	usr/mdec/netboot
+COPY	${DESTDIR}/usr/mdec/tapeboot	usr/mdec/tapeboot
+COPY	${DESTDIR}/usr/mdec/ufsboot	usr/mdec/ufsboot
+LINK		   usr/mdec/ufsboot	ufsboot
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
+COPY	${DESTDIR}/etc/netconfig	etc/netconfig
+COPY	${DESTDIR}/etc/passwd		etc/passwd
+COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
+COPY	${DESTDIR}/etc/services		etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+
+# some /etc files get special handling (for MFS /tmp yuck)
+COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+SYMLINK	/tmp/disktab.shadow		etc/disktab
+COPY	${CURDIR}/fstab			tmp/fstab.shadow
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
+
+# copy the miniroot installation tools
+COPY	${CURDIR}/profile		.profile
+COPY	${CURDIR}/termcap		usr/share/misc/termcap
+
+COPY	${CURDIR}/install.md		install.md	0644
+COPY	${OBJDIR}/install.sub		install.sub	0644
+
+COPY	${DISTRIBDIR}/miniroot/install.sh install	0755
+COPY	${DISTRIBDIR}/miniroot/upgrade.sh upgrade	0755
+
+# miniroot files from /sbin:
+# Extras not in ../../miniroot/list:
+#  disklabel dmesg edlabel mount_kernfs restore 
+
+COPY	${DESTDIR}/sbin/dmesg		sbin/dmesg
+COPY	${DESTDIR}/sbin/edlabel 	sbin/edlabel
+
+COPY	${DESTDIR}/sbin/fsck		sbin/fsck
+COPY	${DESTDIR}/sbin/fsck_ffs	sbin/fsck_ffs
+
+COPY	${DESTDIR}/sbin/ifconfig	sbin/ifconfig
+COPY	${DESTDIR}/sbin/init		sbin/init
+COPY	${DESTDIR}/sbin/mknod		sbin/mknod
+
+COPY	${DESTDIR}/sbin/mount		sbin/mount
+COPY	${DESTDIR}/sbin/mount_cd9660	sbin/mount_cd9660
+COPY	${DESTDIR}/sbin/mount_ffs	sbin/mount_ffs
+COPY	${DESTDIR}/sbin/mount_kernfs	sbin/mount_kernfs
+COPY	${DESTDIR}/sbin/mount_nfs	sbin/mount_nfs
+
+COPY	${DESTDIR}/sbin/newfs		sbin/newfs
+COPY	${DESTDIR}/sbin/ping		sbin/ping
+COPY	${DESTDIR}/sbin/reboot		sbin/reboot
+LINK		   sbin/reboot		sbin/halt
+
+COPY	${DESTDIR}/sbin/restore		sbin/restore
+LINK		   sbin/restore		sbin/rrestore
+
+COPY	${DESTDIR}/sbin/route		sbin/route
+COPY	${DESTDIR}/sbin/shutdown	sbin/shutdown
+COPY	${DESTDIR}/sbin/slattach	sbin/slattach
+COPY	${DESTDIR}/sbin/swapctl		sbin/swapctl
+COPY	${DESTDIR}/sbin/sysctl		sbin/sysctl
+COPY	${DESTDIR}/sbin/umount		sbin/umount
+
+# miniroot files from /bin:
+# Extras not in ../../miniroot/list:
+#  date ps rmdir
+
+COPY	${DESTDIR}/bin/cat		bin/cat
+COPY	${DESTDIR}/bin/chmod		bin/chmod
+COPY	${DESTDIR}/bin/cp		bin/cp
+COPY	${DESTDIR}/bin/date		bin/date
+COPY	${DESTDIR}/bin/dd		bin/dd
+COPY	${DESTDIR}/bin/df		bin/df
+COPY	${DESTDIR}/bin/ed		bin/ed
+COPY	${DESTDIR}/bin/expr		bin/expr
+COPY	${DESTDIR}/bin/hostname		bin/hostname
+COPY	${DESTDIR}/bin/kill		bin/kill
+COPY	${DESTDIR}/bin/ln		bin/ln
+COPY	${DESTDIR}/bin/ls		bin/ls
+COPY	${DESTDIR}/bin/mkdir		bin/mkdir
+COPY	${DESTDIR}/bin/mt		bin/mt
+COPY	${DESTDIR}/bin/mv		bin/mv
+COPY	${DESTDIR}/bin/pax		bin/pax
+COPY	${DESTDIR}/bin/ps		bin/ps
+COPY	${DESTDIR}/bin/pwd		bin/pwd
+COPY	${DESTDIR}/bin/rm		bin/rm
+COPY	${DESTDIR}/bin/rmdir		bin/rmdir
+COPY	${DESTDIR}/bin/sh		bin/sh
+COPY	${DESTDIR}/bin/sleep		bin/sleep
+COPY	${DESTDIR}/bin/stty		bin/stty
+COPY	${DESTDIR}/bin/sync		bin/sync
+
+COPY	${DESTDIR}/bin/test		bin/test
+LINK		   bin/test		bin/[
+
+# new, combined pax,tar,cpio
+LINK		   bin/pax		usr/bin/tar
+
+SYMLINK	/usr/lib usr/libexec
+
+# Shared library stuff...
+# libcurses: vi
+# libedit: ftp
+# libtermcap: ftp, less, vi
+# libutil: rdate
+COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib
+COPY	${DESTDIR}/usr/lib/libc.so		usr/lib
+LINK	usr/lib/libc.so				usr/lib/libc.so.12
+COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib
+LINK	usr/lib/libcurses.so			usr/lib/libcurses.so.4
+COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib
+LINK	usr/lib/libedit.so			usr/lib/libedit.so.2
+COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib
+LINK	usr/lib/libtermcap.so			usr/lib/libtermcap.so.0
+COPY	${DESTDIR}/usr/lib/libutil.so		usr/lib
+LINK	usr/lib/libutil.so			usr/lib/libutil.so.6
+
+# usr.sbin:
+COPY	${DESTDIR}/usr/sbin/chown		usr/sbin/chown
+COPY	${DESTDIR}/usr/sbin/eeprom		usr/sbin
+COPY	${DESTDIR}/usr/sbin/installboot		usr/sbin/installboot
+COPY	${DESTDIR}/usr/sbin/rdate		usr/sbin/rdate
+
+# usr.bin:
+
+LINK		   usr/sbin/chown		usr/bin/chgrp
+
+COPY	${DESTDIR}/usr/bin/chflags		usr/bin/chflags
+COPY	${DESTDIR}/usr/bin/cksum		usr/bin/cksum
+COPY	${DESTDIR}/usr/bin/cmp			usr/bin/cmp
+COPY	${DESTDIR}/usr/bin/ftp			usr/bin/ftp
+COPY	${DESTDIR}/usr/bin/less			usr/bin/less
+LINK		   usr/bin/less 		usr/bin/more
+COPY	${DESTDIR}/usr/bin/rsh			usr/bin/rsh
+COPY	${DESTDIR}/usr/bin/sed			usr/bin/sed
+COPY	${DESTDIR}/usr/bin/tip			usr/bin/tip
+COPY	${DESTDIR}/usr/bin/vi			usr/bin/vi
+
+# gnu/usr.bin:
+COPY	${DESTDIR}/usr/bin/gzip			usr/bin/gzip
+LINK		   usr/bin/gzip 		usr/bin/gunzip
+LINK		   usr/bin/gzip 		usr/bin/gzcat
+
+# install.md still uses sort
+COPY	${DESTDIR}/usr/bin/sort			usr/bin/sort
