@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.12 1993/12/19 04:35:57 davidb Exp $
+#	$Id: Makefile,v 1.13 1993/12/20 13:13:02 davidb Exp $
 
 .include "config/Makefile.$(MACHINE_ARCH)"
 
@@ -15,6 +15,8 @@ gas_objformat=aout
 
 .if exists(${.CURDIR}/obj)
 ADDINCLUDE=-I${.CURDIR}/obj
+.elif exists(${.CURDIR}/obj.${MACHINE})
+ADDINCLUDE=-I${.CURDIR}/obj.${MACHINE}
 .endif
 
 PROG=		as
