@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.136.4.6 2001/04/05 23:30:46 he Exp $
+#	$NetBSD: bsd.own.mk,v 1.136.4.7 2001/12/09 17:25:23 he Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -82,9 +82,7 @@ PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-
 NOLINT=1
 NOPROFILE=1
 OBJECT_FMT?=COFF
-.if ${OBJECT_FMT} == "COFF"
 NOPIC?=1
-.endif
 .endif
 
 # The sparc64 port is incomplete.
@@ -131,6 +129,10 @@ GNU_ARCH.sh3=sh
 GNU_ARCH.sparc=sparc
 GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
+
+# CPU model, derived from MACHINE_ARCH
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:C/sh3e[bl]/sh3/}
+
 .if ${MACHINE_ARCH} == "mips"
 .INIT:
 	@echo Must set MACHINE_ARCH to one of mipseb or mipsel
