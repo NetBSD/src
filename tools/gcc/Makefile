@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2003/11/27 00:56:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2003/11/27 01:05:32 mrg Exp $
 
 .include <bsd.own.mk>
 
 MODULE=		gcc
-
-FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-long-long \
@@ -33,14 +31,9 @@ bootstrap-libgcc: .configure_done
 	@MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} libgcc \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
-native: .native/.configure_done
-	@echo 'Extracting GNU configury for a native toolchain.'
-	@MAKE=${MAKE:Q} ${HOST_SH}  ${MKNATIVE} all \
-		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
-
 native-gcc: .native/.configure_done
 	@echo 'Extracting GNU GCC configury for a native toolchain.'
-	@MAKE=${MAKE:Q} ${HOST_SH}  ${MKNATIVE} gcc3 \
+	@MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} gcc3 \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
