@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126 2003/01/09 04:58:58 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.127 2003/01/10 16:34:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -219,14 +219,14 @@ userret(p, pc, oticks)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-	if (want_ast) {
-		want_ast = 0;
+	if (cpuinfo.want_ast) {
+		cpuinfo.want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 	}
-	if (want_resched) {
+	if (cpuinfo.want_resched) {
 		/*
 		 * We are being preempted.
 		 */
