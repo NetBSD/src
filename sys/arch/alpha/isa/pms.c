@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.8 1996/12/08 00:22:12 cgd Exp $	*/
+/* $NetBSD: pms.c,v 1.9 1997/04/06 23:22:30 cgd Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -30,6 +30,8 @@
  * same I/O ports.  Frobbing the mouse and keyboard at the same time
  * may result in dropped characters and/or corrupted mouse events.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
