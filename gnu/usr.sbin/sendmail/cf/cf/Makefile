@@ -1,36 +1,30 @@
-#	$NetBSD: Makefile,v 1.22 2003/03/31 20:57:30 atatat Exp $
+#	$NetBSD: Makefile,v 1.23 2003/04/01 03:16:53 atatat Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 .include <bsd.own.mk>
 
-FILESDIR=	/usr/share/sendmail/cf
-FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
-		netbsd-proto.mc netbsd-msp.mc submit.mc sun-lamp.mc zhadum.mc \
-		Makefile
-
-.if (${.CURDIR} == ${FILESDIR})
-CFDIR=		${.CURDIR}/..
-.else
 DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/cf/cf
+
+FILESDIR=	/usr/share/sendmail/cf
+FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
+		netbsd-proto.mc netbsd-msp.mc submit.mc sun-lamp.mc zhadum.mc
+
+FILES+=		Makefile.sendmail
+FILESNAME_Makefile.sendmail=Makefile
+
+.if (${.CURDIR} == ${FILESDIR})
+CFDIR?=		${.CURDIR}/..
+.else
 CFDIR?=		${DIST}/sendmail/cf
 .endif
-CHMOD=		chmod
-M4?=		m4
-ROMODE=		444
-RM=		rm -f
 
 ALL=		netbsd-proto.cf netbsd-msp.cf
+FILES+=		${ALL}
 
 OTHERS=		${FILES:S/Makefile//:C/netbsd-(proto|msp).*//:S/.mc/.cf/g}
 
-.SUFFIXES: .mc .cf
-
-.mc.cf:
-	${RM} $@
-	(cd ${CFDIR}/cf && \
-	    ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
-	${CHMOD} ${ROMODE} $@
+.include <Makefile.sendmail>
 
 realall: ${ALL}
 
