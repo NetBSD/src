@@ -1,4 +1,4 @@
-/*	$NetBSD: scrio.h,v 1.2 1998/07/08 07:56:14 thorpej Exp $	*/
+/*	$NetBSD: scrio.h,v 1.3 1999/01/01 12:41:13 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -37,52 +37,41 @@
  * Definitions for SCR smart card driver
  */
 
-#ifndef _SYS_SCRIO_H_
-#define _SYS_SCRIO_H_
+#ifndef _ARM32_SCRIO_H_
+#define _ARM32_SCRIO_H_
 
+#define ATR_BUF_MAX	1 + 1 + 4 * 10 + 15 + 1 /* TS + T0 + 4 * TABCD + 15 * TK + TCK */
+#define CMD_BUF_LEN	5
+#define DATA_BUF_MAX	256
 
-
-
-#define ATR_BUF_MAX			1 + 1 + 4 * 10 + 15 + 1 /* TS + T0 + 4 * TABCD + 15 * TK + TCK */
-#define CMD_BUF_LEN			5
-#define DATA_BUF_MAX		256
-
-/* status information for Status*/
+/* status information for Status */
 #define CARD_REMOVED	0x0000		
 #define CARD_INSERTED	0x0001		
 #define CARD_ON         0x0002
 
-
-
-typedef struct 
-{
+typedef struct {
 	int status;
-}ScrStatus;
+} ScrStatus;
 
-
-typedef struct 
-{
+typedef struct {
 	unsigned char atrBuf[ATR_BUF_MAX];
 	unsigned int  atrLen;
 	unsigned int  status;					
-}ScrOn;
+} ScrOn;
 
-typedef struct 
-{
-	unsigned char command[CMD_BUF_LEN];		/* command */
-	int		      writeBuffer;				/* true write, false read */
-	unsigned char data[DATA_BUF_MAX];		/* data, write to card, read from card */
-	unsigned int  dataLen;					/* data length, used on write, set of read */
-	unsigned char sw1;						/* sw1 status */
-	unsigned char sw2;						/* sw2 status */
-	unsigned int  status;					/* driver status */
-}ScrT0;
+typedef struct {
+	unsigned char command[CMD_BUF_LEN];	/* command */
+	int writeBuffer;			/* true write, false read */
+	unsigned char data[DATA_BUF_MAX];	/* data, write to card, read from card */
+	unsigned int  dataLen;			/* data length, used on write, set of read */
+	unsigned char sw1;			/* sw1 status */
+	unsigned char sw2;			/* sw2 status */
+	unsigned int  status;			/* driver status */
+} ScrT0;
 
-
-typedef struct
-{
+typedef struct {
 	unsigned int status;
-}ScrOff;
+} ScrOff;
 
 #define SCRIOSTATUS	_IOR ('S', 1, ScrStatus) /* return card in/out, card on/off */
 #define SCRIOON		_IOR ('S', 2, ScrOn)	 /* turns card on, returns ATR */
@@ -90,19 +79,19 @@ typedef struct
 #define SCRIOT0		_IOWR('S', 4, ScrT0)	 /* read/write card data in T0 protocol */
 
 
-#define ERROR_OK					0	/* no error */
-#define ERROR_PARITY				1	/* too many parity errors */
-#define ERROR_ATR_TCK				2	/* ATR checksum error */
+#define ERROR_OK			0	/* no error */
+#define ERROR_PARITY			1	/* too many parity errors */
+#define ERROR_ATR_TCK			2	/* ATR checksum error */
 #define ERROR_ATR_BUF_OVERRUN		3	/* ATR was to big for buf */
-#define ERROR_ATR_FI_INVALID		4   /* FI was invalid */
-#define ERROR_ATR_DI_INVALID		5   /* DI was invalid */
-#define ERROR_ATR_T3				6   /* timer T3 expired */
-#define ERROR_WORK_WAITING			7   /* work waiting expired */
-#define ERROR_BAD_PROCEDURE_BYTE	8   /* bad procedure byte */
-#define ERROR_CARD_REMOVED	        9   /* tried to do ioctal that needs card inserted */
-#define ERROR_CARD_ON			    10  /* tried to do ioctal that needs card off */
-#define ERROR_CARD_OFF              11  /* tried to do ioctal that needs card on */
-#define ERROR_INVALID_DATALEN       12  /* invalid data length on t0 write */
-#define ERROR_TO_OVERRUN            13  /* invalid data length read from card */
+#define ERROR_ATR_FI_INVALID		4	/* FI was invalid */
+#define ERROR_ATR_DI_INVALID		5	/* DI was invalid */
+#define ERROR_ATR_T3			6	/* timer T3 expired */
+#define ERROR_WORK_WAITING		7	/* work waiting expired */
+#define ERROR_BAD_PROCEDURE_BYTE	8	/* bad procedure byte */
+#define ERROR_CARD_REMOVED	        9	/* tried to do ioctal that needs card inserted */
+#define ERROR_CARD_ON			10	/* tried to do ioctal that needs card off */
+#define ERROR_CARD_OFF			11	/* tried to do ioctal that needs card on */
+#define ERROR_INVALID_DATALEN		12	/* invalid data length on t0 write */
+#define ERROR_TO_OVERRUN		13	/* invalid data length read from card */
 
-#endif /* _SYS_SCRIO_H_ */
+#endif /* _ARM32_SCRIO_H_ */
