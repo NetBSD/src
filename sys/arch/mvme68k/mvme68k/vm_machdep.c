@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 2000/09/09 19:51:36 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 2000/11/20 19:35:31 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -237,11 +237,8 @@ pagemove(from, to, size)
 		if (pmap_extract(pmap_kernel(), (vaddr_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
-		pmap_remove(pmap_kernel(),
-			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(),
-			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kremove((vaddr_t)from, (vsize_t)PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;

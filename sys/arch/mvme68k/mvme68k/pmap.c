@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2000/09/28 03:49:28 itohy Exp $        */
+/*	$NetBSD: pmap.c,v 1.48 2000/11/20 19:35:30 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,8 @@
  *
  * Supports:
  *	68030 with on-chip MMU	model MVME147
- *	68040 with on-chip MMU	model MVME167
+ *	68040 with on-chip MMU	model MVME162 and MVME167
+ *	68060 with on-chip MMU	model MVME172 and MVME177
  *
  * Notes:
  *	Don't even pay lip service to multiprocessor support.
@@ -168,9 +169,9 @@ int pmapdebug = PDB_PARANOIA;
 
 #define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
 
-#if defined(M68040)
-int dowriteback = 1;	/* 68040: enable writeback caching */
-int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
+#if defined(M68040) || defined(M68060)
+int dowriteback = 1;	/* 68040/060: enable writeback caching */
+int dokwriteback = 1;	/* 68040/060: enable writeback caching of kernel AS */
 #endif
 #else /* ! DEBUG */
 #define	PMAP_DPRINTF(l, x)	/* nothing */
@@ -179,13 +180,14 @@ int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
 /*
  * Get STEs and PTEs for user/kernel address space
  */
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 #define	pmap_ste1(m, v)	\
 	(&((m)->pm_stab[(vaddr_t)(v) >> SG4_SHIFT1]))
 /* XXX assumes physically contiguous ST pages (if more than one) */
 #define pmap_ste2(m, v) \
 	(&((m)->pm_stab[(st_entry_t *)(*(u_int *)pmap_ste1(m, v) & SG4_ADDR1) \
 			- (m)->pm_stpa + (((v) & SG4_MASK2) >> SG4_SHIFT2)]))
+#if defined(M68020) || defined(M68030)
 #define	pmap_ste(m, v)	\
 	(&((m)->pm_stab[(vaddr_t)(v) \
 			>> (mmutype == MMU_68040 ? SG4_SHIFT1 : SG_ISHIFT)]))
@@ -194,6 +196,12 @@ int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
 	 ? ((*pmap_ste1(m, v) & SG_V) && \
 	    (*pmap_ste2(m, v) & SG_V)) \
 	 : (*pmap_ste(m, v) & SG_V))
+#else
+#define	pmap_ste(m, v)	\
+	(&((m)->pm_stab[(vaddr_t)(v) >> SG4_SHIFT1]))
+#define pmap_ste_v(m, v) \
+	((*pmap_ste1(m, v) & SG_V) && (*pmap_ste2(m, v) & SG_V))
+#endif
 #else
 #define	pmap_ste(m, v)	 (&((m)->pm_stab[(vaddr_t)(v) >> SG_ISHIFT]))
 #define pmap_ste_v(m, v) (*pmap_ste(m, v) & SG_V)
@@ -264,7 +272,7 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
@@ -305,8 +313,8 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
  * Internal routines
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
-boolean_t pmap_testbit	__P((paddr_t, int));
-void	pmap_changebit	__P((paddr_t, int, int));
+boolean_t pmap_testbit __P((paddr_t, int));
+boolean_t pmap_changebit __P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
 void	pmap_ptpage_addref __P((vaddr_t));
 int	pmap_ptpage_delref __P((vaddr_t));
@@ -514,7 +522,7 @@ pmap_init()
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
 	    TRUE, &pt_map_store);
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		protostfree = ~l2tobm(0);
 		for (rv = MAXUL2SIZE; rv < sizeof(protostfree)*NBBY; rv++)
@@ -527,6 +535,36 @@ pmap_init()
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
+	 * Now that this is done, mark the pages shared with the
+	 * hardware page table search as non-CCB (actually, as CI).
+	 *
+	 * XXX Hm. Given that this is in the kernel map, can't we just
+	 * use the va's?
+	 */
+#ifdef M68060
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	if (cputype == CPU_68060)
+#endif
+	{
+		struct kpt_page *kptp = kpt_free_list;
+		paddr_t paddr;
+
+		while (kptp) {
+			pmap_changebit(kptp->kpt_pa, PG_CI, ~PG_CCB);
+			kptp = kptp->kpt_next;
+		}
+
+		paddr = (paddr_t)Segtabzeropa;
+		while (paddr < (paddr_t)Segtabzeropa + HP_STSIZE) {
+			pmap_changebit(paddr, PG_CI, ~PG_CCB);
+			paddr += NBPG;
+		}
+
+		DCIS();
+	}
+#endif
 
 	/*
 	 * Now it is safe to enable pv_table recording.
@@ -707,7 +745,7 @@ pmap_create()
 	pmap_t pmap;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
-	    ("pmap_create\n"));
+	    ("pmap_create()\n"));
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
@@ -738,8 +776,10 @@ pmap_pinit(pmap)
 	 */
 	pmap->pm_stab = Segtabzero;
 	pmap->pm_stpa = Segtabzeropa;
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
 	if (mmutype == MMU_68040)
+#endif
 		pmap->pm_stfree = protostfree;
 #endif
 	pmap->pm_count = 1;
@@ -919,19 +959,17 @@ pmap_remove(pmap, sva, eva)
 void
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
-	vm_prot_t	prot;
+	vm_prot_t prot;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct pv_entry *pv;
 	int s;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
 #endif
-	if (PAGE_IS_MANAGED(pa) == 0)
-		return;
 
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
@@ -1030,12 +1068,17 @@ pmap_protect(pmap, sva, eva, prot)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, isro)) {
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 				/*
 				 * Clear caches if making RO (see section
 				 * "7.3 Cache Coherency" in the manual).
 				 */
-				if (isro && mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+				if (isro && mmutype == MMU_68040)
+#else
+				if (isro)
+#endif
+				{
 					paddr_t pa = pmap_pte_pa(pte);
 
 					DCFP(pa);
@@ -1247,9 +1290,21 @@ validate:
 	if (wired)
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+		npte |= (mmutype == MMU_68040 ? PG_CIN : PG_CI);
+#else
+		npte |= PG_CIN;
+#endif
+#else
 		npte |= PG_CI;
-#if defined(M68040)
-	if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
+#endif
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	else if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
+#else
+	else if ((npte & (PG_PROT|PG_CI)) == PG_RW)
+#endif
 #ifdef DEBUG
 		if (dowriteback && (dokwriteback || pmap != pmap_kernel()))
 #endif
@@ -1263,8 +1318,13 @@ validate:
 	 * If so, we need not flush the TLB and caches.
 	 */
 	wired = ((*pte ^ npte) == PG_W);
-#if defined(M68040)
-	if (mmutype == MMU_68040 && !wired) {
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040 && !wired)
+#else
+	if (!wired)
+#endif
+	{
 		DCFP(pa);
 		ICPP(pa);
 	}
@@ -1286,30 +1346,104 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	pmap_t pmap = pmap_kernel();
+	pt_entry_t *pte;
+	int npte;
+
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
+	    ("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot));
+
+#ifdef DIAGNOSTIC
+	/*
+	 * pmap_kenter() should never be used for CADDR1 and CADDR2.
+	 */
+	if (va == (vaddr_t)CADDR1 || va == (vaddr_t)CADDR2)
+		panic("pmap_kenter_pa: used for CADDR1 or CADDR2");
+#endif
+
+	/*
+	 * Segment table entry not valid, we need a new PT page
+	 */
+	if (!pmap_ste_v(pmap, va))
+		pmap_enter_ptpage(pmap, va);
+
+	/*
+	 * Build the new PTE.
+	 */
+	pte = pmap_pte(pmap, va);
+	npte = pa | pte_prot(pmap, prot) | PG_V;
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW)
+#else
+	if ((npte & PG_PROT) == PG_RW)
+#endif
+#ifdef DEBUG
+		if (dowriteback && dokwriteback)
+#endif
+		npte |= PG_CCB;
+#endif
+
+	*pte = npte;
+	TBIS (va);
 }
 
 void
 pmap_kenter_pgs(va, pgs, npgs)
 	vaddr_t va;
-	struct vm_page **pgs;
+	vm_page_t *pgs;
 	int npgs;
 {
 	int i;
 
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
+	    ("pmap_kenter_pgs(%lx, %p, %d)\n", va, pgs, npgs));
+
+	for (i = 0; i < npgs; i++)
+		pmap_kenter_pa(va + (NBPG * i),
+		    VM_PAGE_TO_PHYS(pgs[i]),
+		    VM_PROT_READ|VM_PROT_WRITE);
 }
 
 void
-pmap_kremove(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove(sva, size)
+	vaddr_t sva;
+	vsize_t size;
 {
-	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	pmap_t pmap = pmap_kernel();
+	vaddr_t nssva;
+	pt_entry_t *pte;
+	vaddr_t eva = sva + size;
+
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
+	    ("pmap_kremove(%lx, %lx)\n", sva, size));
+
+	while (sva < eva) {
+		nssva = m68k_trunc_seg(sva) + NBSEG;
+		if (nssva == 0 || nssva > eva)
+			nssva = eva;
+
+		/*
+		 * Invalidate every valid mapping within this segment.
+		 */
+		pte = pmap_pte(pmap, sva);
+		while (sva < nssva) {
+			if (!pmap_pte_v(pte)) {
+				printf ("pmap_kremove: attempt to remove invalid mapping.\n");
+				pte++;
+				sva += NBPG;
+				continue;
+			}
+			if (pmap_pte_w(pte)) {
+				printf ("pmap_kremove: attempt to remove wired mapping.\n");
+				pmap->pm_stats.wired_count--;
+			}
+			pmap->pm_stats.resident_count--;
+			*pte = PG_NV;
+			TBIS(sva);
+			pte++;
+			sva += NBPG;
+		}
 	}
 }
 
@@ -1446,9 +1580,13 @@ pmap_update()
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
 
-#if (defined(M68020)||defined(M68040)||defined(M68060))
-	TBIA();
+#if defined(M68060)
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	if (cputype == CPU_68060)
 #endif
+		DCIA();
+#endif
+	TBIA();
 }
 
 /*
@@ -1627,7 +1765,10 @@ pmap_zero_page(phys)
 	npte = phys | PG_V;
 
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		/*
 		 * Set copyback caching on the page; this is required
 		 * for cache consistency (since regular mappings are
@@ -1715,7 +1856,10 @@ pmap_copy_page(src, dst)
 	npte2 = dst | PG_V;
 
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		/*
 		 * Set copyback caching on the pages; this is required
 		 * for cache consistency (since regular mappings are
@@ -1757,13 +1901,10 @@ pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t rv;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%lx)\n", pa));
 
-	rv = pmap_testbit(pa, PG_M);
-	pmap_changebit(pa, 0, ~PG_M);
-	return rv;
+	return pmap_changebit(pa, 0, ~PG_M);
 }
 
 /*
@@ -1776,13 +1917,10 @@ pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t rv;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%lx)\n", pa));
 
-	rv = pmap_testbit(pa, PG_U);
-	pmap_changebit(pa, 0, ~PG_U);
-	return rv;
+	return pmap_changebit(pa, 0, ~PG_U);
 }
 
 /*
@@ -2051,8 +2189,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
 		    ("remove: ste was %x@%p pte was %x@%p\n",
 		    *ste, ste, opte, pmap_pte(pmap, va)));
-#if defined(M68040)
-		if (mmutype == MMU_68040) {
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+		if (mmutype == MMU_68040)
+#endif
+		{
 			st_entry_t *este = &ste[NPTEPG/SG4_LEV3SIZE];
 
 			while (ste < este)
@@ -2060,9 +2201,14 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #ifdef DEBUG
 			ste -= NPTEPG/SG4_LEV3SIZE;
 #endif
-		} else
+		}
+#if defined(M68020) || defined(M68030)
+		else
 #endif
+#endif
+#if defined(M68020) || defined(M68030)
 		*ste = SG_NV;
+#endif
 		/*
 		 * If it was a user PT page, we decrement the
 		 * reference count on the segment table as well,
@@ -2087,8 +2233,10 @@ pmap_remove_mapping(pmap, va, pte, flags)
 						 HP_STSIZE);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
 				if (mmutype == MMU_68040)
+#endif
 					ptpmap->pm_stfree = protostfree;
 #endif
 				/*
@@ -2177,7 +2325,7 @@ pmap_testbit(pa, bit)
  *	for a physical page.
  */
 /* static */
-void
+boolean_t
 pmap_changebit(pa, set, mask)
 	paddr_t pa;
 	int set, mask;
@@ -2186,15 +2334,16 @@ pmap_changebit(pa, set, mask)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	int s;
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	boolean_t firstpage = TRUE;
 #endif
+	boolean_t r = FALSE;
 
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
 
 	if (PAGE_IS_MANAGED(pa) == 0)
-		return;
+		return(r);
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
@@ -2229,13 +2378,17 @@ pmap_changebit(pa, set, mask)
 			pte = pmap_pte(pv->pv_pmap, va);
 			npte = (*pte | set) & mask;
 			if (*pte != npte) {
-#if defined(M68040)
+				r = TRUE;
+#if defined(M68040) || defined(M68060)
 				/*
 				 * If we are changing caching status or
 				 * protection make sure the caches are
 				 * flushed (but only once).
 				 */
-				if (firstpage && (mmutype == MMU_68040) &&
+				if (firstpage &&
+#if defined(M68020) || defined(M68030)
+				    (mmutype == MMU_68040) &&
+#endif
 				    ((set == PG_RO) ||
 				     (set & PG_CMASK) ||
 				     (mask & PG_CMASK) == 0)) {
@@ -2251,6 +2404,7 @@ pmap_changebit(pa, set, mask)
 		}
 	}
 	splx(s);
+	return(r);
 }
 
 /*
@@ -2284,12 +2438,15 @@ pmap_enter_ptpage(pmap, va)
 			uvm_km_zalloc(st_map, HP_STSIZE);
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
 		    (paddr_t *)&pmap->pm_stpa);
-#if defined(M68040)
-		if (mmutype == MMU_68040) {
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+		if (mmutype == MMU_68040)
+#endif
+		{
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((paddr_t)pmap->pm_stpa, 0, ~PG_CCB);
+			pmap_changebit((paddr_t)pmap->pm_stpa, PG_CI, ~PG_CCB);
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2306,11 +2463,14 @@ pmap_enter_ptpage(pmap, va)
 	}
 
 	ste = pmap_ste(pmap, va);
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	/*
 	 * Allocate level 2 descriptor block if necessary
 	 */
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		if (*ste == SG_NV) {
 			int ix;
 			caddr_t addr;
@@ -2407,7 +2567,7 @@ pmap_enter_ptpage(pmap, va)
 		}
 		ptpa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
 	}
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	/*
 	 * Turn off copyback caching of page table pages,
 	 * could get ugly otherwise.
@@ -2415,7 +2575,10 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 	if (dowriteback && dokwriteback)
 #endif
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 #ifdef DEBUG
 		pt_entry_t *pte = pmap_pte(pmap_kernel(), va);
 		if ((pmapdebug & PDB_PARANOIA) && (*pte & PG_CCB) == 0)
@@ -2423,7 +2586,7 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, 0, ~PG_CCB);
+		pmap_changebit(ptpa, PG_CI, ~PG_CCB);
 	}
 #endif
 	/*
@@ -2458,7 +2621,7 @@ pmap_enter_ptpage(pmap, va)
 	 * it would be difficult to identify ST pages in pmap_pageable to
 	 * release them.  We also avoid the overhead of vm_map_pageable.
 	 */
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		st_entry_t *este;
 

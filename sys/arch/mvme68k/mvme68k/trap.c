@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2000/07/20 20:40:40 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 2000/11/20 19:35:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,9 +101,11 @@ int	writeback __P((struct frame *fp, int docachepush));
 void	trap __P((int type, u_int code, u_int v, struct frame frame));
 void	syscall __P((register_t code, struct frame frame));
 
+#if defined(M68040) || defined(M68060)
 #ifdef DEBUG
 void	dumpssw __P((u_short));
 void	dumpwb __P((int, u_short, u_int, u_int));
+#endif
 #endif
 
 static inline void userret __P((struct proc *p, struct frame *fp,
@@ -392,9 +394,27 @@ trap(type, code, v, frame)
 		i = SIGFPE;
 		break;
 
-#ifdef M68040
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_ILLINST:	/* fnop generates this, apparently. */
+	case T_FPEMULI:
+	case T_FPEMULD:
+	{
+		extern label_t *nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp(nofault);
+		if (type == T_ILLINST)
+			printf("Kernel Illegal Instruction trap.\n");
+		else
+			printf("Kernel FPU trap.\n");
+		goto dopanic;
+	}
+
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
+#if defined(M68040) || defined(M68060)
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
 		       p->p_pid, p->p_comm,

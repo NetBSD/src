@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2000/07/20 20:40:41 scw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2000/11/20 19:35:30 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,9 +64,10 @@ static struct mvme68k_soft_intr mvme68k_soft_intrs[IPL_NSOFT];
 static __inline int
 ssir_pending(volatile unsigned char *ssptr)
 {
-	int __rv = 0;
+	int __rv;
 
 	__asm __volatile(
+		"	moveq	#0, %1	\n"
 		"	tas	%0	\n"
 		"	jne	1f	\n"
 		"	moveq	#1, %1	\n"
