@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.11 1999/04/11 04:04:09 chs Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.12 1999/04/17 20:03:39 chs Exp $	*/
 
 /*
  *
@@ -1484,8 +1484,8 @@ boolean_t just_try;
 {
   struct vm_page *ptp;
 
-  ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL);
-
+  ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
+		      UVM_PGA_USERESERVE);
   if (ptp == NULL) {
     if (just_try)
       return(NULL);
