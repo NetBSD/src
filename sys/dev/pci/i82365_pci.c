@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.4 1998/06/08 06:55:54 thorpej Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.5 1998/11/30 19:47:17 jtk Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -88,7 +88,7 @@ pcic_pci_match(parent, match, aux)
 		return (0);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CIRRUS_CL_GD6729:
+	case PCI_PRODUCT_CIRRUS_CL_PD6729:
 		break;
 	default:
 		return (0);
@@ -148,8 +148,8 @@ pcic_pci_attach(parent, self, aux)
 	sc->memh = memh;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CIRRUS_CL_GD6729:
-		model = "Cirrus Logic GD6729 PCMCIA controller";
+	case PCI_PRODUCT_CIRRUS_CL_PD6729:
+		model = "Cirrus Logic PD6729 PCMCIA controller";
 		break;
 	default:
 		model = "Model unknown";
