@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscallargs.h,v 1.23 1998/06/25 22:18:53 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscallargs.h,v 1.24 1998/09/11 23:15:07 mycroft Exp $	*/
 
 /*
  * System call argument lists.
@@ -281,13 +281,13 @@ int	sys_profil	__P((struct proc *, void *, register_t *));
 int	sys_ktrace	__P((struct proc *, void *, register_t *));
 #else
 #endif
-int	sys_sigaction	__P((struct proc *, void *, register_t *));
+int	compat_13_sys_sigaction	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));
-int	sys_sigprocmask	__P((struct proc *, void *, register_t *));
+int	compat_13_sys_sigprocmask	__P((struct proc *, void *, register_t *));
 int	sys___getlogin	__P((struct proc *, void *, register_t *));
 int	sys_setlogin	__P((struct proc *, void *, register_t *));
 int	sys_acct	__P((struct proc *, void *, register_t *));
-int	sys_sigpending	__P((struct proc *, void *, register_t *));
+int	compat_13_sys_sigpending	__P((struct proc *, void *, register_t *));
 int	compat_13_sys_sigaltstack	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_ioctl	__P((struct proc *, void *, register_t *));
 int	sys_reboot	__P((struct proc *, void *, register_t *));
@@ -339,7 +339,7 @@ int	sys_listen	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigvec	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigblock	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigsetmask	__P((struct proc *, void *, register_t *));
-int	sys_sigsuspend	__P((struct proc *, void *, register_t *));
+int	compat_13_sys_sigsuspend	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigstack	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_recvmsg	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sendmsg	__P((struct proc *, void *, register_t *));

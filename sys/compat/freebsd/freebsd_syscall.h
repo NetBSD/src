@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.h,v 1.24 1998/06/25 22:18:53 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscall.h,v 1.25 1998/09/11 23:15:07 mycroft Exp $	*/
 
 /*
  * System call numbers.
@@ -143,13 +143,13 @@
 /* syscall: "ktrace" ret: "int" args: "char *" "int" "int" "int" */
 #define	FREEBSD_SYS_ktrace	45
 
-/* syscall: "sigaction" ret: "int" args: "int" "struct sigaction *" "struct sigaction *" */
+/* syscall: "sigaction" ret: "int" args: "int" "const struct sigaction13 *" "struct sigaction13 *" */
 #define	FREEBSD_SYS_sigaction	46
 
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	FREEBSD_SYS_getgid	47
 
-/* syscall: "sigprocmask" ret: "int" args: "int" "sigset_t" */
+/* syscall: "sigprocmask" ret: "int" args: "int" "int" */
 #define	FREEBSD_SYS_sigprocmask	48
 
 /* syscall: "__getlogin" ret: "int" args: "char *" "u_int" */
