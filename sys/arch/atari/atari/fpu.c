@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 1996/02/09 20:53:59 leo Exp $	*/
+/*	$NetBSD: fpu.c,v 1.3 1996/04/19 20:35:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -77,9 +77,9 @@ fpu_probe()
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
 	 * We, of course, need to have enough room for either.
 	 */
-	int	fpframe[60 / sizeof(int)];
-	label_t	faultbuf;
-	u_char	b;
+	struct	fpframe	fpframe;
+	label_t		faultbuf;
+	u_char		b;
 
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
@@ -110,15 +110,16 @@ fpu_probe()
 	 * have if this will.  We save the state in order to get the
 	 * size of the frame.
 	 */
-	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
+	asm("movl %0, a0; fsave a0@" : : "a" (&fpframe) : "a0" );
 
-	b = *((u_char *) fpframe + 1);
+	b = fpframe.fpf_fsize;
 
 	/*
 	 * Now, restore a NULL state to reset the FPU.
 	 */
-	fpframe[0] = fpframe[1] = 0;
-	m68881_restore(fpframe);
+	fpframe.fpf_null = 0;
+	fpframe.fpf_idle.fpf_ccr = 0;	/* XXX: really needed? */
+	m68881_restore(&fpframe);
 
 	/*
 	 * The size of a 68881 IDLE frame is 0x18
