@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.17 2000/05/07 22:58:58 fvdl Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.18 2000/05/21 16:29:15 jhawk Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -64,7 +64,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "bbinfo.h"
 
-BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
+BOOTSEG		=	0x01000	# boot will be loaded here (below 640K)
 BOOTSTACK	=	0xfffc	# boot stack
 LOADSZ		=	PRIM_LOADSZ	# size of first loaded chunk
 
@@ -306,7 +306,7 @@ found:
 	data32
 	pushl	%eax		/* so we get address 0 in BOOTSEG */
 	data32
-	pushl	$0x10+LOADSZ*0x10000
+	pushl	$0x10+LOADSZ*0x20000
 	movl	%esp, %esi
 	movb	$0x42, %ah
 	int	$0x13
