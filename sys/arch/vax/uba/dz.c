@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.11 1998/07/04 22:18:44 jonathan Exp $	*/
+/*	$NetBSD: dz.c,v 1.12 1998/08/10 14:41:16 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -188,7 +188,7 @@ dzrint(cntlr)
 		if (c & DZ_RBUF_PARITY_ERR)
 			cc |= TTY_PE;
 
-#if DDB && (VAX410 || VAX43)
+#if defined(DDB) && (defined(VAX410) || defined(VAX43) || defined(VAX46))
 		if (tp->t_dev == cn_tab->cn_dev) {
 			int j = kdbrint(cc);
 
@@ -480,12 +480,14 @@ dzstart(tp)
 {
 	register struct dz_softc *sc;
 	register struct clist *cl;
-	register int unit, line;
+	register int unit, line, s;
+	char state;
 
 	unit = DZ_I2C(minor(tp->t_dev));
 	line = DZ_PORT(minor(tp->t_dev));
 	sc = dz_cd.cd_devs[unit];
 
+	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		return;
 	cl = &tp->t_outq;
@@ -501,8 +503,12 @@ dzstart(tp)
 
 	tp->t_state |= TS_BUSY;
 
-	*sc->sc_dr.dr_tcr = ((*sc->sc_dr.dr_tcrw) & 255) |(1 << line);
-	return;
+	state = (*sc->sc_dr.dr_tcrw) & 255;
+	if ((state & (1 << line)) == 0) {
+		*sc->sc_dr.dr_tcr = state | (1 << line);
+	}
+	dzxint(sc->sc_dev.dv_unit);
+	splx(s);
 }
 
 static int
