@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.50.4.2 1999/04/12 21:27:09 pk Exp $	*/
+/*	$NetBSD: asc.c,v 1.50.4.3 1999/06/23 17:16:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -753,10 +753,6 @@ asc_startcmd(asc, target)
 		asc_logp = asc_log;
 #endif
 
-	/* preload the FIFO with the message to be sent */
-	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
-	tc_mb();
-
 	/* initialize the DMA */
 	len = (*asc->dma_start)(asc, state, scsicmd->cmd, ASCDMA_WRITE,
 	   len, 0);
@@ -776,6 +772,10 @@ asc_startcmd(asc, target)
 /*		printf("asc_startcmd: reselect in progress (before select)\n");*/
 		return;
 	}
+
+	/* preload the FIFO with the message to be sent */
+	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
+	tc_mb();
 
 	if (state->flags & TRY_SYNC)
 		regs->asc_cmd = len = ASC_CMD_SEL_ATN_STOP;
