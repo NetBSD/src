@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.56 2002/08/28 02:09:29 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.57 2002/11/03 13:16:11 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -693,7 +693,9 @@
 #define	MIPS_TX4900	0x2d	/* Toshiba TX49 family		ISA III */
 #define	MIPS_R5900	0x2e	/* Toshiba R5900 (EECore)	ISA --- */
 #define	MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
+#define	MIPS_TX7900	0x38	/* Toshiba TX79			ISA III+*/
 #define	MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
+#define	MIPS_R5500	0x55	/* NEC VR5500 			ISA IV	*/
 
 /*
  * CPU revision IDs for some prehistoric processors.
