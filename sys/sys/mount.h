@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.57 1997/06/11 10:40:18 bouyer Exp $	*/
+/*	$NetBSD: mount.h,v 1.58 1997/06/24 23:47:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -145,6 +145,7 @@ struct mount {
 #define	MNT_EXPORTANON	0x00000400	/* use anon uid mapping for everyone */
 #define	MNT_EXKERB	0x00000800	/* exported with Kerberos uid mapping */
 #define MNT_EXNORESPORT	0x08000000	/* don't enforce reserved ports (NFS) */
+#define MNT_EXPUBLIC	0x10000000	/* public export (WebNFS) */
 
 /*
  * Flags set by internal operations.
@@ -276,6 +277,7 @@ struct export_args {
 	int	ex_addrlen;		/* and the net address length */
 	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
 	int	ex_masklen;		/* and the smask length */
+	char	*ex_indexfile;		/* index file for WebNFS URLs */
 };
 
 /*
@@ -371,6 +373,17 @@ struct nfs_args {
 #define	NFSMNT_AUTHERR		0x80000000  /* Authentication error */
 
 /*
+ * Structure holding information for a publicly exported filesystem
+ * (WebNFS). Currently the specs allow just for one such filesystem.
+ */
+struct nfs_public {
+	int		np_valid;	/* Do we hold valid information */
+	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
+	struct mount	*np_mount;	/* Mountpoint of exported fs */
+	char		*np_index;	/* Index file */
+};
+
+/*
  *  Arguments to mount MSDOS filesystems.
  */
 struct msdosfs_args {
@@ -410,6 +423,8 @@ int	vfs_export			    /* process mount export info */
 	  __P((struct mount *, struct netexport *, struct export_args *));
 struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 	  __P((struct mount *, struct netexport *, struct mbuf *));
+int	vfs_setpublicfs			    /* set publicly exported fs */
+	  __P((struct mount *, struct netexport *, struct export_args *));
 int	vfs_lock __P((struct mount *));	    /* lock a vfs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 int	vfs_mountroot __P((void));
@@ -422,6 +437,7 @@ struct vfsops *vfs_getopsbyname __P((const char *));
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];		    /* filesystem type table */
 extern	int nvfssw;
+extern	struct nfs_public nfs_pub;
 long	makefstype __P((char *));
 int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
