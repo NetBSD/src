@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2002/08/14 15:41:57 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2002/09/26 01:13:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -195,7 +195,7 @@ mftb(void)
 	mftbu %1	\n\
 	cmplw %0,%1	\n\
 	bne- 1b"
-	    : "=r"(tb), "=r"(tmp));
+	    : "=r"(tb), "=r"(tmp) :: "cr0");
 	return tb;
 }
 
