@@ -1,9 +1,9 @@
-/*	$NetBSD: portability.h,v 1.2 1997/04/13 10:50:11 mrg Exp $	*/
+/*	$NetBSD: portability.h,v 1.3 1997/10/04 15:11:25 mrg Exp $	*/
 
 /* portability.h - include or define things that aren't present on all systems
  * vixie@decwrl 26dec92 [new]
  *
- * from: Id: portability.h,v 8.20 1996/11/26 10:11:16 vixie Exp
+ * from: Id: portability.h,v 8.21 1997/06/01 20:34:27 vixie Exp 
  */
 
 /*
@@ -191,7 +191,8 @@
 #endif
 
 #if defined(_POSIX_SOURCE) || defined(__sgi) || defined(__ultrix) || \
-	defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || defined(sun)
+	defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || \
+	defined(sun) || defined(__m88k__)
 # define USE_POSIX
 #endif
 
@@ -605,6 +606,16 @@ extern u_long htonl __P((u_long)), ntohl __P((u_long));
  */
 #if defined(__m88k__)
 # define __BIND_RES_TEXT
+#endif
+
+/*
+ * Motorola FH40.43 and FH40.44 need specific macros for
+ * get/settimeofday as only one argument seems to be accepted
+ * by the compiler. NULL generates compile errors
+ */
+#if defined(__m88k__) && defined(__unix__)
+# define gettimeofday(tp, tzp) gettimeofday(tp)
+# define settimeofday(tp, tzp) settimeofday(tp)
 #endif
 
 /*

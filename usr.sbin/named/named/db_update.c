@@ -1,8 +1,8 @@
-/*	$NetBSD: db_update.c,v 1.2 1997/04/13 10:51:23 mrg Exp $	*/
+/*	$NetBSD: db_update.c,v 1.3 1997/10/04 15:11:48 mrg Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)db_update.c	4.28 (Berkeley) 3/21/91";
-static char rcsid[] = "from: Id: db_update.c,v 8.18 1996/10/08 04:51:03 vixie Exp";
+static char rcsid[] = "from: Id: db_update.c,v 8.19 1997/06/01 20:34:34 vixie Exp ";
 #endif /* not lint */
 
 /*
@@ -72,8 +72,6 @@ static char rcsid[] = "from: Id: db_update.c,v 8.18 1996/10/08 04:51:03 vixie Ex
 #include <resolv.h>
 
 #include "named.h"
-
-static void			fixttl __P((struct databuf *));
 
 /* int
  * isRefByNS(name, htp)
@@ -639,7 +637,7 @@ db_update(name, odp, newdp, flags, htp)
 	return (OK);
 }
 
-static void
+void
 fixttl(dp)
 	register struct databuf *dp;
 {

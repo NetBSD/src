@@ -1,5 +1,7 @@
+/*	$NetBSD: ns_udp.c,v 1.3 1997/10/04 15:12:14 mrg Exp $	*/
+
 #if !defined(lint) && !defined(SABER)
-static char rcsid[] = "$Id: ns_udp.c,v 1.2 1997/04/13 10:51:50 mrg Exp $";
+static char rcsid[] = "from: Id: ns_udp.c,v 8.3 1996/08/27 08:33:23 vixie Exp ";
 #endif /* not lint */
 
 /*
