@@ -1,48 +1,56 @@
-#	@(#)sys.mk	5.11 (Berkeley) 3/13/91
+#	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
-unix=		We run UNIX.
+unix		?=	We run UNIX.
 
 .SUFFIXES: .out .a .ln .o .c .F .f .e .r .y .l .s .cl .p .h 
 
 .LIBS:		.a
 
-AR=		ar
-ARFLAGS=	rl
-RANLIB=		ranlib
+AR		?=	ar
+ARFLAGS		?=	rl
+RANLIB		?=	ranlib
 
-AS=		as
-AFLAGS=
+AS		?=	as
+AFLAGS		?=
 
-CC=		cc
-CFLAGS=		-O
+CC		?=	gcc
 
-CPP=		cpp
+.if ${MACHINE} == "sparc"
+CFLAGS		?=	-O4
+.else
+CFLAGS		?=	-O2
+.endif
 
-FC=		f77
-FFLAGS=		-O
-EFLAGS=
+CPP		?=	cpp
 
-LEX=		lex
-LFLAGS=
+FC		?=	f77
+FFLAGS		?=	-O
+EFLAGS		?=
 
-LD=		ld
-LDFLAGS=
+LEX		?=	lex
+LFLAGS		?=
 
-LINT=		lint
-LINTFLAGS=	-chapbx
+LD		?=	ld
+LDFLAGS		?=
 
-MAKE=		make
+LINT		?=	lint
+LINTFLAGS	?=	-chapbx
 
-PC=		pc
-PFLAGS=
+MAKE		?=	make
 
-RC=		f77
-RFLAGS=
+PC		?=	pc
+PFLAGS		?=
 
-SHELL=		sh
+RC		?=	f77
+RFLAGS		?=
 
-YACC=		yacc
-YFLAGS=-d
+SHELL		?=	sh
+
+YACC		?=	yacc
+YFLAGS		?=	-d
+
+.c:
+	${CC} ${CFLAGS} ${.IMPSRC} -o ${.TARGET}
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC}
