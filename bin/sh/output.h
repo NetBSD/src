@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)output.h	5.1 (Berkeley) 3/7/91
- *	$Id: output.h,v 1.4 1993/08/01 18:58:38 mycroft Exp $
+ *	$Id: output.h,v 1.5 1994/05/04 23:45:06 jtc Exp $
  */
 
 #ifndef OUTPUT_INCL
@@ -56,9 +56,9 @@ extern struct output *out2;
 
 
 #ifdef __STDC__
-void outstr(char *, struct output *);
-void out1str(char *);
-void out2str(char *);
+void outstr(const char *, struct output *);
+void out1str(const char *);
+void out2str(const char *);
 void outfmt(struct output *, char *, ...);
 void out1fmt(char *, ...);
 void fmtstr(char *, int, char *, ...);
