@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.8 2001/05/22 15:38:22 christos Exp $	*/
+/*	$NetBSD: top.c,v 1.9 2001/06/20 19:56:35 christos Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -139,9 +139,9 @@ char *argv[];
     fd_set readfds;
 
 #ifdef ORDER
-    static char command_chars[] = "\f qh?en#sdkriIuo";
+    static char command_chars[] = "\f qh?en#sdkrSiIuo";
 #else
-    static char command_chars[] = "\f qh?en#sdkriIu";
+    static char command_chars[] = "\f qh?en#sdkrSiIu";
 #endif
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -157,11 +157,12 @@ char *argv[];
 #define CMD_displays	9
 #define CMD_kill	10
 #define CMD_renice	11
-#define CMD_idletog     12
-#define CMD_idletog2    13
-#define CMD_user	14
+#define CMD_system	12
+#define CMD_idletog     13
+#define CMD_idletog2    14
+#define CMD_user	15
 #ifdef ORDER
-#define CMD_order       15
+#define CMD_order       16
 #endif
 
     /* set the buffer for stdout */
@@ -797,6 +798,13 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 				{
 				    clear_message();
 				}
+				break;
+
+			    case CMD_system:
+				ps.system = !ps.system;
+				new_message(MT_standout | MT_delayed,
+				    " %sisplaying system processes.",
+				    ps.system ? "D" : "Not d");
 				break;
 
 			    case CMD_idletog:

@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.5 2000/01/21 17:08:37 mycroft Exp $	*/
+/*	$NetBSD: commands.c,v 1.6 2001/06/20 19:56:35 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -87,6 +87,7 @@ o       - specify sort order (", stdout);
 	fputs("\
 r       - renice a process\n\
 s       - change number of seconds to delay between updates\n\
+S       - toggle showing system processes\n\
 u       - display processes for only one user (+ selects all users)\n\
 \n\
 \n", stdout);
