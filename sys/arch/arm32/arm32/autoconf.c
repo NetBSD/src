@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1998/09/05 03:58:31 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1998/10/05 01:17:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -53,6 +53,8 @@
 #include <machine/bootconfig.h>
 #include <machine/irqhandler.h>
 
+#include "isa.h"
+
 #ifdef SHARK
 #include <arm32/shark/sequoia.h>
 extern void	ofrootfound __P((void));
@@ -77,6 +79,7 @@ static	int booted_partition;
 extern dev_t dumpdev;
 
 void	dumpconf __P(());
+void isa_intr_init __P((void));
 
 /* Table major numbers for the device names, NULL terminated */
 
@@ -191,6 +194,18 @@ configure()
 #ifdef SHARK
 	sequoiaInit();
 	startrtclock();
+#endif
+
+	/*
+	 * Since the ICU is not standard on the ARM we don't know
+	 * if we have one until we find a bridge.
+	 * Since various PCI interrupts could be routed via the ICU
+	 * (for PCI devices in the bridge) we need to set up the ICU
+	 * now so that these interrupts can be established correctly
+	 * i.e. This is a hack.
+	 */
+#if NISA > 0 && !defined(SHARK)
+	isa_intr_init();
 #endif
 
 	config_rootfound("mainbus", NULL);
