@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.332 2001/04/18 08:35:07 kleink Exp $
+#	$NetBSD: mi,v 1.333 2001/04/24 03:20:43 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3031,6 +3031,7 @@
 ./usr/share/man/cat9/pfil_remove_hook.0		comp-sys-catman
 ./usr/share/man/cat9/pgsignal.0		comp-sys-catman
 ./usr/share/man/cat9/physio.0		comp-sys-catman
+./usr/share/man/cat9/pmap.0		comp-sys-catman
 ./usr/share/man/cat9/pool.0		comp-sys-catman
 ./usr/share/man/cat9/pool_create.0		comp-sys-catman
 ./usr/share/man/cat9/pool_destroy.0		comp-sys-catman
@@ -4971,6 +4972,7 @@
 ./usr/share/man/man9/pfil_remove_hook.9		comp-sys-man
 ./usr/share/man/man9/pgsignal.9		comp-sys-man
 ./usr/share/man/man9/physio.9		comp-sys-man
+./usr/share/man/man9/pmap.9		comp-sys-man
 ./usr/share/man/man9/pool.9		comp-sys-man
 ./usr/share/man/man9/pool_create.9		comp-sys-man
 ./usr/share/man/man9/pool_destroy.9		comp-sys-man
