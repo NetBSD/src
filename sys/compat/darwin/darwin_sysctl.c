@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.26 2004/05/25 04:29:08 atatat Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.27 2004/07/04 20:30:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.26 2004/05/25 04:29:08 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.27 2004/07/04 20:30:14 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -291,6 +291,17 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		       SCARG(uap, namelen) * sizeof(int));
 	if (error)
 		return (error);
+
+#ifdef DEBUG_DARWIN
+	if (1) {
+		int i;
+	
+		printf("darwin_sys___sysctl: ");
+		for (i = 0; i < SCARG(uap, namelen); i++) 
+			printf("%d ", name[i]);
+		printf("\n");
+	}
+#endif
 
 	/*
 	 * wire old so that copyout() is less likely to fail?
