@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.15 1999/09/26 04:37:29 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.16 1999/09/26 04:43:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -597,12 +597,14 @@ tlp_pci_attach(parent, self, aux)
 		/* Check for new format SROM. */
 		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
 			/*
-			 * Eek.  I don't know what else we
-			 * can do here.  Punt for now.
+			 * Not an ISV SROM; try the old DEC Ethernet Address
+			 * ROM format.
 			 */
-			printf("%s: SROM not in ISV format?\n",
-			    sc->sc_dev.dv_xname);
-			goto cant_cope;
+			if (tlp_parse_old_srom(sc, enaddr) == 0) {
+				printf("%s: unable to decode Ethernet "
+				    "Address ROM\n", sc->sc_dev.dv_xname);
+				return;
+			}
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
