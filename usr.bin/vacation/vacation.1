@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.19 2003/04/20 03:55:38 christos Exp $
+.\"	$NetBSD: vacation.1,v 1.20 2003/04/24 12:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -179,13 +179,6 @@ database file
 .It Pa ~/.vacation.msg
 message to send
 .El
-.Sh BUGS
-Adding 
-.Fl t Ar A
-or
-.Fl t Ar D
-should only be done for misconfigured or non-compliant MTA's. Doing so
-may auto-respond to messages that were not supposed to be replied to.
 .Sh SEE ALSO
 .Xr syslog 3 ,
 .Xr sendmail 8
@@ -194,3 +187,10 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
+.Sh BUGS
+Adding
+.Fl t Ar A
+or
+.Fl t Ar D
+should only be done for misconfigured or non-compliant MTA's.
+Doing so may auto-respond to messages that were not supposed to be replied to.
