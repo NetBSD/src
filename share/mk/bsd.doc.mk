@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.29 1997/05/07 16:35:44 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.30 1997/05/07 17:06:18 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 .MAIN:		all
 .PHONY:		cleandoc docinstall print spell
 install:	docinstall
-clean:		cleandoc
+clean cleandir:	cleandoc
 
 BIB?=		bib
 EQN?=		eqn
