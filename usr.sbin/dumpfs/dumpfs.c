@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.29 2001/09/02 01:58:32 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.30 2001/09/06 02:16:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.29 2001/09/02 01:58:32 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.30 2001/09/06 02:16:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,6 +198,8 @@ dumpfs(const char *name)
 	    (unsigned long long)afs.fs_maxfilesize);
 	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
 	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
+	printf("avgfilesize %d\tavgfpdir %d\n",
+	    afs.fs_avgfilesize, afs.fs_avgfpdir);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
 	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
 	printf("sbsize\t%d\tcgsize\t%d\toffset\t%d\tmask\t0x%08x\n",

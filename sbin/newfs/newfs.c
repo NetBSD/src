@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.46 2001/08/30 14:37:26 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.47 2001/09/06 02:16:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.46 2001/08/30 14:37:26 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.47 2001/09/06 02:16:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,6 +179,8 @@ int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	nrpos = NRPOS;		/* # of distinguished rotational positions */
+int	avgfilesize = AVFILESIZ;/* expected average file size */
+int	avgfpdir = AFPDIR;	/* expected number of files per directory */
 int	bbsize = BBSIZE;	/* boot block size */
 int	sbsize = SBSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
@@ -225,8 +227,8 @@ main(int argc, char *argv[])
 		errx(1, "insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "B:FNOS:T:Za:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
+	    "NT:a:b:c:d:e:f:g:h:i:m:o:s:" :
+	    "B:FNOS:T:Za:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:x:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -286,6 +288,14 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			fsize = strsuftoi("fragment size",
+			    optarg, 1, INT_MAX);
+			break;
+		case 'g':
+			avgfilesize = strsuftoi("average file size",
+			    optarg, 1, INT_MAX);
+			break;
+		case 'h':
+			avgfpdir = strsuftoi("expected files per directory",
 			    optarg, 1, INT_MAX);
 			break;
 		case 'i':
@@ -865,6 +875,8 @@ usage(void)
 	fprintf(stderr, "\t-e maxbpg\tmaximum blocks per file "
 			"in a cylinder group\n");
 	fprintf(stderr, "\t-f fsize\tfragment size\n");
+	fprintf(stderr, "\t-g average file size\n");
+	fprintf(stderr, "\t-h average files per directory\n");
 	fprintf(stderr, "\t-i density\tnumber of bytes per inode\n");
 	if (!mfs) {
 		fprintf(stderr,
