@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.2 1994/05/13 10:40:19 mycroft Exp $
+ *	$Id: profile.h,v 1.3 1994/05/13 10:47:57 mycroft Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount
@@ -55,3 +55,12 @@ mcount()								\
 	asm("movl (%%ebp),%1;movl 4(%1),%1" : "=r" (frompcindex));	\
 	_mcount(frompcindex, selfpc);					\
 }
+
+#ifdef KERNEL
+/*
+ * Note that we assume splhigh() and splx() cannot call mcount()
+ * recursively.
+ */
+#define	MCOUNT_ENTER	s = splhigh()
+#define	MCOUNT_EXIT	splx(s)
+#endif /* KERNEL */
