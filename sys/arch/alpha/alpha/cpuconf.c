@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.9 1998/01/29 22:20:15 ross Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.10 1998/03/20 21:48:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -121,12 +121,19 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /* 18: ??? */
 	cpu_notsupp("ST_EB66"),			     /* 19: ST_EB66 */
 	cpu_init(dec_eb64plus_init,"DEC_EB64PLUS"),  /* 20: ST_EB64P */
-	cpu_notsupp("???"),			     /* 21: ??? */
+	cpu_notsupp("ST_ALPHABOOK1"),		     /* 21: ST_ALPHABOOK1 */
 	cpu_notsupp("ST_DEC_4100"),		     /* 22: ST_DEC_4100 */
 	cpu_notsupp("ST_DEC_EV45_PBP"),		     /* 23: ST_DEC_EV45_PBP */
 	cpu_notsupp("ST_DEC_2100A_A500"),	     /* 24: ST_DEC_2100A_A500 */
 	cpu_notsupp("???"),			     /* 25: ??? */
 	cpu_init(dec_eb164_init,"DEC_EB164"),	     /* 26: ST_EB164 */
+	cpu_notsupp("ST_DEC_1000A"),		     /* 27: ST_DEC_1000A */
+	cpu_notsupp("ST_DEC_ALPHAVME_224"),	   /* 28: ST_DEC_ALPHAVME_224 */
+	cpu_notsupp("???"),			     /* 29: ??? */
+	cpu_notsupp("???"),			     /* 30: ??? */
+	cpu_notsupp("???"),			     /* 31: ??? */
+	cpu_notsupp("ST_DEC_EV56_PBP"),		     /* 32: ST_DEC_EV56_PBP */
+	cpu_notsupp("ST_DEC_ALPHAVME_320"),	   /* 33: ST_DEC_ALPHAVME_320 */
 };
 int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));
 
