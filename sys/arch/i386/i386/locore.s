@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.220 2000/05/26 21:19:44 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.221 2000/05/31 01:46:15 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1865,7 +1865,7 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 2000/05/26 21:19:37 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 2000/05/31 01:46:15 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -604,7 +604,7 @@ switch_error:
 #endif
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
