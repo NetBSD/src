@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.15 2004/09/15 19:45:17 hubertf Exp $
+.\" $NetBSD: tar.1,v 1.16 2004/09/26 23:46:00 christos Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHLOPXZ014578
+.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHLOPSXZ014578
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -145,6 +145,10 @@ No more than one archive member is matched for each
 .Ar pattern .
 When members of type directory are matched, the file hierarchy rooted at that
 directory is also matched.
+.It Fl S , -sparse
+This flag has no effect as
+.Nm
+always generates sparse files.
 .It Fl s Ar replstr
 Modify the file or archive member names specified by the
 .Ar pattern
