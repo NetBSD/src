@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_core.c,v 1.32 2003/07/22 11:18:24 itojun Exp $	*/
-/*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.33 2003/07/25 10:00:50 itojun Exp $	*/
+/*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.32 2003/07/22 11:18:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.33 2003/07/25 10:00:50 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.32 2003/07/22 11:18:24 itojun Exp $");
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
+#include <netinet6/ah_aesxcbcmac.h>
 #ifdef IPSEC_ESP
 #include <netinet6/esp.h>
 #endif
@@ -79,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.32 2003/07/22 11:18:24 itojun Exp $");
 #include <sys/sha1.h>
 #define SHA1_RESULTLEN	20
 #include <crypto/sha2/sha2.h>
+#include <crypto/ripemd160/rmd160.h>
+#define RIPEMD160_RESULTLEN	20
 
 #include <net/net_osdep.h>
 
@@ -133,6 +136,12 @@ static void ah_hmac_sha2_512_loop __P((struct ah_algorithm_state *, u_int8_t *,
 	size_t));
 static void ah_hmac_sha2_512_result __P((struct ah_algorithm_state *,
 	u_int8_t *, size_t));
+static int ah_hmac_ripemd160_init __P((struct ah_algorithm_state *,
+	struct secasvar *));
+static void ah_hmac_ripemd160_loop __P((struct ah_algorithm_state *, u_int8_t *,
+	size_t));
+static void ah_hmac_ripemd160_result __P((struct ah_algorithm_state *,
+	u_int8_t *, size_t));
 
 static void ah_update_mbuf __P((struct mbuf *, int, int,
 	const struct ah_algorithm *, struct ah_algorithm_state *));
@@ -169,6 +178,14 @@ ah_algorithm_lookup(idx)
 			"hmac-sha2-512",
 			ah_hmac_sha2_512_init, ah_hmac_sha2_512_loop,
 			ah_hmac_sha2_512_result, },
+		{ ah_sumsiz_1216, ah_common_mature, 160, 160,
+			"hmac-sha2-512",
+			ah_hmac_ripemd160_init, ah_hmac_ripemd160_loop,
+			ah_hmac_ripemd160_result, },
+		{ ah_sumsiz_1216, ah_common_mature, 128, 128,
+			"aes-xcbc-mac",
+			ah_aes_xcbc_mac_init, ah_aes_xcbc_mac_loop,
+			ah_aes_xcbc_mac_result, },
 	};
 
 	switch (idx) {
@@ -188,6 +205,10 @@ ah_algorithm_lookup(idx)
 		return &ah_algorithms[6];
 	case SADB_X_AALG_SHA2_512:
 		return &ah_algorithms[7];
+	case SADB_X_AALG_RIPEMD160HMAC:
+		return &ah_algorithms[8];
+	case SADB_X_AALG_AES_XCBC_MAC:
+		return &ah_algorithms[9];
 	default:
 		return NULL;
 	}
@@ -976,6 +997,110 @@ ah_hmac_sha2_512_result(state, addr, l)
 	SHA512_Update(ctxt, opad, 64);
 	SHA512_Update(ctxt, (caddr_t)digest, sizeof(digest));
 	SHA512_Final((caddr_t)digest, ctxt);
+
+	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+
+	free(state->foo, M_TEMP);
+}
+
+static int
+ah_hmac_ripemd160_init(state, sav)
+	struct ah_algorithm_state *state;
+	struct secasvar *sav;
+{
+	u_char *ipad;
+	u_char *opad;
+	RMD160_CTX *ctxt;
+	u_char tk[RIPEMD160_RESULTLEN];
+	u_char *key;
+	size_t keylen;
+	size_t i;
+
+	if (!state)
+		panic("ah_hmac_ripemd160_init: what?");
+
+	state->sav = sav;
+	state->foo = (void *)malloc(64 + 64 + sizeof(RMD160_CTX),
+	    M_TEMP, M_NOWAIT);
+	if (!state->foo)
+		return ENOBUFS;
+	bzero(state->foo, 64 + 64 + sizeof(RMD160_CTX));
+
+	ipad = (u_char *)state->foo;
+	opad = (u_char *)(ipad + 64);
+	ctxt = (RMD160_CTX *)(opad + 64);
+
+	/* compress the key if necessery */
+	if (64 < _KEYLEN(state->sav->key_auth)) {
+		bzero(tk, sizeof(tk));
+		bzero(ctxt, sizeof(*ctxt));
+		RMD160Init(ctxt);
+		RMD160Update(ctxt, _KEYBUF(state->sav->key_auth),
+		    _KEYLEN(state->sav->key_auth));
+		RMD160Final(&tk[0], ctxt);
+		key = &tk[0];
+		keylen = sizeof(tk) < 64 ? sizeof(tk) : 64;
+	} else {
+		key = _KEYBUF(state->sav->key_auth);
+		keylen = _KEYLEN(state->sav->key_auth);
+	}
+
+	bzero(ipad, 64);
+	bzero(opad, 64);
+	bcopy(key, ipad, keylen);
+	bcopy(key, opad, keylen);
+	for (i = 0; i < 64; i++) {
+		ipad[i] ^= 0x36;
+		opad[i] ^= 0x5c;
+	}
+
+	bzero(ctxt, sizeof(*ctxt));
+	RMD160Init(ctxt);
+	RMD160Update(ctxt, ipad, 64);
+
+	return 0;
+}
+
+static void
+ah_hmac_ripemd160_loop(state, addr, len)
+	struct ah_algorithm_state *state;
+	u_int8_t *addr;
+	size_t len;
+{
+	RMD160_CTX *ctxt;
+
+	if (!state || !state->foo)
+		panic("ah_hmac_ripemd160_loop: what?");
+
+	ctxt = (RMD160_CTX *)(((u_char *)state->foo) + 128);
+	RMD160Update(ctxt, (caddr_t)addr, (size_t)len);
+}
+
+static void
+ah_hmac_ripemd160_result(state, addr, l)
+	struct ah_algorithm_state *state;
+	u_int8_t *addr;
+	size_t l;
+{
+	u_char digest[RIPEMD160_RESULTLEN];
+	u_char *ipad;
+	u_char *opad;
+	RMD160_CTX *ctxt;
+
+	if (!state || !state->foo)
+		panic("ah_hmac_ripemd160_result: what?");
+
+	ipad = (u_char *)state->foo;
+	opad = (u_char *)(ipad + 64);
+	ctxt = (RMD160_CTX *)(opad + 64);
+
+	RMD160Final((caddr_t)digest, ctxt);
+
+	bzero(ctxt, sizeof(*ctxt));
+	RMD160Init(ctxt);
+	RMD160Update(ctxt, opad, 64);
+	RMD160Update(ctxt, (caddr_t)digest, sizeof(digest));
+	RMD160Final((caddr_t)digest, ctxt);
 
 	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
 
