@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.12 1998/07/05 21:15:55 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.13 1998/07/09 17:49:51 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.12 1998/07/05 21:15:55 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.13 1998/07/09 17:49:51 hubertf Exp $");
 #endif
 #endif
 
@@ -240,7 +240,7 @@ pkg_do(char *pkg)
 	    continue;
 	if (Verbose)
 	    printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
-	if (!vsystem("/usr/sbin/pkg_info -e %s", p->name)) {
+	if (!vsystem("/usr/sbin/pkg_info -qe %s", p->name)) {
 	    warnx("Conflicting package `%s' installed, please use pkg_delete(1)\n\t first to remove it!\n",  p->name);
 	    ++code;
 	}
@@ -252,7 +252,7 @@ pkg_do(char *pkg)
 	    continue;
 	if (Verbose)
 	    printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
-	if (vsystem("pkg_info -e %s", p->name)) {
+	if (vsystem("/usr/sbin/pkg_info -qe %s", p->name)) {
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
