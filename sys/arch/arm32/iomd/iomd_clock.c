@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.18 1998/06/02 21:57:58 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.19 1999/04/20 09:14:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -261,6 +261,9 @@ microtime(tvp)
 	int tm;
 	int deltatm;
 	static struct timeval oldtv;
+
+	if (timer0_count == 0)
+		return;
 
 	s = splhigh();
 
