@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.18 1997/11/11 00:43:41 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.19 1997/11/22 00:29:35 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,6 +96,12 @@ int config_network (void)
 
 	net_devices[0] = '\0';
 	get_ifconfig_info ();
+	if (strlen(net_devices) == 0) {
+		/* No network interfaces found! */
+		msg_display (MSG_nonet);
+		process_menu (MENU_ok);
+		return -1;
+	}
 	strncpy (defname, net_devices, 255);
 	tp = defname;
 	strsep(&tp, " ");
