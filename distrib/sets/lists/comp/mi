@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.271 2000/11/08 11:11:28 wiz Exp $
+#	$NetBSD: mi,v 1.272 2000/11/08 16:28:00 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -24,7 +24,6 @@
 ./usr/bin/gcov		comp-debug-bin
 ./usr/bin/gdb		comp-debug-bin
 ./usr/bin/gettext	comp-miscutil-bin
-./usr/bin/gettextize	comp-miscutil-bin
 ./usr/bin/gprof		comp-debug-bin
 ./usr/bin/ld		comp-util-bin
 ./usr/bin/lex		comp-c-bin
