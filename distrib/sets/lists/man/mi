@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.373 2001/06/27 20:40:12 itojun Exp $
+# $NetBSD: mi,v 1.374 2001/06/27 23:11:31 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1153,6 +1153,7 @@
 ./usr/share/man/cat8/compat_solaris.0		man-sys-catman
 ./usr/share/man/cat8/compat_sunos.0		man-sys-catman
 ./usr/share/man/cat8/compat_svr4.0		man-sys-catman
+./usr/share/man/cat8/compat_svr4_32.0		man-sys-catman
 ./usr/share/man/cat8/compat_ultrix.0		man-sys-catman
 ./usr/share/man/cat8/compat_win32.0		man-sys-catman
 ./usr/share/man/cat8/compat_xenix.0		man-sys-catman
@@ -2692,6 +2693,7 @@
 ./usr/share/man/man8/compat_solaris.8		man-sys-man
 ./usr/share/man/man8/compat_sunos.8		man-sys-man
 ./usr/share/man/man8/compat_svr4.8		man-sys-man
+./usr/share/man/man8/compat_svr4_32.8		man-sys-man
 ./usr/share/man/man8/compat_ultrix.8		man-sys-man
 ./usr/share/man/man8/compat_win32.8		man-sys-man
 ./usr/share/man/man8/compat_xenix.8		man-sys-man
