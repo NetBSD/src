@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.39 2000/07/26 02:07:35 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.40 2000/07/26 15:40:07 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -295,7 +295,7 @@ _rtld(sp)
 	bool            bind_now = 0;
 	const char     *ld_bind_now;
 	const char    **argv;
-	int		argc;
+	long		argc;
 	Obj_Entry	*obj;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
@@ -323,7 +323,11 @@ _rtld(sp)
 
 	sp += 2;		/* skip over return argument space */
 	argv = (const char **) &sp[1];
-	argc = *(int *)sp;
+	argc = *(long *)sp;
+#ifdef __sparc_v9__
+	/* XXX Temporary hack for argc format conversion. */
+	argc = (argc >> 32) | (argc & 0xffffffff);
+#endif
 	sp += 2 + argc;		/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
