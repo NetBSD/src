@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.152 2002/08/19 02:17:54 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.153 2002/08/28 02:23:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.152 2002/08/19 02:17:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.153 2002/08/28 02:23:57 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -274,6 +274,17 @@ do {									\
 	NTOHL((th)->th_ack);						\
 	NTOHS((th)->th_win);						\
 	NTOHS((th)->th_urp);						\
+} while (0)
+
+/*
+ * ... and reverse the above.
+ */
+#define	TCP_FIELDS_TO_NET(th)						\
+do {									\
+	HTONL((th)->th_seq);						\
+	HTONL((th)->th_ack);						\
+	HTONS((th)->th_win);						\
+	HTONS((th)->th_urp);						\
 } while (0)
 
 #ifdef TCP_CSUM_COUNTERS
@@ -1828,12 +1839,20 @@ after_listen:
 			 * while in TIME_WAIT, drop the old connection
 			 * and start over if the sequence numbers
 			 * are above the previous ones.
+			 *
+			 * NOTE: We will checksum the packet again, and
+			 * so we need to put the header fields back into
+			 * network order!
+			 * XXX This kind of sucks, but we don't expect
+			 * XXX this to happen very often, so maybe it
+			 * XXX doesn't matter so much.
 			 */
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
 				iss = tcp_new_iss(tp, tp->snd_nxt);
 				tp = tcp_close(tp);
+				TCP_FIELDS_TO_NET(th);
 				goto findpcb;
 			}
 			/*
