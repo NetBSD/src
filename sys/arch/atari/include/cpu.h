@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 1999/02/25 23:13:40 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 1999/02/26 22:37:57 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -258,7 +258,7 @@ int	nvram_uio __P((struct uio *));
 /*
  * Prototypes from sys_machdep.c:
  */
-int	cachectl1 __P((int, vaddr_t, int, struct proc *));
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 1999/02/25 19:51:23 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22 1999/02/26 22:37:57 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -119,20 +119,10 @@ vdoualarm(arg)
 
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
-	int req;
-	vm_offset_t addr;
-	int len;
-{
-	return cachectl1(req, addr, len, curproc);
-}
-
-/*ARGSUSED1*/
-int
 cachectl1(req, addr, len, p)
-	int req;
-	vm_offset_t addr;
-	int len;
+	unsigned long req;
+	vaddr_t addr;
+	size_t len;
 	struct proc *p;
 {
 	int error = 0;
@@ -140,7 +130,7 @@ cachectl1(req, addr, len, p)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
-		vm_offset_t end = 0;
+		vaddr_t end = 0;
 
 		if (addr == 0 ||
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 1999/02/26 21:34:38 is Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.7 1999/02/26 22:37:58 is Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -143,7 +143,7 @@ int
 cachectl1(req, addr, len, p)
 	unsigned long req;
 	vaddr_t	addr;
-	int len;
+	size_t len;
 	struct proc *p;
 {
 	int error = 0;

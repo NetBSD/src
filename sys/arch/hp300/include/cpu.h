@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 1999/02/25 23:13:41 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 1999/02/26 22:37:57 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -178,7 +178,7 @@ int	badaddr __P((caddr_t));
 int	badbaddr __P((caddr_t));
 
 /* sys_machdep.c functions */
-int	cachectl1 __P((int, vaddr_t, int, struct proc *));
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 /* vm_machdep.c functions */
 void	physaccess __P((caddr_t, caddr_t, int, int));

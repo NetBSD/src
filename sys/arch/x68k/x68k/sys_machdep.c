@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 1999/02/26 16:07:08 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14 1999/02/26 22:37:59 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -132,10 +132,11 @@ vdoualarm(arg)
  */
 /*ARGSUSED1*/
 int
-cachectl1(req, addr, len)
-	int req;
+cachectl1(req, addr, len, p)
+	unsigned long req;
 	vaddr_t	addr;
-	int len;
+	size_t len;
+	struct proc *p;
 {
 	int error = 0;
 
@@ -147,7 +148,7 @@ cachectl1(req, addr, len)
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
-		if ((curproc->p_emul == &emul_hpux) &&
+		if ((p->p_emul == &emul_hpux) &&
 		    len != 16 && len != NBPG)
 			doall = 1;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.17 1999/02/25 23:13:41 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18 1999/02/26 22:37:57 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -123,9 +123,9 @@ vdoualarm(arg)
 /*ARGSUSED1*/
 int
 cachectl1(req, addr, len, p)
-	int req;
+	unsigned long req;
 	vaddr_t	addr;
-	int len;
+	size_t len;
 	struct proc *p;
 {
 	int error = 0;
