@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.20 2003/09/25 22:00:02 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.21 2003/09/28 00:07:50 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2003/09/25 22:00:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2003/09/28 00:07:50 cl Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -82,10 +82,10 @@ extern int sigpid;
 #define SDB_FPSTATE	0x04
 #endif
 
-void setup_linux_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
-				caddr_t usp));
-void setup_linux_rt_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
-				caddr_t usp, struct lwp *l));
+void setup_linux_sigframe __P((struct frame *frame, int sig,
+    const sigset_t *mask, caddr_t usp));
+void setup_linux_rt_sigframe __P((struct frame *frame, int sig,
+    const sigset_t *mask, caddr_t usp, struct lwp *l));
 
 /*
  * Deal with some m68k-specific things in the Linux emulation code.
@@ -111,7 +111,7 @@ void
 setup_linux_sigframe(frame, sig, mask, usp)
 	struct frame *frame;
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	caddr_t usp;
 {
 	struct lwp *l = curlwp;
@@ -272,7 +272,7 @@ void
 setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 	struct frame *frame;
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	caddr_t usp;
 	struct lwp *l;
 {
