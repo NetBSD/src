@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.7 1998/11/18 03:09:20 ross Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.8 2001/07/18 16:12:31 thorpej Exp $	*/
 
 /*
  * 
@@ -101,7 +101,7 @@
 	      (in)->cred.cr_uid = ident->cr_uid;              \
 	      (in)->cred.cr_groupid = ident->cr_gid;          \
           } else {                                            \
-	      bzero(&((in)->cred),sizeof(struct coda_cred));  \
+	      memset(&((in)->cred), 0, sizeof(struct coda_cred)); \
 	      (in)->cred.cr_uid = -1;                         \
 	      (in)->cred.cr_groupid = -1;                     \
           }                                                   \

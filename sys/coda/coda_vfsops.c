@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.11 2001/01/22 12:17:35 jdolecek Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.12 2001/07/18 16:12:31 thorpej Exp $	*/
 
 /*
  * 
@@ -426,7 +426,7 @@ coda_nb_statfs(vfsp, sbp, p)
 	return(EINVAL);
     }
     
-    bzero(sbp, sizeof(struct statfs));
+    memset(sbp, 0, sizeof(struct statfs));
     /* XXX - what to do about f_flags, others? --bnoble */
     /* Below This is what AFS does
     	#define NB_SFS_SIZ 0x895440
