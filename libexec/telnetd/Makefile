@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/07/14 15:55:53 itojun Exp $
+#	$NetBSD: Makefile,v 1.35 2003/07/16 05:42:04 itojun Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -10,11 +10,13 @@ CPPFLAGS+=-DLINEMODE -DKLUDGELINEMODE -DDIAGNOSTICS
 CPPFLAGS+=-DOLD_ENVIRON -DENV_HACK -DSECURELOGIN -DSUPPORT_UTMP -DSUPPORT_UTMPX
 SRCS=	authenc.c global.c slc.c state.c sys_term.c telnetd.c \
 	termstat.c utility.c
-DPADD=	${LIBUTIL} ${LIBTERMCAP} ${LIBTELNET}
-LDADD+=	-lutil -ltermcap -ltelnet
+DPADD=	${LIBUTIL} ${LIBTERMCAP} ${LIBTELNETDIR}/libtelnet.a
+LDADD+=	-lutil -ltermcap ${LIBTELNETDIR}/libtelnet.a
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
 CPPFLAGS+=-I${.CURDIR}
+
+LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
