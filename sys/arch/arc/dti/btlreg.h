@@ -1,4 +1,4 @@
-/*	$NetBSD: btlreg.h,v 1.4 2003/04/09 01:54:44 thorpej Exp $	*/
+/*	$NetBSD: btlreg.h,v 1.5 2004/12/07 14:50:56 thorpej Exp $	*/
 
 typedef u_int8_t physaddr[4];
 typedef u_int8_t physlen[4];
@@ -125,7 +125,7 @@ struct bt_ccb {
 	/*------------------------------------longword boundary */
 	u_char target;
 	u_char lun;
-	struct scsi_generic scsi_cmd;
+	u_char scsi_cmd[12];
 	u_char dummy2[1];
 	u_char link_id;
 	/*------------------------------------longword boundary */
