@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.74 2002/05/16 02:54:20 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.75 2002/05/17 18:56:05 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.74 2002/05/16 02:54:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.75 2002/05/17 18:56:05 mjacob Exp $");
 
 #include "opt_scsi.h"
 
@@ -1569,6 +1569,11 @@ scsipi_complete(xs)
 		}
 		break;
 
+	case XS_DRIVER_STUFFUP:
+		scsipi_printaddr(periph);
+		printf("generic HBA error\n");
+		error = EIO;
+		break;
 	default:
 		scsipi_printaddr(periph);
 		printf("invalid return code from adapter: %d\n", xs->error);
