@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.2 2003/06/08 06:44:32 thorpej Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,7 @@ is
 .Dv PTHREAD_MUTEX_DEFAULT .
 .Pp
 .Dv PTHREAD_MUXEX_NORMAL
-mutexes do not check for usage errors.  
+mutexes do not check for usage errors.
 .Dv PTHREAD_MUTEX_NORMAL
 mutexes will deadlock if reentered, and result in undefined behavior if a
 locked mutex is unlocked by another thread.  Attempts to unlock an already
@@ -222,7 +222,7 @@ is invalid.
 .\" .Pp
 .Pp
 .Fn pthread_mutexattr_destroy ,
-.Fn pthread_mutexattr_settype , 
+.Fn pthread_mutexattr_settype ,
 and
 .Fn pthread_mutexattr_gettype
 may fail if:

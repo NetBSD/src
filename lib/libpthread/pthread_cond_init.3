@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_init.3,v 1.2 2003/06/08 06:44:30 thorpej Exp $
+.\" $NetBSD: pthread_cond_init.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ Condition variables are intended to be used to communicate changes in
 the state of data shared between threads.  Condition variables are
 always associated with a mutex to provide syncronized access to the
 shared data.  A single predicate should always be assocateed with a
-condition variable.  The predicate should identify a state of the 
+condition variable.  The predicate should identify a state of the
 shared data that must be true before the thread proceeds.
 .Sh RETURN VALUES
 If successful, the
