@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.29 1997/04/02 22:37:35 scottr Exp $	*/
+/*	$NetBSD: rd.c,v 1.30 1997/04/09 20:01:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -1045,17 +1045,17 @@ rderror(unit)
 		rdprinterr("access", sp->c_aef, err_access);
 		rdprinterr("info", sp->c_ief, err_info);
 		printf("    block: %d, P1-P10: ", hwbn);
-		printf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
-		printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
-		printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
+		printf("0x%x", *(u_int *)&sp->c_raw[0]);
+		printf("0x%x", *(u_int *)&sp->c_raw[4]);
+		printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
 		/* command */
 		printf("    ioc: ");
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_pad, 8));
-		printf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_hiaddr, 4));
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_addr, 8));
-		printf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_nop2, 4));
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_len, 8));
-		printf("%s\n", hexstr(*(u_short *)&rs->sc_ioc.c_cmd, 4));
+		printf("0x%x", *(u_int *)&rs->sc_ioc.c_pad);
+		printf("0x%x", *(u_short *)&rs->sc_ioc.c_hiaddr);
+		printf("0x%x", *(u_int *)&rs->sc_ioc.c_addr);
+		printf("0x%x", *(u_short *)&rs->sc_ioc.c_nop2);
+		printf("0x%x", *(u_int *)&rs->sc_ioc.c_len);
+		printf("0x%x\n", *(u_short *)&rs->sc_ioc.c_cmd);
 		return(1);
 	}
 #endif
@@ -1063,9 +1063,9 @@ rderror(unit)
 	       (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
 	       sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
 	printf("P1-P10: ");
-	printf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
-	printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
-	printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
+	printf("0x%x", *(u_int *)&sp->c_raw[0]);
+	printf("0x%x", *(u_int *)&sp->c_raw[4]);
+	printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
 	return(1);
 }
 
