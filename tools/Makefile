@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2005/01/09 03:48:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.88 2005/01/27 12:54:05 is Exp $
 
 .include <bsd.own.mk>
 
@@ -79,7 +79,6 @@ SUBDIR+=	bebox-mkbootimage
 
 .if ${MACHINE} == "amiga"
 SUBDIR+=	amiga-elf2bb
-SUBDIR+=	amiga-aout2bb
 SUBDIR+=	amiga-txlt
 .endif
 
