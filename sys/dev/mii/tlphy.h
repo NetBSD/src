@@ -1,4 +1,4 @@
-/*  $NetBSD: tlphy.h,v 1.2 1997/10/21 05:54:24 bouyer Exp $   */
+/*	$NetBSD: tlphy.h,v 1.3 1997/11/17 09:08:26 thorpej Exp $	 */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -44,7 +44,6 @@
 
 #define	PHY_TL_ST	0x12	/* Read Only */
 #	define	TL_ST_MII_Int	0x8000 /* MII interrupt */
-#	define	TL_ST_PHOK		0x4000 /* Power higth OK */
-#	define	TL_ST_PolOK		0x2000 /* Polarity OK */
-#	define	TL_ST_TPE		0x1000 /* Twisted pair energy */
-
+#	define	TL_ST_PHOK	0x4000 /* Power higth OK */
+#	define	TL_ST_PolOK	0x2000 /* Polarity OK */
+#	define	TL_ST_TPE	0x1000 /* Twisted pair energy */
