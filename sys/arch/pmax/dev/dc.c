@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.42 1998/03/31 11:32:53 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.43 1998/04/19 10:44:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.42 1998/03/31 11:32:53 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.43 1998/04/19 10:44:41 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -111,15 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.42 1998/03/31 11:32:53 jonathan Exp $");
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
 
-/*
- * Autoconfiguration data for config.
- * 
- * Use the statically-allocated softc until old autoconfig code and
- * config.old are completely gone.
- */
-int	old_dcmatch  __P((struct device * parent, void *cfdata, void *aux));
-void	old_dcattach __P((struct device *parent, struct device *self, void *aux));
-
+/* Autoconfiguration data for config. */
 extern struct cfdriver dc_cd;
 
 /*
@@ -133,7 +125,7 @@ int dcmctl	 __P((dev_t dev, int bits, int how));
 void dcscan	__P((void *));
 int dcparam	__P((struct tty *tp, struct termios *t));
 static int cold_dcparam __P((struct tty *tp, struct termios *t, 
-		      dcregs *dcaddr, int allow_19200));
+		      dcregs *dcaddr, int overload_exta_38400));
 
 extern void ttrstrt __P((void *));
 
@@ -144,6 +136,10 @@ int  dcGetc	__P((dev_t));
 void dcPutc	__P((dev_t, int));
 void dcPollc	__P((dev_t, int));
 void dc_consinit __P((dev_t dev, dcregs *dcaddr));
+
+void dc_tty_init __P((struct dc_softc *sc, dev_t dev));
+void dc_kbd_init  __P((struct dc_softc *sc, dev_t dev));
+void dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
 
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
@@ -319,7 +315,9 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
 			splx(s);
 		}
-		if ( 1 /*raster_console()*/) {
+
+		/* 5100 uses line 0 as serial console */
+		if (cn_tab->cn_dev != makedev(DCDEV, 0)) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
@@ -363,6 +361,91 @@ dc_reset(dcaddr)
 }
 
 
+/*
+ * Initialize line parameters for a serial console.
+ */
+void
+dc_tty_init(sc, dev)
+	struct dc_softc *sc;
+	dev_t dev;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = dev;
+	cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+#ifdef pmax
+	/* XXX -- why on pmax, not on Alpha? */
+	cterm.c_cflag  |= CLOCAL;
+#endif
+	cterm.c_ospeed = cterm.c_ispeed = 9600;
+	(void) dcparam(&ctty, &cterm);
+	DELAY(1000);
+	splx(s);
+}
+
+void
+dc_kbd_init(sc, dev)
+	struct dc_softc *sc;
+	dev_t dev;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = dev;
+	cterm.c_cflag = CS8;
+#ifdef pmax
+	/* XXX -- why on pmax, not on Alpha? */
+	cterm.c_cflag |= CLOCAL;
+#endif /* pmax */
+	cterm.c_ospeed = cterm.c_ispeed = 4800;
+	(void) dcparam(&ctty, &cterm);
+	DELAY(10000);
+	splx(s);
+
+}
+
+void
+dc_mouse_init(sc, dev)
+	struct dc_softc *sc;
+	dev_t dev;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = dev;
+	cterm.c_cflag = CS8 | PARENB | PARODD;
+	cterm.c_ospeed = cterm.c_ispeed = 4800;
+	(void) dcparam(&ctty, &cterm);
+
+#ifdef HAVE_RCONS
+	/*
+	 * This is a hack.  As Ted Lemon observed, we want bstreams,
+	 * or failing that, a line discipline to do the inkernel DEC
+	 * mouse tracking required by Xservers.
+	 */
+	if (major(cn_tab->cn_dev) != RCONSDEV)
+		goto done;
+
+	DELAY(10000);
+	MouseInit(ctty.t_dev, sccPutc, sccGetc);
+	DELAY(10000);
+
+done:
+#endif	/* HAVE_RCONS */
+
+	splx(s);
+}
+
+/*
+ * open tty
+ */
 int
 dcopen(dev, flag, mode, p)
 	dev_t dev;
@@ -373,7 +456,6 @@ dcopen(dev, flag, mode, p)
 	register struct dc_softc *sc;
 	register int unit, line;
 	int s, error = 0;
-
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
 	if (unit >= dc_cd.cd_ndevs || line > 4)
@@ -606,11 +688,11 @@ dcparam(tp, t)
 }
 
 int
-cold_dcparam(tp, t, dcaddr, allow_19200)
+cold_dcparam(tp, t, dcaddr, overload_exta_38400)
 	register struct tty *tp;
 	register struct termios *t;
 	register dcregs *dcaddr;
-	int allow_19200;
+	int overload_exta_38400;
 {
 	register int lpr;
 	register int cflag = t->c_cflag;
@@ -624,7 +706,7 @@ cold_dcparam(tp, t, dcaddr, allow_19200)
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed) ||
             (cflag & CSIZE) == CS5 || (cflag & CSIZE) == CS6 ||
-	    (t->c_ospeed >= 19200 && allow_19200 != 1))
+	    (t->c_ospeed > 19200 && overload_exta_38400 != 1))
                 return (EINVAL);
         /* and copy to tty */
         tp->t_ispeed = t->c_ispeed;
@@ -634,6 +716,7 @@ cold_dcparam(tp, t, dcaddr, allow_19200)
 	/*
 	 * Handle console cases specially.
 	 */
+#if 0	/* XXX5100: do this in caller. */
 	if (/*XXX*/ 1) {	/* XXX jrs */
 		if (unit == DCKBD_PORT) {
 			lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
@@ -644,7 +727,12 @@ cold_dcparam(tp, t, dcaddr, allow_19200)
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
 			goto out;
 		}
-	} else if (tp->t_dev == cn_tab->cn_dev) {
+	} else
+#endif /* 0 */
+
+	/* XXX force consoles to 9600, 8 bit, no parity */
+	/* XXX fix callers instead? */
+	if (tp->t_dev == cn_tab->cn_dev) {
 		lpr = LPR_RXENAB | LPR_8_BIT_CHAR | LPR_B9600 | line;
 		goto out;
 	}
