@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.10 2000/08/19 17:27:28 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.11 2000/09/06 03:28:36 sommerfeld Exp $	*/
 
 /*
  *
@@ -235,17 +235,6 @@
  *   this lock protects the list of active pmaps (headed by "pmaps").
  *   we lock it when adding or removing pmaps from this list.
  *
- * - pmap_copy_page_lock
- *   locks the tmp kernel PTE mappings we used to copy data
- *
- * - pmap_zero_page_lock
- *   locks the tmp kernel PTE mapping we use to zero a page
- *
- * - pmap_tmpptp_lock
- *   locks the tmp kernel PTE mapping we use to look at a PTP
- *   in another process
- *
- * XXX: would be nice to have per-CPU VAs for the above 4
  */
 
 /*
@@ -256,9 +245,6 @@
 struct lock pmap_main_lock;
 simple_lock_data_t pvalloc_lock;
 simple_lock_data_t pmaps_lock;
-simple_lock_data_t pmap_copy_page_lock;
-simple_lock_data_t pmap_zero_page_lock;
-simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
@@ -411,11 +397,25 @@ static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
 struct pool pmap_pmap_pool;
 
 /*
- * special VAs and the PTEs that map them
+ * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
+ * I386_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * due to false sharing.
  */
 
+#ifdef MULTIPROCESSOR
+#define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
+#define VASLEW(va,id) ((va)+(id)*NPTECL*NBPG)
+#else
+#define PTESLEW(pte, id) (pte)
+#define VASLEW(va,id) (va)
+#endif
+
+/*
+ * special VAs and the PTEs that map them.
+ */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
 static caddr_t csrcp, cdstp, zerop, ptpp;
+
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vaddr_t msgbuf_vaddr;
@@ -519,53 +519,54 @@ pmap_is_active(pmap)
 
 /*
  * pmap_tmpmap_pa: map a page in for tmp usage
- *
- * => returns with pmap_tmpptp_lock held
  */
 
 __inline static vaddr_t
 pmap_tmpmap_pa(pa)
 	paddr_t pa;
 {
-	simple_lock(&pmap_tmpptp_lock);
+#ifdef MULTIPROCESSOR
+	int id = cpu_number();
+#endif
+	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
+	caddr_t ptpva = VASLEW(ptpp, id);
 #if defined(DIAGNOSTIC)
-	if (*ptp_pte)
+	if (*ptpte)
 		panic("pmap_tmpmap_pa: ptp_pte in use?");
 #endif
-	*ptp_pte = PG_V | PG_RW | pa;		/* always a new mapping */
-	return((vaddr_t)ptpp);
+	*ptpte = PG_V | PG_RW | pa;		/* always a new mapping */
+	return((vaddr_t)ptpva);
 }
 
 /*
  * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
- *
- * => we release pmap_tmpptp_lock
  */
 
 __inline static void
 pmap_tmpunmap_pa()
 {
+#ifdef MULTIPROCESSOR
+	int id = cpu_number();
+#endif
+	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
+	caddr_t ptpva = VASLEW(ptpp, id);
 #if defined(DIAGNOSTIC)
 	if (!pmap_valid_entry(*ptp_pte))
 		panic("pmap_tmpunmap_pa: our pte invalid?");
 #endif
-	*ptp_pte = 0;		/* zap! */
-	pmap_update_pg((vaddr_t)ptpp);
+	*ptpte = 0;		/* zap! */
+	pmap_update_pg((vaddr_t)ptpva);
 #ifdef MULTIPROCESSOR
 	/*
-	 * No need for tlb shootdown here, since ptp_pte is protected by
-	 * pmap_tmpptp_lock.
-	 * XXX MP is this true, given potential prefetching?
+	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
 	 */
 #endif
-	simple_unlock(&pmap_tmpptp_lock);
 }
 
 /*
  * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
  *
  * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- * => we may grab pmap_tmpptp_lock and return with it held
  */
 
 __inline static pt_entry_t *
@@ -587,8 +588,6 @@ pmap_tmpmap_pvepte(pve)
 
 /*
  * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- *
- * => we will release pmap_tmpptp_lock if we hold it
  */
 
 __inline static void
@@ -928,6 +927,26 @@ pmap_bootstrap(kva_start)
 
 	pte = PTE_BASE + i386_btop(virtual_avail);
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * Waste some VA space to avoid false sharing of cache lines
+	 * for page table pages: Give each possible CPU a cache line
+	 * of PTE's (8) to play with, though we only need 4.  We could
+	 * recycle some of this waste by putting the idle stacks here
+	 * as well; we could waste less space if we knew the largest
+	 * CPU ID beforehand.
+	 */
+	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;
+
+	cdstp = (caddr_t) virtual_avail+NBPG;  cdst_pte = pte+1;
+
+	zerop = (caddr_t) virtual_avail+NBPG*2;  zero_pte = pte+2;
+
+	ptpp = (caddr_t) virtual_avail+NBPG*3;  ptp_pte = pte+3;
+
+	virtual_avail += NBPG * I386_MAXPROCS * NPTECL;
+	pte += I386_MAXPROCS * NPTECL;
+#else
 	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
 	virtual_avail += NBPG; pte++;			     /* advance */
 
@@ -939,23 +958,24 @@ pmap_bootstrap(kva_start)
 
 	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
 	virtual_avail += NBPG; pte++;
+#endif
 
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
 	vmmap = (char *)virtual_avail;			/* don't need pte */
-	virtual_avail += NBPG; pte++;
+	virtual_avail += NBPG;
 
 	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += round_page(MSGBUFSIZE); pte++;
+	virtual_avail += round_page(MSGBUFSIZE);
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += NBPG; pte++;
+	virtual_avail += NBPG;
 	avail_end -= NBPG;
 	idt_paddr = avail_end;
 
 #if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-	virtual_avail += NBPG; pte++;
+	virtual_avail += NBPG;
 #endif
 
 	/*
@@ -972,9 +992,6 @@ pmap_bootstrap(kva_start)
 	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
-	simple_lock_init(&pmap_copy_page_lock);
-	simple_lock_init(&pmap_zero_page_lock);
-	simple_lock_init(&pmap_tmpptp_lock);
 #endif
 	LIST_INIT(&pmaps);
 	TAILQ_INIT(&pv_freepages);
@@ -2224,21 +2241,24 @@ void
 pmap_zero_page(pa)
 	paddr_t pa;
 {
-	/* XXX MP PERF: should have zero-page pte per CPU */
-	simple_lock(&pmap_zero_page_lock);
+#ifdef MULTIPROCESSOR
+	int id = cpu_number();
+#endif
+	pt_entry_t *zpte = PTESLEW(zero_pte, id);
+	caddr_t zerova = VASLEW(zerop, id);
+	
 #ifdef DIAGNOSTIC
-	if (*zero_pte)
+	if (*zpte)
 		panic("pmap_zero_page: lock botch");
 #endif
 
-	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
-	memset(zerop, 0, NBPG);				/* zero */
-	*zero_pte = 0;				/* zap! */
-	pmap_update_pg((vaddr_t)zerop);		/* flush TLB */
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
+	memset(zerova, 0, NBPG);			/* zero */
+	*zpte = 0;					/* zap! */
+	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 #ifdef MULTIPROCESSOR
-	/* No shootdown needed here. */
+	/* Using per-cpu VA; no shootdown required here. */
 #endif
-	simple_unlock(&pmap_zero_page_lock);
 }
 
 /*
@@ -2249,22 +2269,25 @@ void
 pmap_zero_page_uncached(pa)
 	paddr_t pa;
 {
-	/* XXX MP PERF: should have zero-page pte per CPU */
-	simple_lock(&pmap_zero_page_lock);
+#ifdef MULTIPROCESSOR
+	int id = cpu_number();
+#endif
+	pt_entry_t *zpte = PTESLEW(zero_pte, id);
+	caddr_t zerova = VASLEW(zerop, id);
+	
 #ifdef DIAGNOSTIC
-	if (*zero_pte)
+	if (*zpte)
 		panic("pmap_zero_page_uncached: lock botch");
 #endif
 
-	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
-	memset(zerop, 0, NBPG);				/* zero */
-	*zero_pte = 0;					/* zap! */
-	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
+	memset(zerova, 0, NBPG);			/* zero */
+	*zpte = 0;					/* zap! */
+	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 #ifdef MULTIPROCESSOR
-	/* No shootdown needed here. */
+	/* Using per-cpu VA; no shootdown required here. */
 #endif
-	simple_unlock(&pmap_zero_page_lock);
 }
 
 /*
@@ -2275,22 +2298,27 @@ void
 pmap_copy_page(srcpa, dstpa)
 	paddr_t srcpa, dstpa;
 {
-	/* XXX MP PERF: should have copy-page ptes per CPU */
-	simple_lock(&pmap_copy_page_lock);
+#ifdef MULTIPROCESSOR
+	int id = cpu_number();
+#endif
+	pt_entry_t *spte = PTESLEW(csrc_pte,id);
+	pt_entry_t *dpte = PTESLEW(cdst_pte,id);	
+	caddr_t csrcva = VASLEW(csrcp, id);
+	caddr_t cdstva = VASLEW(cdstp, id);
+	
 #ifdef DIAGNOSTIC
-	if (*csrc_pte || *cdst_pte)
+	if (*spte || *dpte)
 		panic("pmap_copy_page: lock botch");
 #endif
 
-	*csrc_pte = (srcpa & PG_FRAME) | PG_V | PG_RW;
-	*cdst_pte = (dstpa & PG_FRAME) | PG_V | PG_RW;
-	memcpy(cdstp, csrcp, NBPG);
-	*csrc_pte = *cdst_pte = 0;			/* zap! */
-	pmap_update_2pg((vaddr_t)csrcp, (vaddr_t)cdstp);
+	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW;
+	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW;
+	memcpy(cdstva, csrcva, NBPG);
+	*spte = *dpte = 0;			/* zap! */
+	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 #ifdef MULTIPROCESSOR
-	/* No shootdown required here. */
+	/* Using per-cpu VA; no shootdown required here. */
 #endif
-	simple_unlock(&pmap_copy_page_lock);
 }
 
 /*

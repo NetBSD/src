@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.4 2000/08/18 03:22:47 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.5 2000/09/06 03:28:35 sommerfeld Exp $	*/
 
 /*
  *
@@ -60,12 +60,12 @@
  * (the following assumes that KERNBASE is 0xc0000000)
  *
  * PDE#s	VA range		usage
- * 0->767	0x0 -> 0xbfc00000	user address space, note that the
+ * 0->766	0x0 -> 0xbfc00000	user address space, note that the
  *					max user address is 0xbfbfe000
  *					the final two pages in the last 4MB
  *					used to be reserved for the UAREA
  *					but now are no longer used
- * 768		0xbfc00000->		recursive mapping of PDP (used for
+ * 767		0xbfc00000->		recursive mapping of PDP (used for
  *			0xc0000000	linear mapping of PTPs)
  * 768->1023	0xc0000000->		kernel address space (constant
  *			0xffc00000	across all pmap's/processes)
@@ -238,6 +238,12 @@
 #define PG_W		PG_AVAIL1	/* "wired" mapping */
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 /* PG_AVAIL3 not used */
+
+/*
+ * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
+ * Used to avoid false sharing of cache lines.
+ */
+#define NPTECL			8
 
 #ifdef _KERNEL
 /*
