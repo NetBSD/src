@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 1999/09/22 07:18:32 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 1999/09/26 02:00:12 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -123,7 +123,6 @@ void	makeargv __P((void));
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
-time_t	mkgmtime __P((struct tm *));
 void	mls __P((int, char **));
 void	modtime __P((int, char **));
 void	mput __P((int, char **));

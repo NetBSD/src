@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.75 1999/09/24 14:28:14 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.76 1999/09/26 02:00:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.75 1999/09/24 14:28:14 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.76 1999/09/26 02:00:12 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -881,7 +881,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 						&parsed))) {
 					parsed.tm_isdst = -1;
 					if (*t == '\0')
-						mtime = mkgmtime(&parsed);
+						mtime = timegm(&parsed);
 					if (debug && mtime != -1) {
 						fprintf(ttyout,
 						    "parsed date as: %s",
