@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.22 1999/12/08 21:38:10 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.23 1999/12/15 15:09:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.22 1999/12/08 21:38:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.23 1999/12/15 15:09:38 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -344,7 +344,7 @@ px_init(fi, slotbase, unit, console)
 	struct px_info *pxi;
 	u_long bufpa;
 	int i;
-
+	
 #if NPX > 1
 	if (px_cons_rbuf_use)
 		/* XXX allocate buffers */;
@@ -474,7 +474,7 @@ px_bt459_init(pxi)
 	int i;
 
 	/* Hit it... */
-	BT459_SELECT(vdac, BT459_REG_COMMAND_0);
+	BT459_SELECT(vdac, BT459_IREG_COMMAND_0);
 	BT459_WRITE_REG(vdac, 0xc0c0c0);
 
 	/* Now reset the VDAC */
@@ -486,7 +486,7 @@ px_bt459_init(pxi)
 	tc_wmb();
 
 	/* Finish the initalization */
-	BT459_SELECT(vdac, BT459_REG_COMMAND_1);
+	BT459_SELECT(vdac, BT459_IREG_COMMAND_1);
 	BT459_WRITE_REG(vdac, 0x000000);
 	BT459_WRITE_REG(vdac, 0xc2c2c2);
 	BT459_WRITE_REG(vdac, 0xffffff);
@@ -495,7 +495,7 @@ px_bt459_init(pxi)
 		BT459_WRITE_REG(vdac, 0);
 
 	/* Set cursor colormap */
-	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+	BT459_SELECT(vdac, BT459_IREG_CCOLOR_1);
 	BT459_WRITE_REG(vdac, 0xffffff);
 	BT459_WRITE_REG(vdac, 0xffffff);
 	BT459_WRITE_REG(vdac, 0xffffff);
@@ -522,11 +522,11 @@ px_bt459_init(pxi)
 		px_load_cursor(pxi);
 
 		/* Enable cursor */
-		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_SELECT(vdac, BT459_IREG_CCR);
 		BT459_WRITE_REG(vdac, 0x1c1c1c1);
 		pxi->pxi_flg |= PX_CURSOR_ENABLE;
 	} else {
-		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_SELECT(vdac, BT459_IREG_CCR);
 		BT459_WRITE_REG(vdac, 0);
 	}
 }
@@ -549,7 +549,7 @@ px_probe_planes(pxi, buf)
 		 * VDAC ID. One color is active at level 0x4a for 8 bits, all
 		 * colors are active at 0x4a on the 24 bit cards.
 		 */
-		BT459_SELECT(pxi->pxi_vdac, BT459_REG_ID);
+		BT459_SELECT(pxi->pxi_vdac, BT459_IREG_ID);
 		i = pxi->pxi_vdac->reg & 0x00ffffff;
 
 		/* 3 VDACs */
@@ -780,7 +780,7 @@ px_load_cursor_data(pxi, pos, val)
 	val = DUPBYTE0(val);
 		
 	for (cnt = 10; cnt; cnt--) {
-		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
+		BT459_SELECT(vdac, BT459_IREG_CRAM_BASE + pos);
 		BT459_WRITE_REG(vdac, val);
 
 		if ((BT459_READ_REG(vdac) & pxi->pxi_planemask) == val)
@@ -805,7 +805,7 @@ px_load_cursor(pxi)
 	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1);
 
 	bcnt = 0;
-	BT459_SELECT(vdac, BT459_REG_CRAM_BASE + 0);
+	BT459_SELECT(vdac, BT459_IREG_CRAM_BASE + 0);
 
 	/* 64 pixel scan line is made with 8 bytes of cursor RAM */
 	while (bcnt < sizeof(pxi->pxi_cursor)) {
@@ -862,7 +862,7 @@ px_bt459_flush(pxi)
 	vdac = pxi->pxi_vdac;
 
 	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_POS) {
-		BT459_SELECT(vdac, BT459_REG_CURSOR_X_LOW);
+		BT459_SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
 		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_curx));
 		BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_curx));
 		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_cury));
@@ -875,7 +875,7 @@ px_bt459_flush(pxi)
 	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_CMAP) {
 		cp = pxi->pxi_curcmap;
 
-		BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+		BT459_SELECT(vdac, BT459_IREG_CCOLOR_1);
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
@@ -889,12 +889,12 @@ px_bt459_flush(pxi)
 
 	if (pxi->pxi_dirty & PX_DIRTY_ENABLE) {
 		if (pxi->pxi_flg & PX_ENABLE) {
-			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_SELECT(vdac, BT459_IREG_PRM);
 			BT459_WRITE_REG(vdac, 0xffffff);
 			px_load_cmap(pxi, 0, 1);
 			pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
 		} else {
-			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_SELECT(vdac, BT459_IREG_PRM);
 			BT459_WRITE_REG(vdac, 0);
 
 			BT459_SELECT(vdac, 0);
@@ -902,7 +902,7 @@ px_bt459_flush(pxi)
 			BT459_WRITE_CMAP(vdac, 0);
 			BT459_WRITE_CMAP(vdac, 0);
 
-			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_SELECT(vdac, BT459_IREG_CCR);
 			BT459_WRITE_REG(vdac, 0);
 		}
 	}
@@ -922,7 +922,7 @@ px_bt459_flush(pxi)
 			} else
 				i = 0;
 
-			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_SELECT(vdac, BT459_IREG_CCR);
 			BT459_WRITE_REG(vdac, i);
 		}
 	}
