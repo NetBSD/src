@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.8 1994/10/27 04:16:16 cgd Exp $	*/
+/*	$NetBSD: pio.h,v 1.9 1994/11/18 22:18:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -35,84 +35,84 @@
  */
 
 static __inline u_char
-inb(u_short port)
+inb(int port)
 {
 	u_char	data;
-	__asm __volatile("inb %1,%0" : "=a" (data) : "d" (port));
+	__asm __volatile("inb %%dx,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
 static __inline void
-insb(u_short port, void *addr, int cnt)
+insb(int port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\tinsb" :
 			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
 static __inline u_short
-inw(u_short port)
+inw(int port)
 {
 	u_short	data;
-	__asm __volatile("inw %1,%0" : "=a" (data) : "d" (port));
+	__asm __volatile("inw %%dx,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
 static __inline void
-insw(u_short port, void *addr, int cnt)
+insw(int port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\tinsw" :
 			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
 static __inline u_int
-inl(u_short port)
+inl(int port)
 {
 	u_int	data;
-	__asm __volatile("inl %1,%0" : "=a" (data) : "d" (port));
+	__asm __volatile("inl %%dx,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
 static __inline void
-insl(u_short port, void *addr, int cnt)
+insl(int port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\tinsl" :
 			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
 static __inline void
-outb(u_short port, u_char data)
+outb(int port, u_char data)
 {
-	__asm __volatile("outb %0,%1" : : "a" (data), "d" (port));
+	__asm __volatile("outb %0,%%dx" : : "a" (data), "d" (port));
 }
 
 static __inline void
-outsb(u_short port, void *addr, int cnt)
+outsb(int port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsb" :
 			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
 
 static __inline void
-outw(u_short port, u_short data)
+outw(int port, u_short data)
 {
-	__asm __volatile("outw %0,%1" : : "a" (data), "d" (port));
+	__asm __volatile("outw %0,%%dx" : : "a" (data), "d" (port));
 }
 
 static __inline void
-outsw(u_short port, void *addr, int cnt)
+outsw(int port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsw" :
 			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
 
 static __inline void
-outl(u_short port, u_int data)
+outl(int port, u_int data)
 {
-	__asm __volatile("outl %0,%1" : : "a" (data), "d" (port));
+	__asm __volatile("outl %0,%%dx" : : "a" (data), "d" (port));
 }
 
 static __inline void
-outsl(u_short port, void *addr, int cnt)
+outsl(int port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsl" :
 			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
