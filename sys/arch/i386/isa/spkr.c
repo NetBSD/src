@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.6 1993/10/28 14:00:54 brezak Exp $
+ *	$Id: spkr.c,v 1.7 1993/12/03 09:37:56 mycroft Exp $
  */
 
 #include "speaker.h"
@@ -40,6 +40,11 @@
  * Magic numbers for timer control. 
  */
 #define PIT_MODE	(TIMER_SEL2|TIMER_16BIT|TIMER_SQWAVE)
+
+void
+speakerattach()
+{
+}
 
 static int endtone()
 /* turn off the speaker, ending current tone */
