@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1998/01/01 20:05:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1998/01/03 01:13:02 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -169,9 +169,6 @@ struct pmap	kernel_pmap_store;
 void	pmap_bootstrap __P((vm_offset_t, u_int, u_int));
 void	pmap_changebit __P((vm_offset_t, int, boolean_t));
 
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */

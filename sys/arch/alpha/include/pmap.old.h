@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.12 1997/11/17 00:11:22 ross Exp $ */
+/* $NetBSD: pmap.old.h,v 1.13 1998/01/03 01:13:00 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -129,9 +129,6 @@ extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 
 /* Machine-specific functions. */
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 void	pmap_bootstrap __P((vm_offset_t firstaddr, vm_offset_t ptaddr));
 void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 		int user, int write));
