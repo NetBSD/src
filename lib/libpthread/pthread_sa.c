@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.15 2002/01/02 18:32:02 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.16 2002/01/28 18:47:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <lwp.h>
 #include <sa.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ucontext.h>
-#include <sys/queue.h>
 #include <sys/time.h>
 
 #include "pthread.h"
@@ -90,8 +90,13 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	switch (type) {
 	case SA_UPCALL_BLOCKED:
 		t = pthread__sa_id(sas[1]);
-		t->pt_state = PT_STATE_BLOCKED;
+		pthread_spinlock(self, &t->pt_statelock);
+		t->pt_state = PT_STATE_BLOCKED_SYS;
+		pthread_spinunlock(self, &t->pt_statelock);
 		t->blocks++;
+		t->pt_blockedlwp = sas[1]->sa_id;
+		if (t->pt_cancel)
+			_lwp_wakeup(t->pt_blockedlwp);
 		first++; /* Don't handle this SA in the usual processing. */
 		PTHREADD_ADD(PTHREADD_UP_BLOCK);
 		break;
@@ -107,6 +112,10 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	case SA_UPCALL_SIGNAL:
 		PTHREADD_ADD(PTHREADD_UP_SIGNAL);
 		deliversig = 1;
+		break;
+	case SA_UPCALL_SIGEV:
+		/* Run the alarm queue */
+		pthread__alarm_process(self, arg);
 		break;
 	case SA_UPCALL_USER:
 		/* We don't send ourselves one of these. */
