@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_ceil.S,v 1.6 2002/03/26 15:17:37 fvdl Exp $")
+RCSID("$NetBSD: s_ceil.S,v 1.7 2003/07/26 19:25:00 salo Exp $")
 
 ENTRY(ceil)
 #ifdef __i386__

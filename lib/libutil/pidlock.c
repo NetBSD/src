@@ -1,7 +1,7 @@
-/*	$NetBSD: pidlock.c,v 1.11 2003/04/21 00:39:40 christos Exp $ */
+/*	$NetBSD: pidlock.c,v 1.12 2003/07/26 19:25:10 salo Exp $ */
 
 /*
- * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
+ * Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.11 2003/04/21 00:39:40 christos Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.12 2003/07/26 19:25:10 salo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

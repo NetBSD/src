@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.7 2003/03/09 00:57:20 lukem Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.8 2003/07/26 19:24:57 salo Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -26,14 +26,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Many thanks to Jun-ichiro itojun Hagino <itojun@netbsd.org> for providing
+ * Many thanks to Jun-ichiro itojun Hagino <itojun@NetBSD.org> for providing
  * the sample code for the check field function, this function is 99.999%
  * his code.
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_ipv6.c,v 1.7 2003/03/09 00:57:20 lukem Exp $");
+__RCSID("$NetBSD: type_ipv6.c,v 1.8 2003/07/26 19:24:57 salo Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>

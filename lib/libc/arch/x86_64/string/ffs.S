@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
@@ -7,7 +7,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ffs.S,v 1.1 2001/06/19 00:25:04 fvdl Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.2 2003/07/26 19:24:38 salo Exp $")
 #endif
 
 ENTRY(ffs)

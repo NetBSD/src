@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/04/17 10:13:51 fvdl Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/07/26 19:25:07 salo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Adapted for x86_64 by fvdl@netbsd.org
+ * Adapted for x86_64 by fvdl@NetBSD.org
  */
 
 #ifndef _LIB_PTHREAD_X86_64_MD_H

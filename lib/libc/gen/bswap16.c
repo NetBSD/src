@@ -1,13 +1,13 @@
-/*  $NetBSD: bswap16.c,v 1.1 1999/01/15 13:31:22 bouyer Exp $    */
+/*  $NetBSD: bswap16.c,v 1.2 2003/07/26 19:24:42 salo Exp $    */
 
 /*
- * Written by Manuel Bouyer <bouyer@netbsd.org>.
+ * Written by Manuel Bouyer <bouyer@NetBSD.org>.
  * Public domain.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bswap16.c,v 1.1 1999/01/15 13:31:22 bouyer Exp $");
+__RCSID("$NetBSD: bswap16.c,v 1.2 2003/07/26 19:24:42 salo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: md5hl.c,v 1.3 2002/03/31 12:58:56 bjh21 Exp $	*/
+/*	$NetBSD: md5hl.c,v 1.4 2003/07/26 19:24:47 salo Exp $	*/
 
 /*
- * Written by Jason R. Thorpe <thorpej@netbsd.org>, April 29, 1997.
+ * Written by Jason R. Thorpe <thorpej@NetBSD.org>, April 29, 1997.
  * Public domain.
  */
 

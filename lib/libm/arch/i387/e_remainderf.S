@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: e_remainderf.S,v 1.4 2001/06/25 16:47:05 fvdl Exp $")
+RCSID("$NetBSD: e_remainderf.S,v 1.5 2003/07/26 19:24:59 salo Exp $")
 
 ENTRY(__ieee754_remainderf)
 	XMM_TWO_ARG_FLOAT_PROLOGUE
