@@ -84,6 +84,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "cpphash.h"
 
 void fatal PVPROTO ((const char *, ...)) ATTRIBUTE_PRINTF_1;
+void warning PVPROTO ((const char *, ...)) ATTRIBUTE_PRINTF_1;
 
 sstring buf;
 
@@ -1392,15 +1393,16 @@ cpp_message VPROTO ((cpp_reader *pfile, int is_error, const char *msg, ...))
 }
 
 static void
-v_fatal (str, ap)
+v_error (num, str, ap)
+  int num;
   const char * str;
   va_list ap;
 {
   fprintf (stderr, "%s: %s: ", progname, inc_filename);
   vfprintf (stderr, str, ap);
   fprintf (stderr, "\n");
-  
-  exit (FATAL_EXIT_CODE);
+  if (num) 
+    exit (FATAL_EXIT_CODE);
 }
 
 void
@@ -1417,7 +1419,25 @@ fatal VPROTO ((const char *str, ...))
   str = va_arg (ap, const char *);
 #endif
 
-  v_fatal(str, ap);
+  v_error(1, str, ap);
+  va_end(ap);
+}
+
+void
+warning VPROTO ((const char *str, ...))
+{
+#ifndef __STDC__
+  const char *str;
+#endif
+  va_list ap;
+  
+  VA_START(ap, str);
+
+#ifndef __STDC__
+  str = va_arg (ap, const char *);
+#endif
+
+  v_error(0, str, ap);
   va_end(ap);
 }
 
@@ -1437,7 +1457,7 @@ cpp_fatal VPROTO ((cpp_reader * pfile, const char *str, ...))
   str = va_arg (ap, const char *);
 #endif
 
-  v_fatal(str, ap);
+  v_error(1, str, ap);
   va_end(ap);
 }
 
