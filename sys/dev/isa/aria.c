@@ -1,3 +1,5 @@
+/*	$NetBSD: aria.c,v 1.5 1998/07/21 07:48:36 mycroft Exp $	*/
+
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
  *
