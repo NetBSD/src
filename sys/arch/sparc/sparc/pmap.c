@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 1997/07/06 12:29:54 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.87 1997/07/06 23:52:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,6 +62,7 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -2956,7 +2957,7 @@ pmap_bootstrap4m(void)
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(kernel_pmap_store.pm_lock);
+	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 
 	/*
