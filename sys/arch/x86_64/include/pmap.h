@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2001/09/10 21:19:41 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.10.1 2002/05/30 15:36:53 gehenna Exp $	*/
 
 /*
  *
@@ -155,9 +155,10 @@
  */
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
-#define L4_SLOT_PTE	255
-#define L4_SLOT_KERN	256
-#define L4_SLOT_APTE	511
+#define L4_SLOT_PTE		255
+#define L4_SLOT_KERN		256
+#define L4_SLOT_KERNBASE	511
+#define L4_SLOT_APTE		510
 
 #define PDIR_SLOT_KERN	L4_SLOT_KERN
 #define PDIR_SLOT_PTE	L4_SLOT_PTE
@@ -192,17 +193,22 @@
 #define PDP_BASE	L4_BASE
 #define APDP_BASE	AL4_BASE
 
-#define NKL4_MAX_ENTRIES	(unsigned long)254
+#define NKL4_MAX_ENTRIES	(unsigned long)1
 #define NKL3_MAX_ENTRIES	(unsigned long)(NKL4_MAX_ENTRIES * 512)
 #define NKL2_MAX_ENTRIES	(unsigned long)(NKL3_MAX_ENTRIES * 512)
 #define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * 512)
 
+#define NKL4_KIMG_ENTRIES	1
+#define NKL3_KIMG_ENTRIES	1
+#define NKL2_KIMG_ENTRIES	4
+
 /*
- * 32M of KVA to start with.
+ * Since kva space is below the kernel in its entirety, we start off
+ * with zero entries on each level.
  */
-#define NKL4_START_ENTRIES	1
-#define NKL3_START_ENTRIES	1
-#define NKL2_START_ENTRIES	16
+#define NKL4_START_ENTRIES	0
+#define NKL3_START_ENTRIES	0
+#define NKL2_START_ENTRIES	0
 #define NKL1_START_ENTRIES	0	/* XXX */
 
 #define NTOPLEVEL_PDES		(NBPG / (sizeof (pd_entry_t)))
@@ -212,6 +218,15 @@
 #define NPDPG			(NBPG / sizeof (pd_entry_t))
 
 #define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
+
+/*
+ * pl*_pi: index in the ptp page for a pde mapping a VA.
+ * (pl*_i below is the index in the virtual array of all pdes per level)
+ */
+#define pl1_pi(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
+#define pl2_pi(VA)	(((VA_SIGN_POS(VA)) & L2_MASK) >> L2_SHIFT)
+#define pl3_pi(VA)	(((VA_SIGN_POS(VA)) & L3_MASK) >> L3_SHIFT)
+#define pl4_pi(VA)	(((VA_SIGN_POS(VA)) & L4_MASK) >> L4_SHIFT)
 
 /*
  * pl*_i: generate index into pde/pte arrays in virtual space

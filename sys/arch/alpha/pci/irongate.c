@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.6 2001/10/06 02:51:42 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.6.10.1 2002/05/30 15:32:22 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.6 2001/10/06 02:51:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.6.10.1 2002/05/30 15:32:22 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	    alphabus_dma_get_tag(&icp->ic_dmat_pci, ALPHA_BUS_PCI);
 	pba.pba_pc = &icp->ic_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 

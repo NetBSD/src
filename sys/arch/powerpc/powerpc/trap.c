@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2002/03/04 04:07:35 dbj Exp $	*/
+/*	$NetBSD: trap.c,v 1.58.6.1 2002/05/30 15:35:31 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -649,6 +649,25 @@ fix_unaligned(p, frame)
 	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
 
 	switch (indicator) {
+	case EXC_ALI_DCBZ:
+		{
+			/*
+			 * The DCBZ (Data Cache Block Zero) instruction
+			 * gives an alignment fault if used on non-cacheable
+			 * memory.  We handle the fault mainly for the
+			 * case when we are running with the cache disabled
+			 * for debugging.
+			 */
+			static char zeroes[CACHELINESIZE];
+			int error;
+			error = copyout(zeroes,
+					(void *)(frame->dar & -CACHELINESIZE),
+					CACHELINESIZE);
+			if (error)
+				return -1;
+			return 0;
+		}
+
 	case EXC_ALI_LFD:
 	case EXC_ALI_STFD:
 		{

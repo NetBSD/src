@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2002/04/12 02:55:03 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8.2.1 2002/05/30 15:35:35 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -208,6 +208,7 @@ pci_intr_map(pa, ihp)
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	}
+#if defined(OPENPIC_SERIAL_MODE)
 	if (line == 11) {
 		switch (pin) {
 		case PCI_INTERRUPT_PIN_A:
@@ -228,7 +229,11 @@ pci_intr_map(pa, ihp)
 			goto bad;
 			break;
 		}
+			*ihp = SANDPOINT_INTR_WINBOND_C;
 	} else {
+#else
+	if (1) {
+#endif
 		/*
 		 * Sandpoint has 4 PCI slots.
 		 * Sandpoint rev. X2 has them in a weird order.  Counting

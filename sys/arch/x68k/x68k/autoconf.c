@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.16.1 2002/05/17 13:50:03 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.16.2 2002/05/30 15:36:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -274,7 +274,8 @@ scsi_find(bdev)
 	if (!scsibus)
 		return NULL;
 	sbsc = (struct scsibus_softc *) scsibus;
-	periph = sbsc->sc_channel->chan_periphs[B_X68K_SCSI_ID(bdev)][B_X68K_SCSI_LUN(bdev)];
+	periph = scsipi_lookup_periph(sbsc->sc_channel,
+	    B_X68K_SCSI_ID(bdev), B_X68K_SCSI_LUN(bdev));
 
 	return periph ? periph->periph_dev : NULL;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.24.8.2 2002/05/17 15:09:14 gehenna Exp $
+# $NetBSD: files.next68k,v 1.24.8.3 2002/05/30 15:34:02 gehenna Exp $
 
 # next68k-specific configuration info
 
@@ -53,7 +53,6 @@ file	arch/next68k/next68k/nextrom.c
 file	arch/next68k/next68k/rtc.c
 file	arch/next68k/next68k/disksubr.c
 file	arch/next68k/next68k/kgdb_machdep.c	kgdb
-file	arch/next68k/next68k/stub.c		kgdb
 
 #file	arch/next68k/dev/dbj_debug.c
 file 	arch/next68k/dev/bus_dma.c

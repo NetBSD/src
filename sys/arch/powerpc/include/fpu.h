@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.5 2001/12/05 05:02:10 chs Exp $	*/
+/*	$NetBSD: fpu.h,v 1.5.8.1 2002/05/30 15:35:27 gehenna Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -67,7 +67,10 @@
 #define	FPSCR_RN	0x00000003
 
 #ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
 #include "opt_ppcarch.h"
+#endif
 
 /* List of PowerPC architectures that support FPUs. */
 #if defined(PPC_MPC6XX)

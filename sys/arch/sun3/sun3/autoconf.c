@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.14.1 2002/05/30 15:36:20 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,14 +49,19 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 
+#include "scsibus.h"
+
+#if NSCSIBUS > 0
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/mon.h>
 
 #include <sun3/sun3/machdep.h>
+
 
 /* Make sure the config is OK. */
 #if (defined(_SUN3_) + defined(_SUN3X_)) != 1
@@ -163,7 +168,9 @@ typedef struct device * (*findfunc_t) __P((char *, int, int));
 
 static struct device * find_dev_byname __P((char *));
 static struct device * net_find  __P((char *, int, int));
+#if NSCSIBUS > 0
 static struct device * scsi_find __P((char *, int, int));
+#endif
 static struct device * xx_find   __P((char *, int, int));
 
 struct prom_n2f {
@@ -173,7 +180,9 @@ struct prom_n2f {
 static struct prom_n2f prom_dev_table[] = {
 	{ "ie",		net_find },
 	{ "le",		net_find },
+#if NSCSIBUS > 0
 	{ "sd",		scsi_find },
+#endif
 	{ "xy",		xx_find },
 	{ "xd",		xx_find },
 	{ "",		0 },
@@ -252,6 +261,7 @@ net_find(name, ctlr, unit)
 	return (find_dev_byname(tname));
 }
 
+#if NSCSIBUS > 0
 /*
  * SCSI device:  The controller number corresponds to the
  * scsibus number, and the unit number is (targ*8 + LUN).
@@ -278,12 +288,13 @@ scsi_find(name, ctlr, unit)
 
 	/* Find the device at this target/LUN */
 	sbsc = (struct scsibus_softc *)scsibus;
-	periph = sbsc->sc_channel->chan_periphs[target][lun];
+	periph = scsipi_lookup_periph(sbsc->sc_channel, target, lun);
 	if (periph == NULL)
 		return (NULL);
 
 	return (periph->periph_dev);
 }
+#endif	/* NSCSIBUS > 0 */
 
 /*
  * Xylogics SMD disk: (xy, xd)

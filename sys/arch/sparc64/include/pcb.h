@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 2002/05/14 02:34:15 eeh Exp $ */
+/*	$NetBSD: pcb.h,v 1.8.2.1 2002/05/30 15:35:52 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -153,8 +153,7 @@ struct md_coredump32 {
 };
 
 struct md_coredump {
-	/* We'll retain the larger structure for backwards compat. */
-	struct	trapframe64_15 md_tf;
+	struct	trapframe64 md_tf;
 	struct	fpstate64 md_fpstate;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.6 2002/05/04 10:04:42 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.6.2.1 2002/05/30 15:32:45 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -213,6 +213,7 @@ footbridge_attach(parent, self, aux)
 	fba.fba_pba.pba_dmat = &footbridge_pci_bus_dma_tag;
 	fba.fba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	fba.fba_pba.pba_bus = 0;
+	fba.fba_pba.pba_bridgetag = NULL;
 	config_found(self, &fba.fba_pba, footbridge_print);
 
 	/* Attach a time-of-day clock device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 2002/02/11 10:44:38 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.86.8.1 2002/05/30 15:32:49 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -880,8 +880,11 @@ Lstart0:
 	jle	Lstart0
 	/*
 	 * Enter kernel at destination address and continue copy
+	 * Make sure that the jump is absolute (by adding ':l') otherwise
+	 * the assembler tries to use a pc-relative jump.
+	 * Which is definitely not what is needed at this point!
 	 */
-	jmp	Lstart2
+	jmp	Lstart2:l
 Lstart2:
 	movl	%a0@+,%a5@+		| copy the rest of the kernel
 	subl	#4, %d4

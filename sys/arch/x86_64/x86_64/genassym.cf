@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2002/05/11 09:39:28 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.2.2.1 2002/05/30 15:37:02 gehenna Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,12 @@ endif
 define	SRUN			SRUN
 define	SONPROC			SONPROC
 
+define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
+define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
+define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
+
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
+define	VM_MIN_KERNEL_ADDRESS	(unsigned long long)VM_MIN_KERNEL_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
@@ -123,8 +128,10 @@ define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 
 define	P_SYSTEM		P_SYSTEM
+define	MDP_SYSCALL		MDP_SYSCALL
 
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
@@ -139,8 +146,7 @@ define	V_INTR			offsetof(struct uvmexp, intrs)
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
 define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
-define	PCB_FS			offsetof(struct pcb, pcb_fs)
-define	PCB_GS			offsetof(struct pcb, pcb_gs)
+define	PCB_RSP0		offsetof(struct pcb, pcb_tss.tss_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
@@ -149,7 +155,7 @@ define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_RIP			offsetof(struct trapframe, tf_rip)
 define	TF_ERR			offsetof(struct trapframe, tf_err)
 define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
-define	TF_EFLAGS		offsetof(struct trapframe, tf_eflags)
+define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
 
 define	FRAMESIZE		sizeof(struct trapframe)
 
@@ -160,12 +166,14 @@ define	SIGF_CODE		offsetof(struct sigframe, sf_code)
 define	SIGF_SCP		offsetof(struct sigframe, sf_scp)
 define	SC_FS			offsetof(struct sigcontext, sc_fs)
 define	SC_GS			offsetof(struct sigcontext, sc_gs)
-define	SC_EFLAGS		offsetof(struct sigcontext, sc_eflags)
+define	SC_RFLAGS		offsetof(struct sigcontext, sc_rflags)
 
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_COUNT		offsetof(struct intrhand, ih_count)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
+
+define	CPRIV_SCRATCH_R15	offsetof(struct cpu_privdata, cpriv_regs.tf_r15)
 
 ifdef COMPAT_NETBSD32
 define	SIGF_HANDLER32		offsetof(struct netbsd32_sigframe, sf_handler)

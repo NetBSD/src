@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2001/06/19 00:21:16 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.14.1 2002/05/30 15:37:02 gehenna Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -207,6 +207,9 @@ farjmp64:
 	.space 512
 tmpstk:
 
+	.globl _C_LABEL(cpu_private)
+	.comm _C_LABEL(cpu_private),NBPG,NBPG
+
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
  * This may not be needed it things are cleaned up a little.
@@ -382,13 +385,26 @@ start:	movw	$0x1234,0x472			# warm boot
  *			      0          1       2      3
  */
 
+#if L2_SLOT_KERNBASE > 0
+#define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
+#else
+#define TABLE_L2_ENTRIES (NKL2_KIMG_ENTRIES + 1)
+#endif
+
+#if L3_SLOT_KERNBASE > 0
+#define TABLE_L3_ENTRIES (2 * NKL3_KIMG_ENTRIES)
+#else
+#define TABLE_L3_ENTRIES NKL3_KIMG_ENTRIES
+#endif
+
+
 #define PROC0_PML4_OFF	0
 #define PROC0_STK_OFF	(PROC0_PML4_OFF + NBPG)
 #define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * NBPG)
-#define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_START_ENTRIES * NBPG)
-#define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + NKL3_START_ENTRIES * NBPG)
+#define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * NBPG)
+#define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * NBPG)
 #define TABLESIZE \
-  ((NKL4_START_ENTRIES + NKL3_START_ENTRIES + NKL2_START_ENTRIES + 1 + UPAGES) \
+  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * NBPG)
 
 	/* Find end of kernel image. */
@@ -435,14 +451,13 @@ start:	movw	$0x1234,0x472			# warm boot
 	 */
 	GET_RELOC_ADDR(etext)
 	movl	%ebp,%edx		/* should be $RELOC */
-	subl	$KERNBASE_LO,%edx
 	addl	$PGOFSET,%edx
 	andl	$~PGOFSET,%edx
 
 	/*
 	 * Skip the first MB.
 	 */
-	movl	$KERNTEXTOFF_LO,%eax
+	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
 	movl	%eax,%ecx
 	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # pdes */
 	addl	%ecx,%ebx
@@ -471,28 +486,46 @@ start:	movw	$0x1234,0x472			# warm boot
 	leal    (PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
-	movl	$NKL2_START_ENTRIES,%ecx
+	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
+
+#if L2_SLOT_KERNBASE > 0
+	/* If needed, set up level 2 entries for actual kernel mapping */
+	leal	(PROC0_PTP2_OFF+ L2_SLOT_KERNBASE*8)(%esi),%ebx
+	leal    (PROC0_PTP1_OFF)(%esi),%eax
+	orl     $(PG_V|PG_KW), %eax
+	movl    $(NKL2_KIMG_ENTRIES+1),%ecx
+	fillkpt
+#endif
 
 	/* Set up level 3 pages */
 	leal    (PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
-	movl	$NKL3_START_ENTRIES,%ecx
+	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
+
+#if L3_SLOT_KERNBASE > 0
+	/* If needed, set up level 3 entries for actual kernel mapping */
+	leal	(PROC0_PTP3_OFF+ L3_SLOT_KERNBASE*8)(%esi),%ebx
+	leal    (PROC0_PTP2_OFF)(%esi),%eax
+	orl     $(PG_V|PG_KW), %eax
+	movl    $NKL3_KIMG_ENTRIES,%ecx
+	fillkpt
+#endif
 
 	/* Set up top level entries for identity mapping */
 	leal    (PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
-	movl	$NKL3_START_ENTRIES,%ecx
+	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Set up top level entries for actual kernel mapping */
-	leal    (PROC0_PML4_OFF + PDIR_SLOT_KERN*8)(%esi),%ebx
+	leal    (PROC0_PML4_OFF + L4_SLOT_KERNBASE*8)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
-	movl	$NKL3_START_ENTRIES,%ecx
+	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Install recursive top level PDE */
@@ -573,9 +606,28 @@ longmode_hi:
 	 * There's no need anymore for the identity mapping in low
 	 * memory, remove it.
 	 */
-	movq	$NKL4_START_ENTRIES,%rcx
-	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys  address of PML4
 	movq	$KERNBASE,%r8
+
+#if L2_SLOT_KERNBASE > 0
+	movq	$(NKL2_KIMG_ENTRIES+1),%rcx
+	leaq	(PROC0_PTP2_OFF)(%rsi),%rbx
+	addq	%r8, %rbx
+1:	movq	$0,(%rbx)
+	addq	$8,%rbx
+	loop	1b
+#endif
+
+#if L3_SLOT_KERNBASE > 0
+	movq	$NKL3_KIMG_ENTRIES,%rcx
+	leaq	(PROC0_PTP3_OFF)(%rsi),%rbx
+	addq	%r8, %rbx
+1:	movq	$0,(%rbx)
+	addq	$8,%rbx
+	loop	1b
+#endif
+
+	movq	$NKL4_KIMG_ENTRIES,%rcx
+	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys  address of PML4
 	addq	%r8, %rbx			# new, virtual adress of PML4
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
@@ -594,7 +646,7 @@ longmode_hi:
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
 	xorq	%rbp,%rbp               # mark end of frames
 
-	leaq	(TABLESIZE)(%rsi),%rdi	# skip past stack and page tables
+	movq	$VM_MIN_KERNEL_ADDRESS,%rdi
 	call	_C_LABEL(init_x86_64)
 
 	/* Clear segment registers; always null in proc0. */
@@ -603,14 +655,10 @@ longmode_hi:
 	wrmsr
 	movq	$MSR_GSBASE,%rcx
 	wrmsr
+	movq	$MSR_KERNELGSBASE,%rcx
+	wrmsr
 
 	call 	_C_LABEL(main)
-
-NENTRY(proc_trampoline)
-	movq	%r13,%rdi
-	call	*%r12
-	INTRFASTEXIT
-	/* NOTREACHED */
 
 /*****************************************************************************/
 
@@ -966,12 +1014,6 @@ sw1:	bsfl	%ecx,%r8d		# find a full q
 
 	movq	P_ADDR(%r13),%r13
 
-	/* Save segment registers. */
-	movl	%fs,%eax
-	movl	%gs,%ecx
-	movl	%eax,PCB_FS(%r13)
-	movl	%ecx,PCB_GS(%r13)
-
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%r13)
 	movq	%rbp,PCB_RBP(%r13)
@@ -1016,12 +1058,6 @@ switch_exited:
 	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%rax,%rdx, 1)
 	ltr	%dx
-
-	/* Restore segment registers. */
-	movl	PCB_FS(%r13),%eax
-	movl	PCB_GS(%r13),%ecx
-	movl	%eax,%fs
-	movl	%ecx,%gs
 
 switch_restored:
 	/* Restore cr0 (including FPU state). */
@@ -1116,12 +1152,6 @@ ENTRY(switch_exit)
  * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
-	/* Save segment registers. */
-	movl	%fs,%eax
-	movl	%gs,%ecx
-	movl	%eax,PCB_FS(%rdi)
-	movl	%ecx,PCB_GS(%rdi)
-
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%rdi)
 	movq	%rbp,PCB_RBP(%rdi)

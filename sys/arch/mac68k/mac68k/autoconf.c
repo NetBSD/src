@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56.2.1 2002/05/17 13:49:56 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.2.2 2002/05/30 15:33:29 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,8 +178,9 @@ extern	struct cfdriver		scsibus_cd;
 			if (scsibus_cd.cd_devs[bus]) {
 				scsi = (struct scsibus_softc *)
 						scsibus_cd.cd_devs[bus];
-				if (scsi->sc_channel->chan_periphs[target][lun]) {
-					periph = scsi->sc_channel->chan_periphs[target][lun];
+				periph = scsipi_lookup_periph(scsi->sc_channel,
+				    target, lun);
+				if (periph != NULL) {
 					sc_dev = (struct device *)
 							periph->periph_dev;
 					return sc_dev->dv_unit;
@@ -194,8 +195,9 @@ extern	struct cfdriver		scsibus_cd;
 	}
 	if (scsibus_cd.cd_devs[bus]) {
 		scsi = (struct scsibus_softc *) scsibus_cd.cd_devs[bus];
-		if (scsi->sc_channel->chan_periphs[target][lun]) {
-			periph = scsi->sc_channel->chan_periphs[target][lun];
+		periph = scsipi_lookup_periph(scsi->sc_channel,
+		    target, lun);
+		if (periph != NULL) {
 			sc_dev = (struct device *) periph->periph_dev;
 			return sc_dev->dv_unit;
 		}

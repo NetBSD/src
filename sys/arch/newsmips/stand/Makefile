@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1999/12/17 07:40:09 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2.20.1 2002/05/30 15:33:57 gehenna Exp $
 
-SUBDIR= common boot bootxx installboot
+SUBDIR= common boot bootxx
 
 .include <bsd.subdir.mk>
