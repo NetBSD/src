@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.h,v 1.4 1996/10/14 23:05:34 mark Exp $ */
+/* $NetBSD: vidc.h,v 1.5 1997/01/26 01:25:42 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -193,7 +193,7 @@ struct vidc_state {
 extern int  vidc_write		__P((u_int /*reg*/, int /*value*/));
 extern void vidc_setstate	__P((struct vidc_state */*vidc*/));
 extern void vidc_setpalette	__P((struct vidc_state */*vidc*/));
-extern void vidc_stdpalette	__P(());
+extern void vidc_stdpalette	__P((void));
 extern int  vidc_col		__P((int /*red*/, int /*green*/, int /*blue*/));
 extern struct vidc_state vidc_current[];
 #endif	/* _KERNEL */
