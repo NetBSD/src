@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.36 2003/01/09 15:58:23 christos Exp $
+# $NetBSD: Makefile,v 1.37 2003/01/10 05:07:45 yamt Exp $
 
 .include <bsd.own.mk>
 
-# if you're adding new scripts, don't forget to update
-# src/etc/postinstall and src/etc/mtree/special.
+# if you're adding new scripts, don't forget to update followings.
+#	src/etc/postinstall
+#	src/etc/mtree/special
+#	src/distrib/sets/lists/etc/mi
 
 FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	accounting altqd amd apmd \
