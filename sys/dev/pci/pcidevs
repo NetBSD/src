@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.68 1998/07/13 03:29:00 mark Exp $
+$NetBSD: pcidevs,v 1.69 1998/07/19 12:23:56 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -824,12 +824,12 @@ product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
 product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 
 /* Matrox products */
-product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
 product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
+product MATROX MYSTIQUE		0x051A	MGA 1064SG
 product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
 product MATROX MILLENNIUM_II_AGP	0x051F	MGA Millennium II 2164WA-B AGP
-product MATROX MYSTIQUE		0x102B	MGA 1064SG
+product MATROX IMPRESSION	0x0d10	MGA Impression
 
 /* Mylex products */
 product MYLEX 960P	0x0001	DAC960P RAID controller
@@ -852,6 +852,9 @@ product SYMBIOS 815	0x0004	53c815
 product SYMBIOS 810AP	0x0005	53c810AP
 product SYMBIOS 860	0x0006	53c860
 product SYMBIOS 875	0x000f	53c875
+
+/* NEC products */
+product NEC POWERVR2	0x0046	PowerVR PCX2
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
