@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.88 1998/06/26 18:58:38 cgd Exp $
+#	$NetBSD: INSTALL,v 1.89 1998/07/27 01:51:29 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -66,6 +66,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+options 	MSGBUFSIZE="(128 * 1024)"
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -363,6 +365,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
+cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
