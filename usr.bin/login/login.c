@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.58 2000/06/02 03:01:22 aidan Exp $       */
+/*     $NetBSD: login.c,v 1.59 2000/07/28 16:36:53 thorpej Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.58 2000/06/02 03:01:22 aidan Exp $");
+__RCSID("$NetBSD: login.c,v 1.59 2000/07/28 16:36:53 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -379,7 +379,7 @@ main(argc, argv)
 #ifdef SKEY
 		if (skey_haskey(username) == 0) {
 			static char skprompt[80];
-			char *skinfo = skey_keyinfo(username);
+			const char *skinfo = skey_keyinfo(username);
 				
 			(void)snprintf(skprompt, sizeof(skprompt)-1,
 			    "Password [%s]:",
