@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2002/06/06 19:48:07 fredette Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2002/11/28 06:06:13 chs Exp $	*/
 
 /*	$OpenBSD: disklabel.h,v 1.5 2000/07/05 22:37:22 mickey Exp $	*/
 
@@ -261,35 +261,37 @@ struct lsegblock {
  * volume header for "LIF" format volumes
  */
 struct	lifvol {
-	short	vol_id;
-	char	vol_label[6];
-	u_int	vol_addr;
-	short	vol_oct;
-	short	vol_dummy;
-	u_int	vol_dirsize;
-	short	vol_version;
-	short	vol_zero;
-	u_int	vol_number;
-	u_int	vol_lastvol;
-	u_int	vol_length;
-	char	vol_toc[6];
-	char	vol_dummy1[198];
+	uint16_t	vol_id;
+	uint8_t		vol_label[6];
+	uint32_t	vol_addr;
+	uint16_t	vol_oct;
+	uint16_t	vol_dummy;
 
-	u_int	ipl_addr;
-	u_int	ipl_size;
-	u_int	ipl_entry;
+	uint32_t	vol_dirsize;
+	uint16_t	vol_version;
+	uint16_t	vol_zero;
+	uint32_t	vol_number;
+	uint32_t	vol_lastvol;
 
-	u_int	vol_dummy2;
+	uint32_t	vol_length;
+	uint8_t		vol_toc[6];
+	uint8_t		vol_dummy1[198];
+
+	uint32_t	ipl_addr;
+	uint32_t	ipl_size;
+	uint32_t	ipl_entry;
+
+	uint32_t	vol_dummy2;
 };
 
 struct	lifdir {
-	char	dir_name[10];
-	u_short	dir_type;
-	u_int	dir_addr;
-	u_int	dir_length;
-	char	dir_toc[6];
-	short	dir_flag;
-	u_int	dir_implement;
+	uint8_t		dir_name[10];
+	uint16_t	dir_type;
+	uint32_t	dir_addr;
+	uint32_t	dir_length;
+	uint8_t		dir_toc[6];
+	uint16_t	dir_flag;
+	uint32_t	dir_implement;
 };
 
 struct lif_load {
@@ -297,8 +299,8 @@ struct lif_load {
 	int count;
 };
 
-#define LIF_VOL_ID	-32768
-#define LIF_VOL_OCT	4096
+#define LIF_VOL_ID	0x8000
+#define LIF_VOL_OCT	0x1000
 #define LIF_DIR_SWAP	0x5243
 #define	LIF_DIR_FS	0xcd38
 #define	LIF_DIR_IOMAP	0xcd60
@@ -318,7 +320,7 @@ struct lif_load {
 #define LIF_VOLSIZE	sizeof(struct lifvol)
 #define LIF_DIRSTART	2048
 #define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct lifdir))
-#define LIF_FILESTART	8192
+#define LIF_FILESTART	4096
 
 #define	btolifs(b)	(((b) + (LIF_SECTSIZE - 1)) / LIF_SECTSIZE)
 #define	lifstob(s)	((s) * LIF_SECTSIZE) 
