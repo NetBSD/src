@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24 2002/03/10 11:32:00 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.25 2002/03/10 15:29:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cpu.c,v 1.24 2002/03/10 11:32:00 bjh21 Exp $");
+__RCSID("$NetBSD: cpu.c,v 1.25 2002/03/10 15:29:53 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -57,84 +57,24 @@ __RCSID("$NetBSD: cpu.c,v 1.24 2002/03/10 11:32:00 bjh21 Exp $");
 #include <machine/cpu.h>
 #include <arm/undefined.h>
 
-#include <arm/cpus.h>
-
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
 #include <arm/fpe-arm/armfpe.h>
 #endif
 
-cpu_t cpus[MAX_CPUS];
-
 char cpu_model[256];
-volatile int undefined_test;	/* Used for FPA test */
 
 /* Prototypes */
-void identify_master_cpu(struct device *dv, int cpu_number);
-void identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *);
-void identify_arm_fpu(struct device *dv, int cpu_number);
-int fpa_test(u_int, u_int, trapframe_t *, int);
-int fpa_handler(u_int, u_int, trapframe_t *, int);
+void identify_arm_cpu(struct device *dv, struct cpu_info *);
 
 /*
- * void cpusattach(struct device *parent, struct device *dev, void *aux)
- *
- * Attach the main cpu
+ * Identify the master (boot) CPU
  */
   
 void
 cpu_attach(struct device *dv)
 {
-
-	identify_master_cpu(dv, CPU_MASTER);
-}
-
-/*
- * Used to test for an FPA. The following function is installed as a coproc1
- * handler on the undefined instruction vector and then we issue a FPA
- * instruction. If undefined_test is non zero then the FPA did not handle
- * the instruction so must be absent.
- */
-
-int
-fpa_test(u_int address, u_int instruction, trapframe_t *frame, int fault_code)
-{
-
-	frame->tf_pc += INSN_SIZE;
-	++undefined_test;
-	return(0);
-}
-
-/*
- * If an FPA was found then this function is installed as the coproc1 handler
- * on the undefined instruction vector. Currently we don't support FPA's
- * so this just triggers an exception.
- */
-
-int
-fpa_handler(u_int address, u_int instruction, trapframe_t *frame,
-    int fault_code)
-{
-	u_int fpsr;
-    
-	__asm __volatile("rfs %0" : "=r" (fpsr));
-
-	printf("FPA exception: fpsr = %08x\n", fpsr);
-
-	return(1);
-}
-
-
-/*
- * Identify the master (boot) CPU
- * This also probes for an FPU and will install an FPE if necessary
- */
- 
-void
-identify_master_cpu(struct device *dv, int cpu_number)
-{
-	u_int fpsr;
-	void *uh;
+	int usearmfpe = 1;
 
 	curcpu()->ci_dev = dv;
 
@@ -145,7 +85,7 @@ identify_master_cpu(struct device *dv, int cpu_number)
 
 	curcpu()->ci_cpuid = cpu_id();
 
-	identify_arm_cpu(dv, cpu_number, curcpu());
+	identify_arm_cpu(dv, curcpu());
 
 	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_SA110
 	    && (curcpu()->ci_cpuid & CPU_ID_REVISION_MASK) < 3) {
@@ -178,6 +118,7 @@ identify_master_cpu(struct device *dv, int cpu_number)
  	}
 #endif
 
+#ifdef ARMFPE
 	/*
 	 * Ok now we test for an FPA
 	 * At this point no floating point emulator has been installed.
@@ -192,54 +133,22 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	 * FP status register for identification.
 	 */
  
-	uh = install_coproc_handler(FP_COPROC, fpa_test);
+	/*
+	 * Ok if ARMFPE is defined and the boot options request the 
+	 * ARM FPE then it will be installed as the FPE.
+	 * This is just while I work on integrating the new FPE.
+	 * It means the new FPE gets installed if compiled int (ARMFPE
+	 * defined) and also gives me a on/off option when I boot in
+	 * case the new FPE is causing panics.
+	 */
 
-	undefined_test = 0;
 
-	__asm __volatile("rfs %0" : "=r" (fpsr));
-
-	remove_coproc_handler(uh);
-
-	if (undefined_test == 0) {
-		cpus[cpu_number].fpu_type = (fpsr >> 24);
-	        switch (fpsr >> 24) {
-		case 0x81:
-			cpus[cpu_number].fpu_class = FPU_CLASS_FPA;
-			break;
-
-		default:
-			cpus[cpu_number].fpu_class = FPU_CLASS_FPU;
-			break;
-		}
-		install_coproc_handler(FP_COPROC, fpa_handler);
-	} else {
-		cpus[cpu_number].fpu_class = FPU_CLASS_NONE;
-
-		/*
-		 * Ok if ARMFPE is defined and the boot options request the 
-		 * ARM FPE then it will be installed as the FPE.
-		 * This is just while I work on integrating the new FPE.
-		 * It means the new FPE gets installed if compiled int (ARMFPE
-		 * defined) and also gives me a on/off option when I boot in
-		 * case the new FPE is causing panics.
-		 */
-
-#ifdef ARMFPE
-		if (boot_args) {
-			int usearmfpe = 1;
-
-			get_bootconf_option(boot_args, "armfpe",
-			    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
-			if (usearmfpe) {
-				if (initialise_arm_fpe(&cpus[cpu_number]) != 0)
-					identify_arm_fpu(dv, cpu_number);
-			}
-		}
-
+	if (boot_args)
+		get_bootconf_option(boot_args, "armfpe",
+		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
+	if (usearmfpe)
+		initialise_arm_fpe();
 #endif
-	}
-
-	identify_arm_fpu(dv, cpu_number);
 }
 
 enum cpu_class {
@@ -409,14 +318,12 @@ static const char *wtnames[] = {
 };
 
 void
-identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
+identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 {
-	cpu_t *cpu;
 	u_int cpuid;
 	enum cpu_class cpu_class;
 	int i;
 
-	cpu = &cpus[cpu_number];
 	cpuid = ci->ci_cpuid;
 
 	if (cpuid == 0) {
@@ -546,41 +453,6 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 		break;
 	}
 			       
-}
-
-
-/*
- * Report the type of the specifed arm fpu. This uses the generic and arm
- * specific information in the cpu structure to identify the fpu. The
- * remaining fields in the cpu structure are filled in appropriately.
- */
-
-void
-identify_arm_fpu(struct device *dv, int cpu_number)
-{
-	cpu_t *cpu;
-
-	cpu = &cpus[cpu_number];
-
-	/* Now for the FP info */
-
-	switch (cpu->fpu_class) {
-	case FPU_CLASS_NONE :
-		break;
-	case FPU_CLASS_FPE :
-		printf("%s: no FP hardware found\n", dv->dv_xname);
-		break;
-	case FPU_CLASS_FPA :
-		if (cpu->fpu_type == FPU_TYPE_FPA11)
-			printf("%s: FPA11 found\n", dv->dv_xname);
-		else
-			printf("%s: FPA10 found\n", dv->dv_xname);
-		break;
-	case FPU_CLASS_FPU :
-		printf("%s: Unknown FPU (ID=%02x)\n",
-		    dv->dv_xname, cpu->fpu_type);
-		break;
-	}
 }
 
 /* End of cpu.c */

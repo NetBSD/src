@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe.h,v 1.1 2001/11/24 01:26:24 thorpej Exp $	*/
+/*	$NetBSD: armfpe.h,v 1.2 2002/03/10 15:29:54 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -44,7 +44,6 @@
 #ifndef _ARMFPE_H_
 #define _ARMFPE_H_
 
-#include <arm/cpus.h>
 #include <machine/fp.h>
 #include <machine/ieeefp.h>
 #include <machine/reg.h>
@@ -110,8 +109,8 @@ typedef struct {
 
 /* Prototypes */
 
-int arm_fpe_boot	__P((cpu_t *cpu));
-int initialise_arm_fpe	__P((cpu_t *cpu));
+int arm_fpe_boot	__P((void));
+int initialise_arm_fpe	__P((void));
 void arm_fpe_postproc	__P((u_int fpframe, struct trapframe *frame));
 void arm_fpe_exception	__P((int exception, u_int fpframe, struct trapframe *frame));
 
