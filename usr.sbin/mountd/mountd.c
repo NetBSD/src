@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.82 2003/01/06 12:29:52 wiz Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.83 2003/04/17 02:41:22 lukem Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.82 2003/01/06 12:29:52 wiz Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.83 2003/04/17 02:41:22 lukem Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2219,6 +2219,7 @@ get_net(cp, net, maskflg)
 		net->nt_len = countones(sa);
 	else {
 		if (opt_flags & OP_MASKLEN) {
+			errno = 0;
 			preflen = strtol(prefp, NULL, 10);
 			if (preflen == LONG_MIN && errno == ERANGE)
 				goto fail;
