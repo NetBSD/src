@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 1997/09/20 12:08:21 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 1999/01/27 20:54:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -80,11 +80,11 @@ struct btinfo_console {
 	int speed;
 };
 
-#include <machine/disklabel.h>
+#include <sys/disklabel_mbr.h>
 
 struct bi_biosgeom_entry {
 	int spc, spt;
-	struct dos_partition dosparts[NDOSPART];
+	struct mbr_partition dosparts[NMBRPART];
 };
 
 struct btinfo_biosgeom {
