@@ -350,7 +350,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
   /* Tell the ELF backend that the output file needs a DT_NEEDED
      entry for this file if it is used to resolve the reference in
      a regular object.  */
-  bfd_elf_set_dt_needed_soname (abfd, soname);
+  bfd_elf_set_dt_needed_soname (abfd, xstrdup (soname));
 
   /* Add this file into the symbol table.  */
   if (! bfd_link_add_symbols (abfd, &link_info))
