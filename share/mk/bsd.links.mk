@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.13 2000/04/23 07:58:17 simonb Exp $
+#	$NetBSD: bsd.links.mk,v 1.14 2000/07/07 04:35:36 cgd Exp $
 
 .PHONY:		linksinstall
 realinstall:	linksinstall
@@ -11,7 +11,7 @@ linksinstall::
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \
-		if [ -L $$t ]; then \
+		if [ -h $$t ]; then \
 			cur=`ls -ld $$t | awk '{print $$NF}'` ; \
 			if [ "$$cur" = "$$l" ]; then \
 				continue ; \

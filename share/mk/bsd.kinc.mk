@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.16 2000/06/06 09:53:30 mycroft Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.17 2000/07/07 04:35:35 cgd Exp $
 
 # System configuration variables:
 #
@@ -125,7 +125,7 @@ incinstall::
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \
-		if [ -L $$t ]; then \
+		if [ -h $$t ]; then \
 			cur=`ls -ld $$t | awk '{print $$NF}'` ; \
 			if [ "$$cur" = "$$l" ]; then \
 				continue ; \
