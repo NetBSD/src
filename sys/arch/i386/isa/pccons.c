@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.26 1993/11/10 19:24:45 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.27 1993/11/10 19:38:49 mycroft Exp $
  */
 
 /*
@@ -732,6 +732,8 @@ sput(ps, cp, n)
 		    }
 
 		    case '\010':
+			if (crtat <= Crtat)
+				break;
 			--crtat;
 			if (--ps->ps_col < 0)
 				ps->ps_col += COL;	/* non-destructive backspace */
