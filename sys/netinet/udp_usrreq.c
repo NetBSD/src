@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.126 2004/12/17 22:54:52 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.127 2004/12/18 15:31:26 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.126 2004/12/17 22:54:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.127 2004/12/18 15:31:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -430,9 +430,8 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	 * Checksum extended UDP header and data.  Maybe skip checksum
 	 * on loopback interfaces.
 	 */
-	if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
-			     IFF_LOOPBACK) ||
-			   udp_do_loopback_cksum)) {
+	if (__predict_true((m->m_flags & M_LOOP) == 0 ||
+	    udp_do_loopback_cksum)) {
 		if (uh->uh_sum == 0) {
 			udp6stat.udp6s_nosum++;
 			goto bad;
