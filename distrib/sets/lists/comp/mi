@@ -43,6 +43,7 @@
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/ic
+./usr/include/dev/ic/ad1848reg.h
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
@@ -53,6 +54,7 @@
 ./usr/include/dev/ic/i8042reg.h
 ./usr/include/dev/ic/i8237reg.h
 ./usr/include/dev/ic/i82586reg.h
+./usr/include/dev/ic/ics2101reg.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/ncr5380reg.h
@@ -66,6 +68,8 @@
 ./usr/include/dev/isa/comreg.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/elink.h
+./usr/include/dev/isa/gusreg.h
+./usr/include/dev/isa/ics2101var.h
 ./usr/include/dev/isa/if_edreg.h
 ./usr/include/dev/isa/if_egreg.h
 ./usr/include/dev/isa/if_elreg.h
@@ -87,6 +91,7 @@
 ./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
+./usr/include/dev/mulaw.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/ncr_reg.h
 ./usr/include/dev/pci/pcidevs.h
