@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.3 2000/04/25 14:16:46 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.4 2000/04/26 14:02:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -137,14 +137,13 @@
  */
 
 #include <dev/ic/rtl81x9reg.h>
+#include <dev/ic/rtl81x9var.h>
 
 #if defined DEBUG
 #define STATIC
 #else
 #define STATIC static
 #endif
-
-STATIC int rl_encap		__P((struct rl_softc *, struct mbuf * ));
 
 STATIC void rl_rxeof		__P((struct rl_softc *));
 STATIC void rl_txeof		__P((struct rl_softc *));
@@ -174,7 +173,6 @@ STATIC void rl_setmulti		__P((struct rl_softc *));
 STATIC int rl_list_tx_init	__P((struct rl_softc *));
 
 STATIC int rl_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
-STATIC int rl_allocsndbuf __P((struct rl_softc *, int));
 
 
 #define EE_SET(x)					\
@@ -650,6 +648,10 @@ STATIC void rl_setmulti(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, &sc->ethercom, enm);
 	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0)
+			continue;
+
 		h = rl_calchash(enm->enm_addrlo);
 		if (h < 32)
 			hashes[0] |= (1 << h);
@@ -744,8 +746,14 @@ rl_attach(sc, eaddr)
 	}
 
 	for (i = 0; i < RL_TX_LIST_CNT; i++)
-		     if (rl_allocsndbuf(sc, i))
-			     goto fail;
+		if ((error = bus_dmamap_create(sc->sc_dmat,
+		    MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->snd_dmamap[i])) != 0) {
+			printf("%s: can't create snd buffer DMA map,"
+			    " error = %d\n", sc->sc_dev.dv_xname, error);
+		    goto fail;
+	}
 
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
@@ -873,7 +881,11 @@ STATIC void rl_rxeof(sc)
 
 	while((CSR_READ_1(sc, RL_COMMAND) & RL_CMD_EMPTY_RXBUF) == 0) {
 		rxbufpos = sc->rl_cdata.rl_rx_buf + cur_rx;
+		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
+		    sizeof(u_int32_t *), BUS_DMASYNC_POSTREAD);
 		rxstat = le32toh(*(u_int32_t *)rxbufpos);
+		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
+		    sizeof(u_int32_t *), BUS_DMASYNC_PREREAD);
 
 		/*
 		 * Here's a totally undocumented fact for you. When the
@@ -939,6 +951,9 @@ STATIC void rl_rxeof(sc)
 		if (rx_bytes > max_bytes)
 			break;
 
+		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
+		    cur_rx + sizeof(u_int32_t), total_len, BUS_DMASYNC_POSTREAD);
+
 		rxbufpos = sc->rl_cdata.rl_rx_buf +
 			((cur_rx + sizeof(u_int32_t)) % RL_RXBUFLEN);
 
@@ -994,10 +1009,10 @@ STATIC void rl_rxeof(sc)
 		 */
 		if (ifp->if_bpf) {
 			bpf_mtap(ifp->if_bpf, m);
-			if (ifp->if_flags & IFF_PROMISC &&
-				(bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-						ETHER_ADDR_LEN) &&
-					(eh->ether_dhost[0] & 1) == 0)) {
+			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+				ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+				memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+						ETHER_ADDR_LEN) != 0) {
 				m_freem(m);
 				continue;
 			}
@@ -1005,6 +1020,10 @@ STATIC void rl_rxeof(sc)
 #endif
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
+		    cur_rx + sizeof(u_int32_t),
+		    total_len, BUS_DMASYNC_PREREAD);
 	}
 
 	return;
@@ -1035,11 +1054,17 @@ STATIC void rl_txeof(sc)
 		    RL_TXSTAT_TX_UNDERRUN|RL_TXSTAT_TXABRT)))
 			break;
 
+		bus_dmamap_sync(sc->sc_dmat,
+		    sc->snd_dmamap[sc->rl_cdata.last_tx], 0,
+		    sc->snd_dmamap[sc->rl_cdata.last_tx]->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat,
+		    sc->snd_dmamap[sc->rl_cdata.last_tx]);
+		m_freem(RL_LAST_TXMBUF(sc));
+		RL_LAST_TXMBUF(sc) = NULL;
+
 		ifp->if_collisions += (txstat & RL_TXSTAT_COLLCNT) >> 24;
 
-		if (RL_LAST_TXMBUF(sc) != NULL) {
-			RL_LAST_TXMBUF(sc) = NULL;
-		}
 		if (txstat & RL_TXSTAT_TX_OK)
 			ifp->if_opackets++;
 		else {
@@ -1106,84 +1131,6 @@ int rl_intr(arg)
 	return (handled);
 }
 
-STATIC int
-rl_allocsndbuf(sc, idx)
-	struct rl_softc *sc;
-	int idx;
-{
-	struct mbuf *m_new = NULL;
-	int error;
-
-	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL) {
-		printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
-		return(1);
-	}
-
-	MCLGET(m_new, M_DONTWAIT);
-	if (!(m_new->m_flags & M_EXT)) {
-		m_freem(m_new);
-		printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
-		return(1);
-	}
-
-	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    MCLBYTES, 1,
-	    MCLBYTES, 0, BUS_DMA_NOWAIT,
-	    &sc->snd_dmamap[idx])) != 0) {
-		printf("%s: can't create snd buffer DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
-		return (1);
-	}
-
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->snd_dmamap[idx],
-	    mtod(m_new, caddr_t), MCLBYTES, NULL,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: can't load snd buffer DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
-		return (1);
-	}
-
-	sc->sndbuf[idx] = m_new;
-	return (0);
-}
-
-/*
- * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
- * pointers to the fragment pointers.
- */
-STATIC int rl_encap(sc, m_head)
-	struct rl_softc		*sc;
-	struct mbuf		*m_head;
-{
-	struct mbuf		*m_new;
-
-	/*
-	 * The RealTek is brain damaged and wants longword-aligned
-	 * TX buffers, plus we can only have one fragment buffer
-	 * per packet. We have to copy pretty much all the time.
-	 */
-
-	m_new = sc->sndbuf[sc->rl_cdata.cur_tx];
-
-	m_copydata(m_head, 0, m_head->m_pkthdr.len,	
-				mtod(m_new, caddr_t));
-	m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-	m_freem(m_head);
-	m_head = m_new;
-
-	/* Pad frames to at least 60 bytes. */
-	if (m_head->m_pkthdr.len < RL_MIN_FRAMELEN) {
-		m_head->m_pkthdr.len +=
-			(RL_MIN_FRAMELEN - m_head->m_pkthdr.len);
-		m_head->m_len = m_head->m_pkthdr.len;
-	}
-
-	RL_CUR_TXMBUF(sc) = m_head;
-
-	return(0);
-}
-
 /*
  * Main transmit routine.
  */
@@ -1192,7 +1139,8 @@ STATIC void rl_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct rl_softc		*sc;
-	struct mbuf		*m_head = NULL;
+	struct mbuf		*m_head = NULL, *m_new;
+	int			error, idx, len;
 
 	sc = ifp->if_softc;
 
@@ -1201,7 +1149,50 @@ STATIC void rl_start(ifp)
 		if (m_head == NULL)
 			break;
 
-		rl_encap(sc, m_head);
+		idx = sc->rl_cdata.cur_tx;
+
+		/*
+		 * Load the DMA map.  If this fails, the packet didn't
+		 * fit in one DMA segment, and we need to copy.  Note,
+		 * the packet must also be aligned.
+		 */
+		if ((mtod(m_head, bus_addr_t) & 3) != 0 ||
+		    bus_dmamap_load_mbuf(sc->sc_dmat, sc->snd_dmamap[idx],
+			m_head, BUS_DMA_NOWAIT) != 0) {
+			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+			if (m_new == NULL) {
+				printf("%s: unable to allocate Tx mbuf\n",
+				    sc->sc_dev.dv_xname);
+				IF_PREPEND(&ifp->if_snd, m_new);
+				break;
+			}
+			if (m_head->m_pkthdr.len > MHLEN) {
+				MCLGET(m_new, M_DONTWAIT);
+				if ((m_new->m_flags & M_EXT) == 0) {
+					printf("%s: unable to allocate Tx "
+					    "cluster\n", sc->sc_dev.dv_xname);
+					m_freem(m_new);
+					IF_PREPEND(&ifp->if_snd, m_head);
+					break;
+				}
+			}
+			m_copydata(m_head, 0, m_head->m_pkthdr.len,
+			    mtod(m_new, caddr_t));
+			m_new->m_pkthdr.len = m_new->m_len =
+			    m_head->m_pkthdr.len;
+			m_freem(m_head);
+			m_head = m_new;
+			error = bus_dmamap_load_mbuf(sc->sc_dmat,
+			    sc->snd_dmamap[idx], m_head, BUS_DMA_NOWAIT);
+			if (error) {
+				printf("%s: unable to load Tx buffer, "
+				    "error = %d\n", sc->sc_dev.dv_xname, error);
+				IF_PREPEND(&ifp->if_snd, m_head);
+				break;
+			}
+		}
+
+		RL_CUR_TXMBUF(sc) = m_head;
 
 #if NBPFILTER > 0
 		/*
@@ -1214,10 +1205,17 @@ STATIC void rl_start(ifp)
 		/*
 		 * Transmit the frame.
 	 	 */
+		bus_dmamap_sync(sc->sc_dmat,
+		    sc->snd_dmamap[idx], 0, sc->snd_dmamap[idx]->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		len = sc->snd_dmamap[idx]->dm_segs[0].ds_len;
+		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
+			len = (ETHER_MIN_LEN - ETHER_CRC_LEN);
+
 		CSR_WRITE_4(sc, RL_CUR_TXADDR(sc),
-			    sc->snd_dmamap[sc->rl_cdata.cur_tx]->dm_segs[0].ds_addr);
-		CSR_WRITE_4(sc, RL_CUR_TXSTAT(sc),
-		    RL_TX_EARLYTHRESH | RL_CUR_TXMBUF(sc)->m_pkthdr.len);
+			    sc->snd_dmamap[idx]->dm_segs[0].ds_addr);
+		CSR_WRITE_4(sc, RL_CUR_TXSTAT(sc), RL_TX_EARLYTHRESH | len);
 
 		RL_INC(sc->rl_cdata.cur_tx);
 	}
@@ -1244,7 +1242,7 @@ STATIC void rl_init(xsc)
 	struct rl_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
 	int			s, i;
-	u_int32_t		rxcfg = 0;
+	u_int32_t		rxcfg;
 	u_int16_t		phy_bmcr = 0;
 
 	s = splimp();
@@ -1268,6 +1266,8 @@ STATIC void rl_init(xsc)
 	}
 
 	/* Init the RX buffer pointer register. */
+	bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, 0,
+	    sc->recv_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	CSR_WRITE_4(sc, RL_RXADDR, sc->recv_dmamap->dm_segs[0].ds_addr);
 
 	/* Init TX descriptors. */
