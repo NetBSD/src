@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.1 2003/06/05 13:48:27 scw Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.2 2003/06/14 16:25:53 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
 	sc->sc_iobase = pxa->pxa_addr;
 	sc->sc_frequency = PXA2X0_COM_FREQ;
-	sc->sc_hwflags = COM_HW_PXA2X0;
+	sc->sc_type = COM_TYPE_PXA2x0;
 
 	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
 	    bus_space_map(sc->sc_iot, sc->sc_iobase, pxa->pxa_size, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.208 2003/06/05 13:40:38 scw Exp $	*/
+/*	$NetBSD: com.c,v 1.209 2003/06/14 16:25:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.208 2003/06/05 13:40:38 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.209 2003/06/14 16:25:52 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -389,7 +389,7 @@ comprobeHAYESP(bus_space_handle_t hayespioh, struct com_softc *sc)
 	 * better), at the correct com port address.
 	 */
 
-	SET(sc->sc_hwflags, COM_HW_HAYESP);
+	sc->sc_type = COM_TYPE_HAYESP;
 	printf(", 1024 byte fifo\n");
 	return (1);
 }
@@ -405,7 +405,7 @@ com_enable_debugport(struct com_softc *sc)
 	COM_LOCK(sc);
 	sc->sc_ier = IER_ERXRDY;
 #ifdef COM_PXA2X0
-	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 #endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
@@ -438,7 +438,7 @@ com_attach_subr(struct com_softc *sc)
 
 	/* Disable interrupts before configuring the device. */
 #ifdef COM_PXA2X0
-	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier = IER_EUART;
 	else
 #endif
@@ -473,7 +473,7 @@ com_attach_subr(struct com_softc *sc)
 		bus_space_unmap(iot, hayespioh, HAYESP_NPORTS);
 	}
 	/* No ESP; look for other things. */
-	if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+	if (sc->sc_type != COM_TYPE_HAYESP) {
 #endif
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
@@ -621,7 +621,7 @@ com_config(struct com_softc *sc)
 
 	/* Disable interrupts before configuring the device. */
 #ifdef COM_PXA2X0
-	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier = IER_EUART;
 	else
 #endif
@@ -630,7 +630,7 @@ com_config(struct com_softc *sc)
 
 #ifdef COM_HAYESP
 	/* Look for a Hayes ESP board. */
-	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+	if (sc->sc_type == COM_TYPE_HAYESP) {
 		sc->sc_fifolen = 1024;
 
 		/* Set 16550 compatibility mode */
@@ -781,14 +781,14 @@ com_shutdown(struct com_softc *sc)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
 #ifdef COM_PXA2X0
-		if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_ERXTOUT;
 #endif
 	} else
 		sc->sc_ier = 0;
 
 #ifdef COM_PXA2X0
-	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART;
 #endif
 
@@ -866,7 +866,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* Turn on interrupts. */
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
 #ifdef COM_PXA2X0
-		if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 #endif
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
@@ -1329,7 +1329,7 @@ com_to_tiocm(struct com_softc *sc)
 		SET(ttybits, TIOCM_RI);
 
 #ifdef COM_PXA2X0
-	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0)) {
+	if (sc->sc_type == COM_TYPE_PXA2x0) {
 		if ((sc->sc_ier & 0x0f) != 0)
 			SET(ttybits, TIOCM_LE);
 	} else
@@ -1382,7 +1382,7 @@ comparam(struct tty *tp, struct termios *t)
 		return (EIO);
 
 #ifdef COM_HAYESP
-	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+	if (sc->sc_type == COM_TYPE_HAYESP) {
 		int prescaler, speed;
 
 		/*
@@ -1495,7 +1495,7 @@ comparam(struct tty *tp, struct termios *t)
 	 *    overflows.
 	 *  * Otherwise set it a bit higher.
 	 */
-	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP))
+	if (sc->sc_type == COM_TYPE_HAYESP)
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
 	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		sc->sc_fifo = FIFO_ENABLE |
@@ -1600,7 +1600,7 @@ com_loadchannelregs(struct com_softc *sc)
 	com_iflush(sc);
 
 #ifdef COM_PXA2X0
-	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+	if (sc->sc_type == COM_TYPE_PXA2x0)
 		bus_space_write_1(iot, ioh, com_ier, IER_EUART);
 	else
 #endif
@@ -1617,7 +1617,7 @@ com_loadchannelregs(struct com_softc *sc)
 	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr_active = sc->sc_mcr);
 	bus_space_write_1(iot, ioh, com_fifo, sc->sc_fifo);
 #ifdef COM_HAYESP
-	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+	if (sc->sc_type == COM_TYPE_HAYESP) {
 		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
 		    HAYESP_SETPRESCALER);
 		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
@@ -1889,7 +1889,7 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				SET(sc->sc_ier, IER_ERXRDY);
 #ifdef COM_PXA2X0
-				if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+				if (sc->sc_type == COM_TYPE_PXA2x0)
 					SET(sc->sc_ier, IER_ERXTOUT);
 #endif
 				bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
@@ -2123,7 +2123,7 @@ again:	do {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				CLR(sc->sc_ier, IER_ERXRDY);
 #ifdef COM_PXA2X0
-				if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+				if (sc->sc_type == COM_TYPE_PXA2x0)
 					CLR(sc->sc_ier, IER_ERXTOUT);
 #endif
 				bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
@@ -2131,7 +2131,7 @@ again:	do {
 		} else {
 			if ((iir & IIR_IMASK) == IIR_RXRDY) {
 #ifdef COM_PXA2X0
-				if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+				if (sc->sc_type == COM_TYPE_PXA2x0)
 					bus_space_write_1(iot, ioh, com_ier,
 					    IER_EUART);
 				else

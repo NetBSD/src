@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.44 2003/06/05 13:40:38 scw Exp $	*/
+/*	$NetBSD: comvar.h,v 1.45 2003/06/14 16:25:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -57,14 +57,13 @@ int com_is_console __P((bus_space_tag_t, bus_addr_t, bus_space_handle_t *));
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
-#define	COM_HW_HAYESP	0x04
+		/*	0x04	free for use */
 #define	COM_HW_FLOW	0x08
 #define	COM_HW_DEV_OK	0x20
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
-#define	COM_HW_PXA2X0	0x400
 
 /* Buffer size for character buffer */
 #define	COM_RING_SIZE	2048
@@ -123,6 +122,16 @@ struct com_softc {
 #ifdef COM_HAYESP
 	u_char sc_prescaler;
 #endif
+
+	/*
+	 * There are a great many almost-ns16550-compatible UARTs out
+	 * there, which have minor differences.  The type field here
+	 * lets us distinguish between them.
+	 */
+	int sc_type;
+#define	COM_TYPE_NORMAL		0	/* normal 16x50 */
+#define	COM_TYPE_HAYESP		1	/* Hayes ESP modem */
+#define	COM_TYPE_PXA2x0		2	/* Intel PXA2x0 processor built-in */
 
 	/* power management hooks */
 	int (*enable) __P((struct com_softc *));
