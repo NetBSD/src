@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2001/05/30 12:28:43 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2001/08/31 04:18:52 simonb Exp $	*/
 
 #ifndef __HPCMIPS_CPU_H
 #define __HPCMIPS_CPU_H
@@ -28,4 +28,4 @@ extern struct cpu_info cpu_info_store;
 #endif
 #endif /* !_LOCORE */
 
-#endif __HPCMIPS_CPU_H
+#endif /* __HPCMIPS_CPU_H */
