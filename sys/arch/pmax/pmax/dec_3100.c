@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.6.2.14 2000/02/03 09:34:44 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.6.2.15 2000/03/14 09:39:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.14 2000/02/03 09:34:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.15 2000/03/14 09:39:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,8 @@ static void dec_3100_bus_reset __P((void));
 static void dec_3100_cons_init __P((void));
 static void dec_3100_device_register __P((struct device *, void *));
 static int  dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
-void dec_3100_intr_establish __P((struct device *, void *,
+static void dec_3100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
-void dec_3100_intr_disestablish __P((struct device *, void *));
 
 static void dec_3100_memerr __P((void));
 
@@ -129,6 +128,7 @@ dec_3100_init()
 	platform.cons_init = dec_3100_cons_init;
 	platform.device_register = dec_3100_device_register;
 	platform.iointr = dec_3100_intr;
+	platform.intr_establish = dec_3100_intr_establish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -148,7 +148,7 @@ dec_3100_init()
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
-	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
+	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 2 : 3);
 }
 
 static void
@@ -195,36 +195,14 @@ dec_3100_device_register(dev, aux)
 	panic("dec_3100_device_register unimplemented");
 }
 
-void
-dec_3100_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
-	void *cookie, *arg;
-	int level;
-	int (*func) __P((void *));
-{
-	int dev = (int)cookie;
 
-	if (dev < 0 || dev >= MAX_DEV_NCOOKIES)
-		panic("dec_3100_intr_establish: invalid cookie %d", dev);
-
-	intrtab[dev].ih_func = func;
-	intrtab[dev].ih_arg = arg;
-}
-
-void
-dec_3100_intr_disestablish(dev, cookie)
-	struct device *dev;
-	void *cookie;
-{
-	printf("dec_3100_intr_distestablish: not implemented\n");
-}
-
-
-#define	CHECKINTR(slot, cp0) 					\
+#define CALLINTR(vvv, cp0) 					\
+    do {							\
 	if (cpumask & (cp0)) {					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
 
 static int
 dec_3100_intr(cpumask, pc, status, cause)
@@ -250,11 +228,9 @@ dec_3100_intr(cpumask, pc, status, cause)
 	/* allow clock interrupt posted when enabled */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_3));
 
-	CHECKINTR(SYS_DEV_SCSI, MIPS_INT_MASK_0);
-	CHECKINTR(SYS_DEV_LANCE, MIPS_INT_MASK_1);
-	CHECKINTR(SYS_DEV_SCC0, MIPS_INT_MASK_2);
-
-#undef CHECKINTR
+	CALLINTR(SYS_DEV_SCSI, MIPS_INT_MASK_0);
+	CALLINTR(SYS_DEV_LANCE, MIPS_INT_MASK_1);
+	CALLINTR(SYS_DEV_SCC0, MIPS_INT_MASK_2);
 
 	if (cpumask & MIPS_INT_MASK_4) {
 		dec_3100_memerr();
@@ -264,6 +240,21 @@ dec_3100_intr(cpumask, pc, status, cause)
 
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
+
+
+static void
+dec_3100_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
+	int (*handler) __P((void *));
+	void *arg;
+{
+
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
+}
+
 
 /*
  * Handle memory errors.
@@ -276,7 +267,7 @@ dec_3100_memerr()
 	csr = *(u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 	if (csr & KN01_CSR_MERR) {
 		printf("Memory error at 0x%x\n",
-			*(unsigned *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
+			*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
 	csr = (csr & ~KN01_CSR_MBZ) | 0xff;
