@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.62 2003/12/17 03:59:33 ad Exp $ */
+/* $NetBSD: sfb.c,v 1.63 2003/12/20 06:41:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.62 2003/12/17 03:59:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.63 2003/12/20 06:41:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,17 +85,25 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.62 2003/12/17 03:59:33 ad Exp $");
  *	};
  */
 
-/* Bt459 hardware registers */
-#define	bt_lo	0
-#define	bt_hi	1
-#define	bt_reg	2
-#define	bt_cmap 3
+/* Bt459 hardware registers, memory-mapped in 32bit stride */
+#define	bt_lo	0x0
+#define	bt_hi	0x4
+#define	bt_reg	0x8
+#define	bt_cmap 0xc
 
-#define	REG(base, index)	*((u_int32_t *)(base) + (index))
-#define	SELECT(vdac, regno) do {			\
-	REG(vdac, bt_lo) = ((regno) & 0x00ff);		\
-	REG(vdac, bt_hi) = ((regno) & 0x0f00) >> 8;	\
-	tc_wmb();					\
+#define	REGWRITE32(p,i,v) do {					\
+	*(volatile u_int32_t *)((p) + (i)) = (v); tc_wmb();	\
+    } while (0)
+#define	SFBWRITE32(p,i,v) do {					\
+	*(volatile u_int32_t *)((p) + (i)) = (v);		\
+    } while (0)
+#define	MEMWRITE32(p,v) do {					\
+	*(volatile u_int32_t *)(p) = (v);			\
+    } while (0)
+
+#define	VDACSELECT(p,r) do {					\
+	REGWRITE32(p, bt_lo, 0xff & (r));			\
+	REGWRITE32(p, bt_hi, 0x0f & ((r)>>8));			\
    } while (0)
 
 struct hwcmap256 {
@@ -133,23 +141,23 @@ struct sfb_softc {
 #define	HX_MAGIC_X	368
 #define	HX_MAGIC_Y	38
 
-static int  sfbmatch __P((struct device *, struct cfdata *, void *));
-static void sfbattach __P((struct device *, struct device *, void *));
+static int  sfbmatch(struct device *, struct cfdata *, void *);
+static void sfbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sfb, sizeof(struct sfb_softc),
     sfbmatch, sfbattach, NULL, NULL);
 
-static void sfb_common_init __P((struct rasops_info *));
+static void sfb_common_init(struct rasops_info *);
 static struct rasops_info sfb_console_ri;
 static tc_addr_t sfb_consaddr;
 
-static void sfb_putchar __P((void *, int, int, u_int, long));
-static void sfb_erasecols __P((void *, int, int, int, long));
-static void sfb_eraserows __P((void *, int, int, long));
-static void sfb_copyrows __P((void *, int, int, int));
-static void sfb_do_cursor __P((struct rasops_info *));
+static void sfb_putchar(void *, int, int, u_int, long);
+static void sfb_erasecols(void *, int, int, int, long);
+static void sfb_eraserows(void *, int, int, long);
+static void sfb_copyrows(void *, int, int, int);
+static void sfb_do_cursor(struct rasops_info *);
 #if 0
-static void sfb_copycols __P((void *, int, int, int, int));
+static void sfb_copycols(void *, int, int, int, int);
 #endif
 
 static struct wsscreen_descr sfb_stdscreen = {
@@ -167,14 +175,14 @@ static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-static int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	sfbmmap __P((void *, off_t, int));
+static int	sfbioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	sfbmmap(void *, off_t, int);
 
-static int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void	sfb_free_screen __P((void *, void *));
-static int	sfb_show_screen __P((void *, void *, int,
-				     void (*) (void *, int, int), void *));
+static int	sfb_alloc_screen(void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *);
+static void	sfb_free_screen(void *, void *);
+static int	sfb_show_screen(void *, void *, int,
+				     void (*) (void *, int, int), void *);
 
 static const struct wsdisplay_accessops sfb_accessops = {
 	sfbioctl,
@@ -185,17 +193,17 @@ static const struct wsdisplay_accessops sfb_accessops = {
 	0 /* load_font */
 };
 
-int  sfb_cnattach __P((tc_addr_t));
-static int  sfbintr __P((void *));
-static void sfbhwinit __P((caddr_t));
-static void sfb_cmap_init __P((struct sfb_softc *));
-static void sfb_screenblank __P((struct sfb_softc *, int));
+int  sfb_cnattach(tc_addr_t);
+static int  sfbintr(void *);
+static void sfbhwinit(caddr_t);
+static void sfb_cmap_init(struct sfb_softc *);
+static void sfb_screenblank(struct sfb_softc *, int);
 
-static int  get_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
-static int  set_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
-static int  set_cursor __P((struct sfb_softc *, struct wsdisplay_cursor *));
-static int  get_cursor __P((struct sfb_softc *, struct wsdisplay_cursor *));
-static void set_curpos __P((struct sfb_softc *, struct wsdisplay_curpos *));
+static int  get_cmap(struct sfb_softc *, struct wsdisplay_cmap *);
+static int  set_cmap(struct sfb_softc *, struct wsdisplay_cmap *);
+static int  set_cursor(struct sfb_softc *, struct wsdisplay_cursor *);
+static int  get_cursor(struct sfb_softc *, struct wsdisplay_cursor *);
+static void set_curpos(struct sfb_softc *, struct wsdisplay_curpos *);
 
 /*
  * Compose 2 bit/pixel cursor image.  Bit order will be reversed.
@@ -294,8 +302,9 @@ sfbattach(parent, self, aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, sfbintr, sc);
 
 	asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
-	*(u_int32_t *)(asic + SFB_ASIC_CLEAR_INTR) = 0;
-	*(u_int32_t *)(asic + SFB_ASIC_ENABLE_INTR) = 1;
+	
+	SFBWRITE32(asic, SFB_ASIC_CLEAR_INTR, 0);
+	SFBWRITE32(asic, SFB_ASIC_ENABLE_INTR, 1);
 
 	waa.console = console;
 	waa.scrdata = &sfb_screenlist;
@@ -334,12 +343,13 @@ sfb_common_init(ri)
 	hsetup = *(u_int32_t *)(asic + SFB_ASIC_VIDEO_HSETUP);
 	vsetup = *(u_int32_t *)(asic + SFB_ASIC_VIDEO_VSETUP);
 
-	*(u_int32_t *)(asic + SFB_ASIC_VIDEO_BASE) = vbase = 1;
-	*(u_int32_t *)(asic + SFB_ASIC_PLANEMASK) = ~0;
-	*(u_int32_t *)(asic + SFB_ASIC_PIXELMASK) = ~0;
-	*(u_int32_t *)(asic + SFB_ASIC_MODE) = 0;	/* MODE_SIMPLE */
-	*(u_int32_t *)(asic + SFB_ASIC_ROP) = 3; 	/* ROP_COPY */
-	*(u_int32_t *)(asic + 0x180000) = 0; 		/* Bt459 reset */
+	vbase = 1;
+	SFBWRITE32(asic, SFB_ASIC_VIDEO_BASE, vbase);
+	SFBWRITE32(asic, SFB_ASIC_PLANEMASK, ~0);
+	SFBWRITE32(asic, SFB_ASIC_PIXELMASK, ~0);
+	SFBWRITE32(asic, SFB_ASIC_MODE, 0);	/* MODE_SIMPLE */
+	SFBWRITE32(asic, SFB_ASIC_ROP, 3); 	/* ROP_COPY */
+	SFBWRITE32(asic, 0x180000, 0); 		/* Bt459 reset */
 
 	/* initialize colormap and cursor hardware */
 	sfbhwinit(base);
@@ -538,7 +548,7 @@ sfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 
@@ -571,8 +581,8 @@ sfbintr(arg)
 	
 	base = (caddr_t)sc->sc_ri->ri_hw;
 	asic = base + SFB_ASIC_OFFSET;
-	*(u_int32_t *)(asic + SFB_ASIC_CLEAR_INTR) = 0;
-	/* *(u_int32_t *)(asic + SFB_ASIC_ENABLE_INTR) = 1; */
+	SFBWRITE32(asic, SFB_ASIC_CLEAR_INTR, 0);
+	/* SFBWRITE32(asic, SFB_ASIC_ENABLE_INTR, 1); */
 
 	if (sc->sc_changed == 0)
 		goto done;
@@ -580,8 +590,11 @@ sfbintr(arg)
 	vdac = base + SFB_RAMDAC_OFFSET;
 	v = sc->sc_changed;
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
-		SELECT(vdac, BT459_IREG_CCR);
-		REG(vdac, bt_reg) = (sc->sc_curenb) ? 0xc0 : 0x00;
+		int  onoff;
+
+		onoff = (sc->sc_curenb) ? 0xc0 : 0x00;
+		VDACSELECT(vdac, BT459_IREG_CCR);
+		REGWRITE32(vdac, bt_reg, onoff);
 	}
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
 		int x, y;
@@ -591,23 +604,23 @@ sfbintr(arg)
 		x += sc->sc_cursor.cc_magic.x;
 		y += sc->sc_cursor.cc_magic.y;
 
-		SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
-		REG(vdac, bt_reg) = x;		tc_wmb();
-		REG(vdac, bt_reg) = x >> 8;	tc_wmb();
-		REG(vdac, bt_reg) = y;		tc_wmb();
-		REG(vdac, bt_reg) = y >> 8;	tc_wmb();
+		VDACSELECT(vdac, BT459_IREG_CURSOR_X_LOW);
+		REGWRITE32(vdac, bt_reg, x);
+		REGWRITE32(vdac, bt_reg, x >> 8);
+		REGWRITE32(vdac, bt_reg, y);
+		REGWRITE32(vdac, bt_reg, y >> 8);
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
-		SELECT(vdac, BT459_IREG_CCOLOR_2);
-		REG(vdac, bt_reg) = cp[1];	tc_wmb();
-		REG(vdac, bt_reg) = cp[3];	tc_wmb();
-		REG(vdac, bt_reg) = cp[5];	tc_wmb();
+		VDACSELECT(vdac, BT459_IREG_CCOLOR_2);
+		REGWRITE32(vdac, bt_reg, cp[1]);
+		REGWRITE32(vdac, bt_reg, cp[3]);
+		REGWRITE32(vdac, bt_reg, cp[5]);
 
-		REG(vdac, bt_reg) = cp[0];	tc_wmb();
-		REG(vdac, bt_reg) = cp[2];	tc_wmb();
-		REG(vdac, bt_reg) = cp[4];	tc_wmb();
+		REGWRITE32(vdac, bt_reg, cp[0]);
+		REGWRITE32(vdac, bt_reg, cp[2]);
+		REGWRITE32(vdac, bt_reg, cp[4]);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		u_int8_t *ip, *mp, img, msk;
@@ -618,29 +631,29 @@ sfbintr(arg)
 		mp = (u_int8_t *)sc->sc_cursor.cc_mask;
 
 		bcnt = 0;
-		SELECT(vdac, BT459_IREG_CRAM_BASE+0);
+		VDACSELECT(vdac, BT459_IREG_CRAM_BASE+0);
 		/* 64 pixel scan line is consisted with 16 byte cursor ram */
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
 			/* pad right half 32 pixel when smaller than 33 */
 			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
-				REG(vdac, bt_reg) = 0; tc_wmb();
-				REG(vdac, bt_reg) = 0; tc_wmb();
+				REGWRITE32(vdac, bt_reg, 0);
+				REGWRITE32(vdac, bt_reg, 0);
 			}
 			else {
 				img = *ip++;
 				msk = *mp++;
 				img &= msk;	/* cookie off image */
 				u = (msk & 0x0f) << 4 | (img & 0x0f);
-				REG(vdac, bt_reg) = shuffle[u];	tc_wmb();
+				REGWRITE32(vdac, bt_reg, shuffle[u]);
 				u = (msk & 0xf0) | (img & 0xf0) >> 4;
-				REG(vdac, bt_reg) = shuffle[u];	tc_wmb();
+				REGWRITE32(vdac, bt_reg, shuffle[u]);
 			}
 			bcnt += 2;
 		}
 		/* pad unoccupied scan lines */
 		while (bcnt < CURSOR_MAX_SIZE * 16) {
-			REG(vdac, bt_reg) = 0; tc_wmb();
-			REG(vdac, bt_reg) = 0; tc_wmb();
+			REGWRITE32(vdac, bt_reg, 0);
+			REGWRITE32(vdac, bt_reg, 0);
 			bcnt += 2;
 		}
 	}
@@ -648,11 +661,11 @@ sfbintr(arg)
 		struct hwcmap256 *cm = &sc->sc_cmap;
 		int index;
 
-		SELECT(vdac, 0);
+		VDACSELECT(vdac, 0);
 		for (index = 0; index < CMAP_SIZE; index++) {
-			REG(vdac, bt_cmap) = cm->r[index];	tc_wmb();
-			REG(vdac, bt_cmap) = cm->g[index];	tc_wmb();
-			REG(vdac, bt_cmap) = cm->b[index];	tc_wmb();
+			REGWRITE32(vdac, bt_cmap, cm->r[index]);
+			REGWRITE32(vdac, bt_cmap, cm->g[index]);
+			REGWRITE32(vdac, bt_cmap, cm->b[index]);
 		}
 	}
 	sc->sc_changed = 0;
@@ -668,65 +681,65 @@ sfbhwinit(base)
 	const u_int8_t *p;
 	int i;
 
-	SELECT(vdac, BT459_IREG_COMMAND_0);
-	REG(vdac, bt_reg) = 0x40; /* CMD0 */	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;  /* CMD1 */	tc_wmb();
-	REG(vdac, bt_reg) = 0xc0; /* CMD2 */	tc_wmb();
-	REG(vdac, bt_reg) = 0xff; /* PRM */	tc_wmb();
-	REG(vdac, bt_reg) = 0;    /* 205 */	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;  /* PBM */	tc_wmb();
-	REG(vdac, bt_reg) = 0;    /* 207 */	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;  /* ORM */	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;  /* OBM */	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;  /* ILV */	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;  /* TEST */	tc_wmb();
+	VDACSELECT(vdac, BT459_IREG_COMMAND_0);
+	REGWRITE32(vdac, bt_reg, 0x40); /* CMD0 */
+	REGWRITE32(vdac, bt_reg, 0x0);  /* CMD1 */
+	REGWRITE32(vdac, bt_reg, 0xc0); /* CMD2 */
+	REGWRITE32(vdac, bt_reg, 0xff); /* PRM */
+	REGWRITE32(vdac, bt_reg, 0);    /* 205 */
+	REGWRITE32(vdac, bt_reg, 0x0);  /* PBM */
+	REGWRITE32(vdac, bt_reg, 0);    /* 207 */
+	REGWRITE32(vdac, bt_reg, 0x0);  /* ORM */
+	REGWRITE32(vdac, bt_reg, 0x0);  /* OBM */
+	REGWRITE32(vdac, bt_reg, 0x0);  /* ILV */
+	REGWRITE32(vdac, bt_reg, 0x0);  /* TEST */
 
-	SELECT(vdac, BT459_IREG_CCR);
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
-	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	VDACSELECT(vdac, BT459_IREG_CCR);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
+	REGWRITE32(vdac, bt_reg, 0x0);
 
 	/* build sane colormap */
-	SELECT(vdac, 0);
+	VDACSELECT(vdac, 0);
 	p = rasops_cmap;
 	for (i = 0; i < CMAP_SIZE; i++, p += 3) {
-		REG(vdac, bt_cmap) = p[0];	tc_wmb();
-		REG(vdac, bt_cmap) = p[1];	tc_wmb();
-		REG(vdac, bt_cmap) = p[2];	tc_wmb();
+		REGWRITE32(vdac, bt_cmap, p[0]);
+		REGWRITE32(vdac, bt_cmap, p[1]);
+		REGWRITE32(vdac, bt_cmap, p[2]);
 	}
 
 	/* clear out cursor image */
-	SELECT(vdac, BT459_IREG_CRAM_BASE);
+	VDACSELECT(vdac, BT459_IREG_CRAM_BASE);
 	for (i = 0; i < 1024; i++)
-		REG(vdac, bt_reg) = 0xff;	tc_wmb();
+		REGWRITE32(vdac, bt_reg, 0xff);
 
 	/*
 	 * 2 bit/pixel cursor.  Assign MSB for cursor mask and LSB for
 	 * cursor image.  CCOLOR_2 for mask color, while CCOLOR_3 for
 	 * image color.  CCOLOR_1 will be never used.
 	 */
-	SELECT(vdac, BT459_IREG_CCOLOR_1);
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
+	VDACSELECT(vdac, BT459_IREG_CCOLOR_1);
+	REGWRITE32(vdac, bt_reg, 0xff);
+	REGWRITE32(vdac, bt_reg, 0xff);
+	REGWRITE32(vdac, bt_reg, 0xff);
 
-	REG(vdac, bt_reg) = 0;		tc_wmb();
-	REG(vdac, bt_reg) = 0;		tc_wmb();
-	REG(vdac, bt_reg) = 0;		tc_wmb();
+	REGWRITE32(vdac, bt_reg, 0);	
+	REGWRITE32(vdac, bt_reg, 0);	
+	REGWRITE32(vdac, bt_reg, 0);	
 
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
+	REGWRITE32(vdac, bt_reg, 0xff);
+	REGWRITE32(vdac, bt_reg, 0xff);
+	REGWRITE32(vdac, bt_reg, 0xff);
 }
 
 static int
@@ -904,23 +917,23 @@ set_curpos(sc, curpos)
 #endif
 
 #define	SFBMODE(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_MODE) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_MODE, (v))
 #define	SFBROP(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_ROP) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_ROP, (v))
 #define	SFBPLANEMASK(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_PLANEMASK) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_PLANEMASK, (v))
 #define	SFBPIXELMASK(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_PIXELMASK) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_PIXELMASK, (v))
 #define	SFBADDRESS(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_ADDRESS) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_ADDRESS, (v))
 #define	SFBSTART(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_START) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_START, (v))
 #define	SFBPIXELSHIFT(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_PIXELSHIFT) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_PIXELSHIFT, (v))
 #define	SFBFG(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_FG) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_FG, (v))
 #define	SFBBG(p, v) \
-		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_BG) = (v))
+		SFBWRITE32(BUMP(p), SFB_ASIC_BG, (v))
 
 /*
  * Paint the cursor.
@@ -1057,8 +1070,8 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 		sp -= aligns;
 		dp -= alignd;
 		while (height > 0) {
-			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
-			*(u_int32_t *)dp = lmaskd;	WRITE_MB();
+			MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+			MEMWRITE32(dp, lmaskd);	WRITE_MB();
 			sp += scanspan;
 			dp += scanspan;
 			height--;
@@ -1084,20 +1097,20 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 		sq = sp;
 		dq = dp;
 		while (height > 0) {
-			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
-			*(u_int32_t *)dp = lmaskd;	WRITE_MB();
+			MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+			MEMWRITE32(dp, lmaskd);	WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
 				sp += SFBCOPYBYTESDONE;
 				dp += SFBCOPYBYTESDONE;
-				*(u_int32_t *)sp = SFBCOPYALL1; WRITE_MB();
-				*(u_int32_t *)dp = SFBCOPYALL1; WRITE_MB();
+				MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+				MEMWRITE32(dp, SFBCOPYALL1);	WRITE_MB();
 				width -= SFBCOPYBITS;
 			}
 			sp += SFBCOPYBYTESDONE;
 			dp += SFBCOPYBYTESDONE;
-			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
-			*(u_int32_t *)dp = rmaskd;	WRITE_MB();
+			MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+			MEMWRITE32(dp, rmaskd);	WRITE_MB();
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
 			width = w;
@@ -1124,20 +1137,20 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 		sq = sp += (((aligns + w) - 1) & ~31);
 		dq = dp += (((alignd + w) - 1) & ~31);
 		while (height > 0) {
-			*(u_int32_t *)sp = SFBCOPYALL1; WRITE_MB();
-			*(u_int32_t *)dp = rmaskd;	WRITE_MB();
+			MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+			MEMWRITE32(dp, rmaskd);	WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
 				sp -= SFBCOPYBYTESDONE;
 				dp -= SFBCOPYBYTESDONE;
-				*(u_int32_t *)sp = SFBCOPYALL1; WRITE_MB();
-				*(u_int32_t *)dp = SFBCOPYALL1; WRITE_MB();
+				MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+				MEMWRITE32(dp, SFBCOPYALL1);	WRITE_MB();
 				width -= SFBCOPYBITS;
 			}
 			sp -= SFBCOPYBYTESDONE;
 			dp -= SFBCOPYBYTESDONE;
-			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
-			*(u_int32_t *)dp = lmaskd;	WRITE_MB();
+			MEMWRITE32(sp, SFBCOPYALL1);	WRITE_MB();
+			MEMWRITE32(dp, lmaskd);	WRITE_MB();
 
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
@@ -1193,17 +1206,15 @@ sfb_erasecols(id, row, startcol, ncols, attr)
 	else {
 		caddr_t q = p;
 		while (height > 0) {
-			*(u_int32_t *)p = lmask;
-			WRITE_MB();
+			MEMWRITE32(p, lmask);	WRITE_MB();
 			width -= 2 * SFBSTIPPLEBITS;
 			while (width > 0) {
 				p += SFBSTIPPLEBYTESDONE;
-				*(u_int32_t *)p = SFBSTIPPLEALL1;
-				WRITE_MB();
+				MEMWRITE32(p, SFBSTIPPLEALL1); WRITE_MB();
 				width -= SFBSTIPPLEBITS;
 			}
 			p += SFBSTIPPLEBYTESDONE;
-			*(u_int32_t *)p = rmask;
+			MEMWRITE32(p, rmask); WRITE_MB();
 			WRITE_MB();
 
 			p = (q += scanspan);
@@ -1254,18 +1265,18 @@ sfb_copyrows(id, srcrow, dstrow, nrows)
 	else {
 		caddr_t q = p;
 		while (height > 0) {
-			*(u_int32_t *)p = lmask;
-			*(u_int32_t *)(p + offset) = lmask;
+			MEMWRITE32(p, lmask);
+			MEMWRITE32(p + offset, lmask);
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
 				p += SFBCOPYBYTESDONE;
-				*(u_int32_t *)p = SFBCOPYALL1;
-				*(u_int32_t *)(p + offset) = SFBCOPYALL1;
+				MEMWRITE32(p, SFBCOPYALL1);
+				MEMWRITE32(p + offset, SFBCOPYALL1);
 				width -= SFBCOPYBITS;
 			}
 			p += SFBCOPYBYTESDONE;
-			*(u_int32_t *)p = rmask;
-			*(u_int32_t *)(p + offset) = rmask;
+			MEMWRITE32(p, rmask);
+			MEMWRITE32(p + offset, rmask);
 
 			p = (q += scanspan);
 			width = w + align;
@@ -1311,18 +1322,15 @@ sfb_eraserows(id, startrow, nrows, attr)
 	else {
 		caddr_t q = p;
 		while (height > 0) {
-			*(u_int32_t *)p = lmask;
-			WRITE_MB();
+			MEMWRITE32(p, lmask); WRITE_MB();
 			width -= 2 * SFBSTIPPLEBITS;
 			while (width > 0) {
 				p += SFBSTIPPLEBYTESDONE;
-				*(u_int32_t *)p = SFBSTIPPLEALL1;
-				WRITE_MB();
+				MEMWRITE32(p, SFBSTIPPLEALL1); WRITE_MB();
 				width -= SFBSTIPPLEBITS;
 			}
 			p += SFBSTIPPLEBYTESDONE;
-			*(u_int32_t *)p = rmask;
-			WRITE_MB();
+			MEMWRITE32(p, rmask); WRITE_MB();
 
 			p = (q += scanspan);
 			width = w + align;
