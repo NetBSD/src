@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1996/10/10 23:55:10 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 1996/10/11 19:49:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -119,7 +119,7 @@ configure()
 int
 simple_devprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	return(QUIET);
 }
