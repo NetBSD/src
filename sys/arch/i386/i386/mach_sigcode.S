@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.S,v 1.4 2003/08/07 16:27:54 agc Exp $	*/
+/*	$NetBSD: mach_sigcode.S,v 1.5 2003/08/20 21:48:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@ IDTVEC(mach_trap)
 	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	2b
 1:	INTRFASTEXIT

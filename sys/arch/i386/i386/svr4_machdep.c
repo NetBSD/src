@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.67 2003/07/27 14:14:44 mrg Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.68 2003/08/20 21:48:41 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.67 2003/07/27 14:14:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.68 2003/08/20 21:48:41 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -218,7 +218,7 @@ svr4_setmcontext(l, mc, flags)
 	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (r[SVR4_X86_EFL] & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe));
+		void syscall_vm86 __P((struct trapframe *));
 
 		tf->tf_vm86_gs = r[SVR4_X86_GS];
 		tf->tf_vm86_fs = r[SVR4_X86_FS];
