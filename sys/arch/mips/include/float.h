@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.6 1995/06/20 20:32:48 jtc Exp $	*/
+/*	$NetBSD: float.h,v 1.7 1995/06/20 20:45:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)float.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _PMAX_FLOAT_H_
+#define _PMAX_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -73,3 +76,5 @@ __END_DECLS
 #define LDBL_MAX_EXP	DBL_MAX_EXP
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
+
+#endif	/* _PMAX_FLOAT_H_ */
