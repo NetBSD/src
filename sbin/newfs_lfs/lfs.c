@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.12 2000/05/23 18:17:20 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.13 2000/06/27 21:06:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.12 2000/05/23 18:17:20 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.13 2000/06/27 21:06:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,6 +148,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_nclean */       0,
 		/* dlfs_fsmnt */        { 0 },
 		/* dlfs_clean */        0,
+		/* dlfs_dmeta */	0,
 
 		/* dlfs_pad */ 		{ 0 },
 		/* dlfs_cksum */	0
@@ -309,7 +310,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_sushift = log2(lfsp->lfs_sepb);
 	lfsp->lfs_size = partp->p_size >> lfsp->lfs_fsbtodb;
 	lfsp->lfs_dsize = lfsp->lfs_size - (LFS_LABELPAD >> lfsp->lfs_bshift);
-	lfsp->lfs_nclean = lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
+	lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
+	lfsp->lfs_nclean = lfsp->lfs_nseg - 1;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
 
 	if(lfsp->lfs_nseg < MIN_FREE_SEGS + 1
@@ -330,10 +332,11 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 		fprintf(stderr,"Using segment size %d\n", ssize);
 
 	/* 
-	 * The number of free blocks is set from the number of segments times
-	 * the segment size - MIN_FREE_SEGS (that we never write because we need to make
-	 * sure the cleaner can run).  Then we'll subtract off the room for the
-	 * superblocks ifile entries and segment usage table.
+	 * The number of free blocks is set from the number of segments
+	 * times the segment size - MIN_FREE_SEGS (that we never write
+	 * because we need to make sure the cleaner can run).  Then
+	 * we'll subtract off the room for the superblocks ifile entries
+	 * and segment usage table.
 	 */
 	lfsp->lfs_dsize = fsbtodb(lfsp, (lfsp->lfs_nseg - MIN_FREE_SEGS) * lfsp->lfs_ssize);
 	lfsp->lfs_bfree = lfsp->lfs_dsize;
@@ -344,6 +347,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	if ((sb_interval = lfsp->lfs_nseg / LFS_MAXNUMSB) < LFS_MIN_SBINTERVAL)
 		sb_interval = LFS_MIN_SBINTERVAL;
 
+	/* To start, one inode block and one segsum are dirty metadata */
+	lfsp->lfs_dmeta = 1 + fsbtodb(lfsp, 1);
 	/*
 	 * Now, lay out the file system.  We need to figure out where
 	 * the superblocks go, initialize the checkpoint information
@@ -401,7 +406,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	segp->su_flags = SEGUSE_SUPERBLOCK | SEGUSE_DIRTY;
 	lfsp->lfs_bfree -= LFS_SUMMARY_SIZE / lp->d_secsize;
 	lfsp->lfs_bfree -=
-	     fsbtodb(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4);
+	     fsbtodb(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4 +
+		     MIN_FREE_SEGS * lfsp->lfs_ssize);
 
 	/* 
 	 * Now figure out the address of the ifile inode. The inode block
@@ -426,12 +432,11 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	 * Initialize dynamic accounting.  The blocks available for
 	 * writing are the bfree blocks minus 1 segment summary for
 	 * each segment since you can't write any new data without
-	 * creating a segment summary - 2 segments that the cleaner
-	 * needs.
+	 * creating a segment summary.
 	 */
-	lfsp->lfs_avail = lfsp->lfs_bfree - lfsp->lfs_nseg - 
-		fsbtodb(lfsp, 2 * lfsp->lfs_ssize);
+	lfsp->lfs_avail = lfsp->lfs_bfree - lfsp->lfs_nseg;
 	lfsp->lfs_uinodes = 0;
+
 	/*
 	 * Ready to start writing segments.  The first segment is different
 	 * because it contains the segment usage table and the ifile inode
