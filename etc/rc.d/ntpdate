@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.2 2000/03/11 20:10:21 veego Exp $
+# $NetBSD: ntpdate,v 1.3 2000/05/13 08:45:07 lukem Exp $
 #
 
 # PROVIDE: ntpdate
 # REQUIRE: syslogd network
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="ntpdate"
 start_precmd="checkyesno ntpdate"
@@ -28,4 +27,5 @@ ntpdate_start()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

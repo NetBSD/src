@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: sysctl,v 1.6 2000/05/07 19:03:25 tsarna Exp $
+# $NetBSD: sysctl,v 1.7 2000/05/13 08:45:09 lukem Exp $
 #
 
 # PROVIDE: sysctl
 # REQUIRE: root ipnat
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="sysctl"
 start_cmd="sysctl_start"
@@ -51,4 +50,5 @@ __EOF__
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.2 2000/03/11 20:11:16 veego Exp $
+# $NetBSD: wscons,v 1.3 2000/05/13 08:45:10 lukem Exp $
 #
 
 # PROVIDE: wscons
 # REQUIRE: systemfs
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="wscons"
 start_precmd="checkyesno wscons"
@@ -21,4 +20,5 @@ do_wscons()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

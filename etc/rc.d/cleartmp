@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: cleartmp,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: cleartmp,v 1.2 2000/05/13 08:45:06 lukem Exp $
 #
 
 # PROVIDE: cleartmp
 # REQUIRE: mountall
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="cleartmp"
 start_cmd="cleartmp_start"
@@ -27,4 +26,5 @@ cleartmp_start()
 		! -name quota.group -exec rm -rf -- {} \; -type d -prune)
 }
 
+load_rc_config $name
 run_rc_command "$1"

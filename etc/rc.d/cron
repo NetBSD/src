@@ -1,16 +1,16 @@
 #!/bin/sh
 #
-# $NetBSD: cron,v 1.2 2000/03/13 04:03:55 lukem Exp $
+# $NetBSD: cron,v 1.3 2000/05/13 08:45:06 lukem Exp $
 #
 
 # PROVIDE: cron
 # REQUIRE: LOGIN
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="cron"
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 
+load_rc_config $name
 run_rc_command "$1"
