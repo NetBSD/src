@@ -1,5 +1,5 @@
 #	from: @(#)files.newconf	7.5 (Berkeley) 5/10/93
-#	$Id: files.newconf,v 1.28 1994/05/27 16:29:39 glass Exp $
+#	$Id: files.newconf,v 1.29 1994/06/10 10:57:03 pk Exp $
 
 # generic attributes
 define	disk
@@ -59,13 +59,13 @@ file ddb/db_variables.c	 	ddb
 file ddb/db_watch.c		ddb
 file ddb/db_write_cmd.c	 	ddb
 file dev/vn.c			vn needs-flag
-file isofs/isofs_bmap.c	 	isofs
-file isofs/isofs_lookup.c	isofs
-file isofs/isofs_node.c	 	isofs
-file isofs/isofs_rrip.c	 	isofs
-file isofs/isofs_util.c	 	isofs
-file isofs/isofs_vfsops.c	isofs
-file isofs/isofs_vnops.c	isofs
+file isofs/cd9660/cd9660_bmap.c		cd9660
+file isofs/cd9660/cd9660_lookup.c	cd9660
+file isofs/cd9660/cd9660_node.c		cd9660
+file isofs/cd9660/cd9660_rrip.c		cd9660
+file isofs/cd9660/cd9660_util.c		cd9660
+file isofs/cd9660/cd9660_vfsops.c	cd9660
+file isofs/cd9660/cd9660_vnops.c	cd9660
 file kern/exec_aout.c	
 file kern/exec_conf.c	
 file kern/exec_ecoff.c		compat_ultrix	
@@ -123,9 +123,11 @@ file kern/uipc_syscalls.c
 file kern/uipc_usrreq.c	
 file kern/vfs_bio.c		
 file kern/vfs_cache.c	
+file kern/vfs_cluster.c	
 file kern/vfs_conf.c		
-file kern/vfs_lookup.c	
+file kern/vfs_init.c		
 file kern/vfs_lockf.c
+file kern/vfs_lookup.c	
 file kern/vfs_subr.c		
 file kern/vfs_syscalls.c	
 file kern/vfs_vnops.c	
@@ -135,9 +137,9 @@ file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c		fifo
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
-file miscfs/lofs/lofs_subr.c		lofs
-file miscfs/lofs/lofs_vfsops.c		lofs
-file miscfs/lofs/lofs_vnops.c		lofs
+file miscfs/nullfs/null_subr.c		nullfs
+file miscfs/nullfs/null_vfsops.c	nullfs
+file miscfs/nullfs/null_vnops.c		nullfs
 file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_ctl.c		procfs
@@ -148,13 +150,20 @@ file miscfs/procfs/procfs_status.c	procfs
 file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs
 file miscfs/procfs/procfs_vnops.c	procfs
+file miscfs/procfs/procfs_fpregs.c	procfs
 file miscfs/specfs/spec_vnops.c
-file msdosfs/msdosfs_conv.c 	msdosfs
-file msdosfs/msdosfs_denode.c 	msdosfs
-file msdosfs/msdosfs_fat.c	msdosfs
-file msdosfs/msdosfs_lookup.c 	msdosfs
-file msdosfs/msdosfs_vfsops.c 	msdosfs
-file msdosfs/msdosfs_vnops.c 	msdosfs
+file miscfs/umapfs/umap_subr.c		umapfs
+file miscfs/umapfs/umap_vfsops.c	umapfs
+file miscfs/umapfs/umap_vnops.c		umapfs
+file miscfs/union/union_subr.c		union
+file miscfs/union/union_vfsops.c	union
+file miscfs/union/union_vnops.c		union
+file msdosfs/msdosfs_conv.c 		msdosfs
+file msdosfs/msdosfs_denode.c 		msdosfs
+file msdosfs/msdosfs_fat.c		msdosfs
+file msdosfs/msdosfs_lookup.c 		msdosfs
+file msdosfs/msdosfs_vfsops.c 		msdosfs
+file msdosfs/msdosfs_vnops.c 		msdosfs
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
 file net/if.c		
@@ -259,6 +268,7 @@ file nfs/krpc_subr.c		nfsclient
 file nfs/nfs_bio.c		nfsclient
 file nfs/nfs_boot.c		nfsclient
 file nfs/nfs_node.c		nfsclient
+file nfs/nfs_nqlease.c		nfsserver nfsclient
 file nfs/nfs_serv.c		nfsserver
 file nfs/nfs_socket.c	 	nfsserver nfsclient
 file nfs/nfs_srvcache.c	 	nfsserver
@@ -266,18 +276,33 @@ file nfs/nfs_subs.c		nfsserver nfsclient
 file nfs/nfs_syscalls.c	 	nfsserver nfsclient
 file nfs/nfs_vfsops.c	 	nfsclient
 file nfs/nfs_vnops.c		nfsclient
-file ufs/mfs_vfsops.c	 	mfs
-file ufs/mfs_vnops.c		mfs
-file ufs/ufs_alloc.c		ffs
-file ufs/ufs_bmap.c		ffs
-file ufs/ufs_inode.c		ffs
-file ufs/ufs_lookup.c		ffs
-file ufs/ufs_quota.c		quota
-file ufs/ufs_subr.c		ffs
-file ufs/ufs_tables.c		ffs
-file ufs/ufs_vfsops.c		ffs
-file ufs/ufs_vnops.c		ffs
-file ufs/ufs_vtab.c		ffs nfsserver nfsclient
+file ufs/ffs/ffs_alloc.c	ffs mfs
+file ufs/ffs/ffs_balloc.c	ffs mfs
+file ufs/ffs/ffs_inode.c	ffs mfs
+file ufs/ffs/ffs_subr.c		ffs mfs
+file ufs/ffs/ffs_tables.c	ffs mfs
+file ufs/ffs/ffs_vfsops.c	ffs mfs
+file ufs/ffs/ffs_vnops.c	ffs mfs
+file ufs/lfs/lfs_alloc.c	lfs
+file ufs/lfs/lfs_bio.c		lfs
+file ufs/lfs/lfs_balloc.c	lfs
+file ufs/lfs/lfs_cksum.c	lfs
+file ufs/lfs/lfs_debug.c	lfs
+file ufs/lfs/lfs_inode.c	lfs
+file ufs/lfs/lfs_segment.c	lfs
+file ufs/lfs/lfs_subr.c		lfs
+file ufs/lfs/lfs_syscalls.c	lfs
+file ufs/lfs/lfs_vfsops.c	lfs
+file ufs/lfs/lfs_vnops.c	lfs
+file ufs/mfs/mfs_vfsops.c	mfs
+file ufs/mfs/mfs_vnops.c	mfs
+file ufs/ufs/ufs_bmap.c		ffs lfs mfs
+file ufs/ufs/ufs_ihash.c	ffs lfs mfs
+file ufs/ufs/ufs_inode.c	ffs lfs mfs
+file ufs/ufs/ufs_lookup.c	ffs lfs mfs
+file ufs/ufs/ufs_quota.c	ffs lfs mfs
+file ufs/ufs/ufs_vfsops.c	ffs lfs mfs
+file ufs/ufs/ufs_vnops.c	ffs lfs mfs
 file vm/device_pager.c	 	devpager
 file vm/kern_lock.c		
 file vm/swap_pager.c		swappager
