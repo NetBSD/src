@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.4 2001/09/21 22:59:00 tv Exp $
+# $NetBSD: Makefile,v 1.5 2001/09/25 01:42:25 gmcgarry Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
 
