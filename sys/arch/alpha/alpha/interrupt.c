@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.52 2000/11/18 19:25:36 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.53 2000/11/20 19:24:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.52 2000/11/18 19:25:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.53 2000/11/20 19:24:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,27 +114,9 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
-	    {
-		u_long pending_ipis, bit;
-
-#ifdef DIAGNOSTIC
-		if (sc == NULL) {
-			/* XXX panic? */
-			printf("WARNING: no softc for ID %lu\n", ci->ci_cpuid);
-			return;
-		}
-#endif
-
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
-		sc->sc_evcnt_ipi.ev_count++;
 
-		pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
-		for (bit = 0; bit < ALPHA_NIPIS; bit++) {
-			if (pending_ipis & (1UL << bit)) {
-				sc->sc_evcnt_which_ipi[bit].ev_count++;
-				(*ipifuncs[bit])();
-			}
-		}
+		alpha_ipi_process(ci);
 
 		/*
 		 * Handle inter-console messages if we're the primary
@@ -145,7 +127,6 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			cpu_iccb_receive();
 
 		atomic_sub_ulong(&ci->ci_intrdepth, 1);
-	    }
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
 #endif /* MULTIPROCESSOR */
