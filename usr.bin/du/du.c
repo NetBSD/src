@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
+/*	$NetBSD: du.c,v 1.12 1997/10/18 13:21:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $";
+__RCSID("$NetBSD: du.c,v 1.12 1997/10/18 13:21:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,9 @@ static char rcsid[] = "$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int	 linkchk __P((FTSENT *));
-void	 usage __P((void));
+int	linkchk __P((FTSENT *));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -81,7 +82,7 @@ main(argc, argv)
 	Hflag = Lflag = Pflag = aflag = cflag = kflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPacksx")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPacksx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -159,7 +160,7 @@ main(argc, argv)
 	blocksize /= 512;
 
 	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
-		err(1, NULL);
+		err(1, "fts_open `%s'", *argv);
 
 	for (rval = 0; (p = fts_read(fts)) != NULL;)
 		switch (p->fts_info) {
@@ -175,7 +176,7 @@ main(argc, argv)
 			 * or directories and this is post-order of the
 			 * root of a traversal, display the total.
 			 */
-			if (listdirs || !listfiles && !p->fts_level)
+			if (listdirs || (!listfiles && !p->fts_level))
 				(void)printf("%ld\t%s\n",
 				    howmany(p->fts_number, blocksize),
 				    p->fts_path);
@@ -235,7 +236,7 @@ linkchk(p)
 
 	if (nfiles == maxfiles && (files = realloc((char *)files,
 	    (u_int)(sizeof(ID) * (maxfiles += 128)))) == NULL)
-		err(1, "");
+		err(1, "realloc");
 	files[nfiles].inode = ino;
 	files[nfiles].dev = dev;
 	++nfiles;
