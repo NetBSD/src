@@ -1,0 +1,113 @@
+Tue Mar  3 10:16:07 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (main.c) Added missing } at line 140.
+
+	* (version.h) Changed date of version 1.02 to March 3, 1992.
+
+Mon Feb  3 16:07:57 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (version.h) Updated version number and date.
+
+	* (bc.1) Added a new "VERSION" section.
+
+Wed Jan 29 14:13:55 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (execute.c) Removed the setjmp and longjmp calls that may have
+	  caused some problems with interrupted programs.
+
+Thu Jan 16 17:08:16 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (Makefile) Changed install to install the manual.
+
+Wed Jan  8 13:23:42 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Change all copyright notices to include 1992.
+	
+	* (load.c) Added termination to "load_code" to ignore code
+	  after an error has been found.
+
+	* (scan.l) Changed the check for NUL characters in STRING tokens
+	  (before the close quote) to work correctly.  Also added code to
+	  report illegal characters in a more readable output format.
+
+	* (bc.1) Added the exclusion of NUL characters from strings in
+	  the "differences" section and updated date of last change.
+
+	* (const.h) Changed BC_MAX_SEGS to 16.
+
+Mon Jan  6 14:20:02 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (number.c) Changed the out_num routine to use a correct field
+	  size for bases greater than 16.  e.g.  For base 1000, each
+	  "digit" is a three digit number.
+
+	* (Makefile) Added the "8" flag to get an 8 bit scanner.
+
+	* (scan.l) Changed "char *" to "unsigned char *" to match the
+	  declaration of yytext for the 8 bit scanner.  Also added code
+	  to detect the null character in strings and generate an error.
+
+Sat Jan  4 20:32:20 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (const.h) Changed BC_BASE_MAX to INT_MAX to allow more bases!
+
+Mon Dec 30 21:47:28 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (main.c) Fixed the bug that loaded the math library before
+	  every file.
+
+	* (bc.y) Removed some type declarations that duplicated token
+	  definitions so it could be run through bison.
+
+	* (load.c) Added a check for maximum code size.
+
+	* (Makefile) Added a prefix for LIBDIR and BINDIR so it can be
+	  changed easily.
+
+Mon Nov 25 13:11:17 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed version number in version.h to 1.01 with current date.
+
+	* Changed LIBFILE definition in Makefile.
+
+	* Added a recursive function example to bc.1.
+
+Sun Nov 24 21:24:01 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed the Makefile to make sure configure is run first.
+	  Added the $(CC) the configure call.  Moved some defines
+	  toward the front of the Makefile to make sure they are
+	  read by installers.  Also added SUBDIRS variable and updated
+	  the GNU distribution to include the subdirectories.  Included
+	  math.h in the distribution for use by configure.  Included
+	  ChangeLog in the distribution.
+
+	* Split the README into README and Install.  Changed Install
+	  to have current information.  Documented the STRINGS_H define.
+	  Updated the version number in README.
+
+	* Added a check for <strings.h> in configure.
+
+Fri Nov 22 15:06:32 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed configure to check for varargs.h first.  Also, added
+	  checks to see if long strings (math.h) are accepted by the
+	  C compiler.  Also added parameters to configure.
+
+	* Deleted #include <sys/types.h> from proto.h.  Also made only
+	  ANSI C compilers include <stdlib.h>.
+
+	* Changed the Makefile to have the install bin directory be
+	  /usr/local/bin and the install lib directory be /usr/local/lib.
+
+	* Changed some files in the Test directory to eliminate the
+	  <op>= form that some older bcs don't like.
+
+	* Made some small corrections in bc.1.
+
+Tue Oct 29 10:06:32 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Called current version 1.00.
+
+	* Submitted GNU bc-1.00 to comp.sources.reviewed
+
