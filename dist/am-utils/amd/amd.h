@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.h,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+/*	$NetBSD: amd.h,v 1.1.1.5 2002/11/29 22:58:08 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amd.h,v 1.8.2.3 2001/04/07 00:47:41 ib42 Exp
+ * Id: amd.h,v 1.26 2002/06/24 03:05:14 ib42 Exp
  *
  */
 
@@ -54,7 +53,7 @@
 
 /* options for amd.conf */
 #define CFM_BROWSABLE_DIRS		0x0001
-#define CFM_MOUNT_TYPE_AUTOFS		0x0002
+#define CFM_MOUNT_TYPE_AUTOFS		0x0002 /* use kernel autofs support */
 #define CFM_SELECTORS_IN_DEFAULTS	0x0004
 #define CFM_NORMALIZE_HOSTNAMES		0x0008
 #define CFM_PROCESS_LOCK		0x0010
@@ -78,6 +77,7 @@
 
 #define ereturn(x) { *error_return = x; return 0; }
 
+#define NEVER (time_t) 0
 
 /*
  * TYPEDEFS:
@@ -115,6 +115,7 @@ struct amu_global_options {
   char *pid_file;		/* PID file */
   char *sub_domain;		/* local domain */
   char *map_options;		/* global map options */
+  int map_reload_interval;	/* map reload interval */
   char *map_type;		/* global map type */
   char *search_path;		/* search path for maps */
   char *mount_type;		/* mount type for map */
@@ -198,18 +199,11 @@ struct mnt_map {
  * retry mechanism to resend the lookup request which can then be handled.
  */
 struct continuation {
-  char **ivec;			/* Current mount info */
   am_node *mp;			/* Node we are trying to mount */
-  char *key;			/* Map key */
-  char *info;			/* Info string */
-  char **xivec;			/* Saved strsplit vector */
-  char *auto_opts;		/* Automount options */
-  am_opts fs_opts;		/* Filesystem options */
-  char *def_opts;		/* Default automount options */
   int retry;			/* Try again? */
-  int tried;			/* Have we tried any yet? */
   time_t start;			/* Time we started this mount */
   int callout;			/* Callout identifier */
+  mntfs **mf;			/* Current mntfs */
 };
 
 
@@ -230,33 +224,36 @@ extern voidp amqproc_null_1_svc(voidp argp, struct svc_req *rqstp);
 extern voidp amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp);
 
 /* other external definitions */
-extern am_nfs_fh *root_fh(char *dir);
-extern am_node *autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
+extern am_nfs_fh *get_root_nfs_fh(char *dir);
 extern am_node *find_ap(char *);
-extern am_node *find_ap2(char *, am_node *);
+extern am_node *get_ap_child(am_node *, char *);
 extern bool_t xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead);
 extern fserver *find_nfs_srvr(mntfs *mf);
 extern int auto_fmount(am_node *mp);
 extern int auto_fumount(am_node *mp);
-extern int mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *mf);
+extern int mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs, mntfs *mf);
 extern int process_last_regular_map(void);
 extern int set_conf_kv(const char *section, const char *k, const char *v);
 extern int try_mount(voidp mvp);
+extern int unmount_mp(am_node *mp);
 extern int yyparse (void);
 extern nfsentry *make_entry_chain(am_node *mp, const nfsentry *current_chain, int fully_browsable);
+
 extern void amfs_auto_cont(int rc, int term, voidp closure);
 extern void amfs_auto_mkcacheref(mntfs *mf);
 extern void amfs_auto_retry(int rc, int term, voidp closure);
+extern void amfs_auto_mounted(mntfs *mf);
+extern int mount_amfs_toplvl(mntfs *mf, char *opts);
 extern void assign_error_mntfs(am_node *mp);
 extern void flush_srvr_nfs_cache(void);
 extern void free_continuation(struct continuation *cp);
 extern void mf_mounted(mntfs *mf);
-extern void quick_reply(am_node *mp, int error);
+extern void nfs_quick_reply(am_node *mp, int error);
 extern void root_newmap(const char *, const char *, const char *, const cf_map_t *);
 
 /* amd global variables */
 extern FILE *yyin;
-extern SVCXPRT *nfs_program_2_transp; /* For quick_reply() */
+extern SVCXPRT *current_transp; /* For nfs_quick_reply() */
 extern char *conf_tag;
 extern char *opt_gid;
 extern char *opt_uid;
@@ -276,7 +273,8 @@ extern sigset_t masked_sigs;
 
 #if defined(HAVE_AMU_FS_LINK) || defined(HAVE_AMU_FS_LINKX)
 extern char *amfs_link_match(am_opts *fo);
-extern int amfs_link_fumount(mntfs *mf);
+extern int amfs_link_mount(am_node *mp, mntfs *mf);
+extern int amfs_link_umount(am_node *mp, mntfs *mf);
 #endif /* defined(HAVE_AMU_FS_LINK) || defined(HAVE_AMU_FS_LINKX) */
 
 #ifdef HAVE_AMU_FS_NFSL
@@ -288,16 +286,24 @@ extern bool_t xdr_mountres3(XDR *xdrs, mountres3 *objp);
 #endif /* defined(HAVE_FS_NFS3) && !defined(HAVE_XDR_MOUNTRES3) */
 
 #ifdef HAVE_FS_AUTOFS
-extern SVCXPRT *autofsxprt;
-extern u_short autofs_port;
 extern int amd_use_autofs;
 
-extern int autofs_mount(am_node *mp);
-extern int autofs_umount(am_node *mp);
-extern int create_autofs_service(int *soAUTOFSp, u_short *autofs_portp, SVCXPRT **autofs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp));
-extern int svc_create_local_service(void (*dispatch) (), u_long prognum, u_long versnum, char *nettype, char *servname);
-extern void autofs_mounted(mntfs *mf);
-extern void autofs_program_1(struct svc_req *rqstp, SVCXPRT *transp);
+extern autofs_fh_t *autofs_get_fh(am_node *mp);
+extern void autofs_release_fh(autofs_fh_t *fh);
+extern void autofs_add_fdset(fd_set *readfds);
+extern int autofs_handle_fdset(fd_set *readfds, int nsel);
+extern void autofs_mounted(am_node *mp);
+extern void autofs_mount_succeeded(am_node *mp);
+extern void autofs_mount_failed(am_node *mp);
+extern int autofs_umount_succeeded(am_node *mp);
+extern int autofs_umount_failed(am_node *mp);
+extern void autofs_get_opts(char *opts, autofs_fh_t *fh);
+extern int autofs_link_mount(am_node *mp);
+extern int autofs_link_umount(am_node *mp);
+extern int autofs_compute_mount_flags(mntent_t *);
+extern void autofs_timeout_mp(am_node *);
+extern int create_autofs_service(void);
+extern int destroy_autofs_service(void);
 #endif /* HAVE_FS_AUTOFS */
 
 /* Unix file system (irix) */

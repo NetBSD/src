@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_svr4.c,v 1.1.1.4 2001/05/13 17:50:17 veego Exp $	*/
+/*	$NetBSD: mount_svr4.c,v 1.1.1.5 2002/11/29 22:58:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mount_svr4.c,v 1.4.2.1 2001/01/10 03:23:18 ezk Exp
+ * Id: mount_svr4.c,v 1.8 2002/02/02 20:58:58 ezk Exp
  *
  */
 
@@ -102,6 +101,13 @@ mount_svr4(char *fsname, char *dir, int flags, MTYPE_TYPE type, caddr_t data, co
 		     type, (char *) data, sizeof(nfs_args_t));
   }
 #endif /* defined(MOUNT_TYPE_NFS) && defined(MNTTAB_TYPE_NFS) */
+
+#if defined(MOUNT_TYPE_AUTOFS) && defined(MNTTAB_TYPE_AUTOFS)
+  if (STREQ(type, MOUNT_TYPE_AUTOFS)) {
+    return sys_mount(fsname, dir, (MNT2_GEN_OPT_DATA | flags),
+		     type, (char *) data, sizeof(autofs_args_t));
+  }
+#endif /* defined(MOUNT_TYPE_AUTOFS) && defined(MNTTAB_TYPE_AUTOFS) */
 
 #if defined(MOUNT_TYPE_UFS) && defined(MNTTAB_TYPE_UFS)
   if (STREQ(type, MOUNT_TYPE_UFS))

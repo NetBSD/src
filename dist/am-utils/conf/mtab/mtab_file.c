@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab_file.c,v 1.1.1.4 2001/05/13 17:50:17 veego Exp $	*/
+/*	$NetBSD: mtab_file.c,v 1.1.1.5 2002/11/29 22:58:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mtab_file.c,v 1.4.2.2 2001/04/14 21:08:23 ezk Exp
+ * Id: mtab_file.c,v 1.11 2002/02/02 20:58:58 ezk Exp
  *
  */
 
@@ -261,10 +260,16 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
     tmpname[1] = '\0';
   }
   strcat(tmpname, "/mtabXXXXXX");
-  mktemp(tmpname);
   retries = 0;
 enfile1:
-  if ((tmpfd = open(tmpname, O_RDWR | O_CREAT | O_TRUNC, 0644)) < 0) {
+#ifdef HAVE_MKSTEMP
+  tmpfd = mkstemp(tmpname);
+  fchmod(tmpfd, 0644);
+#else /* not HAVE_MKSTEMP */
+  mktemp(tmpname);
+  tmpfd = open(tmpname, O_RDWR | O_CREAT | O_TRUNC, 0644);
+#endif /* not HAVE_MKSTEMP */
+  if (tmpfd < 0) {
     if (errno == ENFILE && retries++ < NFILE_RETRIES) {
       sleep(1);
       goto enfile1;
@@ -378,17 +383,17 @@ mnt_dup(mntent_t *mp)
   new_mp->mnt_freq = mp->mnt_freq;
   new_mp->mnt_passno = mp->mnt_passno;
 
-#ifdef HAVE_FIELD_MNTENT_T_MNT_TIME
-# ifdef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING
+#ifdef HAVE_MNTENT_T_MNT_TIME
+# ifdef HAVE_MNTENT_T_MNT_TIME_STRING
   new_mp->mnt_time = strdup(mp->mnt_time);
-# else /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
+# else /* not HAVE_MNTENT_T_MNT_TIME_STRING */
   new_mp->mnt_time = mp->mnt_time;
-# endif /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
-#endif /* HAVE_FIELD_MNTENT_T_MNT_TIME */
+# endif /* not HAVE_MNTENT_T_MNT_TIME_STRING */
+#endif /* HAVE_MNTENT_T_MNT_TIME */
 
-#ifdef HAVE_FIELD_MNTENT_T_MNT_CNODE
+#ifdef HAVE_MNTENT_T_MNT_CNODE
   new_mp->mnt_cnode = mp->mnt_cnode;
-#endif /* HAVE_FIELD_MNTENT_T_MNT_CNODE */
+#endif /* HAVE_MNTENT_T_MNT_CNODE */
 
   return new_mp;
 }

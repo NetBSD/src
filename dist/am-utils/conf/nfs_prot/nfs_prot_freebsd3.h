@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_freebsd3.h,v 1.1.1.4 2001/05/13 17:50:18 veego Exp $	*/
+/*	$NetBSD: nfs_prot_freebsd3.h,v 1.1.1.5 2002/11/29 22:58:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_freebsd3.h,v 1.5.2.1 2001/01/10 03:23:22 ezk Exp
+ * Id: nfs_prot_freebsd3.h,v 1.9 2002/02/26 08:28:21 ezk Exp
  *
  */
 
@@ -85,6 +84,7 @@
 #define na_nlink	nlink
 #define na_size		size
 #define na_type		type
+#define na_uid		uid
 #define ne_cookie	cookie
 #define ne_fileid	fileid
 #define ne_name		name

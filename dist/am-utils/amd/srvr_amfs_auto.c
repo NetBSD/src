@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_amfs_auto.c,v 1.1.1.4 2001/05/13 17:50:14 veego Exp $	*/
+/*	$NetBSD: srvr_amfs_auto.c,v 1.1.1.5 2002/11/29 22:58:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: srvr_amfs_auto.c,v 1.3.2.3 2001/04/14 21:08:23 ezk Exp
+ * Id: srvr_amfs_auto.c,v 1.9 2002/02/02 20:58:56 ezk Exp
  *
  */
 
@@ -121,9 +120,7 @@ timeout_srvr(voidp v)
    * we are free to remove this node
    */
   if (fs->fs_refc == 0) {
-#ifdef DEBUG
     dlog("Deleting file server %s", fs->fs_host);
-#endif /* DEBUG */
     if (fs->fs_flags & FSF_WANT)
       wakeup_srvr(fs);
 
@@ -171,9 +168,7 @@ free_srvr(fserver *fs)
      */
     int ttl = (fs->fs_flags & (FSF_DOWN | FSF_ERROR)) ? 19 : AM_TTL;
 
-#ifdef DEBUG
     dlog("Last hard reference to file server %s - will timeout in %ds", fs->fs_host, ttl);
-#endif /* DEBUG */
     if (fs->fs_cid) {
       untimeout(fs->fs_cid);
       /*

@@ -1,6 +1,7 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.5 from Makefile.am.
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+# Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -10,10 +11,11 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
+@SET_MAKE@
+
 # Package: am-utils
 # Level: Makefile for amd/ directory
 # Author: Erez Zadok
-
 
 SHELL = @SHELL@
 
@@ -35,13 +37,9 @@ infodir = @infodir@
 mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
-
-DESTDIR =
-
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-
 top_builddir = ..
 
 ACLOCAL = @ACLOCAL@
@@ -50,11 +48,11 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_HEADER = $(INSTALL_DATA)
 transform = @program_transform_name@
-
 NORMAL_INSTALL = :
 PRE_INSTALL = :
 POST_INSTALL = :
@@ -65,33 +63,49 @@ host_alias = @host_alias@
 host_triplet = @host@
 AMD_FS_OBJS = @AMD_FS_OBJS@
 AMD_INFO_OBJS = @AMD_INFO_OBJS@
+AMTAR = @AMTAR@
 AMU_LIB_OBJS = @AMU_LIB_OBJS@
 AMU_NFS_PROT_HEADER = @AMU_NFS_PROT_HEADER@
 AR = @AR@
 AS = @AS@
+AWK = @AWK@
 CC = @CC@
 CPP = @CPP@
+DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
+EXEEXT = @EXEEXT@
+INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LEX = @LEX@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LIBTOOL_LDFLAGS = @LIBTOOL_LDFLAGS@
 LN_S = @LN_S@
-LTALLOCA = @LTALLOCA@
 LTLIBOBJS = @LTLIBOBJS@
-MAKEINFO = @MAKEINFO@
 OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PERL = @PERL@
 RANLIB = @RANLIB@
+STRIP = @STRIP@
 VERSION = @VERSION@
+am__include = @am__include@
+am__quote = @am__quote@
 am_utils_unmount_args = @am_utils_unmount_args@
 am_utils_unmount_call = @am_utils_unmount_call@
+install_sh = @install_sh@
+
+# allow users to add their own flags via "configure --enable-am-flags=ARG"
+AMU_CFLAGS = @AMU_CFLAGS@
+YACC = @YACC@
 
 sbin_PROGRAMS = amd
 
 # man pages
 man_MANS = amd.8
+
+# test scripts
+TESTS = test1.sh
 
 # headers this depends on, not to be installed
 noinst_HEADERS = amd.h
@@ -100,11 +114,70 @@ noinst_HEADERS = amd.h
 # which will not generate the .h needs for the lex file from the yacc file.
 # I took out the conf .y/.l files b/c of bad interaction between bsd44 make
 # and automake-1.2 rules.
-amd_SOURCES =  	am_ops.c			amd.c				amfs_auto.c			amfs_direct.c			amfs_error.c			amfs_host.c			amfs_inherit.c			amfs_link.c			amfs_linkx.c			amfs_nfsl.c			amfs_nfsx.c			amfs_program.c			amfs_root.c			amfs_toplvl.c			amfs_union.c			amq_subr.c			amq_svc.c			autil.c				clock.c				conf.c				get_args.c			map.c				mapc.c				mntfs.c				nfs_prot_svc.c			nfs_start.c			nfs_subr.c			opts.c				restart.c			rpc_fwd.c			sched.c				srvr_amfs_auto.c		srvr_nfs.c
+# get_args.c is handled separately
+amd_SOURCES = \
+	am_ops.c		\
+	amd.c			\
+	amfs_auto.c		\
+	amfs_direct.c		\
+	amfs_error.c		\
+	amfs_host.c		\
+	amfs_inherit.c		\
+	amfs_link.c		\
+	amfs_linkx.c		\
+	amfs_nfsl.c		\
+	amfs_nfsx.c		\
+	amfs_program.c		\
+	amfs_root.c		\
+	amfs_toplvl.c		\
+	amfs_union.c		\
+	amq_subr.c		\
+	amq_svc.c		\
+	autil.c			\
+	clock.c			\
+	conf.c			\
+	map.c			\
+	mapc.c			\
+	mntfs.c			\
+	nfs_prot_svc.c		\
+	nfs_start.c		\
+	nfs_subr.c		\
+	opts.c			\
+	restart.c		\
+	rpc_fwd.c		\
+	sched.c			\
+	srvr_amfs_auto.c	\
+	srvr_nfs.c
 
 
 # the complete list of all optional sources
-EXTRA_amd_SOURCES =  	info_file.c		info_hesiod.c		info_ldap.c		info_ndbm.c		info_nis.c		info_nisplus.c		info_passwd.c		info_union.c			ops_autofs.c		ops_cachefs.c		ops_cdfs.c		ops_efs.c		ops_lofs.c		ops_mfs.c		ops_nfs.c		ops_nfs3.c		ops_nullfs.c		ops_pcfs.c		ops_tfs.c		ops_tmpfs.c		ops_ufs.c		ops_umapfs.c		ops_unionfs.c		ops_xfs.c
+EXTRA_amd_SOURCES = \
+	info_file.c	\
+	info_hesiod.c	\
+	info_ldap.c	\
+	info_ndbm.c	\
+	info_nis.c	\
+	info_nisplus.c	\
+	info_passwd.c	\
+	info_union.c	\
+	\
+	ops_cachefs.c	\
+	ops_cdfs.c	\
+	ops_efs.c	\
+	ops_lofs.c	\
+	ops_mfs.c	\
+	ops_nfs.c	\
+	ops_nfs3.c	\
+	ops_nullfs.c	\
+	ops_pcfs.c	\
+	ops_tfs.c	\
+	ops_tmpfs.c	\
+	ops_ufs.c	\
+	ops_umapfs.c	\
+	ops_unionfs.c	\
+	ops_xfs.c	\
+	\
+	get_args.c
 
 
 # AMD_FS_OBJS: a list of ops_*.o objects added, depending on which
@@ -112,123 +185,67 @@ EXTRA_amd_SOURCES =  	info_file.c		info_hesiod.c		info_ldap.c		info_ndbm.c		info
 # AMD_INFO_OBJS: a list of info_*.o objects added, depending on which map
 # types this system supports.
 EXTRA_amd_OBJECTS = @AMD_FS_OBJS@ @AMD_INFO_OBJS@ conf_tok.o conf_parse.o
-LDADD = $(EXTRA_amd_OBJECTS) ../libamu/libamu.la
+LDADD = $(EXTRA_amd_OBJECTS) get_args.o ../libamu/libamu.la
 # must manually add f/lex library to LIBS, and not to LDADD.
 LIBS = @LIBS@ @LEXLIB@
 
 # additional files to distribute and clean
-EXTRA_DIST = conf_tok.l conf_parse.y ops_TEMPLATE.c $(man_MANS)
+EXTRA_DIST = conf_tok.l conf_parse.y ops_TEMPLATE.c $(man_MANS) $(TESTS)
 CLEANFILES = conf_tok.c conf_parse.c conf_parse.h
 DISTCLEANFILES = build_version.h
 
 INCLUDES = -I$(top_srcdir)/include
-
-# allow users to add their own flags via "configure --enable-am-flags=ARG"
-AMU_CFLAGS = @AMU_CFLAGS@
 CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
-YACC = @YACC@
 YFLAGS = -d
+subdir = amd
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_HEADER = ../config.h
-CONFIG_CLEAN_FILES = 
-PROGRAMS =  $(sbin_PROGRAMS)
+CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_CLEAN_FILES =
+sbin_PROGRAMS = amd$(EXEEXT)
+PROGRAMS = $(sbin_PROGRAMS)
 
+am_amd_OBJECTS = am_ops.$(OBJEXT) amd.$(OBJEXT) amfs_auto.$(OBJEXT) \
+	amfs_direct.$(OBJEXT) amfs_error.$(OBJEXT) amfs_host.$(OBJEXT) \
+	amfs_inherit.$(OBJEXT) amfs_link.$(OBJEXT) amfs_linkx.$(OBJEXT) \
+	amfs_nfsl.$(OBJEXT) amfs_nfsx.$(OBJEXT) amfs_program.$(OBJEXT) \
+	amfs_root.$(OBJEXT) amfs_toplvl.$(OBJEXT) amfs_union.$(OBJEXT) \
+	amq_subr.$(OBJEXT) amq_svc.$(OBJEXT) autil.$(OBJEXT) \
+	clock.$(OBJEXT) conf.$(OBJEXT) map.$(OBJEXT) mapc.$(OBJEXT) \
+	mntfs.$(OBJEXT) nfs_prot_svc.$(OBJEXT) nfs_start.$(OBJEXT) \
+	nfs_subr.$(OBJEXT) opts.$(OBJEXT) restart.$(OBJEXT) \
+	rpc_fwd.$(OBJEXT) sched.$(OBJEXT) srvr_amfs_auto.$(OBJEXT) \
+	srvr_nfs.$(OBJEXT)
+amd_OBJECTS = $(am_amd_OBJECTS)
+amd_LDADD = $(LDADD)
+amd_DEPENDENCIES = conf_tok.o conf_parse.o get_args.o \
+	../libamu/libamu.la
+amd_LDFLAGS =
 
-DEFS = @DEFS@ -I. -I$(srcdir) -I..
+DEFS = @DEFS@
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-amd_OBJECTS =  am_ops.o amd.o amfs_auto.o amfs_direct.o amfs_error.o \
-amfs_host.o amfs_inherit.o amfs_link.o amfs_linkx.o amfs_nfsl.o \
-amfs_nfsx.o amfs_program.o amfs_root.o amfs_toplvl.o amfs_union.o \
-amq_subr.o amq_svc.o autil.o clock.o conf.o get_args.o map.o mapc.o \
-mntfs.o nfs_prot_svc.o nfs_start.o nfs_subr.o opts.o restart.o \
-rpc_fwd.o sched.o srvr_amfs_auto.o srvr_nfs.o
-amd_LDADD = $(LDADD)
-amd_DEPENDENCIES =  conf_tok.o conf_parse.o ../libamu/libamu.la
-amd_LDFLAGS = 
-COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+depcomp =
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
+	$(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-man8dir = $(mandir)/man8
-MANS = $(man_MANS)
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+DIST_SOURCES = $(amd_SOURCES) $(EXTRA_amd_SOURCES)
 
 NROFF = nroff
-HEADERS =  $(noinst_HEADERS)
+MANS = $(man_MANS)
+HEADERS = $(noinst_HEADERS)
 
-DIST_COMMON =  Makefile.am Makefile.in
-
-
-DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
-
-TAR = gtar
-GZIP_ENV = --best
+DIST_COMMON = $(noinst_HEADERS) Makefile.am Makefile.in
 SOURCES = $(amd_SOURCES) $(EXTRA_amd_SOURCES)
-OBJECTS = $(amd_OBJECTS)
 
-all: all-redirect
+all: all-am
+
 .SUFFIXES:
-.SUFFIXES: .S .c .lo .o .s
-$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
-	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps amd/Makefile
-
-Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
-	cd $(top_builddir) \
-	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
-
-
-mostlyclean-sbinPROGRAMS:
-
-clean-sbinPROGRAMS:
-	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
-
-distclean-sbinPROGRAMS:
-
-maintainer-clean-sbinPROGRAMS:
-
-install-sbinPROGRAMS: $(sbin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(sbindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(sbindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
-	  else :; fi; \
-	done
-
-uninstall-sbinPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(sbindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
-	done
-
-.c.o:
-	$(COMPILE) -c $<
-
-.s.o:
-	$(COMPILE) -c $<
-
-.S.o:
-	$(COMPILE) -c $<
-
-mostlyclean-compile:
-	-rm -f *.o core *.core
-
-clean-compile:
-
-distclean-compile:
-	-rm -f *.tab.c
-
-maintainer-clean-compile:
-
-.c.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
-.s.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
-.S.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
+.SUFFIXES: .c .lo .o .obj
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -237,17 +254,65 @@ clean-libtool:
 	-rm -rf .libs _libs
 
 distclean-libtool:
+	-rm -f libtool
+$(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
+	cd $(top_srcdir) && \
+	  $(AUTOMAKE) --gnu  --ignore-deps amd/Makefile
+Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
+	cd $(top_builddir) && \
+	  CONFIG_HEADERS= CONFIG_LINKS= \
+	  CONFIG_FILES=$(subdir)/$@ $(SHELL) ./config.status
+install-sbinPROGRAMS: $(sbin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(sbindir)
+	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	     || test -f $$p1 \
+	  ; then \
+	    f=`echo $$p1|sed '$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(sbindir)/$$f"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(sbindir)/$$f; \
+	  else :; fi; \
+	done
 
-maintainer-clean-libtool:
+uninstall-sbinPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f $(DESTDIR)$(sbindir)/$$f"; \
+	  rm -f $(DESTDIR)$(sbindir)/$$f; \
+	done
 
-amd: $(amd_OBJECTS) $(amd_DEPENDENCIES)
-	@rm -f amd
+clean-sbinPROGRAMS:
+	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
+amd$(EXEEXT): $(amd_OBJECTS) $(amd_DEPENDENCIES) 
+	@rm -f amd$(EXEEXT)
 	$(LINK) $(amd_LDFLAGS) $(amd_OBJECTS) $(amd_LDADD) $(LIBS)
 
-install-man8:
+mostlyclean-compile:
+	-rm -f *.$(OBJEXT) core *.core
+
+distclean-compile:
+	-rm -f *.tab.c
+
+.c.o:
+	$(COMPILE) -c `test -f $< || echo '$(srcdir)/'`$<
+
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
+.c.lo:
+	$(LTCOMPILE) -c -o $@ `test -f $< || echo '$(srcdir)/'`$<
+uninstall-info-am:
+
+man8dir = $(mandir)/man8
+install-man8: $(man8_MANS) $(man_MANS)
+	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(man8dir)
-	@list='$(man8_MANS)'; \
-	l2='$(man_MANS)'; for i in $$l2; do \
+	@list='$(man8_MANS) $(dist_man8_MANS) $(nodist_man8_MANS)'; \
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
 	  case "$$i" in \
 	    *.8*) list="$$list $$i" ;; \
 	  esac; \
@@ -257,14 +322,16 @@ install-man8:
 	  else file=$$i; fi; \
 	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
 	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
 	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
 	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man8dir)/$$inst"; \
 	  $(INSTALL_DATA) $$file $(DESTDIR)$(man8dir)/$$inst; \
 	done
-
 uninstall-man8:
-	@list='$(man8_MANS)'; \
-	l2='$(man_MANS)'; for i in $$l2; do \
+	@$(NORMAL_UNINSTALL)
+	@list='$(man8_MANS) $(dist_man8_MANS) $(nodist_man8_MANS)'; \
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
 	  case "$$i" in \
 	    *.8*) list="$$list $$i" ;; \
 	  esac; \
@@ -272,326 +339,211 @@ uninstall-man8:
 	for i in $$list; do \
 	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
 	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
 	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
 	  echo " rm -f $(DESTDIR)$(man8dir)/$$inst"; \
 	  rm -f $(DESTDIR)$(man8dir)/$$inst; \
 	done
-install-man: $(MANS)
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) install-man8
-uninstall-man:
-	@$(NORMAL_UNINSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) uninstall-man8
 
 tags: TAGS
 
-ID: $(HEADERS) $(SOURCES) $(LISP)
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
+ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
-	here=`pwd` && cd $(srcdir) \
-	  && mkid -f$$here/ID $$unique $(LISP)
+	mkid -fID $$unique $(LISP)
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
+	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
 	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
-	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+	  || etags $(ETAGS_ARGS) $$tags  $$unique $(LISP)
 
-mostlyclean-tags:
-
-clean-tags:
+GTAGS:
+	here=`CDPATH=: && cd $(top_builddir) && pwd` \
+	  && cd $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) $$here
 
 distclean-tags:
-	-rm -f TAGS ID
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH
 
-maintainer-clean-tags:
+check-TESTS: $(TESTS)
+	@failed=0; all=0; xfail=0; xpass=0; \
+	srcdir=$(srcdir); export srcdir; \
+	list='$(TESTS)'; \
+	if test -n "$$list"; then \
+	  for tst in $$list; do \
+	    if test -f ./$$tst; then dir=./; \
+	    elif test -f $$tst; then dir=; \
+	    else dir="$(srcdir)/"; fi; \
+	    if $(TESTS_ENVIRONMENT) $${dir}$$tst; then \
+	      all=`expr $$all + 1`; \
+	      case " $(XFAIL_TESTS) " in \
+	      *" $$tst "*) \
+	        xpass=`expr $$xpass + 1`; \
+	        failed=`expr $$failed + 1`; \
+	        echo "XPASS: $$tst"; \
+	      ;; \
+	      *) \
+	        echo "PASS: $$tst"; \
+	      ;; \
+	      esac; \
+	    elif test $$? -ne 77; then \
+	      all=`expr $$all + 1`; \
+	      case " $(XFAIL_TESTS) " in \
+	      *" $$tst "*) \
+	        xfail=`expr $$xfail + 1`; \
+	        echo "XFAIL: $$tst"; \
+	      ;; \
+	      *) \
+	        failed=`expr $$failed + 1`; \
+	        echo "FAIL: $$tst"; \
+	      ;; \
+	      esac; \
+	    fi; \
+	  done; \
+	  if test "$$failed" -eq 0; then \
+	    if test "$$xfail" -eq 0; then \
+	      banner="All $$all tests passed"; \
+	    else \
+	      banner="All $$all tests behaved as expected ($$xfail expected failures)"; \
+	    fi; \
+	  else \
+	    if test "$$xpass" -eq 0; then \
+	      banner="$$failed of $$all tests failed"; \
+	    else \
+	      banner="$$failed of $$all tests did not behave as expected ($$xpass unexpected passes)"; \
+	    fi; \
+	  fi; \
+	  dashes=`echo "$$banner" | sed s/./=/g`; \
+	  echo "$$dashes"; \
+	  echo "$$banner"; \
+	  echo "$$dashes"; \
+	  test "$$failed" -eq 0; \
+	fi
 
-distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-subdir = amd
+top_distdir = ..
+distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
 
 distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
-	  d=$(srcdir); \
+	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
+	  dir=`echo "$$file" | sed -e 's,/[^/]*$$,,'`; \
+	  if test "$$dir" != "$$file" && test "$$dir" != "."; then \
+	    $(mkinstalldirs) "$(distdir)/$$dir"; \
+	  fi; \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$d/$$file $(distdir)/$$file; \
+	    cp -pR $$d/$$file $(distdir) \
+	    || exit 1; \
 	  else \
 	    test -f $(distdir)/$$file \
-	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
-	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	    || cp -p $$d/$$file $(distdir)/$$file \
+	    || exit 1; \
 	  fi; \
 	done
-amd.o: amd.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-amfs_auto.o: amfs_auto.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_direct.o: amfs_direct.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_error.o: amfs_error.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_host.o: amfs_host.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_inherit.o: amfs_inherit.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_link.o: amfs_link.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_linkx.o: amfs_linkx.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_nfsl.o: amfs_nfsl.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_nfsx.o: amfs_nfsx.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_program.o: amfs_program.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_root.o: amfs_root.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_toplvl.o: amfs_toplvl.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amfs_union.o: amfs_union.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-am_ops.o: am_ops.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-amq_subr.o: amq_subr.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-amq_svc.o: amq_svc.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-autil.o: autil.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-clock.o: clock.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-conf.o: conf.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-conf_parse.o: conf_parse.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-conf_tok.o: conf_tok.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h conf_parse.h
-get_args.o: get_args.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h build_version.h
-info_file.o: info_file.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-info_ldap.o: info_ldap.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-info_ndbm.o: info_ndbm.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-info_nis.o: info_nis.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-info_nisplus.o: info_nisplus.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-info_passwd.o: info_passwd.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-info_union.o: info_union.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-mapc.o: mapc.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-map.o: map.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-mntfs.o: mntfs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-nfs_prot_svc.o: nfs_prot_svc.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-nfs_start.o: nfs_start.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-nfs_subr.o: nfs_subr.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_autofs.o: ops_autofs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_cdfs.o: ops_cdfs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_efs.o: ops_efs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-ops_nfs3.o: ops_nfs3.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_nfs.o: ops_nfs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-ops_pcfs.o: ops_pcfs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_ufs.o: ops_ufs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-opts.o: opts.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-restart.o: restart.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-rpc_fwd.o: rpc_fwd.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-sched.o: sched.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
-srvr_amfs_auto.o: srvr_amfs_auto.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-srvr_nfs.o: srvr_nfs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-
-info-am:
-info: info-am
-dvi-am:
-dvi: dvi-am
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-am
-installcheck-am:
-installcheck: installcheck-am
-install-exec-am: install-sbinPROGRAMS
-install-exec: install-exec-am
+all-am: Makefile $(PROGRAMS) $(MANS) $(HEADERS)
 
-install-data-am: install-man
+installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(sbindir) $(DESTDIR)$(man8dir)
+
+install: install-am
+install-exec: install-exec-am
 install-data: install-data-am
+uninstall: uninstall-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
-install: install-am
-uninstall-am: uninstall-sbinPROGRAMS uninstall-man
-uninstall: uninstall-am
-all-am: Makefile $(PROGRAMS) $(MANS) $(HEADERS)
-all-redirect: all-am
+
+installcheck: installcheck-am
 install-strip:
-	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
-installdirs:
-	$(mkinstalldirs)  $(DESTDIR)$(sbindir) $(DESTDIR)$(mandir)/man8
-
-
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
+	  `test -z '$(STRIP)' || \
+	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install
 mostlyclean-generic:
 
 clean-generic:
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
-	-rm -f Makefile $(CONFIG_CLEAN_FILES)
-	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+	-rm -f Makefile $(CONFIG_CLEAN_FILES) stamp-h stamp-h[0-9]*
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
-mostlyclean-am:  mostlyclean-sbinPROGRAMS mostlyclean-compile \
-		mostlyclean-libtool mostlyclean-tags \
-		mostlyclean-generic
-
-mostlyclean: mostlyclean-am
-
-clean-am:  clean-sbinPROGRAMS clean-compile clean-libtool clean-tags \
-		clean-generic mostlyclean-am
-
+	@echo "This command is intended for maintainers to use"
+	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-distclean-am:  distclean-sbinPROGRAMS distclean-compile \
-		distclean-libtool distclean-tags distclean-generic \
-		clean-am
-	-rm -f libtool
+clean-am: clean-generic clean-libtool clean-sbinPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 
-maintainer-clean-am:  maintainer-clean-sbinPROGRAMS \
-		maintainer-clean-compile maintainer-clean-libtool \
-		maintainer-clean-tags maintainer-clean-generic \
-		distclean-am
-	@echo "This command is intended for maintainers to use;"
-	@echo "it deletes files that may require special tools to rebuild."
+distclean-am: clean-am distclean-compile distclean-generic \
+	distclean-libtool distclean-tags
+
+dvi: dvi-am
+
+dvi-am:
+
+info: info-am
+
+info-am:
+
+install-data-am: install-man
+
+install-exec-am: install-sbinPROGRAMS
+
+install-info: install-info-am
+
+install-man: install-man8
+
+installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 
-.PHONY: mostlyclean-sbinPROGRAMS distclean-sbinPROGRAMS \
-clean-sbinPROGRAMS maintainer-clean-sbinPROGRAMS uninstall-sbinPROGRAMS \
-install-sbinPROGRAMS mostlyclean-compile distclean-compile \
-clean-compile maintainer-clean-compile mostlyclean-libtool \
-distclean-libtool clean-libtool maintainer-clean-libtool install-man8 \
-uninstall-man8 install-man uninstall-man tags mostlyclean-tags \
-distclean-tags clean-tags maintainer-clean-tags distdir info-am info \
-dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
-install-exec install-data-am install-data install-am install \
-uninstall-am uninstall all-redirect all-am all installdirs \
-mostlyclean-generic distclean-generic clean-generic \
-maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+maintainer-clean-am: distclean-am maintainer-clean-generic
+
+mostlyclean: mostlyclean-am
+
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool
+
+uninstall-am: uninstall-info-am uninstall-man uninstall-sbinPROGRAMS
+
+uninstall-man: uninstall-man8
+
+.PHONY: GTAGS all all-am check check-TESTS check-am clean clean-generic \
+	clean-libtool clean-sbinPROGRAMS distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am info info-am install install-am install-data \
+	install-data-am install-exec install-exec-am install-info \
+	install-info-am install-man install-man8 install-sbinPROGRAMS \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	tags uninstall uninstall-am uninstall-info-am uninstall-man \
+	uninstall-man8 uninstall-sbinPROGRAMS
 
 
 # dependencies
 $(PROGRAMS): $(LDADD)
 conf_tok.o: conf_parse.h
 get_args.o: build_version.h
-$(OBJECTS) $(EXTRA_amd_OBJECTS):		\
+$(amd_OBJECTS) $(EXTRA_amd_OBJECTS):		\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\
@@ -615,17 +567,8 @@ conf_parse.c conf_parse.h: $(srcdir)/conf_parse.y
 	mv y.tab.h conf_parse.h
 
 # auto-generate build number
-build_version.h: $(amd_SOURCES) $(EXTRA_amd_SOURCES)	\
-		../config.h				\
-		../aux_conf.h				\
-		$(top_srcdir)/include/am_compat.h	\
-		$(top_srcdir)/include/am_defs.h		\
-		$(top_srcdir)/include/am_utils.h	\
-		$(top_srcdir)/include/amq_defs.h	\
-		@AMU_NFS_PROT_HEADER@			\
-		$(noinst_HEADERS)
+build_version.h: $(OBJECTS) $(EXTRA_amd_OBJECTS) get_args.c
 	$(top_srcdir)/aux/update_build_version
-
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_gram.y,v 1.1.1.4 2001/05/13 17:50:30 veego Exp $	*/
+/*	$NetBSD: fsi_gram.y,v 1.1.1.5 2002/11/29 22:59:00 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
  *
- * Id: fsi_gram.y,v 1.4.2.1 2001/01/10 03:23:33 ezk Exp
+ * Id: fsi_gram.y,v 1.8 2002/02/02 20:59:02 ezk Exp
  *
  */
 
@@ -58,10 +57,14 @@
 #  include <alloca.h>
 # else /* not HAVE_ALLOCA_H */
 #  ifdef _AIX
-#pragma alloca
+/*
+ * This pragma directive is indented so that pre-ANSI C compilers will
+ * ignore it, rather than choke on it.
+ */
+ #pragma alloca
 #  else /* not _AIX */
 #   ifndef alloca
-  /* predefined by HP cc +Olibcalls */
+/* predefined by HP cc +Olibcalls */
 voidp alloca();
 #   endif /* not alloca */
 #  endif /* not _AIX */

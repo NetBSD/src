@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_sockets.c,v 1.1.1.4 2001/05/13 17:50:23 veego Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.1.1.5 2002/11/29 22:58:39 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: transp_sockets.c,v 1.6.2.3 2001/04/14 21:08:24 ezk Exp
+ * Id: transp_sockets.c,v 1.15 2002/06/23 01:05:39 ib42 Exp
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -163,9 +162,7 @@ get_mount_client(char *unused_host, struct sockaddr_in *sin, struct timeval *tv,
     *sock = RPC_ANYSOCK;
     return NULL;
   }
-#ifdef DEBUG
   dlog("get_mount_client: Using udp, port %d", sin->sin_port);
-#endif /* DEBUG */
   return client;
 }
 
@@ -178,6 +175,16 @@ amu_svc_getcaller(SVCXPRT *xprt)
 {
   /* glibc 2.2 returns a sockaddr_storage ??? */
   return (struct sockaddr_in *)svc_getcaller(xprt);
+}
+
+
+/*
+ * register an RPC server
+ */
+int
+amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum, void (*dispatch)(), u_long protocol, struct netconfig *dummy)
+{
+  return svc_register(xprt, prognum, versnum, dispatch, protocol);
 }
 
 
@@ -203,7 +210,8 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
     return 1;
   }
   if (!svc_register(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, 0)) {
-    plog(XLOG_FATAL, "unable to register (%d, %d, 0)", NFS_PROGRAM, NFS_VERSION);
+    plog(XLOG_FATAL, "unable to register (%ld, %ld, 0)",
+	 (u_long) NFS_PROGRAM, (u_long) NFS_VERSION);
     return 3;
   }
 
@@ -215,7 +223,7 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
  * Create the amq service for amd (both TCP and UDP)
  */
 int
-create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp)
+create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **dummy1, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **dummy2)
 {
   /* first create TCP service */
   if (tcp_soAMQp) {
@@ -371,19 +379,3 @@ try_again:
        (int) nfs_version, proto, host);
   return nfs_version;
 }
-
-
-/*
- * AUTOFS FUNCTIONS FOR SOCKETS:
- */
-#ifdef HAVE_FS_AUTOFS
-/*
- * Create the nfs service for amd
- */
-int
-create_autofs_service(int *soAUTOFSp, u_short *autofs_portp, SVCXPRT **autofs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp))
-{
-  /* NOT IMPLEMENTED! */
-  return -1;
-}
-#endif /* HAVE_FS_AUTOFS */
