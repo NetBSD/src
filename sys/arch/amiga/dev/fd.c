@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
+/*	$NetBSD: fd.c,v 1.37 1997/07/17 01:30:44 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -51,6 +51,8 @@
 
 #include <sys/conf.h>
 #include <machine/conf.h>
+
+#include "locators.h"
 
 enum fdc_bits { FDB_CHANGED = 2, FDB_PROTECT, FDB_CYLZERO, FDB_READY };
 /*
@@ -366,11 +368,11 @@ fdmatch(pdp, cfp, auxp)
 	void *auxp;
 {
 
-#define cf_unit	cf_loc[0]
+#define cf_unit	cf_loc[FDCCF_UNIT]
 	struct fdcargs *fdap;
 
 	fdap = auxp;
-	if (cfp->cf_unit == fdap->unit || cfp->cf_unit == -1)
+	if (cfp->cf_unit == fdap->unit || cfp->cf_unit == FDCCF_UNIT_DEFAULT)
 		return(1);
 	return(0);
 #undef cf_unit
