@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_mpilib.h,v 1.1 2003/04/16 22:03:00 thorpej Exp $	*/
+/*	$NetBSD: mpt_mpilib.h,v 1.2 2003/04/16 23:24:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by LSI Logic Corporation
@@ -64,6 +64,14 @@
 *
 *****************************************************************************/
 
+#ifdef __NetBSD__
+typedef	int8_t		S8;
+typedef	uint8_t		U8;
+typedef	int16_t		S16;
+typedef	uint16_t	U16;
+typedef	int32_t		S32;
+typedef	uint32_t	U32;
+#else /* ! __NetBSD__ */
 typedef signed   char   S8;
 typedef unsigned char   U8;
 typedef signed   short  S16;
@@ -80,6 +88,7 @@ typedef unsigned short  U16;
     typedef unsigned long  U32;
 
 #endif
+#endif /* __NetBSD__ */
 
 
 typedef struct _S64
