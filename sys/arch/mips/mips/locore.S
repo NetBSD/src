@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 1996/09/30 02:21:21 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 1996/10/13 21:37:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1110,7 +1110,7 @@ LEAF(suiword)
 #ifdef JONATHAN_BOTCHED_THIS
  	b	_C_LABEL(MachFlushICache)	# NOTE: must not clobber v0!
 #else
- 	b	_C_LABEL(mips_r2000_FlushICache)# NOTE: must not clobber v0!
+/*XXX*/	b	_C_LABEL(mips1_FlushICache)# NOTE: must not clobber v0!
 #endif
 	li	a1, 4				# size of word
 END(suiword)
