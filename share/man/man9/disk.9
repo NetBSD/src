@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.7 1998/04/22 07:14:32 ross Exp $
+.\"	$NetBSD: disk.9,v 1.8 1998/09/02 05:13:07 jeremy Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -332,20 +332,20 @@ This section describes places within the
 source tree where actual
 code implementing or utilizing the disk framework can be found.  All
 pathnames are relative to
-.Nm /usr/src .
+.Pa /usr/src .
 .Pp
 The disk framework itself is implemented within the file
-.Nm sys/kern/subr_disk.c .
+.Pa sys/kern/subr_disk.c .
 Data structures and function prototypes for the framework are located in
-.Nm sys/sys/disk.h .
+.Pa sys/sys/disk.h .
 .Pp
 The
 .Nx
 machine-independent SCSI disk and CD-ROM drivers utilize the
 disk framework.  They are located in
-.Nm sys/scsi/sd.c
+.Pa sys/scsi/sd.c
 and
-.Nm sys/scsi/cd.c .
+.Pa sys/scsi/cd.c .
 .Pp
 The
 .Nx
@@ -354,9 +354,9 @@ and
 .Nm vnd
 drivers utilize the detachment capability of the framework.
 They are located in
-.Nm sys/dev/ccd.c
+.Pa sys/dev/ccd.c
 and
-.Nm sys/dev/vnd.c .
+.Pa sys/dev/vnd.c .
 .Sh AUTHOR
 The
 .Nx

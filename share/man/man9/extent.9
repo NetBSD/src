@@ -1,4 +1,4 @@
-.\"	$NetBSD: extent.9,v 1.10 1998/06/06 02:32:28 thorpej Exp $
+.\"	$NetBSD: extent.9,v 1.11 1998/09/02 05:13:07 jeremy Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -319,16 +319,16 @@ This section describes places within the
 source tree where
 actual code implementing or using the extent manager can be found.
 All pathnames are relative to
-.Nm /usr/src .
+.Pa /usr/src .
 .Pp
 The extent manager itself is implemented within the file
-.Nm sys/kern/subr_extent.c .
+.Pa sys/kern/subr_extent.c .
 Function prototypes for the framework are located in
-.Nm sys/sys/extent.h .
+.Pa sys/sys/extent.h .
 .Pp
 The i386 bus management code uses the extent manager for managing I/O
 ports and I/O memory.  This code is in the file
-.Nm sys/arch/i386/i386/machdep.c .
+.Pa sys/arch/i386/i386/machdep.c .
 .Sh AUTHOR
 The
 .Nx
