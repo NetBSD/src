@@ -217,7 +217,7 @@ struct Frame *fp = NULL;	/* frame pointer. bottom level unused */
 
 Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 {
-	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
+	static const Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
 	int i, ncall, ndef;
 	Node *x;
 	Cell *args[NARGS], *oargs[NARGS];	/* BUG: fixed size arrays */
@@ -1444,10 +1444,12 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 {
 	Cell *x, *y;
 	Awkfloat u;
-	int t;
-	char *p, *buf;
+	int t, sz;
+	char *p, *buf, *fmt;
 	Node *nextarg;
 	FILE *fp;
+	time_t tv;
+	struct tm *tm;
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
@@ -1516,6 +1518,35 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		else
 			u = fflush(fp);
 		break;
+	case FSYSTIME:
+		u = time((time_t *) 0); break;
+	case FSTRFTIME:
+		/* strftime([format [,timestamp]]) */
+		if (nextarg) {
+			y = execute(nextarg), nextarg = nextarg->nnext;
+			tv = (time_t) getfval(y);
+			tempfree(y);
+		} else
+			tv = time((time_t *) 0);
+		tm = localtime(&tv);
+
+		if (isrec(x)) {
+			/* format argument not provided, use default */
+			fmt = "%a %b %d %H:%M:%S %Z %Y";
+		} else
+			fmt = tostring(getsval(x));
+
+		sz = 32, buf = NULL;
+		do {
+			if ((buf = realloc(buf, (sz *= 2))) == NULL)
+				FATAL("out of memory in strftime");
+		} while(strftime(buf, sz, fmt, tm) == 0);
+
+		y = gettemp();
+		setsval(y, buf);
+		free(buf);
+
+		return y;
 	default:	/* can't happen */
 		FATAL("illegal function type %d", t);
 		break;
@@ -1582,7 +1613,7 @@ FILE *redirect(int a, Node *b)	/* set up all i/o redirections */
 
 struct files {
 	FILE	*fp;
-	char	*fname;
+	const char	*fname;
 	int	mode;	/* '|', 'a', 'w' => LE/LT, GT */
 } files[FOPEN_MAX] ={
 	{ NULL,  "/dev/stdin",  LT },	/* watch out: don't free this! */
@@ -1643,7 +1674,7 @@ FILE *openfile(int a, char *us)
 	return fp;
 }
 
-char *filename(FILE *fp)
+const char *filename(FILE *fp)
 {
 	int i;
 
@@ -1862,6 +1893,124 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 	x->fval = num;
 	free(buf);
 	return(x);
+}
+
+Cell *gensub(Node **a, int nnn)	/* global selective substitute */
+	/* XXX incomplete - doesn't support backreferences \0 ... \9 */
+{
+	Cell *x, *y, *res, *h;
+	char *rptr, *sptr, *t, *pb, *q;
+	char *buf;
+	fa *pfa;
+	int mflag, tempstat, num, whichm;
+	int bufsz = recsize;
+
+	if ((buf = (char *) malloc(bufsz)) == NULL)
+		FATAL("out of memory in gensub");
+	mflag = 0;	/* if mflag == 0, can replace empty string */
+	num = 0;
+	x = execute(a[4]);	/* source string */
+	t = getsval(x);
+	res = copycell(x);	/* target string - initially copy of source */
+	if (a[0] == 0)		/* 0 => a[1] is already-compiled regexpr */
+		pfa = (fa *) a[1];	/* regular expression */
+	else {
+		y = execute(a[1]);
+		pfa = makedfa(getsval(y), 1);
+		tempfree(y);
+	}
+	y = execute(a[2]);	/* replacement string */
+	h = execute(a[3]);	/* which matches should be replaced */
+	sptr = getsval(h);
+	if (sptr[0] == 'g' || sptr[0] == 'G')
+		whichm = -1;
+	else
+		whichm = (int) getfval(h);
+	tempfree(h);
+
+	if (pmatch(pfa, t)) {
+		tempstat = pfa->initstat;
+		pfa->initstat = 2;
+		pb = buf;
+		rptr = getsval(y);
+		do {
+			if (whichm >= 0 && whichm != num) {
+				num++;
+				adjbuf(&buf, &bufsz, (pb - buf) + (patbeg - t) + patlen, recsize, &pb, "gensub");
+
+				/* copy the part of string up to and including
+				 * match to output buffer */
+				while (t < patbeg + patlen)
+					*pb++ = *t++;
+				continue;
+			}
+
+			if (patlen == 0 && *patbeg != 0) {	/* matched empty string */
+				if (mflag == 0) {	/* can replace empty */
+					num++;
+					sptr = rptr;
+					while (*sptr != 0) {
+						adjbuf(&buf, &bufsz, 5+pb-buf, recsize, &pb, "gensub");
+						if (*sptr == '\\') {
+							backsub(&pb, &sptr);
+						} else if (*sptr == '&') {
+							sptr++;
+							adjbuf(&buf, &bufsz, 1+patlen+pb-buf, recsize, &pb, "gensub");
+							for (q = patbeg; q < patbeg+patlen; )
+								*pb++ = *q++;
+						} else
+							*pb++ = *sptr++;
+					}
+				}
+				if (*t == 0)	/* at end */
+					goto done;
+				adjbuf(&buf, &bufsz, 2+pb-buf, recsize, &pb, "gensub");
+				*pb++ = *t++;
+				if (pb > buf + bufsz)	/* BUG: not sure of this test */
+					FATAL("gensub result0 %.30s too big; can't happen", buf);
+				mflag = 0;
+			}
+			else {	/* matched nonempty string */
+				num++;
+				sptr = t;
+				adjbuf(&buf, &bufsz, 1+(patbeg-sptr)+pb-buf, recsize, &pb, "gensub");
+				while (sptr < patbeg)
+					*pb++ = *sptr++;
+				sptr = rptr;
+				while (*sptr != 0) {
+					adjbuf(&buf, &bufsz, 5+pb-buf, recsize, &pb, "gensub");
+					if (*sptr == '\\') {
+						backsub(&pb, &sptr);
+					} else if (*sptr == '&') {
+						sptr++;
+						adjbuf(&buf, &bufsz, 1+patlen+pb-buf, recsize, &pb, "gensub");
+						for (q = patbeg; q < patbeg+patlen; )
+							*pb++ = *q++;
+					} else
+						*pb++ = *sptr++;
+				}
+				t = patbeg + patlen;
+				if (patlen == 0 || *t == 0 || *(t-1) == 0)
+					goto done;
+				if (pb > buf + bufsz)
+					FATAL("gensub result1 %.30s too big; can't happen", buf);
+				mflag = 1;
+			}
+		} while (pmatch(pfa,t));
+		sptr = t;
+		adjbuf(&buf, &bufsz, 1+strlen(sptr)+pb-buf, 0, &pb, "gensub");
+		while ((*pb++ = *sptr++) != 0)
+			;
+	done:	if (pb > buf + bufsz)
+			FATAL("gensub result2 %.30s too big; can't happen", buf);
+		*pb = '\0';
+		setsval(res, buf);
+		pfa->initstat = tempstat;
+	}
+	tempfree(x);
+	tempfree(y);
+	free(buf);
+	return(res);
 }
 
 void backsub(char **pb_ptr, char **sptr_ptr)	/* handle \\& variations */
