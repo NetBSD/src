@@ -1,4 +1,4 @@
-/*      $NetBSD: intvec.s,v 1.5 1994/11/25 19:09:54 ragge Exp $   */
+/*      $NetBSD: intvec.s,v 1.6 1995/02/13 00:46:08 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -39,517 +39,231 @@
 #include "vax/include/trap.h"
 #include "uba.h"
 
+#define	TRAPCALL(namn, typ)	\
+	.align 2; namn ## :;.globl namn ;pushl $0; pushl $typ; jbr trap;
+
+#define	TRAPARGC(namn, typ)	\
+	.align 2; namn ## :;.globl namn ; pushl $typ; jbr trap;
+
+#define	FASTINTR(namn, rutin)	\
+	.align 2; namn ## :;.globl namn ;pushr $0x3f; \
+	calls $0,_ ## rutin ;popr $0x3f;rei
+#define	STRAY(scbnr,vecnr) \
+	.align 2;stray ## vecnr ## :;pushr $0x3f;pushl $ ## 0x ## vecnr; \
+	pushl $scbnr; calls $2,_stray ; popr $0x3f; rei;
+#define	KSTACK 0
+#define ISTACK 1
+#define INTVEC(label,stack)	\
+	.long	label+stack;
 		.text
 
 		.globl	_kernbase
 _kernbase:
-                .long trp_0x00+1	# Unused.
-_V_MACHINE_CHK: .long trp_0x04+1	# Machine Check.
-_V_K_STK_INV:   .long trp_0x08+1	# Kernel Stack Invalid.
-_V_POWER_FAIL:  .long trp_0x0C+1	# Power Failed.
+	INTVEC(stray00, ISTACK)	# Unused., 0
+	INTVEC(mcheck, ISTACK)		# Machine Check., 4
+	INTVEC(stray08, ISTACK)	# Kernel Stack Invalid., 8
+	INTVEC(stray0C, ISTACK)	# Power Failed., C
+	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
+	INTVEC(stray14, ISTACK)	# Customer Reserved Instruction, 14
+	INTVEC(resopflt, KSTACK)	# Reserved Operand/Boot Vector(?), 18
+	INTVEC(resadflt, KSTACK)	# # Reserved Address Mode., 1C
+	INTVEC(access_v, KSTACK)	# Access Control Violation, 20
+	INTVEC(transl_v, KSTACK)	# Translation Invalid, 24
+	INTVEC(stray28, ISTACK)	# Trace Pending, 28
+	INTVEC(stray2C, ISTACK)	# Breakpoint Instruction, 2C
+	INTVEC(stray30, ISTACK)	# Compatibility Exception, 30
+	INTVEC(arithflt, KSTACK)	# Arithmetic Fault, 34
+	INTVEC(stray38, ISTACK)	# Unused, 38
+	INTVEC(stray3C, ISTACK)	# Unused, 3C
+	INTVEC(syscall, KSTACK)		# main syscall trap, chmk, 40
+	INTVEC(resopflt, KSTACK)	# chme, 44
+	INTVEC(resopflt, KSTACK)	# chms, 48
+	INTVEC(resopflt, KSTACK)	# chmu, 4C
+	INTVEC(stray50, ISTACK)	# System Backplane Exception, 50
+	INTVEC(stray54, ISTACK)	# Corrected Memory Read, 54
+	INTVEC(stray58, ISTACK)	# System Backplane Alert, 58
+	INTVEC(stray5C, ISTACK)	# System Backplane Fault, 5C
+	INTVEC(stray60, ISTACK)	# Memory Write Timeout, 60
+	INTVEC(stray64, ISTACK)	# Unused, 64
+	INTVEC(stray68, ISTACK)	# Unused, 68
+	INTVEC(stray6C, ISTACK)	# Unused, 6C
+	INTVEC(stray70, ISTACK)	# Unused, 70
+	INTVEC(stray74, ISTACK)	# Unused, 74
+	INTVEC(stray78, ISTACK)	# Unused, 78
+	INTVEC(stray7C, ISTACK)	# Unused, 7C
+	INTVEC(stray80, ISTACK)	# Unused, 80
+	INTVEC(stray84, ISTACK)	# Unused, 84
+	INTVEC(astintr,	 KSTACK)	# Asynchronous Sustem Trap, AST
+	INTVEC(stray8C, ISTACK)	# Unused, 8C
+	INTVEC(stray90, ISTACK)	# Unused, 90
+	INTVEC(stray94, ISTACK)	# Unused, 94
+	INTVEC(stray98, ISTACK)	# Unused, 98
+	INTVEC(stray9C, ISTACK)	# Unused, 9C
+	INTVEC(softclock,ISTACK)	# Software clock interrupt
+	INTVEC(strayA4, ISTACK)	# Unused, A4
+	INTVEC(strayA8, ISTACK)	# Unused, A8
+	INTVEC(strayAC, ISTACK)	# Unused, AC
+	INTVEC(netint,   ISTACK)	# Network interrupt
+	INTVEC(strayB4, ISTACK)	# Unused, B4
+	INTVEC(strayB8, ISTACK)	# Unused, B8
+	INTVEC(strayBC, ISTACK)	# Unused, BC
+	INTVEC(hardclock,ISTACK)	# Interval Timer
+	INTVEC(strayC4, ISTACK)	# Unused, C4
+	INTVEC(strayC8, ISTACK)	# Unused, C8
+	INTVEC(strayCC, ISTACK)	# Unused, CC
+	INTVEC(strayD0, ISTACK)	# Unused, D0
+	INTVEC(strayD4, ISTACK)	# Unused, D4
+	INTVEC(strayD8, ISTACK)	# Unused, D8
+	INTVEC(strayDC, ISTACK)	# Unused, DC
+	INTVEC(strayE0, ISTACK)	# Unused, E0
+	INTVEC(strayE4, ISTACK)	# Unused, E4
+	INTVEC(strayE8, ISTACK)	# Unused, E8
+	INTVEC(strayEC, ISTACK)	# Unused, EC
+	INTVEC(strayF0, ISTACK)	# Console Storage Recieve Interrupt
+	INTVEC(strayF4, ISTACK)	# Console Storage Transmit Interrupt
+	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
+	INTVEC(constint, ISTACK)	# Console Terminal Transmit Interrupt
 
-		.long privinflt		# Privileged/Reserved Instruction.
-_V_CUSTOMER:    .long trp_0x14+1	# Customer Reserved Instruction.
-		.long resopflt		# Reserved Operand/Boot Vector(?)
-		.long resadflt		# Reserved Address Mode.
-
-		.long access_v		# Access Control Violation.
-		.long transl_v		# Translation Invalid.
-_V_TRACE_PEND:  .long trp_0x28+1	# Trace Pending.
-_V_BREAKPOINT:  .long trp_0x2C+1	# Breakpoint Instruction.
-
-_V_COMPAT:      .long trp_0x30+1	# Compatibility Exception.
-		.long arithflt		# Arithmetic Fault.
-                .long trp_0x38+1	# Unused.
-                .long trp_0x3C+1	# Unused.
-
-	        .long Xsyscall		# main syscall trap, chmk
-		.long trp_0x44+1	# chme
-		.long trp_0x48+1	# chms
-	        .long trp_0x4C+1	# chmu
-
-_V_SBI_SILO:    .long trp_0x50+1	# System Backplane Exception.
-_V_CORR_READ:	.long trp_0x54+1	# Corrected Memory Read.
-_V_SBI_ALERT:   .long trp_0x58+1	# System Backplane Alert.
-_V_SBI_FAULT:   .long trp_0x5C+1	# System Backplane Fault.
-
-_V_MEM_W_TOUT:  .long trp_0x60+1	# Memory Write Timeout
-                .long trp_0x64+1	# Unused
-                .long trp_0x68+1	# Unused
-                .long trp_0x6C+1	# Unused
-
-                .long trp_0x70+1        # Unused
-                .long trp_0x74+1        # Unused
-                .long trp_0x78+1        # Unused
-                .long trp_0x7C+1        # Unused
-
-                .long trp_0x80+1              # Unused
-_V_SW_LVL1:     .long trp_0x84+1              # Software Lvl1 Interrupt
-		.long astintr         	      # AST interrupt
-_V_SW_LVL3:     .long trp_0x8C+1              # Software Lvl3 Interrupt
-
-_V_SW_LVL4:     .long trp_0x90+1               # Software Lvl4 Interrupt
-_V_SW_LVL5:     .long trp_0x94+1               # Software Lvl5 Interrupt
-_V_SW_LVL6:     .long trp_0x98+1               # Software Lvl6 Interrupt
-_V_SW_LVL7:     .long trp_0x9C+1               # Software Lvl7 Interrupt
-
-		.long softclock+1              # Softclock interrupt
-_V_SW_LVL9:     .long trp_0xA4+1               # Software Lvl9 Interrupt
-_V_SW_LVL10:    .long trp_0xA8+1               # Software Lvl10 Interrupt
-_V_SW_LVL11:    .long trp_0xAC+1               # Software Lvl11 Interrupt
-
-		.long Xnetint+1			# Inet card Interrupt
-_V_SW_LVL13:    .long trp_0xB4+1               # Software Lvl13 Interrupt
-_V_SW_LVL14:    .long trp_0xB8+1               # Software Lvl14 Interrupt
-_V_SW_LVL15:    .long trp_0xBC+1               # Software Lvl15 Interrupt
-
-		.long hardclock+1              # Interval Timer
-                .long trp_0xC4+1               # Unused
-                .long trp_0xC8+1               # Unused
-                .long trp_0xCC+1               # Unused
-
-                .long trp_0xD0+1               # Unused
-                .long trp_0xD4+1               # Unused
-                .long trp_0xD8+1               # Unused
-                .long trp_0xDC+1               # Unused
-
-                .long trp_0xE0+1               # Unused
-                .long trp_0xE4+1               # Unused
-                .long trp_0xE8+1               # Unused
-                .long trp_0xEC+1               # Unused
-
-_V_CONSOLE_SR:  .long trp_0xF0+1       # Console Storage Recieve Interrupt
-_V_CONSOLE_ST:  .long trp_0xF4+1       # Console Storage Transmit Interrupt
-		.long consrint+1       # Console Terminal Recieve Interrupt
-		.long constint+1       # Console Terminal Transmit Interrupt
 
 		.globl _V_DEVICE_VEC
 _V_DEVICE_VEC:  .space 0x100
 
-_UNIvec:	.globl _UNIvec
-		# Unibus vector space
-#if NUBA>0
-	.long	_uba_00+1,_uba_01+1,_uba_02+1,_uba_03+1,_uba_04+1,_uba_05+1,_uba_06+1,_uba_07+1
-	.long	_uba_08+1,_uba_09+1,_uba_0a+1,_uba_0b+1,_uba_0c+1,_uba_0d+1,_uba_0e+1,_uba_0f+1
-	.long	_uba_10+1,_uba_11+1,_uba_12+1,_uba_13+1,_uba_14+1,_uba_15+1,_uba_16+1,_uba_17+1
-	.long	_uba_18+1,_uba_19+1,_uba_1a+1,_uba_1b+1,_uba_1c+1,_uba_1d+1,_uba_1e+1,_uba_1f+1
-	.long	_uba_20+1,_uba_21+1,_uba_22+1,_uba_23+1,_uba_24+1,_uba_25+1,_uba_26+1,_uba_27+1
-	.long	_uba_28+1,_uba_29+1,_uba_2a+1,_uba_2b+1,_uba_2c+1,_uba_2d+1,_uba_2e+1,_uba_2f+1
-	.long	_uba_30+1,_uba_31+1,_uba_32+1,_uba_33+1,_uba_34+1,_uba_35+1,_uba_36+1,_uba_37+1
-	.long	_uba_38+1,_uba_39+1,_uba_3a+1,_uba_3b+1,_uba_3c+1,_uba_3d+1,_uba_3e+1,_uba_3f+1
-	.long	_uba_40+1,_uba_41+1,_uba_42+1,_uba_43+1,_uba_44+1,_uba_45+1,_uba_46+1,_uba_47+1
-	.long	_uba_48+1,_uba_49+1,_uba_4a+1,_uba_4b+1,_uba_4c+1,_uba_4d+1,_uba_4e+1,_uba_4f+1
-	.long	_uba_50+1,_uba_51+1,_uba_52+1,_uba_53+1,_uba_54+1,_uba_55+1,_uba_56+1,_uba_57+1
-	.long	_uba_58+1,_uba_59+1,_uba_5a+1,_uba_5b+1,_uba_5c+1,_uba_5d+1,_uba_5e+1,_uba_5f+1
-	.long	_uba_60+1,_uba_61+1,_uba_62+1,_uba_63+1,_uba_64+1,_uba_65+1,_uba_66+1,_uba_67+1
-	.long	_uba_68+1,_uba_69+1,_uba_6a+1,_uba_6b+1,_uba_6c+1,_uba_6d+1,_uba_6e+1,_uba_6f+1
-	.long	_uba_70+1,_uba_71+1,_uba_72+1,_uba_73+1,_uba_74+1,_uba_75+1,_uba_76+1,_uba_77+1
-	.long	_uba_78+1,_uba_79+1,_uba_7a+1,_uba_7b+1,_uba_7c+1,_uba_7d+1,_uba_7e+1,_uba_7f+1
-#if NUBA>1
-	.long	_uba_00+1,_uba_01+1,_uba_02+1,_uba_03+1,_uba_04+1,_uba_05+1,_uba_06+1,_uba_07+1
-	.long	_uba_08+1,_uba_09+1,_uba_0a+1,_uba_0b+1,_uba_0c+1,_uba_0d+1,_uba_0e+1,_uba_0f+1
-	.long	_uba_10+1,_uba_11+1,_uba_12+1,_uba_13+1,_uba_14+1,_uba_15+1,_uba_16+1,_uba_17+1
-	.long	_uba_18+1,_uba_19+1,_uba_1a+1,_uba_1b+1,_uba_1c+1,_uba_1d+1,_uba_1e+1,_uba_1f+1
-	.long	_uba_20+1,_uba_21+1,_uba_22+1,_uba_23+1,_uba_24+1,_uba_25+1,_uba_26+1,_uba_27+1
-	.long	_uba_28+1,_uba_29+1,_uba_2a+1,_uba_2b+1,_uba_2c+1,_uba_2d+1,_uba_2e+1,_uba_2f+1
-	.long	_uba_30+1,_uba_31+1,_uba_32+1,_uba_33+1,_uba_34+1,_uba_35+1,_uba_36+1,_uba_37+1
-	.long	_uba_38+1,_uba_39+1,_uba_3a+1,_uba_3b+1,_uba_3c+1,_uba_3d+1,_uba_3e+1,_uba_3f+1
-	.long	_uba_40+1,_uba_41+1,_uba_42+1,_uba_43+1,_uba_44+1,_uba_45+1,_uba_46+1,_uba_47+1
-	.long	_uba_48+1,_uba_49+1,_uba_4a+1,_uba_4b+1,_uba_4c+1,_uba_4d+1,_uba_4e+1,_uba_4f+1
-	.long	_uba_50+1,_uba_51+1,_uba_52+1,_uba_53+1,_uba_54+1,_uba_55+1,_uba_56+1,_uba_57+1
-	.long	_uba_58+1,_uba_59+1,_uba_5a+1,_uba_5b+1,_uba_5c+1,_uba_5d+1,_uba_5e+1,_uba_5f+1
-	.long	_uba_60+1,_uba_61+1,_uba_62+1,_uba_63+1,_uba_64+1,_uba_65+1,_uba_66+1,_uba_67+1
-	.long	_uba_68+1,_uba_69+1,_uba_6a+1,_uba_6b+1,_uba_6c+1,_uba_6d+1,_uba_6e+1,_uba_6f+1
-	.long	_uba_70+1,_uba_71+1,_uba_72+1,_uba_73+1,_uba_74+1,_uba_75+1,_uba_76+1,_uba_77+1
-	.long	_uba_78+1,_uba_79+1,_uba_7a+1,_uba_7b+1,_uba_7c+1,_uba_7d+1,_uba_7e+1,_uba_7f+1
-#if NUBA>2
-	.long	_uba_00+1,_uba_01+1,_uba_02+1,_uba_03+1,_uba_04+1,_uba_05+1,_uba_06+1,_uba_07+1
-	.long	_uba_08+1,_uba_09+1,_uba_0a+1,_uba_0b+1,_uba_0c+1,_uba_0d+1,_uba_0e+1,_uba_0f+1
-	.long	_uba_10+1,_uba_11+1,_uba_12+1,_uba_13+1,_uba_14+1,_uba_15+1,_uba_16+1,_uba_17+1
-	.long	_uba_18+1,_uba_19+1,_uba_1a+1,_uba_1b+1,_uba_1c+1,_uba_1d+1,_uba_1e+1,_uba_1f+1
-	.long	_uba_20+1,_uba_21+1,_uba_22+1,_uba_23+1,_uba_24+1,_uba_25+1,_uba_26+1,_uba_27+1
-	.long	_uba_28+1,_uba_29+1,_uba_2a+1,_uba_2b+1,_uba_2c+1,_uba_2d+1,_uba_2e+1,_uba_2f+1
-	.long	_uba_30+1,_uba_31+1,_uba_32+1,_uba_33+1,_uba_34+1,_uba_35+1,_uba_36+1,_uba_37+1
-	.long	_uba_38+1,_uba_39+1,_uba_3a+1,_uba_3b+1,_uba_3c+1,_uba_3d+1,_uba_3e+1,_uba_3f+1
-	.long	_uba_40+1,_uba_41+1,_uba_42+1,_uba_43+1,_uba_44+1,_uba_45+1,_uba_46+1,_uba_47+1
-	.long	_uba_48+1,_uba_49+1,_uba_4a+1,_uba_4b+1,_uba_4c+1,_uba_4d+1,_uba_4e+1,_uba_4f+1
-	.long	_uba_50+1,_uba_51+1,_uba_52+1,_uba_53+1,_uba_54+1,_uba_55+1,_uba_56+1,_uba_57+1
-	.long	_uba_58+1,_uba_59+1,_uba_5a+1,_uba_5b+1,_uba_5c+1,_uba_5d+1,_uba_5e+1,_uba_5f+1
-	.long	_uba_60+1,_uba_61+1,_uba_62+1,_uba_63+1,_uba_64+1,_uba_65+1,_uba_66+1,_uba_67+1
-	.long	_uba_68+1,_uba_69+1,_uba_6a+1,_uba_6b+1,_uba_6c+1,_uba_6d+1,_uba_6e+1,_uba_6f+1
-	.long	_uba_70+1,_uba_71+1,_uba_72+1,_uba_73+1,_uba_74+1,_uba_75+1,_uba_76+1,_uba_77+1
-	.long	_uba_78+1,_uba_79+1,_uba_7a+1,_uba_7b+1,_uba_7c+1,_uba_7d+1,_uba_7e+1,_uba_7f+1
-#if NUBA>3
-	.long	_uba_00+1,_uba_01+1,_uba_02+1,_uba_03+1,_uba_04+1,_uba_05+1,_uba_06+1,_uba_07+1
-	.long	_uba_08+1,_uba_09+1,_uba_0a+1,_uba_0b+1,_uba_0c+1,_uba_0d+1,_uba_0e+1,_uba_0f+1
-	.long	_uba_10+1,_uba_11+1,_uba_12+1,_uba_13+1,_uba_14+1,_uba_15+1,_uba_16+1,_uba_17+1
-	.long	_uba_18+1,_uba_19+1,_uba_1a+1,_uba_1b+1,_uba_1c+1,_uba_1d+1,_uba_1e+1,_uba_1f+1
-	.long	_uba_20+1,_uba_21+1,_uba_22+1,_uba_23+1,_uba_24+1,_uba_25+1,_uba_26+1,_uba_27+1
-	.long	_uba_28+1,_uba_29+1,_uba_2a+1,_uba_2b+1,_uba_2c+1,_uba_2d+1,_uba_2e+1,_uba_2f+1
-	.long	_uba_30+1,_uba_31+1,_uba_32+1,_uba_33+1,_uba_34+1,_uba_35+1,_uba_36+1,_uba_37+1
-	.long	_uba_38+1,_uba_39+1,_uba_3a+1,_uba_3b+1,_uba_3c+1,_uba_3d+1,_uba_3e+1,_uba_3f+1
-	.long	_uba_40+1,_uba_41+1,_uba_42+1,_uba_43+1,_uba_44+1,_uba_45+1,_uba_46+1,_uba_47+1
-	.long	_uba_48+1,_uba_49+1,_uba_4a+1,_uba_4b+1,_uba_4c+1,_uba_4d+1,_uba_4e+1,_uba_4f+1
-	.long	_uba_50+1,_uba_51+1,_uba_52+1,_uba_53+1,_uba_54+1,_uba_55+1,_uba_56+1,_uba_57+1
-	.long	_uba_58+1,_uba_59+1,_uba_5a+1,_uba_5b+1,_uba_5c+1,_uba_5d+1,_uba_5e+1,_uba_5f+1
-	.long	_uba_60+1,_uba_61+1,_uba_62+1,_uba_63+1,_uba_64+1,_uba_65+1,_uba_66+1,_uba_67+1
-	.long	_uba_68+1,_uba_69+1,_uba_6a+1,_uba_6b+1,_uba_6c+1,_uba_6d+1,_uba_6e+1,_uba_6f+1
-	.long	_uba_70+1,_uba_71+1,_uba_72+1,_uba_73+1,_uba_74+1,_uba_75+1,_uba_76+1,_uba_77+1
-	.long	_uba_78+1,_uba_79+1,_uba_7a+1,_uba_7b+1,_uba_7c+1,_uba_7d+1,_uba_7e+1,_uba_7f+1
-#if NUBA>4
-#error "Number of bus adapters must be increased in intvec.s"
-#endif
-#endif
-#endif
-#endif
+#if NUBA
+#include "vax/uba/ubavec.s"
 #endif
 
+#if NUBA>4 /* Safety belt */
+#error "Number of bus adapters must be increased in ubavec.s"
+#endif
 
-		.globl _eUNIvec
-_eUNIvec:
-		.align 2
-trp_0x00:	pushal	msg_trp_0x00
-		calls	$1,_conout
-		halt
+	STRAY(0, 00)
 
 		.align 2
- #
- # trp_0x04 is the badaddress trap, also called when referencing
- # a invalid address (busserror)
- # _memtest (memtest in C) holds the address to continue execution
- # at when returning from a intentional test.
- #
-trp_0x04:
-		cmpl	$0,_memtest	# Ar we running the memory test?
-		bneq	1f		# Yes.
-                                        # Get number of extra 
-                addl2   (sp)+,sp        # long:s on interrupt stack
-                                        # Remove all the overhead
+#
+# mcheck is the badaddress trap, also called when referencing
+# a invalid address (busserror)
+# _memtest (memtest in C) holds the address to continue execution
+# at when returning from a intentional test.
+#
+mcheck:	.globl	mcheck
+	tstl	_cold		# Ar we still in coldstart?
+	bneq	1f		# Yes.
 
-                pushl   r0
-                pushl   r1
-                movl    8(sp),r1
-                pushl   r1              # The address
-                pushl   (r1)            # The instruction               
-                pushal  msg_trp_0x04
-                calls   $1,_printf
-                movq    (sp)+,r1
-                movq    (sp)+,r0
+	pushr	$0x3f
+	pushab	24(sp)
+	calls	$1, _machinecheck
+	popr	$0x3f
+	addl2	(sp)+,sp
 
-                halt                    # halt for debugging
-                rei
+        rei
 
-1:		# Ok, we got the last address
-					# Get number of extra 
-		addl2 	(sp)+,sp	# long:s on interrupt stack
-				# Remove all the overhead
+1:	addl2	(sp)+,sp	# remove info pushed on stack
+	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
+	movl	_memtest,(sp)	# REI to new adress
+	rei
 
-		movl	_memtest,(sp)	# Do not redo the address
-					# that generated the trap
+	STRAY(0, 08)
+	STRAY(0, 0C)
 
-		mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-					# XXX What if there was another error?
-		movl	$0,_memtest
-		rei
+	TRAPCALL(privinflt, T_PRIVINFLT)
 
+	STRAY(0, 14)
 
-		.align 2
-trp_0x08:	pushal	msg_trp_0x08
-		calls	$1,_conout
-		halt
-		rei
-
-		.align 2
-trp_0x0C:	pushal	msg_trp_0x0C
-		calls	$1,_conout
-		halt
-		rei
-
-		.align 2
-privinflt:	.globl	privinflt
-		pushl	$0		# dummy
-		pushl	$T_PRIVINFLT
-		pushr	$0x3f
-		pushl	sp
-		addl2	$24,(sp)
-		calls	$1,_arithflt
-		popr	$0x3f
-		addl2	$8,sp
-		rei
-
-		.align 2
-trp_0x14:	pushal	msg_trp_0x14
-		calls	$1,_conout
-		halt
-		rei
-
-		.align 2
-resopflt:	pushl	$0		#dummy
-		pushl	$T_RESOPFLT
-		pushr	$0x3f
-		pushl	sp
-		addl2	$24,(sp)
-		calls	$1,_arithflt
-		popr	$0x3f
-		addl2	$8,sp
-		rei
-
-		.align 2
-resadflt:	pushl	$0		#dummy
-		pushl	$T_RESADFLT
-		pushr	$0x3f
-		pushl	sp
-		addl2	$24,(sp)
-		calls	$1,_arithflt
-		popr	$0x3f
-		addl2	$8,sp
-		rei
+	TRAPCALL(resopflt, T_RESOPFLT)
+	TRAPCALL(resadflt, T_RESADFLT)
 
 		.align	2
 transl_v:	.globl	transl_v	# Translation violation
-access_v:	.globl	access_v	# Access cntrl viol fault
-		pushr	$0x3f
-		pushl	24(sp)	# code
-		pushl	32(sp)	# vaddr
-		pushl	40(sp)	# pc
-		pushl	48(sp)	# psl
-		pushl	sp		# arg pointer
-		calls	$5,_pageflt	# pop all args off stack
-		popr	$0x3f
-		addl2   $8,sp
-		rei
+	pushl	$T_TRANSFLT
+3:	bbc	$1,4(sp),1f
+	bisl2	$T_PTEFETCH, (sp)
+1:	bbc	$2,4(sp),2f
+	bisl2	$T_WRITE, (sp)
+2:	movl	(sp), 4(sp)
+	addl2	$4, sp
+	jbr	trap
 
-trp_0x28:	.align 2
-		pushal	msg_trp_0x28
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
-trp_0x2C:	pushal	msg_trp_0x2C
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
-trp_0x30:	pushal	msg_trp_0x30
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
 
-arithflt:	pushl	$T_ARITHFLT
-		pushr   $0x3f	# arithmetic fault, info pointed to by arg
-		pushl	sp
-		addl2	$24,(sp)
-		calls	$1,_arithflt
-		popr	$0x3f
-		addl2	$8,sp
-		rei
+		.align  2
+access_v:.globl	access_v	# Access cntrl viol fault
+	blbs	(sp), ptelen
+	pushl	$T_ACCFLT
+	jbr	3b
 
-		.align 2
-trp_0x38:	pushal	msg_trp_0x38
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
-trp_0x3C:	pushal	msg_trp_0x3C
-		calls	$1,_conout
-		halt
-		rei
+ptelen:	movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
+	jbr trap;
+
+
+	STRAY(0, 28)
+	STRAY(0, 2C)
+	STRAY(0, 30)
+
+	TRAPARGC(arithflt, T_ARITHFLT)
+
+	STRAY(0, 38)
+	STRAY(0, 3C)
+
+
+
+
 
 	.align 2		# Main system call 
-	.globl	Xsyscall
-Xsyscall:
-#	halt
-	pushl	r5
-	pushl	r4
-	pushl	r3
-	pushl	r2
-	pushl	r1
-	pushl	r0
+	.globl	syscall
+syscall:
+	pushl	$T_SYSCALL
+	pushr	$0x3f
 	pushl	ap
 	pushl	fp
 	pushl	sp		# pointer to syscall frame; defined in trap.h
 	calls	$1,_syscall
 	movl	(sp)+,fp
 	movl	(sp)+,ap
-	movl	(sp)+,r0
-	movl	(sp)+,r1
-	movl	(sp)+,r2
-	movl	(sp)+,r3
-	movl	(sp)+,r4
-	movl	(sp)+,r5
-	addl2	$4,sp
+	popr	$0x3f
+	addl2	$8,sp
 	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
-#	halt
 	rei
 
 
-		.align 2
-trp_0x44:	pushal	msg_trp_0x44
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
-trp_0x48:	pushal	msg_trp_0x48
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
-trp_0x4C:	pushal	msg_trp_0x4C
-		calls	$1,_conout
-		halt
-		rei
-		.align 2
-trp_0x50:	pushal	msg_trp_0x50
-		calls	$1,_conout
-		halt
+	STRAY(0, 44)
+	STRAY(0, 48)
+	STRAY(0, 4C)
+	STRAY(0, 50)
+	STRAY(0, 54)
+	STRAY(0, 58)
+	STRAY(0, 5C)
+	STRAY(0, 60)
+	STRAY(0, 64)
+	STRAY(0, 68)
+	STRAY(0, 6C)
+	STRAY(0, 70)
+	STRAY(0, 74)
+	STRAY(0, 78)
+	STRAY(0, 7C)
+	STRAY(0, 80)
+	STRAY(0, 84)
 
-		.align 2
-trp_0x54:	pushal	msg_trp_0x54
-		calls	$1,_conout
-		halt
+	TRAPCALL(astintr, T_ASTFLT)
 
-		.align 2
-trp_0x58:	pushal	msg_trp_0x58
- 		calls	$1,_conout
-		halt
+	STRAY(0, 8C)
+	STRAY(0, 90)
+	STRAY(0, 94)
+	STRAY(0, 98)
+	STRAY(0, 9C)
 
-		.align 2
-trp_0x5C:	pushal	msg_trp_0x5C
-		calls	$1,_conout
-		halt
+	FASTINTR(softclock, softclock)
 
-		.align 2
-trp_0x60:	pushl   r0
-                pushl   r1
-                pushl   16(sp)
-                pushl   16(sp)
-                pushal  msg_trp_0x60
-                calls   $3,_printf
-                movl    (sp)+,r1
-                movl    (sp)+,r0
-                halt
-                rei
+	STRAY(0, A4)
+	STRAY(0, A8)
+	STRAY(0, AC)
 
-		.align 2
-trp_0x64:	pushal	msg_trp_0x64
-		calls	$1,_conout
-		halt
+	FASTINTR(netint, netintr)	#network packet interrupt
 
-		.align 2
-trp_0x68:	pushal	msg_trp_0x68
-		calls	$1,_conout
-		halt
+	STRAY(0, B4)
+	STRAY(0, B8)
+	STRAY(0, BC)
 
-		.align 2
-trp_0x6C:	pushal	msg_trp_0x6C
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x70:	pushal	msg_trp_0x70
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x74:	pushal	msg_trp_0x74
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x78:	pushal	msg_trp_0x78
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x7C:	pushal	msg_trp_0x7C
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x80:	pushal	msg_trp_0x80
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x84:	pushal	msg_trp_0x84
-		calls	$1,_conout
-		halt
-
-		.align 2
-astintr:	pushr	$0x3f		# AST trap
-		calls	$0,_astint
-		popr	$0x3f	
-		rei
-
-		.align 2
-trp_0x8C:	pushal	msg_trp_0x8C
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x90:	pushal	msg_trp_0x90
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x94:	pushal	msg_trp_0x94
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x98:	pushal	msg_trp_0x98
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0x9C:	pushal	msg_trp_0x9C
-		calls	$1,_conout
-		halt
-
-		.align 2
-softclock:	pushr	$0x3f		# Software interrupt vector
-	        calls	$0,_softclock
-	       	popr	$0x3f
-	        rei
-
-		.align 2
-trp_0xA4:	pushal	msg_trp_0xA4
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0xA8:	pushal	msg_trp_0xA8
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0xAC:	pushal	msg_trp_0xAC
-		calls	$1,_conout
-		halt
-
-		.align 2
-Xnetint:	pushr	$0x3f		#network packet interrupt
-		calls	$0,_netintr
-		popr	$0x3f
-		rei
-
-		.align 2
-trp_0xB4:	pushal	msg_trp_0xB4
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0xB8:	pushal	msg_trp_0xB8
-		calls	$1,_conout
-		halt
-
-		.align 2
-trp_0xBC:	pushal	msg_trp_0xBC
-		calls	$1,_conout
-		halt
-		.align 2
-
+		.align	2
+		.globl	hardclock
 hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		pushr	$0x3f
 		pushl	sp
@@ -558,153 +272,100 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		popr	$0x3f
 		rei
 
-		.align 2
-trp_0xC4:	pushal	msg_trp_0xC4
-		calls	$1,_conout
-		halt
+	STRAY(0, C4)
+	STRAY(0, C8)
+	STRAY(0, CC)
+	STRAY(0, D0)
+	STRAY(0, D4)
+	STRAY(0, D8)
+	STRAY(0, DC)
+	STRAY(0, E0)
+	STRAY(0, E4)
+	STRAY(0, E8)
+	STRAY(0, EC)
+	STRAY(0, F0)
+	STRAY(0, F4)
 
-		.align 2
-trp_0xC8:	pushal	msg_trp_0xC8
-		calls	$1,_conout
-		halt
+	FASTINTR(consrint, gencnrint)
+	FASTINTR(constint, gencntint)
 
-		.align 2
-trp_0xCC:	pushal	msg_trp_0xCC
-		calls	$1,_conout
-		halt
+trap:	pushr	$0x3f
+	pushl	ap
+	pushl	fp
+	pushl	sp
+	calls	$1,_arithflt
+	movl	(sp)+,fp
+	movl	(sp)+,ap
+        popr	$0x3f
+	addl2	$8,sp
+	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
+	rei
 
-		.align 2
-trp_0xD0:	pushal	msg_trp_0xD0
-		calls	$1,_conout
-		halt
+#if 0
 
-		.align 2
-trp_0xD4:	pushal	msg_trp_0xD4
-		calls	$1,_conout
-		halt
+msg_0, 00:	.asciz	"\r\nTrap:	0x00	Unused.\r\n"
+msg_0, 08:	.asciz	"\r\nTrap:	0x08	V_K_STK_INV\r\n"
+msg_0, 0C:	.asciz	"\r\nTrap:	0x0C	V_POWER_FAIL\r\n"
 
-		.align 2
-trp_0xD8:	pushal	msg_trp_0xD8
-		calls	$1,_conout
-		halt
+msg_0, 14:	.asciz	"\r\nTrap:	0x14	V_CUSTOMER\n"
 
-		.align 2
-trp_0xDC:	pushal	msg_trp_0xDC
-		calls	$1,_conout
-		halt
+msg_0, 28:	.asciz	"\r\nTrap:	0x28	V_TRACE_PEND\r\n"
+msg_0, 2C:	.asciz	"\r\nTrap:	0x2C	V_BREAKPOINT\r\n"
 
-		.align 2
-trp_0xE0:	pushal	msg_trp_0xE0
-		calls	$1,_conout
-		halt
+msg_0, 30:	.asciz	"\r\nTrap:	0x30	V_COMPAT\r\n"
+msg_0, 38:	.asciz	"\r\nTrap:	0x38	Unused.\r\n"
+msg_0, 3C:	.asciz	"\r\nTrap:	0x3C	Unused.\r\n"
 
-		.align 2
-trp_0xE4:	pushal	msg_trp_0xE4
-		calls	$1,_conout
-		halt
+msg_0, 44:	.asciz	"\r\nTrap:	0x44	V_CHME\r\n"
+msg_0, 48:	.asciz	"\r\nTrap:	0x48	V_CHMS.\r\n"
+msg_0, 4C:	.asciz	"\r\nTrap:	0x4C	V_CHMU\r\n"
 
-		.align 2
-trp_0xE8:	pushal	msg_trp_0xE8
-		calls	$1,_conout
-		halt
+msg_0, 50:	.asciz	"\r\nTrap:	0x50	V_SBI_SILO\r\n"
+msg_0, 54:	.asciz	"\r\nTrap:	0x54	V_CORR_READ\r\n"
+msg_0, 58:	.asciz	"\r\nTrap:	0x58	V_SBI_ALERT\r\n"
+msg_0, 5C:	.asciz	"\r\nTrap:	0x5C	V_SBI_FAULT\r\n"
 
-		.align 2
-trp_0xEC:	pushal	msg_trp_0xEC
-		calls	$1,_conout
-		halt
+msg_0, 60:	.asciz	"\r\nTrap:	0x60	V_MEM_W_TOUT\r\n"
+msg_0, 64:	.asciz	"\r\nTrap:	0x64	Unused.\r\n"
+msg_0, 68:	.asciz	"\r\nTrap:	0x68	Unused.\r\n"
+msg_0, 6C:	.asciz	"\r\nTrap:	0x6C	Unused.\r\n"
 
-		.align 2
-trp_0xF0:	pushal	msg_trp_0xF0
-		calls	$1,_conout
-		halt
+msg_0, 70:	.asciz	"\r\nTrap:	0x70	Unused.\r\n"
+msg_0, 74:	.asciz	"\r\nTrap:	0x74	Unused.\r\n"
+msg_0, 78:	.asciz	"\r\nTrap:	0x78	Unused.\r\n"
+msg_0, 7C:	.asciz	"\r\nTrap:	0x7C	Unused.\r\n"
 
-		.align 2
-trp_0xF4:	pushal	msg_trp_0xF4
-		calls	$1,_conout
-		halt
+msg_0, 80:	.asciz	"\r\nTrap:	0x80	Unused.\r\n"
+msg_0, 84:	.asciz	"\r\nTrap:	0x84	V_SW_LVL1\r\n"
+msg_0, 8C:	.asciz	"\r\nTrap:	0x8C	V_SW_LVL3\r\n"
 
-		.align 2
-consrint:	pushr   $0x3f
-		calls   $0,_gencnrint
-		popr	$0x3f
-		rei
+msg_0, 90:	.asciz	"\r\nTrap:	0x90	V_SW_LVL4\r\n"
+msg_0, 94:	.asciz	"\r\nTrap:	0x94	V_SW_LVL5\r\n"
+msg_0, 98:	.asciz	"\r\nTrap:	0x98	V_SW_LVL6\r\n"
+msg_0, 9C:	.asciz	"\r\nTrap:	0x9C	V_SW_LVL7\r\n"
 
-		.align 2
-constint:	pushr	$0x3f
-		calls	$0,_gencntint
-		popr	$0x3f
-		rei
+msg_0, A4:	.asciz	"\r\nTrap:	0xA4	V_SW_LVL9\r\n"
+msg_0, A8:	.asciz	"\r\nTrap:	0xA8	V_SW_LVL10\r\n"
+msg_0, AC:	.asciz	"\r\nTrap:	0xAC	V_SW_LVL11\r\n"
 
+msg_0, B4:	.asciz	"\r\nTrap:	0xB4	V_SW_LVL13\r\n"
+msg_0, B8:	.asciz	"\r\nTrap:	0xB8	V_SW_LVL14\r\n"
+msg_0, BC:	.asciz	"\r\nTrap:	0xBC	V_SW_LVL15\r\n"
 
+msg_0, C4:	.asciz	"\r\nTrap:	0xC4	Unused.\r\n"
+msg_0, C8:	.asciz	"\r\nTrap:	0xC8	Unused.\r\n"
+msg_0, CC:	.asciz	"\r\nTrap:	0xCC	Unused.\r\n"
 
-msg_trp_0x00:	.asciz	"\r\nTrap:	0x00	Unused.\r\n"
-msg_trp_0x04:   .asciz  "\r\nTrap:      0x04    V_MACHINE_CHK\nTried to execute op: 0x%x\n       from address: 0x%x\n"
-msg_trp_0x08:	.asciz	"\r\nTrap:	0x08	V_K_STK_INV\r\n"
-msg_trp_0x0C:	.asciz	"\r\nTrap:	0x0C	V_POWER_FAIL\r\n"
+msg_0, D0:	.asciz	"\r\nTrap:	0xD0	Unused.\r\n"
+msg_0, D4:	.asciz	"\r\nTrap:	0xD4	Unused.\r\n"
+msg_0, D8:	.asciz	"\r\nTrap:	0xD8	Unused.\r\n"
+msg_0, DC:	.asciz	"\r\nTrap:	0xDC	Unused.\r\n"
 
-msg_trp_0x10:	.asciz	"\r\nTrap:	0x10	V_PRIV_INSTR\nTried to execute op: 0x%x\n       from address: 0x%x\n"
-msg_trp_0x14:	.asciz	"\r\nTrap:	0x14	V_CUSTOMER\n"
+msg_0, E0:	.asciz	"\r\nTrap:	0xE0	Unused.\r\n"
+msg_0, E4:	.asciz	"\r\nTrap:	0xE4	Unused.\r\n"
+msg_0, E8:	.asciz	"\r\nTrap:	0xE8	Unused.\r\n"
+msg_0, EC:	.asciz	"\r\nTrap:	0xEC	Unused.\r\n"
 
-msg_trp_0x20:	.asciz	"\r\nTrap:	0x20	V_ACC_CNTL_VIO\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\n"
-msg_trp_0x24:	.asciz	"\r\nTrap:	0x24	V_TRANSL_INV\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\nObserve: YOU forgot to set the pte valid bit!\n"
-msg_trp_0x28:	.asciz	"\r\nTrap:	0x28	V_TRACE_PEND\r\n"
-msg_trp_0x2C:	.asciz	"\r\nTrap:	0x2C	V_BREAKPOINT\r\n"
-
-msg_trp_0x30:	.asciz	"\r\nTrap:	0x30	V_COMPAT\r\n"
-msg_trp_0x34:	.asciz	"\r\nTrap:	0x34	V_ARITHMETIC\r\n"
-msg_trp_0x38:	.asciz	"\r\nTrap:	0x38	Unused.\r\n"
-msg_trp_0x3C:	.asciz	"\r\nTrap:	0x3C	Unused.\r\n"
-
-msg_trp_0x44:	.asciz	"\r\nTrap:	0x44	V_CHME\r\n"
-msg_trp_0x48:	.asciz	"\r\nTrap:	0x48	V_CHMS.\r\n"
-msg_trp_0x4C:	.asciz	"\r\nTrap:	0x4C	V_CHMU\r\n"
-
-msg_trp_0x50:	.asciz	"\r\nTrap:	0x50	V_SBI_SILO\r\n"
-msg_trp_0x54:	.asciz	"\r\nTrap:	0x54	V_CORR_READ\r\n"
-msg_trp_0x58:	.asciz	"\r\nTrap:	0x58	V_SBI_ALERT\r\n"
-msg_trp_0x5C:	.asciz	"\r\nTrap:	0x5C	V_SBI_FAULT\r\n"
-
-msg_trp_0x60:	.asciz	"\r\nTrap:	0x60	V_MEM_W_TOUT\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\n\n"
-msg_trp_0x64:	.asciz	"\r\nTrap:	0x64	Unused.\r\n"
-msg_trp_0x68:	.asciz	"\r\nTrap:	0x68	Unused.\r\n"
-msg_trp_0x6C:	.asciz	"\r\nTrap:	0x6C	Unused.\r\n"
-
-msg_trp_0x70:	.asciz	"\r\nTrap:	0x70	Unused.\r\n"
-msg_trp_0x74:	.asciz	"\r\nTrap:	0x74	Unused.\r\n"
-msg_trp_0x78:	.asciz	"\r\nTrap:	0x78	Unused.\r\n"
-msg_trp_0x7C:	.asciz	"\r\nTrap:	0x7C	Unused.\r\n"
-
-msg_trp_0x80:	.asciz	"\r\nTrap:	0x80	Unused.\r\n"
-msg_trp_0x84:	.asciz	"\r\nTrap:	0x84	V_SW_LVL1\r\n"
-msg_trp_0x88:	.asciz	"\r\nTrap:	0x88	V_SW_LVL2\r\n"
-msg_trp_0x8C:	.asciz	"\r\nTrap:	0x8C	V_SW_LVL3\r\n"
-
-msg_trp_0x90:	.asciz	"\r\nTrap:	0x90	V_SW_LVL4\r\n"
-msg_trp_0x94:	.asciz	"\r\nTrap:	0x94	V_SW_LVL5\r\n"
-msg_trp_0x98:	.asciz	"\r\nTrap:	0x98	V_SW_LVL6\r\n"
-msg_trp_0x9C:	.asciz	"\r\nTrap:	0x9C	V_SW_LVL7\r\n"
-
-msg_trp_0xA4:	.asciz	"\r\nTrap:	0xA4	V_SW_LVL9\r\n"
-msg_trp_0xA8:	.asciz	"\r\nTrap:	0xA8	V_SW_LVL10\r\n"
-msg_trp_0xAC:	.asciz	"\r\nTrap:	0xAC	V_SW_LVL11\r\n"
-
-msg_trp_0xB4:	.asciz	"\r\nTrap:	0xB4	V_SW_LVL13\r\n"
-msg_trp_0xB8:	.asciz	"\r\nTrap:	0xB8	V_SW_LVL14\r\n"
-msg_trp_0xBC:	.asciz	"\r\nTrap:	0xBC	V_SW_LVL15\r\n"
-
-msg_trp_0xC4:	.asciz	"\r\nTrap:	0xC4	Unused.\r\n"
-msg_trp_0xC8:	.asciz	"\r\nTrap:	0xC8	Unused.\r\n"
-msg_trp_0xCC:	.asciz	"\r\nTrap:	0xCC	Unused.\r\n"
-
-msg_trp_0xD0:	.asciz	"\r\nTrap:	0xD0	Unused.\r\n"
-msg_trp_0xD4:	.asciz	"\r\nTrap:	0xD4	Unused.\r\n"
-msg_trp_0xD8:	.asciz	"\r\nTrap:	0xD8	Unused.\r\n"
-msg_trp_0xDC:	.asciz	"\r\nTrap:	0xDC	Unused.\r\n"
-
-msg_trp_0xE0:	.asciz	"\r\nTrap:	0xE0	Unused.\r\n"
-msg_trp_0xE4:	.asciz	"\r\nTrap:	0xE4	Unused.\r\n"
-msg_trp_0xE8:	.asciz	"\r\nTrap:	0xE8	Unused.\r\n"
-msg_trp_0xEC:	.asciz	"\r\nTrap:	0xEC	Unused.\r\n"
-
-msg_trp_0xF0:	.asciz	"\r\nTrap:	0xF0	V_CONSOLE_SR\r\n"
-msg_trp_0xF4:	.asciz	"\r\nTrap:	0xF4	V_CONSOLE_ST\r\n"
+msg_0, F0:	.asciz	"\r\nTrap:	0xF0	V_CONSOLE_SR\r\n"
+msg_0, F4:	.asciz	"\r\nTrap:	0xF4	V_CONSOLE_ST\r\n"
+#endif

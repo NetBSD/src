@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.3 1994/10/26 08:03:12 cgd Exp $	*/
+/*	$NetBSD: ka750.c,v 1.4 1995/02/13 00:46:09 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -43,10 +43,11 @@
 
 #include "sys/param.h"
 #include "sys/types.h"
-#include "vax/include/ka750.h"
-#include "vax/include/nexus.h"
-#include "vax/include/pte.h"
-#include "vax/include/mtpr.h"
+#include "sys/device.h"
+#include "machine/ka750.h"
+#include "machine/nexus.h"
+#include "machine/pte.h"
+#include "machine/mtpr.h"
 #include "vax/uba/ubavar.h"
 #include "vax/uba/ubareg.h"
 
@@ -60,121 +61,24 @@
 struct nexus *nexus;
 
 int
-v750_loinit()
+ka750_conf()
 {
-	/* Normal memory, count it up is the only thing needed */
-	return memory_test();
+	extern char cpu_model[];
+
+	strcpy(cpu_model,"VAX 11/750");
+	config_rootfound("backplane",75);
 }
 
 int
 conf_750(){
-	extern int cpu_type, nmcr, nmba, numuba;
-	int i,j,k,l,m,cardinfo,nexnum;
-	void *tempaddr;
-	union nexcsr nexcsr;
-	extern caddr_t mcraddr[];
+	extern int cpu_type, nmba, numuba;
 
-	printf("VAX 11/750, hardware rev %d, ucode rev %d\n",
+	printf(": 11/750, hardware rev %d, ucode rev %d\n",
 		V750HARDW(cpu_type), V750UCODE(cpu_type));
-/*
- * First we map up so that we have virtual I/O-adresses for each nexus.
- */
-	phys_map=kmem_suballoc(kernel_map, &nexus, &tempaddr,
-		(16*sizeof(struct nexus)), FALSE); 
-		/* XXX 16==NNEXUS */
-	pmap_map(nexus, 0xf20000, 0xf40000, VM_PROT_READ|VM_PROT_WRITE);
-		/* XXX 0xf20000 == NEXBASE */
-/*
- * Check out what type of nexus there is. On 750 nexus don't identify
- * themselves, so we check them for specific places. :-/
- */
-
-	for(nexnum=0;nexnum<4;nexnum++){ /* First mcr at 0-3 */
-		if(badaddr((caddr_t)&nexus[nexnum],4))continue;
-		mcraddr[nmcr]=(caddr_t)&nexus[nexnum];
-		printf("mcr%d at tr%d: mcr type ", nmcr++, nexnum);
-	/* We will use this info for error reporting - later! */
-                cardinfo=*((int *)(nexus+nexnum)+2);
-                switch((cardinfo>>24)&3){
-                case 0: printf("L0011 ");
-                        break;
-                case 1: printf("L0016 ");
-                        m=cardinfo&0xaaaa;
-                        for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
-                        printf("with %d M8750",l);
-                        break;
-                case 3: printf("L0022 ");
-                        m=cardinfo&0x5555;
-                        for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
-                        printf("with %d M7199",l);
-                        m=cardinfo&0xaaaa;
-                        if(m){
-                        for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
-                        printf(" and %d M8750",l);
-                        }
-                        break;
-                }
-                printf("\n");
-	}
-
-	for(nexnum=4;nexnum<8;nexnum++){ /* Check mba at 4-7 */
-		if(badaddr((caddr_t)&nexus[nexnum],4)) continue;
-		printf("mba%d at tr%d", nmba, nexnum);
-		if(nmba>=NMBA){
-			printf(" not configured.\n");
-		} else {
-			printf("\n");
-#if NMBA > 0
-			mbafind(nexnum,&nexus[nexnum]);
-#endif
-		}
-		nmba++;
-	}
-
-	for(nexnum=8;nexnum<10;nexnum++){
-		if(badaddr((caddr_t)&nexus[nexnum],4)) continue;
-                printf("uba%d at tr%d", numuba, nexnum);
-                if(numuba>=NUBA){
-                        printf(" not configured.\n");
-                } else {
-                        printf("\n");
-#if NUBA > 0
-                        uba750(nexnum,&nexus[nexnum]);
-#endif
-                }
-                numuba++;
-        }
-
-	for(nexnum=10;nexnum<16;nexnum++){
-		if(badaddr((caddr_t)&nexus[nexnum],4)) continue;
-		nexcsr=nexus[nexnum].nexcsr;
-		switch(nexcsr.nex_type){
-
-                case NEX_UBA0:
-                case NEX_UBA1:
-                case NEX_UBA2:
-                case NEX_UBA3:
-                        printf("uba%d at tr%d ", numuba, nexnum);
-			if(nmba>=NUBA){
-				printf(" not configured.\n");
-			}
-			break;
-
-		default:
-			printf("nexus type %x", nexcsr.nex_type);
-unsupp:
-                        printf(" unsupported (at tr %d)\n", nexnum);
-                        continue;
-		}
-	}
-/*
- * Enable memory error reporting.
- */
-	ka750_memenable();
 }
 
-clock_750(){
-	int i;
+ka750_clock(){
+	u_int i;
 /*
  * It's time to start clocks in system...
  */
@@ -194,46 +98,12 @@ clock_750(){
 
 #if NMBA < 1
 /*
- * Dummy routine; should never be called. :)
+ * Dummy routine; should never be called.
  * Should also be somewhere else, but it doesn't matter right now :)
  */
 mbainterrupt(){return;}
 #endif
 
-#if NUBA > 0
-
-uba750(int nexnum,caddr_t nexaddr){
-	extern struct uba_hd uba_hd[];
-	extern int numuba;
-	struct uba_regs *ubar=(struct uba_regs *)nexaddr;
-	void *tempaddr;
-	unsigned int i;
-
-	struct uba_hd *uhp = &uba_hd[numuba];
-
-	uhp->uh_mr = ubar->uba_map;
-	uhp->uh_type = DW750;
-	uhp->uh_uba = (void*)nexaddr;
-	uhp->uh_physuba = (void*)0xf20000+nexnum*0x2000;
-	uhp->uh_memsize = UBAPAGES;
-	uhp->uh_mem = Tumem(numuba);
-        uhp->uh_iopage = Tumem(numuba) + (uhp->uh_memsize * NBPG);
-
-/*
- * First we map up so that we have virtual I/O-adresses for each nexus.
- */
-/*        phys_map=kmem_suballoc(kernel_map, &Numem, &tempaddr,
-		(UBAPAGES+UBAIOPAGES)*NBPG, FALSE);
-        pmap_map(Numem, UMEM750(numuba), UMEM750(numuba)+
-		(UBAPAGES+UBAIOPAGES)*NBPG, VM_PROT_READ|VM_PROT_WRITE);
-*/
-	ioaccess(UMEM750(numuba), UMEMmap[numuba], (UBAPAGES+UBAIOPAGES)*NBPG);
-
-        unifind(uhp, UMEM750(numuba) + (uhp->uh_memsize * NBPG));
-}
-#else
-ubainterrupt(){return;}
-#endif
 
 /*
  * 750-specific code.
@@ -243,13 +113,13 @@ ubainterrupt(){return;}
 #include "sys/param.h"
 
 /* #include "mem.h" */
-#include "../include/mtpr.h"
 
-extern caddr_t mcraddr[];
+extern volatile caddr_t mcraddr[];
 
 struct	mcr750 {
 	int	mc_err;			/* error bits */
 	int	mc_inh;			/* inhibit crd */
+	int	mc_inf;			/* info bits */
 };
 
 #define	M750_ICRD	0x10000000	/* inhibit crd interrupts, in [1] */
@@ -265,8 +135,39 @@ struct	mcr750 {
 #define	M750_ADDR(err)	(((err) >> 9) & 0x7fff)
 
 /* enable crd interrupts */
-ka750_memenable()
+ka750_memenable(sa,self)
+	struct sbi_attach_args *sa;
+	struct device *self;
 {
+	extern int nmcr;
+	int k,l,m,cardinfo;
+	struct mcr750 *mcr=(struct mcr750 *)sa->nexaddr;
+	
+	mcraddr[self->dv_unit]=(caddr_t)sa->nexaddr;
+
+	/* We will use this info for error reporting - later! */
+	cardinfo=mcr->mc_inf;
+	switch((cardinfo>>24)&3){
+	case 0: printf(": L0011 ");
+		break;
+	case 1: printf(": L0016 ");
+		m=cardinfo&0xaaaa;
+		for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
+		printf("with %d M8750",l);
+		break;
+	case 3: printf(": L0022 ");
+		m=cardinfo&0x5555;
+		for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
+		printf("with %d M7199",l);
+		m=cardinfo&0xaaaa;
+		if(m){
+		for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
+		printf(" and %d M8750",l);
+		}
+		break;
+	}
+	printf("\n");
+
 
 	M750_ENA((struct mcr750 *)mcraddr[0]);
 }
@@ -317,8 +218,6 @@ ka750_mchk(cmcf)
 
 	printf("machine check %x: %s%s\n", type, mc750[type&0xf],
 	    (type&0xf0) ? " abort" : " fault"); 
-	mtpr(PR_TBIA, 0);
-	mtpr(PR_MCESR, 0xf);
 	printf(
 "\tva %x errpc %x mdr %x smr %x rdtimo %x tbgpar %x cacherr %x\n",
 	    mcf->mc5_va, mcf->mc5_errpc, mcf->mc5_mdr, mcf->mc5_svmode,
@@ -326,6 +225,8 @@ ka750_mchk(cmcf)
 	printf("\tbuserr %x mcesr %x pc %x psl %x mcsr %x\n",
 	    mcf->mc5_buserr, mcf->mc5_mcesr, mcf->mc5_pc, mcf->mc5_psl,
 	    mcsr);
+	mtpr(0, PR_TBIA);
+	mtpr(0xf, PR_MCESR);
 	if (type == MC750_TBERR && (mcf->mc5_mcesr&0xe) == MC750_TBPAR) {
 		printf("tbuf par: flushing and returning\n");
 		return (0);
