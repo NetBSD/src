@@ -1,8 +1,13 @@
-/*	$NetBSD: difftime.c,v 1.3 1996/01/20 02:30:46 jtc Exp $	*/
+/*	$NetBSD: difftime.c,v 1.4 1996/09/10 22:04:29 jtc Exp $	*/
+
+/*
+** This file is in the public domain, so clarified as of
+** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)difftime.c	7.6";
+static char	elsieid[] = "@(#)difftime.c	7.7";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
