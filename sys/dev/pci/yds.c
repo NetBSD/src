@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.8 2001/11/13 07:48:49 lukem Exp $	*/
+/*	$NetBSD: yds.c,v 1.9 2001/12/25 16:55:50 someya Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.8 2001/11/13 07:48:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.9 2001/12/25 16:55:50 someya Exp $");
 
 #include "mpu.h"
 
@@ -688,6 +688,7 @@ yds_attach(parent, self, aux)
 	sc->sc_pc = pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_id = pa->pa_id;
+	sc->sc_revision = revision;
 	sc->sc_flags = yds_get_dstype(sc->sc_id);
 #ifdef AUDIO_DEBUG
 	if (ydsdebug) {
@@ -907,6 +908,13 @@ yds_read_codec(sc_, reg, data)
 		printf("%s: yds_read_codec timeout\n",
 		       sc->sc->sc_dev.dv_xname);
 		return EIO;
+	}
+
+	if (PCI_PRODUCT(sc->sc->sc_id) == PCI_PRODUCT_YAMAHA_YMF744B &&
+	    sc->sc->sc_revision < 2) {
+		int i;
+		for (i=0; i<600; i++)
+			YREAD2(sc->sc, sc->status_data);
 	}
 
 	*data = YREAD2(sc->sc, sc->status_data);
