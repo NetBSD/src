@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.19.8.1 1997/05/14 18:09:47 mellon Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.19.8.2 1997/06/26 21:57:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -302,7 +302,7 @@ void	 tcp_drain __P((void));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
 void	 tcp_input __P((struct mbuf *, ...));
-int	 tcp_mss __P((struct tcpcb *, u_int16_t));
+int	 tcp_mss __P((struct tcpcb *, u_int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));

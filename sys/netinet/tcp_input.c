@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.6 1997/06/26 21:40:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.7 1997/06/26 21:57:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1704,7 +1704,7 @@ tcp_xmit_timer(tp, rtt)
 int
 tcp_mss(tp, offer)
 	register struct tcpcb *tp;
-	u_int16_t offer;
+	u_int offer;
 {
 	struct route *ro;
 	register struct rtentry *rt;
