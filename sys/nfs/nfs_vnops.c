@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.62.4.2 1997/03/04 18:06:30 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.62.4.3 1997/03/05 02:10:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1645,8 +1645,7 @@ nfs_link(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(vp);
-
+	int v3;
 
 	if (dvp->v_mount != vp->v_mount) {
 		FREE(cnp->cn_pnbuf, M_NAMEI);
@@ -1664,6 +1663,7 @@ nfs_link(v)
 	 */
 	VOP_FSYNC(vp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
 
+	v3 = NFS_ISV3(vp);
 	nfsstats.rpccnt[NFSPROC_LINK]++;
 	nfsm_reqhead(vp, NFSPROC_LINK,
 		NFSX_FH(v3)*2 + NFSX_UNSIGNED + nfsm_rndup(cnp->cn_namelen));
