@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.39 2002/02/13 22:06:17 itojun Exp $	*/
+/*	$NetBSD: wi.c,v 1.40 2002/02/17 19:24:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.39 2002/02/13 22:06:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.40 2002/02/17 19:24:18 martin Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -420,6 +420,7 @@ void wi_inquire(xsc)
 {
 	struct wi_softc		*sc;
 	struct ifnet		*ifp;
+	int			s;
 
 	sc = xsc;
 	ifp = &sc->sc_ethercom.ec_if;
@@ -433,14 +434,17 @@ void wi_inquire(xsc)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
+	s = splnet();
 	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
+	splx(s);
 }
 
 void wi_wait_scan(xsc)
 	void			*xsc;
 {
 	struct wi_softc         *sc;  
-	struct ifnet            *ifp; 
+	struct ifnet            *ifp;
+	int			s, result;
 
 	sc = xsc;
 	ifp = &sc->sc_ethercom.ec_if;
@@ -449,17 +453,21 @@ void wi_wait_scan(xsc)
 	if (!sc->wi_scanning)
 		return;
 
-	/* Wait for to make INQUIRE */
+	s = splnet();
+
+	/* Wait for sending complete to make INQUIRE */
 	if (ifp->if_flags & IFF_OACTIVE) {
 		callout_reset(&sc->wi_scan_sh, hz * 1, wi_wait_scan, sc);
+		splx(s);
 		return;
 	}
 
 	/* try INQUIRE */
-	if (wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS) == ETIMEDOUT) {
+	result = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS);
+	if (result == ETIMEDOUT)
 		callout_reset(&sc->wi_scan_sh, hz * 1, wi_wait_scan, sc);
-		return;
-	}
+
+	splx(s);
 }
 
 void wi_update_stats(sc)
@@ -711,6 +719,7 @@ int wi_intr(arg)
 	return 1;
 }
 
+/* Must be called at proper protection level! */
 static int
 wi_cmd(sc, cmd, val)
 	struct wi_softc		*sc;
@@ -723,6 +732,12 @@ wi_cmd(sc, cmd, val)
 	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
 			break;
+	}
+
+	if (i == WI_TIMEOUT) {
+		printf("%s: wi_cmd: BUSY did not clear, cmd=0x%x\n",
+			sc->sc_dev.dv_xname, cmd);
+		return EIO;
 	}
 
 	CSR_WRITE_2(sc, WI_PARAM0, val);
@@ -744,8 +759,12 @@ wi_cmd(sc, cmd, val)
 	if (s & WI_STAT_CMD_RESULT)
 		return(EIO);
 
-	if (i == WI_TIMEOUT)
+	if (i == WI_TIMEOUT) {
+		if (!sc->wi_scanning)
+		    printf("%s: command timed out, cmd=0x%x\n",
+			sc->sc_dev.dv_xname, cmd);
 		return(ETIMEDOUT);
+	}
 
 	return(0);
 }
