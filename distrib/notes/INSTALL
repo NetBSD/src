@@ -162,9 +162,9 @@ work in NetBSD _VER:
 * Swap configuration
 
   Description:
-	Swap partittion configuration is now entirely in the domain
+	Swap partition configuration is now entirely in the domain
 	of the user and as such all swap partitions need to be added
-	to /etv/fstab.  Common symptoms of upgrades missing this
+	to /etc/fstab.  Common symptoms of upgrades missing this
 	vital step include machine death during builds, and such.
 
   Fix:
@@ -344,7 +344,7 @@ contained in the set, you could use the command:
 
 or to actually extract the files contained in the set:
 
-	cat set_name.?? | gunzip | tar xfp -
+	cat set_name.?? | gunzip | tar xpf -
 
 In each of the source distribution set directories, there is a file
 named "CKSUMS" which contains the checksums of the files in that
