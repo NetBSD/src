@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1996/11/02 01:02:56 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1996/11/11 23:41:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -418,6 +418,9 @@ cfcrosscheck(cf, what, nv)
 	register struct devi *pd;
 	int errs, devminor;
 
+	if (maxpartitions <= 0)
+		panic("cfcrosscheck");
+
 	for (errs = 0; nv != NULL; nv = nv->nv_next) {
 		if (nv->nv_name == NULL)
 			continue;
@@ -517,4 +520,49 @@ badstar()
 			panic("badstar() n<1");
 	}
 	return (errs);
+}
+
+/*
+ * Verify/create builddir if necessary, change to it, and verify srcdir.
+ * This will be called when we see the first include.
+ */
+void
+setupdirs()
+{
+	struct stat st;
+	char *prof;
+
+	/* srcdir must be specified if builddir is not specified or if
+	 * no configuration filename was specified. */
+	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir) {
+		error("source directory must be specified");
+		exit(1);
+	}
+
+	if (srcdir == NULL)
+		srcdir = "../../../..";
+	if (builddir == NULL)
+		builddir = defbuilddir;
+
+	if (stat(builddir, &st) != 0) {
+		if (mkdir(builddir, 0777)) {
+			(void)fprintf(stderr, "config: cannot create %s: %s\n",
+			    builddir, strerror(errno));
+			exit(2);
+		}
+	} else if (!S_ISDIR(st.st_mode)) {
+		(void)fprintf(stderr, "config: %s is not a directory\n",
+			      builddir);
+		exit(2);
+	}
+	if (chdir(builddir) != 0) {
+		(void)fprintf(stderr, "config: cannot change to %s\n",
+			      builddir);
+		exit(2);
+	}
+	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+		(void)fprintf(stderr, "config: %s is not a directory\n",
+			      srcdir);
+		exit(2);
+	}
 }
