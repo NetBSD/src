@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.6 2002/12/10 12:13:24 pk Exp $ */
+/*	$NetBSD: oclock.c,v 1.7 2003/02/26 17:39:07 pk Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,8 +50,8 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/promlib.h>
 #include <machine/autoconf.h>
-#include <machine/idprom.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170.h>
@@ -61,7 +61,6 @@ extern todr_chip_handle_t todr_handle;
 extern int oldclk;
 extern int timerblurb;
 extern void (*timer_init)(void);
-void establish_hostid(struct idprom *);
 
 
 static int oclockmatch(struct device *, struct cfdata *, void *);
@@ -134,7 +133,6 @@ oclockattach(parent, self, aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_tag_t bt = oba->oba_bustag;
 	bus_space_handle_t bh;
-	extern struct idprom sun4_idprom_store;
 
 	oldclk = 1;  /* we've got an oldie! */
 
@@ -197,13 +195,7 @@ oclockattach(parent, self, aux)
 	/* Our TOD clock year 0 represents 1968 */
 	if ((todr_handle = intersil7170_attach(bt, bh, 1968)) == NULL)
 		panic("Can't attach tod clock");
-
-	/*
-	 * This has nothing to do with `oclock' but since on mostek
-	 * TOD clock based machines the host ID is established when
-	 * the clock attaches, we do it here as well.
-	 */
-	establish_hostid(&sun4_idprom_store);
+	printf("\n");
 #endif /* SUN4 */
 }
 

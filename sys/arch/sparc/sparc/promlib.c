@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.15 2003/02/26 14:25:20 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.16 2003/02/26 17:39:07 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 #include "opt_sparc_arch.h"
 #endif
 
-#include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
@@ -57,9 +57,9 @@
 
 #include <machine/stdarg.h>
 #include <machine/oldmon.h>
-#include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
-#include <machine/openfirm.h>
+#include <machine/ctlreg.h>
+#include <sparc/sparc/asm.h>
 
 #define obpvec ((struct promvec *)romp)
 
@@ -895,6 +895,74 @@ prom_makememarr(ap, max, which)
 	 * Success!  (Hooray)
 	 */
 	return (n);
+}
+
+
+static struct idprom idprom;
+#ifdef _STANDALONE
+long hostid;
+#endif
+
+struct idprom *
+prom_getidprom(void)
+{
+	int node, len;
+	u_long h;
+	u_char *src, *dst;
+
+	if (idprom.id_format != 0)
+		/* Already got it */
+		return (&idprom);
+
+	switch (prom_version()) {
+	case PROM_OLDMON:
+		len = sizeof(struct idprom);
+		src = (char *)AC_IDPROM;
+		dst = (char *)&idprom;
+		do {
+			*dst++ = lduba(src++, ASI_CONTROL);
+		} while (--len > 0);
+		break;
+
+	/*
+	 * Fetch the `idprom' property at the root node.
+	 */
+	case PROM_OBP_V0:
+	case PROM_OBP_V2:
+	case PROM_OPENFIRM:
+	case PROM_OBP_V3:
+		dst = (char *)&idprom;
+		len = sizeof(struct idprom);
+		node = prom_findroot();
+		if (PROM_getprop(node, "idprom", 1, &len, (void **)&dst) != 0) {
+			printf("`idprom' property cannot be read: "
+				"cannot get ethernet address");
+		}
+		break;
+	}
+
+	/* Establish hostid */
+	h =  idprom.id_machine << 24;
+	h |= idprom.id_hostid[0] << 16;
+	h |= idprom.id_hostid[1] << 8;
+	h |= idprom.id_hostid[2];
+	hostid = h;
+
+	return (&idprom);
+}
+
+__strong_alias(myetheraddr,prom_getether);
+void prom_getether(cp)
+	u_char *cp;
+{
+	struct idprom *idp = prom_getidprom();
+
+	cp[0] = idp->id_ether[0];
+	cp[1] = idp->id_ether[1];
+	cp[2] = idp->id_ether[2];
+	cp[3] = idp->id_ether[3];
+	cp[4] = idp->id_ether[4];
+	cp[5] = idp->id_ether[5];
 }
 
 static void prom_init_oldmon __P((void));

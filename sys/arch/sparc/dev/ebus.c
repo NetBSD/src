@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.11 2003/01/01 02:20:47 thorpej Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.12 2003/02/26 17:39:05 pk Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -62,7 +62,6 @@ int ebus_debug = 0;
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/openfirm.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

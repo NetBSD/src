@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.16 2003/01/03 11:57:48 mrg Exp $ */
+/*	$NetBSD: msiiep.c,v 1.17 2003/02/26 17:39:07 pk Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.16 2003/01/03 11:57:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.17 2003/02/26 17:39:07 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.16 2003/01/03 11:57:48 mrg Exp $");
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
-#include <machine/idprom.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
@@ -70,10 +69,6 @@ static void	msiiep_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(msiiep, sizeof(struct device),
     msiiep_match, msiiep_attach, NULL, NULL);
-
-static struct idprom	msiiep_idprom_store;
-static void		msiiep_getidprom(void);
-
 
 /*
  * The real thing.
@@ -263,13 +258,6 @@ msiiep_attach(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	struct msiiep_attach_args msa;
 
-	/*
-	 * Ok, we know that we are on ms-IIep and the easy way to get
-	 * idprom is to read it from root property (try this at prom:
-	 * "see idprom@ seeprom see ee-read" if you don't believe me ;-).
-	 */
-	msiiep_getidprom();
-
 	/* pass on real mainbus_attach_args */
 	msa.msa_ma = ma;
 
@@ -281,29 +269,6 @@ msiiep_attach(parent, self, aux)
 	msa.msa_name = "pcic";
 	config_found(self, &msa, NULL);
 }
-
-
-/*
- * idprom is in /pci/ebus/gpio but it's a pain to access.
- * fortunately the PROM sets "idprom" property on the root node.
- * XXX: the idprom stuff badly needs to be factored out....
- */
-static void
-msiiep_getidprom()
-{
-	extern void establish_hostid(struct idprom *); /* clock.c */
-	struct idprom *idp;
-	int nitems;
-
-	idp = &msiiep_idprom_store;
-	nitems = 1;
-	if (PROM_getprop(prom_findroot(), "idprom",
-			 sizeof(struct idprom), &nitems,
-			 (void **)&idp) != 0)
-		panic("unable to get \"idprom\" property from root node");
-	establish_hostid(idp);
-}
-
 
 /*
  * Turn PCIC endian swapping on/off.  The kernel runs with endian
