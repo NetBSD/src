@@ -40,7 +40,7 @@
  * And then from:
  *	Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp 
  *
- *	$Id: process_machdep.c,v 1.2 1994/08/15 16:37:25 cgd Exp $
+ *	$Id: process_machdep.c,v 1.3 1994/10/06 06:07:28 phil Exp $
  */
 
 /* Modified by Phil Nelson for the pc532 port.  1/12/94 */
@@ -154,7 +154,7 @@ process_sstep(p, sstep)
 int
 process_set_pc(p, addr)
 	struct proc *p;
-	u_int addr;
+	caddr_t addr;
 {
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
