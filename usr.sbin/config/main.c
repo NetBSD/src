@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 1999/04/02 06:36:30 gwr Exp $	*/
+/*	$NetBSD: main.c,v 1.40 1999/07/09 06:44:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,7 +339,7 @@ mksymlinks()
 		p = sourcepath(buf);
 		q = machinearch;
 	} else {
-		p = strdup("machine");
+		p = estrdup("machine");
 		q = machine;
 	}
 	(void)unlink(q);
