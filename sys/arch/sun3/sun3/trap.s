@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.s,v 1.11 1995/02/11 21:08:50 gwr Exp $	*/
+/*	$NetBSD: trap.s,v 1.12 1995/02/24 05:03:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,19 +44,16 @@
  *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
  */
 
+	.text
+
+	.globl _buserr, _addrerr, _illinst, _zerodiv, _chkinst
+	.globl _trapvinst, _privinst, _trace, _badtrap, _fmterr
+	.globl _trap0, _trap1, _trap2, _trap12, _trap15
+	.globl _coperr, _fpfline, _fpunsupp
+
 /*
  * Trap/interrupt vector routines
  */ 
-
-/* the buserr/addrerr won't work on a sun3.  in particular more interpretation
- * of the memory error register is necessary
- */
-
-.text
-.globl _buserr, _addrerr, _illinst, _zerodiv, _chkinst, _trapvinst
-.globl _privinst, _trace, _fpfline, _badtrap, _coperr, _fmterr, _trap0,
-.globl _trap1, _trap2, _trap12, _trap15
-.globl _fpunsupp
 
 	.globl	_trap, _nofault, _longjmp
 _buserr:
@@ -161,17 +158,20 @@ Lstkadj:
 	movl	sp@,sp			| and our SP
 	jra	rei			| all done
 
-/* unchanged from hp300 */
-
-
 /*
  * FP exceptions.
  */
 _fpfline:
-	jra	_illinst
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
+	jra	fault			| do it
 
 _fpunsupp:
-	jra	_illinst
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	jra	fault			| do it
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -179,7 +179,7 @@ _fpunsupp:
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
  */
-.globl _fpfault
+	.globl	_fpfault
 _fpfault:
 #ifdef FPCOPROC
 	clrl	sp@-		| stack adjust count
@@ -302,7 +302,7 @@ _trap0:
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
-	jra	rei			| all done
+	rte
 
 /*
  * Routines for traps 1 and 2.  The meaning of the two traps depends
