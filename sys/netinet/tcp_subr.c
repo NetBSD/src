@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.32.2.5 1998/02/07 00:58:43 mellon Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.32.2.6 1998/05/05 09:25:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -699,7 +699,9 @@ tcp_rmx_rtt(tp)
 		 * is also a minimum value; this is subject to time.
 		 */
 		if (rt->rt_rmx.rmx_locks & RTV_RTT)
-			tp->t_rttmin = rtt / (RTM_RTTUNIT / PR_SLOWHZ);
+			TCPT_RANGESET(tp->t_rttmin,
+			    rtt / (RTM_RTTUNIT / PR_SLOWHZ),
+			    TCPTV_MIN, TCPTV_REXMTMAX);
 		tp->t_srtt = rtt /
 		    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTT_SHIFT + 2));
 		if (rt->rt_rmx.rmx_rttvar) {
