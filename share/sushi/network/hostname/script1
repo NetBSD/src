@@ -1,8 +1,0 @@
-#!/bin/sh
-# $NetBSD: script1,v 1.1 2001/04/25 03:43:29 garbled Exp $
-
-if [ -f "/etc/myname" ]; then
-	cat /etc/myname
-else
-	hostname -s
-fi

@@ -1,2 +1,0 @@
-# $NetBSD: md.netwinder,v 1.1 2001/11/26 03:45:46 thorpej Exp $
-./usr/lib/libarm32.so.0		base-sys-shlib

@@ -1,5 +1,0 @@
-# $NetBSD: md.pc532,v 1.39 2001/12/04 00:12:46 jdolecek Exp $
-./sbin/bim			base-sysutil-root
-./sbin/ldconfig			base-sysutil-root
-./usr/libexec/ld.so		base-sys-shlib
-./usr/mdec/boot			base-sysutil-bin

@@ -1,3 +1,0 @@
-# $NetBSD: md.bebox,v 1.8 2001/12/04 00:12:45 jdolecek Exp $
-./sbin/fdisk		base-sysutil-root
-./usr/bin/fdformat	base-util-bin
