@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.12 1997/05/16 14:44:02 mycroft Exp $	*/
+/*	$NetBSD: ln.c,v 1.13 1997/07/20 17:44:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static char rcsid[] = "$NetBSD: ln.c,v 1.12 1997/05/16 14:44:02 mycroft Exp $";
+__RCSID("$NetBSD: ln.c,v 1.13 1997/07/20 17:44:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ int (*linkf) __P((const char *, const char *));
 
 int	linkit __P((char *, char *, int));
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -141,8 +142,8 @@ linkit(target, source, isdir)
 	/* If the source is a directory (and not a symlink if hflag),
 	   append the target's name. */
 	if (isdir ||
-	    !lstat(source, &sb) && S_ISDIR(sb.st_mode) ||
-	    !hflag && !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
+	    (!lstat(source, &sb) && S_ISDIR(sb.st_mode)) ||
+	    (!hflag && !stat(source, &sb) && S_ISDIR(sb.st_mode))) {
 		if ((p = strrchr(target, '/')) == NULL)
 			p = target;
 		else
@@ -155,7 +156,7 @@ linkit(target, source, isdir)
 	 * If the file exists, and -f was specified, unlink it.
 	 * Attempt the link.
 	 */
-	if (fflag && unlink(source) < 0 && errno != ENOENT ||
+	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
 	    (*linkf)(target, source)) {
 		warn("%s", source);
 		return (1);
@@ -168,7 +169,9 @@ void
 usage()
 {
 
+	extern char *__progname;
 	(void)fprintf(stderr,
-	    "usage:\tln [-fhns] file1 file2\n\tln [-fhns] file ... directory\n");
+	    "Usage:\t%s [-fhns] file1 file2\n\t%s [-fhns] file ... directory\n",
+	    __progname, __progname);
 	exit(1);
 }
