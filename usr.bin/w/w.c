@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.30 1998/07/06 07:50:20 mrg Exp $	*/
+/*	$NetBSD: w.c,v 1.31 1999/01/29 14:17:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.30 1998/07/06 07:50:20 mrg Exp $");
+__RCSID("$NetBSD: w.c,v 1.31 1999/01/29 14:17:21 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ main(argc, argv)
 	else
 		(void)setegid(egid);
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL)
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);
 
 	/* get rid of it now anyway */
