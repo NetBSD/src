@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.48 1999/05/01 05:49:02 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.49 1999/05/04 02:45:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -81,7 +81,6 @@
 #include <vm/vm.h>
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
