@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.39 2001/04/24 08:03:44 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.40 2001/05/15 21:48:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -367,18 +367,45 @@
 /*
  * Coprocessor 0 registers:
  *
- *	MIPS_COP_0_TLB_INDEX	TLB index.
- *	MIPS_COP_0_TLB_RANDOM	TLB random.
- *	MIPS_COP_0_TLB_LOW	r3k TLB entry low.
- *	MIPS_COP_0_TLB_LO0	r4k TLB entry low.
- *	MIPS_COP_0_TLB_LO1	r4k TLB entry low, extended.
- *	MIPS_COP_0_TLB_CONTEXT	TLB context.
- *	MIPS_COP_0_BAD_VADDR	Bad virtual address.
- *	MIPS_COP_0_TLB_HI	TLB entry high.
- *	MIPS_COP_0_STATUS	Status register.
- *	MIPS_COP_0_CAUSE	Exception cause register.
- *	MIPS_COP_0_EXC_PC	Exception PC.
- *	MIPS_COP_0_PRID		Processor revision identifier.
+ *  0	MIPS_COP_0_TLB_INDEX	TLB Index.
+ *  1	MIPS_COP_0_TLB_RANDOM	TLB Random.
+ *  2	MIPS_COP_0_TLB_LOW	r3k TLB entry low.
+ *  2	MIPS_COP_0_TLB_LO0	r4k TLB entry low.
+ *  3	MIPS_COP_0_TLB_LO1	r4k TLB entry low, extended.
+ *  4	MIPS_COP_0_TLB_CONTEXT	TLB Context.
+ *  5	MIPS_COP_0_TLB_PG_MASK	TLB Page Mask register.
+ *  6	MIPS_COP_0_TLB_WIRED	Wired TLB number.
+ *  8	MIPS_COP_0_BAD_VADDR	Bad virtual address.
+ *  9	MIPS_COP_0_COUNT	Count register.
+ * 10	MIPS_COP_0_TLB_HI	TLB entry high.
+ * 11	MIPS_COP_0_COMPARE	Compare (against Count).
+ * 12	MIPS_COP_0_STATUS	Status register.
+ * 13	MIPS_COP_0_CAUSE	Exception cause register.
+ * 14	MIPS_COP_0_EXC_PC	Exception PC.
+ * 15	MIPS_COP_0_PRID		Processor revision identifier.
+ * 16	MIPS_COP_0_CONFIG	Configuration register.
+ * 16/1	MIPS_COP_0_CONFIG1	Configuration register 1.
+ * 16/2	MIPS_COP_0_CONFIG2	Configuration register 2.
+ * 16/3	MIPS_COP_0_CONFIG3	Configuration register 3.
+ * 17	MIPS_COP_0_LLADDR	Load Linked Address.
+ * 18	MIPS_COP_0_WATCH_LO	WatchLo register.
+ * 19	MIPS_COP_0_WATCH_HI	WatchHi register.
+ * 20	MIPS_COP_0_TLB_XCONTEXT TLB XContext register.
+ * 23	MIPS_COP_0_DEBUG	Debug JTAG register.
+ * 24	MIPS_COP_0_DEPC		DEPC JTAG register.
+ * 25	MIPS_COP_0_PERFCNT	Performance Counter register.
+ * 26	MIPS_COP_0_ECC		ECC / Error Control register.
+ * 27	MIPS_COP_0_CACHE_ERR	Cache Error register.
+ * 28/0	MIPS_COP_0_TAG_LO	Cache TagLo register (instr).
+ * 28/1	MIPS_COP_0_DATA_LO	Cache DataLo register (instr).
+ * 28/2	MIPS_COP_0_TAG_LO	Cache TagLo register (data).
+ * 28/3	MIPS_COP_0_DATA_LO	Cache DataLo register (data).
+ * 29/0	MIPS_COP_0_TAG_HI	Cache TagHi register (instr).
+ * 29/1	MIPS_COP_0_DATA_HI	Cache DataHi register (instr).
+ * 29/2	MIPS_COP_0_TAG_HI	Cache TagHi register (data).
+ * 29/3	MIPS_COP_0_DATA_HI	Cache DataHi register (data).
+ * 30	MIPS_COP_0_ERROR_PC	Error EPC register.
+ * 31	MIPS_COP_0_DESAVE	DESAVE JTAG register.
  */
 #define MIPS_COP_0_TLB_INDEX	$0
 #define MIPS_COP_0_TLB_RANDOM	$1
@@ -420,7 +447,13 @@
 #define MIPS_COP_0_TAG_HI	$29
 #define MIPS_COP_0_ERROR_PC	$30
 
-
+/* MIPS32/64 */
+#define	MIPS_COP_0_DEBUG	$23
+#define	MIPS_COP_0_DEPC		$24
+#define	MIPS_COP_0_PERFCNT	$25
+#define	MIPS_COP_0_DATA_LO	$28
+#define	MIPS_COP_0_DATA_HI	$29
+#define	MIPS_COP_0_DESAVE	$31
 
 /*
  * Values for the code field in a break instruction.
@@ -495,7 +528,6 @@
 #define MIPS_OPCODE_LDC1	0x35
 #define MIPS_OPCODE_SWC1	0x39
 #define MIPS_OPCODE_SDC1	0x3d
-
 
 
 /*
@@ -637,6 +669,8 @@
 #define MIPS_TX4900	0x2d	/* Toshiba TX49 family		ISA III */
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
+#define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
+#define	MIPS_5Kc	0x81	/* MIPS 4Kc			ISA 32  */
 
 /*
  * FPU processor revision ID
