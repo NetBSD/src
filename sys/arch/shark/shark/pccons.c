@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.13 2002/10/23 09:12:02 jdolecek Exp $       */
+/*      $NetBSD: pccons.c,v 1.14 2003/01/28 22:35:15 wiz Exp $       */
 
 /*
  * Copyright 1997
@@ -854,7 +854,7 @@ async_update(struct pc_softc *sc,
 **  FUNCTION VALUE:
 **
 **     0 - Probe failed to find the requested device.
-**     1 - Probe sucessfully talked to the device. 
+**     1 - Probe successfully talked to the device. 
 **
 **  SIDE EFFECTS:
 **

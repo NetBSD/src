@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.20 2003/01/17 23:13:12 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.21 2003/01/28 22:35:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20 2003/01/17 23:13:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21 2003/01/28 22:35:10 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -192,7 +192,7 @@ again:
 	 * If any writeback fails, go back and attempt signal delivery.
 	 * unless we have already been here and attempted the writeback
 	 * (e.g. bad address with user ignoring SIGSEGV).  In that case
-	 * we just return to the user without sucessfully completing
+	 * we just return to the user without successfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
 	if (cputype == CPU_68040 && fp->f_format == FMT7) {

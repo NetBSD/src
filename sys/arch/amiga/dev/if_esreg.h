@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esreg.h,v 1.5 2002/03/03 18:21:37 mhitch Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.6 2003/01/28 22:35:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -93,7 +93,7 @@ union smcregs {
 /* EPH Status Register */
 #define	EPHSR_16COL	0x1000		/* 16 collisions reached */
 #define	EPHSR_MULCOL	0x0400		/* Multiple collsions */
-#define	EPHSR_TX_SUC	0x0100		/* Last transmit sucessful */
+#define	EPHSR_TX_SUC	0x0100		/* Last transmit successful */
 #define	EPHSR_LOST_CAR	0x0004		/* Lost carrier */
 
 /* Receive Control Register */
