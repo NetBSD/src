@@ -17,6 +17,9 @@ kerberos_server=NO
 #
 hostname=`cat /etc/myname`
 hostname $hostname
+if [ -f /etc/defaultdomaie ]; then
+	domainname `cat /etc/defaultdomain`
+fi
 
 # configure all of the interfaces which we know about.
 # do this by reading /etc/hostname.* files, where * is the name
@@ -81,4 +84,8 @@ route add $hostname localhost
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
 	route add default `cat /etc/mygate`
+fi
+
+if [ -d /var/yp -a -f /usr/sbin/ypbind ]; then
+	ypbind;		echo ypbind
 fi
