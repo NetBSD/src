@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 1995/08/29 22:13:19 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.24 1995/09/03 21:55:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1047,8 +1047,7 @@ eeprom_uio(uio)
 #if defined(SUN4)
 	int error;
 	int off;	/* NOT off_t */
-	u_int cnt;
-	caddr_t va;
+	u_int cnt, bcnt;
 	caddr_t buf = NULL;
 
 	if (cputyp != CPU_SUN4)
@@ -1070,18 +1069,23 @@ eeprom_uio(uio)
 		goto out;
 	}
 
-	va = eeprom_va;
-	if (uio->uio_rw != UIO_READ) {
-		/* Write requires a temporary buffer. */
-		buf = malloc(EEPROM_SIZE, M_DEVBUF, M_WAITOK);
-		if (buf == NULL) {
-			error = EAGAIN;
-			goto out;
-		}
-		va = buf;
+	/*
+	 * The EEPROM can only be accessed one byte at a time, yet
+	 * uiomove() will attempt long-word access.  To circumvent
+	 * this, we byte-by-byte copy the eeprom contents into a
+	 * temporary buffer.
+	 */
+	buf = malloc(EEPROM_SIZE, M_DEVBUF, M_WAITOK);
+	if (buf == NULL) {
+		error = EAGAIN;
+		goto out;
 	}
 
-	if ((error = uiomove(va + off, (int)cnt, uio)) != 0)
+	if (uio->uio_rw == UIO_READ)
+		for (bcnt = 0; bcnt < EEPROM_SIZE; ++bcnt)
+			*(char *)(buf + bcnt) = *(char *)(eeprom_va + bcnt);
+
+	if ((error = uiomove(buf + off, (int)cnt, uio)) != 0)
 		goto out;
 
 	if (uio->uio_rw != UIO_READ)
