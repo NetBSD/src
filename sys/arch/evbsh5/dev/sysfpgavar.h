@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgavar.h,v 1.1 2002/07/05 13:31:39 scw Exp $	*/
+/*	$NetBSD: sysfpgavar.h,v 1.2 2002/08/30 10:59:39 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,10 +50,10 @@ struct sysfpga_attach_args {
 /*
  * Interrupt groups managed by the System FPGA
  */
-#define	SYSFPGA_IGROUP_FEMI	0
-#define	SYSFPGA_IGROUP_SUPERIO	1
-#define	SYSFPGA_IGROUP_PCI1	2
-#define	SYSFPGA_IGROUP_PCI2	3
+#define	SYSFPGA_IGROUP_SUPERIO	0	/* Output to CPU's IRL1 pin */
+#define	SYSFPGA_IGROUP_FEMI	1	/* Output to CPU's IRL0 pin */
+#define	SYSFPGA_IGROUP_PCI1	2	/* Output to CPU's IRL2 pin */
+#define	SYSFPGA_IGROUP_PCI2	3	/* Output to CPU's IRL3 pin */
 #define	SYSFPGA_NGROUPS		4
 
 /*
