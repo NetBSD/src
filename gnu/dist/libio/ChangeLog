@@ -1,3 +1,63 @@
+1998-08-17  Ulrich Drepper  <drepper@cygnus.com>
+
+	* strfile.h: Define __PMT if not already defined.
+
+1998-08-03  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* libioP.h: Use __PMT in typedefs.
+	* strfile.h: Likewise.
+
+1998-06-29  Ulrich Drepper  <drepper@cygnus.com>
+
+	* libio.h: Rewrite __PMT change so that it works with platforms
+	defining __P but not __PMT.
+
+	* libio.h (__PMT): New macro.  Defined like __P.  Use is for
+	function pointers.
+
+1998-06-27  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (install): Remove superfluous /include.
+
+1998-06-26  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config.shared (FLAGS_TO_PASS): Add gcc_version_trigger.
+	(Makefile): Add dependency upon $(gcc_version_trigger).
+
+1998-06-24  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (install): Install _G_config.h depending on new flag
+	--enable-version-specific-runtime-libs.
+	* config/linux.mt (gxx_include_dir): Remove definition here as we use
+	gcc's default anyway.
+
+1998-06-24  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config.shared (FLAGS_TO_PASS): Add gcc_version.
+
+1998-06-19  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config.shared (FLAGS_TO_PASS): Add libsubdir.
+
+1998-06-07  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* genops.c (__underflow): Read character from read pointer as unsigned.
+	(__uflow): Likewise.
+
+1998-05-22  Ulrich Drepper  <drepper@cygnus.com>
+
+	* strops.c (_IO_str_underflow): Read newly available character
+	from buffer as unsigned.
+
+Sun Apr 19 22:13:36 1998  H.J. Lu  (hjl@gnu.org)
+
+	* isgetline.cc (istream::get): Fix a typo.
+
+Thu Mar  5 09:23:28 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* configure.in: Make locating frag files failsafe even for the
+	special case if configuring and building in srcdir.
+
 1998-02-24  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
 
 	Changes for _G_IO_IO_FILE_VERSION == 0x20001:
@@ -19,38 +79,13 @@
 	(ostream::operator<<(long double n)) [__GLIBC_MINOR__ >= 1]:
 	Likewise.
 
-Tue Feb 24 20:57:39 1998  H.J. Lu  (hjl@gnu.org)
+Sun Feb 22 17:24:53 1998  Jeffrey A Law  (law@cygnus.com)
 
-	* configure.in (topsrcdir): New.
-	(CHECK_SUBDIRS, configdirs): Check ${topsrcdir}/gcc instead.
-	(config-ml.in): Use ${topsrcdir}/config-ml.in.
+	* config.shared: Bring back changes from Ian and Fred that were
+	accidentally clobbered.  Should eliminate the need for Dave's
+	recent change.
 
-	* tests/configure.in (topsrcdir): New.
-	(CHECK): Check ${topsrcdir}/gcc instead.
-
-	* configure.in (CHECK_SUBDIRS): Set to testsuite only if
-	${srcdir}/../gcc exists.
-	(configdirs): Include testsuite only if ${srcdir}/../gcc exists.
-
-	* tests/Makefile.in (check): Depend on $(CHECK).
-
-	* tests/configure.in (CHECK): Set to "check-iostream
-	check-stdio" if ${srcdir}/../../gcc doesn't exists.
-
-1998-02-17  Andreas Schwab  (schwab@issan.informatik.uni-dortmund.de)
-
-	* iostream.cc (istream::operator>>(long double&))
-	[!_G_HAVE_LONG_DOUBLE_IO]: Scan value into separate variable, in
-	case long double is bigger than double.
-	(ostream::operator<<(double)) [_G_HAVE_PRINTF_FP]: Fix order of
-	initializers of struct printf_info to match declaration order,
-	to work around g++ bug.
-	(ostream::operator<<(long double)) [_G_HAVE_PRINTF_FP]: Likewise.
-
-	* gen-params: Add missing quotes.  Avoid useless use of command
-	substitution.
-
-Tue Feb 17 21:52:44 1998  H.J. Lu  (hjl@gnu.org)
+Tue Feb 17 21:56:25 1998  H.J. Lu  (hjl@gnu.org)
 
 	* config/linux.mt (IO_OBJECTS): Add iogetline.o.
 	* config/linuxlibc1.mt: Ditto.
@@ -68,6 +103,44 @@ Tue Feb 17 21:52:44 1998  H.J. Lu  (hjl@gnu.org)
 	* iogetline.c (_IO_getline): Handle the case when there is no
 	buffer.
 
+Fri Feb 13 00:57:20 1998  Krister Walfridsson (cato@df.lth.se)
+
+	* fileops.c: #include <unistd.h>.
+	* ioprims.c: Likewise.
+
+1998-02-10  Mark Mitchell  <mmitchell@usa.net>
+
+	* iostream.cc (ostream::operator<<(long double)): Don't use
+	labeled initializers.
+
+Fri Feb  6 01:35:56 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config.shared (FLAGS_TO_PASS): Don't emit PICFLAG.
+	(.c.o): Check value of enable_shared, not PICFLAG.
+	(.C.o): Dito.
+	(.cc.o): Dito.
+	(stamp-picdir): Dito.
+
+Thu Feb  5 17:41:26 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* config.shared (LIBS): Change to -L../../libstdc++ (was -L../libstdc++)
+	if ${DOING_GPERF} is true.
+
+1998-01-20  Andreas Schwab  (schwab@issan.informatik.uni-dortmund.de)
+
+	* iostream.cc (istream::operator>>(long double&))
+	[!_G_HAVE_LONG_DOUBLE_IO]: Scan value into separate variable, in
+	case long double is bigger than double.
+	(ostream::operator<<(double)) [_G_HAVE_PRINTF_FP]: Fix order of
+	initializers of struct printf_info to match declaration order,
+	to work around g++ bug.
+	(ostream::operator<<(long double)) [_G_HAVE_PRINTF_FP]: Likewise.
+
+	* gen-params: Add missing quotes.  Avoid useless use of command
+	substitution.
+
+Sun Feb  1 13:29:47 1998  H.J. Lu  (hjl@gnu.org)
+
 	* filebuf.cc (filebuf::open): Call _IO_file_open if
 	_G_HAVE_IO_FILE_OPEN is 1.
 
@@ -77,7 +150,7 @@ Tue Feb 17 21:52:44 1998  H.J. Lu  (hjl@gnu.org)
 	* libioP.h (_IO_file_open): New declaration.
 
 	* libio.h (_IO_FILE, _IO_stdin_, _IO_stdout_, _IO_stderr_,
-	_IO_seekoff, _IO_seekpos): Add support for libio in egcs 2.1.
+	_IO_seekoff, _IO_seekpos): Add support for libio in glibc 2.1.
 	* libioP.h (_IO_seekoff_t, _IO_seekpos_t, _IO_seek_t,
 	_IO_seekoff, _IO_seekpos, _IO_default_seekoff,
 	_IO_default_seekpos, _IO_default_seek, _IO_file_seekoff,
@@ -87,24 +160,90 @@ Tue Feb 17 21:52:44 1998  H.J. Lu  (hjl@gnu.org)
 
 	* gen-params (__extension__): Use only if gcc version >= 2.8.
 
-Sun Feb 15 21:11:25 1998  Krister Walfridsson (cato@df.lth.se)
+Sun Feb  1 13:08:18 1998  Krister Walfridsson (cato@df.lth.se)
 
-	* fileops.c: #include <unistd.h>.
-	* ioprims.c: Likewise.
 	* dbz/dbz.c (putconf): Handle systems which use "long long" as type
 	for "off_t".
 	* dbz/dbzmain.c (mkfiles): Likewise.
 
-Fri Dec 19 09:35:48 1997  H.J. Lu  (hjl@gnu.org)
+Wed Jan 28 10:27:11 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config.shared (FLAGS_TO_PASS): Add gxx_include_dir.
+
+	* stdio/configure.in, tests/configure.in: Update with yesterday's
+	toplevel configure.in changes.
+	* testsuite/configure.in: Likewise.
+
+	* config.shared: Fix typo in yesterday's changes.
+
+Tue Jan 27 23:26:07 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config.shared: Emit everything which needs to be re-definable
+	via file descriptor 1; the generic stuff is emitted using redirection
+	onto fd 2.
+
+	* configure.in (package_makefile_rules_frag): New variable
+	which is used in the call to config.shared; redirect file descriptor 2
+	to ${package_makefile_rules_frag}.
+
+Tue Jan 27 10:35:22 1998  H.J. Lu  (hjl@gnu.org)
+
+	* configure.in (topsrcdir): New.
+	(CHECK_SUBDIRS, configdirs): Check ${topsrcdir}/gcc instead.
+	(config-ml.in): Use ${topsrcdir}/config-ml.in.
+
+	* tests/configure.in (topsrcdir): New.
+	(CHECK): Check ${topsrcdir}/gcc instead.
+
+Fri Jan 16 00:48:03 1998  Manfred Hollstein  <manfred@lts.sel.alcatel.de>
+
+	* config.shared (FLAGS_TO_PASS): Add SHELL.
+
+Thu Jan 15 00:21:58 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: For *-*-cygwin32*, add a -I for winsup to both
+	XCINCLUDES and XCXXINCLUDES.
+	* config.shared: Use ${host_includes} when setting CXXINCLUDES in
+	the DOING_LIBGXX case.
+	* Makefile.in (_G_config.h): Pass $(CINCLUDES) in CC and
+	$(CXXINCLUDES) in CXX when running gen-params.
+
+Tue Jan 13 21:32:08 1998  H.J. Lu  (hjl@gnu.org)
+
+	* configure.in (CHECK_SUBDIRS): Set to testsuite only if
+	${srcdir}/../gcc exists.
+	(configdirs): Include testsuite only if ${srcdir}/../gcc exists.
+
+	* tests/Makefile.in (check): Depend on $(CHECK).
+
+	* tests/configure.in (CHECK): Set to "check-iostream
+	check-stdio" if ${srcdir}/../../gcc doesn't exists.
+
+Thu Jan  8 18:09:03 1998  Fred Fish  <fnf@cygnus.com>
+
+	* config.shared (THIS_FILE): Really found via TOLIBIO instead
+	of TOLIBCXX, which is empty when configuring gperf.
+	(LIBS): When linking gperf, find libstdc++ relative to TO_TOPDIR
+	instead of hardcoded "../".
+
+1997-12-12  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	Don't make gperf depend upon libg++.
+	* config.shared (TOLIBGCXX) [DOING_GPERF]: Delete.
+	(LIBS) [DOING_GPERF]: Make it just `-L../libstdc++ -lstdc++'.
+
+Thu Dec 11 11:20:59 1997  H.J. Lu  (hjl@gnu.org)
 
 	* configure.in (target frags): Add *-linux-gnu.
+
+Fri Dec  5 16:22:15 1997  H.J. Lu  (hjl@gnu.org)
 
 	* streambuf.cc (streambuf::~streambuf): Don't delete _lock
 	for _IO_stdin/_IO_stdout/_IO_stderr.
 
 Thu Nov 27 01:32:43 1997  Jeffrey A Law  (law@cygnus.com)
 
-	* Makefile.in (insatll): Change gxx_includedir to gcc_include_dir.
+	* Makefile.in (install): Change gxx_includedir to gcc_include_dir.
 	* config.shared (gxx_includedir): Remove default definition.
 	* config/linux.mt: Change gxx_includedir to gxx_include_dir.
 	* config/linuxaxp1.mt: Likewise.
@@ -128,6 +267,11 @@ Wed Nov 26 16:08:50 1997  Richard Henderson  (rth@cygnus.com)
 	* gen-params (va_list): Check for and use __gnuc_va_list.
 	(NULL): Work around some linux kernel headers and redefine NULL.
 
+Mon Nov 24 17:04:18 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* stdiostream.cc (sys_read): Declare ch with int type, rather than
+	without a type.
+
 Tue Nov 18 09:53:58 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
 
 	* stdstrbufs.cc (DEF_STDFILE): Use STD_VTABLE.
@@ -136,9 +280,18 @@ Tue Nov 11 01:40:17 1997  Oleg Krivosheev <kriol@fnal.gov>
 
 	* iomanip.h: Fix guiding decls.
 
+1997-11-05  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* libio.h (__P): Name its arg `p' instead of `params'.
+	Avoids problems with an unchanged Solaris math.h header.
+
 Wed Oct 29 23:01:47 1997  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* gen-params: Override NULL.
+
+1997-10-27 03:53  Ulrich Drepper  <drepper@cygnus.com>
+
+	* stdio-lock.h: Removed.  Was never needed.
 
 Wed Oct 22 19:19:32 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
 
@@ -202,7 +355,7 @@ Sun Sep 28 12:04:21 1997  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* libio.h: Don't use _IO_LOCK_T if it's not defined.
 
-Fri Sep 26 20:56:41 1997  Ulrich Drepper  <drepper@rtl.cygnus.com>
+Fri Sep 26 20:56:41 1997
 
 	Based on a patch by H.J. Lu  (hjl@gnu.ai.mit.edu).
 
@@ -242,7 +395,7 @@ Fri Sep 26 20:56:41 1997  Ulrich Drepper  <drepper@rtl.cygnus.com>
 
 	* tests/tFile.cc (tempfile): Fix a typo.
 
-Fri Sep 19 11:52:25 1997  Jim Wilson  <wilson@cygnus.com>
+1997-09-19 11:52  Jim Wilson  <wilson@cygnus.com>
 
 	* Makefile.in (LIBIO_OBJECTS): Depend on _G_CONFIG_H.
 
@@ -255,7 +408,6 @@ Fri Sep 19 11:52:25 1997  Jim Wilson  <wilson@cygnus.com>
 1997-09-17 02:50  Ulrich Drepper  <drepper@cygnus.com>
 
 	* libioP.h: Define __set_errno if not already defined.
-	* fileops.c: Don't try to define __set_errno, it's already defined.
 
 1997-09-15 02:37  Ulrich Drepper  <drepper@cygnus.com>
 
@@ -570,7 +722,7 @@ Sat Apr 26 13:38:21 1997  Bob Manson  <manson@charmed.cygnus.com>
 	* configure.in (configdirs): Add testsuite directory.
 
 	* testsuite/ChangeLog:
-	* testsuite/Makefile.in: 
+	* testsuite/Makefile.in:
 	* testsuite/libio.tests/tiomanip.exp:
 	* testsuite/libio.tests/tstdiomisc.exp:
 	* testsuite/libio.tests/tiomisc.exp:
@@ -581,12 +733,12 @@ Sat Apr 26 13:38:21 1997  Bob Manson  <manson@charmed.cygnus.com>
 	* testsuite/libio.tests/putbackdog.exp:
 	* testsuite/configure.in:
 	* testsuite/lib/libio.exp:
-	* testsuite/config/default.exp: 
+	* testsuite/config/default.exp:
 	New files for DejaGnu-style testsuite.
-	
+
 Fri Apr  4 03:16:44 1997  Ulrich Drepper  <drepepr@cygnus.com>
 
-	* configure.in: Enable multilibing by default. 
+	* configure.in: Enable multilibing by default.
 	Update multilib template to read config-ml.in.
 
 	* floatconv.c: Enable use in cross targets which use the
@@ -690,7 +842,7 @@ Tue May 14 11:47:21 1996  Per Bothner  <bothner@andros.cygnus.com>
 	* strstream.h, strstream.cc (strstreambase::strstreambase()):  Call
 	ios::init here.
  	(other constructors):  Simplify - init already called.
-	
+
 Tue May 14 10:55:21 1996  Per Bothner  <bothner@deneb.cygnus.com>
 
 	Change so that strstreambuf default constructor does no allocation.
@@ -701,12 +853,12 @@ Tue May 14 10:55:21 1996  Per Bothner  <bothner@deneb.cygnus.com>
 	buffer, to handle case when initial size is 0.
 
 	* iostdio.h (remove, rename, tmpfile, tempnam):  Comment out.
-	
+
 Mon May 13 23:19:39 1996  Per Bothner  <bothner@deneb.cygnus.com>
 
 	* fileops.c (_IO_file_close_it):  Just call _IO_do_flush rather
 	than _IO_file_sync, to avoid useless lseek.
-	
+
 Tue May 14 10:48:48 1996  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* floatconv.c (_IO_strtod): Force rv into the stack.
@@ -780,7 +932,7 @@ Tue Feb 27 18:08:16 1996  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* streambuf.h (ios):  Add ios::binary;  deprecate ios::bin.
 	* filebuf.cc (filebuf::open):  Handle ios::binary.
-	
+
 Fri Feb  9 12:40:19 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
 
 	* cleanup.c (_IO_cleanup_registration_needed) [!_G_HAVE_ATEXIT]: Init
@@ -913,7 +1065,7 @@ Wed Oct 25 11:14:25 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 	* libio.h (_IO_seekoff, _IO_seekpos):  New declarations.
 	* libioP.h (_IO_seekoff, _IO_seekpos):  Remove declarations.
 	* libioP.h:  Cleanup;  remove old !_IO_UNIFIED_JUMPTABLES stuff.
-	
+
 	* filebuf.cc (filebuf::~filebuf):  Only call SYSYCLOSE if currently
 	open.  Bug found by Martin Gerbershagen <ger@ezis-ulm.de>.
 
@@ -981,7 +1133,7 @@ Fri Aug  4 23:21:17 1995  Paul Eggert  <eggert@twinsun.com>
 	that do not have a space before the defined type name,
 	e.g. `typedef void *__gnuc_va_list;' as in Linux.  Also,
 	not require a space in the definiens, e.g. `typedef void*foo;'.
-	
+
 Thu Aug  3 17:54:15 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
 	* iostream.h, iostream.cc (istream::sync):  Added missing method.
@@ -1760,7 +1912,7 @@ Fri Feb 11 11:08:01 1994  SBPM Marc GINGOLD (marc@david.saclay.cea.fr)
 	* iovfprintf.c (helper_vfprintf): add
 	  hp->_IO_file_flags = _IO_MAGIC|(_IO_IS_FILEBUF+_IO_NO_READS);
 	[This is needed because _IO_vfprintf checks for _IO_UNBUFFERED. -PB]
-	[Actually:  don't set _IO_IS_FILEBUF. -PB]  
+	[Actually:  don't set _IO_IS_FILEBUF. -PB]
 
 Wed Jun 22 13:49:22 1994  Per Bothner  (bothner@kalessin.cygnus.com)
 
@@ -2240,7 +2392,7 @@ Wed Nov  3 10:20:49 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 	_IO_read_base, _IO_read_pre, IO_read_end, _IO_write_base,
 	_IO_write_ptr, _IO_write_end).
 	* libio.h:  Remove the old macros (which fixes a conflict.
-	
+
 Mon Nov  1 15:22:12 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
 	* iostream.cc:  Use _IO_sputn instead of sputn.  _IO_sputn does
@@ -2283,7 +2435,7 @@ Thu Oct 21 19:24:02 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
 Wed Oct 20 15:22:04 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
-	* streambuf.h (streambuf::underflow, streambuf::overflow): 
+	* streambuf.h (streambuf::underflow, streambuf::overflow):
 	Don't make virtual functions pure.
 	* streambuf.cc (streambuf::underflow, streambuf::overflow):
 	Default definitions (return EOF).
@@ -2365,7 +2517,7 @@ Mon Sep 27 14:04:47 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 	* procbuf.cc:  Now just a C++ wrapper for the files in iopopen.c.
 	* streambuf.h (ios::unsetf):  Return complete old value of flags.
 	* iogets.c (_IO_gets(), ioungetc.c (_IO_ungetc), ioperror.c
-	(_IO_perror), iostrerror.c (_IO_strerror):  New files and 
+	(_IO_perror), iostrerror.c (_IO_strerror):  New files and
 	functions, for stdio implementation.
 	* iostdio.h:  Add declarations for various recently-added functions.
 
@@ -2431,7 +2583,7 @@ Wed Aug 18 19:34:04 1993  david d `zoo' zuhn  (zoo@rtl.cygnus.com)
 	* configure.in (INSTALLDIR): handle native vs. cross case
 
 	* Makefile.in (install): don't use $TARGETLIB, set INSTALLDIR to
-	$(libdir) 
+	$(libdir)
 
 Wed Aug 18 12:10:03 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
@@ -2447,5 +2599,3 @@ Tue Aug 17 17:34:24 1993  Per Bothner  (bothner@kalessin.cygnus.com)
 
 	New directory.  Based on old libg++/iostream code,
 	but extensively re-written.
-
-

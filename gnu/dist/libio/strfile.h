@@ -1,4 +1,4 @@
-/* Copyright (C) 1993, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1993, 1997, 1998 Free Software Foundation, Inc.
    This file is part of the GNU IO Library.
 
    This library is free software; you can redistribute it and/or
@@ -28,8 +28,16 @@
 Merge into  libio.h ?
 #endif
 
-typedef void *(*_IO_alloc_type) __P ((_IO_size_t));
-typedef void (*_IO_free_type) __P ((void*));
+#ifndef __PMT
+# ifdef __STDC__
+#  define __PMT(p) p
+# else
+#  define __PMT(p) ()
+# endif
+#endif /*!__P*/
+
+typedef void *(*_IO_alloc_type) __PMT ((_IO_size_t));
+typedef void (*_IO_free_type) __PMT ((void*));
 
 struct _IO_str_fields
 {

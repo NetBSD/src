@@ -13,7 +13,7 @@
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
 #ifndef lint
-static char RCSid[] = "$Header: /cvsroot/src/gnu/dist/libio/dbz/Attic/fake.c,v 1.1.1.1 1998/03/29 08:32:23 mrg Exp $";
+static char RCSid[] = "$Header: /cvsroot/src/gnu/dist/libio/dbz/Attic/fake.c,v 1.1.1.2 1998/08/24 18:46:03 tv Exp $";
 #endif
 
 int midonly = 0;		/* just message ids, rest not realistic */
