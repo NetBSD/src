@@ -2504,6 +2504,15 @@ for machine in $build $host $target; do
 		tmake_file=arm/t-semiaof
 		fixincludes=Makefile.in # There is nothing to fix
 		;;
+	armv2-*-netbsd*)
+		tm_file=arm/netbsd26.h
+		xm_file=arm/xm-netbsd.h
+		tmake_file=t-netbsd
+		extra_parts="crtbegin.o crtend.o"
+		# On NetBSD, the headers are already okay, except for math.h.
+		fixincludes=fixinc.wrap
+		gas=yes
+		;;
 	arm*-*-netbsd*)
 		tm_file=arm/netbsd.h
 		xm_file=arm/xm-netbsd.h
@@ -5455,7 +5464,7 @@ fi
 
 # Figure out what assembler alignment features are present.
 echo $ac_n "checking assembler alignment features""... $ac_c" 1>&6
-echo "configure:5413: checking assembler alignment features" >&5
+echo "configure:5468: checking assembler alignment features" >&5
 gcc_cv_as=
 gcc_cv_as_alignment_features=
 gcc_cv_as_gas_srcdir=`echo $srcdir | sed -e 's,gcc$,gas,'`

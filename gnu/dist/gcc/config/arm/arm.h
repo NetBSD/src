@@ -565,7 +565,9 @@ extern int arm_arch4;
 /* This is for compatibility with ARMCC.  ARM SDT Reference Manual
    (ARM DUI 0020D) page 2-20 says "Structures are aligned on word
    boundaries".  */
+#ifndef STRUCTURE_SIZE_BOUNDARY
 #define STRUCTURE_SIZE_BOUNDARY 32
+#endif
 
 /* Non-zero if move instructions will actually fail to work
    when given unaligned data.  */
@@ -1825,6 +1827,7 @@ extern int arm_compare_fp;
   goto JUMPTO
 
 /* Output an internal label definition.  */
+#ifndef ASM_OUTPUT_INTERNAL_LABEL
 #define ASM_OUTPUT_INTERNAL_LABEL(STREAM, PREFIX, NUM)  	\
   do                                    	      	   	\
     {						      	   	\
@@ -1841,6 +1844,7 @@ extern int arm_compare_fp;
 	ASM_GENERATE_INTERNAL_LABEL (s, (PREFIX), (NUM));   	\
 	ASM_OUTPUT_LABEL (STREAM, s);		                \
     } while (0)
+#endif
 
 /* Output a push or a pop instruction (only used when profiling).  */
 #define ASM_OUTPUT_REG_PUSH(STREAM,REGNO) \
