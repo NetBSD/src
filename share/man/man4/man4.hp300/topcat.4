@@ -1,4 +1,4 @@
-.\"	$NetBSD: topcat.4,v 1.1 2001/09/11 06:30:06 gmcgarry Exp $
+.\"	$NetBSD: topcat.4,v 1.2 2002/01/15 01:38:46 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,7 +118,22 @@ describing Topcat/Catseye devices is defined in
 For further information about the use of
 .Xr ioctl 2
 see the man page.
-.Sh EXAMPLE
+.Sh FILES
+.Bl -tag -width /dev/MAKEDEV.hpux -compact
+.It Pa /dev/grf?
+.Bx
+special file
+.It Pa /dev/crt9837
+.It Pa /dev/crt98550
+.Tn HP-UX
+.Em starbase
+special files
+.It Pa /dev/MAKEDEV.hpux
+script for creating
+.Tn HP-UX
+special files
+.El
+.Sh EXAMPLES
 A small example of opening, mapping and using the device is given below.
 For more examples of the details on the behavior of the device, see the device
 dependent source files for the X Window System, in the
@@ -144,21 +159,6 @@ if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
 tc = (tcboxfb *) Addr;                          /* Control Registers   */
 frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer memory */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/MAKEDEV.hpux -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt9837
-.It Pa /dev/crt98550
-.Tn HP-UX
-.Em starbase
-special files
-.It Pa /dev/MAKEDEV.hpux
-script for creating
-.Tn HP-UX
-special files
-.El
 .Sh DIAGNOSTICS
 None under
 .Bx .
@@ -178,5 +178,5 @@ specification.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr ite 4 ,
-.Xr grf 4
+.Xr grf 4 ,
+.Xr ite 4
