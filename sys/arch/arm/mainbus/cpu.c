@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2001/03/03 17:09:25 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2001/03/03 17:46:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -60,11 +60,6 @@
 #ifdef ARMFPE
 #include <arm32/fpe-arm/armfpe.h>
 #endif	/* ARMFPE */
-
-#include "cpu.h"
-#if NCPU != 1
-#error Need 1 CPU configured
-#endif
 
 struct cpu_softc {
 	struct	device sc_device;
