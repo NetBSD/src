@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.74 1998/07/19 12:25:46 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.75 1998/07/22 17:43:11 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.69 1998/07/19 12:23:56 tron Exp 
+ *	NetBSD: pcidevs,v 1.70 1998/07/22 17:41:04 drochner Exp 
  */
 
 /*
@@ -122,6 +122,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ACC Microelectronics",
 	    "ACCM 2188 VL-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_HB,
+	    0,
+	    "ACC Microelectronics",
+	    "2051 PCI Single Chip Solution (host bridge)",
+	},
+	{
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_ISA,
+	    0,
+	    "ACC Microelectronics",
+	    "2051 PCI Single Chip Solution (ISA bridge)",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
