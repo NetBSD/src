@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.38 2000/07/28 09:38:15 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.39 2000/11/15 15:44:05 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -362,6 +362,8 @@ int	 vscanf __P((const char *, _BSD_VA_LIST_))
 	    __attribute__((__format__(__scanf__, 1, 0)));
 int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
 	    __attribute__((__format__(__scanf__, 2, 0)));
+__const char *fmtcheck __P((const char *, const char *))
+	__attribute__((__format_arg__(2)));
 __END_DECLS
 
 /*
