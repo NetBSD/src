@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.90 2000/01/31 22:01:04 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.91 2000/02/14 21:46:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.90 2000/01/31 22:01:04 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.91 2000/02/14 21:46:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ hookup(host, port)
 	char *port;
 {
 	int s = -1, len, error;
-#ifdef NI_NUMERICHOST
+#if defined(NI_NUMERICHOST) && defined(INET6)
 	struct addrinfo hints, *res, *res0;
 	char hbuf[MAXHOSTNAMELEN];
 #else
@@ -199,7 +199,7 @@ hookup(host, port)
 	char *cause = "unknown";
 	int family;
 	
-#ifdef NI_NUMERICHOST
+#if defined(NI_NUMERICHOST) && defined(INET6)
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_CANONNAME;

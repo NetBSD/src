@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.104 2000/01/31 22:01:04 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.105 2000/02/14 21:46:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.104 2000/01/31 22:01:04 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.105 2000/02/14 21:46:26 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -451,7 +451,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	char		*proxyauth;
 	char		*wwwauth;
 {
-#ifdef NI_NUMERICHOST
+#if defined(NI_NUMERICHOST) && defined(INET6)
 	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
 	char			hbuf[NI_MAXHOST];
@@ -665,7 +665,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			}
 		} /* ! EMPTYSTRING(proxyenv) */
 
-#ifndef NI_NUMERICHOST
+#if !defined(NI_NUMERICHOST) || !defined(INET6)
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 
