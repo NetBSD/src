@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	8.2 (Berkeley) 2/16/94";*/
-static char *rcsid = "$Id: ifconfig.c,v 1.16 1994/12/05 20:16:12 cgd Exp $";
+static char *rcsid = "$Id: ifconfig.c,v 1.17 1994/12/18 12:58:39 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
 char	name[30];
-int	flags, metric,setaddr, setipdst, doalias;
+int	flags, metric, setaddr, setipdst, doalias;
 int	clearaddr, s;
 int	newaddr = 1;
 int	nsellength = 1;
