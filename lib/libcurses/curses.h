@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)curses.h	8.1 (Berkeley) 6/7/93
+ *	from: @(#)curses.h	8.1 (Berkeley) 6/7/93
+ *	$Id: curses.h,v 1.8 1993/11/09 04:05:35 cgd Exp $
  */
 
 #ifndef _CURSES_H_
@@ -40,7 +41,9 @@
 #include <sys/cdefs.h>
 
 #include <stdio.h>
+#ifdef notdef
 #include <compat.h>
+#endif /* notdef */
 
 /*
  * The following #defines and #includes are present for backward
