@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.3 2000/09/23 20:24:47 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.4 2000/09/24 03:22:47 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -82,6 +82,7 @@ static const struct scanner_id {
 	uint16_t	product;
 } scanner_ids [] = {
 	/* Acer Peripherals */
+	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_640U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_620U },
 
