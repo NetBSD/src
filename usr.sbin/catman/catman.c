@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.10 1999/04/04 10:56:38 dante Exp $       */
+/*      $NetBSD: catman.c,v 1.11 1999/04/20 05:02:36 mycroft Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -483,7 +483,7 @@ scanmandir(catdir, mandir)
 		}
 
 		if ((error && errno == ENOENT) ||
-		    manstat.st_mtime >= catstat.st_mtime) {
+		    manstat.st_mtime > catstat.st_mtime) {
 			if (f_noformat) {
 				dowhatis = 1;
 			} else {
