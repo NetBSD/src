@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 1996/08/20 22:38:26 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 1996/08/21 15:54:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -218,7 +218,9 @@ printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp
 		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
 		    sizeof(struct trapframe));
 
+#ifdef NEW_PMAP
 printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[FRAME_RA]);
+#endif
 		/*
 		 * Set up return-value registers as fork() libc stub expects.
 		 */
