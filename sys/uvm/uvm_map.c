@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.179 2005/01/12 09:34:35 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.180 2005/01/13 11:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.179 2005/01/12 09:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.180 2005/01/13 11:50:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -836,6 +836,8 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	 */
 	KASSERT(size > 0);
 
+	KASSERT((~flags & (UVM_FLAG_NOWAIT | UVM_FLAG_WAITVA)) != 0);
+
 	uvm_tree_sanity(map, "map entry");
 
 	/*
@@ -852,6 +854,7 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	 * figure out where to put new VM range
 	 */
 
+retry:
 	if (vm_map_lock_try(map) == FALSE) {
 		if (flags & UVM_FLAG_TRYLOCK) {
 			return EAGAIN;
@@ -860,9 +863,35 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	}
 	if ((prev_entry = uvm_map_findspace(map, start, size, &start,
 	    uobj, uoffset, align, flags)) == NULL) {
-		UVMHIST_LOG(maphist,"<- uvm_map_findspace failed!",0,0,0,0);
+		unsigned int timestamp;
+
+		if ((flags & UVM_FLAG_WAITVA) == 0) {
+			UVMHIST_LOG(maphist,"<- uvm_map_findspace failed!",
+			    0,0,0,0);
+			vm_map_unlock(map);
+			return ENOMEM;
+		}
+		timestamp = map->timestamp;
+		UVMHIST_LOG(maphist,"waiting va timestamp=0x%x",
+			    timestamp,0,0,0);
+		simple_lock(&map->flags_lock);
+		map->flags |= VM_MAP_WANTVA;
+		simple_unlock(&map->flags_lock);
 		vm_map_unlock(map);
-		return ENOMEM;
+
+		/*
+		 * wait until someone does unmap.
+		 * XXX fragile locking
+		 */
+
+		simple_lock(&map->flags_lock);
+		while ((map->flags & VM_MAP_WANTVA) != 0 &&
+		   map->timestamp == timestamp) {
+			ltsleep(&map->header, PVM, "vmmapva", 0,
+			    &map->flags_lock);
+		}
+		simple_unlock(&map->flags_lock);
+		goto retry;
 	}
 
 #ifdef PMAP_GROWKERNEL
@@ -1996,6 +2025,13 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	*entry_list = first_entry;
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
+
+	simple_lock(&map->flags_lock);
+	if (map->flags & VM_MAP_WANTVA) {
+		map->flags &= ~VM_MAP_WANTVA;
+		wakeup(&map->header);
+	}
+	simple_unlock(&map->flags_lock);
 }
 
 /*
