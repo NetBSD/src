@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.14 1995/03/18 05:51:22 gwr Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.15 1995/03/28 21:29:32 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -71,14 +71,13 @@ int nfs_boot_init(nd, procp)
  * so we might as well take advantage of it for bootparam too.
  *
  * The diskless boot sequence goes as follows:
- * (1) Get our interface address using RARP
- *     (also save the address of the RARP server)
- * (2) Get our hostname using RPC/bootparam/whoami
- *     (all boopararms RPCs to the RARP server)
- * (3) Get the root path using RPC/bootparam/getfile
- * (4) Get the root file handle using RPC/mountd
- * (5) Get the swap path using RPC/bootparam/getfile
- * (6) Get the swap file handle using RPC/mountd
+ * (1) Use RARP to get our interface address
+ * (2) Use RPC/bootparam/whoami to get our hostname,
+ *     our IP address, and the server's IP address.
+ * (3) Use RPC/bootparam/getfile to get the root path
+ * (4) Use RPC/mountd to get the root file handle
+ * (5) Use RPC/bootparam/getfile to get the swap path
+ * (6) Use RPC/mountd to get the swap file handle
  *
  * (This happens to be the way Sun does it too.)
  */
@@ -116,22 +115,13 @@ nfs_boot_init(nd, procp)
 	int error, len;
 	u_short port;
 
-#if 0
-	/*
-	 * XXX time must be non-zero when we init the interface or else
-	 * the arp code will wedge... (Fixed in if_ether.c -gwr)
-	 */
-	if (time.tv_sec == 0)
-		time.tv_sec = 1;
-#endif
-
 	/*
 	 * Find an interface, rarp for its ip address, stuff it, the
 	 * implied broadcast addr, and netmask into a nfs_diskless struct.
 	 *
 	 * This was moved here from nfs_vfsops.c because this procedure
 	 * would be quite different if someone decides to write (i.e.) a
-	 * BOOTP version of this file (might not use RARP, etc.) -gwr
+	 * BOOTP version of this file (might not use RARP, etc.)
 	 */
 
 	/*
@@ -161,18 +151,16 @@ nfs_boot_init(nd, procp)
 		panic("nfs_boot: SIFFLAGS, error=%d", error);
 
 	/*
-	 * Do RARP for the interface address.  Also
-	 * save the server address for bootparam RPC.
+	 * Do RARP for the interface address.
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0)
 		panic("revarp failed, error=%d", error);
 	printf("nfs_boot: client_addr=0x%x\n", ntohl(my_ip.s_addr));
 
 	/*
-	 * Do enough of ifconfig(8) so that the chosen interface can
-	 * talk to the server(s).  (also get brcast addr and netmask)
+	 * Do enough of ifconfig(8) so that the chosen interface
+	 * can talk to the servers.  (just set the address)
 	 */
-	/* Set interface address. */
 	sin = (struct sockaddr_in *)&ireq.ifr_addr;
 	bzero((caddr_t)sin, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
@@ -187,13 +175,15 @@ nfs_boot_init(nd, procp)
 	/*
 	 * Get client name and gateway address.
 	 * RPC: bootparam/whoami
-	 * XXX - Using old broadcast addr. for WHOAMI,
-	 * then it is replaced with the BP server addr.
+	 * Use the old broadcast address for the WHOAMI
+	 * call because we do not yet know our netmask.
+	 * The server address returned by the WHOAMI call
+	 * is used for all subsequent booptaram RPCs.
 	 */
 	bzero((caddr_t)&bp_sin, sizeof(bp_sin));
 	bp_sin.sin_len = sizeof(bp_sin);
 	bp_sin.sin_family = AF_INET;
-	bp_sin.sin_addr.s_addr = ~0;	/* XXX */
+	bp_sin.sin_addr.s_addr = INADDR_BROADCAST;
 	hostnamelen = MAXHOSTNAMELEN;
 
 	/* this returns gateway IP address */
@@ -339,8 +329,7 @@ struct bp_inaddr {
  *	domain name (domainname)
  *	gateway address
  *
- * Setting the hostname and domainname here may be somewhat
- * controvercial, but it is so easy to do it here. -gwr
+ * The hostname and domainname are set here for convenience.
  *
  * Note - bpsin is initialized to the broadcast address,
  * and will be replaced with the bootparam server address
