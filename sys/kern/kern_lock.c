@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.12 1998/11/04 06:19:56 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.12.2.1 1998/11/09 06:06:31 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -586,6 +586,20 @@ _simple_unlock(alp, id, l)
 	if (curproc)
 		curproc->p_simple_locks--;
 }
+
+void
+_simple_lock_assert(alp, value, id, l)
+	__volatile struct simplelock *alp;
+	int value;
+	const char *id;
+	int l;
+{
+	if (alp->lock_data != value) {
+		panic("lock %p: value %d != expected %d at %s:%d",
+		      alp, alp->lock_data, value, id, l);
+	}
+}
+
 
 void
 simple_lock_dump()

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.21 1998/11/08 18:18:31 mycroft Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.21.2.1 1998/11/09 06:06:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,6 +35,8 @@
  *	@(#)vfs_cluster.c	8.10 (Berkeley) 3/28/95
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
@@ -48,6 +50,32 @@
 #include <vm/vm.h>
 
 int doreallocblks = 0;
+
+#ifdef UBC
+
+/* XXX use uvm clustering stuff... does that do enough? */
+
+int
+cluster_read(vp, filesize, lblkno, size, cred, bpp)
+	struct vnode *vp;
+	u_quad_t filesize;
+	daddr_t lblkno;
+	long size;
+	struct ucred *cred;
+	struct buf **bpp;
+{
+	panic("cluster_read");
+}
+
+void
+cluster_write(bp, filesize)
+        struct buf *bp;
+	u_quad_t filesize;
+{
+	panic("cluster_write");
+}
+
+#else
 
 #ifdef DEBUG
 #include <sys/sysctl.h>
@@ -783,3 +811,5 @@ cluster_collectbufs(vp, last_bp)
 	buflist->bs_nchildren = i + 1;
 	return (buflist);
 }
+
+#endif /* UBC */

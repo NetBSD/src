@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.6 1998/08/13 02:11:04 eeh Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.6.2.1 1998/11/09 06:06:40 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -57,7 +57,7 @@ struct uvm_vnode {
 	struct uvm_object u_obj;	/* the actual VM object */
 	int u_flags;			/* flags */
 	int u_nio;			/* number of running I/O requests */
-	vsize_t u_size;		/* size of object */
+	vsize_t u_size;			/* size of object */
 
 	/* the following entry is locked by uvn_wl_lock */
 	LIST_ENTRY(uvm_vnode) u_wlist;	/* list of writeable vnode objects */
@@ -69,6 +69,17 @@ struct uvm_vnode {
 /*
  * u_flags values
  */
+#ifdef UBC
+#define UVM_VNODE_RELKILL	VXLOCK
+#define UVM_VNODE_WANTED	VXWANT
+#define UVM_VNODE_IOSYNCWANTED	VBWAIT
+#define UVM_VNODE_WRITEABLE	VDIRTY
+#define UVM_VNODE_VNISLOCKED	VXLOCK
+#define UVM_VNODE_BLOCKED	VXLOCK
+
+#define UVM_VNODE_ALOCK		VXLOCK
+
+#else
 #define UVM_VNODE_VALID		0x001	/* we are attached to the vnode */
 #define UVM_VNODE_CANPERSIST	0x002	/* we can persist after ref == 0 */
 #define UVM_VNODE_ALOCK		0x004	/* uvn_attach is locked out */
@@ -92,6 +103,7 @@ struct uvm_vnode {
  * touching the vnode [set WANTED and sleep to wait for it to clear]
  */
 #define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
+#endif
 
 
 /*

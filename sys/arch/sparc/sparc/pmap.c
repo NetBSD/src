@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 1998/10/16 22:39:18 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.133.2.1 1998/11/09 06:06:29 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3109,12 +3109,14 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 
 		/*
 		 * Unmap the pages, if any, that are not part of
-		 * the final segment.
+		 * the final segment.  also clear out bogus mappings
+		 * for a ways beyond the end of the kernel so that
+		 * the virtual space that the UBC mappings will
+		 * eventually occupy will be initially unmapped.
 		 */
 		for (p += npte << PGSHIFT; npte < NPTESG; npte++, p += NBPG)
 			setpte4(p, 0);
 
-#if defined(SUN4_MMU3L)
 		if (HASSUN4_MMU3L) {
 			/*
 			 * Unmap the segments, if any, that are not part of
@@ -3122,8 +3124,15 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 			 */
 			for (i = rp->rg_nsegmap; i < NSEGRG; i++, p += NBPSG)
 				setsegmap(p, seginval);
+			for (; (u_long)p < 0xf8000000; p += NBPRG)
+				for (i = 0; i < nctx; i++)
+					rom_setmap(i, p, reginval);
 		}
-#endif
+		else {
+			for (; (u_long)p < 0xf8000000; p += NBPSG)
+				for (i = 0; i < nctx; i++)
+					rom_setmap(i, p, seginval);
+		}
 		break;
 	}
 
@@ -7223,3 +7232,165 @@ void print_fe_map(void)
 }
 
 #endif
+
+
+
+
+
+
+void print_contexts(void);
+void
+print_contexts(void)
+{
+    struct proc *p;
+
+    for (p = allproc.lh_first; p; p = p->p_list.le_next)
+    {
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+
+	printf("context %d pid %3.3d name %s\n",
+	       pmap->pm_ctxnum, p->p_pid, p->p_comm);
+    }
+}
+
+
+void print_context(int c);
+void
+print_context(int c)
+{
+    int va, oldc;
+
+    oldc = getcontext4();
+    setcontext4(c);
+
+    for (va = 0; va < VM_MAX_ADDRESS; va += NBPSG)
+    {
+	int pmeg;
+
+	if (va == 0x20000000)
+	{
+	    va = 0xe0000000;
+	}
+
+	pmeg= getsegmap(va);
+	if (pmeg != seginval)
+	{
+	    printf("seg 0x%08x pmeg %d\n", va, pmeg);
+	}
+    }
+
+    setcontext4(oldc);
+}
+
+void gc(void);
+void
+gc()
+{
+    printf("current context %d\n", getcontext4());
+}
+
+
+void sc(int);
+void
+sc(int c)
+{
+    setcontext4(c);
+    gc();
+}
+
+
+
+#define p(x) sp->sg_pte[x + i * 8]
+
+void print_swpmeg(struct pmap *pm, int va);
+void
+print_swpmeg(struct pmap *pm, int va)
+{
+    int vr, vs, i;
+    struct regmap *rp;
+    struct segmap *sp;
+
+    vr = VA_VREG(va);
+    vs = VA_VSEG(va);
+    rp = &pm->pm_regmap[vr];
+    sp = &rp->rg_segmap[vs];
+
+    for (i = 0; i < 8; i++)
+    {
+	printf("%08x %08x %08x %08x %08x %08x %08x %08x\n",
+	       p(0), p(1), p(2), p(3), p(4), p(5), p(6), p(7));
+    }
+}
+
+#undef p
+#define p(x) getpte4(va + (x + i * 8) * NBPG)
+
+void print_pmeg_va(int c, int va);
+void
+print_pmeg_va(int c, int va)
+{
+    int oldc, i;
+
+    oldc = getcontext4();
+    setcontext4(c);
+
+    printf("pmeg 0x%x\n", getsegmap(va));    
+
+    for (i = 0; i < 8; i++)
+    {
+	printf("%08x %08x %08x %08x %08x %08x %08x %08x\n",
+	       p(0), p(1), p(2), p(3), p(4), p(5), p(6), p(7));
+    }
+
+    setcontext4(oldc);
+}
+
+void print_pmeg(int);
+void
+print_pmeg(int pmeg)
+{
+    int savepmeg, i;
+    int va = 0;
+
+    savepmeg = getsegmap(0);
+    setsegmap(0, pmeg);
+
+    for (i = 0; i < 8; i++)
+    {
+	printf("%08x %08x %08x %08x %08x %08x %08x %08x\n",
+	       p(0), p(1), p(2), p(3), p(4), p(5), p(6), p(7));
+    }
+
+    setsegmap(0, savepmeg);
+}
+
+
+
+void print_va_page(vaddr_t);
+void
+print_va_page(vaddr_t va)
+{
+    paddr_t pa = pmap_extract(pmap_kernel(), va);
+
+    if (pa == 0)
+    {
+	printf("no mapping\n");
+	return;
+    }
+
+    printf("page is %p\n", PHYS_TO_VM_PAGE(pa));
+}
+
+void print_pa_page(paddr_t);
+void
+print_pa_page(paddr_t pa)
+{
+    printf("page is %p\n", PHYS_TO_VM_PAGE(pa));
+}
+
+
+void print_all_pmegs(void);
+void
+print_all_pmegs()
+{
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.27 1998/07/05 14:33:56 tron Exp $	*/
+/*	$NetBSD: db_command.c,v 1.27.4.1 1998/11/09 06:06:31 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -353,6 +354,38 @@ db_page_print_cmd(addr, have_addr, count, modif)
 #endif
 }
 
+/*ARGSUSED*/
+void
+db_buf_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+        boolean_t full = FALSE;
+        
+        if (modif[0] == 'f')
+                full = TRUE;
+
+	vfs_buf_print((struct buf *)addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
+db_vnode_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+        boolean_t full = FALSE;
+        
+        if (modif[0] == 'f')
+                full = TRUE;
+
+	vfs_vnode_print((struct vnode *) addr, full, db_printf);
+}
+
 /*
  * 'show' commands
  */
@@ -371,6 +404,8 @@ struct db_command db_show_cmds[] = {
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
+	{ "buf",	db_buf_print_cmd,	0,	NULL },
+	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL, }
 };
 
