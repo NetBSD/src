@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_net.c 1.33 89/08/23
  *	from: @(#)hpux_net.c	7.7 (Berkeley) 2/13/91
- *	$Id: hpux_net.c,v 1.3 1993/08/01 19:24:56 mycroft Exp $
+ *	$Id: hpux_net.c,v 1.4 1994/01/07 00:43:50 mycroft Exp $
  */
 
 /*
@@ -70,7 +70,7 @@
 extern int socket(), listen(), bind(), oaccept(), connect(), orecv();
 extern int osend(), shutdown(), ogetsockname(), sendto();
 extern int orecvfrom(), ogetpeername();
-int hpuxgetsockopt(), hpuxsetsockopt();
+int hpux_getsockopt(), hpux_setsockopt();
 
 struct hpuxtobsdipc {
 	int (*rout)();
@@ -80,7 +80,7 @@ struct hpuxtobsdipc {
 	bind,		3, /* 3f0 */	oaccept,	3, /* 3f1 */
 	connect,	3, /* 3f2 */	orecv,		4, /* 3f3 */
 	osend,		4, /* 3f4 */	shutdown,	2, /* 3f5 */
-	ogetsockname,	3, /* 3f6 */	hpuxsetsockopt,	5, /* 3f7 */
+	ogetsockname,	3, /* 3f6 */	hpux_setsockopt,5, /* 3f7 */
 	sendto,		6, /* 3f8 */	orecvfrom,	6, /* 3f9 */
 	ogetpeername,	3, /* 3fa */	NULL,		0, /* 3fb */
 	NULL,		0, /* 3fc */	NULL,		0, /* 3fd */
@@ -90,7 +90,7 @@ struct hpuxtobsdipc {
 	NULL,		0, /* 404 */	NULL,		0, /* 405 */
 	NULL,		0, /* 406 */	NULL,		0, /* 407 */
 	NULL,		0, /* 408 */	NULL,		0, /* 409 */
-	NULL,		0, /* 40a */	hpuxgetsockopt,	5, /* 40b */
+	NULL,		0, /* 40a */	hpux_getsockopt,5, /* 40b */
 	NULL,		0, /* 40c */	NULL,		0, /* 40d */
 };
 
@@ -98,12 +98,14 @@ struct hpuxtobsdipc {
  * Single system call entry to BSD style IPC.
  * Gleened from disassembled libbsdipc.a syscall entries.
  */
-hpuxnetioctl(p, uap, retval)
+struct hpux_netioctl_args {
+	int	call;
+	int	*args;
+};
+
+hpux_netioctl(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	call;
-		int	*args;
-	} *uap;
+	struct hpux_netioctl_args *uap;
 	int *retval;
 {
 	int *args, i;
@@ -131,15 +133,17 @@ hpuxnetioctl(p, uap, retval)
 	return ((*hpuxtobsdipc[code].rout)(p, uap, retval));
 }
 
-hpuxsetsockopt(p, uap, retval)
+struct hpux_setsockopt_args {
+	int	s;
+	int	level;
+	int	name;
+	caddr_t	val;
+	int	valsize;
+};
+
+hpux_setsockopt(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	s;
-		int	level;
-		int	name;
-		caddr_t	val;
-		int	valsize;
-	} *uap;
+	struct hpux_setsockopt_args *uap;
 	int *retval;
 {
 	struct file *fp;
@@ -178,15 +182,17 @@ hpuxsetsockopt(p, uap, retval)
 	    uap->name, m));
 }
 
-hpuxgetsockopt(p, uap, retval)
+struct hpux_getsockopt_args {
+	int	s;
+	int	level;
+	int	name;
+	caddr_t	val;
+	int	*avalsize;
+};
+
+hpux_getsockopt(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	s;
-		int	level;
-		int	name;
-		caddr_t	val;
-		int	*avalsize;
-	} *uap;
+	struct hpux_getsockopt_args *uap;
 	int *retval;
 {
 	struct file *fp;

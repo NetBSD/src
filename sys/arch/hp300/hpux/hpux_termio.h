@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_termio.h 1.1 90/07/09
  *	from: @(#)hpux_termio.h	7.3 (Berkeley) 10/24/90
- *	$Id: hpux_termio.h,v 1.3 1993/08/01 19:24:57 mycroft Exp $
+ *	$Id: hpux_termio.h,v 1.4 1994/01/07 00:44:02 mycroft Exp $
  */
 
 /* HP-UX termio stuff */
@@ -148,7 +148,7 @@
 #define	TIO_ECHONL	0x00000040	/* 0000100 */
 #define	TIO_NOFLSH	0x00000080	/* 0000200 */
 
-struct hpuxtermio {
+struct hpux_termio {
 	u_short	c_iflag;	/* input modes */
 	u_short	c_oflag;	/* output modes */
 	u_short	c_cflag;	/* control modes */
@@ -157,7 +157,7 @@ struct hpuxtermio {
 	u_char	c_cc[HPUXNCC];	/* control chars */
 };
 
-#define	HPUXTCGETA	_IOR('T', 1, struct hpuxtermio)
-#define	HPUXTCSETA	_IOW('T', 2, struct hpuxtermio)
-#define	HPUXTCSETAW	_IOW('T', 3, struct hpuxtermio)
-#define	HPUXTCSETAF	_IOW('T', 4, struct hpuxtermio)
+#define	HPUXTCGETA	_IOR('T', 1, struct hpux_termio)
+#define	HPUXTCSETA	_IOW('T', 2, struct hpux_termio)
+#define	HPUXTCSETAW	_IOW('T', 3, struct hpux_termio)
+#define	HPUXTCSETAF	_IOW('T', 4, struct hpux_termio)
