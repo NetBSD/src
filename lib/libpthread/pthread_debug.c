@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.2 2001/07/24 21:23:22 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.3 2001/07/25 23:56:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,9 +41,12 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <sys/shm.h>
+#include <sys/types.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -79,7 +82,7 @@ pthread__debuglog_init(void)
 
 	if (debuglog == (void *)-1)
 		err(1, "Couldn't map shared debug log (ID %d): %s\n",
-		    strerror(errno));
+		    debugshmid, strerror(errno));
 
 	buf = (struct pthread_msgbuf *)debuglog;
 
