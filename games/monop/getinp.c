@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.9 2000/07/10 10:19:26 itojun Exp $	*/
+/*	$NetBSD: getinp.c,v 1.10 2003/01/06 13:04:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getinp.c,v 1.9 2000/07/10 10:19:26 itojun Exp $");
+__RCSID("$NetBSD: getinp.c,v 1.10 2003/01/06 13:04:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ inter:
 		printf("%s", prompt);
 		for (sp = buf; (c=getchar()) != '\n'; ) {
 			*sp = c;
-			if (c == -1)	/* check for interupted system call */
+			if (c == -1)	/* check for interrupted system call */
 				goto inter;
 			else if (sp != buf || *sp != ' ')
 				sp++;

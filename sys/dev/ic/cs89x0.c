@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.6 2002/05/21 02:47:04 augustss Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.7 2003/01/06 13:05:09 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.6 2002/05/21 02:47:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.7 2003/01/06 13:05:09 wiz Exp $");
 
 #include "opt_inet.h"
 
@@ -843,9 +843,9 @@ cs_initChip(struct cs_softc *sc)
 	 * 
 	 * I have turned off the BUF_CFG_RX_MISS_IE, to speed things up, this is
 	 * a better way to do it because the card has a counter which can be
-	 * read to update the RX_MISS counter. This saves many interupts.
+	 * read to update the RX_MISS counter. This saves many interrupts.
 	 * 
-	 * I have turned on the tx and rx overflow interupts to counter using
+	 * I have turned on the tx and rx overflow interrupts to counter using
 	 * the receive miss interrupt. This is a better estimate of errors
 	 * and requires lower system overhead.
 	 */
@@ -1238,7 +1238,7 @@ cs_intr(void *arg)
 			Event = CS_READ_PORT(sc, PORT_ISQ);
 	}
 
-	/* have handled the interupt */
+	/* have handled the interrupt */
 #if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, rndEvent);
 #endif
