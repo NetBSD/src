@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.75 1998/07/19 12:25:46 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.76 1998/07/22 17:43:11 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.69 1998/07/19 12:23:56 tron Exp 
+ *	NetBSD: pcidevs,v 1.70 1998/07/22 17:41:04 drochner Exp 
  */
 
 /*
@@ -548,6 +548,8 @@
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
+#define	PCI_PRODUCT_ACC_2051_HB	0x2051		/* 2051 PCI Single Chip Solution (host bridge) */
+#define	PCI_PRODUCT_ACC_2051_ISA	0x5842		/* 2051 PCI Single Chip Solution (ISA bridge) */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
