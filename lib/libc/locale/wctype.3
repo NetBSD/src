@@ -1,4 +1,4 @@
-.\" $NetBSD: wctype.3,v 1.2 2003/03/17 08:41:31 wiz Exp $
+.\" $NetBSD: wctype.3,v 1.3 2003/04/16 08:36:55 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 The
 .Fn wctype
 function returns a character class identifier corresponding to the
-locale-specific character class name, pointed by
+locale-specific character class name
 .Fa charclass .
-This identifier can be used on the subsequent calls of
+This identifier can be used in subsequent calls of
 .Fn iswctype .
 The following names are defined in all locales:
 .Bd -literal -offset indent
@@ -56,7 +56,9 @@ lower print punct space upper xdigit
 .Pp
 The behaviour of the
 .Fn wctype
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 The
@@ -64,24 +66,24 @@ The
 returns:
 .Bl -tag -width 012345678901
 .It 0
-if the string pointed by
+if
 .Fa charclass
-does not corresponding to a valid character class name.
+does not correspond to a valid character class name.
 .It non-zero
-an character class identifier corresponding to the name pointed by
+a character class identifier corresponding to
 .Fa charclass .
 .El
 .Pp
-note: wctype_t is a scalar type, e.g. pointer.
+Note: wctype_t is a scalar type, e.g., a pointer.
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
 No errors are defined.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr iswctype 3 ,
-.Xr wctrans 3 ,
+.Xr setlocale 3 ,
 .Xr towctrans 3 ,
-.Xr setlocale 3
+.Xr wctrans 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The

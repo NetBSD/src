@@ -1,4 +1,4 @@
-.\" $NetBSD: towctrans.3,v 1.2 2003/03/17 08:41:31 wiz Exp $
+.\" $NetBSD: towctrans.3,v 1.3 2003/04/16 08:36:55 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" ----------------------------------------------------------------------
 .Sh NAME
 .Nm towctrans
-.Nd conver a wide character with a specified map
+.Nd convert a wide character with a specified map
 .\" ----------------------------------------------------------------------
 .Sh LIBRARY
 .Lb libc
@@ -50,33 +50,36 @@ with a character mapping
 .Pp
 The behaviour of the
 .Fn towctrans
-is undefined
-if the
+is undefined if the
 .Fn towctrans
 function is called with an invalid
 .Fa charmap
-(changes of LC_CTYPE category invalidate
+(changes of
+.Dv LC_CTYPE
+category invalidate
 .Fa charclass )
-or invalid wide character as
+or invalid wide character
 .Fa wc .
 .Pp
 The behaviour of the
 .Fn towctrans
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 The
 .Fn towctrans
-returns a result character of the conversion.
+returns the result character of the conversion.
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
 No errors are defined.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr wctrans 3 ,
-.Xr wctype 3 ,
 .Xr iswctype 3 ,
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr wctrans 3 ,
+.Xr wctype 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The

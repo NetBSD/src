@@ -1,4 +1,4 @@
-.\" $NetBSD: iswctype.3,v 1.3 2003/03/17 08:49:46 wiz Exp $
+.\" $NetBSD: iswctype.3,v 1.4 2003/04/16 08:36:54 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -50,8 +50,7 @@ is in
 .Pp
 The behaviour of the
 .Fn iswctype
-is undefined
-if the
+is undefined if the
 .Fn iswctype
 function is called with an invalid
 .Fa charclass
@@ -59,7 +58,7 @@ function is called with an invalid
 .Dv LC_CTYPE
 category invalidate
 .Fa charclass )
-or invalid wide character as
+or invalid wide character
 .Fa wc .
 .Pp
 The behaviour of the
