@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.45 2000/10/11 14:46:14 is Exp $	*/
+/*	$NetBSD: if.c,v 1.46 2000/11/14 23:00:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.45 2000/10/11 14:46:14 is Exp $");
+__RCSID("$NetBSD: if.c,v 1.46 2000/11/14 23:00:57 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,9 +340,13 @@ intpr(interval, ifnetaddr, pfunc)
 					(struct sockaddr_dl *)sa;
 				    cp = (char *)LLADDR(sdl);
 				    if (sdl->sdl_type == IFT_FDDI
-					|| sdl->sdl_type == IFT_ETHER)
+					|| sdl->sdl_type == IFT_ETHER
+					|| sdl->sdl_type == IFT_IEEE1394)
 					    hexsep = ':';
 				    n = sdl->sdl_alen;
+				    if (sdl->sdl_type == IFT_IEEE1394
+					&& sdl->sdl_len > 8)
+					    n = 8; /* XXX */
 				}
 				m = printf("%-13.13s ", "<Link>");
 				goto hexprint;
