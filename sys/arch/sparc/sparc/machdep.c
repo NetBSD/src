@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 2003/01/03 15:12:02 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.213 2003/01/03 15:44:56 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -421,8 +421,7 @@ setregs(p, pack, stack)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
-				xcall((xcall_func_t)savefpstate,
-					(int)fs, 0, 0, 0, 1 << cpi->ci_cpuid);
+				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 			cpi->fpproc = NULL;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.69 2003/01/03 09:19:03 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.70 2003/01/03 15:44:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1008,7 +1008,7 @@ smp_vcache_flush_page(va, ctx)
 	int va;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_page, va, ctx, 0, 0, 0);
+	XCALL2(cpuinfo.sp_vcache_flush_page, va, ctx, CPUSET_ALL);
 }
 
 void
@@ -1016,7 +1016,7 @@ smp_vcache_flush_segment(vr, vs, ctx)
 	int vr, vs;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, 0, 0);
+	XCALL3(cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, CPUSET_ALL);
 }
 
 void
@@ -1024,14 +1024,14 @@ smp_vcache_flush_region(vr, ctx)
 	int vr;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_region, vr, ctx, 0, 0, 0);
+	XCALL2(cpuinfo.sp_vcache_flush_region, vr, ctx, CPUSET_ALL);
 }
 
 void
 smp_vcache_flush_context(ctx)
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_context, ctx, 0, 0, 0, 0);
+	XCALL1(cpuinfo.sp_vcache_flush_context, ctx, CPUSET_ALL);
 }
 
 void
@@ -1040,6 +1040,6 @@ smp_cache_flush(va, size, ctx)
 	u_int size;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_cache_flush, (int)va, (int)size, ctx, 0, 0);
+	XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65 2003/01/03 15:12:03 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.66 2003/01/03 15:44:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -241,8 +241,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 				savefpstate(p1->p_md.md_fpstate);
 #if defined(MULTIPROCESSOR)
 			else
-				xcall((xcall_func_t)savefpstate,
-					(int)p1->p_md.md_fpstate, 0, 0, 0,
+				XCALL1(savefpstate, p1->p_md.md_fpstate,
 					1 << cpi->ci_cpuid);
 #endif
 		}
@@ -322,8 +321,7 @@ cpu_exit(p)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
-				xcall((xcall_func_t)savefpstate,
-					(int)fs, 0, 0, 0, 1 << cpi->ci_cpuid);
+				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 			cpi->fpproc = NULL;
 		}

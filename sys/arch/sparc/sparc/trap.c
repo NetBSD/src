@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120 2003/01/03 15:12:03 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.121 2003/01/03 15:44:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -324,7 +324,7 @@ trap(type, psr, pc, tf)
 			(*cpuinfo.pure_vcache_flush)();
 #if defined(MULTIPROCESSOR)
 			/* Broadcast to other CPUs */
-			/* e.g. xcall(cpuinfo.pure_vcache_flush, 0, 0, 0, 0);*/
+			/* e.g. XCALL0(cpuinfo.pure_vcache_flush, CPUSET_ALL);*/
 #endif
 			ADVANCE;
 			return;
@@ -485,8 +485,7 @@ badtrap:
 					panic("FPU(%d): state for %p",
 							cpi->ci_cpuid, p);
 #if defined(MULTIPROCESSOR)
-				xcall((xcall_func_t)savefpstate,
-					(int)fs, 0, 0, 0, 1 << cpi->ci_cpuid);
+				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 				cpi->fpproc = NULL;
 			}
