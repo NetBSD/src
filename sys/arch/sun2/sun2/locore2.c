@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.1 2001/03/29 03:26:13 fredette Exp $	*/
+/*	$NetBSD: locore2.c,v 1.2 2001/03/29 04:07:54 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,11 +58,10 @@
 
 #include <machine/stdarg.h>
 
-#include <sun3/sun3/control.h>
-#include <sun3/sun3/interreg.h>
-#include <sun3/sun3/machdep.h>
-#include <sun3/sun3/obmem.h>
-#include <sun3/sun3/vector.h>
+#include <sun2/sun2/control.h>
+#include <sun2/sun2/machdep.h>
+#include <sun2/sun2/obmem.h>
+#include <sun2/sun2/vector.h>
 
 /* This is defined in locore.s */
 extern char kernel_text[];
@@ -164,20 +163,6 @@ _save_symtab(kehp)
 	/* OK, we have a valid symbol table. */
 	endp += *strsz;			/* past strings */
 
-#ifdef	_SUN3_
-	/*
-	 * The Sun3/50 has further restrictions on the
-	 * size of the kernel boot image.  If preserving
-	 * the symbol table would take us over the limit,
-	 * then just ignore the symbols.
-	 */
-	if ((cpu_machine_id == SUN3_MACH_50) &&
-	    ((long)endp > (KERNBASE+OBMEM_BW50_ADDR-USPACE))) {
-	  errdesc = "too large for 3/50";
-	  goto err;
-	}
-#endif	/* SUN3 */
-
 	/* Success!  Advance esym past the symbol data. */
 	esym = endp;
 	return;
@@ -247,11 +232,6 @@ _vm_init(kehp)
 
 /*
  * Determine which Sun2 model we are running on.
-#if 0
- * We have to do this very early on the Sun3 because
- * pmap_bootstrap() needs to know if it should avoid
- * the video memory on the Sun3/50.
-#endif
  *
  * XXX: Just save idprom.idp_machtype here, and
  * XXX: move the rest of this to identifycpu().
