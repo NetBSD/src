@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.41 2002/09/27 20:31:44 atatat Exp $	*/
+/*	$NetBSD: kdump.c,v 1.42 2002/11/15 19:58:05 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.41 2002/09/27 20:31:44 atatat Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.42 2002/11/15 19:58:05 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,6 +176,7 @@ main(argc, argv)
 		usage();
 
 	setemul(emul_name, 0, 0);
+	mach_lookup_emul();
 
 	m = malloc(size = 1024);
 	if (m == NULL)
@@ -326,12 +327,14 @@ ktrsyscall(ktr)
 	struct ktr_syscall *ktr;
 {
 	int argsize = ktr->ktr_argsize;
+	const struct emulation *revelant = current;
 	register_t *ap;
 
-	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
+	if ((ktr->ktr_code >= revelant->nsysnames || ktr->ktr_code < 0)
+	    && (mach_traps_dispatch(&ktr->ktr_code, &revelant) == 0))
 		(void)printf("[%d]", ktr->ktr_code);
 	else
-		(void)printf("%s", current->sysnames[ktr->ktr_code]);
+		(void)printf("%s", revelant->sysnames[ktr->ktr_code]);
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	if (argsize) {
 		char c = '(';
@@ -356,7 +359,7 @@ ktrsyscall(ktr)
 				break;
 			
 			case SYS_ptrace:
-				if (strcmp(current->name, "linux") == 0) {
+				if (strcmp(revelant->name, "linux") == 0) {
 				  if (*ap >= 0 && *ap <= 
 				      sizeof(linux_ptrace_ops) /
 				      sizeof(linux_ptrace_ops[0]))
@@ -421,7 +424,8 @@ ktrsysret(ktr)
 		revelant = current;
 	emul_changed = 0;
 
-	if (code >= revelant->nsysnames || code < 0 || plain > 1)
+	if ((code >= revelant->nsysnames || code < 0 || plain > 1) 
+	    && (mach_traps_dispatch(&code, &revelant) == 0))
 		(void)printf("[%d] ", code);
 	else
 		(void)printf("%s ", revelant->sysnames[code]);
@@ -445,7 +449,6 @@ ktrsysret(ktr)
 		break;
 	}
 	(void)putchar('\n');
-
 }
 
 /*
