@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.6 2001/06/21 06:24:23 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.7 2001/06/21 18:58:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
 	  2,			6 },
 
 	/* Ethernet */
-	{ P5064_IRQ_ETHERNET,		1,
+	{ P5064_IRQ_ETHERNET,	1,
 	  IRQREG_PCIINT,	PCIINT_ETH,
 	  4,			2 },
 
