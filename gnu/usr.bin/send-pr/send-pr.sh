@@ -111,6 +111,14 @@ else
   $PASSWD | grep "^$LOGNAME:" | awk -F: '{print $5}' | sed -e 's/,.*//' > $TEMP
   ORIGINATOR="`cat $TEMP`"
   rm -f $TEMP
+
+  case "$ORIGINATOR" in
+  *'&'*)
+    TEMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
+    TEMP=`echo $TEMP $LOGNAME | sed 's/^\(.\)[^ ]* ./\1/'`
+    ORIGINATOR=`echo "$ORIGINATOR" | sed "s/&/$TEMP/"`
+    ;;
+  esac
 fi
 
 if [ -n "$ORGANIZATION" ]; then
