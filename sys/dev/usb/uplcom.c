@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.32 2003/11/23 12:22:51 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.33 2004/01/05 13:29:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.32 2003/11/23 12:22:51 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.33 2004/01/05 13:29:08 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.32 2003/11/23 12:22:51 augustss Exp $")
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 
