@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.11 1996/12/17 08:41:17 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.12 1997/01/09 01:07:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
  *	@(#)itevar.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifdef _KERNEL
 #define ITEUNIT(dev)       minor(dev)
 
 #define getbyte(ip, offset) \
@@ -92,6 +93,7 @@ struct ite_softc {
 	struct	ite_data *sc_data;	/* terminal state info */
 	struct	grf_softc *sc_grf;	/* pointer to framebuffer */
 };
+#endif
 
 /* Flags */
 #define ITE_ALIVE	0x01	/* hardware exists */
