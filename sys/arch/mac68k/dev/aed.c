@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.18 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: aed.c,v 1.19 2005/01/16 00:32:16 chs Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.18 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.19 2005/01/16 00:32:16 chs Exp $");
 
 #include "opt_adb.h"
 
@@ -411,17 +411,15 @@ aed_enqevent(adb_event_t *event)
 int 
 aedopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	int unit;
-	int error = 0;
+	struct aed_softc *sc;
 	int s;
 
-	unit = minor(dev);
-
-	if (unit != 0)
+	sc = device_lookup(&aed_cd, minor(dev));
+	if (sc == NULL)
 		return (ENXIO);
 
 	s = spladb();
-	if (aed_sc->sc_open) {
+	if (sc->sc_open) {
 		splx(s);
 		return (EBUSY);
 	}
@@ -431,15 +429,16 @@ aedopen(dev_t dev, int flag, int mode, struct proc *p)
 	aed_sc->sc_ioproc = p;
 	splx(s);
 
-	return (error);
+	return 0;
 }
 
 
 int 
 aedclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	int s = spladb();
+	int s;
 
+	s = spladb();
 	aed_sc->sc_open = 0;
 	aed_sc->sc_ioproc = NULL;
 	splx(s);
