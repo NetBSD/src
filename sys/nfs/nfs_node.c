@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.46 2001/09/15 20:36:39 chs Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.47 2001/11/10 10:59:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)nfs_node.c	8.6 (Berkeley) 5/22/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.47 2001/11/10 10:59:09 lukem Exp $");
 
 #include "opt_nfs.h"
 

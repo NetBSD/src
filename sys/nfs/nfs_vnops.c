@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.142 2001/11/07 20:04:52 bjh21 Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.143 2001/11/10 10:59:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,9 @@
 /*
  * vnode op calls for Sun NFS version 2 and 3
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.143 2001/11/10 10:59:10 lukem Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
