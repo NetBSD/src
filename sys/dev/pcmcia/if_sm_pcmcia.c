@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.4 1997/10/14 00:47:27 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.5 1997/10/16 17:30:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -240,12 +240,6 @@ sm_pcmcia_attach(parent, self, aux)
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
 
-	/* Establish the interrupt handler. */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, smc91cxx_intr, sc);
-	if (psc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
-
 	pcmcia_function_disable(pa->pf);
 }
 
@@ -254,6 +248,15 @@ sm_pcmcia_enable(sc)
 	struct smc91cxx_softc *sc;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
+
+	/* Establish the interrupt handler. */
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
+	    sc);
+	if (psc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt handler\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
 
 	return (pcmcia_function_enable(psc->sc_pf));
 }
@@ -265,4 +268,6 @@ sm_pcmcia_disable(sc)
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 
 	pcmcia_function_disable(psc->sc_pf);
+
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
