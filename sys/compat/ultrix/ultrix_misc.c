@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.56 2000/03/30 11:27:21 augustss Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.57 2000/04/28 12:52:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -427,13 +427,14 @@ ultrix_sys_setsockopt(p, v, retval)
 	return (error);
 }
 
+#define	ULTRIX__SYS_NMLN	32
+
 struct ultrix_utsname {
-	char    sysname[9];
-	char    nodename[9];
-	char    nodeext[65-9];
-	char    release[9];
-	char    version[9];
-	char    machine[9];
+	char    sysname[ULTRIX__SYS_NMLN];
+	char    nodename[ULTRIX__SYS_NMLN];
+	char    release[ULTRIX__SYS_NMLN];
+	char    version[ULTRIX__SYS_NMLN];
+	char    machine[ULTRIX__SYS_NMLN];
 };
 
 int
@@ -444,15 +445,25 @@ ultrix_sys_uname(p, v, retval)
 {
 	struct ultrix_sys_uname_args *uap = v;
 	struct ultrix_utsname sut;
+        char *cp, *dp, *ep;
 
 	memset(&sut, 0, sizeof(sut));
 
-	memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
-	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
-	sut.nodename[sizeof(sut.nodename)-1] = '\0';
-	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
-	memcpy(sut.version, "1", sizeof(sut.version) - 1);
-	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
+	strncpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
+	strncpy(sut.nodename, hostname, sizeof(sut.nodename) - 1);
+	strncpy(sut.release, osrelease, sizeof(sut.release) - 1);
+        dp = sut.version;
+        ep = &sut.version[sizeof(sut.version) - 1];
+        for (cp = version; *cp && *cp != '('; cp++)
+                ;
+        for (cp++; *cp && *cp != ')' && dp < ep; cp++)
+                *dp++ = *cp;
+        for (; *cp && *cp != '#'; cp++)
+                ;
+        for (; *cp && *cp != ':' && dp < ep; cp++)
+                *dp++ = *cp;
+        *dp = '\0';
+	strncpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
 	    sizeof(struct ultrix_utsname));
