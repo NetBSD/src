@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkinit.c	5.3 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: mkinit.c,v 1.4 1993/08/01 18:58:09 mycroft Exp $";
+static char rcsid[] = "$Id: mkinit.c,v 1.5 1994/03/27 07:45:57 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -349,7 +349,7 @@ dodecl(line1, fp)
 		if (! amiddecls)
 			addchar('\n', &decls);
 		q = NULL;
-		for (p = line1 + 6 ; *p != '=' && *p != '/' ; p++);
+		for (p = line1 + 6 ; *p && *p != '=' && *p != '/' ; p++);
 		if (*p == '=') {		/* eliminate initialization */
 			for (q = p ; *q && *q != ';' ; q++);
 			if (*q == '\0')
