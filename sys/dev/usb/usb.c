@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.36 1999/12/22 23:54:09 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.37 2000/01/24 18:35:51 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -243,6 +243,7 @@ USB_ATTACH(usb)
 	if (cold)
 		sc->sc_bus->use_polling--;
 
+	config_pending_incr();
 	kthread_create(usb_create_event_thread, sc);
 
 #if defined(__FreeBSD__)
@@ -273,6 +274,7 @@ usb_event_thread(arg)
 	void *arg;
 {
 	struct usb_softc *sc = arg;
+	int first = 1;
 
 	DPRINTF(("usb_event_thread: start\n"));
 
@@ -281,6 +283,10 @@ usb_event_thread(arg)
 		if (usb_noexplore < 2)
 #endif
 		usb_discover(sc);
+		if (first) {
+			config_pending_decr();
+			first = 0;
+		}
 		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
 #ifdef USB_DEBUG
 			     usb_noexplore ? 0 :
