@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.1.2.2 2001/02/04 18:42:17 he Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.1.2.3 2001/11/13 21:53:03 he Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -46,6 +46,7 @@
  */
 #define HPT366_REV 0x01
 #define HPT370_REV 0x03
+#define HPT370A_REV 0x04
 
 #define HPT_IDETIM(chan, drive) (0x40 + ((drive) * 4) + ((chan) * 8))
 #define HPT_IDETIM_BUFEN		0x80000000
