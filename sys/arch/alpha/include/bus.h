@@ -1,7 +1,7 @@
-/* $NetBSD: bus.h,v 1.15 1997/08/13 02:53:03 cgd Exp $ */
+/* $NetBSD: bus.h,v 1.16 1998/01/17 21:53:55 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -402,10 +402,14 @@ struct alpha_bus_space {
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
 
+/*
+ * Private flags stored in the DMA map.
+ */
+#define	DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
-struct alpha_sgmap_cookie;
 
 /*
  *	bus_dmasync_op_t
@@ -543,8 +547,14 @@ struct alpha_bus_dmamap {
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
-	/* SGMAP cookie used for SGMAP-mapped DMA */
-	struct alpha_sgmap_cookie *_dm_sgcookie;
+	/*
+	 * This is used only for SGMAP-mapped DMA, but we keep it
+	 * here to avoid pointless indirection.
+	 */
+	int		_dm_pteidx;	/* PTE index */
+	int		_dm_ptecnt;	/* PTE count */
+	u_long		_dm_sgva;	/* allocated sgva */
+	bus_size_t	_dm_sgvalen;	/* svga length */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
