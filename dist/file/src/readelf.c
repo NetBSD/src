@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.2 2003/09/17 00:41:39 itojun Exp $	*/
+/*	$NetBSD: readelf.c,v 1.3 2003/10/03 22:26:58 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -44,7 +44,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.32 2003/05/23 21:31:59 christos Exp")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.2 2003/09/17 00:41:39 itojun Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.3 2003/10/03 22:26:58 pooka Exp $");
 #endif
 #endif
 
@@ -372,17 +372,12 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 			if (ver_rel == 0 && ver_patch != 0) {
 				if (file_printf(ms, ".%u", ver_patch) == -1)
 					return size;
-			} else if (ver_rel != 0 && ver_rel <= 26) {
-				if (file_printf(ms, "%c", 'A' + ver_rel - 1)
-				    == -1)
-					return size;
-			} else if (ver_rel != 0 && ver_rel <= 52) {
-				if (file_printf(ms, "Z%c", 'A' + ver_rel - 27)
-				    == -1)
-					return size;
 			} else if (ver_rel != 0) {
-				if (file_printf(ms, "<unknown>") == -1)
-					return size;
+				while (ver_rel > 26) {
+					file_printf(ms, "Z");
+					ver_rel -= 26;
+				}
+				file_printf(ms, "%c", 'A' + ver_rel - 1);
 			}
 		}
 		return size;
