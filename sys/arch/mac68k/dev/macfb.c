@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.3.4.1 2000/06/30 16:27:28 simonb Exp $ */
+/* $NetBSD: macfb.c,v 1.3.4.2 2000/11/01 23:06:38 tv Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -234,7 +234,7 @@ macfb_attach(parent, self, aux)
 
 		sc->sc_dc->dc_offset = gm->fboff;
 
-		macfb_init(sc->sc_dc);
+		macfb_clear(sc->sc_dc);
 
 		sc->nscreens = 1;
 	}
