@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.61 2003/10/27 23:52:57 mrg Exp $
+#	$NetBSD: bsd.dep.mk,v 1.62 2003/10/28 01:25:33 mrg Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -15,8 +15,8 @@ MKDEP?=		mkdep
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)							# {
-_TRADIONAL_CPP?=-traditional-cpp
-__acpp_flags=	${_TRADIONAL_CPP}
+_TRADITIONAL_CPP?=-traditional-cpp
+__acpp_flags=	${_TRADITIONAL_CPP}
 
 __DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
 		${DPSRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
