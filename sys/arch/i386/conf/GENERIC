@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.29 1996/02/27 00:06:53 cgd Exp $
+#	$NetBSD: GENERIC,v 1.30 1996/02/28 02:02:32 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -80,6 +80,9 @@ isa0	at root
 eisa0	at root
 pci0	at root
 
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
@@ -113,7 +116,7 @@ aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
-ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 ahe0	at isa? port 0x1c00 irq ?	# Adaptec 284x SCSI controllers
 scsibus* at ahe?
@@ -123,7 +126,7 @@ bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt2	at isa? port ? irq ?
 scsibus* at bt?
-ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 sea0	at isa? iomem 0xc8000 irq 5
 scsibus* at sea?
@@ -157,9 +160,9 @@ el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
-le*	at pci? bus ? dev ?			# PCnet-PCI based ethernet cards
-de*	at pci? bus ? dev ?			# DC21X4X-based ethernet cards
-ep*	at pci? bus ? dev ?			# 3C590 ethernet cards
+le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver

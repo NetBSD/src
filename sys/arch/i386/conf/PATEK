@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.27 1996/02/27 00:07:06 cgd Exp $
+#	$NetBSD: PATEK,v 1.28 1996/02/28 02:02:40 cgd Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -75,6 +75,9 @@ isa0	at root
 #eisa0	at root
 #pci0	at root
 
+#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+#pci*	at ppb? bus ?
+
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
@@ -112,7 +115,7 @@ scsibus* at aic?
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt2	at isa? port ? irq ?
 #scsibus* at bt?
-#ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
