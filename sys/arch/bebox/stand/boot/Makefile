@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/19 03:00:55 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/27 00:11:07 sakamoto Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -15,8 +15,8 @@ CLEANFILES+= vers.c vers.o netbsd.gz ${BASE} elf2pef
 CPPFLAGS= -I${.CURDIR}/../../.. -I${S} -I${S}/lib/libsa
 CPPFLAGS+= -DDBMONITOR -DRELOC=${RELOC} -DENTRY=${ENTRY}
 CPPFLAGS+= -DCONS_VGA
-#CPPFLAGS+= -DCONS_SERIAL 
-#CPPFLAGS+= -DCOMSPEED=38400 -DCOMPORT=0x3F8
+#CPPFLAGS+= -DCONS_SERIAL
+#CPPFLAGS+= -DCOMSPEED=9600 -DCOMPORT=0x3F8
 CPPFLAGS+= -DUSE_SCAN
 
 AFLAGS= -x assembler-with-cpp -traditional-cpp
