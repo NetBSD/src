@@ -1,4 +1,4 @@
-/*	$NetBSD: a.out.c,v 1.4 2002/10/10 01:57:10 simonb Exp $	*/
+/*	$NetBSD: a.out.c,v 1.5 2004/02/11 18:42:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: a.out.c,v 1.4 2002/10/10 01:57:10 simonb Exp $");
+__RCSID("$NetBSD: a.out.c,v 1.5 2004/02/11 18:42:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -62,8 +62,7 @@ __RCSID("$NetBSD: a.out.c,v 1.4 2002/10/10 01:57:10 simonb Exp $");
 #define	LINKCMD "ld -A %s -e _%s -o %s -T %p %s"
 
 void
-a_out_linkcmd(char *buf,
-	      size_t len,
+a_out_linkcmd(char **cmdp,
 	      const char *kernel,
 	      const char *entry,
 	      const char *outfile,
@@ -71,12 +70,7 @@ a_out_linkcmd(char *buf,
 	      const char *object,
 	      const char *ldscript)	/* XXX ignored on a.out */
 {
-	ssize_t n;
-
-	n = snprintf(buf, len, LINKCMD, kernel, entry,
-		     outfile, address, object);
-	if (n >= len)
-		errx(1, "link command longer than %lu bytes", (u_long)len);
+	asprintf(cmdp, LINKCMD, kernel, entry, outfile, address, object);
 }
 
 static int
