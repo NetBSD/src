@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.64 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.65 2004/04/23 14:37:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -242,10 +242,10 @@ void	 arc4random_addrandom __P((u_char *, int));
 char	*getbsize __P((int *, long *));
 char	*cgetcap __P((char *, const char *, int));
 int	 cgetclose __P((void));
-int	 cgetent __P((char **, char **, const char *));
-int	 cgetfirst __P((char **, char **));
+int	 cgetent __P((char **, const char **, const char *));
+int	 cgetfirst __P((char **, const char **));
 int	 cgetmatch __P((const char *, const char *));
-int	 cgetnext __P((char **, char **));
+int	 cgetnext __P((char **, const char **));
 int	 cgetnum __P((char *, const char *, long *));
 int	 cgetset __P((const char *));
 int	 cgetstr __P((char *, const char *, char **));
