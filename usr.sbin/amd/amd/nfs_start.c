@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_start.c,v 1.1.1.4 1997/10/26 00:02:48 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_start.c,v 1.1.1.3 1997/09/22 21:12:03 christos Exp $
+ * Id: nfs_start.c,v 5.2.2.1 1992/02/09 15:08:51 jsp beta 
  *
  */
 
@@ -378,7 +380,8 @@ mount_automounter(int ppid)
    */
   plog(XLOG_INFO, "creating autofs service listener");
   ret = create_autofs_service(&soAUTOFS, &autofs_port, &autofsxprt, autofs_program_1);
-  if (ret != 0)
+  /* if autofs service fails it is OK if using a test amd */
+  if (ret != 0 && gopt.portmap_program == AMQ_PROGRAM)
     return ret;
 #endif /* HAVE_FS_AUTOFS */
 

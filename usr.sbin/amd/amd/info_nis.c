@@ -1,3 +1,5 @@
+/*	$NetBSD: info_nis.c,v 1.1.1.5 1997/10/26 00:02:41 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_nis.c,v 1.1.1.4 1997/09/26 16:06:43 christos Exp $
+ * Id: info_nis.c,v 5.2.2.1 1992/02/09 15:08:32 jsp beta 
  *
  */
 
@@ -65,14 +67,21 @@ int nis_mtime(mnt_map *m, char *map, time_t *tp);
 
 /* typedefs */
 typedef void (*nis_callback_fxn_t)(mnt_map *, char *, char *);
-/* do not change this. different OSs require a different prototype */
+#ifndef DEFINED_YPALL_CALLBACK_FXN_T
 typedef int (*ypall_callback_fxn_t)();
+#endif /* DEFINED_YPALL_CALLBACK_FXN_T */
 
 struct nis_callback_data {
   mnt_map *ncd_m;
   char *ncd_map;
   nis_callback_fxn_t ncd_fn;
 };
+
+/* Map to the right version of yp_all */
+#ifdef HAVE_BAD_YP_ALL
+# define yp_all am_yp_all
+static int am_yp_all(char *indomain, char *inmap, struct ypall_callback *incallback);
+#endif /* HAVE_BAD_YP_ALL */
 
 
 /*
@@ -299,3 +308,64 @@ nis_mtime(mnt_map *m, char *map, time_t *tp)
 {
   return nis_init(m,map, tp);
 }
+
+
+#ifdef HAVE_BAD_YP_ALL
+/*
+ * If you are using NIS and your yp_all function is "broken", use an
+ * alternate code which avoids a bug in yp_all().  The bug in yp_all() is
+ * that it does not close a TCP connection to ypserv, and this ypserv runs
+ * out of open filedescriptors, getting into an infinite loop, thus all YP
+ * clients enevtually unbind and hang too.
+ *
+ * Systems known to be plagued with this bug:
+ *	earlier SunOS 4.x
+ *	all irix systems (at this time, up to 6.4 was checked)
+ *
+ * -Erez Zadok <ezk@cs.columbia.edu>
+ * -James Tanis <jtt@cs.columbia.edu> */
+static int
+am_yp_all(char *indomain, char *inmap, struct ypall_callback *incallback)
+{
+  int i, j;
+  char *outkey, *outval;
+  int outkeylen, outvallen;
+  char *outkey_old;
+  int outkeylen_old;
+
+  plog(XLOG_INFO, "NIS map %s reloading using am_yp_all", inmap);
+
+  i = yp_first(indomain, inmap, &outkey, &outkeylen, &outval, &outvallen);
+  if (i) {
+    plog(XLOG_ERROR, "yp_first() returned error: %s\n", yperr_string(i));
+  }
+  do {
+    j = (incallback->foreach)(YP_TRUE,
+			      outkey,
+			      outkeylen,
+			      outval,
+			      outvallen,
+			      incallback->data);
+    if (j != FALSE)		/* terminate loop */
+      break;
+    outkey_old = outkey;
+    outkeylen_old = outkeylen;
+    i = yp_next(indomain,
+		inmap,
+		outkey_old,
+		outkeylen_old,
+		 &outkey,
+		&outkeylen,
+		&outval,
+		&outvallen);
+  } while (!i);
+#ifdef DEBUG
+  if (i) {
+    dlog("yp_next() returned error: %s\n", yperr_string(i));
+  }
+#endif /* DEBUG */
+  if (i == YPERR_NOMORE)
+    return 0;
+  return i;
+}
+#endif /* HAVE_BAD_YP_ALL */

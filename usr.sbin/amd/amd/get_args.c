@@ -1,3 +1,5 @@
+/*	$NetBSD: get_args.c,v 1.1.1.4 1997/10/26 00:02:38 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: get_args.c,v 1.1.1.3 1997/09/22 21:11:50 christos Exp $
+ * Id: get_args.c,v 5.2.2.1 1992/02/09 15:08:23 jsp beta 
  *
  */
 
@@ -72,8 +74,8 @@ int debug_flags = D_AMQ		/* Register AMQ */
 char *
 get_version_string(void)
 {
-  static char vers[1024];
-  char tmpbuf[256];
+  static char vers[2048];
+  char tmpbuf[1024];
 
   sprintf(vers, "%s\n%s\n%s\n%s\n",
 	  "Copyright (c) 1997 Erez Zadok",
@@ -102,18 +104,11 @@ get_version_string(void)
   strcat(vers, ".\nFS: ");
   ops_showfstypes(tmpbuf);
   strcat(vers, tmpbuf);
-  sprintf(tmpbuf, "Primary network: primnetname=\"%s\" (primnetnum=%s).\n",
-	  PrimNetName, PrimNetNum);
-  strcat(vers, tmpbuf);
-  if (SubsNetName && !STREQ(SubsNetName, NO_SUBNET)) {
-    sprintf(tmpbuf, "Subsidiary network: subsnetname=\"%s\" (subsnetnum=%s).\n",
-	    SubsNetName, SubsNetNum);
-  } else {
-    sprintf(tmpbuf, "No Subsidiary network.\n");
-  }
+
+  /* list all known networks */
+  print_wires(tmpbuf);
   strcat(vers, tmpbuf);
 
-  /* finally return formed string */
   return vers;
 }
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: misc_rpc.c,v 1.1.1.2 1997/10/26 00:02:16 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: misc_rpc.c,v 1.1.1.1 1997/07/24 21:20:07 christos Exp $
+ * Id: misc_rpc.c,v 5.2.2.1 1992/02/09 15:08:40 jsp beta 
  *
  */
 

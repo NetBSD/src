@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: conf_tok.l,v 1.1.1.2 1997/10/26 00:03:07 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +41,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: conf_tok.l,v 1.1.1.1 1997/07/24 21:22:27 christos Exp $
+ * Id: conf_tok.l,v 5.2.2.1 1992/02/09 15:09:36 jsp beta 
  *
  */
 
@@ -74,7 +76,14 @@ int yylineno = 0;
 #endif /* FLEX_SCANNER */
 
 int yylex(void);
+/*
+ * some systems such as DU-4.x have a different GNU flex in /usr/bin
+ * which automatically generates yywrap macros and symbols.  So I must
+ * distinguish between them and when yywrap is actually needed.
+ */
+#ifndef yywrap
 int yywrap(void);
+#endif /* not yywrap */
 
 #define TOK_DEBUG 0
 
@@ -159,7 +168,14 @@ NONQUOTE	[^\"]
 
 %%
 
+/*
+ * some systems such as DU-4.x have a different GNU flex in /usr/bin
+ * which automatically generates yywrap macros and symbols.  So I must
+ * distinguish between them and when yywrap is actually needed.
+ */
+#ifndef yywrap
 int yywrap(void)
 {
   return 1;
 }
+#endif /* not yywrap */

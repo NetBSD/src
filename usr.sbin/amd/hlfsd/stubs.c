@@ -1,3 +1,5 @@
+/*	$NetBSD: stubs.c,v 1.1.1.3 1997/10/26 00:03:13 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: stubs.c,v 1.1.1.2 1997/09/22 21:12:37 christos Exp $
+ * Id: stubs.c,v 1.10 1993/09/13 15:11:00 ezk Exp 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -303,6 +305,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   int retval = 0;
   char *path_val = (char *) NULL;
   char *username;
+  static uid_t last_uid = INVALIDID;
 
   if (eq_fh(argp, &root)) {
     res.rlr_status = NFSERR_ISDIR;
@@ -341,8 +344,12 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     }
   }
 
-  plog(XLOG_USER, "mailbox for uid=%d, gid=%d is %s",
-       userid, groupid, (char *) res.rlr_u.rlr_data_u);
+  /* print info, but try to avoid repetitions */
+  if (userid != last_uid) {
+    plog(XLOG_USER, "mailbox for uid=%d, gid=%d is %s",
+	 userid, groupid, (char *) res.rlr_u.rlr_data_u);
+    last_uid = userid;
+  }
 
   /* I don't think will pass this if -D nofork */
   if (serverpid == getpid())

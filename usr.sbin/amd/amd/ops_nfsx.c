@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_nfsx.c,v 1.1.1.2 1997/10/26 00:02:57 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_nfsx.c,v 1.1.1.1 1997/07/24 21:21:45 christos Exp $
+ * Id: ops_nfsx.c,v 5.2.2.3 1992/05/31 16:13:07 jsp Exp 
  *
  */
 

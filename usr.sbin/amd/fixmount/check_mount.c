@@ -1,3 +1,5 @@
+/*	$NetBSD: check_mount.c,v 1.1.1.2 1997/10/26 00:03:34 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: check_mount.c,v 1.1.1.1 1997/07/24 21:24:12 christos Exp $
+ * Id: checkmount_bsd44.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
  *
  */
 
@@ -48,7 +50,7 @@
 #include <am_defs.h>
 
 extern int is_same_host(char *name1, char *name2, struct in_addr addr2);
-
+int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path);
 
 int
 fixmount_check_mount(char *host, struct in_addr hostaddr, char *path)

@@ -1,3 +1,5 @@
+/*	$NetBSD: rpc_fwd.c,v 1.1.1.4 1997/10/26 00:03:04 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: rpc_fwd.c,v 1.1.1.3 1997/09/22 21:12:21 christos Exp $
+ * Id: rpc_fwd.c,v 5.2.2.1 1992/02/09 15:09:01 jsp beta 
  *
  */
 

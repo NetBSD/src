@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_efs.c,v 1.1.1.2 1997/10/26 00:02:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_efs.c,v 1.1.1.1 1997/07/24 21:21:42 christos Exp $
+ * Id: ops_efs.c,v 5.2.2.1 1992/02/09 15:08:21 jsp beta 
  *
  */
 

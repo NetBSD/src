@@ -1,3 +1,4 @@
-@set UPDATED 26 September 1997
-@set EDITION 6.0a12
-@set VERSION 6.0a12
+$NetBSD: version.texi,v 1.1.1.3 1997/10/26 00:03:55 christos Exp $
+@set UPDATED 24 October 1997
+@set EDITION 6.0a13
+@set VERSION 6.0a13

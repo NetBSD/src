@@ -1,3 +1,5 @@
+/*	$NetBSD: fsinfo.h,v 1.1.1.4 1997/10/26 00:03:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fsinfo.h,v 1.1.1.3 1997/09/26 16:08:07 christos Exp $
+ * Id: fsinfo.h,v 5.2.2.1 1992/02/09 15:09:51 jsp beta 
  *
  */
 
@@ -102,7 +104,14 @@ extern void warning(void);
 
 extern int yyerror(char *fmt, ...);
 extern void domain_strip(char *otherdom, char *localdom);
+/*
+ * some systems such as DU-4.x have a different GNU flex in /usr/bin
+ * which automatically generates yywrap macros and symbols.  So I must
+ * distinguish between them and when yywrap is actually needed.
+ */
+#ifndef yywrap
 extern int yywrap(void);
+#endif /* not yywrap */
 extern int yyparse(void);
 extern int write_atab(qelem *q);
 extern int write_bootparams(qelem *q);
