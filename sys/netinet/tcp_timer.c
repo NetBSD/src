@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.18 1997/07/23 21:26:52 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.19 1997/07/28 22:07:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -103,7 +103,6 @@ tcp_slowtimo()
 	int s;
 	register long i;
 	static int syn_cache_last = 0;
-	extern int tcp_syn_cache_interval;
 
 	s = splsoftnet();
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
