@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.81 2003/07/27 01:19:32 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.82 2003/09/19 16:35:32 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -9,22 +9,6 @@ maxpartitions 8
 maxusers 2 8 1024
 
 defflag	opt_sparc_arch.h	SUN4U
-
-#
-# XXXXXXXXXXX
-#
-# These files must be compiled w/no omtimization in 64-bit mode
-#
-
-file dev/ic/elink3.c		compile-with "${NOOPT_C}"
-file net/if_ppp.c		compile-with "${NOOPT_C}"
-file net/if_loop.c		compile-with "${NOOPT_C}"
-file net/if_sl.c		compile-with "${NOOPT_C}"
-file ufs/lfs/lfs_debug.c	compile-with "${NOOPT_C}"
-
-#
-# XXXXXXXXXXX
-#
 
 define mainbus {}
 device mainbus: mainbus

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.49 2002/11/26 18:51:17 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.50 2003/09/19 16:35:31 martin Exp $
 
 #=========================================================================
 #
@@ -71,8 +71,6 @@ AFLAGS+=	-Wa,-Av8plusa
 .endif
 CFLAGS+=	-mno-fpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-
-NOOPT_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -O0 -c $<
 
 ##
 ## (3) libkern and compat
