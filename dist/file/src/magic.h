@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
+/*	$NetBSD: magic.h,v 1.1.1.3 2003/09/25 17:59:05 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -33,17 +33,22 @@
 
 #include <sys/types.h>
 
-#define	MAGIC_NONE	0x00	/* No flags */
-#define	MAGIC_DEBUG	0x01	/* Turn on debugging */
-#define	MAGIC_SYMLINK	0x02	/* Follow symlinks */
-#define	MAGIC_COMPRESS	0x04	/* Check inside compressed files */
-#define	MAGIC_DEVICES	0x08	/* Look at the contents of devices */
-#define	MAGIC_MIME	0x10	/* Return a mime string */
-#define	MAGIC_CONTINUE	0x20	/* Return all matches, not just the first */
-#define	MAGIC_CHECK	0x40	/* Print warnings to stderr */
+#define	MAGIC_NONE		0x00	/* No flags */
+#define	MAGIC_DEBUG		0x01	/* Turn on debugging */
+#define	MAGIC_SYMLINK		0x02	/* Follow symlinks */
+#define	MAGIC_COMPRESS		0x04	/* Check inside compressed files */
+#define	MAGIC_DEVICES		0x08	/* Look at the contents of devices */
+#define	MAGIC_MIME		0x10	/* Return a mime string */
+#define	MAGIC_CONTINUE		0x20	/* Return all matches */
+#define	MAGIC_CHECK		0x40	/* Print warnings to stderr */
+#define	MAGIC_PRESERVE_ATIME	0x80	/* Restore access time on exit */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct magic_set *magic_t;
-
 magic_t magic_open(int);
 void magic_close(magic_t);
 
@@ -51,10 +56,14 @@ const char *magic_file(magic_t, const char *);
 const char *magic_buffer(magic_t, const void *, size_t);
 
 const char *magic_error(magic_t);
-void magic_setflags(magic_t, int);
+int magic_setflags(magic_t, int);
 
 int magic_load(magic_t, const char *);
 int magic_compile(magic_t, const char *);
 int magic_check(magic_t, const char *);
 
+#ifdef __cplusplus
+};
 #endif
+
+#endif /* _MAGIC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.1.1.2 2003/05/25 21:27:34 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.1.1.3 2003/09/25 17:59:00 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -53,9 +53,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.58 2003/05/23 21:31:58 christos Exp")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.64 2003/09/12 19:39:44 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.1.1.2 2003/05/25 21:27:34 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.1.1.3 2003/09/25 17:59:00 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -107,6 +107,7 @@ private int apprentice_compile(struct magic_set *, struct magic **, uint32_t *,
     const char *);
 
 private size_t maxmagic = 0;
+private size_t magicsize = sizeof(struct magic);
 
 #ifdef COMPILE_ONLY
 const char *magicfile;
@@ -131,7 +132,7 @@ main(int argc, char *argv[])
 	}
 	magicfile = argv[1];
 
-	exit(apprentice(magicfile, COMPILE, MAGIC_CHECK));
+	exit(file_apprentice(magicfile, COMPILE, MAGIC_CHECK) == -1 ? 1 : 0);
 }
 #endif /* COMPILE_ONLY */
 
@@ -149,7 +150,7 @@ apprentice_1(struct magic_set *ms, const char *fn, int action,
 	int rv = -1;
 	int mapped;
 
-	if (sizeof(*magic) != FILE_MAGICSIZE) {
+	if (magicsize != FILE_MAGICSIZE) {
 		file_error(ms, "Magic element size %lu != %lu",
 		    (unsigned long)sizeof(*magic),
 		    (unsigned long)FILE_MAGICSIZE);
@@ -268,10 +269,11 @@ apprentice_file(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 		return -1;
 	}
 
-	/* parse it */
-	if (action == FILE_CHECK)	/* print silly verbose header for USG compat. */
-		(void) printf("%s\n", hdr);
+	/* print silly verbose header for USG compat. */
+	if (action == FILE_CHECK)
+		(void)fprintf(stderr, "%s\n", hdr);
 
+	/* parse it */
 	for (lineno = 1; fgets(line, BUFSIZ, f) != NULL; lineno++) {
 		if (line[0]=='#')	/* comment, do not parse */
 			continue;
@@ -687,8 +689,12 @@ getvalue(struct magic_set *ms, struct magic *m, char **p)
 	case FILE_PSTRING:
 	case FILE_REGEX:
 		*p = getstr(ms, *p, m->value.s, sizeof(m->value.s), &slen);
-		if (*p == NULL)
+		if (*p == NULL) {
+			if (ms->flags & MAGIC_CHECK)
+				file_magwarn("Cannot get string from `%s'",
+				    m->value.s);
 			return -1;
+		}
 		m->vallen = slen;
 		return 0;
 	default:
@@ -938,6 +944,7 @@ apprentice_map(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 		file_error(ms, "Cannot map `%s' (%s)", dbname, strerror(errno));
 		goto error;
 	}
+#define RET	2
 #else
 	if ((mm = malloc((size_t)st.st_size)) == NULL) {
 		file_oomem(ms);
@@ -947,6 +954,7 @@ apprentice_map(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 		file_error(ms, "Read failed (%s)", strerror(errno));
 		goto error;
 	}
+#define RET	1
 #endif
 	*magicp = mm;
 	(void)close(fd);
@@ -973,7 +981,7 @@ apprentice_map(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 	(*magicp)++;
 	if (needsbyteswap)
 		byteswap(*magicp, *nmagicp);
-	return 0;
+	return RET;
 
 error:
 	if (fd != -1)
