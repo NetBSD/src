@@ -1,4 +1,4 @@
-/*	$NetBSD: runenone.c,v 1.6 2001/01/22 04:42:40 itojun Exp $	*/
+/*	$NetBSD: runenone.c,v 1.7 2001/01/26 13:42:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: runenone.c,v 1.6 2001/01/22 04:42:40 itojun Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.7 2001/01/26 13:42:11 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: runenone.c,v 1.6 2001/01/22 04:42:40 itojun Exp $");
 #include "rune.h"
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 size_t	_none_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
 	void *));
