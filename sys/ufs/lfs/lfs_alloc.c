@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.71 2003/08/07 16:34:34 agc Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.72 2003/09/23 05:26:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.71 2003/08/07 16:34:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.72 2003/09/23 05:26:49 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -199,12 +199,11 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		/* printf("lfs_rf_valloc: ino %d vp %p\n", ino, vp); */
 
 		/* The dirop-nature of this vnode is past */
+		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
 		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-		--fs->lfs_nadirop;
-		ip->i_flag &= ~IN_ADIROP;
 	}
 	*vpp = vp;
 	return error;
@@ -392,16 +391,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 	uvm_vnp_setsize(vp, 0);
 	*vpp = vp;
-	if (!(vp->v_flag & VDIROP)) {
-		(void)lfs_vref(vp);
-		++lfs_dirvcount;
-		TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-	}
-	vp->v_flag |= VDIROP;
-
-	if (!(ip->i_flag & IN_ADIROP))
-		++fs->lfs_nadirop;
-	ip->i_flag |= IN_ADIROP;
+	lfs_mark_vnode(vp);
 	genfs_node_init(vp, &lfs_genfsops);
 	VREF(ip->i_devvp);
 	/* Set superblock modified bit and increment file count. */
@@ -500,6 +490,7 @@ lfs_vfree(void *v)
 
 	lfs_seglock(fs, SEGM_PROT);
 	
+	lfs_unmark_vnode(vp);
 	if (vp->v_flag & VDIROP) {
 		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
@@ -507,7 +498,6 @@ lfs_vfree(void *v)
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
 	}
-	lfs_unmark_vnode(vp);
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
 	ip->i_flag &= ~IN_ALLMOD;
