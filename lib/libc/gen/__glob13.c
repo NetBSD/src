@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.13 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.14 2000/10/16 04:12:55 erh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.13 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.14 2000/10/16 04:12:55 erh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -712,7 +712,7 @@ globextend(path, pglob)
 {
 	char **pathv;
 	int i;
-	u_int newsize;
+	size_t newsize;
 	char *copy;
 	const Char *p;
 
