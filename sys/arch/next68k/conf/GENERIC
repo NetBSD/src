@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 1999/11/21 14:00:42 itojun Exp $
+# $NetBSD: GENERIC,v 1.22 1999/12/14 11:17:27 dbj Exp $
 #
 # GENERIC next68k
 #
@@ -20,10 +20,11 @@ options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
-# Which kernel debugger?  Uncomment either this:
-options 	DDB
 options 	DEBUG		# kernel debugging code
 options 	DIAGNOSTIC	# extra kernel sanity checking
+
+# Which kernel debugger?  Uncomment either this:
+options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
