@@ -1,4 +1,4 @@
-/*	$NetBSD: n_j1.c,v 1.2 1997/10/20 14:12:50 ragge Exp $	*/
+/*	$NetBSD: n_j1.c,v 1.3 1998/10/20 02:26:11 matt Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ static char sccsid[] = "@(#)j1.c	8.2 (Berkeley) 11/30/93";
 #include <float.h>
 #include <errno.h>
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
 #else
 #define _IEEE	1
@@ -151,11 +151,12 @@ double j1(x)
 {
 	double z, s,c,ss,cc,r,u,v,y;
 	y = fabs(x);
-	if (!finite(x))			/* Inf or NaN */
+	if (!finite(x)) {		/* Inf or NaN */
 		if (_IEEE && x != x)
 			return(x);
 		else
 			return (copysign(x, zero));
+	}
 	y = fabs(x);
 	if (y >= 2)			/* |x| >= 2.0 */
 	{
@@ -172,11 +173,11 @@ double j1(x)
 	 * j1(x) = 1/sqrt(pi) * (P(1,x)*cc - Q(1,x)*ss) / sqrt(x)
 	 * y1(x) = 1/sqrt(pi) * (P(1,x)*ss + Q(1,x)*cc) / sqrt(x)
 	 */
-#if !defined(vax) && !defined(tahoe)
+#if !defined(__vax__) && !defined(tahoe)
 		if (y > two_129)	 /* x > 2^129 */
 			z = (invsqrtpi*cc)/sqrt(y);
 		else
-#endif /* defined(vax) || defined(tahoe) */
+#endif /* defined(__vax__) || defined(tahoe) */
 		{
 		    u = pone(y); v = qone(y);
 		    z = invsqrtpi*(u*cc-v*ss)/sqrt(y);
@@ -214,7 +215,7 @@ double y1(x)
 {
 	double z, s, c, ss, cc, u, v;
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
-	if (!finite(x))
+	if (!finite(x)) {
 		if (!_IEEE) return (infnan(EDOM));
 		else if (x < 0)
 			return(zero/zero);
@@ -222,6 +223,7 @@ double y1(x)
 			return (0);
 		else
 			return(x);
+	}
 	if (x <= 0) {
 		if (_IEEE && x == 0) return -one/zero;
 		else if(x == 0) return(infnan(-ERANGE));

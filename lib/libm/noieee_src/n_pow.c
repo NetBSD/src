@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.2 1997/10/20 14:13:23 ragge Exp $ */
+/*      $NetBSD: n_pow.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-#if (defined(vax) || defined(tahoe))
+#if (defined(__vax__) || defined(tahoe))
 #define TRUNC(x)	x = (double) (float) x
 #define _IEEE		0
 #else
@@ -120,7 +120,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 #define endian		(((*(int *) &one)) ? 1 : 0)
 #define TRUNC(x) 	*(((int *) &x)+endian) &= 0xf8000000
 #define infnan(x)	0.0
-#endif		/* vax or tahoe */
+#endif		/* __vax__ or tahoe */
 
 const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
@@ -179,29 +179,32 @@ pow_P(x, y) double x, y;
 	struct Double s, t;
 	double  huge = 1e300, tiny = 1e-300;
 
-	if (x == zero)
+	if (x == zero) {
 		if (y > zero)
 			return (zero);
 		else if (_IEEE)
 			return (huge*huge);
 		else
 			return (infnan(ERANGE));
+	}
 	if (x == one)
 		return (one);
-	if (!finite(x))
+	if (!finite(x)) {
 		if (y < zero)
 			return (zero);
 		else if (_IEEE)
 			return (huge*huge);
 		else
 			return (infnan(ERANGE));
-	if (y >= 7e18)		/* infinity */
+	}
+	if (y >= 7e18) {	/* infinity */ 
 		if (x < 1)
 			return(tiny*tiny);
 		else if (_IEEE)
 			return (huge*huge);
 		else
 			return (infnan(ERANGE));
+	}
 
 	/* Return exp(y*log(x)), using simulated extended */
 	/* precision for the log and the multiply.	  */

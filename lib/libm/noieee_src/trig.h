@@ -139,11 +139,11 @@ ic(S5,  1.5868926979889205164E-10 , -33,  1.5CF61DF672B13)
 #define	S6	vccast(S6)
 #endif
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 #  define	sin__S(z)	(z*(S0+z*(S1+z*(S2+z*(S3+z*(S4+z*(S5+z*S6)))))))
-#else 	/* defined(vax)||defined(tahoe) */
+#else 	/* defined(__vax__)||defined(tahoe) */
 #  define	sin__S(z)	(z*(S0+z*(S1+z*(S2+z*(S3+z*(S4+z*S5))))))
-#endif 	/* defined(vax)||defined(tahoe) */
+#endif 	/* defined(__vax__)||defined(tahoe) */
 
 /* cos__C(x*x) ... re-implemented as a macro
  * DOUBLE PRECISION (VAX D FORMAT 56 BITS, IEEE DOUBLE 53 BITS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.2 1997/10/20 14:12:34 ragge Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.3 1998/10/20 02:26:11 matt Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,9 +66,9 @@ static char sccsid[] = "@(#)fmod.c	8.1 (Berkeley) 6/4/93";
  *    fmod(x,0), fmod(INF,y) are invalid operations and NaN is returned.
  *
  */
-#if !defined(vax) && !defined(tahoe)
+#if !defined(__vax__) && !defined(tahoe)
 extern int isnan(),finite();
-#endif	/* !defined(vax) && !defined(tahoe) */
+#endif	/* !defined(__vax__) && !defined(tahoe) */
 
 #ifdef TEST_FMOD
 static double
@@ -83,9 +83,9 @@ double x,y;
 	double r,w;
 
 	if (y == (double)0
-#if !defined(vax) && !defined(tahoe)	/* per "fmod" manual entry, SunOS 4.0 */
+#if !defined(__vax__) && !defined(tahoe)	/* per "fmod" manual entry, SunOS 4.0 */
 		|| isnan(y) || !finite(x)
-#endif	/* !defined(vax) && !defined(tahoe) */
+#endif	/* !defined(__vax__) && !defined(tahoe) */
 	    )
 	    return (x*y)/(x*y);
 

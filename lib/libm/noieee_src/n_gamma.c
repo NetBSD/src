@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.2 1997/10/20 14:12:39 ragge Exp $ */
+/*      $NetBSD: n_gamma.c,v 1.3 1998/10/20 02:26:11 matt Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -129,7 +129,7 @@ static int endian;
  * TRUNC sets trailing bits in a floating-point number to zero.
  * is a temporary variable.
  */
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE		0
 #define TRUNC(x)	x = (double) (float) (x)
 #else
@@ -151,14 +151,15 @@ gamma(x)
 			return(one/zero);
 		u = large_gam(x);
 		return(__exp__D(u.a, u.b));
-	} else if (x >= 1.0 + LEFT + x0)
+	} else if (x >= 1.0 + LEFT + x0) {
 		return (small_gam(x));
-	else if (x > 1.e-17)
+	} else if (x > 1.e-17) {
 		return (smaller_gam(x));
-	else if (x > -1.e-17) {
-		if (x == 0.0)
+	} else if (x > -1.e-17) {
+		if (x == 0.0) {
 			if (!_IEEE) return (infnan(ERANGE));
 			else return (one/x);
+		}
 		b =one+1e-20;		/* Raise inexact flag. ??? -ragge */
 		return (one/x);
 	} else if (!finite(x)) {
@@ -300,11 +301,12 @@ neg_gam(x)
 	double y, z;
 
 	y = floor(x + .5);
-	if (y == x)		/* Negative integer. */
+	if (y == x) {		/* Negative integer. */
 		if(!_IEEE)
 			return (infnan(ERANGE));
 		else
 			return (one/zero);
+	}
 	z = fabs(x - y);
 	y = .5*ceil(x);
 	if (y == ceil(y))

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.c,v 1.1 1995/10/10 23:36:40 ragge Exp $	*/
+/*	$NetBSD: n_cbrt.c,v 1.2 1998/10/20 02:26:10 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ static char sccsid[] = "@(#)cbrt.c	8.1 (Berkeley) 6/4/93";
  * On a National machine, it has different ordering; therefore, this code 
  * must be compiled with flag -DNATIONAL. 
  */
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 
 static const unsigned long
 		     B1 = 715094163, /* B1 = (682-0.03306235651)*2**20 */

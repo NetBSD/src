@@ -1,4 +1,4 @@
-/*	$NetBSD: n_erf.c,v 1.2 1997/10/20 14:12:10 ragge Exp $	*/
+/*	$NetBSD: n_erf.c,v 1.3 1998/10/20 02:26:10 matt Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -148,7 +148,7 @@ static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
  *	   	erfc/erf(NaN) is NaN
  */
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
 #define TRUNC(x) (double)(x) = (float)(x)
 #else
@@ -362,11 +362,12 @@ double erfc(x)
 		z = c+P/Q; return one+z;
 	    }
 	}
-	if (ax >= 28)	/* Out of range */
+	if (ax >= 28) {	/* Out of range */
  		if (x>0)
 			return (tiny*tiny);
 		else
 			return (two-tiny);
+	}
 	z = ax;
 	TRUNC(z);
 	y = z - ax; y *= (ax+z);

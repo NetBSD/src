@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asinh.c,v 1.2 1997/10/20 14:11:54 ragge Exp $	*/
+/*	$NetBSD: n_asinh.c,v 1.3 1998/10/20 02:26:09 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -91,9 +91,9 @@ double x;
 				big  =1.0E20,	/* fl(1+big) == big */
 				one  =1.0   ;	
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	if((t=copysign(x,one))>small) 
 	    if(t<big) {
 	     	s=one/t; return(copysign(log1p(t+t/(s+sqrt(one+s*s))),x)); }

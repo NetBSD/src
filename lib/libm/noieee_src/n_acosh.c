@@ -1,4 +1,4 @@
-/*	$NetBSD: n_acosh.c,v 1.2 1997/10/20 14:11:44 ragge Exp $	*/
+/*	$NetBSD: n_acosh.c,v 1.3 1998/10/20 02:26:09 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -94,9 +94,9 @@ acosh(x)
 {	
 	double t,big=1.E20; /* big+1==big */
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 
     /* return log1p(x) + log(2) if x is large */
 	if(x>big) {t=log1p(x)+ln2lo; return(t+ln2hi);} 

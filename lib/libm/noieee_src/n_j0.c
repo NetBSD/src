@@ -1,4 +1,4 @@
-/*	$NetBSD: n_j0.c,v 1.2 1997/10/20 14:12:44 ragge Exp $	*/
+/*	$NetBSD: n_j0.c,v 1.3 1998/10/20 02:26:11 matt Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ static char sccsid[] = "@(#)j0.c	8.2 (Berkeley) 11/30/93";
 #include <float.h>
 #include <errno.h>
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
 #else
 #define _IEEE	1
@@ -148,9 +148,10 @@ j0(x)
 {
 	double z, s,c,ss,cc,r,u,v;
 
-	if (!finite(x))
+	if (!finite(x)) {
 		if (_IEEE) return one/(x*x);
 		else return (0);
+	}
 	x = fabs(x);
 	if (x >= 2.0) {	/* |x| >= 2.0 */
 		s = sin(x);
@@ -211,17 +212,20 @@ y0(x)
 {
 	double z, s, c, ss, cc, u, v;
     /* Y0(NaN) is NaN, y0(-inf) is Nan, y0(inf) is 0  */
-	if (!finite(x))
+	if (!finite(x)) {
 		if (_IEEE)
 			return (one/(x+x*x));
 		else
 			return (0);
-        if (x == 0)
+	}
+        if (x == 0) {
 		if (_IEEE)	return (-one/zero);
 		else		return(infnan(-ERANGE));
-        if (x<0)
+	}
+        if (x<0) {
 		if (_IEEE)	return (zero/zero);
 		else		return (infnan(EDOM));
+	}
         if (x >= 2.00) {	/* |x| >= 2.0 */
         /* y0(x) = sqrt(2/(pi*x))*(p0(x)*sin(x0)+q0(x)*cos(x0))
          * where x0 = x-pi/4

@@ -1,4 +1,4 @@
-/*      $NetBSD: n_sinh.c,v 1.2 1997/10/20 14:13:27 ragge Exp $ */
+/*      $NetBSD: n_sinh.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -94,11 +94,11 @@ ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
 #define	lnovfl	vccast(lnovfl)
 #endif
 
-#if defined(vax)||defined(tahoe)
-static max = 126                      ;
-#else	/* defined(vax)||defined(tahoe) */
-static max = 1023                     ;
-#endif	/* defined(vax)||defined(tahoe) */
+#if defined(__vax__)||defined(tahoe)
+static int max = 126                      ;
+#else	/* defined(__vax__)||defined(tahoe) */
+static int max = 1023                     ;
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 
 double sinh(x)
@@ -106,9 +106,9 @@ double x;
 {
 	static const double  one=1.0, half=1.0/2.0 ;
 	double t, sign;
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	sign=copysign(one,x);
 	x=copysign(x,one);
 	if(x<lnovfl)
