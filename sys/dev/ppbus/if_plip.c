@@ -1,3 +1,5 @@
+/* $NetBSD: if_plip.c,v 1.3 2004/01/21 00:33:37 bjh21 Exp $ */
+
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
  * All rights reserved.

@@ -1,3 +1,5 @@
+# $NetBSD: files.ppbus,v 1.3 2004/01/21 00:33:37 bjh21 Exp $
+#
 # Config file and device description for machine-independent parallel port bus 
 # code.
 
