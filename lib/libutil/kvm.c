@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.19 1993/10/02 07:07:43 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.20 1993/10/13 15:49:55 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -1216,7 +1216,7 @@ setsyserr(va_alist)
 
 	va_start(ap);
 	fmt = va_arg(ap, char *);
-	(void) vsnprintf(errbuf, _POSIX2_LINE_MAX, fmt, ap);
+	(void) vsnprintf(cp = errbuf, _POSIX2_LINE_MAX, fmt, ap);
 	cp += strlen(cp);
 	(void) snprintf(cp, _POSIX2_LINE_MAX - (cp - errbuf), ": %s",
 			strerror(errno));
