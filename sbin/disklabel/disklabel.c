@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
 /*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: disklabel.c,v 1.10 1993/12/06 09:37:30 cgd Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.11 1994/03/21 00:56:58 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1077,10 +1077,13 @@ getasciilabel(f, lp)
 			}
 			pp = &lp->d_partitions[part];
 #define NXTNUM(n) { \
-	cp = tp, tp = word(cp); \
-	if (tp == NULL) \
-		tp = cp; \
-	(n) = atoi(cp); \
+	if (tp != NULL) { \
+		cp = tp, tp = word(cp); \
+		if (tp == NULL) \
+			tp = cp; \
+		(n) = atoi(cp); \
+	} else \
+		(n) = 0; \
      }
 
 			NXTNUM(v);
