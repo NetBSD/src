@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1 2001/06/19 00:21:17 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.2 2002/05/26 12:19:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -333,8 +333,8 @@ process_read_regs32(struct proc *p, struct reg32 *regs)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	regs->r_gs = pcb->pcb_gs;
-	regs->r_fs = pcb->pcb_fs;
+	regs->r_gs = LSEL(LUCODE32_SEL, SEL_UPL);
+	regs->r_fs = LSEL(LUCODE32_SEL, SEL_UPL);
 	regs->r_es = LSEL(LUCODE32_SEL, SEL_UPL);
 	regs->r_ds = LSEL(LUCODE32_SEL, SEL_UPL);
 	regs->r_eflags = tf->tf_eflags;
