@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/08 04:45:12 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/02/09 05:58:24 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,8 @@ FILESOWN_xcursor-config=${BINOWN}
 FILESGRP_xcursor-config=${BINGRP}
 FILESMODE_xcursor-config=${BINMODE}
 
-.PHONY:		xcursor.pc xcursor-config
-all dependall:	xcursor.pc xcursor-config
+CLEANFILES+=${FILES}
+realall: ${FILES}
 
 XCURSORDIR=	${X11SRCDIR.xc}/lib/Xcursor
 CONFIG_SUBST=	${HOST_SH} ${XCURSORDIR}/config-subst \

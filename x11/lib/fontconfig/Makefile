@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/08 04:45:12 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/09 05:58:25 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,8 @@ FILESDIR=	${X11USRLIBDIR}/pkgconfig
 
 SCRIPTS=	fontconfig-config
 
-.PHONY:		fontconfig.pc fontconfig-config
-all dependall:	fontconfig.pc fontconfig-config
+CLEANFILES+= ${FILES} ${SCRIPTS}
+realall: ${FILES}
 
 FONTCONFIGDIR=	${X11SRCDIR.xc}/lib/fontconfig
 CONFIG_SUBST=	${HOST_SH} ${FONTCONFIGDIR}/config/config-subst \
