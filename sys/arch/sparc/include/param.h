@@ -42,7 +42,7 @@
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: param.h,v 1.13 92/11/26 02:04:38 torek Exp  (LBL)
- * $Id: param.h,v 1.5 1994/05/19 08:23:27 deraadt Exp $
+ * $Id: param.h,v 1.6 1994/07/04 21:35:33 deraadt Exp $
  */
 
 /*
@@ -70,7 +70,6 @@
 
 #define	KERNBASE	0xf8000000	/* start of kernel virtual space */
 #define	KERNTEXTOFF	0xf8004000	/* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PG_SHIFT)
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
