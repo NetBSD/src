@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.17 1998/08/15 16:50:07 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.18 1998/08/26 01:29:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -391,6 +391,11 @@
 
 #define	CONFIG_AUTOSELECT	(u_short) 0x0100
 #define	CONFIG_AUTOSELECT_SHIFT	(u_short)      8
+
+/*
+ * MAC_CONTROL (Window 3)
+ */
+#define	MAC_CONTROL_FDX			0x20	/* full-duplex mode */
 
 /*
  * RESET_OPTIONS (Window 3, on Demon/Vortex/Bomerang only)
