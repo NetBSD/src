@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.1.1.2 2001/04/10 07:14:22 itojun Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.2 2001/07/27 23:34:27 manu Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -265,7 +265,8 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 
 	/*
 	 * Change owner and mode of the tty as required.
-	 * Warn but continue if filesystem is read-only and the uids match.
+	 * Warn but continue if filesystem is read-only and the uids match/
+	 * tty is owned by root.
 	 */
 	if (stat(ttyname, &st))
 		fatal("stat(%.100s) failed: %.100s", ttyname,
@@ -273,7 +274,8 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 
 	if (st.st_uid != pw->pw_uid || st.st_gid != gid) {
 		if (chown(ttyname, pw->pw_uid, gid) < 0) {
-			if (errno == EROFS && st.st_uid == pw->pw_uid)
+			if (errno == EROFS && 
+			    (st.st_uid == pw->pw_uid || st.st_uid == 0))
 				error("chown(%.100s, %d, %d) failed: %.100s",
 				      ttyname, pw->pw_uid, gid,
 				      strerror(errno));
