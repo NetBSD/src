@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.49.2.2 2000/08/14 21:11:02 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.49.2.3 2000/08/26 05:26:46 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -205,7 +205,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	.align	2
 	.globl	privinflt
 privinflt:
-#ifdef INSN_EMULATE
+#ifndef NO_INSN_EMULATE
 	jsb	unimemu	# do not return if insn emulated
 #endif
 	pushl $0
@@ -389,7 +389,7 @@ _sret:	movl	(sp)+, fp
 sbifltmsg:
 	.asciz	"SBI fault"
 
-#if INSN_EMULATE
+#ifndef NO_INSN_EMULATE
 /*
  * Table of emulated Microvax instructions supported by emulate.s.
  * Use noemulate to convert unimplemented ones to reserved instruction faults.
@@ -454,7 +454,7 @@ _emtable:
 	.align	2
 	.globl	emulate
 emulate:
-#if INSN_EMULATE
+#ifndef NO_INSN_EMULATE
 	movl	r11,32(sp)		# save register r11 in unused operand
 	movl	r10,36(sp)		# save register r10 in unused operand
 	cvtbl	(sp),r10		# get opcode
