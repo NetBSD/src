@@ -1,5 +1,5 @@
 #	from: @(#)bsd.own.mk	0.1 (RGrimes) 4/4/93
-#	$Id: bsd.own.mk,v 1.9 1993/12/08 23:10:33 cgd Exp $
+#	$Id: bsd.own.mk,v 1.10 1994/01/19 21:26:11 jtc Exp $
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
@@ -12,8 +12,8 @@ BINMODE?=	555
 NONBINMODE?=	444
 
 MANDIR?=	/usr/share/man/cat
-MANGRP?=	${BINGRP}
-MANOWN?=	${BINOWN}
+MANGRP?=	bin
+MANOWN?=	bin
 MANMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
@@ -23,8 +23,8 @@ LIBOWN?=	${BINOWN}
 LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=        /usr/share/doc
-DOCGRP?=	${BINGRP}
-DOCOWN?=	${BINOWN}
+DOCGRP?=	bin
+DOCOWN?=	bin
 DOCMODE?=       ${NONBINMODE}
 
 COPY?=		-c
