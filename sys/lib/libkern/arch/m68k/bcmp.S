@@ -1,3 +1,5 @@
+/*	$NetBSD: bcmp.S,v 1.4 1996/11/30 02:06:28 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,15 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: bcmp.S,v 1.3 1995/02/08 18:35:50 mycroft Exp $"
+#if 0
+	RCSID("from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: bcmp.S,v 1.4 1996/11/30 02:06:28 jtc Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bcmp(s1, s2, n) */
-
-#include "DEFS.h"
 
 /*
  * This is probably not the best we can do, but it is still 2-10 times
@@ -57,35 +61,35 @@ ENTRY(bcmp)
 	movl	sp@(4),a0		| string 1
 	movl	sp@(8),a1		| string 2
 	movl	sp@(12),d0		| length
-	beq	bcdone			| if zero, nothing to do
+	beq	Lbcdone			| if zero, nothing to do
 	movl	a0,d1
 	btst	#0,d1			| string 1 address odd?
-	beq	bceven			| no, skip alignment
+	beq	Lbceven			| no, skip alignment
 	cmpmb	a0@+,a1@+		| yes, compare a byte
-	bne	bcnoteq			| not equal, return non-zero
+	bne	Lbcnoteq		| not equal, return non-zero
 	subql	#1,d0			| adjust count
-	beq	bcdone			| count 0, reutrn zero
-bceven:
+	beq	Lbcdone			| count 0, reutrn zero
+Lbceven:
 	movl	a1,d1
 	btst	#0,d1			| string 2 address odd?
-	bne	bcbloop			| yes, no hope for alignment, compare bytes
+	bne	Lbcbloop		| yes, no hope for alignment, compare bytes
 	movl	d0,d1			| no, both even
 	lsrl	#2,d1			| convert count to longword count
-	beq	bcbloop			| count 0, skip longword loop
-bclloop:
+	beq	Lbcbloop		| count 0, skip longword loop
+Lbclloop:
 	cmpml	a0@+,a1@+		| compare a longword
-	bne	bcnoteq			| not equal, return non-zero
+	bne	Lbcnoteq		| not equal, return non-zero
 	subql	#1,d1			| adjust count
-	bne	bclloop			| still more, keep comparing
+	bne	Lbclloop		| still more, keep comparing
 	andl	#3,d0			| what remains
-	beq	bcdone			| nothing, all done
-bcbloop:
+	beq	Lbcdone			| nothing, all done
+Lbcbloop:
 	cmpmb	a0@+,a1@+		| compare a byte
-	bne	bcnoteq			| not equal, return non-zero
+	bne	Lbcnoteq		| not equal, return non-zero
 	subql	#1,d0			| adjust count
-	bne	bcbloop			| still more, keep going
+	bne	Lbcbloop		| still more, keep going
 	rts
-bcnoteq:
+Lbcnoteq:
 	moveq	#1,d0
-bcdone:
+Lbcdone:
 	rts
