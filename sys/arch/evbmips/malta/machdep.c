@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/09/26 16:00:28 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/10/27 18:36:26 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2003/09/26 16:00:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/10/27 18:36:26 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -266,8 +266,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 #else
 	panic("malta: not configured to use serial console");
 #endif /* NCOM > 0 */
-
-	consinit();
 
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = ctob(physmem);
