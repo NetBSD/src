@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore_old.c,v 1.2 1997/08/25 19:31:54 kleink Exp $	*/
+/*	$NetBSD: savecore_old.c,v 1.3 1997/08/26 07:13:18 veego Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore_old.c,v 1.2 1997/08/25 19:31:54 kleink Exp $";
+static char rcsid[] = "$NetBSD: savecore_old.c,v 1.3 1997/08/26 07:13:18 veego Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,7 @@ kmem_setup()
 	}
 	if (kernel)
 		return;
-	(void)fseek(fp, (current_nl[X_VERSION].n_value, SEEK_SET);
+	(void)fseek(fp, current_nl[X_VERSION].n_value, SEEK_SET);
 	(void)fgets(vers, sizeof(vers), fp);
 
 	/* Don't fclose(fp), we use dumpfd later. */
