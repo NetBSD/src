@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.2 2004/04/24 17:35:27 cl Exp $ */
+/* $NetBSD: xbdvar.h,v 1.3 2004/04/24 20:05:49 cl Exp $ */
 
 /*
  *
@@ -46,6 +46,7 @@ struct xbd_softc {
 struct xbd_attach_args {
 	const char 		*xa_device;
 	int			xa_disk;
+	struct dk_intf		*xa_dkintf;
 };
 
 int xbd_scan(struct device *, struct xbd_attach_args *, cfprint_t);
