@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.34 2003/12/14 01:32:01 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.35 2003/12/14 01:33:15 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -179,7 +179,6 @@ pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
