@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.169 2003/01/20 20:51:33 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.170 2003/01/21 06:18:41 sjg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,12 +133,12 @@ void fpu_init __P((struct cpu_info *));
 #define SRMMU_IMPL(mmusr)	((u_int)(mmusr) >> 28)
 #define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
 
+int bootmid;		/* Module ID of boot CPU */
 #if defined(MULTIPROCESSOR)
 void cpu_spinup __P((struct cpu_info *));
 struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
-int bootmid;		/* Module ID of boot CPU */
 int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
 
 /* lock this to send IPI's */
