@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.508 2004/11/12 05:29:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.509 2004/11/12 05:32:27 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7891,3 +7891,9 @@ xfree/xc/programs/Xserver/hw/netbsd/alpha/sfb/sfbwindow.c	1.2
 	video adapter.  Change REGION_INIT() to REGION_NULL() where used with
 	NullBox.  Both servers will now run on an alpha with a tga card.
 	[mhitch, ticket #925]
+
+sbin/sysctl/sysctl.8				1.116
+lib/libc/gen/sysctl.3				1.140
+
+	Add vm.bufcache, vm.bufmem, vm.bufmem_lowater, m.bufmem_hiwater
+	[daniel, ticket #926]
