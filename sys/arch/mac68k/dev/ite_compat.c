@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.1.2.2 2000/02/07 08:20:48 scottr Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.1.2.3 2000/02/11 17:41:18 scottr Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -27,7 +27,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * The main thing to realize about this emulator is that the old console
+ * emulator was largely compatible with the DEC VT-220.  Since the
+ * wsdiplay driver has a more complete emulation of that terminal, it's
+ * reasonable to pass virtually everything up to that driver without
+ * modification.
+ */
+
 #include "ite.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,18 +44,19 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 
+#include <dev/cons.h>
+
 #include <machine/cpu.h>
 #include <machine/iteioctl.h>
-#include <mac68k/dev/itevar.h>
 
 cdev_decl(ite);
 cdev_decl(wsdisplay);
 void		iteattach __P((int));
 
-dev_t		wscdev;
-static int	bell_freq = 1880;
-static int	bell_length = 10;
-static int	bell_volume = 100;
+static int	ite_initted = 0;
+static int	ite_bell_freq = 1880;
+static int	ite_bell_length = 10;
+static int	ite_bell_volume = 100;
 
 
 /*ARGSUSED*/
@@ -54,22 +64,27 @@ void
 iteattach(n)
 	int n;
 {
-	/* Do nothing; there's only one console. */
-}
+#if NWSDISPLAY > 0
+	int maj;
 
-/*ARGSUSED*/
-void
-ite_attach(parent, dev)
-	struct device *parent;
-	dev_t dev;
-{
-	wscdev = dev;
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == wsdisplayopen)
+			break;
+	KASSERT(maj < nchrdev);
+
+	if (maj != major(cn_tab->cn_dev))
+		return;
+
+	cn_tab->cn_dev = cn_tab->cn_dev;
+	ite_initted = 1;
+#endif
 }
 
 /*
  * Tty handling functions
  */
 
+/*ARGSUSED*/
 int
 iteopen(dev, mode, devtype, p)
 	dev_t dev;
@@ -77,9 +92,11 @@ iteopen(dev, mode, devtype, p)
 	int devtype;
 	struct proc *p;
 {
-	return wsdisplayopen(wscdev, mode, devtype, p);
+	return ite_initted ?
+	    wsdisplayopen(cn_tab->cn_dev, mode, devtype, p) : (ENXIO);
 }
 
+/*ARGSUSED*/
 int
 iteclose(dev, flag, mode, p)
 	dev_t dev;
@@ -87,39 +104,47 @@ iteclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	return wsdisplayclose(wscdev, flag, mode, p);
+	return ite_initted ?
+	    wsdisplayclose(cn_tab->cn_dev, flag, mode, p) : (ENXIO);
 }
 
+/*ARGSUSED*/
 int
 iteread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	return wsdisplayread(wscdev, uio, flag);
+	return ite_initted ?
+	    wsdisplayread(cn_tab->cn_dev, uio, flag) : (ENXIO);
 }
 
+/*ARGSUSED*/
 int
 itewrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	return wsdisplaywrite(wscdev, uio, flag);
+	return ite_initted ?
+	    wsdisplaywrite(cn_tab->cn_dev, uio, flag) : (ENXIO);
 }
 
+/*ARGSUSED*/
 struct tty *
 itetty(dev)
 	dev_t dev;
 {
-	return wsdisplaytty(wscdev);
+	return ite_initted ? wsdisplaytty(cn_tab->cn_dev) : (NULL);
 }
 
+/*ARGSUSED*/
 void 
 itestop(struct tty *tp, int flag)
 {
 }
 
+/*ARGSUSED*/
 int
 iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
@@ -128,9 +153,13 @@ iteioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
+	if (!ite_initted)
+		return (ENXIO);
+
 	switch (cmd) {
 	case ITEIOC_RINGBELL:
-		return mac68k_ring_bell(bell_freq, bell_length, bell_volume);
+		return mac68k_ring_bell(ite_bell_freq,
+		    ite_bell_length, ite_bell_volume);
 	case ITEIOC_SETBELL:
 		{
 			struct bellparams *bp = (void *)addr;
@@ -143,22 +172,22 @@ iteioctl(dev, cmd, addr, flag, p)
 			if (bp->vol < 0 || bp->vol > 100)
 				return (EINVAL);
 
-			bell_freq = bp->freq;
-			bell_length = bp->len;
-			bell_volume = bp->vol;
+			ite_bell_freq = bp->freq;
+			ite_bell_length = bp->len;
+			ite_bell_volume = bp->vol;
 			return (0);
 		}
 	case ITEIOC_GETBELL:
 		{
 			struct bellparams *bp = (void *)addr;
 
-			bell_freq = bp->freq;
-			bell_length = bp->len;
-			bell_volume = bp->vol;
+			ite_bell_freq = bp->freq;
+			ite_bell_length = bp->len;
+			ite_bell_volume = bp->vol;
 			return (0);
 		}
 	default:
-		return wsdisplayioctl(wscdev, cmd, addr, flag, p);
+		return wsdisplayioctl(cn_tab->cn_dev, cmd, addr, flag, p);
 	}
 
 	return (ENOTTY);
