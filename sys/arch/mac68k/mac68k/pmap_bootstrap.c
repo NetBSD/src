@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.37 1997/09/19 13:54:41 leo Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.38 1997/10/20 08:14:18 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -72,6 +72,8 @@ extern vm_size_t mem_size;
 extern int protection_codes[];
 
 extern vm_offset_t reserve_dumppages __P((vm_offset_t));
+
+extern	int	zsinited;
 
 /*
  * These are used to map the RAM:
@@ -630,8 +632,7 @@ bootstrap_mac68k(tc)
 	 * of this function (where we start using the MMU, so the new
 	 * address is correct.
 	 */
-	if (   (mac68k_machine.serial_boot_echo)
-	    || (mac68k_machine.serial_console))
+	if (zsinited != 0)
 		zs_init();
 
 	videoaddr = newvideoaddr;

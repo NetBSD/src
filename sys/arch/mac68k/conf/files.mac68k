@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.72 1997/08/27 11:25:49 bouyer Exp $
+#	$NetBSD: files.mac68k,v 1.73 1997/10/20 08:13:26 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -87,13 +87,13 @@ file	arch/mac68k/dev/esp.c		esp needs-flag
 device	zsc { channel = -1 }
 attach	zsc at obio_norm
 file	arch/mac68k/dev/zs.c		zsc needs-flag
-file	arch/mac68k/dev/z8530sc.c	zsc
-#file	dev/ic/z8530sc.c		zsc
+#file	arch/mac68k/dev/z8530sc.c	zsc
+file	dev/ic/z8530sc.c		zsc
 
 device	zstty: tty
 attach	zstty at zsc
-file	arch/mac68k/dev/z8530tty.c	zstty needs-flag
-#file	dev/ic/z8530tty.c		zstty needs-flag
+#file	arch/mac68k/dev/z8530tty.c	zstty needs-flag
+file	dev/ic/z8530tty.c		zstty needs-flag
 
 # This one is out of alphabetical order
 device	fpu
