@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.10 2005/03/01 13:41:43 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.11 2005/03/07 13:59:30 hannken Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.10 2005/03/01 13:41:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.11 2005/03/07 13:59:30 hannken Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.50 2005/02/17 05:32:24 darrenr Exp";
@@ -1079,13 +1079,13 @@ fr_info_t *fin;
 
 	fi = &fin->fin_fi;
 	fi->fi_flx |= FI_TCPUDP;
-
-	if (frpr_pullup(fin, sizeof(*udp)) == -1) {
-		fi->fi_flx |= FI_SHORT;
+	if (fin->fin_off != 0)
 		return;
-	}
 
-	if (!fin->fin_off && (fin->fin_dlen > 3)) {
+	if (frpr_pullup(fin, sizeof(*udp)) == -1)
+		return;
+
+	if (fin->fin_dlen > 3) {
 		udp = fin->fin_dp;
 
 		fin->fin_sport = ntohs(udp->uh_sport);
