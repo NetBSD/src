@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.44 2003/12/20 07:10:01 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.45 2005/01/02 20:41:20 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.44 2003/12/20 07:10:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.45 2005/01/02 20:41:20 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,7 @@ tfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
-		if ((sc->sc_blanked == 0) ^ turnoff) {
+		if (sc->sc_blanked != turnoff) {
 			sc->sc_blanked = turnoff;
 #if 0	/* XXX later XXX */		
 	To turn off;
