@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.22 2003/04/10 22:07:01 christos Exp $
+# 	$NetBSD: INSTALL,v 1.23 2003/09/06 03:25:29 itojun Exp $
 
 #	config for bootable floppy kernel
 #
@@ -141,3 +141,5 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	md		1	# memory disk device
 pseudo-device	sl		1	# SLIP interfaces
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

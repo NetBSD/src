@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.221 2003/08/07 12:06:16 soren Exp $
+#	$NetBSD: INSTALL,v 1.222 2003/09/06 03:25:26 itojun Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -715,7 +715,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)

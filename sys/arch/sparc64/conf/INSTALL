@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL,v 1.15 2003/06/20 03:15:06 nakayama Exp $
+# 	$NetBSD: INSTALL,v 1.16 2003/09/06 03:25:31 itojun Exp $
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"INSTALL-$Revision: 1.15 $"
+#ident 		"INSTALL-$Revision: 1.16 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
@@ -30,3 +30,5 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `miniroot' image (which is built in distrib/sparc64/miniroot).
 options 	MEMORY_DISK_ROOT_SIZE=10240	# size of memory disk, in blocks
+
+pseudo-device	rnd			# /dev/random and /dev/urandom
