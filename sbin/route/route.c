@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.68 2003/08/07 10:04:38 agc Exp $	*/
+/*	$NetBSD: route.c,v 1.69 2003/09/16 09:34:48 cube Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.68 2003/08/07 10:04:38 agc Exp $");
+__RCSID("$NetBSD: route.c,v 1.69 2003/09/16 09:34:48 cube Exp $");
 #endif
 #endif /* not lint */
 
@@ -1067,7 +1067,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *isin)
 	} else if (net < 57344) { /* 224 * 256 */
 		addr = net << IN_CLASSB_NSHIFT;
 		mask = IN_CLASSC_NET;
-	} else if (net < 65536) { /* XXX See above */
+	} else if (net < 65536) {
 		addr = net << IN_CLASSB_NSHIFT;
 		mask = IN_CLASSB_NET;
 	} else if (net < 14680064L) { /* 224 * 65536 */
