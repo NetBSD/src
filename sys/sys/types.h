@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
+/*	$NetBSD: types.h,v 1.30 1997/10/16 23:34:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -67,13 +67,13 @@ typedef	quad_t *	qaddr_t;
 
 typedef	char *		caddr_t;	/* core address */
 typedef	int32_t		daddr_t;	/* disk address */
-typedef	int32_t		dev_t;		/* device number */
+typedef	u_int32_t	dev_t;		/* device number */
 typedef	u_int32_t	fixpt_t;	/* fixed point number */
 typedef	u_int32_t	gid_t;		/* group id */
 typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
-typedef	u_int16_t	mode_t;		/* permissions */
-typedef	u_int16_t	nlink_t;	/* link count */
+typedef	u_int32_t	mode_t;		/* permissions */
+typedef	u_int32_t	nlink_t;	/* link count */
 typedef	quad_t		off_t;		/* file offset */
 typedef	int32_t		pid_t;		/* process id */
 typedef quad_t		rlim_t;		/* resource limit */
