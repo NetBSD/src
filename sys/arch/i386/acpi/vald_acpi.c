@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.11 2003/07/01 20:24:46 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.12 2003/07/02 13:18:17 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,12 +83,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.11 2003/07/01 20:24:46 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.12 2003/07/02 13:18:17 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -472,7 +471,7 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 #endif
 	}
 
-	free(buf.Pointer, M_DEVBUF);
+	AcpiOsFree(buf.Pointer);
 	return (AE_OK);
 }
 
