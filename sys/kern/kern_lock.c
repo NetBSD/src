@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.28 2000/05/02 04:32:33 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.29 2000/05/03 13:53:59 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -210,10 +210,10 @@ do {									\
 struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
 
 #define	SPINLOCK_LIST_LOCK()						\
-	__cpu_simple_lock(&spinlock_list_slock->lock_data)
+	__cpu_simple_lock(&spinlock_list_slock.lock_data)
 
 #define	SPINLOCK_LIST_UNLOCK()						\
-	__cpu_simple_unlock(&spinlock_list_slock->lock_data)
+	__cpu_simple_unlock(&spinlock_list_slock.lock_data)
 #else
 #define	SPINLOCK_LIST_LOCK()	/* nothing */
 
@@ -675,10 +675,10 @@ TAILQ_HEAD(, simplelock) simplelock_list =
 struct simplelock simplelock_list_slock = SIMPLELOCK_INITIALIZER;
 
 #define	SLOCK_LIST_LOCK()						\
-	__cpu_simple_lock(&simplelock_list_slock->lock_data)
+	__cpu_simple_lock(&simplelock_list_slock.lock_data)
 
 #define	SLOCK_LIST_UNLOCK()						\
-	__cpu_simple_unlock(&simplelock_list_slock->lock_data)
+	__cpu_simple_unlock(&simplelock_list_slock.lock_data)
 
 #if defined(__HAVE_ATOMIC_OPERATIONS) /* { */
 #define	SLOCK_COUNT(x)							\
