@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.75 1995/06/26 05:20:40 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.76 1995/06/26 05:47:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -353,7 +353,7 @@ fdprobe(parent, match, aux)
 	delay(2000000);
 	out_fdc(iobase, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
-#ifdef DEBUG
+#ifdef FD_DEBUG
 	{
 		int i;
 		printf("fdprobe: status");
@@ -490,7 +490,7 @@ fdstrategy(bp)
 
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
-#ifdef DEBUG
+#ifdef FD_DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
 #endif
@@ -894,7 +894,7 @@ loop:
 		    fdc->sc_drq);
 #endif
 		outb(iobase + fdctl, type->rate);
-#ifdef DEBUG
+#ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
 		    sec, nblks);
