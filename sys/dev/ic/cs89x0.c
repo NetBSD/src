@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.4 2002/04/18 21:58:02 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.5 2002/05/14 19:23:45 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.4 2002/04/18 21:58:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.5 2002/05/14 19:23:45 augustss Exp $");
 
 #include "opt_inet.h"
 
@@ -239,31 +239,31 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.4 2002/04/18 21:58:02 thorpej Exp $");
 /*
  * FUNCTION PROTOTYPES
  */
-void	cs_get_default_media __P((struct cs_softc *));
-int	cs_get_params __P((struct cs_softc *));
-int	cs_get_enaddr __P((struct cs_softc *));
-int	cs_reset_chip __P((struct cs_softc *));
-void	cs_reset __P((void *));
-int	cs_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	cs_initChip __P((struct cs_softc *));
-void	cs_buffer_event __P((struct cs_softc *, u_int16_t));
-void	cs_transmit_event __P((struct cs_softc *, u_int16_t));
-void	cs_receive_event __P((struct cs_softc *, u_int16_t));
-void	cs_process_receive __P((struct cs_softc *));
-void	cs_process_rx_early __P((struct cs_softc *));
-void	cs_start_output __P((struct ifnet *));
-void	cs_copy_tx_frame __P((struct cs_softc *, struct mbuf *));
-void	cs_set_ladr_filt __P((struct cs_softc *, struct ethercom *));
-u_int16_t cs_hash_index __P((char *));
-void	cs_counter_event __P((struct cs_softc *, u_int16_t));
+void	cs_get_default_media(struct cs_softc *);
+int	cs_get_params(struct cs_softc *);
+int	cs_get_enaddr(struct cs_softc *);
+int	cs_reset_chip(struct cs_softc *);
+void	cs_reset(void *);
+int	cs_ioctl(struct ifnet *, u_long, caddr_t);
+void	cs_initChip(struct cs_softc *);
+void	cs_buffer_event(struct cs_softc *, u_int16_t);
+void	cs_transmit_event(struct cs_softc *, u_int16_t);
+void	cs_receive_event(struct cs_softc *, u_int16_t);
+void	cs_process_receive(struct cs_softc *);
+void	cs_process_rx_early(struct cs_softc *);
+void	cs_start_output(struct ifnet *);
+void	cs_copy_tx_frame(struct cs_softc *, struct mbuf *);
+void	cs_set_ladr_filt(struct cs_softc *, struct ethercom *);
+u_int16_t cs_hash_index(char *);
+void	cs_counter_event(struct cs_softc *, u_int16_t);
 
-int	cs_mediachange __P((struct ifnet *));
-void	cs_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	cs_mediachange(struct ifnet *);
+void	cs_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int cs_enable __P((struct cs_softc *));
-static void cs_disable __P((struct cs_softc *));
-static void cs_stop __P((struct ifnet *, int));
-static void cs_power __P((int, void *));
+static int cs_enable(struct cs_softc *);
+static void cs_disable(struct cs_softc *);
+static void cs_stop(struct ifnet *, int);
+static void cs_power(int, void *);
 
 /*
  * GLOBAL DECLARATIONS
@@ -306,10 +306,8 @@ int cs_default_media[] = {
 int cs_default_nmedia = sizeof(cs_default_media) / sizeof(cs_default_media[0]);
 
 int 
-cs_attach(sc, enaddr, media, nmedia, defmedia)
-	struct cs_softc *sc;
-	u_int8_t *enaddr;
-	int *media, nmedia, defmedia;
+cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media, 
+	  int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *chipname, *medname;
@@ -479,8 +477,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 }
 
 int
-cs_detach(sc)
-	struct cs_softc *sc;
+cs_detach(struct cs_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -517,8 +514,7 @@ cs_detach(sc)
 }
 
 void
-cs_get_default_media(sc)
-	struct cs_softc *sc;
+cs_get_default_media(struct cs_softc *sc)
 {
 	u_int16_t adp_cfg, xmit_ctl;
 
@@ -567,8 +563,7 @@ cs_get_default_media(sc)
 }
 
 int 
-cs_get_params(sc)
-	struct cs_softc *sc;
+cs_get_params(struct cs_softc *sc)
 {
 	u_int16_t isaConfig;
 	u_int16_t adapterConfig;
@@ -610,8 +605,7 @@ cs_get_params(sc)
 }
 
 int 
-cs_get_enaddr(sc)
-	struct cs_softc *sc;
+cs_get_enaddr(struct cs_softc *sc)
 {
 	u_int16_t *myea;
 
@@ -644,8 +638,7 @@ cs_get_enaddr(sc)
 }
 
 int 
-cs_reset_chip(sc)
-	struct cs_softc *sc;
+cs_reset_chip(struct cs_softc *sc)
 {
 	int intState;
 	int x;
@@ -711,9 +704,7 @@ cs_reset_chip(sc)
 }
 
 int
-cs_verify_eeprom(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+cs_verify_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	u_int16_t self_status;
 
@@ -727,11 +718,8 @@ cs_verify_eeprom(iot, ioh)
 }
 
 int 
-cs_read_eeprom(iot, ioh, offset, pValue)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
-	u_int16_t *pValue;
+cs_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int offset,
+	       u_int16_t *pValue)
 {
 	int x;
 
@@ -766,8 +754,7 @@ cs_read_eeprom(iot, ioh, offset, pValue)
 }
 
 void 
-cs_initChip(sc)
-	struct cs_softc *sc;
+cs_initChip(struct cs_softc *sc)
 {
 	u_int16_t busCtl;
 	u_int16_t selfCtl;
@@ -964,8 +951,7 @@ cs_initChip(sc)
 }
 
 int 
-cs_init(ifp)
-	struct ifnet *ifp;
+cs_init(struct ifnet *ifp)
 {
 	int intState;
 	int error = CS_OK;
@@ -1012,9 +998,7 @@ out:
 }
 
 void 
-cs_set_ladr_filt(sc, ec)
-	struct cs_softc *sc;
-	struct ethercom *ec;
+cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
@@ -1099,8 +1083,7 @@ cs_set_ladr_filt(sc, ec)
 }
 
 u_int16_t
-cs_hash_index(addr)
-	char *addr;
+cs_hash_index(char *addr)
 {
 	uint32_t crc;
 	uint16_t hash_code;
@@ -1112,8 +1095,7 @@ cs_hash_index(addr)
 }
 
 void 
-cs_reset(arg)
-	void *arg;
+cs_reset(void *arg)
 {
 	struct cs_softc *sc = arg;
 
@@ -1125,10 +1107,7 @@ cs_reset(arg)
 }
 
 int 
-cs_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+cs_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct cs_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1166,8 +1145,7 @@ cs_ioctl(ifp, cmd, data)
 }
 
 int
-cs_mediachange(ifp)
-	struct ifnet *ifp;
+cs_mediachange(struct ifnet *ifp)
 {
 
 	/*
@@ -1179,9 +1157,7 @@ cs_mediachange(ifp)
 }
 
 void
-cs_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+cs_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct cs_softc *sc = ifp->if_softc;
 
@@ -1199,8 +1175,7 @@ cs_mediastatus(ifp, ifmr)
 }
 
 int 
-cs_intr(arg)
-	void *arg;
+cs_intr(void *arg)
 {
 	struct cs_softc *sc = arg;
 	u_int16_t Event;
@@ -1266,9 +1241,7 @@ cs_intr(arg)
 }
 
 void 
-cs_counter_event(sc, cntEvent)
-	struct cs_softc *sc;
-	u_int16_t cntEvent;
+cs_counter_event(struct cs_softc *sc, u_int16_t cntEvent)
 {
 	struct ifnet *ifp;
 	u_int16_t errorCount;
@@ -1306,9 +1279,7 @@ cs_counter_event(sc, cntEvent)
 }
 
 void 
-cs_buffer_event(sc, bufEvent)
-	struct cs_softc *sc;
-	u_int16_t bufEvent;
+cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 {
 	struct ifnet *ifp;
 
@@ -1362,9 +1333,7 @@ cs_buffer_event(sc, bufEvent)
 }
 
 void 
-cs_transmit_event(sc, txEvent)
-	struct cs_softc *sc;
-	u_int16_t txEvent;
+cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1429,9 +1398,7 @@ cs_transmit_event(sc, txEvent)
 }
 
 void
-cs_print_rx_errors(sc, rxEvent)
-	struct cs_softc *sc;
-	u_int16_t rxEvent;
+cs_print_rx_errors(struct cs_softc *sc, u_int16_t rxEvent)
 {
 
 	if (rxEvent & RX_EVENT_RUNT)
@@ -1452,9 +1419,7 @@ cs_print_rx_errors(sc, rxEvent)
 }
 
 void 
-cs_receive_event(sc, rxEvent)
-	struct cs_softc *sc;
-	u_int16_t rxEvent;
+cs_receive_event(struct cs_softc *sc, u_int16_t rxEvent)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1495,9 +1460,7 @@ cs_receive_event(sc, rxEvent)
 }
 
 void
-cs_ether_input(sc, m)
-	struct cs_softc *sc;
-	struct mbuf *m;
+cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1517,8 +1480,7 @@ cs_ether_input(sc, m)
 }
 
 void 
-cs_process_receive(sc)
-	struct cs_softc *sc;
+cs_process_receive(struct cs_softc *sc)
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
@@ -1626,8 +1588,7 @@ cs_process_receive(sc)
 }
 
 void 
-cs_process_rx_early(sc)
-	struct cs_softc *sc;
+cs_process_rx_early(struct cs_softc *sc)
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
@@ -1728,8 +1689,7 @@ cs_process_rx_early(sc)
 }
 
 void 
-cs_start_output(ifp)
-	struct ifnet *ifp;
+cs_start_output(struct ifnet *ifp)
 {
 	struct cs_softc *sc;
 	struct mbuf *pMbuf;
@@ -1882,9 +1842,7 @@ cs_start_output(ifp)
 }
 
 void 
-cs_copy_tx_frame(sc, m0)
-	struct cs_softc *sc;
-	struct mbuf *m0;
+cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 {
 	struct mbuf *m;
 	int len, leftover, frameoff;
@@ -1979,8 +1937,7 @@ cs_copy_tx_frame(sc, m0)
 }
 
 static int
-cs_enable(sc)
-	struct cs_softc *sc;
+cs_enable(struct cs_softc *sc)
 {
 
 	if (CS_IS_ENABLED(sc) == 0) {
@@ -1998,8 +1955,7 @@ cs_enable(sc)
 }
 
 static void
-cs_disable(sc)
-	struct cs_softc *sc;
+cs_disable(struct cs_softc *sc)
 {
 
 	if (CS_IS_ENABLED(sc)) {
@@ -2011,9 +1967,7 @@ cs_disable(sc)
 }
 
 static void
-cs_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+cs_stop(struct ifnet *ifp, int disable)
 {
 	struct cs_softc *sc = ifp->if_softc;
 
@@ -2030,9 +1984,7 @@ cs_stop(ifp, disable)
 }
 
 int
-cs_activate(self, act)
-	struct device *self;
-	enum devact act;
+cs_activate(struct device *self, enum devact act)
 {
 	struct cs_softc *sc = (void *)self;
 	int s, error = 0;
@@ -2053,9 +2005,7 @@ cs_activate(self, act)
 }
 
 static void
-cs_power(why, arg)
-	int why;
-	void *arg;
+cs_power(int why, void *arg)
 {
 	struct cs_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
