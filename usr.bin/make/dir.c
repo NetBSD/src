@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.29 2002/01/18 19:18:23 pk Exp $	*/
+/*	$NetBSD: dir.c,v 1.30 2002/01/26 22:36:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.29 2002/01/18 19:18:23 pk Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.30 2002/01/26 22:36:41 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.29 2002/01/18 19:18:23 pk Exp $");
+__RCSID("$NetBSD: dir.c,v 1.30 2002/01/26 22:36:41 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -986,9 +986,9 @@ Dir_FindFile (name, path)
      * (fish.c) and what pmake finds (./fish.c).
      * Unless we found the magic DOTLAST path...
      */
-    if (!lastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL)
-	return file;
-
+    if (!lastDot && name[0] != '/')
+	if ((file = DirFindDot(hasSlash, name, cp)) != NULL)
+	    return file;
 
     /*
      * We look through all the directories on the path seeking one which
@@ -1012,8 +1012,9 @@ Dir_FindFile (name, path)
     }
     Lst_Close (path);
 
-    if (lastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL)
-	return file;
+    if (lastDot && name[0] != '/')
+	if ((file = DirFindDot(hasSlash, name, cp)) != NULL)
+	    return file;
 
     /*
      * We didn't find the file on any existing members of the directory.
