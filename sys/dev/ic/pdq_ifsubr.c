@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.13 1998/05/21 20:44:02 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.14 1998/05/24 21:40:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -185,37 +185,32 @@ pdq_ifstart(
 	return;
     }
     for (;; tx = 1) {
-#if defined(PDQ_BUS_DMA) && !defined(PDQ_BUS_DMA_NOTX)
-	bus_dmamap_t map;
-#endif
 	IF_DEQUEUE(ifq, m);
 	if (m == NULL)
 	    break;
 #if defined(PDQ_BUS_DMA) && !defined(PDQ_BUS_DMA_NOTX)
-	if (m->m_flags & M_HASDMAMAP) {
-	    map = M_GETCTX(m, bus_dmamap_t);
-	} else {
-	    map = NULL;
-	    if (!bus_dmamap_create(sc->sc_dmatag, 0x1FFF, 255, 0x1FFF, 0, BUS_DMA_NOWAIT, &map)) {
+	if ((m->m_flags & M_HASTXDMAMAP) == 0) {
+	    bus_dmamap_t map;
+	    if (!bus_dmamap_create(sc->sc_dmatag, m->m_pkthdr.len, 255,
+				   m->m_pkthdr.len, 0, BUS_DMA_NOWAIT, &map)) {
 		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
-		    bus_dmamap_sync(sc->sc_dmatag, map, 0, m->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
+		    bus_dmamap_sync(sc->sc_dmatag, map, 0, m->m_pkthdr.len,
+				    BUS_DMASYNC_PREWRITE);
 		    M_SETCTX(m, map);
-		    m->m_flags |= M_HASDMAMAP;
+		    m->m_flags |= M_HASTXDMAMAP;
 		}
 	    }
-	    if ((m->m_flags & M_HASDMAMAP) == 0) {
-		ifp->if_flags |= IFF_OACTIVE;
-		IF_PREPEND(ifq, m);
+	    if ((m->m_flags & M_HASTXDMAMAP) == 0)
 		break;
-	    }
 	}
 #endif
 
-	if (pdq_queue_transmit_data(sc->sc_pdq, m) == PDQ_FALSE) {
-	    ifp->if_flags |= IFF_OACTIVE;
-	    IF_PREPEND(ifq, m);
+	if (pdq_queue_transmit_data(sc->sc_pdq, m) == PDQ_FALSE)
 	    break;
-	}
+    }
+    if (m != NULL) {
+	ifp->if_flags |= IFF_OACTIVE;
+	IF_PREPEND(ifq, m);
     }
     if (tx)
 	PDQ_DO_TYPE2_PRODUCER(sc->sc_pdq);
@@ -232,13 +227,25 @@ pdq_os_receive_pdu(
     struct fddi_header *fh = mtod(m, struct fddi_header *);
 
     sc->sc_if.if_ipackets++;
-#if NBPFILTER > 0
-#if defined(PDQ_BUS_MAP)
-    pdq_os_databuf_sync(sc, m, 0, pktlen, BUS_DMASYNC_POSTREAD);
-    bus_dmamap_unload(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
-    bus_dmamap_destroy(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
-    m->m_flags &= ~M_HASDMAMAP;
+#if defined(PDQ_BUS_DMA)
+    {
+	/*
+	 * Even though the first mbuf start at the frame control octet,
+	 * the dmamap PDQ_RX_FC_OFFSET octets earlier.  Any additional
+	 * mbufs will start normally.
+	 */
+	int offset = PDQ_RX_FC_OFFSET;
+	struct mbuf *m0;
+	for (m0 = m; m0 != NULL; m0 = m0->m_next, offset = 0) {
+	    pdq_os_databuf_sync(sc, m0, offset, m0->m_len, BUS_DMASYNC_POSTREAD);
+	    bus_dmamap_unload(sc->sc_dmatag, M_GETCTX(m0, bus_dmamap_t));
+	    bus_dmamap_destroy(sc->sc_dmatag, M_GETCTX(m0, bus_dmamap_t));
+	    m0->m_flags &= ~M_HASRXDMAMAP;
+	    M_SETCTX(m0, NULL);
+	}
+    }
 #endif
+#if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
 #endif
@@ -246,12 +253,6 @@ pdq_os_receive_pdu(
 	PDQ_OS_DATABUF_FREE(pdq, m);
 	return;
     }
-#if NBPFILTER == 0 && defined(PDQ_BUS_MAP)
-    pdq_os_databuf_sync(sc, m, 0, pktlen, BUS_DMASYNC_POSTREAD);
-    bus_dmamap_unload(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
-    bus_dmamap_destroy(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
-    m->m_flags &= ~M_HASDMAMAP;
-#endif
 
     m->m_data += sizeof(struct fddi_header);
     m->m_len  -= sizeof(struct fddi_header);
@@ -704,11 +705,11 @@ pdq_os_databuf_free(
     pdq_os_ctx_t *sc,
     struct mbuf *m)
 {
-    if (m->m_flags & M_HASDMAMAP) {
+    if (m->m_flags & (M_HASRXDMAMAP|M_HASTXDMAMAP)) {
 	bus_dmamap_t map = M_GETCTX(m, bus_dmamap_t);
 	bus_dmamap_unload(sc->sc_dmatag, map);
 	bus_dmamap_destroy(sc->sc_dmatag, map);
-	m->m_flags ^= M_HASDMAMAP;
+	m->m_flags &= ~(M_HASRXDMAMAP|M_HASTXDMAMAP);
     }
     m_freem(m);
 }
@@ -721,26 +722,31 @@ pdq_os_databuf_alloc(
     bus_dmamap_t map;
 
     MGETHDR(m, M_DONTWAIT, MT_DATA);
-    if (m == NULL)
+    if (m == NULL) {
+	printf("%s: can't alloc small buf\n", sc->sc_dev.dv_xname);
 	return NULL;
+    }
     MCLGET(m, M_DONTWAIT);
     if ((m->m_flags & M_EXT) == 0) {
+	printf("%s: can't alloc cluster\n", sc->sc_dev.dv_xname);
         m_free(m);
 	return NULL;
     }
-    m->m_len = PDQ_OS_DATABUF_SIZE;
+    m->m_pkthdr.len = m->m_len = PDQ_OS_DATABUF_SIZE;
 
-    if (!bus_dmamap_create(sc->sc_dmatag, PDQ_OS_DATABUF_SIZE,
+    if (bus_dmamap_create(sc->sc_dmatag, PDQ_OS_DATABUF_SIZE,
 			   1, PDQ_OS_DATABUF_SIZE, 0, BUS_DMA_NOWAIT, &map)) {
+	printf("%s: can't create dmamap\n", sc->sc_dev.dv_xname);
 	m_free(m);
 	return NULL;
     }
-    if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+    if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+	printf("%s: can't load dmamap\n", sc->sc_dev.dv_xname);
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 	m_free(m);
 	return NULL;
     }
-    m->m_flags |= M_HASDMAMAP;
+    m->m_flags |= M_HASRXDMAMAP;
     M_SETCTX(m, map);
     return m;
 }
