@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.5 1994/02/10 05:33:21 briggs Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.6 1994/04/19 13:28:29 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -172,7 +172,7 @@ deliver(fd, name, lockfile)
 	struct passwd *pw;
 	int created, mbfd, nr, nw, off, rval=0, lfd=-1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
-	off_t curoff, lseek();
+	off_t curoff;
 
 	/*
 	 * Disallow delivery to unknown names -- special mailboxes can be
@@ -209,9 +209,9 @@ deliver(fd, name, lockfile)
 	}
 	}
 
-	curoff = lseek(mbfd, 0L, SEEK_END);
+	curoff = lseek(mbfd, 0, SEEK_END);
 	(void)sprintf(biffmsg, "%s@%ld\n", name, curoff);
-	if (lseek(fd, 0L, SEEK_SET) == (off_t)-1) {
+	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		err(FATAL, "temporary file: %s", strerror(errno));
 		rval = 1;
 		goto bad;
