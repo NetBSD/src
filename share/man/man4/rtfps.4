@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtfps.4,v 1.7 2001/09/11 22:52:53 wiz Exp $
+.\"	$NetBSD: rtfps.4,v 1.8 2002/01/21 18:05:27 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -42,8 +42,7 @@
 .Os
 .Sh NAME
 .Nm rtfps
-.Nd
-multiplexing serial communications interface
+.Nd multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "rtfps0 at isa? port 0x1230 irq 10"
 .Cd "com2 at rtfps0 slave 0"
@@ -54,7 +53,7 @@ multiplexing serial communications interface
 The
 .Nm rtfps
 driver provides support for IBM RT PC boards that multiplex together up to four
-.Rn EIA
+.Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
