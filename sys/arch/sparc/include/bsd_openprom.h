@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.6 1996/03/14 19:49:06 christos Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.7 1996/03/16 23:51:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -312,3 +312,8 @@ struct nodeops {
 				   int len));
 	caddr_t	(*no_nextprop) __P((int node, caddr_t name));
 };
+
+void	romhalt __P((void))
+    __attribute__((__noreturn__));
+void	romboot __P((char *))
+    __attribute__((__noreturn__));
