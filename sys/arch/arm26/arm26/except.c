@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13 2000/08/25 16:43:46 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.14 2000/12/09 18:57:17 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13 2000/08/25 16:43:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.14 2000/12/09 18:57:17 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -255,7 +255,7 @@ swi_handler(struct trapframe *tf)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
+		ktrsyscall(p, code, argsize, (register_t *)args);
 #endif
 
 	rval[0] = 0;
@@ -315,7 +315,7 @@ child_return(void *arg)
 	userret(p, tf->tf_r15 & R15_PC, 0);
 #ifdef KTRACE
         if (KTRPOINT(p, KTR_SYSRET))
-                ktrsysret(p, SYS_fork /* XXX */, 0, &tf->tf_r0);
+                ktrsysret(p, SYS_fork /* XXX */, 0, tf->tf_r0);
 #endif
 }
 
