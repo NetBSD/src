@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.80 2004/10/16 18:08:50 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.81 2004/10/20 13:48:32 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.80 2004/10/16 18:08:50 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.81 2004/10/20 13:48:32 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ uaudio_add_selector(struct uaudio_softc *sc, const usb_descriptor_t *v,
 	mix.minval = 1;
 	mix.maxval = d->bNrInPins;
 	mix.mul = mix.maxval - mix.minval;
-	wp = snprintf(mix.ctlname, MAX_AUDIO_DEV_LEN, "fea%d-", d->bUnitId);
+	wp = snprintf(mix.ctlname, MAX_AUDIO_DEV_LEN, "sel%d-", d->bUnitId);
 	for (i = 1; i <= d->bNrInPins; i++) {
 		wp += snprintf(mix.ctlname + wp, MAX_AUDIO_DEV_LEN - wp,
 			       "i%d", d->baSourceId[i - 1]);
