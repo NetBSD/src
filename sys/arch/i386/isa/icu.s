@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.13 1993/06/14 19:44:37 mycroft Exp $
+ *	$Id: icu.s,v 1.14 1993/06/27 04:59:47 andrew Exp $
  */
 
 /*
@@ -49,7 +49,12 @@
  * soft priority masks as in the hard ones.
  */
 
+#ifdef notyet
 #include "sio.h"
+#else
+#define NSIO 0
+#endif
+
 #define	HIGHMASK	0xffff
 #define	SOFTCLOCKMASK	0x8000
 
