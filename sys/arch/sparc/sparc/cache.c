@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.81 2003/08/24 00:41:43 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.82 2003/11/07 14:50:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.81 2003/08/24 00:41:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.82 2003/11/07 14:50:21 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -254,8 +254,6 @@ swift_cache_enable()
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
-	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
-	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 
 	/* Now reset cache tag memory if cache not yet enabled */
 	ls = CACHEINFO.ic_linesize;
@@ -270,6 +268,8 @@ swift_cache_enable()
 		for (i = 0; i < ts; i += ls)
 			sta(i, ASI_DCACHETAG, 0);
 
+	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 }
 
