@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.92 2004/11/13 15:01:48 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.93 2005/01/10 22:01:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.92 2004/11/13 15:01:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.93 2005/01/10 22:01:38 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,14 +309,15 @@ Static void	uaudio_close(void *);
 Static int	uaudio_drain(void *);
 Static int	uaudio_query_encoding(void *, struct audio_encoding *);
 Static int	uaudio_set_params
-	(void *, int, int, struct audio_params *, struct audio_params *);
-Static int	uaudio_round_blocksize(void *, int);
+	(void *, int, int, struct audio_params *, struct audio_params *,
+	 stream_filter_list_t *, stream_filter_list_t *);
+Static int	uaudio_round_blocksize(void *, int, int, const audio_params_t *);
 Static int	uaudio_trigger_output
 	(void *, void *, void *, int, void (*)(void *), void *,
-	 struct audio_params *);
+	 const audio_params_t *);
 Static int	uaudio_trigger_input
 	(void *, void *, void *, int, void (*)(void *), void *,
-	 struct audio_params *);
+	 const audio_params_t *);
 Static int	uaudio_halt_in_dma(void *);
 Static int	uaudio_halt_out_dma(void *);
 Static int	uaudio_getdev(void *, struct audio_device *);
@@ -1766,8 +1767,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 		else
 			auf->mode = AUMODE_RECORD;
 		auf->encoding = sc->sc_alts[i].encoding;
-		auf->precision = t1desc->bBitResolution;
-		auf->subframe_size = t1desc->bSubFrameSize * 8;
+		auf->validbits = t1desc->bBitResolution;
+		auf->precision = t1desc->bSubFrameSize * 8;
 		auf->channels = t1desc->bNrChannels;
 		auf->channel_mask = sc->sc_channel_config;
 		auf->frequency_type = t1desc->bSamFreqType;
@@ -2189,7 +2190,8 @@ uaudio_getdev(void *addr, struct audio_device *retp)
  * Make sure the block size is large enough to hold all outstanding transfers.
  */
 Static int
-uaudio_round_blocksize(void *addr, int blk)
+uaudio_round_blocksize(void *addr, int blk,
+		       int mode, const audio_params_t *param)
 {
 	struct uaudio_softc *sc = addr;
 	int bpf;
@@ -2462,7 +2464,7 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 Static int
 uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
-		     struct audio_params *param)
+		     const audio_params_t *param)
 {
 	struct uaudio_softc *sc = addr;
 	struct chan *ch = &sc->sc_recchan;
@@ -2504,7 +2506,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 Static int
 uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		      void (*intr)(void *), void *arg,
-		      struct audio_params *param)
+		      const audio_params_t *param)
 {
 	struct uaudio_softc *sc = addr;
 	struct chan *ch = &sc->sc_playchan;
@@ -2862,12 +2864,12 @@ uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
 	int samples_per_frame, sample_size;
 
 	ch->altidx = altidx;
-	sample_size = param->precision * param->factor * param->hw_channels / 8;
-	samples_per_frame = param->hw_sample_rate / USB_FRAMES_PER_SECOND;
+	sample_size = param->precision * param->channels / 8;
+	samples_per_frame = param->sample_rate / USB_FRAMES_PER_SECOND;
 	ch->sample_size = sample_size;
-	ch->sample_rate = param->hw_sample_rate;
+	ch->sample_rate = param->sample_rate;
 	if (maxpktsize == 0) {
-		ch->fraction = param->hw_sample_rate % USB_FRAMES_PER_SECOND;
+		ch->fraction = param->sample_rate % USB_FRAMES_PER_SECOND;
 		ch->bytes_per_frame = samples_per_frame * sample_size;
 	} else {
 		ch->fraction = 0;
@@ -2890,11 +2892,13 @@ uaudio_chan_set_param(struct chan *ch, u_char *start, u_char *end, int blksize)
 
 Static int
 uaudio_set_params(void *addr, int setmode, int usemode,
-		  struct audio_params *play, struct audio_params *rec)
+		  struct audio_params *play, struct audio_params *rec,
+		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct uaudio_softc *sc = addr;
 	int paltidx = -1, raltidx = -1;
 	struct audio_params *p;
+	stream_filter_list_t *fil;
 	int mode, i;
 
 	if (sc->sc_dying)
@@ -2922,9 +2926,15 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		if ((setmode & mode) == 0)
 			continue;
 
-		p = (mode == AUMODE_PLAY) ? play : rec;
+		if (mode == AUMODE_PLAY) {
+			p = play;
+			fil = pfil;
+		} else {
+			p = rec;
+			fil = rfil;
+		}
 		i = auconv_set_converter(sc->sc_formats, sc->sc_nformats,
-					 mode, p, TRUE);
+					 mode, p, TRUE, fil);
 		if (i < 0)
 			return EINVAL;
 
@@ -2935,12 +2945,14 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	}
 
 	if ((setmode & AUMODE_PLAY)) {
+		p = pfil->req_size > 0 ? &pfil->filters[0].param : play;
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_playchan, paltidx, play, 0);
+		uaudio_chan_init(&sc->sc_playchan, paltidx, p, 0);
 	}
 	if ((setmode & AUMODE_RECORD)) {
+		p = rfil->req_size > 0 ? &pfil->filters[0].param : rec;
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
+		uaudio_chan_init(&sc->sc_recchan, raltidx, p,
 		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
 	}
 

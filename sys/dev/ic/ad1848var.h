@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.10 2002/08/26 17:00:42 martin Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.11 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -175,12 +175,13 @@ int	ad1848_mixer_get_port __P((struct ad1848_softc *, ad1848_devmap_t *,
 				   int, mixer_ctrl_t *));
 int	ad1848_mixer_set_port __P((struct ad1848_softc *, ad1848_devmap_t *,
 				   int, mixer_ctrl_t *));
-int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
+int	ad1848_set_speed __P((struct ad1848_softc *, u_int *));
 void	ad1848_mute_wave_output __P((struct ad1848_softc *, int, int));
 int	ad1848_query_encoding __P((void *, struct audio_encoding *));
-int	ad1848_set_params __P((void *, int, int, struct audio_params *,
-			       struct audio_params *));
-int	ad1848_round_blocksize __P((void *, int));
+int	ad1848_set_params __P((void *, int, int, audio_params_t *,
+			       audio_params_t *, stream_filter_list_t *,
+			       stream_filter_list_t *));
+int	ad1848_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	ad1848_commit_settings __P((void *));
 int	ad1848_set_rec_port __P((struct ad1848_softc *, int));
 int	ad1848_get_rec_port __P((struct ad1848_softc *));

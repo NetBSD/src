@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.11 2004/12/06 13:28:34 wiz Exp $	*/
+/*	$NetBSD: auconv.h,v 1.12 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,27 +38,41 @@
 
 #ifndef _SYS_DEV_AUCONV_H_
 #define _SYS_DEV_AUCONV_H_
+#include <dev/audio_if.h>
+
+/* common routines for stream_filter_t */
+extern void stream_filter_set_fetcher(stream_filter_t *, stream_fetcher_t *);
+extern void stream_filter_set_inputbuffer(stream_filter_t *, audio_stream_t *);
+extern stream_filter_t *auconv_nocontext_filter_factory
+	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+extern void auconv_nocontext_filter_dtor(struct stream_filter *);
+#define FILTER_LOOP_PROLOGUE(SRC, SRCFRAME, DST, DSTFRAME, MAXUSED) \
+do { \
+	const uint8_t *s; \
+	uint8_t *d; \
+	s = (SRC)->outp; \
+	d = (DST)->inp; \
+	for (; audio_stream_get_used(DST) < MAXUSED \
+		&& audio_stream_get_used(SRC) >= SRCFRAME; \
+		s = audio_stream_add_outp(SRC, s, SRCFRAME), \
+		d = audio_stream_add_inp(DST, d, DSTFRAME))
+#define FILTER_LOOP_EPILOGUE(SRC, DST)	\
+	(SRC)->outp = s; \
+	(DST)->inp = d; \
+} while (/*CONSTCOND*/0)
+
 
 /* Convert between signed and unsigned. */
-extern void change_sign8(void *, u_char *, int);
-extern void change_sign16_le(void *, u_char *, int);
-extern void change_sign16_be(void *, u_char *, int);
+extern stream_filter_factory_t change_sign8;
+extern stream_filter_factory_t change_sign16;
 /* Convert between little and big endian. */
-extern void swap_bytes(void *, u_char *, int);
-extern void swap_bytes_change_sign16_le(void *, u_char *, int);
-extern void swap_bytes_change_sign16_be(void *, u_char *, int);
-extern void change_sign16_swap_bytes_le(void *, u_char *, int);
-extern void change_sign16_swap_bytes_be(void *, u_char *, int);
+extern stream_filter_factory_t swap_bytes;
+extern stream_filter_factory_t swap_bytes_change_sign16;
 /* Byte expansion/contraction */
-extern void linear8_to_linear16_le(void *, u_char *, int);
-extern void linear8_to_linear16_be(void *, u_char *, int);
-extern void linear16_to_linear8_le(void *, u_char *, int);
-extern void linear16_to_linear8_be(void *, u_char *, int);
-/* Byte expansion/contraction with sign change */
-extern void ulinear8_to_slinear16_le(void *, u_char *, int);
-extern void ulinear8_to_slinear16_be(void *, u_char *, int);
-extern void slinear16_to_ulinear8_le(void *, u_char *, int);
-extern void slinear16_to_ulinear8_be(void *, u_char *, int);
+extern stream_filter_factory_t linear8_to_linear16;
+extern stream_filter_factory_t linear16_to_linear8;
+/* sampling rate conversion (aurateconv.c) */
+extern stream_filter_factory_t aurateconv;
 
 struct audio_format {
 	/**
@@ -79,15 +93,15 @@ struct audio_format {
 
 	/**
 	 * The size of valid bits in one sample.
-	 * It must be <= subframe_size.
+	 * It must be <= precision.
 	 */
-	u_int precision;
+	u_int validbits;
 
 	/**
 	 * The bit size of one sample.
-	 * It must be >= precision, and is usualy a multiple of 8.
+	 * It must be >= validbits, and is usualy a multiple of 8.
 	 */
-	u_int subframe_size;
+	u_int precision;
 
 	/**
 	 * The number of channels.  >= 1
@@ -132,7 +146,7 @@ struct audio_format {
 	/**
 	 * sampling rates
 	 */
-	u_long frequency[AUFMT_MAX_FREQUENCIES];
+	u_int frequency[AUFMT_MAX_FREQUENCIES];
 };
 
 #define	AUFMT_INVALIDATE(fmt)	(fmt)->mode |= 0x80000000
@@ -140,9 +154,9 @@ struct audio_format {
 #define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
 struct audio_encoding_set;
-struct audio_params;
 extern int auconv_set_converter(const struct audio_format *, int,
-				int, struct audio_params *, int);
+				int, const audio_params_t *, int,
+				stream_filter_list_t *);
 extern int auconv_create_encodings(const struct audio_format *, int,
 				   struct audio_encoding_set **);
 extern int auconv_delete_encodings(struct audio_encoding_set *);

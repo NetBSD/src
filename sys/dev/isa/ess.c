@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.64 2004/10/29 12:57:17 yamt Exp $	*/
+/*	$NetBSD: ess.c,v 1.65 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.64 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.65 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,20 +119,20 @@ int	ess_open __P((void *, int));
 void	ess_close __P((void *));
 int	ess_getdev __P((void *, struct audio_device *));
 int	ess_drain __P((void *));
-	
+
 int	ess_query_encoding __P((void *, struct audio_encoding *));
 
-int	ess_set_params __P((void *, int, int, struct audio_params *, 
-	    struct audio_params *));
+int	ess_set_params __P((void *, int, int, audio_params_t *,
+	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
 
-int	ess_round_blocksize __P((void *, int));
+int	ess_round_blocksize __P((void *, int, int, const audio_params_t *));
 
 int	ess_audio1_trigger_output __P((void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *));
+	    void (*)(void *), void *, const audio_params_t *));
 int	ess_audio2_trigger_output __P((void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *));
+	    void (*)(void *), void *, const audio_params_t *));
 int	ess_audio1_trigger_input __P((void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *));
+	    void (*)(void *), void *, const audio_params_t *));
 int	ess_audio1_halt __P((void *));
 int	ess_audio2_halt __P((void *));
 int	ess_audio1_intr __P((void *));
@@ -143,7 +143,7 @@ void	ess_audio2_poll __P((void *));
 int	ess_speaker_ctl __P((void *, int));
 
 int	ess_getdev __P((void *, struct audio_device *));
-	
+
 int	ess_set_port __P((void *, mixer_ctrl_t *));
 int	ess_get_port __P((void *, mixer_ctrl_t *));
 
@@ -270,6 +270,26 @@ const struct audio_hw_if ess_1888_hw_if = {
 	ess_audio2_trigger_output,
 	ess_audio1_trigger_input,
 	NULL,
+};
+
+#define ESS_NFORMATS	8
+static const struct audio_format ess_formats[ESS_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {ESS_MINRATE, ESS_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {ESS_MINRATE, ESS_MAXRATE}},
 };
 
 #ifdef AUDIO_DEBUG
@@ -904,7 +924,6 @@ essattach(sc, enablejoy)
 	int enablejoy;
 {
 	struct audio_attach_args arg;
-	struct audio_params pparams, rparams;
 	int i;
 	u_int v;
 
@@ -966,14 +985,6 @@ essattach(sc, enablejoy)
 			return;
 		}
 	}
-
-	/* 
-	 * Set record and play parameters to default values defined in
-	 * generic audio driver.
-	 */
-	pparams = audio_default;
-	rparams = audio_default;
-	ess_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
 	/* Do a hardware reset on the mixer. */
 	ess_write_mix_reg(sc, ESS_MIX_RESET, ESS_MIX_RESET);
@@ -1199,14 +1210,13 @@ ess_query_encoding(addr, fp)
 }
 
 int
-ess_set_params(addr, setmode, usemode, play, rec)
+ess_set_params(addr, setmode, usemode, play, rec, pfil, rfil)
 	void *addr;
 	int setmode, usemode;
-	struct audio_params *play, *rec;
+	audio_params_t *play, *rec;
+	stream_filter_list_t *pfil, *rfil;
 {
 	struct ess_softc *sc = addr;
-	struct audio_params *p;
-	int mode;
 	int rate;
 
 	DPRINTF(("ess_set_params: set=%d use=%d\n", setmode, usemode));
@@ -1230,47 +1240,15 @@ ess_set_params(addr, setmode, usemode, play, rec)
 			return (EINVAL);
 	}
 
-	for (mode = AUMODE_RECORD; mode != -1; 
-	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < ESS_MINRATE ||
-		    p->sample_rate > ESS_MAXRATE ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
-			return (EINVAL);
-		}
+	if (setmode & AUMODE_RECORD) {
+		if (auconv_set_converter(ess_formats, ESS_NFORMATS,
+					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
+			return EINVAL;
+	}
+	if (setmode & AUMODE_PLAY) {
+		if (auconv_set_converter(ess_formats, ESS_NFORMATS,
+					 AUMODE_PLAY, play, FALSE, pfil) < 0)
+			return EINVAL;
 	}
 
 	if (usemode == AUMODE_RECORD)
@@ -1296,7 +1274,7 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct ess_softc *sc = addr;
 	u_int8_t reg;
@@ -1330,7 +1308,7 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL, reg);
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;
@@ -1359,7 +1337,7 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL, ESS_DEMAND_CTRL_DEMAND_4);
 
 	/* Start auto-init DMA */
-  	ess_wdsp(sc, ESS_ACMD_ENABLE_SPKR);
+	ess_wdsp(sc, ESS_ACMD_ENABLE_SPKR);
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2);
 	reg &= ~(ESS_AUDIO1_CTRL2_DMA_READ | ESS_AUDIO1_CTRL2_ADC_ENABLE);
 	reg |= ESS_AUDIO1_CTRL2_FIFO_ENABLE | ESS_AUDIO1_CTRL2_AUTO_INIT;
@@ -1375,7 +1353,7 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct ess_softc *sc = addr;
 	u_int8_t reg;
@@ -1399,7 +1377,7 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO2_CTRL2_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO2_CTRL2_FIFO_SIZE;
@@ -1414,7 +1392,7 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 		reg &= ~ESS_AUDIO2_CTRL2_FIFO_SIGNED;
 	ess_write_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2, reg);
 
-	isa_dmastart(sc->sc_ic, sc->sc_audio2.drq, start, 
+	isa_dmastart(sc->sc_ic, sc->sc_audio2.drq, start,
 		     (char *)end - (char *)start, NULL,
 	    DMAMODE_WRITE | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
@@ -1445,13 +1423,13 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct ess_softc *sc = addr;
 	u_int8_t reg;
 
-	DPRINTFN(1, ("ess_audio1_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
-	    addr, start, end, blksize, intr, arg));
+	DPRINTFN(1, ("ess_audio1_trigger_input: sc=%p start=%p end=%p "
+	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
 
 	if (sc->sc_audio1.active)
 		panic("ess_audio1_trigger_input: already running");
@@ -1479,7 +1457,7 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL, reg);
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;
@@ -1495,7 +1473,7 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	reg |= ESS_AUDIO1_CTRL1_FIFO_CONNECT;
 	ess_write_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1, reg);
 
-	isa_dmastart(sc->sc_ic, sc->sc_audio1.drq, start, 
+	isa_dmastart(sc->sc_ic, sc->sc_audio1.drq, start,
 		     (char *)end - (char *)start, NULL,
 	    DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
@@ -1508,7 +1486,7 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL, ESS_DEMAND_CTRL_DEMAND_4);
 
 	/* Start auto-init DMA */
-  	ess_wdsp(sc, ESS_ACMD_DISABLE_SPKR);
+	ess_wdsp(sc, ESS_ACMD_DISABLE_SPKR);
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2);
 	reg |= ESS_AUDIO1_CTRL2_DMA_READ | ESS_AUDIO1_CTRL2_ADC_ENABLE;
 	reg |= ESS_AUDIO1_CTRL2_FIFO_ENABLE | ESS_AUDIO1_CTRL2_AUTO_INIT;
@@ -1670,9 +1648,11 @@ ess_audio2_poll(addr)
 }
 
 int
-ess_round_blocksize(addr, blk)
+ess_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return (blk & -8);	/* round for max DMA size */
 }

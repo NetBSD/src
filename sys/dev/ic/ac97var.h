@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.13 2004/12/22 00:54:55 reinoud Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.14 2005/01/10 22:01:37 kent Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -30,10 +30,11 @@
 
 #ifndef _DEV_IC_AC97VAR_H_
 #define	_DEV_IC_AC97VAR_H_
+#include <sys/types.h>
 
 struct ac97_codec_if;
 
-/* 
+/*
  * This is the interface used to attach the AC97 compliant CODEC.
  */
 enum ac97_host_flags {
@@ -45,8 +46,8 @@ struct ac97_host_if {
 	void  *arg;
 
 	int (*attach)(void *, struct ac97_codec_if *);
-	int (*read)(void *, u_int8_t, u_int16_t *);
-	int (*write)(void *, u_int8_t, u_int16_t);
+	int (*read)(void *, uint8_t, uint16_t *);
+	int (*write)(void *, uint8_t, uint16_t);
 	int (*reset)(void *);
 
 	enum ac97_host_flags (*flags)(void *);
@@ -69,7 +70,7 @@ struct ac97_codec_if_vtbl {
 	void (*restore_ports)(struct ac97_codec_if *);
 
 	u_int16_t (*get_extcaps)(struct ac97_codec_if *);
-	int (*set_rate)(struct ac97_codec_if *, int, u_long *);
+	int (*set_rate)(struct ac97_codec_if *, int, u_int *);
 	void (*set_clock)(struct ac97_codec_if *, unsigned int);
 	void (*detach)(struct ac97_codec_if *);
 };
@@ -78,7 +79,8 @@ struct ac97_codec_if {
 	struct ac97_codec_if_vtbl *vtbl;
 };
 
-int ac97_attach(struct ac97_host_if *);
+struct device;
+int ac97_attach(struct ac97_host_if *, struct device *);
 
 #define AC97_IS_FIXED_RATE(codec)	\
 	!((codec)->vtbl->get_extcaps(codec) & AC97_EXT_AUDIO_VRA)
