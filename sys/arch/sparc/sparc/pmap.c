@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 1998/07/23 21:42:40 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.122 1998/07/25 22:01:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -216,6 +216,11 @@ struct pvlist *pv_table;	/* array of entries, one per physical page */
 
 #define pvhead(pa)	(&pv_table[atop((pa) - vm_first_phys)])
 
+static vm_size_t pv_table_map __P((vm_offset_t, int));
+static vm_offset_t pv_physmem;
+static struct pool pv_pool;
+
+
 /*
  * Each virtual segment within each pmap is either valid or invalid.
  * It is valid if pm_npte[VA_VSEG(va)] is not 0.  This does not mean
@@ -317,6 +322,9 @@ union ctxinfo {
 #define ctx_kick	(cpuinfo.ctx_kick)
 #define ctx_kickdir	(cpuinfo.ctx_kickdir)
 #define ctx_freelist	(cpuinfo.ctx_freelist)
+
+void	ctx_alloc __P((struct pmap *));
+void	ctx_free __P((struct pmap *));
 
 #if 0
 union ctxinfo *ctxinfo;		/* allocated at in pmap_bootstrap */
@@ -780,17 +788,40 @@ pgt_page_free(v, sz, mtype)
 } while (0)
 
 
+static void get_phys_mem __P((void));
 static void sortm __P((struct memarr *, int));
-void	ctx_alloc __P((struct pmap *));
-void	ctx_free __P((struct pmap *));
 void	pv_flushcache __P((struct pvlist *));
 void	kvm_iocache __P((caddr_t, int));
+
 #ifdef DEBUG
 void	pm_check __P((char *, struct pmap *));
 void	pm_check_k __P((char *, struct pmap *));
 void	pm_check_u __P((char *, struct pmap *));
 #endif
 
+
+/*
+ * Grab physical memory list and use it to compute `physmem' and
+ * `avail_end'. The latter is used in conjuction with
+ * `avail_start' to dispatch left-over physical pages to the
+ * VM system.
+ */
+void
+get_phys_mem()
+{
+	struct memarr *mp;
+	int i;
+
+	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	sortm(pmemarr, npmemarr);
+	if (pmemarr[0].addr != 0) {
+		printf("pmap_bootstrap: no kernel memory?!\n");
+		callrom();
+	}
+	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
+	for (physmem = 0, mp = pmemarr, i = npmemarr; --i >= 0; mp++)
+		physmem += btoc(mp->len);
+}
 
 /*
  * Sort a memory array by address.
@@ -2209,7 +2240,7 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_NC;
 			pv->pv_flags |= npv->pv_flags & PV_NC;
-			FREE(npv, M_VMPVENT);
+			pool_put(&pv_pool, npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2231,7 +2262,7 @@ pv_unlink4_4c(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		FREE(npv, M_VMPVENT);
+		pool_put(&pv_pool, npv);
 	}
 	if (pv->pv_flags & PV_ANC && (pv->pv_flags & PV_NC) == 0) {
 		/*
@@ -2303,7 +2334,7 @@ pv_link4_4c(pv, pm, va, nc)
 			}
 		}
 	}
-	MALLOC(npv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
+	npv = pool_get(&pv_pool, PR_WAITOK);
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2526,7 +2557,7 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_C4M;
 			pv->pv_flags |= (npv->pv_flags & PV_C4M);
-			FREE(npv, M_VMPVENT);
+			pool_put(&pv_pool, npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2548,7 +2579,7 @@ pv_unlink4m(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		FREE(npv, M_VMPVENT);
+		pool_put(&pv_pool, npv);
 	}
 	if ((pv->pv_flags & (PV_C4M|PV_ANC)) == (PV_C4M|PV_ANC)) {
 		/*
@@ -2622,7 +2653,7 @@ pv_link4m(pv, pm, va, nc)
 			}
 		}
 	}
-	MALLOC(npv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
+	npv = pool_get(&pv_pool, PR_WAITOK);
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2661,6 +2692,77 @@ pv_flushcache(pv)
 		setcontext(ctx);
 	}
 	splx(s);
+}
+
+vm_size_t
+pv_table_map(base, mapit)
+	vm_offset_t base;
+	int mapit;
+{
+	int nmem;
+	struct memarr *mp;
+	vm_size_t s;
+	vm_offset_t sva, va, eva, pa;
+
+	/* 
+	 * Map pv_table[] as a `sparse' array. pv_table_map() is called
+	 * twice: the first time `mapit' is 0, and the number of
+	 * physical pages needed to map the used pieces of pv_table[]
+	 * is computed;  the second time those pages are used to
+	 * actually map pv_table[].
+	 * In both cases, this function returns the amount of physical
+	 * memory needed.
+	 */ 
+
+	if (!mapit)
+		/* Mark physical pages for pv_table[] */
+		pv_physmem = base;
+
+	pa = pv_physmem; /* XXX - always init `pa' to appease gcc */
+
+	s = 0;
+	sva = eva = 0;
+	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
+		int len;
+		vm_offset_t addr;
+
+		len = mp->len;
+		if ((addr = mp->addr) < base) {
+			/*
+			 * pv_table[] covers everything above `avail_start'.
+			 */
+			addr = base;
+			len -= base;
+		}
+
+		/* Calculate stretch of pv_table */
+		len = sizeof(struct pvlist) * btoc(len);
+		va = (vm_offset_t)&pv_table[btoc(addr - base)];
+		sva = trunc_page(va);
+
+		if (sva < eva) {
+			/* This chunk overlaps the previous in pv_table[] */
+			sva += NBPG;
+			if (sva < eva)
+				panic("pv_table_map: sva(0x%lx)<eva(0x%lx)",
+				      sva, eva);
+		}
+		eva = roundup(va + len, NBPG);
+
+		/* Add this range to the total */
+		s += eva - sva;
+
+		if (mapit) {
+			/* Map this piece of pv_table[] */
+			for (va = sva; va < eva; va += PAGE_SIZE) {
+				pmap_enter(pmap_kernel(), va, pa,
+					   VM_PROT_READ|VM_PROT_WRITE, 1);
+				pa += PAGE_SIZE;
+			}
+			bzero((caddr_t)sva, eva - sva);
+		}
+	}
+	return (s);
 }
 
 /*----------------------------------------------------------------*/
@@ -2728,18 +2830,17 @@ void
 pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
-	register union ctxinfo *ci;
-	register struct mmuentry *mmuseg;
+	union ctxinfo *ci;
+	struct mmuentry *mmuseg;
 #if defined(SUN4_MMU3L)
-	register struct mmuentry *mmureg;
+	struct mmuentry *mmureg;
 #endif
 	struct   regmap *rp;
-	register int i, j;
-	register int npte, zseg, vr, vs;
-	register int rcookie, scookie;
-	register caddr_t p;
-	register struct memarr *mp;
-	register void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
+	int i, j;
+	int npte, zseg, vr, vs;
+	int rcookie, scookie;
+	caddr_t p;
+	void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
 	int lastpage;
 	extern char end[];
 #ifdef DDB
@@ -2882,20 +2983,15 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * for /dev/mem, all with no associated physical memory.
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
-	avail_start = (int)p - KERNBASE;
 
 	/*
-	 * Grab physical memory list, so pmap_next_page() can do its bit.
+	 * Grab physical memory list.
 	 */
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
-	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0) {
-		printf("pmap_bootstrap: no kernel memory?!\n");
-		callrom();
-	}
-	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
-		physmem += btoc(mp->len);
+	get_phys_mem();
+
+	/* Allocate physical memory for pv_table[] */
+	p += pv_table_map((vm_offset_t)p - KERNBASE, 0);
+	avail_start = (int)p - KERNBASE;
 
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
@@ -2903,10 +2999,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
-	/*
-	 * Allocate virtual memory for pv_table[], which will be mapped
-	 * sparsely in pmap_init().
-	 */
+	/* Allocate virtual memory for pv_table[]. */
 	pv_table = (struct pvlist *)p;
 	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
 
@@ -3099,11 +3192,9 @@ static void
 pmap_bootstrap4m(void)
 {
 	register int i, j;
-	caddr_t p;
-	register caddr_t q;
-	register union ctxinfo *ci;
-	register struct memarr *mp;
-	register int reg, seg;
+	caddr_t p, q;
+	union ctxinfo *ci;
+	int reg, seg;
 	unsigned int ctxtblsize;
 	caddr_t pagetables_start, pagetables_end;
 	extern char end[];
@@ -3181,22 +3272,15 @@ pmap_bootstrap4m(void)
 	 * of available pages are free.
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
-	avail_start = (int)p - KERNBASE;
+
 	/*
-	 * Grab physical memory list use it to compute `physmem' and
-	 * `avail_end'. The latter is used in conjuction with
-	 * `avail_start' to dispatch left-over physical pages to the
-	 * VM system.
+	 * Grab physical memory list.
 	 */
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
-	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0) {
-		printf("pmap_bootstrap: no kernel memory?!\n");
-		callrom();
-	}
-	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
-		physmem += btoc(mp->len);
+	get_phys_mem();
+
+	/* Allocate physical memory for pv_table[] */
+	p += pv_table_map((vm_offset_t)p - KERNBASE, 0);
+	avail_start = (int)p - KERNBASE;
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
@@ -3233,7 +3317,6 @@ pmap_bootstrap4m(void)
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
 	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
-	qzero(cpuinfo.ctx_tbl, ctxtblsize);
 
 	/*
 	 * Reserve memory for segment and page tables needed to map the entire
@@ -3246,23 +3329,21 @@ pmap_bootstrap4m(void)
 	 * malloc a page table to enter _that_ mapping; malloc deadlocks since
 	 * it is already allocating that object).
 	 */
-	p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(long));
+	p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(u_int));
+	qzero(p, SRMMU_L1SIZE * sizeof(u_int));
 	kernel_regtable_store = (u_int *)p;
-	p += SRMMU_L1SIZE * sizeof(long);
-	bzero(kernel_regtable_store,
-	      p - (caddr_t) kernel_regtable_store);
+	p += SRMMU_L1SIZE * sizeof(u_int);
 
-	p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(long));
+	p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(u_int));
+	qzero(p, (SRMMU_L2SIZE * sizeof(u_int)) * NKREG);
 	kernel_segtable_store = (u_int *)p;
-	p += (SRMMU_L2SIZE * sizeof(long)) * NKREG;
-	bzero(kernel_segtable_store,
-	      p - (caddr_t) kernel_segtable_store);
+	p += (SRMMU_L2SIZE * sizeof(u_int)) * NKREG;
 
-	p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(long));
+	p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(u_int));
+	/* zero it: all will be SRMMU_TEINVALID */
+	qzero(p, ((SRMMU_L3SIZE * sizeof(u_int)) * NKREG) * NSEGRG);
 	kernel_pagtable_store = (u_int *)p;
-	p += ((SRMMU_L3SIZE * sizeof(long)) * NKREG) * NSEGRG;
-	bzero(kernel_pagtable_store,
-	      p - (caddr_t) kernel_pagtable_store);
+	p += ((SRMMU_L3SIZE * sizeof(u_int)) * NKREG) * NSEGRG;
 
 	/* Round to next page and mark end of stolen pages */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
@@ -3355,10 +3436,7 @@ pmap_bootstrap4m(void)
 		vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(vpage[i])];
 	}
 
-	/*
-	 * Allocate virtual memory for pv_table[], which will be mapped
-	 * sparsely in pmap_init().
-	 */
+	/* Allocate virtual memory for pv_table[]. */
 	pv_table = (struct pvlist *)p;
 	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
 
@@ -3411,7 +3489,13 @@ pmap_bootstrap4m(void)
 		sp->sg_npte++;
 
 		pte = ((int)q - KERNBASE) >> SRMMU_PPNPASHIFT;
-		pte |= PPROT_N_RX | SRMMU_PG_C | SRMMU_TEPTE;
+		pte |= PPROT_N_RX | SRMMU_TEPTE;
+
+		/* Deal with the cacheable bit for pagetable memory */
+		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0 ||
+		    q < pagetables_start || q >= pagetables_end)
+			pte |= SRMMU_PG_C;
+
 		/* write-protect kernel text */
 		if (q < (caddr_t) trapbase || q >= etext)
 			pte |= PPROT_WRITE;
@@ -3442,11 +3526,6 @@ pmap_bootstrap4m(void)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
-
-	/* Mark all MMU tables uncacheable, if required */
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		kvm_uncache(pagetables_start,
-			    (pagetables_end - pagetables_start) >> PGSHIFT);
 
 #if defined(MACHINE_NEW_NONCONTIG)
 	pmap_page_upload();
@@ -3558,89 +3637,20 @@ pmap_alloc_cpu(sc)
 void
 pmap_init()
 {
-	register vm_size_t s;
-	int pass1, nmem;
-	register struct memarr *mp;
-	vm_offset_t sva, va, eva;
-	vm_offset_t pa = 0;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
 
-	/*
-	 * Map pv_table[] as a `sparse' array. This requires two passes
-	 * over the `pmemarr': (1) to determine the number of physical
-	 * pages needed, and (2), to map the correct pieces of virtual
-	 * memory allocated to pv_table[].
-	 */
+	/* Map pv_table[] */
+	(void)pv_table_map(avail_start, 1);
 
-	s = 0;
-	pass1 = 1;
-
-pass2:
-	sva = eva = 0;
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		int len;
-		vm_offset_t addr;
-
-		len = mp->len;
-		if ((addr = mp->addr) < avail_start) {
-			/*
-			 * pv_table[] covers everything above `avail_start'.
-			 */
-			addr = avail_start;
-			len -= avail_start;
-		}
-		len = sizeof(struct pvlist) * atop(len);
-
-		if (addr < avail_start || addr >= avail_end)
-			panic("pmap_init: unmanaged address: 0x%lx", addr);
-
-		va = (vm_offset_t)&pv_table[atop(addr - avail_start)];
-		sva = trunc_page(va);
-
-		if (sva < eva) {
-			/* This chunk overlaps the previous in pv_table[] */
-			sva += PAGE_SIZE;
-			if (sva < eva)
-				panic("pmap_init: sva(0x%lx) < eva(0x%lx)",
-				      sva, eva);
-		}
-		eva = round_page(va + len);
-		if (pass1) {
-			/* Just counting */
-			s += eva - sva;
-			continue;
-		}
-
-		/* Map this piece of pv_table[] */
-		for (va = sva; va < eva; va += PAGE_SIZE) {
-			pmap_enter(pmap_kernel(), va, pa,
-				   VM_PROT_READ|VM_PROT_WRITE, 1);
-			pa += PAGE_SIZE;
-		}
-		bzero((caddr_t)sva, eva - sva);
-	}
-
-	if (pass1) {
-#if defined(UVM)
-		/* XXXCDC: ABSOLUTELY WRONG!   uvm_km_alloc() _CAN_
-			return 0 if out of VM */
-		pa = pmap_extract(pmap_kernel(), uvm_km_alloc(kernel_map, s));
-#else
-		pa = pmap_extract(pmap_kernel(), kmem_alloc(kernel_map, s));
-#endif
-		pass1 = 0;
-		goto pass2;
-	}
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
 
-#if notyet
-	pool_init(&pv_pool, sizeof(pv_entry), 0, 0, 0, "pvtable", 0,
+	/* Setup a pool for additional pvlist structures */
+	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", 0,
 		  NULL, NULL, 0);
-#endif
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -4626,7 +4636,7 @@ pmap_page_protect4_4c(pa, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			FREE(pv, M_VMPVENT);
+			pool_put(&pv_pool, pv);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -4972,7 +4982,7 @@ pmap_page_protect4m(pa, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			FREE(pv, M_VMPVENT);
+			pool_put(&pv_pool, pv);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -6703,7 +6713,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	int vr, vs, n;
 
 	if (pm->pm_regmap == NULL)
-	    panic("%s: CHK(pmap %p): no region mapping", s, pm);
+		panic("%s: CHK(pmap %p): no region mapping", s, pm);
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M &&
