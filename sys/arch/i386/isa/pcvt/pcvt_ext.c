@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.13 1995/09/04 22:33:21 fvdl Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.14 1995/09/10 10:45:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2156,7 +2156,7 @@ pcvt_x_hook(int tografx)
 		/* step 4: restore screen and re-enable text output */
 
 		/* kernel memory -> video board memory */
-		bcopyb(vsp->Memory, Crtat,
+		bcopyb(vsp->Crtat, Crtat,
 		       vsp->screen_rowsize * vsp->maxcol * CHR);
 
 		vsp->Crtat = Crtat;	/* operate on-screen now */
