@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.47 2001/06/02 18:09:27 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.48 2001/06/23 20:47:44 chs Exp $	*/
 
 /*
  *
@@ -537,23 +537,20 @@ ReTry:
 		uvm_pager_dropcluster(uobj, pg, ppsp, npages, PGO_REALLOCSWAP);
 
 		/*
-		 * for failed swap-backed pageouts with a "pg",
-		 * we need to reset pg's swslot to either:
-		 * "swblk" (for transient errors, so we can retry),
-		 * or 0 (for hard errors).
+		 * for hard failures on swap-backed pageouts with a "pg"
+		 * we need to clear pg's swslot since uvm_pager_dropcluster()
+		 * didn't do it and we aren't going to retry.
 		 */
 
-		if (uobj == NULL && pg != NULL) {
-			int nswblk = (result == EAGAIN) ? swblk : 0;
+		if (uobj == NULL && pg != NULL && result != EAGAIN) {
 			if (pg->pqflags & PQ_ANON) {
 				simple_lock(&pg->uanon->an_lock);
-				pg->uanon->an_swslot = nswblk;
+				pg->uanon->an_swslot = 0;
 				simple_unlock(&pg->uanon->an_lock);
 			} else {
 				simple_lock(&pg->uobject->vmobjlock);
 				uao_set_swslot(pg->uobject,
-					       pg->offset >> PAGE_SHIFT,
-					       nswblk);
+				    pg->offset >> PAGE_SHIFT, 0);
 				simple_unlock(&pg->uobject->vmobjlock);
 			}
 		}
