@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.15 2003/09/23 17:24:45 cb Exp $
+.\" $NetBSD: cgdconfig.8,v 1.16 2003/09/23 21:25:20 wiz Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,8 +171,9 @@ scan for a valid disklabel.
 .It ffs
 scan for a valid FFS file system.
 .It re-enter
-prompt for passphrase twice, and ensure entered passphrases are identical.
-This method only works the pkcs5_pbkdf2 key generator.
+prompt for passphrase twice, and ensure entered passphrases are
+identical.
+This method only works with the pkcs5_pbkdf2 key generator.
 .El
 .Ss /etc/cgd/cgd.conf
 The file
