@@ -1,4 +1,4 @@
-/* $NetBSD: i82557.c,v 1.3 1999/09/10 09:12:44 drochner Exp $ */
+/* $NetBSD: i82557.c,v 1.4 2001/07/07 22:57:58 perry Exp $ */
 
 /*
  * Copyright (c) 1998, 1999
@@ -213,11 +213,11 @@ EtherInit(myadr)
 
 	cbp = SNDBUF_VIRT;
 	/*
-	 * This bcopy is kind of disgusting, but there are a bunch of must be
+	 * This memcpy is kind of disgusting, but there are a bunch of must be
 	 * zero and must be one bits in this structure and this is the easiest
 	 * way to initialize them all to proper values.
 	 */
-	bcopy(fxp_cb_config_template, (void *)cbp,
+	memcpy((void *)cbp, fxp_cb_config_template,
 	      sizeof(fxp_cb_config_template));
 
 #define prm 0
@@ -283,7 +283,7 @@ EtherInit(myadr)
 	cb_ias->cb_status = 0;
 	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
 	cb_ias->link_addr = -1;
-	bcopy(myadr, (void *)cb_ias->macaddr, 6);
+	memcpy((void *)cb_ias->macaddr, myadr, 6);
 
 	/*
 	 * Start the IAS (Individual Address Setup) command/DMA.
@@ -343,7 +343,7 @@ int EtherSend(pkt, len)
 	/* XXX assuming we send at max 400 bytes */
 	tbdp = (struct fxp_tbd *)(SNDBUF_VIRT + 440);
 	txp->tbd_array_addr = SNDBUF_PHYS + 440;
-	bcopy(pkt, SNDBUF_VIRT + 400, len);
+	memcpy(SNDBUF_VIRT + 400, pkt, len);
 	tbdp->tb_addr = SNDBUF_PHYS + 400;
 #endif
 	tbdp->tb_size = len;
@@ -413,7 +413,7 @@ EtherReceive(pkt, maxlen)
 	if (rfa->rfa_status & FXP_RFA_STATUS_C) {
 		len = rfa->actual_size & 0x7ff;
 		if (len <= maxlen) {
-			bcopy((caddr_t)(rfa + 1), pkt, maxlen);
+			memcpy(pkt, (caddr_t)(rfa + 1), maxlen);
 #if 0
 			printf("rfa status=%x, len=%x, i=%d\n",
 			       rfa->rfa_status, len, i);

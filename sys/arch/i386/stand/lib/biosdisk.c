@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.14 2001/06/01 23:26:31 jdolecek Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.15 2001/07/07 22:57:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -128,7 +128,7 @@ biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
 				*rsize = blks * BIOSDISK_SECSIZE;
 			return (EIO);
 		}
-		bcopy(d->buf, buf + blks * BIOSDISK_SECSIZE, frag);
+		memcpy(buf + blks * BIOSDISK_SECSIZE, d->buf, frag);
 	}
 	if (rsize)
 		*rsize = size;
@@ -250,7 +250,7 @@ biosdiskopen(struct open_file *f, ...)
 #ifdef _STANDALONE
 		bi_disk.labelsector = sector + LABELSECTOR;
 		bi_disk.label.type = lp->d_type;
-		bcopy(lp->d_packname, bi_disk.label.packname, 16);
+		memcpy(bi_disk.label.packname, lp->d_packname, 16);
 		bi_disk.label.checksum = lp->d_checksum;
 #endif
 	}
