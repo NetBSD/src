@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.18 1999/06/28 01:56:58 briggs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.19 1999/09/29 06:14:03 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -179,6 +179,8 @@ sn_obio_attach(parent, self, aux)
 		bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
 		return;
 	}
+
+	printf(": integrated Ethernet adapter\n");
 
 	/* snsetup returns 1 if something fails */
 	if (snsetup(sc, myaddr)) {
