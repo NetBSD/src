@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.12 1995/12/28 18:05:10 pk Exp $
+ *	$Id: md.c,v 1.13 1997/10/14 17:17:52 christos Exp $
  */
 
 #include <sys/param.h>
@@ -138,26 +138,28 @@ md_relocate(r, relocation, addr, relocatable_output)
 	relocation <<= RELOC_TARGET_BITPOS(r);
 	mask <<= RELOC_TARGET_BITPOS(r);
 
+#define RELOCATE(type)					\
+	{						\
+		type ad;				\
+		(void)memcpy(&ad, addr, sizeof(ad));	\
+		if (RELOC_MEMORY_ADD_P(r))		\
+			relocation += (mask & ad);	\
+		ad &= ~mask;				\
+		ad |= relocation;			\
+		(void)memcpy(addr, &ad, sizeof(ad));	\
+	}
+
 	switch (RELOC_TARGET_SIZE(r)) {
 	case 0:
-		if (RELOC_MEMORY_ADD_P(r))
-			relocation += (mask & *(u_char *) (addr));
-		*(u_char *) (addr) &= ~mask;
-		*(u_char *) (addr) |= relocation;
+		RELOCATE(u_char)
 		break;
 
 	case 1:
-		if (RELOC_MEMORY_ADD_P(r))
-			relocation += (mask & *(u_short *) (addr));
-		*(u_short *) (addr) &= ~mask;
-		*(u_short *) (addr) |= relocation;
+		RELOCATE(u_short)
 		break;
 
 	case 2:
-		if (RELOC_MEMORY_ADD_P(r))
-			relocation += (mask & *(u_long *) (addr));
-		*(u_long *) (addr) &= ~mask;
-		*(u_long *) (addr) |= relocation;
+		RELOCATE(u_long)
 		break;
 	default:
 		errx(1, "Unimplemented relocation field length: %d",
