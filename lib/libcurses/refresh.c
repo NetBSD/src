@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.59 2004/03/28 08:58:37 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.60 2004/04/07 17:27:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.59 2004/03/28 08:58:37 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.60 2004/04/07 17:27:10 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -518,8 +518,7 @@ doupdate(void)
 
 	/* Don't leave the screen with attributes set. */
 	__unsetattr(0);
-	(void) fflush(_cursesi_screen->outfd);
-	return (OK);
+	return fflush(_cursesi_screen->outfd) == EOF ? ERR : OK;
 }
 
 /*
