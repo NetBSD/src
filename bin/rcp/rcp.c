@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.18 1997/10/19 13:12:04 mycroft Exp $	*/
+/*	$NetBSD: rcp.c,v 1.19 1997/10/21 13:47:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.18 1997/10/19 13:12:04 mycroft Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.19 1997/10/21 13:47:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ int	doencrypt = 0;
 #endif
 
 struct passwd *pwd;
+char *pwname;
 u_short	port;
 uid_t	userid;
 int errs, rem;
@@ -192,6 +193,9 @@ main(argc, argv)
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		errx(1, "unknown user %d", (int)userid);
 
+	if ((pwname = strdup(pwd->pw_name)) == NULL)
+		err(1, "%s", "");
+
 	rem = STDIN_FILENO;		/* XXX */
 
 	if (fflag) {			/* Follow "protocol", send data. */
@@ -245,7 +249,7 @@ toremote(targ, argc, argv)
 	int argc;
 {
 	int i, len;
-	char *bp, *host, *src, *suser, *thost, *tuser, *name;
+	char *bp, *host, *src, *suser, *thost, *tuser;
 
 	*targ++ = 0;
 	if (*targ == 0)
@@ -280,7 +284,7 @@ toremote(targ, argc, argv)
 				*host++ = 0;
 				suser = argv[i];
 				if (*suser == '\0')
-					suser = pwd->pw_name;
+					suser = pwname;
 				else if (!okname(suser))
 					continue;
 				(void)snprintf(bp, len,
@@ -303,23 +307,20 @@ toremote(targ, argc, argv)
 					err(1, "%s", "");
 				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
-				if ((name = strdup(pwd->pw_name)) == NULL)
-					err(1, "%s", "");
 #ifdef KERBEROS
 				if (use_kerberos)
-					rem = kerberos(&host, bp, name,
-					    tuser ? tuser : name);
+					rem = kerberos(&host, bp, pwname,
+					    tuser ? tuser : pwname);
 				else
 #endif
-					rem = rcmd(&host, port, name,
-					    tuser ? tuser : name,
+					rem = rcmd(&host, port, pwname,
+					    tuser ? tuser : pwname,
 					    bp, 0);
 				if (rem < 0)
 					exit(1);
 				if (response() < 0)
 					exit(1);
 				(void)free(bp);
-				(void)free(name);
 			}
 			source(1, argv+i);
 		}
@@ -353,12 +354,12 @@ tolocal(argc, argv)
 			src = ".";
 		if ((host = strchr(argv[i], '@')) == NULL) {
 			host = argv[i];
-			suser = pwd->pw_name;
+			suser = pwname;
 		} else {
 			*host++ = 0;
 			suser = argv[i];
 			if (*suser == '\0')
-				suser = pwd->pw_name;
+				suser = pwname;
 			else if (!okname(suser))
 				continue;
 		}
@@ -369,9 +370,9 @@ tolocal(argc, argv)
 		rem = 
 #ifdef KERBEROS
 		    use_kerberos ? 
-			kerberos(&host, bp, pwd->pw_name, suser) : 
+			kerberos(&host, bp, pwname, suser) : 
 #endif
-			rcmd(&host, port, pwd->pw_name, suser, bp, 0);
+			rcmd(&host, port, pwname, suser, bp, 0);
 		(void)free(bp);
 		if (rem < 0) {
 			++errs;
