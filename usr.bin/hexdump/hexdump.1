@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)hexdump.1	5.12 (Berkeley) 7/27/91
+.\"	@(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd July 27, 1991
+.Dd April 18, 1994
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -176,8 +176,8 @@ character (unlike the
 .Xr fprintf 3
 default which prints the entire string if the precision is unspecified).
 .It
-The conversion characters ``h'', ``n'', and ``p'' are not
-supported.
+The conversion characters ``h'', ``l'', ``n'', ``p'' and ``q'' are
+not supported.
 .It
 The single character escape sequences
 described in the C standard are supported:
@@ -246,7 +246,7 @@ One byte counts only.
 .Li \&%d , \&%i , \&%o ,
 .Li \&%u , \&%X , \&%x 
 .Xc
-Four byte default, one and two byte counts supported.
+Four byte default, one, two and four byte counts supported.
 .It Xo
 .Li \&%E , \&%e , \&%f ,
 .Li \&%G , \&%g 
@@ -263,7 +263,7 @@ The input is manipulated in ``blocks'', where a block is defined as the
 largest amount of data specified by any format string.
 Format strings interpreting less than an input block's worth of data,
 whose last format unit both interprets some number of bytes and does
-not have a specified iteration count, have the the interation count
+not have a specified iteration count, have the iteration count
 incremented until the entire input block has been processed or there
 is not enough data remaining in the block to satisfy the format string.
 .Pp
@@ -322,9 +322,3 @@ Implement the \-x option:
 .Ed
 .Sh SEE ALSO
 .Xr adb 1
-.Sh STANDARDS
-The
-.Nm hexdump
-utility is expected to be
-.St -p1003.2
-compatible.
