@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.31 1998/10/06 21:19:05 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.32 1998/11/25 19:58:47 mjacob Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 1998/10/06 21:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 1998/11/25 19:58:47 mjacob Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 1998/10/06 21:19:05 thorpej Exp $"
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
+#include <machine/alpha.h>
 #include <machine/cpu.h>
 #include <machine/prom.h>
 #include <machine/conf.h>
