@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.8 1999/01/16 07:48:24 lukem Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.9 1999/01/16 11:43:08 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.8 1999/01/16 07:48:24 lukem Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.9 1999/01/16 11:43:08 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,9 +112,9 @@ getnetanswer(answer, anslen, net_i)
 	int net_i;
 {
 
-	register HEADER *hp;
-	register u_char *cp;
-	register int n;
+	HEADER *hp;
+	u_char *cp;
+	int n;
 	u_char *eom;
 	int type, class, buflen, ancount, qdcount, haveanswer, i, nchar;
 	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
@@ -253,7 +253,7 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 	va_list  ap;
 {
 	unsigned int netbr[4];
-	int nn, anslen, i;
+	int nn, anslen;
 	querybuf buf;
 	char qbuf[MAXDNAME];
 	unsigned long net2;
@@ -316,8 +316,8 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 
 struct netent *
 getnetbyaddr(net, net_type)
-	register u_long net;
-	register int net_type;
+	u_long net;
+	int net_type;
 {
 	struct netent *net_entry;
 	static ns_dtab dtab[] = {
@@ -376,7 +376,7 @@ _dns_getnetbyname(rv, cb_data, ap)
 	void    *cb_data;
 	va_list  ap;
 {
-	int anslen, i;
+	int anslen;
 	querybuf buf;
 	char qbuf[MAXDNAME];
 	struct netent *net_entry;
@@ -405,7 +405,7 @@ _dns_getnetbyname(rv, cb_data, ap)
 
 struct netent *
 getnetbyname(net)
-	register const char *net;
+	const char *net;
 {
 	struct netent *net_entry;
 	static ns_dtab dtab[] = {
