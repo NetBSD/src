@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_util.h,v 1.1 1995/05/10 16:45:44 christos Exp $	 */
+/*	$NetBSD: hpux_util.h,v 1.2 1995/06/24 20:17:57 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -30,36 +30,12 @@
 #ifndef	_HPUX_UTIL_H_
 #define	_HPUX_UTIL_H_
 
-#include <machine/vmparam.h>
-#include <sys/exec.h>
-
-extern char     sigcode[], esigcode[];
-
-static __inline caddr_t
-stackgap_init()
-{
-#define szsigcode (esigcode - sigcode)
-	return STACKGAPBASE;
-}
-
-
-static __inline void *
-stackgap_alloc(sgp, sz)
-	caddr_t	*sgp;
-	size_t   sz;
-{
-	void	*p = (void *) *sgp;
-	*sgp += ALIGN(sz);
-	return p;
-}
+#include <compat/common/compat_util.h>
 
 #ifdef DEBUG_HPUX
 #define DPRINTF(a)	printf a;
 #else
 #define DPRINTF(a)
 #endif
-
-extern const char hpux_emul_path[];
-extern int hpux_error[];
 
 #endif /* !_HPUX_UTIL_H_ */

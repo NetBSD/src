@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.16 1995/05/10 16:45:31 christos Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.17 1995/06/24 20:17:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -254,7 +254,7 @@ hpux_wait(p, uap, retval)
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
-		caddr_t sg = stackgap_init();
+		caddr_t sg = stackgap_init(p->p_emul);
 		SCARG(&w4, status) = stackgap_alloc(&sg, sz);
 	}
 	else
