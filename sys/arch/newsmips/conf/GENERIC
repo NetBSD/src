@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.27 2000/09/24 15:59:36 jdolecek Exp $
+# 	$NetBSD: GENERIC,v 1.28 2000/10/04 08:26:42 tsubai Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	16
 
@@ -143,3 +143,4 @@ pseudo-device	ccd		4	# concatenated and striped disks
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
+pseudo-device	rnd			# /dev/random and in-kernel generator
