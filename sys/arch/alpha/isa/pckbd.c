@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.7 1996/05/05 01:41:53 thorpej Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.8 1996/10/10 23:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -256,7 +256,7 @@ kbd_cmd(val, polling)
 						break;
 					}
 #ifdef DIAGNOSTIC
-					printf("kbd_cmd: input char %x lost\n",
+					kprintf("kbd_cmd: input char %x lost\n",
 					    c);
 #endif
 				}
@@ -300,7 +300,7 @@ pckbdprobe(parent, match, aux)
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
-		printf("pcprobe: command error\n");
+		kprintf("pcprobe: command error\n");
 		return 0;
 	}
 
@@ -309,7 +309,7 @@ pckbdprobe(parent, match, aux)
 	kbd_flush_input();
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
-		printf("pcprobe: reset error %d\n", 1);
+		kprintf("pcprobe: reset error %d\n", 1);
 		goto lose;
 	}
 	for (i = 600000; i; i--)
@@ -320,7 +320,7 @@ pckbdprobe(parent, match, aux)
 		}
 	if (i == 0 || bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0)
 	    != KBR_RSTDONE) {
-		printf("pcprobe: reset error %d\n", 2);
+		kprintf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
 	/*
@@ -331,7 +331,7 @@ pckbdprobe(parent, match, aux)
 	kbd_flush_input();
 	/* Just to be sure. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
-		printf("pcprobe: reset error %d\n", 3);
+		kprintf("pcprobe: reset error %d\n", 3);
 		goto lose;
 	}
 
@@ -351,13 +351,13 @@ pckbdprobe(parent, match, aux)
 	if (kbc_get8042cmd() & KC8_TRANS) {
 		/* The 8042 is translating for us; use AT codes. */
 		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(2, 1)) {
-			printf("pcprobe: reset error %d\n", 4);
+			kprintf("pcprobe: reset error %d\n", 4);
 			goto lose;
 		}
 	} else {
 		/* Stupid 8042; set keyboard to XT codes. */
 		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(1, 1)) {
-			printf("pcprobe: reset error %d\n", 5);
+			kprintf("pcprobe: reset error %d\n", 5);
 			goto lose;
 		}
 	}
@@ -399,10 +399,10 @@ pckbdattach(parent, self, aux)
 	sc->sc_bellactive = sc->sc_bellpitch = 0;
 
 #if NWSCONS
-	printf("\n");
+	kprintf("\n");
 	kbdattach(self, &pckbd_wscons_idev);
 #else
-	printf(": no wscons driver present; no input possible\n");
+	kprintf(": no wscons driver present; no input possible\n");
 #endif
 }
 
@@ -461,7 +461,7 @@ do_async_update(poll)
 		old_lock_state = lock_state;
 		if (!kbd_cmd(KBC_MODEIND, poll) ||
 		    !kbd_cmd(lock_state, poll)) {
-			printf("pc: timeout updating leds\n");
+			kprintf("pc: timeout updating leds\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}
@@ -469,7 +469,7 @@ do_async_update(poll)
 		old_typematic_rate = typematic_rate;
 		if (!kbd_cmd(KBC_TYPEMATIC, poll) ||
 		    !kbd_cmd(typematic_rate, poll)) {
-			printf("pc: timeout updating typematic rate\n");
+			kprintf("pc: timeout updating typematic rate\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.8 1996/08/27 21:53:58 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.9 1996/10/10 23:51:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -179,7 +179,7 @@ lcaattach(parent, self, aux)
 #endif
 
 	/* XXX print chipset information */
-	printf("\n");
+	kprintf("\n");
 
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_AXPPCI_33)
@@ -207,7 +207,7 @@ lcaprint(aux, pnp)
 
 	/* only PCIs can attach to LCAes; easy. */
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		kprintf("%s at %s", pba->pba_busname, pnp);
+	kprintf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

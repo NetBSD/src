@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1996/10/07 23:57:22 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1996/10/10 23:50:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -151,7 +151,7 @@ cpu_fork(p1, p2)
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
 #else
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
-	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
+	kprintf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
 	    p2->p_pid, p2->p_md.md_pcbpaddr, &p2->p_vmspace->vm_pmap);
 #endif
 
@@ -185,7 +185,7 @@ cpu_fork(p1, p2)
 #ifndef NEW_PMAP
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
 #else
-printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
+kprintf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
 #endif
 
 	/*
@@ -196,7 +196,7 @@ printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp
 	if (p1 != curproc)
 		panic("cpu_fork: curproc");
 	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
-		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
+		kprintf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
 #endif
 
 	/*
@@ -217,7 +217,7 @@ printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp
 		    sizeof(struct trapframe));
 
 #ifdef NEW_PMAP
-printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[FRAME_RA]);
+kprintf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[FRAME_RA]);
 #endif
 		/*
 		 * Set up return-value registers as fork() libc stub expects.
