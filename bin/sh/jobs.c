@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.37 2001/06/13 08:48:06 lukem Exp $	*/
+/*	$NetBSD: jobs.c,v 1.38 2001/09/10 15:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.37 2001/06/13 08:48:06 lukem Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.38 2001/09/10 15:47:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ STATIC void freejob __P((struct job *));
 STATIC struct job *getjob __P((char *));
 STATIC int dowait __P((int, struct job *));
 STATIC int onsigchild __P((void));
-STATIC int waitproc __P((int, int *));
+STATIC int waitproc __P((int, struct job *, int *));
 STATIC void cmdtxt __P((union node *));
 STATIC void cmdputs __P((const char *));
 
@@ -773,7 +773,7 @@ dowait(block, job)
 
 	TRACE(("dowait(%d) called\n", block));
 	do {
-		pid = waitproc(block, &status);
+		pid = waitproc(block, job, &status);
 		TRACE(("wait returns %d, status=%d\n", pid, status));
 	} while (pid == -1 && errno == EINTR);
 	if (pid <= 0)
@@ -889,17 +889,17 @@ STATIC int onsigchild() {
 
 
 STATIC int
-waitproc(block, status)
+waitproc(block, jp, status)
 	int block;
+	struct job *jp;
 	int *status;
 {
 #ifdef BSD
-	int flags;
+	int flags = 0;
 
 #if JOBS
-	flags = WUNTRACED;
-#else
-	flags = 0;
+	if (jp->jobctl)
+		flags |= WUNTRACED;
 #endif
 	if (block == 0)
 		flags |= WNOHANG;
