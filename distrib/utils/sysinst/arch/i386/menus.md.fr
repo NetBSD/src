@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.25.4.2 2000/11/01 02:11:06 tv Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.25.4.3 2001/10/27 20:02:18 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,10 @@
  */
 
 /* Menu definitions for sysinst. i386 version, machine dependent. */
+
+menu getboottype, title "Sélection de Bootblocks";
+	option "Utilisez normal le bootblocks", exit, action  {boottype = "normal";};
+	option "Utilisez serial le bootblocks", exit, action  {boottype = "serial";};
 
 menu fullpart, y=15, title  "Faite votre choix";
 	option "Utilisation d'une partie du disque", exit, action  {usefull = 0;};
