@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.92 2000/11/14 18:42:58 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.93 2000/11/19 15:32:24 bouyer Exp $	*/
 
 
 /*
@@ -257,6 +257,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801AB_IDE,
 	  0,
 	  "Intel 82801AB IDE Controller (ICH0)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801BA_IDE,
+	  0,
+	  "Intel 82801BA IDE Controller (ICH2)",
 	  piix_chip_map,
 	},
 	{ 0,
@@ -1330,13 +1335,20 @@ piix_chip_map(sc, pa)
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
+		case PCI_PRODUCT_INTEL_82801BA_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 		}
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap =
-	    (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) ? 4 : 2;
+	switch(sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_INTEL_82801AA_IDE:
+	case PCI_PRODUCT_INTEL_82801BA_IDE:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	default:
+		sc->sc_wdcdev.UDMA_cap = 2;
+	}
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
 	else
