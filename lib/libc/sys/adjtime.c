@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.4 2003/01/18 11:33:01 thorpej Exp $ */
+/*	$NetBSD: adjtime.c,v 1.5 2003/07/16 19:42:11 cb Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -107,6 +107,7 @@ try_syscall:
 		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
 		if (__clockctl_fd == -1)
 			return -1;
+		(void) fcntl(__clockctl_fd, F_SETFD, FD_CLOEXEC);
 	}
 
 	/* 
