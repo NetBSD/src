@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.40 1999/01/26 01:08:06 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.40.2.1 1999/04/27 14:11:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.40 1999/01/26 01:08:06 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.40.2.1 1999/04/27 14:11:10 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,10 +91,9 @@ __weak_alias(setpwent,_setpwent);
 
 static struct passwd _pw_passwd;	/* password structure */
 static DB *_pw_db;			/* password database */
-static int _pw_keynum;			/* key counter */
+static int _pw_keynum;			/* key counter. no more records if -1 */
 static int _pw_stayopen;		/* keep fd's open */
 static int _pw_flags;			/* password flags */
-static int _pw_none;			/* true if getpwent got EOF */
 
 static int __hashpw __P((DBT *));
 static int __initdb __P((void));
@@ -108,10 +107,11 @@ static const ns_src compatsrc[] = {
 #ifdef YP
 static char     *__ypcurrent, *__ypdomain;
 static int      __ypcurrentlen;
+static int	_pw_ypdone;		/* non-zero if no more yp records */
 #endif
 
 #ifdef HESIOD
-static int	_pw_hesnum;
+static int	_pw_hesnum;		/* hes counter. no more records if -1 */
 #endif
 
 #ifdef _PASSWD_COMPAT
@@ -318,7 +318,8 @@ __ypmaptype()
 }
 
 /*
- * parse an old-style passwd file line (from NIS or HESIOD)
+ * parse a passwd file line (from NIS or HESIOD).
+ * assumed to be `old-style' if maptype != YPMAP_MASTER.
  */
 static int
 __pwparse(pw, s)
@@ -399,6 +400,8 @@ _local_getpw(rv, cb_data, ap)
 	bf[0] = search;
 	switch (search) {
 	case _PW_KEYBYNUM:
+		if (_pw_keynum == -1)
+			return NS_NOTFOUND;	/* no more local records */
 		++_pw_keynum;
 		memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 		key.size = sizeof(_pw_keynum) + 1;
@@ -420,10 +423,8 @@ _local_getpw(rv, cb_data, ap)
 
 	key.data = (u_char *)bf;
 	rval = __hashpw(&key);
-	if (rval == NS_NOTFOUND && search == _PW_KEYBYNUM) {
-		_pw_none = 1;
-		rval = NS_SUCCESS;
-	}
+	if (rval == NS_NOTFOUND && search == _PW_KEYBYNUM)
+		_pw_keynum = -1;	/* flag `no more local records' */
 
 	if (!_pw_stayopen && (search != _PW_KEYBYNUM)) {
 		(void)(_pw_db->close)(_pw_db);
@@ -450,14 +451,17 @@ _dns_getpw(rv, cb_data, ap)
 	uid_t		  uid;
 	int		  search;
 
-	char		 *map;
+	const char	 *map;
 	char		**hp;
 	void		 *context;
 	int		  r;
 
 	search = va_arg(ap, int);
+ nextdnsbynum:
 	switch (search) {
 	case _PW_KEYBYNUM:
+		if (_pw_hesnum == -1)
+			return NS_NOTFOUND;	/* no more hesiod records */
 		snprintf(line, sizeof(line) - 1, "passwd-%u", _pw_hesnum);
 		_pw_hesnum++;
 		map = "passwd";
@@ -484,12 +488,10 @@ _dns_getpw(rv, cb_data, ap)
 	hp = hesiod_resolve(context, line, map);
 	if (hp == NULL) {
 		if (errno == ENOENT) {
-			if (search == _PW_KEYBYNUM) {
-				_pw_hesnum = 0;
-				_pw_none = 1;
-				r = NS_SUCCESS;
-			} else
-				r = NS_NOTFOUND;
+					/* flag `no more hesiod records' */
+			if (search == _PW_KEYBYNUM)
+				_pw_hesnum = -1;
+			r = NS_NOTFOUND;
 		}
 		goto cleanup_dns_getpw;
 	}
@@ -497,9 +499,11 @@ _dns_getpw(rv, cb_data, ap)
 	strncpy(line, hp[0], sizeof(line));	/* only check first elem */
 	line[sizeof(line) - 1] = '\0';
 	hesiod_free_list(context, hp);
-	if (__pwparse(&_pw_passwd, line))
+	if (__pwparse(&_pw_passwd, line)) {
+		if (search == _PW_KEYBYNUM)
+			goto nextdnsbynum;	/* skip dogdy entries */
 		r = NS_UNAVAIL;
-	else
+	} else
 		r = NS_SUCCESS;
  cleanup_dns_getpw:
 	hesiod_end(context);
@@ -525,14 +529,15 @@ _nis_getpw(rv, cb_data, ap)
 	uid_t		 uid;
 	int		 search;
 	char		*key, *data;
-	char		*map = PASSWD_BYNAME;
-	int		 keylen, datalen, r;
+	const char	*map;
+	int		 keylen, datalen, r, rval;
 
 	if(__ypdomain == NULL) {
 		if(_yp_check(&__ypdomain) == 0)
 			return NS_UNAVAIL;
 	}
 
+	map = PASSWD_BYNAME;
 	search = va_arg(ap, int);
 	switch (search) {
 	case _PW_KEYBYNUM:
@@ -550,24 +555,17 @@ _nis_getpw(rv, cb_data, ap)
 		abort();
 	}
 	line[sizeof(line) - 1] = '\0';
+	rval = NS_UNAVAIL;
 	if (search != _PW_KEYBYNUM) {
 		data = NULL;
 		r = yp_match(__ypdomain, map, line, (int)strlen(line),
 				&data, &datalen);
-		switch (r) {
-		case 0:
-			break;
-		case YPERR_KEY:
-			r =  NS_NOTFOUND;
-			break;
-		default:
-			r = NS_UNAVAIL;
-			break;
-		}
+		if (r == YPERR_KEY)
+			rval = NS_NOTFOUND;
 		if (r != 0) {
 			if (data)
 				free(data);
-			return r;
+			return (rval);
 		}
 		data[datalen] = '\0';		/* clear trailing \n */
 		strncpy(line, data, sizeof(line));
@@ -578,6 +576,8 @@ _nis_getpw(rv, cb_data, ap)
 		return NS_SUCCESS;
 	}
 
+	if (_pw_ypdone)
+		return NS_NOTFOUND;
 	for (;;) {
 		data = key = NULL;
 		if (__ypcurrent) {
@@ -592,26 +592,20 @@ _nis_getpw(rv, cb_data, ap)
 				break;
 			case YPERR_NOMORE:
 				__ypcurrent = NULL;
-				_pw_none = 1;
-				if (key)
-					free(key);
-				return NS_SUCCESS;
-			default:
-				r = NS_UNAVAIL;
-				break;
+					/* flag `no more yp records' */
+				_pw_ypdone = 1;
+				rval = NS_NOTFOUND;
 			}
 		} else {
-			r = 0;
-			if (yp_first(__ypdomain, map, &__ypcurrent,
-					&__ypcurrentlen, &data, &datalen))
-				r = NS_UNAVAIL;
+			r = yp_first(__ypdomain, map, &__ypcurrent,
+					&__ypcurrentlen, &data, &datalen);
 		}
 		if (r != 0) {
 			if (key)
 				free(key);
 			if (data)
 				free(data);
-			return r;
+			return (rval);
 		}
 		data[datalen] = '\0';		/* clear trailing \n */
 		strncpy(line, data, sizeof(line));
@@ -738,7 +732,7 @@ _compat_getpwent(rv, cb_data, ap)
 #ifdef _PASSWD_COMPAT
 	static char	*name = NULL;
 	const char	*user, *host, *dom;
-	int		 has_compatpw;
+	int		 has_compatpw, rval;
 #endif
 
 	if (!_pw_db && !__initdb())
@@ -792,12 +786,17 @@ again:
 	}
 #endif
 
+	if (_pw_keynum == -1)
+		return NS_NOTFOUND;	/* no more local records */
 	++_pw_keynum;
 	bf[0] = _PW_KEYBYNUM;
 	memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 	key.data = (u_char *)bf;
 	key.size = sizeof(_pw_keynum) + 1;
-	if(__hashpw(&key) == NS_SUCCESS) {
+	rval = __hashpw(&key);
+	if (rval == NS_NOTFOUND)
+		_pw_keynum = -1;	/* flag `no more local records' */
+	else if (rval == NS_SUCCESS) {
 #ifdef _PASSWD_COMPAT
 		/* if we don't have YP at all, don't bother. */
 		if (has_compatpw) {
@@ -841,9 +840,8 @@ again:
 			}
 		}
 #endif
-		return NS_SUCCESS;
 	}
-	return NS_NOTFOUND;
+	return (rval);
 }
 
 /*
@@ -860,9 +858,9 @@ _compat_getpw(rv, cb_data, ap)
 {
 #ifdef _PASSWD_COMPAT
 	DBT		key;
-	int		search, rval, r, s;
+	int		search, rval, r, s, keynum;
 	uid_t		uid;
-	char		bf[MAXLOGNAME + 1];
+	char		bf[sizeof(keynum) + 1];
 	const char	*name, *host, *user, *dom;
 #endif
 
@@ -893,11 +891,11 @@ _compat_getpw(rv, cb_data, ap)
 		abort();
 	}
 
-	for(s = -1, _pw_keynum=1; _pw_keynum; _pw_keynum++) {
+	for (s = -1, keynum = 1 ; ; keynum++) {
 		bf[0] = _PW_KEYBYNUM;
-		memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
+		memmove(bf + 1, &keynum, sizeof(keynum));
 		key.data = (u_char *)bf;
-		key.size = sizeof(_pw_keynum) + 1;
+		key.size = sizeof(keynum) + 1;
 		if(__hashpw(&key) != NS_SUCCESS)
 			break;
 		switch(_pw_passwd.pw_name[0]) {
@@ -913,10 +911,12 @@ _compat_getpw(rv, cb_data, ap)
 				break;
 			case '@':
 pwnam_netgrp:
+#if 0			/* XXX: is this a hangover from pre-nsswitch?  */
 				if(__ypcurrent) {
 					free(__ypcurrent);
 					__ypcurrent = NULL;
 				}
+#endif
 				if (s == -1)		/* first time */
 					setnetgrent(_pw_passwd.pw_name + 2);
 				s = getnetgrent(&host, &user, &dom);
@@ -1011,10 +1011,9 @@ getpwent()
 		{ 0 }
 	};
 
-	_pw_none = 0;
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent", compatsrc,
 	    _PW_KEYBYNUM);
-	if (_pw_none || r != NS_SUCCESS)
+	if (r != NS_SUCCESS)
 		return (struct passwd *)NULL;
 	return &_pw_passwd;
 }
@@ -1069,6 +1068,7 @@ setpassent(stayopen)
 	if(__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
+	_pw_ypdone = 0;
 #endif
 #ifdef HESIOD
 	_pw_hesnum = 0;
@@ -1104,6 +1104,7 @@ endpwent()
 	if(__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
+	_pw_ypdone = 0;
 #endif
 #ifdef HESIOD
 	_pw_hesnum = 0;
