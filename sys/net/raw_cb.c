@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.14 2003/08/07 16:32:56 agc Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.15 2005/02/26 22:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.14 2003/08/07 16:32:56 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.15 2005/02/26 22:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.14 2003/08/07 16:32:56 agc Exp $");
 #include <netinet/in.h>
 
 /*
- * Routines to manage the raw protocol control blocks. 
+ * Routines to manage the raw protocol control blocks.
  *
  * TODO:
  *	hash lookups by protocol family/protocol + address family

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.11 2004/12/27 05:36:08 mycroft Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.12 2005/02/26 22:45:09 perry Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -52,7 +52,7 @@ struct ieee80211_plcp_hdr {
 	u_int16_t	i_crc;
 } __attribute__((__packed__));
 
-#define IEEE80211_PLCP_SFD      0xF3A0 
+#define IEEE80211_PLCP_SFD      0xF3A0
 
 /*
  * generic definitions for IEEE 802.11 frames
@@ -373,7 +373,7 @@ union ieee80211_information {
 		struct {
 			u_int8_t schan;		/* starting channel */
 			u_int8_t nchan;		/* number channels */
-			u_int8_t maxtxpwr;	
+			u_int8_t maxtxpwr;
 		} band[4];			/* up to 4 sub bands */
 	} country;
 	struct ath {
@@ -595,7 +595,7 @@ enum {
 #define	IEEE80211_AID_ISSET(b, w) \
 	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
 
-/* 
+/*
  * RTS frame length parameters.  The default is specified in
  * the 802.11 spec.  The max may be wrong for jumbo frames.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.143 2005/02/18 00:52:56 heas Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.144 2005/02/26 22:45:12 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.143 2005/02/18 00:52:56 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.144 2005/02/26 22:45:12 perry Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -512,8 +512,8 @@ sendit:
 
 #ifdef IPSEC_NAT_T
 	/*
-	 * NAT-T ESP fragmentation: don't do IPSec processing now, 
-	 * we'll do it on each fragmented packet. 
+	 * NAT-T ESP fragmentation: don't do IPSec processing now,
+	 * we'll do it on each fragmented packet.
 	 */
 	if (sp->req->sav &&
 	    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
@@ -732,7 +732,7 @@ skip_ipsec:
 		/*
 		 * If deferred crypto processing is needed, check that
 		 * the interface supports it.
-		 */ 
+		 */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
 		if (mtag != NULL && (ifp->if_capenable & IFCAP_IPSEC) == 0) {
 			/* notify IPsec to do its own crypto */
@@ -853,16 +853,16 @@ spd_done:
 			ipsec_delaux(m);
 
 #ifdef IPSEC_NAT_T
-			/* 
+			/*
 			 * If we get there, the packet has not been handeld by
-			 * IPSec whereas it should have. Now that it has been 
+			 * IPSec whereas it should have. Now that it has been
 			 * fragmented, re-inject it in ip_output so that IPsec
 			 * processing can occur.
 			 */
 			if (natt_frag) {
-				error = ip_output(m, opt, 
+				error = ip_output(m, opt,
 				    ro, flags, imo, so, mtu_p);
-			} else 
+			} else
 #endif /* IPSEC_NAT_T */
 #endif /* IPSEC */
 			{

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.11 2003/09/21 19:17:16 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.12 2005/02/26 22:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -12,7 +12,7 @@
  * roots in a similar driver written by Phil Cockcroft (formerly) at
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
- * 
+ *
  * from: Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
  */
 

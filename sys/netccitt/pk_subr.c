@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.28 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.29 2005/02/26 22:45:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.28 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.29 2005/02/26 22:45:10 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static void pk_reset __P((struct pklcd *, int));
  * Attach X.25 protocol to socket, allocate logical channel descripter and
  * buffer space, and enter LISTEN state if we are to accept IN-COMMING CALL
  * packets.
- * 
+ *
  */
 
 struct pklcd *

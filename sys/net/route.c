@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.64 2005/01/23 18:41:56 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.65 2005/02/26 22:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -52,7 +52,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.64 2005/01/23 18:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.65 2005/02/26 22:45:09 perry Exp $");
 
 #include "opt_ns.h"
 
@@ -204,7 +204,7 @@ rtalloc1(const struct sockaddr *dst, int report)
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			if (rt->rt_ifp != NULL) {
-				info.rti_info[RTAX_IFP] = 
+				info.rti_info[RTAX_IFP] =
 				    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 			}
@@ -314,7 +314,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 		goto create;
 	/*
 	 * Don't listen to the redirect if it's
-	 * for a route to an interface. 
+	 * for a route to an interface.
 	 */
 	if (rt->rt_flags & RTF_GATEWAY) {
 		if (((rt->rt_flags & RTF_HOST) == 0) && (flags & RTF_HOST)) {
@@ -447,7 +447,7 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 		 * we can use the local address.
 		 */
 		ifa = 0;
-		if (flags & RTF_HOST) 
+		if (flags & RTF_HOST)
 			ifa = ifa_ifwithdstaddr(dst);
 		if (ifa == 0)
 			ifa = ifa_ifwithaddr(gateway);
@@ -839,14 +839,14 @@ static int rt_init_done = 0;
 		}							\
 	} while (/*CONSTCOND*/0)
 
-/* 
+/*
  * Some subtle order problems with domain initialization mean that
  * we cannot count on this being run from rt_init before various
  * protocol initializations are done.  Therefore, we make sure
  * that this is run when the first queue is added...
  */
 
-void	 
+void
 rt_timer_init(void)
 {
 	assert(rt_init_done == 0);
@@ -867,7 +867,7 @@ rt_timer_queue_create(u_int timeout)
 
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
-		return (NULL);		
+		return (NULL);
 	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
@@ -923,7 +923,7 @@ rt_timer_count(struct rttimer_queue *rtq)
 	return rtq->rtq_count;
 }
 
-void     
+void
 rt_timer_remove_all(struct rtentry *rt, int destroy)
 {
 	struct rttimer *r;
@@ -941,7 +941,7 @@ rt_timer_remove_all(struct rtentry *rt, int destroy)
 	}
 }
 
-int      
+int
 rt_timer_add(struct rtentry *rt,
 	void (*func)(struct rtentry *, struct rttimer *),
 	struct rttimer_queue *queue)
@@ -984,7 +984,7 @@ rt_timer_add(struct rtentry *rt,
 	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
 	TAILQ_INSERT_TAIL(&queue->rtq_head, r, rtt_next);
 	r->rtt_queue->rtq_count++;
-	
+
 	return (0);
 }
 
@@ -1002,7 +1002,7 @@ rt_timer_timer(void *arg)
 	splx(s);
 
 	s = splsoftnet();
-	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL; 
+	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
 	     rtq = LIST_NEXT(rtq, rtq_link)) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
 		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
