@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.179 2003/09/28 04:45:14 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.180 2003/11/10 20:03:29 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.179 2003/09/28 04:45:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.180 2003/11/10 20:03:29 jonathan Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1922,9 +1922,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	int error, old;
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
+	/* All sysctl names (except ifq.*) at this level are terminal. */
+	if ((namelen != 1) && !(namelen == 2 && name[0] == IPCTL_IFQ))
+		return (ENOTDIR); 
 
 	switch (name[0]) {
 	case IPCTL_FORWARDING:
@@ -2059,6 +2059,11 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_CHECKINTERFACE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_checkinterface));
+	case IPCTL_IFQ:
+		return (sysctl_ifq(name+1, namelen-1,
+				  oldp, oldlenp, newp, newlen,
+				  &ipintrq));
+
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.73 2003/09/21 15:23:56 wiz Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.74 2003/11/10 20:03:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.73 2003/09/21 15:23:56 wiz Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.74 2003/11/10 20:03:29 jonathan Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: sysctl.c,v 1.73 2003/09/21 15:23:56 wiz Exp $");
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
+
+#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -263,8 +265,12 @@ main(int argc, char *argv[])
 	if (Aflag || aflag) {
 		warnfp = stdout;
 		debuginit();
-		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++)
+		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++) {
+		  if (secondlevel[lvl1].list == NULL &&
+		      secondlevel[lvl1].size == 0)
+		    break;
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
+		}
 		return 0;
 	}
 
@@ -824,6 +830,11 @@ debuginit(void)
 	}
 }
 
+struct ctlname ifqname[] = CTL_IFQ_NAMES;
+struct list ifqvars[] = {
+/*0*/	{ ifqname, 5 },	/* ip.ifq */
+};
+
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
@@ -910,6 +921,22 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
+
+	if (*typep == CTLTYPE_NODE) {
+		int tindx;
+
+		if (*bufpp == 0) {
+			listall(string, &ifqvars[0]);
+			return(-1);
+		}
+		lp = &ifqvars[0];
+		if ((tindx = findname(string, "fifth", bufpp, lp)) == -1)
+			return (-1);
+		mib[4] = tindx;
+		*typep = lp->list[tindx].ctl_type;
+		return(5);
+	}
+
 	return (4);
 }
 
