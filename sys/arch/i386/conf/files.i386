@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.27 1994/01/08 11:12:15 cgd Exp $
+#	$Id: files.i386,v 1.28 1994/01/09 19:27:39 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
@@ -20,6 +20,7 @@ arch/i386/i386/trap.c		standard
 arch/i386/i386/vm_machdep.c	standard
 arch/i386/isa/aha1542.c		optional aha device-driver requires isa scsi
 arch/i386/isa/aha1742.c		optional ahb device-driver requires isa scsi not aha
+arch/i386/isa/bsd_audio.c	optional audio device-driver
 arch/i386/isa/bt742a.c		optional bt device-driver requires isa scsi not aha
 arch/i386/isa/clock.c		optional isa
 arch/i386/isa/com.c		optional com device-driver requires isa
@@ -43,6 +44,7 @@ arch/i386/isa/mms.c		optional mms device-driver requires isa
 arch/i386/isa/npx.c		optional npx device-driver requires isa
 arch/i386/isa/pccons.c		optional pc device-driver requires isa
 arch/i386/isa/pms.c		optional pms device-driver requires isa
+arch/i386/isa/sb.c		optional sb device-driver requires isa
 arch/i386/isa/spkr.c		optional speaker device-driver requires isa
 arch/i386/isa/ultra14f.c	optional uha device-driver requires isa scsi
 arch/i386/isa/wd.c		optional wd device-driver requires isa
