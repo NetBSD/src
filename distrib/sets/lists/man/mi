@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.563 2003/04/18 05:02:07 thorpej Exp $
+# $NetBSD: mi,v 1.564 2003/04/18 05:23:38 gmcgarry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -461,7 +461,6 @@
 ./usr/share/man/cat4/acorn32/ie.0			man-sys-catman
 ./usr/share/man/cat4/acorn32/intro.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/kbd.0		man-sys-catman
-./usr/share/man/cat4/acorn32/kmem.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/lpt.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/mainbus.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/mem.0		man-sys-catman
@@ -540,7 +539,6 @@
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman
 ./usr/share/man/cat4/an.0			man-sys-catman
 ./usr/share/man/cat4/aria.0			man-sys-catman
-./usr/share/man/cat4/arm32/asc.0		man-sys-catman
 ./usr/share/man/cat4/arp.0			man-sys-catman
 ./usr/share/man/cat4/ast.0			man-sys-catman
 ./usr/share/man/cat4/atalk.0			man-sys-catman
@@ -2253,7 +2251,6 @@
 ./usr/share/man/man4/acorn32/ie.4			man-sys-man
 ./usr/share/man/man4/acorn32/intro.4		man-sys-man
 ./usr/share/man/man4/acorn32/kbd.4		man-sys-man
-./usr/share/man/man4/acorn32/kmem.4		man-sys-man
 ./usr/share/man/man4/acorn32/lpt.4		man-sys-man
 ./usr/share/man/man4/acorn32/mainbus.4		man-sys-man
 ./usr/share/man/man4/acorn32/mem.4		man-sys-man
