@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.16 1999/03/23 14:22:59 bouyer Exp $	*/
+/*	$NetBSD: dump.h,v 1.16.2.1 2000/10/10 22:24:40 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -126,10 +126,10 @@ static __inline u_int64_t iswap64(x)
 /* operator interface functions */
 void	broadcast __P((char *message));
 void	lastdump __P((int arg));	/* int should be char */
-void	msg __P((const char *fmt, ...));
-void	msgtail __P((const char *fmt, ...));
+void	msg __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
+void	msgtail __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
 int	query __P((char *question));
-void	quit __P((const char *fmt, ...));
+void	quit __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
 void	set_operators __P((void));
 time_t	do_stats __P((void));
 void	statussig __P((int));
