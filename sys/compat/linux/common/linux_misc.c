@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.112 2002/11/13 08:27:10 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.113 2002/11/13 15:20:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.112 2002/11/13 08:27:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.113 2002/11/13 15:20:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,11 +584,9 @@ linux_sys_mprotect(p, v, retval)
 
 /*
  * This code is partly stolen from src/lib/libc/compat-43/times.c
- * XXX - CLK_TCK isn't declared in /sys, just in <time.h>, done here
  */
 
-#define CLK_TCK 100
-#define	CONVTCK(r)	(r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
+#define	CONVTCK(r)	(r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
 int
 linux_sys_times(p, v, retval)
@@ -624,6 +622,8 @@ linux_sys_times(p, v, retval)
 	retval[0] = ((linux_clock_t)(CONVTCK(t)));
 	return 0;
 }
+
+#undef CONVTCK
 
 /*
  * Linux 'readdir' call. This code is mostly taken from the
