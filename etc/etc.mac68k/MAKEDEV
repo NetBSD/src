@@ -20,11 +20,10 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.34 1998/11/13 04:49:02 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.35 1999/02/18 07:36:57 scottr Exp $
 #
 # Device "make" file.  Valid arguments:
-#	all	a smattering--at least one of each except
-#		fd* (unimp.) and ch*
+#	all	a smattering -- at least one of each except ch*
 #
 #	std	standard devices
 #	fd	file descriptor device nodes
@@ -35,13 +34,13 @@
 #	st*	scsi tapes
 #
 # Disks:
-#	fd*	floppy disk drives (3 1/2") (unimp.)
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
 #	vnd*	vnode pseudo-disks
 #	raid*	RAIDframe disk driver
 #	ccd*	concatenated disk driver
 #	md*	memory pseudo-disks
+#	fd*	floppy disk drives (3 1/2")
 #
 # Terminal ports:
 #	ttye*	ite consoles
@@ -76,7 +75,7 @@ case $i in
 all)
 	sh $0 std fd sd0 sd1 sd2 sd3 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
-	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1 raid0 raid1 raid2 raid3
+	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1 raid0 raid1 raid2 raid3 fd0
 	sh $0 ttye0 adb grf0 grf1 grf2 grf3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11 random
@@ -168,9 +167,10 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-sd*|vnd*|ccd*|raid*)
+sd*|fd*|vnd*|ccd*|raid*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=9;	chr=20;;
+	fd*) name=fd;	unit=${i#fd};	blk=21;	chr=43;;
 	raid*) name=raid; unit=${i#vnd}; blk=20; chr=42;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=8;	chr=19;;
