@@ -1,5 +1,5 @@
-.\" Copyright (c) 1985, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ping.8	6.7 (Berkeley) 3/16/91
+.\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 16, 1991
+.Dd December 11, 1993
 .Dt PING 8
 .Os BSD 4.3
 .Sh NAME
@@ -65,7 +65,6 @@ followed by a
 and then an arbitrary number of ``pad'' bytes used to fill out the
 packet.
 The options are as follows:
-Other options are:
 .Bl -tag -width Ds
 .It Fl c Ar count
 Stop after sending (and receiving)
@@ -82,7 +81,7 @@ Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
 .Tn ECHO_REQUEST
-sent a period ``.'' is printed, while for ever
+sent a period ``.'' is printed, while for every
 .Tn ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
