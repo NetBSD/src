@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.7 2002/03/26 16:58:56 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.8 2002/03/26 22:59:32 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.7 2002/03/26 16:58:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.8 2002/03/26 22:59:32 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -53,8 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.7 2002/03/26 16:58:56 manu Exp $")
 
 #include <machine/regnum.h>
 
+#include <compat/common/compat_util.h>
+
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_wait.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -615,4 +621,45 @@ loop:
 		return error;
 	goto loop;
 
+}
+
+int 
+irix_sys_sigprocmask(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(irix_sigset_t *) set;
+		syscallarg(irix_sigset_t *) oset;
+	} */ *uap = v;
+	struct svr4_sys_sigprocmask_args cup;
+	int error;
+	sigset_t *obss;
+	irix_sigset_t niss, oiss;
+	caddr_t sg;
+
+	SCARG(&cup, how) = SCARG(uap, how);
+	SCARG(&cup, set) = (svr4_sigset_t *)SCARG(uap, set);
+	SCARG(&cup, oset) = (svr4_sigset_t *)SCARG(uap, oset);
+
+	if (SCARG(uap, how) == IRIX_SIG_SETMASK32) {
+		sg = stackgap_init(p, 0);
+		if ((error = copyin(SCARG(uap, set), &niss, sizeof(niss))) != 0)
+			return error;
+		SCARG(&cup, set) = stackgap_alloc(p, &sg, sizeof(niss));
+
+		obss = &p->p_sigctx.ps_sigmask;	
+		native_to_irix_sigset(obss, &oiss);
+		/* preserve the higher 32 bits */
+		niss.bits[3] = oiss.bits[3]; 
+
+		if ((error = copyout(&niss, (void *)SCARG(&cup, set), 
+		    sizeof(niss))) != 0)
+			return error;
+
+		SCARG(&cup, how) = SVR4_SIG_SETMASK;
+	}
+	return svr4_sys_sigprocmask(p, &cup, retval);
 }

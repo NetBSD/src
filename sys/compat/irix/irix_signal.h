@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.4 2002/02/17 20:50:06 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.5 2002/03/26 22:59:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #include <compat/irix/irix_types.h>
 
 /* From IRIX's <sys/signal.h> */
+
+#define IRIX_SIG_SETMASK32 256
 
 typedef struct irix_sigcontext {
 	__uint32_t	isc_regmask;
