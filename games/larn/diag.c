@@ -1,15 +1,16 @@
-/*	$NetBSD: diag.c,v 1.8 1997/10/18 20:03:12 christos Exp $	*/
+/*	$NetBSD: diag.c,v 1.9 2000/07/03 03:57:42 matt Exp $	*/
 
 /* diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: diag.c,v 1.8 1997/10/18 20:03:12 christos Exp $");
+__RCSID("$NetBSD: diag.c,v 1.9 2000/07/03 03:57:42 matt Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
 #include <sys/times.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "header.h"
 #include "extern.h"

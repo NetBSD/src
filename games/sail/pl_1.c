@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.7 1999/09/08 21:45:30 jsm Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.8 2000/07/03 03:57:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.7 1999/09/08 21:45:30 jsm Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.8 2000/07/03 03:57:43 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.5 1999/09/08 21:17:50 jsm Exp $	*/
+/*	$NetBSD: stoc.c,v 1.6 2000/07/03 03:57:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.5 1999/09/08 21:17:50 jsm Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.6 2000/07/03 03:57:41 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gomoku.h"
 
 const char	*letters	= "<ABCDEFGHJKLMNOPQRST>";

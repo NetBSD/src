@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.6 1999/09/08 21:17:59 jsm Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.7 2000/07/03 03:57:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.6 1999/09/08 21:17:59 jsm Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.7 2000/07/03 03:57:43 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: lo_main.c,v 1.6 1999/09/08 21:17:59 jsm Exp $");
  * -l force a long listing (print out real usernames)
  */
 #include <sys/types.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include "extern.h"
 #include "pathnames.h"
