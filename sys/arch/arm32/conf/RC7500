@@ -32,7 +32,6 @@ options		RC7500		# ARM7500
 
 # FPA options
 
-#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
