@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.121 2003/07/12 10:31:10 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.122 2003/07/12 11:45:12 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -276,7 +276,7 @@ Notes:
 
 Package:	gettext
 Version:	0.10.35
-Current Vers:	0.11.5
+Current Vers:	0.12.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -285,6 +285,9 @@ Notes:
 GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
 we use BSD-licensed implementation from Citrus project (see entry for
 "Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
+0.11.x introduced new file format with file format revision >= 1, while our
+BSD-licensed libintl supports revision 0 only.  Therefore, we cannot upgrade
+to 0.11.x until we add support for new file format.
 
 Package:	grep
 Version:	2.5.1
