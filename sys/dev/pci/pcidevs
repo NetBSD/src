@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.490 2002/12/03 06:08:00 explorer Exp $
+$NetBSD: pcidevs,v 1.491 2002/12/11 21:34:36 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1610,6 +1610,7 @@ product MACRONIX MX98713	0x0512	MX98713 (PMAC) 10/100 Ethernet
 product MACRONIX MX987x5	0x0531	MX987x5 (PMAC) 10/100 Ethernet
 
 /* Madge Networks products */
+product MADGE SMARTRN2		0x0002	Smart 16/4 PCI Ringnode Mk2
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
 product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 
