@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/08 20:15:20 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.1 2000/12/08 20:15:13 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,27 +40,44 @@
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/lkm.h>
-
-extern const struct emul emul_svr4;
-
-int compat_svr4_lkmentry __P((struct lkm_table *, int, int));
+#include <sys/file.h>
+#include <sys/errno.h>
+#include <sys/proc.h>
 
 /*
- * declare the emulation
+ * This module is different to other compat modules - it adds the
+ * execsw[] entry as well. As the compat_aout is emulation more of
+ * executable format support, it's probably better to be placed here\
+ * than under lkm/exec/.
  */
-MOD_COMPAT("svr4", -1, &emul_svr4);
+
+extern const struct emul emul_netbsd_aout;
+
+int compat_aout_lkmentry __P((struct lkm_table *, int, int));
+
+static struct execsw exec_netbsd_aout =
+	{ sizeof(struct exec), exec_aout_makecmds, { NULL },
+	  &emul_netbsd_aout,
+	  EXECSW_PRIO_FIRST,	/* Note: this differs from exec_conf.c entry */
+	  0, copyargs, setregs };	/* a.out binaries */
+
+/*
+ * declare the executable format
+ */
+MOD_EXEC("compat_aout", -1, &exec_netbsd_aout, "aout");
 
 /*
  * entry point
  */
 int
-compat_svr4_lkmentry(lkmtp, cmd, ver)
+compat_aout_lkmentry(lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;	
 	int cmd;
 	int ver;
 {
-
 	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
 }
