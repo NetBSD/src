@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.11 1998/02/01 19:25:44 kleink Exp $	*/
+/*	$NetBSD: i82586.c,v 1.12 1998/02/28 01:14:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,6 @@ Mode of operation:
 
 #include <machine/bus.h>
 
-#define _NEW_I82586	/* remove after all old drivers are converted */
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 
