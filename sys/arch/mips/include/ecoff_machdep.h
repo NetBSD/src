@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.13 1997/10/15 00:59:01 mhitch Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.14 1998/12/05 07:26:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -62,8 +62,12 @@
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
 
+#ifdef _KERNEL
+struct proc;
+struct exec_package;
 extern void	cpu_exec_ecoff_setregs __P((
     struct proc *, struct exec_package *, u_long));
+#endif	/* _KERNEL */
 
 
 /*
