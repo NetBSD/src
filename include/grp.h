@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.15 2002/01/24 02:46:33 lukem Exp $	*/
+/*	$NetBSD: grp.h,v 1.16 2002/01/27 07:00:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -71,9 +71,9 @@ void		 setgrfile __P((const char *));
 int		 setgroupent __P((int));
 const char	*group_from_gid __P((gid_t, int));
 int		 gid_from_group __P((const char *, gid_t *));
-int		 pwcache_groupdb(int (*)(int), void (*)(void),
+int		 pwcache_groupdb __P((int (*)(int), void (*)(void),
 				    struct group * (*)(const char *),
-				    struct group * (*)(gid_t));
+				    struct group * (*)(gid_t)));
 #endif
 __END_DECLS
 
