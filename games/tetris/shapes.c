@@ -1,4 +1,4 @@
-/*	$NetBSD: shapes.c,v 1.4 1999/09/08 21:18:01 jsm Exp $	*/
+/*	$NetBSD: shapes.c,v 1.5 2002/06/02 22:17:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,9 +85,9 @@ const struct shape shapes[] = {
 int
 fits_in(shape, pos)
 	const struct shape *shape;
-	register int pos;
+	int pos;
 {
-	register int *o = shape->off;
+	int *o = shape->off;
 
 	if (board[pos] || board[pos + *o++] || board[pos + *o++] ||
 	    board[pos + *o])
@@ -102,9 +102,9 @@ fits_in(shape, pos)
 void
 place(shape, pos, onoff)
 	const struct shape *shape;
-	register int pos, onoff;
+	int pos, onoff;
 {
-	register int *o = shape->off;
+	int *o = shape->off;
 
 	board[pos] = onoff;
 	board[pos + *o++] = onoff;

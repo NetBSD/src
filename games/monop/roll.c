@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.7 1999/08/21 10:40:04 simonb Exp $	*/
+/*	$NetBSD: roll.c,v 1.8 2002/06/02 22:17:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: roll.c,v 1.7 1999/08/21 10:40:04 simonb Exp $");
+__RCSID("$NetBSD: roll.c,v 1.8 2002/06/02 22:17:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: roll.c,v 1.7 1999/08/21 10:40:04 simonb Exp $");
 /*
  *	This routine rolls ndie nside-sided dice.
  */
-
-#define	reg	register
 
 #if defined(pdp11)
 #define	MAXRAND	32767L
