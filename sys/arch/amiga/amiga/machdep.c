@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.3 1993/09/02 18:05:34 mw Exp $
+ * from: Utah $Hdr: machdep.c 1.63 91/04/24$
+ *
+ *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
 #include "param.h"
@@ -68,6 +68,7 @@
 #include "pte.h"
 #include "net/netisr.h"
 #include "sys/exec.h"
+#include "sys/vnode.h"
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include "vm/vm_param.h"
@@ -116,6 +117,10 @@ extern	u_int lowram;
 
 /* used in init_main.c */
 char *cpu_type = "m68k";
+
+#ifdef COMPAT_SUNOS
+void sun_sendsig ();
+#endif
 
 /*
  * Console initialization: called early on from main,
@@ -222,14 +227,13 @@ again:
 	 */
 	if (bufpages == 0)
 		bufpages = physmem / 10 / CLSIZE;
+	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);  /* XXX ? - cgd */
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-#if 0
-	freebufspace = bufpages * NBPG;
-#endif
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -253,7 +257,6 @@ again:
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
 
-#if 0
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -265,6 +268,10 @@ again:
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		/* don't want to alloc more physical mem than needed */
+		bufpages = btoc(MAXBSIZE) * nbuf;
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
@@ -292,15 +299,6 @@ again:
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
 #endif
-#else	/* code from 386BSD */
-
-	/*
-	 * Allocate a submap for buffer space allocations.
-	 */
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 bufpages*NBPG, TRUE);
-
-#endif	/* code from 386BSD */
 
 	/*
 	 * Allocate a submap for physio
@@ -451,6 +449,26 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
 };
 
+#ifdef COMPAT_SUNOS
+/* sigh.. I guess it's too late to change now, but "our" sigcontext
+   is plain vax, not very 68000 (ap, for example..) */
+struct sun_sigcontext {
+	int 	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
+	int	sc_sp;			/* sp to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_ps;			/* psl to restore */
+};
+struct sun_sigframe {
+	int	ssf_signum;		/* signo for handler */
+	int	ssf_code;		/* additional info for handler */
+	struct sun_sigcontext *ssf_scp;	/* context pointer for handler */
+	u_int	ssf_addr;		/* even more info for handler */
+	struct sun_sigcontext ssf_sc;	/* I don't know if that's what 
+					   comes here */
+};
+#endif	
+
 #ifdef DEBUG
 int sigdebug = 0x0;
 int sigpid = 0;
@@ -482,6 +500,30 @@ sendsig(catcher, sig, mask, code)
 	frame = (struct frame *)p->p_regs;
 	ft = frame->f_format;
 	oonstack = ps->ps_onstack;
+
+#ifdef COMPAT_SUNOS
+	if (p->p_md.md_emul == MDPE_SUNOS)
+	  {
+	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
+	       can't currently handle it. Reset signal actions and
+	       have the process die unconditionally. */
+	    if (ft >= FMT9)
+	      {
+		SIGACTION(p, sig) = SIG_DFL;
+		mask = sigmask(sig);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, sig);
+		return;
+	      }
+
+	    /* else build the short SunOS frame instead */
+	    sun_sendsig (catcher, sig, mask, code);
+	    return;
+	  }
+#endif
+
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -596,7 +638,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	  frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
@@ -604,6 +646,104 @@ sendsig(catcher, sig, mask, code)
 #endif
 	free((caddr_t)kfp, M_TEMP);
 }
+
+#ifdef COMPAT_SUNOS
+/* much simpler sendsig() for SunOS processes, as SunOS does the whole
+   context-saving in usermode. For now, no hardware information (ie.
+   frames for buserror etc) is saved. This could be fatal, so I take 
+   SIG_DFL for "dangerous" signals. */
+
+void
+sun_sendsig(catcher, sig, mask, code)
+	sig_t catcher;
+	int sig, mask;
+	unsigned code;
+{
+	register struct proc *p = curproc;
+	register struct sun_sigframe *fp;
+	struct sun_sigframe kfp;
+	register struct frame *frame;
+	register struct sigacts *ps = p->p_sigacts;
+	register short ft;
+	int oonstack, fsize;
+
+	frame = (struct frame *)p->p_regs;
+	ft = frame->f_format;
+	oonstack = ps->ps_onstack;
+	/*
+	 * Allocate and validate space for the signal handler
+	 * context. Note that if the stack is in P0 space, the
+	 * call to grow() is a nop, and the useracc() check
+	 * will fail if the process has not already allocated
+	 * the space with a `brk'.
+	 */
+	fsize = sizeof(struct sun_sigframe);
+	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigsp - fsize);
+		ps->ps_onstack = 1;
+	} else
+		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)grow(p, (unsigned)fp);
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sun_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->ssf_sc, ft);
+#endif
+	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sun_sendsig(%d): useracc failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	kfp.ssf_signum = sig;
+	kfp.ssf_code = code;
+	kfp.ssf_scp = &fp->ssf_sc;
+	kfp.ssf_addr = ~0;		/* means: not computable */
+
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	kfp.ssf_sc.sc_onstack = oonstack;
+	kfp.ssf_sc.sc_mask = mask;
+	kfp.ssf_sc.sc_sp = frame->f_regs[SP];
+	kfp.ssf_sc.sc_pc = frame->f_pc;
+	kfp.ssf_sc.sc_ps = frame->f_sr;
+	(void) copyout((caddr_t)&kfp, (caddr_t)fp, fsize);
+	frame->f_regs[SP] = (int)fp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sun_sendsig(%d): sig %d scp %x sc_sp %x\n",
+		       p->p_pid, sig, kfp.ssf_sc.sc_sp);
+#endif
+
+	/* have the user-level trampoline code sort out what registers it
+	   has to preserve. */
+	frame->f_pc = catcher;
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sun_sendsig(%d): sig %d returns\n",
+		       p->p_pid, sig);
+#endif
+}
+
+#endif	/* COMPAT_SUNOS */
+
 
 /*
  * System call to cleanup state after a signal
@@ -736,6 +876,55 @@ sigreturn(p, uap, retval)
 #endif
 	return (EJUSTRETURN);
 }
+
+#ifdef COMPAT_SUNOS
+/* this is a "light weight" version of the NetBSD sigreturn, just for
+   SunOS processes. We don't have to restore any hardware frames,
+   registers, fpu stuff, that's all done in user space. */
+int
+sun_sigreturn(p, uap, retval)
+	struct proc *p;
+	struct args {
+		struct sun_sigcontext *sigcntxp;
+	} *uap;
+	int *retval;
+{
+	register struct sun_sigcontext *scp;
+	register struct frame *frame;
+	register int rf;
+	struct sun_sigcontext tsigc;
+	int flags;
+
+	scp = uap->sigcntxp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sun_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+#endif
+	if ((int)scp & 1)
+		return (EINVAL);
+	/*
+	 * Test and fetch the context structure.
+	 * We grab it all at once for speed.
+	 */
+	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+		return (EINVAL);
+	scp = &tsigc;
+	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+		return (EINVAL);
+	/*
+	 * Restore the user supplied information
+	 */
+	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+	frame = (struct frame *) p->p_regs;
+	frame->f_regs[SP] = scp->sc_sp;
+	frame->f_pc = scp->sc_pc;
+	frame->f_sr = scp->sc_ps;
+
+	return EJUSTRETURN;
+}
+#endif /* COMPAT_SUNOS */
 
 static int waittime = -1;
 
@@ -1354,7 +1543,7 @@ physstrat(bp, strat, prio)
    ZMAGIC always worked the `right' way (;-)) just ignore the missing
    MID and proceed to new zmagic code ;-) */
 
-cpu_exec_makecmds(p, epp)
+cpu_exec_aout_makecmds(p, epp)
     struct proc *p;
     struct exec_package *epp;
 {
@@ -1363,14 +1552,127 @@ cpu_exec_makecmds(p, epp)
 #ifdef COMPAT_NOMID
   if (! ((epp->ep_execp->a_midmag >> 16) & 0x0fff)
       && epp->ep_execp->a_midmag == ZMAGIC)
-    return exec_prep_zmagic (p, epp);
+    return exec_aout_prep_zmagic (p, epp);
 #endif
 
-  if (((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN020)
-    return exec_prep_zmagic (p, epp);
+#ifdef COMPAT_SUNOS
+  if (((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN020
+      || ((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN010)
+    {
+      int error;
 
-  if (((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN010)
-    return exec_prep_zmagic (p, epp);
+      switch (epp->ep_execp->a_midmag & 0xffff)
+	{
+	case ZMAGIC:
+	  error = sun_exec_aout_prep_zmagic (p, epp);
+	  break;
+
+	case NMAGIC:
+	  error = sun_exec_aout_prep_nmagic (p, epp);
+	  break;
+
+	  /* not yet */
+	case OMAGIC:
+	  error = sun_exec_aout_prep_omagic (p, epp);
+	  break;
+
+	default:
+	  error = ENOEXEC;
+	  break;
+	}
+
+      if (error == 0)
+	p->p_md.md_emul = MDPE_SUNOS;
+      return error;
+    }
+#endif
 
   return ENOEXEC;
 }
+
+#ifdef COMPAT_SUNOS
+/*
+   XXX this is not nice.. I need to have a possibility of resetting
+   XXX the OS emulator when executing another binary, as we might have
+   XXX to switch back to NetBSD emulation. Any better idea of achieving
+   XXX this? */
+struct sun_execve_args {
+	char	*fname;
+	char	**argp;
+	char	**envp;
+};
+sun_execve(p, uap, retval)
+	struct proc *p;
+	struct sun_execve_args *uap;
+	int *retval;
+{
+  int error;
+
+  /* switch the process to NetBSD mode, just to get default
+     behavior of execve. */
+  p->p_md.md_emul = MDPE_NETBSD;
+
+  error = execve (p, uap, retval);
+
+  if (error > 0)
+    /* in that case, have to switch back to SunOS mode */
+    p->p_md.md_emul = MDPE_SUNOS;
+
+  return error;
+}
+#endif /* COMPAT_SUNOS */
+
+int
+ptrace_set_pc (struct proc *p, unsigned int addr)
+{
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  frame->f_pc = addr & ~1;
+  return 0;
+}
+
+int
+ptrace_single_step (struct proc *p)
+{
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  frame->f_sr |= PSL_T;
+  return 0;
+}
+
+int
+ptrace_getregs (struct proc *p, unsigned int *addr)
+{
+  u_long ipcreg[NIPCREG];
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  bcopy (frame->f_regs, ipcreg, sizeof (frame->f_regs));
+  ipcreg[PS] = frame->f_sr;
+  ipcreg[PC] = frame->f_pc;
+  return copyout (ipcreg, addr, sizeof (ipcreg));
+}
+
+int
+ptrace_setregs (struct proc *p, unsigned int *addr)
+{
+  int error;
+  u_long ipcreg[NIPCREG];
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  if (error = copyin (addr, ipcreg, sizeof(ipcreg)))
+    return error;
+
+  bcopy (ipcreg, frame->f_regs, sizeof (ipcreg));
+  frame->f_sr = (ipcreg[PS] | PSL_USERSET) &~ PSL_USERCLR;
+  frame->f_pc = ipcreg[PC];
+  return 0;
+}
+
+
+
+
+

@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: clock.c 1.18 91/01/21
- *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.3 1993/09/02 18:05:28 mw Exp $
+ * from: Utah $Hdr: clock.c 1.18 91/01/21$
+ *
+ *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
 
 #include "param.h"
