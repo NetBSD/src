@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.37 2000/01/05 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.38 2000/01/05 04:15:30 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1023,6 +1023,8 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
+		if (rrcopy == NULL)
+			return(ENOMEM);
 
 		rrcopy->raidPtr = (void *) raidPtrs[unit];
 		rrcopy->row = row;
@@ -1133,6 +1135,8 @@ raidioctl(dev, cmd, data, flag, p)
 		/* make a copy of the recon request so that we don't rely on
 		 * the user's buffer */
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
+		if (rrcopy == NULL)
+			return(ENOMEM);
 		bcopy(rr, rrcopy, sizeof(*rr));
 		rrcopy->raidPtr = (void *) raidPtrs[unit];
 
