@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.627 2003/08/24 19:21:11 thorpej Exp $
+#	$NetBSD: files,v 1.628 2003/08/26 17:54:33 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -112,6 +112,7 @@ include "netinet/files.netinet"
 include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
 include "netinet6/files.netipsec"
+include "netipsec/files.ipsec"
 include "netiso/files.netiso"
 include "netnatm/files.netnatm"
 include "netns/files.netns"
@@ -1270,6 +1271,3 @@ device	joy
 file	dev/ic/joy.c			joy needs-flag
 
 file	dev/ieee1394/fwiso.c		fwiso			needs-count
-#
-# include	"opencrypto/files.opencrypto"
-include	"netipsec/files.ipsec"
