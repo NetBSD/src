@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: scsiconf.c,v 1.9.3.6 1993/11/25 03:04:46 mycroft Exp $
+ *      $Id: scsiconf.c,v 1.9.3.7 1994/01/22 14:20:57 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -345,7 +345,7 @@ scsi_probedev(sc_link, maybe_more)
 	 * Ask the device what it is
 	 */
 #ifdef	SCSIDEBUG
-	if (target == DEBUGTARG && lu == DEBUGLUN)
+	if (target == DEBUGTARG && lun == DEBUGLUN)
 		sc_link->flags |= DEBUGLEVEL;
 	else
 		sc_link->flags &= ~(SDEV_DB1 | SDEV_DB2 | SDEV_DB3 | SDEV_DB4);
