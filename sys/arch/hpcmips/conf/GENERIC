@@ -1,12 +1,12 @@
 #
-# Distribution kernel (any  model) kernel config file
+# Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.45 2000/04/25 06:20:14 uch Exp $
+# 	$NetBSD: GENERIC,v 1.46 2000/04/27 19:38:23 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.46 $"
 
 maxusers	8
 
@@ -84,7 +84,6 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
