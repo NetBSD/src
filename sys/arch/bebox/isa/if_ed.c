@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.1 1997/10/14 06:48:58 sakamoto Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.2 1997/10/16 01:55:34 sakamoto Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -59,12 +59,13 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#if bebox
+#if bebox				/* XXX temporarily */
 #include <bebox/isa/dp8390reg.h>
+#include <bebox/isa/if_edreg.h>
 #else
 #include <dev/ic/dp8390reg.h>
-#endif
 #include <dev/isa/if_edreg.h>
+#endif
 
 #if bebox
 #define	bus_space_read_2(tag, bsh, offset) \
