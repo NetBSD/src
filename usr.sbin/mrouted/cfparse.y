@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.10 2003/03/05 21:05:38 wiz Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.11 2003/03/05 21:15:18 wiz Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -398,7 +398,7 @@ fatal(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	logit(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
@@ -411,7 +411,7 @@ warn(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	logit(LOG_WARNING,0,"%s: %s near line %d", configfilename, buf, lineno);
