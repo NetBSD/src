@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.7 2002/01/25 23:40:51 sjg Exp $	*/
+/*	$NetBSD: edit.c,v 1.8 2002/09/25 02:41:11 provos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -501,7 +501,7 @@ x_print_expansions(nwords, words, is_command)
 	XPtrV l;
 
 	/* Check if all matches are in the same directory (in this
-	 * case, we want to omitt the directory name)
+	 * case, we want to omit the directory name)
 	 */
 	if (!is_command
 	    && (prefix_len = x_longest_prefix(nwords, words)) > 0)
@@ -534,7 +534,7 @@ x_print_expansions(nwords, words, is_command)
 	 */
 	x_putc('\r');
 	x_putc('\n');
-	pr_menu(use_copy ? (char **) XPptrv(l) : words);
+	pr_list(use_copy ? (char **) XPptrv(l) : words);
 
 	if (use_copy)
 		XPfree(l); /* not x_free_words() */
@@ -740,7 +740,8 @@ x_command_glob(flags, str, slen, wordsp)
 	return nwords;
 }
 
-#define IS_WORDC(c)	!(ctype(c, C_LEX1) || (c) == '\'' || (c) == '"')
+#define IS_WORDC(c)	!( ctype(c, C_LEX1) || (c) == '\'' || (c) == '"'  \
+			    || (c) == '`' || (c) == '=' || (c) == ':' )
 
 static int
 x_locate_word(buf, buflen, pos, startp, is_commandp)
@@ -780,7 +781,7 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		/* Figure out if this is a command */
 		for (p = start - 1; p >= 0 && isspace((unsigned char)buf[p]); p--)
 			;
-		iscmd = p < 0 || strchr(";|&()", buf[p]);
+		iscmd = p < 0 || strchr(";|&()`", buf[p]);
 		if (iscmd) {
 			/* If command has a /, path, etc. is not searched;
 			 * only current directory is searched, which is just
@@ -1030,6 +1031,7 @@ glob_path(flags, pat, wp, path)
 {
 	const char *sp, *p;
 	char *xp;
+	int staterr;
 	int pathlen;
 	int patlen;
 	int oldsize, newsize, i, j;
@@ -1064,13 +1066,15 @@ glob_path(flags, pat, wp, path)
 		memcpy(xp, pat, patlen);
 
 		oldsize = XPsize(*wp);
-		glob_str(Xstring(xs, xp), wp, 0);
+		glob_str(Xstring(xs, xp), wp, 1); /* mark dirs */
 		newsize = XPsize(*wp);
 
 		/* Check that each match is executable... */
 		words = (char **) XPptrv(*wp);
 		for (i = j = oldsize; i < newsize; i++) {
-			if (search_access(words[i], X_OK, (int *) 0) >= 0) {
+			staterr = 0;
+			if ((search_access(words[i], X_OK, &staterr) >= 0)
+			    || (staterr == EISDIR)) {
 				words[j] = words[i];
 				if (!(flags & XCF_FULLPATH))
 					memmove(words[j], words[j] + pathlen,
