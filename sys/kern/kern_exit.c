@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.77 2000/05/08 19:06:36 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.78 2000/05/08 19:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ exit1(p, rv)
 	struct vmspace *vm;
 	int s;
 
-	if (p == initproc)
+	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 
