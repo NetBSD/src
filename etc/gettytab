@@ -1,4 +1,4 @@
-#	$NetBSD: gettytab,v 1.9 1997/03/14 20:41:51 mycroft Exp $
+#	$NetBSD: gettytab,v 1.10 1997/07/31 00:38:30 perry Exp $
 #	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
@@ -10,7 +10,7 @@
 # entries, and in cases where getty is called with no table name
 #
 default:\
-	:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
+	:ce:ck:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
 
 #
 # Fixed speed entries
@@ -22,25 +22,21 @@ default:\
 #	autobaud code in getty, and likewise can
 #	be assigned to any table desired (hopefully the same speed).
 #
-a|std.110|110-baud:\
-	:nd#1:cd#1:uc:sp#110:
-b|std.134|134.5-baud:\
-	:ep:nd#1:cd#2:ff#1:td#1:sp#134:ht:nl:
-1|std.150|150-baud:\
-	:ep:nd#1:cd#2:td#1:fd#1:sp#150:ht:nl:lm=\E\72\6\6\17login\72 :
-c|std.300|300-baud:\
-	:nd#1:cd#1:sp#300:
-d|std.600|600-baud:\
-	:nd#1:cd#1:sp#600:
-f|std.1200|1200-baud:\
-	:fd#1:sp#1200:
-6|std.2400|2400-baud:\
+std.110|110-baud:\
+	:sp#110:
+std.300|300-baud:\
+	:sp#300:
+std.600|600-baud:\
+	:sp#600:
+std.1200|1200-baud:\
+	:sp#1200:
+std.2400|2400-baud:\
 	:sp#2400:
-7|std.4800|4800-baud:\
+std.4800|4800-baud:\
 	:sp#4800:
-2|std.9600|9600-baud:\
+std.9600|9600-baud:\
 	:sp#9600:
-g|std.19200|19200-baud:\
+std.19200|19200-baud:\
 	:sp#19200:
 std.38400|38400-baud:\
 	:sp#38400:
@@ -52,23 +48,19 @@ std.115200|115200-baud:\
 #
 # Dial in rotary tables, speed selection via 'break'
 #
-0|d300|Dial-300:\
-	:nx=d1200:cd#2:sp#300:
 d1200|Dial-1200:\
-	:nx=d150:fd#1:sp#1200:
-d150|Dial-150:\
-	:nx=d110:lm@:tc=150-baud:
-d110|Dial-110:\
-	:nx=d300:tc=300-baud:
+	:nx=d300:sp#1200:
+d300|Dial-300:\
+	:nx=d1200:sp#300:
 
 #
 # Fast dialup terminals, 2400/1200/300 rotary (can start either way)
 #
 D2400|d2400|Fast-Dial-2400:\
 	:nx=D1200:tc=2400-baud:
-3|D1200|Fast-Dial-1200:\
+D1200|Fast-Dial-1200:\
 	:nx=D300:tc=1200-baud:
-5|D300|Fast-Dial-300:\
+D300|Fast-Dial-300:\
 	:nx=D2400:tc=300-baud:
 
 #
@@ -94,55 +86,38 @@ t1200a:\
 #
 # Odd special case terminals
 #
--|tty33|asr33|Pity the poor user of this beast:\
-	:tc=110-baud:
+Console|Console Decwriter II:\
+	:rw:tc=300-baud:
 
-4|Console|Console Decwriter II:\
-	:nd@:cd@:rw:tc=300-baud:
-
-e|Console-1200|Console Decwriter III:\
-	:fd@:nd@:cd@:rw:tc=1200-baud:
-
-i|Interdata console:\
-	:uc:sp#0:
-
-l|lsi chess terminal:\
-	:sp#300:
+Console-1200|Console Decwriter III:\
+	:rw:tc=1200-baud:
 
 X|Xwindow|X window system:\
-	:fd@:nd@:cd@:rw:sp#9600:
+	:rw:sp#9600:
 
-P|Pc|Pc console:\
+Pc|Pc console:\
 	:np:sp#9600:
 
 # 8 bit clean Sun console
-S|suncons|Sun Console:\
+suncons|Sun Console:\
 	:np:sp#9600:
-
-#
-# Wierdo special case for fast crt's with hardcopy devices
-#
-8|T9600|CRT with hardcopy:\
-	:nx=T300:tc=9600-baud:
-9|T300|CRT with hardcopy (300):\
-	:nx=T9600:tc=300-baud:
 
 #
 # Plugboard, and misc other terminals
 #
 plug-9600|Plugboard-9600:\
 	:pf#1:tc=9600-baud:
-p|P9600|Plugboard-9600-rotary:\
+P9600|Plugboard-9600-rotary:\
 	:pf#1:nx=P300:tc=9600-baud:
-q|P300|Plugboard-300:\
+P300|Plugboard-300:\
 	:pf#1:nx=P1200:tc=300-baud:
-r|P1200|Plugboard-1200:\
+P1200|Plugboard-1200:\
 	:pf#1:nx=P9600:tc=1200-baud:
 
 #
 # XXXX Port selector
 #
-s|DSW|Port Selector:\
+DSW|Port Selector:\
 	:ps:sp#2400:
 
 #
@@ -150,5 +125,5 @@ s|DSW|Port Selector:\
 # Special code in getty will switch this out
 # to one of the NNN-baud entries.
 #
-A|Auto-baud:\
+Auto-baud:\
 	:ab:sp#2400:f0#040:
