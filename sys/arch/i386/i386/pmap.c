@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2000/08/19 19:48:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2000/09/05 21:56:41 thorpej Exp $	*/
 
 /*
  *
@@ -2005,16 +2005,25 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	paddr_t retval;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, pte;
+	pd_entry_t pde;
 
-	if (pmap->pm_pdir[pdei(va)]) {
+	if (__predict_true((pde = pmap->pm_pdir[pdei(va)]) != 0)) {
+		if (pde & PG_PS) {
+			if (pap != NULL)
+				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			return (TRUE);
+		}
+
 		ptes = pmap_map_ptes(pmap);
-		retval = (paddr_t)(ptes[i386_btop(va)] & PG_FRAME);
+		pte = ptes[i386_btop(va)];
 		pmap_unmap_ptes(pmap);
-		if (pap != NULL)
-			*pap = retval | (va & ~PG_FRAME);
-		return (TRUE);
+
+		if (__predict_true((pte & PG_V) != 0)) {
+			if (pap != NULL)
+				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			return (TRUE);
+		}
 	}
 	return (FALSE);
 }
