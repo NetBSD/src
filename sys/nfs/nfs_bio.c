@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63 2001/02/27 04:37:46 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.64 2001/03/10 22:46:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1249,8 +1249,8 @@ loopdone:
 		splx(s);
 	}
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND",0,0,0,0);
-		return EINPROGRESS;
+		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -1493,7 +1493,7 @@ nfs_putpages(v)
 		splx(s);
 	}
 	if (async) {
-		return EINPROGRESS;
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
