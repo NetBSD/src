@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.27 1999/09/30 20:39:58 perseant Exp $	*/
+/*	$NetBSD: traverse.c,v 1.28 1999/10/01 04:35:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.27 1999/09/30 20:39:58 perseant Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.28 1999/10/01 04:35:23 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,10 +117,10 @@ blockest(dp)
 	sizeest = howmany(dp->di_size, TP_BSIZE);
 	if (blkest > sizeest)
 		blkest = sizeest;
-	if (dp->di_size > sblock->fs_bsize * NDADDR) {
+	if (dp->di_size > ufsib->ufs_bsize * NDADDR) {
 		/* calculate the number of indirect blocks on the dump tape */
 		blkest +=
-			howmany(sizeest - NDADDR * sblock->fs_bsize / TP_BSIZE,
+			howmany(sizeest - NDADDR * ufsib->ufs_bsize / TP_BSIZE,
 			TP_NINDIR);
 	}
 	return (blkest + 1);
@@ -330,12 +330,12 @@ mapdirs(maxino, tapesize)
 		for (ret = 0, i = 0; filesize > 0 && i < NDADDR; i++) {
 			if (di.di_db[i] != 0)
 				ret |= searchdir(ino, iswap32(di.di_db[i]),
-					(long)dblksize(sblock, &di, i),
+					(long)ufs_dblksize(ufsib, &di, i),
 					filesize, tapesize, nodump);
 			if (ret & HASDUMPEDFILE)
 				filesize = 0;
 			else
-				filesize -= sblock->fs_bsize;
+				filesize -= ufsib->ufs_bsize;
 		}
 		for (i = 0; filesize > 0 && i < NIADDR; i++) {
 			if (di.di_ib[i] == 0)
@@ -381,24 +381,24 @@ dirindir(ino, blkno, ind_level, filesize, tapesize, nodump)
 	int i;
 	daddr_t	idblk[MAXNINDIR];
 
-	bread(fsbtodb(sblock, iswap32(blkno)), (char *)idblk,
-		(int)sblock->fs_bsize);
+	bread(fsatoda(ufsib, iswap32(blkno)), (char *)idblk,
+		(int)ufsib->ufs_bsize);
 	if (ind_level <= 0) {
-		for (i = 0; *filesize > 0 && i < NINDIR(sblock); i++) {
+		for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
 			blkno = idblk[i];
 			if (blkno != 0)
 				ret |= searchdir(ino, iswap32(blkno),
-				    sblock->fs_bsize, *filesize,
+				    ufsib->ufs_bsize, *filesize,
 				    tapesize, nodump);
 			if (ret & HASDUMPEDFILE)
 				*filesize = 0;
 			else
-				*filesize -= sblock->fs_bsize;
+				*filesize -= ufsib->ufs_bsize;
 		}
 		return (ret);
 	}
 	ind_level--;
-	for (i = 0; *filesize > 0 && i < NINDIR(sblock); i++) {
+	for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
 		blkno = idblk[i];
 		if (blkno != 0)
 			ret |= dirindir(ino, blkno, ind_level, filesize,
@@ -427,7 +427,7 @@ searchdir(dino, blkno, size, filesize, tapesize, nodump)
 	char dblk[MAXBSIZE];
 	ino_t ino;
 
-	bread(fsbtodb(sblock, blkno), dblk, (int)size);
+	bread(fsatoda(ufsib, blkno), dblk, (int)size);
 	if (filesize < size)
 		size = filesize;
 	for (loc = 0; loc < size; ) {
@@ -513,8 +513,8 @@ dumpino(dp, ino)
 		 */
 		if (dp->di_size > 0 &&
 #ifdef FS_44INODEFMT
-		    (dp->di_size < sblock->fs_maxsymlinklen ||
-		     (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0))) {
+		    (dp->di_size < ufsib->ufs_maxsymlinklen ||
+		     (ufsib->ufs_maxsymlinklen == 0 && dp->di_blocks == 0))) {
 #else
 		    dp->di_blocks == 0) {
 #endif
@@ -545,12 +545,12 @@ dumpino(dp, ino)
 		msg("Warning: undefined file type 0%o\n", dp->di_mode & IFMT);
 		return;
 	}
-	if (dp->di_size > NDADDR * sblock->fs_bsize)
-		cnt = NDADDR * sblock->fs_frag;
+	if (dp->di_size > NDADDR * ufsib->ufs_bsize)
+		cnt = NDADDR * ufsib->ufs_frag;
 	else
-		cnt = howmany(dp->di_size, sblock->fs_fsize);
+		cnt = howmany(dp->di_size, ufsib->ufs_fsize);
 	blksout(&dp->di_db[0], cnt, ino);
-	if ((size = dp->di_size - NDADDR * sblock->fs_bsize) <= 0)
+	if ((size = dp->di_size - NDADDR * ufsib->ufs_bsize) <= 0)
 		return;
 	for (ind_level = 0; ind_level < NIADDR; ind_level++) {
 		dmpindir(ino, dp->di_ib[ind_level], ind_level, &size);
@@ -573,21 +573,21 @@ dmpindir(ino, blk, ind_level, size)
 	daddr_t idblk[MAXNINDIR];
 
 	if (blk != 0)
-		bread(fsbtodb(sblock, iswap32(blk)), (char *)idblk,
-			(int) sblock->fs_bsize);
+		bread(fsatoda(ufsib, iswap32(blk)), (char *)idblk,
+			(int) ufsib->ufs_bsize);
 	else
-		memset(idblk, 0, (int)sblock->fs_bsize);
+		memset(idblk, 0, (int)ufsib->ufs_bsize);
 	if (ind_level <= 0) {
-		if (*size < NINDIR(sblock) * sblock->fs_bsize)
-			cnt = howmany(*size, sblock->fs_fsize);
+		if (*size < ufsib->ufs_nindir * ufsib->ufs_bsize)
+			cnt = howmany(*size, ufsib->ufs_fsize);
 		else
-			cnt = NINDIR(sblock) * sblock->fs_frag;
-		*size -= NINDIR(sblock) * sblock->fs_bsize;
+			cnt = ufsib->ufs_nindir * ufsib->ufs_frag;
+		*size -= ufsib->ufs_nindir * ufsib->ufs_bsize;
 		blksout(&idblk[0], cnt, ino);
 		return;
 	}
 	ind_level--;
-	for (i = 0; i < NINDIR(sblock); i++) {
+	for (i = 0; i < ufsib->ufs_nindir; i++) {
 		dmpindir(ino, idblk[i], ind_level, size);
 		if (*size <= 0)
 			return;
@@ -606,8 +606,8 @@ blksout(blkp, frags, ino)
 	daddr_t *bp;
 	int i, j, count, blks, tbperdb;
 
-	blks = howmany(frags * sblock->fs_fsize, TP_BSIZE);
-	tbperdb = sblock->fs_bsize >> tp_bshift;
+	blks = howmany(frags * ufsib->ufs_fsize, TP_BSIZE);
+	tbperdb = ufsib->ufs_bsize >> tp_bshift;
 	for (i = 0; i < blks; i += TP_NINDIR) {
 		if (i + TP_NINDIR > blks)
 			count = blks;
@@ -624,7 +624,7 @@ blksout(blkp, frags, ino)
 		for (j = i; j < count; j += tbperdb, bp++)
 			if (*bp != 0) {
 				if (j + tbperdb <= count)
-					dumpblock(iswap32(*bp), (int)sblock->fs_bsize);
+					dumpblock(iswap32(*bp), (int)ufsib->ufs_bsize);
 				else
 					dumpblock(iswap32(*bp), (count - j) * TP_BSIZE);
 			}
@@ -674,25 +674,4 @@ writeheader(ino)
 	}
 	spcl.c_checksum = iswap32(CHECKSUM - sum);
 	writerec((char *)&spcl, 1);
-}
-
-struct dinode *
-getino(inum)
-	ino_t inum;
-{
-	static daddr_t minino, maxino;
-	static struct dinode inoblock[MAXINOPB];
-	int i;
-
-	curino = inum;
-	if (inum >= minino && inum < maxino)
-		return (&inoblock[inum - minino]);
-	bread(fsbtodb(sblock, ino_to_fsba(sblock, inum)), (char *)inoblock,
-	    (int)sblock->fs_bsize);
-	if (needswap)
-		for (i = 0; i < MAXINOPB; i++)
-			ffs_dinode_swap(&inoblock[i], &inoblock[i]);
-	minino = inum - (inum % INOPB(sblock));
-	maxino = minino + INOPB(sblock);
-	return (&inoblock[inum - minino]);
 }
