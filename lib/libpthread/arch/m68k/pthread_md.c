@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.7 2003/01/16 03:35:46 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.c,v 1.1.2.1 2003/01/16 03:35:48 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,56 +36,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LIB_PTHREAD_ALPHA_MD_H
-#define _LIB_PTHREAD_ALPHA_MD_H
+#define	__PTHREAD_SIGNAL_PRIVATE
 
-static __inline long
-pthread__sp(void)
+#include <assert.h>
+
+#include "pthread.h"
+#include "pthread_int.h"
+
+/*
+ * We only need this to know how much data to copy.
+ */
+static const int exframesize[] = {
+	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
+	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
+	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
+	-1, -1,		/* type 5-6 - undefined */
+	FMT7SIZE,	/* type 7 - access error (68040) */
+	58,		/* type 8 - bus fault (68010) */ 
+	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
+	FMTASIZE,	/* type A - short bus fault (68020/030) */
+	FMTBSIZE,	/* type B - long bus fault (68020/030) */ 
+	-1, -1, -1, -1	/* type C-F - undefined */
+};
+#define	_SIGSTATE_EXFRAMESIZE(fmt)	exframesize[(fmt)]
+
+/*
+ * m68k signal contexts are quite screwey, so we have to go through
+ * a fair bit of effort to convert them.
+ */
+void
+pthread__ucontext_to_sigcontext(const sigset_t *mask, ucontext_t *uc,
+    struct pthread__sigcontext *psc)
 {
-	long ret;
 
-	__asm("mov $30, %0" : "=r" (ret));
+	uc->uc_sigmask = *mask;
 
-	return ret;
+	_MCONTEXT_TO_SIGSTATE(uc, &psc->psc_state);	/* must be first */
+	_UCONTEXT_TO_SIGCONTEXT(uc, &psc->psc_context);
+
+	psc->psc_context.sc_ap = (int) &psc->psc_state;
 }
 
-#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
+void
+pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *psc,
+    ucontext_t *uc)
+{
 
-/*
- * Set initial, sane values for registers whose values aren't just
- * "don't care".
- * 0x0008 is ALPHA_PSL_USERSET from arch/alpha/include/alpha_cpu.h
- */
-#define _INITCONTEXT_U_MD(ucp)						\
-	(ucp)->uc_mcontext.__gregs[_REG_PS] = 0x0008;
-#define STACKSPACE 32	/* 4 quad values */
-/*
- * Conversions between struct reg and struct mcontext. Used by
- * libpthread_dbg.
- */
+	_SIGSTATE_TO_MCONTEXT(&psc->psc_state, uc);	/* must be first */
+	_SIGCONTEXT_TO_UCONTEXT(&psc->psc_context, uc);
 
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	memcpy(&(reg)->r_regs, &(uc)->uc_mcontext.__gregs,		\
-		31 * sizeof(__greg_t));					\
-	(reg)->r_regs[R_ZERO] = (uc)->uc_mcontext.__gregs[_REG_PC];    	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_regs,		\
-		31 * sizeof(__greg_t));					\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->r_regs[R_ZERO];    	\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
-	memcpy((freg), &(uc)->uc_mcontext.__fpregs,			\
-	    sizeof(struct fpreg))					\
-
-#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
-	memcpy(&(uc)->uc_mcontext.__fpregs, (freg),			\
-	    sizeof(struct fpreg));					\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#endif /* _LIB_PTHREAD_ALPHA_MD_H */
+	uc->uc_flags &= ~_UC_SIGMASK;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.7 2002/12/06 21:17:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.8 2003/01/16 03:35:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,29 +101,6 @@ pthread__sp(void)
 		32 * 4);						\
 	(uc)->uc_mcontext.__fpregs.__fpu_fpscr = (freg)->fpscr;		\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_TO_SIGCONTEXT(uc, sc) do {			\
-	memcpy(&(sc)->sc_frame.fixreg, &(uc)->uc_mcontext.__gregs, 	\
-		32 * 4);						\
-	(sc)->sc_frame.lr = (uc)->uc_mcontext.__gregs[33];		\
-	(sc)->sc_frame.cr = (uc)->uc_mcontext.__gregs[32];		\
-	(sc)->sc_frame.xer = (uc)->uc_mcontext.__gregs[37];		\
-	(sc)->sc_frame.ctr = (uc)->uc_mcontext.__gregs[36];		\
-	(sc)->sc_frame.srr0 = (uc)->uc_mcontext.__gregs[34];		\
-	(sc)->sc_frame.srr1 = (uc)->uc_mcontext.__gregs[35];		\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_SIGCONTEXT_TO_UCONTEXT(uc, sc) do {			\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(sc)->sc_frame.fixreg, 	\
-		32 * 4);						\
-	(uc)->uc_mcontext.__gregs[33] = (sc)->sc_frame.lr;		\
-	(uc)->uc_mcontext.__gregs[32] = (sc)->sc_frame.cr;		\
-	(uc)->uc_mcontext.__gregs[37] = (sc)->sc_frame.xer;		\
-	(uc)->uc_mcontext.__gregs[36] = (sc)->sc_frame.ctr;		\
-	(uc)->uc_mcontext.__gregs[34] = (sc)->sc_frame.srr0;		\
-	(uc)->uc_mcontext.__gregs[35] = (sc)->sc_frame.srr1;		\
-	(uc)->uc_flags &= ~_UC_USER;					\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_POWERPC_MD_H */
