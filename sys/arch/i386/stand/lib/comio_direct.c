@@ -69,7 +69,7 @@
 #include <sys/types.h>
 #include <lib/libsa/stand.h>
 #include <machine/pio.h>
-#include <dev/isa/comreg.h>
+#include <dev/ic/comreg.h>
 #include "comio_direct.h"
 
 static int comspeed __P((long speed));
