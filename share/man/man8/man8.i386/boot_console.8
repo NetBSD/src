@@ -1,6 +1,6 @@
-.\"	$NetBSD: boot_console.8,v 1.5 2000/04/17 21:28:49 jhawk Exp $
+.\"	$NetBSD: boot_console.8,v 1.6 2000/05/13 05:25:20 jhawk Exp $
 .\"
-.Dd December 31, 1998
+.Dd May 12, 2000
 .Os
 .Dt BOOT_CONSOLE 8 i386
 .Sh NAME
@@ -14,7 +14,8 @@ i386 bootloader selects a console device for its user interaction and
 passes information about it to the
 .Nx
 kernel.  The selection process is controlled by bootloader compile-time
-options and system setup at the bootloader startup time.
+options and system setup at the bootloader startup time, and may
+be changed on-the-fly from within the bootloader.
 .\"
 .Ss Serial Console Options
 The compile-time options (to be set in the booter's
