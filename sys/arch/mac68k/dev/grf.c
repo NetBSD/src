@@ -38,11 +38,11 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.7.2.1 1994/07/24 01:23:08 cgd Exp $
+ *	$Id: grf.c,v 1.7.2.2 1994/08/05 22:51:40 mycroft Exp $
  */
 
 /*
- * Graphics display driver for the HP300.
+ * Graphics display driver for the Macintosh.
  * This is the hardware-independent portion of the driver.
  * Hardware access is through the grfdev routines below.
  */
@@ -61,7 +61,7 @@
 
 #include <sys/device.h>
 #include "nubus.h"
-#include "grfioctl.h"
+#include <machine/grfioctl.h>
 #include "grfvar.h"
 
 #include <machine/cpu.h>
@@ -85,8 +85,7 @@ int	grfprobe();
 int	macvideo_init(), macvideo_mode();
 
 struct grfdev grfdev[] = {
-	GID_MAC,	GRFMAC,	macvideo_init,	macvideo_mode,
-	"MacVideo",
+	GID_MAC,	GRFMAC,	macvideo_init,	macvideo_mode, "MacVideo",
 };
 int	ngrfdev = sizeof(grfdev) / sizeof(grfdev[0]);
 
@@ -106,7 +105,6 @@ int grfdebug = 0xff;
 /*
  * XXX: called from ite console init routine.
  * Does just what configure will do later but without printing anything.
-MF maybe i'll call this from larrys console stuff
  */
 grfconfig()
 {
@@ -173,6 +171,7 @@ grfprobe(nu, unit)
 	else
 		printf("%d color", gp->g_display.gd_colors);
 	printf(" %s (%s) display\n", grfdev[gp->g_type].gd_desc, nu->Slot.name);
+	gp->g_data = (void *)&nu->Slot;
 	return(1);
 }
 
@@ -220,6 +219,47 @@ grfinit(nu, unit)
 	return(0);
 }
 
+void fake_internal (void)
+{
+	int			i, j;
+	struct grf_softc	*gp;
+	struct grfinfo		*gi;
+	struct grfterm		*gt;
+	struct grfmouse		*gm;
+	extern unsigned long	int_video_start;
+
+	if (int_video_start == 0) {
+		return;
+	}
+
+	for (i = 0; i < NGRF; i++) {
+		gp = &grf_softc[i];
+		if ((gp->g_flags & GF_ALIVE) == 0) {
+			break;
+		}
+	}
+
+	if (i == NGRF) {
+		printf ("grf: not enough grf's to map internal video.\n");
+		return;
+	}
+
+	gp->g_type = 0;
+	gp->g_flags = GF_ALIVE;
+
+	gi = &(gp->g_display);
+	gi->gd_id = GRFMAC;
+	gi->gd_regsize = 0;
+	gi->gd_colors = 1;
+	gi->gd_planes = 1;
+	gi->gd_dwidth = gi->gd_fbwidth = 640;  /* XXX */
+	gi->gd_dheight = gi->gd_fbheight = 480; /* XXX */
+	gi->gd_fbsize = gi->gd_dwidth * gi->gd_dheight;
+	gi->gd_fbrowbytes = 80; /* XXX Hack */
+	gi->gd_fbaddr = (caddr_t)0;
+	gp->g_fbkva = gi->gd_fbaddr;
+}
+
 /*ARGSUSED*/
 grfopen(dev, flags)
 	dev_t dev;
@@ -227,6 +267,12 @@ grfopen(dev, flags)
 	int unit = GRFUNIT(dev);
 	register struct grf_softc *gp = &grf_softc[unit];
 	int error = 0;
+	static int faked; /* Whether we've faked internal video yet */
+
+	if (!faked) {
+		fake_internal ();
+		faked = 1;
+	}
 
 	if (unit >= NGRF || (gp->g_flags & GF_ALIVE) == 0)
 		return(ENXIO);
@@ -448,7 +494,11 @@ grfmmap(dev, addrp, p)
 	vn.v_rdev = dev;			/* XXX */
 
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+		(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn,
+		0);
+
+	/* Offset into page: */
+	*addrp += (unsigned long)gp->g_display.gd_fbaddr & 0xfff;
 
 	return(error);
 }
@@ -469,7 +519,7 @@ grfunmmap(dev, addr, p)
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-	rv = vm_deallocate(&(p->p_vmspace->vm_map), (vm_offset_t)addr, size);
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 
