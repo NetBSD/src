@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.9 2000/12/09 20:42:06 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.10 2000/12/17 15:52:42 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/mips/conf/Makefile.mips
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

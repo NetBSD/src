@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.25 2000/05/09 00:56:26 hubertf Exp $
+#	$NetBSD: Makefile.ofppc,v 1.26 2000/12/17 15:52:43 jdolecek Exp $
 #
 # Makefile for NetBSD
 #
@@ -11,13 +11,7 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/ofppc/conf/Makefile.ofppc
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
-#
+
 .SUFFIXES:	.S .c .o
 
 # DEBUG is set to -g if debugging.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.47 2000/12/15 07:16:36 itohy Exp $
+#	$NetBSD: Makefile.x68k,v 1.48 2000/12/17 15:52:44 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/x68k/conf/Makefile.x68k
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 .include <bsd.own.mk>
 

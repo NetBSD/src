@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3.be,v 1.5 2000/05/09 00:56:27 hubertf Exp $
+#	$NetBSD: Makefile.sh3.be,v 1.6 2000/12/17 15:52:43 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sh3/conf/Makefile.sh3
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
