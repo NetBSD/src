@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $	*/
+/*	$NetBSD: file.c,v 1.8.2.1 2002/06/07 18:43:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $");
+__RCSID("$NetBSD: file.c,v 1.8.2.1 2002/06/07 18:43:00 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -65,6 +65,25 @@ __RCSID("$NetBSD: file.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $");
 
 int	getCLBYTES __P((int));
 int	getMID __P((int, int));
+
+const char *
+FileTypeName(type)
+	mopd_imagetype type;
+{
+
+	switch (type) {
+	case IMAGE_TYPE_MOP:
+		return ("MOP");
+
+	case IMAGE_TYPE_ELF32:
+		return ("Elf32");
+
+	case IMAGE_TYPE_AOUT:
+		return ("a.out");
+	}
+
+	abort();
+}
 
 void
 mopFilePutLX(buf, index, value, cnt)
@@ -603,6 +622,7 @@ GetElfFileInfo(dl)
 		printf(" S%d Pad Size:       %08x\n", i,
 		    dl->e_sections[i].s_pad);
 	}
+	dl->e_machine = e_machine;
 
 	dl->e_curpos = 0;
 	dl->e_cursec = 0;

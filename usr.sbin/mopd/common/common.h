@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.5 2002/02/18 22:00:36 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.5.2.1 2002/06/07 18:42:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: common.h,v 1.5 2002/02/18 22:00:36 thorpej Exp $
+ *	$NetBSD: common.h,v 1.5.2.1 2002/06/07 18:42:59 thorpej Exp $
  *
  */
 
@@ -92,6 +92,7 @@ struct dllist {
 	mopd_imagetype	image_type;	/* what type of image is it?	*/
 
 	/* For Elf32 files */
+	int		e_machine;	/* Machine ID			*/
 	int		e_nsec;		/* number of program sections	*/
 #define	SEC_MAX	4
 	struct {
