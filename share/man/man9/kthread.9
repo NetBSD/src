@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.2 2001/09/04 02:51:16 wiz Exp $
+.\"     $NetBSD: kthread.9,v 1.3 2001/09/04 03:05:07 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ Kernel threads are light-weight processes which execute entirely
 within the kernel.  Any process can request the creation of a new
 kernel thread.  Kernel threads are not swapped out during memory
 congestion.  The VM space and limits are shaed with proc0 (usually
-.Xr init 8 ).
+.Xr init 8 ) .
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn kthread_create1 "func" "arg" "newpp" "fmt" "..."
@@ -98,15 +98,15 @@ This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the kthread
 framework can be found.  All pathnames are relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The kthread framework itself is implemented within the file
 .Pa sys/kern/kern_kthread.c .
 Data structures and function prototypes for the framework are located in
 .Pa sys/sys/kthread.h .
 .Sh SEE ALSO
-.Xr fork1 9 ,
-.Xr driver 9 .
+.Xr driver 9 ,
+.Xr fork1 9
 .Sh HISTORY
 The kthread framework appeared in
 .Nx 1.4 .
