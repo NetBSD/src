@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.22 2000/03/04 10:14:39 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.23 2000/03/06 03:13:35 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.22 2000/03/04 10:14:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.23 2000/03/06 03:13:35 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.22 2000/03/04 10:14:39 nisimura Exp $
 void		dec_5100_init __P((void));		/* XXX */
 static void	dec_5100_bus_reset __P((void));
 static void	dec_5100_cons_init __P((void));
-static void	dec_5100_device_register __P((struct device *, void *));
 static int	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_5100_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
@@ -67,7 +66,6 @@ dec_5100_init()
 	platform.iobus = "baseboard";
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
-	platform.device_register = dec_5100_device_register;
 	platform.iointr = dec_5100_intr;
 	platform.intr_establish = dec_5100_intr_establish;
 	platform.memsize = memsize_scan;
@@ -120,16 +118,6 @@ dec_5100_cons_init()
 
 	dc_cnattach(KN230_SYS_DZ0, 0);
 }
-
-
-static void
-dec_5100_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	panic("dec_5100_device_register unimplemented");
-}
-
 
 static void
 dec_5100_intr_establish(dev, cookie, level, handler, arg)
