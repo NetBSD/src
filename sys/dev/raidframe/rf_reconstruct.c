@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.9 2000/01/05 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.10 2000/01/08 22:57:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,7 +50,6 @@
 #include "rf_reconutil.h"
 #include "rf_revent.h"
 #include "rf_reconbuffer.h"
-#include "rf_threadid.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_dag.h"
@@ -1388,7 +1387,7 @@ CheckHeadSeparation(
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl[row];
 	RF_CallbackDesc_t *cb, *p, *pt;
-	int     retval = 0, tid;
+	int     retval = 0;
 
 	/* if we're too far ahead of the slowest disk, stop working on this
 	 * disk until the slower ones catch up.  We do this by scheduling a
@@ -1398,12 +1397,13 @@ CheckHeadSeparation(
 	 * separation before we'll wake up.
 	 * 
 	 */
-	rf_get_threadid(tid);
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
 	if ((raidPtr->headSepLimit >= 0) &&
 	    ((ctrl->headSepCounter - reconCtrlPtr->minHeadSepCounter) > raidPtr->headSepLimit)) {
-		Dprintf6("[%d] RECON: head sep stall: row %d col %d hsCtr %ld minHSCtr %ld limit %ld\n",
-		    tid, row, col, ctrl->headSepCounter, reconCtrlPtr->minHeadSepCounter, raidPtr->headSepLimit);
+		Dprintf6("raid%d: RECON: head sep stall: row %d col %d hsCtr %ld minHSCtr %ld limit %ld\n",
+			 raidPtr->raidid, row, col, ctrl->headSepCounter, 
+			 reconCtrlPtr->minHeadSepCounter, 
+			 raidPtr->headSepLimit);
 		cb = rf_AllocCallbackDesc();
 		/* the minHeadSepCounter value we have to get to before we'll
 		 * wake up.  build in 20% hysteresis. */
@@ -1500,7 +1500,6 @@ rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
 						 * offset */
 	RF_RowCol_t *diskids;
 	RF_RowCol_t stripe;
-	int     tid;
 	RF_ReconUnitNum_t which_ru;	/* RU within parity stripe */
 	RF_RowCol_t fcol, diskno, i;
 	RF_ReconBuffer_t *new_rbuf;	/* ptr to newly allocated rbufs */
@@ -1508,7 +1507,6 @@ rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
 	RF_CallbackDesc_t *cb;
 	int     created = 0, nPromoted;
 
-	rf_get_threadid(tid);
 	psid = rf_MapStripeIDToParityStripeID(&raidPtr->Layout, stripeID, &which_ru);
 
 	RF_LOCK_PSS_MUTEX(raidPtr, row, psid);
@@ -1548,7 +1546,7 @@ rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
 				if (pssPtr->issued[diskno]) {
 					nPromoted = rf_DiskIOPromote(&raidPtr->Queues[row][diskno], psid, which_ru);
 					if (rf_reconDebug && nPromoted)
-						printf("[%d] promoted read from row %d col %d\n", tid, row, diskno);
+						printf("raid%d: promoted read from row %d col %d\n", raidPtr->raidid, row, diskno);
 				} else {
 					new_rbuf = rf_MakeReconBuffer(raidPtr, row, diskno, RF_RBUF_TYPE_FORCED);	/* create new buf */
 					ComputePSDiskOffsets(raidPtr, psid, row, diskno, &offset, &fd_offset,
@@ -1570,13 +1568,14 @@ rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
 
 					new_rbuf->arg = req;
 					rf_DiskIOEnqueue(&raidPtr->Queues[row][diskno], req, RF_IO_NORMAL_PRIORITY);	/* enqueue the I/O */
-					Dprintf3("[%d] Issued new read req on row %d col %d\n", tid, row, diskno);
+					Dprintf3("raid%d: Issued new read req on row %d col %d\n", raidPtr->raidid, row, diskno);
 				}
 			}
 		/* if the write is sitting in the disk queue, elevate its
 		 * priority */
 		if (rf_DiskIOPromote(&raidPtr->Queues[row][fcol], psid, which_ru))
-			printf("[%d] promoted write to row %d col %d\n", tid, row, fcol);
+			printf("raid%d: promoted write to row %d col %d\n", 
+			       raidPtr->raidid, row, fcol);
 	}
 	/* install a callback descriptor to be invoked when recon completes on
 	 * this parity stripe. */
@@ -1587,7 +1586,8 @@ rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
 	cb->callbackArg.p = (void *) cbArg;
 	cb->next = pssPtr->procWaitList;
 	pssPtr->procWaitList = cb;
-	DDprintf2("[%d] Waiting for forced recon on psid %ld\n", tid, psid);
+	DDprintf2("raid%d: Waiting for forced recon on psid %ld\n", 
+		  raidPtr->raidid, psid);
 
 	RF_UNLOCK_PSS_MUTEX(raidPtr, row, psid);
 	return (1);
@@ -1622,10 +1622,9 @@ rf_UnblockRecon(raidPtr, asmap)
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconUnitNum_t which_ru;
 	RF_StripeNum_t psid;
-	int     tid, created = 0;
+	int     created = 0;
 	RF_CallbackDesc_t *cb;
 
-	rf_get_threadid(tid);
 	psid = rf_MapStripeIDToParityStripeID(&raidPtr->Layout, stripeID, &which_ru);
 	RF_LOCK_PSS_MUTEX(raidPtr, row, psid);
 	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl[row]->pssTable, psid, which_ru, RF_PSS_NONE, &created);
@@ -1642,7 +1641,8 @@ rf_UnblockRecon(raidPtr, asmap)
 		goto out;
 	}
 	pssPtr->blockCount--;
-	Dprintf3("[%d] unblocking recon on psid %ld: blockcount is %d\n", tid, psid, pssPtr->blockCount);
+	Dprintf3("raid%d: unblocking recon on psid %ld: blockcount is %d\n",
+		 raidPtr->raidid, psid, pssPtr->blockCount);
 	if (pssPtr->blockCount == 0) {	/* if recon blockage has been released */
 
 		/* unblock recon before calling CauseReconEvent in case
