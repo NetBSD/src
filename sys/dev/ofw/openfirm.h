@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.3 1998/01/28 00:01:34 cgd Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.4 1998/02/02 21:00:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,6 +79,7 @@ int	OF_peer __P((int phandle));
 int	OF_child __P((int phandle));
 int	OF_parent __P((int phandle));
 int	OF_instance_to_package __P((int ihandle));
+int	OF_getproplen __P((int handle, char *prop));
 int	OF_getprop __P((int handle, char *prop, void *buf, int buflen));
 int	OF_finddevice __P((char *name));
 int	OF_instance_to_path __P((int ihandle, char *buf, int buflen));
