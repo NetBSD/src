@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.2 1998/07/04 22:18:29 jonathan Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.3 1998/09/03 14:06:07 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -99,5 +99,5 @@ struct mc_softc {
 };
 
 int	mcsetup __P((struct mc_softc *, u_int8_t *));
-void	mcintr __P((void *arg));
+int	mcintr __P((void *arg));
 void	mc_rint __P((struct mc_softc *sc));
