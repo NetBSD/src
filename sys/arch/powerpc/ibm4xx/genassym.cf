@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2003/03/04 07:51:03 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2003/07/16 03:52:31 simonb Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,8 +78,6 @@ define	IFRAME_R5		offsetof(struct intrframe, r5)
 define	IFRAME_R4		offsetof(struct intrframe, r4)
 define	IFRAME_R3		offsetof(struct intrframe, r3)
 define	IFRAME_R0		offsetof(struct intrframe, r0)
-
-define	SZ_BOARD_CFG_DATA	sizeof(struct board_cfg_data)
 
 define	CALLFRAMELEN	CALLFRAMELEN
 define	CFRAME_SP	offsetof(struct callframe, sp)
