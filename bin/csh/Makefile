@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 1997/10/11 09:34:07 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 1997/11/07 07:24:33 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
 #
-# To profile, put -DPROF in DEFS and -pg in CFLAGS, and recompile.
+# To profile, put -DPROF in DFLAGS and -pg in CFLAGS, and recompile.
 
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
@@ -38,6 +38,9 @@ const.h: const.c
 	    sort >> ${.TARGET}
 
 .depend alloc.o: const.h errnum.h 
+
+alloc.o const.o csh.o dir.o dol.o err.o exec.o exp.o file.o func.o glob.o \
+    hist.o init.o lex.o misc.o parse.o proc.o sem.o set.o str.o time.o: const.h
 
 .if make(install)
 SUBDIR+=USD.doc
