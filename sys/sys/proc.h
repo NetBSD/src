@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.84 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.85 2000/02/06 16:47:57 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -93,12 +93,13 @@ struct	emul {
 	struct sysent *e_sysent;	/* System call array */
 	char	**e_syscallnames;	/* System call name array */
 	int	e_arglen;		/* Extra argument size in words */
-					/* Copy arguments on the stack */
+					/* Copy arguments on the new stack */
 	void	*(*e_copyargs) __P((struct exec_package *, struct ps_strings *,
 				    void *, void *));
 					/* Set registers before execution */
 	void	(*e_setregs) __P((struct proc *, struct exec_package *,
 				  u_long));
+
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 };
@@ -241,6 +242,7 @@ struct	proc {
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
 #define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
+#define	P_32		0x40000	/* 32-bit process -- only used on 64-bit kernels */
 
 /*
  * Macro to compute the exit signal to be delivered.
