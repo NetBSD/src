@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/03/24 21:59:44 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/11 09:34:41 mycroft Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 PROG=	mail
@@ -21,3 +21,4 @@ distribution:
 	    -m 644 ${EFILES} ${DESTDIR}/etc
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>

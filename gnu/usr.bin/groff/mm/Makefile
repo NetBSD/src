@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1997/03/24 22:06:31 christos Exp $
+#	$Id: Makefile,v 1.11 1997/10/11 09:34:24 mycroft Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -21,3 +21,4 @@ SUBDIR=		mm
 
 .include "../Makefile.cfg"
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
