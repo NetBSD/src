@@ -1,6 +1,6 @@
-/*	$NetBSD: bivar.h,v 1.3 1999/07/12 13:42:55 ragge Exp $ */
+/*	$NetBSD: bivar.h,v 1.4 1999/08/04 19:12:22 ragge Exp $ */
 /*
- * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,8 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -36,18 +36,25 @@
  * per-BI-adapter state.
  */
 struct bi_softc {
-        struct device bi_dev;
-        struct bi_node *bi_base;
+	struct device sc_dev;
+	bus_space_tag_t sc_iot;		/* Space tag for the BI bus */
+	bus_dma_tag_t sc_dmat;
+	bus_addr_t sc_addr;		/* Address base address for this bus */
+	int sc_busnr;			/* (Physical) number of this bus */
+	int sc_lastiv;			/* last available interrupt vector */
 };
 
 /*
  * Struct used for autoconfiguration; attaching of BI nodes.
  */
 struct bi_attach_args {
-        struct bi_node *ba_node;
-        int ba_busnr;
-        int ba_nodenr;
+	bus_space_tag_t ba_iot;
+	bus_space_handle_t ba_ioh;	/* Base address for this node */
+	bus_dma_tag_t ba_dmat;
+	int ba_busnr;
+	int ba_nodenr;
 	int ba_intcpu;	/* Mask of which cpus to interrupt */
+	int ba_ivec;	/* Interrupt vector to use */
 };
 
 /*
@@ -55,6 +62,9 @@ struct bi_attach_args {
  */
 struct bi_list {
 	u_short bl_nr;		/* Unit ID# */
-	u_short bl_havedriver;	/* Have device driver */
+	u_short bl_havedriver;	/* Have device driver (informal) */
 	char *bl_name;		/* DEC name */
 };
+
+/* Prototype */
+void	bi_attach __P((struct bi_softc *));
