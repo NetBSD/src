@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.18 1997/07/02 05:42:13 lukem Exp $	*/
+/*	$NetBSD: su.c,v 1.19 1997/10/19 23:31:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT(
+    "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.18 1997/07/02 05:42:13 lukem Exp $";
+__RCSID("$NetBSD: su.c,v 1.19 1997/10/19 23:31:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +110,7 @@ main(argc, argv)
 
 	asme = asthem = fastlogin = 0;
 	shell = NULL;
-	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
+	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
 #ifdef KERBEROS
 		case 'K':
@@ -322,7 +323,6 @@ chshell(sh)
 	char *sh;
 {
 	char *cp;
-	char *getusershell();
 
 	while ((cp = getusershell()) != NULL)
 		if (!strcmp(cp, sh))
@@ -333,7 +333,7 @@ chshell(sh)
 static char *
 ontty()
 {
-	char *p, *ttyname();
+	char *p;
 	static char buf[MAXPATHLEN + 4];
 
 	buf[0] = 0;
@@ -351,7 +351,7 @@ kerberos(username, user, uid)
 	KTEXT_ST ticket;
 	AUTH_DAT authdata;
 	struct hostent *hp;
-	register char *p;
+	char *p;
 	int kerno;
 	u_long faddr;
 	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
@@ -463,7 +463,7 @@ static int
 koktologin(name, realm, toname)
 	char *name, *realm, *toname;
 {
-	register AUTH_DAT *kdata;
+	AUTH_DAT *kdata;
 	AUTH_DAT kdata_st;
 
 	kdata = &kdata_st;

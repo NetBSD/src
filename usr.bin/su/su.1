@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.13 1997/07/02 05:42:12 lukem Exp $
+.\"	$NetBSD: su.1,v 1.14 1997/10/19 23:31:52 lukem Exp $
 .\"
 .Dd April 18, 1994
 .Dt SU 1
@@ -83,7 +83,7 @@ is set to the target login, unless the target login has a user ID of 0,
 in which case it is unmodified.
 The invoked shell is the target login's.
 This is the traditional behavior of
-.Nm su .
+.Nm "" .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -173,7 +173,7 @@ to remind one of its awesome power.
 .Xr environ 7
 .Sh ENVIRONMENT
 Environment variables used by
-.Nm su :
+.Nm "" :
 .Bl -tag -width "HOME"
 .It Ev HOME
 Default home directory of real user ID unless modified as
