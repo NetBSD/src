@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1998/02/22 15:40:40 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2001/05/28 12:40:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mem.c,v 1.3 1998/02/22 15:40:40 christos Exp $");
+__RCSID("$NetBSD: mem.c,v 1.4 2001/05/28 12:40:37 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -43,8 +43,7 @@ __RCSID("$NetBSD: mem.c,v 1.3 1998/02/22 15:40:40 christos Exp $");
 #include "lint.h"
 
 void *
-xmalloc(s)
-	size_t	s;
+xmalloc(size_t s)
 {
 	void	*p;
 
@@ -54,8 +53,7 @@ xmalloc(s)
 }
 
 void *
-xcalloc(n, s)
-	size_t	n, s;
+xcalloc(size_t n, size_t s)
 {
 	void	*p;
 
@@ -65,18 +63,16 @@ xcalloc(n, s)
 }
 
 void *
-xrealloc(p, s)
-	void	*p;
-	size_t	s;
+xrealloc(void *p, size_t s)
 {
+
 	if ((p = realloc(p, s)) == NULL)
 		nomem();
 	return (p);
 }
 
 char *
-xstrdup(s)
-	const	char *s;
+xstrdup(const char *s)
 {
 	char	*s2;
 
@@ -86,7 +82,8 @@ xstrdup(s)
 }
 
 void
-nomem()
+nomem(void)
 {
+
 	errx(1, "virtual memory exhausted");
 }
