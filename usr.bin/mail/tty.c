@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.13 2002/03/04 03:07:27 wiz Exp $	*/
+/*	$NetBSD: tty.c,v 1.14 2002/03/04 03:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.13 2002/03/04 03:07:27 wiz Exp $");
+__RCSID("$NetBSD: tty.c,v 1.14 2002/03/04 03:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ grabh(struct header *hp, int gflags)
 #endif
 	if (gflags & GTO) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_to != NIL)
+		if (!ttyset && hp->h_to != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		hp->h_to =
@@ -138,7 +138,7 @@ grabh(struct header *hp, int gflags)
 	}
 	if (gflags & GCC) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_cc != NIL)
+		if (!ttyset && hp->h_cc != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		hp->h_cc =
@@ -146,7 +146,7 @@ grabh(struct header *hp, int gflags)
 	}
 	if (gflags & GBCC) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_bcc != NIL)
+		if (!ttyset && hp->h_bcc != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		hp->h_bcc =
