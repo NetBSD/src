@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2002/09/12 14:28:33 joda Exp $
+# $NetBSD: Makefile,v 1.23 2002/09/12 15:28:22 joda Exp $
 
 NOLINT=		# defined
 
@@ -127,13 +127,10 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 
-CLEANFILES=	${ERR_FILES} krb_err.h ktypes.h krb.h
+CLEANFILES=	${ERR_FILES} krb_err.h krb.h
 
 krb.h:	krb.h.in
 	sed 's,@DES_H@,openssl/des.h,' < ${.ALLSRC} > ${.TARGET}
-
-ktypes.h:
-	cp ${NETBSDSRCDIR}/include/heimdal/$@ $@
 
 ${SRCS:.c=.o}: krb_err.h
 
