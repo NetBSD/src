@@ -1340,7 +1340,7 @@ extract_tbr (insn, invalid)
 #define PPC405	PPC403
 #define PPC750	PPC
 #define PPC860	PPC
-#define PPCVEC	PPC_OPCODE_ALTIVEC | PPC_OPCODE_ANY
+#define PPCVEC	PPC_OPCODE_ALTIVEC | PPC_OPCODE_ANY | PPC_OPCODE_PPC
 #define	POWER   PPC_OPCODE_POWER | PPC_OPCODE_ANY
 #define	POWER2	PPC_OPCODE_POWER | PPC_OPCODE_POWER2 | PPC_OPCODE_ANY
 #define PPCPWR2	PPC_OPCODE_PPC | PPC_OPCODE_POWER | PPC_OPCODE_POWER2 | PPC_OPCODE_ANY
@@ -1502,6 +1502,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "nmaclhws.",	XO(4,494,0,1), XO_MASK,	PPC405,		{ RT, RA, RB } },
 { "nmaclhwso",	XO(4,494,1,0), XO_MASK,	PPC405,		{ RT, RA, RB } },
 { "nmaclhwso.",	XO(4,494,1,1), XO_MASK,	PPC405,		{ RT, RA, RB } },
+{ "mfvrsave",  VX(4, 256), VX_MASK,	PPCVEC,		{ VD } },
+{ "mtvrsave",  VX(4, 256), VX_MASK,	PPCVEC,		{ VD } },
 { "mfvscr",  VX(4, 1540), VX_MASK,	PPCVEC,		{ VD } },
 { "mtvscr",  VX(4, 1604), VX_MASK,	PPCVEC,		{ VD } },
 { "vaddcuw", VX(4,  384), VX_MASK,	PPCVEC,		{ VD, VA, VB } },

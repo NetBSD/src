@@ -849,7 +849,8 @@ md_parse_option (c, arg)
 	       || strcmp (arg, "603") == 0
 	       || strcmp (arg, "604") == 0)
 	ppc_cpu = PPC_OPCODE_PPC;
-      else if (strcmp (arg, "7400") == 0 || strcmp (arg, "vec") == 0)
+      else if (strcmp (arg, "7400") == 0 || strcmp (arg, "vec")
+               || strcmp (arg, "altivec") == 0)
         ppc_cpu = PPC_OPCODE_PPC | PPC_OPCODE_ALTIVEC;
       /* -mppc64 and -m620 mean to assemble for the 64-bit PowerPC
          620.  */
