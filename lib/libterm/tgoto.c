@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.20 2002/06/26 18:08:49 christos Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.21 2002/07/04 18:47:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.20 2002/06/26 18:08:49 christos Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.21 2002/07/04 18:47:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,17 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 			do
 				dig_buf[k++] = which % 10 | '0';
 			while ((which /= 10) != 0);
+
+			if (c != 'd') {
+				c -= '0';
+				if (k > c) {
+					errno = E2BIG;
+					return -1;
+				}
+				while (k < c)
+					dig_buf[k++] = '0';
+			}
+
 			if (dp + k >= buf_lim) {
 				errno = E2BIG;
 				return -1;
