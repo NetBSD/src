@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.34 2002/09/21 18:43:36 christos Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.35 2002/10/01 03:08:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.34 2002/09/21 18:43:36 christos Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.35 2002/10/01 03:08:56 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,8 +230,7 @@ mount_nfs(argc, argv)
 	    sizeof (struct nfsrpc_fullblock) != RPCX_FULLBLOCK ||
 	    ((char *)&ktick.kt) - ((char *)&ktick) != NFSX_UNSIGNED ||
 	    ((char *)ktick.kt.dat) - ((char *)&ktick) != 2 * NFSX_UNSIGNED)
-		fprintf(stderr, "Yikes! NFSKERB structs not packed!!\n");
-
+		warnx("Yikes! NFSKERB structs not packed!!\n");
 #endif
 	retrycnt = DEF_RETRY;
 
@@ -322,48 +321,48 @@ mount_nfs(argc, argv)
 #endif
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, &altflags);
-			if(altflags & ALTF_BG)
+			if (altflags & ALTF_BG)
 				opflags |= BGRND;
-			if(altflags & ALTF_CONN)
+			if (altflags & ALTF_CONN)
 				nfsargsp->flags &= ~NFSMNT_NOCONN;
-			if(altflags & ALTF_DUMBTIMR)
+			if (altflags & ALTF_DUMBTIMR)
 				nfsargsp->flags |= NFSMNT_DUMBTIMR;
-			if(altflags & ALTF_INTR)
+			if (altflags & ALTF_INTR)
 				nfsargsp->flags |= NFSMNT_INT;
 #ifdef NFSKERB
-			if(altflags & ALTF_KERB)
+			if (altflags & ALTF_KERB)
 				nfsargsp->flags |= NFSMNT_KERB;
 #endif
-			if(altflags & ALTF_NFSV3) {
+			if (altflags & ALTF_NFSV3) {
 				if (force2)
-					errx(1,"conflicting version options");
+					errx(1, "conflicting version options");
 				force3 = 1;
 			}
-			if(altflags & ALTF_NFSV2) {
+			if (altflags & ALTF_NFSV2) {
 				if (force3)
-					errx(1,"conflicting version options");
+					errx(1, "conflicting version options");
 				force2 = 1;
 				nfsargsp->flags &= ~NFSMNT_NFSV3;
 			}
-			if(altflags & ALTF_RDIRPLUS)
+			if (altflags & ALTF_RDIRPLUS)
 				nfsargsp->flags |= NFSMNT_RDIRPLUS;
-			if(altflags & ALTF_MNTUDP)
+			if (altflags & ALTF_MNTUDP)
 				mnttcp_ok = 0;
-			if(altflags & ALTF_NORESPORT)
+			if (altflags & ALTF_NORESPORT)
 				nfsargsp->flags &= ~NFSMNT_RESVPORT;
 #ifdef ISO
-			if(altflags & ALTF_SEQPACKET)
+			if (altflags & ALTF_SEQPACKET)
 				nfsargsp->sotype = SOCK_SEQPACKET;
 #endif
-			if(altflags & ALTF_NQNFS) {
+			if (altflags & ALTF_NQNFS) {
 				if (force2)
-					errx(1,"nqnfs only available with v3");
+					errx(1, "nqnfs only available with v3");
 				force3 = 1;
 				nfsargsp->flags |= NFSMNT_NQNFS;
 			}
-			if(altflags & ALTF_SOFT)
+			if (altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
-			if(altflags & ALTF_TCP) {
+			if (altflags & ALTF_TCP) {
 				nfsargsp->sotype = SOCK_STREAM;
 				nfsproto = IPPROTO_TCP;
 			}
@@ -377,7 +376,7 @@ mount_nfs(argc, argv)
 			break;
 		case 'q':
 			if (force2)
-				errx(1,"nqnfs only available with v3");
+				errx(1, "nqnfs only available with v3");
 			force3 = 1;
 			nfsargsp->flags |= NFSMNT_NQNFS;
 			break;
@@ -445,8 +444,8 @@ mount_nfs(argc, argv)
 
 	spec = *argv++;
 	name = *argv;
-	if((ospec = strdup(spec))==NULL) {
-		err(1,"strdup");
+	if ((ospec = strdup(spec)) == NULL) {
+		err(1, "strdup");
 	}
 
 	if ((mntflags & MNT_GETARGS) == 0) {
@@ -713,8 +712,7 @@ getnfsargs(spec, nfsargsp)
 	orgcnt = retrycnt;
 	nfhret.stat = EACCES;	/* Mark not yet successful */
 
-    ai = ai_nfs;
-    while (ai != NULL) {
+    for (ai = ai_nfs; ai; ai = ai->ai_next) {
 	/*
 	 * XXX. Nead a generic (family, type, proto) -> nconf interface.
 	 * __rpc_*2nconf exist, maybe they should be exported.
@@ -824,7 +822,6 @@ tryagain:
 	}
 	if (nfhret.stat == 0)
 		break;
-	ai = ai->ai_next;
     }
 	freeaddrinfo(ai_nfs);
 	if (nfhret.stat) {
