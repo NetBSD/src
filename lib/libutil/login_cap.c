@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.13 2003/09/08 20:54:48 itojun Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.14 2003/10/21 00:55:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.13 2003/09/08 20:54:48 itojun Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.14 2003/10/21 00:55:05 fvdl Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -119,7 +119,7 @@ login_getclass(char *class)
 		case -1:
 			if ((res = open(classfiles[0], 0)) >= 0)
 				close(res);
-			if (strcmp(lc->lc_class, LOGIN_DEFCLASS) == NULL &&
+			if (strcmp(lc->lc_class, LOGIN_DEFCLASS) == 0 &&
 			    res < 0)
 				return (lc);
 			syslog(LOG_ERR, "%s: unknown class", lc->lc_class);
