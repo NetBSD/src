@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.56 2002/01/02 16:20:14 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.57 2002/02/11 15:11:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.56 2002/01/02 16:20:14 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.57 2002/02/11 15:11:49 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,6 +423,7 @@ ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 				usbd_free_xfer(sce->isoreqs[i].xfer);
 			return (ENOMEM);
 		case UE_CONTROL:
+			sce->timeout = USBD_DEFAULT_TIMEOUT;
 			return (EINVAL);
 		}
 	}
@@ -1033,12 +1034,12 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state &= ~UGEN_SHORT_OK;
 		return (0);
 	case USB_SET_TIMEOUT:
-		if (endpt == USB_CONTROL_ENDPOINT) {
-			/* XXX the lower levels don't support this yet. */
-			return (EINVAL);
-		}
 		sce = &sc->sc_endpoints[endpt][IN];
-		if (sce == NULL || sce->pipeh == NULL)
+		if (sce == NULL 
+		    /* XXX this shouldn't happen, but the distinction between
+		       input and output pipes isn't clear enough.
+		       || sce->pipeh == NULL */
+			)
 			return (EINVAL);
 		sce->timeout = *(int *)addr;
 		return (0);
@@ -1232,8 +1233,9 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 					goto ret;
 			}
 		}
+		sce = &sc->sc_endpoints[endpt][IN];
 		err = usbd_do_request_flags(sc->sc_udev, &ur->request,
-			  ptr, ur->flags, &ur->actlen);
+			  ptr, ur->flags, &ur->actlen, sce->timeout);
 		if (err) {
 			error = EIO;
 			goto ret;
