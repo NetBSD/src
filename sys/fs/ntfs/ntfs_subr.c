@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.11 2004/12/27 18:14:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.12 2005/02/13 11:55:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.11 2004/12/27 18:14:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.12 2005/02/13 11:55:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1523,9 +1523,15 @@ ntfs_writentvattr_plain(
 		off = ntfs_btocnoff(off);
 
 		while (left && ccl) {
-			tocopy = min(left,
-				  min(ntfs_cntob(ccl) - off, MAXBSIZE - off));
+			/*
+			 * Always read and write single clusters at a time -
+			 * we need to avoid requesting differently-sized
+			 * blocks at the same disk offsets to avoid
+			 * confusing the buffer cache.
+			 */
+			tocopy = min(left, ntfs_cntob(1) - off);
 			cl = ntfs_btocl(tocopy + off);
+			KASSERT(cl == 1 && tocopy <= ntfs_cntob(1));
 			ddprintf(("ntfs_writentvattr_plain: write: " \
 				"cn: 0x%x cl: %d, off: %d len: %d, left: %d\n",
 				(u_int32_t) cn, (u_int32_t) cl, 
@@ -1621,23 +1627,18 @@ ntfs_readntvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
-					tocopy = min(left,
-						  min(ntfs_cntob(ccl) - off,
-						      MAXBSIZE - off));
-					cl = ntfs_btocl(tocopy + off);
-
 					/*
-					 * If 'off' pushes us to next
-					 * block, don't attempt to read whole
-					 * 'tocopy' at once. This is to avoid
-					 * bread() with varying 'size' for
-					 * same 'blkno', which is not good.
+					 * Always read single clusters at a
+					 * time - we need to avoid reading
+					 * differently-sized blocks at the
+					 * same disk offsets to avoid
+					 * confusing the buffer cache.
 					 */
-					if (cl > ntfs_btocl(tocopy)) {
-						tocopy -=
-						    ntfs_btocnoff(tocopy + off);
-						cl--;
-					}
+					tocopy = min(left,
+					    ntfs_cntob(1) - off);
+					cl = ntfs_btocl(tocopy + off);
+					KASSERT(cl == 1 &&
+					    tocopy <= ntfs_cntob(1));
 
 					ddprintf(("ntfs_readntvattr_plain: " \
 						"read: cn: 0x%x cl: %d, " \
