@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.45 2004/11/30 04:13:43 christos Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.46 2005/02/06 05:58:21 perry Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.45 2004/11/30 04:13:43 christos Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.46 2005/02/06 05:58:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,14 +121,14 @@ int keepalive = 1;
 char *gettyname = "default";
 char *progname;
 
-int main __P((int, char *[]));
-void usage __P((void));
-int getterminaltype __P((char *, size_t));
-int getent __P((char *, char *));
-void doit __P((struct sockaddr *));
-void _gettermname __P((void));
-int terminaltypeok __P((char *));
-char *getstr __P((const char *, char **));
+int main(int, char *[]);
+void usage(void);
+int getterminaltype(char *, size_t);
+int getent(char *, char *);
+void doit(struct sockaddr *);
+void _gettermname(void);
+int terminaltypeok(char *);
+char *getstr(const char *, char **);
 
 /*
  * The string to pass to getopt().  We do it this way so
@@ -163,12 +163,10 @@ int family = AF_INET;
 struct sockaddr_storage from;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int on = 1, fromlen;
-	register int ch;
+	int ch;
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 	int tos = -1;
 #endif
@@ -444,7 +442,7 @@ main(argc, argv)
 }  /* end of main */
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage: telnetd");
 #ifdef	AUTHENTICATION
@@ -488,9 +486,7 @@ static unsigned char ttytype_sbbuf[] = {
 };
 
 int
-getterminaltype(name, l)
-    char *name;
-    size_t l;
+getterminaltype(char *name, size_t l)
 {
     int retval = -1;
 
@@ -631,7 +627,7 @@ getterminaltype(name, l)
 }  /* end of getterminaltype */
 
 void
-_gettermname()
+_gettermname(void)
 {
     /*
      * If the client turned off the option,
@@ -649,8 +645,7 @@ _gettermname()
 }
 
 int
-terminaltypeok(s)
-    char *s;
+terminaltypeok(char *s)
 {
     char buf[1024];
 
@@ -673,14 +668,13 @@ char *hostname;
 char host_name[MAXHOSTNAMELEN + 1];
 char remote_host_name[MAXHOSTNAMELEN + 1];
 
-extern void telnet __P((int, int));
+extern void telnet(int, int);
 
 /*
  * Get a pty, scan input lines.
  */
 void
-doit(who)
-	struct sockaddr *who;
+doit(struct sockaddr *who)
 {
 	char *host;
 	int error;
@@ -744,8 +738,7 @@ doit(who)
  * hand data to telnet receiver finite state machine.
  */
 void
-telnet(f, p)
-	int f, p;
+telnet(int f, int p)
 {
 	int on = 1;
 #define	TABBUFSIZ	512
@@ -889,7 +882,7 @@ telnet(f, p)
 
 
 	{
-		register int t;
+		int t;
 		t = open(_PATH_TTY, O_RDWR);
 		if (t >= 0) {
 			(void) ioctl(t, TIOCNOTTY, (char *)0);
@@ -927,7 +920,7 @@ telnet(f, p)
 		if (IF)	{
 			char buf[_POSIX2_LINE_MAX];
 			FILE *fd;
-                        
+
 			if ((fd = fopen(IF, "r")) != NULL) {
 				while (fgets(buf, sizeof(buf) - 1, fd) != NULL)
 					ptyibuf2ptr = putf(buf, ptyibuf2ptr);
@@ -957,7 +950,7 @@ telnet(f, p)
 	set[0].fd = f;
 	set[1].fd = p;
 	for (;;) {
-		register int c;
+		int c;
 
 		if (ncc < 0 && pcc < 0)
 			break;
@@ -1109,7 +1102,7 @@ telnet(f, p)
  * otherwise, write intr char.
  */
 void
-interrupt()
+interrupt(void)
 {
 	ptyflush();	/* half-hearted */
 
@@ -1122,14 +1115,14 @@ interrupt()
  * otherwise, write quit char.
  */
 void
-sendbrk()
+sendbrk(void)
 {
 	ptyflush();	/* half-hearted */
 	(void) ioctl(pty, TIOCSIG, (char *)SIGQUIT);
 }
 
 void
-sendsusp()
+sendsusp(void)
 {
 	ptyflush();	/* half-hearted */
 	(void) ioctl(pty, TIOCSIG, (char *)SIGTSTP);
@@ -1140,7 +1133,7 @@ sendsusp()
  * just send back "[Yes]".
  */
 void
-recv_ayt()
+recv_ayt(void)
 {
 	if (slctab[SLC_AYT].sptr && *slctab[SLC_AYT].sptr != _POSIX_VDISABLE) {
 		(void) ioctl(pty, TIOCSIG, (char *)SIGINFO);
@@ -1150,7 +1143,7 @@ recv_ayt()
 }
 
 void
-doeof()
+doeof(void)
 {
 	init_termbuf();
 
