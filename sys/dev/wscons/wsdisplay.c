@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.52 2001/08/05 11:26:52 jdolecek Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.53 2001/10/13 13:35:59 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52 2001/08/05 11:26:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.53 2001/10/13 13:35:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -181,7 +181,7 @@ static int wsdisplayparam __P((struct tty *, struct termios *));
 #define	WSSCREEN_HAS_TTY(scr)	((scr)->scr_tty != NULL)
 
 static void wsdisplay_common_attach __P((struct wsdisplay_softc *sc,
-	    int console, const struct wsscreen_list *,
+	    int console, int kbdmux, const struct wsscreen_list *,
 	    const struct wsdisplay_accessops *accessops,
 	    void *accesscookie));
 
@@ -510,8 +510,9 @@ wsdisplay_emul_attach(parent, self, aux)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
-	wsdisplay_common_attach(sc, ap->console, ap->scrdata,
-				ap->accessops, ap->accesscookie);
+	wsdisplay_common_attach(sc, ap->console,
+	     sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, ap->scrdata,
+	     ap->accessops, ap->accesscookie);
 
 	if (ap->console) {
 		int maj;
@@ -566,7 +567,9 @@ wsdisplay_noemul_attach(parent, self, aux)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
 	struct wsdisplaydev_attach_args *ap = aux;
 
-	wsdisplay_common_attach(sc, 0, NULL, ap->accessops, ap->accesscookie);
+	wsdisplay_common_attach(sc, 0,
+	    sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, NULL,
+	    ap->accessops, ap->accesscookie);
 }
 
 /* Print function (for parent devices). */
@@ -586,9 +589,10 @@ wsdisplaydevprint(aux, pnp)
 }
 
 static void
-wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
+wsdisplay_common_attach(sc, console, kbdmux, scrdata, accessops, accesscookie)
 	struct wsdisplay_softc *sc;
 	int console;
+	int kbdmux;
 	const struct wsscreen_list *scrdata;
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
@@ -598,7 +602,11 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 #if NWSKBD > 0
 	struct device *dv;
 
-	sc->sc_muxdv = wsmux_create("dmux", sc->sc_dv.dv_unit);
+	if (kbdmux <= 0)
+		sc->sc_muxdv = wsmux_create("dmux", sc->sc_dv.dv_unit);
+	else
+		sc->sc_muxdv = wsmux_getmux(kbdmux);
+	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (!sc->sc_muxdv)
 		panic("wsdisplay_common_attach: no memory\n");
 	sc->sc_muxdv->sc_displaydv = &sc->sc_dv;
@@ -606,6 +614,7 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 
 	sc->sc_isconsole = console;
 
+	printf(" kbdmux %d", kbdmux);
 	if (console) {
 		KASSERT(wsdisplay_console_initted);
 		KASSERT(wsdisplay_console_device == NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.10 2001/10/13 13:36:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ wsmux_setmax(n)
 	if (n >= nwsmux) {
 		i = nwsmux;
 		nwsmux = n + 1;
-		if (nwsmux != 0)
+		if (i != 0)
 			wsmuxdevs = realloc(wsmuxdevs, 
 					    nwsmux * sizeof (*wsmuxdevs), 
 					    M_DEVBUF, M_NOWAIT);
@@ -134,14 +134,26 @@ void
 wsmuxattach(n)
 	int n;
 {
-	int i;
+}
 
-	wsmux_setmax(n);	/* Make sure we have room for all muxes. */
+/* Return mux n, create if necessary */
+struct wsmux_softc *
+wsmux_getmux(n)
+	int n;
+{
+	struct wsmux_softc *sc;
 
-	/* Make sure all muxes are there. */
-	for (i = 0; i < nwsmux; i++)
-		if (!wsmuxdevs[i])
-			wsmuxdevs[i] = wsmux_create("wsmux", i);
+	wsmux_setmax(n);
+	sc = wsmuxdevs[n];
+	if (sc == 0) {
+		sc = wsmux_create("wsmux", n);
+		if (sc == 0) {
+			printf("wsmux: attach out of memory\n");
+			return (NULL);
+		}
+		wsmuxdevs[n] = sc;
+	}
+	return (sc);
 }
 
 /* From mouse or keyboard. */
@@ -158,16 +170,7 @@ wsmux_attach(n, type, dsc, ev, psp, ops)
 	int error;
 
 	DPRINTF(("wsmux_attach: n=%d\n", n));
-	wsmux_setmax(n);
-	sc = wsmuxdevs[n];
-	if (sc == 0) {
-		sc = wsmux_create("wsmux", n);
-		if (sc == 0) {
-			printf("wsmux: attach out of memory\n");
-			return;
-		}
-		wsmuxdevs[n] = sc;
-	}
+	sc = wsmux_getmux(n);
 	error = wsmux_attach_sc(sc, type, dsc, ev, psp, ops);
 	if (error)
 		printf("wsmux_attach: error=%d\n", error);
@@ -310,14 +313,14 @@ wsmux_add_mux(unit, muxsc)
 	if (unit < 0 || unit >= nwsmux || (sc = wsmuxdevs[unit]) == NULL)
 		return (ENXIO);
 
-	DPRINTF(("wsmux_add_mux: %s to %s\n", sc->sc_dv.dv_xname,
-		 muxsc->sc_dv.dv_xname));
+	DPRINTF(("wsmux_add_mux: %s(%p) to %s(%p)\n", sc->sc_dv.dv_xname, sc,
+		 muxsc->sc_dv.dv_xname, muxsc));
 
 	if (sc->sc_mux || sc->sc_events.io)
 		return (EBUSY);
 
-	/* The mux we are adding must not be an ancestor of it. */
-	for (m = muxsc->sc_mux; m; m = m->sc_mux)
+	/* The mux we are adding must not be an ancestor of itself. */
+	for (m = muxsc; m; m = m->sc_mux)
 		if (m == sc)
 			return (EINVAL);
 
@@ -352,8 +355,8 @@ wsmux_create(name, unit)
 
 	DPRINTF(("wsmux_create: allocating\n"));
 	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT);
-	if (!sc)
-		return (0);
+	if (sc == NULL)
+		return (NULL);
 	memset(sc, 0, sizeof *sc);
 	LIST_INIT(&sc->sc_reals);
 	snprintf(sc->sc_dv.dv_xname, sizeof sc->sc_dv.dv_xname,
@@ -377,7 +380,7 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
 	DPRINTF(("wsmux_attach_sc: %s: type=%d dsc=%p, *psp=%p\n",
 		 sc->sc_dv.dv_xname, type, dsc, *psp));
 	m = malloc(sizeof *m, M_DEVBUF, M_NOWAIT);
-	if (m == 0)
+	if (m == NULL)
 		return (ENOMEM);
 	m->type = type;
 	m->mux = sc;
@@ -475,7 +478,8 @@ wsmux_detach_sc(sc, dsc)
 	return (0);
 }
 
-int wsmuxdoclose(dv, flags, mode, p)
+int
+wsmuxdoclose(dv, flags, mode, p)
 	struct device *dv;
 	int flags, mode;
 	struct proc *p;
