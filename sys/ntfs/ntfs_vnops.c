@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.15 1999/09/09 18:10:23 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.16 1999/09/22 14:39:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,9 +72,7 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_extern.h>
 #include <miscfs/specfs/specdev.h>
-#if __NetBSD_Version__ > 104040000
 #include <miscfs/genfs/genfs.h>
-#endif 
 
 #include <sys/unistd.h> /* for pathconf(2) constants */
 
@@ -86,11 +84,6 @@ static int	ntfs_inactive __P((struct vop_inactive_args *ap));
 static int	ntfs_print __P((struct vop_print_args *ap));
 static int	ntfs_reclaim __P((struct vop_reclaim_args *ap));
 static int	ntfs_strategy __P((struct vop_strategy_args *ap));
-#if defined(__NetBSD__) && __NetBSD_Version__ < 104050000
-static int	ntfs_islocked __P((struct vop_islocked_args *ap));
-static int	ntfs_unlock __P((struct vop_unlock_args *ap));
-static int	ntfs_lock __P((struct vop_lock_args *ap));
-#endif
 static int	ntfs_access __P((struct vop_access_args *ap));
 static int	ntfs_open __P((struct vop_open_args *ap));
 static int	ntfs_close __P((struct vop_close_args *ap));
@@ -456,130 +449,6 @@ ntfs_write(ap)
 
 	return (0);
 }
-
-#if defined(__NetBSD__) && __NetBSD_Version__ < 104050000
-/*
- * Check for a locked ntnode.
- */
-int
-ntfs_islocked(ap)
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
-{
-	register struct ntnode *ip = VTONT(ap->a_vp);
-
-	dprintf(("ntfs_islocked %d\n",ip->i_number));
-
-	if (ip->i_flag & IN_LOCKED)
-		return (1);
-	return (0);
-}
-
-/*
- * Unlock an ntnode.  If WANT bit is on, wakeup.
- */
-int ntfs_lockcount = 90;
-int
-ntfs_unlock(ap)
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
-{
-	register struct ntnode *ip = VTONT(ap->a_vp);
-#ifdef DIAGNOSTIC
-	struct proc *p = curproc;
-#endif
-
-	dprintf(("ntfs_unlock %d\n",ip->i_number));
-
-#ifdef DIAGNOSTIC
-
-	if ((ip->i_flag & IN_LOCKED) == 0) {
-		vprint("ntfs_unlock: unlocked ntnode", ap->a_vp);
-		panic("ntfs_unlock NOT LOCKED");
-	}
-	if (p && p->p_pid != ip->i_lockholder && p->p_pid > -1 &&
-	    ip->i_lockholder > -1 && ntfs_lockcount++ < 100)
-		panic("unlocker (%d) != lock holder (%d)",
-		    p->p_pid, ip->i_lockholder);
-#endif
-
-	if (--ip->i_lockcount > 0) {
-		if ((ip->i_flag & IN_RECURSE) == 0)
-			panic("ntfs_unlock: recursive lock prematurely released, pid=%d\n", ip->i_lockholder);
-		return (0);
-	}
-	ip->i_lockholder = 0;
-	ip->i_flag &= ~(IN_LOCKED|IN_RECURSE);
-	if (ip->i_flag & IN_WANTED) {
-		ip->i_flag &= ~IN_WANTED;
-		wakeup((caddr_t)ip);
-	}
-	return (0);
-}
-
-/*
- * Lock an ntnode. If its already locked, set the WANT bit and sleep.
- */
-int
-ntfs_lock(ap)
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
-{
-	struct proc *p = curproc;
-	register struct vnode *vp = ap->a_vp;
-	register struct ntnode *ip = VTONT(vp);
-
-	dprintf(("ntfs_lock %d (%d locks)\n",ip->i_number,ip->i_lockcount));
-
-start:
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		(void) tsleep((caddr_t)vp, PINOD, "ntflk1", 0);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	ip = VTONT(vp);
-	if (ip->i_flag & IN_LOCKED) {
-		if (p->p_pid == ip->i_lockholder) {
-			if( (ip->i_flag & IN_RECURSE) == 0)
-				panic("ntfs_lock: recursive lock not expected, pid: %d\n",
-					ip->i_lockholder);
-		} else {
-			ip->i_flag |= IN_WANTED;
-#ifdef DIAGNOSTIC
-			if (p)
-				ip->i_lockwaiter = p->p_pid;
-			else
-				ip->i_lockwaiter = -1;
-#endif
-			(void) tsleep((caddr_t)ip, PINOD, "ntflk2", 0);
-			goto start;
-		}
-	}
-#ifdef DIAGNOSTIC
-	ip->i_lockwaiter = 0;
-	if (((ip->i_flag & IN_RECURSE) == 0) && (ip->i_lockholder != 0))
-		panic("lockholder (%d) != 0", ip->i_lockholder);
-	if (p && p->p_pid == 0)
-		printf("locking by process 0\n");
-#endif
-
-	if ((ip->i_flag & IN_RECURSE) == 0)
-		ip->i_lockcount = 1;
-	else
-		++ip->i_lockcount;
-
-	if (p)
-		ip->i_lockholder = p->p_pid;
-	else
-		ip->i_lockholder = -1;
-	ip->i_flag |= IN_LOCKED;
-	return (0);
-}
-#endif
 
 int
 ntfs_access(ap)
@@ -1087,9 +956,7 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_read_desc, (vop_t *) ntfs_read },	/* read */
 	{ &vop_write_desc, (vop_t *) ntfs_write },	/* write */
 	{ &vop_lease_desc, genfs_lease_check },		/* lease */
-#if __NetBSD_Version__ >= 104050000
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
-#endif
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */
 	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
@@ -1107,18 +974,12 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, (vop_t *) ntfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, (vop_t *) ntfs_reclaim },	/* reclaim */
-#if __NetBSD_Version__ >= 104050000
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
-	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
-#else
-	{ &vop_lock_desc, (vop_t *) ntfs_lock },	/* lock */
-	{ &vop_unlock_desc, (vop_t *) ntfs_unlock },	/* unlock */
-	{ &vop_islocked_desc, (vop_t *) ntfs_islocked },	/* islocked */
-#endif
 	{ &vop_bmap_desc, (vop_t *) ntfs_bmap },	/* bmap */
 	{ &vop_strategy_desc, (vop_t *) ntfs_strategy },	/* strategy */
 	{ &vop_print_desc, (vop_t *) ntfs_print },	/* print */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ntfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, genfs_nullop },		/* advlock */
 	{ &vop_blkatoff_desc, genfs_eopnotsupp },	/* blkatoff */
