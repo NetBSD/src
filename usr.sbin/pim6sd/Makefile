@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/02/25 06:27:32 itojun Exp $
+# $NetBSD: Makefile,v 1.3 2000/02/26 18:32:00 mycroft Exp $
 
 PROG=	pim6sd
 SRCS=	mld6.c mld6_proto.c \
@@ -12,11 +12,8 @@ CPPFLAGS+=-DHAVE_STDARG_H -DYY_NO_UNPUT -DHAVE_GETIFADDRS
 LDADD+=-ly -ll
 YFLAGS+=-d
 CLEANFILES+=	y.tab.h
+SCRIPTS=pim6stat
 
 MAN=	pim6stat.1 pim6sd.8 pim6sd.conf.5
-
-afterinstall:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${INSTALLFLAGS} ${.CURDIR}/pim6stat ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>
