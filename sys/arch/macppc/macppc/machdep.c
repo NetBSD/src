@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1999/10/15 12:24:36 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.4.1 1999/11/15 00:38:36 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -376,8 +376,8 @@ restore_ofw_mapping()
 			continue;
 
 		while (size > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1,
-			    VM_PROT_ALL);
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
+			    VM_PROT_ALL|PMAP_WIRED);
 			pa += NBPG;
 			va += NBPG;
 			size -= NBPG;
@@ -530,7 +530,7 @@ cpu_startup()
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1010,7 +1010,7 @@ mapiodev(pa, len)
 
 	for (; len > 0; len -= NBPG) {
 		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
@@ -1034,7 +1034,7 @@ cninit()
 	struct consdev *cp;
 	int l, node;
 	int stdout;
-	int akbd_ih;
+	int akbd_ih, akbd;
 	char type[16];
 
 	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
@@ -1087,13 +1087,20 @@ cninit()
 		 * So, test "`adb-kbd-ihandle" method and use the value if
 		 * it succeeded.
 		 */
-		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
-		    != -1) {
-			int akbd;
-
-			if ((akbd = OF_instance_to_package(akbd_ih)) != -1)
-				node = akbd;
+#if NUKBD > 0
+		if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
+			stdin = akbd_ih;
+			node = akbd;
 		}
+#endif
+#if NAKBD > 0
+		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
+			stdin = akbd_ih;
+			node = akbd;
+		}
+#endif
 
 		node = OF_parent(node);
 		bzero(type, sizeof(type));
@@ -1105,8 +1112,8 @@ cninit()
 		}
 
 		if (strcmp(type, "adb") == 0) {
-			printf("console keyboard type: ADB\n");
 #if NAKBD > 0
+			printf("console keyboard type: ADB\n");
 			akbd_cnattach();
 #else
 			panic("akbd support not in kernel");

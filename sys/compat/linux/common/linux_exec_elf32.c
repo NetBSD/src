@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.42 1999/04/30 23:07:01 cgd Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.42.4.1 1999/11/15 00:40:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 		 * Header cannot have a load address, or flags and
 		 * it must be large enough.
 		 */
-		if (s->sh_type != Elf_sht_progbits ||
+		if (s->sh_type != SHT_PROGBITS ||
 		    s->sh_addr != 0 ||
 		    s->sh_flags != 0 ||
 		    s->sh_size < sizeof(signature) - 1)
@@ -182,7 +182,7 @@ ELFNAME2(linux,signature)(p, epp, eh)
 {
 	size_t i;
 	Elf_Phdr *ph;
-	Elf_Note *notep;
+	Elf_Nhdr *notep;
 	size_t phsize;
 	int error = ENOEXEC;
 
@@ -196,15 +196,15 @@ ELFNAME2(linux,signature)(p, epp, eh)
 		Elf_Phdr *ephp = &ph[i];
 		u_int32_t ostype;
 
-		if (ephp->p_type != Elf_pt_interp /* XAX pt_note */
+		if (ephp->p_type != PT_INTERP /* XAX PT_NOTE */
 #if 0
 		    || ephp->p_flags != 0
-		    || ephp->p_filesz < sizeof(Elf_Note))
+		    || ephp->p_filesz < sizeof(Elf_Nhdr))
 #endif
 		    )
 			continue;
 
-		notep = (Elf_Note *)malloc(ephp->p_filesz+1, M_TEMP, M_WAITOK);
+		notep = (Elf_Nhdr *)malloc(ephp->p_filesz+1, M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
 					(caddr_t)notep, ephp->p_filesz)) != 0)
 			goto out3;
@@ -226,24 +226,24 @@ ELFNAME2(linux,signature)(p, epp, eh)
 		goto out2;
 
 		/* XXX XAX Should handle NETBSD_TYPE_EMULNAME */
-		if (notep->type != ELF_NOTE_TYPE_OSVERSION) {
+		if (notep->n_type != ELF_NOTE_TYPE_OSVERSION) {
 			free(notep, M_TEMP);
 			continue;
 		}
 
 		/* Check the name and description sizes. */
-		if (notep->namesz != ELF_NOTE_GNU_NAMESZ ||
-		    notep->descsz != ELF_NOTE_GNU_DESCSZ)
+		if (notep->n_namesz != ELF_NOTE_GNU_NAMESZ ||
+		    notep->n_descsz != ELF_NOTE_GNU_DESCSZ)
 			goto out2;
 
 		/* Is the name "GNU\0"? */
-		if (memcmp((notep + sizeof(Elf_Note)),
+		if (memcmp((notep + sizeof(Elf_Nhdr)),
 			   ELF_NOTE_GNU_NAME, ELF_NOTE_GNU_NAMESZ))
 			goto out2;
 
 		/* Make sure the OS is Linux */
-		ostype = (u_int32_t)(*((u_int32_t *)notep + sizeof(Elf_Note) +
-		    notep->namesz)) & ELF_NOTE_GNU_OSMASK;
+		ostype = (u_int32_t)(*((u_int32_t *)notep + sizeof(Elf_Nhdr) +
+		    notep->n_namesz)) & ELF_NOTE_GNU_OSMASK;
 		if (ostype != ELF_NOTE_GNU_OSLINUX)
 			goto out2;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.1 1998/02/22 08:43:27 mycroft Exp $	*/
+/*	$NetBSD: index.S,v 1.1.16.1 1999/11/15 00:41:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)index.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: index.S,v 1.1 1998/02/22 08:43:27 mycroft Exp $")
+	RCSID("$NetBSD: index.S,v 1.1.16.1 1999/11/15 00:41:53 fvdl Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,15 +52,18 @@ ENTRY(strchr)
 #else
 ENTRY(index)
 #endif
-	movl	sp@(4),a0		| string
-	movb	sp@(11),d0		| char to look for
+	movl	%sp@(4),%a0		| string
+	movb	%sp@(11),%d0		| char to look for
 ixloop:
-	cmpb	a0@,d0			| found our char?
+	cmpb	%a0@,%d0		| found our char?
 	jeq	ixfound			| yes, break out
-	tstb	a0@+			| null?
+	tstb	%a0@+			| null?
 	jne	ixloop			| no, keep going
-	moveq	#0,d0			| not found, return null
+	moveq	#0,%d0			| not found, return null
+#ifdef __SVR4_ABI__
+	moveal	%d0,%a0
+#endif
 	rts
 ixfound:
-	movl	a0,d0			| found, return pointer
+	movl	%a0,%d0			| found, return pointer
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts102reg.h,v 1.2 1999/08/11 00:46:06 matt Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.2.4.1 1999/11/15 00:39:14 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,19 @@
  */
 #ifndef _SPARC_DEV_TS102REG_H
 #define	_SPARC_DEV_TS102REG_H
+
+/* The TS102 consumes a 256MB region of the SPARCbook 3's address space.
+ */
+#define	TS102_OFFSET_REGISTERS		0x02000000
+#define	TS102_OFFSET_CARD_A_ATTR_SPACE	0x04000000
+#define	TS102_OFFSET_CARD_B_ATTR_SPACE	0x05000000
+#define	TS102_SIZE_ATTR_SPACE		0x01000000
+#define	TS102_OFFSET_CARD_A_IO_SPACE	0x06000000
+#define	TS102_OFFSET_CARD_B_IO_SPACE	0x07000000
+#define	TS102_SIZE_IO_SPACE		0x01000000
+#define	TS102_OFFSET_CARD_A_MEM_SPACE	0x08000000
+#define	TS102_OFFSET_CARD_B_MEM_SPACE	0x0c000000
+#define	TS102_SIZE_MEM_SPACE		0x04000000
 
 /* There are two separate register blocks within the TS102.  The first
  * gives access to PCMCIA card specific resources, and the second gives

@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetimage.c,v 1.1 1999/05/13 08:38:05 simonb Exp $	*/
+/*	$NetBSD: setnetimage.c,v 1.1.6.1 1999/11/15 00:39:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,7 +140,8 @@ main(argc, argv)
 	/* read the exec header */
 	i = read(ifd, (char *)&ehdr, sizeof(ehdr));
 	if ((i != sizeof(ehdr)) ||
-	    (memcmp(ehdr.e_ident, Elf32_e_ident, Elf32_e_siz) != 0)) {
+	    (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) ||
+	    (ehdr.e_ident[EI_CLASS] != ELFCLASS32)) {
 		errx(1, "No ELF header in %s", kernel);
 	}
 
@@ -151,7 +152,7 @@ main(argc, argv)
 			err(1, "%s", kernel);
 		if (read(ifd, &phdr, sizeof(phdr)) != sizeof(phdr))
 			err(1, "%s", kernel);
-		if (phdr.p_type != Elf_pt_load)
+		if (phdr.p_type != PT_LOAD)
 			continue;
 
 		printf("load section %d at addr 0x%08x, file offset %8d, length %8d\n",

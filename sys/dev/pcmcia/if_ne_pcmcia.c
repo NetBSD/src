@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.39 1999/09/27 23:19:14 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.39.4.1 1999/11/15 00:41:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -198,11 +198,32 @@ struct ne2000dev {
       PCMCIA_CIS_DLINK_DE650,
       0, 0x0040, { 0x00, 0x80, 0xc8 } },
 
-    { PCMCIA_STR_IODATA_PCLAT,
-      PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
-      PCMCIA_CIS_IODATA_PCLAT,
-      /* two possible location, 0x01c0 or 0x0ff0 */
+    /*
+     * IO-DATA PCLA/TE and later version of PCLA/T has valid
+     * vendor/product ID and it is possible to read MAC address
+     * using standard I/O ports.  It also read from CIS offset 0x01c0.
+     * On the other hand, earlier version of PCLA/T doesn't have valid
+     * vendor/product ID and MAC address must be read from CIS offset
+     * 0x0ff0 (i.e., usual ne2000 way to read it doesn't work).
+     * And CIS information of earlier and later version of PCLA/T are
+     * same except fourth element.  So, for now, we place the entry for
+     * PCLA/TE (and later version of PCLA/T) followed by entry
+     * for the earlier version of PCLA/T (or, modify to match all CIS
+     * information and have three or more individual entries).
+     */
+    { PCMCIA_STR_IODATA_PCLATE,
+      PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
+      PCMCIA_CIS_IODATA_PCLATE,
       0, -1, { 0x00, 0xa0, 0xb0 } },
+
+    /*
+     * This entry should be placed after above PCLA-TE entry.
+     * See above comments for detail.
+     */
+    { PCMCIA_STR_IODATA_PCLAT,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_IODATA_PCLAT,
+      0, 0x0ff0, { 0x00, 0xa0, 0xb0 } },
 
     { PCMCIA_STR_DAYNA_COMMUNICARD_E_1,
       PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
@@ -224,6 +245,11 @@ struct ne2000dev {
       PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
+    { PCMCIA_STR_COREGA_FAST_ETHER_PCC_TX,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
+      PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
+      0, -1, { 0x00, 0x00, 0xf4 }, NE2000DVF_DL10019 },
+
     { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
       PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
@@ -233,6 +259,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
+
+    { PCMCIA_STR_SOCEKT_LP_ETHER_CF,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
+      PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+      0, -1, { 0x00, 0xc0, 0x1b} },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device

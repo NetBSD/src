@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.10 1999/09/30 23:01:12 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.10.4.1 1999/11/15 00:38:43 fvdl Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -539,7 +539,7 @@ sbic_sched(dev)
         stat = sbicicmd(dev, &acb->cmd, acb->clen,
                         acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
     else
-    if ( sbicgo(dev, xs) == 0 )
+    if ( sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT )
         return;
     else
         stat = dev->sc_stat[0];
@@ -708,7 +708,8 @@ sbicdmaok(dev, xs)
     struct sbic_softc   *dev;
     struct scsipi_xfer    *xs;
 {
-    if ( sbic_no_dma || xs->datalen & 0x03 || (int)xs->data & 0x03)
+    if ( sbic_no_dma || xs->datalen == 0 ||
+    	 xs->datalen & 0x03 || (int)xs->data & 0x03)
         return(0);
 
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.21 1999/08/27 19:13:00 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.21.4.1 1999/11/15 00:40:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -229,7 +229,8 @@ epic_attach(sc)
 	sc->sc_mii.mii_statchg = epic_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, epic_mediachange,
 	    epic_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -1134,6 +1135,9 @@ epic_stop(sc, drain)
 	 * Stop the one second clock.
 	 */
 	untimeout(epic_tick, sc);
+
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
 
 	/* Paranoia... */
 	epic_fixup_clock_source(sc);

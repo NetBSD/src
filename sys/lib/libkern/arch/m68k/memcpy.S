@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.1 1998/02/22 08:43:27 mycroft Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.1.16.1 1999/11/15 00:41:53 fvdl Exp $	*/
 
 #define MEMCOPY
 #include "bcopy.S"

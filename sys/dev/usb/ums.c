@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.33 1999/10/13 08:10:57 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.33.4.1 1999/11/15 00:41:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,8 @@ struct ums_softc {
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 #define MOUSE_FLAGS (HIO_RELATIVE)
 
-void ums_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
+static void ums_intr __P((usbd_xfer_handle, usbd_private_handle,
+			  usbd_status));
 
 static int	ums_enable __P((void *));
 static void	ums_disable __P((void *));
@@ -134,16 +135,16 @@ USB_MATCH(ums)
 	usb_interface_descriptor_t *id;
 	int size, ret;
 	void *desc;
-	usbd_status r;
+	usbd_status err;
 	
-	if (!uaa->iface)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (!id || id->bInterfaceClass != UCLASS_HID)
+	if (id == NULL || id->bInterfaceClass != UCLASS_HID)
 		return (UMATCH_NONE);
 
-	r = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
-	if (r != USBD_NORMAL_COMPLETION)
+	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	if (err)
 		return (UMATCH_NONE);
 
 	if (hid_is_collection(desc, size, 
@@ -165,7 +166,7 @@ USB_ATTACH(ums)
 	struct wsmousedev_attach_args a;
 	int size;
 	void *desc;
-	usbd_status r;
+	usbd_status err;
 	char devinfo[1024];
 	u_int32_t flags;
 	int i;
@@ -178,7 +179,7 @@ USB_ATTACH(ums)
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
-	if (!ed) {
+	if (ed == NULL) {
 		printf("%s: could not read endpoint descriptor\n",
 		       USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
@@ -202,8 +203,8 @@ USB_ATTACH(ums)
 
 	sc->revz = (usbd_get_quirks(uaa->device)->uq_flags & UQ_MS_REVZ) != 0;
 
-	r = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
-	if (r != USBD_NORMAL_COMPLETION)
+	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	if (err)
 		USB_ATTACH_ERROR_RETURN;
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
@@ -262,7 +263,7 @@ USB_ATTACH(ums)
 
 	sc->sc_isize = hid_report_size(desc, size, hid_input, &sc->sc_iid);
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_NOWAIT);
-	if (!sc->sc_ibuf) {
+	if (sc->sc_ibuf == NULL) {
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		free(sc->sc_loc_btn, M_USBDEV);
 		USB_ATTACH_ERROR_RETURN;
@@ -309,7 +310,7 @@ ums_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wsmousedev)
+		if (sc->sc_wsmousedev != NULL)
 			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
 		break;
@@ -325,7 +326,7 @@ USB_DETACH(ums)
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
 
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
-	if (sc->sc_wsmousedev)
+	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
 	if (rv == 0) {
 		free(sc->sc_loc_btn, M_USBDEV);
@@ -335,8 +336,8 @@ USB_DETACH(ums)
 }
 
 void
-ums_intr(reqh, addr, status)
-	usbd_request_handle reqh;
+ums_intr(xfer, addr, status)
+	usbd_xfer_handle xfer;
 	usbd_private_handle addr;
 	usbd_status status;
 {
@@ -361,7 +362,7 @@ ums_intr(reqh, addr, status)
 	}
 
 	ibuf = sc->sc_ibuf;
-	if (sc->sc_iid) {
+	if (sc->sc_iid != 0) {
 		if (*ibuf++ != sc->sc_iid)
 			return;
 	}
@@ -392,7 +393,7 @@ ums_enable(v)
 {
 	struct ums_softc *sc = v;
 
-	usbd_status r;
+	usbd_status err;
 
 	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
 
@@ -406,12 +407,12 @@ ums_enable(v)
 	sc->sc_buttons = 0;
 
 	/* Set up interrupt pipe. */
-	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
-				USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, 
-				sc->sc_ibuf, sc->sc_isize, ums_intr);
-	if (r != USBD_NORMAL_COMPLETION) {
+	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
+		  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, 
+		  sc->sc_ibuf, sc->sc_isize, ums_intr);
+	if (err) {
 		DPRINTF(("ums_enable: usbd_open_pipe_intr failed, error=%d\n",
-			 r));
+			 err));
 		sc->sc_enabled = 0;
 		return (EIO);
 	}
@@ -456,4 +457,3 @@ ums_ioctl(v, cmd, data, flag, p)
 
 	return (-1);
 }
-

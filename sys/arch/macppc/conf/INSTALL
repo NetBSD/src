@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15 1999/08/28 16:50:36 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.15.4.1 1999/11/15 00:38:34 fvdl Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -95,6 +95,20 @@ atapibus* at wdc? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+
+# PCI USB controllers
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Keyboards
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback

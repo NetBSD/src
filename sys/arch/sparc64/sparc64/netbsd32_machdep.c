@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3 1999/10/11 01:57:46 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3.4.1 1999/11/15 00:39:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -56,8 +56,8 @@ netbsd32_setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
+	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct fpstate64 *fs;
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
@@ -380,8 +380,8 @@ netbsd32_process_read_fpregs(p, regs)
 struct proc	*p;
 struct fpreg	*regs;
 {
-	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	extern struct fpstate64	initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
@@ -404,7 +404,7 @@ struct proc	*p;
 struct fpreg	*regs;
 {
 	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1999/09/26 12:46:57 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.6.4.1 1999/11/15 00:37:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -145,6 +145,12 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("E-55(Small Font)"), BIFB_D2_M2L_0x2,
 		480, 320, 256, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_CASIO_CASSIOPEIAE_E55 },
+	{ TEXT("E-100"), BIFB_D16_FFFF,
+		240, 320, 512, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E100 },
+	{ TEXT("E-500"), BIFB_D16_FFFF,
+		240, 320, 512, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E500 },
 	{ TEXT("INTERTOP CX300"), BIFB_D8_FF,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300 },
@@ -160,6 +166,12 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Compaq C-series 2015c"), BIFB_D8_FF,
 		640, 240, 0, 0,
 		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_2015 },
+	{ TEXT("Victor InterLink MP-C101"), BIFB_D16_0000,
+		640, 480, 0, 0,
+		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_VICTOR_INTERLINK_MPC101},
+	{ TEXT("Sharp Telios HC-AJ1"), BIFB_D16_0000,
+		800, 600, 0, 0,
+		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_SHARP_TELIOS_HCAJ1},
 };
 
 #define ARRAYSIZEOF(a)	(sizeof(a)/sizeof(*(a)))
@@ -395,7 +407,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.7.0 1999.09.26\r\n")
+			       TEXT("Version 1.7.2 1999.10.30\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")

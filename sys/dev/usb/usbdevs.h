@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.54 1999/10/15 14:42:17 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.54.4.1 1999/11/15 00:41:40 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.54 1999/10/15 14:41:43 augustss Exp 
+ *	NetBSD: usbdevs,v 1.60 1999/11/12 00:26:13 augustss Exp 
  */
 
 /*
@@ -68,10 +68,12 @@
 #define	USB_VENDOR_LUCENT	0x047e		/* Lucent */
 #define	USB_VENDOR_STMICRO	0x0483		/* STMicroelectronics */
 #define	USB_VENDOR_ACER	0x04a5		/* Acer Peripheral Inc. */
+#define	USB_VENDOR_CANON	0x04a9		/* Canon Inc. */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corp. */
+#define	USB_VENDOR_ALTEC	0x04d2		/* Altec Lansing */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics Co., Ltd. */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
@@ -80,6 +82,7 @@
 #define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
 #define	USB_VENDOR_APC	0x051d		/* American Power Conversion */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
+#define	USB_VENDOR_UNIACCESS	0x0540		/* Universal Access */
 #define	USB_VENDOR_ANCHOR	0x0547		/* Anchor Chips Inc. */
 #define	USB_VENDOR_VISION	0x0553		/* VLSI Vision Ltd. */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
@@ -96,6 +99,7 @@
 #define	USB_VENDOR_INSYSTEM	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_QTRONIX	0x05c7		/* Qtronix Corp */
+#define	USB_VENDOR_ELSA	0x05cc		/* ELSA Gmbh */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_PIENGINEERING	0x05f3		/* P.I. Engineering */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
@@ -105,6 +109,7 @@
 #define	USB_VENDOR_MIDIMAN	0x0763		/* Midiman */
 #define	USB_VENDOR_SANDISK	0x0781		/* SanDisk Corp */
 #define	USB_VENDOR_SIIG	0x07cc		/* SIIG */
+#define	USB_VENDOR_HANDSPRING	0x082d		/* Handspring Inc. */
 #define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
 #define	USB_VENDOR_MOTOROLA	0x1063		/* Motorola */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
@@ -127,6 +132,7 @@
 /* Kodak products */
 #define	USB_PRODUCT_KODAK_DC260	0x0110		/* Digital Science DC260 */
 #define	USB_PRODUCT_KODAK_DC240	0x0120		/* Digital Science DC240 */
+#define	USB_PRODUCT_KODAK_DC280	0x0130		/* Digital Science DC280 */
 
 /* CATC products */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
@@ -181,6 +187,9 @@
 /* Acer products */
 #define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
 
+/* Canon Inc. products */
+#define	USB_PRODUCT_CANON_S10	0x3041		/* PowerShot S10 */
+
 /* Cypress Semiconductor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
 #define	USB_PRODUCT_CYPRESS_THERMO	0x0002		/* thermometer */
@@ -193,6 +202,9 @@
 
 /* Konica Corp. Products */
 #define	USB_PRODUCT_KONICA_CAMERA	0x0720		/* Digital Color Camera */
+
+/* Altec Lansing products */
+#define	USB_PRODUCT_ALTEC_ASC495	0xff05		/* ASC495 Speakers */
 
 /* Shuttle Technology products */
 #define	USB_PRODUCT_SHUTTLE_EUSB	0x0001		/* E-USB Bridge */
@@ -214,6 +226,9 @@
 
 /* AKS products */
 #define	USB_PRODUCT_AKS_USBHASP	0x0001		/* USB-HASP 0.06 */
+
+/* Universal Access products */
+#define	USB_PRODUCT_UNIACCESS_PANACHE	0x0101		/* Panache Surf USB ISDN Adapter */
 
 /* Anchor products */
 #define	USB_PRODUCT_ANCHOR_EZUSB	0x2131		/* EZUSB */
@@ -262,10 +277,14 @@
 /* Qtronix products */
 #define	USB_PRODUCT_QTRONIX_980N	0x2011		/* Scorpion-980N keyboard */
 
+/* Elsa products */
+#define	USB_PRODUCT_ELSA_MODEM1	0x2265		/* ELSA Modem Board */
+
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
 #define	USB_PRODUCT_LOGITECH_QUICKCAM	0x0801		/* QuickCam */
+#define	USB_PRODUCT_LOGITECH_QUICKCAMPRO	0x0810		/* QuickCam Pro */
 #define	USB_PRODUCT_LOGITECH_N48	0xc001		/* N48 mouse */
 #define	USB_PRODUCT_LOGITECH_MBA47	0xc002		/* M-BA47 mouse */
 
@@ -293,6 +312,7 @@
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
 #define	USB_PRODUCT_ENTREGA_EZUSB	0x8000		/* EZ-USB */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
+#define	USB_PRODUCT_ENTREGA_SERIAL_DB9	0x8093		/* DB9 Serial connector */
 
 /* Midiman products */
 #define	USB_PRODUCT_MIDIMAN_MIDISPORT2X2	0x1001		/* Midisport 2x2 */
@@ -302,6 +322,9 @@
 
 /* SIIG products */
 #define	USB_PRODUCT_SIIG_DIGIFILMREADER	0x0004		/* DigiFilm-Combo Reader */
+
+/* Handspring Inc. */
+#define	USB_PRODUCT_HANDSPRING_VISOR	0x0100		/* Handspring Visor */
 
 /* ActiveWire Inc. products */
 #define	USB_PRODUCT_ACTIVEWIRE_IOBOARD	0x0100		/* I/O Board */

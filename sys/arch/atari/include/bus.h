@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 1999/08/14 20:48:33 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.4.1 1999/11/15 00:37:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@ typedef caddr_t			bus_space_handle_t;
 #define	BUS_SPACE_MAP_CACHEABLE	0x01
 #define	BUS_SPACE_MAP_LINEAR	0x02
 
+int	bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
+				bus_size_t, bus_size_t, bus_size_t, int,
+				bus_addr_t *, bus_space_handle_t *));
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
 void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,

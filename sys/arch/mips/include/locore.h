@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.21 1999/09/25 00:00:37 shin Exp $	*/
+/*	$NetBSD: locore.h,v 1.21.4.1 1999/11/15 00:38:37 fvdl Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -153,7 +153,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBFlush()		mips3_TLBFlush(mips_num_tlb_entries)
 #define MachTLBFlushAddr	mips3_TLBFlushAddr
 #define MachTLBUpdate		mips3_TLBUpdate
-#define wbflush			mips3_wbflush
+#define wbflush()		mips3_wbflush()
 #define proc_trampoline		mips3_proc_trampoline
 #endif
 
@@ -166,7 +166,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBFlush()		mips1_TLBFlush(MIPS1_TLB_NUM_TLB_ENTRIES)
 #define MachTLBFlushAddr	mips1_TLBFlushAddr
 #define MachTLBUpdate		mips1_TLBUpdate
-#define wbflush			mips1_wbflush
+#define wbflush()		mips1_wbflush()
 #define proc_trampoline		mips1_proc_trampoline
 #endif
 
@@ -181,7 +181,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBFlush()		(*(mips_locore_jumpvec.tlbFlush))(mips_num_tlb_entries)
 #define MachTLBFlushAddr	(*(mips_locore_jumpvec.tlbFlushAddr))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
-#define wbflush			(*(mips_locore_jumpvec.wbflush))
+#define wbflush()		(*(mips_locore_jumpvec.wbflush))()
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.30 1999/08/16 23:22:22 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.30.4.1 1999/11/15 00:41:43 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.30 1999/08/16 23:22:22 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.30.4.1 1999/11/15 00:41:43 fvdl Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -557,7 +557,7 @@ wskbd_input(dev, type, value)
 	if (!sc->sc_ready)
 		return;
 
-#if NWSMUX > 0 || NWSDISPLAY > 0
+#if NWSMUX > 0
 	if (sc->sc_mux)
 		evar = &sc->sc_mux->sc_events;
 	else
@@ -663,7 +663,7 @@ wskbdopen(dev, flags, mode, p)
 		return (0);
 	}
 
-#if NWSMUX > 0 || NWSDISPLAY > 0
+#if NWSMUX > 0
 	if (sc->sc_mux)
 		return (EBUSY);
 #endif

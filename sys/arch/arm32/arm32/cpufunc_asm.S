@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.9 1998/12/12 17:28:05 mycroft Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.9.10.1 1999/11/15 00:37:07 fvdl Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -183,7 +183,7 @@ ENTRY(arm8_setttb)
 	msr	cpsr_all , r1
 
 	stmfd	sp!, {r0-r3, lr}
-	bl	_arm8_cache_cleanID
+	bl	_C_LABEL(arm8_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
 	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
 
@@ -207,7 +207,7 @@ ENTRY(arm8_setttb)
 
 #ifdef CPU_SA110
 Lblock_userspace_access:
-	.word	_block_userspace_access
+	.word	_C_LABEL(block_userspace_access)
 
 ENTRY(sa110_setttb)
 	/* We need to flush the cache as it uses virtual addresses that are about to change */
@@ -222,7 +222,7 @@ ENTRY(sa110_setttb)
 	str	r1, [r3]
 #endif
 	stmfd	sp!, {r0-r3, lr}
-	bl	_sa110_cache_cleanID
+	bl	_C_LABEL(sa110_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
 	mcr	15, 0, r0, c7, c5, 0
 	mcr	15, 0, r0, c7, c10, 4
@@ -486,18 +486,18 @@ ENTRY(sa110_cache_cleanD_E)
  */
 
 	.data
-	.global	_sa110_cache_clean_addr
-_sa110_cache_clean_addr:
+	.global	_C_LABEL(sa110_cache_clean_addr)
+_C_LABEL(sa110_cache_clean_addr):
 	.word	0xf0000000
-	.global	_sa110_cache_clean_size
-_sa110_cache_clean_size:
+	.global	_C_LABEL(sa110_cache_clean_size)
+_C_LABEL(sa110_cache_clean_size):
 	.word	0x00008000
 
 	.text
 Lsa110_cache_clean_addr:
-	.word	_sa110_cache_clean_addr
+	.word	_C_LABEL(sa110_cache_clean_addr)
 Lsa110_cache_clean_size:
-	.word	_sa110_cache_clean_size
+	.word	_C_LABEL(sa110_cache_clean_size)
 
 ENTRY(sa110_cache_cleanID)
 ENTRY(sa110_cache_cleanD)
@@ -645,7 +645,7 @@ Lsa110_cache_syncI_loop:
 ENTRY(sa110_cache_cleanID_rng)
 ENTRY(sa110_cache_cleanD_rng)
 	cmp	r1, #0x4000
-	bcs	_sa110_cache_cleanID
+	bcs	_C_LABEL(sa110_cache_cleanID)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -661,7 +661,7 @@ sa110_cache_cleanD_rng_loop:
 
 ENTRY(sa110_cache_purgeID_rng)
 	cmp	r1, #0x2000
-	bcs	_sa110_cache_purgeID
+	bcs	_C_LABEL(sa110_cache_purgeID)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -680,7 +680,7 @@ sa110_cache_purgeID_rng_loop:
 
 ENTRY(sa110_cache_purgeD_rng)
 	cmp	r1, #0x2000
-	bcs	_sa110_cache_purgeD
+	bcs	_C_LABEL(sa110_cache_purgeD)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -697,7 +697,7 @@ sa110_cache_purgeD_rng_loop:
 
 ENTRY(sa110_cache_syncI_rng)
 	cmp	r1, #0x4000
-	bcs	_sa110_cache_syncI
+	bcs	_C_LABEL(sa110_cache_syncI)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2

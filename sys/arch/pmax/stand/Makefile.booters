@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.24 1999/07/21 13:34:34 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.24.4.1 1999/11/15 00:39:05 fvdl Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 

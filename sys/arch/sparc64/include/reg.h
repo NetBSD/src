@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.3 1999/10/11 01:57:45 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.3.4.1 1999/11/15 00:39:28 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,15 +144,26 @@ struct reg64 {
  * need to malloc these.
  */
 #define	FP_QSIZE	16
-#define ALIGNFPSTATE(f)		((struct fpstate *)(((long)(f))&(~BLOCK_ALIGN)))
+#define ALIGNFPSTATE(f)		((struct fpstate64 *)(((long)(f))&(~BLOCK_ALIGN)))
 
 struct fp_qentry {
 	int	*fq_addr;		/* the instruction's address */
 	int	fq_instr;		/* the instruction itself */
 };
-struct fpstate {
+
+struct fpstate64 {
 	u_int	fs_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fs_fsr;			/* %fsr */
+	int	fs_qsize;		/* actual queue depth */
+	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
+};
+
+/* 
+ * For 32-bit emulations.
+ */
+struct fpstate32 {
+	u_int	fs_regs[32];		/* our view is 32 32-bit registers */
+	int	fs_fsr;			/* %fsr */
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
@@ -177,7 +188,7 @@ struct fpreg32 {
 	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
 
-#if defined(_KERNEL) || defined(__arch64__)
+#if defined(__arch64__)
 /* Here we gotta do naughty things to let gdb work on 32-bit binaries */
 #define reg		reg64
 #define fpreg		fpreg64
@@ -187,7 +198,7 @@ struct fpreg32 {
 #define reg		reg32
 #define fpreg		fpreg32
 #define trapframe	trapframe32
-#define rwindow		rwindow64
+#define rwindow		rwindow32
 #endif
 
 #endif /* _MACHINE_REG_H_ */

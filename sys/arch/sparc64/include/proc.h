@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: proc.h,v 1.1.1.1.16.1 1999/11/15 00:39:28 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,8 +48,8 @@
  * Machine-dependent part of the proc structure for SPARC.
  */
 struct mdproc {
-	struct	trapframe *md_tf;	/* trap/syscall registers */
-	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
+	struct	trapframe64 *md_tf;	/* trap/syscall registers */
+	struct	fpstate64 *md_fpstate;	/* fpu state, if any; always resident */
 	u_long	md_flags;
 };
 

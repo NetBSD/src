@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.4 1999/04/13 20:37:21 augustss Exp $	*/
+/*	$NetBSD: auconv.h,v 1.4.4.1 1999/11/15 00:40:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,11 +38,16 @@
 
 /* Convert between signed and unsigned. */
 extern void change_sign8 __P((void *, u_char *, int));
-extern void change_sign16 __P((void *, u_char *, int));
+extern void change_sign16_le __P((void *, u_char *, int));
+extern void change_sign16_be __P((void *, u_char *, int));
 /* Convert between little and big endian. */
 extern void swap_bytes __P((void *, u_char *, int));
-extern void swap_bytes_change_sign16 __P((void *, u_char *, int));
-extern void change_sign16_swap_bytes __P((void *, u_char *, int));
+extern void swap_bytes_change_sign16_le __P((void *, u_char *, int));
+extern void swap_bytes_change_sign16_be __P((void *, u_char *, int));
+extern void change_sign16_swap_bytes_le __P((void *, u_char *, int));
+extern void change_sign16_swap_bytes_be __P((void *, u_char *, int));
 /* Byte expansion/contraction */
-extern void linear8_to_linear16 __P((void *, u_char *, int));
-extern void linear16_to_linear8 __P((void *, u_char *, int));
+extern void linear8_to_linear16_le __P((void *, u_char *, int));
+extern void linear8_to_linear16_be __P((void *, u_char *, int));
+extern void linear16_to_linear8_le __P((void *, u_char *, int));
+extern void linear16_to_linear8_be __P((void *, u_char *, int));

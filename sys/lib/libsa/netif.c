@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.12 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: netif.c,v 1.12.10.1 1999/11/15 00:42:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.6 1999/03/19 22:43:11 erh Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.6.10.1 1999/11/15 00:40:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -34,6 +34,34 @@
  * This software has been written for Vixie Enterprises by Michael Graff
  * <explorer@flame.org>.  To learn more about Vixie Enterprises, see
  * ``http://www.vix.com''.
+ */
+
+/*
+ * hd64570:
+ *	From the hitachi docs:
+ *	The HD64570 serial communications adaptor (SCA) peripheral chip enables
+ *	a host microprocessor to perform asynchronous, byte-synchronous, or
+ *	bit-synchronous serial communication.  Its two full-duplex,
+ *	multiprotocol serial channels support a wide variety of protocols,
+ *	including frame relay, LAPB, LAPD, bisync and DDCMP.  Its build-in
+ *	direct memory access controller (DMAC) is equipped with a 32-stage
+ *	FIFO and can execure chained-block transfers.  Due to its DMAC and
+ *	16-bit bus interface, the SCA supports serial data transfer rates up
+ *	to 12 Mbits/s without monopolizing the bus, even in full-duplex
+ *	communication.  Other on-chip features of the SCA, including four
+ *	types of MPU interfaces, a bus arbiter, timers, and an interrupt
+ *	controller, provide added functionality in a wide range of
+ *	applications, such as frame relay exchanges/system multiplexes, private
+ *	branch exchanges, computer networks, workstations, ISDN terminals,
+ *	and facsimile.
+ *
+ *	For more info: http://semiconductor.hitachi.com
+ *	----
+ *
+ *	This driver not only talks to the HD64570 chip, but also implements
+ *	a version of the HDLC protocol that includes the CISCO keepalive
+ *	protocol.  It publishes itself as a network interface that can
+ *	handle IP traffic only.
  */
 
 /*

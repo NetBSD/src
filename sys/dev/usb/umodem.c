@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.15 1999/09/11 08:19:27 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.15.4.1 1999/11/15 00:41:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,12 +108,12 @@ struct umodem_softc {
 
 	int			sc_bulkin_no;	/* bulk in endpoint address */
 	usbd_pipe_handle	sc_bulkin_pipe;	/* bulk in pipe */
-	usbd_request_handle	sc_ireqh;	/* read request */
+	usbd_xfer_handle	sc_ixfer;	/* read request */
 	u_char			*sc_ibuf;	/* read buffer */
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
 	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
-	usbd_request_handle	sc_oreqh;	/* read request */
+	usbd_xfer_handle	sc_oxfer;	/* read request */
 
 	int			sc_cm_cap;	/* CM capabilities */
 	int			sc_acm_cap;	/* ACM capabilities */
@@ -146,9 +146,9 @@ void	umodem_shutdown	__P((struct umodem_softc *));
 void	umodem_modem	__P((struct umodem_softc *, int));
 void	umodem_break	__P((struct umodem_softc *, int));
 usbd_status umodemstartread __P((struct umodem_softc *));
-void	umodemreadcb	__P((usbd_request_handle, usbd_private_handle, 
+void	umodemreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
 			     usbd_status status));
-void	umodemwritecb	__P((usbd_request_handle, usbd_private_handle, 
+void	umodemwritecb	__P((usbd_xfer_handle, usbd_private_handle, 
 			     usbd_status status));
 
 USB_DECLARE_DRIVER(umodem);
@@ -358,18 +358,18 @@ umodemstart(tp)
 
 	DPRINTFN(4,("umodemstart: %d chars\n", cnt));
 	/* XXX what can we do on error? */
-	usbd_setup_request(sc->sc_oreqh, sc->sc_bulkout_pipe, 
+	usbd_setup_request(sc->sc_oxfer, sc->sc_bulkout_pipe, 
 			   (usbd_private_handle)sc, data, cnt,
 			   0, USBD_NO_TIMEOUT, umodemwritecb);
-	(void)usbd_transfer(sc->sc_oreqh);
+	(void)usbd_transfer(sc->sc_oxfer);
 
 out:
 	splx(s);
 }
 
 void
-umodemwritecb(reqh, p, status)
-	usbd_request_handle reqh;
+umodemwritecb(xfer, p, status)
+	usbd_xfer_handle xfer;
 	usbd_private_handle p;
 	usbd_status status;
 {
@@ -390,7 +390,7 @@ umodemwritecb(reqh, p, status)
 		return;
 	}
 
-	usbd_get_request_status(reqh, 0, 0, &cc, 0);
+	usbd_get_request_status(xfer, 0, 0, &cc, 0);
 	DPRINTFN(5,("umodemwritecb: cc=%d\n", cc));
 
 	s = spltty();
@@ -565,17 +565,17 @@ umodemopen(dev, flag, mode, p)
 		}
 		
 		/* Allocate a request and an input buffer and start reading. */
-		sc->sc_ireqh = usbd_alloc_request(sc->sc_udev);
-		if (sc->sc_ireqh == 0) {
+		sc->sc_ixfer = usbd_alloc_request(sc->sc_udev);
+		if (sc->sc_ixfer == 0) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_oreqh = usbd_alloc_request(sc->sc_udev);
-		if (sc->sc_oreqh == 0) {
+		sc->sc_oxfer = usbd_alloc_request(sc->sc_udev);
+		if (sc->sc_oxfer == 0) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
-			usbd_free_request(sc->sc_ireqh);
+			usbd_free_request(sc->sc_ixfer);
 			return (ENOMEM);
 		}
 		sc->sc_ibuf = malloc(UMODEMIBUFSIZE, M_USBDEV, M_WAITOK);
@@ -614,19 +614,19 @@ umodemstartread(sc)
 	usbd_status r;
 
 	DPRINTFN(5,("umodemstartread: start\n"));
-	usbd_setup_request(sc->sc_ireqh, sc->sc_bulkin_pipe, 
+	usbd_setup_request(sc->sc_ixfer, sc->sc_bulkin_pipe, 
 			   (usbd_private_handle)sc, 
 			   sc->sc_ibuf,  UMODEMIBUFSIZE, USBD_SHORT_XFER_OK, 
 			   USBD_NO_TIMEOUT, umodemreadcb);
-	r = usbd_transfer(sc->sc_ireqh);
+	r = usbd_transfer(sc->sc_ixfer);
 	if (r != USBD_IN_PROGRESS)
 		return (r);
 	return (USBD_NORMAL_COMPLETION);
 }
  
 void
-umodemreadcb(reqh, p, status)
-	usbd_request_handle reqh;
+umodemreadcb(xfer, p, status)
+	usbd_xfer_handle xfer;
 	usbd_private_handle p;
 	usbd_status status;
 {
@@ -648,7 +648,7 @@ umodemreadcb(reqh, p, status)
 		return;
 	}
 
-	usbd_get_request_status(reqh, 0, (void **)&cp, &cc, 0);
+	usbd_get_request_status(xfer, 0, (void **)&cp, &cc, 0);
 	DPRINTFN(5,("umodemreadcb: got %d chars, tp=%p\n", cc, tp));
 	s = spltty();
 	/* Give characters to tty layer. */
@@ -709,8 +709,8 @@ umodem_cleanup(sc)
 	usbd_close_pipe(sc->sc_bulkin_pipe);
 	usbd_abort_pipe(sc->sc_bulkout_pipe);
 	usbd_close_pipe(sc->sc_bulkout_pipe);
-	usbd_free_request(sc->sc_ireqh);
-	usbd_free_request(sc->sc_oreqh);
+	usbd_free_request(sc->sc_ixfer);
+	usbd_free_request(sc->sc_oxfer);
 	free(sc->sc_ibuf, M_USBDEV);
 }
 

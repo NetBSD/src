@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/16 16:30:21 minoura Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 1999/11/15 00:39:55 fvdl Exp $
 
 LIB=	dos
 
@@ -10,8 +10,8 @@ CPPFLAGS+=	-I${.CURDIR}
 
 AWK?=	awk
 
-SRCS=	dos_rename.s
-SRCS+=	dos_cerror.s dos_procerr.s dos_errno.c dos_strerror.S
+SRCS=	dos_rename.S
+SRCS+=	dos_cerror.S dos_procerr.S dos_errno.c dos_strerror.S
 CLEANFILES+=	dos_strerror.S
 
 ASM=	exit.o getchar.o putchar.o cominp.o comout.o prnout.o inpout.o \
@@ -51,7 +51,7 @@ MAKECALL=${.CURDIR}/makedoscalls.awk
 ${ASM}: ${.CURDIR}/dos.h ${MAKECALL}
 	@echo creating ${.TARGET}
 	@grep -i 'DOS_${.PREFIX} ' ${.CURDIR}/dos.h | \
-	    ${AWK} -f ${MAKECALL} | ${AS} -o ${.TARGET}
+	    ${AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | ${AS} -o ${.TARGET}
 
 MAKESTRERR=${.CURDIR}/makestrerror.awk
 

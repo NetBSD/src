@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.9 1999/10/10 18:52:03 cgd Exp $	*/
+/*	$NetBSD: eso.c,v 1.9.4.1 1999/11/15 00:40:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -58,16 +58,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define htopci(x) bswap32(x)
-#define pcitoh(x) bswap32(x)
-#else
-#define htopci(x) (x)
-#define pcitoh(x) (x)
-#endif
-
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) printf x
@@ -275,6 +265,9 @@ eso_attach(parent, self, aux)
 	eso_write_mixreg(sc, ESO_MIXREG_A2MODE, a2mode);
 	
 	/* Set mixer regs to something reasonable, needs work. */
+	sc->sc_recsrc = ESO_MIXREG_ERS_LINE;
+	sc->sc_monooutsrc = ESO_MIXREG_MPM_MOMUTE;
+	sc->sc_recmon = sc->sc_spatializer = sc->sc_mvmute = 0;
 	for (idx = 0; idx < ESO_NGAINDEVS; idx++) {
 		int v;
 		
@@ -718,7 +711,7 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16;
+				p->sw_code = mulaw_to_ulinear16_le;
 			} else {
 				p->sw_code = ulinear8_to_mulaw;
 			}
@@ -726,7 +719,7 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16;
+				p->sw_code = alaw_to_ulinear16_le;
 			} else {
 				p->sw_code = ulinear8_to_alaw;
 			}
@@ -995,6 +988,29 @@ eso_set_port(hdl, cp)
 		eso_write_mixreg(sc, ESO_MIXREG_SPAT,
 		    tmp | ESO_MIXREG_SPAT_RSTREL);
 		break;
+
+	case ESO_MASTER_MUTE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+
+		sc->sc_mvmute = (cp->un.ord != 0);
+
+		if (sc->sc_mvmute) {
+			eso_write_mixreg(sc, ESO_MIXREG_LMVM,
+			    eso_read_mixreg(sc, ESO_MIXREG_LMVM) |
+			    ESO_MIXREG_LMVM_MUTE);
+			eso_write_mixreg(sc, ESO_MIXREG_RMVM,
+			    eso_read_mixreg(sc, ESO_MIXREG_RMVM) |
+			    ESO_MIXREG_RMVM_MUTE);
+		} else { 
+			eso_write_mixreg(sc, ESO_MIXREG_LMVM,
+			    eso_read_mixreg(sc, ESO_MIXREG_LMVM) &
+			    ~ESO_MIXREG_LMVM_MUTE);
+			eso_write_mixreg(sc, ESO_MIXREG_RMVM,
+			    eso_read_mixreg(sc, ESO_MIXREG_RMVM) &
+			    ~ESO_MIXREG_RMVM_MUTE);
+		}
+		break;
 		
 	case ESO_MONOOUT_SOURCE:
 		if (cp->type != AUDIO_MIXER_ENUM)
@@ -1117,6 +1133,10 @@ eso_get_port(hdl, cp)
 		cp->un.ord = sc->sc_preamp;
 		break;
 
+	case ESO_MASTER_MUTE:
+		cp->un.ord = sc->sc_mvmute;
+		break;
+
 	default:
 		return (EINVAL);
 	}
@@ -1217,12 +1237,26 @@ eso_query_devinfo(hdl, dip)
 		
 	case ESO_MASTER_VOL:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
-		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = ESO_MASTER_MUTE;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
+	case ESO_MASTER_MUTE:
+		dip->mixer_class = ESO_OUTPUT_CLASS;
+		dip->prev = ESO_MASTER_VOL;
+		dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNmute);
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
+		break;
+
 	case ESO_PCSPEAKER_VOL:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
@@ -1613,9 +1647,9 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	
 	/* Set up DMA controller. */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAA,
-	    htopci(DMAADDR(ed)));
+	    DMAADDR(ed));
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAC,
-	    htopci((uint8_t *)end - (uint8_t *)start));
+	    (uint8_t *)end - (uint8_t *)start);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAM,
 	    ESO_IO_A2DMAM_DMAENB | ESO_IO_A2DMAM_AUTO);
 	
@@ -1714,9 +1748,9 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_MODE,
 	    DMA37MD_WRITE | DMA37MD_LOOP | DMA37MD_DEMAND);
 	bus_space_write_4(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_DMAA,
-	    htopci(DMAADDR(ed)));
+	    DMAADDR(ed));
 	bus_space_write_2(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_DMAC,
-	    htopci((uint8_t *)end - (uint8_t *)start - 1));
+	    (uint8_t *)end - (uint8_t *)start - 1);
 	bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_MASK, 0);
 
 	/* Start DMA. */
@@ -1840,11 +1874,13 @@ eso_set_gain(sc, port)
 
 	case ESO_MASTER_VOL:
 		/* Special case - separate regs, and 6-bit precision. */
-		/* Map bits 7:2 -> 5:0. */
+		/* Map bits 7:2 -> 5:0, reflect mute settings. */
 		eso_write_mixreg(sc, ESO_MIXREG_LMVM,
-		    sc->sc_gain[port][ESO_LEFT] >> 2);
+		    (sc->sc_gain[port][ESO_LEFT] >> 2) |
+		    (sc->sc_mvmute ? ESO_MIXREG_LMVM_MUTE : 0x00));
 		eso_write_mixreg(sc, ESO_MIXREG_RMVM,
-		    sc->sc_gain[port][ESO_RIGHT] >> 2);
+		    (sc->sc_gain[port][ESO_RIGHT] >> 2) |
+		    (sc->sc_mvmute ? ESO_MIXREG_RMVM_MUTE : 0x00));
 		return;
 
 	case ESO_SPATIALIZER:

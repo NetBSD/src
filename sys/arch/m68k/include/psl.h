@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 1999/08/05 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.6.4.1 1999/11/15 00:38:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -81,7 +81,7 @@
 ({									\
 	register int _spl_r;						\
 									\
-	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
+	__asm __volatile ("clrl %0; movew %%sr,%0; movew %1,%%sr" :	\
 	    "&=d" (_spl_r) : "di" (s));					\
 	_spl_r;								\
 })
@@ -91,15 +91,15 @@
 	int _spl_r;							\
 									\
 	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
+		clrl	%%d0					;	\
+		movw	%%sr,%%d0				;	\
+		movl	%%d0,%0					;	\
+		andw	#0x700,%%d0				;	\
+		movw	%1,%%d1					;	\
+		andw	#0x700,%%d1				;	\
+		cmpw	%%d0,%%d1				;	\
 		jle	1f					;	\
-		movw	%1,sr					;	\
+		movw	%1,%%sr					;	\
 	    1:"							:	\
 		    "&=d" (_spl_r)				:	\
 		    "di" (s)					:	\

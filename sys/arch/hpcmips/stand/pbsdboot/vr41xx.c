@@ -54,6 +54,7 @@ vr41xx_init(SYSTEM_INFO *info)
 	system_info.si_asmcodelen = (unsigned char*)vr41xx_asm_code_end
 		- system_info.si_asmcode;
 	system_info.si_boot = mips_boot;
+	system_info.si_intrvec = 0;
 }
 
 void

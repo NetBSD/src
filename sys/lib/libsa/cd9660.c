@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.8 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.8.10.1 1999/11/15 00:42:00 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.

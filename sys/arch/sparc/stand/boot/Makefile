@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/08/21 14:18:36 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 1999/11/15 00:39:22 fvdl Exp $
 
 STRIPFLAG=
 PROG=		boot
@@ -12,7 +12,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
 
-RELOC=		0x300000
+RELOC=		0x700000
 
 .include <bsd.own.mk>
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.18.4.1 1999/11/15 00:38:59 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18.4.1 1999/11/15 00:38:59 fvdl Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -449,7 +449,6 @@ px_qvss_init(pxi)
 	fi->fi_base = (caddr_t)pxi;
 	fi->fi_fbu = &pxi->pxi_fbuaccess;
 	fi->fi_type.fb_width = 1280;
-	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_PX;
 	fi->fi_type.fb_cmsize = 256;
@@ -1695,11 +1694,6 @@ pxopen(dev, flag, mode, p)
 	pmEventQueueInit(&pxi->pxi_fbuaccess.scrInfo.qe);
 	genConfigMouse();
 
-	/* Enable interrupt driven operation */
-	pxi->pxi_lpw = 0;
-	pxi->pxi_lpr = 0;
-	pxi->pxi_flg = (pxi->pxi_flg & ~PX_ISR_MASK) | PX_ISR_ENABLE;
-
 	/* Turn packet-done interrupts on */
 	stic = pxi->pxi_stic;
 	s = stic->ipdvint | STIC_INT_P_WE | STIC_INT_P_EN;
@@ -1907,14 +1901,27 @@ pxmmap(dev, off, prot)
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
-
-	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
-		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
-
-	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
-
+	
+	/* 
+	 * STIC control registers
+	 */	
 	if (off < NBPG)
 		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_stic) + off);
+	off -= NBPG;
+	
+	/*
+	 * STIC poll registers
+	 */
+	if (off < sizeof(int32_t) * 4096)
+		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_poll) + off);
+	off -= sizeof(int32_t) * 4096;
+
+	/*
+	 * 'struct px_info' and ringbuffer
+	 */ 
+	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
+		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
+	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
 
 	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.3 1999/10/15 10:59:57 augustss Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.3.4.1 1999/11/15 00:40:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -87,7 +87,12 @@ cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbusreg_t address, mask;
   int s;
 
-  if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
+  /* EXT ROM is able to map on memory space ONLY. */
+  if (reg == CARDBUS_ROM_REG) {
+    return 1;
+  }
+
+  if(reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
     panic("cardbus_io_find: bad request");
   }
 
@@ -109,12 +114,12 @@ cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   splx(s);
 
   if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
-    printf("pci_io_find: expected type i/o, found mem\n");
+    printf("cardbus_io_find: expected type i/o, found mem\n");
     return 1;
   }
 
   if (PCI_MAPREG_IO_SIZE(mask) == 0) {
-    printf("pci_io_find: void region\n");
+    printf("cardbus_io_find: void region\n");
     return (1);
   }
 
@@ -154,8 +159,9 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbusreg_t address, mask;
   int s;
 
-  if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
-    panic("cardbus_find_mem: bad request");
+  if (reg != CARDBUS_ROM_REG && 
+      (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
+    panic("cardbus_mem_find: bad request");
   }
 
   /*
@@ -175,15 +181,19 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbus_conf_write(cc, cf, tag, reg, address);
   splx(s);
 
-  if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
-    printf("cardbus_mem_find: expected type mem, found i/o\n");
-    return 1;
-  }
-  if (PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
-    printf("cardbus_mem_find: expected mem type %08x, found %08x\n",
-	   PCI_MAPREG_MEM_TYPE(type),
-	   PCI_MAPREG_MEM_TYPE(address));
-    return 1;
+  if (reg != CARDBUS_ROM_REG) {
+    /* memory space BAR */
+
+    if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
+      printf("cardbus_mem_find: expected type mem, found i/o\n");
+      return 1;
+    }
+    if (PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
+      printf("cardbus_mem_find: expected mem type %08x, found %08x\n",
+	     PCI_MAPREG_MEM_TYPE(type),
+	     PCI_MAPREG_MEM_TYPE(address));
+      return 1;
+    }
   }
 
   if (PCI_MAPREG_MEM_SIZE(mask) == 0) {
@@ -196,7 +206,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   case PCI_MAPREG_MEM_TYPE_32BIT_1M:
     break;
   case PCI_MAPREG_MEM_TYPE_64BIT:
-    printf("pci_mem_find: 64-bit memory mapping register\n");
+    printf("cardbus_mem_find: 64-bit memory mapping register\n");
     return 1;
   default:
     printf("cardbus_mem_find: reserved mapping register type\n");
@@ -220,7 +230,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
 
 
 /*
- * int cardbus_mapreg_map(cardbus_devfunc_t, int, cardbusreg_t,
+ * int cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
  *			  int bus_space_tag_t *, bus_space_handle_t *,
  *			  bus_addr_t *, bus_size_t *)
  *    This function maps bus-space on the value of Base Address
@@ -230,17 +240,17 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
  *   written on the BAR.
  */
 int
-cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep)
-     cardbus_devfunc_t ct;
-     int reg, busflags;
+cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
+     struct cardbus_softc *sc;
+     int func, reg, busflags;
      cardbusreg_t type;
      bus_space_tag_t *tagp;
      bus_space_handle_t *handlep;
      bus_addr_t *basep;
      bus_size_t *sizep;
 {
-  cardbus_chipset_tag_t cc = ct->ct_cc;
-  cardbus_function_tag_t cf = ct->ct_cf;
+  cardbus_chipset_tag_t cc = sc->sc_cc;
+  cardbus_function_tag_t cf = sc->sc_cf;
   bus_space_tag_t bustag;
 #if rbus
   rbus_tag_t rbustag;
@@ -251,26 +261,26 @@ cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep)
   int flags;
   int status = 0;
 
-  cardbustag_t tag = cardbus_make_tag(cc, cf, ct->ct_bus, ct->ct_dev, ct->ct_func);
+  cardbustag_t tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
 
-  DPRINTF(("cardbus_mapreg_map called: %s %x\n", ct->ct_sc->sc_dev.dv_xname,
+  DPRINTF(("cardbus_mapreg_map called: %s %x\n", sc->sc_dev.dv_xname,
 	   type));
 
   if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
     if (cardbus_io_find(cc, cf, tag, reg, type, &base, &size, &flags)) {
       status = 1;
     }
-    bustag = ct->ct_sc->sc_iot;
+    bustag = sc->sc_iot;
 #if rbus
-    rbustag = ct->ct_sc->sc_rbus_iot;
+    rbustag = sc->sc_rbus_iot;
 #endif
   } else {
     if (cardbus_mem_find(cc, cf, tag, reg, type, &base, &size, &flags)){
       status = 1;
     }
-    bustag = ct->ct_sc->sc_memt;
+    bustag = sc->sc_memt;
 #if rbus
-    rbustag = ct->ct_sc->sc_rbus_memt;
+    rbustag = sc->sc_rbus_memt;
 #endif
   }
   if (status == 0) {
@@ -311,6 +321,8 @@ cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep)
   if (sizep != 0) {
     *sizep = size;
   }
+  cardbus_free_tag(cc, cf, tag);
+
   return 0;
 }
 

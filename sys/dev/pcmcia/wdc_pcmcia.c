@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.21 1999/09/23 11:04:33 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21.4.1 1999/11/15 00:41:16 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@ struct wdc_pcmcia_softc {
 	int sc_auxiowindow;
 	void *sc_ih;
 	struct pcmcia_function *sc_pf;
+	int sc_flags;
+#define	WDC_PCMCIA_ATTACH	0x0001
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
@@ -352,13 +354,9 @@ wdc_pcmcia_attach(parent, self, aux)
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter.scsipi_enable = wdc_pcmcia_enable;
 
-	/*
-	 * Disable the pcmcia function now; wdcattach() will enable
-	 * us again as it adds references to probe for children.
-	 */
-	pcmcia_function_disable(pa->pf);
-
+	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
+	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 }
 
 int
@@ -402,11 +400,14 @@ wdc_pcmcia_enable(arg, onoff)
 			return (EIO);
 		}
 
-		if (pcmcia_function_enable(sc->sc_pf)) {
-			printf("%s: couldn't enable PCMCIA function\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-			return (EIO);
+		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
+			if (pcmcia_function_enable(sc->sc_pf)) {
+				printf("%s: couldn't enable PCMCIA function\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+				return (EIO);
+			}
+			wdcreset(&sc->wdc_channel, VERBOSE);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
