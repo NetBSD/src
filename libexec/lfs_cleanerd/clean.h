@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.4 1998/03/01 02:20:07 fvdl Exp $	*/
+/*	$NetBSD: clean.h,v 1.5 1998/09/11 21:21:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,21 +132,21 @@ void	 toss __P((void *, int *, size_t,
 
 #define PRINT_INODE(b, bip) { \
 	(void) printf("\t%s inode: %d daddr: 0x%lx create: %s\n", \
-	    b ? "KEEPING" : "TOSSING", (bip)->bi_inode, (bip)->bi_daddr, \
+	    b ? "KEEPING" : "TOSSING", (bip)->bi_inode, (long)(bip)->bi_daddr, \
 	    ctime((time_t *)&(bip)->bi_segcreate)); \
 	fflush(stdout); \
 }
 
 #define PRINT_BINFO(bip) { \
 	(void)printf("\tinode: %d lbn: %d daddr: 0x%lx create: %s\n", \
-	    (bip)->bi_inode, (bip)->bi_lbn, (bip)->bi_daddr, \
+	    (bip)->bi_inode, (bip)->bi_lbn, (unsigned long)(bip)->bi_daddr, \
 	    ctime((time_t *)&(bip)->bi_segcreate)); \
 	fflush(stdout); \
 }
 
 #define PRINT_SEGUSE(sup, n) { \
 	(void)printf("Segment %d nbytes=%lu\tflags=%c%c%c ninos=%d nsums=%d lastmod: %s\n", \
-			n, (sup)->su_nbytes, \
+			n, (unsigned long)(sup)->su_nbytes, \
 			(sup)->su_flags & SEGUSE_DIRTY ? 'D' : 'C', \
 			(sup)->su_flags & SEGUSE_ACTIVE ? 'A' : ' ', \
 			(sup)->su_flags & SEGUSE_SUPERBLOCK ? 'S' : ' ', \
