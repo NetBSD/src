@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_pci.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: firepower_pci.c,v 1.2 2001/10/30 01:21:24 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -141,9 +141,16 @@ firepower_pci_conf_addr(int b, int d, int f, int offset, bus_addr_t *addrp)
 		addr = FP_MAP_PCICFG_BASE | (1U << (d + 11)) | (f << 8) |
 		    offset;
 	} else {
-		/* Type 1 cycles. */
-		/* XXX Don't know how to do these yet. */
-		return (1);
+		/*
+		 * Type 1 cycles.  Note we only get 7 bits for the bus
+		 * number in a Type 1 cycle.
+		 */
+		if (b > 127) {
+			/* Can't represent this device. */
+			return (1);
+		}
+		addr = FP_MAP_PCICFG_BASE | (b << 16) | (d << 11) | (f << 8) |
+		    offset;
 	}
 
 	*addrp = addr;
