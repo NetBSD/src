@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.15 2004/12/29 01:06:52 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.16 2004/12/29 01:11:24 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -70,15 +70,6 @@ extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)
 #define	DPRINTF(__sc, __flags, __x)
 #endif /* RTW_DEBUG */
-
-#if 0
-enum rtw_rftype {
-	RTW_RFTYPE_INTERSIL = 0,
-	RTW_RFTYPE_RFMD,
-	RTW_RFTYPE_PHILIPS,
-	RTW_RFTYPE_MAXIM
-};
-#endif
 
 enum rtw_locale {
 	RTW_LOCALE_USA = 0,
@@ -385,9 +376,6 @@ struct rtw_softc {
 	bus_dma_tag_t		sc_dmat;
 	u_int32_t		sc_flags;
 
-#if 0
-	enum rtw_rftype		sc_rftype;
-#endif
 	enum rtw_attach_state	sc_attach_state;
 	enum rtw_rfchipid	sc_rfchipid;
 	enum rtw_locale		sc_locale;
@@ -395,8 +383,6 @@ struct rtw_softc {
 
 	/* s/w Tx/Rx descriptors */
 	struct rtw_txsoft_blk	sc_txsoft_blk[RTW_NTXPRI];
-	u_int			sc_txq;
-	u_int			sc_txnext;
 	struct rtw_txdesc_blk	sc_txdesc_blk[RTW_NTXPRI];
 
 	struct rtw_rxsoft	sc_rxsoft[RTW_RXQLEN];
