@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 1998/07/07 03:05:15 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 1998/07/09 02:43:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -42,11 +42,12 @@
 #ifndef _ARM32_CPUFUNC_H_
 #define _ARM32_CPUFUNC_H_
 
-#include "opt_cputypes.h"
-
 #include <sys/types.h>
 
 #ifdef _KERNEL
+#ifndef _LKM
+#include "opt_cputypes.h"
+#endif
 
 struct cpu_functions {
 
