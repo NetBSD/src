@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.72 2002/01/11 21:16:28 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.73 2002/03/17 17:02:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.72 2002/01/11 21:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.73 2002/03/17 17:02:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ sys_ptrace(p, v, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
+	struct ptrace_io_desc piod;
 	int s, error, write, tmp;
 
 	/* "A foolish consistency..." XXX */
@@ -168,6 +169,7 @@ sys_ptrace(p, v, retval)
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
 	case  PT_CONTINUE:
+	case  PT_IO:
 	case  PT_KILL:
 	case  PT_DETACH:
 #ifdef PT_STEP
@@ -255,6 +257,35 @@ sys_ptrace(p, v, retval)
 		error = procfs_domem(p, t, NULL, &uio);
 		if (!write)
 			*retval = tmp;
+		return (error);
+		
+	case  PT_IO:
+		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
+		if (error)
+			return (error);
+		iov.iov_base = piod.piod_addr;
+		iov.iov_len = piod.piod_len;
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)(long)piod.piod_offs;
+		uio.uio_resid = piod.piod_len;
+		uio.uio_segflg = UIO_USERSPACE;
+		uio.uio_procp = p;
+		switch (piod.piod_op) {
+		case PIOD_READ_D:
+		case PIOD_READ_I:
+			uio.uio_rw = UIO_READ;
+			break;
+		case PIOD_WRITE_D:
+		case PIOD_WRITE_I:
+			uio.uio_rw = UIO_WRITE;
+			break;
+		default:
+			return (EINVAL);
+		}
+		error = procfs_domem(p, t, NULL, &uio);
+		piod.piod_len -= uio.uio_resid;
+		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
 
 #ifdef PT_STEP
