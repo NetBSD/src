@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.121 2001/05/30 15:24:33 lukem Exp $	*/
+/*	$NetBSD: locore.S,v 1.122 2001/07/09 01:43:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -775,10 +775,13 @@ NESTED(kcopy, 48, ra)
 	.mask	0x80010000, -4
 	sw	ra, 44(sp)			# save ra
 	sw	s0, 32(sp)			# save s0
+	move	v0, a0				# swap a0, a1 for call to memcpy
+	move	a0, a1
+	move	a1, v0
 	lw	v1, _C_LABEL(curpcb)		# set up fault handler
 	la	v0, _C_LABEL(kcopyerr)
 	lw	s0, U_PCB_ONFAULT(v1)		# save old handler
-	jal	bcopy
+	jal	memcpy
 	sw	v0, U_PCB_ONFAULT(v1)
 
 	lw	v1, _C_LABEL(curpcb)		# restore the old handler
@@ -811,9 +814,12 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 	sw	ra, CALLFRAME_RA(sp)
 	blt	a0, zero, _C_LABEL(copyerr)
+	move	v0, a0				# swap a0, a1 for call to memcpy
+	move	a0, a1
+	move	a1, v0
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(copyerr)
-	jal	bcopy
+	jal	memcpy
 	sw	v0, U_PCB_ONFAULT(v1)
 
 	lw	v1, _C_LABEL(curpcb)
@@ -835,9 +841,12 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 	sw	ra, CALLFRAME_RA(sp)
 	blt	a1, zero, _C_LABEL(copyerr)
+	move	v0, a0				# swap a0, a1 for call to memcpy
+	move	a0, a1
+	move	a1, v0
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(copyerr)
-	jal	bcopy
+	jal	memcpy
 	sw	v0, U_PCB_ONFAULT(v1)
 
 	lw	v1, _C_LABEL(curpcb)
