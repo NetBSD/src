@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.398 2002/01/26 16:31:18 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.399 2002/01/26 22:41:46 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.393 2002/01/26 16:30:00 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.394 2002/01/26 22:40:46 tron Exp 
  */
 
 /*
@@ -527,6 +527,7 @@
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
+#define	PCI_VENDOR_SIIG	0x131f		/* Siig Inc. */
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
@@ -536,6 +537,9 @@
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
+#define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
+#define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology Co. Ltd. */
+#define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor Ltd. */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics, Inc. */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
@@ -555,7 +559,6 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
-#define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
 #define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
