@@ -41,7 +41,7 @@
 .Nm lp
 .Nd printer port Internet Protocol driver
 .Sh SYNOPSIS
-.Cd "lp* at ppbus?" 
+.Cd "lp* at ppbus?"
 .Cd options PLIP_DEBUG
 .Sh DESCRIPTION
 The
@@ -55,10 +55,10 @@ and any standard AT-compatible printer port with working interrupts may be used.
 During the boot process, for each
 .Nm ppbus
 device which is attached and has an interrupt capability, a corresponding
-.Nm 
+.Nm
 device is attached. The
 .Nm
-device is configured using 
+device is configured using
 .Xr ifconfig 8
 using the options for a point-to-point network interface:
 .Pp
@@ -92,7 +92,7 @@ packet header, and is easier to interface to other types of equipment.
 .El
 .Pp
 The interface MTU defaults to 1500, but may be set to any value.  Both ends
-of the link must be configured with the same MTU. See 
+of the link must be configured with the same MTU. See
 .Xr ifconfig 8
 for details on configuring network interfaces.
 .Ss Cable Connections
@@ -229,13 +229,13 @@ state to avoid spuriously indicating the start of the next packet).
 .Xr ifconfig 8
 .Sh HISTORY
 The
-.Nm 
-driver was implemented for ppbus in FreeBSD and imported into NetBSD. Crynwr 
-packet drivers implemented PLIP for MS-DOS. Linux also has a PLIP driver. The 
-protocols are know as LPIP (FreeBSD) and CLPIP (Crynwr/Linux) in the 
+.Nm
+driver was implemented for ppbus in FreeBSD and imported into NetBSD. Crynwr
+packet drivers implemented PLIP for MS-DOS. Linux also has a PLIP driver. The
+protocols are know as LPIP (FreeBSD) and CLPIP (Crynwr/Linux) in the
 documentation and code of this port. LPIP originally appeared in FreeBSD.
 .Sh AUTHORS
-This manual page is based on the FreeBSD 
+This manual page is based on the FreeBSD
 .Xr lp 4
 manual page. The information has been updated for NetBSD's port by Gary Thorpe.
 .Sh BUGS
@@ -246,23 +246,23 @@ excessive amounts of CPU.  This is unavoidable in the case of CLPIP mode
 due to the choice of handshake lines; it could theoretically be improved
 in the case of LPIP mode.
 .Pp
-Regardless of the speed difference between hosts, PLIP is CPU-intensive and its 
+Regardless of the speed difference between hosts, PLIP is CPU-intensive and its
 made worse by having to send nibbles (4 bits) at a time.
 .Pp
 Polling timeouts are controlled by counting loop iterations rather than
 timers, and so are dependent on CPU speed.  This is somewhat stabilized
 by the need to perform (slow) ISA bus cycles to actually read the port.
 .Pp
-In the FreeBSD implementation, the idle state was not properly being restored 
-on errors or when finishing transmitting/receiving. This implementation 
-attempts to fix this problem which would result in an unresponsive interface 
-that could no longer be used (the port bits get stuck in a state and nothing 
+In the FreeBSD implementation, the idle state was not properly being restored
+on errors or when finishing transmitting/receiving. This implementation
+attempts to fix this problem which would result in an unresponsive interface
+that could no longer be used (the port bits get stuck in a state and nothing
 can progress) by zeroing the data register when necessary.
 .Pp
-For unknown reasons, the more complex protocol (CLPIP) yields higher data 
-transfer rates during testing so far. This could possibly be because the other 
-side can reliably detect when the host is transmitting in this implementation 
-of CLPIP (this may not necessarily be true in Linux or MS-DOS packet drivers). 
-CLPIP gets about 70 KB/sec (the best expected is about 75 KB/sec) and LPIP get 
-about 55 KB/sec. This is despite LPIP being able to send more packets over the 
-interface (tested with 'ping -f') compared to CLPIP. 
+For unknown reasons, the more complex protocol (CLPIP) yields higher data
+transfer rates during testing so far. This could possibly be because the other
+side can reliably detect when the host is transmitting in this implementation
+of CLPIP (this may not necessarily be true in Linux or MS-DOS packet drivers).
+CLPIP gets about 70 KB/sec (the best expected is about 75 KB/sec) and LPIP get
+about 55 KB/sec. This is despite LPIP being able to send more packets over the
+interface (tested with 'ping -f') compared to CLPIP.
