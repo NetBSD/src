@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: index.S,v 1.4 1994/01/28 20:34:38 jtc Exp $
+ *	$Id: index.S,v 1.5 1994/02/14 20:05:52 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: index.S,v 1.4 1994/01/28 20:34:38 jtc Exp $"
+	.asciz "$Id: index.S,v 1.5 1994/02/14 20:05:52 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -67,7 +67,7 @@ L1:
 	je 	L2
 	incl	%eax
 	testb	%bl,%bl			/* null terminator??? */
-	jne	L1
+	jnz	L1
 	xorl	%eax,%eax
 L2:
 	popl	%ebx
