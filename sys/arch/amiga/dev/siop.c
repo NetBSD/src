@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.4 1994/02/13 21:11:03 chopps Exp $
+ *	$Id: siop.c,v 1.5 1994/02/21 06:30:44 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -51,7 +51,7 @@
 #if NSIOP > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.4 1994/02/13 21:11:03 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.5 1994/02/21 06:30:44 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
@@ -93,6 +93,7 @@ int siop_test_unit_rdy (int ctlr, int slave, int unit);
 int siop_start_stop_unit (int ctlr, int slave, int unit, int start);
 int siop_request_sense (int ctlr, int slave, int unit, u_char *buf, unsigned int len);
 int siop_immed_command (int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd);
+int siop_immed_command_nd (int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb);
 int siop_tt_read (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
 int siop_tt_write (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
 #if NST > 0
@@ -103,7 +104,7 @@ int siop_tt_oddio (int ctlr, int slave, int unit, u_char *buf, u_int len, int b_
 int zeusscsiinit();
 
 struct driver zeusscsidriver = {
-	zeusscsiinit, "Zeusscsi", (int (*)())siopstart, (int (*)())siopgo,
+	zeusscsiinit, "Zeusscsi", (int (*)())siopstart, (int (*)(int,...))siopgo,
 	(int (*)())siopintr2, (int (*)())siopdone,
 	siopustart, siopreq, siopfree, siopreset,
 	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
@@ -120,7 +121,7 @@ struct driver zeusscsidriver = {
 int magnumscsiinit();
 
 struct driver magnumscsidriver = {
-	magnumscsiinit, "Magnumscsi", (int (*)())siopstart, (int (*)())siopgo,
+	magnumscsiinit, "Magnumscsi", (int (*)())siopstart, (int (*)(int,...))siopgo,
 	(int (*)())siopintr2, (int (*)())siopdone,
 	siopustart, siopreq, siopfree, siopreset,
 	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
@@ -967,6 +968,15 @@ siop_request_sense(ctlr, slave, unit, buf, len)
 	cdb.len = len;
 	return (siopicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), buf, len));
 }
+
+int
+siop_immed_command_nd(ctlr, slave, unit, cdb)
+	int ctlr, slave, unit;
+	struct scsi_fmt_cdb *cdb;
+{
+	return(siop_immed_command(ctlr, slave, unit, cdb, 0, 0, 0));
+}
+
 
 int
 siop_immed_command(ctlr, slave, unit, cdb, buf, len, rd)

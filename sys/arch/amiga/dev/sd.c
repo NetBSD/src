@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.10 1994/02/19 07:10:08 chopps Exp $
+ *	$Id: sd.c,v 1.11 1994/02/21 06:30:43 chopps Exp $
  */
 
 /*
@@ -54,7 +54,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.10 1994/02/19 07:10:08 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.11 1994/02/21 06:30:43 chopps Exp $";
 #endif
 
 #include <sys/types.h>
@@ -80,21 +80,23 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.1
 
 struct sd_softc;
 
-extern int sdinit (register struct amiga_device *ad);
-extern void sdreset (register struct sd_softc *sc, register struct amiga_device *ad);
-extern int sdopen (dev_t dev, int flags, int mode, struct proc *p);
-extern void sdstrategy (register struct buf *bp);
-extern void sdustart (register int unit);
-extern void sdstart (register int unit);
-extern void sdgo (register int unit);
-extern void sdintr (register int unit, int stat);
-extern int sdioctl (dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-extern int sdsize (dev_t dev);
-extern int sddump (dev_t dev);
-static int sdident (struct sd_softc *sc, struct amiga_device *ad);
-static void sdlblkstrat (register struct buf *bp, register int bsize);
-static int sderror (int unit, register struct sd_softc *sc, register struct amiga_device *am, int stat);
-static void sdfinish (int unit, register struct sd_softc *sc, register struct buf *bp);
+int sdinit __P((register struct amiga_device *ad));
+int sdopen __P((dev_t dev, int flags, int mode, struct proc *p));
+int sdioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
+int sdsize __P((dev_t dev));
+int sddump __P((dev_t dev));
+int scsi_unlock_floptical __P((int ctlr, int slave, int unit));
+void sdreset __P((register struct sd_softc *sc, register struct amiga_device *ad));
+void sdstrategy __P((register struct buf *bp));
+void sdustart __P((register int unit));
+void sdstart __P((register int unit));
+void sdgo __P((register int unit));
+void sdintr __P((register int unit, int stat));
+
+static int sdident __P((struct sd_softc *sc, struct amiga_device *ad));
+static int sderror __P((int unit, register struct sd_softc *sc, register struct amiga_device *am, int stat));
+static void sdlblkstrat __P((register struct buf *bp, register int bsize));
+static void sdfinish __P((int unit, register struct sd_softc *sc, register struct buf *bp));
 
 extern void disksort();
 extern int physio();
@@ -105,42 +107,7 @@ struct	driver sddriver = {
 	(int (*)(int,int)) sdintr, 0,
 };
 
-#if 0
-struct	size {
-	u_long	strtblk;
-	u_long	endblk;
-	int	nblocks;
-};
-
-struct sdinfo {
-	u_int	cylinders;	/* number of driver cylinders	      RDB value */
-	u_int	sectors;	/* sectors per track		      RDB value */
-	u_int	heads;		/* number of drive heads 	      RDB value */
-	u_int	cylblocks;	/* available number of blocks per cyl RDB value */
-	struct	size part[8];
-};
-
-/*
- * since the SCSI standard tends to hide the disk structure, we define
- * partitions in terms of DEV_BSIZE blocks.  The default partition table
- * (for an unlabeled disk) reserves 512K for a boot area, has an 8 meg
- * root and 32 meg of swap.  The rest of the space on the drive goes in
- * the G partition.  As usual, the C partition covers the entire disk
- * (including the boot area).
- */
-struct sdinfo sddefaultpart = {
-	     1024,   17408,   16384   ,	/* A */
-	    17408,   82944,   65536   ,	/* B */
-	        0,       0,       0   ,	/* C */
-	    17408,  115712,   98304   ,	/* D */
-	   115712,  218112,  102400   ,	/* E */
-	   218112,       0,       0   ,	/* F */
-	    82944,       0,       0   ,	/* G */
-	   115712,       0,       0   ,	/* H */
-};
-#endif
-
-struct	sd_softc {
+struct sd_softc {
 	struct	amiga_device *sc_ad;
 	struct	devqueue sc_dq;
 	int	sc_format_pid;	/* process using "format" mode */
@@ -155,7 +122,8 @@ struct	sd_softc {
 	struct  disklabel sc_label;  /* drive partition table & label info */
 	int	sc_have_label;
 	int	sc_write_label;
-} sd_softc[NSD];
+};
+struct sd_softc sd_softc[NSD];
 
 /* sc_flags values */
 #define	SDF_ALIVE	0x1
@@ -179,7 +147,8 @@ struct sdstats {
 	long	sdresets;
 	long	sdtransfers;
 	long	sdpartials;
-} sdstats[NSD];
+};
+struct sdstats sdstats[NSD];
 
 struct	buf sdtab[NSD];
 struct	scsi_fmt_cdb sdcmd[NSD];
@@ -237,7 +206,7 @@ sdident(sc, ad)
 	struct sd_softc *sc;
 	struct amiga_device *ad;
 {
-	int unit;
+	int unit, stat;
 	register int ctlr, slave;
 	register int i;
 	register int tries = 10;
@@ -366,6 +335,25 @@ retry_TUR:
 		sc->sc_blks <<= sc->sc_bshift;
 	}
 	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
+	 
+ 	if (!bcmp(&sc->sc_idstr[0],"IOMEGA",6) &&
+ 	    !bcmp(&sc->sc_idstr[8],"Io20S",5)) {
+ 		int stat;
+		/* unlock FLOPTICAL */
+#if defined (DAIGNOSTIC)
+ 		printf("Floptical drive detected, trying to unlock...");
+#endif
+ 		stat = scsi_unlock_floptical(ctlr,slave,unit);
+#if defined (DAIGNOSTIC)
+ 		if(!stat) 
+ 			printf("success.\n");
+ 		else {
+ 			printf("unlock failed: %d\n",stat);
+ 			sderror(unit,sc,sc->sc_ad,stat);
+		}
+#endif
+ 	}
+	
 	(ad->amiga_cdriver->d_delay)(0);
 	return(inqbuf.type);
 failed:
@@ -1014,7 +1002,6 @@ sdintr(unit, stat)
 	sdfinish(unit, sc, bp);
 }
 
-#if 1
 u_int
 sdminphys (bp)
 	struct buf *bp;
@@ -1087,7 +1074,6 @@ sdwrite(dev, uio, flags)
 		
 	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
 }
-#endif
 
 int
 sdioctl(dev, cmd, data, flag, p)
@@ -1260,5 +1246,90 @@ sddump(dev)
 		baddr += ctod(1);
 	}
 	return (0);
+}
+
+/*
+  * scsi_unlock_floptical() 
+  *
+  * Unlocks a floptical drive by reading the vendor
+  * mode page 0x2e (floptical page). In addition a rezero 
+  * unit command is issued, because the first READ command
+  * fails with a "Servo Hardware Fault" error 
+  * (ASC=2,ASCQ=0). The rezero command will also fail, but
+  * now we can ignore it.
+  */
+int
+scsi_unlock_floptical(ctlr, slave, unit)
+	int ctlr;
+	int slave;
+	int unit;
+{
+	struct mp_header_s {
+		u_char mode_data_length;
+		u_char media_type;
+		u_char block_descriptor_length;
+	};
+ 
+	struct mp_descriptor_s {
+		u_char reserved[4];
+		u_char block_length[4];
+	};
+ 
+	struct floppage_s {
+		u_char reserved1:1,
+		    pagecode:7;
+		u_char len;
+		u_char reserved2;
+		u_char hamheads;
+		u_char secpertrack;
+		u_short bytespersector;
+		u_short hamcyls;
+		u_char reserved3:4,
+		    ejm:1,
+		    reserved4:2,
+		    nhf:1;
+		u_char idstr[13];
+		u_char reserved5[6];
+	};
+ 
+	struct sense_return_s {
+		struct mp_header_s mp_header;
+		struct mp_descriptor_s mp_descriptor;
+		struct floppage_s floppage;
+	};
+	register struct amiga_device *ad = sd_softc[unit].sc_ad;
+	struct sense_return_s sr;
+	struct scsi_fmt_cdb cdb;
+	struct scsi_cdb6 *cmd;
+ 	int stat;
+
+	cdb.len = 6;
+	cmd = (struct scsi_cdb6 *)&cdb.cdb;
+	cmd->cmd = CMD_MODE_SENSE;
+ 	cmd->lbam = 0x2e;
+ 	cmd->len = sizeof(sr);
+
+	/* Mode sense. */
+	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &cdb,
+	    (u_char *)&sr, sizeof(sr), B_READ);
+	if(stat == 0) { 
+#if defined(DIAGNOSTIC) && defined(DEBUG)
+		printf("Floptical information\n");
+		printf("Page code          : %d\n",sr.floppage.pagecode);
+		printf("Page length        : %d\n",sr.floppage.len);
+		printf("Number of HAM heads: %d\n",sr.floppage.hamheads);
+		printf("Sectors per Track  : %d\n",sr.floppage.secpertrack);
+		printf("Data Bytes/Sector  : %d\n",sr.floppage.bytespersector);
+		printf("Number of HAM cyls : %d\n",sr.floppage.hamcyls);
+		printf("Eject Motor        : %d\n",sr.floppage.ejm);
+		printf("Non-HAM format     : %d\n",sr.floppage.nhf);
+		printf("IdString           : %s\n",sr.floppage.idstr);
+#endif
+		cmd->cmd = CMD_REWIND;
+		stat = (ad->amiga_cdriver->d_immcmd_nd)(ctlr, slave, unit, &cdb);
+		if(stat == 2)
+			stat = 0; /* explicitly ignore servo fault errors */
+	}
+	return(stat);
 }
 #endif
