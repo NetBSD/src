@@ -24,36 +24,28 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: accton.8,v 1.1 1993/05/03 01:53:22 cgd Exp $
+.\"	$Id: accton.8,v 1.2 1993/10/20 00:13:05 cgd Exp $
 .\"
-.Dd May 2, 1993
+.Dd October 18, 1993
 .Dt ACCTON 8
-.Os NetBSD 0.8a
+.Os BSD 4
 .Sh NAME
-.Nm accton ,
-.Nm acctoff
+.Nm accton
 .Nd enable/disable system accounting
 .Sh SYNOPSIS
 .Nm accton
-.Nm acctoff
+.Op Ar file
 .Sh DESCRIPTION
-.Nm Accton
-enables generation of kernel accounting records, and
-.Nm acctoff
-disables their generation.
-The actual logging of accounting records is done
-by the
-.Xr accoutant 8
-program.
+With an argument naming an existing
+.Ar file ,
+.Nm accton
+causes system accounting information for every process executed
+to be placed at the end of the file.  If no argument is given,
+accounting is turned off.
 .Sh SEE ALSO
-.Xr accountant 8 ,
 .Xr lastcomm 1 ,
 .Xr acct 5
 .Sh HISTORY
 The
 .Nm accton
-program probably appeared in Version 6 AT&T UNIX,
-or thereabouts, but was substantially modified for 
-the new device-based accounting procedures in NetBSD 0.8a.
-.Nm Acctoff
-first appeard in NetBSD 0.8a.
+has existed nearly forever, but this man page is new.
