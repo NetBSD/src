@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.h,v 1.1.1.1 1997/06/12 13:14:11 mrg Exp $	*/
+/*	$NetBSD: swapctl.h,v 1.2 1997/10/10 05:39:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green for
- *      the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
