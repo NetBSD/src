@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.24 2002/10/04 22:50:26 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.25 2002/10/04 22:56:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,12 +55,11 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.24 2002/10/04 22:50:26 oster Exp $");
-
-#include "rf_threadstuff.h"
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.25 2002/10/04 22:56:54 oster Exp $");
 
 #include <sys/errno.h>
 
+#include "rf_threadstuff.h"
 #include "rf_dag.h"
 #include "rf_engine.h"
 #include "rf_etimer.h"
@@ -69,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.24 2002/10/04 22:50:26 oster Exp $")
 #include "rf_shutdown.h"
 #include "rf_raid.h"
 
+static void rf_ShutdownEngine(void *);
 static void DAGExecutionThread(RF_ThreadArg_t arg);
 static void rf_RaidIOThread(RF_ThreadArg_t arg);
 
@@ -103,8 +103,6 @@ do { \
 
 #define	DO_SIGNAL(_r_) \
 	RF_BROADCAST_COND((_r_)->node_queue)	/* XXX RF_SIGNAL_COND? */
-
-static void rf_ShutdownEngine(void *);
 
 static void 
 rf_ShutdownEngine(arg)
@@ -162,7 +160,8 @@ rf_ConfigureEngine(
 	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_thread, 
 				    DAGExecutionThread, raidPtr,
 				    "raid%d", raidPtr->raidid)) {
-		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
+		printf("raid%d: Unable to create engine thread\n",
+		       raidPtr->raidid);
 		return (ENOMEM);
 	}
 	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_helper_thread,
@@ -494,13 +493,19 @@ PropagateResults(
 							/* we only have to
 							 * enqueue if we're at
 							 * intr context */
-							s->next = firelist;	/* put node on a list to
-										 * be fired after we
-										 * unlock */
+							/* put node on
+                                                           a list to
+                                                           be fired
+                                                           after we
+                                                           unlock */
+							s->next = firelist;
 							firelist = s;
-						} else {	/* enqueue the node for
-								 * the dag exec thread
-								 * to fire */
+						} else {	
+							/* enqueue the
+							   node for
+							   the dag
+							   exec thread
+							   to fire */
 							RF_ASSERT(NodeReady(s));
 							if (q) {
 								q->next = s;
