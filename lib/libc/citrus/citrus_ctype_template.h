@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.27 2004/09/25 23:51:31 soda Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.28 2004/09/25 23:56:44 soda Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -696,6 +696,7 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 #if _ENCODING_IS_STATE_DEPENDENT
 	if (err == 0)
 		*nresult = (int)(nr + rsz);
+	else
 #else
 	*nresult = (int)nr;
 #endif
