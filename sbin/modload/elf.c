@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
+/*	$NetBSD: elf.c,v 1.2 1999/07/21 03:32:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.1 1999/06/13 12:54:40 mrg Exp $");
+__RCSID("$NetBSD: elf.c,v 1.2 1999/07/21 03:32:53 mycroft Exp $");
 
 #include <sys/param.h>
 
@@ -195,7 +195,7 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	strtab = read_string_table(fd, &ehdr);
 	read_sections(fd, &ehdr, strtab, &head);
 
-	for (s = head; s && s->next; s = s->next) {
+	for (s = head; s; s = s->next) {
 		if (debug)
 			fprintf(stderr, 
 			    "%s: addr = %p size = %#lx align = %#lx\n", 
@@ -324,8 +324,8 @@ elf_mod_load(int fd)
 			addr = (char*)s->addr + s->size;
 		}
 	}
-	/* any trailing zero_space will be filled with zeros by the
-           LKM framework */
+	if (zero_size)
+		loadspace(zero_size);
 	
 	free_sections(head);
 	free(strtab);
