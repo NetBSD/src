@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: psl.h,v 1.2 1998/07/27 06:05:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,7 +232,9 @@ static __inline int getpstate __P((void));
 static __inline void setpstate __P((int));
 static __inline int getcwp __P((void));
 static __inline void setcwp __P((int));
+#ifndef SPLDEBUG
 static __inline void splx __P((int));
+#endif
 static __inline u_int64_t getver __P((void));
 
 /*
