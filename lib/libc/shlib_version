@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.118 2002/06/30 09:46:18 bjh21 Exp $
+#	$NetBSD: shlib_version,v 1.119 2002/07/27 23:57:39 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -11,4 +11,4 @@
 # - libc/net/getaddrinfo.c, netdb.h: remove __ai_pad0
 #
 major=12
-minor=85
+minor=86
