@@ -1,5 +1,5 @@
-# $NetBSD: md.cobalt,v 1.8 2001/04/15 17:14:26 kleink Exp $
-./usr/include/cobalt/			comp-c-include
+# $NetBSD: md.cobalt,v 1.9 2002/04/03 13:44:29 bjh21 Exp $
+./usr/include/cobalt			comp-c-include
 ./usr/include/cobalt/_G_config.h	comp-c-include
 ./usr/include/cobalt/ansi.h		comp-c-include
 ./usr/include/cobalt/aout_machdep.h	comp-c-include
