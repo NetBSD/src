@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.38 2000/01/10 03:24:33 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.39 2000/03/23 06:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -422,7 +422,7 @@ rconsstart(tp)
 			tp->t_state &= ~TS_BUSY;
 		} else {
 			/* called at interrupt level - do it later */
-			timeout(rcons_later, (void*)tp, 0);
+			callout_reset(&tp->t_rstrt_ch, 0, rcons_later, tp);
 		}
 	}
 	if (cl->c_cc <= tp->t_lowat) {

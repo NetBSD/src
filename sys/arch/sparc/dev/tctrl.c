@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.7 2000/03/14 21:24:54 jdc Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.8 2000/03/23 06:44:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
@@ -118,6 +119,8 @@ struct tctrl_softc {
 
 #define TCTRL_STD_DEV		0
 #define TCTRL_APMCTL_DEV	8
+
+static struct tctrl_event_ch = CALLOUT_INITIALIZER;
 
 static int tctrl_match __P((struct device *parent, struct cfdata *cf,
 	void *aux));
@@ -291,7 +294,8 @@ tctrl_intr(arg)
 		case TCTRL_IDLE:
 			if (d == 0xfa) {
 				/* external event */
-				timeout(tctrl_read_event_status, (void *)0, 1);
+				callout_reset(&tctrl_event_ch, 1,
+				    tctrl_read_event_status, NULL);
 			} else {
 				printf("%s: (op=0x%02x): unexpected data (0x%02x)\n",
 					sc->sc_dev.dv_xname, sc->sc_op, d);

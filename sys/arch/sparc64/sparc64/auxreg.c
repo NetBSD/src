@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: auxreg.c,v 1.2 2000/03/23 06:45:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 
@@ -65,6 +66,7 @@ extern struct cfdriver auxreg_cd;
 
 #ifdef BLINK
 static void blink __P((void *zero));
+static struct callout blink_ch = CALLOUT_INITIALIZER;
 
 static void
 blink(zero)
@@ -83,7 +85,7 @@ blink(zero)
 	 * etc.
 	 */
 	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout(blink, (caddr_t)0, s);
+	callout_reset(&blink_ch, s, blink, NULL);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.52 1999/08/16 19:06:29 tron Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.53 2000/03/23 06:48:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ linux_sys_alarm(p, v, retval)
 	/*
 	 * Clear any pending timer alarms.
 	 */
-	untimeout(realitexpire, p);
+	callout_stop(&p->p_realit_ch);
 	timerclear(&itp->it_interval);
 	if (timerisset(&itp->it_value) &&
 	    timercmp(&itp->it_value, &time, >))
@@ -127,7 +127,8 @@ linux_sys_alarm(p, v, retval)
 
 	if (timerisset(&it.it_value)) {
 		timeradd(&it.it_value, &time, &it.it_value);
-		timeout(realitexpire, p, hzto(&it.it_value));
+		callout_reset(&p->p_realit_ch, hzto(&it.it_value),
+		    realitexpire, p);
 	}
 	p->p_realtimer = it;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vt100.c,v 1.3 1998/06/01 19:31:05 tsubai Exp $	*/
+/*	$NetBSD: vt100.c,v 1.4 2000/03/23 06:42:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <machine/framebuf.h>
 #include <machine/keyboard.h>
 #include <newsmips/dev/kbreg.h>
@@ -143,6 +144,8 @@ int	fp;
 int	fpn;
 lPoint	fpp;
 int	fpa;
+
+static struct callout auto_dimmer_ch = CALLOUT_INITIALIZER;
 
 void
 vt100init()
@@ -373,7 +376,7 @@ auto_dimmer()
 		dimmer_counter = dim_cnt;
 	}
 	splx(s);
-	timeout(auto_dimmer, (caddr_t) 0, 60 * hz);
+	callout_reset(&auto_dimmer_ch, 60 * hz, auto_dimmer, NULL);
 }
 #endif
 

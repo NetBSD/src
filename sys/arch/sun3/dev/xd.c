@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.25 2000/01/21 23:39:55 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.26 2000/03/23 06:46:17 thorpej Exp $	*/
 
 /*
  *
@@ -440,6 +440,7 @@ xdcattach(parent, self, aux)
 	/* init queue of waiting bufs */
 
 	BUFQ_INIT(&xdc->sc_wq);
+	callout_init(&xdc->sc_tick_ch);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:
@@ -487,7 +488,7 @@ xdcattach(parent, self, aux)
 		(void) config_found(self, (void *) &xa, xdc_print);
 
 	/* start the watchdog clock */
-	timeout(xdc_tick, xdc, XDC_TICKCNT);
+	callout_reset(&xdc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdc);
 }
 
 int
@@ -2137,7 +2138,7 @@ xdc_tick(arg)
 
 	/* until next time */
 
-	timeout(xdc_tick, xdcsc, XDC_TICKCNT);
+	callout_reset(&xdcsc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdcsc);
 }
 
 /*
