@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.8 2002/01/27 14:51:10 is Exp $ */
+/*	$NetBSD: gvpio.c,v 1.9 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.9 2002/01/28 09:56:57 aymeric Exp $");
 
 /*
  * GVP I/O Extender

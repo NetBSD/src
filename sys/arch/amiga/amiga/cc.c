@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.13 2002/01/26 13:24:53 aymeric Exp $	*/
+/*	$NetBSD: cc.c,v 1.14 2002/01/28 09:56:45 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.14 2002/01/28 09:56:45 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

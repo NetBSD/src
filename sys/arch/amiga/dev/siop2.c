@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.17 2002/01/26 13:41:00 aymeric Exp $ */
+/*	$NetBSD: siop2.c,v 1.18 2002/01/28 09:57:03 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -44,6 +44,9 @@
  */
 
 #include "opt_ddb.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.18 2002/01/28 09:57:03 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

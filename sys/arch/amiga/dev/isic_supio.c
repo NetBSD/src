@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.8 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.9 2002/01/28 09:56:59 aymeric Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -45,6 +45,9 @@
  *	-is	original implementation [Sun Feb 14 10:29:19 1999]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.9 2002/01/28 09:56:59 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

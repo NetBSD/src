@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.3 2002/01/26 13:40:52 aymeric Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.4 2002/01/28 09:56:51 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.4 2002/01/28 09:56:51 aymeric Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions

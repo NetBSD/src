@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.9 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: ite_rh.c,v 1.10 2002/01/28 09:57:00 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_retina.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_rh.c,v 1.10 2002/01/28 09:57:00 aymeric Exp $");
+
 #include "grfrh.h"
 #if NGRFRH > 0
 

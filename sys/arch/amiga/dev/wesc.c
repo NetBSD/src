@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.27 2002/01/26 13:41:00 aymeric Exp $ */
+/*	$NetBSD: wesc.c,v 1.28 2002/01/28 09:57:04 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,6 +35,9 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.28 2002/01/28 09:57:04 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

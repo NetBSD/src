@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.6 2002/01/26 13:40:55 aymeric Exp $ */
+/*	$NetBSD: grfabs.c,v 1.7 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.7 2002/01/28 09:56:57 aymeric Exp $");
 
 /*
  *  amiga abstract graphics driver.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.57 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: ite.c,v 1.58 2002/01/28 09:56:59 aymeric Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,9 @@
  */
 
 #include "opt_ddb.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58 2002/01/28 09:56:59 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
