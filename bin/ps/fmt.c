@@ -72,6 +72,8 @@ shquote(argv)
 			dst++;
 		*dst++ = ' ';
 	}
+	if (dst == buf)
+		return (0);
 	*--dst = '\0';
 	return (buf);
 }
@@ -94,15 +96,16 @@ fmt_argv(argv, cmd, maxlen)
 	int len;
 	char *ap, *cp;
 
-	if (argv == 0 || argv[0] == 0) {
-		if (cmd == NULL)
-			return ("");
-		ap = NULL;
-		len = maxlen + 3;
-	} else {
+	if (argv == 0 || argv[0] == 0)
+		ap = 0;
+	else
 		ap = shquote(argv);
+	if (ap == 0) {
+		if (cmd == 0)
+			return ("");
+		len = maxlen + 3;
+	} else
 		len = strlen(ap) + maxlen + 4;
-	}
 	if ((cp = malloc(len)) == NULL)
 		return (NULL);
 	if (ap == NULL)
