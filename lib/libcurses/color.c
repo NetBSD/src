@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.24 2003/04/06 07:22:13 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.25 2003/07/30 11:10:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.24 2003/04/06 07:22:13 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.25 2003/07/30 11:10:42 dsl Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -255,7 +255,7 @@ start_color(void)
 	__using_color = 1;
 
 	/* Set all positions on all windows to curses default colours. */
-	for (wlp = __winlistp; wlp != NULL; wlp = wlp->nextp) {
+	for (wlp = _cursesi_screen->winlistp; wlp != NULL; wlp = wlp->nextp) {
 		win = wlp->winp;
 		if (wlp->winp == curscr) {
 			/* Reset colour attribute on curscr */
@@ -609,59 +609,57 @@ __change_pair(short pair)
 	struct __winlist	*wlp;
 	WINDOW			*win;
 	int			 y, x;
+	__LINE			*lp;
+	uint32_t		cl = COLOR_PAIR(pair);
 
 
-	for (wlp = __winlistp; wlp != NULL; wlp = wlp->nextp) {
+	for (wlp = _cursesi_screen->winlistp; wlp != NULL; wlp = wlp->nextp) {
 #ifdef DEBUG
 		__CTRACE("__change_pair: win = %p\n", wlp->winp);
 #endif
 		win = wlp->winp;
+		if (win == __virtscr)
+			continue;
+
 		if (win == curscr) {
 			/* Reset colour attribute on curscr */
 #ifdef DEBUG
 			__CTRACE("__change_pair: win == curscr\n");
 #endif
-			for (y = 0; y < curscr->maxy; y++)
+			for (y = 0; y < curscr->maxy; y++) {
+				lp = curscr->lines[y];
 				for (x = 0; x < curscr->maxx; x++) {
-					if ((curscr->lines[y]->line[x].attr &
-					    __COLOR) == COLOR_PAIR(pair))
-						curscr->lines[y]->line[x].attr
-						    &= ~__COLOR;
-					if ((curscr->lines[y]->line[x].battr &
-					    __COLOR) == COLOR_PAIR(pair))
-						curscr->lines[y]->line[x].battr
-						    &= ~__COLOR;
+					if ((lp->line[x].attr & __COLOR) == cl)
+						lp->line[x].attr &= ~__COLOR;
+					if ((lp->line[x].battr & __COLOR) == cl)
+						lp->line[x].battr &= ~__COLOR;
 				}
-		} else if (win != __virtscr) {
-			/* Mark dirty those positions with colour pair "pair" */
-			for (y = 0; y < win->maxy; y++) {
-				for (x = 0; x < win->maxx; x++)
-					if ((win->lines[y]->line[x].attr &
-					    __COLOR) == COLOR_PAIR(pair) ||
-					    (win->lines[y]->line[x].battr &
-					    __COLOR) == COLOR_PAIR(pair)) {
-						if (!(win->lines[y]->flags &
-						    __ISDIRTY))
-							win->lines[y]->flags |=
-							    __ISDIRTY;
-						/*
-						 * firstchp/lastchp are shared
-						 * between parent window and
-						 * sub-window.
-						 */
-						if (*win->lines[y]->firstchp >
-						    x)
-							*win->lines[y]->firstchp
-							    = x;
-						if (*win->lines[y]->lastchp < x)
-							*win->lines[y]->lastchp
-							    = x;
-					}
-#ifdef DEBUG
-				if ((win->lines[y]->flags & __ISDIRTY))
-					__CTRACE("__change_pair: first = %d, last = %d\n", *win->lines[y]->firstchp, *win->lines[y]->lastchp);
-#endif
 			}
+			continue;
+		}
+
+		/* Mark dirty those positions with colour pair "pair" */
+		for (y = 0; y < win->maxy; y++) {
+			lp = curscr->lines[y];
+			for (x = 0; x < win->maxx; x++)
+				if ((lp->line[x].attr & __COLOR) == cl ||
+				    (lp->line[x].battr & __COLOR) == cl) {
+					if (!(lp->flags & __ISDIRTY))
+						lp->flags |= __ISDIRTY;
+					/*
+					 * firstchp/lastchp are shared
+					 * between parent window and
+					 * sub-window.
+					 */
+					if (*lp->firstchp > x)
+						*lp->firstchp = x;
+					if (*lp->lastchp < x)
+						*lp->lastchp = x;
+				}
+#ifdef DEBUG
+			if ((win->lines[y]->flags & __ISDIRTY))
+				__CTRACE("__change_pair: first = %d, last = %d\n", *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+#endif
 		}
 	}
 }
