@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.221 2000/05/31 01:46:15 nisimura Exp $	*/
+/*	$NetBSD: locore.s,v 1.222 2000/05/31 05:09:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_oldboot.h"
+#include "opt_multiprocessor.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -1940,6 +1941,13 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * p->p_cpu = curcpu()
+	 * XXXSMP
+	 */
+#endif
 
 	/* Record new process. */
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 2000/05/26 21:20:20 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 2000/05/31 05:09:19 thorpej Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -74,6 +74,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_multiprocessor.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -7208,6 +7209,12 @@ Lsw_scan:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXXSMP
+	 * p->p_cpu = curcpu();
+	 */
+#endif
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%g3 + P_STAT]
 	sethi	%hi(_C_LABEL(want_resched)), %o0
