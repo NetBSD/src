@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.25 2002/12/05 04:56:57 junyoung Exp $	 */
+/*	$NetBSD: map_object.c,v 1.26 2003/02/06 12:38:17 fvdl Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -84,6 +84,11 @@ _rtld_map_object(path, fd, sb)
 	caddr_t		 clear_addr;
 	size_t		 nclear;
 #endif
+
+	if (sb != NULL && sb->st_size < sizeof (Elf_Ehdr)) {
+		_rtld_error("%s: unrecognized file format", path);
+		return NULL;
+	}
 
 	obj = _rtld_obj_new();
 	obj->path = path;
