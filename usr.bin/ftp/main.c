@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,8 @@ main(argc, argv)
 	progress = 0;
 #ifndef SMALL
 	editing = 0;
+	el = NULL;
+	hist = NULL;
 #endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
@@ -188,33 +190,8 @@ main(argc, argv)
 		(void)strcpy(home, pw->pw_dir);
 	}
 
-#ifndef SMALL
-	if (editing) {
-		el = el_init(__progname, stdin, stdout); /* init editline */
-
-		hist = history_init();		/* init the builtin history */
-		history(hist, H_EVENT, 100);	/* remember 100 events */
-		el_set(el, EL_HIST, history, hist);	/* use history */
-
-		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
-		el_set(el, EL_PROMPT, prompt);	/* set the prompt function */
-
-		/* add local file completion, bind to TAB */
-		el_set(el, EL_ADDFN, "ftp-complete",
-		    "Context sensitive argument completion",
-		    complete);
-		el_set(el, EL_BIND, "^I", "ftp-complete", NULL);
-
-		el_source(el, NULL);	/* read ~/.editrc */
-	}
-#endif /* !SMALL */
-
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
-#ifndef SMALL
-	if (editing)
-		el_set(el, EL_SIGNAL, 1);
-#endif /* !SMALL */
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
@@ -237,6 +214,9 @@ main(argc, argv)
 			setpeer(argc+1, xargv);
 		}
 	}
+#ifndef SMALL
+	controlediting();
+#endif /* !SMALL */
 	top = setjmp(toplevel) == 0;
 	if (top) {
 		(void)signal(SIGINT, (sig_t)intr);
