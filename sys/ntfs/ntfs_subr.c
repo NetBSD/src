@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.16 1999/09/29 15:58:28 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.17 1999/09/30 16:56:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -382,7 +382,6 @@ restart:
  *
  * ntnode returned locked
  */
-static int ntfs_ntnode_hash_lock;
 int
 ntfs_ntlookup(
 	   struct ntfsmount * ntmp,
@@ -394,25 +393,14 @@ ntfs_ntlookup(
 	dprintf(("ntfs_ntlookup: for ntnode %d\n", ino));
 	*ipp = NULL;
 
-restart:
-	ip = ntfs_nthashlookup(ntmp->ntm_dev, ino); /* XXX */
-	if (ip) {
-		ntfs_ntget(ip);
-		*ipp = ip;
-		dprintf(("ntfs_ntlookup: ntnode %d: %p, usecount: %d\n",
-			ino, ip, ip->i_usecount));
-
-		return (0);
-	}
-
-	if (ntfs_ntnode_hash_lock) {
-		while(ntfs_ntnode_hash_lock) {
-			ntfs_ntnode_hash_lock = -1;
-			tsleep(&ntfs_ntnode_hash_lock, PVM, "ntfsntgt", 0);
+	do {
+		if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+			ntfs_ntget(*ipp);
+			dprintf(("ntfs_ntlookup: ntnode %d: %p, usecount: %d\n",
+				ino, ip, ip->i_usecount));
+			return (0);
 		}
-		goto restart;
-	}
-	ntfs_ntnode_hash_lock = 1;
+	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
@@ -434,9 +422,7 @@ restart:
 
 	ntfs_nthashins(ip);
 
-	if (ntfs_ntnode_hash_lock < 0)
-		wakeup(&ntfs_ntnode_hash_lock);
-	ntfs_ntnode_hash_lock = 0;
+	lockmgr(&ntfs_hashlock, LK_RELEASE, 0);
 
 	*ipp = ip;
 
