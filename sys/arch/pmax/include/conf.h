@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5 2001/08/26 11:47:24 simonb Exp $	*/
+/*	$NetBSD: conf.h,v 1.6 2002/02/27 01:19:07 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -18,9 +18,7 @@
 #ifndef _PMAX_CONF_H_
 #define _PMAX_CONF_H_
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+#include <sys/conf.h>
 
 cdev_decl(scc);		/* pmax (also alpha m-d z8530 SCC */
 cdev_decl(dc);		/* dc7085 dz11-on-a-chip */
