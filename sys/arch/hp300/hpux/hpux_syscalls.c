@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: hpux_syscalls.c 1.1 90/07/09$
- *
+ *	from: Utah Hdr: hpux_syscalls.c 1.1 90/07/09
  *	from: @(#)hpux_syscalls.c	7.2 (Berkeley) 12/5/90
- *	$Id: hpux_syscalls.c,v 1.2 1993/05/22 07:58:08 cgd Exp $
+ *	$Id: hpux_syscalls.c,v 1.3 1993/09/02 19:05:41 mycroft Exp $
  */
 
 #ifdef HPUXCOMPAT
