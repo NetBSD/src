@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2000/02/25 03:38:59 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2000/02/27 05:47:34 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -116,9 +116,15 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("FreeStyle(Small Font)"), BIFB_D2_M2L_3x2,
 		640, 240, 80, 0xa000000,
 		PLATID_CPU_MIPS_VR_41XX, PLATID_MACH_EVEREX_FREESTYLE_AXX },
-	{ TEXT("MobileGear MC-CS1X"), BIFB_D2_M2L_0,
+	{ TEXT("MobileGear MC-CS11"), BIFB_D2_M2L_0,
 		480, 240, 256, 0xa000000,
-		PLATID_CPU_MIPS_VR_4102, PLATID_MACH_NEC_MCCS_1X },
+		PLATID_CPU_MIPS_VR_4102, PLATID_MACH_NEC_MCCS_11 },
+	{ TEXT("MobileGear MC-CS12"), BIFB_D2_M2L_0,
+		480, 240, 256, 0xa000000,
+		PLATID_CPU_MIPS_VR_4102, PLATID_MACH_NEC_MCCS_12 },
+	{ TEXT("MobileGear MC-CS13"), BIFB_D2_M2L_0,
+		480, 240, 256, 0xa000000,
+		PLATID_CPU_MIPS_VR_4102, PLATID_MACH_NEC_MCCS_13 },
 	{ TEXT("MobileGearII MC-R300"), BIFB_D2_M2L_0,
 		640, 240, 256, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_NEC_MCR_300 },
@@ -503,7 +509,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		 */
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.10.1 2000.02.09\r\n")
+			       TEXT("Version 1.10.2 2000.02.27\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
