@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 1998/08/18 18:59:46 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.12 1998/08/27 21:42:20 tv Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -16,8 +16,7 @@ GNU_ARCH.powerpc=rs6000
 
 DIST=		${.CURDIR}/../../../dist/gcc
 COMMON=		${.CURDIR}/../common
-COMMONOBJ!=	cd ${.CURDIR}/../common; \
-	 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+COMMONOBJ!=	cd ${.CURDIR}/../common; ${MAKE} print-objdir
 
 CPPFLAGS+=	-I${.CURDIR}/../arch \
 		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
