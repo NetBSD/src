@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.45 2003/05/03 18:25:30 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.46 2003/05/21 22:48:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -85,6 +85,7 @@
 
 /* Kernel text starts at the base of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.

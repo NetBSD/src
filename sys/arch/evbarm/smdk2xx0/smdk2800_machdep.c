@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.10 2003/05/17 23:47:01 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.11 2003/05/21 22:48:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -164,6 +164,7 @@
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /* Memory disk support */
 #if defined(MEMORY_DISK_DYNAMIC) && defined(MEMORY_DISK_ROOT_ADDR)
