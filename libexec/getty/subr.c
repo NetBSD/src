@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.19 1996/07/31 20:40:36 thorpej Exp $	*/
+/*	$NetBSD: subr.c,v 1.20 1996/09/27 02:15:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: subr.c,v 1.19 1996/07/31 20:40:36 thorpej Exp $";
+static char rcsid[] = "$NetBSD: subr.c,v 1.20 1996/09/27 02:15:35 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ static char rcsid[] = "$NetBSD: subr.c,v 1.19 1996/07/31 20:40:36 thorpej Exp $"
  * Melbourne getty.
  */
 #define COMPAT_43
+#include <sys/param.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -557,7 +558,7 @@ adelay(ms, dp)
 }
 #endif
 
-char	editedhost[32];
+char	editedhost[MAXHOSTNAMELEN];
 
 void
 edithost(pat)
