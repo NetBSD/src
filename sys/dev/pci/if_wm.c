@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.7 2002/05/08 21:43:10 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.8 2002/05/09 00:41:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -228,6 +228,7 @@ struct wm_softc {
 	/* Event counters. */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
+	struct evcnt sc_ev_txforceintr;	/* Tx interrupts forced */
 	struct evcnt sc_ev_txdw;	/* Tx descriptor interrupts */
 	struct evcnt sc_ev_txqe;	/* Tx queue empty interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
@@ -852,6 +853,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdstall");
+	evcnt_attach_dynamic(&sc->sc_ev_txforceintr, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txforceintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txdw, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "txdw");
 	evcnt_attach_dynamic(&sc->sc_ev_txqe, EVCNT_TYPE_INTR,
@@ -1216,11 +1219,12 @@ wm_start(struct ifnet *ifp)
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
 		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
-		if (sc->sc_txwin < (WM_NTXDESC * 2 / 3))
-			sc->sc_txdescs[lasttx].wtx_cmdlen |=
-			    htole32(WTX_CMD_IDE);
-		else
+		if (sc->sc_txwin >= (WM_NTXDESC * 2 / 3)) {
+			WM_EVCNT_INCR(&sc->sc_ev_txforceintr);
+			sc->sc_txdescs[lasttx].wtx_cmdlen &=
+			    htole32(~WTX_CMD_IDE);
 			sc->sc_txwin = 0;
+		}
 
 #if 0 /* XXXJRT */
 		/*
@@ -1858,14 +1862,14 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, sizeof(sc->sc_txdescs));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
-		CSR_WRITE(sc, WMREG_OLD_TIDV, 64);
+		CSR_WRITE(sc, WMREG_OLD_TIDV, 1024);
 	} else {
 		CSR_WRITE(sc, WMREG_TBDAH, 0);
 		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, sizeof(sc->sc_txdescs));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 64);
+		CSR_WRITE(sc, WMREG_TIDV, 1024);
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
