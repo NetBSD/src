@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.20 1998/02/19 00:27:01 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.21 1998/04/09 00:32:39 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "config.h"
-#include "y.tab.h"
+#include "gram.h"
 
 int	yyline;
 const char *yyfile;

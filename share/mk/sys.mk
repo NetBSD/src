@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.39 1998/04/01 16:58:33 tv Exp $
+#	$NetBSD: sys.mk,v 1.40 1998/04/09 00:32:36 tv Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -76,7 +76,7 @@ SIZE?=		size
 TSORT?= 	tsort -q
 
 YACC?=		yacc
-YFLAGS?=	-d
+YFLAGS?=
 YACC.y?=	${YACC} ${YFLAGS}
 
 # C

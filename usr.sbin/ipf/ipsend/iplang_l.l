@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.3 1997/11/14 12:58:21 mrg Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.4 1998/04/09 00:32:40 tv Exp $	*/
 
 %e 1500
 %p 4000
@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include "y.tab.h"
+#include "iplang_y.h"
 #include <netinet/ip_compat.h>
 #include "ipf.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.18 1998/04/01 16:58:33 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.19 1998/04/09 00:32:36 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -48,8 +48,24 @@ HOST_LDFLAGS?=
 	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
 	rm -f ${.TARGET:R}.yy.c
+.endif
 
 # Yacc
+.if defined(YHEADER)
+YFLAGS+=-d
+.y:
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
+	rm -f ${.TARGET:R}.tab.c ${.TARGET:R}.tab.h
+.y.h .y.c:
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	mv ${.TARGET:R}.tab.c ${.TARGET:R}.c
+	mv ${.TARGET:R}.tab.h ${.TARGET:R}.h
+.y.o:
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
+	rm -f ${.TARGET:R}.tab.c ${TARGET:R}.tab.h
+.elif defined(PARALLEL)
 .y:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}

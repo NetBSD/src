@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.14 1998/02/22 15:40:40 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.15 1998/04/09 00:32:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.14 1998/02/22 15:40:40 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.15 1998/04/09 00:32:38 tv Exp $");
 #endif
 
 #include <stdlib.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: tree.c,v 1.14 1998/02/22 15:40:40 christos Exp $");
 #include <math.h>
 
 #include "lint1.h"
-#include "y.tab.h"
+#include "cgram.h"
 
 /* Various flags for each operator. */
 static	mod_t	modtab[NOPS];

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/23 02:53:50 lukem Exp $	
+#	$NetBSD: Makefile,v 1.16 1998/04/09 00:32:35 tv Exp $	
 
 LIB=	pcap
 MAN=	pcap.3 
@@ -11,9 +11,10 @@ CPPFLAGS+=-DHAVE_ETHER_HOSTTON=1 -DHAVE_STRERROR=1 -DHAVE_SOCKADDR_SA_LEN=1
 CFPPLAGS+=-DLBL_ALIGN=1
 LFLAGS+=-olex.yy.c -Ppcap_
 YFLAGS+=-ppcap_
+YHEADER=1
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
-inet.c grammar.y gencode.c etherent.c bpf_image.c 
+	inet.c grammar.y gencode.c etherent.c bpf_image.c 
 SRCS+=	bpf_filter.c version.c
 
 .PATH:	${.CURDIR}/../../sys/net
@@ -21,10 +22,6 @@ SRCS+=	bpf_filter.c version.c
 INCS=	pcap-namedb.h pcap.h 
 INCSDIR=/usr/include
 
-CLEANFILES+= y.tab.h
-
-scanner.c:	y.tab.h
-
-y.tab.c y.tab.h: grammar.c
+scanner.c: grammar.h
 
 .include <bsd.lib.mk>

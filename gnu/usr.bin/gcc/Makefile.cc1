@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cc1,v 1.7 1997/10/25 10:10:52 lukem Exp $
+#	$NetBSD: Makefile.cc1,v 1.8 1998/04/09 00:32:34 tv Exp $
 
 NOMAN=
 
@@ -9,8 +9,6 @@ COMMON!=cd $(.CURDIR)/../common; \
 
 CPPFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
-
-YFLAGS=
 
 LDADD+=	-L${COMMON} -lcc1 -lgnumalloc
 DPADD+=	${COMMON}/libcc1.a ${LIBGNUMALLOC}

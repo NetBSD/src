@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 1998/03/30 12:06:48 veego Exp $
+#	$NetBSD: Makefile,v 1.41 1998/04/09 00:32:31 tv Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -13,6 +13,7 @@ LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
+YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 

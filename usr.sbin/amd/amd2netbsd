@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.12 1998/04/07 19:33:09 tv Exp $
+#	$NetBSD: amd2netbsd,v 1.13 1998/04/09 00:32:39 tv Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -402,14 +402,10 @@ DPADD += ${LIBAMU}/libamu.a ${LIBRPCSVC} ${LIBL}
 PROG= amd
 %% srcs amd
 MAN+= amd.8
-CLEANFILES+=conf_tok.c conf_parse.c conf_parse.h y.tab.h
+YHEADER=1
+CLEANFILES+=conf_tok.c conf_parse.c conf_parse.h
 
 conf_tok.o: conf_parse.h
-
-conf_parse.c conf_parse.h: conf_parse.y
-	${YACC} -d ${.ALLSRC}
-	mv y.tab.c conf_parse.c
-	mv y.tab.h conf_parse.h
 
 .include <bsd.prog.mk>
 %% file usr.sbin/amd/amq/Makefile
@@ -458,14 +454,10 @@ MAN+= wire-test.8
 PROG= fsinfo
 %% srcs fsinfo
 MAN+= fsinfo.8
-CLEANFILES+=fsi_lex.c fsi_gram.c fsi_gram.h y.tab.h
+YHEADER=1
+CLEANFILES+=fsi_lex.c fsi_gram.c fsi_gram.h
 
 fsi_lex.o: fsi_gram.h
-
-fsi_gram.c fsi_gram.h: fsi_gram.y
-	${YACC} -d ${.ALLSRC}
-	mv y.tab.c fsi_gram.c
-	mv y.tab.h fsi_gram.h
 
 .include <bsd.prog.mk>
 %% file usr.sbin/amd/libamu/Makefile

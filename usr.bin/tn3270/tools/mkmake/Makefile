@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/03/04 13:16:14 christos Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/09 00:32:38 tv Exp $
 
 PROG=	mkmake
-
-CLEANFILES+=mkmake.c y.tab.h
+SRCS=	mkmake.y
 
 .include <bsd.prog.mk>
 

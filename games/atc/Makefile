@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.16 1998/02/18 22:37:30 jtc Exp $
+#	$NetBSD: Makefile,v 1.17 1998/04/09 00:32:32 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
 CPPFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
-SRCS=	extern.c grammar.c graphics.c input.c lex.c list.c log.c \
+SRCS=	extern.c grammar.y graphics.c input.c lex.l list.c log.c \
 	main.c tunable.c update.c
+YHEADER=1
 MAN=	atc.6
 LDADD=	-ll -lm -lcurses
 DPADD=	${LIBL} ${LIBM} ${LIBCURSES}
 GAMES=	ATC_scores Game_List Killer crossover default easy game_2 \
 	Atlantis OHare Tic-Tac-Toe airports box crosshatch game_3 \
 	game_4 novice two-corners
-CLEANFILES=grammar.c y.tab.h lex.c
 HIDEGAME=hidegame
 SETGIDGAME=yes
 FILES=${GAMES:S@^@${.CURDIR}/games/@g}

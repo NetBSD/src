@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.2 1997/07/30 22:55:26 jtc Exp $	*/
+/*	$NetBSD: scan.l,v 1.3 1998/04/09 00:32:41 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "y.tab.h"
+#include "gram.h"
 #include "acl.h"
 
 int	yyline;

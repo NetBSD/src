@@ -12,6 +12,7 @@ LDADD=	-lm -ly -ll
 DPADD=	${LIBM} ${LIBY} ${LIBL}
 
 CFLAGS+= -I. -g
+YFLAGS+= -d
 
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison

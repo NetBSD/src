@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.2 1997/11/09 20:59:18 phil Exp $	*/
+/*	$NetBSD: scan.l,v 1.3 1998/04/09 00:32:37 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "defs.h"
-#include "y.tab.h"
+#include "parse.h"
 
 static int level; 	/* For nested comments. */
 static int comstart;	/* line number of comment start. */

@@ -1,20 +1,18 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/13 21:01:57 phil Exp $
+#	$NetBSD: Makefile,v 1.5 1998/04/09 00:32:34 tv Exp $
 
 PROG=	cc1plus
-SRCS=	parse.c call.c decl.c errfn.c expr.c \
+SRCS=	parse.y call.c decl.c errfn.c expr.c \
 	pt.c sig.c typeck2.c class.c decl2.c \
 	error.c gc.c lex.c ptree.c spew.c \
 	typeck.c cvt.c edsel.c except.c init.c \
-	method.c search.c tree.c xref.c repo.c \
-	
-lex.o pt.o spew.o: parse.h
+	method.c search.c tree.c xref.c repo.c
+YHEADER=1
 
-CLEANFILES+=	parse.c parse.h
+lex.c pt.c spew.c: parse-h
 
-parse.c parse.h: parse.y
-	$(YACC) -d $(.IMPSRC)
-	grep '^#define[         ]*YYEMPTY' y.tab.c >>y.tab.h
-	mv -f y.tab.c parse.c
-	mv -f y.tab.h parse.h
+parse-h: parse.h
+	grep '^#define[         ]*YYEMPTY' parse.c >>parse.h
+	@touch parse-h
+CLEANFILES+= parse-h
 
 .include "../Makefile.cc1"
