@@ -1,4 +1,4 @@
-;	$NetBSD: siop2_script.ss,v 1.2 1999/03/13 19:42:52 is Exp $
+;	$NetBSD: siop2_script.ss,v 1.3 1999/03/26 22:50:23 mhitch Exp $
 
 ;
 ; Copyright (c) 1998 Michael L. Hitch
@@ -41,8 +41,8 @@ ABSOLUTE ds_Status	= ds_Cmd + 8
 ABSOLUTE ds_Msg		= ds_Status + 8
 ABSOLUTE ds_MsgIn	= ds_Msg + 8
 ABSOLUTE ds_ExtMsg	= ds_MsgIn + 8
-ABSOLUTE ds_SyncMsg	= ds_ExtMsg + 8
-ABSOLUTE ds_Data1	= ds_SyncMsg + 8
+ABSOLUTE ds_NegMsg	= ds_ExtMsg + 8
+ABSOLUTE ds_Data1	= ds_NegMsg + 8
 ABSOLUTE ds_Data2	= ds_Data1 + 8
 ABSOLUTE ds_Data3	= ds_Data2 + 8
 ABSOLUTE ds_Data4	= ds_Data3 + 8
@@ -63,12 +63,14 @@ ABSOLUTE err7		= 0xff07
 ABSOLUTE err8		= 0xff08
 ABSOLUTE err9		= 0xff09
 ABSOLUTE err10		= 0xff0a
+ABSOLUTE err11		= 0xff0b
 
 ENTRY	scripts
 ENTRY	switch
 ENTRY	wait_reselect
 ENTRY	dataout
 ENTRY	datain
+ENTRY	clear_ack
 
 PROC	siopng_scripts:
 
@@ -95,8 +97,10 @@ msgin:
 	JUMP REL(msg_rdp), IF 0x03	; restore data pointers
 	INT err6			; unrecognized message
 
-msg_rdp:
 msg_rej:
+; Do we need to interrupt host here to let it handle the reject?
+msg_rdp:
+clear_ack:
 	CLEAR ACK
 	CLEAR ATN
 	JUMP REL(switch)
@@ -104,12 +108,17 @@ msg_rej:
 ext_msg:
 	CLEAR ACK
 	MOVE FROM ds_ExtMsg, WHEN MSG_IN
-	JUMP REL(sync_msg), IF 0x03
+	JUMP REL(neg_msg), IF 0x03	; extended message might be SDTR
+	JUMP REL(neg_msg), IF 0x02	; extended message might be WDTR
 	int err7			; extended message not SDTR
 
-sync_msg:
+neg_msg:
 	CLEAR ACK
-	MOVE FROM ds_SyncMsg, WHEN MSG_IN
+	MOVE FROM ds_NegMsg, WHEN MSG_IN
+	int err11			; Let host handle the message
+; If we continue from the interrupt, the host has set up a response
+; message to be sent.  Set ATN, clear ACK, and continue.
+	SET ATN
 	CLEAR ACK
 	JUMP REL(switch)
 

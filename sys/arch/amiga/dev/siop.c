@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.39 1998/07/04 22:18:17 jonathan Exp $	*/
+/*	$NetBSD: siop.c,v 1.40 1999/03/26 22:50:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -746,9 +746,14 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 	acb->ds.synmsgbuf = (char *) kvtop(&acb->msg[3]);
 	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
 
-	if (sc->sc_sync[target].state == SYNC_START) {
+	/*
+	 * Negotiate wide is the initial negotiation state;  since the 53c710
+	 * doesn't do wide transfers, just begin the synchronous transfer
+	 * negotation here.
+	 */
+	if (sc->sc_sync[target].state == NEG_WIDE) {
 		if (siop_inhibit_sync[target]) {
-			sc->sc_sync[target].state = SYNC_DONE;
+			sc->sc_sync[target].state = NEG_DONE;
 			sc->sc_sync[target].sbcl = 0;
 			sc->sc_sync[target].sxfer = 0;
 #ifdef DEBUG
@@ -768,7 +773,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 			acb->msgout[5] = SIOP_MAX_OFFSET;
 			acb->ds.idlen = 6;
-			sc->sc_sync[target].state = SYNC_SENT;
+			sc->sc_sync[target].state = NEG_WAITS;
 #ifdef DEBUG
 			if (siopsync_debug)
 				printf ("Sending sync request to target %d\n", target);
@@ -918,20 +923,48 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		}
 #endif
 		target = acb->xs->sc_link->scsipi_scsi.target;
-		if (sc->sc_sync[target].state == SYNC_SENT) {
-#ifdef DEBUG
-			if (siopsync_debug)
-				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
-				    acb->msg[0], acb->msg[1], acb->msg[2],
-				    acb->msg[3], acb->msg[4], acb->msg[5]);
-#endif
+		if (sc->sc_sync[target].state == NEG_WAITS) {
 			if (acb->msg[1] == 0xff)
 				printf ("%s: target %d ignored sync request\n",
 				    sc->sc_dev.dv_xname, target);
 			else if (acb->msg[1] == MSG_REJECT)
 				printf ("%s: target %d rejected sync request\n",
 				    sc->sc_dev.dv_xname, target);
-			sc->sc_sync[target].state = SYNC_DONE;
+			else
+/* XXX - need to set sync transfer parameters */
+				printf("%s: target %d (sync) %02x %02x %02x\n",
+				    sc->sc_dev.dv_xname, target, acb->msg[1],
+				    acb->msg[2], acb->msg[3]);
+			sc->sc_sync[target].state = NEG_DONE;
+		}
+		dma_cachectl(&acb->stat[0], 1);
+		*status = acb->stat[0];
+#ifdef DEBUG
+		if (rp->siop_sbcl & SIOP_BSY) {
+			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
+			    rp, &scripts, &acb->ds);*/
+#ifdef DDB
+			/*Debugger();*/
+#endif
+		}
+		if (acb->msg[0] != 0x00)
+			printf("%s: message was not COMMAND COMPLETE: %x\n",
+			    sc->sc_dev.dv_xname, acb->msg[0]);
+#endif
+		if (sc->nexus_list.tqh_first)
+			rp->siop_dcntl |= SIOP_DCNTL_STD;
+		return 1;
+	}
+	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0b) {
+		target = acb->xs->sc_link->scsipi_scsi.target;
+		if (acb->msg[1] == MSG_EXT_MESSAGE && acb->msg[2] == 3 &&
+		    acb->msg[3] == MSG_SYNC_REQ) {
+#ifdef DEBUG
+			if (siopsync_debug)
+				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
+				    acb->msg[0], acb->msg[1], acb->msg[2],
+				    acb->msg[3], acb->msg[4], acb->msg[5]);
+#endif
 			sc->sc_sync[target].sxfer = 0;
 			sc->sc_sync[target].sbcl = 0;
 			if (acb->msg[2] == 3 &&
@@ -964,24 +997,18 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 				    acb->msg[4] * 4, acb->msg[5]);
 				scsi_period_to_siop (sc, target);
 			}
-		}
-		dma_cachectl(&acb->stat[0], 1);
-		*status = acb->stat[0];
-#ifdef DEBUG
-		if (rp->siop_sbcl & SIOP_BSY) {
-			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
-			    rp, &scripts, &acb->ds);*/
-#ifdef DDB
-			/*Debugger();*/
-#endif
-		}
-		if (acb->msg[0] != 0x00)
-			printf("%s: message was not COMMAND COMPLETE: %x\n",
-			    sc->sc_dev.dv_xname, acb->msg[0]);
-#endif
-		if (sc->nexus_list.tqh_first)
+			rp->siop_sxfer = sc->sc_sync[target].sxfer;
+			rp->siop_sbcl = sc->sc_sync[target].sbcl;
+			if (sc->sc_sync[target].state == NEG_WAITS) {
+				sc->sc_sync[target].state = NEG_DONE;
+				rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
+				return(0);
+			}
 			rp->siop_dcntl |= SIOP_DCNTL_STD;
-		return 1;
+			sc->sc_sync[target].state = NEG_DONE;
+			return (0);
+		}
+		/* XXX - not SDTR message */
 	}
 	if (sstat0 & SIOP_SSTAT0_M_A) {		/* Phase mismatch */
 #ifdef DEBUG

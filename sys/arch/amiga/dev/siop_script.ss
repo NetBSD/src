@@ -1,4 +1,4 @@
-;	$NetBSD: siop_script.ss,v 1.3 1995/08/18 15:28:11 chopps Exp $
+;	$NetBSD: siop_script.ss,v 1.4 1999/03/26 22:50:26 mhitch Exp $
 
 ;
 ; Copyright (c) 1995 Michael L. Hitch
@@ -32,6 +32,8 @@
 
 ; NCR 53c710 script
 ;
+ARCH 710
+;
 ABSOLUTE ds_Device	= 0
 ABSOLUTE ds_MsgOut 	= ds_Device + 4
 ABSOLUTE ds_Cmd		= ds_MsgOut + 8
@@ -61,12 +63,14 @@ ABSOLUTE err7		= 0xff07
 ABSOLUTE err8		= 0xff08
 ABSOLUTE err9		= 0xff09
 ABSOLUTE err10		= 0xff0a
+ABSOLUTE err11		= 0xff0b
 
 ENTRY	scripts
 ENTRY	switch
 ENTRY	wait_reselect
 ENTRY	dataout
 ENTRY	datain
+ENTRY	clear_ack
 
 PROC	scripts:
 
@@ -93,8 +97,10 @@ msgin:
 	JUMP REL(msg_rdp), IF 0x03	; restore data pointers
 	INT err6			; unrecognized message
 
-msg_rdp:
 msg_rej:
+; Do we need to interrupt host here to let it handle the reject?
+msg_rdp:
+clear_ack:
 	CLEAR ACK
 	CLEAR ATN
 	JUMP REL(switch)
@@ -108,6 +114,10 @@ ext_msg:
 sync_msg:
 	CLEAR ACK
 	MOVE FROM ds_SyncMsg, WHEN MSG_IN
+	int err11			; Let host handle the message
+; If we continue from the interrupt, the host has set up a response
+; message to be sent.  Set ATN, clear ACK, and continue.
+	SET ATN
 	CLEAR ACK
 	JUMP REL(switch)
 

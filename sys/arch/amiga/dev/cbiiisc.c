@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.2 1999/03/09 20:25:46 is Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.3 1999/03/26 22:50:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -140,7 +140,7 @@ cbiiiscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &cbiiisc_scsidev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7 /*15*/;
+	sc->sc_link.scsipi_scsi.max_target = 15;
 	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
