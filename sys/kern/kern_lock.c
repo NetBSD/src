@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.69 2003/01/18 10:06:27 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.70 2003/01/19 14:40:55 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.69 2003/01/18 10:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.70 2003/01/19 14:40:55 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1060,7 +1060,9 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 
 #if defined(MULTIPROCESSOR) /* { */
 	/* Acquire the lock before modifying any fields. */
+	splx(s);
 	__cpu_simple_lock(&alp->lock_data);
+	s = spllock();
 #else
 	alp->lock_data = __SIMPLELOCK_LOCKED;
 #endif /* } */
