@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.14 2003/05/03 18:10:50 wiz Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.15 2004/12/07 21:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -209,7 +209,8 @@ typedef struct	req_q {
     struct dma_chain	*dm_last;   /* last DMA-request			    */
     long		xdata_len;  /* length of transfer		    */
     u_char		*xdata_ptr; /* virtual address of transfer	    */
-    struct scsi_generic	xcmd;	    /* command to execute		    */
+    struct scsipi_generic xcmd;	    /* command to execute		    */
+     int                xcmd_len;   /* command length                       */
 } SC_REQ;
 
 /*
@@ -238,7 +239,6 @@ static int  handle_message __P((SC_REQ *, u_int));
 static void ack_message __P((void));
 static void nack_message __P((SC_REQ *, u_char));
 static void finish_req __P((SC_REQ *reqp));
-static int command_size __P((u_char opcode));
 static int  information_transfer __P((struct ncr_softc *));
 static void reselect __P((struct ncr_softc *));
 static int  check_autosense __P((SC_REQ *, int));

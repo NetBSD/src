@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.55 2003/10/30 22:35:38 matt Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.56 2004/12/07 21:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.55 2003/10/30 22:35:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.56 2004/12/07 21:12:42 thorpej Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -92,24 +92,6 @@ static SC_REQ	*free_head = NULL;	/* Free request structures	*/
 /*
  * Inline functions:
  */
-
-/*
- * Determine the size of a SCSI command.
- */
-extern __inline__ int command_size(opcode)
-u_char	opcode;
-{
-	switch ((opcode >> 4) & 0xf) {
-		case 0:
-		case 1:
-			return (6);
-		case 2:
-		case 3:
-			return (10);
-	}
-	return (12);
-}
-
 
 /*
  * Wait for request-line to become active. When it doesn't return 0.
@@ -337,7 +319,8 @@ ncr5380_scsi_request(chan, req, arg)
 		reqp->targ_lun  = xs->xs_periph->periph_lun;
 		reqp->xdata_ptr = (u_char*)xs->data;
 		reqp->xdata_len = xs->datalen;
-		memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
+		memcpy(&reqp->xcmd, xs->cmd, xs->cmdlen);
+		reqp->xcmd_len = xs->cmdlen;
 		reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
 
 #ifdef REAL_DMA
@@ -401,6 +384,7 @@ ncr5380_scsi_request(chan, req, arg)
 			tmp->targ_id = reqp->targ_id;
 			tmp->targ_lun = reqp->targ_lun;
 			bcopy(sense_cmd, &tmp->xcmd, sizeof(sense_cmd));
+			tmp->xcmd_len = sizeof(sense_cmd);
 			tmp->xdata_ptr = (u_char *)&tmp->xs->sense.scsi_sense;
 			tmp->xdata_len = sizeof(tmp->xs->sense.scsi_sense);
 			ncr_test_link |= 1<<tmp->targ_id;
@@ -932,7 +916,7 @@ int	code;
 		 * Try to disconnect from the target.  We cannot leave
 		 * it just hanging here.
 		 */
-		if (!reach_msg_out(sc, sizeof(struct scsi_generic))) {
+		if (!reach_msg_out(sc, sizeof(struct scsipi_generic))) {
 			u_long	len   = 1;
 			u_char	phase = PH_MSGOUT;
 			u_char	msg   = MSG_ABORT;
@@ -1102,7 +1086,7 @@ struct ncr_softc *sc;
 		reqp->msgout = MSG_NOOP;
 		return (-1);
 	   case PH_CMD :
-		len = command_size(reqp->xcmd.opcode);
+		len = reqp->xcmd_len;
 		transfer_pio(&phase, (u_char *)&reqp->xcmd, &len, 0);
 		PID("info_transf5");
 		return (-1);
@@ -1629,6 +1613,7 @@ int	linked;
 		switch (reqp->status & SCSMASK) {
 		    case SCSCHKC:
 			bcopy(sense_cmd, &reqp->xcmd, sizeof(sense_cmd));
+			reqp->xcmd_len = sizeof(sense_cmd);
 			reqp->xdata_ptr = (u_char *)&reqp->xs->sense.scsi_sense;
 			reqp->xdata_len = sizeof(reqp->xs->sense.scsi_sense);
 			reqp->dr_flag  |= DRIVER_AUTOSEN;
@@ -1961,14 +1946,13 @@ struct scsipi_xfer	*xs;
 {
 	u_char	*p1, *p2;
 	int	i;
-	int	sz;
 
 	p1 = (u_char *) xs->cmd;
 	p2 = (u_char *)&xs->sense.scsi_sense;
 	if(*p2 == 0)
 		return;	/* No(n)sense */
-	printf("cmd[%d,%d]: ", xs->cmdlen, sz = command_size(*p1));
-	for (i = 0; i < sz; i++)
+	printf("cmd[%d]: ", xs->cmdlen);
+	for (i = 0; i < xs->cmdlen; i++)
 		printf("%x ", p1[i]);
 	printf("\nsense: ");
 	for (i = 0; i < sizeof(xs->sense.scsi_sense); i++)
