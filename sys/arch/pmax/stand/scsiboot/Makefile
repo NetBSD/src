@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/03/31 07:23:28 simonb Exp $
+#	$NetBSD: Makefile,v 1.12 1999/03/31 07:43:39 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -18,7 +18,8 @@ SRCS+=	bcmp.c
 CLEANFILES+=${PROG}.aout ${PROG}.map mkboot ${ALL}
 .PATH:  ${.CURDIR}/../lib $S/lib/libsa $S/lib/libkern
 
-BOOTDEFADD+=-DBOOTXX -DRELOC=0x${RELOC} -DUFS_NOCLOSE -DUFS_NOSYMLINK \
+BOOTDEFADD+=-DBOOTXX -DRELOC=0x${RELOC} \
+	-DLIBSA_NO_FS_CLOSE -DLIBSA_NO_FS_SYMLINK \
 	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET -DLIBSA_NO_TWIDDLE
 
 ALL=	rzboot bootrz

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1999/03/14 00:57:07 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1999/03/31 07:43:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,13 +46,6 @@
 
 const	struct callback *callv = &callvec;
 
-#ifdef UFS_NOCLOSE
-#define ufs_close	0
-#endif
-#ifdef UFS_NOWRITE
-#define ufs_write	0
-#endif
-
 #ifdef SMALL
 #define rzclose /*(()(struct open_file*))*/0
 #define rzioctl /*(()(struct open_file*, u_long, void*))*/0
@@ -65,6 +58,13 @@ struct devsw devsw[] = {
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+
+#ifdef LIBSA_NO_FS_CLOSE
+#define ufs_close	0
+#endif
+#ifdef LIBSA_NO_FS_WRITE
+#define ufs_write	0
+#endif
 
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
