@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.8 2002/10/12 10:46:24 kent Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.9 2003/09/07 11:27:33 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -81,19 +81,30 @@
 #define		AC97_EXT_AUDIO_DRA		0x0002
 #define		AC97_EXT_AUDIO_SPDIF		0x0004
 #define		AC97_EXT_AUDIO_VRM		0x0008 /* for dedicated mic */
-#define		AC97_EXT_AUDIO_DSA0		0x0010 /* for EXT ID */
-#define		AC97_EXT_AUDIO_DSA1		0x0020 /* for EXT ID */
-#define		AC97_EXT_AUDIO_SPSA0		0x0010 /* for EXT CTRL */
-#define		AC97_EXT_AUDIO_SPSA1		0x0020 /* for EXT CTRL */
+#define		AC97_EXT_AUDIO_DSA_MASK		0x0030 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_DSA00		0x0000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_DSA01		0x0010 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_DSA10		0x0020 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_DSA11		0x0030 /* for EXT ID */
+#define		AC97_EXT_AUDIO_SPSA_MASK	0x0030 /* for EXT CTRL */
+#define		 AC97_EXT_AUDIO_SPSA34		0x0000 /* for EXT CTRL */
+#define		 AC97_EXT_AUDIO_SPSA78		0x0010 /* for EXT CTRL */
+#define		 AC97_EXT_AUDIO_SPSA69		0x0020 /* for EXT CTRL */
+#define		 AC97_EXT_AUDIO_SPSAAB		0x0030 /* for EXT CTRL */
 #define		AC97_EXT_AUDIO_CDAC		0x0040
 #define		AC97_EXT_AUDIO_SDAC		0x0080
 #define		AC97_EXT_AUDIO_LDAC		0x0100
 #define		AC97_EXT_AUDIO_AMAP		0x0200 /* for EXT ID */
-#define		AC97_EXT_AUDIO_REV_11		0x0000 /* for EXT ID */
-#define		AC97_EXT_AUDIO_REV_22		0x0400 /* for EXT ID */
-#define		AC97_EXT_AUDIO_REV_23		0x0800 /* for EXT ID */
 #define		AC97_EXT_AUDIO_REV_MASK		0x0C00 /* for EXT ID */
-#define		AC97_EXT_AUDIO_ID		0xC000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_REV_11		0x0000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_REV_22		0x0400 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_REV_23		0x0800 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_REV_RESERVED11	0x0c00 /* for EXT ID */
+#define		AC97_EXT_AUDIO_ID_MASK		0xC000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_ID_PRIMARY	0x0000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_ID_SECONDARY01	0x4000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_ID_SECONDARY10	0x8000 /* for EXT ID */
+#define		 AC97_EXT_AUDIO_ID_SECONDARY11	0xc000 /* for EXT ID */
 #define		AC97_EXT_AUDIO_MADC		0x0200 /* for EXT CTRL */
 #define		AC97_EXT_AUDIO_SPCV		0x0400 /* for EXT CTRL */
 #define		AC97_EXT_AUDIO_PRI		0x0800 /* for EXT CTRL */
@@ -110,13 +121,13 @@
 #define	AC97_REG_PCM_MIC_ADC_RATE	0x34	/* dedicated mic */
 #define	AC97_REG_CENTER_LFE_MASTER	0x36	/* center + LFE master volume */
 #define	AC97_REG_SURR_MASTER		0x38	/* surround (rear) master vol */
-#define AC97_REG_SPDIF_CRTL		0x3a
+#define AC97_REG_SPDIF_CTRL		0x3a
 #define		AC97_SPDIF_V			0x8000
 #define		AC97_SPDIF_DRS			0x4000
-#define		AC97_SPDIF_SPSR_44K		0x0000
-#define		AC97_SPDIF_SPSR_48K		0x2000
-#define		AC97_SPDIF_SPSR_32K		0x1000
 #define		AC97_SPDIF_SPSR_MASK		0x3000
+#define		 AC97_SPDIF_SPSR_44K		0x0000
+#define		 AC97_SPDIF_SPSR_48K		0x2000
+#define		 AC97_SPDIF_SPSR_32K		0x1000
 #define		AC97_SPDIF_L			0x0800
 #define		AC97_SPDIF_CC_MASK		0x07f0
 #define		AC97_SPDIF_PRE			0x0008
