@@ -105,6 +105,13 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_STRICT_ALIGN)
 
+/* Attempt to enable execute permissions on the stack.  */
+#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+#ifdef L_trampoline
+#undef TRAMPOLINE_SIZE
+#define TRAMPOLINE_SIZE 48
+#endif
+
 /* Override STACK_BOUNDARY to use Altivec compliant one.  */
 #undef STACK_BOUNDARY
 #define STACK_BOUNDARY	128
