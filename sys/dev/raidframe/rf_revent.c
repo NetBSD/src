@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.18 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.19 2004/11/15 17:16:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.18 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.19 2004/11/15 17:16:28 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -73,8 +73,7 @@ rf_ConfigureReconEvent(RF_ShutdownList_t **listp)
  * or will return an event if it is not */
 
 RF_ReconEvent_t *
-rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc,
-		     void (*continueFunc)(void *), void *continueArg)
+rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
@@ -83,10 +82,6 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc,
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
-
-	rctrl->continueFunc = continueFunc;
-	rctrl->continueArg = continueArg;
-
 
 	/* mpsleep timeout value: secs = timo_val/hz.  'ticks' here is
 	   defined as cycle-counter ticks, not softclock ticks */

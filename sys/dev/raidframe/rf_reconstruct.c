@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.76 2004/03/18 16:54:54 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.77 2004/11/15 17:16:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.76 2004/03/18 16:54:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.77 2004/11/15 17:16:28 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -636,7 +636,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 
 		while (reconDesc->numDisksDone < raidPtr->numCol - 1) {
 
-			event = rf_GetNextReconEvent(reconDesc, (void (*) (void *)) rf_ContinueReconstructFailedDisk, reconDesc);
+			event = rf_GetNextReconEvent(reconDesc);
 			RF_ASSERT(event);
 
 			if (ProcessReconEvent(raidPtr, event))
@@ -670,7 +670,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 
 		while (rf_UnitsLeftToReconstruct(raidPtr->reconControl->reconMap) > 0) {
 
-			event = rf_GetNextReconEvent(reconDesc, (void (*) (void *)) rf_ContinueReconstructFailedDisk, reconDesc);
+			event = rf_GetNextReconEvent(reconDesc);
 			RF_ASSERT(event);
 
 			(void) ProcessReconEvent(raidPtr, event);	/* ignore return code */
