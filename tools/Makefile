@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2002/02/23 21:32:27 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.38 2002/02/26 18:15:59 tv Exp $
 
 # XXX Note: NO_DBSYM is a stopgap temporary variable for use
 # with the development of non-NetBSD hosting support.  This will go away.
@@ -25,7 +25,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		makefs menuc mklocale msgc pax pwd_mkdb zic
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
-SUBDIR+=	autoconf
+SUBDIR+=	autoconf gettext
 .endif
 
 .if ${MACHINE} == sparc || ${MACHINE} == sparc64
