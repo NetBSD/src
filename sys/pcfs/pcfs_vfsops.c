@@ -15,15 +15,13 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_vfsops.c,v 1.2 1993/04/29 22:54:33 cgd Exp $
- *
- *  April 6, 1992
- *
+ *  April 6, 1993:
  *	Changed MOUNT_PCFS to MOUNT_MSDOS, this whole package should be renamed
  *	to msdosfs, but I did not have the time to do it.  Some one please do
  *	this and resubmit it to the patchkit!
  *	Rodney W. Grimes
  *
+ *	$Id: pcfs_vfsops.c,v 1.3 1993/05/20 03:34:21 cgd Exp $
  */
 
 #include "param.h"

@@ -15,8 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfsmount.h,v 1.1 1993/04/09 19:38:16 cgd Exp $
- *
+ *	$Id: pcfsmount.h,v 1.2 1993/05/20 03:34:27 cgd Exp $
  */
 
 /*

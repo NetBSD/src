@@ -15,8 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_vnops.c,v 1.2 1993/04/29 22:54:34 cgd Exp $
- *
+ *	$Id: pcfs_vnops.c,v 1.3 1993/05/20 03:34:24 cgd Exp $
  */
 
 #include "param.h"
