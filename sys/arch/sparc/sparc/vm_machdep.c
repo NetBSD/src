@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69 2003/01/09 05:27:09 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.70 2003/01/12 16:29:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -238,8 +238,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 
-		s = splclock();
-		FPU_LOCK();
+		FPU_LOCK(s);
 		if ((cpi = p1->p_md.md_fpu) != NULL) {
 			if (cpi->fpproc != p1)
 				panic("FPU(%d): fpproc %p",
@@ -254,8 +253,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		}
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
 		    sizeof(struct fpstate));
-		FPU_UNLOCK();
-		splx(s);
+		FPU_UNLOCK(s);
 	} else
 		p2->p_md.md_fpstate = NULL;
 
@@ -322,8 +320,7 @@ cpu_exit(p)
 		struct cpu_info *cpi;
 		int s;
 
-		s = splclock();
-		FPU_LOCK();
+		FPU_LOCK(s);
 		if ((cpi = p->p_md.md_fpu) != NULL) {
 			if (cpi->fpproc != p)
 				panic("FPU(%d): fpproc %p",
@@ -336,8 +333,7 @@ cpu_exit(p)
 #endif
 			cpi->fpproc = NULL;
 		}
-		FPU_UNLOCK();
-		splx(s);
+		FPU_UNLOCK(s);
 		free((void *)fs, M_SUBPROC);
 	}
 	switchexit(p);
