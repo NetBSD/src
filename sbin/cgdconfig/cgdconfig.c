@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.12 2004/08/13 15:03:57 tv Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.13 2005/03/30 15:45:56 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.12 2004/08/13 15:03:57 tv Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.13 2005/03/30 15:45:56 elric Exp $");
 #endif
 
 #include <err.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.12 2004/08/13 15:03:57 tv Exp $");
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 
 #include <dev/cgdvar.h>
 
@@ -94,6 +95,7 @@ static int	do_all(const char *, int, char **,
 
 static int	 configure_params(int, const char *, const char *,
 				  struct params *);
+static void	 eliminate_cores(void);
 static bits_t	*getkey(const char *, struct keygen *, int);
 static bits_t	*getkey_storedkey(const char *, struct keygen *, int);
 static bits_t	*getkey_randomkey(const char *, struct keygen *, int, int);
@@ -143,6 +145,7 @@ main(int argc, char **argv)
 	char	cfile[FILENAME_MAX] = "";
 	char	outfile[FILENAME_MAX] = "";
 
+	eliminate_cores();
 	setprogname(*argv);
 	p = params_new();
 	kg = NULL;
@@ -827,4 +830,17 @@ do_all(const char *cfile, int argc, char **argv,
 		words_free(my_argv, my_argc);
 	}
 	return ret;
+}
+
+static void
+eliminate_cores(void)
+{
+	struct rlimit	rlp;
+	int		ret;
+
+	rlp.rlim_cur = 0;
+	rlp.rlim_max = 0;
+	ret = setrlimit(RLIMIT_CORE, &rlp);
+	if (ret)
+		err(EXIT_FAILURE, "Can't disable cores");
 }
