@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.3 2001/04/09 18:59:51 augustss Exp $
+.\"	$NetBSD: ucom.9,v 1.4 2001/04/09 19:12:44 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,11 +49,11 @@ a
 It basically takes two bulk pipes, input and output, and makes
 a tty out of them.
 This is useful for a number of device types, e.g., serial ports
-(
+(see
 .Xr uftdi 4 ),
-modems (
+modems (see
 .Xr umodem 4 ),
-and devices that traditionally look like a tty (
+and devices that traditionally look like a tty (see
 .Xr uvisor 4 ).
 .Pp
 Communication between the real driver and the
@@ -125,18 +125,18 @@ pointer and the
 driver will use a sensible default.
 .Bd -literal
 struct ucom_methods {
-	void (*ucom_get_status)__P((void *sc, int portno, 
+	void (*ucom_get_status)__P((void *sc, int portno,
 				    u_char *lsr, u_char *msr));
 	void (*ucom_set)__P((void *sc, int portno, int reg, int onoff));
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
 	int (*ucom_param)__P((void *sc, int portno, struct termios *));
-	int (*ucom_ioctl)__P((void *sc, int portno, u_long cmd, 
+	int (*ucom_ioctl)__P((void *sc, int portno, u_long cmd,
 			      caddr_t data, int flag, struct proc *p));
 	int (*ucom_open)__P((void *sc, int portno));
 	void (*ucom_close)__P((void *sc, int portno));
-	void (*ucom_read)__P((void *sc, int portno, u_char **ptr, 
+	void (*ucom_read)__P((void *sc, int portno, u_char **ptr,
 			      u_int32_t *count));
 	void (*ucom_write)__P((void *sc, int portno, u_char *to,
 			       u_char *from, u_int32_t *count));
@@ -156,12 +156,12 @@ The contents of these two bytes is exactly as for a 16550 UART.
 Set (or unset) a particular feature of a port.
 .It Fn "int (*ucom_param)" "void *sc, int portno, struct termios *t"
 Set the speed, number of data bit, stop bits, and parity of a port
-according to the 
+according to the
 .Xr termios 4
 struct.
 .It Fn "int (*ucom_ioctl)" "void *sc, int portno, u_long cmd, caddr_t data, int flag, struct proc *p"
 implements any non-standard
-.Xr ioctl 4
+.Xr ioctl 2
 that a device needs.
 .It Fn "int (*ucom_open)" "void *sc, int portno"
 called just before the
