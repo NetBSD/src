@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_inst.c,v 1.1 1995/09/23 17:38:51 thorpej Exp $	*/
+/*	$NetBSD: sys_inst.c,v 1.2 1995/10/04 06:54:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -68,6 +68,7 @@ char line[100];
 extern	u_int opendev;
 extern	char *lowram;
 extern	int noconsole;
+extern	int cons_scode;
 
 char	*kernel_name = "/netbsd";
 
@@ -580,6 +581,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 
 	asm("movl %0,d7" : : "m" (howto));
 	asm("movl %0,d6" : : "m" (opendev));
+	asm("movl %0,d5" : : "m" (cons_scode));
 	asm("movl %0,a5" : : "a" (loadaddr));
 	asm("movl %0,a4" : : "a" (esym));
 	(*((int (*)())entry))();
