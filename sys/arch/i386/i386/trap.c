@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 1998/05/20 16:30:54 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.114 1998/05/27 15:53:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -99,12 +99,7 @@ extern struct emul emul_freebsd;
 static __inline void userret __P((struct proc *, int, u_quad_t));
 void trap __P((struct trapframe));
 #if defined(I386_CPU)
-static int i386_faultrw __P((struct proc *, struct vmspace *, vm_offset_t));
-#if defined(PMAP_NEW)
-int i386_writecheck __P((unsigned, unsigned));
-#else
 int trapwrite __P((unsigned));
-#endif
 #endif
 void syscall __P((struct trapframe));
 
@@ -552,13 +547,22 @@ out:
 /*
  * Compensate for 386 brain damage (missing URKR)
  */
-static __inline int
-i386_faultrw(p, vm, va)
+int
+trapwrite(addr)
+	unsigned addr;
+{
+	vm_offset_t va;
+	unsigned nss;
 	struct proc *p;
 	struct vmspace *vm;
-	vm_offset_t va;
-{
-	unsigned nss = 0;
+
+	va = trunc_page((vm_offset_t)addr);
+	if (va >= VM_MAXUSER_ADDRESS)
+		return 1;
+
+	nss = 0;
+	p = curproc;
+	vm = p->p_vmspace;
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		nss = clrnd(btoc(USRSTACK-(unsigned)va));
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
@@ -580,59 +584,6 @@ i386_faultrw(p, vm, va)
 
 	return 0;
 }
-
-#if defined(PMAP_NEW)
-int
-i386_writecheck(addr, len)
-	unsigned addr, len;
-{
-	vm_offset_t va, eva;
-	pt_entry_t *pde, *pte;
-	struct proc *p = curproc;
-	struct vmspace *vm = p->p_vmspace;
-
-	va = i386_trunc_page((vm_offset_t)addr);
-	eva = i386_round_page(addr + len);
-
-	pde = vtopte(vtopte(va)); /* hmmm */
-
-	while (va < eva) {
-		vm_offset_t endofpde = i386_round_pdr(va);
-		if (endofpde > eva)
-			endofpde = eva;
-
-		pte = vtopte(va);
-
-		if (!(*pde))
-			goto fault;
-
-		while (va < endofpde) {
-			if (!(*pte & PG_RW)) {
-fault:
-				if (i386_faultrw(p, vm, va))
-					return (1);
-			}
-			va += NBPG;
-			pte++;
-		}
-		pde++;
-	}
-	return (0);
-}
-#else
-int
-trapwrite(addr)
-	unsigned addr;
-{
-	vm_offset_t va;
-
-	va = trunc_page((vm_offset_t)addr);
-	if (va >= VM_MAXUSER_ADDRESS)
-		return 1;
-
-	return (i386_faultrw(curproc, curproc->p_vmspace, va));
-}
-#endif /* PMAP_NEW */
 #endif /* I386_CPU */
 
 /*
