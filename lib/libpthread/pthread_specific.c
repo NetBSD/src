@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.3 2003/01/18 18:45:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -188,6 +188,7 @@ pthread_setspecific(pthread_key_t key, const void *value)
 	 * and return it from functions that are const void *, without
 	 * generating a warning. 
 	 */
+	/*LINTED const cast*/
 	self->pt_specific[key] = (void *) value;
 
 	return 0;

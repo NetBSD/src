@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.3 2003/01/18 18:45:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,8 +70,8 @@ pthread__stackalloc(pthread_t *newt)
 	 * then unmapping the unaligned stuff on the edges.
 	 */
 
-	addr = mmap(0, 2 * PT_STACKSIZE, PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, 0);
+	addr = mmap(NULL, 2 * PT_STACKSIZE, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 	if (addr == MAP_FAILED)
 		return ENOMEM;
 
@@ -79,7 +79,7 @@ pthread__stackalloc(pthread_t *newt)
 
 	if ((a & PT_STACKMASK) != 0) {
 		b = (a & ~PT_STACKMASK) + PT_STACKSIZE;
-		ret = munmap((void *)a,  b-a);
+		ret = munmap((void *)a, (size_t)(b-a));
 		if (ret == -1)
 			return ENOMEM;
 	} else {
@@ -89,7 +89,7 @@ pthread__stackalloc(pthread_t *newt)
 	c = b + PT_STACKSIZE;
 	d = a + 2*PT_STACKSIZE;
 
-	ret = munmap((void *)c, d-c);
+	ret = munmap((void *)c, (size_t)(d-c));
 	if (ret == -1)
 		return ENOMEM;
 
@@ -114,15 +114,20 @@ pthread__initmain(pthread_t *newt)
 }
 
 static pthread_t
+/*ARGSUSED*/
 pthread__stackid_setup(void *base, int size)
 {
 	pthread_t t;
-	int pagesize, ret;
+	size_t pagesize;
+	int ret;
 
 	/* Protect the next-to-bottom stack page as a red zone. */
 	/* XXX assumes that the stack grows down. */
-	pagesize = sysconf(_SC_PAGESIZE);
-	ret = mprotect( (char *)base + pagesize, pagesize, PROT_NONE);
+	pagesize = (size_t)sysconf(_SC_PAGESIZE);
+#ifdef __hppa__
+	#error "stack does not grow down"
+#endif
+	ret = mprotect((char *)base + pagesize, pagesize, PROT_NONE);
 	if (ret == -1)
 		err(2, "Couldn't mprotect() stack redzone at %p\n",
 		    (char *)base + pagesize);
@@ -136,7 +141,7 @@ pthread__stackid_setup(void *base, int size)
 	t->pt_stack.ss_size = PT_STACKSIZE - 2 * pagesize;
 
 	/* Set up an initial ucontext pointer to a "safe" area */
-	t->pt_uc =(ucontext_t *) ((char *)t->pt_stack.ss_sp + 
+	t->pt_uc =(ucontext_t *)(void *)((char *)t->pt_stack.ss_sp + 
 	    t->pt_stack.ss_size - (pagesize/2));
 #ifdef _UC_UCONTEXT_ALIGN
 	t->pt_uc = (ucontext_t *)((uintptr_t)t->pt_uc & _UC_UCONTEXT_ALIGN);
