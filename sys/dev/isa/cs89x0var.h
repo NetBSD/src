@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.5 1998/07/27 01:08:51 thorpej Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.6 1998/07/27 01:20:19 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -105,11 +105,21 @@ struct cs_softc {
 };
 
 /*
- * Macros for reading/writing the packet page area.
+ * Inlines for reading/writing the packet page area.
  */
-#define	CS_READ_PACKET_PAGE_IO(iot, ioh, offset)			\
-	(bus_space_write_2((iot), (ioh), PORT_PKTPG_PTR, (offset)),	\
-	 bus_space_read_2((iot), (ioh), PORT_PKTPG_DATA))
+static __inline__ u_int16_t CS_READ_PACKET_PAGE_IO __P((bus_space_tag_t,
+	bus_space_handle_t, int));
+
+static __inline__ u_int16_t
+CS_READ_PACKET_PAGE_IO(iot, ioh, offset)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int offset;
+{
+
+	bus_space_write_2(iot, ioh, PORT_PKTPG_PTR, offset);
+	return (bus_space_read_2(iot, ioh, PORT_PKTPG_DATA));
+}
 
 #define	CS_READ_PACKET_PAGE_MEM(memt, memh, offset)			\
 	bus_space_read_2((memt), (memh), (offset))
