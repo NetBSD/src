@@ -42,7 +42,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.h,v 1.11 93/05/25 10:36:09 torek Exp 
- * $Id: pmap.h,v 1.2 1993/10/11 02:28:28 deraadt Exp $
+ * $Id: pmap.h,v 1.3 1994/02/01 11:58:37 pk Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_
@@ -148,9 +148,10 @@ struct kpmap {
 #define	pm_npte		pmc.pmc_npte
 #define	pm_pte		pmc.pmc_pte
 
+typedef struct pmap *pmap_t;
+
 #ifdef KERNEL
 
-typedef struct pmap *pmap_t;
 #define PMAP_NULL	((pmap_t)0)
 
 extern struct kpmap kernel_pmap_store;
