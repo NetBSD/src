@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.3 1994/10/26 08:02:41 cgd Exp $	*/
+/*      $NetBSD: uba.c,v 1.4 1994/11/25 19:09:31 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -40,6 +40,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include "sys/types.h"
+#include "sys/time.h"
 #include "sys/systm.h"
 #include "sys/param.h"
 #include "sys/map.h"
@@ -616,7 +617,11 @@ ubasetup(int uban,struct buf *bp,int flags) {
 		} else {
 			rp =bp->b_proc;
 		}
-		v = vax_btop(PxTOP0((u_int)bp->b_un.b_addr));
+#if 0
+printf("(u_int)bp->b_un.b_addr %x\n",(u_int)bp->b_un.b_addr);
+asm("halt");
+#endif
+		v = vax_btop((u_int)bp->b_un.b_addr&0x3fffffff);
 		if (bp->b_flags & B_UAREA){
 			printf("B_UAREA\n");
 			asm("halt");
@@ -626,7 +631,19 @@ ubasetup(int uban,struct buf *bp,int flags) {
  * It may be better to use pmap_extract() here somewhere,
  * but so far we do it "the hard way" :)
  */
-			pte=&rp->p_vmspace->vm_pmap.pm_ptab[v];
+			u_int *hej;
+
+			if(((u_int)bp->b_un.b_addr<0x40000000)||
+				((u_int)bp->b_un.b_addr>0x7fffffff)){
+				hej=rp->p_vmspace->vm_pmap.pm_pcb->P0BR;
+			} else {
+				hej=rp->p_vmspace->vm_pmap.pm_pcb->P1BR;
+			}
+			pte=(struct pte*)&hej[v];
+#if 0
+printf("ubasetup: pte %x, *pte %x, addr %x, hej %x\n",pte, *pte, 
+	(u_int)bp->b_un.b_addr, hej);
+#endif
 		}
 	}
 	io = &uh->uh_mr[reg];
