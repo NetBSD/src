@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.645 2003/12/04 19:38:23 atatat Exp $
+#	$NetBSD: files,v 1.646 2003/12/07 05:30:22 dyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1245,6 +1245,7 @@ file	net80211/ieee80211_ioctl.c	wlan
 file	net80211/ieee80211_node.c	wlan
 file	net80211/ieee80211_output.c	wlan
 file	net80211/ieee80211_proto.c	wlan
+file	net80211/ieee80211_rssadapt.c	wlan
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
