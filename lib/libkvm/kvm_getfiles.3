@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getfiles.3,v 1.5 1998/02/05 18:51:43 perry Exp $
+.\"	$NetBSD: kvm_getfiles.3,v 1.6 2002/01/15 02:52:09 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@
 .Sh DESCRIPTION
 .Fn kvm_getfiles
 returns a (sub-)set of the open files in the kernel indicated by
-.Fa kd.
+.Fa kd .
 The
 .Fa op
 and
@@ -78,15 +78,14 @@ saved.
 will return
 .Dv NULL
 on failure.
-.Pp
-.Sh BUGS
-This routine does not belong in the kvm interface.
 .Sh SEE ALSO
 .Xr kvm 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_geterr 3 ,
+.Xr kvm_nlist 3 ,
 .Xr kvm_open 3 ,
 .Xr kvm_openfiles 3 ,
-.Xr kvm_close 3 ,
 .Xr kvm_read 3 ,
-.Xr kvm_write 3 ,
-.Xr kvm_nlist 3 ,
-.Xr kvm_geterr 3
+.Xr kvm_write 3
+.Sh BUGS
+This routine does not belong in the kvm interface.
