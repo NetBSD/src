@@ -1,11 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1999/07/14 22:33:33 sommerfeld Exp $
-#	From FreeBSD:
-#	$Id: Makefile,v 1.1 1999/07/14 22:33:33 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.2 1999/07/23 19:06:54 thorpej Exp $
+
 PROG=	wiconfig
-SRCS=	wiconfig.c
-
-CFLAGS+= -Wall
-
 MAN=	wiconfig.8
 
 .include <bsd.prog.mk>
