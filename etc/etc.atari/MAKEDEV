@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 1996/01/11 21:17:48 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1996/01/11 21:34:48 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -104,8 +104,8 @@ std)
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
-	mknod nvram		c 2 11	; chmod 640 nvram ; chgrp kmem mem
-	mknod reload		c 2 20	; chmod 640 reload ; chgrp kmem mem
+	mknod nvram		c 2 11	; chmod 640 nvram ; chgrp kmem nvram
+	mknod reload		c 2 20	; chmod 640 reload ; chgrp kmem reload
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod null		c 2 2	; chmod 666 null
 	mknod tty		c 1 0	; chmod 666 tty
