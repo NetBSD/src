@@ -100,7 +100,7 @@ restore_inferior_pid (pid)
      void *pid;
 {
   /* XXX terrible type punning, but C doesn't have closures... */
-  inferior_pid = (int)pid; 
+  inferior_pid = (int)pid;
 }
 
 static td_proc_t *main_ta;
@@ -149,42 +149,42 @@ td_err_string (errcode)
 }
 
 static void
-nbsd_thread_activate()
+nbsd_thread_activate ()
 {
   int val;
 
-  val = td_open(&nbsd_thread_callbacks, NULL, &main_ta);
+  val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
   if (val != 0)
-    error("nbsd_thread_create_inferior: td_open: %s",
-	  td_err_string(val));
+    error ("nbsd_thread_create_inferior: td_open: %s",
+	  td_err_string (val));
 
   main_pid = inferior_pid;
   nbsd_thread_active = 1;
-  nbsd_find_new_threads();
-  val = find_active_thread();
+  nbsd_find_new_threads ();
+  val = find_active_thread ();
   if (val == -1)
-    error("No active thread found\n");
+    error ("No active thread found\n");
   inferior_pid = val;
 }
 
 static void
-nbsd_thread_deactivate()
+nbsd_thread_deactivate ()
 {
   inferior_pid = main_pid;
   main_pid = 0;
   cached_thread = 0;
   nbsd_thread_active = 0;
-  init_thread_list();
+  init_thread_list ();
 
-  td_close(main_ta);
+  td_close (main_ta);
 }
 
 static void
-nbsd_thread_attach(args, from_tty)
+nbsd_thread_attach (args, from_tty)
      char *args;
      int from_tty;
 {
-  child_ops.to_attach(args, from_tty);
+  child_ops.to_attach (args, from_tty);
 
   push_target (&nbsd_thread_ops);
 }
@@ -201,7 +201,7 @@ nbsd_thread_post_attach (pid)
   child_ops.to_post_attach (pid);
 
   if (nbsd_thread_present)
-    nbsd_thread_activate();
+    nbsd_thread_activate ();
 }
 
 
@@ -257,29 +257,30 @@ find_active_thread ()
   td_thread_t *thread;
   td_thread_info_t ti;
 
-  val = td_map_lwps(main_ta);
+  val = td_map_lwps (main_ta);
   if (val != 0)
     {
-      warning("find_active_thread: td_map_lwps: %s\n", td_err_string(val));
+      warning ("find_active_thread: td_map_lwps: %s\n", td_err_string (val));
       return -1;
     }
   if (cached_thread != 0)
     return cached_thread;
 
-  val = td_map_lwp2thr(main_ta, 0, &thread);
+  val = td_map_lwp2thr (main_ta, 0, &thread);
   if (val != 0)
     {
-      warning("find_active_thread: td_map_lwp2thr: %s\n", td_err_string(val));
+      warning ("find_active_thread: td_map_lwp2thr: %s\n",
+	       td_err_string (val));
       return -1;
     }
-  val = td_thr_info(thread, &ti);
+  val = td_thr_info (thread, &ti);
   if (val != 0)
     {
-      warning("find_active_thread: td_thr_info: %s\n", td_err_string(val));
+      warning ("find_active_thread: td_thr_info: %s\n", td_err_string (val));
       return -1;
     }
 
-  val = BUILD_THREAD(ti.thread_id, main_pid);
+  val = BUILD_THREAD (ti.thread_id, main_pid);
   cached_thread = val;
   return val;
 }
@@ -307,7 +308,7 @@ nbsd_thread_wait (pid, ourstatus)
     {
       rtnval = find_active_thread ();
       if (rtnval == -1)
-	error("No active thread!\n");
+	error ("No active thread!\n");
       if (!in_thread_list (rtnval))
 	add_thread (rtnval);
     }
@@ -325,24 +326,27 @@ nbsd_thread_fetch_registers (regno)
   struct fpreg fpregs;
   int val;
 
-  if (nbsd_thread_active) {
-    if ((val = td_map_id2thr(main_ta, GET_THREAD(inferior_pid), &thread)) != 0)
-	    error("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
-	  td_err_string(val));
-    if ((val = td_thr_getregs(thread, 0, &gregs)) != 0)
-      error("nbsd_thread_fetch_registers: td_thr_getregs: %s\n", 
-	  td_err_string(val));
-    if ((val = td_thr_getregs(thread, 1, &fpregs)) != 0)
-      error("nbsd_thread_fetch_registers: td_thr_getregs: %s\n", 
-	  td_err_string(val));
-    nbsd_reg_to_internal(&gregs);
-    nbsd_fpreg_to_internal(&fpregs);
-  } else {
-    if (target_has_execution)
-      child_ops.to_fetch_registers (regno);
-    else
-      orig_core_ops.to_fetch_registers (regno);
-  }
+  if (nbsd_thread_active)
+    {
+      if ((val = td_map_id2thr (main_ta, GET_THREAD (inferior_pid), &thread)) != 0)
+	error ("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
+	       td_err_string (val));
+      if ((val = td_thr_getregs (thread, 0, &gregs)) != 0)
+	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
+	       td_err_string (val));
+      if ((val = td_thr_getregs (thread, 1, &fpregs)) != 0)
+	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
+	       td_err_string (val));
+      nbsd_reg_to_internal (&gregs);
+      nbsd_fpreg_to_internal (&fpregs);
+    }
+  else
+    {
+      if (target_has_execution)
+	child_ops.to_fetch_registers (regno);
+      else
+	orig_core_ops.to_fetch_registers (regno);
+    }
 }
 
 static void
@@ -356,22 +360,22 @@ nbsd_thread_store_registers (regno)
 
   if (nbsd_thread_active)
     {
-      val = td_map_id2thr(main_ta, GET_THREAD(inferior_pid), &thread);
+      val = td_map_id2thr (main_ta, GET_THREAD (inferior_pid), &thread);
       if (val != 0)
-	error("nbsd_thread_store_registers: td_map_id2thr: %s\n",
-	      td_err_string(val));		  
+	error ("nbsd_thread_store_registers: td_map_id2thr: %s\n",
+	      td_err_string (val));
 
-      nbsd_internal_to_reg(&gregs);
-      nbsd_internal_to_fpreg(&fpregs);
+      nbsd_internal_to_reg (&gregs);
+      nbsd_internal_to_fpreg (&fpregs);
 
-      val = td_thr_setregs(thread, 0, &gregs);
+      val = td_thr_setregs (thread, 0, &gregs);
       if (val != 0)
-	error("nbsd_thread_store_registers: td_thr_setregs: %s\n",
-	      td_err_string(val));
-      val = td_thr_setregs(thread, 1, &fpregs);
+	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
+	      td_err_string (val));
+      val = td_thr_setregs (thread, 1, &fpregs);
       if (val != 0)
-	error("nbsd_thread_store_registers: td_thr_setregs: %s\n",
-	      td_err_string(val));
+	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
+	      td_err_string (val));
     }
   else
     {
@@ -380,8 +384,6 @@ nbsd_thread_store_registers (regno)
     else
       orig_core_ops.to_store_registers (regno);
     }
-      
-  
 }
 
 
@@ -396,7 +398,7 @@ nbsd_thread_prepare_to_store ()
 {
   struct cleanup *old_chain;
   old_chain = save_inferior_pid ();
-  
+
   if (nbsd_thread_active)
     inferior_pid = main_pid;
 
@@ -460,7 +462,7 @@ nbsd_thread_mourn_inferior ()
   struct cleanup *old_chain;
   old_chain = save_inferior_pid ();
 
-  if (nbsd_thread_active) 
+  if (nbsd_thread_active)
     nbsd_thread_deactivate ();
 
   unpush_target (&nbsd_thread_ops);
@@ -477,7 +479,7 @@ nbsd_pid_to_str (pid)
 {
   static char buf[100];
 
-  sprintf (buf, "Thread %d", GET_THREAD(pid));
+  sprintf (buf, "Thread %d", GET_THREAD (pid));
 
   return buf;
 }
@@ -489,7 +491,7 @@ nbsd_pid_to_str (pid)
    those variables don't show up until the library gets mapped and the symbol
    table is read in.  */
 
-/* This new_objfile event is now managed by a chained function pointer. 
+/* This new_objfile event is now managed by a chained function pointer.
  * It is the callee's responsability to call the next client on the chain.
  */
 
@@ -519,15 +521,15 @@ nbsd_thread_new_objfile (objfile)
   /* Now, initialize the thread debugging library.  This needs to be
      done after the shared libraries are located because it needs
      information from the user's thread library.  */
-  val = td_open(&nbsd_thread_callbacks, NULL, &main_ta);
+  val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
   if (val == TD_ERR_NOLIB)
     goto quit;
   else if (val != 0)
     {
-      warning ("target_new_objfile: td_open: %s", td_err_string(val));
+      warning ("target_new_objfile: td_open: %s", td_err_string (val));
       goto quit;
     }
-  td_close(main_ta);
+  td_close (main_ta);
   nbsd_thread_present = 1;
 
  quit:
@@ -545,19 +547,23 @@ nbsd_thread_alive (pid)
   td_thread_info_t ti;
   int val;
 
-  if (IS_THREAD(pid)) {
-    if (td_map_id2thr (main_ta, GET_THREAD(pid), &th) == 0) {
-      /* Thread found */
-      if (td_thr_info (th, &ti) == 0)
-	return 1;
+  if (IS_THREAD (pid))
+    {
+      if (td_map_id2thr (main_ta, GET_THREAD (pid), &th) == 0)
+	{
+	  /* Thread found */
+	  if (td_thr_info (th, &ti) == 0)
+	    return 1;
+	}
+      return 1;
     }
-    return 1;
-  } else {
-    if (target_has_execution)
-      return child_ops.to_thread_alive (GET_PROCESS(pid));
-    else
-      return orig_core_ops.to_thread_alive (GET_PROCESS(pid));
-  }
+  else
+    {
+      if (target_has_execution)
+	return child_ops.to_thread_alive (GET_PROCESS (pid));
+      else
+	return orig_core_ops.to_thread_alive (GET_PROCESS (pid));
+    }
 }
 
 
@@ -577,8 +583,8 @@ nbsd_find_new_threads_callback (th, ignored)
   if ((retval = td_thr_info (th, &ti)) != 0)
       return -1;
 
-  pid = BUILD_THREAD(ti.thread_id, main_pid);
-  if (ti.thread_type == TD_TYPE_USER && 
+  pid = BUILD_THREAD (ti.thread_id, main_pid);
+  if (ti.thread_type == TD_TYPE_USER &&
       ti.thread_state != TD_STATE_ZOMBIE &&
       !in_thread_list (pid))
     add_thread (pid);
@@ -605,8 +611,8 @@ nbsd_find_new_threads ()
     }
   retval = td_thr_iter (main_ta, nbsd_find_new_threads_callback, (void *) 0);
   if (retval != 0)
-    error("nbsd_find_new_threads: td_thr_iter: %s", 
-	  td_err_string(retval));
+    error ("nbsd_find_new_threads: td_thr_iter: %s",
+	  td_err_string (retval));
 }
 
 
@@ -689,11 +695,11 @@ nbsd_thread_create_inferior (exec_file, allargs, env)
   int val;
 
   child_ops.to_create_inferior (exec_file, allargs, env);
-  
-  push_target(&nbsd_thread_ops);
+
+  push_target (&nbsd_thread_ops);
 
   if (nbsd_thread_present)
-    nbsd_thread_activate();
+    nbsd_thread_activate ();
 }
 
 
@@ -705,16 +711,17 @@ waiter_cb (th, s)
   int ret;
   td_thread_info_t ti;
 
-  if ((ret = td_thr_info (th, &ti)) == 0) {
-    wrap_here(NULL);
-    printf_filtered (" %d", ti.thread_id);
-  }
+  if ((ret = td_thr_info (th, &ti)) == 0)
+    {
+      wrap_here (NULL);
+      printf_filtered (" %d", ti.thread_id);
+    }
 
   return 0;
 }
 
 /* Worker bee for thread state command.  This is a callback function that
-   gets called once for each user thread (ie. not kernel thread) in the 
+   gets called once for each user thread (ie. not kernel thread) in the
    inferior.  Print anything interesting that we can think of.  */
 
 static int
@@ -754,30 +761,36 @@ info_cb (th, s)
 	  printf_filtered ("zombie   ");
 	  break;
 	}
-      
-      if (ti.thread_state == TD_STATE_SLEEPING) {
-	      td_thr_sleepinfo(th, &ts);
-	      td_sync_info(ts, &tsi);
-	      if (tsi.sync_type == TD_SYNC_JOIN) {
-		td_thr_info(tsi.sync_data.join.thread, &ti2);
-		printf("joining thread %d ", ti2.thread_id);
-	      } else {
-		printf_filtered("on %s at %p ",
-				syncnames[tsi.sync_type],
-				(void *)tsi.sync_addr);
-		if (tsi.sync_type == TD_SYNC_MUTEX &&
-		    tsi.sync_data.mutex.owner != 0) {
-			td_thr_info(tsi.sync_data.mutex.owner, &ti2);
-			printf_filtered("owned by %d ", ti2.thread_id);
-		}
-	      }
-      }
 
-      if (ti.thread_hasjoiners) {
-	printf_filtered("(being joined by");
-	td_thr_join_iter(th, waiter_cb, NULL);
-	printf_filtered(")");
-      }
+      if (ti.thread_state == TD_STATE_SLEEPING)
+	{
+	  td_thr_sleepinfo (th, &ts);
+	  td_sync_info (ts, &tsi);
+	  if (tsi.sync_type == TD_SYNC_JOIN)
+	    {
+	      td_thr_info (tsi.sync_data.join.thread, &ti2);
+	      printf ("joining thread %d ", ti2.thread_id);
+	    }
+	  else
+	    {
+	      printf_filtered ("on %s at %p ",
+			       syncnames[tsi.sync_type],
+			       (void *)tsi.sync_addr);
+	      if (tsi.sync_type == TD_SYNC_MUTEX &&
+		  tsi.sync_data.mutex.owner != 0)
+		{
+		  td_thr_info (tsi.sync_data.mutex.owner, &ti2);
+		  printf_filtered ("owned by %d ", ti2.thread_id);
+		}
+	    }
+	}
+
+      if (ti.thread_hasjoiners)
+	{
+	  printf_filtered ("(being joined by");
+	  td_thr_join_iter (th, waiter_cb, NULL);
+	  printf_filtered (")");
+	}
       printf_filtered ("\n");
     }
   else
@@ -800,7 +813,7 @@ nbsd_thread_examine_all_cmd (args, from_tty)
     {
       val = td_thr_iter (main_ta, info_cb, args);
       if (val != 0)
-	error("nbsd_find_new_threads: td_thr_iter: %s", td_err_string(val));
+	error ("nbsd_find_new_threads: td_thr_iter: %s", td_err_string (val));
     }
   else
     printf_filtered ("Thread debugging not active.\n");
@@ -817,22 +830,24 @@ nbsd_thread_examine_cmd (exp, from_tty)
   td_thread_t *th;
   int ret;
 
-  if (!nbsd_thread_active) {
-    warning ("Thread debugging not active.\n");
-    return;
-  }
+  if (!nbsd_thread_active)
+    {
+      warning ("Thread debugging not active.\n");
+      return;
+    }
 
-  if (exp != NULL && *exp != '\000') {
-    addr = parse_and_eval_address(exp);
-    if (from_tty)
-      *exp = 0;
-  }
+  if (exp != NULL && *exp != '\000')
+    {
+      addr = parse_and_eval_address (exp);
+      if (from_tty)
+	*exp = 0;
+    }
 
-  if ((ret = td_map_pth2thr(main_ta, (pthread_t) addr, &th)) != 0)
-    error("nbsd_thread_examine_command: td_map_pth2thr: %s", 
-	  td_err_string(ret));
+  if ((ret = td_map_pth2thr (main_ta, (pthread_t) addr, &th)) != 0)
+    error ("nbsd_thread_examine_command: td_map_pth2thr: %s",
+	  td_err_string (ret));
 
-  info_cb(th, NULL);
+  info_cb (th, NULL);
 }
 
 
@@ -849,63 +864,73 @@ nbsd_thread_sync_cmd (exp, from_tty)
   td_thread_info_t ti;
   int ret;
 
-  if (!nbsd_thread_active) {
+  if (!nbsd_thread_active)
+    {
       warning ("Thread debugging not active.\n");
       return;
-  }
-
-  if (exp != NULL && *exp != '\000') {
-    addr = parse_and_eval_address(exp);
-    if (from_tty)
-      *exp = 0;
-  }
-
-  if ((ret = td_map_addr2sync(main_ta, (caddr_t)addr, &ts)) != 0)
-    error("nbsd_thread_sync_cmd: td_map_addr2sync: %s", td_err_string(ret));
-  
-  if ((ret = td_sync_info(ts, &tsi)) != 0)
-    error("nbsd_thread_sync_cmd: td_sync_info: %s", td_err_string(ret));
-
-  printf_filtered("%p: %s ", addr, syncnames[tsi.sync_type]);
-
-  if (tsi.sync_type == TD_SYNC_MUTEX) {
-    if (!tsi.sync_data.mutex.locked)
-      printf_filtered(" unlocked ");
-    else {
-      td_thr_info(tsi.sync_data.mutex.owner, &ti);
-      printf_filtered(" locked by thread %d", ti.thread_id);
     }
-  } else if (tsi.sync_type == TD_SYNC_SPIN) {
-    if (!tsi.sync_data.spin.locked)
-      printf_filtered(" unlocked ");
-    else {
-      td_thr_info(tsi.sync_data.mutex.owner, &ti);
-      printf_filtered(" locked (waiters not tracked)");
-    }
-  } else if (tsi.sync_type == TD_SYNC_JOIN) {
-      td_thr_info(tsi.sync_data.join.thread, &ti);
-      printf_filtered(" %d ", ti.thread_id);
-  }
-  
-  if (tsi.sync_haswaiters) {
-    printf_filtered(" waiters:");
-    if ((ret = td_sync_waiters_iter(ts, waiter_cb, NULL)) != 0) 
-      error("nbsd_thread_sync_cmd: td_sync_info: %s", 
-	    td_err_string(ret));
-  }
 
-  printf_filtered("\n");
+  if (exp != NULL && *exp != '\000')
+    {
+      addr = parse_and_eval_address (exp);
+      if (from_tty)
+	*exp = 0;
+    }
+
+  if ((ret = td_map_addr2sync (main_ta, (caddr_t)addr, &ts)) != 0)
+    error ("nbsd_thread_sync_cmd: td_map_addr2sync: %s", td_err_string (ret));
+
+  if ((ret = td_sync_info (ts, &tsi)) != 0)
+    error ("nbsd_thread_sync_cmd: td_sync_info: %s", td_err_string (ret));
+
+  printf_filtered ("%p: %s ", addr, syncnames[tsi.sync_type]);
+
+  if (tsi.sync_type == TD_SYNC_MUTEX)
+    {
+      if (!tsi.sync_data.mutex.locked)
+	printf_filtered (" unlocked ");
+      else
+	{
+	  td_thr_info (tsi.sync_data.mutex.owner, &ti);
+	  printf_filtered (" locked by thread %d", ti.thread_id);
+	}
+    }
+  else if (tsi.sync_type == TD_SYNC_SPIN)
+    {
+      if (!tsi.sync_data.spin.locked)
+	printf_filtered (" unlocked ");
+      else
+	{
+	  td_thr_info (tsi.sync_data.mutex.owner, &ti);
+	  printf_filtered (" locked (waiters not tracked)");
+	}
+    }
+  else if (tsi.sync_type == TD_SYNC_JOIN)
+    {
+      td_thr_info (tsi.sync_data.join.thread, &ti);
+      printf_filtered (" %d ", ti.thread_id);
+    }
+
+  if (tsi.sync_haswaiters)
+    {
+      printf_filtered (" waiters:");
+      if ((ret = td_sync_waiters_iter (ts, waiter_cb, NULL)) != 0)
+	error ("nbsd_thread_sync_cmd: td_sync_info: %s",
+	       td_err_string (ret));
+    }
+
+  printf_filtered ("\n");
 }
 
-int 
-tsd_cb(key, destructor)
+int
+tsd_cb (key, destructor)
      pthread_key_t key;
      void (*destructor)(void *);
 {
   struct minimal_symbol *ms;
   char *name;
 
-  printf_filtered("Key %3d   ", key);
+  printf_filtered ("Key %3d   ", key);
 
   /* XXX What does GDB use to print a function? */
   ms = lookup_minimal_symbol_by_pc ((CORE_ADDR)destructor);
@@ -913,9 +938,9 @@ tsd_cb(key, destructor)
   if (!ms)
     name = "???";
   else
-    name = SYMBOL_NAME(ms);
+    name = SYMBOL_NAME (ms);
 
-  printf_filtered("Destructor %p <%s>\n", destructor, name);
+  printf_filtered ("Destructor %p <%s>\n", destructor, name);
 }
 
 static void
@@ -923,7 +948,7 @@ nbsd_thread_tsd_cmd (exp, from_tty)
      char *exp;
      int from_tty;
 {
-  td_tsd_iter(main_ta, tsd_cb, NULL);
+  td_tsd_iter (main_ta, tsd_cb, NULL);
 }
 
 static void
@@ -942,7 +967,7 @@ nbsd_add_to_thread_list (abfd, asect, reg_sect_arg)
 
   thread_id = atoi (bfd_section_name (abfd, asect) + 5);
 
-  td_map_lwp2thr(main_ta, thread_id >> 16, &dummy);
+  td_map_lwp2thr (main_ta, thread_id >> 16, &dummy);
 }
 
 static void
@@ -956,17 +981,17 @@ nbsd_core_open (filename, from_tty)
 
   if (nbsd_thread_present)
     {
-      val = td_open(&nbsd_thread_callbacks, NULL, &main_ta);
+      val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
       if (val == 0)
 	{
 	  main_pid = elf_tdata (core_bfd)->core_pid;
 	  nbsd_thread_active = 1;
 	  bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list,
 				 bfd_get_section_by_name (core_bfd, ".reg"));
-	  nbsd_find_new_threads();
+	  nbsd_find_new_threads ();
 	}
       else
-	error ("target_new_objfile: td_open: %s", td_err_string(val));
+	error ("target_new_objfile: td_open: %s", td_err_string (val));
     }
 }
 
@@ -1003,12 +1028,12 @@ nbsd_core_files_info (t)
  * Process operation callbacks
  */
 static int
-nbsd_thread_proc_read(void *arg, caddr_t addr, void *buf, size_t size)
+nbsd_thread_proc_read (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_read_memory((CORE_ADDR)addr, buf, size);
-  
+  val = target_read_memory ((CORE_ADDR)addr, buf, size);
+
   if (val == 0)
     return 0;
   else
@@ -1017,12 +1042,12 @@ nbsd_thread_proc_read(void *arg, caddr_t addr, void *buf, size_t size)
 
 
 static int
-nbsd_thread_proc_write(void *arg, caddr_t addr, void *buf, size_t size)
+nbsd_thread_proc_write (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_write_memory((CORE_ADDR)addr, buf, size);
-	
+  val = target_write_memory ((CORE_ADDR)addr, buf, size);
+
   if (val == 0)
     return 0;
   else
@@ -1030,7 +1055,7 @@ nbsd_thread_proc_write(void *arg, caddr_t addr, void *buf, size_t size)
 }
 
 static int
-nbsd_thread_proc_lookup(void *arg, char *sym, caddr_t *addr)
+nbsd_thread_proc_lookup (void *arg, char *sym, caddr_t *addr)
 {
   struct minimal_symbol *ms;
 
@@ -1046,25 +1071,25 @@ nbsd_thread_proc_lookup(void *arg, char *sym, caddr_t *addr)
 }
 
 static int
-nbsd_thread_proc_regsize(void *arg, int regset, size_t *size)
+nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
 {
   switch (regset)
     {
     case 0:
-      *size = sizeof(struct reg);
+      *size = sizeof (struct reg);
       break;
     case 1:
-      *size = sizeof(struct fpreg);
+      *size = sizeof (struct fpreg);
       break;
     default:
       return TD_ERR_INVAL;
     }
-  
+
   return 0;
 }
 
 static int
-nbsd_thread_proc_getregs(void *arg, int regset, int lwp, void *buf)
+nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
 {
   struct reg gregs;
   struct fpreg fpregs;
@@ -1073,26 +1098,26 @@ nbsd_thread_proc_getregs(void *arg, int regset, int lwp, void *buf)
 
   old_chain = save_inferior_pid ();
   inferior_pid = main_pid;
-  
+
   /* Fetching registers requires that inferior_pid have the
      funky LWP/process mix that the kernel drops. */
-     inferior_pid = BUILD_LWP(lwp, inferior_pid);
+     inferior_pid = BUILD_LWP (lwp, inferior_pid);
   if (target_has_execution)
     child_ops.to_fetch_registers (-1);
   else
     orig_core_ops.to_fetch_registers (-1);
 
-  nbsd_internal_to_reg(&gregs);
-  nbsd_internal_to_fpreg(&fpregs);
+  nbsd_internal_to_reg (&gregs);
+  nbsd_internal_to_fpreg (&fpregs);
 
   ret = 0;
   switch (regset)
     {
     case 0:
-      memcpy(buf, &gregs, sizeof(struct reg));
+      memcpy (buf, &gregs, sizeof (struct reg));
       break;
     case 1:
-      memcpy(buf, &fpregs, sizeof(struct fpreg));
+      memcpy (buf, &fpregs, sizeof (struct fpreg));
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1104,7 +1129,7 @@ nbsd_thread_proc_getregs(void *arg, int regset, int lwp, void *buf)
 }
 
 static int
-nbsd_thread_proc_setregs(void *arg, int regset, int lwp, void *buf)
+nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
 {
   struct reg gregs;
   struct fpreg fpregs;
@@ -1118,10 +1143,10 @@ nbsd_thread_proc_setregs(void *arg, int regset, int lwp, void *buf)
   switch (regset)
     {
     case 0:
-      memcpy(&gregs, buf, sizeof(struct reg));
+      memcpy (&gregs, buf, sizeof (struct reg));
       break;
     case 1:
-      memcpy(&fpregs, buf, sizeof(struct fpreg));
+      memcpy (&fpregs, buf, sizeof (struct fpreg));
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1129,14 +1154,14 @@ nbsd_thread_proc_setregs(void *arg, int regset, int lwp, void *buf)
 
   /* Storing registers requires that inferior_pid have the
      funky LWP/process mix that the kernel drops. */
-  inferior_pid = BUILD_LWP(lwp, inferior_pid);
-  nbsd_reg_to_internal(&gregs);
-  nbsd_fpreg_to_internal(&fpregs);
+  inferior_pid = BUILD_LWP (lwp, inferior_pid);
+  nbsd_reg_to_internal (&gregs);
+  nbsd_fpreg_to_internal (&fpregs);
   child_ops.to_store_registers (-1);
 
   do_cleanups (old_chain);
 
-  return ret;	
+  return ret;
 }
 
 
@@ -1267,17 +1292,17 @@ _initialize_nbsd_thread ()
   init_nbsd_core_ops ();
   init_nbsd_proc_callbacks ();
 
-  add_target(&nbsd_thread_ops);
+  add_target (&nbsd_thread_ops);
   add_cmd ("tsd", class_run, nbsd_thread_tsd_cmd,
-	    "Show the thread-specific data keys and destructors for the process.\n", 
+	    "Show the thread-specific data keys and destructors for the process.\n",
 	   &thread_cmd_list);
 
   add_cmd ("sync", class_run, nbsd_thread_sync_cmd,
-	    "Show the synchronization object at the given address.\n", 
+	    "Show the synchronization object at the given address.\n",
 	   &thread_cmd_list);
 
   add_prefix_cmd ("examine", class_run, nbsd_thread_examine_cmd,
-	    "Show the thread at the given address.\n", 
+	    "Show the thread at the given address.\n",
 	   &thread_examine_list, "examine ", 1, &thread_cmd_list);
 
   add_cmd ("all", class_run, nbsd_thread_examine_all_cmd,
@@ -1285,8 +1310,8 @@ _initialize_nbsd_thread ()
 	   &thread_examine_list);
 
 
-  memcpy(&orig_core_ops, &core_ops, sizeof (struct target_ops));
-  memcpy(&core_ops, &nbsd_core_ops, sizeof (struct target_ops));
+  memcpy (&orig_core_ops, &core_ops, sizeof (struct target_ops));
+  memcpy (&core_ops, &nbsd_core_ops, sizeof (struct target_ops));
   add_target (&core_ops);
 
   child_suppress_run = 1;
