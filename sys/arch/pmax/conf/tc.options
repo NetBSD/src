@@ -11,3 +11,5 @@ sfb0	at tc?
 
 le0	at tc? #slot ?  offset ?		# DS 5000/200 baseboard 
 le*	at tc? #slot ?  offset ?		# TC ether option
+
+asc*	at tc?					# PMAZ SCSI option
