@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.2 2002/04/09 23:44:19 bjh21 Exp $
+# $NetBSD: md.mvmeppc,v 1.3 2002/08/07 21:20:58 briggs Exp $
 ./usr/include/mvmeppc	comp-c-include
 ./usr/include/mvmeppc/_G_config.h	comp-c-include
 ./usr/include/mvmeppc/ansi.h	comp-c-include
@@ -37,6 +37,7 @@
 ./usr/include/mvmeppc/pcb.h	comp-c-include
 ./usr/include/mvmeppc/pio.h	comp-c-include
 ./usr/include/mvmeppc/pmap.h	comp-c-include
+./usr/include/mvmeppc/pmc.h	comp-c-include
 ./usr/include/mvmeppc/powerpc.h	comp-c-include
 ./usr/include/mvmeppc/proc.h	comp-c-include
 ./usr/include/mvmeppc/profile.h	comp-c-include
