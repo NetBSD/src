@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.11 1995/02/13 22:24:20 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.12 1995/05/24 20:55:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -127,11 +127,6 @@
 
 /* This is where access by other VME masters starts. */
 #define DVMA_SLAVE_BASE  0x0F000000
-
-/*
- * Kernel VA of kernel u-area for current process
- */
-#define	UADDR	0x0FFE0000	/* mon shortseg */
 
 /*
  * Mach derived constants

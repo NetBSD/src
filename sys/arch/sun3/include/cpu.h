@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1995/05/05 03:42:13 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1995/05/24 20:55:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -54,12 +54,10 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p) 	/* nothing */
-#define	cpu_wait(p) 	/* nothing */
+#define	cpu_exec(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_wait(p)			/* nothing */
 #define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
-#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
-#define	BROKEN_SWAP
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -138,7 +136,7 @@ union sun3sir {
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-/* values for machineid */
+/* values for cpu_machine_id */
 
 #define CPU_ARCH_MASK  0xf0
 #define SUN3_ARCH      0x10
@@ -150,8 +148,7 @@ union sun3sir {
 #define SUN3_MACH_60   0x07
 #define SUN3_MACH_E    0x08
 
-extern	int machineid, mmutype, ectype;
-extern	char *intiobase, *intiolimit;
+extern	unsigned char cpu_machine_id;
 
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
