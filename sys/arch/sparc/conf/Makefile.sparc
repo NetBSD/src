@@ -1,5 +1,5 @@
 # from:	@(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# $Id: Makefile.sparc,v 1.8 1994/04/13 10:26:48 deraadt Exp $
+# $Id: Makefile.sparc,v 1.9 1994/05/05 07:50:04 deraadt Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -33,7 +33,7 @@ S=	../../../..
 SPARC=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -DSUN4C -Dsun4c
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL
 CFLAGS=	${COPTS}
 
 ### find out what to use for libkern
