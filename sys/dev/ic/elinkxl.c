@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.27 2000/03/01 20:53:11 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.28 2000/03/02 01:21:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1095,9 +1095,10 @@ ex_intr(arg)
 	int ret = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	if (sc->enabled == 0) {
-	  return ret;
-	}
+	if (sc->enabled == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (0);
+
 	for (;;) {
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
 
@@ -1441,7 +1442,12 @@ ex_tick(arg)
 	void *arg;
 {
 	struct ex_softc *sc = arg;
-	int s = splnet();
+	int s;
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
+
+	s = splnet();
 
 	if (sc->ex_conf & EX_CONF_MII)
 		mii_tick(&sc->ex_mii);
@@ -1454,7 +1460,6 @@ ex_tick(arg)
 
 	timeout(ex_tick, sc, hz);
 }
-
 
 void
 ex_reset(sc)
