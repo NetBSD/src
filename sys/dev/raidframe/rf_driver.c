@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.25 2000/01/09 03:14:32 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.26 2000/01/09 03:15:59 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,7 +102,6 @@
 #include "rf_freelist.h"
 #include "rf_decluster.h"
 #include "rf_map.h"
-#include "rf_diskthreads.h"
 #include "rf_revent.h"
 #include "rf_callback.h"
 #include "rf_engine.h"
