@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.14 2000/03/04 21:27:17 mycroft Exp $
+.\"	$NetBSD: apmd.8,v 1.14.4.1 2001/04/04 16:32:44 he Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 12, 1996
+.Dd November 5, 2000
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nm ""
 .Op Fl adlqsv
 .Bk -words
-.Op Fl t Ar seconds
+.Op Fl t Ar rate
 .Ek
 .Bk -words
 .Op Fl S Ar sockname
@@ -62,7 +62,7 @@
 .Nm
 monitors the advanced power management (APM) pseudo-device, acting on
 signaled events and upon user requests as sent by the
-.Xr apm 8 
+.Xr apm 8
 utility.
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
@@ -75,7 +75,7 @@ runs the appropriate configuration utility (if one exists).
 For power status change events,
 .Nm
 fetches the current status and reports it via
-.Xr syslog 3 
+.Xr syslog 3
 with logging facility
 .Dv LOG_DAEMON .
 .Pp
@@ -87,51 +87,61 @@ device).
 Suspends are announced with two high tones.
 .Pp
 .Nm
-periodically polls the APM driver for the current power state.  
+periodically polls the APM driver for the current power state.
 If the battery charge level changes substantially or the external power
 status changes, the new status is logged.  The polling rate defaults to
 once per 10 minutes, but may be specified using the
 .Fl t
 command-line flag.
 .Pp
-If the
-.Fl s
-flag is specified, the current battery statistics are reported via
-.Xr syslog 3
-and
 .Nm
-exits without monitoring the APM status.
-.Pp
-If the
-.Fl a
-flag is specified, any BIOS-initiated suspend or standby requests are
+supports the following options:
+.Bl -tag -width Fl
+.It Fl a
+Any BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
 batteries (user requests are still honored).
-.Pp
-If the
-.Fl l
-flag is specified, then a low-battery event causes a suspend request
-to occur.
-.Pp
-If the
-.Fl d
-flag is specified,
-.Nm
-enters debug mode, logging to facility
+.It Fl d
+Enter debug mode, log to facility
 .Dv LOG_LOCAL1
-and staying in the foreground on the controlling terminal.
-.Pp
-If the
-.Fl q
-flag is specified,
-.Nm
-does not announce suspend and standby requests on the speaker.
-.Pp
-If the
-.Fl v
-flag is specified,
-.Nm
-logs the power status via syslog(3) periodically.
+and stay in the foreground on the controlling terminal.
+.It Fl f Ar devname
+Specify an alternate device file name.
+.It Fl l
+A low-battery event causes a suspend request to occur.
+.It Fl m Ar sockmode
+Use
+.Ar sockmode
+instead of
+.Sq 0660
+for the mode of
+.Pa /var/run/apmdev .
+.It Fl o Ar sockowner:sockgroup
+Use
+.Ar sockowner:sockgroup
+instead of
+.Sq `0:0'
+for the owner/group of
+.Pa /var/run/apmdev .
+.It Fl q
+Do not announce suspend and standby requests on the speaker.
+.It Fl s
+The current battery statistics are reported via
+.Xr syslog 3
+and exit without monitoring the APM status.
+.It Fl S Ar sockname
+Specify an alternate socket name (used by
+.Xr apm 8
+to communicate with
+.Nm "" ) .
+.It Fl t Ar rate
+Change the polling rate from 10 seconds to
+.Ar rate
+seconds.
+.It Fl v
+Periodically log the power status via
+.Xr syslog 3 .
+.El
 .Pp
 When a client requests a suspend or stand-by mode,
 .Nm
@@ -161,19 +171,19 @@ The line and battery actions are run after switching power sources to
 AC (line) or battery, respectively.  The appropriate line or battery action
 is also run upon the startup of apmd based on the current power source.
 .Sh FILES
-.Pa /etc/apm/suspend ,
-.Pa /etc/apm/standby ,
-.Pa /etc/apm/resume ,
-.Pa /etc/apm/line
-and
-.Pa /etc/apm/battery
-are the files that contain the host's customized actions.
+.Bl -tag -width /etc/apm/suspend -compact
+.It Pa /etc/apm/suspend
+.It Pa /etc/apm/standby
+.It Pa /etc/apm/resume
+.It Pa /etc/apm/line
+.It Pa /etc/apm/battery
+Contain the host's customized actions.
 Each file must be an executable binary or shell script suitable
 for execution by the
-.Xr execve 2 
+.Xr execve 2
 function.
 If you wish to have the same program or script control all transitions, it
-may determine which transition is in progress by examining its 
+may determine which transition is in progress by examining its
 .Va argv[0]
 which is set to one of
 .Ar suspend ,
@@ -182,28 +192,18 @@ which is set to one of
 .Ar line
 or
 .Ar battery .
-See 
+See
 .Pa /usr/share/examples/apm/script
 for such an example script.
 .Pp
-.Pa /var/run/apmdev
-is the default UNIX-domain socket used for communication with
+.It Pa /var/run/apmdev
+The default UNIX-domain socket used for communication with
 .Xr apm 8 .
-The
-.Fl S
-flag may be used to specify an alternate socket name.
-The socket is protected by default to mode 0660, UID 0, GID 0;
-the
-.Fl m
-and
-.Fl o
-flags may be used to specify different modes or owners/groups, respectively.
+The socket is protected by default to mode 0660, UID 0, GID 0.
 .Pp
-.Pa /dev/apmctl
-is the default device used to control the APM kernel driver.
-The
-.Fl f
-flag may be used to specify an alternate device file name.
+.It Pa /dev/apmctl
+The default device used to control the APM kernel driver.
+.El
 .Sh SEE ALSO
 .Xr execve 2 ,
 .Xr syslog 3 ,
