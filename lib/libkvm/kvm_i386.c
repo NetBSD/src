@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_i386.c,v 1.7 1995/06/29 11:41:45 cgd Exp $";
+static char *rcsid = "$Id: kvm_i386.c,v 1.8 1996/03/08 10:45:16 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -70,12 +70,8 @@ static char *rcsid = "$Id: kvm_i386.c,v 1.7 1995/06/29 11:41:45 cgd Exp $";
 #endif
 
 struct vmstate {
-	pd_entry_t **PTDpaddr;
 	pd_entry_t *PTD;
 };
-
-#define KREAD(kd, addr, p)\
-	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
 _kvm_freevtop(kd)
@@ -95,7 +91,7 @@ _kvm_initvtop(kd)
 {
 	struct vmstate *vm;
 	struct nlist nlist[2];
-	pt_entry_t *tmpPTD;
+	u_long pa;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
@@ -110,21 +106,35 @@ _kvm_initvtop(kd)
 		return (-1);
 	}
 
-	vm->PTDpaddr = 0;
 	vm->PTD = 0;
-	if (KREAD(kd, (u_long)nlist[0].n_value - KERNBASE, &vm->PTDpaddr)) {
-		_kvm_err(kd, kd->program, "cannot read PTDpaddr");
-		return (-1);
+
+	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), 0) == -1 &&
+	    errno != 0) {
+		_kvm_syserr(kd, kd->program, "kvm_lseek");
+		goto invalid;
+	}
+	if (read(kd->pmfd, &pa, sizeof pa) != sizeof pa) {
+		_kvm_syserr(kd, kd->program, "kvm_read");
+		goto invalid;
 	}
 
-	tmpPTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
-	if ((kvm_read(kd, (u_long)vm->PTDpaddr, tmpPTD, NBPG)) != NBPG) {
-		free(tmpPTD);
-		_kvm_err(kd, kd->program, "cannot read PTD");
-		return (-1);
+	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
+
+	if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
+		_kvm_syserr(kd, kd->program, "kvm_lseek");
+		goto invalid;
 	}
-	vm->PTD = tmpPTD;
+	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
+		_kvm_syserr(kd, kd->program, "kvm_read");
+		goto invalid;
+	}
+
 	return (0);
+
+invalid:
+	if (vm->PTD != 0)
+		free(vm->PTD);
+	return (-1);
 }
 
 /*
@@ -165,7 +175,7 @@ _kvm_kvatop(kd, va, pa)
 	/* XXX READ PHYSICAL XXX */
 	{
 		if (lseek(kd->pmfd, (off_t)pte_pa, 0) == -1 && errno != 0) {
-			_kvm_syserr(kd, 0, "kvm_lseek");
+			_kvm_syserr(kd, kd->program, "kvm_lseek");
 			goto invalid;
 		}
 		if (read(kd->pmfd, &pte, sizeof pte) != sizeof pte) {
