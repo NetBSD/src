@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.10 1995/11/23 01:42:08 cgd Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.11 1995/11/24 22:13:08 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -326,8 +326,8 @@ db_symbol_values(sym, namep, valuep)
  */
 
 extern char end[];
-unsigned long		db_lastsym = (long)end;
-unsigned db_expr_t	db_maxoff = 0x10000000;
+unsigned long	db_lastsym = (long)end;
+db_expr_t	db_maxoff = 0x10000000;
 
 
 void
