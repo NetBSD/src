@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75 2001/05/08 05:36:01 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.76 2001/05/08 06:02:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2001/05/08 05:36:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76 2001/05/08 06:02:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	for (i = 0; i < UPAGES; i++)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
+	/*
+	 * new thread of control starts its life calling proc_trampoline
+	 * in spl0 condition.
+	 */
 	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */
