@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.32 2002/08/20 13:12:00 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.33 2002/08/20 13:58:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.32 2002/08/20 13:12:00 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.33 2002/08/20 13:58:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ struct	utmpx wtmp;
 struct	utmp wtmp;
 #endif /* UTMPX */
 
+#if	!defined(UTMPX) && !(defined(CRAY) || defined(__hpux)) && BSD <= 43
 int	utmp_len = sizeof(wtmp.ut_host);
 #ifndef PARENT_DOES_UTMP
 char	wtmpf[]	= "/usr/adm/wtmp";
@@ -69,6 +70,7 @@ char	utmpf[] = "/etc/utmp";
 #else /* PARENT_DOES_UTMP */
 char	wtmpf[]	= "/etc/wtmp";
 #endif /* PARENT_DOES_UTMP */
+#endif
 
 #ifdef CRAY
 #include <tmpdir.h>

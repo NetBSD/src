@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.32 2002/01/31 07:54:50 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.33 2002/08/20 13:58:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.32 2002/01/31 07:54:50 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.33 2002/08/20 13:58:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,9 @@ int	auth_level = 0;
 int	require_secure_login = 0;
 #endif
 
+#if	!defined(UTMPX) && !(defined(CRAY) || defined(__hpux)) && BSD <= 43
 extern	int utmp_len;
+#endif
 extern int require_hwpreauth;
 #ifdef KRB5
 extern krb5_context telnet_context;
@@ -435,7 +437,11 @@ main(argc, argv)
 			break;
 
 		case 'u':
+#if	!defined(UTMPX) && !(defined(CRAY) || defined(__hpux)) && BSD <= 43
 			utmp_len = atoi(optarg);
+#else
+			fprintf(stderr, "telnetd: -u option unneeded\n");
+#endif
 			break;
 
 		case 'U':
@@ -928,9 +934,11 @@ doit(who)
 	error = getnameinfo(who, who->sa_len, remote_host_name,
 	    sizeof(remote_host_name), NULL, 0, 0);
 
+#if	!defined(UTMPX) && !(defined(CRAY) || defined(__hpux)) && BSD <= 43
 	if (!error && strlen(remote_host_name) > utmp_len)
 		error = getnameinfo(who, who->sa_len, remote_host_name,
 		    sizeof(remote_host_name), NULL, 0, NI_NUMERICHOST);
+#endif
 
 	if (error) {
 		fatal(net, "Couldn't resolve your address into a host name.\r\n\
