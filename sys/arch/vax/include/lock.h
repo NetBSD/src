@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.12 2003/06/23 11:01:49 martin Exp $	*/
+/*	$NetBSD: lock.h,v 1.13 2003/06/26 13:20:55 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -34,7 +34,9 @@
 #define _VAX_LOCK_H_
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 #include <machine/cpu.h>
 #endif
 
