@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.7 1995/09/24 00:27:59 chuck Exp $ */
+/* $NetBSD: xd.c,v 1.8 1995/09/25 16:02:09 chuck Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.7 1995/09/24 00:27:59 chuck Exp $
+ * id: $Id: xd.c,v 1.8 1995/09/25 16:02:09 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -234,6 +234,8 @@ int	xdclose __P((dev_t, int, int));
 int	xddump __P((dev_t));
 int	xdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	xdopen __P((dev_t, int, int));
+int	xdread __P((dev_t, struct uio *));
+int	xdwrite __P((dev_t, struct uio *));
 int	xdsize __P((dev_t));
 void	xdstrategy __P((struct buf *));
 
@@ -243,6 +245,7 @@ void	xdcattach __P((struct device *, struct device *, void *));
 int	xdmatch __P((struct device *, void *, void *));
 void	xdattach __P((struct device *, struct device *, void *));
 
+static	void xddummystrat __P((struct buf *));
 void	xdgetdisklabel __P((struct xd_softc *, void *));
 
 /*
@@ -274,7 +277,7 @@ xddummystrat(bp)
 		panic("xddummystrat");
 	bcopy(xd_labeldata, bp->b_un.b_addr, XDFM_BPS);
 	bp->b_flags |= B_DONE;
-	bp->b_flags &= B_BUSY;
+	bp->b_flags &= ~B_BUSY;
 }
 
 void
@@ -691,13 +694,15 @@ xdattach(parent, self, aux)
 		bcopy(xa->dvmabuf, &xd->dkb, XDFM_BPS);
 	}
 
-	if (xa->booting)
+	if (xa->booting) {
 		xd->sc_dk.dk_driver = &xddkdriver;	/* link in dkdriver */
 
-	/* restore bootpath! (do this via attach_args again?)*/
-	bp = bootpath_store(0, NULL);
-	if (bp && strcmp("xd", bp->name) == 0 && xd->xd_drive == bp->val[0])
-		bootdv = &xd->sc_dev;
+		/* restore bootpath! (do this via attach_args again?)*/
+		bp = bootpath_store(0, NULL);
+		if (bp && strcmp("xd", bp->name) == 0 && 
+						xd->xd_drive == bp->val[0])
+			bootdv = &xd->sc_dev;
+	}
 
 	dk_establish(&xd->sc_dk, &xd->sc_dev);
 
