@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.2.4 1999/03/15 12:51:49 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.2.5 1999/05/11 07:15:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -102,7 +102,7 @@ mbattach(parent, self, aux)
 #endif /* NTC */
 
 	if (systype == DS_PMAX || systype == DS_MIPSMATE) {
-		nca.ca_name = "baseboard";
+		nca.ca_name = platform.iobus;
 		nca.ca_slot = 0;
 		config_found(self, &nca, mbprint);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.1.2.1 1998/10/15 02:41:15 nisimura Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.1.2.2 1999/05/11 07:15:17 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.1.2.1 1998/10/15 02:41:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.1.2.2 1999/05/11 07:15:17 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ ibus_pmax_match(parent, cfdata, aux)
 
 	if (strcmp(ca->ca_name, "baseboard") != 0)
 		return 0;
-	if (systype != DS_PMAX || systype != DS_MIPSMATE || ibus_attached)
-		return 0;
+	if (systype != DS_PMAX && systype != DS_MIPSMATE)
+		panic("ibus_pmax_match: how did we get here?");
 	return 1;
 }
 
@@ -127,5 +127,5 @@ ibus_pmax_attach(parent, self, aux)
 		ibd.ibd_disestablish = dec_5100_intr_disestablish;
 	}
 #endif
-	ibus_devattach(self, &ibd);
+	ibus_attach_devs(self, &ibd);
 }

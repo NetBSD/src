@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.10 1999/05/11 06:43:15 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.11 1999/05/11 07:15:16 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.10 1999/05/11 06:43:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.11 1999/05/11 07:15:16 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -153,7 +153,6 @@ extern void stacktrace __P((void)); /*XXX*/
 #endif
 
 /* Motherboard or system-specific initialization vector */
-void	unimpl_os_init __P((void));
 void	unimpl_bus_reset __P((void));
 int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
 void	unimpl_cons_init __P((void));
@@ -163,7 +162,6 @@ void	unimpl_clockintr __P ((void *));
 
 struct platform platform = {
 	"iobus not set",
-	unimpl_os_init,
 	unimpl_bus_reset,
 	unimpl_cons_init,
 	unimpl_device_register,
@@ -775,12 +773,6 @@ void
 unimpl_bus_reset()
 {
 	panic("sysconf.init didnt set bus_reset");
-}
-
-void
-unimpl_cons_init()
-{
-	panic("sysconf.init didnt set cons_init");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6.2.7 1999/05/11 06:43:14 nisimura Exp $ */
+/*	$NetBSD: dec_3100.c,v 1.6.2.8 1999/05/11 07:15:16 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.7 1999/05/11 06:43:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.8 1999/05/11 07:15:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ struct splsw spl_3100 = {
 void
 dec_3100_init()
 {
-	platform.iobus = "ibus";
+	platform.iobus = "baseboard";
 
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;

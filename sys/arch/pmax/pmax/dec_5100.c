@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.8 1999/05/11 06:43:16 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.9 1999/05/11 07:15:17 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.8 1999/05/11 06:43:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.9 1999/05/11 07:15:17 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ dec_5100_init()
 {
 	extern void mips_set_wbflush __P((void (*)(void)));
 
-	platform.iobus = "ibus";
+	platform.iobus = "baseboard";
 
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
