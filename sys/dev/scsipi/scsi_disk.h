@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.15 1998/02/13 08:28:36 enami Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.16 1998/06/09 19:03:24 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -84,6 +84,21 @@ struct scsi_rw {
 	u_int8_t addr[3];
 #define	SRW_TOPADDR	0x1F	/* only 5 bits here */
 	u_int8_t length;
+	u_int8_t control;
+};
+
+/*
+ * XXX Does ATAPI have an equivalent?
+ */
+#define	SCSI_SYNCHRONIZE_CACHE		0x35
+struct scsi_synchronize_cache {
+	u_int8_t opcode;
+	u_int8_t flags;
+#define	SSC_RELADR	0x01
+#define	SSC_IMMED	0x02
+	u_int8_t addr[4];
+	u_int8_t reserved;
+	u_int8_t length[2];
 	u_int8_t control;
 };
 
