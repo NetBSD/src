@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.1.1.2 2002/05/13 02:28:40 itojun Exp $	*/
-/*	$OpenBSD: monitor.h,v 1.4 2002/05/12 23:53:45 djm Exp $	*/
+/*	$NetBSD: monitor.h,v 1.1.1.3 2002/06/24 05:26:11 itojun Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.6 2002/06/11 05:46:20 mpech Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -50,7 +50,7 @@ enum monitor_reqtype {
 	MONITOR_REQ_RSAKEYALLOWED, MONITOR_ANS_RSAKEYALLOWED,
 	MONITOR_REQ_RSACHALLENGE, MONITOR_ANS_RSACHALLENGE,
 	MONITOR_REQ_RSARESPONSE, MONITOR_ANS_RSARESPONSE,
-	MONITOR_REQ_TERM,
+	MONITOR_REQ_TERM
 };
 
 struct mm_master;
@@ -60,7 +60,7 @@ struct monitor {
 	struct mm_master	*m_zback;
 	struct mm_master	*m_zlib;
 	struct Kex		**m_pkex;
-	int			 m_pid;
+	pid_t			 m_pid;
 };
 
 struct monitor *monitor_init(void);

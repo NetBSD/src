@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.1.1.10 2002/04/22 07:37:28 itojun Exp $	*/
-/*	$OpenBSD: kex.h,v 1.30 2002/03/18 17:50:31 provos Exp $	*/
+/*	$NetBSD: kex.h,v 1.1.1.11 2002/06/24 05:25:48 itojun Exp $	*/
+/*	$OpenBSD: kex.h,v 1.31 2002/05/16 22:02:50 markus Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -80,7 +80,7 @@ struct Enc {
 struct Mac {
 	char	*name;
 	int	enabled;
-	EVP_MD	*md;
+	const EVP_MD	*md;
 	int	mac_len;
 	u_char	*key;
 	int	key_len;

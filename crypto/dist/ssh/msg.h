@@ -1,8 +1,7 @@
-/*	$NetBSD: sshconnect.h,v 1.1.1.9 2002/06/24 05:26:05 itojun Exp $	*/
-/*	$OpenBSD: sshconnect.h,v 1.17 2002/06/19 00:27:55 deraadt Exp $	*/
-
+/*	$NetBSD: msg.h,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
+/*	$OpenBSD: msg.h,v 1.1 2002/05/23 19:24:30 markus Exp $	*/
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,47 +23,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SSHCONNECT_H
-#define SSHCONNECT_H
+#ifndef SSH_MSG_H
+#define SSH_MSG_H
 
-typedef struct Sensitive Sensitive;
-struct Sensitive {
-	Key	**keys;
-	int	nkeys;
-	int	external_keysign;
-};
-
-int
-ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
-    int, const char *);
-
-void
-ssh_login(Sensitive *, const char *, struct sockaddr *, struct passwd *);
-
-int	 verify_host_key(char *, struct sockaddr *, Key *);
-
-void	 ssh_kex(char *, struct sockaddr *);
-void	 ssh_kex2(char *, struct sockaddr *);
-
-void	 ssh_userauth1(const char *, const char *, char *, Sensitive *);
-void	 ssh_userauth2(const char *, const char *, char *, Sensitive *);
-
-void	 ssh_put_password(char *);
-
-
-/*
- * Macros to raise/lower permissions.
- */
-#define PRIV_START do {				\
-	int save_errno = errno;			\
-	(void)seteuid(original_effective_uid);	\
-	errno = save_errno;			\
-} while (0)
-
-#define PRIV_END do {				\
-	int save_errno = errno;			\
-	(void)seteuid(original_real_uid);	\
-	errno = save_errno;			\
-} while (0)
+void	 msg_send(int, u_char, Buffer *);
+int	 msg_recv(int, Buffer *);
 
 #endif
