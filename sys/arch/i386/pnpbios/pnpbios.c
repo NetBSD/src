@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.8 2000/01/12 19:24:02 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.9 2000/01/16 03:30:23 drochner Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -618,6 +618,11 @@ pnp_scan(bufp, maxlen, r, in_depends)
 				for (i = 0; i < len; i++)
 					idstr[i] = NEXTBYTE(p);
 				idstr[len] = '\0';
+				if (idstr[0] == '\0') {
+					/* disabled device */
+					free(idstr, M_DEVBUF);
+					break;
+				}
 				r->longname = idstr;
 				break;
 			case 0x05:  /* 32bit memory descriptor */
