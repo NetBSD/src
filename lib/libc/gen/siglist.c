@@ -1,4 +1,4 @@
-/*	$NetBSD: siglist.c,v 1.13 1998/12/06 07:05:49 jonathan Exp $	*/
+/*	$NetBSD: siglist.c,v 1.14 1999/08/17 03:50:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,9 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)siglist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siglist.c,v 1.13 1998/12/06 07:05:49 jonathan Exp $");
+__RCSID("$NetBSD: siglist.c,v 1.14 1999/08/17 03:50:56 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef __weak_alias
+__weak_alias(sys_siglist, _sys_siglist)
+__weak_alias(__sys_siglist, _sys_siglist)
+#endif
 
 const char *const _sys_siglist[] = {
 	"Signal 0",
