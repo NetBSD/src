@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.20 2003/01/22 21:04:50 rafal Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.21 2003/01/28 23:47:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.20 2003/01/22 21:04:50 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21 2003/01/28 23:47:42 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.20 2003/01/22 21:04:50 rafal Exp $"
 #include <compat/irix/irix_syscallargs.h>
 
 struct irix_sproc_child_args {
-	struct lwp **isc_lwp; 
+	struct proc **isc_proc; 
 	void *isc_entry;
 	void *isc_arg;
 	size_t isc_len;
@@ -281,7 +281,6 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	struct exec_vmcmd vmc;
 	int error;
 	struct proc *p2;
-	struct lwp *l2;
 	struct irix_sproc_child_args *isc;	
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
@@ -380,7 +379,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	 * This will be freed by the child.
 	 */
 	isc = malloc(sizeof(*isc), M_TEMP, M_WAITOK);
-	isc->isc_lwp = &l2;
+	isc->isc_proc = &p2;
 	isc->isc_entry = entry;
 	isc->isc_arg = arg;
 	isc->isc_len = len;
@@ -416,8 +415,8 @@ static void
 irix_sproc_child(isc)
 	struct irix_sproc_child_args *isc;
 {
-	struct lwp *l2 = *isc->isc_lwp;
-	struct proc *p2 = l2->l_proc;
+	struct proc *p2 = *isc->isc_proc;
+	struct lwp *l2 = proc_representative_lwp(p2);
 	int inh = isc->isc_inh;
 	struct lwp *lparent = isc->isc_parent_lwp;
 	struct proc *parent = lparent->l_proc;
@@ -551,7 +550,7 @@ irix_sproc_child(isc)
 	/*
 	 * Return to userland for a newly created process
 	 */
-	child_return((void *)p2);
+	child_return((void *)l2);
 	return;
 }
 
