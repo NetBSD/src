@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.19 2001/03/26 12:33:23 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.19.2.1 2001/07/10 14:03:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -67,7 +67,8 @@ cdev_decl(raid);
 #define cdev_vidcvid_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), 0 }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /* open, close, read, write, ioctl */
 #define cdev_iic_init(c,n)	cdev__ocrwi_init(c,n)

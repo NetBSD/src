@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46 2001/03/26 12:33:24 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.46.2.1 2001/07/10 14:03:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -93,7 +93,8 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	cdev_hil_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_noimpl(write,nullop), dev_init(c,n,ioctl), \
-	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), dev_init(c,n,mmap) }
+	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
+	dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
 
 cdev_decl(cn);
 cdev_decl(ctty);
