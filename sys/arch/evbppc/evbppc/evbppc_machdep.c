@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.4 2003/07/25 11:44:19 scw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.4 2003/07/25 11:44:19 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/pmap.h>
 
@@ -85,7 +86,7 @@ int fake_mapiodev = 1;
  * Allocate vm space and mapin the I/O address
  */
 void *
-mapiodev(paddr_t pa, psize_t len, int flags)
+mapiodev(paddr_t pa, psize_t len)
 {
 	paddr_t faddr;
 	vaddr_t taddr, va;
@@ -112,6 +113,6 @@ mapiodev(paddr_t pa, psize_t len, int flags)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
-
+	pmap_update(pmap_kernel());
 	return (void *)(va + off);
 }
