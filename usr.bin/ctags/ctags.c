@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
+/*	$NetBSD: ctags.c,v 1.5 1997/10/18 13:18:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $";
+__RCSID("$NetBSD: ctags.c,v 1.5 1997/10/18 13:18:31 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -81,6 +81,7 @@ char	searchar = '/';		/* use /.../ searches by default */
 char	lbuf[LINE_MAX];
 
 void	init __P((void));
+int	main __P((int, char **));
 void	find_entries __P((char *));
 
 int
@@ -97,7 +98,7 @@ main(argc, argv)
 	char	cmd[100];			/* too ugly to explain */
 
 	aflag = uflag = NO;
-	while ((ch = getopt(argc, argv, "BFadf:tuwvx")) != EOF)
+	while ((ch = getopt(argc, argv, "BFadf:tuwvx")) != -1)
 		switch(ch) {
 		case 'B':
 			searchar = '?';
@@ -229,7 +230,7 @@ find_entries(file)
 	char	*cp;
 
 	lineno = 0;				/* should be 1 ?? KB */
-	if (cp = strrchr(file, '.')) {
+	if ((cp = strrchr(file, '.')) != NULL) {
 		if (cp[1] == 'l' && !cp[2]) {
 			int	c;
 

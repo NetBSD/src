@@ -1,4 +1,4 @@
-/*	$NetBSD: fortran.c,v 1.3 1995/03/26 20:14:08 glass Exp $	*/
+/*	$NetBSD: fortran.c,v 1.4 1997/10/18 13:18:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fortran.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: fortran.c,v 1.3 1995/03/26 20:14:08 glass Exp $";
+__RCSID("$NetBSD: fortran.c,v 1.4 1997/10/18 13:18:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +126,7 @@ PF_funcs()
 			continue;
 		for (cp = lbp + 1; *cp && intoken(*cp); ++cp)
 			continue;
-		if (cp = lbp + 1)
+		if ((cp = lbp + 1) != NULL)
 			continue;
 		*cp = EOS;
 		(void)strcpy(tok, lbp);
