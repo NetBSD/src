@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/10/18 01:35:17 simonb Exp $
+#	$NetBSD: Makefile,v 1.12 1999/12/28 10:56:54 simonb Exp $
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -12,9 +12,7 @@ LABELPROTO=    ${.CURDIR}/diskimage.label.proto
 NEWFSOPTS+=	-i 32768	# don't need many inodes!
 
 KERN=		${.CURDIR}/../../../sys/arch/pmax/compile/RAMDISK/netbsd
-RAMDISK!=	cd ${.CURDIR}/../ramdisk; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-		${MAKE} -s -f-
+RAMDISK!=	cd ${.CURDIR}/../ramdisk; ${MAKE} echoimage
 CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}.gz
 
 VND_DEV=	/dev/${VND}
@@ -54,6 +52,8 @@ realinstall:
 		-m ${NONBINMODE} ${IMAGE}.gz ${RELEASEDIR}${DISKBINDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${BINMODE} netbsd.gz ${RELEASEDIR}${KERNBINDIR}/install.gz
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
+		-m ${BINMODE} netbsd.ecoff.gz ${RELEASEDIR}${KERNBINDIR}/install.ecoff.gz
 
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
