@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.14 1995/06/22 21:32:57 fvdl Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.15 1995/06/24 20:29:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -52,7 +52,10 @@
 
 static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
 			       void *, void *));
+
+const char svr4_emul_path[] = "/emul/svr4";
 extern int svr4_error[];
+extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 extern char *svr4_syscallnames[];
 
@@ -117,7 +120,7 @@ svr4_elf_probe(p, epp, itp, pos)
 	size_t len;
 
 	if (itp[0]) {
-		if ((error = svr4_emul_find(p, NULL, svr4_emul_path, itp, &bp)))
+		if ((error = emul_find(p, NULL, svr4_emul_path, itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;

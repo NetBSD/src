@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.6 1995/06/24 18:47:08 fvdl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.7 1995/06/24 20:29:27 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -651,6 +651,10 @@ svr4_putmsg(p, uap, retval)
 	struct sockaddr_in sa, *sap;
 	caddr_t sg;
 
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return EBADF;
+
 #ifdef DEBUG_SVR4
 	svr4_showmsg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		     SCARG(uap, dat), SCARG(uap, flags));
@@ -706,7 +710,7 @@ svr4_putmsg(p, uap, retval)
 	sa.sin_port = na->port;
 	sa.sin_addr.s_addr = na->addr;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	sap = (struct sockaddr_in *) stackgap_alloc(&sg,
 						    sizeof(struct sockaddr_in));
 
@@ -773,6 +777,10 @@ svr4_getmsg(p, uap, retval)
 	int fl;
 	caddr_t sg;
 
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return EBADF;
+
 	bzero(&sc, sizeof(sc));
 
 #ifdef DEBUG_SVR4
@@ -818,7 +826,7 @@ svr4_getmsg(p, uap, retval)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	sap = (struct sockaddr_in *) stackgap_alloc(&sg,
 						    sizeof(struct sockaddr_in));
 	flen = (int *) stackgap_alloc(&sg, sizeof(*flen));

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.9 1995/06/10 22:44:18 mycroft Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.10 1995/06/24 20:29:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -112,8 +112,8 @@ svr4_stat(p, uap, retval)
 	struct stat_args	cup;
 	int			error;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
@@ -144,8 +144,8 @@ svr4_lstat(p, uap, retval)
 	struct stat_args	cup;
 	int			error;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
@@ -175,7 +175,7 @@ svr4_fstat(p, uap, retval)
 	struct fstat_args	cup;
 	int			error;
 
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
@@ -206,8 +206,8 @@ svr4_xstat(p, uap, retval)
 	struct stat_args	cup;
 	int			error;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
@@ -237,8 +237,8 @@ svr4_lxstat(p, uap, retval)
 	struct stat_args	cup;
 	int			error;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
@@ -268,7 +268,7 @@ svr4_fxstat(p, uap, retval)
 	struct fstat_args	cup;
 	int			error;
 
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
