@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.22 2003/09/09 03:56:39 itojun Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.23 2004/12/30 05:07:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.22 2003/09/09 03:56:39 itojun Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.23 2004/12/30 05:07:43 christos Exp $");
 #endif
 #endif
 
@@ -334,9 +334,9 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 		if (!nconf || !cl)
 			break;
 		/* XXX fvdl - is this useful? */
-		if (strncmp(nconf->nc_protofmly, "inet", 4) == 0)
+		if (strncmp(nconf->nc_protofmly, "inet", (size_t)4) == 0)
 			setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one,
-			    sizeof (one));
+			    (socklen_t)sizeof (one));
 		break;
 	case NC_TPI_CLTS:
 		cl = clnt_dg_create(fd, svcaddr, prog, vers, sendsz, recvsz);
