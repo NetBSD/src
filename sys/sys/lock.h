@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.39 2000/11/19 00:56:39 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.40 2000/11/22 06:31:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -167,6 +167,13 @@ struct lock {
 #if defined(LOCKDEBUG)
 #define	lk_list		lk_un.lk_un_spin.lk_spin_list
 #endif
+
+#if defined(LOCKDEBUG)
+	const char *lk_lock_file;
+	const char *lk_unlock_file;
+	int lk_lock_line;
+	int lk_unlock_line;
+#endif
 };
 
 /*
@@ -275,7 +282,13 @@ struct proc;
 
 void	lockinit(struct lock *, int prio, const char *wmesg, int timo,
 			int flags);
+#if defined(LOCKDEBUG)
+int	_lockmgr(__volatile struct lock *, u_int flags, struct simplelock *,
+	    const char *file, int line);
+#define	lockmgr(l, f, i)	_lockmgr((l), (f), (i), __FILE__, __LINE__)
+#else
 int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
+#endif /* LOCKDEBUG */
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(__volatile struct lock *);
 
@@ -289,8 +302,18 @@ void	spinlock_switchcheck(void);
 #define	spinlockmgr(lkp, flags, intrlk)					\
 	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
 
+#if defined(LOCKDEBUG)
+int	_spinlock_release_all(__volatile struct lock *, const char *, int);
+void	_spinlock_acquire_count(__volatile struct lock *, int, const char *,
+	    int);
+
+#define	spinlock_release_all(l)	_spinlock_release_all((l), __FILE__, __LINE__)
+#define	spinlock_acquire_count(l, c) _spinlock_acquire_count((l), (c),	\
+					__FILE__, __LINE__)
+#else
 int	spinlock_release_all(__volatile struct lock *);
 void	spinlock_acquire_count(__volatile struct lock *, int);
+#endif
 
 #if defined(LOCKDEBUG)
 void	_simple_lock(__volatile struct simplelock *, const char *, int);
