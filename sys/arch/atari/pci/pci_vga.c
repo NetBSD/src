@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.6.2.1 2002/01/10 19:40:05 thorpej Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.6.2.2 2002/06/17 18:56:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -148,7 +148,7 @@ check_for_vga(iot, memt)
 				tseng_init(pc, tag, id, regs, fb);
 				found = 1;
 				break;
-			case PCI_PRODUCT_ATI_MACH64_B:
+			case PCI_PRODUCT_ATI_RAGE_PRO_PCI_P:
 				ati_vga_init(pc, tag, id, regs, fb);
 				found = 1;
 				break;
