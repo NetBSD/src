@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.23 2004/08/22 23:20:04 hubertf Exp $
+.\"	$NetBSD: netboot,v 1.24 2004/09/10 12:59:03 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -291,7 +291,7 @@ group {
                 #
                 option host-name        "client";
 .if !\n[hp300] \{\
-.ie \n[evbppc] \{\
+.if \n[evbppc] \{\
 
                 #
                 # Name of the kernel image to download via tftp.
@@ -300,7 +300,6 @@ group {
                 #
                 filename                "netbsd-INSTALL_WALNUT.img"
 .\}
-.el
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
@@ -311,7 +310,7 @@ group {
                 #
                 filename                "bootjs.net";
 .\}
-.ie \n[hp700] \{\
+.if \n[hp700] \{\
                 #
                 filename                "SYSNBSD";
 .\}
@@ -319,10 +318,12 @@ group {
                 #
                 filename                "ofwboot.xcf";
 .\}
-.el .if \n[next68k] \{\
+.el \{\
+.if \n[next68k] \{\
                 #
                 filename                "boot";
 .\} \" \n[next68k]
+.\} \" \n[macppc]
 .\} \" !\n[hp300]
 
                 #
@@ -455,8 +456,10 @@ you can achieve this with:
 .No # Ic "/etc/rc.d/inetd restart"
 .disp)
 .Pp
-.ie \n[evbppc] Now, you need to copy the kernel for your \*M machine to
-.el Now, you need to copy the bootloader for your \*M machine to
+Now, you need to copy the
+.ie \n[evbppc] kernel
+.el bootloader
+for your \*M machine to
 .Pa /tftpboot .
 .if \n[hp700] \{\
 Get
@@ -671,7 +674,7 @@ Also, copy the distribution files to the client's root directory.
 .Pp
 If you are running your \*M diskless, simply use
 .Pa binary/kernel/netbsd-GENERIC.gz .
-.\}
+.\} \" \n[hp300]
 .if \n[hp700] \{\
 You do not need to place a kernel in
 .Pa /export/client/root
