@@ -2397,7 +2397,7 @@ lookup_name_current_level (name)
   return t;
 }
 
-static int sigsegv ()
+static void sigsegv ()
 {
   error ("Segmentation violation");
   signal (SIGSEGV, SIG_DFL);
@@ -8541,8 +8541,8 @@ hack_incomplete_structures (type)
 		expand_decl_init (decl);
 	      }
 	  }
+	assert (current_binding_level->n_incomplete > 0);
 	--current_binding_level->n_incomplete;
-	assert (current_binding_level->n_incomplete >= 0);
       }
 }
 
