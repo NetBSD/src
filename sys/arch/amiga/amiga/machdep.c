@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 2002/03/25 15:42:09 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171 2002/04/25 09:20:28 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2002/03/25 15:42:09 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2002/04/25 09:20:28 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ struct vm_map *phys_map = NULL;
 caddr_t	msgbufaddr;
 paddr_t msgbufpa;
 
+int	machineid;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2002/01/28 09:56:47 aymeric Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2002/04/25 09:20:29 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2002/01/28 09:56:47 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2002/04/25 09:20:29 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,6 +279,8 @@ u_int	*Sysseg, *Sysseg_pa;
 u_int	*Sysmap, *Sysptmap;
 u_int	*Segtabzero, *Segtabzeropa;
 vsize_t	Sysptsize = VM_KERNEL_PT_PAGES;
+
+pv_entry_t	pv_table;	/* array of entries, one per page */
 
 struct pmap	kernel_pmap_store;
 struct vm_map	*pt_map;

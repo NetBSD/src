@@ -1,5 +1,5 @@
 /*
- * $NetBSD: drcustom.h,v 1.5 2002/01/26 13:24:54 aymeric Exp $
+ * $NetBSD: drcustom.h,v 1.6 2002/04/25 09:20:28 aymeric Exp $
  *
  * Motherboard addresses for the DraCo.
  *
@@ -128,4 +128,4 @@ struct drioct {
 #endif
 #endif
 
-#endif
+#endif /* _DRACO_HARDWARE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: viewioctl.h,v 1.7 2002/01/26 13:41:00 aymeric Exp $	*/
+/*	$NetBSD: viewioctl.h,v 1.8 2002/04/25 09:20:31 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -59,4 +59,3 @@ struct view_size {
 int viewioctl(dev_t, u_long, caddr_t, int, struct proc *);
 void viewprobe(void);
 #endif
-
