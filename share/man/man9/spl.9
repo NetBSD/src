@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.15 2001/09/04 02:51:16 wiz Exp $
+.\"	$NetBSD: spl.9,v 1.16 2001/12/26 00:24:16 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -243,9 +243,7 @@ in places where the system priority level is being decreased
 permanently.  It is inappropriate to attempt to use them where the
 system priority level is being decreased temporarily, and would
 need to be restored to a previous value before continuing.
-.Pp
 .Sh HISTORY
-.Pp
 Originally,
 .Fn splsoftclock
 lowered the system priority level.
