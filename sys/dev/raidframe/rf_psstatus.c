@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.12 2002/11/12 00:01:32 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.13 2003/12/21 07:53:59 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.12 2002/11/12 00:01:32 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.13 2003/12/21 07:53:59 simonb Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -88,10 +88,10 @@ rf_ConfigurePSStatus(
 
 	raidPtr->pssTableSize = RF_PSS_DEFAULT_TABLESIZE;
 	pool_init(&raidPtr->pss_pool, sizeof(RF_ReconParityStripeStatus_t), 0,
-		  0, RF_PSS_INITIAL, "raidpsspl", NULL);
+		  0, 0, "raidpsspl", NULL);
 	pool_init(&raidPtr->pss_issued_pool,
 		  raidPtr->numCol * sizeof(char), 0,
-		  0, RF_PSS_INITIAL, "raidpssissuedpl", NULL);
+		  0, 0, "raidpssissuedpl", NULL);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
