@@ -54,7 +54,7 @@ RELEASE=`(uname -r) 2>/dev/null`
 VERSION=`(uname -v) 2>/dev/null`
 if test -f /usr/include/netinet6/in6.h; then
 	grep __KAME__ /usr/include/netinet6/in6.h 2>&1 >/dev/null
-	if $?; then
+	if [ $?  = 1 ]; then
 		INET6=
 	else
 		if [ -f /usr/local/v6/lib/libinet6.a ]; then
