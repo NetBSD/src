@@ -1,8 +1,10 @@
-#	$NetBSD: GENERIC,v 1.94 2000/01/20 19:12:32 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.95 2000/01/23 23:46:13 hubertf Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
+
+#ident 		"GENERIC-$Revision: 1.95 $"
 
 maxusers	16		# estimated number of users
 

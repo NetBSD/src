@@ -2,9 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.23 2000/01/20 19:12:31 wrstuden Exp $
+# 	$NetBSD: GENERIC,v 1.24 2000/01/23 23:46:11 hubertf Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	8
 

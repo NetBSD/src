@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.6 2000/01/20 19:12:32 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.7 2000/01/23 23:46:14 hubertf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
+
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	16		# estimated number of users
 
