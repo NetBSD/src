@@ -1,11 +1,11 @@
-/*	$NetBSD: en_US.ISO_8859-2.src,v 1.1 2000/12/30 02:33:15 itojun Exp $	*/
+/*	$NetBSD: en_US.ISO_8859-2.src,v 1.2 2001/03/26 19:56:35 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for the iso_8859_2 Locale
  */
 
 ENCODING	"NONE"
-VARIABLE        ISO 8859-2 Latin-2 character set
+VARIABLE        Latin-2 character set, CODESET=ISO8859-2
 
 #
 # This is a comment

@@ -1,11 +1,11 @@
-/*	$NetBSD: en_US.UTF-2.src,v 1.1 2000/12/30 02:33:15 itojun Exp $	*/
+/*	$NetBSD: en_US.UTF-2.src,v 1.2 2001/03/26 19:56:36 tshiozak Exp $	*/
 /*	@(#)POSIX	8.1 (Berkeley) 6/6/93 */
 
 /*
  * Standard LOCALE_CTYPE for the C Locale, using utf-8 encoding
  */
 ENCODING	"UTF2"
-VARIABLE	A comment line or data line.  Only 1 allowed.  Copied verbatim.
+VARIABLE	CODESET=UTF-8
 
 /*
  * This is a comment

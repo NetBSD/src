@@ -1,4 +1,4 @@
-/*	$NetBSD: zh_CN.eucCN.src,v 1.1 2000/12/30 02:33:17 itojun Exp $	*/
+/*	$NetBSD: zh_CN.eucCN.src,v 1.2 2001/03/26 19:56:37 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1998,	Luoqi Chen
@@ -29,7 +29,7 @@
  */
 
 ENCODING	"EUC"
-VARIABLE	1 0x0000 2 0x8080 2 0x0080 3 0x8000 0x8080
+VARIABLE	1 0x0000 2 0x8080 2 0x0080 3 0x8000 0x8080 CODESET=eucCN
 
 /*
  * Code Set 1
