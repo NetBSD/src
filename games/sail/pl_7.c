@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.20 2001/01/04 04:41:42 jwise Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.21 2001/01/04 05:34:56 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.20 2001/01/04 04:41:42 jwise Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.21 2001/01/04 05:34:56 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,10 @@ __RCSID("$NetBSD: pl_7.c,v 1.20 2001/01/04 04:41:42 jwise Exp $");
 void	initscreen(void);
 void	cleanupscreen(void);
 void	newturn(int);
-void	Signal(const char *, struct ship *, ...);
-void	Msg(const char *, ...);
+void	Signal(const char *, struct ship *, ...)
+		__attribute__((__format__(__printf__,1,3)));
+void	Msg(const char *, ...)
+		__attribute__((__format__(__printf__,1,2)));
 static void	Scroll(void);
 void	prompt(const char *, struct ship *);
 static void	endprompt(int);
@@ -89,9 +91,9 @@ WINDOW *scroll_w;
 WINDOW *stat_w;
 WINDOW *turn_w;
 
-char done_curses;
-char loaded, fired, changed, repaired;
-char dont_adjust;
+int done_curses;
+int loaded, fired, changed, repaired;
+int dont_adjust;
 int viewrow, viewcol;
 char movebuf[sizeof SHIP(0)->file->movebuf];
 int player;
