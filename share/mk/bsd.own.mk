@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.351 2003/07/28 08:53:54 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.352 2003/08/01 22:51:34 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,16 +33,18 @@ TOOLCHAIN_MISSING=	no
 #
 # Transitional for toolchain upgrade to GCC3.3
 #
+#    ${MACHINE_ARCH} == "m68000" ||
+#    ${MACHINE_ARCH} == "sh3el" ||
+#    ${MACHINE_ARCH} == "sh3eb" ||
+#    ${MACHINE_ARCH} == "powerpc" ||
+
 USE_TOOLS_TOOLCHAIN?=	yes
-.if ${MACHINE_ARCH} == "i386" || \
+.if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "m68000" || \
-    ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 USE_TOOLS_TOOLCHAIN?=	no
@@ -63,7 +65,7 @@ CPPFLAG_ISYSTEM=	-isystem
 .if ${USE_TOOLS_TOOLCHAIN} == "yes"
 CPPFLAG_ISYSTEMXX=	-isystem
 .else
-CPPFLAG_ISYSTEMXX=	-I
+CPPFLAG_ISYSTEMXX=	-isystem-cxx
 .endif
 .endif
 
