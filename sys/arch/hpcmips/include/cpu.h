@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2000/03/24 21:30:59 soren Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2000/03/24 23:06:04 soren Exp $	*/
 
 #ifndef __HPCMIPS_CPU_H
 #define __HPCMIPS_CPU_H
@@ -17,16 +17,5 @@
 #else
 #define	INT_MASK_REAL_DEV	MIPS3_HARD_INT_MASK	/* XXX */
 #endif
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 #endif __HPCMIPS_CPU_H
