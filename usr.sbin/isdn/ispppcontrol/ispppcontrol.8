@@ -24,25 +24,53 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: ispppcontrol.8,v 1.2 2001/04/04 11:18:07 wiz Exp $
+.\" $Id: ispppcontrol.8,v 1.3 2001/04/29 10:30:41 martin Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
-.Dd August 31, 2000
+.Dd March 26, 2001
 .Os
 .Dt ISPPPCONTROL 8
 .Sh NAME
-.Nm ispppcontrol
-.Nd display or set parameters for an isdn4bsd isp interface
+.Nm ispppcontrol ,
+.Nm pppoectl
+.Nd display or set parameters for an pppoe or isdn ppp (isp) interface
 .Sh SYNOPSIS
 .Nm
 .Op Fl v
 .Ar ifname
 .Op Ar parameter Ns Op \&= Ns Ar value
 .Op Ar ...
+.Pp
+.Nm pppoectl
+.Fl e Ar ethernet-ifname
+.Op Fl s Ar service-name
+.Op Fl a Ar access-concentrator-name
+.Ar ifname
 .Sh DESCRIPTION
+There are two basic modes of operation: configuring security related
+parameters and attaching a PPPoE interface to its ethernet interface,
+optionally passing in additional parameters for the PPPoE encapsulatione.
+.Pp
+The later useage is indicated by the presence of the 
+.Fl e
+option, which takes the name of the ethernet interface as its argument.
+.Pp
+.Bl -tag -width indent
+.It Fl e
+specifies the ethernet interface used to communicate with the
+access concentrator (typically via an DSL modem).
+.It Fl a
+specifies the name of the access concentrator.
+.It Fl s
+specifies the name of the service connected to.
+.El
+.Pp
+Both the access concentrator name and the service name are typically
+not specified.
+.Pp
 The
-.Xr i4bisppp 4
+.Xr isppp 4
 driver might require a number of additional arguments or optional
 parameters besides the settings that can be adjusted with
 .Xr ifconfig 8 .
@@ -186,7 +214,7 @@ isp0:	phase=dead
 	enable_vj: on
 .Ed
 .Pp
-Display the settings for isp0.  The interface is currently in
+Display the settings for pppoe0.  The interface is currently in
 .Em dead
 phase, i. e. the LCP layer is down, and no traffic is possible.  Both
 ends of the connection use the CHAP protocol, my end tells remote the
@@ -229,6 +257,11 @@ by the previous example.
 .%T "PPP Challenge Handshake Authentication Protocol (CHAP)"
 .%O RFC 1994
 .Re
+.Rs
+.%A L. Mamakos e.a.
+.%T "A Method for Transmitting PPP Over Ethernet (PPPoE)"
+.%O RFC 2516
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -240,4 +273,6 @@ utility which appeared in
 The program was written by
 .ie t J\(:org Wunsch,
 .el Joerg Wunsch,
-Dresden.
+Dresden and modified for PPPoE support by
+.ie t Martin Husemann.
+.el Martin Husemann.
