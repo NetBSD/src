@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.58 1995/03/23 11:33:18 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.59 1995/03/23 11:37:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -612,7 +612,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0,
 		    &cd->sc_dk.dk_cpulabel);
 		if (error == 0 && cmd == DIOCWDINFO)
-			error = writedisklabel(WDLABELDEV(dev), cdstrategy,
+			error = writedisklabel(CDLABELDEV(dev), cdstrategy,
 			    &cd->sc_dk.dk_label, &cd->sc_dk.dk_cpulabel);
 
 		cd->flags &= ~CDF_LABELLING;
