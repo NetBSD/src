@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.7 1998/01/03 00:25:19 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.8 1998/01/12 20:53:05 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,9 +70,6 @@ int	vsbus_print	__P((void *, const char *));
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
 
-struct	cfdriver vsbus_cd = { 
-	NULL, "vsbus", DV_DULL 
-};
 struct	cfattach vsbus_ca = { 
 	sizeof(struct device), vsbus_match, vsbus_attach
 };
