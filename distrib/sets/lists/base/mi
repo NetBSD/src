@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.432 2003/10/13 07:29:28 dyoung Exp $
+# $NetBSD: mi,v 1.433 2003/10/19 09:10:25 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1815,6 +1815,7 @@
 ./usr/share/man/cat8/hpcmips		base-man-share
 ./usr/share/man/cat8/hpcsh		base-man-share
 ./usr/share/man/cat8/i386		base-man-share
+./usr/share/man/cat8/ibmnws		base-man-share
 ./usr/share/man/cat8/luna68k		base-man-share
 ./usr/share/man/cat8/mac68k		base-man-share
 ./usr/share/man/cat8/macppc		base-man-share
@@ -1914,6 +1915,7 @@
 ./usr/share/man/html8/hpcmips		base-man-share
 ./usr/share/man/html8/hpcsh		base-man-share
 ./usr/share/man/html8/i386		base-man-share
+./usr/share/man/html8/ibmnws		base-man-share
 ./usr/share/man/html8/luna68k		base-man-share
 ./usr/share/man/html8/mac68k		base-man-share
 ./usr/share/man/html8/macppc		base-man-share
@@ -2014,6 +2016,7 @@
 ./usr/share/man/man8/hpcmips		base-man-share
 ./usr/share/man/man8/hpcsh		base-man-share
 ./usr/share/man/man8/i386		base-man-share
+./usr/share/man/man8/ibmnws		base-man-share
 ./usr/share/man/man8/luna68k		base-man-share
 ./usr/share/man/man8/mac68k		base-man-share
 ./usr/share/man/man8/macppc		base-man-share
