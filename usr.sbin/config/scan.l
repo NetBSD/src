@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.14 1997/06/12 15:03:12 mrg Exp $	*/
+/*	$NetBSD: scan.l,v 1.15 1997/10/10 09:32:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,6 +122,10 @@ with		return WITH;
 		return WORD;
 	}
 
+\"\" {
+		yylval.str = intern("");
+		return EMPTY;
+	}
 \"([^"\n]|\\\")+ {
 		tok = input();  /* eat closing quote */
 		if (tok != '"') {

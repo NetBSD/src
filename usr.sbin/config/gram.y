@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.15 1997/06/12 15:03:09 mrg Exp $	*/
+/*	$NetBSD: gram.y,v 1.16 1997/10/10 09:32:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,7 @@ static	void	check_maxpart __P((void));
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
-%token	<str> PATHNAME WORD
+%token	<str> PATHNAME WORD EMPTY
 
 %left '|'
 %left '&'
@@ -269,6 +269,7 @@ locdefault:
 
 value:
 	WORD				{ $$ = $1; } |
+	EMPTY				{ $$ = $1; } |
 	signed_number			{ char bf[40];
 					    (void)sprintf(bf, FORMAT($1), $1);
 					    $$ = intern(bf); };
