@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1998/06/06 05:34:00 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1998/06/20 12:46:00 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@
 #define	PART_USR	G
 
 int
-md_get_info (void)
+md_get_info()
 {
 	struct disklabel disklabel;
 	int fd;
@@ -109,15 +109,19 @@ md_get_info (void)
 /*
  * hook called before writing new disklabel.
  */
-void	md_pre_disklabel (void)
+void
+md_pre_disklabel()
 {
+
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-void	md_post_disklabel (void)
+void
+md_post_disklabel()
 {
+
 }
 
 /*
@@ -129,29 +133,26 @@ void	md_post_disklabel (void)
  *
  * On the sparc, we use this opportunity to install the boot blocks.
  */
-void	md_post_newfs (void)
+void
+md_post_newfs()
 {
 
-	printf (msg_string(MSG_dobootblks), diskdev);
+	printf(msg_string(MSG_dobootblks), diskdev);
 	run_prog_or_continue("/sbin/disklabel -W %s", diskdev);
 	run_prog_or_continue("/usr/mdec/binstall ffs /mnt");
 }
 
-void	md_copy_filesystem (void)
+/*
+ * some ports use this to copy the MD filesystem, we do not.
+ */
+void
+md_copy_filesystem()
 {
-	if (target_already_root()) {
-		return;
-	}
 
-	/* Copy the instbin(s) to the disk */
-	printf ("%s", msg_string(MSG_dotar));
-	run_prog("cd /; pax -Xrwpe . /mnt");
-
-	/* Copy next-stage profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
 }
 
-int md_make_bsd_partitions (void)
+int
+md_make_bsd_partitions()
 {
 	FILE *f;
 	int i, part;
@@ -366,11 +367,11 @@ int md_make_bsd_partitions (void)
 	return (1);
 }
 
-
 /* Upgrade support */
 int
-md_update(void)
+md_update()
 {
+
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
@@ -380,6 +381,7 @@ md_update(void)
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install()
 {
+
 }
