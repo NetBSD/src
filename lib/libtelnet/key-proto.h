@@ -1,4 +1,4 @@
-/*	$NetBSD: key-proto.h,v 1.5 2003/08/07 16:44:55 agc Exp $	*/
+/*	$NetBSD: key-proto.h,v 1.6 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,10 +55,9 @@
 #define	__KEY_PROTO__
 
 #include <sys/cdefs.h>
-#define P __P
 
-int key_file_exists P((void));
-void key_lookup P((unsigned char *, Block));
-void key_stream_init P((Block, Block, int));
-unsigned char key_stream P((int, int));
+int key_file_exists(void);
+void key_lookup(unsigned char *, Block);
+void key_stream_init(Block, Block, int);
+unsigned char key_stream(int, int);
 #endif
