@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2000/01/08 20:17:16 he Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2000/06/27 15:08:06 he Exp $
+
+.ifndef NOTESOBJDIR
+NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} ${MAKEFLAGS} -V .OBJDIR
+.endif
 
 TOP=		${.CURDIR}/..
 
@@ -41,9 +45,8 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 notes:
-	cd ${.CURDIR}/../../../notes/mac68k && ${MAKE} && \
-	    cp ${.OBJDIR}/../../../notes/mac68k${__usrobjdirpf}/INSTALL.more \
-	    ${.OBJDIR}/
+	cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} ${MAKEFLAGS} INSTALL.more && \
+	    cp ${NOTESOBJDIR}/INSTALL.more ${.OBJDIR}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
