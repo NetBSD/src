@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2001/05/14 17:55:03 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2001/06/08 00:09:28 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -159,10 +159,11 @@ extern u_int32_t 	clockmask;
 #define	spllock()	splhigh()
 #define spllpt()	spltty()
 
-#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
-#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
+#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_1)
+#define splsoftclock()	splsoft()
 #define splsoftnet()	splsoft()
+
+#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_1)
 
 extern void *		cpu_intr_establish(int, int, int (*)(void *), void *);
 void *			softintr_establish(int, void (*)(void *), void *);
