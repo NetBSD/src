@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.84 2004/05/08 23:41:40 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.85 2004/05/17 16:57:49 kochi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.84 2004/05/08 23:41:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.85 2004/05/17 16:57:49 kochi Exp $");
 
 #include "opt_pci.h"
 
@@ -229,7 +229,7 @@ pciprint(aux, pnp)
 			    "\002\001multifn\002singlefn\003skipfunc0"
 			    "\004skipfunc1\005skipfunc2\006skipfunc3"
 			    "\007skipfunc4\010skipfunc5\011skipfunc6"
-			    "\012skipfunc8",
+			    "\012skipfunc7",
 			    devinfo, sizeof (devinfo));
 			printf(" quirks %s", devinfo);
 		}
