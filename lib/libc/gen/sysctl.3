@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.132 2004/03/24 18:22:30 atatat Exp $
+.\"	$NetBSD: sysctl.3,v 1.133 2004/03/24 19:10:46 snj Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd January 7, 2004
+.Dd March 24, 2004
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1778,7 +1778,7 @@ size_t len;
 .sp
 mib[0] = CTL_VFS;
 mib[1] = CTL_QUERY;
-memset(&query, 0, sizeof(query));
+memset(\*[Am]query, 0, sizeof(query));
 query.sysctl_flags = SYSCTL_VERSION;
 len = sizeof(vfs);
 sysctl(mib, 2, \*[Am]vfs[0], \*[Am]len, \*[Am]query, sizeof(query));
@@ -1988,9 +1988,9 @@ mib[1] = CTL_DESCRIBE;
 d = (struct sysctldesc *)\*[Am]buf[0];
 len = sizeof(buf);
 sysctl(mib, 2, d, \*[Am]len, NULL, 0);
-while ((caddr_t)d < (caddr_t)&buf[len]) {
-	printf("node %d: %.*s\\n", d->descr_num, d->descr_len,
-	    d->descr_str);
+while ((caddr_t)d \*[Lt] (caddr_t)\*[Am]buf[len]) {
+	printf("node %d: %.*s\\n", d-\*[Gt]descr_num, d-\*[Gt]descr_len,
+	    d-\*[Gt]descr_str);
 	d = NEXT_DESCR(d);
 }
 .sp
@@ -2001,7 +2001,7 @@ desc.sysctl_num = KERN_SECURELEVEL;
 d = (struct sysctldesc *)\*[Am]buf[0];
 len = sizeof(buf);
 sysctl(mib, 2, d, \*[Am]len, \*[Am]desc, sizeof(desc));
-printf("kern.securelevel: %.*s\\n", d->descr_len, d->descr_str);
+printf("kern.securelevel: %.*s\\n", d-\*[Gt]descr_len, d-\*[Gt]descr_str);
 .Ed
 .Pp
 Descriptions can also be set as follows, subject to the following rules:
@@ -2035,10 +2035,10 @@ sysctl(mib, 2, NULL, NULL, \*[Am]desc, sizeof(desc));
 Upon successully setting a description, the new description will be
 returned in the space indicated by the
 .Fa oldp
-and 
+and
 .Fa oldlenp
 arguments.
-.Pp 
+.Pp
 The
 .Fa sysctl_flags
 field in the struct sysctlnode contains the sysctl version, node type
