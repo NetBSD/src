@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/04/12 14:18:41 tv Exp $
+#	$NetBSD: Makefile,v 1.6 1998/05/06 11:59:09 mycroft Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -13,7 +13,8 @@ SUBDIR=std stl io
 
 LIB=	stdc++
 
-SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
+SRCS=	_G_config.h \
+	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
 	indstream.cc ioassign.cc ioextend.cc iomanip.cc iostream.cc \
 	isgetline.cc isgetsb.cc isscan.cc osform.cc parsestream.cc \
 	pfstream.cc procbuf.cc sbform.cc sbgetline.cc sbscan.cc \
@@ -34,7 +35,7 @@ SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
 
 DIST=		$(.CURDIR)/../../dist
 CXXFLAGS+=	-nostdinc++ 
-CPPFLAGS+=	-I$(.CURDIR) -I$(DIST)/libstdc++ -I$(DIST)/libio \
+CPPFLAGS+=	-I. -I$(DIST)/libstdc++ -I$(DIST)/libio \
 		-I$(DIST)/libstdc++/stl -I$(DIST)/gcc/cp/inc
 NOMAN=		noman
 NOLINT=		nolint (c++)
@@ -55,6 +56,12 @@ DPADD=	${DESTDIR}/usr/lib/c++rt0.o
 
 SINSTCC=	$(DIST)/libstdc++/sinst.cc
 CINSTCC=	$(DIST)/libstdc++/cinst.cc
+
+_G_config.h: Makefile
+	rootme=${.OBJDIR} CC="${CC}" CXX="${CXX}" CONFIG_NM="${NM}" \
+	    /bin/sh ${DIST}/libio/gen-params LIB_VERSION=2.8.0 >tmp-params.h
+	mv -f tmp-params.h _G_config.h
+CLEANFILES+=dummy.h tmp-params.h _G_config.h
 
 cstrmain.cc: Makefile
 	@echo Creating cstrmain.cc
