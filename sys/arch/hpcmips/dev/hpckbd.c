@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.1 2000/09/21 14:17:29 takemura Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.2 2000/10/01 03:45:33 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -101,6 +101,7 @@ void	hpckbd_initif __P((struct hpckbd_core*));
 int	hpckbd_getevent __P((struct hpckbd_core*, u_int*, int*));
 int	hpckbd_putevent __P((struct hpckbd_core*, u_int, int));
 void	hpckbd_keymap_lookup __P((struct hpckbd_core*));
+void	hpckbd_keymap_setup __P((struct hpckbd_core *, const keysym_t *, int));
 int	__hpckbd_input __P((void*, int, int));
 void	__hpckbd_input_hook __P((void*));
 
@@ -259,6 +260,27 @@ hpckbd_getevent(hc, type, data)
 }
 
 void
+hpckbd_keymap_setup(hc, map, mapsize)
+	struct hpckbd_core *hc;
+	const keysym_t *map;
+	int mapsize;
+{
+	int i;
+	struct wscons_keydesc *desc;
+
+	/* fix keydesc table */
+	desc = (struct wscons_keydesc *)hpckbd_keymapdata.keydesc;
+	for (i = 0; desc[i].name != 0; i++) {
+		if ((desc[i].name & KB_MACHDEP) && desc[i].map == NULL) {
+			desc[i].map = map;
+			desc[i].map_size = mapsize;
+		}
+	}
+
+	return;
+}
+
+void
 hpckbd_keymap_lookup(hc)
 	struct hpckbd_core *hc;
 {
@@ -275,6 +297,17 @@ hpckbd_keymap_lookup(hc)
 #if !defined(PCKBD_LAYOUT)
 			hpckbd_keymapdata.layout = tab->ht_layout;
 #endif
+			if (tab->ht_cmdmap.map) {
+				hpckbd_keymap_setup(hc, tab->ht_cmdmap.map, 
+						    tab->ht_cmdmap.size);
+#if !defined(PCKBD_LAYOUT)
+				hpckbd_keymapdata.layout |= KB_MACHDEP;
+#endif
+			} else {
+#if defined(PCKBD_LAYOUT)
+				hpckbd_keymapdata.layout &= ~KB_MACHDEP;
+#endif
+			}
 			return;
 		}
 	}
