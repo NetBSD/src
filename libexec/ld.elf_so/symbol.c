@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.35 2003/12/07 09:36:06 mrauch Exp $	 */
+/*	$NetBSD: symbol.c,v 1.36 2004/07/18 17:26:19 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -62,6 +62,19 @@ _rtld_is_exported(const Elf_Sym *def)
 		(Elf_Addr)dlsym,
 		(Elf_Addr)dlerror,
 		(Elf_Addr)dladdr,
+
+#if 0
+	/*
+	 * Don't need to list these since they are aliases of the
+	 * above symbols, and thus have the same value.
+	 */
+		(Elf_Addr)__dlopen,
+		(Elf_Addr)__dlclose,
+		(Elf_Addr)__dlsym,
+		(Elf_Addr)__dlerror,
+		(Elf_Addr)__dladdr,
+#endif
+
 		0
 	};
 	int i;
