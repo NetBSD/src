@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.2 1999/01/03 04:53:59 erh Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.3 1999/01/03 05:34:39 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,9 @@ typedef union linux_sigval {
 #define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 4)
 
 typedef struct linux_siginfo {
-	int	si_signo;
-	int	si_errno;
-	int	si_code;
+	int	lsi_signo;
+	int	lsi_errno;
+	int	lsi_code;
 	union {
 		int _pad[SI_PAD_SIZE];
 
