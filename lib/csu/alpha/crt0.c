@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 1996/12/07 20:04:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -35,8 +35,12 @@
 #undef DYNAMIC
 #endif
 
-#include <stdlib.h>
+#include <sys/param.h>
+#include <sys/exec.h>
 #include <sys/syscall.h>
+#include <vm/vm.h>
+
+#include <stdlib.h>
 #ifdef DYNAMIC
 #include "rtld.h"
 #else
@@ -63,6 +67,7 @@ static char	*_strrchr __P((char *, char));
 
 char	**environ;
 char	*__progname = "";
+struct ps_strings *__ps_strings = PS_STRINGS;
 
 #ifndef ECOFF_COMPAT
 extern void	__init __P((void));
@@ -90,10 +95,11 @@ extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
 void
-__start(sp, cleanup, obj)
+__start(sp, cleanup, obj, ps_strings)
 	char **sp;
 	void (*cleanup) __P((void));		/* from shared loader */
 	const Obj_Entry *obj;			/* from shared loader */
+	struct ps_strings *ps_strings;
 {
 	long argc;
 	char **argv, *namep;
@@ -108,6 +114,10 @@ __start(sp, cleanup, obj)
 		else
 			__progname++;
 	}
+
+	if (ps_strings != (struct ps_strings *)0 &&
+	    ps_strings != (struct ps_strings *)0xbabefacedeadbeef)
+		__ps_strings = ps_strings;
 
 #ifdef DYNAMIC
 	if (&_DYNAMIC != NULL)
