@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.2 1994/11/20 20:53:12 deraadt Exp $ */
+/*	$NetBSD: kbd.h,v 1.3 1995/04/26 14:24:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,3 +78,9 @@
 #define	KBD_CMD_NOBELL	3		/* turn bell off */
 #define	KBD_CMD_CLICK	10		/* turn keyclick on */
 #define	KBD_CMD_NOCLICK	11		/* turn keyclick off */
+#define KBD_CMD_SETLED	14		/* set LED state (type 4 kbd) */
+
+#define	LED_NUM_LOCK	0x1
+#define	LED_COMPOSE	0x2
+#define	LED_SCROLL_LOCK	0x4
+#define	LED_CAPS_LOCK	0x8

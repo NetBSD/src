@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.2 1994/11/20 20:53:13 deraadt Exp $ */
+/*	$NetBSD: kbio.h,v 1.3 1995/04/26 14:24:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,8 @@ struct kiockey {
 #define	KIOCTYPE	_IOR('k', 9, int)	/* get keyboard type */
 #define	KIOCSDIRECT	_IOW('k', 10, int)	/* keys to console? */
 #define	KIOCLAYOUT	_IOR('k', 20, int)	/* get keyboard layout */
+#define	KIOCSLED	_IOW('k', 14, char)	/* set LED state */
+#define	KIOCGLED	_IOR('k', 15, char)	/* get LED state */
 
 #define	TR_NONE			0	/* X compat, unsupported */
 #define	TR_ASCII		1	/* X compat, unsupported */
