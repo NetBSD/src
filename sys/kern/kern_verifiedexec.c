@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.4 2003/07/14 14:59:02 lukem Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.5 2003/11/01 17:35:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.4 2003/07/14 14:59:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.5 2003/11/01 17:35:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h> 
@@ -330,7 +330,7 @@ ectly by pid %u (ppid %u, gppid %u)\n",
                   }
                   break;
 
-          case FINGERPRINT_NOMATCH: /* does not match - bitch about it */
+          case FINGERPRINT_NOMATCH: /* does not match - whine about it */
                   printf("Fingerprint for %s (dev %lu, inode %lu) does not match
  loaded value\n",
                          epp->ep_name, epp->ep_vap->va_fsid,
