@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.19 2000/06/21 01:58:52 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.20 2000/07/03 01:49:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.19 2000/06/21 01:58:52 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.20 2000/07/03 01:49:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,17 +312,19 @@ clean_loop(fsp, nsegs, options)
 	int nsegs;
 	long options;
 {
+	struct lfs *lfsp;
 	double loadavg[MAXLOADS];
 	time_t	now;
 	u_long max_free_segs;
 	u_long db_per_seg;
 
+	lfsp = &fsp->fi_lfs;
         /*
 	 * Compute the maximum possible number of free segments, given the
 	 * number of free blocks.
 	 */
-	db_per_seg = fragstodb(&fsp->fi_lfs, fsp->fi_lfs.lfs_ssize);
-	max_free_segs = (fsp->fi_statfsp->f_bfree / fsp->fi_lfs.lfs_ssize) >> fsp->fi_lfs.lfs_fbshift;
+	db_per_seg = fsbtodb(lfsp, lfsp->lfs_ssize);
+	max_free_segs = lfsp->lfs_bfree / db_per_seg + lfsp->lfs_minfreeseg;
 	
 	/* 
 	 * We will clean if there are not enough free blocks or total clean
@@ -331,23 +333,24 @@ clean_loop(fsp, nsegs, options)
 	now = time((time_t *)NULL);
 
         if(debug > 1) {
-            syslog(LOG_DEBUG, "db_per_seg = %lu max_free_segs = %lu, bfree = %u avail = %d ",
-                   db_per_seg, max_free_segs, fsp->fi_lfs.lfs_bfree,
-                   fsp->fi_lfs.lfs_avail);
+            syslog(LOG_DEBUG, "db_per_seg = %lu bfree = %u avail = %d ",
+                   db_per_seg, lfsp->lfs_bfree,
+                   lfsp->lfs_avail);
 	    syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
 		   fsp->fi_cip->clean, max_free_segs);
-            syslog(LOG_DEBUG, "clean = %d", fsp->fi_cip->clean);
         }
 
-	if ((fsp->fi_lfs.lfs_bfree - fsp->fi_lfs.lfs_avail > db_per_seg &&
-	     fsp->fi_lfs.lfs_avail < db_per_seg) ||
+	if ((lfsp->lfs_bfree - lfsp->lfs_avail > db_per_seg &&
+	     lfsp->lfs_avail < (long)db_per_seg) ||
 	    (fsp->fi_cip->clean < max_free_segs &&
-	     (fsp->fi_cip->clean <= MIN_SEGS(&fsp->fi_lfs) ||
+	     (fsp->fi_cip->clean <= lfsp->lfs_minfreeseg ||
 	      fsp->fi_cip->clean < max_free_segs * BUSY_LIM)))
 	{
                 if(debug)
-			syslog(LOG_DEBUG, "Cleaner Running  at %s (%d of %lu segments available)",
-			       ctime(&now), fsp->fi_cip->clean, max_free_segs);
+			syslog(LOG_DEBUG, "Cleaner Running  at %s "
+			       "(%d of %lu segments available, avail = %d)",
+			       ctime(&now), fsp->fi_cip->clean, max_free_segs,
+			       lfsp->lfs_avail);
 		clean_fs(fsp, cost_benefit, nsegs, options);
 		if(do_quit) {
 			if(debug)
@@ -448,8 +451,8 @@ clean_fs(fsp, cost_func, nsegs, options)
 	}
 
 	/* If we relly need to clean a lot, do it now */
-	if(fsp->fi_cip->clean < 2*MIN_FREE_SEGS)
-		nsegs = MAX(nsegs,MIN_FREE_SEGS);
+	if(fsp->fi_cip->clean < 2 * fsp->fi_lfs.lfs_minfreeseg)
+		nsegs = MAX(nsegs, fsp->fi_lfs.lfs_minfreeseg);
 	/* But back down if we haven't got that many free to clean into */
 	if(fsp->fi_cip->clean < nsegs)
 		nsegs = fsp->fi_cip->clean;
