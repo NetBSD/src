@@ -18,7 +18,7 @@ ENTRY(fpsetsticky)
 	orl %eax,%edx
 	movl 8(%esp),%ecx
 	andl $63,%ecx
-	orl $63,%edx
+	subl %ecx,%edx
 	movl %edx,(%esp)
 	fldsw (%esp)
 
