@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.7 2002/03/25 03:46:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.8 2002/04/11 02:51:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,11 +44,6 @@
 #include "pthread_int.h"
 
 static void pthread_cond_wait__callback(void *);
-
-/* Aliases for use by libc */
-__weak_alias(_libc_pthread_cond_init, pthread_cond_init)
-__weak_alias(_libc_pthread_cond_wait, pthread_cond_wait)
-__weak_alias(_libc_pthread_cond_signal, pthread_cond_signal)
 
 int
 pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.4 2002/03/25 03:46:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.5 2002/04/11 02:51:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,11 +49,6 @@ static int tsd_alloc[PTHREAD_KEYS_MAX];
 static int nextkey;
 
 static void (*tsd_destructors[PTHREAD_KEYS_MAX])(void *);
-
-/* Aliases for use by libc */
-__weak_alias(_libc_pthread_key_create, pthread_key_create)
-__weak_alias(_libc_pthread_setspecific, pthread_setspecific)
-__weak_alias(_libc_pthread_getspecific, pthread_getspecific)
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
