@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)exec.c	5.9 (Berkeley) 6/17/91";*/
-static char *rcsid = "$Id: exec.c,v 1.3 1993/08/26 00:44:30 jtc Exp $";
+static char *rcsid = "$Id: exec.c,v 1.4 1993/10/22 19:13:42 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -182,7 +182,7 @@ execvp(name, argv)
 {
 	register int lp, ln;
 	register char *p;
-	int eacces, etxtbsy;
+	int eacces = 0, etxtbsy = 0;
 	char *bp, *cur, *path, buf[MAXPATHLEN];
 
 	/* If it's an absolute or relative path name, it's easy. */
@@ -198,7 +198,6 @@ execvp(name, argv)
 		path = _PATH_DEFPATH;
 	cur = path = strdup(path);
 
-	eacces = etxtbsy = 0;
 	while (p = strsep(&cur, ":")) {
 		/*
 		 * It's a SHELL path -- double, leading and trailing colons
