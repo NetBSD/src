@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.5 1993/11/19 20:30:57 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.6 1993/11/19 20:50:27 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,7 +52,6 @@ static char rcsid[] = "$Id: printf.c,v 1.5 1993/11/19 20:30:57 jtc Exp $";
 #include <locale.h>
 #include <err.h>
 
-static void	 do_printf __P((char *));
 static void	 print_escape_str();
 static int	 print_escape();
 
@@ -127,6 +126,10 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+	static char *skip1, *skip2;
+	register char *fmt, *start;
+	register int fieldwidth, precision;
+	char convch, nextch;
 	char *format;
 	int ch;
 
@@ -154,106 +157,94 @@ main(argc, argv)
 	gargv = ++argv;
 
 	do {
-		do_printf(format);
+		/*
+		 * Basic algorithm is to scan the format string for conversion
+		 * specifications -- once one is found, find out if the field
+		 * width or precision is a '*'; if it is, gather up value. 
+		 * Note, format strings are reused as necessary to use up the
+		 * provided arguments, arguments of zero/null string are 
+		 * provided to use up the format string.
+		 */
+		skip1 = "#-+ 0";
+		skip2 = "*0123456789";
+
+		/* find next format specification */
+		for (fmt = format; *fmt; fmt++) {
+			switch (*fmt) {
+			case '%':
+				start = fmt++;
+
+				if (*fmt == '%') {
+					putchar ('%');
+					break;
+				} else if (*fmt == 'b') {
+					char *p = getstr();
+					print_escape_str(p);
+					break;
+				}
+
+				/* skip to field width */
+				for (; index(skip1, *fmt); ++fmt);
+				fieldwidth = *fmt == '*' ? getint() : 0;
+
+				/* skip to possible '.', get following precision */
+				for (; index(skip2, *fmt); ++fmt);
+				if (*fmt == '.')
+					++fmt;
+				precision = *fmt == '*' ? getint() : 0;
+
+				for (; index(skip2, *fmt); ++fmt);
+				if (!*fmt) {
+					warnx ("missing format character");
+					rval = 1;
+					return;
+				}
+
+				convch = *fmt;
+				nextch = *(fmt + 1);
+				*(fmt + 1) = '\0';
+				switch(convch) {
+				case 'c': {
+					char p = getchr();
+					PF(start, p);
+					break;
+				}
+				case 's': {
+					char *p = getstr();
+					PF(start, p);
+					break;
+				}
+				case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': {
+					char *f = mklong(start, convch);
+					long p = getlong();
+					PF(f, p);
+					free(f);
+					break;
+				}
+				case 'e': case 'E': case 'f': case 'g': case 'G': {
+					double p = getdouble();
+					PF(start, p);
+					break;
+				}
+				default:
+					warnx ("%s: invalid directive", start);
+					rval = 1;
+				}
+				*(fmt + 1) = nextch;
+				break;
+
+			case '\\':
+				fmt += print_escape(fmt);
+				break;
+
+			default:
+				putchar (*fmt);
+				break;
+			}
+		}
 	} while (gargv > argv && *gargv);
 
 	return (rval);
-}
-
-static void
-do_printf(format)
-	char *format;
-{
-	static char *skip1, *skip2;
-	register char *fmt, *start;
-	register int fieldwidth, precision;
-	char convch, nextch;
-
-	/*
-	 * Basic algorithm is to scan the format string for conversion
-	 * specifications -- once one is found, find out if the field
-	 * width or precision is a '*'; if it is, gather up value.  Note,
-	 * format strings are reused as necessary to use up the provided
-	 * arguments, arguments of zero/null string are provided to use
-	 * up the format string.
-	 */
-	skip1 = "#-+ 0";
-	skip2 = "*0123456789";
-
-	/* find next format specification */
-	for (fmt = format; *fmt; fmt++) {
-		switch (*fmt) {
-		case '%':
-			start = fmt++;
-
-			if (*fmt == '%') {
-				putchar ('%');
-				break;
-			} else if (*fmt == 'b') {
-				char *p = getstr();
-				print_escape_str(p);
-				break;
-			}
-
-			/* skip to field width */
-			for (; index(skip1, *fmt); ++fmt);
-			fieldwidth = *fmt == '*' ? getint() : 0;
-
-			/* skip to possible '.', get following precision */
-			for (; index(skip2, *fmt); ++fmt);
-			if (*fmt == '.')
-				++fmt;
-			precision = *fmt == '*' ? getint() : 0;
-
-			for (; index(skip2, *fmt); ++fmt);
-			if (!*fmt) {
-				warnx ("missing format character");
-				rval = 1;
-				return;
-			}
-
-			convch = *fmt;
-			nextch = *(fmt + 1);
-			*(fmt + 1) = '\0';
-			switch(convch) {
-			case 'c': {
-				char p = getchr();
-				PF(start, p);
-				break;
-			}
-			case 's': {
-				char *p = getstr();
-				PF(start, p);
-				break;
-			}
-			case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': {
-				char *f = mklong(start, convch);
-				long p = getlong();
-				PF(f, p);
-				free(f);
-				break;
-			}
-			case 'e': case 'E': case 'f': case 'g': case 'G': {
-				double p = getdouble();
-				PF(start, p);
-				break;
-			}
-			default:
-				warnx ("%s: invalid directive", start);
-				rval = 1;
-			}
-			*(fmt + 1) = nextch;
-			break;
-
-		case '\\':
-			fmt += print_escape(fmt);
-			break;
-
-		default:
-			putchar (*fmt);
-			break;
-		}
-	}
 }
 
 
