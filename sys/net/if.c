@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.143 2004/06/22 12:50:41 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.144 2004/07/27 12:22:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.143 2004/06/22 12:50:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.144 2004/07/27 12:22:59 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -475,7 +475,8 @@ if_attach(ifp)
 	if (pfil_head_register(&ifp->if_pfil) != 0)
 		printf("%s: WARNING: unable to register pfil hook\n",
 		    ifp->if_xname);
-	pfil_run_hooks(&if_pfil, NULL, ifp, PFIL_NEWIF);
+	(void)pfil_run_hooks(&if_pfil,
+	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
 #endif
 
 	if (domains)
@@ -586,7 +587,9 @@ if_detach(ifp)
 #endif
 
 #ifdef PFIL_HOOKS
-	(void) pfil_head_unregister(&ifp->if_pfil);
+	(void)pfil_run_hooks(&if_pfil,
+	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
+	(void)pfil_head_unregister(&ifp->if_pfil);
 #endif
 
 	/*
