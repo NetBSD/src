@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.1 2002/01/09 22:30:14 thorpej Exp $
+.\"	$NetBSD: dkctl.8,v 1.2 2002/01/09 23:10:19 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to manipulate and configure disks
-in various ways.  It is used by specifying a disk manipulate, the command
+in various ways.  It is used by specifying a disk to manipulate, the command
 to perform, and any arguments the command may require.
 .Sh COMMANDS
 The following commands are supported:
@@ -91,7 +91,7 @@ in the disk's cache.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr sd 4 ,
-.Xr wd 4 ,
+.Xr wd 4
 .Sh HISTORY
 The
 .Nm
