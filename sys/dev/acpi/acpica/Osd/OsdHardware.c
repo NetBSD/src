@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.5 2003/07/02 11:45:08 kochi Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.6 2003/10/31 20:52:30 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.5 2003/07/02 11:45:08 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.6 2003/10/31 20:52:30 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,20 +66,20 @@ __KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.5 2003/07/02 11:45:08 kochi Exp $"
  *	Read a value from an input port.
  */
 ACPI_STATUS
-AcpiOsReadPort(ACPI_IO_ADDRESS Address, void *Value, UINT32 Width)
+AcpiOsReadPort(ACPI_IO_ADDRESS Address, UINT32 *Value, UINT32 Width)
 {
 
 	switch (Width) {
 	case 8:
-		*(uint8_t *) Value = acpi_md_OsIn8(Address);
+		*Value = acpi_md_OsIn8(Address);
 		break;
 
 	case 16:
-		*(uint16_t *) Value = acpi_md_OsIn16(Address);
+		*Value = acpi_md_OsIn16(Address);
 		break;
 
 	case 32:
-		*(uint32_t *) Value = acpi_md_OsIn32(Address);
+		*Value = acpi_md_OsIn32(Address);
 		break;
 
 	default:
@@ -95,7 +95,7 @@ AcpiOsReadPort(ACPI_IO_ADDRESS Address, void *Value, UINT32 Width)
  *	Write a value to an output port.
  */
 ACPI_STATUS
-AcpiOsWritePort(ACPI_IO_ADDRESS Address, ACPI_INTEGER Value, UINT32 Width)
+AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width)
 {
 
 	switch (Width) {
@@ -124,7 +124,7 @@ AcpiOsWritePort(ACPI_IO_ADDRESS Address, ACPI_INTEGER Value, UINT32 Width)
  *	Read a value from a memory location.
  */
 ACPI_STATUS
-AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
+AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 {
 	void *LogicalAddress;
 	ACPI_STATUS rv;
@@ -135,15 +135,15 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
 
 	switch (Width) {
 	case 8:
-		*(uint8_t *) Value = *(__volatile uint8_t *) LogicalAddress;
+		*Value = *(__volatile uint8_t *) LogicalAddress;
 		break;
 
 	case 16:
-		*(uint16_t *) Value = *(__volatile uint16_t *) LogicalAddress;
+		*Value = *(__volatile uint16_t *) LogicalAddress;
 		break;
 
 	case 32:
-		*(uint32_t *) Value = *(__volatile uint32_t *) LogicalAddress;
+		*Value = *(__volatile uint32_t *) LogicalAddress;
 		break;
 
 	default:
@@ -161,8 +161,7 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
  *	Write a value to a memory location.
  */
 ACPI_STATUS
-AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, ACPI_INTEGER Value,
-    UINT32 Width)
+AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 {
 	void *LogicalAddress;
 	ACPI_STATUS rv;
