@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.37 2000/08/23 13:41:59 pk Exp $
+#	$NetBSD: files.sparc64,v 1.38 2000/09/21 23:44:06 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -93,9 +93,8 @@ file	dev/ic/z8530sc.c			zs
 #file	dev/ic/sab82532.c			sab
 
 # "com" attachments for the kbd/mouse of the U5/U10/...
-#device ucom {}
-#attach ucom at ebus with com
-#file	arch/sparc64/dev/ucom_ebus.c		ucom
+attach com at ebus with com_ebus
+file	arch/sparc64/dev/com_ebus.c		com_ebus
 
 # XXX bogus; this is in dev/isa/files.isa.  fix me please!
 # XXX we should attach a `bpp'-style device here rather than
@@ -135,10 +134,7 @@ file arch/sparc/dev/zs_kgdb.c		kgdb
 #attach sabtty at sab
 #file dev/ic/sabtty.c			sabtty needs-flag
 
-define zsevent
-#file dev/sun/event.c			zsevent
-
-device kbd: zsevent
+device kbd
 attach kbd at zs with kbd_zs
 #attach kbd at ucom with kbd_ucom
 file dev/sun/kbd_zs.c			kbd_zs
@@ -147,13 +143,18 @@ file dev/sun/kbd_tables.c 		kbd
 file arch/sparc64/dev/kd.c 		kbd
 #file arch/sparc64/dev/kbd_ucom.c 	kbd_ucom
 
-device ms: zsevent
+device ms
 attach ms at zs with ms_zs
 #attach ms at ucom with ms_ucom
 file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
 #file arch/sparc64/dev/ms_ucom.c 	ms_ucom
 
+attach kbd at com
+file dev/sun/sunkbd.c			kbd needs-flag
+
+attach ms at com
+file dev/sun/sunms.c			ms needs-flag
 
 #
 # Machine-independent SCSI drivers
