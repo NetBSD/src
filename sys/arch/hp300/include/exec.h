@@ -24,11 +24,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.3 1993/06/04 01:12:04 cgd Exp $
+ *	$Id: exec.h,v 1.4 1993/08/19 14:34:25 mycroft Exp $
  */
 
 #ifndef _HP300_EXEC_H_
 #define _HP300_EXEC_H_
+
+#ifdef KERNEL
 
 #ifdef HPUXCOMPAT
 #include "user.h"			/* for pcb */
@@ -41,7 +43,7 @@
  * The standard executable formats are taken care of automatically;
  * machine-specific ones can be defined using this function.
  */
-#define cpu_exec_makecmds(p,epp)        ENOEXEC
+int cpu_exec_makecmds __P((struct proc *p, struct exec_package *epp));
 
 /*
  * the following function/macro checks to see if a given machine
@@ -54,5 +56,7 @@
 #else
 #define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300)))
 #endif
+
+#endif /* KERNEL */
 
 #endif  /* _HP300_EXEC_H_ */
