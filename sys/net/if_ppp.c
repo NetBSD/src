@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.16 1994/07/18 23:45:33 paulus Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.17 1994/07/20 01:40:11 paulus Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -294,10 +294,7 @@ pppopen(dev, tp)
 	sc->sc_outm = NULL;
     }
 	
-    if (pppgetm(sc) == 0) {
-	sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
-	return (ENOBUFS);
-    }
+    pppgetm(sc);
 
     sc->sc_ilen = 0;
     bzero(sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
@@ -525,12 +522,7 @@ ppptioctl(tp, cmd, data, flag, p)
 	mru = *(int *)data;
 	if (mru >= PPP_MRU && mru <= PPP_MAXMRU) {
 	    sc->sc_mru = mru;
-	    if (pppgetm(sc) == 0) {
-		error = ENOBUFS;
-		sc->sc_mru = PPP_MRU;
-		if (pppgetm(sc) == 0)
-		    sc->sc_if.if_flags &= ~IFF_UP;
-	    }
+	    pppgetm(sc);
 	}
 	break;
 
@@ -1024,41 +1016,23 @@ pppgetm(sc)
     register struct ppp_softc *sc;
 {
     struct mbuf *m, **mp;
-    int len = HDROFF + sc->sc_mru + PPP_HDRLEN + PPP_FCSLEN;
+    int len;
     int s;
 
     s = splimp();
-    for (mp = &sc->sc_m; (m = *mp) != NULL; mp = &m->m_next)
-	if ((len -= M_DATASIZE(m)) <= 0) {
-	    splx(s);
-	    return (1);
+    mp = &sc->sc_m;
+    for (len = HDROFF + sc->sc_mru + PPP_HDRLEN + PPP_FCSLEN; len > 0; ){
+	if ((m = *mp) == NULL) {
+	    MGETHDR(m, M_DONTWAIT, MT_DATA);
+	    if (m == NULL)
+		break;
+	    *mp = m;
+	    MCLGET(m, M_DONTWAIT);
 	}
-
-    for (;; mp = &m->m_next) {
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0) {
-	    if (sc->sc_m != NULL) {
-		m_freem(sc->sc_m);
-		sc->sc_m = NULL;
-	    }
-	    splx(s);
-	    printf("ppp%d: can't allocate mbuf\n", sc->sc_if.if_unit);
-	    return (0);
-	}
-	*mp = m;
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-	    m_freem(sc->sc_m);
-	    sc->sc_m = NULL;
-	    splx(s);
-	    printf("ppp%d: can't allocate mbuf cluster\n", sc->sc_if.if_unit);
-	    return (0);
-	}
-	if ((len -= M_DATASIZE(m)) <= 0) {
-	    splx(s);
-	    return (1);
-	}
+	len -= M_DATASIZE(m);
     }
+    splx(s);
+    return len <= 0;
 }
 
 /*
@@ -1106,6 +1080,20 @@ ppppktin(sc, m)
 	    if (sc->sc_flags & SC_DEBUG)
 		printf("ppp%d: %scomp pkt w/o compression; flags 0x%x\n",
 			sc->sc_if.if_unit, pkttype, sc->sc_flags);
+	    m_freem(m);
+	    sc->sc_if.if_ierrors++;
+	    return 0;
+	}
+
+	if (proto == PPP_VJC_COMP && m->m_data - M_DATASTART(m) < MAX_HDR) {
+	    /*
+	     * We don't have room in the mbuf to decompress this packet.
+	     * XXX For now we just drop the packet.
+	     */
+	    if (sc->sc_flags & SC_DEBUG)
+		printf("ppp%d: no room to VJ-decompress packet\n",
+		       sc->sc_if.if_unit);
+	    m_freem(m);
 	    sc->sc_if.if_ierrors++;
 	    return 0;
 	}
@@ -1121,6 +1109,7 @@ ppppktin(sc, m)
 	    if (sc->sc_flags & SC_DEBUG)
 		printf("ppp%d: sl_uncompress failed on type %scomp\n",
 			sc->sc_if.if_unit, pkttype);
+	    m_freem(m);
 	    sc->sc_if.if_ierrors++;
 	    return 0;
 	}
@@ -1325,9 +1314,7 @@ pppinput(c, tp)
 	    ttwakeup(tp);
 	}
 
-	if (!pppgetm(sc))
-	    sc->sc_if.if_flags &= ~IFF_UP;
-
+	pppgetm(sc);
 	return;
     }
 
@@ -1360,8 +1347,15 @@ pppinput(c, tp)
     if (sc->sc_ilen == 0) {
 	/* reset the first input mbuf */
 	m = sc->sc_m;
+	if (m == NULL) {
+	    if (sc->sc_flags & SC_DEBUG)
+		printf("ppp%d: no input mbufs!\n", sc->sc_if.if_unit);
+	    goto flush;
+	}
 	m->m_len = 0;
-	m->m_data = M_DATASTART(sc->sc_m) + HDROFF;
+	m->m_data = M_DATASTART(sc->sc_m);
+	if (M_DATASIZE(sc->sc_m) >= HDROFF + PPP_HDRLEN)
+	    m->m_data += HDROFF;	/* allow room for VJ decompression */
 	sc->sc_mc = m;
 	sc->sc_mp = mtod(m, char *);
 	sc->sc_fcs = PPP_INITFCS;
@@ -1409,7 +1403,8 @@ pppinput(c, tp)
     if (M_TRAILINGSPACE(m) <= 0) {
 	sc->sc_mc = m = m->m_next;
 	if (m == NULL) {
-	    printf("ppp%d: too few input mbufs!\n", sc->sc_if.if_unit);
+	    if (sc->sc_flags & SC_DEBUG)
+		printf("ppp%d: too few input mbufs!\n", sc->sc_if.if_unit);
 	    goto flush;
 	}
 	m->m_len = 0;
