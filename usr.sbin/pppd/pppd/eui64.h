@@ -1,3 +1,5 @@
+/*	$NetBSD: eui64.h,v 1.2 1999/08/25 02:07:42 christos Exp $	*/
+
 /*
  * eui64.h - EUI64 routines for IPv6CP.
  *
@@ -15,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: eui64.h,v 1.1.1.1 1999/08/24 20:25:44 christos Exp $
+ * Id: eui64.h,v 1.1 1999/08/13 01:58:43 paulus Exp 
  */
 
 /*

@@ -1,8 +1,7 @@
-/*	$NetBSD: patchlevel.h,v 1.17 1998/09/04 19:13:05 christos Exp $	*/
-
-/* Id: patchlevel.h,v 1.33 1998/05/04 06:10:31 paulus Exp  */
-#define	PATCHLEVEL	5
+/*	$NetBSD: patchlevel.h,v 1.18 1999/08/25 02:07:44 christos Exp $	*/
+/* Id: patchlevel.h,v 1.43 1999/08/13 01:58:31 paulus Exp  */
+#define	PATCHLEVEL	9
 
 #define VERSION		"2.3"
 #define IMPLEMENTATION	""
-#define DATE		"4 May 1998"
+#define DATE		"12 August 1999"
