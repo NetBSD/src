@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.12 2000/06/03 20:47:41 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.12 2000/06/03 20:47:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -77,9 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.12 2000/06/03 20:47:41 thorpej Exp $
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-#include <dev/dec/zskbdvar.h>
 
-#include <alpha/tc/zs_ioasicvar.h>
+#include <dev/tc/zs_ioasicvar.h>
 
 #if 1
 #define SPARSE
