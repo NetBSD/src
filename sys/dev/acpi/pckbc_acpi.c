@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.15 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.15 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $"
 
 #include <dev/acpi/acpivar.h>
 
-int	pckbc_acpi_match(struct device *, struct cfdata *, void *);
-void	pckbc_acpi_attach(struct device *, struct device *, void *);
+static int	pckbc_acpi_match(struct device *, struct cfdata *, void *);
+static void	pckbc_acpi_attach(struct device *, struct device *, void *);
 
 struct pckbc_acpi_softc {
 	struct pckbc_softc sc_pckbc;
@@ -91,7 +91,7 @@ extern struct cfdriver pckbc_cd;
 CFATTACH_DECL(pckbc_acpi, sizeof(struct pckbc_acpi_softc),
     pckbc_acpi_match, pckbc_acpi_attach, NULL, NULL);
 
-void	pckbc_acpi_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+static void	pckbc_acpi_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 /*
  * Supported Device IDs
@@ -116,7 +116,7 @@ static const char * const pckbc_acpi_ids_ms[] = {
 /*
  * pckbc_acpi_match: autoconf(9) match routine
  */
-int
+static int
 pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -134,7 +134,7 @@ pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 pckbc_acpi_attach(struct device *parent,
     struct device *self,
     void *aux)
@@ -234,7 +234,7 @@ pckbc_acpi_attach(struct device *parent,
 	acpi_resource_cleanup(&res);
 }
 
-void
+static void
 pckbc_acpi_intr_establish(struct pckbc_softc *sc,
     pckbc_slot_t slot)
 {
