@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.6 2001/06/21 12:49:06 onoe Exp $	*/
+/*	$NetBSD: anvar.h,v 1.7 2001/06/29 11:24:42 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -163,7 +163,6 @@ struct an_softc	{
 	int			an_perskeylen[IEEE80211_WEP_NKID];
 	int			an_tx_perskey;
 	int			an_tx_rate;
-	int			an_if_flags;
 	struct an_tx_ring_data	an_rdata;
 	struct an_ltv_status	an_status;
 	u_int8_t		an_associated;

@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.7 2001/06/21 12:33:24 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.8 2001/06/29 11:24:42 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -655,8 +655,12 @@ struct an_ltv_wepkey {
  */
 #define AN_RID_LEAP_USER	0xFF23	/* User Name for LEAP */
 #define AN_RID_LEAP_PASS	0xFF24	/* Password for LEAP */
-#define AN_LEAP_USER_MAX	32
-#define AN_LEAP_PASS_MAX	32
+struct an_ltv_leapkey {
+	u_int16_t		an_len;			/* 0x00 */
+	u_int16_t		an_type;		/* 0xXX */
+	u_int16_t		an_key_len;		/* 0x02 */
+	u_int8_t		an_key[32];		/* 0x04 */
+};
 
 /*
  * Receive frame structure.
