@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.75 2003/01/18 11:23:54 thorpej Exp $	*/
+/*	$NetBSD: namespace.h,v 1.76 2003/02/13 02:50:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -364,6 +364,7 @@
 #define posix2time		_posix2time
 #define pread			_pread
 #define psignal			_psignal
+#define pthread_atfork		_pthread_atfork
 #define putenv			_putenv
 #define pwcache_userdb		_pwcache_userdb
 #define pwcache_groupdb		_pwcache_groupdb
