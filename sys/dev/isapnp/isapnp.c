@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.32 1999/03/22 07:40:57 mycroft Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.33 1999/03/22 09:38:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -609,21 +609,27 @@ isapnp_submatch(parent, match, aux)
  *	Match a probed device with the information from the driver
  */
 int
-isapnp_devmatch(ipa, dinfo)
+isapnp_devmatch(ipa, dinfo, variant)
 	const struct isapnp_attach_args *ipa;
 	const struct isapnp_devinfo *dinfo;
+	int *variant;
 {
-	const char *const *name;
+	const struct isapnp_matchinfo *match;
+	int n;
 
-	for (name = dinfo->devlogic; *name; name++)
-		if (strcmp(*name, ipa->ipa_devlogic) == 0)
-			return 1;
+	for (match = dinfo->devlogic, n = dinfo->nlogic; n--; match++)
+		if (strcmp(match->name, ipa->ipa_devlogic) == 0) {
+			*variant = match->variant;
+			return (1);
+		}
 
-	for (name = dinfo->devcompat; *name; name++)
-		if (strcmp(*name, ipa->ipa_devcompat) == 0)
-			return 1;
+	for (match = dinfo->devcompat, n = dinfo->ncompat; n--; match++)
+		if (strcmp(match->name, ipa->ipa_devcompat) == 0) {
+			*variant = match->variant;
+			return (1);
+		}
 
-	return 0;
+	return (0);
 }
 
 

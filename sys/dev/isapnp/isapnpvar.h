@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.18 1999/03/19 03:24:19 cgd Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.19 1999/03/22 09:38:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ void isapnp_unconfig __P((bus_space_tag_t, bus_space_tag_t,
 #ifdef _KERNEL
 struct isapnp_devinfo;
 int isapnp_devmatch __P((const struct isapnp_attach_args *,
-    const struct isapnp_devinfo *));
+    const struct isapnp_devinfo *, int *));
 void isapnp_isa_attach_hook __P((struct isa_softc *));
 #endif
 
