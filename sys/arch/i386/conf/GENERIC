@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300.2.26 2002/02/24 00:17:42 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.300.2.27 2002/02/24 01:58:56 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.26 $"
+#ident 		"GENERIC-$Revision: 1.300.2.27 $"
 
 maxusers	32		# estimated number of users
 
@@ -212,7 +212,7 @@ mainbus0 at root
 cpu* at mainbus? apid ?
 #ioapic* at mainbus? apid ?
 
-#apm0	at mainbus0			# Advanced power management
+apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function

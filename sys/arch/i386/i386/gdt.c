@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.22.2.7 2001/12/30 03:35:02 sommerfeld Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22.2.8 2002/02/24 01:58:57 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.7 2001/12/30 03:35:02 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.8 2002/02/24 01:58:57 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ setgdt(int sel, void *base, size_t limit,
 	struct segment_descriptor *sd = &gdt[sel].sd;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	
+
 	setsegment(sd, base, limit, type, dpl, def32, gran);
 	for (CPU_INFO_FOREACH(cii, ci))
 		ci->ci_gdt[sel].sd = *sd;
@@ -169,18 +169,26 @@ gdt_compact()
 #endif
 
 /*
- * Initialize the GDT.
+ * Initialize the GDT subsystem.  Called from autoconf() relatively
+ * late in boot.
  */
 void
 gdt_init()
 {
-	size_t max_len, min_len;
-	union descriptor *old_gdt;
-	struct cpu_info *ci = curcpu();
-	struct vm_page *pg;
-	vaddr_t va;
 
 	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
+}
+
+/*
+ * Initialize the boot cpu's GDT; called very early in boot.
+ */
+void
+gdt_init_cpu0(struct cpu_info *ci)
+{
+	size_t max_len, min_len;
+	union descriptor *old_gdt;
+	struct vm_page *pg;
+	vaddr_t va;
 
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	min_len = MINGDTSIZ * sizeof(gdt[0]);
@@ -204,9 +212,13 @@ gdt_init()
 	ci->ci_gdt = gdt;
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 1, 1);
+
 	gdt_init_cpu(ci);
 }
 
+/*
+ * Allocate shadow GDT for a slave cpu.
+ */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
@@ -224,15 +236,15 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 
 /*
- * Load appropriate gdt descriptor.
+ * Load appropriate gdt descriptor; we better be running on *ci
+ * (for the most part, this is how a cpu knows who it is).
  */
-
 void
 gdt_init_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
 	size_t max_len;
-	
+
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	setregion(&region, ci->ci_gdt, max_len - 1);
 	lgdt(&region);
@@ -245,7 +257,7 @@ gdt_reload_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
 	size_t max_len;
-	
+
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	setregion(&region, ci->ci_gdt, max_len - 1);
 	lgdt(&region);
@@ -353,7 +365,7 @@ gdt_put_slot(int slot)
 
 	gdt[slot].gd.gd_type = SDT_SYSNULL;
 #if 0
-	/* 
+	/*
 	 * shrink the GDT if we're using less than 1/4 of it.
 	 * Shrinking at that point means we'll still have room for
 	 * almost 2x as many processes as are now running without

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.25 2001/12/29 23:30:59 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.26 2002/02/24 01:58:57 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -291,6 +291,7 @@ cpu_attach(parent, self, aux)
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		identifycpu(ci);
+		gdt_init_cpu0(ci);
 		cpu_init(ci);
 		break;
 
@@ -298,6 +299,7 @@ cpu_attach(parent, self, aux)
 		printf("apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		identifycpu(ci);
+		gdt_init_cpu0(ci);
 		cpu_init(ci);
 
 #if NLAPIC > 0
