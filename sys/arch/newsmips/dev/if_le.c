@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:03 drochner Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1999/12/17 03:21:12 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -223,18 +223,13 @@ le_attach(parent, self, aux)
 	sc->sc_hwinit = NULL;
 
 	am7990_config(&lesc->sc_am7990);
-}
 
-int
-leintr(unit)
-	int unit;
-{
-	struct am7990_softc *sc;
-	extern struct cfdriver le_cd;
-
-	if (unit >= le_cd.cd_ndevs)
-		return 0;
-
-	sc = le_cd.cd_devs[unit];
-	return am7990_intr(sc);
+	switch (sc->sc_dev.dv_unit) {
+	case 0:
+		hb_intr_establish(1, IPL_NET, am7990_intr, sc);
+		break;
+	default:
+		hb_intr_establish(0, IPL_NET, am7990_intr, sc);
+		break;
+	}
 }
