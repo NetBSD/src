@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.17 2002/06/10 08:33:05 grant Exp $ */
+.\" $NetBSD: userdel.8,v 1.18 2002/06/24 17:28:07 grant Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -130,6 +130,9 @@ utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Xr usermgmt.conf 5 ,
 .Xr nologin 8 ,
 .Xr pwd_mkdb 8
+.Sh BUGS
+.Nm
+does not remove users from supplementary groups.
 .Sh HISTORY
 The
 .Nm
