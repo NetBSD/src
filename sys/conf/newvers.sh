@@ -1,4 +1,5 @@
 #!/bin/sh -
+# NetBSD $Id: newvers.sh,v 1.15 1994/06/27 19:44:05 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -31,8 +32,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	from: @(#)newvers.sh	8.1 (Berkeley) 4/20/94
-#	$Id: newvers.sh,v 1.14 1994/06/08 11:47:03 mycroft Exp $
+#	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
 if [ ! -r version ]
 then
