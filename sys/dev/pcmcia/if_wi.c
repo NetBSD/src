@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21 2000/06/06 14:01:40 pooka Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.1 2000/07/03 22:34:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -172,8 +172,15 @@ wi_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	return (pa->manufacturer == PCMCIA_VENDOR_LUCENT &&
-	    pa->product == PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE);
+	if (pa->manufacturer == PCMCIA_VENDOR_LUCENT &&
+	    pa->product == PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE)
+	  return 1;
+
+	if (pa->manufacturer == PCMCIA_VENDOR_3COM &&
+	    pa->product == PCMCIA_PRODUCT_3COM_3CRWE737A)
+	  return 1;
+
+	return 0;
 }
 
 int
