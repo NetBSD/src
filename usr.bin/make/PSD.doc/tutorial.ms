@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.9 2004/06/27 19:04:54 uwe Exp $
+.\"	$NetBSD: tutorial.ms,v 1.10 2004/06/27 19:12:33 uwe Exp $
 .\" Copyright (c) 1988, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2967,8 +2967,8 @@ looks like this:
 .DS
 .SM
 #
-# Rules for making libraries. The object files that make up the library are
-# removed once they are archived.
+# Rules for making libraries. The object files that make up the library
+# are removed once they are archived.
 #
 # To make several libraries in parallel, you should define the variable
 # "many_libraries". This will serialize the invocations of ranlib.
@@ -2994,8 +2994,8 @@ ARFLAGS		?= crl
 
 #
 # Re-archive the out-of-date members and recreate the library's table of
-# contents using ranlib. If many_libraries is defined, put the ranlib off
-# til the end so many libraries can be made at once.
+# contents using ranlib. If many_libraries is defined, put the ranlib
+# off til the end so many libraries can be made at once.
 #
 MAKELIB		: .USE .PRECIOUS
 	ar $(ARFLAGS) $(.TARGET) $(.OODATE)
