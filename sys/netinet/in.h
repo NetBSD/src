@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.64 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: in.h,v 1.64.2.1 2004/05/10 15:00:59 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -107,6 +107,9 @@ typedef __sa_family_t	sa_family_t;
 
 /* last return value of *_input(), meaning "all job for this pkt is done".  */
 #define	IPPROTO_DONE		257
+
+/* sysctl placeholder for (FAST_)IPSEC */
+#define CTL_IPPROTO_IPSEC	258
 
 
 /*
