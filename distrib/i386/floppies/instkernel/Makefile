@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/11/18 12:39:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/11 20:55:10 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,6 +17,7 @@ ${V}=		${${V}DIR}/${F}.fs
 
 MDSETTARGETS=		INSTALL		${RAMDISK_B}	-	\
 			INSTALL_LAPTOP	${RAMDISK_B}	-	\
+			INSTALL_XENU	${RAMDISK_B}	-	\
 			INSTALL_SMALL	${RAMDISK_S}	-	\
 			INSTALL_TINY	${RAMDISK_T}	-	\
 			INSTALL_PS2	${RAMDISK_S}	-	\
