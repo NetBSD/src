@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1997/09/19 13:55:44 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 1997/10/05 20:43:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3543,25 +3543,18 @@ pmap_update()
 }
 
 /*
- * Fill in the cpu_kcore header for dumpsys()
- * (See machdep.c)
+ * Fill in the sun3x-specific part of the kernel core header
+ * for dumpsys().  (See machdep.c for the rest.)
  */
 void
-pmap_set_kcore_hdr(chdr_p)
-	cpu_kcore_hdr_t *chdr_p;
+pmap_kcore_hdr(sh)
+	struct sun3x_kcore_hdr *sh;
 {
-	struct sun3x_kcore_hdr *sh = &chdr_p->un._sun3x;
 	u_long spa, len;
 	int i;
-	extern char machine[];
 
-	/*
-	 * Fill in dispatch information.
-	 */
-	strcpy(chdr_p->name, machine);
-	chdr_p->page_size = NBPG;
-	chdr_p->kernbase = KERNBASE;
-
+	sh->pg_frame = MMU_SHORT_PTE_BASEADDR;
+	sh->pg_valid = MMU_DT_PAGE;
 	sh->contig_end = virtual_contig_end;
 	sh->kernCbase = (u_long) kernCbase;
 	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
