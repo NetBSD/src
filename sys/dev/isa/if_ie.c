@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.7 1994/03/29 04:35:58 mycroft Exp $
+ *	$Id: if_ie.c,v 1.8 1994/03/31 06:16:35 mycroft Exp $
  */
 
 /*
@@ -370,6 +370,10 @@ sl_probe(sc, ia)
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_maddr = ia->ia_maddr;
 
+	/* Need this for part of the probe. */
+	sc->reset_586 = sl_reset_586;
+	sc->chan_attn = sl_chan_attn;
+
 	c = inb(PORT + IEATT_REVISION);
 	switch(SL_BOARD(c)) {
 	case SL10_BOARD:
@@ -409,8 +413,6 @@ sl_probe(sc, ia)
 		return 0;
 	}
 
-	sc->reset_586 = sl_reset_586;
-	sc->chan_attn = sl_chan_attn;
 	slel_get_address(sc);
 
 	ia->ia_iosize = 16;
@@ -428,6 +430,10 @@ el_probe(sc, ia)
 
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_maddr = ia->ia_maddr;
+
+	/* Need this for part of the probe. */
+	sc->reset_586 = el_reset_586;
+	sc->chan_attn = el_chan_attn;
 
 	/* Reset and put card in CONFIG state without changing address. */
 	elink_reset();
@@ -474,6 +480,7 @@ el_probe(sc, ia)
 	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
 
 	sc->hard_type = IE_3C507;
+	sc->hard_vers = 0;	/* 3C507 has no version number. */
 
 	/*
 	 * Divine memory size on-board the card.
@@ -495,9 +502,10 @@ el_probe(sc, ia)
 		return 0;
 	}
 
-	sc->reset_586 = el_reset_586;
-	sc->chan_attn = el_chan_attn;
 	slel_get_address(sc);
+
+	/* Clear the interrupt latch just in case. */
+	outb(PORT + IE507_ICTRL, 1);
 
 	ia->ia_iosize = 16;
 	return 1;
@@ -549,9 +557,9 @@ ieattach(parent, self, aux)
 			ifa = ifa->ifa_next;
 	}
 
-	printf("ie%d: address %s, type %s R%d\n", sc->sc_dev.dv_unit,
-	       ether_sprintf(sc->sc_arpcom.ac_enaddr),
-	       ie_hardware_names[sc->hard_type], sc->hard_vers + 1);
+	printf(": address %s, type %s R%d\n",
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	    ie_hardware_names[sc->hard_type], sc->hard_vers + 1);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -586,8 +594,13 @@ ieintr(unit)
 
 	status = sc->scb->ie_status;
 
-	if ((status & IE_ST_WHENCE) == 0)
+	if ((status & IE_ST_WHENCE) == 0) {
+		/* Clear the interrupt latch on the 3C507. */
+		if (sc->hard_type == IE_3C507 &&
+		    (inb(PORT + IE507_CTRL) & EL_CTRL_INTL))
+			outb(PORT + IE507_ICTRL, 1);
 		return 0;
+	}
 
 loop:
 	if (status & (IE_ST_RECV | IE_ST_RNR)) {
@@ -632,6 +645,10 @@ loop:
 
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
 		goto loop;
+
+	/* Clear the interrupt latch on the 3C507. */
+	if (sc->hard_type == IE_3C507)
+		outb(PORT + IE507_ICTRL, 1);
 
 	return 1;
 }
