@@ -1,5 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.4 2002/09/30 18:44:27 agc Exp $
-./rescue/fdisk			base-rescue-root
+# $NetBSD: md.hpcarm,v 1.5 2002/10/09 01:22:39 thorpej Exp $
 ./sbin/fdisk			base-sysutil-root
 ./usr/sbin/apm			base-sysutil-bin
 ./usr/sbin/tpctl		base-sysutil-bin
