@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.5 2000/08/23 12:33:34 lukem Exp $
+# $NetBSD: mi,v 1.60.2.6 2000/08/24 06:44:43 enami Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -146,7 +146,6 @@
 ./etc/rc.local
 ./etc/rc.shutdown
 ./etc/rc.subr
-./etc/rc.wscons
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
