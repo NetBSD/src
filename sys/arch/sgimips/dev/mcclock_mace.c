@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.3 2002/01/14 16:23:28 pooka Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.4 2002/01/14 16:26:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -201,7 +201,7 @@ mcclock_mace_set(struct device *dev, struct clock_ymdhms *dt)
 	regs[MC_DOW] = TOBCD(dt->dt_wday);
 	regs[MC_DOM] = TOBCD(dt->dt_day);
 	regs[MC_MONTH] = TOBCD(dt->dt_mon);
-	regs[MC_YEAR] = TOBSD(TO_IRIX_YEAR(dt->dt_year));
+	regs[MC_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
 
 	s = splhigh();
 	MC146818_PUTTOD(sc, &regs);
