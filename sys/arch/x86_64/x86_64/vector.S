@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2.14.2 2002/07/15 01:41:10 gehenna Exp $	*/
+/*	$NetBSD: vector.S,v 1.2.14.3 2002/07/17 02:14:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ IDTVEC(trap07)
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
 IDTVEC(trap08)
-	TRAP(T_DOUBLEFLT)
+	ZTRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC(trap0a)
@@ -252,7 +252,12 @@ IDTVEC(syscall)
 	pushq	%r15
 	subq	$(TF_RSP-TF_TRAPNO),%rsp
 	movq	CPUVAR(SCRATCH),%r15
-	INTR_SAVEARGS
+	subq	$32,%rsp
+	INTR_SAVE_GPRS
+	movw	%fs,TF_FS(%rsp)
+	movw	%gs,TF_GS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)
@@ -283,13 +288,19 @@ syscall_return:
 	cmpl	_C_LABEL(cpl)(%rip),%ebx
 	jne	3f
 #endif
-	INTR_RESTOREARGS
-	addq	$16,%rsp
+	/*
+	 * XXX interrupts off longer than they should be here.
+	 */
+	cli
+	swapgs
+	movw	TF_ES(%rsp),%es
+	movw	TF_FS(%rsp),%fs
+	movw	TF_GS(%rsp),%gs
+	INTR_RESTORE_GPRS
+	addq	$48,%rsp
 	popq	%rcx	/* return rip */
 	addq	$8,%rsp
 	popq	%r11	/* flags as set by sysret insn */
-	swapgs
-	cli
 	movq	(%rsp),%rsp
 	sysretq
 

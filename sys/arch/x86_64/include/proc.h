@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1.14.1 2002/05/30 15:36:54 gehenna Exp $	*/
+/*	$NetBSD: proc.h,v 1.1.14.2 2002/07/17 02:14:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -52,3 +52,4 @@ struct mdproc {
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_COMPAT	0x0002	/* x86 compatibility process */
 #define MDP_SYSCALL	0x0004	/* entered kernel via syscall ins */
+#define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
