@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.36 1997/08/26 19:27:25 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.37 1997/08/28 00:02:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -305,6 +305,8 @@ wssfind(parent, sc, ia)
     bus_space_write_1(sc->sc_iot, sc->sc_ioh, WSS_CONFIG,
 		      (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
 
+    if (sc->sc_ad1848.mode <= 1)
+	ia->ia_drq2 = -1;
     return 1;
 
 bad:
