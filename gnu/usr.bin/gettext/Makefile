@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2000/11/06 15:35:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2000/11/08 16:26:46 itojun Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	lib gettext msgcmp msgcomm msgfmt msgmerge msgunfmt xgettext \
-	gettextize info
+	info
 
 .if ${MKNLS} != "no"
 SUBDIR+=locale
