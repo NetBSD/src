@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.38 2002/05/13 22:38:01 eeh Exp $
+# 	$NetBSD: GENERIC32,v 1.39 2002/05/16 01:01:41 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 maxusers	64
 
@@ -200,12 +200,12 @@ cpu0	at mainbus0
 sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 psycho*	at mainbus0				# Darwin, Ultra5
-ofpci*	at psycho?
-ofpci*	at ofppb?
-ofppb*	at ofpci?				# `APB' support.
-ebus*	at ofpci?					# ebus devices
+pci*	at psycho?
+pci*	at ppb?
+ppb*	at pci?					# `APB' support.
+ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
-puc*	at ofpci? dev ? function ?		# PCI "universal" comm. cards
+puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
 
 #### Standard system devices -- all required for a given architecture
 
@@ -253,8 +253,8 @@ ms0	at com?					# mouse
 
 # PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
-cy*	at ofpci? dev ? function ?	# Cyclades Cyclom-Y serial boards
-cz*	at ofpci? dev ? function ?	# Cyclades-Z multi-port serial boards
+cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
 #### Disk controllers and disks
 
@@ -275,23 +275,23 @@ scsibus* at esp?
 
 ## Qlogic ISP SBus or PCI SCSI Card
 isp*	at sbus? slot ? offset ?
-isp*	at ofpci?
+isp*	at pci?
 scsibus* at isp?
 
 ## GLM support
-siop*	at ofpci?					# 53C875 "glm" compatible
+siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
 # PCI SCSI controllers
 # 	UT marks untested.
-adv*	at ofpci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
-adw*	at ofpci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
-ahc*	at ofpci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI UT
-bha*	at ofpci? dev ? function ?	# BusLogic 9xx SCSI UT
-dpt*	at ofpci? dev ? function ?	# DPT SmartCache/SmartRAID UT
-iha*	at ofpci? dev ? function ?	# Initio INIC-940/950 SCSI
-pcscp*	at ofpci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI UT
-trm*	at ofpci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI UT
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI UT
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 scsibus* at scsi?
 
@@ -306,7 +306,7 @@ ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
-pciide* at ofpci ? dev ? function ? flags 0x0000
+pciide* at pci ? dev ? function ? flags 0x0000
 atapibus* at pciide? channel ?
 
 ## Disable UDMA 4 which causes data corruption on the Acer Labs
@@ -319,9 +319,9 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # RAID controllers and devices (untested)
-cac*	at ofpci? dev ? function ?	# Compaq PCI array controllers
-mlx*	at ofpci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
-twe*	at ofpci? dev ? function ?	# 3ware Escalade RAID controllers
+cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
+twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
 ld*	at cac? unit ?			# logical disk devices
 ld*	at twe? unit ?
@@ -385,7 +385,7 @@ le*		at lebuffer?			# SBus
 
 ## Happy Meal Ethernet
 hme*		at sbus? slot ? offset ?
-hme*		at ofpci?	dev ? function ?	# network "hme" compatible
+hme*		at pci?	dev ? function ?	# network "hme" compatible
 
 ## qec/be, qec/hme
 qec*		at sbus? slot ? offset ?
@@ -394,27 +394,27 @@ qe*		at qec?
 
 # PCI network interfaces
 # 	UT marks untested.
-an*	at ofpci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
-en*	at ofpci? dev ? function ?	# ENI/Adaptec ATM UT
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
+en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
-#ep*	at ofpci? dev ? function ?	# 3Com 3c59x
-ex*	at ofpci? dev ? function ?	# 3Com 90x[B] UT
-epic*	at ofpci? dev ? function ?	# SMC EPIC/100 Ethernet UT
-esh*	at ofpci? dev ? function ?	# Essential HIPPI card UT
-fpa*	at ofpci? dev ? function ?	# DEC DEFPA FDDI UT
-fxp*	at ofpci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
-gem*	at ofpci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
-le*	at ofpci? dev ? function ?	# PCnet-PCI Ethernet UT
+#ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[B] UT
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
+esh*	at pci? dev ? function ?	# Essential HIPPI card UT
+fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
+gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
 # XXX uses vtophys()
-#lmc*	at ofpci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-ne*	at ofpci? dev ? function ?	# NE2000-compatible Ethernet UT
-ntwoc*	at ofpci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
-rtk*	at ofpci? dev ? function ?	# Realtek 8129/8139 UT
-sip*	at ofpci? dev ? function ?	# SiS 900 Ethernet UT
-ti*	at ofpci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
-tl*	at ofpci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at ofpci? dev ? function ?	# DECchip 21x4x and clones
-vr*	at ofpci? dev ? function ?	# VIA Rhine Fast Ethernet
+#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
+ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # MII/PHY support
 # XXX: only nsphy "tested"
@@ -433,7 +433,7 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
-ohci*	at ofpci? dev ? function ?			# Open Host Controller
+ohci*	at pci? dev ? function ?			# Open Host Controller
 
 usb*	at ohci?					# USB bus support
 uhub*	at usb?						# USB Hubs
@@ -463,8 +463,8 @@ uyap* at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # PCI IEEE1394 controllers
-fwohci*	at ofpci? dev ? function ?	# IEEE1394 Open Host Controller
-#fwlynx* at ofpci? dev ? function ?	# IEEE1394 TI Lynx Controller
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
@@ -515,7 +515,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
-autri*		at ofpci? dev ? function ?	# Blade 100 'sound'
+autri*		at pci? dev ? function ?	# Blade 100 'sound'
 
 audio*		at audiocs?
 audio*		at autri?

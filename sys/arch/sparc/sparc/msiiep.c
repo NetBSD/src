@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.8 2002/05/08 16:51:39 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.9 2002/05/16 01:01:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.8 2002/05/08 16:51:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.9 2002/05/16 01:01:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -376,6 +376,7 @@ mspcic_attach(parent, self, aux)
 	 */
 	pba.pba_busname = "pci";
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_iot = sc->sc_iot;
 	pba.pba_memt = sc->sc_memt;
 	pba.pba_dmat = sc->sc_dmat;

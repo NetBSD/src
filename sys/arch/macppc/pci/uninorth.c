@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.3 2001/09/14 21:04:58 nathanw Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.4 2002/05/16 01:01:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -136,6 +136,7 @@ uninorth_attach(parent, self, aux)
 	pba.pba_iot = pc->iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_bus = pc->bus;
+	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
