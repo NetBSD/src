@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 2003/10/06 16:08:35 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 2004/05/17 13:16:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #undef _LOCORE
 
 	.import _GLOBAL_OFFSET_TABLE_
-	.import _GOT_END_
 
 ENTRY($rtld_start,32)
 
@@ -65,39 +64,10 @@ ENTRY($rtld_start,32)
 	 * relocations for this part of the text segment.
 	 */
 
-	/*
-	 * The only way I know to get an external symbol value 
-	 * for which the linker won't also emit a relocation is 
-	 * to assemble a branch to that symbol, and then decode 
-	 * the PC-relative offset that it contains.  Since we 
-	 * can discover the absolute address of the branch 
-	 * instruction, we can add the two together to arrive 
-	 * at the symbol's absolute address.
-	 *
-	 * The LOAD_ADDR macro hides all of this.  The most 
-	 * difficult part is implementing the 
-	 *
-	 * lshift(sign_ext(assemble_17(w1,w2,w),17),2)
-	 *
-	 * pseudoinstruction from the b,l description.
-	 */
-#define	LOAD_ADDR(sym,reg)						!\
-	bl	4,%t1		/* branch to the ldw below, */		!\
-				/*  storing absolute address of	*/	!\
-				/*  fake branch in t1 */		!\
-	depi	0, 31, 2, %t1	/* mask off privilege bits */		!\
-	b	sym		/* fake branch, never executed */	!\
-	ldw	0(%t1), %t2	/* load the fake branch	*/		!\
-	ldo	8(%t1), %t1	/* branch target = pc + 8 + disp */	!\
-	extrs	%t2, 31, 1, %t3	/* extract w */				!\
-	zdep	%t3, 13, 16, reg /* deposit w */				!\
-	extru	%t2, 15, 5, %t3	/* extract w1 */			!\
-	dep	%t3, 18, 5, reg	/* deposit w1 */			!\
-	extru	%t2, 29, 1, %t3	/* extract w2{10} */			!\
-	dep	%t3, 19, 1, reg	/* deposit w2{10} */			!\
-	extru	%t2, 28, 10, %t3 /* extract w2{0..9} */			!\
-	dep	%t3, 29, 10, reg /* deposit w2{0..9} */			!\
-	add	%t1, reg, reg	/* make final absolute address */
+	bl	L$lpc1, %r19
+	depi	0, 31, 2, %r19
+L$lpc1:	addil	L'_DYNAMIC - ($PIC_pcrel$0 - 8), %r19
+	ldo	R'_DYNAMIC - ($PIC_pcrel$0 - 12)(%r1),%arg0
 
 	/*
 	 * Load the absolute address of the beginning of the
@@ -105,7 +75,8 @@ ENTRY($rtld_start,32)
 	 * register, leaving it ready-to-use by the dynamic
 	 * linker C code.
 	 */
-	LOAD_ADDR(_GLOBAL_OFFSET_TABLE_, %r19)
+	addil	L'_GLOBAL_OFFSET_TABLE_ - ($PIC_pcrel$0 - 16), %r19
+	ldo	R'_GLOBAL_OFFSET_TABLE_ - ($PIC_pcrel$0 - 20)(%r1),%r19
 
 	/*
 	 * The linker sets the first entry in the GOT to the 
@@ -113,21 +84,10 @@ ENTRY($rtld_start,32)
 	 * from the absolute address of _DYNAMIC to get our
 	 * relocbase.
 	 */
-	LOAD_ADDR(_DYNAMIC, %arg0)	; %arg0 = &_DYNAMIC
 	ldw	0(%r19), %arg1
 	sub	%arg0, %arg1, %arg1	; %arg1 = relocbase
-
-	/*
-	 * Our special linker script sets _GOT_END_ to the
-	 * end of the GOT.  
-	 */
-	LOAD_ADDR(_GOT_END_, %arg3)	; %arg3 = _GOT_END_
-
-	/*
-	 * Relocate the GOT.
-	 */
-	bl	_rtld_bootstrap_hppa_got, %rp
-	copy	%r19, %arg2		; %arg2 = _GLOBAL_OFFSET_TABLE_
+	bl	_rtld_relocate_nonplt_self, %rp
+	copy	%arg1, %r4		; save for later
 
 	/*
 	 * Recover the ps_strings pointer, and take out the
@@ -144,10 +104,11 @@ ENTRY($rtld_start,32)
 	 * storage for obj and cleanup that _rtld needs.
 	 */
 	ldo	-12(%arg0), %arg0
-
-	/* Call _rtld, saving our pointer to that storage. */
-	bl	_rtld, %rp
 	stw	%arg0, HPPA_FRAME_ARG(1)(%r3)
+
+	/* Call _rtld, copying relocbase into arg1. */
+	bl	_rtld, %rp
+	copy	%r4, %arg1		; %arg1 = relocbase
 
 	/* Prepare the arguments for the entry point. */
 	ldw	HPPA_FRAME_ARG(1)(%r3), %r1
@@ -183,7 +144,12 @@ LEAF_ENTRY(__rtld_setup_hppa_pltgot)
 	 * linker immediately before the GOT.  We use 
 	 * this stub to enter our binder.
 	 */
-	LOAD_ADDR(_rtld_bind_start, %arg0)
+
+	bl	L$lpc2, %arg0
+	depi	0, 31, 2, %arg0
+L$lpc2:	addil	L'_rtld_bind_start - ($PIC_pcrel$0 - 8), %arg0
+	ldo	R'_rtld_bind_start - ($PIC_pcrel$0 - 12)(%r1),%arg0
+
 	stw	%arg0, -8(%arg1)
 	bv	%r0(%rp)
 	stw	%r19, -4(%arg1)
@@ -199,7 +165,8 @@ ENTRY(_rtld_bind_start,32)
 	/* Start stack calling convention.  */
 	copy	%r3, %r1 
 	copy	%sp, %r3
-	stw,ma	%r1, HPPA_FRAME_SIZE*2(%sp)
+
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
 	/*
 	 * We have to save all calling convention registers 
@@ -242,7 +209,7 @@ ENTRY(_rtld_bind_start,32)
 	copy	%r21, %r19
 
 	/*
-	 * Our hppa version of _rtld_relocate_plt_object
+	 * Our hppa version of _rtld_bind
 	 * returns to us the address of the PLT entry that
 	 * it fixed up.  Load the function address and
 	 * shared linkage for the newly bound function.
