@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.14 2002/10/14 13:43:36 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.15 2003/01/03 04:18:58 jschauma Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -314,7 +314,7 @@ value to the effect that it is not supported.
 .Pp
 Many of the functions in the vnode operations vector take a
 componentname structure.
-Is is used to encapsulate many parameters into a singla function
+Is is used to encapsulate many parameters into a single function
 argument.
 It has the following structure:
 .Bd -literal
@@ -721,7 +721,7 @@ returned, otherwise an appropriate error code is returned.
 .Pp
 Most file systems do not supply a function for
 .Fn VOP_IOCTL .
-This function implments the
+This function implements the
 .Xr ioctl 2
 system call.
 .It Fn VOP_FCNTL "vp" "command" "data" "fflag" "cred" "p"
@@ -750,7 +750,7 @@ The argument
 .Fa vp
 is the locked vnode of the file to poll and
 .Fa p
-is the callling process.
+is the calling process.
 It returns any events of interest as specified by
 .Fa events
 that may have occurred for the file.
@@ -987,7 +987,7 @@ is the vnode of the directory to read the contents of and
 is the destination location to read the contents into.
 The argument
 .Fa cred
-is the caller's credientials.
+is the caller's credentials.
 The argument
 .Fa eofflag
 is the pointer to a flag which is set by
