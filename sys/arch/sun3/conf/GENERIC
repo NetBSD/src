@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 1996/10/30 00:17:10 gwr Exp $
+#	$NetBSD: GENERIC,v 1.32 1996/11/19 21:04:47 gwr Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -16,8 +16,7 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-options 	KTRACE				# system call tracing support
+options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either this:
 options 	DDB
