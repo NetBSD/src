@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.7 2001/01/22 17:32:11 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.8 2001/01/22 17:40:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@
 /*
  * Driver for the 3ware Escalade family of RAID controllers.
  */
-
-#include "opt_twe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
