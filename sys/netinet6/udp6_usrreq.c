@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.30.2.3 2001/04/06 00:29:38 he Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.30.2.4 2001/05/09 19:38:47 he Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.62 2000/10/19 01:11:05 itojun Exp $	*/
 
 /*
@@ -103,6 +103,9 @@
 #endif /*IPSEC*/
 
 #include "faith.h"
+#if defined(NFAITH) && NFAITH > 0
+#include <net/if_faith.h>
+#endif
 
 /*
  * UDP protocol inplementation.
@@ -161,18 +164,18 @@ udp6_input(mp, offp, proto)
 	u_int32_t plen, ulen;
 	struct sockaddr_in6 udp_in6;
 
+	ip6 = mtod(m, struct ip6_hdr *);
+
 #if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* send icmp6 host unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
+	if (faithprefix(&ip6->ip6_dst)) {
+		/* send icmp6 host unreach? */
+		m_freem(m);
+		return IPPROTO_DONE;
 	}
 #endif
+
 	udp6stat.udp6s_ipackets++;
 
-	ip6 = mtod(m, struct ip6_hdr *);
 	/* check for jumbogram is done in ip6_input.  we can trust pkthdr.len */
 	plen = m->m_pkthdr.len - off;
 #ifndef PULLDOWN_TEST
