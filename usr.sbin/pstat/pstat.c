@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.31 1997/06/12 15:03:44 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.32 1997/07/13 02:23:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.31 1997/06/12 15:03:44 mrg Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.32 1997/07/13 02:23:40 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ main(argc, argv)
 	if (ttyflag)
 		ttymode();
 	if (swapflag || totalflag)
-		list_swap(0, 0, kflag, totalflag, 1);
+		list_swap(0, kflag, 0, totalflag, 1);
 	exit (0);
 }
 
