@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 1998/11/13 04:47:09 oster Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 1999/06/05 20:38:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,12 +85,6 @@ cdev_decl(tcx);
 
 cdev_decl(cgfourteen);
 
-bdev_decl(xd);
-cdev_decl(xd);
-
-bdev_decl(xy);
-cdev_decl(xy);
-
 bdev_decl(sw);
 cdev_decl(sw);
 
@@ -101,3 +95,6 @@ bdev_decl(md);
 cdev_decl(md);
 
 cdev_decl(scsibus);
+
+bdev_decl(wd);
+cdev_decl(wd);

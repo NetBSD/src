@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 1999/05/30 19:13:33 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.8 1999/06/05 20:38:25 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,7 +180,7 @@ int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 struct fpstate;
 void	savefpstate __P((struct fpstate *));
 void	loadfpstate __P((struct fpstate *));
-int	probeget __P((caddr_t, int));
+int	probeget __P((int, paddr_t, int));
 #if 0
 void	write_all_windows __P((void));
 void	write_user_windows __P((void));

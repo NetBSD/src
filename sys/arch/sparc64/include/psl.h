@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 1999/03/26 04:29:21 eeh Exp $ */
+/*	$NetBSD: psl.h,v 1.8 1999/06/05 20:38:25 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@
 #define PIL_BIO		5
 #define PIL_VIDEO	5
 #define	PIL_TTY		6
+#define	PIL_LPT		6
 #define	PIL_NET		6
 #define PIL_IMP		7
 #define	PIL_CLOCK	10
@@ -365,6 +366,9 @@ SPLHOLD(splnet, PIL_NET)
 /* tty input runs at software level 6 */
 SPLHOLD(spltty, PIL_TTY)
 
+/* parallel port runs at software level 6 */
+SPLHOLD(spllpt, PIL_LPT)
+
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
@@ -410,6 +414,7 @@ static __inline void splx(newpil)
 #define	splbio()	splbioX(__FILE__, __LINE__)
 #define	splnet()	splnetX(__FILE__, __LINE__)
 #define	spltty()	splttyX(__FILE__, __LINE__)
+#define	spllpt()	spllptX(__FILE__, __LINE__)
 #define	splimp()	splimpX(__FILE__, __LINE__)
 #define	splpmap()	splpmapX(__FILE__, __LINE__)
 #define	splclock()	splclockX(__FILE__, __LINE__)
