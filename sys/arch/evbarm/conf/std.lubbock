@@ -1,4 +1,4 @@
-#	$NetBSD: std.lubbock,v 1.1 2002/12/18 04:56:52 bsh Exp $
+#	$NetBSD: std.lubbock,v 1.2 2003/01/02 23:38:02 thorpej Exp $
 #
 # standard NetBSD/evbarm for LUBBOCK options
 
@@ -18,7 +18,7 @@ options 	ARM32
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDTYPE="lubbock"
 
-options 	EVBARM_BOARDTYPE=EVBARM_BOARDTYPE_PXA2X0
+options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 
 # OS Timer    This is compatible to SA1110's OS Timer.
 saost*	at pxaip? addr 0x40a00000 size 0x20
