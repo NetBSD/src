@@ -20,9 +20,9 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: regsub.c,v 1.8 1999/05/06 17:09:31 christos Exp $");
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: regsub.c,v 1.9 2000/09/14 01:24:32 msaitoh Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <regexp.h>
 #include <stdio.h>
