@@ -1,8 +1,7 @@
-#	$Id: Makefile,v 1.1 1993/10/22 21:09:57 pk Exp $
+#	$Id: Makefile,v 1.2 1993/10/22 21:10:42 pk Exp $
 
 PROG=	ldd
 SRCS=	ldd.c
-NOMAN=	noman
 BINDIR= ${DESTDIR}/usr/bin
 
 .include <bsd.prog.mk>
