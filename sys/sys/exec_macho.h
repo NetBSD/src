@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.5 2002/11/19 19:54:36 christos Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.6 2002/11/21 19:53:40 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _SYS_EXEC_MACHO_H_
 #define	_SYS_EXEC_MACHO_H_
+
+#include <sys/param.h>
 
 #include <machine/int_types.h>
 #include <machine/macho_machdep.h>
@@ -238,6 +240,12 @@ struct exec_macho_thread_command {
 	u_long	cmdsize;
 	u_long	flavor;
 	u_long	count;
+};
+
+struct exec_macho_emul_arg {
+	char *path;
+	char filename[MAXPATHLEN];
+	struct exec_macho_object_header *macho_hdr;
 };
 
 #ifndef _LKM
