@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.3 2001/12/24 13:25:52 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.4 2001/12/24 13:43:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,6 +149,37 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, umass_fixup_yedata
 	},
 
+	/* InSystem Design ATA over USB devices */
+	{ { USB_VENDOR_ATI, USB_PRODUCT_ATI2_205 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_ATAPI },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_DRIVEV2_5 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_ADAPTERV2 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DRIVEV2 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
 };
 
 const struct umass_quirk *
