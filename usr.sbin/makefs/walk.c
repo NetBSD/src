@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.5 2001/11/02 03:12:48 lukem Exp $	*/
+/*	$NetBSD: walk.c,v 1.6 2001/12/05 11:08:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: walk.c,v 1.5 2001/11/02 03:12:48 lukem Exp $");
+__RCSID("$NetBSD: walk.c,v 1.6 2001/12/05 11:08:53 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -98,7 +98,8 @@ __RCSID("$NetBSD: walk.c,v 1.5 2001/11/02 03:12:48 lukem Exp $");
 static	void	 apply_specdir(const char *, NODE *, fsnode *);
 static	void	 apply_specentry(const char *, NODE *, fsnode *);
 static	fsnode	*create_fsnode(const char *, struct stat *);
-static	fsnode	*link_check(fsnode *);
+static	fsinode	*create_fsinode(struct stat *);
+static	fsinode	*link_check(fsinode *);
 
 
 /*
@@ -141,6 +142,7 @@ walk_dir(const char *dir, fsnode *parent)
 		}
 
 		cur = create_fsnode(dent->d_name, &stbuf);
+		cur->inode = create_fsinode(&stbuf);
 		cur->parent = parent;
 		if (strcmp(dent->d_name, ".") == 0) {
 				/* ensure "." is at the start of the list */
@@ -159,10 +161,15 @@ walk_dir(const char *dir, fsnode *parent)
 				continue;
 			}
 		}
-		if (cur->statbuf.st_nlink > 1) {
-			cur->dup = link_check(cur);
-			if (cur->dup)
-				cur->dup->nlink++;
+		if (stbuf.st_nlink > 1) {
+			fsinode	*curino;
+
+			curino = link_check(cur->inode);
+			if (curino != NULL) {
+				free(cur->inode);
+				cur->inode = curino;
+				cur->inode->nlink++;
+			}
 		}
 		if (S_ISLNK(cur->type)) {
 			char	slink[PATH_MAX+1];
@@ -184,19 +191,28 @@ walk_dir(const char *dir, fsnode *parent)
 }
 
 static fsnode *
-create_fsnode(const char *name, struct stat *statbuf)
+create_fsnode(const char *name, struct stat *stbuf)
 {
 	fsnode *cur;
 
 	if ((cur = calloc(1, sizeof(fsnode))) == NULL ||
 	    (cur->name = strdup(name)) == NULL)
 		err(1, "Memory allocation error");
-	cur->statbuf = *statbuf;
-	cur->type = (cur->statbuf.st_mode & S_IFMT);
-	cur->nlink = 1;
+	cur->type = stbuf->st_mode & S_IFMT;
 	return (cur);
 }
 
+static fsinode *
+create_fsinode(struct stat *statbuf)
+{
+	fsinode *cur;
+
+	if ((cur = calloc(1, sizeof(fsinode))) == NULL)
+		err(1, "Memory allocation error");
+	cur->nlink = 1;
+	cur->st = *statbuf;
+	return (cur);
+}
 
 /*
  * apply_specfile --
@@ -301,6 +317,7 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 					/* build minimal fsnode */
 			memset(&stbuf, 0, sizeof(stbuf));
 			stbuf.st_mode = nodetoino(curnode->type);
+			stbuf.st_nlink = 1;
 			stbuf.st_mtime = stbuf.st_atime =
 			    stbuf.st_ctime = start_time.tv_sec;
 			stbuf.st_mtimensec = stbuf.st_atimensec =
@@ -353,16 +370,6 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	if (debug & DEBUG_APPLY_SPECENTRY)
 		printf("apply_specentry: %s/%s\n", dir, dirnode->name);
 
-			/*
-			 * if this is a duplicate (i.e, an existing hardlink),
-			 * change the actual settings.
-			 */
-	if (dirnode->dup != NULL) {
-		if (debug & DEBUG_APPLY_SPECENTRY)
-			printf("\t\t\thard-linked to %s\n", dirnode->dup->name);
-		dirnode = dirnode->dup;
-	}
-
 #define ASEPRINT(t, b, o, n) \
 		if (debug & DEBUG_APPLY_SPECENTRY) \
 			printf("\t\t\tchanging %s from " b " to " b "\n", \
@@ -370,21 +377,21 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 
 	if (specnode->flags & (F_GID | F_GNAME)) {
 		ASEPRINT("gid", "%d",
-		    dirnode->statbuf.st_gid, specnode->st_gid);
-		dirnode->statbuf.st_gid = specnode->st_gid;
+		    dirnode->inode->st.st_gid, specnode->st_gid);
+		dirnode->inode->st.st_gid = specnode->st_gid;
 	}
 	if (specnode->flags & F_MODE) {
 		ASEPRINT("mode", "%#o",
-		    dirnode->statbuf.st_mode & ALLPERMS, specnode->st_mode);
-		dirnode->statbuf.st_mode &= ~ALLPERMS;
-		dirnode->statbuf.st_mode |= (specnode->st_mode & ALLPERMS);
+		    dirnode->inode->st.st_mode & ALLPERMS, specnode->st_mode);
+		dirnode->inode->st.st_mode &= ~ALLPERMS;
+		dirnode->inode->st.st_mode |= (specnode->st_mode & ALLPERMS);
 	}
 		/* XXX: ignoring F_NLINK for now */
 	if (specnode->flags & F_SIZE) {
 		ASEPRINT("size", "%lld",
-		    (long long)dirnode->statbuf.st_size,
+		    (long long)dirnode->inode->st.st_size,
 		    (long long)specnode->st_size);
-		dirnode->statbuf.st_size = specnode->st_size;
+		dirnode->inode->st.st_size = specnode->st_size;
 	}
 	if (specnode->flags & F_SLINK) {
 		assert(dirnode->symlink != NULL);
@@ -396,29 +403,30 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	}
 	if (specnode->flags & F_TIME) {
 		ASEPRINT("time", "%ld",
-		    (long)dirnode->statbuf.st_mtime, (long)specnode->st_mtime);
-		dirnode->statbuf.st_mtime =	specnode->st_mtime;
-		dirnode->statbuf.st_mtimensec =	specnode->st_mtimensec;
-		dirnode->statbuf.st_atime =	specnode->st_mtime;
-		dirnode->statbuf.st_atimensec =	specnode->st_mtimensec;
-		dirnode->statbuf.st_ctime =	start_time.tv_sec;
-		dirnode->statbuf.st_ctimensec =	start_time.tv_nsec;
+		    (long)dirnode->inode->st.st_mtime,
+		    (long)specnode->st_mtime);
+		dirnode->inode->st.st_mtime =		specnode->st_mtime;
+		dirnode->inode->st.st_mtimensec =	specnode->st_mtimensec;
+		dirnode->inode->st.st_atime =		specnode->st_mtime;
+		dirnode->inode->st.st_atimensec =	specnode->st_mtimensec;
+		dirnode->inode->st.st_ctime =		start_time.tv_sec;
+		dirnode->inode->st.st_ctimensec =	start_time.tv_nsec;
 	}
 	if (specnode->flags & (F_UID | F_UNAME)) {
 		ASEPRINT("uid", "%d",
-		    dirnode->statbuf.st_uid, specnode->st_uid);
-		dirnode->statbuf.st_uid = specnode->st_uid;
+		    dirnode->inode->st.st_uid, specnode->st_uid);
+		dirnode->inode->st.st_uid = specnode->st_uid;
 	}
 	if (specnode->flags & F_FLAGS) {
 		ASEPRINT("flags", "%#lX",
-		    (u_long)dirnode->statbuf.st_flags,
-		    (u_long)specnode->st_flags);
-		dirnode->statbuf.st_flags = specnode->st_flags;
+		    (ulong)dirnode->inode->st.st_flags,
+		    (ulong)specnode->st_flags);
+		dirnode->inode->st.st_flags = specnode->st_flags;
 	}
 	if (specnode->flags & F_DEV) {
 		ASEPRINT("rdev", "%#x",
-		    dirnode->statbuf.st_rdev, specnode->st_rdev);
-		dirnode->statbuf.st_rdev = specnode->st_rdev;
+		    dirnode->inode->st.st_rdev, specnode->st_rdev);
+		dirnode->inode->st.st_rdev = specnode->st_rdev;
 	}
 #undef ASEPRINT
 }
@@ -451,11 +459,8 @@ dump_fsnodes(const char *dir, fsnode *root)
 		} else {
 			assert (cur->symlink == NULL);
 		}
-		if (cur->dup != NULL) {
-			printf(", hard-linked to %s", cur->dup->name);
-		}
-		if (cur->nlink > 1)
-			printf(", nlinks=%d", cur->nlink);
+		if (cur->inode->nlink > 1)
+			printf(", nlinks=%d", cur->inode->nlink);
 		putchar('\n');
 
 		if (cur->child) {
@@ -482,21 +487,19 @@ inode_type(mode_t mode)
 }
 
 
-typedef struct {
-	int32_t	dev;
-	int32_t	ino;
-	fsnode	*dup;
-} dupnode;
-
 /*
  * link_check --
  *	return pointer to fsnode matching `entry's st_ino & st_dev if it exists,
  *	otherwise add `entry' to table and return NULL
  */
-static fsnode *
-link_check(fsnode *entry)
+static fsinode *
+link_check(fsinode *entry)
 {
-	static	dupnode	*dups;
+	static	struct dupnode {
+		uint32_t	dev;
+		uint32_t	ino;
+		fsinode		*dup;
+	} *dups;
 	static	int	ndups, maxdups;
 
 	int	i;
@@ -505,27 +508,26 @@ link_check(fsnode *entry)
 
 		/* XXX; maybe traverse in reverse for speed? */
 	for (i = 0; i < ndups; i++) {
-		if (dups[i].dev == entry->statbuf.st_dev &&
-		    dups[i].ino == entry->statbuf.st_ino) {
+		if (dups[i].dev == entry->st.st_dev &&
+		    dups[i].ino == entry->st.st_ino) {
 			if (debug & DEBUG_WALK_DIR_LINKCHECK)
-				printf(
-				    "link_check: %s (%d,%d) linked to %s\n",
-				    entry->name, entry->statbuf.st_dev,
-				    entry->statbuf.st_ino, dups[i].dup->name);
+				printf("link_check: found [%d,%d]\n",
+				    entry->st.st_dev, entry->st.st_ino);
 			return (dups[i].dup);
 		}
 	}
 
 	if (debug & DEBUG_WALK_DIR_LINKCHECK)
-		printf("link_check: no match for %s (%d, %d)\n",
-		    entry->name, entry->statbuf.st_dev, entry->statbuf.st_ino);
+		printf("link_check: no match for [%d, %d]\n",
+		    entry->st.st_dev, entry->st.st_ino);
 	if (ndups == maxdups) {
 		maxdups += 128;
-		if ((dups = realloc(dups, sizeof(dupnode) * maxdups)) == NULL)
+		if ((dups = realloc(dups, sizeof(struct dupnode) * maxdups))
+		    == NULL)
 			err(1, "Memory allocation error");
 	}
-	dups[ndups].dev = entry->statbuf.st_dev;
-	dups[ndups].ino = entry->statbuf.st_ino;
+	dups[ndups].dev = entry->st.st_dev;
+	dups[ndups].ino = entry->st.st_ino;
 	dups[ndups].dup = entry;
 	ndups++;
 
