@@ -733,6 +733,7 @@ boot(arghowto)
 	      fp = (int *)fp[0];
 	      if (++i == 3) { printf ("\n"); i=0; }
 	    }
+	    printf ("\n");
 	  }
 #else
 		savectx(&dumppcb, 0);
@@ -742,6 +743,7 @@ boot(arghowto)
 #endif
 	}
 
+	printf ("rebooting ....");
 	reboot_cpu();
 	for(;;) ;
 	/*NOTREACHED*/
@@ -1173,3 +1175,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+
+/* SCSI "support". */
+int
+dk_establish()
+{
+  printf ("dk_establish ??? \n");
+}
