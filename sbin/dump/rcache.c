@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.12 2003/01/24 21:55:06 fvdl Exp $	*/
+/*	$NetBSD: rcache.c,v 1.13 2003/02/03 23:08:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.12 2003/01/24 21:55:06 fvdl Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.13 2003/02/03 23:08:37 hannken Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,25 +63,29 @@ __RCSID("$NetBSD: rcache.c,v 1.12 2003/01/24 21:55:06 fvdl Exp $");
 #define MAXMEMPART	6	/* max 15% of the user mem */
 
 /*-----------------------------------------------------------------------*/
-struct cheader {
-	volatile size_t count;
-};
-
-struct cdesc {
-	volatile daddr_t blkstart;
-	volatile daddr_t blkend;/* start + nblksread */
-	volatile daddr_t blocksRead;
-	volatile size_t time;
+union cdesc {
+	volatile size_t cd_count;
+	struct {
+		volatile daddr_t blkstart;
+		volatile daddr_t blkend;/* start + nblksread */
+		volatile daddr_t blocksRead;
+		volatile size_t time;
 #ifdef DIAGNOSTICS
-	volatile pid_t owner;
+		volatile pid_t owner;
 #endif
+	} desc;
+#define cd_blkstart	desc.blkstart
+#define cd_blkend	desc.blkend
+#define cd_blocksRead	desc.blocksRead
+#define cd_time		desc.time
+#define cd_owner	desc.owner
 };
 
 static int findlru(void);
 
 static void *shareBuffer = NULL;
-static struct cheader *cheader;
-static struct cdesc *cdesc;
+static union cdesc *cheader;
+static union cdesc *cdesc;
 static char *cdata;
 static int cachebufs;
 static int nblksread;
@@ -120,8 +124,8 @@ initcache(int cachesize, int readblksize)
 		if (cachebufs > MAXCACHEBUFS)
 			cachebufs = MAXCACHEBUFS;
 
-		sharedSize = sizeof(struct cheader) +
-	   	    sizeof(struct cdesc) * cachebufs +
+		sharedSize = sizeof(union cdesc) +
+	   	    sizeof(union cdesc) * cachebufs +
 	   	    nblksread * cachebufs * dev_bsize;
 #ifdef STATS
 		fprintf(stderr, "Using %d buffers (%d bytes)\n", cachebufs,
@@ -135,10 +139,10 @@ initcache(int cachesize, int readblksize)
 			return;
 		}
 		cheader = shareBuffer;
-		cdesc = (struct cdesc *) (((char *) shareBuffer) +
-		    sizeof(struct cheader));
-		cdata = ((char *) shareBuffer) + sizeof(struct cheader) +
-	   	    sizeof(struct cdesc) * cachebufs;
+		cdesc = (union cdesc *) (((char *) shareBuffer) +
+		    sizeof(union cdesc));
+		cdata = ((char *) shareBuffer) + sizeof(union cdesc) +
+	   	    sizeof(union cdesc) * cachebufs;
 
 		memset(shareBuffer, '\0', sharedSize);
 	}
@@ -151,13 +155,13 @@ static int
 findlru(void)
 {
 	int	i;
-	size_t	minTime = cdesc[0].time;
+	size_t	minTime = cdesc[0].cd_time;
 	int	minIdx = 0;
 
 	for (i = 0; i < cachebufs; i++) {
-		if (cdesc[i].time < minTime) {
+		if (cdesc[i].cd_time < minTime) {
 			minIdx = i;
-			minTime = cdesc[i].time;
+			minTime = cdesc[i].cd_time;
 		}
 	}
 
@@ -275,16 +279,16 @@ retry:
 		int	i;
 
 		for (i = 0; i < cachebufs; i++) {
-			struct cdesc *curr = &cdesc[i];
+			union cdesc *curr = &cdesc[i];
 
 #ifdef DIAGNOSTICS
-			if (curr->owner) {
+			if (curr->cd_owner) {
 				fprintf(stderr, "Owner is set (%d, me=%d), can"
-				    "not happen.\n", curr->owner, getpid());
+				    "not happen.\n", curr->cd_owner, getpid());
 			}
 #endif
 
-			if (curr->blkend == 0)
+			if (curr->cd_blkend == 0)
 				continue;
 			/*
 			 * If we find a bit of the read in the buffers,
@@ -292,11 +296,11 @@ retry:
 			 * copy them out, adjust blkno, buf and size,
 			 * and restart
 			 */
-			if (curr->blkstart <= blkno &&
-			    blkno < curr->blkend) {
+			if (curr->cd_blkstart <= blkno &&
+			    blkno < curr->cd_blkend) {
 				/* Number of data blocks to be copied */
 				int toCopy = MIN(size,
-				    (curr->blkend - blkno) * dev_bsize);
+				    (curr->cd_blkend - blkno) * dev_bsize);
 #ifdef DIAGNOSTICS
 				if (toCopy <= 0 ||
 				    toCopy > nblksread * dev_bsize) {
@@ -304,23 +308,23 @@ retry:
 					    toCopy);
 					dumpabort(0);
 				}
-				if (CDATA(i) + (blkno - curr->blkstart) *
+				if (CDATA(i) + (blkno - curr->cd_blkstart) *
 			   	    dev_bsize < CDATA(i) ||
-			   	    CDATA(i) + (blkno - curr->blkstart) *
+			   	    CDATA(i) + (blkno - curr->cd_blkstart) *
 			   	    dev_bsize >
 				    CDATA(i) + nblksread * dev_bsize) {
 					fprintf(stderr, "%p < %p !!!\n",
 				   	   CDATA(i) + (blkno -
-						curr->blkstart) * dev_bsize,
+						curr->cd_blkstart) * dev_bsize,
 					   CDATA(i));
-					fprintf(stderr, "cdesc[i].blkstart %d "
+					fprintf(stderr, "cdesc[i].cd_blkstart %d "
 					    "blkno %d dev_bsize %ld\n",
-				   	    curr->blkstart, blkno, dev_bsize);
+				   	    curr->cd_blkstart, blkno, dev_bsize);
 					dumpabort(0);
 				}
 #endif
 				memcpy(buf, CDATA(i) +
-				    (blkno - curr->blkstart) * dev_bsize,
+				    (blkno - curr->cd_blkstart) * dev_bsize,
 			   	    toCopy);
 
 				buf 	+= toCopy;
@@ -329,7 +333,7 @@ retry:
 				numBlocks -=
 				    (toCopy  + dev_bsize - 1) / dev_bsize;
 
-				curr->time = cheader->count++;
+				curr->cd_time = cheader->cd_count++;
 
 				/*
 				 * If all data of a cache block have been
@@ -337,10 +341,10 @@ retry:
 				 * will occur, so expire the cache immediately
 				 */
 
-				curr->blocksRead +=
+				curr->cd_blocksRead +=
 				    (toCopy + dev_bsize -1) / dev_bsize;
-				if (curr->blocksRead >= nblksread)
-					curr->time = 0;
+				if (curr->cd_blocksRead >= nblksread)
+					curr->cd_time = 0;
 
 				goto retry;
 			}
@@ -369,15 +373,15 @@ retry:
 			    dev_bsize;
 
 #ifdef DIAGNOSTICS
-			if (cdesc[idx].owner)
+			if (cdesc[idx].cd_owner)
 				fprintf(stderr, "Owner is set (%d, me=%d), can"
-				    "not happen(2).\n", cdesc[idx].owner,
+				    "not happen(2).\n", cdesc[idx].cd_owner,
 				    getpid());
-			cdesc[idx].owner = getpid();
+			cdesc[idx].cd_owner = getpid();
 #endif
-			cdesc[idx].time = cheader->count++;
-			cdesc[idx].blkstart = blockBlkNo;
-			cdesc[idx].blocksRead = 0;
+			cdesc[idx].cd_time = cheader->cd_count++;
+			cdesc[idx].cd_blkstart = blockBlkNo;
+			cdesc[idx].cd_blocksRead = 0;
 
 			if (lseek(diskfd,
 			    ((off_t) (blockBlkNo) << dev_bshift), 0) < 0) {
@@ -399,28 +403,28 @@ retry:
 			if (rsize <= 0) {
 				rawread(oblkno, obuf, osize);
 #ifdef DIAGNOSTICS
-				if (cdesc[idx].owner != getpid())
+				if (cdesc[idx].cd_owner != getpid())
 					fprintf(stderr, "Owner changed from "
 					    "%d to %d, can't happen\n",
-					    getpid(), cdesc[idx].owner);
-				cdesc[idx].owner = 0;
+					    getpid(), cdesc[idx].cd_owner);
+				cdesc[idx].cd_owner = 0;
 #endif
 				break;
 			}
 
 			/* On short read, just note the fact and go on */
-			cdesc[idx].blkend = blockBlkNo + rsize / dev_bsize;
+			cdesc[idx].cd_blkend = blockBlkNo + rsize / dev_bsize;
 
 #ifdef STATS
 			nphysread++;
 			physreadsize += rsize;
 #endif
 #ifdef DIAGNOSTICS
-			if (cdesc[idx].owner != getpid())
+			if (cdesc[idx].cd_owner != getpid())
 				fprintf(stderr, "Owner changed from "
 				    "%d to %d, can't happen\n",
-				    getpid(), cdesc[idx].owner);
-			cdesc[idx].owner = 0;
+				    getpid(), cdesc[idx].cd_owner);
+			cdesc[idx].cd_owner = 0;
 #endif
 			/*
 			 * We swapped some of data in, let the loop fetch
