@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.3 2003/10/11 03:57:32 matt Exp $	*/
+/*	$NetBSD: dk.c,v 1.4 2003/10/21 12:24:11 itohy Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -34,6 +34,8 @@
 
 #include "dev_hppa.h"
 
+const char *dk_disklabel(struct hppa_dev *, struct disklabel *);
+
 iodcio_t dkiodc;	/* boot IODC entry point */
 
 const char *
@@ -42,9 +44,9 @@ dk_disklabel(struct hppa_dev *dp, struct disklabel *label)
 	char buf[DEV_BSIZE];
 	size_t ret;
 
-	if (iodcstrategy(dp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &ret))
-		if (ret != DEV_BSIZE)
-			return "cannot read disklabel";
+	if (iodcstrategy(dp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &ret) ||
+	    ret != DEV_BSIZE)
+		return "cannot read disklabel";
 
 	return (getdisklabel(buf, label));
 }
@@ -67,7 +69,6 @@ dkopen(struct open_file *f, ...)
 
 	lp = dp->label;
 	st = NULL;
-#if 0	
 #ifdef DEBUG
 	if (debug)
 		printf ("disklabel\n");
@@ -80,11 +81,14 @@ dkopen(struct open_file *f, ...)
 		return ERDLAB;
 	} else {
 		i = B_PARTITION(dp->bootdev);
+#ifdef DEBUG
+		if (debug)
+			printf("bootdev 0x%x, partition %u\n", dp->bootdev, i);
+#endif
 		if (i >= lp->d_npartitions || !lp->d_partitions[i].p_size) {
 			return (EPART);
 		}
 	}
-#endif
 #ifdef DEBUGBUG
 	if (debug)
 		printf ("dkopen() ret\n");
