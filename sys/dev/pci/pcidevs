@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.504 2003/02/03 11:00:26 joda Exp $
+$NetBSD: pcidevs,v 1.505 2003/02/03 13:27:57 pooka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1789,7 +1789,8 @@ product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
 product NVIDIA	QUADRO		0x0103	Quadro
-product NVIDIA  GEFORCE2MX	0x0110	GeForce2 MX [NV11]
+product NVIDIA	GEFORCE2MX	0x0110	GeForce2 MX [NV11]
+product	NVIDIA	GEFORCE2GO	0x0112	GeForce2 Go
 product NVIDIA	GEFORCE2	0x0150	GeForce2 GTS
 product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
