@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_conf.h,v 1.2 1998/01/09 06:06:18 perry Exp $	*/
+/*	$NetBSD: parse_conf.h,v 1.3 1998/04/03 05:06:04 cgd Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/include/parse_conf.h,v 3.8 1996/12/01 16:02:47 kardel Exp
@@ -47,8 +47,8 @@ struct format
 {
   struct foff
     {
-      char offset;		/* offset into buffer */
-      char length;		/* length of field */
+      u_char offset;		/* offset into buffer */
+      u_char length;		/* length of field */
     } field_offsets[O_COUNT];
   char *fixed_string;		/* string with must be chars (blanks = wildcards) */
   u_long flags;
