@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.8 1999/02/02 00:32:21 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.9 1999/02/05 01:10:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -311,7 +311,7 @@ static void vr_mii_sync(sc)
 {
 	register int		i;
 
-	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAIN);
+	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAOUT);
 
 	for (i = 0; i < 32; i++) {
 		SIO_SET(VR_MIICMD_CLK);
@@ -337,9 +337,9 @@ static void vr_mii_send(sc, bits, cnt)
 
 	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
 		if (bits & i) {
-			SIO_SET(VR_MIICMD_DATAIN);
+			SIO_SET(VR_MIICMD_DATAOUT);
 		} else {
-			SIO_CLR(VR_MIICMD_DATAIN);
+			SIO_CLR(VR_MIICMD_DATAOUT);
 		}
 		DELAY(1);
 		SIO_CLR(VR_MIICMD_CLK);
@@ -387,7 +387,7 @@ static int vr_mii_readreg(sc, frame)
 	vr_mii_send(sc, frame->mii_regaddr, 5);
 
 	/* Idle bit */
-	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAIN));
+	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAOUT));
 	DELAY(1);
 	SIO_SET(VR_MIICMD_CLK);
 	DELAY(1);
@@ -400,7 +400,7 @@ static int vr_mii_readreg(sc, frame)
 	DELAY(1);
 	SIO_SET(VR_MIICMD_CLK);
 	DELAY(1);
-	ack = CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAOUT;
+	ack = CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN;
 
 	/*
 	 * Now try reading data bits. If the ack failed, we still
@@ -420,7 +420,7 @@ static int vr_mii_readreg(sc, frame)
 		SIO_CLR(VR_MIICMD_CLK);
 		DELAY(1);
 		if (!ack) {
-			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAOUT)
+			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN)
 				frame->mii_data |= i;
 			DELAY(1);
 		}
