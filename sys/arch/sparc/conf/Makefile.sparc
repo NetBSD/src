@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.23 1995/10/22 17:36:33 pk Exp $
+# 	$NetBSD: Makefile.sparc,v 1.24 1996/02/02 02:37:14 mycroft Exp $
 
 # @(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
 # Makefile for 4.4 BSD
@@ -111,15 +111,15 @@ clean::
 	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] tags1 *.[io] \
 		[a-z]*.s Errs errs linterrs makelinks genassym
 
-locore.o: ${SPARC}/sparc/locore.s assym.s
+locore.o: ${SPARC}/sparc/locore.s assym.h
 	${NORMAL_S}
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-./assym.s: assym.s
-assym.s: genassym
-	./genassym >assym.s
+./assym.h: assym.h
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: genassym.o
 	${CC} -static -o $@ genassym.o
@@ -129,7 +129,7 @@ genassym.o: ${SPARC}/sparc/genassym.c
 
 SRCS= ${CFILES} ioconf.c param.c vnode_if.c
 depend: .depend
-.depend: ${SRCS} assym.s
+.depend: ${SRCS} assym.h
 	mkdep ${COPTS} ${SRCS}
 	mkdep -a -p ${COPTS} ${SPARC}/sparc/genassym.c 
 

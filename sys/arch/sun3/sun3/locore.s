@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 1995/12/11 02:38:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 1996/02/02 02:37:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,7 +43,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/trap.h>
 
 | Remember this is a fun project.  (Thanks, Adam.  I try! 8^)

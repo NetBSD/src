@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 1995/12/18 20:40:59 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 1996/02/02 02:36:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  * Atari Modifications: Leo Weppelman
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <atari/atari/vectors.s>
 
 	.text

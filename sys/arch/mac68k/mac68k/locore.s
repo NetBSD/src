@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 1996/01/12 04:17:26 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 1996/02/02 02:36:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,7 @@
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
-#include "assym.s"
+#include "assym.h"
 #include "vectors.s"
 #include "macglobals.s"
 

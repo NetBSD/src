@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 1995/12/11 02:38:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 1996/02/02 02:37:06 mycroft Exp $	*/
 
 #undef	STACKCHECK	/* doesn't work any more */
 
@@ -57,7 +57,7 @@
  */
 /* #define	STACKCHECK */
 
-#include "assym.s"
+#include "assym.h"
 #include <mvme68k/mvme68k/vectors.s>
 
 /*

@@ -43,7 +43,7 @@
  */
 
 #define	_LOCORE
-#include "assym.s"
+#include "assym.h"
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
 #ifdef notyet

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.10 1996/02/01 22:29:59 mycroft Exp $
+#	$NetBSD: Makefile.atari,v 1.11 1996/02/02 02:36:24 mycroft Exp $
 #
 # Makefile for NetBSD Atari-TT
 #
@@ -116,7 +116,7 @@ lint: /tmp param.c
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
-locore.o: assym.s ${ATARI}/atari/vectors.s ${ATARI}/atari/locore.s 
+locore.o: assym.h ${ATARI}/atari/vectors.s ${ATARI}/atari/locore.s 
 locore.o: machine/trap.h machine/psl.h machine/pte.h machine/cpu.h
 	${CPP} -D_LOCORE ${COPTS} ${ATARI}/atari/locore.s | ${AS} -o locore.o
 
@@ -131,16 +131,16 @@ machdep.o sys_machdep.o pmap.o pmap_bootstrap.o trap.o dma.o:	Makefile
 uipc_proto.o vfs_conf.o locore.o:	Makefile
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym:
 	${CC} -static ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Datari \
 	    -o genassym ${ATARI}/atari/genassym.c
 
-depend: assym.s param.c vnode_if.h
+depend: assym.h param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${ATARI}/atari/genassym.c
 

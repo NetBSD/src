@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.7 1995/09/17 21:28:39 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.8 1996/02/02 02:36:58 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -35,7 +35,7 @@
  */
 
 
-#include "assym.s"
+#include "assym.h"
 
 
 	/* Define this symbol as global with (v) value */
