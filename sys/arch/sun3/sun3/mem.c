@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 1994/10/26 09:12:50 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.12 1994/11/21 21:38:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -39,9 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mem.c 1.14 90/10/12$
- *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
+ *	from: Utah $Hdr: mem.c 1.14 90/10/12$
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
@@ -65,7 +64,7 @@
 extern int eeprom_uio();
 
 extern int physmem;
-extern caddr_t vmmap;
+extern caddr_t vmempage;
 caddr_t zeropage;
 
 /*
@@ -83,9 +82,24 @@ mmrw(dev, uio, flags)
 	int flags;
 {
 	register int o;
-	register u_int c, v;
+	register u_int c;
+	register caddr_t v;
 	register struct iovec *iov;
 	int error = 0;
+	extern caddr_t vmempage;
+	static struct {
+		int	locked;
+		int	wanted;
+	} physlock;
+
+	if (minor(dev) == 0) {
+		/* lock against other uses of shared vmempage */
+		while (physlock.locked) {
+			physlock.wanted = 1;
+			(void)tsleep((caddr_t)&physlock, PZERO, "mmrw", 0);
+		}
+		physlock.locked = 1;
+	}
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -100,40 +114,39 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-			v = uio->uio_offset;
+			o = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= (u_int)physmem)
+			if (o >= (u_int)physmem)
 				return (EFAULT);
 #endif
-			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			v = vmempage;
+			pmap_enter(kernel_pmap, (vm_offset_t)v,
+				(vm_offset_t)trunc_page(o),
+				uio->uio_rw == UIO_READ ?
+					VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
-			    (vm_offset_t)&vmmap[NBPG]);
+			c = min(uio->uio_resid, (u_int)(NBPG - o));
+			error = uiomove(&v[o], (int)c, uio);
+			pmap_remove(kernel_pmap, (vm_offset_t)v,
+				(vm_offset_t)v + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			o = uio->uio_offset;
+			v = (caddr_t)(long)uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)o, c,
+			if (!kernacc(v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)o, (int)c, uio);
+			error = uiomove(v, (int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
-			if (uio->uio_rw == UIO_READ)
-				return (0);
-			c = iov->iov_len;
-			break;
+			if (uio->uio_rw == UIO_WRITE)
+				uio->uio_resid = 0;
+			return (0);
 
 /* minor device 11 (/dev/eeprom) accesses Non-Volatile RAM */
 		case 11:
@@ -143,8 +156,8 @@ mmrw(dev, uio, flags)
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return (0);
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -168,6 +181,12 @@ mmrw(dev, uio, flags)
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
+	}
+	if (minor(dev) == 0) {
+unlock:
+		physlock.locked = 0;
+		if (physlock.wanted)
+			wakeup((caddr_t)&physlock);
 	}
 	return (error);
 }

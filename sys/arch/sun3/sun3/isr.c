@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.12 1994/10/26 09:12:40 cgd Exp $	*/
+/*	$NetBSD: isr.c,v 1.13 1994/11/21 21:38:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -296,8 +296,7 @@ soft1intr(fp)
 		if (sun3sir.sir_which[SIR_SPARE3]) {
 			sun3sir.sir_which[SIR_SPARE3] = 0;
 			/* spare3intr(); */
-			/* XXX - For testing (db> w sun3sir 1) */
-			sun3_rom_abort();
+			sun3_rom_abort();	/* XXX - Test: db> w sun3sir 1 */
 		}
 	}
 	return (1);

@@ -1,7 +1,8 @@
-/*	$NetBSD: genassym.c,v 1.22 1994/10/26 09:12:28 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.23 1994/11/21 21:38:33 gwr Exp $	*/
 
 /*
- * Copyright (c) 1993 Adam Glass, Gordon Ross
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)genassym.c	8.3 (Berkeley) 1/4/94
+ *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
+ *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
  */
 
 #define KERNEL
@@ -52,6 +54,7 @@
 #include <machine/pte.h>
 #include <machine/control.h>
 #include <machine/mon.h>
+#include <machine/vmparam.h>
 
 #include "intersil7170.h"
 #include "interreg.h"
@@ -115,14 +118,12 @@ main()
 	/* sun3 memory map */
 	def1(MONSTART);
 	def1(PROM_BASE);
-	def1(MONSHORTSEG);
 	def1(USRSTACK);
+	def1(UADDR);
 
 	/* kernel-isms */
 	def1(KERNBASE);
 	def1(UPAGES);
-	def("UPAGE_ADDR",      MONSHORTSEG);
-	def("KSTACK_ADDR",     MONSHORTSEG);
 
 	/* errno-isms */
 	def1(EFAULT);
@@ -154,7 +155,6 @@ main()
 	/* pcb offsets */
 	def("PCB_FLAGS", &pcb->pcb_flags);
 	def("PCB_PS", &pcb->pcb_ps);
-	def("PCB_USTP", &pcb->pcb_ustp);
 	def("PCB_USP", &pcb->pcb_usp);
 	def("PCB_REGS", pcb->pcb_regs);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);

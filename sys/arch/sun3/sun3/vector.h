@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.h,v 1.6 1994/10/26 09:13:21 cgd Exp $	*/
+/*	$NetBSD: vector.h,v 1.7 1994/11/21 21:39:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
