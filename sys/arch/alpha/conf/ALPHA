@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.42 1997/03/21 01:12:40 cgd Exp $
+#	$NetBSD: ALPHA,v 1.43 1997/03/23 00:48:37 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -59,6 +59,7 @@ options		CCITT,LLC,HDLC	# CCITT protocol suite
 #options	GATEWAY		# packet forwarding and more mbuf space
 options		PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options		PPP_DEFLATE	# Deflate compression support for PPP
+options		PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
