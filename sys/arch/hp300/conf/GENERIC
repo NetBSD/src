@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 1996/02/24 00:54:53 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.9.4.1 1996/08/25 01:26:43 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -56,6 +56,8 @@ options		USELEDS		# make the lights twinkle
 options		COMPAT_NOLABEL	# defaults for unlabeled disks
 #options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options	CONSCODE="9"	# force console at this select code
+options		UK_KEYBOARD	# include United Kingdom HIL keymap
+options		SE_KEYBOARD	# include Swedish HIL keymap
 
 #
 # HP-UX binary compatibility.
