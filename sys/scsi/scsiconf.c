@@ -203,20 +203,20 @@ scsi_probe(int masunit, struct scsi_switch *sw, int physid, int type, int want)
 		manu[sizeof inqbuf.vendor] = '\0';
 		strncpy(model, inqbuf.product, sizeof inqbuf.product);
 		model[sizeof inqbuf.product] = '\0';
-		strncpy(version, inqbuf.revision, sizeof inqbuf.revision);
-		version[sizeof inqbuf.revision] = '\0';
+		strncpy(revision, inqbuf.revision, sizeof inqbuf.revision);
+		revision[sizeof inqbuf.revision] = '\0';
 	} else {
 		desc = "early protocol device";
 		strcpy(manu, "????");
 		strcpy(model, "");
-		strcpy(version, "");
+		strcpy(revision, "");
 	}
 
 	if(want)
 		goto print;
 
 	ret = selectdev(masunit, targ, lun, sw, inqbuf.device_qualifier,
-		inqbuf.device_type, inqbuf.removable, manu, model, version, type);
+		inqbuf.device_type, inqbuf.removable, manu, model, revision, type);
 	if(sw->printed[targ] & (1<<lun))
 		return ret;
 
@@ -225,7 +225,7 @@ print:
 		sw->name, masunit, targ, lun,
 		inqbuf.device_type, dtype,
 		inqbuf.removable ? "removable" : "fixed",
-		manu, model, version, inqbuf.ansii_version);
+		manu, model, revision, inqbuf.ansii_version);
 	if(qtype[0])
 		printf("%s%d targ %d lun %d: qualifier %d(%s)\n",
 			sw->name, masunit, targ, lun,
