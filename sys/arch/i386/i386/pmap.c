@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.171 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.171.2.1 2004/04/16 07:58:45 tron Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171 2004/02/20 17:35:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.2.1 2004/04/16 07:58:45 tron Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1939,12 +1939,11 @@ pmap_activate(l)
 	struct lwp *l;
 {
 	struct cpu_info *ci = curcpu();
-	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 
-	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-	pcb->pcb_cr3 = pmap->pm_pdirpa;
 	if (l == ci->ci_curlwp) {
+		struct pcb *pcb;
+
 		KASSERT(ci->ci_want_pmapload == 0);
 		KASSERT(ci->ci_tlbstate != TLBSTATE_VALID);
 #ifdef KSTACK_CHECK_DR0
@@ -1966,6 +1965,9 @@ pmap_activate(l)
 			ci->ci_want_pmapload = 0;
 			return;
 		}
+
+		pcb = &l->l_addr->u_pcb;
+		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 
 		ci->ci_want_pmapload = 1;
 	}
@@ -2021,6 +2023,7 @@ pmap_load()
 	struct pmap *pmap;
 	struct pmap *oldpmap;
 	struct lwp *l;
+	struct pcb *pcb;
 	int s;
 
 	KASSERT(ci->ci_want_pmapload);
@@ -2031,8 +2034,10 @@ pmap_load()
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
 
-	KASSERT(pmap->pm_ldt_sel == l->l_addr->u_pcb.pcb_ldt_sel);
-	lldt(pmap->pm_ldt_sel);
+	pcb = ci->ci_curpcb;
+	KASSERT(pcb == &l->l_addr->u_pcb);
+	/* loaded by pmap_activate */
+	KASSERT(pcb->pcb_ldt_sel == pmap->pm_ldt_sel);
 
 	if (pmap == oldpmap) {
 		if (!pmap_reactivate(pmap)) {
@@ -2071,7 +2076,14 @@ pmap_load()
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	splx(s);
-	lcr3(pmap->pm_pdirpa);
+
+	/*
+	 * update tss and load corresponding registers.
+	 */
+
+	lldt(pcb->pcb_ldt_sel);
+	pcb->pcb_cr3 = pmap->pm_pdirpa;
+	lcr3(pcb->pcb_cr3);
 
 	ci->ci_want_pmapload = 0;
 
