@@ -224,8 +224,7 @@ Lcoflt:
 /*
  * {fu,su},{byte,sword,word}
  */
-ALTENTRY(fuiword, _fuword)
-ENTRY(fuword)
+TWOENTRY(fuword,fuiword)
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
@@ -240,8 +239,7 @@ ENTRY(fusword)
 	movsw	a0@,d0			| do read from user space
 	jra	Lfsdone
 
-ALTENTRY(fuibyte, _fubyte)
-ENTRY(fubyte)
+TWOENTRY(fubyte,fuibyte)
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
@@ -255,8 +253,7 @@ Lfsdone:
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
 	rts
 
-ALTENTRY(suiword, _suword)
-ENTRY(suword)
+TWOENTRY(suword,suiword)
 	movl	sp@(4),a0		| address to write
 	movl	sp@(8),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
@@ -274,8 +271,7 @@ ENTRY(susword)
 	moveq	#0,d0			| indicate no fault
 	jra	Lfsdone
 
-ALTENTRY(suibyte, _subyte)
-ENTRY(subyte)
+TWOENTRY(subyte,suibyte)
 	movl	sp@(4),a0		| address to write
 	movb	sp@(11),d0		| value to put there
 	movl	_curpcb,a1		| current pcb

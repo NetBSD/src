@@ -3,7 +3,7 @@
  */ 
 
 .text
-ENTRY(insque)
+ENTRY(_insque)
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr		| atomic
 	movl	sp@(8),a0		| where to insert (after)
@@ -16,7 +16,7 @@ ENTRY(insque)
 	movw	d0,sr
 	rts
 
-ENTRY(remque)
+ENTRY(_remque)
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr		| atomic
 	movl	sp@(4),a0		| element to remove (e)
@@ -30,8 +30,7 @@ ENTRY(remque)
 /*
  * bzero(addr, count)
  */
-ALTENTRY(blkclr, _bzero)
-ENTRY(bzero)
+TWOENTRY(bzero,blkclr)
 	movl	sp@(4),a0	| address
 	movl	sp@(8),d0	| count
 	jeq	Lbzdone		| if zero, nothing to do
@@ -96,8 +95,7 @@ Lcmpdone:
  *
  * Works for counts up to 128K.
  */
-ALTENTRY(ovbcopy, _bcopy)
-ENTRY(bcopy)
+TWOENTRY(bcopy,ovbcopy)
 	movl	sp@(12),d0		| get count
 	jeq	Lcpyexit		| if zero, return
 	movl	sp@(4),a0		| src address

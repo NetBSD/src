@@ -2,9 +2,10 @@
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.4 1993/06/27 00:46:09 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.5 1993/08/02 02:08:25 glass Exp $
  */
 
+#include "systm.h"
 #include "param.h"
 #include "kernel.h"
 #include "intersil7170.h"
@@ -132,7 +133,6 @@ struct timeval intersil_to_timeval()
 void inittodr(base)
 	time_t base;
 {
-    int s;
     struct timeval clock_time;
     long diff_time;
     void resettodr();

@@ -72,7 +72,7 @@ cpu_readdisklabel(dev, strat, lp, osdep)
  * Check new disk label for sensibility
  * before setting it.
  */
-cpu_setdisklabel(olp, nlp, openmask, osdep)
+int cpu_setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
@@ -84,7 +84,7 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
-cpu_writedisklabel(dev, strat, lp, osdep)
+int cpu_writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	int (*strat)();
 	register struct disklabel *lp;
