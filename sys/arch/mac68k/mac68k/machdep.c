@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.299 2004/08/02 03:44:39 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.300 2004/12/14 16:28:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2004/08/02 03:44:39 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.300 2004/12/14 16:28:00 christos Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -278,6 +278,12 @@ void	nmihand __P((struct frame));
  * Machine-dependent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
+
+/*
+ * XXX: For zs serial driver. We always initialize the base address
+ * to avoid a bunch of #ifdefs.
+ */
+volatile unsigned char *sccA = 0;
 
 /*
  * Early initialization, before main() is called.
@@ -2267,9 +2273,6 @@ void
 mac68k_set_io_offsets(base)
 	vaddr_t base;
 {
-#if NZSC > 0
-	extern volatile u_char *sccA;
-#endif
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
