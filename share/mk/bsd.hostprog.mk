@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.2 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.3 1999/09/24 17:48:57 wrstuden Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -12,8 +12,7 @@ __initialized__:
 .MAIN:		all
 .endif
 
-.PHONY:		cleanprog proginstall scriptsinstall
-realinstall:	proginstall scriptsinstall
+.PHONY:		cleanprog 
 clean cleandir distclean: cleanprog
 
 CFLAGS+=	${COPTS}
@@ -105,10 +104,6 @@ all: ${HOSTPROG}
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-
-proginstal:
-
-scriptinstall:
 
 beforedepend:
 CPPFLAGS=	${HOST_CPPFLAGS}
