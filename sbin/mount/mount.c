@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.70 2004/04/22 10:17:00 hannken Exp $	*/
+/*	$NetBSD: mount.c,v 1.71 2004/04/30 00:48:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.70 2004/04/22 10:17:00 hannken Exp $");
+__RCSID("$NetBSD: mount.c,v 1.71 2004/04/30 00:48:07 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -538,6 +538,11 @@ prmount(sfp)
 		else
 			(void)printf("%d", sfp->f_owner);
 	}
+	if (verbose)
+		(void)printf("%sfsid: 0x%x/0x%x",
+		    !f++ ? " (" /* ) */: ", ",
+		    sfp->f_fsidx.__fsid_val[0], sfp->f_fsidx.__fsid_val[1]);
+
 	if (verbose) {
 		(void)printf("%s", !f++ ? " (" : ", ");
 		(void)printf("reads: sync %" PRIu64 " async %" PRIu64 "",
