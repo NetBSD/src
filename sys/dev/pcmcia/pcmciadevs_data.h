@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.198 2004/07/07 05:34:33 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.199 2004/07/07 05:38:42 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.196 2004/07/07 05:34:18 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.197 2004/07/07 05:38:29 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1156,10 +1156,10 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "AmbiCom AMB8002T",	}
 	,
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICON_AMB8110,
-	    PCMCIA_CIS_AMBICON_AMB8110,
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICOM_AMB8110,
+	    PCMCIA_CIS_AMBICOM_AMB8110,
 	    0,
-	    "",
+	    "AmbiCom Inc",
 	    "AmbiCom AMB8110",	}
 	,
 	{
