@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.36.2.1.2.2 1999/07/01 23:34:52 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.36.2.1.2.3 1999/08/02 22:04:40 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.37 1999/06/23 10:36:19 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.33.2.1.2.3 1999/08/02 22:04:29 thorpej Exp 
  */
 
 /*-
@@ -49,7 +49,7 @@
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
-#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
+#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola Corporation */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
@@ -62,6 +62,7 @@
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
+#define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -193,6 +194,11 @@
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288	0x0100
 #define	PCMCIA_STR_SIMPLETECH_COMMUNICATOR288	"Simple Technology 28.8 Communicator"
+/* Simpletech ID also used by Symbol */
+#define	PCMCIA_CIS_SIMPLETECH_SPECTRUM24	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24	0x801
+#define	PCMCIA_STR_SIMPLETECH_SPECTRUM24	"Symbol Spectrum24 WLAN Adapter"
+
 
 /* Socket Communications Products */
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
@@ -224,13 +230,13 @@
 #define	PCMCIA_PRODUCT_TDK_XIR_CNW	0x0802
 #define	PCMCIA_STR_TDK_XIR_CNW	"Xircom CreditCard Netwave"
 
-/* NewMedia Products */
+/* New Media Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
-#define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
+#define	PCMCIA_STR_NEWMEDIA_BASICS	"New Media BASICS Ethernet"
 #define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
-#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"NewMedia BusToaster SCSI Host Adapter"
+#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"New Media BusToaster SCSI Host Adapter"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
@@ -239,6 +245,11 @@
 #define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
 #define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
+
+/* Lucent WaveLAN/IEEE */
+#define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
+#define	PCMCIA_STR_LUCENT_WAVELAN_IEEE	"WaveLAN/IEEE"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
