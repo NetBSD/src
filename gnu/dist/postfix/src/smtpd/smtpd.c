@@ -995,9 +995,11 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
      * require availability of the cleanup service.
      */
     if (state->history != 0 && state->client != VSTREAM_IN
-      && (state->error_mask & state->notify_mask))
-      smtpd_chat_notify(state);
+	&& (state->error_mask & state->notify_mask))
+	smtpd_chat_notify(state);
+    state->error_mask = 0;
     smtpd_chat_reset(state);
+
     /*
      * Cleanup. The client may send another MAIL command.
      */
@@ -1019,6 +1021,19 @@ static int rset_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	smtpd_chat_reply(state, "501 Syntax: RSET");
 	return (-1);
     }
+
+    /*
+     * Notify the postmaster if there were errors. This usually indicates a
+     * client configuration problem, or that someone is trying nasty things.
+     * Either is significant enough to bother the postmaster. XXX Can't
+     * report problems when running in stand-alone mode: postmaster notices
+     * require availability of the cleanup service.
+     */
+    if (state->history != 0 && state->client != VSTREAM_IN
+	&& (state->error_mask & state->notify_mask))
+	smtpd_chat_notify(state);
+    state->error_mask = 0;
+    smtpd_chat_reset(state);
 
     /*
      * Restore state to right after HELO/EHLO command.
