@@ -115,7 +115,7 @@ struct pool_allocator mclpool_allocator = {
 
 static struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 static struct mbuf *m_split0(struct mbuf *, int, int, int);
-static int m_copyback0(struct mbuf **, int, int, caddr_t, int, int);
+static int m_copyback0(struct mbuf **, int, int, const void *, int, int);
 
 /* flags for m_copyback0 */
 #define	M_COPYBACK0_COPYBACK	0x0001	/* copyback from cp */
@@ -665,9 +665,10 @@ nospace:
  * continuing for "len" bytes, into the indicated buffer.
  */
 void
-m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
+m_copydata(struct mbuf *m, int off, int len, void *vp)
 {
 	unsigned count;
+	char *cp = vp;
 
 	if (off < 0 || len < 0)
 		panic("m_copydata");
@@ -1062,7 +1063,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
  * chain if necessary.
  */
 void
-m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
+m_copyback(struct mbuf *m0, int off, int len, const void *cp)
 {
 #if defined(DEBUG)
 	struct mbuf *origm = m0;
@@ -1085,7 +1086,7 @@ m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
 }
 
 struct mbuf *
-m_copyback_cow(struct mbuf *m0, int off, int len, caddr_t cp, int how)
+m_copyback_cow(struct mbuf *m0, int off, int len, const void *cp, int how)
 {
 	int error;
 
@@ -1141,12 +1142,14 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 }
 
 int
-m_copyback0(struct mbuf **mp0, int off, int len, caddr_t cp, int flags, int how)
+m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
+    int how)
 {
 	int mlen;
 	struct mbuf *m, *n;
 	struct mbuf **mp;
 	int totlen = 0;
+	const char *cp = vp;
 
 	KASSERT(mp0 != NULL);
 	KASSERT(*mp0 != NULL);
