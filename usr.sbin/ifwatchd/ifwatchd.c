@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.8 2002/04/15 20:42:37 tron Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.9 2002/04/15 21:08:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/wait.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #ifdef SPPP_IF_SUPPORT
@@ -91,6 +92,8 @@ static int verbose = 0;
 static int inhibit_initial = 0;
 static const char *up_script = NULL;
 static const char *down_script = NULL;
+static char DummyTTY[] = _PATH_DEVNULL;
+static char DummySpeed[] = "9600";
 
 struct interface_data {
 	SLIST_ENTRY(interface_data) next;
@@ -160,7 +163,7 @@ main(int argc, char **argv)
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
 		perror("open routing socket");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	for (;;) {
@@ -175,7 +178,7 @@ main(int argc, char **argv)
 	close(s);
 	free_interfaces();
 
-	exit(0);
+	return EXIT_SUCCESS;
 }
 
 static void
@@ -191,7 +194,7 @@ usage()
 	    "\t          is already up on ifwatchd startup\n"
 	    "\t -u <cmd> specify command to run on interface up event\n"
 	    "\t -d <cmd> specify command to run on interface down event\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -261,8 +264,9 @@ invoke_script(sa, dest, is_up, ifindex)
 	int is_up, ifindex;
 {
 	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ],
-	     *ifname, *cmd;
+	     *ifname;
 	const char *script;
+	int status;
 
 	if (sa->sa_family == AF_INET6) {
 		struct sockaddr_in6 sin6;
@@ -295,16 +299,21 @@ invoke_script(sa, dest, is_up, ifindex)
 	script = is_up? up_script : down_script;
 	if (script == NULL) return;
 
-	asprintf(&cmd, "%s \"%s\" " _PATH_DEVNULL " 9600 \"%s\" \"%s\"",
-			script, ifname, addr, daddr);
-	if (cmd == NULL) {
-	    fprintf(stderr, "out of memory\n");
-	    return;
-	}
 	if (verbose)
-	    printf("calling: %s\n", cmd);
-	system(cmd);
-	free(cmd);
+	    (void) printf("calling: %s %s %s %s %s %s\n",
+		script, ifname, DummyTTY, DummySpeed, addr, daddr);
+
+	switch (vfork()) {
+	case -1:
+	    fprintf(stderr, "cannot fork\n");
+	    break;
+	case 0:
+	    (void) execl(script, script, ifname, DummyTTY, DummySpeed,
+		addr, daddr, NULL);
+	    _exit(EXIT_FAILURE);
+	default:
+	    (void) wait(&status);
+	}
 }
 
 static void list_interfaces(const char *ifnames)
