@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.6 1998/08/04 13:14:42 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.7 1998/08/07 00:51:06 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -761,8 +761,8 @@ essmatch(sc)
 			  printf("ess: irq %d invalid\n", sc->sc_in.irq);
 			  return (0);
 			}
-		} else
-			goto irq1888;
+			goto irq_not1888;
+		}
 	} else {
 		/* Must use separate interrupts */
 		if (sc->sc_in.irq == sc->sc_out.irq) {
@@ -772,7 +772,6 @@ essmatch(sc)
 		}
 	}
 
- irq1888:
 	/* Check that requested IRQ lines are valid and different. */
 	if (!ESS_IRQ1_VALID(sc->sc_in.irq)) {
 		printf("ess: record irq %d invalid\n", sc->sc_in.irq);
@@ -782,6 +781,7 @@ essmatch(sc)
 		printf("ess: play irq %d invalid\n", sc->sc_out.irq);
 		return (0);
 	}
+ irq_not1888:
 
 	/* Check that the DRQs are free. */
 	if (!isa_drq_isfree(sc->sc_ic, sc->sc_in.drq) ||
