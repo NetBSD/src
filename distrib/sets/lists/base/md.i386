@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.96 2002/10/09 01:22:39 thorpej Exp $
+# $NetBSD: md.i386,v 1.97 2003/01/14 23:54:49 thorpej Exp $
 ./lib/libm387.so.0			base-sys-shlib
 ./lib/libm387.so.0.0			base-sys-shlib
 ./sbin/fdisk				base-sysutil-root
@@ -23,6 +23,10 @@
 ./usr/lkm/exec_svr4_elf.o		base-sys-lkm
 ./usr/mdec/biosboot.sym			base-sysutil-bin
 ./usr/mdec/biosboot_com0.sym		base-sysutil-bin
+./usr/mdec/biosboot_com0_115200.sym	base-sysutil-bin
+./usr/mdec/biosboot_com0_38400.sym	base-sysutil-bin
+./usr/mdec/biosboot_com0_57600.sym	base-sysutil-bin
+./usr/mdec/biosboot_com0_9600.sym	base-sysutil-bin
 ./usr/mdec/biosboot_resetvideo.sym	base-sysutil-bin
 ./usr/mdec/dosboot.com			base-sysutil-bin
 ./usr/mdec/installboot			base-sysutil-bin
