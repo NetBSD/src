@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.13 2002/04/14 13:12:38 bjh21 Exp $
+.\"	$NetBSD: upgrade,v 1.14 2002/06/20 10:44:07 leo Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,11 +40,18 @@ is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
+.ie r_atari \{\
+To do the upgrade, you must first boot the system as described in the
+.Sx Booting the installer
+section.
+.\}
+.el \{\
 .ie \n[macppc]:\n[sparc] \{\
 To do the upgrade, you must boot from the installer kernel using one of
 the methods described above.
 .\}
-.el .ie r_pmax \{\
+.el \{\
+.ie r_pmax \{\
 To do the upgrade, you must install new bootblocks and boot off
 the
 .Ic install
@@ -52,7 +59,8 @@ kernel as described in the
 .Sx Installing from an existing system
 section.
 .\}
-.el .ie r_x68k \{\
+.el \{\
+.ie r_x68k \{\
 As noted above, you must have the
 .Pa loadbsd.x
 utility and the installation kernel you chose, or, the
@@ -62,7 +70,7 @@ boot floppies available to do the upgrade.
 To do the upgrade, you must have the boot floppy
 .if r_alpha set
 available.
-.\}
+.\}\}\}\}
 You must also have at least the
 .Sy base
 and
