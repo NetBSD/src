@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.4 1993/10/22 21:18:58 pk Exp $
+ *	$Id: rtld.c,v 1.5 1993/10/26 19:30:13 pk Exp $
  */
 
 #include <sys/param.h>
@@ -48,7 +48,11 @@
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
-#include <strings.h>
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #include "ld.h"
 
@@ -124,6 +128,7 @@ static struct ld_entry	ld_entry = {
 	dlopen, dlclose, dlsym
 };
 
+static void		xprintf __P((char *, ...));
 static void		init_brk __P((void));
 static void		load_maps __P((struct crt_ldso *));
 static void		map_object __P((struct link_object *, struct link_map *));
@@ -846,7 +851,6 @@ char	*preferred_path;
 					if (preferred_path == NULL ||
 					    strcmp(preferred_path,
 						hstrtab + bp->hi_pathx) == 0) {
-xprintf("%s.%d.%d -> %s\n", name, major, minor, hstrtab + bp->hi_pathx);
 						return hstrtab + bp->hi_pathx;
 					}
 			}
@@ -939,21 +943,44 @@ init_brk()
 	struct rlimit   rlim;
 	char		*cp, **cpp = environ;
 
-	getrlimit(RLIMIT_STACK, &rlim);
+	if (getrlimit(RLIMIT_STACK, &rlim) < 0) {
+		xprintf("ld.so: brk: getrlimit failure\n");
+		_exit(1);
+	}
 
-	while (*cpp) cpp++;
-	cp = *--cpp;
-	while (*cp) cp++;
+	/*
+	 * Walk to the top of stack
+	 */
+	if (*cpp) {
+		while (*cpp) cpp++;
+		cp = *--cpp;
+		while (*cp) cp++;
+	} else
+		cp = (char *)&cp;
+
 	curbrk = (caddr_t)
 		(((long)(cp - 1 - rlim.rlim_cur) + PAGSIZ) & ~(PAGSIZ - 1));
 }
 
-xprintf(fmt, a, b, c, d, e, f, g, h, i, j)
+void
+#if __STDC__
+xprintf(char *fmt, ...)
+#else
+xprintf(fmt, va_alist)
 char	*fmt;
+#endif
 {
-	char buf[128];
-	sprintf(buf, fmt, a, b, c, d, e, f, g, h, i, j);
-	write(1, buf, strlen(buf));
+	char buf[256];
+	va_list	ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+
+	vsprintf(buf, fmt, ap);
+	(void)write(1, buf, strlen(buf));
+	va_end(ap);
 }
 
 caddr_t
