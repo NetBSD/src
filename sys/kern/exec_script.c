@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.9 1994/07/24 02:38:20 cgd Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.10 1994/12/04 03:10:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -269,7 +269,7 @@ fail:
 	/* kill the opened file descriptor, else close the file */
         if (epp->ep_flags & EXEC_HASFD) {
                 epp->ep_flags &= ~EXEC_HASFD;
-                exec_closefd(p, epp->ep_fd);
+                (void) fdclose(p, epp->ep_fd);
         } else
 		vn_close(scriptvp, FREAD, p->p_ucred, p);
 
