@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.1 2002/06/06 19:48:02 fredette Exp $
+#	$NetBSD: files.hp700,v 1.2 2002/09/05 19:39:46 jdolecek Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -104,6 +104,7 @@ device	dino: pcibus
 attach	dino at mainbus
 file	arch/hp700/dev/dino.c		dino
 
+device	sti: wsemuldisplaydev
 attach	sti at mainbus with sti_sgc
 file	arch/hp700/dev/sti_sgc.c		sti_sgc
 
