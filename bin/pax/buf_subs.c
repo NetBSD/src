@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.13 2000/02/17 03:12:23 itohy Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.14 2001/09/16 16:34:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.13 2000/02/17 03:12:23 itohy Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.14 2001/09/16 16:34:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,7 @@ rd_wrbuf(in, cpcnt)
 			/*
 			 * read error, return what we got (or the error if
 			 * no data was copied). The caller must know that an
-			 * error occured and has the best knowledge what to
+			 * error occurred and has the best knowledge what to
 			 * do with it
 			 */
 			if ((res = cpcnt - incnt) > 0)

@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause_1tr6.c,v 1.1.1.1 2001/01/06 13:00:30 martin Exp $
+ *	$Id: pcause_1tr6.c,v 1.2 2001/09/16 16:34:44 wiz Exp $
  *
  * $FreeBSD$
  *
@@ -155,7 +155,7 @@ print_cause_1tr6(unsigned char code)
 			break;
 
 		default:
-			e = "UNKNOWN error occured";
+			e = "UNKNOWN error occurred";
 			break;
 	}
 

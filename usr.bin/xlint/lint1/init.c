@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.7 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.8 2001/09/16 16:34:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.7 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.8 2001/09/16 16:34:44 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: init.c,v 1.7 2001/05/28 12:40:37 lukem Exp $");
 #include "lint1.h"
 
 /*
- * initerr is set as soon as a fatal error occured in an initialisation.
+ * initerr is set as soon as a fatal error occurred in an initialisation.
  * The effect is that the rest of the initialisation is ignored (parsed
  * by yacc, expression trees built, but no initialisation takes place).
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_timex.h,v 1.2 1998/01/05 17:51:29 perry Exp $	*/
+/*	$NetBSD: freebsd_timex.h,v 1.3 2001/09/16 16:34:35 wiz Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -231,7 +231,7 @@
 #define TIME_INS	1	/* insert leap second warning */
 #define TIME_DEL	2	/* delete leap second warning */
 #define TIME_OOP	3	/* leap second in progress */
-#define TIME_WAIT	4	/* leap second has occured */
+#define TIME_WAIT	4	/* leap second has occurred */
 #define TIME_ERROR	5	/* clock not synchronized */
 
 /*

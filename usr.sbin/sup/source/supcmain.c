@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.14 1999/08/02 05:36:05 erh Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.15 2001/09/16 16:34:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -248,7 +248,7 @@
  *
  * 03-Feb-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Fixed small bug in signon that didn't retry connections if an
- *	error occured on the first attempt to connect. [V5.12]
+ *	error occurred on the first attempt to connect. [V5.12]
  *
  * 26-Jan-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	New command interface.  Added -bBDEO flags and "delete",

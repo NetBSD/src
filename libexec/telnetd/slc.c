@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.9 2001/02/04 22:32:15 christos Exp $	*/
+/*	$NetBSD: slc.c,v 1.10 2001/09/16 16:34:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.9 2001/02/04 22:32:15 christos Exp $");
+__RCSID("$NetBSD: slc.c,v 1.10 2001/09/16 16:34:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ end_slc(bufp)
 	register int len;
 
 	/*
-	 * If a change has occured, store the new terminal control
+	 * If a change has occurred, store the new terminal control
 	 * structures back to the terminal driver.
 	 */
 	if (slcchange) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.5 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: io.c,v 1.6 2001/09/16 16:34:23 wiz Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -15,7 +15,7 @@ static int initio_done;
  */
 
 
-/* A shell error occured (eg, syntax error, etc.) */
+/* A shell error occurred (eg, syntax error, etc.) */
 void
 #ifdef HAVE_PROTOTYPES
 errorf(const char *fmt, ...)

@@ -1,4 +1,4 @@
-*	$NetBSD: x_snan.sa,v 1.3 1994/10/26 07:50:28 cgd Exp $
+*	$NetBSD: x_snan.sa,v 1.4 2001/09/16 16:34:32 wiz Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -82,7 +82,7 @@ fpsp_snan:
 *
 * It is possible to have an inex1 exception with the
 * snan.  If the inex enable bit is set in the FPCR, and either
-* inex2 or inex1 occured, we must clean up and branch to the
+* inex2 or inex1 occurred, we must clean up and branch to the
 * real inex handler.
 *
 ck_inex:

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.39 2001/09/13 21:33:05 assar Exp $	*/
+/*	$NetBSD: jobs.c,v 1.40 2001/09/16 16:34:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.39 2001/09/13 21:33:05 assar Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.40 2001/09/16 16:34:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -738,7 +738,7 @@ waitforjob(jp)
 		 * caused us (the shell) to no longer be in the controlling
 		 * session -- so we wouldn't have seen any ^C/SIGINT.  So, we
 		 * intuit from the subprocess exit status whether a SIGINT
-		 * occured, and if so interrupt ourselves.  Yuck.  - mycroft
+		 * occurred, and if so interrupt ourselves.  Yuck.  - mycroft
 		 */
 		if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT)
 			raise(SIGINT);

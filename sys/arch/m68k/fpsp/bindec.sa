@@ -1,4 +1,4 @@
-*	$NetBSD: bindec.sa,v 1.3 1994/10/26 07:48:51 cgd Exp $
+*	$NetBSD: bindec.sa,v 1.4 2001/09/16 16:34:32 wiz Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -102,7 +102,7 @@
 *		in INEX2.
 *
 *	A10.	Or in INEX.
-*		If INEX is set, round error occured.  This is
+*		If INEX is set, round error occurred.  This is
 *		compensated for by 'or-ing' in the INEX2 flag to
 *		the lsb of Y.
 *
@@ -544,7 +544,7 @@ A9_con:
 
 
 * A10. Or in INEX.
-*      If INEX is set, round error occured.  This is compensated
+*      If INEX is set, round error occurred.  This is compensated
 *      for by 'or-ing' in the INEX2 flag to the lsb of Y.
 *
 * Register usage:

@@ -84,7 +84,7 @@
 -- Fixed bug in 2.6
 
 2.6	23 Sep 80
--- Fixed problem introduced by 2.2 which occured in footnotes and
+-- Fixed problem introduced by 2.2 which occurred in footnotes and
    index entries in filled keeps
 
 2.5	29 Aug 80

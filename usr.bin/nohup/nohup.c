@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.9 2000/11/04 18:51:40 kleink Exp $	*/
+/*	$NetBSD: nohup.c,v 1.10 2001/09/16 16:34:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.9 2000/11/04 18:51:40 kleink Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.10 2001/09/16 16:34:43 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ int main __P((int, char **));
 
 /* nohup shall exit with one of the following values:
    126 - The utility was found but could not be invoked.
-   127 - An error occured in the nohup utility, or the utility could
+   127 - An error occurred in the nohup utility, or the utility could
          not be found. */
 #define EXIT_NOEXEC	126
 #define EXIT_NOTFOUND	127

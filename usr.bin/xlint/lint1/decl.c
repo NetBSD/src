@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.23 2001/07/26 15:05:10 wiz Exp $ */
+/* $NetBSD: decl.c,v 1.24 2001/09/16 16:34:43 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.23 2001/07/26 15:05:10 wiz Exp $");
+__RCSID("$NetBSD: decl.c,v 1.24 2001/09/16 16:34:43 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3066,7 +3066,7 @@ glchksz(sym_t *sym)
 	if (sym->s_def == TDEF) {
 		if (sym->s_type->t_tspec == FUNC)
 			/*
-			 * this can happen if an syntax error occured
+			 * this can happen if an syntax error occurred
 			 * after a function declaration
 			 */
 			return;

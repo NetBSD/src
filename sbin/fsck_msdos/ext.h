@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.9 2001/07/26 15:05:08 wiz Exp $	*/
+/*	$NetBSD: ext.h,v 1.10 2001/09/16 16:34:26 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -71,7 +71,7 @@ int checkfilesys __P((const char *));
 #define	FSDIRMOD	2		/* Some directory was modified */
 #define	FSFATMOD	4		/* The FAT was modified */
 #define	FSERROR		8		/* Some unrecovered error remains */
-#define	FSFATAL		16		/* Some unrecoverable error occured */
+#define	FSFATAL		16		/* Some unrecoverable error occurred */
 #define FSDIRTY		32		/* File system is dirty */
 #define FSFIXFAT	64		/* Fix file system FAT */
 

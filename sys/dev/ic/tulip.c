@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.98 2001/08/20 11:57:34 wiz Exp $	*/
+/*	$NetBSD: tulip.c,v 1.99 2001/09/16 16:34:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1251,7 +1251,7 @@ tlp_rxintr(sc)
 			ifp->if_collisions++;
 
 		/*
-		 * If an error occured, update stats, clear the status
+		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
 	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.20 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: tree.c,v 1.21 2001/09/16 16:34:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.20 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: tree.c,v 1.21 2001/09/16 16:34:44 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -655,7 +655,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		break;
 	}
 
-	/* Return if an error occured. */
+	/* Return if an error occurred. */
 	if (ntn == NULL)
 		return (NULL);
 

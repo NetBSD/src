@@ -1,4 +1,4 @@
-*	$NetBSD: res_func.sa,v 1.4 2000/03/13 23:52:32 soren Exp $
+*	$NetBSD: res_func.sa,v 1.5 2001/09/16 16:34:32 wiz Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -324,7 +324,7 @@ cu_nuninx:
 	bne.b	cu_nunzro
 *
 * The mantissa is zero from the denorm loop.  Check sign and rmode
-* to see if rounding should have occured which would leave the lsb.
+* to see if rounding should have occurred which would leave the lsb.
 *
 	move.l	USER_FPCR(a6),d0
 	andi.l	#$30,d0		;isolate rmode

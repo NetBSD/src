@@ -1,10 +1,10 @@
-/*	$NetBSD: lex.h,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: lex.h,v 1.4 2001/09/16 16:34:23 wiz Exp $	*/
 
 /*
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.3 1999/10/20 15:09:59 hubertf Exp $ */
+/* $Id: lex.h,v 1.4 2001/09/16 16:34:23 wiz Exp $ */
 
 #define	IDENT	64
 
@@ -22,7 +22,7 @@ struct source {
 	char	ugbuf[2];	/* buffer for ungetsc() (SREREAD) and
 				 * alias (SALIAS) */
 	int	line;		/* line number */
-	int	errline;	/* line the error occured on (0 if not set) */
+	int	errline;	/* line the error occurred on (0 if not set) */
 	const char *file;	/* input file name */
 	int	flags;		/* SF_* */
 	Area	*areap;
