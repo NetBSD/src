@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)candidate.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: candidate.c,v 1.7 2001/09/02 00:13:05 reinoud Exp $");
+__RCSID("$NetBSD: candidate.c,v 1.8 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: candidate.c,v 1.7 2001/09/02 00:13:05 reinoud Exp $");
  * candidate sends an election request, the candidature is withdrawn.
  */
 int
-election(net)
-	struct netinfo *net;
+election(struct netinfo *net)
 {
 	struct tsp *resp, msg;
 	struct timeval then, wait;
