@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.9.2.5 2000/07/31 18:18:24 he Exp $	*/
+/*	$NetBSD: main.c,v 1.9.2.6 2000/10/12 21:25:59 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.9.2.5 2000/07/31 18:18:24 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.9.2.6 2000/10/12 21:25:59 he Exp $");
 #endif
 #endif
 
@@ -166,11 +166,11 @@ main(int argc, char **argv)
 						snprintf(tmp2, sizeof(tmp2), "%s/%s", dirname_of(tmp), s);
 						
 					if (Verbose)
-							printf("Using %s for %s\n", tmp2, *argv);
+						printf("Using %s for %s\n", tmp2, *argv);
 
-						if (!(cp = realpath(tmp2, pkgname))) {
+					if (!(cp = realpath(tmp2, pkgname))) {
 						lpp = NULL;
-							warn("realpath failed for '%s'", tmp2);
+						warn("realpath failed for '%s'", tmp2);
 					} else
 						lpp = alloc_lpkg(cp);
 				} else {
