@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.9 2004/05/17 11:10:24 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.10 2004/05/17 18:37:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
