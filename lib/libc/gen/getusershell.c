@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.5.10.3 1997/05/26 16:33:39 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.5.10.4 1997/05/27 07:56:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -39,13 +39,12 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.3 1997/05/26 16:33:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.4 1997/05/27 07:56:15 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <nsswitch.h>
@@ -69,9 +68,10 @@ static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.3 1997/05/26 16:33:39 lu
  */
 
 static char *okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
-static char	**curshell;
-static char **initshells __P((void));
-static StringList *sl;
+
+static char		**curshell;
+static char		**initshells __P((void));
+static StringList	 *sl;
 
 /*
  * Get a list of shells from "shells" nsswitch database
@@ -92,7 +92,8 @@ getusershell()
 void
 endusershell()
 {
-	sl_free(sl, 1);
+	if (sl)
+		sl_free(sl, 1);
 	sl = NULL;
 	curshell = NULL;
 }
@@ -110,20 +111,16 @@ _local_initshells(rv, cb_data, ap)
 	void	*cb_data;
 	va_list	 ap;
 {
-	register char	*sp, *cp;
-	register FILE *fp;
-	struct stat statb;
-	char		 line[MAXPATHLEN + 2];
+	char	*sp, *cp;
+	FILE	*fp;
+	char	 line[MAXPATHLEN + 2];
 
-	sl_free(sl, 1);
+	if (sl)
+		sl_free(sl, 1);
 	sl = sl_init();
 
 	if ((fp = fopen(_PATH_SHELLS, "r")) == NULL)
 		return NS_UNAVAIL;
-	if (fstat(fileno(fp), &statb) == -1) {
-		(void)fclose(fp);
-		return NS_UNAVAIL;
-	}
 
 	sp = cp = line;
 	while (fgets(cp, MAXPATHLEN + 1, fp) != NULL) {
@@ -152,7 +149,8 @@ _dns_initshells(rv, cb_data, ap)
 	int	  hsindex, hpi;
 	char	**hp;
 
-	sl_free(sl, 1);
+	if (sl)
+		sl_free(sl, 1);
 	sl = sl_init();
 
 	for (hsindex = 0; ; hsindex++) {
@@ -186,9 +184,10 @@ _nis_initshells(rv, cb_data, ap)
 	void	*cb_data;
 	va_list	 ap;
 {
-	static char	*ypdomain;
+	static char *ypdomain;
 
-	sl_free(sl, 1);
+	if (sl)
+		sl_free(sl, 1);
 	sl = sl_init();
 
 	if (ypdomain == NULL) {
@@ -253,11 +252,13 @@ initshells()
 		NS_NIS_CB(dtab, _nis_initshells, NULL);
 	}
 
-	sl_free(sl, 1);
+	if (sl)
+		sl_free(sl, 1);
 	sl = sl_init();
 
 	if (nsdispatch(NULL, dtab, NSDB_SHELLS) != NS_SUCCESS) {
-		sl_free(sl, 1);
+		if (sl)
+			sl_free(sl, 1);
 		sl = NULL;
 		return (okshells);
 	}
