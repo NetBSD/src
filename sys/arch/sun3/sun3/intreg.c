@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.15 2001/01/15 20:19:58 thorpej Exp $	*/
+/*	$NetBSD: intreg.c,v 1.16 2001/05/27 06:32:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct cfattach intreg_ca = {
 };
 
 volatile u_char *interrupt_reg;
-
+int intreg_attached;
 
 /* called early (by internal_configure) */
 void
@@ -89,14 +89,14 @@ intreg_init()
 
 static int
 intreg_match(parent, cf, args)
-    struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-    void *args;
+	void *args;
 {
 	struct confargs *ca = args;
 
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	/* This driver only supports one instance. */
+	if (intreg_attached)
 		return (0);
 
 	/* Validate the given address. */
@@ -121,6 +121,7 @@ intreg_attach(parent, self, args)
 
 	/* Install handler for our "soft" interrupt. */
 	isr_add_autovect(soft1intr, (void *)sc, 1);
+	intreg_attached = 1;
 }
 
 

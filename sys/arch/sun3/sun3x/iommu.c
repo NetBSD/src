@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.8 1998/02/05 04:57:57 gwr Exp $	*/
+/*	$NetBSD: iommu.c,v 1.9 2001/05/27 06:35:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,9 +70,8 @@ iommu_match(parent, cf, args)
 	struct cfdata *cf;
 	void *args;
 {
-
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	/* This driver only supports one instance. */
+	if (iommu_va)
 		return (0);
 
 	return (1);
