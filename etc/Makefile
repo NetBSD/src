@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274 2004/01/11 04:21:18 tls Exp $
+#	$NetBSD: Makefile,v 1.275 2004/01/27 01:52:06 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -138,7 +138,7 @@ PWD_MKDB_ENDIAN=
 # distribution --
 #	Build a distribution
 #
-distribution: check_DESTDIR .WAIT distrib-dirs
+distribution: .PHONY check_DESTDIR .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	(cd ${NETBSDSRCDIR}; ${MAKE} _DISTRIB= includes)
@@ -148,9 +148,8 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 
-.PHONY: 	MAKEDEV
 CLEANFILES+=	MAKEDEV
-MAKEDEV:
+MAKEDEV: .EXEC
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
@@ -176,9 +175,8 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR USETOOLS
 
-.PHONY:		etc-release install-etc-release
 CLEANFILES+=	etc-release
-etc-release:
+etc-release: .EXEC
 	${_MKTARGET_CREATE}
 	@(	echo "NetBSD ${DISTRIBVER}/${MACHINE}"; \
 		echo "	$$(date -u)  $${USER-root}@$$(hostname)"; \
@@ -195,7 +193,7 @@ etc-release:
 .endif
 .endfor
 
-install-etc-release: etc-release
+install-etc-release: .PHONY etc-release
 	${_MKMSG_INSTALL} etc/release
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    etc-release ${DESTDIR}/etc/release
@@ -203,7 +201,7 @@ install-etc-release: etc-release
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-install-etc-files: check_DESTDIR MAKEDEV
+install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${BIN1} ${DESTDIR}/etc
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
@@ -345,7 +343,7 @@ install-etc-files: check_DESTDIR MAKEDEV
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
 
-install-obsolete-lists:
+install-obsolete-lists: .PHONY
 	mkdir -p ${OBSOLETE.dir}
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
 	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -t ${OBSOLETE.dir})
@@ -364,7 +362,7 @@ TOOL_MTREE.unpriv=
 TOOL_MTREE.unpriv=	-W
 .endif
 
-distrib-dirs: check_DESTDIR
+distrib-dirs: .PHONY check_DESTDIR
 .if !defined(DISTRIBUTION_DONE)
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
 .endif
@@ -375,7 +373,7 @@ distrib-dirs: check_DESTDIR
 # release, snapshot --
 #	Build a full distribution including kernels & install media.
 #
-release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
+release snapshot: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 		    distribution .WAIT \
 		    snap_pre .WAIT snap_kern .WAIT \
 		    snap_post .WAIT snap_md_post
@@ -393,11 +391,11 @@ CDROM.image=${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso
 CDROM.dir=	cdrom.dir
 CDROM.pathlist=	cdrom.pathlist
 
-iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image-md-post
+iso-image: .PHONY check_DESTDIR check_RELEASEDIR .WAIT iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
 	@echo "iso-image created as: ${CDROM.image}"
 
-iso-image-setup: check_RELEASEDIR
+iso-image-setup: .PHONY check_RELEASEDIR
 	rm -f ${CDROM.pathlist}
 	echo "${MACHINE}=${RELEASEDIR}/${MACHINE}" >> ${CDROM.pathlist}
 	mkdir -p ${CDROM.dir}
@@ -406,7 +404,7 @@ iso-image-setup: check_RELEASEDIR
 # iso-image-mi --
 #	Create the image after the MD operations have completed.
 #
-iso-image-mi: check_DESTDIR check_RELEASEDIR .WAIT \
+iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 		iso-image-setup .WAIT iso-image-md-pre
 	@if ! ${MKISOFS} --version; then \
 		echo "install pkgsrc/sysutils/cdrecord and run 'make iso-image'." ; \
@@ -419,21 +417,21 @@ iso-image-mi: check_DESTDIR check_RELEASEDIR .WAIT \
 #	Setup ${CDROM.dir} to produce a bootable CD image.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-iso-image-md-pre: check_DESTDIR check_RELEASEDIR
+iso-image-md-pre: .PHONY check_DESTDIR check_RELEASEDIR
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 # iso-image-md-post --
 #	Fixup the CD-image to be bootable.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-iso-image-md-post: check_DESTDIR check_RELEASEDIR .WAIT iso-image-mi
+iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR .WAIT iso-image-mi
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.
 #
-snap_pre: check_DESTDIR check_RELEASEDIR
+snap_pre: .PHONY check_DESTDIR check_RELEASEDIR
 	${INSTALL} -d -m 755 ${RELEASEDIR}
 .if ${MKUPDATE} == "no"
 # Could be a mount point, ignore the errors
@@ -447,7 +445,7 @@ snap_pre: check_DESTDIR check_RELEASEDIR
 # snap_post --
 #	Build the install media and notes from distrib
 #
-snap_post: check_DESTDIR check_RELEASEDIR
+snap_post: .PHONY check_DESTDIR check_RELEASEDIR
 .if ${MKUPDATE} == "no"
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} cleandir
 .endif
@@ -502,7 +500,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 .if !defined(KERNELS_DONE)						# {
 .for configfile in ${ALL_KERNELS}					# {
 _KERNELS_TO_BUILD+=kern-${configfile}
-kern-${configfile}:
+kern-${configfile}: .PHONY
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
@@ -512,7 +510,7 @@ kern-${configfile}:
 .endfor	# ALL_KERNELS							# }
 .endif	# KERNELS_DONE							# }
 
-build_kernels: ${_KERNELS_TO_BUILD}
+build_kernels: .PHONY ${_KERNELS_TO_BUILD}
 
 # build_kernelsets --
 #	Create kernel sets from ${KERNEL_SETS} into
@@ -520,7 +518,7 @@ build_kernels: ${_KERNELS_TO_BUILD}
 #
 .for configfile in ${KERNEL_SETS}					# {
 _KERNELSETS_TO_BUILD+=kernset-${configfile}
-kernset-${configfile}:
+kernset-${configfile}: .PHONY
 	@ kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
@@ -556,7 +554,7 @@ build_kernelsets: ${_KERNELSETS_TO_BUILD}
 #
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
 _RELEASEKERNELS_TO_BUILD+=releasekern-${configfile}
-releasekern-${configfile}:
+releasekern-${configfile}: .PHONY
 	@ kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
