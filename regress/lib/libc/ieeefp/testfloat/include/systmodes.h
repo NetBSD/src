@@ -1,4 +1,4 @@
-/* $NetBSD: systmodes.h,v 1.2 2001/03/13 07:49:33 ross Exp $ */
+/* $NetBSD: systmodes.h,v 1.3 2001/03/22 12:08:59 ross Exp $ */
 
 /* This is a derivative work. */
 
@@ -62,6 +62,9 @@ this code that are retained.
 ===============================================================================
 */
 
+#ifndef _SYSTMODES_H_
+#define _SYSTMODES_H_
+
 /*
 -------------------------------------------------------------------------------
 Target-specific function for setting the system's IEC/IEEE floating-point
@@ -69,7 +72,10 @@ rounding mode.  Other system modes are also initialized as necessary (for
 example, exception trapping may be disabled).
 -------------------------------------------------------------------------------
 */
-void syst_float_set_rounding_mode( int8 );
+
+#include <ieeefp.h>
+
+void syst_float_set_rounding_mode( fp_rnd );
 
 /*
 -------------------------------------------------------------------------------
@@ -79,3 +85,4 @@ subsequent extended double-precision operations performed by the system.
 */
 void syst_float_set_rounding_precision( int8 );
 
+#endif /* !_SYSTMODES_H_*/
