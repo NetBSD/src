@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.51 2004/08/21 20:40:36 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.52 2004/09/09 19:35:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,8 @@ int	scsi_change_def(struct scsipi_periph *, int);
 void	scsi_kill_pending(struct scsipi_periph *);
 void	scsi_print_addr(struct scsipi_periph *);
 int	scsi_probe_bus(struct scsibus_softc *, int, int);
-int	scsi_scsipi_cmd(struct scsipi_periph *, struct scsipi_generic *,
-	    int, void *, size_t, int, int, struct buf *, int);
+int	scsi_scsipi_cmd(struct scsipi_periph *, struct scsipi_xfer *,
+	    struct scsipi_generic *, int, void *, size_t,
+	    int, int, struct buf *, int);
 
 #endif /* _DEV_SCSIPI_SCSICONF_H_ */
