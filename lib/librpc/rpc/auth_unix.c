@@ -29,7 +29,7 @@
 #if !defined(lint) && defined(SCCSIDS)
 /*static char sccsid[] = "from: @(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: auth_unix.c,v 1.2 1993/08/01 18:33:54 mycroft Exp $";
+static char rcsid[] = "$Id: auth_unix.c,v 1.3 1993/08/25 22:07:19 jtc Exp $";
 #endif
 
 /*
@@ -45,6 +45,7 @@ static char rcsid[] = "$Id: auth_unix.c,v 1.2 1993/08/01 18:33:54 mycroft Exp $"
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>

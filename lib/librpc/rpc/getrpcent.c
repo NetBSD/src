@@ -29,7 +29,7 @@
  */
 #if !defined(lint) && defined(SCCSIDS)
 /*static char sccsid[] = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char rcsid[] = "$Id: getrpcent.c,v 1.5 1993/08/01 18:33:39 mycroft Exp $";
+static char rcsid[] = "$Id: getrpcent.c,v 1.6 1993/08/25 22:07:22 jtc Exp $";
 #endif
 
 /*
@@ -60,7 +60,7 @@ struct rpcdata {
 	char	*current;
 	int	currentlen;
 #endif
-} *rpcdata, *_rpcdata();
+} *rpcdata;
 
 #ifdef	YP
 static int	__yp_nomap = 0;
@@ -69,7 +69,6 @@ static int	__yp_nomap = 0;
 static	struct rpcent *interpret();
 struct	hostent *gethostent();
 char	*inet_ntoa();
-static	char *index();
 
 static char RPCDB[] = "/etc/rpc";
 
