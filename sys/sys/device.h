@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.61 2002/10/09 02:59:57 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.62 2002/10/20 02:27:01 isaki Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -310,6 +310,7 @@ int	config_cfdriver_detach(struct cfdriver *);
 int	config_cfattach_attach(const char *, struct cfattach *);
 int	config_cfattach_detach(const char *, struct cfattach *);
 
+struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
 
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
