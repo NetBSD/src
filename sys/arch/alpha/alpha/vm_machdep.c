@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.24 1997/09/02 13:18:42 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.25 1997/09/02 19:03:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 1997/09/02 13:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 1997/09/02 19:03:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,9 +185,7 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
-#ifndef NEW_PMAP
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
-#else
+#ifdef NEW_PMAP
 printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
 #endif
 
