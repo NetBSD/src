@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.28 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.29 2004/05/05 11:54:32 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.28 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.29 2004/05/05 11:54:32 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -243,18 +243,20 @@ uvm_anfree(anon)
 			KASSERT((pg->flags & PG_RELEASED) == 0);
 			simple_lock(&anon->an_lock);
 			pmap_page_protect(pg, VM_PROT_NONE);
-			while ((pg = anon->u.an_page) &&
-			       (pg->flags & PG_BUSY) != 0) {
-				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, 0,
-				    "anfree", 0);
-				simple_lock(&anon->an_lock);
+
+			/*
+			 * if the page is busy, mark it as PG_RELEASED
+			 * so that uvm_anon_release will release it later.
+			 */
+
+			if (pg->flags & PG_BUSY) {
+				pg->flags |= PG_RELEASED;
+				simple_unlock(&anon->an_lock);
+				return;
 			}
-			if (pg) {
-				uvm_lock_pageq();
-				uvm_pagefree(pg);
-				uvm_unlock_pageq();
-			}
+			uvm_lock_pageq();
+			uvm_pagefree(pg);
+			uvm_unlock_pageq();
 			simple_unlock(&anon->an_lock);
 			UVMHIST_LOG(maphist, "anon 0x%x, page 0x%x: "
 				    "freed now!", anon, pg, 0, 0);
@@ -541,4 +543,36 @@ anon_pagein(anon)
 		simple_unlock(&uobj->vmobjlock);
 	}
 	return FALSE;
+}
+
+/*
+ * uvm_anon_release: release an anon and its page.
+ *
+ * => caller must lock the anon.
+ */
+
+void
+uvm_anon_release(anon)
+	struct vm_anon *anon;
+{
+	struct vm_page *pg = anon->u.an_page;
+
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+
+	KASSERT(pg != NULL);
+	KASSERT((pg->flags & PG_RELEASED) != 0);
+	KASSERT((pg->flags & PG_BUSY) != 0);
+	KASSERT(pg->uobject == NULL);
+	KASSERT(pg->uanon == anon);
+	KASSERT(pg->loan_count == 0);
+	KASSERT(anon->an_ref == 0);
+
+	uvm_lock_pageq();
+	uvm_pagefree(pg);
+	uvm_unlock_pageq();
+	simple_unlock(&anon->an_lock);
+
+	KASSERT(anon->u.an_page == NULL);
+
+	uvm_anfree(anon);
 }

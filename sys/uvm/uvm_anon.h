@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.16 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.17 2004/05/05 11:54:32 yamt Exp $	*/
 
 /*
  *
@@ -106,6 +106,7 @@ void uvm_anon_remove(int);
 struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
 void uvm_anon_dropswap(struct vm_anon *);
 boolean_t anon_swap_off(int, int);
+void uvm_anon_release(struct vm_anon *);
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.62 2003/09/01 14:20:57 pk Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.63 2004/05/05 11:54:32 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.62 2003/09/01 14:20:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.63 2004/05/05 11:54:32 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -422,9 +422,15 @@ uvm_aio_aiodone(bp)
 		 */
 
 		if (swap) {
-			uvm_page_unbusy(&pg, 1);
-			uvm_unlock_pageq();
-			simple_unlock(slock);
+			if (pg->uobject == NULL && pg->uanon->an_ref == 0 &&
+			    (pg->flags & PG_RELEASED) != 0) {
+				uvm_unlock_pageq();
+				uvm_anon_release(pg->uanon);
+			} else {
+				uvm_page_unbusy(&pg, 1);
+				uvm_unlock_pageq();
+				simple_unlock(slock);
+			}
 		}
 	}
 	if (!swap) {

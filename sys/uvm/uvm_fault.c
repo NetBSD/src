@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.87 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.88 2004/05/05 11:54:32 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.87 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.88 2004/05/05 11:54:32 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -428,8 +428,6 @@ uvmfault_anonget(ufi, amap, anon)
 				wakeup(pg);
 			}
 			if (error) {
-				/* remove page from anon */
-				anon->u.an_page = NULL;
 
 				/*
 				 * remove the swap slot from the anon
@@ -441,6 +439,9 @@ uvmfault_anonget(ufi, amap, anon)
 				if (anon->an_swslot > 0)
 					uvm_swap_markbad(anon->an_swslot, 1);
 				anon->an_swslot = SWSLOT_BAD;
+
+				if ((pg->flags & PG_RELEASED) != 0)
+					goto released;
 
 				/*
 				 * note: page was never !PG_BUSY, so it
@@ -459,6 +460,30 @@ uvmfault_anonget(ufi, amap, anon)
 					simple_unlock(&anon->an_lock);
 				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
 				return error;
+			}
+
+			if ((pg->flags & PG_RELEASED) != 0) {
+released:
+				KASSERT(anon->an_ref == 0);
+
+				/*
+				 * released while we unlocked amap.
+				 */
+
+				if (locked)
+					uvmfault_unlockall(ufi, amap, NULL,
+					    NULL);
+
+				uvm_anon_release(anon);
+
+				if (error) {
+					UVMHIST_LOG(maphist,
+					    "<- ERROR/RELEASED", 0,0,0,0);
+					return error;
+				}
+
+				UVMHIST_LOG(maphist, "<- RELEASED", 0,0,0,0);
+				return ERESTART;
 			}
 
 			/*
