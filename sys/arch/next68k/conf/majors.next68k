@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.5 2003/04/25 21:10:59 ragge Exp $
+#	$NetBSD: majors.next68k,v 1.6 2003/07/27 14:18:24 itojun Exp $
 #
 # Device majors for next68k
 #
@@ -44,3 +44,4 @@ device-major	clockctl	char 46			clockctl
 device-major	systrace	char 47			systrace
 device-major	cgd		char 48  block 21	cgd
 device-major	ksyms		char 49			ksyms
+device-major	pf		char 50			pf

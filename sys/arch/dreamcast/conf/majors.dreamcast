@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.5 2003/04/25 21:10:51 ragge Exp $
+#	$NetBSD: majors.dreamcast,v 1.6 2003/07/27 14:18:18 itojun Exp $
 #
 # Device majors for dreamcast
 #
@@ -56,3 +56,4 @@ device-major	cgd		char 61  block 20	cgd
 device-major	mmem		char 62  block 21	mmem
 device-major	mlcd		char 63			mlcd
 device-major	ksyms		char 64			ksyms
+device-major	pf		char 65			pf

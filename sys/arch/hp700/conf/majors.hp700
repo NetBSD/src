@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.4 2003/04/25 21:10:53 ragge Exp $
+#	$NetBSD: majors.hp700,v 1.5 2003/07/27 14:18:20 itojun Exp $
 #
 # Device majors for hp700
 #
@@ -40,3 +40,4 @@ device-major	altq		char 33			altq
 device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 8	cgd
 device-major	ksyms		char 36			ksyms
+device-major	pf		char 37			pf

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.5 2003/06/08 20:12:33 reinoud Exp $
+#	$NetBSD: majors.acorn32,v 1.6 2003/07/27 14:18:15 itojun Exp $
 #
 # Device majors for acorn32
 #
@@ -72,3 +72,4 @@ device-major	ksyms		char 86			ksyms
 device-major	netsmb		char 87			netsmb
 device-major	nsmb		char 88			nsmb
 
+device-major	pf		char 89			pf

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.27 2003/04/27 13:15:33 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.28 2003/07/27 14:18:01 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -85,6 +85,7 @@
 #	ch*	SCSI media changer
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	kbd	keyboard (provides events, for X11)
 #	mouse	mouse (provides events, for X11)
 #	random	Random number generator
@@ -361,6 +362,12 @@ ipl)
 	mknod ipstate c 20 2
 	mknod ipauth c 20 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 38 0
+	chmod 600 pf
 	;;
 
 random)
