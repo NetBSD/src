@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.42 2002/10/02 04:22:52 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.43 2003/04/02 02:34:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -249,7 +251,8 @@ findchannel_defer(self)
 	nextdma_setconf (esc->sc_dma, cb_arg, sc);
 
 	error = bus_dmamap_create(esc->sc_dma->sc_dmat,
-				  sc->sc_maxxfer, sc->sc_maxxfer/NBPG+1, sc->sc_maxxfer,
+				  sc->sc_maxxfer,
+				  sc->sc_maxxfer/PAGE_SIZE+1, sc->sc_maxxfer,
 				  0, BUS_DMA_ALLOCNOW, &esc->sc_main_dmamap);
 	if (error) {
 		panic("%s: can't create main i/o DMA map, error = %d",
