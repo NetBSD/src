@@ -38,7 +38,7 @@
  * from: Utah $Hdr: pcb.h 1.13 89/04/23$
  *
  *	@(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.6 1994/04/10 02:28:29 chopps Exp $
+ *	$Id: pcb.h,v 1.7 1994/05/21 10:07:04 chopps Exp $
  */
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_
@@ -62,5 +62,14 @@ struct pcb
 };
 
 /* flags (none currently used) */
+
+/*
+ * The pcb is augmented with machine-dependent additional data for
+ * core dumps. For the hp300, this includes an HP-UX exec header
+ * which is dumped for HP-UX processes.
+ */
+struct md_coredump {
+        int     md_exec[16];    /* exec structure for HP-UX core dumps */
+};
 
 #endif /* !_MACHINE_PCB_H_ */
