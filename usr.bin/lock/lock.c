@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
+/*	$NetBSD: lock.c,v 1.9 1997/05/17 19:49:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: lock.c,v 1.9 1997/05/17 19:49:02 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -102,7 +102,7 @@ main(argc, argv)
 
 	if (!(pw = getpwuid(getuid())))
 		errx(1, "unknown uid %d.", getuid());
-	
+
 	while ((ch = getopt(argc, argv, "pt:")) != EOF)
 		switch((char)ch) {
 		case 't':
@@ -158,7 +158,7 @@ main(argc, argv)
 			(void)tcsetattr(0, TCSADRAIN, &tty);
 			exit(1);
 		}
-		s[0] = NULL;
+		s[0] = '\0';
 		mypw = s1;
 	}
 
@@ -216,7 +216,7 @@ skey_auth(char *user)
 	int ret = 0;
 
 	if (!skey_haskey(user) && (ask = skey_keyinfo(user))) {
-		printf("\n[%s]\nResponse: ", ask);		
+		printf("\n[%s]\nResponse: ", ask);
 		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
 			clearerr(stdin);
 		else {
