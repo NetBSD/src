@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.3 2000/10/17 00:34:41 thorpej Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.4 2000/11/04 18:44:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -122,7 +122,7 @@ struct weasel_config_block {
  *
  *	for (new_state = old_state; new_state == old_state;) {
  *		WDT_SEMAPHORE = 0x22;
- *		delay(1);
+ *		delay(1500);
  *		if (WDT_SEMAPHORE == 0xea) {
  *			WDT_SEMAPHORE = 0x2f;
  *			delay(1500);
