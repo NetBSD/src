@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.1 2003/06/26 06:30:14 tshiozak Exp $	*/
+/*	$NetBSD: lex.l,v 1.2 2003/07/12 15:39:21 tshiozak Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: lex.l,v 1.1 2003/06/26 06:30:14 tshiozak Exp $");
+__RCSID("$NetBSD: lex.l,v 1.2 2003/07/12 15:39:21 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -77,10 +77,13 @@ int line_number = 1;
 "NAME"		{ return (R_NAME); }
 "SRC_ZONE"	{ return (R_SRC_ZONE); }
 "DST_INVALID"	{ return (R_DST_INVALID); }
+"DST_ILSEQ"	{ return (R_DST_ILSEQ); }
 "DST_UNIT_BITS"	{ return (R_DST_UNIT_BITS); }
 "BEGIN_MAP"	{ return (R_BEGIN_MAP); }
 "END_MAP"	{ return (R_END_MAP); }
 "INVALID"	{ return (R_INVALID); }
+"ILSEQ"		{ return (R_ILSEQ); }
+"OOB_MODE"	{ return (R_OOB_MODE); }
 "ROWCOL"	{ return (R_ROWCOL); }
 
 \"([^\"\n]*(\\\")?)*\"|\'([^\'\n]*(\\\')?)*\'	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.4 2003/07/01 09:42:16 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.5 2003/07/12 15:39:20 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.4 2003/07/01 09:42:16 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.5 2003/07/12 15:39:20 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -302,19 +302,19 @@ do_conv(struct _citrus_iconv_std_shared *is,
 				ret = _csmapper_convert(sd->sd_mapper,
 							&tmpidx, *idx, NULL);
 				switch (ret) {
-				case _CITRUS_MAPPER_CONVERT_SUCCESS:
+				case _MAPPER_CONVERT_SUCCESS:
 					*csid = sd->sd_csid;
 					*idx = tmpidx;
 					return 0;
-				case _CITRUS_MAPPER_CONVERT_INVAL:
+				case _MAPPER_CONVERT_NONIDENTICAL:
 					break;
-				case _CITRUS_MAPPER_CONVERT_SRC_MORE:
+				case _MAPPER_CONVERT_SRC_MORE:
 					/*FALLTHROUGH*/
-				case _CITRUS_MAPPER_CONVERT_DST_MORE:
+				case _MAPPER_CONVERT_DST_MORE:
 					/*FALLTHROUGH*/
-				case _CITRUS_MAPPER_CONVERT_FATAL:
+				case _MAPPER_CONVERT_FATAL:
 					return EINVAL;
-				case _CITRUS_MAPPER_CONVERT_ILSEQ:
+				case _MAPPER_CONVERT_ILSEQ:
 					return EILSEQ;
 				}
 			}
