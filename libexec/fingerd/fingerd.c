@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.4 1997/01/20 21:01:30 thorpej Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.5 1997/09/09 02:40:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: fingerd.c,v 1.4 1997/01/20 21:01:30 thorpej Exp $";
+static char rcsid[] = "$NetBSD: fingerd.c,v 1.5 1997/09/09 02:40:43 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(argc, argv)
 	logging = secure = user_required = short_list = 0;
 	openlog("fingerd", LOG_PID | LOG_CONS, LOG_DAEMON);
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "sluSmpP:")) != EOF)
+	while ((ch = getopt(argc, argv, "gsluSmpP:")) != EOF)
 		switch (ch) {
 		case 'l':
 			logging = 1;
@@ -104,6 +104,9 @@ main(argc, argv)
 			break;
 		case 'p':
 			av[ac++] = "-p";
+			break;
+		case 'g':
+			av[ac++] = "-g";
 			break;
 		case '?':
 		default:
