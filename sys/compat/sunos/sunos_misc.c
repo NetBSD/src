@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.97 1998/12/19 16:27:10 drochner Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.98 1998/12/21 10:34:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1279,9 +1279,6 @@ sunos_sys_sigvec(p, v, retval)
 			return (EINVAL);
 
 		compat_43_sigvec_to_sigaction(&nsv, &nsa);
-
-		/* SunOS binaries have a user-mode trampoline. */
-		nsa.sa_flags |= SA_USERTRAMP;
 	}
 	error = sigaction1(p, SCARG(uap, signum),
 			   SCARG(uap, nsv) ? &nsa : 0,
