@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.29 2004/05/07 16:40:31 jlam Exp $	*/
+/*	$NetBSD: show.c,v 1.30 2005/02/14 16:16:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.29 2004/05/07 16:40:31 jlam Exp $");
+__RCSID("$NetBSD: show.c,v 1.30 2005/02/14 16:16:24 agc Exp $");
 #endif
 #endif
 
@@ -99,7 +99,7 @@ static const show_t showv[] = {
 };
 
 void
-show_file(char *title, char *fname)
+show_file(char *pkg, char *title, char *fname)
 {
 	FILE   *fp;
 	char    line[1024];
@@ -109,7 +109,7 @@ show_file(char *title, char *fname)
 		printf("%s%s", InfoPrefix, title);
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
-		printf("ERROR: show_file: Can't open '%s' for reading!\n", fname);
+		printf("ERROR: show_file: package \"%s\": can't open '%s' for reading\n", pkg, fname);
 	} else {
 		int append_nl = 0;
 		while ((n = fread(line, 1, sizeof(line), fp)) != 0) {
@@ -178,7 +178,7 @@ show_index(char *title, char *fname)
 		maxline -= MAX(MAXNAMESIZE, strlen(title));
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
-		warnx("show_file: can't open '%s' for reading", fname);
+		warnx("show_index: can't open '%s' for reading", fname);
 		return;
 	}
 	if ((line = fgetln(fp, &linelen))) {
