@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.1.2.1 2002/09/30 20:43:43 jdolecek Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.1.2.2 2002/10/02 19:37:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.1.2.1 2002/09/30 20:43:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.1.2.2 2002/10/02 19:37:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,6 @@ filt_nfsread(struct knote *kn, long hint)
 	}
 
 	/* XXXLUKEM lock the struct? */
-	/* XXXLUKEM (jdolecek): clipping to 32bit value */
 	kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
         return (kn->kn_data != 0);
 }
