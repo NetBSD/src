@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.16 1997/03/16 19:43:20 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.17 1997/03/16 19:46:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.16 1997/03/16 19:43:20 christos Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.17 1997/03/16 19:46:02 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -291,7 +291,7 @@ makelink(from_name, to_name)
 	 * try the names the user provided
 	 */
 	if (symlink(from_name, to_name) == -1)
-		err(1, "symlink %s -> %s", src, to_name);
+		err(1, "symlink %s -> %s", from_name, to_name);
 
 }
 
