@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.79 2004/10/23 13:36:43 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.80 2004/10/23 16:17:56 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.79 2004/10/23 13:36:43 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.80 2004/10/23 16:17:56 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1291,9 +1291,18 @@ ehci_open(usbd_pipe_handle pipe)
 	usbd_status err;
 	int s;
 	int ival, speed, naks;
+	int hshubaddr, hshubport;
 
 	DPRINTFN(1, ("ehci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+
+	if (dev->myhsport) {
+		hshubaddr = dev->myhsport->parent->address;
+		hshubport = dev->myhsport->portno;
+	} else {
+		hshubaddr = 0;
+		hshubport = 0;
+	}
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
@@ -1321,6 +1330,14 @@ ehci_open(usbd_pipe_handle pipe)
 	case USB_SPEED_HIGH: speed = EHCI_QH_SPEED_HIGH; break;
 	default: panic("ehci_open: bad device speed %d", dev->speed);
 	}
+	if (speed != EHCI_QH_SPEED_HIGH) {
+		printf("%s: *** WARNING: opening low/full speed device, this "
+		       "does not work properly yet.\n",
+		       USBDEVNAME(sc->sc_bus.bdev));
+		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
+			    hshubaddr, hshubport));
+	}
+
 	naks = 8;		/* XXX */
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL)
@@ -1338,7 +1355,9 @@ ehci_open(usbd_pipe_handle pipe)
 		);
 	sqh->qh.qh_endphub = htole32(
 		EHCI_QH_SET_MULT(1) |
-		/* XXX TT stuff */
+		EHCI_QH_SET_HUBA(hshubaddr) |
+		EHCI_QH_SET_PORT(hshubport) |
+		EHCI_QH_SET_CMASK(0xf0) | /* XXX */
 		EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
 		);
 	sqh->qh.qh_curqtd = EHCI_NULL;
