@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.16 1994/02/10 04:19:25 briggs Exp $
+ *	$Id: disklabel.h,v 1.17 1994/02/13 23:02:13 chopps Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -58,7 +58,7 @@
 #endif
 
 #ifdef amiga
-#define MAXPARTITIONS   32
+#define MAXPARTITIONS   16
 #endif
 
 #ifndef	LABELSECTOR
