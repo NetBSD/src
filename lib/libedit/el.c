@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.8 1997/12/20 19:15:50 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.9 1998/05/20 01:01:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.8 1997/12/20 19:15:50 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.9 1998/05/20 01:01:00 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -65,9 +65,9 @@ __RCSID("$NetBSD: el.c,v 1.8 1997/12/20 19:15:50 christos Exp $");
  *	Initialize editline and set default parameters.
  */
 public EditLine *
-el_init(prog, fin, fout)
+el_init(prog, fin, fout, ferr)
     const char *prog;
-    FILE *fin, *fout;
+    FILE *fin, *fout, *ferr;
 {
     EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
 #ifdef DEBUG
@@ -81,21 +81,8 @@ el_init(prog, fin, fout)
 
     el->el_infd  = fileno(fin);
     el->el_outfile = fout;
+    el->el_errfile = ferr;
     el->el_prog = strdup(prog);
-
-#ifdef DEBUG
-    if ((tty = getenv("DEBUGTTY")) != NULL) {
-	el->el_errfile = fopen(tty, "w");
-	if (el->el_errfile == NULL) {
-		extern errno;
-		(void) fprintf(stderr, "Cannot open %s (%s).\n",
-			       tty, strerror(errno));
-		return NULL;
-	}
-    }
-    else 
-#endif
-	el->el_errfile = stderr;
 
     /*
      * Initialize all the modules. Order is important!!!
@@ -342,4 +329,14 @@ el_resize(el)
 	term_change_size(el, lins, cols);
 
     (void) sigprocmask(SIG_SETMASK, &oset, NULL);
+}
+
+/* el_beep():
+ *	Called from the program to beep
+ */
+public void
+el_beep(el)
+    EditLine *el;
+{
+    term_beep(el);
 }
