@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.17 1999/12/01 22:03:43 wennmach Exp $	*/
+/*	$NetBSD: unvis.c,v 1.18 1999/12/07 18:26:27 wennmach Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.17 1999/12/01 22:03:43 wennmach Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.18 1999/12/07 18:26:27 wennmach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -180,17 +180,9 @@ __unvis13(cp, c, astate, flag)
 			 */
 			*astate = S_GROUND;
 			return (UNVIS_NOCHAR);
-		default:
-			/*
-			 * backslash escaped character
-			 */
-			*astate = S_GROUND;
-			if (isascii(c) && isgraph(c)) {
-				*cp = c;
-				return(UNVIS_VALID);
-			} else
-				return(UNVIS_SYNBAD);
 		}
+		*astate = S_GROUND;
+		return (UNVIS_SYNBAD);
 		 
 	case S_META:
 		if (c == '-')
