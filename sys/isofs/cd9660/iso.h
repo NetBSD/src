@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.4 1994/07/03 09:52:30 mycroft Exp $	*/
+/*	$NetBSD: iso.h,v 1.5 1994/07/13 22:30:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -183,14 +183,13 @@ int cd9660_init __P(());
 
 struct iso_node;
 int iso_blkatoff __P((struct iso_node *ip, long offset, struct buf **bpp)); 
-int iso_iget __P((struct iso_node *xp, ino_t ino, int relocated,
-		  struct iso_node **ipp, struct iso_directory_record *isodir));
-int iso_iput __P((struct iso_node *ip)); 
-int iso_ilock __P((struct iso_node *ip)); 
-int iso_iunlock __P((struct iso_node *ip)); 
 int cd9660_mountroot __P((void)); 
 
 extern int (**cd9660_vnodeop_p)();
+extern int (**cd9660_specop_p)();
+#ifdef FIFO
+extern int (**cd9660_fifoop_p)();
+#endif
 
 extern inline int
 isonum_711(p)
