@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.12 1998/03/01 02:21:04 fvdl Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.12.24.1 2000/07/14 18:11:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ struct kernfs_mount {
 struct kern_target {
 	u_char kt_type;
 	u_char kt_namlen;
-	char *kt_name;
+	const char *kt_name;
 	void *kt_data;
 #define	KTT_NULL	 1
 #define	KTT_TIME	 5
