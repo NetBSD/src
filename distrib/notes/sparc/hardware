@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.19 2002/06/30 12:43:05 lukem Exp $
+.\"	$NetBSD: hardware,v 1.20 2002/07/15 00:19:54 mbw Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -63,7 +63,7 @@ SPARCstation/server 10
 .It
 SPARCstation/server 20
 .It
-Voyager
+SPARCstation Voyager
 .bullet)
 .(Note
 All known SuperSPARC, HyperSPARC, microSPARC, and TurboSPARC CPUs are supported
@@ -296,7 +296,8 @@ found with some SPARCBook 3 machines
 .bullet)
 .It
 .Em nell ;
-PCMCIA/Cardbus devices using the sbus-to-PCMCIA bridge
+PCMCIA/Cardbus devices using the sbus-to-PCMCIA bridge.
+On-board (SPARCstation Voyager) and Sbus card.
 .(bullet -compact
 All 8 bit devices listed in the Machine-independent PCMCIA drivers page
 should work.
