@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.26 2004/05/26 01:08:50 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.27 2004/06/04 09:54:03 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -97,7 +97,7 @@
 #define RES_SET_H_ERRNO(r,x) __h_errno_set(r,x)
 struct __res_state; /* forward */
 __BEGIN_DECLS
-void __h_errno_set(struct __res_state *res, int err);
+void __h_errno_set(struct __res_state *, int);
 __END_DECLS
 
 /*
