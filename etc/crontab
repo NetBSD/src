@@ -7,6 +7,6 @@ HOME=/var/log
 #minute	hour	mday	month	wday	command
 #
 #0/15	*	*	*	*	/usr/libexec/atrun
-0	2	*	*	*	/etc/daily > /var/log/daily.out 2>&1
-30	3	*	*	6	/etc/weekly > /var/log/weekly.out 2>&1
-30	5	1	*	*	/etc/monthly > /var/log/monthly.out 2>&1
+0	2	*	*	*	sh /etc/daily
+30	3	*	*	6	sh /etc/weekly
+30	5	1	*	*	sh /etc/monthly
