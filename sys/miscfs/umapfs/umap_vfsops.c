@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.47 2004/05/25 14:54:58 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.48 2004/05/29 23:48:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.47 2004/05/25 14:54:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.48 2004/05/29 23:48:08 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,6 +336,6 @@ struct vfsops umapfs_vfsops = {
 	NULL,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	layerfs_snapshot,
 	umapfs_vnodeopv_descs,
 };
