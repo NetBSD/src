@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/04/23 03:11:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/19 03:52:30 lukem Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
-
-.include "../../Makefile.inc"
 
 PROG=	less
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../lesskey
