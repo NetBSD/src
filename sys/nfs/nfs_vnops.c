@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.89 1998/03/01 02:24:29 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.90 1998/03/03 00:17:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1983,6 +1983,9 @@ nfs_readdir(v)
 	char *base = uio->uio_iov->iov_base;
 	int tresid, error;
 	size_t count, lost;
+	struct dirent *dp;
+	off_t *cookies = NULL;
+	int ncookies = 0, nc;
 
 	if (vp->v_type != VDIR)
 		return (EPERM);
@@ -1999,21 +2002,23 @@ nfs_readdir(v)
 	error = nfs_bioread(vp, uio, 0, ap->a_cred,
 		    ap->a_cookies ? NFSBIO_CACHECOOKIES : 0);
 
+	if (!error && ap->a_cookies) {
+		ncookies = count / 16;
+		MALLOC(cookies, off_t *, sizeof (off_t) * ncookies, M_TEMP,
+		    M_WAITOK);
+		*ap->a_cookies = cookies;
+	}
+
 	if (!error && uio->uio_resid == tresid) {
 		uio->uio_resid += lost;
 		nfsstats.direofcache_misses++;
+		if (ap->a_cookies)
+			*ap->a_ncookies = 0;
 		*ap->a_eofflag = 1;
 		return (0);
 	}
 
 	if (!error && ap->a_cookies) {
-		struct dirent *dp;
-		off_t *cookies;
-		int ncookies;
-
-		ncookies = uio->uio_resid / 16;
-		MALLOC(cookies, off_t *, sizeof (off_t) * ncookies, M_TEMP,
-		    M_WAITOK);
 		/*
 		 * Only the NFS server and emulations use cookies, and they
 		 * load the directory block into system space, so we can
@@ -2021,7 +2026,7 @@ nfs_readdir(v)
 		 */
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("nfs_readdir: lost in space");
-		while (ncookies-- && base < uio->uio_iov->iov_base) {
+		for (nc = 0; ncookies-- && base < uio->uio_iov->iov_base; nc++){
 			dp = (struct dirent *) base;
 			if (dp->d_reclen == 0)
 				break;
@@ -2034,8 +2039,7 @@ nfs_readdir(v)
 		uio->uio_resid += (uio->uio_iov->iov_base - base);
 		uio->uio_iov->iov_len += (uio->uio_iov->iov_base - base);
 		uio->uio_iov->iov_base = base;
-		*ap->a_cookies = cookies;
-		*ap->a_ncookies = ncookies;
+		*ap->a_ncookies = nc;
 	}
 
 	uio->uio_resid += lost;
