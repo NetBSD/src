@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	5.3 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: eval.c,v 1.5 1993/08/01 18:58:18 mycroft Exp $";
+static char rcsid[] = "$Id: eval.c,v 1.6 1993/09/09 01:05:19 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -521,7 +521,10 @@ evalbackcmd(n, result)
 	result->buf = NULL;
 	result->nleft = 0;
 	result->jp = NULL;
-	if (n->type == NCMD) {
+	/* No command inside the backqotes, so do nothing. */
+	if (n == NULL)
+		;
+	else if (n->type == NCMD) {
 		evalcommand(n, EV_BACKCMD, result);
 	} else {
 		if (pipe(pip) < 0)
