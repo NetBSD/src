@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.18 1995/06/24 08:28:00 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.19 1995/07/22 20:50:41 ragge Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
@@ -53,7 +53,8 @@ STRIP?=		-s
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "alpha")
+.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "vax")
 NOPIC=
 .endif
 
