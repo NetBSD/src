@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.372 2001/09/13 21:54:17 thorpej Exp $
+#	$NetBSD: mi,v 1.373 2001/09/13 23:15:07 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -721,6 +721,7 @@
 ./usr/include/paths.h			comp-c-include
 ./usr/include/pcap-namedb.h		comp-c-include
 ./usr/include/pcap.h			comp-c-include
+./usr/include/pci.h			comp-c-include
 ./usr/include/poll.h			comp-c-include
 ./usr/include/protocols/dumprestore.h	comp-c-include
 ./usr/include/protocols/routed.h	comp-c-include
@@ -1076,6 +1077,8 @@
 ./usr/lib/libossaudio_p.a	comp-c-proflib
 ./usr/lib/libpcap.a		comp-c-lib
 ./usr/lib/libpcap_p.a		comp-c-proflib
+./usr/lib/libpci.a		comp-c-lib
+./usr/lib/libpci_p.a		comp-c-proflib
 ./usr/lib/libposix.a		comp-c-lib
 ./usr/lib/libposix_p.a		comp-c-proflib
 ./usr/lib/libresolv.a		comp-c-lib
@@ -2404,6 +2407,14 @@
 ./usr/share/man/cat3/ossaudio.0	comp-c-catman
 ./usr/share/man/cat3/pause.0	comp-c-catman
 ./usr/share/man/cat3/pcap.0	comp-c-catman
+./usr/share/man/cat3/pci.0			comp-c-catman
+./usr/share/man/cat3/pci_conf_print.0		comp-c-catman
+./usr/share/man/cat3/pci_devinfo.0		comp-c-catman
+./usr/share/man/cat3/pci_findvendor.0		comp-c-catman
+./usr/share/man/cat3/pcibus_conf_read.0		comp-c-catman
+./usr/share/man/cat3/pcibus_conf_write.0	comp-c-catman
+./usr/share/man/cat3/pcidev_conf_read.0		comp-c-catman
+./usr/share/man/cat3/pcidev_conf_write.0	comp-c-catman
 ./usr/share/man/cat3/pclose.0	comp-c-catman
 ./usr/share/man/cat3/perror.0	comp-c-catman
 ./usr/share/man/cat3/pidfile.0	comp-c-catman
@@ -4554,6 +4565,14 @@
 ./usr/share/man/man3/ossaudio.3		comp-c-man
 ./usr/share/man/man3/pause.3		comp-c-man
 ./usr/share/man/man3/pcap.3		comp-c-man
+./usr/share/man/man3/pci.3			comp-c-man
+./usr/share/man/man3/pci_conf_print.3		comp-c-man
+./usr/share/man/man3/pci_devinfo.3		comp-c-man
+./usr/share/man/man3/pci_findvendor.3		comp-c-man
+./usr/share/man/man3/pcibus_conf_read.3		comp-c-man
+./usr/share/man/man3/pcibus_conf_write.3	comp-c-man
+./usr/share/man/man3/pcidev_conf_read.3		comp-c-man
+./usr/share/man/man3/pcidev_conf_write.3	comp-c-man
 ./usr/share/man/man3/pclose.3		comp-c-man
 ./usr/share/man/man3/perror.3		comp-c-man
 ./usr/share/man/man3/pidfile.3		comp-c-man
