@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4 1997/01/23 21:23:51 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.5 1997/01/27 22:09:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -93,7 +93,6 @@ struct pcb;
 struct proc;
 struct reg;
 struct trapframe;
-struct pmap;
 
 extern int cold;
 extern int fpu_type;
@@ -165,6 +164,11 @@ void	regdump __P((struct frame *, int));
 void	savectx __P((struct pcb *));
 
 void	setvbr __P((void **));
+
+void	sunmon_abort __P((void));
+void	sunmon_halt __P((void));
+void	sunmon_init __P((void));
+void	sunmon_reboot __P((char *));
 
 void	swapconf __P((void));
 void	swapgeneric __P((void));
