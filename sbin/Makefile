@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.4.1 1996/06/28 18:00:32 jtc Exp $
+#	$NetBSD: Makefile,v 1.29.4.2 1996/06/28 18:46:22 jtc Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -30,8 +30,7 @@ SUBDIR+= bim edlabel fdisk
 SUBDIR+= fdisk
 .elif ${MACHINE} == "pc532"
 SUBDIR+= bim
-.elif (${MACHINE} == "sun3") || (${MACHINE} == "atari") || \
-      (${MACHINE} == "sparc")
+.elif (${MACHINE} == "sun3") || (${MACHINE} == "atari") || (${MACHINE} == "sparc")
 SUBDIR+= edlabel
 .endif
 
