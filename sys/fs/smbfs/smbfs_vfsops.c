@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.47 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.48 2005/03/29 02:41:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.47 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.48 2005/03/29 02:41:05 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -144,6 +144,7 @@ struct vfsops smbfs_vfsops = {
 	vfs_stdextattrctl,
 	smbfs_vnodeopv_descs,
 };
+VFS_ATTACH(smbfs_vfsops);
 
 int
 smbfs_mount(struct mount *mp, const char *path, void *data,
