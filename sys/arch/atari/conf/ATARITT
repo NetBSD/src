@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.15 1996/10/16 12:50:30 leo Exp $
+#	$NetBSD: ATARITT,v 1.16 1996/11/08 14:12:19 leo Exp $
 #
 # ATARI-TT
 #
@@ -115,6 +115,8 @@ pseudo-device	rd	1	# Boot ramdisk
 #
 #The following sections describe various hardware options.
 #
+fd0	at fdc0 unit 0		# builtin floppy drive
+fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
 grfcc1	at grfbus0		# second graphics driver
 ite*	at grfcc1		# second tty
