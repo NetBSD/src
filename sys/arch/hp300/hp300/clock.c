@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.7 1994/02/04 23:05:38 mycroft Exp $
+ *	$Id: clock.c,v 1.8 1994/04/08 06:28:21 hpeyerl Exp $
  */
 
 #include "param.h"
@@ -242,7 +242,7 @@ clockmmap(dev, addrp, p)
 	struct specinfo si;
 	int flags;
 
-	flags = MAP_FILE|MAP_SHARED;
+	flags = MAP_SHARED;
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
