@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.17 2001/07/29 15:21:34 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.18 2001/08/02 14:42:08 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -401,7 +401,7 @@ initarm(argc, argv, bi)
 
 	/* Use the first 1MB to allocate things */
 	freemempos = 0xc0000000;
-	memset((void *)0xc0000000, 0, 0x80000);
+	memset((void *)0xc0000000, 0, KERNEL_TEXT_BASE - 0xc0000000);
 
 	/*
 	 * Right We have the bottom meg of memory mapped to 0x00000000
@@ -684,6 +684,7 @@ initarm(argc, argv, bi)
 	}
 
 #ifdef VERBOSE_INIT_ARM
+	printf("freemempos=%08lx\n", freemempos);
 	printf("MMU enabled. control=%08x\n", cpu_get_control());
 #endif
 
