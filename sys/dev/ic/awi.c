@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.37 2001/09/18 09:09:58 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.38 2001/09/18 23:19:08 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -1860,9 +1860,9 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			sc->sc_cmd_inprog = AWI_CMD_SYNC;
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
 				if (sc->sc_fhset_one)
-					awi_write_1(sc, AWI_CA_SCAN_SET, 1);
+					awi_write_1(sc, AWI_CA_SYNC_SET, 1);
 				else
-					awi_write_1(sc, AWI_CA_SCAN_SET,
+					awi_write_1(sc, AWI_CA_SYNC_SET,
 					    bs->bs_chan % 3 + 1);
 				awi_write_1(sc, AWI_CA_SYNC_IDX, 1);
 			} else {
