@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 2004/12/11 03:32:27 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.12 2005/02/27 09:27:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.11 2004/12/11 03:32:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.12 2005/02/27 09:27:31 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -97,7 +97,8 @@ static void le_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(le, sizeof(struct le_softc),
     le_match, le_attach, NULL, NULL);
 
-extern volatile u_char *lance_mem, *idrom_addr;
+extern volatile u_char *idrom_addr;
+extern uint32_t lance_mem_phys;
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -163,7 +164,7 @@ le_attach(struct device *parent, struct device *self, void *aux)
 	lesc->sc_r1 = (void *)IIOV(ha->ha_address);
 
 	if (ISIIOPA(ha->ha_address)) {
-		sc->sc_mem = (u_char *)lance_mem;
+		sc->sc_mem = (u_char *)IIOV(lance_mem_phys);
 		p = (u_char *)(idrom_addr + 0x10);
 	} else {
 		sc->sc_mem = lesc->sc_r1 - 0x10000;
@@ -171,7 +172,7 @@ le_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_memsize = 0x4000;	/* 16K */
-	sc->sc_addr = (int)sc->sc_mem & 0x00ffffff;
+	sc->sc_addr = lance_mem_phys & 0x00ffffff;
 	sc->sc_conf3 = LE_C3_BSWP|LE_C3_BCON;
 
 	sc->sc_enaddr[0] = (*p++ << 4);
