@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.7 2003/05/02 09:34:57 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.8 2003/05/07 21:28:16 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,7 +36,6 @@
 
 /*
  * TODO:
- *	Fix quick-search of symbols. (comes with linker)
  *	Change the ugly way of adding new symbols (comes with linker)
  *	Add kernel locking stuff.
  *	(Ev) add support for poll.
@@ -129,9 +128,136 @@ static CIRCLEQ_HEAD(, symtab) symtab_queue =
 
 static struct symtab kernel_symtab;
 
+#define	USE_PTREE
+#ifdef USE_PTREE
+/*
+ * Patricia-tree-based lookup structure for the in-kernel global symbols.
+ * Based on a design by Mikael Sundstrom, msm@sm.luth.se.
+ */
+struct ptree {
+	int16_t bitno;
+	int16_t lr[2];
+} *symb;
+static int16_t baseidx;
+static int treex = 1;
+
+#define	P_BIT(key, bit) ((key[bit >> 3] >> (bit & 7)) & 1)
+#define	STRING(idx) kernel_symtab.sd_symstart[idx].st_name + \
+			kernel_symtab.sd_strstart
+
+/*
+ * Walk down the tree until a terminal node is found.
+ */
+static int
+symbol_traverse(char *key)
+{
+	int16_t nb, rbit = baseidx;
+
+	while (rbit > 0) {
+		nb = symb[rbit].bitno;
+		rbit = symb[rbit].lr[P_BIT(key, nb)];
+	}
+	return -rbit;
+}
+
+static int
+ptree_add(char *key, int val)
+{
+	int idx;
+	int nix, cix, bit, rbit, sb, lastrbit, svbit, ix;
+	char *m, *k;
+
+	if (baseidx == 0) {
+		baseidx = -val;
+		return 0; /* First element */
+	}
+
+	/* Get string to match against */
+	idx = symbol_traverse(key);
+
+	/* Find first mismatching bit */
+	m = STRING(idx);
+	k = key;
+	if (strcmp(m, k) == 0)
+		return 1;
+
+	for (cix = 0; *m && *k && *m == *k; m++, k++, cix += 8)
+		;
+	ix = ffs((int)*m ^ (int)*k) - 1;
+	cix += ix;
+
+	/* Create new node */
+	nix = treex++;
+	bit = P_BIT(key, cix);
+	symb[nix].bitno = cix;
+	symb[nix].lr[bit] = -val;
+
+	/* Find where to insert node */
+	rbit = baseidx;
+	lastrbit = 0;
+	for (;;) {
+		if (rbit < 0)
+			break;
+		sb = symb[rbit].bitno;
+		if (sb > cix)
+			break;
+		if (sb == cix)
+			printf("symb[rbit].bitno == cix!!!\n");
+		lastrbit = rbit;
+		svbit = P_BIT(key, sb);
+		rbit = symb[rbit].lr[svbit];
+	}
+
+	/* Do the actual insertion */
+	if (lastrbit == 0) {
+		/* first element */
+		symb[nix].lr[!bit] = baseidx;
+		baseidx = nix;
+	} else {
+		symb[nix].lr[!bit] = rbit;
+		symb[lastrbit].lr[svbit] = nix;
+	}
+	return 0;
+}
+
+static int
+ptree_find(char *key)
+{
+	int idx;
+
+	if (baseidx == 0)
+		return 0;
+	idx = symbol_traverse(key);
+
+	if (strcmp(key, STRING(idx)) == 0)
+		return idx;
+	return 0;
+}
+
+static void
+ptree_gen(char *off, struct symtab *tab)
+{
+	Elf_Sym *sym;
+	int i;
+
+	if (off != NULL)
+		symb = (struct ptree *)ALIGN(off);
+	else
+		symb = malloc((tab->sd_symsize/sizeof(Elf_Sym)) *
+		    sizeof(struct ptree), M_DEVBUF, M_WAITOK);
+	symb--; /* sym index won't be 0 */
+
+	sym = tab->sd_symstart;
+	for (i = 1; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
+		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
+			continue;
+		ptree_add(tab->sd_strstart+sym[i].st_name, i);
+	}
+}
+#endif
+
 /*
  * Finds a certain symbol name in a certain symbol table.
- * XXX - symbol hashing must be rewritten (missing)
  */
 static Elf_Sym *
 findsym(char *name, struct symtab *table)
@@ -139,6 +265,11 @@ findsym(char *name, struct symtab *table)
 	Elf_Sym *start = table->sd_symstart;
 	int i, sz = table->sd_symsize/sizeof(Elf_Sym);
 	char *np;
+
+#ifdef USE_PTREE
+	if (table == &kernel_symtab && (i = ptree_find(name)) != 0)
+		return &start[i];
+#endif
 
 	for (i = 0; i < sz; i++) {
 		np = table->sd_strstart + start[i].st_name;
@@ -156,6 +287,12 @@ void ksymsattach(int);
 void
 ksymsattach(int arg)
 {
+
+#ifdef USE_PTREE
+	if (baseidx == 0)
+		ptree_gen(0, &kernel_symtab);
+#endif
+
 }
 
 /*
@@ -166,9 +303,11 @@ static void
 addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 {
 	caddr_t start = (caddr_t)ehdr;
+	caddr_t send;
 	Elf_Shdr *shdr;
-	Elf_Sym *sym;
-	int i, j;
+	Elf_Sym *sym, *nsym;
+	int i, j, n, g;
+	char *str;
 
 	/* Find the symbol table and the corresponding string table. */
 	shdr = (Elf_Shdr *)(start + ehdr->e_shoff);
@@ -187,21 +326,94 @@ addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 		break;
 	}
 	tab->sd_name = name;
+	send = tab->sd_strstart + tab->sd_strsize;
 
-	/* Change all symbols to be absolute references */
-	sym = (Elf_Sym *)tab->sd_symstart;
-	for (i = 0; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
-		sym[i].st_shndx = SHN_ABS;
-		if (sym[i].st_name == 0)
+#ifdef KSYMS_DEBUG
+	printf("start %p sym %p symsz %d str %p strsz %d send %p\n",
+	    start, tab->sd_symstart, tab->sd_symsize, 
+	    tab->sd_strstart, tab->sd_strsize, send);
+#endif
+
+	/*
+	 * Pack symbol table by removing all file name references
+	 * and overwrite the elf header.
+	 */
+	sym = tab->sd_symstart;
+	nsym = (Elf_Sym *)start;
+	str = tab->sd_strstart;
+	for (g = i = n = 0; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
+		if (i == 0) {
+			nsym[n++] = sym[i];
 			continue;
-		j = strlen(sym[i].st_name + tab->sd_strstart) + 1;
+		}
+		/*
+		 * Remove useless symbols.
+		 * Should actually remove all typeless symbols.
+		 */
+		if (sym[i].st_name == 0)
+			continue; /* Skip nameless entries */
+		if (ELF_ST_TYPE(sym[i].st_info) == STT_FILE)
+			continue; /* Skip filenames */
+		if (ELF_ST_TYPE(sym[i].st_info) == STT_NOTYPE &&
+		    sym[i].st_value == 0 &&
+		    strcmp(str + sym[i].st_name, "*ABS*") == 0)
+			continue; /* XXX */
+		if (ELF_ST_TYPE(sym[i].st_info) == STT_NOTYPE &&
+		    strcmp(str + sym[i].st_name, "gcc2_compiled.") == 0)
+			continue; /* XXX */
+
+#ifndef DDB
+		/* Only need global symbols */
+		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
+			continue;
+#endif
+
+		/* Save symbol. Set it as an absolute offset */
+		nsym[n] = sym[i];
+		nsym[n].st_shndx = SHN_ABS;
+		if (ELF_ST_BIND(nsym[n].st_info) == STB_GLOBAL)
+			g++;
 #if NKSYMS
+		j = strlen(nsym[n].st_name + tab->sd_strstart) + 1;
 		if (j > ksyms_maxlen)
 			ksyms_maxlen = j;
 #endif
+		n++;
+
 	}
+	tab->sd_symstart = nsym;
+	tab->sd_symsize = n * sizeof(Elf_Sym);
+
+#ifdef notyet
+	/*
+	 * Remove left-over strings.
+	 */
+	sym = tab->sd_symstart;
+	str = (caddr_t)tab->sd_symstart + tab->sd_symsize;
+	str[0] = 0;
+	n = 1;
+	for (i = 1; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
+		strcpy(str+n, tab->sd_strstart + sym[i].st_name);
+		sym[i].st_name = n;
+		n += strlen(str+n) + 1;
+	}
+	tab->sd_strstart = str;
+	tab->sd_strsize = n;
+
+#ifdef KSYMS_DEBUG
+	printf("str %p strsz %d send %p\n", str, n, send);
+#endif
+#endif
 
 	CIRCLEQ_INSERT_HEAD(&symtab_queue, tab, sd_queue);
+
+#ifdef notyet
+#ifdef USE_PTREE
+	/* Try to use the freed space, if possible */
+	if (send - str - n > g * sizeof(struct ptree))
+		ptree_gen(str + n, tab);
+#endif
+#endif
 }
 
 /*
@@ -247,19 +459,23 @@ ksyms_init(int symsize, void *start, void *end)
 		return; /* nothing to do */
 	}
 
+#if NKSYMS
+	/* Loaded header will be scratched in addsymtab */
+	ksyms_hdr_init(start);
+#endif
+
 	addsymtab("netbsd", ehdr, &kernel_symtab);
+
 #if NKSYMS
 	ksyms_sizes_calc();
 #endif
+
 	ksymsinited = 1;
+
 #ifdef DEBUG
 	printf("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
 	    kernel_symtab.sd_symstart, kernel_symtab.sd_strstart,
 	    (long)kernel_symtab.sd_symsize/sizeof(Elf_Sym));
-#endif
-
-#if NKSYMS
-	ksyms_hdr_init(start);
 #endif
 }
 
@@ -284,7 +500,6 @@ ksyms_getval(char *mod, char *sym, unsigned long *val, int type)
 		printf("ksyms_getval: mod %s sym %s valp %p\n", mod, sym, val);
 #endif
 
-	/* XXX search order XXX */
 	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
 		if (mod && strcmp(st->sd_name, mod))
 			continue;
