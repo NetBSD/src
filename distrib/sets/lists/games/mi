@@ -15,6 +15,7 @@
 ./usr/games/factor
 ./usr/games/fish
 ./usr/games/fortune
+./usr/games/gomoku
 ./usr/games/hack
 ./usr/games/hangman
 ./usr/games/hide/adventure
@@ -29,6 +30,7 @@
 ./usr/games/hide/chess
 ./usr/games/hide/cribbage
 ./usr/games/hide/fish
+./usr/games/hide/gomoku
 ./usr/games/hide/hack
 ./usr/games/hide/hangman
 ./usr/games/hide/larn
@@ -165,6 +167,7 @@
 ./usr/share/man/cat6/factor.0
 ./usr/share/man/cat6/fish.0
 ./usr/share/man/cat6/fortune.0
+./usr/share/man/cat6/gomoku.0
 ./usr/share/man/cat6/hack.0
 ./usr/share/man/cat6/hangman.0
 ./usr/share/man/cat6/larn.0
