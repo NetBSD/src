@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.8 2002/09/27 02:24:34 thorpej Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.9 2002/10/04 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.8 2002/09/27 02:24:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.9 2002/10/04 01:50:53 thorpej Exp $");
 
 #include "opt_userconf.h"
 
@@ -580,7 +580,7 @@ userconf_list()
 
 	userconf_cnt = 0;
 
-	while (cfdata[i].cf_attach != 0) {
+	while (cfdata[i].cf_name != NULL) {
 		if (userconf_more())
 			break;
 		userconf_pdev(i++);
@@ -606,7 +606,7 @@ userconf_common_dev(dev, len, unit, state, routine)
 		break;
 	}
 
-	while (cfdata[i].cf_attach != 0) {
+	while (cfdata[i].cf_name != NULL) {
 		if (strlen(cfdata[i].cf_name) == len) {
 
 			/*
