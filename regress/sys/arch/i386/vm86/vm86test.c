@@ -1,4 +1,4 @@
-/* $NetBSD: vm86test.c,v 1.1 2003/08/16 15:02:36 drochner Exp $ */
+/* $NetBSD: vm86test.c,v 1.2 2003/09/10 15:33:08 drochner Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,11 @@
 #include <sys/mman.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <err.h>
+#include <ucontext.h>
+
+void urghdl(int, siginfo_t *, void *);
 
 /*
  * Some code to execute in vm86 mode. Uses INT 0x20 to print some status info
@@ -61,17 +65,22 @@ const char vmcode[] = {
 #define VMSIZE 0x4000
 
 void
-urghdl(int sig, int code, struct sigcontext *sc)
+urghdl(int sig, siginfo_t *si, void *vuc)
 {
 	stack_t oss;
-	int res, ip = sc->sc_eip;
+	ucontext_t *uc = vuc;
+	int res, ip, eflags, code;
+
+	ip = uc->uc_mcontext.__gregs[_REG_EIP];
+	eflags = uc->uc_mcontext.__gregs[_REG_EFL];
+	code = si->si_trap;
 
 	res = sigaltstack(0, &oss);
 	if (res < 0)
 		err(6, "sigaltstack in handler");
 	fprintf(stderr, "urghdl called @ip=%04x, code=%04x, ", ip, code);
 	fprintf(stderr, "eflags=%08x, stackflags=%01x\n",
-		sc->sc_eflags, oss.ss_flags);
+		eflags, oss.ss_flags);
 	if (code == VM86_MAKEVAL(VM86_INTx, 0x21))
 		exit (0);
 }
@@ -116,9 +125,9 @@ main(int argc, char **argv)
 		vm.substr.regs.vmsc.sc_esp = VMSIZE - (codeaddr & 15); /* hmm */
 	}
 
-	sa.sa_handler = (void(*)(int))urghdl;
+	sa.sa_sigaction = urghdl;
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = usealtstack ? SA_ONSTACK : 0;
+	sa.sa_flags = SA_SIGINFO | (usealtstack ? SA_ONSTACK : 0);
 	res = sigaction(SIGURG, &sa, 0);
 	if (res < 0)
 		err(3, "sigaction");
