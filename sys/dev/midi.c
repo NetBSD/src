@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.9 1998/12/15 18:03:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -268,7 +268,8 @@ midi_in(addr, data)
 					sc->in_state = MIDI_IN_DATA;
 					sc->in_msg[0] = sc->in_status = data;
 					sc->in_pos = 1;
-					sc->in_left = MIDI_LENGTH(sc->in_status);
+					sc->in_left = 
+						MIDI_LENGTH(sc->in_status);
 				}
 				break;
 			}
@@ -560,13 +561,14 @@ midiwrite(dev, uio, ioflag)
 		cc = mb->usedhigh - used; 	/* maximum to write */
 		n = mb->end - inp;
 		if (n < cc)
-			cc = n;			/* don't write beyond end of buffer */
+			cc = n;		/* don't write beyond end of buffer */
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; 	/* and no more than we have */
 		error = uiomove(inp, cc, uio);
 #ifdef MIDI_DEBUG
 		if (error)
-		        printf("midi_write:(1) uiomove failed %d; cc=%d inp=%p\n",
+		        printf("midi_write:(1) uiomove failed %d; "
+			       "cc=%d inp=%p\n",
 			       error, cc, inp);
 #endif
 		if (error)
@@ -584,7 +586,7 @@ midiwrite(dev, uio, ioflag)
 }
 
 /*
- * This write routine is only called from sequencer code and expect
+ * This write routine is only called from sequencer code and expects
  * a write that is smaller than the MIDI buffer.
  */
 int
@@ -598,6 +600,7 @@ midi_writebytes(unit, buf, cc)
 	int n, s;
 
 	DPRINTFN(2, ("midi_writebytes: %p, unit=%d, cc=%d\n", sc, unit, cc));
+	DPRINTFN(3, ("midi_writebytes: %x %x %x\n",buf[0],buf[1],buf[2]));
 
 	s = splaudio();
 	if (mb->used + cc >= mb->usedhigh) {
@@ -607,7 +610,8 @@ midi_writebytes(unit, buf, cc)
 	n = mb->end - mb->inp;
 	if (cc < n)
 		n = cc;
-	memcpy(mb->inp, buf, cc);
+	mb->used += cc;
+	memcpy(mb->inp, buf, n);
 	mb->inp += n;
 	if (mb->inp >= mb->end) {
 		mb->inp = mb->start;
@@ -617,7 +621,6 @@ midi_writebytes(unit, buf, cc)
 			mb->inp += cc;
 		}
 	}
-	mb->used += cc;
 	splx(s);
 	return (midi_start_output(sc, 0));
 }
