@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.26 1994/02/25 07:42:01 phil Exp $
+#	$Id: Makefile.inc,v 1.27 1994/06/22 00:15:22 cgd Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
 
-SRCS+=	memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
+SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strftime.c strmode.c strtok.c strxfrm.c 
 
 .if   (${MACHINE_ARCH} == "m68k")
@@ -120,12 +120,13 @@ strrchr.so: rindex.c
 	    -o ${.TARGET}
 .endif
 
-MAN3+=	bcmp.0 bcopy.0 bstring.0 bzero.0 ffs.0 index.0 memccpy.0 memchr.0 \
+MAN3+=	bm.0 bcmp.0 bcopy.0 bstring.0 bzero.0 ffs.0 index.0 memccpy.0 memchr.0 \
 	memcmp.0 memcpy.0 memmove.0 memset.0 rindex.0 strcasecmp.0 strcat.0 \
-	strchr.0 strcmp.0 strcoll.0 strcpy.0 strcspn.0 strerror.0 strftime.0 string.0 \
-	strlen.0 strmode.0 strdup.0 strpbrk.0 strrchr.0 strsep.0 strspn.0 \
-	strstr.0 strtok.0 strxfrm.0 swab.0
+	strchr.0 strcmp.0 strcoll.0 strcpy.0 strcspn.0 strerror.0 strftime.0 \
+	string.0 strlen.0 strmode.0 strdup.0 strpbrk.0 strrchr.0 strsep.0 \
+	strspn.0 strstr.0 strtok.0 strxfrm.0 swab.0
 
+MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
 MLINKS+=strcasecmp.3 strncasecmp.3
 MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
