@@ -1,20 +1,24 @@
-#	$NetBSD: Makefile,v 1.14 1997/05/07 16:06:02 mycroft Exp $
+#	$NetBSD: Makefile,v 1.15 1997/05/09 12:38:30 mycroft Exp $
 #	@(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	strip
 
+proginstall::	.NOTMAIN hackinstall
+
 .include <bsd.prog.mk>
 
-proginstall:: ${DESTDIR}${BINDIR}/${PROG}
+PROGNAME?= ${PROG}
+hackinstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${BINDIR}/${PROG}
+.PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
 .endif
-.if !defined(UPDATE)
-${DESTDIR}${BINDIR}/${PROG}: .MADE
+.if !defined(BUILD)
+${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
 
-${DESTDIR}${BINDIR}/${PROG}: ${PROG}
+.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
+${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 ${.ALLSRC} ${.TARGET}
-	./strip ${.TARGET}
+	-if [ "${STRIPFLAG}" != "" ]; then ./strip ${.TARGET}; fi
 	chmod ${BINMODE} ${.TARGET}
 	-if [ "${COPY}" = "" ]; then rm -f ./strip; fi
