@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.88 2000/03/24 02:02:03 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.89 2000/03/24 18:16:33 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -541,7 +541,8 @@ END(_splget)
 LEAF(_setsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-	nop; nop
+	nop
+	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nop
 	or	v0, v0, a0			# set soft intr. bits
@@ -554,7 +555,8 @@ END(_setsoftintr)
 LEAF(_clrsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-	nop; nop
+	nop
+	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	v0, v0, a0			# clear soft intr. bits
