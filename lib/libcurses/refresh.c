@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.25 2000/04/28 06:51:36 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.26 2000/04/28 17:11:51 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.25 2000/04/28 06:51:36 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.26 2000/04/28 17:11:51 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -543,7 +543,11 @@ makech(wy)
 			 * so that the relevant attributes can be reset
 			 * (because 'me' unsets 'mb', 'md', 'mh', 'mk',
 			 * 'mp' and 'mr').  Check to see if we also turn off
-			 * standout, attributes and colour.
+			 * standout and attributes.
+			 * XXX
+			 * Assume that we also turn off colour, as we might
+			 * have the entries ":me=\E[m:op=\E[39;49m:" (xterm)
+			 * and we can't just do a string comparison on them.
 			 */
 			if ((nsp->attr & __TERMATTR) !=
 			    (curscr->wattr & __TERMATTR)) {
@@ -553,14 +557,13 @@ makech(wy)
 					curscr->wattr &= ~__STANDOUT;
 				if (UE != NULL && !strcmp(ME, UE))
 					curscr->wattr &= ~__UNDERSCORE;
-				if (OP != NULL && !strcmp(ME, OP))
-					curscr->wattr &= ~__COLOR;
+				curscr->wattr &= ~__COLOR;
 			}
 
 			/*
 			 * Exit underscore mode if appropriate.
-			 * Check to see if we also turn off standout,
-			 * attributes and colour.
+			 * Check to see if we also turn off standout and
+			 * attributes.  Assume that we also turn off colour.
 			 */
 			if (!(nsp->attr & __UNDERSCORE) &&
 			    (curscr->wattr & __UNDERSCORE)) {
@@ -570,14 +573,13 @@ makech(wy)
 					curscr->wattr &= ~__STANDOUT;
 				if (ME != NULL && !strcmp(UE, ME))
 					curscr->wattr &= ~__TERMATTR;
-				if (OP != NULL && !strcmp(UE, OP))
-					curscr->wattr &= ~__COLOR;
+				curscr->wattr &= ~__COLOR;
 			}
 
 			/*
 			 * Enter/exit standout mode as appropriate.
-			 * Check to see if we also turn off underscore,
-			 * attributes and colour.
+			 * Check to see if we also turn off underscore and
+		         * attributes.  Assume that we also turn off colour.
 			 * XXX
 			 * Should use UC if SO/SE not available.
 			 */
@@ -596,8 +598,7 @@ makech(wy)
 						    ~__UNDERSCORE;
 					if (ME != NULL && !strcmp(SE, ME))
 						curscr->wattr &= ~__TERMATTR;
-					if (OP != NULL && !strcmp(SE, OP))
-						curscr->wattr &= ~__COLOR;
+					curscr->wattr &= ~__COLOR;
 				}
 			}
 
@@ -1204,8 +1205,9 @@ __unsetattr(int checkms)
 #endif
 		
 	/*
-         * Don't leave the screen in standout mode (check against MS).  Check
-	 * to see if we also turn off underscore, attributes and colour.
+         * Don't leave the screen in standout mode (check against MS).
+	 * Check to see if we also turn off underscore and attributes.
+	 * Assume that we also turn off colour.
 	 */
 	if (curscr->wattr & __STANDOUT && isms) {
 		tputs(SE, 0, __cputchar);
@@ -1214,30 +1216,28 @@ __unsetattr(int checkms)
 			curscr->wattr &= ~__UNDERSCORE;
 		if (ME != NULL && !strcmp(SE, ME))
 			curscr->wattr &= ~__TERMATTR;
-		if (OP != NULL && !strcmp(SE, OP))
-			curscr->wattr &= ~__COLOR;
+		curscr->wattr &= ~__COLOR;
 	}
 	/*
 	 * Don't leave the screen in underscore mode (check against MS).
-	 * Check to see if we also turn off attributes and colour.
+	 * Check to see if we also turn off attributes.  Assume that we
+	 * also turn off colour.
 	 */
 	if (curscr->wattr & __UNDERSCORE && isms) {
 		tputs(UE, 0, __cputchar);
 		curscr->wattr &= ~__UNDERSCORE;
 		if (ME != NULL && !strcmp(UE, ME))
 			curscr->wattr &= ~__TERMATTR;
-		if (OP != NULL && !strcmp(UE, OP))
-			curscr->wattr &= ~__COLOR;
+		curscr->wattr &= ~__COLOR;
 	}
 	/*
 	 * Don't leave the screen with attributes set (check against MS).
-	 * Check to see if we also turn off colour.
+	 * Assume that also turn off colour.
 	 */
 	if (curscr->wattr & __TERMATTR && isms) {
 		tputs(ME, 0, __cputchar);
-			curscr->wattr &= ~__TERMATTR;
-		if (OP != NULL && !strcmp(ME, OP))
-			curscr->wattr &= ~__COLOR;
+		curscr->wattr &= ~__TERMATTR;
+		curscr->wattr &= ~__COLOR;
 	}
 	/* Don't leave the screen with altcharset set (don't check MS). */
 	if (curscr->wattr & __ALTCHARSET) {
