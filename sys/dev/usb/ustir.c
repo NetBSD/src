@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.8 2002/12/28 04:23:40 dsainty Exp $	*/
+/*	$NetBSD: ustir.c,v 1.9 2002/12/28 04:28:39 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.8 2002/12/28 04:23:40 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.9 2002/12/28 04:28:39 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,12 +277,12 @@ ustir_write_reg(struct ustir_softc *sc, unsigned int reg, u_int8_t data)
 
 #ifdef USTIR_DEBUG
 static void
-ustir_dumpdata(char const *data, size_t dlen, char const *desc)
+ustir_dumpdata(u_int8_t const *data, size_t dlen, char const *desc)
 {
 	size_t bdindex;
 	printf("%s: (%lx)", desc, (unsigned long)dlen);
 	for (bdindex = 0; bdindex < dlen; bdindex++)
-		printf(" %02x", (unsigned int)(unsigned char)data[bdindex]);
+		printf(" %02x", (unsigned int)data[bdindex]);
 	printf("\n");
 }
 #endif
