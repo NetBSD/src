@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.57 1998/11/18 20:24:59 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.58 1999/03/22 17:01:55 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -229,6 +229,7 @@ extern int		vttoif_tab[];
 
 #define FSYNC_WAIT	0x0001		/* fsync: wait for completition */
 #define FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
+#define FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)
@@ -483,6 +484,7 @@ int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_write __P((struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags));
 int	vn_writechk __P((struct vnode *vp));
+int	vn_isunder __P((struct vnode *dvp, struct vnode *rvp, struct proc *p));
 struct vnode *
 	checkalias __P((struct vnode *vp, dev_t nvp_rdev, struct mount *mp));
 void 	vput __P((struct vnode *vp));
