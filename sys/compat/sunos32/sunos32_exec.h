@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.h,v 1.1 2001/02/02 07:28:54 mrg Exp $	*/
+/*	$NetBSD: sunos32_exec.h,v 1.2 2001/02/08 12:32:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -31,7 +31,7 @@
 #ifndef	_SUNOS32_EXEC_H_
 #define	_SUNOS32_EXEC_H_
 
-#define SUNOS32_AOUT_HDR_SIZE (sizeof(struct sunos_exec))
+#define SUNOS32_AOUT_HDR_SIZE (sizeof(struct netbsd32_exec))
 
 extern const struct emul emul_sunos;
 
