@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.h,v 1.3 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: ppbus_1284.h,v 1.4 2004/01/25 00:41:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -94,7 +94,7 @@
 /* ieee1284 host side states */
 #define PPBUS_ERROR			0
 #define PPBUS_FORWARD_IDLE		1
-#define PPBUS_NEGOCIATION			2
+#define PPBUS_NEGOTIATION			2
 #define PPBUS_SETUP			3
 #define PPBUS_ECP_FORWARD_IDLE		4
 #define PPBUS_FWD_TO_REVERSE		5
@@ -105,7 +105,7 @@
 #define PPBUS_TERMINATION			10
 
 /* peripheral side states */
-#define PPBUS_PERIPHERAL_NEGOCIATION	11
+#define PPBUS_PERIPHERAL_NEGOTIATION	11
 #define PPBUS_PERIPHERAL_IDLE		12
 #define PPBUS_PERIPHERAL_TRANSFER		13
 #define PPBUS_PERIPHERAL_TERMINATION	14
@@ -115,7 +115,7 @@
 /* Function prototypes */
 
 /* Host functions */
-int ppbus_1284_negociate(struct device *, int, int);
+int ppbus_1284_negotiate(struct device *, int, int);
 int ppbus_1284_terminate(struct device *);
 int ppbus_1284_read_id(struct device *, int, char **, size_t *, size_t *);
 int ppbus_1284_get_state(struct device *);
@@ -123,7 +123,7 @@ int ppbus_1284_set_state(struct device *, int state);
 
 /* Peripheral functions */
 int ppbus_peripheral_terminate(struct device *, int);
-int ppbus_peripheral_negociate(struct device *, int, int);
+int ppbus_peripheral_negotiate(struct device *, int, int);
 int byte_peripheral_write(struct device *, char *, int, int *);
 
 #endif /*_KERNEL*/
