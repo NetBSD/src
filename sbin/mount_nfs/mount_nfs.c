@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.41 2003/05/05 13:23:10 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.42 2003/05/16 15:33:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.41 2003/05/05 13:23:10 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.42 2003/05/16 15:33:45 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -398,7 +398,7 @@ mount_nfs(argc, argv)
 				nfsargsp->flags |= NFSMNT_RSIZE;
 			}
 			if (altflags & ALTF_WSIZE) {
-				nfsargsp->rsize =
+				nfsargsp->wsize =
 				    (int)getmntoptnum(mp, "wsize");
 				nfsargsp->flags |= NFSMNT_WSIZE;
 			}
