@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.14 2002/05/02 13:59:25 enami Exp $	*/
+/*	$NetBSD: asa.c,v 1.15 2002/05/30 00:34:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: asa.c,v 1.14 2002/05/02 13:59:25 enami Exp $");
+__RCSID("$NetBSD: asa.c,v 1.15 2002/05/30 00:34:06 enami Exp $");
 #endif
 
 #include <err.h>
@@ -50,20 +50,17 @@ main (int argc, char *argv[])
 	/* skip progname */
 	argv++;
 
-	fp = stdin;
-	do {
-		if (*argv) {
-			if (!(fp = fopen(*argv, "r"))) {
+	if (*argv == NULL)
+		asa(stdin);
+	else
+        	do {
+			if ((fp = fopen(*argv, "r")) == NULL) {
 				warn("%s", *argv);
-				++argv;
 				continue;
 			}
-			++argv;
-		}
-		asa(fp);
-		if (fp != stdin)
+			asa(fp);
 			(void)fclose(fp);
-	} while (*argv);
+        	} while (*++argv != NULL);
 
 	exit(0);
 }
