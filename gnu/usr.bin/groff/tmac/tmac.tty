@@ -1,3 +1,5 @@
+.\" $NetBSD: tmac.tty,v 1.5 1999/02/17 03:53:23 ross Exp $
+.
 .nr _C \n(.C
 .cp 0
 .nroff
