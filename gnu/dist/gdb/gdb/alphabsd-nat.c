@@ -27,7 +27,9 @@
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/signal.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 
 #ifdef HAVE_SYS_PROCFS_H
 #include <sys/procfs.h>
@@ -155,3 +157,36 @@ store_inferior_registers (int regno)
 	perror_with_name ("Couldn't write floating point status");
     }
 }
+
+#ifdef FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
+void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  int i, regno;
+  
+  /* Clear v0 through t7 */
+  for (i = 0, regno = 0; regno < ALPHA_S0_REGNUM; regno++)
+    supply_register (regno, (char *)&i);
+
+  /* s0 through s6 */
+  for (i = 0, regno = ALPHA_S0_REGNUM; regno < ALPHA_A0_REGNUM ; regno++, i++)
+    supply_register (regno, (char *)&pcb->pcb_context[i]);
+
+  /* Clear a0 through gp */
+  for (i = 0, regno = ALPHA_A0_REGNUM; regno < ALPHA_SP_REGNUM; regno++)
+    supply_register (regno, (char *)&i);
+
+  /* sp */
+  supply_register (ALPHA_SP_REGNUM, (char *)&pcb->pcb_hw.apcb_ksp);
+
+  /* XXX Should we clear FP state? */
+
+  /* pc */
+  supply_register (ALPHA_PC_REGNUM, (char *)&pcb->pcb_context[7]);
+}
+#endif
