@@ -325,7 +325,7 @@ __link_set_add_data(_openpam_static_modules, _pam_module)
 
 #if !defined(OPENPAM_STATIC_MODULE)
 #define	PAM_EXTERN		/* nothing */
-#define	PAM_MODULE_ENTRY(name)	/* nothing */
+#define	PAM_MODULE_ENTRY(name)	/*LINTED empty decl*/
 #endif
 
 #ifdef __cplusplus
