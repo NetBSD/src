@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pciide.c,v 1.1 1998/03/04 06:35:12 cgd Exp $	*/
+/*	$NetBSD: wdc_pciide.c,v 1.2 1998/06/08 06:55:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -56,11 +56,7 @@ struct wdc_pciide_softc {
 	struct wdc_attachment_data	sc_ad;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdc_pciide_probe __P((struct device *, void *, void *));
-#else
 int	wdc_pciide_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void	wdc_pciide_attach __P((struct device *, struct device *, void *));
 
 struct cfattach wdc_pciide_ca = {
@@ -68,22 +64,11 @@ struct cfattach wdc_pciide_ca = {
 };
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-wdc_pciide_probe(parent, matchv, aux)
-#else
 wdc_pciide_probe(parent, match, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *matchv;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *match = matchv;
-#endif
 	struct pciide_attach_args *aa = aux;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.15 1998/05/18 17:14:32 cgd Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.16 1998/06/08 06:55:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -253,11 +253,7 @@ fxp_scb_wait(sc)
 	while (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) && --i);
 }
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int fxp_match __P((struct device *, void *, void *));
-#else
 static int fxp_match __P((struct device *, struct cfdata *, void *));
-#endif
 static void fxp_attach __P((struct device *, struct device *, void *));
 
 static void	fxp_shutdown __P((void *));
@@ -272,11 +268,7 @@ struct cfattach fxp_ca = {
 static int
 fxp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

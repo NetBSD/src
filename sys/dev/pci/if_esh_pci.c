@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.2 1998/05/17 16:46:28 kml Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.3 1998/06/08 06:55:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,11 +97,7 @@
 
 #define MEM_MAP_REG	0x10
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int esh_pci_match __P((struct device *, void *, void *));
-#else
 int esh_pci_match __P((struct device *, struct cfdata *, void *));
-#endif
 void esh_pci_attach __P((struct device *, struct device *, void *));
 static u_int8_t esh_pci_bist_read __P((struct esh_softc *));
 static void esh_pci_bist_write __P((struct esh_softc *, u_int8_t));
@@ -114,11 +110,7 @@ struct cfattach esh_pci_ca = {
 int
 esh_pci_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.17 1998/05/21 20:44:03 matt Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.18 1998/06/08 07:04:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -446,11 +446,7 @@ struct cfdriver feacd = {
 static int
 pdq_eisa_match(
     struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match,
-#else
     struct cfdata *match,
-#endif
     void *aux)
 {
     const struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;

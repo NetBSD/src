@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.68 1998/05/25 22:20:24 mark Exp $	*/
+/*	$NetBSD: if_de.c,v 1.69 1998/06/08 06:55:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5386,11 +5386,7 @@ struct cfdriver decd = {
 static int
 tulip_pci_probe(
     struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match,
-#else
     struct cfdata *match,
-#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;

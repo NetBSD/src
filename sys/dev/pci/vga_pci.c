@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
+/* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -55,11 +55,7 @@ struct vga_pci_softc {
 #endif
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	vga_pci_match __P((struct device *, void *, void *));
-#else
 int	vga_pci_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	vga_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vga_pci_ca = {
@@ -69,11 +65,7 @@ struct cfattach vga_pci_ca = {
 int
 vga_pci_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

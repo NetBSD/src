@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.6 1998/05/05 17:23:08 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.7 1998/06/08 06:55:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,11 +75,7 @@ struct ne_pci_softc {
 	void *sc_ih;				/* interrupt handle */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ne_pci_match __P((struct device *, void *, void *));
-#else
 int ne_pci_match __P((struct device *, struct cfdata *, void *));
-#endif
 void ne_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ne_pci_ca = {
@@ -132,11 +128,7 @@ ne_pci_lookup(id)
 int
 ne_pci_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

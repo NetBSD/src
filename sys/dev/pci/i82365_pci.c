@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.3 1998/05/23 18:32:30 matt Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.4 1998/06/08 06:55:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -47,11 +47,7 @@
  */
 #define	PCI_CBIO		0x10	/* Configuration Base IO Address */
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pcic_pci_match __P((struct device *, void *, void *));
-#else
 int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	pcic_pci_attach __P((struct device *, struct device *, void *));
 
 void	*pcic_pci_chip_intr_establish __P((pcmcia_chipset_handle_t,
@@ -83,11 +79,7 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 int
 pcic_pci_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata  *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
