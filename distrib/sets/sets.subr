@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.32 2004/03/17 20:32:02 scw Exp $
+#	$NetBSD: sets.subr,v 1.33 2004/06/13 22:35:02 jmc Exp $
 #
 
 #
@@ -40,6 +40,7 @@ MKVARS="\
 	MKKERBEROS4	\
 	MKLINT		\
 	MKMAN		\
+	MKMANPAGES	\
 	MKMANZ		\
 	MKNLS		\
 	MKPIC		\
@@ -58,6 +59,11 @@ IFS="
 for x in $(
 ${MAKE:-make} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
+.if (\${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
+MKMANPAGES=no
+.else
+MKMANPAGES=yes
+.endif
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
 		HAVE_GCC3 OBJECT_FMT TOOLCHAIN_MISSING \
@@ -114,7 +120,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.32 2004/03/17 20:32:02 scw Exp $
+# 	# $NetBSD: sets.subr,v 1.33 2004/06/13 22:35:02 jmc Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -180,9 +186,9 @@ list_set_files()
 					if (ENVIRON[nv] != "no")
 						wanted[kw] = 1 
 				}
-				if ("catpages" in wanted)
+				if (("man" in wanted) && ("catpages" in wanted))
 					wanted[".cat"] = 1
-				if ("man" in wanted)
+				if (("man" in wanted) && ("manpages" in wanted))
 					wanted[".man"] = 1
 			}
 		}
