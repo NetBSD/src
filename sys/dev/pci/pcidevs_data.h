@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.425 2002/05/03 12:46:42 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.426 2002/05/14 12:05:36 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.422 2002/05/03 12:46:11 augustss Exp 
+ *	NetBSD: pcidevs,v 1.423 2002/05/14 12:05:13 augustss Exp 
  */
 
 /*
@@ -2870,6 +2870,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Guillemot",
 	    "MAXIRADIO",
+	},
+	{
+	    PCI_VENDOR_HEURICON, PCI_PRODUCT_HEURICON_PMPPC,
+	    0,
+	    "Heurikon/Computer Products",
+	    "PM/PPC",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A,
@@ -10003,6 +10009,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ARIEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Ariel",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_HEURICON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Heurikon/Computer Products",
 	    NULL,
 	},
 	{

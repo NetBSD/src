@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.427 2002/05/03 12:46:41 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.428 2002/05/14 12:05:35 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.422 2002/05/03 12:46:11 augustss Exp 
+ *	NetBSD: pcidevs,v 1.423 2002/05/14 12:05:13 augustss Exp 
  */
 
 /*
@@ -499,6 +499,7 @@
 #define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
+#define	PCI_VENDOR_HEURICON	0x1223		/* Heurikon/Computer Products */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
@@ -1235,6 +1236,9 @@
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
+
+/* Heuricon products */
+#define	PCI_PRODUCT_HEURICON_PMPPC	0x000e		/* PM/PPC */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
