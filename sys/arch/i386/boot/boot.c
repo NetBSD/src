@@ -29,7 +29,10 @@
 /*
  * HISTORY
  * $Log: boot.c,v $
- * Revision 1.5  1993/06/05 22:52:11  cgd
+ * Revision 1.6  1993/06/14 00:47:08  deraadt
+ * *whoops*. The previous commit killed a few important characters of code.
+ *
+ * Revision 1.5  1993/06/05  22:52:11  cgd
  * make sure kernel is small enough; this is a really weird fix from
  * rod, pk patch #159.  the comment is:
  *
@@ -177,7 +180,7 @@ loadprog(howto)
 		 * The +28672 is for memory allocated by locore.s that must
 		 * fit in the bss! (XXX - cgd)
 		 */
-		if((addr + head.a_text + head.a_data + head.a_bss + 28672) > 0xa
+		if((addr + head.a_text + head.a_data + head.a_bss + 28672) > 0xa0000)
 		{
 			printf("kernel too big, won't fit in 640K with bss\n");
 			printf("Only hope is to link the kernel for > 1MB\n");
