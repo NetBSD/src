@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.16 1996/02/04 02:09:41 christos Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.17 1996/02/05 01:53:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,6 +42,7 @@ struct vmspace;
 struct vmtotal;
 struct mount;
 struct vnode;
+struct core;
 
 #ifdef KGDB
 void		 chgkprot __P((caddr_t, int, int));
@@ -75,7 +76,7 @@ void		 kmem_free_wakeup __P((vm_map_t, vm_offset_t, vm_size_t));
 void		 kmem_init __P((vm_offset_t, vm_offset_t));
 vm_offset_t	 kmem_malloc __P((vm_map_t, vm_size_t, boolean_t));
 vm_map_t	 kmem_suballoc __P((vm_map_t, vm_offset_t *, vm_offset_t *,
-		    vm_size_t, boolean_t));
+				    vm_size_t, boolean_t));
 void		 loadav __P((struct loadavg *));
 void		 munmapfd __P((struct proc *, int));
 int		 pager_cache __P((vm_object_t, boolean_t));
@@ -93,10 +94,12 @@ void		 thread_block __P((void));
 void		 thread_sleep __P((void *, simple_lock_t, boolean_t));
 void		 thread_wakeup __P((void *));
 int		 useracc __P((caddr_t, int, int));
-int		 vm_allocate __P((vm_map_t,
-		    vm_offset_t *, vm_size_t, boolean_t));
+int		 vm_allocate __P((vm_map_t, vm_offset_t *, vm_size_t,
+				  boolean_t));
 int		 vm_allocate_with_pager __P((vm_map_t, vm_offset_t *,
 		    vm_size_t, boolean_t, vm_pager_t, vm_offset_t, boolean_t));
+int		 vm_coredump __P((struct proc *, struct vnode *, struct ucred *,
+				  struct core *));
 int		 vm_deallocate __P((vm_map_t, vm_offset_t, vm_size_t));
 int		 vm_fault __P((vm_map_t, vm_offset_t, vm_prot_t, boolean_t));
 void		 vm_fault_copy_entry __P((vm_map_t,
@@ -127,4 +130,11 @@ void		 vnode_pager_umount __P((struct mount *));
 boolean_t	 vnode_pager_uncache __P((struct vnode *));
 void		 vslock __P((caddr_t, u_int));
 void		 vsunlock __P((caddr_t, u_int));
+
+/* Machine dependent portion */
+void		vmapbuf __P((struct buf *, vm_size_t));
+void		vunmapbuf __P((struct buf *, vm_size_t));
+void		remrq __P((struct proc *));
+int		cpu_fork __P((struct proc *, struct proc *));
+
 #endif
