@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2002/05/26 00:23:49 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2002/12/10 17:57:19 fvdl Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -93,6 +93,13 @@
 #else
 #define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #endif
+#endif
+
+#ifndef NFS_RSIZE
+#define NFS_RSIZE       32768
+#endif
+#ifndef NFS_WSIZE
+#define NFS_WSIZE       32768
 #endif
 
 /*
