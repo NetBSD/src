@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.2 2002/10/04 23:47:03 dan Exp $
+.\" $NetBSD: cgdconfig.8,v 1.3 2002/10/05 00:34:35 dan Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,8 @@ The method simply reads
 and uses the resulting bits as the key.  It does not require a
 passphrase to be entered.  This method is typically used to present
 disk devices that do not need to survive a reboot, such as the swap
-partition.
+partition. It is also handy to facilitate overwriting the contents of
+a disk volume with meaningless data prior to use.
 .El
 .Ss /etc/cgd/cgd.conf
 The file
@@ -246,3 +247,7 @@ Since
 uses
 .Xr getpass 3
 to read in the passphrase, it is limited to 128 characters.
+.Pp
+At present, there is no mechanism to validate that the key supplied
+matches that used to encrypt the disk.  An option to validate the
+checksum of a disklabel inside the cgd device may be added shortly.
