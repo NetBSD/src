@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.10 1997/11/24 06:27:01 lukem Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.11 1997/12/01 03:40:51 lukem Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,12 +144,44 @@ is used to configure
 .Nm
 if
 .Fl C
+or
+.Fl U
 is used.
-The contents of the configuration file appears exactly as if it were
-entered on the command line.
-Note that on the command line and in the configuration file, the
-.Pa flags
-argument is optional.
+Each line of the configuration file contains arguments as per the 
+.Fl c
+argument:
+.Ar ccd
+.Ar ileave
+.Op Ar flags
+.Ar dev
+.Op Ar ...
+.Pp
+A
+.Sq #
+is a comment, and everything to end of line is ignored.
+A
+.Sq \e
+at the end of a line indicates that the next line should be concatinated
+with the current.
+A
+.Sq \e
+preceeding any character (other than the end of line) prevents that
+character's special meaning from taking effect.
+.Pp
+See
+.Sx EXAMPLE
+for an example of
+.Pa /etc/ccd.conf .
+.Sh EXAMPLE
+The following command, executed from the command line, would configure ccd0
+with 4 components (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e), and an
+interleave factor of 32 blocks.
+.Bd -unfilled -offset indent
+# ccdconfig ccd0 32 0 /dev/sd2e /dev/sd3e /dev/sd4e /dev/sd5e
+.Ed
+.Pp
+An example
+.Pa /etc/ccd.conf :
 .Bd -unfilled -offset indent
 #
 # /etc/ccd.conf
@@ -159,15 +191,6 @@ argument is optional.
 # ccd           ileave  flags   component devices
 ccd0            16      none    /dev/sd2e /dev/sd3e
 .Ed
-.Pp
-.Sh EXAMPLE
-The following command, executed from the command line, would configure ccd0
-with 4 components (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e), and an
-interleave factor of 32 blocks.
-.Bd -unfilled -offset indent
-# ccdconfig ccd0 32 0 /dev/sd2e /dev/sd3e /dev/sd4e /dev/sd5e
-.Ed
-.Pp
 .Sh FILES
 /etc/ccd.conf - default ccd configuration file.
 .Sh SEE ALSO
