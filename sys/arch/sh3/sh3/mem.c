@@ -1,6 +1,8 @@
-/*	$NetBSD: mem.c,v 1.10 2002/05/07 03:28:25 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 2002/05/09 12:29:48 uch Exp $	*/
 
 /*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,39 +42,28 @@
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
-#include "opt_compat_netbsd.h"
-
 /*
  * Memory special file
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/fcntl.h>
-
-#include <machine/cpu.h>
-#include <machine/conf.h>
-
 #include <uvm/uvm_extern.h>
 
-char *kvm_start = (char *)VM_MIN_KERNEL_ADDRESS;
-extern paddr_t avail_end;
+#include <machine/conf.h>
+
 caddr_t zeropage;
+boolean_t __mm_mem_addr(paddr_t);
 
 /*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
-	switch (minor(dev)) {
-
-	default:
-		break;
-	}
 	return (0);
 }
 
@@ -88,24 +79,11 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register vaddr_t o, v;
-	register int c;
-	register struct iovec *iov;
+	struct iovec *iov;
+	vaddr_t v, o;
+	int c;
 	int error = 0;
-	static int physlock;
-	vm_prot_t prot;
 
-	if (minor(dev) == DEV_MEM) {
-		/* lock against other uses of shared kvm_start */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
-	}
 	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -115,32 +93,39 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				panic("mmrw");
 			continue;
 		}
-		switch (minor(dev)) {
 
+		v = uio->uio_offset;
+
+		switch (minor(dev)) {
+		kmemphys:
 		case DEV_MEM:
-			v = uio->uio_offset;
-			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
-			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vaddr_t)kvm_start,
-			    trunc_page(v), prot, prot|PMAP_WIRED);
-			pmap_update(pmap_kernel());
-			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)kvm_start + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)kvm_start,
-			    (vaddr_t)kvm_start + NBPG);
-			pmap_update(pmap_kernel());
+			/* Physical address */
+			if (__mm_mem_addr(v)) {
+				o = v & PGOFSET;
+				c = min(uio->uio_resid, (int)(NBPG - o));
+				error = uiomove((caddr_t)SH3_PHYS_TO_P1SEG(v),
+				    c, uio);
+			} else {
+				return (EFAULT);
+			}
 			break;
 
 		case DEV_KMEM:
-			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
+			/* P0 */
 			if (v < SH3_P1SEG_BASE)
 				return (EFAULT);
-			if (v + c > SH3_PHYS_TO_P1SEG(avail_end +
-					sh3_round_page(MSGBUFSIZE)) &&
-			    (v < SH3_P3SEG_BASE || !uvm_kernacc((void *)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
+			/* P1 */
+			if (v < SH3_P2SEG_BASE) {
+				v = SH3_P1SEG_TO_PHYS(v);
+				goto kmemphys;
+			}
+			/* P2 */
+			if (v < SH3_P3SEG_BASE)
+				return (EFAULT);
+			/* P3 */
+			c = min(iov->iov_len, MAXPHYS);
+			if (!uvm_kernacc((void *)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
 			break;
@@ -156,8 +141,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return (0);
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
+				zeropage = malloc(NBPG, M_TEMP, M_WAITOK);
 				memset(zeropage, 0, NBPG);
 			}
 			c = min(iov->iov_len, NBPG);
@@ -168,31 +152,31 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			return (ENXIO);
 		}
 	}
-	if (minor(dev) == DEV_MEM) {
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
-	}
+
 	return (error);
 }
 
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;
 
-	/*
-	 * /dev/mem is the only one that makes sense through this
-	 * interface.  For /dev/kmem any physaddr we return here
-	 * could be transient and hence incorrect or invalid at
-	 * a later time.  /dev/null just doesn't make any sense
-	 * and /dev/zero is a hack that is handled via the default
-	 * pager in mmap().
-	 */
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if (!__mm_mem_addr(off) && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (-1);
-	return (sh3_btop((u_int)off));
+	return (trunc_page((paddr_t)off));
+}
+
+/*
+ * boolean_t __mm_mem_addr(paddr_t pa):
+ *	Check specified physical address is memory device.
+ */
+boolean_t
+__mm_mem_addr(paddr_t pa)
+{
+
+	return ((atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL)
+	    ? TRUE : FALSE);
 }
