@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.33.2.1 2002/10/02 03:35:07 lukem Exp $	*/
+/*	$NetBSD: lpd.c,v 1.33.2.2 2003/10/21 03:54:37 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.33.2.1 2002/10/02 03:35:07 lukem Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.33.2.2 2003/10/21 03:54:37 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,10 @@ __RCSID("$NetBSD: lpd.c,v 1.33.2.1 2002/10/02 03:35:07 lukem Exp $");
 #include <ctype.h>
 #include <arpa/inet.h>
 
+#ifdef LIBWRAP
+#include <tcpd.h>
+#endif
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -110,6 +114,11 @@ __RCSID("$NetBSD: lpd.c,v 1.33.2.1 2002/10/02 03:35:07 lukem Exp $");
 /* XXX from libc/net/rcmd.c */
 extern int __ivaliduser_sa __P((FILE *, struct sockaddr *, socklen_t,
 		const char *, const char *));
+
+#ifdef LIBWRAP
+int allow_severity = LOG_AUTH|LOG_INFO;
+int deny_severity = LOG_AUTH|LOG_WARNING;
+#endif
 
 int	lflag;				/* log requests flag */
 int	rflag;				/* allow of for remote printers */
@@ -370,7 +379,7 @@ main(int argc, char **argv)
 			if (!sflag && finet)
                         	for (i = 1; i <= *finet; i++) 
 					(void)close(finet[i]);
-			dup2(s, 1);
+			dup2(s, STDOUT_FILENO);
 			(void)close(s);
 			if (domain == AF_INET) {
 				/* for both AF_INET and AF_INET6 */
@@ -620,10 +629,13 @@ chkhost(struct sockaddr *f, int check_opts)
 {
 	struct addrinfo hints, *res, *r;
 	FILE *hostf;
-	int first = 1, good = 0;
+	int good = 0;
 	char host[NI_MAXHOST], ip[NI_MAXHOST];
 	char serv[NI_MAXSERV];
 	int error;
+#ifdef LIBWRAP
+	struct request_info req;
+#endif
 
 	error = getnameinfo(f, f->sa_len, NULL, 0, serv, sizeof(serv),
 			    NI_NUMERICSERV);
@@ -676,9 +688,18 @@ chkhost(struct sockaddr *f, int check_opts)
 		freeaddrinfo(res);
 	if (good == 0)
 		fatal("address for your hostname (%s) not matched", host);
+
 	setproctitle("serving %s", from);
+
+#ifdef LIBWRAP
+	request_init(&req, RQ_DAEMON, "lpd", RQ_CLIENT_SIN, f,
+	    RQ_FILE, STDOUT_FILENO, NULL);
+	fromhost(&req);
+	if (!hosts_access(&req))
+		goto denied;
+#endif
+
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
-again:
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
 			(void)fclose(hostf);
@@ -686,11 +707,17 @@ again:
 		}
 		(void)fclose(hostf);
 	}
-	if (first == 1) {
-		first = 0;
-		hostf = fopen(_PATH_HOSTSLPD, "r");
-		goto again;
+	hostf = fopen(_PATH_HOSTSLPD, "r");
+	if (hostf) {
+		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
+			(void)fclose(hostf);
+			return;
+		}
+		(void)fclose(hostf);
 	}
+#ifdef LIBWRAP
+  denied:
+#endif
 	fatal("Your host does not have line printer access");
 	/*NOTREACHED*/
 }
@@ -761,6 +788,13 @@ socksetup(int af, int options, const char *port)
 					close (*s);
 					continue;
 				}
+			if (setsockopt(*s, SOL_SOCKET, SO_REUSEPORT, &on,
+			    sizeof(on)) < 0) {
+				syslog(LOG_ERR,
+				    "setsockopt (SO_REUSEPORT): %m");
+				close (*s);
+				continue;
+			}
 			if (r->ai_family == AF_INET6 && setsockopt(*s,
 			    IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
 				syslog(LOG_ERR,
