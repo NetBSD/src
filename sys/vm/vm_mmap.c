@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.50 1997/07/04 20:22:21 drochner Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.51 1997/09/08 18:19:45 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -471,6 +471,51 @@ sys_mprotect(p, v, retval)
 
 	switch (vm_map_protect(&p->p_vmspace->vm_map, addr, addr+size, prot,
 	    FALSE)) {
+	case KERN_SUCCESS:
+		return (0);
+	case KERN_PROTECTION_FAILURE:
+		return (EACCES);
+	}
+	return (EINVAL);
+}
+
+
+int
+sys_minherit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_minherit_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(int) len;
+		syscallarg(int) inherit;
+	} */ *uap = v;
+	vm_offset_t addr;
+	vm_size_t size, pageoff;
+	register vm_inherit_t inherit;
+
+	addr = (vm_offset_t)SCARG(uap, addr);
+	size = (vm_size_t)SCARG(uap, len);
+	inherit = SCARG(uap, inherit);
+#ifdef DEBUG
+	if (mmapdebug & MDB_FOLLOW)
+		printf("minherit(%d): addr 0x%lx len %lx inherit %d\n", p->p_pid,
+		    addr, size, inherit);
+#endif
+	/*
+	 * Align the address to a page boundary,
+	 * and adjust the size accordingly.
+	 */
+	pageoff = (addr & PAGE_MASK);
+	addr -= pageoff;
+	size += pageoff;
+	size = (vm_size_t) round_page(size);
+	if ((int)size < 0)
+		return(EINVAL);
+
+	switch (vm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
+	    inherit)) {
 	case KERN_SUCCESS:
 		return (0);
 	case KERN_PROTECTION_FAILURE:
