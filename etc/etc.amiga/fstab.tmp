@@ -1,5 +1,5 @@
 #
-#	$NetBSD: fstab.tmp,v 1.9 1997/06/21 15:40:03 veego Exp $
+#	$NetBSD: fstab.tmp,v 1.10 2001/11/26 16:34:56 lukem Exp $
 #
 #	fast file system on / root partition (NBR\7) lowest scsi disk unit
 /dev/sd0a	/	ffs	rw		1	1
@@ -10,7 +10,7 @@
 #	fast file system on /usr (NBU\7) next to lowest scsi disk unit
 /dev/sd0d	/usr	ffs	rw		1	2	
 #	virtual mem file system on /tmp using swap (NBS\0) scsi id 0 size 5M
-#/dev/sd0b	/tmp	mfs	rw,-s10240
+#swap		/tmp	mfs	rw,-s=5m
 #	amigados file system on /amiga (DOS/1)
 #	It is recomended that you mount it on a dir that matches the
 #	volume name and then slinks will resolve correctly. All ados
