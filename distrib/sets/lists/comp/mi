@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.511 2003/01/10 03:22:00 lukem Exp $
+#	$NetBSD: mi,v 1.512 2003/01/11 22:45:39 lha Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3694,7 +3694,7 @@
 ./usr/share/man/cat9/pcmcia_scan_cis.0		comp-sys-catman
 ./usr/share/man/cat9/pfil.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_add_hook.0		comp-sys-catman
-./usr/share/man/cat9/pfil_get_head.0		comp-sys-catman
+./usr/share/man/cat9/pfil_head_get.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_head_register.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_head_unregister.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_hook_get.0		comp-sys-catman
@@ -6692,7 +6692,7 @@
 ./usr/share/man/man9/pcmcia_scan_cis.9		comp-sys-man
 ./usr/share/man/man9/pfil.9		comp-sys-man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man
-./usr/share/man/man9/pfil_get_head.9		comp-sys-man
+./usr/share/man/man9/pfil_head_get.9		comp-sys-man
 ./usr/share/man/man9/pfil_head_register.9		comp-sys-man
 ./usr/share/man/man9/pfil_head_unregister.9		comp-sys-man
 ./usr/share/man/man9/pfil_hook_get.9		comp-sys-man
