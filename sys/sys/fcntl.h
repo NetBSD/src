@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.27 2003/08/07 16:34:03 agc Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.28 2004/01/05 00:35:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -169,6 +169,10 @@
 #define	F_GETLK		7		/* get record locking information */
 #define	F_SETLK		8		/* set record locking information */
 #define	F_SETLKW	9		/* F_SETLK; wait if blocked */
+#if defined(_NETBSD_SOURCE)
+#define	F_CLOSEM	10		/* close all fds >= to the one given */
+#define	F_MAXFD		11		/* return the max open fd */
+#endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */
