@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.1 1995/04/25 20:05:37 pk Exp $ */
+/*	$NetBSD: am7930.c,v 1.2 1995/05/04 19:43:27 pk Exp $ */
 /*
  * Copyright (c) 1995 Rolf Grossmann
  * All rights reserved.
@@ -65,7 +65,6 @@ struct amd7930_softc {
 	struct	device sc_dev;		/* base device */
 	struct	intrhand sc_hwih;	/* hardware interrupt vector */
 	struct	intrhand sc_swih;	/* software interrupt vector */
-	int	sc_interrupts;		/* number of interrupts taken */
 
 	int	sc_open;		/* single use device */
 	int	sc_locked;		/* true when transfering data */
@@ -84,6 +83,7 @@ struct amd7930_softc {
 
         /* sc_au is special in that the hardware interrupt handler uses it */
         struct  auio sc_au;		/* recv and xmit buffers, etc */
+#define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
 };
 
 /* interrupt interfaces */
@@ -327,6 +327,8 @@ amd9730attach(parent, self, args)
 	sc->sc_swih.ih_fun = amd7930swintr;
 	sc->sc_swih.ih_arg = sc;
 	intr_establish(PIL_AUSOFT, &sc->sc_swih);
+
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	if (audio_hardware_attach(&sa_hw_if, sc) != 0)
 		printf("audio: could not attach to audio pseudo-device driver\n");
