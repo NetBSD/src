@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.3 1996/12/09 22:23:34 thorpej Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.4 1997/04/23 18:51:17 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -313,10 +313,6 @@ pw_scan(bp, pw, flags)
 		warnx("root uid should be 0");
 		return (0);
 	}
-	if (id > USHRT_MAX) {
-		warnx("%s > max uid value (%d)", p, USHRT_MAX);
-		return (0);
-	}
 	pw->pw_uid = id;
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOUID;
@@ -324,10 +320,6 @@ pw_scan(bp, pw, flags)
 	if (!(p = strsep(&bp, ":")))			/* gid */
 		goto fmt;
 	id = atol(p);
-	if (id > USHRT_MAX) {
-		warnx("%s > max gid value (%d)", p, USHRT_MAX);
-		return (0);
-	}
 	pw->pw_gid = id;
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOGID;
