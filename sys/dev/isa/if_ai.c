@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ai.c,v 1.2 1998/02/28 01:14:15 pk Exp $ */
-/*	$Id: if_ai.c,v 1.2 1998/02/28 01:14:15 pk Exp $ */
+/*	$NetBSD: if_ai.c,v 1.3 1998/03/03 20:50:06 pk Exp $ */
+/*	$Id: if_ai.c,v 1.3 1998/03/03 20:50:06 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -247,9 +247,10 @@ ai_match(parent, cf, aux)
 	int rv = 0;
 	u_int8_t val, type;
 	bus_size_t memsize;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct isa_attach_args * const ia = aux;
-	struct ai_softc *sc = (struct ai_softc *) cf;
+	struct ai_softc asc;
 
 
 	/* Punt if wildcarded port, IRQ or memory address */
@@ -261,11 +262,13 @@ ai_match(parent, cf, aux)
 		return (0);
 	}
 
+	iot = ia->ia_iot;
+
 	/*
 	 * This probe is horribly bad, but I have no info on this card other
 	 * than the former driver, and it was just as bad!
 	 */
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase,
+	if (bus_space_map(iot, ia->ia_iobase,
 			  AI_IOSIZE, 0, &ioh) != 0) {
 
 		DPRINTF(("ai_match: cannot map %d IO ports @ 0x%x\n",
@@ -273,7 +276,7 @@ ai_match(parent, cf, aux)
 		return (0);
 	}
 
-	val = bus_space_read_1(ia->ia_iot, ioh, AI_REVISION);
+	val = bus_space_read_1(iot, ioh, AI_REVISION);
 
 	type = SL_BOARD(val);
 	if (type != SL10_BOARD || type != EN100_BOARD ||
@@ -283,13 +286,18 @@ ai_match(parent, cf, aux)
 		goto out;
 	}
 
-	sc->sc_regt = ia->ia_iot;
-	sc->sc_regh = ioh;
+	/*
+	 * Fill in just about enough of our local `ai_softc' for
+	 * ai_find_mem_size() to do its job.
+	 */
+	bzero(&asc, sizeof asc);
+	asc.sc_regt = iot;
+	asc.sc_regh = ioh;
 
-	if ((memsize = ai_find_mem_size(sc,ia->ia_memt,ia->ia_maddr)) == 0) {
+	if ((memsize = ai_find_mem_size(&asc,ia->ia_memt,ia->ia_maddr)) == 0) {
 		DPRINTF(("ai_match: cannot size memory of board @ 0x%x\n",
 			 ia->ia_iobase));
-	goto out;
+		goto out;
 	}
 
 	if (!ia->ia_msize)
@@ -307,7 +315,7 @@ ai_match(parent, cf, aux)
 	DPRINTF(("ai_match: found board @ 0x%x\n", ia->ia_iobase));
 
 out:
-	bus_space_unmap(ia->ia_iot, ioh, AI_IOSIZE);
+	bus_space_unmap(iot, ioh, AI_IOSIZE);
 	return rv;
 }
 
