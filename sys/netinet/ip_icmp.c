@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.55 2000/10/18 17:09:14 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.56 2000/10/18 19:20:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -977,8 +977,10 @@ icmp_mtudisc(icp, faddr)
 		if (mtu < 296 || mtu > rt->rt_ifp->if_mtu)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
 		else if (rt->rt_rmx.rmx_mtu > mtu || 
-			 rt->rt_rmx.rmx_mtu == 0)
+			 rt->rt_rmx.rmx_mtu == 0) {
+			icmpstat.icps_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
+		}
 	}
 
 	if (rt)
