@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.19 1995/06/02 18:49:31 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.20 1995/06/02 19:50:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -856,10 +856,8 @@ kerbauth:
 		}
 	} else {
 		auth_type = RPCAUTH_UNIX;
-		if (cred->cr_ngroups < 1)
-			panic("nfsreq nogrps");
-		auth_len = ((((cred->cr_ngroups - 1) > nmp->nm_numgrps) ?
-			nmp->nm_numgrps : (cred->cr_ngroups - 1)) << 2) +
+		auth_len = (((cred->cr_ngroups > nmp->nm_numgrps) ?
+			nmp->nm_numgrps : cred->cr_ngroups) << 2) +
 			5 * NFSX_UNSIGNED;
 	}
 	m = nfsm_rpchead(cred, (nmp->nm_flag & NFSMNT_NQNFS), procnum,
