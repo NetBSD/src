@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal,v 1.5 2000/10/10 12:55:21 lukem Exp $
+.\"	$NetBSD: legal,v 1.6 2000/10/10 14:06:10 ad Exp $
 .
 This product includes software developed by Ted Lemon.
 .Pp
@@ -20,6 +20,12 @@ Chris G. Demetriou, and Jonathan Stone.
 .Pp
 This product includes software developed by the University
 of California, Lawrence Berkeley Laboratory.
+.Pp
+This product includes software developed by Jonathan Stone for
+the NetBSD Project.
+.Pp
+This product includes software developed by Tohru Nishimura
+for the NetBSD Project.
 .Pp
 Some files have the following copyright:
 .(item -offset indent
