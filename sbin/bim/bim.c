@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.16 2005/01/12 09:04:53 simonb Exp $	*/
+/*	$NetBSD: bim.c,v 1.17 2005/02/05 14:23:24 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.16 2005/01/12 09:04:53 simonb Exp $");
+__RCSID("$NetBSD: bim.c,v 1.17 2005/02/05 14:23:24 xtraeme Exp $");
 #endif /* not lint */
 
 /*
@@ -63,14 +63,13 @@ __RCSID("$NetBSD: bim.c,v 1.16 2005/01/12 09:04:53 simonb Exp $");
 
 #include "extern.h"
 
-int	copy_bytes __P((int, int, int, int, int));
-unsigned short dkcksum __P((struct disklabel *));
-void	getlf __P((char));
-void	getstr __P((char *, int));
-void	init_images __P((char));
-int	main __P((int, char *[]));
-void	save_images __P((void));
-void	usage __P((void));
+int	copy_bytes(int, int, int, int, int);
+unsigned short dkcksum(struct disklabel *);
+void	getlf(char);
+void	getstr(char *, int);
+void	init_images(char);
+void	save_images(void);
+void	usage(void);
 
 #define TRUE 1
 #define FALSE 0
@@ -97,7 +96,7 @@ int     secsize;
 /***********************/
 
 void 
-usage()
+usage(void)
 {
 	printf("usage: %s [-y] [-c command [-c command ...]] [device]\n",
 
@@ -107,8 +106,7 @@ usage()
 }
 
 void 
-getlf(inchar)
-	char	inchar;
+getlf(char inchar)
 {
 
 	while (inchar != '\n')
@@ -116,9 +114,7 @@ getlf(inchar)
 }
 
 void 
-getstr(str, size)
-	char	*str;
-	int	size;
+getstr(char *str, int size)
 {
 	char	inchar;
 	int	count;
@@ -136,8 +132,7 @@ getstr(str, size)
 
 /* Checksum a disk label */
 unsigned short
-dkcksum(lp)
-	struct disklabel *lp;
+dkcksum(struct disklabel *lp)
 {
 	unsigned short *start, *end, sum = 0;
 
@@ -149,7 +144,7 @@ dkcksum(lp)
 }
 
 void 
-save_images()
+save_images(void)
 {
 	int     count;
 
@@ -164,8 +159,7 @@ save_images()
 
 /* This function will initialize the image information . */
 void 
-init_images(badmagic)
-	char    badmagic;
+init_images(char badmagic)
 {
 	char    answer[80];
 	int     idx;
@@ -199,10 +193,7 @@ init_images(badmagic)
 
 /* Print out the header and other information about the disk. */
 int 
-display_part(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+display_part(int num, char **args, char *syntax)
 {
 	int     count;
 
@@ -229,10 +220,7 @@ display_part(num, args, syntax)
 }
 
 int 
-display_image(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+display_image(int num, char **args, char *syntax)
 {
 	int     count;
 
@@ -258,10 +246,7 @@ display_image(num, args, syntax)
 }
 
 int 
-display_head(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+display_head(int num, char **args, char *syntax)
 {
 
 	printf("\nDisk: %s   Type: %s\n", dk_label->d_packname,
@@ -278,8 +263,7 @@ display_head(num, args, syntax)
  *  relative to the start of the files.
  */
 int 
-copy_bytes(from_fd, from_adr, to_fd, to_adr, number)
-	int     from_fd, from_adr, to_fd, to_adr, number;
+copy_bytes(int from_fd, int from_adr, int to_fd, int to_adr, int number)
 {
 	int     count;
 	int     idx;
@@ -325,10 +309,7 @@ copy_bytes(from_fd, from_adr, to_fd, to_adr, number)
 
 /* Add a boot image. */
 int
-add_image(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+add_image(int num, char **args, char *syntax)
 {
 	struct exec im_exec;	/* Information about a new image. */
 	int     im_file;
@@ -453,10 +434,7 @@ add_image(num, args, syntax)
 
 /* Delete a boot image. */
 int
-delete_image(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+delete_image(int num, char **args, char *syntax)
 {
 	int     which_image;	/* Which image is to be operated upon. */
 	int     idx;		/* temporary variable for loops. */
@@ -519,10 +497,7 @@ delete_image(num, args, syntax)
 
 /* Set the default boot image. */
 int
-set_default_image(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+set_default_image(int num, char **args, char *syntax)
 {
 	int     which_image;
 
@@ -541,10 +516,7 @@ set_default_image(num, args, syntax)
 
 /* Initialize the disk or just the image portion. */
 int
-initialize(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+initialize(int num, char **args, char *syntax)
 {
 
 	/* Check the args */
@@ -558,10 +530,7 @@ initialize(num, args, syntax)
 
 /* Write the disk header and exit. */
 int 
-write_exit(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+write_exit(int num, char **args, char *syntax)
 {
 
 	if (images_changed)
@@ -574,12 +543,10 @@ write_exit(num, args, syntax)
 /*********************/
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	int     count;		/* Used by reads. */
-	char   *fname;
+	const char   *fname;
 	int     cmdscnt;	/* Number of argument line commands. */
 	char   *argcmds[MAXARGCMDS];
 	char    optchar;
