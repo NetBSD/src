@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.58.2.2 2002/06/14 17:12:51 lukem Exp $ */
+/*	$NetBSD: md.c,v 1.58.2.3 2002/07/29 14:46:33 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -277,6 +277,14 @@ editlab:
 	bsdlabel[F].pi_fstype = FS_UNUSED;
 	bsdlabel[G].pi_fstype = FS_UNUSED;
 	bsdlabel[H].pi_fstype = FS_UNUSED;
+	bsdlabel[I].pi_fstype = FS_UNUSED;
+	bsdlabel[J].pi_fstype = FS_UNUSED;
+	bsdlabel[K].pi_fstype = FS_UNUSED;
+	bsdlabel[L].pi_fstype = FS_UNUSED;
+	bsdlabel[M].pi_fstype = FS_UNUSED;
+	bsdlabel[N].pi_fstype = FS_UNUSED;
+	bsdlabel[O].pi_fstype = FS_UNUSED;
+	bsdlabel[P].pi_fstype = FS_UNUSED;
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
@@ -369,7 +377,7 @@ custom:
 	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
 	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
 	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	for (i=0; i<8; i++) {
+	for (i=0; i<maxpart; i++) {
 		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 			       'a'+i, bsdlabel[i].pi_size,
 			       'a'+i, bsdlabel[i].pi_offset,
@@ -378,7 +386,7 @@ custom:
 			(void)fprintf (f, "b%c#%d:f%c#%d",
 				       'a'+i, bsdlabel[i].pi_bsize,
 				       'a'+i, bsdlabel[i].pi_fsize);
-		if (i < 7)
+		if (i < maxpart -1)
 			(void)fprintf (f, "\\\n");
 		else
 			(void)fprintf (f, "\n");
@@ -461,7 +469,7 @@ md_cleanup_install(void)
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 	
-	add_rc_conf("wscons=YES");
+	add_rc_conf("wscons=YES\n");
 
 	/*
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
