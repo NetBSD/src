@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.66 1999/12/20 15:12:23 itojun Exp $
+#	$NetBSD: netstart,v 1.67 1999/12/20 15:51:14 itojun Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -199,13 +199,7 @@ fi
 
 # IPv6
 # Note that manual configuration can be done in the above, using ifconfig.
-ifconfig lo0 inet6 >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-	# We do not have IPv6 support in kernel.
-	if checkyesno ip6forwarding || checkyesno rtsol; then
-		echo "WARNING: ip6 requested without kernel IPv6 config"
-	fi
-else
+if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# We have IPv6 support in kernel.
 
 	# disallow scoped unicast dest without outgoing scope identifiers.
@@ -241,6 +235,11 @@ else
 	dadcount=`sysctl -n net.inet6.ip6.dad_count 2>/dev/null`
 	sleep $dadcount
 	sleep 1
+else
+	# We do not have IPv6 support in kernel.
+	if checkyesno ip6forwarding || checkyesno rtsol; then
+		echo "WARNING: ip6 requested without kernel IPv6 config"
+	fi
 fi
 
 if [ -s /etc/netstart.local ]; then
