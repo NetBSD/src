@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_msdos.8,v 1.1 1997/03/01 19:42:57 christos Exp $
+.\"	$NetBSD: newfs_msdos.8,v 1.2 1997/03/12 13:57:51 christos Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas
 .\" Copyright (c) 1995, 1996 Joerg Wunsch
@@ -112,6 +112,7 @@ appropriate information written to diagnostic output).
 .Sh SEE ALSO
 .Xr fdformat 1 ,
 .Xr mount_msdos 8 ,
+.Xr fsck_msdos 8 ,
 .Xr newfs 8 .
 .Sh BUGS
 There is currently no way to specify obscure file system parameters.
@@ -120,12 +121,7 @@ formatted.  For the same reason, it's not possible to handle hard disk
 partitions.  More options should be added to allow this.  More entries
 should be added to the table of known formats, too.
 .Pp
-No attempt is made to handle media defects.  However, this is beyond
-the scope of
-.Nm 
-and should better be handled by the (nonexistent)
-.Xr dosfsck 1
-utility.
+No attempt is made to handle media defects. 
 .Sh HISTORY
 .Nm
 appeared in FreeBSD-2.2.
