@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.4 2000/01/31 14:22:45 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.5 2000/02/06 11:21:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -34,7 +34,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/route.h>
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
 #include <netinet/in.h>
