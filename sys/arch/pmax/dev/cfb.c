@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.13 1996/02/02 18:07:13 mycroft Exp $	*/
+/*	$NetBSD: cfb.c,v 1.14 1996/02/13 18:27:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: cfb.c,v 1.13 1996/02/02 18:07:13 mycroft Exp $
+ *      $Id: cfb.c,v 1.14 1996/02/13 18:27:28 jonathan Exp $
  */
 
 /*
@@ -88,6 +88,7 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 
@@ -120,7 +121,7 @@ struct fbinfo	cfbfi;	/*XXX*/ /* should be softc */
 extern struct cfdriver cfb;
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [NCFB * CMAP_BITS];	/* One colormap per cfb... */
+static u_char cmap_bits [CMAP_BITS];	/* One colormap per cfb... */
 
 /*
  * Method table for standard framebuffer operations on a CFB.
@@ -175,7 +176,6 @@ cfbmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	static int ncfbs = 1;
 
 #ifdef FBDRIVER_DOES_ATTACH
 	/* leave configuration  to the fb driver */
@@ -186,12 +186,6 @@ cfbmatch(parent, match, aux)
 	if (!TC_BUS_MATCHNAME(ca, "PMAG-BA "))
 		return (0);
 
-
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= ncfbs)
-		return (0);
-#endif
 	return (1);
 }
 
@@ -251,8 +245,17 @@ cfbinit(fi, cfbaddr, unit, silent)
 	 * If this device is being intialized as the console, malloc()
 	 * is not yet up and we must use statically-allocated space.
 	 */
-	if (fi == NULL) fi = &cfbfi;	/* XXX */
-  	
+	if (fi == NULL) {
+		fi = &cfbfi;	/* XXX */
+  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	}
+	else {
+    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			return (0);
+		}
+	}
 
 	/* check for no frame buffer */
 	if (badaddr(cfbaddr, 4)) {
@@ -272,7 +275,6 @@ cfbinit(fi, cfbaddr, unit, silent)
 	fi->fi_linebytes = 1024;
 	fi->fi_driver = &cfb_driver;
 	fi->fi_blanked = 0;
-	fi->fi_cmap_bits = (caddr_t)&cmap_bits [CMAP_BITS * unit];
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_CFB;
