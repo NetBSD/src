@@ -1009,8 +1009,8 @@
 ./usr/share/man/cat9/pool_create.0
 ./usr/share/man/cat9/pool_destroy.0
 ./usr/share/man/cat9/pool_get.0
-./usr/share/man/cat9/pool_put.0
 ./usr/share/man/cat9/pool_prime.0
+./usr/share/man/cat9/pool_put.0
 ./usr/share/man/cat9/pool_sethiwat.0
 ./usr/share/man/cat9/pool_setlowat.0
 ./usr/share/man/cat9/printf.0
@@ -2111,6 +2111,13 @@
 ./usr/share/man/man9/pgsignal.9
 ./usr/share/man/man9/physio.9
 ./usr/share/man/man9/pool.9
+./usr/share/man/man9/pool_create.9
+./usr/share/man/man9/pool_destroy.9
+./usr/share/man/man9/pool_get.9
+./usr/share/man/man9/pool_prime.9
+./usr/share/man/man9/pool_put.9
+./usr/share/man/man9/pool_sethiwat.9
+./usr/share/man/man9/pool_setlowat.9
 ./usr/share/man/man9/printf.9
 ./usr/share/man/man9/psignal.9
 ./usr/share/man/man9/readdisklabel.9
