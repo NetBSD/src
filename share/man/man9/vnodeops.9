@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.26 2003/07/01 10:29:45 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.27 2003/07/04 12:35:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1398,10 +1398,10 @@ points a variable that specifies the number of pages to read.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 If PGO_LOCKED is specified in
-.Em flags,
+.Em flags ,
 .Fn VOP_GETPAGES
 might return less pages than requested.
-In that case, a variable pointed by
+In that case, the variable pointed to by
 .Em count
 will be updated.
 .Pp
