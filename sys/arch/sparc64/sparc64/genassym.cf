@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15.2.1 2000/07/18 16:23:26 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.15.2.2 2000/08/07 01:02:31 mrg Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@ include <sys/device.h>
 include <sys/disklabel.h>
 include <sys/disk.h>
 
+include <uvm/uvm.h>
+
 include <machine/db_machdep.h>
 include <machine/pmap.h>
 include <machine/cpu.h>
@@ -133,6 +135,9 @@ define	USIZ		sizeof(struct user)
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
+
+# UVM structure fields
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # pmap structure fields
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
