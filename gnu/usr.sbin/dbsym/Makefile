@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/09/19 03:09:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/04/09 22:38:24 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,11 @@ MAN=		dbsym.8
 
 CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
+.if !defined(HOSTPROG) && ${MKPIC} != "no"
+DPADD+=		${BFDDIR}/libbfd_pic.a
+.else
 DPADD+=		${BFDDIR}/libbfd.a
+.endif
 LDADD+=		-L${BFDDIR} -lbfd
 
 DPADD+=		${IBERTYDIR}/libiberty.a
