@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.5 1999/09/20 09:22:48 is Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.6 1999/09/21 09:43:39 is Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
