@@ -34,21 +34,26 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
-
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: brk.S,v 1.3 1994/12/15 17:25:08 mycroft Exp $")
+	ASMSTR("$Id: brk.S,v 1.4 1995/03/20 14:02:03 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#define	SYS_brk		17
+#include "SYS.h"
+
+	.globl	minbrk
+	.globl	curbrk
+
+	.data
+minbrk:	.word	_C_LABEL(end)
+	.text
 
 LEAF(brk)
 	lw	v0, minbrk
 	bgeu	a0, v0, _C_LABEL(brk)
 	move	a0, v0		# dont allow break < minbrk
 ALEAF(_brk)
-	li	v0, SYS_brk
+	li	v0, SYS_break
 	syscall
 	bne	a3, zero, 1f
 	sw	a0, curbrk
