@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.5 2002/11/05 07:41:36 chs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6 2002/12/20 16:54:17 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ extern vsize_t mem_size;
 extern int protection_codes[];
 extern int pmap_aliasmask;
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
+void pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping

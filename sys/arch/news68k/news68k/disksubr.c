@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2002/03/05 09:40:40 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2002/12/20 16:54:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -53,7 +53,7 @@
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -144,7 +144,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
