@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/11/23 02:08:03 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.13 1999/12/26 19:48:01 msaitoh Exp $
 
 LIB=		bfd
 
@@ -160,6 +160,24 @@ SELECT_VECS+=		${DEFAULT_VEC.powerpc} bfd_elf32_powerpcle_vec \
 SRCS+=			cpu-powerpc.c elf32-ppc.c ppc-dis.c ppc-opc.c \
 			elf32.c elf.c elflink.c dwarf2.c coff-rs6000.c \
 			xcofflink.c
+.endif
+
+##### sh3 #####
+
+.if (${MACHINE_ARCH} == "sh3" || !defined(BFD_SLIM))
+ARCHES+=		sh
+.if defined(ELF_PLEASE)
+DEFAULT_VEC.sh3=	bfd_elf32_shunx_vec
+SELECT_VECS+=		${DEFAULT_VEC.sh3} bfd_elf32_shlunx_vec \
+			shcoff_vec shlcoff_vec
+.else
+DEFAULT_VEC.sh3=	shcoff_vec
+SELECT_VECS+=		${DEFAULT_VEC.sh3} shlcoff_vec \
+			bfd_elf32_shunx_vec bfd_elf32_shlunx_vec
+.endif
+SRCS+=			cpu-sh.c sh-dis.c \
+			elf32-shunx.c elf32-sh.c elf32.c elf.c elflink.c \
+			coff-sh.c cofflink.c coffgen.c dwarf2.c
 .endif
 
 ##### sparc #####
