@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.13 2001/04/19 17:48:47 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.14 2003/04/29 17:06:04 scw Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -47,6 +47,7 @@ extern db_regs_t	*ddb_regp;	/* pointer to current register state */
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
 
+#define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x00000080	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)

@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.16 2003/03/14 06:23:48 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.17 2003/04/29 17:06:06 scw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -65,6 +65,7 @@ extern	db_regs_t	ddb_regs;		/* register state */
 
 #define	PC_REGS(regs)	(*(db_addr_t *)&(regs)->iar)
 
+#define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_ASM	"trap"		/* should match BKPT_INST */
 #define	BKPT_INST	0x7fe00008	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */

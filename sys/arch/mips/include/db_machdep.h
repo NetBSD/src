@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.14 2002/03/05 14:12:29 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.15 2003/04/29 17:06:05 scw Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -63,6 +63,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 		(regs)->f_regs[PC] += BKPT_SIZE;			 \
 } while(0)
 
+#define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define BKPT_INST	0x0001000D
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
