@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.114 2004/05/22 23:24:23 kleink Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.115 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.114 2004/05/22 23:24:23 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.115 2004/05/25 14:55:46 hannken Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -270,7 +270,7 @@ ufs_access(void *v)
 	}
 
 	/* If immutable bit set, nobody gets to write it. */
-	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
+	if ((mode & VWRITE) && (ip->i_flags & (IMMUTABLE | SF_SNAPSHOT)))
 		return (EPERM);
 
 	return (vaccess(vp->v_type, ip->i_mode & ALLPERMS,
@@ -392,6 +392,10 @@ ufs_setattr(void *v)
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
 			    securelevel > 0)
 				return (EPERM);
+			/* Snapshot flag cannot be set or cleared */
+			if ((vap->va_flags & SF_SNAPSHOT) != 
+			    (ip->i_flags & SF_SNAPSHOT))
+				return (EPERM);
 			ip->i_flags = vap->va_flags;
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		} else {
@@ -434,6 +438,8 @@ ufs_setattr(void *v)
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				 return (EROFS);
+			if ((ip->i_flags & SF_SNAPSHOT) != 0)
+				return (EPERM);
 			break;
 		default:
 			break;
@@ -447,6 +453,8 @@ ufs_setattr(void *v)
 	    vap->va_birthtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
+		if ((ip->i_flags & SF_SNAPSHOT) != 0)
+			return (EPERM);
 		if (cred->cr_uid != ip->i_uid &&
 		    (error = suser(cred, &p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
@@ -470,6 +478,10 @@ ufs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
+		if ((ip->i_flags & SF_SNAPSHOT) != 0 &&
+		    (vap->va_mode & (S_IXUSR | S_IWUSR | S_IXGRP | S_IWGRP |
+		     S_IXOTH | S_IWOTH)))
+			return (EPERM);
 		error = ufs_chmod(vp, (int)vap->va_mode, cred, p);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);

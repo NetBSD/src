@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.83 2004/05/19 13:20:27 darrenr Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.84 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.83 2004/05/19 13:20:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.84 2004/05/25 14:55:46 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -466,7 +466,8 @@ sys_mmap(l, v, retval)
 				if ((error =
 				    VOP_GETATTR(vp, &va, p->p_ucred, p)))
 					return (error);
-				if ((va.va_flags & (IMMUTABLE|APPEND)) == 0)
+				if ((va.va_flags &
+				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
 					maxprot |= VM_PROT_WRITE;
 				else if (prot & PROT_WRITE)
 					return (EPERM);

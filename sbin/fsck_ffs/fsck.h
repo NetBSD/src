@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.37 2004/01/09 19:12:31 dbj Exp $	*/
+/*	$NetBSD: fsck.h,v 1.38 2004/05/25 14:54:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -175,7 +175,8 @@ struct inodesc {
 };
 /* file types */
 #define	DATA	1
-#define	ADDR	2
+#define	SNAP	2
+#define	ADDR	3
 
 /*
  * Linked list of duplicate blocks.

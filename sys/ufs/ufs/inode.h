@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.36 2003/08/07 16:34:44 agc Exp $	*/
+/*	$NetBSD: inode.h,v 1.37 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -49,6 +49,10 @@
 /*
  * Per-filesystem inode extensions.
  */
+struct ffs_inode_ext {
+	daddr_t *ffs_snapblklist;	/* Collect expunged snapshot blocks. */
+};
+
 struct ext2fs_inode_ext {
 	daddr_t ext2fs_last_lblk;	/* last logical block allocated */
 	daddr_t ext2fs_last_blk;	/* last block allocated on disk */
@@ -68,6 +72,7 @@ struct lfs_inode_ext;
 struct inode {
 	struct genfs_node i_gnode;
 	LIST_ENTRY(inode) i_hash;/* Hash chain. */
+	TAILQ_ENTRY(inode) i_nextsnap; /* snapshot file list. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ufsmount *i_ump; /* Mount point associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
@@ -103,9 +108,11 @@ struct inode {
 	 */
 	union {
 		/* Other extensions could go here... */
+		struct	ffs_inode_ext ffs;
 		struct	ext2fs_inode_ext e2fs;
 		struct  lfs_inode_ext *lfs;
 	} inode_ext;
+#define	i_snapblklist		inode_ext.ffs.ffs_snapblklist
 #define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 	/*
@@ -264,8 +271,10 @@ struct indir {
 			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
 		if ((ip)->i_flag & IN_UPDATE) {				\
-			DIP_ASSIGN(ip, mtime, (mod)->tv_sec);		\
-			DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec);	\
+			if (((ip)->i_flags & SF_SNAPSHOT) == 0) {	\
+				DIP_ASSIGN(ip, mtime, (mod)->tv_sec);	\
+				DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec); \
+			}						\
 			(ip)->i_modrev++;				\
 			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.39 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.40 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -166,6 +166,12 @@ void ufs_vinit __P((struct mount *, int (**) __P((void *)),
 int ufs_makeinode __P((int, struct vnode *, struct vnode **,
 		       struct componentname *));
 int ufs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
+
+/*
+ * Snapshot function prototypes.
+ */
+
+void	ffs_snapgone(struct inode *);
 
 /*
  * Soft dependency function prototypes.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.208 2004/05/02 12:21:02 pk Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.209 2004/05/25 14:54:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.208 2004/05/02 12:21:02 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.209 2004/05/25 14:54:57 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -539,12 +539,15 @@ dounmount(mp, flags, p)
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
 	if (mp->mnt_syncer != NULL)
 		vfs_deallocate_syncvnode(mp);
-	if (((mp->mnt_flag & MNT_RDONLY) ||
+	error = 0;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 #if NFSS > 0
-	    (error = fss_umount_hook(mp, (flags & MNT_FORCE))) == 0 ||
+		error = fss_umount_hook(mp, (flags & MNT_FORCE));
 #endif
-	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
-	    (flags & MNT_FORCE))
+		if (error == 0)
+			error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+	}
+	if (error == 0 || (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, p);
 	vn_finished_write(mp, 0);
 	simple_lock(&mountlist_slock);
