@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.7 1994/08/03 06:10:15 briggs Exp $
+#	$Id: MAKEDEV,v 1.8 1994/08/04 21:48:17 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -254,17 +254,9 @@ grf*)
 	esac
 	;;
 
-adb*)
-	unit=`expr $i : 'adb\(.*\)'`
-	rm -f adb${unit}
-	case ${unit} in
-	0|1)
-		mknod adb${unit} c 23 ${unit} ; chmod 666 adb${unit}
-		;;
-	*)
-		echo bad unit for adb in: $i
-		;;
-	esac
+adb)
+	rm -f adb
+	mknod adb c 23 0 ; chmod 666 adb
 	;;
 
 bpf*)
