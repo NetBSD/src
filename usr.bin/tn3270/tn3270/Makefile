@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.27 1998/02/18 22:51:08 jtc Exp $
+#	$NetBSD: Makefile,v 1.28 1998/02/28 12:38:58 veego Exp $
 
+CPPFLAGS+=-I${.CURDIR}/../../../lib
 LDADD+=	-lcurses -lcrypt
 DPADD+=	${LIBCURSES} ${LIBCRYPT}
 
