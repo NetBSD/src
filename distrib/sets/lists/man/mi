@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.512 2002/09/01 19:52:33 atatat Exp $
+# $NetBSD: mi,v 1.513 2002/09/10 22:19:41 joda Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -161,7 +161,6 @@
 ./usr/share/man/cat1/jot.0			man-util-catman
 ./usr/share/man/cat1/kdestroy.0			man-krb5-catman
 ./usr/share/man/cat1/kdump.0			man-krb5-catman
-./usr/share/man/cat1/kf.0			man-krb5-catman
 ./usr/share/man/cat1/kill.0			man-util-catman
 ./usr/share/man/cat1/kinit.0			man-krb5-catman
 ./usr/share/man/cat1/klist.0			man-krb5-catman
@@ -1434,7 +1433,6 @@
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman
 ./usr/share/man/cat8/kdc.0			man-krb5-catman
 ./usr/share/man/cat8/kerberos.0			man-krb5-catman
-./usr/share/man/cat8/kfd.0			man-krb5-catman
 ./usr/share/man/cat8/kpasswdd.0			man-krb5-catman
 ./usr/share/man/cat8/kstash.0			man-krb5-catman
 ./usr/share/man/cat8/ktutil.0			man-krb5-catman
@@ -1906,7 +1904,6 @@
 ./usr/share/man/man1/jot.1			man-util-man
 ./usr/share/man/man1/kdestroy.1			man-krb5-man
 ./usr/share/man/man1/kdump.1			man-krb5-man
-./usr/share/man/man1/kf.1			man-krb5-man
 ./usr/share/man/man1/kill.1			man-util-man
 ./usr/share/man/man1/kinit.1			man-krb5-man
 ./usr/share/man/man1/klist.1			man-krb5-man
@@ -3179,7 +3176,6 @@
 ./usr/share/man/man8/kadmind.8			man-krb5-man
 ./usr/share/man/man8/kdc.8			man-krb5-man
 ./usr/share/man/man8/kerberos.8			man-krb5-man
-./usr/share/man/man8/kfd.8			man-krb5-man
 ./usr/share/man/man8/kpasswdd.8			man-krb5-man
 ./usr/share/man/man8/kstash.8			man-krb5-man
 ./usr/share/man/man8/ktutil.8			man-krb5-man
