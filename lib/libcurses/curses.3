@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.25 2000/04/27 00:28:28 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.26 2000/05/01 12:30:30 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,6 +130,7 @@ relative to
 .It endwin()	end window modes
 .It erase()	erase
 .Em stdscr
+.It erasechar()	Return the terminal erase character
 .It flash()	flash the terminal screen
 .It flushinp()	flush terminal input
 .It flushok(win,boolf)	set flush-on-refresh flag for
@@ -166,6 +167,7 @@ refresh.
 .It isendwin()	check if endwin() or wrefresh() was called latest
 .It keypad(win,boolf)	set keypad flag for
 .Em win
+.It killchar()	Return the terminal kill character.
 .It leaveok(win,boolf)	set leave flag for
 .Em win
 .It longname(termbuf,name)	get long name from

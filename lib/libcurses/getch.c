@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.26 2000/04/27 17:50:01 mycroft Exp $	*/
+/*	$NetBSD: getch.c,v 1.27 2000/05/01 12:30:30 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.26 2000/04/27 17:50:01 mycroft Exp $");
+__RCSID("$NetBSD: getch.c,v 1.27 2000/05/01 12:30:30 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -48,6 +48,9 @@ __RCSID("$NetBSD: getch.c,v 1.26 2000/04/27 17:50:01 mycroft Exp $");
 #include <stdio.h>
 #include "curses.h"
 #include "curses_private.h"
+
+/* defined in setterm.c */
+extern struct tinfo *_cursesi_genbuf;
 
 #define DEFAULT_DELAY 2			/* default delay for timeout() */
 
@@ -369,10 +372,9 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
  *
  */
 void
-__init_getch(char *sp)
+__init_getch(void)
 {
-	static	struct tinfo *termcap;
-	char entry[1024], termname[1024], *p;
+	char entry[1024], *p;
 	int     i, j, length, key_ent;
 	size_t limit;
 	key_entry_t *tmp_key;
@@ -391,54 +393,49 @@ __init_getch(char *sp)
 	start = end = working = 0;
 
 	/* now do the termcap snarfing ... */
-	(void) strncpy(termname, sp, (size_t) 1022);
-	termname[1023] = 0;
-
-	if (t_getent(&termcap, termname) > 0) {
-		for (i = 0; i < num_tcs; i++) {
-			p = entry;
-			limit = 1023;
-			if (t_getstr(termcap, tc[i].name, &p, &limit) != NULL) {
-				current = base_keymap;	/* always start with
-							 * base keymap. */
-				length = (int) strlen(entry);
+	for (i = 0; i < num_tcs; i++) {
+		p = entry;
+		limit = 1023;
+		if (t_getstr(_cursesi_genbuf, tc[i].name, &p, &limit) != NULL) {
+			current = base_keymap;	/* always start with
+						 * base keymap. */
+			length = (int) strlen(entry);
 #ifdef DEBUG
-				__CTRACE("Processing termcap entry %s, sequence ",
-					tc[i].name);
-				for (k = 0; k <= length -1; k++)
-					__CTRACE("%s", unctrl(entry[k]));
-				__CTRACE("\n");
+			__CTRACE("Processing termcap entry %s, sequence ",
+				 tc[i].name);
+			for (k = 0; k <= length -1; k++)
+				__CTRACE("%s", unctrl(entry[k]));
+			__CTRACE("\n");
 #endif
-				for (j = 0; j < length - 1; j++) {
-					  /* add the entry to the struct */
-                                        tmp_key = add_new_key(current,
-							      entry[j],
-							      KEYMAP_MULTI, 0);
+			for (j = 0; j < length - 1; j++) {
+				  /* add the entry to the struct */
+				tmp_key = add_new_key(current,
+						      entry[j],
+						      KEYMAP_MULTI, 0);
 					
-                                          /* index into the key array - it's
-                                             clearer if we stash this */
-                                        key_ent = current->mapping[
-                                                (unsigned) entry[j]];
+				  /* index into the key array - it's
+				     clearer if we stash this */
+				key_ent = current->mapping[
+					(unsigned) entry[j]];
 
-					current->key[key_ent] = tmp_key;
-					
-					  /* next key uses this map... */
-					current = current->key[key_ent]->value.next;
-				}
+				current->key[key_ent] = tmp_key;
+				
+				  /* next key uses this map... */
+				current = current->key[key_ent]->value.next;
+			}
 
 				/* this is the last key in the sequence (it
 				 * may have been the only one but that does
 				 * not matter) this means it is a leaf key and
 				 * should have a symbol associated with it.
 				 */
-				tmp_key = add_new_key(current,
-						      entry[length - 1],
-						      KEYMAP_LEAF,
-						      tc[i].symbol);
-				current->key[
-					current->mapping[(int)entry[length - 1]]] =
-                                        tmp_key;
-			}
+			tmp_key = add_new_key(current,
+					      entry[length - 1],
+					      KEYMAP_LEAF,
+					      tc[i].symbol);
+			current->key[
+				current->mapping[(int)entry[length - 1]]] =
+			tmp_key;
 		}
 	}
 }
@@ -766,8 +763,10 @@ wgetch(WINDOW *win)
 	}
 
 	__restore_termios();
+
 	if (__echoit)
 		waddch(win, (chtype) inp);
+
 	if (weset)
 		nocbreak();
 
