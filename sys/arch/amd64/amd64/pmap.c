@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2003/05/07 21:25:34 fvdl Exp $	*/
 
 /*
  *
@@ -1690,26 +1690,40 @@ static __inline struct vm_page *
 pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 {
 	int lidx = level - 1;
+	struct vm_page *pg;
 
 	if (pa != (paddr_t)-1 && pmap->pm_ptphint[lidx] &&
 	    pa == VM_PAGE_TO_PHYS(pmap->pm_ptphint[lidx])) {
 		return (pmap->pm_ptphint[lidx]);
 	}
-	return uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
+	if (lidx == 0)
+		pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
+	else {
+		simple_lock(&pmap->pm_obj[lidx].vmobjlock);
+		pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
+		simple_unlock(&pmap->pm_obj[lidx].vmobjlock);
+	}
+	return pg;
 }
 
 static __inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
 	int lidx;
+	struct uvm_object *obj;
 
 	lidx = level - 1;
 
+	obj = &pmap->pm_obj[lidx];
 	pmap->pm_stats.resident_count--;
+	if (lidx != 0)
+		simple_lock(&obj->vmobjlock);
 	if (pmap->pm_ptphint[lidx] == ptp)
-		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&pmap->pm_obj[lidx].memq);
+		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
 	uvm_pagefree(ptp);
+	if (lidx != 0)
+		simple_unlock(&obj->vmobjlock);
 }
 
 static void
@@ -1762,6 +1776,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 	unsigned long index;
 	pd_entry_t *pva;
 	paddr_t ppa, pa;
+	struct uvm_object *obj;
 
 	ptp = NULL;
 	pa = (paddr_t)-1;
@@ -1786,9 +1801,16 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 			continue;
 		}
 
-		ptp = uvm_pagealloc(&pmap->pm_obj[i-2],
-		    ptp_va2o(va, i - 1), NULL,
+		obj = &pmap->pm_obj[i-2];
+		/*
+		 * XXX pm_obj[0] is pm_lock, which is already locked.
+		 */
+		if (i != 2)
+			simple_lock(&obj->vmobjlock);
+		ptp = uvm_pagealloc(obj, ptp_va2o(va, i - 1), NULL,
 		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		if (i != 2)
+			simple_unlock(&obj->vmobjlock);
 
 		if (ptp == NULL)
 			return NULL;
