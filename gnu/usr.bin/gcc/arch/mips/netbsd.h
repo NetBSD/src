@@ -159,6 +159,19 @@ Boston, MA 02111-1307, USA.  */
 #define SIZE_ASM_OP	".size"
 #define WEAK_ASM_OP	".weak"
 
+/* This is how to equate one symbol to another symbol.  The syntax used is
+   `SYM1=SYM2'.  Note that this is different from the way equates are done
+   with most svr4 assemblers, where the syntax is `.set SYM1,SYM2'.  */
+
+#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)				\
+ do {	fprintf ((FILE), "\t");						\
+	assemble_name (FILE, LABEL1);					\
+	fprintf (FILE, " = ");						\
+	assemble_name (FILE, LABEL2);					\
+	fprintf (FILE, "\n");						\
+  } while (0)
+
+
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  Different svr4 assemblers
    expect various different forms for this operand.  The one given here
