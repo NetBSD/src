@@ -1582,7 +1582,7 @@ oldsun|Sun Microsystems Workstation console:\
 # From: Alexander Lukyanov <lav@video.yars.free.net>, 14 Nov 1995
 sun|sun1|sun2|Sun Microsystems Inc. workstation console:\
 	:am:km:ms:\
-	:co#80:li#35:\
+	:co#80:li#34:\
 	:%7=\E[194z:&5=\E[193z:&8=\E[195z:@7=\E[220z:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:F1=\E[234z:F2=\E[235z:\
 	:IC=\E[%d@:K2=\E[218z:al=\E[L:bl=^G:cd=\E[J:ce=\E[K:\
