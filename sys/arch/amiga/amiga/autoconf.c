@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.14 1994/04/07 17:06:44 chopps Exp $
+ *	$Id: autoconf.c,v 1.15 1994/04/10 21:30:44 chopps Exp $
  */
 
 /*
@@ -706,7 +706,7 @@ find_devs()
   
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_kva	      = (caddr_t)CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_FLOP;
   hw->hw_type	      = B_BUILTIN | D_FLOP;
