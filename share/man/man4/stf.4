@@ -1,5 +1,5 @@
-.\"     $NetBSD: stf.4,v 1.9 2001/01/22 07:51:02 itojun Exp $
-.\"     $KAME: stf.4,v 1.29 2001/01/22 07:38:47 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.10 2001/02/17 04:28:10 itojun Exp $
+.\"     $KAME: stf.4,v 1.32 2001/02/17 04:27:27 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -191,13 +191,15 @@ It emits 6to4 packet only for IPv6 destination 2002:0901::/32
 .Xr gif 4 ,
 .Xr inet 4 ,
 .Xr inet6 4
+.Pp
+.Pa http://www.6bone.net/6bone_6to4.html
 .Rs
 .%A Brian Carpenter
 .%A Keith Moore
 .%T "Connection of IPv6 Domains via IPv4 Clouds"
-.%D September 2000
-.%N draft-ietf-ngtrans-6to4-07.txt
-.%O work in progress
+.%D February 2001
+.%R RFC
+.%N 3056
 .Re
 .Rs
 .%A Jun-ichiro itojun Hagino
@@ -211,3 +213,17 @@ It emits 6to4 packet only for IPv6 destination 2002:0901::/32
 The
 .Nm
 device first appeared in WIDE/KAME IPv6 stack.
+.\"
+.Sh BUGS
+No more than one
+.Nm
+interface is allowed for a node,
+and no more than one IPv6 interface address is allowed for an
+.Nm
+interface.
+It is to avoid source address selection conflicts
+between IPv6 layer and IPv4 layer,
+and to cope with ingress filtering rule on the other side.
+This is a feature to make
+.Nm
+work right for all occasions.
