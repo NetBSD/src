@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.c,v 1.31 2000/07/06 12:36:19 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.68 2000/07/02 14:48:02 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.32 2000/10/15 15:39:12 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.75 2000/10/15 15:23:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1977,8 +1977,11 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 		}
 	}
 
-	if (rt == NULL ||
-	    rt->rt_gateway->sa_family != AF_LINK) {
+	if (rt == NULL) {
+		/* this could happen, if we could not allocate memory */
+		return(0);
+	}
+	if (rt->rt_gateway->sa_family != AF_LINK) {
 		printf("nd6_storelladdr: something odd happens\n");
 		return(0);
 	}

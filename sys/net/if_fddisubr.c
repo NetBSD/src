@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.33 2000/06/14 05:10:28 mycroft Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.34 2000/10/15 15:39:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -277,8 +277,7 @@ fddi_output(ifp, m0, dst, rt0)
 			return (0);	/* if not yet resolved */
 #else
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
-			/* this must be impossible, so we bark */
-			printf("nd6_storelladdr failed\n");
+			/* something bad happened */
 			return(0);
 		}
 #endif /* OLDIP6OUTPUT */
