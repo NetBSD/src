@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.7 1999/12/29 15:21:27 pk Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -100,7 +100,7 @@ process_sstep(p, sstep)
 	int sstep;
 {
 	if (sstep)
-		return EINVAL;
+		return (EINVAL);
 	return (0);
 }
 
@@ -116,27 +116,32 @@ process_set_pc(p, addr)
 
 int
 process_read_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+	struct proc	*p;
+	struct fpreg	*regs;
 {
 	extern struct fpstate	initfpstate;
 	struct fpstate		*statep = &initfpstate;
 
-	/* NOTE: struct fpreg == struct fpstate */
+	/* NOTE: struct fpreg == prefix of struct fpstate */
 	if (p->p_md.md_fpstate)
 		statep = p->p_md.md_fpstate;
 	bcopy(statep, regs, sizeof(struct fpreg));
-	return 0;
+	return (0);
 }
 
 int
 process_write_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+	struct proc	*p;
+	struct fpreg	*regs;
 {
 	if (p->p_md.md_fpstate == NULL)
-		return EINVAL;
+		return (EINVAL);
 
+	/* Write new values to the FP registers */
 	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
-	return 0;
+
+	/* Reset FP queue in this process `fpstate' */
+	p->p_md.md_fpstate->fs_qsize = 0;
+
+	return (0);
 }
