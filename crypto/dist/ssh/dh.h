@@ -1,8 +1,5 @@
-/*	$NetBSD: atomicio.c,v 1.1.1.2 2001/01/14 04:49:56 itojun Exp $	*/
-
 /*
- * Copyright (c) 1995,1999 Theo de Raadt
- * All rights reserved.
+ * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,55 +21,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef DH_H
+#define DH_H
 
-/* from OpenBSD: atomicio.c,v 1.7 2000/10/18 18:04:02 markus Exp */
+struct dhgroup {
+	int size;
+	BIGNUM *g;
+	BIGNUM *p;
+};
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: atomicio.c,v 1.1.1.2 2001/01/14 04:49:56 itojun Exp $");
+DH *choose_dh(int minbits);
+
 #endif
-
-#include "includes.h"
-#include "ssh.h"
-
-ssize_t
-atomic_read(int fd, void *v, size_t n)
-{
-	char *s = v;
-	ssize_t res, pos = 0;
-
-	while (n > pos) {
-		res = read(fd, s + pos, n - pos);
-		switch (res) {
-		case -1:
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-		case 0:
-			return (res);
-		default:
-			pos += res;
-		}
-	}
-	return (pos);
-}
-
-ssize_t
-atomic_write(int fd, const void *v, size_t n)
-{
-	const char *s = v;
-	ssize_t res, pos = 0;
-
-	while (n > pos) {
-		res = write(fd, s + pos, n - pos);
-		switch (res) {
-		case -1:
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-		case 0:
-			return (res);
-		default:
-			pos += res;
-		}
-	}
-	return (pos);
-}

@@ -1,4 +1,4 @@
-/* $NetBSD: pathnames.h,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $ */
+/* $NetBSD: pathnames.h,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $ */
 
 #ifndef _PATHNAMES_H
 #define _PATHNAMES_H
@@ -32,6 +32,7 @@
 /* host keys (should be readable only by root) */
 #define _PATH_HOST_KEY_FILE		"/etc/ssh_host_key"
 #define _PATH_HOST_DSA_KEY_FILE		"/etc/ssh_host_dsa_key"
+#define _PATH_DH_PRIMES			"/etc/primes"
  
 /* client and server config files */
 #define _PATH_CLIENT_CONFIG_FILE	"/etc/ssh.conf"
@@ -69,6 +70,7 @@
  */
 #define _PATH_SSH_CLIENT_IDENTITY	_PATH_SSH_USER_DIR "/identity"
 #define _PATH_SSH_CLIENT_ID_DSA		_PATH_SSH_USER_DIR "/id_dsa"
+#define _PATH_SSH_CLIENT_ID_RSA		_PATH_SSH_USER_DIR "/id_rsa"
 
 /*
  * Configuration and environment files in user's home directory.  These
