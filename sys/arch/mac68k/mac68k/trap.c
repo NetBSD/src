@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1994/10/26 08:47:17 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 1994/11/27 21:47:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,7 @@
 struct	sysent	sysent[];
 int	nsysent;
 #ifdef COMPAT_SUNOS
-#include <compat/sunos/sun_syscall.h>
+#include <compat/sunos/sunos_syscall.h>
 struct	sysent	sun_sysent[];
 int	nsun_sysent;
 #endif
