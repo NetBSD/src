@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.3 1994/06/29 06:31:42 cgd Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.3.2.1 1994/07/20 03:17:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -67,7 +67,7 @@ cd9660_bmap(ap)
 {
 	struct iso_node *ip = VTOI(ap->a_vp);
 	daddr_t lblkno = ap->a_bn;
-	long bsize;
+	int bshift;
 
 	/*
 	 * Check for underlying vnode requests and ensure that logical
@@ -81,8 +81,8 @@ cd9660_bmap(ap)
 	/*
 	 * Compute the requested block number
 	 */
-	bsize = ip->i_mnt->logical_block_size;
-	*ap->a_bnp = (ip->iso_start + lblkno) * btodb(bsize);
+	bshift = ip->i_mnt->im_bshift;
+	*ap->a_bnp = (ip->iso_start + lblkno) << (bshift - DEV_BSHIFT);
 
 	/*
 	 * Determine maximum number of readahead blocks following the
@@ -91,14 +91,14 @@ cd9660_bmap(ap)
 	if (ap->a_runp) {
 		int nblk;
 
-		nblk = (ip->i_size - (lblkno + 1) * bsize) / bsize;
+		nblk = (ip->i_size >> bshift) - (lblkno + 1);
 		if (nblk <= 0)
 			*ap->a_runp = 0;
-		else if (nblk >= MAXBSIZE/bsize)
-			*ap->a_runp = MAXBSIZE/bsize - 1;
+		else if (nblk >= (MAXBSIZE >> bshift))
+			*ap->a_runp = (MAXBSIZE >> bshift) - 1;
 		else
 			*ap->a_runp = nblk;
 	}
 
-	return 0;
+	return (0);
 }
