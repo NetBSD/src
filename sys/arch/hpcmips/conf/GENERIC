@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.54.2.1 2000/06/23 14:36:09 fvdl Exp $
+# 	$NetBSD: GENERIC,v 1.54.2.2 2000/08/06 04:05:55 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.54.2.1 $"
+#ident 		"GENERIC-$Revision: 1.54.2.2 $"
 
 maxusers	8
 
@@ -22,6 +22,7 @@ options 	MIPS3_L2CACHE_ABSENT
 # Standard system options
 options 	DDB			# in-kernel debugger
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
+#options	KGDB			# remote debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
@@ -69,6 +70,7 @@ options 	SOFTDEP         # FFS soft updates support.
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -96,6 +98,10 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
+# temporally power management
+hpcapm0	at mainbus0			# power management
+apmdev0	at hpcapm0			# APM
+
 vrip*	at mainbus0
 vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrbcu*	at vrip? addr 0x0b000000 size 0x20
@@ -108,6 +114,9 @@ vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
+
+mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
+hpcfb*		at	mqvideo?
 
 # Workstation Console attachments
 bivideo0	at	mainbus0
@@ -298,7 +307,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
