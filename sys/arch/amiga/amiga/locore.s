@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 1996/11/17 18:22:37 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 1996/11/26 15:54:23 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -584,7 +584,6 @@ _DraCoLev1intr:
 	btst	#4,a0@(7)	| this only happens during autoconfiguration,
 	jeq	Ldrintrcommon	| so test last.
 	movw	#PSL_HIGHIPL,sr	| run clock at high ipl
-	clrb	a0@(9)		| reset timer irq
 Ldrclockretry:
 	lea	sp@(16),a1	| get pointer to PS
 	movl	a1,sp@-		| push pointer to PS, PC
@@ -601,6 +600,8 @@ Ldrclockretry:
 	movw	d0,a0@(11)	| ...and write it into timer
 	tstw	d0		| already positive?
 	jcs	Ldrclockretry	| we lost more than one tick, call us again.
+
+	clrb	a0@(9)		| reset timer irq
 
 	moveml	sp@+,#0x0303
 	addql	#1,_cnt+V_INTR
