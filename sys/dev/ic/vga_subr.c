@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.1 1998/03/22 15:11:49 drochner Exp $ */
+/* $NetBSD: vga_subr.c,v 1.2 1998/05/28 16:48:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -38,6 +38,8 @@
 #include <sys/queue.h>
 #include <machine/bus.h>
 
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 
@@ -80,7 +82,7 @@ textram(vh)
 	vga_gdc_write(vh, rdplanesel, 0x00);	/* select map 0 for cpu reads */
 	vga_gdc_write(vh, mode, 0x10);		/* enable odd-even addressing */
 	/* map starts at 0xb800 or 0xb000 (mono) */
-	vga_gdc_write(vh, misc, (vh->mono ? 0x0a : 0x0e));
+	vga_gdc_write(vh, misc, (vh->vh_mono ? 0x0a : 0x0e));
 }
 
 void

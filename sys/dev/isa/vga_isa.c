@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.1 1998/03/22 15:14:35 drochner Exp $ */
+/* $NetBSD: vga_isa.c,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,8 @@
 
 #include <dev/isa/isavar.h>
 
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 #include <dev/isa/vga_isavar.h>
@@ -49,11 +51,7 @@ struct vga_isa_softc {
 #endif
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	vga_isa_match __P((struct device *, void *, void *));
-#else
 int	vga_isa_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	vga_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vga_isa_ca = {
@@ -63,11 +61,7 @@ struct cfattach vga_isa_ca = {
 int
 vga_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
@@ -81,7 +75,7 @@ vga_isa_match(parent, match, aux)
 		return (0);
 
 	if (vga_is_console(ia->ia_iot, WSDISPLAY_TYPE_ISAVGA))
-		rv = 1;
+		rv = 2; /* more than generic pcdisplay */
 	else
 		rv = vga_common_probe(ia->ia_iot, ia->ia_memt);
 
