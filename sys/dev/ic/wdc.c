@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.71 1999/08/09 09:55:18 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.72 1999/08/25 17:08:20 bouyer Exp $ */
 
 
 /*
@@ -1281,9 +1281,12 @@ wdc_get_xfer(flags)
 	int flags;
 {
 	struct wdc_xfer *xfer;
+	int s;
 
+	s = splbio();
 	xfer = pool_get(&wdc_xfer_pool,
 	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
+	splx(s);
 	memset(xfer, 0, sizeof(struct wdc_xfer));
 	return xfer;
 }
@@ -1301,8 +1304,8 @@ wdc_free_xfer(chp, xfer)
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
-	splx(s);
 	pool_put(&wdc_xfer_pool, xfer);
+	splx(s);
 }
 
 static void
