@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.63 2001/06/25 20:46:13 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.64 2001/07/01 20:42:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -1068,7 +1068,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
  * XXX arguments in mbufs, and this could go away.
  */
 int
-sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
+sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 {
 	struct sockaddr	*sa;
 	struct mbuf	*m;
@@ -1076,14 +1076,15 @@ sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
 
 	/*
 	 * We can't allow socket names > UCHAR_MAX in length, since that
-	 * will overflow sa_len.
+	 * will overflow sa_len.  Control data more than a page size in
+	 * length is just too much.
 	 */
-	if (type == MT_SONAME && (u_int)buflen > UCHAR_MAX)
+	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
 		return (EINVAL);
 
 	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
-	if ((u_int)buflen > MLEN) {
+	if (buflen > MLEN) {
 		/*
 		 * Won't fit into a regular mbuf, so we allocate just
 		 * enough external storage to hold the argument.
@@ -1091,7 +1092,7 @@ sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
 		MEXTMALLOC(m, buflen, M_WAITOK);
 	}
 	m->m_len = buflen;
-	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
+	error = copyin(buf, mtod(m, caddr_t), buflen);
 	if (error) {
 		(void) m_free(m);
 		return (error);
