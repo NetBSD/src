@@ -1,4 +1,4 @@
-/*	$NetBSD: udiv.S,v 1.1 2002/02/23 23:48:05 matt Exp $	*/
+/*	$NetBSD: urem.S,v 1.1 2002/02/24 00:08:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -35,41 +35,39 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)udiv.s      5.6 (Berkeley) 4/15/91
+ *	@(#)urem.s      5.6 (Berkeley) 4/15/91
  */
 
 #include <machine/asm.h>
 
 /*
- * Unsigned division, PCC flavor.
- * udiv() takes an ordinary dividend/divisor pair;
- * audiv() takes a pointer to a dividend and an ordinary divisor.
+ * Unsigned modulus, PCC flavor.
+ * urem() takes an ordinary dividend/divisor pair;
  */
-
 
 #define	DIVIDEND	4(ap)
 #define	DIVISOR		8(ap)
 
 #ifdef __ELF__
-ENTRY(__udiv, 0)
+ENTRY(__urem, 0)
 #else
-ASENTRY(udiv, 0)
+ASENTRY(urem, 0)
 #endif
-	movl	DIVISOR,r2
+	movl	8(ap),r2
 	jlss	Leasy		# big divisor: settle by comparison
-	movl	DIVIDEND,r0
-	jlss	Lhard		# big dividend: extended division
-	divl2	r2,r0		# small divisor and dividend: signed division
+	movl	4(ap),r0
+	jlss	Lhard		# big dividend: need extended division
+	divl3	r2,r0,r1	# small divisor and dividend: signed modulus
+	mull2	r2,r1
+	subl2	r1,r0
 	ret
 Lhard:
 	clrl	r1
-	ediv	r2,r0,r0,r1
+	ediv	r2,r0,r1,r0
 	ret
 Leasy:
-	cmpl	DIVIDEND,r2
-	jgequ	Lone		# if dividend is as big or bigger, return 1
-	clrl	r0		# else return 0
-	ret
-Lone:
-	movl	$1,r0
+	subl3	r2,DIVIDEND,r0
+	jcc	Ldifference	# if divisor goes in once, return difference
+	movl	DIVIDEND,r0	# if divisor is bigger, return dividend
+Ldifference:
 	ret
