@@ -22,7 +22,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ipcrm.c,v 1.2 1994/03/21 15:46:43 glass Exp $
+ * $Id: ipcrm.c,v 1.3 1994/05/11 07:43:59 cgd Exp $
  */
 
 #include <stdio.h>
@@ -33,7 +33,9 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
+#ifndef NOSHM
 #include <sys/shm.h>
+#endif
 
 #define IPC_TO_STR(x) (x == 'Q' ? "msq" : (x == 'M' ? "shm" : "sem"))
 #define IPC_TO_STRING(x) (x == 'Q' ? "message queue" : \
@@ -53,6 +55,7 @@ int msgrm(key, id)
     return msgctl(id, IPC_RMID, NULL);    
 }
 
+#ifndef NOSHM
 int shmrm(key, id)
     key_t key;
     int id;
@@ -64,6 +67,7 @@ int shmrm(key, id)
     }
     return shmctl(id, IPC_RMID, NULL);
 }
+#endif
 
 int semrm(key, id)
     key_t key;
@@ -104,8 +108,10 @@ int main(argc, argv)
 	    target_id = atoi(optarg);
 	    if (c == 'q')
 		result = msgrm(0, target_id);
+#ifndef NOSHM
 	    else if (c == 'm')
 		result = shmrm(0, target_id);
+#endif
 	    else
 		result = semrm(0, target_id);
 	    if (result < 0) {
@@ -127,8 +133,10 @@ int main(argc, argv)
 	    }
 	    if (c == 'Q')
 		result = msgrm(target_key, 0);
+#ifndef NOSHM
 	    else if (c == 'M')
 		result = shmrm(target_key, 0);
+#endif
 	    else
 		result = semrm(target_key, 0);
 	    if (result < 0) {
