@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.1 1997/11/13 08:03:52 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.2 1997/11/15 00:40:43 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1461,7 +1461,7 @@ init386(first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++)
 		setgate(&static_idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
-		    x == 3 ? SEL_UPL : SEL_KPL);
+		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
 
 	/* new-style interrupt gate for syscalls */
 	setgate(&static_idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
