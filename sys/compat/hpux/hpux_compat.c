@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.37 1997/10/17 18:43:48 scottr Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.38 1997/10/19 19:25:11 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -474,18 +474,36 @@ hpux_sys_sysconf(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_sysconf_args *uap = v;
-	switch (SCARG(uap, name)) {
 
-	/* clock ticks per second */
+	switch (SCARG(uap, name)) {
+	case HPUX_SYSCONF_ARGMAX:
+		*retval = ARG_MAX;
+		break;
+	case HPUX_SYSCONF_CHILDMAX:
+		*retval = maxproc;
+		break;
 	case HPUX_SYSCONF_CLKTICK:
 		*retval = hz;
 		break;
-
-	/* open files */
-	case HPUX_SYSCONF_OPENMAX:
-		*retval = NOFILE;
+	case HPUX_SYSCONF_NGRPMAX:
+		*retval = NGROUPS_MAX;
 		break;
-
+	case HPUX_SYSCONF_OPENMAX:
+		*retval = maxfiles;
+		break;
+	case HPUX_SYSCONF_JOBCNTRL:
+		*retval = 1;
+		break;
+	case HPUX_SYSCONF_SAVEDIDS:
+#ifdef _POSIX_SAVED_IDS
+		*retval = 1;
+#else
+		*retval = 0;
+#endif
+		break;
+	case HPUX_SYSCONF_VERSION:
+		*retval = 198808;
+		break;
 	/* architecture */
 	case HPUX_SYSCONF_CPUTYPE:
 		*retval = hpux_cpu_sysconf_arch();
