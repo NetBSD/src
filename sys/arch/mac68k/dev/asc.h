@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.h,v 1.2 1994/10/26 08:46:03 cgd Exp $	*/
+/*	$NetBSD: asc.h,v 1.3 1995/04/21 02:47:46 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,12 +39,6 @@
 
 int asc_ringbell();
 
-int asc_getbellparams(
-	int *freq,
-	int *length,
-	int *volume);
+int asc_getbellparams __P((int *freq, int *length, int *volume));
 
-int asc_setbellparams(
-	int freq,
-	int length,
-	int volume);
+int asc_setbellparams __P((int freq, int length, int volume));

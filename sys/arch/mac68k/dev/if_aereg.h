@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.8 1995/04/19 04:46:06 briggs Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.9 1995/04/21 02:47:55 briggs Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -17,12 +17,11 @@
  * have the card in m68k mode, we're hosed for the moment.
  * Fix this.  --  XXX
  */
-struct ae_ring	{
-	u_char	rsr;			/* receiver status */
-	u_char	next_packet;		/* pointer to next packet */
-	u_short	count;			/* bytes in packet (length + 4) */
+struct ae_ring {
+	u_char  rsr;		/* receiver status */
+	u_char  next_packet;	/* pointer to next packet */
+	u_short count;		/* bytes in packet (length + 4) */
 };
-
 /*
  * Vendor types
  */
@@ -46,15 +45,15 @@ struct ae_ring	{
 #define AE_FLAGS_NO_DOUBLE_BUFFERING	0x0008
 
 /* */
-#define	GC_RESET_OFFSET		0x000c0000 /* writes here reset NIC */
-#define	GC_ROM_OFFSET		0x000c0000 /* address prom */
-#define GC_DATA_OFFSET		0x000d0000 /* Offset to NIC memory */
-#define GC_NIC_OFFSET		0x000e0000 /* Offset to NIC registers */
+#define	GC_RESET_OFFSET		0x000c0000	/* writes here reset NIC */
+#define	GC_ROM_OFFSET		0x000c0000	/* address prom */
+#define GC_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
+#define GC_NIC_OFFSET		0x000e0000	/* Offset to NIC registers */
 
 #define DP_ROM_OFFSET		0x000f0000
-#define DP_DATA_OFFSET		0x000d0000 /* Offset to SONIC memory */
-#define DP_NIC_OFFSET		0x000e0000 /* Offset to SONIC registers */
+#define DP_DATA_OFFSET		0x000d0000	/* Offset to SONIC memory */
+#define DP_NIC_OFFSET		0x000e0000	/* Offset to SONIC registers */
 
 #define AE_ROM_OFFSET		0x000f0000
-#define AE_DATA_OFFSET		0x000d0000 /* Offset to NIC memory */
-#define AE_NIC_OFFSET		0x000e0000 /* Offset to NIC registers */
+#define AE_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
+#define AE_NIC_OFFSET		0x000e0000	/* Offset to NIC registers */

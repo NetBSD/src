@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.4 1995/03/23 20:19:16 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.5 1995/04/21 02:47:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,23 +44,23 @@
 
 /* internal structure of lock page */
 #define GRFMAXLCK	256
-struct	grf_lockpage {
-	u_char	gl_locks[GRFMAXLCK];
+struct grf_lockpage {
+	u_char  gl_locks[GRFMAXLCK];
 };
 #define gl_lockslot gl_locks[0]
 
 /* per display info */
-struct	grf_softc {
-	int	g_flags;		/* software flags */
-	int	g_type;			/* type of display */
-	caddr_t	g_regkva;		/* KVA of registers */
-	caddr_t	g_fbkva;		/* KVA of framebuffer */
+struct grf_softc {
+	int	g_flags;	/* software flags */
+	int	g_type;		/* type of display */
+	caddr_t g_regkva;	/* KVA of registers */
+	caddr_t g_fbkva;	/* KVA of framebuffer */
 	struct	grfinfo g_display;	/* hardware description (for ioctl) */
 	struct	grf_lockpage *g_lock;	/* lock page associated with device */
-	struct	proc *g_lockp;		/* process holding lock */
-	short	*g_pid;			/* array of pids with device open */
-	int	g_lockpslot;		/* g_pid entry of g_lockp */
-	caddr_t	g_data;			/* device dependent data */
+	struct	proc *g_lockp;	/* process holding lock */
+	short	*g_pid;		/* array of pids with device open */
+	int	g_lockpslot;	/* g_pid entry of g_lockp */
+	caddr_t	g_data;		/* device dependent data */
 };
 
 /* flags */
@@ -74,14 +74,13 @@ struct	grf_softc {
 /* display types - indices into grfdev */
 #define	GT_MAC	0
 
-struct	grfdev {
+struct grfdev {
 	int	gd_hardid;	/* secondary id returned by hardware */
 	int	gd_softid;	/* id returned by HP-UX */
-	int	(*gd_init)();	/* boot time initialization */
-	int	(*gd_mode)();	/* misc functions */
+	int	(*gd_init) ();	/* boot time initialization */
+	int	(*gd_mode) ();	/* misc functions */
 	char	*gd_desc;	/* text description */
 };
-
 /* hardware ids */
 #define GID_MAC	1
 
@@ -93,15 +92,15 @@ struct	grfdev {
 #define GM_GRFOVON	3
 #define GM_GRFOVOFF	4
 
-struct	grfreg {
-	char	gr_pad0;
-	u_char	gr_id;		/* +0x01 */
-	char	gr_pad1[0x13];
-	u_char	gr_id2;		/* +0x15 */
-	char	gr_pad2[0x47];
-	u_char	gr_fbomsb;	/* +0x5d */
-	char	gr_pad3;
-	u_char	gr_fbolsb;	/* +0x5f */
+struct grfreg {
+	char    gr_pad0;
+	u_char  gr_id;		/* +0x01 */
+	char    gr_pad1[0x13];
+	u_char  gr_id2;		/* +0x15 */
+	char    gr_pad2[0x47];
+	u_char  gr_fbomsb;	/* +0x5d */
+	char    gr_pad3;
+	u_char  gr_fbolsb;	/* +0x5f */
 };
 /* bitmapped display hardware id */
 #define GRFHWID		0x39
@@ -115,5 +114,5 @@ struct	grfreg {
 #define GRFUNIT(d)	((d) & 0x7)
 
 #ifdef _KERNEL
-extern	struct grf_softc grf_softc[];
-#endif /* _KERNEL */
+extern struct grf_softc grf_softc[];
+#endif				/* _KERNEL */

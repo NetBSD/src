@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.13 1995/04/20 15:46:56 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.14 1995/04/21 02:47:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,55 +85,56 @@
 #define ATTR_REVERSE	4
 
 enum vt100state_e {
-	ESnormal,       /* Nothing yet                                  */
-	ESesc,          /* Got ESC                                      */
-	ESsquare,	/* Got ESC [					*/
-	ESgetpars,      /* About to get or getting the parameters       */
-	ESgotpars,      /* Finished getting the parameters              */
-	ESfunckey,      /* Function key                                 */
-	EShash,         /* DEC-specific stuff (screen align, etc.)      */
-	ESsetG0,        /* Specify the G0 character set                 */
-	ESsetG1,        /* Specify the G1 character set                 */
-	ESignore        /* Ignore this sequence                         */
+	ESnormal,		/* Nothing yet                             */
+	ESesc,			/* Got ESC                                 */
+	ESsquare,		/* Got ESC [				   */
+	ESgetpars,		/* About to get or getting the parameters  */
+	ESgotpars,		/* Finished getting the parameters         */
+	ESfunckey,		/* Function key                            */
+	EShash,			/* DEC-specific stuff (screen align, etc.) */
+	ESsetG0,		/* Specify the G0 character set            */
+	ESsetG1,		/* Specify the G1 character set            */
+	ESignore		/* Ignore this sequence                    */
 } vt100state = ESnormal;
 
 /* Received from MacBSDBoot, stored by Locore: */
-long		videoaddr;
-long		videorowbytes;
-long		videobitdepth;
-unsigned long	videosize;
+long    videoaddr;
+long    videorowbytes;
+long    videobitdepth;
+unsigned long videosize;
 
 /* Calculated in itecninit(): */
-static int	width, height, scrrows, scrcols;
-static void	(*putpixel)(int x, int y, int *c, int num);
-static void	(*reversepixel)(int x, int y, int num);
+static int width, height, scrrows, scrcols;
+static void (*putpixel) (int x, int y, int *c, int num);
+static void (*reversepixel) (int x, int y, int num);
 
 /* VT100 state: */
 #define MAXPARS	16
-static int	x = 0, y = 0, savex, savey;
-static int	par[MAXPARS], numpars, hanging_cursor, attr;
+static int x = 0, y = 0, savex, savey;
+static int par[MAXPARS], numpars, hanging_cursor, attr;
 
 /* Our tty: */
-struct tty	*ite_tty;
+struct tty *ite_tty;
 
 /* For polled ADB mode: */
 static int polledkey;
 extern int adb_polling;
 
 /* Misc */
-void		itestart();
-static void	ite_putchar (char ch);
+void    itestart();
+static void ite_putchar(char ch);
 
 /*
  * Bitmap handling functions
  */
 
-static inline void putpixel1(int xx, int yy, int *c, int num)
+static inline void 
+putpixel1(int xx, int yy, int *c, int num)
 {
-	unsigned int	i, mask;
-	unsigned char	*sc;
+	unsigned int i, mask;
+	unsigned char *sc;
 
-	sc = (unsigned char *)videoaddr;
+	sc = (unsigned char *) videoaddr;
 
 	i = 7 - (xx & 7);
 	mask = ~(1 << i);
@@ -145,12 +146,13 @@ static inline void putpixel1(int xx, int yy, int *c, int num)
 	}
 }
 
-static void putpixel2(int xx, int yy, int *c, int num)
+static void 
+putpixel2(int xx, int yy, int *c, int num)
 {
-	unsigned int	i, mask;
-	unsigned char	*sc;
+	unsigned int i, mask;
+	unsigned char *sc;
 
-	sc = (unsigned char *)videoaddr;
+	sc = (unsigned char *) videoaddr;
 
 	i = 6 - ((xx & 3) << 1);
 	mask = ~(3 << i);
@@ -162,12 +164,13 @@ static void putpixel2(int xx, int yy, int *c, int num)
 	}
 }
 
-static void putpixel4(int xx, int yy, int *c, int num)
+static void 
+putpixel4(int xx, int yy, int *c, int num)
 {
-	unsigned int	i, mask;
-	unsigned char	*sc;
+	unsigned int i, mask;
+	unsigned char *sc;
 
-	sc = (unsigned char *)videoaddr;
+	sc = (unsigned char *) videoaddr;
 
 	i = 4 - ((xx & 1) << 2);
 	mask = ~(15 << i);
@@ -179,42 +182,48 @@ static void putpixel4(int xx, int yy, int *c, int num)
 	}
 }
 
-static void putpixel8(int xx, int yy, int *c, int num)
+static void 
+putpixel8(int xx, int yy, int *c, int num)
 {
-	unsigned char	*sc;
+	unsigned char *sc;
 
-	sc = (unsigned char *)videoaddr;
+	sc = (unsigned char *) videoaddr;
 
 	sc += yy * videorowbytes + xx;
 	while (num--) {
-		*sc = *c++ & 0xff; 
+		*sc = *c++ & 0xff;
 		sc += videorowbytes;
 	}
 }
 
-static void reversepixel1(int xx, int yy, int num)
+static void 
+reversepixel1(int xx, int yy, int num)
 {
-	unsigned int	mask;
-	unsigned char	*sc;
+	unsigned int mask;
+	unsigned char *sc;
 
-	sc = (unsigned char *)videoaddr;
-	mask = 0; /* Get rid of warning from compiler */
+	sc = (unsigned char *) videoaddr;
+	mask = 0;		/* Get rid of warning from compiler */
 
 	switch (videobitdepth) {
-		case 1:	mask = 1 << (7 - (xx & 7));
-			sc += yy * videorowbytes + (xx >> 3);
-			break;
-		case 2: mask = 3 << (6 - ((xx & 3) << 1));
-			sc += yy * videorowbytes + (xx >> 2);
-			break;
-		case 4: mask = 15 << (4 - ((xx & 1) << 2));
-			sc += yy * videorowbytes + (xx >> 1);
-			break;
-		case 8: mask = 255;
-			sc += yy * videorowbytes + xx;
-			break;
-		default:
-			panic ("reversepixel(): unsupported bit depth");
+	case 1:
+		mask = 1 << (7 - (xx & 7));
+		sc += yy * videorowbytes + (xx >> 3);
+		break;
+	case 2:
+		mask = 3 << (6 - ((xx & 3) << 1));
+		sc += yy * videorowbytes + (xx >> 2);
+		break;
+	case 4:
+		mask = 15 << (4 - ((xx & 1) << 2));
+		sc += yy * videorowbytes + (xx >> 1);
+		break;
+	case 8:
+		mask = 255;
+		sc += yy * videorowbytes + xx;
+		break;
+	default:
+		panic("reversepixel(): unsupported bit depth");
 	}
 
 	while (num--) {
@@ -223,10 +232,11 @@ static void reversepixel1(int xx, int yy, int num)
 	}
 }
 
-static void writechar (char ch, int x, int y, int attr)
+static void 
+writechar(char ch, int x, int y, int attr)
 {
-	int		i, j, mask, rev, col[CHARHEIGHT];
-	unsigned char	*c;
+	int     i, j, mask, rev, col[CHARHEIGHT];
+	unsigned char *c;
 
 	ch &= 0x7F;
 	x *= CHARWIDTH;
@@ -238,94 +248,98 @@ static void writechar (char ch, int x, int y, int attr)
 
 	switch (videobitdepth) {
 	case 1:
-	for (j = 0; j < CHARWIDTH; j++) {
-		mask = 1 << (CHARWIDTH - 1 - j);
-		for (i = 0; i < CHARHEIGHT; i++) {
-			col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
-		}
-		putpixel1 (x + j, y, col, CHARHEIGHT);
-	}
-	if (attr & ATTR_UNDER) {
-		col[0] = 255;
 		for (j = 0; j < CHARWIDTH; j++) {
-			putpixel1 (x + j, y + CHARHEIGHT - 1, col, 1);
+			mask = 1 << (CHARWIDTH - 1 - j);
+			for (i = 0; i < CHARHEIGHT; i++) {
+				col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
+			}
+			putpixel1(x + j, y, col, CHARHEIGHT);
 		}
-	}
-	break;
+		if (attr & ATTR_UNDER) {
+			col[0] = 255;
+			for (j = 0; j < CHARWIDTH; j++) {
+				putpixel1(x + j, y + CHARHEIGHT - 1, col, 1);
+			}
+		}
+		break;
 	case 2:
 	case 4:
 	case 8:
-	for (j = 0; j < CHARWIDTH; j++) {
-		mask = 1 << (CHARWIDTH - 1 - j);
-		for (i = 0; i < CHARHEIGHT; i++) {
-			col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
-		}
-		putpixel (x + j, y, col, CHARHEIGHT);
-	}
-	if (attr & ATTR_UNDER) {
-		col[0] = 255;
 		for (j = 0; j < CHARWIDTH; j++) {
-			putpixel (x + j, y + CHARHEIGHT - 1, col, 1);
+			mask = 1 << (CHARWIDTH - 1 - j);
+			for (i = 0; i < CHARHEIGHT; i++) {
+				col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
+			}
+			putpixel(x + j, y, col, CHARHEIGHT);
 		}
-	}
-	break;
+		if (attr & ATTR_UNDER) {
+			col[0] = 255;
+			for (j = 0; j < CHARWIDTH; j++) {
+				putpixel(x + j, y + CHARHEIGHT - 1, col, 1);
+			}
+		}
+		break;
 	}
 }
 
-static void drawcursor (void)
+static void 
+drawcursor(void)
 {
-	int	j, X, Y;
+	int     j, X, Y;
 
 	X = x * CHARWIDTH;
 	Y = y * CHARHEIGHT;
 
 	for (j = 0; j < CHARWIDTH; j++) {
-		reversepixel (X + j, Y, CHARHEIGHT);
+		reversepixel(X + j, Y, CHARHEIGHT);
 	}
 }
 
-static void erasecursor (void)
+static void 
+erasecursor(void)
 {
-	int	j, X, Y;
+	int     j, X, Y;
 
 	X = x * CHARWIDTH;
 	Y = y * CHARHEIGHT;
 
 	for (j = 0; j < CHARWIDTH; j++) {
-		reversepixel (X + j, Y, CHARHEIGHT);
+		reversepixel(X + j, Y, CHARHEIGHT);
 	}
 }
 
-static void scrollup (void)
+static void 
+scrollup(void)
 {
-	unsigned long	*from, *to;
-	int		i, linelongs, tocopy, copying;
+	unsigned long *from, *to;
+	int     i, linelongs, tocopy, copying;
 
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
-	to = (unsigned long *)videoaddr;
+	to = (unsigned long *) videoaddr;
 	from = to + linelongs;
 
 	tocopy = (scrrows - 1) * linelongs;
 	while (tocopy > 0) {
 		copying = (tocopy > 16383) ? 16383 : tocopy;
-		bcopy (from, to, copying*4);
+		bcopy(from, to, copying * 4);
 		from += copying;
 		to += copying;
 		tocopy -= copying;
 	}
-	to = (unsigned long *)videoaddr;
-	bzero (to + (scrrows - 1) * linelongs, linelongs * sizeof (long));
+	to = (unsigned long *) videoaddr;
+	bzero(to + (scrrows - 1) * linelongs, linelongs * sizeof(long));
 }
 
-static void scrolldown (void)
+static void 
+scrolldown(void)
 {
-	unsigned long	*from, *to;
-	int		i, linelongs;
+	unsigned long *from, *to;
+	int     i, linelongs;
 
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
-	to = (unsigned long *)videoaddr + linelongs * scrrows;
+	to = (unsigned long *) videoaddr + linelongs * scrrows;
 	from = to - linelongs;
 
 	for (i = (scrrows - 1) * linelongs; i > 0; i--) {
@@ -336,33 +350,35 @@ static void scrolldown (void)
 	}
 }
 
-static void clear_screen (int which)
+static void 
+clear_screen(int which)
 {
-	unsigned long	*p;
-	int		i, linelongs;
+	unsigned long *p;
+	int     i, linelongs;
 
-	p = (unsigned long *)videoaddr;
+	p = (unsigned long *) videoaddr;
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
 	switch (which) {
-		case 0:				/* To end of screen	*/
-			p += y * linelongs;
-			i = (scrrows - y) * linelongs;
-			break;
-		case 1:				/* To start of screen	*/
-			i = y * linelongs;
-			break;
-		case 2:				/* Whole screen		*/
-			i = scrrows * linelongs;
-			break;
+	case 0:		/* To end of screen	 */
+		p += y * linelongs;
+		i = (scrrows - y) * linelongs;
+		break;
+	case 1:		/* To start of screen	 */
+		i = y * linelongs;
+		break;
+	case 2:		/* Whole screen		 */
+		i = scrrows * linelongs;
+		break;
 	}
 
-	bzero (p, i * sizeof (long));
+	bzero(p, i * sizeof(long));
 }
 
-static void clear_line (int which)
+static void 
+clear_line(int which)
 {
-	int	start, end, i;
+	int     start, end, i;
 
 	/*
 	 * This routine runs extremely slowly.  I don't think it's
@@ -372,169 +388,182 @@ static void clear_line (int which)
 	 */
 
 	switch (which) {
-		case 0:				/* To end of line	*/
-			start = x;
-			end = scrcols;
-			break;
-		case 1:				/* To start of line	*/
-			start = 0;
-			end = x;
-			break;
-		case 2:				/* Whole line		*/
-			start = 0;
-			end = scrcols;
-			break;
+	case 0:		/* To end of line	 */
+		start = x;
+		end = scrcols;
+		break;
+	case 1:		/* To start of line	 */
+		start = 0;
+		end = x;
+		break;
+	case 2:		/* Whole line		 */
+		start = 0;
+		end = scrcols;
+		break;
 	}
 
 	for (i = start; i < end; i++) {
-		writechar (' ', i, y, ATTR_NONE);
+		writechar(' ', i, y, ATTR_NONE);
 	}
 }
 
-static void putc_normal (char ch)
+static void 
+putc_normal(char ch)
 {
 	switch (ch) {
-		case '\a':			/* Beep			*/
-			asc_ringbell();
-			break;
-		case 127:			/* Delete		*/
-		case '\b':			/* Backspace		*/
-			if (hanging_cursor) {
-				hanging_cursor = 0;
-			} else if (x > 0) {
+		case '\a':	/* Beep			 */
+		asc_ringbell();
+		break;
+	case 127:		/* Delete		 */
+	case '\b':		/* Backspace		 */
+		if (hanging_cursor) {
+			hanging_cursor = 0;
+		} else
+			if (x > 0) {
 				x--;
 			}
-			break;
-		case '\t':			/* Tab			*/
-			do {
-				ite_putchar (' ');
-			} while (x % 8 != 0);
-			break;
-		case '\n':			/* Line feed		*/
-			y++;
-			if (y >= scrrows) {
-				scrollup ();
-				y = scrrows - 1;
+		break;
+	case '\t':		/* Tab			 */
+		do {
+			ite_putchar(' ');
+		} while (x % 8 != 0);
+		break;
+	case '\n':		/* Line feed		 */
+		y++;
+		if (y >= scrrows) {
+			scrollup();
+			y = scrrows - 1;
+		}
+		break;
+	case '\r':		/* Carriage return	 */
+		x = 0;
+		hanging_cursor = 0;
+		break;
+	case '\e':		/* Escape		 */
+		vt100state = ESesc;
+		hanging_cursor = 0;
+		break;
+	default:
+		if (ch >= ' ') {
+			if (hanging_cursor) {
+				x = 0;
+				y++;
+				if (y >= scrrows) {
+					scrollup();
+					y = scrrows - 1;
+				}
+				hanging_cursor = 0;
 			}
-			break;
-		case '\r':			/* Carriage return	*/
-			x = 0;
-			hanging_cursor = 0;
-			break;
-		case '\e':			/* Escape		*/
-			vt100state = ESesc;
-			hanging_cursor = 0;
-			break;
-		default:
-			if (ch >= ' ') {
-				if (hanging_cursor) {
-					x = 0;
-					y++;
-					if (y >= scrrows) {
-						scrollup ();
-						y = scrrows - 1;
-					}
-					hanging_cursor = 0;
-				}
-				writechar (ch, x, y, attr);
-				if (x == scrcols - 1) {
-					hanging_cursor = 1;
-				} else {
-					x++;
-				}
-				if (x >= scrcols) {
-					x = 0;
-					y++;
-				}
-			}
-			break;
-	}
-}
-
-static void putc_esc (char ch)
-{
-	vt100state = ESnormal;
-
-	switch (ch) {
-		case '[':
-			vt100state = ESsquare;
-			break;
-		case 'D':			/* Line feed		*/
-			y++;
-			break;
-		case 'H':			/* Set tab stop		*/
-			/* Not supported */
-			break;
-		case 'M':			/* Cursor up		*/
-			if (y == 0) {
-				scrolldown ();
+			writechar(ch, x, y, attr);
+			if (x == scrcols - 1) {
+				hanging_cursor = 1;
 			} else {
-				y--;
+				x++;
 			}
-			break;
-		case '7':			/* Save cursor		*/
-			savex = x;
-			savey = y;
-			break;
-		case '8':			/* Restore cursor	*/
-			x = savex;
-			y = savey;
-			break;
-		default:
-			/* Rest not supported */
-			break;
+			if (x >= scrcols) {
+				x = 0;
+				y++;
+			}
+		}
+		break;
 	}
 }
 
-static void putc_gotpars (char ch)
+static void 
+putc_esc(char ch)
 {
-	int	i;
+	vt100state = ESnormal;
+
+	switch (ch) {
+	case '[':
+		vt100state = ESsquare;
+		break;
+	case 'D':		/* Line feed		 */
+		y++;
+		break;
+	case 'H':		/* Set tab stop		 */
+		/* Not supported */
+		break;
+	case 'M':		/* Cursor up		 */
+		if (y == 0) {
+			scrolldown();
+		} else {
+			y--;
+		}
+		break;
+	case '7':		/* Save cursor		 */
+		savex = x;
+		savey = y;
+		break;
+	case '8':		/* Restore cursor	 */
+		x = savex;
+		y = savey;
+		break;
+	default:
+		/* Rest not supported */
+		break;
+	}
+}
+
+static void 
+putc_gotpars(char ch)
+{
+	int     i;
 
 	vt100state = ESnormal;
 	switch (ch) {
-		case 'A':			/* Up			*/
-			y--;
-			break;
-		case 'B':			/* Down			*/
-			y++;
-			break;
-		case 'C':			/* Right		*/
-			x++;
-			break;
-		case 'D':			/* Left			*/
-			x--;
-			break;
-		case 'H':			/* Set cursor position	*/
-			x = par[1] - 1;
-			y = par[0] - 1;
-			hanging_cursor = 0;
-			break;
-		case 'J':			/* Clear part of screen	*/
-			clear_screen (par[0]);
-			break;
-		case 'K':			/* Clear part of line	*/
-			clear_line (par[0]);
-			break;
-		case 'g':			/* Clear tab stops	*/
-			/* Not supported */
-			break;
-		case 'm':			/* Set attribute	*/
-			for (i = 0; i < numpars; i++) {
-				switch (par[i]) {
-					case 0: attr = ATTR_NONE; break;
-					case 1: attr |= ATTR_BOLD; break;
-					case 4: attr |= ATTR_UNDER; break;
-					case 7: attr |= ATTR_REVERSE; break;
-				}
+	case 'A':		/* Up			 */
+		y--;
+		break;
+	case 'B':		/* Down			 */
+		y++;
+		break;
+	case 'C':		/* Right		 */
+		x++;
+		break;
+	case 'D':		/* Left			 */
+		x--;
+		break;
+	case 'H':		/* Set cursor position	 */
+		x = par[1] - 1;
+		y = par[0] - 1;
+		hanging_cursor = 0;
+		break;
+	case 'J':		/* Clear part of screen	 */
+		clear_screen(par[0]);
+		break;
+	case 'K':		/* Clear part of line	 */
+		clear_line(par[0]);
+		break;
+	case 'g':		/* Clear tab stops	 */
+		/* Not supported */
+		break;
+	case 'm':		/* Set attribute	 */
+		for (i = 0; i < numpars; i++) {
+			switch (par[i]) {
+			case 0:
+				attr = ATTR_NONE;
+				break;
+			case 1:
+				attr |= ATTR_BOLD;
+				break;
+			case 4:
+				attr |= ATTR_UNDER;
+				break;
+			case 7:
+				attr |= ATTR_REVERSE;
+				break;
 			}
-			break;
-		case 'r':			/* Set scroll region	*/
-			/* Not supported */
-			break;
+		}
+		break;
+	case 'r':		/* Set scroll region	 */
+		/* Not supported */
+		break;
 	}
 }
 
-static void putc_getpars (char ch)
+static void 
+putc_getpars(char ch)
 {
 	if (ch == '?') {
 		/* Not supported */
@@ -545,22 +574,23 @@ static void putc_getpars (char ch)
 		/* Not supported */
 		return;
 	}
-
 	if (ch == ';' && numpars < MAXPARS - 1) {
 		numpars++;
-	} else if (ch >= '0' && ch <= '9') {
-		par[numpars] *= 10;
-		par[numpars] += ch - '0';
-	} else {
-		numpars++;
-		vt100state = ESgotpars;
-		putc_gotpars (ch);
-	}
+	} else
+		if (ch >= '0' && ch <= '9') {
+			par[numpars] *= 10;
+			par[numpars] += ch - '0';
+		} else {
+			numpars++;
+			vt100state = ESgotpars;
+			putc_gotpars(ch);
+		}
 }
 
-static void putc_square (char ch)
+static void 
+putc_square(char ch)
 {
-	int	i;
+	int     i;
 
 	for (i = 0; i < MAXPARS; i++) {
 		par[i] = 0;
@@ -569,18 +599,29 @@ static void putc_square (char ch)
 	numpars = 0;
 	vt100state = ESgetpars;
 
-	putc_getpars (ch);
+	putc_getpars(ch);
 }
 
-static void ite_putchar (char ch)
+static void 
+ite_putchar(char ch)
 {
 	switch (vt100state) {
-		default:	vt100state = ESnormal; /* FALLTHROUGH */
-		case ESnormal:	putc_normal (ch); break;
-		case ESesc:	putc_esc (ch); break;
-		case ESsquare:	putc_square (ch); break;
-		case ESgetpars:	putc_getpars (ch); break;
-		case ESgotpars:	putc_gotpars (ch); break;
+		default:vt100state = ESnormal;	/* FALLTHROUGH */
+	case ESnormal:
+		putc_normal(ch);
+		break;
+	case ESesc:
+		putc_esc(ch);
+		break;
+	case ESsquare:
+		putc_square(ch);
+		break;
+	case ESgetpars:
+		putc_getpars(ch);
+		break;
+	case ESgotpars:
+		putc_gotpars(ch);
+		break;
 	}
 
 	if (x >= scrcols) {
@@ -596,12 +637,12 @@ static void ite_putchar (char ch)
 		y = 0;
 	}
 }
-
 /*
  * Keyboard support functions
  */
 
-static int ite_dopollkey(int key)
+static int 
+ite_dopollkey(int key)
 {
 	polledkey = key;
 
@@ -609,10 +650,11 @@ static int ite_dopollkey(int key)
 }
 
 
-static int ite_pollforchar(void)
+static int 
+ite_pollforchar(void)
 {
-	int		s;
-	register int	intbits;
+	int     s;
+	register int intbits;
 
 	s = splhigh();
 
@@ -627,7 +669,6 @@ static int ite_pollforchar(void)
 			mrg_adbintr();
 			via_reg(VIA1, vIFR) = V1IF_ADBRDY;
 		}
-
 		if (intbits & 0x10) {
 			mrg_pmintr();
 			via_reg(VIA1, vIFR) = 0x10;
@@ -640,40 +681,35 @@ static int ite_pollforchar(void)
 
 	return polledkey;
 }
-
 /*
  * Tty handling functions
  */
 
-static void iteattach (struct device *parent, struct device *dev, void *aux)
+static void 
+iteattach(struct device * parent, struct device * dev, void *aux)
 {
-	printf (" (minimal console)\n");
+	printf(" (minimal console)\n");
 }
 
 extern int matchbyname();
 
-struct cfdriver itecd =
-      { NULL,
-	"ite",
-	matchbyname,
-	iteattach,
-	DV_TTY,
-	sizeof(struct device),
-	NULL,
-	0 };
+struct cfdriver itecd = {
+	NULL, "ite", matchbyname, iteattach, DV_TTY, sizeof(struct device)
+};
 
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
+int
+iteopen(dev_t dev, int mode, int devtype, struct proc * p)
 {
 	register struct tty *tp;
 	register int error;
-	int first = 0;
+	int     first = 0;
 
-	dprintf ("iteopen(): enter(0x%x)\n",(int)dev);
+	dprintf("iteopen(): enter(0x%x)\n", (int) dev);
 	if (ite_tty == NULL)
 		tp = ite_tty = ttymalloc();
 	else
 		tp = ite_tty;
-	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
+	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	tp->t_oproc = itestart;
@@ -683,98 +719,103 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = CS8|CREAD;
+		tp->t_cflag = CS8 | CREAD;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-		tp->t_state = TS_ISOPEN|TS_CARR_ON;
+		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		ttsetwater(tp);
 	}
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*linesw[tp->t_line].l_open) (dev, tp);
 	tp->t_winsize.ws_row = scrrows;
 	tp->t_winsize.ws_col = scrcols;
-	dprintf ("iteopen(): exit(%d)\n", error);
+	dprintf("iteopen(): exit(%d)\n", error);
 	return (error);
 }
 
-iteclose(dev_t dev, int flag, int mode, struct proc *p)
+int
+iteclose(dev_t dev, int flag, int mode, struct proc * p)
 {
-	dprintf ("iteclose: enter (%d)\n", (int)dev);
-	(*linesw[ite_tty->t_line].l_close)(ite_tty, flag);
-	ttyclose (ite_tty);
+	dprintf("iteclose: enter (%d)\n", (int) dev);
+	(*linesw[ite_tty->t_line].l_close) (ite_tty, flag);
+	ttyclose(ite_tty);
 #if 0
-	ttyfree (ite_tty);
-	ite_tty = (struct tty *)0;
+	ttyfree(ite_tty);
+	ite_tty = (struct tty *) 0;
 #endif
-	dprintf ("iteclose: exit\n");
+	dprintf("iteclose: exit\n");
 	return 0;
 }
 
-iteread(dev_t dev, struct uio *uio, int flag)
+int
+iteread(dev_t dev, struct uio * uio, int flag)
 {
-	dprintf ("iteread: enter\n");
-	return (*linesw[ite_tty->t_line].l_read)(ite_tty, uio, flag);
-	dprintf ("iteread: exit\n");
+	dprintf("iteread: enter\n");
+	return (*linesw[ite_tty->t_line].l_read) (ite_tty, uio, flag);
+	dprintf("iteread: exit\n");
 }
 
-itewrite(dev_t dev, struct uio *uio, int flag)
+int
+itewrite(dev_t dev, struct uio * uio, int flag)
 {
-	dprintf ("itewrite: enter\n");
-	return (*linesw[ite_tty->t_line].l_write)(ite_tty, uio, flag);
-	dprintf ("itewrite: exit\n");
+	dprintf("itewrite: enter\n");
+	return (*linesw[ite_tty->t_line].l_write) (ite_tty, uio, flag);
+	dprintf("itewrite: exit\n");
 }
 
 struct tty *
 itetty(dev)
-	dev_t dev;
+	dev_t   dev;
 {
 	return (ite_tty);
 }
 
-iteioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
+int
+iteioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc * p)
 {
 	register struct tty *tp = ite_tty;
-	int error;
+	int     error;
 
-	dprintf ("iteioctl: enter(%d, 0x%x)\n", cmd, cmd);
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag, p);
+	dprintf("iteioctl: enter(%d, 0x%x)\n", cmd, cmd);
+	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, addr, flag, p);
 	if (error >= 0) {
-		dprintf ("iteioctl: exit(%d)\n", error);
+		dprintf("iteioctl: exit(%d)\n", error);
 		return (error);
 	}
 	error = ttioctl(tp, cmd, addr, flag, p);
 	if (error >= 0) {
-		dprintf ("iteioctl: exit(%d)\n", error);
+		dprintf("iteioctl: exit(%d)\n", error);
 		return (error);
 	}
 	switch (cmd) {
-		case ITEIOC_RINGBELL: {
+	case ITEIOC_RINGBELL:{
 			asc_ringbell();
 			return (0);
 		}
-		case ITEIOC_SETBELL: {
-			struct bellparams	*bp = (void *) addr;
+	case ITEIOC_SETBELL:{
+			struct bellparams *bp = (void *) addr;
 
 			asc_setbellparams(bp->freq, bp->len, bp->vol);
 			return (0);
 		}
-		case ITEIOC_GETBELL: {
-			struct bellparams	*bp = (void *) addr;
+	case ITEIOC_GETBELL:{
+			struct bellparams *bp = (void *) addr;
 
 			asc_getbellparams(&bp->freq, &bp->len, &bp->vol);
 			return (0);
 		}
 	}
-	dprintf ("iteioctl: exit(ENOTTY)\n");
+	dprintf("iteioctl: exit(ENOTTY)\n");
 	return (ENOTTY);
 }
 
-void itestart (register struct tty *tp)
+void 
+itestart(register struct tty * tp)
 {
 	register int cc, s;
-	int hiwat = 0, hadcursor = 0;
+	int     hiwat = 0, hadcursor = 0;
 
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
+	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
 		splx(s);
 		return;
 	}
@@ -782,22 +823,23 @@ void itestart (register struct tty *tp)
 
 	cc = tp->t_outq.c_cc;
 	splx(s);
-	erasecursor ();
+	erasecursor();
 	while (cc-- > 0) {
-		ite_putchar (getc (&tp->t_outq));
+		ite_putchar(getc(&tp->t_outq));
 	}
-	drawcursor ();
+	drawcursor();
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	splx(s);
 }
 
-void itestop (struct tty *tp, int flag)
+void 
+itestop(struct tty * tp, int flag)
 {
-	int	s;
+	int     s;
 
-	s = spltty ();
+	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		if ((tp->t_state & TS_TTSTOP) == 0) {
 			tp->t_state |= TS_FLUSH;
@@ -806,75 +848,78 @@ void itestop (struct tty *tp, int flag)
 	splx(s);
 }
 
-ite_intr (adb_event_t *event)
+int
+ite_intr(adb_event_t * event)
 {
-	static	int	shift = 0, control = 0;
-	int		key, press, val, state;
-	char		str[10], *s;
+	static int shift = 0, control = 0;
+	int     key, press, val, state;
+	char    str[10], *s;
 
 	key = event->u.k.key;
-	press = ADBK_PRESS (key);
-	val = ADBK_KEYVAL (key);
+	press = ADBK_PRESS(key);
+	val = ADBK_KEYVAL(key);
 
 	if (val == ADBK_SHIFT) {
 		shift = press;
-	} else if (val == ADBK_CONTROL) {
-		control = press;
-	} else if (press) {
-		switch (val) {
-			case ADBK_UP:
-				str[0] = '\e';
-				str[1] = 'O';
-				str[2] = 'A';
-				str[3] = '\0';
-				break;
-			case ADBK_DOWN:
-				str[0] = '\e';
-				str[1] = 'O';
-				str[2] = 'B';
-				str[3] = '\0';
-				break;
-			case ADBK_RIGHT:
-				str[0] = '\e';
-				str[1] = 'O';
-				str[2] = 'C';
-				str[3] = '\0';
-				break;
-			case ADBK_LEFT:
-				str[0] = '\e';
-				str[1] = 'O';
-				str[2] = 'D';
-				str[3] = '\0';
-				break;
-			default:
-				state = 0;
-				if (shift) {
-					state = 1;
+	} else
+		if (val == ADBK_CONTROL) {
+			control = press;
+		} else
+			if (press) {
+				switch (val) {
+				case ADBK_UP:
+					str[0] = '\e';
+					str[1] = 'O';
+					str[2] = 'A';
+					str[3] = '\0';
+					break;
+				case ADBK_DOWN:
+					str[0] = '\e';
+					str[1] = 'O';
+					str[2] = 'B';
+					str[3] = '\0';
+					break;
+				case ADBK_RIGHT:
+					str[0] = '\e';
+					str[1] = 'O';
+					str[2] = 'C';
+					str[3] = '\0';
+					break;
+				case ADBK_LEFT:
+					str[0] = '\e';
+					str[1] = 'O';
+					str[2] = 'D';
+					str[3] = '\0';
+					break;
+				default:
+					state = 0;
+					if (shift) {
+						state = 1;
+					}
+					if (control) {
+						state = 2;
+					}
+					str[0] = keyboard[val][state];
+					str[1] = '\0';
+					break;
 				}
-				if (control) {
-					state = 2;
+				if (adb_polling) {
+					polledkey = str[0];
+				} else {
+					for (s = str; *s; s++) {
+						(*linesw[ite_tty->t_line].l_rint) (*s, ite_tty);
+					}
 				}
-				str[0] = keyboard[val][state];
-				str[1] = '\0';
-				break;
-		}
-		if (adb_polling) {
-			polledkey = str[0];
-		} else {
-			for (s = str; *s; s++) {
-				(*linesw[ite_tty->t_line].l_rint)(*s, ite_tty);
 			}
-		}
-	}
 }
-
 /*
  * Console functions
  */
 
-itecnprobe(struct consdev *cp)
+int
+itecnprobe(struct consdev * cp)
 {
-	int maj, unit;
+	int     maj, unit;
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++) {
@@ -884,17 +929,17 @@ itecnprobe(struct consdev *cp)
 	}
 
 	if (maj == nchrdev) {
-		panic ("itecnprobe(): did not find iteopen().");
+		panic("itecnprobe(): did not find iteopen().");
 	}
-
-	unit = 0; /* hardcode first device as console. */
+	unit = 0;		/* hardcode first device as console. */
 
 	/* initialize required fields */
-	cp->cn_dev = makedev (maj, unit);
+	cp->cn_dev = makedev(maj, unit);
 	cp->cn_pri = CN_INTERNAL;
 }
 
-itecninit(struct consdev *cp)
+int
+itecninit(struct consdev * cp)
 {
 	width = videosize & 0xffff;
 	height = (videosize >> 16) & 0xffff;
@@ -902,54 +947,62 @@ itecninit(struct consdev *cp)
 	scrcols = width / CHARWIDTH;
 
 	switch (videobitdepth) {
-		default:
-		case 1:	putpixel = putpixel2;
-			reversepixel = reversepixel1;
-			break;
-		case 2:	putpixel = putpixel2;
-			reversepixel = reversepixel1;
-			break;
-		case 4:	putpixel = putpixel4;
-			reversepixel = reversepixel1;
-			break;
-		case 8:	putpixel = putpixel8;
-			reversepixel = reversepixel1;
-			break;
+	default:
+	case 1:
+		putpixel = putpixel2;
+		reversepixel = reversepixel1;
+		break;
+	case 2:
+		putpixel = putpixel2;
+		reversepixel = reversepixel1;
+		break;
+	case 4:
+		putpixel = putpixel4;
+		reversepixel = reversepixel1;
+		break;
+	case 8:
+		putpixel = putpixel8;
+		reversepixel = reversepixel1;
+		break;
 	}
 
 	iteon(cp->cn_dev, 0);
 }
 
+int
 iteon(dev_t dev, int flags)
 {
-	erasecursor ();
-	clear_screen (2);
-	drawcursor ();
+	erasecursor();
+	clear_screen(2);
+	drawcursor();
 }
 
+int
 iteoff(dev_t dev, int flags)
 {
-	erasecursor ();
-	clear_screen (2);
+	erasecursor();
+	clear_screen(2);
 }
 
+int
 itecngetc(dev_t dev)
 {
 	/* Oh, man... */
 
-	return ite_pollforchar ();
+	return ite_pollforchar();
 }
 
+int
 itecnputc(dev_t dev, int c)
 {
-extern	dev_t	mac68k_serdev;
-	int 	s;
+	extern dev_t mac68k_serdev;
+	int     s;
 
 /* 	s = splhigh (); */
 
-	erasecursor ();
-	ite_putchar (c);
-	drawcursor ();
+	erasecursor();
+	ite_putchar(c);
+	drawcursor();
 	if (mac68k_machine.serial_boot_echo)
 		sercnputc(mac68k_serdev, c);
 

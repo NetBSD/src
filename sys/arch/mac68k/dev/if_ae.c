@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.24 1995/04/19 04:43:36 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.25 1995/04/21 02:47:53 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -64,44 +64,44 @@
 /*
  * ae_softc: per line info and status
  */
-struct	ae_softc {
-	struct	device sc_dev;
+struct ae_softc {
+	struct device sc_dev;
 /*	struct	nubusdev sc_nu;
 	struct	intrhand sc_ih;	*/
 
-	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct arpcom sc_arpcom;/* ethernet common */
 
-	char	*type_str;	/* pointer to type string */
-	u_char	vendor;		/* interface vendor */
-	u_char	type;		/* interface type code */
-	u_char	regs_rev;	/* registers are reversed */
+	char   *type_str;	/* pointer to type string */
+	u_char  vendor;		/* interface vendor */
+	u_char  type;		/* interface type code */
+	u_char  regs_rev;	/* registers are reversed */
 
 #define	REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
 #define NIC_GET(sc, reg)	((sc)->nic_addr[REG_MAP(sc, reg)])
 #define NIC_PUT(sc, reg, val)	((sc)->nic_addr[REG_MAP(sc, reg)] = (val))
-	volatile caddr_t nic_addr; /* NIC (DS8390) I/O bus address */
-	caddr_t	rom_addr;	/* on board prom address */
+	volatile caddr_t nic_addr;	/* NIC (DS8390) I/O bus address */
+	caddr_t rom_addr;	/* on board prom address */
 
-	u_char	cr_proto;	/* values always set in CR */
+	u_char  cr_proto;	/* values always set in CR */
 
-	caddr_t	mem_start;	/* shared memory start address */
-	caddr_t	mem_end;	/* shared memory end address */
-	u_long	mem_size;	/* total shared memory size */
-	caddr_t	mem_ring;	/* start of RX ring-buffer (in smem) */
+	caddr_t mem_start;	/* shared memory start address */
+	caddr_t mem_end;	/* shared memory end address */
+	u_long  mem_size;	/* total shared memory size */
+	caddr_t mem_ring;	/* start of RX ring-buffer (in smem) */
 
-	u_char	mem_wr_short;	/* card memory requires int16 writes */
+	u_char  mem_wr_short;	/* card memory requires int16 writes */
 
-	u_char	xmit_busy;	/* transmitter is busy */
-	u_char	txb_cnt;	/* Number of transmit buffers */
-	u_char	txb_inuse;	/* number of TX buffers currently in-use*/
+	u_char  xmit_busy;	/* transmitter is busy */
+	u_char  txb_cnt;	/* Number of transmit buffers */
+	u_char  txb_inuse;	/* number of TX buffers currently in-use */
 
-	u_char 	txb_new;	/* pointer to where new buffer will be added */
-	u_char	txb_next_tx;	/* pointer to next buffer ready to xmit */
-	u_short	txb_len[8];	/* buffered xmit buffer lengths */
-	u_char	tx_page_start;	/* first page of TX buffer area */
-	u_char	rec_page_start;	/* first page of RX ring-buffer */
-	u_char	rec_page_stop;	/* last page of RX ring-buffer */
-	u_char	next_packet;	/* pointer to next unread RX packet */
+	u_char  txb_new;	/* pointer to where new buffer will be added */
+	u_char  txb_next_tx;	/* pointer to next buffer ready to xmit */
+	u_short txb_len[8];	/* buffered xmit buffer lengths */
+	u_char  tx_page_start;	/* first page of TX buffer area */
+	u_char  rec_page_start;	/* first page of RX ring-buffer */
+	u_char  rec_page_stop;	/* last page of RX ring-buffer */
+	u_char  next_packet;	/* pointer to next unread RX packet */
 };
 
 int aeprobe __P((struct device *, void *, void *));
@@ -109,46 +109,57 @@ void aeattach __P((struct device *, struct device *, void *));
 void aeintr __P((struct ae_softc *));
 int ae_ioctl __P((struct ifnet *, u_long, caddr_t));
 void ae_start __P((struct ifnet *));
-void ae_watchdog __P((/* short */));
+void ae_watchdog __P(( /* short */ ));
 void ae_reset __P((struct ae_softc *));
 void ae_init __P((struct ae_softc *));
 void ae_stop __P((struct ae_softc *));
 void ae_getmcaf __P((struct arpcom *, u_long *));
 u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
 
-#define inline	/* XXX for debugging porpoises */
+#define inline			/* XXX for debugging porpoises */
 
-void ae_get_packet __P((/* struct ae_softc *, caddr_t, u_short */));
+void ae_get_packet __P(( /* struct ae_softc *, caddr_t, u_short */ ));
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
-static inline caddr_t ae_ring_copy __P((/* struct ae_softc *, caddr_t, caddr_t,
-					u_short */));
+static inline caddr_t ae_ring_copy 
+__P((				/* struct ae_softc *, caddr_t, caddr_t,
+	    u_short */ ));
 
-struct cfdriver aecd = {
-	NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
-};
-
+	struct cfdriver aecd = {
+		NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
+	};
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-char ae_name[] = "8390 Nubus Ethernet card";
-static char zero = 0;
-static u_char ones = 0xff;
+	char    ae_name[] = "8390 Nubus Ethernet card";
+	static char zero = 0;
+	static u_char ones = 0xff;
 
-struct vendor_S {
-	char	*manu;
-	int	len;
-	int	vendor;
-} vend[] = {
-	{ "Apple", 5, AE_VENDOR_APPLE },
-	{ "3Com",  4, AE_VENDOR_APPLE },
-	{ "Dayna", 5, AE_VENDOR_DAYNA },
-	{ "Inter", 5, AE_VENDOR_INTERLAN },
-	{ "Asant", 5, AE_VENDOR_ASANTE },
+	struct vendor_S {
+		char   *manu;
+		int     len;
+		int     vendor;
+	}       vend[] =
+{
+	{
+		"Apple", 5, AE_VENDOR_APPLE
+	},
+	{
+		"3Com", 4, AE_VENDOR_APPLE
+	},
+	{
+		"Dayna", 5, AE_VENDOR_DAYNA
+	},
+	{
+		"Inter", 5, AE_VENDOR_INTERLAN
+	},
+	{
+		"Asant", 5, AE_VENDOR_ASANTE
+	},
 };
 
-static int numvend = sizeof(vend)/sizeof(vend[0]);
+static int numvend = sizeof(vend) / sizeof(vend[0]);
 
 /*
  * XXX These two should be moved to locore, and maybe changed to use shorts
@@ -157,36 +168,33 @@ static int numvend = sizeof(vend)/sizeof(vend[0]);
  */
 
 void
-bszero(u_short *addr, int len)
+bszero(u_short * addr, int len)
 {
 
 	while (len--)
 		*addr++ = 0;
 }
-
 /*
  * Memory copy, copies word at time.
  */
 static inline void
 word_copy(a, b, len)
 	caddr_t a, b;
-	int len;
+	int     len;
 {
-	u_short *x = (u_short *)a,
-		*y = (u_short *)b;
+	u_short *x = (u_short *) a, *y = (u_short *) b;
 
 	len >>= 1;
 	while (len--)
 		*y++ = *x++;
 }
-
 /*
  * Memory copy, copies bytes at time.
  */
 static inline void
 byte_copy(a, b, len)
 	caddr_t a, b;
-	int len;
+	int     len;
 {
 	while (len--)
 		*b++ = *a++;
@@ -194,44 +202,44 @@ byte_copy(a, b, len)
 
 void
 ae_id_card(nu, sc)
-	struct nubus_hw	*nu;
-	struct ae_softc	*sc;
+	struct nubus_hw *nu;
+	struct ae_softc *sc;
 {
-	int i;
+	int     i;
 
 	/*
 	 * Try to determine what type of card this is...
 	 */
 	sc->vendor = AE_VENDOR_UNKNOWN;
 	for (i = 0; i < numvend; i++) {
-		if (!strncmp(nu->Slot.manufacturer, vend[i].manu, vend[i].len)) {
+		if (!strncmp(nu->slot.manufacturer, vend[i].manu, vend[i].len)) {
 			sc->vendor = vend[i].vendor;
 			break;
 		}
 	}
-	sc->type_str = (char *)(nu->Slot.manufacturer);
+	sc->type_str = (char *) (nu->slot.manufacturer);
 
 }
 
 int
 ae_size_card_memory(sc)
-	struct ae_softc	*sc;
+	struct ae_softc *sc;
 {
 	u_short *p;
 	u_short i1, i2, i3, i4;
-	int size;
+	int     size;
 
-	p = (u_short *)sc->mem_start;
+	p = (u_short *) sc->mem_start;
 
 	/*
 	 * very simple size memory, assuming it's installed in 8k
 	 * banks; also assume it will generally mirror in upper banks
 	 * if not installed.
 	 */
-	i1 = (8192*0)/2;
-	i2 = (8192*1)/2;
-	i3 = (8192*2)/2;
-	i4 = (8192*3)/2;
+	i1 = (8192 * 0) / 2;
+	i2 = (8192 * 1) / 2;
+	i3 = (8192 * 2) / 2;
+	i4 = (8192 * 3) / 2;
 
 	p[i1] = 0x1111;
 	p[i2] = 0x2222;
@@ -240,11 +248,11 @@ ae_size_card_memory(sc)
 
 	if (p[i1] == 0x1111 && p[i2] == 0x2222 &&
 	    p[i3] == 0x3333 && p[i4] == 0x4444)
-		return 8192*4;
+		return 8192 * 4;
 
 	if ((p[i1] == 0x1111 && p[i2] == 0x2222) ||
 	    (p[i1] == 0x3333 && p[i2] == 0x4444))
-		return 8192*2;
+		return 8192 * 2;
 
 	if (p[i1] == 0x1111 || p[i1] == 0x4444)
 		return 8192;
@@ -255,14 +263,14 @@ ae_size_card_memory(sc)
 int
 aeprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	void   *match, *aux;
 {
 	struct ae_softc *sc = match;
 	register struct nubus_hw *nu = aux;
-	int i, memsize;
-	int flags = 0;
+	int     i, memsize;
+	int     flags = 0;
 
-	if (nu->Slot.type != NUBUS_NETWORK)
+	if (nu->slot.type != NUBUS_NETWORK)
 		return 0;
 
 	ae_id_card(nu, sc);
@@ -271,7 +279,7 @@ aeprobe(parent, match, aux)
 	sc->mem_wr_short = 0;
 
 	switch (sc->vendor) {
-	      case AE_VENDOR_INTERLAN:
+	case AE_VENDOR_INTERLAN:
 		sc->nic_addr = nu->addr + GC_NIC_OFFSET;
 		sc->rom_addr = nu->addr + GC_ROM_OFFSET;
 		sc->mem_start = nu->addr + GC_DATA_OFFSET;
@@ -279,19 +287,19 @@ aeprobe(parent, match, aux)
 			return 0;
 
 		/* reset the NIC chip */
-		*((caddr_t)nu->addr + GC_RESET_OFFSET) = (char)zero;
+		*((caddr_t) nu->addr + GC_RESET_OFFSET) = (char) zero;
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i*4);
+			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 4);
 		break;
 
-	      case AE_VENDOR_ASANTE:
+	case AE_VENDOR_ASANTE:
 		/* memory writes require *(u_short *) */
 		sc->mem_wr_short = 1;
 		/* otherwise, pretend to be an apple card (fall through) */
 
-	      case AE_VENDOR_APPLE:
+	case AE_VENDOR_APPLE:
 		sc->regs_rev = 1;
 		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
 		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
@@ -301,10 +309,10 @@ aeprobe(parent, match, aux)
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i*2);
+			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
 		break;
 
-	      case AE_VENDOR_DAYNA:
+	case AE_VENDOR_DAYNA:
 		printf("We think we are a Dayna card, but ");
 		sc->nic_addr = nu->addr + DP_NIC_OFFSET;
 		sc->rom_addr = nu->addr + DP_ROM_OFFSET;
@@ -313,12 +321,12 @@ aeprobe(parent, match, aux)
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i*2);
+			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
 		printf("it is dangerous to continue.\n");
-		return (0); /* Since we don't work yet... */
+		return (0);	/* Since we don't work yet... */
 		break;
 
-	      default:
+	default:
 		return (0);
 		break;
 	}
@@ -339,29 +347,27 @@ aeprobe(parent, match, aux)
 	sc->mem_end = sc->mem_start + memsize;
 
 	/* Now zero memory and verify that it is clear. */
-	bszero((u_short *)sc->mem_start, memsize / 2);
+	bszero((u_short *) sc->mem_start, memsize / 2);
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->mem_start[i]) {
-	        	printf("%s: failed to clear shared memory at %x - check configuration\n",
+			printf("%s: failed to clear shared memory at %x - check configuration\n",
 			    sc->sc_dev.dv_xname,
 			    sc->mem_start + i);
 			return (0);
 		}
-
 	return (1);
 }
-
 /*
  * Install interface into kernel networking data structures
  */
 void
 aeattach(parent, self, aux)
 	struct device *parent, *self;
-	void *aux;
+	void   *aux;
 {
-	struct ae_softc *sc = (void *)self;
-	struct nubus_hw	*nu = aux;
+	struct ae_softc *sc = (void *) self;
+	struct nubus_hw *nu = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -396,9 +402,8 @@ aeattach(parent, self, aux)
 #endif
 
 	/* make sure interrupts are vectored to us */
-	add_nubus_intr( (int) sc->rom_addr & 0xFF000000, aeintr, sc);
+	add_nubus_intr((int) sc->rom_addr & 0xFF000000, aeintr, sc);
 }
-
 /*
  * Reset interface.
  */
@@ -406,14 +411,13 @@ void
 ae_reset(sc)
 	struct ae_softc *sc;
 {
-	int s;
+	int     s;
 
 	s = splimp();
 	ae_stop(sc);
 	ae_init(sc);
 	splx(s);
 }
-
 /*
  * Take interface offline.
  */
@@ -421,7 +425,7 @@ void
 ae_stop(sc)
 	struct ae_softc *sc;
 {
-	int n = 5000;
+	int     n = 5000;
 
 	/* Stop everything on the interface, and select page 0 registers. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
@@ -433,15 +437,14 @@ ae_stop(sc)
 	 */
 	while (((NIC_GET(sc, ED_P0_ISR) & ED_ISR_RST) == 0) && --n);
 }
-
 /*
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-static	int aeintr_ctr = 0;
+static int aeintr_ctr = 0;
 void
 ae_watchdog(unit)
-	int unit;
+	int     unit;
 {
 	struct ae_softc *sc = aecd.cd_devs[unit];
 
@@ -451,11 +454,11 @@ ae_watchdog(unit)
  * sometimes.  This kludges around that by calling the handler
  * by hand if the watchdog is activated. -- XXX (akb)
  */
-	int	i;
+	int     i;
 
 	i = aeintr_ctr;
 
-	(*via2itab[1])(1);
+	(*via2itab[1]) (1);
 
 	if (i != aeintr_ctr) {
 		log(LOG_ERR, "ae%d: device timeout, recovered\n", unit);
@@ -468,7 +471,6 @@ ae_watchdog(unit)
 
 	ae_reset(sc);
 }
-
 /*
  * Initialize device.
  */
@@ -477,9 +479,9 @@ ae_init(sc)
 	struct ae_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i, s;
-	u_char command;
-	u_long mcaf[2];
+	int     i, s;
+	u_char  command;
+	u_long  mcaf[2];
 
 	/* Address not known. */
 	if (ifp->if_addrlist == 0)
@@ -552,7 +554,7 @@ ae_init(sc)
 	/* Set multicast filter on chip. */
 	ae_getmcaf(&sc->sc_arpcom, mcaf);
 	for (i = 0; i < 8; i++)
-		NIC_PUT(sc, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
+		NIC_PUT(sc, ED_P1_MAR0 + i, ((u_char *) mcaf)[i]);
 
 	/*
 	 * Set current page pointer to one page after the boundary pointer, as
@@ -589,7 +591,6 @@ ae_init(sc)
 
 	splx(s);
 }
-
 /*
  * This routine actually starts the transmission on the interface.
  */
@@ -625,7 +626,6 @@ ae_xmit(sc)
 	/* Set a timer just in case we never hear from the board again. */
 	ifp->if_timer = 2;
 }
-
 /*
  * Start output on interface.
  * We make two assumptions here:
@@ -642,7 +642,7 @@ ae_start(ifp)
 	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	caddr_t buffer;
-	int len;
+	int     len;
 
 outloop:
 	/*
@@ -654,14 +654,12 @@ outloop:
 		    sc->sc_dev.dv_xname);
 		ae_xmit(sc);
 	}
-
 	/* See if there is room to put another packet in the buffer. */
 	if (sc->txb_inuse == sc->txb_cnt) {
 		/* No room.  Indicate this to the outside world and exit. */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-
 	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 	if (m == 0) {
 		/*
@@ -674,7 +672,6 @@ outloop:
 		ifp->if_flags &= ~IFF_OACTIVE;
 		return;
 	}
-
 	/* Copy the mbuf chain into the transmit buffer. */
 	m0 = m;
 
@@ -704,7 +701,6 @@ outloop:
 	/* Loop back to the top to possibly buffer more packets. */
 	goto outloop;
 }
-
 /*
  * Ethernet interface receiver interrupt.
  */
@@ -712,9 +708,9 @@ static inline void
 ae_rint(sc)
 	struct ae_softc *sc;
 {
-	u_char boundary, current;
+	u_char  boundary, current;
 	u_short len;
-	u_char nlen;
+	u_char  nlen;
 	struct ae_ring packet_hdr;
 	caddr_t packet_ptr;
 
@@ -746,7 +742,7 @@ loop:
 		 * The byte count includes a 4 byte header that was added by
 		 * the NIC.
 		 */
-		packet_hdr = *(struct ae_ring *)packet_ptr;
+		packet_hdr = *(struct ae_ring *) packet_ptr;
 		packet_hdr.count =
 		    ((packet_hdr.count >> 8) & 0xff) |
 		    ((packet_hdr.count & 0xff) << 8);
@@ -764,7 +760,7 @@ loop:
 			nlen = (packet_hdr.next_packet - sc->next_packet);
 		else
 			nlen = ((packet_hdr.next_packet - sc->rec_page_start) +
-				(sc->rec_page_stop - sc->next_packet));
+			    (sc->rec_page_stop - sc->next_packet));
 		--nlen;
 		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
 			--nlen;
@@ -820,13 +816,12 @@ loop:
 
 	goto loop;
 }
-
 /* Ethernet interface interrupt processor. */
 void
 aeintr(sc)
 	struct ae_softc *sc;
 {
-	u_char isr;
+	u_char  isr;
 
 	aeintr_ctr++;
 
@@ -851,7 +846,7 @@ aeintr(sc)
 		 * the receiver will reset the board under some conditions.
 		 */
 		if (isr & (ED_ISR_PTX | ED_ISR_TXE)) {
-			u_char collisions = NIC_GET(sc, ED_P0_NCR) & 0x0f;
+			u_char  collisions = NIC_GET(sc, ED_P0_NCR) & 0x0f;
 
 			/*
 			 * Check for transmit error.  If a TX completed with an
@@ -876,7 +871,6 @@ aeintr(sc)
 					 */
 					collisions = 16;
 				}
-
 				/* Update output errors counter. */
 				++sc->sc_arpcom.ac_if.if_oerrors;
 			} else {
@@ -910,7 +904,6 @@ aeintr(sc)
 			if (sc->txb_inuse && --sc->txb_inuse)
 				ae_xmit(sc);
 		}
-
 		/* Handle receiver interrupts. */
 		if (isr & (ED_ISR_PRX | ED_ISR_RXE | ED_ISR_OVW)) {
 			/*
@@ -945,7 +938,6 @@ aeintr(sc)
 					    NIC_GET(sc, ED_P0_RSR));
 #endif
 				}
-
 				/*
 				 * Go get the packet(s)
 				 * XXX - Doing this on an error is dubious
@@ -956,7 +948,6 @@ aeintr(sc)
 				ae_rint(sc);
 			}
 		}
-
 		/*
 		 * If it looks like the transmitter can take more data, attempt
 		 * to start output on the interface.  This is done after
@@ -983,26 +974,24 @@ aeintr(sc)
 			(void) NIC_GET(sc, ED_P0_CNTR1);
 			(void) NIC_GET(sc, ED_P0_CNTR2);
 		}
-
 		isr = NIC_GET(sc, ED_P0_ISR);
 		if (!isr)
 			return;
 	}
 }
-
 /*
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
 ae_ioctl(ifp, command, data)
 	register struct ifnet *ifp;
-	u_long command;
+	u_long  command;
 	caddr_t data;
 {
 	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
-	register struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
-	int s, error = 0;
+	register struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifreq *ifr = (struct ifreq *) data;
+	int     s, error = 0;
 
 	s = splimp();
 
@@ -1019,22 +1008,22 @@ ae_ioctl(ifp, command, data)
 			break;
 #endif
 #ifdef NS
-		/* XXX - This code is probably wrong. */
+			/* XXX - This code is probably wrong. */
 		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			{
+				register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			ae_init(sc);
-			break;
-		    }
+				if (ns_nullhost(*ina))
+					ina->x_host =
+					    *(union ns_host *) (sc->sc_arpcom.ac_enaddr);
+				else
+					bcopy(ina->x_host.c_host,
+					    sc->sc_arpcom.ac_enaddr,
+					    sizeof(sc->sc_arpcom.ac_enaddr));
+				/* Set new address. */
+				ae_init(sc);
+				break;
+			}
 #endif
 		default:
 			ae_init(sc);
@@ -1051,21 +1040,22 @@ ae_ioctl(ifp, command, data)
 			 */
 			ae_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			ae_init(sc);
-		} else {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
-			 */
-			ae_stop(sc);
-			ae_init(sc);
-		}
+		} else
+			if ((ifp->if_flags & IFF_UP) != 0 &&
+			    (ifp->if_flags & IFF_RUNNING) == 0) {
+				/*
+				 * If interface is marked up and it is stopped, then
+				 * start it.
+				 */
+				ae_init(sc);
+			} else {
+				/*
+				 * Reset the interface to pick up changes in any other
+				 * flags that affect hardware registers.
+				 */
+				ae_stop(sc);
+				ae_init(sc);
+			}
 		break;
 
 	case SIOCADDMULTI:
@@ -1080,7 +1070,7 @@ ae_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ae_stop(sc); /* XXX for ds_setmcaf? */
+			ae_stop(sc);	/* XXX for ds_setmcaf? */
 			ae_init(sc);
 			error = 0;
 		}
@@ -1093,7 +1083,6 @@ ae_ioctl(ifp, command, data)
 	splx(s);
 	return (error);
 }
-
 /*
  * Retreive packet from shared memory and send to the next level up via
  * ether_input().  If there is a BPF listener, give a copy to BPF, too.
@@ -1105,7 +1094,7 @@ ae_get_packet(sc, buf, len)
 	u_short len;
 {
 	struct ether_header *eh;
-    	struct mbuf *m, *ae_ring_to_mbuf();
+	struct mbuf *m, *ae_ring_to_mbuf();
 
 	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1136,7 +1125,6 @@ ae_get_packet(sc, buf, len)
 		m_freem(m);
 		return;
 	}
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
@@ -1151,9 +1139,9 @@ ae_get_packet(sc, buf, len)
 		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
+			sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
 		}
@@ -1164,7 +1152,6 @@ ae_get_packet(sc, buf, len)
 	m_adj(m, sizeof(struct ether_header));
 	ether_input(&sc->sc_arpcom.ac_if, eh, m);
 }
-
 /*
  * Supporting routines.
  */
@@ -1177,9 +1164,9 @@ static inline caddr_t
 ae_ring_copy(sc, src, dst, amount)
 	struct ae_softc *sc;
 	caddr_t src, dst;
-	u_short	amount;
+	u_short amount;
 {
-	u_short	tmp_amount;
+	u_short tmp_amount;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -1192,12 +1179,10 @@ ae_ring_copy(sc, src, dst, amount)
 		src = sc->mem_ring;
 		dst += tmp_amount;
 	}
-
 	byte_copy(src, dst, amount);
 
 	return (src + amount);
 }
-
 /*
  * Copy data from receive buffer to end of mbuf chain allocate additional mbufs
  * as needed.  Return pointer to last mbuf in chain.
@@ -1244,7 +1229,6 @@ ae_ring_to_mbuf(sc, src, dst, total_len)
 			dst->m_next = m;
 			amount = min(total_len, M_TRAILINGSPACE(m));
 		}
-
 		src = ae_ring_copy(sc, src, mtod(m, caddr_t) + m->m_len,
 		    amount);
 
@@ -1253,7 +1237,6 @@ ae_ring_to_mbuf(sc, src, dst, total_len)
 	}
 	return (m);
 }
-
 /*
  * Compute the multicast address filter from the list of multicast addresses we
  * need to listen to.
@@ -1283,12 +1266,11 @@ ae_getmcaf(ac, af)
 		af[0] = af[1] = 0xffffffff;
 		return;
 	}
-
 	af[0] = af[1] = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo)) != 0) {
+			sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1301,7 +1283,6 @@ ae_getmcaf(ac, af)
 			af[0] = af[1] = 0xffffffff;
 			return;
 		}
-
 		cp = enm->enm_addrlo;
 		crc = 0xffffffff;
 		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
@@ -1325,7 +1306,6 @@ ae_getmcaf(ac, af)
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
-
 /*
  * Copy packet from mbuf to the board memory
  *
@@ -1340,8 +1320,8 @@ ae_put(sc, m, buf)
 	caddr_t buf;
 {
 	u_char *data, savebyte[2];
-	int len, wantbyte;
-	u_short totlen=0;
+	int     len, wantbyte;
+	u_short totlen = 0;
 
 	wantbyte = 0;
 
@@ -1378,6 +1358,5 @@ ae_put(sc, m, buf)
 		savebyte[1] = 0;
 		word_copy(savebyte, buf, 2);
 	}
-
 	return (totlen);
 }
