@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.9 1998/05/09 17:22:09 kleink Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.10 1998/07/04 21:34:20 mrg Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.9 1998/05/09 17:22:09 kleink Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.10 1998/07/04 21:34:20 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -212,7 +212,7 @@ host_addr(name)
     *op = '\0';
 
     if (dots <= 0) e = gethostbyname(name);
-    if (e) memcpy((char *)&addr, e->h_addr_list[0], e->h_length);
+    if (e) memcpy((char *)&addr, e->h_addr_list[0], sizeof(addr));
     else {
 	addr = inet_addr(buf);
 	if (addr == -1) {
@@ -1367,7 +1367,8 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	    exit(-1);
 	}
 
-	memcpy((char *)&addr.sin_addr.s_addr, hp->h_addr, hp->h_length);
+	memcpy((char *)&addr.sin_addr.s_addr, hp->h_addr,
+	    sizeof(addr.sin_addr.s_addr));
     }
 #endif
 
