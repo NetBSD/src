@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.44 2002/04/25 15:06:28 atatat Exp $
+#	$NetBSD: DR-EVIL,v 1.44.6.1 2002/06/10 17:14:01 tv Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -27,6 +27,7 @@ options 	__AUDIT__
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	MTRR		# MTRR support
+#options 	PERFCTRS	# performance-monitoring counters support
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 options 	DUMMY_NOPS
 
