@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/04/15 20:10:41 is Exp $
+#	$NetBSD: Makefile,v 1.21 2000/09/17 18:24:12 is Exp $
 
 ### what we need:
 
@@ -31,7 +31,7 @@ DEFS = -D_STANDALONE -DINSECURE
 
 ### main target: ###
 
-all: ${FILES}
+realall: ${FILES}
 
 .include <bsd.prog.mk>
 
