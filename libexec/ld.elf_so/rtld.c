@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.23 1999/08/19 23:42:15 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.24 1999/10/25 13:57:12 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -296,28 +296,28 @@ _rtld(sp)
 #ifdef	VARPSZ
 	pAUX_pagesz = NULL;
 #endif
-	for (auxp = aux; auxp->au_id != AUX_null; ++auxp) {
-		switch (auxp->au_id) {
-		case AUX_base:
+	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
+		switch (auxp->a_type) {
+		case AT_BASE:
 			pAUX_base = auxp;
 			break;
-		case AUX_entry:
+		case AT_ENTRY:
 			pAUX_entry = auxp;
 			break;
-		case AUX_execfd:
+		case AT_EXECFD:
 			pAUX_execfd = auxp;
 			break;
-		case AUX_phdr:
+		case AT_PHDR:
 			pAUX_phdr = auxp;
 			break;
-		case AUX_phent:
+		case AT_PHENT:
 			pAUX_phent = auxp;
 			break;
-		case AUX_phnum:
+		case AT_PHNUM:
 			pAUX_phnum = auxp;
 			break;
 #ifdef	VARPSZ
-		case AUX_pagesz:
+		case AT_PAGESZ:
 			pAUX_pagesz = auxp;
 			break;
 #endif
@@ -326,11 +326,11 @@ _rtld(sp)
 
 	/* Initialize and relocate ourselves. */
 	assert(pAUX_base != NULL);
-	_rtld_init((caddr_t) pAUX_base->au_v);
+	_rtld_init((caddr_t) pAUX_base->a_v);
 
 #ifdef	VARPSZ
 	assert(pAUX_pagesz != NULL);
-	_rtld_pagesz = (int)pAUX_pagesz->au_v;
+	_rtld_pagesz = (int)pAUX_pagesz->a_v;
 #endif
 
 #ifdef RTLD_DEBUG
@@ -355,14 +355,14 @@ _rtld(sp)
 	}
 	_rtld_process_hints(&_rtld_paths, _PATH_LD_HINTS, true);
 	dbg(("%s is initialized, base address = %p", __progname,
-	     (void *) pAUX_base->au_v));
+	     (void *) pAUX_base->a_v));
 
 	/*
          * Load the main program, or process its program header if it is
          * already loaded.
          */
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
-		int             fd = pAUX_execfd->au_v;
+		int             fd = pAUX_execfd->a_v;
 		dbg(("loading main program"));
 		_rtld_objmain = _rtld_map_object(argv[0], fd);
 		close(fd);
@@ -375,13 +375,13 @@ _rtld(sp)
 
 		dbg(("processing main program's program header"));
 		assert(pAUX_phdr != NULL);
-		phdr = (const Elf_Phdr *) pAUX_phdr->au_v;
+		phdr = (const Elf_Phdr *) pAUX_phdr->a_v;
 		assert(pAUX_phnum != NULL);
-		phnum = pAUX_phnum->au_v;
+		phnum = pAUX_phnum->a_v;
 		assert(pAUX_phent != NULL);
-		assert(pAUX_phent->au_v == sizeof(Elf_Phdr));
+		assert(pAUX_phent->a_v == sizeof(Elf_Phdr));
 		assert(pAUX_entry != NULL);
-		entry = (caddr_t) pAUX_entry->au_v;
+		entry = (caddr_t) pAUX_entry->a_v;
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
 	}
 

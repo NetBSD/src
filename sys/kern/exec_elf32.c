@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.45 1999/06/29 23:39:06 fvdl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.46 1999/10/25 13:55:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -195,40 +195,40 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
 	 */
 	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
 
-		a->au_id = AUX_phdr;
-		a->au_v = ap->arg_phaddr;
+		a->a_type = AT_PHDR;
+		a->a_v = ap->arg_phaddr;
 		a++;
 
-		a->au_id = AUX_phent;
-		a->au_v = ap->arg_phentsize;
+		a->a_type = AT_PHENT;
+		a->a_v = ap->arg_phentsize;
 		a++;
 
-		a->au_id = AUX_phnum;
-		a->au_v = ap->arg_phnum;
+		a->a_type = AT_PHNUM;
+		a->a_v = ap->arg_phnum;
 		a++;
 
-		a->au_id = AUX_pagesz;
-		a->au_v = NBPG;
+		a->a_type = AT_PAGESZ;
+		a->a_v = NBPG;
 		a++;
 
-		a->au_id = AUX_base;
-		a->au_v = ap->arg_interp;
+		a->a_type = AT_BASE;
+		a->a_v = ap->arg_interp;
 		a++;
 
-		a->au_id = AUX_flags;
-		a->au_v = 0;
+		a->a_type = AT_FLAGS;
+		a->a_v = 0;
 		a++;
 
-		a->au_id = AUX_entry;
-		a->au_v = ap->arg_entry;
+		a->a_type = AT_ENTRY;
+		a->a_v = ap->arg_entry;
 		a++;
 
 		free((char *)ap, M_TEMP);
 		pack->ep_emul_arg = NULL;
 	}
 
-	a->au_id = AUX_null;
-	a->au_v = 0;
+	a->a_type = AT_NULL;
+	a->a_v = 0;
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
@@ -250,8 +250,8 @@ ELFNAME(check_header)(eh, type)
 	int type;
 {
 
-	if (memcmp(eh->e_ident, Elf_e_ident, Elf_e_siz) != 0)
-		return ENOEXEC;
+	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    eh->e_ident[EI_CLASS] != ELFCLASS)
 
 	switch (eh->e_machine) {
 
@@ -301,16 +301,16 @@ ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot)
 		diff = uaddr - *addr;
 	}
 
-	*prot |= (ph->p_flags & Elf_pf_r) ? VM_PROT_READ : 0;
-	*prot |= (ph->p_flags & Elf_pf_w) ? VM_PROT_WRITE : 0;
-	*prot |= (ph->p_flags & Elf_pf_x) ? VM_PROT_EXECUTE : 0;
+	*prot |= (ph->p_flags & PF_R) ? VM_PROT_READ : 0;
+	*prot |= (ph->p_flags & PF_W) ? VM_PROT_WRITE : 0;
+	*prot |= (ph->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
 
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
 	psize = round_page(*size);
 
-	if ((ph->p_flags & Elf_pf_w) != 0) {
+	if ((ph->p_flags & PF_W) != 0) {
 		/*
 		 * Because the pagedvn pager can't handle zero fill of the last
 		 * data page if it's not page aligned we map the last page
@@ -440,7 +440,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	    sizeof(eh))) != 0)
 		goto bad;
 
-	if ((error = ELFNAME(check_header)(&eh, Elf_et_dyn)) != 0)
+	if ((error = ELFNAME(check_header)(&eh, ET_DYN)) != 0)
 		goto bad;
 
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
@@ -458,7 +458,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 		int prot = 0;
 
 		switch (ph[i].p_type) {
-		case Elf_pt_load:
+		case PT_LOAD:
 			ELFNAME(load_psection)(vcset, vp, &ph[i], &addr,
 			    &size, &prot);
 			/* If entry is within this section it must be text */
@@ -474,9 +474,9 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 			addr += size;
 			break;
 
-		case Elf_pt_dynamic:
-		case Elf_pt_phdr:
-		case Elf_pt_note:
+		case PT_DYNAMIC:
+		case PT_PHDR:
+		case PT_NOTE:
 			break;
 
 		default:
@@ -530,8 +530,8 @@ ELFNAME2(exec,makecmds)(p, epp)
 	 * XXX allow for executing shared objects. It seems silly
 	 * but other ELF-based systems allow it as well.
 	 */
-	if (ELFNAME(check_header)(eh, Elf_et_exec) != 0 &&
-	    ELFNAME(check_header)(eh, Elf_et_dyn) != 0)
+	if (ELFNAME(check_header)(eh, ET_EXEC) != 0 &&
+	    ELFNAME(check_header)(eh, ET_DYN) != 0)
 		return ENOEXEC;
 
 	/*
@@ -564,7 +564,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
-		if (pp->p_type == Elf_pt_interp) {
+		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz >= sizeof(interp))
 				goto bad;
 			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
@@ -621,7 +621,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 		pp = &ph[i];
 
 		switch (ph[i].p_type) {
-		case Elf_pt_load:
+		case PT_LOAD:
 			/*
 			 * XXX
 			 * Can handle only 2 sections: text and data
@@ -649,19 +649,19 @@ ELFNAME2(exec,makecmds)(p, epp)
 			}
 			break;
 
-		case Elf_pt_shlib:
+		case PT_SHLIB:
 #ifndef COMPAT_IBCS2			/* SCO has these sections */
 			error = ENOEXEC;
 			goto bad;
 #endif
 
-		case Elf_pt_interp:
+		case PT_INTERP:
 			/* Already did this one */
-		case Elf_pt_dynamic:
-		case Elf_pt_note:
+		case PT_DYNAMIC:
+		case PT_NOTE:
 			break;
 
-		case Elf_pt_phdr:
+		case PT_PHDR:
 			/* Note address of program headers (in text segment) */
 			phdr = pp->p_vaddr;
 			break;
@@ -732,7 +732,7 @@ ELFNAME2(netbsd,signature)(p, epp, eh)
 	Elf_Ehdr *eh;
 {
 	Elf_Phdr *hph, *ph;
-	Elf_Note *np = NULL;
+	Elf_Nhdr *np = NULL;
 	size_t phsize;
 	int error;
 
@@ -743,24 +743,24 @@ ELFNAME2(netbsd,signature)(p, epp, eh)
 		goto out1;
 
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
-		if (ph->p_type != Elf_pt_note ||
-		    ph->p_filesz < sizeof(Elf_Note) + ELF_NOTE_NETBSD_NAMESZ)
+		if (ph->p_type != PT_NOTE ||
+		    ph->p_filesz < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
 			continue;
 
-		np = (Elf_Note *)malloc(ph->p_filesz, M_TEMP, M_WAITOK);
+		np = (Elf_Nhdr *)malloc(ph->p_filesz, M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ph->p_offset,
 		    (caddr_t)np, ph->p_filesz)) != 0)
 			goto out2;
 
-		if (np->type != ELF_NOTE_TYPE_OSVERSION) {
+		if (np->n_type != ELF_NOTE_TYPE_OSVERSION) {
 			free(np, M_TEMP);
 			np = NULL;
 			continue;
 		}
 
 		/* Check the name and description sizes. */
-		if (np->namesz != ELF_NOTE_NETBSD_NAMESZ ||
-		    np->descsz != ELF_NOTE_NETBSD_DESCSZ)
+		if (np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
+		    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ)
 			goto out3;
 
 		/* Is the name "NetBSD\0\0"? */

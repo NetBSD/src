@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.17 1999/10/22 10:10:36 hannken Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.18 1999/10/25 13:57:11 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -124,7 +124,8 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		BADUNMAP;
 	ehdrp = (Elf_Ehdr *)(void *)&mappedfile[0];
 
-	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
+	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
 		BADUNMAP;
 
 	switch (ehdrp->e_machine) {
@@ -147,7 +148,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	shdrp = (Elf_Shdr *)(void *)&mappedfile[shdr_off];
 
 	for (i = 0; i < nshdr; i++) {
-		if (shdrp[i].sh_type == Elf_sht_symtab) {
+		if (shdrp[i].sh_type == SHT_SYMTAB) {
 			symshdrp = &shdrp[i];
 			symstrshdrp = &shdrp[shdrp[i].sh_link];
 		}
@@ -201,25 +202,25 @@ ELFNAMEEND(__fdnlist)(fd, list)
 				 * Translate (roughly) from ELF to nlist
 				 */
 				p->n_value = symp[i].st_value;
-				switch(ELF_SYM_TYPE(symp[i].st_info)) {
-				case Elf_estt_notype:
+				switch (ELFDEFNNAME(ST_TYPE)(symp[i].st_info)) {
+				case STT_NOTYPE:
 					p->n_type = N_UNDF;
 					break;
-				case Elf_estt_object:
+				case STT_OBJECT:
 					p->n_type = N_DATA;
 					break;
-				case Elf_estt_func:
+				case STT_FUNC:
 					p->n_type = N_TEXT;
 					break;
-				case Elf_estt_file:
+				case STT_FILE:
 					p->n_type = N_FN;
 					break;
 				default:
 					/* catch other enumerations for gcc */
 					break;
 				}
-				if (ELF_SYM_BIND(symp[i].st_info) !=
-				    Elf_estb_local)
+				if (ELFDEFNNAME(ST_BIND)(symp[i].st_info) !=
+				    STB_LOCAL)
 					p->n_type |= N_EXT;
 				p->n_desc = 0;			/* XXX */
 				p->n_other = 0;			/* XXX */

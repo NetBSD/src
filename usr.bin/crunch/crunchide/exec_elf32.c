@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.8 1999/10/22 10:47:37 hannken Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.9 1999/10/25 13:57:11 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.8 1999/10/22 10:47:37 hannken Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.9 1999/10/25 13:57:11 kleink Exp $");
 #endif
  
 #ifndef ELFSIZE
@@ -145,7 +145,8 @@ ELFNAMEEND(check)(int fd, const char *fn)
 	if (read(fd, &eh, sizeof eh) != sizeof eh)
 		return 0;
 
-	if (memcmp(eh.e_ident, Elf_e_ident, Elf_e_siz))
+	if (memcmp(eh.e_ident, ELFMAG, SELFMAG) != 0 ||
+	    eh.e_ident[EI_CLASS] != ELFCLASS)
                 return 0;
 
         switch (eh.e_machine) {
@@ -207,7 +208,7 @@ ELFNAMEEND(hide)(int fd, const char *fn)
 			maxoff = shdrp[i].sh_offset;
 		}
 		switch (shdrp[i].sh_type) {
-		case Elf_sht_symtab:
+		case SHT_SYMTAB:
 			if (!weird && symtabsnum != -1) {
 				weird = 1;
 				weirdreason = "multiple symbol tables";
@@ -293,7 +294,7 @@ ELFNAMEEND(hide)(int fd, const char *fn)
 
 		/* if it's a keeper or is undefined, don't rename it. */
 		if (in_keep_list(symname) ||
-		    sp->st_shndx == Elf_eshn_undefined) {
+		    sp->st_shndx == SHN_UNDEF) {
 			newent_len = sprintf(nstrtabp + nstrtab_nextoff,
 			    "%s", symname) + 1;
 		} else {
