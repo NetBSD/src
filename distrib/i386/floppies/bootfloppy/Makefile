@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2000/05/02 16:06:48 sjg Exp $
+#	$NetBSD: Makefile,v 1.6 2000/05/05 20:13:30 mycroft Exp $
 
-TOP=		${.CURDIR}/..
+TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-IMAGE=		boot.fs
-KERN?=	${KERNOBJDIR}/INSTALL/netbsd
+IMAGE=	boot.fs
+KERN!=	cd $(.CURDIR)/../ramdisk-kernel/; \
+        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL.gz\n" | \
+	${MAKE} -s -f-
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.24 2000/05/02 16:06:48 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2000/05/05 20:13:30 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 COMMONDIR=	${TOP}/bootfloppy-common
-
-.include <bsd.kernobj.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -13,14 +11,11 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}d
 VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx.fs
-KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
+BOOTCODE=	${MDEC}/biosboot.sym
 STRIP?=		strip
 
-LISTS=		${COMMONDIR}/list
-RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-	${MAKE} -s -f-
+LISTS?=		${COMMONDIR}/list
 
 DISKTYPE?=	floppy3
 DISKSIZE?=	2880
@@ -35,17 +30,16 @@ DISKSIZE?=	2880
 
 INO_BYTES?=	204800
 
-CLEANFILES+=	netbsd.ram.gz
+CLEANFILES+=	netbsd
 
-realall:	netbsd.ram.gz
+realall:	netbsd
 	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
-	${MDEC}/installboot -v -f ${MDEC}/biosboot.sym ${VND_RDEV}
+	${MDEC}/installboot -v -f ${BOOTCODE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -57,12 +51,9 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+netbsd: ${KERN}
+	rm -f netbsd
+	cp ${KERN} netbsd
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppies
@@ -70,7 +61,7 @@ release:
 	gzip <${IMAGE} >${RELEASEDIR}/installation/floppies/${IMAGE}.gz
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
+	/bin/rm -f *.core ${CLEANFILES} ${IMAGE}
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
