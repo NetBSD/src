@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.28 1999/05/18 08:14:18 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.29 1999/05/24 21:18:03 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.28 1999/05/18 08:14:18 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.29 1999/05/24 21:18:03 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,20 +189,20 @@ cmd
 				lreply(221, "");
 				lreply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
-				    total_data, PLURAL(total_data),
-				    total_files, PLURAL(total_files));
+				   total_data, PLURAL(total_data),
+				   total_files, PLURAL(total_files));
 				lreply(0,
 	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
-				    total_bytes, PLURAL(total_bytes),
-				    total_xfers, PLURAL(total_xfers));
+				   total_bytes, PLURAL(total_bytes),
+				   total_xfers, PLURAL(total_xfers));
 				syslog(LOG_INFO,
 				    "Data traffic: %qd byte%s in %qd file%s",
-				    total_data, PLURAL(total_data),
-				    total_files, PLURAL(total_files));
+				   (long long)total_data, PLURAL(total_data),
+				   (long long)total_files, PLURAL(total_files));
 				syslog(LOG_INFO,
 				  "Total traffic: %qd byte%s in %qd transfer%s",
-				    total_bytes, PLURAL(total_bytes),
-				    total_xfers, PLURAL(total_xfers));
+				   (long long)total_bytes, PLURAL(total_bytes),
+				   (long long)total_xfers, PLURAL(total_xfers));
 			}
 			reply(221,
 			    "Thank you for using the FTP service on %s.",
