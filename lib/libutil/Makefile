@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.11 1997/06/29 18:45:24 christos Exp $
+#	$NetBSD: Makefile,v 1.12 1997/09/25 04:53:30 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	util
 CFLAGS+=-DLIBC_SCCS -Wall -Wstrict-prototypes -Wmissing-prototypes
 SRCS=	getmaxpartitions.c getrawpartition.c login.c login_tty.c logout.c \
-	logwtmp.c passwd.c pty.c ttyaction.c ttymsg.c
+	logwtmp.c opendisk.c passwd.c pty.c ttyaction.c ttymsg.c
 
-MAN=	getmaxpartitions.3 getrawpartition.3 login.3 openpty.3 pw_init.3 \
-	pw_lock.3 ttyaction.3 ttymsg.3
+MAN=	getmaxpartitions.3 getrawpartition.3 login.3 opendisk.3 openpty.3 \
+	pw_init.3 pw_lock.3 ttyaction.3 ttymsg.3
 
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
