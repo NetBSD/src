@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl Id: configure.ac,v 1.22 2003/02/05 00:40:19 karl Exp
+dnl Id: configure.ac,v 1.30 2003/06/10 20:50:03 karl Exp
 dnl
 dnl This file is free software; as a special exception the author gives
 dnl unlimited permission to copy and/or distribute it, with or without
@@ -11,7 +11,7 @@ dnl implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 dnl
 AC_PREREQ(2.57)dnl Minimum Autoconf version required.
 dnl
-AC_INIT([GNU Texinfo], [4.5])
+AC_INIT([GNU Texinfo], [4.6])
 AC_CONFIG_SRCDIR([makeinfo/makeinfo.c])
 AM_CONFIG_HEADER(config.h:config.in)dnl Keep filename to 8.3 for MS-DOS.
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -33,11 +33,6 @@ AC_MINIX
 AC_CHECK_FUNC(sigblock, , AC_CHECK_LIB(bsd, sigblock))
 
 dnl Checks for header files.
-dnl Do not use <ncurses/termcap.h> unless we're linking with ncurses.
-if test "x$termlib" = xncurses; then
-  dnl Use AC_CHECK_HEADERS so the HAVE_*_H symbol gets defined.
-  AC_CHECK_HEADERS(ncurses/termcap.h)
-fi
 AC_HEADER_STAT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h io.h limits.h pwd.h string.h strings.h \
@@ -98,15 +93,15 @@ dnl Checks for variables.
 # HP-UX 9 (at least) needs -lncurses which defines termcap variables PC etc.
 AC_MSG_CHECKING(for library with termcap variables)
 AC_CACHE_VAL(ac_cv_var_ospeed,
-oldLIBS=$LIBS 
+oldLIBS=$LIBS
 for trylib in $termlib ${TERMLIB_VARIANTS}; do
    if test "x$trylib" != "x$termlib"; then
      LIBS="$oldLIBS -l$termlib -l$trylib"
    else
      LIBS="$oldLIBS -l$termlib"
    fi
-   AC_TRY_LINK(, 
-#ifdef HAVE_NCURSES_TERMCAP_H
+   AC_TRY_LINK(,
+[#ifdef HAVE_NCURSES_TERMCAP_H
 #include <ncurses/termcap.h>
 #else
 #ifdef HAVE_TERMCAP_H
@@ -115,17 +110,17 @@ for trylib in $termlib ${TERMLIB_VARIANTS}; do
 #undef PC
 char *BC;
 char **UP;
-char PC;      
-short ospeed; 
+char PC;
+short ospeed;
 #endif
 #endif
 /* Make sure all variables actually exist.  AIX 4.3 has ospeed but no BC.
-   --Andreas Ley <andy@rz.uni-karlsruhe.de>, 24 Aug 2000.  */
+   --Andreas Ley <andy@rz.uni-karlsruhe.de> 24 Aug 2000.  */
 BC++;
-UP++
+UP++;
 PC++;
 return ospeed != 0;
-, ac_cv_var_ospeed=$trylib; break)
+], ac_cv_var_ospeed=$trylib; break)
 done
 LIBS=$oldLIBS
 )
@@ -135,6 +130,13 @@ if test -n "$ac_cv_var_ospeed" \
   TERMLIBS="${TERMLIBS} -l${ac_cv_var_ospeed}"
 fi
 AC_SUBST(TERMLIBS)dnl
+
+dnl Do not use <ncurses/termcap.h> unless we're linking with ncurses.
+dnl Must come after the termlib tests.
+if test "x$termlib" = xncurses; then
+  dnl Use AC_CHECK_HEADERS so the HAVE_*_H symbol gets defined.
+  AC_CHECK_HEADERS(ncurses/termcap.h)
+fi
 
 dnl gnulib.
 UTILS_FUNC_MKSTEMP
@@ -149,7 +151,7 @@ test "x$enable_multiplatform" = xyes \
 
 dnl i18n support.  To update to a new version of gettext, run:
 dnl  gettextize -f -c --intl
-AM_GNU_GETTEXT_VERSION(0.11.5)
+AM_GNU_GETTEXT_VERSION(0.12.1)
 AM_GNU_GETTEXT()
 
 AC_CONFIG_FILES([
