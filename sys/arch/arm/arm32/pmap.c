@@ -1,4 +1,31 @@
-/*	$NetBSD: pmap.c,v 1.11 2001/06/24 23:21:04 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2001/06/25 23:22:38 chris Exp $	*/
+
+/*
+ * Copyright (c) 2001 Richard Earnshaw
+ * Copyright (c) 2001 Christopher Gilbert
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the company nor the name of the author may be used to
+ *    endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -200,7 +227,7 @@ static pt_entry_t *pmap_map_ptes __P((struct pmap *));
 #define pmap_unmap_ptes(a)
 
 void pmap_vac_me_harder __P((struct pmap *, struct pv_entry *,
-	    pt_entry_t *));
+	    pt_entry_t *, boolean_t));
 
 #ifdef MYCROFT_HACK
 int mycroft_hack = 0;
@@ -461,10 +488,16 @@ pmap_enter_pv(pmap, va, pv, flags)
 				    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
 #endif
 		npv = pmap_alloc_pv();
-		npv->pv_va = va;
-		npv->pv_pmap = pmap;
-		npv->pv_flags = flags;
-		npv->pv_next = pv->pv_next;
+		/* Must make sure that the new entry is before any others
+		 * for the same pmap.  Otherwise the vac handling code
+		 * will get confused.
+		 * XXX this would be better if we used lists like i386 (infact
+		 * this would be a lot simpler)
+		 */
+		*npv = *pv; 
+ 		pv->pv_va = va;
+ 		pv->pv_pmap = pmap;
+ 		pv->pv_flags = flags;
 		pv->pv_next = npv;
 	}
 
@@ -1599,15 +1632,14 @@ pmap_pte_delref(pmap, va)
  * Note that the pmap must have it's ptes mapped in, and passed with ptes.
  */
 void
-pmap_vac_me_harder(pmap, pv, ptes)
-	pmap_t pmap;
-	struct pv_entry *pv;
-	pt_entry_t *ptes;
+pmap_vac_me_harder(struct pmap *pmap, struct pv_entry *pv, pt_entry_t *ptes,
+	boolean_t clear_cache)
 {
 	struct pv_entry *npv;
 	pt_entry_t *pte;
 	int entries = 0;
 	int writeable = 0;
+	int cacheable_entries = 0;
 
 	if (pv->pv_pmap == NULL)
 		return;
@@ -1622,40 +1654,73 @@ pmap_vac_me_harder(pmap, pv, ptes)
 		if (pmap == npv->pv_pmap) {
 			if (entries++ == 0)
 				pv = npv;
+			/* Cacheable mappings */
+			if ((npv->pv_flags & PT_NC) == 0)
+				cacheable_entries++;
 			/* Writeable mappings */
 			if (npv->pv_flags & PT_Wr)
 				++writeable;
 		}
 	}
 
+	PDEBUG(3,printf("pmap_vac_me_harder: pmap %p Entries %d, "
+		"writeable %d cacheable %d %s\n", pmap, entries, writeable,
+	    	cacheable_entries, clear_cache ? "clean" : "no clean"));
+	
 	/*
 	 * Enable or disable caching as necessary.
 	 * We do a quick check of the first PTE to avoid walking the list if
 	 * we're already in the right state.
 	 */
 	if (entries > 1 && writeable) {
-		pte =  &ptes[arm_byte_to_page(pv->pv_va)];
-		if (~*pte & (PT_C | PT_B))
-		{
+		if (cacheable_entries == 0)
+		    return;
+		if (pv->pv_flags & PT_NC) {
+#ifdef DIAGNOSTIC
+    			/* We have cacheable entries, but the first one
+ 			isn't among them. Something is wrong.  */
+    			if (cacheable_entries)
+				panic("pmap_vac_me_harder: "
+	    				"cacheable inconsistent");
+#endif
 			return;
 		}
+		pte =  &ptes[arm_byte_to_page(pv->pv_va)];
 		*pte &= ~(PT_C | PT_B);
+		pv->pv_flags |= PT_NC;
+		if (clear_cache && cacheable_entries < 4) {
+			cpu_cache_purgeID_rng(pv->pv_va, NBPG);
+			cpu_tlb_flushID_SE(pv->pv_va);
+		}
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap) {
-			    ptes[arm_byte_to_page(npv->pv_va)] &= 
+			if (pmap == npv->pv_pmap && 
+			    (npv->pv_flags & PT_NC) == 0) {
+				ptes[arm_byte_to_page(npv->pv_va)] &= 
 				    ~(PT_C | PT_B);
+ 				npv->pv_flags |= PT_NC;
+				if (clear_cache && cacheable_entries < 4) {
+					cpu_cache_purgeID_rng(npv->pv_va,
+					    NBPG);
+					cpu_tlb_flushID_SE(npv->pv_va);
+				}
 			}
 		}
-	} else if (entries > 0) {
-		pte = &ptes[arm_byte_to_page(pv->pv_va)];
-		if (*pte & (PT_C | PT_B)) {
-			return;
+		if (clear_cache && cacheable_entries >= 4) {
+			cpu_cache_purgeID();
+			cpu_tlb_flushID();
 		}
+	} else if (entries > 0) {
+		if ((pv->pv_flags & PT_NC) == 0)
+			return;
+		pte = &ptes[arm_byte_to_page(pv->pv_va)];
 		*pte |= (PT_C | PT_B);
+		pv->pv_flags &= ~PT_NC;
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap) {
+			if (pmap == npv->pv_pmap &&
+				(npv->pv_flags & PT_NC)) {
 				ptes[arm_byte_to_page(npv->pv_va)] |=
-				    (PT_C | PT_B);	
+				    (PT_C | PT_B);
+				npv->pv_flags &= ~PT_NC;
 			}
 		}
 	}
@@ -1795,7 +1860,7 @@ pmap_remove(pmap, sva, eva)
 			if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 				pv = &vm_physmem[bank].pmseg.pvent[off];
 				pmap_remove_pv(pmap, sva, pv);
-				pmap_vac_me_harder(pmap, pv, ptes);
+				pmap_vac_me_harder(pmap, pv, ptes, FALSE);
 			}
 		}
 		sva += NBPG;
@@ -1991,7 +2056,7 @@ pmap_protect(pmap, sva, eva, prot)
 		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 			pv = &vm_physmem[bank].pmseg.pvent[off];
 			(void) pmap_modify_pv(pmap, sva, pv, PT_Wr, 0);
-			pmap_vac_me_harder(pmap, pv, ptes);
+			pmap_vac_me_harder(pmap, pv, ptes, FALSE);
 		}
 
 next:
@@ -2212,11 +2277,15 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	if (bank != -1)
 	{
+		boolean_t pmap_active = FALSE;
 		/* XXX this will change once the whole of pmap_enter uses
 		 * map_ptes
 		 */
 		ptes = pmap_map_ptes(pmap);
-		pmap_vac_me_harder(pmap, pv, ptes);
+		if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
+		    || (pmap == kernel_pmap))
+			pmap_active = TRUE;
+ 		pmap_vac_me_harder(pmap, pv, ptes, pmap_active);
 		pmap_unmap_ptes(pmap);
 	}
 
