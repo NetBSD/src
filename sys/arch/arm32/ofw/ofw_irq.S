@@ -1,7 +1,7 @@
-/*	$NetBSD: ofw_irq.S,v 1.6 1998/07/07 00:48:12 mark Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.7 1998/09/05 04:05:31 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,46 +17,39 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * irq.S
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Low level irq and fiq handlers
  *
  * Created      : 27/09/94
  */
 
-#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 #include "opt_uvm.h"
 
 #include "assym.h"
+#include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/irqhandler.h>
 
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
 	.text
+	.align	0
 
 /*
  *
@@ -91,6 +84,9 @@ Lcurrent_spl_level:
 Lcurrent_intr_depth:
 	.word	_current_intr_depth
 
+Lspl_masks:
+	.word	_spl_masks
+
 Lofw_ticktmp:
 	.word	_ofw_ticktmp
 
@@ -99,9 +95,6 @@ Lirq_entry:
 
 Lofwirqstk:			/* hack */
 	.word	ofwirqstk + 4096
-
-	.text
-	.global	irq_entry
 
 /*
  * Regsister usage
@@ -113,7 +106,7 @@ Lofwirqstk:			/* hack */
  *  r10 - Base address of IOMD
  */
 
-irq_entry:
+ASENTRY_NP(irq_entry)
 	/*
 	 *  We come here following an OFW-handled timer tick.
 	 *  
@@ -156,16 +149,16 @@ irq_entry:
 	/* Now we're in IRQ mode. */
 	/* Restore contents of ofw_ticktmp. */
 	add	r0, pc, #(Lofwirqstk - . - 8)	/* Bummer!  Mitch hasn't left me a stack. */
-	ldr	sp, [r0]						/* I'll use my own for now... */
+	ldr	sp, [r0]			/* I'll use my own for now... */
 	ldr	r0, Lofw_ticktmp	/* r0 now points to ofw_ticktmp[0] */
 	ldr	r1, [r0], #(4*3)	/* skip over saved {r0, r1} */
 	msr	spsr_all, r1		/* restore spsr */
-	ldmia	r0, {sp, lr}^	/* restore user sp and lr */
-	add	r0, r0, #(4*2)	/* previous instruction can't writeback */
-						/* this one can't use banked registers */
+	ldmia	r0, {sp, lr}^		/* restore user sp and lr */
+	add	r0, r0, #(4*2)		/* previous instruction can't writeback */
+					/* this one can't use banked registers */
 	ldr	lr, [r0], #(-4*4)	/* restore pc; point r0 at ofw_ticktmp[1] */
 	add	lr, lr, #4		/* pc += 4; will be decremented below */
-	ldmia	r0, {r0, r1}	/* restore r0 and r1 */
+	ldmia	r0, {r0, r1}		/* restore r0 and r1 */
 
 	/* OK, the machine state should be identical now to that when */
 	/* OFW fielded the interrupt.  So just fall through... */
@@ -173,8 +166,6 @@ irq_entry:
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-
-/*        mov     r11, #0x00000000*/	/* Trace back stops here */
 
 	/*
 	 *  Can't field this interrupt now if priority is _SPL_CLOCK
@@ -195,7 +186,7 @@ irq_entry:
  	 *  interrupt:  (1 << TIMER0).  The existing code will take
  	 *  care of invoking that handler and the softint/ast stuff
  	 *  which follows it.
-      */
+	 */
 ofwtakeint:
 	mov	r8, #0x00000001		/* timer interrupt pending! */
 	mov	r8, r8, lsl #IRQ_TIMER0
@@ -213,12 +204,10 @@ ofwtakeint:
 	str	r1, [r0]
 
 	/* Block the current requested interrupts */
-
 	ldr	r1, Ldisabled_mask
 	ldr	r0, [r1]
 	stmfd	sp!, {r0}
 	orr	r0, r0, r8
-	str	r0, [r1]
 
 	/*
  	 * Need to block all interrupts at the IPL or lower for
@@ -233,27 +222,29 @@ ofwtakeint:
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #0x00000001
-	ldr	r7, Lirqblock
+	mov	r9, #(_SPL_LEVELS - 1)
+	ldr	r7, Lspl_masks
 
-emulate_hwipl_loop:
-	tst	r8, r9
-	ldrne	r6, [r7]
-	orrne	r0, r0, r6
+Lfind_highest_ipl:
+	ldr	r2, [r7, r9, lsl #2]
+	tst	r8, r2
+	subeq	r9, r9, #1
+	beq	Lfind_highest_ipl
 
-	add	r7, r7, #4
-	mov	r9, r9, lsl #1		/* move on to next bit */
-#ifdef CPU_ARM7500
-	teq	r9, #0			/* done the last bit ? */
-#else
-	teq	r9, #(1 << 24)		/* done the last bit ? */
-#endif	/* CPU_ARM7500 */
-	bne	emulate_hwipl_loop	/* no - loop back. */
+	/* r9 = SPL level of highest priority interrupt */
+	add	r9, r9, #1
+	ldr	r2, [r7, r9, lsl #2]
+	mvn	r2, r2
+	orr	r0, r0, r2
 
 	str	r0, [r1]	
 
-	/* Update the IOMD irq masks */
+	ldr	r0, Lcurrent_spl_level
+	ldr	r1, [r0]
+	str	r9, [r0]
+	stmfd	sp!, {r1}
 
+	/* Update the irq masks */
 	bl	_irq_setmasks
 
         mrs     r0, cpsr_all		/* Enable IRQ's */
@@ -262,8 +253,6 @@ emulate_hwipl_loop:
 
 	ldr	r7, [pc, #irqhandlers - . - 8]
         mov	r9, #0x00000001
-
-	stmfd	sp!, {r8}
 
 irqloop:
 	/* This would benefit from a special ffs type routine */
@@ -281,9 +270,6 @@ irqloop:
 	add	r1, r1, #0x00000001
 	str	r1, [r0, #(V_INTR)]
 
-irqchainloop:
-	add	lr, pc, #nextinchain - . - 8	/* return address */
-
 /*
  * XXX: Should stats be accumlated for every interrupt routine called
  * or for every physical interrupt that is serviced.
@@ -299,6 +285,8 @@ irqchainloop:
 	str	r1, [r0]
 #endif	/* IRQSTATS */
 
+irqchainloop:
+	add	lr, pc, #nextinchain - . - 8	/* return address */
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame */
@@ -316,14 +304,12 @@ irqdone:
 nextirq:
 	add	r7, r7, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
-#ifdef CPU_ARM7500
-	teq	r9, #0			/* done the last bit ? */
-#else
 	teq	r9, #(1 << 24)		/* done the last bit ? */
-#endif	/* CPU_ARM7500 */
 	bne	irqloop			/* no - loop back. */
 
-	ldmfd	sp!, {r8}
+	ldmfd	sp!, {r2}
+	ldr	r1, Lcurrent_spl_level
+	str	r2, [r1]
 
 	/* Restore previous disabled mask */
 	ldmfd	sp!, {r2}
@@ -334,7 +320,6 @@ nextirq:
 	bl	_dosoftints		/* Handle the soft interrupts */
 
 	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
-
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
@@ -346,13 +331,11 @@ nextirq:
 	beq	irqast			/* call the AST handler */
 
 	/* Kill IRQ's in preparation for exit */
-
         mrs     r0, cpsr_all
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
 	/* Decrement the nest count */
-
 	ldr	r0, Lcurrent_intr_depth
 	ldr	r1, [r0]
 	sub	r1, r1, #1
@@ -410,12 +393,8 @@ Lspl_mask:
 Lcurrent_mask:
 	.word	_current_mask		/* irq's that are usable */
 
-Lirqblock:
-	.word	_irqblock
 
-	.global	_irq_setmasks
-
-_irq_setmasks:
+ENTRY(irq_setmasks)
 	/* Do nothing */
 	mov	pc, lr
 
@@ -576,17 +555,17 @@ __intrnames:
 
 	.data
 
-        .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
+        .globl  _intrnames, _eintrnames, _intrcnt, _sintrcnt, _eintrcnt
 _intrnames:
 	.asciz	"interrupt  0 "
-	.asciz	"softnet      "	/* reserved0 */
+	.asciz	"interrupt  1 "
 	.asciz	"interrupt  2 "
 	.asciz	"interrupt  3 "
 	.asciz	"interrupt  4 "
 	.asciz	"interrupt  5 "
 	.asciz	"interrupt  6 "
-	.asciz	"softclock    "	/* reserved1 */
-	.asciz	"softplip     " /* reserved2 */
+	.asciz	"interrupt  7 "
+	.asciz	"interrupt  8 "
 	.asciz	"interrupt  9 "
 	.asciz	"interrupt 10 "
 	.asciz	"interrupt 11 "
@@ -594,27 +573,64 @@ _intrnames:
 	.asciz	"interrupt 13 "
 	.asciz	"interrupt 14 "
 	.asciz	"interrupt 15 "
-	.asciz	"dma channel 0"
-	.asciz	"dma channel 1"
-	.asciz	"dma channel 2"
-	.asciz	"dma channel 3"
+	.asciz	"interrupt 16 "
+	.asciz	"interrupt 17 "
+	.asciz	"interrupt 18 "
+	.asciz	"interrupt 19 "
 	.asciz	"interrupt 20 "
 	.asciz	"interrupt 21 "
-	.asciz	"reserved 3   "
-	.asciz	"reserved 4   "
-	.asciz	"exp card 0   "
-	.asciz	"exp card 1   "
-	.asciz	"exp card 2   "
-	.asciz	"exp card 3   "
-	.asciz	"exp card 4   "
-	.asciz	"exp card 5   "
-	.asciz	"exp card 6   "
-	.asciz	"exp card 7   "
+	.asciz	"interrupt 22 "
+	.asciz	"interrupt 23 "
+	.asciz	"interrupt 24 "
+	.asciz	"interrupt 25 "
+	.asciz	"interrupt 26 "
+	.asciz	"interrupt 27 "
+	.asciz	"interrupt 28 "
+	.asciz	"interrupt 29 "
+	.asciz	"interrupt 30 "
+	.asciz	"interrupt 31 "
+
+_sintrnames:
+	.asciz	"softclock    "
+	.asciz	"softnet      "
+	.asciz	"softserial   "
+	.asciz	"softintr  3  "
+	.asciz	"softintr  4  "
+	.asciz	"softintr  5  "
+	.asciz	"softintr  6  "
+	.asciz	"softintr  7   "
+	.asciz	"softintr  8  "
+	.asciz	"softintr  9  "
+	.asciz	"softintr 10  "
+	.asciz	"softintr 11  "
+	.asciz	"softintr 12  "
+	.asciz	"softintr 13  "
+	.asciz	"softintr 14  "
+	.asciz	"softintr 15  "
+	.asciz	"softintr 16  "
+	.asciz	"softintr 17  "
+	.asciz	"softintr 18  "
+	.asciz	"softintr 19  "
+	.asciz	"softintr 20  "
+	.asciz	"softintr 21  "
+	.asciz	"softintr 22  "
+	.asciz	"softintr 23  "
+	.asciz	"softintr 24  "
+	.asciz	"softintr 25  "
+	.asciz	"softintr 26  "
+	.asciz	"softintr 27  "
+	.asciz	"softintr 28  "
+	.asciz	"softintr 29  "
+	.asciz	"softintr 30  "
+	.asciz	"softintr 31  "
 _eintrnames:
 
 	.bss
 	.align	0
 _intrcnt:
+	.space	32*4	/* XXX Should be linked to number of interrupts */
+
+_sintrcnt:
 	.space	32*4	/* XXX Should be linked to number of interrupts */
 _eintrcnt:
 
@@ -634,11 +650,7 @@ _eintrcnt:
 
 /* FIQ code */
 
-	.text
-	.align	0
-	.global	_fiq_setregs		/* Sets up the FIQ handler */
-
-_fiq_setregs:
+ENTRY(fiq_setregs)
         mrs	r2, cpsr_all
 	mov	r3, r2
 	bic	r2, r2, #(PSR_MODE)
@@ -656,9 +668,7 @@ _fiq_setregs:
 
 	mov	pc, lr			/* Exit */
 
-	.global	_fiq_getregs		/* Gets the FIQ registers */
-
-_fiq_getregs:
+ENTRY(fiq_getregs)
         mrs	r2, cpsr_all
 	mov	r3, r2
 	bic	r2, r2, #(PSR_MODE)
