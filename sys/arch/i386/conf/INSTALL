@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.218 2003/05/04 16:16:19 ad Exp $
+#	$NetBSD: INSTALL,v 1.219 2003/05/15 13:13:24 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -672,11 +672,6 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #mms1	at isa? port 0x238 irq 5
 #wsmouse*	at lms?
 #wsmouse*	at mms?
-# backwards compatible versions
-#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#olms1	at isa? port 0x238 irq 5
-#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#omms1	at isa? port 0x238 irq 5
 
 # Joysticks
 
