@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.17 2003/12/19 05:55:12 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.18 2003/12/19 19:09:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -123,6 +123,13 @@ struct pciide_softc {
 			int dma_flags;
 		} dma_maps[2];
 		bus_space_handle_t	dma_iohs[IDEDMA_NREGS];
+		/*
+		 * Some controllers require certain bits to
+		 * always be set for proper operation of the
+		 * controller.  Set those bits here, if they're
+		 * required.
+		 */
+		uint8_t		idedma_cmd;
 	} pciide_channels[PCIIDE_NUM_CHANNELS];
 };
 
