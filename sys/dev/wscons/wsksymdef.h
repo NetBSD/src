@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.3 1998/04/07 13:59:38 hannken Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.4 1998/04/16 13:29:41 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -411,17 +411,15 @@
 #define KS_GROUP_Function	0xf300
 #define KS_GROUP_Command	0xf400
 #define KS_GROUP_Internal	0xf500
-#define KS_GROUP_Dead		0xf800		/* not encoded in keysym */
-#define KS_GROUP_Ascii		0xf801		/* not encoded in keysym */
-#define KS_GROUP_Keycode	0xf802		/* not encoded in keysym */
+#define KS_GROUP_Dead		0x0300		/* not encoded in keysym */
+#define KS_GROUP_Ascii		0x0000		/* not encoded in keysym */
+#define KS_GROUP_Keycode	0xe000		/* not encoded in keysym */
 
-#define KS_GROUP(k)	((k) >= 0x0300 && (k) < 0x0370 ? KS_GROUP_Dead : \
-			    (((k) & 0xf000) == 0xe000 ? KS_GROUP_Keycode : \
-			      (((k) & 0xf800) == 0xf000 ? ((k) & 0xff00) : \
-			        KS_GROUP_Ascii)))
+#define KS_GROUP(k)	(((k) & 0xf000) == 0xe000 ? KS_GROUP_Keycode : \
+				((k) & 0xff00))
 
 #define KS_VALUE(k)	(((k) & 0xf000) == 0xe000 ? ((k) & 0x0fff) : \
-			    (((k) & 0xf800) == 0xf000 ? ((k) & 0x00ff) : (k)))
+				((k) & 0x00ff))
 
 /*
  * Keyboard types: 8bit encoding, 8bit variant
