@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.62 2000/12/23 01:38:01 wiz Exp $ */
+/* $NetBSD: isp_pci.c,v 1.63 2000/12/28 22:23:41 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -270,7 +270,7 @@ struct cfattach isp_pci_ca = {
 };
 
 #ifdef	DEBUG
-static char *vstring = 
+const char vstring[] = 
     "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
 #endif
 
@@ -318,7 +318,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
-	static char *nomem = "%s: no mem for sdparam table\n";
+	static const char nomem[] = "%s: no mem for sdparam table\n";
 	u_int32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
@@ -914,9 +914,9 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			    dmap->dm_segs[seg].ds_addr;
 #endif
 		}
-		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%x,%d}",
-		    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
-		    dmap->dm_segs[seg].ds_len);
+		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%lx,%lu}",
+		    rq->req_seg_count, (long) dmap->dm_segs[seg].ds_addr,
+		    (unsigned long) dmap->dm_segs[seg].ds_len);
 	}
 
 	if (seg == segcnt)
@@ -949,10 +949,10 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			crq->req_dataseg[ovseg].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
 #endif
-			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%x,%d}",
+			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%lx,%lu}",
 			    rq->req_header.rqs_entry_count - 1,
-			    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
-			    dmap->dm_segs[seg].ds_len);
+			    rq->req_seg_count, (long)dmap->dm_segs[seg].ds_addr,
+			    (unsigned long) dmap->dm_segs[seg].ds_len);
 		}
 	} while (seg < segcnt);
 
