@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.45 2001/08/03 12:58:38 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.46 2001/08/26 02:47:37 matt Exp $
 #
 # macppc-specific configuration info
 
@@ -6,8 +6,6 @@
 maxpartitions 16
 
 maxusers 2 8 64
-
-defopt L2CR_CONFIG
 
 include "arch/powerpc/conf/files.ofw"
 

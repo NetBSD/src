@@ -1,11 +1,11 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/08/26 02:47:41 matt Exp $	 */
+/*	$NetBSD: cpu.c,v 1.1 2001/08/26 02:47:40 matt Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by NONAKA Kimihiro.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -41,45 +41,40 @@
 #include <sys/device.h>
 
 #include <dev/ofw/openfirm.h>
+#include <machine/cpu.h>
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+static int cpu_match(struct device *, struct cfdata *, void *);
+static void cpu_attach(struct device *, struct device *, void *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
+struct cfattach cpu_ca = {
+	sizeof(struct cpu_softc), cpu_match, cpu_attach
 };
 
-extern struct cfdriver mainbus_cd;
-
-/*
- * Probe for the mainbus; always succeeds.
- */
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
+	struct ofbus_attach_args *oba = aux;
+	char name[32];
+
+	if (OF_getprop(oba->oba_phandle, "device_type", name, sizeof name) <= 3)
+		return (0);
+	if (!strcmp(name, "cpu"))
+		return (0);
 	return (1);
 }
 
-/*
- * Attach the mainbus.
- */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofbus_attach_args oba;
-	int node;
+	struct cpu_softc *sc = (struct cpu_softc *) self;
+	struct ofbus_attach_args *oba = aux;
+	unsigned char data[4];
 
-	printf("\n");
+	sc->sc_ofnode = oba->oba_phandle;
+	cpu_attach_common(self, 0);
 
-	node = OF_peer(0);
-	if (node) {
-		oba.oba_busname = "ofw";
-		oba.oba_phandle = node;
-		config_found(self, &oba, NULL);
+	if (OF_getprop(oba->oba_phandle, "timebase-frequency", 
+	    data, sizeof data) >= sizeof(int)) {
+		cpu_timebase = of_decode_int(data);
 	}
 }

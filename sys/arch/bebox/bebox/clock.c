@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2001/06/19 08:34:49 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2001/08/26 02:47:35 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,8 +33,10 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 
+#include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/pio.h>
 
@@ -47,8 +49,7 @@ static long ticks_per_intr;
 static volatile u_long lasttb;
 
 void
-decr_intr(frame)
-	struct clockframe *frame;
+decr_intr(struct clockframe *frame)
 {
 	int msr;
 	int pri;
@@ -107,17 +108,15 @@ decr_intr(frame)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
-	int msr, scratch;
-
 	ticks_per_intr = ticks_per_sec / hz;
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;
@@ -131,8 +130,7 @@ mftb()
  * Fill in *tvp with current time with microsecond resolution.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	u_long tb;
 	u_long ticks;
