@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.18 2000/02/24 04:39:41 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.19 2000/02/25 02:06:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -771,7 +771,8 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 		rf_ResumeNewRequests(raidPtr);
 
-		printf("Reconstruction of disk at row %d col %d completed and spare disk reassigned\n", row, col);
+		printf("Reconstruction of disk at row %d col %d completed\n", 
+		       row, col);
 		xor_s = raidPtr->accumXorTimeUs / 1000000;
 		xor_resid_us = raidPtr->accumXorTimeUs % 1000000;
 		printf("Recon time was %d.%06d seconds, accumulated XOR time was %ld us (%ld.%06ld)\n",
