@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.14 1998/08/08 23:51:42 mycroft Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.15 1998/08/11 00:09:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -99,12 +99,24 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
 #include <dev/i2c/i2c_bus.h>
 #include <dev/i2c/i2c_eeprom.h>
-#include <dev/mii/mii_adapter.h>
-#include <dev/mii/mii_adapters_id.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
+
+#include <dev/mii/tlphyvar.h>
+
 #include <dev/pci/if_tlregs.h>
+#include <dev/pci/if_tlvar.h>
 #endif /* __NetBSD__ */
+
+#if defined(__NetBSD__) && defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#undef vtophys
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#endif
 
 /* number of transmit/receive buffers */
 #ifndef TL_NBUF 
@@ -115,57 +127,6 @@
 #ifndef TL_IDLETIME
 #define TL_IDLETIME 10
 #endif
-
-struct tl_softc {
-	struct device sc_dev;		/* base device */
-	bus_space_tag_t tl_bustag;
-	bus_space_handle_t tl_bushandle; /* CSR region handle */
-	void* tl_ih;
-	struct ethercom tl_ec;
-	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware adress */
-	struct ifmedia tl_ifmedia;
-	u_int16_t tl_flags;
-#define TL_IFACT 0x0001 /* chip has interface activity */
-	u_int8_t tl_lasttx; /* we were without input this many seconds */
-	i2c_adapter_t i2cbus;		/* i2c bus, for eeprom */
-	mii_data_t mii;				/* mii bus */
-	struct Rx_list *Rx_list;	/* Receive and transmit lists */
-	struct Tx_list *Tx_list;
-	struct Rx_list *active_Rx, *last_Rx;
-	struct Tx_list *active_Tx, *last_Tx;
-	struct Tx_list *Free_Tx;
-	int opkt;			/* used to detect link up/down for AUI/BNC */
-	int stats_exesscoll; /* idem */
-#ifdef TL_PRIV_STATS
-	int ierr_overr;
-	int ierr_code;
-	int ierr_crc;
-	int ierr_nomem;
-	int oerr_underr;
-	int oerr_deffered;
-	int oerr_coll;
-	int oerr_multicoll;
-	int oerr_latecoll;
-	int oerr_exesscoll;
-	int oerr_carrloss;
-	int oerr_mcopy;
-#endif
-};
-#define tl_if            tl_ec.ec_if
-#define tl_bpf   tl_if.if_bpf
-
-typedef struct tl_softc tl_softc_t;
-typedef u_long ioctl_cmd_t;
-
-#define TL_HR_READ(sc, reg) \
-	bus_space_read_4(sc->tl_bustag, sc->tl_bushandle, (reg))
-#define TL_HR_READ_BYTE(sc, reg) \
-	bus_space_read_1(sc->tl_bustag, sc->tl_bushandle, (reg))
-#define TL_HR_WRITE(sc, reg, data) \
-	bus_space_write_4(sc->tl_bustag, sc->tl_bushandle, (reg), (data))
-#define TL_HR_WRITE_BYTE(sc, reg, data) \
-	bus_space_write_1(sc->tl_bustag, sc->tl_bushandle, (reg), (data))
-#define ETHER_MIN_TX (ETHERMIN + sizeof(struct ether_header))
 
 static int tl_pci_match __P((struct device *, struct cfdata *, void *));
 static void tl_pci_attach __P((struct device *, struct device *, void *));
@@ -192,14 +153,18 @@ static void tl_intreg_write __P((tl_softc_t*, u_int32_t, u_int32_t));
 static u_int8_t tl_intreg_read_byte __P((tl_softc_t*, u_int32_t));
 static void tl_intreg_write_byte __P((tl_softc_t*, u_int32_t, u_int8_t));
 
+void	tl_mii_sync __P((struct tl_softc *));
+void	tl_mii_sendbits __P((struct tl_softc *, u_int32_t, int));
+
 
 #if defined(TLDEBUG_RX) 
 static void ether_printheader __P((struct ether_header*));
 #endif
 
-void tl_mii_set __P((void*, u_int8_t));
-void tl_mii_clr __P((void*, u_int8_t));
-int tl_mii_read __P((void*, u_int8_t));
+int tl_mii_read __P((struct device *, int, int));
+void tl_mii_write __P((struct device *, int, int, int));
+
+void tl_statchg __P((struct device *));
 
 void tl_i2c_set __P((void*, u_int8_t));
 void tl_i2c_clr __P((void*, u_int8_t));
@@ -233,32 +198,22 @@ struct cfattach tl_ca = {
 	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
 };
 
-struct tl_product_desc {
-	u_int32_t tp_product;
-	u_int32_t tp_adapter;
-	int tp_flags;
-	const char *tp_desc;
-};
-
-/* tp_flags */
-#define	TPF_BROKEN_MEM	0x00000001	/* memory-mapped access is broken */
-
 const struct tl_product_desc tl_compaq_products[] = {
-	{ PCI_PRODUCT_COMPAQ_N100TX, COMPAQ_NETLIGENT_10_100,
+	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,
 	  0, "Compaq Netelligent 10/100 TX" },
-	{ PCI_PRODUCT_COMPAQ_N10T, COMPAQ_NETLIGENT_10,
+	{ PCI_PRODUCT_COMPAQ_N10T, TLPHY_MEDIA_10_5,
 	  0, "Compaq Netelligent 10 T" },
-	{ PCI_PRODUCT_COMPAQ_IntNF3P, COMPAQ_INT_NETFLEX,
+	{ PCI_PRODUCT_COMPAQ_IntNF3P, TLPHY_MEDIA_10_2,
 	  0, "Compaq Integrated NetFlex 3/P" },
-	{ PCI_PRODUCT_COMPAQ_IntPL100TX, COMPAQ_INT_NETLIGENT_10_100,
+	{ PCI_PRODUCT_COMPAQ_IntPL100TX, TLPHY_MEDIA_10_2|TLPHY_MEDIA_NO_10_T,
 	  0, "Compaq ProLiant Integrated Netelligent 10/100 TX" },
-	{ PCI_PRODUCT_COMPAQ_DPNet100TX, COMPAQ_DUAL_NETLIGENT_10_100,
+	{ PCI_PRODUCT_COMPAQ_DPNet100TX, TLPHY_MEDIA_10_5|TLPHY_MEDIA_NO_10_T,
 	  0, "Compaq Dual Port Netelligent 10/100 TX" },
-	{ PCI_PRODUCT_COMPAQ_DP4000, COMPAQ_DSKP4000,
+	{ PCI_PRODUCT_COMPAQ_DP4000, TLPHY_MEDIA_10_5,
 	  0, "Compaq Deskpro 4000 5233MMX" },
-	{ PCI_PRODUCT_COMPAQ_NF3P_BNC, COMPAQ_NETFLEX_BNC,
+	{ PCI_PRODUCT_COMPAQ_NF3P_BNC, TLPHY_MEDIA_10_2,
 	  0, "Compaq NetFlex 3/P w/ BNC" },
-	{ PCI_PRODUCT_COMPAQ_NF3P, COMPAQ_NETFLEX,
+	{ PCI_PRODUCT_COMPAQ_NF3P, TLPHY_MEDIA_10_5,
 	  0, "Compaq NetFlex 3/P" },
 	{ 0, 0, NULL },
 };
@@ -269,7 +224,7 @@ const struct tl_product_desc tl_ti_products[] = {
 	 * docking station; better product description?
 	 * XXX Seems to have broken memory-mapped access.
 	 */
-	{ PCI_PRODUCT_TI_TLAN, TI_TLAN,
+	{ PCI_PRODUCT_TI_TLAN, 0,
 	  TPF_BROKEN_MEM, "Texas Instruments ThunderLAN" },
 	{ 0, 0, NULL },
 };
@@ -349,6 +304,7 @@ tl_pci_attach(parent, self, aux)
 	tp = tl_lookup_product(pa->pa_id);
 	if (tp == NULL)
 		panic("tl_pci_attach: impossible");
+	sc->tl_product = tp;
 
 	/* Map the card space. */
 	ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
@@ -375,7 +331,6 @@ tl_pci_attach(parent, self, aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	printf("%s: %s\n", sc->sc_dev.dv_xname, tp->tp_desc);
-	sc->mii.adapter_id = tp->tp_adapter;
 
 	tl_reset(sc);
 
@@ -430,19 +385,31 @@ tl_pci_attach(parent, self, aux)
 	 */
 	(void) shutdownhook_establish(tl_shutdown, sc);
 
-	sc->mii.adapter_softc = sc;
-	sc->mii.mii_setbit = tl_mii_set;
-	sc->mii.mii_clrbit = tl_mii_clr;
-	sc->mii.mii_readbit = tl_mii_read;
-	sc->mii.mii_readreg = NULL; /* Let generic MII function handle that */
-	sc->mii.mii_writereg = NULL;
-	if (config_found(self, (void*)&sc->mii, mii_adapter_print) == NULL) {
-		return;
-	}
-
-	ifmedia_init(&sc->tl_ifmedia, 0, tl_mediachange, tl_mediastatus);
-	mii_media_add(&sc->tl_ifmedia, &sc->mii);
-	ifmedia_set(&sc->tl_ifmedia, IFM_ETHER | IFM_NONE);
+	/*
+	 * Initialize our media structures and probe the MII.
+	 *
+	 * Note that we don't care about the media instance.  We
+	 * are expecting to have multiple PHYs on the 10/100 cards,
+	 * and on those cards we exclude the internal PHY from providing
+	 * 10baseT.  By ignoring the instance, it allows us to not have
+	 * to specify it on the command line when switching media.
+	 */
+	sc->tl_mii.mii_ifp = ifp;
+	sc->tl_mii.mii_readreg = tl_mii_read;
+	sc->tl_mii.mii_writereg = tl_mii_write;
+	sc->tl_mii.mii_statchg = tl_statchg;
+	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
+	    tl_mediastatus);
+	mii_phy_probe(self, &sc->tl_mii, 0xffffffff);
+#ifdef notyet	/* XXX XXX XXX */
+	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
+		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
+#else
+	ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
+#endif
 
 	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
 	sc->tl_if.if_softc = sc;
@@ -457,7 +424,6 @@ tl_pci_attach(parent, self, aux)
 	bpfattach(&sc->tl_bpf, &sc->tl_if, DLT_EN10MB,
 		sizeof(struct ether_header));
 #endif
-	sc->mii.mii_media_active = IFM_NONE;
 }
 
 static void
@@ -498,7 +464,7 @@ tl_reset(sc)
 	/* Unreset MII */
 	netsio_set(sc, TL_NETSIO_NMRST);
 	DELAY(100000);
-	sc->mii.mii_media_status &= ~IFM_ACTIVE;
+	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 	sc->tl_flags = 0;
 	sc->opkt = 0;
 	sc->stats_exesscoll = 0;
@@ -545,7 +511,7 @@ static void tl_shutdown(v)
 	free(sc->Tx_list, M_DEVBUF);
 	sc->Tx_list = NULL;
 	sc->tl_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	sc->mii.mii_media_status &= ~IFM_ACTIVE;
+	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 	sc->tl_flags = 0;
 }
 
@@ -637,10 +603,8 @@ static int tl_init(sc)
 	}
 	bzero(nullbuf, ETHER_MIN_TX);
 
-	/* set media if needed */
-	if (IFM_SUBTYPE(sc->mii.mii_media_active) != IFM_NONE) {
-		mii_mediachg(&sc->mii);
-	}
+	/* set media */
+	mii_mediachg(&sc->tl_mii);
 
 	/* start ticks calls */
 	timeout(tl_ticks, sc, hz);
@@ -694,69 +658,126 @@ tl_intreg_write_byte(sc, reg, val)
 	TL_HR_WRITE_BYTE(sc, TL_HOST_DIO_DATA + (reg & 0x03), val);
 }
 
-void tl_mii_set(v, bit)
-	void *v;
-	u_int8_t bit;
+void
+tl_mii_sync(sc)
+	struct tl_softc *sc;
 {
-	tl_softc_t *sc = v;
+	int i;
 
-	switch (bit) {
-	case MII_DATA:
-		netsio_set(sc, TL_NETSIO_MDATA);
-		break;
-	case MII_CLOCK:
-		netsio_set(sc, TL_NETSIO_MCLK);
-		break;
-	case MII_TXEN:
-		netsio_set(sc, TL_NETSIO_MTXEN);
-		break;
-	default:
-		printf("tl_mii_set: unknown bit %d\n", bit);
-	}
-}
-
-void tl_mii_clr(v, bit)
-	void *v;
-	u_int8_t bit;
-{
-	tl_softc_t *sc = v;
-
-	switch (bit) {
-	case MII_DATA:
-		netsio_clr(sc, TL_NETSIO_MDATA);
-		break;
-	case MII_CLOCK:
+	netsio_clr(sc, TL_NETSIO_MTXEN);
+	for (i = 0; i < 32; i++) {
 		netsio_clr(sc, TL_NETSIO_MCLK);
-		break;
-	case MII_TXEN:
-		netsio_clr(sc, TL_NETSIO_MTXEN);
-		break;
-	default:
-		printf("tl_mii_clr: unknown bit %d\n", bit);
+		netsio_set(sc, TL_NETSIO_MCLK);
 	}
-	return;
 }
 
-int tl_mii_read(v, bit)
-	void *v;
-	u_int8_t bit;
+void
+tl_mii_sendbits(sc, data, nbits)
+	struct tl_softc *sc;
+	u_int32_t data;
+	int nbits;
 {
-	tl_softc_t *sc = v;
+	int i;
 
-	switch (bit) {
-	case MII_DATA:
-		return netsio_read(sc, TL_NETSIO_MDATA);
-		break;
-	case MII_CLOCK:
-		return netsio_read(sc, TL_NETSIO_MCLK);
-		break;
-	case MII_TXEN:
-		return netsio_read(sc, TL_NETSIO_MTXEN);
-		break;
-	default:
-		printf("tl_mii_read: unknown bit %d\n", bit);
-		return -1;
+	netsio_set(sc, TL_NETSIO_MTXEN);
+	for (i = 1 << (nbits - 1); i; i = i >>  1) {
+		netsio_clr(sc, TL_NETSIO_MCLK);
+		netsio_read(sc, TL_NETSIO_MCLK);
+		if (data & i)
+			netsio_set(sc, TL_NETSIO_MDATA);
+		else
+			netsio_clr(sc, TL_NETSIO_MDATA);
+		netsio_set(sc, TL_NETSIO_MCLK);
+		netsio_read(sc, TL_NETSIO_MCLK);
 	}
+}
+
+int
+tl_mii_read(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct tl_softc *sc = (struct tl_softc *)self;
+	int val = 0, i, err;
+
+	/*
+	 * Read the PHY register by manually driving the MII control lines.
+	 */
+
+	tl_mii_sync(sc);
+	tl_mii_sendbits(sc, MII_COMMAND_START, 2);
+	tl_mii_sendbits(sc, MII_COMMAND_READ, 2);
+	tl_mii_sendbits(sc, phy, 5);
+	tl_mii_sendbits(sc, reg, 5);
+
+	netsio_clr(sc, TL_NETSIO_MTXEN);
+	netsio_clr(sc, TL_NETSIO_MCLK);
+	netsio_set(sc, TL_NETSIO_MCLK);
+	netsio_clr(sc, TL_NETSIO_MCLK);
+
+	err = netsio_read(sc, TL_NETSIO_MDATA);
+	netsio_set(sc, TL_NETSIO_MCLK);
+
+	/* Even if an error occurs, must still clock out the cycle. */
+	for (i = 0; i < 16; i++) {
+		val <<= 1;
+		netsio_clr(sc, TL_NETSIO_MCLK);
+		if (err == 0 && netsio_read(sc, TL_NETSIO_MDATA))
+			val |= 1;
+		netsio_set(sc, TL_NETSIO_MCLK);
+	}
+	netsio_clr(sc, TL_NETSIO_MCLK);
+	netsio_set(sc, TL_NETSIO_MCLK);
+
+	return (err ? 0 : val);
+}
+
+void
+tl_mii_write(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct tl_softc *sc = (struct tl_softc *)self;
+
+	/*
+	 * Write the PHY register by manually driving the MII control lines.
+	 */
+
+	tl_mii_sync(sc);
+	tl_mii_sendbits(sc, MII_COMMAND_START, 2);
+	tl_mii_sendbits(sc, MII_COMMAND_WRITE, 2);
+	tl_mii_sendbits(sc, phy, 5);
+	tl_mii_sendbits(sc, reg, 5);
+	tl_mii_sendbits(sc, MII_COMMAND_ACK, 2);
+	tl_mii_sendbits(sc, val, 16);
+
+	netsio_clr(sc, TL_NETSIO_MCLK);
+	netsio_set(sc, TL_NETSIO_MCLK);
+}
+
+void
+tl_statchg(self)
+	struct device *self;
+{
+	tl_softc_t *sc = (struct tl_softc *)self;
+	u_int32_t reg;
+
+#ifdef TLDEBUG
+	printf("tl_statchg, media %x\n", sc->tl_ifmedia.ifm_media);
+#endif
+
+	/*
+	 * We must keep the ThunderLAN and the PHY in sync as
+	 * to the status of full-duplex!
+	 */
+	reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetCmd);
+	if (sc->tl_mii.mii_media_active & IFM_FDX)
+		reg |= TL_NETCOMMAND_DUPLEX;
+	else
+		reg &= ~TL_NETCOMMAND_DUPLEX;
+	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
+
+	/* XXX Update ifp->if_baudrate */
 }
 
 void tl_i2c_set(v, bit)
@@ -1147,7 +1168,7 @@ tl_ifioctl(ifp, cmd, data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->tl_ifmedia, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->tl_mii.mii_media, cmd);
 		break;
 	default:
 		error = EINVAL;
@@ -1328,25 +1349,10 @@ static int
 tl_mediachange(ifp)
 	struct ifnet *ifp;
 {
-	
-	tl_softc_t *sc = ifp->if_softc;
-	int err;
-	u_int32_t reg;
-	int oldmedia;
-#ifdef TLDEBUG
-	printf("tl_mediachange, media %x\n", sc->tl_ifmedia.ifm_media);
-#endif
-	oldmedia = sc->mii.mii_media_active;
-	sc->mii.mii_media_active = sc->tl_ifmedia.ifm_media;
-	if ((err = mii_mediachg(&sc->mii)) != 0)
-		sc->mii.mii_media_active = oldmedia;
-	reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetCmd);
-	if (sc->mii.mii_media_active & IFM_FDX)
-		reg |= TL_NETCOMMAND_DUPLEX;
-	else
-		reg &= ~TL_NETCOMMAND_DUPLEX;
-	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
-	return err;
+
+	if (ifp->if_flags & IFF_UP)
+		tl_init(ifp->if_softc);
+	return (0);
 }
 
 static void
@@ -1355,17 +1361,10 @@ tl_mediastatus(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	tl_softc_t *sc = ifp->if_softc;
-	if (IFM_SUBTYPE(sc->mii.mii_media_active) == IFM_10_2 ||
-		IFM_SUBTYPE(sc->mii.mii_media_active) == IFM_10_5)
-		if (sc->tl_flags & TL_IFACT)
-			sc->mii.mii_media_status = IFM_AVALID | IFM_ACTIVE;
-		else
-			sc->mii.mii_media_status = IFM_AVALID;
-	else
-		mii_pollstat(&sc->mii);
-	
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
+
+	mii_pollstat(&sc->tl_mii);
+	ifmr->ifm_active = sc->tl_mii.mii_media_active;
+	ifmr->ifm_status = sc->tl_mii.mii_media_status;
 }
 
 static int tl_add_RxBuff(Rx, oldm)
