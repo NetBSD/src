@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.11 1996/03/26 15:16:55 gwr Exp $	*/
+/*	$NetBSD: stub.c,v 1.12 1996/06/17 15:41:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -44,18 +44,15 @@ void swapgeneric() {}
  * XXX: isr.c:netintr() - move to conf.c?
  */
 
-/* sun3_startup.c */
-#if !defined(DDB) && !defined(KGDB)
 /*
  * When DDB is included, Debugger() comes from db_interface.c
- * otherwise provide this function.  This will just stop in
- * the Sun PROM monitor.  (You can look around, or continue.)
+ * otherwise we get the one compiled here.
  */
-void Debugger()
+#ifndef DDB
+void
+Debugger()
 {
-	sun3_mon_abort();
+	__asm ("trap #15");
 }
-#endif	/* !DDB && !KGDB */
+#endif	/* !DDB */
 
-/* sys_machdep.c */
-/* trap.c */
