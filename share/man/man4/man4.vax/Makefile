@@ -8,13 +8,4 @@ MAN4=	acc.0 ad.0 autoconf.0 cons.0 crl.0 css.0 ct.0 ddn.0 de.0 dh.0 dhu.0 \
 MLINKS=	mem.4 kmem.4
 MANSUBDIR=/vax
 
-all: ${MAN4}
-
-clean depend lint tags:
-
-cleandir:
-	rm -f ${MAN4}
-
-install: maninstall
-
 .include <bsd.prog.mk>
