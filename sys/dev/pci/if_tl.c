@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.12 1998/07/05 00:51:24 jonathan Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.13 1998/07/05 06:49:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -42,6 +42,7 @@
 #undef TLDEBUG_ADDR
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.25 1998/07/05 00:51:14 jonathan Exp $ */
+/*	$NetBSD: if_ie.c,v 1.26 1998/07/05 06:49:09 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -98,6 +98,7 @@
 */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

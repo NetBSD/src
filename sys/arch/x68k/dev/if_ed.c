@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.7 1998/07/05 00:51:16 jonathan Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.8 1998/07/05 06:49:10 jonathan Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -24,6 +24,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.5 1998/07/05 00:51:16 jonathan Exp $	*/
+/*	$NetBSD: if_se.c,v 1.6 1998/07/05 06:49:10 jonathan Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -19,6 +19,8 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
+
 #include "se.h"
 #if NSE > 0
 /* bpfilter included here in case it is needed in future net includes */

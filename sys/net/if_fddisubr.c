@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.22 1998/07/05 04:37:41 jonathan Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.23 1998/07/05 06:49:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -43,6 +43,7 @@
 #include "opt_ccitt.h"
 #include "opt_llc.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

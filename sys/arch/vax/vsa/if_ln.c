@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.4 1998/07/05 03:14:42 jonathan Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.5 1998/07/05 06:49:10 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_llc.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.21 1998/07/05 00:51:06 jonathan Exp $	*/
+/*	$NetBSD: if_es.c,v 1.22 1998/07/05 06:49:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -35,6 +35,7 @@
  */
 #include "opt_ddb.h"
 #include "opt_inet.h"
+#include "opt_ns.h"
 
 #include "bpfilter.h"
 

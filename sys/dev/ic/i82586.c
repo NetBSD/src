@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.14 1998/07/05 00:51:18 jonathan Exp $	*/
+/*	$NetBSD: i82586.c,v 1.15 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ Mode of operation:
 */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

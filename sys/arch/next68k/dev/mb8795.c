@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.4 1998/07/05 03:14:42 jonathan Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.5 1998/07/05 06:49:07 jonathan Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_llc.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
