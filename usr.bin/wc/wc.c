@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.24 2002/03/23 21:27:14 enami Exp $	*/
+/*	$NetBSD: wc.c,v 1.25 2002/03/23 21:29:38 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.24 2002/03/23 21:27:14 enami Exp $");
+__RCSID("$NetBSD: wc.c,v 1.25 2002/03/23 21:29:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,11 +287,11 @@ cnt(file)
 	}
 
 	if (len == -1) {
-		warn ("%s", file);
+		warn("%s", file);
 		rval = 1;
 	}
 	if (dochar && r == (size_t)-2) {
-		warnx ("%s: incomplete multibyte character", file);
+		warnx("%s: incomplete multibyte character", file);
 		rval = 1;
 	}
 
@@ -306,7 +306,7 @@ cnt(file)
 	tcharct += charct;
 
 	if (close(fd)) {
-		warn ("%s", file);
+		warn("%s", file);
 		rval = 1;
 	}
 }
