@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.18 1998/02/22 00:24:12 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.19 1998/07/06 00:43:28 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -57,6 +57,8 @@
 #include <machine/conf.h>
 #include <machine/mouse.h>
 #include <arm32/dev/qmsvar.h>
+
+#define MOUSE_IOC_ACK
 
 #define QMOUSE_BSIZE 12*64
 
