@@ -1,6 +1,8 @@
-/*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: uuencode.c,v 1.6 1994/11/17 07:39:43 jtc Exp $	*/
+
+/*-
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +33,16 @@
  * SUCH DAMAGE.
  */
 
+char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
 #ifndef lint
-/*static char sccsid[] = "from: @(#)uuencode.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: uuencode.c,v 1.5 1993/11/09 01:47:00 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
+#endif
+static char rcsid[] = "$NetBSD: uuencode.c,v 1.6 1994/11/17 07:39:43 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -56,7 +65,7 @@ static __dead void usage();
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	struct stat sb;
 	int mode;
