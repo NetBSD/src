@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 1996/04/12 08:37:05 leo Exp $	*/
+/*	$NetBSD: ms.c,v 1.5 1996/04/12 08:39:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -96,7 +96,7 @@ mouseattach(cnt)
 	int cnt;
 {
 	printf("1 mouse configured\n");
-	ms_softc[0].ms_emul3b = 0 /*1*/; /* XXX: default behaviour.... */
+	ms_softc[0].ms_emul3b = 1;
 	return(NMOUSE);
 }
 
