@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2002/09/04 14:02:47 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2002/10/31 14:20:39 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -197,13 +197,15 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	    ((char *)p2->p_addr + (USPACE - sizeof(*tf)));
 
 	/* Child inherits parent's trapframe */
-	memcpy(tf, p1->p_md.md_regs, sizeof(*tf));
+	memcpy(tf, (char *)p1->p_addr + (USPACE - sizeof(*tf)), sizeof(*tf));
 
 	/*
 	 * If the child is to have a different user-mode stack, fix it up now.
 	 */
-	if (stack != NULL)
+	if (stack != NULL) {
 		tf->tf_caller.r15 = (register_t)(intptr_t)stack + stacksize;
+		tf->tf_caller.r14 = tf->tf_caller.r15;
+	}
 
 	/*
 	 * Set the child's syscall return parameters to the values
@@ -217,7 +219,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * Set up a switchframe which will vector through proc_trampoline
 	 */
 	pcb->pcb_ctx.sf_pc = (register_t)(intptr_t)proc_trampoline;
-	pcb->pcb_ctx.sf_sp = (register_t)(intptr_t)tf;
+	pcb->pcb_ctx.sf_sp = pcb->pcb_ctx.sf_fp = (register_t)(intptr_t)tf;
 	pcb->pcb_ctx.sf_r10 = (register_t)(intptr_t)func;
 	pcb->pcb_ctx.sf_r11 = (register_t)(intptr_t)arg;
 }
