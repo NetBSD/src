@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.19 2003/03/03 06:33:38 tshiozak Exp $	*/
+/*	$NetBSD: rune.c,v 1.20 2003/03/04 08:49:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.19 2003/03/03 06:33:38 tshiozak Exp $");
+__RCSID("$NetBSD: rune.c,v 1.20 2003/03/04 08:49:15 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -238,7 +238,7 @@ _Read_RuneMagi(fp)
 	if (fstat(fileno(fp), &sb) < 0)
 		return NULL;
 
-	if (sb.st_size < sizeof(_RuneLocale))
+	if (sb.st_size < sizeof(_FileRuneLocale))
 		return NULL;
 	/* XXX more validation? */
 
