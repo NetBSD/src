@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.78 2000/07/18 20:14:45 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.79 2000/07/19 03:24:07 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -55,7 +55,7 @@
  */
 #define	DIAGNOSTIC
 
-#undef	PHYS_CLEAR
+#undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
@@ -260,18 +260,22 @@
  * regardless of the current stack.
  */
 
-#ifdef _LP64
-#define STACKFRAME(size)					\
+#define TO_STACK64(size)					\
 	andcc	%sp, 1, %g0; /* 64-bit stack? */		\
 	save	%sp, size, %sp;					\
 	add	%sp, -BIAS, %o0; /* Convert to 64-bits */	\
 	movz	%icc, %o0, %sp
-#else
-#define STACKFRAME(size)					\
+
+#define TO_STACK32(size)					\
 	andcc	%sp, 1, %g0; /* 64-bit stack? */		\
 	save	%sp, size, %sp;					\
 	add	%sp, +BIAS, %o0; /* Convert to 32-bits */	\
 	movnz	%icc, %o0, %sp
+
+#ifdef _LP64
+#define	STACKFRAME(size)	TO_STACK64(size)
+#else
+#define	STACKFRAME(size)	TO_STACK32(size)
 #endif
 
 
@@ -1478,6 +1482,41 @@ _C_LABEL(trap_trace_end):
 #if	defined(TRAPTRACE)||defined(FLTRACE)
 #define TRACEPTR	(_C_LABEL(trap_trace_ptr)-_C_LABEL(trap_trace))
 #define TRACEDIS	(_C_LABEL(trap_trace_dis)-_C_LABEL(trap_trace))
+#define	TRACEIT(tt,r3,r4,r2,r6,r7)					\
+	set	trap_trace, r2;						\
+	lduw	[r2+TRACEDIS], r4;					\
+	brnz,pn	r4, 1f;							\
+	 lduw	[r2+TRACEPTR], r3;					\
+	rdpr	%tl, r4;						\
+	cmp	r4, 1;							\
+	sllx	r4, 13, r4;						\
+	rdpr	%pil, r6;						\
+	or	r4, %g5, r4;						\
+	mov	%g0, %g5;						\
+	andncc	r3, (TRACESIZ-1), %g0;	/* At end of buffer? */		\
+	sllx	r6, 9, r6;						\
+	or	r6, r4, r4;						\
+	movnz	%icc, %g0, r3;		/* Wrap buffer if needed */	\
+	rdpr	%tstate, r6;						\
+	rdpr	%tpc, r7;						\
+	sth	r4, [r2+r3];						\
+	inc	2, r3;							\
+	sth	%g5, [r2+r3];						\
+	inc	2, r3;							\
+	stw	r6, [r2+r3];						\
+	inc	4, r3;							\
+	stw	%sp, [r2+r3];						\
+	inc	4, r3;							\
+	stw	r7, [r2+r3];						\
+	inc	4, r3;							\
+	mov	TLB_TAG_ACCESS, r7;					\
+	ldxa	[r7] ASI_DMMU, r7;					\
+	stw	r7, [r2+r3];						\
+	inc	4, r3;							\
+	stw	r3, [r2+TRACEPTR];					\
+1:
+
+		
 	.text
 traceit:
 	set	trap_trace, %g2
@@ -2109,7 +2148,7 @@ dmmu_write_fault:
 	bz,pn	%xcc, winfix				! No -- really fault
 	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
 
-#if DEBUG
+#ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
@@ -2202,7 +2241,7 @@ data_miss:
 	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
 
-#if DEBUG
+#ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
 	brnz,pt	%g6, Ludata_miss			! If user context continue miss
@@ -3162,7 +3201,6 @@ instr_miss:
 	stb	%g6, [%g7+0x20]	! debug
 #endif
 
-#if 1
 	/*
 	 * Try to parse our page table.
 	 */
@@ -3228,7 +3266,6 @@ Lutext_miss:
 	!!
 	!!  Check our prom mappings -- temporary
 	!!
-#endif
 
 /*
  * Each memory text access fault, from user or kernel mode,
@@ -4241,11 +4278,7 @@ sparc_intr_retry:
 	 nop				! XXX Spitfire bug
 1:
 !	DLFLUSH(%l2, %o3)
-#ifdef PHYS_CLEAR
-	ldx	[%l2 + IH_CLR], %l1
-#else
 	LDPTR	[%l2 + IH_CLR], %l1
-#endif
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
@@ -4298,12 +4331,8 @@ sparc_intr_retry:
 #endif
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5
-#ifdef PHYS_CLEAR
-	stxa	%g0, [%l1] ASI_PHYS_NON_CACHED		! Clear intr source
-#else
 	stx	%g0, [%l1]		! Clear intr source
-#endif
-	membar	#Sync			! Should not be needed
+	membar	#Sync				! Should not be needed
 0:
 	brnz,pt	%o0, 3b			! Handle any others
 	 nop
@@ -4390,52 +4419,14 @@ sparc_intr_retry:
 	ta	1
 7:
 #endif
-#if 0
-#ifdef PHYS_CLEAR
-	ldx	[%l4 + IH_CLR], %l3
-#else
-	LDPTR	[%l4 + IH_CLR], %l3
-#endif
-	add	%sp, CC64FSZ + STKB, %o2	! tf = %sp + CC64FSZ + STKB
-	brnz,a,pt	%l3, 5f			! Clear this intr?
-
-#ifdef PHYS_CLEAR
-	 stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
-#else
-	 stx	%g0, [%l3]		! Clear intr source
-#endif
-5:
-	membar	#Sync				! Should not be needed
-2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
-	 movrz	%o0, %o2, %o0		!	arg = (arg == 0) ? arg : tf
-	movrnz	%o0, %o0, %l5		! Store the success somewhere
-	clrb	[%l4 + IH_PEND]		! Clear the pending bit
-	LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
-3:	brnz,pt	%l4, 1b			! } while (ih)
-	 clr	%l3			! Make sure we don't have a valid pointer
-	brnz,pn	%l5, intrcmplt		!	if (handled) break
-	 nop
-	clr	%o1
-!	call	_C_LABEL(strayintr)	!	strayintr(&intrframe, 0)
-	 add	%sp, CC64FSZ + STKB, %o0
-	/* all done: restore registers and go return */
-#else
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
 	clrb	[%l4 + IH_PEND]		! Clear the pending bit
-#ifdef PHYS_CLEAR
-	ldx	[%l4 + IH_CLR], %l3
-#else
 	LDPTR	[%l4 + IH_CLR], %l3
-#endif
 	brz,pn	%l3, 5f			! Clear intr?
 	 nop
-#ifdef PHYS_CLEAR
-	stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
-#else
 	stx	%g0, [%l3]		! Clear intr source
-#endif
 	membar	#Sync				! Should not be needed
 5:	brnz,pn	%o0, intrcmplt		! if (handled) break
 	 LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
@@ -4445,7 +4436,6 @@ sparc_intr_retry:
 	call	_C_LABEL(strayintr)	!	strayintr(&intrframe, 0)
 	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
-#endif
 intrcmplt:
 #ifdef VECTORED_INTERRUPTS
 	rd	SOFTINT, %l7		! %l5 contains #intr handled.
@@ -5813,11 +5803,11 @@ _C_LABEL(openfirmware):
 	 sethi	%hi(romp), %l7
 	LDPTR	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
-	rdpr	%pil, %i2	! s = splx(level)
-	cmp	%i2, PIL_IMP
-	blu,a,pt	%icc, 0f
-	 wrpr	%g0, PIL_IMP, %pil
-0:
+	rdpr	%pil, %i2
+	mov	PIL_IMP, %i3
+	cmp	%i3, %i2
+	movle	%icc, %i2, %i3
+	wrpr	%g0, %i3, %pil
 #if 0
 !!!
 !!! Since prom addresses overlap user addresses
@@ -5884,16 +5874,14 @@ _C_LABEL(openfirmware):
 	srl	%sp, 0, %sp
 	rdpr	%pil, %i2	! s = splx(level)
 	mov	%i0, %o0
+	mov	PIL_IMP, %i3
 	mov	%g1, %l1
 	mov	%g2, %l2
+	cmp	%i3, %i2
 	mov	%g3, %l3
-
-	cmp	%i2, PIL_IMP
-	blu,a,pt	%icc, 0f
-	 wrpr	%g0, PIL_IMP, %pil
-0:
 	mov	%g4, %l4
 	mov	%g5, %l5
+	movle	%icc, %i2, %i3
 	mov	%g6, %l6
 	mov	%g7, %l7
 	jmpl	%o1, %o7
@@ -7413,7 +7401,7 @@ idle:
 	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,a,pt	%o3, Lsw_scan
 	 wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
-	b	1b
+	ba,a,pt	%icc, 1b
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -7973,7 +7961,19 @@ ENTRY(proc_trampoline)
 	 * the trap instruction; but we bypass that, so we must do it manually.
 	 */
 !	save	%sp, -CC64FSZ, %sp		! Save a kernel frame to emulate a syscall
-	mov	PSTATE_USER, %g1		! user pstate (no need to load it)
+#if 0
+	/* This code doesn't seem to work, but it should. */
+	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
+	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
+	andn	%g1, CWP, %g1			! Clear the CWP bits
+	add	%g2, 4, %g3			! npc = pc+4
+	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
+	or	%g1, %g5, %g1
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
+#else
+	mov	PSTATE_USER, %g1		! XXXX user pstate (no need to load it)
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
 	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
 	add	%g2, 4, %g3			! npc = pc+4
@@ -7982,6 +7982,7 @@ ENTRY(proc_trampoline)
 	or	%g1, %g5, %g1
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
+#endif
 #ifdef SCHED_DEBUG
 !	set	panicstack-CC64FSZ-STKB, %o0! DEBUG
 !	save	%g0, %o0, %sp	! DEBUG
@@ -8531,7 +8532,7 @@ ENTRY(pmap_zero_page)
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the page again
 	membar	#Sync				! No real reason for this XXXX
 
-#ifdef DEBUG
+#ifdef PARANOID
 	!!
 	!! Use phys accesses to verify page is clear
 	!!
@@ -8867,7 +8868,7 @@ ENTRY(pmap_copy_page)
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the source page again
 	membar	#Sync				! No real reason for this XXXX
 
-#ifdef DEBUG
+#ifdef PARANOID
 	!!
 	!! Use phys accesses to verify copy
 	!!
@@ -9220,7 +9221,7 @@ ENTRY(pseg_set)
 	add	%o5, %o4, %o4
 	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
 	DLFLUSH(%o4, %o4)
-#ifdef DEBUG
+#ifdef PARANOID
 	!! Try pseg_get to verify we did this right
 	mov	%o7, %o4
 	call	pseg_get
@@ -9532,7 +9533,14 @@ ENTRY(bzero)
 	! %o0 = addr, %o1 = len
 	clr	%o2			! Initialize our pattern
 Lbzero_internal:
-	brz,pn	%o1, Lbzero_done	! No bytes to copy??
+#ifndef _LP64
+#ifdef	DEBUG
+	tst	%o1			! DEBUG
+	tneg	%icc, 1			! DEBUG -- trap if negative.
+#endif
+	sra	%o1, 0, %o1		! Sign extend 32-bits
+#endif
+	brlez,pn	%o1, Lbzero_done	! No bytes to copy??
 !	 cmp	%o1, 8			! Less than 8 bytes to go?
 !	ble,a,pn	%icc, Lbzero_small	! Do it byte at a time.
 !	 deccc	8, %o1			! pre-decrement
