@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.18 2000/07/04 07:03:15 kleink Exp $
+.\" $NetBSD: doc2html,v 1.19 2000/07/05 10:54:12 ad Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -793,6 +793,11 @@ AT&T UNIX\\$*
 .	recurse \\$@
 .	pc-fin
 ..
+.de Ox
+.	as doc-pcresult OpenBSD
+.	recurse \\$@
+.	pc-fin
+..
 .de Ux
 .	as doc-pcresult UNIX
 .	recurse \\$@
@@ -1244,6 +1249,7 @@ AT&T UNIX\\$*
 .als doc2html@@Op Op
 .als doc2html@@Em Em
 .als doc2html@@Fx Fx
+.als doc2html@@Ox Ox
 .als doc2html@@Nm Nm
 .als doc2html@@Nd Nd
 .als doc2html@@At At
