@@ -66,13 +66,17 @@ main(argc, argv)
 	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "gp")) != EOF)
+	fatal_errors =1;
+	while ((ch = getopt(argc, argv, "gpk")) != EOF)
 		switch (ch) {
 		case 'g':
 			debugging++;
 			break;
 		case 'p':
 			profiling++;
+			break;
+	        case 'k':
+			fatal_errors=0;
 			break;
 		case '?':
 		default:
@@ -82,7 +86,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (argc != 1) {
-usage:		fputs("usage: config [-gp] sysname\n", stderr);
+usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 		exit(1);
 	}
 
@@ -149,6 +153,8 @@ usage:		fputs("usage: config [-gp] sysname\n", stderr);
 	exit(0);
 }
 
+#define is_paren(x) ((x == '(') || (x == ')'))
+#define is_comment(x) (x == '#')
 /*
  * get_word
  *	returns EOF on end of file
@@ -170,10 +176,22 @@ get_word(fp)
 		return ((char *)EOF);
 	if (ch == '\n')
 		return (NULL);
+	if (is_paren(ch)) {
+	    line[0] = ch;
+	    line[1] = '\0';
+	    return line;
+	}
+	if (is_comment(ch)) {
+	    while ((ch = getc(fp)) != EOF)
+		if (ch == '\n')
+		    break;
+	    if (ch == EOF) return ((char *)EOF);
+	    else return NULL;
+	}
 	cp = line;
 	*cp++ = ch;
 	while ((ch = getc(fp)) != EOF) {
-		if (isspace(ch))
+	    if (isspace(ch) || is_paren(ch))
 			break;
 		*cp++ = ch;
 	}
@@ -184,6 +202,40 @@ get_word(fp)
 	return (line);
 }
 
+/*
+ * get_rword
+ *	returns EOF on end of file
+ *	NULL on end of line
+ *	pointer to the word otherwise
+ */
+char *
+get_rword(fp)
+	register FILE *fp;
+{
+	static char line[80];
+	register int ch;
+	register char *cp;
+
+	while ((ch = getc(fp)) != EOF)
+		if (ch != ' ' && ch != '\t')
+			break;
+	if (ch == EOF)
+		return ((char *)EOF);
+	if (ch == '\n')
+		return (NULL);
+	cp = line;
+	*cp++ = ch;
+	while ((ch = getc(fp)) != EOF) {
+	    if (isspace(ch) || is_paren(ch))
+			break;
+		*cp++ = ch;
+	}
+	*cp = 0;
+	if (ch == EOF)
+		return ((char *)EOF);
+	(void) ungetc(ch, fp);
+	return (line);
+}
 /*
  * get_quoted_word
  *	like get_word but will accept something in double or single quotes
