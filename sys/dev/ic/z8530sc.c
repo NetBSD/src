@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.6 1997/10/04 22:30:30 gwr Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.7 1998/02/19 21:26:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,9 +72,7 @@ zs_break(cs, set)
 	struct zs_chanstate *cs;
 	int set;
 {
-	int s;
 
-	s = splzs();
 	if (set) {
 		cs->cs_preg[5] |= ZSWR5_BREAK;
 		cs->cs_creg[5] |= ZSWR5_BREAK;
@@ -83,7 +81,6 @@ zs_break(cs, set)
 		cs->cs_creg[5] &= ~ZSWR5_BREAK;
 	}
 	zs_write_reg(cs, 5, cs->cs_creg[5]);
-	splx(s);
 }
 
 
