@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.34.2.1 2000/06/29 23:59:57 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.34.2.2 2000/12/31 20:14:54 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -331,6 +331,11 @@ fxp_attach(sc)
 	ifp->if_ioctl = fxp_ioctl;
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Attach the interface.
@@ -868,6 +873,7 @@ fxp_intr(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct fxp_cb_tx *txd;
 	struct fxp_txsoft *txs;
@@ -938,6 +944,21 @@ fxp_intr(arg)
 				/*
 				 * Runt packet; drop it now.
 				 */
+				FXP_INIT_RFABUF(sc, m);
+				goto rcvloop;
+			}
+
+			/*
+			 * If support for 802.1Q VLAN sized frames is
+			 * enabled, we need to do some additional error
+			 * checking (as we are saving bad frames, in
+			 * order to receive the larger ones).
+			 */
+			if ((ec->ec_capenable & ETHERCAP_VLAN_MTU) != 0 &&
+			    (rxstat & (FXP_RFA_STATUS_OVERRUN|
+				       FXP_RFA_STATUS_RNR|
+				       FXP_RFA_STATUS_ALIGN|
+				       FXP_RFA_STATUS_CRC)) != 0) {
 				FXP_INIT_RFABUF(sc, m);
 				goto rcvloop;
 			}
@@ -1282,7 +1303,7 @@ fxp_init(sc)
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txd;
 	bus_dmamap_t rxmap;
-	int i, prm, allm, error = 0;
+	int i, prm, save_bf, allm, error = 0;
 
 	/*
 	 * Cancel any pending I/O
@@ -1320,6 +1341,13 @@ fxp_init(sc)
 	allm = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
 
 	/*
+	 * In order to support receiving 802.1Q VLAN frames, we have to
+	 * enable "save bad frames", since they are 4 bytes larger than
+	 * the normal Ethernet maximum frame length.
+	 */
+	save_bf = (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ? 1 : 0;
+
+	/*
 	 * Initialize base of dump-stats buffer.
 	 */
 	fxp_scb_wait(sc);
@@ -1354,7 +1382,7 @@ fxp_init(sc)
 	cbp->late_scb =		0;	/* (don't) defer SCB update */
 	cbp->tno_int =		0;	/* (disable) tx not okay interrupt */
 	cbp->ci_int =		1;	/* interrupt on CU idle */
-	cbp->save_bf =		prm;	/* save bad frames */
+	cbp->save_bf =		save_bf;/* save bad frames */
 	cbp->disc_short_rx =	!prm;	/* discard short packets */
 	cbp->underrun_retry =	1;	/* retry mode (1) on DMA underrun */
 	cbp->mediatype =	!sc->phy_10Mbps_only; /* interface mode */
