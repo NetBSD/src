@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.5 1999/03/05 04:42:12 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.6 1999/03/29 16:50:35 drochner Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.5 1999/03/05 04:42:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.6 1999/03/29 16:50:35 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -20,7 +20,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.5 1999/03/05 04:42:12 nisimura 
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <dev/tc/tcvar.h>
-#include <pmax/tc/ioasicvar.h> /* XXX XXX XXX */
+#include <dev/tc/ioasicvar.h> /* XXX XXX XXX */
 #include <dev/tc/ioasicreg.h>
 
 int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
