@@ -64,7 +64,6 @@ static	void	ka48_reboot __P((int));
 static	void	ka48_cache_enable __P((void));
 
 struct	vs_cpu *ka48_cpu;
-extern  short *clk_page;
 
 /* 
  * Declaration of 48-specific calls.
@@ -86,8 +85,6 @@ struct	cpu_dep ka48_calls = {
 void
 ka48_conf()
 {
-        extern  int clk_adrshift, clk_tweak;
-
 	printf("cpu: KA48\n");
 	ka48_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 	printf("cpu: turning on floating point chip\n");

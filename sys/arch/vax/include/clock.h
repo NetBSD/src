@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.3 1999/08/30 21:18:17 ragge Exp $ */
+/*	$NetBSD: clock.h,v 1.4 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,7 +65,7 @@
 #define	CSRD_VRT	0200
 
 /* Var's used when dealing with clock chip */
-extern	short *clk_page;
+extern	volatile short *clk_page;
 extern	int clk_adrshift, clk_tweak;
 
 /* Prototypes */
