@@ -75,7 +75,7 @@
 
 #define	PODULE_CCONCEPTS_LASERDIRECT	0x0014		/* laser direct (Canon LBP-4) */
 
-#define	PODULE_ARMADILLO_A448	0x0016		/* A447 sound sampler */
+#define	PODULE_ARMADILLO_A448	0x0016		/* A448 sound sampler */
 
 #define	PODULE_WILDVISION_HAWKV9	0x0052		/* hawk v9 mark2 */
 #define	PODULE_WILDVISION_SCANLIGHTV256	0x00cb		/* scanlight video 256 */
@@ -105,6 +105,12 @@
 
 #define	PODULE_ICUBED_ETHERH	0x00ec		/* etherlan 600 network slot interface */
 #define	PODULE_ICUBED_ETHERHFLASH	0x011e		/* etherlan 600 network slot interface */
+#define	PODULE_ICUBED_ETHERLAN500	0x00d4		/* etherlen 500 interface */
+#define	PODULE_ICUBED_ETHERLAN500A	0x011f		/* etherlen 500 interface */
+#define	PODULE_ICUBED_ETHERLAN200	0x00bd		/* etherlen 200 interface */
+#define	PODULE_ICUBED_ETHERLAN200A	0x011d		/* etherlen 200 interface */
+#define	PODULE_ICUBED_ETHERLAN100	0x00c4		/* etherlen 100 interface */
+#define	PODULE_ICUBED_ETHERLAN100A	0x011c		/* etherlen 100 interface */
 
 #define	PODULE_BRINI_PORT	0x0000		/* BriniPort intelligent I/O interface */
 #define	PODULE_BRINI_LINK	0x00df		/* BriniLink transputer link adapter */
