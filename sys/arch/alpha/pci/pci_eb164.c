@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_eb164.c,v 1.2 1996/11/13 21:13:30 cgd Exp $	*/
+/*	$NetBSD: pci_eb164.c,v 1.3 1996/11/17 02:30:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -64,8 +64,21 @@ void	*dec_eb164_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_eb164_intr_disestablish __P((void *, void *));
 
-void	eb164_pci_strayintr __P((int irq));
+#define	EB164_SIO_IRQ	4  
+#define	EB164_MAX_IRQ	24
+#define	PCI_STRAY_MAX	5
+
+struct alpha_shared_intr *eb164_pci_intr;
+#ifdef EVCNT_COUNTERS
+struct evcnt eb164_intr_evcnt;
+#endif
+
+bus_space_tag_t eb164_intrgate_iot;
+bus_space_handle_t eb164_intrgate_ioh;
+
 void	eb164_iointr __P((void *framep, unsigned long vec));
+void	eb164_enable_intr __P((int irq));
+void	eb164_disable_intr __P((int irq));
 
 void
 pci_eb164_pickintr(ccp)
@@ -73,6 +86,7 @@ pci_eb164_pickintr(ccp)
 {
 	bus_space_tag_t iot = ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
+	int i;
 
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_eb164_intr_map;
@@ -80,20 +94,24 @@ pci_eb164_pickintr(ccp)
         pc->pc_intr_establish = dec_eb164_intr_establish;
         pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
 
+	eb164_intrgate_iot = iot;
+	if (bus_space_map(eb164_intrgate_iot, 0x804, 3, 0,
+	    &eb164_intrgate_ioh) != 0)
+		panic("pci_eb164_pickintr: couldn't map interrupt PLD");
+	for (i = 0; i < EB164_MAX_IRQ; i++)
+		eb164_disable_intr(i);	
+
+	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ);
+	for (i = 0; i < EB164_MAX_IRQ; i++)
+		alpha_shared_intr_set_maxstrays(eb164_pci_intr, i,
+			PCI_STRAY_MAX);
+
 #if NSIO
 	sio_intr_setup(iot);
+	eb164_enable_intr(EB164_SIO_IRQ);
 #endif
 
 	set_iointr(eb164_iointr);
-
-#if 0 /* XXX */
-#if NSIO
-	eb164_enable_intr(KN20AA_PCEB_IRQ);
-#if 0 /* XXX init PCEB interrupt handler? */
-	eb164_attach_intr(&eb164_pci_intrs[KN20AA_PCEB_IRQ], ???, ???, ???);
-#endif
-#endif
-#endif /* 0 XXX */
 }
 
 int     
@@ -103,16 +121,10 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
         int buspin, line;
         pci_intr_handle_t *ihp;
 {
-
-	printf("dec_eb164_intr_map(0x%lx, %d, %d)\n", bustag, buspin, line);
-	return 0;
-
-#if 0
 	struct cia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int device;
-	int eb164_irq;
-	void *ih;
+	int eb164_irq, pinbase, pinoff;
 
         if (buspin == 0) {
                 /* No IRQ used. */
@@ -123,55 +135,64 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
                 return 1;
         }
 
-	/*
-	 * Slot->interrupt translation.  Appears to work, though it
-	 * may not hold up forever.
-	 *
-	 * The DEC engineers who did this hardware obviously engaged
-	 * in random drug testing.
-	 */
 	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	switch (device) {
-	case 11:
-	case 12:
-		eb164_irq = ((device - 11) + 0) * 4;
+#if 0	/* THIS CODE SHOULD NEVER BE CALLED FOR THE SIO */
+	case 8: 					/* SIO */
+		eb164_irq = 4;
 		break;
-
-	case 7:
-		eb164_irq = 8;
-		break;
-
-	case 9:
-		eb164_irq = 12;
-		break;
-
-	case 6:					/* 21040 on AlphaStation 500 */
-		eb164_irq = 13;
-		break;
-
-	case 8:
-		eb164_irq = 16;
-		break;
-
-	default:
-#ifdef KN20AA_BOGUS_IRQ_FROB
-		*ihp = 0xdeadbeef;
-		printf("\n\n BOGUS INTERRUPT MAPPING: dev %d, pin %d\n",
-		    device, buspin);
-		return (0);
 #endif
+
+	case 11:
+		eb164_irq = 5;				/* IDE */
+		break;
+
+	case 6:
+	case 7:
+	case 8:
+	case 9:
+		switch (buspin) {
+		case 1:
+			pinbase = 0;
+			break;
+		case 2:
+		case 3:
+		case 4:
+			pinbase = (buspin * 4) - 1;
+			break;
+#ifdef DIAGNOSTIC
+		default:
+			panic("dec_eb164_intr_map: slot buspin switch");
+#endif
+		};
+		switch (device) {
+		case 5:
+			pinoff = 2;
+			break;
+
+		case 6:
+		case 7:
+		case 9:
+			pinoff = device - 6;
+			break;
+#ifdef DIAGNOSTIC
+		default:
+			panic("dec_eb164_intr_map: slot device switch");
+#endif
+		}
+		eb164_irq = pinoff + pinbase;
+		break;
+	default:
 		panic("pci_eb164_map_int: invalid device number %d\n",
 		    device);
 	}
 
-	eb164_irq += buspin - 1;
-	if (eb164_irq > KN20AA_MAX_IRQ)
+	if (eb164_irq > EB164_MAX_IRQ)
 		panic("pci_eb164_map_int: eb164_irq too large (%d)\n",
 		    eb164_irq);
 
 	*ihp = eb164_irq;
 	return (0);
-#endif
 }
 
 const char *
@@ -184,23 +205,10 @@ dec_eb164_intr_string(ccv, ih)
 #endif
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
-	sprintf(irqstr, "BOGUS");
-	return (irqstr);
-
-#if 0 /* XXX */
-#ifdef KN20AA_BOGUS_IRQ_FROB
-	if (ih == 0xdeadbeef) {
-		sprintf(irqstr, "BOGUS");
-		return (irqstr);
-	}
-#endif
-        if (ih > KN20AA_MAX_IRQ)
-                panic("dec_eb164_a50_intr_string: bogus eb164 IRQ 0x%x\n",
-		    ih);
-
+        if (ih > EB164_MAX_IRQ)
+                panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%x\n", ih);
         sprintf(irqstr, "eb164 irq %d", ih);
         return (irqstr);
-#endif /* 0 XXX */
 }
 
 void *
@@ -210,44 +218,29 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg)
         int level;
         int (*func) __P((void *));
 {
-
-	printf("dec_eb164_intr_establish(0x%lx, %d, %p, %p)\n", ih, level, func, arg);
-	return ((void *)0xbabefacedeadbeef);
-
-#if 0 /* XXX */
-        struct cia_config *ccp = ccv;
+#if 0
+	struct cia_config *ccp = ccv;
+#endif
 	void *cookie;
 
-#ifdef KN20AA_BOGUS_IRQ_FROB
-	if (ih == 0xdeadbeef) {
-		int i;
-		char chars[10];
+	if (ih > EB164_MAX_IRQ)
+		panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%x\n", ih);
 
-		printf("dec_eb164_intr_establish: BOGUS IRQ\n");
-		do {
-			printf("IRQ to enable? ");
-			getstr(chars, 10);
-			i = atoi(chars);
-		} while (i < 0 || i > 32);
-		printf("ENABLING IRQ %d\n", i);
-		eb164_enable_intr(i);
-		return ((void *)0xbabefacedeadbeef);
-	}
-#endif
-        if (ih > KN20AA_MAX_IRQ)
-                panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%x\n",
-		    ih);
+	cookie = alpha_shared_intr_establish(eb164_pci_intr, ih, IST_LEVEL,
+	    level, func, arg, "eb164 irq");
 
-	cookie = eb164_attach_intr(&eb164_pci_intrs[ih], level, func, arg);
-	eb164_enable_intr(ih);
+	if (cookie != NULL && alpha_shared_intr_isactive(eb164_pci_intr, ih))
+		eb164_enable_intr(ih);
 	return (cookie);
-#endif /* XXX */
 }
 
-void    
+void
 dec_eb164_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
+#if 0
+	struct cia_config *ccp = ccv;
+#endif
 
 	panic("dec_eb164_intr_disestablish not implemented"); /* XXX */
 }
@@ -257,6 +250,67 @@ eb164_iointr(framep, vec)
 	void *framep;
 	unsigned long vec;
 {
+	int irq; 
 
+	if (vec >= 0x900) {
+		if (vec >= 0x900 + (EB164_MAX_IRQ << 4))
+			panic("eb164_iointr: vec 0x%x out of range\n", vec);
+		irq = (vec - 0x900) >> 4;
+
+#ifdef EVCNT_COUNTERS
+		eb164_intr_evcnt.ev_count++;
+#else
+		if (EB164_MAX_IRQ != INTRCNT_EB164_IRQ_LEN)
+			panic("eb164 interrupt counter sizes inconsistent");
+		intrcnt[INTRCNT_EB164_IRQ + irq]++;
+#endif
+
+		if (!alpha_shared_intr_dispatch(eb164_pci_intr, irq)) {
+			alpha_shared_intr_stray(eb164_pci_intr, irq,
+			    "eb164 irq");
+			if (eb164_pci_intr[irq].intr_nstrays ==
+			    eb164_pci_intr[irq].intr_maxstrays)
+				eb164_disable_intr(irq);
+		}
+		return;
+	}
+#if NSIO
+	if (vec >= 0x800) {
+		sio_iointr(framep, vec);
+		return;
+	}
+#endif
 	panic("eb164_iointr: weird vec 0x%x\n", vec);
+}
+
+u_int8_t eb164_intr_mask[3] = { 0xff, 0xff, 0xff };
+
+void
+eb164_enable_intr(irq)
+	int irq;
+{
+	int byte = (irq / 8), bit = (irq % 8);
+
+#if 1
+	printf("eb164_enable_intr: enabling %d (%d:%d)\n", irq, byte, bit);
+#endif
+	eb164_intr_mask[byte] &= ~(1 << bit);
+
+	bus_space_write_1(eb164_intrgate_iot, eb164_intrgate_ioh, byte,
+	    eb164_intr_mask[byte]);
+}
+
+void
+eb164_disable_intr(irq)
+	int irq;
+{
+	int byte = (irq / 8), bit = (irq % 8);
+
+#if 1
+	printf("eb164_disable_intr: disabling %d (%d:%d)\n", irq, byte, bit);
+#endif
+	eb164_intr_mask[byte] |= (1 << bit);
+
+	bus_space_write_1(eb164_intrgate_iot, eb164_intrgate_ioh, byte,
+	    eb164_intr_mask[byte]);
 }
