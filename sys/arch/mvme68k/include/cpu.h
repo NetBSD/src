@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1996/09/11 00:23:47 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1996/09/12 05:01:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,6 +142,7 @@ extern	char *intiobase, *intiolimit;
 struct frame;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
+int	badaddr __P((caddr_t, int));
 void	nmihand __P((struct frame *));
 void	mvme68k_abort __P((const char *));
 void	physaccess __P((caddr_t, caddr_t, int, int));
