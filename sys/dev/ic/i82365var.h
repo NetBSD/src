@@ -11,9 +11,24 @@ struct pcic_handle {
     int sock;
     int flags;
     int memalloc;
+    struct {
+	bus_addr_t addr;
+	bus_size_t size;
+	long offset;
+	int kind;
+    } mem[PCIC_MEM_WINS];
     int ioalloc;
+    struct {
+	bus_addr_t addr;
+	bus_size_t size;
+	int width;
+    } io[PCIC_IO_WINS];
+    int ih_irq;
     struct device *pcmcia;
 };
+
+#define PCIC_FLAG_SOCKETP	0x0001
+#define PCIC_FLAG_CARDP		0x0002
 
 #define C0SA PCIC_CHIP0_BASE+PCIC_SOCKETA_INDEX
 #define C0SB PCIC_CHIP0_BASE+PCIC_SOCKETB_INDEX
@@ -46,6 +61,14 @@ struct pcic_softc {
 
     /* used by memory window mapping functions */
     bus_addr_t membase;
+
+    /* used by io window mapping functions.  These can actually overlap
+       with another pcic, since the underlying extent mapper will deal
+       with individual allocations.  This is here to deal with the fact
+       that different busses have different real widths (different pc
+       hardware seems to use 10 or 12 bits for the I/O bus). */
+    bus_addr_t iobase;
+    bus_addr_t iosize;
 
     int irq;
     void *ih;
