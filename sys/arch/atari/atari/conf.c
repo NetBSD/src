@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 1997/05/25 12:41:28 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 1997/06/02 20:40:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -126,59 +126,59 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+#include "bpfilter.h"
+#include "ch.h"
+#include "grfcc.h"
+#include "grfet.h"
+#define	NGRF	(NGRFCC + NGRFET)
+#include "ipfilter.h"
+#include "ite.h"
+#include "kbd.h"
+#include "lpt.h"
+#include "mouse.h"
+#include "pty.h"
+#include "ser.h"
+#include "ss.h"
+#include "tun.h"
+#include "uk.h"
+#include "view.h"
+#include "zs.h"
+
+cdev_decl(bpf);
+cdev_decl(ccd);
+cdev_decl(cd);
+cdev_decl(ch);
 cdev_decl(cn);
 cdev_decl(ctty);
+cdev_decl(fd);
+ dev_decl(filedesc,open);
+cdev_decl(grf);
+cdev_decl(ipl);
+cdev_decl(ite);
+cdev_decl(kbd);
+cdev_decl(log);
+cdev_decl(lpt);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
-cdev_decl(sw);
-#include "pty.h"
+cdev_decl(ms);
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
 #define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
-cdev_decl(log);
-#include "zs.h"
-cdev_decl(zs);
-cdev_decl(sd);
-cdev_decl(cd);
-cdev_decl(st);
-#include "ss.h"
-cdev_decl(ss);
-#include "uk.h"
-cdev_decl(uk);
-#include "ch.h"
-cdev_decl(ch);
 cdev_decl(rtc);
-#include "ser.h"
+cdev_decl(sd);
 cdev_decl(ser);
-
-#include "grfcc.h"
-#include "grfet.h"
-#define	NGRF	(NGRFCC + NGRFET)
-cdev_decl(grf);
-
-#include "ite.h"
-cdev_decl(ite);
-#include "view.h"
-cdev_decl(view);
-#include "kbd.h"
-cdev_decl(kbd);
-#include "mouse.h"
-cdev_decl(ms);
-cdev_decl(fd);
-cdev_decl(vnd);
-cdev_decl(ccd);
-dev_decl(filedesc,open);
-#include "bpfilter.h"
-cdev_decl(bpf);
-#include "tun.h"
+cdev_decl(ss);
+cdev_decl(st);
+cdev_decl(sw);
 cdev_decl(tun);
-#include "lpt.h"
-cdev_decl(lpt);
+cdev_decl(uk);
+cdev_decl(view);
 cdev_decl(wd);
+cdev_decl(zs);
 
 struct cdevsw	cdevsw[] =
 {
@@ -218,6 +218,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rtc_init(1,rtc),		/* 33: RealTimeClock	*/
 	cdev_disk_init(NIDEC,wd),	/* 34: IDE disk driver	*/
 	cdev_tty_init(NSER,ser),	/* 35: 68901 UART	*/
+	cdev_ipf_init(NIPFILTER,ipl),	/* 36: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
