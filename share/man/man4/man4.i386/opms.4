@@ -1,4 +1,4 @@
-.\" $NetBSD: opms.4,v 1.5 2001/04/02 20:42:19 wiz Exp $
+.\" $NetBSD: opms.4,v 1.6 2001/04/02 21:03:51 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -43,7 +43,6 @@
 .Cd opms* at pckbc?
 .Cd opms0 at pc? irq 12
 .Cd opms0 at vt? irq 12
-.Cd options PMS_RESET_AND_DISABLE
 .Sh DESCRIPTION
 This driver provides a interface to a PS/2 auxiliary port mouse which
 is backwards-compatible to previous
@@ -56,15 +55,6 @@ The
 driver internally converts the PS/2 mouse output into
 .Xr busmouse 4
 protocol.
-.Sh CONFIGURATION
-The option PMS_RESET_AND_DISABLE is available only if the
-.Dq opms
-device is attached to a
-.Xr pc 4
-or
-.Xr pcvt 4
-terminal driver. It causes the mouse device to be reset when it
-is probed and disabled when it is closed.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
