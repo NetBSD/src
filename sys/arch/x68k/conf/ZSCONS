@@ -1,4 +1,4 @@
-#	$NetBSD: ZSCONS,v 1.12 2000/04/16 14:17:59 minoura Exp $
+#	$NetBSD: ZSCONS,v 1.13 2000/06/14 22:02:44 veego Exp $
 
 #
 #	ZSCONS -- like GENERIC, but use zs console.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"ZSCONS-$Revision: 1.12 $"
+#ident 		"ZSCONS-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -156,19 +156,6 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

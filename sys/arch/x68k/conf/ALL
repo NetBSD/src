@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.35 2000/04/16 14:17:59 minoura Exp $
+#	$NetBSD: ALL,v 1.36 2000/06/14 22:02:42 veego Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"ALL-$Revision: 1.35 $"
+#ident 		"ALL-$Revision: 1.36 $"
 
 maxusers	32
 
@@ -156,19 +156,6 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-prefix ../crypto-intl/sys
-cinclude "conf/files.crypto-intl"
-prefix
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
