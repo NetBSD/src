@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.14 2002/02/13 08:18:30 ross Exp $
+.\"	$NetBSD: boot.8,v 1.15 2002/05/19 22:28:16 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,7 +66,7 @@ which must currently be an ``sd'' disk.
 .Pp
 The
 .Op Fl s
-flag to the boot loader will being the system up in single-user mode.
+flag to the boot loader will bring the system up in single-user mode.
 The
 .Op Fl a
 flag instructs the system to prompt for the location of the root filesystem
@@ -75,7 +75,7 @@ The
 .Op Fl d
 flag to the boot loader will bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
-.Xr gdb 8 .
+.Xr gdb 1 .
 The
 .Op Fl q
 flag to the boot loader would boot the system in
