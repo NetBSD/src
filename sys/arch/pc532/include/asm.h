@@ -32,18 +32,24 @@
  * 	File: asm.h
  *	Author: Johannes Helander, Tero Kivinen, Tatu Ylonen
  *	Modified by Phil Nelson for NetBSD.
+ *	Modified by Matthias Pfaller for PIC.
  *	Helsinki University of Technology 1992.
  */
 
 #ifndef _MACHINE_ASM_H_ 
 #define _MACHINE_ASM_H_
 
-#define S_ARG0	4(sp)
-#define S_ARG1	8(sp)
-#define S_ARG2	12(sp)
-#define S_ARG3	16(sp)
+#ifdef __STDC__
+#define CAT(a, b)	a ## b
+#define EX(x)		_ ## x
+#define LEX(x)		_ ## x ## :
+#else
+#define CAT(a, b)	a/**/b
+#define EX(x)		_/**/x
+#define LEX(x)		_/**/x/**/:
+#endif
 
-#define FRAME	enter [ ],0
+#define FRAME	enter [],0
 #define EMARF	exit []
 
 #if 1 /* DEBUG */
@@ -54,6 +60,11 @@
 #define DEMARF
 #endif
 
+#define S_ARG0	4(sp)
+#define S_ARG1	8(sp)
+#define S_ARG2	12(sp)
+#define S_ARG3	16(sp)
+
 #define B_ARG0	 8(fp)
 #define B_ARG1	12(fp)
 #define B_ARG2	16(fp)
@@ -61,27 +72,45 @@
 
 #define ALIGN 0
 
-#ifdef  __STDC__
+#ifdef PIC
+#define PIC_PROLOGUE \
+	sprd	sb,tos; \
+	addr	__GLOBAL_OFFSET_TABLE_(pc),r1; \
+	lprd	sb,r1
+#define PIC_EPILOGUE \
+	lprd	sb,tos
+#define PIC_GOT(x)	0(x(sb))
 
-#define EX(x) _ ## x
-#define LEX(x) _ ## x ## :
-#define MCOUNT
-#define	ENTRY(x)	.globl EX(x); .align ALIGN; LEX(x)
-#define	ASENTRY(x)	.globl x; .align ALIGN; x ## :
+#define PIC_S_ARG0	8(sp)
+#define PIC_S_ARG1	12(sp)
+#define PIC_S_ARG2	16(sp)
+#define PIC_S_ARG3	20(sp)
+#else
+#define PIC_PROLOGUE
+#define PIC_EPILOGUE
+#define	PIC_GOT(x)	x(pc)
 
-#else __STDC__
+#define PIC_S_ARG0	4(sp)
+#define PIC_S_ARG1	8(sp)
+#define PIC_S_ARG2	12(sp)
+#define PIC_S_ARG3	16(sp)
+#endif
 
-#define EX(x) _/**/x
-#define LEX(x) _/**/x/**/:
-#define MCOUNT
-#define	ENTRY(x)	.globl EX(x); .align ALIGN; LEX(x)
-#define	ASENTRY(x)	.globl x; .align ALIGN; x:
+#ifdef PROF
+#define	MC1	.data; 1:; .long 0; .text
+#define MC2	addr 1b(pc),tos; bsr mcount
+#else
+#define MC1
+#define MC2
+#endif
 
-#endif __STDC__
+#define	DECL(x)	MC1; .globl x; .type x,@function; .align ALIGN; CAT(x,:); MC2
+
+#define	ENTRY(x)	DECL(EX(x))
+#define	Entry(x)	DECL(EX(x))
+#define ASENTRY(x)	DECL(x)
+#define	ASMSTR		.asciz
 
 #define	SVC svc
-
-#define	Entry(x)	.globl EX(x); LEX(x)
-#define	DATA(x)		.globl EX(x); .align ALIGN; LEX(x)
 
 #endif

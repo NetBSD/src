@@ -64,27 +64,38 @@ unsigned long	ntohl __P((unsigned long));
 unsigned short	ntohs __P((unsigned short));
 __END_DECLS
 
+
+#ifdef __GNUC__
+
+#define __byte_swap_long(x) \
+({ register unsigned long __x = (x); \
+   asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" \
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
+
+#define __byte_swap_word(x) \
+({ register unsigned short __x = (x); \
+   asm ("rotw 8,%1" \
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
+
+#define	ntohl(x)	__byte_swap_long(x)
+#define	ntohs(x)	__byte_swap_word(x)
+#define	htonl(x)	__byte_swap_long(x)
+#define	htons(x)	__byte_swap_word(x)
+
+#endif	/* __GNUC__ */
+
+
 /*
  * Macros for network/external number representation conversion.
  */
-#if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
-#define	ntohl(x)	(x)
-#define	ntohs(x)	(x)
-#define	htonl(x)	(x)
-#define	htons(x)	(x)
-
-#define	NTOHL(x)	(x)
-#define	NTOHS(x)	(x)
-#define	HTONL(x)	(x)
-#define	HTONS(x)	(x)
-
-#else
-
 #define	NTOHL(x)	(x) = ntohl((u_long)x)
 #define	NTOHS(x)	(x) = ntohs((u_short)x)
 #define	HTONL(x)	(x) = htonl((u_long)x)
 #define	HTONS(x)	(x) = htons((u_short)x)
-#endif
 
 #endif /* _POSIX_SOURCE */
 
