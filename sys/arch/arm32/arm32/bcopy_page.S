@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy_page.S,v 1.2 1996/06/03 21:21:31 mark Exp $ */
+/* $NetBSD: bcopy_page.S,v 1.3 1996/10/15 01:52:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -38,79 +38,103 @@
  * Created      : 08/04/95
  */
 
+ip	.req	r12
+sp	.req	r13
+lr	.req	r14
+pc	.req	r15
+
 #include <machine/param.h>
 
-/* TODO:
+/*
+ * bcopy_page(src, dest)
  *
- * Use r2 as the counter so that r3-r10 can be used instead of r4-r11
- * This means r11 will not need to be pushed on the stack.
- */
-
-/* bcopy_page(src, dest)
- * r0 - src
- * r1 - dest
- * number of bytes (NBPG) is a multiple of 512
+ * Optimised copy page routine.
+ *
+ * On entry:
+ *   r0 - src address
+ *   r1 - dest address
+ *
+ * Requires:
+ *   number of bytes per page (NBPG) is a multiple of 512
  */
 
 	.global	_bcopy_page
 _bcopy_page:
-	mov	r3, #(NBPG >> 9)
+	stmfd	sp!, {r4-r10, lr}
 
-	STMFD	r13!, {r4-r11, r14}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
+
+	mov	r2, #(NBPG >> 9)
 
 loopcopy:
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
 
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
 
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
 
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
-	ldmia	r0!, {r4-r11}
-	stmia	r1!, {r4-r11}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r10}
+	stmia	r1!, {r3-r10}
 
-	subs	r3, r3, #1
-	bgt	loopcopy
+	subs	r2, r2, #1
+	bne	loopcopy
 
-	ldmfd	r13!, {r4-r11, r15}
+	ldmfd	sp!, {r4-r10, pc}
 
-/* bzero_page(dest)
- * r0 - dest
- * number of bytes is a multiple of 512
+/*
+ * bzero_page(dest)
+ *
+ * Optimised zero page routine.
+ *
+ * On entry:
+ *   r0 - dest address
+ *
+ * Requires:
+ *   number of bytes per page (NBPG) is a multiple of 512
  */
 
 	.global _bzero_page
 _bzero_page:
-	mov	r3, #(NBPG >> 9)
+	stmfd	sp!, {r4-r10, lr}
 
-	stmfd	r13!, {r4-r11, r14}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 
+	mov	r2, #(NBPG >> 9)
+
+	mov	r3, #0
 	mov	r4, #0
 	mov	r5, #0
 	mov	r6, #0
@@ -118,30 +142,29 @@ _bzero_page:
 	mov	r8, #0
 	mov	r9, #0
 	mov	r10, #0
-	mov	r11, #0
 
 loopzero:
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
 
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
 
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
 
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
-	stmia	r0!, {r4-r11}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r10}
 
-	subs	r3, r3, #1
-	bgt	loopzero
+	subs	r2, r2, #1
+	bne	loopzero
 
-	ldmfd	r13!, {r4-r11, r15}
+	ldmfd	sp!, {r4-r10, pc}
