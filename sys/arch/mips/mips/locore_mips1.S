@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.24 2000/03/27 05:23:43 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.25 2000/04/10 04:59:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1758,71 +1758,66 @@ LEAF(mips1_proc_trampoline)
 END(mips1_proc_trampoline)
 
 /*
- * Resume process indicated by the pte's for its u struct
- * NOTE: This is hard coded to UPAGES == 2.
- * Also, there should be no TLB faults at this point.
+ * void mips1_cpu_switch_resume(struct proc *newproc)
  *
- * Entered from CPU-common cpu_switch()
- * a0 = new proc's p_addr
- * a1 = 1st u.pte
- * a2 = 2nd u.pte
- * a3 = Address Space Identifier (TLB Process ID) for this process
- *
- * NB: cannot be profiled due to weird argument-assing convention.
- *     mcount would trash v0, t0, t1.
+ * Wiredown the USPACE of newproc with TLB entry#0.  Check
+ * whether target USPACE is already refered by some TLB entry(s)
+ * before that, and make sure TBIS(them) in the case.
  */
 LEAF_NOPROFILE(mips1_cpu_switch_resume)
-	li	s0, MIPS_KSEG2_START
-	blt	a0, s0, 9f			# don't bother proc0
-	sll	a3, a3, MIPS1_TLB_PID_SHIFT	# a3 = aligned TLBPID
-	ori	a1, MIPS1_PG_G			# belongs to kernel space
-	ori	a2, MIPS1_PG_G			# belongs to kernel space
+	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
+	lw	a2, P_MD_UPTE_1(a0)		# a2 = upte[1]
+	lw	s0, P_ADDR(a0)			# va = p->p_addr
+	li	s2, MIPS_KSEG2_START
+	blt	s0, s2, resume
+	nop
 
-	mtc0	a0, MIPS_COP_0_TLB_HI		# 1st VPN expecting PG_G
+	mtc0	s0, MIPS_COP_0_TLB_HI		# VPN = va
 	nop
-	tlbp					# probe for entry
-	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
+	tlbp					# probe 1st VPN
+	mfc0	s1, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	s0, 1f
-	li	s0, MIPS_KSEG0_START		# found, then
-	mtc0	s0, MIPS_COP_0_TLB_HI
+	bltz	s1, entry0set
+	li	s1, MIPS_KSEG0_START		# found, then
+	mtc0	s1, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
-	tlbwi					# purge it out of TLB
+	tlbwi					# TBIS(va)
 	nop
-	mtc0	a0, MIPS_COP_0_TLB_HI		# set 1st VPN again
-1:
+	mtc0	s0, MIPS_COP_0_TLB_HI		# set 1st VPN again
+entry0set:
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# TLB index #0
+	ori	a1, a1, MIPS1_PG_G
 	mtc0	a1, MIPS_COP_0_TLB_LOW		# 1st PFN w/ PG_G
 	nop
 	tlbwi					# set TLB entry #0
 
-	addu	a1, a0, NBPG
-	mtc0	a1, MIPS_COP_0_TLB_HI		# 2nd VPN expecting PG_G
+	addu	s0, s0, NBPG
+	mtc0	s0, MIPS_COP_0_TLB_HI		# VPN = va+NBPG
 	nop
-	tlbp					# probe for entry
-	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
+	tlbp					# probe 2nd VPN
+	mfc0	s1, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	s0, 1f
-	li	s0, MIPS_KSEG0_START		# found, then
-	mtc0	s0, MIPS_COP_0_TLB_HI
+	bltz	s1, entry1set
+	li	s1, MIPS_KSEG0_START		# found, then
+	mtc0	s1, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
-	tlbwi					# purge it from TLB
+	tlbwi					# TBIS(va+NBPG)
 	nop
-	mtc0	a1, MIPS_COP_0_TLB_HI		# restore 2nd VPN
-1:
-	li	s0, 1 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	s0, MIPS_COP_0_TLB_INDEX	# TLB index #1
-	mtc0	a2, MIPS_COP_0_TLB_LOW		# 2nd PFN
+	mtc0	s0, MIPS_COP_0_TLB_HI		# set 2nd VPN again
+entry1set:
+	li	s1, 1 << MIPS1_TLB_INDEX_SHIFT
+	mtc0	s1, MIPS_COP_0_TLB_INDEX	# TLB index #1
+	ori	a2, a2, MIPS1_PG_G
+	mtc0	a2, MIPS_COP_0_TLB_LOW		# 2nd PFN w/ PG_G
 	nop
 	tlbwi					# set TLB entry #1
-9:
-	mtc0	a3, MIPS_COP_0_TLB_HI		# set the new TLBPID
 
+resume:
 	j	ra
 	nop
-END(mips1_cpu_switch_resume)
+	END(mips1_cpu_switch_resume)
 
 /*
  * void mips1_TBIAP(int sizeofTLB)
