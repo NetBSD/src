@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310var.h,v 1.5 2002/02/07 21:34:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.6 2002/10/03 20:11:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -79,7 +79,12 @@ struct intrq {
  * XINT3 bits 0-4 are "IRQ 0-4".  XINT0 bits 0-2 are "IRQ 5-7".
  */
 #define	XINT3_IRQ(x)	(x)
+#define	IRQ_IS_XINT3(x)	((x) >= 0 && (x) <= 4)
+#deifne	IRQ_XINT3(x)	(x)
+
 #define	XINT0_IRQ(x)	((x) + 5)
+#define	IRQ_IS_XINT0(x)	((x) >= 5 && (x) <= 7)
+#define	IRQ_XINT0(x)	((x) - 5)
 
 void	iq80310_calibrate_delay(void);
 
