@@ -1645,6 +1645,7 @@ if test "${target}" = "${host}"; then
 EOF
 
 	;;
+  alpha*-*-netbsd*)	COREFILE=netbsd-core.o ;;
   alpha*-*-*)		COREFILE=osf-core.o ;;
   arm-*-riscix)		COREFILE=trad-core.o ;;
   hppa*-*-hpux*)	COREFILE=hpux-core.o ;;
@@ -1873,6 +1874,7 @@ EOF
   hpux-core.o)		COREFLAG=-DHPUX_CORE ;;
   irix-core.o)		COREFLAG=-DIRIX_CORE ;;
   lynx-core.o)		COREFLAG=-DLYNX_CORE ;;
+  netbsd-core.o)	COREFLAG=-DNETBSD_CORE ;;
   osf-core.o)		COREFLAG=-DOSF_CORE ;;
   ptrace-core.o)	COREFLAG=-DPTRACE_CORE ;;
   rs6000-core.o)	COREFLAG="$COREFLAG -DAIX_CORE" ;;
