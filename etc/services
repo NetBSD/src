@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.37 2000/06/18 04:09:54 mrg Exp $
+#	$NetBSD: services,v 1.37.2.1 2000/08/06 17:01:22 thorpej Exp $
 #
 # Network services, Internet style
 #
@@ -121,6 +121,8 @@ nip		376/tcp				# Amiga Envoy Net Inquiry Prot.
 nip		376/udp				# Amiga Envoy Net Inquiry Prot.
 ldap		389/tcp			# Lightweight Directory Access Protocol
 ldap		389/udp			# Lightweight Directory Access Protocol
+isakmp		500/tcp			# IPsec Key Management (ISAKMP/Oakley)
+isakmp		500/udp			# IPsec Key Management (ISAKMP/Oakley)
 
 #
 # UNIX specific services
