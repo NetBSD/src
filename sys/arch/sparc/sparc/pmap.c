@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 1998/01/08 23:48:16 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.107 1998/01/13 00:55:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -343,7 +343,6 @@ u_int 	kernel_iopte_table_pa;
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
-int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ vm_offset_t	avail_start;	/* first free physical page */
 /*static*/ vm_offset_t	avail_end;	/* last free physical page */
 /*static*/ vm_offset_t	avail_next;	/* pmap_next_page() state:
@@ -352,6 +351,8 @@ int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ vm_offset_t	unavail_end;	/* last stolen free physical page */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
+
+static void pmap_page_upload __P((void));
 
 int mmu_has_hole;
 
@@ -863,63 +864,43 @@ pmap_virtual_space(v_start, v_end)
         *v_end   = virtual_end;
 }
 
-#if !defined(MACHINE_NEW_NONCONTIG)
 /*
- * Return the number of page indices in the range of
- * possible return values for pmap_page_index() for
- * all addresses provided by pmap_next_page().  This
- * return value is used to allocate per-page data.
- *
+ * Helper routine that hands off available physical pages to the VM system.
  */
-u_int
-pmap_free_pages()
+static void
+pmap_page_upload()
 {
-	int long bytes;
-	int nmem;
-	register struct memarr *mp;
+	int		n = 0;
+	vm_offset_t	start, end;
 
-	bytes = -avail_start;
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
-		bytes += mp->len;
-
-        return atop(bytes);
-}
-
-/*
- * If there are still physical pages available, put the address of
- * the next available one at paddr and return TRUE.  Otherwise,
- * return FALSE to indicate that there are no more free pages.
- * Note that avail_next is set to avail_start in pmap_bootstrap().
- *
- * Imporant:  The page indices of the pages returned here must be
- * in ascending order.
- */
-int
-pmap_next_page(paddr)
-        vm_offset_t *paddr;
-{
-
-        /* Is it time to skip over a hole? */
-	if (avail_next == pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len) {
-		if (++cpmemarr == npmemarr)
-			return FALSE;
-		avail_next = pmemarr[cpmemarr].addr;
-	} else if (avail_next == unavail_start)
+	if (unavail_start != 0 && avail_next != unavail_start) {
+		/* First, the gap we created in pmap_bootstrap() */
+		vm_page_physload(
+			atop(avail_next),
+			atop(unavail_start),
+			atop(avail_next),
+			atop(unavail_start));
 		avail_next = unavail_end;
-
-#ifdef DIAGNOSTIC
-        /* Any available memory remaining? */
-        if (avail_next >= avail_end) {
-		panic("pmap_next_page: too much memory?!\n");
 	}
-#endif
 
-        /* Have memory, will travel... */
-        *paddr = avail_next;
-        avail_next += NBPG;
-        return TRUE;
+	for (n = 0; n < npmemarr; n++) {
+		/*
+		 * Assume `avail_next' is always in the first segment; we
+		 * already made that assumption in pmap_bootstrap()..
+		 */
+		start = (n == 0) ? avail_next : pmemarr[n].addr;
+		end = pmemarr[n].addr + pmemarr[n].len;
+		if (start == end)
+			continue;
+
+		vm_page_physload(
+			atop(start),
+			atop(end),
+			atop(start),
+			atop(end));
+	}
+
 }
-#endif /* ! MACHINE_NEW_NONCONTIG */
 
 /*
  * pmap_page_index()
@@ -3025,35 +3006,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 			setpte4(p, getpte4(p) & mask);
 	}
 #if defined(MACHINE_NEW_NONCONTIG)
-	while (1) {
-		if (avail_next >=
-		    pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len) {
-			if (++cpmemarr == npmemarr)
-				break;   /* DONE */
-
-			if (avail_next < pmemarr[cpmemarr].addr)
-				avail_next = pmemarr[cpmemarr].addr;
-			continue;
-		} 
-
-		if (avail_next == unavail_start) {
-			avail_next = unavail_end;
-			continue;
-		}
-
-#if defined(DIAGNOSTIC)
-		if (avail_next >= avail_end)
-			panic("pmap: too much memory!?");
-#endif
-
-		vm_page_physload(
-		    atop(avail_next),
-		    atop(pmemarr[cpmemarr].addr) + atop(pmemarr[cpmemarr].len),
-		    atop(avail_next),
-		    atop(pmemarr[cpmemarr].addr) + atop(pmemarr[cpmemarr].len));
-
-		avail_next = pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len;
-	}
+	pmap_page_upload();
 #endif
 }
 #endif
@@ -3419,6 +3372,9 @@ pmap_bootstrap4m(void)
 		kvm_uncache(pagetables_start,
 			    (pagetables_end - pagetables_start) >> PGSHIFT);
 
+#if defined(MACHINE_NEW_NONCONTIG)
+	pmap_page_upload();
+#endif
 }
 
 static u_long prom_ctxreg;
