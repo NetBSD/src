@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/08/31 10:36:08 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2001/10/05 23:42:11 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -60,7 +60,8 @@ CPPFLAGS+=-DHAVE_SIGNING_C=1 -DHAVE_OPENSSL_PEM_H=1 -DHAVE_OPENSSL_X509_H=1
 #LDSTATIC= -static
 #.endif
 
+CLEANFILES+=	y.tab.h cfparse.c cftoken.c
+
 .include <bsd.prog.mk>
 
 .PATH:	${RACOONSRCDIR} ${TCPDUMPSRCDIR} ${RACOONSRCDIR}/missing/crypto/rijndael ${RACOONSRCDIR}/missing/crypto/sha2
-CLEANFILES+=	y.tab.h cfparse.c cftoken.c
