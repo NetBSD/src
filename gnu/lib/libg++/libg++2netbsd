@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.2 1996/03/09 00:20:44 phil Exp $
+#	$NetBSD: libg++2netbsd,v 1.3 1996/03/11 02:38:44 thorpej Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -277,22 +277,22 @@ sub dumprtti {
     print "  Dumping rtti for @name\n";
 
     print ODATA "@name.o: @name.cc\n";
-    print ODATA "\t\@echo \"\$(COMPILE.cc) -frtti \$(.ALLSRC)\"\n";
-    print ODATA "\t\@\$(COMPILE.cc) -frtti \$(.ALLSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) -frtti \$(.IMPSRC)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) -frtti \$(.IMPSRC) -o \$(.TARGET).o\n";
     print ODATA "\t\@\$(LD) -x -r \$(.TARGET).o -o \$(.TARGET)\n";
     print ODATA "\t\@rm -f \$(.TARGET).o\n";
     print ODATA "\n";
 
     print ODATA "@name.po: @name.cc\n";
-    print ODATA "\t\@echo \"\$(COMPILE.cc) -p -frtti \$(.ALLSRC) -o \$(.TARGET)\"\n";
-    print ODATA "\t\@\$(COMPILE.cc) -p -frtti \$(.ALLSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) -p -frtti \$(.IMPSRC) -o \$(.TARGET)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) -p -frtti \$(.IMPSRC) -o \$(.TARGET).o\n";
     print ODATA "\t\@\$(LD) -X -r \$(.TARGET).o -o \$(.TARGET)\n";
     print ODATA "\t\@rm -f \$(.TARGET).o\n";
     print ODATA "\n";
 
     print ODATA "@name.so: @name.cc\n";
-    print ODATA "\t\@echo \"\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.ALLSRC) -o \$(.TARGET)\"\n";
-    print ODATA "\t\@\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.ALLSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.IMPSRC) -o \$(.TARGET)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.IMPSRC) -o \$(.TARGET).o\n";
     print ODATA "\t\@\$(LD) -x -r \$(.TARGET).o -o \$(.TARGET)\n";
     print ODATA "\t\@rm -f \$(.TARGET).o\n";
     print ODATA "\n";
