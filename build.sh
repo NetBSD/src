@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.111 2003/07/29 10:07:15 lukem Exp $
+#	$NetBSD: build.sh,v 1.112 2003/08/10 16:20:37 sommerfeld Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -382,7 +382,8 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     -r          Remove contents of TOOLDIR and DESTDIR before building
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
                 the environment, ${toolprefix}make will be (re)built unconditionally
-    -U          Set MKUNPRIVED=yes (build without requiring root privileges)
+    -U          Set MKUNPRIVED=yes (build without requiring root privileges;
+    		install from an UNPRIVED build with proper file permissions)
     -u          Set MKUPDATE=yes (do not run "make clean" first).
 		Without this, everything is rebuilt, including the tools.
     -V v=[val]  Set variable \`v' to \`val'
@@ -801,7 +802,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.111 2003/07/29 10:07:15 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.112 2003/08/10 16:20:37 sommerfeld Exp $
 #
 
 EOF
