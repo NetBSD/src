@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: gvpbusvar.h,v 1.1 1994/05/08 05:53:16 chopps Exp $
+ *	$Id: gvpbusvar.h,v 1.2 1994/05/25 21:55:08 chopps Exp $
  */
 #ifndef _GVPBUSVAR_H_
 #define _GVPBUSVAR_H_
@@ -51,6 +51,7 @@ enum gvpbusflags {
 	GVP_SCSI = 0x4,
 	GVP_24BITDMA = 0x8,
 	GVP_25BITDMA = 0x10,
+	GVP_NOBANK = 0x20,
 };
 
 struct gvpbus_args {

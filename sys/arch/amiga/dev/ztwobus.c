@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobus.c,v 1.2 1994/05/11 19:06:50 chopps Exp $
+ *	$Id: ztwobus.c,v 1.3 1994/05/25 21:55:11 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,7 +48,9 @@ struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
 	{ "atzee",	513,	1 },
 	{ "atzsc",	514,	3 },
-	{ "atzsi",	513,	112 },
+	{ "le",		514	112 },
+	{ "ql",		514,	69 },
+	{ "ql",		514,	70 },
 	/* Ameristart */
 	{ "le",		1053,	1 },
 	/* Univeristy lowell */
@@ -56,7 +58,7 @@ struct aconfdata aconftab[] = {
 	/* Macorsystems */
 	{ "grfrt",	18260,	6 },
 	/* Greater valley products */
-	{ "gosc",	2017,	9 },
+	{ "gvpbus",	2017,	2 },
 	{ "gvpbus",	2017,	11 },
 	{ "giv",	2017,	32 },
 	/* progressive perhiperals */
