@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syscall.2	6.3 (Berkeley) 3/10/91
-.\"	$Id: sysarch.2,v 1.2 1993/11/25 00:39:54 jtc Exp $
+.\"	$Id: sysarch.2,v 1.3 1993/12/01 18:51:28 jtc Exp $
 .\"
 .Dd October 11, 1993
 .Dt SYSARCH 2
@@ -59,7 +59,7 @@ functions can be found in the header file
 .Ao Pa machine/sysarch.h Ac .
 .Pp
 The
-.Nm
+.Fn sysarch
 system call should never be called directly by
 user programs.  Instead, they should access
 its functions using the architecture-dependent
