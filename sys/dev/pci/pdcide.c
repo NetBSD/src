@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.6 2003/10/29 02:33:51 mycroft Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.7 2003/11/15 16:40:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -325,6 +325,9 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    PDC_IS_265(sc) ? pdc20265_pci_intr : pdc202xx_pci_intr);
+		/* clear interrupt, in case there is one pending */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, IDEDMA_CTL_INTR);
 	}
 	return;
 }
