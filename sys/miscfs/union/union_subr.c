@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.6 1994/12/14 16:31:18 mycroft Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.7 1994/12/18 07:20:34 glass Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -41,6 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
