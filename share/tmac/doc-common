@@ -235,8 +235,9 @@
 .	if "\\$2"0.8"  .as oS \00.8
 .	if "\\$2"0.8a" .as oS \00.8a
 .	if "\\$2"0.9"  .as oS \00.9
-.	if "\\$2"0.9a" .as oS \00.9a Experimental
-.	if "\\$2"1.0"  .as oS \01.0 Experimental
+.	if "\\$2"0.9a" .as oS \00.9a
+.	if "\\$2"1.0"  .as oS \01.0
+.	if "\\$2"1.1"  .as oS \01.1 Experimental
 .\}
 .if "\\*(oS"Null" .ds oS \0\\$1
 .if "\\*(aa"Non-Null" .as oS \0\\$2
