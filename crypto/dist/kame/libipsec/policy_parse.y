@@ -1,4 +1,4 @@
-/*	$KAME: policy_parse.y,v 1.14 2003/06/27 03:39:20 itojun Exp $	*/
+/*	$KAME: policy_parse.y,v 1.15 2003/10/02 19:37:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -320,17 +320,19 @@ set_x_request(src, dst)
 {
 	struct sadb_x_ipsecrequest *p;
 	int reqlen;
+	caddr_t n;
 
 	reqlen = sizeof(*p)
 		+ (src ? src->sa_len : 0)
 		+ (dst ? dst->sa_len : 0);
-	tlen += reqlen;		/* increment to total length */
 
-	pbuf = realloc(pbuf, tlen);
+	n = realloc(pbuf, tlen + reqlen);
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	tlen += reqlen;
+	pbuf = n;
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
 	p->sadb_x_ipsecrequest_len = reqlen;
 	p->sadb_x_ipsecrequest_proto = p_protocol;
