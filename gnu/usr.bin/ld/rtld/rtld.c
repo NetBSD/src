@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.21 1994/06/24 13:31:34 pk Exp $
+ *	$Id: rtld.c,v 1.21.2.1 1994/08/08 08:04:24 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -438,7 +438,7 @@ map_object(sodp, smp)
 		usehints = 1;
 again:
 		path = rtfindlib(name, sodp->sod_major,
-						sodp->sod_minor, &usehints);
+				 sodp->sod_minor, &usehints);
 		if (path == NULL) {
 			errno = ENOENT;
 			return NULL;
@@ -544,9 +544,8 @@ caddr_t			addr;
 	else
 		sym = "";
 
-	if (getenv("LD_WARN_NON_PURE_CODE") != NULL)
-		fprintf(stderr,
-			"ld.so: warning: non pure code in %s at %x (%s)\n",
+	if (getenv("LD_SUPPRESS_WARNINGS") == NULL)
+		warnx("ld.so: warning: non pure code in %s at %x (%s)\n",
 				smp->som_path, r->r_address, sym);
 
 	if (smp->som_write == 0 &&
@@ -1072,41 +1071,50 @@ rtfindlib(name, major, minor, usehints)
 	int	major, minor;
 	int	*usehints;
 {
-	char	*hint;
 	char	*cp, *ld_path = getenv("LD_LIBRARY_PATH");
+	int	realminor;
 
 	if (hheader == NULL)
 		maphints();
 
-	if (!HINTS_VALID || !(*usehints)) {
-		*usehints = 0;
-		return (char *)findshlib(name, &major, &minor, 0);
-	}
+	if (!HINTS_VALID || !(*usehints))
+		goto lose;
 
 	if (ld_path != NULL) {
 		/* Prefer paths from LD_LIBRARY_PATH */
 		while ((cp = strsep(&ld_path, ":")) != NULL) {
 
-			hint = findhint(name, major, minor, cp);
+			cp = findhint(name, major, minor, cp);
 			if (ld_path)
 				*(ld_path-1) = ':';
-			if (hint)
-				return hint;
+			if (cp)
+				return cp;
 		}
 		/* Not found in hints, try directory search */
-		hint = (char *)findshlib(name, &major, &minor, 0);
-		if (hint)
-			return hint;
+		realminor = -1;
+		cp = (char *)findshlib(name, &major, &realminor, 0);
+		if (cp && realminor >= minor)
+			return cp;
 	}
 
 	/* No LD_LIBRARY_PATH or lib not found in there; check default */
-	hint = findhint(name, major, minor, NULL);
-	if (hint)
-		return hint;
+	cp = findhint(name, major, minor, NULL);
+	if (cp)
+		return cp;
 
+lose:
 	/* No hints available for name */
 	*usehints = 0;
-	return (char *)findshlib(name, &major, &minor, 0);
+	realminor = -1;
+	cp = (char *)findshlib(name, &major, &realminor, 0);
+	if (cp) {
+		if (realminor < minor && getenv("LD_SUPPRESS_WARNINGS") == NULL)
+			warnx("warning: lib%s.so.%d.%d: "
+			      "minor version >= %d expected, using it anyway",
+			      name, major, realminor, minor);
+		return cp;
+	}
+	return NULL;
 }
 
 static struct somap_private dlmap_private = {
