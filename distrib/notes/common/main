@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.46 2000/02/23 07:51:53 groo Exp $
+.\" $NetBSD: main,v 1.47 2000/02/23 14:00:51 nonaka Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -778,6 +778,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.ORG Ta Sy x68k
 .It Ta Phil Nelson Ta Mt phil@NetBSD.ORG Ta Sy pc532
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.ORG Ta Sy luna68k
+.It Ta NONAKA Kimihiro Ta Mt nonaka@NetBSD.ORG Ta Sy prep
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG Ta Sy mac68k
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.ORG Ta Sy bebox
 .It Ta Noriyuki Soda Ta Mt soda@NetBSD.ORG Ta Sy arc
@@ -891,6 +892,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.ORG
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.ORG
 .It Ta Bob Nestor Ta Mt rnestor@NetBSD.ORG
+.It Ta NONAKA Kimihiro Ta Mt nonaka@NetBSD.ORG
 .It Ta Masaru Oki Ta Mt oki@NetBSD.ORG
 .It Ta Greg Oster Ta Mt oster@NetBSD.ORG
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.ORG
