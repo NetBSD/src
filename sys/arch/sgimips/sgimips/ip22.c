@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.4 2001/06/08 00:02:41 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.5 2001/06/14 01:15:35 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -41,11 +41,8 @@
 #include <machine/machtype.h>
 #include <mips/locore.h>
 
-extern struct platform platform;
-
-extern int mach_type;		/* IPxx type */
-extern int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
-extern int mach_boardrev;	/* machine board revision, in case it matters */
+static struct evcnt mips_int5_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
 static u_int32_t iocwrite;	/* IOC write register: read-only */
 static u_int32_t iocreset;	/* IOC reset register: read-only */
@@ -71,10 +68,10 @@ ip22_init(void)
 
 	mach_type = MACH_SGI_IP22;
 
-	/* XXXrkb: enable watchdog timer, clear it */
+	/* enable watchdog timer, clear it */
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
-	
+
 	sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
 
 	if (sysid & 1)
@@ -114,14 +111,9 @@ ip22_init(void)
 	iocwrite = 0x3a;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9878) = iocwrite;
 
-	/* Twiddle interrupt masks a bit */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x04) = 0xbf;
-       
-	/* For Guiness, make sure to turn off video interrupts */
-	if (mach_subtype == MACH_SGI_IP22_GUINESS)
-	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x0c) = 0x3f;
-	else
-	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x0c) = 0xff;
+	/* Clean out interrupt masks */
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x04) = 0x00;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x0c) = 0x00;
 
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x14) = 0x00;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x18) = 0x00;
@@ -168,6 +160,8 @@ ip22_init(void)
 						(cps % (1000000 / hz) / 100));
 
 	platform.ticks_per_hz = cps;
+
+	evcnt_attach_static(&mips_int5_evcnt);
 }
 
 void 	
@@ -184,18 +178,11 @@ ip22_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-	static int nested = 0;
 	unsigned long cycles;
 	struct clockframe cf;
 
-	/* XXXrkb Tickle Indy/I2 MC watchdog timer */ 
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
+	/* Tickle Indy/I2 MC watchdog timer */ 
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
-
-	nested++;
-
-	if (nested > 1)
-		panic("ip22_intr re-entered with ISR running!\n");
 
 	if (ipending & MIPS_INT_MASK_5) {
 		cycles = mips3_cp0_count_read();
@@ -205,6 +192,7 @@ ip22_intr(status, cause, pc, ipending)
 		cf.sr = status;
 
 		hardclock(&cf);
+		mips_int5_evcnt.ev_count++;
 
 		cause &= ~MIPS_INT_MASK_5;
 	}
@@ -230,7 +218,6 @@ ip22_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
-	nested--;
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
