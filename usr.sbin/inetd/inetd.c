@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.37 1997/10/08 07:15:59 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.38 1997/10/17 13:53:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.37 1997/10/08 07:15:59 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.38 1997/10/17 13:53:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,7 @@ main(argc, argv, envp)
 #else
 					"d"
 #endif
-					   )) != EOF)
+					   )) != -1)
 		switch(ch) {
 		case 'd':
 			debug = 1;
@@ -766,10 +766,14 @@ config(signo)
 		case AF_UNIX:
 			if (sep->se_fd != -1)
 				break;
-			(void)unlink(sep->se_service);
 			n = strlen(sep->se_service);
-			if (n > sizeof(sep->se_ctrladdr_un.sun_path) - 1)
-				n = sizeof(sep->se_ctrladdr_un.sun_path) - 1;
+			if (n > sizeof(sep->se_ctrladdr_un.sun_path)) {
+				syslog(LOG_ERR, "%s: address too long",
+				    sep->se_service);
+				sep->se_checked = 0;
+				continue;
+			}
+			(void)unlink(sep->se_service);
 			strncpy(sep->se_ctrladdr_un.sun_path,
 			    sep->se_service, n);
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
