@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.86 2003/08/07 16:30:47 agc Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.87 2003/08/24 17:52:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.86 2003/08/07 16:30:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.87 2003/08/24 17:52:46 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -156,6 +156,8 @@ void syscall_intern(struct proc *);
 void syscall __P((void));
 #endif
 
+struct uvm_object *emul_ultrix_object;
+
 const struct emul emul_ultrix = {
 	"ultrix",
 	"/emul/ultrix",
@@ -171,6 +173,7 @@ const struct emul emul_ultrix = {
 	trapsignal,
 	ultrix_sigcode,
 	ultrix_esigcode,
+	&emul_ultrix_object,
 	setregs,
 	NULL,
 	NULL,

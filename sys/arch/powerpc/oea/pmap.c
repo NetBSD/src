@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2003/08/12 05:06:57 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2003/08/24 17:52:35 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2003/08/12 05:06:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2003/08/24 17:52:35 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_pmap.h"
@@ -245,6 +245,9 @@ STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 STATIC void pmap_pvo_remove(struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile struct pte *pmap_pvo_to_pte(const struct pvo_entry *, int);
+#define pmap_pvo_reclaim(pm)	NULL
+STATIC void pvo_set_exec(struct pvo_entry *);
+STATIC void pvo_clear_exec(struct pvo_entry *);
 
 STATIC void tlbia(void);
 
@@ -760,8 +763,9 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
  * kernel's pte entries.  In either case, interrupts are already
  * disabled.
  */
+
 int
-pmap_pte_spill(struct pmap *pm, vaddr_t addr)
+pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
 {
 	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
 	struct pvo_entry *pvo;
@@ -846,6 +850,9 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 				return 1;
 			}
 			source_pvo = pvo;
+			if (exec && !PVO_ISEXECUTABLE(source_pvo)) {
+				return 0;
+			}
 			if (victim_pvo != NULL)
 				break;
 		}
@@ -970,14 +977,12 @@ pmap_real_memory(paddr_t *start, psize_t *size)
 void
 pmap_init(void)
 {
-	int s;
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct pvo_tqhead *pvoh;
 	int bank;
 	long sz;
 	char *attr;
 
-	s = splvm();
 	pvoh = pmap_physseg.pvoh;
 	attr = pmap_physseg.attrs;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
@@ -989,10 +994,8 @@ pmap_init(void)
 			*attr = 0;
 		}
 	}
-	splx(s);
 #endif
 
-	s = splvm();
 	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl",
 	    &pmap_pool_mallocator);
@@ -1000,7 +1003,6 @@ pmap_init(void)
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 
 	pmap_initialized = 1;
-	splx(s);
 
 #ifdef PMAPCOUNTERS
 	evcnt_attach_static(&pmap_evcnt_mappings);
@@ -1138,7 +1140,8 @@ pmap_pinit(pmap_t pm)
 		hash &= PTE_VSID >> (PTE_VSID_SHFT + SR_KEY_LEN);
 		pmap_vsid_bitmap[n] |= mask;
 		for (i = 0; i < 16; i++)
-			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY;
+			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY |
+			    SR_NOEXEC;
 		return;
 	}
 	panic("pmap_pinit: out of segments");
@@ -1493,10 +1496,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	pvo = pool_get(pl, poolflags);
 	msr = pmap_interrupts_off();
 	if (pvo == NULL) {
-#if 0
 		pvo = pmap_pvo_reclaim(pm);
 		if (pvo == NULL) {
-#endif
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_pvo_enter: failed");
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -1504,16 +1505,14 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			pmap_interrupts_restore(msr);
 			return ENOMEM;
-#if 0
 		}
-#endif
 	}
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
 	pvo->pvo_vaddr &= ~ADDR_POFF;
 	if (flags & VM_PROT_EXECUTE) {
 		PMAPCOUNT(exec_mappings);
-		pvo->pvo_vaddr |= PVO_EXECUTABLE;
+		pvo_set_exec(pvo);
 	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
@@ -1559,7 +1558,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		 * If this is a kernel page, make sure it's active.
 		 */
 		if (pm == pmap_kernel()) {
-			i = pmap_pte_spill(pm, va);
+			i = pmap_pte_spill(pm, va, FALSE);
 			KASSERT(i);
 		}
 	}
@@ -1611,7 +1610,13 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	}
 
 	/*
-	 * Update our statistics
+	 * Account for executable mappings.
+	 */
+	if (PVO_ISEXECUTABLE(pvo))
+		pvo_clear_exec(pvo);
+
+	/*
+	 * Update our statistics.
 	 */
 	pvo->pvo_pmap->pm_stats.resident_count--;
 	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
@@ -1645,6 +1650,48 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 }
 
 /*
+ * Mark a mapping as executable.
+ * If this is the first executable mapping in the segment,
+ * clear the noexec flag.
+ */
+STATIC void
+pvo_set_exec(struct pvo_entry *pvo)
+{
+	struct pmap *pm = pvo->pvo_pmap;
+	int sr;
+
+	if (pm == pmap_kernel() || PVO_ISEXECUTABLE(pvo)) {
+		return;
+	}
+	pvo->pvo_vaddr |= PVO_EXECUTABLE;
+	sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+	if (pm->pm_exec[sr]++ == 0) {
+		pm->pm_sr[sr] &= ~SR_NOEXEC;
+	}
+}
+
+/*
+ * Mark a mapping as non-executable.
+ * If this was the last executable mapping in the segment,
+ * set the noexec flag.
+ */
+STATIC void
+pvo_clear_exec(struct pvo_entry *pvo)
+{
+	struct pmap *pm = pvo->pvo_pmap;
+	int sr;
+
+	if (pm == pmap_kernel() || !PVO_ISEXECUTABLE(pvo)) {
+		return;
+	}
+	pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+	sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+	if (--pm->pm_exec[sr] == 0) {
+		pm->pm_sr[sr] |= SR_NOEXEC;
+	}
+}
+
+/*
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 int
@@ -1655,7 +1702,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	struct pool *pl;
 	register_t pte_lo;
-	int s;
 	int error;
 	u_int pvo_flags;
 	u_int was_exec = 0;
@@ -1714,17 +1760,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (flags & (VM_PROT_READ|VM_PROT_WRITE))
 		pte_lo |= PTE_REF;
 
-#if 0
-	if (pm == pmap_kernel()) {
-		if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == VM_PROT_READ)
-			printf("pmap_pvo_enter: Kernel RO va %#lx pa %#lx\n",
-				va, pa);
-		if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == VM_PROT_NONE)
-			printf("pmap_pvo_enter: Kernel N/A va %#lx pa %#lx\n",
-				va, pa);
-	}
-#endif
-
 	/*
 	 * We need to know if this page can be executable
 	 */
@@ -1734,9 +1769,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Record mapping for later back-translation and pte spilling.
 	 * This will overwrite any existing mapping.
 	 */
-	s = splvm();
 	error = pmap_pvo_enter(pm, pl, pvo_head, va, pa, pte_lo, flags);
-	splx(s);
 
 	/* 
 	 * Flush the real page from the instruction cache if this page is
@@ -1774,9 +1807,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
 	register_t pte_lo;
-	register_t msr;
 	int error;
-	int s;
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_kenter_pa: attempt to enter "
@@ -1808,12 +1839,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/*
 	 * We don't care about REF/CHG on PVOs on the unmanaged list.
 	 */
-	s = splvm();
-	msr = pmap_interrupts_off();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool,
 	    &pmap_pvo_kunmanaged, va, pa, pte_lo, prot|PMAP_WIRED);
-	pmap_interrupts_restore(msr);
-	splx(s);
 
 	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d",
@@ -1840,18 +1867,15 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	struct pvo_entry *pvo;
 	register_t msr;
 	int pteidx;
-	int s;
 
+	msr = pmap_interrupts_off();
 	for (; va < endva; va += PAGE_SIZE) {
-		s = splvm();
-		msr = pmap_interrupts_off();
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo != NULL) {
 			pmap_pvo_remove(pvo, pteidx);
 		}
-		pmap_interrupts_restore(msr);
-		splx(s);
 	}
+	pmap_interrupts_restore(msr);
 }
 
 /*
@@ -1862,7 +1886,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
 	register_t msr;
-	int s;
 
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
@@ -1884,7 +1907,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		return FALSE;
 	}
 	
-	s = splvm();
 	msr = pmap_interrupts_off();
 	pvo = pmap_pvo_find_va(pm, va & ~ADDR_POFF, NULL);
 	if (pvo != NULL) {
@@ -1892,15 +1914,11 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
 	}
 	pmap_interrupts_restore(msr);
-	splx(s);
 	return pvo != NULL;
 }
 
 /*
  * Lower the protection on the specified range of this pmap.
- *
- * There are only two cases: either the protection is going to 0,
- * or it is going to read-only.
  */
 void
 pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
@@ -1908,14 +1926,13 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	struct pvo_entry *pvo;
 	volatile struct pte *pt;
 	register_t msr;
-	int s;
 	int pteidx;
 
 	/*
 	 * Since this routine only downgrades protection, we should
-	 * always be called without WRITE permisison.
+	 * always be called with at least one bit not set.
 	 */
-	KASSERT((prot & VM_PROT_WRITE) == 0);
+	KASSERT(prot != VM_PROT_ALL);
 
 	/*
 	 * If there is no protection, this is equivalent to
@@ -1926,9 +1943,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		return;
 	}
 
-	s = splvm();
 	msr = pmap_interrupts_off();
-
 	for (; va < endva; va += PAGE_SIZE) {
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo == NULL)
@@ -1939,7 +1954,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * Revoke executable if asked to do so.
 		 */
 		if ((prot & VM_PROT_EXECUTE) == 0)
-			pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+			pvo_clear_exec(pvo);
 
 #if 0
 		/*
@@ -1972,9 +1987,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-
 	pmap_interrupts_restore(msr);
-	splx(s);
 }
 
 void
@@ -1982,11 +1995,8 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pvo_entry *pvo;
 	register_t msr;
-	int s;
 
-	s = splvm();
 	msr = pmap_interrupts_off();
-
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
 		if (pvo->pvo_vaddr & PVO_WIRED) {
@@ -1995,16 +2005,11 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-
 	pmap_interrupts_restore(msr);
-	splx(s);
 }
 
 /*
  * Lower the protection on the specified physical page.
- *
- * There are only two cases: either the protection is going to 0,
- * or it is going to read-only.
  */
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
@@ -2013,18 +2018,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_entry *pvo, *next_pvo;
 	volatile struct pte *pt;
 	register_t msr;
-	int s;
 
-	/*
-	 * Since this routine only downgrades protection, if the
-	 * maximal protection is desired, there isn't any change
-	 * to be made.
-	 */
-	KASSERT((prot & VM_PROT_WRITE) == 0);
-	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
-		return;
-
-	s = splvm();
+	KASSERT(prot != VM_PROT_ALL);
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2059,7 +2054,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * flag in the PVO.
 		 */
 		if ((prot & VM_PROT_EXECUTE) == 0)
-			pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+			pvo_clear_exec(pvo);
 
 		/*
 		 * If this entry is already RO, don't diddle with the
@@ -2085,9 +2080,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-
 	pmap_interrupts_restore(msr);
-	splx(s);
 }
 
 /*
@@ -2123,11 +2116,10 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	struct pvo_entry *pvo;
 	volatile struct pte *pt;
 	register_t msr;
-	int s;
 
 	if (pmap_attr_fetch(pg) & ptebit)
 		return TRUE;
-	s = splvm();
+
 	msr = pmap_interrupts_off();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
@@ -2139,7 +2131,6 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 			pmap_attr_save(pg, ptebit);
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 			pmap_interrupts_restore(msr);
-			splx(s);
 			return TRUE;
 		}
 	}
@@ -2163,13 +2154,11 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
 				pmap_interrupts_restore(msr);
-				splx(s);
 				return TRUE;
 			}
 		}
 	}
 	pmap_interrupts_restore(msr);
-	splx(s);
 	return FALSE;
 }
 
@@ -2181,9 +2170,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	volatile struct pte *pt;
 	register_t msr;
 	int rv = 0;
-	int s;
 
-	s = splvm();
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2231,7 +2218,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
-	splx(s);
+
 	/*
 	 * If we are clearing the modify bit and this page was marked EXEC
 	 * and the user of the page thinks the page was modified, then we

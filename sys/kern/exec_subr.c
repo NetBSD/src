@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.39 2003/08/21 15:17:03 yamt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.40 2003/08/24 17:52:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.39 2003/08/21 15:17:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.40 2003/08/24 17:52:47 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 
 	for (i = 0; i < evsp->evs_used; i++) {
 		vcp = &evsp->evs_cmds[i];
-		if (vcp->ev_vp != NULLVP)
+		if (vcp->ev_vp != NULL)
 			vrele(vcp->ev_vp);
 	}
 	evsp->evs_used = evsp->evs_cnt = 0;
@@ -344,12 +344,11 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
 	}
 	KASSERT(access_size > 0);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
 
 	return 0;
 }
