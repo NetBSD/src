@@ -1,8 +1,0 @@
-.\"	$NetBSD: prep,v 1.4 1999/01/13 07:30:02 ross Exp $	
-If you have any data on
-your disks that you want to keep,
-.Em back it up
-before starting. Note that NetBSD/alpha does not support booting more than
-one operating system from a single disk, although it's fine to have
-multiple operating systems on your machine if you have a separate
-disk for NetBSD, or if one of them uses a network boot.

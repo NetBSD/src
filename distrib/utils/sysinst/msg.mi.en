@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.48 1999/06/22 04:29:54 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.48.2.1 1999/06/23 18:04:26 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -218,8 +218,8 @@ message fspart
 }
 
 message fspart_head
-{id:      Size    Offset       End FStype Bsize Fsize Mount point
----      ----    ------       --- ------ ----- ----- -----------
+{id:	Size	Offset	End	FStype	Bsize	Fsize	Mount point 
+---	----	------	---	------	-----	-----	-----------
 }
 
 
@@ -475,13 +475,13 @@ message net_media
 message netok
 {The following are the values you entered.  Are they OK?
 
-Domain:        %s
-Host Name:     %s
-Host IP:       %s
-Netmask:       %s
-Nameserver IP: %s
-Gateway IP:    %s
-Media type:    %s
+Domain:		%s 
+Host Name:	%s 
+Host IP:	%s 
+Netmask:	%s 
+Nameserver IP:	%s 
+Gateway IP:	%s 
+Media type:	%s 
 }
 
 message netagain
@@ -711,7 +711,7 @@ geometry is %d cylinders %d sectors %d heads\n}
 
 message cmdfail
 {Command
-        %s
+	%s
 failed. I can't continue.}
 
 message noactivepart
