@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.2 1999/03/01 16:40:08 christos Exp $	 */
+/*	$NetBSD: xmalloc.c,v 1.2.12.1 2004/05/28 08:31:22 tron Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,27 +39,27 @@
 #include <string.h>
 
 void *
-xcalloc(size)
-	size_t size;
+xcalloc(size_t size)
 {
+
 	return memset(xmalloc(size), 0, size);
 }
 
 void *
-xmalloc(size)
-	size_t size;
+xmalloc(size_t size)
 {
 	void *p = malloc(size);
+
 	if (p == NULL)
 		xerr(1, "%s", xstrerror(errno));
 	return p;
 }
 
 char*
-xstrdup(s)
-	const char *s;
+xstrdup(const char *s)
 {
 	char *p = strdup(s);
+
 	if (p == NULL)
 		xerr(1, "%s", xstrerror(errno));
 	return p;

@@ -1,11 +1,11 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2001/07/15 23:19:59 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3.2.1 2004/05/28 08:31:22 tron Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas.
+ * by Matt Thomas and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,20 @@ _rtld_start:
 	sub	sp, sp, #8		/* make room for obj_main & exit proc */
 	mov	r4, r0			/* save ps_strings */
 
-	mov	r0, sp			/* arg#1 = sp */
+	ldr	sl, .L2
+	ldr	r5, .L2+4
+	ldr	r0, .L2+8
+.L1:
+	add	sl, pc, sl
+	ldr	r5, [sl, r5]
+	ldr	r0, [sl, r0]
+
+	sub	r1, sl, r5		/* relocbase */
+	add	r0, r1, r0		/* &_DYNAMIC */
+	bl	_rtld_relocate_nonplt_self
+
+	sub	r1, sl, r5		/* relocbase */
+	mov	r0, sp			/* sp */
 	bl	_rtld			/* call the shared loader */
 	mov	r3, r0			/* save entry point */
 
@@ -55,6 +68,10 @@ _rtld_start:
 	add	sp, sp, #8		/* restore stack */
 	mov	r0, r4			/* restore ps_strings */
 	mov	pc, r3			/* jump to the entry point */
+.L2:
+	.word	_GLOBAL_OFFSET_TABLE_ - (.L1+8)
+	.word	_GLOBAL_OFFSET_TABLE_(GOT)
+	.word	_DYNAMIC(GOT)
 
 	.align	0
 	.globl	_rtld_bind_start

@@ -1,8 +1,9 @@
-/*	$NetBSD: headers.c,v 1.9 2001/04/25 12:24:50 kleink Exp $	 */
+/*	$NetBSD: headers.c,v 1.9.2.1 2004/05/28 08:31:22 tron Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,15 +58,15 @@
  * information in its Obj_Entry structure.
  */
 void
-_rtld_digest_dynamic(obj)
-	Obj_Entry *obj;
+_rtld_digest_dynamic(Obj_Entry *obj)
 {
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
 	const Elf_Dyn  *dyn_rpath = NULL;
-	Elf_Sword	plttype = DT_REL;
+	Elf_Sword	plttype = DT_NULL;
 	Elf_Addr        relsz = 0, relasz = 0;
-	Elf_Addr	pltrelsz = 0;
+	Elf_Addr	pltrel = 0, pltrelsz = 0;
+	Elf_Addr	init = 0, fini = 0;
 
 	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
 		switch (dynp->d_tag) {
@@ -84,13 +85,7 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_JMPREL:
-			if (plttype == DT_REL) {
-				obj->pltrel = (const Elf_Rel *)
-				    (obj->relocbase + dynp->d_un.d_ptr);
-			} else {
-				obj->pltrela = (const Elf_Rela *)
-				    (obj->relocbase + dynp->d_un.d_ptr);
-			}
+			pltrel = dynp->d_un.d_ptr;
 			break;
 
 		case DT_PLTRELSZ:
@@ -112,19 +107,7 @@ _rtld_digest_dynamic(obj)
 
 		case DT_PLTREL:
 			plttype = dynp->d_un.d_val;
-			assert(plttype == DT_REL ||
-			    plttype == DT_RELA);
-#if !defined(__sparc__) && !defined(__archv9__) && !defined(__sparc_v9__)
-			/* 
-			 * sparc v9 has both DT_PLTREL and DT_JMPREL.
-			 * But they point to different things.
-			 * We want the DT_JMPREL which points to our jump table.
-			 */
-			if (plttype == DT_RELA) {
-				obj->pltrela = (const Elf_Rela *) obj->pltrel;
-				obj->pltrel = NULL;
-			}
-#endif
+			assert(plttype == DT_REL || plttype == DT_RELA);
 			break;
 
 		case DT_SYMTAB:
@@ -158,7 +141,6 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_NEEDED:
-			assert(!obj->rtld);
 			{
 				Needed_Entry *nep = NEW(Needed_Entry);
 
@@ -198,13 +180,11 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_INIT:
-			obj->init = (void (*) __P((void)))
-			    (obj->relocbase + dynp->d_un.d_ptr);
+			init = dynp->d_un.d_ptr;
 			break;
 
 		case DT_FINI:
-			obj->fini = (void (*) __P((void)))
-			    (obj->relocbase + dynp->d_un.d_ptr);
+			fini = dynp->d_un.d_ptr;
 			break;
 
 		case DT_DEBUG:
@@ -213,7 +193,7 @@ _rtld_digest_dynamic(obj)
 #endif
 			break;
 
-#if defined(__mips__)
+#ifdef __mips__
 		case DT_MIPS_LOCAL_GOTNO:
 			obj->local_gotno = dynp->d_un.d_val;
 			break;
@@ -239,16 +219,46 @@ _rtld_digest_dynamic(obj)
 	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
 	obj->relalim = (const Elf_Rela *)((caddr_t)obj->rela + relasz);
 	if (plttype == DT_REL) {
-		obj->pltrellim = (const Elf_Rel *)((caddr_t)obj->pltrel + pltrelsz);
+		obj->pltrel = (const Elf_Rel *)(obj->relocbase + pltrel);
+		obj->pltrellim = (const Elf_Rel *)(obj->relocbase + pltrel + pltrelsz);
 		obj->pltrelalim = 0;
-	} else {
+		/* On PPC and SPARC, at least, REL(A)SZ may include JMPREL.
+		   Trim rel(a)lim to save time later. */
+		if (obj->rellim && obj->pltrel &&
+		    obj->rellim > obj->pltrel &&
+		    obj->rellim <= obj->pltrellim)
+			obj->rellim = obj->pltrel;
+	} else if (plttype == DT_RELA) {
+		obj->pltrela = (const Elf_Rela *)(obj->relocbase + pltrel);
 		obj->pltrellim = 0;
-		obj->pltrelalim = (const Elf_Rela *)((caddr_t)obj->pltrela + pltrelsz);
+		obj->pltrelalim = (const Elf_Rela *)(obj->relocbase + pltrel + pltrelsz);
+		/* On PPC and SPARC, at least, REL(A)SZ may include JMPREL.
+		   Trim rel(a)lim to save time later. */
+		if (obj->relalim && obj->pltrela &&
+		    obj->relalim > obj->pltrela &&
+		    obj->relalim <= obj->pltrelalim)
+			obj->relalim = obj->pltrela;
 	}
+
+#if defined(RTLD_LOADER) && defined(__HAVE_FUNCTION_DESCRIPTORS)
+	if (init != 0)
+		obj->init = (void (*)(void))
+		    _rtld_function_descriptor_alloc(obj, NULL, init);
+	if (fini != 0)
+		obj->fini = (void (*)(void))
+		    _rtld_function_descriptor_alloc(obj, NULL, fini);
+#else
+	if (init != 0)
+		obj->init = (void (*)(void))
+		    (obj->relocbase + init);
+	if (fini != 0)
+		obj->fini = (void (*)(void))
+		    (obj->relocbase + fini);
+#endif
 
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(&obj->rpaths, obj->strtab +
-		    dyn_rpath->d_un.d_val, true);
+		    dyn_rpath->d_un.d_val);
 	}
 }
 
@@ -259,10 +269,7 @@ _rtld_digest_dynamic(obj)
  * returns an Obj_Entry structure.
  */
 Obj_Entry *
-_rtld_digest_phdr(phdr, phnum, entry)
-	const Elf_Phdr *phdr;
-	int phnum;
-	caddr_t entry;
+_rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 {
 	Obj_Entry      *obj;
 	const Elf_Phdr *phlimit = phdr + phnum;
@@ -275,8 +282,6 @@ _rtld_digest_phdr(phdr, phnum, entry)
 
 		case PT_PHDR:
 			assert((const Elf_Phdr *) ph->p_vaddr == phdr);
-			obj->phdr = (const Elf_Phdr *) ph->p_vaddr;
-			obj->phsize = ph->p_memsz;
 			break;
 
 		case PT_INTERP:

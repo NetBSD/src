@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.3 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.3.12.1 2004/05/28 08:31:22 tron Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -33,34 +33,36 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-void    *xcalloc __P((size_t));
-void    *xmalloc __P((size_t));
-char    *xstrdup __P((const char *));
+void    *xcalloc(size_t);
+void    *xmalloc(size_t);
+char    *xstrdup(const char *);
 
 #ifdef RTLD_LOADER
-void xprintf __P((const char *, ...))
+void xprintf(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-void xvprintf __P((const char *, va_list))
+void xvprintf(const char *, va_list)
     __attribute__((__format__(__printf__, 1, 0)));
-void xsnprintf __P((char *, size_t, const char *, ...))
+void xsnprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__, 3, 4)));
-size_t xvsnprintf __P((char *, size_t, const char *, va_list))
+size_t xvsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
-void xwarn __P((const char *, ...))
+void xwarn(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-void xwarnx __P((const char *, ...))
+void xwarnx(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-void xerr __P((int, const char *, ...))
+void xerr(int, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
-void xerrx __P((int, const char *, ...))
+void xerrx(int, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
 
-void     xassert __P((const char *, int, const char *));
-const char *xstrerror __P((int));
+void     xassert(const char *, int, const char *);
+const char *xstrerror(int);
 
-# define assert(cond)	((cond) \
-			 ? (void) 0 :\
-			 (xassert(__FILE__, __LINE__, #cond "\n"), abort()))
+# ifdef DEBUG
+#  define assert(cond)	((cond) ? (void) 0 : xassert(__FILE__, __LINE__, #cond))
+# else
+#  define assert(cond)	(void) 0
+# endif
 #else
 # include <assert.h>
 # include <stdio.h>

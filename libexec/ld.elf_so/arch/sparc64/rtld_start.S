@@ -1,12 +1,12 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/05/06 18:53:30 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6.2.1 2004/05/28 08:31:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas and Paul Kranenburg.
+ * by Christos Zoulas, Paul Kranenburg and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,24 +58,39 @@
 	.register	%g3,#scratch
 
 /* Offset of ARGC from bottom of stack */
-#define	ARGC	(16*8)			
+#define	ARGC	176
 	
 	.section	".text"
-	.align	16
+	.align	4
 	.global	_rtld_start
 	.type	_rtld_start,@function
 _rtld_start:
 	mov	0, %fp			/* Erect a fence post for ourselves */
 	mov	%g1, %l1		/* save ps_strings */
-	sub	%sp, 16, %sp		/* Make room for return args */
-	add	%sp, BIAS+(16*8), %l0	/* Now %l0 points at our return arg space. */
+	sub	%sp, 48+16, %sp		/* Make room for return args */
 
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
+	call	0f
+	 add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
+	call	_DYNAMIC+8
+0:	add	%l7, %o7, %l7		/* real &_GLOBAL_OFFSET_TABLE_ */
+	ld	[%o7+8], %o0		/* load stub call instruction */
+	ldx	[%l7], %l0		/* base-relative &_DYNAMIC */
+	sll	%o0, 2, %o0		/* extract PC offset */
+	sra	%o0, 0, %o0		/* sign-extend */
+
+	add	%o0, %o7, %o0		/* real &_DYNAMIC */
+	sub	%o0, %l0, %l0		/* relocbase */
+	call	_rtld_relocate_nonplt_self
+	 mov	%l0, %o1		/* relocbase */
+
+	mov	%l0, %o1		/* relocbase */
 	call	_rtld
-	 mov	%l0, %o0
+	 add	%sp, BIAS + ARGC, %o0	/* &argc - 16 */
 
-	ldx	[%l0], %g3		/* arg: cleanup */
-	ldx	[%l0 + 8], %g2		/* arg: obj */
-	add	%sp, 16, %sp		/* restore stack pointer */
+	ldx	[%sp + BIAS + ARGC], %g3	/* arg: cleanup */
+	ldx	[%sp + BIAS + ARGC + 8], %g2	/* arg: obj */
+	add	%sp, 48+16, %sp		/* restore stack pointer */
 
 	jmp	%o0
 	 mov	%l1, %g1		/* restore ps_strings */
@@ -85,59 +100,55 @@ _rtld_start:
 	 * We have two separate entry points to the runtime linker.
 	 * I'm implementing this following the SPARC v9 ABI spec.
 	 *
-	 * _rtld_bind_start_0(x, y) is called from .PLT0, and is used for
+	 * _rtld_bind_start_0(y, x) is called from .PLT0, and is used for
 	 * PLT entries above 32768.
 	 *
-	 * _rtld_bind_start_1(x, y) is called from .PLT1, and is used for
+	 * _rtld_bind_start_1(y, x) is called from .PLT1, and is used for
 	 * PLT entries below 32768.
 	 *
 	 * The first two entries of PLT2 contain the xword object pointer.
 	 *
 	 * These routines are called with two longword arguments, 
 	 * x and y.  To calculate the address of the entry,
-	 * _rtld_bind_start_1(x, y) does:
+	 * _rtld_bind_start_1(y, x) does:
 	 *
 	 *	n = x >> 15;
 	 *
-	 * and _rtld_bind_start_0(x, y) does:
+	 * and _rtld_bind_start_0(y, x) does:
 	 *
-	 *	i = x - y + 1048596;
+	 *	i = x - y + 8 - 32768*32;
 	 *	n = 32768 + (i/5120)*160 + (i%5120)/24;
 	 *
 	 * Neither routine needs to issue a save since it's already been
 	 * done in the PLT entry.
 	 */
 
-	/* NOTE: _rtld_bind_start_0 is untested.  Hence the debug stuff */
-	
 	.section	".text"
 	.align	4
 	.global	_rtld_bind_start_0
 	.type	_rtld_bind_start_0,@function
-_rtld_bind_start_0:	# (x, y)
-#if 0
-	call	_rtld_bind_start_0_stub
-	 ldx     [%o1 + (10*4)], %l7
-	mov	%o0, %l5
-	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
-	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
-	sllx	%l5, 3, %o1		/*  So multiply by 24. */
-	
-	call	_rtld_bind
-	 mov	%l7, %o0
-#else
-	sethi	%hi(1048596), %l1
-	sub	%o0, %o1, %l0		/* x - y */
-	or	%l1, %lo(1048596), %l1
-	add	%l0, %l1, %l0		/* x - y + 1048596 */
+_rtld_bind_start_0:	# (y, x)
+	/* %o0 = obj->pltgot[6] */
+	/* %o1 = plt[4] */
+	/* %o1 - %o0 + 8 == offset of plt[] from obj->pltgot[] */
+	/* -32768*32 to get offset from beginning of upper PLT section */
 
-	sdivx	%l0, 5120, %l1		/* Calculate i/5120 */
-	ldx	[%o1 + (10*4)], %o0	/* Load object pointer from PLT2 */
-	sub	%l0, %l1, %l2		/* And i%5120 */
+	sethi	%hi(32768*32-8), %l1
+	sub	%o1, %o0, %l0		/* i = x - y */
+	or	%l1, %lo(32768*32-8), %l1
+	sub	%l0, %l1, %l0		/* i = x - y + 8 - 32768*32 */
+
+	ldx	[%o0 + (10*4)], %o0	/* Load object pointer from PLT2 */
+
+	sethi	%hi(5120), %l1
+	sdivx	%l0, %l1, %l1		/* Calculate i/5120 */
+	sllx	%l1, 2, %l2
+	add	%l2, %l1, %l2
+	sllx	%l2, 10, %l2
+	sub	%l0, %l2, %l2		/* And i%5120 */
 	
 	/* Let the division churn for a bit. */
-	sdivx	%l2, 14, %l4		/* (i%5120)/24 */
+	sdivx	%l2, 24, %l4		/* (i%5120)/24 */
 
 	/* 160 is (32 * 5) or (32 * (4 + 1)) */
 	sllx	%l1, 2, %l3		/* 4 * (i/5120) */
@@ -146,34 +157,22 @@ _rtld_bind_start_0:	# (x, y)
 
 	sethi	%hi(32768), %l6
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
-	add	%l5, %l6, %l5
-	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
-	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
-	sllx	%l5, 3, %l5		/*  So multiply by 24. */
 	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
-	 mov	%l5, %o1
+	 add	%l5, %l6, %o1		/* %o1 = 32768 + ... */
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-#endif	
 	
 	.section	".text"
 	.align	4
 	.global	_rtld_bind_start_1
 	.type	_rtld_bind_start_1,@function
-_rtld_bind_start_1:	# (x, y)
-	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
-	
-	sllx	%o2, 1, %o3		/* Each element is an Elf_Rela which */
-	add	%o3, %o2, %o2		/*  is 3 longwords or 24 bytes. */
-	sllx	%o2, 3, %o2		/*  So multiply by 24. */
-	
-	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
+_rtld_bind_start_1:	# (y, x)
+	ldx	[%o0 + (2*4)], %o0	/* Load object pointer from PLT2 */
 	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
-	 mov	%o2, %o1
+	 srax	%o1, 15, %o1		/* %o1 is the index to our PLT slot */
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
