@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 1999/04/26 04:25:38 ad Exp $
+#	$NetBSD: INSTALL,v 1.7 1999/05/19 21:06:00 ad Exp $
 #
 # from: NetBSD: GENERIC,v 1.67 1998/05/20 11:50:54 pk Exp
 #
@@ -39,6 +39,8 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #options 	RASTERCONSOLE		# fast rasterop console
 #options 	FONT_GALLANT12x22	# the console font
 #options 	FONT_BOLD8x16		# a somewhat smaller font
+#options	RASTERCONSOLE_FGCOL=WSCOL_BLACK
+#options	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
