@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.4 1998/08/14 16:50:00 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.4.6.1 1999/04/07 08:12:41 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -11,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 1998/08/14 16:50:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.6.1 1999/04/07 08:12:41 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

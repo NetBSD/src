@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.13 1997/02/03 23:43:36 mycroft Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.13.20.1 1999/04/07 08:12:51 pk Exp $	*/
 
 /*
  * Mach Operating System
@@ -11,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  *
