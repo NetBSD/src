@@ -17,6 +17,8 @@
 #ifndef LDEMUL_H
 #define LDEMUL_H
 
+#include "getopt.h"
+
 extern void ldemul_hll
   PARAMS ((char *));
 extern void ldemul_syslib
