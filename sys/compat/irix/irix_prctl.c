@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.10 2002/05/28 21:15:42 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.11 2002/06/01 20:26:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.10 2002/05/28 21:15:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.11 2002/06/01 20:26:42 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.10 2002/05/28 21:15:42 manu Exp $")
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
+#include <sys/pool.h>
+#include <sys/filedesc.h>
+#include <sys/vnode.h>
 #include <sys/resourcevar.h>
 
 #include <uvm/uvm_extern.h>
@@ -65,6 +68,8 @@ struct irix_sproc_child_args {
 	void *isc_entry;
 	void *isc_arg;
 	void *isc_aux;
+	int isc_inh;
+	struct proc *isc_parent;
 }; 
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
 static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t, 
@@ -197,7 +202,8 @@ irix_sys_sproc(p, v, retval)
 }
 
 
-static int irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
+static int 
+irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	void *entry;
 	unsigned int inh;
 	void *arg;
@@ -215,21 +221,21 @@ static int irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	struct irix_sproc_child_args isc;	
 
 #ifdef DEBUG_IRIX
-	printf("irix_sproc(): entry = %p, inh = %d, arg = %p, sp = 0x%08lx, len = 0x%08lx, pid = %d\n", entry, inh, arg, (u_long)sp, (u_long)len, pid);
+	printf("irix_sproc(): entry = %p, inh = %x, arg = %p, sp = 0x%08lx, len = 0x%08lx, pid = %d\n", entry, inh, arg, (u_long)sp, (u_long)len, pid);
 #endif
 
 	if (inh & IRIX_PR_SADDR)
 		bsd_flags |= FORK_SHAREVM;
 	if (inh & IRIX_PR_SFDS)
 		bsd_flags |= FORK_SHAREFILES;
-	if (inh & IRIX_PR_SDIR)
+	if (inh & (IRIX_PR_SUMASK|IRIX_PR_SDIR)) {
 		bsd_flags |= FORK_SHARECWD;
+		/* Forget them so that we don't handle PR_SDIR in the child */
+		inh &= ~(IRIX_PR_SUMASK|IRIX_PR_SDIR);
+	}
+	/* We know how to do IRIX_PR_SUMASK only with PR_SDIR */
 	if (inh & IRIX_PR_SUMASK)
 		printf("Warning: unimplemented IRIX sproc flag PR_SUMASK\n");
-	if (inh & IRIX_PR_SULIMIT)
-		printf("Warning: unimplemented IRIX sproc flag PR_SULIMIT\n");
-	if (inh & IRIX_PR_SID)
-		printf("Warning: unimplemented IRIX sproc flag PR_SID\n");
 
 	/* 
 	 * Setting up child stack 
@@ -266,6 +272,8 @@ static int irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	isc.isc_proc = &p2;
 	isc.isc_entry = entry;
 	isc.isc_arg = arg;
+	isc.isc_inh = inh;
+	isc.isc_parent = p;
 	if ((error = copyin((void *)(tf->f_regs[SP] + 28), 
 	    &isc.isc_aux, sizeof(isc.isc_aux))) != 0)
 		isc.isc_aux = 0;
@@ -285,7 +293,6 @@ static int irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	retval[1] = 0;
 
 	return 0;
-
 }
 
 static void
@@ -294,7 +301,51 @@ irix_sproc_child(isc)
 {
 	struct proc *p2 = *isc->isc_proc;
 	struct frame *tf = (struct frame *)p2->p_md.md_regs;
+	int inh = isc->isc_inh;
+	struct proc *parent = isc->isc_parent;
+	struct vnode *vp;
+	struct pcred *pc;
+	struct plimit *pl;
 
+	/* 
+	 * Handle shared current and root directories
+	 */
+	if (inh & IRIX_PR_SDIR) {
+		vp = p2->p_cwdi->cwdi_cdir;
+		vref(parent->p_cwdi->cwdi_cdir);
+		p2->p_cwdi->cwdi_cdir = parent->p_cwdi->cwdi_cdir;
+		vrele(vp);
+
+		vp = p2->p_cwdi->cwdi_rdir;
+		vref(parent->p_cwdi->cwdi_rdir);
+		p2->p_cwdi->cwdi_rdir = parent->p_cwdi->cwdi_rdir;
+		vrele(vp);
+	}
+
+	/*
+	 * Handle shared process UID/GID
+	 */
+	if (inh & IRIX_PR_SID) {
+		pc = p2->p_cred;
+		parent->p_cred->p_refcnt++;
+		p2->p_cred = parent->p_cred;
+		if (--pc->p_refcnt == 0) {
+			crfree(pc->pc_ucred);	
+			pool_put(&pcred_pool, pc);
+		}
+	}
+
+	/* 
+	 * Handle shared process limits
+	 */
+	if (inh & IRIX_PR_SULIMIT) {
+		pl = p2->p_limit;
+		parent->p_limit->p_refcnt++;
+		p2->p_limit = parent->p_limit;
+		if(--pl->p_refcnt == 0)
+			limfree(pl);
+	}
+		
 	/* 
 	 * Setup PC to return to the child entry point 
 	 */
