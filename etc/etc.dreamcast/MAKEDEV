@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2000/12/11 18:19:16 marcus Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2001/03/25 21:46:16 marcus Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,7 @@
 #	st*	SCSI tapes
 #
 # Disks:
+#	gdrom*	Dreamcast "gigadisc" CD-ROM drive
 #	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	fd*	"floppy" disk drives (3 1/2", 5 1/4")
 #	sd*	SCSI disks
@@ -45,10 +46,10 @@
 #	ccd*	contatenated disk devices
 #
 # Console ports:
-#	ttyv0	pccons or pcvt screen 0
-#	ttyv*	pcvt
+#	ttyE?	Workstation console ("wscons") glass-tty emulators
 #
 # Terminal ports:
+#	scif*	serial communcation interface with FIFO
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
 #
@@ -81,19 +82,25 @@ do
 case $i in
 
 all)
-	sh $0 std fd fd0
-	sh $0 tty0 tty1 pty0 pty1
+	sh $0 std gdrom0
+	sh $0 scif0 sci0 pty0 pty1
 	sh $0 vnd0 vnd1
-	sh $0 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	sh $0 ttyE0 ttyEcfg wsmouse0 wskbd0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 random
-	sh $0 lkm audio local
-	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
+	sh $0 wscons lkm audio local
 	;;
 
 ramdisk)
 	sh $0 std md0
-	sh $0 tty0 tty1 pty0 pty1
-	sh $0 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	sh $0 scif0 sci0 pty0 pty1
+	sh $0 ttyE0 ttyEcfg wsmouse0 wskbd0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 ttyEcfg
 	;;
 
 std)
@@ -110,19 +117,6 @@ std)
 	mknod stdin		c 22 0	; chmod 666 stdin
 	mknod stdout		c 22 1	; chmod 666 stdout
 	mknod stderr		c 22 2	; chmod 666 stderr
-	;;
-
-ttyv*)
-	chr=12; unit=${i#ttyv}
-	rm -f ttyv$unit
-	mknod ttyv$unit	c $chr $unit
-	chown root.wheel ttyv$unit
-#	case $unit in
-#	0)
-#		rm -f vga
-#		ln -s ttyv0 vga
-#		;;
-#	esac
 	;;
 
 fd)
@@ -189,6 +183,29 @@ com*|tty*)					# (XXX -- com should die)
 	chown uucp.wheel tty0$unit
 	;;
 
+scif*|sci*)
+	case $i in
+	scif*) name=scif; unit=${i#scif}; chr=10;;
+	sci*) name=sci; unit=${i#sci}; chr=11;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c $chr $unit
+	chown uucp.wheel $name$unit
+	;;
+
+ttyEcfg)
+	rm -f $i
+	mknod $i c 52 255
+	chown root:wheel $i
+	;;
+
+ttyE*)
+	unit=${i#ttyE};	major=52; minor=$unit
+        rm -f $name$unit
+        mknod $name$unit c $major $minor
+        chown uucp.wheel $name$unit
+        ;;
+
 pty*)
 	class=${i#pty}
 	case $class in
@@ -198,9 +215,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with console ttyv* devices."
-		continue;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
@@ -233,10 +248,11 @@ pty*)
         chmod 666 tty$name? pty$name?
 	;;
 
-cd*|mcd*)
+gdrom*|cd*|mcd*)
 	case $i in
 	cd*) name=cd;	unit=${i#cd};	chr=15;	blk=6;;
 	mcd*) name=mcd;	unit=${i#mcd};	chr=39;	blk=7;;
+	gdrom*) name=gdrom;	unit=${i#gdrom};	chr=57;	blk=19;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
@@ -276,6 +292,24 @@ lkm)
 	mknod lkm c 28 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	rm -f $wskbd
+	mknod $wskbd c 53 $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	rm -f $wsmouse
+	mknod $wsmouse c 54 $unit
+	chown root.wheel $wsmouse
+	chmod 600 $wsmouse
 	;;
 
 audio*)
