@@ -1,4 +1,4 @@
-/* $NetBSD: px.c,v 1.4 1999/04/25 04:04:16 simonb Exp $ */
+/* 	$NetBSD: px.c,v 1.5 1999/04/26 04:37:33 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.4 1999/04/25 04:04:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.5 1999/04/26 04:37:33 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -88,19 +88,16 @@ struct px_softc {
 	struct	px_info *px_info;
 };
 
-/* Called externally */
 int	px_match __P((struct device *, struct cfdata *, void *));
 void	px_attach __P((struct device *, struct device *, void *));
 int	px_intr __P((void *xxx_sc));
 
-/* Our cdev interface */
 int	pxopen __P((dev_t, int, int, struct proc *));
 int	pxclose __P((dev_t, int, int, struct proc *));
 int	pxioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	pxpoll __P((dev_t, int, struct proc *));
 int	pxmmap __P((dev_t, int, int));
 
-/* Stuff that we use internally */
 static int32_t *px_alloc_pbuf __P((struct px_info *));
 static int	px_send_packet __P((struct px_info *, int *buf));
 static void	px_init_stic __P((struct px_info *, int));
@@ -115,6 +112,7 @@ static int	px_rect __P((struct px_info *, int, int, int, int, int));
 static void	px_qvss_init __P((struct px_info *));
 static int	px_mmap_info  __P((struct proc *, dev_t, vm_offset_t *));
 static void	px_cursor_hack __P((struct fbinfo *, int, int));
+static int	px_probe_sram __P((struct px_info *));
 
 struct cfattach px_ca = {
 	sizeof(struct px_softc),
@@ -125,9 +123,7 @@ struct cfattach px_ca = {
 /* The different types of card that we support, for px_match(). */
 static const char *px_types[] = {
 	"PMAG-CA ",
-	"PMAG-DA ", /* XXX should this be PMAGB-DA? */
-	"PMAG-E  ", /* XXX should this be PMAGB-EA? */
-	"PMAG-EA ",
+	"PMAG-DA ",
 	"PMAG-F  ", /* XXX always -FA? */
 	"PMAG-FA ",
 };
@@ -156,9 +152,6 @@ static struct wsdisplay_emulops px_emulops = {
 };
 
 /* Colormap for wscons, matching WSCOL_*. Upper 8 are high-intensity */
-#define FGCOLOR(a)	((a) & 255)
-#define BGCOLOR(a)	(((a) >> 8) & 255)
-
 static const u_char px_cmap[16*3] = {
 	0x00, 0x00, 0x00, /* black */
 	0x7f, 0x00, 0x00, /* red */
@@ -241,22 +234,22 @@ struct bt459_regs {
 };
 
 #define	BT459_SELECT(vdac, regno) do {		\
-	(vdac)->lo = (regno) & 0x00ff;		\
-	(vdac)->hi = ((regno) & 0x0f00) >> 8;	\
+	(vdac)->lo = DUPBYTE0(regno);		\
+	(vdac)->hi = DUPBYTE1(regno);		\
 	tc_wmb();				\
    } while(0);
 
 #define	BT459_WRITE_REG(vdac, data) \
-	(vdac)->reg = (data) & 0xffffff, tc_wmb();
+	((vdac)->reg = (data)), tc_wmb();
 
 #define	BT459_WRITE_CMAP(vdac, data) \
-	(vdac)->cmap = (data) & 0xffffff, tc_wmb();
+	((vdac)->cmap = (data)), tc_wmb();
 
 #define BT459_READ_REG(vdac)	((vdac)->reg)
 
 /* We have to support 3 VDACs on the 24-bit cards */
 #define DUPBYTE0(x) ((((x)&0xff)<<16) | (((x)&0xff)<<8) | ((x)&0xff))
-#define DUPBYTE1(x) ((((x)<<8)&0xff00) | ((x)&0xff00) | (((x)>>8)&0xff))
+#define DUPBYTE1(x) ((((x)<<8)&0xff0000) | ((x)&0xff00) | (((x)>>8)&0xff))
 #define DUPBYTE2(x) (((x)&0xff0000) | (((x)>>8)&0xff00) | (((x)>>16)&0xff))
 
 #define PACK_WORD(p, o) ((p)[(o)] | ((p)[(o)+1] << 16))
@@ -301,7 +294,7 @@ px_attach(parent, self, aux)
 	slotbase = (caddr_t)TC_PHYS_TO_UNCACHED(ta->ta_addr);
 
 	/* Init the card only if it hasn't been done before... */
-	if (px_cons_info && slotbase != (caddr_t)px_cons_info->pxi_slotbase)
+	if (!px_cons_info || slotbase != (caddr_t)px_cons_info->pxi_slotbase)
 		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 1);
 
 	/* px_init() fills in px_unit[#] */
@@ -318,14 +311,16 @@ px_attach(parent, self, aux)
 
 	/* Set ISR driven packet-buffer polling addresses */
 	for (i = 0; i < 16; i++) {
-		caddr_t addr = (caddr_t)pxi->pxi_rbuf + i * 4096;
+		caddr_t addr = (caddr_t)pxi->pxi_rbuf + (i << 12);
 		pxi->pxi_qpoll[i] = px_poll_addr(slotbase, addr);
 	}
 
 	/* The following values are filled in by px_init_stic. */
-	printf(": %s Rev. %d, %dx%d stamp, %d plane\n", pxi->pxi_type,
-	    pxi->pxi_revision, pxi->pxi_stampw, pxi->pxi_stamph,
-	    pxi->pxi_nplanes);
+	printf(": %cD, %dx%d stamp, %d plane", (pxi->pxi_option ? '3' : '2'),
+	    pxi->pxi_stampw, pxi->pxi_stamph, pxi->pxi_nplanes);
+	if (pxi->pxi_option)
+		printf(", %dkB SRAM", px_probe_sram(pxi) >> 10);
+	printf("\n");
 }
 
 
@@ -356,41 +351,41 @@ px_init(fi, slotbase, unit, silent)
 		px_cons_rbuf_use = 1;
 	}
 
-	/* Align to 8kB */
+	/* Align to 8kB. px_info struct gets the first 4kB */
 	bufpa = (bufpa + 8191) & ~8191;
-
-	/* px_info struct gets the first 4kB */
 	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG0(bufpa);
 	px_unit[unit] = pxi;
 	bufpa += PXMAP_INFO_SIZE;
-
-	if (fi == NULL)
-		px_cons_info = pxi;
 
 	if (bufpa + PXMAP_RBUF_SIZE > 8192*1024) {
 		printf("px%d: ring buffer outside first 8MB of RAM\n", unit);
 		return 0;
 	}
 
-	/* Fill info struct enough to init the STIC, then do it */
 	pxi->pxi_slotbase = TC_PHYS_TO_UNCACHED(slotbase);
 	pxi->pxi_unit = unit;
 	pxi->pxi_stamp = (caddr_t) (pxi->pxi_slotbase + PX_STAMP_OFFSET);
 	pxi->pxi_poll = (int32_t *) (pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
 	pxi->pxi_stic = (struct stic_regs *) (pxi->pxi_slotbase + PX_STIC_OFFSET);
-
-	/* We need to do this ASAP so we can disable the co-processor */
-	px_init_stic(pxi, 1);
-
-	/* PXG upwards has it's VDAC at a different location */
-	i = (pxi->pxi_option ? PXG_VDAC_OFFSET : PX_VDAC_OFFSET);
-	pxi->pxi_vdac = (struct bt459_regs *) (slotbase + i);
-
 	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
 	pxi->pxi_rbuf_phys = bufpa;
 	pxi->pxi_rbuf_size = PXMAP_RBUF_SIZE;
 	pxi->pxi_pbuf_select = 0;
 	pxi->pxi_flg = PX_ENABLE;
+
+	/* We need to do this ASAP so we can disable the co-processor */
+	px_init_stic(pxi, 1);
+	
+	/* 
+	 * If this is a PXG, use the SRAM and not kernel bss.
+	 * XXX this is a big fat waste of memory.
+	 */
+	if (pxi->pxi_option) {
+		bufpa = MIPS_KSEG0_TO_PHYS(slotbase + PXG_SRAM_OFFSET);
+		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
+		pxi->pxi_rbuf_phys = bufpa;
+		pxi->pxi_rbuf_size = 128*1024; /* XXX might have 256kB */
+	}
 
 	/* Get a font and lock */
 	wsfont_init();
@@ -398,7 +393,7 @@ px_init(fi, slotbase, unit, silent)
 	if ((i = wsfont_find(NULL, 0, 0, 2)) < 0)
 		panic("px_init: unable to get font");
 
-	if (wsfont_lock(i, &pxi->pxi_font, WSFONT_BIG, WSFONT_LITTLE) < 0)
+	if (wsfont_lock(i, &pxi->pxi_font, WSFONT_R2L, WSFONT_L2R) < 0)
 		panic("px_init: unable to lock font");
 
 	/* Only now can we init the bt459... */
@@ -410,7 +405,9 @@ px_init(fi, slotbase, unit, silent)
 	pxi->pxi_fontscale = pxi->pxi_font->fontheight * pxi->pxi_font->stride;
 
 	/* Connect to rcons if this is the console device */
-	if (!fi) {
+	if (fi == NULL) {
+		px_cons_info = pxi;
+		
 		/* XXX no multiscreen X support yet */
 		px_qvss_init(pxi);
 
@@ -490,17 +487,17 @@ px_bt459_init(pxi)
 
 	/* Set cursor colormap */
 	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
-	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
-	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
-	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
+	BT459_WRITE_REG(vdac, 0xffffff);
+	BT459_WRITE_REG(vdac, 0xffffff);
+	BT459_WRITE_REG(vdac, 0xffffff);
 
 	BT459_WRITE_REG(vdac, 0x00);
 	BT459_WRITE_REG(vdac, 0x00);
 	BT459_WRITE_REG(vdac, 0x00);
 
-	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
-	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
-	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
+	BT459_WRITE_REG(vdac, 0xffffff);
+	BT459_WRITE_REG(vdac, 0xffffff);
+	BT459_WRITE_REG(vdac, 0xffffff);
 
 	/* Build and load a sane colormap */
 	bzero(pxi->pxi_cmap, sizeof(pxi->pxi_cmap));
@@ -530,7 +527,7 @@ px_probe_planes(pxi, buf)
 	int buf;
 {
 	int i;
-
+	
 	if (buf == 0) {
 		/*
 		 * For the real framebuffer (# 0), we can cheat and use the
@@ -559,7 +556,26 @@ px_probe_planes(pxi, buf)
 	/* Don't give a damn about Z-buffers... */
 	panic("px_probe_planes: (buf != 0) was un-implemented (bloat)");
 }
+	
 
+/*
+ * Figure out how much SRAM the _PXG_ has.
+ */
+static int
+px_probe_sram(pxi)
+	struct px_info *pxi;
+{
+	volatile int32_t *a, *b;
+	
+	a = (int32_t *)(pxi->pxi_slotbase + PXG_SRAM_OFFSET);
+	b = a + (0x20000 >> 1);
+	
+	*a = 4321;
+	*b = 1234;
+	tc_wmb();
+	
+	return (*a == *b) ? 0x20000 : 0x40000;
+}
 
 /*
  * Initialize the STIC (STamp Interface Chip) and stamp
@@ -571,10 +587,23 @@ px_init_stic(pxi, probe)
 {
 	int modtype, xconfig, yconfig, config;
 	struct stic_regs *stic;
+	volatile int32_t *slot;
 	caddr_t stamp;
+	int i;
 
 	stic = pxi->pxi_stic;
 	stamp = pxi->pxi_stamp;
+	
+	/* If this is a 3D board, disable the i860 co-processor. */
+	if (((stic->modcl >> 12) & 3) != 0) {
+		slot = (volatile int32_t *)pxi->pxi_slotbase;
+
+		slot[PXG_N10_RESET_OFFSET >> 2] = 0;
+		tc_wmb();
+		slot[PXG_HOST_INTR_OFFSET >> 2] = 0;
+		tc_wmb();
+		DELAY(40000); /* paranoia */
+	}	
 
 	/*
 	 * Initialize STIC interface chip registers. Magic sequence from
@@ -603,7 +632,6 @@ px_init_stic(pxi, probe)
 		*(int32_t *) (stamp + __PXS(0x100b0)) = config | 8;
 		*(int32_t *) (stamp + __PXS(0x100b4)) = 0x0;
 	}
-
 	/*
 	 * Remember the size of the stamp, and card revision. Also
 	 * figure out the number of planes.
@@ -614,6 +642,10 @@ px_init_stic(pxi, probe)
 		pxi->pxi_revision = (char)(modtype >> 24);
 		pxi->pxi_option = (char)((modtype >> 12) & 3);
 
+		/* PXG upwards has it's VDAC at a different location */
+		i = (pxi->pxi_option ? PXG_VDAC_OFFSET : PX_VDAC_OFFSET);
+		pxi->pxi_vdac = (struct bt459_regs *) (pxi->pxi_slotbase + i);
+	
 		if (pxi->pxi_option == 0) {
 			/* 2D board */
 			pxi->pxi_nplanes = 8;
@@ -629,9 +661,9 @@ px_init_stic(pxi, probe)
 
 				/* XXX is this right */
 				if (pxi->pxi_nplanes == 8)
-					pxi->pxi_planemask = 0xff000000;
+					pxi->pxi_planemask = 0xff0000;
 				else
-					pxi->pxi_planemask = 0xff;
+					pxi->pxi_planemask = 0xffffff;
 			}
 		}
 	}
@@ -649,31 +681,22 @@ px_init_stic(pxi, probe)
 	stic->ipdvint = STIC_INT_CLR;
 	stic->sticsr = 0x00000008;
 	tc_wmb();
-
-	/*
-	 * If this is a 3D board, disable the i860 co-processor or we'll
-	 * run into serious trouble later while trying to initiate DMAs.
-	 * The code overhead needed to support the use of the onboard SRAM
-	 * and i860 is too big and too undocumented to consider. A paging
-	 * mechanism and N10 interrupt handling scheme are required for this.
-	 *
-	 * XXX shouldn't we be doing this sooner?
-	 * XXX do we have to DMA from the SRAM?
-	 */
+	
+	/* Now enable the i860 and STIC interrupts (PXG only) */
 	if (pxi->pxi_option) {
-		int32_t *slot = (int32_t *)pxi->pxi_slotbase;
+		slot = (volatile int32_t *)pxi->pxi_slotbase;
 
-		slot[PXG_N10_RESET_OFFSET >> 2] = 0;
+		slot[PXG_N10_START_OFFSET >> 2] = 1;
 		tc_wmb();
-		slot[PXG_HOST_INTR_OFFSET >> 2] = 0;
+		DELAY(2000);
+		stic->sticsr = STIC_INT_WE | STIC_INT_CLR;
 		tc_wmb();
-		DELAY(40000); /* paranoia */
 	}
 }
 
 
 /*
- * The default cursor: "Sturdy construction for rugged play"
+ * Make a cursor matching the current font dimensions.
  */
 static void
 px_make_cursor(pxi)
@@ -737,18 +760,14 @@ px_load_cursor_data(pxi, pos, val)
 	int cnt;
 
 	vdac = pxi->pxi_vdac;
-
+	val = DUPBYTE0(val);
+		
 	for (cnt = 10; cnt; cnt--) {
-		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
-		BT459_WRITE_REG(vdac, DUPBYTE0(val));
-
 		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
 
 		if ((BT459_READ_REG(vdac) & pxi->pxi_planemask) == val)
-			return;
+			break;
 	}
-
-	printf("px%d: cursor data failed to load\n", pxi->pxi_unit);
 }
 
 
@@ -802,10 +821,13 @@ px_load_cmap(pxi, index, num)
 	p = pxi->pxi_cmap + (index << 1) + index;
 
 	BT459_SELECT(vdac, index);
+	BT459_SELECT(vdac, index);
+	DELAY(20);
 
 	for (; num--; p++)
 		BT459_WRITE_CMAP(vdac, DUPBYTE0(*p));
 }
+
 
 /*
  * PixelStamp board interrupt handler. We can get more than one interrupt
@@ -820,13 +842,9 @@ px_intr(xxx_sc)
 	struct stic_regs *stic;
 	struct bt459_regs *vdac;
 	struct px_info *pxi;
-	int caught, i;
+	int caught, i, state;
+	int32_t *hi;
 
-	/*
-	 * Due to a MIPS caching peculariarity which I admittedly don't
-	 * understand, we need to access this from KSEG1, because the
-	 * mappings in KUSEG and KSEG0 can get badly out of sync.
-	 */
 	pxi = (struct px_info *)
 	   MIPS_PHYS_TO_KSEG1(((struct px_softc *)xxx_sc)->px_info);
 
@@ -834,8 +852,30 @@ px_intr(xxx_sc)
 	vdac = pxi->pxi_vdac;
 	caught = 0;
 
+	state = stic->ipdvint;
+	
+	/* Getting this from the i860? */
+	if (pxi->pxi_option) {
+		hi = (int32_t *)pxi->pxi_slotbase + (PXG_HOST_INTR_OFFSET>>2);
+		
+		/* Clear the interrupt condition */
+		i = hi[0];
+		hi[0] = 0;
+		tc_wmb();
+		hi[2] = 0;
+		tc_wmb();
+
+		if (i != 3) /* 3 == vblank */
+			state |= STIC_INT_V;
+#ifdef notdef 
+		/* Would cause race... */
+		else 
+			printf("px%d: intr(%d) from i860?\n", pxi->pxi_unit, i);
+#endif
+	}
+
 	/* Vertical retrace interrupt. */
-	if (stic->ipdvint & STIC_INT_V) {
+	if (state & STIC_INT_V) {
 		stic->ipdvint = STIC_INT_V_WE | (stic->ipdvint & STIC_INT_V_EN);
 		tc_wmb();
 		caught = 1;
@@ -916,7 +956,7 @@ px_intr(xxx_sc)
 	}
 
 	/* Packet interrupt. Clear packet done flag. */
-	if (stic->ipdvint & STIC_INT_P) {
+	if (state & STIC_INT_P) {
 		stic->ipdvint = STIC_INT_P_WE | (stic->ipdvint & STIC_INT_P_EN);
 		tc_wmb();
 		caught = 1;
@@ -943,7 +983,7 @@ px_intr(xxx_sc)
 	cl = &pxi->pxi_cliplist;
 
 	/* Does this new packet need to be clipped? */
-	if ((pxi->pxi_flg & PX_ISR_PASS_CLIP) == 0) {
+	if (cl->cl_loaded != 0 && (pxi->pxi_flg & PX_ISR_PASS_CLIP) == 0) {
 		int32_t *buf;
 
 		buf = (int32_t *)pxi->pxi_rbuf + (pxi->pxi_lpr & 15) * 1024;
@@ -997,13 +1037,12 @@ static inline int32_t *
 px_alloc_pbuf(pxi)
 	struct px_info *pxi;
 {
+	volatile int32_t *poll;
 	int32_t *buf;
+	int i, j;
 
 	/* Use queueing if the ISR is enabled */
 	if (pxi->pxi_flg & PX_ISR_ENABLE) {
-		volatile int32_t *poll;
-		int i, j;
-
  		/* Wait until we have a free buffer */
 		for (i = STAMP_RETRIES; i; i--) {
 			if (pxi->pxi_lpw - pxi->pxi_lpr < 15)
@@ -1040,6 +1079,43 @@ px_alloc_pbuf(pxi)
 		    ((pxi->pxi_lpw & 15) << 12));
 	}
 
+	/* If this is a PXG, ask the damn i860 which buffer to use */
+	if (pxi->pxi_option) {
+		poll = (volatile int32_t *)pxi->pxi_slotbase;
+		poll += PXG_COPROC_INTR_OFFSET >> 2;
+		
+		/* 
+		 * XXX these should be defined as constants. 0x30 is
+		 * "pause coprocessor and interrupt."
+		 */
+		*poll = 0x30;
+	
+		for (i = 1000000; i; i--) {
+			DELAY(4);
+
+			switch(j = *poll) {
+				case 2:
+					pxi->pxi_pbuf_select = 4096;
+					break;
+				case 1:
+					pxi->pxi_pbuf_select = 0;
+					break;
+				default:	
+					if (j == 0x30)
+						continue;
+					break;
+			}
+			
+			break;
+		}
+		
+		if (j != 1 || j != 2) {
+			/* i860 has gone mad, punish it */
+			px_init_stic(pxi, 0);
+			pxi->pxi_pbuf_select = 0;
+		}
+	}
+
 	buf = (int32_t *)((u_long)pxi->pxi_rbuf + pxi->pxi_pbuf_select);
 	pxi->pxi_pbuf_select ^= 4096;
 	return buf;
@@ -1072,6 +1148,10 @@ px_send_packet(pxi, buf)
 		return (0);
 	}
 
+	/* Convert buffer address to i860 physical address for PXG */ 
+	if (pxi->pxi_option)
+		buf = (int32_t *)(((long)buf-(long)pxi->pxi_rbuf) & ~0x40000);
+
 	/* Get address of poll register for this buffer */
 	poll = px_poll_addr((caddr_t)pxi->pxi_slotbase, buf);
 
@@ -1083,9 +1163,20 @@ px_send_packet(pxi, buf)
 	tc_wmb();
 
 	for (c = STAMP_RETRIES; c; c--) {
-		if (*poll == STAMP_OK)
+		if (*poll == STAMP_OK) {
+			/* Tell the i860 we are done */
+			if (pxi->pxi_option) {
+				poll = (volatile int32_t*)pxi->pxi_slotbase + 
+				    (PXG_HOST_INTR_OFFSET >> 2);
+				
+				poll[0] = 0;
+				tc_wmb();
+				poll[2] = 0;
+				tc_wmb();
+			}
 			return (0);
-
+		}
+		
 		DELAY(STAMP_DELAY);
 	}
 
@@ -1183,7 +1274,7 @@ px_erasecols(cookie, row, col, num, attr)
 	pb[2] = 0;
 	pb[3] = STAMP_UPDATE_ENABLE | STAMP_METHOD_COPY;
 	pb[4] = linewidth;
-	pb[5] = BGCOLOR(attr);
+	pb[5] = DUPBYTE1(attr);
 	pb[6] = col | row;
 	pb[7] = (col + num) | row;
 
@@ -1217,7 +1308,7 @@ px_eraserows(cookie, row, num, attr)
 	pb[2] = 0;
 	pb[3] = STAMP_UPDATE_ENABLE | STAMP_METHOD_COPY;
 	pb[4] = linewidth;
-	pb[5] = BGCOLOR(attr);
+	pb[5] = DUPBYTE1(attr);
 	pb[6] = row;
 	pb[7] = (1280 << 19) | row;
 
@@ -1380,9 +1471,9 @@ px_putchar(cookie, r, c, uc, attr)
 	c *= font->fontwidth;
 	uc = (uc - font->firstchar) * pxi->pxi_fontscale;
 	fr = (u_short *)((caddr_t)font->data + uc);
-	bgcolor = BGCOLOR(attr);
-	fgcolor = FGCOLOR(attr);
-
+	bgcolor = DUPBYTE1(attr);
+	fgcolor = DUPBYTE0(attr);
+	
 	i = (16 << 2) - 1;
 	v1 = (c << 19) | ((r << 3) + i);
 	v2 = ((c + font->fontwidth) << 19) | (v1 & 0xffff);
