@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.55 1997/01/21 09:43:45 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.56 1997/02/10 22:11:27 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -26,7 +26,7 @@ file	arch/mac68k/dev/adbsysasm.s
 
 device	asc
 attach	asc at obio
-file	arch/mac68k/dev/asc.c		asc
+file	arch/mac68k/dev/asc.c		asc needs-flag
 
 define grfbus { }
 file	arch/mac68k/dev/grf_subr.c	grfbus
