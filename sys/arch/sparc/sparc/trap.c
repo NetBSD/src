@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2002/12/31 13:17:23 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.120 2003/01/03 15:12:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -468,34 +468,32 @@ badtrap:
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-#if notyet
-		simple_lock(&cpuinfo.fplock);
+#if 1
 		if (cpuinfo.fpproc != p) {		/* we do not have it */
+			struct cpu_info *cpi;
 			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
-				cpuinfo.fpproc->p_md.md_fpumid = -1;
+				cpuinfo.fpproc->p_md.md_fpu = NULL;
 			}
 			/*
 			 * On MP machines, some of the other FPUs might
 			 * still have our state. Tell the owning processor
 			 * to save the process' FPU state.
 			 */
-			cpi = p->p_md.md_fpumid;
-			if (cpi != NULL) {
-				if (cpi->mid == cpuinfo.mid)
-					panic("FPU on module %d", mid);
-				LOCK_XPMSG();
-				simple_lock(&cpi->fplock);
-				simple_lock(&cpi->msg.lock);
-				cpi->msg.tag = XPMSG_SAVEFPU;
-				raise_ipi_wait_and_unlock(cpi);
-				UNLOCK_XPMSG();
+			if ((cpi = p->p_md.md_fpu) != NULL) {
+				if (cpi->ci_cpuid == cpuinfo.ci_cpuid)
+					panic("FPU(%d): state for %p",
+							cpi->ci_cpuid, p);
+#if defined(MULTIPROCESSOR)
+				xcall((xcall_func_t)savefpstate,
+					(int)fs, 0, 0, 0, 1 << cpi->ci_cpuid);
+#endif
+				cpi->fpproc = NULL;
 			}
 			loadfpstate(fs);
 			cpuinfo.fpproc = p;		/* now we do have it */
-			p->p_md.md_fpumid = cpuinfo.mid;
+			p->p_md.md_fpu = curcpu();
 		}
-		simple_unlock(&cpuinfo.fplock);
 #else
 		if (cpuinfo.fpproc != p) {		/* we do not have it */
 			int mid;
@@ -808,7 +806,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cpuinfo.fpproc != p)
 			panic("FPU enabled but wrong proc (1)");
 		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpumid = -1;
+		p->p_md.md_fpu = NULL;
 		cpuinfo.fpproc = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
@@ -984,7 +982,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cpuinfo.fpproc != p)
 			panic("FPU enabled but wrong proc (2)");
 		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpumid = -1;
+		p->p_md.md_fpu = NULL;
 		cpuinfo.fpproc = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
