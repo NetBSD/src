@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1999/02/26 16:07:08 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 1999/03/02 18:18:38 itohy Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2855,7 +2855,7 @@ void
 pmap_procwr(p, va, len)
 	struct proc	*p;
 	vaddr_t		va;
-	u_long		len;
+	size_t		len;
 {
 	(void)cachectl1(0x80000004, va, len, p);
 }
