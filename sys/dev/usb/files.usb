@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.45 2002/08/22 10:15:57 augustss Exp $
+#	$NetBSD: files.usb,v 1.46 2002/08/23 00:55:20 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -113,6 +113,11 @@ file	dev/usb/ustir.c			ustir
 device	ubt
 attach	ubt at uhub
 file	dev/usb/ubt.c			ubt
+
+# BCM2033 firmware download
+device	ubtbcmfw
+attach	ubtbcmfw at uhub
+file	dev/usb/ubtbcmfw.c		ubtbcmfw
 
 
 # Misc
