@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 1995/03/29 07:28:48 briggs Exp $
+#	$NetBSD: GENERIC,v 1.26 1995/06/19 03:55:15 briggs Exp $
 #
 # GENERIC
 
@@ -53,7 +53,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 # Mac-specific options
 options		M68040
 options		M68030		# Includes the 020+851
-#options	FPSP
+options		FPSP
 options		FPU_EMULATE
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
@@ -74,8 +74,8 @@ st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 
-pseudo-device	loop
 pseudo-device	pty		16
-pseudo-device	sl
 pseudo-device	bpfilter	4
+pseudo-device	loop
 pseudo-device	ppp
+pseudo-device	sl
