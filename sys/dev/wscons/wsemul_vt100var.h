@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.5.4.1 2003/05/27 04:25:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -57,6 +57,7 @@ struct wsemul_vt100_emuldata {
 #define VTFL_DECAWM	0x020	/* auto wrap */
 #define VTFL_CURSORON	0x040
 #define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
+#define VTFL_SAVEDCURS	0x100	/* we have a saved cursor state */
 	long curattr, bkgdattr;		/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 	u_int scrreg_startrow;
