@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.17 2003/01/07 21:21:25 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.18 2003/01/08 01:44:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,9 +61,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
-#ifdef DEBUG
-#include <sys/kernel.h>		/* for `cold' */
-#endif
+#include <sys/kernel.h>
 
 #include <uvm/uvm.h>
 
@@ -551,6 +549,12 @@ cpu_boot_secondary_processors()
 		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
 			(cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
+
+		/*
+		 * XXX - the first process run on this CPU will be charged
+		 *	 with the leading idle time.
+		 */
+		cpi->ci_schedstate.spc_runtime = time;
 
 		printf(" cpu%d", cpi->ci_cpuid);
 		cpi->flags |= CPUFLG_READY;
