@@ -1,0 +1,46 @@
+#	$Id: Makefile.kc,v 1.1 1994/04/18 10:16:38 cgd Exp $
+
+.ifndef MOUNT_POINT
+MOUNT_POINT=	/mnt
+.endif
+.if !defined(VND_DEV) || !defined(VND_DEV)
+VND_DEV=	/dev/vnd0a
+VND_RDEV=	/dev/rvnd0a
+.endif
+
+ROOTDIRLIST=	/ /bin /dev /mnt /sbin /usr
+BINDIRLIST=	/usr/bin
+FLOPPYBINS=	echo fsck init mount reboot sh tar test umount
+
+all:
+.if !defined(IMAGE) || !defined(KERNEL)
+	@echo both IMAGE and KERNEL must be defined
+	@false
+.else
+	dd if=/dev/zero of=${IMAGE} bs=100k count=12
+	vnconfig -c ${VND_DEV} ${IMAGE}
+	disklabel -r -w ${VND_DEV} floppy5 \
+		${DESTDIR}/usr/mdec/fdboot ${DESTDIR}/usr/mdec/bootfd
+	newfs -m 0 -o space -i 6144 -c 80 ${VND_DEV} floppy5
+	mount ${VND_DEV} ${MOUNT_POINT}
+	for d in ${ROOTDIRLIST} ; do \
+		install -d -o root -g wheel -m 755 ${MOUNT_POINT}$$d ; \
+	done
+	for d in ${BINDIRLIST} ; do \
+		install -d -o bin -g bin -m 755 ${MOUNT_POINT}$$d ; \
+	done
+	cp ${KERNEL} ${MOUNT_POINT}
+	cp ${.CURDIR}/etc.i386/MAKEDEV ${MOUNT_POINT}/dev
+	(cd ${MOUNT_POINT}/dev; sh MAKEDEV floppy)
+	for b in ${FLOPPYBINS} ; do \
+		( cd ${.CURDIR}/../sys/arch/i386/floppy/$$b ; \
+		    make DESTDIR=${MOUNT_POINT} install ) ; \
+	done
+	umount -f ${MOUNT_POINT}
+	vnconfig -u ${VND_DEV} ${IMAGE}
+.endif
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND_DEV} ${IMAGE}
+	-/bin/rm -f ${IMAGE}
