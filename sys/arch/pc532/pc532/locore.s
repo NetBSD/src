@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 2002/07/09 23:10:04 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 2002/07/11 00:41:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -156,7 +156,7 @@ ENTRY_NOPROFILE(sigcode)
 					   and put it in the argument slot */
 	movd	SYS___sigreturn14,r0
 	svc
-	movd	0,0			/* Illegal instruction. */
+	.long	0x0000a517		/* movd	0,0 -- illegal instruction. */
 GLOBAL(esigcode)
 
 #if defined(PROF) || defined(GPROF) || defined(KGDB) || defined(DDB)
