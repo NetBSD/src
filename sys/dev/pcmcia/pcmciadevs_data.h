@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.97 2000/08/24 07:12:20 imp Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.98 2000/11/02 07:16:16 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -626,6 +626,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Samsung MagicLAN SWL-2000N"	},
 	},
 	{
+	    PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
+	    PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
+	    0,
+	    "Telecom Device",
+	    "Telecom Device TCD-HPC100"	},
+	},
+	{
+	    PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
+	    PCMCIA_CIS_MACNICA_ME1_JEIDA,
+	    0,
+	    "MACNICA",
+	    "MACNICA ME1 for JEIDA"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -843,6 +857,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Intersil Prism II"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MELCO_LPC2_TX,
+	    PCMCIA_CIS_MELCO_LPC2_TX,
+	    0,
+	    "Melco Corporation",
+	    "Melco LPC2-TX"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1039,6 +1060,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_TELECOMDEVICE, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Telecom Device",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_NOKIA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1085,6 +1113,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Contec",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_MACNICA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "MACNICA",
 	    NULL,
 	},
 	{
