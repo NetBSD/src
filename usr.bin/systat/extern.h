@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2000/12/01 02:19:43 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.27 2001/07/14 07:09:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@ extern float	*dk_mspw;
 extern kvm_t	*kd;
 extern long	ntext, textp;
 extern int	CMDLINE;
-extern int	hz, stathz;
+extern int	hz, stathz, maxslp;
 extern int	naptime, col;
 extern int	nhosts;
 extern int	nports;
