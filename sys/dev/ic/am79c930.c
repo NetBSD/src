@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.7 2001/11/13 13:14:34 lukem Exp $ */
+/* $NetBSD: am79c930.c,v 1.8 2003/10/04 22:04:36 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.7 2001/11/13 13:14:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.8 2003/10/04 22:04:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ static void mem_write_2 (sc, off, val)
 
 	/* could be unaligned */
 	if ((off & 0x1) == 0)
-		bus_space_write_2(t, h, off,    val);
+		bus_space_write_2(t, h, off,    htole16(val));
 	else {
 		bus_space_write_1(t, h, off,    val        & 0xff);
 		bus_space_write_1(t, h, off+1, (val >>  8) & 0xff);
@@ -314,7 +314,7 @@ static void mem_write_4 (sc, off, val)
 
 	/* could be unaligned */
 	if ((off & 0x3) == 0)
-		bus_space_write_4(t, h, off,    val);
+		bus_space_write_4(t, h, off,    htole32(val));
 	else {
 		bus_space_write_1(t, h, off,    val        & 0xff);
 		bus_space_write_1(t, h, off+1, (val >>  8) & 0xff);
@@ -346,7 +346,7 @@ static u_int16_t mem_read_2 (sc, off)
 {
 	/* could be unaligned */
 	if ((off & 0x1) == 0)
-		return bus_space_read_2(sc->sc_memt, sc->sc_memh, off);
+		return le16toh(bus_space_read_2(sc->sc_memt, sc->sc_memh, off));
 	else
 		return
 		     bus_space_read_1(sc->sc_memt, sc->sc_memh, off  )       |
@@ -359,7 +359,7 @@ static u_int32_t mem_read_4 (sc, off)
 {
 	/* could be unaligned */
 	if ((off & 0x3) == 0)
-		return bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+		return le32toh(bus_space_read_4(sc->sc_memt, sc->sc_memh, off));
 	else
 		return
 		     bus_space_read_1(sc->sc_memt, sc->sc_memh, off  )       |
