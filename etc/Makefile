@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2000/02/04 09:24:08 veego Exp $
+#	$NetBSD: Makefile,v 1.132 2000/02/05 18:25:01 jlam Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -88,7 +88,7 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	(${MACHINE_ARCH} == "arm32")
 BIN1+=	ld.so.conf
 .elif exists(etc.${MACHINE_ARCH}/ld.so.conf)
-BIN1+=	ld.so.conf
+BIN1+=	etc.${MACHINE_ARCH}/ld.so.conf
 .endif
 
 # IPv6
