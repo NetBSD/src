@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.4.2.1 2001/05/01 10:11:23 he Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.4.2.2 2001/05/01 11:55:37 he Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -381,6 +381,7 @@ stf_output(ifp, m, dst, rt)
 {
 	struct stf_softc *sc;
 	struct sockaddr_in6 *dst6;
+	struct in_addr *in4;
 	struct sockaddr_in *dst4;
 	u_int8_t tos;
 	struct ip *ip;
@@ -415,6 +416,19 @@ stf_output(ifp, m, dst, rt)
 	ip6 = mtod(m, struct ip6_hdr *);
 	tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 
+	/*
+	 * Pickup the right outer dst addr from the list of candidates.
+	 * ip6_dst has priority as it may be able to give us shorter IPv4 hops.
+	 */
+	if (IN6_IS_ADDR_6TO4(&ip6->ip6_dst))
+		in4 = GET_V4(&ip6->ip6_dst);
+	else if (IN6_IS_ADDR_6TO4(&dst6->sin6_addr))
+		in4 = GET_V4(&dst6->sin6_addr);
+	else {
+		m_freem(m);
+		return ENETUNREACH;
+	}
+
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
 		m = m_pullup(m, sizeof(struct ip));
@@ -426,7 +440,7 @@ stf_output(ifp, m, dst, rt)
 
 	bcopy(GET_V4(&((struct sockaddr_in6 *)&ia6->ia_addr)->sin6_addr),
 	    &ip->ip_src, sizeof(ip->ip_src));
-	bcopy(GET_V4(&dst6->sin6_addr), &ip->ip_dst, sizeof(ip->ip_dst));
+	bcopy(in4, &ip->ip_dst, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
 	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
 	ip->ip_len = m->m_pkthdr.len;	/*host order*/
