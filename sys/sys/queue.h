@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.8 1994/08/30 03:01:30 mycroft Exp $	*/
+/*	$NetBSD: queue.h,v 1.9 1994/12/13 15:04:28 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)queue.h	8.4 (Berkeley) 1/4/94
+ *	@(#)queue.h	8.5 (Berkeley) 8/20/94
  */
 
 #ifndef	_SYS_QUEUE_H_
@@ -45,16 +45,16 @@
  * A list is headed by a single forward pointer (or an array of forward
  * pointers for a hash table header). The elements are doubly linked
  * so that an arbitrary element can be removed without a need to
- * traverse the list. New elements can be added to the list after
- * an existing element or at the head of the list. A list may only be
- * traversed in the forward direction.
+ * traverse the list. New elements can be added to the list before
+ * or after an existing element or at the head of the list. A list
+ * may only be traversed in the forward direction.
  *
  * A tail queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
  * linked so that an arbitrary element can be removed without a need to
- * traverse the list. New elements can be added to the list after
- * an existing element, at the head of the list, or at the end of the
- * list. A tail queue may only be traversed in the forward direction.
+ * traverse the list. New elements can be added to the list before or
+ * after an existing element, at the head of the list, or at the end of
+ * the list. A tail queue may only be traversed in the forward direction.
  *
  * A circle queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
