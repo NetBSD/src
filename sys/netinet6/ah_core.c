@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.5 1999/07/06 05:09:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,8 +98,10 @@
 
 #define	HMACSIZE	16
 
+#ifdef INET6
 #define ZEROBUFLEN	256
 static char zerobuf[ZEROBUFLEN];
+#endif
 
 static int ah_sumsiz_1216 __P((struct secas *));
 static int ah_sumsiz_zero __P((struct secas *));
