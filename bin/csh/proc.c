@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.20 1999/05/19 14:37:05 kleink Exp $	*/
+/*	$NetBSD: proc.c,v 1.21 2001/01/06 23:56:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.20 1999/05/19 14:37:05 kleink Exp $");
+__RCSID("$NetBSD: proc.c,v 1.21 2001/01/06 23:56:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: proc.c,v 1.20 1999/05/19 14:37:05 kleink Exp $");
 
 #define BIGINDEX	9	/* largest desirable job index */
 
+extern int insource;
 static struct rusage zru;
 
 static void	 pflushall __P((void));
@@ -90,7 +91,6 @@ pchild(notused)
     struct process *pp;
     struct process *fp;
     int pid;
-    extern int insource;
     int w;
     int     jobflags;
     struct rusage ru;
