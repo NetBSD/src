@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.65 (Berkeley) 1/23/94"; */
-static char *rcsid = "$Id: main.c,v 1.2 1994/01/24 06:38:59 cgd Exp $";
+static char *rcsid = "$Id: main.c,v 1.3 1994/03/02 01:54:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -473,7 +473,7 @@ err:		eval = 1;
 	 * other systems mess up characters typed after the quit command to
 	 * vi but before vi actually exits.
 	 */
-	if (F_ISSET(gp, G_ISFROMTTY))
+	if (F_ISSET(gp, G_HAVETTY) && F_ISSET(gp, G_ISFROMTTY))
 		(void)tcsetattr(STDIN_FILENO, TCSADRAIN, &gp->original_termios);
 	exit(eval);
 }
@@ -516,14 +516,16 @@ gs_init()
 	 * and term.c:term_init()) want values for special characters.
 	 */
 	if (F_ISSET(gp, G_ISFROMTTY)) {
-		if (tcgetattr(STDIN_FILENO, &gp->original_termios))
+		if (tcgetattr(STDIN_FILENO, &gp->original_termios) == -1)
 			err(1, "tcgetattr");
+		F_SET(gp, G_HAVETTY);
 	} else {
-		if ((fd = open(_PATH_TTY, O_RDONLY, 0)) == -1)
-			err(1, "%s", _PATH_TTY);
-		if (tcgetattr(fd, &gp->original_termios))
-			err(1, "tcgetattr");
-		(void)close(fd);
+		if ((fd = open(_PATH_TTY, O_RDONLY, 0)) != -1) {
+			if (tcgetattr(fd, &gp->original_termios) == -1)
+				err(1, "tcgetattr");
+			(void)close(fd);
+			F_SET(gp, G_HAVETTY);
+		}
 	}
 
 	return (gp);
