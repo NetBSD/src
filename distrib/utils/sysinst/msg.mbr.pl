@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.9 2003/07/14 09:59:00 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.10 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,8 @@ message Space_allocated {Space allocated: }	/* XXX translate */
 message ptn_starts {Space at %d..%d %s (size %d %s)\n}	/* XXX translate */
 message get_ptn_start {%s%sStart (in %s)}	/* XXX translate */
 message get_ptn_id {Partition kind (0..255)}	/* XXX translate */
-
+message No_free_space {No free space}	/* XXX translate */
+message Only_one_extended_ptn {There can only be one extended partition}	/* XXX translate */
 
 
 message editparttable
