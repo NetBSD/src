@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.8 2001/12/20 06:49:03 thorpej Exp $
+$NetBSD: README,v 1.9 2002/07/10 15:12:34 fredette Exp $
 
 BUGS/PROBLEMS:
 
@@ -15,13 +15,14 @@ BUGS/PROBLEMS:
 * The method used to relocate ld.so is shoddy and fragile.  Currently it's
   something like:
 
-  alpha, powerpc:
+  alpha, hppa, powerpc:
 	(1) assembly code relocates RELATIVE relocations in the GOT
 	    (on some ports, all relative relocations; this will probably
 	    have to be #ifdef'd in reloc.c), assuming that everything
-	    in the GOT is a RELATIVE relocation.
+	    in the GOT is a RELATIVE relocation.  On the hppa, this
+	    is actually done in C code.
 
-	(2) alpha only: C code relocates the rest of the loader,
+	(2) alpha, hppa only: C code relocates the rest of the loader,
 	    excluding those RELATIVE relocations already done (via an ...
 	    iffy heuristic).
 
