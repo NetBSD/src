@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.2 1996/09/09 00:57:59 cgd Exp $	*/
+/*	$NetBSD: SYS.h,v 1.3 1996/09/15 18:18:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,10 +37,10 @@
 #define	SYSCALL_NOLABEL(x)					\
 	.set	noat;						\
 	CALLSYS(SYS_/**/x);					\
-	beq	a3, L8001;					\
 	br	gp, L8000;					\
 L8000:							\
 	SETGP(gp);						\
+	beq	a3, L8001;					\
 	lda	at_reg, cerror;					\
 	jmp	zero, (at_reg);					\
 L8001:							\
