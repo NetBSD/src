@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.47 2002/03/14 20:51:35 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,11 +149,10 @@ int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 static int sbus_overtemp __P((void *));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
-		bus_type_t,
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vaddr_t,		/*preferred virtual address */
+		vaddr_t,			/* XXX unused -- compat w/sparc */
 		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
@@ -453,17 +452,17 @@ sbus_destroy_attach_args(sa)
 
 
 int
-_sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
+_sbus_bus_map(t, addr, size, flags, v, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
+	bus_addr_t addr;
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t v;
 	bus_space_handle_t *hp;
 {
 	struct sbus_softc *sc = t->cookie;
-	int64_t slot = btype;
+	int64_t slot = BUS_ADDR_IOSPACE(addr);
+	int64_t offset = BUS_ADDR_PADDR(addr);
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
@@ -479,8 +478,7 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 ("\n_sbus_bus_map: mapping paddr slot %lx offset %lx poffset %lx paddr %lx\n",
 		    (long)slot, (long)offset, (long)sc->sc_range[i].poffset,
 		    (long)paddr));
-		return (bus_space_map2(sc->sc_bustag, 0, paddr,
-					size, flags, vaddr, hp));
+		return (bus_space_map(sc->sc_bustag, paddr, size, flags, hp));
 	}
 
 	return (EINVAL);
