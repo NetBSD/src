@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2002/02/17 20:55:52 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2002/02/28 01:58:53 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -403,14 +403,9 @@ vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
  *	vm_page.h:PHYS_TO_VM_PAGE, vm_physseg_find
  *	machdep.c:pmap_bootstrap (uvm_page_physload, etc)
  */
-#if 0
-/* broken */
-#define PMAP_MAP_POOLPAGE(pa)	SH3_PHYS_TO_P1SEG((pa))
-#define PMAP_UNMAP_POOLPAGE(va)	SH3_P1SEG_TO_PHYS((va))
-#else
+/* XXX broken */
 #define PMAP_MAP_POOLPAGE(pa)	(pa)
 #define PMAP_UNMAP_POOLPAGE(va)	(va)
-#endif
 
 vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 paddr_t vtophys(vaddr_t);
