@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.1 1999/05/24 20:10:31 ragge Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.2 1999/06/06 19:00:53 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -41,27 +41,34 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#define	_VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/cpu.h>
+#include <machine/sgmap.h>
 
-#include <dev/dec/uba/ubareg.h>
-#include <dev/dec/uba/ubavar.h>
+#include <dev/qbus/ubavar.h>
+
+#include <arch/vax/uba/uba_common.h>
+
+/* Some Qbus-specific defines */
+#define	QBASIZE	(8192 * VAX_NBPG)
+#define	QBAMAP	0x20088000
+#define	QIOPAGE	0x20000000
 
 /*
  * The Q22 bus is the main IO bus on MicroVAX II/MicroVAX III systems.
  * It has an address space of 4MB (22 address bits), therefore the name,
  * and is hardware compatible with all 16 and 18 bits Q-bus devices.
  */
-int	qba_match __P((struct device *, struct cfdata *, void *));
-void	qba_attach __P((struct device *, struct device *, void *));
-void	qba_beforescan __P((struct uba_softc*));
-void	qba_init __P((struct uba_softc*));
+static	int	qba_match __P((struct device *, struct cfdata *, void *));
+static	void	qba_attach __P((struct device *, struct device *, void *));
+static	void	qba_beforescan __P((struct uba_softc*));
+static	void	qba_init __P((struct uba_softc*));
 
 struct	cfattach uba_mainbus_ca = {
-	sizeof(struct uba_softc), qba_match, qba_attach
+	sizeof(struct uba_vsoftc), qba_match, qba_attach
 };
 
 extern	struct vax_bus_space vax_mem_bus_space;
@@ -85,30 +92,25 @@ qba_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct uba_softc *sc = (void *)self;
+	struct uba_vsoftc *sc = (void *)self;
 
 	printf(": Q22\n");
 	/*
 	 * Fill in bus specific data.
 	 */
-/*	sc->uh_uba not used; no regs */
-/*	sc->uh_nbdp is 0; Qbus has no BDP's */
-/*	sc->uh_nr is 0; there can be only one! */
-/*	sc->uh_afterscan; not used */
-/*	sc->uh_errchk; not used */
-	sc->uh_beforescan = qba_beforescan;
-	sc->uh_ubainit = qba_init;
-	sc->uh_type = QBA;
-	sc->uh_memsize = QBAPAGES;
-	sc->uh_tag = &vax_mem_bus_space;
-	/*
-	 * Map in the UBA page map into kernel space. On other UBAs,
-	 * the map registers are in the bus IO space.
-	 */
-	sc->uh_mr = (void *)vax_map_physmem(QBAMAP,
-	    (QBAPAGES * sizeof(struct pte)) / VAX_NBPG);
+	sc->uv_sc.uh_beforescan = qba_beforescan;
+	sc->uv_sc.uh_ubainit = qba_init;
+	sc->uv_sc.uh_iot = &vax_mem_bus_space;
+	sc->uv_sc.uh_dmat = &sc->uv_dmat;
 
-	uba_attach(sc, QIOPAGE);
+	/*
+	 * Fill in variables used by the sgmap system.
+	 */
+	sc->uv_size = QBASIZE;	/* Size in bytes of Qbus space */
+	sc->uv_addr = QBAMAP;	/* Physical address of map registers */
+
+	uba_dma_init(sc);
+	uba_attach(&sc->uv_sc, QIOPAGE);
 }
 
 /*
@@ -119,6 +121,8 @@ void
 qba_beforescan(sc)
 	struct uba_softc *sc;
 {
+#define	QIPCR	0x1f40
+#define	Q_LMEAE	0x20
 	bus_space_write_2(sc->uh_tag, sc->uh_ioh, QIPCR, Q_LMEAE);
 }
 
