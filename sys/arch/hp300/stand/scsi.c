@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.6 1996/12/17 09:21:42 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -54,10 +54,12 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <hp300/dev/device.h>
+
 #define _IOCTL_
 #include <hp300/dev/scsireg.h>
-#include "scsivar.h"
+
+#include <hp300/stand/device.h>
+#include <hp300/stand/scsivar.h>
 
 #include "stand.h"
 #include "samachdep.h"
