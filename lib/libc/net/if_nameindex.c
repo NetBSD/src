@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nameindex.c,v 1.1 2000/04/24 10:24:47 itojun Exp $	*/
+/*	$NetBSD: if_nameindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.3 2000/04/24 10:08:41 itojun Exp $	*/
 
 /*-
@@ -25,6 +25,11 @@
  *
  *	BSDI Id: if_nameindex.c,v 2.3 2000/04/17 22:38:05 dab Exp
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: if_nameindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
