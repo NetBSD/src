@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.17 1998/08/15 03:02:46 mycroft Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.18 1998/11/07 16:47:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -73,6 +73,7 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_COMMAND_SERR_ENABLE			0x00000100
 #define	PCI_COMMAND_BACKTOBACK_ENABLE		0x00000200
 
+#define	PCI_STATUS_CAPLIST_SUPPORT		0x00100000
 #define	PCI_STATUS_66MHZ_SUPPORT		0x00200000
 #define	PCI_STATUS_UDF_SUPPORT			0x00400000
 #define	PCI_STATUS_BACKTOBACK_SUPPORT		0x00800000
@@ -281,6 +282,20 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_IO_SIZE(mr)						\
 	    (PCI_MAPREG_IO_ADDR(mr) & -PCI_MAPREG_IO_ADDR(mr))
 #define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffc
+
+/*
+ * capabilities link list
+ */
+#define PCI_CAPLISTPTR_REG		0x34
+#define PCI_CAPLIST_PTR(cpr) ((cpr) & 0xff)
+#define PCI_CAPLIST_NEXT(cr) (((cr) >> 8) & 0xff)
+#define PCI_CAPLIST_CAP(cr) ((cr) & 0xff)
+#define PCI_CAP_PWRMGMT	1
+#define PCI_CAP_AGP	2
+#define PCI_CAP_VPD	3
+#define PCI_CAP_SLOTID	4
+#define PCI_CAP_MBI	5
+#define PCI_CAP_HOTSWAP	6
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
