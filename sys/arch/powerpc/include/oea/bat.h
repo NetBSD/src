@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.2 2003/02/05 07:05:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,25 +71,25 @@
 #define	_POWERPC_OEA_BAT_H_
 
 struct bat {
-	u_int32_t batu;
-	u_int32_t batl;
+	register_t batu;
+	register_t batl;
 };
 
 /* Lower BAT bits (all but PowerPC 601): */
-#define	BAT_PBS		0xfffe0000	/* physical block start */
+#define	BAT_RPN		0xfffe0000	/* physical block start */
 #define	BAT_W		0x00000040	/* 1 = write-through, 0 = write-back */
 #define	BAT_I		0x00000020	/* cache inhibit */
 #define	BAT_M		0x00000010	/* memory coherency enable */
 #define	BAT_G		0x00000008	/* guarded region (not on 601) */
 
-#define	BAT_PP      0x00000003	/* PP mask */
+#define	BAT_PP		0x00000003	/* PP mask */
 #define	BAT_PP_NONE	0x00000000	/* no access permission */
 #define	BAT_PP_RO_S	0x00000001	/* read-only (soft) */
 #define	BAT_PP_RW	0x00000002	/* read/write */
 #define	BAT_PP_RO	0x00000003	/* read-only */
 
 /* Upper BAT bits (all but PowerPC 601): */
-#define	BAT_EBS		0xfffe0000	/* effective block start */
+#define	BAT_EPI		0xfffe0000	/* effective block start */
 #define	BAT_BL		0x00001ffc	/* block length */
 #define	BAT_Vs		0x00000002	/* valid in supervisor mode */
 #define	BAT_Vu		0x00000001	/* valid in user mode */
@@ -111,13 +111,13 @@ struct bat {
 #define	BAT_BL_256M	0x00001ffc
 
 #define	BATU(va, len, v)						\
-	(((va) & BAT_EBS) | ((len) & BAT_BL) | ((v) & BAT_V))
+	(((va) & BAT_EPI) | ((len) & BAT_BL) | ((v) & BAT_V))
 
 #define	BATL(pa, wimg, pp)						\
-	(((pa) & BAT_PBS) | (wimg) | (pp))
+	(((pa) & BAT_RPN) | (wimg) | (pp))
 
 #define BAT_VA_MATCH_P(batu,va) \
-  (((~(((batu)&BAT_BL)<<15))&(va)&BAT_EBS)==((batu)&BAT_EBS))
+  (((~(((batu)&BAT_BL)<<15))&(va)&BAT_EPI)==((batu)&BAT_EPI))
 
 #define BAT_VALID_P(batu, msr) \
   (((msr)&PSL_PR)?(((batu)&BAT_Vu)==BAT_Vu):(((batu)&BAT_Vs)==BAT_Vs))
