@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.42 2000/01/10 03:16:25 matt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.43 2000/01/13 06:33:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -164,36 +164,36 @@ ibcs2_sys_waitsys(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(__i386__)
 	struct ibcs2_sys_waitsys_args /* {
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 	} */ *uap = v;
+#endif
 	int error;
 	struct sys_wait4_args w4;
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
 
-	
 	SCARG(&w4, rusage) = NULL;
 	SCARG(&w4, status) = stackgap_alloc(&sg, sizeof(int));
 
 #if defined(__i386__)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	if ((p->p_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
-#endif
-#if defined(__vax__)
-	if (p != NULL) {	/* XXX */
-#endif
 		/* waitpid */
 		SCARG(&w4, pid) = SCARG(uap, a1);
 		SCARG(&w4, options) = SCARG(uap, a3);
 	} else {
+#endif
 		/* wait */
 		SCARG(&w4, pid) = WAIT_ANY;
 		SCARG(&w4, options) = 0;
+#if defined(__i386__)
 	}
+#endif
 
 	if ((error = sys_wait4(p, &w4, retval)) != 0)
 		return error;
