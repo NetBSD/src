@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.6 1995/08/04 01:17:26 thorpej Exp $	*/
+/*	$NetBSD: arp.c,v 1.7 1995/09/11 21:11:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -157,15 +157,15 @@ arprecv(d, pkt, len, tleft)
 	register size_t len;
 	time_t tleft;
 {
-	register struct ether_header *eh;
 	register struct ether_arp *ah;
+	u_int16_t etype;	/* host order */
 
 #ifdef ARP_DEBUG
  	if (debug)
 		printf("arprecv: ");
 #endif
 
-	len = readether(d, pkt, len, tleft);
+	len = readether(d, pkt, len, tleft, &etype);
 	if (len == -1 || len < sizeof(struct ether_arp)) {
 #ifdef ARP_DEBUG
 		if (debug)
@@ -174,37 +174,42 @@ arprecv(d, pkt, len, tleft)
 		goto bad;
 	}
 
-	eh = (struct ether_header *)pkt - 1;
-	if (eh->ether_type != htons(ETHERTYPE_ARP)) {
+	if (etype != ETHERTYPE_ARP) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("not arp %d\n", ntohs(eh->ether_type));
-#endif
-		goto bad;
-	}
-	/* Must be to us */
-	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
-	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
-#ifdef ARP_DEBUG
-		if (debug)
-			printf("not ours %s\n", ether_sprintf(eh->ether_dhost));
+			printf("not arp type=%d\n", etype);
 #endif
 		goto bad;
 	}
 
+	/* Ethernet address now checked in readether() */
+
 	ah = (struct ether_arp *)pkt;
-	HTONS(ah->arp_hrd);
-	HTONS(ah->arp_pro);
-	HTONS(ah->arp_op);
-	if (ah->arp_hrd != ARPHRD_ETHER || ah->arp_pro != ETHERTYPE_IP ||
+	if (ah->arp_hrd != htons(ARPHRD_ETHER) ||
+	    ah->arp_pro != htons(ETHERTYPE_IP) ||
 	    ah->arp_hln != sizeof(ah->arp_sha) ||
-	    ah->arp_pln != sizeof(ah->arp_spa) || ah->arp_op != ARPOP_REPLY) {
+	    ah->arp_pln != sizeof(ah->arp_spa) )
+	{
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("not valid reply\n");
+			printf("bad hrd/pro/hln/pln\n")
 #endif
 		goto bad;
 	}
+
+	if (ah->arp_op == htons(ARPOP_REQUEST)) {
+		arp_reply(d, ah);
+		goto bad;
+	}
+
+	if (ah->arp_op != htons(ARPOP_REPLY)) {
+#ifdef ARP_DEBUG
+		if (debug)
+			printf("not ARP reply\n");
+#endif
+		goto bad;
+	}
+
 	if (bcmp(&arp_list[arp_num].addr, ah->arp_spa, sizeof(long)) != 0 ||
 	    bcmp(&d->myip, ah->arp_tpa, sizeof(d->myip)) != 0) {
 #ifdef ARP_DEBUG
@@ -225,4 +230,61 @@ arprecv(d, pkt, len, tleft)
 bad:
 	errno = 0;
 	return (-1);
+}
+
+/*
+ * Convert an ARP request into a reply and send it.
+ * Notes:  Re-uses buffer.  Min send length = 60.
+ */
+void
+arp_reply(d, pkt)
+	register struct iodesc *d;
+	register void *pkt;		/* the request */
+{
+	struct ether_arp *arp = pkt;
+
+	if (arp->arp_hrd != htons(ARPHRD_ETHER) ||
+	    arp->arp_pro != htons(ETHERTYPE_IP) ||
+	    arp->arp_hln != sizeof(arp->arp_sha) ||
+	    arp->arp_pln != sizeof(arp->arp_spa) )
+	{
+#ifdef ARP_DEBUG
+		if (debug)
+			printf("arp_reply: bad hrd/pro/hln/pln\n")
+#endif
+		return;
+	}
+
+	if (arp->arp_op != htons(ARPOP_REQUEST)) {
+#ifdef ARP_DEBUG
+		if (debug)
+			printf("arp_reply: not request!\n");
+#endif
+		return;
+	}
+
+	/* If we are not the target, ignore the request. */
+	if (bcmp(arp->arp_tpa, &d->myip, sizeof(arp->arp_tpa)))
+		return;
+
+#ifdef ARP_DEBUG
+	if (debug) {
+		printf("arp_reply: to %s\n",
+		       ether_sprintf(arp->arp_sha));
+	}
+#endif
+
+	arp->arp_op = htons(ARPOP_REPLY);
+	/* source becomes target */
+	bcopy(arp->arp_sha, arp->arp_tha, sizeof(arp->arp_tha));
+	bcopy(arp->arp_spa, arp->arp_tpa, sizeof(arp->arp_tpa));
+	/* here becomes source */
+	bcopy(d->myea,  arp->arp_sha, sizeof(arp->arp_sha));
+	bcopy(&d->myip, arp->arp_spa, sizeof(arp->arp_spa));
+
+	/*
+	 * No need to get fancy here.  If the send fails, the
+	 * requestor will just ask again.
+	 */
+	(void) sendether(d, pkt, 60, arp->arp_tha, ETHERTYPE_ARP);
 }
