@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.8 1995/05/01 11:07:40 mycroft Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.9 1995/06/23 01:33:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -524,7 +524,7 @@ vga_string(int number)
 		"s3 924",
 		"s3 801/805",
 		"s3 928",
-		"unkown s3",
+		"unknown s3",
 		"cl-gd5402",
 		"cl-gd5402r1",
 		"cl-gd5420",
