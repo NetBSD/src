@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.27 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.28 2004/08/27 15:55:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.27 2004/04/09 23:10:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.28 2004/08/27 15:55:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -409,13 +409,13 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		RF_ASSERT(xorNode->numAntecedents == nRodNodes);
 		tmpNode = rodNodes;
 		for (i = 0; i < nRodNodes; i++) {
-			RF_ASSERT(tmpNode.numAntecedents == 1);
+			RF_ASSERT(tmpNode->numAntecedents == 1);
 			blockNode->succedents[i] = tmpNode;
 			tmpNode->antecedents[0] = blockNode;
 			tmpNode->antType[0] = rf_control;
 
 			/* connect the Rod nodes to the Xor node */
-			RF_ASSERT(tmpNode.numSuccedents == 1);
+			RF_ASSERT(tmpNode->numSuccedents == 1);
 			tmpNode->succedents[0] = xorNode;
 			xorNode->antecedents[i] = tmpNode;
 			xorNode->antType[i] = rf_trueData;
@@ -1110,7 +1110,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_ASSERT(commitNode->numSuccedents == (numDataNodes + (nfaults * numParityNodes)));
 	tmpwriteDataNode = writeDataNodes;
 	for (i = 0; i < numDataNodes; i++) {
-		RF_ASSERT(tmpwriteDataNodes->numAntecedents == 1);
+		RF_ASSERT(tmpwriteDataNode->numAntecedents == 1);
 		commitNode->succedents[i] = tmpwriteDataNode;
 		tmpwriteDataNode->antecedents[0] = commitNode;
 		tmpwriteDataNode->antType[0] = rf_trueData;
