@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.40 1999/02/04 11:58:30 christos Exp $
+#	$NetBSD: bsd.doc.mk,v 1.41 1999/02/12 01:10:06 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -11,7 +11,7 @@ __initialized__:
 .endif
 
 .PHONY:		cleandoc docinstall print spell
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 realinstall:	docinstall
 .endif
 clean cleandir distclean: cleandoc
@@ -28,7 +28,7 @@ SOELIM?=	soelim
 TBL?=		tbl
 
 .if !target(all)
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 all: paper.ps
 .else
 all:
@@ -48,7 +48,7 @@ print: paper.ps
 cleandoc:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
-.if !defined(NODOC)
+.if ${MKDOC} != "no"
 FILES?=	${SRCS}
 .for F in ${FILES} ${EXTRA} Makefile
 docinstall:: ${DESTDIR}${DOCDIR}/${DIR}/${F}

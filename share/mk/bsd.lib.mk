@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.147 1999/02/04 11:58:30 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.148 1999/02/12 01:10:07 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -58,13 +58,13 @@ checkver:
 #		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
 # APICFLAGS:	flags for ${AS} to assemble .[sS]  to .so objects.
 
-.if (${MACHINE_ARCH} == "alpha")
+.if ${MACHINE_ARCH} == "alpha"
 		# Alpha-specific shared library flags
 CPICFLAGS ?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
-.elif (${MACHINE_ARCH} == "mips")
+.elif ${MACHINE_ARCH} == "mips"
 		# mips-specific shared library flags
 
 # On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
@@ -94,7 +94,7 @@ APICFLAGS?= -k
 .endif
 
 # Platform-independent linker flags for ELF shared libraries
-.if (${OBJECT_FMT} == "ELF")
+.if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 SHLIB_SHFLAGS=-soname lib${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
@@ -178,25 +178,25 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if defined(NOPIC) || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| !defined(NOLINKLIB)
+.if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
+	|| ${MKLINKLIB} != "no"
 _LIBS=lib${LIB}.a
 .else
 _LIBS=
 .endif
 
-.if !defined(NOPROFILE) && !defined(NOLINKLIB)
+.if ${MKPROFILE} != "no" && ${MKLINKLIB} != "no"
 _LIBS+=lib${LIB}_p.a
 .endif
 
-.if !defined(NOPIC)
+.if ${MKPIC} != "no"
 _LIBS+=lib${LIB}_pic.a
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
 .endif
 
-.if !defined(NOLINT) && !defined(NOLINKLIB)
+.if ${MKLINT} != "no" && ${MKLINKLIB} != "no"
 _LIBS+=llib-l${LIB}.ln
 .endif
 
@@ -239,7 +239,7 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    ${SHLIB_LDSTARTFILE} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
-.if (${OBJECT_FMT} == "ELF")
+.if ${OBJECT_FMT} == "ELF"
 	rm -f lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    lib${LIB}.so.${SHLIB_MAJOR}
@@ -271,10 +271,10 @@ afterdepend: .depend
 .endif
 
 .if !target(libinstall)
-# Make sure it gets defined, in case NOPIC && NOLINKLIB are defined
+# Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
 libinstall::
 
-.if !defined(NOLINKLIB)
+.if ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
@@ -287,7 +287,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 .endif
 
-.if !defined(NOPROFILE) && !defined(NOLINKLIB)
+.if ${MKPROFILE} != "no" && ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
@@ -300,7 +300,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
-.if !defined(NOPIC) && !defined(NOPICINSTALL) && !defined(NOLINKLIB)
+.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no" && ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
@@ -313,7 +313,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 .endif
 
-.if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
+.if ${MKPIC} != "no" && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
@@ -326,22 +326,22 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${LIBOWN} -g ${LIBGRP} \
 		-m ${LIBMODE} ${.ALLSRC} ${.TARGET}
-.if (${OBJECT_FMT} == "a.out" && !defined(DESTDIR))
+.if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
 	/sbin/ldconfig -m ${LIBDIR}
 .endif
-.if (${OBJECT_FMT} == "ELF")
+.if ${OBJECT_FMT} == "ELF"
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
-.if !defined(NOLINKLIB)
+.if ${MKLINKLIB} != "no"
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
 .endif
 
-.if !defined(NOLINT) && !defined(NOLINKLIB)
+.if ${MKLINT} != "no" && ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln

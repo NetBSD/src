@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.44 1998/11/07 09:40:35 erh Exp $
+#	$NetBSD: bsd.README,v 1.45 1999/02/12 01:10:06 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -58,17 +58,49 @@ The profiled libraries are no longer built in a different directory than
 the regular libraries.  A new suffix, ".po", is used to denote a profiled
 object, and ".so" denotes a shared (position-independent) object.
 
-There are two variables that control how things are made/installed that
-are not set by default:
+The following variables that control how things are made/installed that
+are not set by default. These should not be set by Makefiles; they're
+for the user to define in /etc/mk.conf or on the make(1) command line:
 
-BUILD 		If set 'make install' checks that the targets in the source
-                directories are up-to-date and remakes them if they
+BUILD 		If defined, 'make install' checks that the targets in the
+		source directories are up-to-date and remakes them if they
                 are out of date, instead of blindly trying to install
                 out of date or non-existant targets.
 
-UPDATE 		'make install' only installs targets that are more recently
-                modified in the source directories that their installed
-                counterparts.
+UPDATE 		If defined, 'make install' only installs targets that are
+		more recently modified in the source directories that their
+		installed counterparts.
+
+MKCATPAGES	If "no", don't build or install the catman pages.
+
+MKDOC		If "no", don't build or install the documentation.
+
+MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
+		Also:
+			- don't install the .a libraries
+			- don't install _pic.a libraries on PIC systems
+			- don't build .a libraries on PIC systems
+			- don't install the .so symlink on ELF systems
+		I.e, only install the shared library (and the .so.major
+		symlink on ELF).
+
+MKLINT		If "no", don't build or install the lint libraries.
+
+MKMAN		If "no", don't build or install the man or catman pages.
+
+MKNLS		If "no", don't build or install the NLS files.
+
+MKOBJ		If "no", don't create objdirs.
+
+MKPIC		If "no", don't build or install shared libraries.
+
+MKPICINSTALL	If "no", don't install the *_pic.a libraries.
+
+MKPROFILE	If "no", don't build or install the profiling libraries.
+
+MKSHARE		If "no", act as "MKDOC=no MKMAN=no MKNLS=no".
+		I.e, don't build documentation, info pages, man pages,
+		NLS files, etc.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -215,7 +247,7 @@ NOPROFILE	Do not build profiled versions of system libraries
 
 NOPIC		Do not build PIC versions of system libraries, and
 		do not build shared libraries.  [set if ${MACHINE_ARCH}
-		is "vax" "powerpc", unset otherwise.]
+		is "sparc64", unset otherwise.]
 
 NOLINT		Do not build lint libraries.
 

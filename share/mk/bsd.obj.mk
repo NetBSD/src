@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.obj.mk,v 1.15 1998/08/27 20:33:45 tv Exp $
+#	$NetBSD: bsd.obj.mk,v 1.16 1999/02/12 01:10:07 lukem Exp $
 
-.if defined(NOOBJ)
+.if ${MKOBJ} == "no"
 obj:
 .else
 
