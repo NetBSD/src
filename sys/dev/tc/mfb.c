@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.39 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: mfb.c,v 1.40 2003/12/17 03:59:33 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.39 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.40 2003/12/17 03:59:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ mfbioctl(v, cmd, data, flag, p)
 {
 	struct mfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
-	int turnoff;
+	int turnoff, s;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -383,8 +383,10 @@ mfbioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_SCURPOS:
+		s = spltty();
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
+		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
+		splx(s);
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -397,6 +399,16 @@ mfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			s = spltty();
+			sc->sc_curenb = 0;
+			sc->sc_blanked = 0;
+			sc->sc_changed |= WSDISPLAY_CURSOR_DOCUR;
+			splx(s);
+		}
+		return (0);
 	}
 	return (EPASSTHROUGH);
 }
@@ -494,7 +506,7 @@ mfbintr(arg)
 	*(u_int8_t *)(base + MX_IREQ_OFFSET) = 0;
 #endif
 	if (sc->sc_changed == 0)
-		goto done;
+		return (1);
 
 	vdac = base + MX_BT455_OFFSET;
 	curs = base + MX_BT431_OFFSET;
@@ -569,7 +581,6 @@ mfbintr(arg)
 		}
 	}
 	sc->sc_changed = 0;	
-done:
 	return (1);
 }
 
@@ -630,7 +641,7 @@ set_cursor(sc, p)
 	uint64_t image[CURSOR_MAX_SIZE];
 	uint64_t mask[CURSOR_MAX_SIZE];
 	uint8_t color[6];
-	int error;
+	int error, s;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -654,6 +665,7 @@ set_cursor(sc, p)
 			return error;
 	}
 
+	s = spltty();
 	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
 	if (v & WSDISPLAY_CURSOR_DOPOS)
@@ -669,7 +681,8 @@ set_cursor(sc, p)
 		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
 		memcpy(cc->cc_mask, mask, icount);
 	}
-	sc->sc_changed = v;
+	sc->sc_changed |= v;
+	splx(s);
 
 	return (0);
 #undef cc

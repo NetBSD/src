@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.34 2003/12/13 23:02:50 ad Exp $ */
+/* $NetBSD: xcfb.c,v 1.35 2003/12/17 03:59:33 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.34 2003/12/13 23:02:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.35 2003/12/17 03:59:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ static const struct wsdisplay_accessops xcfb_accessops = {
 
 static int  xcfbintr __P((void *));
 static void xcfb_screenblank __P((struct xcfb_softc *));
+static void xcfb_cmap_init __P((struct xcfb_softc *));
 static int  set_cmap __P((struct xcfb_softc *, struct wsdisplay_cmap *));
 static int  get_cmap __P((struct xcfb_softc *, struct wsdisplay_cmap *));
 static int  set_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
@@ -224,9 +225,7 @@ xcfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap256 *cm;
-	const u_int8_t *p;
-	int console, index;
+	int console;
 
 	console = (ta->ta_addr == xcfb_consaddr);
 	if (console) {
@@ -248,13 +247,7 @@ xcfbattach(parent, self, aux)
 	}
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
 
-	cm = &sc->sc_cmap;
-	p = rasops_cmap;
-	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
-		cm->r[index] = p[0];
-		cm->g[index] = p[1];
-		cm->b[index] = p[2];
-	}
+	xcfb_cmap_init(sc);
 
 	sc->sc_vaddr = ta->ta_addr;
 	sc->sc_blanked = 0;
@@ -268,6 +261,23 @@ xcfbattach(parent, self, aux)
 	waa.accesscookie = sc;
 
 	config_found(self, &waa, wsemuldisplaydevprint);
+}
+
+static void
+xcfb_cmap_init(sc)
+	struct xcfb_softc *sc;
+{
+	struct hwcmap256 *cm;
+	const u_int8_t *p;
+	int index;
+
+	cm = &sc->sc_cmap;
+	p = rasops_cmap;
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+		cm->r[index] = p[0];
+		cm->g[index] = p[1];
+		cm->b[index] = p[2];
+	}
 }
 
 static void
@@ -456,6 +466,17 @@ xcfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			sc->sc_csr |= IMS332_CSR_A_DISABLE_CURSOR;
+			ims332_write_reg(IMS332_REG_CSR_A, sc->sc_csr);
+			xcfb_cmap_init(sc);
+			ims332_loadcmap(&sc->sc_cmap);
+			sc->sc_blanked = 0;
+			xcfb_screenblank(sc);
+		}
+		return (0);
 	}
 	return (EPASSTHROUGH);
 }

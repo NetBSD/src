@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.26 2003/11/13 03:09:29 chs Exp $	*/
+/*	$NetBSD: stic.c,v 1.27 2003/12/17 03:59:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.26 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.27 2003/12/17 03:59:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,6 +561,7 @@ int
 sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct stic_info *si;
+	int s;
 
 	si = v;
 
@@ -623,7 +624,9 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (si->si_dispmode == WSDISPLAYIO_MODE_EMUL) {
 			(*si->si_ioctl)(si, STICIO_STOPQ, NULL, flag, p);
 			stic_setup_vdac(si);
+			s = spltty();
 			stic_flush(si);
+			splx(s);
 			stic_clear_screen(si);
 			stic_do_switch(si->si_curscreen);
 		}
@@ -1447,12 +1450,7 @@ stic_set_hwcurpos(struct stic_info *si)
 /*
  * STIC control inteface.  We have a separate device for mapping the board,
  * because access to the DMA engine means that it's possible to circumvent
- * the securelevel mechanism.  Given the way devices work in the BSD kernel,
- * and given the unfortunate design of the mmap() call it's near impossible
- * to protect against this using a shared device (i.e. wsdisplay).
- *
- * This is a gross hack... Hopefully not too many other devices will need
- * it.
+ * the securelevel mechanism.
  */
 int
 sticopen(dev_t dev, int flag, int mode, struct proc *p)
