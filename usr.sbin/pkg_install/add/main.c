@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.14 2000/01/19 23:28:28 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2000/06/16 23:48:23 sjg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2000/01/19 23:28:28 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2000/06/16 23:48:23 sjg Exp $");
 #endif
 #endif
 
@@ -197,7 +197,7 @@ main(int argc, char **argv)
 	if ((error = pkg_perform(&pkgs)) != 0) {
 		if (Verbose)
 			warnx("%d package addition(s) failed", error);
-		return error;
-	} else
-		return 0;
+		exit(1);
+	}
+	exit(0);
 }
