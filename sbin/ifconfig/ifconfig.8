@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.59 2002/09/22 15:29:23 thorpej Exp $
+.\"	$NetBSD: ifconfig.8,v 1.60 2002/09/25 00:24:25 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd April 27, 2001
+.Dd September 25, 2002
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -254,7 +254,7 @@ Set the maximum transmission unit of the interface to
 .Ar n .
 Most interfaces don't support this option.
 .It Cm netmask Ar mask
-.Pq inet, inet6 and ISO
+.Pq inet, inet6, and ISO
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
 The mask includes the network part of the local address
@@ -364,7 +364,7 @@ Set the desired BSSID for IEEE 802.11-based wireless network interfaces.
 .It Fl bssid
 .Pq IEEE 802.11 devices only
 Unset the desired BSSID for IEEE 802.11-based wireless network interfaces.
-The interface will automatically selected a BSSID in this mode, which is
+The interface will automatically select a BSSID in this mode, which is
 the default.
 .It Cm channel Ar chan
 .Pq IEEE 802.11 devices only
