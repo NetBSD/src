@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.9 2002/05/29 18:15:18 christos Exp $	*/
+/*	$NetBSD: deflate.h,v 1.10 2003/03/18 19:53:15 mycroft Exp $	*/
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: deflate.h,v 1.9 2002/05/29 18:15:18 christos Exp $ */
+/* @(#) $Id: deflate.h,v 1.10 2003/03/18 19:53:15 mycroft Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -70,7 +70,7 @@ typedef struct static_tree_desc_s  static_tree_desc;
 typedef struct tree_desc_s {
     ct_data *dyn_tree;           /* the dynamic tree */
     int     max_code;            /* largest code with non zero frequency */
-    static_tree_desc *stat_desc; /* the corresponding static tree */
+    const static_tree_desc *stat_desc; /* the corresponding static tree */
 } FAR tree_desc;
 
 typedef ush Pos;

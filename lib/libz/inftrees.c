@@ -1,4 +1,4 @@
-/* $NetBSD: inftrees.c,v 1.8 2003/03/08 07:42:36 lukem Exp $ */
+/* $NetBSD: inftrees.c,v 1.9 2003/03/18 19:53:16 mycroft Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inftrees.c,v 1.8 2003/03/08 07:42:36 lukem Exp $");
+__RCSID("$NetBSD: inftrees.c,v 1.9 2003/03/18 19:53:16 mycroft Exp $");
 
 #include "zutil.h"
 #include "inftrees.h"
@@ -403,8 +403,8 @@ local inflate_huft *fixed_td;
 int inflate_trees_fixed(bl, bd, tl, td, z)
 uIntf *bl;               /* literal desired/actual bit depth */
 uIntf *bd;               /* distance desired/actual bit depth */
-inflate_huft * FAR *tl;  /* literal/length tree result */
-inflate_huft * FAR *td;  /* distance tree result */
+const inflate_huft * FAR *tl;  /* literal/length tree result */
+const inflate_huft * FAR *td;  /* distance tree result */
 z_streamp z;             /* for memory allocation */
 {
 #ifdef BUILDFIXED
