@@ -346,7 +346,7 @@ BUILDING
                 actually execute them.  This will still cause recursion to
                 take place.
 
-     -v var     Print make(1)'s idea of the value of var.  Does not build any
+     -V var     Print make(1)'s idea of the value of var.  Does not build any
                 targets.
 
      var=value  Set the variable var to value, overriding any setting speci-
@@ -547,4 +547,4 @@ HISTORY
 BUGS
      A few platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                            May 3, 2002                                9
+NetBSD                           Dec 23, 2003                                9
