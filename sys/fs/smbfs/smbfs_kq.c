@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.1 2003/03/02 22:06:51 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.1 2003/03/02 22:06:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,12 @@ smbfs_kqpoll(void *arg)
 			osize = ke->vp->v_size;
 
 			error = VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
+			if (error)
+				continue;
 
 			/* following is a bit fragile, but about best
 			 * we can get */
-			if (attr.va_size != osize) {
+			if (ke->vp->v_type != VDIR && attr.va_size != osize) {
 				int extended = (attr.va_size > osize);
 				VN_KNOTE(ke->vp, NOTE_WRITE
 					| (extended ? NOTE_EXTEND : 0));
@@ -228,6 +230,27 @@ filt_smbfsread(struct knote *kn, long hint)
 	if (hint == NOTE_REVOKE) {
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
+	}
+
+	/* There is no size info for directories */
+	if (((struct vnode *)kn->kn_hook)->v_type == VDIR) {
+		/*
+		 * This is kind of hackish, since we need to
+		 * set the flag when we are called with the hint
+		 * to make confirming call from kern_event.c
+		 * succeed too, but need to unset it afterwards
+		 * so that the directory wouldn't stay flagged
+		 * as changed.
+		 * XXX perhaps just fail for directories?
+		 */
+		if (hint & NOTE_WRITE) {
+			kn->kn_fflags |= NOTE_WRITE;
+			return (1);
+		} else if (hint == 0 && (kn->kn_fflags & NOTE_WRITE)) {
+			kn->kn_fflags &= ~NOTE_WRITE;
+			return (1);
+		} else
+			return (0);
 	}
 
 	/* XXXLUKEM lock the struct? */
