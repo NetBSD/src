@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.84 2002/08/14 00:23:34 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.85 2002/08/20 16:29:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.84 2002/08/14 00:23:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.85 2002/08/20 16:29:42 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -230,6 +230,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 #ifdef INET6
 	struct in6pcb *in6p = tp->t_in6pcb;
 #endif
+	struct socket *so;
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	int size;
@@ -258,12 +259,16 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 
 	rt = NULL;
 #ifdef INET
-	if (inp)
+	if (inp) {
 		rt = in_pcbrtentry(inp);
+		so = inp->inp_socket;
+	}
 #endif
 #ifdef INET6
-	if (in6p)
+	if (in6p) {
 		rt = in6_pcbrtentry(in6p);
+		so = in6p->in6p_socket;
+	}
 #endif
 	if (rt == NULL) {
 		size = tcp_mssdflt;
@@ -350,6 +355,15 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	 * I'm not quite sure about this (could someone comment).
 	 */
 	*txsegsizep = min(tp->t_peermss - optlen, size);
+	/*
+	 * Never send more than half a buffer full.  This insures that we can
+	 * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
+	 * therefore ACKs will never be delayed unless we run out of data to
+	 * transmit.
+	 */
+	if (so)
+		*txsegsizep = min((so->so_snd.sb_hiwat >> 1) - optlen,
+		    *txsegsizep);
 	*rxsegsizep = min(tp->t_ourmss - optlen, size);
 
 	if (*txsegsizep != tp->t_segsz) {
