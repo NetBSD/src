@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.75 2000/02/01 05:51:31 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.76 2000/02/01 10:21:00 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.74 2000/02/01 05:50:18 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.75 2000/02/01 10:19:51 enami Exp 
  */
 
 /*-
@@ -353,6 +353,7 @@
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
+#define	PCMCIA_VENDOR_MELCO	-1	/* Melco Inc */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -428,3 +429,6 @@
 #define	PCMCIA_CIS_EXP_EXPMULTIMEDIA	{ "EXP   ", "PnPIDE", "F1", NULL }
 #define	PCMCIA_PRODUCT_EXP_EXPMULTIMEDIA	-1
 #define	PCMCIA_STR_EXP_EXPMULTIMEDIA	"EXP IDE/ATAPI DVD Card"
+#define	PCMCIA_CIS_MELCO_WLI_PCM	{ "AMD", "Am79C930", NULL, NULL }
+#define	PCMCIA_PRODUCT_MELCO_WLI_PCM	-1
+#define	PCMCIA_STR_MELCO_WLI_PCM	"Melco WLI-PCM"
