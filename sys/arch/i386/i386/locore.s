@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.66 1994/05/05 08:44:53 mycroft Exp $
+ *	$Id: locore.s,v 1.67 1994/05/13 00:50:41 cgd Exp $
  */
 
 /*
@@ -1385,10 +1385,10 @@ ENTRY(longjmp)
 	.globl	_whichqs,_qs,_cnt,_panic
 
 /*
- * setrq(struct proc *p);
+ * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
-ENTRY(setrq)
+ENTRY(setrunqueue)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
 	cmpl	$0,P_BACK(%eax)	# should not be on q already
@@ -1412,7 +1412,7 @@ ENTRY(setrq)
 1:	pushl	$2f
 	call	_panic
 	/*NOTREACHED*/
-2:	.asciz	"setrq"
+2:	.asciz	"setrunqueue"
 #endif
 
 /*
