@@ -33,16 +33,19 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strerror.c,v 1.2 1994/10/06 18:17:52 jtc Exp $";
+static char *rcsid = "$Id: __strerror.c,v 1.3 1994/10/10 04:52:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
 #define catclose	__catclose
 #define catgets		__catgets
 #define catopen		__catopen
+#define sys_errlist	__sys_errlist
+#define sys_nerr	__sys_nerr
 #include <nl_types.h>
 #endif
 
+#include <stdio.h>
 #include <string.h>
 
 /*
@@ -50,9 +53,6 @@ static char *rcsid = "$Id: __strerror.c,v 1.2 1994/10/06 18:17:52 jtc Exp $";
  * static buffer, both functions supply their own buffers to the
  * internal function __strerror().
  */
-
-extern char *sys_errlist[];
-extern int sys_nerr;
 
 char *
 __strerror(num, buf)
