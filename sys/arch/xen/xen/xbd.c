@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.8 2004/05/07 14:15:11 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.9 2004/05/10 01:39:39 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.8 2004/05/07 14:15:11 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9 2004/05/10 01:39:39 cl Exp $");
 
 #include "xbd.h"
 
@@ -351,6 +351,7 @@ static xen_disk_t *vbd_info;
 static blk_ring_t *blk_ring = NULL;
 static BLK_RING_IDX resp_cons; /* Response consumer for comms ring. */
 static BLK_RING_IDX req_prod;  /* Private request producer.         */
+static BLK_RING_IDX last_req_prod;  /* Request producer at last trap. */
 
 #define STATE_ACTIVE    0
 #define STATE_SUSPENDED 1
@@ -448,7 +449,7 @@ init_interface(void)
 		    blk_ring, (void *)(op.u.ring_mfn << PAGE_SHIFT)));
 
 		blk_ring->req_prod = blk_ring->resp_prod =
-			resp_cons = req_prod = 0;
+			resp_cons = req_prod = last_req_prod = 0;
 
 		event_set_handler(_EVENT_BLKDEV, &xbd_response_handler,
 		    NULL, IPL_BIO);
@@ -474,8 +475,9 @@ signal_requests_to_xen(void)
 	block_io_op_t op; 
 
 	DPRINTF(XBDB_IO, ("signal_requests_to_xen: %d -> %d\n",
-	    blk_ring->req_prod, req_prod));
-	blk_ring->req_prod = req_prod;
+	    blk_ring->req_prod, MASK_BLK_IDX(req_prod)));
+	blk_ring->req_prod = MASK_BLK_IDX(req_prod);
+	last_req_prod = req_prod;
 
 	op.cmd = BLOCK_IO_OP_SIGNAL; 
 	HYPERVISOR_block_io_op(&op);
@@ -597,7 +599,11 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	xbd_allxr = xr;
 #endif
 
-	for (i = 0; i < BLK_RING_SIZE; i++)
+	/* XXX Xen1.2: We cannot use BLK_RING_SIZE many slots, since
+	 * Xen 1.2 keeps indexes masked in the ring and the case where
+	 * we queue all slots at once is handled wrong. 
+	 */
+	for (i = 0; i < BLK_RING_SIZE - 1; i++)
 		PUT_XBDREQ(&xr[i]);
 
 	MALLOC(vbd_info, xen_disk_t *, MAX_VBDS * sizeof(xen_disk_t),
@@ -893,7 +899,7 @@ fill_ring(struct xbdreq *xr)
 	}
 	pxr->xr_data = addr;
 
-	req_prod = BLK_RING_INC(req_prod);
+	req_prod++;
 }
 
 static void
@@ -1031,7 +1037,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 
  out:
-	if (runqueue && blk_ring->req_prod != req_prod)
+	if (runqueue && last_req_prod != req_prod)
 		signal_requests_to_xen();
 
 	return ret;
@@ -1104,7 +1110,7 @@ xbd_response_handler(void *arg)
 	}
 	resp_cons = i;
 	/* check if xbdresume queued any requests */
-	if (blk_ring->req_prod != req_prod)
+	if (last_req_prod != req_prod)
 		signal_requests_to_xen();
 	return 0;
 }
