@@ -1,7 +1,7 @@
-/*	$NetBSD: clock.c,v 1.1.1.5 2002/11/29 22:58:13 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.1.6 2003/03/09 01:13:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: clock.c,v 1.9 2002/06/23 05:37:53 ib42 Exp
+ * Id: clock.c,v 1.10 2002/12/27 22:43:48 ezk Exp
  *
  */
 

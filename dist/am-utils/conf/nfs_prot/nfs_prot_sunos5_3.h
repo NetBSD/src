@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_sunos5_3.h,v 1.1.1.5 2002/11/29 22:58:37 christos Exp $	*/
+/*	$NetBSD: nfs_prot_sunos5_3.h,v 1.1.1.6 2003/03/09 01:13:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_sunos5_3.h,v 1.6 2002/02/02 20:59:00 ezk Exp
+ * Id: nfs_prot_sunos5_3.h,v 1.7 2002/12/27 22:44:01 ezk Exp
  *
  */
 

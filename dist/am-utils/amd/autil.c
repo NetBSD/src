@@ -1,7 +1,7 @@
-/*	$NetBSD: autil.c,v 1.1.1.5 2002/11/29 22:58:12 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.1.1.6 2003/03/09 01:13:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autil.c,v 1.22 2002/06/24 03:05:15 ib42 Exp
+ * Id: autil.c,v 1.27 2003/01/25 01:46:24 ib42 Exp
  *
  */
 
@@ -130,11 +130,11 @@ strsplit(char *s, int ch, int qc)
      */
     ivec[ic++] = v;
     ivec = (char **) xrealloc((voidp) ivec, (ic + 1) * sizeof(char *));
-    amuDebug(D_STR)
+    if (amuDebug(D_STR))
       plog(XLOG_DEBUG, "strsplit saved \"%s\"", v);
   }
 
-  amuDebug(D_STR)
+  if (amuDebug(D_STR))
     plog(XLOG_DEBUG, "strsplit saved a total of %d strings", ic);
 
   ivec[ic] = 0;
@@ -294,7 +294,7 @@ am_mounted(am_node *mp)
     mntent_t mnt;
     if (mf->mf_mopts) {
       mnt.mnt_opts = mf->mf_mopts;
-      if (hasmntopt(&mnt, "nounmount"))
+      if (amu_hasmntopt(&mnt, "nounmount"))
 	mp->am_flags |= AMF_NOTIMEOUT;
       if ((mp->am_timeo = hasmntval(&mnt, "utimeout")) == 0)
 	mp->am_timeo = gopt.am_timeo;
@@ -352,6 +352,11 @@ mount_node(am_node *mp)
   mntfs *mf = mp->am_mnt;
   int error = 0;
 
+#ifdef HAVE_FS_AUTOFS
+  if (mf->mf_flags & MFF_AUTOFS)
+    mf->mf_autofs_fh = autofs_get_fh(mp);
+#endif /* HAVE_FS_AUTOFS */
+
   mf->mf_flags |= MFF_MOUNTING;
   error = mf->mf_ops->mount_fs(mp, mf);
 
@@ -359,10 +364,8 @@ mount_node(am_node *mp)
   mf = mp->am_mnt;
   if (error >= 0)
     mf->mf_flags &= ~MFF_MOUNTING;
-  if (!error && !(mf->mf_fsflags & FS_MBACKGROUND)) {
-    /* ...but see ifs_mount - Huh? ifs_mount doesn't exist */
+  if (!error && !(mf->mf_fsflags & FS_MBACKGROUND))
     am_mounted(mp);
-  }
 
   return error;
 }
@@ -400,11 +403,14 @@ am_unmounted(am_node *mp)
    *
    * If we remove the mount point of a pending mount, any queued access
    * to it will fail. So don't do it in that case.
+   * Also don't do it if the refcount is > 1.
    */
   if (mf->mf_flags & MFF_MKMNT &&
+      mf->mf_refc == 1 &&
       !(mp->am_flags & AMF_REMOUNT)) {
     plog(XLOG_INFO, "removing mountpoint directory '%s'", mf->mf_real_mount);
     rmdirs(mf->mf_real_mount);
+    mf->mf_flags &= ~MFF_MKMNT;
   }
 
   /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_lofs.c,v 1.1.1.5 2002/11/29 22:58:19 christos Exp $	*/
+/*	$NetBSD: ops_lofs.c,v 1.1.1.6 2003/03/09 01:13:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_lofs.c,v 1.12 2002/03/29 20:01:28 ib42 Exp
+ * Id: ops_lofs.c,v 1.13 2002/12/27 22:43:51 ezk Exp
  *
  */
 

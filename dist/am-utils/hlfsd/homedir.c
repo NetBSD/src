@@ -1,7 +1,7 @@
-/*	$NetBSD: homedir.c,v 1.1.1.5 2002/11/29 22:59:01 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.1.1.6 2003/03/09 01:13:55 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: homedir.c,v 1.15 2002/06/23 01:38:37 ib42 Exp
+ * Id: homedir.c,v 1.17 2002/12/27 22:44:08 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -136,13 +136,10 @@ homedir(int userid, int groupid)
     }
   }
 
-#ifdef DEBUG
   /*
-   * only run this forking code if asked for -D fork
-   * or if did not ask for -D nofork
+   * only run this forking code if did not ask for -D fork
    */
-  amuDebug(D_FORK) {
-#endif /* DEBUG */
+  if (!amuDebug(D_FORK)) {
     /* fork child to process request if none in progress */
     if (found->child && kill(found->child, 0))
       found->child = 0;
@@ -158,21 +155,17 @@ homedir(int userid, int groupid)
       return alt_spooldir;
     }
     if (found->child) {		/* PARENT */
-#ifdef DEBUG
       if (lastchild)
-	plog(XLOG_INFO, "cache spill uid = %ld, pid = %ld, home = %s",
+	dlog("cache spill uid = %ld, pid = %ld, home = %s",
 	     (long) lastchild->uid, (long) lastchild->child,
 	     lastchild->home);
-#endif /* DEBUG */
       lastchild = found;
       return (char *) NULL;	/* return NULL to parent, so it can continue */
     }
-#ifdef DEBUG
-  }				/* end of Debug(D_FORK) */
-#endif /* DEBUG */
+  }
 
   /*
-   * CHILD: (or parent if -D nofork)
+   * CHILD: (or parent if -D fork)
    *
    * Check and create dir if needed.
    * Check disk space and/or quotas too.

@@ -175,7 +175,7 @@ case "$1" in
     ;;
 
     -K )
-#	mkcnf_cmd="../aux/mkconf"
+#	mkcnf_cmd="../m4/mkconf"
 	mkcnf_cmd="../bootstrap"
 	if test -f bootstrap ; then
 	    :

@@ -1,5 +1,43 @@
 # -*- text -*-
 
+*** Notes specific to am-utils version 6.1b2
+
+- new mount flag "softlookup", which determines how amd will respond to
+  lookups of NFS shares already mounted (return a valid symlink or return
+  EIO). The default, if "softlookup" is not specified, depends on whether the
+  mount is "soft" or "hard".
+
+- return EIO instead of ENOENT if amd thinks the server is down; this allows
+  well-written applications to sleep and retry the operation.
+
+- minor new ports:
+
+	i386-apple-darwin6.0
+	i386-pc-linux-rh8.0
+	ia64-unknown-linux-rh2.1AW
+	sparc-sun-solaris2.9
+
+- automatic support for loop mounts on Linux (deprecates the "loop" mount
+  option)
+
+- new amd.conf parameter ldap_proto_version (default 2) for setting the LDAP
+  protocol version to use.
+
+- bugs fixed:
+
+	* redundancy mode (multiple servers for the same share) wasn't working
+	* non-autofs mode had some rather nasty hangs on downed fileservers
+	* double-free'ing problem in assign_error_mntfs and free_continuation
+	* free'ing non-malloc'ed memory in amfs_auto_mount
+	* late server ping replies were not ignored
+	* amfs_auto_lookup_mntfs wasn't propagating errors up to callers
+	* autofs-v4 on Solaris 9 works
+	* handle std{in,out,err} correctly when releasing controlling tty
+	  (for real this time)
+	* don't cast pointers between enum_t and u_long, it doesn't work on
+	  64-bit big-endian platforms
+	* fix compile problem with mlockall() on Darwin
+
 *** Notes specific to am-utils version 6.1b1
 
 - Major Autofs work

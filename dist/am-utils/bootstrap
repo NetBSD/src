@@ -13,22 +13,22 @@ if [ ! -f amd/amd.c ]; then
 fi
 
 # validate macros directory and some macro files
-if [ ! -d aux/macros ]; then
-    echo No aux/macros directory found!
+if [ ! -d m4/macros ]; then
+    echo No m4/macros directory found!
     exit 1
 fi
-if [ ! -f aux/macros/HEADER ]; then
-    echo No aux/macros/HEADER file found!
+if [ ! -f m4/macros/HEADER ]; then
+    echo No m4/macros/HEADER file found!
     exit 1
 fi
 
 # remove any remaining autom4te.cache directory
-rm -fr autom4te.cache
+rm -fr autom4te.cache autom4te-*.cache
 
 # generate acinclude.m4 file
 echo "AMU: prepare acinclude.m4..."
 test -f acinclude.m4 && mv -f acinclude.m4 acinclude.m4.old
-(cd aux/macros
+(cd m4/macros
  for i in HEADER *.m4; do
      cat $i
      echo

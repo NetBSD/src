@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_nfs.c,v 1.1.1.5 2002/11/29 22:58:20 christos Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.1.1.6 2003/03/09 01:13:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_nfs.c,v 1.18 2002/06/23 01:05:39 ib42 Exp
+ * Id: ops_nfs.c,v 1.23 2003/01/25 01:39:41 ib42 Exp
  *
  */
 
@@ -662,7 +662,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *real_mntdir, char *fs_nam
 		   fs_name);
 
   /* finally call the mounting function */
-  amuDebug(D_TRACE) {
+  if (amuDebug(D_TRACE)) {
     print_nfs_args(&nfs_args, nfs_version);
     plog(XLOG_DEBUG, "Generic mount flags 0x%x used for NFS mount", genflags);
   }
@@ -684,11 +684,17 @@ int
 nfs_mount(am_node *am, mntfs *mf)
 {
   int error = 0;
+  mntent_t mnt;
 
   if (!mf->mf_private) {
     plog(XLOG_ERROR, "Missing filehandle for %s", mf->mf_info);
     return EINVAL;
   }
+
+  mnt.mnt_opts = mf->mf_mopts;
+  if (amu_hasmntopt(&mnt, "softlookup") ||
+      (amu_hasmntopt(&mnt, "soft") && !amu_hasmntopt(&mnt, "nosoftlookup")))
+    am->am_flags |= AMF_SOFTLOOKUP;
 
   error = mount_nfs_fh((am_nfs_handle_t *) mf->mf_private,
 		       mf->mf_mount,
@@ -768,7 +774,7 @@ nfs_umounted(mntfs *mf)
    * Call the mount daemon on the server to announce that we are not using
    * the fs any more.
    *
-   * This is *wrong*.  The mountd should be called when the fhandle is
+   * XXX: This is *wrong*.  The mountd should be called when the fhandle is
    * flushed from the cache, and a reference held to the cached entry while
    * the fs is mounted...
    */

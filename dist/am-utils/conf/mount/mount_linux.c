@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.5 2002/11/29 22:58:29 christos Exp $	*/
+/*	$NetBSD: mount_linux.c,v 1.1.1.6 2003/03/09 01:13:22 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_linux.c,v 1.33 2002/03/29 01:46:24 ezk Exp
+ * Id: mount_linux.c,v 1.36 2002/12/27 22:43:56 ezk Exp
  */
 
 /*
@@ -97,9 +97,6 @@ const struct fs_opts iso_opts[] = {
   { "mode",	1 },
   { "gid",	1 },
   { "uid",	1 },
-#ifdef HAVE_LOOP_DEVICE
-  { "loop",	1 },		/* XXX: 0 or 1 for "type" */
-#endif /* HAVE_LOOP_DEVICE */
   { NULL,	0 }
 };
 
@@ -197,18 +194,9 @@ parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
 
 do_opts:
       while (dev_opts->opt &&
-	     (!NSTREQ(dev_opts->opt, opt, strlen(dev_opts->opt))
-#ifdef HAVE_LOOP_DEVICE
-	      /* also skip "loop", but not "loop=/dev/loopX" */
-	      || STREQ(MNTTAB_OPT_LOOP, opt))
-#endif /* HAVE_LOOP_DEVICE */
-	     ) {
+	     (!NSTREQ(dev_opts->opt, opt, strlen(dev_opts->opt)))) {
 	++dev_opts;
       }
-#ifdef HAVE_LOOP_DEVICE
-      if (dev_opts->opt && STREQ(MNTTAB_OPT_LOOP, opt))
-	++dev_opts;
-#endif /* HAVE_LOOP_DEVICE */
       if (dev_opts->opt && *xopts) {
 	strcat(*xopts, opt);
 	strcat(*xopts, ",");
@@ -250,27 +238,243 @@ linux_version_code(void)
 int
 do_mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 {
-  int errorcode;
-  char *fs_name = mnt->mnt_fsname;
-
-#ifdef DEBUG
-  amuDebug(D_FULL) {
-    plog(XLOG_DEBUG, "do_mount_linux: fsname %s\n", fs_name);
+  if (amuDebug(D_FULL)) {
+    plog(XLOG_DEBUG, "do_mount_linux: fsname %s\n", mnt->mnt_fsname);
     plog(XLOG_DEBUG, "do_mount_linux: type (mntent) %s\n", mnt->mnt_type);
     plog(XLOG_DEBUG, "do_mount_linux: opts %s\n", mnt->mnt_opts);
     plog(XLOG_DEBUG, "do_mount_linux: dir %s\n", mnt->mnt_dir);
   }
-#endif /* DEBUG */
 
   /*
    * If we have an nfs mount, the 5th argument to system mount() must be the
    * nfs_mount_data structure, otherwise it is the return from parse_opts()
    */
-  errorcode = mount(fs_name,
-		    mnt->mnt_dir,
-		    type,
-		    MS_MGC_VAL | flags,
-		    data);
+  return mount(mnt->mnt_fsname,
+	       mnt->mnt_dir,
+	       type,
+	       MS_MGC_VAL | flags,
+	       data);
+}
+
+
+int
+mount_linux_nfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
+{
+  nfs_args_t *mnt_data = (nfs_args_t *) data;
+  int errorcode;
+
+  /* Fake some values for linux */
+  mnt_data->version = NFS_MOUNT_VERSION;
+  if (!mnt_data->timeo) {
+#ifdef MNT2_NFS_OPT_TCP
+    if (mnt_data->flags & MNT2_NFS_OPT_TCP)
+      mnt_data->timeo = 600;
+    else
+#endif /* MNT2_NFS_OPT_TCP */
+      mnt_data->timeo = 7;
+  }
+  if (!mnt_data->retrans)
+    mnt_data->retrans = 3;
+
+#ifdef MNT2_NFS_OPT_NOAC
+  if (!(mnt_data->flags & MNT2_NFS_OPT_NOAC)) {
+    if (!mnt_data->acregmin)
+      mnt_data->acregmin = 3;
+    if (!mnt_data->acregmax)
+      mnt_data->acregmax = 60;
+    if (!mnt_data->acdirmin)
+      mnt_data->acdirmin = 30;
+    if (!mnt_data->acdirmax)
+      mnt_data->acdirmax = 60;
+  }
+#endif /* MNT2_NFS_OPT_NOAC */
+
+  /*
+   * in nfs structure implementation version 4, the old
+   * filehandle field was renamed "old_root" and left as 3rd field,
+   * while a new field called "root" was added to the end of the
+   * structure. Both of them however need a copy of the file handle
+   * for NFSv2 mounts.
+   */
+#ifdef MNT2_NFS_OPT_VER3
+  if (mnt_data->flags & MNT2_NFS_OPT_VER3)
+    memset(mnt_data->old_root.data, 0, FHSIZE);
+  else
+#endif /* MNT2_NFS_OPT_VER3 */
+    memcpy(mnt_data->old_root.data, mnt_data->root.data, FHSIZE);
+
+#ifdef HAVE_NFS_ARGS_T_BSIZE
+  /* linux mount version 3 */
+  mnt_data->bsize = 0;			/* let the kernel decide */
+#endif /* HAVE_NFS_ARGS_T_BSIZE */
+
+#ifdef HAVE_NFS_ARGS_T_NAMLEN
+  /* linux mount version 2 */
+  mnt_data->namlen = NAME_MAX;		/* 256 bytes */
+#endif /* HAVE_NFS_ARGS_T_NAMELEN */
+
+  mnt_data->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (mnt_data->fd < 0) {
+    plog(XLOG_ERROR, "Can't create socket for kernel");
+    return 1;
+  }
+  if (bindresvport(mnt_data->fd, 0) < 0) {
+    plog(XLOG_ERROR, "Can't bind to reserved port");
+    errorcode = 1;
+    goto out;
+  }
+  /*
+   * connect() the socket for kernels 1.3.10 and below
+   * only to avoid problems with multihomed hosts.
+   */
+  if (linux_version_code() <= 0x01030a) {
+    int ret = connect(mnt_data->fd,
+		      (struct sockaddr *) &mnt_data->addr,
+		      sizeof(mnt_data->addr));
+    if (ret < 0) {
+      plog(XLOG_ERROR, "Can't connect socket for kernel");
+      errorcode = 1;
+      goto out;
+    }
+  }
+  if (amuDebug(D_FULL)) {
+    plog(XLOG_DEBUG, "mount_linux_nfs: type %s\n", type);
+    plog(XLOG_DEBUG, "mount_linux_nfs: version %d\n", mnt_data->version);
+    plog(XLOG_DEBUG, "mount_linux_nfs: fd %d\n", mnt_data->fd);
+    plog(XLOG_DEBUG, "mount_linux_nfs: hostname %s\n",
+	 inet_ntoa(mnt_data->addr.sin_addr));
+    plog(XLOG_DEBUG, "mount_linux_nfs: port %d\n",
+	 htons(mnt_data->addr.sin_port));
+  }
+  if (amuDebug(D_TRACE)) {
+    plog(XLOG_DEBUG, "mount_linux_nfs: Generic mount flags 0x%x", MS_MGC_VAL | flags);
+    plog(XLOG_DEBUG, "mount_linux_nfs: updated nfs_args...");
+    print_nfs_args(mnt_data, 0);
+  }
+
+  errorcode = do_mount_linux(type, mnt, flags, data);
+
+ out:
+  /*
+   * If we failed, (i.e. errorcode != 0), then close the socket
+   * if it is open.
+   */
+  if (errorcode && mnt_data->fd != -1) {
+    /* save errno, may be clobbered by close() call! */
+    int save_errno = errno;
+    close(mnt_data->fd);
+    errno = save_errno;
+  }
+  return errorcode;
+}
+
+
+int
+mount_linux_nonfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
+{
+  char *extra_opts = NULL;
+  char *tmp_opts = NULL;
+  char *sub_type = NULL;
+  char *loopdev = NULL;
+  int noauto = 0;
+  int errorcode;
+
+  sub_type = hasmnteq(mnt, "type");
+  if (sub_type) {
+    sub_type = strdup(sub_type);
+    if (sub_type) {		/* the strdup malloc might have failed */
+      type = strpbrk(sub_type, ",:;\n\t");
+      if (type == NULL)
+	type = MOUNT_TYPE_UFS;
+      else {
+	*type = '\0';
+	type = sub_type;
+      }
+    } else {
+      plog(XLOG_ERROR, "strdup returned null in mount_linux_nonfs");
+    }
+  }
+
+  if (!hasmntopt(mnt, "type"))
+    mnt->mnt_type = type;
+
+  tmp_opts = parse_opts(type, mnt->mnt_opts, &flags, &extra_opts, &noauto);
+
+#if defined(MOUNT_TYPE_LOFS)
+  if (STREQ(type, MOUNT_TYPE_LOFS)) {
+# if defined(MNT2_GEN_OPT_BIND)
+    /* use bind mounts for lofs */
+    flags |= MNT2_GEN_OPT_BIND;
+# else /* not MNT2_GEN_OPT_BIND */
+    /* this is basically a hack to support fist lofs */
+    XFREE(extra_opts);
+    extra_opts = (char *) xmalloc(strlen(mnt->mnt_fsname) + sizeof("dir=") + 1);
+    sprintf(extra_opts, "dir=%s", mnt->mnt_fsname);
+# endif /* not MNT2_GEN_OPT_BIND */
+    errorcode = do_mount_linux(type, mnt, flags, extra_opts);
+  } else /* end of "if type is LOFS" */
+#endif /* MOUNT_TYPE_LOFS */
+
+  {
+#ifdef HAVE_LOOP_DEVICE
+    /*
+     * If the mounted "device" is actually a regular file,
+     # try to attach a loop device to it.
+     */
+    struct stat buf;
+    char *old_fsname = NULL;
+    if (stat(mnt->mnt_fsname, &buf) == 0 &&
+	S_ISREG(buf.st_mode)) {
+      if ((loopdev = setup_loop_device(mnt->mnt_fsname)) != NULL) {
+	char *str;
+	int len;
+
+	plog(XLOG_INFO, "setup loop device %s over %s OK", loopdev, mnt->mnt_fsname);
+	old_fsname = mnt->mnt_fsname;
+	mnt->mnt_fsname = loopdev;
+	/* XXX: hack, append loop=/dev/loopX to mnttab opts */
+	len = strlen(mnt->mnt_opts) + 7 + strlen(loopdev);
+	str = (char *) xmalloc(len);
+	if (str) {
+	  sprintf(str, "%s,loop=%s", mnt->mnt_opts, loopdev);
+	  XFREE(mnt->mnt_opts);
+	  mnt->mnt_opts = str;
+	}
+      } else {
+	plog(XLOG_ERROR, "failed to set up a loop device: %m");
+	errorcode = 1;
+	goto out;
+      }
+    }
+#endif /* HAVE_LOOP_DEVICE */
+
+    errorcode = do_mount_linux(type, mnt, flags, extra_opts);
+
+#ifdef HAVE_LOOP_DEVICE
+    /* if mount failed and we used a loop device, then undo it */
+    if (errorcode != 0 && loopdev != NULL) {
+      if (delete_loop_device(loopdev) < 0)
+	plog(XLOG_WARNING, "mount() failed to release loop device %s: %m", loopdev);
+      else
+	plog(XLOG_INFO, "mount() released loop device %s OK", loopdev);
+    }
+    if (old_fsname)
+      mnt->mnt_fsname = old_fsname;
+#endif /* HAVE_LOOP_DEVICE */
+  }
+
+  /*
+   * Free all allocated space and return errorcode.
+   */
+out:
+if (loopdev)
+     XFREE(loopdev);
+  if (extra_opts != NULL)
+    XFREE(extra_opts);
+  if (tmp_opts != NULL)
+    XFREE(tmp_opts);
+  if (sub_type != NULL)
+    XFREE(sub_type);
   return errorcode;
 }
 
@@ -278,10 +482,6 @@ do_mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 int
 mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 {
-  char *extra_opts = NULL;
-  char *tmp_opts = NULL;
-  char *sub_type = NULL;
-  int noauto = 0;
   int errorcode;
 
   if (mnt->mnt_opts && STREQ(mnt->mnt_opts, "defaults"))
@@ -290,198 +490,10 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   if (type == NULL)
     type = index(mnt->mnt_fsname, ':') ? MOUNT_TYPE_NFS : MOUNT_TYPE_UFS;
 
-  if (STREQ(type, MOUNT_TYPE_NFS)) {
-    nfs_args_t *mnt_data = (nfs_args_t *) data;
-
-    /* Fake some values for linux */
-    mnt_data->version = NFS_MOUNT_VERSION;
-    if (!mnt_data->timeo) {
-      mnt_data->timeo = 7;
-#ifdef MNT2_NFS_OPT_TCP
-      if (mnt_data->flags & MNT2_NFS_OPT_TCP)
-	mnt_data->timeo = 600;
-#endif /* MNT2_NFS_OPT_TCP */
-    }
-    if (!mnt_data->retrans)
-      mnt_data->retrans = 3;
-
-#ifdef MNT2_NFS_OPT_NOAC
-    if (!(mnt_data->flags & MNT2_NFS_OPT_NOAC)) {
-      if (!mnt_data->acregmin)
-	mnt_data->acregmin = 3;
-      if (!mnt_data->acregmax)
-	mnt_data->acregmax = 60;
-      if (!mnt_data->acdirmin)
-	mnt_data->acdirmin = 30;
-      if (!mnt_data->acdirmax)
-	mnt_data->acdirmax = 60;
-    }
-#endif /* MNT2_NFS_OPT_NOAC */
-
-    /*
-     * in nfs structure implementation version 4, the old
-     * filehandle field was renamed "old_root" and left as 3rd field,
-     * while a new field called "root" was added to the end of the
-     * structure. Both of them however need a copy of the file handle
-     * for NFSv2 mounts.
-     */
-#ifdef MNT2_NFS_OPT_VER3
-    if (mnt_data->flags & MNT2_NFS_OPT_VER3)
-      memset(mnt_data->old_root.data, 0, FHSIZE);
-    else
-#endif /* MNT2_NFS_OPT_VER3 */
-      memcpy(mnt_data->old_root.data, mnt_data->root.data, FHSIZE);
-
-#ifdef HAVE_NFS_ARGS_T_BSIZE
-    /* linux mount version 3 */
-    mnt_data->bsize = 0;	/* let the kernel decide */
-#endif /* HAVE_NFS_ARGS_T_BSIZE */
-
-#ifdef HAVE_NFS_ARGS_T_NAMLEN
-    /* linux mount version 2 */
-    mnt_data->namlen = NAME_MAX;	/* 256 bytes */
-#endif /* HAVE_NFS_ARGS_T_NAMELEN */
-
-    mnt_data->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (mnt_data->fd < 0) {
-      plog(XLOG_ERROR, "Can't create socket for kernel");
-      errorcode = 1;
-      goto fail;
-    }
-    if (bindresvport(mnt_data->fd, 0) < 0) {
-      plog(XLOG_ERROR, "Can't bind to reserved port");
-      errorcode = 1;
-      goto fail;
-    }
-    /*
-     * connect() the socket for kernels 1.3.10 and below
-     * only to avoid problems with multihomed hosts.
-     */
-    if (linux_version_code() <= 0x01030a) {
-      int ret = connect(mnt_data->fd,
-			(struct sockaddr *) &mnt_data->addr,
-			sizeof(mnt_data->addr));
-      if (ret < 0) {
-	plog(XLOG_ERROR, "Can't connect socket for kernel");
-	errorcode = 1;
-	goto fail;
-      }
-    }
-#ifdef DEBUG
-    amuDebug(D_FULL) {
-      plog(XLOG_DEBUG, "mount_linux: type %s\n", type);
-      plog(XLOG_DEBUG, "mount_linux: version %d\n", mnt_data->version);
-      plog(XLOG_DEBUG, "mount_linux: fd %d\n", mnt_data->fd);
-      plog(XLOG_DEBUG, "mount_linux: hostname %s\n",
-	   inet_ntoa(mnt_data->addr.sin_addr));
-      plog(XLOG_DEBUG, "mount_linux: port %d\n",
-	   htons(mnt_data->addr.sin_port));
-    }
-    amuDebug(D_TRACE) {
-      plog(XLOG_DEBUG, "mount_linux: Generic mount flags 0x%x", MS_MGC_VAL | flags);
-      plog(XLOG_DEBUG, "mount_linux: updated nfs_args...");
-      print_nfs_args(mnt_data, 0);
-    }
-#endif /* DEBUG */
-
-    errorcode = do_mount_linux(type, mnt, flags, data);
-
-    /*
-     * If we failed, (i.e. errorcode != 0), then close the socket
-     * if it is open.
-     */
-    if (errorcode && mnt_data->fd != -1) {
-      /* save errno, may be clobbered by close() call! */
-      int save_errno = errno;
-      close(mnt_data->fd);
-      errno = save_errno;
-    }
-
-  } else {			/* non-NFS mounts */
-
-    sub_type = hasmnteq(mnt, "type");
-    if (sub_type) {
-      sub_type = strdup(sub_type);
-      if (sub_type) {		/* the strdup malloc might have failed */
-	type = strpbrk(sub_type, ",:;\n\t");
-	if (type == NULL)
-	  type = MOUNT_TYPE_UFS;
-	else {
-	  *type = '\0';
-	  type = sub_type;
-	}
-      } else {
-	plog(XLOG_ERROR, "strdup returned null in mount_linux");
-      }
-    }
-
-    if (!hasmntopt(mnt, "type"))
-      mnt->mnt_type = type;
-
-    /* We only parse opts if non-NFS mount */
-    tmp_opts = parse_opts(type, mnt->mnt_opts, &flags, &extra_opts, &noauto);
-
-#if defined(MOUNT_TYPE_LOFS)
-    if (STREQ(type, MOUNT_TYPE_LOFS)) {
-# if defined(MNT2_GEN_OPT_BIND)
-      /* use bind mounts for lofs */
-      flags |= MNT2_GEN_OPT_BIND;
-# else /* not MNT2_GEN_OPT_BIND */
-      /* this is basically a hack to support fist lofs */
-      XFREE(extra_opts);
-      extra_opts = (char *) xmalloc(strlen(mnt->mnt_fsname) + sizeof("dir=") + 1);
-      sprintf(extra_opts, "dir=%s", mnt->mnt_fsname);
-# endif /* not MNT2_GEN_OPT_BIND */
-      errorcode = do_mount_linux(type, mnt, flags, extra_opts);
-      goto fail;
-    } /* end of "if type is LOFS" */
-#endif /* MOUNT_TYPE_LOFS */
-
-#ifdef HAVE_LOOP_DEVICE
-    /*
-     * Yet another hack to support loop mounts of ISO images.
-     * XXX: this file desperately needs to be rewritten!
-     */
-    if (STREQ(type, MOUNT_TYPE_CDFS)) {
-      mntent_t lomnt;		/* temp for loop mounts */
-      char *lodev;
-
-      memcpy(&lomnt, mnt, sizeof(mntent_t));
-      /* extra opts may contain "loop=/dev/loopN" */
-      lomnt.mnt_opts = extra_opts;
-      lodev = hasmnteq(&lomnt, MNTTAB_OPT_LOOP);
-      if (lodev) {
-	char *newopts;
-	lomnt.mnt_fsname = lodev;
-	/* fix mnt->mnt_opts so caller can update /etc/mtab correctly */
-	newopts = (char *) xmalloc(strlen(mnt->mnt_opts) + strlen(extra_opts) + 1);
-	sprintf(newopts, "%s,%s", mnt->mnt_opts, extra_opts);
-	XFREE(mnt->mnt_opts);
-	mnt->mnt_opts = newopts;
-	plog(XLOG_DEBUG, "mount_linux (loop): lodev %s, opts %s",
-	     lodev, mnt->mnt_opts);
-	errorcode = do_mount_linux(type, &lomnt, flags, extra_opts);
-      } else {
-	errorcode = do_mount_linux(type, mnt, flags, extra_opts);
-      }
-      goto fail;
-    }
-#endif /* HAVE_LOOP_DEVICE */
-
-    /* if we get here, then it's not an NFS, LOFS, or CDFS mount */
-    errorcode = do_mount_linux(type, mnt, flags, extra_opts);
-  } /* non-NFS mounts */
-
-  /*
-   * Free all allocated space and return errorcode.
-   */
-fail:
-  if (extra_opts != NULL)
-    XFREE(extra_opts);
-  if (tmp_opts != NULL)
-    XFREE(tmp_opts);
-  if (sub_type != NULL)
-    XFREE(sub_type);
+  if (STREQ(type, MOUNT_TYPE_NFS))
+    errorcode = mount_linux_nfs(type, mnt, flags, data);
+  else				/* non-NFS mounts */
+    errorcode = mount_linux_nonfs(type, mnt, flags, data);
 
   return errorcode;
 }

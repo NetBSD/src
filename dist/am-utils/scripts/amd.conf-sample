@@ -1,4 +1,3 @@
-# -*- text -*-
 # A SAMPLE CONFIGURATION FILE FOR AMD
 
 ##############################################################################
@@ -60,6 +59,7 @@ ldap_base =			"ou=Marketing, o=AMD Ltd, c=US"
 ldap_hostports =		ldap.your.domain:389
 ldap_cache_seconds =		0 (default)
 ldap_cache_maxmem =		131072 (default)
+ldap_proto_version =		3 (default is 2)
 # default base name for hesiod maps
 hesiod_base =			automount
 # interval to check if a reload of any maps is needed

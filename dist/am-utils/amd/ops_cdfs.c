@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_cdfs.c,v 1.1.1.5 2002/11/29 22:58:19 christos Exp $	*/
+/*	$NetBSD: ops_cdfs.c,v 1.1.1.6 2003/03/09 01:13:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_cdfs.c,v 1.16 2002/03/29 20:01:28 ib42 Exp
+ * Id: ops_cdfs.c,v 1.19 2002/12/27 22:43:51 ezk Exp
  *
  */
 
@@ -127,7 +127,7 @@ mount_cdfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_au
   mnt.mnt_opts = opts;
 
 #if defined(MNT2_CDFS_OPT_DEFPERM) && defined(MNTTAB_OPT_DEFPERM)
-  if (hasmntopt(&mnt, MNTTAB_OPT_DEFPERM))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_DEFPERM))
 # ifdef MNT2_CDFS_OPT_DEFPERM
     cdfs_flags |= MNT2_CDFS_OPT_DEFPERM;
 # else /* not MNT2_CDFS_OPT_DEFPERM */
@@ -136,30 +136,30 @@ mount_cdfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_au
 #endif /* defined(MNT2_CDFS_OPT_DEFPERM) && defined(MNTTAB_OPT_DEFPERM) */
 
 #if defined(MNT2_CDFS_OPT_NODEFPERM) && defined(MNTTAB_OPT_NODEFPERM)
-  if (hasmntopt(&mnt, MNTTAB_OPT_NODEFPERM))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_NODEFPERM))
     cdfs_flags |= MNT2_CDFS_OPT_NODEFPERM;
 #endif /* MNTTAB_OPT_NODEFPERM */
 
 #if defined(MNT2_CDFS_OPT_NOVERSION) && defined(MNTTAB_OPT_NOVERSION)
-  if (hasmntopt(&mnt, MNTTAB_OPT_NOVERSION))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_NOVERSION))
     cdfs_flags |= MNT2_CDFS_OPT_NOVERSION;
 #endif /* defined(MNT2_CDFS_OPT_NOVERSION) && defined(MNTTAB_OPT_NOVERSION) */
 
 #if defined(MNT2_CDFS_OPT_RRIP) && defined(MNTTAB_OPT_RRIP)
-  if (hasmntopt(&mnt, MNTTAB_OPT_RRIP))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_RRIP))
     cdfs_flags |= MNT2_CDFS_OPT_RRIP;
 #endif /* defined(MNT2_CDFS_OPT_RRIP) && defined(MNTTAB_OPT_RRIP) */
 #if defined(MNT2_CDFS_OPT_NORRIP) && defined(MNTTAB_OPT_NORRIP)
-  if (hasmntopt(&mnt, MNTTAB_OPT_NORRIP))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_NORRIP))
     cdfs_flags |= MNT2_CDFS_OPT_NORRIP;
 #endif /* defined(MNT2_CDFS_OPT_NORRIP) && defined(MNTTAB_OPT_NORRIP) */
 
 #if defined(MNT2_CDFS_OPT_GENS) && defined(MNTTAB_OPT_GENS)
-  if (hasmntopt(&mnt, MNTTAB_OPT_GENS))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_GENS))
     cdfs_flags |= MNT2_CDFS_OPT_GENS;
 #endif /* defined(MNT2_CDFS_OPT_GENS) && defined(MNTTAB_OPT_GENS) */
 #if defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT)
-  if (hasmntopt(&mnt, MNTTAB_OPT_EXTATT))
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_EXTATT))
     cdfs_flags |= MNT2_CDFS_OPT_EXTATT;
 #endif /* defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT) */
 
@@ -192,49 +192,13 @@ mount_cdfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_au
 #endif /* HAVE_CDFS_ARGS_T_SSECTOR */
 
 #ifdef HAVE_CDFS_ARGS_T_FSPEC
-  cdfs_args.fspec = fs_name;	/* NOTE: may be overridden below */
+  cdfs_args.fspec = fs_name;
 #endif /* HAVE_CDFS_ARGS_T_FSPEC */
-
-#ifdef HAVE_LOOP_DEVICE
-  if (hasmntopt(&mnt, MNTTAB_OPT_LOOP)) {
-    *lpname = setup_loop_device(mnt.mnt_fsname);
-    if (*lpname) {
-      char *str;
-      int len;
-
-      plog(XLOG_INFO, "setup loop device %s on %s OK", *lpname, mnt.mnt_fsname);
-      cdfs_args.fspec = *lpname; /* NOTE: overriding cdfs device! */
-      /* XXX: hack, append loop=/dev/loopX to mnttab opts */
-      len = strlen(mnt.mnt_opts) + 7 + strlen(*lpname);
-      str = (char *) xmalloc(len);
-      if (str) {
-	sprintf(str, "%s,loop=%s", mnt.mnt_opts, *lpname);
-	XFREE(mnt.mnt_opts);
-	mnt.mnt_opts = str;
-      }
-    } else {
-      plog(XLOG_ERROR, "failed to set up a loop device: %m");
-      return errno;
-    }
-  }
-#endif /* HAVE_LOOP_DEVICE */
 
   /*
    * Call generic mount routine
    */
   retval = mount_fs2(&mnt, real_mntdir, genflags, (caddr_t) &cdfs_args, 0, type, 0, NULL, mnttab_file_name);
-
-#ifdef HAVE_LOOP_DEVICE
-  /* if mount failed and we used a loop device, then undo it */
-  if (retval != 0  &&  *lpname != NULL) {
-    if (delete_loop_device(*lpname) < 0) {
-      plog(XLOG_WARNING, "mount() failed to release loop device %s: %m", *lpname);
-    } else {
-      plog(XLOG_INFO, "mount() released loop device %s OK", *lpname);
-    }
-    XFREE(*lpname);
-  }
-#endif /* HAVE_LOOP_DEVICE */
 
   return retval;
 }
@@ -259,20 +223,5 @@ cdfs_mount(am_node *am, mntfs *mf)
 static int
 cdfs_umount(am_node *am, mntfs *mf)
 {
-  int retval;
-
-  retval = UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
-
-#ifdef HAVE_LOOP_DEVICE
-  if (retval >= 0  &&  mf->mf_loopdev) {
-    if (delete_loop_device(mf->mf_loopdev) < 0) {
-      plog(XLOG_WARNING, "unmount() failed to release loop device %s: %m", mf->mf_loopdev);
-    } else {
-      plog(XLOG_INFO, "unmount() released loop device %s OK", mf->mf_loopdev);
-    }
-    XFREE(mf->mf_loopdev);
-  }
-#endif /* HAVE_LOOP_DEVICE */
-
-  return retval;
+  return UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: stubs.c,v 1.1.1.5 2002/11/29 22:59:02 christos Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.1.6 2003/03/09 01:13:55 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: stubs.c,v 1.12 2002/02/02 20:59:03 ezk Exp
+ * Id: stubs.c,v 1.14 2002/12/27 22:44:09 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -357,7 +357,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     last_uid = userid;
   }
 
-  /* I don't think will pass this if -D nofork */
+  /* I don't think it will pass this if -D fork */
   if (serverpid == getpid())
     return &res;
 
@@ -377,11 +377,11 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     retval = 0;
 
   /*
-   * If asked for -D nofork, then must return the value,
+   * If asked for -D fork, then must return the value,
    * NOT exit, or else the main hlfsd server exits.
-   * Bug where is that status information being collected?
+   * Bug: where is that status information being collected?
    */
-  amuDebugNo(D_FORK)
+  if (amuDebug(D_FORK))
     return &res;
 
   exit(retval);

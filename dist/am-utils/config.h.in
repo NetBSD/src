@@ -27,7 +27,7 @@
    */
 #undef CRAY_STACKSEG_END
 
-/* Define if using `alloca.c'. */
+/* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
 /* Turn off general debugging by default */
@@ -40,13 +40,14 @@
    this is either `int' or `gid_t'. */
 #undef GETGROUPS_T
 
-/* Define if the `getpgrp' function takes no argument. */
+/* Define to 1 if the `getpgrp' function requires zero arguments. */
 #undef GETPGRP_VOID
 
-/* Define if you have `alloca', as a function or macro. */
+/* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
-/* Define if you have <alloca.h> and it should be used (not on Ultrix). */
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
 #undef HAVE_ALLOCA_H
 
 /* Define if have automount filesystem */
@@ -85,17 +86,20 @@
 /* Define if have union filesystem */
 #undef HAVE_AMU_FS_UNION
 
-/* Define if you have the <arpa/inet.h> header file. */
+/* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
-/* Define if you have the <arpa/nameser.h> header file. */
+/* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
 
-/* Define if you have the <assert.h> header file. */
+/* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
 /* Define if `addr' is member of `autofs_args_t'. */
 #undef HAVE_AUTOFS_ARGS_T_ADDR
+
+/* define if have a bad version of hasmntopt() */
+#undef HAVE_BAD_HASMNTOPT
 
 /* define if have a bad version of memcmp() */
 #undef HAVE_BAD_MEMCMP
@@ -103,16 +107,16 @@
 /* define if have a bad version of yp_all() */
 #undef HAVE_BAD_YP_ALL
 
-/* Define if you have the `bcmp' function. */
+/* Define to 1 if you have the `bcmp' function. */
 #undef HAVE_BCMP
 
-/* Define if you have the `bcopy' function. */
+/* Define to 1 if you have the `bcopy' function. */
 #undef HAVE_BCOPY
 
-/* Define if you have the <bsd/rpc/rpc.h> header file. */
+/* Define to 1 if you have the <bsd/rpc/rpc.h> header file. */
 #undef HAVE_BSD_RPC_RPC_H
 
-/* Define if you have the `bzero' function. */
+/* Define to 1 if you have the `bzero' function. */
 #undef HAVE_BZERO
 
 /* Define if `flags' is member of `cdfs_args_t'. */
@@ -133,49 +137,50 @@
 /* Define if `ssector' is member of `cdfs_args_t'. */
 #undef HAVE_CDFS_ARGS_T_SSECTOR
 
-/* Define if you have the <cdfs/cdfsmount.h> header file. */
+/* Define to 1 if you have the <cdfs/cdfsmount.h> header file. */
 #undef HAVE_CDFS_CDFSMOUNT_H
 
-/* Define if you have the <cdfs/cdfs_mount.h> header file. */
+/* Define to 1 if you have the <cdfs/cdfs_mount.h> header file. */
 #undef HAVE_CDFS_CDFS_MOUNT_H
 
-/* Define if you have the `clnt_create' function. */
+/* Define to 1 if you have the `clnt_create' function. */
 #undef HAVE_CLNT_CREATE
 
-/* Define if you have the `clnt_create_timed' function. */
+/* Define to 1 if you have the `clnt_create_timed' function. */
 #undef HAVE_CLNT_CREATE_TIMED
 
-/* Define if you have the `clnt_spcreateerror' function. */
+/* Define to 1 if you have the `clnt_spcreateerror' function. */
 #undef HAVE_CLNT_SPCREATEERROR
 
-/* Define if you have the `clnt_sperrno' function. */
+/* Define to 1 if you have the `clnt_sperrno' function. */
 #undef HAVE_CLNT_SPERRNO
 
-/* Define if you have the `clock_gettime' function. */
+/* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
-/* Define if you have the <cluster.h> header file. */
+/* Define to 1 if you have the <cluster.h> header file. */
 #undef HAVE_CLUSTER_H
 
-/* Define if you have the `cnodeid' function. */
+/* Define to 1 if you have the `cnodeid' function. */
 #undef HAVE_CNODEID
 
-/* Define if you have the <ctype.h> header file. */
+/* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
 
-/* Define if you have the <db1/ndbm.h> header file. */
+/* Define to 1 if you have the <db1/ndbm.h> header file. */
 #undef HAVE_DB1_NDBM_H
 
-/* Define if you have the `dbm_open' function. */
+/* Define to 1 if you have the `dbm_open' function. */
 #undef HAVE_DBM_OPEN
 
-/* Define if you have the `dg_mount' function. */
+/* Define to 1 if you have the `dg_mount' function. */
 #undef HAVE_DG_MOUNT
 
-/* Define if you have the <dirent.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
 #undef HAVE_DIRENT_H
 
-/* Define if you have the <dlfcn.h> header file. */
+/* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
 /* Define if `flags' is member of `efs_args_t'. */
@@ -184,7 +189,7 @@
 /* Define if `fspec' is member of `efs_args_t'. */
 #undef HAVE_EFS_ARGS_T_FSPEC
 
-/* Define if you have the <errno.h> header file. */
+/* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
 /* does extern definition for clnt_spcreateerror() exist? */
@@ -262,22 +267,22 @@
 /* does extern definition for xdr_opaque_auth() exist? */
 #undef HAVE_EXTERN_XDR_OPAQUE_AUTH
 
-/* Define if you have the <fcntl.h> header file. */
+/* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define if you have the `fgets' function. */
+/* Define to 1 if you have the `fgets' function. */
 #undef HAVE_FGETS
 
 /* Define if plain fhandle type exists */
 #undef HAVE_FHANDLE
 
-/* Define if you have the `flock' function. */
+/* Define to 1 if you have the `flock' function. */
 #undef HAVE_FLOCK
 
-/* Define if you have the `fork' function. */
+/* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
-/* Define if you have the `fsmount' function. */
+/* Define to 1 if you have the `fsmount' function. */
 #undef HAVE_FSMOUNT
 
 /* Define if have AUTOFS filesystem */
@@ -334,154 +339,154 @@
 /* Define if have XFS filesystem (irix) */
 #undef HAVE_FS_XFS
 
-/* Define if you have the `getccent' function. */
+/* Define to 1 if you have the `getccent' function. */
 #undef HAVE_GETCCENT
 
-/* Define if you have the `getcwd' function. */
+/* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
-/* Define if you have the `getdomainname' function. */
+/* Define to 1 if you have the `getdomainname' function. */
 #undef HAVE_GETDOMAINNAME
 
-/* Define if you have the `getdtablesize' function. */
+/* Define to 1 if you have the `getdtablesize' function. */
 #undef HAVE_GETDTABLESIZE
 
-/* Define if you have the `gethostname' function. */
+/* Define to 1 if you have the `gethostname' function. */
 #undef HAVE_GETHOSTNAME
 
-/* Define if you have the `getifaddrs' function. */
+/* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
-/* Define if you have the `getmntinfo' function. */
+/* Define to 1 if you have the `getmntinfo' function. */
 #undef HAVE_GETMNTINFO
 
-/* Define if you have the `getmountent' function. */
+/* Define to 1 if you have the `getmountent' function. */
 #undef HAVE_GETMOUNTENT
 
-/* Define if you have the `getpagesize' function. */
+/* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
-/* Define if you have the `getpwnam' function. */
+/* Define to 1 if you have the `getpwnam' function. */
 #undef HAVE_GETPWNAM
 
-/* Define if you have the `gettimeofday' function. */
+/* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define if you have the `get_myaddress' function. */
+/* Define to 1 if you have the `get_myaddress' function. */
 #undef HAVE_GET_MYADDRESS
 
 /* define if your system's getopt() is GNU getopt() (are you using glibc) */
 #undef HAVE_GNU_GETOPT
 
-/* Define if you have the <grp.h> header file. */
+/* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
 
-/* Define if you have the `hasmntopt' function. */
+/* Define to 1 if you have the `hasmntopt' function. */
 #undef HAVE_HASMNTOPT
 
-/* Define if you have the <hesiod.h> header file. */
+/* Define to 1 if you have the <hesiod.h> header file. */
 #undef HAVE_HESIOD_H
 
-/* Define if you have the `hesiod_init' function. */
+/* Define to 1 if you have the `hesiod_init' function. */
 #undef HAVE_HESIOD_INIT
 
-/* Define if you have the `hesiod_reload' function. */
+/* Define to 1 if you have the `hesiod_reload' function. */
 #undef HAVE_HESIOD_RELOAD
 
-/* Define if you have the `hesiod_to_bind' function. */
+/* Define to 1 if you have the `hesiod_to_bind' function. */
 #undef HAVE_HESIOD_TO_BIND
 
-/* Define if you have the `hes_init' function. */
+/* Define to 1 if you have the `hes_init' function. */
 #undef HAVE_HES_INIT
 
-/* Define if you have the <hsfs/hsfs.h> header file. */
+/* Define to 1 if you have the <hsfs/hsfs.h> header file. */
 #undef HAVE_HSFS_HSFS_H
 
-/* Define if you have the <ifaddrs.h> header file. */
+/* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
-/* Define if you have the <inttypes.h> header file. */
+/* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define if you have the <irs.h> header file. */
+/* Define to 1 if you have the <irs.h> header file. */
 #undef HAVE_IRS_H
 
-/* Define if you have the <isofs/cd9660/cd9660_mount.h> header file. */
+/* Define to 1 if you have the <isofs/cd9660/cd9660_mount.h> header file. */
 #undef HAVE_ISOFS_CD9660_CD9660_MOUNT_H
 
-/* Define if you have the <lber.h> header file. */
+/* Define to 1 if you have the <lber.h> header file. */
 #undef HAVE_LBER_H
 
-/* Define if you have the `ldap_enable_cache' function. */
+/* Define to 1 if you have the `ldap_enable_cache' function. */
 #undef HAVE_LDAP_ENABLE_CACHE
 
-/* Define if you have the <ldap.h> header file. */
+/* Define to 1 if you have the <ldap.h> header file. */
 #undef HAVE_LDAP_H
 
-/* Define if you have the `ldap_open' function. */
+/* Define to 1 if you have the `ldap_open' function. */
 #undef HAVE_LDAP_OPEN
 
-/* Define if you have the `gdbm' library (-lgdbm). */
+/* Define to 1 if you have the `gdbm' library (-lgdbm). */
 #undef HAVE_LIBGDBM
 
-/* Define if you have the <libgen.h> header file. */
+/* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
-/* Define if you have the `malloc' library (-lmalloc). */
+/* Define to 1 if you have the `malloc' library (-lmalloc). */
 #undef HAVE_LIBMALLOC
 
-/* Define if you have the `mapmalloc' library (-lmapmalloc). */
+/* Define to 1 if you have the `mapmalloc' library (-lmapmalloc). */
 #undef HAVE_LIBMAPMALLOC
 
-/* Define if you have the `nsl' library (-lnsl). */
+/* Define to 1 if you have the `nsl' library (-lnsl). */
 #undef HAVE_LIBNSL
 
-/* Define if you have the `posix4' library (-lposix4). */
+/* Define to 1 if you have the `posix4' library (-lposix4). */
 #undef HAVE_LIBPOSIX4
 
-/* Define if you have the `rpc' library (-lrpc). */
+/* Define to 1 if you have the `rpc' library (-lrpc). */
 #undef HAVE_LIBRPC
 
-/* Define if you have the `rpcsvc' library (-lrpcsvc). */
+/* Define to 1 if you have the `rpcsvc' library (-lrpcsvc). */
 #undef HAVE_LIBRPCSVC
 
-/* Define if you have the `rt' library (-lrt). */
+/* Define to 1 if you have the `rt' library (-lrt). */
 #undef HAVE_LIBRT
 
-/* Define if you have the <linux/auto_fs4.h> header file. */
+/* Define to 1 if you have the <linux/auto_fs4.h> header file. */
 #undef HAVE_LINUX_AUTO_FS4_H
 
-/* Define if you have the <linux/auto_fs.h> header file. */
+/* Define to 1 if you have the <linux/auto_fs.h> header file. */
 #undef HAVE_LINUX_AUTO_FS_H
 
-/* Define if you have the <linux/fs.h> header file. */
+/* Define to 1 if you have the <linux/fs.h> header file. */
 #undef HAVE_LINUX_FS_H
 
-/* Define if you have the <linux/kdev_t.h> header file. */
+/* Define to 1 if you have the <linux/kdev_t.h> header file. */
 #undef HAVE_LINUX_KDEV_T_H
 
-/* Define if you have the <linux/list.h> header file. */
+/* Define to 1 if you have the <linux/list.h> header file. */
 #undef HAVE_LINUX_LIST_H
 
-/* Define if you have the <linux/loop.h> header file. */
+/* Define to 1 if you have the <linux/loop.h> header file. */
 #undef HAVE_LINUX_LOOP_H
 
-/* Define if you have the <linux/nfs.h> header file. */
+/* Define to 1 if you have the <linux/nfs.h> header file. */
 #undef HAVE_LINUX_NFS_H
 
-/* Define if you have the <linux/nfs_mount.h> header file. */
+/* Define to 1 if you have the <linux/nfs_mount.h> header file. */
 #undef HAVE_LINUX_NFS_MOUNT_H
 
-/* Define if you have the <linux/posix_types.h> header file. */
+/* Define to 1 if you have the <linux/posix_types.h> header file. */
 #undef HAVE_LINUX_POSIX_TYPES_H
 
-/* Define if you support file names longer than 14 characters. */
+/* Define to 1 if you support file names longer than 14 characters. */
 #undef HAVE_LONG_FILE_NAMES
 
-/* Define if you have the <machine/endian.h> header file. */
+/* Define to 1 if you have the <machine/endian.h> header file. */
 #undef HAVE_MACHINE_ENDIAN_H
 
-/* Define if you have the <malloc.h> header file. */
+/* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 
 /* Define if have DBM maps */
@@ -511,34 +516,34 @@
 /* Define if have UNION maps */
 #undef HAVE_MAP_UNION
 
-/* Define if you have the `memcmp' function. */
+/* Define to 1 if you have the `memcmp' function. */
 #undef HAVE_MEMCMP
 
-/* Define if you have the `memcpy' function. */
+/* Define to 1 if you have the `memcpy' function. */
 #undef HAVE_MEMCPY
 
-/* Define if you have the `memmove' function. */
+/* Define to 1 if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
 
-/* Define if you have the <memory.h> header file. */
+/* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define if you have the `memset' function. */
+/* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
-/* Define if you have the `mkdir' function. */
+/* Define to 1 if you have the `mkdir' function. */
 #undef HAVE_MKDIR
 
-/* Define if you have the `mkstemp' function. */
+/* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
 
-/* Define if you have the `mlockall' function. */
+/* Define to 1 if you have the `mlockall' function. */
 #undef HAVE_MLOCKALL
 
-/* Define if you have the `mntctl' function. */
+/* Define to 1 if you have the `mntctl' function. */
 #undef HAVE_MNTCTL
 
-/* Define if you have the <mntent.h> header file. */
+/* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
 /* Define if `mnt_cnode' is member of `mntent_t'. */
@@ -553,52 +558,52 @@
 /* does mntent_t have mnt_time field and is of type "char *" ? */
 #undef HAVE_MNTENT_T_MNT_TIME_STRING
 
-/* Define if you have the <mnttab.h> header file. */
+/* Define to 1 if you have the <mnttab.h> header file. */
 #undef HAVE_MNTTAB_H
 
-/* Define if you have the `mount' function. */
+/* Define to 1 if you have the `mount' function. */
 #undef HAVE_MOUNT
 
-/* Define if you have the `mountsyscall' function. */
+/* Define to 1 if you have the `mountsyscall' function. */
 #undef HAVE_MOUNTSYSCALL
 
-/* Define if you have the <mount.h> header file. */
+/* Define to 1 if you have the <mount.h> header file. */
 #undef HAVE_MOUNT_H
 
-/* Define if you have the <msdosfs/msdosfsmount.h> header file. */
+/* Define to 1 if you have the <msdosfs/msdosfsmount.h> header file. */
 #undef HAVE_MSDOSFS_MSDOSFSMOUNT_H
 
-/* Define if you have the <ndbm.h> header file. */
+/* Define to 1 if you have the <ndbm.h> header file. */
 #undef HAVE_NDBM_H
 
-/* Define if you have the <ndir.h> header file. */
+/* Define to 1 if you have the <ndir.h> header file. */
 #undef HAVE_NDIR_H
 
-/* Define if you have the <netconfig.h> header file. */
+/* Define to 1 if you have the <netconfig.h> header file. */
 #undef HAVE_NETCONFIG_H
 
-/* Define if you have the <netdb.h> header file. */
+/* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
-/* Define if you have the <netdir.h> header file. */
+/* Define to 1 if you have the <netdir.h> header file. */
 #undef HAVE_NETDIR_H
 
-/* Define if you have the <netinet/if_ether.h> header file. */
+/* Define to 1 if you have the <netinet/if_ether.h> header file. */
 #undef HAVE_NETINET_IF_ETHER_H
 
-/* Define if you have the <netinet/in.h> header file. */
+/* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
-/* Define if you have the <net/errno.h> header file. */
+/* Define to 1 if you have the <net/errno.h> header file. */
 #undef HAVE_NET_ERRNO_H
 
-/* Define if you have the <net/if.h> header file. */
+/* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
-/* Define if you have the <net/if_var.h> header file. */
+/* Define to 1 if you have the <net/if_var.h> header file. */
 #undef HAVE_NET_IF_VAR_H
 
-/* Define if you have the <net/route.h> header file. */
+/* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
 /* Define if `acdirmin' is member of `nfs_args_t'. */
@@ -634,49 +639,49 @@
 /* Define if `version' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_VERSION
 
-/* Define if you have the <nfs/export.h> header file. */
+/* Define to 1 if you have the <nfs/export.h> header file. */
 #undef HAVE_NFS_EXPORT_H
 
-/* Define if you have the <nfs/mount.h> header file. */
+/* Define to 1 if you have the <nfs/mount.h> header file. */
 #undef HAVE_NFS_MOUNT_H
 
-/* Define if you have the <nfs/nfsmount.h> header file. */
+/* Define to 1 if you have the <nfs/nfsmount.h> header file. */
 #undef HAVE_NFS_NFSMOUNT_H
 
-/* Define if you have the <nfs/nfsproto.h> header file. */
+/* Define to 1 if you have the <nfs/nfsproto.h> header file. */
 #undef HAVE_NFS_NFSPROTO_H
 
-/* Define if you have the <nfs/nfsv2.h> header file. */
+/* Define to 1 if you have the <nfs/nfsv2.h> header file. */
 #undef HAVE_NFS_NFSV2_H
 
-/* Define if you have the <nfs/nfs_clnt.h> header file. */
+/* Define to 1 if you have the <nfs/nfs_clnt.h> header file. */
 #undef HAVE_NFS_NFS_CLNT_H
 
-/* Define if you have the <nfs/nfs_gfs.h> header file. */
+/* Define to 1 if you have the <nfs/nfs_gfs.h> header file. */
 #undef HAVE_NFS_NFS_GFS_H
 
-/* Define if you have the <nfs/nfs.h> header file. */
+/* Define to 1 if you have the <nfs/nfs.h> header file. */
 #undef HAVE_NFS_NFS_H
 
-/* Define if you have the <nfs/nfs_mount.h> header file. */
+/* Define to 1 if you have the <nfs/nfs_mount.h> header file. */
 #undef HAVE_NFS_NFS_MOUNT_H
 
-/* Define if you have the <nfs/pathconf.h> header file. */
+/* Define to 1 if you have the <nfs/pathconf.h> header file. */
 #undef HAVE_NFS_PATHCONF_H
 
 /* define if the host has NFS protocol headers in system headers */
 #undef HAVE_NFS_PROT_HEADERS
 
-/* Define if you have the <nfs/rpcv2.h> header file. */
+/* Define to 1 if you have the <nfs/rpcv2.h> header file. */
 #undef HAVE_NFS_RPCV2_H
 
-/* Define if you have the `nis_domain_of' function. */
+/* Define to 1 if you have the `nis_domain_of' function. */
 #undef HAVE_NIS_DOMAIN_OF
 
-/* Define if you have the <nsswitch.h> header file. */
+/* Define to 1 if you have the <nsswitch.h> header file. */
 #undef HAVE_NSSWITCH_H
 
-/* Define if you have the `opendir' function. */
+/* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
 
 /* Define if `dsttime' is member of `pcfs_args_t'. */
@@ -697,143 +702,143 @@
 /* Define if `uid' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_UID
 
-/* Define if you have the `plock' function. */
+/* Define to 1 if you have the `plock' function. */
 #undef HAVE_PLOCK
 
-/* Define if you have the <pwd.h> header file. */
+/* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
-/* Define if you have the `regcomp' function. */
+/* Define to 1 if you have the `regcomp' function. */
 #undef HAVE_REGCOMP
 
-/* Define if you have the `regexec' function. */
+/* Define to 1 if you have the `regexec' function. */
 #undef HAVE_REGEXEC
 
-/* Define if you have the <regex.h> header file. */
+/* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
 
-/* Define if you have the <resolv.h> header file. */
+/* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
 
-/* Define if system calls automatically restart after interruption by a
+/* Define to 1 if system calls automatically restart after interruption by a
    signal. */
 #undef HAVE_RESTARTABLE_SYSCALLS
 
-/* Define if you have the `rmdir' function. */
+/* Define to 1 if you have the `rmdir' function. */
 #undef HAVE_RMDIR
 
-/* Define if you have the <rpcsvc/autofs_prot.h> header file. */
+/* Define to 1 if you have the <rpcsvc/autofs_prot.h> header file. */
 #undef HAVE_RPCSVC_AUTOFS_PROT_H
 
-/* Define if you have the <rpcsvc/mountv3.h> header file. */
+/* Define to 1 if you have the <rpcsvc/mountv3.h> header file. */
 #undef HAVE_RPCSVC_MOUNTV3_H
 
-/* Define if you have the <rpcsvc/mount.h> header file. */
+/* Define to 1 if you have the <rpcsvc/mount.h> header file. */
 #undef HAVE_RPCSVC_MOUNT_H
 
-/* Define if you have the <rpcsvc/nfs_prot.h> header file. */
+/* Define to 1 if you have the <rpcsvc/nfs_prot.h> header file. */
 #undef HAVE_RPCSVC_NFS_PROT_H
 
-/* Define if you have the <rpcsvc/nis.h> header file. */
+/* Define to 1 if you have the <rpcsvc/nis.h> header file. */
 #undef HAVE_RPCSVC_NIS_H
 
-/* Define if you have the <rpcsvc/ypclnt.h> header file. */
+/* Define to 1 if you have the <rpcsvc/ypclnt.h> header file. */
 #undef HAVE_RPCSVC_YPCLNT_H
 
-/* Define if you have the <rpcsvc/yp_prot.h> header file. */
+/* Define to 1 if you have the <rpcsvc/yp_prot.h> header file. */
 #undef HAVE_RPCSVC_YP_PROT_H
 
-/* Define if you have the <rpc/auth_des.h> header file. */
+/* Define to 1 if you have the <rpc/auth_des.h> header file. */
 #undef HAVE_RPC_AUTH_DES_H
 
-/* Define if you have the <rpc/pmap_clnt.h> header file. */
+/* Define to 1 if you have the <rpc/pmap_clnt.h> header file. */
 #undef HAVE_RPC_PMAP_CLNT_H
 
-/* Define if you have the <rpc/pmap_prot.h> header file. */
+/* Define to 1 if you have the <rpc/pmap_prot.h> header file. */
 #undef HAVE_RPC_PMAP_PROT_H
 
-/* Define if you have the <rpc/rpc.h> header file. */
+/* Define to 1 if you have the <rpc/rpc.h> header file. */
 #undef HAVE_RPC_RPC_H
 
-/* Define if you have the <rpc/types.h> header file. */
+/* Define to 1 if you have the <rpc/types.h> header file. */
 #undef HAVE_RPC_TYPES_H
 
-/* Define if you have the <rpc/xdr.h> header file. */
+/* Define to 1 if you have the <rpc/xdr.h> header file. */
 #undef HAVE_RPC_XDR_H
 
-/* Define if you have the `select' function. */
+/* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 
-/* Define if you have the `seteuid' function. */
+/* Define to 1 if you have the `seteuid' function. */
 #undef HAVE_SETEUID
 
-/* Define if you have the `setitimer' function. */
+/* Define to 1 if you have the `setitimer' function. */
 #undef HAVE_SETITIMER
 
-/* Define if you have the <setjmp.h> header file. */
+/* Define to 1 if you have the <setjmp.h> header file. */
 #undef HAVE_SETJMP_H
 
-/* Define if you have the `setresuid' function. */
+/* Define to 1 if you have the `setresuid' function. */
 #undef HAVE_SETRESUID
 
-/* Define if you have the `setsid' function. */
+/* Define to 1 if you have the `setsid' function. */
 #undef HAVE_SETSID
 
-/* Define if you have the `sigaction' function. */
+/* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
 
-/* Define if you have the `signal' function. */
+/* Define to 1 if you have the `signal' function. */
 #undef HAVE_SIGNAL
 
-/* Define if you have the <signal.h> header file. */
+/* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
-/* Define if you have the `socket' function. */
+/* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
-/* Define if you have the <socketbits.h> header file. */
+/* Define to 1 if you have the <socketbits.h> header file. */
 #undef HAVE_SOCKETBITS_H
 
-/* Define if you have the <statbuf.h> header file. */
+/* Define to 1 if you have the <statbuf.h> header file. */
 #undef HAVE_STATBUF_H
 
-/* Define if you have the <stdarg.h> header file. */
+/* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
-/* Define if you have the <stdint.h> header file. */
+/* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
-/* Define if you have the <stdio.h> header file. */
+/* Define to 1 if you have the <stdio.h> header file. */
 #undef HAVE_STDIO_H
 
-/* Define if you have the <stdlib.h> header file. */
+/* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define if you have the `strcasecmp' function. */
+/* Define to 1 if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
-/* Define if you have the `strchr' function. */
+/* Define to 1 if you have the `strchr' function. */
 #undef HAVE_STRCHR
 
-/* Define if you have the `strcspn' function. */
+/* Define to 1 if you have the `strcspn' function. */
 #undef HAVE_STRCSPN
 
-/* Define if you have the `strdup' function. */
+/* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
 
-/* Define if you have the `strerror' function. */
+/* Define to 1 if you have the `strerror' function. */
 #undef HAVE_STRERROR
 
-/* Define if you have the <strings.h> header file. */
+/* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
-/* Define if you have the <string.h> header file. */
+/* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define if you have the `strspn' function. */
+/* Define to 1 if you have the `strspn' function. */
 #undef HAVE_STRSPN
 
-/* Define if you have the `strstr' function. */
+/* Define to 1 if you have the `strstr' function. */
 #undef HAVE_STRSTR
 
 /* Define if `fhs_fh' is member of `struct fhstatus'. */
@@ -866,196 +871,196 @@
 /* Define if `devid' is member of `struct umntrequest'. */
 #undef HAVE_STRUCT_UMNTREQUEST_DEVID
 
-/* Define if you have the `svc_getreq' function. */
+/* Define to 1 if you have the `svc_getreq' function. */
 #undef HAVE_SVC_GETREQ
 
-/* Define if you have the `svc_getreqset' function. */
+/* Define to 1 if you have the `svc_getreqset' function. */
 #undef HAVE_SVC_GETREQSET
 
-/* Define if you have the `sysfs' function. */
+/* Define to 1 if you have the `sysfs' function. */
 #undef HAVE_SYSFS
 
-/* Define if you have the `syslog' function. */
+/* Define to 1 if you have the `syslog' function. */
 #undef HAVE_SYSLOG
 
-/* Define if you have the <syslog.h> header file. */
+/* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 
-/* Define if you have the <sys/config.h> header file. */
+/* Define to 1 if you have the <sys/config.h> header file. */
 #undef HAVE_SYS_CONFIG_H
 
-/* Define if you have the <sys/dg_mount.h> header file. */
+/* Define to 1 if you have the <sys/dg_mount.h> header file. */
 #undef HAVE_SYS_DG_MOUNT_H
 
-/* Define if you have the <sys/dir.h> header file. */
+/* Define to 1 if you have the <sys/dir.h> header file. */
 #undef HAVE_SYS_DIR_H
 
-/* Define if you have the <sys/errno.h> header file. */
+/* Define to 1 if you have the <sys/errno.h> header file. */
 #undef HAVE_SYS_ERRNO_H
 
-/* Define if you have the <sys/file.h> header file. */
+/* Define to 1 if you have the <sys/file.h> header file. */
 #undef HAVE_SYS_FILE_H
 
-/* Define if you have the <sys/fsid.h> header file. */
+/* Define to 1 if you have the <sys/fsid.h> header file. */
 #undef HAVE_SYS_FSID_H
 
-/* Define if you have the <sys/fstyp.h> header file. */
+/* Define to 1 if you have the <sys/fstyp.h> header file. */
 #undef HAVE_SYS_FSTYP_H
 
-/* Define if you have the <sys/fs/autofs.h> header file. */
+/* Define to 1 if you have the <sys/fs/autofs.h> header file. */
 #undef HAVE_SYS_FS_AUTOFS_H
 
-/* Define if you have the <sys/fs/autofs_prot.h> header file. */
+/* Define to 1 if you have the <sys/fs/autofs_prot.h> header file. */
 #undef HAVE_SYS_FS_AUTOFS_PROT_H
 
-/* Define if you have the <sys/fs/cachefs_fs.h> header file. */
+/* Define to 1 if you have the <sys/fs/cachefs_fs.h> header file. */
 #undef HAVE_SYS_FS_CACHEFS_FS_H
 
-/* Define if you have the <sys/fs/efs_clnt.h> header file. */
+/* Define to 1 if you have the <sys/fs/efs_clnt.h> header file. */
 #undef HAVE_SYS_FS_EFS_CLNT_H
 
-/* Define if you have the <sys/fs/nfs_clnt.h> header file. */
+/* Define to 1 if you have the <sys/fs/nfs_clnt.h> header file. */
 #undef HAVE_SYS_FS_NFS_CLNT_H
 
-/* Define if you have the <sys/fs/nfs.h> header file. */
+/* Define to 1 if you have the <sys/fs/nfs.h> header file. */
 #undef HAVE_SYS_FS_NFS_H
 
-/* Define if you have the <sys/fs/nfs/mount.h> header file. */
+/* Define to 1 if you have the <sys/fs/nfs/mount.h> header file. */
 #undef HAVE_SYS_FS_NFS_MOUNT_H
 
-/* Define if you have the <sys/fs/nfs/nfs_clnt.h> header file. */
+/* Define to 1 if you have the <sys/fs/nfs/nfs_clnt.h> header file. */
 #undef HAVE_SYS_FS_NFS_NFS_CLNT_H
 
-/* Define if you have the <sys/fs/pc_fs.h> header file. */
+/* Define to 1 if you have the <sys/fs/pc_fs.h> header file. */
 #undef HAVE_SYS_FS_PC_FS_H
 
-/* Define if you have the <sys/fs/tmp.h> header file. */
+/* Define to 1 if you have the <sys/fs/tmp.h> header file. */
 #undef HAVE_SYS_FS_TMP_H
 
-/* Define if you have the <sys/fs_types.h> header file. */
+/* Define to 1 if you have the <sys/fs_types.h> header file. */
 #undef HAVE_SYS_FS_TYPES_H
 
-/* Define if you have the <sys/fs/ufs_mount.h> header file. */
+/* Define to 1 if you have the <sys/fs/ufs_mount.h> header file. */
 #undef HAVE_SYS_FS_UFS_MOUNT_H
 
-/* Define if you have the <sys/fs/xfs_clnt.h> header file. */
+/* Define to 1 if you have the <sys/fs/xfs_clnt.h> header file. */
 #undef HAVE_SYS_FS_XFS_CLNT_H
 
-/* Define if you have the <sys/ioctl.h> header file. */
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
 
-/* Define if you have the <sys/lock.h> header file. */
+/* Define to 1 if you have the <sys/lock.h> header file. */
 #undef HAVE_SYS_LOCK_H
 
-/* Define if you have the <sys/machine.h> header file. */
+/* Define to 1 if you have the <sys/machine.h> header file. */
 #undef HAVE_SYS_MACHINE_H
 
-/* Define if you have the <sys/mbuf.h> header file. */
+/* Define to 1 if you have the <sys/mbuf.h> header file. */
 #undef HAVE_SYS_MBUF_H
 
-/* Define if you have the <sys/mman.h> header file. */
+/* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 
-/* Define if you have the <sys/mntctl.h> header file. */
+/* Define to 1 if you have the <sys/mntctl.h> header file. */
 #undef HAVE_SYS_MNTCTL_H
 
-/* Define if you have the <sys/mntent.h> header file. */
+/* Define to 1 if you have the <sys/mntent.h> header file. */
 #undef HAVE_SYS_MNTENT_H
 
-/* Define if you have the <sys/mnttab.h> header file. */
+/* Define to 1 if you have the <sys/mnttab.h> header file. */
 #undef HAVE_SYS_MNTTAB_H
 
-/* Define if you have the <sys/mount.h> header file. */
+/* Define to 1 if you have the <sys/mount.h> header file. */
 #undef HAVE_SYS_MOUNT_H
 
-/* Define if you have the <sys/ndir.h> header file. */
+/* Define to 1 if you have the <sys/ndir.h> header file. */
 #undef HAVE_SYS_NDIR_H
 
-/* Define if you have the <sys/netconfig.h> header file. */
+/* Define to 1 if you have the <sys/netconfig.h> header file. */
 #undef HAVE_SYS_NETCONFIG_H
 
-/* Define if you have the <sys/param.h> header file. */
+/* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
-/* Define if you have the <sys/pathconf.h> header file. */
+/* Define to 1 if you have the <sys/pathconf.h> header file. */
 #undef HAVE_SYS_PATHCONF_H
 
-/* Define if you have the <sys/proc.h> header file. */
+/* Define to 1 if you have the <sys/proc.h> header file. */
 #undef HAVE_SYS_PROC_H
 
-/* Define if you have the <sys/resource.h> header file. */
+/* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
-/* Define if you have the <sys/sema.h> header file. */
+/* Define to 1 if you have the <sys/sema.h> header file. */
 #undef HAVE_SYS_SEMA_H
 
-/* Define if you have the <sys/signal.h> header file. */
+/* Define to 1 if you have the <sys/signal.h> header file. */
 #undef HAVE_SYS_SIGNAL_H
 
-/* Define if you have the <sys/socket.h> header file. */
+/* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H
 
-/* Define if you have the <sys/sockio.h> header file. */
+/* Define to 1 if you have the <sys/sockio.h> header file. */
 #undef HAVE_SYS_SOCKIO_H
 
-/* Define if you have the <sys/statfs.h> header file. */
+/* Define to 1 if you have the <sys/statfs.h> header file. */
 #undef HAVE_SYS_STATFS_H
 
-/* Define if you have the <sys/stat.h> header file. */
+/* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define if you have the <sys/syscall.h> header file. */
+/* Define to 1 if you have the <sys/syscall.h> header file. */
 #undef HAVE_SYS_SYSCALL_H
 
-/* Define if you have the <sys/syslimits.h> header file. */
+/* Define to 1 if you have the <sys/syslimits.h> header file. */
 #undef HAVE_SYS_SYSLIMITS_H
 
-/* Define if you have the <sys/syslog.h> header file. */
+/* Define to 1 if you have the <sys/syslog.h> header file. */
 #undef HAVE_SYS_SYSLOG_H
 
-/* Define if you have the <sys/time.h> header file. */
+/* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
-/* Define if you have the <sys/tiuser.h> header file. */
+/* Define to 1 if you have the <sys/tiuser.h> header file. */
 #undef HAVE_SYS_TIUSER_H
 
-/* Define if you have the <sys/types.h> header file. */
+/* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define if you have the <sys/ucred.h> header file. */
+/* Define to 1 if you have the <sys/ucred.h> header file. */
 #undef HAVE_SYS_UCRED_H
 
-/* Define if you have the <sys/uio.h> header file. */
+/* Define to 1 if you have the <sys/uio.h> header file. */
 #undef HAVE_SYS_UIO_H
 
-/* Define if you have the <sys/utsname.h> header file. */
+/* Define to 1 if you have the <sys/utsname.h> header file. */
 #undef HAVE_SYS_UTSNAME_H
 
-/* Define if you have the <sys/vfs.h> header file. */
+/* Define to 1 if you have the <sys/vfs.h> header file. */
 #undef HAVE_SYS_VFS_H
 
-/* Define if you have the <sys/vmount.h> header file. */
+/* Define to 1 if you have the <sys/vmount.h> header file. */
 #undef HAVE_SYS_VMOUNT_H
 
-/* Define if you have the <sys/vnode.h> header file. */
+/* Define to 1 if you have the <sys/vnode.h> header file. */
 #undef HAVE_SYS_VNODE_H
 
-/* Define if you have <sys/wait.h> that is POSIX.1 compatible. */
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
-/* Define if you have the <time.h> header file. */
+/* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
 
-/* Define if you have the <tiuser.h> header file. */
+/* Define to 1 if you have the <tiuser.h> header file. */
 #undef HAVE_TIUSER_H
 
-/* Define if you have the <tmpfs/tmp.h> header file. */
+/* Define to 1 if you have the <tmpfs/tmp.h> header file. */
 #undef HAVE_TMPFS_TMP_H
 
 /* what type of network transport type is in use? TLI or sockets? */
 #undef HAVE_TRANSPORT_TYPE_TLI
 
-/* Define if you have the `ualarm' function. */
+/* Define to 1 if you have the `ualarm' function. */
 #undef HAVE_UALARM
 
 /* Define if `flags' is member of `ufs_args_t'. */
@@ -1070,178 +1075,178 @@
 /* Define if `ufs_pgthresh' is member of `ufs_args_t'. */
 #undef HAVE_UFS_ARGS_T_UFS_PGTHRESH
 
-/* Define if you have the <ufs/ufs_mount.h> header file. */
+/* Define to 1 if you have the <ufs/ufs_mount.h> header file. */
 #undef HAVE_UFS_UFS_MOUNT_H
 
-/* Define if you have the <ufs/ufs/ufsmount.h> header file. */
+/* Define to 1 if you have the <ufs/ufs/ufsmount.h> header file. */
 #undef HAVE_UFS_UFS_UFSMOUNT_H
 
-/* Define if you have the `umount' function. */
+/* Define to 1 if you have the `umount' function. */
 #undef HAVE_UMOUNT
 
-/* Define if you have the `uname' function. */
+/* Define to 1 if you have the `uname' function. */
 #undef HAVE_UNAME
 
-/* Define if you have the <unistd.h> header file. */
+/* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the `unmount' function. */
+/* Define to 1 if you have the `unmount' function. */
 #undef HAVE_UNMOUNT
 
-/* Define if you have the `uvmount' function. */
+/* Define to 1 if you have the `uvmount' function. */
 #undef HAVE_UVMOUNT
 
-/* Define if you have the <varargs.h> header file. */
+/* Define to 1 if you have the <varargs.h> header file. */
 #undef HAVE_VARARGS_H
 
-/* Define if you have the `vfork' function. */
+/* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
-/* Define if you have the <vfork.h> header file. */
+/* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
 
-/* Define if you have the `vfsmount' function. */
+/* Define to 1 if you have the `vfsmount' function. */
 #undef HAVE_VFSMOUNT
 
-/* Define if you have the `vmount' function. */
+/* Define to 1 if you have the `vmount' function. */
 #undef HAVE_VMOUNT
 
-/* Define if you have the `vsnprintf' function. */
+/* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
-/* Define if you have the `wait3' function. */
+/* Define to 1 if you have the `wait3' function. */
 #undef HAVE_WAIT3
 
-/* Define if you have the `waitpid' function. */
+/* Define to 1 if you have the `waitpid' function. */
 #undef HAVE_WAITPID
 
-/* Define if `fork' works. */
+/* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK
 
-/* Define if `vfork' works. */
+/* Define to 1 if `vfork' works. */
 #undef HAVE_WORKING_VFORK
 
-/* Define if you have the `xdr_attrstat' function. */
+/* Define to 1 if you have the `xdr_attrstat' function. */
 #undef HAVE_XDR_ATTRSTAT
 
-/* Define if you have the `xdr_createargs' function. */
+/* Define to 1 if you have the `xdr_createargs' function. */
 #undef HAVE_XDR_CREATEARGS
 
-/* Define if you have the `xdr_dirlist' function. */
+/* Define to 1 if you have the `xdr_dirlist' function. */
 #undef HAVE_XDR_DIRLIST
 
-/* Define if you have the `xdr_diropargs' function. */
+/* Define to 1 if you have the `xdr_diropargs' function. */
 #undef HAVE_XDR_DIROPARGS
 
-/* Define if you have the `xdr_diropokres' function. */
+/* Define to 1 if you have the `xdr_diropokres' function. */
 #undef HAVE_XDR_DIROPOKRES
 
-/* Define if you have the `xdr_diropres' function. */
+/* Define to 1 if you have the `xdr_diropres' function. */
 #undef HAVE_XDR_DIROPRES
 
-/* Define if you have the `xdr_dirpath' function. */
+/* Define to 1 if you have the `xdr_dirpath' function. */
 #undef HAVE_XDR_DIRPATH
 
-/* Define if you have the `xdr_entry' function. */
+/* Define to 1 if you have the `xdr_entry' function. */
 #undef HAVE_XDR_ENTRY
 
-/* Define if you have the `xdr_exportnode' function. */
+/* Define to 1 if you have the `xdr_exportnode' function. */
 #undef HAVE_XDR_EXPORTNODE
 
-/* Define if you have the `xdr_exports' function. */
+/* Define to 1 if you have the `xdr_exports' function. */
 #undef HAVE_XDR_EXPORTS
 
-/* Define if you have the `xdr_fattr' function. */
+/* Define to 1 if you have the `xdr_fattr' function. */
 #undef HAVE_XDR_FATTR
 
-/* Define if you have the `xdr_fhandle' function. */
+/* Define to 1 if you have the `xdr_fhandle' function. */
 #undef HAVE_XDR_FHANDLE
 
-/* Define if you have the `xdr_fhstatus' function. */
+/* Define to 1 if you have the `xdr_fhstatus' function. */
 #undef HAVE_XDR_FHSTATUS
 
-/* Define if you have the `xdr_filename' function. */
+/* Define to 1 if you have the `xdr_filename' function. */
 #undef HAVE_XDR_FILENAME
 
-/* Define if you have the `xdr_ftype' function. */
+/* Define to 1 if you have the `xdr_ftype' function. */
 #undef HAVE_XDR_FTYPE
 
-/* Define if you have the `xdr_groupnode' function. */
+/* Define to 1 if you have the `xdr_groupnode' function. */
 #undef HAVE_XDR_GROUPNODE
 
-/* Define if you have the `xdr_groups' function. */
+/* Define to 1 if you have the `xdr_groups' function. */
 #undef HAVE_XDR_GROUPS
 
-/* Define if you have the `xdr_linkargs' function. */
+/* Define to 1 if you have the `xdr_linkargs' function. */
 #undef HAVE_XDR_LINKARGS
 
-/* Define if you have the `xdr_mountbody' function. */
+/* Define to 1 if you have the `xdr_mountbody' function. */
 #undef HAVE_XDR_MOUNTBODY
 
-/* Define if you have the `xdr_mountlist' function. */
+/* Define to 1 if you have the `xdr_mountlist' function. */
 #undef HAVE_XDR_MOUNTLIST
 
-/* Define if you have the `xdr_mountres3' function. */
+/* Define to 1 if you have the `xdr_mountres3' function. */
 #undef HAVE_XDR_MOUNTRES3
 
-/* Define if you have the `xdr_name' function. */
+/* Define to 1 if you have the `xdr_name' function. */
 #undef HAVE_XDR_NAME
 
-/* Define if you have the `xdr_nfscookie' function. */
+/* Define to 1 if you have the `xdr_nfscookie' function. */
 #undef HAVE_XDR_NFSCOOKIE
 
-/* Define if you have the `xdr_nfspath' function. */
+/* Define to 1 if you have the `xdr_nfspath' function. */
 #undef HAVE_XDR_NFSPATH
 
-/* Define if you have the `xdr_nfsstat' function. */
+/* Define to 1 if you have the `xdr_nfsstat' function. */
 #undef HAVE_XDR_NFSSTAT
 
-/* Define if you have the `xdr_nfstime' function. */
+/* Define to 1 if you have the `xdr_nfstime' function. */
 #undef HAVE_XDR_NFSTIME
 
-/* Define if you have the `xdr_nfs_fh' function. */
+/* Define to 1 if you have the `xdr_nfs_fh' function. */
 #undef HAVE_XDR_NFS_FH
 
-/* Define if you have the `xdr_pointer' function. */
+/* Define to 1 if you have the `xdr_pointer' function. */
 #undef HAVE_XDR_POINTER
 
-/* Define if you have the `xdr_readargs' function. */
+/* Define to 1 if you have the `xdr_readargs' function. */
 #undef HAVE_XDR_READARGS
 
-/* Define if you have the `xdr_readdirargs' function. */
+/* Define to 1 if you have the `xdr_readdirargs' function. */
 #undef HAVE_XDR_READDIRARGS
 
-/* Define if you have the `xdr_readdirres' function. */
+/* Define to 1 if you have the `xdr_readdirres' function. */
 #undef HAVE_XDR_READDIRRES
 
-/* Define if you have the `xdr_readlinkres' function. */
+/* Define to 1 if you have the `xdr_readlinkres' function. */
 #undef HAVE_XDR_READLINKRES
 
-/* Define if you have the `xdr_readokres' function. */
+/* Define to 1 if you have the `xdr_readokres' function. */
 #undef HAVE_XDR_READOKRES
 
-/* Define if you have the `xdr_readres' function. */
+/* Define to 1 if you have the `xdr_readres' function. */
 #undef HAVE_XDR_READRES
 
-/* Define if you have the `xdr_renameargs' function. */
+/* Define to 1 if you have the `xdr_renameargs' function. */
 #undef HAVE_XDR_RENAMEARGS
 
-/* Define if you have the `xdr_sattr' function. */
+/* Define to 1 if you have the `xdr_sattr' function. */
 #undef HAVE_XDR_SATTR
 
-/* Define if you have the `xdr_sattrargs' function. */
+/* Define to 1 if you have the `xdr_sattrargs' function. */
 #undef HAVE_XDR_SATTRARGS
 
-/* Define if you have the `xdr_statfsokres' function. */
+/* Define to 1 if you have the `xdr_statfsokres' function. */
 #undef HAVE_XDR_STATFSOKRES
 
-/* Define if you have the `xdr_statfsres' function. */
+/* Define to 1 if you have the `xdr_statfsres' function. */
 #undef HAVE_XDR_STATFSRES
 
-/* Define if you have the `xdr_symlinkargs' function. */
+/* Define to 1 if you have the `xdr_symlinkargs' function. */
 #undef HAVE_XDR_SYMLINKARGS
 
-/* Define if you have the `xdr_writeargs' function. */
+/* Define to 1 if you have the `xdr_writeargs' function. */
 #undef HAVE_XDR_WRITEARGS
 
 /* Define if `flags' is member of `xfs_args_t'. */
@@ -1250,16 +1255,16 @@
 /* Define if `fspec' is member of `xfs_args_t'. */
 #undef HAVE_XFS_ARGS_T_FSPEC
 
-/* Define if you have the `yp_all' function. */
+/* Define to 1 if you have the `yp_all' function. */
 #undef HAVE_YP_ALL
 
-/* Define if you have the `yp_get_default_domain' function. */
+/* Define to 1 if you have the `yp_get_default_domain' function. */
 #undef HAVE_YP_GET_DEFAULT_DOMAIN
 
-/* Define if you have the `_seterr_reply' function. */
+/* Define to 1 if you have the `_seterr_reply' function. */
 #undef HAVE__SETERR_REPLY
 
-/* Define if you have the `__seterr_reply' function. */
+/* Define to 1 if you have the `__seterr_reply' function. */
 #undef HAVE___SETERR_REPLY
 
 /* Name of mount type to hide amd mount from df(1) */
@@ -1854,19 +1859,25 @@
 /* Define the field name for the filehandle within nfs_args_t */
 #undef NFS_FH_FIELD
 
-/* Define if your C compiler doesn't accept -c and -o together. */
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
 
-/* Define bug-reporting address (must be defined by configure.in) */
+/* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
-/* Define package name (must be defined by configure.in) */
+/* Define to the full name of this package. */
 #undef PACKAGE_NAME
 
-/* Define version of package (must be defined by configure.in) */
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
 /* Type of the 6th argument to recvfrom() */
@@ -1878,7 +1889,7 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
-/* Define if the `setpgrp' function takes no argument. */
+/* Define to 1 if the `setpgrp' function takes no argument. */
 #undef SETPGRP_VOID
 
 /* If using the C implementation of alloca, define if you know the
@@ -1889,19 +1900,19 @@
         STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
-/* Define if the `S_IS*' macros in <sys/stat.h> do not work properly. */
+/* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 #undef STAT_MACROS_BROKEN
 
-/* Define if you have the ANSI C header files. */
+/* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Define the type of the 3rd argument ('in') to svc_getargs() */
 #undef SVC_IN_ARG_TYPE
 
-/* Define if you can safely include both <sys/time.h> and <time.h>. */
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
 
-/* Define if your <sys/time.h> declares `struct tm'. */
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
 /* Define user name */
@@ -1916,8 +1927,8 @@
 /* Version number of package */
 #undef VERSION
 
-/* Define if your processor stores words with the most significant byte first
-   (like Motorola and SPARC, unlike Intel and VAX). */
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN
 
 /* Define to the type of xdr procedure type */
@@ -1926,11 +1937,11 @@
 /* Type of the 3rd argument to yp_order() */
 #undef YP_ORDER_OUTORDER_TYPE
 
-/* Define if `lex' declares `yytext' as a `char *' by default, not a `char[]'.
-   */
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
 #undef YYTEXT_POINTER
 
-/* Define if on AIX 3.
+/* Define to 1 if on AIX 3.
    System headers sometimes define this.
    We just want to avoid a redefinition error message.  */
 #ifndef _ALL_SOURCE

@@ -8,15 +8,15 @@
 
 ** General notes about the autofs support in am-utils
 
-- The autofs code in am-utils is late-beta quality for Linux, beta quality for
+- The autofs code in am-utils is gamma quality for Linux, beta quality for
   Solaris 2.5+ and non-working for all the other systems.
 
-- Link, lofs, and nfs mount types work; the others should work, but are not
-  tested.
+- Link, lofs, and nfs mounts were tested and work properly; the others
+  should work, but were not tested.
 
 * Caveats:
 
-- [this applies mostly to Solaris/Irix] Amd acts as *both* automountd and
+- [this applies to Solaris/Irix/HP-UX/AIX] Amd acts as *both* automountd and
 automount.  There's no way to distinguish between the two.  When amd starts,
 it first registers itself as an autofs server (automountd's job), then
 parses its own maps, and decides which autofs-type mounts to make
@@ -54,7 +54,7 @@ unusable.
 * Solaris:
 
 - Amd w/ autofs mounts will fight over the listener port with Sun's
-  automounterd, so running both simultaneously is a really bad idea.
+  automountd, so running both simultaneously is a really bad idea.
 
 - Browsable_dirs is possible and implemented for Solaris 2.6+.
 
@@ -144,17 +144,17 @@ just pretend everything is ok, when in fact it isn't.
 and create_autofs_service(), in conf/transp/transp_sockets.c. Not sure if
 it's necessary, Solaris it still biased towards TLI/STREAMS in userspace.
 
-- [Linux only] support kernel-based expirations. Somewhat tricky, because
-the ioctl() needs to be called from a child process, otherwise we deadlock.
+- Implement the restarting of autofs mount points. This is already doable on
+Solaris; on Linux, the kernel needs to be patched to allow it.
 
 (3) Testing and porting to other systems:
 
-- nothing has been tested on Irix, which reportedly has a similar
-functioning autofs to Solaris 2.5.1.
+- nothing has been tested on Irix, which reportedly has a similarly
+functioning autofs to Solaris 2.5.
 
-- support for Linux autofs is fairly stable, we need testers!
+- support for Linux autofs is stable, we need testers!
 
 - support for Solaris 2.6+ is pretty stable, so we need testers for it, too!
 
-- did not test any version of Solaris on x86. It will probably work, but you
-have been warned. Testers are welcome.
+- we did not test any version of Solaris on x86. It will probably work, but
+you have been warned. Testers are welcome.

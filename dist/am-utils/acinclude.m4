@@ -3,7 +3,7 @@ dnl Contains definitions for specialized GNU-autoconf macros.
 dnl Author: Erez Zadok <ezk@cs.columbia.edu>
 dnl
 dnl DO NOT EDIT DIRECTLY!  Generated automatically by maintainers from
-dnl aux/Makefile!
+dnl m4/GNUmakefile!
 dnl
 dnl ######################################################################
 dnl UNCOMMENT THE NEXT FEW LINES FOR DEBUGGING CONFIGURE
@@ -1755,8 +1755,7 @@ case "${host_os}" in
 		ac_cv_nfs_fh_dref_style=bsd44 ;;
 	# all new BSDs changed the type of the
 	# filehandle in nfs_args from nfsv2fh_t to u_char.
-	# I wonder about darwin/rhapsody...
-	freebsd* | freebsdelf* | bsdi* | netbsd* | openbsd* )
+	freebsd* | freebsdelf* | bsdi* | netbsd* | openbsd* | darwin* | rhapsody* )
 		ac_cv_nfs_fh_dref_style=freebsd22 ;;
 	aix[[1-3]]* | aix4.[[01]]* )
 		ac_cv_nfs_fh_dref_style=aix3 ;;
@@ -1864,8 +1863,10 @@ case "${host_os}" in
 			ac_cv_nfs_prot_headers=aix4_2 ;;
 	aix4.3* )
 			ac_cv_nfs_prot_headers=aix4_3 ;;
-	aix* )
+	aix5.1* )
 			ac_cv_nfs_prot_headers=aix5_1 ;;
+	aix* )
+			ac_cv_nfs_prot_headers=aix5_2 ;;
 	osf[[1-3]]* )
 			ac_cv_nfs_prot_headers=osf2 ;;
 	osf4* )
@@ -2363,6 +2364,67 @@ fi
 dnl ======================================================================
 
 
+dnl ######################################################################
+dnl Check if we have as buggy hasmntopt() libc function
+AC_DEFUN([AMU_FUNC_BAD_HASMNTOPT],
+[
+AC_CACHE_CHECK([for working hasmntopt], ac_cv_func_hasmntopt_working,
+[AC_TRY_RUN(
+AMU_MOUNT_HEADERS(
+[[
+#ifdef HAVE_MNTENT_H
+/* some systems need <stdio.h> before <mntent.h> is included */
+# ifdef HAVE_STDIO_H
+#  include <stdio.h>
+# endif /* HAVE_STDIO_H */
+# include <mntent.h>
+#endif /* HAVE_MNTENT_H */
+#ifdef HAVE_SYS_MNTENT_H
+# include <sys/mntent.h>
+#endif /* HAVE_SYS_MNTENT_H */
+#ifdef HAVE_SYS_MNTTAB_H
+# include <sys/mnttab.h>
+#endif /* HAVE_SYS_MNTTAB_H */
+#if defined(HAVE_MNTTAB_H) && !defined(MNTTAB)
+# include <mnttab.h>
+#endif /* defined(HAVE_MNTTAB_H) && !defined(MNTTAB) */
+#ifdef HAVE_STRUCT_MNTENT
+typedef struct mntent mntent_t;
+#else /* not HAVE_STRUCT_MNTENT */
+# ifdef HAVE_STRUCT_MNTTAB
+typedef struct mnttab mntent_t;
+/* map struct mnttab field names to struct mntent field names */
+#  define mnt_opts	mnt_mntopts
+# endif /* not HAVE_STRUCT_MNTTAB */
+#endif /* not HAVE_STRUCT_MNTENT */
+
+int main()
+{
+  mntent_t mnt;
+  char *tmp = NULL;
+
+ /*
+  * Test if hasmntopt will incorrectly find the string "soft", which
+  * is part of the large "softlookup" function.
+  */
+  mnt.mnt_opts = "hard,softlookup,ro";
+
+  if ((tmp = hasmntopt(&mnt, "soft")))
+    exit(1);
+  exit(0);
+}
+]]),
+	[ac_cv_func_hasmntopt_working=yes],
+	[ac_cv_func_hasmntopt_working=no]
+)])
+if test $ac_cv_func_hasmntopt_working = no
+then
+	AC_LIBOBJ([hasmntopt])
+ 	AC_DEFINE(HAVE_BAD_HASMNTOPT)
+fi
+])
+
+
 dnl My version is similar to the one from Autoconf 2.52, but I also
 dnl define HAVE_BAD_MEMCMP so that I can do smarter things to avoid
 dnl linkage conflicts with bad memcmp versions that are in libc.
@@ -2405,7 +2467,7 @@ fi
 ])
 
 
-dnl FILE: aux/macros/header_templates.m4
+dnl FILE: m4/macros/header_templates.m4
 dnl defines descriptions for various am-utils specific macros
 
 AH_TEMPLATE([HAVE_AMU_FS_AUTO],
@@ -3230,6 +3292,9 @@ AH_TEMPLATE([mfs_args_t],
 AH_TEMPLATE([rfs_args_t],
 [Define a type for the rfs_args structure])
 
+AH_TEMPLATE([HAVE_BAD_HASMNTOPT],
+[define if have a bad version of hasmntopt()])
+
 AH_TEMPLATE([HAVE_BAD_MEMCMP],
 [define if have a bad version of memcmp()])
 
@@ -3691,7 +3756,12 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	* )	ac_cv_os_cflags="" ;;
+	darwin* )
+		ac_cv_os_cflags="-D_P1003_1B_VISIBLE"
+		;;
+	* )
+		ac_cv_os_cflags=""
+		;;
 esac
 ])
 CFLAGS="$CFLAGS $ac_cv_os_cflags"
@@ -3890,6 +3960,14 @@ then
 AC_TRY_COMPILE_NFS(
 [ struct irix5_nfs_args na;
 ], ac_cv_have_struct_nfs_args="struct irix5_nfs_args", ac_cv_have_struct_nfs_args=notfound)
+fi
+
+# look for "struct aix52_nfs_args" (specially set in conf/nfs_prot/)
+if test "$ac_cv_have_struct_nfs_args" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ struct aix52_nfs_args na;
+], ac_cv_have_struct_nfs_args="struct aix52_nfs_args", ac_cv_have_struct_nfs_args=notfound)
 fi
 
 # look for "struct aix51_nfs_args" (specially set in conf/nfs_prot/)

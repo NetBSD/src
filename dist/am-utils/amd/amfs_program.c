@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.1.1.6 2003/03/09 01:13:08 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_program.c,v 1.15 2002/03/29 20:01:27 ib42 Exp
+ * Id: amfs_program.c,v 1.17 2002/12/27 22:43:47 ezk Exp
  *
  */
 
@@ -145,7 +145,7 @@ amfs_program_exec(char *info)
   /*
    * Try the exec
    */
-  amuDebug(D_FULL) {
+  if (amuDebug(D_FULL)) {
     char **cp = xivec;
     plog(XLOG_DEBUG, "executing (un)mount command...");
     while (*cp) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: ualarm.c,v 1.1.1.5 2002/11/29 22:59:08 christos Exp $	*/
+/*	$NetBSD: ualarm.c,v 1.1.1.6 2003/03/09 01:14:02 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ualarm.c,v 1.6 2002/02/02 20:59:05 ezk Exp
+ * Id: ualarm.c,v 1.7 2002/12/27 22:44:11 ezk Exp
  *
  */
 

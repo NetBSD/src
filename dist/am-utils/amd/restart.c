@@ -1,7 +1,7 @@
-/*	$NetBSD: restart.c,v 1.1.1.5 2002/11/29 22:58:16 christos Exp $	*/
+/*	$NetBSD: restart.c,v 1.1.1.6 2003/03/09 01:13:13 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: restart.c,v 1.7 2002/02/02 20:58:56 ezk Exp
+ * Id: restart.c,v 1.9 2002/12/27 22:43:52 ezk Exp
  *
  */
 
@@ -48,6 +48,75 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+
+static void
+restart_fake_mntfs(mntent_t *me, am_ops *fs_ops)
+{
+  mntfs *mf;
+  am_opts mo;
+  char *cp;
+
+  /*
+   * Partially fake up an opts structure
+   */
+  memset(&mo, 0, sizeof(mo));
+  mo.opt_rhost = 0;
+  mo.opt_rfs = 0;
+  cp = strchr(me->mnt_fsname, ':');
+  if (cp) {
+    *cp = '\0';
+    mo.opt_rhost = strdup(me->mnt_fsname);
+    mo.opt_rfs = strdup(cp + 1);
+    *cp = ':';
+  } else if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS)) {
+    /*
+     * Hacky workaround for mnttab NFS entries that only list the server
+     */
+    plog(XLOG_WARNING, "NFS server entry assumed to be %s:/", me->mnt_fsname);
+    mo.opt_rhost = strdup(me->mnt_fsname);
+    mo.opt_rfs = strdup("/");
+    me->mnt_fsname = str3cat(me->mnt_fsname, mo.opt_rhost, ":", "/");
+  }
+  mo.opt_fs = me->mnt_dir;
+  mo.opt_opts = me->mnt_opts;
+
+  /*
+   * Make a new mounted filesystem
+   */
+  mf = find_mntfs(fs_ops, &mo, me->mnt_dir,
+		  me->mnt_fsname, "", me->mnt_opts, "");
+  if (mf->mf_refc == 1) {
+    mf->mf_flags |= MFF_RESTART | MFF_MOUNTED;
+    mf->mf_error = 0;		     /* Already mounted correctly */
+    mf->mf_fo = 0;
+    /*
+     * Only timeout non-NFS entries
+     */
+    if (!STREQ(me->mnt_type, MNTTAB_TYPE_NFS))
+      mf->mf_flags |= MFF_RSTKEEP;
+    if (fs_ops->fs_init) {
+      /*
+       * Don't care whether this worked since
+       * it is checked again when the fs is
+       * inherited.
+       */
+      (void) (*fs_ops->fs_init) (mf);
+    }
+    plog(XLOG_INFO, "%s restarted fstype %s on %s",
+	 me->mnt_fsname, fs_ops->fs_type, me->mnt_dir);
+  } else {
+    /* Something strange happened - two mounts at the same place! */
+    free_mntfs(mf);
+  }
+  /*
+   * Clean up mo
+   */
+  if (mo.opt_rhost)
+    XFREE(mo.opt_rhost);
+  if (mo.opt_rfs)
+    XFREE(mo.opt_rfs);
+}
 
 
 /*
@@ -79,12 +148,18 @@ restart(void)
        mlp = mlp->mnext) {
     mntent_t *me = mlp->mnt;
     am_ops *fs_ops = 0;
-    if (STREQ(me->mnt_type, MNTTAB_TYPE_UFS)) {
-      /*
-       * UFS entry
-       */
-      fs_ops = &ufs_ops;
-    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS)) {
+
+    /* Search for the correct filesystem ops */
+    fs_ops = ops_search(me->mnt_type);
+
+    /*
+     * Catch everything else with symlinks to
+     * avoid recursive mounts.  This is debatable...
+     */
+    if (!fs_ops)
+      fs_ops = &amfs_link_ops;
+
+    if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS)) {
       /*
        * NFS entry, or possibly an Amd entry...
        * The mnt_fsname for daemon mount points is
@@ -97,110 +172,10 @@ restart(void)
       if (colon && strstr(colon, "(pid")) {
 	plog(XLOG_WARNING, "%s is an existing automount point", me->mnt_dir);
 	fs_ops = &amfs_link_ops;
-      } else {
-	fs_ops = &nfs_ops;
       }
-#ifdef MNTTAB_TYPE_NFS3
-    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS3)) {
-      fs_ops = &nfs_ops;
-#endif /* MNTTAB_TYPE_NFS3 */
-#ifdef MNTTAB_TYPE_LOFS
-    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_LOFS)) {
-      fs_ops = &lofs_ops;
-#endif /* MNTTAB_TYPE_LOFS */
-#ifdef MNTTAB_TYPE_CDFS
-    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_CDFS)) {
-      fs_ops = &cdfs_ops;
-#endif /* MNTTAB_TYPE_CDFS */
-#ifdef MNTTAB_TYPE_PCFS
-    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_PCFS)) {
-      fs_ops = &pcfs_ops;
-#endif /* MNTTAB_TYPE_PCFS */
-#ifdef MNTTAB_TYPE_MFS
-    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_MFS)) {
-      /*
-       * MFS entry.  Fake with a symlink.
-       */
-      fs_ops = &amfs_link_ops;
-#endif /* MNTTAB_TYPE_MFS */
-    } else {
-      /*
-       * Catch everything else with symlinks to
-       * avoid recursive mounts.  This is debatable...
-       */
-      fs_ops = &amfs_link_ops;
     }
 
-    /*
-     * If we found something to do
-     */
-    if (fs_ops) {
-      mntfs *mf;
-      am_opts mo;
-      char *cp;
-      cp = strchr(me->mnt_fsname, ':');
-
-      /*
-       * Partially fake up an opts structure
-       */
-      memset(&mo, 0, sizeof(mo));
-      mo.opt_rhost = 0;
-      mo.opt_rfs = 0;
-      if (cp) {
-	*cp = '\0';
-	mo.opt_rhost = strdup(me->mnt_fsname);
-	mo.opt_rfs = strdup(cp + 1);
-	*cp = ':';
-      } else if (fs_ops->ffserver == find_nfs_srvr) {
-	/*
-	 * Prototype 4.4 BSD used to end up here -
-	 * might as well keep the workaround for now
-	 */
-	plog(XLOG_WARNING, "NFS server entry assumed to be %s:/", me->mnt_fsname);
-	mo.opt_rhost = strdup(me->mnt_fsname);
-	mo.opt_rfs = strdup("/");
-	me->mnt_fsname = str3cat(me->mnt_fsname, mo.opt_rhost, ":", "/");
-      }
-      mo.opt_fs = me->mnt_dir;
-      mo.opt_opts = me->mnt_opts;
-
-      /*
-       * Make a new mounted filesystem
-       */
-      mf = find_mntfs(fs_ops, &mo, me->mnt_dir,
-		      me->mnt_fsname, "", me->mnt_opts, "");
-      if (mf->mf_refc == 1) {
-	mf->mf_flags |= MFF_RESTART | MFF_MOUNTED;
-	mf->mf_error = 0;	/* Already mounted correctly */
-	mf->mf_fo = 0;
-	/*
-	 * If the restarted type is a link then
-	 * don't time out.
-	 */
-	if (fs_ops == &amfs_link_ops || fs_ops == &ufs_ops)
-	  mf->mf_flags |= MFF_RSTKEEP;
-	if (fs_ops->fs_init) {
-	  /*
-	   * Don't care whether this worked since
-	   * it is checked again when the fs is
-	   * inherited.
-	   */
-	  (void) (*fs_ops->fs_init) (mf);
-	}
-	plog(XLOG_INFO, "%s restarted fstype %s on %s",
-	     me->mnt_fsname, fs_ops->fs_type, me->mnt_dir);
-      } else {
-	/* Something strange happened - two mounts at the same place! */
-	free_mntfs(mf);
-      }
-      /*
-       * Clean up mo
-       */
-      if (mo.opt_rhost)
-	XFREE(mo.opt_rhost);
-      if (mo.opt_rfs)
-	XFREE(mo.opt_rfs);
-    }
+    restart_fake_mntfs(me, fs_ops);
   }
 
   /*

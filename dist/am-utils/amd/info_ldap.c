@@ -1,7 +1,7 @@
-/*	$NetBSD: info_ldap.c,v 1.1.1.5 2002/11/29 22:58:18 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.1.1.6 2003/03/09 01:13:14 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ldap.c,v 1.17 2002/06/22 18:16:14 ezk Exp
+ * Id: info_ldap.c,v 1.20 2002/12/27 22:43:49 ezk Exp
  *
  */
 
@@ -168,13 +168,54 @@ cr_free(CR *c)
 }
 
 
+/*
+ * Special ldap_unbind function to handle SIGPIPE.
+ * We first ignore SIGPIPE, in case a remote LDAP server was
+ * restarted, then we reinstall the handler.
+ */
+static int
+amu_ldap_unbind(LDAP *ld)
+{
+  int e;
+#ifdef HAVE_SIGACTION
+  struct sigaction sa;
+#else /* not HAVE_SIGACTION */
+  void (*handler)(int);
+#endif /* not HAVE_SIGACTION */
+
+  dlog("amu_ldap_unbind()\n");
+
+#ifdef HAVE_SIGACTION
+  sa.sa_handler = SIG_IGN;
+  sa.sa_flags = 0;
+  sigemptyset(&(sa.sa_mask));
+  sigaddset(&(sa.sa_mask), SIGPIPE);
+  sigaction(SIGPIPE, &sa, &sa);	/* set IGNORE, and get old action */
+#else /* not HAVE_SIGACTION */
+  handler = signal(SIGPIPE, SIG_IGN);
+#endif /* not HAVE_SIGACTION */
+
+  e = ldap_unbind(ld);
+
+#ifdef HAVE_SIGACTION
+  sigemptyset(&(sa.sa_mask));
+  sigaddset(&(sa.sa_mask), SIGPIPE);
+  sigaction(SIGPIPE, &sa, NULL);
+#else /* not HAVE_SIGACTION */
+  (void) signal(SIGPIPE, handler);
+#endif /* not HAVE_SIGACTION */
+
+  return e;
+}
+
+
 static void
 ald_free(ALD *a)
 {
   he_free(a->hostent);
   cr_free(a->credentials);
   if (a->ldap != NULL)
-    ldap_unbind(a->ldap);
+    amu_ldap_unbind(a->ldap);
   XFREE(a);
 }
 
@@ -243,7 +284,7 @@ amu_ldap_rebind(ALD *a)
   if (a->ldap != NULL) {
     if ((a->timestamp - now) > AMD_LDAP_TTL) {
       dlog("Re-establishing ldap connection\n");
-      ldap_unbind(a->ldap);
+      amu_ldap_unbind(a->ldap);
       a->timestamp = now;
       a->ldap = NULL;
     } else {
@@ -259,6 +300,19 @@ amu_ldap_rebind(ALD *a)
 	plog(XLOG_WARNING, "Unable to ldap_open to %s:%d\n", h->host, h->port);
 	break;
       }
+#if LDAP_VERSION_MAX > LDAP_VERSION2
+      /* handle LDAPv3 and heigher, if available and amd.conf-igured */
+      if (gopt.ldap_proto_version > LDAP_VERSION2) {
+        if (!ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &gopt.ldap_proto_version)) {
+          dlog("amu_ldap_rebind: LDAP protocol version set to %ld\n",
+	       gopt.ldap_proto_version);
+        } else {
+          plog(XLOG_WARNING, "Unable to set ldap protocol version to %ld\n",
+	       gopt.ldap_proto_version);
+	  break;
+        }
+      }
+#endif /* LDAP_VERSION_MAX > LDAP_VERSION2 */
       if (ldap_bind_s(ld, c->who, c->pw, c->method) != LDAP_SUCCESS) {
 	plog(XLOG_WARNING, "Unable to ldap_bind to %s:%d as %s\n",
 	     h->host, h->port, c->who);
@@ -268,7 +322,7 @@ amu_ldap_rebind(ALD *a)
 #ifdef HAVE_LDAP_ENABLE_CACHE
 	ldap_enable_cache(ld, gopt.ldap_cache_seconds, gopt.ldap_cache_maxmem);
 #else /* HAVE_LDAP_ENABLE_CACHE */
-	plog(XLOG_WARNING, "ldap_enable_cache(%d) does not exist on this system!\n", gopt.ldap_cache_seconds);
+	plog(XLOG_WARNING, "ldap_enable_cache(%ld) does not exist on this system!\n", gopt.ldap_cache_seconds);
 #endif /* HAVE_LDAP_ENABLE_CACHE */
       }
       a->ldap = ld;
@@ -319,7 +373,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
 	 i + 1, ldap_err2string(err));
     if (err != LDAP_TIMEOUT) {
       dlog("get_ldap_timestamp: unbinding...\n");
-      ldap_unbind(a->ldap);
+      amu_ldap_unbind(a->ldap);
       a->ldap = NULL;
       if (amu_ldap_rebind(a))
         return (ENOENT);
@@ -433,7 +487,7 @@ amu_ldap_search(mnt_map *m, char *map, char *key, char **pval, time_t *ts)
         i + 1, ldap_err2string(err));
     if (err != LDAP_TIMEOUT) {
       dlog("amu_ldap_search: unbinding...\n");
-      ldap_unbind(a->ldap);
+      amu_ldap_unbind(a->ldap);
       a->ldap = NULL;
       if (amu_ldap_rebind(a))
         return (ENOENT);

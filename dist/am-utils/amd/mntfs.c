@@ -1,7 +1,7 @@
-/*	$NetBSD: mntfs.c,v 1.1.1.5 2002/11/29 22:58:15 christos Exp $	*/
+/*	$NetBSD: mntfs.c,v 1.1.1.6 2003/03/09 01:13:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mntfs.c,v 1.21 2002/06/24 15:41:33 ib42 Exp
+ * Id: mntfs.c,v 1.24 2002/12/27 22:43:50 ezk Exp
  *
  */
 
@@ -277,6 +277,20 @@ void
 free_mntfs(voidp v)
 {
   mntfs *mf = v;
+
+  dlog("free_mntfs <%s> type %s mf_refc %d flags %x",
+       mf->mf_mount, mf->mf_ops->fs_type, mf->mf_refc, mf->mf_flags);
+
+  /*
+   * We shouldn't ever be called to free something that has
+   * a non-positive refcount.  Something is badly wrong if
+   * we have been!  Ignore the request for now...
+   */
+  if(mf->mf_refc <= 0) {
+    plog(XLOG_ERROR, "IGNORING free_mntfs for <%s>: refc %d, flags %x",
+         mf->mf_mount, mf->mf_refc, mf->mf_flags);
+    return;
+  }
 
   if (--mf->mf_refc == 0) {
     if (mf->mf_flags & MFF_MOUNTED) {

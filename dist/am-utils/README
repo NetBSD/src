@@ -74,7 +74,7 @@ for example to add hesiod support, do so as follows:
 hlfsd, lib, etc, all you need to do to get a new version of am-utils is run
 make.
 
-If you modify any of the files in the aux/ or conf/ directories, or any *.in
+If you modify any of the files in the m4/ or conf/ directories, or any *.in
 or *.am file, then you must rebuild the configure script, Makefile.in files,
 aclocal.m4, etc.  The best way to do so is to run
 

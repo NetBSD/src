@@ -1,7 +1,7 @@
-/*	$NetBSD: pawd.c,v 1.1.1.5 2002/11/29 22:58:22 christos Exp $	*/
+/*	$NetBSD: pawd.c,v 1.1.1.6 2003/03/09 01:13:19 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: pawd.c,v 1.9 2002/02/02 20:58:56 ezk Exp
+ * Id: pawd.c,v 1.10 2002/12/27 22:43:54 ezk Exp
  *
  */
 
