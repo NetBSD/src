@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.11 1995/03/26 20:24:08 jtc Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.12 1995/08/18 15:32:58 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 /*
  * Header prepended to each a.out file.
  * only manipulate the a_midmag field via the
- * N_SETMAGIC/N_GET{MAGIC,MID,FLAG} macros in a.out.h
+ * N_SETMAGIC/N_GET{MAGIC,MID,FLAG} macros below.
  */
 struct exec {
 	u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
