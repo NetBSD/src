@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.14 2002/07/14 01:34:00 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.15 2002/08/06 23:51:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
  * 256 hardware descriptors in the ring.  We tell the upper layers
- * that they can queue a lot of packets, and we go ahead and mange
+ * that they can queue a lot of packets, and we go ahead and manage
  * up to 64 of them at a time.  We allow up to 16 DMA segments per
  * packet.
  */
