@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.193 2003/09/08 23:44:29 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.194 2003/09/09 02:43:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.193 2003/09/08 23:44:29 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.194 2003/09/09 02:43:34 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -441,7 +441,7 @@ cdopen(dev, flag, fmt, p)
 		 * raw parition to be opened, for raw IOCTLs. Data transfers
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
-		if (error == ENODEV) {
+		if (error == EIO) {
 			int silent, error2;
 
 			if (part == RAW_PART && fmt == S_IFCHR)
@@ -453,7 +453,7 @@ cdopen(dev, flag, fmt, p)
 			case 0:
 				error = 0;
 				break;
-			case ENODEV:
+			case EIO:
 			case EINVAL:
 				if (silent)
 					goto out;
