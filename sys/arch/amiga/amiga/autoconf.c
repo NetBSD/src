@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 1996/05/10 14:30:59 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1996/05/12 02:41:00 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -286,10 +286,7 @@ swapconf()
 		}
 		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 	}
-	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
-	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
-		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			ctob(physmem)/DEV_BSIZE;
+	dumpconf();
 	if (dumplo < 0)
 		dumplo = 0;
 
