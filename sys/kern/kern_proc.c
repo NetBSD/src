@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.28 1998/08/31 23:20:16 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.29 1998/09/01 00:08:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -78,6 +78,7 @@ struct proclist zombproc;
 struct pool proc_pool;
 struct pool pcred_pool;
 struct pool plimit_pool;
+struct pool pgrp_pool;
 
 static void orphanpg __P((struct pgrp *));
 #ifdef DEBUG
@@ -98,6 +99,8 @@ procinit()
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PGRP);
 	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
@@ -213,8 +216,7 @@ enterpgrp(p, pgid, mksess)
 		if (p->p_pid != pgid)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
-		MALLOC(pgrp, struct pgrp *, sizeof(struct pgrp), M_PGRP,
-		    M_WAITOK);
+		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
 		if ((np = pfind(savepid)) == NULL || np != p)
 			return (ESRCH);
 		if (mksess) {
@@ -294,7 +296,7 @@ pgdelete(pgrp)
 	LIST_REMOVE(pgrp, pg_hash);
 	if (--pgrp->pg_session->s_count == 0)
 		FREE(pgrp->pg_session, M_SESSION);
-	FREE(pgrp, M_PGRP);
+	pool_put(&pgrp_pool, pgrp);
 }
 
 /*
