@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.29 1999/12/07 07:04:39 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.30 1999/12/08 00:35:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  *
  * uses:
  *	CHIP		name of the 'chip' it's being compiled for.
- *	CHIP_D_MEM_BASE	Dense Mem space base to use.
+ *	CHIP_D_MEM_W1_SYS_START	Dense Mem space base to use.
  *	CHIP_D_MEM_EX_STORE
  *			If defined, device-provided static storage area
  *			for the dense memory space extent.  If this is
@@ -169,14 +169,14 @@ void		__C(CHIP,_mem_copy_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_mem_copy_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 #ifndef	CHIP_D_MEM_EX_STORE
 static long
     __C(CHIP,_dmem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 #define	CHIP_D_MEM_EX_STORE(v)		(__C(CHIP,_dmem_ex_storage))
 #define	CHIP_D_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_dmem_ex_storage))
 #endif
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 
 #ifndef	CHIP_S_MEM_EX_STORE
 static long
@@ -198,7 +198,10 @@ __C(CHIP,_bus_mem_init)(t, v)
 	bus_space_tag_t t;
 	void *v;
 {
-	struct extent *dex, *sex;
+#ifdef CHIP_D_MEM_W1_SYS_START
+	struct extent *dex;
+#endif
+	struct extent *sex;
 
 	/*
 	 * Initialize the bus space tag.
@@ -273,6 +276,7 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_c_4 =		__C(CHIP,_mem_copy_region_4);
 	t->abs_c_8 =		__C(CHIP,_mem_copy_region_8);
 
+#ifdef CHIP_D_MEM_W1_SYS_START
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	dex = extent_create(__S(__C(CHIP,_bus_dmem)), 0x0UL,
 	    0xffffffffffffffffUL, M_DEVBUF,
@@ -280,7 +284,6 @@ __C(CHIP,_bus_mem_init)(t, v)
 	    EX_NOWAIT);
 	extent_alloc_region(dex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
 
-#ifdef CHIP_D_MEM_BASE
 #ifdef CHIP_D_MEM_W1_BUS_START
 #ifdef EXTENT_DEBUG
 	printf("dmem: freeing from 0x%lx to 0x%lx\n",
@@ -295,7 +298,7 @@ __C(CHIP,_bus_mem_init)(t, v)
         extent_print(dex);
 #endif
         CHIP_D_MEM_EXTENT(v) = dex;
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	sex = extent_create(__S(__C(CHIP,_bus_smem)), 0x0UL,
@@ -353,18 +356,18 @@ __C(CHIP,_bus_mem_init)(t, v)
         CHIP_S_MEM_EXTENT(v) = sex;
 }
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 static int	__C(CHIP,_xlate_addr_to_dense_handle) __P((void *,
 		    bus_addr_t, bus_space_handle_t *));
 static int	__C(CHIP,_xlate_dense_handle_to_addr) __P((void *,
 		    bus_space_handle_t, bus_addr_t *));
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 static int	__C(CHIP,_xlate_addr_to_sparse_handle) __P((void *,
 		    bus_addr_t, bus_space_handle_t *));
 static int	__C(CHIP,_xlate_sparse_handle_to_addr) __P((void *,
 		    bus_space_handle_t, bus_addr_t *));
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 static int
 __C(CHIP,_xlate_addr_to_dense_handle)(v, memaddr, memhp)
 	void *v;
@@ -401,7 +404,7 @@ __C(CHIP,_xlate_dense_handle_to_addr)(v, memh, memaddrp)
 #endif
 		return (0);
 }
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 
 static int
 __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
@@ -493,10 +496,10 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 
-#ifndef CHIP_D_MEM_BASE
+#ifndef CHIP_D_MEM_W1_SYS_START
 	/* No cacheable space without dense. */
 	cacheable = 0;
-#endif /* ! CHIP_D_MEM_BASE */
+#endif /* ! CHIP_D_MEM_W1_SYS_START */
 
 	/* Requests for linear uncacheable space can't be satisfied. */
 	if (linear && !cacheable)
@@ -510,7 +513,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	if (acct == 0)
 		return (EOPNOTSUPP);
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	mustd = 1;
 #else
 	mustd = 0;
@@ -523,7 +526,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	printf("mem: %s dense, %s sparse\n", mustd ? "need" : "want",
 	    musts ? "need" : "want");
 #endif  
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	errord = extent_alloc_region(CHIP_D_MEM_EXTENT(v), memaddr, memsize,
 	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 #else
@@ -544,7 +547,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	if ((mustd && !didd) || (musts && !dids))
 		goto bad;
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if (didd && !__C(CHIP,_xlate_addr_to_dense_handle)(v, memaddr, &dh)) {
 		printf("\n");
 #ifdef CHIP_D_MEM_W1_BUS_START
@@ -554,7 +557,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 		panic("%s: don't know how to map %lx cacheable",
 		    __S(__C(CHIP,_mem_map)), memaddr);
 	}
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 
 	if (dids && !__C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, &sh)) {
 		printf("\n");
@@ -584,7 +587,7 @@ bad:
 #ifdef EXTENT_DEBUG
 	printf("mem: failed\n");
 #endif
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if (didd) {
 #ifdef EXTENT_DEBUG
 	printf("mem: freeing dense\n");
@@ -596,7 +599,7 @@ bad:
 			    memaddr + memsize - 1);
 		}
 	}
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 	if (dids) {
 #ifdef EXTENT_DEBUG
 	printf("mem: freeing sparse\n");
@@ -610,7 +613,7 @@ bad:
 	}
 
 #ifdef EXTENT_DEBUG
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	extent_print(CHIP_D_MEM_EXTENT(v));
 #endif
 	extent_print(CHIP_S_MEM_EXTENT(v));
@@ -631,7 +634,7 @@ __C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 	int acct;
 {
 	bus_addr_t memaddr;
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	bus_space_handle_t temph;
 #endif
 	int sparse, haves, haved;
@@ -655,18 +658,18 @@ __C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 	if (sparse)
 		haves = __C(CHIP,_xlate_sparse_handle_to_addr)(v, memh,
 		    &memaddr);
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	else
 		haved = __C(CHIP,_xlate_dense_handle_to_addr)(v, memh,
 		    &memaddr);
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 
 	if (!haves && !haved)
 		panic("%s: couldn't get addr from %s handle 0x%lx",
 		    __S(__C(CHIP,_mem_unmap)), sparse ? "sparse" : "dense",
 		    memh);
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	/*
 	 * Find out were/if that address lives in the other space.
 	 */
@@ -676,7 +679,7 @@ __C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 	else
 		haves = __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr,
 		    &temph);
-#endif /* CHIP_D_MEM_BASE */
+#endif /* CHIP_D_MEM_W1_SYS_START */
 
 	/*
 	 * Free any ranges we have.
@@ -685,7 +688,7 @@ __C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 	printf("mem: it's at 0x%lx (%sdense, %ssparse)\n", memaddr,
 	    haved ? "" : "not ", haves ? "" : "not ");
 #endif
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if (haved && extent_free(CHIP_D_MEM_EXTENT(v), memaddr, memsize,
 	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0)) != 0) {
 		printf("%s: WARNING: couldn't free dense 0x%lx-0x%lx\n",
@@ -764,7 +767,7 @@ __C(CHIP,_mem_read_1)(v, memh, off)
 
 	alpha_mb();
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		return (*(u_int8_t *)(memh + off));
 #endif
@@ -792,7 +795,7 @@ __C(CHIP,_mem_read_2)(v, memh, off)
 
 	alpha_mb();
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		return (*(u_int16_t *)(memh + off));
 #endif
@@ -820,7 +823,7 @@ __C(CHIP,_mem_read_4)(v, memh, off)
 
 	alpha_mb();
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		return (*(u_int32_t *)(memh + off));
 #endif
@@ -848,7 +851,7 @@ __C(CHIP,_mem_read_8)(v, memh, off)
 
 	alpha_mb();
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
         if ((memh >> 63) != 0)
                 return (*(u_int64_t *)(memh + off));
 #endif
@@ -907,7 +910,7 @@ __C(CHIP,_mem_write_1)(v, memh, off, val)
 	register u_int32_t *port, nval;
 	register int offset;
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		(*(u_int8_t *)(memh + off)) = val;
 	else
@@ -934,7 +937,7 @@ __C(CHIP,_mem_write_2)(v, memh, off, val)
 	register u_int32_t *port, nval;
 	register int offset;
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		(*(u_int16_t *)(memh + off)) = val;
 	else
@@ -961,7 +964,7 @@ __C(CHIP,_mem_write_4)(v, memh, off, val)
 	register u_int32_t *port, nval;
 	register int offset;
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		(*(u_int32_t *)(memh + off)) = val;
 	else
@@ -985,7 +988,7 @@ __C(CHIP,_mem_write_8)(v, memh, off, val)
 	u_int64_t val;
 {
 
-#ifdef CHIP_D_MEM_BASE
+#ifdef CHIP_D_MEM_W1_SYS_START
 	if ((memh >> 63) != 0)
 		(*(u_int64_t *)(memh + off)) = val;
 	else
