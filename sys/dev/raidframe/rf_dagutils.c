@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.17 2002/09/21 00:56:57 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.18 2002/09/23 02:49:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.17 2002/09/21 00:56:57 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.18 2002/09/23 02:49:14 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1233,7 +1233,6 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	RF_PhysDiskAddr_t *mirror_pda = (RF_PhysDiskAddr_t *) node->params[4].p;
 	RF_PhysDiskAddr_t *tmp_pda;
 	RF_RaidDisk_t **disks = raidPtr->Disks;
-	RF_DiskQueue_t **dqs = raidPtr->Queues, *dataQueue, *mirrorQueue;
 	int     usemirror;
 
 	/* return the [row col] of the disk with the shortest queue */
@@ -1241,8 +1240,6 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	colData = data_pda->col;
 	rowMirror = mirror_pda->row;
 	colMirror = mirror_pda->col;
-	dataQueue = &(dqs[rowData][colData]);
-	mirrorQueue = &(dqs[rowMirror][colMirror]);
 
 	usemirror = 0;
 	if (RF_DEAD_DISK(disks[rowMirror][colMirror].status)) {
