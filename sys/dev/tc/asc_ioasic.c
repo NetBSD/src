@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.18 1999/12/03 04:26:17 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.19 2000/02/03 05:16:30 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -19,27 +19,20 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/cpu.h>
+#include <machine/bus.h>
+
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
+#include <dev/tc/ioasicreg.h>
 
 #include <pmax/dev/device.h>		/* XXX */
 #include <pmax/dev/scsi.h>		/* XXX */
 
-#include <pmax/dev/ascreg.h>		/* XXX */
+#include <pmax/dev/ascreg.h>
 #include <dev/tc/ascvar.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>		/* bus, cache consistency, etc  */
-
-/*XXX*/
-#include <pmax/pmax/asic.h>		/* XXX ioasic register defs? */
-#include <pmax/pmax/kmin.h>		/* XXX ioasic register defs? */
-#include <pmax/pmax/pmaxtype.h>
-extern int pmax_boardtype;
-
 extern paddr_t kvtophys __P((vaddr_t));
-
-extern tc_addr_t ioasic_base;	/* XXX */
 
 /*
  * Autoconfiguration data for config.
@@ -82,29 +75,33 @@ asc_ioasic_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct ioasicdev_attach_args *d = aux;
-	register asc_softc_t asc = (asc_softc_t) self;
+	asc_softc_t asc = (asc_softc_t)self;
+	struct ioasicdev_attach_args *d = aux;
 
-	tc_addr_t ascaddr;
-	int unit;
+	asc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
+	asc->sc_bsh = ((struct ioasic_softc *)parent)->sc_bsh;
+	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
+	if (bus_space_subregion(asc->sc_bst,
+			asc->sc_bsh,
+			IOASIC_SLOT_12_START, 0x100, &asc->sc_scsi_bsh)) {
+		printf("%s: unable to map device\n", asc->sc_dev.dv_xname);
+		return;
+	}
 
-	ascaddr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(d->iada_addr);
-	unit = asc->sc_dev.dv_unit;
-	
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
-	asc->regs = (asc_regmap_t *)(ascaddr + ASC_OFFSET_53C94);
+	asc->regs = (asc_regmap_t *)(MIPS_PHYS_TO_KSEG1(d->iada_addr) + ASC_OFFSET_53C94);
 
 	/*
 	 * Set up machine dependencies.
 	 * (1) how to do dma
 	 * (2) timing based on turbochannel frequency
 	 */
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_DMAPTR, -1);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_NEXTPTR, -1);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
 
-	*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
-	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
-	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 	asc->dma_start = asic_dma_start;
 	asc->dma_end = asic_dma_end;
 
@@ -113,8 +110,7 @@ asc_ioasic_attach(parent, self, aux)
 
 	/* tie pseudo-slot to device */
 
-	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,
-			      asc_intr, asc);
+	ioasic_intr_establish(parent, d->iada_cookie, IPL_BIO, asc_intr, asc);
 }
 
 
@@ -131,13 +127,13 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	int len;
 	int off;
 {
-	register volatile u_int *ssr = (volatile u_int *)
-		IOASIC_REG_CSR(ioasic_base);
-	u_int phys, nphys;
+	u_int32_t ssr, phys, nphys;
 
 	/* stop DMA engine first */
-	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
 
 	/* restrict len to the maximum the IOASIC can transfer */
 	if (len > ((caddr_t)mips_trunc_page(cp + NBPG * 2) - cp))
@@ -148,15 +144,18 @@ asic_dma_start(asc, state, cp, flag, len, off)
 		u_int32_t scrval;
 
 		p = (u_int32_t *)((vaddr_t)cp & ~7);
-		*((volatile u_int32_t *)IOASIC_REG_SCSI_SDR0(ioasic_base)) = p[0];
-		*((volatile u_int32_t *)IOASIC_REG_SCSI_SDR1(ioasic_base)) = p[1];
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_SDR0, p[0]);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_SDR1, p[1]);
 		scrval = ((vaddr_t)cp >> 1) & 3;
 		cp = (caddr_t)((vaddr_t)cp & ~7);
 		if (flag != ASCDMA_READ) {
 			scrval |= 4;
 			cp += 8;
 		}
-		*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = scrval;
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_SCR, scrval);
 	}
 
 	/* If R4K, writeback and invalidate  the buffer */
@@ -187,15 +186,16 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	asc->dma_xfer = state->dmalen - (nphys - phys);
 #endif
 
-	*(volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base) =
-		IOASIC_DMA_ADDR(phys);
-	*(volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base) =
-		IOASIC_DMA_ADDR(nphys);
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(phys));
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+				IOASIC_SCSI_NEXTPTR, IOASIC_DMA_ADDR(nphys));
 	if (flag == ASCDMA_READ)
-		*ssr |= IOASIC_CSR_SCSI_DIR | IOASIC_CSR_DMAEN_SCSI;
+		ssr |= (IOASIC_CSR_SCSI_DIR | IOASIC_CSR_DMAEN_SCSI);
 	else
-		*ssr = (*ssr & ~IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
-	wbflush();
+		ssr = (ssr & ~IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 	return (len);
 }
 
@@ -205,22 +205,19 @@ asic_dma_end(asc, state, flag)
 	State *state;
 	int flag;
 {
-	register volatile u_int *ssr = (volatile u_int *)
-		IOASIC_REG_CSR(ioasic_base);
-	register volatile u_int *dmap = (volatile u_int *)
-		IOASIC_REG_SCSI_DMAPTR(ioasic_base);
-	register u_short *to;
-	int nb;
+	u_int32_t ssr, ptr, halfwords;
 
-	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+	ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_DMAPTR);
 #if USE_CACHED_BUFFER	/* XXX - Should uncached address always be used? */
-	to = (u_short *)MIPS_PHYS_TO_KSEG0(*dmap >> 3);
+	ptr = MIPS_PHYS_TO_KSEG0(ptr >> 3);
 #else
-	to = (u_short *)MIPS_PHYS_TO_KSEG1(*dmap >> 3);
+	ptr = MIPS_PHYS_TO_KSEG1(ptr >> 3);
 #endif
-	*dmap = -1;
-	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
-	wbflush();
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_DMAPTR, -1);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_NEXTPTR, -1);
 
 	if (flag == ASCDMA_READ) {
 #if !defined(ASC_IOASIC_BOUNCE) && USE_CACHED_BUFFER
@@ -235,14 +232,18 @@ asic_dma_end(asc, state, flag)
 			    MIPS_KSEG1_TO_PHYS(state->dmaBufAddr)),
 			    state->dmalen);
 #endif	/* USE_CACHED_BUFFER */
-		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
+		halfwords = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SCR);
+		if (halfwords != 0) {
 			int sdr[2];
 			/* pick up last upto 6 bytes, sigh. */
 
 			/* Copy untransferred data from IOASIC */
-			sdr[0] = *(int *)IOASIC_REG_SCSI_SDR0(ioasic_base);
-			sdr[1] = *(int *)IOASIC_REG_SCSI_SDR1(ioasic_base);
-			memcpy(to, (char *)sdr, nb * 2);
+			sdr[0] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SDR0);
+			sdr[1] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SDR1);
+			memcpy((caddr_t)ptr, (caddr_t)sdr, halfwords * 2);
 		}
 	}
 }
