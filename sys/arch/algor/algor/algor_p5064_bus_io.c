@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_bus_io.c,v 1.1 2001/05/28 16:22:14 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_bus_io.c,v 1.2 2001/06/14 18:48:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,6 @@
 #define	CHIP_IO_W1_BUS_START(v)	0x00000000UL
 #define	CHIP_IO_W1_BUS_END(v)	0x00ffffffUL
 #define	CHIP_IO_W1_SYS_START(v)	P5064_PCIIO
-#define	CHIP_IO_W1_SYS_END(v)	(P5064_PCIIO + CHIP_IO_W1_BUS_END(v))
+#define	CHIP_IO_W1_SYS_END(v)	(P5064_PCIIO + 0x00ffffffUL)
 
 #include <algor/pci/pci_alignstride_bus_io_chipdep.c>
