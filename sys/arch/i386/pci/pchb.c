@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.23 2000/11/03 17:28:02 ad Exp $	*/
+/*	$NetBSD: pchb.c,v 1.24 2001/09/10 10:06:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -48,9 +48,12 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/agpvar.h>
+
 #include <arch/i386/pci/pchbvar.h>
 
 #include "rnd.h"
+#include "agp.h"
 
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
@@ -76,16 +79,14 @@ int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
 int	pchb_print __P((void *, const char *));
+int	agp_print __P((void *, const char *));
 
 struct cfattach pchb_ca = {
 	sizeof(struct pchb_softc), pchbmatch, pchbattach
 };
 
 int
-pchbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pchbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -98,9 +99,7 @@ pchbmatch(parent, match, aux)
 }
 
 void
-pchbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pchbattach(struct device *parent, struct device *self, void *aux)
 {
 #if NRND > 0
 	struct pchb_softc *sc = (void *) self;
@@ -108,6 +107,7 @@ pchbattach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
+	struct agp_phcb_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
@@ -251,6 +251,16 @@ pchbattach(parent, self, aux)
 		config_found(self, &pba, pchb_print);
 	}
 
+#if NAGP > 0
+	/*
+	 * XXX re-use of pci attach args for pchb, but it's probably
+	 * the best thing to do.
+	 */
+	apa.apa_busname = "agp";
+	apa.apa_pci_args = *pa;
+	config_found(self, &apa, agp_print);
+#endif
+
 #if NRND > 0
 	/*
 	 * Attach a random number generator, if there is one.
@@ -260,14 +270,21 @@ pchbattach(parent, self, aux)
 }
 
 int
-pchb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+pchb_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
+	return (UNCONF);
+}
+
+int
+agp_print(void *aux, const char *pnp)
+{
+	struct agp_phcb_attach_args *apa = aux;
+	if (pnp)
+		printf("%s at %s", apa->apa_busname, pnp);
 	return (UNCONF);
 }
