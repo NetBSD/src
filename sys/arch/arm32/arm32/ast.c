@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.20 2000/12/12 05:21:02 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.21 2000/12/12 05:26:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -66,7 +66,7 @@ userret(p)
 {
 	int sig;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (p == NULL)
 		panic("userret: p=0 curproc=%p", curproc);
     
@@ -79,7 +79,7 @@ userret(p)
 		Debugger();
 #endif	/* DDB */
 	}
-#endif	/* DIAGNOSTIC */
+#endif	/* DEBUG */
 
 	/* take pending signals */
 
@@ -105,14 +105,14 @@ userret(p)
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (current_spl_level != _SPL_0) {
 		printf("userret: spl level=%d on exit\n", current_spl_level);
 #ifdef DDB
 		Debugger();
 #endif	/* DDB */
 	}
-#endif	/* DIAGNOSTIC */
+#endif	/* DEBUG */
 }
 
 
