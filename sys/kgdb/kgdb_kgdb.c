@@ -83,7 +83,7 @@ kgdb_init()
 	if (kgdbifinit(&kgdb_if, 0) < 0
 	    || !(kgdb_if.flags&KGDB_MYHW)) {
 		/* Interface not found, drop KGDB */
-		printf("KGDB: No interface found!\n");
+		kprintf("KGDB: No interface found!\n");
 		kgdb_if.connect = KGDB_NOIF;
 		boothowto &= ~RB_KDB;
 	}
@@ -94,7 +94,7 @@ kgdb_connect(when)
 {
 	boothowto |= RB_KDB;
 	if (when == 0)
-		printf("waiting for remote GDB\n");
+		kprintf("waiting for remote GDB\n");
 	kgdb_trap();
 #ifdef	KGDBTEST
 	new_if.connect = KGDB_ALL;
@@ -656,8 +656,7 @@ init(ifp)
 		}
 	}
 	cp = ifp->myinetaddr;
-	printf("My IP address is %d.%d.%d.%d\n",
-	       cp[0], cp[1], cp[2], cp[3]);
+	kprintf("My IP address is %d.%d.%d.%d\n", cp[0], cp[1], cp[2], cp[3]);
 }
 
 static int
@@ -823,8 +822,8 @@ connectkgdb(ifp, buf)
 		return -1;
 	*cp++ = 0;
 	ip = ifp->hisinetaddr;
-	printf("debugged by %s@%s (%d.%d.%d.%d)\n",buf + 1,cp,
-	       ip[0], ip[1], ip[2], ip[3]);
+	kprintf("debugged by %s@%s (%d.%d.%d.%d)\n",buf + 1,cp,
+	    ip[0], ip[1], ip[2], ip[3]);
 	ifp->connect = KGDB_SAME; /* if someone once connected, he may do so again */
 	ifp->flags |= KGDB_CONNECTED;
 	ifp->seq = 0;
