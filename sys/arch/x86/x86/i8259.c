@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
+/*	$NetBSD: i8259.c,v 1.3 2003/07/14 22:32:39 lukem Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -72,6 +72,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.3 2003/07/14 22:32:39 lukem Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>

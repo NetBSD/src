@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.9 2003/06/01 19:14:21 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.10 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,6 +101,9 @@
  * The Intel MP-stuff is just one way of x86 SMP systems
  * so only Intel MP specific stuff is here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.10 2003/07/14 22:32:40 lukem Exp $");
 
 #include "opt_mpbios.h"
 
