@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.70 2002/04/10 06:02:52 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.71 2002/04/10 06:12:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.70 2002/04/10 06:02:52 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.71 2002/04/10 06:12:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -527,17 +527,20 @@ install(char *from_name, char *to_name, u_int flags)
 	int		devnull, from_fd, to_fd, serrno, tmpmode;
 	char		*p, tmpl[MAXPATHLEN], *oto_name;
 
-	if (stat(from_name, &from_sb))
-		err(1, "%s: stat", from_name);
+	if (!dolink) {
+			/* ensure that from_sb & tv are sane if !dolink */
+		if (stat(from_name, &from_sb))
+			err(1, "%s: stat", from_name);
 #ifdef BSD4_4
-	TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
 #else
-	tv[0].tv_sec = from_sb.st_atime;
-	tv[0].tv_usec = 0;
-	tv[1].tv_sec = from_sb.st_mtime;
-	tv[1].tv_usec = 0;
+		tv[0].tv_sec = from_sb.st_atime;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = from_sb.st_mtime;
+		tv[1].tv_usec = 0;
 #endif
+	}
 
 	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
 		if (!dolink) {
