@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetgrent.3,v 1.8 1999/01/16 08:05:33 lukem Exp $
+.\"	$NetBSD: getnetgrent.3,v 1.9 1999/03/02 14:02:02 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Sh SYNOPSIS
 .Fd #include <netgroup.h>
 .Ft int
-.Fn getnetgrent "char **host" "char **user" "char **domain"
+.Fn getnetgrent "const char **host" "const char **user" "const char **domain"
 .Ft int
 .Fn innetgr "const char *netgroup" "const char *host" "const char *user" "const char *domain"
 .Ft void
