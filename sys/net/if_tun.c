@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.45 2001/08/03 21:11:57 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.46 2001/10/31 20:08:17 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -68,46 +68,135 @@
 #define TUNDEBUG	if (tundebug) printf
 int	tundebug = 0;
 
-struct tun_softc tunctl[NTUN];
 extern int ifqmaxlen;
 void	tunattach __P((int));
+LIST_HEAD(, tun_softc) tun_softc_list;
+static struct simplelock tun_softc_lock;
 
 int	tun_ioctl __P((struct ifnet *, u_long, caddr_t));
 int	tun_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *rt));
+int	tun_clone_create __P((struct if_clone *, int));
+void	tun_clone_destroy __P((struct ifnet *));
 
+struct if_clone tun_cloner =
+    IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
+
+static void tunattach0 __P((struct tun_softc *));
 static void tuninit __P((struct tun_softc *));
+static struct tun_softc *tun_find_unit __P((dev_t));
 
 void
 tunattach(unused)
 	int unused;
 {
-	int i;
-	struct ifnet *ifp;
 
-	for (i = 0; i < NTUN; i++) {
-		tunctl[i].tun_flags = TUN_INITED;
+	simple_lock_init(&tun_softc_lock);
+	LIST_INIT(&tun_softc_list);
+	if_clone_attach(&tun_cloner);
+}
 
-		ifp = &tunctl[i].tun_if;
-		sprintf(ifp->if_xname, "tun%d", i);
-		ifp->if_softc = &tunctl[i];
-		ifp->if_mtu = TUNMTU;
-		ifp->if_ioctl = tun_ioctl;
-		ifp->if_output = tun_output;
-		ifp->if_flags = IFF_POINTOPOINT;
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-		ifp->if_collisions = 0;
-		ifp->if_ierrors = 0;
-		ifp->if_oerrors = 0;
-		ifp->if_ipackets = 0;
-		ifp->if_opackets = 0;
-		ifp->if_dlt = DLT_NULL;
-		if_attach(ifp);
-		if_alloc_sadl(ifp);
+int
+tun_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct tun_softc *sc;
+
+	sc = malloc(sizeof(struct tun_softc), M_DEVBUF, M_WAITOK);
+	(void)memset(sc, 0, sizeof(struct tun_softc));
+
+	(void)snprintf(sc->tun_if.if_xname, sizeof(sc->tun_if.if_xname),
+	    "%s%d", ifc->ifc_name, unit);
+	sc->tun_unit = unit;
+	simple_lock_init(&sc->tun_lock);
+
+	tunattach0(sc);
+
+	simple_lock(&tun_softc_lock);
+	LIST_INSERT_HEAD(&tun_softc_list, sc, tun_list);
+	simple_unlock(&tun_softc_lock);
+
+	return (0);
+}
+
+void
+tunattach0(sc)
+	struct tun_softc *sc;
+{
+	struct ifnet *ifp = (void *)sc;
+
+	sc->tun_flags = TUN_INITED;
+
+	ifp = &sc->tun_if;
+	ifp->if_softc = sc;
+	ifp->if_mtu = TUNMTU;
+	ifp->if_ioctl = tun_ioctl;
+	ifp->if_output = tun_output;
+	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_snd.ifq_maxlen = ifqmaxlen;
+	ifp->if_collisions = 0;
+	ifp->if_ierrors = 0;
+	ifp->if_oerrors = 0;
+	ifp->if_ipackets = 0;
+	ifp->if_opackets = 0;
+	ifp->if_dlt = DLT_NULL;
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-		bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
+	bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
 #endif
+}
+
+void
+tun_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct tun_softc *tp = (void *)ifp;
+	struct proc *p;
+
+	simple_lock(&tun_softc_lock);
+	simple_lock(&tp->tun_lock);
+	LIST_REMOVE(tp, tun_list);
+	simple_unlock(&tp->tun_lock);
+	simple_unlock(&tun_softc_lock);
+
+	if (tp->tun_flags & TUN_RWAIT) {
+		tp->tun_flags &= ~TUN_RWAIT;
+		wakeup((caddr_t)tp);
 	}
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
+		if (tp->tun_pgrp > 0)
+			gsignal(tp->tun_pgrp, SIGIO);
+		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
+			psignal(p, SIGIO);
+	}
+	selwakeup(&tp->tun_rsel);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+
+	free(tp, M_DEVBUF);
+}
+
+static struct tun_softc *
+tun_find_unit(dev)
+	dev_t dev;
+{
+	struct tun_softc *tp;
+	int unit = minor(dev);
+
+	simple_lock(&tun_softc_lock);
+	LIST_FOREACH(tp, &tun_softc_list, tun_list)
+		if (unit == tp->tun_unit)
+			break;
+	if (tp)
+		simple_lock(&tp->tun_lock);
+	simple_unlock(&tun_softc_lock);
+
+	return (tp);
 }
 
 /*
@@ -122,19 +211,28 @@ tunopen(dev, flag, mode, p)
 {
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
-	int	unit, error;
+	int	error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if ((unit = minor(dev)) >= NTUN)
+	if (NTUN < 1)
 		return (ENXIO);
-	tp = &tunctl[unit];
-	if (tp->tun_flags & TUN_OPEN)
-		return ENXIO;
+
+	tp = tun_find_unit(dev);
+
+	if (!tp)
+		return (ENXIO);
+
+	if (tp->tun_flags & TUN_OPEN) {
+		simple_unlock(&tp->tun_lock);
+		return (EBUSY);
+	}
+
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
 	TUNDEBUG("%s: open\n", ifp->if_xname);
+	simple_unlock(&tp->tun_lock);
 	return (0);
 }
 
@@ -149,10 +247,18 @@ tunclose(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	int	unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
+	int	s;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*m;
+
+	tp = tun_find_unit(dev);
+
+	/* interface was "destroyed" before the close */
+	if (tp == NULL)
+		return (0);
+
+	ifp = &tp->tun_if;
 
 	tp->tun_flags &= ~TUN_OPEN;
 
@@ -191,6 +297,7 @@ tunclose(dev, flag, mode, p)
 	selwakeup(&tp->tun_rsel);
 		
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
+	simple_unlock(&tp->tun_lock);
 	return (0);
 }
 
@@ -199,7 +306,7 @@ tuninit(tp)
 	struct tun_softc *tp;
 {
 	struct ifnet	*ifp = &tp->tun_if;
-	struct ifaddr *ifa;
+	struct ifaddr	*ifa;
 
 	TUNDEBUG("%s: tuninit\n", ifp->if_xname);
 
@@ -238,6 +345,9 @@ tun_ioctl(ifp, cmd, data)
 	caddr_t	data;
 {
 	int		error = 0, s;
+	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
+
+	simple_lock(&tp->tun_lock);
 
 	s = splnet();
 	switch(cmd) {
@@ -288,6 +398,7 @@ tun_ioctl(ifp, cmd, data)
 		error = EINVAL;
 	}
 	splx(s);
+	simple_unlock(&tp->tun_lock);
 	return (error);
 }
 
@@ -307,12 +418,14 @@ tun_output(ifp, m0, dst, rt)
 	int		s;
 #endif
 
+	simple_lock(&tp->tun_lock);
 	TUNDEBUG ("%s: tun_output\n", ifp->if_xname);
 
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG ("%s: not ready 0%o\n", ifp->if_xname,
 			  tp->tun_flags);
 		m_freem (m0);
+		simple_unlock(&tp->tun_lock);
 		return (EHOSTDOWN);
 	}
 
@@ -344,6 +457,7 @@ tun_output(ifp, m0, dst, rt)
 			M_PREPEND(m0, dst->sa_len, M_DONTWAIT);
 			if (m0 == NULL) {
 				IF_DROP(&ifp->if_snd);
+				simple_unlock(&tp->tun_lock);
 				return (ENOBUFS);
 			}
 			bcopy(dst, mtod(m0, char *), dst->sa_len);
@@ -356,6 +470,7 @@ tun_output(ifp, m0, dst, rt)
 			m_freem(m0);
 			splx(s);
 			ifp->if_collisions++;
+			simple_unlock(&tp->tun_lock);
 			return (ENOBUFS);
 		}
 		IF_ENQUEUE(&ifp->if_snd, m0);
@@ -365,6 +480,7 @@ tun_output(ifp, m0, dst, rt)
 #endif
 	default:
 		m_freem(m0);
+		simple_unlock(&tp->tun_lock);
 		return (EAFNOSUPPORT);
 	}
 
@@ -379,6 +495,7 @@ tun_output(ifp, m0, dst, rt)
 			psignal(p, SIGIO);
 	}
 	selwakeup(&tp->tun_rsel);
+	simple_unlock(&tp->tun_lock);
 	return (0);
 }
 
@@ -393,8 +510,14 @@ tunioctl(dev, cmd, data, flag, p)
 	int		flag;
 	struct proc	*p;
 {
-	int		unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
+	int		s;
+	struct tun_softc *tp;
+
+	tp = tun_find_unit(dev);
+
+	/* interface was "destroyed" already */
+	if (tp == NULL)
+		return (ENXIO);
 
 	switch (cmd) {
 	case TUNSDEBUG:
@@ -412,6 +535,7 @@ tunioctl(dev, cmd, data, flag, p)
 			s = splnet();
 			if (tp->tun_if.if_flags & IFF_UP) {
 				splx(s);
+				simple_unlock(&tp->tun_lock);
 				return (EBUSY);
 			}
 			tp->tun_if.if_flags &=
@@ -420,6 +544,7 @@ tunioctl(dev, cmd, data, flag, p)
 			splx(s);
 			break;
 		default:
+			simple_unlock(&tp->tun_lock);
 			return (EINVAL);
 			break;
 		}
@@ -464,8 +589,10 @@ tunioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
+		simple_unlock(&tp->tun_lock);
 		return (ENOTTY);
 	}
+	simple_unlock(&tp->tun_lock);
 	return (0);
 }
 
@@ -479,15 +606,24 @@ tunread(dev, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit = minor(dev);
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*m, *m0;
-	int		error=0, len, s;
+	int		error=0, len, s, index;
+
+	tp = tun_find_unit(dev);
+
+	/* interface was "destroyed" already */
+	if (tp == NULL)
+		return (ENXIO);
+
+	index = tp->tun_if.if_index;
+	ifp = &tp->tun_if;
 
 	TUNDEBUG ("%s: read\n", ifp->if_xname);
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG ("%s: not ready 0%o\n", ifp->if_xname, tp->tun_flags);
+		simple_unlock(&tp->tun_lock);
 		return EHOSTDOWN;
 	}
 
@@ -499,12 +635,29 @@ tunread(dev, uio, ioflag)
 		if (m0 == 0) {
 			if (tp->tun_flags & TUN_NBIO) {
 				splx(s);
+				simple_unlock(&tp->tun_lock);
 				return (EWOULDBLOCK);
 			}
 			tp->tun_flags |= TUN_RWAIT;
+			simple_unlock(&tp->tun_lock);
 			if (tsleep((caddr_t)tp, PZERO|PCATCH, "tunread", 0)) {
 				splx(s);
 				return (EINTR);
+			} else {
+				/*
+				 * Maybe the interface was destroyed while
+				 * we were sleeping, so let's ensure that
+				 * we're looking at the same (valid) tun
+				 * interface before looping.
+				 */
+				tp = tun_find_unit(dev);
+				if (tp == NULL ||
+				    tp->tun_if.if_index != index) {
+					splx(s);
+					if (tp)
+						simple_unlock(&tp->tun_lock);
+					return (ENXIO);
+				}
 			}
 		}
 	} while (m0 == 0);
@@ -524,6 +677,7 @@ tunread(dev, uio, ioflag)
 	}
 	if (error)
 		ifp->if_ierrors++;
+	simple_unlock(&tp->tun_lock);
 	return (error);
 }
 
@@ -536,27 +690,38 @@ tunwrite(dev, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit = minor (dev);
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*top, **mp, *m;
 	struct ifqueue	*ifq;
 	struct sockaddr	dst;
 	int		isr, error=0, s, tlen, mlen;
 
+	tp = tun_find_unit(dev);
+
+	/* interface was "destroyed" already */
+	if (tp == NULL)
+		return (ENXIO);
+
+	ifp = &tp->tun_if;
+
 	TUNDEBUG("%s: tunwrite\n", ifp->if_xname);
 
 	if (tp->tun_flags & TUN_PREPADDR) {
-		if (uio->uio_resid < sizeof(dst))
+		if (uio->uio_resid < sizeof(dst)) {
+			simple_unlock(&tp->tun_lock);
 			return (EIO);
+		}
 		error = uiomove((caddr_t)&dst, sizeof(dst), uio);
 		if (dst.sa_len > sizeof(dst)) {
 			/* Duh.. */
 			char discard;
 			int n = dst.sa_len - sizeof(dst);
 			while (n--)
-				if ((error = uiomove(&discard, 1, uio)) != 0)
+				if ((error = uiomove(&discard, 1, uio)) != 0) {
+					simple_unlock(&tp->tun_lock);
 					return (error);
+				}
 		}
 	} else {
 #ifdef INET
@@ -567,6 +732,7 @@ tunwrite(dev, uio, ioflag)
 	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
 		TUNDEBUG("%s: len=%lu!\n", ifp->if_xname,
 		    (unsigned long)uio->uio_resid);
+		simple_unlock(&tp->tun_lock);
 		return (EIO);
 	}
 
@@ -578,6 +744,7 @@ tunwrite(dev, uio, ioflag)
 		break;
 #endif
 	default:
+		simple_unlock(&tp->tun_lock);
 		return (EAFNOSUPPORT);
 	}
 
@@ -585,8 +752,10 @@ tunwrite(dev, uio, ioflag)
 
 	/* get a header mbuf */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	if (m == NULL) {
+		simple_unlock(&tp->tun_lock);
 		return (ENOBUFS);
+	}
 	mlen = MHLEN;
 
 	top = 0;
@@ -609,6 +778,7 @@ tunwrite(dev, uio, ioflag)
 		if (top)
 			m_freem (top);
 		ifp->if_ierrors++;
+		simple_unlock(&tp->tun_lock);
 		return (error);
 	}
 
@@ -641,12 +811,14 @@ tunwrite(dev, uio, ioflag)
 		splx(s);
 		ifp->if_collisions++;
 		m_freem(top);
+		simple_unlock(&tp->tun_lock);
 		return (ENOBUFS);
 	}
 	IF_ENQUEUE(ifq, top);
 	splx(s);
 	ifp->if_ipackets++;
 	schednetisr(isr);
+	simple_unlock(&tp->tun_lock);
 	return (error);
 }
 
@@ -661,10 +833,17 @@ tunpoll(dev, events, p)
 	int		events;
 	struct proc	*p;
 {
-	int		unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
-	int		revents = 0;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
+	int		s, revents = 0;
+
+	tp = tun_find_unit(dev);
+
+	/* interface was "destroyed" already */
+	if (tp == NULL)
+		return (0);
+
+	ifp = &tp->tun_if;
 
 	s = splnet();
 	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);
@@ -684,6 +863,7 @@ tunpoll(dev, events, p)
 		revents |= events & (POLLOUT | POLLWRNORM);
 
 	splx(s);
+	simple_unlock(&tp->tun_lock);
 	return (revents);
 }
 
