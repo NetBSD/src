@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.1 2001/02/27 05:15:03 matt Exp $	*/
+/*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -173,7 +173,8 @@ gpio_intr(void *arg)
 	int rv = 0;
 
 #if NADB > 0
-	rv = adb_intr(adb_cd.cd_devs[0]);
+	if (adb_cd.cd_devs[0] != NULL)
+		rv = adb_intr(adb_cd.cd_devs[0]);
 #endif
 
 	return rv;
