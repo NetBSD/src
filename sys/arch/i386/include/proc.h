@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.25 2004/01/28 10:48:55 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.26 2004/02/21 04:31:40 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -53,13 +53,11 @@ struct mdlwp {
 #define	MDL_USEDFPU	0x0001	/* has used the FPU */
 
 struct mdproc {
-					/* Syscall handling function */
 	int	md_flags;
 	void	(*md_syscall)(struct trapframe *);
+					/* Syscall handling function */
 	__volatile int md_astpending;	/* AST pending for this process */
 };
-
-#endif /* _I386_PROC_H_ */
 
 /* md_flags */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
@@ -72,3 +70,5 @@ struct mdproc {
 #define	KSTACK_SIZE	\
 	(USPACE - PAGE_SIZE*2)
 #endif
+
+#endif /* _I386_PROC_H_ */
