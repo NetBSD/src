@@ -1,4 +1,4 @@
-/*	$NetBSD: usbd.c,v 1.1 1998/07/12 19:52:02 augustss Exp $	*/
+/*	$NetBSD: usbd.c,v 1.2 1998/07/23 18:39:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ main(int argc, char **argv)
 	extern char *optarg;
 	extern int optind;
 
-	while ((ch = getopt(argc, argv, "def:tv")) != -1) {
+	while ((ch = getopt(argc, argv, "def:t:v")) != -1) {
 		switch(ch) {
 		case 'd':
 			debug++;
