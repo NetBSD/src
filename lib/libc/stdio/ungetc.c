@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.5 1996/03/29 23:29:27 jtc Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.6 1997/07/13 20:15:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
+#else
+__RCSID("$NetBSD: ungetc.c,v 1.6 1997/07/13 20:15:33 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: ungetc.c,v 1.5 1996/03/29 23:29:27 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -48,6 +50,7 @@ static char rcsid[] = "$NetBSD: ungetc.c,v 1.5 1996/03/29 23:29:27 jtc Exp $";
 #include <string.h>
 #include "local.h"
 
+static int __submore __P((FILE *));
 /*
  * Expand the ungetc buffer `in place'.  That is, adjust fp->_p when
  * the buffer moves, so that it points the same distance from the end,
