@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2001/06/21 09:29:39 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2001/08/11 13:20:21 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -189,7 +189,7 @@
 #define	__HAVE_PMAP_PHYSSEG
 
 struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv_entry array */
+	struct pv_head *pvhead;		/* pv_entry array */
 	char *attrs;			/* attrs array */
 };
 
