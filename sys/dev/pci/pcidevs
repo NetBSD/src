@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.22 2002/01/24 22:35:10 he Exp $
+$NetBSD: pcidevs,v 1.236.2.23 2002/01/29 22:38:40 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1223,6 +1223,7 @@ product SYMBIOS 825	0x0003	53c825
 product SYMBIOS 815	0x0004	53c815
 product SYMBIOS 810AP	0x0005	53c810AP
 product SYMBIOS 860	0x0006	53c860
+product SYMBIOS 1510D	0x000a	53c1510D
 product SYMBIOS 896	0x000b	53c896
 product SYMBIOS 895	0x000c	53c895
 product SYMBIOS 885	0x000d	53c885
