@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.32 1997/04/17 00:08:50 thorpej Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.33 1997/06/12 14:51:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -56,6 +56,7 @@
 #include <sys/map.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <vm/vm_swap.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -64,6 +65,7 @@
 #include <vm/vm_pageout.h>
 #include <vm/swap_pager.h>
 
+/* XXX this makes the max swap devices 16 */
 #define NSWSIZES	16	/* size of swtab */
 #define MAXDADDRS	64	/* max # of disk addrs for fixed allocations */
 #ifndef NPENDINGIO
@@ -114,10 +116,6 @@ struct swtab {
 #endif
 } swtab[NSWSIZES+1];
 
-int	dmmin, dmmax;
-
-struct	map *swapmap;
-int	nswapmap;
 
 #ifdef DEBUG
 int		swap_pager_poip;	/* pageouts in progress */
@@ -171,9 +169,8 @@ struct pagerops swappagerops = {
 static void
 swap_pager_init()
 {
-	register swp_clean_t spc;
-	register int i, bsize;
-	int maxbsize;
+	swp_clean_t spc;
+	int i, maxbsize, bsize;
 
 #ifdef DEBUG
 	if (swpagerdebug & (SDB_FOLLOW|SDB_INIT))
@@ -202,42 +199,34 @@ swap_pager_init()
 		spc->spc_flags = SPC_FREE;
 	}
 
+/* this needs to be at least ctod(1) for all ports for vtod() to work */
+#define DMMIN	32
 	/*
-	 * Calculate the swap allocation constants.
+	 * Fill in our table of object size vs. allocation size.  bsize needs
+	 * to be at least ctod(1) for all ports for vtod() to work, with a
+	 * bare minimum of 32.
 	 */
-        if (dmmin == 0) {
-                dmmin = DMMIN;
-		if (dmmin < CLBYTES/DEV_BSIZE)
-			dmmin = CLBYTES/DEV_BSIZE;
-	}
-        if (dmmax == 0)
-                dmmax = DMMAX;
-
-	/*
-	 * Fill in our table of object size vs. allocation size
-	 */
-	bsize = btodb(PAGE_SIZE);
-	if (bsize < dmmin)
-		bsize = dmmin;
+#define max(a, b) ((a) > (b) ? (a) : (b))
+	bsize = max(32, max(ctod(1), btodb(PAGE_SIZE)));
 	maxbsize = btodb(sizeof(sw_bm_t) * NBBY * PAGE_SIZE);
-	if (maxbsize > dmmax)
-		maxbsize = dmmax;
+	if (maxbsize > NBPG)
+		maxbsize = NBPG;
 	for (i = 0; i < NSWSIZES; i++) {
-		swtab[i].st_osize = (vm_size_t) (MAXDADDRS * dbtob(bsize));
-		swtab[i].st_bsize = bsize;
 		if (bsize <= btodb(MAXPHYS))
 			swap_pager_maxcluster = dbtob(bsize);
+		swtab[i].st_bsize = bsize;
+		if (bsize >= maxbsize) {
+			swtab[i].st_osize = 0;
+			break;
+		}
+		swtab[i].st_osize = (vm_size_t) (MAXDADDRS * dbtob(bsize));
 #ifdef DEBUG
 		if (swpagerdebug & SDB_INIT)
 			printf("swpg_init: ix %d, size %lx, bsize %x\n",
 			       i, swtab[i].st_osize, swtab[i].st_bsize);
 #endif
-		if (bsize >= maxbsize)
-			break;
 		bsize *= 2;
 	}
-	swtab[i].st_osize = 0;
-	swtab[i].st_bsize = bsize;
 }
 
 /*
@@ -273,8 +262,10 @@ swap_pager_alloc(handle, size, prot, foff)
 			 * to the object and also to remove from the
 			 * object cache.
 			 */
+#ifdef DIAGNOSTIC
 			if (vm_object_lookup(pager) == NULL)
 				panic("swap_pager_alloc: bad object");
+#endif
 			return(pager);
 		}
 	}
@@ -409,7 +400,7 @@ swap_pager_dealloc(pager)
 				printf("swpg_dealloc: blk %x\n",
 				       bp->swb_block);
 #endif
-			rmfree(swapmap, swp->sw_bsize, bp->swb_block);
+			swap_free(swp->sw_bsize, bp->swb_block);
 		}
 	/*
 	 * Free swap management resources
@@ -464,7 +455,6 @@ swap_pager_putpage(pager, mlist, npages, sync)
 	int npages;
 	boolean_t sync;
 {
-	int flags;
 
 #ifdef DEBUG
 	if (swpagerdebug & SDB_FOLLOW)
@@ -475,11 +465,8 @@ swap_pager_putpage(pager, mlist, npages, sync)
 		swap_pager_clean(B_WRITE);
 		return (VM_PAGER_OK);		/* ??? */
 	}
-	flags = B_WRITE;
-	if (!sync)
-		flags |= B_ASYNC;
 	return(swap_pager_io((sw_pager_t)pager->pg_data,
-			     mlist, npages, flags));
+	    mlist, npages, B_WRITE | (sync ? 0 : B_ASYNC)));
 }
 
 static boolean_t
@@ -541,8 +528,10 @@ swap_pager_cluster(pager, offset, loffset, hoffset)
 		bsize = swap_pager_maxcluster;
 
 	loff = offset - (offset % bsize);
+#ifdef DIAGNOSTIC
 	if (loff >= swp->sw_osize)
 		panic("swap_pager_cluster: bad offset");
+#endif
 
 	hoff = loff + bsize;
 	if (hoff > swp->sw_osize)
@@ -656,7 +645,7 @@ swap_pager_io(swp, mlist, npages, flags)
 	 * Allocate a swap block if necessary.
 	 */
 	if (swb->swb_block == 0) {
-		swb->swb_block = rmalloc(swapmap, swp->sw_bsize);
+		swb->swb_block = swap_alloc(swp->sw_bsize);
 		if (swb->swb_block == 0) {
 #ifdef DEBUG
 			if (swpagerdebug & SDB_FAIL)
@@ -726,8 +715,8 @@ swap_pager_io(swp, mlist, npages, flags)
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_dirtyoff = 0;
 		bp->b_dirtyend = npages * PAGE_SIZE;
-		swapdev_vp->v_numoutput++;
 		s = splbio();
+		swapdev_vp->v_numoutput++;
 		swp->sw_poip++;
 		splx(s);
 		mask = (~(~0 << npages)) << atop(off);
@@ -753,13 +742,13 @@ swap_pager_io(swp, mlist, npages, flags)
 	 * and place a "cleaning" entry on the inuse queue.
 	 */
 	if ((flags & (B_READ|B_ASYNC)) == B_ASYNC) {
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (swap_pager_free.tqh_first == NULL)
 			panic("swpg_io: lost spc");
 #endif
 		spc = swap_pager_free.tqh_first;
 		TAILQ_REMOVE(&swap_pager_free, spc, spc_list);
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (spc->spc_flags != SPC_FREE)
 			panic("swpg_io: bad free spc");
 #endif
@@ -1004,7 +993,7 @@ swap_pager_iodone(bp)
 	     spc = spc->spc_list.tqe_next)
 		if (spc->spc_bp == bp)
 			break;
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 	if (spc == NULL)
 		panic("swap_pager_iodone: bp not found");
 #endif
@@ -1140,14 +1129,14 @@ swap_pager_remove(pager, from, to)
 		 *	means no pages are left in the block, free it.
 		 */
 		if ((swb->swb_mask &= mask) == 0) {
-			rmfree(swapmap, swp->sw_bsize, swb->swb_block);
+			swap_free(swp->sw_bsize, swb->swb_block);
 			swb->swb_block = 0;
 		}
  	}
 
 	/*	Adjust the page count and return the removed count.	*/
 	swp->sw_cnt -= cnt;
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 	if (swp->sw_cnt < 0)
 		panic("swap_pager_remove: sw_cnt < 0");
 #endif
