@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.10 1994/04/15 07:04:58 cgd Exp $
+ *	$Id: vm_page.h,v 1.11 1994/04/29 08:21:52 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -129,6 +129,7 @@ struct vm_page {
 #define	PG_FAKE		0x0200		/* page is placeholder for pagein (O) */
 #define	PG_FILLED	0x0400		/* client flag to set when filled */
 #define	PG_DIRTY	0x0800		/* client flag to set when dirty */
+#define	PG_FAULTING	0x2000		/* page is being faulted in */
 #define	PG_PAGEROWNED	0x4000		/* DEBUG: async paging op in progress */
 #define	PG_PTPAGE	0x8000		/* DEBUG: is a user page table page */
 
