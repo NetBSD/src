@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.5 1997/10/18 13:48:38 lukem Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.6 1998/11/27 05:09:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -232,6 +232,10 @@ usage:
 		fprintf(stderr, "Unable to create %s: %s\n", argv[2], strerror(errno));
 		exit(1);
 	}
+	/* Truncate file... */
+	if (ftruncate(outfile, 0)) {
+		warn("ftruncate %s", argv[2]);
+	}
 	/* Write the header... */
 	i = write(outfile, &aex, sizeof aex);
 	if (i != sizeof aex) {
@@ -251,8 +255,10 @@ usage:
 				if (gap > 65536)
 					errx(1,
 			"Intersegment gap (%ld bytes) too large.", (long) gap);
+#ifdef DEBUG
 				warnx("Warning: %ld byte intersegment gap.",
 				    (long)gap);
+#endif
 				memset(obuf, 0, sizeof obuf);
 				while (gap) {
 					int     count = write(outfile, obuf, (gap > sizeof obuf
