@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.6 1998/01/12 09:27:13 thorpej Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.7 1998/06/09 00:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -198,13 +198,13 @@ gus_isapnp_attach(parent, self, aux)
 	sc->sc_recdrq = ipa->ipa_drq[0].num;
 	sc->sc_playdrq = ipa->ipa_drq[1].num;
 
-	sc->sc_isa = parent->dv_parent;
+	sc->sc_ic = ipa->ipa_ic;
 
         /*
          * Create our DMA maps.
          */
         if (sc->sc_playdrq != -1) {
-                if (isa_dmamap_create(sc->sc_isa, sc->sc_playdrq,
+                if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
                     MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
                         printf("%s: can't create map for drq %d\n",
                             sc->sc_dev.dv_xname, sc->sc_playdrq);
@@ -212,7 +212,7 @@ gus_isapnp_attach(parent, self, aux)
 		      }
 	      }
         if (sc->sc_recdrq != -1) {
-                if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq,
+                if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
                     MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
                         printf("%s: can't create map for drq %d\n",
                             sc->sc_dev.dv_xname, sc->sc_recdrq);

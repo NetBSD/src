@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.17 1998/04/19 22:26:31 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.18 1998/06/09 00:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -52,11 +52,11 @@ static int isapnp_findcard __P((struct isapnp_softc *));
 static void isapnp_free_region __P((bus_space_tag_t, struct isapnp_region *));
 static int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
 static int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
-static int isapnp_alloc_drq __P((struct device *, struct isapnp_pin *));
+static int isapnp_alloc_drq __P((isa_chipset_tag_t, struct isapnp_pin *));
 static int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
     struct isapnp_attach_args *, int));
-static struct isapnp_attach_args *isapnp_bestconfig __P((struct device *, 
-    struct isapnp_softc *, struct isapnp_attach_args **));
+static struct isapnp_attach_args *isapnp_bestconfig __P((struct isapnp_softc *,
+    struct isapnp_attach_args **));
 static void isapnp_print_region __P((const char *, struct isapnp_region *,
     size_t));
 static void isapnp_configure __P((struct isapnp_softc *,
@@ -247,8 +247,8 @@ isapnp_alloc_irq(ic, i)
  *	Allocate a drq
  */
 static int
-isapnp_alloc_drq(isa, i)
-	struct device *isa;
+isapnp_alloc_drq(ic, i)
+	isa_chipset_tag_t ic;
 	struct isapnp_pin *i;
 {
 	int b;
@@ -259,7 +259,7 @@ isapnp_alloc_drq(isa, i)
 	}
 
 	for (b = 0; b < 8; b++)
-		if ((i->bits & (1 << b)) && ISA_DRQ_ISFREE(isa, b)) {
+		if ((i->bits & (1 << b)) && isa_drq_isfree(ic, b)) {
 			i->num = b;
 			return 0;
 		}
@@ -308,7 +308,7 @@ isapnp_testconfig(iot, memt, ipa, alloc)
 	}
 
 	for (; ndrq < ipa->ipa_ndrq; ndrq++) {
-		error = isapnp_alloc_drq(ipa->ipa_isa, &ipa->ipa_drq[ndrq]);
+		error = isapnp_alloc_drq(ipa->ipa_ic, &ipa->ipa_drq[ndrq]);
 		if (error)
 			goto bad;
 	}
@@ -384,8 +384,7 @@ isapnp_unconfig(iot, memt, ipa)
  *	free all other configurations.
  */
 static struct isapnp_attach_args *
-isapnp_bestconfig(isa, sc, ipa)
-	struct device *isa;
+isapnp_bestconfig(sc, ipa)
 	struct isapnp_softc *sc;
 	struct isapnp_attach_args **ipa;
 {
@@ -406,7 +405,12 @@ isapnp_bestconfig(isa, sc, ipa)
 				best = c;
 		}
 
-		best->ipa_isa = isa;
+		/*
+		 * Make sure the ISA chipset is initialized!  We need
+		 * it to test the best config!
+		 */
+		best->ipa_ic = sc->sc_ic;
+
 		/* Test the best config */
 		error = isapnp_testconfig(sc->sc_iot, sc->sc_memt, best, 0);
 
@@ -810,6 +814,7 @@ isapnp_attach(parent, self, aux)
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
+	sc->sc_ic = ia->ia_ic;
 	sc->sc_ncards = 0;
 
 	if (isapnp_map(sc))
@@ -831,7 +836,7 @@ isapnp_attach(parent, self, aux)
 
 		DPRINTF(("Selecting attachments\n"));
 		for (d = 0;
-		    (lpa = isapnp_bestconfig(parent, sc, &ipa)) != NULL; d++) {
+		    (lpa = isapnp_bestconfig(sc, &ipa)) != NULL; d++) {
 			isapnp_write_reg(sc, ISAPNP_LOGICAL_DEV_NUM, d);
 			isapnp_configure(sc, lpa);
 #ifdef DEBUG_ISAPNP
