@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.23 2004/12/21 11:33:04 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.23.4.1 2005/01/25 13:01:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.23 2004/12/21 11:33:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.23.4.1 2005/01/25 13:01:08 yamt Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -250,7 +250,7 @@ mpbios_map (pa, len, handle)
 {
 	paddr_t pgpa = x86_trunc_page(pa);
 	paddr_t endpa = x86_round_page(pa + len);
-	vaddr_t va = uvm_km_valloc(kernel_map, endpa - pgpa);
+	vaddr_t va = uvm_km_alloc(kernel_map, endpa - pgpa, 0, UVM_KMF_VAONLY);
 	vaddr_t retva = va + (pa & PGOFSET);
 
 	handle->pa = pa;
@@ -273,7 +273,7 @@ mpbios_unmap (handle)
 	struct mp_map *handle;
 {
 	pmap_kremove (handle->baseva, handle->vsize);
-	uvm_km_free (kernel_map, handle->baseva, handle->vsize);
+	uvm_km_free (kernel_map, handle->baseva, handle->vsize, UVM_KMF_VAONLY);
 }
 
 /*

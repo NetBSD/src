@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.559 2004/10/20 04:20:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.559.6.1 2005/01/25 13:01:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.559 2004/10/20 04:20:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.559.6.1 2005/01/25 13:01:08 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -290,7 +290,8 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
-	msgbuf_vaddr = uvm_km_valloc(kernel_map, x86_round_page(MSGBUFSIZE));
+	msgbuf_vaddr = uvm_km_alloc(kernel_map, x86_round_page(MSGBUFSIZE), 0,
+	    UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 

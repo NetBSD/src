@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.12.1 2005/01/25 13:01:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.12.1 2005/01/25 13:01:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_valloc(kernel_map, endpa - pa);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -376,7 +376,7 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			/*
 			 * Free the kernel virtual mapping.
 			 */
-			uvm_km_free(kernel_map, va, endva - va);
+			uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 		}
 	} else {
 		panic("_x86_memio_unmap: bad bus space tag");
@@ -427,7 +427,7 @@ x86_memio_unmap(t, bsh, size)
 		/*
 		 * Free the kernel virtual mapping.
 		 */
-		uvm_km_free(kernel_map, va, endva - va);
+		uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 	} else
 		panic("x86_memio_unmap: bad bus space tag");
 
