@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.38 2000/07/27 18:43:30 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.39 2001/08/26 11:55:39 simonb Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -18,10 +18,8 @@
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
-#	tz*	SCSI tapes, DEC TK50 cartridge tape
 #	st*	MI SCSI tape drives
 # Disks:
-#	rz*	SCSI disks
 #	ccd*	concatenated disk driver
 #	cd*	MI SCSI cdroms
 #	md*	memory pseudo-disk devices
@@ -73,16 +71,15 @@ all)
 	sh $0 ipl random lkm
 	sh $0 local
 	sh $0 audio
-#	sh $0 cd0
-#	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
-#	sh $0 st0 st1
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
 minimal)
 	sh $0 std
-	sh $0 rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
-	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
+	sh $0 cd0
+	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	sh $0 sd8 sd9 sd10 sd11 sd12 sd13 sd14 sd15
+	sh $0 st0 st1
 	sh $0 md0 dz0 zs0 pty0
 	;;
 
@@ -121,26 +118,6 @@ audio)
 	ln -fs audio0 audio
 	ln -fs mixer0 mixer
 	ln -fs audioctl0 audioctl
-	;;
-
-tz*)
-	case $i in
-	tz*) unit=${i#tz}; chr=10;;
-	esac
-	case $unit in
-	[0-6])
-		rm -f rmt$unit nrmt$unit rmth$unit nrmth$unit
-		mknod rmt$unit c $chr	$(($unit * 16 + 0))
-		mknod nrmt$unit c $chr	$(($unit * 16 + 1))
-		mknod rmth$unit c $chr	$(($unit * 16 + 2))
-		mknod nrmth$unit c $chr $(($unit * 16 + 3))
-		chgrp operator rmt$unit nrmt$unit rmth$unit nrmth$unit
-		chmod 660 rmt$unit nrmt$unit rmth$unit nrmth$unit
-		;;
-	*)
-		echo bad unit for tape in: $i
-		;;
-	esac
 	;;
 
 bpf*|tun*)
@@ -189,9 +166,8 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-rz*|ccd*|cd*|raid*|sd*|vnd*)
+ccd*|cd*|raid*|sd*|vnd*)
 	case $i in
-	rz*)    name=rz;        unit=${i#rz};   blk=21; chr=56;;
 	ccd*)   name=ccd;       unit=${i#ccd};  blk=24; chr=87;;
 	cd*)    name=cd;        unit=${i#cd};   blk=25; chr=47;;
 	raid*)  name=raid;      unit=${i#raid}; blk=32; chr=96;;
