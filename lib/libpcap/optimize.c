@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.2 1995/03/06 11:38:35 mycroft Exp $	*/
+/*	$NetBSD: optimize.c,v 1.3 1995/04/29 05:42:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -36,6 +36,9 @@ static char rcsid[] =
 #ifdef __osf__
 #include <stdlib.h>
 #include <malloc.h>
+#endif
+#ifdef __NetBSD__
+#include <stdlib.h>
 #endif
 #include <memory.h>
 
