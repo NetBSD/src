@@ -1,7 +1,7 @@
-/* $NetBSD: assert.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+/* $NetBSD: assert.c,v 1.1.1.3 2004/03/25 19:02:00 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: assert.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+__RCSID("$NetBSD: assert.c,v 1.1.1.3 2004/03/25 19:02:00 atatat Exp $");
 #endif
 
 /*
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: assert.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: assert.c,v 1.25 2001/09/11 04:04:47 gshapiro Exp")
+SM_RCSID("@(#)Id: assert.c,v 1.25.2.1 2003/12/05 22:44:17 ca Exp")
 
 /*
 **  Abnormal program termination and assertion checking.
@@ -133,7 +133,7 @@ sm_abort_sethandler(f)
 **		doesn't.
 */
 
-void
+void SM_DEAD_D
 #if SM_VA_STD
 sm_abort(char *fmt, ...)
 #else /* SM_VA_STD */
@@ -169,7 +169,7 @@ sm_abort(fmt, va_alist)
 **		doesn't.
 */
 
-void
+void SM_DEAD_D
 sm_abort_at(filename, lineno, msg)
 	const char *filename;
 	int lineno;

@@ -1,7 +1,7 @@
-/* $NetBSD: exc.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+/* $NetBSD: exc.c,v 1.1.1.3 2004/03/25 19:02:03 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exc.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+__RCSID("$NetBSD: exc.c,v 1.1.1.3 2004/03/25 19:02:03 atatat Exp $");
 #endif
 
 /*
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: exc.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: exc.c,v 1.47 2002/01/09 18:51:43 ca Exp")
+SM_RCSID("@(#)Id: exc.c,v 1.47.2.1 2003/12/05 22:44:17 ca Exp")
 
 /*
 **  exception handling
@@ -593,7 +593,7 @@ sm_exc_newthread(h)
 **		doesn't.
 */
 
-void
+void SM_DEAD_D
 sm_exc_raise_x(exc)
 	SM_EXC_T *exc;
 {
@@ -654,7 +654,7 @@ sm_exc_raise_x(exc)
 **		none.
 */
 
-void
+void SM_DEAD_D
 #if SM_VA_STD
 sm_exc_raisenew_x(
 	const SM_EXC_TYPE_T *etype,
