@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.4 2003/02/17 20:51:52 ichiro Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.5 2003/03/25 06:12:47 igy Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.5 2003/03/25 06:12:47 igy Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
