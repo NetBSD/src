@@ -36,7 +36,7 @@
 ./etc/mtree/NetBSD.dist
 ./etc/mtree/special
 ./etc/namedb/localhost.rev
-./etc/namedb/named.boot
+./etc/namedb/named.conf
 ./etc/namedb/root.cache
 ./etc/netstart
 ./etc/networks
