@@ -1,4 +1,4 @@
-#	$NetBSD: RAQ,v 1.6 2000/05/29 15:44:22 soren Exp $
+#	$NetBSD: RAQ,v 1.7 2000/06/28 09:45:01 soren Exp $
 
 include		"arch/cobalt/conf/std.cobalt"
 
@@ -20,7 +20,6 @@ options 	DIAGNOSTIC
 file-system	FFS
 file-system	EXT2FS
 file-system	NFS
-file-system	KERNFS
 
 options 	FFS_EI
 
