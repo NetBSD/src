@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa.c,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $	*/
+/*	$NetBSD: rsa.c,v 1.2 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -62,6 +62,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: rsa.c,v 1.24 2001/12/27 18:22:16 markus Exp $");
+__RCSID("$NetBSD: rsa.c,v 1.2 2003/07/10 01:09:46 lukem Exp $");
 
 #include "rsa.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.24 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.25 2003/07/10 01:09:43 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,6 +61,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: clientloop.c,v 1.108 2003/04/02 09:48:07 markus Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.25 2003/07/10 01:09:43 lukem Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
