@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.5 1999/12/11 22:22:54 explorer Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.6 2000/04/10 07:46:51 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp 
+ *	NetBSD: cardbusdevs,v 1.8 2000/04/10 07:42:57 haya Exp 
  */
 
 /*
@@ -53,6 +53,8 @@
 #define	CARDBUS_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
+#define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
+#define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
@@ -68,6 +70,9 @@
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
+
+/* Accton products */
+#define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
 
 /* DEC products */
 #define	CARDBUS_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/3 */
@@ -86,3 +91,7 @@
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
 /* this is the device id `indicating 21143 driver compatibility' */
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
+
+/* Realtek (Creative Labs?) products */
+#define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
+
