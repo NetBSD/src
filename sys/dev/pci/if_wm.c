@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.15 2002/08/06 23:51:43 simonb Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.16 2002/08/07 04:53:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1456,7 +1456,7 @@ wm_txintr(struct wm_softc *sc)
 
 	/*
 	 * Go through the Tx list and free mbufs for those
-	 * frams which have been transmitted.
+	 * frames which have been transmitted.
 	 */
 	for (i = sc->sc_txsdirty; sc->sc_txsfree != WM_TXQUEUELEN;
 	     i = WM_NEXTTXS(i), sc->sc_txsfree++) {
