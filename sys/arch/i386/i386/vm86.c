@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.36 2003/10/27 14:11:47 junyoung Exp $	*/
+/*	$NetBSD: vm86.c,v 1.37 2003/10/28 23:10:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.36 2003/10/27 14:11:47 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.37 2003/10/28 23:10:02 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,15 +96,15 @@ static __inline int is_bitset(int, caddr_t);
 
 #define getword(base, ptr, word) \
 	do { \
-		u_long w1 = 0, w2 = 0; /* XXX: gcc */\
-		getbyte(base, ptr, w1); \
-		getbyte(base, ptr, w2); \
-		word = w1 | w2 << 8; \
+		u_long b1, b2; \
+		getbyte(base, ptr, b1); \
+		getbyte(base, ptr, b2); \
+		word = b1 | b2 << 8; \
 	} while (0)
 
 #define getdword(base, ptr, dword) \
 	do { \
-		u_long w1 = 0, w2 = 0; /* XXX: gcc */\
+		u_long w1, w2; \
 		getword(base, ptr, w1); \
 		getword(base, ptr, w2); \
 		dword = w1 | w2 << 16; \
