@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.71 2003/12/07 18:58:11 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.72 2004/03/17 10:37:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.71 2003/12/07 18:58:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.72 2004/03/17 10:37:02 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -846,7 +846,7 @@ nfsrv_zapsock(slp)
 		so->so_upcall = NULL;
 		so->so_upcallarg = NULL;
 		so->so_rcv.sb_flags &= ~SB_UPCALL;
-		soshutdown(so, 2);
+		soshutdown(so, SHUT_RDWR);
 		closef(fp, (struct proc *)0);
 		if (slp->ns_nam)
 			m_free(slp->ns_nam);
