@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/12/12 00:51:03 tv Exp $
+# $NetBSD: Makefile,v 1.10 2001/12/12 03:18:17 tv Exp $
 
 NOLINT=		# defined
 
@@ -29,7 +29,7 @@ SRCS=						\
 	kadm_supp.c				\
 	check_password.c
 
-INCS=		kadm.h kadm_err.h
+INCS=		kadm.h kadm_err.h
 INCSDIR=	/usr/include/kerberosIV
 
 LIBKRBINC!=	cd ${.CURDIR}/../libkrb && ${PRINTOBJDIR}
