@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.29 2000/03/07 00:39:17 mycroft Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.30 2000/03/15 18:39:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -323,6 +323,10 @@ struct tulip_softc {
 	/* Media tick function. */
 	void		(*sc_tick) __P((void *));
 
+	/* Power management hooks. */
+	int		(*sc_enable) __P((struct tulip_softc *));
+	void		(*sc_disable) __P((struct tulip_softc *));
+
 	/*
 	 * The Winbond 89C840F places registers 4 bytes apart, instead
 	 * of 8.
@@ -381,6 +385,10 @@ struct tulip_softc {
 #define	TULIPF_LINK_UP		0x00000100	/* link is up (non-MII) */
 #define	TULIPF_LINK_VALID	0x00000200	/* link state valid */
 #define	TULIPF_DOINGAUTO	0x00000400	/* doing autoneg (non-MII) */
+#define	TULIPF_ATTACHED		0x00000800	/* attach has succeeded */
+#define	TULIPF_ENABLED		0x00001000	/* chip is enabled */
+
+#define	TULIP_IS_ENABLED(sc)	((sc)->sc_flags & TULIPF_ENABLED)
 
 /*
  * This macro returns the current media entry for *non-MII* media.
