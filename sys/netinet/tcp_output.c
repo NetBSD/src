@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.83 2002/06/13 16:31:05 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.84 2002/08/14 00:23:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.83 2002/06/13 16:31:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.84 2002/08/14 00:23:34 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1073,7 +1073,7 @@ send:
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		ip->ip_len = m->m_pkthdr.len;
+		ip->ip_len = htons(m->m_pkthdr.len);
 		if (tp->t_inpcb) {
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;

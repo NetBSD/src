@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.20 2002/08/10 05:40:54 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.21 2002/08/14 00:23:30 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.20 2002/08/10 05:40:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.21 2002/08/14 00:23:30 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -297,8 +297,7 @@ gre_mobile_input(m, va_alist)
 	memmove(ip + (ip->ip_hl << 2), ip + (ip->ip_hl << 2) + msiz,
 		m->m_len - msiz - (ip->ip_hl << 2));
 	m->m_len -= msiz;
-	ip->ip_len -= msiz;
-	HTONS(ip->ip_len);
+	ip->ip_len = htons(ntohs(ip->ip_len) - msiz);
 	m->m_pkthdr.len -= msiz;
 
 	ip->ip_sum = 0;

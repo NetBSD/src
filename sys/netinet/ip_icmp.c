@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.69 2002/06/30 22:40:34 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.70 2002/08/14 00:23:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.69 2002/06/30 22:40:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.70 2002/08/14 00:23:30 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -248,7 +248,7 @@ icmp_error(n, type, code, dest, destifp)
 	 */
 	if (n->m_flags & M_DECRYPTED)
 		goto freeit;
-	if (oip->ip_off &~ (IP_MF|IP_DF))
+	if (oip->ip_off &~ htons(IP_MF|IP_DF))
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
@@ -271,7 +271,8 @@ icmp_error(n, type, code, dest, destifp)
 	/*
 	 * Now, formulate icmp message
 	 */
-	icmplen = oiplen + min(icmpreturndatabytes, oip->ip_len - oiplen);
+	icmplen = oiplen + min(icmpreturndatabytes,
+	    ntohs(oip->ip_len) - oiplen);
 	/*
 	 * Defend against mbuf chains shorter than oip->ip_len:
 	 */
@@ -328,8 +329,6 @@ icmp_error(n, type, code, dest, destifp)
 			icp->icmp_nextmtu = htons(destifp->if_mtu);
 	}
 
-	HTONS(oip->ip_off);
-	HTONS(oip->ip_len);
 	icp->icmp_code = code;
 	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
 	nip = &icp->icmp_ip;
@@ -348,9 +347,9 @@ icmp_error(n, type, code, dest, destifp)
 	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
 	nip->ip_tos = 0;
-	nip->ip_len = m->m_len;
+	nip->ip_len = htons(m->m_len);
 	/* ip_id set in ip_output */
-	nip->ip_off = 0;
+	nip->ip_off = htons(0);
 	/* ip_ttl set in icmp_reflect */
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
@@ -399,7 +398,7 @@ icmp_input(m, va_alist)
 	 * Locate icmp structure in mbuf, and check
 	 * that not corrupted and of at least minimum length.
 	 */
-	icmplen = ip->ip_len - hlen;
+	icmplen = ntohs(ip->ip_len) - hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
 		printf("icmp_input from %x to %x, len %d\n",
@@ -502,7 +501,6 @@ icmp_input(m, va_alist)
 		}
 		if (IN_MULTICAST(icp->icmp_ip.ip_dst.s_addr))
 			goto badcode;
-		NTOHS(icp->icmp_ip.ip_len);
 #ifdef ICMPPRINTFS
 		if (icmpprintfs)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
@@ -687,10 +685,12 @@ icmp_reflect(m)
 
 	icmpdst.sin_addr = t;
 
-	/* if the packet is addressed somewhere else, compute the
-	   source address for packets routed back to the source, and
-	   use that, if it's an address on the interface which
-	   received the packet */
+	/*
+	 * if the packet is addressed somewhere else, compute the
+	 * source address for packets routed back to the source, and
+	 * use that, if it's an address on the interface which
+	 * received the packet
+	 */
 	if (sin == (struct sockaddr_in *)0) {
 		struct sockaddr_in sin_dst;
 		struct route icmproute;
@@ -720,10 +720,12 @@ icmp_reflect(m)
 		}
 	}
 
-	/* if it was not addressed to us, but the route doesn't go out
-	   the source interface, pick an address on the source
-	   interface.  This can happen when routing is asymmetric, or
-	   when the incoming packet was encapsulated */
+	/*
+	 * if it was not addressed to us, but the route doesn't go out
+	 * the source interface, pick an address on the source
+	 * interface.  This can happen when routing is asymmetric, or
+	 * when the incoming packet was encapsulated
+	 */
 	if (sin == (struct sockaddr_in *)0) {
 		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
@@ -821,7 +823,7 @@ icmp_reflect(m)
 		 * Now strip out original options by copying rest of first
 		 * mbuf's data back, and adjust the IP length.
 		 */
-		ip->ip_len -= optlen;
+		ip->ip_len = htons(ntohs(ip->ip_len) - optlen);
 		ip->ip_hl = sizeof(struct ip) >> 2;
 		m->m_len -= optlen;
 		if (m->m_flags & M_PKTHDR)
@@ -855,7 +857,7 @@ icmp_send(m, opts)
 	m->m_len -= hlen;
 	icp = mtod(m, struct icmp *);
 	icp->icmp_cksum = 0;
-	icp->icmp_cksum = in_cksum(m, ip->ip_len - hlen);
+	icp->icmp_cksum = in_cksum(m, ntohs(ip->ip_len) - hlen);
 	m->m_data -= hlen;
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
@@ -991,7 +993,7 @@ icmp_mtudisc(icp, faddr)
 	if (mtu == 0) {
 		int i = 0;
 
-		mtu = icp->icmp_ip.ip_len; /* NTOHS happened in deliver: */
+		mtu = ntohs(icp->icmp_ip.ip_len);
 		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
 		if (mtu > rt->rt_rmx.rmx_mtu && rt->rt_rmx.rmx_mtu != 0)
 			mtu -= (icp->icmp_ip.ip_hl << 2);

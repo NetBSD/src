@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.41 2002/08/12 05:22:57 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.42 2002/08/14 00:23:27 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.41 2002/08/12 05:22:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.42 2002/08/14 00:23:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -274,8 +274,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			}
 			ip = mtod(m, struct ip *);
 			memcpy((caddr_t)(ip + 1), &mob_h, (unsigned)msiz);
-			NTOHS(ip->ip_len);
-			ip->ip_len += msiz;
+			ip->ip_len = htons(ntohs(ip->ip_len) + msiz);
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);

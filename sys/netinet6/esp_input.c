@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.22 2002/06/08 20:06:44 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.23 2002/08/14 00:23:38 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.22 2002/06/08 20:06:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.23 2002/08/14 00:23:38 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.22 2002/06/08 20:06:44 itojun Exp $"
 
 #include <net/net_osdep.h>
 
-#define IPLEN_FLIPPED
+/*#define IPLEN_FLIPPED*/
 
 #define ESPMAXLEN \
 	(sizeof(struct esp) < sizeof(struct newesp) \
