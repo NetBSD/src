@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2004/06/06 06:07:01 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2004/11/13 10:26:39 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,6 +77,7 @@
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC32_IP2x"
 #define SET_KERNEL_2_NAME	"kern-GENERIC32_IP3x"
+#define SET_KERNEL_3_NAME	"kern-GENERIC32_IP12"
 #define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM)
 
 /*
