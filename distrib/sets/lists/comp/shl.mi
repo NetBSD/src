@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.27 2003/02/13 23:57:54 jmc Exp $
+# $NetBSD: shl.mi,v 1.28 2003/02/26 22:31:14 thorpej Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
@@ -31,6 +31,8 @@
 ./usr/lib/libpcap_pic.a		comp-c-piclib
 ./usr/lib/libpci_pic.a		comp-c-piclib
 ./usr/lib/libposix_pic.a	comp-c-piclib
+./usr/lib/libpthread_dbg_pic.a	comp-c-piclib
+./usr/lib/libpthread_pic.a	comp-c-piclib
 ./usr/lib/libresolv_pic.a	comp-c-piclib
 ./usr/lib/libroken_pic.a	comp-c-piclib
 ./usr/lib/librt_pic.a		comp-c-piclib
