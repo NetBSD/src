@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.6 2003/08/01 00:40:17 bsh Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.7 2003/08/04 12:31:12 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.6 2003/08/01 00:40:17 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.7 2003/08/04 12:31:12 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,9 +222,12 @@ s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch * dispatch_table, int icu_len)
 		dispatch_table[i].level = IPL_BIO;
 	}
 
+	global_intr_mask = ~0;		/* no intr is globally blocked. */
+
 	_splraise(IPL_SERIAL);
 	enable_interrupts(I32_bit);
 }
+
 #undef splx
 void
 splx(int ipl)
