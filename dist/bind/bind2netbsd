@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.19 2001/05/27 04:45:20 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.20 2002/07/04 22:46:04 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,6 @@ if [ $# -ne 2 ]; then echo "bind2netbsd src dest"; exit 1; fi
 
 r=$1
 d=$2/basesrc/dist/bind
-dcrypto=$2/basesrc/crypto/dist/bind
 
 case "$d" in
 	/*)
@@ -66,7 +65,6 @@ rm -rf $d
 mkdir -p $d
 mkdir -p $d/man
 mkdir -p $d/doc
-mkdir -p $dcrypto/lib
 
 ### Copy the files and directories
 cd $r/src
@@ -182,10 +180,10 @@ echo "Fixing file/directory permissions."
 )
 echo done
 
-echo "Split crypto source code.  You do not need to import crypto portion."
+echo "Remove crypto source code"
 (
-	mv $d/lib/cylink $dcrypto/lib
-	mv $d/lib/dnssafe $dcrypto/lib
+	/bin/rm -fr $d/lib/cylink
+	/bin/rm -fr $d/lib/dnssafe
 )
 echo done
 
