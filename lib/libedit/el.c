@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.11 1998/09/28 11:00:05 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.12 1998/12/12 20:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.11 1998/09/28 11:00:05 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.12 1998/12/12 20:08:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -385,7 +385,7 @@ public const LineInfo *
 el_line(el)
     EditLine *el;
 {
-    return (const LineInfo *) &el->el_line;
+    return (const LineInfo *)(void *)&el->el_line;
 }
 
 static const char elpath[] = "/.editrc";
