@@ -1,4 +1,4 @@
-/*	$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $	*/
+/*	$NetBSD: wrterm.c,v 1.4 1996/11/15 05:52:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $";
+static char rcsid[] = "$NetBSD: wrterm.c,v 1.4 1996/11/15 05:52:49 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,10 +63,10 @@ wrtermcap(bp)
 		err("termcap names not colon terminated");
 	*t++ = '\0';
 
-	/* Output terminal names that don't have whitespace. */
+	/* Output terminal names that don't have whitespace or quotes. */
 	sep = "";
 	while ((p = strsep(&bp, "|")) != NULL)
-		if (*p != '\0' && strpbrk(p, " \t") == NULL) {
+		if (*p != '\0' && strpbrk(p, " \t'\"") == NULL) {
 			(void)printf("%s%s", sep, p);
 			sep = "|";
 		}
