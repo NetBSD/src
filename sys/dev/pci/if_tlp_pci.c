@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.60 2002/03/13 05:05:38 chs Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.61 2002/03/16 18:44:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.60 2002/03/13 05:05:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.61 2002/03/16 18:44:17 chs Exp $");
 
 #include "opt_tlp.h"
 
@@ -1250,7 +1250,38 @@ tlp_pci_adaptec_quirks(psc, enaddr)
 	struct tulip_pci_softc *psc;
 	const u_int8_t *enaddr;
 {
+	struct tulip_softc *sc = &psc->sc_tulip;
+	uint8_t *srom = sc->sc_srom;
+	uint16_t id1, id2;
 
-	strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-69xx");
-	psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+	id1 = TULIP_ROM_GETW(srom, 0);
+	id2 = TULIP_ROM_GETW(srom, 2);
+	if (id1 != 0x1109) {
+		goto unknown;
+	}
+
+	switch (id2) {
+	case 0x1900:
+		strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-6911");
+		break;
+
+	case 0x2400:
+		strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-6944A");
+		psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+		break;
+
+	case 0x2b00:
+		strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-6911A");
+		break;
+
+	case 0x3000:
+		strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-6922");
+		psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+		break;
+
+	default:
+unknown:
+		printf("%s: unknown Adaptec/Cogent board ID 0x%04x/0x%04x\n",
+		    sc->sc_dev.dv_xname, id1, id2);
+	}
 }
