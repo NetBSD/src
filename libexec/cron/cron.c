@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.1.1.1 1994/01/05 20:40:13 jtc Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.1.1.2 1994/01/11 19:10:45 jtc Exp $";
 #endif
 
 
@@ -177,10 +177,10 @@ cron_tick(db)
 	 * like many bizarre things, it's the standard.
 	 */
 	for (u = db->head;  u != NULL;  u = u->next) {
-		Debug(DSCH|DEXT, ("user [%s:%d:%d:...]\n",
-			env_get("LOGNAME", u->envp), u->uid, u->gid))
 		for (e = u->crontab;  e != NULL;  e = e->next) {
-			Debug(DSCH|DEXT, ("entry [%s]\n", e->cmd))
+			Debug(DSCH|DEXT, ("user [%s:%d:%d:...] cmd=\"%s\"\n",
+					  env_get("LOGNAME", e->envp),
+					  e->uid, e->gid, e->cmd))
 			if (bit_test(e->minute, minute)
 			 && bit_test(e->hour, hour)
 			 && bit_test(e->month, month)
