@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.12 1998/08/01 20:25:12 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.13 1999/02/12 06:25:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.12 1998/08/01 20:25:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.13 1999/02/12 06:25:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,8 +252,8 @@ dec_550_intr_string(ccv, ih)
 	static char irqstr[16];		/* 12 + 2 + NULL + sanity */
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_string: bogus 550 IRQ 0x%x\n", ih);
-	sprintf(irqstr, "dec 550 irq %d", ih);
+		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx\n", ih);
+	sprintf(irqstr, "dec 550 irq %ld", ih);
 	return (irqstr);
 }
 
@@ -270,7 +270,7 @@ dec_550_intr_establish(ccv, ih, level, func, arg)
 	void *cookie;
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%x\n", ih);
+		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%lx\n", ih);
 
 	cookie = alpha_shared_intr_establish(dec_550_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "dec 550 irq");
@@ -344,7 +344,7 @@ dec_550_iointr(framep, vec)
 		irq = ((vec - 0x900) >> 4) + DEC_550_PCI_IRQ_BEGIN;
 
 		if (irq >= DEC_550_MAX_IRQ)
-			panic("550_iointr: vec 0x%x out of range\n", vec);
+			panic("550_iointr: vec 0x%lx out of range\n", vec);
 
 #ifdef EVCNT_COUNTERS
 		dec_550_intr_evcnt.ev_count++;
@@ -368,7 +368,7 @@ dec_550_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("dec_550_iointr: weird vec 0x%x\n", vec);
+	panic("dec_550_iointr: weird vec 0x%lx\n", vec);
 }
 
 void

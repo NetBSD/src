@@ -1,4 +1,4 @@
-/* $NetBSD: comlogout.c,v 1.1 1998/07/08 00:34:49 mjacob Exp $ */
+/* $NetBSD: comlogout.c,v 1.2 1999/02/12 06:32:12 thorpej Exp $ */
 /*
  * Copyright (c) 1998 by Matthew Jacob
  * NASA AMES Research Center.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.1 1998/07/08 00:34:49 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.2 1999/02/12 06:32:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,11 @@ ev5_logout_print(ev5lohdrp, mcucev5p)
 	    ALPHA_PROC_MCHECK, ev5lohdrp->mcheck_code);
 	/* Print PAL fields */
 	for (i = 0; i < 24; i += 2) {
-		printf("\tPAL temp[%d-%d]\t\t= 0x%l016x 0x%l016x\n", i, i+1,
+		printf("\tPAL temp[%d-%d]\t\t= 0x%16lx 0x%16lx\n", i, i+1,
 		    mcucev5p->paltemp[i], mcucev5p->paltemp[i+1]);
 	}
 	for (i = 0; i < 8; i += 2) {
-		printf("\tshadow[%d-%d]\t\t\t= 0x%l016x 0x%l016x\n", i, i+1,
+		printf("\tshadow[%d-%d]\t\t\t= 0x%16lx 0x%16lx\n", i, i+1,
 		    mcucev5p->shadow[i], mcucev5p->shadow[i+1]);
 	}
 	printf("\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.9 1998/07/07 22:24:39 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.10 1999/02/12 06:25:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.9 1998/07/07 22:24:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.10 1999/02/12 06:25:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,8 +201,8 @@ dec_kn300_intr_string(ccv, ih)
 	pci_intr_handle_t ih;
 {
         static char irqstr[64];
-	sprintf(irqstr, "kn300 irq %d PCI Interrupt Pin %c",
-		(ih >> 11) & 0x1f, (ih & 0x3) + 'A');
+	sprintf(irqstr, "kn300 irq %ld PCI Interrupt Pin %c",
+		(ih >> 11) & 0x1f, (int)(ih & 0x3) + 'A');
 	return (irqstr);
 }
 
