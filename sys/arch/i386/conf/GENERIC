@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.520 2002/10/24 18:22:53 junyoung Exp $
+# $NetBSD: GENERIC,v 1.521 2002/10/27 10:28:39 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.520 $"
+#ident 		"GENERIC-$Revision: 1.521 $"
 
 maxusers	32		# estimated number of users
 
@@ -646,6 +646,7 @@ tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 # ISA Plug-and-Play network interfaces
 an*	at isapnp?			# Aironet 802.11
 ep*	at isapnp?			# 3Com 3c509 Ethernet
+fmv*	at isapnp?			# Fujitsu FMV-183
 le*	at isapnp?			# AMD PCnet-ISA Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
@@ -677,7 +678,7 @@ el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
-fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
+fmv0	at isa? port 0x2a0 irq ?		# FMV-181/182
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
 iy0	at isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
