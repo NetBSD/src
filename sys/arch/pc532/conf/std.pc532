@@ -1,4 +1,4 @@
-#	$NetBSD: std.pc532,v 1.4 1997/03/20 12:03:27 matthias Exp $
+#	$NetBSD: std.pc532,v 1.5 1997/04/21 16:15:59 matthias Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
@@ -7,10 +7,10 @@ machine pc532
 mainbus0 	at root
 clock0 		at mainbus0		# system timer
 rtc0		at mainbus0		# realtime clock
-ncr0		at mainbus0		# ncr SCSI driver
-scsibus0	at ncr0 		# ncr SCSI bus
-#aic0		at mainbus0		# aic SCSI driver
-#scsibus1	at aic0			# aic SCSI bus
+ncr*		at mainbus0		# ncr SCSI driver
+scsibus0	at ncr? 		# ncr SCSI bus
+#aic*		at mainbus0		# aic SCSI driver
+#scsibus1	at aic?			# aic SCSI bus
 #XXX Wildcards don't work with holes at the moment,
 #XXX so we do a config for every channel.
 #XXX The following is better, but still wrong:
