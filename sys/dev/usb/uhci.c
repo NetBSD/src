@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.109 2000/04/06 23:44:20 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.110 2000/04/14 14:11:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -251,12 +251,14 @@ Static __inline__ uhci_soft_qh_t *uhci_find_prev_qh
     __P((uhci_soft_qh_t *, uhci_soft_qh_t *));
 
 #ifdef UHCI_DEBUG
+Static void		uhci_dump_all __P((uhci_softc_t *));
 Static void		uhci_dumpregs __P((uhci_softc_t *));
 Static void		uhci_dump_qhs __P((uhci_soft_qh_t *));
 Static void		uhci_dump_qh __P((uhci_soft_qh_t *));
 Static void		uhci_dump_tds __P((uhci_soft_td_t *));
 Static void		uhci_dump_td __P((uhci_soft_td_t *));
 Static void		uhci_dump_ii __P((uhci_intr_info_t *ii));
+Static void		uhci_dump __P((void));
 #endif
 
 #define UWRITE1(sc, r, x) bus_space_write_1((sc)->iot, (sc)->ioh, (r), (x))
@@ -770,18 +772,23 @@ uhci_dump_qh(sqh)
 }
 
 
-#if 0
+#if 1
 void
 uhci_dump()
 {
-	uhci_softc_t *sc = thesc;
-
-	uhci_dumpregs(sc);
-	printf("intrs=%d\n", sc->sc_bus.no_intrs);
-	printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);
-	uhci_dump_qh(sc->sc_ctl_start->qh.hlink);
+	uhci_dump_all(thesc);
 }
 #endif
+
+void
+uhci_dump_all(sc)
+	uhci_softc_t *sc;
+{
+	uhci_dumpregs(sc);
+	printf("intrs=%d\n", sc->sc_bus.no_intrs);
+	/*printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);*/
+	uhci_dump_qh(sc->sc_ctl_start);
+}
 
 
 void
@@ -1062,6 +1069,10 @@ uhci_intr(arg)
 		printf("%s: host controller halted\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
 		sc->sc_dying = 1;
+#ifdef UHCI_DEBUG
+		uhci_dump_all(sc);
+#endif
+
 	}
 
 	if (ack)	/* acknowledge the ints */
