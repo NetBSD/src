@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.4 1999/11/03 11:40:58 shin Exp $
+#	$NetBSD: files.hpcmips,v 1.5 1999/11/04 13:11:23 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -50,7 +50,6 @@ file	arch/hpcmips/hpcmips/disksubr.c	disk
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
-file	arch/hpcmips/dev/findcons.c
 file	arch/hpcmips/dev/bicons.c
 file	arch/hpcmips/dev/bifont.c
 defpseudo	biconsdev
