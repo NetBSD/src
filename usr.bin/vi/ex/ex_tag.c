@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.12 2001/05/01 16:46:12 aymeric Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.13 2002/04/09 01:47:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,8 +14,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
+#else
+__RCSID("$NetBSD");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

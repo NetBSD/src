@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.5 2001/10/20 10:04:49 aymeric Exp $	*/
+/*	$NetBSD: cut.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)cut.c	10.10 (Berkeley) 9/15/96";
+#else
+__RCSID("$NetBSD: cut.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

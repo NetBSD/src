@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.5 2001/10/17 07:38:49 yamt Exp $	*/
+/*	$NetBSD: ex_cscope.c,v 1.6 2002/04/09 01:47:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)ex_cscope.c	10.13 (Berkeley) 9/15/96";
+#else
+__RCSID("$NetBSD");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

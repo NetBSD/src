@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.6 2001/03/31 11:37:47 aymeric Exp $	*/
+/*	$NetBSD: search.c,v 1.7 2002/04/09 01:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)search.c	10.25 (Berkeley) 6/30/96";
+#else
+__RCSID("$NetBSD: search.c,v 1.7 2002/04/09 01:47:32 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 1998/01/09 08:06:45 perry Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2002/04/09 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)log.c	10.8 (Berkeley) 3/6/96";
+#else
+__RCSID("$NetBSD: log.c,v 1.3 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
+/*	$NetBSD: put.c,v 1.4 2002/04/09 01:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)put.c	10.11 (Berkeley) 9/23/96";
+#else
+__RCSID("$NetBSD: put.c,v 1.4 2002/04/09 01:47:32 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
