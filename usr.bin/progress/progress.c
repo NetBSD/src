@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.7 2003/02/12 00:58:34 ross Exp $ */
+/*	$NetBSD: progress.c,v 1.8 2004/03/09 17:04:24 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.7 2003/02/12 00:58:34 ross Exp $");
+__RCSID("$NetBSD: progress.c,v 1.8 2004/03/09 17:04:24 hubertf Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-z] [-f file] [-l length] cmd [args...]\n",
+	    "usage: %s [-z] [-f file] [-l length] [-p prefix] cmd [args...]\n",
 	    getprogname());
 	exit(1);
 }
@@ -96,8 +96,9 @@ main(int argc, char *argv[])
 	/* defaults: Read from stdin, 0 filesize (no completion estimate) */
 	fd = STDIN_FILENO;
 	filesize = 0;
+	prefix=NULL;
 
-	while ((ch = getopt(argc, argv, "f:l:z")) != -1)
+	while ((ch = getopt(argc, argv, "f:l:p:z")) != -1)
 		switch (ch) {
 		case 'f':
 			infile = optarg;
@@ -105,6 +106,9 @@ main(int argc, char *argv[])
 		case 'l':
 			lflag++;
 			filesize = strtoull(optarg, NULL, 0);
+			break;
+		case 'p':
+			prefix = optarg;
 			break;
 		case 'z':
 			zflag++;

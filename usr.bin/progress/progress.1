@@ -1,4 +1,4 @@
-.\"	$NetBSD: progress.1,v 1.5 2003/02/14 15:59:18 grant Exp $
+.\"	$NetBSD: progress.1,v 1.6 2004/03/09 17:04:24 hubertf Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2003
+.Dd March 5, 2004
 .Dt PROGRESS 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Op Fl z
 .Op Fl f Ar file
 .Op Fl l Ar length
+.Op Fl p Ar prefix
 .Ar cmd
 .Op Ar args ...
 .Sh DESCRIPTION
@@ -72,6 +73,10 @@ instead of standard input.
 Use the specified length for the time estimate, rather than attempting to
 .Xr fstat 2
 the input.
+.It Fl p Ar prefix
+Print the given
+.Dq prefix
+text before (left of) the progress bar. 
 .It Fl z
 Filter the input through
 .Xr gzip 1 .
