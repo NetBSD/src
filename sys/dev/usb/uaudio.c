@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.12 1999/11/18 23:32:27 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.13 1999/11/26 01:38:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -345,8 +345,11 @@ USB_ATTACH(uaudio)
 	sc->sc_udev = uaa->device;
 
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
-	if (cdesc == NULL)
+	if (cdesc == NULL) {
+		printf("%s: failed to get configuration descriptor\n",
+		       USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
+	}
 
 	err = uaudio_identify(sc, cdesc);
 	if (err) {
@@ -360,9 +363,10 @@ USB_ATTACH(uaudio)
 	for (i = 0; i < uaa->nifaces; i++) {
 		if (uaa->ifaces[i] != NULL) {
 			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
-			if (id->bInterfaceNumber == sc->sc_as_iface) {
+			if (id != NULL &&
+			    id->bInterfaceNumber == sc->sc_as_iface) {
 				sc->sc_as_ifaceh = uaa->ifaces[i];
-				uaa->ifaces[i] = 0;
+				uaa->ifaces[i] = NULL;
 				break;
 			}
 		}
@@ -2100,6 +2104,7 @@ uaudio_set_params(addr, setmode, usemode, p, r)
 {
 	struct uaudio_softc *sc = addr;
 	int flags = sc->sc_altflags;
+	int pfactor, rfactor;
 	int enc, i, j;
 	void (*pswcode) __P((void *, u_char *buf, int cnt));
 	void (*rswcode) __P((void *, u_char *buf, int cnt));
@@ -2111,6 +2116,7 @@ uaudio_set_params(addr, setmode, usemode, p, r)
 		return (EBUSY);
 
         pswcode = rswcode = 0;
+	pfactor = rfactor = 1;
 	enc = p->encoding;
         switch (p->encoding) {
         case AUDIO_ENCODING_SLINEAR_BE:
@@ -2157,6 +2163,13 @@ uaudio_set_params(addr, setmode, usemode, p, r)
 				pswcode = mulaw_to_slinear8;
 				rswcode = slinear8_to_mulaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
+#if 0
+			} else if (flags & HAS_16) {
+				pswcode = mulaw_to_slinear16_le;
+				pfactor = 2;
+				/* XXX recording not handled */
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+#endif
 			} else
 				return (EINVAL);
 		}
@@ -2171,6 +2184,13 @@ uaudio_set_params(addr, setmode, usemode, p, r)
 				pswcode = alaw_to_slinear8;
 				rswcode = slinear8_to_alaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
+#if 0
+			} else if (flags & HAS_16) {
+				pswcode = alaw_to_slinear16_le;
+				pfactor = 2;
+				/* XXX recording not handled */
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+#endif
 			} else
 				return (EINVAL);
 		}
@@ -2208,6 +2228,8 @@ uaudio_set_params(addr, setmode, usemode, p, r)
  found:
         p->sw_code = pswcode;
         r->sw_code = rswcode;
+	p->factor  = pfactor;
+	r->factor  = rfactor;
 	sc->sc_curaltidx = i;
 
 	DPRINTF(("uaudio_set_params: use altidx=%d, altno=%d\n", 
