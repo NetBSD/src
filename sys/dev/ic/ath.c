@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.34 2004/08/08 13:01:03 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.35 2004/08/10 00:57:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.34 2004/08/08 13:01:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.35 2004/08/10 00:57:20 dyoung Exp $");
 #endif
 
 /*
@@ -1200,8 +1200,8 @@ ath_start(struct ifnet *ifp)
 			TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 			ath_txbuf_critsect_end(sc, s);
 			ifp->if_oerrors++;
-			if (ni && ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			continue;
 		}
 
@@ -2406,9 +2406,7 @@ ath_rx_proc(void *arg, int npending)
 		/*
 		 * Locate the node for sender, track state, and
 		 * then pass this node (referenced) up to the 802.11
-		 * layer for its use.  We are required to pass
-		 * something so we fall back to ic_bss when this frame
-		 * is from an unknown sender.
+		 * layer for its use.
 		 */
 		ni = ieee80211_find_rxnode(ic, wh);
 
@@ -2432,12 +2430,9 @@ ath_rx_proc(void *arg, int npending)
 		/*
 		 * The frame may have caused the node to be marked for
 		 * reclamation (e.g. in response to a DEAUTH message)
-		 * so use free_node here instead of unref_node.
+		 * so use release_node here instead of unref_node.
 		 */
-		if (ni == ic->ic_bss)
-			ieee80211_unref_node(&ni);
-		else
-			ieee80211_free_node(ic, ni);
+		ieee80211_release_node(ic, ni);
   rx_next:
 		TAILQ_INSERT_TAIL(&sc->sc_rxbuf, bf, bf_list);
 	} while (ath_rxbuf_init(sc, bf) == 0);
@@ -2884,8 +2879,7 @@ ath_tx_proc(void *arg, int npending)
 			 *     this is a DEAUTH message that was sent and the
 			 *     node was timed out due to inactivity.
 			 */
-			if (ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, bf->bf_dmamap);
@@ -2951,11 +2945,11 @@ ath_draintxq(struct ath_softc *sc)
 		ni = bf->bf_node;
 		bf->bf_node = NULL;
 		ath_txbuf_critsect_begin(sc, s2);
-		if (ni != NULL && ni != ic->ic_bss) {
+		if (ni != NULL) {
 			/*
 			 * Reclaim node reference.
 			 */
-			ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 		ath_txbuf_critsect_end(sc, s2);
