@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/28 17:02:27 veego Exp $
+#	$NetBSD: Makefile,v 1.5 1999/11/28 17:39:08 veego Exp $
 
 LIB=bind
 
@@ -35,7 +35,7 @@ SRCS+=	ns_parse.c ns_print.c ns_netint.c ns_ttl.c ns_name.c \
 	ns_sign.c ns_verify.c ns_date.c ns_samedomain.c
 # ${BIND_DIST_DIR}/lib/dst
 SRCS+=	dst_api.c prandom.c rsaref_link.c support.c bsafe_link.c \
-	cylink_link.c hmac_link.c eay_dss_link.c md5_dgst.c
+	cylink_link.c hmac_link.c eay_dss_link.c
 
 # only needed during build
 libinstall::
