@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.22 1995/12/31 00:27:21 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.23 1996/02/14 02:44:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -78,7 +78,7 @@
 #define DEFAULT_BAUD_RATE 9600
 #endif
 
-int	dcmmatch(), dcmintr(), dcmparam();
+int	dcmmatch(), dcmparam();
 void	dcmattach(), dcmstart();
 struct	driver dcmdriver = {
 	dcmmatch, dcmattach, "dcm",
@@ -232,7 +232,6 @@ struct	dcm_softc {
 	struct	tty *sc_tty[NDCMPORT];	/* our tty instances */
 	struct	modemreg *sc_modem[NDCMPORT]; /* modem control */
 	char	sc_mcndlast[NDCMPORT];	/* XXX last modem status for port */
-	struct	isr sc_isr;		/* interrupt handler */
 	short	sc_softCAR;		/* mask of ports with soft-carrier */
 	struct	dcmischeme sc_scheme;	/* interrupt scheme for board */
 
@@ -256,6 +255,7 @@ struct	dcm_softc {
 } dcm_softc[NDCM];
 
 void	dcminit __P((struct dcmdevice *, int, int));
+int	dcmintr __P((void *));
 
 int
 dcmmatch(hd)
@@ -336,10 +336,7 @@ dcmattach(hd)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	sc->sc_isr.isr_ipl = hd->hp_ipl;
-	sc->sc_isr.isr_arg = brd;
-	sc->sc_isr.isr_intr = dcmintr;
-	isrlink(&sc->sc_isr);
+	isrlink(dcmintr, sc, hd->hp_ipl, ISRPRI_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
@@ -600,12 +597,13 @@ dcmtty(dev)
 }
  
 int
-dcmintr(brd)
-	register int brd;
+dcmintr(arg)
+	void *arg;
 {
-	struct dcm_softc *sc = &dcm_softc[brd];
+	struct dcm_softc *sc = arg;
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
+	int brd = sc->sc_hd->hp_unit;
 	int code, i;
 	int pcnd[4], mcode, mcnd[4];
 

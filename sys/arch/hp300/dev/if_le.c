@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.26 1996/01/02 21:56:21 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.27 1996/02/14 02:44:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -80,7 +80,7 @@ struct	le_softc le_softc[NLE];
 int	lematch __P((struct hp_device *));
 void	leattach __P((struct hp_device *));
 int	leintr __P((void *));
-static	int hp300_leintr __P((int));	/* machine-dependent wrapper */
+static	int hp300_leintr __P((void *));	/* machine-dependent wrapper */
 
 struct	driver ledriver = {
 	lematch, leattach, "le",
@@ -188,18 +188,16 @@ leattach(hd)
 	sc->sc_arpcom.ac_if.if_name = ledriver.d_name;
 	leconfig(sc);
 
-	sc->sc_isr.isr_intr = hp300_leintr;
-	sc->sc_isr.isr_arg = hd->hp_unit;
-	sc->sc_isr.isr_ipl = hd->hp_ipl;
-	isrlink(&sc->sc_isr);
+	/* Establish the interrupt handler. */
+	isrlink(hp300_leintr, sc, hd->hp_ipl, ISRPRI_NET);
 	ler0->ler0_status = LE_IE;
 }
 
 static int
-hp300_leintr(unit)
-	int unit;
+hp300_leintr(arg)
+	void *arg;
 {
-	struct le_softc *sc = LE_SOFTC(unit);
+	struct le_softc *sc = arg;
 	u_int16_t isr;
 
 #ifdef USELEDS
