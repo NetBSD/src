@@ -1,0 +1,64 @@
+#	$NetBSD: Makefile,v 1.1 1997/11/17 09:47:17 cjs Exp $
+
+TOP=		${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
+IMAGE=		md_install-${REV}.fs
+CBIN=		md_install
+
+MOUNT_POINT?=	/mnt
+# DEV/RDEV file system device, CDEV/RDEV vnconfig device
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+VND_CDEV=	/dev/${VND}c
+VND_CRDEV=	/dev/r${VND}c
+IMAGE?=		xxx-${REV}.fs
+MDEC=		${DESTDIR}/usr/mdec
+
+LISTS=		list
+CRUNCHCONF=	${CBIN}.conf
+MTREE=		mtree.conf
+
+DISKTYPE=	floppy
+
+all: ${CBIN} 
+	dd if=/dev/zero of=${IMAGE} count=4096
+	vnconfig -v -c ${VND_CDEV} ${IMAGE}
+	#vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	#disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	#newfs -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -m 0 -o space -i 5120 ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	@echo ""
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND_CDEV}
+	cat /*bin/* > /dev/null
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND_DEV}
+	-/bin/rm -f ${IMAGE}
+	cat /*bin/* > /dev/null
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
+	make -f ${CBIN}.mk all
+
+clean cleandir:
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+
+# libhack is listed in rd_bin.conf but is built here.
+HACKSRC=${TOP}/../../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+
