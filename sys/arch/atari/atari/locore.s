@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2001/05/15 13:49:56 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 2001/05/28 08:41:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -378,6 +378,8 @@ ENTRY_NOPROFILE(lev6intr)
 #define	PLX_CNTRL	0x42ec
 #define	PLX_DMCFGA	0x42ac
 	moveml	%d0-%d2/%a0-%a1,%sp@-
+	movw	%sp@(20),%sp@-		|  push previous SR value
+	clrw	%sp@-			|	padded to longword
 	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
 	movew	#0xffff,%a0@(PLX_PCICR)	| clear PCI_SR error bits
 	movel	a0@(PLX_CNTRL),%d0	| Change PCI command code from
@@ -395,7 +397,7 @@ ENTRY_NOPROFILE(lev6intr)
 	movew	%d2,%sr			| Re-enable interrupts
 	movel	%d1,%sp@-		| Call handler
 	jbsr	_C_LABEL(milan_isa_intr)
-	addql	#4,%sp
+	addql	#8,%sp
 	moveml	%sp@+,%d0-%d2/%a0-%a1
 	jra	_ASM_LABEL(rei)
 

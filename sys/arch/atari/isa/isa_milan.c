@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.2 2001/05/16 08:45:50 leo Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.3 2001/05/28 08:41:37 leo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ static void init_icu(void);
 #endif
 static void set_icus(void);
 static void calc_imask(void);
+static void isa_callback(int);
 
 /*
  * Bitmask of currently enabled isa interrupts. Used by set_icus().
@@ -132,11 +133,24 @@ calc_imask()
 	set_icus();
 }
 
+static void
+isa_callback(vector)
+	int	vector;
+{
+	isa_intr_info_t	*iinfo_p;
+	int		s;
 
-void milan_isa_intr(int);
+	iinfo_p = &milan_isa_iinfo[vector];
+
+	s = splx(iinfo_p->ipl);
+	(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+	splx(s);
+}
+
+void milan_isa_intr(int, int);
 void
-milan_isa_intr(vector)
-int	vector;
+milan_isa_intr(vector, sr)
+	int	vector, sr;
 {
 	isa_intr_info_t *iinfo_p;
 
@@ -151,10 +165,22 @@ int	vector;
 	*((u_char *)AD_8259_MASTER) = 0x20;
 
 	iinfo_p = &milan_isa_iinfo[vector];
-	if (iinfo_p->ifunc == NULL)
+	if (iinfo_p->ifunc == NULL) {
 		printf("milan_isa_intr: Stray interrupt: %d (mask:%04x)\n",
 				vector, imask_enable);
-	else (void) (iinfo_p->ifunc)(iinfo_p->iarg);
+		return;
+	}
+	if ((sr & PSL_IPL) >= (iinfo_p->ipl & PSL_IPL)) {
+		/*
+		 * We're running at a too high priority now.
+		 */
+		add_sicallback((si_farg)isa_callback, (void*)vector, 0);
+	}
+	else {
+		s = splx(iinfo_p->ipl);
+		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+		splx(s);
+	}
 }
 
 
