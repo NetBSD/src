@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.3 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.4 2005/03/01 03:31:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -358,6 +358,7 @@ struct aac_adapter_info {
 #define	AAC_MONKER_INITSTRUCT	0x05
 #define	AAC_MONKER_SYNCFIB	0x0c
 #define	AAC_MONKER_GETKERNVER	0x11
+#define	AAC_MONKER_GETINFO	0x19
 
 /*
  * Command status values
