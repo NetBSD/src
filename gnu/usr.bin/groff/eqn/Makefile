@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/11/12 17:09:46 tv Exp $
+#	$NetBSD: Makefile,v 1.16 2001/11/13 17:01:23 tv Exp $
 
 .include "../Makefile.lib"
 
@@ -9,13 +9,13 @@ PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
 		script.cc mark.cc other.cc delim.cc sqrt.cc pile.cc special.cc\
 		eqn.cc
-CPPFLAGS+=	-I${DIST}
+CPPFLAGS+=	-I. -I${DIST}
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
+DPSRCS+=	eqn_tab.h
+CLEANFILES+=	eqn.cc neqn
 
-CLEANFILES+=	eqn.cc eqn_tab.h neqn
-
-lex.o:	eqn.cc
+eqn_tab.h lex.o: eqn.cc
 
 FILES=neqn
 FILESMODE=${BINMODE}
