@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.102 1998/10/06 18:58:09 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.103 1998/10/08 21:49:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -255,8 +255,6 @@ bootstrap()
 	 */
 
 #if defined(SUN4M)
-#define getpte4m(va)	lda(((va) & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
-
 	/* First we'll do the interrupt registers */
 	if (CPU_ISSUN4M) {
 		int node;
