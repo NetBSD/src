@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.18 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.19 2003/12/25 21:03:55 jmc Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,10 @@
 #define __I386_APM_H__
 
 #include <dev/apm/apmbios.h>
+
+#ifndef _LOCORE
 #include <dev/apm/apmio.h>
+#endif /* _LCORE */
 
 /*
  * virtual & physical address of the trampoline
@@ -46,6 +49,7 @@
  */
 #define APM_BIOSTRAMP	PAGE_SIZE
 
+#ifndef _LOCORE
 /* filled in by apmcall */ 
 
 struct apm_connect_info {
@@ -76,4 +80,5 @@ void apminit(void);
 int apm_set_powstate(u_int devid, u_int powstate);
 int apm_busprobe(void);
 #endif /* _KERNEL */
+#endif /* _LOCORE */
 #endif /* __i386_apm_h__ */
