@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.15 1997/04/10 06:36:28 jeremy Exp $
+.\"	$NetBSD: ep.4,v 1.16 1997/04/27 09:43:05 jonathan Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -49,7 +49,7 @@ The
 device driver supports the 3Com Etherlink III family of cards on Alpha
 and i386 CPUs.  Supported Etherlink III cards include:
 .Pp
-.Bl -tag -width xxxxxx
+.Bl -tag -width xxxxxx -offset indent
 .It 3c509
 ISA 10Mbit card, in BNC and multiport variants
 .It 3c509B
@@ -67,31 +67,20 @@ PCI 10Mbit multiport card with busmastering capability
 .It 3c595
 PCI 10/100Mbit multiport card with busmastering capability
 .It 3c900
-PCI 10Mbit card  in UTP and multiport variants
+PCI 10Mbit card  in 10baseT and multiport variants
 .It 3c905
 PCI 10/100Mbit cards
 .El
 
 The
 .Nm ep
-driver provides full support for the 10Mbit-only cards.
-Due to limitations in 
-.Xr ifconfig 8 ,
-the
-.Nm ep
-driver does not provide  full support for  selecting and switching
-media  on the 10/100 cards. (In all other respects, the
-.Nm ep
-driver supports the 10/100 cards as completely as the 10Mbit cards.)
-The
-.Nm ep
 driver also works with 3c589 PCMCIA cards, if pre-configured to
 work as ISA devices. NetBSD does not include PCMCIA support at this time.
-.Sh 10MBIT MEDIA SELECTION
+.Sh MEDIA SELECTION
 Various models of these cards come with a different assortment of
 media. Supported 10Mbit Ethernet media include:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxxxxxx -offset indent
 .It AUI/DIX
 Standard 15 pin connector
 .It 10Base2
@@ -100,22 +89,49 @@ BNC, also known as thin-net
 UTP, also known as twisted pair
 .El
 .Pp
+The 100Mbit cards each support exactly one of the following 100Mbit
+standards:
+.Pp
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It 100baseTX
+100Mbit over cat-5 UTP
+.It 100baseT4
+100Mbit over all four pairs of cat-3 UTP
+.It 100baseFX
+100Mbit over fiber
+.It MII
+MII connection to external 100Mbit PHY
+.El
+
+Note that the 100baseTX and 100baseT4  cards can also run as 10baseT.
+.Pp
 The
 .Nm 
-driver defaults to using the BNC port.
-To choose an alternative port,
+driver defaults to using the port selected via the vendor-supplied
+configuration utility.
+To choose an alternate port,
 use the following media flags with
 .Xr ifconfig 8
 or in your /etc/ifconfig.ep? file.
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxx
-.It 10base2/BNC
-Use the BNC port (default).
-.It 10base5/AUI
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It 10base2
+Use the 10base-2 BNC port.
+.It AUI
 Use the AUI port.
-.It 10baseT/UTP
-Use the UTP port.
+.It 10baseT
+Use the UTP port in 10base-T mode.
+.It 100baseTX
+Use the builtin 100base-Tx PHY on the UTP port.
+.It 100baseFX
+Use the builtin 100mbit fibre-optic PHY.
+.It 100baseT4
+Use the builtin 100base-T4 PHY on the UTP port.
 .El
+
+The
+.Nm
+driver no longer supports changing media via the link0/link1/link2 flags.
 .Pp
 If there are multiple cards in the computer, they are searched for
 in the following order:
@@ -128,39 +144,12 @@ This is an example of how they will probe:
 ep0 at isa0 port 0x6000-0x600f irq 10: aui/bnc address 00:60:8c:70:e5:c5
 ep1 at isa0 port 0x300-0x30f irq 3: aui/bnc/utp address 00:20:af:10:62:ab
 .Pp
-You may specify the port and irq numbers that the cards are expected
+You may specify the port and irq numbers that ISA cards are expected
 to be found at, but it is not necessary.
 The cards are sufficiently intelligent to tell us where they
 actually live on the ISA bus.
-.Pp
-Some models of 3c5x9 have all three connectors on them.
-In the case of these cards; you must configure the transceiver type
-with the 3Com supplied DOS configuration disk before the link0/link1
-flags will operate correctly. (This is a bug).
-.Pp
-.Sh 100MBIT MEDIA SELECTION
-Supported 100Mbit Ethernet media include:
-.Pp
-.Bl -tag -width xxxxxxxxxxxxxxxx
-.It 100baseTX
-100Mbit Ethernet over Cat-5 unshielded twisted pair
-.It 100baseFX
-100Mbit Ethernet over fibre-optic media
-.It 100baseT4
-100Mbit Ethernet over all four pairs of Cat-3 UTP
-.It MII
-Media Independent Interface connector.
-.El
-.Pp
-.Xr ifconfig 8
-does not properly support selecting 100Mbit media. To
-change media, you must configure the desired media with the 3Com
-supplied DOS configuration disk before booting or installing NetBSD.
-Set the media you want to use as the default in the config utility.
-
-Even then, the link0/link1 flags will have no effect on 100Mbit cards.
 .Sh NOTES
-The 3c509 card has no jumpers to set the address.
+Etherlink III cards have no jumpers to set the address.
 3Com supplies software to set the address of the card in software.
 To find the card on the ISA bus, the kernel performs a complex
 scan operation at IO address 0x100.
@@ -168,12 +157,12 @@ Beware!
 Avoid placing other cards at that address!
 .Pp
 The 3Com configuration utilities can `autosense' the active media and
-save it as default.  The saved default medium is the media active at
-the time the configuration utility was run.  The
+save it as default.  The saved default medium is the medium that
+was  active atthe time the configuration utility was run.  The
 .Nm ep
-driver does not yet re-autosense the active media at boot time;
-it simply uses the media type sensed and saved when the configuration
-utility was run.
+driver does not yet re-autosense the active media at boot time.
+If the EEPROM autosense bit is set, the driver simply uses the media
+type sensed and saved when the configuration utility was run.
 .Sh DIAGNOSTICS
 ep0: reset (status: %x)
 .in +4
@@ -190,19 +179,17 @@ This means that someone has scribbled with pencil in the test area on the
 card.  Erase the pencil mark and reboot.  (This is not a joke).
 .in -4
 .Sh BUGS
-.Xr ifconfig 8
-and the link0/link1/link2  interface flags need to be extended to handle
-the four additional media types available with Fast (100Mbit)
-Ethernet. 
-The requirement to pre-configure combo cards should be removed.
 Support for autosensing the active media should be added to the driver.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr eisa 4 ,
+.Xr pci 4
 .Xr ed 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
-.Xr ie 4 ,
-.Xr le 4
+.Xr ie 4 .
 .Sh STANDARDS
 are great. There's so many to choose from.
