@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_usrreq.c	7.26 (Berkeley) 6/3/91
- *	$Id: uipc_usrreq.c,v 1.3 1993/05/22 11:41:56 cgd Exp $
+ *	$Id: uipc_usrreq.c,v 1.4 1993/06/12 14:01:23 andrew Exp $
  */
 
 #include "param.h"
@@ -761,7 +761,8 @@ unp_mark(fp)
 unp_discard(fp)
 	struct file *fp;
 {
-
+	if (fp->f_msgcount == 0)
+		return;
 	fp->f_msgcount--;
 	unp_rights--;
 	(void) closef(fp, curproc);
