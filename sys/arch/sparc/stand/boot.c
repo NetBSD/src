@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 1994/12/11 15:18:34 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.10 1995/02/22 08:18:18 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -84,7 +84,6 @@ struct promvec *pp;
 		printf("boot: ");
 		gets(kernel);
 	}
-	reset_twiddle();
 
 	printf("Booting %s @ 0x%x\n", kernel, LOADADDR);
 	copyunix(io, LOADADDR);
@@ -106,7 +105,6 @@ copyunix(io, addr)
 		printf("%s: Bad format\n", kernel);
 		return;
 	}
-	reset_twiddle();
 	printf("%d", x.a_text);
 	if (N_GETMAGIC(x) == ZMAGIC) {
 		entry = (void (*)())(addr+sizeof(struct exec));
@@ -118,12 +116,10 @@ copyunix(io, addr)
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
 		while ((int)addr & __LDPGSZ)
 			*addr++ = 0;
-	reset_twiddle();
 	printf("+%d", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
-	reset_twiddle();
 	printf("+%d", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
@@ -134,11 +130,9 @@ copyunix(io, addr)
 		if (read(io, addr, x.a_syms) != x.a_syms)
 			goto shread;
 		addr += x.a_syms;
-		reset_twiddle();
 
 		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
 			goto shread;
-		reset_twiddle();
 
 		bcopy(&strtablen, addr, sizeof(int));
 		if (i = strtablen) {
@@ -146,7 +140,6 @@ copyunix(io, addr)
 			addr += sizeof(int);
 			if (read(io, addr, i) != i)
 			    goto shread;
-			reset_twiddle();
 			addr += i;
 		}
 		printf("%d]", i);
@@ -161,28 +154,6 @@ copyunix(io, addr)
 shread:
 	printf("Short read\n");
 	return;
-}
-
-static int tw_on;
-static int tw_pos;
-static char tw_chars[] = "|/-\\";
-
-reset_twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	tw_on = 0;
-	tw_pos = 0;
-}
-
-twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	else
-		tw_on = 1;
-	putchar(tw_chars[tw_pos++]);
-	tw_pos %= (sizeof(tw_chars) - 1);
 }
 
 _rtt()

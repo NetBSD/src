@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.8 1994/12/11 15:18:35 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.9 1995/02/22 08:18:20 mycroft Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -140,7 +140,6 @@ promstrategy(devdata, flag, dblk, size, buf, rsize)
 #ifdef DEBUG
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
-	twiddle();
 
 	if (promvec->pv_romvec_vers >= 2) {
 		if (pdp->devtype == BLOCK)
