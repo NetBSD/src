@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.12 1997/01/01 21:14:47 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.13 1997/01/12 15:44:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -84,7 +84,7 @@ static  TAILQ_HEAD(acthead, dma_entry)	dma_active;
 
 static	int	must_init = 1;		/* Must initialize		*/
 
-void	cdmaint __P((void *, int));
+int	cdmaint __P((void *, int));
 
 static	void	st_dma_init __P((void));
 
@@ -99,7 +99,7 @@ st_dma_init()
 	for(i = 0; i < NDMA_DEV; i++)
 		TAILQ_INSERT_HEAD(&dma_free, &dmatable[i], entries);
 
-	if (intr_establish(7, USER_VEC, 0, (hw_ifun_t)cdmaint, NULL) == NULL)
+	if (intr_establish(7, USER_VEC, 0, cdmaint, NULL) == NULL)
 		panic("st_dma_init: Can't establish interrupt\n");
 }
 
@@ -201,7 +201,7 @@ st_dmawanted()
 	return(dma_active.tqh_first->entries.tqe_next != NULL);
 }
 
-void
+int
 cdmaint(unused, sr)
 void	*unused;
 int	sr;	/* sr at time of interrupt */
@@ -210,6 +210,10 @@ int	sr;	/* sr at time of interrupt */
 	void		*softc;
 
 	if(dma_active.tqh_first != NULL) {
+		/*
+		 * Due to the logic of the ST-DMA chip, it is not possible to
+		 * check for stray interrupts here...
+		 */
 		int_func = dma_active.tqh_first->int_func;
 		softc    = dma_active.tqh_first->softc;
 
@@ -220,8 +224,9 @@ int	sr;	/* sr at time of interrupt */
 			(*int_func)(softc);
 			spl0();
 		}
+		return 1;
 	}
-	else printf("DMA interrupt discarded\n");
+	return 0;
 }
 
 /*
