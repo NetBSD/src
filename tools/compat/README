@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.8 2002/09/29 07:05:28 lukem Exp $
+$NetBSD: README,v 1.9 2003/11/17 05:42:58 dbj Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -26,6 +26,16 @@ LINUX:
 
 * The zlib and zlib-devel packages must be installed.  This will be
   fixed in the future to include zlib in libnbcompat.
+
+=====
+
+MACOS
+  Probably requires a case sensitive filesystem such as UFS
+
+* Tested on 10.2.8 with Dec 2002 Developer Tools
+    - may require a fix to /usr/bin/join, netbsd's join should work fine
+* Tested on 10.3 with xcode 1.0
+    - compiles fine out of the box
 
 =====
 
