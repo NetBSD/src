@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.21 1998/10/04 00:02:33 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.22 1998/12/15 10:32:16 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -91,15 +91,16 @@ linux_sys_ioctl(p, v, retval)
 		return oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
 	case 'S':
 		return linux_ioctl_cdrom(p, uap, retval);
-	case 'T':
 	case 't':
 	case 'f':
+		return linux_ioctl_termios(p, uap, retval);
+	case 'T':
 	{
 #if NSEQUENCER > 0
 /* XXX XAX 2x check this. */
 		/*
 		 * Both termios and the MIDI sequncer use 'T' to identify
-		 * the ioctl, so we have to differntiate them in a different
+		 * the ioctl, so we have to differentiate them in another
 		 * way.  We do it by indexing in the cdevsw with the major
 		 * device number and check if that is the sequencer entry.
 		 */
@@ -110,13 +111,13 @@ linux_sys_ioctl(p, v, retval)
 		extern int sequencerioctl 
 			__P((dev_t, u_long, caddr_t, int, struct proc *));
 
-
 		fdp = p->p_fd;
 		if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
 		    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 			return EBADF;
-		vp = (struct vnode *)fp->f_data;
-		if (vp->v_type == VCHR &&
+		if (fp->f_type == DTYPE_VNODE &&
+		    (vp = (struct vnode *)fp->f_data) != NULL &&
+		    vp->v_type == VCHR &&
 		    VOP_GETATTR(vp, &va, p->p_ucred, p) == 0 &&
 		    major(va.va_rdev) < nchrdev &&
 		    cdevsw[major(va.va_rdev)].d_ioctl == &sequencerioctl)
