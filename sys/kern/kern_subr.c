@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.16 2002/10/18 02:44:53 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.17 2002/10/18 05:20:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.16 2002/10/18 02:44:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.17 2002/10/18 05:20:56 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1264,9 +1264,9 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif /* KTRACE */
 
