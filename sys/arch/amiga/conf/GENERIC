@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.25 1994/07/31 06:41:01 chopps Exp $
+#	$Id: GENERIC,v 1.26 1994/07/31 19:57:11 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -105,7 +105,7 @@ options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
 options		"GRF_A2024"	# Support for the A2024
-#options		GRF_AGA		# AGA Chip Set
+options		GRF_AGA		# AGA Chip Set
 #options	"KFONT_8X11"	# 8x11 font
 
 grfcc0		at mainbus0		# custom chips
