@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.28.4.1 1996/06/01 06:16:43 scottr Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.28.4.2 1996/06/25 01:25:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -132,7 +132,7 @@ u_char	opcode;
  */
 extern __inline__ int wait_req_true(void)
 {
-	int	timeout = 25000;
+	int	timeout = 2500000;
 
 	while (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ) && --timeout)
 		delay(1);
@@ -145,7 +145,7 @@ extern __inline__ int wait_req_true(void)
  */
 extern __inline__ int wait_req_false(void)
 {
-	int	timeout = 25000;
+	int	timeout = 2500000;
 
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ) && --timeout)
 		delay(1);
