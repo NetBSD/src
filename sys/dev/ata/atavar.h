@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.34 2003/12/14 05:14:39 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.35 2003/12/14 05:33:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -84,6 +84,9 @@ struct ata_drive_datas {
 	/* Downgrade after NERRS_MAX errors in at most NXFER xfers */
 #define NERRS_MAX 4
 #define NXFER 4000
+
+	/* Callbacks into the drive's driver. */
+	void	(*drv_done)(void *);	/* transfer is done */
 
 	struct device *drv_softc;	/* ATA drives softc, if any */
 	void *chnl_softc;		/* channel softc */

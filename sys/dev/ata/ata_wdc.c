@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.45 2003/12/14 02:48:36 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.46 2003/12/14 05:33:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.45 2003/12/14 02:48:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.46 2003/12/14 05:33:29 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -748,8 +748,8 @@ wdc_ata_bio_kill_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 	ata_bio->flags |= ATA_ITSDONE;
 	ata_bio->error = ERR_NODEV;
 	ata_bio->r_error = WDCE_ABRT;
-	WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-	wddone(chp->ch_drive[drive].drv_softc);
+	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
+	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 }
 
 static void
@@ -772,8 +772,8 @@ wdc_ata_bio_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-	wddone(chp->ch_drive[drive].drv_softc);
+	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
+	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
