@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.1 1999/12/09 14:53:06 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.2 2000/03/19 16:28:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -95,6 +95,7 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
+static void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
 static void	ncr5380_sched __P((struct ncr5380_softc *));
 static void	ncr5380_done __P((struct ncr5380_softc *));
 
@@ -367,10 +368,6 @@ ncr5380_init(sc)
 		for (j = 0; j < 8; j++)
 			sc->sc_matrix[i][j] = NULL;
 
-	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;
 
@@ -391,7 +388,7 @@ ncr5380_init(sc)
 }
 
 
-void
+static void
 ncr5380_reset_scsibus(sc)
 	struct ncr5380_softc *sc;
 {
@@ -419,9 +416,10 @@ ncr5380_reset_scsibus(sc)
  * This may also called for a DMA timeout (at splbio).
  */
 int
-ncr5380_intr(sc)
-	struct ncr5380_softc *sc;
+ncr5380_intr(arg)
+	void *arg;
 {
+	struct ncr5380_softc *sc = arg;
 	int claimed = 0;
 
 	/*
@@ -2606,6 +2604,63 @@ ncr5380_show_state()
 	db_printf("sc_prevphase=%d\n",	sc->sc_prevphase);
 	db_printf("sc_msgpriq=0x%x\n",	sc->sc_msgpriq);
 }
-
 #endif	/* DDB */
 #endif	/* NCR5380_DEBUG */
+
+struct scsipi_device ncr5380_dev = {
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+};
+
+void
+ncr5380_attach(sc)
+	struct ncr5380_softc *sc;
+{
+
+	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+
+	/*
+	 * Fill in the prototype scsipi_link
+	 */
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &sc->sc_adapter;
+	sc->sc_link.device = &ncr5380_dev;
+	sc->sc_link.openings = 2;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
+	sc->sc_link.type = BUS_SCSI;
+
+	/*
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
+	 */
+	if (scsipi_adapter_addref(&sc->sc_link) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	ncr5380_init(sc);	/* Init chip and driver */
+	ncr5380_reset_scsibus(sc);
+
+	/*
+	 * Ask the adapter what subunits are present
+	 */
+	(void) config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	scsipi_adapter_delref(&sc->sc_link);
+}
+
+int
+ncr5380_detach(sc, flags)
+	struct ncr5380_softc *sc;
+	int flags;
+{
+
+	return (EOPNOTSUPP);
+}

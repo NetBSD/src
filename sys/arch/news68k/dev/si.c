@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.3 2000/02/08 16:17:32 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.4 2000/03/19 16:28:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,13 +89,6 @@ void si_dma_start __P((struct ncr5380_softc *));
 void si_dma_poll __P((struct ncr5380_softc *));
 void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
-
-struct scsipi_device si_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
 
 struct cfattach si_ca = {
 	sizeof(struct si_softc), si_match, si_attach
@@ -189,23 +182,14 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_pio_in  = ncr5380_pio_in;
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
 	ncr_sc->sc_adapter.scsipi_minphys = minphys;
-
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &si_scsidev;
-	ncr_sc->sc_link.type = BUS_SCSI;
 
 	/* soft reset DMAC */
 	sc->sc_regs = (void *)IIOV(DMAC_BASE);
 	sc->sc_regs->ctl = DC_CTL_RST;
 
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+	ncr5380_attach(ncr_sc);
 }
 
 int
