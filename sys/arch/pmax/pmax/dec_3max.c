@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.29 2000/04/11 02:43:55 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.30 2000/04/11 06:50:37 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.29 2000/04/11 02:43:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.30 2000/04/11 06:50:37 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,6 @@ dec_3max_init()
 	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
-
-	mips_hardware_intr = dec_3max_intr;
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
