@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.2 1999/07/12 16:37:03 wrstuden Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.3 1999/07/15 21:30:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -184,6 +184,7 @@ layer_node_alloc(mp, lowervp, vpp)
 			&vp)) != 0)
 		return (error);
 	vp->v_type = lowervp->v_type;
+	vp->v_flag |= VLAYER;
 
 	MALLOC(xp, struct layer_node *, lmp->layerm_size, M_TEMP, M_WAITOK);
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
