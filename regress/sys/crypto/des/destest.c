@@ -1,4 +1,4 @@
-/*	$NetBSD: destest.c,v 1.2 2000/11/08 06:02:02 itojun Exp $	*/
+/*	$NetBSD: destest.c,v 1.3 2005/02/06 06:05:19 perry Exp $	*/
 /*	$KAME: destest.c,v 1.3 2000/11/08 05:58:25 itojun Exp $	*/
 
 /*
@@ -206,8 +206,8 @@ static unsigned char cipher_data[NUM_TESTS][8]={
 	{0x2A,0x2B,0xB0,0x08,0xDF,0x97,0xC2,0xF2}};
 
 
-static const char *pt __P((unsigned char *));
-int main __P((int, char **));
+static const char *pt(unsigned char *);
+int main(int, char **);
 
 static const char *
 pt(p)

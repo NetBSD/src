@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2002/02/21 07:38:18 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2005/02/06 06:05:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 #include <string.h>
 #include <time.h>
 
-int	main __P((int, char *[]));
-void	die __P((void));
+int	main(int, char *[]);
+void	die(void);
 
 void
 die()

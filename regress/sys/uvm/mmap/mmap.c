@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.16 2003/11/29 19:09:21 yamt Exp $	*/
+/*	$NetBSD: mmap.c,v 1.17 2005/02/06 06:05:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@
 #include <unistd.h>
 #include <string.h>	/* for memset declaration (?) */
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
-int	check_residency __P((void *, int));
+int	check_residency(void *, int);
 
 int	pgsize;
 int	verbose;

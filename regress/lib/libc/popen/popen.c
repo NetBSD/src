@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.1.1.1 1999/09/30 09:23:23 tron Exp $	*/
+/*	$NetBSD: popen.c,v 1.2 2005/02/06 06:05:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: popen.c,v 1.1.1.1 1999/09/30 09:23:23 tron Exp $");
+__RCSID("$NetBSD: popen.c,v 1.2 2005/02/06 06:05:19 perry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: popen.c,v 1.1.1.1 1999/09/30 09:23:23 tron Exp $");
 			/* 640KB ought to be enough for everyone. */
 #define DATAFILE	"popen.data"
 
-int	main __P((int, char *[]));
+int	main(int, char *[]);
 
 main(argc, argv)
 	int argc;
