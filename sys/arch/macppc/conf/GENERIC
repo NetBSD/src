@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 1998/11/22 15:57:37 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.19 1998/11/25 20:30:46 hwr Exp $
 #
 # POWERMAC config file
 #
@@ -157,6 +157,7 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	tun		4	# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	pty		64	# pseudo-terminals
 
 # rnd is EXPERIMENTAL at this point.
