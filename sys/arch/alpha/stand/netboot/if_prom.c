@@ -1,4 +1,4 @@
-/*	$NetBSD: if_prom.c,v 1.4 1996/10/02 21:18:49 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.5 1997/01/16 01:21:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -37,9 +37,9 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include "netif.h"
+#include <lib/libsa/netif.h>
 #include "include/prom.h"
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
 int prom_probe();
 int prom_match();
