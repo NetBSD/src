@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.3 1999/09/30 23:01:12 thorpej Exp $ */
+/*	$NetBSD: siop.c,v 1.4 2000/02/26 16:50:55 scw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -60,6 +60,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <machine/cpu.h>
 #include <m68k/cacheops.h>
 
 #include <mvme68k/dev/siopreg.h>

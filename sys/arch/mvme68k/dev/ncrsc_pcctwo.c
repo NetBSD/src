@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.2 1999/02/21 13:59:35 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.3 2000/02/26 16:50:55 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <machine/cpu.h>
 #include <machine/autoconf.h>
 
 #include <mvme68k/dev/siopreg.h>
