@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.21 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: wchar.h,v 1.22 2005/03/30 03:47:11 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -93,6 +93,8 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
+struct tm;
+
 __BEGIN_DECLS
 wint_t	btowc(int);
 size_t	mbrlen(const char * __restrict, size_t, mbstate_t * __restrict);
@@ -108,6 +110,8 @@ int	wcscmp(const wchar_t *, const wchar_t *);
 int	wcscoll(const wchar_t *, const wchar_t *);
 wchar_t	*wcscpy(wchar_t * __restrict, const wchar_t * __restrict);
 size_t	wcscspn(const wchar_t *, const wchar_t *);
+size_t	wcsftime(wchar_t * __restrict, size_t, const wchar_t * __restrict,
+	    const struct tm * __restrict);
 size_t	wcslen(const wchar_t *);
 wchar_t	*wcsncat(wchar_t * __restrict, const wchar_t * __restrict, size_t);
 int	wcsncmp(const wchar_t *, const wchar_t *, size_t);
