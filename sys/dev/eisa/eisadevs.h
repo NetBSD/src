@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.24 2001/04/17 14:30:01 ad Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.25 2001/05/06 19:44:14 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.22 2001/04/17 14:29:47 ad Exp 
+ *	NetBSD: eisadevs,v 1.23 2001/05/06 19:43:54 ad Exp 
  */
 
 /*
@@ -125,6 +125,16 @@
 
 /* Madge products */
 #define	EISA_PRODUCT_MDG0002	"Madge Networks Smart 16/4 EISA Ringnode"
+
+/* Mylex products */
+#define	EISA_PRODUCT_MLX0070	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0071	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0072	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0073	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0074	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0075	"Mylex DAC960-A RAID controller"
+#define	EISA_PRODUCT_MLX0076	"Mylex DAC960-A RAID controller"
+#define	EISA_PRODUCT_MLX0077	"Mylex DAC960-A RAID controller"
 
 /* NEC products */
 #define	EISA_PRODUCT_NEC8200	"NEC EATA SCSI controller"
