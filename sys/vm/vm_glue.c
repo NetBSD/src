@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.72 1998/03/01 02:24:00 fvdl Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.73 1998/04/09 00:23:39 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -206,8 +206,7 @@ vm_fork(p1, p2, shared)
 	register struct proc *p1, *p2;
 	boolean_t shared;
 {
-	register struct user *up;
-	vm_offset_t addr;
+	struct user *up = p2->p_addr;
 
 	/*
 	 * Share the address space if we've been directed to.
@@ -217,26 +216,12 @@ vm_fork(p1, p2, shared)
 	else
 		p2->p_vmspace = vmspace_fork(p1->p_vmspace);
 
-#if !defined(vax)
 	/*
-	 * Allocate a wired-down (for now) pcb and kernel stack for the process
+	 * Wire down the U-area for the process, which contains the PCB
+	 * and the kernel stack.
 	 */
-	addr = kmem_alloc_pageable(kernel_map, USPACE);
-	if (addr == 0)
-		panic("vm_fork: no more kernel virtual memory");
-	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
-#else
-	/*
-	 * XXX somehow, on 386, ocassionally pageout removes active, wired down
-	 * kstack and pagetables, WITHOUT going thru vm_page_unwire! Why this
-	 * appears to work is not yet clear, yet it does...
-	 */
-	addr = kmem_alloc(kernel_map, USPACE);
-	if (addr == 0)
-		panic("vm_fork: no more kernel virtual memory");
-#endif
-	up = (struct user *)addr;
-	p2->p_addr = up;
+	vm_map_pageable(kernel_map, (vm_offset_t)up,
+	    (vm_offset_t)up + USPACE, FALSE);
 
 	/*
 	 * p_stats and p_sigacts currently point at fields

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.40 1998/03/01 02:22:28 fvdl Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.41 1998/04/09 00:23:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -60,6 +60,7 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -119,6 +120,7 @@ fork1(p1, flags, retval, rnewprocp)
 	register uid_t uid;
 	struct proc *newproc;
 	int count;
+	vm_offset_t uaddr;
 	static int nextpid, pidchecked = 0;
 
 	/*
@@ -143,6 +145,27 @@ fork1(p1, flags, retval, rnewprocp)
 		(void)chgproccnt(uid, -1);
 		return (EAGAIN);
 	}
+
+	/*
+	 * Allocate virtual address space for the U-area now, while it
+	 * is still easy to abort the fork operation if we're out of
+	 * kernel virtual address space.  The actual U-area pages will
+	 * be allocated and wired in vm_fork().
+	 */
+#if defined(UVM)
+	uaddr = uvm_km_valloc(kernel_map, USPACE);
+#else
+	uaddr = kmem_alloc_pageable(kernel_map, USPACE);
+#endif
+	if (uaddr == 0) {
+		(void)chgproccnt(uid, -1);
+		return (ENOMEM);
+	}
+
+	/*
+	 * We are now committed to the fork.  From here on, we may
+	 * block on resources, but resource allocation may NOT fail.
+	 */
 
 	/* Allocate new proc. */
 	MALLOC(newproc, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
@@ -282,6 +305,7 @@ again:
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
+	p2->p_addr = (struct user *)uaddr;
 #if defined(UVM)
 	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
 #else
