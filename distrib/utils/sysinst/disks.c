@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.48 2003/01/10 20:00:28 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.49 2003/01/12 21:49:50 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,9 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #define FSTYPENAMES
+#define static
 #include <sys/disklabel.h>
+#undef static
 
 #include "defs.h"
 #include "md.h"
