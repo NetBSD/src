@@ -1,6 +1,8 @@
+/*	$NetBSD: vipw.c,v 1.3 1995/01/20 19:19:57 mycroft Exp $	*/
+
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,30 +34,53 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)vipw.c	5.16 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: vipw.c,v 1.2 1993/08/01 17:54:45 mycroft Exp $";
+static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <err.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-char *progname = "vipw";
+#include "pw_util.h"
+
 char *tempname;
 
-main()
+void	copyfile __P((int, int));
+void	usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	register int pfd, tfd;
+	int pfd, tfd;
 	struct stat begin, end;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "")) != EOF) {
+		switch (ch) {
+		case '?':
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0)
+		usage();
 
 	pw_init();
 	pfd = pw_lock();
@@ -70,7 +95,7 @@ main()
 		if (stat(tempname, &end))
 			pw_error(tempname, 1, 1);
 		if (begin.st_mtime == end.st_mtime) {
-			(void)fprintf(stderr, "vipw: no changes made\n");
+			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
 		}
 		if (pw_mkdb())
@@ -80,10 +105,11 @@ main()
 	exit(0);
 }
 
+void
 copyfile(from, to)
-	register int from, to;
+	int from, to;
 {
-	register int nr, nw, off;
+	int nr, nw, off;
 	char buf[8*1024];
 	
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
@@ -92,4 +118,12 @@ copyfile(from, to)
 				pw_error(tempname, 1, 1);
 	if (nr < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: vipw\n");
+	exit(1);
 }
