@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2001/10/31 01:15:57 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2001/10/31 03:59:42 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.73 2001/10/31 01:15:57 tv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.74 2001/10/31 03:59:42 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2001/10/31 01:15:57 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.74 2001/10/31 03:59:42 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -147,12 +147,11 @@ static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
 static char *		Check_Cwd_av __P((int, char **, int));
 static void		MainParseArgs __P((int, char **));
-char *			chdir_verify_path __P((char *, char *));
 static int		ReadMakefile __P((ClientData, ClientData));
 static void		usage __P((void));
 
-static char *curdir;			/* startup directory */
-static char *objdir;			/* where we chdir'ed to */
+static char curdir[MAXPATHLEN + 1];	/* startup directory */
+static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
 char *progname;				/* the program name */
 
 Boolean forceJobs = FALSE;
@@ -454,34 +453,42 @@ Main_ParseArgLine(line)
 	free(argv);
 }
 
-char *
-chdir_verify_path(path, obpath)
-	char *path;
-	char *obpath;
+Boolean
+Main_SetObjdir(path)
+	const char *path;
 {
 	struct stat sb;
+	char *p = NULL;
+	char buf[MAXPATHLEN + 1];
+	Boolean rc = TRUE;
 
+	/* expand variable substitutions */
 	if (strchr(path, '$') != 0) {
-		path = Var_Subst(NULL, path, VAR_GLOBAL, 0);
+		snprintf(buf, MAXPATHLEN, "%s", path);
+		path = p = Var_Subst(NULL, buf, VAR_GLOBAL, 0);
 	}
+
+	if (path[0] != '/') {
+		snprintf(buf, MAXPATHLEN, "%s/%s", curdir, path);
+		path = buf;
+	}
+
+	/* look for the directory and try to chdir there */
 	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 		if (chdir(path)) {
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
 				      path, strerror(errno));
-			return 0;
-		}
-		else {
-			if (path[0] != '/') {
-				(void) snprintf(obpath, MAXPATHLEN, "%s/%s",
-						curdir, path);
-				return obpath;
-			}
-			else
-				return path;
+		} else {
+			strncpy(objdir, path, MAXPATHLEN);
+			Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
+			setenv("PWD", objdir, 1);
+			rc = TRUE;
 		}
 	}
 
-	return 0;
+	if (p)
+		free(p);
+	return rc;
 }
 
 
@@ -510,10 +517,8 @@ main(argc, argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
-	char *p1, *path, *pathp, *pwd;
-	char mdpath[MAXPATHLEN + 1];
-	char obpath[MAXPATHLEN + 1];
-	char cdpath[MAXPATHLEN + 1];
+	char *p1, *path, *pwd;
+	char mdpath[MAXPATHLEN];
     	char *machine = getenv("MACHINE");
 	char *machine_arch = getenv("MACHINE_ARCH");
 	char *syspath = getenv("MAKESYSPATH");
@@ -544,7 +549,6 @@ main(argc, argv)
 	 * All this code is so that we know where we are when we start up
 	 * on a different machine with pmake.
 	 */
-	curdir = cdpath;
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 		exit(2);
@@ -569,7 +573,7 @@ main(argc, argv)
 	    getenv("MAKEOBJDIRPREFIX") == NULL) {
 	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
 		sa.st_dev == sb.st_dev)
-		(void) strcpy(curdir, pwd);
+		(void) strncpy(curdir, pwd, MAXPATHLEN);
 	}
 
 	/*
@@ -621,43 +625,28 @@ main(argc, argv)
 	Var_Set(".newline", "\n", VAR_GLOBAL, 0); /* handy for :@ loops */
 
 	/*
-	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
-	 * exists, change into it and build there.  (If a .${MACHINE} suffix
-	 * exists, use that directory instead).
-	 * Otherwise check MAKEOBJDIRPREFIX`cwd` (or by default,
-	 * _PATH_OBJDIRPREFIX`cwd`) and build there if it exists.
-	 * If all fails, use the current directory to build.
+	 * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that,
+	 * MAKEOBJDIR is set in the environment, try only that value
+	 * and fall back to .CURDIR if it does not exist.
 	 *
-	 * Once things are initted,
-	 * have to add the original directory to the search path,
-	 * and modify the paths for the Makefiles apropriately.  The
-	 * current directory is also placed as a variable for make scripts.
+	 * Otherwise, try _PATH_OBJDIR.MACHINE, _PATH_OBJDIR, and
+	 * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
+	 * of these paths exist, just use .CURDIR.
 	 */
-	if (!(pathp = getenv("MAKEOBJDIRPREFIX"))) {
-		if (!(path = getenv("MAKEOBJDIR"))) {
-			path = _PATH_OBJDIR;
-			pathp = _PATH_OBJDIRPREFIX;
-			(void) snprintf(mdpath, MAXPATHLEN, "%s.%s",
-					path, machine);
-			if (!(objdir = chdir_verify_path(mdpath, obpath)))
-				if (!(objdir=chdir_verify_path(path, obpath))) {
-					(void) snprintf(mdpath, MAXPATHLEN,
-							"%s%s", pathp, curdir);
-					if (!(objdir=chdir_verify_path(mdpath,
-								       obpath)))
-						objdir = curdir;
-				}
+	(void) Main_SetObjdir(curdir);
+	if ((path = getenv("MAKEOBJDIRPREFIX")) != NULL) {
+		(void) snprintf(mdpath, MAXPATHLEN, "%s%s", path, curdir);
+		(void) Main_SetObjdir(mdpath);
+	} else if ((path = getenv("MAKEOBJDIR")) != NULL) {
+		(void) Main_SetObjdir(path);
+	} else {
+		(void) snprintf(mdpath, MAXPATHLEN, "%s.%s", _PATH_OBJDIR, machine);
+		if (!Main_SetObjdir(mdpath) && !Main_SetObjdir(_PATH_OBJDIR)) {
+			(void) snprintf(mdpath, MAXPATHLEN, "%s%s", 
+					_PATH_OBJDIRPREFIX, curdir);
+			(void) Main_SetObjdir(mdpath);
 		}
-		else if (!(objdir = chdir_verify_path(path, obpath)))
-			objdir = curdir;
 	}
-	else {
-		(void) snprintf(mdpath, MAXPATHLEN, "%s%s", pathp, curdir);
-		if (!(objdir = chdir_verify_path(mdpath, obpath)))
-			objdir = curdir;
-	}
-
-	setenv("PWD", objdir, 1);
 
 	create = Lst_Init(FALSE);
 	makefiles = Lst_Init(FALSE);
@@ -693,13 +682,11 @@ main(argc, argv)
 
 	/*
 	 * Initialize directory structures so -I flags can be processed
-	 * correctly, if we have a different objdir, then let the directory
-	 * know our curdir.
+	 * correctly.
 	 */
-	Dir_Init(curdir != objdir ? curdir : NULL);
+	Dir_Init(curdir);
 	Parse_Init();		/* Need to initialize the paths of #include
 				 * directories */
-	Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
 
 	/*
 	 * Initialize various variables.
@@ -988,7 +975,7 @@ ReadMakefile(p, q)
 		setMAKEFILE = strcmp(fname, ".depend");
 
 		/* if we've chdir'd, rebuild the path name */
-		if (curdir != objdir && *fname != '/') {
+		if (strcmp(curdir, objdir) && *fname != '/') {
 			size_t plen = strlen(curdir) + strlen(fname) + 2;
 			if (len < plen)
 				path = erealloc(path, len = 2 * plen);

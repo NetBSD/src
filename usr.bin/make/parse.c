@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.74 2001/10/31 01:15:57 tv Exp $	*/
+/*	$NetBSD: parse.c,v 1.75 2001/10/31 03:59:42 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.74 2001/10/31 01:15:57 tv Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.75 2001/10/31 03:59:42 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.74 2001/10/31 01:15:57 tv Exp $");
+__RCSID("$NetBSD: parse.c,v 1.75 2001/10/31 03:59:42 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -173,8 +173,9 @@ typedef enum {
     NoExport,	    /* .NOEXPORT */
     NoPath,	    /* .NOPATH */
     Not,	    /* Not special */
-    NotParallel,    /* .NOTPARALELL */
+    NotParallel,    /* .NOTPARALLEL */
     Null,   	    /* .NULL */
+    ExObjdir,	    /* .OBJDIR */
     Order,  	    /* .ORDER */
     Parallel,	    /* .PARALLEL */
     ExPath,	    /* .PATH */
@@ -232,6 +233,7 @@ static struct {
 { ".NOTPARALLEL", NotParallel,	0 },
 { ".NO_PARALLEL", NotParallel,	0 },
 { ".NULL",  	  Null,	    	0 },
+{ ".OBJDIR",	  ExObjdir,	0 },
 { ".OPTIONAL",	  Attribute,   	OP_OPTIONAL },
 { ".ORDER", 	  Order,    	0 },
 { ".PARALLEL",	  Parallel,	0 },
@@ -1188,7 +1190,7 @@ ParseDoDependency (line)
      */
     if ((specType == Suffixes) || (specType == ExPath) ||
 	(specType == Includes) || (specType == Libs) ||
-	(specType == Null))
+	(specType == Null) || (specType == ExObjdir))
     {
 	while (*line) {
 	    /*
@@ -1214,6 +1216,9 @@ ParseDoDependency (line)
 	     *
 	     * If it was .NULL, the source is the suffix to use when a file
 	     * has no valid suffix.
+	     *
+	     * If it was .OBJDIR, the source is a new definition for .OBJDIR,
+	     * and will cause make to do a new chdir to that path.
 	     */
 	    char  savec;
 	    while (*cp && !isspace ((unsigned char)*cp)) {
@@ -1236,6 +1241,9 @@ ParseDoDependency (line)
 		    break;
 		case Null:
 		    Suff_SetNull (line);
+		    break;
+		case ExObjdir:
+		    Main_SetObjdir(line);
 		    break;
 		default:
 		    break;
