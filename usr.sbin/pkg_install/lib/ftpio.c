@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.5 1998/02/04 15:29:19 christos Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.5 1998/02/04 15:29:19 christos Exp $");
 #endif
 /*
  * ----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $");
  * `state' of FTP_t
  *
  * from FreeBSD Id: ftpio.c,v 1.25 1997/02/22 15:06:50 peter Exp
- * $NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $
+ * $NetBSD: ftpio.c,v 1.5 1998/02/04 15:29:19 christos Exp $
  *
  */
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <tzfile.h>
 
 #define SUCCESS		 0
 #define FAILURE		-1
@@ -245,7 +246,7 @@ ftpGetModtime(FILE *fp, char *name)
     t0 = localtime (&t0)->tm_gmtoff;
     sscanf(cp, "%04d%02d%02d%02d%02d%02d", &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &t.tm_sec);
     t.tm_mon--;
-    t.tm_year -= 1900;
+    t.tm_year -= TM_YEAR_BASE;
     t.tm_isdst=-1;
     t.tm_gmtoff = 0;
     t0 += mktime (&t);
