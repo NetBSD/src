@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.5 2001/05/01 16:46:11 aymeric Exp $	*/
+/*	$NetBSD: cl_funcs.c,v 1.6 2001/05/02 21:15:19 windsor Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -458,7 +458,7 @@ cl_move(sp, lno, cno)
 	/* See the comment in cl_cursor. */
 	if (move(RLNO(sp, lno), cno) == ERR) {
 		msgq(sp, M_ERR,
-		    "Error: move: l(%u) c(%u) o(%u)", lno, cno, sp->woff);
+		    "Error: move: l(%lu) c(%lu) o(%lu)", (u_long)lno, (u_long)cno, (u_long)sp->woff);
 		return (1);
 	}
 	return (0);
