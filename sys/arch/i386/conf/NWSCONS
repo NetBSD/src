@@ -1,6 +1,6 @@
-#	$NetBSD: NWSCONS,v 1.16 1998/11/20 11:50:29 tron Exp $
+#	$NetBSD: NWSCONS,v 1.17 1998/12/17 00:07:08 tron Exp $
 #
-#	GENERIC -- everything that's currently supported
+#	like GENERIC, with new console drivers
 #
 
 include "arch/i386/conf/std.i386"
@@ -265,6 +265,8 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #com*	at boca? slave ?
+#tcom0	at isa? port 0x100 irq 7	# TC-800 8-port serial cards
+#com*	at tcom? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
@@ -301,6 +303,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # ISA Plug-and-Play SCSI controllers
+aha*	at isapnp? 			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
@@ -343,7 +346,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # IDE and Related Devices
-# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
+# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx, ...).
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
@@ -359,18 +362,27 @@ wdc*	at pcmcia? function ?
 wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isa? port 0x170 irq 15
 
-# IDE drives
-wd*	at wdc? channel ? drive ?
-wd*	at pciide? channel ? drive ?
+# IDE drives.
+# Flags are used only with controlers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The first 4 bytes of the flags define the PIO mode to use, the
+# second DMA mode and the third UltraDMA mode. For each group of 4 bytes,
+# the 3 lower define the mode to use, and the last one must be 1 for the
+# setting to be used. For DMA and UDMA, 0xf means 'disable'.
+# 0x0fac means 'use PIO mode 4 DMA mode 2, disable UltraDMA'.
+# 0x0000 means "use whatever the drive claims to support.
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
 atapibus* at wdc? channel ?
 atapibus* at pciide? channel ?
 
 # ATAPI devices
-cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
-sd*	at atapibus? drive ?		# ATAPI disk drives
-uk*	at atapibus? drive ?		# ATAPI unknown
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
 # Miscellaneous mass storage devices
@@ -469,29 +481,30 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ?
+uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums*	at uhub? port ?
+ums*	at uhub? port ? configuration ? interface ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ?
+ukbd*	at uhub? port ? configuration ? interface ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ?
+uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printer
-ulpt*	at uhub? port ?
+ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
-#ugen*	at uhub? port ?
+ugen*	at uhub? port ? configuration ? interface ?
 
 # Audio Devices
 
 # PCI audio devices
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -513,9 +526,10 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at ess?
 opl*	at sb?
+opl*	at sv?
 
 # USB Audio devices
-#uaudio*	at uhub? port ?
+#uaudio*	at uhub? port ? configuration ? interface ?
 
 # Audio support
 audio*	at aria?
@@ -526,6 +540,7 @@ audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
 audio*	at sp?
+audio*	at sv?
 #audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
