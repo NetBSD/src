@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.17 1999/02/15 18:40:01 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.18 1999/02/21 00:52:05 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -33,7 +33,9 @@
  *
  */
 
+#ifndef WDCDEBUG
 #define WDCDEBUG
+#endif /* WDCDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
