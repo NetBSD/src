@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.320 2002/05/04 19:43:58 jdolecek Exp $
+# $NetBSD: mi,v 1.321 2002/05/14 23:26:24 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2392,6 +2392,7 @@
 ./var/cron/tabs			base-cron-root
 ./var/db			base-sys-root
 ./var/db/ns			base-sys-root
+./var/empty			base-sys-root
 ./var/games			base-games-root
 ./var/games/hackdir		base-games-root
 ./var/games/hackdir/save	base-games-root
