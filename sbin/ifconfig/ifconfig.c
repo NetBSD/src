@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.25 1997/03/18 00:37:34 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.26 1997/03/18 01:50:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.25 1997/03/18 00:37:34 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.26 1997/03/18 01:50:01 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -623,26 +623,34 @@ domediaopt(val, clear)
 	int clear;
 {
 	struct ifmediareq ifmr;
-	int first_type, options;
+	int *mwords, options;
 
 	memset(&ifmr, 0, sizeof(ifmr));
 	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
-	ifmr.ifm_count = 1;
-	ifmr.ifm_ulist = &first_type;
-	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
-		/*
-		 * If we get E2BIG, the kernel is telling us
-		 * that there are more, so we can ignore it.
-		 */
-		if (errno != E2BIG)
-			err(1, "SIOCGIFMEDIA");
-	}
+	/*
+	 * We must go through the motions of reading all
+	 * supported media because we need to know both
+	 * the current media type and the top-level type.
+	 */
+
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
+		err(1, "SIOCGIFMEDIA");
 
 	if (ifmr.ifm_count == 0)
 		errx(1, "%s: no media types?", name);
 
-	options = get_media_options(IFM_TYPE(first_type), val);
+	mwords = (int *)malloc(ifmr.ifm_count * sizeof(int));
+	if (mwords == NULL)
+		err(1, "malloc");
+
+	ifmr.ifm_ulist = mwords;
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
+		err(1, "SIOCGIFMEDIA");
+
+	options = get_media_options(IFM_TYPE(mwords[0]), val);
+
+	free(mwords);
 
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_media = ifmr.ifm_current;
