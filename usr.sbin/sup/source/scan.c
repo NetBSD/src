@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.8 1997/06/17 18:56:33 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.9 1997/10/19 19:53:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -601,7 +601,7 @@ int always;
 	}
 	if (lstat(name,&statbuf) < 0)
 		return;
-	if ((statbuf.st_mode&S_IFMT) == S_IFLNK) {
+	if (S_ISLNK(statbuf.st_mode)) {
 		if (Tsearch (symT,fullname)) {
 			listname (fullname,&statbuf);
 			return;
@@ -613,7 +613,7 @@ int always;
 		if (updir) link++;
 		if (stat(name,&statbuf) < 0) return;
 	}
-	if ((statbuf.st_mode&S_IFMT) == S_IFDIR) {
+	if (S_ISDIR(statbuf.st_mode)) {
 		if (access(name,R_OK|X_OK) < 0) return;
 		if (chdir(name) < 0) return;
 		listname (fullname,&statbuf);

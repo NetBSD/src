@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.c,v 1.3 1997/10/17 14:01:55 lukem Exp $	*/
+/*	$NetBSD: videomode.c,v 1.4 1997/10/19 19:55:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christian E. Hopps
@@ -100,7 +100,7 @@ get_grf()
 	/* find out on which ite/grf we are */
 	if (fstat(0, &stb) == -1)
 		err(1, "fstat 0");
-	if (((stb.st_mode & S_IFMT) != S_IFCHR) || !isatty(0))
+	if (!S_ISCHR(stb.st_mode) || !isatty(0))
 		errx(1, "stdin not a tty");
 	if (major(stb.st_rdev) != 13)
 		errx(1, "stdin not an ite device");

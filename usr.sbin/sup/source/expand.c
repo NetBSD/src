@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.8 1997/09/22 13:57:36 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.9 1997/10/19 19:53:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -165,7 +165,7 @@ static void glob(as)
 		return;
 	}
 	/* this should not be an lstat */
-	if (stat(fixit(path), &stb) >= 0 && (stb.st_mode&S_IFMT) == S_IFDIR)
+	if (stat(fixit(path), &stb) >= 0 && S_ISDIR(stb.st_mode))
 		matchdir(cs);
 endit:
 	pathp = spathp;

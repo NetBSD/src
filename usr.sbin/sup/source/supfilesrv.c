@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.15 1997/06/17 21:38:26 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.16 1997/10/19 19:54:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1088,7 +1088,7 @@ void *v;
 		return (SCMOK);
 	}
 	cdprefix (tl->TLprefix);
-	if ((t->Tmode&S_IFMT) == S_IFLNK)
+	if (S_ISLNK(t->Tmode))
 		x = lstat(name,&sbuf);
 	else
 		x = stat(name,&sbuf);
@@ -1183,13 +1183,13 @@ void *v;
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
 		return (SCMOK);
-	if ((t->Tmode&S_IFMT) == S_IFDIR) /* send no directories this pass */
+	if (S_ISDIR(t->Tmode)) /* send no directories this pass */
 		return (SCMOK);
 	x = msgsend ();
 	if (x != SCMOK)  goaway ("Error reading receive file request from client");
 	upgradeT = t;			/* upgrade file pointer */
 	fd = -1;			/* no open file */
-	if ((t->Tmode&S_IFMT) == S_IFREG) {
+	if (S_ISREG(t->Tmode)) {
 		if (!listonly && (t->Tflags&FUPDATE) == 0) {
 #ifdef RCS
                         if (dorcs) {
@@ -1305,7 +1305,7 @@ void *v;
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
 		return (SCMOK);
-	if ((t->Tmode&S_IFMT) != S_IFDIR) /* send only directories this pass */
+	if (!S_ISDIR(t->Tmode)) /* send only directories this pass */
 		return (SCMOK);
 	x = msgsend ();
 	if (x != SCMOK)  goaway ("Error reading receive file request from client");
@@ -1325,7 +1325,7 @@ sendfile(t, ap)
 	register int x, fd;
 
 	fd = va_arg(ap,int);
-	if ((t->Tmode&S_IFMT) != S_IFREG || listonly || (t->Tflags&FUPDATE))
+	if (!S_ISREG(t->Tmode) || listonly || (t->Tflags&FUPDATE))
 		return (SCMOK);
 	x = writefile (fd);
 	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
@@ -1803,7 +1803,7 @@ struct stat *sinfo;
 	/*
 	 * Do not trust BSD style symlinks either.
 	 */
-	if ((sb.st_mode & S_IFMT) == S_IFLNK)
+	if (S_ISLNK(sb.st_mode))
 		return(0);
 
 #ifdef	VIOCIGETCELL
@@ -1877,7 +1877,7 @@ struct stat *sb1, *sb2;
     return (sb1->st_ino == sb2->st_ino &&	/* Still the same file */
 	    sb1->st_dev == sb2->st_dev &&	/* On the same device */
 	    sb1->st_mode == sb2->st_mode &&     /* Perms (and type) same */
-	    (sb1->st_mode & S_IFMT) == S_IFREG && /* Only allow reg files */
+	    S_ISREG(sb1->st_mode) &&		/* Only allow reg files */
 	    (sb1->st_mode & 077) == 0 &&	/* Owner only perms */
 	    sb1->st_nlink == sb2->st_nlink &&	/* # hard links same... */
 	    sb1->st_nlink == 1 &&		/* and only 1 */
