@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.6 2002/08/22 01:13:57 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.7 2002/08/24 02:16:33 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -587,21 +587,21 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
