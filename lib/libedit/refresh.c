@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.11 1999/11/13 11:32:12 lukem Exp $	*/
+/*	$NetBSD: refresh.c,v 1.12 2000/01/20 22:56:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.11 1999/11/13 11:32:12 lukem Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.12 2000/01/20 22:56:21 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -109,9 +109,12 @@ re_addc(el, c)
 	return;
     }
     if (c == '\n') {			/* expand the newline	 */
+	int oldv = el->el_refresh.r_cursor.v;
 	re_putc(el, '\0');		/* assure end of line	 */
-	el->el_refresh.r_cursor.h = 0;	/* reset cursor pos	 */
-	el->el_refresh.r_cursor.v++;
+	if (oldv == el->el_refresh.r_cursor.v) {
+	    el->el_refresh.r_cursor.h = 0;	/* reset cursor pos	 */
+	    el->el_refresh.r_cursor.v++;
+	}
 	return;
     }
     if (c == '\t') {		/* expand the tab 	 */
@@ -652,8 +655,8 @@ re_update_line(el, old, new, i)
      * if we have a net insert on the first difference, AND inserting the net
      * amount ((nsb-nfd) - (osb-ofd)) won't push the last useful character
      * (which is ne if nls != ne, otherwise is nse) off the edge of the screen
-     * (el->el_term.t_size.h) else we do the deletes first so that we keep everything we need
-     * to.
+     * (el->el_term.t_size.h) else we do the deletes first so that we keep
+     * everything we need to.
      */
 
     /*
@@ -961,8 +964,16 @@ re_fastputc(el, c)
 	el->el_cursor.h = 0;
 	el->el_cursor.v++;
 	el->el_refresh.r_oldcv++;
-	term__putc('\r');
-	term__putc('\n');
+	if (EL_HAS_AUTO_MARGINS) {
+	    if (EL_HAS_MAGIC_MARGINS) {
+		term__putc(' ');
+		term__putc('\b');
+	    }
+	}
+	else {
+	    term__putc('\r');
+	    term__putc('\n');
+	}
     }
 } /* end re_fastputc */
 
