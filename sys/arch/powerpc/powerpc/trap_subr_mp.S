@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.3 2001/06/15 08:09:33 matt Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.4 2001/06/23 02:36:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -226,20 +226,12 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
  * (Code essentially from the 603e User Manual, Chapter 5, but
  * corrected a lot.)
  */
-#define	DMISS	976
-#define	DCMP	977
-#define	HASH1	978
-#define	HASH2	979
-#define	IMISS	980
-#define	ICMP	981
-#define	RPA	982
-
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
-	mfspr	2,HASH1			/* get first pointer */
+	mfspr	2,SPR_HASH1		/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
-	mfspr	3,ICMP			/* get first compare value */
+	mfspr	3,SPR_ICMP		/* get first compare value */
 	addi	2,2,-8			/* predec pointer */
 1:
 	mtctr	1			/* load counter */
@@ -252,11 +244,11 @@ _C_LABEL(tlbimiss):
 	andi.	3,1,8			/* check G-bit */
 	bne	4f			/* if guarded, take ISI */
 	mtctr	0			/* restore counter */
-	mfspr	0,IMISS			/* get the miss address for the tlbli */
+	mfspr	0,SPR_IMISS		/* get the miss address for the tlbli */
 	mfsrr1	3			/* get the saved cr0 bits */
 	mtcrf	0x80,3			/* and restore */
 	ori	1,1,0x100		/* set the reference bit */
-	mtspr	RPA,1			/* set the pte */
+	mtspr	SPR_RPA,1		/* set the pte */
 	srwi	1,1,8			/* get byte 7 of pte */
 	tlbli	0			/* load the itlb */
 	stb	1,6(2)			/* update page table */
@@ -265,7 +257,7 @@ _C_LABEL(tlbimiss):
 3:	/* not found in pteg */
 	andi.	1,3,0x40		/* have we already done second hash? */
 	bne	5f
-	mfspr	2,HASH2			/* get the second pointer */
+	mfspr	2,SPR_HASH2		/* get the second pointer */
 	ori	3,3,0x40		/* change the compare value */
 	li	1,8
 	addi	2,2,-8			/* predec pointer */
@@ -292,10 +284,10 @@ _C_LABEL(tlbimsize) = .-_C_LABEL(tlbimiss)
 
 	.globl	_C_LABEL(tlbdlmiss),_C_LABEL(tlbdlmsize)
 _C_LABEL(tlbdlmiss):
-	mfspr	2,HASH1			/* get first pointer */
+	mfspr	2,SPR_HASH1		/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
-	mfspr	3,DCMP			/* get first compare value */
+	mfspr	3,SPR_DCMP		/* get first compare value */
 	addi	2,2,-8			/* predec pointer */
 1:
 	mtctr	1			/* load counter */
@@ -306,11 +298,11 @@ _C_LABEL(tlbdlmiss):
 	bne	3f			/* not found */
 	lwz	1,4(2)			/* load tlb entry lower word */
 	mtctr	0			/* restore counter */
-	mfspr	0,DMISS			/* get the miss address for the tlbld */
+	mfspr	0,SPR_DMISS		/* get the miss address for the tlbld */
 	mfsrr1	3			/* get the saved cr0 bits */
 	mtcrf	0x80,3			/* and restore */
 	ori	1,1,0x100		/* set the reference bit */
-	mtspr	RPA,1			/* set the pte */
+	mtspr	SPR_RPA,1		/* set the pte */
 	srwi	1,1,8			/* get byte 7 of pte */
 	tlbld	0			/* load the dtlb */
 	stb	1,6(2)			/* update page table */
@@ -319,7 +311,7 @@ _C_LABEL(tlbdlmiss):
 3:	/* not found in pteg */
 	andi.	1,3,0x40		/* have we already done second hash? */
 	bne	5f
-	mfspr	2,HASH2			/* get the second pointer */
+	mfspr	2,SPR_HASH2		/* get the second pointer */
 	ori	3,3,0x40		/* change the compare value */
 	li	1,8
 	addi	2,2,-8			/* predec pointer */
@@ -331,7 +323,7 @@ _C_LABEL(tlbdlmiss):
 	andi.	2,3,0xffff		/* clean upper srr1 */
 	mtsrr1	2
 	mtdsisr	1			/* load the dsisr */
-	mfspr	1,DMISS			/* get the miss address */
+	mfspr	1,SPR_DMISS		/* get the miss address */
 	mtdar	1			/* put in dar */
 	mfmsr	0
 	xoris	0,0,0x20000@h		/* flip the msr<tgpr> bit */
@@ -343,10 +335,10 @@ _C_LABEL(tlbdlmsize) = .-_C_LABEL(tlbdlmiss)
 
 	.globl	_C_LABEL(tlbdsmiss),_C_LABEL(tlbdsmsize)
 _C_LABEL(tlbdsmiss):
-	mfspr	2,HASH1			/* get first pointer */
+	mfspr	2,SPR_HASH1		/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
-	mfspr	3,DCMP			/* get first compare value */
+	mfspr	3,SPR_DCMP		/* get first compare value */
 	addi	2,2,-8			/* predec pointer */
 1:
 	mtctr	1			/* load counter */
@@ -360,17 +352,17 @@ _C_LABEL(tlbdsmiss):
 	beq	4f
 5:
 	mtctr	0			/* restore counter */
-	mfspr	0,DMISS			/* get the miss address for the tlbld */
+	mfspr	0,SPR_DMISS		/* get the miss address for the tlbld */
 	mfsrr1	3			/* get the saved cr0 bits */
 	mtcrf	0x80,3			/* and restore */
-	mtspr	RPA,1			/* set the pte */
+	mtspr	SPR_RPA,1		/* set the pte */
 	tlbld	0			/* load the dtlb */
 	rfi
 
 3:	/* not found in pteg */
 	andi.	1,3,0x40		/* have we already done second hash? */
 	bne	5f
-	mfspr	2,HASH2			/* get the second pointer */
+	mfspr	2,SPR_HASH2		/* get the second pointer */
 	ori	3,3,0x40		/* change the compare value */
 	li	1,8
 	addi	2,2,-8			/* predec pointer */
@@ -386,7 +378,7 @@ _C_LABEL(tlbdsmiss):
 					   on store */
 	b	1f
 7:	/* found, PP=1x */
-	mfspr	3,DMISS			/* get the miss address */
+	mfspr	3,SPR_DMISS		/* get the miss address */
 	mfsrin	1,3			/* get the segment register */
 	mfsrr1	3
 	rlwinm	3,3,18,31,31		/* get PR-bit */
@@ -406,7 +398,7 @@ _C_LABEL(tlbdsmiss):
 	andi.	2,3,0xffff		/* clean upper srr1 */
 	mtsrr1	2
 	mtdsisr	1			/* load the dsisr */
-	mfspr	1,DMISS			/* get the miss address */
+	mfspr	1,SPR_DMISS		/* get the miss address */
 	mtdar	1			/* put in dar */
 	mfmsr	0
 	xoris	0,0,0x20000@h		/* flip the msr<tgpr> bit */
