@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.1 1999/05/11 21:02:24 augustss Exp $
+# $NetBSD: usb_hid_usages,v 1.2 1999/06/28 05:53:48 augustss Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -1070,3 +1070,8 @@
 144	Camera Control
 
 145	Arcade Device
+
+# Some Micro$oft non-standard extensions
+0xff00	Microsoft
+	0xe9	Base Up
+	0xea	Base Down
