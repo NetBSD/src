@@ -1,1 +1,0 @@
-tset -Q \?$TERM

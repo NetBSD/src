@@ -1,8 +1,0 @@
-#	$NetBSD: files.mmeye,v 1.1 1999/09/13 10:30:50 itojun Exp $
-#
-# config file for mmeye
-
-include "arch/mmeye/conf/files.shbus"
-
-file	arch/mmeye/mmeye/conf.c
-file	arch/mmeye/mmeye/machdep.c
