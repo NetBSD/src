@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.34 2004/09/09 22:57:19 yamt Exp $	*/
+/*	$NetBSD: lfs.c,v 1.35 2004/09/11 08:33:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.34 2004/09/09 22:57:19 yamt Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.35 2004/09/11 08:33:53 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,38 +65,6 @@ extern int Nflag; /* Don't write anything */
 /* XXX ondisk32 */
 int32_t **ifibp = NULL; /* Ifile single indirect blocks */
 int ifibc;        /* Number of indirect blocks */
-
-/*
- * This table is indexed by the log base 2 of the block size.
- * It returns the maximum file size allowed in a file system
- * with the specified block size.  For block sizes smaller than
- * 8K, the size is limited by the maximum number of blocks that
- * can be reached by triply indirect blocks:
- *	NDADDR + INOPB(bsize) + INOPB(bsize)^2 + INOPB(bsize)^3
- * For block size of 8K or larger, the file size is limited by the
- * number of blocks that can be represented in the file system.  Since
- * we use negative block numbers to represent indirect blocks, we can
- * have a maximum of 2^31 blocks.
- */
-
-const uint64_t maxtable[] = {
-	/*    1 */ -1,
-	/*    2 */ -1,
-	/*    4 */ -1,
-	/*    8 */ -1,
-	/*   16 */ -1,
-	/*   32 */ -1,
-	/*   64 */ -1,
-	/*  128 */ -1,
-	/*  256 */ -1,
-	/*  512 */ NDADDR + 128 + 128 * 128 + 128 * 128 * 128,
-	/* 1024 */ NDADDR + 256 + 256 * 256 + 256 * 256 * 256,
-	/* 2048 */ NDADDR + 512 + 512 * 512 + 512 * 512 * 512,
-	/* 4096 */ NDADDR + 1024 + 1024 * 1024 + 1024 * 1024 * 1024,
-	/* 8192 */ UINT64_C(1) << 31,
-	/* 16 K */ UINT64_C(1) << 31,
-	/* 32 K */ UINT64_C(1) << 31,
-};
 
 static struct lfs lfs_default =  {
 	{ /* lfs_dlfs */
@@ -194,6 +162,22 @@ struct direct lfs_lf_dir[] = {
 static daddr_t make_dinode(ino_t, struct ufs1_dinode *, int, daddr_t, struct lfs *);
 static void make_dir( void *, struct direct *, int);
 static void put(int, off_t, void *, size_t);
+static uint64_t maxfilesize(int);
+
+/*
+ * calculate the maximum file size allowed with the specified block shift.
+ */
+static uint64_t
+maxfilesize(int bshift)
+{
+	uint64_t nptr; /* number of block pointers per block */
+	uint64_t maxblock;
+
+	nptr = (1 << bshift) / sizeof(uint32_t);
+	maxblock = NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
+
+	return maxblock << bshift;
+}
 
 int
 make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
@@ -372,7 +356,7 @@ make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
 	lfsp->lfs_nseg = lfsp->lfs_dsize / segtod(lfsp, 1);
 
 	lfsp->lfs_nclean = lfsp->lfs_nseg - 1;
-	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
+	lfsp->lfs_maxfilesize = maxfilesize(lfsp->lfs_bshift);
 	if (minfreeseg == 0)
 		lfsp->lfs_minfreeseg = lfsp->lfs_nseg / DFL_MIN_FREE_SEGS;
 	else
