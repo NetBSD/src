@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.12 1999/09/05 12:30:56 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.13 1999/09/07 08:16:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1611,7 +1611,7 @@ ntfs_readntvattr_plain(
 			} else {
 				tocopy = min(left, ntfs_cntob(ccl) - off);
 				ddprintf(("ntfs_readntvattr_plain: "
-					"sparce: ccn: 0x%x ccl: %d, off: %d, " \
+					"hole: ccn: 0x%x ccl: %d, off: %d, " \
 					" len: %d, left: %d\n", 
 					(u_int32_t) ccn, (u_int32_t) ccl, 
 					(u_int32_t) off, (u_int32_t) tocopy, 
