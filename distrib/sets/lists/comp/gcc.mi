@@ -1,4 +1,4 @@
-#	$NetBSD: gcc.mi,v 1.7 2004/01/11 10:13:42 lukem Exp $
+#	$NetBSD: gcc.mi,v 1.8 2004/01/13 06:27:16 lukem Exp $
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/unprotoize				comp-c-bin
@@ -10,7 +10,6 @@
 ./usr/include/g++/algobase.h			comp-cxx-include	obsolete
 ./usr/include/g++/algorithm			comp-cxx-include
 ./usr/include/g++/alloc.h			comp-cxx-include	obsolete
-./usr/include/g++/backward			comp-cxx-include
 ./usr/include/g++/backward/algo.h		comp-cxx-include
 ./usr/include/g++/backward/algobase.h		comp-cxx-include
 ./usr/include/g++/backward/alloc.h		comp-cxx-include
@@ -47,7 +46,6 @@
 ./usr/include/g++/backward/tempbuf.h		comp-cxx-include
 ./usr/include/g++/backward/tree.h		comp-cxx-include
 ./usr/include/g++/backward/vector.h		comp-cxx-include
-./usr/include/g++/bits				comp-cxx-include
 ./usr/include/g++/bits/atomicity.h		comp-cxx-include
 ./usr/include/g++/bits/basic_file.h		comp-cxx-include
 ./usr/include/g++/bits/basic_ios.h		comp-cxx-include
@@ -162,7 +160,6 @@
 ./usr/include/g++/editbuf.h			comp-cxx-include	obsolete
 ./usr/include/g++/exception			comp-cxx-include
 ./usr/include/g++/exception_defines.h		comp-cxx-include
-./usr/include/g++/ext				comp-cxx-include
 ./usr/include/g++/ext/algorithm			comp-cxx-include
 ./usr/include/g++/ext/enc_filebuf.h		comp-cxx-include
 ./usr/include/g++/ext/functional		comp-cxx-include
@@ -247,7 +244,6 @@
 ./usr/include/g++/sstream			comp-cxx-include
 ./usr/include/g++/stack				comp-cxx-include
 ./usr/include/g++/stack.h			comp-cxx-include	obsolete
-./usr/include/g++/std				comp-cxx-include
 ./usr/include/g++/std/bastring.cc		comp-cxx-include	obsolete
 ./usr/include/g++/std/bastring.h		comp-cxx-include	obsolete
 ./usr/include/g++/std/complext.cc		comp-cxx-include	obsolete
