@@ -100,7 +100,7 @@ path(file)
 	const char *file;
 {
 	register char *cp;
-#define	CDIR "../../compile/"
+#define	CDIR "../compile/"
 
 	if (file == NULL) {
 		cp = emalloc(sizeof(CDIR) + strlen(confdirbase));

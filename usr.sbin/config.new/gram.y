@@ -385,8 +385,8 @@ setmachine(mch)
 	char buf[MAXPATHLEN];
 
 	machine = mch;
-	(void)sprintf(buf, "files.%s", mch);
+	(void)sprintf(buf, "files.%s.newconf", mch);
 	if (include(buf, ENDFILE) ||
-	    include("../../conf/files.newconf", ENDFILE))
+	    include("../../../conf/files.newconf", ENDFILE))
 		exit(1);
 }
