@@ -26,26 +26,18 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-/* static char sccsid[] = "@(#)buf.c	5.5 (Talke Studio) 3/28/93"; */
-static char rcsid[] = "$Id: buf.c,v 1.10 1993/11/23 04:41:48 alm Exp $";
+static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #endif /* not lint */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/file.h>
-#include <unistd.h>
 
 #include "ed.h"
 
-extern char errmsg[];
 
 FILE *sfp;				/* scratch file pointer */
-char *sfbuf = NULL;			/* scratch file input buffer */
-int sfbufsz = 0;			/* scratch file input buffer size */
 off_t sfseek;				/* scratch file position */
 int seek_write;				/* seek before writing */
-line_t line0;				/* initial node of line queue */
+line_t buffer_head;			/* incore buffer */
 
 /* get_sbuf_line: get a line of text from the scratch file; return pointer
    to the text */
@@ -53,9 +45,12 @@ char *
 get_sbuf_line(lp)
 	line_t *lp;
 {
+	static char *sfbuf = NULL;	/* buffer */
+	static int sfbufsz = 0;		/* buffer size */
+
 	int len, ct;
 
-	if (lp == &line0)
+	if (lp == &buffer_head)
 		return NULL;
 	seek_write = 1;				/* force seek on write */
 	/* out of position */
@@ -68,7 +63,7 @@ get_sbuf_line(lp)
 		}
 	}
 	len = lp->len;
-	CKBUF(sfbuf, sfbufsz, len + 1, NULL);
+	REALLOC(sfbuf, sfbufsz, len + 1, NULL);
 	if ((ct = fread(sfbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot read temp file");
@@ -79,9 +74,6 @@ get_sbuf_line(lp)
 	return sfbuf;
 }
 
-
-extern long current_addr;
-extern long addr_last;
 
 /* put_sbuf_line: write a line of text to the scratch file and add a line node
    to the editor buffer;  return a pointer to the end of the text */
@@ -139,7 +131,7 @@ add_line_node(lp)
 	line_t *cp;
 
 	cp = get_addressed_line_node(current_addr);				/* this get_addressed_line_node last! */
-	insqueue(lp, cp);
+	insque(lp, cp);
 	addr_last++;
 	current_addr++;
 }
@@ -150,12 +142,12 @@ long
 get_line_node_addr(lp)
 	line_t *lp;
 {
-	line_t *cp = &line0;
+	line_t *cp = &buffer_head;
 	long n = 0;
 
-	while (cp != lp && (cp = cp->next) != &line0)
+	while (cp != lp && (cp = cp->q_forw) != &buffer_head)
 		n++;
-	if (n && cp == &line0) {
+	if (n && cp == &buffer_head) {
 		sprintf(errmsg, "invalid address");
 		return ERR;
 	 }
@@ -168,32 +160,34 @@ line_t *
 get_addressed_line_node(n)
 	long n;
 {
-	static line_t *lp = &line0;
+	static line_t *lp = &buffer_head;
 	static long on = 0;
 
 	SPL1();
 	if (n > on)
 		if (n <= (on + addr_last) >> 1)
 			for (; on < n; on++)
-				lp = lp->next;
+				lp = lp->q_forw;
 		else {
-			lp = line0.prev;
+			lp = buffer_head.q_back;
 			for (on = addr_last; on > n; on--)
-				lp = lp->prev;
+				lp = lp->q_back;
 		}
 	else
 		if (n >= on >> 1)
 			for (; on > n; on--)
-				lp = lp->prev;
+				lp = lp->q_back;
 		else {
-			lp = &line0;
+			lp = &buffer_head;
 			for (on = 0; on < n; on++)
-				lp = lp->next;
+				lp = lp->q_forw;
 		}
 	SPL0();
 	return lp;
 }
 
+
+extern int newline_added;
 
 char sfn[15] = "";				/* scratch file name */
 
@@ -201,6 +195,7 @@ char sfn[15] = "";				/* scratch file name */
 int
 open_sbuf()
 {
+	isbinary = newline_added = 0;
 	strcpy(sfn, "/tmp/ed.XXXXXX");
 	if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
 		fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
@@ -250,9 +245,16 @@ init_buffers()
 {
 	int i = 0;
 
+	/* Read stdin one character at a time to avoid i/o contention 
+	   with shell escapes invoked by nonterminal input, e.g.,
+	   ed - <<EOF
+	   !cat
+	   hello, world
+	   EOF */
+	setbuffer(stdin, stdinbuf, 1);
 	if (open_sbuf() < 0)
 		quit(2);
-	requeue(&line0, &line0);
+	REQUE(&buffer_head, &buffer_head);
 	for (i = 0; i < 256; i++)
 		ctab[i] = i;
 }
