@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.74 2003/08/22 22:00:37 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.75 2003/09/04 09:16:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.74 2003/08/22 22:00:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.75 2003/09/04 09:16:59 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -142,6 +142,7 @@ rip_input(m, va_alist)
 {
 	int proto;
 	struct ip *ip = mtod(m, struct ip *);
+	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct inpcb *last = 0;
 	struct mbuf *opts = 0;
@@ -167,7 +168,10 @@ rip_input(m, va_alist)
 	ip->ip_len = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 	NTOHS(ip->ip_off);
 
-	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
+	CIRCLEQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
+		inp = (struct inpcb *)inph;
+		if (inp->inp_af != AF_INET)
+			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
 			continue;
 		if (!in_nullhost(inp->inp_laddr) &&
@@ -247,10 +251,12 @@ rip_pcbnotify(table, faddr, laddr, proto, errno, notify)
 	int nmatch;
 
 	nmatch = 0;
-	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
 	    inp != (struct inpcb *)&table->inpt_queue;
 	    inp = ninp) {
-		ninp = inp->inp_queue.cqe_next;
+		ninp = (struct inpcb *)inp->inp_queue.cqe_next;
+		if (inp->inp_af != AF_INET)
+			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
 			continue;
 		if (in_hosteq(inp->inp_faddr, faddr) &&
