@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.18 2002/04/24 19:41:58 bjh21 Exp $	*/
+/*	$NetBSD: config.h.in,v 1.19 2002/07/03 17:16:27 pooka Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -32,7 +32,6 @@
 #undef HAVE_SYS_SYSMACROS_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
-#undef HAVE_VIS_H
 #undef STDC_HEADERS
 
 #undef HAVE_ID_T
@@ -78,8 +77,11 @@
 #undef HAVE_STRLCAT
 #undef HAVE_STRLCPY
 #undef HAVE_STRSEP
+#undef HAVE_SVIS
+#undef HAVE_USER_FROM_UID
 #undef HAVE_VASPRINTF
 #undef HAVE_VASNPRINTF
+#undef HAVE_VIS
 #undef HAVE_VSNPRINTF
 
 #undef HAVE_DECL_SETGROUPENT
