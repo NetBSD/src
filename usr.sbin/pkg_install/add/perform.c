@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.49 2000/04/01 22:12:45 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.50 2000/04/01 23:31:39 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.49 2000/04/01 22:12:45 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.50 2000/04/01 23:31:39 hubertf Exp $");
 #endif
 #endif
 
@@ -382,10 +382,15 @@ pkg_do(char *pkg)
 				(void) snprintf(buf, sizeof(buf), fmt,
 					(int)(s - p->name) + skip, p->name);
 				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-					warnx("pkg `%s' required, but `%s' found installed.\n"
-					      "Please resolve this conflict!", p->name, installed);
-					code = 1;
-					goto success; /* close enough */
+					warnx("pkg `%s' required, but `%s' found installed.",
+					      p->name, installed);
+					if (Force) {
+						warnx("Proceeding anyways.");
+					} else {	
+						warnx("Please resolve this conflict!");
+						code = 1;
+						goto success; /* close enough */
+					}
 				}
 			}
 		}
