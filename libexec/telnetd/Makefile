@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2000/12/30 17:29:25 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.31 2002/03/22 18:10:22 thorpej Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -18,7 +18,7 @@ LDADD+=	-lutil -ltermcap -ltelnet
 CPPFLAGS+=-I${.CURDIR}/../../lib
 CPPFLAGS+=-I${.CURDIR}
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 CPPFLAGS+=-DKRB5

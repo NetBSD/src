@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/03/08 02:00:58 itojun Exp $
+#	$NetBSD: Makefile,v 1.12 2002/03/22 18:10:23 thorpej Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -24,7 +24,7 @@ SRCS+=	readpassphrase.c
 # only needed during build - prevent installation of library
 libinstall::
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+= -DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 CPPFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
 SRCS+= radix.c
