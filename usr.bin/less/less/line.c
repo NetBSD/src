@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.8 2003/04/14 02:56:47 mrg Exp $	*/
+/*	$NetBSD: line.c,v 1.9 2004/08/26 01:29:20 wiz Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -86,9 +86,9 @@ init_line()
  	static int
 expand_linebuf()
 {
-	int new_size = size_linebuf + LINEBUF_SIZE;
-	char *new_buf = (char *) calloc(new_size, sizeof(char));
-	char *new_attr = (char *) calloc(new_size, sizeof(char));
+	int new_size = size_linebuf * 2;
+	char *new_buf = (char *) realloc(linebuf, new_size);
+	char *new_attr = (char *) realloc(attr, new_size);
 	if (new_buf == NULL || new_attr == NULL)
 	{
 		if (new_attr != NULL)
@@ -97,10 +97,8 @@ expand_linebuf()
 			free(new_buf);
 		return 1;
 	}
-	memcpy(new_buf, linebuf, size_linebuf * sizeof(char));
-	memcpy(new_attr, attr, size_linebuf * sizeof(char));
-	free(attr);
-	free(linebuf);
+	memset(new_buf + size_linebuf, 0, new_size - size_linebuf);
+	memset(new_attr + size_linebuf, 0, new_size - size_linebuf);
 	linebuf = new_buf;
 	attr = new_attr;
 	size_linebuf = new_size;
