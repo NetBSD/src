@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.7 1999/02/16 22:46:57 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 1999/02/16 23:34:12 is Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

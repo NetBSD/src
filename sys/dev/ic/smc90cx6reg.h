@@ -1,7 +1,7 @@
-/*	$NetBSD: smc90cx6reg.h,v 1.6 1999/02/16 22:46:58 is Exp $ */
+/*	$NetBSD: smc90cx6reg.h,v 1.7 1999/02/16 23:34:13 is Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

@@ -1,7 +1,7 @@
-/*	$NetBSD: drsupio.c,v 1.5 1999/02/16 22:46:56 is Exp $ */
+/*	$NetBSD: drsupio.c,v 1.6 1999/02/16 23:34:11 is Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
