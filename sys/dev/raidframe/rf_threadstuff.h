@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.19 2003/12/29 06:19:28 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.20 2003/12/29 06:30:42 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,13 +48,11 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/lock.h>
 
 #include <dev/raidframe/raidframevar.h>
 
-#include <sys/lock.h>
-
 #define decl_simple_lock_data(a,b) a struct simplelock b;
-#define simple_lock_addr(a) ((struct simplelock *)&(a))
 
 typedef struct proc *RF_Thread_t;
 typedef void *RF_ThreadArg_t;
@@ -64,8 +62,6 @@ typedef void *RF_ThreadArg_t;
 #define RF_DECLARE_EXTERN_MUTEX(_m_)    decl_simple_lock_data(extern,(_m_))
 
 #define RF_DECLARE_COND(_c_)            int _c_;
-#define RF_DECLARE_STATIC_COND(_c_)     static int _c_;
-#define RF_DECLARE_EXTERN_COND(_c_)     extern int _c_;
 
 #define RF_LOCK_MUTEX(_m_)              simple_lock(&(_m_))
 #define RF_UNLOCK_MUTEX(_m_)            simple_unlock(&(_m_))
@@ -99,11 +95,5 @@ typedef void *RF_ThreadArg_t;
 	    (struct proc **)&(_handle_), _fmt_, _fmt_arg_)
 
 #define rf_mutex_init(m) simple_lock_init(m)
-
-int     rf_lkmgr_mutex_init(struct lock *);
-int     rf_lkmgr_mutex_destroy(struct lock *);
-int 
-_rf_create_managed_lkmgr_mutex(RF_ShutdownList_t **, struct lock *,
-    char *, int);
 
 #endif				/* !_RF__RF_THREADSTUFF_H_ */
