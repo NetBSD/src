@@ -4,7 +4,7 @@
    until the actual libisc merge. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,24 @@ static const char *text[ISC_R_NRESULTS] = {
 	"zone TSIG key not known",		/* 47 */
 	"invalid TSIG key",			/* 48 */
 	"operation in progress",		/* 49 */
+	"DNS format error",			/* 50 */
+	"DNS server failed",			/* 51 */
+	"no such domain",			/* 52 */
+	"not implemented",			/* 53 */
+	"refused",				/* 54 */
+	"domain already exists",		/* 55 */
+	"RRset already exists",			/* 56 */
+	"no such RRset",			/* 57 */
+	"not authorized",			/* 58 */
+	"not a zone",				/* 59 */
+	"bad DNS signature",			/* 60 */
+	"bad DNS key",				/* 61 */
+	"clock skew too great",			/* 62 */
+	"no root zone",				/* 63 */
+	"destination address required",		/* 64 */
+	"cross-zone update",			/* 65 */
+	"no TSIG signature",			/* 66 */
+	"not equal"				/* 67 */
 };
 
 const char *isc_result_totext (isc_result_t result)
