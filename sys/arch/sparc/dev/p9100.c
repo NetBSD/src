@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2 1999/08/01 06:27:00 matt Exp $ */
+/*	$NetBSD: p9100.c,v 1.3 1999/08/02 18:00:21 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,14 +138,18 @@ struct p9100_softc {
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
+/* The Tadpole 3GX Technical Reference Manual lies.  The ramdac registers
+ * are map in 4 byte increments, not 8.
+ */
+#define	PWRUP_CNFG	0x0194	/* Power Up Configuration */
 #define	DAC_CMAP_WRIDX	0x0200	/* IBM RGB528 Palette Address (Write) */
-#define	DAC_CMAP_DATA	0x0208	/* IBM RGB528 Palette Data */
-#define	DAC_PXL_MASK	0x0210	/* IBM RGB528 Pixel Mask */
-#define	DAC_CMAP_RDIDX	0x0218	/* IBM RGB528 Palette Address (Read) */
-#define	DAC_INDX_LO	0x0220	/* IBM RGB528 Index Low */
-#define	DAC_INDX_HI	0x0228	/* IBM RGB528 Index High */
-#define	DAC_INDX_DATA	0x0230	/* IBM RGB528 Index Data (Indexed Registers) */
-#define	DAC_INDX_CTL	0x0238	/* IBM RGB528 Index Control */
+#define	DAC_CMAP_DATA	0x0204	/* IBM RGB528 Palette Data */
+#define	DAC_PXL_MASK	0x0208	/* IBM RGB528 Pixel Mask */
+#define	DAC_CMAP_RDIDX	0x020c	/* IBM RGB528 Palette Address (Read) */
+#define	DAC_INDX_LO	0x0210	/* IBM RGB528 Index Low */
+#define	DAC_INDX_HI	0x0214	/* IBM RGB528 Index High */
+#define	DAC_INDX_DATA	0x0218	/* IBM RGB528 Index Data (Indexed Registers) */
+#define	DAC_INDX_CTL	0x021c	/* IBM RGB528 Index Control */
 
 /* autoconfiguration driver */
 static int	p9100_sbus_match(struct device *, struct cfdata *, void *);
@@ -175,13 +179,9 @@ static void p9100loadcmap(struct p9100_softc *, int, int);
 static void p9100_set_video(struct p9100_softc *, int);
 static int p9100_get_video(struct p9100_softc *);
 static uint32_t p9100_ctl_read_4(struct p9100_softc *, bus_size_t);
-#if 0
 static void p9100_ctl_write_4(struct p9100_softc *, bus_size_t, uint32_t);
-static uint8_t p9100_ctl_read_1(struct p9100_softc *, bus_size_t);
-static void p9100_ctl_write_1(struct p9100_softc *, bus_size_t, uint8_t);
 static uint8_t p9100_ramdac_read(struct p9100_softc *, bus_size_t);
 static void p9100_ramdac_write(struct p9100_softc *, bus_size_t, uint8_t);
-#endif
 
 /*
  * Match a p9100.
@@ -286,7 +286,6 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	if ((1 << fb->fb_type.fb_depth) != fb->fb_type.fb_cmsize)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 
-#if 0
 	/* grab initial (current) color map */
 	p9100_ramdac_write(sc, DAC_CMAP_RDIDX, 0);
 	for (i = 0; i < fb->fb_type.fb_cmsize; i++) {
@@ -294,17 +293,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 		for (j = 0; j < 3; j++) {
 			sc->sc_cmap.cm_map[i][j] = p9100_ramdac_read(sc, DAC_CMAP_DATA);
 		}
-		if ((sc->sc_cmap.cm_map[i][0] != 0 &&
-		     sc->sc_cmap.cm_map[i][1] != 0 &&
-		     sc->sc_cmap.cm_map[i][2] != 0) &&
-		    (sc->sc_cmap.cm_map[i][0] != 255 &&
-		     sc->sc_cmap.cm_map[i][1] != 255 &&
-		     sc->sc_cmap.cm_map[i][2] != 255)) {
-			printf(", cmap[%d]=<%d,%d,%d>", i, sc->sc_cmap.cm_map[i][0],
-			       sc->sc_cmap.cm_map[i][1], sc->sc_cmap.cm_map[i][2]);
-		}
 	}
-#endif
 
 	/* make sure we are not blanked */
 	p9100_set_video(sc, 1);
@@ -400,48 +389,30 @@ p9100poll(dev_t dev, int events, struct proc *p)
 static uint32_t
 p9100_ctl_read_4(struct p9100_softc *sc, bus_size_t off)
 {
-	sc->sc_junk += bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
+	sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
 	return bus_space_read_4(sc->sc_bustag, sc->sc_ctl_memh, off);
 }
 
-#if 0
 static void
 p9100_ctl_write_4(struct p9100_softc *sc, bus_size_t off, uint32_t v)
 {
-	sc->sc_junk += bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
+	sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
 	bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh, off, v);
-}
-
-static uint8_t
-p9100_ctl_read_1(struct p9100_softc *sc, bus_size_t off)
-{
-	sc->sc_junk += bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
-	return bus_space_read_1(sc->sc_bustag, sc->sc_ctl_memh, off);
-}
-
-static void
-p9100_ctl_write_1(struct p9100_softc *sc, bus_size_t off, uint8_t v)
-{
-	sc->sc_junk += bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
-	bus_space_write_1(sc->sc_bustag, sc->sc_ctl_memh, off, v);
 }
 
 static uint8_t
 p9100_ramdac_read(struct p9100_softc *sc, bus_size_t off)
 {
-	sc->sc_junk += p9100_ctl_read_4(sc, 0x0004);
-	DELAY(1);
-	return p9100_ctl_read_1(sc, off);
+	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
+	return p9100_ctl_read_4(sc, off) >> 16;
 }
 
 static void
 p9100_ramdac_write(struct p9100_softc *sc, bus_size_t off, uint8_t v)
 {
-	sc->sc_junk += p9100_ctl_read_4(sc, 0x0004);
-	DELAY(1);
-	p9100_ctl_write_1(sc, off, v);
+	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
+	p9100_ctl_write_4(sc, off, v << 16);
 }
-#endif
 
 /*
  * Undo the effect of an FBIOSVIDEO that turns the video off.
@@ -470,15 +441,13 @@ p9100_get_video(struct p9100_softc *sc)
 static void
 p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
 {
-#if 0
 	u_char *p;
 
 	p9100_ramdac_write(sc, DAC_CMAP_WRIDX, start);
 
-	for (p = sc->sc_cmap.cm_map[start], ncolors *= 3; --ncolors > 0; p++) {
+	for (p = sc->sc_cmap.cm_map[start], ncolors *= 3; ncolors-- > 0; p++) {
 		p9100_ramdac_write(sc, DAC_CMAP_DATA, *p);
 	}
-#endif
 }
 
 /*
