@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 1998/02/13 07:41:53 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 1998/04/20 06:45:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,9 @@
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -132,7 +135,7 @@ int mmupid = -1;
 #endif
 
 /* trap() and syscall() only called from locore */
-void	trap __P((int, unsigned, register unsigned, struct frame));
+void	trap __P((int, u_int, u_int, struct frame));
 void	syscall __P((register_t, struct frame));
 void	child_return __P((struct proc *, struct frame)); /* XXX */
 
@@ -142,7 +145,7 @@ static inline void userret __P((struct proc *p, struct frame *fp,
 #if defined(M68040)
 static int	writeback __P((struct frame *, int));
 #if DEBUG
-static void dumpssw __P((register u_short));
+static void dumpssw __P((u_short));
 static void dumpwb __P((int, u_short, u_int, u_int));
 #endif
 #endif
@@ -153,8 +156,8 @@ static void dumpwb __P((int, u_short, u_int, u_int));
  */
 static inline void
 userret(p, fp, oticks, faultaddr, fromtrap)
-	register struct proc *p;
-	register struct frame *fp;
+	struct proc *p;
+	struct frame *fp;
 	u_quad_t oticks;
 	u_int faultaddr;
 	int fromtrap;
@@ -236,16 +239,16 @@ again:
 void
 trap(type, code, v, frame)
 	int type;
-	unsigned code;
-	register unsigned v;
+	u_int code;
+	u_int v;
 	struct frame frame;
 {
 	extern char fubail[], subail[];
 #ifdef DDB
 	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
 #endif
-	register struct proc *p;
-	register int i;
+	struct proc *p;
+	int i, s;
 	u_int ucode;
 	u_quad_t sticks;
 
@@ -271,15 +274,38 @@ trap(type, code, v, frame)
 
 	switch (type) {
 	default:
-dopanic:
-		printf("trap: type 0x%x, code 0x%x, v 0x%x\n", type, code, v);
-#ifdef DDB
-		if (kdb_trap(type, (db_regs_t *) &frame))
-			return;
+	dopanic:
+		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
+		printf("%s program counter = 0x%x\n",
+		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
+		/*
+		 * Let the kernel debugger see the trap frame that
+		 * caused us to panic.  This is a convenience so
+		 * one can see registers at the point of failure.
+		 */
+		s = splhigh();
+#ifdef KGDB
+		/* If connected, step or cont returns 1 */
+		if (kgdb_trap(type, (db_regs_t *)&frame))
+			goto kgdb_cont;
 #endif
+#ifdef DDB
+		(void)kdb_trap(type, (db_regs_t *)&frame);
+#endif
+#ifdef KGDB
+	kgdb_cont:
+#endif
+		splx(s);
+		if (panicstr) {
+			printf("trap during panic!\n");
+#ifdef DEBUG
+			/* XXX should be a machine-dependent hook */
+			printf("(press a key)\n"); (void)cngetc();
+#endif
+		}
 		regdump((struct trapframe *)&frame, 128);
 		type &= ~T_USER;
-		if ((unsigned)type < trap_types)
+		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
@@ -295,7 +321,7 @@ dopanic:
 copyfault:
 		frame.f_stackadj = exframesize[frame.f_format];
 		frame.f_format = frame.f_vector = 0;
-		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
+		frame.f_pc = (int)p->p_addr->u_pcb.pcb_onfault;
 		return;
 
 	case T_BUSERR|T_USER:	/* Bus error */
@@ -350,10 +376,10 @@ copyfault:
 	case T_ILLINST:	/* fnop generates this, apparently. */
 	case T_FPEMULI:
 	case T_FPEMULD: {
-		extern int	*nofault;
+		extern label_t *nofault;
 
 		if (nofault)	/* If we're probing. */
-			longjmp((label_t *) nofault);
+			longjmp(nofault);
 		if (type == T_ILLINST)
 			printf("Kernel Illegal Instruction trap.\n");
 		else
@@ -396,15 +422,20 @@ copyfault:
 		break;
 
 	/*
-	 * Trace traps.
+	 * XXX: Trace traps are a nightmare.
 	 *
-	 * M68k NetBSD uses trap #2,
-	 * SUN 3.x uses trap #15,
-	 * KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
+	 *	HP-UX uses trap #1 for breakpoints,
+	 *	NetBSD/m68k uses trap #2,
+	 *	SUN 3.x uses trap #15,
+	 *	DDB and KGDB uses trap #15 (for kernel breakpoints;
+	 *	handled elsewhere).
 	 *
-	 * M68k NetBSD traps get mapped by locore.s into T_TRACE.
+	 * NetBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
+	 *
+	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: because locore.s now gives them special treatment.
 	 */
 	case T_TRACE:		/* Kernel trace trap */
 	case T_TRAP15:		/* SUN trace trap */
@@ -517,9 +548,9 @@ copyfault:
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm = p->p_vmspace;
+		vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
@@ -546,7 +577,7 @@ copyfault:
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		va = trunc_page((vm_offset_t) v);
+		va = trunc_page((vm_offset_t)v);
 #ifdef DEBUG
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", v);
@@ -569,9 +600,9 @@ copyfault:
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
 			if (rv == KERN_SUCCESS) {
-				unsigned nss;
+				u_int nss;
 
-				nss = clrnd(btoc(USRSTACK-(unsigned)va));
+				nss = clrnd(btoc(USRSTACK - (u_int)va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
@@ -581,7 +612,7 @@ copyfault:
 			if (type == T_MMUFLT) {
 #if defined(M68040)
 				if (mmutype == MMU_68040)
-					(void) writeback(&frame, 1);
+					(void)writeback(&frame, 1);
 #endif
 				return;
 			}
@@ -591,7 +622,7 @@ copyfault:
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-				(unsigned) map, (unsigned) va, ftype, rv);
+				(u_int)map, (u_int)va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 				type, code);
 			goto dopanic;
@@ -636,8 +667,8 @@ writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
 {
-	register struct fmt7 *f = &fp->f_fmt7;
-	register struct proc *p = curproc;
+	struct fmt7 *f = &fp->f_fmt7;
+	struct proc *p = curproc;
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
@@ -720,8 +751,8 @@ writeback(fp, docachepush)
 		 * Writeback #1.
 		 * Position the "memory-aligned" data and write it out.
 		 */
-		register u_int wb1d = f->f_wb1d;
-		register int off;
+		u_int wb1d = f->f_wb1d;
+		int off;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -865,7 +896,7 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 static void
 dumpssw(ssw)
-	register u_short ssw;
+	u_short ssw;
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -897,7 +928,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	vm_offset_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
@@ -922,9 +953,9 @@ syscall(code, frame)
 	register_t code;
 	struct frame frame;
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
 	register_t args[8], rval[2];
