@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.552.2.2 2004/07/23 22:42:00 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.552.2.3 2004/08/16 17:46:05 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.552.2.2 2004/07/23 22:42:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.552.2.3 2004/08/16 17:46:05 jmc Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -469,10 +469,12 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
+	if (!i386_alldisks)
+		return(EOPNOTSUPP);
 	node.sysctl_data = i386_alldisks;
 	node.sysctl_size = sizeof(struct disklist) +
 	    (i386_ndisks - 1) * sizeof(struct nativedisk_info);
-        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 /*
