@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.41 2002/02/02 07:04:56 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.42 2002/02/02 11:23:16 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -448,7 +448,9 @@ pty*)
 	class=${i#pty}
 	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
 	case $name in
-	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
+	w)	echo "$0: $i: pty unit conflicts with console ttyw0 device."
+		continue;;
+	S|T)	echo "$0: $i: pty unit conflicts with dhu11 device."
 		continue;;
 	?)      ;;
 	*)      echo "$0: $i: pty unit must be between 0 and 15"
