@@ -57,7 +57,7 @@ static char sccsid[] = "@(#)process.c	5.10 (Berkeley) 12/2/92";
 #include "defs.h"
 #include "extern.h"
 
-static SPACE HS, PS, SS;
+static SPACE HS = {""}, PS, SS;
 #define	pd		PS.deleted
 #define	ps		PS.space
 #define	psl		PS.len
