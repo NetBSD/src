@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.4 1999/11/01 09:59:23 haya Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.5 1999/12/12 17:46:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+
+#include <machine/endian.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
