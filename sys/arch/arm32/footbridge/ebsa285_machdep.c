@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.6 1999/03/29 10:02:19 mycroft Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.7 1999/05/27 09:08:09 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -167,7 +167,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt,
     pv_addr_t kernel_ptpt));
 void process_kernel_args	__P((char *));
-caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
