@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.15 2003/05/16 19:28:10 dsl Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.16 2003/06/03 11:54:49 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -133,9 +133,9 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 	option "SystemPlikow", action
 		{
 			if (check_lfs_progs())
-				process_menu (MENU_selfskindlfs);
+				process_menu (MENU_selfskindlfs, NULL);
 			else
-				process_menu (MENU_selfskind);
+				process_menu (MENU_selfskind, NULL);
 		};
 	option "Przesuniecie/rozmiar", action  
 		{	int start, size;
@@ -154,7 +154,7 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 
 			if (!PI_ISBSDFS(&bsdlabel[editpart])) {
 				msg_display (MSG_not42bsd, 'a'+editpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_ok, NULL);
 				return FALSE;
 			}
 			snprintf(buf, sizeof(buf), "%d",
@@ -178,7 +178,7 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 					fsmount[editpart][0] = '\0';
 			} else {
 				msg_display (MSG_nomount, 'a'+editpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_ok, NULL);
 			}
 		};
 	option "Ochrona", action 
@@ -420,4 +420,14 @@ menu ip6autoconf, title "Wykonac autokonfiguracje IPv6?";
 menu dhcpautoconf, title "Wykonac autkonfiguracje DHCP?";
 	option "Tak", exit, action  {yesno = 1;};
 	option "Nie",  exit, action  {yesno = 0;};
+
+menu rootsh, title "Root shell"; 	/* XXX translate */
+        option "/bin/csh", exit, action {shellpath = "/bin/csh";};
+	option "/bin/ksh", exit, action {shellpath = "/bin/ksh";};
+	option "/bin/sh",  exit, action {shellpath = "/bin/sh";};
+			 
+menu extract, title "Select set extraction verbosity";	/* XXX translate */
+	option "Progress bar (recommended)", exit, action  { yesno = 1; };
+	option "Silent", exit, action  { yesno = 0; };
+	option "Verbose file name listing (slow)", exit, action { yesno = 2; };
 

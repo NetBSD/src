@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2003/05/31 08:10:02 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.21 2003/06/03 11:54:55 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -282,7 +282,7 @@ md_check_partitions(void)
 			continue;
 		if (last >= A && bsdlabel[part].pi_size > 0) {
 			msg_display(MSG_emptypart, part+'a');
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 			return 0;
 		}
 		if (bsdlabel[part].pi_size == 0) {
@@ -291,7 +291,7 @@ md_check_partitions(void)
 		} else {
 			if (start >= bsdlabel[part].pi_offset) {
 				msg_display(MSG_ordering, part+'a');
-				process_menu(MENU_yesno);
+				process_menu(MENU_yesno, NULL);
 				if (yesno)
 					return 0;
 			}

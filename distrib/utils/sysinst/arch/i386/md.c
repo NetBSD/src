@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.80 2003/05/30 22:17:04 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.81 2003/06/03 11:54:52 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,21 +99,21 @@ edit:
 	if (mbr_part_above_chs(part) &&
 	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
 		msg_display(MSG_partabovechs);
-		process_menu(MENU_noyes);
+		process_menu(MENU_noyes, NULL);
 		if (!yesno)
 			goto edit;
 	}
 
 	if (count_mbr_parts(part) > 1) {
 		msg_display(MSG_installbootsel);
-		process_menu(MENU_yesno);
+		process_menu(MENU_yesno, NULL);
 		if (yesno) {
 			mbr_len = md_read_bootcode(_PATH_BOOTSEL, &mbr);
 			configure_bootsel();
 			netbsd_mbr_installed = 2;
 		} else {
 			msg_display(MSG_installnormalmbr);
-			process_menu(MENU_yesno);
+			process_menu(MENU_yesno, NULL);
 			if (yesno) {
 				mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
 				netbsd_mbr_installed = 1;
@@ -126,7 +126,7 @@ edit:
 
 	if (mbr_partstart_above_chs(part) && netbsd_mbr_installed == 0) {
 		msg_display(MSG_installmbr);
-		process_menu(MENU_yesno);
+		process_menu(MENU_yesno, NULL);
 		if (yesno) {
 			mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
 			netbsd_mbr_installed = 1;
@@ -191,7 +191,7 @@ md_pre_disklabel(void)
 	/* write edited MBR onto disk. */
 	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 1;
 	}
 	md_upgrade_mbrtype();
@@ -217,7 +217,7 @@ md_post_newfs(void)
 	ret = stat("/usr/mdec/biosboot_com0_9600.sym", &sb);
 	if ((ret != -1) && (sb.st_mode & S_IFREG)) {
 		msg_display(MSG_getboottype);
-		process_menu(MENU_getboottype);
+		process_menu(MENU_getboottype, NULL);
 	}
 	msg_display(MSG_dobootblks, diskdev);
 	if (!strncmp(boottype, "serial", 6))
@@ -404,7 +404,7 @@ nogeom:
 		msg_table_add(MSG_onebiosmatch_row, bip->bi_dev - 0x80,
 		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
 		msg_display_add(MSG_biosgeom_advise);
-		process_menu(MENU_biosonematch);
+		process_menu(MENU_biosonematch, NULL);
 	} else {
 		msg_display(MSG_biosmultmatch);
 		msg_table_add(MSG_biosmultmatch_header);
@@ -414,7 +414,7 @@ nogeom:
 			    bip->bi_dev - 0x80, bip->bi_cyl, bip->bi_head,
 			    bip->bi_sec);
 		}
-		process_menu(MENU_biosmultmatch);
+		process_menu(MENU_biosmultmatch, NULL);
 	}
 	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))
 		bsize = dlsize;
