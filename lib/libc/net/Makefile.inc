@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.47 2000/01/26 02:46:36 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.48 2000/01/27 05:33:06 itojun Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -19,7 +19,7 @@ CPPFLAGS+=-DRESOLVSORT -I.
 # IPv6
 SRCS+=	getaddrinfo.c getnameinfo.c ifname.c ip6opt.c rthdr.c vars6.c
 # need to revisit
-#SRCS+=	name6.c rresvport_af.c freehostent.c
+#SRCS+=	name6.c freehostent.c
 #CPPFLAGS+=	-DUSE_GETIPNODEBY
 
 LPREFIX=_nsyy
@@ -86,7 +86,9 @@ MLINKS+=getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3 \
 	inet6_rthdr_space.3 inet6_rthdr_reverse.3 \
 	inet6_rthdr_space.3 inet6_rthdr_segments.3 \
 	inet6_rthdr_space.3 inet6_rthdr_getaddr.3 \
-	inet6_rthdr_space.3 inet6_rthdr_getflags.3
+	inet6_rthdr_space.3 inet6_rthdr_getflags.3 \
+	rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3 rcmd.3 rresvport_af.3 \
+	rcmd.3 orcmd_af.3
 # need to revisit
-#MAN+=	getipnodebyname.3 rresvport_af.3
+#MAN+=	getipnodebyname.3
 #MLINKS+=getipnodebyname.3 getipnodebyaddr.3 getipnodebyname.3 freehostent.3 \

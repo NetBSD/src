@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.187 2000/01/26 13:20:26 itojun Exp $
+# $NetBSD: mi,v 1.188 2000/01/27 05:33:07 itojun Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1882,6 +1882,7 @@
 ./usr/share/man/cat3/ipsec_set_policy.0
 ./usr/share/man/cat3/ipsec_strerror.0
 ./usr/share/man/cat3/iruserok.0
+./usr/share/man/cat3/iruserok_sa.0
 ./usr/share/man/cat3/isalnum.0
 ./usr/share/man/cat3/isalpha.0
 ./usr/share/man/cat3/isascii.0
@@ -2040,6 +2041,7 @@
 ./usr/share/man/cat3/openlog.0
 ./usr/share/man/cat3/openpty.0
 ./usr/share/man/cat3/orcmd.0
+./usr/share/man/cat3/orcmd_af.0
 ./usr/share/man/cat3/ossaudio.0
 ./usr/share/man/cat3/pause.0
 ./usr/share/man/cat3/pcap.0
@@ -2083,6 +2085,7 @@
 ./usr/share/man/cat3/rand_r.0
 ./usr/share/man/cat3/random.0
 ./usr/share/man/cat3/rcmd.0
+./usr/share/man/cat3/rcmd_af.0
 ./usr/share/man/cat3/re_comp.0
 ./usr/share/man/cat3/re_exec.0
 ./usr/share/man/cat3/readdir.0
@@ -2118,6 +2121,7 @@
 ./usr/share/man/cat3/rpc.0
 ./usr/share/man/cat3/rpc_createerr.0
 ./usr/share/man/cat3/rresvport.0
+./usr/share/man/cat3/rresvport_af.0
 ./usr/share/man/cat3/ruserok.0
 ./usr/share/man/cat3/scalb.0
 ./usr/share/man/cat3/scalbf.0
@@ -2988,6 +2992,7 @@
 ./usr/share/man/man3/bcmp.3
 ./usr/share/man/man3/bcopy.3
 ./usr/share/man/man3/bindresvport.3
+./usr/share/man/man3/bindresvport_sa.3
 ./usr/share/man/man3/bitstring.3
 ./usr/share/man/man3/bm.3
 ./usr/share/man/man3/bm_comp.3
@@ -3357,6 +3362,7 @@
 ./usr/share/man/man3/ipsec_set_policy.3
 ./usr/share/man/man3/ipsec_strerror.3
 ./usr/share/man/man3/iruserok.3
+./usr/share/man/man3/iruserok_sa.3
 ./usr/share/man/man3/isalnum.3
 ./usr/share/man/man3/isalpha.3
 ./usr/share/man/man3/isascii.3
@@ -3515,6 +3521,7 @@
 ./usr/share/man/man3/openlog.3
 ./usr/share/man/man3/openpty.3
 ./usr/share/man/man3/orcmd.3
+./usr/share/man/man3/orcmd_af.3
 ./usr/share/man/man3/ossaudio.3
 ./usr/share/man/man3/pause.3
 ./usr/share/man/man3/pcap.3
@@ -3558,6 +3565,7 @@
 ./usr/share/man/man3/rand_r.3
 ./usr/share/man/man3/random.3
 ./usr/share/man/man3/rcmd.3
+./usr/share/man/man3/rcmd_af.3
 ./usr/share/man/man3/re_comp.3
 ./usr/share/man/man3/re_exec.3
 ./usr/share/man/man3/readdir.3
@@ -3593,6 +3601,7 @@
 ./usr/share/man/man3/rpc.3
 ./usr/share/man/man3/rpc_createerr.3
 ./usr/share/man/man3/rresvport.3
+./usr/share/man/man3/rresvport_af.3
 ./usr/share/man/man3/ruserok.3
 ./usr/share/man/man3/scalb.3
 ./usr/share/man/man3/scalbf.3
