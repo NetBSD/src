@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.6 2002/10/08 19:53:54 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.7 2002/10/16 19:34:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -706,6 +706,32 @@ td_map_lwp2thr(td_proc_t *proc, int lwp, td_thread_t **threadp)
 	return 0;
 }
 
+int
+td_map_lwps(td_proc_t *proc)
+{
+	int i, val, nlwps;
+	caddr_t addr;
+	td_thread_t *thread;
+
+	val = LOOKUP(proc, "pthread__maxlwps", &addr);
+	if (val != 0)
+		return val;
+
+	val = READ(proc, addr, &nlwps, sizeof(int));
+	if (val != 0)
+		return val;
+
+	for (i = 1; i <= nlwps; i++) {
+		/*
+		 * Errors are deliberately ignored for the call to
+		 * td_map_lwp2thr(); it is entirely likely that not
+		 * all LWPs in the range 1..nlwps exist, and that's
+		 * not a problem.
+		 */
+		td_map_lwp2thr(proc, i, &thread);
+	}
+	return 0;
+}
 
 int
 td_tsd_iter(td_proc_t *proc,
