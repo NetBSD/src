@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1998/08/30 09:19:39 veego Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1999/08/18 01:39:16 hubertf Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -383,7 +383,7 @@ rollnewplayer()
 	do {
 		mvaddstr(20, 0, "Give your character a password [up to 8 characters] ? ");
 		getstring(Player.p_password, SZ_PASSWORD);
-		mvaddstr(21, 0, "One more time to verify ? ");
+		mvaddstr(21, 0, "Enter again to verify: ");
 		getstring(Databuf, SZ_PASSWORD);
 	}
 	while (strcmp(Player.p_password, Databuf) != 0);
