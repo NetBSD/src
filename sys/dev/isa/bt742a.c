@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.39 1995/04/17 12:08:39 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.40 1995/07/08 00:34:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1297,6 +1297,7 @@ bt_scsi_cmd(xs)
 	s = splbio();
 
 	if (bt_send_mbo(bt, BT_MBO_START, ccb) == NULL) {
+		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		bt_free_ccb(bt, ccb, flags);
 		return TRY_AGAIN_LATER;

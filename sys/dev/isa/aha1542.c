@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.42 1995/04/17 12:08:28 cgd Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.43 1995/07/08 00:34:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1282,6 +1282,7 @@ aha_scsi_cmd(xs)
 	s = splbio();
 
 	if (aha_send_mbo(aha, AHA_MBO_START, ccb) == NULL) {
+		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		aha_free_ccb(aha, ccb, flags);
 		return TRY_AGAIN_LATER;
