@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.43 2003/11/11 21:26:53 enami Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.44 2003/11/14 08:33:36 dsl Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -257,6 +257,7 @@ __CLEANDEPEND: .USE
 cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 clean: __CLEANKERNEL
 depend: .depend
+dependall: depend all
 
 .if !target(.depend)
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
@@ -271,10 +272,6 @@ MKDEP_CFLAGS?=	${CFLAGS}
 	    ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
-.endif
-
-.if !target(dependall)
-dependall: depend all
 .endif
 
 .if !target(lint)
