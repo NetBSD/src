@@ -50,7 +50,6 @@ initialize(startup)
 	puts("Admiral D.W. Riggle\n");
 	srand(getpid());
 	getutmp(uname);
-	wiz = wizard(uname);
 	wordinit();
 	if (startup) {
 		location = dayfile;
@@ -65,6 +64,7 @@ initialize(startup)
 			setbit(location[p->room].objects, p->obj);
 	} else
 		restore();
+	wiz = wizard(uname);
 	signal(SIGINT, die);
 }
 
