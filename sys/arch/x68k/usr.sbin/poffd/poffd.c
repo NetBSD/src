@@ -1,4 +1,4 @@
-/*	$NetBSD: poffd.c,v 1.5 2001/06/12 10:30:04 minoura Exp $	*/
+/*	$NetBSD: poffd.c,v 1.6 2001/06/12 11:29:31 minoura Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -234,7 +234,7 @@ usr1handler(sig)
 	execl(_PATH_BSHELL, "sh", "-c", shut, NULL);
 	p = alloca(strlen(shutdownprog) + 20);
 	snprintf(p, strlen(shutdownprog) + 20, "Failed in exec %s: %%s", shut);
-	logerror("Failed in exec %s: %s");
+	logerror(p);
 	exit(1);
 }
 
