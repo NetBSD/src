@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsfh.h,v 1.4 1997/10/03 19:54:45 christos Exp $	*/
+/*	$NetBSD: nfsfh.h,v 1.4.12.1 2002/06/06 20:00:45 he Exp $	*/
 
 /*
  * Header: nfsfh.h,v 1.6 96/12/16 03:40:31 leres Exp 
@@ -33,4 +33,4 @@ typedef	struct {
 #define	fsid_eq(a,b)	((a.fsid_code == b.fsid_code) &&\
 			 dev_eq(a.Fsid_dev, b.Fsid_dev))
 
-extern void Parse_fh(caddr_t *, int, my_fsid *, ino_t *, char **, char **, int);
+extern void Parse_fh(const unsigned char *, int, my_fsid *, ino_t *, const char **, const char **, int);
