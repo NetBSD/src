@@ -2,7 +2,7 @@
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $ */
+/* $Id: sh.h,v 1.1.1.2 1996/10/09 15:12:52 jtc Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -680,6 +680,14 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 #define OBRACE	'{'
 #define CBRACE	'}'
 
+/* Determine the location of the system (common) profile */
+#ifndef KSH_SYSTEM_PROFILE
+# ifdef __NeXT
+#  define KSH_SYSTEM_PROFILE "/etc/profile.std"
+# else /* __NeXT */
+#  define KSH_SYSTEM_PROFILE "/etc/profile"
+# endif /* __NeXT */
+#endif /* KSH_SYSTEM_PROFILE */
 
 #include "shf.h"
 #include "table.h"

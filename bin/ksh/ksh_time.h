@@ -1,5 +1,8 @@
+#ifndef KSH_TIME_H
+# define KSH_TIME_H
+
 /* Wrapper around the ugly time.h,sys/time.h includes/ifdefs */
-/* $Id: ksh_time.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $ */
+/* $Id: ksh_time.h,v 1.1.1.2 1996/10/09 15:12:44 jtc Exp $ */
 
 #ifdef TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -19,3 +22,4 @@ extern time_t time ARGS((time_t *));
 #ifndef CLK_TCK
 # define CLK_TCK 60			/* 60HZ */
 #endif
+#endif /* KSH_TIME_H */

@@ -755,7 +755,7 @@ skip_wdvarname(s, aok)
 		do
 			s += 2;
 		while (s[0] == CHAR && letnum(s[1]));
-		if (aok) {
+		if (aok && s[0] == CHAR && s[1] == '[') {
 			/* skip possible array de-reference */
 			const char *p = s;
 			char c;
@@ -1011,9 +1011,9 @@ unsetspec(vp)
 		break;
 #endif /* KSH */
 	  /* todo: generic action for specials (at&t says variables
-	   * loose their special meaning when unset but global() checks
+	   * lose their special meaning when unset but global() checks
 	   * the name of new vars to see if they are special)
-	   * 	loose meaning: _, ERRNO, LINENO, MAILCHECK,
+	   * 	lose meaning: _, ERRNO, LINENO, MAILCHECK,
 	   *		OPTARG, OPTIND, RANDOM, SECONDS, TMOUT.
 	   *	unknown: MAIL, MAILPATH, HISTSIZE, HISTFILE,
 	   *    no effect: IFS, COLUMNS, PATH, TMPDIR,

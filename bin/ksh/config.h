@@ -62,7 +62,7 @@
 #define RETSIGTYPE void
 
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
-/* #undef STAT_MACROS_BROKEN */
+#define STAT_MACROS_BROKEN 1
 
 /* Define if `sys_siglist' is declared by <signal.h>.  */
 #define SYS_SIGLIST_DECLARED 1
@@ -244,6 +244,9 @@
 /* Define if you have the getgroups function.  */
 /* #undef HAVE_GETGROUPS */
 
+/* Define if you have the getpagesize function.  */
+#define HAVE_GETPAGESIZE 1
+
 /* Define if you have the getrusage function.  */
 /* #undef HAVE_GETRUSAGE */
 
@@ -279,6 +282,9 @@
 
 /* Define if you have the ulimit function.  */
 /* #undef HAVE_ULIMIT */
+
+/* Define if you have the valloc function.  */
+#define HAVE_VALLOC 1
 
 /* Define if you have the wait3 function.  */
 #define HAVE_WAIT3 1

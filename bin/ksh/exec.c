@@ -519,7 +519,7 @@ comexec(t, tp, ap, flags)
 				fcflags |= FC_DEFPATH;
 			}
 			ap += builtin_opt.optind;
-			/* POSIX says special builtins loose their status
+			/* POSIX says special builtins lose their status
 			 * if accessed using command.
 			 */
 			keepasn_ok = 0;
