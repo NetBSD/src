@@ -1,6 +1,6 @@
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)zic.c	7.78";
+static char	elsieid[] = "@(#)zic.c	7.87";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -79,15 +79,9 @@ struct zone {
 
 extern int	getopt P((int argc, char * const argv[],
 			const char * options));
-extern char *	icatalloc P((char * old, const char * new));
-extern char *	icpyalloc P((const char * string));
-extern void	ifree P((char * p));
-extern char *	imalloc P((int n));
-extern void *	irealloc P((void * old, int n));
 extern int	link P((const char * fromname, const char * toname));
 extern char *	optarg;
 extern int	optind;
-extern char *	scheck P((const char * string, const char * format));
 
 static void	addtt P((time_t starttime, int type));
 static int	addtype P((long gmtoff, const char * abbr, int isdst,
@@ -147,8 +141,10 @@ static int		leapcnt;
 static int		linenum;
 static time_t		max_time;
 static int		max_year;
+static int		max_year_representable;
 static time_t		min_time;
 static int		min_year;
+static int		min_year_representable;
 static int		noise;
 static const char *	rfilename;
 static int		rlinenum;
@@ -359,6 +355,7 @@ char * const	ptr;
 {
 	if (ptr == NULL) {
 		const char *e = strerror(errno);
+
 		(void) fprintf(stderr, _("%s: Memory exhausted: %s\n"),
 			progname, e);
 		(void) exit(EXIT_FAILURE);
@@ -435,7 +432,7 @@ const char * const	string;
 
 	cp = ecpyalloc("warning: ");
 	cp = ecatalloc(cp, string);
-	error(string);
+	error(cp);
 	ifree(cp);
 	--errors;
 }
@@ -475,7 +472,7 @@ char *	argv[];
 	(void) textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT - 0 */
 	progname = argv[0];
-	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != EOF)
+	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != EOF && c != -1)
 		switch (c) {
 			default:
 				usage();
@@ -608,6 +605,7 @@ const char * const	tofile;
 			(void) exit(EXIT_FAILURE);
 		if (link(fromname, toname) != 0) {
 			const char *e = strerror(errno);
+
 			(void) fprintf(stderr,
 				_("%s: Can't link from %s to %s: %s\n"),
 				progname, fromname, toname, e);
@@ -653,6 +651,8 @@ setboundaries P((void))
 	}
 	min_year = TM_YEAR_BASE + gmtime(&min_time)->tm_year;
 	max_year = TM_YEAR_BASE + gmtime(&max_time)->tm_year;
+	min_year_representable = min_year;
+	max_year_representable = max_year;
 }
 
 static int
@@ -780,6 +780,7 @@ const char *	name;
 		fp = stdin;
 	} else if ((fp = fopen(name, "r")) == NULL) {
 		const char *e = strerror(errno);
+
 		(void) fprintf(stderr, _("%s: Can't open %s: %s\n"),
 			progname, name, e);
 		(void) exit(EXIT_FAILURE);
@@ -848,6 +849,7 @@ _("%s: panic: Invalid l_value %d\n"),
 	}
 	if (fp != stdin && fclose(fp)) {
 		const char *e = strerror(errno);
+
 		(void) fprintf(stderr, _("%s: Error closing %s: %s\n"),
 			progname, filename, e);
 		(void) exit(EXIT_FAILURE);
@@ -1220,6 +1222,7 @@ const char * const		timep;
 				rp->r_todisstd = FALSE;
 				rp->r_todisgmt = FALSE;
 				*ep = '\0';
+				break;
 			case 'g':	/* Greenwich */
 			case 'u':	/* Universal */
 			case 'z':	/* Zulu */
@@ -1251,7 +1254,11 @@ const char * const		timep;
 	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_loyear) != 1) {
 		error(_("invalid starting year"));
 		return;
-	}
+	} else if (noise)
+		if (rp->r_loyear < min_year_representable)
+			warning(_("starting year too low to be represented"));
+		else if (rp->r_loyear > max_year_representable)
+			warning(_("starting year too high to be represented"));
 	cp = hiyearp;
 	if ((lp = byword(cp, end_years)) != NULL) switch ((int) lp->l_value) {
 		case YR_MINIMUM:
@@ -1271,7 +1278,11 @@ const char * const		timep;
 	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_hiyear) != 1) {
 		error(_("invalid ending year"));
 		return;
-	}
+	} else if (noise)
+		if (rp->r_loyear < min_year_representable)
+			warning(_("starting year too low to be represented"));
+		else if (rp->r_loyear > max_year_representable)
+			warning(_("starting year too high to be represented"));
 	if (rp->r_loyear > rp->r_hiyear) {
 		error(_("starting year greater than ending year"));
 		return;
@@ -1285,6 +1296,8 @@ const char * const		timep;
 		}
 		rp->r_yrtype = ecpyalloc(typep);
 	}
+	if (rp->r_loyear < min_year && rp->r_loyear > 0)
+		min_year = rp->r_loyear;
 	/*
 	** Day work.
 	** Accept things such as:
@@ -1393,8 +1406,10 @@ const char * const	name;
 
 		toi = 0;
 		fromi = 0;
+		while (fromi < timecnt && attypes[fromi].at < min_time)
+			++fromi;
 		if (isdsts[0] == 0)
-			while (attypes[fromi].type == 0)
+			while (fromi < timecnt && attypes[fromi].type == 0)
 				++fromi;	/* handled by default rule */
 		for ( ; fromi < timecnt; ++fromi) {
 			if (toi != 0
@@ -1422,11 +1437,22 @@ const char * const	name;
 	fullname = erealloc(fullname,
 		(int) (strlen(directory) + 1 + strlen(name) + 1));
 	(void) sprintf(fullname, "%s/%s", directory, name);
+	/*
+	** Remove old file, if any, to snap links.
+	*/
+	if (!itsdir(fullname) && remove(fullname) != 0 && errno != ENOENT) {
+		const char *e = strerror(errno);
+
+		(void) fprintf(stderr, _("%s: Can't remove %s: %s\n"),
+			progname, fullname, e);
+		(void) exit(EXIT_FAILURE);
+	}
 	if ((fp = fopen(fullname, "wb")) == NULL) {
 		if (mkdirs(fullname) != 0)
 			(void) exit(EXIT_FAILURE);
 		if ((fp = fopen(fullname, "wb")) == NULL) {
 			const char *e = strerror(errno);
+
 			(void) fprintf(stderr, _("%s: Can't create %s: %s\n"),
 				progname, fullname, e);
 			(void) exit(EXIT_FAILURE);
@@ -1682,7 +1708,7 @@ const int			zonecount;
 					(void) strcpy(startbuf, zp->z_format);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
-error(_("can't determine time zone abbrevation to use just after until time"));
+error(_("can't determine time zone abbreviation to use just after until time"));
 			else	addtt(starttime,
 					addtype(startoff, startbuf,
 						startoff != zp->z_gmtoff,
@@ -1708,8 +1734,22 @@ error(_("can't determine time zone abbrevation to use just after until time"));
 static void
 addtt(starttime, type)
 const time_t	starttime;
-const int	type;
+int		type;
 {
+	if (starttime <= min_time ||
+		(timecnt == 1 && attypes[0].at < min_time)) {
+		gmtoffs[0] = gmtoffs[type];
+		isdsts[0] = isdsts[type];
+		ttisstds[0] = ttisstds[type];
+		ttisgmts[0] = ttisgmts[type];
+		if (abbrinds[type] != 0)
+			(void) strcpy(chars, &chars[abbrinds[type]]);
+		abbrinds[0] = 0;
+		charcnt = strlen(chars) + 1;
+		typecnt = 1;
+		timecnt = 0;
+		type = 0;
+	}
 	if (timecnt >= TZ_MAX_TIMES) {
 		error(_("too many transitions?!"));
 		(void) exit(EXIT_FAILURE);
@@ -2111,14 +2151,20 @@ char * const	argname;
 		if (!itsdir(name)) {
 			/*
 			** It doesn't seem to exist, so we try to create it.
+			** Creation may fail because of the directory being
+			** created by some other multiprocessor, so we get
+			** to do extra checking.
 			*/
-			if (mkdir(name, 0755) != 0) {
+			if (mkdir(name, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) != 0) {
 				const char *e = strerror(errno);
-				(void) fprintf(stderr,
-				    _("%s: Can't create directory %s: %s\n"),
-				    progname, name, e);
-				ifree(name);
-				return -1;
+
+				if (errno != EEXIST || !itsdir(name)) {
+					(void) fprintf(stderr,
+_("%s: Can't create directory %s: %s\n"),
+						progname, name, e);
+					ifree(name);
+					return -1;
+				}
 			}
 		}
 		*cp = '/';
