@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.18 2001/06/19 13:42:09 wiz Exp $	*/
+/*	$NetBSD: svc.h,v 1.19 2002/02/25 22:44:56 simonb Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -7,23 +7,23 @@
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -65,7 +65,7 @@
  */
 
 /*
- *      Service control requests
+ *	Service control requests
  */
 #define SVCGET_VERSQUIET	1
 #define SVCSET_VERSQUIET	2
@@ -133,7 +133,7 @@ struct svc_req {
 };
 
 /*
- *  Approved way of getting address of caller
+ * Approved way of getting address of caller
  */
 #define svc_getrpccaller(x) (&(x)->xp_rtaddr)
 
@@ -190,7 +190,7 @@ struct svc_req {
  *	const SVCXPRT *xprt;
  *	const rpcprog_t prog;
  *	const rpcvers_t vers;
- *	const void (*dispatch)();
+ *	const void (*dispatch)(...);
  *	const struct netconfig *nconf;
  */
 
@@ -236,7 +236,7 @@ __END_DECLS
 /*
  * When the service routine is called, it must first check to see if it
  * knows about the procedure;  if not, it should call svcerr_noproc
- * and return.  If so, it should deserialize its arguments via 
+ * and return.  If so, it should deserialize its arguments via
  * SVC_GETARGS (defined above).  If the deserialization does not work,
  * svcerr_decode should be called followed by a return.  Successful
  * decoding of the arguments should be followed the execution of the
@@ -247,7 +247,7 @@ __END_DECLS
  * Note: do not confuse access-control failure with weak authentication!
  *
  * NB: In pure implementations of rpc, the caller always waits for a reply
- * msg.  This message is sent when svc_sendreply is called.  
+ * msg.  This message is sent when svc_sendreply is called.
  * Therefore pure service implementations should always call
  * svc_sendreply even if the function logically returns void;  use
  * xdr.h - xdr_void for the xdr routine.  HOWEVER, tcp based rpc allows
@@ -272,7 +272,7 @@ extern int	rpc_reg __P((rpcprog_t, rpcvers_t, rpcproc_t,
 			     char *(*) __P((char *)), xdrproc_t, xdrproc_t,
 			     char *));
 __END_DECLS
-    
+
 /*
  * Lowest level dispatching -OR- who owns this process anyway.
  * Somebody has to wait for incoming requests and then call the correct
@@ -286,7 +286,7 @@ __END_DECLS
 
 /*
  * Global keeper of rpc service descriptors in use
- * dynamic; must be inspected before each call to select 
+ * dynamic; must be inspected before each call to select
  */
 extern int svc_maxfd;
 #ifdef FD_SETSIZE
@@ -332,10 +332,10 @@ __BEGIN_DECLS
 extern int svc_create __P((void (*) __P((struct svc_req *, SVCXPRT *)),
 			   const rpcprog_t, const rpcvers_t, const char *));
 /*
- *      void (*dispatch)();             -- dispatch routine
- *      const rpcprog_t prognum;        -- program number
- *      const rpcvers_t versnum;        -- version number
- *      const char *nettype;            -- network type
+ *	void (*dispatch)(...);		-- dispatch routine
+ *	const rpcprog_t prognum;	-- program number
+ *	const rpcvers_t versnum;	-- version number
+ *	const char *nettype;		-- network type
  */
 
 
@@ -347,12 +347,12 @@ extern int svc_create __P((void (*) __P((struct svc_req *, SVCXPRT *)),
 extern SVCXPRT *svc_tp_create __P((void (*) __P((struct svc_req *, SVCXPRT *)),
 				   const rpcprog_t, const rpcvers_t,
 				   const struct netconfig *));
-        /*
-         * void (*dispatch)();            -- dispatch routine
-         * const rpcprog_t prognum;       -- program number
-         * const rpcvers_t versnum;       -- version number
-         * const struct netconfig *nconf; -- netconfig structure
-         */
+/*
+ *	void (*dispatch)(...);		-- dispatch routine
+ *	const rpcprog_t prognum;	-- program number
+ *	const rpcvers_t versnum;	-- version number
+ *	const struct netconfig *nconf;	-- netconfig structure
+ */
 
 
 /*
@@ -362,11 +362,11 @@ extern SVCXPRT *svc_tli_create __P((const int, const struct netconfig *,
 				    const struct t_bind *, const u_int,
 				    const u_int));
 /*
- *      const int fd;                   -- connection end point
- *      const struct netconfig *nconf;  -- netconfig structure for network
- *      const struct t_bind *bindaddr;  -- local bind address
- *      const u_int sendsz;             -- max sendsize
- *      const u_int recvsz;             -- max recvsize
+ *	const int fd;			-- connection end point
+ *	const struct netconfig *nconf;	-- netconfig structure for network
+ *	const struct t_bind *bindaddr;	-- local bind address
+ *	const u_int sendsz;		-- max sendsize
+ *	const u_int recvsz;		-- max recvsize
  */
 
 /*
@@ -375,17 +375,17 @@ extern SVCXPRT *svc_tli_create __P((const int, const struct netconfig *,
 
 extern SVCXPRT *svc_vc_create __P((const int, const u_int, const u_int));
 /*
- *      const int fd;                           -- open connection end point
- *      const u_int sendsize;                   -- max send size
- *      const u_int recvsize;                   -- max recv size
+ *	const int fd;			-- open connection end point
+ *	const u_int sendsize;		-- max send size
+ *	const u_int recvsize;		-- max recv size
  */
 
 extern SVCXPRT *svc_dg_create __P((const int, const u_int, const u_int));
-        /*
-         * const int fd;                                -- open connection
-         * const u_int sendsize;                        -- max send size
-         * const u_int recvsize;                        -- max recv size
-         */
+/*
+ *	const int fd;			-- open connection
+ *	const u_int sendsize;		-- max send size
+ *	const u_int recvsize;		-- max recv size
+ */
 
 
 /*
@@ -394,9 +394,9 @@ extern SVCXPRT *svc_dg_create __P((const int, const u_int, const u_int));
  */
 extern SVCXPRT *svc_fd_create __P((const int, const u_int, const u_int));
 /*
- *      const int fd;                           -- open connection end point
- *      const u_int sendsize;                   -- max send size
- *      const u_int recvsize;                   -- max recv size
+ *	const int fd;			-- open connection end point
+ *	const u_int sendsize;		-- max send size
+ *	const u_int recvsize;		-- max recv size
  */
 
 /*
