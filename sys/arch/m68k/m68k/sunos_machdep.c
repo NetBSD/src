@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.25 2003/09/22 14:34:57 cl Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.26 2003/09/25 22:04:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.25 2003/09/22 14:34:57 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.26 2003/09/25 22:04:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ struct sunos_sigframe {
  * SIG_DFL for "dangerous" signals.
  */
 void
-sunos_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	u_long code = ksi->ksi_trap;
 	int sig = ksi->ksi_signo;
