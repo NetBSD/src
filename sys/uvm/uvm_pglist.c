@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.6 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.6.2.1 1999/02/25 04:35:40 chs Exp $	*/
 
 #define VM_PAGE_ALLOC_MEMORY_STATS
  
@@ -238,19 +238,19 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	error = 0;
 
 out:
-	uvm_unlock_fpageq();
-	splx(s);
-
 	/*
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
-	 * XXX: we read uvm.free without locking
 	 */
 	 
-	if (uvmexp.free < uvmexp.freemin ||
-	    (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg)) 
-		thread_wakeup(&uvm.pagedaemon);
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	     uvmexp.inactive < uvmexp.inactarg)) {
+		wakeup(&uvm.pagedaemon);
+	}
+
+	uvm_unlock_fpageq();
+	splx(s);
 
 	return (error);
 }
