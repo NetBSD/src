@@ -1,9 +1,9 @@
 #
-#	$NetBSD: ttys,v 1.1.1.1 1999/09/16 12:18:27 takemura Exp $
+#	$NetBSD: ttys,v 1.2 2000/02/12 13:46:54 shin Exp $
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty std.9600"	unknown	on secure
+console	"/usr/libexec/getty std.9600"	vt100	on secure
 #
 #  pseudo-terminals
 #
