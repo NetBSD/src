@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 1995/03/28 18:18:28 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 1995/04/10 12:42:13 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -195,17 +195,13 @@ struct pmap {
 
 typedef struct pmap	*pmap_t;
 
-#ifdef _KERNEL
-extern pmap_t		kernel_pmap;
-#endif
-
 /*
  * Macros for speed
  */
 #define PMAP_ACTIVATE(pmapp, pcbp) \
 	if ((pmapp) != NULL /*&& (pmapp)->pm_pdchanged */) {  \
 		(pcbp)->pcb_ptb = \
-		    pmap_extract(kernel_pmap, (pmapp)->pm_pdir); \
+		    pmap_extract(pmap_kernel(), (pmapp)->pm_pdir); \
 		if ((pmapp) == &curproc->p_vmspace->vm_pmap) \
 			_load_ptb0((pcbp)->pcb_ptb); \
 		(pmapp)->pm_pdchanged = FALSE; \
@@ -232,10 +228,12 @@ typedef struct pv_entry {
 #ifdef	KERNEL
 
 pv_entry_t	pv_table;		/* array of entries, one per page */
+struct pmap	kernel_pmap_store;
 
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
+#define	pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 #endif	KERNEL

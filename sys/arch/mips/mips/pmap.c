@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1994/11/23 20:46:20 dean Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1995/04/10 12:42:20 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -146,7 +146,6 @@ int pmapdebug;
 #endif /* DEBUG */
 
 struct pmap	kernel_pmap_store;
-pmap_t kernel_pmap;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -217,7 +216,6 @@ pmap_bootstrap(firstaddr)
 	/* XXX need to decide how to set cnt.v_page_size */
 	pmaxpagesperpage = 1;
 
-        kernel_pmap = &kernel_pmap_store;
 	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_count = 1;
 }

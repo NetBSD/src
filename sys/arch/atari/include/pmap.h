@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 1995/03/30 06:01:19 leo Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 1995/04/10 12:41:49 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -59,7 +59,6 @@ struct pmap {
 };
 
 typedef struct pmap *pmap_t;
-extern pmap_t kernel_pmap;
 
 /*
  * Macros for speed
@@ -93,12 +92,14 @@ typedef struct pv_entry {
 #define PV_PTPAGE	0x02	/* entry maps a page table page */
 
 #ifdef	_KERNEL
-extern pv_entry_t	pv_table;	/* array of entries, one per page */
-extern u_int		*Sysmap;
-extern char		*vmmap;		/* map for mem, dumps, etc. */
+pv_entry_t	pv_table;	/* array of entries, one per page */
+u_int		*Sysmap;
+char		*vmmap;		/* map for mem, dumps, etc. */
+struct pmap	kernel_pmap_store;
 
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
+#define	pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #endif	KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1994/10/26 08:25:15 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1995/04/10 12:42:16 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -182,7 +182,6 @@ int	protection_codes[8];
 
 struct user *proc0paddr;
 struct pmap	kernel_pmap_store;
-pmap_t		kernel_pmap;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -317,7 +316,7 @@ map_page_table(pmap_t pmap, int index, vm_offset_t va, vm_offset_t pa)
 		panic("remapping 2nd level table");
 	}
 	/* map in the 2nd level table */
-	map_page(kernel_pmap, va, pa);
+	map_page(pmap_kernel(), va, pa);
 	/* init the 2nd level table to all invalid */
 	bzero(pa, NBPG);
 	/* install the 2nd level table */
@@ -358,13 +357,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	 */
 	ns532_protection_init(); 
 
-	/*
-	 * The kernel's pmap is statically allocated so we don't
-	 * have to use pmap_create, which is unlikely to work
-	 * correctly at this part of the boot sequence.
-	 */
-	kernel_pmap = &kernel_pmap_store;
-
 	/* setup avail_start, avail_end, virtual_avail, virtual_end */
 	avail_start = firstaddr;
 	avail_end = mem_size;
@@ -378,12 +370,12 @@ pmap_bootstrap(firstaddr, loadaddr)
 	/*
 	 * Create Kernel page directory table and page maps.
 	 */
-	kernel_pmap->pm_pdir = (pd_entry_t *) (KPTphys + KERNBASE);
+	pmap_kernel()->pm_pdir = (pd_entry_t *) (KPTphys + KERNBASE);
 	/* recursively map in ptb0 */
-	ptr = ((int *) kernel_pmap->pm_pdir) + PDRPDROFF;
+	ptr = ((int *) pmap_kernel()->pm_pdir) + PDRPDROFF;
 	if (*ptr) {
 		printf("ptb0 0x%x offset 0x%x should be 0 but is 0x%x\n",
-			kernel_pmap->pm_pdir, PDRPDROFF, *ptr);
+			pmap_kernel()->pm_pdir, PDRPDROFF, *ptr);
 		bpt_to_monitor();
 	}
 	/* don't add KERNBASE as this has to be a physical address */
@@ -391,11 +383,11 @@ pmap_bootstrap(firstaddr, loadaddr)
 	/* fill in the rest of the top-level kernel VA entries */
 	for (x = ns532_btod(VM_MIN_KERNEL_ADDRESS);
 			x < ns532_btod(VM_MAX_KERNEL_ADDRESS); x++) {
-		ptr = (int *) &kernel_pmap->pm_pdir[x];
+		ptr = (int *) &pmap_kernel()->pm_pdir[x];
 		/* only fill in the entries not yet made in _low_level_init() */
 		if (!*ptr) {
 			/* map in the page table */
-			map_page_table(kernel_pmap, x,
+			map_page_table(pmap_kernel(), x,
 				virtual_avail, avail_start);
 			avail_start += NBPG;
 			virtual_avail += NBPG;
@@ -403,7 +395,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	}
 	/* map in the kernel stack for process 0 */
 	/* install avail_start as a 2nd level table for index 0x3f6 */
-	map_page_table(kernel_pmap, 0x3f6, virtual_avail, avail_start);
+	map_page_table(pmap_kernel(), 0x3f6, virtual_avail, avail_start);
 	avail_start += NBPG;
 	virtual_avail += NBPG;
 	/* reserve UPAGES pages */
@@ -411,16 +403,16 @@ pmap_bootstrap(firstaddr, loadaddr)
 	curpcb = (struct pcb *) proc0paddr;
 	va = ns532_dtob(0x3f6) | ns532_ptob(0x3fe);  /* USRSTACK ? */
 	for (x = 0; x < UPAGES; ++x) {
-		map_page(kernel_pmap, va, avail_start);
-		map_page(kernel_pmap, virtual_avail, avail_start);
+		map_page(pmap_kernel(), va, avail_start);
+		map_page(pmap_kernel(), virtual_avail, avail_start);
 		bzero(va, NBPG);
 		va += NBPG;
 		avail_start += NBPG;
 		virtual_avail += NBPG;
 	}
 
-	simple_lock_init(&kernel_pmap->pm_lock);
-	kernel_pmap->pm_count = 1;
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap_kernel()->pm_count = 1;
 
 #ifdef DEBUG
 	printf("avail_start   = 0x%x\n", avail_start);
@@ -437,7 +429,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	v = (c)va; va += ((n)*NS532_PAGE_SIZE); p = pte; pte += (n);
 
 	va = virtual_avail;
-	pte = pmap_pte(kernel_pmap, va);
+	pte = pmap_pte(pmap_kernel(), va);
 
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
@@ -544,7 +536,7 @@ pmap_map(virt, start, end, prot)
 		printf("pmap_map(%x, %x, %x, %x)\n", virt, start, end, prot);
 #endif
 	while (start < end) {
-		pmap_enter(kernel_pmap, virt, start, prot, FALSE);
+		pmap_enter(pmap_kernel(), virt, start, prot, FALSE);
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
@@ -619,7 +611,7 @@ pmap_pinit(pmap)
 
 	/* install self-referential address mapping entry */
 	*(int *)(pmap->pm_pdir+PTDPTDI) =
-		(int)pmap_extract(kernel_pmap, pmap->pm_pdir) | PG_V | PG_KW;
+		(int)pmap_extract(pmap_kernel(), pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -724,7 +716,7 @@ pmap_remove(pmap, sva, eva)
 
 	/* are we current address space or kernel? */
 	if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum
-		|| pmap == kernel_pmap)
+		|| pmap == pmap_kernel())
 		ptp=PTmap;
 
 	/* otherwise, we are alternate address space */
@@ -809,7 +801,7 @@ pmap_remove(pmap, sva, eva)
 /* commented out in 386 version as well */
 		/* are we current address space or kernel? */
 		if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum
-				|| pmap == kernel_pmap) {
+				|| pmap == pmap_kernel()) {
 			_load_ptb0(curpcb->pcb_ptb);
 		}
 #endif
@@ -969,7 +961,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 	/* are we current address space or kernel? */
 	if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum
-		|| pmap == kernel_pmap)
+		|| pmap == pmap_kernel())
 		ptp=PTmap;
 
 	/* otherwise, we are alternate address space */
@@ -1057,7 +1049,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/* also, should not muck with PTD va! */
 
 #ifdef DEBUG
-	if (pmap == kernel_pmap)
+	if (pmap == pmap_kernel())
 		enter_stats.kernel++;
 	else
 		enter_stats.user++;
@@ -1347,7 +1339,7 @@ struct pte *pmap_pte(pmap, va)
 
 		/* are we current address space or kernel? */
 		if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum
-			|| pmap == kernel_pmap)
+			|| pmap == pmap_kernel())
 			return ((struct pte *) vtopte(va));
 
 		/* otherwise, we are alternate address space */
@@ -1460,7 +1452,7 @@ pmap_collect(pmap)
 	int *pde;
 	int opmapdebug;
 #endif
-	if (pmap != kernel_pmap)
+	if (pmap != pmap_kernel())
 		return;
 }
 
@@ -1486,17 +1478,6 @@ pmap_activate(pmap, pcbp)
 	}
 #endif
 }
-
-/*
- *	Routine:	pmap_kernel
- *	Function:
- *		Returns the physical map handle for the kernel.
- */
-/* pmap_t
-pmap_kernel()
-{
-    	return (kernel_pmap);
-} */
 
 /*
  *	pmap_zero_page zeros the specified (machine independent)
@@ -1579,7 +1560,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 *	- we are called with only one page at a time
 	 *	- PT pages have only one pv_table entry
 	 */
-	if (pmap == kernel_pmap && pageable && sva + PAGE_SIZE == eva) {
+	if (pmap == pmap_kernel() && pageable && sva + PAGE_SIZE == eva) {
 		register pv_entry_t pv;
 		register vm_offset_t pa;
 
@@ -1807,7 +1788,7 @@ pmap_changebit(pa, bit, setem)
 #endif
 		for (; pv; pv = pv->pv_next) {
 #ifdef DEBUG
-			toflush |= (pv->pv_pmap == kernel_pmap) ? 2 : 1;
+			toflush |= (pv->pv_pmap == pmap_kernel()) ? 2 : 1;
 #endif
 			va = pv->pv_va;
 
@@ -1877,8 +1858,8 @@ pmap_check_wiring(str, va)
 	register int count, *pte;
 
 	va = trunc_page(va);
-	if (!pmap_pde_v(pmap_pde(kernel_pmap, va)) ||
-	    !pmap_pte_v(pmap_pte(kernel_pmap, va)))
+	if (!pmap_pde_v(pmap_pde(pmap_kernel(), va)) ||
+	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
@@ -1903,14 +1884,14 @@ pads(pm)
 	struct pte *ptep;
 	int num=0;
 
-/*	if(pm == kernel_pmap) return; */
+/*	if(pm == pmap_kernel()) return; */
 	for (i = 0; i < 1024; i++) 
 		if(pm->pm_pdir[i].pd_v)
 			for (j = 0; j < 1024 ; j++) {
 				va = (i<<22)+(j<<12);
-				if (pm == kernel_pmap && va < 0xfe000000)
+				if (pm == pmap_kernel() && va < 0xfe000000)
 						continue;
-				if (pm != kernel_pmap && va > UPT_MAX_ADDRESS)
+				if (pm != pmap_kernel() && va > UPT_MAX_ADDRESS)
 						continue;
 				ptep = pmap_pte(pm, va);
 				if(pmap_pte_v(ptep)) {

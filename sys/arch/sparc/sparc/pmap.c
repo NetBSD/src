@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1995/04/10 11:57:17 mycroft Exp $ */
+/*	$NetBSD: pmap.c,v 1.42 1995/04/10 12:42:26 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,7 +264,6 @@ caddr_t vdumppages;		/* 32KB worth of reserved dump pages */
 
 struct pmap	kernel_pmap_store;	/* the kernel's pmap */
 struct ksegmap	kernel_segmap_store;	/* the kernel's segmap */
-pmap_t		kernel_pmap;
 
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
 #ifdef MACHINE_NONCONTIG
@@ -753,7 +752,7 @@ me_alloc(mh, newpm, newvseg)
 	pm = me->me_pmap;
 	if (pm == NULL)
 		panic("me_alloc: LRU entry has no pmap");
-	if (pm == kernel_pmap)
+	if (pm == pmap_kernel())
 		panic("me_alloc: stealing from kernel");
 	pte = pm->pm_pte[me->me_vseg];
 	if (pte == NULL)
@@ -1391,8 +1390,6 @@ pmap_bootstrap(nmmu, nctx)
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
 
-	kernel_pmap = (pmap_t)&kernel_pmap_store;
-
 	ncontext = nctx;
 
 #if defined(SUN4) && defined(SUN4C)
@@ -1493,7 +1490,7 @@ pmap_bootstrap(nmmu, nctx)
 	 * Intialize the kernel pmap.
 	 */
 	{
-		register struct pmap *k = kernel_pmap;
+		register struct pmap *k = pmap_kernel();
 
 		k->pm_ctx = ctxinfo;
 		/* k->pm_ctxnum = 0; */
@@ -1513,7 +1510,7 @@ pmap_bootstrap(nmmu, nctx)
 	 *
 	 * XXX sun4c could use context 0 for users?
 	 */
-	ci->c_pmap = kernel_pmap;
+	ci->c_pmap = pmap_kernel();
 	ctx_freelist = ci + 1;
 	for (i = 1; i < ncontext; i++) {
 		ci++;
@@ -1557,14 +1554,14 @@ pmap_bootstrap(nmmu, nctx)
 		me->me_pmeg = i;
 		insque(me, me_locked.mh_prev);
 		/* me->me_pmforw = NULL; */
-		me->me_pmback = kernel_pmap->pm_mmuback;
-		*kernel_pmap->pm_mmuback = me;
-		kernel_pmap->pm_mmuback = &me->me_pmforw;
-		me->me_pmap = kernel_pmap;
+		me->me_pmback = pmap_kernel()->pm_mmuback;
+		*pmap_kernel()->pm_mmuback = me;
+		pmap_kernel()->pm_mmuback = &me->me_pmforw;
+		me->me_pmap = pmap_kernel();
 		me->me_vseg = vs;
-		kernel_pmap->pm_segmap[vs] = i;
+		pmap_kernel()->pm_segmap[vs] = i;
 		n = ++i < z ? NPTESG : lastpage;
-		kernel_pmap->pm_npte[vs] = n;
+		pmap_kernel()->pm_npte[vs] = n;
 		me++;
 		vs++;
 		if (i < z) {
@@ -1722,7 +1719,7 @@ pass2:
 
 		/* Map this piece of pv_table[] */
 		for (va = sva; va < eva; va += PAGE_SIZE) {
-			pmap_enter(kernel_pmap, va, pa,
+			pmap_enter(pmap_kernel(), va, pa,
 				   VM_PROT_READ|VM_PROT_WRITE, 1);
 			pa += PAGE_SIZE;
 		}
@@ -1730,7 +1727,7 @@ pass2:
 	}
 
 	if (pass1) {
-		pa = pmap_extract(kernel_pmap, kmem_alloc(kernel_map, s));
+		pa = pmap_extract(pmap_kernel(), kmem_alloc(kernel_map, s));
 		pass1 = 0;
 		goto pass2;
 	}
@@ -1752,7 +1749,7 @@ pmap_map(va, pa, endpa, prot)
 	register int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(kernel_pmap, va, pa, prot, 1);
+		pmap_enter(pmap_kernel(), va, pa, prot, 1);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -1912,7 +1909,7 @@ pmap_remove(pm, va, endva)
 		printf("pmap_remove(%x, %x, %x)\n", pm, va, endva);
 #endif
 
-	if (pm == kernel_pmap) {
+	if (pm == pmap_kernel()) {
 		/*
 		 * Removing from kernel address space.
 		 */
@@ -2240,7 +2237,7 @@ pmap_page_protect(pa, prot)
 			flags |= MR(tpte);
 			if (pm->pm_ctx) {
 				setsegmap(va, seginval);
-				if (pm == kernel_pmap) {
+				if (pm == pmap_kernel()) {
 					for (i = ncontext; --i > 0;) {
 						setcontext(i);
 						setsegmap(va, seginval);
@@ -2379,7 +2376,7 @@ pmap_changeprot(pm, va, prot, wired)
 
 	write_user_windows();	/* paranoia */
 
-	if (pm == kernel_pmap)
+	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
 		newprot = prot & VM_PROT_WRITE ? PG_W : 0;
@@ -2486,7 +2483,7 @@ pmap_enter(pm, va, pa, prot, wired)
 		pteproto |= PG_W;
 
 	ctx = getcontext();
-	if (pm == kernel_pmap)
+	if (pm == pmap_kernel())
 		pmap_enk(pm, va, prot, wired, pv, pteproto | PG_S);
 	else
 		pmap_enu(pm, va, prot, wired, pv, pteproto);
@@ -2919,17 +2916,6 @@ pmap_pageable(pm, start, end, pageable)
 }
 
 /*
- *	Routine:	pmap_kernel
- *	Function:
- *		Returns the physical map handle for the kernel.
- */
-pmap_t
-pmap_kernel()
-{
-	return (kernel_pmap);
-}
-
-/*
  * Fill the given MI physical page with zero bytes.
  *
  * We avoid stomping on the cache.
@@ -3044,7 +3030,7 @@ pmap_count_ptes(pm)
 {
 	register int idx, total;
 
-	if (pm == kernel_pmap)
+	if (pm == pmap_kernel())
 		idx = NKSEG;
 	else
 		idx = NUSEG;

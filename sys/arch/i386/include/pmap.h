@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 1995/03/28 18:17:06 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 1995/04/10 12:42:05 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -156,7 +156,7 @@ struct pv_page {
 extern struct pmap	kernel_pmap_store;
 struct pv_entry		*pv_table;	/* array of entries, one per page */
 
-#define	kernel_pmap			(&kernel_pmap_store)
+#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 

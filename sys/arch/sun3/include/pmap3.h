@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.12 1995/03/28 18:21:07 jtc Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.13 1995/04/10 12:42:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,9 +50,9 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
+struct pmap	kernel_pmap_store;
 
-extern pmap_t kernel_pmap;
-#define	pmap_kernel()			(kernel_pmap)
+#define	pmap_kernel()			(&kernel_pmap_store)
 
 #define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
 	pmap_activate(pmap, pcbp)

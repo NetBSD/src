@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.9 1995/04/10 03:54:27 mycroft Exp $     */
+/*      $NetBSD: pmap.c,v 1.10 1995/04/10 12:42:39 mycroft Exp $     */
 #undef	oldway
 #define DEBUG
 /*
@@ -67,7 +67,6 @@ pt_entry_t *pmap_virt2pte(pmap_t, u_int);
 
 struct pmap kernel_pmap_store;
 unsigned int gurkskit[50],istack;
-pmap_t kernel_pmap = &kernel_pmap_store;
 
 static pv_entry_t alloc_pv_entry();
 static void	free_pv_entry();
@@ -174,8 +173,8 @@ pmap_bootstrap()
 		VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Init kernel pmap */
-	kernel_pmap->ref_count = 1;
-	simple_lock_init(&kernel_pmap->pm_lock);
+	pmap_kernel()->ref_count = 1;
+	simple_lock_init(&pmap_kernel()->pm_lock);
 	p0pmap->pm_pcb=(struct pcb *)proc0paddr;
 
 		 /* used for signal trampoline code */

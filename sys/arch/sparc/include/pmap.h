@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1995/03/28 18:19:59 jtc Exp $ */
+/*	$NetBSD: pmap.h,v 1.14 1995/04/10 12:42:23 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,6 @@ typedef struct pmap *pmap_t;
 
 extern struct pmap	kernel_pmap_store;
 extern struct ksegmap	kernel_segmap_store;
-extern pmap_t		kernel_pmap;
 extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 /*
@@ -170,6 +169,7 @@ int		pmap_count_ptes __P((struct pmap *));
 vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
 int		pmap_pa_exists __P((vm_offset_t));
 
+#define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
 #define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1994/11/08 01:17:19 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 1995/04/10 12:42:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -234,22 +234,22 @@ pmap_bootstrap(virtual_start)
 	 * [ currently done in locore. i have wild and crazy ideas -wfj ]
 	 */
 	bzero(firstaddr, (1+NKPDE)*NBPG);
-	kernel_pmap->pm_pdir = firstaddr + VM_MIN_KERNEL_ADDRESS;
-	kernel_pmap->pm_ptab = firstaddr + VM_MIN_KERNEL_ADDRESS + NBPG;
+	pmap_kernel()->pm_pdir = firstaddr + VM_MIN_KERNEL_ADDRESS;
+	pmap_kernel()->pm_ptab = firstaddr + VM_MIN_KERNEL_ADDRESS + NBPG;
 
 	firstaddr += NBPG;
 	for (x = i386_btod(VM_MIN_KERNEL_ADDRESS);
 	    x < i386_btod(VM_MIN_KERNEL_ADDRESS) + NKPDE; x++) {
 		pd_entry_t *pde;
-		pde = kernel_pmap->pm_pdir + x;
+		pde = pmap_kernel()->pm_pdir + x;
 		*pde = (firstaddr + x*NBPG) | PG_V | PG_KW;
 	}
 #else
-	kernel_pmap->pm_pdir = (pd_entry_t *)(KERNBASE + IdlePTD);
+	pmap_kernel()->pm_pdir = (pd_entry_t *)(KERNBASE + IdlePTD);
 #endif
 
-	simple_lock_init(&kernel_pmap->pm_lock);
-	kernel_pmap->pm_count = 1;
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap_kernel()->pm_count = 1;
 
 #if BSDVM_COMPAT
 	/*
@@ -259,7 +259,7 @@ pmap_bootstrap(virtual_start)
 	v = (c)va; va += ((n)*NBPG); p = pte; pte += (n);
 
 	va = virtual_avail;
-	pte = pmap_pte(kernel_pmap, va);
+	pte = pmap_pte(pmap_kernel(), va);
 
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
@@ -565,7 +565,7 @@ pmap_map(va, spa, epa, prot)
 #endif
 
 	while (spa < epa) {
-		pmap_enter(kernel_pmap, va, spa, prot, FALSE);
+		pmap_enter(pmap_kernel(), va, spa, prot, FALSE);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -635,7 +635,7 @@ pmap_pinit(pmap)
 
 	/* install self-referential address mapping entry */
 	*(pmap->pm_pdir + PTDPTDI) =
-	    pmap_extract(kernel_pmap, (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
+	    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -722,7 +722,7 @@ pmap_activate(pmap, pcb)
 
 	if (pmap /*&& pmap->pm_pdchanged */) {
 		pcb->pcb_cr3 =
-		    pmap_extract(kernel_pmap, (vm_offset_t)pmap->pm_pdir);
+		    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
 		if (pmap == &curproc->p_vmspace->vm_pmap)
 			lcr3(pcb->pcb_cr3);
 		pmap->pm_pdchanged = FALSE;
@@ -1061,7 +1061,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/* also, should not muck with PTD va! */
 
 #ifdef DEBUG
-	if (pmap == kernel_pmap)
+	if (pmap == pmap_kernel())
 		enter_stats.kernel++;
 	else
 		enter_stats.user++;
@@ -1282,7 +1282,7 @@ pmap_pte(pmap, va)
 		return NULL;
 
 	if ((pmap->pm_pdir[PTDPTDI] & PG_FRAME) == (PTDpde & PG_FRAME) ||
-	    pmap == kernel_pmap)
+	    pmap == pmap_kernel())
 		/* current address space or kernel */
 		ptp = PTmap;
 	else {
@@ -1377,7 +1377,7 @@ pmap_collect(pmap)
 	printf("pmap_collect(%x) ", pmap);
 #endif
 
-	if (pmap != kernel_pmap)
+	if (pmap != pmap_kernel())
 		return;
 
 }
@@ -1484,7 +1484,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 *	- we are called with only one page at a time
 	 *	- PT pages have only one pv_table entry
 	 */
-	if (pmap == kernel_pmap && pageable && sva + NBPG == eva) {
+	if (pmap == pmap_kernel() && pageable && sva + NBPG == eva) {
 		register vm_offset_t pa;
 		register pt_entry_t *pte;
 
@@ -1674,8 +1674,8 @@ pmap_check_wiring(str, va)
 	register int count, *pte;
 
 	va = trunc_page(va);
-	if (!pmap_pde_v(pmap_pde(kernel_pmap, va)) ||
-	    !pmap_pte_v(pmap_pte(kernel_pmap, va)))
+	if (!pmap_pde_v(pmap_pde(pmap_kernel(), va)) ||
+	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
@@ -1699,16 +1699,16 @@ pads(pm)
 	unsigned va, i, j;
 	register pt_entry_t *pte;
 
-	if (pm == kernel_pmap)
+	if (pm == pmap_kernel())
 		return;
 	for (i = 0; i < 1024; i++) 
 		if (pmap_pde_v(&pm->pm_pdir[i]))
 			for (j = 0; j < 1024 ; j++) {
 				va = (i << PDSHIFT) | (j << PGSHIFT);
-				if (pm == kernel_pmap &&
+				if (pm == pmap_kernel() &&
 				    va < VM_MIN_KERNEL_ADDRESS)
 					continue;
-				if (pm != kernel_pmap &&
+				if (pm != pmap_kernel() &&
 				    va > VM_MAX_ADDRESS)
 					continue;
 				pte = pmap_pte(pm, va);
