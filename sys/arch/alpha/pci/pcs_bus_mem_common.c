@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_mem_common.c,v 1.16 1997/03/12 05:24:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,25 @@
  * uses:
  *	CHIP		name of the 'chip' it's being compiled for.
  *	CHIP_D_MEM_BASE	Dense Mem space base to use.
+ *	CHIP_D_MEM_EX_STORE
+ *			If defined, device-provided static storage area
+ *			for the dense memory space extent.  If this is
+ *			defined, CHIP_D_MEM_EX_STORE_SIZE must also be
+ *			defined.  If this is not defined, a static area
+ *			will be declared.
+ *	CHIP_D_MEM_EX_STORE_SIZE
+ *			Size of the device-provided static storage area
+ *			for the dense memory space extent.
  *	CHIP_S_MEM_BASE	Sparse Mem space base to use.
+ *	CHIP_S_MEM_EX_STORE
+ *			If defined, device-provided static storage area
+ *			for the sparse memory space extent.  If this is
+ *			defined, CHIP_S_MEM_EX_STORE_SIZE must also be
+ *			defined.  If this is not defined, a static area
+ *			will be declared.
+ *	CHIP_S_MEM_EX_STORE_SIZE
+ *			Size of the device-provided static storage area
+ *			for the sparse memory space extent.
  */
 
 #include <sys/extent.h>
@@ -151,10 +169,19 @@ void		__C(CHIP,_mem_copy_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_mem_copy_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
+#ifndef	CHIP_D_MEM_EX_STORE
 static long
     __C(CHIP,_dmem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+#define	CHIP_D_MEM_EX_STORE(v)		(__C(CHIP,_dmem_ex_storage))
+#define	CHIP_D_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_dmem_ex_storage))
+#endif
+
+#ifndef	CHIP_S_MEM_EX_STORE
 static long
     __C(CHIP,_smem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+#define	CHIP_S_MEM_EX_STORE(v)		(__C(CHIP,_smem_ex_storage))
+#define	CHIP_S_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_smem_ex_storage))
+#endif
 
 static struct alpha_bus_space __C(CHIP,_mem_space) = {
 	/* cookie */
@@ -239,8 +266,8 @@ __C(CHIP,_bus_mem_init)(v)
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	dex = extent_create(__S(__C(CHIP,_bus_dmem)), 0x0UL,
 	    0xffffffffffffffffUL, M_DEVBUF,
-	    (caddr_t)__C(CHIP,_dmem_ex_storage),
-	    sizeof(__C(CHIP,_dmem_ex_storage)), EX_NOWAIT);
+	    (caddr_t)CHIP_D_MEM_EX_STORE(v), CHIP_D_MEM_EX_STORE_SIZE(v),
+	    EX_NOWAIT);
 	extent_alloc_region(dex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
 
 #ifdef CHIP_D_MEM_W1_BUS_START
@@ -261,8 +288,8 @@ __C(CHIP,_bus_mem_init)(v)
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	sex = extent_create(__S(__C(CHIP,_bus_smem)), 0x0UL,
 	    0xffffffffffffffffUL, M_DEVBUF,
-	    (caddr_t)__C(CHIP,_smem_ex_storage),
-	    sizeof(__C(CHIP,_smem_ex_storage)), EX_NOWAIT);
+	    (caddr_t)CHIP_S_MEM_EX_STORE(v), CHIP_S_MEM_EX_STORE_SIZE(v),
+	    EX_NOWAIT);
 	extent_alloc_region(sex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
 
 #ifdef CHIP_S_MEM_W1_BUS_START
