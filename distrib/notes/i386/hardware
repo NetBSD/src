@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.90 2001/05/20 23:25:46 jhawk Exp $
+.\"	$NetBSD: hardware,v 1.91 2001/05/20 23:47:08 jhawk Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -435,7 +435,7 @@ Ensoniq AudioPCI [*] [+]
 ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 2/2E and
 Solo-1 ES1938/1946
 .It
-Gravis Ultrasound Plug\*&Play [*] [+]
+Gravis Ultrasound Plug and Play [*] [+]
 .It
 Gravis Ultrasound and Ultrasound Max [*] [+]
 .It
@@ -495,7 +495,7 @@ Handspring Visor driver [*] [+]
 .It
 PCMCIA Controllers.
 .br
-ISA, PCI, and ISA Plug\*&Play attachments
+ISA, PCI, and ISA Plug and Play attachments
 .(bullet -compact
 Intel 82365 PCIC, rev 0 and rev 1
 .It
