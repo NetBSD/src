@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)brk.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: brk.2,v 1.3 1993/11/25 00:38:26 jtc Exp $
+.\"	$Id: brk.2,v 1.4 1993/11/25 02:49:19 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt BRK 2
@@ -41,10 +41,10 @@
 .Nd change data segment size
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Ft char
-.Fn *brk "const char *addr"
+.Ft int
+.Fn brk "const char *addr"
 .Ft char *
-.Fn *sbrk "int incr"
+.Fn sbrk "int incr"
 .Sh DESCRIPTION
 .Bf -symbolic
 The brk and sbrk functions are historical curiosities
