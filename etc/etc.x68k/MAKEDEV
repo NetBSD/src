@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.3 1996/09/16 20:08:56 oki Exp $
+#	$NetBSD: MAKEDEV,v 1.4 1996/09/16 20:56:24 oki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,19 +92,18 @@ for i
 do
 case $i in
 all)
-	sh MAKEDEV std fd st0 st1 ttye0 ttye1 mouse0 mouse1
-	sh MAKEDEV tty00 tty01 tty02 tty03 com0 com1 grf0 grf1 kbd
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 pty0
-	sh MAKEDEV cd0 ss0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 par0 lkm
-	sh MAKEDEV sram audio pow0 pow1 bell local
-	sh MAKEDEV rd0 rd1 ch0 uk0 uk1 ss0
+	sh $0 std fd st0 st1 ttye0 ttye1 mouse0 mouse1
+	sh $0 tty00 tty01 tty02 tty03 com0 com1 grf0 grf1 kbd
+	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	sh $0 vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 pty0
+	sh $0 cd0 ss0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
+	sh $0 ccd0 ccd1 ccd2 ccd3 tun0 tun1 par0 lkm
+	sh $0 sram audio pow0 pow1 bell local
+	sh $0 rd0 rd1 ch0 uk0 uk1 ss0
 	;;
 
 floppy)
-	sh MAKEDEV std fd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	sh MAKEDEV std fd0 fd1 sd0 sd1 sd2
 	sh MAKEDEV tty00 cd0 ttye0
 	;;
 
@@ -138,30 +137,30 @@ fd)
 	;;
 
 st*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2
 	case $i in
-	st*) name=st; blk=5; chr=20;;
+	st*) name=st;	unit=${i#st} blk=5; chr=20;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	case $unit in
 	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-		mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-		mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-		mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-		mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-		chgrp operator ${name}${unit} n${name}${unit} \
+		mknod $name$unit	b $blk $(($unit * 16 + 0))
+		mknod n$name$unit	b $blk $(($unit * 16 + 1))
+		mknod e$name$unit	b $blk $(($unit * 16 + 2))
+		mknod en$name$unit	b $blk $(($unit * 16 + 3))
+		mknod r$name$unit	c $chr $(($unit * 16 + 0))
+		mknod nr$name$unit	c $chr $(($unit * 16 + 1))
+		mknod er$name$unit	c $chr $(($unit * 16 + 2))
+		mknod enr$name$unit	c $chr $(($unit * 16 + 3))
+		chgrp operator $name$unit n$name$unit \
 			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
+			r$name$unit nr$name$unit \
+			er$name$unit enr$name$unit 
+		chmod 640 $name$unit n$name$unit \
 			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
+			r$name$unit nr$name$unit \
+			er$name$unit enr$name$unit
 		;;
 	*)
 		echo bad unit for tape in: $i
@@ -171,26 +170,26 @@ st*)
 	;;
 
 fd*)
-	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
+	umask 2 ; unit=${i#fd}
 	rm -f fd$unit? rfd$unit?
 	case $unit in
 	0|1|2|3)
-		mknod fd${unit}a b 2 `expr $unit '*' 8 + 0`
-		mknod fd${unit}b b 2 `expr $unit '*' 8 + 1`
-		mknod fd${unit}c b 2 `expr $unit '*' 8 + 2`
-		mknod fd${unit}d b 2 `expr $unit '*' 8 + 3`
-		mknod fd${unit}e b 2 `expr $unit '*' 8 + 4`
-		mknod fd${unit}f b 2 `expr $unit '*' 8 + 5`
-		mknod fd${unit}g b 2 `expr $unit '*' 8 + 6`
-		mknod fd${unit}h b 2 `expr $unit '*' 8 + 7`
-		mknod rfd${unit}a c 18 `expr $unit '*' 8 + 0`
-		mknod rfd${unit}b c 18 `expr $unit '*' 8 + 1`
-		mknod rfd${unit}c c 18 `expr $unit '*' 8 + 2`
-		mknod rfd${unit}d c 18 `expr $unit '*' 8 + 3`
-		mknod rfd${unit}e c 18 `expr $unit '*' 8 + 4`
-		mknod rfd${unit}f c 18 `expr $unit '*' 8 + 5`
-		mknod rfd${unit}g c 18 `expr $unit '*' 8 + 6`
-		mknod rfd${unit}h c 18 `expr $unit '*' 8 + 7`
+		mknod fd${unit}a b 2 $(($unit * 8 + 0))
+		mknod fd${unit}b b 2 $(($unit * 8 + 1))
+		mknod fd${unit}c b 2 $(($unit * 8 + 2))
+		mknod fd${unit}d b 2 $(($unit * 8 + 3))
+		mknod fd${unit}e b 2 $(($unit * 8 + 4))
+		mknod fd${unit}f b 2 $(($unit * 8 + 5))
+		mknod fd${unit}g b 2 $(($unit * 8 + 6))
+		mknod fd${unit}h b 2 $(($unit * 8 + 7))
+		mknod rfd${unit}a c 18 $(($unit * 8 + 0))
+		mknod rfd${unit}b c 18 $(($unit * 8 + 1))
+		mknod rfd${unit}c c 18 $(($unit * 8 + 2))
+		mknod rfd${unit}d c 18 $(($unit * 8 + 3))
+		mknod rfd${unit}e c 18 $(($unit * 8 + 4))
+		mknod rfd${unit}f c 18 $(($unit * 8 + 5))
+		mknod rfd${unit}g c 18 $(($unit * 8 + 6))
+		mknod rfd${unit}h c 18 $(($unit * 8 + 7))
 		chgrp operator fd$unit? rfd$unit?
 		chmod 640 fd$unit? rfd$unit?
 		;;
@@ -201,38 +200,37 @@ fd*)
 	umask 77
 	;;
 
-sd*|vnd*|rd*|ccd*)
-	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
+sd*|vnd*|ccd*)
+	umask 2
 	case $i in
-	sd*) name=sd; blk=4; chr=8;;
-	vnd*) name=vnd; blk=6; chr=19;;
-	rd*) name=ccd; blk=8; chr=7;;
-	ccd*) name=ccd; blk=15; chr=34;;
+	sd*) name=sd;	unit=${i#sd};	blk=4; chr=8;;
+	vnd*) name=vnd; unit=${i#vnd};	blk=6; chr=19;;
+	ccd*) name=ccd; unit=${i#ccd};	blk=15; chr=34;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+		mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
 		if [ $name != cd -a $name != vnd ]
 		then
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
+		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+		mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+		mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
+		mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
+		mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
+		mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
+		mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+		mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+		mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+		mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
+		mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
+		mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
+		mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
 		fi
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chgrp operator $name$unit? r$name$unit?
+		chmod 640 $name$unit? r$name$unit?
 		;;
 	*)
 		echo bad unit for disk in: $i
@@ -242,18 +240,19 @@ sd*|vnd*|rd*|ccd*)
 	;;
 
 cd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2
 	case $i in
-	cd*) name=cd; blk=7; chr=9;;
+	cd*) name=cd;	unit=${i#cd} blk=7; chr=9;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
 	0|1|2|3|4|5|6)
-		mknod ${name}${unit}a   b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}d   b $blk `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}a  c $chr `expr $unit '*' 8 + 0`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		mknod ${name}${unit}a   b $blk $(($unit * 8 + 0))
+		mknod ${name}${unit}d   b $blk $(($unit * 8 + 3))
+		mknod r${name}${unit}a  c $chr $(($unit * 8 + 0))
+		mknod r${name}${unit}d  c $chr $(($unit * 8 + 3))
+		chgrp operator $name$unit? r$name$unit?
+		chmod 640 $name$unit? r$name$unit?
 		;;
 	*)
 		echo bad unit for disk in: $i
@@ -262,39 +261,50 @@ cd*)
 	umask 77
 	;;
 
-ss*|ch*|uk*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+rd*)
 	case $i in
-	ss*) name=ss;  chr=35;;
-	ch*) name=ch;  chr=36;;
-	uk*) name=uk;  chr=37;;
+	rd*) name=rd;	unit=${i#rd};	blk=8; chr=7;;
+	esac
+	rm -f $name$unit r$name$unit
+	mknod $name$unit	b $blk $(($unit +  0))
+	mknod r$name$unit	c $chr $(($unit + 16))
+	chgrp operator $name$unit r$name$unit
+	chmod 640 $name$unit r$name$unit
+	;;
+
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss}  chr=35;;
+	esac
+	rm -f $name$unit n$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	chgrp operator $name$unit n$name$unit
+	chmod 640 $name$unit n$name$unit
+	;;
+
+ch*|uk*)
+	case $i in
+	ch*) name=ch;	unit=${i#ch}  chr=36;;
+	uk*) name=uk;	unit=${i#uk}  chr=37;;
 	esac
 	rm -f $name$unit
-	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
-	chmod 640 ${name}${unit}
-	umask 77
+	mknod $name$unit	c $chr $unit
+	chgrp operator $name$unit
+	chmod 640 $name$unit
 	;;
 
 tty0*)
-	unit=`expr $i : 'tty0\(.*\)'`
-	rm -f ser${unit}
-	case $unit in
-	0|1|2|3)
-		rm -f tty0${unit} ttym${unit}
-		mknod tty0${unit} c 12 $unit
-		mknod ttym${unit} c 12 `expr 128 + $unit`
-		chown uucp:wheel tty0${unit} ttym${unit}
-		;;
-	*)
-		echo bad unit for ser in: $i
-		;;
-	esac
+	unit=${i#???}
+	rm -f tty0${unit}
+	rm -f tty0${unit}
+	mknod tty0${unit} c 12 $unit
+	chown uucp:wheel tty0${unit}
 	;;
 
 
 com*)
-	unit=`expr $i : 'com\(.*\)'`
+	unit=${i#???}
 	rm -f com${unit}
 	case $unit in
 	0|1)
@@ -308,23 +318,8 @@ com*)
 	esac
 	;;
 
-
-par*)
-	unit=`expr $i : 'par\(.*\)'`
-	rm -f par${unit}
-	case $unit in
-	0)
-		mknod par${unit} c 11 ${unit}
-		;;
-	*)
-		echo bad unit for par in: $i
-		;;
-	esac
-	;;
-
-
 ttye*)
-	unit=`expr $i : 'ttye\(.*\)'`
+	unit=${i#ttye}
 	rm -f ttye${unit}
 	rm -f ite*
 	case $unit in
@@ -338,7 +333,7 @@ ttye*)
 	;;
 
 grf*)
-	unit=`expr $i : 'grf\(.*\)'`
+	unit=${i#grf}
 	rm -f grf${unit}
 	case $unit in
 	0|1)
@@ -351,7 +346,7 @@ grf*)
 	;;
 
 mouse*)
-	unit=`expr $i : 'mouse\(.*\)'`
+	unit=${i#mouse}
 	rm -f mouse${unit}
 	case $unit in
 	0|1)
@@ -374,7 +369,7 @@ kbd)
 
 
 # pty*)
-# 	class=`expr $i : 'pty\(.*\)'`
+# 	class=${i#pty}
 # 	case $class in
 # 	0) offset=0 name=p;;
 # 	1) offset=16 name=q;;
@@ -398,7 +393,7 @@ kbd)
 # 	;;
 
 pty*)
-	class=`expr $i : 'pty\(.*\)'`
+	class=${i#pty}
 	case $class in
 	0) offset=0 name=p;;
 	1) offset=16 name=q;;
@@ -423,19 +418,15 @@ pty*)
 	esac
 	;;
 
-bpf*)
-	unit=`expr $i : 'bpf\(.*\)'`
-	rm -f bpf$unit
-	mknod bpf$unit c 22 $unit
-	chown root:wheel bpf$unit
-	;;
-
-tun*)
-	unit=`expr $i : 'tun\(.*\)'`
-	rm -f tun$unit
-	mknod tun$unit c 31 $unit
-	chmod 600 tun$unit
-	chown root:wheel tun$unit
+bpf*|tun*|par*)
+	case $i in
+	par*) name=par;	unit=${i#par};	chr=11;;
+	bpf*) name=bpf;	unit=${i#bpf};	chr=22;;
+	tun*) name=tun;	unit=${i#tun};	chr=31;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chown root.wheel $name$unit
 	;;
 
 lkm)
@@ -462,7 +453,7 @@ sram)
 	;;
 
 pow*)
-	unit=`expr $i : 'pow\(.*\)'`
+	unit=${i#pow}
 	rm -f pow${unit}
 	case $unit in
 	0|1)
