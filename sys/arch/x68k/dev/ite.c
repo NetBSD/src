@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.18 1999/05/05 13:41:19 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.19 1999/05/05 14:31:16 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,6 @@ __inline static void ite_cr __P((struct ite_softc *));
 __inline static void ite_rlf __P((struct ite_softc *));
 static void iteprecheckwrap __P((struct ite_softc *ip));
 static void itecheckwrap __P((struct ite_softc *ip));
-static void repeat_handler __P((void *arg));
 static int ite_argnum __P((struct ite_softc *ip));
 static int ite_zargnum __P((struct ite_softc *ip));
 static void ite_sendstr __P((struct ite_softc *ip, char *str));
