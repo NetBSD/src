@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.8 2001/10/23 19:54:53 oster Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.9 2002/07/10 23:16:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -73,7 +73,7 @@ struct file_lock {
 /* lock status */
 #define LKST_LOCKED	1 /* lock is locked */
 #define LKST_WAITING	2 /* file is already locked by another host */
-#define LKST_PROCESSING	3 /* child is trying to aquire the lock */
+#define LKST_PROCESSING	3 /* child is trying to acquire the lock */
 #define LKST_DYING	4 /* must dies when we get news from the child */
 
 void lfree __P((struct file_lock *));
@@ -134,7 +134,7 @@ testlock(lock, flags)
 }
 
 /*
- * getlock: try to aquire the lock. 
+ * getlock: try to acquire the lock. 
  * If file is already locked and we can sleep, put the lock in the list with
  * status LKST_WAITING; it'll be processed later.
  * Otherwise try to lock. If we're allowed to block, fork a child which
@@ -406,7 +406,7 @@ sigchild_handler(sig)
 
 /*
  *
- * try to aquire the lock described by fl. Eventually fock a child to do a
+ * try to acquire the lock described by fl. Eventually fork a child to do a
  * blocking lock if allowed and required.
  */
 
