@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.50.4.1 2002/05/30 21:20:45 tv Exp $
+# $NetBSD: AMIGA,v 1.50.4.2 2002/08/01 05:36:58 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.179.4.1 2002/05/30 21:17:19 tv Exp $
+# Created from: #NetBSD: GENERIC,v 1.179.4.2 2002/08/01 04:16:42 lukem Exp $
 
 #GENERIC machine description file
 
@@ -26,7 +26,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident  		"GENERIC-$Revision: 1.50.4.1 $"
+#ident  		"GENERIC-$Revision: 1.50.4.2 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -288,7 +288,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-
+#
 #XXX in std.amiga: kbd0 at mainbus0
 #wskbd0		at kbd0 console ?
 
@@ -422,6 +422,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
