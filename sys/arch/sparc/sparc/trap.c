@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 1999/01/20 00:15:07 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.80 1999/01/24 10:12:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -968,7 +968,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if ((lda((sfva & 0xFFFFF000) | ASI_SRMMUFP_LN, ASI_SRMMUFP) &
 		    SRMMU_TETYPE) != SRMMU_TEPTE)
 			goto fault;	/* Translation bad */
-		else goto out;	/* Translation OK, retry operation */
+		lda(SRMMU_SFSR, ASI_SRMMU);
+		goto out;	/* Translation OK, retry operation */
 	}
 
 	va = trunc_page(sfva);
@@ -984,12 +985,14 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 * do a useless VM read.
 		 * XXX: Is this really necessary?
 		 */
-		if (mmumod == SUN4M_MMU_HS) { /* On HS, we have va for both */
+		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+			/* On HS, we have va for both */
+			vm = p->p_vmspace;
 #if defined(UVM)
-			if (uvm_fault(kernel_map, trunc_page(pc),
+			if (uvm_fault(&vm->vm_map, trunc_page(pc),
 				     0, VM_PROT_READ) != KERN_SUCCESS)
 #else
-			if (vm_fault(kernel_map, trunc_page(pc),
+			if (vm_fault(&vm->vm_map, trunc_page(pc),
 				     VM_PROT_READ, 0) != KERN_SUCCESS)
 #endif
 #ifdef DEBUG
