@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.120 1997/03/17 03:10:30 thorpej Exp $
+#	$NetBSD: files,v 1.121 1997/04/02 21:34:11 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -329,6 +329,13 @@ file netinet/fil.c			ipfilter
 file netinet/ip_nat.c			ipfilter
 file netinet/ip_frag.c			ipfilter
 file netinet/ip_state.c			ipfilter
+file netatalk/aarp.c			netatalk
+file netatalk/at_control.c		netatalk
+file netatalk/at_proto.c		netatalk
+file netatalk/at_rmx.c			netatalkdebug
+file netatalk/ddp_input.c		netatalk
+file netatalk/ddp_output.c		netatalk
+file netatalk/ddp_usrreq.c		netatalk
 file netiso/clnp_debug.c		iso
 file netiso/clnp_er.c			iso
 file netiso/clnp_frag.c			iso
