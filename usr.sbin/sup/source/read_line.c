@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.6 2003/04/03 17:14:24 christos Exp $	*/
+/*	$NetBSD: read_line.c,v 1.7 2003/04/04 23:10:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(lint) && defined(__RCSID)
-__RCSID("$NetBSD: read_line.c,v 1.6 2003/04/03 17:14:24 christos Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.7 2003/04/04 23:10:10 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -89,11 +89,12 @@ read_line(FILE * fp, size_t * size, size_t * lineno, const char *delim,
 		}
 #else
 		if ((ptr = fgets(sbuf, sizeof(sbuf) - 1, fp)) == NULL) {
-			char *l;
 			if (len == 0)
 				return NULL;
 			else
 				return buf;
+		} else {
+			char *l;
 			if ((l = strchr(sbuf, '\n')) == NULL) {
 				if (sbuf[sizeof(sbuf) - 3] != '\\') {
 					s = sizeof(sbuf);
@@ -102,7 +103,7 @@ read_line(FILE * fp, size_t * size, size_t * lineno, const char *delim,
 				} else
 					s = sizeof(sbuf) - 1;
 			} else {
-				s = l - ptr;
+				s = l - sbuf;
 			}
 		}
 #endif
