@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.2 1994/10/26 08:02:25 cgd Exp $	*/
+/*	$NetBSD: reg.h,v 1.3 1995/04/12 15:26:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,4 +33,23 @@
  /* All bugs are subject to removal without further notice */
 		
 
+struct  reg {
+	int	r0;     /* General registers saved upon trap/syscall */
+	int	r1;
+	int	r2;
+	int	r3;
+	int	r4;
+	int	r5;
+	int	r6;
+	int	r7;
+	int	r8;
+	int	r9;
+	int	r10;
+	int	r11;
+	int	ap;     /* Argument pointer on user stack */
+	int	fp;     /* Stack frame pointer */
+	int	sp;
+	int	pc;     /* User pc */
+	int	psl;    /* User psl */
+};
 
