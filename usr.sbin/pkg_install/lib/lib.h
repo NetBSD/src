@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.4 1997/10/17 14:54:38 lukem Exp $ */
+/* $NetBSD: lib.h,v 1.4.2.1 1998/08/29 03:39:46 mellon Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -26,16 +26,17 @@
 #define _INST_LIB_LIB_H_
 
 /* Includes */
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+
+#include <ctype.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/file.h>
 
 /* Macros */
 #define SUCCESS	(0)
@@ -84,7 +85,7 @@ enum _plist_t {
     PLIST_CHOWN, PLIST_CHGRP, PLIST_COMMENT, PLIST_IGNORE,
     PLIST_NAME, PLIST_UNEXEC, PLIST_SRC, PLIST_DISPLAY,
     PLIST_PKGDEP, PLIST_MTREE, PLIST_DIR_RM, PLIST_IGNORE_INST,
-    PLIST_OPTION
+    PLIST_OPTION, PLIST_PKGCFL
 };
 typedef enum _plist_t plist_t;
 
@@ -125,6 +126,7 @@ char		*strconcat(char *, char *);
 /* File */
 Boolean		fexists(char *);
 Boolean		isdir(char *);
+Boolean		islinktodir(char *);
 Boolean		isemptydir(char *fname);
 Boolean		isemptyfile(char *fname);
 Boolean         isfile(char *);
