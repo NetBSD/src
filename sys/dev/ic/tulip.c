@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.95 2001/07/19 16:25:26 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.96 2001/07/23 17:20:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1782,7 +1782,8 @@ tlp_init(ifp)
 				tlp_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			TULIP_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
