@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.28 2002/02/11 02:47:29 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.29 2002/05/12 23:06:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct lfs;
 struct segment;
 struct ucred;
 
+extern int lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
