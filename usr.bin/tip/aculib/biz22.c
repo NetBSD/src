@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.4 1995/10/29 00:49:47 pk Exp $	*/
+/*	$NetBSD: biz22.c,v 1.5 1996/12/29 10:41:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: biz22.c,v 1.4 1995/10/29 00:49:47 pk Exp $";
+static char rcsid[] = "$NetBSD: biz22.c,v 1.5 1996/12/29 10:41:55 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -47,6 +47,8 @@ static char rcsid[] = "$NetBSD: biz22.c,v 1.4 1995/10/29 00:49:47 pk Exp $";
 static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
+
+static int cmd(), detect();
 
 /*
  * Dial up on a BIZCOMP Model 1022 with either
@@ -59,7 +61,6 @@ biz_dialer(num, mod)
 {
 	register int connected = 0;
 	char cbuf[40];
-	static int cmd(), detect();
 
 	if (boolean(value(VERBOSE)))
 		printf("\nstarting call...");

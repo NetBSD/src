@@ -1,4 +1,4 @@
-/*	$NetBSD: v3451.c,v 1.4 1995/10/29 00:49:59 pk Exp $	*/
+/*	$NetBSD: v3451.c,v 1.5 1996/12/29 10:42:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: v3451.c,v 1.4 1995/10/29 00:49:59 pk Exp $";
+static char rcsid[] = "$NetBSD: v3451.c,v 1.5 1996/12/29 10:42:00 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -46,6 +46,9 @@ static char rcsid[] = "$NetBSD: v3451.c,v 1.4 1995/10/29 00:49:59 pk Exp $";
 #include "tip.h"
 
 static	jmp_buf Sjbuf;
+
+static	int expect(), notin(), prefix();
+static	void vawrite(), alarmtr();
 
 v3451_dialer(num, acu)
 	register char *num;
@@ -59,8 +62,6 @@ v3451_dialer(num, acu)
 #ifdef ACULOG
 	char line[80];
 #endif
-	static int expect();
-	static void vawrite();
 
 	/*
 	 * Get in synch
@@ -157,8 +158,6 @@ expect(cp)
 	char buf[300];
 	register char *rp = buf;
 	int timeout = 30, online = 0;
-	static int notin();
-	static void alarmtr();
 
 	if (strcmp(cp, "\"\"") == 0)
 		return (1);
@@ -201,7 +200,6 @@ static int
 notin(sh, lg)
 	char *sh, *lg;
 {
-	static int prefix();
 
 	for (; *lg; lg++)
 		if (prefix(sh, lg))

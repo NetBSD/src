@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $	*/
+/*	$NetBSD: ventel.c,v 1.5 1996/12/29 10:42:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $";
+static char rcsid[] = "$NetBSD: ventel.c,v 1.5 1996/12/29 10:42:02 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,9 @@ static char rcsid[] = "$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $";
 static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
+
+static	int gobble(), vensync();
+static	void echo();
 
 /*
  * some sleep calls have been replaced by this macro
@@ -71,8 +74,6 @@ ven_dialer(num, acu)
 	register char *cp;
 	register int connected = 0;
 	char *msg, *index(), line[80];
-	static int gobble(), vensync();
-	static void echo();
 	struct termios	cntrl;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.4 1995/10/29 00:50:02 pk Exp $	*/
+/*	$NetBSD: v831.c,v 1.5 1996/12/29 10:42:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: v831.c,v 1.4 1995/10/29 00:50:02 pk Exp $";
+static char rcsid[] = "$NetBSD: v831.c,v 1.5 1996/12/29 10:42:01 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -48,6 +48,8 @@ static char rcsid[] = "$NetBSD: v831.c,v 1.4 1995/10/29 00:50:02 pk Exp $";
 
 int	v831_abort();
 static	void alarmtr();
+static	int dialit();
+static	char *sanitize();
 extern	int errno;
 
 static jmp_buf jmpbuf;
@@ -58,7 +60,6 @@ v831_dialer(num, acu)
 {
         int status, pid, connected = 1;
         register int timelim;
-	static int dialit();
 
         if (boolean(value(VERBOSE)))
                 printf("\nstarting call...");
@@ -192,7 +193,6 @@ dialit(phonenum, acu)
 	struct termios cntrl;
         char c;
         int i, two = 2;
-	static char *sanitize();
 
         phonenum = sanitize(phonenum);
 #ifdef DEBUG
