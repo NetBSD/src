@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.36 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.37 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,6 +156,9 @@ void		ohci_close_pipe __P((usbd_pipe_handle pipe,
 				     ohci_soft_ed_t *head));
 void		ohci_abort_request __P((usbd_request_handle reqh));
 
+void		ohci_device_clear_toggle __P((usbd_pipe_handle pipe));
+void		ohci_noop __P((usbd_pipe_handle pipe));
+
 #ifdef USB_DEBUG
 ohci_softc_t   *thesc;
 void		ohci_dumpregs __P((ohci_softc_t *));
@@ -210,6 +213,7 @@ struct usbd_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_start,
 	ohci_root_ctrl_abort,
 	ohci_root_ctrl_close,
+	ohci_noop,
 	0,
 };
 
@@ -218,6 +222,7 @@ struct usbd_methods ohci_root_intr_methods = {
 	ohci_root_intr_start,
 	ohci_root_intr_abort,
 	ohci_root_intr_close,
+	ohci_noop,
 	0,
 };
 
@@ -226,6 +231,7 @@ struct usbd_methods ohci_device_ctrl_methods = {
 	ohci_device_ctrl_start,
 	ohci_device_ctrl_abort,
 	ohci_device_ctrl_close,
+	ohci_noop,
 	0,
 };
 
@@ -234,6 +240,8 @@ struct usbd_methods ohci_device_intr_methods = {
 	ohci_device_intr_start,
 	ohci_device_intr_abort,
 	ohci_device_intr_close,
+	ohci_device_clear_toggle,
+	0,
 };
 
 struct usbd_methods ohci_device_bulk_methods = {	
@@ -241,6 +249,7 @@ struct usbd_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_start,
 	ohci_device_bulk_abort,
 	ohci_device_bulk_close,
+	ohci_device_clear_toggle,
 	0,
 };
 
@@ -1360,9 +1369,6 @@ ohci_open(pipe)
 			s = splusb();
 			ohci_add_ed(sed, sc->sc_bulk_head);
 			splx(s);
-			/* XXX is the right place and/or time */
-			/* Make sure DATA0 toggle will be used next. */
-			usbd_clear_endpoint_stall(pipe);
 			break;
 		}
 	}
@@ -2015,6 +2021,21 @@ ohci_device_ctrl_close(pipe)
 }
 
 /************************/
+
+void
+ohci_device_clear_toggle(pipe)
+	usbd_pipe_handle pipe;
+{
+	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
+
+	opipe->sed->ed->ed_tailp &= LE(~OHCI_TOGGLECARRY);
+}
+
+void
+ohci_noop(pipe)
+	usbd_pipe_handle pipe;
+{
+}
 
 usbd_status
 ohci_device_bulk_transfer(reqh)
