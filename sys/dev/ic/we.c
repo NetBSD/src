@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.2 2001/03/29 08:48:55 jdolecek Exp $	*/
+/*	$NetBSD: we.c,v 1.3 2001/07/04 11:14:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -147,11 +147,11 @@ we_config(self, wsc, typestr)
 	/*
 	 * Allow user to override 16-bit mode.  8-bit takes precedence.
 	 */
-	if (self->dv_cfdata->cf_flags & WE_FLAGS_FORCE_16BIT_MODE) {
+	if (self->dv_cfdata->cf_flags & DP8390_FORCE_16BIT_MODE) {
 		wsc->sc_16bitp = 1;
 		forced_16bit = 1;
 	}
-	if (self->dv_cfdata->cf_flags & WE_FLAGS_FORCE_8BIT_MODE)
+	if (self->dv_cfdata->cf_flags & DP8390_FORCE_8BIT_MODE)
 		wsc->sc_16bitp = 0;
 
 	/* Registers are linear. */
