@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.3 2001/08/30 23:00:19 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
@@ -107,7 +107,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 		if ((phdr.p_vaddr & (4*MEG-1)) == 0)
 			align = 4*MEG;
 		if (phdr.p_filesz < phdr.p_memsz)
-			phdr.p_memsz = 4*MEG;
+			phdr.p_memsz = (phdr.p_memsz + 4*MEG) & ~(4*MEG-1);
 		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, align) ==
 		    (void *)-1)
 			panic("cannot claim memory");
