@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.102 1999/01/28 04:31:33 augustss Exp $
+$NetBSD: pcidevs,v 1.103 1999/02/05 22:55:19 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -900,6 +900,11 @@ product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
 /* National Semiconductor products */
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS NS87410	0xd001	NS87410
+
+/* Olicom products */
+product OLICOM OC2183	0x0013	Olicom OC-2183/2185 Ethernet
+product OLICOM OC2325	0x0012	Olicom OC-2325 Ethernet
+product OLICOM OC2326	0x0014	Olicom OC-2326 10/100-TX Ethernet
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
