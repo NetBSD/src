@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.50 2003/02/23 00:22:33 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.51 2003/02/24 08:42:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0
 #endif
+/* Max block count for lfs_markv() */
+#define LFS_MARKV_MAXBLKCNT             65536
 
 /* Local definition for LFS's usage of PG_PAGER1 */
 #define PG_DELWRI	PG_PAGER1
@@ -931,5 +933,16 @@ struct lfs_stats {
 #ifdef _KERNEL
 extern struct lfs_stats lfs_stats;
 #endif
+
+/* Ioctls to take the place of the lfs syscalls */
+struct lfs_ioctl_markv {
+	BLOCK_INFO *blkiov;	/* blocks to relocate */
+	int blkcnt;		/* number of blocks */
+};
+
+#define LIOCSEGWAITALL	 _IOW('L', 0, struct timeval)
+#define LIOCSEGWAIT	 _IOW('L', 1, struct timeval)
+#define LIOCBMAPV	_IOWR('L', 2, struct lfs_ioctl_markv)
+#define LIOCMARKV	_IOWR('L', 3, struct lfs_ioctl_markv)
 
 #endif /* !_UFS_LFS_LFS_H_ */
