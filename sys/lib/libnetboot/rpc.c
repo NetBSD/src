@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/rpc.c,v 1.1 1993/10/13 05:41:39 cgd Exp $ (LBL)
+ * from @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
+ *   $Id: rpc.c,v 1.2 1993/10/14 04:53:39 glass Exp $
  */
 
 #include <sys/param.h>
@@ -45,7 +46,7 @@
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
-
+#undef NFSX_FATTR
 #include <errno.h>
 
 #include "netboot.h"
@@ -101,7 +102,11 @@ struct nfs_call_data {
 /* Data part of nfs rpc reply (also the largest thing we receive) */
 struct nfs_reply_data {
 	u_long	errno;
+#ifndef NFSX_FATTR
 	struct	nfsv2_fattr fa;
+#else
+	u_char	fa[NFSX_FATTR(0)];
+#endif
 	u_long	count;
 	u_char	data[1200];
 };
@@ -258,7 +263,7 @@ getport(d, prog, vers)
 
 	if (callrpc(d, PMAPPROG, PMAPVERS, PMAPPROC_GETPORT,
 	    &sdata, sizeof(sdata), &port, sizeof(port)) < 0)
-		panic("getport: %s", strerror(errno));
+		panic("getport: %m");
 
 	/* Cache answer */
 	pl->addr = d->destip;
@@ -299,7 +304,7 @@ getnfsfh(d, path, fhp)
 
 	if (callrpc(d, RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT,
 	    &sdata, len, &rdata, sizeof(rdata)) < 0)
-		panic("getnfsfh: %s", strerror(errno));
+		panic("getnfsfh: %s: %m", path);
 
 	bcopy(rdata.fh, fhp, sizeof(rdata.fh));
 }
@@ -311,19 +316,34 @@ getnfsinfo(d, tp, sp, fp)
 	register time_t *tp;
 	register u_long *sp, *fp;
 {
+	register int rlen;
+	register u_long t;
 	struct {
 		u_long	errno;
 		struct	nfsv2_fattr fa;
 	} rdata;
 
-	if (debug)
-	    printf("getnfsinfo: called\n");
+ 	if (debug)
+ 	    printf("getnfsinfo: called\n");
+	rlen = sizeof(rdata);
+#if 0
+#ifdef NFSX_FATTR
+#if NFSX_FATTR(1) > NFSX_FATTR(0)
+	/* nqnfs makes this more painful than it needs to be */
+	rlen -= NFSX_FATTR(1) - NFSX_FATTR(0);
+#endif
+#endif
+#endif
 	if (callrpc(d, NFS_PROG, NFS_VER2, NFSPROC_GETATTR,
-	    d->fh, NFS_FHSIZE, &rdata, sizeof(rdata)) < 0)
-		panic("getnfsfh: %s", strerror(errno));
+	    d->fh, NFS_FHSIZE, &rdata, rlen) < 0)
+		panic("getnfsinfo: %m");
 
-	if (tp)
-		*tp = ntohl(rdata.fa.fa_ctime.tv_sec);
+	if (tp) {
+		*tp = ntohl(rdata.fa.fa_mtime.tv_sec);
+		t = ntohl(rdata.fa.fa_atime.tv_sec);
+		if (*tp < t)
+			*tp = t;
+	}
 	if (sp)
 		*sp = ntohl(rdata.fa.fa_size);
 	if (fp)
@@ -339,7 +359,7 @@ lookupfh(d, name, fhp, tp, sp, fp)
 	register time_t *tp;
 	register u_long *sp, *fp;
 {
-	register int len;
+	register int len, rlen;
 	struct {
 		u_char	fh[NFS_FHSIZE];
 		u_long	len;
@@ -363,8 +383,17 @@ lookupfh(d, name, fhp, tp, sp, fp)
 	sdata.len = htonl(len);
 	len = sizeof(sdata) - sizeof(sdata.name) + roundup(len, sizeof(long));
 
+	rlen = sizeof(rdata);
+#if 0
+#ifdef NFSX_FATTR
+#if NFSX_FATTR(1) > NFSX_FATTR(0)
+	/* nqnfs makes this more painful than it needs to be */
+	rlen -= NFSX_FATTR(1) - NFSX_FATTR(0);
+#endif
+#endif
+#endif
 	if (callrpc(d, NFS_PROG, NFS_VER2, NFSPROC_LOOKUP,
-	    &sdata, len, &rdata, sizeof(rdata)) < 0)
+	    &sdata, len, &rdata, rlen) < 0)
 		return (-1);
 
 	bcopy(rdata.fh, fhp, sizeof(rdata.fh));
