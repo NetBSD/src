@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2002/09/11 21:14:08 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2002/09/12 17:07:26 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -44,18 +44,19 @@ _rtld_start:
 	stw	8,32(1)			# ps_strings
 
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	11			# r11 = (real) GOT
-	lwz	10,_GLOBAL_OFFSET_TABLE_@got(11)
+	mflr	31			# r31 = (real) GOT
+	lwz	30,_GLOBAL_OFFSET_TABLE_@got(31)
 					# the linker thought GOT were ...
-	lwz	3,_DYNAMIC@got(11)
-	subf	4,10,11			# r4 = relocbase
+	lwz	3,_DYNAMIC@got(31)
+
+	subf	4,30,31			# r4 = relocbase
 	add	3,3,4			# r3 = &_DYNAMIC
 	bl	_rtld_relocate_nonplt_self@plt
 
-	lwz	4,16(1)
-	addi	3,4,-12			# sp = &argv[-3]	/* XXX */
-
-	bl	_rtld@plt		# _start = _rtld(sp)
+	subf	4,30,31			# r4 = relocbase
+	lwz	3,16(1)
+	addi	3,3,-12			# sp = &argv[-3]	/* XXX */
+	bl	_rtld@plt		# _start = _rtld(sp, relocbase)
 	mtlr	3
 
 	lwz	3,12(1)			# argc
