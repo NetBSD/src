@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1995/04/07 04:44:05 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1995/04/08 04:43:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -162,6 +162,11 @@ identifycpu()
 	printf("Model: %s\n", cpu_model);
 }
 
+/*
+ * Save the page table entries for the u-area of the
+ * process identified by procp using the u-area mapping
+ * passed as VA (the location where they are permanent).
+ */
 void
 save_u_area(procp, va)
 	struct proc *procp;
@@ -181,6 +186,12 @@ save_u_area(procp, va)
 	} while (ptep < limit);
 }
 
+/*
+ * Load mappings for the u-area of a process at UADDR for
+ * a process that is about to become the current process.
+ * The necessary page table entries have been stashed in
+ * the machine-dependent part of the proc structure.
+ */
 void
 load_u_area()
 {
