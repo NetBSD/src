@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.4 2002/10/02 16:51:16 thorpej Exp $ */
+/* $NetBSD: gtp.c,v 1.5 2003/01/31 00:07:42 thorpej Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -142,14 +142,17 @@ gtp_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	pcireg_t csr;
 	char devinfo[256];
-	
+
+	aprint_naive(": Radio controller\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->tea.iot,
 	    &sc->tea.ioh, NULL, &iosize)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -170,7 +173,7 @@ gtp_attach(struct device *parent, struct device *self, void *aux)
 	sc->tea.write_bit = gtp_write_bit;
 	sc->tea.read = gtp_hardware_read;
 
-	printf(": Gemtek PR103\n");
+	aprint_normal(": Gemtek PR103\n");
 
 	radio_attach_mi(&gtp_hw_if, sc, &sc->sc_dev);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.29 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.29 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,6 +256,8 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t pr;
 	int r;
 
+	aprint_naive(": Audio controller\n");
+
 	sc->sc_play.sc_base = AUVIA_PLAY_BASE;
 	sc->sc_record.sc_base = AUVIA_RECORD_BASE;
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT8233_AC97) {
@@ -265,7 +267,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
 		&sc->sc_ioh, NULL, &iosize)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -277,10 +279,10 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		sprintf(sc->sc_revision, "0x%02X", r);
 		if (r < 0x50) {
-			printf(": VIA VT8233 AC'97 Audio (rev %s)\n",
+			aprint_normal(": VIA VT8233 AC'97 Audio (rev %s)\n",
 			       sc->sc_revision);
 		} else {
-			printf(": VIA VT8235 AC'97 Audio (rev %s)\n",
+			aprint_normal(": VIA VT8235 AC'97 Audio (rev %s)\n",
 			       sc->sc_revision);
 		}
 	} else {
@@ -293,12 +295,12 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 			sprintf(sc->sc_revision, "0x%02X", r);
 		}
 
-		printf(": VIA VT82C686A AC'97 Audio (rev %s)\n",
+		aprint_normal(": VIA VT82C686A AC'97 Audio (rev %s)\n",
 		       sc->sc_revision);
 	}
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		aprint_error(": couldn't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
 	}
@@ -306,15 +308,16 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auvia_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* disable SBPro compat & others */
 	pr = pci_conf_read(pc, pt, AUVIA_PCICONF_JUNK);
@@ -336,7 +339,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset = auvia_reset_codec;
 
 	if ((r = ac97_attach(&sc->host_if)) != 0) {
-		printf("%s: can't attach codec (error 0x%X)\n",
+		aprint_error("%s: can't attach codec (error 0x%X)\n",
 			sc->sc_dev.dv_xname, r);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);

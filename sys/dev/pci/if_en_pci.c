@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.18 2002/10/02 16:51:22 thorpej Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.19 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.18 2002/10/02 16:51:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,8 @@ void *aux;
   const char *intrstr;
   int retval;
 
-  printf("\n");
+  aprint_naive(": ATM controller\n");
+  aprint_normal("\n");
 
   sc->is_adaptec = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP) ? 1 : 0;
   scp->en_pc = pa->pa_pc;
@@ -223,19 +224,19 @@ void *aux;
    */
 
   if (pci_intr_map(pa, &ih)) {
-    printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+    aprint_error("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
     return;
   }
   intrstr = pci_intr_string(scp->en_pc, ih);
   scp->sc_ih = pci_intr_establish(scp->en_pc, ih, IPL_NET, en_intr, sc);
   if (scp->sc_ih == NULL) {
-    printf("%s: couldn't establish interrupt\n", sc->sc_dev.dv_xname);
+    aprint_error("%s: couldn't establish interrupt\n", sc->sc_dev.dv_xname);
     if (intrstr != NULL)
-      printf(" at %s", intrstr);
-    printf("\n");
+      aprint_normal(" at %s", intrstr);
+    aprint_normal("\n");
     return;
   }
-  printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+  aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
   sc->ipl = 1; /* XXX */
 
   /*
@@ -246,7 +247,7 @@ void *aux;
 			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 			  &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz);
   if (retval) {
-    printf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
+    aprint_error("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
     return;
   }
 	

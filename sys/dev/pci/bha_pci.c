@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.24 2002/10/02 16:51:04 thorpej Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.25 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.24 2002/10/02 16:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.25 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,17 +115,19 @@ bha_pci_attach(parent, self, aux)
 	pcireg_t csr;
 	const char *model, *intrstr;
 
+	aprint_naive(": SCSI controller\n");
+
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC)
 		model = "BusLogic 9xxC SCSI";
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
 		model = "BusLogic 9xxC SCSI";
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	aprint_normal(": %s\n", model);
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
 	    NULL, NULL)) {
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -143,20 +145,21 @@ bha_pci_attach(parent, self, aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	bha_attach(sc);
 

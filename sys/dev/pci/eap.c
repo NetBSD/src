@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.63 2003/01/14 02:23:29 mrg Exp $	*/
+/*	$NetBSD: eap.c,v 1.64 2003/01/31 00:07:41 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.63 2003/01/14 02:23:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.64 2003/01/31 00:07:41 thorpej Exp $");
 
 #include "midi.h"
 
@@ -586,6 +586,8 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	int revision, ct5880;
 	const char *revstr = "";
 
+	aprint_naive(": Audio controller\n");
+
 	/* Stash this away for detach */
 	sc->sc_pc = pc;
 
@@ -620,12 +622,12 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 	}
-	printf(": %s %s(rev. 0x%02x)\n", devinfo, revstr, revision);
+	aprint_normal(": %s %s(rev. 0x%02x)\n", devinfo, revstr, revision);
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	      &sc->iot, &sc->ioh, NULL, &sc->iosz)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -638,20 +640,21 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, eap_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_ei[EAP_I1].parent = (struct device *)sc;
 	sc->sc_ei[EAP_I1].index = EAP_DAC2;
@@ -782,7 +785,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	    audio_attach_mi(eap_hw_if, &sc->sc_ei[EAP_I1], &sc->sc_dev);
 
 #ifdef EAP_USE_BOTH_DACS
-	printf("%s: attaching secondary DAC\n", sc->sc_dev.dv_xname);
+	aprint_normal("%s: attaching secondary DAC\n", sc->sc_dev.dv_xname);
 	sc->sc_ei[EAP_I2].ei_audiodev =
 	    audio_attach_mi(eap_hw_if, &sc->sc_ei[EAP_I2], &sc->sc_dev);
 #endif
