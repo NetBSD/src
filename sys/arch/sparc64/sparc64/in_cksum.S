@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2 2001/08/10 20:53:11 eeh Exp $ */
+/*	$NetBSD: in_cksum.S,v 1.3 2001/09/23 17:31:17 eeh Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath
@@ -67,7 +67,11 @@ _ENTRY(_C_LABEL(in_cksum_internal))
 	lduw	[%o0 + M_LEN], %o2	! Code duplicated at Lloop
 	srlx	%o3, 32, %g4	! REDUCE bigtime
 	sethi	%hi(0xffff), %g5
+#ifdef __arch64__
 	ldx	[%o0 + M_DATA], %o5
+#else
+	lduw	[%o0 + M_DATA], %o5
+#endif
 	srl	%o3, 0, %o3
 	or	%g5, %lo(0xffff), %g5
 	
@@ -80,7 +84,11 @@ Lloop:
 	lduw	[%o0 + M_LEN], %o2
 	srlx	%o3, 32, %g4	! REDUCE bigtime
 	sethi	%hi(0xffff), %g5
+#ifdef	__arch64__
 	ldx	[%o0 + M_DATA], %o5
+#else
+	lduw	[%o0 + M_DATA], %o5
+#endif
 	srl	%o3, 0, %o3
 	or	%g5, %lo(0xffff), %g5
 0:	
