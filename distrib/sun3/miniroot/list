@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.6 2002/10/15 21:58:20 jdolecek Exp $
+# $NetBSD: list,v 1.7 2002/10/28 17:25:14 nathanw Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -128,15 +128,15 @@ SYMLINK	/usr/lib libexec
 # libtermcap: ftp, less, vi
 # libutil: rdate
 COPY	${DESTDIR}/libexec/ld.elf_so		usr/lib/ld.elf_so	555
-COPY	${DESTDIR}/usr/lib/libc.so		usr/lib/libc.so
+COPY	${DESTDIR}/lib/libc.so			usr/lib/libc.so
 LINK	usr/lib/libc.so				usr/lib/libc.so.12
 COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib/libcurses.so
 LINK	usr/lib/libcurses.so			usr/lib/libcurses.so.5
-COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib/libedit.so
+COPY	${DESTDIR}/lib/libedit.so		usr/lib/libedit.so
 LINK	usr/lib/libedit.so			usr/lib/libedit.so.2
-COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib/libtermcap.so
+COPY	${DESTDIR}/lib/libtermcap.so		usr/lib/libtermcap.so
 LINK	usr/lib/libtermcap.so			usr/lib/libtermcap.so.0
-COPY	${DESTDIR}/usr/lib/libutil.so		usr/lib/libutil.so
+COPY	${DESTDIR}/lib/libutil.so		usr/lib/libutil.so
 LINK	usr/lib/libutil.so			usr/lib/libutil.so.6
 
 # usr.sbin:
