@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.27 1997/07/22 23:13:20 phil Exp $
+#	$NetBSD: MAKEDEV,v 1.28 1997/07/23 01:29:49 phil Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -200,25 +200,43 @@ tty*)
 pty*)
 	class=${i#pty}
 	case $class in
-	0) offset=0 name=p;;
-	1) offset=16 name=q;;
-	2) offset=32 name=r;;
-	3) offset=48 name=s;;
-# Note that telnetd, rlogind, and xterm (at least) only look at p-s.
-	4) offset=64 name=t;;
-	*) echo bad unit for pty in: $i;;
+	0)      name=p;;
+	1)      name=q;;
+	2)      name=r;;
+	3)      name=s;;
+	4)      name=t;;
+	5)      name=u;;
+	6)      name=v;;
+	7)      name=w;;
+	8)      name=x;;
+	9)      name=y;;
+	10)     name=z;;
+	11)     name=P;;
+	12)     name=Q;;
+	13)     name=R;;
+	14)     name=S;;
+	15)     name=T;;
+	*)      echo "$0: $i: pty unit must be between 0 and 15"
+	        continue ;;
 	esac
-	case $class in
-	0|1|2|3|4)
-		umask 0
-		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d; \
-				    rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
-				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
-		umask 77
-		;;
-	esac
+	rm -f tty$name[0-9a-f] pty$name[0-9a-f]
+	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		case $j in
+		[0-9])  jn=$j ;;
+		a)      jn=10 ;;
+		b)      jn=11 ;;
+		c)      jn=12 ;;
+		d)      jn=13 ;;
+		e)      jn=14 ;;
+		f)      jn=15 ;;
+		esac
+		unit=$(($class * 16 + $jn))
+		mknod tty$name$j c 4 $unit
+		mknod pty$name$j c 5 $unit
+	done
+        chgrp wheel tty$name? pty$name?
+        chmod 666 tty$name? pty$name?
 	;;
 
 st*)
