@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.2 1996/05/20 00:35:16 thorpej Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.3 1996/05/20 01:31:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -107,7 +107,7 @@ pdq_tc_attach(
     bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
     pdq_ifattach(sc, NULL);
 
-    tc_intr_establish(sc->sc_bc, ta->ta_cookie, TC_IPL_NET,
+    tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NET,
 		      (int (*)(void *)) pdq_interrupt, sc->sc_pdq);
 
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
