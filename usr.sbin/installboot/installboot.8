@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.38 2003/11/26 08:10:37 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.39 2003/11/26 09:02:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -506,7 +506,7 @@ multiple disks are handled with the ustarfs file system):
 .Bd -ragged -offset indent-two -compact
 .Em Note:
 Ignore the warnings that
-.Ic newfs
+.Xr newfs 8
 displays; it can not write a disklabel,
 which is not a problem for a floppy disk.
 .Ed
@@ -527,10 +527,12 @@ in the Master Boot Record (MBR):
 The
 .Fl r Ar 16
 is to reserve space for the primary bootstrap.
-.Ic newfs_msdos
-will display an `MBR type' such as
+.Xr newfs_msdos 8
+will display an
+.Dq MBR type
+such as
 .Ql 1 ,
-.Ql 4
+.Ql 4 ,
 or
 .Ql 6 ;
 the MBR partition type of the appropriate primary partition should be
@@ -543,7 +545,9 @@ changed to this value.
 .Dl Ic installboot -t raw /dev/rwd1a /usr/mdec/bootxx_msdos
 .Bd -ragged -offset indent-two -compact
 .Em Note:
-It may be necessary to ensure that there is a valid NetBSD disklabel on
+It may be necessary to ensure that there is a valid
+.Nx
+disklabel on
 .Sq wd1
 for the primary bootstrap to function correctly.
 .Ed
