@@ -22,6 +22,8 @@ libgcc1.S: ${G_LIB1ASMSRC}
 CLEANFILES+=libgcc1.S
 ${G_LIB1ASMFUNCS:=.o}: libgcc1.S
 	${COMPILE.s} ${CPPFLAGS} -DL$* -o $@ ${>:M*.S}
+${G_LIB1ASMFUNCS:=.po}: libgcc1.S
+	${COMPILE.s} ${CPPFLAGS} -DGPROF -DPROF -DL$* -o $@ ${>:M*.S}
 OBJS+=${G_LIB1ASMFUNCS:=.o}
 CLEANFILES+=${G_LIB1ASMFUNCS:=.o}
 
