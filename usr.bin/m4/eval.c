@@ -1,4 +1,4 @@
-/*      $NetBSD: eval.c,v 1.6 1996/11/06 00:11:56 pk Exp $      */
+/*      $NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $      */
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.6 1996/11/06 00:11:56 pk Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ register int td;
 				k = strlen(lquote);
 				while (k--)
 					putback(lquote[k]);
-				putback(',');
+				putback(COMMA);
 			}
 			k = strlen(rquote);
 			while (k--)
@@ -429,7 +429,7 @@ register int argc;
 			case '*':
 				for (n = argc - 1; n > 2; n--) {
 					pbstr(argv[n]);
-					putback(',');
+					putback(COMMA);
 				}
 				pbstr(argv[2]);
 				break;
@@ -438,7 +438,7 @@ register int argc;
                                         pbstr(rquote);
                                         pbstr(argv[n]);
                                         pbstr(lquote);
-                                        putback(',');
+					putback(COMMA);
                                 }
 				pbstr(rquote);
                                 pbstr(argv[2]);
