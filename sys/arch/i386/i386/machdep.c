@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.106 1994/05/19 06:33:49 mycroft Exp $
+ *	$Id: machdep.c,v 1.107 1994/05/22 10:17:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1188,22 +1188,13 @@ _remque(elem)
 	elem->q_prev = 0;
 }
 
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
- * if COMPAT_NOMID is given as a kernel option.
- */
-int
-cpu_exec_aout_makecmds(p, epp)
+
+#ifdef COMPAT_NOMID
+static int
+exec_nomid(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-#ifdef COMPAT_NOMID
 	int error;
 	u_long midmag, magic;
 	u_short mid;
@@ -1243,9 +1234,41 @@ cpu_exec_aout_makecmds(p, epp)
 	}
 
 	return error;
-#else /* ! COMPAT_NOMID */
-	return ENOEXEC;
+}
 #endif
+
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ *
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
+ * if COMPAT_NOMID is given as a kernel option.
+ */
+int
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	int error = ENOEXEC;
+#ifdef COMPAT_SVR4
+	extern int svr4_exec_elf_makecmds __P((struct proc *,
+					       struct exec_package *));
+#endif /* ! COMPAT_SVR4 */
+
+#ifdef COMPAT_NOMID
+	if ((error = exec_nomid(p, epp)) == 0)
+		return error;
+#endif /* ! COMPAT_NOMID */
+
+#ifdef COMPAT_SVR4
+	if ((error = svr4_exec_elf_makecmds(p, epp)) == 0)
+		return error;
+#endif /* ! COMPAT_SVR4 */
+
+	return error;
 }
 
 #ifdef COMPAT_NOMID
