@@ -1,0 +1,7 @@
+# $NetBSD: std.sun2,v 1.3.8.2 2001/06/27 16:59:58 fredette Exp $
+
+# Standard information for Sun2 machines.
+machine	sun2 m68k sun68k
+
+# Standard defines
+options 	EXEC_ELF32, EXEC_SCRIPT
