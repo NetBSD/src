@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.10 1997/04/15 07:00:49 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.10 1997/04/15 07:00:49 lukem Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,11 +260,36 @@ do_stats()
 	if (ttaken > 0) {
 		msg("Volume %d took %d:%02d:%02d\n", tapeno,
 		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60); 
-		msg("Volume %d transfer rate: %ldK/s\n", tapeno,
+		msg("Volume %d transfer rate: %ld KB/s\n", tapeno,
 		    blocks / ttaken);
 		xferrate += blocks / ttaken;
 	}
 	return(tnow);
+}
+
+/*
+ * statussig --
+ *	information message upon receipt of SIGINFO
+ *	(derived from optr.c::timeest())
+ */
+void
+statussig(notused)
+	int notused;
+{
+	time_t	tnow, deltat;
+	char	msgbuf[128];
+
+	if (blockswritten < 500)
+		return;	
+	(void) time((time_t *) &tnow);
+	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
+		/ blockswritten * tapesize;
+	(void)snprintf(msgbuf, sizeof(msgbuf),
+	    "%3.2f%% done at %ld KB/s, finished in %d:%02d\n",
+	    (blockswritten * 100.0) / tapesize,
+	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
+	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
+	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 }
 
 static void
@@ -741,6 +766,7 @@ enslave()
 			for (j = 0; j <= i; j++)
 			        (void) close(slaves[j].fd);
 			signal(SIGINT, SIG_IGN);    /* Master handles this */
+			signal(SIGINFO, SIG_IGN);
 			doslave(cmd[0], i);
 			Exit(X_FINOK);
 		}
