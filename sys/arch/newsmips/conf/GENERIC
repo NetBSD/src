@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2003/05/10 04:11:53 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.60 2003/05/21 13:10:08 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,12 +22,12 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 maxusers	16
 
-options 	news3400
-options 	news5000
+options 	news3400		# NWS-3400/3700 support
+options 	news5000		# NWS-5000 support
 options 	MIPS1			# R2000/R3000 support
 options 	MIPS3			# R4000 support
 options 	CPU_SINGLE		# no I/O processor
@@ -46,7 +46,7 @@ options 	SYSVSHM			# System V shared memory
 options 	LKM			# loadable kernel modules
 options 	NTP			# network time protocol
 options 	USERCONF		# userconf(4) support
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -124,24 +124,29 @@ config	netbsd	root on ? type ?
 mainbus0 at root
 
 cpu0	at mainbus0
-hb0	at mainbus0			# Hyper-bus
-ap0	at mainbus0			# APbus
+hb0	at mainbus0			# Hyper-bus on news3400
+ap0	at mainbus0			# APbus on news5000
 
 mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
-mkclock0 at ap?
+mkclock0 at ap?				#
 
-le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
-le1	at hb0 addr 0xb8c30000 level 0
+le0	at hb0 addr 0xbff80000 level 1	# on-board LANCE Ethernet
+le1	at hb0 addr 0xb8c30000 level 0	# NWB-235A LANCE Ethernet
 
-sn*	at ap?				# SONIC Ethernet
-tlp*	at ap?
+sn*	at ap?				# on-board/NWB-5851 SONIC Ethernet
+tlp*	at ap?				# NWB-5852A tulip Ethernet
 
 kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
-ms0	at hb0 addr 0xbfd00004 level 2	# mouse
+kb0	at ap?				#
+wskbd0	at kb? console ?
 
-zsc0	at hb0 addr 0xbfec0000 level 1 flags 0x0	# on-board
-zsc1	at hb0 addr 0xb8c40100 level 1 flags 0x1	# expansion board
-zsc2	at hb0 addr 0xb8c40104 level 1 flags 0x1
+ms0	at hb0 addr 0xbfd00004 level 2	# mouse
+ms0	at ap?				#
+wsmouse0 at ms?
+
+zsc0	at hb0 addr 0xbfec0000 level 1 flags 0x0	# on-board serial
+zsc1	at hb0 addr 0xb8c40100 level 1 flags 0x1	# NWB-231A 4ch serial
+zsc2	at hb0 addr 0xb8c40104 level 1 flags 0x1	#
 zsc0	at ap?
 
 zstty0	at zsc0 channel 0		# tty00
@@ -151,28 +156,23 @@ zstty3	at zsc1 channel 1		# tty03
 zstty4	at zsc2 channel 0		# tty04
 zstty5	at zsc2 channel 1		# tty05
 
-fb0	at hb0 addr 0x88000000		# frame buffer
+fb0	at hb0 addr 0x88000000		# NWB-253 frame buffer
+wsdisplay0 at fb? console ?
 
-sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
+xafb*	at ap?				# "XA" frame buffer
+wsdisplay0 at xafb? console ?
+
+sc0	at hb0 addr 0xbfe00100 level 0	# on-board CXD1185 SCSI controller
 scsibus* at sc0
 
 dmac*	at ap?				# dmac3
 spifi*	at ap?				# SPIFI SCSI
 scsibus* at spifi?
 
-xafb*	at ap?
-kb0	at ap?
-ms0	at ap?
-
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
-
-wsdisplay0 at fb? console ?
-wsdisplay0 at xafb? console ?
-wskbd0	at kb? console ?
-wsmouse0 at ms?
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
@@ -193,13 +193,13 @@ pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	rnd			# /dev/random and in-kernel generator
