@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: NOFPU,v 1.1 1994/02/27 03:44:26 briggs Exp $
+#     $Id: NOFPU,v 1.2 1994/02/27 16:48:36 briggs Exp $
 
 include	"std.mac68k"
 
@@ -36,7 +36,8 @@ options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS
 
 options		SCSI
-options		SCSIDEBUG
+#options	SCSIDEBUG
+options		COMPAT_NOMID
 
 # Networking options
 options		INET
