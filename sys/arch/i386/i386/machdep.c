@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.438 2001/05/03 00:35:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.439 2001/05/03 16:04:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -683,7 +683,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K5 or K6"		/* Default */
 			},
 			NULL,
-			NULL,
+			amd_cpuid_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -695,7 +695,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL,
-			NULL,
+			amd_cpuid_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -706,7 +706,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
-			NULL,
+			amd_cpuid_cpu_cacheinfo,
 		} }
 	},
 	{
