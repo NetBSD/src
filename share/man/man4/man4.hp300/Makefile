@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/09/11 06:30:02 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.10 2001/09/13 05:11:08 enami Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	apci.4 autoconf.4 cons.4 ct.4 dio.4 dca.4 dcm.4 dnkbd.4 \
@@ -9,7 +9,7 @@ MAN=	apci.4 autoconf.4 cons.4 ct.4 dio.4 dca.4 dcm.4 dnkbd.4 \
 #MAN+=	dcl.4 st.4 
 
 MLINKS=	mem.4 kmem.4
-MLINKS=	hpib.4 nhpib.4 hpib.4 fhpib.4 hpib.4 hpibbus.4
+MLINKS+=hpib.4 nhpib.4 hpib.4 fhpib.4 hpib.4 hpibbus.4
 
 MANSUBDIR=/hp300
 
