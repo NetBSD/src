@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.10 1996/02/01 00:04:55 jtc Exp $	*/
+/*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: create.c,v 1.10 1996/02/01 00:04:55 jtc Exp $";
+static char rcsid[] = "$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ statf(p)
 		output(&indent, "mode=%#o", p->fts_statp->st_mode & MBITS);
 	if (keys & F_NLINK && p->fts_statp->st_nlink != 1)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
-	if (keys & F_SIZE)
+	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
 		output(&indent, "size=%qd", p->fts_statp->st_size);
 	if (keys & F_TIME)
 		output(&indent, "time=%ld.%ld",
