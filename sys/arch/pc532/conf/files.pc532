@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.12 1995/05/16 07:30:30 phil Exp $
+#	$NetBSD: files.pc532,v 1.13 1995/08/25 07:58:23 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -28,6 +28,8 @@ define	scsi {}
 
 device	ncr at membus: scsi
 file	arch/pc532/dev/ncr.c		ncr needs-count
+device	oldncr at membus: scsi
+file	arch/pc532/dev/oldncr.c		oldncr needs-count
 device	dp at membus: scsi
 file	arch/pc532/dev/dp.c		dp needs-count
 device	aic at membus: scsi
