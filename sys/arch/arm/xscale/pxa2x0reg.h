@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.2 2003/03/18 11:23:03 bsh Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.3 2003/06/05 13:48:28 scw Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -73,6 +73,8 @@
 #define PXA2X0_SDRAM1_START 0xa4000000
 #define PXA2X0_SDRAM2_START 0xa8000000
 #define PXA2X0_SDRAM3_START 0xac000000
+#define	PXA2X0_SDRAM_BANKS      4
+#define	PXA2X0_SDRAM_BANK_SIZE  0x04000000
 
 /*
  * Physical address of integrated peripherals
@@ -86,7 +88,7 @@
 #define PXA2X0_I2C_SIZE		0x000016a4
 #define PXA2X0_I2S_BASE 	0x40400000
 #define PXA2X0_AC97_BASE	0x40500000
-#define PXA2X0_AC97_SIZE	0x3fc
+#define PXA2X0_AC97_SIZE	0x600
 #define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client */
 #define PXA2X0_USBDC_SIZE 	0x0e04
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
@@ -142,6 +144,7 @@
 
 /* DMAC */
 #define DMAC_N_CHANNELS	16
+#define	DMAC_N_PRIORITIES 3
 
 #define DMAC_DCSR(n)	((n)*4)
 #define  DCSR_BUSERRINTR    (1<<0)	/* bus error interrupt */
@@ -153,6 +156,7 @@
 #define  DCSR_NODESCFETCH   (1<<30)	/* no-descriptor fetch mode */
 #define  DCSR_RUN  	    (1<<31)
 #define DMAC_DINT 	0x00f0		/* DAM interrupt */
+#define  DMAC_DINT_MASK	0xffffu
 #define DMAC_DRCMR(n)	(0x100+(n)*4)	/* Channel map register */
 #define  DRCMR_CHLNUM	0x0f		/* channel number */
 #define  DRCMR_MAPVLD	(1<<7)		/* map valid */
@@ -161,7 +165,7 @@
 #define DMAC_DSADR(n)	(0x0204+(n)*16)
 #define DMAC_DTADR(n)	(0x0208+(n)*16)
 #define DMAC_DCMD(n)	(0x020c+(n)*16)
-#define  DCMD_LENGTH	0x1fff
+#define  DCMD_LENGTH_MASK	0x1fff
 #define  DCMD_WIDTH_SHIFT  14
 #define  DCMD_WIDTH_0	(0<<DCMD_WIDTH_SHIFT)	/* for mem-to-mem transfer*/
 #define  DCMD_WIDTH_1	(1<<DCMD_WIDTH_SHIFT)
@@ -179,28 +183,14 @@
 #define  DCMD_INCTRGADDR  (1<<30)	/* increment target address */
 #define  DCMD_INCSRCADDR  (1<<31)	/* increment source address */
 
-/* DMA request index */
-#define DMAC_MAP_DREQ0    	0
-#define DMAC_MAP_DREQ1     	1
-#define DMAC_MAP_I2SRX     	2
-#define DMAC_MAP_I2STX     	3
-#define DMAC_MAP_BTURARTX	4
-/* ... */
-#define DMAC_MAP_AC97MODEMRX 	9
-#define DMAC_MAP_AC97MODEMTX 	10
-#define DMAC_MAP_AC97AUDIORX 	11
-#define DMAC_MAP_AC97AUDIOTX 	12
-/* ... */
-#define DMAC_MAP_USBEP(n)	(24+(n))   /* for endpoint 1..4,6..9,11..14 */
-
-
 #ifndef __ASSEMBLER__
 /* DMA descriptor */
 struct pxa2x0_dma_desc {
-    uint32_t	dd_ddadr;
-    uint32_t	dd_dsadr;
-    uint32_t	dd_dtadr;
-    uint32_t	dd_dcmd;		/* command and length */
+	volatile uint32_t	dd_ddadr;
+#define	DMAC_DESC_LAST	0x1
+	volatile uint32_t	dd_dsadr;
+	volatile uint32_t	dd_dtadr;
+	volatile uint32_t	dd_dcmd;		/* command and length */
 };
 #endif
 
@@ -311,15 +301,55 @@ struct pxa2x0_dma_desc {
 #define GPIO_GAFR2_L  0x64	/* alternate function [79:64] */
 #define GPIO_GAFR2_U  0x68	/* alternate function [80] */
 
+#define	GPIO_REG(r, pin)	((r) + (((pin) / 32) * 4))
+#define	GPIO_BANK(pin)		((pin) / 32)
+#define	GPIO_BIT(pin)		(1u << ((pin) & 0x1f))
+#define	GPIO_FN_REG(pin)	(GPIO_GAFR0_L + (((pin) / 16) * 4))
+#define	GPIO_FN_SHIFT(pin)	((pin & 0xf) * 2)
+
+#define	GPIO_IN		  	0x00	/* Regular GPIO input pin */
+#define	GPIO_OUT	  	0x10	/* Regular GPIO output pin */
+#define	GPIO_ALT_FN_1_IN	0x01	/* Alternate function 1 input */
+#define	GPIO_ALT_FN_1_OUT	0x11	/* Alternate function 1 output */
+#define	GPIO_ALT_FN_2_IN	0x02	/* Alternate function 2 input */
+#define	GPIO_ALT_FN_2_OUT	0x12	/* Alternate function 2 output */
+#define	GPIO_ALT_FN_3_IN	0x03	/* Alternate function 3 input */
+#define	GPIO_ALT_FN_3_OUT	0x13	/* Alternate function 3 output */
+#define	GPIO_SET		0x20	/* Initial state is Set */
+#define	GPIO_CLR		0x00	/* Initial state is Clear */
+
+#define	GPIO_FN_MASK		0x03
+#define	GPIO_FN_IS_OUT(n)	((n) & GPIO_OUT)
+#define	GPIO_FN_IS_SET(n)	((n) & GPIO_SET)
+#define	GPIO_FN(n)		((n) & GPIO_FN_MASK)
+#define	GPIO_IS_GPIO(n)		(GPIO_FN(n) == 0)
+#define	GPIO_IS_GPIO_IN(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_IN)
+#define	GPIO_IS_GPIO_OUT(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_OUT)
+
+#define	GPIO_NPINS    81
+
 /*
  * memory controller
  */
 
 #define MEMCTL_MDCNFG	0x0000
-#define  MDCNFG_DE0	(1<<0)
-#define  MDCNFG_DE1	(1<<1)
-#define  MDCNFG_DE2	(1<<16)
-#define  MDCNFG_DE3	(1<<17)
+#define  MDCNFG_DE0		(1<<0)
+#define  MDCNFG_DE1		(1<<1)
+#define  MDCNFD_DWID01_SHIFT	2
+#define  MDCNFD_DCAC01_SHIFT	3
+#define  MDCNFD_DRAC01_SHIFT	5
+#define  MDCNFD_DNB01_SHIFT	7
+#define  MDCNFG_DE2		(1<<16)
+#define  MDCNFG_DE3		(1<<17)
+#define  MDCNFD_DWID23_SHIFT	18
+#define  MDCNFD_DCAC23_SHIFT	19
+#define  MDCNFD_DRAC23_SHIFT	21
+#define  MDCNFD_DNB23_SHIFT	23
+
+#define  MDCNFD_DWID_MASK	0x1
+#define  MDCNFD_DCAC_MASK	0x3
+#define  MDCNFD_DRAC_MASK	0x3
+#define  MDCNFD_DNB_MASK	0x1
 	
 #define MEMCTL_MDREFR   0x04	/* refresh control register */
 #define  MDREFR_DRI	0xfff
@@ -488,6 +518,7 @@ struct pxa2x0_dma_desc {
 /*
  * AC97
  */
+#define	AC97_N_CODECS	2
 #define AC97_GCR 	0x000c	/* Global control register */
 #define  GCR_GIE       	(1<<0)	/* interrupt enable */
 #define  GCR_COLD_RST	(1<<1)
@@ -542,6 +573,7 @@ struct pxa2x0_dma_desc {
 #define AC97_SECAUDIO	0x0300	/* Secondary autio codec */
 #define AC97_PRIMODEM	0x0400	/* Primary modem codec */
 #define AC97_SECMODEM	0x0500	/* Secondary modem codec */
+#define	AC97_CODEC_BASE(c)	(AC97_PRIAUDIO + ((c) * 0x100))
 
 /*
  * USB device controller
