@@ -31,13 +31,14 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.4 1995/05/21 15:40:43 mycroft Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.5 1995/05/21 15:42:54 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <netdb.h>
 #include <rpc/rpc.h>
