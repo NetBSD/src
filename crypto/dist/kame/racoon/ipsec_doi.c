@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.123 2001/01/02 05:06:56 itojun Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.124 2001/01/24 02:33:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -278,7 +278,8 @@ saok:
 		if (tsa.gssid != NULL) {
 			iph1->gi_r = vdup(tsa.gssid);
 			if (iph1->rmconf->proposal->gssid != NULL)
-				iph1->gi_i = iph1->rmconf->proposal->gssid;
+				iph1->gi_i =
+				    vdup(iph1->rmconf->proposal->gssid);
 			else
 				iph1->gi_i = gssapi_get_default_id(iph1);
 		}
