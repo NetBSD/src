@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.45 1999/04/23 05:43:02 cgd Exp $ */
+/* $NetBSD: trap.c,v 1.46 1999/04/30 05:47:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 1999/04/23 05:43:02 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 1999/04/30 05:47:53 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +274,13 @@ trap(a0, a1, a2, entry, framep)
 		 * user has requested that.
 		 */
 		if (user) {
+#ifdef COMPAT_OSF1
+			extern struct emul emul_osf1;
+
+			/* just punt on OSF/1.  XXX THIS IS EVIL */
+			if (p->p_emul == &emul_osf1) 
+				goto out;
+#endif
 			i = SIGFPE;
 			ucode =  a0;		/* exception summary */
 			break;
