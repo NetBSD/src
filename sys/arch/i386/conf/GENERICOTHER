@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICOTHER,v 1.10 1996/03/10 09:03:19 cgd Exp $
+#	$NetBSD: GENERICOTHER,v 1.11 1996/03/12 01:32:49 perry Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -31,7 +31,7 @@ options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options		DIAGNOSTIC	# internally consistency checks
+options		DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		SYSVMSG		# System V-like message queues
