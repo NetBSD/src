@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.109 2003/12/10 23:46:42 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.110 2004/01/13 23:02:40 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.109 2003/12/10 23:46:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.110 2004/01/13 23:02:40 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1954,6 +1954,7 @@ key_spddelete(so, m, mhp)
 		ipseclog((LOG_DEBUG,
 		    "key_spddelete2: attempt to remove persistent SP:%u.\n",
 		    sp->id));
+		key_freesp(sp);	/* ref gained by key_getsp */
 		return key_senderror(so, m, EPERM);
 	}
 
@@ -2031,11 +2032,12 @@ key_spddelete2(so, m, mhp)
 		ipseclog((LOG_DEBUG,
 		    "key_spddelete2: attempt to remove persistent SP:%u.\n",
 		    id));
+		key_freesp(sp);	/* ref gained by key_getspbyid */
 		return key_senderror(so, m, EPERM);
 	}
 
 	key_sp_dead(sp);
-	key_freesp(sp);	/* ref gained by key_getsp */
+	key_freesp(sp);	/* ref gained by key_getspbyid */
 	key_sp_unlink(sp);
 	sp = NULL;
 
@@ -2136,6 +2138,7 @@ key_spdget(so, m, mhp)
 	}
 
 	n = key_setdumpsp(sp, SADB_X_SPDGET, 0, mhp->msg->sadb_msg_pid);
+	key_freesp(sp);	/* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
 		return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
