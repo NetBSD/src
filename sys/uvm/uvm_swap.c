@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.61 2002/03/18 11:43:01 manu Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.62 2002/03/26 11:50:26 manu Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.61 2002/03/18 11:43:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.62 2002/03/26 11:50:26 manu Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -495,14 +495,15 @@ sys_swapctl(p, v, retval)
 #endif
 	    ) {
 		misc = MIN(uvmexp.nswapdev, misc);
-		len = sizeof(struct swapent) * misc;
-		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
-
-		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
 #if defined(COMPAT_13)
 		if (SCARG(uap, cmd) == SWAP_OSTATS)
 			len = sizeof(struct oswapent) * misc;
+		else
 #endif
+			len = sizeof(struct swapent) * misc;
+		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
+
+		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
 		error = copyout(sep, (void *)SCARG(uap, arg), len);
 
 		free(sep, M_TEMP);
