@@ -1,4 +1,4 @@
-.\" $NetBSD: clct.4,v 1.1 2001/01/22 01:28:54 augustss Exp $
+.\" $NetBSD: clct.4,v 1.2 2001/01/22 01:33:13 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,14 +43,14 @@
 .Sh SYNOPSIS
 .Cd "clct*  at pci? dev ? function ?"
 .Cd "audio* at clct?"
-.\" .Cd "midi*  at clcs?"
+.Cd "midi*  at clct?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the Cirrus Logic CS4281 chip.
 .Sh SEE ALSO
 .Xr audio 4 ,
-.\" .Xr midi 4 ,
+.Xr midi 4 ,
 .Xr pci 4
 .Sh HISTORY
 The
