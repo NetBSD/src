@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.5 1998/07/05 06:49:06 jonathan Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.6 1998/09/03 14:06:06 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -502,7 +502,7 @@ maceput(sc, m)
 	return (totlen);
 }
 
-void
+int
 mcintr(arg)
 	void *arg;
 {
@@ -510,6 +510,9 @@ mcintr(arg)
 	u_int8_t ir;
 
 	ir = NIC_GET(sc, MACE_IR) & ~NIC_GET(sc, MACE_IMR);
+	if (ir == 0)
+		return 0;
+
 	if (ir & JAB) {
 #ifdef MCDEBUG
 		printf("%s: jabber error\n", sc->sc_dev.dv_xname);
@@ -540,6 +543,8 @@ mcintr(arg)
 
 	if (ir & RCVINT)
 		mc_rint(sc);
+
+	return 1;
 }
 
 integrate void
