@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.31 1997/05/05 21:07:31 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.32 1997/06/24 00:44:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -1173,7 +1173,8 @@ rdsize(dev)
 			return(-1);
 		didopen = 1;
 	}
-	psize = rs->sc_dkdev.dk_label->d_partitions[rdpart(dev)].p_size;
+	psize = rs->sc_dkdev.dk_label->d_partitions[rdpart(dev)].p_size *
+	    (rs->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 	if (didopen)
 		(void) rdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
 	return (psize);
