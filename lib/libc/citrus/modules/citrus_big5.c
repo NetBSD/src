@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.2 2002/03/27 15:01:17 yamt Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.3 2002/03/27 17:54:41 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.2 2002/03/27 15:01:17 yamt Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.3 2002/03/27 17:54:41 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -105,7 +105,6 @@ typedef struct {
 		_BIG5State	s_mbsrtowcs;
 		_BIG5State	s_wcrtomb;
 		_BIG5State	s_wcsrtombs;
-		_BIG5State	s_wcstombs;
 		_BIG5State	s_wctomb;
 	} states;
 } _BIG5CTypeInfo;
