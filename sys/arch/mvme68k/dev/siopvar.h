@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.1 1999/02/20 00:12:01 scw Exp $ */
+/*	$NetBSD: siopvar.h,v 1.2 1999/02/21 18:10:10 scw Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,9 +45,6 @@
  * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
  * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
  * buffer is not page aligned (+1).
- *
- * XXXSCW: Force this to 9, since (MAXPHYS/NBPG+1) == 17 on mvme68k.
- *         The siop script can (currently) only handle 9 elements.
  */
 #define	DMAMAXIO	((MAXPHYS/NBPG)+1)
 
