@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.17 2000/04/15 13:17:02 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.18 2000/04/15 22:53:05 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.17 2000/04/15 13:17:02 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.18 2000/04/15 22:53:05 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -179,15 +179,16 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			if (lp->line[x].ch != c ||
 			    lp->line[x].attr != attributes) {
 				newx = x + win->ch_off;
-				if (!(lp->flags & __ISDIRTY)) {
+				if (!(lp->flags & __ISDIRTY))
 					lp->flags |= __ISDIRTY;
-					*lp->firstchp = *lp->lastchp = newx;
-				} else
-					if (newx < *lp->firstchp)
-						*lp->firstchp = newx;
-					else
-						if (newx > *lp->lastchp)
-							*lp->lastchp = newx;
+				/*
+				 * firstchp/lastchp are shared between
+				 * parent window and sub-window.
+				 */
+				if (newx < *lp->firstchp)
+					*lp->firstchp = newx;
+				if (newx > *lp->lastchp)
+					*lp->lastchp = newx;
 #ifdef DEBUG
 				__CTRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
 				    *lp->firstchp, *lp->lastchp,
