@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.13 2001/05/27 09:16:01 he Exp $
+# $NetBSD: mi,v 1.60.2.14 2001/12/11 00:09:29 he Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -37,6 +37,7 @@
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
+./etc/moduli
 ./etc/monthly
 ./etc/monthly.conf
 ./etc/motd
@@ -59,7 +60,6 @@
 ./etc/postfix/main.cf
 ./etc/postfix/master.cf
 ./etc/postfix/postfix-script
-./etc/primes
 ./etc/printcap
 ./etc/profile
 ./etc/protocols
