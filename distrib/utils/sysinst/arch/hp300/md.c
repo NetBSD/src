@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2002/02/10 01:14:05 gmcgarry Exp $ */
+/*	$NetBSD: md.c,v 1.2 2002/03/15 05:24:31 gmcgarry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -128,8 +128,6 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-
-	printf("HERE");
 
 	if (rammb < 6)
 		set_swap(diskdev, bsdlabel, 1);
