@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.53 2003/10/21 05:45:11 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.54 2003/10/21 16:41:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.53 2003/10/21 05:45:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.54 2003/10/21 16:41:51 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -210,6 +210,7 @@ struct wm_softc {
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
+	int sc_pcix_offset;		/* PCIX capability register offset */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -754,8 +755,47 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		if (reg & STATUS_BUS64)
 			sc->sc_flags |= WM_F_BUS64;
 		if (sc->sc_type >= WM_T_82544 &&
-		    (reg & STATUS_PCIX_MODE) != 0)
+		    (reg & STATUS_PCIX_MODE) != 0) {
+			pcireg_t pcix_cmd, pcix_sts, bytecnt, maxb;
+
 			sc->sc_flags |= WM_F_PCIX;
+			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
+					       PCI_CAP_PCIX,
+					       &sc->sc_pcix_offset, NULL) == 0)
+				aprint_error("%s: unable to find PCIX "
+				    "capability\n", sc->sc_dev.dv_xname);
+			else if (sc->sc_type != WM_T_82545_3 &&
+				 sc->sc_type != WM_T_82546_3) {
+				/*
+				 * Work around a problem caused by the BIOS
+				 * setting the max memory read byte count
+				 * incorrectly.
+				 */
+				pcix_cmd = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				    sc->sc_pcix_offset + PCI_PCIX_CMD);
+				pcix_sts = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				    sc->sc_pcix_offset + PCI_PCIX_STATUS);
+
+				bytecnt =
+				    (pcix_cmd & PCI_PCIX_CMD_BYTECNT_MASK) >>
+				    PCI_PCIX_CMD_BYTECNT_SHIFT;
+				maxb =
+				    (pcix_sts & PCI_PCIX_STATUS_MAXB_MASK) >>
+				    PCI_PCIX_STATUS_MAXB_SHIFT;
+				if (bytecnt > maxb) {
+					aprint_verbose("%s: resetting PCI-X "
+					    "MMRBC: %d -> %d\n",
+					    sc->sc_dev.dv_xname,
+					    512 << bytecnt, 512 << maxb);
+					pcix_cmd = (pcix_cmd &
+					    ~PCI_PCIX_CMD_BYTECNT_MASK) |
+					   (maxb << PCI_PCIX_CMD_BYTECNT_SHIFT);
+					pci_conf_write(pa->pa_pc, pa->pa_tag,
+					    sc->sc_pcix_offset + PCI_PCIX_CMD,
+					    pcix_cmd);
+				}
+			}
+		}
 		/*
 		 * The quad port adapter is special; it has a PCIX-PCIX
 		 * bridge on the board, and can run the secondary bus at
