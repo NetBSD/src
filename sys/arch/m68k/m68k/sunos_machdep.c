@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.13 1997/10/17 02:50:50 briggs Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.14 1998/02/22 11:33:10 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -63,6 +65,10 @@
 #include <machine/reg.h>
 
 #include <vm/vm.h>
+
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
 
 #ifdef DEBUG
 extern int sigdebug;
@@ -143,13 +149,21 @@ sunos_sendsig(catcher, sig, mask, code)
 	} else
 		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+#ifdef UVM
+		(void)uvm_grow(p, (unsigned)fp);
+#else
 		(void)grow(p, (unsigned)fp);
+#endif
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sunos_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
+#ifdef UVM
+	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#else
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#endif
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sunos_sendsig(%d): useracc failed on sig %d\n",
@@ -243,7 +257,11 @@ sunos_sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
+#ifdef UVM
+	if (uvm_useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
+#else
 	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
+#endif
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)))
 		return (EINVAL);
 	scp = &tsigc;
