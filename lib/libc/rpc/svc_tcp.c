@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.22 1999/03/25 01:16:11 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.23 1999/05/03 15:32:13 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.22 1999/03/25 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.23 1999/05/03 15:32:13 christos Exp $");
 #endif
 #endif
 
@@ -148,7 +148,7 @@ svctcp_create(sock, sendsize, recvsize)
 	SVCXPRT *xprt;
 	struct tcp_rendezvous *r = NULL;
 	struct sockaddr_in addr;
-	int len = sizeof(struct sockaddr_in);
+	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -259,7 +259,7 @@ rendezvous_request(xprt, msg)
 	int sock;
 	struct tcp_rendezvous *r;
 	struct sockaddr_in addr;
-	int len;
+	socklen_t len;
 
 	r = (struct tcp_rendezvous *)xprt->xp_p1;
     again:

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $");
 #endif
 #endif
 
@@ -122,7 +122,7 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	SVCXPRT *xprt = NULL;
 	struct svcudp_data *su = NULL;
 	struct sockaddr_in addr;
-	int len = sizeof(struct sockaddr_in);
+	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -204,16 +204,17 @@ svcudp_recv(xprt, msg)
 	int rlen;
 	char *reply;
 	u_long replylen;
+	socklen_t alen;
 
     again:
 	xprt->xp_addrlen = sizeof(struct sockaddr_in);
 	rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), su->su_iosz,
-	    0, (struct sockaddr *)(void *)&(xprt->xp_raddr),
-	    &(xprt->xp_addrlen));
+	    0, (struct sockaddr *)(void *)&(xprt->xp_raddr), &alen);
 	if (rlen == -1 && errno == EINTR)
 		goto again;
 	if (rlen == -1 || rlen < 4*sizeof(u_int32_t))
 		return (FALSE);
+	xprt->xp_addrlen = alen;
 	xdrs->x_op = XDR_DECODE;
 	XDR_SETPOS(xdrs, 0);
 	if (! xdr_callmsg(xdrs, msg))
@@ -224,7 +225,7 @@ svcudp_recv(xprt, msg)
 			(void) sendto(xprt->xp_sock, reply,
 			    (u_int32_t)replylen, 0,
 			    (struct sockaddr *)(void *)&xprt->xp_raddr,
-			    xprt->xp_addrlen);
+			    (socklen_t)xprt->xp_addrlen);
 			return (TRUE);
 		}
 	}
@@ -248,7 +249,7 @@ svcudp_reply(xprt, msg)
 		slen = XDR_GETPOS(xdrs);
 		if (sendto(xprt->xp_sock, rpc_buffer(xprt), slen, 0,
 		    (struct sockaddr *)(void *)&(xprt->xp_raddr),
-		    xprt->xp_addrlen) == slen) {
+		    (socklen_t)xprt->xp_addrlen) == slen) {
 			stat = TRUE;
 			if (su->su_cache) {
 				cache_set(xprt, (u_long) slen);
