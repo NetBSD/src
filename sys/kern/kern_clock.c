@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.35 1996/07/12 22:00:46 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.36 1996/07/24 16:13:04 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -887,9 +887,9 @@ statclock(frame)
 {
 #ifdef GPROF
 	register struct gmonparam *g;
+	register int i;
 #endif
 	register struct proc *p;
-	register int i;
 
 	if (CLKF_USERMODE(frame)) {
 		p = curproc;
