@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.3 2000/04/22 06:38:25 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -118,7 +118,7 @@ ym_pnpbios_attach(parent, self, aux)
 
 	sc->sc_ic = aa->ic;
 
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->ym_irq)) {
+	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->ym_irq, NULL)) {
 		printf(": can't get IRQ\n");
 		return;
 	}

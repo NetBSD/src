@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.12 2000/03/01 20:23:55 groo Exp $ */
+/* $NetBSD: pnpbios.c,v 1.13 2000/04/22 06:38:24 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
  * Copyright (c) 1999
@@ -1239,11 +1239,12 @@ pnpbios_intr_establish(pbt, resc, idx, level, fcn, arg)
 }
 
 int
-pnpbios_getirqnum(pbt, resc, idx, irqp)
+pnpbios_getirqnum(pbt, resc, idx, irqp, istp)
 	pnpbios_tag_t pbt;
 	struct pnpresources *resc;
 	int idx;
 	int *irqp;
+	int *istp;
 {
 	struct pnp_irq *irq;
 
@@ -1254,7 +1255,10 @@ pnpbios_getirqnum(pbt, resc, idx, irqp)
 	while (idx--)
 		irq = SIMPLEQ_NEXT(irq, next);
 
-	*irqp = ffs(irq->mask) - 1;
+	if (irqp != NULL)
+		*irqp = ffs(irq->mask) - 1;
+	if (istp != NULL)
+		*istp = (irq->flags & 0x0c) ? IST_LEVEL : IST_EDGE;
 	return (0);
 }
 

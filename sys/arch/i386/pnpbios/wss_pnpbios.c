@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.3 2000/02/20 22:03:49 groo Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.4 2000/04/22 06:38:24 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -131,7 +131,7 @@ wss_pnpbios_attach(parent, self, aux)
 
 	sc->wss_ic = aa->ic;
 
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->wss_irq)) {
+	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->wss_irq, NULL)) {
 		printf(": can't get IRQ\n");
 		return;
 	}
