@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.12 1999/12/12 11:11:15 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.13 2000/02/01 21:29:15 veego Exp $	*/
 
 /*
  * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
@@ -9,9 +9,9 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.12 1999/12/12 11:11:15 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.13 2000/02/01 21:29:15 veego Exp $";
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.1.2.1 1999/09/28 11:44:04 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.1.2.2 2000/01/16 10:12:14 darrenr Exp";
 #endif
 #endif
 
@@ -402,7 +402,7 @@ fr_authioctlloop:
 #  if SOLARIS
 			error = fr_qout(fr_auth[i].fra_q, m);
 #  else /* SOLARIS */
-#   if _BSDI_VERSION >= 199802
+#   if (_BSDI_VERSION >= 199802) || defined(__OpenBSD__)
 			error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL,
 					  NULL);
 #   else

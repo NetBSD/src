@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.16 1999/12/12 11:11:17 veego Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.17 2000/02/01 21:29:16 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.1.2.2 1999/11/28 11:01:51 darrenr Exp
+ * Id: ip_nat.h,v 2.1.2.3 2000/01/24 12:44:24 darrenr Exp
  */
 
 #ifndef _NETINET_IP_NAT_H_
@@ -188,6 +188,7 @@ typedef	struct	natlog {
 	int	nl_rule;
 	U_QUAD_T	nl_pkts;
 	U_QUAD_T	nl_bytes;
+	u_char	nl_p;
 } natlog_t;
 
 
