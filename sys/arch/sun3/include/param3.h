@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.45 1997/09/20 12:10:38 leo Exp $	*/
+/*	$NetBSD: param3.h,v 1.46 1997/10/02 01:12:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -66,7 +66,8 @@
 
 #define	UPAGES		2		/* pages of u-area */
 
-#define MSGBUFSIZE	(4096 - 4 * sizeof(long))
+#define MSGBUFOFF	0x100
+#define MSGBUFSIZE	(NBPG - MSGBUFOFF)
 
 #include <m68k/param.h>
 
