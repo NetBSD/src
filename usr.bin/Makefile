@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.31 1993/12/12 00:38:58 cgd Exp $
+#	$Id: Makefile,v 1.32 1993/12/21 02:54:58 cgd Exp $
 
-SUBDIR=	ar asa at biff basename cal calendar cap_mkdb \
+SUBDIR=	apropos ar asa at biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
 	crontab ctags cut dirname du elvis elvisrecover \
 	env error expand false file find finger fmt fold fpr from \
@@ -15,8 +15,9 @@ SUBDIR=	ar asa at biff basename cal calendar cap_mkdb \
 	sccs script sed shar showmount size soelim split strings \
 	strip su symorder tail talk tcopy tee telnet tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
-	unifdef uniq units unvis users uudecode uuencode vacation vgrind vis \
-	vmstat w wall wc what whereis which who whoami whois window write \
+	unifdef uniq units unvis users uudecode uuencode \
+	vacation vgrind vis vmstat w wall wc what whatis whereis \
+	which who whoami whois window write \
 	xargs xinstall xstr yacc yes
 
 .include <bsd.subdir.mk>
