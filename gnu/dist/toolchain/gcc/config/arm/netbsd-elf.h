@@ -47,6 +47,81 @@ Boston, MA 02111-1307, USA.  */
 /* APCS-32 is the default for ELF anyway. */
 /* Unsigned chars are the default anyway. */
 
+/* Support const sections and the ctors and dtors sections for g++.
+   Note that there appears to be two different ways to support const
+   sections at the moment.  You can either #define the symbol
+   READONLY_DATA_SECTION (giving it some code which switches to the
+   readonly data section) or else you can #define the symbols
+   EXTRA_SECTIONS, EXTRA_SECTION_FUNCTIONS, SELECT_SECTION, and
+   SELECT_RTX_SECTION.  We do both here just to be on the safe side.  */
+#define USE_CONST_SECTION       1
+
+/* Support for Constructors and Destructors.  */
+#define READONLY_DATA_SECTION() const_section ()
+
+/* A default list of other sections which we might be "in" at any given
+   time.  For targets that use additional sections (e.g. .tdesc) you
+   should override this definition in the target-specific file which
+   includes this file.  */
+#define SUBTARGET_EXTRA_SECTIONS in_const,
+
+/* A default list of extra section function definitions.  For targets
+   that use additional sections (e.g. .tdesc) you should override this
+   definition in the target-specific file which includes this file.  */
+#define SUBTARGET_EXTRA_SECTION_FUNCTIONS       CONST_SECTION_FUNCTION
+
+extern void text_section ();
+
+#define CONST_SECTION_ASM_OP    ".section\t.rodata"
+
+#define CONST_SECTION_FUNCTION                                          \
+void                                                                    \
+const_section ()                                                        \
+{                                                                       \
+  if (!USE_CONST_SECTION)                                               \
+    text_section ();                                                    \
+  else if (in_section != in_const)                                      \
+    {                                                                   \
+      fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP);             \
+      in_section = in_const;                                            \
+    }                                                                   \
+}  
+
+/* A C statement or statements to switch to the appropriate
+   section for output of DECL.  DECL is either a `VAR_DECL' node
+   or a constant of some sort.  RELOC indicates whether forming
+   the initial value of DECL requires link-time relocations.  */
+#define SELECT_SECTION(DECL,RELOC)                                      \
+{                                                                       \
+  if (TREE_CODE (DECL) == STRING_CST)                                   \
+    {                                                                   \
+      if (! flag_writable_strings)                                      \
+        const_section ();                                               \
+      else                                                              \
+        data_section ();                                                \
+    }                                                                   \
+  else if (TREE_CODE (DECL) == VAR_DECL)                                \
+    {                                                                   \
+      if ((flag_pic && RELOC)                                           \
+          || !TREE_READONLY (DECL) || TREE_SIDE_EFFECTS (DECL)          \
+          || !DECL_INITIAL (DECL)                                       \
+          || (DECL_INITIAL (DECL) != error_mark_node                    \
+              && !TREE_CONSTANT (DECL_INITIAL (DECL))))                 \
+        data_section ();                                                \
+      else                                                              \
+        const_section ();                                               \
+    }                                                                   \
+  else                                                                  \
+    const_section ();                                                   \
+}  
+
+/* A C statement or statements to switch to the appropriate
+   section for output of RTX in mode MODE.  RTX is some kind
+   of constant in RTL.  The argument MODE is redundant except 
+   in the case of a `const_int' rtx.  Currently, these always
+   go into the const section.  */
+#define SELECT_RTX_SECTION(MODE,RTX) const_section ()
+
 #include "arm/elf.h"
 
 /* We use VFP format for doubles. */
@@ -69,6 +144,7 @@ Boston, MA 02111-1307, USA.  */
  %{mapcs-26:-mapcs-26} %{!mapcs-26:-mapcs-32} \
  %{mapcs-float:-mapcs-float} \
  %{mthumb-interwork:-mthumb-interwork} \
+ -matpcs \
  %{fpic:-k} %{fPIC:-k}"
 
 /* Some defines for CPP. */
