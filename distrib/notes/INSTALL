@@ -19,43 +19,104 @@ NetBSD is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
 possible, it's likely that this release wouldn't have come about.
 
-The current release has built upon the successful NetBSD 1.2 release
-by integrating many bug fixes, adding new and updated kernel
-subsystems, and adding various userland enhancements.  The results of
-these improvements is a stable operating system fit for production use
-and ready for the next phase of development.
+The NetBSD _VER release is a landmark. Building upon the successful
+NetBSD 1.2 release, we have provided numerous and significant
+functional enhancements, including support for many new devices,
+integration of many bug fixes, new and updated kernel subsystems, and
+many userland enhancements.  The results of these improvements is a
+stable operating system fit for production use that rivals most
+commercially available systems.
 
+It is impossible to summarize the 18 months of development that went
+into the NetBSD _VER release. Some of the significant changes include:
 
-Significant changes include:
+	Support for machine independant device drivers has been
+	radically improved with the addition of the "bus.h" interface,
+	providing a high quality abstraction for machine and
+	architecture independent device access.
 
-	Continuing the multi-platform tradition, the integration of
-	the DEC Alpha port has been completed, and new ports to ARM
-	and x68k have been added.
+	The bus_dma interface has also been integrated, providing a
+	machine-independent abstraction for DMA mapping. This permits many
+	good things, including (among many) clean multi-platform
+	bounce buffer support.
 
-	NetBSD/sparc now supports 4m machines. 
+	Framework support for ISA "Plug and Play" has been added, as
+	well as support for numerous "Plug and Play" devices.
 
-	NetBSD/amiga now supports the DraCo.
+	APM support has been added to NetBSD/i386.
 
-	Standard C Prototypes have been added to the Kernel.
+	An initial cut of multiplatform PCMCIA support has been added.
 
-	Kernel NTP (Network Time Protocol) phased lock loop support has
-	been added.  See http://www.eecis.udel.edu/~ntp/ for more 
-	details.
+	Support for ATAPI devices (initially just ATAPI CD-ROM drives)
+	has been added.
 
-	The PINT (PINT is not TWAIN) SCSI scanner driver interface has
-	been integrated.  See http://www.dol-esa.gov/~kstailey/pint 
-	for more details.
+	Support for Sun 3/80s (sun3x architecture) has been added.
 
-	A new SCSI medium changer driver and the `chio' program used to 
-	operate it has been added.
+	Integration/merger of 4.4BSD Lite-2 sources into userland
+	programs has nearly been completed.
 
-	The NFS subsystem now supports NFSv3.
+	Most of userland now compiles with high levels of gcc warnings
+	turned on, which has lead to the discovery and elimination of
+	many bugs.
+	
+	The i386 boot blocks have been completely replaced with a new,
+	libsa based two stage boot system. This has permitted
+	integration of compressed boot support (see below).
 
-	Several performance enhancements have been made to the 
-	networking subsystem.
+	Many ports (including NetBSD/i386) now support booting of
+	compressed kernels, and feature new "Single Floppy" install
+	systems that boot compressed install kernels and ramdisks. We
+	intend to do substantial work on improving ease of
+	installation in the future.
 
-	GCC, Libg++, and many other third party programs have been 
-	upgraded to more recent versions.
+	"ypserv" has been added, thus completing our support for the
+	"yp" network information system suite.
+
+	Support for the Linux "ext2fs" filesystem and for FAT32 "msdosfs"
+	filesystems has been added.
+
+	TCP now has a SYN "compressed state engine" which provides
+	increased robustness under high levels of received SYNs (as in
+	the case of "SYN flood" attacks.) (Much of this code was
+	derived from sources provided by BSDI.)
+
+	An initial implementation of Path MTU discovery has been
+	integrated (though it is not turned on by default).
+
+	An initial kernel based random number generator pseudodevice has
+	been added.
+
+	Several major fixes have been integrated for the VM subsystem,
+	including the fix of a notorious VM leak, improved
+	synchronization between mmap()ed and open()ed files, and
+	massively improved performance in low real memory conditions.
+
+	A new swap subsystem has radically improved configuration and
+	management of swap devices and swap files.
+
+	Userland ntp support, including xntpd, has been integrated.
+
+	The audio subsystems have been substantially debugged and
+	improved, and now offer substantial emulation of the OSS audio
+	interface, thus providing the ability to cleanly run emulated
+	Linux and FreeBSD versions of sound intensive programs.
+
+	A "packages" system has been adapted from FreeBSD and will
+	provide binary package installations for third party
+	applications.
+
+	The XFree86 X source tree has been made a supported part of
+	the NetBSD distribution, and X servers, libraries and
+	utilities are now shipped with our releases.
+
+	The ftp(1) program has been made astoundingly overfunctional.
+	It supports command line editing, tab completion, status bars,
+	automatic download of URLs specified on the command line,
+	firewall support and many other features.
+
+	All ports now use "new" config. Old config has been laid to rest.
+
+As has been noted, there have also been innumerable bug fixes.	
 
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
@@ -66,6 +127,8 @@ system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
 Solaris and Ultrix compatibility), bringing NetBSD closer to the goal of
 making the emulation as accurate as possible.
 
+In the near future, we hope to integrate a fully rewritten VM
+subsystem, kernel threads, and SMP support.
 
 #include "whatis"
 
@@ -165,30 +228,30 @@ The source distribution sets can be found in subdirectories of the
 complete sources to the system.  The source distribution sets 
 are as follows:
 
-	dsrc12	This set contains the "domestic" sources.  These
+	dsrc13	This set contains the "domestic" sources.  These
 		sources may be subject to United States export
 		regulations.
-		[ 140K gzipped, 655K uncompressed ]
+		[ 140K gzipped, 655K uncompressed ] /* XXX */
 
-	gsrc12	This set contains the "gnu" sources, including
+	gsrc13	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
-		[ 7.1M gzipped, 30.4M uncompressed ]
+		[ 7.1M gzipped, 30.4M uncompressed ] /* XXX */
 
-	ksrc12	This set contains the sources to the NetBSD _VER
+	ksrc13	This set contains the sources to the NetBSD _VER
 		kernel, config(8), and dbsym(8).
-		[ 6.0M gzipped, 27.0M uncompressed ]
+		[ 6.0M gzipped, 27.0M uncompressed ] /* XXX */
 
-	ssrc12	This set contains the "share" sources, which include
+	ssrc13	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
-		[ 2.4M gzipped, 8.9M uncompressed ]
+		[ 2.4M gzipped, 8.9M uncompressed ] /* XXX */
 
-	src12	This set contains all of the NetBSD _VER sources which
+	src13	This set contains all of the NetBSD _VER sources which
 		are not mentioned above.
-		[ 9.3M gzipped, 41.6M uncompressed ]
+		[ 9.3M gzipped, 41.6M uncompressed ] /* XXX */
 
 It is worth noting that unless all of the source distribution sets
 are installed (except the domestic set), you can't rebuild and install
@@ -370,10 +433,6 @@ Cygnus Support for hosting the NetBSD Mail server.
 Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
 who've had a hand in making CVS a useful tool.
-
-Alistair G. Crooks <agc@westley.demon.co.uk> has been producing tar 
-file snapshot reports for NetBSD-current users, a very valuable 
-service.
 
 Dave Burgess <burgess@cynjut.infonet.net> has been maintaining the
 386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
