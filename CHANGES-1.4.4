@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.14 2001/05/30 09:46:46 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.15 2001/07/19 13:54:05 perry Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -329,3 +329,21 @@ lib/libc/gen/sysctl.3				1.75 via patch
   Introduce net.inet.ip.maxfragpackets, which controls the maximum
   number of IPv4 fragment reassembly queue entries.  Defends against
   certain DoS attacks.  Fixes SA#2001-006.
+
+sys/kern/exec_script.c				patch
+sys/kern/kern_exec.c				patch
+
+  In check_exec(), don't bother checking P_TRACED along with
+  MNT_NOSUID, just check MNT_NOSUID to clear the S{U,G}ID bits
+  in the attributes for the vnode we're about to exec.
+
+  We now check P_TRACED right before we would actually perform
+  the s{u,g}id function in the exec code.
+
+  This closes a race condition between exec of a setuid binary
+  and ptrace(2).
+
+sys/kern/uipc_syscalls.c			patch
+
+  fix overflow in sendmsg()
+
