@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.48 2003/02/04 05:31:18 atatat Exp $
+#	$NetBSD: daily,v 1.49 2003/02/21 22:35:46 jhawk Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -228,9 +228,17 @@ if checkyesno run_security; then
 	SECOUT="$DAILYDIR/sec"
 	sh /etc/security > "$SECOUT" 2>&1
 	if [ ! -s "$SECOUT" ]; then
-		echo "Nothing to report on $date" > "$SECOUT"
+		if checkyesno send_empty_security; then
+			echo "Nothing to report on $date" > "$SECOUT"
+		else
+			echo ""
+			echo "Supressing empty security report."
+		fi
 	fi
-	mail -s "$host daily insecurity output for $date" $MAILTO < "$SECOUT"
+	if [ -s "$SECOUT" ]; then
+		mail -s "$host daily insecurity output for $date" \
+		    $MAILTO < "$SECOUT"
+	fi
 fi
 
 if checkyesno run_skeyaudit; then
