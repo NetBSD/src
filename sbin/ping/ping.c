@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ping.c	5.9 (Berkeley) 5/12/91";*/
-static char rcsid[] = "$Id: ping.c,v 1.5 1993/08/01 18:25:47 mycroft Exp $";
+static char rcsid[] = "$Id: ping.c,v 1.6 1993/09/23 23:03:55 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -133,9 +133,9 @@ int interval = 1;		/* interval between packets */
 
 /* timing */
 int timing;			/* flag to do timing */
-long tmin = LONG_MAX;		/* minimum round trip time */
-long tmax;			/* maximum round trip time */
-u_long tsum;			/* sum of all times, for doing average */
+double tmin = 100.0*(double)LONG_MAX;		/* minimum round trip time */
+double tmax;			/* maximum round trip time */
+double tsum;			/* sum of all times, for doing average */
 
 char *pr_addr();
 void catcher(), finish();
@@ -390,7 +390,7 @@ catcher()
 		alarm((u_int)interval);
 	else {
 		if (nreceived) {
-			waittime = 2 * tmax / 1000;
+			waittime = 2 * tmax / 1000000.0;
 			if (!waittime)
 				waittime = 1;
 		} else
@@ -465,7 +465,7 @@ pr_pack(buf, cc, from)
 	static char old_rr[MAX_IPOPTLEN];
 	struct ip *ip;
 	struct timeval tv, *tp;
-	long triptime;
+	double triptime;
 	int hlen, dupflag;
 
 	(void)gettimeofday(&tv, (struct timezone *)NULL);
@@ -495,7 +495,7 @@ pr_pack(buf, cc, from)
 			tp = (struct timeval *)icp->icmp_data;
 #endif
 			tvsub(&tv, tp);
-			triptime = tv.tv_sec * 1000000 + tv.tv_usec;
+			triptime = tv.tv_sec * 1000000.0 + tv.tv_usec;
 			tsum += triptime;
 			if (triptime < tmin)
 				tmin = triptime;
@@ -523,7 +523,7 @@ pr_pack(buf, cc, from)
 			   icp->icmp_seq);
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (timing)
-				(void)printf(" time=%.3f ms", triptime / 1000.0);
+				(void)printf(" time=%.3f ms", triptime/1000.0);
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
