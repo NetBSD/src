@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.65 2000/10/04 07:01:52 enami Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.66 2000/10/11 16:53:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1063,7 +1063,7 @@ ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 	}
 
 	/*
-	 * Look up the address in our list.
+	 * Look ur the address in our list.
 	 */
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
 	if (enm == NULL) {
@@ -1089,4 +1089,97 @@ ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 	 * and its reception filter should be adjusted accordingly.
 	 */
 	return (ENETRESET);
+}
+
+/*
+ * Common ioctls for Ethernet interfaces.  Note, we must be
+ * called at splnet().
+ */
+int
+ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct ethercom *ec = (void *) ifp;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	int error = 0;
+
+	switch (cmd) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if ((error = (*ifp->if_init)(ifp)) != 0)
+				break;
+			arp_ifinit(ifp, ifa);
+			break;
+#endif /* INET */
+#ifdef NS
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)
+				    LLADDR(ifp->if_sadl);
+			else
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ifp->if_addrlen);
+			/* Set new address. */
+			error = (*ifp->if_init)(ifp);
+			break;
+		    }
+#endif /* NS */
+		default:
+			error = (*ifp->if_init)(ifp);
+			break;
+		}
+		break;
+
+	case SIOCGIFADDR:
+		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+
+	case SIOCSIFFLAGS:
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+			/*
+			 * If interface is marked down and it is running,
+			 * then stop and disable it.
+			 */
+			(*ifp->if_stop)(ifp, 1);
+		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			error = (*ifp->if_init)(ifp);
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Reset the interface to pick up changes in any other
+			 * flags that affect the hardware state.
+			 */
+			error = (*ifp->if_init)(ifp);
+		}
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, ec) :
+		    ether_delmulti(ifr, ec);
+		break;
+
+	default:
+		error = ENOTTY;
+	}
+
+	return (error);
 }
