@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.40 2002/11/12 23:40:21 manu Exp $
+#	$NetBSD: files.powerpc,v 1.41 2002/11/17 00:59:13 manu Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -63,6 +63,7 @@ file	arch/powerpc/powerpc/macho_machdep.c		exec_macho
 
 # Darwin binary compatibility (COMPAT_DARWIN)
 include "compat/darwin/files.darwin"
+include "compat/freebsd/files.freebsd" 
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"	
