@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 2000/12/19 05:09:06 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.37 2000/12/29 18:35:18 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,8 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
+extern u_int64_t cpu_clockrate;
+
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
  * power of two.  Since this gives us an even number, not an odd number,
@@ -106,10 +108,12 @@ int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
 static long tick_increment;
+int schedintr __P((void *));
 
 static struct intrhand level10 = { clockintr };
 static struct intrhand level0 = { tickintr };
 static struct intrhand level14 = { statintr };
+static struct intrhand schedint = { schedintr };
 
 /*
  * clock (eeprom) attaches at the sbus or the ebus (PCI)
@@ -531,7 +535,6 @@ void
 cpu_initclocks()
 {
 	int statint, minint;
-	extern u_int64_t cpu_clockrate;
 	static u_int64_t start_time;
 #ifdef DEBUG
 	extern int intrdebug;
@@ -628,6 +631,15 @@ cpu_initclocks()
 		statvar >>= 1;
 
 	/* 
+	 * Establish scheduler softint.
+	 */
+	schedint.ih_pil = PIL_SCHED;
+	schedint.ih_clr = NULL;
+	schedint.ih_arg = 0;
+	schedint.ih_pending = 0;
+	schedhz = stathz/4;
+
+	/* 
 	 * Enable timers 
 	 *
 	 * Also need to map the interrupts cause we're not a child of the sbus.
@@ -670,10 +682,33 @@ setstatclockrate(newhz)
  * console input, we need to check for that here as well, and generate
  * a software interrupt to read it.
  */
+static int clockcheck = 0;
 int
 clockintr(cap)
 	void *cap;
 {
+#ifdef DEBUG
+	static int64_t tick_base = 0;
+	int64_t t = (u_int64_t)tick();
+
+	if (!tick_base) {
+		tick_base = (time.tv_sec * 1000000LL + time.tv_usec) 
+			* 1000000LL / cpu_clockrate;
+		tick_base -= t;
+	} else if (clockcheck) {
+		int64_t tk = t;
+		int64_t clk = (time.tv_sec * 1000000LL + time.tv_usec);
+		t -= tick_base;
+		t = t * 1000000LL / cpu_clockrate;
+		if (t - clk > hz) {
+			printf("Clock lost an interrupt!\n");
+			printf("Actual: %llx Expected: %llx tick %llx tick_base %llx\n",
+			       (long long)t, (long long)clk, (long long)tk, (long long)tick_base);
+			Debugger();
+			tick_base = 0;
+		}
+	}	
+#endif
 	/* Let locore.s clear the interrupt for us. */
 	hardclock((struct clockframe *)cap);
 	return (1);
@@ -720,6 +755,7 @@ statintr(cap)
 	void *cap;
 {
 	register u_long newint, r, var;
+	struct cpu_info *ci = curcpu();
 
 #ifdef NOT_DEBUG
 	printf("statclock: count %x:%x, limit %x:%x\n", 
@@ -744,11 +780,22 @@ statintr(cap)
 	} while (r == 0);
 	newint = statmin + r;
 
+	if (schedhz)
+		if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
+			send_softint(-1, PIL_SCHED, &schedint);
 	stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
 	     tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
 	return (1);
 }
 
+int
+schedintr(arg)
+	void *arg;
+{
+	if (curproc)
+		schedclock(curproc);
+	return (1);
+}
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
