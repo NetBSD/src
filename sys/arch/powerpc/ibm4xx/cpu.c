@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2003/07/15 02:54:43 lukem Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2003/09/23 15:25:26 shige Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2003/07/15 02:54:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2003/09/23 15:25:26 shige Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,8 @@ CFATTACH_DECL(cpu, sizeof(struct device),
 int ncpus;
 
 struct cpu_info cpu_info[1];
+
+char cpu_model[80];
 
 int cpufound = 0;
 
