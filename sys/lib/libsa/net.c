@@ -52,8 +52,6 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#include <errno.h>
-
 #include "stand.h"
 #include "net.h"
 #include "netif.h"
