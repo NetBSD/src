@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: fdc.4,v 1.1 1996/11/29 16:33:07 jtk Exp $
+.\"   $NetBSD: fdc.4,v 1.2 1997/07/11 04:58:30 mikel Exp $
 .\"
 .Dd November 28, 1996
 .Dt FDC 4 i386
@@ -69,18 +69,18 @@ The driver saves this state and it persists while the device is open.
 .It Dv FDIOCFORMAT_TRACK Fa struct fdformat_cmd
 Format a track on the medium.
 If this call returns
-.Em EINVAL ,
+.Er EINVAL ,
 the track formatting parameters were out of range for the medium.
 If it returns
-.Em EIO ,
+.Er EIO ,
 there was a medium error while formatting the track.
-.It Dv FDIOCSETOPTS int
+.It Dv FDIOCSETOPTS Fa int
 Set driver options which persist until the device is closed.  The
 options should be the logical OR of the desired values below:
 .Bl -tag -width FDOPT_NORETRY -compact
-.It FDOPT_NORETRY
+.It Dv FDOPT_NORETRY
 Do not retry operations on failure
-.It FDOPT_SILENT
+.It Dv FDOPT_SILENT
 Do not print error messages to the console
 .El
 .It Dv FDIOCGETOPTS Fa int
@@ -89,16 +89,17 @@ Fetch drive options.
 .Pp
 A typical use of the formatting facilities would be to open the device,
 call
-.Cm FDIOCGETFORMAT
+.Dv FDIOCGETFORMAT
 to fetch the current format parameters, perhaps
 change a parameter or two, display the formatting details to the user,
 and then call
-.Cm FDIOCSETFORMAT
+.Dv FDIOCSETFORMAT
 followed by a series of calls to
-.Cm FDIOCFORMAT_TRACK .
+.Dv FDIOCFORMAT_TRACK .
 .Sh SEE ALSO
-.Xr fdformat 8 .
+.Xr fdformat 1 .
 .Sh HISTORY
 The
 .Nm
-formatting support appeared in NetBSD-1.3.
+formatting support appeared in
+.Nx 1.3 .
