@@ -4,8 +4,14 @@
 #define NETBSD_ELF
 #include <netbsd.h>
 
-#undef CPP_SUBTARGET_SPEC
-#define CPP_SUBTARGET_SPEC ""
+/* Fix up CPP_SPEC.  This merges the code from <netbsd.h> and <sparc/sparc.h> */
+#undef CPP_SPEC
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} \
+%(cpp_cpu) %(cpp_arch) %(cpp_endian) %(cpp_subtarget)"
+
+#undef CPP_PREDEFINES
+#define CPP_PREDEFINES "-D__sparc__ -D__NetBSD__ -D__ELF__ \
+-Asystem(unix) -Asystem(NetBSD)"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
@@ -53,7 +59,7 @@
 #undef ASM_SPEC
 #define ASM_SPEC "%{fpic:-K PIC} %{fPIC:-K PIC} \
 %{mlittle-endian:-EL} \
-%(asm_cpu) \
+%(asm_cpu) %(asm_arch)\
 "
 
 #undef STDC_0_IN_SYSTEM_HEADERS
