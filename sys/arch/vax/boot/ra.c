@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.5 1996/08/02 11:22:18 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.6 1998/10/09 06:15:33 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
 #include "lib/libsa/stand.h"
 
 #include "../include/pte.h"
-#include "../include/macros.h"
+/*#include "../include/macros.h"*/
 #include "../include/sid.h"
 
 #include "../uba/ubareg.h"
