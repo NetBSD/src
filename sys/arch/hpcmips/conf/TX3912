@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.11 2000/02/27 16:34:14 uch Exp $
+#	$NetBSD: TX3912,v 1.12 2000/03/12 15:28:12 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -120,6 +120,8 @@ fb*		at	tx3912video?
 wsdisplay*	at	fb?
 wskbd*		at	skbd? mux 1
 wsmouse*	at	ucbtp? mux 0
+btnmgr0		at	mainbus0
+wskbd*		at	btnmgr0 mux 1
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -164,4 +166,4 @@ pseudo-device	pty		64	# pseudo ptys
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
-pseudo-device	btnmgr		1	# button event handler
+
