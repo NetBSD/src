@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2000/11/02 01:02:07 thorpej Exp $	 */
+/*	$NetBSD: conf.c,v 1.6 2003/02/23 23:25:50 simonb Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -36,6 +36,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/lfs.h>
 #ifdef SUPPORT_USTARFS
 #include <lib/libsa/ustarfs.h>
 #endif
@@ -56,6 +57,10 @@ struct fs_ops file_system[] = {
 		ustarfs_seek, ustarfs_stat },
 #endif
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	{ lfsv1_open, lfsv1_close, lfsv1_read, lfsv1_write, lfsv1_seek,
+		lfsv1_stat },
+	{ lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
+		lfsv2_stat },
 #ifdef SUPPORT_DOSFS
 	{ dosfs_open, dosfs_close, dosfs_read, dosfs_write, dosfs_seek,
 		dosfs_stat },
