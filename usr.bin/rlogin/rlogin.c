@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.21 1998/07/11 07:17:25 mrg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.21.2.1 1999/04/30 16:34:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.21 1998/07/11 07:17:25 mrg Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.21.2.1 1999/04/30 16:34:58 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ main(argc, argv)
 	int through_once = 0;
 	char *cp = (char *) NULL;
 	extern int _kstream_des_debug_OOB;
-	char *dest_realm;
+	char *dest_realm = NULL;
 #endif
 
 	argoff = dflag = 0;
