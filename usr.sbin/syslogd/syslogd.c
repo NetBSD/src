@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.36 2000/06/30 18:03:50 jwise Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.37 2000/06/30 18:22:54 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.36 2000/06/30 18:03:50 jwise Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.37 2000/06/30 18:22:54 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -1368,7 +1368,7 @@ socksetup(af)
 			logerror("socket");
 			continue;
 		}
-		if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+		if (!SecureMode && bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
 			close (*s);
 			logerror("bind");
 			continue;
