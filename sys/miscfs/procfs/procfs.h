@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.4 1994/01/11 18:02:06 ws Exp $
+ *	$Id: procfs.h,v 1.5 1994/01/20 21:23:04 ws Exp $
  */
 
 /*
@@ -68,7 +68,7 @@ struct pfsnode {
 	u_long		pfs_fileno;	/* unique file id */
 };
 
-#define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
+#define PROCFS_NOTELEN	8	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
 
 /*
@@ -103,14 +103,14 @@ struct pfsdent {
 #define VTOPFS(vp)	((struct pfsnode *)(vp)->v_data)
 #define PFSTOV(pfs)	((pfs)->pfs_vnode)
 
-typedef struct vfs_namemap vfs_namemap_t;
-struct vfs_namemap {
+typedef struct procfs_namemap procfs_namemap_t;
+struct procfs_namemap {
 	const char *nm_name;
 	int nm_val;
 };
 
-extern int vfs_getuserstr __P((struct uio *, char *, int *));
-extern vfs_namemap_t *vfs_findname __P((vfs_namemap_t *, char *, int));
+extern int procfs_getuserstr __P((struct uio *, char *, int *));
+extern procfs_namemap_t *procfs_findname __P((procfs_namemap_t *, char *, int));
 
 struct reg;
 

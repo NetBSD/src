@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_subr.c,v 1.7 1994/01/10 04:58:14 mycroft Exp $
+ *	$Id: procfs_subr.c,v 1.8 1994/01/20 21:23:07 ws Exp $
  */
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ loop:
 		break;
 
 	case Pctl:
-		pfs->pfs_mode = (VWRITE);
+		pfs->pfs_mode = (VREAD|VWRITE);
 		vp->v_type = VREG;
 		break;
 
@@ -177,7 +177,7 @@ loop:
 		break;
 
 	case Pnote:
-		pfs->pfs_mode = (VWRITE);
+		pfs->pfs_mode = (VREAD|VWRITE);
 		vp->v_type = VREG;
 		break;
 
@@ -263,7 +263,7 @@ procfs_rw(vp, uio, ioflag, cred)
 /*
  * Get a string from userland into (buf).  Strip a trailing
  * nl character (to allow easy access from the shell).
- * The buffer should be *buflenp + 1 chars long.  vfs_getuserstr
+ * The buffer should be *buflenp + 1 chars long.  procfs_getuserstr
  * will automatically add a nul char at the end.
  *
  * Returns 0 on success or the following errors
@@ -272,16 +272,13 @@ procfs_rw(vp, uio, ioflag, cred)
  * EMSGSIZE:  message is longer than kernel buffer
  * EFAULT:    user i/o buffer is not addressable
  */
-vfs_getuserstr(uio, buf, buflenp)
+procfs_getuserstr(uio, buf, buflenp)
 	struct uio *uio;
 	char *buf;
 	int *buflenp;
 {
 	int xlen;
 	int error;
-
-	if (uio->uio_offset != 0)
-		return (EINVAL);
 
 	xlen = *buflenp;
 
@@ -294,9 +291,6 @@ vfs_getuserstr(uio, buf, buflenp)
 	if (error)
 		return (error);
 
-	/* allow multiple writes without seeks */
-	uio->uio_offset = 0;
-
 	/* cleanup string and remove trailing newline */
 	buf[xlen] = '\0';
 	xlen = strlen(buf);
@@ -307,9 +301,9 @@ vfs_getuserstr(uio, buf, buflenp)
 	return (0);
 }
 
-vfs_namemap_t *
-vfs_findname(nm, buf, buflen)
-	vfs_namemap_t *nm;
+procfs_namemap_t *
+procfs_findname(nm, buf, buflen)
+	procfs_namemap_t *nm;
 	char *buf;
 	int buflen;
 {
