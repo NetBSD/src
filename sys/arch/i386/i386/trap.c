@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.20 1993/12/19 06:58:15 mycroft Exp $
+ *	$Id: trap.c,v 1.21 1993/12/20 17:16:47 ws Exp $
  */
 
 /*
@@ -260,10 +260,8 @@ trap(frame)
 #ifdef MATH_EMULATE
 		rv = math_emulate(&frame);
 		if (rv == 0) {
-#ifdef		TRACE_EMU			/* XXX is this necessary? */
 			if (frame.tf_eflags & PSL_T)
 				goto trace;
-#endif
 			return;
 		}
 #else
@@ -378,10 +376,8 @@ trap(frame)
 
 #ifndef DDB
 	/* XXX need to deal with this when DDB is present, too */
-	case T_TRCTRAP:
-		/* kernel trace trap -- someone single stepping lcall's */
-		frame.tf_eflags &= ~PSL_T;
-		/* restored later from lcall frame */
+	case T_TRCTRAP: /* kernel trace trap -- someone single stepping lcall's */
+			/* syscall has to turn off the trace bit itself */
 		return;
 #endif
 	
