@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.37.4.3 2001/11/25 19:35:42 he Exp $	*/
+/*	$NetBSD: setup.c,v 1.37.4.4 2001/11/25 19:37:37 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.37.4.3 2001/11/25 19:35:42 he Exp $");
+__RCSID("$NetBSD: setup.c,v 1.37.4.4 2001/11/25 19:37:37 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,7 +572,6 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 {
 
 	asb->fs_firstfield = sb->fs_firstfield;
-	asb->fs_fscktime = sb->fs_fscktime;
 	asb->fs_unused_1 = sb->fs_unused_1;
 	asb->fs_time = sb->fs_time;
 	asb->fs_cstotal = sb->fs_cstotal;
