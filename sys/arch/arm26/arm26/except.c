@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.24 2001/01/12 13:43:12 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.25 2001/01/20 17:14:20 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.24 2001/01/12 13:43:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.25 2001/01/20 17:14:20 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -263,7 +263,7 @@ syscall(struct trapframe *tf)
 	nstkargs = nargs - nregargs;
 
 	if (nregargs > 0)
-		bcopy((register_t *)tf + nextreg, args,
+		bcopy(&tf->tf_r0 + nextreg, args,
 		    nregargs * sizeof(register_t));
 
 	if (nstkargs > 0) {
@@ -482,7 +482,12 @@ do_fault(struct trapframe *tf, struct proc *p,
 	}
 }
 
-#define getreg(r) (((register_t *)tf)[r])
+/*
+ * In order for the following macro to work, any function using it
+ * must ensure that tf->r15 is copied into getreg(15).  This is safe
+ * with the current trapframe layout on arm26, but be careful.
+ */
+#define getreg(r) (((register_t *)&tf->tf_r0)[r])
 
 /*
  * Undo any effects of the aborted instruction that need to be undone
@@ -496,6 +501,7 @@ data_abort_fixup(struct trapframe *tf)
 	register_t insn;
 	int rn, count, loop;
 
+	getreg(15) = tf->tf_r15;
 	/* Get the faulting instruction */
        	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	if ((insn & 0x0e000000) == 0x08000000 &&
@@ -529,6 +535,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 	int rn, rm, offset, shift, p, i, u;
 	vaddr_t base;
 
+	getreg(15) = tf->tf_r15;
 	/* Get the faulting instruction */
        	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	if ((insn & 0x0c000000) == 0x04000000) {
