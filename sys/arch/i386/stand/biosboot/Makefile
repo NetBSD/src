@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/01/29 18:46:15 christos Exp $
+#	$NetBSD: Makefile,v 1.15 1999/01/29 18:47:24 christos Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -7,7 +7,7 @@ PROG= ${BASE}.sym
 NOMAN=
 NEWVERSWHAT=	"BIOS Boot"
 
-SRCS= main.c devopen.c conf.c exec.c
+SRCS= main.c devopen.c conf.c
 
 CLEANFILES+= ${BSSTART}
 
