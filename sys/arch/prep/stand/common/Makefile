@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/27 16:19:16 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/05 15:15:26 nonaka Exp $
 
 S= ${.CURDIR}/../../../..
 
 NOMAN= # defined
 
 CPPFLAGS+= -D_STANDALONE
+CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I. -I${S} -I${.OBJDIR}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 
