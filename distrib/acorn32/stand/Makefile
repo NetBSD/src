@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.6 2004/06/17 08:23:42 tron Exp $
+#	$NetBSD: Makefile,v 1.10.2.7 2004/06/17 08:37:46 tron Exp $
 #
 
 .include <bsd.own.mk>
@@ -102,7 +102,7 @@ settypes: setup_tmp
 .endfor
 
 .PHONY: tmp/BtNetBSD
-tmp/BtNetBSD: setup_tmp settypes
+tmp/BtNetBSD: setup_tmp ${UUDECODE_FILES} settypes
 	cp ${KERNOBJDIR}/INSTALL/netbsd tmp/BtNetBSD/InstKern,1a9
 	cp ${BOOTLOADER} 'tmp/BtNetBSD/!BtNetBSD/boot32,ffa'
 	${TOOL_MDSETIMAGE} tmp/BtNetBSD/InstKern,1a9 ${RAMDISKDIR}/ramdisk.fs
