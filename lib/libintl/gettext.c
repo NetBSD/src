@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.6 2000/12/14 02:06:12 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.7 2000/12/15 06:37:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.6 2000/12/14 02:06:12 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.7 2000/12/15 06:37:21 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -310,7 +310,8 @@ mapit(path)
 	int i;
 	char *v;
 
-	if (mohandle.addr && strcmp(path, mohandle.path) == 0)
+	if (mohandle.addr && mohandle.addr != MAP_FAILED &&
+	    strcmp(path, mohandle.path) == 0)
 		return 0;	/*already opened*/
 
 	unmapit();
@@ -338,7 +339,7 @@ mapit(path)
 	}
 	mohandle.addr = mmap(NULL, (size_t)st.st_size, PROT_READ,
 	    MAP_FILE | MAP_SHARED, fd, (off_t)0);
-	if (!mohandle.addr) {
+	if (!mohandle.addr || mohandle.addr == MAP_FAILED) {
 		close(fd);
 		goto fail;
 	}
@@ -433,7 +434,7 @@ unmapit()
 {
 
 	/* unmap if there's already mapped region */
-	if (mohandle.addr)
+	if (mohandle.addr && mohandle.addr != MAP_FAILED)
 		munmap(mohandle.addr, mohandle.len);
 	mohandle.addr = NULL;
 	mohandle.path[0] = '\0';
