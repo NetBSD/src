@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.66 1996/02/17 04:04:28 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.67 1996/02/17 04:51:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -745,7 +745,11 @@ comparam(tp, t)
 		if (ospeed != 0) {
 			/*
 			 * Make sure the transmit FIFO is empty before
-			 * proceeding.
+			 * proceeding.  If we don't do this, some revisions
+			 * of the UART will hang.  Interestingly enough,
+			 * even if we do this will the last character is
+			 * still being pushed out, they don't hang.  This
+			 * seems good enough.
 			 */
 			while (ISSET(tp->t_state, TS_BUSY)) {
 				int error;
