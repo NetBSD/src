@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.117.2.2 1997/11/05 05:35:40 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.117.2.3 1998/11/07 00:22:23 cgd Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -59,8 +59,8 @@ APICFLAGS ?=
 
 SHLIB_TYPE=ELF
 # still use gnu-derived ld.so on pmax; don't have or need lib<>.so support.
-SHLIB_LDSTARTFILE=
-SHLIB_LDENDFILE=
+SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
+SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 
 # On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
