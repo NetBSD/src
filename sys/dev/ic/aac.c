@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.13 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: aac.c,v 1.14 2005/01/14 16:23:32 scw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.13 2004/09/13 12:55:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.14 2005/01/14 16:23:32 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,8 @@ aac_init(struct aac_softc *sc)
 
 	ip->AdapterFibsPhysicalAddress = htole32(sc->sc_common_seg.ds_addr +
 	    offsetof(struct aac_common, ac_fibs));
-	ip->AdapterFibsVirtualAddress = htole32(&sc->sc_common->ac_fibs[0]);
+	ip->AdapterFibsVirtualAddress =
+	    (void *)(intptr_t) htole32(&sc->sc_common->ac_fibs[0]);
 	ip->AdapterFibsSize =
 	    htole32(AAC_ADAPTER_FIBS * sizeof(struct aac_fib));
 	ip->AdapterFibAlign = htole32(sizeof(struct aac_fib));
@@ -1250,7 +1251,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* Fetch the entry. */
 	*fib_size = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_size);
-	*fib_addr = le32toh((struct aac_fib *)
+	*fib_addr = (void *)(intptr_t) le32toh((struct aac_fib *)
 	    (sc->sc_qentries[queue] + ci)->aq_fib_addr);
 
 	/* Update consumer index. */
