@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 1998/03/18 21:59:38 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 1998/04/11 17:44:11 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -129,17 +129,23 @@ ASENTRY(start)
 	br	_C_LABEL(init532)
 
 ENTRY_NOPROFILE(proc_trampoline)
-	movd	r4,tos
+#if !defined(MRTD)
+	movd	r4,0(sp)	/* There was curproc on the stack */
 	jsr	0(r3)
 	cmpqd	0,tos
 	br	rei
+#else
+	movd	r4,tos
+	jsr	0(r3)
+	br	rei
+#endif
 
 /****************************************************************************/
 
 /*
  * Burn N microseconds in a delay loop.
  */
-ENTRY(delay)			/* bsr  2 cycles;  80 ns */
+KENTRY(delay, 4)		/* bsr  2 cycles;  80 ns */
 	cmpqd	0,S_ARG0	/*	2 cycles;  80 ns */
 	beq	2f		/*	2 cycles;  80 ns */
 	nop; nop; nop; nop	/*	8 cycles; 320 ns */
@@ -150,7 +156,7 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 	acbd	-1,r0,1f	/*      5 cycles; 200 ns */
 				/*                ====== */
 				/*                840 ns */
-	ret	0		/*	4 cycles; 160 ns */
+	ret	ARGS		/*	4 cycles; 160 ns */
 				/*                ====== */
 				/*		 1000 ns */
 				/*		  840 ns */
@@ -160,7 +166,7 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 	nop; nop
 #endif
 	acbd	-1,r0,1b	/* 	5 cycles; 200 ns */
-2:	ret	0		/* 	4 cycles; 160 ns */
+2:	ret	ARGS		/* 	4 cycles; 160 ns */
 
 /****************************************************************************/
 
@@ -195,7 +201,7 @@ GLOBAL(esigcode)
  *
  * Copy len bytes into the user's address space.
  */
-ENTRY(copyout)
+KENTRY(copyout, 12)
 	enter	[r3,r4],0
 	movd	_C_LABEL(curpcb)(pc),r4
 	addr	_ASM_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
@@ -244,14 +250,14 @@ ENTRY(copyout)
 	movsb				/* This also sets r0 to zero. */
 9:	movd	r0,PCB_ONFAULT(r4)
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 
 /*
  * int copyin(caddr_t from, caddr_t to, size_t len);
  *
  * Copy len bytes from the user's address space.
  */
-ENTRY(copyin)
+KENTRY(copyin, 12)
 	enter	[r3,r4],0
 	movd	_C_LABEL(curpcb)(pc),r4
 	addr	_ASM_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
@@ -282,13 +288,16 @@ ENTRY(copyin)
 	movsb				/* This also sets r0 to zero. */
 9:	movd	r0,PCB_ONFAULT(r4)
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 
 ASLOCAL(copy_fault)
 	movqd	0,PCB_ONFAULT(r4)
 	movd	EFAULT,r0
 	exit	[r3,r4]
-	ret	0
+	/*
+	 * copyin and copyout have the same number of arguments.
+	 */
+	ret	ARGS
 
 /*
  * int copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
@@ -298,7 +307,7 @@ ASLOCAL(copy_fault)
  * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
  * else return 0 or EFAULT.
  */
-ENTRY(copyoutstr)
+KENTRY(copyoutstr, 16)
 	enter	[r3],0
 	movd	_C_LABEL(curpcb)(pc),r3
 	addr	_ASM_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
@@ -328,7 +337,7 @@ ENTRY(copyoutstr)
  * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
  * else return 0 or EFAULT.
  */
-ENTRY(copyinstr)
+KENTRY(copyinstr, 16)
 	enter	[r3],0
 	movd	_C_LABEL(curpcb)(pc),r3
 	addr	_ASM_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
@@ -363,7 +372,10 @@ ASLOCAL(copystr_return)
 	beq	1f
 	movd	r1,0(r2)
 1:	exit	[r3]
-	ret	0
+	/*
+	 * copyinstr and copyoutstr have the same number of arguments.
+	 */
+	ret	ARGS
 
 /*
  * int copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
@@ -372,7 +384,7 @@ ASLOCAL(copystr_return)
  * number of characters copied (including the NUL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
  */
-ENTRY(copystr)
+KENTRY(copystr, 16)
 	enter	[r4],0
 	movd	B_ARG0,r1		/* from */
 	movd	B_ARG1,r2		/* to */
@@ -408,7 +420,7 @@ ENTRY(copystr)
 	beq	3f
 	movd	r2,0(r1)
 3:	exit	[r4]
-	ret	0
+	ret	ARGS
 
 #if defined(UVM)
 /*
@@ -425,13 +437,14 @@ ENTRY(copystr)
  * be known. So we duplicate the bcopy code here. Sigh.
  */
 
+KENTRY(kcopyret, 12)
 0:	movd	_C_LABEL(curpcb)(pc),r4
 	movd	tos,PCB_ONFAULT(r4)
 	movd	EFAULT,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 
-ENTRY(kcopy)
+KENTRY(kcopy, 12)
 	enter	[r3,r4],0
 	movd	_C_LABEL(curpcb)(pc),r4
 	movd	PCB_ONFAULT(r4),tos
@@ -471,7 +484,7 @@ ENTRY(kcopy)
 	movd	tos,PCB_ONFAULT(r4)
 	movqd	0,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 
 2:	addd	r0,r1
 	addd	r0,r2
@@ -504,16 +517,16 @@ ENTRY(kcopy)
 	movd	tos,PCB_ONFAULT(r4)
 	movqd	0,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 #endif /* UVM */
 
 /*
  * fuword(caddr_t uaddr);
  * Fetch an int from the user's address space.
  */
-ENTRY(fuword)
+KENTRY(fuword, 4)
 	movd	_C_LABEL(curpcb)(pc),r2
-	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
+	addr	_C_LABEL(fufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	/*
 	 * MACH's locore.s code says that
@@ -523,94 +536,104 @@ ENTRY(fuword)
 	movusd	0(r0),S_ARG0
 	movd	S_ARG0,r0
 	movqd	0,PCB_ONFAULT(r2)
-	ret	0
+	ret	ARGS
 
 /*
  * fuswintr(caddr_t uaddr);
  * Fetch a short from the user's address space.  Can be called during an
  * interrupt.
  */
-ENTRY(fuswintr)
+KENTRY(fuswintr, 4)
 	movd	_C_LABEL(curpcb)(pc),r2
-	addr	_C_LABEL(fusubail)(pc),PCB_ONFAULT(r2)
+	addr	_C_LABEL(fubail)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movusw	0(r0),S_ARG0
 	movqd	0,r0
 	movw	S_ARG0,r0
 	movqd	0,PCB_ONFAULT(r2)
-	ret	0
+	ret	ARGS
 
 /*
  * fubyte(caddr_t uaddr);
  * Fetch a byte from the user's address space.
  */
-ENTRY(fubyte)
+KENTRY(fubyte, 4)
 	movd	_C_LABEL(curpcb)(pc),r2
-	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
+	addr	_C_LABEL(fufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movusb	0(r0),S_ARG0
 	movqd	0,r0
 	movb	S_ARG0,r0
 	movqd	0,PCB_ONFAULT(r2)
-	ret	0
+	ret	ARGS
 
 /*
  * suword(caddr_t uaddr, int x);
  * Store an int in the user's address space.
  */
-ENTRY(suword)
+KENTRY(suword, 8)
 	movd	_C_LABEL(curpcb)(pc),r2
-	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
+	addr	_C_LABEL(sufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movsud	S_ARG1,0(r0)
 	movqd	0,r0
 	movd	r0,PCB_ONFAULT(r2)
-	ret	0
+	ret	ARGS
 
 /*
  * suswintr(caddr_t uaddr, short x);
  * Store a short in the user's address space.  Can be called during an
  * interrupt.
  */
-ENTRY(suswintr)
+KENTRY(suswintr, 8)
 	movd	_C_LABEL(curpcb)(pc),r2
-	addr	_C_LABEL(fusubail)(pc),PCB_ONFAULT(r2)
+	addr	_C_LABEL(subail)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movsuw	S_ARG1,0(r0)
 	movqd	0,r0
 	movd	r0,PCB_ONFAULT(r2)
-	ret	0
+	ret	ARGS
 
 /*
  * subyte(caddr_t uaddr, char x);
  * Store a byte in the user's address space.
  */
-ENTRY(subyte)
+KENTRY(subyte, 8)
 	movd	_C_LABEL(curpcb)(pc),r2
-	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
+	addr	_C_LABEL(sufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movsub	S_ARG1,0(r0)
 	movqd	0,r0
 	movd	r0,PCB_ONFAULT(r2)
-	ret	0
+	ret	ARGS
 
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
-ENTRY(fusufault)
+KENTRY(fufault, 4)
 	movqd	0,PCB_ONFAULT(r2)
 	movqd	-1,r0
-	ret	0
+	ret	ARGS
+
+KENTRY(sufault, 8)
+	movqd	0,PCB_ONFAULT(r2)
+	movqd	-1,r0
+	ret	ARGS
 
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.  This differs from
  * fusufault() in that trap() will recognize it and return immediately rather
  * than trying to page fault.
  */
-ENTRY(fusubail)
+KENTRY(fubail, 4)
 	movqd	0,PCB_ONFAULT(r2)
 	movqd	-1,r0
-	ret	0
+	ret	ARGS
+
+KENTRY(subail, 8)
+	movqd	0,PCB_ONFAULT(r2)
+	movqd	-1,r0
+	ret	ARGS
 
 /***************************************************************************/
 
@@ -622,7 +645,7 @@ ENTRY(fusubail)
  * r0-r2 and sb are not saved.
  */
 
-ENTRY(setjmp)
+KENTRY(setjmp, 4)
 	movd	S_ARG0,r0
 
 	sprd	sp,0(r0)		/* save stackpointer */
@@ -636,9 +659,9 @@ ENTRY(setjmp)
 	movd	r7,28(r0)
 
 	movqd	0,r0			/* return(0) */
-	ret	0
+	ret	ARGS
 
-ENTRY(longjmp)
+KENTRY(longjmp, 4)
 	movd	S_ARG0,r0
 
 	lprd	sp,0(r0)		/* restore stackpointer */
@@ -652,7 +675,7 @@ ENTRY(longjmp)
 	movd	28(r0),r7
 
 	movqd	1,r0			/* return(1) */
-	ret	0
+	ret	ARGS
 
 /****************************************************************************/
 
@@ -670,7 +693,7 @@ ENTRY(longjmp)
  * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
-ENTRY(setrunqueue)
+KENTRY(setrunqueue, 4)
 	movd	S_ARG0,r0
 #ifdef DIAGNOSTIC
 	cmpqd	0,P_BACK(r0)		/* should not be on q already */
@@ -689,7 +712,7 @@ ENTRY(setrunqueue)
 	movd	r0,P_BACK(r1)		/* update q's p_back */
 	movd	r0,P_FORW(r2)		/* update tail's p_forw */
 	movd    r2,P_BACK(r0)		/* set p->p_back */
-	ret	0
+	ret	ARGS
 #ifdef DIAGNOSTIC
 1:	PANIC("setrunqueue")		/* Was on the list! */
 #endif
@@ -698,7 +721,7 @@ ENTRY(setrunqueue)
  * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
-ENTRY(remrunqueue)
+KENTRY(remrunqueue, 4)
 	movd	S_ARG0,r1
 	movzbd	P_PRIORITY(r1),r0
 #ifdef DIAGNOSTIC
@@ -717,7 +740,7 @@ ENTRY(remrunqueue)
 	lshd	-2,r0
 #endif
 	cbitd	r0,_C_LABEL(whichqs)(pc) /* mark q as empty */
-2:	ret	0
+2:	ret	ARGS
 #ifdef DIAGNOSTIC
 1:	PANIC("remrunqueue")		/* No queue entry! */
 #endif
@@ -746,7 +769,7 @@ ENTRY_NOPROFILE(idle)
  * cpu_switch(void);
  * Find a runnable process and switch to it.  Wait if necessary.
  */
-ENTRY(cpu_switch)
+KENTRY(cpu_switch, 4)
 	enter	[r3,r4,r5,r6,r7],0
 
 	movd	_C_LABEL(curproc)(pc),r4
@@ -760,13 +783,17 @@ ENTRY(cpu_switch)
 	 */
 	movqd	0,_C_LABEL(curproc)(pc)
 
-	movd	_imask(pc),tos
-	bsr	_splx			/* spl0 - process pending interrupts */
-#if defined(DDB) || defined(KGDB)
+	movd	_C_LABEL(imask)(pc),tos
+	bsr	_C_LABEL(splx)		/* spl0 - process pending interrupts */
+#if !defined(MRTD)
+# if defined(DDB) || defined(KGDB)
 	cmpqd	0,tos
 	movd	r0,tos
-#else
+# else
 	movd	r0,0(sp)
+# endif
+#else
+	movd	r0,tos
 #endif
 
 	/*
@@ -881,10 +908,12 @@ switch_return:
 	 * Restore old priority level from stack.
 	 */
 	bsr	_C_LABEL(splx)
+#if !defined(MRTD)
 	cmpqd	0,tos
+#endif
 
 	exit	[r3,r4,r5,r6,r7]
-	ret	0
+	ret	ARGS
 
 #ifdef	DIAGNOSTIC
 ENTRY(switch_error)
@@ -911,7 +940,7 @@ ENTRY(switch_error)
  * void save_fpu_context(struct pcb *p);
  * Save FPU context.
  */
-ENTRY(save_fpu_context)
+KENTRY(save_fpu_context, 4)
 	FPU_INSTALLED
 	movd	S_ARG0,r0
 	sprw	cfg,r1
@@ -926,13 +955,13 @@ ENTRY(save_fpu_context)
 	movl	f5,PCB_F5(r0)
 	movl	f6,PCB_F6(r0)
 	movl	f7,PCB_F7(r0)
-9:	ret	0
+9:	ret	ARGS
 
 /*
  * void restore_fpu_context(struct pcb *p);
  * Restore FPU context.
  */
-ENTRY(restore_fpu_context)
+KENTRY(restore_fpu_context, 4)
 	FPU_INSTALLED
 	movd	S_ARG0,r0
 	sprw	cfg,r1
@@ -947,7 +976,7 @@ ENTRY(restore_fpu_context)
 	movl	PCB_F5(r0),f5
 	movl	PCB_F6(r0),f6
 	movl	PCB_F7(r0),f7
-9:	ret	0
+9:	ret	ARGS
 
 /****************************************************************************/
 
@@ -991,14 +1020,14 @@ ENTRY(restore_fpu_context)
 	bfc	9f; \
 	7: \
 	ints_off; \
-	cmpqd	0,_astpending(pc); \
+	cmpqd	0,_C_LABEL(astpending)(pc); \
 	beq	9f; \
-	movqd	0,_astpending(pc); \
+	movqd	0,_C_LABEL(astpending)(pc); \
 	ints_on; \
 	movd	T_AST,tos; \
 	movqd	0,tos; \
 	movqd	0,tos; \
-	bsr	_trap; \
+	bsr	_C_LABEL(trap); \
 	adjspd	-12; \
 	br	7b; \
 	9:
@@ -1033,7 +1062,7 @@ ENTRY_NOPROFILE(handle_trap)
 	 */
 	smr 	tear,tos
 	smr	msr,tos
-	bsr	_trap
+	bsr	_C_LABEL(trap)
 	adjspd	-12			/* Pop off software part of frame. */
 	CHECKAST
 	KEXIT
@@ -1070,7 +1099,7 @@ GLOBAL(cinvstart)
 	andd	~PGOFSET,r1
 	addd	r0,r1
 	cinv	i,r1
-GLOBALcinvend)
+GLOBAL(cinvend)
 	rett	0
 #endif
 
@@ -1124,10 +1153,15 @@ ASENTRY_NOPROFILE(interrupt)
 	cmpqd	0,r1
 	bne	1f
 	addr	0(sp),r1		/* NULL -> push frame address */
-1:	movd	r1,tos
+1:
+	movd	r1,tos
 	movd	_C_LABEL(ivt)+IV_VEC(r0),r0 /* Call the handler */
 	jsr	0(r0)
+#if !defined(MRTD)
 	adjspd	-8			/* Remove arg and vec from stack */
+#else
+	adjspd	-4			/* Remove vec from stack */
+#endif
 	/*
 	 * If we are switching back to spl0 and there
 	 * are pending software interrupts, switch to
@@ -1147,6 +1181,9 @@ ASENTRY_NOPROFILE(interrupt)
 	addr	1 << IR_SOFT(r3),r0
 	movd	r0,_C_LABEL(Cur_pl)(pc)
 	movw	r0,@ICU_ADR+IMSK
+#if defined(MRTD)
+	movqd	0,tos
+#endif
 	bsr	_C_LABEL(check_sir)
 
 1:	CHECKAST
@@ -1217,7 +1254,7 @@ GLOBAL(inttab)
  *   sb - pointer to intbase
  */
 
-ENTRY(ram_size)
+KENTRY(ram_size, 4)
 	enter	[r3,r4,r5,r6,r7],0
 	sprd	sb,tos
 	sprd	intbase,r0
@@ -1266,7 +1303,7 @@ ENTRY(ram_size)
 	movb	0(r2),r2		/* clear parity status */
 	lprd	sb,tos
 	exit	[r3,r4,r5,r6,r7]
-	ret	0
+	ret	ARGS
 
 2:					/* come here if parity error */
 	addr	1b(pc),0(sp)		/* modify return addr to exit */
