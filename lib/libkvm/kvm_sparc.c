@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.16 1998/02/03 19:12:44 perry Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.17 1998/03/15 23:26:04 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.16 1998/02/03 19:12:44 perry Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.17 1998/03/15 23:26:04 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,7 +64,6 @@ __RCSID("$NetBSD: kvm_sparc.c,v 1.16 1998/02/03 19:12:44 perry Exp $");
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
-#include <machine/autoconf.h>
 #include <machine/kcore.h>
 
 #include <limits.h>
