@@ -3643,6 +3643,13 @@ for machine in $build $host $target; do
 		fi
 		xmake_file=rs6000/x-sysv4
 		;;
+	powerpc-*-netbsd*)
+		tm_file=rs6000/netbsd.h
+		xm_file=rs6000/xm-netbsd.h
+		# On NetBSD, the headers are already okay, except for math.h.
+		fixincludes=fixinc.math
+		tmake_file=t-netbsd
+		;;
 	powerpc-*-eabiaix*)
 		tm_file=rs6000/eabiaix.h
 		tmake_file="rs6000/t-ppcgas rs6000/t-ppccomm"
