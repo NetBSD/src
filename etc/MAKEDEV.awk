@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.7 2003/10/24 19:57:36 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.8 2003/10/26 13:40:46 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -193,11 +193,11 @@ BEGIN {
 
 # special cases aside, handle normal line 
 {
-	sub("^%MD_DEVICES%", MDDEV)
-	sub("%MKDISK%", MKDISK)
-	sub("%DISKMINOROFFSET%", DISKMINOROFFSET)
-	sub("%RAWDISK_OFF%", RAWDISK_OFF)
-	sub("%RAWDISK_NAME%", RAWDISK_NAME)
+	sub(/^%MD_DEVICES%/, MDDEV)
+	sub(/%MKDISK%/, MKDISK)
+	sub(/%DISKMINOROFFSET%/, DISKMINOROFFSET)
+	sub(/%RAWDISK_OFF%/, RAWDISK_OFF)
+	sub(/%RAWDISK_NAME%/, RAWDISK_NAME)
 
 	# if device substitutions are not active, do nothing more
 	if (!devsubst) {
@@ -218,7 +218,7 @@ BEGIN {
 		for (b in blk)
 			gsub("%" b "_blk%", blk[b], deventry)
 
-		if (deventry !~ "%[a-z]*_chr%" && deventry !~ "%[a-z]*_blk%")
+		if (deventry !~ /%[a-z]*_chr%/ && deventry !~ /%[a-z]*_blk%/)
 			print deventry
 	}
 	deventry = $0
