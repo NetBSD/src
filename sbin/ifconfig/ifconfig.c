@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	8.2 (Berkeley) 2/16/94";*/
-static char *rcsid = "$Id: ifconfig.c,v 1.15 1994/10/31 04:24:09 cgd Exp $";
+static char *rcsid = "$Id: ifconfig.c,v 1.16 1994/12/05 20:16:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,32 +73,31 @@ struct	ifaliasreq	addreq;
 struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
-
 char	name[30];
-int	flags;
-int	metric;
-int	nsellength = 1;
-int	setaddr;
-int	setipdst;
-int	doalias;
-int	clearaddr;
+int	flags, metric,setaddr, setipdst, doalias;
+int	clearaddr, s;
 int	newaddr = 1;
-int	s;
+int	nsellength = 1;
 int	af = AF_INET;
 
-int	setifflags(), setifaddr(), setifdstaddr(), setifnetmask();
-int	setifmetric(), setifbroadaddr(), setifipdst();
-int	notealias(), setsnpaoffset(), setnsellength(), notrailers();
-int	getinfo __P((struct ifreq *));
-void	getsock __P((int));
-void	printall __P((void));
+void 	notealias __P((char *, int));
+void 	notrailers __P((char *, int));
+void 	setifaddr __P((char *, int));
+void 	setifdstaddr __P((char *, int));
+void 	setifflags __P((char *, int));
+void 	setifbroadaddr __P((char *));
+void 	setifipdst __P((char *));
+void 	setifmetric __P((char *));
+void 	setifnetmask __P((char *));
+void 	setnsellength __P((char *));
+void 	setsnpaoffset __P((char *));
 
 #define	NEXTARG		0xffffff
 
 struct	cmd {
 	char	*c_name;
 	int	c_parameter;		/* NEXTARG means next argv */
-	int	(*c_func)();
+	void	(*c_func)();
 } cmds[] = {
 	{ "up",		IFF_UP,		setifflags } ,
 	{ "down",	-IFF_UP,	setifflags },
@@ -132,20 +131,30 @@ struct	cmd {
 	{ 0,		0,		setifdstaddr },
 };
 
+void 	adjust_nsellength();
+int	getinfo __P((struct ifreq *));
+void	getsock __P((int));
+void	printall __P((void));
+void 	printb __P((char *, unsigned short, char *));
+void 	status();
+
 /*
  * XNS support liberally adapted from code written at the University of
  * Maryland principally by James O'Toole and Chris Torek.
  */
-int	in_status(), in_getaddr();
-int	xns_status(), xns_getaddr();
-int	iso_status(), iso_getaddr();
+void	in_status __P((int));
+void 	in_getaddr __P((char *, int));
+void 	xns_status __P((int));
+void 	xns_getaddr __P((char *, int));
+void 	iso_status __P((int));
+void 	iso_getaddr __P((char *, int));
 
 /* Known address families */
 struct afswtch {
 	char *af_name;
 	short af_af;
-	int (*af_status)();
-	int (*af_getaddr)();
+	void (*af_status)();
+	void (*af_getaddr)();
 	u_long af_difaddr;
 	u_long af_aifaddr;
 	caddr_t af_ridreq;
@@ -163,6 +172,7 @@ struct afswtch {
 
 struct afswtch *afp;	/*the address family being set or asked about*/
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -330,9 +340,10 @@ printall()
 #define DSTADDR	3
 
 /*ARGSUSED*/
+void
 setifaddr(addr, param)
 	char *addr;
-	short param;
+	int param;
 {
 	/*
 	 * Delay the ioctl to set the interface addr until flags are all set.
@@ -345,18 +356,21 @@ setifaddr(addr, param)
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
 }
 
+void
 setifnetmask(addr)
 	char *addr;
 {
 	(*afp->af_getaddr)(addr, MASK);
 }
 
+void
 setifbroadaddr(addr)
 	char *addr;
 {
 	(*afp->af_getaddr)(addr, DSTADDR);
 }
 
+void
 setifipdst(addr)
 	char *addr;
 {
@@ -365,10 +379,13 @@ setifipdst(addr)
 	clearaddr = 0;
 	newaddr = 0;
 }
+
 #define rqtosa(x) (&(((struct ifreq *)(afp->x))->ifr_addr))
 /*ARGSUSED*/
+void
 notealias(addr, param)
 	char *addr;
+	int param;
 {
 	if (setaddr && doalias == 0 && param < 0)
 		memcpy(rqtosa(af_ridreq),
@@ -383,6 +400,7 @@ notealias(addr, param)
 }
 
 /*ARGSUSED*/
+void
 notrailers(vname, value)
 	char *vname;
 	int value;
@@ -391,6 +409,7 @@ notrailers(vname, value)
 }
 
 /*ARGSUSED*/
+void
 setifdstaddr(addr, param)
 	char *addr;
 	int param;
@@ -398,9 +417,10 @@ setifdstaddr(addr, param)
 	(*afp->af_getaddr)(addr, DSTADDR);
 }
 
+void
 setifflags(vname, value)
 	char *vname;
-	short value;
+	int value;
 {
  	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
 		err(1, "SIOCGIFFLAGS");
@@ -417,6 +437,7 @@ setifflags(vname, value)
 		err(1, "SIOCSIFFLAGS");
 }
 
+void
 setifmetric(val)
 	char *val;
 {
@@ -426,6 +447,7 @@ setifmetric(val)
 		warn("SIOCSIFMETRIC");
 }
 
+void
 setsnpaoffset(val)
 	char *val;
 {
@@ -440,10 +462,10 @@ setsnpaoffset(val)
  * Print the status of the interface.  If an address family was
  * specified, show it and it only; otherwise, show them all.
  */
+void
 status()
 {
 	register struct afswtch *p = afp;
-	short af = ifr.ifr_addr.sa_family;
 
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
@@ -458,6 +480,7 @@ status()
 	}
 }
 
+void
 in_status(force)
 	int force;
 {
@@ -518,6 +541,7 @@ in_status(force)
 	putchar('\n');
 }
 
+void
 xns_status(force)
 	int force;
 {
@@ -556,6 +580,7 @@ xns_status(force)
 	putchar('\n');
 }
 
+void
 iso_status(force)
 	int force;
 {
@@ -610,8 +635,10 @@ struct sockaddr_in *sintab[] = {
 SIN(ridreq.ifr_addr), SIN(addreq.ifra_addr),
 SIN(addreq.ifra_mask), SIN(addreq.ifra_broadaddr)};
 
+void
 in_getaddr(s, which)
 	char *s;
+	int which;
 {
 	register struct sockaddr_in *sin = sintab[which];
 	struct hostent *hp;
@@ -635,6 +662,7 @@ in_getaddr(s, which)
 /*
  * Print a value a la the %b format of the kernel's printf
  */
+void
 printb(s, v, bits)
 	char *s;
 	register char *bits;
@@ -670,8 +698,10 @@ struct sockaddr_ns *snstab[] = {
 SNS(ridreq.ifr_addr), SNS(addreq.ifra_addr),
 SNS(addreq.ifra_mask), SNS(addreq.ifra_broadaddr)};
 
+void
 xns_getaddr(addr, which)
-char *addr;
+	char *addr;
+	int which;
 {
 	struct sockaddr_ns *sns = snstab[which];
 	struct ns_addr ns_addr();
@@ -688,8 +718,10 @@ struct sockaddr_iso *sisotab[] = {
 SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
 SISO(iso_addreq.ifra_mask), SISO(iso_addreq.ifra_dstaddr)};
 
+void
 iso_getaddr(addr, which)
-char *addr;
+	char *addr;
+	int which;
 {
 	register struct sockaddr_iso *siso = sisotab[which];
 	struct iso_addr *iso_addr();
@@ -704,6 +736,7 @@ char *addr;
 	}
 }
 
+void
 setnsellength(val)
 	char *val;
 {
@@ -714,14 +747,16 @@ setnsellength(val)
 		errx(1, "Setting NSEL length valid only for iso");
 }
 
+void
 fixnsel(s)
-register struct sockaddr_iso *s;
+	register struct sockaddr_iso *s;
 {
 	if (s->siso_family == 0)
 		return;
 	s->siso_tlen = nsellength;
 }
 
+void
 adjust_nsellength()
 {
 	fixnsel(sisotab[RIDADDR]);

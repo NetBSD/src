@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass5.c	8.2 (Berkeley) 2/2/94";*/
-static char *rcsid = "$Id: pass5.c,v 1.9 1994/10/28 16:55:05 mycroft Exp $";
+static char *rcsid = "$Id: pass5.c,v 1.10 1994/12/05 20:16:03 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,7 +42,9 @@ static char *rcsid = "$Id: pass5.c,v 1.9 1994/10/28 16:55:05 mycroft Exp $";
 #include <ufs/ffs/fs.h>
 #include <string.h>
 #include "fsck.h"
+#include "extern.h"
 
+void
 pass5()
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos;

@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.18 1994/09/30 02:33:15 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.19 1994/12/05 20:15:31 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: disklabel.c,v 1.18 1994/09/30 02:33:15 mycroft Exp $
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
 
@@ -140,6 +141,8 @@ int getasciilabel __P((FILE *, struct disklabel *));
 int checklabel __P((struct disklabel *));
 void setbootflag __P((struct disklabel *));
 void usage __P((void));
+u_short dkcksum __P((struct disklabel *));
+
 
 int
 main(argc, argv)
@@ -374,7 +377,6 @@ writelabel(f, boot, lp)
 	char *boot;
 	struct disklabel *lp;
 {
-	int i;
 	int writeable;
 	off_t sectoffset = 0;
 
@@ -465,6 +467,7 @@ writelabel(f, boot, lp)
 #ifdef vax
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		daddr_t alt;
+		int i;
 
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
