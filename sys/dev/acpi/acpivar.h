@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.15.2.1 2004/04/28 05:24:28 jmc Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.15.2.2 2004/04/28 05:25:25 jmc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -272,7 +272,15 @@ ACPI_STATUS	acpi_resource_parse(struct device *, struct acpi_devnode *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
 
+#if defined(_KERNEL_OPT)
+#include "acpiec.h"
+
+#if NACPIEC > 0
 void		acpiec_early_attach(struct device *);
+#endif
+#else
+#define	NACPIEC	0
+#endif
 
 struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
 struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);
