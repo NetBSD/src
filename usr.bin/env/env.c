@@ -39,12 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)env.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: env.c,v 1.5 1993/11/10 20:06:00 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.6 1993/11/19 20:06:41 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <errno.h>
 #include <unistd.h>
 #include <err.h>
@@ -61,6 +62,8 @@ main(argc, argv)
 	register char **ep, *p;
 	char *cleanenv[1];
 	int ch;
+
+	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "-i")) != -1)
 		switch((char)ch) {
