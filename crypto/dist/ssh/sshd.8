@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.26.2.1 2002/06/26 16:54:30 tv Exp $
+.\"	$NetBSD: sshd.8,v 1.26.2.2 2002/07/09 01:19:01 lukem Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -579,7 +579,7 @@ These files are created using
 .Xr ssh-keygen 1 .
 .It Pa /etc/moduli
 Contains Diffie-Hellman groups used for the "Diffie-Hellman Group Exchange".
-.It Pa /var/empty
+.It Pa /var/chroot/sshd
 .Xr chroot 2
 directory used by
 .Nm
