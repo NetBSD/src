@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2001/11/02 03:52:21 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2001/11/02 15:37:41 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.75 2001/11/02 03:52:21 tv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.76 2001/11/02 15:37:41 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.75 2001/11/02 03:52:21 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2001/11/02 15:37:41 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -460,7 +460,7 @@ Main_SetObjdir(path)
 	struct stat sb;
 	char *p = NULL;
 	char buf[MAXPATHLEN + 1];
-	Boolean rc = TRUE;
+	Boolean rc = FALSE;
 
 	/* expand variable substitutions */
 	if (strchr(path, '$') != 0) {
