@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.13 2003/07/14 15:47:03 lukem Exp $	*/
+/*	$NetBSD: bthci.c,v 1.14 2003/07/24 19:19:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.13 2003/07/14 15:47:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.14 2003/07/24 19:19:42 nathanw Exp $");
 
 #include "bthcidrv.h"
 
@@ -338,8 +338,8 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 
 	if (uio->uio_resid < sc->sc_rd_len) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: short read %d < %d\n", uio->uio_resid,
-		       sc->sc_rd_len);
+		printf("bthciread: short read %ld < %ld\n",
+		    (long)uio->uio_resid, (long)sc->sc_rd_len);
 #endif
 		error = EINVAL;
 		goto ret;
@@ -418,14 +418,14 @@ bthciwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (uiolen > BTHCI_ACL_DATA_MAX_LEN + 1) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: long write %d\n", uio->uio_resid);
+		printf("bthciread: long write %ld\n", (long)uio->uio_resid);
 #endif
 		return (EINVAL);
 	}
 
 	if (uiolen <= 1) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: short write %d\n", uio->uio_resid);
+		printf("bthciread: short write %ld\n", (long)uio->uio_resid);
 #endif
 		return (EINVAL);
 	}
