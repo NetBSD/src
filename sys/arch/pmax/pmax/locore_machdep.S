@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8.2.4 1999/05/07 02:33:31 nisimura Exp $ */
+/*	$NetBSD: locore_machdep.S,v 1.8.2.5 1999/11/12 11:47:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,15 +200,14 @@ _C_LABEL(intrnames):
 	.asciiz	"softnet"
 	.asciiz	"serial0"
 	.asciiz	"serial1"
-	.asciiz	"serial2"
 	.asciiz	"ether"
 	.asciiz	"scsi"
 	.asciiz	"memory"
 	.asciiz	"clock"
 	.asciiz	"fpu"
-	.asciiz	"tcslot0"
-	.asciiz	"tcslot1"
-	.asciiz	"tcslot2"
+	.asciiz	"optslot0"
+	.asciiz	"optslot1"
+	.asciiz	"optslot2"
 	.asciiz "dtop"
 	.asciiz "isdn"
 	.asciiz	"floppy"

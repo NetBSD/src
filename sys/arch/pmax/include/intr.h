@@ -1,5 +1,5 @@
-/* $Id: intr.h,v 1.5.2.4 1999/08/06 05:01:10 nisimura Exp $ */
-/*	$NetBSD: intr.h,v 1.5.2.4 1999/08/06 05:01:10 nisimura Exp $	*/
+/* $Id: intr.h,v 1.5.2.5 1999/11/12 11:47:27 nisimura Exp $ */
+/*	$NetBSD: intr.h,v 1.5.2.5 1999/11/12 11:47:27 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -51,6 +51,7 @@
 
 extern int _splraise __P((int));
 extern int _spllower __P((int));
+extern int _splrestore __P((int));
 extern int _splset __P((int));
 extern int _splget __P((void));
 extern void _splnone __P((void));
@@ -84,7 +85,7 @@ struct splsw {
 	struct splclosure tty;
 	struct splclosure imp;
 	struct splclosure clock;
-	struct splclosure splx;
+	struct splclosure restore;
 };
 extern struct splsw *__spl;
 
@@ -92,7 +93,7 @@ extern struct splsw *__spl;
 
 #define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)_spllower(0)
-#define splx(s)		(void)_splset(s)
+#define splx(s)		(void)_splrestore(s)
 #define splbio()	_splraise(splvec.splbio)
 #define splnet()	_splraise(splvec.splnet)
 #define spltty()	_splraise(splvec.spltty)
@@ -100,24 +101,24 @@ extern struct splsw *__spl;
 #define splpmap()	_splraise(splvec.splimp)
 #define splclock()	_splraise(splvec.splclock)
 #define splstatclock()	_splraise(splvec.splstatclock)
+#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1) 
-#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #else
 
 #define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)(*__spl->lower.func)(0)
-#define splx(lvl)	(void)(*__spl->splx.func)(lvl)
+#define splx(lvl)	(void)(*__spl->restore.func)(lvl)
 #define splbio()	(*__spl->bio.func)(__spl->bio.arg)
 #define splnet()	(*__spl->net.func)(__spl->net.arg)
 #define spltty()	(*__spl->tty.func)(__spl->tty.arg)
 #define splimp()	(*__spl->imp.func)(__spl->imp.arg)
 #define splclock()	(*__spl->clock.func)(__spl->clock.arg)
 #define splstatclock()	(*__spl->clock.func)(__spl->clock.arg)
+#define spllowersoftclock()	(*__spl->lower.func)(MIPS_SOFT_INT_MASK_0)
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1)
-#define spllowersoftclock() (*__spl->lower.func)(MIPS_SOFT_INT_MASK_0)
 
 #endif
 
@@ -144,19 +145,18 @@ extern unsigned intrcnt[];
 #define SOFTNET_INTR	1
 #define SERIAL0_INTR	2
 #define SERIAL1_INTR	3
-#define SERIAL2_INTR	4
-#define LANCE_INTR	5
-#define SCSI_INTR	6
-#define ERROR_INTR	7
-#define HARDCLOCK	8
-#define FPU_INTR	9
-#define SLOT0_INTR	10
-#define SLOT1_INTR	11
-#define SLOT2_INTR	12
-#define DTOP_INTR	13
-#define ISDN_INTR	14
-#define FLOPPY_INTR	15
-#define STRAY_INTR	16
+#define LANCE_INTR	4
+#define SCSI_INTR	5
+#define ERROR_INTR	6
+#define HARDCLOCK	7
+#define FPU_INTR	8
+#define SLOT0_INTR	9
+#define SLOT1_INTR	10
+#define SLOT2_INTR	11
+#define DTOP_INTR	12
+#define ISDN_INTR	13
+#define FLOPPY_INTR	14
+#define STRAY_INTR	15
 
 /* interrupt handler array; hiring indeces of intrcnt[] */
 
@@ -170,7 +170,6 @@ extern struct intrhand intrtab[];
 #define SYS_DEV_LANCE	LANCE_INTR
 #define SYS_DEV_SCC0	SERIAL0_INTR
 #define SYS_DEV_SCC1	SERIAL1_INTR
-#define SYS_DEV_SCC2	SERIAL2_INTR
 #define SYS_DEV_DTOP	DTOP_INTR
 #define SYS_DEV_FDC	FLOPPY_INTR
 #define SYS_DEV_ISDN	ISDN_INTR
