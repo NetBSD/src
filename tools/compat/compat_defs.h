@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.24 2003/01/27 01:17:47 uwe Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.25 2003/01/31 20:50:29 uwe Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -409,6 +409,29 @@ char *alloca ();
 #  endif
 # endif
 #endif
+
+/* avoid prototype conflicts with host */
+#define cgetcap __nbcompat_cgetcap
+#define cgetclose __nbcompat_cgetclose
+#define cgetent __nbcompat_cgetent
+#define cgetfirst __nbcompat_cgetfirst
+#define cgetmatch __nbcompat_cgetmatch
+#define cgetnext __nbcompat_cgetnext
+#define cgetnum __nbcompat_cgetnum
+#define cgetset __nbcompat_cgetset
+#define cgetstr __nbcompat_cgetstr
+#define cgetustr __nbcompat_cgetustr
+
+char	*cgetcap(char *, const char *, int);
+int	 cgetclose(void);
+int	 cgetent(char **, char **, const char *);
+int	 cgetfirst(char **, char **);
+int	 cgetmatch(const char *, const char *);
+int	 cgetnext(char **, char **);
+int	 cgetnum(char *, const char *, long *);
+int	 cgetset(const char *);
+int	 cgetstr(char *, const char *, char **);
+int	 cgetustr(char *, const char *, char **);
 
 /* <sys/endian.h> */
 

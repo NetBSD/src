@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.16 2002/01/31 19:23:50 tv Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.17 2003/01/31 20:50:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,6 +33,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
@@ -43,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.16 2002/01/31 19:23:50 tv Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.17 2003/01/31 20:50:30 uwe Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
