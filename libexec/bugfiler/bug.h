@@ -31,9 +31,13 @@
  * SUCH DAMAGE.
  *
  *	@(#)bug.h	5.10 (Berkeley) 2/25/91
+ *
+ *  4/01/93 Fixed BUGS_HOME so it can be defined from the Makefile - rgrimes
  */
 
+#ifndef	BUGS_HOME
 #define BUGS_HOME	"owner-bugs@ucbvax.Berkeley.EDU"
+#endif	/* BUGS_HOME */
 #define BUGS_ID		"bugs"
 
 /*
