@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.2 1993/07/31 15:26:53 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/04/27 06:23:02 hpeyerl Exp $
 
 COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
 	../netiso/*.[ch] ../netccitt/*.[ch] \
@@ -7,8 +7,7 @@ COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
 
 # Makefile for hp300 tags file
 
-all:
-	@echo "make tags or links only"
+SUBDIR= stand
 
 THP300=	../hp300/tags
 SHP300=	../hp300/hp300/*.[ch] ../hp300/include/*.h \
@@ -28,3 +27,5 @@ tags:
 links:
 	-for i in ${DHP300}; do \
 	    cd ../$$i && rm -f tags; ln -s ../tags tags; done
+
+.include <bsd.prog.mk>
