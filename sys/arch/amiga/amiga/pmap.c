@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2004/09/23 21:30:36 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2005/01/01 21:02:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2004/09/23 21:30:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2005/01/01 21:02:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ pv_entry_t	pv_table;	/* array of entries, one per page */
 
 struct pmap	kernel_pmap_store;
 struct vm_map	*pt_map;
-struct vm_map	pt_map_store;
+struct vm_map_kernel pt_map_store;
 
 vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
