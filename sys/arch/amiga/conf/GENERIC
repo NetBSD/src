@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.33 1995/03/02 03:30:43 chopps Exp $
+#	$NetBSD: GENERIC,v 1.34 1995/04/02 20:38:33 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -140,8 +140,8 @@ ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
 
 # scsi stuff, all possible
-gvpbus0		at zbus0
-gtsc0		at gvpbus0		# GVP series II scsi
+gvpbus*		at zbus0
+gtsc0		at gvpbus?		# GVP series II scsi
 ahsc0		at mainbus0		# A3000 scsi
 atzsc0		at zbus0
 wstsc0		at zbus0		# Wordsync II scsi
