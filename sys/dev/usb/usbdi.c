@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.20 1999/01/08 11:58:26 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.21 1999/01/10 19:13:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -663,7 +663,6 @@ usbd_bus_count()
 {
 	return (usb_bus_count());
 }
-#endif
 
 usbd_status 
 usbd_get_bus_handle(index, bus)
@@ -672,6 +671,7 @@ usbd_get_bus_handle(index, bus)
 {
 	return (usb_get_bus_handle(index, bus));
 }
+#endif
 
 usbd_status 
 usbd_get_root_hub(bus, dev)
@@ -1276,14 +1276,14 @@ usbd_device_set_desc(device_t device, char *devinfo)
 	device_set_desc(device, desc);
 }
 
-/* 
- * A static buffer is a loss if this routine is used from an interrupt,
- * but it's not fatal.
- */
 char *
 usbd_devname(bdevice *bdev)
 {
 	static char buf[20];
+	/* 
+	 * A static buffer is a loss if this routine is used from an interrupt,
+	 * but it's not fatal.
+	 */
 
 	sprintf(buf, "%s%d", device_get_name(*bdev), device_get_unit(*bdev));
 	return (buf);

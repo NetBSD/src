@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.6 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.7 1999/01/10 19:13:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/malloc.h>
 #if defined(__NetBSD__)
 #include <sys/ioctl.h>
+#include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
@@ -56,7 +57,6 @@
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/device.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.20 1999/01/10 11:13:36 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.21 1999/01/10 19:13:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,13 +113,14 @@ struct ums_softc {
 	int flags;		/* device configuration */
 #define UMS_Z		0x01	/* z direction available */
 	int nbuttons;
+#define MAX_BUTTONS	7	/* chosen because sc_buttons is u_char */
 
 #if defined(__NetBSD__)
 	u_char sc_buttons;	/* mouse button status */
 	struct device *sc_wsmousedev;
 #elif defined(__FreeBSD__)
 	u_char		qbuf[QUEUE_BUFSIZE];
-	u_char		dummy[100];		/* just for safety and for now */
+	u_char		dummy[100];	/* XXX just for safety and for now */
 	int		qcount, qhead, qtail;
 	mousehw_t	hw;
 	mousemode_t	mode;
@@ -282,8 +283,8 @@ USB_ATTACH(ums)
 		}
 	}
 
-	/* figure out the number of buttons, 7 is an arbitrary limit */
-	for (i = 1; i <= 7; i++)
+	/* figure out the number of buttons */
+	for (i = 1; i <= MAX_BUTTONS; i++)
 		if (!hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),
 				hid_input, &loc_btn, 0))
 			break;
@@ -407,6 +408,7 @@ ums_intr(reqh, addr, status)
 	int dx, dy, dz;
 	u_char buttons = 0;
 	int i;
+
 #if defined(__NetBSD__)
 #define UMS_BUT(i) ((i) == 1 || (i) == 2 ? 3 - (i) : i)
 #elif defined(__FreeBSD__)
@@ -434,9 +436,6 @@ ums_intr(reqh, addr, status)
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
-	/* NWH Why are you modifying the button assignments here?
-	 * That's the purpose of a high level mouse driver
-	 */
 	for (i = 0; i < sc->nbuttons; i++)
 		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
 			buttons |= (1 << UMS_BUT(i));
@@ -697,7 +696,7 @@ ums_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	if (!sc) {
 		DPRINTF(("sc not found at ioctl"));
-		return ENOENT;
+		return (ENOENT);
 	}
 
 	switch(cmd) {
@@ -738,4 +737,3 @@ ums_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 CDEV_DRIVER_MODULE(ums, usb, ums_driver, ums_devclass,
 			UMS_CDEV_MAJOR, ums_cdevsw, usbd_driver_load, 0);
 #endif
-

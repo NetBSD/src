@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.16 1999/01/08 11:58:26 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.17 1999/01/10 19:13:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -199,8 +199,10 @@ usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev,
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
-usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
 void		usb_needs_explore __P((usbd_bus_handle));
+#if 0
+usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
+#endif
 
 /* Locator stuff. */
 

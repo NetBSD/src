@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.5 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.6 1999/01/10 19:13:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,9 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	((dev)->softc = config_found_sm(parent, args, print, sub))
 
+
+
+
 #elif defined(__FreeBSD__)
 /*
  * FreeBSD
@@ -132,6 +135,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 		else			\
 			panic("Non zero filler for memset, cannot handle!"); \
 		} while (0)
+
 
 #define usb_timeout(f, d, t, h) ((h) = timeout((f), (d), (t)))
 #define usb_untimeout(f, d, h) untimeout((f), (d), (h))
@@ -178,7 +182,7 @@ __CONCAT(dname,_attach)(device_t self)
 #define USB_ATTACH_SUCCESS_RETURN	return 0
 
 #define USB_ATTACH_SETUP \
-	usb_device_set_desc(self, devinfo); \
+	usbd_device_set_desc(self, devinfo); \
 	sc->sc_dev = self
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
@@ -204,7 +208,7 @@ __CONCAT(dname,_attach)(device_t self)
 #define SIMPLEQ_INIT		STAILQ_INIT
 #define SIMPLEQ_ENTRY		STAILQ_ENTRY
 
-#endif /* __FreeBSD */
+#endif /* __FreeBSD__ */
 
 #define NONE {0,0}
 
