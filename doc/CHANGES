@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.117 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.118 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -321,3 +321,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	amd: update to 6.1b2 [christos 20030309]
 	evbppc: Add support for the NCD Explora451 ThinClient.
 		[hannken 20030311]
+	kernel: Report correct child cpu times. [dsl 20030305]
+	kernel: Use common code for set{u,g}id functions. [dsl 20030305]
+	kernel: New pid allocator - avoids all the searching in pfind() etc.
+		Bump version to 1.6Q.  [dsl 20030319]
