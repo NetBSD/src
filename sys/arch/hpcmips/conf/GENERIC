@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp $
+# 	$NetBSD: GENERIC,v 1.30 2000/02/17 22:16:31 mycroft Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	8
 
@@ -231,7 +231,7 @@ pcic0   at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 # Unknown machines
 #
 vrisab4 at vrgiu?
-isa4	at vrisab3
+isa4	at vrisab4
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
