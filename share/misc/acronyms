@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.114 2003/04/06 18:02:52 jschauma Exp $
+$NetBSD: acronyms,v 1.115 2003/04/06 19:51:50 salo Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -12,8 +12,10 @@ AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
 ASAP	as soon as possible
+ATM	at the moment
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
+B/C	because
 BBL	[I'll] be back later
 BBS	be back soon
 BBT	be back tomorrow
@@ -34,6 +36,8 @@ CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
 CYA	see you around
+D/L	download
+DIY	do it yourself
 DKDC	don't know, don't care
 DSTM	don't shoot the messenger
 DTRT	do the right thing
@@ -42,10 +46,12 @@ DWIM	do what I mean
 EG	evil grin
 EMSG	email message
 EOB	end of business [day]
+EOD	end of discussion
 EOL	end of life
 ETLA	extended three letter acronym
 EWAG	experienced wild-ass guess
 FAQ	frequently asked question
+FCFS	first come first served
 FIIK	fuck[ed] if I know
 FIIR	fuck[ed] if I remember
 FM	fucking magic
@@ -58,13 +64,20 @@ FUD	fear, uncertainty and doubt
 FWIW	for what it's worth
 FYI	for your information
 G	grin
+GAC	get a clue
+GAL	get a life
 GIGO	garbage in, garbage out
 GMTA	great minds think alike
 GTFO	get the fuck out
+GTG	got to go
 HAND	have a nice day
 HHIS	hanging head in shame
+HICA	here it comes again
 HTH	hope this helps
+IAC	in any case
 IANAL	I am not a lawyer
+IC	I see
+ICCL	I couldn't care less
 IHAFC	I haven't a fucking clue
 IHNFC	I have no fucking clue
 IIANM	if I am not mistaken
@@ -80,7 +93,8 @@ ISAGN	I see a great need
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
-IYSS	If you say so
+IYSS	if you say so
+J/K	just kidding
 JIC	just in case
 JK	just kidding
 JMO	just my opinion
@@ -95,6 +109,7 @@ LMAO	laughing my ass off
 LMSO	laughing my socks off
 LOL	laughing out loud
 LTNS	long time no see
+N/M	never mind
 MMU	memory management unit
 MOTAS	member of the appropriate sex
 MOTOS	member of the opposite sex
@@ -110,10 +125,13 @@ NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
 OIC	oh, I see
+OMG	oh, my god
+OT	off topic
 OTL	out to lunch
 OTOH	on the other hand
 OTT	over the top
 OTTOMH	off the top of my head
+PEBKAC	problem exists between keyboard and chair
 PFO	please fuck off
 PFY	pimply faced youth
 PITA	pain in the ass
@@ -147,6 +165,7 @@ SMLSFB	so many losers, so few bullets
 SMOP	simple matter of programming
 SNAFU	situation normal, all fucked up
 SNERT	snot-nosed egotistical rude teenager
+SNR	signal to noise ratio
 SO	significant other
 SOB	son of [a] bitch
 SOL	shit out [of] luck
@@ -157,8 +176,10 @@ SWAG	silly, wild-assed guess
 SWAHBI	silly, wild-assed hare-brained idea
 SWMBO	she who must be obeyed
 TANSTAAFL	there ain't no such thing as a free lunch
+TBC	to be continued
 TBD	to be {decided,determined,done}
 TIA	thanks in advance
+TINC	there is no cabal
 TLA	three letter acronym
 TLB	translation lookaside buffer
 TMA	too many abbreviations
@@ -168,10 +189,16 @@ TTFN	ta ta for now
 TTYL	talk to you later
 TWIAVBP	the world is a very big place
 TYVM	thank you very much
+U/L	upload
 UTSL	use the source, Luke
 VEG	very evil grin
+W/	with
+W/O	without
 WAG	wild-ass guess
+WB	welcome back
+WFM	works for me
 WIBNI	wouldn't it be nice if
+WIP	work in progress
 WOFTAM	waste of fucking time and money
 WOMBAT	waste of money, brain, and time
 WRT	with respect to
@@ -183,3 +210,4 @@ YHL	you have lost
 YKWIM	you know what I mean
 YMA	yo momma's ass
 YMMV	your mileage may vary
+YW	you're welcome
