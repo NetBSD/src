@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.50 2004/04/11 13:31:17 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.51 2004/12/10 21:49:31 erh Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -239,7 +239,9 @@ file installation; often this is
 .Pa /usr .
 .It Fl u
 If the package that's being installed is already installed, either
-in the same or a different version, an update is performed.
+in the same or a different version, an update is performed.  If this
+is specified twice, then any dependant packages that are too old will
+also be updated to fulfill the dependecy.
 See below for a more detailed description of the process.
 .It Fl V
 Print version number and exit.
@@ -344,7 +346,11 @@ are read from the packing list.
 If any of these required packages are not currently installed,
 an attempt is made to find and install it;
 if the missing package cannot be found or installed,
-the installation is terminated.
+the installation is terminated.  If the
+.Fl u
+option was specified twice, required packages that are installed,
+but with too old of a version, are also updated.  The dependant
+packages are found according to the normal PKG_PATH rules.
 .It
 A search is made for any
 .Cm @option
