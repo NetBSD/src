@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.13 1997/03/15 18:09:36 is Exp $ */
+/* $NetBSD: if_ea.c,v 1.14 1997/03/19 02:45:06 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1095,6 +1095,7 @@ eaintr(arg)
 {
 	register struct ea_softc *sc = arg;
 	u_int iobase = sc->sc_iobase;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int status, s;
 	u_int txstatus;
 
