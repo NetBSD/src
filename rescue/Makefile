@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2005/01/10 10:04:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2005/01/10 10:05:44 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -43,6 +43,7 @@ CLEANFILES+=	rescue.unstripped
 realall: ${CRUNCHBIN}
 
 install: ${CRUNCHBIN}
+	${_MKMSG} "populate ${TARGETDIR}"
 	${PARSELIST} -v mode=install ${LISTS} | ${MAKE} -f - install
 
 .include <bsd.prog.mk>
