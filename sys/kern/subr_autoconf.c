@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.51 2000/06/02 01:31:54 cgd Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.52 2000/06/02 01:48:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.51 2000/06/02 01:31:54 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.52 2000/06/02 01:48:50 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -203,7 +203,7 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
  * This is much like config_search, but there is no parent.
  */
 struct cfdata *
-config_rootsearch(cfmatch_t fn, char *rootname, void *aux)
+config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 	short *p;
@@ -227,7 +227,7 @@ config_rootsearch(cfmatch_t fn, char *rootname, void *aux)
 	return (m.match);
 }
 
-static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
+static const char *msgs[3] = { "", " not configured\n", " unsupported\n" };
 
 /*
  * The given `aux' argument describes a device that has been found
@@ -254,7 +254,7 @@ config_found_sm(struct device *parent, void *aux, cfprint_t print,
  * As above, but for root devices.
  */
 struct device *
-config_rootfound(char *rootname, void *aux)
+config_rootfound(const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 
@@ -289,7 +289,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
-	char *xunit;
+	const char *xunit;
 	int myunit;
 	char num[10];
 
@@ -345,7 +345,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	else {
 		printf("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
-			(void) (*print)(aux, (char *)0);
+			(void) (*print)(aux, NULL);
 	}
 
 	/* put this device in the devices array */

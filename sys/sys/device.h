@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.39 2000/06/02 01:31:52 cgd Exp $ */
+/* $NetBSD: device.h,v 1.40 2000/06/02 01:48:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ struct cfdriver {
  * of the parent device.  The return value is ignored if the device was
  * configured, so most functions can return UNCONF unconditionally.
  */
-typedef int (*cfprint_t)(void *, const char *);
+typedef int (*cfprint_t)(void *, const char *);		/* XXX const char * */
 #define	QUIET	0		/* print nothing */
 #define	UNCONF	1		/* print " not configured\n" */
 #define	UNSUPP	2		/* print " not supported\n" */
@@ -176,9 +176,9 @@ extern __volatile int config_pending; 	/* semaphore for mountroot */
 
 void configure(void);
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
-struct cfdata *config_rootsearch(cfmatch_t, char *, void *);
+struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
-struct device *config_rootfound(char *, void *);
+struct device *config_rootfound(const char *, void *);
 struct device *config_attach(struct device *, struct cfdata *, void *,
     cfprint_t);
 int config_detach(struct device *, int);
