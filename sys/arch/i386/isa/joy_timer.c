@@ -1,11 +1,15 @@
-/*	$NetBSD: joy_isa.c,v 1.3 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:40 jdolecek Exp $	*/
+
+/*
+ * XXX This _really_ should be rewritten such that it doesn't
+ * XXX rely in the i386 timer!
+ */
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
  * All rights reserved.
  *
- * Ported to NetBSD by Matthieu Herrb <matthieu@laas.fr>.  Additional
- * modification by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * Ported to NetBSD by Matthieu Herrb <matthieu@laas.fr>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,76 +36,44 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:40 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 
 #include <machine/bus.h>
 
+#include <machine/cpu.h>
+#include <machine/pio.h>
+#include <machine/cpufunc.h>
+#include <machine/joystick.h>
+#include <machine/conf.h>
+
 #include <dev/isa/isavar.h>
+#include <dev/isa/isareg.h>
 
-#include <bebox/isa/joyvar.h>
+#include <dev/ic/joyvar.h>
 
-#define JOY_NPORTS    1
-
-int	joy_isa_probe __P((struct device *, struct cfdata *, void *));
-void	joy_isa_attach __P((struct device *, struct device *, void *));
-
-struct cfattach joy_isa_ca = {
-	sizeof(struct joy_softc), joy_isa_probe, joy_isa_attach
-};
+#include <i386/isa/timerreg.h>		/* XXX XXX XXX */
 
 int
-joy_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+joy_get_tick()
 {
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
-	int rval = 0;
+	int low, high;
 
-	if (ia->ia_iobase == IOBASEUNK)
-		return (0);
+	outb(TIMER_MODE, TIMER_SEL0);
+	low = inb(TIMER_CNTR0);
+	high = inb(TIMER_CNTR0);
 
-	if (bus_space_map(iot, ia->ia_iobase, JOY_NPORTS, 0, &ioh))
-		return (0);
-
-#ifdef WANT_JOYSTICK_CONNECTED
-	bus_space_write_1(iot, ioh, 0, 0xff);
-	DELAY(10000);		/* 10 ms delay */
-	if ((bus_space_read_1(iot, ioh, 0) & 0x0f) != 0x0f)
-		rval = 1;
-#else
-	rval = 1;
-#endif
-
-	bus_space_unmap(iot, ioh, JOY_NPORTS);
-
-	ia->ia_iosize = JOY_NPORTS;
-	ia->ia_msize = 0;
-	return rval;
+	return ((high << 8) | low);
 }
 
-void
-joy_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+int
+joy_timer_freq()
 {
-	struct joy_softc *sc = (struct joy_softc *) self;
-	struct isa_attach_args *ia = aux;
-
-	printf("\n");
-
-	sc->sc_iot = ia->ia_iot;
-
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, JOY_NPORTS, 0,
-	    &sc->sc_ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	joyattach(sc);
+	return (TIMER_FREQ);
 }

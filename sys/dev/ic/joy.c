@@ -1,9 +1,4 @@
-/*	$NetBSD: joy.c,v 1.4 2002/01/07 22:58:08 chris Exp $	*/
-
-/*
- * XXX This _really_ should be rewritten such that it doesn't
- * XXX rely in the i386 timer!
- */
+/*	$NetBSD: joy.c,v 1.1 2002/02/02 18:37:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -36,6 +31,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.1 2002/02/02 18:37:44 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -46,16 +44,14 @@
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/cpufunc.h>
 #include <machine/joystick.h>
-#include <arm/conf.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
-#include <dev/ic/i8253reg.h>
-
-#include <arm32/isa/joyvar.h>
-
+#include <dev/ic/joyvar.h>
 
 /*
  * The game port can manage 4 buttons and 4 variable resistors (usually 2
@@ -84,7 +80,6 @@
 
 int		joyopen __P((dev_t, int, int, struct proc *));
 int		joyclose __P((dev_t, int, int, struct proc *));
-static int	get_tick __P((void));
 
 extern struct cfdriver joy_cd;
 
@@ -96,9 +91,11 @@ joyattach(sc)
 	sc->timeout[0] = sc->timeout[1] = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	printf("%s: joystick%sconnected\n", sc->sc_dev.dv_xname,
+	printf("%s: joystick %sconnected\n", sc->sc_dev.dv_xname,
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
-	    " not " : " ");
+	    "not " : "");
+
+	sc->sc_timer_freq = joy_timer_freq();
 }
 
 int
@@ -113,15 +110,16 @@ joyopen(dev, flag, mode, p)
 
 	if (unit >= joy_cd.cd_ndevs)
 		return (ENXIO);
-
 	sc = joy_cd.cd_devs[unit];
+	if (sc == 0)
+		return (ENXIO);
 
 	if (sc->timeout[i])
-		return EBUSY;
+		return (EBUSY);
 
 	sc->x_off[i] = sc->y_off[i] = 0;
 	sc->timeout[i] = JOY_TIMEOUT;
-	return 0;
+	return (0);
 }
 
 int
@@ -135,7 +133,7 @@ joyclose(dev, flag, mode, p)
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
 
 	sc->timeout[i] = 0;
-	return 0;
+	return (0);
 }
 
 int
@@ -146,25 +144,24 @@ joyread(dev, uio, flag)
 {
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
-	struct joystick c;
-	int i, t0, t1;
-	int state = 0, x = 0, y = 0;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int s;
+	struct joystick c;
+	int i, t0, t1, s;
+	int state = 0, x = 0, y = 0;
 
-	s = splhigh();
+	s = splhigh();	/* XXX */
 	bus_space_write_1(iot, ioh, 0, 0xff);
-	t0 = get_tick();
+	t0 = joy_get_tick();
 	t1 = t0;
 	i = USEC2TICKS(sc->timeout[JOYPART(dev)]);
 	while (t0 - t1 < i) {
 		state = bus_space_read_1(iot, ioh, 0);
 		if (JOYPART(dev) == 1)
 			state >>= 2;
-		t1 = get_tick();
+		t1 = joy_get_tick();
 		if (t1 > t0)
-			t1 -= TIMER_FREQ / hz;
+			t1 -= sc->sc_timer_freq / hz;
 		if (!x && !(state & 0x01))
 			x = t1;
 		if (!y && !(state & 0x02))
@@ -172,13 +169,14 @@ joyread(dev, uio, flag)
 		if (x && y)
 			break;
 	}
-	splx(s);
+	splx(s);	/* XXX */
+
 	c.x = x ? sc->x_off[JOYPART(dev)] + TICKS2USEC(t0 - x) : 0x80000000;
 	c.y = y ? sc->y_off[JOYPART(dev)] + TICKS2USEC(t0 - y) : 0x80000000;
 	state >>= 4;
 	c.b1 = ~state & 1;
 	c.b2 = ~(state >> 1) & 1;
-	return uiomove((caddr_t) & c, sizeof(struct joystick), uio);
+	return (uiomove(&c, sizeof(struct joystick), uio));
 }
 
 int
@@ -198,7 +196,7 @@ joyioctl(dev, cmd, data, flag, p)
 	case JOY_SETTIMEOUT:
 		x = *(int *) data;
 		if (x < 1 || x > 10000)	/* 10ms maximum! */
-			return EINVAL;
+			return (EINVAL);
 		sc->timeout[i] = x;
 		break;
 	case JOY_GETTIMEOUT:
@@ -217,19 +215,7 @@ joyioctl(dev, cmd, data, flag, p)
 		*(int *) data = sc->y_off[i];
 		break;
 	default:
-		return ENXIO;
+		return (ENXIO);
 	}
 	return 0;
-}
-
-static int
-get_tick()
-{
-	int low, high;
-
-	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0);
-	low = inb(IO_TIMER1 + TIMER_CNTR0);
-	high = inb(IO_TIMER1 + TIMER_CNTR0);
-
-	return (high << 8) | low;
 }
