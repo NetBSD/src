@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.3 2003/10/26 09:35:51 tron Exp $
+# $NetBSD: md.cats,v 1.4 2003/10/31 10:55:48 chris Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -62,7 +62,6 @@
 ./usr/X11R6/man/cat1/xvidtune.0
 ./usr/X11R6/man/cat4
 ./usr/X11R6/man/cat4/chips.0
-./usr/X11R6/man/cat4/cirrus.0
 ./usr/X11R6/man/cat4/citron.0
 ./usr/X11R6/man/cat4/dmc.0
 ./usr/X11R6/man/cat4/dynapro.0
