@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.4 2004/03/11 06:28:59 rtr Exp $
+# $NetBSD: md.amd64,v 1.5 2004/03/12 02:24:18 matt Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -137,6 +137,7 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/via_drv.o
 ./usr/X11R6/lib/modules/drivers/vmware_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
@@ -245,6 +246,7 @@
 ./usr/X11R6/man/cat4/tseng.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vesa.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vga.0			-unknown-		.cat
+./usr/X11R6/man/cat4/via.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vmware.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
@@ -300,6 +302,7 @@
 ./usr/X11R6/man/man4/tseng.4			-unknown-		.man
 ./usr/X11R6/man/man4/vesa.4			-unknown-		.man
 ./usr/X11R6/man/man4/vga.4			-unknown-		.man
+./usr/X11R6/man/man4/via.4			-unknown-		.man
 ./usr/X11R6/man/man4/vmware.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man
