@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.70 2003/08/07 17:17:58 bouyer Exp $
+# 	$NetBSD: GENERIC32,v 1.71 2003/10/08 11:15:49 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 maxusers	64
 
@@ -315,8 +315,8 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 pciide* at pci? dev ? function ? flags 0x0000
-
-atapibus* at atapi?
+atabus* at pciide? channel ?
+atapibus* at atabus?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -332,7 +332,7 @@ atapibus* at atapi?
 
 ## Disable UDMA 4 which causes data corruption on the Acer Labs
 ## chipset on Sun Blade 100 and Netra X1 machines.
-wd*	at pciide? channel ? drive ? flags 0x0a00 # Disable UDMA 4
+wd*     at atabus? drive ? flags 0x0000
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives

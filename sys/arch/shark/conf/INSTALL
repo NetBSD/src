@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 2003/05/03 00:47:04 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.12 2003/10/08 11:15:22 bouyer Exp $
 #
 #	Shark installation kernel
 #
@@ -160,9 +160,10 @@ ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
-wd*		at wdc? drive ?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ?
 
-atapibus*	at wdc?
+atapibus*	at atabus?
 cd*		at atapibus? drive?
 sd*		at atapibus? drive?
 

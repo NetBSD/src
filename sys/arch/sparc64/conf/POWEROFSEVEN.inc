@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.19 2003/06/20 03:15:05 nakayama Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.20 2003/10/08 11:15:49 bouyer Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -291,8 +291,9 @@ ms0	at com?					# mouse
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0000
-atapibus* at pciide? channel ?
+atabus* at pciide? channel ?
+wd*	at atabus? drive ? flags 0x0000
+atapibus* at atabus?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives

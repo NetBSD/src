@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 2003/06/25 01:07:55 uwe Exp $
+#	$NetBSD: GENERIC,v 1.21 2003/10/08 11:15:22 bouyer Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.20 $"
+#ident		"GENERIC-$Revision: 1.21 $"
 
 # estimated number of users
 maxusers	32
@@ -170,9 +170,10 @@ ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
-wd*		at wdc? drive ?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ?
 
-atapibus*	at wdc?
+atapibus*	at atabus?
 cd*		at atapibus? drive?
 sd*		at atapibus? drive?
 
