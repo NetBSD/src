@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.10 1997/09/09 18:59:23 mycroft Exp $	*/
+/*	$NetBSD: db_access.c,v 1.11 1997/09/13 18:44:55 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,7 @@ db_get_value(addr, size, is_signed)
 
 	value = 0;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	for (i = size - 1; i >= 0; i--)
+	for (i = size; i-- > 0;)
 #else /* BYTE_ORDER == BIG_ENDIAN */
 	for (i = 0; i < size; i++)
 #endif /* BYTE_ORDER */
@@ -86,7 +86,7 @@ db_put_value(addr, size, value)
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = 0; i < size; i++)
 #else /* BYTE_ORDER == BIG_ENDIAN */
-	for (i = size - 1; i >= 0; i--)
+	for (i = size; i-- > 0;)
 #endif /* BYTE_ORDER */
 	{
 		data[i] = value & 0xFF;
