@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.18 1997/11/17 14:33:46 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.19 1998/05/01 03:28:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -570,6 +570,15 @@ int out;
 	char hbuf[(0xf << 2) + sizeof(struct icmp) + sizeof(ip_t) + 8];
 #  endif
 	int up;
+
+#ifdef M_CANFASTFWD
+	/*
+	 * XXX For now, IP Filter and fast-forwarding of cached flows
+	 * XXX are mutually exclusive.  Eventually, IP Filter should
+	 * XXX get a "can-fast-forward" filter rule.
+	 */
+	m->m_flags &= ~M_CANFASTFWD;
+#endif /* M_CANFASTFWD */
 
 	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
 	     ip->ip_p == IPPROTO_ICMP)) {
