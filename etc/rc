@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.45 1994/06/18 06:38:54 cgd Exp $
+#	$Id: rc,v 1.46 1994/06/24 07:51:59 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -160,8 +160,8 @@ echo clearing /tmp
 # prune quickly with one rm, then use find to clean up /tmp/[lq]*
 # (not needed with mfs /tmp, but doesn't hurt there...)
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
-    find . ! -name . ! -name lost+found ! -name quotas \
-	-exec rm -rf -- {} \; -type d -prune)
+    find . ! -name . ! -name lost+found ! -name quota.user \
+	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
 
 if [ -f /var/account/acct ]; then
 	echo 'turning on accounting';	accton /var/account/acct
