@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.115 2002/07/04 23:32:12 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.116 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.115 2002/07/04 23:32:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.116 2002/09/06 13:18:43 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -636,7 +636,7 @@ sunos_sys_mmap(p, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    iszerodev(vp->v_rdev)) {					/*XXX*/
+	    vp->v_rdev == zerodev) {					/*XXX*/
 		SCARG(&ouap, flags) |= MAP_ANON;
 		SCARG(&ouap, fd) = -1;
 	}

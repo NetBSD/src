@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 2002/07/27 11:09:35 hannken Exp $	*/
+/*	$NetBSD: fd.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,7 +119,6 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/conf.h>
 #include <machine/io.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bus.h>
@@ -270,9 +270,24 @@ struct cfattach fd_ca = {
 
 extern struct cfdriver fd_cd;
 
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 void fdgetdisklabel __P((struct fd_softc *));
 int fd_get_parms __P((struct fd_softc *));
-void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
@@ -1308,27 +1323,6 @@ fdcretry(fdc)
 }
 
 int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return -1;
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
-}
-
-int
 fdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -1586,7 +1580,7 @@ load_memory_disc_from_floppy(md, dev)
 	int type;
 	int floppysize;
 
-	if (major(dev) != 17)	/* XXX - nice if the major was defined elsewhere */
+	if (bdevsw_lookup(dev) != &fd_bdevsw)
 		return(EINVAL);
 
 	if (md->md_type == MD_UNCONFIGURED || md->md_addr == 0)

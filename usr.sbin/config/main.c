@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 2002/06/05 10:56:18 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.69 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,6 +216,10 @@ main(int argc, char **argv)
 	defparamtab = ht_new();
 	defflagtab = ht_new();
 	optfiletab = ht_new();
+	bdevmtab = ht_new();
+	maxbdevm = 0;
+	cdevmtab = ht_new();
+	maxcdevm = 0;
 	nextopt = &options;
 	nextmkopt = &mkoptions;
 	nextfsopt = &fsoptions;
@@ -268,6 +272,12 @@ main(int argc, char **argv)
 		stop();
 
 	/*
+	 * Fix device-majors.
+	 */
+	if (fixdevsw())
+		stop();
+
+	/*
 	 * Perform cross-checking.
 	 */
 	if (maxusers == 0) {
@@ -301,7 +311,7 @@ main(int argc, char **argv)
 	 * Ready to go.  Build all the various files.
 	 */
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
-	    mkioconf() || mkident())
+	    mkioconf() || mkdevsw() || mkident())
 		stop();
 	(void)printf("Don't forget to run \"make depend\"\n");
 	exit(0);
