@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.51 2001/05/20 03:08:31 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.52 2001/05/28 00:50:40 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd May 3rd, 2001
+.Dd May 3, 2001
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@ The architecture, as returned by
 See
 .Xr uname 1 .
 .It OPSYS
-The operating system name, as returned by 
+The operating system name, as returned by
 .Dq uname -s .
 .It LOCALBASE
 Where non-X11 based packages will be installed.
@@ -85,10 +85,10 @@ Run some sanity checks that package developers want:
 .It
 make sure patches apply with zero fuzz
 .It
-run check-shlibs to see that all binaries will find their 
+run check-shlibs to see that all binaries will find their
 shared libs.
 .El
-.It USE_GLX 
+.It USE_GLX
 Says that if Mesa is requested, a package should preferably use a
 GLX (hardware-accelerated) version of the Mesa library.
 .It BINPKG_SITES
@@ -101,7 +101,7 @@ replaced with OS release (
 .Dq 1.5 ,
 etc.) and architecture (
 .Dq mipsel ,
-etc.). 
+etc.).
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
@@ -166,12 +166,12 @@ or
 Suffix to
 .Pa ${DISTDIR} .
 If set, all
-.Pa ${DISTFILES} 
+.Pa ${DISTFILES}
 and
 .Pa ${PATCHFILES}
 will be put in this subdirectory of
 .Pa ${DISTDIR}.
-.It ALLFILES	
+.It ALLFILES
 All of
 .Pa ${DISTFILES}
 and
@@ -180,12 +180,12 @@ and
 If some of the
 .Pa ${ALLFILES}
 are not checksum-able, set this variable to their names.
-.It PKGNAME	
+.It PKGNAME
 Name of the package file to create if the
 .Pa ${DISTNAME}
 isn't really relevant for the package.  The default is
 .Pa ${DISTNAME} .
-.It SVR4_PKGNAME	
+.It SVR4_PKGNAME
 Name of the package file to create if the
 .Pa ${PKGNAME}
 isn't unique enough on a SVR4 system. The default is
@@ -198,26 +198,26 @@ The lenght of SVR4_PKGNAME is limited to 5 characters.
 If defined, a subset of
 .Pa ${DISTFILES}
 you want to actually extract.
-.It PATCHDIR 	
+.It PATCHDIR
 A directory containing any additional patches you made
 to package this software.  The default is
 .Pa ${.CURDIR}/patches .
-.It SCRIPTDIR 
+.It SCRIPTDIR
 A directory containing any auxiliary scripts.  The default is
 .Pa ${.CURDIR}/scripts .
-.It FILESDIR 	
+.It FILESDIR
 A directory containing any miscellaneous additional files.  The default is
 .Pa ${.CURDIR}/files .
-.It PKGDIR 	
+.It PKGDIR
 A direction containing any package creation files.  The default is
 .Pa ${.CURDIR}/pkg .
-.It PKG_DBDIR	
+.It PKG_DBDIR
 Where package installation is recorded.  The default is
 .Pa /var/db/pkg .
 .It FORCE_PKG_REGISTER
 If set, it will overwrite any existing package registration information in
 .Pa ${PKG_DBDIR}/${PKGNAME} .
-.It NO_MTREE	
+.It NO_MTREE
 If set, will not invoke mtree from
 .Pa bsd.pkg.mk
 from the
@@ -240,7 +240,7 @@ from
 and so a check must be made that these are available.
 If they are not, an IGNORE message will be displayed, and the package
 will not be built.
-.It PLIST_SRC	   
+.It PLIST_SRC
 Which file(s) to use to build
 .Pa ${PLIST} .
 Default is
@@ -297,7 +297,7 @@ Binaries of this package may not be placed on CDROM.  Set this string to
 .It NO_BIN_ON_FTP
 Binaries of this package may not be made available via ftp.  Set this string to
 .Pa ${RESTRICTED} .
-.It NO_BUILD	
+.It NO_BUILD
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
 Use a dummy (do-nothing) configure target.
@@ -324,9 +324,9 @@ Do not run 'check-shlibs' even if PKG_DEVELOPER is set. This prevents
 errors on emul/compat packages (e.g. Linux binaries, ...).
 .It MAKEFILE
 Name of the Makefile in ${WRKSRC}, used in the default build and
-install targets. Default: 
+install targets. Default:
 .Dq Makefile .
-.It BROKEN	
+.It BROKEN
 Package is broken.  Set this string to the reason why.
 .It RESTRICTED
 Package is restricted.  Set this string to the reason why.
@@ -336,11 +336,11 @@ only. This string should be set to the type of licence the package has,
 like "shareware", or "non-commercial-use". If LICENCE is set, the
 .Dv ACCEPTABLE_LICENCES
 variable will be searched, if set, for a string matching the licence.
-.It PASSIVE_FETCH	
+.It PASSIVE_FETCH
 Uses passive
 .Xr ftp 1
 to retrieve distribution files.
-.It USE_LIBTOOL	
+.It USE_LIBTOOL
 Says that the package uses
 .Pa libtool
 to manage building of libraries and shared objects, where applicable.
@@ -353,12 +353,12 @@ package instead of the pkg's own
 .Pa libtool .
 .It USE_FORTRAN
 Says that the package uses a fortran compiler for building.
-.It USE_GMAKE	
+.It USE_GMAKE
 Says that the package uses
 .Pa gmake .
 .It USE_JAVA
 Says that the package uses a Java virtual machine.
-.It USE_PERL5	
+.It USE_PERL5
 Says that the package uses
 .Pa perl5
 for building and running.
@@ -366,28 +366,28 @@ for building and running.
 Sets the minimum
 .Pa perl5
 version required. The default is 5.0.
-.It USE_IMAKE	
+.It USE_IMAKE
 Says that the package uses
 .Pa imake .
-.It USE_MESA 
+.It USE_MESA
 Says that the package uses the Mesa library.  This will include all
 Mesa components that are not included in the installed X11
 distribution.
-.It USE_SSL	
+.It USE_SSL
 Says that the package uses a SSL library. The location of the SSL
 installation can be found in
 .Dv ${SSLBASE} .
-.It USE_X11BASE	
+.It USE_X11BASE
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
 This is necessary for packages that install X11 fonts, application
-default files or Imake rule or template files. 
-.It USE_XAW 
+default files or Imake rule or template files.
+.It USE_XAW
 Says that the package uses the Athena widget set.
-.It USE_XPM 
+.It USE_XPM
 Says that the package uses the Xpm library. If it is not included
 in the installed X11 distribution the xpm package will be used.
-.It USE_GTEXINFO	
+.It USE_GTEXINFO
 Says that the package uses gtexinfo.
 .It USE_MOTIF
 Says that the package uses Motif (it will use lesstif if
@@ -412,17 +412,17 @@ Additional environment variables passed to scripts in
 .Pa ${SCRIPTDIR}
 executed by
 .Pa bsd.pkg.mk .
-.It MAKE_ENV	
+.It MAKE_ENV
 Additional environment variables passed to sub-make in build stage.
-.It CFLAGS	
+.It CFLAGS
 Any CFLAGS you wish passed to the configure script and/or sub-make in
 build stage.
-.It LDFLAGS	
+.It LDFLAGS
 Any LDFLAGS you wish passed to the configure script and/or sub-make in
 build stage.  LDFLAGS is pre-loaded with rpath settings for ELF machines
 depending on the setting of USE_X11 or USE_MOTIF.  If you do not wish
 to override these settings, use LDFLAGS+=.
-.It MAKE_ENV	
+.It MAKE_ENV
 Additional environment variables passed to sub-make in build stage.
 .It IS_INTERACTIVE
 Set this if your package needs to interact with the user
@@ -436,7 +436,7 @@ A list of
 .Dq path:dir
 pairs of other package this package depends in the
 .Dq fetch
-stage. 
+stage.
 .Dq path
 is the name of a file if it starts with a slash
 (/), an executable otherwise.  make will test for the existence (if it
@@ -462,7 +462,7 @@ determine the existence of the dependency is the same as
 This definition is deprecated, and is no longer used in the packages
 collection. It should be replaced by a simple
 .Dq DEPENDS
-definition.  
+definition.
 .It LIB_DEPENDS
 This definition is deprecated, and is no longer used in the packages
 collection. It should be replaced by a simple
@@ -476,7 +476,7 @@ If the
 package is not installed, then it will be built and
 installed from the source package in
 .Dq dir .
-.It CONFLICTS          
+.It CONFLICTS
 A list of other ports this package conflicts with. Use this for packages
 that install identical set of files. The format of this entry is
 .Dq pkgname .
@@ -495,12 +495,12 @@ before the filename argument.  The default is
 Arguments to
 .Dv ${EXTRACT_CMD}
 following the filename argument.  There is no default.
-.It FETCH_CMD		 
+.It FETCH_CMD
 Full path to ftp/http command if not in
 .Dv $PATH .
 The default is
 .Pa /usr/bin/ftp .
-.It NO_IGNORE    
+.It NO_IGNORE
 Set this to
 .Dq YES
 (most probably in a
@@ -511,13 +511,13 @@ if you want to fetch all distfiles, even for packages not built due to
 limitation by absent X or Motif.
 .\" XXXmrg -- this shouldn't be documented.  if we want to export the
 .\" feature, give it a different name, or something.
-.It __PLATFORM_OK    
+.It __PLATFORM_OK
 Internal variable set if the package is ok to build on this architecture. Set
 to
 .Dq YES
 to insist on e.g. fetching all distfiles (for interactive use in
 .Pa ${PKGSRCDIR} ,
-mostly. 
+mostly.
 .It ALL_TARGET
 The target to pass to make in the package when building.  The default is
 .Dq all .
@@ -532,9 +532,9 @@ Similar to MASTER_SORT, but takes a list of regular expressions for
 finer grained control.
 .It OSVERSION_SPECIFIC
 Used to denote packages, such as LKM's, which are tightly bound to a specific
-version of the OS.  Such binary packages are not backwards compatible with 
-other versions of the OS, and should be uploaded to a version specific 
-directory on the FTP.  This variable is not currently used by any of the 
+version of the OS.  Such binary packages are not backwards compatible with
+other versions of the OS, and should be uploaded to a version specific
+directory on the FTP.  This variable is not currently used by any of the
 package system internals, but may be used in the future.  Set this to
 .Dq YES
 to denote such a package.
@@ -547,7 +547,7 @@ Motif and/or LessTiF.
 Set this in your package if it requires Motif.
 If Motif is not present on your system, the lesstif package will be
 installed for you.
-.It MOTIFLIB	
+.It MOTIFLIB
 Set automatically to the Motif or Lesstif library name.
 .El
 .Sh PACKAGE DISTFILE REPOSITORIES
@@ -585,7 +585,7 @@ X Window System contributed source mirror.
 .Sh SPECIAL VARIABLES
 Variables to change if you want a special behavior:
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It ECHO_MSG	
+.It ECHO_MSG
 Used to print all the
 .Dq ===>
 style prompts - override this
@@ -644,23 +644,23 @@ or you will get stuck in an endless loop!
 This section documents variables that serve as convenient aliases.
 for your *-install targets.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It INSTALL_PROGRAM	
+.It INSTALL_PROGRAM
 A command to install binary executables.
 Use these like:
 .Dq ${INSTALL_PROGRAM} ${WRKSRC}/prog ${PREFIX}/bin .
-.It INSTALL_SCRIPT	
+.It INSTALL_SCRIPT
 A command to install executable scripts.
-.It INSTALL_DATA		
+.It INSTALL_DATA
 A command to install sharable data.
-.It INSTALL_MAN		
+.It INSTALL_MAN
 A command to install manpages (doesn't compress).
 .It INSTALL_PROGRAM_DIR
 Create a directory for storing programs.
 .It INSTALL_SCRIPT_DIR
 Create a directory for storing scripts.
-.It INSTALL_DATA_DIR	
+.It INSTALL_DATA_DIR
 Create a directory for storing arbitrary data.
-.It INSTALL_MAN_DIR	
+.It INSTALL_MAN_DIR
 Create a directory for storing man pages.
 .El
 .Sh MANUAL PAGE VARIABLES
@@ -670,7 +670,7 @@ are installed by this package.
 .It MANCOMPRESSED
 Indicates that the package installs manpages in a compressed
 form.  The default package installs manpages uncompressed.
-.It INFO_FILES	
+.It INFO_FILES
 set to the base names of the info files you wish to be installed in the
 info dir file. Automatically sets
 .Dv USE_GTEXINFO .
@@ -683,7 +683,7 @@ target relies on the
 .Dq build
 target), then these targets will be executed beforehand.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It fetch		
+.It fetch
 Retrieves
 .Dv ${DISTFILES}
 and
@@ -693,67 +693,67 @@ into
 as necessary.
 .It fetch-list
 Show list of files that would be retrieved by fetch.
-.It extract	
+.It extract
 Unpacks
 .Dv ${DISTFILES} into
 .Pa ${WRKDIR}.
-.It patch		
+.It patch
 Apply any provided patches to the source.
-.It configure	
+.It configure
 Runs either GNU configure, one or more local configure scripts or
 nothing, depending on what's available.
-.It build		
+.It build
 Actually compile the sources.
-.It install	
+.It install
 Install the results of a build.
-.It bin-install	
+.It bin-install
 Install a binary package from local disk and via FTP from a list
 of sites (see
 .Dq BINPKG_LIST
-variable), and do a 
+variable), and do a
 .Dq make package
 if no binary package is available anywhere. The arguments given to
-.Xr pkg_add
+.Xr pkg_add 1
 can be set via
 .Dq BIN_INSTALL_FLAGS ,
-e.g. to do verbose operation, etc. 
-.It reinstall	
+e.g. to do verbose operation, etc.
+.It reinstall
 Install the results of a build, ignoring
 .Dq already installed
 flag.
-.It deinstall	
+.It deinstall
 Remove the installation.
-.It update	
+.It update
 Update the installation of the current and all dependent packages that
 are installed on the system.
-.It package	
+.It package
 Create a binary package other people can use.
-.It clean	
+.It clean
 Clean the source tree for a package.
-.It clean-depends	
+.It clean-depends
 Clean the source tree for a package and the packages it depends upon.
-.It clean-update	
+.It clean-update
 Clean the source tree for a package and all dependent packages that
 are installed on the system.
 .It describe
 Try to generate a one-line description for each package for
 use in INDEX files and the like.
-.It checksum	
+.It checksum
 Use
 .Pa files/md5
 to ensure that your distfiles are valid.
-.It makesum	
+.It makesum
 Generate
 .Pa files/md5
 (only do this for your own packages!).
-.It readme	
+.It readme
 Create a README.html file describing the category or package. See
 .Pa ${PKGSRCDIR}/Packages.txt
 for more details.
 .It mirror-distfiles
 Mirror the distfile(s) if they are freely redistributable. If
 .Dv NO_SRC_ON_FTP
-is set in the package's Makefile (usually to 
+is set in the package's Makefile (usually to
 .Pa ${RESTRICTED} )
 then that reason is printed, and the distfile is not mirrored.
 .El
@@ -776,8 +776,8 @@ targets unless you want to open a major can of worms.
 and
 .Rs
 .%T "Documentation on the NetBSD Package System"
-.Re 
-.Pa ${PKGSRCDIR}/Packages.txt 
+.Re
+.Pa ${PKGSRCDIR}/Packages.txt
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
