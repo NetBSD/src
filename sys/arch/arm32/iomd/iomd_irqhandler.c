@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.12 1996/12/27 02:01:02 mark Exp $ */
+/* $NetBSD: iomd_irqhandler.c,v 1.13 1997/01/06 02:30:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
+#include <sys/malloc.h>
 #include <vm/vm.h>
 #include <net/netisr.h>
 
@@ -68,6 +69,8 @@ u_int spl_mask;
 u_int soft_interrupts;
 extern u_int intrcnt[];
 
+u_int irqblock[NIRQS];
+
 typedef struct {
     vm_offset_t physical;
     vm_offset_t virtual;
@@ -79,7 +82,6 @@ extern char *_intrnames;
 /* Prototypes */
 
 int podule_irqhandler	__P((void));
-int irq_claim		__P((int irq, irqhandler_t *handler));
 extern void zero_page_readonly	__P((void));
 extern void zero_page_readwrite	__P((void));
 extern int fiq_setregs		__P((fiqhandler_t *));
@@ -102,10 +104,12 @@ irq_init()
 {
 	int loop;
 
-	/* Clear all the IRQ handlers */
+	/* Clear all the IRQ handlers and the irq block masks */
 
-	for (loop = 0; loop < NIRQS; ++loop)
+	for (loop = 0; loop < NIRQS; ++loop) {
 		irqhandlers[loop] = NULL;
+		irqblock[loop] = 0;
+	}
 
 	/* Clear the FIQ handler */
 
@@ -162,6 +166,7 @@ irq_claim(irq, handler)
 	irqhandler_t *handler;
 {
 	int level;
+	int loop;
 
 #ifdef DIAGNOSTIC
 	/* Sanity check */
@@ -250,6 +255,33 @@ irq_claim(irq, handler)
 #endif
 	}
 
+	/*
+	 * We now need to update the irqblock array. This array indicates
+	 * what other interrupts should be blocked when interrupt is asserted
+	 * This basically emulates hardware interrupt priorities e.g. by blocking
+	 * all other IPL_BIO interrupts with an IPL_BIO interrupt is asserted.
+	 * For each interrupt we find the highest IPL and set the block mask to
+	 * the interrupt mask for that level.
+	 */
+
+	for (loop = 0; loop < NIRQS; ++loop) {
+		irqhandler_t *ptr;
+
+		ptr = irqhandlers[loop];
+		if (ptr) {
+			/* There is at least 1 handler so scan the chain */
+			level = ptr->ih_level;
+			while (ptr) {
+				if (ptr->ih_level > level)
+					level = ptr->ih_level;
+				ptr = ptr->ih_next;
+			}
+			irqblock[loop] = ~irqmasks[level];
+		} else
+			/* No handlers for this irq so nothing to block */
+			irqblock[loop] = 0;
+	}
+
 #if NPODULEBUS > 0
 	/*
 	 * Is this an expansion card IRQ and is there a PODULE IRQ handler
@@ -284,6 +316,7 @@ irq_release(irq, handler)
 	irqhandler_t *handler;
 {
 	int level;
+	int loop;
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
 	extern char *_intrnames;
@@ -369,12 +402,38 @@ irq_release(irq, handler)
 					level = ptr->ih_level - 1;
 				ptr = ptr->ih_next;
 			}
-
 			while (level >= 0) {
 				irqmasks[level] |= (1 << irq);
 				--level;
 			}
 		}
+	}
+
+	/*
+	 * We now need to update the irqblock array. This array indicates
+	 * what other interrupts should be blocked when interrupt is asserted
+	 * This basically emulates hardware interrupt priorities e.g. by blocking
+	 * all other IPL_BIO interrupts with an IPL_BIO interrupt is asserted.
+	 * For each interrupt we find the highest IPL and set the block mask to
+	 * the interrupt mask for that level.
+	 */
+
+	for (loop = 0; loop < NIRQS; ++loop) {
+		irqhandler_t *ptr;
+
+		ptr = irqhandlers[loop];
+		if (ptr) {
+			/* There is at least 1 handler so scan the chain */
+			level = ptr->ih_level;
+			while (ptr) {
+				if (ptr->ih_level > level)
+					level = ptr->ih_level;
+				ptr = ptr->ih_next;
+			}
+			irqblock[loop] = ~irqmasks[level];
+		} else
+			/* No handlers for this irq so nothing to block */
+			irqblock[loop] = 0;
 	}
 
 	/*
@@ -388,6 +447,43 @@ irq_release(irq, handler)
 	set_spl_masks();
       
 	return(0);
+}
+
+
+void *
+intr_claim(irq, level, name, ih_func, ih_arg)
+	int irq;
+	int level;
+	const char *name;
+	int (*ih_func) __P((void *));
+	void *ih_arg;
+{
+	irqhandler_t *ih;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+	if (!ih)
+		panic("intr_claim(): Cannot malloc handler memory\n");
+
+	ih->ih_level = level;
+	ih->ih_name = name;
+	ih->ih_func = ih_func;
+	ih->ih_arg = ih_arg;
+	ih->ih_flags = 0;
+
+	if (irq_claim(irq, ih) != 0)
+		return(NULL);
+	return(ih);
+}
+
+
+void
+intr_release(arg)
+	void *arg;
+{
+	irqhandler_t *ih = (irqhandler_t *)arg;
+
+	if (irq_release(ih->ih_num, ih) == 0)
+		free(ih, M_DEVBUF);
 }
 
 
