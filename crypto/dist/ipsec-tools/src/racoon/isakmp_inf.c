@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_inf.c,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.1.1.3 2005/03/14 08:14:30 manu Exp $	*/
 
-/* Id: isakmp_inf.c,v 1.14.4.1 2005/02/18 10:01:39 vanhu Exp */
+/* Id: isakmp_inf.c,v 1.14.4.2 2005/03/02 20:00:03 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -115,6 +115,9 @@ static void info_recv_initialcontact __P((struct ph1handle *));
 static u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
 #endif
 
+#ifdef HAVE_POLICY_FWD
+extern int tunnel_mode_prop __P((struct saprop *));
+#endif
 
 
 /* %%%
@@ -1208,7 +1211,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 #ifdef HAVE_POLICY_FWD
 					/* make forward policy if required */
 					if (tunnel_mode_prop(iph2->approval)) {
-						spidx->dir = IPSEC_DIR_FWD;
+						spidx.dir = IPSEC_DIR_FWD;
 						if (pk_sendspddelete(iph2) < 0) {
 							plog(LLV_ERROR, LOCATION, NULL,
 								 "pfkey spddelete(forward) failed.\n");

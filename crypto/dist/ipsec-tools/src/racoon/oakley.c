@@ -1,6 +1,6 @@
-/*	$NetBSD: oakley.c,v 1.1.1.2 2005/02/23 14:54:23 manu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.1.1.3 2005/03/14 08:14:31 manu Exp $	*/
 
-/* Id: oakley.c,v 1.17 2005/01/30 20:34:05 vanhu Exp */
+/* Id: oakley.c,v 1.17.2.1 2005/03/01 09:51:48 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2794,8 +2794,10 @@ oakley_newiv2(iph1, msgid)
 	plogdump(LLV_DEBUG, newivm->iv->v, newivm->iv->l);
 
 end:
-	if (error && newivm != NULL)
+	if (error && newivm != NULL){
 		oakley_delivm(newivm);
+		newivm=NULL;
+	}
 	if (buf != NULL)
 		vfree(buf);
 	return newivm;

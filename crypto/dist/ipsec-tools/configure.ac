@@ -1,5 +1,5 @@
 dnl -*- mode: m4 -*-
-dnl Id: configure.ac,v 1.47.2.2 2005/02/22 23:56:08 manubsd Exp
+dnl Id: configure.ac,v 1.47.2.3 2005/03/14 07:55:03 manubsd Exp
 
 AC_PREREQ(2.52)
 AC_INIT(ipsec-tools, 0.5pre)
@@ -218,6 +218,9 @@ if test $enable_idea = "yes"; then
 fi
 AC_SUBST(EXTRA_CRYPTO)
 
+# For dynamic libradius
+RACOON_PATH_LIBS(MD5_Init, crypto)
+
 # Check for Kerberos5 support
 AC_MSG_CHECKING(if --enable-gssapi option is specified)
 AC_ARG_ENABLE(gssapi,
@@ -284,11 +287,11 @@ if test "$libradius_dir" != "no"; then
 		  libradius_dir="";
 	fi;
 	if test "x$libradius_dir" = "x"; then
-		RACOON_PATH_LIBS(rad_create_request, lradius)
+		RACOON_PATH_LIBS(rad_create_request, radius)
 	else
 		if test -d "$libradius_dir/lib" -a \
 		    -d "$libradius_dir/include" ; then
-			RACOON_PATH_LIBS(rad_create_request, lradius, "$libradius_dir/lib")
+			RACOON_PATH_LIBS(rad_create_request, radius, "$libradius_dir/lib")
 			CPPFLAGS_ADD="$CPPFLAGS_ADD -I$libradius_dir/include"
 		else
 			AC_MSG_ERROR([RADIUS libs or includes not found. Aborting.])
@@ -310,11 +313,11 @@ if test "$libpam_dir" != "no"; then
 		  libpam_dir="";
 	fi;
 	if test "x$libpam_dir" = "x"; then
-		RACOON_PATH_LIBS(rad_create_request, lpam)
+		RACOON_PATH_LIBS(pam_start, pam)
 	else
 		if test -d "$libpam_dir/lib" -a \
 		    -d "$libpam_dir/include" ; then
-			RACOON_PATH_LIBS(rad_create_request, lpam, "$libpam_dir/lib")
+			RACOON_PATH_LIBS(pam_start, pam, "$libpam_dir/lib")
 			CPPFLAGS_ADD="$CPPFLAGS_ADD -I$libpam_dir/include"
 		else
 			AC_MSG_ERROR([PAM libs or includes not found. Aborting.])
@@ -322,7 +325,7 @@ if test "$libpam_dir" != "no"; then
 	fi
 	AC_DEFINE([HAVE_LIBPAM], [], [Hybrid authentication uses PAM])
 	LIBS="$LIBS -L$libpam_dir/lib -R$libpam_dir/lib -lpam"
-	AC_CHECK_FUNCS(rad_create_request)
+	AC_CHECK_FUNCS(pam_start)
 fi
 
 AC_MSG_CHECKING(if --enable-stats option is specified)
