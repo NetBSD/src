@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.20 2002/03/01 01:23:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.21 2002/03/07 22:56:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ struct	pthread_st {
 
 #define PT_UPCALLSTACKS	16
 
-#define PT_ALARMTIMER_MAGIC	0x33330003
+#define PT_ALARMTIMER_MAGIC	0x88880008
 #define NIDLETHREADS	4
 #define IDLESPINS	1000
 
