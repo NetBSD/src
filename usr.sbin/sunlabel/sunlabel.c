@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.5.2.3 2002/12/26 07:45:24 tron Exp $ */
+/* $NetBSD: sunlabel.c,v 1.5.2.4 2004/06/16 01:31:38 jmc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.5.2.3 2002/12/26 07:45:24 tron Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.5.2.4 2004/06/16 01:31:38 jmc Exp $");
 
 #include <stdio.h>
 #include <errno.h>
@@ -51,12 +55,12 @@ __RCSID("$NetBSD: sunlabel.c,v 1.5.2.3 2002/12/26 07:45:24 tron Exp $");
 
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
 
 /* If neither S_COMMAND nor NO_S_COMMAND is defined, guess. */
 #if !defined(S_COMMAND) && !defined(NO_S_COMMAND)
 #define S_COMMAND
 #include <util.h>
+#include <sys/disklabel.h>
 #endif
 
 /*
@@ -263,6 +267,7 @@ setdisk(const char *s)
 	}
 	if (trydisk(s, 0))
 		return;
+#ifndef DISTRIB /* native tool: search in /dev */
 	tmp = malloc(strlen(s) + 7);
 	sprintf(tmp, "/dev/%s", s);
 	if (trydisk(tmp, 0))
@@ -270,6 +275,7 @@ setdisk(const char *s)
 	sprintf(tmp, "/dev/%s%c", s, getrawpartition() + 'a');
 	if (trydisk(tmp, 0))
 		return;
+#endif
 	errx(1, "Can't find device for disk `%s'", s);
 }
 
