@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: ufs_lockf.c,v 1.4.2.1 1993/07/21 14:33:21 cgd Exp $
+ *	$Id: ufs_lockf.c,v 1.4.2.2 1993/07/22 10:50:54 cgd Exp $
  */
 
 #include "param.h"
@@ -245,23 +245,20 @@ lf_setlock(lock)
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-		if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
-			/* Don't leave a dangling pointer in block list */
-			if (lf_getblock(lock) == block) {
-				struct lockf    **prev;
- 
-				/* Still there, find us on list */
-				prev = &block->lf_block;
-				while ((block = block->lf_block) != NOLOCKF) {
-					if (block == lock) {
-						*prev = block->lf_block;
-						break;
-					}
-					prev = &block->lf_block;
-				}
+	if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
+			/*
+			 * Delete ourselves from the waiting to lock list.
+			 */
+			for (block = lock->lf_next;
+			     block != NOLOCKF;
+			     block = block->lf_block) {
+				if (block->lf_block != lock)
+					continue;
+				block->lf_block = block->lf_block->lf_block;
+				free(lock, M_LOCKF);
+				return (error);
 			}
-			free(lock, M_LOCKF);
-			return (error);
+			panic("lf_setlock: lost lock");
 		}
 	}
 	/*
@@ -543,16 +540,11 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 #endif /* LOCKF_DEBUG */
 	start = lock->lf_start;
 	end = lock->lf_end;
-asm("foo1:");
 	while (lf != NOLOCKF) {
-asm("foo5:");
 		if (((type & SELF) && lf->lf_id != lock->lf_id) ||
 		    ((type & OTHERS) && lf->lf_id == lock->lf_id)) {
-asm("foo2:");
 			*prev = &lf->lf_next;
-asm("foo3:");
 			*overlap = lf = lf->lf_next;
-asm("foo4:");
 			continue;
 		}
 #ifdef LOCKF_DEBUG
