@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.103 2000/06/03 09:56:35 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.104 2000/06/05 20:38:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -671,7 +671,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	0,
@@ -799,7 +799,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	0,
@@ -999,7 +999,7 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
 	memerr4m,
@@ -1029,7 +1029,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m,
@@ -1054,7 +1054,7 @@ struct module_info module_swift = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m,
@@ -1095,7 +1095,7 @@ struct module_info module_viking = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	viking_pcache_flush_line,
+	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	viking_memerr,
@@ -1180,7 +1180,7 @@ struct module_info module_hypersparc = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
 	hypersparc_memerr,
@@ -1230,7 +1230,7 @@ struct module_info module_cypress = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
 	memerr4m,
@@ -1255,7 +1255,7 @@ struct module_info module_turbosparc = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m,
@@ -1295,7 +1295,7 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->sp_vcache_flush_segment = 0;
 	sc->sp_vcache_flush_region = 0;
 	sc->sp_vcache_flush_context = 0;
-	sc->pcache_flush_line = 0;
+	sc->pcache_flush_page = 0;
 }
 
 void
@@ -1480,7 +1480,7 @@ getcpuinfo(sc, node)
 		MPCOPY(sp_vcache_flush_segment);
 		MPCOPY(sp_vcache_flush_region);
 		MPCOPY(sp_vcache_flush_context);
-		MPCOPY(pcache_flush_line);
+		MPCOPY(pcache_flush_page);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);
