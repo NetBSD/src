@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.12 2004/03/22 19:46:53 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.13 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.12 2004/03/22 19:46:53 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.13 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,10 +86,10 @@ __RCSID("$NetBSD: pass1.c,v 1.12 2004/03/22 19:46:53 bouyer Exp $");
 
 static daddr_t badblk;
 static daddr_t dupblk;
-static void checkinode __P((ino_t, struct inodesc *));
+static void checkinode(ino_t, struct inodesc *);
 
 void
-pass1()
+pass1(void)
 {
 	ino_t inumber;
 	int c, i;
@@ -155,9 +155,7 @@ pass1()
 }
 
 static void
-checkinode(inumber, idesc)
-	ino_t inumber;
-	struct inodesc *idesc;
+checkinode(ino_t inumber, struct inodesc *idesc)
 {
 	struct ext2fs_dinode *dp;
 	struct zlncnt *zlnp;
@@ -325,8 +323,7 @@ unknown:
 }
 
 int
-pass1check(idesc)
-	struct inodesc *idesc;
+pass1check(struct inodesc *idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;

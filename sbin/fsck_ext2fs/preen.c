@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.6 2004/03/22 19:46:53 bouyer Exp $	*/
+/*	$NetBSD: preen.c,v 1.7 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-__RCSID("$NetBSD: preen.c,v 1.6 2004/03/22 19:46:53 bouyer Exp $");
+__RCSID("$NetBSD: preen.c,v 1.7 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,13 +95,11 @@ int	nrun, ndisks;
 char	hotroot;
 
 char	*rawname(), *unrawname(), *blockcheck();
-void addpart __P((char *, char *, long));
-int startdisk __P((struct disk *, int (*)() ));
+void addpart(char *, char *, long);
+int startdisk(struct disk *, int (*)() );
 
 int
-checkfstab(preen, maxrun, docheck, chkit)
-	int preen, maxrun;
-	int (*docheck)(), (*chkit)();
+checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 {
 	struct fstab *fsp;
 	struct disk *dk, *nextdisk;
@@ -223,8 +221,7 @@ checkfstab(preen, maxrun, docheck, chkit)
 }
 
 struct disk *
-finddisk(name)
-	char *name;
+finddisk(char *name)
 {
 	struct disk *dk, **dkp;
 	char *p;
@@ -262,9 +259,7 @@ finddisk(name)
 }
 
 void
-addpart(name, fsname, auxdata)
-	char *name, *fsname;
-	long auxdata;
+addpart(char *name, char *fsname, long auxdata)
 {
 	struct disk *dk = finddisk(name);
 	struct part *pt, **ppt = &dk->part;
@@ -292,9 +287,7 @@ addpart(name, fsname, auxdata)
 }
 
 int
-startdisk(dk, checkit)
-	struct disk *dk;
-	int (*checkit)();
+startdisk(struct disk *dk, int (*checkit)())
 {
 	struct part *pt = dk->part;
 
@@ -310,8 +303,7 @@ startdisk(dk, checkit)
 }
 
 char *
-blockcheck(origname)
-	char *origname;
+blockcheck(char *origname)
 {
 	struct stat stslash, stblock, stchar;
 	char *newname, *raw;
@@ -363,8 +355,7 @@ retry:
 }
 
 char *
-unrawname(name)
-	char *name;
+unrawname(char *name)
 {
 	char *dp;
 	struct stat stb;
@@ -382,8 +373,7 @@ unrawname(name)
 }
 
 char *
-rawname(name)
-	char *name;
+rawname(char *name)
 {
 	static char rawbuf[32];
 	char *dp;

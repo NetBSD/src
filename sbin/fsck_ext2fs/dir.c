@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.11 2004/03/22 19:46:53 bouyer Exp $	*/
+/*	$NetBSD: dir.c,v 1.12 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.11 2004/03/22 19:46:53 bouyer Exp $");
+__RCSID("$NetBSD: dir.c,v 1.12 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,19 +93,19 @@ struct	ext2fs_dirtemplate dirhead = {
 };
 #undef DIRBLKSIZ
 
-static int expanddir __P((struct ext2fs_dinode *, char *));
-static void freedir __P((ino_t, ino_t));
-static struct ext2fs_direct *fsck_readdir __P((struct inodesc *));
-static struct bufarea *getdirblk __P((daddr_t, long));
-static int lftempname __P((char *, ino_t));
-static int mkentry __P((struct inodesc *));
-static int chgino __P((struct  inodesc *));
+static int expanddir(struct ext2fs_dinode *, char *);
+static void freedir(ino_t, ino_t);
+static struct ext2fs_direct *fsck_readdir(struct inodesc *);
+static struct bufarea *getdirblk(daddr_t, long);
+static int lftempname(char *, ino_t);
+static int mkentry(struct inodesc *);
+static int chgino(struct  inodesc *);
 
 /*
  * Propagate connected state through the tree.
  */
 void
-propagate()
+propagate(void)
 {
 	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
@@ -141,8 +141,7 @@ propagate()
  * Scan each entry in a directory block.
  */
 int
-dirscan(idesc)
-	struct inodesc *idesc;
+dirscan(struct inodesc *idesc)
 {
 	struct ext2fs_direct *dp;
 	struct bufarea *bp;
@@ -190,8 +189,7 @@ dirscan(idesc)
  * get next entry in a directory.
  */
 static struct ext2fs_direct *
-fsck_readdir(idesc)
-	struct inodesc *idesc;
+fsck_readdir(struct inodesc *idesc)
 {
 	struct ext2fs_direct *dp, *ndp;
 	struct bufarea *bp;
@@ -252,9 +250,7 @@ dpok:
  * This is a superset of the checks made in the kernel.
  */
 int
-dircheck(idesc, dp)
-	struct inodesc *idesc;
-	struct ext2fs_direct *dp;
+dircheck(struct inodesc *idesc, struct ext2fs_direct *dp)
 {
 	int size;
 	char *cp;
@@ -285,18 +281,14 @@ dircheck(idesc, dp)
 }
 
 void
-direrror(ino, errmesg)
-	ino_t ino;
-	char *errmesg;
+direrror(ino_t ino, char *errmesg)
 {
 
 	fileerror(ino, ino, errmesg);
 }
 
 void
-fileerror(cwd, ino, errmesg)
-	ino_t cwd, ino;
-	char *errmesg;
+fileerror(ino_t cwd, ino_t ino, char *errmesg)
 {
 	struct ext2fs_dinode *dp;
 	char pathbuf[MAXPATHLEN + 1];
@@ -318,9 +310,7 @@ fileerror(cwd, ino, errmesg)
 }
 
 void
-adjust(idesc, lcnt)
-	struct inodesc *idesc;
-	short lcnt;
+adjust(struct inodesc *idesc, short lcnt)
 {
 	struct ext2fs_dinode *dp;
 
@@ -349,8 +339,7 @@ adjust(idesc, lcnt)
 }
 
 static int
-mkentry(idesc)
-	struct inodesc *idesc;
+mkentry(struct inodesc *idesc)
 {
 	struct ext2fs_direct *dirp = idesc->id_dirp;
 	struct ext2fs_direct newent;
@@ -379,8 +368,7 @@ mkentry(idesc)
 }
 
 static int
-chgino(idesc)
-	struct inodesc *idesc;
+chgino(struct inodesc *idesc)
 {
 	struct ext2fs_direct *dirp = idesc->id_dirp;
 	u_int16_t namlen = dirp->e2d_namlen;
@@ -398,9 +386,7 @@ chgino(idesc)
 }
 
 int
-linkup(orphan, parentdir)
-	ino_t orphan;
-	ino_t parentdir;
+linkup(ino_t orphan, ino_t parentdir)
 {
 	struct ext2fs_dinode *dp;
 	int lostdir;
@@ -505,10 +491,7 @@ linkup(orphan, parentdir)
  * fix an entry in a directory.
  */
 int
-changeino(dir, name, newnum)
-	ino_t dir;
-	char *name;
-	ino_t newnum;
+changeino(ino_t dir, char *name, ino_t newnum)
 {
 	struct inodesc idesc;
 
@@ -526,9 +509,7 @@ changeino(dir, name, newnum)
  * make an entry in a directory
  */
 int
-makeentry(parent, ino, name)
-	ino_t parent, ino;
-	char *name;
+makeentry(ino_t parent, ino_t ino, char *name)
 {
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
@@ -564,9 +545,7 @@ makeentry(parent, ino, name)
  * Attempt to expand the size of a directory
  */
 static int
-expanddir(dp, name)
-	struct ext2fs_dinode *dp;
-	char *name;
+expanddir(struct ext2fs_dinode *dp, char *name)
 {
 	daddr_t lastbn, newblk;
 	struct bufarea *bp;
@@ -624,9 +603,7 @@ bad:
  * allocate a new directory
  */
 int
-allocdir(parent, request, mode)
-	ino_t parent, request;
-	int mode;
+allocdir(ino_t parent, ino_t request, int mode)
 {
 	ino_t ino;
 	struct ext2fs_dinode *dp;
@@ -686,8 +663,7 @@ allocdir(parent, request, mode)
  * free a directory inode
  */
 static void
-freedir(ino, parent)
-	ino_t ino, parent;
+freedir(ino_t ino, ino_t parent)
 {
 	struct ext2fs_dinode *dp;
 
@@ -703,9 +679,7 @@ freedir(ino, parent)
  * generate a temporary name for the lost+found directory.
  */
 static int
-lftempname(bufp, ino)
-	char *bufp;
-	ino_t ino;
+lftempname(char *bufp, ino_t ino)
 {
 	ino_t in;
 	char *cp;
@@ -730,9 +704,7 @@ lftempname(bufp, ino)
  * Insure that it is held until another is requested.
  */
 static struct bufarea *
-getdirblk(blkno, size)
-	daddr_t blkno;
-	long size;
+getdirblk(daddr_t blkno, long size)
 {
 
 	if (pdirbp != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.5 2004/03/22 19:46:53 bouyer Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.5 2004/03/22 19:46:53 bouyer Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,11 +76,11 @@ __RCSID("$NetBSD: pass1b.c,v 1.5 2004/03/22 19:46:53 bouyer Exp $");
 #include "fsck.h"
 #include "extern.h"
 
-static int	pass1bcheck __P((struct inodesc *));
-static  struct dups *duphead;
+static int	pass1bcheck(struct inodesc *);
+static struct	dups *duphead;
 
 void
-pass1b()
+pass1b(void)
 {
 	int c, i;
 	struct ext2fs_dinode *dp;
@@ -108,8 +108,7 @@ pass1b()
 }
 
 static int
-pass1bcheck(idesc)
-	struct inodesc *idesc;
+pass1bcheck(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
