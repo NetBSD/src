@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_join.3,v 1.2 2003/06/08 06:44:31 thorpej Exp $
+.\" $NetBSD: pthread_join.3,v 1.3 2003/07/04 11:47:03 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@ If the thread calling
 is cancelled, then the target thread is not detached.
 .Pp
 A thread that has exited but remains unjoined counts against
-[_POSIX_THREAD_THREADS_MAX].
+.Dv _POSIX_THREAD_THREADS_MAX .
 .Sh RETURN VALUES
 If successful,  the
 .Fn pthread_join
