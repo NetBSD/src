@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.14 1999/10/26 12:34:41 drochner Exp $
+$NetBSD: tcdevs,v 1.15 2000/01/05 12:14:33 drochner Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -63,6 +63,7 @@ device	T3PKT		tt	DECWRL Turbochannel T3
 device	PMAT-AA 	tra	DEC TurboChannel Token Ring Controller
 device	PMABV-AA	vba	VME Adapter
 device	PMAP-AA		???	Prestoserve
+device	KWS_TD		???	Kubota Denali
 
 # the following entries are unconfirmed
 #device	PMAD-AB		le	LANCE Ethernet
