@@ -1,9 +1,10 @@
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sbin/mount_isofs/Attic/mount_isofs.c,v 1.4 1993/07/19 11:41:47 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/mount_isofs/Attic/mount_isofs.c,v 1.5 1993/07/19 13:31:39 cgd Exp $";
 #endif
 
 #include <stdio.h>
 #include <sys/types.h>
+#define ISOFS
 #include <sys/mount.h>
 
 void
@@ -22,27 +23,26 @@ char **argv;
 	char *dir;
 	struct ufs_args args;
 	int c;
-	extern char *optarg;
-	extern int optind;
 	int opts;
 
 	opts = MNT_RDONLY;
 
-	while ((c = getopt (argc, argv, "F:")) != EOF) {
-		switch (c) {
-		case 'F':
-			opts |= atoi (optarg);
-			break;
-		default:
-			usage ();
-		}
+	argc--;
+	argv++;
+	while (argc > 2) {
+		if (!strcmp("-F", argv[0])) {
+			argc--; argv++;
+			opts |= atoi(argv[0]);
+			argc--; argv++;
+		} else if (!strcmp(argv[0], "-norrip")) {
+			opts |= ISOFSMNT_NORRIP;
+			argc--; argv++;
+		} else
+			usage();
 	}
 
-	if (optind + 2 != argc)
-		usage ();
-
-	dev = argv[optind];
-	dir = argv[optind + 1];
+	dev = argv[0];
+	dir = argv[1];
 
 	args.fspec = dev;
 	args.exflags = MNT_EXRDONLY | opts;
