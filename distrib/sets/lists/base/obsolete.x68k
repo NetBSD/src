@@ -1,5 +1,4 @@
-# $NetBSD: obsolete.x68k,v 1.1 1999/12/05 16:41:24 minoura Exp $
-/usr/include/x68k
+# $NetBSD: obsolete.x68k,v 1.2 2000/08/09 10:34:37 tv Exp $
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h
 /usr/include/machine/aout_machdep.h
@@ -52,3 +51,4 @@
 /usr/include/machine/varargs.h
 /usr/include/machine/vmparam.h
 /usr/include/machine/vuid_event.h
+/usr/include/x68k

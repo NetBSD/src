@@ -1,21 +1,21 @@
-# $NetBSD: obsolete.mi,v 1.8 2000/07/04 12:21:04 itojun Exp $
-/usr/share/doc/xntp
+# $NetBSD: obsolete.mi,v 1.9 2000/08/09 10:34:38 tv Exp $
+/usr/share/doc/smm/03.fsck
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
 /usr/share/doc/smm/03.fsck/2.t
 /usr/share/doc/smm/03.fsck/3.t
 /usr/share/doc/smm/03.fsck/4.t
 /usr/share/doc/smm/03.fsck/Makefile
-/usr/share/doc/smm/03.fsck
+/usr/share/doc/smm/09.sendmail/Makefile
+/usr/share/doc/smm/09.sendmail/intro.me
 /usr/share/doc/usd/11.edit/edit.vindex
 /usr/share/doc/usd/12.vi/vi.apwh.ms
 /usr/share/doc/usd/12.vi/vi.summary
 /usr/share/doc/usd/13.ex/ex.summary
 /usr/share/doc/usd/13.viref/merge.awk
 /usr/share/doc/usd/13.viref/spell.ok
+/usr/share/doc/xntp
 /usr/share/examples/supfiles/skarven.itea.unit.no
-/usr/share/doc/smm/09.sendmail/Makefile
-/usr/share/doc/smm/09.sendmail/intro.me
 /usr/share/misc/sendmail.hf
 /usr/share/postfix
 /usr/share/sendmail/cf/clientproto.mc
