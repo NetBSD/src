@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.6 1997/10/08 01:00:41 enami Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.7 1997/10/20 02:00:36 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.6 1997/10/08 01:00:41 enami Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.7 1997/10/20 02:00:36 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "itw")) != -1)
