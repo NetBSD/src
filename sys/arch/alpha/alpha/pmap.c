@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.158 2001/03/21 03:16:05 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.159 2001/04/20 16:22:33 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2001/03/21 03:16:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2001/04/20 16:22:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,6 +646,26 @@ do {									\
 		(void) alpha_pal_swpctx((u_long)p->p_md.md_pcbpaddr);	\
 	}								\
 } while (0)
+
+#if defined(MULTIPROCESSOR)
+/*
+ * PMAP_LEV1MAP_SHOOTDOWN:
+ *
+ *	"Shoot down" the level 1 map on other CPUs.
+ */
+#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)				\
+do {									\
+	u_long __cpumask = (pmap)->pm_cpus & ~(1UL << (cpu_id));	\
+									\
+	if (__cpumask != 0) {						\
+		alpha_multicast_ipi(__cpumask,				\
+		    ALPHA_IPI_PMAP_REACTIVATE);				\
+		/* XXXSMP BARRIER OPERATION */				\
+	}								\
+} while (/*CONSTCOND*/0)
+#else
+#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)	/* nothing */
+#endif /* MULTIPROCESSOR */
 
 /*
  * PMAP_SET_NEEDISYNC:
@@ -2375,6 +2395,29 @@ pmap_deactivate(struct proc *p)
 	atomic_clearbits_ulong(&pmap->pm_cpus, (1UL << cpu_number()));
 }
 
+#if defined(MULTIPROCESSOR)
+/*
+ * pmap_do_reactivate:
+ *
+ *	Reactivate an address space when the level 1 map changes.
+ *	We are invoked by an interprocessor interrupt.
+ */
+void
+pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
+{
+	struct pmap *pmap;
+
+	if (ci->ci_curproc == NULL)
+		return;
+
+	pmap = ci->ci_curproc->p_vmspace->vm_map.pmap;
+
+	pmap_asn_alloc(pmap, ci->ci_cpuid);
+	if (PMAP_ISACTIVE(pmap, ci->ci_cpuid))
+		PMAP_ACTIVATE(pmap, ci->ci_curproc, ci->ci_cpuid);
+}
+#endif /* MULTIPROCESSOR */
+
 /*
  * pmap_zero_page:		[ INTERFACE ]
  *
@@ -3547,6 +3590,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		pmap_asn_alloc(pmap, cpu_id);
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 	}
+	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 	return 0;
 }
 
@@ -3593,6 +3637,7 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	PMAP_INVALIDATE_ASN(pmap, cpu_id);
 	if (PMAP_ISACTIVE(pmap, cpu_id))
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
+	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 
 	/*
 	 * Free the old level 1 page table page.
@@ -4010,7 +4055,9 @@ pmap_l1pt_delref(pmap_t pmap, pt_entry_t *l1pte, long cpu_id)
  *
  *	Allocate and assign an ASN to the specified pmap.
  *
- *	Note: the pmap must already be locked.
+ *	Note: the pmap must already be locked.  This may be called from
+ *	an interprocessor interrupt, and in that case, the sender of
+ *	the IPI has the pmap lock.
  */
 void
 pmap_asn_alloc(pmap_t pmap, long cpu_id)
@@ -4034,11 +4081,25 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 			printf("pmap_asn_alloc: still references "
 			    "kernel_lev1map\n");
 #endif
+#if defined(MULTIPROCESSOR)
+		/*
+		 * In a multiprocessor system, it's possible to
+		 * get here without having PMAP_ASN_RESERVED in
+		 * pmap->pm_asn[cpu_id]; see pmap_lev1map_destroy().
+		 *
+		 * So, what we do here, is simply assign the reserved
+		 * ASN for kernel_lev1map users and let things
+		 * continue on.  We do, however, let uniprocessor
+		 * configurations continue to make its assertion.
+		 */
+		pmap->pm_asn[cpu_id] = PMAP_ASN_RESERVED;
+#else
 #ifdef DIAGNOSTIC
 		if (pmap->pm_asn[cpu_id] != PMAP_ASN_RESERVED)
 			panic("pmap_asn_alloc: kernel_lev1map without "
 			    "PMAP_ASN_RESERVED");
 #endif
+#endif /* MULTIPROCESSOR */
 		return;
 	}
 
