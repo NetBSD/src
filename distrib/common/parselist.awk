@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.1 2002/02/03 15:24:43 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.2 2002/02/05 23:16:51 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -109,7 +109,7 @@ BEGIN \
 		print "cd ${CURDIR}";
 		print;
 	} else if (mode == "mtree") {
-		print "/unset\tmode";
+		print "/unset\tall";
 		print "/set\ttype=file uname=root gname=wheel";
 		print;
 	}
