@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_if.c,v 1.5 2000/03/23 06:42:12 thorpej Exp $	*/
+/*	$NetBSD: kbms_if.c,v 1.6 2000/03/24 21:25:32 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ static struct kbm_sw Kbm_port[] = {
 extern int kbd_flush();
 
 static struct callout ms_helper_ch = CALLOUT_INITIALIZER;
-statuc struct callout kb_soft_ch = CALLOUT_INITIALIZER;
+static struct callout kb_soft_ch = CALLOUT_INITIALIZER;
 
 void
 kbm_open(chan)
