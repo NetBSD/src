@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.33 2001/11/06 10:59:15 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.34 2001/11/06 16:20:16 tv Exp $
 
 .include <bsd.init.mk>
 
@@ -32,10 +32,6 @@ realall:	${NLSALL}
 ##### Install rules
 nlsinstall::	# ensure existence
 .if ${MKNLS} != "no"
-
-nlsinstall::	${DESTDIR}${NLSDIR}
-.PRECIOUS:	${DESTDIR}${NLSDIR}
-.PHONY:		${DESTDIR}${NLSDIR}
 
 __nlsinstall: .USE
 	${INSTALL_FILE} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} \
