@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.32 1998/12/05 19:43:54 mjacob Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.33 1999/01/06 19:19:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@ const char *ncr53c9x_variant_names[] = {
 	"ESP406",
 	"FAS408",
 	"FAS216",
+	"AM53C974",
 };
 
 /*
@@ -267,6 +268,7 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_ESP406:
 	case NCR_VARIANT_FAS408:
 		NCR_SCSIREGS(sc);
+	case NCR_VARIANT_AM53C974:
 	case NCR_VARIANT_FAS216:
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
@@ -289,6 +291,10 @@ ncr53c9x_reset(sc)
 		NCR_WRITE_REG(sc, NCR_SYNCOFF, 0);
 		NCR_WRITE_REG(sc, NCR_TIMEOUT, sc->sc_timeout);
 	}
+
+	if (sc->sc_rev == NCR_VARIANT_AM53C974)
+		NCR_WRITE_REG(sc, NCR_AMDCFG4,
+		    NCRAMDCFG4_GE12NS | NCRAMDCFG4_RADE);
 }
 
 /*
@@ -438,8 +444,17 @@ ncr53c9x_setsync(sc, ti)
 			 * put the chip in Fast SCSI mode.
 			 */
 			if (ti->period <= 50)
-				cfg3 |= NCRCFG3_FSCSI;
+				cfg3 |= (sc->sc_rev == NCR_VARIANT_AM53C974) ?
+				    NCRAMDCFG3_FSCSI : NCRCFG3_FSCSI;
 		}
+
+		/*
+		 * Am53c974 requires different SYNCTP values when the
+		 * FSCSI bit is off.
+		 */
+		if (sc->sc_rev == NCR_VARIANT_AM53C974 &&
+		    (cfg3 & NCRAMDCFG3_FSCSI) == 0)
+			synctp--;
 	} else {
 		syncoff = 0;
 		synctp = 0;
