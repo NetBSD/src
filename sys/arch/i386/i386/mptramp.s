@@ -1,3 +1,5 @@
+/*	$NetBSD: mptramp.s,v 1.1.2.3 2001/01/03 17:02:06 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
