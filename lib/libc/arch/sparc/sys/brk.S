@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.5 1999/01/14 22:48:22 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.6 1999/03/31 18:14:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,13 +44,13 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.5 1999/01/14 22:48:22 kleink Exp $")
+	RCSID("$NetBSD: brk.S,v 1.6 1999/03/31 18:14:27 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-	.globl	curbrk
+	.globl	CURBRK
 	.globl	_C_LABEL(__minbrk)
 
 	.data
@@ -71,7 +71,7 @@ ENTRY(brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	ld	[%o5 + curbrk], %o4
+	ld	[%o5 + CURBRK], %o4
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
@@ -88,9 +88,9 @@ ENTRY(brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	 sethi	%hi(curbrk), %g1
+	 sethi	%hi(CURBRK), %g1
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
-	 st	%o2, [%g1 + %lo(curbrk)]
+	 st	%o2, [%g1 + %lo(CURBRK)]
 #endif
