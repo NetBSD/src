@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.12.2.2 1999/04/19 04:58:32 cjs Exp $
+#	$NetBSD: INSTALL,v 1.12.2.3 1999/04/19 05:07:27 cjs Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -30,7 +30,7 @@ options 	M68060
 #### System options specific to the x68k port
 
 #options 	EXTENDED_MEMORY		# support for >16MB memory
-options 	FPU_EMULATE		# software fpu emulation for MC68030
+#options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
