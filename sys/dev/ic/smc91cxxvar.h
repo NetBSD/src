@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.10 2002/09/04 14:54:37 scw Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.11 2003/04/29 08:47:30 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct smc91cxx_softc {
 #define SMC_FLAGS_32BIT_READ	0x0008		/* reads are always 32-bits */
 
 	u_int8_t	sc_chipid;
+	u_int8_t	sc_internal_phy;	/* 91C111 only */
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
