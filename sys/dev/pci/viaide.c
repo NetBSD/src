@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.8 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.9 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -337,7 +337,8 @@ via_setup_channel(struct wdc_channel *chp)
 	int mode, drive;
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct wdc_softc *wdc = &sc->sc_wdcdev;
 #ifndef PCIIDE_AMD756_ENABLEDMA
 	int rev = PCI_REVISION(
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
@@ -346,8 +347,8 @@ via_setup_channel(struct wdc_channel *chp)
 	idedma_ctl = 0;
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc));
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc));
-	datatim_reg &= ~APO_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~APO_UDMA_MASK(chp->channel);
+	datatim_reg &= ~APO_DATATIM_MASK(chp->ch_channel);
+	udmatim_reg &= ~APO_UDMA_MASK(chp->ch_channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -363,45 +364,45 @@ via_setup_channel(struct wdc_channel *chp)
 			mode = drvp->PIO_mode;
 			goto pio;
 		}
-		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			udmatim_reg |= APO_UDMA_EN(chp->channel, drive) |
-			    APO_UDMA_EN_MTH(chp->channel, drive);
+			udmatim_reg |= APO_UDMA_EN(chp->ch_channel, drive) |
+			    APO_UDMA_EN_MTH(chp->ch_channel, drive);
 			switch (PCI_VENDOR(sc->sc_pci_id)) {
 			case PCI_VENDOR_VIATECH:
 				if (sc->sc_wdcdev.UDMA_cap == 6) {
 					/* 8233a */
 					udmatim_reg |= APO_UDMA_TIME(
-					    chp->channel,
+					    chp->ch_channel,
 					    drive,
 					    via_udma133_tim[drvp->UDMA_mode]);
 				} else if (sc->sc_wdcdev.UDMA_cap == 5) {
 					/* 686b */
 					udmatim_reg |= APO_UDMA_TIME(
-					    chp->channel,
+					    chp->ch_channel,
 					    drive,
 					    via_udma100_tim[drvp->UDMA_mode]);
 				} else if (sc->sc_wdcdev.UDMA_cap == 4) {
 					/* 596b or 686a */
 					udmatim_reg |= APO_UDMA_CLK66(
-					    chp->channel);
+					    chp->ch_channel);
 					udmatim_reg |= APO_UDMA_TIME(
-					    chp->channel,
+					    chp->ch_channel,
 					    drive,
 					    via_udma66_tim[drvp->UDMA_mode]);
 				} else {
 					/* 596a or 586b */
 					udmatim_reg |= APO_UDMA_TIME(
-					    chp->channel,
+					    chp->ch_channel,
 					    drive,
 					    via_udma33_tim[drvp->UDMA_mode]);
 				}
 				break;
 			case PCI_VENDOR_AMD:
 			case PCI_VENDOR_NVIDIA:
-				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				udmatim_reg |= APO_UDMA_TIME(chp->ch_channel,
 				    drive, amd7x6_udma_tim[drvp->UDMA_mode]);
 				 break;
 			}
@@ -425,7 +426,7 @@ via_setup_channel(struct wdc_channel *chp)
 				    "%s:%d:%d: multi-word DMA disabled due "
 				    "to chip revision\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,
-				    chp->channel, drive);
+				    chp->ch_channel, drive);
 				mode = drvp->PIO_mode;
 				drvp->drive_flags &= ~DRIVE_DMA;
 				goto pio;
@@ -449,9 +450,9 @@ pio:		/* setup PIO mode */
 			drvp->DMA_mode = mode - 2;
 		}
 		datatim_reg |=
-		    APO_DATATIM_PULSE(chp->channel, drive,
+		    APO_DATATIM_PULSE(chp->ch_channel, drive,
 			apollo_pio_set[mode]) |
-		    APO_DATATIM_RECOV(chp->channel, drive,
+		    APO_DATATIM_RECOV(chp->ch_channel, drive,
 			apollo_pio_rec[mode]);
 	}
 	if (idedma_ctl != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.53 2004/01/03 19:31:09 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.54 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
  */
 struct wdc_channel {
 	struct callout ch_callout;	/* callout handle */
-	int channel;			/* location */
-	struct wdc_softc *wdc;		/* controller's softc */
+	int ch_channel;			/* location */
+	struct wdc_softc *ch_wdc;	/* controller's softc */
 
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: acardide.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -180,8 +180,9 @@ acard_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int channel = chp->channel;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct wdc_softc *wdc = &sc->sc_wdcdev;
+	int channel = chp->ch_channel;
 	int drive;
 	u_int32_t idetime, udma_mode;
 	u_int32_t idedma_ctl;
@@ -203,7 +204,7 @@ acard_setup_channel(struct wdc_channel *chp)
 		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
 		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA)) {
 			if (pci_conf_read(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL)
-			    & ATP860_CTRL_80P(chp->channel)) {
+			    & ATP860_CTRL_80P(chp->ch_channel)) {
 				if (chp->ch_drive[0].UDMA_mode > 2)
 					chp->ch_drive[0].UDMA_mode = 2;
 				if (chp->ch_drive[1].UDMA_mode > 2)
@@ -221,7 +222,7 @@ acard_setup_channel(struct wdc_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			if (ACARD_IS_850(sc)) {
@@ -238,7 +239,7 @@ acard_setup_channel(struct wdc_channel *chp)
 				    acard_udma_conf[drvp->UDMA_mode]);
 			}
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) &&
+		} else if ((wdc->cap & WDC_CAPABILITY_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
 			drvp->drive_flags &= ~DRIVE_UDMA;

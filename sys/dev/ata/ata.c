@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.25 2004/01/03 01:50:53 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.26 2004/01/03 22:56:53 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.25 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.26 2004/01/03 22:56:53 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -87,7 +87,7 @@ atabusprint(void *aux, const char *pnp)
 	
 	if (pnp)
 		aprint_normal("atabus at %s", pnp);
-	aprint_normal(" channel %d", chan->channel);
+	aprint_normal(" channel %d", chan->ch_channel);
 
 	return (UNCONF);
 }
@@ -200,7 +200,7 @@ atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (chp == NULL)
 		return (0);
 	
-	if (cf->cf_loc[ATACF_CHANNEL] != chp->channel &&
+	if (cf->cf_loc[ATACF_CHANNEL] != chp->ch_channel &&
 	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
 	    	return (0);
 	

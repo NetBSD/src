@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.5 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.6 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -176,7 +176,7 @@ acer_setup_channel(struct wdc_channel *chp)
 	u_int32_t acer_fifo_udma;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 
 	idedma_ctl = 0;
 	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
@@ -188,7 +188,7 @@ acer_setup_channel(struct wdc_channel *chp)
 	if ((chp->ch_drive[0].drive_flags | chp->ch_drive[1].drive_flags) &
 	    DRIVE_UDMA) { /* check 80 pins cable */
 		if (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4A) &
-		    ACER_0x4A_80PIN(chp->channel)) {
+		    ACER_0x4A_80PIN(chp->ch_channel)) {
 			if (chp->ch_drive[0].UDMA_mode > 2)
 				chp->ch_drive[0].UDMA_mode = 2;
 			if (chp->ch_drive[1].UDMA_mode > 2)
@@ -202,29 +202,29 @@ acer_setup_channel(struct wdc_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		WDCDEBUG_PRINT(("acer_setup_channel: old timings reg for "
-		    "channel %d drive %d 0x%x\n", chp->channel, drive,
+		    "channel %d drive %d 0x%x\n", chp->ch_channel, drive,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag,
-		    ACER_IDETIM(chp->channel, drive))), DEBUG_PROBE);
+		    ACER_IDETIM(chp->ch_channel, drive))), DEBUG_PROBE);
 		/* clear FIFO/DMA mode */
-		acer_fifo_udma &= ~(ACER_FTH_OPL(chp->channel, drive, 0x3) |
-		    ACER_UDMA_EN(chp->channel, drive) |
-		    ACER_UDMA_TIM(chp->channel, drive, 0x7));
+		acer_fifo_udma &= ~(ACER_FTH_OPL(chp->ch_channel, drive, 0x3) |
+		    ACER_UDMA_EN(chp->ch_channel, drive) |
+		    ACER_UDMA_TIM(chp->ch_channel, drive, 0x7));
 
 		/* add timing values, setup DMA if needed */
 		if ((drvp->drive_flags & DRIVE_DMA) == 0 &&
 		    (drvp->drive_flags & DRIVE_UDMA) == 0) {
 			acer_fifo_udma |=
-			    ACER_FTH_OPL(chp->channel, drive, 0x1);
+			    ACER_FTH_OPL(chp->ch_channel, drive, 0x1);
 			goto pio;
 		}
 
-		acer_fifo_udma |= ACER_FTH_OPL(chp->channel, drive, 0x2);
+		acer_fifo_udma |= ACER_FTH_OPL(chp->ch_channel, drive, 0x2);
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			acer_fifo_udma |= ACER_UDMA_EN(chp->channel, drive);
+			acer_fifo_udma |= ACER_UDMA_EN(chp->ch_channel, drive);
 			acer_fifo_udma |= 
-			    ACER_UDMA_TIM(chp->channel, drive,
+			    ACER_UDMA_TIM(chp->ch_channel, drive,
 				acer_udma[drvp->UDMA_mode]);
 			/* XXX disable if one drive < UDMA3 ? */
 			if (drvp->UDMA_mode >= 3) {
@@ -249,7 +249,7 @@ acer_setup_channel(struct wdc_channel *chp)
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
-		    ACER_IDETIM(chp->channel, drive),
+		    ACER_IDETIM(chp->ch_channel, drive),
 		    acer_pio[drvp->PIO_mode]);
 	}
 	WDCDEBUG_PRINT(("acer_setup_channel: new fifo/udma reg 0x%x\n",

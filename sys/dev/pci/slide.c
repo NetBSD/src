@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.3 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: slide.c,v 1.4 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ sl82c105_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	int pxdx_reg, drive;
 	pcireg_t pxdx;
 
@@ -195,8 +195,9 @@ sl82c105_setup_channel(struct wdc_channel *chp)
 	pciide_channel_dma_setup(cp);
 
 	for (drive = 0; drive < 2; drive++) {
-		pxdx_reg = ((chp->channel == 0) ? SYMPH_P0D0CR
-						: SYMPH_P1D0CR) + (drive * 4);
+		pxdx_reg = ((chp->ch_channel == 0) ? SYMPH_P0D0CR
+						   : SYMPH_P1D0CR) +
+			    (drive * 4);
 
 		pxdx = pci_conf_read(sc->sc_pc, sc->sc_tag, pxdx_reg);
 
