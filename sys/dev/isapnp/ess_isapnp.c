@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.1 1998/08/07 00:53:23 matt Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.2 1999/03/17 22:19:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -108,12 +108,12 @@ ess_isapnp_attach(parent, self, aux)
 	sc->sc_iobase = ipa->ipa_io[0].base;
 	sc->sc_ioh = ipa->ipa_io[0].h;
 
-	sc->sc_in.irq = ipa->ipa_irq[0].num;
-	sc->sc_in.ist = ipa->ipa_irq[0].type;
-	sc->sc_in.drq = ipa->ipa_drq[0].num;
-	sc->sc_out.irq = ipa->ipa_irq[0].num;
-	sc->sc_out.ist = ipa->ipa_irq[0].type;
-	sc->sc_out.drq = ipa->ipa_drq[1].num;
+	sc->sc_audio1.irq = ipa->ipa_irq[0].num;
+	sc->sc_audio1.ist = ipa->ipa_irq[0].type;
+	sc->sc_audio1.drq = ipa->ipa_drq[0].num;
+	sc->sc_audio2.irq = ipa->ipa_irq[0].num;
+	sc->sc_audio2.ist = ipa->ipa_irq[0].type;
+	sc->sc_audio2.drq = ipa->ipa_drq[1].num;
 
 	if (!essmatch(sc)) {
 		printf("%s: essmatch failed\n", sc->sc_dev.dv_xname);
