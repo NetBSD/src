@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.31 1997/05/25 12:41:55 leo Exp $
+#	$NetBSD: GENERIC,v 1.32 1997/06/02 20:40:57 leo Exp $
 #
 # Generic atari
 #
@@ -121,6 +121,7 @@ pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
 pseudo-device	ccd		4	# concatenating disk driver
 pseudo-device	md		1	# Boot memory disk
+pseudo-device	ipfilter		# IP filtering device
 
 #
 # The following sections describe various hardware options.
