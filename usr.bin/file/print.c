@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.28 2002/09/15 00:50:18 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.29 2002/12/06 02:54:19 thorpej Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -30,6 +30,7 @@
 #include "file.h"
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -39,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)Id: print.c,v 1.38 2002/07/03 18:37:44 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.28 2002/09/15 00:50:18 thorpej Exp $");
+__RCSID("$NetBSD: print.c,v 1.29 2002/12/06 02:54:19 thorpej Exp $");
 #endif
 #endif  /* lint */
 
