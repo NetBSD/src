@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.21 1995/10/05 01:35:07 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.22 1995/10/05 01:42:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -98,7 +98,7 @@ ttcompat(tp, com, data, flag, p)
 	case TIOCGETP: {
 		register struct sgttyb *sg = (struct sgttyb *)data;
 		register u_char *cc = tp->t_cc;
-		register speed;
+		register int speed;
 
 		speed = ttspeedtab(tp->t_ospeed, compatspeeds);
 		sg->sg_ospeed = (speed == -1) ? MAX_SPEED : speed;
@@ -191,7 +191,7 @@ ttcompat(tp, com, data, flag, p)
 	case TIOCLBIC:
 	case TIOCLSET: {
 		struct termios term;
-		long flags;
+		int flags;
 
 		term = tp->t_termios;
 		flags = ttcompatgetflags(tp);
@@ -251,14 +251,15 @@ ttcompat(tp, com, data, flag, p)
 	return (0);
 }
 
+int
 ttcompatgetflags(tp)
 	register struct tty *tp;
 {
-	register long iflag = tp->t_iflag;
-	register long lflag = tp->t_lflag;
-	register long oflag = tp->t_oflag;
-	register long cflag = tp->t_cflag;
-	register flags = 0;
+	register tcflag_t iflag = tp->t_iflag;
+	register tcflag_t lflag = tp->t_lflag;
+	register tcflag_t oflag = tp->t_oflag;
+	register tcflag_t cflag = tp->t_cflag;
+	register int flags = 0;
 
 	if (ISSET(iflag, IXOFF))
 		SET(flags, TANDEM);
@@ -313,11 +314,11 @@ ttcompatsetflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
 {
-	register flags = tp->t_flags;
-	register long iflag = t->c_iflag;
-	register long oflag = t->c_oflag;
-	register long lflag = t->c_lflag;
-	register long cflag = t->c_cflag;
+	register int flags = tp->t_flags;
+	register tcflag_t iflag = t->c_iflag;
+	register tcflag_t oflag = t->c_oflag;
+	register tcflag_t lflag = t->c_lflag;
+	register tcflag_t cflag = t->c_cflag;
 
 	if (ISSET(flags, TANDEM))
 		SET(iflag, IXOFF);
@@ -394,11 +395,11 @@ ttcompatsetlflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
 {
-	register flags = tp->t_flags;
-	register long iflag = t->c_iflag;
-	register long oflag = t->c_oflag;
-	register long lflag = t->c_lflag;
-	register long cflag = t->c_cflag;
+	register int flags = tp->t_flags;
+	register tcflag_t iflag = t->c_iflag;
+	register tcflag_t oflag = t->c_oflag;
+	register tcflag_t lflag = t->c_lflag;
+	register tcflag_t cflag = t->c_cflag;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))
