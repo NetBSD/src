@@ -55,6 +55,7 @@ static char sccsid[] = "@(#)compile.c	5.6 (Berkeley) 11/2/92";
 #include "extern.h"
 
 static char	 *compile_addr __P((char *, struct s_addr *));
+static char	 *compile_ccl __P((char **, char *));
 static char	 *compile_delimited __P((char *, char *));
 static char	 *compile_flags __P((char *, struct s_subst *));
 static char	 *compile_re __P((char *, regex_t **));
@@ -333,7 +334,11 @@ compile_delimited(p, d)
 	else if (c == '\n')
 		err(COMPILE, "newline can not be used as a string delimiter");
 	while (*p) {
-		if (*p == '\\' && p[1] == c)
+		if (*p == '[') {
+			if ((d = compile_ccl(&p, d)) == NULL)
+				err(COMPILE, "unbalanced brackets ([])");
+			continue;
+		} else if (*p == '\\' && p[1] == c)
 			p++;
 		else if (*p == '\\' && p[1] == 'n') {
 			*d++ = '\n';
@@ -348,6 +353,32 @@ compile_delimited(p, d)
 		*d++ = *p++;
 	}
 	return (NULL);
+}
+
+
+/* compile_ccl: expand a POSIX character class */
+static char *
+compile_ccl(sp, t)
+	char **sp;
+	char *t;
+{
+	int c, d;
+	char *s = *sp;
+
+	*t++ = *s++;
+	if (*s == '^')
+		*t++ = *s++;
+	if (*s == ']')
+		*t++ = *s++;
+	for (; *s && (*t = *s) != ']'; s++, t++)
+		if (*s == '[' && ((d = *(s+1)) == '.' || d == ':' || d == '=')) {
+			*++t = *++s, t++, s++;
+			for (c = *s; (*t = *s) != ']' || c != d; s++, t++)
+				if ((c = *s) == '\0')
+					return NULL;
+		} else if (*s == '\\' && s[1] == 'n')
+			*t = '\n', s++;
+	return (*s == ']') ? *sp = ++s, ++t : NULL;
 }
 
 /*
