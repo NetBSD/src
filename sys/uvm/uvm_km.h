@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.12 2003/05/10 21:10:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.13 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  *
@@ -47,9 +47,9 @@
  * prototypes
  */
 
-void uvm_km_init __P((vaddr_t, vaddr_t));
-void uvm_km_pgremove __P((struct uvm_object *, vaddr_t, vaddr_t));
-void uvm_km_pgremove_intrsafe __P((vaddr_t, vaddr_t));
+void uvm_km_init(vaddr_t, vaddr_t);
+void uvm_km_pgremove(struct uvm_object *, vaddr_t, vaddr_t);
+void uvm_km_pgremove_intrsafe(vaddr_t, vaddr_t);
 
 #endif /* _KERNEL */
 
