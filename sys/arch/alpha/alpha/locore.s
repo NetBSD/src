@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.41 1998/02/27 03:53:49 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.42 1998/03/04 02:11:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.41 1998/02/27 03:53:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.42 1998/03/04 02:11:58 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1146,23 +1146,36 @@ bcopy_ov_short:
 	END(bcopy)
 
 #if defined(UVM)
+/*
+ * kcopy(const void *src, void *dst, size_t len);
+ *
+ * Copy len bytes from src to dst, aborting if we encounter a fatal
+ * page fault.
+ *
+ * kcopy() _must_ save and restore the old fault handler since it is
+ * called by uiomove(), which may be in the path of servicing a non-fatal
+ * page fault.
+ */
 NESTED(kcopy, 3, 16, ra, 0, 0)
 	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
-	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	ra, (16-16)(sp)			/* save ra		     */
+	stq	s0, (16-8)(sp)			/* save s0		     */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, curproc
 	ldq	at_reg, P_ADDR(at_reg)
+	ldq	s0, U_PCB_ONFAULT(at_reg)	/* save old handler.	     */
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, curproc			/* restore the old handler.  */
 	ldq	at_reg, P_ADDR(at_reg)
-	stq	zero, U_PCB_ONFAULT(at_reg)
+	stq	s0, U_PCB_ONFAULT(at_reg)
 	.set at
-	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	ra, (16-16)(sp)			/* restore ra.		     */
+	ldq	s0, (16-8)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	mov	zero, v0			/* return 0. */
 	RET
