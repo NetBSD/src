@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.67 2002/03/18 08:23:33 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.68 2002/03/18 12:28:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.67 2002/03/18 08:23:33 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.68 2002/03/18 12:28:07 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.67 2002/03/18 08:23:33 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.68 2002/03/18 12:28:07 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -419,9 +419,6 @@ static void
 JobContinueSig(signo)
     int	    signo;	/* The signal number we've received */
 {
-    if (signal(SIGTSTP, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGTSTP, JobPassSig);
-    }
     JobRestartJobs();
 }
 #endif
@@ -482,11 +479,13 @@ JobPassSig(signo)
      * we take any other signal.
      */
     sigfillset(&nmask);
-    sigprocmask(SIG_SETMASK, &nmask, &omask);
+    sigdelset(&nmask, signo);
+    (void) sigprocmask(SIG_SETMASK, &nmask, &omask);
+
     act.sa_handler = SIG_DFL;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
-    sigaction(signo, &act, NULL);
+    (void) sigaction(signo, &act, NULL);
 
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout,
@@ -500,12 +499,10 @@ JobPassSig(signo)
 	Lst_ForEach(jobs, JobCondPassSig, (ClientData) &sigcont);
     }
 
+    /* Restore handler and signal mask */
+    act.sa_handler = JobPassSig;
+    (void) sigaction(signo, &act, NULL);
     (void) sigprocmask(SIG_SETMASK, &omask, NULL);
-    sigprocmask(SIG_SETMASK, &omask, NULL);
-    if (signo != SIGCONT && signo != SIGTSTP) {
-	act.sa_handler = JobPassSig;
-	sigaction(sigcont, &act, NULL);
-    }
 }
 
 /*-
