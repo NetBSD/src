@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.27 2003/11/16 18:31:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.27 2003/11/16 18:31:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -179,10 +178,11 @@ pcscp_attach(parent, self, aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s\n", devinfo);
+	printf("%s", sc->sc_dev.dv_xname);
 
 	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		printf(": unable to map registers\n");
 		return;
 	}
 
@@ -243,26 +243,6 @@ pcscp_attach(parent, self, aux)
 	/* Really no limit, but since we want to fit into the TCR... */
 	sc->sc_maxxfer = 16 * 1024 * 1024;
 
-	/* map and establish interrupt */
-	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-	    ncr53c9x_intr, esc);
-	if (esc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-		    intrstr);
-
 	/*
 	 * Create the DMA maps for the data transfers.
 	 */
@@ -273,7 +253,7 @@ pcscp_attach(parent, self, aux)
 
 	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MDL_SEG_SIZE,
 	    MDL_SEG_SIZE, BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
-		printf("%s: can't create DMA maps\n", sc->sc_dev.dv_xname);
+		printf(": can't create DMA maps\n");
 		return;
 	}
 
@@ -284,35 +264,51 @@ pcscp_attach(parent, self, aux)
 	if ((error = bus_dmamem_alloc(esc->sc_dmat,
 	    sizeof(u_int32_t) * MDL_SIZE, PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate memory for the MDL, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		printf(": unable to allocate memory for the MDL, error = %d\n",
+		    error);
 		return;
 	}
 	if ((error = bus_dmamem_map(esc->sc_dmat, &seg, rseg,
 	    sizeof(u_int32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map the MDL memory, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf(": unable to map the MDL memory, error = %d\n", error);
 		return;
 	}
 	if ((error = bus_dmamap_create(esc->sc_dmat,
 	    sizeof(u_int32_t) * MDL_SIZE, 1, sizeof(u_int32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
-		printf("%s: unable to map_create for the MDL, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf(": unable to map_create for the MDL, error = %d\n",
+		    error);
 		return;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
 	     esc->sc_mdladdr, sizeof(u_int32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load for the MDL, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf(": unable to load for the MDL, error = %d\n", error);
 		return;
 	}
 
+	/* map and establish interrupt */
+	if (pci_intr_map(pa, &ih)) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+	    ncr53c9x_intr, esc);
+	if (esc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	if (intrstr != NULL)
+		printf(": interrupting at %s\n", intrstr);
+
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
-
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
@@ -398,9 +394,11 @@ pcscp_dma_intr(sc)
 		return 0;
 	}
 
+#ifdef DIAGNOSTIC
 	/* This is an "assertion" :) */
 	if (esc->sc_active == 0)
 		panic("pcscp dmaintr: DMA wasn't active");
+#endif
 
 	/* DMA has stopped */
 
@@ -450,22 +448,20 @@ pcscp_dma_intr(sc)
 				p = *esc->sc_dmaaddr;
 		}
 
-		resid += (NCR_READ_REG(sc, NCR_TCL) |
+		resid += NCR_READ_REG(sc, NCR_TCL) |
 		    (NCR_READ_REG(sc, NCR_TCM) << 8) |
-		    ((sc->sc_cfg2 & NCRCFG2_FE)
-		    ? (NCR_READ_REG(sc, NCR_TCH) << 16) : 0));
-
-		if (resid == 0 && esc->sc_dmasize == 65536 &&
-		    (sc->sc_cfg2 & NCRCFG2_FE) == 0)
-			/* A transfer of 64K is encoded as `TCL=TCM=0' */
-			resid = 65536;
+		    (NCR_READ_REG(sc, NCR_TCH) << 16);
 	} else {
-		while((dmastat & DMASTAT_DONE) == 0)
+		while ((dmastat & DMASTAT_DONE) == 0)
 			dmastat = READ_DMAREG(esc, DMA_STAT);
 	}
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
+	/* sync MDL */
+	bus_dmamap_sync(esc->sc_dmat, esc->sc_mdldmap,
+	    0, sizeof(u_int32_t) * dmap->dm_nsegs, BUS_DMASYNC_POSTWRITE);
+	/* sync transfer buffer */
 	bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, dmap);
@@ -503,7 +499,7 @@ pcscp_dma_intr(sc)
 	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
 	    NCR_READ_REG(sc, NCR_TCL),
 	    NCR_READ_REG(sc, NCR_TCM),
-	    (sc->sc_cfg2 & NCRCFG2_FE) ? NCR_READ_REG(sc, NCR_TCH) : 0,
+	    NCR_READ_REG(sc, NCR_TCH),
 	    trans, resid));
 
 	*esc->sc_dmalen -= trans;
@@ -597,8 +593,8 @@ pcscp_dma_go(sc)
 	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* sync MDL */
-	bus_dmamap_sync(esc->sc_dmat, mdldmap, 0, mdldmap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(esc->sc_dmat, mdldmap,
+	    0, sizeof(u_int32_t) * dmap->dm_nsegs, BUS_DMASYNC_PREWRITE);
 
 	/* set Starting MDL Address */
 	WRITE_DMAREG(esc, DMA_SMDLA, mdldmap->dm_segs[0].ds_addr);
