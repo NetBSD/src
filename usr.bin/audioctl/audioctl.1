@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.8 1998/08/21 19:45:37 augustss Exp $
+.\" $NetBSD: audioctl.1,v 1.9 1999/02/18 17:37:37 mycroft Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -77,20 +77,26 @@ The
 .Fl n
 flag suppresses printing of the variable name.
 .Sh EXAMPLES
-To set the playing sampling rate to 11025 you can enter
+To set the playing sampling rate to 11025, you can use
 .Dl audioctl -w play.sample_rate=11025
+To set all of the play parameters for CD-quality audio, you can use
+.Dl audioctl -w play=44100,2,16,slinear_le
 Note that many of the variables that can be inspected and changed
 with
 .Nm
-are reset when the device is opened.  This can be circumvented
-like this
-.Dl (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio0
-or
-.Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio0
+are reset when
+.Pa /dev/audio0
+is opened.  This can be circumvented by using
+.Pa /dev/sound0
+instead.
 .Sh FILES
-.Bl -tag -width /dev/audioctl0
+.Bl -tag -width /dev/audioctl0 -compact
+.It Pa /dev/audio0
+audio I/O device (resets on open)
 .It Pa /dev/audioctl0
 audio control device
+.It Pa /dev/sound0
+audio I/O device (does not reset on open)
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
