@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.85 2004/03/24 07:50:49 junyoung Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.85.2.1 2004/05/15 13:48:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.85 2004/03/24 07:50:49 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.85.2.1 2004/05/15 13:48:49 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -508,7 +508,8 @@ sys_swapctl(l, v, retval)
 	    || SCARG(uap, cmd) == SWAP_OSTATS
 #endif
 	    ) {
-		misc = MIN(uvmexp.nswapdev, misc);
+		if ((size_t)misc > (size_t)uvmexp.nswapdev)
+			misc = uvmexp.nswapdev;
 #if defined(COMPAT_13)
 		if (SCARG(uap, cmd) == SWAP_OSTATS)
 			len = sizeof(struct oswapent) * misc;
