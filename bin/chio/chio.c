@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.2 1997/07/20 04:44:53 thorpej Exp $	*/
+/*	$NetBSD: chio.c,v 1.3 1997/07/20 05:31:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.2 1997/07/20 04:44:53 thorpej Exp $");
+__RCSID("$NetBSD: chio.c,v 1.3 1997/07/20 05:31:47 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -648,7 +648,7 @@ bits_to_string(v, cp)
 			np++;
 		if ((v & (1 << (f - 1))) == 0)
 			continue;
-		bp += sprintf(bp, "%c%.*s", sep, np - cp, cp);
+		bp += sprintf(bp, "%c%.*s", sep, (int)(long)(np - cp), cp);
 		sep = ',';
 	}
 	if (sep != '<')
