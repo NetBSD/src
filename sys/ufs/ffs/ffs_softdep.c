@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.3 2000/06/27 16:46:54 pk Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.4 2000/06/28 14:11:33 mrg Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -422,7 +422,7 @@ static int stat_inode_bitmap;	/* bufs redirtied as inode bitmap not written */
 static int stat_direct_blk_ptrs;/* bufs redirtied as direct ptrs not written */
 static int stat_dir_entry;	/* bufs redirtied as dir entry cannot write */
 #ifdef DEBUG
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 struct ctldebug debug20 = { "max_softdeps", &max_softdeps };
 struct ctldebug debug21 = { "tickdelay", &tickdelay };
