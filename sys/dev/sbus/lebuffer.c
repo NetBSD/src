@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.4 1998/07/29 18:33:27 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.5 1998/08/29 20:38:38 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,12 +41,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.3 1998/08/29 19:52:09 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.4 1998/08/29 20:38:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
