@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.63 1999/12/05 20:09:17 danw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.64 1999/12/23 19:46:27 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp 
+ *	NetBSD: pcmciadevs,v 1.63 1999/12/23 19:45:56 augustss Exp 
  */
 
 /*-
@@ -465,6 +465,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BayStack 650 Wireless LAN"	},
 	},
 	{
+	    PCMCIA_VENDOR_WEBGEAR, PCMCIA_PRODUCT_WEBGEAR_WLAN,
+	    PCMCIA_CIS_WEBGEAR_WLAN,
+	    0,
+	    "WebGear",
+	    "WLAN Adapter"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -721,6 +728,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Dayna Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_WEBGEAR, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "WebGear",
 	    NULL,
 	},
 	{
