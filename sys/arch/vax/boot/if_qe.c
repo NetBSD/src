@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.1 1998/03/11 22:13:55 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.2 1998/08/31 19:20:24 ragge Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -42,7 +42,7 @@
 #include <vax/if/if_qereg.h>
 
 int qe_probe(), qe_match(), qe_get(), qe_put();
-void qe_init();
+void qe_init(), qe_end();
 
 struct netif_stats qe_stats;
 
@@ -54,22 +54,26 @@ struct netif_dif qe_ifs[] = {
 struct netif_stats qe_stats;
 
 struct netif_driver qe_driver = {
-	"qe", qe_match, qe_probe, qe_init, qe_get, qe_put, 0, qe_ifs, 1,
+	"qe", qe_match, qe_probe, qe_init, qe_get, qe_put, qe_end, qe_ifs, 1,
 };
+
+#define PG_V            0x80000000
+#define QBAMAP          0x20088000
 
 #define NRCV    1                      /* Receive descriptors          */
 #define NXMT    1                       /* Transmit descriptors         */
 #define NTOT    (NXMT + NRCV)
 
+#define QE_INTS        (QE_RCV_INT | QE_XMIT_INT)
+#define MAXPACKETSIZE  0x800            /* Because of (buggy) DEQNA */
+
 struct  qe_softc {
-        struct  qe_ring *rringaddr;     /* mapping info for rings       */
-        struct  qe_ring *tringaddr;     /*       ""                     */
-        struct  qe_ring rring[NRCV+1];  /* Receive ring descriptors     */
-        struct  qe_ring tring[NXMT+1];  /* Xmit ring descriptors        */
+        struct  qe_ring rring[NRCV+2];  /* Receive ring descriptors     */
+        struct  qe_ring tring[NXMT+2];  /* Xmit ring descriptors        */
         u_char  setup_pkt[16][8];       /* Setup packet                 */
+	char	qein[2048], qeout[2048];/* Packet buffers		*/
 };
 
-static	char *qein,*qeout;
 static	volatile struct qe_softc *sc;
 static	volatile struct qedevice *addr;
 
@@ -96,59 +100,21 @@ qe_init(desc, machdep_hint)
 {
 
 	int i,j;
-	struct  qe_ring *rp, *prp;
+	u_int *qm=(u_int *) QBAMAP;
 
-	qein=(void*)0x1000;
-	qeout=(void*)0x1800;
-	sc=(void*)0x2000;
+	sc = (void *)alloc(sizeof(struct qe_softc));
 
-	bzero(qein,2048);
-	bzero(qeout,2048);
 	bzero(sc,sizeof(struct qe_softc)); 
+
+	for(i = 0; i < 8192; i++)
+		qm[i] = PG_V | i;
 
 	/* XXX hardcoded addr */
 	addr = (struct qedevice *)(0x20000000 + (0774440 & 017777));
 
 	addr->qe_csr = QE_RESET;
 	addr->qe_csr &= ~QE_RESET;
-
-	sc->rringaddr = (void *)sc->rring;
-	sc->tringaddr = (void *)sc->tring;
-
-        prp = (struct qe_ring *)sc->rringaddr;
-
-
-	bzero((caddr_t)sc->tring, sizeof(struct qe_ring));
-        sc->tring->qe_buf_len = -64;
-        sc->tring->qe_addr_lo = (int)sc->setup_pkt;
-        sc->tring->qe_addr_hi = 0;
-
-	bzero((caddr_t)sc->rring, sizeof(struct qe_ring));
-        sc->rring->qe_buf_len = -64;
-        sc->rring->qe_addr_lo = (int)sc->setup_pkt;
-        sc->rring->qe_addr_hi = 0;
-
-        rp = (struct qe_ring *)sc->tring;
-        rp->qe_setup = 1;
-        rp->qe_eomsg = 1;
-        rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-        rp->qe_valid = 1;
-
-        rp = (struct qe_ring *)&sc->tring[1];
-        rp->qe_flag = rp->qe_status1 = 0;
-        rp->qe_valid = 0;
-	rp->qe_addr_lo = 0;
-	rp->qe_addr_hi = 0;
-
-        rp = (struct qe_ring *)sc->rring;
-        rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-        rp->qe_valid = 1;
-
-        rp = (struct qe_ring *)&sc->rring[1];
-        rp->qe_flag = rp->qe_status1 = 0;
-        rp->qe_valid = 0;
-	rp->qe_addr_lo = 0;
-	rp->qe_addr_hi = 0;
+	for(i=0x10000; i; i--) ;
 
         for (i = 0; i < 6; i++) {
                 sc->setup_pkt[i][1] = addr->qe_sta_addr[i];
@@ -162,25 +128,43 @@ qe_init(desc, machdep_hint)
 		desc->myea[i] = addr->qe_sta_addr[i];
 	}
 
+	bzero((caddr_t)sc->rring, sizeof(struct qe_ring));
+        sc->rring->qe_buf_len = -64;
+        sc->rring->qe_addr_lo = (short)((int)sc->setup_pkt);
+        sc->rring->qe_addr_hi = (short)((int)sc->setup_pkt >> 16);
+
+	bzero((caddr_t)sc->tring, sizeof(struct qe_ring));
+        sc->tring->qe_buf_len = -64;
+        sc->tring->qe_addr_lo = (short)((int)sc->setup_pkt);
+        sc->tring->qe_addr_hi = (short)((int)sc->setup_pkt >> 16);
+
+        sc->rring[0].qe_flag = sc->rring[0].qe_status1 = QE_NOTYET;
+        sc->rring[0].qe_valid = 1;
+
+        sc->tring[0].qe_setup = 1;
+        sc->tring[0].qe_eomsg = 1;
+        sc->tring[0].qe_flag = sc->tring[0].qe_status1 = QE_NOTYET;
+        sc->tring[0].qe_valid = 1;
+
 	addr->qe_csr =  QE_XMIT_INT | QE_RCV_INT;
 
-        addr->qe_rcvlist_lo = (short)((int)prp);
-        addr->qe_rcvlist_hi = (short)((int)prp >> 16);
-        prp += NRCV+1;
-        addr->qe_xmtlist_lo = (short)((int)prp);
-        addr->qe_xmtlist_hi = (short)((int)prp >> 16);
+        addr->qe_rcvlist_lo = (short)((int)sc->rring & 0xffff);
+        addr->qe_rcvlist_hi = (short)((int)sc->rring >> 16);
 
-	while ((addr->qe_csr & 0x8080) != 0x8080)
+        addr->qe_xmtlist_lo = (short)((int)sc->tring & 0xffff);
+        addr->qe_xmtlist_hi = (short)((int)sc->tring >> 16);
+
+	while ((addr->qe_csr & QE_INTS) != QE_INTS)
 		;
-	addr->qe_csr |= 0x8080;
+	addr->qe_csr |= QE_INTS;
 
 	addr->qe_csr &= ~(QE_INT_ENABLE|QE_ELOOP);
 	addr->qe_csr |= QE_ILOOP;
 
-        sc->rring[0].qe_addr_lo = (short)((int)qein);
-        sc->rring[0].qe_addr_hi = (short)((int)qein >> 16);
+        sc->rring[0].qe_addr_lo = (short)((int)sc->qein & 0xffff);
+        sc->rring[0].qe_addr_hi = (short)((int)sc->qein >> 16);
 	sc->rring[0].qe_setup=0;
-	sc->rring[0].qe_buf_len=-750;
+	sc->rring[0].qe_buf_len=-MAXPACKETSIZE/2;
 	sc->rring[0].qe_valid=1;
 	sc->rring[0].qe_flag=sc->rring[0].qe_status1=QE_NOTYET;
 	sc->rring[0].qe_status2=1;
@@ -191,8 +175,8 @@ qe_init(desc, machdep_hint)
 	sc->rring[1].qe_flag=sc->rring[1].qe_status1=QE_NOTYET;
 	sc->rring[1].qe_status2=1;
 
-        sc->tring[0].qe_addr_lo = (short)((int)qeout);
-        sc->tring[0].qe_addr_hi = (short)((int)qeout >> 16);
+        sc->tring[0].qe_addr_lo = (short)((int)sc->qeout & 0xffff);
+        sc->tring[0].qe_addr_hi = (short)((int)sc->qeout >> 16);
 	sc->tring[0].qe_setup=0;
 	sc->tring[0].qe_buf_len=0;
 	sc->tring[0].qe_eomsg=1;
@@ -205,10 +189,8 @@ qe_init(desc, machdep_hint)
 	sc->tring[1].qe_addr_hi = 0;
 
         addr->qe_csr|=QE_RCV_ENABLE;
-        addr->qe_rcvlist_lo = (short)((int)sc->rring);
+        addr->qe_rcvlist_lo = (short)((int)sc->rring & 0xffff);
         addr->qe_rcvlist_hi = (short)((int)sc->rring >> 16);
-
-	return;
 }
 
 int
@@ -221,7 +203,6 @@ qe_get(desc, pkt, maxlen, timeout)
 	int len, j;
 
 retry:
-
 	for(j = 0x10000;j && (addr->qe_csr & QE_RCV_INT) == 0; j--)
 		;
 
@@ -239,10 +220,10 @@ retry:
         if (len == 0)
 		goto retry;
 
-	bcopy((void*)qein,pkt,len);
+	bcopy((void*)sc->qein,pkt,len);
 
 
-end:	sc->rring[0].qe_flag = sc->rring[1].qe_flag = 0;
+end:
 	sc->rring[0].qe_status2 = sc->rring[1].qe_status2 = 1;
 	sc->rring[0].qe_flag=sc->rring[0].qe_status1=QE_NOTYET;
 	sc->rring[1].qe_flag=sc->rring[1].qe_status1=QE_NOTYET;
@@ -263,13 +244,12 @@ qe_put(desc, pkt, len)
 {
 	int j;
 
-	bcopy(pkt,qeout,len);
+	bcopy(pkt,sc->qeout,len);
         sc->tring[0].qe_buf_len=-len/2;
-        sc->tring[0].qe_flag=0;
         sc->tring[0].qe_flag=sc->tring[0].qe_status1=QE_NOTYET;
         sc->tring[1].qe_flag=sc->tring[1].qe_status1=QE_NOTYET;
 
-        addr->qe_xmtlist_lo = (short)((int)sc->tring);
+        addr->qe_xmtlist_lo = (short)((int)sc->tring & 0xffff);
         addr->qe_xmtlist_hi = (short)((int)sc->tring >> 16);
 
 	for(j = 0; (j < 0x10000) && ((addr->qe_csr & QE_XMIT_INT) == 0); j++)
@@ -286,4 +266,15 @@ qe_put(desc, pkt, len)
 		return -1;
 	}
 	return len;
+}
+
+void
+qe_end(nif)
+     struct netif *nif;
+{
+	int i;
+
+	addr->qe_csr = QE_RESET;
+	addr->qe_csr &= ~QE_RESET;
+	for(i=0x10000; i; i--) ;
 }
