@@ -1,8 +1,8 @@
-/*	$NetBSD: db_tsig.c,v 1.2 2001/01/27 07:21:58 itojun Exp $	*/
+/*	$NetBSD: db_tsig.c,v 1.2.2.1 2002/06/28 11:31:02 lukem Exp $	*/
 
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: db_tsig.c,v 8.6 2000/04/21 06:54:04 vixie Exp";
+static const char rcsid[] = "Id: db_tsig.c,v 8.8 2002/05/21 02:34:32 marka Exp";
 #endif /* not lint */
 
 /*
@@ -112,7 +112,7 @@ typedef struct {
 #define TSIG_ALG_MD5 "HMAC-MD5.SIG-ALG.REG.INT"
 #define TSIG_ALG_MD5_SHORT "hmac-md5"
 
-char *
+const char *
 tsig_alg_name(int value) {
 	if (value == KEY_HMAC_MD5)
 		return(TSIG_ALG_MD5);
@@ -131,7 +131,7 @@ tsig_alg_value(char *name) {
 
 DST_KEY *
 tsig_key_from_addr(struct in_addr addr) {
-	server_info si = si = find_server(addr);
+	server_info si = find_server(addr);
 	if (si == NULL || si->key_list == NULL || si->key_list->first == NULL)
 		return(NULL);
 	return(si->key_list->first->key);
