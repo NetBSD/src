@@ -1,4 +1,4 @@
-.\" $NetBSD: xcu5,v 1.7 1999/07/09 16:13:53 jwise Exp $
+.\" $NetBSD: xcu5,v 1.8 2000/07/07 20:06:27 tv Exp $
 .\"
 .\" Copyright (c) 1999 Jim Wise
 .\" All rights reserved.
@@ -114,6 +114,7 @@ of
 .Pp
 .sccs admin
 .
+.\" ---- alias ----
 .Ss alias - define or display aliases
 .compliant alias
 .Pp
@@ -132,9 +133,6 @@ which is not compliant with
 In particular,
 .gnu
 .Nm ar
-assumes that all
-.Ar file
-operands are object files.  In addition, the
 .Fl r
 and
 .Fl q
@@ -233,7 +231,9 @@ or
 .
 .\" ---- bg ----
 .Ss bg - run jobs in the background
-.unfinished
+.compliant bg
+.Pp
+.builtin bg
 .
 .\" ---- c89 ----
 .Ss c89 - compile standard C programs
@@ -403,7 +403,7 @@ or
 .
 .\" ---- false ----
 .Ss false - return false value
-.unfinished
+.compliant false
 .
 .\" ---- fc ----
 .Ss fc - process the command history list
@@ -411,7 +411,9 @@ or
 .
 .\" ---- fg ----
 .Ss fg - run jobs in the foreground
-.unfinished
+.compliant fg
+.Pp
+.builtin fg
 .
 .\" ---- fgrep ----
 .Ss fgrep - search a file for a fixed-string pattern (LEGACY)
@@ -452,6 +454,8 @@ or
 .\" ---- getopts ----
 .Ss getopts - parse utility options
 .unfinished
+.Pp
+.builtin getopts
 .
 .\" ---- grep ----
 .Ss grep - search a file for a pattern
@@ -763,7 +767,7 @@ or
 .
 .\" ---- true ----
 .Ss true - return true value
-.unfinished
+.compliant true
 .
 .\" ---- tsort ----
 .Ss tsort - topological sort
