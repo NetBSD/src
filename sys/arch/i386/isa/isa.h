@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.13 1994/01/03 23:54:35 mycroft Exp $
+ *	$Id: isa.h,v 1.14 1994/02/16 07:26:55 hpeyerl Exp $
  */
 
 /*
@@ -208,3 +208,9 @@ int isa_irq_pending __P((struct isa_device *dvp));
 #ifndef LOCORE
 extern vm_offset_t isaphysmem;
 #endif
+
+/*
+ * defines for elink_reset()  (See isa.c)
+ */
+#define ELINK_ID_PORT	0x100
+#define ELINK_RESET	0xc0
