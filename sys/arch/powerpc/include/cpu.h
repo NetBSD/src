@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2002/09/26 01:13:32 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2002/11/25 01:31:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -189,12 +189,12 @@ mftb(void)
 	uint64_t tb;
 	int tmp;
 
-	asm volatile ("
-1:	mftbu %0	\n\
-	mftb %0+1	\n\
-	mftbu %1	\n\
-	cmplw %0,%1	\n\
-	bne- 1b"
+	asm volatile (
+"1:	mftbu %0	\n"
+"	mftb %0+1	\n"
+"	mftbu %1	\n"
+"	cmplw %0,%1	\n"
+"	bne- 1b"
 	    : "=r"(tb), "=r"(tmp) :: "cr0");
 	return tb;
 }
