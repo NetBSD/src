@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 1998/09/05 23:57:27 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.4 1999/05/30 19:13:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -164,7 +164,7 @@ cpu_attach(parent, dev, aux)
 	char fpbuf[40];
 	register int i, l;
 	u_int64_t ver;
-	extern u_int64_t cpu_clockrate;
+	extern u_int64_t cpu_clockrate[];
 
 	/* This needs to be 64-bit aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
@@ -200,7 +200,8 @@ cpu_attach(parent, dev, aux)
 		clk = getpropint(findroot(), "clock-frequency", 0);
 	}
 	if (clk) {
-		cpu_clockrate = clk; /* Tell OS what frequency we run on */
+		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
+		cpu_clockrate[1] = clk/1000000;
 	}
 	sprintf(cpu_model, "%s @ %s MHz, %s FPU",
 		getpropstring(node, "name"),

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1999/05/30 02:37:10 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.7 1999/05/30 19:13:33 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,29 +80,6 @@
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
  */
-/* 
- * Note: we have to do something to make sure this matches the definition
- * of trapframe in reg.h.
- */
-#if 0
-struct clockframe {
-	u_int64_t	tstate;		/* pstate before interrupt, excluding PSR_ET */
-	u_int64_t	pc;		/* pc at interrupt */
-	u_int64_t	npc;		/* npc at interrupt */
-	u_int64_t	faultaddr;	/* faulting addr -- not used */
-	u_int64_t	oldfp;		/* location of prev trapframe */
-	u_int	pil;			/* actual interrupt priority level */
-	u_int	oldpil;			/* priority before interrupt */
-	u_int64_t	fp;		/* %fp at interrupt */
-};
-typedef const struct clockframe clockframe;
-extern int eintstack[];
-
-#define	CLKF_USERMODE(framep)	(((framep)->tstate & TSTATE_PRIV) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->oldpil) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(((framep)->fp < (u_int)eintstack)&&((framep)->fp > (u_int)KERNBASE))
-#else
 extern int eintstack[];
 struct clockframe {
 	struct trapframe t;
@@ -112,7 +89,6 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
 #define	CLKF_INTR(framep)	(((framep)->t.tf_kstack < (u_int)eintstack)&&((framep)->t.tf_kstack > (u_int)KERNBASE))
-#endif
 
 /*
  * Software interrupt request `register'.
@@ -197,8 +173,7 @@ void	dumpconf __P((void));
 caddr_t	reserve_dumppages __P((caddr_t));
 /* clock.c */
 struct timeval;
-void	lo_microtime __P((struct timeval *));
-int	statintr __P((void *));
+int	tickintr __P((void *)); /* level 10 (tick) interrupt code */
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.14 1999/05/25 23:14:08 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.15 1999/05/30 19:13:33 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -756,6 +756,7 @@ sbus_flush(sc)
 	stxa(&sc->sc_sysio->sys_strbuf.strbuf_flushsync, ASI_NUCLEUS, sc->sc_flushpa);
 #endif
 	membar_sync();
+/* XXXXXX this may never time out if %tick is the clock!!!! */
 	flushtimeout = tick() + cpu_clockrate/2; /* .5 sec after *now* */
 #ifdef DEBUG
 	if (sbusdebug & SDB_DVMA)
