@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.3 1999/11/14 16:27:08 veego Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -77,15 +77,13 @@ find $d -name '.cvsignore' -exec rm {} \;
 find $d -name 'Makefile' -exec rm {} \;
 cd $d/lib/isc && rm *.mdoc
 
-### Remove the $'s around the Id: and add our $NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $
+### Remove the $'s around the Id: and add our NetBSD RCS Id
 find $d -name '*.[chly]' -print | while read c; do
 	sed -e ' s/\$\(Id.*\) \$/\1/' < $c > /tmp/bind2n$$ && mv /tmp/bind2n$$ $c && \
 	echo removed \$Id tag from $c
 	sed 1q < $c | grep -q '\$NetBSD' || (
-cat <<'__eof_header'  > /tmp/bind3n$$
-/*	$NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $	*/
-
-__eof_header
+echo "/*	\$NetBSD\$	*/" >/tmp/bind3n$$
+echo "" >>/tmp/bind3n$$
 cat $c  >> /tmp/bind3n$$
 mv /tmp/bind3n$$ $c && echo added RCS tag to $c
 	)
@@ -96,10 +94,8 @@ find $d/man -name '*.[0-9]' -print | while read m; do
 	mv /tmp/bind1m$$ $m && echo removed \$Id tag from $m
 
 	sed 1q < $m | grep -q '\$NetBSD' || (
-cat <<'__eof_header' > /tmp/bind2m$$
-.\"	$NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $
-.\"
-__eof_header
+echo ".\\\"     \$NetBSD\$" >/tmp/bind2m$$
+echo ".\\\"" >>/tmp/bind2m$$
 	cat $m >> /tmp/bind2m$$
 	mv /tmp/bind2m$$ $m && echo added RCS tag to $m
 
