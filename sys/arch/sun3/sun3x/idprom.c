@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.7 1999/04/08 04:08:01 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.8 1999/04/12 01:30:22 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ idprom_get(dst)
 {
 	u_char *src;
 	caddr_t va;
-	int len, x;
+	int len;
 
 	/* First, probe for a separate IDPROM (3/470). */
 	va = obio_find_mapping(OBIO_IDPROM1, IDPROM_SIZE);
