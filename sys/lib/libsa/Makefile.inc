@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1996/12/26 21:32:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/01/02 22:06:51 christos Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 SADIR=	$S/lib/libsa
@@ -30,7 +30,7 @@ clean:: 		.NOTMAIN __always_make_salib
 	@echo cleaning the stand-alone library objects
 	@(cd ${SADST} && ${MAKE} -f ${SAREL}${SADIR}/Makefile \
 	  KERNCC=${CC:Q} \
-	  KERNCFLAGS="${CFLAGS:Q} \
+	  KERNCFLAGS=${CFLAGS:Q} \
 	  SAREL=${SAREL:Q} \
 	  SADIR=${SADIR:Q} clean)
 
