@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.10 1995/06/07 16:10:22 cgd Exp $	*/
+/*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.10 1995/06/07 16:10:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
