@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntptime.8,v 1.5 2002/01/19 11:44:58 wiz Exp $
+.\"	$NetBSD: ntptime.8,v 1.6 2002/02/02 01:27:22 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -23,7 +23,7 @@ page in
 .Pa /usr/share/doc/html/ntp/kern.htm .
 It reads and displays
 time-related kernel variables using the
-.Pa ntp_gettime()
+.Xr ntp_gettime 2
 system call.
 A similar display can be obtained using the
 .Nm ntpdc
@@ -55,5 +55,5 @@ Specify clock status. Better know what you are doing.
 .It Fl t Ar time_constant
 Specify time constant, an integer in the range 0-4.
 .El
-.Sh AUTHOR
+.Sh AUTHORS
 David L. Mills (mills@udel.edu)
