@@ -1,0 +1,32 @@
+#	$Id: Linux,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confDEPEND_TYPE', `CC-M')
+define(`confMANROOT', `/usr/man/man')
+define(`confLIBS', `-ldl')
+define(`confEBINDIR', `/usr/sbin')
+APPENDDEF(`confLIBSEARCH', `crypt nsl')
+
+define(`confMTLDOPTS', `-lpthread')
+define(`confLDOPTS_SO', `-shared')
+
+
+ifelse(confBLDVARIANT, `DEBUG',
+dnl Debug build
+`
+	define(`confOPTIMIZE',`-g')
+',
+dnl Optimized build
+confBLDVARIANT, `OPTIMIZED',
+`
+	define(`confOPTIMIZE',`-O')
+',
+dnl Purify build
+confBLDVARIANT, `PURIFY',
+`
+	define(`confOPTIMIZE',`-g')
+',
+dnl default
+`
+	define(`confOPTIMIZE',`-O')
+')
+
+

@@ -1,0 +1,13 @@
+#	$Id: maxion,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+define(`confCC', `/usr/ucb/cc')
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confLIBDIRS', `-L/usr/ucblib')
+define(`confLIBS', `-ldbm -lgen -lucb')
+define(`confMBINDIR', `/usr/ucblib')
+define(`confSBINDIR', `/usr/ucbetc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/ucblib')
+define(`confSBINOWN', `smtp')
+define(`confSBINGRP', `mail')
+define(`confSTDIR', `/var/adm/log')
+define(`confINSTALL', `/usr/ucb/install')

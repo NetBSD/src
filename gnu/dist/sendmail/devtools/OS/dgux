@@ -1,0 +1,10 @@
+#	$Id: dgux,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confLIBS', `-ldbm')
+define(`confMBINDIR', `/usr/bin')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `bin')
+define(`confINSTALL', `${BUILDBIN}/install.sh')
+APPENDDEF(`confLIBSEARCH', `socket nsl')

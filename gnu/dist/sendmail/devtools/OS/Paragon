@@ -1,0 +1,7 @@
+#	$Id: Paragon,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM')
+define(`confLIBDIRS', `-L/usr/shlib -L/usr/lib')
+define(`confLIBS', `-ldbm')
+define(`confSTDIR', `/var/adm/sendmail')
+define(`confINSTALL', `installbsd')
+define(`confUBINDIR', `${BINDIR}')

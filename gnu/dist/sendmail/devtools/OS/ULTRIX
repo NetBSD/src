@@ -1,0 +1,9 @@
+#	$Id: ULTRIX,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+define(`confCC', `cc -Olimit 1095')
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confHFDIR', `/usr/lib')
+define(`confDEPEND_TYPE', `CC-M')

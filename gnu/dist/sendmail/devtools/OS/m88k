@@ -1,0 +1,20 @@
+#	$Id: m88k,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#
+#	Contributed by Sergey Rusanov <rsm@utfoms.udmnet.ru>
+#
+define(`confCC', `gcc')
+define(`confOPTIMIZE', `-O2')
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-DMOTO')
+define(`confINCDIRS', `-I/usr/include -I/usr/ucbinclude')
+define(`confLIBDIRS', `-L/usr/lib -L/usr/ucblib')
+define(`confLIBS', `-lc -ldbm -lsocket -lnsl -lelf -lucb')
+define(`confMBINDIR', `/usr/local/sbin')
+define(`confSBINDIR', `/usr/ucb')
+define(`confUBINDIR', `/usr/local/bin')
+define(`confEBINDIR', `/usr/ucblib')
+define(`confSBINGRP', `mail')
+define(`confSTDIR', `/var/log')
+define(`confHFDIR', `/usr/local/sbin')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confDEPEND_TYPE', `CC-M')

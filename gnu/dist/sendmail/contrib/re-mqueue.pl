@@ -84,9 +84,17 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# @(#)$Id: re-mqueue.pl,v 1.1.1.1 2000/02/07 20:05:42 tron Exp $
+# @(#)$OrigId: re-mqueue,v 1.3 1995/05/25 18:14:53 p-pomes Exp $
+#
+# Updated by Graeme Hewson <ghewson@uk.oracle.com> May 1999
+#
+#	'use Sys::Syslog' for Perl 5
+#	Move transcript (xf) files if they exist
+#	Allow zero-length df files (empty message body)
+#	Preserve $! for error messages
+#
 
-require "syslog.pl";
+use Sys::Syslog;
 
 $LOCK_EX = 2;
 $LOCK_NB = 4;
@@ -126,9 +134,10 @@ $now = time();
 while ($dfile = pop(@dfiles)) {
     print "Checking $dfile\n" if ($debug);
     ($qfile = $dfile) =~ s/^d/q/;
+    ($xfile = $dfile) =~ s/^d/x/;
     ($mfile = $dfile) =~ s/^df//;
-    if (! -e $dfile || -z $dfile) {
-	print "$dfile is gone or zero bytes - skipping\n" if ($debug);
+    if (! -e $dfile) {
+	print "$dfile is gone - skipping\n" if ($debug);
 	next;
     }
     if (! -e $qfile || -z $qfile) {
@@ -155,6 +164,10 @@ while ($dfile = pop(@dfiles)) {
 	print "$queueb/$qfile already exists - skipping\n" if ($debug);
 	next;
     }
+    if (-e "$queueB/$xfile") {
+	print "$queueb/$xfile already exists - skipping\n" if ($debug);
+	next;
+    }
 
     # Try and lock qf* file
     unless (open(QF, ">>$qfile")) {
@@ -171,29 +184,51 @@ while ($dfile = pop(@dfiles)) {
 
     # Show time!  Do the link()s
     if (link("$dfile", "$queueB/$dfile") == 0) {
-	&syslog('err', 'link(%s, %s/%s): %m', $dfile, $queueB, $dfile);
-	print STDERR "$0: link($dfile, $queueB/$dfile): $!\n";
+	$bang = $!;
+	&syslog('err', 'link(%s, %s/%s): %s', $dfile, $queueB, $dfile, $bang);
+	print STDERR "$0: link($dfile, $queueB/$dfile): $bang\n";
 	exit (1);
     }
     if (link("$qfile", "$queueB/$qfile") == 0) {
-	&syslog('err', 'link(%s, %s/%s): %m', $qfile, $queueB, $qfile);
-	print STDERR "$0: link($qfile, $queueB/$qfile): $!\n";
+	$bang = $!;
+	&syslog('err', 'link(%s, %s/%s): %s', $qfile, $queueB, $qfile, $bang);
+	print STDERR "$0: link($qfile, $queueB/$qfile): $bang\n";
 	unlink("$queueB/$dfile");
 	exit (1);
+    }
+    if (-e "$xfile") {
+	if (link("$xfile", "$queueB/$xfile") == 0) {
+	    $bang = $!;
+	    &syslog('err', 'link(%s, %s/%s): %s', $xfile, $queueB, $xfile, $bang);
+	    print STDERR "$0: link($xfile, $queueB/$xfile): $bang\n";
+	    unlink("$queueB/$dfile");
+	    unlink("$queueB/$qfile");
+	    exit (1);
+	}
     }
 
     # Links created successfully.  Unlink the original files, release the
     # lock, and close the file.
     print "links ok\n" if ($debug);
     if (unlink($qfile) == 0) {
-	&syslog('err', 'unlink(%s): %m', $qfile);
-	print STDERR "$0: unlink($qfile): $!\n";
+	$bang = $!;
+	&syslog('err', 'unlink(%s): %s', $qfile, $bang);
+	print STDERR "$0: unlink($qfile): $bang\n";
 	exit (1);
     }
     if (unlink($dfile) == 0) {
-	&syslog('err', 'unlink(%s): %m', $dfile);
-	print STDERR "$0: unlink($dfile): $!\n";
+	$bang = $!;
+	&syslog('err', 'unlink(%s): %s', $dfile, $bang);
+	print STDERR "$0: unlink($dfile): $bang\n";
 	exit (1);
+    }
+    if (-e "$xfile") {
+	if (unlink($xfile) == 0) {
+	    $bang = $!;
+	    &syslog('err', 'unlink(%s): %s', $xfile, $bang);
+	    print STDERR "$0: unlink($xfile): $bang\n";
+	    exit (1);
+	}
     }
     flock(QF, $LOCK_UN);
     close(QF);

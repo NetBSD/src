@@ -1,0 +1,8 @@
+#	$Id: SunOS,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confLDOPTS', `-Bstatic')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confDEPEND_TYPE', `CC-M')

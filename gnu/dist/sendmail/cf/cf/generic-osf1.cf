@@ -1,5 +1,6 @@
 #
-# Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+#	All rights reserved.
 # Copyright (c) 1983, 1995 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -15,40 +16,42 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@knecht.sendmail.org on Thu Feb 4 16:39:23 PST 1999
-##### in /home/eric/src/sendmail/cf/cf
+##### built by gshapiro@horsey.gshapiro.net on Thu Apr 6 14:36:14 PDT 2000
+##### in /usr/local/src/sendmail/devel/OpenSource/sendmail-8.10.1/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
 ######################################################################
 
-#####  @(#)cfhead.m4	8.23 (Berkeley) 10/6/1998  #####
-#####  @(#)cf.m4	8.29 (Berkeley) 5/19/1998  #####
-#####  @(#)generic-osf1.mc	8.8 (Berkeley) 5/19/1998  #####
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
-#####  @(#)osf1.m4	8.11 (Berkeley) 10/6/1998  #####
-
-
-#####  @(#)generic.m4	8.9 (Berkeley) 5/19/1998  #####
-
-#####  @(#)redirect.m4	8.10 (Berkeley) 5/19/1998  #####
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
 
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
-#####  @(#)use_cw_file.m4	8.6 (Berkeley) 5/19/1998  #####
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
 
 
-#####  @(#)proto.m4	8.243 (Berkeley) 2/2/1999  #####
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
 
-# level 8 config file format
-V8/Berkeley
+# level 9 config file format
+V9/Berkeley
 
-# override file safeties - setting this option compromises system security
-# need to set this now for the sake of class files
+# override file safeties - setting this option compromises system security,
+# addressing the actual file configuration problem is preferred
+# need to set this before any file actions are encountered in the cf file
 #O DontBlameSendmail=safe
+
+# default LDAP map specification
+# need to set this now before any LDAP maps are defined
+#O LDAPDefaultSpec=-h localhost
 
 ##################
 #   local info   #
@@ -56,12 +59,11 @@ V8/Berkeley
 
 Cwlocalhost
 # file containing names of hosts for which we receive email
-Fw/etc/sendmail.cw
+Fw/etc/mail/local-host-names
 
 # my official domain name
 # ... define this only if sendmail cannot automatically determine your domain
 #Dj$w.Foo.COM
-
 
 CP.
 
@@ -79,18 +81,12 @@ C..
 C[[
 
 
-
-
-
-
-
-
-
 # Resolve map (to check if a host exists in check_mail)
 Kresolve host -a<OK> -T<TEMP>
 
 # Hosts that will permit relaying ($=R)
 FR-o /etc/mail/relay-domains
+
 
 # who I send unqualified names to (null means deliver locally)
 DR
@@ -104,8 +100,9 @@ Kdequote dequote
 # class E: names that should be exposed as from this host, even if we masquerade
 # class L: names that should be delivered locally, even if we have a relay
 # class M: domains that should be converted to $M
+# class N: domains that should not be converted to $M
 #CL root
-CE root
+CEroot
 
 # who I masquerade as (null for no masquerading) (see also $=M)
 DM
@@ -117,7 +114,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.9.3
+DZ8.10.1
 
 
 ###############
@@ -130,12 +127,11 @@ O SevenBitInput=False
 # 8-bit data handling
 O EightBitMode=pass8
 
-
 # wait for alias file rebuild (default units: minutes)
 O AliasWait=10
 
 # location of alias file
-O AliasFile=/usr/adm/sendmail/aliases
+O AliasFile=/etc/mail/aliases
 
 # minimum number of free blocks on filesystem
 O MinFreeBlocks=100
@@ -156,31 +152,33 @@ O HoldExpensive=False
 O DeliveryMode=background
 
 # automatically rebuild the alias database?
-#O AutoRebuildAliases
+# NOTE: There is a potential for a denial of service attack if this is set.
+#       This option is deprecated and will be removed from a future version.
+#O AutoRebuildAliases=False
 
 # error message header/file
-#O ErrorHeader=/etc/sendmail.oE
+#O ErrorHeader=/etc/mail/error-header
 
 # error mode
 #O ErrorMode=print
 
 # save Unix-style "From_" lines at top of header?
-#O SaveFromLine
+#O SaveFromLine=False
 
 # temporary file mode
 O TempFileMode=0600
 
 # match recipients against GECOS field?
-#O MatchGECOS
+#O MatchGECOS=False
 
 # maximum hop count
 #O MaxHopCount=17
 
 # location of help file
-O HelpFile=/usr/share/lib/sendmail.hf
+O HelpFile=/etc/mail/helpfile
 
 # ignore dots as terminators in incoming messages?
-#O IgnoreDots
+#O IgnoreDots=False
 
 # name resolver options
 #O ResolverOptions=+AAONLY
@@ -201,7 +199,7 @@ O ConnectionCacheTimeout=5m
 #O HostStatusDirectory=.hoststat
 
 # single thread deliveries (requires HostStatusDirectory)?
-#O SingleThreadDelivery
+#O SingleThreadDelivery=False
 
 # use Errors-To: header?
 O UseErrorsTo=False
@@ -210,7 +208,7 @@ O UseErrorsTo=False
 O LogLevel=9
 
 # send to me too, even in an alias expansion?
-#O MeToo
+#O MeToo=True
 
 # verify RHS in newaliases?
 O CheckAliases=False
@@ -219,13 +217,17 @@ O CheckAliases=False
 O OldStyleHeaders=True
 
 # SMTP daemon options
-#O DaemonPortOptions=Port=esmtp
+O DaemonPortOptions=Name=MTA
+O DaemonPortOptions=Port=587, Name=MSA, M=E
+
+# SMTP client options
+#O ClientPortOptions=Address=0.0.0.0
 
 # privacy flags
 O PrivacyOptions=authwarnings
 
 # who (if anyone) should get extra copies of error messages
-#O PostMasterCopy=Postmaster
+#O PostmasterCopy=Postmaster
 
 # slope of queue-only function
 #O QueueFactor=600000
@@ -247,8 +249,9 @@ O QueueDirectory=/var/spool/mqueue
 #O Timeout.quit=2m
 #O Timeout.misc=2m
 #O Timeout.command=1h
-#O Timeout.ident=30s
+#O Timeout.ident=5s
 #O Timeout.fileopen=60s
+#O Timeout.control=2m
 O Timeout.queuereturn=5d
 #O Timeout.queuereturn.normal=5d
 #O Timeout.queuereturn.urgent=2d
@@ -258,9 +261,15 @@ O Timeout.queuewarn=4h
 #O Timeout.queuewarn.urgent=1h
 #O Timeout.queuewarn.non-urgent=12h
 #O Timeout.hoststatus=30m
+#O Timeout.resolver.retrans=5s
+#O Timeout.resolver.retrans.first=5s
+#O Timeout.resolver.retrans.normal=5s
+#O Timeout.resolver.retry=4
+#O Timeout.resolver.retry.first=4
+#O Timeout.resolver.retry.normal=4
 
 # should we not prune routes in route-addr syntax addresses?
-#O DontPruneRoutes
+#O DontPruneRoutes=False
 
 # queue up everything before forking?
 O SuperSafe=True
@@ -278,13 +287,13 @@ O StatusFile=/usr/adm/sendmail/sendmail.st
 O DefaultUser=daemon
 
 # list of locations of user database file (null means no lookup)
-#O UserDatabaseSpec=/etc/userdb
+#O UserDatabaseSpec=/etc/mail/userdb
 
 # fallback MX host
 #O FallbackMXhost=fall.back.host.net
 
 # if we are the best MX host for a site, try it directly instead of config err
-#O TryNullMXList
+#O TryNullMXList=False
 
 # load average at which we just queue messages
 #O QueueLA=8
@@ -302,7 +311,7 @@ O DefaultUser=daemon
 #O RecipientFactor=30000
 
 # deliver each queued job in a separate process?
-#O ForkEachJob
+#O ForkEachJob=False
 
 # work class factor
 #O ClassFactor=1800
@@ -320,7 +329,7 @@ O DefaultUser=daemon
 #O DefaultCharSet=iso-8859-1
 
 # service switch file (ignored on Solaris, Ultrix, OSF/1, others)
-#O ServiceSwitchFile=/etc/service.switch
+#O ServiceSwitchFile=/etc/mail/service.switch
 
 # hosts file (normally /etc/hosts)
 #O HostsFile=/etc/hosts
@@ -335,19 +344,19 @@ O DefaultUser=daemon
 #O SafeFileEnvironment=/arch
 
 # are colons OK in addresses?
-#O ColonOkInAddr
+#O ColonOkInAddr=True
 
 # how many jobs can you process in the queue?
 #O MaxQueueRunSize=10000
 
 # shall I avoid expanding CNAMEs (violates protocols)?
-#O DontExpandCnames
+#O DontExpandCnames=False
 
 # SMTP initial login message (old $e macro)
 O SmtpGreetingMessage=$j Sendmail $v/$Z; $b
 
 # UNIX initial From header format (old $l macro)
-O UnixFromLine=From $g  $d
+O UnixFromLine=From $g $d
 
 # From: lines that have embedded newlines are unwrapped onto one line
 #O SingleLineFromHeader=False
@@ -362,13 +371,16 @@ O UnixFromLine=From $g  $d
 O OperatorChars=.:%@!^/[]+
 
 # shall I avoid calling initgroups(3) because of high NIS costs?
-#O DontInitGroups
+#O DontInitGroups=False
 
 # are group-writable :include: and .forward files (un)trustworthy?
-#O UnsafeGroupWrites
+#O UnsafeGroupWrites=True
 
 # where do errors that occur when sending errors get sent?
 #O DoubleBounceAddress=postmaster
+
+# where to save bounces if all else fails
+#O DeadLetterDrop=/var/tmp/dead.letter
 
 # what user id do we assume for the majority of the processing?
 #O RunAsUser=sendmail
@@ -377,7 +389,49 @@ O OperatorChars=.:%@!^/[]+
 #O MaxRecipientsPerMessage=100
 
 # shall we get local names from our installed interfaces?
-#O DontProbeInterfaces
+#O DontProbeInterfaces=False
+
+# Return-Receipt-To: header implies DSN request
+#O RrtImpliesDsn=False
+
+# override connection address (for testing)
+#O ConnectOnlyTo=0.0.0.0
+
+# Trusted user for file ownership and starting the daemon
+#O TrustedUser=root
+
+# Control socket for daemon management
+#O ControlSocketName=/var/spool/mqueue/.control
+
+# Maximum MIME header length to protect MUAs
+#O MaxMimeHeaderLength=0/0
+
+# Maximum length of the sum of all headers
+O MaxHeadersLength=32768
+
+# Maximum depth of alias recursion
+#O MaxAliasRecursion=10
+
+# location of pid file
+#O PidFile=/var/run/sendmail.pid
+
+# Prefix string for the process title shown on 'ps' listings
+#O ProcessTitlePrefix=prefix
+
+# Data file (df) memory-buffer file maximum size
+#O DataFileBufferSize=4096
+
+# Transcript file (xf) memory-buffer file maximum size
+#O XscriptFileBufferSize=4096
+
+# list of authentication mechanisms
+#O AuthMechanisms=GSSAPI KERBEROS_V4 DIGEST-MD5 CRAM-MD5
+
+# default authentication information for outgoing connections
+#O DefaultAuthInfo=/etc/mail/default-auth-info
+
+# SMTP AUTH flags
+#O AuthOptions
 
 
 
@@ -399,7 +453,7 @@ Pjunk=-100
 #####################
 
 # this is equivalent to setting class "t"
-#Ft/etc/sendmail.ct
+#Ft/etc/mail/trusted-users
 Troot
 Tdaemon
 Tuucp
@@ -410,6 +464,7 @@ Tuucp
 
 H?P?Return-Path: <$g>
 HReceived: $?sfrom $s $.$?_($?s$|from $.$_)
+	$.$?{auth_type}(authenticated)
 	$.by $j ($v/$Z)$?r with $r$. id $i$?u
 	for $u; $|;
 	$.$b
@@ -422,6 +477,7 @@ H?x?Full-Name: $x
 # H?l?Received-Date: $b
 H?M?Resent-Message-Id: <$t.$i@$j>
 H?M?Message-Id: <$t.$i@$j>
+
 #
 ######################################################################
 ######################################################################
@@ -434,7 +490,7 @@ H?M?Message-Id: <$t.$i@$j>
 ############################################
 ###  Ruleset 3 -- Name Canonicalization  ###
 ############################################
-S3
+Scanonify=3
 
 # handle null input (translate to <@> special case)
 R$@			$@ <@>
@@ -445,7 +501,7 @@ R$* < $* > $* <@>	$: $1 < $2 > $3			unmark <addr>
 R@ $* <@>		$: @ $1				unmark @host:...
 R$* :: $* <@>		$: $1 :: $2			unmark node::addr
 R:include: $* <@>	$: :include: $1			unmark :include:...
-R$* [ $* : $* ] <@>	$: $1 [ $2 : $3 ]		unmark IPv6 addrs
+R$* [ IPv6 $- ] <@>	$: $1 [ IPv6 $2 ]		unmark IPv6 addr
 R$* : $* [ $* ]		$: $1 : $2 [ $3 ] <@>		remark if leading colon
 R$* : $* <@>		$: $2				strip colon if marked
 R$* <@>			$: $1				unmark
@@ -462,48 +518,53 @@ R< $* > $+		   < $1 >			strip excess on right
 R<>			$@ < @ >			MAIL FROM:<> case
 R< $+ >			$: $1				remove housekeeping <>
 
-# make sure <@a,@b,@c:user@d> syntax is easy to parse -- undone later
-R@ $+ , $+		@ $1 : $2			change all "," to ":"
-
-# localize and dispose of route-based addresses
-R@ $+ : $+		$@ $>96 < @$1 > : $2		handle <route-addr>
+# strip route address <@a,@b,@c:user@d> -> <user@d>
+R@ $+ , $+		$2
+R@ $+ : $+		$2
 
 # find focus for list syntax
-R $+ : $* ; @ $+	$@ $>96 $1 : $2 ; < @ $3 >	list syntax
+R $+ : $* ; @ $+	$@ $>Canonify2 $1 : $2 ; < @ $3 >	list syntax
 R $+ : $* ;		$@ $1 : $2;			list syntax
 
 # find focus for @ syntax addresses
 R$+ @ $+		$: $1 < @ $2 >			focus on domain
 R$+ < $+ @ $+ >		$1 $2 < @ $3 >			move gaze right
-R$+ < @ $+ >		$@ $>96 $1 < @ $2 >		already canonical
+R$+ < @ $+ >		$@ $>Canonify2 $1 < @ $2 >	already canonical
 
 # do some sanity checking
 R$* < @ $* : $* > $*	$1 < @ $2 $3 > $4		nix colons in addrs
 
 # convert old-style addresses to a domain-based address
-R$- ! $+		$@ $>96 $2 < @ $1 .UUCP >	resolve uucp names
-R$+ . $- ! $+		$@ $>96 $3 < @ $1 . $2 >		domain uucps
-R$+ ! $+		$@ $>96 $2 < @ $1 .UUCP >	uucp subdomains
+R$- ! $+		$@ $>Canonify2 $2 < @ $1 .UUCP >	resolve uucp names
+R$+ . $- ! $+		$@ $>Canonify2 $3 < @ $1 . $2 >		domain uucps
+R$+ ! $+		$@ $>Canonify2 $2 < @ $1 .UUCP >	uucp subdomains
 
 # if we have % signs, take the rightmost one
 R$* % $*		$1 @ $2				First make them all @s.
 R$* @ $* @ $*		$1 % $2 @ $3			Undo all but the last.
-R$* @ $*		$@ $>96 $1 < @ $2 >		Insert < > and finish
+R$* @ $*		$@ $>Canonify2 $1 < @ $2 >	Insert < > and finish
 
 # else we must be a local name
-R$*			$@ $>96 $1
+R$*			$@ $>Canonify2 $1
 
 
 ################################################
 ###  Ruleset 96 -- bottom half of ruleset 3  ###
 ################################################
 
-S96
+SCanonify2=96
 
 # handle special cases for local names
 R$* < @ localhost > $*		$: $1 < @ $j . > $2		no domain at all
 R$* < @ localhost . $m > $*	$: $1 < @ $j . > $2		local domain
 R$* < @ localhost . UUCP > $*	$: $1 < @ $j . > $2		.UUCP domain
+
+# check for IPv6 domain literal (save quoted form)
+R$* < @ [ IPv6 $- ] > $*	$: $2 $| $1 < @@ [ $(dequote $2 $) ] > $3	mark IPv6 addr
+R$- $| $* < @@ $=w > $*		$: $2 < @ $j . > $4		self-literal
+R$- $| $* < @@ [ $+ ] > $*	$@ $2 < @ [ IPv6 $1 ] > $4	canon IP addr
+
+# check for IPv4 domain literal
 R$* < @ [ $+ ] > $*		$: $1 < @@ [ $2 ] > $3		mark [a.b.c.d]
 R$* < @@ $=w > $*		$: $1 < @ $j . > $3		self-literal
 R$* < @@ $+ > $*		$@ $1 < @ $2 > $3		canon IP addr
@@ -518,28 +579,31 @@ R$* < @@ $+ > $*		$@ $1 < @ $2 > $3		canon IP addr
 R$* < @ $+ . UUCP > $*		$: $1 < @ $[ $2 $] . UUCP . > $3
 R$* < @ $+ . . UUCP . > $*	$@ $1 < @ $2 . > $3
 
+# hostnames ending in class P are always canonical
+R$* < @ $* $=P > $*		$: $1 < @ $2 $3 . > $4
+R$* < @ $* $~P > $*		$: $&{daemon_flags} $| $1 < @ $2 $3 > $4
+R$* CC $* $| $*			$: $3
 # pass to name server to make hostname canonical
-R$* < @ $* $~P > $*		$: $1 < @ $[ $2 $3 $] > $4
+R$* $| $* < @ $* > $*		$: $2 < @ $[ $3 $] > $4
+R$* $| $*			$: $2
 
 # local host aliases and pseudo-domains are always canonical
 R$* < @ $=w > $*		$: $1 < @ $2 . > $3
-R$* < @ $j > $*			$: $1 < @ $j . > $2
 R$* < @ $=M > $*		$: $1 < @ $2 . > $3
-R$* < @ $* $=P > $*		$: $1 < @ $2 $3 . > $4
 R$* < @ $* . . > $*		$1 < @ $2 . > $3
 
 
 ##################################################
 ###  Ruleset 4 -- Final Output Post-rewriting  ###
 ##################################################
-S4
+Sfinal=4
 
 R$* <@>			$@				handle <> and list:;
 
 # strip trailing dot off possibly canonical name
 R$* < @ $+ . > $*	$1 < @ $2 > $3
 
-# eliminate internal code -- should never get this far!
+# eliminate internal code
 R$* < @ *LOCAL* > $*	$1 < @ $j > $2
 
 # externalize local domain info
@@ -560,20 +624,20 @@ R$+ % $=w @ $=w		$1 @ $2				u%host@host => u@host
 ###		   (used for recursive calls)		   ###
 ##############################################################
 
-S97
-R$*			$: $>3 $1
-R$*			$@ $>0 $1
+SRecurse=97
+R$*			$: $>canonify $1
+R$*			$@ $>parse $1
 
 
 ######################################
 ###   Ruleset 0 -- Parse Address   ###
 ######################################
 
-S0
+Sparse=0
 
 R$*			$: $>Parse0 $1		initial parsing
 R<@>			$#local $: <@>		special case error msgs
-R$*			$: $>98 $1		handle local hacks
+R$*			$: $>ParseLocal $1	handle local hacks
 R$*			$: $>Parse1 $1		final parsing
 
 #
@@ -585,26 +649,26 @@ R$*			$: $>Parse1 $1		final parsing
 
 SParse0
 R<@>			$@ <@>			special case error msgs
-R$* : $* ; <@>		$#error $@ 5.1.3 $: "List:; syntax illegal for recipient addresses"
-#R@ <@ $* >		< @ $1 >		catch "@@host" bogosity
-R<@ $+>			$#error $@ 5.1.3 $: "User address required"
+R$* : $* ; <@>		$#error $@ 5.1.3 $: "553 List:; syntax illegal for recipient addresses"
+R@ <@ $* >		< @ $1 >		catch "@@host" bogosity
+R<@ $+>			$#error $@ 5.1.3 $: "553 User address required"
 R$*			$: <> $1
 R<> $* < @ [ $+ ] > $*	$1 < @ [ $2 ] > $3
-R<> $* <$* : $* > $*	$#error $@ 5.1.3 $: "Colon illegal in host name part"
+R<> $* <$* : $* > $*	$#error $@ 5.1.3 $: "553 Colon illegal in host name part"
 R<> $*			$1
-R$* < @ . $* > $*	$#error $@ 5.1.2 $: "Invalid host name"
-R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "Invalid host name"
+R$* < @ . $* > $*	$#error $@ 5.1.2 $: "553 Invalid host name"
+R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "553 Invalid host name"
 
 # now delete the local info -- note $=O to find characters that cause forwarding
-R$* < @ > $*		$@ $>Parse0 $>3 $1		user@ => user
-R< @ $=w . > : $*	$@ $>Parse0 $>3 $2		@here:... -> ...
+R$* < @ > $*		$@ $>Parse0 $>canonify $1	user@ => user
+R< @ $=w . > : $*	$@ $>Parse0 $>canonify $2	@here:... -> ...
 R$- < @ $=w . >		$: $(dequote $1 $) < @ $2 . >	dequote "foo"@here
-R< @ $+ >		$#error $@ 5.1.3 $: "User address required"
-R$* $=O $* < @ $=w . >	$@ $>Parse0 $>3 $1 $2 $3	...@here -> ...
+R< @ $+ >		$#error $@ 5.1.3 $: "553 User address required"
+R$* $=O $* < @ $=w . >	$@ $>Parse0 $>canonify $1 $2 $3	...@here -> ...
 R$- 			$: $(dequote $1 $) < @ *LOCAL* >	dequote "foo"
-R< @ *LOCAL* >		$#error $@ 5.1.3 $: "User address required"
+R< @ *LOCAL* >		$#error $@ 5.1.3 $: "553 User address required"
 R$* $=O $* < @ *LOCAL* >
-			$@ $>Parse0 $>3 $1 $2 $3	...@*LOCAL* -> ...
+			$@ $>Parse0 $>canonify $1 $2 $3	...@*LOCAL* -> ...
 R$* < @ *LOCAL* >	$: $1
 
 #
@@ -612,13 +676,19 @@ R$* < @ *LOCAL* >	$: $1
 #
 
 SParse1
+
 # handle numeric address spec
-R$* < @ [ $+ ] > $*	$: $>98 $1 < @ [ $2 ] > $3	numeric internet spec
-R$* < @ [ $+ ] > $*	$#esmtp $@ [$2] $: $1 < @ [$2] > $3	still numeric: send
+R$* < @ [ $+ ] > $*	$: $>ParseLocal $1 < @ [ $2 ] > $3	numeric internet spec
+R$* < @ [ $+ ] > $*	$1 < @ [ $2 ] : $S > $3		Add smart host to path
+R$* < @ [ IPv6 $- ] : > $*
+		$#esmtp $@ [ $(dequote $2 $) ] $: $1 < @ [IPv6 $2 ] > $3	no smarthost: send
+R$* < @ [ $+ ] : > $*	$#esmtp $@ [$2] $: $1 < @ [$2] > $3	no smarthost: send
+R$* < @ [ $+ ] : $- : $*> $*	$#$3 $@ $4 $: $1 < @ [$2] > $5	smarthost with mailer
+R$* < @ [ $+ ] : $+ > $*	$#esmtp $@ $3 $: $1 < @ [$2] > $4	smarthost without mailer
 
 
 # short circuit local delivery so forwarded email works
-R$=L < @ $=w . >	$#local $: @ $1		special local names
+R$=L < @ $=w . >	$#local $: @ $1			special local names
 R$+ < @ $=w . >		$#local $: $1			regular local name
 
 
@@ -629,20 +699,24 @@ R$+ < @ $=w . >		$#local $: $1			regular local name
 
 
 # pass names that still have a host to a smarthost (if defined)
-R$* < @ $* > $*		$: $>95 < $S > $1 < @ $2 > $3	glue on smarthost name
+R$* < @ $* > $*		$: $>MailerToTriple < $S > $1 < @ $2 > $3	glue on smarthost name
 
 # deal with other remote names
-R$* < @$* > $*		$#esmtp $@ $2 $: $1 < @ $2 > $3		user@host.domain
+R$* < @$* > $*		$#esmtp $@ $2 $: $1 < @ $2 > $3	user@host.domain
 
 # handle locally delivered names
-R$=L			$#local $: @ $1			special local names
+R$=L			$#local $: @ $1		special local names
 R$+			$#local $: $1			regular local names
 
 ###########################################################################
 ###   Ruleset 5 -- special rewriting after aliases have been expanded   ###
 ###########################################################################
 
-S5
+SLocal_localaddr
+Slocaladdr=5
+R$+			$: $1 $| $>"Local_localaddr" $1
+R$+ $| $#$*		$#$2
+R$+ $| $*		$: $1
 
 # deal with plussed users so aliases work nicely
 R$+ + *			$#local $@ $&h $: $1
@@ -655,30 +729,34 @@ R$+			$: <> $1
 # see if we have a relay or a hub
 R< > $+			$: < $H > $1			try hub
 R< > $+			$: < $R > $1			try relay
-R< > $+			$: < > < $1 $&h >		nope, restore +detail
+R< > $+			$: < > < $1 <> $&h >		nope, restore +detail
+R< > < $+ <> + $* >	$: < > < $1 + $2 >		check whether +detail
+R< > < $+ <> $* >	$: < > < $1 >			else discard
 R< > < $+ + $* > $*	   < > < $1 > + $2 $3		find the user part
 R< > < $+ > + $*	$#local $@ $2 $: @ $1		strip the extra +
 R< > < $+ >		$@ $1				no +detail
 R$+			$: $1 <> $&h			add +detail back in
 R$+ <> + $*		$: $1 + $2			check whether +detail
 R$+ <> $*		$: $1				else discard
-R< local : $* > $*	$: $>95 < local : $1 > $2	no host extension
-R< error : $* > $*	$: $>95 < error : $1 > $2	no host extension
-R< $- : $+ > $+		$: $>95 < $1 : $2 > $3 < @ $2 >
-R< $+ > $+		$@ $>95 < $1 > $2 < @ $1 >
+R< local : $* > $*	$: $>MailerToTriple < local : $1 > $2	no host extension
+R< error : $* > $*	$: $>MailerToTriple < error : $1 > $2	no host extension
+R< $- : $+ > $+		$: $>MailerToTriple < $1 : $2 > $3 < @ $2 >
+R< $+ > $+		$@ $>MailerToTriple < $1 > $2 < @ $1 >
 
 
 ###################################################################
 ###  Ruleset 95 -- canonify mailer:[user@]host syntax to triple	###
 ###################################################################
 
-S95
+SMailerToTriple=95
 R< > $*				$@ $1			strip off null relay
+R< error : $-.$-.$- : $+ > $* 	$#error $@ $1.$2.$3 $: $4
 R< error : $- $+ > $*		$#error $@ $(dequote $1 $) $: $2
 R< local : $* > $*		$>CanonLocal < $1 > $2
 R< $- : $+ @ $+ > $*<$*>$*	$# $1 $@ $3 $: $2<@$3>	use literal user
 R< $- : $+ > $*			$# $1 $@ $2 $: $3	try qualified mailer
 R< $=w > $*			$@ $2			delete local host
+R< [ IPv6 $+ ] > $*		$#relay $@ $(dequote $1 $) $: $2	use unqualified mailer
 R< $+ > $*			$#relay $@ $1 $: $2	use unqualified mailer
 
 ###################################################################
@@ -687,8 +765,8 @@ R< $+ > $*			$#relay $@ $1 $: $2	use unqualified mailer
 
 SCanonLocal
 # strip local host from routed addresses
-R< $* > < @ $+ > : $+		$@ $>97 $3
-R< $* > $+ $=O $+ < @ $+ >	$@ $>97 $2 $3 $4
+R< $* > < @ $+ > : $+		$@ $>Recurse $3
+R< $* > $+ $=O $+ < @ $+ >	$@ $>Recurse $2 $3 $4
 
 # strip trailing dot from any host name that may appear
 R< $* > $* < @ $* . >		$: < $1 > $2 < @ $3 >
@@ -708,8 +786,11 @@ R< $+ > $* 			$#local $@ $2    $: $1
 ###  Ruleset 93 -- convert header names to masqueraded form	###
 ###################################################################
 
-S93
+SMasqHdr=93
 
+
+# do not masquerade anything in class N
+R$* < @ $* $=N . >	$@ $1 < @ $2 $3 . >
 
 # special case the users that should be exposed
 R$=E < @ *LOCAL* >	$@ $1 < @ $j . >		leave exposed
@@ -727,19 +808,21 @@ R$* < @ $+ @ $+ > $*	$: $1 < @ $3 . > $4		$M is not null
 ###  Ruleset 94 -- convert envelope names to masqueraded form	###
 ###################################################################
 
-S94
+SMasqEnv=94
 R$* < @ *LOCAL* > $*	$: $1 < @ $j . > $2
 
 ###################################################################
 ###  Ruleset 98 -- local part of ruleset zero (can be null)	###
 ###################################################################
 
-S98
+SParseLocal=98
 
 # addresses sent to foo@host.REDIRECT will give a 551 error code
 R$* < @ $+ .REDIRECT. >		$: $1 < @ $2 . REDIRECT . > < ${opMode} >
 R$* < @ $+ .REDIRECT. > <i>	$: $1 < @ $2 . REDIRECT. >
-R$* < @ $+ .REDIRECT. > < $- >	$# error $@ 5.1.1 $: "551 User has moved; please try " <$1@$2>
+R$* < @ $+ .REDIRECT. > < $- >	$#error $@ 5.1.1 $: "551 User has moved; please try " <$1@$2>
+
+
 
 
 
@@ -756,10 +839,8 @@ R$* < @ $+ .REDIRECT. > < $- >	$# error $@ 5.1.1 $: "551 User has moved; please 
 ######################################################################
 
 SCanonAddr
-R$*			$: $>Parse0 $>3 $1	make domain canonical
-R< @ $+ > : $* @ $*	< @ $1 > : $2 % $3	change @ to % in src route
-R$* < @ $+ > : $* : $*	$3 $1 < @ $2 > : $4	change to % hack.
-R$* < @ $+ > : $*	$3 $1 < @ $2 >
+R$*			$: $>Parse0 $>canonify $1	make domain canonical
+
 
 ######################################################################
 ###  ParseRecipient --	Strip off hosts in $=R as well as possibly
@@ -786,8 +867,10 @@ R<?> $*				$@ $1
 
 R<NO> $* < @ $* $=R >		$: <RELAY> $1 < @ $2 $3 >
 
+
 R<RELAY> $* < @ $* >		$@ $>ParseRecipient $1
 R<$-> $*			$@ $2
+
 
 ######################################################################
 ###  check_relay -- check hostname/address on SMTP startup
@@ -807,6 +890,7 @@ R< $* > $*		$: $2
 
 
 
+
 ######################################################################
 ###  check_mail -- check SMTP `MAIL FROM:' command argument
 ######################################################################
@@ -823,36 +907,48 @@ R$*			$: < ${deliveryMode} > $1
 R< d > $*		$@ deferred
 R< $* > $*		$: $2
 
-R<>			$@ <OK>
-R$*			$: <?> $>CanonAddr $1
+R<>			$@ <OK>			we MUST accept <> (RFC 1123)
+R$+			$: <?> $1
+R<?><$+>		$: <@> <$1>
+R<?>$+			$: <@> <$1>
+R$*			$: $&{daemon_flags} $| $1
+R$* f $* $| <@> < $* @ $- >	$: < ? $&{client_name} > < $3 @ $4 >
+R$* u $* $| <@> < $* >	$: <?> < $3 >
+R$* $| $*		$: $2
+# handle case of @localhost on address
+R<@> < $* @ localhost >	$: < ? $&{client_name} > < $1 @ localhost >
+R<@> < $* @ [127.0.0.1] >
+			$: < ? $&{client_name} > < $1 @ [127.0.0.1] >
+R<@> < $* @ localhost.$m >
+			$: < ? $&{client_name} > < $1 @ localhost.$m >
+R<@> < $* @ localhost.UUCP >
+			$: < ? $&{client_name} > < $1 @ localhost.UUCP >
+R<@> $*			$: $1			no localhost as domain
+R<? $=w> $*		$: $2			local client: ok
+R<? $+> <$+>		$#error $@ 5.5.4 $: "553 Real domain name required"
+R<?> $*			$: $1
+R$*			$: <?> $>CanonAddr $1		canonify sender address and mark it
 R<?> $* < @ $+ . >	<?> $1 < @ $2 >			strip trailing dots
 # handle non-DNS hostnames (*.bitnet, *.decnet, *.uucp, etc)
-R<?> $* < $* $=P > $*	$: <OK> $1 < @ $2 $3 > $4
-R<?> $* < @ $+ > $*	$: <? $(resolve $2 $: $2 <PERM> $) > $1 < @ $2 > $3
-R<? $* <$->> $* < @ $+ > $*
-			$: <$2> $3 < @ $4 > $5
-
-# handle case of @localhost on address
-R<$+> $* < @localhost >	$: < ? $&{client_name} > <$1> $2 < @localhost >
-R<$+> $* < @localhost.$m >
-			$: < ? $&{client_name} > <$1> $2 < @localhost.$m >
-R<$+> $* < @localhost.UUCP >
-			$: < ? $&{client_name} > <$1> $2 < @localhost.UUCP >
-R<? $=w> <$+> $*	<?> <$2> $3
-R<? $+> <$+> $*		$#error $@ 5.5.4 $: "553 Real domain name required"
-R<?> <$+> $*		$: <$1> $2
+R<?> $* < @ $* $=P >	$: <OK> $1 < @ $2 $3 >
+R<?> $* < @ $+ >	$: <? $(resolve $2 $: $2 <PERM> $) > $1 < @ $2 >
+R<? $* <$->> $* < @ $+ >
+			$: <$2> $3 < @ $4 >
 
 
 # handle case of no @domain on address
+R<?> $*			$: $&{daemon_flags} $| <?> $1
+R$* u $* $| <?> $*	$: <OK> $3
+R$* $| $*		$: $2
 R<?> $*			$: < ? $&{client_name} > $1
 R<?> $*			$@ <OK>				...local unqualed ok
 R<? $+> $*		$#error $@ 5.5.4 $: "553 Domain name required"
 							...remote is not
 # check results
-R<?> $*			$@ <OK>
+R<?> $*			$: @ $1		mark address: nothing known about it
 R<OK> $*		$@ <OK>
-R<TEMP> $*		$#error $@ 4.1.8 $: "451 Sender domain must resolve"
-R<PERM> $*		$#error $@ 5.1.8 $: "501 Sender domain must exist"
+R<TEMP> $*		$#error $@ 4.1.8 $: "451 Domain of sender address " $&f " does not resolve"
+R<PERM> $*		$#error $@ 5.1.8 $: "501 Domain of sender address " $&f " does not exist"
 
 ######################################################################
 ###  check_rcpt -- check SMTP `RCPT TO:' command argument
@@ -870,46 +966,71 @@ R$*			$: < ${deliveryMode} > $1
 R< d > $*		$@ deferred
 R< $* > $*		$: $2
 
+
 R$*			$: $>ParseRecipient $1		strip relayable hosts
 
 
 
 
+
+# authenticated by a trusted mechanism?
+R$*			$: $1 $| $&{auth_type}
+R$* $|			$: $1
+R$* $| $={TrustAuthMech}	$# RELAYAUTH
+R$* $| $*		$: $1
 # anything terminating locally is ok
-R$+ < @ $=w >		$@ OK
-R$+ < @ $* $=R >	$@ OK
+R$+ < @ $=w >		$@ RELAYTO
+R$+ < @ $* $=R >	$@ RELAYTO
+
 
 
 # check for local user (i.e. unqualified address)
 R$*			$: <?> $1
 R<?> $* < @ $+ >	$: <REMOTE> $1 < @ $2 >
 # local user is ok
-R<?> $+			$@ OK
+R<?> $+			$@ RELAYTOLOCAL
 R<$+> $*		$: $2
 
 # anything originating locally is ok
-R$*			$: <?> $&{client_name}
-# check if bracketed IP address (forward lookup != reverse lookup)
-R<?> [$+]		$: <BAD> [$1]
-# pass to name server to make hostname canonical
-R<?> $* $~P 		$: <?> $[ $1 $2 $]
-R<$-> $*		$: $2
-R$* .			$1				strip trailing dots
-R$@			$@ OK
-R$=w			$@ OK
-R$* $=R			$@ OK
-
 # check IP address
 R$*			$: $&{client_addr}
-R$@			$@ OK			originated locally
-R0			$@ OK			originated locally
-R$=R $*			$@ OK			relayable IP address
+R$@			$@ RELAYFROM		originated locally
+R0			$@ RELAYFROM		originated locally
+R$=R $*			$@ RELAYFROM		relayable IP address
 R$*			$: [ $1 ]		put brackets around it...
-R$=w			$@ OK			... and see if it is local
+R$=w			$@ RELAYFROM		... and see if it is local
 
+
+# check client name: first: did it resolve?
+R$*			$: < $&{client_resolve} >
+R<TEMP>			$#error $@ 4.7.1 $: "450 Relaying temporarily denied. Cannot resolve PTR record for " $&{client_addr}
+R<FORGED>		$#error $@ 5.7.1 $: "550 Relaying denied. IP name possibly forged " $&{client_name}
+R<FAIL>			$#error $@ 5.7.1 $: "550 Relaying denied. IP name lookup failed " $&{client_name}
+R$*			$: <?> $&{client_name}
+# pass to name server to make hostname canonical
+R<?> $* $~P 		$:<?>  $[ $1 $2 $]
+R$* .			$1			strip trailing dots
+R<?>			$@ RELAYFROM
+R<?> $=w		$@ RELAYFROM
+R<?> $* $=R			$@ RELAYFROM
 
 # anything else is bogus
 R$*			$#error $@ 5.7.1 $: "550 Relaying denied"
+
+
+# is user trusted to authenticate as someone else?
+Strust_auth
+R$*			$: $&{auth_type} $| $1
+# required by RFC 2554 section 4.
+R$@ $| $*		$#error $@ 5.7.1 $: "550 not authenticated"
+R$* $| $&{auth_authen}		$@ identical
+R$* $| <$&{auth_authen}>	$@ identical
+R$* $| $*		$: $1 $| $>"Local_trust_auth" $1
+R$* $| $#$*		$#$2
+R$*			$#error $@ 5.7.1 $: "550 " $&{auth_authen} " not allowed to act as " $&{auth_author}
+
+SLocal_trust_auth
+
 
 #
 ######################################################################
@@ -925,106 +1046,68 @@ R$*			$#error $@ 5.7.1 $: "550 Relaying denied"
 ###   Local and Program Mailer specification   ###
 ##################################################
 
-#####  @(#)local.m4	8.30 (Berkeley) 6/30/1998  #####
-
-Mlocal,		P=/bin/mail, F=lsDFMAw5:/|@qrmn9, S=10/30, R=20/40,
-		T=DNS/RFC822/X-Unix,
-		A=mail -d $u
-Mprog,		P=/bin/sh, F=lsDFMoqeu9, S=10/30, R=20/40, D=$z:/,
-		T=X-Unix,
-		A=sh -c $u
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
 #
 #  Envelope sender rewriting
 #
-S10
+SEnvFromL=10
 R<@>			$n			errors to mailer-daemon
 R@ <@ $*>		$n			temporarily bypass Sun bogosity
-R$+			$: $>50 $1		add local domain if needed
-R$*			$: $>94 $1		do masquerading
+R$+			$: $>AddDomain $1	add local domain if needed
+R$*			$: $>MasqEnv $1		do masquerading
 
 #
 #  Envelope recipient rewriting
 #
-S20
+SEnvToL=20
 R$+ < @ $* >		$: $1			strip host part
 
 #
 #  Header sender rewriting
 #
-S30
+SHdrFromL=30
 R<@>			$n			errors to mailer-daemon
 R@ <@ $*>		$n			temporarily bypass Sun bogosity
-R$+			$: $>50 $1		add local domain if needed
-R$*			$: $>93 $1		do masquerading
+R$+			$: $>AddDomain $1	add local domain if needed
+R$*			$: $>MasqHdr $1		do masquerading
 
 #
 #  Header recipient rewriting
 #
-S40
-R$+			$: $>50 $1		add local domain if needed
+SHdrToL=40
+R$+			$: $>AddDomain $1	add local domain if needed
+R$* < @ *LOCAL* > $*	$: $1 < @ $j . > $2
 
 #
 #  Common code to add local domain name (only if always-add-domain)
 #
-S50
+SAddDomain=50
+
+Mlocal,		P=/bin/mail, F=lsDFMAw5:/|@qPrmn9, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL,
+		T=DNS/RFC822/X-Unix,
+		A=mail -d $u
+Mprog,		P=/bin/sh, F=lsDFMoqeu9, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=$z:/,
+		T=X-Unix/X-Unix/X-Unix,
+		A=sh -c $u
 
 #####################################
 ###   SMTP Mailer specification   ###
 #####################################
 
-#####  @(#)smtp.m4	8.38 (Berkeley) 5/19/1998  #####
-
-Msmtp,		P=[IPC], F=mDFMuX, S=11/31, R=21, E=\r\n, L=990,
-		T=DNS/RFC822/SMTP,
-		A=IPC $h
-Mesmtp,		P=[IPC], F=mDFMuXa, S=11/31, R=21, E=\r\n, L=990,
-		T=DNS/RFC822/SMTP,
-		A=IPC $h
-Msmtp8,		P=[IPC], F=mDFMuX8, S=11/31, R=21, E=\r\n, L=990,
-		T=DNS/RFC822/SMTP,
-		A=IPC $h
-Mrelay,		P=[IPC], F=mDFMuXa8, S=11/31, R=61, E=\r\n, L=2040,
-		T=DNS/RFC822/SMTP,
-		A=IPC $h
+#####  $Id: generic-osf1.cf,v 1.1.1.2 2000/05/03 09:27:27 itojun Exp $  #####
 
 #
-#  envelope sender rewriting
+#  common sender and masquerading recipient rewriting
 #
-S11
-R$+			$: $>51 $1			sender/recipient common
-R$* :; <@>		$@				list:; special case
-R$*			$: $>61 $1			qualify unqual'ed names
-R$+			$: $>94 $1			do masquerading
-
-
-#
-#  envelope recipient rewriting --
-#  also header recipient if not masquerading recipients
-#
-S21
-R$+			$: $>51 $1			sender/recipient common
-R$+			$: $>61 $1			qualify unqual'ed names
-
-
-#
-#  header sender and masquerading header recipient rewriting
-#
-S31
-R$+			$: $>51 $1			sender/recipient common
-R:; <@>			$@				list:; special case
-
-# do special header rewriting
-R$* <@> $*		$@ $1 <@> $2			pass null host through
-R< @ $* > $*		$@ < @ $1 > $2			pass route-addr through
-R$*			$: $>61 $1			qualify unqual'ed names
-R$+			$: $>93 $1			do masquerading
-
+SMasqSMTP=61
+R$* < @ $* > $*		$@ $1 < @ $2 > $3		already fully qualified
+R$+			$@ $1 < @ *LOCAL* >		add local qualification
 
 #
 #  convert pseudo-domain addresses to real domain addresses
 #
-S51
+SPseudoToReal=51
 
 # pass <route-addr>s through
 R< @ $+ > $*		$@ < @ $1 > $2			resolve <route-addr>
@@ -1045,18 +1128,57 @@ R$+ < @ >		$: $1 < @ *LOCAL* >		if no UUCP_RELAY
 
 
 #
-#  common sender and masquerading recipient rewriting
+#  envelope sender rewriting
 #
-S61
+SEnvFromSMTP=11
+R$+			$: $>PseudoToReal $1		sender/recipient common
+R$* :; <@>		$@				list:; special case
+R$*			$: $>MasqSMTP $1		qualify unqual'ed names
+R$+			$: $>MasqEnv $1			do masquerading
 
-R$* < @ $* > $*		$@ $1 < @ $2 > $3		already fully qualified
-R$+			$@ $1 < @ *LOCAL* >		add local qualification
+
+#
+#  envelope recipient rewriting --
+#  also header recipient if not masquerading recipients
+#
+SEnvToSMTP=21
+R$+			$: $>PseudoToReal $1		sender/recipient common
+R$+			$: $>MasqSMTP $1		qualify unqual'ed names
+R$* < @ *LOCAL* > $*	$: $1 < @ $j . > $2
+
+#
+#  header sender and masquerading header recipient rewriting
+#
+SHdrFromSMTP=31
+R$+			$: $>PseudoToReal $1		sender/recipient common
+R:; <@>			$@				list:; special case
+
+# do special header rewriting
+R$* <@> $*		$@ $1 <@> $2			pass null host through
+R< @ $* > $*		$@ < @ $1 > $2			pass route-addr through
+R$*			$: $>MasqSMTP $1		qualify unqual'ed names
+R$+			$: $>MasqHdr $1			do masquerading
 
 
 #
 #  relay mailer header masquerading recipient rewriting
 #
-S71
+SMasqRelay=71
+R$+			$: $>MasqSMTP $1
+R$+			$: $>MasqHdr $1
 
-R$+			$: $>61 $1
-R$+			$: $>93 $1
+Msmtp,		P=[IPC], F=mDFMuX, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
+		T=DNS/RFC822/SMTP,
+		A=IPC $h
+Mesmtp,		P=[IPC], F=mDFMuXa, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
+		T=DNS/RFC822/SMTP,
+		A=IPC $h
+Msmtp8,		P=[IPC], F=mDFMuX8, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
+		T=DNS/RFC822/SMTP,
+		A=IPC $h
+Mdsmtp,		P=[IPC], F=mDFMuXa%, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
+		T=DNS/RFC822/SMTP,
+		A=IPC $h
+Mrelay,		P=[IPC], F=mDFMuXa8, S=EnvFromSMTP/HdrFromSMTP, R=MasqSMTP, E=\r\n, L=2040,
+		T=DNS/RFC822/SMTP,
+		A=IPC $h

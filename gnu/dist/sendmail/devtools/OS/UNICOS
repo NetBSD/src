@@ -1,0 +1,7 @@
+#	$Id: UNICOS,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+define(`confENVDEF', `-DUNICOS')
+define(`confOPTIMIZE', `-O')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')

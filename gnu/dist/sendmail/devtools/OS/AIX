@@ -1,0 +1,9 @@
+#	$Id: AIX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confENVDEF', `-D_AIX3')
+define(`confOPTIMIZE', `-g')
+define(`confLIBS', `-ldbm')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `system')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confDEPEND_TYPE', `AIX')

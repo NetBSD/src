@@ -12,7 +12,7 @@ use IO::Socket;
 # system requirements:
 # 	must have 'nslookup' and 'hostname' programs.
 
-# $Header: /cvsroot/src/gnu/dist/sendmail/contrib/Attic/expn.pl,v 1.1.1.1 2000/02/07 20:05:38 tron Exp $
+# $OrigHeader: /home/muir/bin/RCS/expn,v 3.11 1997/09/10 08:14:02 muir Exp muir $
 
 # TODO:
 #	less magic should apply to command-line addresses
