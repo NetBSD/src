@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2001/11/14 18:15:14 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2002/03/17 21:45:06 simonb Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -693,7 +693,7 @@ bus_space_copy_region(8,64)
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
-#define ARC_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define ARC_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
