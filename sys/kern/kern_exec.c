@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.115 2000/07/13 02:33:36 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.116 2000/07/26 15:42:09 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -593,9 +593,13 @@ copyargs(pack, arginfo, stack, argp)
 	char *dp, *sp;
 	size_t len;
 	void *nullp = NULL;
-	int argc = arginfo->ps_nargvstr;
-	int envc = arginfo->ps_nenvstr;
+	long argc = arginfo->ps_nargvstr;
+	long envc = arginfo->ps_nenvstr;
 
+#ifdef __sparc_v9__
+	/* XXX Temporary hack for argc format conversion. */
+	argc = (argc << 32) | (argc & 0xffffffff);
+#endif
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return NULL;
 
