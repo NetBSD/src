@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.147.2.5 2002/09/04 04:12:29 itojun Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.147.2.6 2003/02/11 15:54:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -473,6 +473,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MEDAVIS ", "RENO CD-ROMX2A  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.3"},  SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "NEC     ", "CD-ROM DRIVE:502", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:55 ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
