@@ -1,79 +1,39 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/12 03:21:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/04/22 21:17:57 fredette Exp $
 
 TOP=		${.CURDIR}/..
 
-# This include just sets DISTRIBREV=XX
-.include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
+.include <bsd.kernobj.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-IMAGE=	miniroot
+IMG=		miniroot
+IMAGE=		${IMG}
+IMAGESIZE=	12m
+MAKEFS_FLAGS=	-o minfree=0,optimization=space,density=8k,cpg=16
 
-TREE=	${TOP}/common/${IMAGE}.tree
+KERNEL=		${KERNOBJDIR}/INSTALL/netbsd
 
-LISTS=	${TOP}/common/${IMAGE}.list \
-	${TOP}/common/mini_sbin.list \
-	${TOP}/common/mini_bin.list \
-	${TOP}/common/mini_usr.list
+WARNS=		1
+DBG=		-Os
 
-KERNEL  = ${KERNOBJDIR}/INSTALL/netbsd
+LISTS=		${.CURDIR}/${IMG}.list
+PARSELISTENV=	TOPDIR=${TOP} KERNEL=${KERNEL}
+MTREECONF=	${TOP}/common/${IMG}.tree
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0 fd0
+IMAGEDEPENDS=	${KERNEL} install.sub
 
-MOUNT_POINT?=	/mnt
-RAW_PART!=	sysctl -n kern.rawpartition | tr '0-7' 'a-h'
-VND?=		vnd1
-VND_DEV?=	/dev/${VND}a
-VND_RDEV?=	/dev/r${VND}a
-VND_CRDEV?=	/dev/r${VND}${RAW_PART}
+realall: ${IMG} ib.stamp
 
-# These are all the parameters for the miniroot: (12MB)
-DISKTYPE=	miniroot
-SIZE=		12
-# bigendian, old format, minfree, opt, b/i, cpg
-NEWFSARGS= -B be -O -m 0 -o space -i 8192 -c 16
-MTREE?=		mtree
-INSTALLBOOT?=	usr/mdec/installboot
-
-CLEANFILES= ${IMAGE}.gz ${IMAGE} ${IMAGE}.tmp install.sub
-
-all: ${IMAGE}.gz
-
-${IMAGE}.gz: ${TREE} ${LISTS} install.sub
-	dd if=/dev/zero of=${IMAGE} bs=1024k count=${SIZE}
-	vnconfig -f ${.CURDIR}/disktab -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
-	cp ${KERNEL}  ${MOUNT_POINT}/netbsd
-	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
-	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
-	  sh ${TOP}/common/RunList.sh ${LISTS}
-	sync ; sleep 1 ; sync
-	cd ${MOUNT_POINT} ;\
-	  ${INSTALLBOOT} -v ufsboot usr/mdec/bootxx ${VND_CRDEV}
-	sync
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	-umount ${MOUNT_POINT}
-	dd if=${VND_DEV} of=${IMAGE}-tmp bs=1024k count=${SIZE}
-	vnconfig -u ${VND}
-	mv ${IMAGE}-tmp ${IMAGE}
-	gzip -9 -c ${IMAGE} > ${IMAGE}.tmp
-	-mv -f ${IMAGE}.tmp ${IMAGE}.gz
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
-
-# Do not delete this if I change my mind and kill make...
-.PRECIOUS: ${IMAGE}.gz
+ib.stamp: ${IMG}
+	${INSTALLBOOT} -v ${IMG} ${DESTDIR}/usr/mdec/bootxx /ufsboot
+	touch ib.stamp
 
 install.sub : ${TOP}/../miniroot/install.sub
 	sed -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
 
-clean cleandir distclean:
-	-rm -f a.out core *.core *.o
-	-rm -f ${CLEANFILES}
+${IMAGE}.gz: ${IMAGE}
+	gzip -c -9 < ${IMAGE} > ${IMAGE}.gz
 
 .if !defined(RELEASEDIR)
 release:
@@ -85,6 +45,7 @@ release: ${IMAGE}.gz
 	${RELINSTALL} ${IMAGE}.gz ${RELEASEDIR}/installation/miniroot
 .endif	# RELEASEDIR
 
-# Standard rules needed by the above...
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+.include <bsd.prog.mk>
