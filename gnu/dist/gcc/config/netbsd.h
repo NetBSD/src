@@ -35,6 +35,13 @@
 #endif
 
 
+/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we provide
+   support for the special GCC option -static.  */
+
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC \
+  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}}"
+
 /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
    the GCC option `-posix'.  */
 
@@ -48,17 +55,20 @@
 #define ASM_SPEC " %| %{fpic:-k} %{fPIC:-k -K}"
 
 /* Provide a LIB_SPEC appropriate for NetBSD.  Just select the appropriate
-   libc, depending on whether we're doing profiling.  */
+   libc, depending on whether we're doing profiling; if `-posix' is specified,
+   link against the appropriate libposix first.  */
 
 #undef LIB_SPEC
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+#define LIB_SPEC							\
+  "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
+   %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
 
 /* Provide a LINK_SPEC appropriate for NetBSD.  Here we provide support
    for the special GCC options -static, -assert, and -nostdlib.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 
 /* This defines which switch letters take arguments. */
 #undef SWITCH_TAKES_ARG
