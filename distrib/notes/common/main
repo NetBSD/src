@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.211 2002/08/14 01:02:45 junyoung Exp $
+.\"	$NetBSD: main,v 1.212 2002/09/07 04:01:46 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1150,18 +1150,21 @@ following problems and compatibility issues in mind when upgrading to
 .Nx \*V .
 .
 .Ss2 Issues affecting an upgrade from NetBSD 1.5
-These issues can generally be resolved by extracting the
+The following issues can generally be resolved by extracting the
 .Sy etc
-set into a temporary directory
-(such as
-.Pa /tmp/upgrade )
-and running:
+set into a temporary directory and running
+.Em postinstall :
 .(disp
+mkdir /tmp/upgrade
 cd /tmp/upgrade
+pax -zrpe -f /path/to/etc.tgz
 \&./etc/postinstall -s `pwd` check
 \&./etc/postinstall -s `pwd` fix
 .disp)
-.(bullet
+.Pp
+Issues fixed by
+.Em postinstall :
+.(bullet -offset indent
 Various files in
 .Pa /etc
 need upgrading.
@@ -1187,7 +1190,8 @@ These include:
 .It
 .Pa /etc/rc.d/*
 .bullet)
-.Pp
+.
+.It
 The following files are now obsolete:
 .Pa /etc/rc.d/NETWORK
 and
@@ -1245,6 +1249,41 @@ The
 entries in
 .Xr wscons.conf 5
 are now obsolete.
+.bullet)
+.
+.Pp
+The following issues need to be resolved manually:
+.
+.(bullet -offset indent
+.Xr postfix 8
+configuration files require upgrading.
+.(disp
+cd /usr/share/examples/postfix
+cp post-install postfix-files postfix-script /etc/postfix
+postfix check
+.disp)
+.
+.It
+The
+.Em de
+ethernet driver was replaced with the
+.Em tlp
+driver.
+This may require the renaming of the files
+.Pa /etc/ifconfig.de*
+to
+.Pa /etc/ifconfig.tlp* ,
+renaming of
+.Xr rc.conf 5
+entries
+.Li ifconfig_de*
+to
+.Li ifconfig_tlp* ,
+and the reconfiguration of files such as
+.Pa /etc/dhclient.conf
+and
+.Pa /etc/ipf.conf .
+.
 .bullet)
 .
 .Ss2 Issues affecting an upgrade from NetBSD 1.4 or prior
