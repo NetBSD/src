@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.x68k,v 1.4 2003/10/24 18:32:16 mycroft Exp $
-./usr/include/x68k/_G_config.h
-./usr/include/x68k/bsd_audioio.h
-./usr/include/x68k/svr4_machdep.h

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.13 2003/11/03 17:05:36 wiz Exp $
+# $NetBSD: mi,v 1.14 2003/12/29 03:13:29 lukem Exp $
 ./usr/bin/addftinfo		text-groff-bin
 ./usr/bin/checknr		text-groff-bin
 ./usr/bin/eqn			text-groff-bin
@@ -6,8 +6,9 @@
 ./usr/bin/grodvi		text-groff-bin
 ./usr/bin/groff			text-groff-bin
 ./usr/bin/grog			text-groff-bin
-./usr/bin/grolj4		text-groff-bin
+./usr/bin/grohtml		text-groff-bin	obsolete
 ./usr/bin/grolbp		text-groff-bin
+./usr/bin/grolj4		text-groff-bin
 ./usr/bin/grops			text-groff-bin
 ./usr/bin/grotty		text-groff-bin
 ./usr/bin/hpftodit		text-groff-bin
@@ -22,6 +23,8 @@
 ./usr/bin/pic			text-groff-bin
 ./usr/bin/post-grohtml		text-groff-bin
 ./usr/bin/pre-grohtml		text-groff-bin
+./usr/bin/psbb			text-groff-bin	obsolete
+./usr/bin/psroff		text-groff-bin	obsolete
 ./usr/bin/refer			text-groff-bin
 ./usr/bin/soelim		text-groff-bin
 ./usr/bin/tbl			text-groff-bin
@@ -119,6 +122,8 @@
 ./usr/share/groff_font/devcp1047/L	text-groff-font
 ./usr/share/groff_font/devcp1047/R	text-groff-font
 ./usr/share/groff_font/devcp1047/S	text-groff-font
+./usr/share/groff_font/devdvi/B		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/BI	text-groff-font	obsolete
 ./usr/share/groff_font/devdvi/CW	text-groff-font
 ./usr/share/groff_font/devdvi/CWEC	text-groff-font
 ./usr/share/groff_font/devdvi/CWI	text-groff-font
@@ -128,6 +133,7 @@
 ./usr/share/groff_font/devdvi/CompileFonts	text-groff-font
 ./usr/share/groff_font/devdvi/DESC	text-groff-font
 ./usr/share/groff_font/devdvi/EX	text-groff-font
+./usr/share/groff_font/devdvi/H		text-groff-font	obsolete
 ./usr/share/groff_font/devdvi/HB	text-groff-font
 ./usr/share/groff_font/devdvi/HBEC	text-groff-font
 ./usr/share/groff_font/devdvi/HBI	text-groff-font
@@ -140,8 +146,10 @@
 ./usr/share/groff_font/devdvi/HR	text-groff-font
 ./usr/share/groff_font/devdvi/HREC	text-groff-font
 ./usr/share/groff_font/devdvi/HRTC	text-groff-font
+./usr/share/groff_font/devdvi/I		text-groff-font	obsolete
 ./usr/share/groff_font/devdvi/MI	text-groff-font
 ./usr/share/groff_font/devdvi/Makefile	text-groff-font
+./usr/share/groff_font/devdvi/R		text-groff-font	obsolete
 ./usr/share/groff_font/devdvi/S		text-groff-font
 ./usr/share/groff_font/devdvi/SA	text-groff-font
 ./usr/share/groff_font/devdvi/SB	text-groff-font
@@ -159,6 +167,17 @@
 ./usr/share/groff_font/devdvi/TREC	text-groff-font
 ./usr/share/groff_font/devdvi/TRTC	text-groff-font
 ./usr/share/groff_font/devdvi/ec.map	text-groff-font
+./usr/share/groff_font/devdvi/generate/CompileFonts	text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/Makefile		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/msam.map		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/msbm.map		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/texb.map		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/texex.map	text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/texi.map		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/texmi.map	text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/texr.map		text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/texsy.map	text-groff-font	obsolete
+./usr/share/groff_font/devdvi/generate/textt.map	text-groff-font	obsolete
 ./usr/share/groff_font/devdvi/msam.map	text-groff-font
 ./usr/share/groff_font/devdvi/msbm.map	text-groff-font
 ./usr/share/groff_font/devdvi/tc.map	text-groff-font
@@ -177,9 +196,21 @@
 ./usr/share/groff_font/devhtml/CI	text-groff-font
 ./usr/share/groff_font/devhtml/CR	text-groff-font
 ./usr/share/groff_font/devhtml/DESC	text-groff-font
+./usr/share/groff_font/devhtml/HB	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/HBI	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/HI	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/HR	text-groff-font	obsolete
 ./usr/share/groff_font/devhtml/I	text-groff-font
+./usr/share/groff_font/devhtml/NB	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/NBI	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/NI	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/NR	text-groff-font	obsolete
 ./usr/share/groff_font/devhtml/R	text-groff-font
 ./usr/share/groff_font/devhtml/S	text-groff-font
+./usr/share/groff_font/devhtml/TB	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/TBI	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/TI	text-groff-font	obsolete
+./usr/share/groff_font/devhtml/TR	text-groff-font	obsolete
 ./usr/share/groff_font/devkoi8-r/B	text-groff-font
 ./usr/share/groff_font/devkoi8-r/BI	text-groff-font
 ./usr/share/groff_font/devkoi8-r/CW	text-groff-font
@@ -253,6 +284,9 @@
 ./usr/share/groff_font/devlj4/UCR	text-groff-font
 ./usr/share/groff_font/devlj4/UI	text-groff-font
 ./usr/share/groff_font/devlj4/UR	text-groff-font
+./usr/share/groff_font/devlj4/generate/Makefile		text-groff-font	obsolete
+./usr/share/groff_font/devlj4/generate/special.map	text-groff-font	obsolete
+./usr/share/groff_font/devlj4/generate/text.map		text-groff-font	obsolete
 ./usr/share/groff_font/devlj4/special.map	text-groff-font
 ./usr/share/groff_font/devlj4/text.map	text-groff-font
 ./usr/share/groff_font/devps/AB		text-groff-font
@@ -300,6 +334,15 @@
 ./usr/share/groff_font/devps/dingbats.rmap	text-groff-font
 ./usr/share/groff_font/devps/download		text-groff-font
 ./usr/share/groff_font/devps/freeeuro.pfa	text-groff-font
+./usr/share/groff_font/devps/generate/Makefile		text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/afmname		text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/dingbatsmap	text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/dingbatsrmap	text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/lgreekmap		text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/symbol.sed	text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/symbolchars	text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/symbolsl.afm	text-groff-font	obsolete
+./usr/share/groff_font/devps/generate/textmap		text-groff-font	obsolete
 ./usr/share/groff_font/devps/lgreekmap		text-groff-font
 ./usr/share/groff_font/devps/prologue		text-groff-font
 ./usr/share/groff_font/devps/symbol		text-groff-font
@@ -337,6 +380,7 @@
 ./usr/share/man/cat1/nroff.0		text-groff-catman
 ./usr/share/man/cat1/pfbtops.0		text-groff-catman
 ./usr/share/man/cat1/pic.0		text-groff-catman
+./usr/share/man/cat1/psbb.0		text-groff-catman	obsolete
 ./usr/share/man/cat1/refer.0		text-groff-catman
 ./usr/share/man/cat1/soelim.0		text-groff-catman
 ./usr/share/man/cat1/tbl.0		text-groff-catman
@@ -352,11 +396,13 @@
 ./usr/share/man/cat7/groff_char.0	text-groff-catman
 ./usr/share/man/cat7/groff_diff.0	text-groff-catman
 ./usr/share/man/cat7/groff_man.0	text-groff-catman
+./usr/share/man/cat7/groff_markup.0	text-groff-catman	obsolete
 ./usr/share/man/cat7/groff_mdoc.0	text-groff-catman
 ./usr/share/man/cat7/groff_me.0		text-groff-catman
 ./usr/share/man/cat7/groff_mm.0		text-groff-catman
 ./usr/share/man/cat7/groff_mmse.0	text-groff-catman
 ./usr/share/man/cat7/groff_ms.0		text-groff-catman
+./usr/share/man/cat7/groff_msafer.0	text-groff-catman	obsolete
 ./usr/share/man/cat7/groff_trace.0	text-groff-catman
 ./usr/share/man/cat7/groff_www.0	text-groff-catman
 ./usr/share/man/cat7/man.0		text-groff-catman
@@ -386,6 +432,7 @@
 ./usr/share/man/man1/nroff.1		text-groff-man
 ./usr/share/man/man1/pfbtops.1		text-groff-man
 ./usr/share/man/man1/pic.1		text-groff-man
+./usr/share/man/man1/psbb.1		text-groff-man	obsolete
 ./usr/share/man/man1/refer.1		text-groff-man
 ./usr/share/man/man1/soelim.1		text-groff-man
 ./usr/share/man/man1/tbl.1		text-groff-man
@@ -401,11 +448,13 @@
 ./usr/share/man/man7/groff_char.7	text-groff-man
 ./usr/share/man/man7/groff_diff.7	text-groff-man
 ./usr/share/man/man7/groff_man.7	text-groff-man
+./usr/share/man/man7/groff_markup.7	text-groff-man	obsolete
 ./usr/share/man/man7/groff_mdoc.7	text-groff-man
 ./usr/share/man/man7/groff_me.7	text-groff-man
 ./usr/share/man/man7/groff_mm.7		text-groff-man
 ./usr/share/man/man7/groff_mmse.7	text-groff-man
 ./usr/share/man/man7/groff_ms.7		text-groff-man
+./usr/share/man/man7/groff_msafer.7	text-groff-man	obsolete
 ./usr/share/man/man7/groff_trace.7	text-groff-man
 ./usr/share/man/man7/groff_www.7	text-groff-man
 ./usr/share/man/man7/man.7		text-groff-man
@@ -494,6 +543,38 @@
 ./usr/share/tmac/pspic.tmac		text-groff-share
 ./usr/share/tmac/s.tmac			text-groff-share
 ./usr/share/tmac/safer.tmac		text-groff-share
+./usr/share/tmac/tmac.X			text-groff-share	obsolete
+./usr/share/tmac/tmac.Xps		text-groff-share	obsolete
+./usr/share/tmac/tmac.a4		text-groff-share	obsolete
+./usr/share/tmac/tmac.an		text-groff-share	obsolete
+./usr/share/tmac/tmac.an.old		text-groff-share	obsolete
+./usr/share/tmac/tmac.andoc		text-groff-share	obsolete
+./usr/share/tmac/tmac.arkup		text-groff-share	obsolete
+./usr/share/tmac/tmac.doc		text-groff-share	obsolete
+./usr/share/tmac/tmac.doc-common	text-groff-share	obsolete
+./usr/share/tmac/tmac.doc-ditroff	text-groff-share	obsolete
+./usr/share/tmac/tmac.doc-nroff		text-groff-share	obsolete
+./usr/share/tmac/tmac.doc-syms		text-groff-share	obsolete
+./usr/share/tmac/tmac.doc2html		text-groff-share	obsolete
+./usr/share/tmac/tmac.dvi		text-groff-share	obsolete
+./usr/share/tmac/tmac.e			text-groff-share	obsolete
+./usr/share/tmac/tmac.html		text-groff-share	obsolete
+./usr/share/tmac/tmac.latin1		text-groff-share	obsolete
+./usr/share/tmac/tmac.lj4		text-groff-share	obsolete
+./usr/share/tmac/tmac.m			text-groff-share	obsolete
+./usr/share/tmac/tmac.mse		text-groff-share	obsolete
+./usr/share/tmac/tmac.pic		text-groff-share	obsolete
+./usr/share/tmac/tmac.ps		text-groff-share	obsolete
+./usr/share/tmac/tmac.psatk		text-groff-share	obsolete
+./usr/share/tmac/tmac.psnew		text-groff-share	obsolete
+./usr/share/tmac/tmac.psold		text-groff-share	obsolete
+./usr/share/tmac/tmac.pspic		text-groff-share	obsolete
+./usr/share/tmac/tmac.s			text-groff-share	obsolete
+./usr/share/tmac/tmac.safer		text-groff-share	obsolete
+./usr/share/tmac/tmac.trace		text-groff-share	obsolete
+./usr/share/tmac/tmac.tty		text-groff-share	obsolete
+./usr/share/tmac/tmac.tty-char		text-groff-share	obsolete
+./usr/share/tmac/tmac.vgrind		text-groff-share	obsolete
 ./usr/share/tmac/trace.tmac		text-groff-share
 ./usr/share/tmac/troffrc		text-groff-share
 ./usr/share/tmac/troffrc-end		text-groff-share

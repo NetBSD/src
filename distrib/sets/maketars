@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.46 2003/12/19 22:25:54 jmc Exp $
+# $NetBSD: maketars,v 1.47 2003/12/29 03:13:25 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -16,56 +16,23 @@
 prog=${0##*/}
 
 # set defaults
-: ${PAX=pax}
+: ${HOST_SH=sh}
 : ${MKTEMP=mktemp}
 : ${MTREE=mtree}
+: ${PAX=pax}
 
-. $(dirname $0)/sets.defaults
+. $(dirname $0)/sets.subr
+lists=$nlists
 
-setd=$(pwd)
-nlists=$lists
-xlists="xbase xcomp xcontrib xfont xserver xmisc"
 tars=$RELEASEDIR
 dest=$DESTDIR
 metalog=
 installdir=
 etcdir=
 
-# handle args
-while : ; do
-	case $1 in
-	-b*)
-		lists="$xlists $nlists"
-		;;
-	-x*)
-		lists=$xlists
-		;;
-	-i*)
-		installdir=$2; shift
-		;;
-	-a*)
-		machine_arch=$2; shift
-		;;
-	-M*)
-		metalog=$2; shift
-		;;
-	-m*)
-		machine=$2; shift
-		;;
-	-N*)
-		etcdir=$2; shift
-		;;
-	-s*)
-		setd=$2; shift
-		;;
-	-d*)
-		dest=$2; shift
-		;;
-	-t*)
-		tars=$2; shift
-		;;
-	-*)
-		cat 1>&2 <<USAGE
+usage()
+{
+	cat 1>&2 <<USAGE
 Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
 	    [-M metalog] [-N etcdir] [-d dest] [-t targetdir] [setname ...]
 	-b		make netbsd + x11 lists
@@ -73,21 +40,56 @@ Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
 	-i idir		install sets to idir instead of creating tar files
 	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$machine_arch]
 	-m machine	set machine (e.g, amiga, i386, macppc) [$machine]
-	-s setsdir	directory to find sets [$setd]
+	-s setsdir	directory to find sets [$setsdir]
 	-M metalog	metalog file
 	-N etcdir	etc dir for metalog use [$dest/etc]
 	-d dest		\$DESTDIR	[$dest]
 	-t targetdir	\$RELEASEDIR	[$tars]
 	[setname ...]	sets to build 	[$lists]
 USAGE
-		exit 1
+	exit 1
+}
+
+# handle args
+while getopts bxi:a:m:s:M:N:d:t: ch; do
+	case ${ch} in
+	b)
+		lists="$xlists $nlists"
+		;;
+	x)
+		lists="$xlists"
+		;;
+	i)
+		installdir=${OPTARG}
+		;;
+	a)
+		machine_arch=${OPTARG}
+		machine_cpu=$(arch_to_cpu ${OPTARG})
+		;;
+	m)
+		machine=${OPTARG}
+		;;
+	s)
+		setsdir=${OPTARG}
+		;;
+	M)
+		metalog=${OPTARG}
+		;;
+	N)
+		etcdir=${OPTARG}
+		;;
+	d)
+		dest=${OPTARG}
+		;;
+	t)
+		tars=${OPTARG}
 		;;
 	*)
-		break
+		usage
 		;;
 	esac
-	shift
 done
+shift $((${OPTIND} - 1))
 if [ -n "$installdir" ]; then		# if -i, remove etc from default list
 	lists=$(echo $lists | sed -e 's/ etc / /')
 fi
@@ -145,8 +147,8 @@ for setname in $lists; do
 		fi
 		echo "Creating $out"
 	fi
-	sh $setd/makeflist -a $machine_arch -m $machine -s $setd $setname \
-	    > $SDIR/flist.$setname
+	${HOST_SH} $setsdir/makeflist -a $machine_arch -m $machine \
+	    -s $setsdir $setname > $SDIR/flist.$setname
 	if [ -n "$metalog" ]; then
 		awk -f getdirs.awk $SDIR/flist.$setname | sort -u \
 		    > $SDIR/flist.$setname.full

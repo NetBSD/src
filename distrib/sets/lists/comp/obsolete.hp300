@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.hp300,v 1.3 2003/10/24 18:32:16 mycroft Exp $
-./usr/include/hp300/_G_config.h
-./usr/include/hp300/svr4_machdep.h

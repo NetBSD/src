@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.35 2003/12/05 18:57:40 matt Exp $
+# $NetBSD: ad.powerpc,v 1.36 2003/12/29 03:13:26 lukem Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/altivec.h	comp-c-include
 ./usr/include/powerpc	comp-c-include
@@ -6,7 +6,9 @@
 ./usr/include/powerpc/aout_machdep.h	comp-c-include
 ./usr/include/powerpc/asm.h	comp-c-include
 ./usr/include/powerpc/atomic.h	comp-c-include
+./usr/include/powerpc/bat.h     	comp-obsolete	obsolete
 ./usr/include/powerpc/bswap.h	comp-c-include
+./usr/include/powerpc/bus.h     	comp-obsolete	obsolete
 ./usr/include/powerpc/cdefs.h	comp-c-include
 ./usr/include/powerpc/cpu.h	comp-c-include
 ./usr/include/powerpc/elf_machdep.h	comp-c-include
@@ -15,6 +17,8 @@
 ./usr/include/powerpc/float.h	comp-c-include
 ./usr/include/powerpc/fpu.h	comp-c-include
 ./usr/include/powerpc/frame.h	comp-c-include
+./usr/include/powerpc/hid.h     	comp-obsolete	obsolete
+./usr/include/powerpc/hid_601.h 	comp-obsolete	obsolete
 ./usr/include/powerpc/ibm4xx	comp-c-include
 ./usr/include/powerpc/ibm4xx/cpu.h	comp-c-include
 ./usr/include/powerpc/ibm4xx/pmap.h	comp-c-include
@@ -30,8 +34,17 @@
 ./usr/include/powerpc/kcore.h	comp-c-include
 ./usr/include/powerpc/limits.h	comp-c-include
 ./usr/include/powerpc/lock.h	comp-c-include
+./usr/include/powerpc/machine_type.h	comp-obsolete	obsolete
 ./usr/include/powerpc/math.h	comp-c-include
 ./usr/include/powerpc/mcontext.h	comp-c-include
+./usr/include/powerpc/mpc6xx    	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/bat.h	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/hid.h	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/hid_601.h	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/pmap.h	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/pte.h	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/sr_601.h	comp-obsolete	obsolete
+./usr/include/powerpc/mpc6xx/vmparam.h	comp-obsolete	obsolete
 ./usr/include/powerpc/oea	comp-c-include
 ./usr/include/powerpc/oea/bat.h	comp-c-include
 ./usr/include/powerpc/oea/hid.h	comp-c-include
@@ -56,4 +69,6 @@
 ./usr/include/powerpc/stdarg.h	comp-c-include
 ./usr/include/powerpc/trap.h	comp-c-include
 ./usr/include/powerpc/types.h	comp-c-include
+./usr/include/powerpc/va-ppc.h  	comp-obsolete	obsolete
 ./usr/include/powerpc/varargs.h	comp-c-include
+./usr/include/powerpc/vmparam.h 	comp-obsolete	obsolete

@@ -1,4 +1,5 @@
-# $NetBSD: md.pc532,v 1.41 2003/06/23 13:00:21 thorpej Exp $
+# $NetBSD: md.pc532,v 1.42 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/pc532	comp-c-include
 ./usr/include/pc532/_G_config.h	comp-c-include
 ./usr/include/pc532/ansi.h	comp-c-include
@@ -8,6 +9,7 @@
 ./usr/include/pc532/bswap.h	comp-c-include
 ./usr/include/pc532/byte_swap.h	comp-c-include
 ./usr/include/pc532/cdefs.h	comp-c-include
+./usr/include/pc532/conf.h      	comp-obsolete	obsolete
 ./usr/include/pc532/cpu.h	comp-c-include
 ./usr/include/pc532/cpufunc.h	comp-c-include
 ./usr/include/pc532/db_machdep.h	comp-c-include
@@ -52,4 +54,3 @@
 ./usr/include/pc532/vmparam.h	comp-c-include
 ./usr/lib/c++rt0.o	comp-cxx-lib
 ./usr/lib/scrt0.o	comp-c-lib
-./usr/include/ieeefp.h		comp-c-include

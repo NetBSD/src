@@ -1,11 +1,15 @@
-# $NetBSD: md.alpha,v 1.30 2003/02/26 22:31:00 thorpej Exp $
+# $NetBSD: md.alpha,v 1.31 2003/12/29 03:13:25 lukem Exp $
 ./usr/bin/fdformat		base-util-bin
 ./usr/lib/libalpha.so.0		base-sys-shlib
 ./usr/lib/libalpha.so.0.0	base-sys-shlib
 ./usr/mdec/boot			base-sysutil-bin
+./usr/mdec/bootxx		base-obsolete	obsolete
+./usr/mdec/bootxx.old		base-obsolete	obsolete
 ./usr/mdec/bootxx_cd9660	base-sysutil-bin
 ./usr/mdec/bootxx_ffs		base-sysutil-bin
 ./usr/mdec/bootxx_lfs		base-sysutil-bin
+./usr/mdec/installboot		base-obsolete	obsolete
+./usr/mdec/installboot.old	base-obsolete	obsolete
 ./usr/mdec/mkbootimage		base-sysutil-bin
 ./usr/mdec/netboot		base-sysutil-bin
 ./usr/mdec/setnetbootinfo	base-sysutil-bin

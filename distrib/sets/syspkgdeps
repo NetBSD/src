@@ -9,83 +9,55 @@
 
 #set -u
 
-DB="db -q"
+: ${TOOL_DB=db}
+DB="${TOOL_DB} -q"
 
 #
 # set defaults and import setlist subroutines
 #
-. ./sets.defaults
-
 . ./sets.subr
-setd=$(pwd)
 prefix=/
 
-usage() {
-exec 1>&2
-
-echo "Usage: $0 [-a arch] [-m machine] [-s setsdir] [-p prefix] sets"
-echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]"
-echo "	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]"
-echo "	-s setsdir	directory to find sets			[$setd]"
-echo "	-p prefix	prefix for created plist		[$prefix]"
-echo "	sets		sets to find dependencies for"
-
-exit 1
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname [...]
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]
+	-s setsdir	directory to find sets			[$setsdir]
+	-p prefix	prefix for created plist		[$prefix]
+	setname [...]	sets to find dependencies for
+USAGE
+	exit 1
 }
 
 # parse arguments
-while : ; do
-	case $1 in
-	-a*)
-		machine_arch=${2}
-		machine_cpu=$(arch_to_cpu ${2})
-		shift
+while getopts a:m:ps: ch; do
+	case ${ch} in
+	a)
+		machine_arch=${OPTARG}
+		machine_cpu=$(arch_to_cpu ${OPTARG})
 		;;
-	-m*)
-		machine=$2; shift
+	m)
+		machine=${OPTARG}
 		;;
-	-s*)
-		setd=$2; shift
+	p)
+		prefix=${OPTARG}
 		;;
-	-p*)
-		prefix=$2; shift
-		;;
-	-*)
-		usage
+	s)
+		setsdir=${OPTARG}
 		;;
 	*)
-		break
+		usage
 		;;
 	esac
-	shift
 done
+shift $((${OPTIND} - 1))
 if [ $# -lt 1 ]; then
 	usage
 fi
 
 sets=$@
-
-if [ "$object_fmt" = "ELF" ]; then
-	shlib=elf
-else
-	shlib=aout
-fi
-stlib=$shlib
-
-# Turn off shlibs for some ports.
-if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
-	shlib=no
-fi
-
-lkm=yes
-# Turn off LKMs for some ports.
-if [ "$machine" = "evbppc" ]; then
-	lkm=no
-fi
-
-# Turn off lintlibs for some ports.
-# Not needed anymore, leave the hook here for future use.
-lintlibs=
 
 # TBD clean up
 SCRATCH=$(mktemp -d /var/tmp/$(basename $0).XXXXXX)

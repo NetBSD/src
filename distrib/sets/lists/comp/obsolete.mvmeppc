@@ -1,9 +1,0 @@
-# $NetBSD: obsolete.mvmeppc,v 1.2 2003/10/24 06:49:37 matt Exp $
-./usr/include/mvmeppc/_G_config.h
-./usr/include/mvmeppc/bat.h
-./usr/include/mvmeppc/bus.h
-./usr/include/mvmeppc/db_machdep.h
-./usr/include/mvmeppc/ipkdb.h
-./usr/include/mvmeppc/kgdb.h
-./usr/include/mvmeppc/pio.h
-./usr/include/mvmeppc/powerpc.h

@@ -1,5 +1,0 @@
-# $NetBSD: obsolete.ofppc,v 1.2 2003/10/24 06:49:37 matt Exp $
-./usr/include/ofppc/_G_config.h
-./usr/include/ofppc/bat.h
-./usr/include/ofppc/db_machdep.h
-./usr/include/ofppc/ipkdb.h
