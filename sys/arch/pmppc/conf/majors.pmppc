@@ -1,4 +1,8 @@
-#	$NetBSD: majors.pmppc,v 1.7 2003/08/22 05:06:56 itojun Exp $
+#	$NetBSD: majors.pmppc,v 1.8 2003/10/05 08:04:25 jdolecek Exp $
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.
 #
 # Device majors for pmppc
 #
@@ -55,3 +59,7 @@ device-major	cgd		char 61  block 19	cgd
 device-major	ksyms		char 62			ksyms
 device-major	pf		char 63			pf
 device-major	crypto		char 64			opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.
