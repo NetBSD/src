@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.61 2003/02/02 10:21:14 wiz Exp $	*/
+/*	$NetBSD: options.c,v 1.62 2003/02/25 13:37:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.61 2003/02/02 10:21:14 wiz Exp $");
+__RCSID("$NetBSD: options.c,v 1.62 2003/02/25 13:37:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ static void cpio_usage(void);
 #define GETLINE_OUT_OF_MEM 2
 static int getline_error;
 
+#define BZIP2_CMD	"bzip2"		/* command to run as bzip2 */
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
 
@@ -674,6 +675,8 @@ pax_options(int argc, char **argv)
 
 struct option tar_longopts[] = {
 	{ "block-size",		required_argument,	0,	'b' },
+	{ "bunzip2",		no_argument,		0,	'j' },
+	{ "bzip2",		no_argument,		0,	'j' },
 	{ "create",		no_argument,		0,	'c' },	/* F */
 	/* -e -- no corresponding long option */
 	{ "file",		required_argument,	0,	'f' },
@@ -787,7 +790,7 @@ tar_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "+b:cef:hlmopqrstuvwxzBC:HI:OPT:X:Z014578",
+	    "+b:cef:hjlmopqrstuvwxzBC:HI:OPT:X:Z014578",
 	    tar_longopts, NULL))
 	    != -1)  {
 		switch(c) {
@@ -833,6 +836,13 @@ tar_options(int argc, char **argv)
 			 * follow symlinks
 			 */
 			Lflag = 1;
+			break;
+		case 'j':
+			/*
+			 * pass through bzip2. not a standard option
+			 */
+			jflag = 1;
+			gzip_program = BZIP2_CMD;
 			break;
 		case 'l':
 			/*
@@ -1948,7 +1958,7 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("Usage: tar [-]{crtux}[-befhmopqvwzHLOPXZ014578] [archive] "
+	(void)fputs("Usage: tar [-]{crtux}[-befhjlmopqvwzHLOPXZ014578] [archive] "
 		    "[blocksize]\n"
 		    "           [-C directory] [-T file] [-s replstr] "
 		    "[file ...]\n", stderr);

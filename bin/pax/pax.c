@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.24 2002/12/12 05:00:42 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.25 2003/02/25 13:37:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.24 2002/12/12 05:00:42 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.25 2003/02/25 13:37:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ int	cflag;			/* match all EXCEPT pattern/file */
 int	cwdfd;			/* starting cwd */
 int	dflag;			/* directory member match only  */
 int	iflag;			/* interactive file/archive rename */
+int	jflag;			/* pass through bzip2 */
 int	kflag;			/* do not overwrite existing files */
 int	lflag;			/* use hard links when possible */
 int	nflag;			/* select first archive member match */
