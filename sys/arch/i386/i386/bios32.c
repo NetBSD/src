@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.1 1999/11/17 00:55:50 thorpej Exp $	*/
+/*	$NetBSD: bios32.c,v 1.2 2000/02/02 04:09:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ bios32_service(service, e, ei)
 {
 	u_int32_t eax, ebx, ecx, edx;
 	paddr_t entry;
+
+	if (bios32_entry.offset == 0)
+		return (0);	/* BIOS32 not present */
 
 	__asm __volatile("lcall (%%edi)"
 		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
