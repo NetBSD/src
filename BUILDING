@@ -42,6 +42,10 @@ FILES
 
      BUILDING       This document (in plaintext).
 
+     tools/compat/README
+                    Special notes for cross-hosting a NetBSD build on non-
+                    NetBSD platforms.
+
      Makefile       The main Makefile for NetBSD; should only be run for
                     native builds with an appropriately up-to-date version of
                     NetBSD make(1).  (For building from out-of-date systems or
