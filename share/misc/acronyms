@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.141 2004/06/29 18:12:13 snj Exp $
+$NetBSD: acronyms,v 1.142 2004/09/02 12:10:11 jmmv Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -160,6 +160,7 @@ PNG	persona non grata
 PNP	plug and pray
 POC	point of contact
 POLA	principle of least astonishment
+POLS	principle of least surprise
 POS	piece of shit
 PPL	pretty please
 PTV	parental tunnel vision
