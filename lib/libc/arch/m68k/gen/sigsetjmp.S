@@ -1,3 +1,5 @@
+/*	$NetBSD: sigsetjmp.S,v 1.2 1995/12/13 19:37:10 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,10 +37,14 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$NetBSD: sigsetjmp.S,v 1.1 1995/05/03 03:43:07 briggs Exp $"
+#if 0
+	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: sigsetjmp.S,v 1.2 1995/12/13 19:37:10 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,8 +57,6 @@
  * by restoring registers from the stack,
  * The previous signal state is restored if 'm' was non-zero.
  */
-
-#include "DEFS.h"
 
 /* grab _JBLEN */
 #include <m68k/setjmp.h>

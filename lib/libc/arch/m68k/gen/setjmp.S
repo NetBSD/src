@@ -1,3 +1,5 @@
+/*	$NetBSD: setjmp.S,v 1.5 1995/12/13 19:37:06 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,10 +37,14 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: setjmp.S,v 1.4 1994/08/05 22:35:20 mycroft Exp $"
+#if 0
+	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: setjmp.S,v 1.5 1995/12/13 19:37:06 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,8 +57,6 @@
  * by restoring registers from the stack,
  * and a struct sigcontext, see <signal.h>
  */
-
-#include "DEFS.h"
 
 ENTRY(setjmp)
 	subl	#12,sp		/* space for sigstack args/rvals */

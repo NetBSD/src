@@ -1,3 +1,5 @@
+/*	$NetBSD: saveregs.c,v 1.2 1995/12/13 19:36:59 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,8 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)saveregs.c	5.2 (Berkeley) 6/22/90";*/
-static char rcsid[] = "$Id: saveregs.c,v 1.1 1993/11/25 23:37:18 paulus Exp $";
+#if 0
+static char sccsid[] = "from: @(#)saveregs.c	5.2 (Berkeley) 6/22/90";
+#else
+static char rcsid[] = "$NetBSD: saveregs.c,v 1.2 1995/12/13 19:36:59 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 __builtin_saveregs()
