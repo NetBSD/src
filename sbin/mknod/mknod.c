@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.16 1998/10/08 02:01:11 wsanchez Exp $	*/
+/*	$NetBSD: mknod.c,v 1.17 1998/10/13 16:41:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.16 1998/10/08 02:01:11 wsanchez Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.17 1998/10/13 16:41:20 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -379,7 +379,7 @@ main(argc, argv)
 	printf("name: %s\nmode: %05o\ndev:  %08x\n", name, mode, dev);
 #else
 	if (mknod(name, mode, dev) < 0)
-		err(1, "%s", argv[0]);
+		err(1, "%s", name);
 #endif
 
 	exit(0);
