@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.17 2002/11/15 13:30:21 itohy Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.18 2002/12/10 13:18:04 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -197,7 +197,7 @@ mkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *) data = WSKBD_TYPE_USB;	/* XXX */
+		*(int *) data = WSKBD_TYPE_MAPLE;
 		return (0);
 	case WSKBDIO_SETLEDS:
 		return (0);
