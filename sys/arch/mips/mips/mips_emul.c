@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.9 2003/11/26 08:36:49 he Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.10 2004/03/26 17:34:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.9 2003/11/26 08:36:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.10 2004/03/26 17:34:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,12 +258,7 @@ MachEmulateInst(status, cause, opc, frame)
 		ksi.ksi_trap = cause; /* XXX */
 		ksi.ksi_code = SEGV_MAPERR;
 		ksi.ksi_addr = (void *)opc;
-#ifdef __HAVE_SIGINFO
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-#else
-		(*curproc->p_emul->e_trapsignal)(curlwp, ksi.ksi_signo,
-		    ksi.ksi_trap);
-#endif
 		break;
 	}
 }
@@ -281,11 +276,7 @@ send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
 	ksi.ksi_trap = cause;
 	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_addr = (void *)vaddr;
-#ifdef __HAVE_SIGINFO
 	(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-#else
-	(*curproc->p_emul->e_trapsignal)(curlwp, ksi.ksi_signo, ksi.ksi_trap);
-#endif
 }
 
 static __inline void
@@ -323,12 +314,7 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		ksi.ksi_trap = cause;
 		ksi.ksi_code = (vaddr & 3) ? BUS_ADRALN : BUS_ADRERR;
 		ksi.ksi_addr = (void *)vaddr;
-#ifdef __HAVE_SIGINFO
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-#else
-		(*curproc->p_emul->e_trapsignal)(curlwp, ksi.ksi_signo,
-		    ksi.ksi_trap);
-#endif
 		return;
 	}
 
@@ -369,12 +355,7 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		ksi.ksi_trap = cause;
 		ksi.ksi_code = (vaddr & 3) ? BUS_ADRALN : BUS_ADRERR;
 		ksi.ksi_addr = (void *)vaddr;
-#ifdef __HAVE_SIGINFO
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-#else
-		(*curproc->p_emul->e_trapsignal)(curlwp, ksi.ksi_signo,
-		    ksi.ksi_trap);
-#endif
 		return;
 	}
 
@@ -428,12 +409,7 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		ksi.ksi_trap = cause;
 		ksi.ksi_code = SEGV_MAPERR;
 		ksi.ksi_addr = (void *)frame->f_regs[_R_PC];
-#ifdef __HAVE_SIGINFO
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-#else
-		(*curproc->p_emul->e_trapsignal)(curlwp, ksi.ksi_signo,
-		    ksi.ksi_trap);
-#endif
 		break;
 	}
 
