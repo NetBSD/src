@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 1997/11/02 03:45:32 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.12 1997/11/02 08:20:40 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -241,7 +241,13 @@ void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
+
+/* from prefix.c */
 void	make_target_dir __P((const char *path));
-void	append_to_target_file __P((const char *string, const char *path));
-void	echo_to_target_file __P((const char *string, const char *path));
+void	append_to_target_file __P((const char *path, const char *string));
+void	echo_to_target_file __P(( const char *path, const char *string));
+void	sprintf_to_target_file __P(( const char *path, const char *fmt, ...));
 void	trunc_target_file __P((const char *path));
+int	target_chdir __P(( const char *path));
+void	target_chdir_or_die __P((const char *dir));
+int	target_already_root __P((void));
