@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.69 2001/12/12 13:17:03 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.70 2001/12/12 13:23:20 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.69 2001/12/12 13:17:03 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.70 2001/12/12 13:23:20 gehenna Exp $");
 
 #include "atapibus.h"
 
@@ -173,7 +173,7 @@ Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *sc,
 				usbd_xfer_handle xfer);
 Static void umass_clear_endpoint_stall(struct umass_softc *sc,
 				u_int8_t endpt, usbd_pipe_handle pipe,
-				int state, usbd_xfer_handle xfer);
+				usbd_xfer_handle xfer);
 #if 0
 Static void umass_reset(struct umass_softc *sc,	transfer_cb_f cb, void *priv);
 #endif
@@ -837,8 +837,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usbd_device_handle dev,
 
 Static void
 umass_clear_endpoint_stall(struct umass_softc *sc,
-	u_int8_t endpt, usbd_pipe_handle pipe,
-	int state, usbd_xfer_handle xfer)
+	u_int8_t endpt, usbd_pipe_handle pipe, usbd_xfer_handle xfer)
 {
 	usbd_device_handle dev;
 
@@ -849,8 +848,6 @@ umass_clear_endpoint_stall(struct umass_softc *sc,
 		USBDEVNAME(sc->sc_dev), endpt));
 
 	usbd_interface2device_handle(sc->iface, &dev);
-
-	sc->transfer_state = state;
 
 	usbd_clear_endpoint_toggle(pipe);
 
@@ -1120,12 +1117,12 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					sc->transfer_datalen,usbd_errstr(err)));
 
 				if (err == USBD_STALLED) {
+					sc->transfer_state = TSTATE_BBB_DCLEAR;
 					umass_clear_endpoint_stall(sc,
 					  (sc->transfer_dir == DIR_IN?
 					    sc->bulkin:sc->bulkout),
 					  (sc->transfer_dir == DIR_IN?
 					    sc->bulkin_pipe:sc->bulkout_pipe),
-					  TSTATE_BBB_DCLEAR,
 					  sc->transfer_xfer[XFER_BBB_DCLEAR]);
 					return;
 				} else {
@@ -1201,9 +1198,9 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 * retry it, otherwise fail.
 			 */
 			if (sc->transfer_state == TSTATE_BBB_STATUS1) {
+				sc->transfer_state = TSTATE_BBB_SCLEAR;
 				umass_clear_endpoint_stall(sc,
 				    sc->bulkin, sc->bulkin_pipe,
-				    TSTATE_BBB_SCLEAR,
 				    sc->transfer_xfer[XFER_BBB_SCLEAR]);
 				return;
 			} else {
@@ -1302,8 +1299,8 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			printf("%s: BBB reset failed, %s\n",
 				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 
-		umass_clear_endpoint_stall(sc,
-			sc->bulkin, sc->bulkin_pipe, TSTATE_BBB_RESET2,
+		sc->transfer_state = TSTATE_BBB_RESET2;
+		umass_clear_endpoint_stall(sc, sc->bulkin, sc->bulkin_pipe,
 			sc->transfer_xfer[XFER_BBB_RESET2]);
 
 		return;
@@ -1313,8 +1310,8 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
-		umass_clear_endpoint_stall(sc,
-			sc->bulkout, sc->bulkout_pipe, TSTATE_BBB_RESET3,
+		sc->transfer_state = TSTATE_BBB_RESET3;
+		umass_clear_endpoint_stall(sc, sc->bulkout, sc->bulkout_pipe,
 			sc->transfer_xfer[XFER_BBB_RESET3]);
 
 		return;
@@ -1578,9 +1575,9 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				sc->transfer_datalen,usbd_errstr(err)));
 
 			if (err == USBD_STALLED) {
+				sc->transfer_state = TSTATE_CBI_DCLEAR;
 				umass_clear_endpoint_stall(sc,
 					sc->bulkin, sc->bulkin_pipe,
-					TSTATE_CBI_DCLEAR,
 					sc->transfer_xfer[XFER_CBI_DCLEAR]);
 			} else {
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
@@ -1624,9 +1621,9 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 */
 
 			if (err == USBD_STALLED) {
+				sc->transfer_state = TSTATE_CBI_SCLEAR;
 				umass_clear_endpoint_stall(sc,
 					sc->intrin, sc->intrin_pipe,
-					TSTATE_CBI_SCLEAR,
 					sc->transfer_xfer[XFER_CBI_SCLEAR]);
 			} else {
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
@@ -1712,8 +1709,8 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			printf("%s: CBI reset failed, %s\n",
 				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 
-		umass_clear_endpoint_stall(sc,
-			sc->bulkin, sc->bulkin_pipe, TSTATE_CBI_RESET2,
+		sc->transfer_state = TSTATE_CBI_RESET2;
+		umass_clear_endpoint_stall(sc, sc->bulkin, sc->bulkin_pipe,
 			sc->transfer_xfer[XFER_CBI_RESET2]);
 
 		return;
@@ -1723,8 +1720,8 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
-		umass_clear_endpoint_stall(sc,
-			sc->bulkout, sc->bulkout_pipe, TSTATE_CBI_RESET3,
+		sc->transfer_state = TSTATE_CBI_RESET3;
+		umass_clear_endpoint_stall(sc, sc->bulkout, sc->bulkout_pipe,
 			sc->transfer_xfer[XFER_CBI_RESET3]);
 
 		return;
