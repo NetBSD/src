@@ -1,4 +1,4 @@
-/*	$NetBSD: struct.h,v 1.3 1995/03/21 15:04:31 cgd Exp $	*/
+/*	$NetBSD: struct.h,v 1.4 1999/07/17 19:57:03 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -106,6 +106,8 @@ typedef struct {
 	int	time;
 	int	real_time;
 } SCORE;
+
+#define SCORE_SCANF_FMT	"%9s %255s %255s %d %d %d"
 
 typedef struct displacement {
 	int	dx;

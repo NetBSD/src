@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/07/17 19:57:03 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,7 +55,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/07/17 19:57:03 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,10 @@ main(ac, av)
 #ifdef BSD
 	struct itimerval	itv;
 #endif
+
+	/* Open the score file then revoke setgid privileges */
+	open_score_file();
+	setregid(getgid(), getgid());
 
 	start_time = seed = time(0);
 
