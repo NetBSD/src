@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.35 1999/03/16 06:18:17 fair Exp $
+#	$NetBSD: security,v 1.36 1999/03/17 02:58:11 wrstuden Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -108,7 +108,9 @@ if checkyesno check_passwd; then
 		column $OUTPUT
 	fi
 
-	< $MPBYUID uniq -d -f 1 | awk '{ print $2 }' > $TMP2
+# the corner case of a "toor " account is caught in the invalid character
+# test above.
+	< $MPBYUID egrep -v '^toor ' | uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 	if [ -s $TMP2 ] ; then
 		printf "\n$MP has duplicate user id's.\n"
 		while read uid; do
