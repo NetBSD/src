@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.9 1996/03/30 23:08:29 christos Exp $	*/
+/*	$NetBSD: eisa.c,v 1.10 1996/04/06 02:04:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -56,7 +56,7 @@ struct cfattach eisa_ca = {
 };
 
 struct cfdriver eisa_cd = {
-        NULL, "eisa", DV_DULL
+	NULL, "eisa", DV_DULL
 };
 
 int	eisasubmatch __P((struct device *, void *, void *));
@@ -65,8 +65,8 @@ void	eisa_devinfo __P((const char *, char *));
 
 int
 eisamatch(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+	struct device *parent;
+	void *match, *aux;
 {
 	struct cfdata *cf = match;
 	struct eisabus_attach_args *eba = aux;
@@ -76,7 +76,7 @@ eisamatch(parent, match, aux)
 
 	/* XXX check other indicators */
 
-        return (1);
+	return (1);
 }
 
 int
@@ -111,8 +111,8 @@ eisasubmatch(parent, match, aux)
 
 void
 eisaattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_chipset_tag_t bc;
@@ -198,14 +198,14 @@ eisaattach(parent, self, aux)
 }
 
 #ifdef EISAVERBOSE
-/*      
+/*
  * Descriptions of of known vendors and devices ("products").
- */     
+ */
 struct eisa_knowndev {
 	int	flags;
 	const char *id, *name;
-};      
-#define EISA_KNOWNDEV_NOPROD     0x01            /* match on vendor only */
+};
+#define EISA_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/eisa/eisadevs_data.h>
 #endif /* EISAVERBOSE */
