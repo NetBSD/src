@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_cd.h,v 1.14 2001/09/02 19:35:20 thorpej Exp $	*/
+/*	$NetBSD: scsi_cd.h,v 1.15 2001/09/02 19:53:40 thorpej Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -33,9 +33,6 @@ struct scsi_play_track {
 	u_int8_t end_index;
 	u_int8_t control;
 };
-
-/* sense pages */
-#define SCSI_AUDIO_PAGE  0x0e
 
 #define	SCSI_CD_WRITE_PARAMS_PAGE	0x05
 #define	SCSI_CD_WRITE_PARAMS_PAGE_LEN	0x32
