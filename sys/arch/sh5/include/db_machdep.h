@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1 2002/07/05 13:31:57 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 2002/08/26 10:16:45 scw Exp $	*/
 
 /*
  * This is still very much experimental. There is as yet no DB support
@@ -43,25 +43,23 @@
 #include <machine/trap.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
-typedef	long		db_expr_t;	/* expression - signed */
+typedef	int64_t		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_spc)
+#define	PC_REGS(r)	((db_addr_t)(r)->tf_state.sf_spc & ~1)
+#define	PC_ADVANCE(r)	((r)->tf_state.sf_spc += BKPT_SIZE)
 
-#define	BKPT_INST	0x6ff5ff0	/* breakpoint instruction */
+#define	BKPT_INST	0x6ff1fff0	/* breakpoint instruction (trapa r63) */
 #define	BKPT_SIZE	4		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	BKPT_INST
 
-#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_state.sf_spc -= BKPT_SIZE)
+#define	FIXUP_PC_AFTER_BREAK(regs)	/* Nothing to do */
 
-#define	IS_BREAKPOINT_TRAP(type, code)	((type) == SH5_EXPEVT_BREAK)
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define	IS_WATCHPOINT_TRAP(type, code)	(0) /* XXX (msaitoh) */
-
-#define	inst_load(ins)		0
-#define	inst_store(ins)		0
 
 /* access capability and access macros */
 
@@ -96,10 +94,33 @@ typedef	long	kgdb_reg_t;
 /* macro for checking if a thread has used floating-point */
 #define	db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
-int kdb_trap(int, int, db_regs_t *);
-boolean_t inst_call(int);
-boolean_t inst_return(int);
-boolean_t inst_trap_return(int);
+extern int kdb_trap(int, void *);
+
+#define	I_RTE	0x6ff3fff0		/* rte */
+#define	I_RET	0x4401fff0		/* blink tr?, r63 */
+#define	M_RET	0xff8fffff
+#define	I_CALL	0x4401fd20		/* blink tr?, r18 */
+#define	M_CALL	0xff8fffff
+
+
+/*
+ * SH5 does have hardware single-step (using SR.T), but its use is
+ * cpu dependent. (We need to be able to change DBGVEC, which is
+ * frobbed in a cpu-dependent manner).
+ *
+ * Far easier to just use software single-stepping.
+ */
+#define	SOFTWARE_SSTEP
+extern boolean_t inst_branch(int);
+extern boolean_t inst_call(int);
+extern boolean_t inst_load(int);
+extern boolean_t inst_store(int);
+extern boolean_t inst_unconditional_flow_transfer(int);
+extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
+extern db_addr_t next_instr_address(db_addr_t, boolean_t);
+#define	inst_return(ins)	(((ins) & M_RET) == I_RET)
+#define	inst_trap_return(ins)	((ins) == I_RTE)
+
 
 /*
  * We use ELF symbols in DDB.
@@ -109,9 +130,9 @@ boolean_t inst_trap_return(int);
 #define	DB_ELFSIZE	32
 
 /*
- * We have machine-dependent commands.
+ * We have no machine-dependent commands.
  */
-#define	DB_MACHINE_COMMANDS
+#undef	DB_MACHINE_COMMANDS
 
 extern const char kgdb_devname[];
 
