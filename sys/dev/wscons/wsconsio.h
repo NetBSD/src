@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.57 2003/02/10 14:28:22 jdolecek Exp $ */
+/* $NetBSD: wsconsio.h,v 1.58 2003/06/03 06:48:12 petrov Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -94,6 +94,8 @@ struct wscons_event {
 #define		WSKBD_TYPE_AMIGA	13	/* Amiga keyboard */
 #define		WSKBD_TYPE_MAPLE	14	/* Dreamcast Maple keyboard */
 #define		WSKBD_TYPE_ATARI	15	/* Atari keyboard */
+#define		WSKBD_TYPE_SUN		16	/* Sun Type3/4 */
+#define		WSKBD_TYPE_SUN5		17	/* Sun Type5 */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -257,6 +259,7 @@ struct wsmouse_id {
 #define		WSDISPLAY_TYPE_TIGER	30	/* HP Tiger */
 #define		WSDISPLAY_TYPE_HYPERION	31	/* HP Hyperion */
 #define		WSDISPLAY_TYPE_AMIGACC	32	/* Amiga custom chips */
+#define		WSDISPLAY_TYPE_SUN24	33	/* Sun 24 bit framebuffers */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -322,7 +325,6 @@ struct wsdisplay_cursor {
 #define	WSDISPLAYIO_SMODE	_IOW('W', 76, u_int)
 #define		WSDISPLAYIO_MODE_EMUL	0	/* emulation (text) mode */
 #define		WSDISPLAYIO_MODE_MAPPED	1	/* mapped (graphics) mode */
-
 
 
 /*
@@ -402,7 +404,6 @@ struct wsdisplay_char {
 #define WSDISPLAY_CHAR_BLINK  2
 #define WSDISPLAYIO_GETWSCHAR	_IOWR('W', 85, struct wsdisplay_char)
 #define WSDISPLAYIO_PUTWSCHAR	_IOWR('W', 86, struct wsdisplay_char)
-
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
