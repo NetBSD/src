@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10 1995/01/26 19:46:17 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.11 1995/01/26 21:28:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -95,7 +95,7 @@ process_read_regs(p, regs)
 {
 	struct frame *frame;
 
-	frame = process_frame(p)
+	frame = process_frame(p);
 	if (frame == NULL)
 		return (EIO);
 
@@ -113,7 +113,7 @@ process_read_fpregs(p, regs)
 {
 	struct fpframe *frame;
 
-	frame = process_fpframe(p)
+	frame = process_fpframe(p);
 	if (frame == NULL)
 		return (EIO);
 
@@ -132,7 +132,7 @@ process_write_regs(p, regs)
 {
 	struct frame *frame;
 
-	frame = process_frame(p)
+	frame = process_frame(p);
 	if (frame == NULL)
 		return (EIO);
 
@@ -169,7 +169,7 @@ process_write_fpregs(p, regs)
 {
 	struct fpframe *frame;
 
-	frame = process_fpframe(p)
+	frame = process_fpframe(p);
 	if (frame == NULL)
 		return (EIO);
 
@@ -188,7 +188,7 @@ process_sstep(p, sstep)
 {
 	struct frame *frame;
 
-	frame = process_frame(p)
+	frame = process_frame(p);
 	if (frame == NULL)
 		return (EIO);
 
@@ -207,7 +207,7 @@ process_set_pc(p, addr)
 {
 	struct frame *frame;
 
-	frame = process_frame(p)
+	frame = process_frame(p);
 	if (frame == NULL)
 		return (EIO);
 
