@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.6 1997/10/27 19:53:20 drochner Exp $	 */
+/*	$NetBSD: pcio.c,v 1.7 1998/08/13 17:41:11 rvb Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -107,9 +107,11 @@ initio(dev)
 			 *  1. successful output
 			 *  2. optionally, keypress within 1s
 			 */
-			if(computc(' ', SERIAL_ARG)
+			if (	computc(':', SERIAL_ARG) &&
+				computc('-', SERIAL_ARG) &&
+				computc('(', SERIAL_ARG)
 #ifdef COMCONS_KEYPRESS
-			   && awaitkey(1, 0)
+			   && awaitkey(7, 0)
 #endif
 			   )
 				goto ok;
@@ -122,10 +124,10 @@ initio(dev)
 			 *     (status seems only useful after character output)
 			 *  3. optionally, keypress within 1s
 			 */
-			if (!(computc(' ', SERIAL_ARG) & 0x80)
+			if (!(computc('@', SERIAL_ARG) & 0x80)
 			    && (comstatus(SERIAL_ARG) & 0x00b0)
 #ifdef COMCONS_KEYPRESS
-			    && awaitkey(1, 0)
+			    && awaitkey(7, 0)
 #endif
 			    )
 				goto ok;
@@ -143,11 +145,53 @@ ok:
 		if(!btinfo_console.addr) goto nocom;
 		cominit(SERIAL_ARG);
 		break;
+	    case CONSDEV_COM0KBD:
+	    case CONSDEV_COM1KBD:
+	    case CONSDEV_COM2KBD:
+	    case CONSDEV_COM3KBD:
+		iodev = dev - 4;
+		i = iodev - CONSDEV_COM0;
+		btinfo_console.addr = getcomaddr(i);
+		if(!btinfo_console.addr) goto nocom;
+		conputc('0' + i); /* to tell user what happens */
+		cominit(SERIAL_ARG);
+#ifdef DIRECT_SERIAL
+			/* check for:
+			 *  1. successful output
+			 *  2. optionally, keypress within 1s
+			 */
+			if (	computc(':', SERIAL_ARG) &&
+				computc('-', SERIAL_ARG) &&
+				computc('(', SERIAL_ARG)
+#ifdef COMCONS_KEYPRESS
+			   && awaitkey(7, 0)
+#endif
+			   )
+				break;
+#else
+			/*
+			 * serial console must have hardware handshake!
+			 * check:
+			 *  1. character output without error
+			 *  2. status bits for modem ready set
+			 *     (status seems only useful after character output)
+			 *  3. optionally, keypress within 1s
+			 */
+			if (!(computc('@', SERIAL_ARG) & 0x80)
+			    && (comstatus(SERIAL_ARG) & 0x00b0)
+#ifdef COMCONS_KEYPRESS
+			    && awaitkey(7, 0)
+#endif
+			    )
+				break;
+#endif
 	    default:
 nocom:
 		iodev = CONSDEV_PC;
 		break;
 	}
+	conputc('\015');
+	conputc('\n');
 	strncpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
 #if defined(DIRECT_SERIAL) && defined(CONSPEED)
 	btinfo_console.speed = CONSPEED;
