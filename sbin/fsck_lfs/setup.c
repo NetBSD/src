@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.6 2000/06/14 18:44:00 perseant Exp $	 */
+/* $NetBSD: setup.c,v 1.7 2000/10/04 11:37:54 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -406,18 +406,17 @@ setup(const char *dev)
 	 */
 #ifndef VERBOSE_BLOCKMAP
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = malloc((unsigned)bmapsize * sizeof(char));
-	bzero(blockmap, bmapsize * sizeof(char));
+	blockmap = calloc((unsigned)bmapsize, sizeof(char));
 #else
 	bmapsize = maxfsblock * sizeof(ino_t);
-	blockmap = (ino_t *)malloc(maxfsblock * sizeof(ino_t));
-	bzero(blockmap, maxfsblock * sizeof(ino_t));
+	blockmap = (ino_t *)calloc(maxfsblock, sizeof(ino_t));
 #endif
 	if (blockmap == NULL) {
 		printf("cannot alloc %u bytes for blockmap\n",
 		       (unsigned)bmapsize);
 		goto badsblabel;
 	}
+	
 	statemap = calloc((unsigned)maxino, sizeof(char));
 	if (statemap == NULL) {
 		printf("cannot alloc %u bytes for statemap\n",
