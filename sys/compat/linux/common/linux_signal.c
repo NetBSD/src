@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.23 1999/09/30 19:32:53 tron Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.24 1999/10/04 17:46:37 fvdl Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -332,7 +332,6 @@ linux_sys_rt_sigaction(p, v, retval)
 	struct sigaction nbsa, obsa;
 	int error;
 
-	/* XXX XAX linux_sigset_t or struct linux_sigaction here? */
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
 		return (EINVAL);
 
@@ -412,18 +411,48 @@ linux_sys_rt_sigprocmask(p, v, retval)
 		syscallarg(size_t) sigsetsize;
 	} */ *uap = v;
 
-	/* Use non-rt function: sigsetsize is ignored. */
-	/* Assume sizeof(linux_sigset_t) == sizeof(linux_old_sigset_t) */
-	if (SCARG(uap, sigsetsize) != sizeof(linux_old_sigset_t)) {
-#ifdef DEBUG_LINUX
-	    printf("linux_sys_rt_sigprocmask: sigsetsize != sizeof(old_sigset_t)");
-#endif
-	    return(ENOSYS);
+	linux_sigset_t nlss, olss, *oset;
+	const linux_sigset_t *set;
+	sigset_t nbss, obss;
+	int error, how;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+
+	switch (SCARG(uap, how)) {
+	case LINUX_SIG_BLOCK:
+		how = SIG_BLOCK;
+		break;
+	case LINUX_SIG_UNBLOCK:
+		how = SIG_UNBLOCK;
+		break;
+	case LINUX_SIG_SETMASK:
+		how = SIG_SETMASK;
+		break;
+	default:
+		return (EINVAL);
 	}
 
-	return(linux_sigprocmask1(p, SCARG(uap, how), 
-				(const linux_old_sigset_t *)SCARG(uap, set),
-				(linux_old_sigset_t *)SCARG(uap, oset)));
+	set = SCARG(uap, set);
+	oset = SCARG(uap, oset);
+
+	if (set) {
+		error = copyin(set, &nlss, sizeof(nlss));
+		if (error)
+			return (error);
+		linux_to_native_sigset(&nlss, &nbss);
+	}
+	error = sigprocmask1(p, how,
+	    set ? &nbss : 0, oset ? &obss : 0);
+	if (error)
+		return (error); 
+	if (oset) {
+		native_to_linux_sigset(&obss, &olss);
+		error = copyout(&olss, oset, sizeof(olss));
+		if (error)
+			return (error);
+	}       
+	return (error);
 }
 
 int
@@ -446,6 +475,7 @@ linux_sys_rt_sigpending(p, v, retval)
 	native_to_linux_sigset(&bss, &lss);
 	return copyout(&lss, SCARG(uap, set), sizeof(lss));
 }
+
 int
 linux_sys_sigpending(p, v, retval)
 	register struct proc *p;
