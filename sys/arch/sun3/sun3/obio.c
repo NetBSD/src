@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.21 1996/10/13 03:47:34 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.22 1996/10/30 00:20:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,6 +44,7 @@
 static int  obio_match __P((struct device *, void *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
 static int  obio_print __P((void *, const char *parentname));
+static int	obio_submatch __P((struct device *, void *, void *));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
@@ -87,7 +88,7 @@ obio_attach(parent, self, aux)
 		ca->ca_intpri = -1;
 		ca->ca_intvec = -1;
 
-		(void) config_found(self, ca, obio_print);
+		(void) config_found_sm(self, ca, obio_print, obio_submatch);
 	}
 }
 
@@ -106,10 +107,40 @@ obio_print(args, name)
 	if (name)
 		return(QUIET);
 
-	printf(" addr 0x%x", ca->ca_paddr);
+	if (ca->ca_paddr != -1)
+		printf(" addr 0x%x", ca->ca_paddr);
+	if (ca->ca_intpri != -1)
+		printf(" level %d", ca->ca_intpri);
 
 	return(UNCONF);
 }
+
+int
+obio_submatch(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	cfmatch_t submatch;
+
+	/*
+	 * Default addresses are mostly useless for OBIO.
+	 * The address assignments are fixed for all time,
+	 * so our config files might as well reflect that.
+	 */
+	if (cf->cf_paddr != ca->ca_paddr)
+		return 0;
+
+	/* Now call the match function of the potential child. */
+	submatch = cf->cf_attach->ca_match;
+	if (submatch == NULL)
+		panic("obio_submatch: no match function for: %s\n",
+			  cf->cf_driver->cd_name);
+
+	return ((*submatch)(parent, vcf, aux));
+}
+
 
 /*****************************************************************/
 
