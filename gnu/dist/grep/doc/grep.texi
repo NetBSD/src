@@ -1,5 +1,5 @@
 \input texinfo  @c -*-texinfo-*-
-@c $NetBSD: grep.texi,v 1.6 2003/01/26 23:21:49 wiz Exp $
+@c $NetBSD: grep.texi,v 1.7 2003/01/26 23:30:44 wiz Exp $
 @c %**start of header
 @setfilename grep.info
 @settitle grep, print lines matching a pattern
