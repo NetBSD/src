@@ -1,0 +1,86 @@
+#	$NetBSD: kqueue-todo,v 1.1.2.1 2001/07/10 14:20:36 lukem Exp $
+
+items todo from bill sommerfeld:
+	- multiple entry points
+	- events should remain across fork()
+	- rewrite sowakeup()
+	- use pool for everything. (i'm not convinced)
+	- high-level docco overview of kqueues [c.f jlemon's various papers]
+
+done:
+	- name->id lookup
+	- why is union kn_ptr not just a void *? (added p_opaque)
+	- need more comments in kern_event.c
+	- explain fd_knlistsize better
+	- section 9 man page for internal api
+
+
+merge in from freebsd:
+	usr.bin/tail
+	pkgsrc/devel/py-kqueue
+	lib/libc/sys/kqueue.2
+	lib/libc/net/res_send.c
+	sys/netinet/tcp_subr.c	1.93 (?)
+	libc/libc_r/uthread (?)
+	pkgsrc/security/l0pht-watch (?)
+	pkgsrc/www/thttpd
+
+
+
+general points:
+	- miscfs/fifofs/fifo_* seems to define filters which aren't used
+	  by our tree
+
+to fix:
+
+	- look for XXXLUKEM in the comments. these usually indicate
+	  areas to either fix or sanity check they're ok (and remove
+	  the XXXLUKEM comment)
+
+	- need to test bits of the tree that call closef() to determine
+	  if knote_fdclose() is required. (aka fdrelease()/fdfree()):
+		* ktrderef()		ktrace
+		* unp_detach()
+		* nfsrv_zapsock()	nfsd
+		* portal_unmount()	mount_portal ?
+
+not implemented:
+
+	- pipes/fifos
+		named pipes (fifos) don't work.
+		c.f. freebsd's kern/sys_pipe.c. need to integrate with the
+		pipe code that jdolocek has integrated
+
+	- aio support
+		not supported on netbsd; a noop for now
+
+
+pkgsrc todo:
+
+tested:
+
+	create/close	OK
+
+	EVFILT_PROC	OK
+
+	EVFILT_SIGNAL	OK
+
+	EVFILT_VNODE	OK for ufs (all NOTE_*s seem to work).
+			implement & test for other file systems.
+
+	EVFILT_READ	OK for ufs, socket listen, socket read
+			FAIL for fifos (not implemented; speak to jdolocek)
+			test tty
+			implement & test for other file systems.
+
+	EVFILT_AIO	FAIL: not implemented, returns EINVAL
+
+	timeouts	OK. tested  NULL (infinity), 0 (poll), >0 (maxwait)
+
+	KEVENT_NAME	(ioctl) OK
+
+	KEVENT_FILTER	(ioctl) OK
+
+to test:
+
+	EVFILT_WRITE	test socket, tty, fifo
