@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Christopher G. Demetriou
+ * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_subr.c,v 1.3 1994/01/13 02:29:32 cgd Exp $
+ *	$Id: exec_subr.c,v 1.4 1994/01/16 03:07:33 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -35,6 +35,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/mman.h>
 
@@ -193,4 +194,17 @@ vmcmd_map_zero(p, cmd)
 
 	return vm_protect(&p->p_vmspace->vm_map, cmd->ev_addr, cmd->ev_len,
 	    FALSE, cmd->ev_prot);
+}
+
+void
+exec_closefd(p, fd)
+	struct proc *p;
+	int fd;
+{
+	if (p->p_fd->fd_lastfile == fd)
+		p->p_fd->fd_lastfile--;
+	if (p->p_fd->fd_freefile > fd)
+		p->p_fd->fd_freefile = fd;
+	closef(p->p_fd->fd_ofiles[fd], p); 
+	p->p_fd->fd_ofiles[fd] = 0;
 }
