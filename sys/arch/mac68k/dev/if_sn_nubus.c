@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.1 1997/03/15 20:26:37 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.2 1997/03/16 13:41:15 is Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -39,10 +39,13 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
+#if 0 /* XXX this shouldn't be necessary; else reinsert */
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
+#endif
 #endif
 
 #include <machine/bus.h>
@@ -57,11 +60,10 @@ static int	sn_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));
 static int	sn_nb_card_vendor __P((struct nubus_attach_args *));
 
-void	snsetup __P((struct sn_softc *));
-
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
 };
+
 
 static int
 sn_nubus_match(parent, cf, aux)
@@ -110,6 +112,7 @@ sn_nubus_attach(parent, self, aux)
 	int		i, success;
 	bus_space_tag_t	bst;
 	bus_space_handle_t	bsh, tmp_bsh;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
@@ -146,8 +149,7 @@ sn_nubus_attach(parent, self, aux)
 		 * Copy out the ethernet address from the card's ROM
 		 */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
-					bus_space_read_1(bst, tmp_bsh, i);
+			myaddr[i] = bus_space_read_1(bst, tmp_bsh, i);
 
 		success = 1;
                 break;
@@ -169,7 +171,7 @@ sn_nubus_attach(parent, self, aux)
 		return;
 	}
 
-	snsetup(sc);
+	snsetup(sc, myaddr);
 }
 
 static int
