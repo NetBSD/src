@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.63 2002/05/14 20:03:55 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.64 2002/05/17 21:42:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.63 2002/05/14 20:03:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.64 2002/05/17 21:42:38 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,10 +309,10 @@ lfs_fsync(void *v)
 	 * If we were called from vinvalbuf and lfs_update
 	 * didn't flush all our buffers, we're in trouble.
 	 */
-	if ((ap->a_flags & FSYNC_WAIT) && vp->v_dirtyblkhd.lh_first != NULL) {
+	if ((ap->a_flags & FSYNC_WAIT) && LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
 		struct buf *bp;
 
-		bp = vp->v_dirtyblkhd.lh_first;
+		bp = LIST_FIRST(&vp->v_dirtyblkhd);
 		printf("lfs_fsync: ino %d failed to sync", VTOI(vp)->i_number);
 		printf("lfs_fsync: iocount = %d\n", VTOI(vp)->i_lfs->lfs_iocount);
 		printf("lfs_fsync: flags are 0x%x, numoutput=%d\n",
