@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.74 1999/04/23 19:29:30 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.75 1999/06/17 21:11:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 #include <sys/time.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
-#ifndef MAP_COPY
-#define MAP_COPY	MAP_PRIVATE
-#endif
 #include <err.h>
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -712,7 +709,7 @@ again:
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
 	         PROT_READ|PROT_EXEC,
-	         MAP_FILE|MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	         MAP_FILE|MAP_PRIVATE, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -728,7 +725,7 @@ again:
 
 	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
 		 PROT_READ|PROT_WRITE|PROT_EXEC,
-		 MAP_ANON|MAP_COPY|MAP_FIXED,
+		 MAP_ANON|MAP_PRIVATE|MAP_FIXED,
 		 anon_fd, 0) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
@@ -1409,7 +1406,7 @@ maphints()
 
 	hsize = (hsize + PAGSIZ - 1) & -PAGSIZ;
 
-	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_COPY, hfd, 0);
+	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_PRIVATE, hfd, 0);
 	if (addr == (caddr_t)-1)
 		goto nohints;
 

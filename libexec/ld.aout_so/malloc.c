@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.5 1998/12/15 21:33:00 pk Exp $	*/
+/*	$NetBSD: malloc.c,v 1.6 1999/06/17 21:11:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.5 1998/12/15 21:33:00 pk Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.6 1999/06/17 21:11:42 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: malloc.c,v 1.5 1998/12/15 21:33:00 pk Exp $");
 #include <sys/param.h>
 #include <sys/mman.h>
 #ifndef BSD
-#define MAP_COPY	MAP_PRIVATE
 #define MAP_FILE	0
 #define MAP_ANON	0
 #endif
@@ -468,7 +467,7 @@ int	n;
 
 	if ((pagepool_start = mmap(0, n * pagesz,
 			PROT_READ|PROT_WRITE,
-			MAP_ANON|MAP_COPY, fd, 0)) == (caddr_t)-1) {
+			MAP_ANON|MAP_PRIVATE, fd, 0)) == (caddr_t)-1) {
 		char *str = "ld.so: malloc: cannot map pages\n";
 		(void)write(2, str, strlen(str));
 		return 0;
