@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
+/*	$NetBSD: md.c,v 1.9 1996/10/10 22:25:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -130,7 +130,7 @@ rdattach(n)
 
 #ifdef	DIAGNOSTIC
 	if (ramdisk_ndevs) {
-		printf("ramdisk: multiple attach calls?\n");
+		kprintf("ramdisk: multiple attach calls?\n");
 		return;
 	}
 #endif
@@ -151,13 +151,13 @@ rdattach(n)
 
 		sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
 		if (!sc) {
-			printf("ramdisk: malloc for attach failed!\n");
+			kprintf("ramdisk: malloc for attach failed!\n");
 			return;
 		}
 		bzero((caddr_t)sc, sizeof(*sc));
 		ramdisk_devs[i] = sc;
 		sc->sc_dev.dv_unit = i;
-		sprintf(sc->sc_dev.dv_xname, "rd%d", i);
+		ksprintf(sc->sc_dev.dv_xname, "rd%d", i);
 		rd_attach(NULL, &sc->sc_dev, NULL);
 	}
 }
