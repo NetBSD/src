@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.3 1997/08/27 20:41:30 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.4 1997/09/16 20:34:36 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -97,7 +97,7 @@ com_supio_match(parent, match, aux)
 	iot = supa->supio_iot;
 	iobase = supa->supio_iobase;
 
-	if (strcmp(supa->supio_name,"com") || (match->cf_unit > 1))
+	if (strcmp(supa->supio_name,"com"))
 		return 0;
 #if 0
 	/* if it's in use as console, it's there. */
@@ -122,6 +122,7 @@ com_supio_attach(parent, self, aux)
 	int iobase;
 	bus_space_tag_t iot;
 	struct supio_attach_args *supa = aux;
+	u_int16_t needpsl;
 
 	/*
 	 * We're living on a superio chip.
@@ -134,17 +135,22 @@ com_supio_attach(parent, self, aux)
 	} else
                 csc->sc_ioh = comconsioh;
 
+	csc->sc_frequency = supa->supio_arg;
+
 	printf(" port 0x%x", iobase);
 	com_attach_subr(csc);
 
-	if (amiga_ttyspl < (PSL_S|PSL_IPL5)) {
+	/* XXX this should be really in the interupt stuff */
+	needpsl = PSL_S | (supa->supio_ipl << 8);
+
+	if (amiga_ttyspl < needpsl) {
 		printf("%s: raising amiga_ttyspl from 0x%x to 0x%x\n",
-		    csc->sc_dev.dv_xname, amiga_ttyspl, PSL_S|PSL_IPL5);
-		amiga_ttyspl = PSL_S|PSL_IPL5;
+		    csc->sc_dev.dv_xname, amiga_ttyspl, needpsl);
+		amiga_ttyspl = needpsl;
 	}
 	sc->sc_isr.isr_intr = comintr;
 	sc->sc_isr.isr_arg = csc;
-	sc->sc_isr.isr_ipl = 5;
+	sc->sc_isr.isr_ipl = supa->supio_ipl;
 	add_isr(&sc->sc_isr);
 
 	/*
