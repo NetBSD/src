@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/03/21 15:06:38 cgd Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 1997/11/20 09:06:29 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	battlestar
@@ -9,5 +9,6 @@ MAN=	battlestar.6
 DPADD=	${LIBCURSES} ${LIBTERMCAP}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
+SETGIDGAME=yes
 
 .include <bsd.prog.mk>

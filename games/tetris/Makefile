@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/04/22 07:42:31 cgd Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 1997/11/20 09:06:53 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	tetris
@@ -7,5 +7,6 @@ MAN=	tetris.6
 DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
+SETGIDGAME=yes
 
 .include <bsd.prog.mk>

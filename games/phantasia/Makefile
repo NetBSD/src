@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/13 02:18:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 1997/11/20 09:06:41 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -7,6 +7,7 @@ SRCS=	fight.c gamesupport.c interplayer.c io.c main.c misc.c phantglobs.c
 DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
+SETGIDGAME=yes
 USETBL=
 MAN=	phantasia.6
 CLEANFILES+=map setup setup.o host_phantglobs.o
@@ -24,7 +25,7 @@ setup.o: ${.CURDIR}/setup.c
 
 afterinstall: 
 	./setup -m ${.CURDIR}/monsters.asc
-	chown games:bin ${DESTDIR}/var/games/phantasia/*
+	chown games:games ${DESTDIR}/var/games/phantasia/*
 
 # Make Phantasia map.  Change the map commands reflect your installation.
 # PLOTDEVICE is used for plotting the map.  Change as appropriate.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1995/04/22 08:34:27 cgd Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 1997/11/20 09:06:51 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	snake
@@ -7,6 +7,7 @@ MAN=	snake.6
 DPADD=	${LIBM} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -ltermcap -lcompat
 HIDEGAME=hidegame
+SETGIDGAME=yes
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
