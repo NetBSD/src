@@ -92,8 +92,10 @@
 #include <sys/namei.h>
 #include <sys/null.h>
 #include <sys/param.h>
+#ifdef XXX
 #include <sys/pipe.h>
 #include <sys/pmc.h>
+#endif
 #include <sys/poll.h>
 #include <sys/pool.h>
 #include <sys/power.h>
