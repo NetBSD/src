@@ -34,7 +34,7 @@
 #include <krb5_locl.h>
 
 __RCSID("$Heimdal: changepw.c,v 1.49 2004/06/02 19:21:36 lha Exp $"
-        "$NetBSD: changepw.c,v 1.11 2004/07/12 20:44:56 jonathan Exp $");
+        "$NetBSD: changepw.c,v 1.12 2004/07/13 14:15:17 he Exp $");
 
 static void
 str2data (krb5_data *d,
@@ -320,7 +320,7 @@ process_reply (krb5_context context,
 
     if (len < 6) {
 	str2data (result_string, "server %s sent to too short message "
-		  "(%d bytes)", host, len);
+		  "(%zd bytes)", host, len);
 	*result_code = KRB5_KPASSWD_MALFORMED;
 	return 0;
     }
