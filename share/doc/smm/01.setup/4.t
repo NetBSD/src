@@ -1,4 +1,4 @@
-.\"	$NetBSD: 4.t,v 1.5 1998/01/10 00:11:36 perry Exp $
+.\"	$NetBSD: 4.t,v 1.6 2001/03/11 21:22:22 hubertf Exp $
 .\"
 .\" Copyright (c) 1980, 1986, 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ netiso	ISO protocols (TP-4, CLNP, CLTP, etc)
 netns	Xerox network systems protocols (IDP, SPP, etc)
 netx25	CCITT X.25 protocols (X.25 Packet Level, HDLC/LAPB)
 .TE
-.sp.05
+.sp 0.5
 A separate subdirectory is provided for each machine architecture
 .TS
 l l.
