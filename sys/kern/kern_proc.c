@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.72 2004/02/26 11:20:08 junyoung Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.73 2004/02/26 11:29:41 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.72 2004/02/26 11:20:08 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.73 2004/02/26 11:29:41 junyoung Exp $");
 
 #include "opt_kstack.h"
 
@@ -198,9 +198,6 @@ const struct proclist_desc proclists[] = {
 
 static void orphanpg(struct pgrp *);
 static void pg_delete(pid_t);
-#ifdef DEBUG
-void pgrpdump(void);
-#endif
 
 /*
  * Initialize global process hashing structures.
