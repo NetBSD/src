@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.27 2003/01/19 23:21:44 rafal Exp $
+#	$NetBSD: MAKEDEV,v 1.28 2003/01/20 01:52:19 rafal Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,7 +48,9 @@
 #		null, stderr, stdin, stdout, tty, zero).
 #	local	Configuration specific devices which are created by running
 #		the MAKEDEV.local shell script with the argument "all".
-#	isdns	make ISDN devices
+#	audio	make audio devices.
+#	isdns	make ISDN devices.
+#	wscons	make wscons console, keyboard and mouse devices.
 #
 # Tapes:
 #	st*	SCSI tape
@@ -93,6 +95,7 @@
 #	ch*	SCSI media changer
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP filter
+#	pci*	PCI bus access devices, see pcictl(8)
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
