@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 1999/03/06 02:45:54 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13 1999/03/13 13:16:29 drochner Exp $	*/
 
 /* 
  * Mach Operating System
@@ -58,7 +58,6 @@ void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_trapdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_kvtophys_cmd __P((db_expr_t, int, db_expr_t, char *));
 
-extern int	kdbpeek __P((vaddr_t addr));
 extern void	kdbpoke __P((vaddr_t addr, int newval));
 extern vaddr_t	MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 
