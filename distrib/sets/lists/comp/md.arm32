@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.39 2001/02/17 11:40:58 ragge Exp $
+# $NetBSD: md.arm32,v 1.40 2001/02/17 15:00:01 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -9,6 +9,7 @@
 ./usr/include/arm/disklabel.h		comp-c-include
 ./usr/include/arm/disklabel_acorn.h	comp-c-include
 ./usr/include/arm/elf_machdep.h		comp-c-include
+./usr/include/arm/endian_machdep.h	comp-c-include
 ./usr/include/arm/float.h		comp-c-include
 ./usr/include/arm/fp.h			comp-c-include
 ./usr/include/arm/frame.h		comp-c-include
