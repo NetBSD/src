@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	5.31 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: vmstat.c,v 1.6 1993/08/01 18:03:21 mycroft Exp $";
+static char rcsid[] = "$Id: vmstat.c,v 1.7 1993/08/23 10:33:07 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,6 +101,16 @@ struct nlist nl[] = {
 	{ "_bucket" },
 #define	X_VMSTAT	15
 	{ "_vm_stat" },
+#define	X_FREE		16
+	{ "_vm_page_free_count" },
+#define	X_ACTIVE	17
+	{ "_vm_page_active_count" },
+#define	X_INACTIVE	18
+	{ "_vm_page_inactive_count" },
+#define	X_WIRED		19
+	{ "_vm_page_wire_count" },
+#define	X_PAGESIZE	20
+	{ "_page_size" },
 #ifdef notdef
 #define	X_DEFICIT	15
 	{ "_deficit" },
@@ -114,7 +124,7 @@ struct nlist nl[] = {
 	{ "_xstats" },
 #define X_END		19
 #else
-#define X_END		15
+#define X_END		20
 #endif
 #ifdef hp300
 #define	X_HPDINIT	(X_END+1)
@@ -135,17 +145,7 @@ struct nlist nl[] = {
 	{ "_ubdinit" },
 #endif
 #ifdef i386
-#define	X_FREE		(X_END+1)
-	{ "_vm_page_free_count" },
-#define	X_ACTIVE	(X_END+2)
-	{ "_vm_page_active_count" },
-#define	X_INACTIVE	(X_END+3)
-	{ "_vm_page_inactive_count" },
-#define	X_WIRED		(X_END+4)
-	{ "_vm_page_wire_count" },
-#define	X_PAGESIZE	(X_END+5)
-	{ "_page_size" },
-#define	X_ISA_BIO	(X_END+6)
+#define	X_ISA_BIO	(X_END+1)
 	{ "_isa_subdev" },
 #endif i386
 	{ "" },
