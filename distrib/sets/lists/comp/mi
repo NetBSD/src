@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.385 2001/10/20 06:13:28 jmc Exp $
+#	$NetBSD: mi,v 1.386 2001/10/21 17:05:11 martin Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -444,6 +444,7 @@
 ./usr/include/netisdn/i4b_cause.h	comp-c-include
 ./usr/include/netisdn/i4b_debug.h	comp-c-include
 ./usr/include/netisdn/i4b_ioctl.h	comp-c-include
+./usr/include/netisdn/i4b_rbch_ioctl.h	comp-c-include
 ./usr/include/netisdn/i4b_tel_ioctl.h	comp-c-include
 ./usr/include/netisdn/i4b_trace.h	comp-c-include
 ./usr/include/netiso/argo_debug.h	comp-c-include
