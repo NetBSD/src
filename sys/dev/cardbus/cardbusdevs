@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.10.2.2 2002/01/29 22:50:14 he Exp $
+$NetBSD: cardbusdevs,v 1.10.2.3 2002/02/05 12:54:48 he Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -103,3 +103,4 @@ product COREGA CB_TXD	0xa117	FEther CB-TXD 10/100 Ethernet
 
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8138	0x8138	8138 Ethernet
+product REALTEK RT8139	0x8139	8139 Ethernet
