@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadid.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$NetBSD: rf_threadid.h,v 1.4 2000/01/07 03:25:35 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,11 +43,6 @@
 /*
  * Kernel
  */
-
-#define RF_DECLARE_GLOBAL_THREADID
-#define rf_setup_threadid()
-#define rf_shutdown_threadid()
-#define rf_assign_threadid()
 
 #define rf_get_threadid(_id_) _id_ = 0;
 
