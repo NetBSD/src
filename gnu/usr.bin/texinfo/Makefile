@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/07/25 16:47:50 assar Exp $
+#	$NetBSD: Makefile,v 1.8 2001/09/02 22:16:58 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,7 @@ FILESNAME_${F}= texinfo.mo
 .endfor
 .endif
 
-MAN=		info.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
-		info.5 texinfo.5
+MAN=		info.5 texinfo.5
 
 TEXINFO=	info-stnd.texi info.texi texinfo.txi
 
