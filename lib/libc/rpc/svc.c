@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc.c	2.4 88/08/11 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc.c,v 1.2 1994/08/20 00:55:32 deraadt Exp $";
+static char *rcsid = "$Id: svc.c,v 1.3 1994/08/23 18:42:11 deraadt Exp $";
 #endif
 
 /*
@@ -73,6 +73,8 @@ static struct svc_callout *svc_find();
 
 /* ***************  SVCXPRT related stuff **************** */
 
+extern int svc_maxfd;
+
 /*
  * Activate a transport handle.
  */
@@ -105,9 +107,11 @@ xprt_unregister(xprt)
 	if ((sock < FD_SETSIZE) && (xports[sock] == xprt)) {
 		xports[sock] = (SVCXPRT *)0;
 		FD_CLR(sock, &svc_fdset);
-		for (svc_maxfd--; svc_maxfd; svc_maxfd--)
-			if (xports[svc_maxfd])
-				break;
+		if (sock == svc_maxfd) {
+			for (svc_maxfd--; svc_maxfd>=0; svc_maxfd--)
+				if (xports[svc_maxfd])
+					break;
+		}
 	}
 }
 
