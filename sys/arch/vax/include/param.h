@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.35 1999/01/19 21:04:48 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.36 1999/05/02 17:28:43 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -86,8 +86,9 @@
 #define	CLSIZELOG2	0		/* XXX - die */
 #define	CLSIZE		1		/* XXX - die */
 
-#define	UPAGES		1		/* pages of u-area */
+#define	UPAGES		2		/* pages of u-area */
 #define USPACE		(NBPG*UPAGES)
+#define	REDZONEADDR	(VAX_NBPG*3)	/* Must be > sizeof(struct user) */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
