@@ -1,4 +1,4 @@
-.\"	$NetBSD: groups.1,v 1.4 1997/05/29 01:48:58 cgd Exp $
+.\"	$NetBSD: groups.1,v 1.5 1997/10/19 02:45:44 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)groups.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: groups.1,v 1.4 1997/05/29 01:48:58 cgd Exp $
+.\"	$NetBSD: groups.1,v 1.5 1997/10/19 02:45:44 lukem Exp $
 .\"
 .Dd June 6, 1993
 .Dt GROUPS 1
@@ -41,11 +41,11 @@
 .Nm groups
 .Nd show group memberships
 .Sh SYNOPSIS
-.Nm groups
+.Nm
 .Op Ar user
 .Sh DESCRIPTION
 The
-.Nm groups
+.Nm
 utility has been obsoleted by the
 .Xr id 1
 utility, and is equivalent to
@@ -55,12 +55,12 @@ The command
 is suggested for normal interactive use.
 .Pp
 The
-.Nm groups
+.Nm
 utility displays the groups to which you (or the optionally specified user)
 belong.
 .Pp
 The
-.Nm groups
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr id 1
