@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: scsiconf.c,v 1.10 1993/12/17 08:50:49 mycroft Exp $
+ *	$Id: scsiconf.c,v 1.11 1994/03/25 07:38:51 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -241,14 +241,14 @@ print:
 }
 
 void
-scsi_warn(int masunit, int mytarg, struct scsi_switch *sw)
+scsi_warn(int masunit, struct scsi_switch *sw)
 {
 	struct scsidevs *match = (struct scsidevs *)0;
 	int physid;
 	int targ, lun;
 
 	for(targ=0; targ<8; targ++) {
-		if(targ==mytarg)
+		if(targ==sw->scsi_dev)
 			continue;
 		for(lun=0; lun<8; lun++) {
 			/* check if device already used, or empty */
@@ -285,7 +285,7 @@ scsi_warn(int masunit, int mytarg, struct scsi_switch *sw)
  * any device that is not found the first time won't exist later on.
  */
 int
-scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
+scsi_attach(int masunit, struct scsi_switch *sw,
 	int *physid, int *unit, int type)
 {
 	struct scsidevs *match = (struct scsidevs *)0;
@@ -320,7 +320,7 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 	}
 
 	for(targ=0; targ<8; targ++) {
-		if(targ==mytarg)
+		if(targ==sw->scsi_dev)
 			continue;
 		for(lun=0; lun<8; lun++) {
 			if( (sw->empty[targ] & (1<<lun)) || (sw->used[targ] & (1<<lun)) )

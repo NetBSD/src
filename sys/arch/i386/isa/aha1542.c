@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.22 1994/03/12 04:10:03 mycroft Exp $
+ *	$Id: aha1542.c,v 1.23 1994/03/25 07:40:50 mycroft Exp $
  */
 
 /*
@@ -274,7 +274,6 @@ short aha_base[NAHA];		/* base port for each board */
 int speed[NAHA];
 int aha_int[NAHA];
 int aha_dma[NAHA];
-int aha_scsi_dev[NAHA];
 int aha_initialized[NAHA];
 
 int aha_debug = 0;
@@ -510,8 +509,8 @@ ahaattach(struct isa_device *dev)
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}
 
-	r = scsi_attach(masunit, aha_scsi_dev[masunit], &aha_switch[masunit],
-		&dev->id_physid, &dev->id_unit, dev->id_flags);
+	r = scsi_attach(masunit, &aha_switch[masunit], &dev->id_physid,
+	    &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(firsttime==0) {
@@ -815,7 +814,7 @@ aha_init(int unit)
 		return(EIO);
 	}
 	/* who are we on the scsi bus */
-	aha_scsi_dev[unit] = conf.scsi_dev;
+	aha_switch[unit].scsi_dev = conf.scsi_dev;
 
 
 	/*

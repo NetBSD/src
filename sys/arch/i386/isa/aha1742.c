@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.21 1994/03/12 04:10:11 mycroft Exp $
+ *	$Id: aha1742.c,v 1.22 1994/03/25 07:40:53 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -254,7 +254,6 @@ struct ahb_data {
 	int	baseport;
 	struct ecb ecbs[NUM_CONCURRENT];
 	struct ecb *free_ecb;
-	int	our_id;			/* our scsi id */
 	int	vect;
 	struct ecb *immed_ecb; 	/* an outstanding immediete command */
 } ahb_data[NAHB];
@@ -477,8 +476,8 @@ ahb_attach(struct isa_device *dev)
 			ahb_switch[masunit].printed[r] = 0;
 		}
 	}
-	r = scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch[masunit],
-		&dev->id_physid, &dev->id_unit, dev->id_flags);
+	r = scsi_attach(masunit, &ahb_switch[masunit], &dev->id_physid,
+	    &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(firsttime==0) {
@@ -795,7 +794,7 @@ ahb_init(int unit)
 	}
 
 	outb(port + INTDEF, intdef|INTEN); /* make sure we can interrupt */
-	ahb_data[unit].our_id = (inb(port + SCSIDEF) & HSCSIID);
+	ahb_switch[unit].scsi_dev = (inb(port + SCSIDEF) & HSCSIID);
 
 	/*
 	 * link up all our ECBs into a free list

@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.15 1994/03/12 04:10:33 mycroft Exp $
+ *	$Id: wd7000.c,v 1.16 1994/03/25 07:40:59 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -156,7 +156,6 @@ struct wds {
 	u_short addr;
 	struct wds_req wdsr[MAXSIMUL];
 	struct wds_mb ombs[WDS_NOMB], imbs[WDS_NIMB];
-	int devs;
 } wds[NWDS];
 
 static int wdsunit = 0;
@@ -609,8 +608,8 @@ wdsattach(struct isa_device *dev)
 			wds_switch[masunit].printed[r] = 0;
 		}
 	}
-	r = scsi_attach(masunit, wds[masunit].devs, &wds_switch[masunit],
-		&dev->id_physid, &dev->id_unit, dev->id_flags);
+	r = scsi_attach(masunit, &wds_switch[masunit], &dev->id_physid,
+	    &dev->id_unit, dev->id_flags);
 	return r;
 }
 

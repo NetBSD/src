@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.23 1994/03/14 13:32:56 mycroft Exp $
+ *	$Id: ultra14f.c,v 1.24 1994/03/25 07:40:57 mycroft Exp $
  */
  
 #include <sys/types.h>
@@ -252,7 +252,6 @@ struct  uha_data
 	int     baseport;
 	struct  mscp mscps[NUM_CONCURRENT];
 	struct  mscp *free_mscp;
-	int     our_id;                 /* our scsi id */
 	int     vect;
 	int	dma;
 } uha_data[NUHA];
@@ -451,8 +450,8 @@ struct  isa_device *dev;
 			uha_switch[masunit].printed[r] = 0;
 		}
 	}
-	r = scsi_attach(masunit, uha_data[masunit].our_id, &uha_switch[masunit],
-		&dev->id_physid, &dev->id_unit, dev->id_flags);
+	r = scsi_attach(masunit, &uha_switch[masunit], &dev->id_physid,
+	    &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(firsttime==0) {
@@ -751,7 +750,7 @@ int	unit;
 	}
 	/* who are we on the scsi bus */
 	printf("id=%x\n",uha_id);
-	uha_data[unit].our_id = uha_id;
+	uha_switch[unit].scsi_dev = uha_id;
 
 	
 	/***********************************************\
