@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.49 2000/05/22 21:14:24 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.50 2000/05/23 03:50:12 soren Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -764,7 +764,7 @@ ahc_print_scb(struct scb *scb)
 		(unsigned long)(le32toh(hscb->SG_pointer)));
 	printf("	sg_addr:%lx sg_len:%lu\n",
 		(unsigned long)(le32toh(scb->sg_list[0].addr)),
-		(unsigned long)(le32toh(scb->sg_list[0].len));
+		(unsigned long)(le32toh(scb->sg_list[0].len)));
 	printf("	cdb:%x %x %x %x %x %x %x %x %x %x %x %x\n",
 		hscb->cmdstore[0], hscb->cmdstore[1], hscb->cmdstore[2],
 		hscb->cmdstore[3], hscb->cmdstore[4], hscb->cmdstore[5],
