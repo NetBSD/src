@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.36 2002/09/27 07:52:48 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.37 2002/11/17 08:32:44 chs Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -133,10 +133,10 @@ initialises the swap sub-system.
 .Fn uvmspace_share "struct proc *p1" "struct proc *p2"
 .Ft void
 .Fn uvmspace_unshare "struct proc *p"
-.Ft vaddr_t
-.Fn uvm_uarea_alloc "void"
+.Ft boolean_t
+.Fn uvm_uarea_alloc "vaddr_t *uaddrp"
 .Ft void
-.Fn uvm_uarea_free "vaddr_t va"
+.Fn uvm_uarea_free "vaddr_t uaddr"
 .nr nS 0
 .Pp
 .Fn uvm_map
@@ -359,8 +359,13 @@ necessary by calling
 .Fn uvmspace_fork .
 .Pp
 .Fn uvm_uarea_alloc
-allocates virtual space for a u-area (i.e., a kernel stack) and returns
-its virtual address.
+allocates virtual space for a u-area (i.e., a kernel stack) and stores
+its virtual address in
+.Fa *uaddrp .
+The return value is
+.Dv TRUE
+if the u-area is already backed by wired physical memory, otherwise
+.Dv FALSE .
 .Pp
 .Fn uvm_uarea_free
 frees a u-area allocated with
