@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 1999/07/09 03:05:49 christos Exp $
+#	$NetBSD: Makefile,v 1.50 2000/04/09 23:27:03 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 WARNS=2
@@ -6,7 +6,8 @@ YHEADER=1
 PROG=	sh
 SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
-	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c
+	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c \
+	test.c
 GENSRCS=arith.c arith.h arith_lex.c builtins.c builtins.h init.c nodes.c \
 	nodes.h syntax.c syntax.h token.h
 SRCS=	${SHSRCS} ${GENSRCS}
@@ -19,7 +20,7 @@ YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 
-.PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
+.PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf ${.CURDIR}/../test
 
 CLEANFILES+= mkinit mknodes mksyntax
 CLEANFILES+= ${GENSRCS} y.tab.h
