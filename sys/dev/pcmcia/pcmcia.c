@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.57 2004/08/10 18:43:50 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.58 2004/08/10 19:15:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.57 2004/08/10 18:43:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.58 2004/08/10 19:15:08 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -365,12 +365,13 @@ pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
         for (pp = tab, n = nent; n; pp = (const struct pcmcia_product *)
 	      ((const char *)pp + ent_size), n--) {
 		/* see if it matches vendor/product */
+		matches = 0;
 		if ((pp->pp_vendor != PCMCIA_VENDOR_INVALID &&
 		     pp->pp_vendor == pa->manufacturer) &&
 		    (pp->pp_product != PCMCIA_PRODUCT_INVALID &&
 		     pp->pp_product == pa->product))
 			matches = 1;
-		else if ((pp->pp_cisinfo[0] && pa->card->cis1_info[0] &&
+		if ((pp->pp_cisinfo[0] && pa->card->cis1_info[0] &&
 		          !strcmp(pp->pp_cisinfo[0], pa->card->cis1_info[0])) &&
 		         (pp->pp_cisinfo[1] && pa->card->cis1_info[1] &&
 		          !strcmp(pp->pp_cisinfo[1], pa->card->cis1_info[1])) &&
@@ -379,8 +380,6 @@ pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
 		         (!pp->pp_cisinfo[3] || (pa->card->cis1_info[3] &&
 		           !strcmp(pp->pp_cisinfo[3], pa->card->cis1_info[3]))))
 			matches = 1;
-		else
-			matches = 0;
 
 		/* if a separate match function is given, let it override */
 		if (matchfn)
