@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.6 2000/06/29 08:04:04 mrg Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.7 2000/08/13 17:00:53 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2000/06/29 08:04:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2000/08/13 17:00:53 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,6 +541,91 @@ _bus_dmamap_sync(t, map, offset, len, ops)
  * by bus-specific DMA memory allocation functions.
  */
 int
+_bus_dmamem_alloc_common(t, low, high, size, alignment, boundary,
+    segs, nsegs, rsegs, flags)
+	bus_dma_tag_t t; 
+	bus_addr_t low, high;
+	bus_size_t size, alignment, boundary;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int *rsegs;
+	int flags; 
+{
+	paddr_t curaddr, lastaddr;
+	vm_page_t m;    
+	struct pglist mlist;
+	int curseg, error;
+
+	/* Always round the size. */
+	size = round_page(size);
+	high -= PAGE_SIZE;
+
+	/*
+	 * Allocate pages from the VM system.
+	 *
+	 * XXXSCW: This will be sub-optimal if the base-address of offboard
+	 * RAM is significantly higher than the end-address of onboard RAM.
+	 * (Due to how uvm_pglistalloc() is implemented.)
+	 *
+	 * uvm_pglistalloc() also currently ignores the 'nsegs' parameter,
+	 * and always returns only one (contiguous) segment.
+	 */
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	if (error)
+		return (error);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	m = mlist.tqh_first;
+	curseg = 0;
+	lastaddr = VM_PAGE_TO_PHYS(m);
+	segs[curseg].ds_addr = lastaddr;
+	segs[curseg].ds_len = PAGE_SIZE;
+	m = m->pageq.tqe_next;
+
+	for (; m != NULL; m = m->pageq.tqe_next) {
+		if ( curseg > nsegs ) {
+#ifdef DIAGNOSTIC
+			printf("_bus_dmamem_alloc_common: too many segments\n");
+#ifdef DEBUG
+			panic("_bus_dmamem_alloc_common");
+#endif
+#endif
+			uvm_pglistfree(&mlist);
+			return (-1);
+		}
+
+		curaddr = VM_PAGE_TO_PHYS(m);
+#ifdef DIAGNOSTIC
+		if (curaddr < low || curaddr > high) {
+			printf("vm_page_alloc_memory returned non-sensical"
+			    " address 0x%lx\n", curaddr);
+			panic("_bus_dmamem_alloc_common");
+		}
+#endif
+		if (curaddr == (lastaddr + PAGE_SIZE))
+			segs[curseg].ds_len += PAGE_SIZE;
+		else {
+			curseg++;
+			segs[curseg].ds_addr = curaddr;
+			segs[curseg].ds_len = PAGE_SIZE;
+		}
+		lastaddr = curaddr;
+	}
+
+	*rsegs = curseg + 1;
+
+	return (0);
+}
+/*
+ * Common function for DMA-safe memory allocation.  May be called
+ * by bus-specific DMA memory allocation functions.
+ */
+int
 _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	bus_dma_tag_t t; 
 	bus_size_t size, alignment, boundary;
@@ -550,13 +635,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags; 
 {
 	extern paddr_t avail_start, avail_end;
-	paddr_t curaddr, lastaddr, high;
-	vm_page_t m;    
-	struct pglist mlist;
-	int curseg, error;
-
-	/* Always round the size. */
-	size = round_page(size);
+	bus_addr_t high;
 
 	/*
 	 * Assume any memory will do (this includes off-board RAM)
@@ -577,67 +656,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		high = 0x01000000u;
 	}
 
-	high -= PAGE_SIZE;
-
-	/*
-	 * Allocate pages from the VM system.
-	 *
-	 * XXXSCW: This will be sub-optimal if the base-address of offboard
-	 * RAM is significantly higher than the end-address of onboard RAM.
-	 * (Due to how uvm_pglistalloc() is implemented.)
-	 *
-	 * uvm_pglistalloc() also currently ignores the 'nsegs' parameter,
-	 * and always returns only one (contiguous) segment.
-	 */
-	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
-	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
-		return (error);
-
-	/*
-	 * Compute the location, size, and number of segments actually
-	 * returned by the VM code.
-	 */
-	m = mlist.tqh_first;
-	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
-	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
-
-	for (; m != NULL; m = m->pageq.tqe_next) {
-		if ( curseg > nsegs ) {
-#ifdef DIAGNOSTIC
-			printf("_bus_dmamem_alloc: too many segments!\n");
-#ifdef DEBUG
-			panic("_bus_dmamem_alloc");
-#endif
-#endif
-			uvm_pglistfree(&mlist);
-			return (-1);
-		}
-
-		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < avail_start || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc");
-		}
-#endif
-		if (curaddr == (lastaddr + PAGE_SIZE))
-			segs[curseg].ds_len += PAGE_SIZE;
-		else {
-			curseg++;
-			segs[curseg].ds_addr = curaddr;
-			segs[curseg].ds_len = PAGE_SIZE;
-		}
-		lastaddr = curaddr;
-	}
-
-	*rsegs = curseg + 1;
-
-	return (0);
+	return _bus_dmamem_alloc_common(t, avail_start, high,
+	    size, alignment, boundary, segs, nsegs, rsegs, flags);
 }
 
 /*
