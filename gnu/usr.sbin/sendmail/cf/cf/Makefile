@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:41 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2000/02/08 16:13:26 tron Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -40,7 +40,7 @@ clean cleandir distclean:
 
 realdepend:
 
-distribution:
+distribution: netbsd-proto.cf
 	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
 	    ${DESTDIR}/etc/sendmail.cf
 
