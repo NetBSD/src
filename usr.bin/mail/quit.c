@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.17 2002/03/05 21:11:46 wiz Exp $	*/
+/*	$NetBSD: quit.c,v 1.18 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.17 2002/03/05 21:11:46 wiz Exp $");
+__RCSID("$NetBSD: quit.c,v 1.18 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,17 +138,17 @@ nolock:
 #ifdef APPEND
 		fseek(fbuf, (long)mailsize, 0);
 		while ((c = getc(fbuf)) != EOF)
-			(void) putc(c, rbuf);
+			(void)putc(c, rbuf);
 #else
 		p = minfo.st_size - mailsize;
 		while (p-- > 0) {
 			c = getc(fbuf);
 			if (c == EOF)
 				goto newmail;
-			(void) putc(c, rbuf);
+			(void)putc(c, rbuf);
 		}
 #endif
-		(void) fflush(rbuf);
+		(void)fflush(rbuf);
 		if (ferror(rbuf)) {
 			warn("%s", tempname);
 			Fclose(rbuf);
@@ -254,7 +254,7 @@ nolock:
 		rm(tempname);
 		if ((abuf = Fopen(mbox, "r")) != NULL) {
 			while ((c = getc(abuf)) != EOF)
-				(void) putc(c, obuf);
+				(void)putc(c, obuf);
 			Fclose(abuf);
 		}
 		if (ferror(obuf)) {
@@ -305,7 +305,7 @@ nolock:
 		rewind(ibuf);
 		c = getc(ibuf);
 		while (c != EOF) {
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 			if (ferror(obuf))
 				break;
 			c = getc(ibuf);
@@ -351,8 +351,8 @@ cream:
 		if (abuf == NULL)
 			goto newmail;
 		while ((c = getc(rbuf)) != EOF)
-			(void) putc(c, abuf);
-		(void) fflush(abuf);
+			(void)putc(c, abuf);
+		(void)fflush(abuf);
 		if (ferror(abuf)) {
 			warn("%s", mailname);
 			Fclose(abuf);
@@ -402,8 +402,8 @@ writeback(FILE *res)
 #ifndef APPEND
 	if (res != NULL) {
 		while ((c = getc(res)) != EOF)
-			(void) putc(c, obuf);
-		(void) fflush(obuf);
+			(void)putc(c, obuf);
+		(void)fflush(obuf);
 		if (ferror(obuf)) {
 			warn("%s", mailname);
 			Fclose(obuf);
@@ -423,7 +423,7 @@ writeback(FILE *res)
 #ifdef APPEND
 	if (res != NULL)
 		while ((c = getc(res)) != EOF)
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 #endif
 	fflush(obuf);
 	if (!ferror(obuf))
@@ -504,8 +504,8 @@ edstop(void)
 		}
 		fseek(ibuf, (long)mailsize, 0);
 		while ((c = getc(ibuf)) != EOF)
-			(void) putc(c, obuf);
-		(void) fflush(obuf);
+			(void)putc(c, obuf);
+		(void)fflush(obuf);
 		if (ferror(obuf)) {
 			warn("%s", tempname);
 			Fclose(obuf);
@@ -546,7 +546,7 @@ edstop(void)
 	gotcha = (c == 0 && ibuf == NULL);
 	if (ibuf != NULL) {
 		while ((c = getc(ibuf)) != EOF)
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 		Fclose(ibuf);
 	}
 	fflush(obuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.12 2002/03/04 03:07:26 wiz Exp $	*/
+/*	$NetBSD: popen.c,v 1.13 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.12 2002/03/04 03:07:26 wiz Exp $");
+__RCSID("$NetBSD: popen.c,v 1.13 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ Fopen(char *fn, char *mode)
 
 	if ((fp = fopen(fn, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void) fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, 1);
 	}
 	return fp;
 }
@@ -87,7 +87,7 @@ Fdopen(int fd, char *mode)
 
 	if ((fp = fdopen(fd, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void) fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, 1);
 	}
 	return fp;
 }
@@ -110,8 +110,8 @@ Popen(char *cmd, char *mode)
 
 	if (pipe(p) < 0)
 		return NULL;
-	(void) fcntl(p[READ], F_SETFD, 1);
-	(void) fcntl(p[WRITE], F_SETFD, 1);
+	(void)fcntl(p[READ], F_SETFD, 1);
+	(void)fcntl(p[WRITE], F_SETFD, 1);
 	if (*mode == 'r') {
 		myside = p[READ];
 		fd0 = -1;
@@ -127,7 +127,7 @@ Popen(char *cmd, char *mode)
 		close(p[WRITE]);
 		return NULL;
 	}
-	(void) close(hisside);
+	(void)close(hisside);
 	if ((fp = fdopen(myside, mode)) != NULL)
 		register_file(fp, 1, pid);
 	return fp;
@@ -141,7 +141,7 @@ Pclose(FILE *ptr)
 
 	i = file_pid(ptr);
 	unregister_file(ptr);
-	(void) fclose(ptr);
+	(void)fclose(ptr);
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGINT);
 	sigaddset(&nset, SIGHUP);
@@ -157,9 +157,9 @@ close_all_files(void)
 
 	while (fp_head)
 		if (fp_head->pipe)
-			(void) Pclose(fp_head->fp);
+			(void)Pclose(fp_head->fp);
 		else
-			(void) Fclose(fp_head->fp);
+			(void)Fclose(fp_head->fp);
 }
 
 void
@@ -264,11 +264,11 @@ prepare_child(sigset_t *nset, int infd, int outfd)
 		dup2(outfd, 1);
 	for (i = 1; i < NSIG; i++)
 		if (nset != NULL && sigismember(nset, i))
-			(void) signal(i, SIG_IGN);
+			(void)signal(i, SIG_IGN);
 	if (nset == NULL || !sigismember(nset, SIGINT))
-		(void) signal(SIGINT, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
 	sigemptyset(&eset);
-	(void) sigprocmask(SIG_SETMASK, &eset, NULL);
+	(void)sigprocmask(SIG_SETMASK, &eset, NULL);
 }
 
 int
