@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.8 2000/04/22 17:06:01 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.9 2000/05/17 09:25:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -331,7 +331,9 @@ next_intr:
 }
 
 /*
- * what is our OFW node?
+ * what is our OFW node?  this depends on our pci chipset tag
+ * having it's "node" value set to the OFW node of the PCI bus,
+ * see the simba driver.
  */
 int
 ebus_find_node(sc, pa)
