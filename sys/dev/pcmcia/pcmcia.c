@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.68 2004/08/12 17:26:51 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.69 2004/08/12 17:31:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.68 2004/08/12 17:26:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.69 2004/08/12 17:31:06 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -227,6 +227,7 @@ pcmcia_card_detach(dev, flags)
 	 * or in user context detaching a device by user request.
 	 */
 	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
+		pf->pf_flags |= PFF_DETACHED;
 		if (SIMPLEQ_EMPTY(&pf->cfe_head))
 			continue;
 		if (pf->child == NULL)
@@ -614,7 +615,8 @@ pcmcia_function_disable(pf)
 		goto out;
 	}
 
-	if (pcmcia_mfc(sc)) {
+	if (pcmcia_mfc(sc) &&
+	    (pf->pf_flags & PFF_DETACHED) == 0) {
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		reg &= ~(PCMCIA_CCR_OPTION_FUNC_ENABLE|
 			 PCMCIA_CCR_OPTION_ADDR_DECODE|
