@@ -1,4 +1,4 @@
-/*	$NetBSD: ctreg.h,v 1.8 2003/08/07 16:27:26 agc Exp $	*/
+/*	$NetBSD: ctreg.h,v 1.9 2004/04/19 12:44:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -113,7 +113,7 @@ struct ct_describe {
 		d_access:16,	/* unit: access time param (1/100-sec) */
 		d_maxint:8,	/* unit: maximum interleave */
 		d_fvbyte:8,	/* unit: fixed volume byte */
-		d_rvbyte:8,	/* unit: removeable volume byte */
+		d_rvbyte:8,	/* unit: removable volume byte */
 		d_maxcyl:24,	/* volume: maximum cylinder */
 		d_maxhead:8,	/* volume: maximum head */
 		d_maxsect:16,	/* volume: maximum sector on track */
