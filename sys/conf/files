@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.181 1998/04/22 07:08:11 jonathan Exp $
+#	$NetBSD: files,v 1.182 1998/04/29 20:45:30 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -19,6 +19,7 @@ defopt	opt_ntp.h	PPS_SYNC NTP
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 			NFS_BOOT_GATEWAY
 
+defopt	GATEWAY
 defopt	MROUTING
 defopt	TCP_COMPAT_42
 
