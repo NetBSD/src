@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005reg.h,v 1.1 2000/09/18 20:51:15 bjh21 Exp $ */
+/* $NetBSD: seeq8005reg.h,v 1.2 2000/09/21 22:20:38 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -48,7 +48,7 @@
 #define EA_8005_TX_PTR		0xc
 #define EA_8005_DMA_ADDR	0xe
 
-#define EA_CMD_DMA_INTEN	(1 << 0)
+#define EA_CMD_DMA_INTEN	(1 << 0) /* s/DMA/TEST/ on 80C04? */
 #define EA_CMD_RX_INTEN		(1 << 1)
 #define EA_CMD_TX_INTEN		(1 << 2)
 #define EA_CMD_BW_INTEN		(1 << 3)
@@ -65,7 +65,7 @@
 #define EA_CMD_FIFO_READ	(1 << 14)
 #define EA_CMD_FIFO_WRITE	(1 << 15)
 
-#define EA_STATUS_DMA_INT	(1 << 4)
+#define EA_STATUS_DMA_INT	(1 << 4) /* s/DMA/TEST/ on 80C04? */
 #define EA_STATUS_RX_INT	(1 << 5)
 #define EA_STATUS_TX_INT	(1 << 6)
 #define EA_STATUS_RX_ON		(1 << 9)
@@ -75,33 +75,35 @@
 #define EA_STATUS_FIFO_DIR	(1 << 15)
 #define EA_STATUS_FIFO_READ	(1 << 15)
 
-#define EA_CFG1_DMA_BURST_CONT	0x00
-#define EA_CFG1_DMA_BURST_800	0x10
-#define EA_CFG1_DMA_BURST_1600	0x20
-#define EA_CFG1_DMA_BURST_3200	0x30
-#define EA_CFG1_DMA_BSIZE_1	0x00
-#define EA_CFG1_DMA_BSIZE_4	0x40
-#define EA_CFG1_DMA_BSIZE_8	0x80
-#define EA_CFG1_DMA_BSIZE_16	0xc0
+#define EA_CFG1_DMA_BURST_CONT	0x00	/* 8005 only? */
+#define EA_CFG1_DMA_BURST_800	0x10	/* 8005 only? */
+#define EA_CFG1_DMA_BURST_1600	0x20	/* 8005 only? */
+#define EA_CFG1_DMA_BURST_3200	0x30	/* 8005 only? */
+#define EA_CFG1_DMA_BSIZE_1	0x00	/* 8005 only? */
+#define EA_CFG1_DMA_BSIZE_4	0x40	/* 8005 only? */
+#define EA_CFG1_DMA_BSIZE_8	0x80	/* 8005 only? */
+#define EA_CFG1_DMA_BSIZE_16	0xc0	/* 8005 only? */
 
-#define EA_CFG1_STATION_ADDR0	(1 << 8)
-#define EA_CFG1_STATION_ADDR1	(1 << 9)
-#define EA_CFG1_STATION_ADDR2	(1 << 10)
-#define EA_CFG1_STATION_ADDR3	(1 << 11)
-#define EA_CFG1_STATION_ADDR4	(1 << 12)
-#define EA_CFG1_STATION_ADDR5	(1 << 13)
+#define EA_CFG1_STATION_ADDR0	(1 << 8)	/* 8005 only? */
+#define EA_CFG1_STATION_ADDR1	(1 << 9)	/* 8005 only? */
+#define EA_CFG1_STATION_ADDR2	(1 << 10)	/* 8005 only? */
+#define EA_CFG1_STATION_ADDR3	(1 << 11)	/* 8005 only? */
+#define EA_CFG1_STATION_ADDR4	(1 << 12)	/* 8005 only? */
+#define EA_CFG1_STATION_ADDR5	(1 << 13)	/* 8005 only? */
 #define EA_CFG1_SPECIFIC	((0 << 15) | (0 << 14))
 #define EA_CFG1_BROADCAST	((0 << 15) | (1 << 14))
 #define EA_CFG1_MULTICAST	((1 << 15) | (0 << 14))
 #define EA_CFG1_PROMISCUOUS	((1 << 15) | (1 << 14))
 
 #define EA_CFG2_BYTESWAP	(1 << 0)
+#define EA_CFG2_REA_AUTOUPDATE	(1 << 1)	/* 80C04 only */
+#define EA_CFG2_RX_TX_DISABLE	(1 << 2)	/* 80C04 only */
 #define EA_CFG2_CRC_ERR_ENABLE	(1 << 3)
 #define EA_CFG2_DRIB_ERR_ENABLE (1 << 4)
 #define EA_CFG2_PASS_SHORT	(1 << 5)
-#define EA_CFG2_SLOT_SELECT	(1 << 6)
+#define EA_CFG2_SLOT_SELECT	(1 << 6)	/* 8005 only? */
 #define EA_CFG2_PREAM_SELECT	(1 << 7)
-#define EA_CFG2_ADDR_LENGTH	(1 << 8)
+#define EA_CFG2_ADDR_LENGTH	(1 << 8)	/* 8005 only? */
 #define EA_CFG2_RX_CRC		(1 << 9)
 #define EA_CFG2_NO_TX_CRC	(1 << 10)
 #define EA_CFG2_LOOPBACK	(1 << 11)
@@ -109,16 +111,20 @@
 #define EA_CFG2_RESET		(1 << 15)
 
 #define EA_BUFCODE_STATION_ADDR0	0x00
-#define EA_BUFCODE_STATION_ADDR1	0x01
-#define EA_BUFCODE_STATION_ADDR2	0x02
-#define EA_BUFCODE_STATION_ADDR3	0x03
-#define EA_BUFCODE_STATION_ADDR4	0x04
-#define EA_BUFCODE_STATION_ADDR5	0x05
+#define EA_BUFCODE_STATION_ADDR1	0x01	/* 8005 only? */
+#define EA_BUFCODE_STATION_ADDR2	0x02	/* 8005 only? */
+#define EA_BUFCODE_STATION_ADDR3	0x03	/* 8005 only? */
+#define EA_BUFCODE_STATION_ADDR4	0x04	/* 8005 only? */
+#define EA_BUFCODE_STATION_ADDR5	0x05	/* 8005 only? */
 #define EA_BUFCODE_ADDRESS_PROM		0x06
 #define EA_BUFCODE_TX_EAP		0x07
 #define EA_BUFCODE_LOCAL_MEM		0x08
-#define EA_BUFCODE_INT_VECTOR		0x09
-/*#define EA_BUFCODE_MULTICAST		0x0f*/
+#define EA_BUFCODE_INT_VECTOR		0x09	/* 8005 only? */
+#define EA_BUFCODE_TX_COLLS		0x0b	/* 80C04 only */
+#define EA_BUFCODE_CONFIG3		0x0c	/* 80C04 only */
+#define EA_BUFCODE_PRODUCTID		0x0d	/* 80C04 only */
+#define EA_BUFCODE_TESTENABLE		0x0e	/* 80C04 only */
+#define EA_BUFCODE_MULTICAST		0x0f	/* 80C04 only */
 
 #define EA_PKTHDR_TX		(1 << 7)
 #define EA_PKTHDR_RX		(0 << 7)
@@ -130,11 +136,14 @@
 #define EA_TXHDR_BABBLE		(1 << 0)
 #define EA_TXHDR_COLLISION	(1 << 1)
 #define EA_TXHDR_COLLISION16	(1 << 2)
+#define EA_TXHDR_COLLISIONMASK	(0x78)		/* 80C04 only */
+#define EA_TXHDR_ERROR_MASK	(0x07)		/* 80C04 only */
 
 #define EA_TXHDR_BABBLE_INT	(1 << 0)
 #define EA_TXHDR_COLLISION_INT	(1 << 1)
 #define EA_TXHDR_COLLISION16_INT	(1 << 2)
 #define EA_TXHDR_XMIT_SUCCESS_INT	(1 << 3)
+#define EB_TXHDR_SQET_TEST_INT	(1 << 3)	/* 80C04 only */
 #define EA_TXHDR_ERROR_MASK	(0x07)
 
 #define EA_RXHDR_OVERSIZE	(1 << 0)
