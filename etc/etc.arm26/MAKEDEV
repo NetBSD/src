@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.17 2002/03/03 14:16:00 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2002/03/04 14:02:30 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -91,33 +91,47 @@ callunit=262144
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
+
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
+makedev()
+{
+
 for i
 do
 case $i in
 
 all)
-	sh $0 std wscons fd pty0
-	sh $0 vnd0 vnd1 vnd2 vnd3
-	sh $0 ccd0 ccd1 ccd2 ccd3 md0 md1
-	sh $0 wd0 wd1 sd0 sd1
-	sh $0 wskbd0 wsmouse0
-	sh $0 com0 lpt0 arcpp0
-	sh $0 clockctl
+	makedev std wscons fd pty0
+	makedev vnd0 vnd1 vnd2 vnd3
+	makedev ccd0 ccd1 ccd2 ccd3 md0 md1
+	makedev wd0 wd1 sd0 sd1
+	makedev wskbd0 wsmouse0
+	makedev com0 lpt0 arcpp0
+	makedev clockctl
 	;;
 
 minimal)
-	sh $0 std
-	sh $0 opty ccd0 ccd1 md0
-	sh $0 ttyE0 ttyE1 wsmouse0 wskbd0 ttyEcfg
+	makedev std
+	makedev opty ccd0 ccd1 md0
+	makedev ttyE0 ttyE1 wsmouse0 wskbd0 ttyEcfg
 	;;
 
 wscons)
-	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
-	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
-	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
-	sh $0 wsmouse wskbd
-	sh $0 ttyEcfg
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wsmouse wskbd
+	makedev ttyEcfg
 	;;
 
 wskbd*)
@@ -126,7 +140,6 @@ wskbd*)
 	wskbd=wskbd$unit
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
-	chown root.wheel $wskbd
 	chmod 600 $wskbd
 	;;
 
@@ -136,21 +149,18 @@ wsmouse*)
 	wsmouse=wsmouse$unit
 	rm -f $wsmouse
 	mknod $wsmouse c 12 $unit
-	chown root.wheel $wsmouse
 	chmod 600 $wsmouse
 	;;
 
 wsmouse)
 	rm -f wsmouse
 	mknod wsmouse c 13 0
-	chown root.wheel wsmouse
 	chmod 600 wsmouse
 	;;
 
 wskbd)
 	rm -f wskbd
 	mknod wskbd c 13 1
-	chown root.wheel wskbd
 	chmod 600 wskbd
 	;;
 
@@ -162,40 +172,42 @@ wsmux*)
 	major=13
 	rm -f $wsmux $wsmuxctl
 	mknod $wsmux c $major $unit
-	chown root.wheel $wsmux
 	chmod 600 $wsmux
 	mknod $wsmuxctl c $major $unitctl
-	chown root.wheel $wsmuxctl
 	chmod 200 $wsmuxctl
 	;;
 
 std)
-	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
+	rm -f console drum mem kmem null zero io klog
 	mknod console		c 0 0
-	mknod tty		c 1 0	; chmod 666 tty
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
 	mknod null		c 2 2	; chmod 666 null
 	mknod zero		c 2 3	; chmod 666 zero
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod klog		c 6 0	; chmod 600 klog
-	mknod stdin		c 7 0	; chmod 666 stdin
-	mknod stdout		c 7 1	; chmod 666 stdout
-	mknod stderr		c 7 2	; chmod 666 stderr
+	if $nofdesc; then
+		rm -f tty stdin stdout stderr
+		mknod tty	c 1 0	; chmod 666 tty
+		mknod stdin	c 7 0	; chmod 666 stdin
+		mknod stdout	c 7 1	; chmod 666 stdout
+		mknod stderr	c 7 2	; chmod 666 stderr
+	fi
 	;;
 
 fd)
-	major=7
-	rm -f fd/*
-	mkdir fd > /dev/null 2>&1
-	n=0
-	while [ $n -lt 64 ]; do
-		mknod fd/$n c $major $n
-		n=$(($n + 1))
-	done
-	chown -R root.wheel fd
-	chmod 755 fd
-	chmod 666 fd/*
+	if $nofdesc; then
+		major=7
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mknod fd/$n c $major $n
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
 	;;
 
 md*)
@@ -242,17 +254,16 @@ ccd*|raid*|vnd*|wd*|sd*|cd*)
 ttyEcfg)
 	rm -f $i
 	mknod $i c 14 255
-	chown root:wheel $i
 	;;
 
 ttyE*)
 	case $i in
 	ttyE*)	name=ttyE; unit=${i#ttyE};	major=14; minor=$unit;;
 	esac
-        rm -f $name$unit
-        mknod $name$unit c $major $minor
-        chown uucp.wheel $name$unit
-        ;;
+	rm -f $name$unit
+	mknod $name$unit c $major $minor
+	chown uucp $name$unit
+	;;
 
 com*|tty*)					# (XXX -- com should die)
 	ounit=${i#???}
@@ -266,7 +277,7 @@ com*|tty*)					# (XXX -- com should die)
 	rm -f tty$unit dty$unit
 	mknod tty$unit c 20 $(($ounit + $dialin ))
 	mknod dty$unit c 20 $(($ounit + $dialout))
-	chown uucp.wheel tty$unit dty$unit
+	chown uucp tty$unit dty$unit
 	;;
 
 
@@ -286,7 +297,6 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
 	;;
 
@@ -315,8 +325,7 @@ pty*)
 		mknod pty$name$j c 5 $unit
 		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
-        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 bpf*|tun*|lpt*|arcpp*)
@@ -328,7 +337,6 @@ bpf*|tun*|lpt*|arcpp*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
 	;;
 
 ipl)
@@ -337,7 +345,6 @@ ipl)
 	mknod ipnat c 23 1
 	mknod ipstate c 23 2
 	mknod ipauth c 23 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -345,7 +352,6 @@ random)
 	rm -f random urandom
 	mknod random c 24 0
 	mknod urandom c 24 1
-	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
@@ -356,7 +362,6 @@ cfs*)
 	major=25
 	rm -f $cfs
 	mknod $cfs c $major $unit
-	chown root.wheel $cfs
 	chmod 600 $cfs
 	;;
 
@@ -364,7 +369,7 @@ cfs*)
 clockctl)
 	rm -f clockctl
 	mknod clockctl c 27 0
-	chown root.ntpd clockctl
+	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
 
@@ -380,3 +385,7 @@ local)
 
 esac
 done
+
+}
+
+makedev $*

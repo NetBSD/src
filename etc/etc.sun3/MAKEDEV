@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 2002/03/03 14:16:11 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.41 2002/03/04 14:02:38 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -84,6 +84,20 @@ mk() {
 	return 0
 }
 
+
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
+makedev()
+{
+
 for arg
 do
 
@@ -93,26 +107,25 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh $0 std fd pty0
-	sh $0 bwtwo0 cgtwo0 cgfour0
-	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
-	sh $0 cd0 cd1 st0 st1 st2 fd0 md0 md1
-	sh $0 xd0 xd1 xd2 xd3
-	sh $0 xy0 xy1 xy2 xy3
-	sh $0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
-	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1
-	sh $0 lkm random
-	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh $0 local
-	sh $0 clockctl
+	makedev std fd pty0
+	makedev bwtwo0 cgtwo0 cgfour0
+	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
+	makedev sd0 sd1 sd2 sd3 sd4 sd5 sd6
+	makedev cd0 cd1 st0 st1 st2 fd0 md0 md1
+	makedev xd0 xd1 xd2 xd3
+	makedev xy0 xy1 xy2 xy3
+	makedev vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev tun0 tun1
+	makedev lkm random
+	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev local
+	makedev clockctl
 	;;
 
 std)
 	mk console	c 0 0 622
 	mk kd		c 1 0 622
-	mk tty		c 2 0
 
 	mk mem		c 3 0 640 kmem
 	mk kmem		c 3 1 640 kmem
@@ -128,21 +141,26 @@ std)
 	mk klog		c 16 0 600
 	mk fb		c 22 0
 	mk kbd		c 29 0
-	mk stdin	c 23 0
-	mk stdout	c 23 1
-	mk stderr	c 23 2
+	if $nofdesc; then
+		mk tty		c 2 0
+		mk stdin	c 23 0
+		mk stdout	c 23 1
+		mk stderr	c 23 2
+	fi
 	;;
 
 fd)
-	rm -f fd/*
-	mkdir fd > /dev/null 2>&1
-	n=0
-	while [ $n -lt 64 ]; do
-		mk fd/$n c 23 $n 666
-		n=$(($n + 1))
-	done
-	chown -R root.wheel fd
-	chmod 755 fd
+	if $nofdesc; then
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mk fd/$n c 23 $n 666
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
 	;;
 
 bpf*)
@@ -169,7 +187,6 @@ opty)
 		mknod ttyp$j c 20 $jn
 		mknod ptyp$j c 21 $jn
 	done
-	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
 	;;
 
@@ -198,8 +215,7 @@ pty*)
 		mknod pty$name$j c 21 $unit
 		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
-        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 ccd*|cd*|fd*|sd*|xd*|xy*|vnd*|raid*)
@@ -274,7 +290,7 @@ scsibus*)
 clockctl)
 	rm -f clockctl
 	mknod clockctl c 84 0
-	chown root.ntpd clockctl
+	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
 
@@ -290,3 +306,6 @@ local)
 esac
 done
 
+}
+
+makedev $*
