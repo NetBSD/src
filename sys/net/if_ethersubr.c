@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.21.4.1 1997/02/07 18:06:58 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.21.4.2 1997/02/11 20:21:12 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -108,6 +108,7 @@ ether_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct ether_header *eh;
+	struct arphdr *ah;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -152,6 +153,29 @@ ether_output(ifp, m0, dst, rt0)
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		etype = htons(ETHERTYPE_IP);
+		break;
+
+	case AF_ARP:
+		ah = mtod(m, struct arphdr *);
+		if (m->m_flags & M_BCAST)
+                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+				sizeof(edst));
+		else
+			bcopy((caddr_t)ar_tha(ah),
+				(caddr_t)edst, sizeof(edst));
+		
+		switch(ah->ar_op) {
+		case ARPOP_REVREQUEST:
+		case ARPOP_REVREPLY:
+			etype = htons(ETHERTYPE_REVARP);
+			break;
+
+		case ARPOP_REQUEST:
+		case ARPOP_REPLY:
+		default:
+			etype = htons(ETHERTYPE_ARP);
+		}
+
 		break;
 #endif
 #ifdef NS

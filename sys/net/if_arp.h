@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.8 1995/03/08 02:56:52 cgd Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.8.8.1 1997/02/11 20:21:11 is Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -69,7 +69,13 @@ struct	arphdr {
 	u_int8_t  ar_tha[];	/* target hardware address */
 	u_int8_t  ar_tpa[];	/* target protocol address */
 #endif
+	u_int8_t  ar_remain[0];	/* minimum size, normally bigger */
+#define ar_sha(ap) (((ap)->ar_remain)+0)
+#define ar_spa(ap) (((ap)->ar_remain)+(ap)->ar_hln)
+#define ar_tha(ap) (((ap)->ar_remain)+(ap)->ar_hln+(ap)->ar_pln)
+#define ar_tpa(ap) (((ap)->ar_remain)+2*(ap)->ar_hln+(ap)->ar_pln)
 };
+
 
 /*
  * ARP ioctl request
