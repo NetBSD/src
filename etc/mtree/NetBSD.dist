@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.78 1999/02/09 17:41:13 tv Exp $
+#	$NetBSD: NetBSD.dist,v 1.79 1999/02/11 14:39:35 tv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -921,6 +921,11 @@ devlj4
 # ./usr/share/groff_font
 ..
 
+# ./usr/share/info
+info
+# ./usr/share/info
+..
+
 # ./usr/share/keymaps
 keymaps
 
@@ -970,6 +975,29 @@ vfs
 
 # ./usr/share/locale
 locale
+
+# ./usr/share/locale/de
+de
+
+# ./usr/share/locale/de/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/de/LC_MESSAGES
+..
+
+# ./usr/share/locale/de
+..
+
+# ./usr/share/locale/fr
+fr
+
+# ./usr/share/locale/fr/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/fr/LC_MESSAGES
+..
+
+# ./usr/share/locale/fr
+..
+
 # ./usr/share/locale
 ..
 
