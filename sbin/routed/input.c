@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: input.c,v 1.1.1.6 1998/06/02 17:41:25 thorpej Exp $";
+__RCSID("$NetBSD: input.c,v 1.1.1.7 1999/02/23 09:56:50 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.6 $"
 
 #include "defs.h"
 
@@ -145,7 +144,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	struct rt_spare new;
 	struct netinfo *n, *lim;
 	struct interface *ifp1;
-	naddr gate, mask, v1_mask, dst, ddst_h;
+	naddr gate, mask, v1_mask, dst, ddst_h = 0;
 	struct auth *ap;
 	struct tgate *tg = 0;
 	struct tgate_net *tn;
@@ -167,7 +166,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	} else if (rip->rip_vers > RIPv2) {
 		rip->rip_vers = RIPv2;
 	}
-	if (cc > OVER_MAXPACKETSIZE) {
+	if (cc > (int)OVER_MAXPACKETSIZE) {
 		msglim(&bad_router, FROM_NADDR,
 		       "packet at least %d bytes too long received from %s",
 		       cc-MAXPACKETSIZE, naddr_ntoa(FROM_NADDR));
@@ -183,7 +182,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	 *
 	 * RIPv2 authentication is lame.  Why authenticate queries?
 	 * Why should a RIPv2 implementation with authentication disabled
-	 * not be able to listen to RIPv2 packets with authenication, while
+	 * not be able to listen to RIPv2 packets with authentication, while
 	 * RIPv1 systems will listen?  Crazy!
 	 */
 	if (!auth_ok
@@ -233,7 +232,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			}
 		}
 
-		/* According to RFC 1723, we should ignore unathenticated
+		/* According to RFC 1723, we should ignore unauthenticated
 		 * queries.  That is too silly to bother with.  Sheesh!
 		 * Are forwarding tables supposed to be secret, when
 		 * a bad guy can infer them with test traffic?  When RIP
@@ -607,7 +606,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			 */
 			gate = FROM_NADDR;
 			if (n->n_nhop != 0) {
-				if (rip->rip_vers == RIPv2) {
+				if (rip->rip_vers == RIPv1) {
 					n->n_nhop = 0;
 				} else {
 				    /* Use it only if it is valid. */
@@ -633,7 +632,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			} else if ((ntohl(dst) & ~mask) != 0) {
 				msglim(&bad_mask, FROM_NADDR,
 				       "router %s sent bad netmask"
-				       " %#x with %s",
+				       " %#lx with %s",
 				       naddr_ntoa(FROM_NADDR),
 				       mask,
 				       naddr_ntoa(dst));
@@ -670,7 +669,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			 */
 			if (aifp->int_d_metric != 0
 			    && dst == RIP_DEFAULT
-			    && n->n_metric >= aifp->int_d_metric)
+			    && (int)n->n_metric >= aifp->int_d_metric)
 				continue;
 
 			/* We can receive aggregated RIPv2 routes that must
@@ -911,7 +910,7 @@ ck_passwd(struct interface *aifp,
 	struct auth *ap;
 	MD5_CTX md5_ctx;
 	u_char hash[RIP_AUTH_PW_LEN];
-	int i;
+	int i, len;
 
 
 	if ((void *)NA >= lim || NA->a_family != RIP_AF_AUTH) {
@@ -929,7 +928,7 @@ ck_passwd(struct interface *aifp,
 			continue;
 
 		if (NA->a_type == RIP_AUTH_PW) {
-			if (!bcmp(NA->au.au_pw, ap->key, RIP_AUTH_PW_LEN))
+			if (!memcmp(NA->au.au_pw, ap->key, RIP_AUTH_PW_LEN))
 				return 1;
 
 		} else {
@@ -938,28 +937,52 @@ ck_passwd(struct interface *aifp,
 			if (NA->au.a_md5.md5_keyid != ap->keyid)
 				continue;
 
-			na2 = (struct netauth *)((char *)(NA+1)
-						 + NA->au.a_md5.md5_pkt_len);
-			if (NA->au.a_md5.md5_pkt_len % sizeof(*NA) != 0
-			    || lim < (void *)(na2+1)) {
+			len = ntohs(NA->au.a_md5.md5_pkt_len);
+			if ((len-sizeof(*rip)) % sizeof(*NA) != 0
+			    || len != (char *)lim-(char*)rip-(int)sizeof(*NA)) {
 				msglim(use_authp, from,
-				       "bad MD5 RIP-II pkt length %d from %s",
-				       NA->au.a_md5.md5_pkt_len,
+				       "wrong MD5 RIPv2 packet length of %d"
+				       " instead of %d from %s",
+				       len, (int)((char *)lim-(char *)rip
+						  -sizeof(*NA)),
 				       naddr_ntoa(from));
 				return 0;
 			}
+			na2 = (struct netauth *)((char *)rip+len);
+
+			/* Given a good hash value, these are not security
+			 * problems so be generous and accept the routes,
+			 * after complaining.
+			 */
+			if (TRACEPACKETS) {
+				if (NA->au.a_md5.md5_auth_len
+				    != RIP_AUTH_MD5_LEN)
+					msglim(use_authp, from,
+					       "unknown MD5 RIPv2 auth len %#x"
+					       " instead of %#x from %s",
+					       NA->au.a_md5.md5_auth_len,
+					       RIP_AUTH_MD5_LEN,
+					       naddr_ntoa(from));
+				if (na2->a_family != RIP_AF_AUTH)
+					msglim(use_authp, from,
+					       "unknown MD5 RIPv2 family %#x"
+					       " instead of %#x from %s",
+					       na2->a_family, RIP_AF_AUTH,
+					       naddr_ntoa(from));
+				if (na2->a_type != ntohs(1))
+					msglim(use_authp, from,
+					       "MD5 RIPv2 hash has %#x"
+					       " instead of %#x from %s",
+					       na2->a_type, ntohs(1),
+					       naddr_ntoa(from));
+			}
+
 			MD5Init(&md5_ctx);
-			MD5Update(&md5_ctx, (u_char *)NA,
-				  (char *)na2->au.au_pw - (char *)NA);
-			MD5Update(&md5_ctx,
-				  (u_char *)ap->key, sizeof(ap->key));
+			MD5Update(&md5_ctx, (u_char *)rip, len);
+			MD5Update(&md5_ctx, ap->key, RIP_AUTH_MD5_LEN);
 			MD5Final(hash, &md5_ctx);
-			if (na2->a_family != RIP_AF_AUTH
-			    || na2->a_type != 1
-			    || NA->au.a_md5.md5_auth_len != RIP_AUTH_PW_LEN
-			    || bcmp(hash, na2->au.au_pw, sizeof(hash)))
-				return 0;
-			return 1;
+			if (!memcmp(hash, na2->au.au_pw, sizeof(hash)))
+				return 1;
 		}
 	}
 

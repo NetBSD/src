@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: trace.c,v 1.1.1.6 1998/06/02 17:41:27 thorpej Exp $";
+__RCSID("$NetBSD: trace.c,v 1.1.1.7 1999/02/23 09:56:53 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.6 $"
 
 #define	RIPCMDS
 #include "defs.h"
@@ -55,12 +54,13 @@ static char rcsid[] = "$NetBSD: trace.c,v 1.1.1.6 1998/06/02 17:41:27 thorpej Ex
 
 int	tracelevel, new_tracelevel;
 FILE	*ftrace = stdout;		/* output trace file */
-static char *sigtrace_pat = "%s";
+static const char *sigtrace_pat = "%s";
 static char savetracename[MAXPATHLEN+1];
 char	inittracename[MAXPATHLEN+1];
 int	file_trace;			/* 1=tracing to file, not stdout */
 
 static void trace_dump(void);
+static void tmsg(const char *, ...) PATTRIB(1,2);
 
 
 /* convert string to printable characters
@@ -137,7 +137,7 @@ naddr_ntoa(naddr a)
 }
 
 
-char *
+const char *
 saddr_ntoa(struct sockaddr *sa)
 {
 	return (sa == 0) ? "?" : naddr_ntoa(S_ADDR(sa));
@@ -152,7 +152,7 @@ ts(time_t secs) {
 #ifdef sgi
 	(void)cftime(s, "%T", &secs);
 #else
-	bcopy(ctime(&secs)+11, s, 8);
+	memcpy(s, ctime(&secs)+11, 8);
 	s[8] = '\0';
 #endif
 	return s;
@@ -177,7 +177,7 @@ lastlog(void)
 
 
 static void
-tmsg(char *p, ...)
+tmsg(const char *p, ...)
 {
 	va_list args;
 
@@ -223,13 +223,13 @@ trace_flush(void)
 	if (ftrace != 0) {
 		fflush(ftrace);
 		if (ferror(ftrace))
-			trace_off("tracing off: ", strerror(ferror(ftrace)));
+			trace_off("tracing off: %s", strerror(ferror(ftrace)));
 	}
 }
 
 
 void
-trace_off(char *p, ...)
+trace_off(const char *p, ...)
 {
 	va_list args;
 
@@ -249,16 +249,16 @@ trace_off(char *p, ...)
 /* log a change in tracing
  */
 void
-tracelevel_msg(char *pat,
+tracelevel_msg(const char *pat,
 	       int dump)		/* -1=no dump, 0=default, 1=force */
 {
-	static char *off_msgs[MAX_TRACELEVEL] = {
+	static const char *off_msgs[MAX_TRACELEVEL] = {
 		"Tracing actions stopped",
 		"Tracing packets stopped",
 		"Tracing packet contents stopped",
 		"Tracing kernel changes stopped",
 	};
-	static char *on_msgs[MAX_TRACELEVEL] = {
+	static const char *on_msgs[MAX_TRACELEVEL] = {
 		"Tracing actions started",
 		"Tracing packets started",
 		"Tracing packet contents started",
@@ -293,13 +293,13 @@ tracelevel_msg(char *pat,
 
 
 void
-set_tracefile(char *filename,
-	      char *pat,
+set_tracefile(const char *filename,
+	      const char *pat,
 	      int dump)			/* -1=no dump, 0=default, 1=force */
 {
 	struct stat stbuf;
 	FILE *n_ftrace;
-	char *fn;
+	const char *fn;
 
 
 	/* Allow a null filename to increase the level if the trace file
@@ -341,8 +341,7 @@ set_tracefile(char *filename,
 
 		/* If the new tracefile exists, it must be a regular file.
 		 */
-		if (stat(filename, &stbuf) >= 0
-		    && (stbuf.st_mode & S_IFMT) != S_IFREG) {
+		if (stat(filename, &stbuf) >= 0 && !S_ISREG(stbuf.st_mode)) {
 			msglog("wrong type (%#x) of trace file \"%s\"",
 			       stbuf.st_mode, filename);
 			return;
@@ -383,7 +382,7 @@ set_tracefile(char *filename,
 
 /* ARGSUSED */
 void
-sigtrace_on(int s)
+sigtrace_on(int s UNUSED)
 {
 	new_tracelevel++;
 	sigtrace_pat = "SIGUSR1: %s";
@@ -392,7 +391,7 @@ sigtrace_on(int s)
 
 /* ARGSUSED */
 void
-sigtrace_off(int s)
+sigtrace_off(int s UNUSED)
 {
 	new_tracelevel--;
 	sigtrace_pat = "SIGUSR2: %s";
@@ -466,9 +465,9 @@ addrname(naddr	addr,			/* in network byte order */
 /* display a bit-field
  */
 struct bits {
-	int	bits_mask;
-	int	bits_clear;
-	char	*bits_name;
+	u_int	bits_mask;
+	u_int	bits_clear;
+	const char *bits_name;
 };
 
 static struct bits if_bits[] = {
@@ -535,11 +534,11 @@ static struct bits rs_bits[] = {
 
 
 static void
-trace_bits(struct bits *tbl,
+trace_bits(const struct bits *tbl,
 	   u_int field,
 	   int force)
 {
-	int b;
+	u_int b;
 	char c;
 
 	if (force) {
@@ -616,7 +615,7 @@ print_rts(struct rt_spare *rts,
 	    || (force_tag == 0 && rts->rts_tag != 0))
 		(void)fprintf(ftrace, "tag=%#x ", ntohs(rts->rts_tag));
 	if (rts->rts_de_ag != 0) {
-		for (i = 1; (1 << i) <= rts->rts_de_ag; i++)
+		for (i = 1; (u_int)(1 << i) <= rts->rts_de_ag; i++)
 			continue;
 		(void)fprintf(ftrace, "de_ag=%d ", i);
 	}
@@ -625,8 +624,8 @@ print_rts(struct rt_spare *rts,
 
 
 void
-trace_if(char *act,
-	  struct interface *ifp)
+trace_if(const char *act,
+	 struct interface *ifp)
 {
 	if (!TRACEACTIONS || ftrace == 0)
 		return;
@@ -668,7 +667,7 @@ trace_upslot(struct rt_entry *rt,
 	lastlog();
 	if (new->rts_gate == 0) {
 		(void)fprintf(ftrace, "Del #%d %-35s ",
-			      rts - rt->rt_spares,
+			      (int)(rts - rt->rt_spares),
 			      rtname(rt->rt_dst, rt->rt_mask, rts->rts_gate));
 		print_rts(rts, 0,0,0,0,
 			  (rts != rt->rt_spares
@@ -676,7 +675,7 @@ trace_upslot(struct rt_entry *rt,
 
 	} else if (rts->rts_gate != RIP_DEFAULT) {
 		(void)fprintf(ftrace, "Chg #%d %-35s ",
-			      rts - rt->rt_spares,
+			      (int)(rts - rt->rt_spares),
 			      rtname(rt->rt_dst, rt->rt_mask, rts->rts_gate));
 		print_rts(rts, 0,0,
 			  rts->rts_gate != new->rts_gate,
@@ -698,7 +697,7 @@ trace_upslot(struct rt_entry *rt,
 
 	} else {
 		(void)fprintf(ftrace, "Add #%d %-35s ",
-			      rts - rt->rt_spares,
+			      (int)(rts - rt->rt_spares),
 			      rtname(rt->rt_dst, rt->rt_mask, new->rts_gate));
 		print_rts(new, 0,0,0,0,
 			  (rts != rt->rt_spares
@@ -711,7 +710,7 @@ trace_upslot(struct rt_entry *rt,
 /* miscellaneous message checked by the caller
  */
 void
-trace_misc(char *p, ...)
+trace_misc(const char *p, ...)
 {
 	va_list args;
 
@@ -728,7 +727,7 @@ trace_misc(char *p, ...)
 /* display a message if tracing actions
  */
 void
-trace_act(char *p, ...)
+trace_act(const char *p, ...)
 {
 	va_list args;
 
@@ -745,7 +744,7 @@ trace_act(char *p, ...)
 /* display a message if tracing packets
  */
 void
-trace_pkt(char *p, ...)
+trace_pkt(const char *p, ...)
 {
 	va_list args;
 
@@ -763,7 +762,7 @@ void
 trace_change(struct rt_entry *rt,
 	     u_int	state,
 	     struct	rt_spare *new,
-	     char	*label)
+	     const char	*label)
 {
 	if (ftrace == 0)
 		return;
@@ -785,7 +784,7 @@ trace_change(struct rt_entry *rt,
 	trace_bits(rs_bits, rt->rt_state, rt->rt_state != state);
 
 	(void)fprintf(ftrace, "\n%*s %19s%-16s ",
-		      strlen(label), "", "",
+		      (int)strlen(label), "", "",
 		      (rt->rt_gate != new->rts_gate
 		       ? naddr_ntoa(new->rts_gate) : ""));
 	print_rts(new,
@@ -802,7 +801,7 @@ trace_change(struct rt_entry *rt,
 
 
 void
-trace_add_del(char * action, struct rt_entry *rt)
+trace_add_del(const char * action, struct rt_entry *rt)
 {
 	if (ftrace == 0)
 		return;
@@ -820,15 +819,15 @@ trace_add_del(char * action, struct rt_entry *rt)
 /* ARGSUSED */
 static int
 walk_trace(struct radix_node *rn,
-	   struct walkarg *w)
+	   struct walkarg *w UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	struct rt_spare *rts;
-	int i, age = AGE_RT(RT->rt_state, RT->rt_ifp);
+	int i;
 
 	(void)fprintf(ftrace, "  %-35s ",
 		      rtname(RT->rt_dst, RT->rt_mask, RT->rt_gate));
-	print_rts(&RT->rt_spares[0], 0,0,0,0,age);
+	print_rts(&RT->rt_spares[0], 0,0,0,0, AGE_RT(RT->rt_state, RT->rt_ifp));
 	trace_bits(rs_bits, RT->rt_state, 0);
 	if (RT->rt_poison_time >= now_garbage
 	    && RT->rt_poison_metric < RT->rt_metric)
@@ -866,14 +865,14 @@ trace_dump(void)
 
 
 void
-trace_rip(char *dir1, char *dir2,
+trace_rip(const char *dir1, const char *dir2,
 	  struct sockaddr_in *who,
 	  struct interface *ifp,
 	  struct rip *msg,
 	  int size)			/* total size of message */
 {
 	struct netinfo *n, *lim;
-#	define NA (msg->rip_auths)
+#	define NA ((struct netauth*)n)
 	int i, seen_route;
 
 	if (!TRACEPACKETS || ftrace == 0)
@@ -943,23 +942,24 @@ trace_rip(char *dir1, char *dir2,
 				if (NA->a_type == RIP_AUTH_MD5
 				    && n == msg->rip_nets) {
 					(void)fprintf(ftrace,
-						      "\tMD5 Authentication"
-						      " len=%d KeyID=%u"
-						      " seqno=%u"
+						      "\tMD5 Auth"
+						      " pkt_len=%d KeyID=%u"
+						      " auth_len=%d"
+						      " seqno=%#x"
 						      " rsvd=%#x,%#x\n",
-						      NA->au.a_md5.md5_pkt_len,
-						      NA->au.a_md5.md5_keyid,
-						      NA->au.a_md5.md5_seqno,
-						      NA->au.a_md5.rsvd[0],
-						      NA->au.a_md5.rsvd[1]);
+					      ntohs(NA->au.a_md5.md5_pkt_len),
+					      NA->au.a_md5.md5_keyid,
+					      NA->au.a_md5.md5_auth_len,
+					      ntohl(NA->au.a_md5.md5_seqno),
+					      ntohs(NA->au.a_md5.rsvd[0]),
+					      ntohs(NA->au.a_md5.rsvd[1]));
 					continue;
 				}
 				(void)fprintf(ftrace,
-					      "\tAuthentication"
-					      " type %d: ",
+					      "\tAuthentication type %d: ",
 					      ntohs(NA->a_type));
 				for (i = 0;
-				     i < sizeof(NA->au.au_pw);
+				     i < (int)sizeof(NA->au.au_pw);
 				     i++)
 					(void)fprintf(ftrace, "%02x ",
 						      NA->au.au_pw[i]);

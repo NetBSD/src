@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: if.c,v 1.1.1.6 1998/06/02 17:41:24 thorpej Exp $";
+__RCSID("$NetBSD: if.c,v 1.1.1.7 1999/02/23 09:56:50 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.6 $"
 
 #include "defs.h"
 #include "pathnames.h"
@@ -335,7 +334,7 @@ ripv1_mask_net(naddr addr,		/* in network byte order */
 		for (r1p = r1nets; r1p != 0; r1p = r1p->r1net_next) {
 			if (on_net(addr, r1p->r1net_net, r1p->r1net_match)
 			    && r1p->r1net_mask > mask)
-				r1p->r1net_mask = mask;
+				mask = r1p->r1net_mask;
 		}
 
 		/* Otherwise, make the classic A/B/C guess.
@@ -582,7 +581,7 @@ if_bad(struct interface *ifp)
  */
 int					/* 1=it was dead */
 if_ok(struct interface *ifp,
-      char *type)
+      const char *type)
 {
 	struct interface *ifp1;
 
@@ -640,7 +639,7 @@ rt_xaddrs(struct rt_addrinfo *info,
 #endif
 
 
-	bzero(info, sizeof(*info));
+	memset(info, 0, sizeof(*info));
 	info->rti_addrs = addrs;
 	for (i = 0; i < RTAX_MAX && sa < lim; i++) {
 		if ((addrs & (1 << i)) == 0)
@@ -698,7 +697,7 @@ ifinit(void)
 					    ? CHECK_ACT_INTERVAL
 					    : CHECK_QUIET_INTERVAL);
 
-	/* mark all interfaces so we can get rid of thost that disappear */
+	/* mark all interfaces so we can get rid of those that disappear */
 	for (ifp = ifnet; 0 != ifp; ifp = ifp->int_next)
 		ifp->int_state &= ~(IS_CHECKED | IS_DUP);
 
@@ -740,7 +739,7 @@ ifinit(void)
 			ifm = (struct if_msghdr *)ifam;
 			/* make prototype structure for the IP aliases
 			 */
-			bzero(&ifs0, sizeof(ifs0));
+			memset(&ifs0, 0, sizeof(ifs0));
 			ifs0.int_rip_sock = -1;
 			ifs0.int_index = ifm->ifm_index;
 			ifs0.int_if_flags = ifm->ifm_flags;
@@ -773,7 +772,7 @@ ifinit(void)
 		 * will be an alias.
 		 * Do not output RIP or Router-Discovery packets via aliases.
 		 */
-		bcopy(&ifs0, &ifs, sizeof(ifs));
+		memcpy(&ifs, &ifs0, sizeof(ifs));
 		ifs0.int_state |= (IS_ALIAS | IS_NO_RIP_OUT | IS_NO_RDISC);
 
 		if (INFO_IFA(&info) == 0) {
@@ -967,7 +966,7 @@ ifinit(void)
 				} else if (now.tv_sec>(ifp->int_data.ts
 						       + CHECK_BAD_INTERVAL)) {
 					trace_act("interface %s has been off"
-						  " %d seconds; forget it",
+						  " %ld seconds; forget it",
 						  ifp->int_name,
 						  now.tv_sec-ifp->int_data.ts);
 					ifdel(ifp);
@@ -1008,7 +1007,7 @@ ifinit(void)
 			}
 			ifp->int_data = ifs.int_data;
 
-			/* Withhold judgement when the short error
+			/* Withhold judgment when the short error
 			 * counters wrap or the interface is reset.
 			 */
 			if (ierr < 0 || in < 0 || oerr < 0 || out < 0) {
@@ -1108,7 +1107,7 @@ ifinit(void)
 		/* It is new and ok.   Add it to the list of interfaces
 		 */
 		ifp = (struct interface *)rtmalloc(sizeof(*ifp), "ifinit ifp");
-		bcopy(&ifs, ifp, sizeof(*ifp));
+		memcpy(ifp, &ifs, sizeof(*ifp));
 		get_parms(ifp);
 		if_link(ifp);
 		trace_if("Add", ifp);

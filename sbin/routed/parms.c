@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: parms.c,v 1.1.1.4 1998/06/02 17:41:26 thorpej Exp $";
+__RCSID("$NetBSD: parms.c,v 1.1.1.5 1999/02/23 09:56:51 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.4 $"
 
 #include "defs.h"
 #include "pathnames.h"
@@ -54,7 +53,7 @@ struct tgate *tgates;
 void
 get_parms(struct interface *ifp)
 {
-	static warned_auth_in, warned_auth_out;
+	static int warned_auth_in, warned_auth_out;
 	struct parm *parmp;
 	int i, num_passwds = 0;
 
@@ -75,9 +74,9 @@ get_parms(struct interface *ifp)
 				if (parmp->parm_auth[0].type == RIP_AUTH_NONE
 				    || num_passwds >= MAX_AUTH_KEYS)
 					break;
-				bcopy(&parmp->parm_auth[i],
-				      &ifp->int_auth[num_passwds++],
-				      sizeof(ifp->int_auth[0]));
+				memcpy(&ifp->int_auth[num_passwds++],
+				       &parmp->parm_auth[i],
+				       sizeof(ifp->int_auth[0]));
 			}
 			if (parmp->parm_rdisc_pref != 0)
 				ifp->int_rdisc_pref = parmp->parm_rdisc_pref;
@@ -164,6 +163,7 @@ gwkludge(void)
 {
 	FILE *fp;
 	char *p, *lptr;
+	const char *cp;
 	char lbuf[200], net_host[5], dname[64+1+64+1];
 	char gname[GNAME_LEN+1], qual[9];
 	struct interface *ifp;
@@ -171,7 +171,7 @@ gwkludge(void)
 	int metric, n, lnum;
 	struct stat sb;
 	u_int state;
-	char *type;
+	const char *type;
 
 
 	fp = fopen(_PATH_GATEWAYS, "r");
@@ -185,7 +185,7 @@ gwkludge(void)
 	}
 
 	for (lnum = 1; ; lnum++) {
-		if (0 == fgets(lbuf, sizeof(lbuf)-1, fp))
+		if (0 == fgets(lbuf, sizeof(lbuf), fp))
 			break;
 		lptr = lbuf;
 		while (*lptr == ' ')
@@ -202,12 +202,12 @@ gwkludge(void)
 		 */
 		if (strncasecmp("net", lptr, 3)
 		    && strncasecmp("host", lptr, 4)) {
-			p = parse_parms(lptr,
-					(sb.st_uid == 0
-					 && !(sb.st_mode&(S_IRWXG|S_IRWXO))));
-			if (p != 0)
+			cp = parse_parms(lptr,
+					 (sb.st_uid == 0
+					  && !(sb.st_mode&(S_IRWXG|S_IRWXO))));
+			if (cp != 0)
 				msglog("%s in line %d of "_PATH_GATEWAYS,
-				       p, lnum);
+				       cp, lnum);
 			continue;
 		}
 
@@ -249,7 +249,7 @@ gwkludge(void)
 			HTONL(dst);	/* make network # into IP address */
 		} else {
 			msglog("bad \"%s\" in "_PATH_GATEWAYS
-			       " entry \"%s\"", lptr);
+			       " entry \"%s\"", net_host, lptr);
 			continue;
 		}
 
@@ -317,7 +317,7 @@ gwkludge(void)
 		}
 
 		ifp = (struct interface *)rtmalloc(sizeof(*ifp), "gwkludge()");
-		bzero(ifp, sizeof(*ifp));
+		memset(ifp, 0, sizeof(*ifp));
 
 		ifp->int_state = state;
 		if (netmask == HOST_MASK)
@@ -364,12 +364,13 @@ gwkludge(void)
  */
 static int				/* 0=ok, -1=bad */
 parse_quote(char **linep,		/* look here */
-	    char *delims,		/* for these delimiters */
+	    const char *delims,		/* for these delimiters */
 	    char *delimp,		/* 0 or put found delimiter here */
 	    char *buf,			/* copy token to here */
 	    int	lim)			/* at most this many bytes */
 {
-	char c, *pc, *p;
+	char c = '\0', *pc;
+	const char *p;
 
 
 	pc = *linep;
@@ -381,7 +382,7 @@ parse_quote(char **linep,		/* look here */
 		if (c == '\0')
 			break;
 
-		if (c == '\\' && pc != '\0') {
+		if (c == '\\' && *pc != '\0') {
 			if ((c = *pc++) == 'n') {
 				c = '\n';
 			} else if (c == 'r') {
@@ -432,6 +433,9 @@ parse_ts(time_t *tp,
 	 u_int bufsize)
 {
 	struct tm tm;
+#if defined(sgi) || defined(__NetBSD__)
+	char *ptr;
+#endif
 
 	if (0 > parse_quote(valp, "| ,\n\r", delimp,
 			    buf,bufsize)
@@ -441,15 +445,26 @@ parse_ts(time_t *tp,
 		return buf;
 	}
 	strcat(buf,"\n");
-	bzero(&tm, sizeof(tm));
-	if (5 != sscanf(buf, "%u/%u/%u@%u:%u\n",
-			&tm.tm_year, &tm.tm_mon, &tm.tm_mday,
-			&tm.tm_hour, &tm.tm_min)) {
+	memset(&tm, 0, sizeof(tm));
+#if defined(sgi) || defined(__NetBSD__)
+	ptr = strptime(buf, "%y/%m/%d@%H:%M\n", &tm);
+	if (ptr == NULL || *ptr != '\0') {
 		sprintf(buf,"bad timestamp %.25s", val0);
 		return buf;
 	}
-	if (tm.tm_year <= 37)
-		tm.tm_year += 100;
+#else
+	if (5 != sscanf(buf, "%u/%u/%u@%u:%u\n",
+			&tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+			&tm.tm_hour, &tm.tm_min)
+	    || tm.tm_mon < 1 || tm.tm_mon > 12
+	    || tm.tm_mday < 1 || tm.tm_mday > 31) {
+		sprintf(buf,"bad timestamp %.25s", val0);
+		return buf;
+	}
+	tm.tm_mon--;
+	if (tm.tm_year <= 37)		/* assume small years are in the */
+		tm.tm_year += 100;	/* 3rd millenium */
+#endif
 
 	if ((*tp = mktime(&tm)) == -1) {
 		sprintf(buf,"bad timestamp %.25s", val0);
@@ -463,11 +478,11 @@ parse_ts(time_t *tp,
 /* Get a password, key ID, and expiration date in the format
  *	passwd|keyID|year/mon/day@hour:min|year/mon/day@hour:min
  */
-static char *				/* 0 or error message */
+static const char *			/* 0 or error message */
 get_passwd(char *tgt,
 	   char *val,
 	   struct parm *parmp,
-	   u_char type,
+	   u_int16_t type,
 	   int safe)			/* 1=from secure file */
 {
 	static char buf[80];
@@ -486,7 +501,7 @@ get_passwd(char *tgt,
 			return "too many passwords";
 	}
 
-	bzero(&k, sizeof(k));
+	memset(&k, 0, sizeof(k));
 	k.type = type;
 	k.end = -1-DAY;
 
@@ -537,13 +552,13 @@ get_passwd(char *tgt,
 	if (delim != '\0')
 		return tgt;
 
-	bcopy(&k, ap, sizeof(*ap));
+	memmove(ap, &k, sizeof(*ap));
 	return 0;
 }
 
 
-static char *
-bad_str(char *estr)
+static const char *
+bad_str(const char *estr)
 {
 	static char buf[100+8];
 
@@ -554,7 +569,7 @@ bad_str(char *estr)
 
 /* Parse a set of parameters for an interface.
  */
-char *					/* 0 or error message */
+const char *					/* 0 or error message */
 parse_parms(char *line,
 	    int safe)			/* 1=from secure file */
 {
@@ -567,7 +582,8 @@ parse_parms(char *line,
 	struct r1net *r1netp;
 	struct tgate *tg;
 	naddr addr, mask;
-	char delim, *val0, *tgt, *val, *p;
+	char delim, *val0 = 0, *tgt, *val, *p;
+	const char *msg;
 	char buf[BUFSIZ], buf2[BUFSIZ];
 	int i;
 
@@ -599,7 +615,10 @@ parse_parms(char *line,
 		return 0;
 	}
 
-	/* "ripv1_mask=x.y.z.u/mask,mask" must be alone on the line */
+	/* "ripv1_mask=x.y.z.u/mask1,mask2" must be alone on the line.
+	 * This requires that x.y.z.u/mask1 be considered a subnet of
+	 * x.y.z.u/mask2, as if x.y.z.u/mask2 were a class-full network.
+	 */
 	if (!strncasecmp(line, "ripv1_mask=", sizeof("ripv1_mask=")-1)
 	    && *(val = &line[sizeof("ripv1_mask=")-1]) != '\0') {
 		if (0 > parse_quote(&val, ",", &delim, buf, sizeof(buf))
@@ -613,7 +632,7 @@ parse_parms(char *line,
 		r1netp->r1net_mask = HOST_MASK << (32-i);
 		if (!getnet(buf, &r1netp->r1net_net, &r1netp->r1net_match)
 		    || r1netp->r1net_net == RIP_DEFAULT
-		    || r1netp->r1net_mask < r1netp->r1net_match) {
+		    || r1netp->r1net_mask > r1netp->r1net_match) {
 			free(r1netp);
 			return bad_str(line);
 		}
@@ -622,9 +641,8 @@ parse_parms(char *line,
 		return 0;
 	}
 
-	bzero(&parm, sizeof(parm));
+	memset(&parm, 0, sizeof(parm));
 
-	tgt = "null";
 	for (;;) {
 		tgt = line + strspn(line, " ,\n\r");
 		if (*tgt == '\0' || *tgt == '#')
@@ -673,17 +691,17 @@ parse_parms(char *line,
 			/* since cleartext passwords are so weak allow
 			 * them anywhere
 			 */
-			tgt = get_passwd(tgt,val0,&parm,RIP_AUTH_PW,1);
-			if (tgt) {
+			msg = get_passwd(tgt,val0,&parm,RIP_AUTH_PW,1);
+			if (msg) {
 				*val0 = '\0';
-				return bad_str(tgt);
+				return bad_str(msg);
 			}
 
 		} else if (PARSEQ("md5_passwd")) {
-			tgt = get_passwd(tgt,val0,&parm,RIP_AUTH_MD5,safe);
-			if (tgt) {
+			msg = get_passwd(tgt,val0,&parm,RIP_AUTH_MD5,safe);
+			if (msg) {
 				*val0 = '\0';
-				return bad_str(tgt);
+				return bad_str(msg);
 			}
 
 		} else if (PARS("no_ag")) {
@@ -775,7 +793,7 @@ parse_parms(char *line,
 			tg = (struct tgate *)rtmalloc(sizeof(*tg),
 						      "parse_parms"
 						      "trust_gateway");
-			bzero(tg, sizeof(*tg));
+			memset(tg, 0, sizeof(*tg));
 			tg->tgate_addr = addr;
 			i = 0;
 			/* The default is to trust all routes. */
@@ -810,7 +828,7 @@ parse_parms(char *line,
 
 
 /* check for duplicate parameter specifications */
-char *					/* 0 or error message */
+const char *				/* 0 or error message */
 check_parms(struct parm *new)
 {
 	struct parm *parmp, **parmpp;
@@ -879,7 +897,7 @@ check_parms(struct parm *new)
 	 * they affect the result in the order the operator specified.
 	 */
 	parmp = (struct parm*)rtmalloc(sizeof(*parmp), "check_parms");
-	bcopy(new, parmp, sizeof(*parmp));
+	memcpy(parmp, new, sizeof(*parmp));
 	*parmpp = parmp;
 
 	return 0;
@@ -904,11 +922,11 @@ getnet(char *name,
 
 	/* Detect and separate "1.2.3.4/24"
 	 */
-	if (0 != (mname = rindex(name,'/'))) {
+	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
-		if (i > sizeof(hname)-1)	/* name too long */
+		if (i > (int)sizeof(hname)-1)	/* name too long */
 			return 0;
-		bcopy(name, hname, i);
+		memmove(hname, name, i);
 		hname[i] = '\0';
 		mname++;
 		name = hname;
@@ -942,7 +960,8 @@ getnet(char *name,
 		mask = (naddr)strtoul(mname, &p, 0);
 		if (*p != '\0' || mask > 32)
 			return 0;
-		mask = HOST_MASK << (32-mask);
+		if (mask != 0)
+			mask = HOST_MASK << (32-mask);
 	}
 
 	/* must have mask of 0 with default */
@@ -990,7 +1009,7 @@ gethost(char *name,
 
 	hp = gethostbyname(name);
 	if (hp) {
-		bcopy(hp->h_addr, addrp, sizeof(*addrp));
+		memcpy(addrp, hp->h_addr, sizeof(*addrp));
 		return 1;
 	}
 
