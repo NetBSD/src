@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.5 1997/02/05 17:39:21 gwr Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.6 1997/02/05 17:44:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
 #include <machine/mon.h>
 
 extern int edata[], end[];
-extern int * getvbr();
+extern void ** getvbr();
 extern __dead void abort();
 extern void main();
 
@@ -55,16 +55,17 @@ exit()
 __dead void
 _start()
 {
-	register int *p;
+	register int *ip;
+	register void **vbr;
 
 	/* Clear BSS */
-	p = edata;
-	do *p++ = 0;
-	while (p < end);
+	ip = edata;
+	do *ip++ = 0;
+	while (ip < end);
 
 	/* Set the vector for trap 0 used by abort. */
-	p = getvbr();
-	p[32] = (int) romVectorPtr->abortEntry;
+	vbr = getvbr();
+	vbr[32] = romVectorPtr->abortEntry;
 
 	main(0);
 	exit();
