@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/12 05:15:35 cjs Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.10 1999/02/12 23:48:46 dean Exp $
 
 BINDIR=	/usr/mdec
 PROG=	installboot
