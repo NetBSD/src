@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 1999/04/24 08:10:41 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 1999/05/17 01:10:51 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 1999/04/24 08:10:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 1999/05/17 01:10:51 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -671,17 +671,15 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
-        p->p_addr->u_pcb.pcb_segtab =
-            p->p_vmspace->vm_map.pmap->pm_segtab;
-
+        p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
         if (p == curproc) {
                 int tlbpid = pmap_alloc_tlbpid(p);
                 MachSetPID(tlbpid);
 #ifdef	MIPS3
 		if (CPUISMIPS3) {
-			mips3_write_xcontext_upper(
-				(u_int32_t)curpcb->pcb_segtab);
+			mips3_write_xcontext_upper((u_int32_t)pmap->pm_segtab);
 		}
 #endif
         }
@@ -1795,30 +1793,27 @@ pmap_phys_address(ppn)
  * Therefore, when we allocate a new PID, we just take the next number. When
  * we run out of numbers, we flush the TLB, increment the generation count
  * and start over. PID zero is reserved for kernel use.
- * This is called only by switch().
  */
 int
 pmap_alloc_tlbpid(p)
 	struct proc *p;
 {
 	pmap_t pmap;
-	int id;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_tlbgen != tlbpid_gen) {
-		id = tlbpid_cnt;
-		if (id == MIPS_TLB_NUM_PIDS) {
+	if (pmap->pm_tlbgen == tlbpid_gen)
+		;
+	else {
+		if (tlbpid_cnt == MIPS_TLB_NUM_PIDS) {
 			MachTLBFlush();
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++tlbpid_gen == 0)
 				tlbpid_gen = 1;
-			id = 1;
+			tlbpid_cnt = 1;
 		}
-		tlbpid_cnt = id + 1;
-		pmap->pm_tlbpid = id;
+		pmap->pm_tlbpid = tlbpid_cnt++;
 		pmap->pm_tlbgen = tlbpid_gen;
-	} else
-		id = pmap->pm_tlbpid;
+	}
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
@@ -1828,10 +1823,10 @@ pmap_alloc_tlbpid(p)
 		else
 			printf("pmap_alloc_tlbpid: curproc <none> ");
 		printf("segtab %p tlbpid %d pid %d '%s'\n",
-			pmap->pm_segtab, id, p->p_pid, p->p_comm);
+			pmap->pm_segtab, pmap->pm_tlbpid, p->p_pid, p->p_comm);
 	}
 #endif
-	return (id);
+	return (pmap->pm_tlbpid);
 }
 
 /*
