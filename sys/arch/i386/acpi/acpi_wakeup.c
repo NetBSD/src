@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.1 2002/06/18 07:25:14 tshiozak Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.2 2002/06/18 07:53:05 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.1 2002/06/18 07:25:14 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.2 2002/06/18 07:53:05 tshiozak Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -115,28 +115,30 @@ acpi_md_install_wakecode(paddr_t pa)
 static ACPI_STATUS
 enter_s4_with_bios(void)
 {
-    ACPI_OBJECT_LIST    ArgList;
-    ACPI_OBJECT         Arg;
-	u_long		ef;
+	ACPI_OBJECT_LIST	ArgList;
+	ACPI_OBJECT		Arg;
+	u_long			ef;
+	UINT32			ret;
+	ACPI_STATUS		status;
 
 	ACPI_FUNCTION_TRACE("AcpiEnterSleepStateS4Bios");
 
 	/* run the _PTS and _GTS methods */
 
-    ACPI_MEMSET(&ArgList, 0, sizeof(ArgList));
-    ArgList.Count = 1;
-    ArgList.Pointer = &Arg;
+	ACPI_MEMSET(&ArgList, 0, sizeof(ArgList));
+	ArgList.Count = 1;
+	ArgList.Pointer = &Arg;
 
-    ACPI_MEMSET(&Arg, 0, sizeof(Arg));
-    Arg.Type = ACPI_TYPE_INTEGER;
-    Arg.Integer.Value = ACPI_STATE_S4;
+	ACPI_MEMSET(&Arg, 0, sizeof(Arg));
+	Arg.Type = ACPI_TYPE_INTEGER;
+	Arg.Integer.Value = ACPI_STATE_S4;
 
-    AcpiEvaluateObject (NULL, "\\_PTS", &ArgList, NULL);
-    AcpiEvaluateObject (NULL, "\\_GTS", &ArgList, NULL);
+	AcpiEvaluateObject (NULL, "\\_PTS", &ArgList, NULL);
+	AcpiEvaluateObject (NULL, "\\_GTS", &ArgList, NULL);
 
 	/* clear wake status */
 
-	AcpiHwBitRegisterWrite(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
+	AcpiHwRegisterWrite(TRUE, ACPI_BITREG_WAKE_STATUS, 1);
 
 	ef = read_eflags();
 	disable_intr();
@@ -154,8 +156,12 @@ enter_s4_with_bios(void)
 			AcpiOsStall(1000000);
 			AcpiOsWritePort(AcpiGbl_FADT->SmiCmd,
 					AcpiGbl_FADT->S4BiosReq, 8);
-	} while (!AcpiHwBitRegisterRead(ACPI_BITREG_WAKE_STATUS,
-					ACPI_MTX_LOCK));
+			status = AcpiHwRegisterRead(TRUE,
+						    ACPI_BITREG_WAKE_STATUS,
+						    &ret);
+			if (ACPI_FAILURE(status))
+				break;
+	} while (!ret);
 
 	AcpiHwEnableNonWakeupGpes();
 
