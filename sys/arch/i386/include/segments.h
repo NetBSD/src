@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.7 1994/10/27 04:16:24 cgd Exp $	*/
+/*	$NetBSD: segments.h,v 1.8 1994/11/05 03:20:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990 William F. Jolitz
@@ -227,8 +227,8 @@ extern int currentldt;
 extern union descriptor gdt[NGDT];
 extern union descriptor ldt[NLDT];
 extern struct soft_segment_descriptor gdt_segs[];
-extern ssdtosd();	/* to decode a ssd */
-extern sdtossd();	/* to encode a sd */
+void ssdtosd __P((struct soft_segment_descriptor *, struct segment_descriptor *));
+void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *));
 #endif
 
 #if __GNUC__ >= 2
