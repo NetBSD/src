@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.17 2002/09/15 23:40:40 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.18 2002/09/19 22:36:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.17 2002/09/15 23:40:40 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.18 2002/09/19 22:36:23 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -85,9 +85,6 @@ static void DAGExecutionThread(RF_ThreadArg_t arg);
 
 /* synchronization primitives for this file.  DO_WAIT should be enclosed in a while loop. */
 
-/*
- * XXX Is this spl-ing really necessary?
- */
 #define DO_LOCK(_r_) \
 do { \
 	ks = splbio(); \
