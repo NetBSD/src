@@ -29,7 +29,8 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	@(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
+|	from: @(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
+!	$Id: oc_cksum.s,v 1.2 1993/08/01 19:22:47 mycroft Exp $
 |
 |
 | oc_cksum: ones complement 16 bit checksum for MC68020.
@@ -89,7 +90,7 @@
 | enough gain to be worth the effort.
 
 	.data
-	.asciz	"@(#)$Header: /cvsroot/src/sys/arch/amiga/amiga/Attic/oc_cksum.s,v 1.1.1.1 1993/07/05 19:19:50 mw Exp $"
+	.asciz	"@(#)$Header: /cvsroot/src/sys/arch/amiga/amiga/Attic/oc_cksum.s,v 1.2 1993/08/01 19:22:47 mycroft Exp $"
 	.even
 	.text
 

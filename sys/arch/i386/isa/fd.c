@@ -35,59 +35,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.19 1993/07/16 15:44:22 mycroft Exp $
+ *	$Id: fd.c,v 1.20 1993/08/01 19:25:40 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
- */
-/*
- * $Log: fd.c,v $
- * Revision 1.19  1993/07/16 15:44:22  mycroft
- * #include cpufunc,h so inb() and outb() are inlined.
- *
- * Revision 1.18  1993/07/06  06:06:29  deraadt
- * clean up code for timeout/untimeout/wakeup prototypes.
- *
- * Revision 1.17  1993/06/29  19:12:44  deraadt
- * uninitialized variable reported by <jfw@ksr.com>
- *
- * Revision 1.16  1993/06/21  09:39:52  deraadt
- * I don't know what I did that was so critical, but now the floppy driver
- * works on my machine (it did not before). Big voodoo.
- *
- * Revision 1.15  1993/06/20  08:42:05  deraadt
- * if the floppy does not exist, say nothing.
- *
- * Revision 1.14  1993/06/18  06:19:16  cgd
- * new floppy driver, merged from patchkit patch #153
- *
- * Revision 1.1.1.1  1993/06/12  14:58:02  rgrimes
- * Initial import, 0.1 + pk 0.2.4-B1
- *
- * Revision 1.10  93/04/13  16:53:29  root
- * make sure turning off a drive motor doesn't deselect another
- * drive active at the time.
- * Also added a pointer from the fd_data to it's fd_type.
- * 
- * Revision 1.9  93/04/13  15:31:02  root
- * make all seeks go through DOSEEK state so are sure of being done right.
- * 
- * Revision 1.8  93/04/12  21:20:13  root
- * only check if old fd is the one we are working on if there IS
- * an old fd pointer. (in fdstate())
- * 
- * Revision 1.7  93/04/11  17:05:35  root
- * cleanup timeouts etc.
- * also fix bug to select teh correct drive when running > 1 drive
- * at a time.
- * 
- * Revision 1.6  93/04/05  00:48:45  root
- * change a timeout and add version to banner message
- * 
- * Revision 1.5  93/04/04  16:39:08  root
- * first working version.. some floppy controllers don't seem to
- * like 2 int. status inquiries in a row.
- * 
  */
 
 #include "fd.h"
@@ -251,6 +202,10 @@ struct isa_device *dev;
 
 	fdc->baseport = dev->id_iobase;
 
+	/* Try a reset, don't change motor on */
+	set_motor(fdcu,0,1);
+	DELAY(100);
+	set_motor(fdcu,0,0);
 	/* see if it can handle a command */
 	if (out_fdc(fdcu,NE7CMD_SPECIFY) < 0)
 	{

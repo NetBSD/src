@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: clockioctl.h 1.1 90/07/09$
- *
+ *	from: Utah Hdr: clockioctl.h 1.1 90/07/09
  *	from: @(#)clockioctl.h	7.2 (Berkeley) 11/2/90
- *	$Id: clockioctl.h,v 1.2 1993/05/22 07:57:14 cgd Exp $
+ *	$Id: clockioctl.h,v 1.3 1993/08/01 19:24:39 mycroft Exp $
  */
 
 #define	CLOCKMAP	_IOWR('C', 1, int)

@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: rd.c 1.14 89/02/27$
- *
+ *	from: Utah Hdr: rd.c 1.14 89/02/27
  *	from: @(#)rd.c	7.3 (Berkeley) 5/5/91
- *	$Id: rd.c,v 1.2 1993/05/22 07:59:16 cgd Exp $
+ *	$Id: rd.c,v 1.3 1993/08/01 19:25:18 mycroft Exp $
  */
 
 /*

@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: itevar.h 1.1 90/07/09$
- *
+ *	from: Utah Hdr: itevar.h 1.1 90/07/09
  *	from: @(#)itevar.h	7.2 (Berkeley) 11/4/90
- *	$Id: itevar.h,v 1.3 1993/05/29 19:41:03 cgd Exp $
+ *	$Id: itevar.h,v 1.4 1993/08/01 19:24:27 mycroft Exp $
  */
 
 #define UNIT(dev)       minor(dev)

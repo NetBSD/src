@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: hpux_net.c 1.33 89/08/23$
- *
+ *	from: Utah Hdr: hpux_net.c 1.33 89/08/23
  *	from: @(#)hpux_net.c	7.7 (Berkeley) 2/13/91
- *	$Id: hpux_net.c,v 1.2 1993/05/22 07:58:05 cgd Exp $
+ *	$Id: hpux_net.c,v 1.3 1993/08/01 19:24:56 mycroft Exp $
  */
 
 /*

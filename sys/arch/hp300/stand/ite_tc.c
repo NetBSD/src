@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite_tc.c 1.9 89/02/20$
- *
+ *	from: Utah Hdr: ite_tc.c 1.9 89/02/20
  *	from: @(#)ite_tc.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_tc.c,v 1.2 1993/05/22 07:59:09 cgd Exp $
+ *	$Id: ite_tc.c,v 1.3 1993/08/01 19:25:17 mycroft Exp $
  */
 
 #include "samachdep.h"

@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: rominfo.h 1.2 88/05/24$
- *
+ *	from: Utah Hdr: rominfo.h 1.2 88/05/24
  *	from: @(#)rominfo.h	7.1 (Berkeley) 5/8/90
- *	$Id: rominfo.h,v 1.2 1993/05/22 07:59:18 cgd Exp $
+ *	$Id: rominfo.h,v 1.3 1993/08/01 19:25:19 mycroft Exp $
  */
 
 #define ROMADDR	0xFFFFF000

@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
+ *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
+ *	$Id: pmap.c,v 1.2 1993/08/01 19:22:48 mycroft Exp $
  */
 
 /*

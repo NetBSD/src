@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: rdreg.h 1.2 90/10/12$
- *
+ *	from: Utah Hdr: rdreg.h 1.2 90/10/12
  *	from: @(#)rdreg.h	7.3 (Berkeley) 2/25/91
- *	$Id: rdreg.h,v 1.2 1993/05/22 07:56:47 cgd Exp $
+ *	$Id: rdreg.h,v 1.3 1993/08/01 19:24:29 mycroft Exp $
  */
 
 struct	rd_iocmd {

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dmareg.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)dmareg.h	7.3 (Berkeley) 5/7/91
+ *	$Id: dmareg.h,v 1.2 1993/08/01 19:24:04 mycroft Exp $
  */
 
 /*

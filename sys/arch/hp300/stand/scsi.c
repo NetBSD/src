@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: scsi.c 1.3 90/01/27$
- *
+ *	from: Utah Hdr: scsi.c 1.3 90/01/27
  *	from: @(#)scsi.c	7.4 (Berkeley) 5/7/91
- *	$Id: scsi.c,v 1.2 1993/05/22 07:59:21 cgd Exp $
+ *	$Id: scsi.c,v 1.3 1993/08/01 19:25:20 mycroft Exp $
  */
 
 /*

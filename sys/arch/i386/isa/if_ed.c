@@ -11,10 +11,8 @@
  *
  * Currently supports the Western Digital/SMC 8003 and 8013 series
  *   and the 3Com 3c503
- */
-
-/*
- *	$Id: if_ed.c,v 1.3 1993/07/28 02:21:17 cgd Exp $
+ *
+ *	$Id: if_ed.c,v 1.4 1993/08/01 19:25:42 mycroft Exp $
  */
  
 #include "ed.h"
@@ -22,8 +20,6 @@
 #include "bpfilter.h"
 
 #include "param.h"
-#include "systm.h"
-#include "select.h"
 #include "errno.h"
 #include "ioctl.h"
 #include "mbuf.h"

@@ -1,8 +1,7 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- *	$Id: if_edreg.h,v 1.2 1993/07/28 02:21:23 cgd Exp $
- * 
+ *	$Id: if_edreg.h,v 1.3 1993/08/01 19:25:43 mycroft Exp $
  */
 
 /*

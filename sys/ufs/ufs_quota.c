@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_quota.c	7.11 (Berkeley) 6/21/91
- *	$Id: ufs_quota.c,v 1.2 1993/05/20 03:53:41 cgd Exp $
+ *	$Id: ufs_quota.c,v 1.3 1993/08/01 19:26:33 mycroft Exp $
  */
 #include "param.h"
 #include "kernel.h"
@@ -118,7 +118,7 @@ chkdq(ip, change, cred, flags)
 				continue;
 			while (dq->dq_flags & DQ_LOCK) {
 				dq->dq_flags |= DQ_WANT;
-				sleep((caddr_t)dq, PINOD+1);
+				tsleep((caddr_t)dq, PINOD+1, "chkdq1", 0);
 			}
 			ncurblocks = dq->dq_curblocks + change;
 			if (ncurblocks >= 0)
@@ -143,7 +143,7 @@ chkdq(ip, change, cred, flags)
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			sleep((caddr_t)dq, PINOD+1);
+			tsleep((caddr_t)dq, PINOD+1, "chkdq2", 0);
 		}
 		dq->dq_curblocks += change;
 		dq->dq_flags |= DQ_MOD;
@@ -229,7 +229,7 @@ chkiq(ip, change, cred, flags)
 				continue;
 			while (dq->dq_flags & DQ_LOCK) {
 				dq->dq_flags |= DQ_WANT;
-				sleep((caddr_t)dq, PINOD+1);
+				tsleep((caddr_t)dq, PINOD+1, "chkiq1", 0);
 			}
 			ncurinodes = dq->dq_curinodes + change;
 			if (ncurinodes >= 0)
@@ -254,7 +254,7 @@ chkiq(ip, change, cred, flags)
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			sleep((caddr_t)dq, PINOD+1);
+			tsleep((caddr_t)dq, PINOD+1, "chkiq2", 0);
 		}
 		dq->dq_curinodes += change;
 		dq->dq_flags |= DQ_MOD;
@@ -515,7 +515,7 @@ setquota(mp, id, type, addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+1);
+		tsleep((caddr_t)dq, PINOD+1, "setquot", 0);
 	}
 	/*
 	 * Copy all but the current values.
@@ -573,7 +573,7 @@ setuse(mp, id, type, addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+1);
+		tsleep((caddr_t)dq, PINOD+1, "setuse", 0);
 	}
 	/*
 	 * Reset time limit if have a soft limit and were
@@ -877,7 +877,7 @@ dqsync(vp, dq)
 		VOP_LOCK(dqvp);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+2);
+		tsleep((caddr_t)dq, PINOD+2, "dqsync", 0);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
 				VOP_UNLOCK(dqvp);

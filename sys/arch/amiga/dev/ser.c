@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ser.c	7.12 (Berkeley) 6/27/91
+ *	from: @(#)ser.c	7.12 (Berkeley) 6/27/91
+ *	$Id: ser.c,v 1.2 1993/08/01 19:23:20 mycroft Exp $
  */
 
 #include "ser.h"
