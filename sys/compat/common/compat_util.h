@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.10 2002/03/16 20:43:49 christos Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.11 2002/11/29 16:32:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -76,16 +76,16 @@ struct emul_flags_xtab {
 	unsigned long nval;
 };
 
-caddr_t	stackgap_init __P((const struct proc *, size_t));
-void	*stackgap_alloc __P((const struct proc *, caddr_t *, size_t));
+caddr_t	stackgap_init(const struct proc *, size_t);
+void	*stackgap_alloc(const struct proc *, caddr_t *, size_t);
 
-int emul_find __P((struct proc *, caddr_t *, const char *, const char *,
-		   const char **, int));
+int emul_find(struct proc *, caddr_t *, const char *, const char *,
+		   const char **, int);
 
 unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 				   unsigned long in, unsigned long *leftover);
 
-void compat_offseterr __P((struct vnode *, char *msg));
+void compat_offseterr(struct vnode *, char *msg);
 
 #define	CHECK_ALT_FL_EXISTS	0
 #define	CHECK_ALT_FL_CREAT	1
