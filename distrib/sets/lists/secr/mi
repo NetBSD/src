@@ -4,6 +4,8 @@
 ./usr/bin/kdestroy
 ./usr/bin/kinit
 ./usr/bin/klist
+./usr/bin/login
+./usr/bin/passwd
 ./usr/bin/telnet
 ./usr/bin/tn3270
 ./usr/include/kerberosIV/adm_locl.h
@@ -22,7 +24,9 @@
 ./usr/include/kerberosIV/krb_config.h
 ./usr/include/kerberosIV/krb_db.h
 ./usr/include/kerberosIV/krb_err.h
+./usr/include/kerberosIV/kstream.h
 ./usr/include/kerberosIV/kuser_locl.h
+./usr/include/kerberosIV/mit-copyright.h
 ./usr/include/kerberosIV/port-fix.h
 ./usr/include/kerberosIV/prot.h
 ./usr/include/kerberosIV/protos.h
@@ -46,6 +50,8 @@
 ./usr/lib/libkdb_p.a
 ./usr/lib/libkrb.a
 ./usr/lib/libkrb_p.a
+./usr/lib/libkstream.a
+./usr/lib/libkstream_p.a
 ./usr/lib/libss.a
 ./usr/lib/libss_p.a
 ./usr/lib/libtelnet.a
