@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.22 2002/03/11 16:27:01 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.23 2002/04/03 16:34:11 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,6 +133,16 @@ static void cg14_setcursor __P((struct cgfourteen_softc *));/* set position */
 static void cg14_loadcursor __P((struct cgfourteen_softc *));/* set shape */
 
 /*
+ * We map the display memory with an offset of 256K when emulating the cg3 or
+ * cg8; the cg3 uses this offset for compatibility with the cg4, and both the
+ * cg4 and cg8 have a mono overlay plane and an overlay enable plane in the
+ * first 256K.  Mapping at an offset of 0x04000000 causes only the color
+ * frame buffer to be mapped, without the overlay planes.
+ */
+#define START		(128*1024 + 128*1024)
+#define NOOVERLAY	(0x04000000)
+
+/*
  * Match a cgfourteen.
  */
 int
@@ -196,8 +206,22 @@ cgfourteenattach(parent, self, aux)
 	fb->fb_type.fb_depth = 8;
 #endif
 	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
-
+#ifdef CG14_CG8
+	/*
+	 * fb_setsize_obp set fb->fb_linebytes based on the current
+	 * depth reported by obp, but that defaults to 8 bits (as
+	 * reported by getpropint().  Update the value to reflect
+	 * the depth that will be used after open.
+	 * The display memory size returned by the cg8 driver includes
+	 * the space used by the overlay planes, but the size returned
+	 * by the cg3 driver does not; emulate the other drivers.
+	 */
+	fb->fb_linebytes = (fb->fb_type.fb_width * fb->fb_type.fb_depth) / 8;
+	ramsize = roundup(START + (fb->fb_type.fb_height * fb->fb_linebytes),
+			NBPG);
+#else
 	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
+#endif
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
 	fb->fb_type.fb_size = ramsize;
 
@@ -539,10 +563,6 @@ cgfourteenmmap(dev, off, prot)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 
-#define CG3START	(128*1024 + 128*1024)
-#define CG8START	(256*1024)
-#define NOOVERLAY	(0x04000000)
-
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
 
@@ -565,19 +585,20 @@ cgfourteenmmap(dev, off, prot)
 	
 	if ((u_int)off >= NOOVERLAY)
 		off -= NOOVERLAY;
-#ifdef CG14_CG8
-	else if ((u_int)off >= CG8START) {
-		off -= CG8START;
-	}
-#else
-	else if ((u_int)off >= CG3START)
-		off -= CG3START;
-#endif
+	else if ((u_int)off >= START)
+		off -= START;
 	else
 		off = 0;
 
-	if (off >= sc->sc_fb.fb_type.fb_size *
-		sc->sc_fb.fb_type.fb_depth/8) {
+	/*
+	 * fb_size includes the overlay space only for the CG8.
+	 */
+#ifdef CG14_CG8
+	if (off >= sc->sc_fb.fb_type.fb_size - START)
+#else
+	if (off >= sc->sc_fb.fb_type.fb_size)
+#endif
+	{
 #ifdef DEBUG
 		printf("\nmmap request out of bounds: request 0x%x, "
 		    "bound 0x%x\n", (unsigned) off,
