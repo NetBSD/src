@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.28 2000/01/23 23:37:42 hubertf Exp $	*/
+/*	$NetBSD: gram.y,v 1.29 2000/10/02 19:48:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,14 +81,14 @@ static	int	adepth;
 #define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
-static	void	cleanup __P((void));
-static	void	setmachine __P((const char *, const char *));
-static	void	check_maxpart __P((void));
+static	void	cleanup(void);
+static	void	setmachine(const char *, const char *);
+static	void	check_maxpart(void);
 
-static	void	app __P((struct nvlist *, struct nvlist *));
+static	void	app(struct nvlist *, struct nvlist *);
 
-static	struct nvlist *mk_nsis __P((const char *, int, struct nvlist *, int));
-static	struct nvlist *mk_ns __P((const char *, struct nvlist *));
+static	struct nvlist *mk_nsis(const char *, int, struct nvlist *, int);
+static	struct nvlist *mk_ns(const char *, struct nvlist *);
 
 %}
 
@@ -480,8 +480,7 @@ flags_opt:
 %%
 
 void
-yyerror(s)
-	const char *s;
+yyerror(const char *s)
 {
 
 	error("%s", s);
@@ -492,7 +491,7 @@ yyerror(s)
  * allocated during parsing the current line.
  */
 static void
-cleanup()
+cleanup(void)
 {
 	struct nvlist **np;
 	int i;
@@ -503,9 +502,7 @@ cleanup()
 }
 
 static void
-setmachine(mch, mcharch)
-	const char *mch;
-	const char *mcharch;
+setmachine(const char *mch, const char *mcharch)
 {
 	char buf[MAXPATHLEN];
 
@@ -529,16 +526,16 @@ setmachine(mch, mcharch)
 }
 
 static void
-check_maxpart()
+check_maxpart(void)
 {
+
 	if (maxpartitions <= 0) {
 		stop("cannot proceed without maxpartitions specifier");
 	}
 }
 
 static void
-app(p, q)
-	struct nvlist *p, *q;
+app(struct nvlist *p, struct nvlist *q)
 {
 	while (p->nv_next)
 		p = p->nv_next;
@@ -546,11 +543,7 @@ app(p, q)
 }
 
 static struct nvlist *
-mk_nsis(name, count, adefs, opt)
-	const char *name;
-	int count;
-	struct nvlist *adefs;
-	int opt;
+mk_nsis(const char *name, int count, struct nvlist *adefs, int opt)
 {
 	struct nvlist *defs = adefs;
 	struct nvlist **p;
@@ -576,9 +569,7 @@ mk_nsis(name, count, adefs, opt)
 
 
 static struct nvlist *
-mk_ns(name, vals)
-	const char *name;
-	struct nvlist *vals;
+mk_ns(const char *name, struct nvlist *vals)
 {
 	struct nvlist *p;
 	char buf[200];

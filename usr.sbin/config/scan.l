@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.27 2000/01/23 23:37:42 hubertf Exp $	*/
+/*	$NetBSD: scan.l,v 1.28 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ struct incl {
 	int	in_ateof;	/* token to insert at EOF */
 };
 static struct incl *incl;
-static int endinclude __P((void));
+static int endinclude(void);
 
 #define	yywrap() 1
 
@@ -186,8 +186,7 @@ with		return WITH;
  * Open the "main" file (conffile).
  */
 int
-firstfile(fname)
-	const char *fname;
+firstfile(const char *fname)
 {
 
 	if ((yyin = fopen(fname, "r")) == NULL)
@@ -205,9 +204,7 @@ firstfile(fname)
  * If ateof == 0 then nothing is inserted.
  */
 int
-include(fname, ateof, conditional)
-	const char *fname;
-	int ateof, conditional;
+include(const char *fname, int ateof, int conditional)
 {
 	FILE *fp;
 	struct incl *in;
@@ -249,7 +246,7 @@ include(fname, ateof, conditional)
  * Terminate the most recent inclusion.
  */
 static int
-endinclude()
+endinclude(void)
 {
 	struct incl *in;
 	int ateof;
@@ -275,7 +272,7 @@ endinclude()
  * token lookahead, so we can tell.
  */
 int
-currentline()
+currentline(void)
 {
 	extern int yychar;
 

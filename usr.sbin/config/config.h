@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.48 2000/10/02 18:59:03 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.49 2000/10/02 19:48:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,9 +54,7 @@
 #if !defined(MAKE_BOOTSTRAP) && defined(BSD)
 #include <sys/cdefs.h>
 #include <paths.h>
-#else /* ...BSD */
-#define	__P(protos)	protos		/* full-blown ANSI C */
-#endif /* ...BSD */
+#endif
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -360,39 +358,39 @@ struct {			/* loc[] table for config */
 } locators;
 
 /* files.c */
-void	initfiles __P((void));
-void	checkfiles __P((void));
-int	fixfiles __P((void));	/* finalize */
-int	fixobjects __P((void));
-void	addfile __P((const char *, struct nvlist *, int, const char *));
-void	addobject __P((const char *, struct nvlist *, int));
+void	initfiles(void);
+void	checkfiles(void);
+int	fixfiles(void);		/* finalize */
+int	fixobjects(void);
+void	addfile(const char *, struct nvlist *, int, const char *);
+void	addobject(const char *, struct nvlist *, int);
 
 /* hash.c */
-struct	hashtab *ht_new __P((void));
-int	ht_insrep __P((struct hashtab *, const char *, void *, int));
+struct	hashtab *ht_new(void);
+int	ht_insrep(struct hashtab *, const char *, void *, int);
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
-void	*ht_lookup __P((struct hashtab *, const char *));
-void	initintern __P((void));
-const char *intern __P((const char *));
-typedef int (*ht_callback) __P((const char *, void *, void *));
-int	ht_enumerate __P((struct hashtab *, ht_callback, void *));
+void	*ht_lookup(struct hashtab *, const char *);
+void	initintern(void);
+const char *intern(const char *);
+typedef int (*ht_callback)(const char *, void *, void *);
+int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
 /* main.c */
-void	addoption __P((const char *name, const char *value));
-void	addfsoption __P((const char *name));
-void	addmkoption __P((const char *name, const char *value));
-void	deffilesystem __P((const char *fname, struct nvlist *fses));
-void	defoption __P((const char *fname, struct nvlist *opts,
-	    struct nvlist *deps));
-void	defflag __P((const char *fname, struct nvlist *opts,
-	    struct nvlist *deps));
-void	defparam __P((const char *fname, struct nvlist *opts,
-	    struct nvlist *deps));
-int	devbase_has_instances __P((struct devbase *, int));
-struct nvlist * find_declared_option __P((const char *name));
-int	deva_has_instances __P((struct deva *, int));
-void	setupdirs __P((void));
+void	addoption(const char *name, const char *value);
+void	addfsoption(const char *name);
+void	addmkoption(const char *name, const char *value);
+void	deffilesystem(const char *fname, struct nvlist *fses);
+void	defoption(const char *fname, struct nvlist *opts,
+	    struct nvlist *deps);
+void	defflag(const char *fname, struct nvlist *opts,
+	    struct nvlist *deps);
+void	defparam(const char *fname, struct nvlist *opts,
+	    struct nvlist *deps);
+int	devbase_has_instances(struct devbase *, int);
+struct nvlist * find_declared_option(const char *name);
+int	deva_has_instances(struct deva *, int);
+void	setupdirs(void);
 
 /* tests on option types */
 #define OPT_FSOPT(n)	(ht_lookup(deffstab, (n)) != NULL)
@@ -403,44 +401,43 @@ void	setupdirs __P((void));
 
 
 /* mkheaders.c */
-int	mkheaders __P((void));
+int	mkheaders(void);
 
 /* mkioconf.c */
-int	mkioconf __P((void));
+int	mkioconf(void);
 
 /* mkmakefile.c */
-int	mkmakefile __P((void));
+int	mkmakefile(void);
 
 /* mkswap.c */
-int	mkswap __P((void));
+int	mkswap(void);
 
 /* pack.c */
-void	pack __P((void));
+void	pack(void);
 
 /* scan.l */
-int	currentline __P((void));
-int	firstfile __P((const char *));
-int	include __P((const char *, int, int));
+int	currentline(void);
+int	firstfile(const char *);
+int	include(const char *, int, int);
 
 /* sem.c, other than for yacc actions */
-void	initsem __P((void));
+void	initsem(void);
 
 /* util.c */
-void	*emalloc __P((size_t));
-void	*erealloc __P((void *, size_t));
-char	*estrdup __P((const char *));
-void	prefix_push __P((const char *));
-void	prefix_pop __P((void));
-char	*sourcepath __P((const char *));
-void	warn __P((const char *, ...));			/* immediate warns */
-void	error __P((const char *, ...));			/* immediate errs */
-void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
-__dead void panic __P((const char *, ...));
-struct nvlist *newnv __P((const char *, const char *, void *, int,
-	    struct nvlist *));
-void	nvfree __P((struct nvlist *));
-void	nvfreel __P((struct nvlist *));
+void	*emalloc(size_t);
+void	*erealloc(void *, size_t);
+char	*estrdup(const char *);
+void	prefix_push(const char *);
+void	prefix_pop(void);
+char	*sourcepath(const char *);
+void	warn(const char *, ...);			/* immediate warns */
+void	error(const char *, ...);			/* immediate errs */
+void	xerror(const char *, int, const char *, ...);	/* delayed errs */
+__dead void panic(const char *, ...);
+struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
+void	nvfree(struct nvlist *);
+void	nvfreel(struct nvlist *);
 
 /* liby */
-void	yyerror __P((const char *));
-int	yylex __P((void));
+void	yyerror(const char *);
+int	yylex(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.26 2000/05/09 00:34:58 hubertf Exp $	*/
+/*	$NetBSD: sem.c,v 1.27 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,22 +74,22 @@ static struct config **nextcf;
 static struct devi **nextdevi;
 static struct devi **nextpseudo;
 
-static int has_errobj __P((struct nvlist *, void *));
-static struct nvlist *addtoattr __P((struct nvlist *, struct devbase *));
-static int resolve __P((struct nvlist **, const char *, const char *,
-			struct nvlist *, int));
-static struct devi *newdevi __P((const char *, int, struct devbase *d));
-static struct devi *getdevi __P((const char *));
-static const char *concat __P((const char *, int));
-static char *extend __P((char *, const char *));
-static int split __P((const char *, size_t, char *, size_t, int *));
-static void selectbase __P((struct devbase *, struct deva *));
-static int onlist __P((struct nvlist *, void *));
-static const char **fixloc __P((const char *, struct attr *, struct nvlist *));
-static const char *makedevstr __P((int, int));
+static int has_errobj(struct nvlist *, void *);
+static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
+static int resolve(struct nvlist **, const char *, const char *,
+		   struct nvlist *, int);
+static struct devi *newdevi(const char *, int, struct devbase *d);
+static struct devi *getdevi(const char *);
+static const char *concat(const char *, int);
+static char *extend(char *, const char *);
+static int split(const char *, size_t, char *, size_t, int *);
+static void selectbase(struct devbase *, struct deva *);
+static int onlist(struct nvlist *, void *);
+static const char **fixloc(const char *, struct attr *, struct nvlist *);
+static const char *makedevstr(int, int);
 
 void
-initsem()
+initsem(void)
 {
 
 	attrtab = ht_new();
@@ -122,7 +122,7 @@ initsem()
 extern const char *lastfile;
 
 void
-enddefs()
+enddefs(void)
 {
 	struct devbase *dev;
 
@@ -142,8 +142,7 @@ enddefs()
 }
 
 void
-setdefmaxusers(min, def, max)
-	int min, def, max;
+setdefmaxusers(int min, int def, int max)
 {
 
 	if (min < 1 || min > def || def > max)
@@ -156,8 +155,7 @@ setdefmaxusers(min, def, max)
 }
 
 void
-setmaxusers(n)
-	int n;
+setmaxusers(int n)
 {
 
 	if (maxusers != 0) {
@@ -176,8 +174,7 @@ setmaxusers(n)
 }
 
 void
-setident(i)
-	const char *i;
+setident(const char *i)
 {
 
 	ident = intern(i);
@@ -189,10 +186,7 @@ setident(i)
  * all locator lists include a dummy head node, which we discard here.
  */
 int
-defattr(name, locs, devclass)
-	const char *name;
-	struct nvlist *locs;
-	int devclass;
+defattr(const char *name, struct nvlist *locs, int devclass)
 {
 	struct attr *a;
 	struct nvlist *nv;
@@ -250,9 +244,7 @@ defattr(name, locs, devclass)
  * pointer list.
  */
 static int
-has_errobj(nv, obj)
-	struct nvlist *nv;
-	void *obj;
+has_errobj(struct nvlist *nv, void *obj)
 {
 
 	for (; nv != NULL; nv = nv->nv_next)
@@ -266,9 +258,7 @@ has_errobj(nv, obj)
  * pointer list.
  */
 int
-has_attr(nv, attr)
-	struct nvlist *nv;
-	const char *attr;
+has_attr(struct nvlist *nv, const char *attr)
 {
 	struct attr *a;
 
@@ -287,9 +277,7 @@ has_attr(nv, attr)
  * list order, but no one cares anyway.
  */
 static struct nvlist *
-addtoattr(l, dev)
-	struct nvlist *l;
-	struct devbase *dev;
+addtoattr(struct nvlist *l, struct devbase *dev)
 {
 	struct nvlist *n;
 
@@ -302,10 +290,8 @@ addtoattr(l, dev)
  * attribute and/or refer to existing attributes.
  */
 void
-defdev(dev, loclist, attrs, ispseudo)
-	struct devbase *dev;
-	struct nvlist *loclist, *attrs;
-	int ispseudo;
+defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
+       int ispseudo)
 {
 	struct nvlist *nv;
 	struct attr *a;
@@ -374,8 +360,7 @@ bad:
  * i.e., does not end in a digit or contain special characters.
  */
 struct devbase *
-getdevbase(name)
-	const char *name;
+getdevbase(const char *name)
 {
 	u_char *p;
 	struct devbase *dev;
@@ -418,10 +403,8 @@ badname:
  * There may be a list of (plain) attributes.
  */
 void
-defdevattach(deva, dev, atlist, attrs)
-	struct deva *deva;
-	struct devbase *dev;
-	struct nvlist *atlist, *attrs;
+defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
+	     struct nvlist *attrs)
 {
 	struct nvlist *nv;
 	struct attr *a;
@@ -509,8 +492,7 @@ bad:
  * name, i.e., does not contain digits or special characters.
  */
 struct deva *
-getdevattach(name)
-	const char *name;
+getdevattach(const char *name)
 {
 	u_char *p;
 	struct deva *deva;
@@ -551,8 +533,7 @@ badname:
  * Look up an attribute.
  */
 struct attr *
-getattr(name)
-	const char *name;
+getattr(const char *name)
 {
 	struct attr *a;
 
@@ -568,9 +549,7 @@ getattr(name)
  * as a root/dumps "on" device in a configuration.
  */
 void
-setmajor(d, n)
-	struct devbase *d;
-	int n;
+setmajor(struct devbase *d, int n)
 {
 
 	if (d != &errdev && d->d_major != NODEV)
@@ -584,8 +563,7 @@ setmajor(d, n)
  * Make a string description of the device at maj/min.
  */
 static const char *
-makedevstr(maj, min)
-	int maj, min;
+makedevstr(int maj, int min)
 {
 	struct devbase *dev;
 	char buf[32];
@@ -608,11 +586,8 @@ makedevstr(maj, min)
  * corresponding name, and map NULL to the default.
  */
 static int
-resolve(nvp, name, what, dflt, part)
-	struct nvlist **nvp;
-	const char *name, *what;
-	struct nvlist *dflt;
-	int part;
+resolve(struct nvlist **nvp, const char *name, const char *what,
+	struct nvlist *dflt, int part)
 {
 	struct nvlist *nv;
 	struct devbase *dev;
@@ -704,8 +679,7 @@ resolve(nvp, name, what, dflt, part)
  * Add a completed configuration to the list.
  */
 void
-addconf(cf0)
-	struct config *cf0;
+addconf(struct config *cf0)
 {
 	struct config *cf;
 	struct nvlist *nv;
@@ -764,10 +738,7 @@ bad:
 }
 
 void
-setconf(npp, what, v)
-	struct nvlist **npp;
-	const char *what;
-	struct nvlist *v;
+setconf(struct nvlist **npp, const char *what, struct nvlist *v)
 {
 
 	if (*npp != NULL) {
@@ -778,9 +749,7 @@ setconf(npp, what, v)
 }
 
 void
-setfstype(fstp, v)
-	const char **fstp;
-	const char *v;
+setfstype(const char **fstp, const char *v)
 {
 
 	if (*fstp != NULL) {
@@ -797,10 +766,7 @@ setfstype(fstp, v)
 }
 
 static struct devi *
-newdevi(name, unit, d)
-	const char *name;
-	int unit;
-	struct devbase *d;
+newdevi(const char *name, int unit, struct devbase *d)
 {
 	struct devi *i;
 
@@ -829,10 +795,7 @@ newdevi(name, unit, d)
  * another device instead) plus unit number.
  */
 void
-adddev(name, at, loclist, flags)
-	const char *name, *at;
-	struct nvlist *loclist;
-	int flags;
+adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 {
 	struct devi *i;		/* the new instance */
 	struct attr *attr;	/* attribute that allows attach */
@@ -966,9 +929,7 @@ bad:
 }
 
 void
-addpseudo(name, number)
-	const char *name;
-	int number;
+addpseudo(const char *name, int number)
 {
 	struct devbase *d;
 	struct devi *i;
@@ -999,8 +960,7 @@ addpseudo(name, number)
  * Define a new instance of a specific device.
  */
 static struct devi *
-getdevi(name)
-	const char *name;
+getdevi(const char *name)
 {
 	struct devi *i, *firsti;
 	struct devbase *d;
@@ -1039,9 +999,7 @@ getdevi(name)
 }
 
 static const char *
-concat(name, c)
-	const char *name;
-	int c;
+concat(const char *name, int c)
 {
 	int len;
 	char buf[NAMESIZE];
@@ -1058,16 +1016,14 @@ concat(name, c)
 }
 
 const char *
-starref(name)
-	const char *name;
+starref(const char *name)
 {
 
 	return (concat(name, '*'));
 }
 
 const char *
-wildref(name)
-	const char *name;
+wildref(const char *name)
 {
 
 	return (concat(name, '?'));
@@ -1079,12 +1035,7 @@ wildref(name)
  * the length of the "foo0" part is one of the arguments.
  */
 static int
-split(name, nlen, base, bsize, aunit)
-	const char *name;
-	size_t nlen;
-	char *base;
-	size_t bsize;
-	int *aunit;
+split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 {
 	const char *cp;
 	int c, l;
@@ -1116,9 +1067,7 @@ split(name, nlen, base, bsize, aunit)
  * attributes for "optional foo".
  */
 static void
-selectbase(d, da)
-	struct devbase *d;
-	struct deva *da;
+selectbase(struct devbase *d, struct deva *da)
 {
 	struct attr *a;
 	struct nvlist *nv;
@@ -1142,9 +1091,7 @@ selectbase(d, da)
  * Is the given pointer on the given list of pointers?
  */
 static int
-onlist(nv, ptr)
-	struct nvlist *nv;
-	void *ptr;
+onlist(struct nvlist *nv, void *ptr)
 {
 	for (; nv != NULL; nv = nv->nv_next)
 		if (nv->nv_ptr == ptr)
@@ -1153,9 +1100,7 @@ onlist(nv, ptr)
 }
 
 static char *
-extend(p, name)
-	char *p;
-	const char *name;
+extend(char *p, const char *name)
 {
 	int l;
 
@@ -1172,10 +1117,7 @@ extend(p, name)
  * given as "?" and have defaults.  Return 0 on success.
  */
 static const char **
-fixloc(name, attr, got)
-	const char *name;
-	struct attr *attr;
-	struct nvlist *got;
+fixloc(const char *name, struct attr *attr, struct nvlist *got)
 {
 	struct nvlist *m, *n;
 	int ord;
