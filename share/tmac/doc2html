@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.33 2001/12/28 23:06:31 wiz Exp $
+.\" $NetBSD: doc2html,v 1.34 2002/02/05 21:00:09 ross Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -959,9 +959,19 @@ AT&T UNIX\\$*
 .	pc-fin
 ..
 .de Xr
-.	ie \\n[DOC_XR] \{\
+.	nr have-sec 0
+.	if \\$21 .nr have-sec 1
+.	if \\$22 .nr have-sec 1
+.	if \\$23 .nr have-sec 1
+.	if \\$24 .nr have-sec 1
+.	if \\$25 .nr have-sec 1
+.	if \\$26 .nr have-sec 1
+.	if \\$27 .nr have-sec 1
+.	if \\$28 .nr have-sec 1
+.	if \\$29 .nr have-sec 1
+.	ie \\n[DOC_XR]:(\\n[have-sec]=0) \{\
 .		mode-code-on
-.		ie \\w\\$2=0 .as doc-pcresult \\$1
+.		ie \\n[have-sec]=0 .as doc-pcresult \\$1
 .		el .as doc-pcresult \\$1(\\$2)
 .		mode-code-off
 .	\}
