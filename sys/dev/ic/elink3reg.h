@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.12 1997/04/07 23:49:48 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -472,7 +472,7 @@
 #define ACTIVATE_ADAPTER_TO_CONFIG 	0xff
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID				0x506d	/* `TCM' */
-#define PROD_ID				0x5090
+#define PROD_ID_3C509			0x5090	/* 509[0-f] */
 #define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
 				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
 
