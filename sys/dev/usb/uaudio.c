@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.68 2003/09/29 11:54:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,13 +38,13 @@
  */
 
 /*
- * USB audio specs: http://www.usb.org/developers/data/devclass/audio10.pdf
- *                  http://www.usb.org/developers/data/devclass/frmts10.pdf
- *                  http://www.usb.org/developers/data/devclass/termt10.pdf
+ * USB audio specs: http://www.usb.org/developers/devclass_docs/audio10.pdf
+ *                  http://www.usb.org/developers/devclass_docs/frmts10.pdf
+ *                  http://www.usb.org/developers/devclass_docs/termt10.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.68 2003/09/29 11:54:26 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
