@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.182 2003/10/25 08:48:11 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.183 2003/11/29 19:27:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.182 2003/10/25 08:48:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.183 2003/11/29 19:27:57 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1346,6 +1346,7 @@ retry:
 			ctx.nwc_mbufcount++;
 			simple_unlock(&ctx.nwc_slock);
 			splx(s);
+			nfs_zeropad(mb, 0, nfsm_padlen(len));
 		} else {
 			nfsm_uiotom(uiop, len);
 		}
