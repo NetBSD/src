@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.6 2002/11/15 13:30:22 itohy Exp $	*/
+/*	$NetBSD: mms.c,v 1.7 2002/12/10 13:19:10 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ struct mms_condition {
 struct mms_softc {
 	struct device sc_dev;
 
+	struct device *sc_parent;
 	struct maple_unit *sc_unit;
 
 	uint32_t sc_oldbuttons;
@@ -131,6 +132,7 @@ mms_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": SEGA Dreamcast Mouse\n");
 
+	sc->sc_parent = parent;
 	sc->sc_unit = ma->ma_unit;
 
 	data = maple_get_function_data(ma->ma_devinfo,
@@ -162,7 +164,6 @@ mms_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_MOUSE, mms_intr, sc);
-	maple_enable_periodic(parent, sc->sc_unit, MAPLE_FN_MOUSE, 1);
 }
 
 int
@@ -180,15 +181,18 @@ mms_detach(struct device *self, int flags)
 int
 mms_enable(void *v)
 {
+	struct mms_softc *sc = v;
 
+	maple_enable_periodic(sc->sc_parent, sc->sc_unit, MAPLE_FN_MOUSE, 1);
 	return (0);
 }
 
 void
 mms_disable(void *v)
 {
+	struct mms_softc *sc = v;
 
-	/* Nothing to do here. */
+	maple_enable_periodic(sc->sc_parent, sc->sc_unit, MAPLE_FN_MOUSE, 0);
 }
 
 int
@@ -197,7 +201,7 @@ mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *) data = WSMOUSE_TYPE_USB;	/* XXX */
+		*(u_int *) data = WSMOUSE_TYPE_MAPLE;
 		break;
 
 	case WSMOUSEIO_SRES:
