@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.17 1997/05/08 21:24:41 gwr Exp $	*/
+/*	$NetBSD: dir.c,v 1.18 1997/05/09 17:05:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.17 1997/05/08 21:24:41 gwr Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.18 1997/05/09 17:05:59 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,8 @@ static void DirExpandCurly __P((char *, char *, Lst, Lst));
 static void DirExpandInt __P((char *, Lst, Lst));
 static int DirPrintWord __P((ClientData, ClientData));
 static int DirPrintDir __P((ClientData, ClientData));
+static char *DirLookup __P((Path *, char *, char *, Boolean));
+static char *DirLookupSubdir __P((Path *, char *));
 
 /*-
  *-----------------------------------------------------------------------
@@ -681,6 +683,146 @@ Dir_Expand (word, path, expansions)
 
 /*-
  *-----------------------------------------------------------------------
+ * DirLookup  --
+ *	Find if the file with the given name exists in the given path.
+ *
+ * Results:
+ *	The path to the file, the empty string or NULL. If the file is
+ *	the empty string, the search should be terminated.
+ *	This path is guaranteed to be in a
+ *	different part of memory than name and so may be safely free'd.
+ *
+ * Side Effects:
+ *	None.
+ *-----------------------------------------------------------------------
+ */
+static char *
+DirLookup(p, name, cp, hasSlash)
+    Path *p;
+    char *name;
+    char *cp;
+    Boolean hasSlash;
+{
+    char *p1;		/* pointer into p->name */
+    char *p2;		/* pointer into name */
+    char *file;		/* the current filename to check */
+
+    if (DEBUG(DIR)) {
+	printf("%s...", p->name);
+    }
+    if (Hash_FindEntry (&p->files, cp) != (Hash_Entry *)NULL) {
+	if (DEBUG(DIR)) {
+	    printf("here...");
+	}
+	if (hasSlash) {
+	    /*
+	     * If the name had a slash, its initial components and p's
+	     * final components must match. This is false if a mismatch
+	     * is encountered before all of the initial components
+	     * have been checked (p2 > name at the end of the loop), or
+	     * we matched only part of one of the components of p
+	     * along with all the rest of them (*p1 != '/').
+	     */
+	    p1 = p->name + strlen (p->name) - 1;
+	    p2 = cp - 2;
+	    while (p2 >= name && p1 >= p->name && *p1 == *p2) {
+		p1 -= 1; p2 -= 1;
+	    }
+	    if (p2 >= name || (p1 >= p->name && *p1 != '/')) {
+		if (DEBUG(DIR)) {
+		    printf("component mismatch -- continuing...");
+		}
+		return NULL;
+	    }
+	}
+	file = str_concat (p->name, cp, STR_ADDSLASH);
+	if (DEBUG(DIR)) {
+	    printf("returning %s\n", file);
+	}
+	p->hits += 1;
+	hits += 1;
+	return file;
+    } else if (hasSlash) {
+	/*
+	 * If the file has a leading path component and that component
+	 * exactly matches the entire name of the current search
+	 * directory, we assume the file doesn't exist and return NULL.
+	 */
+	for (p1 = p->name, p2 = name; *p1 && *p1 == *p2; p1++, p2++) {
+	    continue;
+	}
+	if (*p1 == '\0' && p2 == cp - 1) {
+	    if (DEBUG(DIR)) {
+		printf("must be here but isn't -- returing\n");
+	    }
+	    return "";
+	}
+    }
+    return NULL;
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * DirLookupSubdir  --
+ *	Find if the file with the given name exists in the given path.
+ *
+ * Results:
+ *	The path to the file or NULL. This path is guaranteed to be in a
+ *	different part of memory than name and so may be safely free'd.
+ *
+ * Side Effects:
+ *	If the file is found, it is added in the modification times hash
+ *	table.
+ *-----------------------------------------------------------------------
+ */
+static char *
+DirLookupSubdir(p, name)
+    Path *p;
+    char *name;
+{
+    struct stat	  stb;		/* Buffer for stat, if necessary */
+    Hash_Entry	 *entry;	/* Entry for mtimes table */
+    char 	 *file;		/* the current filename to check */
+
+    if (p != dot) {
+	file = str_concat (p->name, name, STR_ADDSLASH);
+    } else {
+	/*
+	 * Checking in dot -- DON'T put a leading ./ on the thing.
+	 */
+	file = estrdup(name);
+    }
+
+    if (DEBUG(DIR)) {
+	printf("checking %s...", file);
+    }
+
+    if (stat (file, &stb) == 0) {
+	if (DEBUG(DIR)) {
+	    printf("got it.\n");
+	}
+
+	/*
+	 * Save the modification time so if it's needed, we don't have
+	 * to fetch it again.
+	 */
+	if (DEBUG(DIR)) {
+	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+		    file);
+	}
+	entry = Hash_CreateEntry(&mtimes, (char *) file,
+				 (Boolean *)NULL);
+	Hash_SetValue(entry, (long)stb.st_mtime);
+	nearmisses += 1;
+	return (file);
+    }
+    free (file);
+    return NULL;
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * Dir_FindFile  --
  *	Find the file with the given name along the given search path.
  *
@@ -702,8 +844,6 @@ Dir_FindFile (name, path)
     char    	  *name;    /* the file to find */
     Lst           path;	    /* the Lst of directories to search */
 {
-    register char *p1;	    /* pointer into p->name */
-    register char *p2;	    /* pointer into name */
     LstNode       ln;	    /* a list element */
     register char *file;    /* the current filename to check */
     register Path *p;	    /* current path member */
@@ -762,6 +902,13 @@ Dir_FindFile (name, path)
 	return ((char *) NULL);
     }
 
+    if (cur && (file = DirLookup(cur, name, cp, hasSlash)) != NULL) {
+	if (*file)
+	    return file;
+	else
+	    return NULL;
+    }
+
     /*
      * We look through all the directories on the path seeking one which
      * contains the final component of the given name and whose final
@@ -772,58 +919,12 @@ Dir_FindFile (name, path)
      */
     while ((ln = Lst_Next (path)) != NILLNODE) {
 	p = (Path *) Lst_Datum (ln);
-	if (DEBUG(DIR)) {
-	    printf("%s...", p->name);
-	}
-	if (Hash_FindEntry (&p->files, cp) != (Hash_Entry *)NULL) {
-	    if (DEBUG(DIR)) {
-		printf("here...");
-	    }
-	    if (hasSlash) {
-		/*
-		 * If the name had a slash, its initial components and p's
-		 * final components must match. This is false if a mismatch
-		 * is encountered before all of the initial components
-		 * have been checked (p2 > name at the end of the loop), or
-		 * we matched only part of one of the components of p
-		 * along with all the rest of them (*p1 != '/').
-		 */
-		p1 = p->name + strlen (p->name) - 1;
-		p2 = cp - 2;
-		while (p2 >= name && p1 >= p->name && *p1 == *p2) {
-		    p1 -= 1; p2 -= 1;
-		}
-		if (p2 >= name || (p1 >= p->name && *p1 != '/')) {
-		    if (DEBUG(DIR)) {
-			printf("component mismatch -- continuing...");
-		    }
-		    continue;
-		}
-	    }
-	    file = str_concat (p->name, cp, STR_ADDSLASH);
-	    if (DEBUG(DIR)) {
-		printf("returning %s\n", file);
-	    }
+        if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
 	    Lst_Close (path);
-	    p->hits += 1;
-	    hits += 1;
-	    return (file);
-	} else if (hasSlash) {
-	    /*
-	     * If the file has a leading path component and that component
-	     * exactly matches the entire name of the current search
-	     * directory, we assume the file doesn't exist and return NULL.
-	     */
-	    for (p1 = p->name, p2 = name; *p1 && *p1 == *p2; p1++, p2++) {
-		continue;
-	    }
-	    if (*p1 == '\0' && p2 == cp - 1) {
-		if (DEBUG(DIR)) {
-		    printf("must be here but isn't -- returing NULL\n");
-		}
-		Lst_Close (path);
-		return ((char *) NULL);
-	    }
+	    if (*file)
+		return file;
+	    else
+		return NULL;
 	}
     }
 
@@ -853,67 +954,18 @@ Dir_FindFile (name, path)
 	if (DEBUG(DIR)) {
 	    printf("failed. Trying subdirectories...");
 	}
+
+	if (cur && (file = DirLookupSubdir(cur, name)) != NULL)
+	    return file;
+
 	(void) Lst_Open (path);
 	while ((ln = Lst_Next (path)) != NILLNODE) {
 	    p = (Path *) Lst_Datum (ln);
-	    if (p != dot) {
-		file = str_concat (p->name, name, STR_ADDSLASH);
-	    } else {
-		/*
-		 * Checking in dot -- DON'T put a leading ./ on the thing.
-		 */
-		file = estrdup(name);
+	    if (p == dot)
 		checkedDot = TRUE;
-	    }
-	    if (DEBUG(DIR)) {
-		printf("checking %s...", file);
-	    }
-
-
-	    if (stat (file, &stb) == 0) {
-		if (DEBUG(DIR)) {
-		    printf("got it.\n");
-		}
-
+	    if ((file = DirLookupSubdir(p, name)) != NULL) {
 		Lst_Close (path);
-
-		if (!hasSlash) {
-		    /*
-		     * If the file did not have originally a slash,
-		     * and we've found it after we've added a pathname,
-		     * we've found another directory to search. We
-		     * know there's a slash in 'file' because we
-		     * put one there. We nuke it after finding it
-		     * and call Dir_AddDir to add this new directory
-		     * onto the existing search path. Once that's
-		     * done, we restore the slash and triumphantly
-		     * return the file name, knowing that should
-		     a file in this directory every be referenced
-		     * again in such a manner, we will find it
-		     * without having to do numerous numbers of
-		     * access calls. Hurrah! 
-		     */
-		    cp = strrchr (file, '/');
-		    *cp = '\0';
-		    (void) Dir_AddDir (path, file);
-		    *cp = '/';
-		}
-
-		/*
-		 * Save the modification time so if it's needed, we don't have
-		 * to fetch it again.
-		 */
-		if (DEBUG(DIR)) {
-		    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
-			    file);
-		}
-		entry = Hash_CreateEntry(&mtimes, (char *) file,
-					 (Boolean *)NULL);
-		Hash_SetValue(entry, (long)stb.st_mtime);
-		nearmisses += 1;
-		return (file);
-	    } else {
-		free (file);
+		return file;
 	    }
 	}
 
