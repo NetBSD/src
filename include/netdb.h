@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.18.2.2 2000/07/30 06:31:53 lukem Exp $	*/
+/*	$NetBSD: netdb.h,v 1.18.2.3 2001/05/01 10:28:45 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -248,7 +248,7 @@ struct addrinfo {
 #include <sys/ansi.h>
 #ifndef socklen_t
 typedef __socklen_t	socklen_t;
-#define socklen_t	socklen_t
+#define socklen_t	__socklen_t
 #endif
 
 __BEGIN_DECLS
