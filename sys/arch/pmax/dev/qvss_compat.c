@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.27 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.28 2001/09/19 19:04:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
 
 #include <dev/dec/lk201.h>		/* LK-201 keycodes */
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>		/* X11R5 Xserver ioctls */
 
