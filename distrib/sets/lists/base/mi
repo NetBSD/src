@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.247 2001/04/11 21:23:26 aymeric Exp $
+# $NetBSD: mi,v 1.248 2001/04/16 08:20:58 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1134,6 +1134,7 @@
 ./usr/share/man/cat8/hpcmips		base-man-share
 ./usr/share/man/cat8/i386		base-man-share
 ./usr/share/man/cat8/mac68k		base-man-share
+./usr/share/man/cat8/macppc		base-man-share
 ./usr/share/man/cat8/mvme68k		base-man-share
 ./usr/share/man/cat8/next68k		base-man-share
 ./usr/share/man/cat8/pc532		base-man-share
@@ -1198,6 +1199,7 @@
 ./usr/share/man/man8/hpcmips		base-man-share
 ./usr/share/man/man8/i386		base-man-share
 ./usr/share/man/man8/mac68k		base-man-share
+./usr/share/man/man8/macppc		base-man-share
 ./usr/share/man/man8/mvme68k		base-man-share
 ./usr/share/man/man8/next68k		base-man-share
 ./usr/share/man/man8/pc532		base-man-share
