@@ -43,7 +43,7 @@
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
  * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.3 1994/05/04 05:34:14 gwr Exp $
+ * $Id: zs.c,v 1.4 1994/05/05 06:54:08 gwr Exp $
  */
 
 /*
@@ -364,6 +364,7 @@ zscnprobe_kbd()
 		mon_printf("zscnprobe_kbd: zs1 not yet mapped\n");
 		return CN_DEAD;
 	}
+	zsaddr[1] = (struct zsdevice *)zs1_va;
 	return CN_INTERNAL;
 }
 
@@ -442,7 +443,8 @@ zscninit(struct consdev *cn)
  * Polled console input putchar.
  */
 int
-zscngetc()
+zscngetc(dev)
+	dev_t dev;
 {
 	register volatile struct zschan *zc = zs_conschan;
 	register int s, c;
@@ -463,17 +465,20 @@ zscngetc()
  * Polled console output putchar.
  */
 int
-zscnputc(c)
+zscnputc(dev, c)
+	dev_t dev;
 	int c;
 {
 	register volatile struct zschan *zc = zs_conschan;
 	register int s;
 
-	if (zc == NULL)
+	if (zc == NULL) {
+		s = splhigh();
+		mon_putchar(c);
+		splx(s);
 		return (0);
+	}
 
-	if (c == '\n')
-		zscnputc('\r');
 	s = splhigh();
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
 		ZS_DELAY();
