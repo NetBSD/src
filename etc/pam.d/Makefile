@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:54:34 christos Exp $
 # $FreeBSD: src/etc/pam.d/Makefile,v 1.11 2004/10/24 15:32:24 ru Exp $
 
 NOOBJ=
