@@ -31,21 +31,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_log.c,v 1.3 1993/06/27 06:01:52 andrew Exp $
+ *	$Id: subr_log.c,v 1.4 1993/12/18 04:21:25 mycroft Exp $
  */
 
 /*
  * Error log buffer for kernel printf's.
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "vnode.h"
-#include "ioctl.h"
-#include "msgbuf.h"
-#include "file.h"
-#include "select.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/ioctl.h>
+#include <sys/msgbuf.h>
+#include <sys/file.h>
+#include <sys/select.h>
 
 #define LOG_RDPRI	(PZERO + 1)
 
