@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.43 1999/08/24 17:47:45 tron Exp $
+$NetBSD: pcmciadevs,v 1.44 1999/09/07 19:30:10 soren Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@ vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
  * List of known products.  Grouped by vendor.
  */
 /* Adaptec Products */
-product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A SCSI Host Adapter
-product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
+product ADAPTEC APA1460		0x0001 Adaptec APA-1460 SlimSCSI
+product ADAPTEC APA1460A	0x0002 Adaptec APA-1460A SlimSCSI
 
 /* 3COM Products */
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet

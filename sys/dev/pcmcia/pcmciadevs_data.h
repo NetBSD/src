@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.46 1999/08/24 17:48:31 tron Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.47 1999/09/07 19:30:11 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -45,18 +45,18 @@
 
 struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	{
-	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460_1,
-	    PCMCIA_CIS_ADAPTEC_APA1460_1,
+	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460,
+	    PCMCIA_CIS_ADAPTEC_APA1460,
 	    0,
 	    "Adaptec Corporation",
-	    "Adaptec APA-1460/A SCSI Host Adapter"	},
+	    "Adaptec APA-1460 SlimSCSI"	},
 	},
 	{
-	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460_2,
-	    PCMCIA_CIS_ADAPTEC_APA1460_2,
+	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460A,
+	    PCMCIA_CIS_ADAPTEC_APA1460A,
 	    0,
 	    "Adaptec Corporation",
-	    "Adaptec APA-1460/B SCSI Host Adapter"	},
+	    "Adaptec APA-1460A SlimSCSI"	},
 	},
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C562,
