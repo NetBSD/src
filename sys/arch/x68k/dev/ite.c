@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.23 2000/11/02 00:42:41 eeh Exp $	*/
+/*	$NetBSD: ite.c,v 1.24 2000/11/13 15:20:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -747,7 +747,7 @@ __inline static void
 itesendch (ch)
 	int ch;
 {
-	(*linesw[kbd_tty->t_line].l_rint)(ch, kbd_tty);
+	(*kbd_tty->t_linesw->l_rint)(ch, kbd_tty);
 }
 
 
@@ -898,9 +898,9 @@ ite_filter(c)
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
-		(*linesw[kbd_tty->t_line].l_rint) (27, kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) ('O', kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) (out[cp - in], kbd_tty);
+		(*kbd_tty->t_linesw->l_rint) (27, kbd_tty);
+		(*kbd_tty->t_linesw->l_rint) ('O', kbd_tty);
+		(*kbd_tty->t_linesw->l_rint) (out[cp - in], kbd_tty);
 		splx(s);
 		return;
 	} else {
@@ -929,11 +929,11 @@ ite_filter(c)
 		 * in the default keymap
 		 */
 		for (i = *str++; i; i--)
-			(*linesw[kbd_tty->t_line].l_rint) (*str++, kbd_tty);
+			(*kbd_tty->t_linesw->l_rint) (*str++, kbd_tty);
 		splx(s);
 		return;
 	}
-	(*linesw[kbd_tty->t_line].l_rint)(code, kbd_tty);
+	(*kbd_tty->t_linesw->l_rint)(code, kbd_tty);
 
 	splx(s);
 	return;
