@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.133 2004/08/11 04:25:28 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.134 2004/08/12 17:13:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.133 2004/08/11 04:25:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.134 2004/08/12 17:13:54 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ u_int8_t *
 	ne_pcmcia_dl10019_get_enaddr __P((struct ne_pcmcia_softc *,
 	    u_int8_t [ETHER_ADDR_LEN]));
 int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
-int	ne_pcmcia_ax88790_power_up __P((struct ne_pcmcia_softc *));
 
 CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
     ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate);
@@ -753,9 +752,6 @@ ne_pcmcia_enable(dsc)
 	    nsc->sc_type == NE2000_TYPE_AX88790) {
 		if (ne_pcmcia_ax88190_set_iobase(psc))
 			goto fail_3;
-		if (nsc->sc_type == NE2000_TYPE_AX88790 &&
-		    ne_pcmcia_ax88790_power_up(psc))
-			goto fail_3;
 	}
 
 	return (0);
@@ -865,14 +861,4 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	if (oldiobase == iobase || oldiobase != newiobase)
 		return (0);
 	return (EIO);
-}
-
-int
-ne_pcmcia_ax88790_power_up(psc)
-	struct ne_pcmcia_softc *psc;
-{
-	struct pcmcia_function *pf = psc->sc_pf;
-
-	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, 0x04);
-	return (0);
 }
