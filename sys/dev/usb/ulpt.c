@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.23 1999/09/11 10:40:07 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.24 1999/09/12 08:23:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ ulpt_do_write(sc, uio, flags)
 		if (error)
 			break;
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
-		r = usbd_bulk_transfer(reqh, sc->sc_bulkpipe, 0, 
+		r = usbd_bulk_transfer(reqh, sc->sc_bulkpipe, USBD_NO_COPY, 
 				       USBD_NO_TIMEOUT, buf, &n, "ulptwr");
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("ulptwrite: error=%d\n", r));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.26 1999/09/05 19:32:18 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.27 1999/09/12 08:23:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -491,12 +491,24 @@ uhub_activate(self, act)
 	device_ptr_t self;
 	enum devact act;
 {
+	struct uhub_softc *sc = (struct uhub_softc *)self;
+	usbd_device_handle devhub = sc->sc_hub;
+	int nports, p, i;
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:
+		nports = devhub->hub->hubdesc.bNbrPorts;
+		for(p = 0; p < nports; p++) {
+			usbd_device_handle dev = devhub->hub->ports[p].device;
+			if (dev) {
+				for (i = 0; dev->subdevs[i]; i++)
+					config_deactivate(dev->subdevs[i]);
+			}
+		}
 		break;
 	}
 	return (0);
