@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcdreg.h,v 1.4 2001/07/08 06:38:59 ichiro Exp $ */
+/*	$NetBSD: ipaq_lcdreg.h,v 1.1 2001/07/10 18:09:33 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -122,4 +122,4 @@
 #define IPAQ_LCCR3	CR3_PCD(36) | CR3_ACB(2) | \
 			CR3_VSPL | CR3_HSPL | CR3_API(0)
 
-/* end of sa11x0_lcdreg.h */
+/* end of ipaq_lcdreg.h */
