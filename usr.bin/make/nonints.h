@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.22 2001/06/12 23:36:18 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.23 2002/01/17 19:15:02 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
+
+#ifdef MAKE_BOOTSTRAP
+#define __attribute__()
+#endif
 
 /* arch.c */
 ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
