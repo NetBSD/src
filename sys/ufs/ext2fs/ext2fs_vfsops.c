@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.77 2004/11/11 01:32:12 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.78 2005/01/02 16:08:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.77 2004/11/11 01:32:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.78 2005/01/02 16:08:30 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -138,6 +138,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_mountroot,
 	ufs_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	vfs_stdextattrctl,
 	ext2fs_vnodeopv_descs,
 };
 
