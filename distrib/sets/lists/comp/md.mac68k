@@ -1,6 +1,5 @@
-# $NetBSD: md.mac68k,v 1.49 2003/01/18 17:50:25 thorpej Exp $
+# $NetBSD: md.mac68k,v 1.50 2003/10/24 18:32:16 mycroft Exp $
 ./usr/include/mac68k	comp-c-include
-./usr/include/mac68k/_G_config.h	comp-c-include
 ./usr/include/mac68k/adbsys.h	comp-c-include
 ./usr/include/mac68k/ansi.h	comp-c-include
 ./usr/include/mac68k/aout_machdep.h	comp-c-include
