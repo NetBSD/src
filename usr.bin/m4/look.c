@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.9 2003/08/07 11:14:32 agc Exp $	*/
+/*	$NetBSD: look.c,v 1.9.2.1 2004/06/22 07:15:27 tron Exp $	*/
 /*	$OpenBSD: look.c,v 1.8 2001/09/17 08:11:13 espie Exp $	*/
 
 /*
@@ -33,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: look.c,v 1.9 2003/08/07 11:14:32 agc Exp $");
+__RCSID("$NetBSD: look.c,v 1.9.2.1 2004/06/22 07:15:27 tron Exp $");
 #endif
 #endif /* not lint */
 
