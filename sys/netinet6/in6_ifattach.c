@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.51 2002/09/11 02:46:45 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.52 2002/09/11 03:23:24 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.51 2002/09/11 02:46:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.52 2002/09/11 03:23:24 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,7 @@ in6_nigroup(ifp, name, namelen, sa6)
 	struct sockaddr_in6 *sa6;
 {
 	const char *p;
-	u_char *q;
+	u_int8_t *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
 	u_int8_t l;
