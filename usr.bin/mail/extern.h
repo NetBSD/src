@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1996/12/28 07:11:01 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1997/07/07 22:57:53 phil Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.5 1996/12/28 07:11:01 tls Exp $
+ *	$NetBSD: extern.h,v 1.6 1997/07/07 22:57:53 phil Exp $
  */
 
 struct name;
@@ -200,7 +200,7 @@ void	 prettyprint __P((struct name *));
 void	 printgroup __P((char []));
 void	 printhead __P((int));
 int	 puthead __P((struct header *, FILE *, int));
-int	 putline __P((FILE *, char *));
+int	 putline __P((FILE *, char *, int));
 int	 pversion __P((void *));
 void	 quit __P((void));
 int	 quitcmd __P((void *));
