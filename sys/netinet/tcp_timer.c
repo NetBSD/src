@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.53 2001/09/10 22:14:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.54 2001/09/10 22:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
