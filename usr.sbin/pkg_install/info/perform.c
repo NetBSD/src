@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.56 2004/10/06 15:40:11 erh Exp $	*/
+/*	$NetBSD: perform.c,v 1.57 2004/11/02 01:03:29 erh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.56 2004/10/06 15:40:11 erh Exp $");
+__RCSID("$NetBSD: perform.c,v 1.57 2004/11/02 01:03:29 erh Exp $");
 #endif
 #endif
 
@@ -126,7 +126,6 @@ pkg_do(char *pkg)
 				if (Flags & SHOW_REQUIRE)	{ strcat(flist, REQUIRE_FNAME); 	strcat(flist, " "); }
 				/* PRESERVE_FNAME? */
 #endif				
-				strcat(flist, PRESERVE_FNAME); strcat(flist, " ");
 
 				if (stat(fname, &sb) == FAIL) {
 					warnx("can't stat package file '%s'", fname);
