@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16 2000/05/31 23:55:52 matt Exp $	*/
+/*	$NetBSD: if_le.c,v 1.17 2000/06/04 02:19:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 
 struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
+	struct	evcnt sc_intrcnt;
 	volatile u_short *sc_rap;
 	volatile u_short *sc_rdp;
 };
@@ -186,7 +187,9 @@ le_ibus_attach(parent, self, aux)
 	i = scb_vecref(&vec, &br);
 	if (i == 0 || vec == 0)
 		return;
-	scb_vecalloc(vec, (void (*)(void *))am7990_intr, sc, SCB_ISTACK);
+	scb_vecalloc(vec, (void (*)(void *))am7990_intr, sc,
+		SCB_ISTACK, &sc->sc_intrcnt);
+	evcnt_attach(self, "intr", &sc->sc_intrcnt);
 
 	printf(": vec %o ipl %x\n%s", vec, br, self->dv_xname);
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.27 2000/05/27 10:12:45 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.28 2000/06/04 02:19:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct si_dma_handle {
 
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
+	struct	evcnt		ncr_intrcnt;
 	caddr_t ncr_addr;
 	int	ncr_off;
 	int	ncr_dmaaddr;
@@ -149,7 +150,8 @@ si_attach(parent, self, aux)
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	int tweak, target;
 
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
+		SCB_ISTACK, &sc->ncr_intrcnt);
 
 	/*
 	 * DMA area mapin.

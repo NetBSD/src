@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.4 2000/05/27 04:52:33 thorpej Exp $	*/
+/*	$NetBSD: cfl.c,v 1.5 2000/06/04 02:19:26 matt Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -115,8 +115,10 @@ cflclose(dev, flag, p)
 	int flag;
 	struct proc *p;
 {
-
+	int s;
+	s = splbio();
 	brelse(cfltab.cfl_buf);
+	splx(s);
 	cfltab.cfl_state = IDLE;
 	return 0;
 }
@@ -135,7 +137,7 @@ cflrw(dev, uio, flag)
 
 	if (uio->uio_resid == 0) 
 		return (0);
-	s = spl4();
+	s = splconsfloppy();
 	while (cfltab.cfl_state == BUSY)
 		(void) tsleep(&cfltab, PRIBIO, "cflbusy", 0);
 	cfltab.cfl_state = BUSY;
@@ -156,7 +158,7 @@ cflrw(dev, uio, flag)
 				break;
 		}
 		bp->b_flags = uio->uio_rw == UIO_WRITE ? B_WRITE : B_READ;
-		s = spl4(); 
+		s = splconsfloppy(); 
 		cflstart();
 		while ((bp->b_flags & B_DONE) == 0)
 			(void) tsleep(bp, PRIBIO, "cflrw", 0);
@@ -236,10 +238,10 @@ cfltint(arg)
 void cflrint __P((int));
 
 void
-cflrint(ch)
-	int ch;
+cflrint(int ch)
 {
 	struct buf *bp = cfltab.cfl_buf;
+	int s;
 
 	switch (cfltab.cfl_active) {
 	case CFL_NEXT:
@@ -247,7 +249,9 @@ cflrint(ch)
 			cfltab.cfl_active = CFL_GETIN;
 		else {
 			cfltab.cfl_active = CFL_IDLE;
+			s = splbio();
 			bp->b_flags |= B_DONE;
+			splx(s);
 			wakeup(bp);
 		}
 		break;
@@ -256,7 +260,9 @@ cflrint(ch)
 		*cfltab.cfl_xaddr++ = ch & 0377;
 		if (--bp->b_bcount==0) {
 			cfltab.cfl_active = CFL_IDLE;
+			s = splbio();
 			bp->b_flags |= B_DONE;
+			splx(s);
 			wakeup(bp);
 		}
 		break;
