@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.3 1995/02/20 11:04:10 mycroft Exp $	*/
+/*	$NetBSD: net.h,v 1.4 1995/06/27 15:23:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -54,9 +54,15 @@
 #define	IFNAME_SIZE 16
 #define RECV_SIZE 1536	/* XXX delete this */
 
-/* Size of struct ether_header + struct ip + struct udphdr */
+/*
+ * How much room to leave for headers:
+ *	14: struct ether_header
+ *  20: struct ip
+ *   8: struct udphdr
+ * That's 42 but let's pad it out to 48 bytes.
+ */
 #define ETHER_SIZE 14
-#define	HEADER_SIZE (ETHER_SIZE + 20 + 8)
+#define	HEADER_SIZE 48
 
 extern	u_char bcea[6];
 extern	char rootpath[FNAME_SIZE];
