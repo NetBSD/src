@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.10 2003/06/11 13:20:38 christos Exp $
+#	$NetBSD: host-mkdep.in,v 1.11 2003/11/10 17:57:43 dsl Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -37,11 +37,31 @@
 #
 
 APPEND=false
+MERGE=false
+OPTIONAL=false
+AWK_OPTIONAL=
+QUIET=false
 CPPFLAGS=
 NEWEXT=.o
 OUTFILE=.depend
 SRCS=
-USAGE="Usage: $0 [-a] [-p] [-f makefile] [flags] file ..."
+USAGE="Usage: $0 [-a] [-d] [-o] [-p] [-q] [-s suffix] [-f makefile] [flags] file ..."
+
+set_objlist()
+{
+	if [ -n "$NEWEXT" ]; then
+		oifs="$IFS"
+		IFS=" ,"
+		set -- $NEWEXT
+		IFS="$oifs"
+		objlist=
+		for suf in $*; do
+			objlist="$objlist${objlist:+ }$file$suf"
+		done
+	else
+		objlist="$file"
+	fi
+}
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -49,12 +69,34 @@ while [ $# -gt 0 ]; do
 		shift
 		;;
 
+	-d)	MERGE=true
+		shift
+		;;
+
 	-f)	OUTFILE=$2
 		shift 2
 		;;
 
+	-o)	OPTIONAL=true
+		AWK_OPTIONAL='print ".OPTIONAL:" $0'
+		shift
+		;;
+
 	-p)	NEWEXT=
 		shift
+		;;
+
+	-q)	QUIET=true
+		shift
+		;;
+
+	-s)	NEWEXT="$2"
+		shift 2
+		;;
+
+	-*)	$MERGE || break;
+		echo "$USAGE" >&2
+		exit 1
 		;;
 
 	*)	break
@@ -67,51 +109,55 @@ if [ $# = 0 ]; then
 	exit 1
 fi
 
-while [ $# -gt 0 ]; do
-	case "$1" in
-	-L)			# takes an arg, but ignored
-			shift 2
-			;;
-
-	-c|-[lLMOW]*)		# takes no extra args
-			shift
-			;;
-
-	-[IDU]*)
-			CPPFLAGS="$CPPFLAGS $1"
-			shift
-			;;
-
-	-[IDU]|-include|-isystem)
-			CPPFLAGS="$CPPFLAGS $1 $2"
-			shift 2
-			;;
-
-	-no-cpp-precomp)	# This is a Darwin-specific option.
-			CPPFLAGS="$CPPFLAGS $1"
-			shift
-			;;
-
-	-nostdinc*)	# This is a gcc/g++ ism; ignore if not gcc/g++
-			case "@CFLAGS@" in
-			*-O2*)	# Autoconf puts -O2 when gcc only
-				CPPFLAGS="$CPPFLAGS $1"
+if $MERGE; then
+	SRCS="$*"
+else
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-L)			# takes an arg, but ignored
+				shift 2
 				;;
-			esac	
-			shift
-			;;
 
-	-*)		
-			echo "$0: Unknown option: $1" 1>&2 # all other -options
-			exit 1
-			;;
+		-c|-[lLMOW]*)		# takes no extra args
+				shift
+				;;
 
-	*)	
-			SRCS="$SRCS $1"	# source file
-			shift
-			;;
-	esac
-done
+		-[IDU]*)
+				CPPFLAGS="$CPPFLAGS $1"
+				shift
+				;;
+
+		-[IDU]|-include|-isystem)
+				CPPFLAGS="$CPPFLAGS $1 $2"
+				shift 2
+				;;
+
+		-no-cpp-precomp)	# This is a Darwin-specific option.
+				CPPFLAGS="$CPPFLAGS $1"
+				shift
+				;;
+
+		-nostdinc*)	# This is a gcc/g++ ism; ignore if not gcc/g++
+				case "@CFLAGS@" in
+				*-O2*)	# Autoconf puts -O2 when gcc only
+					CPPFLAGS="$CPPFLAGS $1"
+					;;
+				esac	
+				shift
+				;;
+
+		-*)		
+				echo "$0: Unknown option: $1" 1>&2 # all other -options
+				exit 1
+				;;
+
+		*)	
+				SRCS="$SRCS $1"	# source file
+				shift
+				;;
+		esac
+	done
+fi
 
 if [ -z "$SRCS" ]; then
 	echo "$USAGE" 1>&2
@@ -123,29 +169,51 @@ rm -f $TMP
 
 trap 'rm -f $TMP; exit 1' 1 2 3 13 15
 
-for f in $SRCS; do
-	@CPP@ $CPPFLAGS $f | @AWK@ '
-		BEGIN {
-			objfile = "'$f'"
-			sub(/^.*\//, "", objfile)
-			sub(/\.(c|cc|m)$/, "'$NEWEXT'", objfile)
-		}
-		/^#/ {
-			# Be as tolerant as possible.
-			sub(/^#(line)? [ 0-9]*\"?/, "")
-			sub(/^#(pragma).*/, "")
-			sub(/^<.*/, "")
-			sub(/\".*$/, "")
-			sub(/ [ 0-9]*$/, "")
+if $MERGE; then
+	for f in $SRCS; do
+		if [ ! -f "$f" ]; then
+			if ! $QUIET; then echo "$0: Ignoring $f" >&2; fi
+			continue
+		fi
+		while IFS=':'; read target dependants; do
+			IFS=
+			t1="${target#* }"
+			file="${target%.o}"
+			if [ "$t" = "$target" -a "$file" != "$target" ]; then
+				set_objlist $file
+				target="$objlist"
+			fi
+			echo "$target:$dependants"
+			if "$OPTIONAL"; then
+				echo ".OPTIONAL:$dependants"
+			fi
+		done <$f
+	done >$TMP
+else
+	for f in $SRCS; do
+		file=${f##*/}
+		file=${file%.*}
+		set_objlist $file
 
-			if ($0 in seenfiles) next
-			if ($0 ~ /y.tab.c/) next
+		@CPP@ $CPPFLAGS $f | @AWK@ '
+			/^#/ {
+				# Be as tolerant as possible.
+				sub(/^#(line)? [ 0-9]*\"?/, "")
+				sub(/^#(pragma).*/, "")
+				sub(/^<.*/, "")
+				sub(/\".*$/, "")
+				sub(/ [ 0-9]*$/, "")
 
-			seenfiles[$0] = 1
-			print objfile ": " $0
-		}
-	' >> $TMP
-done
+				if ($0 in seenfiles) next
+				if ($0 ~ /y.tab.c/) next
+
+				seenfiles[$0] = 1
+				print "'"$objlist"'" ": " $0
+				'"$AWK_OPTIONAL"'
+			}
+		' >> $TMP
+	done
+fi
 
 if $APPEND; then
 	cat $TMP >> $OUTFILE
