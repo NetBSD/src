@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1995/07/11 18:25:04 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1995/07/13 21:36:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,9 @@
 #include <machine/pte.h>
 #include <machine/iomap.h>
 #include <dev/cons.h>
+
+#include "ether.h"
+#include "ppp.h"
 
 static void call_sicallbacks __P((void));
 static void alloc_sicallback __P((void));
@@ -1086,6 +1089,12 @@ netintr()
 	if (netisr & (1 << NETISR_ISO)) {
 		netisr &= ~(1 << NETISR_ISO);
 		clnlintr();
+	}
+#endif
+#ifdef NPPP
+	if (netisr & (1 << NETISR_PPP)) {
+		netisr &= ~(1 << NETISR_PPP);
+		pppintr();
 	}
 #endif
 }
