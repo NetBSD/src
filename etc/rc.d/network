@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.12 2000/06/20 08:34:33 enami Exp $
+# $NetBSD: network,v 1.13 2000/06/20 16:48:19 itojun Exp $
 #
 
 # PROVIDE: network
@@ -270,16 +270,10 @@ network_start()
 		autohost)
 			echo 'IPv6 mode: autoconfigured host'
 			sysctl -w net.inet6.ip6.accept_rtadv=1 >/dev/null
-			if [ -n "$ip6defaultif" ]; then
-				ndp -I $ip6defaultif
-			fi
 			;;
 
 		host)	
 			echo 'IPv6 mode: host'
-			if [ -n "$ip6defaultif" ]; then
-				ndp -I $ip6defaultif
-			fi
 			;;
 
 		*)	echo 'WARNING: invalid value in ip6mode'
