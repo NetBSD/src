@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.20 2000/07/25 19:02:15 jdolecek Exp $
+.\"	$NetBSD: shutdown.8,v 1.21 2000/10/17 01:07:43 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -182,7 +182,9 @@ be back up and why it is going down (or anything else).
 .Sh FILES
 .Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
-tells login not to let anyone log in
+tells
+.Xr login 1
+not to let anyone log in
 .It Pa /fastboot
 tells
 .Xr rc 8
