@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.15 1998/10/08 12:58:00 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.16 1998/10/09 09:35:39 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.15 1998/10/08 12:58:00 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.16 1998/10/09 09:35:39 agc Exp $");
 #endif
 #endif
 
@@ -154,7 +154,7 @@ pkg_do(char *pkg)
 		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME))
 			show_file("Install notice:\n", DISPLAY_FNAME);
 		if (Flags & SHOW_PLIST)
-			show_plist("Packing list:\n", &plist, (plist_t) - 1);
+			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
 		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME))
 			show_file("Install script:\n", INSTALL_FNAME);
 		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME))
