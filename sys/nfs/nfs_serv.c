@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.91 2004/12/04 08:07:52 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.92 2004/12/09 01:48:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.91 2004/12/04 08:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.92 2004/12/09 01:48:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1424,6 +1424,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	}
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_mode = 0;
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		how = fxdr_unsigned(int, *tl);
 		switch (how) {
@@ -1439,8 +1440,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			nfsm_dissect(cp, caddr_t, NFSX_V3CREATEVERF);
 			memcpy(cverf, cp, NFSX_V3CREATEVERF);
 			exclusive_flag = 1;
-			if (nd.ni_vp == NULL)
-				va.va_mode = 0;
 			break;
 		};
 		va.va_type = VREG;
@@ -1659,6 +1658,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		goto out;
 	}
 	VATTR_NULL(&va);
+	va.va_mode = 0;
 	nfsm_srvsattr(&va);
 	if (vtyp == VCHR || vtyp == VBLK) {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2212,6 +2212,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		goto out;
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_mode = 0;
 		nfsm_srvsattr(&va);
 		nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
 		len2 = fxdr_unsigned(uint32_t, *tl);
@@ -2362,6 +2363,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	}
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_mode = 0;
 		nfsm_srvsattr(&va);
 	} else {
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
