@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.20 2002/03/21 00:16:15 eeh Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.20.2.1 2002/03/26 17:26:46 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.20 2002/03/21 00:16:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.20.2.1 2002/03/26 17:26:46 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,12 +84,10 @@ int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
 
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_sbus_ca = {
-	sizeof(struct esp_softc), espmatch_sbus, espattach_sbus
-};
-struct cfattach esp_dma_ca = {
-	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
-};
+DEV_CFA_DECL(esp_sbus_ca, sizeof(struct esp_softc), 
+	espmatch_sbus, espattach_sbus);
+DEV_CFA_DECL(esp_dma_ca, sizeof(struct esp_softc), 
+	espmatch_sbus, espattach_dma);
 
 /*
  * Functions and the switch for the MI code.
@@ -133,7 +131,7 @@ static struct ncr53c9x_glue esp_sbus_glue1 = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-static void	espattach __P((struct esp_softc *, struct ncr53c9x_glue *));
+static void	espattach __P((struct device *, struct ncr53c9x_glue *));
 
 int
 espmatch_sbus(parent, cf, aux)
@@ -141,15 +139,21 @@ espmatch_sbus(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	int rv;
-	struct sbus_attach_args *sa = aux;
+	struct device *dev = (struct device *)aux;
+	char name[30];
+	char cdname[30];
 
-	if (strcmp("SUNW,fas", sa->sa_name) == 0)
-	        return 1;
+	if (dev_getprop(dev, "name", name, sizeof(name), NULL, 0) == -1)
+		return (0);
 
-	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
-	    strcmp("ptscII", sa->sa_name) == 0);
-	return (rv);
+	if (strcmp("SUNW,fas", name) == 0) return (1);
+	if (strcmp("ptscII", name) == 0) return (1);
+
+	if (dev_getprop(dev, "cd-name", cdname, sizeof(cdname), NULL, 0) == -1)
+		return (0);
+
+	if (strcmp(cdname, name) == 0) return (1);
+	return (0);
 }
 
 void
@@ -157,33 +161,70 @@ espattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct esp_softc *esc = (void *)self;
+	struct esp_softc *esc = (struct esp_softc *)DEV_PRIVATE(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	struct sbus_attach_args *sa = aux;
 	struct lsi64854_softc *lsc;
+	struct sbus_reg reg[2];
 	int burst, sbusburst;
+	int promaddr[2], npromaddr, nreg;
+	char name[30];
 
-	esc->sc_bustag = sa->sa_bustag;
-	esc->sc_dmatag = sa->sa_dmatag;
+	dev_getprop(parent, "bus-tag", &esc->sc_bustag, sizeof(esc->sc_bustag),
+		NULL, 1);
+	dev_getprop(parent, "dma-tag", &esc->sc_dmatag, sizeof(esc->sc_dmatag),
+		NULL, 1);
 
-	sc->sc_id = PROM_getpropint(sa->sa_node, "initiator-id", 7);
-	sc->sc_freq = PROM_getpropint(sa->sa_node, "clock-frequency", -1);
-	if (sc->sc_freq < 0)
-		sc->sc_freq = ((struct sbus_softc *)
-		    sc->sc_dev.dv_parent)->sc_clockfreq;
+	if (dev_getprop(self, "initiator-id", &sc->sc_id, sizeof(sc->sc_id),
+		NULL, 0) == -1)
+		sc->sc_id = 7;
+	if (dev_getprop(self, "clock-frequency", &sc->sc_freq, 
+		sizeof(sc->sc_freq), NULL, 1) == -1)
+		panic("esp: cannot find clock-frequency");
 
 #ifdef ESP_SBUS_DEBUG
 	printf("%s: espattach_sbus: sc_id %d, freq %d\n",
 	       self->dv_xname, sc->sc_id, sc->sc_freq);
 #endif
+	if (dev_getprop(self, "name", &name, sizeof(name), NULL, 0) == -1)
+		panic("esp: cannot find name");
 
-	if (strcmp("SUNW,fas", sa->sa_name) == 0) {
+	npromaddr = dev_getprop(self, "address", &promaddr,
+		sizeof(promaddr), NULL, 0);
+	if (npromaddr > 0)
+		npromaddr /= sizeof(promaddr[0]);
+
+	nreg = dev_getprop(self, "reg", &reg, sizeof(reg), NULL, 0);
+	if (nreg > 0) nreg /= sizeof(reg[0]);
+
+#if 0
+	if (dev_getprop(self, "interrupts", &esc->sc_pri,
+		sizeof(esc->sc_pri), NULL, 0) != sizeof(esc->sc_pri)) {
+		printf("\n%s: wrong number of interrupts\n",
+			self->dv_xname);
+		return;
+	}
+#else
+	{
+		struct sbus_attach_args *sa = aux;
+
+/* 
+ * We need to use sa->sa_pri right now since the bus_intr_establish()
+ * vector in the bustag may have been replaced by our parent.
+ */
+		esc->sc_pri = sa->sa_pri;
+	}
+#endif
+
+	if (strcmp("SUNW,fas", name) == 0) {
+		struct sbus_reg reg[2];
 
 		/*
-		 * fas has 2 register spaces: dma(lsi64854) and SCSI core (ncr53c9x)
+		 * fas has 2 register spaces: dma(lsi64854) and SCSI 
+		 * core (ncr53c9x)
 		 */
-		if (sa->sa_nreg != 2) {
-			printf("%s: %d register spaces\n", self->dv_xname, sa->sa_nreg);
+		if (nreg != 2) {
+			printf("%s: %d register spaces\n", self->dv_xname,
+				nreg);
 			return;
 		}
 
@@ -191,7 +232,8 @@ espattach_sbus(parent, self, aux)
 		 * allocate space for dma, in SUNW,fas there are no separate
 		 * dma device
 		 */
-		lsc = malloc(sizeof (struct lsi64854_softc), M_DEVBUF, M_NOWAIT);
+		lsc = malloc(sizeof (struct lsi64854_softc), M_DEVBUF, 
+			M_NOWAIT);
 
 		if (lsc == NULL) {
 			printf("%s: out of memory (lsi64854_softc)\n",
@@ -200,21 +242,19 @@ espattach_sbus(parent, self, aux)
 		}
 		esc->sc_dma = lsc;
 
-		lsc->sc_bustag = sa->sa_bustag;
-		lsc->sc_dmatag = sa->sa_dmatag;
+		lsc->sc_bustag = esc->sc_bustag;
+		lsc->sc_dmatag = esc->sc_dmatag;
 
 		bcopy(sc->sc_dev.dv_xname, lsc->sc_dev.dv_xname,
 		      sizeof (lsc->sc_dev.dv_xname));
 
 		/* Map dma registers */
-		if (sa->sa_npromvaddrs) {
-			sbus_promaddr_to_handle(sa->sa_bustag,
-				sa->sa_promvaddrs[0], &lsc->sc_regs);
+		if (npromaddr > 0) {
+			sbus_promaddr_to_handle(esc->sc_bustag,	promaddr[0], 
+				&lsc->sc_regs);
 		} else {
-			if (sbus_bus_map(sa->sa_bustag,
-				sa->sa_reg[0].sbr_slot,
-				sa->sa_reg[0].sbr_offset,
-				sa->sa_reg[0].sbr_size,
+			if (sbus_bus_map(esc->sc_bustag, reg[0].sbr_slot,
+				reg[0].sbr_offset, reg[0].sbr_size,
 				0, &lsc->sc_regs) != 0) {
 				printf("%s: cannot map dma registers\n",
 					self->dv_xname);
@@ -229,11 +269,13 @@ espattach_sbus(parent, self, aux)
 		 * controller registers. This is needed on the Sun4m; do
 		 * others need it too?
 		 */
-		sbusburst = ((struct sbus_softc *)parent)->sc_burst;
-		if (sbusburst == 0)
+		if (dev_getprop(parent, "burst-sizes", &sbusburst, 
+			sizeof(sbusburst), NULL, 0) == -1)
 			sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-		burst = PROM_getpropint(sa->sa_node, "burst-sizes", -1);
+		if (dev_getprop(self, "burst-sizes", &burst, 
+			sizeof(burst), NULL, 0) == -1)
+			burst = -1;
 
 #if ESP_SBUS_DEBUG
 		printf("espattach_sbus: burst 0x%x, sbus 0x%x\n",
@@ -257,14 +299,12 @@ espattach_sbus(parent, self, aux)
 		/*
 		 * map SCSI core registers
 		 */
-		if (sa->sa_npromvaddrs > 1) {
-			sbus_promaddr_to_handle(sa->sa_bustag,
-				sa->sa_promvaddrs[1], &esc->sc_reg);
+		if (npromaddr > 1) {
+			sbus_promaddr_to_handle(esc->sc_bustag,
+				promaddr[1], &esc->sc_reg);
 		} else {
-			if (sbus_bus_map(sa->sa_bustag,
-				sa->sa_reg[1].sbr_slot,
-				sa->sa_reg[1].sbr_offset,
-				sa->sa_reg[1].sbr_size,
+			if (sbus_bus_map(esc->sc_bustag, reg[1].sbr_slot,
+				reg[1].sbr_offset, reg[1].sbr_size,
 				0, &esc->sc_reg) != 0) {
 				printf("%s @ sbus: "
 					"cannot map scsi core registers\n",
@@ -273,18 +313,11 @@ espattach_sbus(parent, self, aux)
 			}
 		}
 
-		if (sa->sa_nintr == 0) {
-			printf("\n%s: no interrupt property\n", self->dv_xname);
-			return;
-		}
-
-		esc->sc_pri = sa->sa_pri;
-
 		/* add me to the sbus structures */
 		esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-		sbus_establish(&esc->sc_sd, &sc->sc_dev);
+		sbus_establish(&esc->sc_sd, self);
 
-		espattach(esc, &esp_sbus_glue);
+		espattach(self, &esp_sbus_glue);
 
 		return;
 	}
@@ -322,38 +355,27 @@ espattach_sbus(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_npromvaddrs) {
-		sbus_promaddr_to_handle(sa->sa_bustag,
-			sa->sa_promvaddrs[0], &esc->sc_reg);
+	if (npromaddr > 0) {
+		sbus_promaddr_to_handle(esc->sc_bustag,	promaddr[0],
+			&esc->sc_reg);
 	} else {
-		if (sbus_bus_map(sa->sa_bustag,
-			sa->sa_slot, sa->sa_offset, sa->sa_size,
+		if (sbus_bus_map(esc->sc_bustag, reg[0].sbr_slot,
+			reg[0].sbr_offset, reg[0].sbr_size,
 			0, &esc->sc_reg) != 0) {
-			printf("%s @ sbus: cannot map registers\n",
+			printf("%s: cannot map dma registers\n",
 				self->dv_xname);
 			return;
 		}
 	}
 
-	if (sa->sa_nintr == 0) {
-		/*
-		 * No interrupt properties: we quit; this might
-		 * happen on e.g. a Sparc X terminal.
-		 */
-		printf("\n%s: no interrupt property\n", self->dv_xname);
-		return;
-	}
-
-	esc->sc_pri = sa->sa_pri;
-
 	/* add me to the sbus structures */
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-	sbus_establish(&esc->sc_sd, &sc->sc_dev);
+	sbus_establish(&esc->sc_sd, self);
 
-	if (strcmp("ptscII", sa->sa_name) == 0) {
-		espattach(esc, &esp_sbus_glue1);
+	if (strcmp("ptscII", name) == 0) {
+		espattach(self, &esp_sbus_glue1);
 	} else {
-		espattach(esc, &esp_sbus_glue);
+		espattach(self, &esp_sbus_glue);
 	}
 }
 
@@ -362,56 +384,84 @@ espattach_dma(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct esp_softc *esc = (void *)self;
+	struct esp_softc *esc = (struct esp_softc *)DEV_PRIVATE(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	struct sbus_attach_args *sa = aux;
+	int promaddr[2], npromaddr, nreg;
+	struct sbus_reg reg[2];
+	char name[30];
 
-	if (strcmp("ptscII", sa->sa_name) == 0) {
+	if (dev_getprop(self, "name", &name, sizeof(name), NULL, 0) == -1)
+		panic("esp: cannot find name");
+
+	if (strcmp("ptscII", name) == 0) {
 		return;
 	}
 
-	esc->sc_bustag = sa->sa_bustag;
-	esc->sc_dmatag = sa->sa_dmatag;
+	dev_getprop(parent, "bus-tag", &esc->sc_bustag, sizeof(esc->sc_bustag),
+		NULL, 1);
+	dev_getprop(parent, "dma-tag", &esc->sc_dmatag, sizeof(esc->sc_dmatag),
+		NULL, 1);
 
-	sc->sc_id = PROM_getpropint(sa->sa_node, "initiator-id", 7);
-	sc->sc_freq = PROM_getpropint(sa->sa_node, "clock-frequency", -1);
+	if (dev_getprop(self, "initiator-id", &sc->sc_id, sizeof(sc->sc_id),
+		NULL, 0) == -1)
+		sc->sc_id = 7;
 
-	esc->sc_dma = (struct lsi64854_softc *)parent;
+	if (dev_getprop(self, "clock-frequency", &sc->sc_freq, 
+		sizeof(sc->sc_freq), NULL, 1) == -1)
+		panic("esp: cannot find clock-frequency");
+
+	npromaddr = dev_getprop(self, "address", &promaddr,
+		sizeof(promaddr), NULL, 0);
+	if (npromaddr > 0)
+		npromaddr /= sizeof(promaddr[0]);
+
+	nreg = dev_getprop(self, "reg", &reg, sizeof(reg), NULL, 0);
+	if (nreg > 0) nreg /= sizeof(reg[0]);
+
+#if 0
+	if (dev_getprop(self, "interrupts", &esc->sc_pri,
+		sizeof(esc->sc_pri), NULL, 0) != sizeof(esc->sc_pri)) {
+		printf("\n%s: wrong number of interrupts\n",
+			self->dv_xname);
+		return;
+	}
+#else
+	{
+		struct sbus_attach_args *sa = aux;
+
+/* 
+ * We need to use sa->sa_pri right now since the bus_intr_establish()
+ * vector in the bustag may have been replaced by our parent.
+ */
+		esc->sc_pri = sa->sa_pri;
+	}
+#endif
+
+	esc->sc_dma = (struct lsi64854_softc *)DEV_PRIVATE(parent);
 	esc->sc_dma->sc_client = sc;
 
 	/*
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_npromvaddrs) {
-		sbus_promaddr_to_handle(sa->sa_bustag,
-			sa->sa_promvaddrs[0], &esc->sc_reg);
+	if (npromaddr > 0) {
+		sbus_promaddr_to_handle(esc->sc_bustag,	promaddr[0],
+			&esc->sc_reg);
 	} else {
-		if (sbus_bus_map(sa->sa_bustag,
-			sa->sa_slot, sa->sa_offset, sa->sa_size,
+		if (sbus_bus_map(esc->sc_bustag, reg[0].sbr_slot,
+			reg[0].sbr_offset, reg[0].sbr_size,
 			0, &esc->sc_reg) != 0) {
-			printf("%s @ dma: cannot map registers\n",
+			printf("%s: cannot map dma registers\n",
 				self->dv_xname);
 			return;
 		}
 	}
 
-	if (sa->sa_nintr == 0) {
-		/*
-		 * No interrupt properties: we quit; this might
-		 * happen on e.g. a Sparc X terminal.
-		 */
-		printf("\n%s: no interrupt property\n", self->dv_xname);
-		return;
-	}
-
-	esc->sc_pri = sa->sa_pri;
-
 	/* Assume SBus is grandparent */
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, parent);
 
-	espattach(esc, &esp_sbus_glue);
+	espattach(self, &esp_sbus_glue);
 }
 
 
@@ -419,10 +469,11 @@ espattach_dma(parent, self, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-espattach(esc, gluep)
-	struct esp_softc *esc;
+espattach(self, gluep)
+	struct device *self;
 	struct ncr53c9x_glue *gluep;
 {
+	struct esp_softc *esc = (struct esp_softc *)DEV_PRIVATE(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	void *icookie;
 	unsigned int uid = 0;
