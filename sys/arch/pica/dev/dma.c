@@ -1,4 +1,5 @@
-/*
+/*	$NetBSD: dma.c,v 1.2 1996/03/28 12:27:10 jonathan Exp $	*/
+
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,7 +32,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.1.1.1 1996/03/13 04:58:05 jonathan Exp $
  */
 
 /*
@@ -324,13 +324,25 @@ picaDmaEnd(dma_softc_t *sc)
 /*
  *  Null call rathole!
  */
-void
+int /* XXX*/
 picaDmaNull(dma_softc_t *sc)
 {
 	pDmaReg regs = sc->dma_reg;
 
 	printf("picaDmaNull called\n");
 }
+
+/*
+ *  Null enable-interrupt rathole!
+ */
+void /* XXX*/
+picaEnIntrNull(dma_softc_t *sc)
+{
+	pDmaReg regs = sc->dma_reg;
+
+	printf("picaEnIntrNull called\n");
+}
+
 
 /*
  *  dma_init..
@@ -340,7 +352,7 @@ void
 asc_dma_init(dma_softc_t *sc)
 {
 	sc->reset = picaDmaReset;
-	sc->enintr = picaDmaNull;
+	sc->enintr = picaEnIntrNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
 	sc->isintr = picaDmaNull;
@@ -360,7 +372,7 @@ void
 fdc_dma_init(dma_softc_t *sc)
 {
 	sc->reset = picaDmaReset;
-	sc->enintr = picaDmaNull;
+	sc->enintr = picaEnIntrNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
 	sc->isintr = picaDmaNull;
@@ -379,8 +391,8 @@ fdc_dma_init(dma_softc_t *sc)
 void
 sn_dma_init(dma_softc_t *sc, int pages)
 {
-	sc->reset = picaDmaNull;
-	sc->enintr = picaDmaNull;
+	sc->reset = picaEnIntrNull;	/* XXX*/
+	sc->enintr = picaEnIntrNull;
 	sc->start = picaDmaFlush;
 	sc->map = picaDmaMap;
 	sc->isintr = picaDmaNull;
