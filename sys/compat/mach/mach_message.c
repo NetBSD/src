@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.34 2003/12/07 23:44:14 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.35 2003/12/08 12:02:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.34 2003/12/07 23:44:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.35 2003/12/08 12:02:24 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -829,13 +829,13 @@ mach_trade_rights_complex(l, mm)
 	 * Sanity check the descriptor count. 
 	 * Note that all descriptor types 
 	 * have the same size, hence it is
-	 * safe to assume this is a port
-	 * descriptor here.
+	 * safe to not take the descriptor
+	 * type into account here.
 	 */
 	mcm = (struct mach_complex_msg *)mm->mm_msg;
 	count = mcm->mcm_body.msgh_descriptor_count;
 	begin = (u_long)mcm;
-	end = (u_long)&mcm->mcm_port_desc[count + 1];
+	end = (u_long)&mcm->mcm_desc[count + 1];
 
 	if ((end - begin) > mm->mm_size) {
 #ifdef DEBUG_MACH
@@ -845,7 +845,7 @@ mach_trade_rights_complex(l, mm)
 	}
 
 	for (i = 0; i < count; i++) {
-		if (mcm->mcm_port_desc[i].type != MACH_MSG_PORT_DESCRIPTOR) {
+		if (mcm->mcm_desc[i].type != MACH_MSG_PORT_DESCRIPTOR) {
 #ifdef DEBUG_MACH
 			printf("OOL data in task to task message\n");
 #endif
