@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.25 1994/03/09 21:24:40 ws Exp $
+ *	$Id: nfs_vnops.c,v 1.26 1994/03/27 09:09:21 cgd Exp $
  */
 
 /*
@@ -378,15 +378,15 @@ nfs_setattr(vp, vap, cred, p)
 	nfsm_reqhead(nfs_procids[NFSPROC_SETATTR], cred, NFSX_FH+NFSX_SATTR);
 	nfsm_fhtom(vp);
 	nfsm_build(sp, struct nfsv2_sattr *, NFSX_SATTR);
-	if (vap->va_mode == 0xffff)
+	if (vap->va_mode == (u_short)VNOVAL)
 		sp->sa_mode = VNOVAL;
 	else
 		sp->sa_mode = vtonfs_mode(vp->v_type, vap->va_mode);
-	if (vap->va_uid == 0xffff)
+	if (vap->va_uid == VNOVAL)
 		sp->sa_uid = VNOVAL;
 	else
 		sp->sa_uid = txdr_unsigned(vap->va_uid);
-	if (vap->va_gid == 0xffff)
+	if (vap->va_gid == VNOVAL)
 		sp->sa_gid = VNOVAL;
 	else
 		sp->sa_gid = txdr_unsigned(vap->va_gid);
