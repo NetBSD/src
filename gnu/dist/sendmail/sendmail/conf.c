@@ -4909,7 +4909,7 @@ load_if_names()
 		{
 		  case AF_INET6:
 			ia6 = sa->sin6.sin6_addr;
-			if (ia6.s6_addr == in6addr_any.s6_addr)
+			if (IN6_IS_ADDR_UNSPECIFIED(&ia6))
 			{
 				addr = anynet_ntop(&ia6, buf6, sizeof buf6);
 				message("WARNING: interface %s is UP with %s address",
@@ -5092,7 +5092,7 @@ load_if_names()
 #   if NETINET6
 		  case AF_INET6:
 			ia6 = sa->sin6.sin6_addr;
-			if (ia6.s6_addr == in6addr_any.s6_addr)
+			if (IN6_IS_ADDR_UNSPECIFIED(&ia6))
 			{
 				addr = anynet_ntop(&ia6, buf6, sizeof buf6);
 				message("WARNING: interface %s is UP with %s address",
