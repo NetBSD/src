@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.152 2004/05/12 16:56:43 cl Exp $
+#	$NetBSD: bsd.README,v 1.153 2004/05/22 16:04:58 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -537,6 +537,11 @@ from <bsd.lib.mk> and <bsd.prog.mk>, and uses the following variables:
 
 FILES		The list of files to install.
 
+CONFIGFILES	Similar semantics to FILES, except that the files
+		are installed by the `configinstall' target,
+		not the `install' target.
+		The FILES* variables documented below also apply.
+
 FILESOWN	File owner.  [${BINOWN}]
 
 FILESGRP	File group.  [${BINGRP}]
@@ -547,9 +552,16 @@ FILESDIR	The location to install the files.
 
 FILESNAME	Optional name to install each file as.
 
-FILESDIR.<fn>	The location to install the specific file <fn>.
+FILESOWN_<fn>	File owner of the specific file <fn>.
 
-FILESNAME.<fn>	Optional name to install <fn> as.
+FILESGRP_<fn>	File group of the specific file <fn>.
+
+FILESMODE_<fn>	File mode of the specific file <fn>.
+
+FILESDIR_<fn>	The location to install the specific file <fn>>
+
+FILESNAME_<fn>	Optional name to install <fn> as.
+
 
 BUILDSYMLINKS	List of two word items:
 			lnsrc lntgt
@@ -733,12 +745,20 @@ LINKS		The list of hard links, consisting of pairs of paths:
 		For example, to link /bin/test and /bin/[, use:
 			LINKS=/bin/test /bin/[
 
+CONFIGLINKS	Similar semantics to LINKS, except that the links
+		are installed by the `configinstall' target,
+		not the `install' target.
+
 SYMLINKS	The list of symbolic links, consisting of pairs of paths:
 			source-file target-file
 		${DESTDIR} is only prepended to target-file before linking.
 		For example, to symlink /usr/bin/tar to /bin/tar resulting
 		in ${DESTDIR}/usr/bin/tar -> /bin/tar:
 			SYMLINKS=/bin/tar /usr/bin/tar
+
+CONFIGSYMLINKS	Similar semantics to SYMLINKS, except that the symbolic links
+		are installed by the `configinstall' target,
+		not the `install' target.
 
 
 =-=-=-=-=   bsd.man.mk   =-=-=-=-=
