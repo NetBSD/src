@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/09/30 23:12:45 is Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/26 21:51:07 lukem Exp $
 
 NOMAN=notyet
 PROG=dotest
 SRCS=dotest.c dotestsubs.S
 AFLAGS+=-I.
-CFLAGS+=-I.
+CPPFLAGS+=-I.
 SPDIR=${.CURDIR}/../../../../../sys/arch/m68k/060sp
 CLEANFILES+=itest.S ftest.S
 

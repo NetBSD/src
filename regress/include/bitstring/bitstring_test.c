@@ -1,12 +1,15 @@
-/*	$NetBSD: bitstring_test.c,v 1.4 1995/04/29 05:44:35 cgd Exp $	*/
+/*	$NetBSD: bitstring_test.c,v 1.5 1997/10/26 21:50:53 lukem Exp $	*/
 
 /*
  * this is a simple program to test bitstring.h
  * inspect the ouput, you should notice problems
  * choose the ATT or BSD flavor
  */
-/*#define ATT /*-*/
+#if 0
+#define ATT
+#else
 #define BSD /*-*/
+#endif
 
 /* include the following define if you want the
  * program to link. this corrects a misspeling
