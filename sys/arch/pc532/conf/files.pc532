@@ -1,11 +1,12 @@
 #
-#	$Id: files.pc532,v 1.1.1.1 1993/09/09 23:53:45 phil Exp $
+#	$Id: files.pc532,v 1.2 1994/01/14 08:08:36 phil Exp $
 #
 arch/pc532/pc532/autoconf.c		standard 
 arch/pc532/pc532/clock.c		standard
 arch/pc532/pc532/machdep.c		standard config-dependent
 arch/pc532/pc532/mem.c			standard
 arch/pc532/pc532/pmap.c			standard
+arch/pc532/pc532/proc_machdep.c		standard
 arch/pc532/pc532/sys_machdep.c		standard
 arch/pc532/pc532/trap.c			standard
 arch/pc532/pc532/vm_machdep.c		standard
