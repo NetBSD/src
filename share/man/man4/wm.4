@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.4 2002/08/15 19:03:34 thorpej Exp $
+.\"	$NetBSD: wm.4,v 1.5 2002/08/22 18:16:13 thorpej Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -88,6 +88,12 @@ In addition to Intel's own
 line of Gigabit Ethernet interfaces, these chips also appear on
 some server systems, processor evaluation boards, and in embedded
 systems.
+.Pp
+The i8254x supports IPv4/TCP/UDP checksumming in hardware.  The
+.Nm
+driver supports this feature of the chip.  See
+.Xr ifconfig 8
+for information on how to enable this feature.
 .\" .Sh DIAGNOSTICS
 .\" XXX too be done.
 .Sh SEE ALSO
