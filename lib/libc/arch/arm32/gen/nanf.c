@@ -1,8 +1,8 @@
-/*	$NetBSD: nanf.c,v 1.1 1999/12/23 10:15:06 kleink Exp $	*/
+/*	$NetBSD: nanf.c,v 1.2 2000/04/18 22:07:17 mark Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nanf.c,v 1.1 1999/12/23 10:15:06 kleink Exp $");
+__RCSID("$NetBSD: nanf.c,v 1.2 2000/04/18 22:07:17 mark Exp $");
 #endif /* not lint */
 
 /* nanf.c */
@@ -10,4 +10,4 @@ __RCSID("$NetBSD: nanf.c,v 1.1 1999/12/23 10:15:06 kleink Exp $");
 #include <math.h>
 
 /* bytes for quiet NaN on an arm32 (IEEE single precision) */
-const char __nanf[] = { 0, 0, (char)0xc0, 0x7f };
+const char __nanf[] __attribute__((__aligned__(4))) = { 0, 0, (char)0xc0, 0x7f };
