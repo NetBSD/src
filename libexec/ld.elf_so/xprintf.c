@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.12 2002/09/24 14:05:33 mycroft Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.13 2002/09/24 14:09:43 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -37,11 +37,8 @@
 #include "rtldenv.h"
 
 #ifdef RTLD_LOADER
-#define SZ_SHORT	0x01
-#define	SZ_INT		0x02
-#define	SZ_LONG		0x04
-#define	SZ_UNSIGNED	0x10
-#define	SZ_MASK		0x0f
+#define	SZ_LONG		0x01
+#define	SZ_UNSIGNED	0x02
 
 /*
  * Non-mallocing printf, for use by malloc and rtld itself.
@@ -68,14 +65,10 @@ xvsnprintf(buf, buflen, fmt, ap)
 			continue;
 		}
 		case '%':{
-			size = SZ_INT;
+			size = 0;
 	rflag:		switch (fmt[1]) {
-			case 'h':
-				size = (size&SZ_MASK)|SZ_SHORT;
-				fmt++;
-				goto rflag;
 			case 'l':
-				size = (size&SZ_MASK)|SZ_LONG;
+				size |= SZ_LONG;
 				fmt++;
 				goto rflag;
 			case 'u':
@@ -86,12 +79,10 @@ xvsnprintf(buf, buflen, fmt, ap)
 				unsigned long uval;
 				char digits[sizeof(int) * 3], *dp = digits;
 #define	SARG() \
-(size & SZ_SHORT ? (short) va_arg(ap, int) : \
-size & SZ_LONG ? va_arg(ap, long) : \
+(size & SZ_LONG ? va_arg(ap, long) : \
 va_arg(ap, int))
 #define	UARG() \
-(size & SZ_SHORT ? (unsigned short) va_arg(ap, unsigned int) : \
-size & SZ_LONG ? va_arg(ap, unsigned long) : \
+(size & SZ_LONG ? va_arg(ap, unsigned long) : \
 va_arg(ap, unsigned int))
 #define	ARG()	(size & SZ_UNSIGNED ? UARG() : SARG())
 
