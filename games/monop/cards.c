@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.4 1997/10/12 17:45:07 christos Exp $	*/
+/*	$NetBSD: cards.c,v 1.5 1998/08/30 09:19:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.4 1997/10/12 17:45:07 christos Exp $");
+__RCSID("$NetBSD: cards.c,v 1.5 1998/08/30 09:19:39 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,11 +188,12 @@ DECK	*dp;
 		}
 		num_h = num_H = 0;
 		for (op = cur_p->own_list; op; op = op->next)
-			if (op->sqr->type == PRPTY)
+			if (op->sqr->type == PRPTY) {
 				if (op->sqr->desc->houses == 5)
 					++num_H;
 				else
 					num_h += op->sqr->desc->houses;
+			}
 		num = per_h * num_h + per_H * num_H;
 		printf("You had %d Houses and %d Hotels, so that cost you $%d\n", num_h, num_H, num);
 		if (num == 0)

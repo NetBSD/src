@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.trap.c,v 1.4 1997/10/19 16:59:16 christos Exp $	*/
+/*	$NetBSD: hack.trap.c,v 1.5 1998/08/30 09:19:37 veego Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.trap.c,v 1.4 1997/10/19 16:59:16 christos Exp $");
+__RCSID("$NetBSD: hack.trap.c,v 1.5 1998/08/30 09:19:37 veego Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -433,11 +433,12 @@ level_tele()
 		newlevel = atoi(buf);
 	} else {
 		newlevel = 5 + rn2(20);	/* 5 - 24 */
-		if (dlevel == newlevel)
+		if (dlevel == newlevel) {
 			if (!xdnstair)
 				newlevel--;
 			else
 				newlevel++;
+		}
 	}
 	if (newlevel >= 30) {
 		if (newlevel > MAXLEVEL)

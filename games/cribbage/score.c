@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.5 1997/10/10 12:32:34 lukem Exp $	*/
+/*	$NetBSD: score.c,v 1.6 1998/08/30 09:19:37 veego Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.5 1997/10/10 12:32:34 lukem Exp $");
+__RCSID("$NetBSD: score.c,v 1.6 1998/08/30 09:19:37 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,21 +159,23 @@ scorehand(hand, starter, n, crb, do_explain)
 	sorthand(h, n + 1);	/* sort by rank */
 	i = 2 * fifteens(h, n + 1);
 	score += i;
-	if (do_explain)
+	if (do_explain) {
 		if (i > 0) {
 			(void) sprintf(buf, "%d points in fifteens", i);
 			strcat(expl, buf);
 		} else
 			strcat(expl, "No fifteens");
+	}
 	i = pairuns(h, n + 1);
 	score += i;
-	if (do_explain)
+	if (do_explain) {
 		if (i > 0) {
 			(void) sprintf(buf, ", %d points in pairs, %d in runs",
 			    pairpoints, runpoints);
 			strcat(expl, buf);
 		} else
 			strcat(expl, ", No pairs/runs");
+	}
 	return (score);
 }
 

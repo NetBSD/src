@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.5 1997/10/18 20:03:29 christos Exp $	*/
+/*	$NetBSD: monster.c,v 1.6 1998/08/30 09:19:38 veego Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.5 1997/10/18 20:03:29 christos Exp $");
+__RCSID("$NetBSD: monster.c,v 1.6 1998/08/30 09:19:38 veego Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -965,7 +965,7 @@ omnidirect(spnum, dam, str)
 		return;		/* bad args */
 	for (x = playerx - 1; x < playerx + 2; x++)
 		for (y = playery - 1; y < playery + 2; y++) {
-			if ((m = mitem[x][y]) != 0)
+			if ((m = mitem[x][y]) != 0) {
 				if (nospell(spnum, m) == 0) {
 					ifblind(x, y);
 					cursors();
@@ -977,6 +977,7 @@ omnidirect(spnum, dam, str)
 					lasthx = x;
 					lasthy = y;
 				}
+			}
 		}
 }
 
@@ -1512,11 +1513,12 @@ spattack(x, xx, yy)
 	switch (x) {
 	case 1:		/* rust your armor, j=1 when rusting has occurred */
 		m = k = c[WEAR];
-		if ((i = c[SHIELD]) != -1)
+		if ((i = c[SHIELD]) != -1) {
 			if (--ivenarg[i] < -1)
 				ivenarg[i] = -1;
 			else
 				j = 1;
+		}
 		if ((j == 0) && (k != -1)) {
 			m = iven[k];
 			for (i = 0; i < ARMORTYPES; i++)
@@ -1710,8 +1712,8 @@ annihilate()
 	u_char  *p;
 	for (k = 0, i = playerx - 1; i <= playerx + 1; i++)
 		for (j = playery - 1; j <= playery + 1; j++)
-			if (!vxy(&i, &j))	/* if not out of bounds */
-				if (*(p = &mitem[i][j]))	/* if a monster there */
+			if (!vxy(&i, &j)) {	/* if not out of bounds */
+				if (*(p = &mitem[i][j])) {	/* if a monster there */
 					if (*p < DEMONLORD + 2) {
 						k += monster[*p].experience;
 						*p = know[i][j] = 0;
@@ -1719,6 +1721,8 @@ annihilate()
 						lprintf("\nThe %s barely escapes being annihilated!", monster[*p].name);
 						hitp[i][j] = (hitp[i][j] >> 1) + 1;	/* lose half hit points */
 					}
+				}
+			}
 	if (k > 0) {
 		lprcat("\nYou hear loud screams of agony!");
 		raiseexperience((long) k);

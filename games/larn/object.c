@@ -1,10 +1,10 @@
-/*	$NetBSD: object.c,v 1.8 1997/10/18 20:03:38 christos Exp $	*/
+/*	$NetBSD: object.c,v 1.9 1998/08/30 09:19:38 veego Exp $	*/
 
 /* object.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: object.c,v 1.8 1997/10/18 20:03:38 christos Exp $");
+__RCSID("$NetBSD: object.c,v 1.9 1998/08/30 09:19:38 veego Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -1110,8 +1110,8 @@ void
 opit()
 {
 	int    i;
-	if (rnd(101) < 81)
-		if (rnd(70) > 9 * c[DEXTERITY] - packweight() || rnd(101) < 5)
+	if (rnd(101) < 81) {
+		if (rnd(70) > 9 * c[DEXTERITY] - packweight() || rnd(101) < 5) {
 			if (level == MAXLEVEL - 1)
 				obottomless();
 			else if (level == MAXLEVEL + MAXVLEVEL - 1)
@@ -1131,6 +1131,8 @@ opit()
 				newcavelevel(level + 1);
 				draws(0, MAXX, 0, MAXY);
 			}
+		}
+	}
 }
 
 void
