@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130.2.1 1997/07/30 07:26:13 marc Exp $
+#	$NetBSD: files,v 1.130.2.2 1997/08/11 20:03:48 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -122,6 +122,10 @@ file	dev/ic/ncr53c9x.c	ncr53c9x
 # Intel 82586 Ethernet Controller
 define	i82586
 file	dev/ic/i82586.c		i82586
+
+# SMC 91Cxx Ethernet Controller
+device	sm: arp, ether, ifnet
+file	dev/ic/smc91cxx.c	sm
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
