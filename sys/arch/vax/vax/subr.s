@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.59 2001/05/29 21:25:11 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.60 2001/06/03 15:07:20 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -586,6 +586,24 @@ ENTRY(blkclr,R6)
 	jgtr	1b
 	movc5	$0,(r3),$0,r6,(r3)
 	ret
+
+#if defined(MULTIPROCESSOR)
+
+JSBENTRY(Slock)
+1:	bbssi	$0,(r1),1b
+	rsb
+
+JSBENTRY(Slocktry)
+	clrl	r0
+	bbssi	$0,(r1),1f
+	incl	r0
+1:	rsb
+
+JSBENTRY(Sunlock)
+	bbcci	$0,(r1),1f
+1:	rsb
+
+#endif
 
 #
 # data department
