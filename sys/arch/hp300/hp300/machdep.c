@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.14 1993/12/08 23:11:40 mycroft Exp $
+ *	$Id: machdep.c,v 1.15 1994/01/06 16:50:13 mycroft Exp $
  */
 
 #include "param.h"
@@ -1626,7 +1626,9 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 #endif /* COMPAT_NOMID */
 
 int
-ptrace_set_pc (struct proc *p, unsigned int addr)
+ptrace_set_pc (p, addr)
+	struct proc *p;
+	int *addr;
 {
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
@@ -1636,7 +1638,8 @@ ptrace_set_pc (struct proc *p, unsigned int addr)
 }
 
 int
-ptrace_single_step (struct proc *p)
+ptrace_single_step (p)
+	struct proc *p;
 {
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
@@ -1646,31 +1649,35 @@ ptrace_single_step (struct proc *p)
 }
 
 int
-ptrace_getregs (struct proc *p, unsigned int *addr)
+ptrace_getregs (p, addr)
+	struct proc *p;
+	int *addr;
 {
-	u_long ipcreg[NIPCREG];
+	struct reg ipcreg;
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
 
 	bcopy(frame->f_regs, ipcreg, sizeof(frame->f_regs));
-	ipcreg[PS] = frame->f_sr;
-	ipcreg[PC] = frame->f_pc;
-	return copyout(ipcreg, addr, sizeof(ipcreg));
+	ipcreg.r_sr = frame->f_sr;
+	ipcreg.r_pc = frame->f_pc;
+	return copyout(reg, addr, sizeof(reg));
 }
 
 int
-ptrace_setregs (struct proc *p, unsigned int *addr)
+ptrace_setregs (p, addr)
+	struct proc *p;
+	int *addr;
 {
 	int error;
-	u_long ipcreg[NIPCREG];
+	struct reg ipcreg;
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
 
-	if (error = copyin(addr, ipcreg, sizeof(ipcreg)))
+	if (error = copyin(addr, reg, sizeof(reg)))
 		return error;
 
 	bcopy(ipcreg, frame->f_regs, sizeof(frame->f_regs));
-	frame->f_sr = (ipcreg[PS] | PSL_USERSET) & ~PSL_USERCLR;
-	frame->f_pc = ipcreg[PC];
+	frame->f_sr = (ipcreg.r_sr | PSL_USERSET) & ~PSL_USERCLR;
+	frame->f_pc = ipcreg.r_pc;
 	return 0;
 }
