@@ -1,8 +1,9 @@
-/*	$NetBSD: getnetgrent.c,v 1.11 1997/01/17 07:26:19 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.11.2.1 1997/05/24 04:51:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
+ * Portions Copyright (c) 1997 Luke Mewburn. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.11 1997/01/17 07:26:19 lukem Exp $";
+static char *rcsid = "$NetBSD: getnetgrent.c,v 1.11.2.1 1997/05/24 04:51:54 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,11 +44,14 @@ static char *rcsid = "$NetBSD: getnetgrent.c,v 1.11 1997/01/17 07:26:19 lukem Ex
 #include <fcntl.h>
 #include <err.h>
 #include <ctype.h>
+#include <nsswitch.h>
 #include <stdlib.h>
 #include <stringlist.h>
 #include <db.h>
 #ifdef YP
+#include <rpc/rpc.h>
 #include <rpcsvc/ypclnt.h>
+#include <rpcsvc/yp_prot.h>
 #endif
 
 #define _NG_STAR(s)	(((s) == NULL || *(s) == '\0') ? _ngstar : s)
@@ -62,17 +66,15 @@ static DB *_ng_db;
 
 static int		getstring __P((char **, int, char **));
 static struct netgroup	*getnetgroup __P((char **));
-static int		 lookup __P((const char *, char *, char **, int));
-static void		 addgroup __P((char *, StringList *, char *));
+static int		 lookup __P((char *, char **, int));
+static void		 addgroup __P((StringList *, char *));
 static int		 in_check __P((const char *, const char *,
 				       const char *, struct netgroup *));
-static int		 in_find __P((char *, StringList *,
-				      char *, const char *,
+static int		 in_find __P((StringList *, char *, const char *,
 				      const char *, const char *));
-static char		*in_lookup1 __P((const char *, const char *,
-					 const char *, int));
+static char		*in_lookup1 __P((const char *, const char *, int));
 static int		 in_lookup __P((const char *, const char *,
-				        const char *, const char *, int));
+					const char *, int));
 
 /*
  * getstring(): Get a string delimited by the character, skipping leading and
@@ -163,79 +165,133 @@ badhost:
 }
 
 
+static int
+_local_lookup(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	ap;
+{
+	char	 *name = va_arg(ap, char *);
+	char	**line = va_arg(ap, char **);
+	int	  bywhat = va_arg(ap, int);
+
+	DBT	 key, data;
+	size_t	 len;
+	char	*ks;
+	int	 r;
+
+	if (_ng_db == NULL)
+		return NS_UNAVAIL;
+
+	len = strlen(name) + 2;
+	ks = malloc(len);
+	if (ks == NULL)
+		_err(1, _ngoomem);
+
+	ks[0] = bywhat;
+	memcpy(&ks[1], name, len - 1);
+
+	key.data = (u_char *) ks;
+	key.size = len;
+
+	r = (_ng_db->get) (_ng_db, &key, &data, 0);
+	free(ks);
+	switch (r) {
+	case 0:
+		break;
+	case 1:
+		return NS_NOTFOUND;
+	case -1:
+		return NS_UNAVAIL;
+	}
+
+	*line = strdup(data.data);
+	if (*line == NULL)
+		return NS_UNAVAIL;
+	return NS_SUCCESS;
+}
+
+#ifdef YP
+static int
+_nis_lookup(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	char	 *name = va_arg(ap, char *);
+	char	**line = va_arg(ap, char **);
+	int	  bywhat = va_arg(ap, int);
+
+	static char	*__ypdomain;
+	int              i;
+	char            *map = NULL;
+
+	if(__ypdomain == NULL) {
+		switch (yp_get_default_domain(&__ypdomain)) {
+		case 0:
+			break;
+		case YPERR_RESRC:
+			return NS_TRYAGAIN;
+		default:
+			return NS_UNAVAIL;
+		}
+	}
+
+	switch (bywhat) {
+	case _NG_KEYBYNAME:
+		map = "netgroup";
+		break;
+
+	case _NG_KEYBYUSER:
+		map = "netgroup.byuser";
+		break;
+
+	case _NG_KEYBYHOST:
+		map = "netgroup.byhost";
+		break;
+
+	default:
+		abort();
+		break;
+	}
+
+
+	*line = NULL;
+	switch (yp_match(__ypdomain, map, name, strlen(name), line, &i)) {
+	case 0:
+		return NS_SUCCESS;
+	case YPERR_KEY:
+		if (*line)
+			free(*line);
+		return NS_NOTFOUND;
+	default:
+		if (*line)
+			free(*line);
+		return NS_UNAVAIL;
+	}
+	/* NOTREACHED */
+}
+#endif
+
 /*
  * lookup(): Find the given key in the database or yp, and return its value
  * in *line; returns 1 if key was found, 0 otherwise
  */
 static int
-lookup(ypdom, name, line, bywhat)
-	const char	 *ypdom;
-	char		 *name;
-	char		**line;
-	int		  bywhat;
+lookup(name, line, bywhat)
+	char	 *name;
+	char	**line;
+	int	  bywhat;
 {
-#ifdef YP
-	int             i;
-	char           *map = NULL;
-#endif
+	int		r;
+	static ns_dtab	dtab;
 
-	if (_ng_db) {
-		DBT	 key, data;
-		size_t	 len = strlen(name) + 2;
-		char	*ks = malloc(len);
+	NS_FILES_CB(dtab, _local_lookup, NULL);
+	NS_NIS_CB(dtab, _nis_lookup, NULL);
 
-		ks[0] = bywhat;
-		memcpy(&ks[1], name, len - 1);
-
-		key.data = (u_char *) ks;
-		key.size = len;
-
-		switch ((_ng_db->get) (_ng_db, &key, &data, 0)) {
-		case 0:
-			free(ks);
-			*line = strdup(data.data);
-			if (*line == NULL)
-				_err(1, _ngoomem);
-			return 1;
-
-		case 1:
-			break;
-
-		case -1:
-			_warn("netgroup: db get");
-			break;
-		}
-		free(ks);
-	}
-#ifdef YP
-	if (ypdom) {
-		switch (bywhat) {
-		case _NG_KEYBYNAME:
-			map = "netgroup";
-			break;
-
-		case _NG_KEYBYUSER:
-			map = "netgroup.byuser";
-			break;
-
-		case _NG_KEYBYHOST:
-			map = "netgroup.byhost";
-			break;
-
-		default:
-			abort();
-			break;
-		}
-
-
-		if (yp_match(ypdom, map, name, strlen(name), line, &i) == 0)
-			return 1;
-	}
-#endif
-
-	return 0;
+	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, name, line, bywhat);
+	return (r == NS_SUCCESS) ? 1 : 0;
 }
-
 
 /*
  * _ng_parse(): Parse a line and return: _NG_ERROR: Syntax Error _NG_NONE:
@@ -290,8 +346,7 @@ _ng_parse(p, name, ng)
  * addgroup(): Recursively add all the members of the netgroup to this group
  */
 static void
-addgroup(ypdom, sl, grp)
-	char		*ypdom;
+addgroup(sl, grp)
 	StringList	*sl;
 	char		*grp;
 {
@@ -311,8 +366,12 @@ addgroup(ypdom, sl, grp)
 	sl_add(sl, grp);
 
 	/* Lookup this netgroup */
-	if (!lookup(ypdom, grp, &line, _NG_KEYBYNAME))
+	line = NULL;
+	if (!lookup(grp, &line, _NG_KEYBYNAME)) {
+		if (line != NULL)
+			free(line);
 		return;
+	}
 
 	p = line;
 
@@ -332,7 +391,7 @@ addgroup(ypdom, sl, grp)
 
 		case _NG_NAME:
 			/* netgroup name */
-			addgroup(ypdom, sl, name);
+			addgroup(sl, name);
 			break;
 
 		case _NG_ERROR:
@@ -376,8 +435,7 @@ in_check(host, user, domain, ng)
  * in_find(): Find a match for the host, user, domain spec
  */
 static int
-in_find(ypdom, sl, grp, host, user, domain)
-	char		*ypdom;
+in_find(sl, grp, host, user, domain)
 	StringList	*sl;
 	char		*grp;
 	const char	*host;
@@ -401,8 +459,12 @@ in_find(ypdom, sl, grp, host, user, domain)
 	sl_add(sl, grp);
 
 	/* Lookup this netgroup */
-	if (!lookup(ypdom, grp, &line, _NG_KEYBYNAME))
+	line = NULL;
+	if (!lookup(grp, &line, _NG_KEYBYNAME)) {
+		if (line)
+			free(line);
 		return 0;
+	}
 
 	p = line;
 
@@ -431,7 +493,7 @@ in_find(ypdom, sl, grp, host, user, domain)
 
 		case _NG_NAME:
 			/* netgroup name */
-			if (in_find(ypdom, sl, name, host, user, domain)) {
+			if (in_find(sl, name, host, user, domain)) {
 				free(line);
 				return 1;
 			}
@@ -480,8 +542,7 @@ _ng_print(buf, len, ng)
  * in_lookup1(): Fast lookup for a key in the appropriate map
  */
 static char *
-in_lookup1(ypdom, key, domain, map)
-	const char	*ypdom;
+in_lookup1(key, domain, map)
 	const char	*key;
 	const char	*domain;
 	int		 map;
@@ -493,7 +554,7 @@ in_lookup1(ypdom, key, domain, map)
 
 	len = (key ? strlen(key) : 1) + (domain ? strlen(domain) : 1) + 2;
 	ptr = _ng_makekey(key, domain, len);
-	res = lookup(ypdom, ptr, &line, map);
+	res = lookup(ptr, &line, map);
 	free(ptr);
 	return res ? line : NULL;
 }
@@ -503,8 +564,7 @@ in_lookup1(ypdom, key, domain, map)
  * in_lookup(): Fast lookup for a key in the appropriate map
  */
 static int
-in_lookup(ypdom, group, key, domain, map)
-	const char	*ypdom;
+in_lookup(group, key, domain, map)
 	const char	*group;
 	const char	*key;
 	const char	*domain;
@@ -515,8 +575,8 @@ in_lookup(ypdom, group, key, domain, map)
 
 	if (domain != NULL) {
 		/* Domain specified; look in "group.domain" and "*.domain" */
-		if ((line = in_lookup1(ypdom, key, domain, map)) == NULL)
-			line = in_lookup1(ypdom, NULL, domain, map);
+		if ((line = in_lookup1(key, domain, map)) == NULL)
+			line = in_lookup1(NULL, domain, map);
 	}
 	else 
 		line = NULL;
@@ -526,8 +586,8 @@ in_lookup(ypdom, group, key, domain, map)
 		 * domain not specified or domain lookup failed; look in
 		 * "group.*" and "*.*"
 		 */
-	    if (((line = in_lookup1(ypdom, key, NULL, map)) == NULL) &&
-		((line = in_lookup1(ypdom, NULL, NULL, map)) == NULL))
+	    if (((line = in_lookup1(key, NULL, map)) == NULL) &&
+		((line = in_lookup1(NULL, NULL, map)) == NULL))
 		return 0;
 	}
 
@@ -574,10 +634,7 @@ setnetgrent(ng)
 	const char	*ng;
 {
 	StringList	*sl = sl_init();
-#ifdef YP
-	char		*line;
-#endif
-	char		*ng_copy, *ypdom = NULL;
+	char		*ng_copy;
 
 	/* Cleanup any previous storage */
 	if (_nghead != NULL)
@@ -586,20 +643,10 @@ setnetgrent(ng)
 	if (_ng_db == NULL)
 		_ng_db = dbopen(_PATH_NETGROUP_DB, O_RDONLY, 0, DB_HASH, NULL);
 
-#ifdef YP
-	/*
-	 * We use yp if there is a "+" in the netgroup file, or if there is
-	 * no netgroup file at all
-	 */
-	if (_ng_db == NULL || lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0)
-		yp_get_default_domain(&ypdom);
-	else
-		free(line);
-#endif
 	ng_copy = strdup(ng);
 	if (ng_copy == NULL)
 		_err(1, _ngoomem);
-	addgroup(ypdom, sl, ng_copy);
+	addgroup(sl, ng_copy);
 	_nghead = _nglist;
 	sl_free(sl, 1);
 }
@@ -628,35 +675,18 @@ int
 innetgr(grp, host, user, domain)
 	const char	*grp, *host, *user, *domain;
 {
-	char	*ypdom = NULL;
-#ifdef YP
-	char	*line;
-#endif
 	int	 found;
 	StringList *sl;
 
 	if (_ng_db == NULL)
 		_ng_db = dbopen(_PATH_NETGROUP_DB, O_RDONLY, 0, DB_HASH, NULL);
 
-#ifdef YP
-	/*
-	 * We use yp if there is a "+" in the netgroup file, or if there is
-	 * no netgroup file at all
-	 */
-	if (_ng_db == NULL)
-		yp_get_default_domain(&ypdom);
-	else if (lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0) {
-		yp_get_default_domain(&ypdom);
-		free(line);
-	}
-#endif
-
 	/* Try the fast lookup first */
 	if (host != NULL && user == NULL) {
-		if (in_lookup(ypdom, grp, host, domain, _NG_KEYBYHOST))
+		if (in_lookup(grp, host, domain, _NG_KEYBYHOST))
 			return 1;
 	} else if (host == NULL && user != NULL) {
-		if (in_lookup(ypdom, grp, user, domain, _NG_KEYBYUSER))
+		if (in_lookup(grp, user, domain, _NG_KEYBYUSER))
 			return 1;
 	}
 	/* If a domainname is given, we would have found a match */
@@ -665,7 +695,7 @@ innetgr(grp, host, user, domain)
 
 	/* Too bad need the slow recursive way */
 	sl = sl_init();
-	found = in_find(ypdom, sl, strdup(grp), host, user, domain);
+	found = in_find(sl, strdup(grp), host, user, domain);
 	sl_free(sl, 1);
 
 	return found;
