@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.8 2003/01/18 06:33:42 thorpej Exp $	*/
+/*	$NetBSD: locore.h,v 1.9 2003/10/01 21:51:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  *	+ change bank from 1 to 0
  *	+ set BANK0 (r4, r5, r6) = (ssr, spc, ssp)
  */
-#define	__EXCEPTION_ENTRY							;\
+#define	__EXCEPTION_ENTRY						;\
 	/* Check kernel/user mode. */					;\
 	mov	#0x40,	r3						;\
 	swap.b	r3,	r3						;\
