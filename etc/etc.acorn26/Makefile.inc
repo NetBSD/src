@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/03/24 21:20:39 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/03/31 16:02:30 bjh21 Exp $
 #
 #	etc.acorn26/Makefile.inc -- acorn26-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC FOURMEG
+
+INSTALLATION_DIRS+=	installation/misc
 
 snap_md_post:
 .ifndef UPDATE
@@ -13,7 +15,7 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 
 	# install bootloader into installation directory
-	cp -p ${DESTDIR}/usr/mdec/boot26,ffa ${RELEASEDIR}/installation/.
+	cp -p ${DESTDIR}/usr/mdec/boot26,ffa ${RELEASEDIR}/installation/misc/.
 
 	# compute checksums
 	sh ${.CURDIR}/../distrib/sets/makesums -t ${RELEASEDIR}/installation '*'
