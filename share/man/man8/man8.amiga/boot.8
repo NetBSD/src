@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 2001/06/05 12:52:56 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.6 2001/11/26 00:11:52 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -46,8 +46,7 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery
-.Pp
+.Ss Power fail and crash recovery
 When the
 .Nx
 kernel is booted normally (using one of the two methods discussed below),
@@ -59,16 +58,14 @@ to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8 ,
+.Xr ddb 4 ,
 if it is configured in the kernel.  If the debugger is not present,
 or the debugger is exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
 during the next boot cycle).  After the dump is complete (successful
 or not), the system will attempt a reboot.
-.Pp
-.Sy Booting NetBSD using the bootloader
-.Pp
+.Ss Booting NetBSD using the bootloader
 When a bootable
 .Nx
 partition is created by means of HDTOOLBOX or another RDB editing program
@@ -95,14 +92,13 @@ typing in an alternate command sequence. The command line looks like:
 .Op Fl S Ar amount
 .Op Fl T Ar amount
 .Ed
-
+.Pp
 .Bl -tag -width flag
 .It kernel-path
 This gives you the opportunity to boot another kernel, say:
-/netbsd.old.
+.Pa /netbsd.old .
 The default is
-/netbsd
-
+.Pa /netbsd .
 .It Fl a
 Autoboot into multi-user mode (default).
 .It Fl b
@@ -145,14 +141,11 @@ from right to left by SCSI bus drivers using this convention.
 .It Fl S
 Load the  kernel symbols
 .El
-
-.Pp
-.Sy Booting NetBSD using the loadbsd program
-.Pp
+.Ss Booting NetBSD using the loadbsd program
 When you want (or have to) start
 .Nx
 from AmigaOS, you have to use the
-.Xr loadbsd
+.Ic loadbsd
 program that is supplied in the utils directory of the distribution.
 The loadbsd command line specification is:
 .Bd -ragged -offset indent
@@ -217,7 +210,9 @@ filesystem, the file
 .Ar /netbsd
 is often not the same as the actual kernel booted. This can cause some
 programs to fail. However, note that you can use third-party Berkeley
-filesystems such as bffs to access the NetBSD root partition from AmigaOS.
+filesystems such as bffs to access the
+.Nx
+root partition from AmigaOS.
 .Sh FILES
 .Bl -tag -width /usr/mdec/xxboot -compact
 .It Pa /netbsd
@@ -227,22 +222,21 @@ RDB device boot block
 .It Pa /usr/mdec/fdboot
 floppy disk boot block
 .El
-.Sh BUGS
-Due to code size restrictions, you can't currently use a old-style file
-system (created with
-.Xr newfs
--O
-or with
-.Nx 0.9 )
-with the boot block. You can use
-.Xr loadbsd
-to boot from AmigaOS, or upgrade the file system with
-.Ar fsck_ffs -c 2 .
 .Sh SEE ALSO
-.Xr ddb 8 ,
+.Xr ddb 4 ,
 .Xr fsck_ffs 8 ,
 .Xr installboot 8 ,
 .Xr newfs 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8
-
+.Sh BUGS
+Due to code size restrictions, you can't currently use a old-style file
+system (created with
+.Xr newfs 8
+-O
+or with
+.Nx 0.9 )
+with the boot block. You can use
+.Ic loadbsd
+to boot from AmigaOS, or upgrade the file system with
+.Ar fsck_ffs -c 2 .
