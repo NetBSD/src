@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stgereg.h,v 1.2 2002/11/08 02:05:16 enami Exp $	*/
+/*	$NetBSD: if_stgereg.h,v 1.3 2003/02/10 21:10:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -250,22 +250,23 @@ struct stge_rfd {
 
 #define	STGE_IntStatusAck		0x5a	/* 16-bit */
 
-#define	STGE_IntEnable			0x5c	/* 16-bit */
-#define	IE_HostError			(1U << 1)
-#define	IE_TxComplete			(1U << 2)
-#define	IE_MACControlFrame		(1U << 3)
-#define	IE_RxComplete			(1U << 4)
-#define	IE_RxEarly			(1U << 5)
-#define	IE_InRequested			(1U << 6)
-#define	IE_UpdateStats			(1U << 7)
-#define	IE_LinkEvent			(1U << 8)
-#define	IE_TxDMAComplete		(1U << 9)
-#define	IE_RxDMAComplete		(1U << 10)
-#define	IE_RFDListEnd			(1U << 11)
-#define	IE_RxDMAPriority		(1U << 12)
-
 #define	STGE_IntStatus			0x5e	/* 16-bit */
+
+#define	STGE_IntEnable			0x5c	/* 16-bit */
+
 #define	IS_InterruptStatus		(1U << 0)
+#define	IS_HostError			(1U << 1)
+#define	IS_TxComplete			(1U << 2)
+#define	IS_MACControlFrame		(1U << 3)
+#define	IS_RxComplete			(1U << 4)
+#define	IS_RxEarly			(1U << 5)
+#define	IS_InRequested			(1U << 6)
+#define	IS_UpdateStats			(1U << 7)
+#define	IS_LinkEvent			(1U << 8)
+#define	IS_TxDMAComplete		(1U << 9)
+#define	IS_RxDMAComplete		(1U << 10)
+#define	IS_RFDListEnd			(1U << 11)
+#define	IS_RxDMAPriority		(1U << 12)
 
 #define	STGE_TxStatus			0x60
 #define	TS_TxError			(1U << 0)

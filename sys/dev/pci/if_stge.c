@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.16 2003/02/10 17:18:33 christos Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.17 2003/02/10 21:10:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.16 2003/02/10 17:18:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.17 2003/02/10 21:10:06 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1073,7 +1073,7 @@ stge_intr(void *arg)
 			break;
 
 		/* Host interface errors. */
-		if (isr & IE_HostError) {
+		if (isr & IS_HostError) {
 			printf("%s: Host interface error\n",
 			    sc->sc_dev.dv_xname);
 			wantinit = 1;
@@ -1081,10 +1081,10 @@ stge_intr(void *arg)
 		}
 
 		/* Receive interrupts. */
-		if (isr & (IE_RxDMAComplete|IE_RFDListEnd)) {
+		if (isr & (IS_RxDMAComplete|IS_RFDListEnd)) {
 			STGE_EVCNT_INCR(&sc->sc_ev_rxintr);
 			stge_rxintr(sc);
-			if (isr & IE_RFDListEnd) {
+			if (isr & IS_RFDListEnd) {
 				printf("%s: receive ring overflow\n",
 				    sc->sc_dev.dv_xname);
 				/*
@@ -1096,20 +1096,20 @@ stge_intr(void *arg)
 		}
 
 		/* Transmit interrupts. */
-		if (isr & (IE_TxDMAComplete|IE_TxComplete)) {
+		if (isr & (IS_TxDMAComplete|IS_TxComplete)) {
 #ifdef STGE_EVENT_COUNTERS
-			if (isr & IE_TxDMAComplete)
+			if (isr & IS_TxDMAComplete)
 				STGE_EVCNT_INCR(&sc->sc_ev_txdmaintr);
 #endif
 			stge_txintr(sc);
 		}
 
 		/* Statistics overflow. */
-		if (isr & IE_UpdateStats)
+		if (isr & IS_UpdateStats)
 			stge_stats_update(sc);
 
 		/* Transmission errors. */
-		if (isr & IE_TxComplete) {
+		if (isr & IS_TxComplete) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txindintr);
 			for (;;) {
 				txstat = bus_space_read_4(sc->sc_st, sc->sc_sh,
@@ -1606,8 +1606,8 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Initialize the interrupt mask.
 	 */
-	sc->sc_IntEnable = IE_HostError | IE_TxComplete | IE_UpdateStats |
-	    IE_TxDMAComplete | IE_RxDMAComplete | IE_RFDListEnd;
+	sc->sc_IntEnable = IS_HostError | IS_TxComplete | IS_UpdateStats |
+	    IS_TxDMAComplete | IS_RxDMAComplete | IS_RFDListEnd;
 	bus_space_write_2(st, sh, STGE_IntStatus, 0xffff);
 	bus_space_write_2(st, sh, STGE_IntEnable, sc->sc_IntEnable);
 
