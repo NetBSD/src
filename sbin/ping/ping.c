@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.47.2.1 1999/06/24 16:23:03 perry Exp $	*/
+/*	$NetBSD: ping.c,v 1.47.2.2 2000/10/10 22:23:45 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.47.2.1 1999/06/24 16:23:03 perry Exp $");
+__RCSID("$NetBSD: ping.c,v 1.47.2.2 2000/10/10 22:23:45 he Exp $");
 #endif
 
 #include <stdio.h>
@@ -218,7 +218,7 @@ static void sec_to_timeval(const double, struct timeval *);
 static double timeval_to_sec(const struct timeval *);
 static void pr_pack(u_char *, int, struct sockaddr_in *);
 static u_short in_cksum(u_short *, u_int);
-static void pr_saddr(char *, u_char *);
+static void pr_saddr(u_char *);
 static char *pr_addr(struct in_addr *);
 static void pr_iph(struct icmp *, int);
 static void pr_retip(struct icmp *, int);
@@ -939,7 +939,7 @@ pr_pack(u_char *buf,
 			PR_PACK_SUB();
 			(void)printf("\nLSRR: ");
 			for (;;) {
-				pr_saddr("\t%s", cp);
+				pr_saddr(cp);
 				cp += 4;
 				hlen -= 4;
 				j -= 4;
@@ -978,7 +978,7 @@ pr_pack(u_char *buf,
 				(void)printf("\nRR: ");
 			}
 			for (;;) {
-				pr_saddr("\t%s", cp);
+				pr_saddr(cp);
 				cp += 4;
 				hlen -= 4;
 				i -= 4;
@@ -1495,8 +1495,7 @@ pr_iph(struct icmp *icp,
  * Print an ASCII host address starting from a string of bytes.
  */
 static void
-pr_saddr(char *pat,
-	 u_char *cp)
+pr_saddr(u_char *cp)
 {
 	n_long l;
 	struct in_addr addr;
@@ -1506,7 +1505,7 @@ pr_saddr(char *pat,
 	l = (l<<8) + (u_char)*++cp;
 	l = (l<<8) + (u_char)*++cp;
 	addr.s_addr = htonl(l);
-	(void)printf(pat, (l == 0) ? "0.0.0.0" : pr_addr(&addr));
+	(void)printf("\t%s", (l == 0) ? "0.0.0.0" : pr_addr(&addr));
 }
 
 
