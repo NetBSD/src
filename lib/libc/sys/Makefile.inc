@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.62 1997/08/20 04:58:41 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.63 1997/08/25 05:07:43 mikel Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -91,7 +91,7 @@ ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 ${LASM} ${LNOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub ${.PREFIX} | \
+	@sh ${.CURDIR}/sys/makelintstub ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
