@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn02_subr.c,v 1.1.4.1 1998/10/15 02:16:30 nisimura Exp $	*/
+/*	$NetBSD: dec_kn02_subr.c,v 1.1.4.2 1998/10/20 02:46:41 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn02_subr.c,v 1.1.4.1 1998/10/15 02:16:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn02_subr.c,v 1.1.4.2 1998/10/20 02:46:41 nisimura Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -86,15 +86,15 @@ kn02ba_recover_erradr(phys, mer)
 
 
 /* 
- * Handle error
+ * Handle memory error
  * All we can do with parity is panic.
  * XXX check for clean user pages, replace frame,  and reload ?
  */
 void
-kn02ba_errintr()
+kn02ba_memerr()
 {
 	register int mer, adr, siz;
-	static int errintr_cnt = 0;
+	static int memerr_cnt = 0;
 
 	siz = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
 	mer = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
@@ -103,8 +103,8 @@ kn02ba_errintr()
 	/* clear interrupt bit */
 	*(unsigned int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 
-	errintr_cnt++;
-	printf("(%d)%s%x [%x %x %x]\n", errintr_cnt,
+	memerr_cnt++;
+	printf("(%d)%s%x [%x %x %x]\n", memerr_cnt,
 	       "Bad memory chip at phys ",
 	       kn02ba_recover_erradr(adr, mer),
 	       mer, siz, adr);

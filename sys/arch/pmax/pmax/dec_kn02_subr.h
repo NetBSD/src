@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn02_subr.h,v 1.1 1998/03/25 06:04:31 jonathan Exp $	*/
+/*	$NetBSD: dec_kn02_subr.h,v 1.1.4.1 1998/10/20 02:46:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -35,5 +35,6 @@
 #ifndef __PMAX_KN02_SUBR_H
 #define __PMAX_KN02_SUBR_H
 
-void	kn02ba_errintr __P ((void));
+void	kn02ba_memerr __P ((void));
+
 #endif /* __KN02B_SUBR_H */

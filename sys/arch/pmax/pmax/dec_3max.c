@@ -1,5 +1,4 @@
-/* $Id: dec_3max.c,v 1.6.2.1 1998/10/15 00:42:44 nisimura Exp $ */
-/*	$NetBSD: dec_3max.c,v 1.6.2.1 1998/10/15 00:42:44 nisimura Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.6.2.2 1998/10/20 02:46:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -74,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.1 1998/10/15 00:42:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.2 1998/10/20 02:46:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +116,11 @@ void kn02_intr_establish __P((struct device *, void *, int,
 		int (*)(void *), void *));
 void kn02_intr_disestablish __P((struct device *, void *));
 
-static void dec_3max_errintr __P((void));
+static void dec_3max_memerr __P((void));
 
+extern void kn02_wbflush __P((void));
+extern unsigned nullclkread __P((void));
+extern unsigned (*clkread) __P((void));
 extern volatile struct chiptime *mcclock_addr;
 extern char cpu_model[];
 
@@ -161,7 +163,7 @@ dec_3max_os_init()
 
 	/* clear any memory errors from new-config probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
-	wbflush();
+	kn02_wbflush();
 
 	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 	mips_hardware_intr = dec_3max_intr;
@@ -182,6 +184,9 @@ dec_3max_os_init()
 	splvec.splstatclock = MIPS_SPL_0_1;
 	
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
 }
 
 
@@ -196,10 +201,10 @@ dec_3max_bus_reset()
 	 */
 
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
-	wbflush();
+	kn02_wbflush();
 
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
-	wbflush();
+	kn02_wbflush();
 }
 
 #include <dev/cons.h>
@@ -316,7 +321,7 @@ dec_3max_intr(cpumask, pc, status, cause)
 	}
 	if (cpumask & MIPS_INT_MASK_3) {
 		intrcnt[ERROR_INTR]++;
-		dec_3max_errintr();
+		dec_3max_memerr();
 	}
 
 	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
@@ -328,7 +333,7 @@ dec_3max_intr(cpumask, pc, status, cause)
  * XXX on double-error on clean user page, mark bad and reload frame?
  */
 static void
-dec_3max_errintr()
+dec_3max_memerr()
 {
 	u_int32_t erradr, errsyn;
 
@@ -336,7 +341,7 @@ dec_3max_errintr()
 	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
 	errsyn = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
-	wbflush();
+	kn02_wbflush();
 
 	/* Send to kn02/kn03 memory subsystem handler */
 	dec_mtasic_err(erradr, errsyn);
@@ -450,7 +455,7 @@ _splraise_kn02(lvl)
 	new = oldiplmask[lvl] = *p;
 	new &= ~iplmask[lvl];
 	*p = new;
-	wbflush();
+	kn02_wbflush();
 	return lvl | _splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1);
 }
 
@@ -462,7 +467,7 @@ _spllower_kn02(mask)
 
 	oldiplmask[IPL_NONE] = *p;	/* save current CSR */
 	*p = iplmask[IPL_HIGH];		/* enable all of established devices */
-	wbflush();
+	kn02_wbflush();
 	return IPL_NONE | _spllower(mask);
 }
 
@@ -474,7 +479,7 @@ _splx_kn02(lvl)
 
 	if (lvl & 0xff) {
 		*p = oldiplmask[lvl & 0xff];
-		wbflush();
+		kn02_wbflush();
 	}
 	(void)_splset(lvl & MIPS_INT_MASK);
 	return 0;
