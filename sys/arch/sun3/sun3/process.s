@@ -1,4 +1,4 @@
-/*	$NetBSD: process.s,v 1.21 1995/03/26 19:38:27 gwr Exp $	*/
+/*	$NetBSD: process.s,v 1.22 1995/04/08 04:45:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -296,6 +296,8 @@ Lswnochg:
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
 	jbsr    _load_u_area		| load_u_area()
 	movl	_curpcb,a1		| restore p_addr
+	movl	#IC_CLEAR,d0
+	movc	d0,cacr
 
 Lcxswdone:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
