@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 1997/01/24 01:52:51 cgd Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 1997/04/01 17:27:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -81,7 +81,7 @@ load_file(bbinfop, loadaddr)
 		puts("invalid number of blocks in boot program description\n");
 		return 0;
 	}
-	if (bbinfop->bsize < 4096 || bbinfop->bsize > MAXBSIZE) {
+	if (bbinfop->bsize < DEV_BSIZE || bbinfop->bsize > MAXBSIZE) {
 		puts("invalid block size in boot program description\n");
 		return 0;
 	}
