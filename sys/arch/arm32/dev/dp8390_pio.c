@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390_pio.c,v 1.1 1997/10/18 04:38:21 mark Exp $	*/
+/*	$NetBSD: dp8390_pio.c,v 1.2 1998/01/20 05:01:14 mark Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -225,7 +225,6 @@ dp8390_pio_readmem(sc, src, dst, amount)
 	bus_space_tag_t iot = sc->sc_regt;
 	bus_space_handle_t nicioh = sc->sc_regh;
 	int maxwait = 100; /* about 120us */
-	int addr;
 
 	DPRINTF(("dp8390_pio_readmem(sc, src=%x, dst=%x, len=%x)\n", src, (u_int)dst, amount));
 
@@ -283,7 +282,6 @@ dp8390_pio_writemem(sc, src, dst, len)
 	bus_space_tag_t iot = sc->sc_regt;
 	bus_space_handle_t nicioh = sc->sc_regh;
 	int maxwait = 100; /* about 120us */
-	int addr;
 
 	DPRINTF(("dp8390_pio_writemem(sc, src=%x, dst=%x, len=%x)\n", (u_int)src, dst, len));
 
@@ -437,10 +435,7 @@ int
 dp8390_pio_test_mem(sc)
 	struct dp8390_softc *sc;
 {
-	bus_space_tag_t buft = sc->sc_buft;
-	bus_space_handle_t bufh = sc->sc_bufh;
 	int i;
-	int d;
 
 	/* Fill the buffer memory with a positional value */
 	for (i = 0; i < sc->mem_size; i += 2)
@@ -517,8 +512,6 @@ dp8390_pio_ring_copy(sc, src, dst, amount)
 	caddr_t dst;
 	u_short amount;
 {
-	bus_space_tag_t buft = sc->sc_buft;
-	bus_space_handle_t bufh = sc->sc_bufh;
 	u_short tmp_amount;
 	u_char bytes[2];
 	int addr = src;
