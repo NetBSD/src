@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.30 1996/10/09 00:04:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -245,7 +245,7 @@ again:
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	p1->p_holdcnt++;
+	PHOLD(p1);
 
 #ifdef __FORK_BRAINDAMAGE
 	/*
@@ -282,7 +282,7 @@ again:
 	/*
 	 * Now can be swapped.
 	 */
-	p1->p_holdcnt--;
+	PRELE(p1);
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
