@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.1 1998/10/14 12:15:11 tsubai Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.2 1999/01/13 08:13:41 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /* XXX This list is incomplete. */
 
-#define KC(n)		(0xe000 | (n))  /* see wsksymvar.h */
+#define KC(n) KS_KEYCODE(n)
 
 static const keysym_t akbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
@@ -147,6 +147,7 @@ static const keysym_t akbd_keydesc_jp[] = {
 
 static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	akbd_keydesc_us),
+	{0, 0, 0, 0}
 };
 
 #undef KBD_MAP
