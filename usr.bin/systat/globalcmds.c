@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.10 2002/11/16 15:59:31 itojun Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.11 2004/07/03 18:54:47 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: globalcmds.c,v 1.10 2002/11/16 15:59:31 itojun Exp $");
+__RCSID("$NetBSD: globalcmds.c,v 1.11 2004/07/03 18:54:47 mycroft Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -130,7 +130,6 @@ global_interval(char *args)
 		return;
 	}
 
-	alarm(0);
 	naptime = interval;
 	display(0);
 	status();
@@ -155,7 +154,7 @@ global_quit(char *args)
 void
 global_stop(char *args)
 {
-	alarm(0);
+	timeout(-1);
 	mvaddstr(CMDLINE, 0, "Refresh disabled.");
 	clrtoeol();
 }

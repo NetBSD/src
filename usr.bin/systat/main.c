@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2004/07/03 18:31:36 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2004/07/03 18:54:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.36 2004/07/03 18:31:36 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2004/07/03 18:54:47 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -228,7 +228,6 @@ main(int argc, char **argv)
 
 	dellave = 0.0;
 
-	signal(SIGALRM, display);
 	display(0);
 	noecho();
 	cbreak();
@@ -264,12 +263,7 @@ void
 display(int signo)
 {
 	int j;
-	sigset_t set;
 	struct mode *p;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	sigprocmask(SIG_BLOCK, &set, NULL);
 
 	/* Get the load average over the last minute. */
 	(void)getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
@@ -311,24 +305,16 @@ display(int signo)
 			allcounter++;
        }
 
-	sigprocmask(SIG_UNBLOCK, &set, NULL);
-	alarm(naptime);
+	timeout(naptime * 1000);
 }
 
 void
 redraw(int signo)
 {
-	sigset_t set;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	sigprocmask(SIG_BLOCK, &set, NULL);
-
 	resizeterm(LINES, COLS);
 	CMDLINE = LINES - 1;
 	labels();
 
-	sigprocmask(SIG_UNBLOCK, &set, NULL);
 	display(0);
 }
 
