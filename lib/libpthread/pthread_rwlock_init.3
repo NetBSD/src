@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock_init.3,v 1.3 2003/07/04 08:41:25 wiz Exp $
+.\" $NetBSD: pthread_rwlock_init.3,v 1.4 2003/07/04 08:42:57 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,8 +106,6 @@ The value specified by
 .Fa attr
 is invalid.
 .El
-.Sh BUGS
-The PTHREAD_PROCESS_SHARED attribute is not supported.
 .Sh SEE ALSO
 .Xr pthread_rwlock_destroy 3 ,
 .Xr pthread_rwlock_rdlock 3 ,
@@ -117,3 +115,5 @@ The PTHREAD_PROCESS_SHARED attribute is not supported.
 .Fn pthread_rwlock_init
 conforms to
 .St -p1003.1-96 .
+.Sh BUGS
+The PTHREAD_PROCESS_SHARED attribute is not supported.
