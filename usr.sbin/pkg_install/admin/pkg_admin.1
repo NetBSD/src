@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.8.4.1 2001/03/20 17:59:06 he Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.8.4.2 2001/05/01 10:55:06 he Exp $
 .\"
 .\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
 .\"
@@ -28,32 +28,30 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-
-.Dd May 4th, 2000
+.Dd May 4, 2000
 .Dt pkg_admin 1
 .Os
 .Sh NAME
 .Nm pkg_admin
-.Nd perform various administrative tasks to the pkg system. 
+.Nd perform various administrative tasks to the pkg system
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl V
-.Ar command args ...
+.Ar command Op args ...
 .Sh DESCRIPTION
 This command performs various administrative tasks around the NetBSD
 Packages System. Available commands are:
 .Pp
-.Bl -tag -width check [pkg]
+.Bl -tag -width check
 .It Fl V
 Print version number and exit.
-.It Cm check Ar [pkg ...]
+.It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
 noted in their +CONTENTS files. If no additional argument is given,
 the files of all installed packages are checked, else only the named
 packages will be checked (wildcards can be used here, see
-.Xr pkg_info 1
-).
+.Xr pkg_info 1 ) .
 .Pp
 The packages' +CONTENTS files will be parsed and the MD5
 checksum will be checked for every file found. A warning message is
@@ -64,7 +62,7 @@ on disk.
 Dump the contents of the package database, similar to
 .Cm pkg_info -F .
 Columns are printed for the keyfield used in the pkgdb - the filename -,
-and the data field - the package the file belongs to. 
+and the data field - the package the file belongs to.
 .It Cm lsall /dir/pkgpattern
 .It Cm lsbest /dir/pkgpattern
 List all/best package matching pattern in the given directory.
@@ -107,7 +105,7 @@ This option is intended to be used for upgrading from non-pkgdb-pkg_*
 tools to pkgdb-pkg_* tools, further manipulation of the pkgdb will be
 done by
 .Xr pkg_add 1 ,
-.Xr pkg_delete 1
+.Xr pkg_delete 1 ,
 and
 .Xr pkg_create 1 .
 .Pp
@@ -129,10 +127,10 @@ Where to register packages instead of
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr pkg_create 1
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
-command was written by Hubert Feyrer. 
+command was written by Hubert Feyrer.
 .Sh HISTORY
 The
 .Nm
