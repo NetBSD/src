@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.144 2003/09/10 16:59:17 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.145 2003/09/10 19:01:12 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1546,3 +1546,17 @@ sys/arch/i386/conf/NET4501
 
 	Enable USERCONF.
 	[jmmv, ticket #1389]
+
+sys/netinet6/in6_pcb.c				1.55 (via patch)
+
+	in6_pcbrtentry() now returns IPv4 rtentry if in6pcb is connected to
+	IPv4 mapped address.  PR kern/22431 from Andreas Gustafsson
+	[itojun, ticket #1405]
+
+sys/net/if.c					1.128-1.130 (via patch)
+
+	correct if_clone_lookup().  based on diff from Quentin Garnier
+	fix INT_MAX check in if_clone_lookup
+	correct number range handling.  David Young
+	[itojun, ticket #1406]
+
