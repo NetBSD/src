@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.50 2005/04/06 13:53:44 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.51 2005/04/06 15:36:01 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1136,3 +1136,52 @@ sys/netinet/tcp_input.c                         patch
 	prevents ending up with a negative RTT and panicking later.
 	[christos, ticket #1401]
 
+doc/3RDPARTY					1.267
+
+	Update IP Filter's archive site.
+	[taca, ticket #1042]
+
+sys/arch/xen/i386/locore.S			1.8
+
+	Change confusing name HYPERVISOR_yield to HYPERVISOR_sched_op.
+	[tls, ticket #1044]
+
+etc/etc.pmax/Makefile.inc			1.14
+
+	Make sure the installation/miniroot subdir gets created.
+	[jmc, ticket #1046]
+
+sbin/sysctl/sysctl.c				1.96
+
+	Pass dynamic buffer pointer to display_string(), not static
+	buffer pointer.  This fixes a problem if the kernel says the
+	buffer needs to be too much larger.
+	[atatat, ticket #1048]
+
+doc/3RDPARTY					1.269
+
+	Fix "Current Vers:" for Vinum.
+	[reed, ticket #1052]
+
+sys/arch/sgimips/hpc/sqvar.h			1.6-1.7
+sys/arch/sgimips/hpc/if_sq.c			1.22-1.23
+
+	Fix the HPC1 transmit logic, which was previously very broken.
+	[rumble, ticket #1054]
+
+sys/arch/amiga/dev/ite_et.c			1.8
+
+	Ensure that hardware pointers are volatile.  Fixes PR#28810.
+	[is, ticket #1055]
+
+sys/uvm/uvm_map.c				1.176 via patch
+
+	Don't merge incompatible map entries, e.g. private and shared.
+	[yamt, ticket #1061]
+
+xsrc/xfree/xc/programs/Xserver/hw/sun/sunKbd.c	1.1.1.5 -> 1.2
+
+	Use the "sun(type5_euro)" keycodes when presented with a
+	European-layout type-5 keyboard.  This makes the backslash
+	(<LSGT>) key on a UK keyboard work.
+	[bjh21, ticket #1062]
