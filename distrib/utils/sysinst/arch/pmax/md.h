@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 1997/11/02 08:15:02 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.6 1997/11/07 08:43:49 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,20 +40,55 @@
 
 /* Constants and defines */
 
-/* Megs required for a full X installation. */
+/*
+ * Megabytes of disk required for a full X installation. 
+ * XXX is this swap space or  additional space in /usr required
+ *     to  hold X binaries?
+ * For now, we set it to 100 on the pmax.
+ */
 #define XNEEDMB 100
 
-/* Disk names. */
+/*
+ * Disk names accepted as valid targets for a from-scratch installation.
+ *
+ * On the pmax, we accept the current 'rz' driver and also accept
+ * 'sd' in case this release of sysinst gets used after we switch to
+ * the MI scsi code. 
+ */
 EXTERN	char *disk_names[]
 #ifdef MAIN
 = {"rz", "sd", NULL}
 #endif
 ;
 
-/* Legal start character for a disk for checking input. */
+/*
+ * Legal start character for a disk for checking input. 
+ * this must return 1 for a character that matches the first
+ * characters of each member of disk_names.
+ */
 #define ISDISKSTART(dn)	(dn == 'r' || dn == 's')
 
-/* Definition of files to retreive from ftp. */
+/*
+ * Machine-specific command to write a new label to a disk.
+ * For example, i386  uses "/sbin/disklabel -w -r", just like i386
+ * miniroot scripts, though this may leave a bogus incore label.
+ * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
+ * to get incore  to ondisk inode translation for the Sun proms.
+ * If not defined, we assume the port does not support disklabels and
+ * hand-edited disklabel will NOT be written by MI code.
+ *
+ * On  pmax, we just use do the same as the i386 until we find
+ * a reason to switch to disklabel -w -r.
+ */
+#define DISKLABEL_CMD "disklabel -w -r"
+
+
+/*
+ *  Default filesets to fetch and install during installation
+ *  or upgrade. The standard sets are:
+ *      base, etc, comp, games, man, misc, text,
+ *      xbase, xfont, xserver, xcontrib, xcomp.
+ */
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
 EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
@@ -68,7 +103,7 @@ EXTERN distinfo dist_list[]
     {"text%s%s",    1, NULL, "Text tools   : "},
     {"xbase%s%s",   1, NULL, "X11 clients  : "},
     {"xfont%s%s",   1, NULL, "X11 fonts    : "},
-    {"xfont%s%s",   1, NULL, "X11 servers  : "},
+    {"xserver%s%s", 1, NULL, "X11 servers  : "},
     {"xcontrib%s%s",1, NULL, "X11 contrib  : "},
     {"xcomp%s%s",   1, NULL, "X programming: "},
 
@@ -77,4 +112,11 @@ EXTERN distinfo dist_list[]
 #endif
 ;
 
+/*
+ * Default fileystem type for floppy disks.
+ *
+ * On pmax, we don't support a dedicated floppy-disk driver, only
+ * SCSI floppy drives, so we can't recognize floppies by name.
+ */
 EXTERN char *fdtype INIT("");
+
