@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.5 2003/02/23 17:28:01 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.6 2003/02/23 19:30:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -81,8 +81,6 @@
 #endif
 
 /*#define SMBFS_RWGENERIC*/
-
-extern int smbfs_pbuf_freecnt;
 
 #define DE_SIZE	(sizeof(struct dirent))
 
