@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1 1999/02/04 05:08:58 explorer Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1999/02/24 15:05:20 drochner Exp $
 #	$OpenBSD: Makefile.inc,v 1.5 1997/07/17 06:02:42 millert Exp $
 
 # hash functions
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/hash ${.CURDIR}/hash
+.PATH: ${ARCHDIR}/hash ${.CURDIR}/hash
 
 SRCS+=	sha1.c sha1hl.c
 

@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.47 1998/09/14 21:34:43 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.48 1999/02/24 15:05:21 drochner Exp $
 
 # string sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
+.PATH: ${ARCHDIR}/string ${.CURDIR}/string
 
 SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strmode.c strsignal.c strtok.c strtok_r.c strxfrm.c \
@@ -17,7 +17,7 @@ SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c \
 # m-d Makefile.inc may include sources for:
 #	memcpy() memmove() strchr() strrchr()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
+.include "${ARCHDIR}/string/Makefile.inc"
 
 # if no m-d versions of memccpy(), memcpy(), memmove(), strchr(), or strrchr()
 # then use the machine independent versions.

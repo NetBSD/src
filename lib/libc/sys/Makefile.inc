@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.89 1999/02/11 20:42:49 carrel Exp $
+#	$NetBSD: Makefile.inc,v 1.90 1999/02/24 15:05:21 drochner Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
+.PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S pipe.S ptrace.S sbrk.S \
@@ -72,7 +72,7 @@ SPSEUDONOERR=	${PSEUDONOERR:.o=.so}
 
 OBJS+=	${ASM} ${NOERR} ${PSEUDONOERR}
 
-${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${PASM}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
@@ -80,14 +80,14 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${SASM}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
-${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${ASM}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
@@ -95,7 +95,7 @@ ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${PNOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
@@ -103,14 +103,14 @@ ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${SNOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
-${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${NOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
@@ -118,7 +118,7 @@ ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${PPSEUDONOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
@@ -127,7 +127,7 @@ ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${SPSEUDONOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
@@ -136,7 +136,7 @@ ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 
-${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+${PSEUDONOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
