@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.33 2001/07/19 16:25:23 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.34 2001/07/31 23:12:01 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -1072,7 +1072,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	if ((scsiq->host_status == QHSTA_NO_ERROR) &&
 	   ((scsiq->done_status == QD_NO_ERROR) ||
 	    (scsiq->done_status == QD_WITH_ERROR))) {
-		switch (scsiq->host_status) {
+		switch (scsiq->scsi_status) {
 		case SCSI_STATUS_GOOD:
 			if ((scsiq->cdb[0] == INQUIRY) &&
 			    (scsiq->target_lun == 0)) {
