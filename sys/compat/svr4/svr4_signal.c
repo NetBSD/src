@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.41.2.7 2002/08/01 02:44:25 nathanw Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.41.2.8 2002/08/14 17:53:15 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.7 2002/08/01 02:44:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.8 2002/08/14 17:53:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.7 2002/08/01 02:44:25 nathanw
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
@@ -486,14 +488,30 @@ svr4_getcontext(l, uc)
 	struct svr4_ucontext *uc;
 {
 	sigset_t mask;
-	ucontext_t *nuc;
-	
-	nuc = (ucontext_t *) uc;
+	struct proc *p = l->l_proc;
 
-	getucontext(l, nuc);
-	mask = nuc->uc_sigmask;
+	svr4_getmcontext(l, &uc->uc_mcontext, &uc->uc_flags);
+	uc->uc_link = l->l_ctxlink;
+	/*
+	 * The (unsupplied) definition of the `current execution stack'
+	 * in the System V Interface Definition appears to allow returning
+	 * the main context stack.
+	 */
+	if ((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) == 0) {
+		uc->uc_stack.ss_sp = (void *)USRSTACK;
+		uc->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
+		uc->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
+	} else {
+		/* Simply copy alternate signal execution stack. */
+		uc->uc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
+		uc->uc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+		uc->uc_stack.ss_flags = p->p_sigctx.ps_sigstk.ss_flags;
+	}
+
+	(void)sigprocmask1(p, 0, NULL, &mask);
 	native_to_svr4_sigset(&mask, &uc->uc_sigmask);
 
+	uc->uc_flags |= _UC_SIGMASK | _UC_STACK;
 }
 
 
@@ -503,13 +521,17 @@ svr4_setcontext(l, uc)
 	struct svr4_ucontext *uc;
 {
 	sigset_t mask;
-	ucontext_t *nuc;
+	struct proc *p = l->l_proc;
 
-	nuc = (ucontext_t *) uc;
+	if (uc->uc_flags & _UC_SIGMASK) {
+		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
+		sigprocmask1(p, SIG_SETMASK, &mask, NULL);
+	}
+
+	/* Ignore the stack; see comment in svr4_getcontext. */
 	
-	svr4_to_native_sigset(&uc->uc_sigmask, &mask);
-	nuc->uc_sigmask = mask;
-	setucontext(l, (ucontext_t *) uc);
+	l->l_ctxlink = uc->uc_link;
+	svr4_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 
 	return EJUSTRETURN;
 }
