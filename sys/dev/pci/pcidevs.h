@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.466 2002/08/04 21:47:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.467 2002/08/08 09:57:21 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.462 2002/08/04 21:47:25 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.463 2002/08/08 09:56:38 drochner Exp 
  */
 
 /*
@@ -2036,6 +2036,7 @@
 #define	PCI_PRODUCT_TI_PCI1211	0xac1e		/* PCI1211 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1251B	0xac1f		/* PCI1251B PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-PCI Bridge */
+#define	PCI_PRODUCT_TI_PCI2050	0xac28		/* PCI2050 PCI-PCI Bridge */
 #define	PCI_PRODUCT_TI_PCI4450YENTA	0xac40		/* PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller */
 #define	PCI_PRODUCT_TI_PCI4410YENTA	0xac41		/* PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller */
 #define	PCI_PRODUCT_TI_PCI4451YENTA	0xac42		/* PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller */
