@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 1994/10/27 04:16:18 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.8 1995/05/01 04:53:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -40,5 +40,5 @@
  */
 struct mdproc {
 	int	*md_regs;		/* registers on current frame */
-	int	ibcs_sigflags;		/* iBCS2 signal semantics flags */
+	int	__spare;
 };
