@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.199 2004/10/25 10:42:48 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.200 2004/11/08 08:55:43 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4192,6 +4192,7 @@ ret_from_intr_vector:
 	ba,a	ret_from_intr_vector
 	 nop				! XXX spitfire bug?
 
+#if defined(MULTIPROCESSOR)
 /*
  * IPI handler to flush single pte.
  * void sparc64_ipi_flush_pte(void *);
@@ -4272,6 +4273,7 @@ ENTRY(sparc64_ipi_flush_all)
 
 	ba,a	ret_from_intr_vector
 	 nop
+#endif				/* MULTIPROCESSOR */
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
