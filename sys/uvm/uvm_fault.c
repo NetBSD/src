@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.64 2001/06/02 18:09:26 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.65 2001/06/14 05:12:56 chs Exp $	*/
 
 /*
  *
@@ -1798,16 +1798,21 @@ uvm_fault_wire(map, start, end, access_type)
 	vm_prot_t access_type;
 {
 	vaddr_t va;
-	pmap_t  pmap;
 	int error;
-
-	pmap = vm_map_pmap(map);
 
 	/*
 	 * now fault it in a page at a time.   if the fault fails then we have
 	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE
 	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
 	 */
+
+	/*
+	 * XXX work around overflowing a vaddr_t.  this prevents us from
+	 * wiring the last page in the address space, though.
+	 */
+	if (start > end) {
+		return EFAULT;
+	}
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
 		error = uvm_fault(map, va, VM_FAULT_WIRE, access_type);
@@ -1818,7 +1823,6 @@ uvm_fault_wire(map, start, end, access_type)
 			return error;
 		}
 	}
-
 	return 0;
 }
 
