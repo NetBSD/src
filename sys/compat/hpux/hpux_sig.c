@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.18 1998/10/01 06:35:10 thorpej Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.19 2000/08/21 02:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,7 +142,7 @@ hpux_sys_sigblock(p, v, retval)
 	struct hpux_sys_sigblock_args *uap = v;
 	sigset_t nmask;
 
-	(void) splhigh();
+	(void) splsched();
 
 	bsdtohpuxmask(&p->p_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &nmask);
@@ -162,7 +162,7 @@ hpux_sys_sigsetmask(p, v, retval)
 {
 	struct hpux_sys_sigsetmask_args *uap = v;
 
-	(void) splhigh();
+	(void) splsched();
 
 	bsdtohpuxmask(&p->p_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &p->p_sigmask);
@@ -244,7 +244,7 @@ hpux_sys_sigprocmask(p, v, retval)
 		if (error)
 			return (error);
 		hpuxtobsdmask(sigset.sigset[0], &mask);
-		(void) splhigh();
+		(void) splsched();
 		switch (SCARG(uap, how)) {
 		case HPUXSIG_BLOCK:
 			sigplusset(&mask, &p->p_sigmask);
