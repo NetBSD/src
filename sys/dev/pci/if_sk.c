@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.7.2.2 2004/05/25 01:15:11 jmc Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.7.2.3 2004/05/25 01:32:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -575,7 +575,7 @@ sk_xmac_hash(caddr_t addr)
 {
 	u_int32_t		crc;
 
-	crc = ether_crc32_be(addr,ETHER_ADDR_LEN);
+	crc = ether_crc32_le(addr,ETHER_ADDR_LEN);
 	crc = ~crc & ((1<< SK_HASH_BITS) - 1);	
 	DPRINTFN(2,("multicast hash for %s is %x\n",ether_sprintf(addr),crc));
 	return (crc);
