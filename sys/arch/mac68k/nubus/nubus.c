@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.52 2002/04/10 04:38:50 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.53 2002/04/13 17:49:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -50,7 +51,7 @@
 #define NDB_PROBE	0x1
 #define NDB_FOLLOW	0x2
 #define NDB_ARITH	0x4
-static int	nubus_debug = 0 /* | NDB_PROBE */;
+static int	nubus_debug = 0 /* | NDB_PROBE | NDB_FOLLOW | NDB_ARITH */ ;
 #endif
 
 static int	nubus_print __P((void *, const char *));
@@ -99,7 +100,7 @@ nubus_attach(parent, self, aux)
 	void *aux;
 {
 	struct nubus_attach_args na_args;
-	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) mba;
+	struct mainbus_attach_args *mba;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	nubus_slot fmtblock;
@@ -110,6 +111,9 @@ nubus_attach(parent, self, aux)
 	int i, rsrcid;
 	u_int8_t lanes;
 
+	mba = aux;
+	KASSERT(NULL != mba->mba_dmat);
+	
 	printf("\n");
 
 	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
@@ -148,10 +152,16 @@ notfound:
 		 * of video resources given to us by the booter.  If that
 		 * doesn't work either, take the first resource following
 		 * the board resource.
+		 * If we only find a board resource, report that. 
+		 * There are cards that do not have anything else; their 
+		 * driver then has to match on the board resource and 
+		 * the card name.
 		 */
 		if (nubus_find_rsrc(bst, bsh,
 		    &fmtblock, &dir, rsrcid, &dirent) <= 0) {
 			if ((rsrcid = nubus_video_resource(i)) == -1) {
+				int has_board_rsrc = 0;
+				
 				/*
 				 * Since nubus_find_rsrc failed, the directory
 				 * is back at its base.
@@ -161,21 +171,27 @@ notfound:
 				/*
 				 * All nubus cards should have a board
 				 * resource, but be sure that's what it
-				 * is before we skip it.
+				 * is before we skip it, and note the fact.
 				 */
 				rsrcid = nubus_read_1(bst, bsh,
 				    lanes, entry);
-				if (rsrcid == 0x1)
+				if (rsrcid == 0x1) {
+					has_board_rsrc = 1;
 					entry = nubus_adjust_ptr(lanes,
 					    dir.curr_ent, 4);
-
+				}
 				rsrcid = nubus_read_1(bst, bsh, lanes, entry);
+				/* end of chain? */
+				if (rsrcid == 0xff) {
+					if (!has_board_rsrc)
+						goto notfound;
+					else
+						rsrcid = 0x01;
+				}
 #ifdef DEBUG
 				if (nubus_debug & NDB_FOLLOW)
 					printf("\tUsing rsrc 0x%x.\n", rsrcid);
 #endif
-				if (rsrcid == 0xff)	/* end of chain */
-					goto notfound;
 			}
 			/*
 			 * Try to find the resource passed by the booter
@@ -719,6 +735,63 @@ nubus_get_c_string(bst, bsh, fmt, dirent, data_return, max_bytes)
 	return 0;
 }
 
+/* 
+ * Get list of address ranges for an sMemory resource
+ * ->  DC&D, p.171
+ */
+int
+nubus_get_smem_addr_rangelist(bst, bsh, fmt, dirent, data_return)
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	nubus_slot *fmt;
+	nubus_dirent *dirent;
+	caddr_t data_return;
+{
+	u_long loc;
+	u_int8_t lanes = fmt->bytelanes;
+	long blocklen;
+	caddr_t blocklist;
+
+#ifdef DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_smem_addr_rangelist(%p, %p, %p).\n",
+		    fmt, dirent, data_return);
+#endif
+	if ((loc = dirent->offset) & 0x800000) {
+		loc |= 0xff000000;
+	}
+	loc = nubus_adjust_ptr(lanes, dirent->myloc, loc);
+
+	/* Obtain the block length from the head of the list */
+	blocklen = nubus_read_4(bst, bsh, lanes, loc);
+
+	/* 
+	 * malloc a block of (blocklen) bytes
+	 * caller must recycle block after use  
+	 */
+	MALLOC(blocklist,caddr_t,blocklen,M_TEMP,M_WAITOK);
+	
+	/* read ((blocklen - 4) / 8) (length,offset) pairs into block */
+	nubus_get_ind_data(bst, bsh, fmt, dirent, blocklist, blocklen);
+#ifdef DEBUG
+	if (nubus_debug & NDB_FOLLOW) {
+		int ii;
+		nubus_smem_rangelist *rlist;
+		
+		rlist = (nubus_smem_rangelist *)blocklist;
+		printf("\tblock@%p, len 0x0%X\n", rlist, rlist->length);
+
+		for (ii=0; ii < ((blocklen - 4) / 8); ii++) {
+			printf("\tRange %d: base addr 0x%X [0x%X]\n", ii, 
+			    rlist->range[ii].offset, rlist->range[ii].length);
+		}
+	}
+#endif
+	*(caddr_t *)data_return = blocklist;
+
+	return 1;
+}
+
 static char	*huh = "???";
 
 char *
@@ -794,7 +867,7 @@ nubus_scan_slot(bst, slotno)
 	bus_space_handle_t sc_bsh;
 
 	if (bus_space_map(bst, NUBUS_SLOT2PA(slotno), NBMEMSIZE, 0, &sc_bsh)) {
-		printf("nubus_scan_slot: failed to map slot %d\n", slotno);
+		printf("nubus_scan_slot: failed to map slot %x\n", slotno);
 		return;
 	}
 
