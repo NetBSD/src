@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 1996/10/13 03:35:10 christos Exp $ */
+/*	$NetBSD: zs.c,v 1.7 1997/10/12 18:06:26 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,6 +134,8 @@ int	zssoft __P((void *));
 struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
+cdev_decl(zs);
+
 static void	zsiopen __P((struct tty *));
 static void	zsiclose __P((struct tty *));
 static void	zsstart __P((struct tty *));
@@ -149,6 +151,10 @@ static void	zs_reset __P((volatile struct zschan *, int, int));
 static void	zs_modem __P((struct zs_chanstate *, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 static void	zsabort __P((void));
+static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
+static void zsoverrun __P((int, long *, char *));
 
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
@@ -170,10 +176,13 @@ static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 int zshardscope;
 int zsshortcuts;		/* number of "shortcut" software interrupts */
 
-static u_char
+static u_int zs_read __P((volatile struct zschan *, u_int reg));
+static u_int zs_write __P((volatile struct zschan *, u_int, u_int));
+
+static u_int
 zs_read(zc, reg)
 	volatile struct zschan *zc;
-	u_char reg;
+	u_int reg;
 {
 	u_char val;
 
@@ -184,10 +193,10 @@ zs_read(zc, reg)
 	return val;
 }
 
-static u_char
+static u_int
 zs_write(zc, reg, val)
 	volatile struct zschan *zc;
-	u_char reg, val;
+	u_int reg, val;
 {
 	zc->zc_csr = reg;
 	ZS_DELAY();
@@ -361,40 +370,6 @@ zs_reset(zc, inten, speed)
 	zs_loadchannelregs(zc, reg);
 }
 #endif
-
-/*
- * Declare the given tty (which is in fact &cons) as a console input
- * or output.  This happens before the zs chip is attached; the hookup
- * is finished later, in zs_setcons() below.
- *
- * This is used only for ports a and b.  The console keyboard is decoded
- * independently (we always send unit-2 input to /dev/kbd, which will
- * direct it to /dev/console if appropriate).
- */
-void
-zsconsole(tp, unit, out, fnstop)
-	register struct tty *tp;
-	register int unit;
-	int out;
-	void (**fnstop) __P((struct tty *, int));
-{
-	int zs;
-	volatile struct zsdevice *addr;
-
-	if (out) {
-		zs_consout = unit;
-		zs = unit >> 1;
-		if ((addr = zsaddr[zs]) == NULL)
-			addr = zsaddr[zs] = findzs(zs);
-		zs_conschan = (unit & 1) == 0 ? &addr->zs_chan[ZS_CHAN_A] :
-		    &addr->zs_chan[ZS_CHAN_B];
-		v_putc = zscnputc;
-	} else
-		zs_consin = unit;
-	if (fnstop)
-		*fnstop = &zsstop;
-	zs_ctty = tp;
-}
 
 /*
  * Polled console output putchar.
@@ -732,51 +707,46 @@ zshard(intrarg)
 #define	b (a + 1)
 	register volatile struct zschan *zc;
 	register int rr3, intflags = 0, v, i;
-	static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
-	static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
-	static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
 
-	{
-		a = &((struct zs_softc*)zs_cd.cd_devs[(intrarg >> 2) & 0x0f])->zi_cs[0];
-		rr3 = ZS_READ(a->cs_zc, 3);
-		if (rr3 & (ZSRR3_IP_A_RX|ZSRR3_IP_A_TX|ZSRR3_IP_A_STAT)) {
-			intflags |= 2;
-			zc = a->cs_zc;
-			i = a->cs_rbput;
-			if (rr3 & ZSRR3_IP_A_RX && (v = zsrint(a, zc)) != 0) {
-				a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-				intflags |= 1;
-			}
-			if (rr3 & ZSRR3_IP_A_TX && (v = zsxint(a, zc)) != 0) {
-				a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-				intflags |= 1;
-				intflags |= 4;
-			}
-			if (rr3 & ZSRR3_IP_A_STAT && (v = zssint(a, zc)) != 0) {
-				a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-				intflags |= 1;
-			}
-			a->cs_rbput = i;
+	a = &((struct zs_softc*)zs_cd.cd_devs[(intrarg >> 2) & 0x0f])->zi_cs[0];
+	rr3 = ZS_READ(a->cs_zc, 3);
+	if (rr3 & (ZSRR3_IP_A_RX|ZSRR3_IP_A_TX|ZSRR3_IP_A_STAT)) {
+		intflags |= 2;
+		zc = a->cs_zc;
+		i = a->cs_rbput;
+		if (rr3 & ZSRR3_IP_A_RX && (v = zsrint(a, zc)) != 0) {
+			a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+			intflags |= 1;
 		}
-		if (rr3 & (ZSRR3_IP_B_RX|ZSRR3_IP_B_TX|ZSRR3_IP_B_STAT)) {
-			intflags |= 2;
-			zc = b->cs_zc;
-			i = b->cs_rbput;
-			if (rr3 & ZSRR3_IP_B_RX && (v = zsrint(b, zc)) != 0) {
-				b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-				intflags |= 1;
-			}
-			if (rr3 & ZSRR3_IP_B_TX && (v = zsxint(b, zc)) != 0) {
-				b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-				intflags |= 1;
-				intflags |= 4;
-			}
-			if (rr3 & ZSRR3_IP_B_STAT && (v = zssint(b, zc)) != 0) {
-				b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-				intflags |= 1;
-			}
-			b->cs_rbput = i;
+		if (rr3 & ZSRR3_IP_A_TX && (v = zsxint(a, zc)) != 0) {
+			a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+			intflags |= 1;
+			intflags |= 4;
 		}
+		if (rr3 & ZSRR3_IP_A_STAT && (v = zssint(a, zc)) != 0) {
+			a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+			intflags |= 1;
+		}
+		a->cs_rbput = i;
+	}
+	if (rr3 & (ZSRR3_IP_B_RX|ZSRR3_IP_B_TX|ZSRR3_IP_B_STAT)) {
+		intflags |= 2;
+		zc = b->cs_zc;
+		i = b->cs_rbput;
+		if (rr3 & ZSRR3_IP_B_RX && (v = zsrint(b, zc)) != 0) {
+			b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+			intflags |= 1;
+		}
+		if (rr3 & ZSRR3_IP_B_TX && (v = zsxint(b, zc)) != 0) {
+			b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+			intflags |= 1;
+			intflags |= 4;
+		}
+		if (rr3 & ZSRR3_IP_B_STAT && (v = zssint(b, zc)) != 0) {
+			b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+			intflags |= 1;
+		}
+		b->cs_rbput = i;
 	}
 #undef b
 	if (intflags & 1) {
