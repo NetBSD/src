@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2003/05/28 21:35:13 kristerw Exp $ */
+/* $NetBSD: cpu.c,v 1.11 2003/10/11 03:01:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2003/05/28 21:35:13 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2003/10/11 03:01:53 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -217,7 +217,12 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 	/* XXX only wire one byte due to weirdness with unaligned words */
 	err = uvm_vslock(p, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);
 	if (err != 0) {
-		trapsignal(curlwp, SIGSEGV, (u_int)uaddr);
+		ksiginfo_t ksi;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_addr = uaddr;
+		ksi.ksi_code = SEGV_MAPERR;
+		trapsignal(curlwp, &ksi);
 		return 0;
 	}
 	/* I believe the uvm_vslock() guarantees the fetch/store won't fail. */
