@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.28 2000/10/10 19:54:38 is Exp $	 */
+/*	$NetBSD: rtld.h,v 1.29 2000/11/10 21:31:30 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -248,14 +248,16 @@ int _rtld_dladdr __P((const void *, Dl_info *));
 void _rtld_debug_state __P((void));
 void _rtld_linkmap_add __P((Obj_Entry *));
 void _rtld_linkmap_delete __P((Obj_Entry *));
+void _rtld_objlist_add __P((Objlist *, Obj_Entry *));
+Objlist_Entry *_rtld_objlist_find __P((Objlist *, const Obj_Entry *));
 
 /* headers.c */
 void _rtld_digest_dynamic __P((Obj_Entry *));
 Obj_Entry *_rtld_digest_phdr __P((const Elf_Phdr *, int, caddr_t));
 
 /* load.c */
-Obj_Entry *_rtld_load_object __P((char *, bool));
-int _rtld_load_needed_objects __P((Obj_Entry *, bool));
+Obj_Entry *_rtld_load_object __P((char *, int, bool));
+int _rtld_load_needed_objects __P((Obj_Entry *, int, bool));
 int _rtld_preload __P((const char *, bool));
 
 /* path.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.41 2000/08/28 04:15:54 scottb Exp $	 */
+/*	$NetBSD: rtld.c,v 1.42 2000/11/10 21:31:30 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -122,8 +122,6 @@ static void _rtld_call_init_functions __P((Obj_Entry *));
 static Obj_Entry *_rtld_dlcheck __P((void *));
 static void _rtld_init_dag __P((Obj_Entry *));
 static void _rtld_init_dag1 __P((Obj_Entry *, Obj_Entry *));
-static void _rtld_objlist_add __P((Objlist *, Obj_Entry *));
-static Objlist_Entry *_rtld_objlist_find __P((Objlist *, const Obj_Entry *));
 static void _rtld_objlist_remove __P((Objlist *, Obj_Entry *));
 static void _rtld_unload_object __P((Obj_Entry *, bool));
 static void _rtld_unref_dag __P((Obj_Entry *));
@@ -478,7 +476,7 @@ _rtld(sp)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, true) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL, true) == -1)
 		_rtld_die();
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
@@ -689,18 +687,15 @@ _rtld_dlopen(name, mode)
 	} else {
 		char *path = _rtld_find_library(name, _rtld_objmain);
 		if (path != NULL)
-			obj = _rtld_load_object(path, true);
+			obj = _rtld_load_object(path, mode, true);
 	}
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
-		if ((mode & RTLD_GLOBAL) &&
-		    _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
-			_rtld_objlist_add(&_rtld_list_global, obj);
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, true) == -1 ||
+			if (_rtld_load_needed_objects(obj, mode, true) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
 			    ((mode & 3) == RTLD_NOW), true)) == -1) {
@@ -953,7 +948,7 @@ _rtld_obj_from_addr(const void *addr)
 	return NULL;
 }
 
-static void
+void
 _rtld_objlist_add(list, obj)
 	Objlist *list;
 	Obj_Entry *obj;
@@ -965,7 +960,7 @@ _rtld_objlist_add(list, obj)
 	SIMPLEQ_INSERT_TAIL(list, elm, link);
 }
 
-static Objlist_Entry *
+Objlist_Entry *
 _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
