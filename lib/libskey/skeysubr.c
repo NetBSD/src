@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.5 1995/06/19 22:47:37 jtc Exp $
+ * $Id: skeysubr.c,v 1.6 1996/09/19 19:36:54 thorpej Exp $
  */
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ char *passwd;	/* Password, any length */
 	MDstruct md;
 	unsigned int buflen;
 	int i;
-	register long tmp;
+	register int tmp;
 	
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
@@ -86,7 +86,7 @@ f(x)
 	char *x;
 {
 	MDstruct md;
-	register long tmp;
+	register int tmp;
 
 	MDbegin(&md);
 	MDupdate(&md,(unsigned char *)x,64);
