@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: socket.c,v 1.1.1.3 2001/09/17 12:25:07 assar Exp $");
+__RCSID("$Heimdal: socket.c,v 1.7 2001/09/03 12:04:23 joda Exp $"
+        "$NetBSD: socket.c,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include <roken.h>

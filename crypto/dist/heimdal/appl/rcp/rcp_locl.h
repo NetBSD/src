@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: rcp_locl.h,v 1.1.1.1 2001/02/11 13:51:12 assar Exp $ */
+/* $Heimdal: rcp_locl.h,v 1.3 2001/01/29 05:59:24 assar Exp $
+   $NetBSD: rcp_locl.h,v 1.1.1.2 2002/09/12 12:41:33 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

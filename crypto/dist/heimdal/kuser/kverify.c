@@ -33,7 +33,8 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kverify.c,v 1.1.1.4 2001/09/17 12:24:59 assar Exp $");
+__RCSID("$Heimdal: kverify.c,v 1.6 2001/08/24 01:08:13 assar Exp $"
+        "$NetBSD: kverify.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 static int help_flag = 0;
 static int version_flag = 0;

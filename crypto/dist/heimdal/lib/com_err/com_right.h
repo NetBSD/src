@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: com_right.h,v 1.1.1.3 2001/02/11 13:51:51 assar Exp $ */
+/* $Heimdal: com_right.h,v 1.11 2000/07/31 01:11:08 assar Exp $
+   $NetBSD: com_right.h,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $ */
 
 #ifndef __COM_RIGHT_H__
 #define __COM_RIGHT_H__

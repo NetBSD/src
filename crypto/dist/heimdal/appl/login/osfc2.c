@@ -32,7 +32,8 @@
  */
 
 #include "login_locl.h"
-RCSID("$Id: osfc2.c,v 1.1.1.3 2001/06/19 22:07:39 assar Exp $");
+__RCSID("$Heimdal: osfc2.c,v 1.4 2001/02/20 01:44:46 assar Exp $"
+        "$NetBSD: osfc2.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 int
 do_osfc2_magic(uid_t uid)

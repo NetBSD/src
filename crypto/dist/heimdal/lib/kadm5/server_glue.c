@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: server_glue.c,v 1.1.1.2 2000/08/02 19:59:22 assar Exp $");
+__RCSID("$Heimdal: server_glue.c,v 1.6 1999/12/02 17:05:07 joda Exp $"
+        "$NetBSD: server_glue.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 kadm5_ret_t
 kadm5_init_with_password(const char *client_name,

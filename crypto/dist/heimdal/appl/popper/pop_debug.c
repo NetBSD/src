@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,8 @@
 /* Tiny program to help debug popper */
 
 #include "popper.h"
-RCSID("$Id: pop_debug.c,v 1.1.1.4 2001/06/19 22:07:43 assar Exp $");
+__RCSID("$Heimdal: pop_debug.c,v 1.23 2002/05/02 16:27:16 joda Exp $"
+        "$NetBSD: pop_debug.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
 
 static void
 loop(int s)
@@ -178,7 +179,9 @@ doit_v5 (char *host, int port)
 #ifdef KRB4
 static int use_v4 = -1;
 #endif
+#ifdef KRB5
 static int use_v5 = -1;
+#endif
 static char *port_str;
 static int do_version;
 static int do_help;
@@ -188,8 +191,10 @@ struct getargs args[] = {
     { "krb4",	'4', arg_flag,		&use_v4,	"Use Kerberos V4",
       NULL },
 #endif
+#ifdef KRB5
     { "krb5",	'5', arg_flag,		&use_v5,	"Use Kerberos V5",
       NULL },
+#endif
     { "port",	'p', arg_string,	&port_str,	"Use this port",
       "number-or-service" },
     { "version", 0,  arg_flag,		&do_version,	"Print version",

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$Id: otptest.c,v 1.1.1.2 2000/08/02 20:00:17 assar Exp $");
+__RCSID("$Heimdal: otptest.c,v 1.6 1999/12/02 16:58:45 joda Exp $"
+        "$NetBSD: otptest.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
 #endif
 
 #include <stdio.h>

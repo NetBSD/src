@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: export_name.c,v 1.1.1.2 2000/08/02 19:59:08 assar Exp $");
+__RCSID("$Heimdal: export_name.c,v 1.4 1999/12/02 17:05:03 joda Exp $"
+        "$NetBSD: export_name.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32 gss_export_name
            (OM_uint32  * minor_status,

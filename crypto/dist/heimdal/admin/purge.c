@@ -33,7 +33,8 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: purge.c,v 1.1.1.4 2001/09/17 12:24:35 assar Exp $");
+__RCSID("$Heimdal: purge.c,v 1.6 2001/07/23 09:46:41 joda Exp $"
+        "$NetBSD: purge.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
 
 /*
  * keep track of the highest version for every principal.

@@ -33,7 +33,8 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: random_password.c,v 1.1.1.3 2001/06/19 22:08:09 assar Exp $");
+__RCSID("$Heimdal: random_password.c,v 1.4 2001/02/15 04:20:53 assar Exp $"
+        "$NetBSD: random_password.c,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $");
 
 /* This file defines some a function that generates a random password,
    that can be used when creating a large amount of principals (such

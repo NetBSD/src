@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: kuserok.c,v 1.1.1.2 2000/08/02 19:59:34 assar Exp $");
+__RCSID("$Heimdal: kuserok.c,v 1.5 1999/12/02 17:05:11 joda Exp $"
+        "$NetBSD: kuserok.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
 /*
  * Return TRUE iff `principal' is allowed to login as `luser'.

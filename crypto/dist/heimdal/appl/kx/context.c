@@ -33,7 +33,8 @@
 
 #include "kx.h"
 
-RCSID("$Id: context.c,v 1.1.1.2 2000/08/02 19:58:31 assar Exp $");
+__RCSID("$Heimdal: context.c,v 1.4 1999/12/02 16:58:32 joda Exp $"
+        "$NetBSD: context.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
 
 /*
  * Set the common part of the context `kc'

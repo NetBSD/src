@@ -53,7 +53,8 @@
 
 #include <config.h>
 
-RCSID("$Id: kerberos5.c,v 1.1.1.4 2001/09/17 12:24:38 assar Exp $");
+__RCSID("$Heimdal: kerberos5.c,v 1.51 2002/09/02 15:33:20 joda Exp $"
+        "$NetBSD: kerberos5.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
 
 #ifdef	KRB5
 
@@ -86,10 +87,14 @@ int dfsfwd = 0;
 
 int forward_flags = 0;  /* Flags get set in telnet/main.c on -f and -F */
 
+int forward(int);
+int forwardable(int);
+
 /* These values need to be the same as those defined in telnet/main.c. */
 /* Either define them in both places, or put in some common header file. */
 #define OPTS_FORWARD_CREDS	0x00000002
 #define OPTS_FORWARDABLE_CREDS	0x00000001
+
 
 void kerberos5_forward (Authenticator *);
 
@@ -202,6 +207,8 @@ kerberos5_send(char *name, Authenticator *ap)
 	ap_opts = AP_OPTS_MUTUAL_REQUIRED;
     else
 	ap_opts = 0;
+
+    ap_opts |= AP_OPTS_USE_SUBKEY;
     
     ret = krb5_auth_con_init (context, &auth_context);
     if (ret) {
@@ -810,5 +817,29 @@ kerberos5_dfspag(void)
     }
 }
 #endif
+
+int
+kerberos5_set_forward(int on)
+{
+    if(on == 0)
+	forward_flags &= ~OPTS_FORWARD_CREDS;
+    if(on == 1)
+	forward_flags |= OPTS_FORWARD_CREDS;
+    if(on == -1)
+	forward_flags ^= OPTS_FORWARD_CREDS;
+    return 0;
+}
+
+int
+kerberos5_set_forwardable(int on)
+{
+    if(on == 0)
+	forward_flags &= ~OPTS_FORWARDABLE_CREDS;
+    if(on == 1)
+	forward_flags |= OPTS_FORWARDABLE_CREDS;
+    if(on == -1)
+	forward_flags ^= OPTS_FORWARDABLE_CREDS;
+    return 0;
+}
 
 #endif /* KRB5 */

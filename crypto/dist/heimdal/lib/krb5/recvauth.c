@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,14 +33,15 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: recvauth.c,v 1.1.1.4 2001/06/19 22:08:22 assar Exp $");
+__RCSID("$Heimdal: recvauth.c,v 1.16 2002/04/18 09:41:33 joda Exp $"
+        "$NetBSD: recvauth.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
 
 /*
  * See `sendauth.c' for the format.
  */
 
 static krb5_boolean
-match_exact(void *data, const char *appl_version)
+match_exact(const void *data, const char *appl_version)
 {
     return strcmp(data, appl_version) == 0;
 }
@@ -49,7 +50,7 @@ krb5_error_code
 krb5_recvauth(krb5_context context,
 	      krb5_auth_context *auth_context,
 	      krb5_pointer p_fd,
-	      char *appl_version,
+	      const char *appl_version,
 	      krb5_principal server,
 	      int32_t flags,
 	      krb5_keytab keytab,
@@ -65,9 +66,9 @@ krb5_error_code
 krb5_recvauth_match_version(krb5_context context,
 			    krb5_auth_context *auth_context,
 			    krb5_pointer p_fd,
-			    krb5_boolean (*match_appl_version)(void *, 
+			    krb5_boolean (*match_appl_version)(const void *, 
 							       const char*),
-			    void *match_data,
+			    const void *match_data,
 			    krb5_principal server,
 			    int32_t flags,
 			    krb5_keytab keytab,

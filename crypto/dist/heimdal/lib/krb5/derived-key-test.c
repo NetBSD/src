@@ -32,7 +32,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: derived-key-test.c,v 1.1.1.1 2001/06/19 22:08:20 assar Exp $");
+__RCSID("$Heimdal: derived-key-test.c,v 1.1 2001/03/12 07:44:52 assar Exp $"
+        "$NetBSD: derived-key-test.c,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $");
 
 enum { MAXSIZE = 24 };
 

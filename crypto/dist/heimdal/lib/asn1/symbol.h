@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,14 +31,15 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: symbol.h,v 1.1.1.2 2000/08/02 19:59:06 assar Exp $ */
+/* $Heimdal: symbol.h,v 1.6 2001/09/25 13:39:27 assar Exp $
+   $NetBSD: symbol.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #ifndef _SYMBOL_H
 #define _SYMBOL_H
 
 enum typetype { TInteger, TOctetString, TBitString, TSequence, TSequenceOf,
 		TGeneralizedTime, TGeneralString, TApplication, TType, 
-		TUInteger };
+		TUInteger, TEnumerated, TOID };
 
 typedef enum typetype Typetype;
 

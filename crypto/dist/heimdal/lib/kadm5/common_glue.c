@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: common_glue.c,v 1.1.1.2 2000/08/02 19:59:15 assar Exp $");
+__RCSID("$Heimdal: common_glue.c,v 1.5 2000/03/23 22:58:26 assar Exp $"
+        "$NetBSD: common_glue.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 #define __CALL(F, P) (*((kadm5_common_context*)server_handle)->funcs.F)P;
 

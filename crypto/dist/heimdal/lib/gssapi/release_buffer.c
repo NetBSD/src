@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: release_buffer.c,v 1.1.1.2 2000/08/02 19:59:09 assar Exp $");
+__RCSID("$Heimdal: release_buffer.c,v 1.4 2000/04/12 09:47:23 assar Exp $"
+        "$NetBSD: release_buffer.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32 gss_release_buffer
            (OM_uint32 * minor_status,

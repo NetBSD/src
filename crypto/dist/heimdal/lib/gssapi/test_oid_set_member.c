@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: test_oid_set_member.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
+__RCSID("$Heimdal: test_oid_set_member.c,v 1.4 1999/12/02 17:05:04 joda Exp $"
+        "$NetBSD: test_oid_set_member.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32 gss_test_oid_set_member (
             OM_uint32 * minor_status,

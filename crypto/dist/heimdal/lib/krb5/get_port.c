@@ -33,7 +33,8 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: get_port.c,v 1.1.1.3 2001/02/11 13:51:44 assar Exp $");
+__RCSID("$Heimdal: get_port.c,v 1.8 2001/01/27 19:24:34 joda Exp $"
+        "$NetBSD: get_port.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 int
 krb5_getportbyname (krb5_context context,

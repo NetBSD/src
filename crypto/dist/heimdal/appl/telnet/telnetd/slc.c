@@ -33,7 +33,8 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: slc.c,v 1.1.1.2 2000/08/02 19:58:22 assar Exp $");
+__RCSID("$Heimdal: slc.c,v 1.10 1997/05/11 06:30:00 assar Exp $"
+        "$NetBSD: slc.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
 
 /*
  * get_slc_defaults
