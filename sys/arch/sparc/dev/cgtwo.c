@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.15 1996/04/23 19:34:05 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.16 1996/05/18 12:19:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,8 +89,8 @@ struct cgtwo_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgtwoattach(struct device *, struct device *, void *);
-static int	cgtwomatch(struct device *, void *, void *);
+static void	cgtwoattach __P((struct device *, struct device *, void *));
+static int	cgtwomatch __P((struct device *, void *, void *));
 int		cgtwoopen __P((dev_t, int, int, struct proc *));
 int		cgtwoclose __P((dev_t, int, int, struct proc *));
 int		cgtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
