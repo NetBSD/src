@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.93 2002/03/13 01:26:54 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.94 2002/03/16 16:56:44 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -495,6 +495,13 @@ pty*)
 	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
+stic*)
+	unit=${i#stic}
+	rm -f stic$unit
+	mknod stic$unit c 68 $unit
+	chmod 600 stic$unit
+	;;
+
 st*)
 	case $i in
 	st*) name=st;	unit=${i#st};	chr=12;	blk=2;;
@@ -579,13 +586,6 @@ agp*)
 	mknod agp$unit c 67 $unit
 	if [ "$unit" = "0" ]; then ln -fs agp$unit agpgart; fi
 	chmod 644 agp$unit
-	;;
-
-stic*)
-	unit=${i#stic}
-	rm -f stic $unit
-	mknod stic $unit c 68 $unit
-	chmod 600 stic$unit
 	;;
 
 altq)
