@@ -1,4 +1,4 @@
-.\"     $NetBSD: isr_add.9,v 1.1 1997/05/22 00:39:26 jeremy Exp $
+.\"     $NetBSD: isr_add.9,v 1.2 1997/05/22 02:12:18 jeremy Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 .Bd -literal
 
 typedef int (*isr_func_t)(void *);
-
 .Ed
 .Ft void
 .Fn isr_add_autovect "isr_func_t fun" "void *arg" "int level"
