@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.31 2000/12/18 14:40:02 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.32 2000/12/21 20:15:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -642,6 +642,7 @@ linux_sys_chmod(p, v, retval)
 	return sys_chmod(p, uap, retval);
 }
 
+#if defined(__i386__) || defined(__m68k__)
 int
 linux_sys_chown16(p, v, retval)
 	struct proc *p;
@@ -710,7 +711,8 @@ linux_sys_lchown16(p, v, retval)
 
 	return sys___posix_lchown(p, &bla, retval);
 }
-	
+#endif /* __i386__ || __m68k__ */
+
 int
 linux_sys_rename(p, v, retval)
 	struct proc *p;
