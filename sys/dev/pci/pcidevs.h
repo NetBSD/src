@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.435 2002/05/25 07:32:25 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.436 2002/05/27 08:52:36 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.430 2002/05/25 07:28:15 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.431 2002/05/27 08:52:13 drochner Exp 
  */
 
 /*
@@ -1212,6 +1212,7 @@
 /* FZ Juelich / ZEL products */
 #define	PCI_PRODUCT_FZJZEL_GIGALINK	0x0001		/* Gigabit link / STR1100 */
 #define	PCI_PRODUCT_FZJZEL_PLXHOTLINK	0x0002		/* HOTlink interface */
+#define	PCI_PRODUCT_FZJZEL_COUNTTIME	0x0003		/* Counter / Timer */
 #define	PCI_PRODUCT_FZJZEL_PLXCAMAC	0x0004		/* CAMAC controller */
 #define	PCI_PRODUCT_FZJZEL_PROFIBUS	0x0005		/* PROFIBUS interface */
 #define	PCI_PRODUCT_FZJZEL_AMCCHOTLINK	0x0006		/* old HOTlink interface */

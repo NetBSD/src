@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.433 2002/05/25 07:32:25 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.434 2002/05/27 08:52:37 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.430 2002/05/25 07:28:15 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.431 2002/05/27 08:52:13 drochner Exp 
  */
 
 /*
@@ -2774,6 +2774,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FZ Juelich / ZEL",
 	    "HOTlink interface",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_COUNTTIME,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "Counter / Timer",
 	},
 	{
 	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXCAMAC,
