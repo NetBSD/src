@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 1996/09/30 16:34:36 ws Exp $	*/
+/*	$NetBSD: types.h,v 1.2 1996/12/05 00:13:57 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -53,5 +53,7 @@ typedef	unsigned long		vm_offset_t;
 
 /* This is only to make some unneeded function declaration happy */
 #define	label_t	void
+
+#define	__BROKEN_INDIRECT_CONFIG
 
 #endif	/* _MACHTYPES_H_ */
