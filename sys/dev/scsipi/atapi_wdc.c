@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.24 1999/08/06 12:00:26 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.25 1999/08/09 09:49:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -331,6 +331,7 @@ wdc_atapi_intr(chp, xfer, irq)
 	if ((xfer->c_flags & (C_TIMEOU | C_DMA)) == C_TIMEOU) {
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
+		return 1;
 	} 
 
 	/* Ack interrupt done in wait_for_unbusy */
@@ -800,7 +801,6 @@ wdc_atapi_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
-	int need_done =  xfer->c_flags & C_NEEDDONE;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
@@ -817,10 +817,8 @@ wdc_atapi_done(chp, xfer)
 		wdc_downgrade_mode(drvp);
 	}
 	    
-	if (need_done) {
-		WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
-		scsipi_done(sc_xfer);
-	}
+	WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
+	scsipi_done(sc_xfer);
 	WDCDEBUG_PRINT(("wdcstart from wdc_atapi_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
