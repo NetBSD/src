@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.59 1999/11/26 17:17:21 soren Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.60 1999/11/27 01:03:34 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.57 1999/11/20 18:32:08 jtk Exp 
+ *	NetBSD: pcmciadevs,v 1.58 1999/11/26 17:16:53 soren Exp 
  */
 
 /*-
@@ -178,11 +178,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Fujitsu Compact Flash Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_3270,
+	    PCMCIA_CIS_IBM_3270,
+	    0,
+	    "IBM Corporation",
+	    "3270 Emulation"	},
+	},
+	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
 	    PCMCIA_CIS_IBM_INFOMOVER,
 	    0,
 	    "IBM Corporation",
 	    "National Semiconductor InfoMover"	},
+	},
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_5250,
+	    PCMCIA_CIS_IBM_5250,
+	    0,
+	    "IBM Corporation",
+	    "5250 Emulation"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_TROPIC,
@@ -206,18 +220,18 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Wireless LAN Entry"	},
 	},
 	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
-	    PCMCIA_CIS_IBM_PORTABLE_CDROM_DRIVE,
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
+	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
 	    0,
 	    "IBM Corporation",
 	    "PCMCIA Portable CD-ROM Drive"	},
 	},
 	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET_PCCARD,
-	    PCMCIA_CIS_IBM_ETHERJET_PCCARD,
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET,
+	    PCMCIA_CIS_IBM_ETHERJET,
 	    0,
 	    "IBM Corporation",
-	    "IBM EtherJet Ethernet PC Card"	},
+	    "IBM EtherJet Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
