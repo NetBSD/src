@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2002/03/13 00:38:13 eeh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2002/03/26 21:20:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -184,7 +184,7 @@ extern void icache_flush(vaddr_t, vsize_t);
 #endif
 #endif
 
-void __syncicache(void *, int);
+void __syncicache(void *, size_t);
 
 
 /*
