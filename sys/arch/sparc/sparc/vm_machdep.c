@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1996/03/15 00:00:39 christos Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.24 1996/03/31 23:45:46 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -359,7 +359,8 @@ cpu_fork(p1, p2)
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
-	 * out of the kernel.
+	 * out of the kernel. (The trap frame invariably resides at
+	 * the tippity-top of the u. area.)
 	 */
 	tf2 = p2->p_md.md_tf = (struct trapframe *)
 			((int)npcb + USPACE - sizeof(*tf2));

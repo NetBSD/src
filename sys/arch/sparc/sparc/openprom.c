@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.7 1996/03/30 21:11:33 christos Exp $ */
+/*	$NetBSD: openprom.c,v 1.8 1996/03/31 23:45:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@ openpromopen(dev, flags, mode, p)
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4)
 		return (ENODEV);
-#endif	
+#endif
 
 	return (0);
 }
