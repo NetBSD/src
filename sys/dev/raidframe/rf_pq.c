@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.7 2000/01/07 03:41:02 oster Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.8 2001/06/19 03:25:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  */
 
 #include "rf_archs.h"
+
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0)
+
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_dag.h"
@@ -79,6 +82,7 @@ rf_RegularPFunc(node)
 {
 	return (rf_RegularXorFunc(node));
 }
+#endif /* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0) */
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
 static void 
