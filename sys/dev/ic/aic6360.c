@@ -1,6 +1,10 @@
-/*	$NetBSD: aic6360.c,v 1.46 1996/05/12 23:51:37 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.47 1996/06/18 16:13:05 mycroft Exp $	*/
 
+#ifdef DDB
+#define	integrate
+#else
 #define	integrate	static inline
+#endif
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -72,7 +76,7 @@
 #define AIC_USE_DWORDS		0
 
 /* Synchronous data transfers? */
-#define AIC_USE_SYNCHRONOUS	1
+#define AIC_USE_SYNCHRONOUS	0
 #define AIC_SYNC_REQ_ACK_OFS 	8
 
 /* Wide data transfers? */
@@ -1863,11 +1867,13 @@ aic_dataout_pio(sc, p, n)
 	int out = 0;
 #define DOUTAMOUNT 128		/* Full FIFO */
 
+	AIC_MISC(("%02x%02x  ", inb(iobase + FIFOSTAT), inb(iobase + SSTAT2)));
+
 	/* Clear host FIFO and counter. */
 	outb(iobase + DMACNTRL0, RSTFIFO | WRITE);
 	/* Enable FIFOs. */
-	outb(iobase + SXFRCTL0, SCSIEN | DMAEN | CHEN);
 	outb(iobase + DMACNTRL0, ENDMA | DWORDPIO | WRITE);
+	outb(iobase + SXFRCTL0, SCSIEN | DMAEN | CHEN);
 
 	/* Turn off ENREQINIT for now. */
 	outb(iobase + SIMODE1,
@@ -1951,11 +1957,6 @@ aic_dataout_pio(sc, p, n)
 	}
 
 phasechange:
-	/* Stop the FIFO data path. */
-	outb(iobase + SXFRCTL0, CHEN);
-	while ((inb(iobase + SXFRCTL0) & SCSIEN) != 0)
-		;
-
 	if ((dmastat & INTSTAT) != 0) {
 		/* Some sort of phase change. */
 		int amount;
@@ -1964,7 +1965,8 @@ phasechange:
 		amount = inb(iobase + FIFOSTAT) + (inb(iobase + SSTAT2) & 15);
 		if (amount > 0) {
 			out -= amount;
-			outb(iobase + SXFRCTL0, CHEN | CLRSTCNT | CLRCH);
+			outb(iobase + DMACNTRL0, RSTFIFO | WRITE);
+			outb(iobase + SXFRCTL0, CHEN | CLRCH);
 			AIC_MISC(("+%d ", amount));
 		}
 	}
@@ -1972,6 +1974,10 @@ phasechange:
 	/* Turn on ENREQINIT again. */
 	outb(iobase + SIMODE1,
 	    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENREQINIT | ENPHASECHG);
+
+	/* Stop the FIFO data path. */
+	outb(iobase + SXFRCTL0, CHEN);
+	outb(iobase + DMACNTRL0, 0);
 
 	return out;
 }
@@ -1994,11 +2000,13 @@ aic_datain_pio(sc, p, n)
 	int in = 0;
 #define DINAMOUNT 128		/* Full FIFO */
 
+	AIC_MISC(("%02x%02x  ", inb(iobase + FIFOSTAT), inb(iobase + SSTAT2)));
+
 	/* Clear host FIFO and counter. */
 	outb(iobase + DMACNTRL0, RSTFIFO);
 	/* Enable FIFOs. */
-	outb(iobase + SXFRCTL0, SCSIEN | DMAEN | CHEN);
 	outb(iobase + DMACNTRL0, ENDMA | DWORDPIO);
+	outb(iobase + SXFRCTL0, SCSIEN | DMAEN | CHEN);
 
 	/* Turn off ENREQINIT for now. */
 	outb(iobase + SIMODE1,
@@ -2079,14 +2087,13 @@ aic_datain_pio(sc, p, n)
 	}
 
 phasechange:
-	/* Stop the FIFO data path. */
-	outb(iobase + SXFRCTL0, CHEN);
-	while ((inb(iobase + SXFRCTL0) & SCSIEN) != 0)
-		;
-
 	/* Turn on ENREQINIT again. */
 	outb(iobase + SIMODE1,
 	    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENREQINIT | ENPHASECHG);
+
+	/* Stop the FIFO data path. */
+	outb(iobase + SXFRCTL0, CHEN);
+	outb(iobase + DMACNTRL0, 0);
 
 	return in;
 }
@@ -2342,6 +2349,10 @@ loop:
 		case AIC_DISCONNECT:
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
+#if 1 /* XXXX */
+			acb->data_addr = sc->sc_dp;
+			acb->data_length = sc->sc_dleft;
+#endif
 			TAILQ_INSERT_HEAD(&sc->nexus_list, acb, chain);
 			sc->sc_nexus = NULL;
 			goto sched;
@@ -2388,7 +2399,7 @@ dophase:
 		if ((aic_debug & AIC_SHOWMISC) != 0) {
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-			printf("cmd=0x%02x+%d  ",
+			printf("cmd=0x%02x+%d ",
 			    acb->scsi_cmd.opcode, acb->scsi_cmd_length-1);
 		}
 #endif
@@ -2401,7 +2412,7 @@ dophase:
 	case PH_DATAOUT:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("dataout dleft=%d  ", sc->sc_dleft));
+		AIC_MISC(("dataout %d ", sc->sc_dleft));
 		n = aic_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -2411,7 +2422,7 @@ dophase:
 	case PH_DATAIN:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("datain  "));
+		AIC_MISC(("datain %d ", sc->sc_dleft));
 		n = aic_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -2423,14 +2434,9 @@ dophase:
 			break;
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		/* XXXX Don't clear FIFO.  Wait for byte to come in. */
 		outb(iobase + SXFRCTL0, CHEN | SPIOEN);
-		outb(iobase + DMACNTRL0, RSTFIFO);
 		acb->target_stat = inb(iobase + SCSIDAT);
 		outb(iobase + SXFRCTL0, CHEN);
-		outb(iobase + DMACNTRL0, RSTFIFO);
-		while ((inb(iobase + SXFRCTL0) & SCSIEN) != 0)
-			;
 		AIC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
 		goto loop;
