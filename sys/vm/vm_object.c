@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.8 1993/09/13 14:10:37 brezak Exp $
+ *	$Id: vm_object.c,v 1.9 1993/09/23 22:20:29 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -250,6 +250,7 @@ void vm_object_deallocate(object)
 		 */
 
 		if (object->can_persist) {
+#ifdef DIAGNOSTIC
 			register vm_page_t	p;
 
 			/*
@@ -270,6 +271,7 @@ void vm_object_deallocate(object)
 
 				p = (vm_page_t) queue_next(&p->listq);
 			}
+#endif /* DIAGNOSTIC */
 
 			queue_enter(&vm_object_cached_list, object,
 				vm_object_t, cached_list);
