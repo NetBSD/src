@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.27 1999/03/22 03:28:09 abs Exp $	*/
+/*	$NetBSD: getcap.c,v 1.28 1999/03/23 02:58:50 abs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.27 1999/03/22 03:28:09 abs Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.28 1999/03/23 02:58:50 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,8 +120,8 @@ cgetset(ent)
 		*dest++ = *source++; /* Do not check first field */
 		while (*source == ':') {
 			check=source+1;
-			while (*check && isspace(*check) ||
-			    (*check=='\\' && isspace(check[1])))
+			while (*check && (isspace(*check) ||
+			    (*check=='\\' && isspace(check[1]))) )
 				++check;
 			if( *check == ':' )
 				source=check;
