@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.360 1999/07/08 18:05:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.361 1999/07/17 00:42:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -624,9 +624,11 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, "Pentium", "Pentium (P54C)",
-				"Pentium (P24T)", "Pentium/MMX", "Pentium", 0,
-				"Pentium (P54C)", 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium (P5 A-step)", "Pentium (P5)",
+				"Pentium (P54C)", "Pentium (P24T)", 
+				"Pentium/MMX", "Pentium", 0,
+				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
+				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
 			NULL
@@ -635,8 +637,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "Pentium Pro", 0, "Pentium II",
-				"Pentium Pro", "Pentium II",
+				"Pentium Pro (A-step)", "Pentium Pro", 0,
+				"Pentium II (Klamath)", "Pentium Pro",
+				"Pentium II (Deschutes)",
 				"Pentium II (Celeron)",
 				"Pentium III", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
