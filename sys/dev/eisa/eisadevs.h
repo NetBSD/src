@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp 
+ *	NetBSD: eisadevs,v 1.2 1996/03/17 00:13:56 cgd Exp 
  */
 
 /*
@@ -50,8 +50,12 @@
 #define	EISA_PRODUCT_ADP7756	"Adaptec AHA-284x (BIOS enabled)"
 #define	EISA_PRODUCT_ADP7757	"Adaptec AHA-284x (BIOS disabled)"
 
+/* AMI products */
+#define	EISA_PRODUCT_AMI4801	"AMI 4801"
+
 /* BusLogic products */
-/* XXX */
+#define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB"
+#define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC"
 
 /* Digital Equipment products */
 #define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425"
