@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/07/15 02:43:52 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/07/28 09:25:28 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2003/07/15 02:43:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/07/28 09:25:28 scw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -460,7 +460,11 @@ mvmeppc_bus_space_init(void)
 
 	int error;
 
-	error = bus_space_init(&mvmeppc_pci_io_bs_tag, "bus_io",
+	error = bus_space_init(&mvmeppc_isa_io_bs_tag, "isa_io",
+	    ex_storage[MVMEPPC_BUS_SPACE_IO],
+	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_IO]));
+
+	error = bus_space_init(&mvmeppc_pci_io_bs_tag, "pci_io",
 	    ex_storage[MVMEPPC_BUS_SPACE_IO],
 	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_IO]));
 
@@ -471,7 +475,11 @@ mvmeppc_bus_space_init(void)
 
 	mvmeppc_isa_io_bs_tag.pbs_extent = mvmeppc_pci_io_bs_tag.pbs_extent;
 
-	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "bus_mem",
+	error = bus_space_init(&mvmeppc_isa_mem_bs_tag, "isa_mem",
+	    ex_storage[MVMEPPC_BUS_SPACE_MEM],
+	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_MEM]));
+
+	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "pci_mem",
 	    ex_storage[MVMEPPC_BUS_SPACE_MEM],
 	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_MEM]));
 
