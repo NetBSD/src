@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.6 1999/11/01 18:12:21 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.7 1999/11/02 16:54:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,6 +152,8 @@ struct uaudio_softc {
 	int	sc_curaltidx;
 
 	int	sc_nullalt;
+
+	int	sc_audio_rev;
 
 	struct as_info *sc_alts;
 	int	sc_nalts;
@@ -349,6 +351,7 @@ USB_ATTACH(uaudio)
 			if (id->bInterfaceNumber == sc->sc_as_iface) {
 				sc->sc_as_ifaceh = uaa->ifaces[i];
 				uaa->ifaces[i] = 0;
+				break;
 			}
 		}
 	}
@@ -357,6 +360,10 @@ USB_ATTACH(uaudio)
 		printf("%s: missing AS interface(s)\n",USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	printf("%s: streaming interface %d, audio rev %d.%02x\n",
+	       USBDEVNAME(sc->sc_dev), sc->sc_as_iface,
+	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
@@ -631,7 +638,6 @@ uaudio_add_input(sc, v, dps)
 		    d->bNrChannels, UGETW(d->wChannelConfig),
 		    d->iChannelNames, d->iTerminal));
 #endif
-	printf("uaudio_add_input: not implemented\n");
 }
 
 void
@@ -824,7 +830,7 @@ uaudio_add_feature(sc, v, dps)
 			mix.ctlunit = AudioNtreble;
 			break;
 		case GRAPHIC_EQUALIZER_CONTROL:
-			continue; /* don't add anything */
+			continue; /* XXX don't add anything */
 			break;
 		case AGC_CONTROL:
 			mix.type = MIX_ON_OFF;
@@ -1148,8 +1154,9 @@ uaudio_identify_ac(sc, cdesc)
 	     UGETW(acdp->bcdADC) != UAUDIO_VERSION)
 		return (USBD_INVAL);
 
+	sc->sc_audio_rev = UGETW(acdp->bcdADC);
 	DPRINTFN(2,("uaudio_identify: found AC header, vers=%03x, len=%d\n",
-		 UGETW(acdp->bcdADC), aclen));
+		 sc->sc_audio_rev, aclen));
 
 	sc->sc_nullalt = -1;
 
