@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.34 2000/07/08 13:46:33 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.35 2000/07/15 18:04:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -336,7 +336,7 @@ __END_DECLS
 #ifndef	off_t
 typedef	__off_t		off_t;
 #define	off_t		off_t
-#endif 7* off_t */
+#endif /* off_t */
 
 int	 fseeko __P((FILE *, off_t, int));
 off_t	 ftello __P((FILE *));
