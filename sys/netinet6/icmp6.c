@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.24 2000/02/28 13:48:51 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.25 2000/02/28 14:30:36 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.71 2000/02/28 09:25:42 jinmei Exp $	*/
 
 /*
@@ -1645,11 +1645,6 @@ icmp6_redirect_input(m, off)
 	if (!icmp6_rediraccept)
 		goto freeit;
 
-	if (IN6_IS_ADDR_LINKLOCAL(&redtgt6))
-		redtgt6.s6_addr16[1] = htons(ifp->if_index);
-	if (IN6_IS_ADDR_LINKLOCAL(&reddst6))
-		reddst6.s6_addr16[1] = htons(ifp->if_index);
-
 #ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, icmp6len,);
 	nd_rd = (struct nd_redirect *)((caddr_t)ip6 + off);
@@ -1662,6 +1657,11 @@ icmp6_redirect_input(m, off)
 #endif
 	redtgt6 = nd_rd->nd_rd_target;
 	reddst6 = nd_rd->nd_rd_dst;
+
+	if (IN6_IS_ADDR_LINKLOCAL(&redtgt6))
+		redtgt6.s6_addr16[1] = htons(ifp->if_index);
+	if (IN6_IS_ADDR_LINKLOCAL(&reddst6))
+		reddst6.s6_addr16[1] = htons(ifp->if_index);
 
 	/* validation */
 	if (!IN6_IS_ADDR_LINKLOCAL(&src6)) {
