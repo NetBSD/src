@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipl.4,v 1.4 2002/03/14 12:32:42 martti Exp $
+.\"	$NetBSD: ipl.4,v 1.5 2003/01/04 01:18:02 wiz Exp $
 .\"
 .TH IPL 4
 .SH NAME
@@ -9,7 +9,7 @@ packet headers of packets you wish to log.  If a packet header is to be
 logged, the entire header is logged (including any IP options \- TCP/UDP
 options are not included when it calculates header size) or not at all.
 The packet contents are also logged after the header.  If the log reader
-is busy or otherwise unable to read log records, upto IPLLOGSIZE (8192 is the
+is busy or otherwise unable to read log records, up to IPLLOGSIZE (8192 is the
 default) bytes of data are stored.
 .PP
 Prepending every packet header logged is a structure containing information
