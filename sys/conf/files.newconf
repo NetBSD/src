@@ -28,6 +28,7 @@ pseudo-device vn: disk
 #pseudo-device cd: disk
 
 pseudo-device pty: tty
+pseudo-device tb: tty
 
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
