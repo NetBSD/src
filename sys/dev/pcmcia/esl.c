@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.1 2001/09/29 14:00:57 augustss Exp $	*/
+/*	$NetBSD: esl.c,v 1.2 2001/09/29 19:06:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -57,47 +57,47 @@
 #include <dev/pcmcia/eslvar.h>
 #include <dev/pcmcia/eslreg.h>
 
-int	esl_open __P((void *, int));
-void	esl_close __P((void *));
-int	esl_query_encoding __P((void *, struct audio_encoding *));
-int	esl_set_params __P((void *, int, int, struct audio_params *,
-					struct audio_params *));
-int	esl_round_blocksize __P((void *, int));
-int	esl_halt_output __P((void *));
-int	esl_halt_input __P((void *));
-int	esl_speaker_ctl __P((void *, int));
-int	esl_getdev __P((void *, struct audio_device *));
-int	esl_set_port __P((void *, mixer_ctrl_t *));
-int	esl_get_port __P((void *, mixer_ctrl_t *));
-int	esl_query_devinfo __P((void *, mixer_devinfo_t *));
-int	esl_get_props __P((void *));
-int	esl_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-				void *, struct audio_params *));
+int	esl_open(void *, int);
+void	esl_close(void *);
+int	esl_query_encoding(void *, struct audio_encoding *);
+int	esl_set_params(void *, int, int, struct audio_params *,
+					struct audio_params *);
+int	esl_round_blocksize(void *, int);
+int	esl_halt_output(void *);
+int	esl_halt_input(void *);
+int	esl_speaker_ctl(void *, int);
+int	esl_getdev(void *, struct audio_device *);
+int	esl_set_port(void *, mixer_ctrl_t *);
+int	esl_get_port(void *, mixer_ctrl_t *);
+int	esl_query_devinfo(void *, mixer_devinfo_t *);
+int	esl_get_props(void *);
+int	esl_trigger_output(void *, void *, void *, int, void (*)(void *),
+				void *, struct audio_params *);
 
 /* Supporting subroutines */
-int	esl_reset __P((struct esl_pcmcia_softc *));
-void	esl_setup __P((struct esl_pcmcia_softc *));
-void	esl_set_gain __P((struct esl_pcmcia_softc *, int, int));
-void	esl_speaker_on __P((struct esl_pcmcia_softc *));
-void	esl_speaker_off __P((struct esl_pcmcia_softc *));
-int	esl_identify __P((struct esl_pcmcia_softc *));
-int	esl_rdsp __P((struct esl_pcmcia_softc *));
-int	esl_wdsp __P((struct esl_pcmcia_softc *, u_char));
-u_char	esl_dsp_read_ready __P((struct esl_pcmcia_softc *));
-u_char	esl_dsp_write_ready __P((struct esl_pcmcia_softc *));
-u_char	esl_get_dsp_status __P((struct esl_pcmcia_softc *));
-u_char	esl_read_x_reg __P((struct esl_pcmcia_softc *, u_char));
-int	esl_write_x_reg __P((struct esl_pcmcia_softc *, u_char, u_char));
-void	esl_clear_xreg_bits __P((struct esl_pcmcia_softc *, u_char, u_char));
-void	esl_set_xreg_bits __P((struct esl_pcmcia_softc *, u_char, u_char));
-u_char	esl_read_mix_reg __P((struct esl_pcmcia_softc *, u_char));
-void	esl_write_mix_reg __P((struct esl_pcmcia_softc *, u_char, u_char));
-void	esl_clear_mreg_bits __P((struct esl_pcmcia_softc *, u_char, u_char));
-void	esl_set_mreg_bits __P((struct esl_pcmcia_softc *, u_char, u_char));
-void	esl_read_multi_mix_reg __P((struct esl_pcmcia_softc *, u_char,
-				    u_int8_t *, bus_size_t));
-u_int	esl_srtotc __P((u_int));
-u_int	esl_srtofc __P((u_int));
+int	esl_reset(struct esl_pcmcia_softc *);
+void	esl_setup(struct esl_pcmcia_softc *);
+void	esl_set_gain(struct esl_pcmcia_softc *, int, int);
+void	esl_speaker_on(struct esl_pcmcia_softc *);
+void	esl_speaker_off(struct esl_pcmcia_softc *);
+int	esl_identify(struct esl_pcmcia_softc *);
+int	esl_rdsp(struct esl_pcmcia_softc *);
+int	esl_wdsp(struct esl_pcmcia_softc *, u_char);
+u_char	esl_dsp_read_ready(struct esl_pcmcia_softc *);
+u_char	esl_dsp_write_ready(struct esl_pcmcia_softc *);
+u_char	esl_get_dsp_status(struct esl_pcmcia_softc *);
+u_char	esl_read_x_reg(struct esl_pcmcia_softc *, u_char);
+int	esl_write_x_reg(struct esl_pcmcia_softc *, u_char, u_char);
+void	esl_clear_xreg_bits(struct esl_pcmcia_softc *, u_char, u_char);
+void	esl_set_xreg_bits(struct esl_pcmcia_softc *, u_char, u_char);
+u_char	esl_read_mix_reg(struct esl_pcmcia_softc *, u_char);
+void	esl_write_mix_reg(struct esl_pcmcia_softc *, u_char, u_char);
+void	esl_clear_mreg_bits(struct esl_pcmcia_softc *, u_char, u_char);
+void	esl_set_mreg_bits(struct esl_pcmcia_softc *, u_char, u_char);
+void	esl_read_multi_mix_reg(struct esl_pcmcia_softc *, u_char,
+				    u_int8_t *, bus_size_t);
+u_int	esl_srtotc(u_int);
+u_int	esl_srtofc(u_int);
 
 struct audio_device esl_device = {
 	"AudioDrive",
