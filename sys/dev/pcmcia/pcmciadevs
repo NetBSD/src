@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.87 2000/04/12 21:07:55 scw Exp $
+$NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
 
 /* Panasonic Products */
 product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface Card
+product PANASONIC KXLC003	0x0504 Panasonic 8X CD-ROM Interface Card
 
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
