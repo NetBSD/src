@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.175 1999/12/23 10:22:41 kleink Exp $
+# $NetBSD: mi,v 1.176 1999/12/23 14:38:11 abs Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -223,6 +223,7 @@
 ./usr/include/dev/mii/mii.h
 ./usr/include/dev/mii/miivar.h
 ./usr/include/dev/mii/nsphyreg.h
+./usr/include/dev/mii/nsphyterreg.h
 ./usr/include/dev/mii/qsphyreg.h
 ./usr/include/dev/mii/tlphyreg.h
 ./usr/include/dev/mii/tlphyvar.h
@@ -255,6 +256,7 @@
 ./usr/include/dev/pckbc/pckbdvar.h
 ./usr/include/dev/pckbc/psmreg.h
 ./usr/include/dev/pcmcia
+./usr/include/dev/pcmcia/if_cnwioctl.h
 ./usr/include/dev/pcmcia/if_wi_ieee.h
 ./usr/include/dev/pcmcia/pcmciachip.h
 ./usr/include/dev/pcmcia/pcmciareg.h
@@ -3413,6 +3415,27 @@
 ./usr/share/man/man3/memmove.3
 ./usr/share/man/man3/memory.3
 ./usr/share/man/man3/memset.3
+./usr/share/man/man3/menu_attributes.3
+./usr/share/man/man3/menu_cursor.3
+./usr/share/man/man3/menu_driver.3
+./usr/share/man/man3/menu_format.3
+./usr/share/man/man3/menu_hook.3
+./usr/share/man/man3/menu_item_current.3
+./usr/share/man/man3/menu_item_name.3
+./usr/share/man/man3/menu_item_new.3
+./usr/share/man/man3/menu_item_opts.3
+./usr/share/man/man3/menu_item_userptr.3
+./usr/share/man/man3/menu_item_value.3
+./usr/share/man/man3/menu_item_visible.3
+./usr/share/man/man3/menu_items.3
+./usr/share/man/man3/menu_mark.3
+./usr/share/man/man3/menu_new.3
+./usr/share/man/man3/menu_opts.3
+./usr/share/man/man3/menu_pattern.3
+./usr/share/man/man3/menu_post.3
+./usr/share/man/man3/menu_userptr.3
+./usr/share/man/man3/menu_win.3
+./usr/share/man/man3/menus.3
 ./usr/share/man/man3/mergesort.3
 ./usr/share/man/man3/mkdtemp.3
 ./usr/share/man/man3/mkstemp.3
