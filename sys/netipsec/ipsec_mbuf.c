@@ -1,8 +1,8 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.1 2003/08/13 20:06:50 jonathan Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.2 2003/08/13 20:13:59 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_mbuf.c,v 1.5.2.1 2003/01/24 05:11:35 sam Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.1 2003/08/13 20:06:50 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.2 2003/08/13 20:13:59 jonathan Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -414,7 +414,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		 * the remainder of the mbuf down over the header.
 		 */
 		newipsecstat.ips_input_middle++;
-		bcopy(mtod(m1, u_char *) + roff + hlen,
+		ovbcopy(mtod(m1, u_char *) + roff + hlen,
 		      mtod(m1, u_char *) + roff,
 		      m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;
