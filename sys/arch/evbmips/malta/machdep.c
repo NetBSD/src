@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2002/04/09 03:38:28 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.1 2002/07/16 01:40:58 gehenna Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -198,6 +198,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	mips_vector_init();
 
+	/* set the VM page size */
 	uvm_setpagesize();
 
 	physmem = btoc(memsize);
@@ -213,7 +214,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
 	malta_cal_timer(&mcp->mc_iot, sh);
 	bus_space_unmap(&mcp->mc_iot, sh, 2);
-
 
 #if NCOM > 0
 	/*
