@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.10 2003/01/21 20:42:03 martin Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.11 2003/01/23 23:18:04 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ svr4_32_getmcontext(l, mc, flags)
 	write_user_windows();
 	if (rwindow_save(l)) {
 #ifdef DEBUG
-		printf("svr4_32_getcontext: rwindow_save(%p) failed, sending SIGILL\n", p);
+		printf("svr4_32_getcontext: rwindow_save(%p) failed, sending SIGILL\n", l);
 #ifdef DDB
 		Debugger();
 #endif
