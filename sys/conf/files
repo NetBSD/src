@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.141 1997/09/20 00:44:05 enami Exp $
+#	$NetBSD: files,v 1.142 1997/09/20 01:02:29 enami Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -19,8 +19,8 @@ define	tape
 define	ifnet
 define	tty
 define	audio { }
-define	scsi { [channel = -1] }
-define  atapi {}
+define	scsi {[channel = -1]}
+define	atapi { }
 
 # audio device attributes
 define	mulaw
@@ -48,14 +48,14 @@ device	ipkdbslip: ipkdb
 device	ipkdbppp: ipkdb
 
 # Common files for any ipkdb support
-file	ipkdb/ipkdb_ipkdb.c		ipkdb needs-flag
+file	ipkdb/ipkdb_ipkdb.c		ipkdb			needs-flag
 file	ipkdb/ipkdb_if.c		ipkdb
 
 # Support for slip
-file	ipkdb/ipkdb_slip.c		ipkdbslip needs-flag
+file	ipkdb/ipkdb_slip.c		ipkdbslip		needs-flag
 
 # Support for ppp	(for now only fake)
-file	ipkdb/ipkdb_ppp.c		ipkdbppp needs-flag
+file	ipkdb/ipkdb_ppp.c		ipkdbppp		needs-flag
 
 
 # "Chipset" drivers.  These are the bus-independent routines which
@@ -63,72 +63,72 @@ file	ipkdb/ipkdb_ppp.c		ipkdbppp needs-flag
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
 device	ahc: scsi
-file	dev/ic/aic7xxx.c	ahc
+file	dev/ic/aic7xxx.c		ahc
 
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 # (Must be declared before AHA to ensure bha probes before aha.
 #  Probing AHA first configures bhas as aha, via their AHA
 #  hardware-compatibility mode.)
 device	bha: scsi
-file	dev/ic/bha.c		bha
+file	dev/ic/bha.c			bha
 
 # Adaptec AHA-154x and AHA-164x controllers
 # (must be after bha, see above)
 device	aha: scsi
-file	dev/ic/aha.c		aha
+file	dev/ic/aha.c			aha
 
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
-file	dev/ic/isp.c		isp
+file	dev/ic/isp.c			isp
 
 # UltraStor SCSI controllers
 device	uha: scsi
-file	dev/ic/uha.c		uha
+file	dev/ic/uha.c			uha
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: arp, ether, ifnet
-file	dev/ic/elink3.c		ep
+file	dev/ic/elink3.c			ep
 
 # DEC EtherWORKS III (LEMAC) Ethernet controllers
 device	lc: arp, ether, ifnet
-file	dev/ic/lemac.c		lc
+file	dev/ic/lemac.c			lc
 
 # LANCE and PCnet Ethernet controllers
 device	le: arp, ether, ifnet
-file	dev/ic/am7990.c		le
+file	dev/ic/am7990.c			le
 
 # 8390-family Ethernet controllers
 define	dp8390nic
-file	dev/ic/dp8390.c		dp8390nic
+file	dev/ic/dp8390.c			dp8390nic
 
 # NCR 5380 SCSI Bus Controller
 define	ncr5380sbc
-file	dev/ic/ncr5380sbc.c	ncr5380sbc
+file	dev/ic/ncr5380sbc.c		ncr5380sbc
 
 # DEC FDDI Chipset
 define	pdq
-file	dev/ic/pdq.c		pdq
-file	dev/ic/pdq_ifsubr.c	pdq
+file	dev/ic/pdq.c			pdq
+file	dev/ic/pdq_ifsubr.c		pdq
 
 # Cyclades Cyclom-8/16/32 
 device	cy: tty
-file	dev/ic/cy.c		cy needs-flag
+file	dev/ic/cy.c			cy			needs-flag
 
 # Efficient Networks, Inc. ATM interface
 device	en: atm, ifnet
-file	dev/ic/midway.c		en
+file	dev/ic/midway.c			en
 
 # NCR 53x9x or Emulex ESP SCSI Controller
 define	ncr53c9x
-file	dev/ic/ncr53c9x.c	ncr53c9x
+file	dev/ic/ncr53c9x.c		ncr53c9x
 
 # Intel 82586 Ethernet Controller
 define	i82586
-file	dev/ic/i82586.c		i82586
+file	dev/ic/i82586.c			i82586
 
 # SMC 91Cxx Ethernet Controller
 device	sm: arp, ether, ifnet
-file	dev/ic/smc91cxx.c	sm
+file	dev/ic/smc91cxx.c		sm
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
@@ -343,7 +343,7 @@ file netccitt/pk_output.c		ccitt
 file netccitt/pk_subr.c			ccitt
 file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
-file netinet/if_arp.c			arp		needs-flag
+file netinet/if_arp.c			arp			needs-flag
 file netinet/if_atm.c			atm
 file netinet/igmp.c			inet
 file netinet/in.c			inet
@@ -361,7 +361,7 @@ file netinet/tcp_subr.c			inet
 file netinet/tcp_timer.c		inet
 file netinet/tcp_usrreq.c		inet
 file netinet/udp_usrreq.c		inet
-file netinet/ip_auth.c			ipfilter	needs-flag
+file netinet/ip_auth.c			ipfilter		needs-flag
 file netinet/ip_fil.c			ipfilter
 file netinet/fil.c			ipfilter
 file netinet/ip_nat.c			ipfilter
@@ -466,15 +466,15 @@ file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
 file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
-file ufs/ext2fs/ext2fs_alloc.c	ext2fs
-file ufs/ext2fs/ext2fs_balloc.c	ext2fs
-file ufs/ext2fs/ext2fs_bmap.c	ext2fs
-file ufs/ext2fs/ext2fs_inode.c	ext2fs
-file ufs/ext2fs/ext2fs_lookup.c	ext2fs
-file ufs/ext2fs/ext2fs_readwrite.c ext2fs
-file ufs/ext2fs/ext2fs_subr.c	ext2fs
-file ufs/ext2fs/ext2fs_vfsops.c	ext2fs
-file ufs/ext2fs/ext2fs_vnops.c	ext2fs
+file ufs/ext2fs/ext2fs_alloc.c		ext2fs
+file ufs/ext2fs/ext2fs_balloc.c		ext2fs
+file ufs/ext2fs/ext2fs_bmap.c		ext2fs
+file ufs/ext2fs/ext2fs_inode.c		ext2fs
+file ufs/ext2fs/ext2fs_lookup.c		ext2fs
+file ufs/ext2fs/ext2fs_readwrite.c	ext2fs
+file ufs/ext2fs/ext2fs_subr.c		ext2fs
+file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
+file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file vm/device_pager.c			devpager
 file vm/swap_pager.c			swappager
 file vm/vm_fault.c
