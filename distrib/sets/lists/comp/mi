@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.150 1999/07/09 11:55:33 fvdl Exp $
+# $NetBSD: mi,v 1.151 1999/08/21 05:29:24 simonb Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -818,6 +818,7 @@
 ./usr/include/sys/ataio.h
 ./usr/include/sys/audioio.h
 ./usr/include/sys/buf.h
+./usr/include/sys/bswap.h
 ./usr/include/sys/callout.h
 ./usr/include/sys/cdefs.h
 ./usr/include/sys/cdefs_aout.h
@@ -838,6 +839,7 @@
 ./usr/include/sys/dkstat.h
 ./usr/include/sys/dmap.h
 ./usr/include/sys/domain.h
+./usr/include/sys/endian.h
 ./usr/include/sys/errno.h
 ./usr/include/sys/exec.h
 ./usr/include/sys/exec_aout.h
