@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.6 1998/11/03 14:27:09 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.7 1999/07/21 06:38:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.6 1998/11/03 14:27:09 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.7 1999/07/21 06:38:50 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,8 +63,10 @@ __RCSID("$NetBSD: read.c,v 1.6 1998/11/03 14:27:09 christos Exp $");
  * routine has the usual nastiness of trying to find the newlines.  Otherwise,
  * it is displayed from the character closest to the beginning of the input to
  * the end.
+ *
+ * Non-zero return means than a (non-fatal) error occurred.
  */
-void
+int
 bytes(fp, off)
 	FILE *fp;
 	off_t off;
@@ -86,7 +88,7 @@ bytes(fp, off)
 	}
 	if (ferror(fp)) {
 		ierr();
-		return;
+		return (1);
 	}
 
 	if (rflag) {
@@ -119,6 +121,7 @@ bytes(fp, off)
 		if ((len = p - sp) == 0)
 			WR(sp, len);
 	}
+	return (0);
 }
 
 /*
@@ -130,8 +133,10 @@ bytes(fp, off)
  * routine has the usual nastiness of trying to find the newlines.  Otherwise,
  * it is displayed from the line closest to the beginning of the input to
  * the end.
+ *
+ * Non-zero return means than a (non-fatal) error occurred.
  */
-void
+int
 lines(fp, off)
 	FILE *fp;
 	off_t off;
@@ -180,7 +185,7 @@ lines(fp, off)
 	}
 	if (ferror(fp)) {
 		ierr();
-		return;
+		return (1);
 	}
 	if (cnt) {
 		lines[recno].l = sp;
@@ -204,4 +209,5 @@ lines(fp, off)
 		for (cnt = 0; cnt < recno; ++cnt)
 			WR(lines[cnt].l, lines[cnt].len);
 	}
+	return (0);
 }
