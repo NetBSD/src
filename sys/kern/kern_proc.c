@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.62 2003/03/19 16:02:31 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.63 2003/03/19 16:47:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.62 2003/03/19 16:02:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.63 2003/03/19 16:47:36 christos Exp $");
 
 #include "opt_kstack.h"
 
@@ -591,7 +591,7 @@ proc_alloc(void)
 		s = proclist_lock_write();
 		pt = &pid_table[next_free_pt];
 #ifdef DIAGNOSTIC
-		if (P_VALID(pt->pt_proc) || pt->pt_pgrp)
+		if (__predict_false(P_VALID(pt->pt_proc) || pt->pt_pgrp))
 			panic("proc_alloc: slot busy");
 #endif
 		nxt = P_NEXT(pt->pt_proc);
@@ -631,7 +631,7 @@ proc_free_mem(struct proc *p)
 
 	pt = &pid_table[pid & pid_tbl_mask];
 #ifdef DIAGNOSTIC
-	if (pt->pt_proc != p)
+	if (__predict_false(pt->pt_proc != p))
 		panic("proc_free: pid_table mismatch, pid %x, proc %p",
 			pid, p);
 #endif
@@ -776,10 +776,10 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		pgrp->pg_id = pgid;
 		LIST_INIT(&pgrp->pg_members);
 #ifdef DIAGNOSTIC
-		if (pid_table[pgid & pid_tbl_mask].pt_pgrp)
+		if (__predict_false(pid_table[pgid & pid_tbl_mask].pt_pgrp))
 			panic("enterpgrp: pgrp table slot in use");
-		if (p != curp)
-			panic("enterpgrp: mksession and p != curlwp");
+		if (__predict_false(mksess && p != curp))
+			panic("enterpgrp: mksession and p != curproc");
 #endif
 		pid_table[pgid & pid_tbl_mask].pt_pgrp = pgrp;
 		pgrp->pg_jobc = 0;
@@ -809,8 +809,8 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		pool_put(&pgrp_pool, new_pgrp);
 	if (pg_id != NO_PGID)
 		pg_delete(pg_id);
-#ifdef DIAGNOSTIC
-	if (rval)
+#ifdef DEBUG_PGRP
+	if (__predict_false(rval))
 		printf("enterpgrp(%d,%d,%d), curproc %d, rval %d\n",
 			pid, pgid, mksess, curp->p_pid, rval);
 #endif
@@ -849,7 +849,8 @@ pg_free(pid_t pg_id)
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
 #ifdef DIAGNOSTIC
-	if (!pgrp || pgrp->pg_id != pg_id || !LIST_EMPTY(&pgrp->pg_members))
+	if (__predict_false(!pgrp || pgrp->pg_id != pg_id
+	    || !LIST_EMPTY(&pgrp->pg_members)))
 		panic("pg_free: process group absent or has members");
 #endif
 	pt->pt_pgrp = 0;
@@ -857,7 +858,7 @@ pg_free(pid_t pg_id)
 	if (!P_VALID(pt->pt_proc)) {
 		/* orphaned pgrp, put slot onto free list */
 #ifdef DIAGNOSTIC
-		if (P_NEXT(pt->pt_proc) & pid_tbl_mask)
+		if (__predict_false(P_NEXT(pt->pt_proc) & pid_tbl_mask))
 			panic("pg_free: process slot on free list");
 #endif
 
