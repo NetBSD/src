@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.1 2001/11/10 23:14:09 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.2 2001/11/11 00:41:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -137,99 +137,78 @@ Lsa110_cache_clean_addr:
 Lsa110_cache_clean_size:
 	.word	_C_LABEL(sa110_cache_clean_size)
 
+#ifdef CACHE_CLEAN_BLOCK_INTR
+#define	SA1_CACHE_CLEAN_BLOCK						\
+	mrs	r3, cpsr_all					;	\
+	orr	r0, r3, #(I32_bit | F32_bit)			;	\
+	msr	cpsr_all, r0
+
+#define	SA1_CACHE_CLEAN_UNBLOCK						\
+	msrcpsr_all, r3
+#else
+#define	SA1_CACHE_CLEAN_BLOCK						\
+	ldr	r3, Lblock_userspace_access			;	\
+	ldr	ip, [r3]					;	\
+	orr	r0, ip, #1					;	\
+	str	r0, [r3]
+
+#define	SA1_CACHE_CLEAN_UNBLOCK						\
+	str	ip, [r3]
+#endif /* CACHE_CLEAN_BLOCK_INTR */
+
+#ifdef DOUBLE_CACHE_CLEAN_BANK
+#define	SA1_DOUBLE_CACHE_CLEAN_BANK					\
+	eor	r0, r0, r1					;	\
+	str	r0, [r2]
+#else
+#define	SA1_DOUBLE_CACHE_CLEAN_BANK	/* nothing */
+#endif /* DOUBLE_CACHE_CLEAN_BANK */
+
+#define	SA1_CACHE_CLEAN_PROLOGUE					\
+	SA1_CACHE_CLEAN_BLOCK					;	\
+	ldr	r2, Lsa110_cache_clean_addr			;	\
+	ldmia	r2, {r0, r1}					;	\
+	SA1_DOUBLE_CACHE_CLEAN_BANK
+
+#define	SA1_CACHE_CLEAN_EPILOGUE					\
+	SA1_CACHE_CLEAN_UNBLOCK
+
 ENTRY(sa110_cache_cleanID)
 ENTRY(sa110_cache_cleanD)
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
-	orr	r0, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r0
-#else
-	ldr	r3, Lblock_userspace_access
-	ldr	ip, [r3]
-	orr	r0, ip, #1
-	str	r0, [r3]
-#endif
-	ldr	r2, Lsa110_cache_clean_addr
-	ldmia	r2, {r0, r1}
-#ifdef DOUBLE_CACHE_CLEAN_BANK
-	eor	r0, r0, r1
-	str	r0, [r2]
-#endif
+	SA1_CACHE_CLEAN_PROLOGUE
 
-Lsa110_cache_cleanD_loop:
-	ldr	r2, [r0], #32
+1:	ldr	r2, [r0], #32
 	subs	r1, r1, #32
-	bne	Lsa110_cache_cleanD_loop
+	bne	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	msr	cpsr_all, r3
-#else
-	str	ip, [r3]
-#endif
+
+	SA1_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID)
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
-	orr	r0, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r0
-#else
-	ldr	r3, Lblock_userspace_access
-	ldr	ip, [r3]
-	orr	r0, ip, #1
-	str	r0, [r3]
-#endif
-	ldr	r2, Lsa110_cache_clean_addr
-	ldmia	r2, {r0, r1}
-#ifdef DOUBLE_CACHE_CLEAN_BANK
-	eor	r0, r0, r1
-	str	r0, [r2]
-#endif
+	SA1_CACHE_CLEAN_PROLOGUE
 
-Lsa110_cache_purgeID_loop:
-	ldr	r2, [r0], #32
+1:	ldr	r2, [r0], #32
 	subs	r1, r1, #32
-	bne	Lsa110_cache_purgeID_loop
+	bne	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	msr	cpsr_all, r3
-#else
-	str	ip, [r3]
-#endif
+
+	SA1_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD)
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
-	orr	r0, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r0
-#else
-	ldr	r3, Lblock_userspace_access
-	ldr	ip, [r3]
-	orr	r0, ip, #1
-	str	r0, [r3]
-#endif
-	ldr	r2, Lsa110_cache_clean_addr
-	ldmia	r2, {r0, r1}
-#ifdef DOUBLE_CACHE_CLEAN_BANK
-	eor	r0, r0, r1
-	str	r0, [r2]
-#endif
+	SA1_CACHE_CLEAN_PROLOGUE
 
-Lsa110_cache_purgeD_loop:
-	ldr	r2, [r0], #32
+1:	ldr	r2, [r0], #32
 	subs	r1, r1, #32
-	bne	Lsa110_cache_purgeD_loop
+	bne	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	msr	cpsr_all, r3
-#else
-	str	ip, [r3]
-#endif
+
+	SA1_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID_E)
@@ -249,35 +228,16 @@ ENTRY(sa110_cache_purgeD_E)
  * Soft functions
  */
 ENTRY(sa110_cache_syncI)
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
-	orr	r0, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r0
-#else
-	ldr	r3, Lblock_userspace_access
-	ldr	ip, [r3]
-	orr	r0, ip, #1
-	str	r0, [r3]
-#endif
-	ldr	r2, Lsa110_cache_clean_addr
-	ldmia	r2, {r0, r1}
-#ifdef DOUBLE_CACHE_CLEAN_BANK
-	eor	r0, r0, r1
-	str	r0, [r2]
-#endif
+	SA1_CACHE_CLEAN_PROLOGUE
 
-Lsa110_cache_syncI_loop:
-	ldr	r2, [r0], #32
+1:	ldr	r2, [r0], #32
 	subs	r1, r1, #32
-	bne	Lsa110_cache_syncI_loop
+	bne	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	msr	cpsr_all, r3
-#else
-	str	ip, [r3]
-#endif
+
+	SA1_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
 ENTRY(sa110_cache_cleanID_rng)
@@ -289,11 +249,10 @@ ENTRY(sa110_cache_cleanD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-sa110_cache_cleanD_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	sa110_cache_cleanD_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -306,12 +265,11 @@ ENTRY(sa110_cache_purgeID_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-sa110_cache_purgeID_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	sa110_cache_purgeID_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
@@ -325,12 +283,11 @@ ENTRY(sa110_cache_purgeD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-sa110_cache_purgeD_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	sa110_cache_purgeD_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -343,11 +300,10 @@ ENTRY(sa110_cache_syncI_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-sa110_cache_syncI_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	sa110_cache_syncI_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
