@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfsstat.2,v 1.8 1997/05/21 21:48:47 pk Exp $
+.\"	$NetBSD: getfsstat.2,v 1.9 1997/12/18 07:22:58 mikel Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@ typedef struct { int32_t val[2]; } fsid_t;
 
 struct statfs {
     short   f_type;	/* type of file system (unused; zero) */
-    short   f_flags;	/* copy of mount flags */
+    u_short f_flags;	/* copy of mount flags */
     long    f_bsize;	/* fundamental file system block size */
     long    f_iosize;	/* optimal transfer block size */
     long    f_blocks;	/* total data blocks in file system */
