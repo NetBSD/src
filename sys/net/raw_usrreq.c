@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.8 1994/06/29 06:36:40 cgd Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.9 1995/04/22 13:08:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -171,7 +171,7 @@ raw_usrreq(so, req, m, nam, control)
 			error = EACCES;
 			break;
 		}
-		error = raw_attach(so, (int)nam);
+		error = raw_attach(so, (int)(long)nam);
 		break;
 
 	/*
