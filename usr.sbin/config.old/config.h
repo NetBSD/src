@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.20 1996/06/10 02:32:20 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.21 1997/01/17 23:48:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980 Regents of the University of California.
@@ -195,8 +195,6 @@ int	yyline;
 
 struct	file_list *ftab, *conf_list, **confp, *comp_list, **compp;
 
-int	zone, hadtz;
-int	dst;
 int	profiling;
 int	debugging;
 
