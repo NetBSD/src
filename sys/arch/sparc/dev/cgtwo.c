@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.5.2.1 1995/10/28 23:18:27 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.5.2.2 1996/02/16 00:24:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,6 +164,7 @@ cgtwoattach(parent, self, args)
 	sc->sc_fb.fb_driver = &cgtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2COLOR;
+	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
@@ -238,8 +239,8 @@ cgtwoattach(parent, self, args)
 		printf("\n");
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	if (node == fbnode)
-		fb_attach(&sc->sc_fb);
+	if (node == fbnode || cputyp == CPU_SUN4)
+		fb_attach(&sc->sc_fb, isconsole);
 }
 
 int
