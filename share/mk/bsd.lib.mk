@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.145 1998/11/30 23:34:44 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.146 1998/12/02 22:52:21 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -326,6 +326,9 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${INSTALL} ${PRESERVE} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${.ALLSRC} ${.TARGET}
+.if (${OBJECT_FMT} == "a.out" && !defined(DESTDIR))
+	/sbin/ldconfig -m ${LIBDIR}
+.endif
 .if (${OBJECT_FMT} == "ELF")
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
