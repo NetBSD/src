@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 1999/02/20 00:12:02 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,6 +171,7 @@ extern unsigned long allocate_sir();
 
 #ifdef _KERNEL
 extern	int machineid;
+extern	int cpuspeed;
 extern	char *intiobase, *intiolimit;
 extern	u_int intiobase_phys, intiotop_phys;
 extern	void *ether_data_buff;		/* These two will go when bus_dma */
@@ -189,12 +190,16 @@ void	iounmap __P((void *, size_t));
 void	child_return __P((void *));
 void	myetheraddr	__P((u_char *));
 
+/* Prototypes from sys_machdep.c: */
+int	cachectl __P((int, caddr_t, int));
+int	dma_cachectl __P((caddr_t, int));
+
 /* physical memory sections for mvme147 */
 #define	INTIOBASE147	(0xfffe0000u)
 #define	INTIOTOP147	(0xfffe5000u)
 
 /* ditto for mvme1[67]7 */
-#define	INTIOBASE167	(0xfff00000u)
+#define	INTIOBASE167	(0xfff40000u)
 #define	INTIOTOP167	(0xfffd0000u)
 
 /*

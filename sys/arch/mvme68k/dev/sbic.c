@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.8 1998/08/22 10:55:33 scw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.9 1999/02/20 00:12:00 scw Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -843,9 +843,6 @@ sbicinit(dev)
 {
     u_int   i;
 
-    extern u_long   scsi_nosync;
-    extern int      shift_nosync;
-
     if ( (dev->sc_flags & SBICF_ALIVE) == 0 ) {
 
         struct sbic_acb *acb;
@@ -882,23 +879,10 @@ sbicinit(dev)
 
     /*
      * initialize inhibit array
+	 * Never enable Sync, since it just doesn't work on mvme147 :(
      */
-    if ( scsi_nosync ) {
-
-        u_int inhibit_sync = (scsi_nosync >> shift_nosync) & 0xff;
-
-        shift_nosync += 8;
-
-#ifdef DEBUG
-        if ( inhibit_sync )
-            printf("%s: Inhibiting synchronous transfer %02x\n",
-                        dev->sc_dev.dv_xname, inhibit_sync);
-#endif
-        for (i = 0; i < 8; ++i) {
-            if ( inhibit_sync & (1 << i) )
-                sbic_inhibit_sync[i] = 1;
-        }
-    }
+    for (i = 0; i < 8; ++i)
+        sbic_inhibit_sync[i] = 1;
 
     sbicreset(dev);
 }

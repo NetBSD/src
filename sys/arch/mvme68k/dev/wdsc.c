@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.14 1998/12/05 19:43:43 mjacob Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.15 1999/02/20 00:12:02 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -77,12 +77,6 @@ struct cfattach wdsc_pcc_ca = {
 
 extern struct cfdriver wdsc_cd;
 
-/*
- * Define 'scsi_nosync = 0x00' to enable sync SCSI mode.
- * This is untested as yet, use at your own risk...
- */
-u_long      scsi_nosync  = 0xff;
-int         shift_nosync = 0;
 
 /*
  * Match for SCSI devices on the onboard WD33C93 chip
