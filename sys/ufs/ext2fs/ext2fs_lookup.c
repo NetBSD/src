@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.15 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -172,8 +172,7 @@ ext2fs_readdir(v)
 	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
-		MALLOC(cookies, off_t *, sizeof (off_t) * ncookies, M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
 	memset(dirbuf, 0, e2fs_count);
@@ -213,7 +212,7 @@ ext2fs_readdir(v)
 	*ap->a_eofflag = VTOI(ap->a_vp)->i_e2fs_size <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {
-			FREE(*ap->a_cookies, M_TEMP);
+			free(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else
