@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.184 2001/09/21 15:16:09 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.185 2001/09/21 15:25:49 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -36,21 +36,21 @@ checkver:
 .endif
 
 print-shlib-major:
-.if defined(SHLIB_MAJOR)
+.if defined(SHLIB_MAJOR) && ${MKPIC} != "no"
 	@echo ${SHLIB_MAJOR}
 .else
 	@false
 .endif
 
 print-shlib-minor:
-.if defined(SHLIB_MINOR)
+.if defined(SHLIB_MINOR) && ${MKPIC} != "no"
 	@echo ${SHLIB_MINOR}
 .else
 	@false
 .endif
 
 print-shlib-teeny:
-.if defined(SHLIB_TEENY)
+.if defined(SHLIB_TEENY) && ${MKPIC} != "no"
 	@echo ${SHLIB_TEENY}
 .else
 	@false
