@@ -24,10 +24,6 @@
 /*	SMTPD_STATE *state;
 /*	char	*recipient;
 /*
-/*	char	*smtpd_check_rcptmap(state, recipient)
-/*	SMTPD_STATE *state;
-/*	char	*recipient;
-/*
 /*	char	*smtpd_check_etrn(state, destination)
 /*	SMTPD_STATE *state;
 /*	char	*destination;
@@ -192,11 +188,7 @@
 /* .IP smtpd_recipient_restrictions
 /*	Restrictions on the recipient address that is sent with the RCPT
 /*	TO command.
-/* .PP
-/*	smtpd_check_rcptmap() validates the recipient address provided
-/*	with an RCPT TO request and sets the rcptmap_checked flag.
-/*	Relevant configuration parameters:
-/* .IP local_recipients_map
+/* .IP local_recipient_maps
 /*	Tables of user names (not addresses) that exist in $mydestination.
 /*	Mail for local users not in these tables is rejected.
 /* .PP
@@ -793,6 +785,13 @@ static int smtpd_check_reject(SMTPD_STATE *state, int error_class,
     va_start(ap, format);
     vstring_vsprintf(error_text, format, ap);
     va_end(ap);
+
+    /*
+     * Ensure RFC compliance. We could do this inside smtpd_chat_reply() and
+     * switch to multi-line for long replies.
+     */
+    vstring_truncate(error_text, 510);
+    VSTRING_TERMINATE(error_text);
 
     /*
      * Validate the response, that is, the response must begin with a
@@ -1622,6 +1621,31 @@ static int reject_unknown_address(SMTPD_STATE *state, const char *addr,
     return (reject_unknown_mailhost(state, domain, reply_name, reply_class));
 }
 
+/* warn_skip_access_action - FILTER etc. action in unsupported context */
+
+static void warn_skip_access_action(const char *table, const char *action,
+				            const char *reply_class)
+{
+
+    /*
+     * Warn only about FILTER/HOLD/etc. access table actions that appear in
+     * restrictions where they will always be ignored.
+     */
+    if (strcmp(reply_class, SMTPD_NAME_CLIENT) == 0
+	|| strcmp(reply_class, SMTPD_NAME_HELO) == 0
+	|| strcmp(reply_class, SMTPD_NAME_SENDER) == 0) {
+	if (var_smtpd_delay_reject == 0)
+	    msg_warn("access table %s: with %s=%s, "
+		     "action %s is always skipped in %s restrictions",
+		     table, VAR_SMTPD_DELAY_REJECT, CONFIG_BOOL_NO,
+		     action, reply_class);
+    } else {
+	msg_warn("access table %s: action %s is always "
+		 "skipped in %s restrictions",
+		 table, action, reply_class);
+    }
+}
+
 /* check_table_result - translate table lookup result into pass/reject */
 
 static int check_table_result(SMTPD_STATE *state, const char *table,
@@ -1673,6 +1697,12 @@ static int check_table_result(SMTPD_STATE *state, const char *table,
      * mind, and reject/discard the message for other reasons.
      */
     if (STREQUAL(value, "FILTER", cmd_len)) {
+#ifndef TEST
+	if (state->dest == 0) {
+	    warn_skip_access_action(table, "FILTER", reply_class);
+	    return (SMTPD_CHECK_DUNNO);
+	}
+#endif
 	if (*cmd_text == 0) {
 	    msg_warn("access map %s entry \"%s\" has FILTER entry without value",
 		     table, datum);
@@ -1697,6 +1727,12 @@ static int check_table_result(SMTPD_STATE *state, const char *table,
      * reject/discard the message for other reasons.
      */
     if (STREQUAL(value, "HOLD", cmd_len)) {
+#ifndef TEST
+	if (state->dest == 0) {
+	    warn_skip_access_action(table, "HOLD", reply_class);
+	    return (SMTPD_CHECK_DUNNO);
+	}
+#endif
 	vstring_sprintf(error_text, "<%s>: %s %s", reply_name, reply_class,
 			*cmd_text ? cmd_text : "triggers HOLD action");
 	log_whatsup(state, "hold", STR(error_text));
@@ -1709,17 +1745,21 @@ static int check_table_result(SMTPD_STATE *state, const char *table,
 
     /*
      * DISCARD means silently discard and claim successful delivery.
-     * 
-     * XXX Set some global flag that disables all further restrictions.
-     * Triggering a "reject" or "hold" action after "discard" is silly.
      */
     if (STREQUAL(value, "DISCARD", cmd_len)) {
+#ifndef TEST
+	if (state->dest == 0) {
+	    warn_skip_access_action(table, "DISCARD", reply_class);
+	    return (SMTPD_CHECK_DUNNO);
+	}
+#endif
 	vstring_sprintf(error_text, "<%s>: %s %s", reply_name, reply_class,
 			*cmd_text ? cmd_text : "triggers DISCARD action");
 	log_whatsup(state, "discard", STR(error_text));
 #ifndef TEST
 	rec_fprintf(state->dest->stream, REC_TYPE_FLGS, "%d",
 		    CLEANUP_FLAG_DISCARD);
+	state->discard = 1;
 #endif
 	return (SMTPD_CHECK_OK);
     }
@@ -2548,6 +2588,9 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 
     for (cpp = restrictions->argv; (name = *cpp) != 0; cpp++) {
 
+	if (state->discard != 0)
+	    break;
+
 	if (msg_verbose)
 	    msg_info("%s: name=%s", myname, name);
 
@@ -2998,10 +3041,7 @@ char   *smtpd_check_rcpt(SMTPD_STATE *state, char *recipient)
 
     /*
      * The "check_recipient_maps" restriction is relevant only when
-     * responding to RCPT TO. It's effectively disabled with DATA (recipient
-     * context is explicitly turned off) and not applicable with undelayed
-     * client/helo/sender restrictions (no recipient info) or with ETRN
-     * (command not allowed in the middle of an ongoing MAIL transaction).
+     * responding to RCPT TO or VRFY.
      */
     state->rcptmap_checked = 0;
 
@@ -3027,7 +3067,7 @@ char   *smtpd_check_rcpt(SMTPD_STATE *state, char *recipient)
     SMTPD_CHECK_RESET();
     status = setjmp(smtpd_check_buf);
     if (status == 0 && rcpt_restrctions->argc)
-	    status = generic_checks(state, rcpt_restrctions,
+	status = generic_checks(state, rcpt_restrctions,
 			  recipient, SMTPD_NAME_RECIPIENT, CHECK_RECIP_ACL);
 
     /*
@@ -3037,6 +3077,14 @@ char   *smtpd_check_rcpt(SMTPD_STATE *state, char *recipient)
     if (status != SMTPD_CHECK_REJECT && state->defer_if_permit.active)
 	status = smtpd_check_reject(state, state->defer_if_permit.class,
 				  "%s", STR(state->defer_if_permit.reason));
+
+    /*
+     * If the "check_recipient_maps" restriction was not applied, and if mail
+     * is not being rejected or discarded, validate the recipient here.
+     */
+    if (status != SMTPD_CHECK_REJECT && state->rcptmap_checked == 0
+	&& state->discard == 0)
+	status = check_rcpt_maps(state, recipient);
 
     SMTPD_CHECK_RCPT_RETURN(status == SMTPD_CHECK_REJECT ? STR(error_text) : 0);
 }
@@ -3100,25 +3148,6 @@ char   *smtpd_check_etrn(SMTPD_STATE *state, char *domain)
 				  "%s", STR(state->defer_if_permit.reason));
 
     SMTPD_CHECK_ETRN_RETURN(status == SMTPD_CHECK_REJECT ? STR(error_text) : 0);
-}
-
-/* smtpd_check_rcptmap - permit if recipient address matches lookup table */
-
-char   *smtpd_check_rcptmap(SMTPD_STATE *state, char *recipient)
-{
-    char   *myname = "smtpd_check_rcptmap";
-    int     status;
-
-    if (msg_verbose)
-	msg_info("%s: %s", myname, recipient);
-
-    /*
-     * Return here in case of serious trouble.
-     */
-    if ((status = setjmp(smtpd_check_buf)) == 0)
-	status = check_rcpt_maps(state, recipient);
-
-    return (status == SMTPD_CHECK_REJECT ? STR(error_text) : 0);
 }
 
 /* check_rcpt_maps - generic_checks() interface for recipient table check */
@@ -3198,13 +3227,13 @@ static int check_rcpt_maps(SMTPD_STATE *state, const char *recipient)
 
     if ((reply->flags & RESOLVE_CLASS_LOCAL)
 	&& *var_local_rcpt_maps
-	/* Generated by bounce, absorbed by qmgr. */
+    /* Generated by bounce, absorbed by qmgr. */
 	&& !MATCH_LEFT(var_double_bounce_sender, CONST_STR(reply->recipient),
 		       strlen(var_double_bounce_sender))
-	/* Absorbed by qmgr. */
+    /* Absorbed by qmgr. */
 	&& !MATCH_LEFT(MAIL_ADDR_POSTMASTER, CONST_STR(reply->recipient),
 		       strlen(MAIL_ADDR_POSTMASTER))
-	/* Generated by bounce. */
+    /* Generated by bounce. */
 	&& !MATCH_LEFT(MAIL_ADDR_MAIL_DAEMON, CONST_STR(reply->recipient),
 		       strlen(MAIL_ADDR_MAIL_DAEMON))
 	&& NOMATCH(local_rcpt_maps, CONST_STR(reply->recipient)))
@@ -3486,6 +3515,7 @@ int     var_local_rcpt_code;
 int     var_relay_rcpt_code;
 int     var_virt_mailbox_code;
 int     var_virt_alias_code;
+int     var_show_unk_rcpt_table;
 
 static INT_TABLE int_table[] = {
     "msg_verbose", 0, &msg_verbose,
@@ -3505,6 +3535,7 @@ static INT_TABLE int_table[] = {
     VAR_RELAY_RCPT_CODE, DEF_RELAY_RCPT_CODE, &var_relay_rcpt_code,
     VAR_VIRT_ALIAS_CODE, DEF_VIRT_ALIAS_CODE, &var_virt_alias_code,
     VAR_VIRT_MAILBOX_CODE, DEF_VIRT_MAILBOX_CODE, &var_virt_mailbox_code,
+    VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
     0,
 };
 
@@ -3883,8 +3914,7 @@ int     main(int argc, char **argv)
 	    } else if (strcasecmp(args->argv[0], "rcpt") == 0) {
 		state.where = "RCPT";
 		TRIM_ADDR(args->argv[1], addr);
-		(resp = smtpd_check_rcpt(&state, addr))
-		    || (resp = smtpd_check_rcptmap(&state, addr));
+		resp = smtpd_check_rcpt(&state, addr);
 	    }
 	    break;
 

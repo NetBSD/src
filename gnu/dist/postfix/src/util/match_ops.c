@@ -69,7 +69,7 @@
 #endif
 
 #ifndef INADDR_NONE
-#define INADDR_NONE 0xffffff
+#define INADDR_NONE 0xffffffff
 #endif
 
 /* Utility library. */
@@ -139,7 +139,7 @@ int     match_hostname(int flags, const char *name, const char *pattern)
     if (strchr(pattern, ':') != 0) {
 	temp = lowercase(mystrdup(name));
 	match = 0;
-	for (entry = temp; /* void */ ; entry = next) {
+	for (entry = temp; *entry != 0; entry = next) {
 	    if ((match = (dict_lookup(pattern, entry) != 0)) != 0)
 		break;
 	    if (dict_errno != 0)
@@ -207,6 +207,7 @@ int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
     unsigned long mask_bits;
     unsigned long net_bits;
     unsigned long addr_bits;
+    struct in_addr net_addr;
 
     if (msg_verbose)
 	msg_info("%s: %s ~? %s", myname, addr, pattern);
@@ -242,7 +243,14 @@ int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
 	if (addr_bits == INADDR_NONE)
 	    msg_fatal("%s: bad address argument: %s", myname, addr);
 	mask_bits = htonl((0xffffffff) << (BITS_PER_ADDR - mask_shift));
-	return ((addr_bits & mask_bits) == (net_bits & mask_bits));
+	if ((addr_bits & mask_bits) == net_bits)
+	    return (1);
+	if (net_bits & ~mask_bits) {
+	    net_addr.s_addr = (net_bits & mask_bits);
+	    msg_fatal("net/mask pattern %s has a non-null host portion; "
+		      "specify %s/%d if this is really what you want",
+		      pattern, inet_ntoa(net_addr), mask_shift);
+	}
     }
     return (0);
 }

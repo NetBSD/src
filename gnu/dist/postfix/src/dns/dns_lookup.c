@@ -141,6 +141,7 @@ static int dns_query(const char *name, int type, int flags,
 {
     HEADER *reply_header;
     int     len;
+    unsigned long saved_options = _res.options;
 
     /*
      * Initialize the name service.
@@ -167,6 +168,7 @@ static int dns_query(const char *name, int type, int flags,
      * only if the name server told us so.
      */
     len = res_search((char *) name, C_IN, type, reply->buf, sizeof(reply->buf));
+    _res.options = saved_options;
     if (len < 0) {
 	if (why)
 	    vstring_sprintf(why, "Name service error for name=%s type=%s: %s",
