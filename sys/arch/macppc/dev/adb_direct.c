@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.2 1998/06/26 14:18:08 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.3 1998/10/13 11:21:21 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -246,7 +246,7 @@ int	tickle_count = 0;		/* how many tickles seen for this packet? */
 int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
-extern struct mac68k_machine_S mac68k_machine;
+volatile u_char *Via1Base;
 extern int adb_polling;
 
 int	zshard __P((int));
@@ -2037,7 +2037,7 @@ setsoftadb()
 }
 
 void
-kbd_init()
+adb_cuda_autopoll()
 {
 	volatile int flag = 0;
 	int result;

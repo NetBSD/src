@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.1 1998/05/15 10:15:47 tsubai Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.2 1998/10/13 11:21:21 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,6 +31,15 @@
  */
 
 #include <machine/adbsys.h>
+
+/*
+ * Arguments used to attach a device to the Apple Desktop Bus
+ */
+struct adb_attach_args {
+	unsigned char	origaddr;
+	unsigned char	adbaddr;
+	unsigned char	handler_id;
+};
 
 #define ADB_MAXTRACE	(NBPG / sizeof(int) - 1)
 extern int adb_traceq[ADB_MAXTRACE];
