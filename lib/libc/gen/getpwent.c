@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.32 1999/01/16 07:47:19 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.33 1999/01/16 14:42:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.32 1999/01/16 07:47:19 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.33 1999/01/16 14:42:54 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -454,7 +454,7 @@ _dns_getpw(rv, cb_data, ap)
 		break;
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
-		snprintf(line, sizeof(line), "%u", uid);
+		snprintf(line, sizeof(line), "%u", (unsigned int)uid);
 		break;
 	default:
 		abort();
@@ -522,7 +522,7 @@ _nis_getpw(rv, cb_data, ap)
 		break;
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
-		snprintf(line, sizeof(line), "%u", uid);
+		snprintf(line, sizeof(line), "%u", (unsigned int)uid);
 		map = PASSWD_BYUID;
 		break;
 	default:
@@ -1025,7 +1025,7 @@ getpwuid(uid)
 		{ NULL, NULL, NULL }
 	};
 
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, _PW_KEYBYUID, (int)uid);
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, _PW_KEYBYUID, uid);
 	return (r == NS_SUCCESS ? &_pw_passwd : (struct passwd *)NULL);
 }
 
