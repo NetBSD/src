@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1995/03/07 21:12:07 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1998/10/08 02:04:56 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,10 +35,16 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
+#include "mtree.h"
+
+#ifdef __APPLE__
+#include <fts.h>
+#endif
+
 int	 compare __P((char *, NODE *, FTSENT *));
-int	 crc __P((int, u_long *, u_long *));
+int	 crc __P((int, u_int32_t *, u_int32_t *));
 void	 cwalk __P((void));
-void	 err __P((const char *, ...));
+void	 mtree_err __P((const char *, ...));
 char	*inotype __P((u_int));
 u_int	 parsekey __P((char *, int *));
 char	*rlink __P((char *));

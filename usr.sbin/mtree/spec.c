@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.12 1998/09/23 19:46:00 itohy Exp $	*/
+/*	$NetBSD: spec.c,v 1.13 1998/10/08 02:04:57 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.12 1998/09/23 19:46:00 itohy Exp $");
+__RCSID("$NetBSD: spec.c,v 1.13 1998/10/08 02:04:57 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ spec()
 
 		/* Find end of line. */
 		if ((p = strchr(buf, '\n')) == NULL)
-			err("line %d too long", lineno);
+			mtree_err("line %d too long", lineno);
 
 		/* See if next line is continuation line. */
 		if (p[-1] == '\\') {
@@ -110,7 +110,7 @@ spec()
 			
 		/* Grab file name, "$", "set", or "unset". */
 		if ((p = strtok(p, "\n\t ")) == NULL)
-			err("missing field");
+			mtree_err("missing field");
 
 		if (p[0] == '/')
 			switch(p[1]) {
@@ -127,7 +127,7 @@ spec()
 			}
 
 		if (strchr(p, '/'))
-			err("slash character in file name");
+			mtree_err("slash character in file name");
 
 		if (!strcmp(p, "..")) {
 			/* Don't go up, if haven't gone down. */
@@ -141,11 +141,11 @@ spec()
 			last->flags |= F_DONE;
 			continue;
 
-noparent:		err("no parent node");
+noparent:		mtree_err("no parent node");
 		}
 
 		if ((centry = calloc(1, sizeof(NODE) + strlen(p))) == NULL)
-			err("%s", strerror(errno));
+			mtree_err("%s", strerror(errno));
 		*centry = ginfo;
 		(void)strcpy(centry->name, p);
 #define	MAGIC	"?*["
@@ -185,21 +185,21 @@ set(t, ip)
 	for (; (kw = strtok(t, "= \t\n")) != NULL; t = NULL) {
 		ip->flags |= type = parsekey(kw, &value);
 		if (value && (val = strtok(NULL, " \t\n")) == NULL)
-			err("missing value");
+			mtree_err("missing value");
 		switch(type) {
 		case F_CKSUM:
 			ip->cksum = strtoul(val, &ep, 10);
 			if (*ep)
-				err("invalid checksum %s", val);
+				mtree_err("invalid checksum %s", val);
 			break;
 		case F_GID:
 			ip->st_gid = (gid_t)strtoul(val, &ep, 10);
 			if (*ep)
-				err("invalid gid %s", val);
+				mtree_err("invalid gid %s", val);
 			break;
 		case F_GNAME:
 			if ((gr = getgrnam(val)) == NULL)
-			    err("unknown group %s", val);
+			    mtree_err("unknown group %s", val);
 			ip->st_gid = gr->gr_gid;
 			break;
 		case F_IGN:
@@ -207,33 +207,42 @@ set(t, ip)
 			break;
 		case F_MODE:
 			if ((m = setmode(val)) == NULL)
-				err("invalid file mode %s", val);
+				mtree_err("invalid file mode %s", val);
 			ip->st_mode = getmode(m, 0);
 			free(m);
 			break;
 		case F_NLINK:
 			ip->st_nlink = (nlink_t)strtoul(val, &ep, 10);
 			if (*ep)
-				err("invalid link count %s", val);
+				mtree_err("invalid link count %s", val);
 			break;
 		case F_SIZE:
 			ip->st_size = (off_t)strtoq(val, &ep, 10);
 			if (*ep)
-				err("invalid size %s", val);
+				mtree_err("invalid size %s", val);
 			break;
 		case F_SLINK:
 			if ((ip->slink = strdup(val)) == NULL)
-				err("%s", strerror(errno));
+				mtree_err("%s", strerror(errno));
 			break;
 		case F_TIME:
+#ifndef __APPLE__
 			ip->st_mtimespec.tv_sec =
 			    (time_t)strtoul(val, &ep, 10);
+#else
+			ip->st_mtimespec.ts_sec =
+			    (time_t)strtoul(val, &ep, 10);
+#endif
 			if (*ep != '.')
-				err("invalid time %s", val);
+				mtree_err("invalid time %s", val);
 			val = ep + 1;
+#ifndef __APPLE__
 			ip->st_mtimespec.tv_nsec = strtol(val, &ep, 10);
+#else
+			ip->st_mtimespec.ts_nsec = strtol(val, &ep, 10);
+#endif
 			if (*ep)
-				err("invalid time %s", val);
+				mtree_err("invalid time %s", val);
 			break;
 		case F_TYPE:
 			switch(*val) {
@@ -264,17 +273,17 @@ set(t, ip)
 					ip->type = F_SOCK;
 				break;
 			default:
-				err("unknown file type %s", val);
+				mtree_err("unknown file type %s", val);
 			}
 			break;
 		case F_UID:
 			ip->st_uid = (uid_t)strtoul(val, &ep, 10);
 			if (*ep)
-				err("invalid uid %s", val);
+				mtree_err("invalid uid %s", val);
 			break;
 		case F_UNAME:
 			if ((pw = getpwnam(val)) == NULL)
-			    err("unknown user %s", val);
+			    mtree_err("unknown user %s", val);
 			ip->st_uid = pw->pw_uid;
 			break;
 		}
