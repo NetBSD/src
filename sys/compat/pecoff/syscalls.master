@@ -1,5 +1,5 @@
-	$NetBSD: syscalls.master,v 1.5 2003/01/18 08:34:26 thorpej Exp $
-; based on NetBSD: syscalls.master,v 1.110 2001/07/01 18:06:11 thorpej Exp
+	$NetBSD: syscalls.master,v 1.6 2003/04/08 10:57:56 oki Exp $
+; based on NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -45,6 +45,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_posix.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -503,11 +504,15 @@
 			    const struct timespec *tp); }
 234	NOARGS		{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
-235	UNIMPL		timer_create
-236	UNIMPL		timer_delete
-237	UNIMPL		timer_settime
-238	UNIMPL		timer_gettime
-239	UNIMPL		timer_getoverrun
+235	NOARGS		{ int sys_timer_create(clockid_t clock_id, \
+			    struct sigevent *evp, timer_t *timerid); }
+236	NOARGS		{ int sys_timer_delete(timer_t timerid); }
+237	NOARGS		{ int sys_timer_settime(timer_t timerid, int flags, \
+			    const struct itimerspec *value, \
+			    struct itimerspec *ovalue); }
+238	NOARGS		{ int sys_timer_gettime(timer_t timerid, struct \
+			    itimerspec *value); }
+239	NOARGS		{ int sys_timer_getoverrun(timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
@@ -516,29 +521,49 @@
 241	NOARGS		{ int sys_fdatasync(int fd); }
 242	NOARGS		{ int sys_mlockall(int flags); }
 243	NOARGS		{ int sys_munlockall(void); }
-244	UNIMPL
-245	UNIMPL
+244	NOARGS		{ int sys___sigtimedwait(const sigset_t *set, \
+			    siginfo_t *info, \
+			    struct timespec *timeout); }
+245	UNIMPL		sys_sigqueue
+;
+; Syscall 246 is free for any use
+;
 246	UNIMPL
-247	UNIMPL
-248	UNIMPL
-249	UNIMPL
-250	UNIMPL
-251	UNIMPL
-252	UNIMPL
-253	UNIMPL
-254	UNIMPL
-255	UNIMPL
-256	UNIMPL
-257	UNIMPL
-258	UNIMPL
-259	UNIMPL
-260	UNIMPL
-261	UNIMPL
-262	UNIMPL
-263	UNIMPL
-264	UNIMPL
-265	UNIMPL
-266	UNIMPL
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+247	NOARGS		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
+248	NOARGS		{ int sys__ksem_open(const char *name, int oflag, \
+			    mode_t mode, unsigned int value, semid_t *idp); }
+249	NOARGS 		{ int sys__ksem_unlink(const char *name); }
+250	NOARGS		{ int sys__ksem_close(semid_t id); }
+251	NOARGS		{ int sys__ksem_post(semid_t id); }
+252	NOARGS		{ int sys__ksem_wait(semid_t id); }
+253	NOARGS		{ int sys__ksem_trywait(semid_t id); }
+254	NOARGS		{ int sys__ksem_getvalue(semid_t id, \
+			    unsigned int *value); }
+255	NOARGS		{ int sys__ksem_destroy(semid_t id); }
+256	UNIMPL		sys__ksem_timedwait
+#else
+247	EXCL		sys__ksem_init
+248	EXCL		sys__ksem_open
+249	EXCL 		sys__ksem_unlink
+250	EXCL		sys__ksem_close
+251	EXCL		sys__ksem_post
+252	EXCL		sys__ksem_wait
+253	EXCL		sys__ksem_trywait
+254	EXCL		sys__ksem_getvalue
+255	EXCL		sys__ksem_destroy
+256	UNIMPL		sys__ksem_timedwait
+#endif
+257	UNIMPL		sys_mq_open
+258	UNIMPL		sys_mq_close
+259	UNIMPL		sys_mq_unlink
+260	UNIMPL		sys_mq_getattr
+261	UNIMPL		sys_mq_setattr
+262	UNIMPL		sys_mq_notify
+263	UNIMPL		sys_mq_send
+264	UNIMPL		sys_mq_receive
+265	UNIMPL		sys_mq_timedsend
+266	UNIMPL		sys_mq_timedreceive
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
@@ -567,7 +592,7 @@
 			    uid_t uid, gid_t gid); }
 284	NOARGS		{ int sys___posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
-285	NOARGS		{ int sys___posix_lchown(const char *path, uid_t uid, \
+285	STD		{ int pecoff_sys___posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 286	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 287	NOARGS		{ pid_t sys___clone(int flags, void *stack); }
@@ -617,27 +642,24 @@
 #else
 303	EXCL		__shmctl13
 #endif
-304	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
+304	STD		{ int pecoff_sys_lchflags(const char *path, u_long flags); }
 305	NOARGS		{ int sys_issetugid(void); }
 306	NOARGS		{ int sys_utrace(const char *label, void *addr, \
-			    size_t len); }
-;
-; Syscalls 307 and 308 are reserved for getcontext and setcontext
-;
-307	UNIMPL
-308	UNIMPL
-;
-; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
-;
-309	UNIMPL
-310	UNIMPL
-311	UNIMPL
-312	UNIMPL
-313	UNIMPL
-314	UNIMPL
-315	UNIMPL
-316	UNIMPL
-317	UNIMPL
+				size_t len); }
+307	NOARGS		{ int sys_getcontext(struct __ucontext *ucp); }
+308	NOARGS		{ int sys_setcontext(const struct __ucontext *ucp); }
+309	NOARGS		{ int sys__lwp_create(const struct __ucontext *ucp, \
+				u_long flags, lwpid_t *new_lwp); }
+310	NOARGS		{ int sys__lwp_exit(void); }
+311	NOARGS		{ lwpid_t sys__lwp_self(void); }
+312	NOARGS		{ int sys__lwp_wait(lwpid_t wait_for, \
+				lwpid_t *departed); }
+313	NOARGS		{ int sys__lwp_suspend(lwpid_t target); }
+314	NOARGS		{ int sys__lwp_continue(lwpid_t target); }
+315	NOARGS		{ int sys__lwp_wakeup(lwpid_t target); }
+316	NOARGS		{ void *sys__lwp_getprivate(void); }
+317	NOARGS		{ void sys__lwp_setprivate(void *ptr); }
+; Syscalls 318-329 reserved for remaining Solaris-compatible LWP calls.
 318	UNIMPL
 319	UNIMPL
 320	UNIMPL
@@ -650,13 +672,41 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	UNIMPL
-331	UNIMPL
-332	UNIMPL
-333	UNIMPL
-334	UNIMPL
-335	UNIMPL
+; Scheduler activation syscalls
+330	NOARGS		{ int sys_sa_register(sa_upcall_t new, \
+				sa_upcall_t *old, int flags); }
+331	NOARGS		{ int sys_sa_stacks(int num, stack_t *stacks); }
+332	NOARGS		{ int sys_sa_enable(void); }
+333	NOARGS		{ int sys_sa_setconcurrency(int concurrency); }
+334	NOARGS		{ int sys_sa_yield(void); }
+335	NOARGS		{ int sys_sa_preempt(int sa_id); }
+;
+; Syscalls 336-339 are reserved for other scheduler activation syscalls.
+;
 336	UNIMPL
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL
+340	NOARGS		{ int sys___sigaction_sigtramp(int signum, \
+			    const struct sigaction *nsa, \
+			    struct sigaction *osa, \
+			    void *tramp, int vers); }
+341	NOARGS		{ int sys_pmc_get_info(int ctr, int op, void *args); }
+342	NOARGS		{ int sys_pmc_control(int ctr, int op, void *args); }
+343	NOARGS		{ int sys_rasctl(caddr_t addr, size_t len, int op); }
+344	NOARGS		{ int sys_kqueue(void); }
+345	NOARGS		{ int sys_kevent(int fd, \
+			    const struct kevent *changelist, size_t nchanges, \
+			    struct kevent *eventlist, size_t nevents, \
+			    const struct timespec *timeout); }
+;
+; Syscalls 346-353 are reserved for the IEEE Std1003.1b scheduling syscalls
+;
+346	UNIMPL		sys_sched_setparam
+347	UNIMPL		sys_sched_getparam
+348	UNIMPL		sys_sched_setscheduler
+349	UNIMPL		sys_sched_getscheduler
+350	UNIMPL		sys_sched_yield
+351	UNIMPL		sys_sched_get_priority_max
+352	UNIMPL		sys_sched_get_priority_min
+353	UNIMPL		sys_sched_rr_get_interval
