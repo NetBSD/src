@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.120 1999/11/23 08:38:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1314,6 +1314,12 @@ audio_calc_blksize(sc, mode)
 	ROUNDSIZE(bs);
 	if (hw->round_blocksize)
 		bs = hw->round_blocksize(sc->hw_hdl, bs);
+	/* 
+	 * The blocksize should never be 0, but a faulty
+	 * driver might set it wrong.  Just use something.
+	 */
+	if (bs <= 0)
+		bs = 512;
 	rb->blksize = bs;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n", 
