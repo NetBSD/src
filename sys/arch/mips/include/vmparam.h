@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 1998/02/02 22:21:32 jonathan Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 1998/02/25 23:26:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,13 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
  */
 
+#ifndef _MIPS_VMPARAM_H_
+#define	_MIPS_VMPARAM_H_
+
 /*
- * Machine dependent constants for DEC Station 3100.
+ * Machine dependent VM constants for MIPS.
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
@@ -226,3 +230,20 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+/* Use new non-contiguous physical memory code. */
+#define	MACHINE_NEW_NONCONTIG
+
+/* VM_PHYSSEG_MAX defined by platform-dependent code. */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+
+#endif /* ! _MIPS_VMPARAM_H_ */
