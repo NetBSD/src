@@ -1,4 +1,4 @@
-#	$Id: bsd.dep.mk,v 1.2 1993/08/15 20:42:39 mycroft Exp $
+#	$Id: bsd.dep.mk,v 1.3 1993/08/15 21:09:21 mycroft Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
@@ -14,6 +14,12 @@ depend: beforedepend .depend afterdepend
 	if [ "$$files" != "  " ]; then \
 	  mkdep -a ${MKDEP} -+ ${CXXFLAGS:M-[ID]*} $$files; \
 	fi
+.endif
+.if !target(beforedepend)
+beforedepend:
+.endif
+.if !target(afterdepend)
+afterdepend:
 .endif
 .endif
 
