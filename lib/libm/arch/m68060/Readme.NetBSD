@@ -1,12 +1,9 @@
 - Import new Motorola 060SP packages in /sys/arch/m68k/060SP first.
 - if you had to change something in here, "make clean" here
-- commit this directory
+- commit Makefile Readme.NetBSD makeas.sh makeoffs.awk
 - "make" here
 - commit this directory
-
-Thu Aug 19 22:50:02 MEST 1999
-	Ignatios Souvatzis
-
+     ----------------------------------------------------------------------
 Method:
 
 Out of the table, we create a wrapper for fplsp.S. It contains:
