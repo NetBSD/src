@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.1 2002/04/21 22:52:05 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.2 2002/04/22 15:53:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.1 2002/04/21 22:52:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.2 2002/04/22 15:53:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ void	esiop_checkdone __P((struct esiop_softc *));
 void	esiop_handle_reset __P((struct esiop_softc *));
 void	esiop_scsicmd_end __P((struct esiop_cmd *));
 void	esiop_unqueue __P((struct esiop_softc *, int, int));
+int	esiop_handle_qtag_reject __P((struct esiop_cmd *));
 static void	esiop_start __P((struct esiop_softc *, struct esiop_cmd *));
 void 	esiop_timeout __P((void *));
 int	esiop_scsicmd __P((struct scsipi_xfer *));
@@ -91,6 +92,7 @@ void	esiop_scsipi_request __P((struct scsipi_channel *,
 			scsipi_adapter_req_t, void *));
 void	esiop_dump_script __P((struct esiop_softc *));
 void	esiop_morecbd __P((struct esiop_softc *));
+void	esiop_moretagtbl __P((struct esiop_softc *));
 void	siop_add_reselsw __P((struct esiop_softc *, int));
 void	esiop_update_scntl3 __P((struct esiop_softc *,
 			struct siop_common_target *));
@@ -201,6 +203,8 @@ esiop_attach(sc)
 	}
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->cmds);
+	TAILQ_INIT(&sc->free_tagtbl);
+	TAILQ_INIT(&sc->tag_tblblk);
 	sc->sc_currschedslot = 0;
 #ifdef SIOP_DEBUG
 	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p\n",
@@ -491,10 +495,11 @@ again:
 			    target, lun);
 			goto none;
 		}
-		esiop_cmd = esiop_lun->active;
+		esiop_cmd =
+		    (tag >= 0) ? esiop_lun->tactive[tag] : esiop_lun->active;
 		if (esiop_cmd == NULL) {
-			printf("esiop_cmd (target %d lun %d) not valid\n",
-			    target, lun);
+			printf("esiop_cmd (target %d lun %d tag %d) not valid\n",
+			    target, lun, tag);
 			goto none;
 		}
 		xs = esiop_cmd->cmd_c.xs;
@@ -677,10 +682,7 @@ none:
 				esiop_target = (struct esiop_target *)
 				    esiop_cmd->cmd_c.siop_target;
 				lun = xs->xs_periph->periph_lun;
-#if 0 /* XXX TAG */
 				tag = esiop_cmd->cmd_c.tag;
-#endif
-				tag = -1;
 				esiop_lun = esiop_target->esiop_lun[lun];
 				esiop_cmd->cmd_c.status = CMDST_DONE;
 				xs->error = XS_SELTIMEOUT;
@@ -854,18 +856,15 @@ scintr:
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
-				}
-#if 0 /* XXX TAG */
-				else if (msg == MSG_SIMPLE_Q_TAG || 
+				} else if (msg == MSG_SIMPLE_Q_TAG || 
 				    msg == MSG_HEAD_OF_Q_TAG ||
 				    msg == MSG_ORDERED_Q_TAG) {
-					if (siop_handle_qtag_reject(
+					if (esiop_handle_qtag_reject(
 					    esiop_cmd) == -1)
 						goto reset;
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
 				}
-#endif /* XXX TAG */
 				if (xs)
 					scsipi_printaddr(xs->xs_periph);
 				else
@@ -1047,10 +1046,10 @@ end:
 		CALL_SCRIPT(Ent_script_sched);
 	else
 		restart = 1;
-#if 0 /* XXX TAG */
-	esiop_lun->esiop_tag[tag].active = NULL;
-#endif
-	esiop_lun->active = NULL;
+	if (tag >= 0)
+		esiop_lun->tactive[tag] = NULL;
+	else
+		esiop_lun->active = NULL;
 	esiop_scsicmd_end(esiop_cmd);
 	if (freetarget && esiop_target->target_c.status == TARST_PROBING)
 		esiop_del_dev(sc, target, lun);
@@ -1131,7 +1130,7 @@ void
 esiop_checkdone(sc)
 	struct esiop_softc *sc;
 {
-	int target, lun;
+	int target, lun, tag;
 	struct esiop_target *esiop_target;
 	struct esiop_lun *esiop_lun;
 	struct esiop_cmd *esiop_cmd;
@@ -1146,15 +1145,27 @@ esiop_checkdone(sc)
 			if (esiop_lun == NULL)
 				continue;
 			esiop_cmd = esiop_lun->active;
-			if (esiop_cmd == NULL)
-				continue;
-			status = le32toh(esiop_cmd->cmd_tables->status);
-			if (status != SCSI_OK)
-				continue;
-			/* Ok, this command has been handled */
-			esiop_cmd->cmd_c.xs->status = status;
-			esiop_lun->active = NULL;
-			esiop_scsicmd_end(esiop_cmd);
+			if (esiop_cmd) {
+				status = le32toh(esiop_cmd->cmd_tables->status);
+				if (status == SCSI_OK) {
+					/* Ok, this command has been handled */
+					esiop_cmd->cmd_c.xs->status = status;
+					esiop_lun->active = NULL;
+					esiop_scsicmd_end(esiop_cmd);
+				}
+			}
+			for (tag = 0; tag < ESIOP_NTAG; tag++) {
+				esiop_cmd = esiop_lun->tactive[tag];
+				if (esiop_cmd == NULL)
+					continue;
+				status = le32toh(esiop_cmd->cmd_tables->status);
+				if (status == SCSI_OK) {
+					/* Ok, this command has been handled */
+					esiop_cmd->cmd_c.xs->status = status;
+					esiop_lun->tactive[tag] = NULL;
+					esiop_scsicmd_end(esiop_cmd);
+				}
+			}
 		}
 	}
 }
@@ -1165,8 +1176,8 @@ esiop_unqueue(sc, target, lun)
 	int target;
 	int lun;
 {
-#if 0 /* XXX TAG */
  	int slot, tag;
+	u_int32_t slotdsa;
 	struct esiop_cmd *esiop_cmd;
 	struct esiop_lun *esiop_lun =
 	    ((struct esiop_target *)sc->sc_c.targets[target])->esiop_lun[lun];
@@ -1174,41 +1185,30 @@ esiop_unqueue(sc, target, lun)
 	/* first make sure to read valid data */
 	esiop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	for (tag = 1; tag < ESIOP_NTAG; tag++) {
+	for (tag = 0; tag < ESIOP_NTAG; tag++) {
 		/* look for commands in the scheduler, not yet started */
-		if (siop_lun->siop_tag[tag].active == NULL) 
+		if (esiop_lun->tactive[tag] == NULL) 
 			continue;
-		esiop_cmd = siop_lun->siop_tag[tag].active;
-		for (slot = 0; slot <= sc->sc_currschedslot; slot++) {
-			if (esiop_script_read(sc,
-			    (Ent_script_sched_slot0 / 4) + slot * 2 + 1) ==
-			    esiop_cmd->cmd_c.dsa +
-			    sizeof(struct siop_common_xfer) +
-			    Ent_ldsa_select)
+		esiop_cmd = esiop_lun->tactive[tag];
+		for (slot = 0; slot <= A_ncmd_slots; slot++) {
+			slotdsa = esiop_script_read(sc,
+			    sc->sc_shedoffset + slot * 2);
+			if (slotdsa & A_f_cmd_free)
+				continue;
+			if ((slotdsa & ~A_f_cmd_free) == esiop_cmd->cmd_c.dsa)
 				break;
 		}
-		if (slot >  sc->sc_currschedslot)
+		if (slot >  ESIOP_NTAG)
 			continue; /* didn't find it */
-		if (esiop_script_read(sc,
-		    (Ent_script_sched_slot0 / 4) + slot * 2) == 0x80000000)
-			continue; /* already started */
-		/* clear the slot */
-		esiop_script_write(sc, (Ent_script_sched_slot0 / 4) + slot * 2,
-		    0x80000000);
+		/* Mark this slot as ignore */
+		esiop_script_write(sc, sc->sc_shedoffset + slot * 2,
+		    esiop_cmd->cmd_c.dsa | A_f_cmd_ignore);
 		/* ask to requeue */
 		esiop_cmd->cmd_c.xs->error = XS_REQUEUE;
 		esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
-		siop_lun->siop_tag[tag].active = NULL;
-		siop_scsicmd_end(esiop_cmd);
+		esiop_lun->tactive[tag] = NULL;
+		esiop_scsicmd_end(esiop_cmd);
 	}
-	/* update sc_currschedslot */
-	sc->sc_currschedslot = 0;
-	for (slot = SIOP_NSLOTS - 1; slot >= 0; slot--) {
-		if (esiop_script_read(sc,
-		    (Ent_script_sched_slot0 / 4) + slot * 2) != 0x80000000)
-			sc->sc_currschedslot = slot;
-	}
-#endif /* XXX TAG */
 }
 
 /*
@@ -1216,17 +1216,18 @@ esiop_unqueue(sc, target, lun)
  * has to adjust the reselect script.
  */
 
-#if 0 /* XXX TAG */
+
 int
 esiop_handle_qtag_reject(esiop_cmd)
 	struct esiop_cmd *esiop_cmd;
 {
-	struct siop_softc *sc = (struct esiop_softc *)esiop_cmd->cmd_c.siop_sc;
+	struct esiop_softc *sc = (struct esiop_softc *)esiop_cmd->cmd_c.siop_sc;
 	int target = esiop_cmd->cmd_c.xs->xs_periph->periph_target;
 	int lun = esiop_cmd->cmd_c.xs->xs_periph->periph_lun;
 	int tag = esiop_cmd->cmd_tables->msg_out[2];
-	struct esiop_lun *esiop_lun =
-	    ((struct esiop_target*)sc->sc_c.targets[target])->esiop_lun[lun];
+	struct esiop_target *esiop_target =
+	    (struct esiop_target*)sc->sc_c.targets[target];
+	struct esiop_lun *esiop_lun = esiop_target->esiop_lun[lun];
 
 #ifdef SIOP_DEBUG
 	printf("%s:%d:%d: tag message %d (%d) rejected (status %d)\n",
@@ -1234,29 +1235,25 @@ esiop_handle_qtag_reject(esiop_cmd)
 	    esiop_cmd->cmd_c.status);
 #endif
 
-	if (esiop_lun->siop_tag[0].active != NULL) {
+	if (esiop_lun->active != NULL) {
 		printf("%s: untagged command already running for target %d "
 		    "lun %d (status %d)\n", sc->sc_c.sc_dev.dv_xname,
-		    target, lun, esiop_lun->siop_tag[0].active->cmd_c.status);
+		    target, lun, esiop_lun->active->cmd_c.status);
 		return -1;
 	}
 	/* clear tag slot */
-	esiop_lun->siop_tag[tag].active = NULL;
+	esiop_lun->tactive[tag] = NULL;
 	/* add command to non-tagged slot */
-	esiop_lun->siop_tag[0].active = esiop_cmd;
-	esiop_cmd->cmd_c.tag = 0;
-	/* adjust reselect script if there is one */
-	if (esiop_lun->siop_tag[0].reseloff > 0) {
-		esiop_script_write(sc,
-		    esiop_lun->siop_tag[0].reseloff + 1,
-		    esiop_cmd->cmd_c.dsa + sizeof(struct siop_common_xfer) +
-		    Ent_ldsa_reload_dsa);
-		esiop_table_sync(esiop_cmd, BUS_DMASYNC_PREWRITE);
-	}
+	esiop_lun->active = esiop_cmd;
+	esiop_cmd->cmd_c.flags &= ~CMDFL_TAG;
+	esiop_cmd->cmd_c.tag = -1;
+	/* update DSA table */
+	esiop_script_write(sc, esiop_target->lun_table_offset + lun + 2,
+	    esiop_cmd->cmd_c.dsa);
+	esiop_lun->lun_flags &= ~LUNF_TAGTABLE;
+	esiop_script_sync(sc, BUS_DMASYNC_PREREAD |  BUS_DMASYNC_PREWRITE);
 	return 0;
 }
-
-#endif /* XXX TAG */
 
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
@@ -1298,17 +1295,14 @@ esiop_handle_reset(sc)
 			esiop_lun = esiop_target->esiop_lun[lun];
 			if (esiop_lun == NULL)
 				continue;
-#if 0 /* XXX TAG */
-			for (tag = 0; tag <
+			for (tag = -1; tag <
 			    ((sc->sc_c.targets[target]->flags & TARF_TAG) ?
-			    ESIOP_NTAG : 1);
+			    ESIOP_NTAG : 0);
 			    tag++) {
-				esiop_cmd = esiop_lun->siop_tag[tag].active;
-#else
-			{
-				tag = -1;
-				esiop_cmd = esiop_lun->active;
-#endif /* XXX TAG */
+				if (tag >= 0)
+					esiop_cmd = esiop_lun->tactive[tag];
+				else
+					esiop_cmd = esiop_lun->active;
 				if (esiop_cmd == NULL)
 					continue;
 				scsipi_printaddr(esiop_cmd->cmd_c.xs->xs_periph);
@@ -1317,10 +1311,10 @@ esiop_handle_reset(sc)
 				    (esiop_cmd->cmd_c.flags & CMDFL_TIMEOUT) ?
 		    		    XS_TIMEOUT : XS_RESET;
 				esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
-#if 0 /* XXX TAG */
-				esiop_lun->siop_tag[tag].active = NULL;
-#endif
-				esiop_lun->active = NULL;
+				if (tag >= 0)
+					esiop_lun->tactive[tag] = NULL;
+				else
+					esiop_lun->active = NULL;
 				esiop_cmd->cmd_c.status = CMDST_DONE;
 				esiop_scsicmd_end(esiop_cmd);
 			}
@@ -1461,11 +1455,21 @@ esiop_scsipi_request(chan, req, arg)
 		    0, esiop_cmd->cmd_c.dmamap_cmd->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
+		if (xs->xs_tag_type)
+			esiop_cmd->cmd_c.tag = xs->xs_tag_id;
+		else
+			esiop_cmd->cmd_c.tag = -1;
 		siop_setuptables(&esiop_cmd->cmd_c);
 		((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq =
-			htole32(A_f_c_target | A_f_c_lun); /* XXX TAG */
+		    htole32(A_f_c_target | A_f_c_lun);
 		((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq |=
-			htole32((target << 8) | (lun << 16)); /* XXX TAG */
+		    htole32((target << 8) | (lun << 16));
+		if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
+			((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq |=
+			    htole32(A_f_c_tag);
+			((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq |=
+			    htole32(esiop_cmd->cmd_c.tag << 24);
+		}
 
 		esiop_table_sync(esiop_cmd,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1494,10 +1498,8 @@ esiop_scsipi_request(chan, req, arg)
 		if (sc->sc_c.targets[xm->xm_target] == NULL)
 			return;
 		s = splbio();
-#if 0
 		if (xm->xm_mode & PERIPH_CAP_TQING)
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_TAG;
-#endif
 		if ((xm->xm_mode & PERIPH_CAP_WIDE16) &&
 		    (sc->sc_c.features & SF_BUS_WIDE))
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_WIDE;
@@ -1566,17 +1568,16 @@ esiop_start(sc, esiop_cmd)
 	}
 #ifdef DIAGNOSTIC
 	/* sanity check the tag if needed */
-#if 0 /* XXX TAG */
 	if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
-		if (esiop_lun->esiop_tag[esiop_cmd->cmd_c.tag].active != NULL)
+		if (esiop_lun->tactive[esiop_cmd->cmd_c.tag] != NULL)
 			panic("esiop_start: tag not free");
-		if (esiop_cmd->cmd_c.tag >= ESIOP_NTAG) {
+		if (esiop_cmd->cmd_c.tag >= ESIOP_NTAG ||
+		    esiop_cmd->cmd_c.tag < 0) {
 			scsipi_printaddr(esiop_cmd->cmd_c.xs->xs_periph);
 			printf(": tag id %d\n", esiop_cmd->cmd_c.tag);
 			panic("esiop_start: invalid tag id");
 		}
 	}
-#endif /* XXX TAG */
 #endif
 #ifdef SIOP_DEBUG_SCHED
 	printf("using slot %d for DSA 0x%lx\n", slot,
@@ -1587,13 +1588,29 @@ esiop_start(sc, esiop_cmd)
 		esiop_cmd->cmd_c.status = CMDST_ACTIVE;
 	else
 		panic("esiop_start: bad status");
-#if 0 /* XXX TAG */
-	esiop_lun->esiop_tag[esiop_cmd->cmd_c.tag].active = esiop_cmd;
-#endif
-	esiop_lun->active = esiop_cmd;
-	/* DSA table for reselect */
-	esiop_script_write(sc, esiop_target->lun_table_offset + lun + 2,
-	    esiop_cmd->cmd_c.dsa);
+	if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
+		esiop_lun->tactive[esiop_cmd->cmd_c.tag] = esiop_cmd;
+		/* DSA table for reselect */
+		if ((esiop_lun->lun_flags & LUNF_TAGTABLE) == 0) {
+			esiop_script_write(sc,
+			    esiop_target->lun_table_offset + lun + 2,
+			    esiop_lun->lun_tagtbl->tbl_dsa);
+			esiop_lun->lun_flags |= LUNF_TAGTABLE;
+		}
+		esiop_lun->lun_tagtbl->tbl[esiop_cmd->cmd_c.tag] = 
+		    htole32(esiop_cmd->cmd_c.dsa);
+		bus_dmamap_sync(sc->sc_c.sc_dmat,
+		    esiop_lun->lun_tagtbl->tblblk->blkmap,
+		    esiop_lun->lun_tagtbl->tbl_offset,
+		    sizeof(u_int32_t) * ESIOP_NTAG, BUS_DMASYNC_PREWRITE);
+	} else {
+		esiop_lun->active = esiop_cmd;
+		/* DSA table for reselect */
+		esiop_script_write(sc, esiop_target->lun_table_offset + lun + 2,
+		    esiop_cmd->cmd_c.dsa);
+		esiop_lun->lun_flags &= ~LUNF_TAGTABLE;
+
+	}
 	/* scheduler slot: ID, then DSA */
 	esiop_script_write(sc, sc->sc_shedoffset + slot * 2 + 1, 
 	    sc->sc_c.targets[target]->id);
@@ -1794,14 +1811,114 @@ bad3:
 }
 
 void
+esiop_moretagtbl(sc)
+	struct esiop_softc *sc;
+{
+	int error, i, j, s;
+	bus_dma_segment_t seg;
+	int rseg;
+	struct esiop_dsatblblk *newtblblk;
+	struct esiop_dsatbl *newtbls;
+	u_int32_t *tbls;
+
+	/* allocate a new list head */
+	newtblblk = malloc(sizeof(struct esiop_dsatblblk),
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (newtblblk == NULL) {
+		printf("%s: can't allocate memory for tag DSA table block\n",
+		    sc->sc_c.sc_dev.dv_xname);
+		return;
+	}
+
+	/* allocate tbl list */
+	newtbls = malloc(sizeof(struct esiop_dsatbl) * ESIOP_NTPB,
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (newtbls == NULL) {
+		printf("%s: can't allocate memory for command descriptors\n",
+		    sc->sc_c.sc_dev.dv_xname);
+		goto bad3;
+	}
+	error = bus_dmamem_alloc(sc->sc_c.sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: unable to allocate tbl DMA memory, error = %d\n",
+		    sc->sc_c.sc_dev.dv_xname, error);
+		goto bad2;
+	}
+	error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
+	    (caddr_t *)&tbls, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error) {
+		printf("%s: unable to map tbls DMA memory, error = %d\n",
+		    sc->sc_c.sc_dev.dv_xname, error);
+		goto bad2;
+	}
+	error = bus_dmamap_create(sc->sc_c.sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_NOWAIT, &newtblblk->blkmap);
+	if (error) {
+		printf("%s: unable to create tbl DMA map, error = %d\n",
+		    sc->sc_c.sc_dev.dv_xname, error);
+		goto bad1;
+	}
+	error = bus_dmamap_load(sc->sc_c.sc_dmat, newtblblk->blkmap,
+	    tbls, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: unable to load tbl DMA map, error = %d\n",
+		    sc->sc_c.sc_dev.dv_xname, error);
+		goto bad0;
+	}
+#ifdef DEBUG
+	printf("%s: alloc new tag DSA table at PHY addr 0x%lx\n",
+	    sc->sc_c.sc_dev.dv_xname,
+	    (unsigned long)newtblblk->blkmap->dm_segs[0].ds_addr);
+#endif
+	for (i = 0; i < ESIOP_NTPB; i++) {
+		newtbls[i].tblblk = newtblblk;
+		newtbls[i].tbl = &tbls[i * ESIOP_NTAG];
+		newtbls[i].tbl_offset = i * ESIOP_NTAG * sizeof(u_int32_t);
+		newtbls[i].tbl_dsa = newtblblk->blkmap->dm_segs[0].ds_addr +
+		    newtbls[i].tbl_offset;
+		for (j = 0; j < ESIOP_NTAG; j++)
+			newtbls[i].tbl[j] = j;
+		s = splbio();
+		TAILQ_INSERT_TAIL(&sc->free_tagtbl, &newtbls[i], next);
+		splx(s);
+	}
+	s = splbio();
+	TAILQ_INSERT_TAIL(&sc->tag_tblblk, newtblblk, next);
+	splx(s);
+	return;
+bad0:
+	bus_dmamap_unload(sc->sc_c.sc_dmat, newtblblk->blkmap);
+	bus_dmamap_destroy(sc->sc_c.sc_dmat, newtblblk->blkmap);
+bad1:
+	bus_dmamem_free(sc->sc_c.sc_dmat, &seg, rseg);
+bad2:
+	free(newtbls, M_DEVBUF);
+bad3:
+	free(newtblblk, M_DEVBUF);
+	return;
+}
+
+void
 esiop_update_scntl3(sc, _siop_target)
 	struct esiop_softc *sc;
 	struct siop_common_target *_siop_target;
 {
+	int slot;
+	u_int32_t slotid, id;
+
 	struct esiop_target *esiop_target = (struct esiop_target *)_siop_target;
 	esiop_script_write(sc, esiop_target->lun_table_offset,
 	    esiop_target->target_c.id);
-/* XXX TAG */
+	id  = esiop_target->target_c.id & 0x00ff0000;
+	/* There may be other commands waiting in the scheduler. handle them */
+	for (slot = 0; slot <= A_ncmd_slots; slot++) {
+		slotid =
+		    esiop_script_read(sc, sc->sc_shedoffset + slot * 2 + 1);
+		if ((slotid & 0x00ff0000) == id)
+			esiop_script_write(sc, sc->sc_shedoffset + slot * 2 + 1,
+			    esiop_target->target_c.id);
+	}
 	esiop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 }
 
@@ -1811,44 +1928,25 @@ esiop_add_dev(sc, target, lun)
 	int target;
 	int lun;
 {
-#if 0 /* XXX TAG */
 	struct esiop_target *esiop_target =
 	    (struct esiop_target *)sc->sc_c.targets[target];
 	struct esiop_lun *esiop_lun = esiop_target->esiop_lun[lun];
-	int i, ntargets;
-	if (siop_target->target_c.flags & TARF_TAG) {
-		/* we need a tag switch */
-		sc->script_free_hi -=
-		    sizeof(tag_switch) / sizeof(tag_switch[0]);
-		if (sc->sc_c.features & SF_CHIP_RAM) {
-			bus_space_write_region_4(sc->sc_c.sc_ramt,
-			    sc->sc_c.sc_ramh,
-			    sc->script_free_hi * 4, tag_switch,
-			    sizeof(tag_switch) / sizeof(tag_switch[0]));
-		} else {
-			for(i = 0;
-			    i < sizeof(tag_switch) / sizeof(tag_switch[0]);
-			    i++) {
-				sc->sc_c.sc_script[sc->script_free_hi + i] = 
-				    htole32(tag_switch[i]);
+
+	if (esiop_target->target_c.flags & TARF_TAG) {
+		/* we need a tag DSA table */
+		esiop_lun->lun_tagtbl= TAILQ_FIRST(&sc->free_tagtbl);
+		if (esiop_lun->lun_tagtbl == NULL) {
+			esiop_moretagtbl(sc);
+			esiop_lun->lun_tagtbl= TAILQ_FIRST(&sc->free_tagtbl);
+			if (esiop_lun->lun_tagtbl == NULL) {
+				/* no resources, run untagged */
+				esiop_target->target_c.flags &= ~TARF_TAG;
+				return;
 			}
 		}
-		esiop_script_write(sc, 
-		    siop_lun->reseloff + 1,
-		    sc->sc_c.sc_scriptaddr + sc->script_free_hi * 4 +
-		    Ent_tag_switch_entry);
-
-		for (i = 0; i < ESIOP_NTAG; i++) {
-			siop_lun->siop_tag[i].reseloff =
-			    sc->script_free_hi + (Ent_resel_tag0 / 4) + i * 2;
-		}
-	} else {
-		/* non-tag case; just work with the lun switch */
-		siop_lun->siop_tag[0].reseloff = 
-		    siop_target->siop_lun[lun]->reseloff;
+		TAILQ_REMOVE(&sc->free_tagtbl, esiop_lun->lun_tagtbl, next);
+		
 	}
-	esiop_script_sync(sc, BUS_DMASYNC_PREWRITE);
-#endif /* XXX TAG */
 }
 
 void
@@ -1875,7 +1973,7 @@ esiop_cmd_find(sc, target, dsa)
 	int target;
 	u_int32_t dsa;
 {
-	int lun;
+	int lun, tag;
 	struct esiop_cmd *cmd;
 	struct esiop_lun *esiop_lun;
 	struct esiop_target *esiop_target =
@@ -1891,7 +1989,13 @@ esiop_cmd_find(sc, target, dsa)
 		cmd = esiop_lun->active;
 		if (cmd && cmd->cmd_c.dsa == dsa)
 			return cmd;
-		/* XXX TAG */
+		if (esiop_target->target_c.flags & TARF_TAG) {
+			for (tag = 0; tag < ESIOP_NTAG; tag++) {
+				cmd = esiop_lun->tactive[tag];
+				if (cmd && cmd->cmd_c.dsa == dsa)
+					return cmd;
+			}
+		}
 	}
 	return NULL;
 }
