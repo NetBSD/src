@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/10/31 01:51:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20 2001/11/14 23:01:15 tv Exp $
 
 LIB=sa
 
@@ -47,4 +47,6 @@ libinstall::
 
 all realall: lib${LIB}.a SRT0.o
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
