@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1998/07/27 07:48:22 mycroft Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1998/08/18 18:46:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -128,23 +128,20 @@ long		index;
 	 * On VAX a branch offset given in immediate mode is relative to
 	 * the end of the address itself.
 	 */
-	u_long	fudge = - (sizeof(sp->opcode) + sizeof(sp->addr) + offset);
+	u_long fudge = - (offsetof(jmpslot_t, reloc_index) + offset);
 
-	sp->opcode = JMPREL;		/* XXX !!! untested !!! XXX */
-#if 0
-	sp->addr =  fudge;
-#else
+	sp->mask = 0;			/* save no registers */
+	sp->opcode = JSB_PCREL;
 	sp->addr[0] = fudge & 0xffff;
 	sp->addr[1] = fudge >> 16;
-#endif
-	sp->reloc_index = index;
+	sp->reloc_index[0] = index;
 }
 
 /*
  * Set up a "direct" transfer (ie. not through the run-time binder) from
  * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
  * and by `ld.so' after resolving the symbol.
- * On the i386, we use the JMP instruction which is PC relative, so no
+ * On the VAX, we use the JMP instruction which is PC relative, so no
  * further RRS relocations will be necessary for such a jmpslot.
  */
 void
@@ -153,15 +150,12 @@ jmpslot_t	*sp;
 long		offset;
 u_long		addr;
 {
-	u_long	fudge = addr - (sizeof(sp->opcode) + sizeof(sp->addr) + offset);
+	u_long fudge = addr - (offsetof(jmpslot_t, reloc_index) + offset);
 
-	sp->opcode = JMPABS;		/* XXX !!! untested !!! XXX */
-#if 0
-	sp->addr = fudge;
-#else
-	sp->addr[0] = fudge & 0xffff;
-	sp->addr[1] = fudge >> 16;
-#endif
+	sp->mask = *(u_short *) addr;	/* store the procedure entry mask */
+	sp->opcode = JMP_PCREL;		/* jmp to procedure + 2 */
+	sp->addr[0] = (fudge + 2) & 0xffff;	/* skipping entry mask */
+	sp->addr[1] = (fudge + 2) >> 16;
 #if 0
 	sp->reloc_index = 0;
 #endif
