@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.120 2003/01/01 00:10:19 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.121 2003/01/20 07:34:37 simonb Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.120 2003/01/01 00:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.121 2003/01/20 07:34:37 simonb Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -311,7 +311,7 @@ void
 wdcattach(chp)
 	struct channel_softc *chp;
 {
-	int channel_flags, ctrl_flags, i, error;
+	int ctrl_flags, i, error;
 	struct ataparams params;
 	static int inited = 0;
 
@@ -423,7 +423,6 @@ wdcattach(chp)
 		}
 	}
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
-	channel_flags = (ctrl_flags >> (NBBY * chp->channel)) & 0xff;
 
 	WDCDEBUG_PRINT(("wdcattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
