@@ -4,7 +4,7 @@
 
 LIB=		driver
 SRCS=		input.cc printer.cc
-GXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
+CXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include
 NOMAN=		noman
 NOPROFILE=	noprofile

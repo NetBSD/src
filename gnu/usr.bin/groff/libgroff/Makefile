@@ -9,7 +9,7 @@ SRCS=		assert.cc change_lf.cc cmap.cc cset.cc errarg.cc \
 		iftoa.cc itoa.cc lf.cc lineno.cc nametoindex.cc \
 		new.cc progname.cc ptable.cc string.cc strsave.cc \
 		version.cc
-GXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../../lib/libg++/g++-include \
+CXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../../lib/libg++/g++-include \
 		-DFONTPATH=\"$(FONTDIR)\"
 NOMAN=		noman
 NOPROFILE=	noprofile

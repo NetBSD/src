@@ -11,16 +11,15 @@ CFLAGS+=-I$(.CURDIR)/../g++-include
 .ifmake (depend)
 CFLAGS+=-+
 .endif
-GXX=		g++
-GXXFLAGS=	${CFLAGS} -felide-constructors
+CXXFLAGS+=-felide-constructors
 
 .cc.o:
-	$(GXX) $(GXXFLAGS) -c $(.IMPSRC)
+	$(CXX) $(CXXFLAGS) -c $(.IMPSRC)
 	@$(LD) -x -r $(.TARGET)
 	@mv a.out $(.TARGET)
 
 .cc.po:
-	$(GXX) -p $(GXXFLAGS) -c $(.IMPSRC) -o $(.TARGET)
+	$(CXX) -p $(CXXFLAGS) -c $(.IMPSRC) -o $(.TARGET)
 	@$(LD) -X -r $(.TARGET)
 	@mv a.out $(.TARGET)
 
@@ -29,7 +28,7 @@ GXXFLAGS=	${CFLAGS} -felide-constructors
 #
 
 LIB=		g++
-GXXFLAGS+=	-I$(.CURDIR)/../g++-include -DHAVE_VPRINTF -DHAVE_VSCANF \
+CXXFLAGS+=	-I$(.CURDIR)/../g++-include -DHAVE_VPRINTF -DHAVE_VSCANF \
 		-DHAVE_SETVBUF -DHAVE_SETLINEBUF -DHAVE_GETPAGESIZE
 SRCS=		AllocRing.cc Obstack.cc File.cc ostream.cc istream.cc \
 		streambuf.cc filebuf.cc Filebuf.cc open.cc PlotFile.cc \
