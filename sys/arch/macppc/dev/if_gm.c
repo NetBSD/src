@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.19 2002/10/02 05:30:41 thorpej Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.20 2003/05/03 18:10:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -190,7 +190,7 @@ gmac_attach(parent, self, aux)
 		return;
 	}
 
-	/* Setup packet buffers and dma descriptors. */
+	/* Setup packet buffers and DMA descriptors. */
 	p = malloc((NRXBUF + NTXBUF) * 2048 + 3 * 0x800, M_DEVBUF, M_NOWAIT);
 	if (p == NULL) {
 		printf(": cannot malloc buffers\n");

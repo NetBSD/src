@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.59 2002/10/23 09:13:25 jdolecek Exp $	*/
+/*	$NetBSD: wt.c,v 1.60 2003/05/03 18:11:30 wiz Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.59 2002/10/23 09:13:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.60 2003/05/03 18:11:30 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ static struct wtregs {
 	CMDPORT,	/* command, write only */
 	STATPORT,	/* status, read only */
 	CTLPORT,	/* control, write only */
-	SDMAPORT,	/* start dma */
-	RDMAPORT;	/* reset dma */
+	SDMAPORT,	/* start DMA */
+	RDMAPORT;	/* reset DMA */
 	/* status port bits */
 	u_char BUSY,	/* not ready bit define */
 	NOEXCEP,	/* no exception bit define */
@@ -129,16 +129,16 @@ struct wt_softc {
 	struct callout		sc_timer_ch;
 
 	enum wttype type;	/* type of controller */
-	int chan;		/* dma channel number, 1..3 */
+	int chan;		/* DMA channel number, 1..3 */
 	int flags;		/* state of tape drive */
 	unsigned dens;		/* tape density */
 	int bsize;		/* tape block size */
 	void *buf;		/* internal i/o buffer */
 
-	void *dmavaddr;		/* virtual address of dma i/o buffer */
+	void *dmavaddr;		/* virtual address of DMA i/o buffer */
 	size_t dmatotal;	/* size of i/o buffer */
 	int dmaflags;		/* i/o direction */
-	size_t dmacount;	/* resulting length of dma i/o */
+	size_t dmacount;	/* resulting length of DMA i/o */
 
 	u_short error;		/* code for error encountered */
 	u_short ercnt;		/* number of error blocks */
@@ -745,7 +745,7 @@ wtintr(arg)
 	sc->dmacount += sc->bsize;		/* increment counter */
 
 	/*
-	 * Clean up dma.
+	 * Clean up DMA.
 	 */
 	if ((sc->dmaflags & DMAMODE_READ) &&
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
@@ -938,7 +938,7 @@ wtwait(sc, catch, msg)
 	return 0;
 }
 
-/* initialize dma for the i/o operation */
+/* initialize DMA for the i/o operation */
 void
 wtdma(sc)
 	struct wt_softc *sc;
@@ -1002,7 +1002,7 @@ wtclock(sc)
 		return;
 	sc->flags |= TPTIMER;
 	/*
-	 * Some controllers seem to lose dma interrupts too often.  To make the
+	 * Some controllers seem to lose DMA interrupts too often.  To make the
 	 * tape stream we need 1 tick timeout.
 	 */
 	callout_reset(&sc->sc_timer_ch, (sc->flags & TPACTIVE) ? 1 : hz,

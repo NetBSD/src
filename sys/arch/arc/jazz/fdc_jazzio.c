@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.6 2003/02/10 15:19:44 tsutsui Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.7 2003/05/03 18:10:45 wiz Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -104,10 +104,10 @@ struct fdc_jazzio_softc {
 	struct fdc_softc sc_fdc;	/* base fdc device */
 
 	bus_space_handle_t sc_baseioh;	/* base I/O handle */
-	bus_space_handle_t sc_dmaioh;	/* dma I/O handle */
+	bus_space_handle_t sc_dmaioh;	/* DMA I/O handle */
 
-	bus_dma_tag_t sc_dmat;		/* bus dma tag */
-	bus_dmamap_t sc_dmamap;		/* bus dma map */
+	bus_dma_tag_t sc_dmat;		/* bus_dma tag */
+	bus_dmamap_t sc_dmamap;		/* bus_dma map */
 	int sc_datain;			/* data direction */
 };
 
@@ -192,7 +192,7 @@ fdc_jazzio_attach(parent, self, aux)
 
 	if (bus_space_map(fdc->sc_iot, jazzio_conf->jc_fdcdmareg,
 	    R4030_DMA_RANGE, 0, &jsc->sc_dmaioh)) {
-		printf(": unable to map dma I/O space\n");
+		printf(": unable to map DMA I/O space\n");
 		goto out_unmap1;
 	}
 

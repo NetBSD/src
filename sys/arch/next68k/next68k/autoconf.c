@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2002/09/25 22:21:15 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2003/05/03 18:10:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,7 +113,7 @@ cpu_configure()
 		/* dspreg = (volatile u_long *)IIOV(0x2108000); */
 		break;
 	default:
-		panic("unknown dma chip revision");
+		panic("unknown DMA chip revision");
 	}
 #else
 	intrmask = (volatile u_long *)IIOV(rom_intrmask);

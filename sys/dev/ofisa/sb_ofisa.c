@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.10 2002/10/02 16:34:31 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.10 2002/10/02 16:34:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ sb_ofisa_attach(parent, self, aux)
 	 *
 	 *	1 i/o register region
 	 *	1 interrupt
-	 *	1 or 2 dma channels
+	 *	1 or 2 DMA channels
 	 */
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, &reg, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.10 2003/04/01 02:13:53 thorpej Exp $	*/
+/*	$NetBSD: esc.c,v 1.11 2003/05/03 18:10:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.10 2003/04/01 02:13:53 thorpej Exp $");
+__RCSID("$NetBSD: esc.c,v 1.11 2003/05/03 18:10:41 wiz Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -780,7 +780,7 @@ esc_arbitate_target(dev, target)
 }
 
 /*
- * Setup a nexus for use. Initializes command, buffer pointers and dma chain.
+ * Setup a nexus for use. Initializes command, buffer pointers and DMA chain.
  */
 void
 esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
@@ -872,7 +872,7 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 	}
 
 /*
- * Fake a dma-block for polled IO. This way we can use the same code to handle
+ * Fake a DMA-block for polled IO. This way we can use the same code to handle
  * reselection. Much nicer this way.
  */
 	if ((mode & ESC_SELECT_I) || (dev->sc_config_flags & ESC_NO_DMA)) {
@@ -1195,7 +1195,7 @@ esc_midaction(dev, rp, nexus)
 		if (dev->sc_dma_len)
 			if (dev->sc_cur_link < dev->sc_max_link) {
 				/*
-				 * Clean up dma and at the same time get how
+				 * Clean up DMA and at the same time get how
 				 * many bytes that were NOT transfered.
 				 */
 			  left = dev->sc_setup_dma(dev, 0, 0, ESC_DMA_CLEAR);
@@ -1237,7 +1237,7 @@ esc_midaction(dev, rp, nexus)
 			  dev->sc_dma_blk_len -= len-left;
 
 			  /*
-			   * If it was the end of a dma block, we select the
+			   * If it was the end of a DMA block, we select the
 			   * next to begin with.
 			   */
 			  if (!dev->sc_dma_blk_len)

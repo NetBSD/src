@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.15 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.15 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ cs4281_intr(p)
 	}
 	if (intr & HISR_DMA1) {
 		handled = 1;
-		/* copy from dma */
+		/* copy from DMA */
 		DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
 			 (int)BA0READ4(sc, CS4281_DCC1)));
 		++sc->sc_ri;

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.38 2002/12/10 13:44:47 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.39 2003/05/03 18:11:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.38 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.39 2003/05/03 18:11:38 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.38 2002/12/10 13:44:47 pk Exp $");
 struct be_softc {
 	struct	device	sc_dev;
 	struct	sbusdev sc_sd;		/* sbus device */
-	bus_space_tag_t	sc_bustag;	/* bus & dma tags */
+	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
 	bus_dmamap_t	sc_dmamap;
 	struct	ethercom sc_ethercom;
@@ -795,7 +795,7 @@ beqint(sc, why)
 	if (why & (BE_CR_STAT_TXLERR | BE_CR_STAT_TXPERR | BE_CR_STAT_TXSERR)) {
 		r |= 1;
 		rst = 1;
-		printf("%s: tx dma error ( ", sc->sc_dev.dv_xname);
+		printf("%s: tx DMA error ( ", sc->sc_dev.dv_xname);
 		if (why & BE_CR_STAT_TXLERR)
 			printf("Late ");
 		if (why & BE_CR_STAT_TXPERR)
@@ -820,7 +820,7 @@ beqint(sc, why)
 	if (why & (BE_CR_STAT_RXLERR | BE_CR_STAT_RXPERR | BE_CR_STAT_RXSERR)) {
 		r |= 1;
 		rst = 1;
-		printf("%s: rx dma error ( ", sc->sc_dev.dv_xname);
+		printf("%s: rx DMA error ( ", sc->sc_dev.dv_xname);
 		if (why & BE_CR_STAT_RXLERR)
 			printf("Late ");
 		if (why & BE_CR_STAT_RXPERR)

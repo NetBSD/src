@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.6 2002/10/02 03:10:48 thorpej Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.7 2003/05/03 18:11:27 wiz Exp $	*/
 /* 
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.6 2002/10/02 03:10:48 thorpej Exp $
+ * $Id: if_ntwoc_isa.c,v 1.7 2003/05/03 18:11:27 wiz Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.6 2002/10/02 03:10:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.7 2003/05/03 18:11:27 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,7 +555,7 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	/* disable the memory window */
 	ntwoc_isa_set_off(sca);
 
-	/* enabled sca dma */
+	/* enabled sca DMA */
 	bus_space_write_1(sca->sc_iot, sca->sc_ioh, NTWOC_PSR,
 	    bus_space_read_1(sca->sc_iot, sca->sc_ioh, NTWOC_PSR)
 	    | NTWOC_PSR_EN_SCA_DMA);

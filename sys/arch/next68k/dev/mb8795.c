@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.31 2002/09/27 15:36:31 provos Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.32 2003/05/03 18:10:55 wiz Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -335,7 +335,7 @@ mb8795_rint(sc)
 			m->m_pkthdr.rcvif = ifp;
 			
 			/* Find receive length, keep crc */
-			/* enable dma interrupts while we process the packet */
+			/* enable DMA interrupts while we process the packet */
 			splx(s);
 
 #if defined(MB8795_DEBUG)

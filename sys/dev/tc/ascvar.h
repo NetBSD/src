@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.7 2000/10/31 15:16:26 simonb Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.8 2003/05/03 18:11:40 wiz Exp $	*/
 
 
 /*
@@ -58,16 +58,16 @@ struct asc_softc {
 	struct script	*script;	/* next expected interrupt & action */
 	ScsiCmd		*cmd[ASC_NCMD];	/* active command indexed by SCSI ID */
 	State		st[ASC_NCMD];	/* state info for each active command */
-	/* Start dma routine */
+	/* Start DMA routine */
 	int  (*dma_start) __P((struct asc_softc *asc,
 				struct scsi_state *state,
 				caddr_t cp, int flag, int len, int off));
-	/* End dma routine */
+	/* End DMA routine */
 	void	(*dma_end) __P((struct asc_softc *asc,
 				struct scsi_state *state, int flag));
 
 	u_char		*dma_next;
-	int		dma_xfer;	/* Dma len still to go */
+	int		dma_xfer;	/* DMA len still to go */
 	int		min_period;	/* Min transfer period clk/byte */
 	int		max_period;	/* Max transfer period clk/byte */
 	int		ccf;		/* CCF, whatever that really is? */
@@ -89,7 +89,7 @@ void	ascattach __P((struct asc_softc *asc, int bus_speed));
 int	asc_intr __P ((void *asc));
 
 /*
- * Dma operations.
+ * DMA operations.
  */
 #define	ASCDMA_READ	1
 #define	ASCDMA_WRITE	2

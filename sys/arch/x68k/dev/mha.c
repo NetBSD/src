@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.32 2002/10/02 16:02:41 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.33 2003/05/03 18:11:07 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -468,13 +468,13 @@ mha_init(sc)
 				     sc->sc_dmaseg, 1, &sc->sc_ndmasegs,
 				     BUS_DMA_NOWAIT);
 		if (r)
-			panic("mha_init: cannot allocate dma memory");
+			panic("mha_init: cannot allocate DMA memory");
 		if (sc->sc_ndmasegs != 1)
 			panic("mha_init: number of segment > 1??");
 		r = bus_dmamem_map(sc->sc_dmat, sc->sc_dmaseg, sc->sc_ndmasegs,
 				   MAXBSIZE, &sc->sc_dmabuf, BUS_DMA_NOWAIT);
 		if (r)
-			panic("mha_init: cannot map dma memory");
+			panic("mha_init: cannot map DMA memory");
 		r = bus_dmamap_create(sc->sc_dmat, MAXBSIZE, 1,
 				      MAXBSIZE, 0, BUS_DMA_NOWAIT,
 				      &sc->sc_dmamap);
@@ -484,7 +484,7 @@ mha_init(sc)
 				    sc->sc_dmabuf, MAXBSIZE, NULL,
 				    BUS_DMA_NOWAIT);
 		if (r)
-			panic("mha_init: cannot load dma buffer into dmamap");
+			panic("mha_init: cannot load DMA buffer into dmamap");
 		sc->sc_p = 0;
 	} else {
 		/* Cancel any active commands. */

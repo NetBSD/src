@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.10 2003/04/01 02:13:53 thorpej Exp $	*/
+/*	$NetBSD: csc.c,v 1.11 2003/05/03 18:10:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ csc_intr(arg)
 	return(0);	/* Pass interrupt on down the chain */
 }
 
-/* Load transfer address into dma register */
+/* Load transfer address into DMA register */
 void
 csc_set_dma_adr(sc, ptr)
 	struct sfas_softc *sc;

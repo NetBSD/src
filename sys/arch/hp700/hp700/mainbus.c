@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2003/04/01 20:48:27 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2003/05/03 18:10:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1089,7 +1089,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	/*
 	 * We now have physical pages, but no kernel virtual addresses 
 	 * yet. These may be allocated in bus_dmamap_map.  Hence we
-	 * save any alignment and boundary requirements in this dma
+	 * save any alignment and boundary requirements in this DMA
 	 * segment.
 	 */
 	return (0);

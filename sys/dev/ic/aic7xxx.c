@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.104 2003/04/25 16:03:45 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.105 2003/05/03 18:11:14 wiz Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.104 2003/04/25 16:03:45 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.105 2003/05/03 18:11:14 wiz Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -450,7 +450,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * the kernel.  This allows us to leave the sequencer
 		 * running in the common case of command completes
 		 * without error.  The sequencer will already have
-		 * dma'd the SCB back up to us, so we can reference
+		 * DMA'd the SCB back up to us, so we can reference
 		 * the in kernel copy directly.
 		 */
 		scb_index = ahc_inb(ahc, SCB_TAG);
@@ -4496,7 +4496,7 @@ ahc_init(struct ahc_softc *ahc)
 	 * The qinfifo and qoutfifo are composed of 256 1 byte elements. 
 	 * When providing for the target mode role, we must additionally
 	 * provide space for the incoming target command fifo and an extra
-	 * byte to deal with a dma bug in some chip versions.
+	 * byte to deal with a DMA bug in some chip versions.
 	 */
 	driver_data_size = 2 * 256 * sizeof(uint8_t);
 	if ((ahc->features & AHC_TARGETMODE) != 0)
@@ -5375,15 +5375,15 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 	 && (found != 0)
 	 && (qinstart != ahc->qinfifonext)) {
 		/*
-		 * The sequencer may be in the process of dmaing
+		 * The sequencer may be in the process of DMA'ing
 		 * down the SCB at the beginning of the queue.
 		 * This could be problematic if either the first,
 		 * or the second SCB is removed from the queue
 		 * (the first SCB includes a pointer to the "next"
-		 * SCB to dma). If we have removed any entries, swap
+		 * SCB to DMA). If we have removed any entries, swap
 		 * the first element in the queue with the next HSCB
 		 * so the sequencer will notice that NEXT_QUEUED_SCB
-		 * has changed during its dma attempt and will retry
+		 * has changed during its DMA attempt and will retry
 		 * the DMA.
 		 */
 		scb = ahc_lookup_scb(ahc, ahc->qinfifo[qinstart]);

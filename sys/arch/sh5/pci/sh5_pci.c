@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.8 2002/10/31 14:52:54 scw Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.9 2003/05/03 18:10:58 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -528,7 +528,7 @@ sh5pci_dmamem_alloc(void *arg, bus_size_t size, bus_size_t alignment,
 	 * Note: This fills in the segments with cpu-relative physical
 	 * addresses. A further call to bus_dmamap_load_raw() must be
 	 * made before the addresses in the segments can be used.
-	 * The segments of the dma map will then contain PCIbus-relative
+	 * The segments of the DMA map will then contain PCIbus-relative
 	 * physical addresses of the memory allocated here.
 	 */
 	return (bus_dmamem_alloc(sc->sc_dmat, size, alignment, boundary,

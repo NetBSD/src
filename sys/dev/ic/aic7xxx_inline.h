@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.3 2003/05/03 18:11:15 wiz Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -513,7 +513,7 @@ ahc_minphys(bp)
 {
 /*
  * Even though the card can transfer up to 16megs per command
- * we are limited by the number of segments in the dma segment
+ * we are limited by the number of segments in the DMA segment
  * list that we can hold.  The worst case is that all pages are
  * discontinuous physically, hense the "page per segment" limit
  * enforced here.

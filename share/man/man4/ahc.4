@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.23 2003/03/30 18:05:22 wiz Exp $
+.\"	$NetBSD: ahc.4,v 1.24 2003/05/03 18:10:39 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -425,7 +425,7 @@ when the transfer is resumed.  When the host queues another transaction
 for the controller to execute, the controller firmware will use a
 free SCB if one is available.  Otherwise, the state of the most recently
 disconnected (and therefor most likely to stay disconnected) SCB is
-saved, via dma, to host memory, and the local SCB reused to start
+saved, via DMA, to host memory, and the local SCB reused to start
 the new transaction.  This allows the controller to queue up to
 255 transactions regardless of the amount of SCB space.  Since the
 local SCB space serves as a cache for disconnected transactions, the
