@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.5 2003/10/26 20:55:31 kleink Exp $ */
+/*	$NetBSD: ieee.h,v 1.6 2003/10/26 20:59:51 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@ struct ieee_ext {
 #define	EXT_EXP_INFNAN	32767
 
 #if 0
-#define	EXT_QUIETNAN	(1 << 15)
+#define	EXT_QUIETNAN	(1 << 30)
 #endif
 
 /*
