@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkswap.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkswap.c,v 1.7 1994/07/01 09:15:49 pk Exp $
+ *	$Id: mkswap.c,v 1.7.2.1 1994/07/08 05:49:45 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -72,11 +72,23 @@ mkdevstr(d)
 dev_t d;
 {
 	static char buf[32];
+	int unit, part;
 
 	if (d == NODEV)
 		(void)sprintf(buf, "NODEV");
-	else
-		(void)sprintf(buf, "makedev(%d, %d)", major(d), minor(d));
+	else {
+		/*
+		 * XXX HACK HACK HACK HACK
+		 * we remove the bad assumptions made throughout the code
+		 * right here. (release dates sometimes dictate drastic
+		 * measures)  This entire process needs to be reworked to
+		 * cleanly do what this hack does.
+		 */
+		unit = minor(d) >> 3;		/* XXX */
+		part = minor(d) & 7;		/* XXX */
+		(void)sprintf(buf, "makedev(%d, (%d * MAXPARTITIONS) + %d)",
+		    major(d), unit, part);
+	}
 	return buf;
 }
 
@@ -99,7 +111,8 @@ mkoneswap(cf)
 	}
 	if (fputs("\
 #include <sys/param.h>\n\
-#include <sys/conf.h>\n\n", fp) < 0)
+#include <sys/conf.h>\n\
+#include <sys/disklabel.h>\n\n", fp) < 0)
 		goto wrerror;
 	nv = cf->cf_root;
 	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
