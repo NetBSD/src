@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.1 1999/09/09 12:28:25 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.2 1999/09/12 08:23:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -365,6 +365,7 @@ uaudio_activate(self, act)
 	enum devact act;
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -372,10 +373,12 @@ uaudio_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (sc->sc_audiodev)
+			rv = config_deactivate(sc->sc_audiodev);
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 int
@@ -1832,7 +1835,8 @@ uaudio_chan_transfer(ch)
 	DPRINTFN(5,("uaudio_chan_transfer: transfer reqh=%p\n", cb->reqh));
 	/* Fill the request */
 	usbd_setup_isoc_request(cb->reqh, ch->pipe, cb, cb->sizes, 
-				UAUDIO_NFRAMES, uaudio_chan_pintr);
+				UAUDIO_NFRAMES, USBD_NO_COPY, 
+				uaudio_chan_pintr);
 
 	(void)usbd_transfer(cb->reqh);
 }
