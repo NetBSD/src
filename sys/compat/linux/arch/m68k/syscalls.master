@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 2000/12/09 05:31:10 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.21 2000/12/09 12:23:36 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -335,3 +335,31 @@
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
 190	NOARGS		{ int sys___vfork14(void); }
+191	UNIMPL		getrlimit
+192	UNIMPL		mmap2
+193	UNIMPL		truncate64
+194	UNIMPL		ftruncate64
+195	UNIMPL		stat64
+196	UNIMPL		lstat64
+197	UNIMPL		fstat64
+198	UNIMPL		lchown
+199	UNIMPL		getuid
+200	UNIMPL		getgid
+201	UNIMPL		geteuid
+202	UNIMPL		getegid
+203	UNIMPL		getreuid
+204	UNIMPL		getregid
+205	UNIMPL		getgroups
+206	UNIMPL		setgroups
+207	UNIMPL		fchown
+208	UNIMPL		setresuid
+209	UNIMPL		getresuid
+210	UNIMPL		setresgid
+211	UNIMPL		getresgid
+;212 chown on i386; lchown on m68k
+212	UNIMPL		lchown
+213	UNIMPL		setuid
+214	UNIMPL		setgid
+215	UNIMPL		setfsuid
+216	UNIMPL		setfsgid
+217	UNIMPL		pivot_root
