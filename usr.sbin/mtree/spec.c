@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.40 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.41 2001/11/09 06:55:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.40 2001/11/07 08:01:52 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.41 2001/11/09 06:55:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ void
 dump_nodes(const char *dir, NODE *root)
 {
 	NODE	*cur;
-	char	path[MAXPATHLEN + 1];
+	char	path[MAXPATHLEN];
 	const char *name;
 
 	for (cur = root; cur != NULL; cur = cur->next) {

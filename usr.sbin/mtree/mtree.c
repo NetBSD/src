@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.24 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.25 2001/11/09 06:55:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.24 2001/11/07 08:01:52 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.25 2001/11/09 06:55:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: mtree.c,v 1.24 2001/11/07 08:01:52 lukem Exp $");
 int	ftsoptions = FTS_PHYSICAL;
 int	cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
     	rflag, sflag, tflag, uflag, Uflag;
-char	fullpath[MAXPATHLEN + 1];
+char	fullpath[MAXPATHLEN];
 
 	int	main(int, char **);
 static	void	usage(void);
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 	if (dir && chdir(dir))
 		mtree_err("%s: %s", dir, strerror(errno));
 
-	if ((cflag || sflag) && !getcwd(fullpath, sizeof(fullpath) - 1))
+	if ((cflag || sflag) && !getcwd(fullpath, sizeof(fullpath)))
 		mtree_err("%s", strerror(errno));
 
 	if (cflag == 1 && Dflag == 1)
