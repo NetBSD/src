@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chmod.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: chmod.2,v 1.2 1993/08/01 07:43:19 mycroft Exp $
+.\"	$Id: chmod.2,v 1.3 1993/10/04 18:00:10 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt CHMOD 2
@@ -40,6 +40,7 @@
 .Nm fchmod
 .Nd change mode of file
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
 .Ft int
 .Fn chmod "const char *path" "mode_t mode"
