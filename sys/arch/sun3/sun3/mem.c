@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 1994/11/21 21:38:51 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 1994/12/12 19:00:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,7 +86,6 @@ mmrw(dev, uio, flags)
 	register caddr_t v;
 	register struct iovec *iov;
 	int error = 0;
-	extern caddr_t vmempage;
 	static struct {
 		int	locked;
 		int	wanted;

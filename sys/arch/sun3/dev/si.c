@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.9 1994/11/21 21:31:22 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.10 1994/12/12 18:59:25 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -63,7 +63,7 @@ static int si_debug=0;
 #include "scsi_5380.h"
 
 #define SCI_PHASE_DISC		0	/* sort of ... */
-#define SCI_CLR_INTR(regs)	{register int temp = regs->sci_iack;}
+#define SCI_CLR_INTR(regs)	((volatile)(regs->sci_iack))
 #define SCI_ACK(ptr,phase)	(ptr)->sci_tcmd = (phase)
 #define SCSI_TIMEOUT_VAL	10000000
 #define WAIT_FOR_NOT_REQ(ptr) {	\
@@ -112,7 +112,7 @@ int Debugger();
 
 struct ncr5380_softc {
     struct device sc_dev;
-    void *sc_regs;
+    volatile void *sc_regs;
     int sc_adapter_target;
     struct scsi_link sc_link;
 };
@@ -126,7 +126,7 @@ static int		ncr5380_reset_target(int adapter, int target);
 static int		ncr5380_poll(int adapter, int timeout);
 static int		ncr5380_send_cmd(struct scsi_xfer *xs);
 
-void		ncr5380_intr(int adapter);
+int		ncr5380_intr(void *);
 
 static int	si_generic(int adapter, int id, int lun,
 			 struct scsi_generic *cmd, int cmdlen,
@@ -179,46 +179,49 @@ si_print(aux, name)
 }
 
 static int
-si_match(parent, cf, aux)
+si_match(parent, vcf, args)
 	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+	void		*vcf, *args;
 {
-    caddr_t si_addr;
-    struct obio_cf_loc *obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
+	struct cfdata	*cf = vcf;
+	struct confargs *ca = args;
+	int x;
 
-    si_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_NCR_SCSI);
-    return !obio_probe_byte(si_addr);
+	if (ca->ca_paddr == -1)
+		ca->ca_paddr = OBIO_NCR_SCSI;
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 2;
+
+	/* The peek returns non-zero on error. */
+    return !bus_peek(ca, 0, 1, &x);
 }
 
 static void
-si_attach(parent, self, aux)
+si_attach(parent, self, args)
 	struct device	*parent, *self;
-	void		*aux;
+	void		*args;
 {
-    caddr_t dvma_malloc();
-	int si_addr, level;
-	int unit = DEVICE_UNIT(self);
-    struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
-    struct obio_cf_loc *obio_loc = OBIO_LOC(self);
-	struct cfdata *new_match;
+	struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
+	register volatile sci_regmap_t *regs;
+	struct confargs *ca = args;
+	int unit = self->dv_unit;
+	caddr_t dvma_malloc();	/* XXX */
 
-    si_addr = OBIO_DEFAULT_PARAM(int, obio_loc->obio_addr, OBIO_NCR_SCSI);
-    ncr5380->sc_regs = (sci_regmap_t *)
-        obio_alloc(si_addr, OBIO_NCR_SCSI_SIZE);
+    printf("\n");
 
-    level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 2);
+	regs = (sci_regmap_t *)
+		obio_alloc(ca->ca_paddr, OBIO_NCR_SCSI_SIZE);
 
+	ncr5380->sc_regs = regs;
     ncr5380->sc_link.scsibus = unit;	/* needed? */
     ncr5380->sc_link.adapter_softc = ncr5380;
     ncr5380->sc_link.adapter_targ = 7;
     ncr5380->sc_link.adapter = &ncr5380_switch;
     ncr5380->sc_link.device = &ncr_dev;
-    
-    obio_print(si_addr, level);
-    printf("\n");
 
-    config_found(self, &(ncr5380->sc_link), si_print);
+	isr_add_autovect(ncr5380_intr, (void *)ncr5380, ca->ca_intpri);
+
+	config_found(self, &(ncr5380->sc_link), si_print);
 }
 
 static u_int
@@ -339,17 +342,20 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
  * Actual chip control.
  */
 
-void
-ncr5380_intr(int adapter)
+int
+ncr5380_intr(void *arg)
 {
-    register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
+    register struct ncr5380_softc *ncr5380 = arg;
     register volatile sci_regmap_t *regs = ncr5380->sc_regs;
 
-    SCI_CLR_INTR(regs);
-    regs->sci_mode    = 0x00;
+	if (regs->sci_csr & SCI_CSR_INT) {
+		SCI_CLR_INTR(regs);
 #ifdef	DEBUG
-	printf ("ncr_intr\n");
+		printf (" ncr_intr\n");
 #endif
+		return (1);	/* we handled it */
+	}
+	return (0);
 }
 
 int

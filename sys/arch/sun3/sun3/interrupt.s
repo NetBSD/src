@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.s,v 1.15 1994/11/21 21:38:36 gwr Exp $	*/
+/*	$NetBSD: interrupt.s,v 1.16 1994/12/12 18:59:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,7 +45,7 @@ timebomb:
 
 #define INTERRUPT_BODY(num) \
 	pea	num		;\
-	jbsr	_intrhand	;\
+	jbsr	_isr_autovec	;\
 	addql	#4,sp
 
 #define INTERRUPT_RESTORE \
@@ -55,12 +55,17 @@ timebomb:
 	INTERRUPT_SAVEREG ;\
 	INTERRUPT_BODY(num) ;\
 	INTERRUPT_RESTORE ;\
-	jra rei
+	jra rei			/* XXX - Just do rte here? */
 
 .globl _level0intr, _level1intr, _level2intr, _level3intr, _level4intr
 .globl _level5intr, _level6intr, _level7intr
 
 .align 4
+/*
+ * These are the auto-vector interrupt handlers,
+ * for which the CPU provides the vector=0x18+level
+ * These are installed in the interrupt vector table.
+ */
 /* spurious interrupt */
 _level0intr:	
 	INTERRUPT_HANDLE(0)
@@ -83,9 +88,20 @@ _level3intr:
 _level4intr:
 	INTERRUPT_HANDLE(4)
 
+/* clock (see below) */
 .align 4
 _level5intr:
 	INTERRUPT_HANDLE(5)
+
+/* SCCs */
+.align 4
+_level6intr:
+	INTERRUPT_HANDLE(6)
+
+/* Memory Error/NMI */
+.align 4
+_level7intr:
+	INTERRUPT_HANDLE(7)
 
 /* clock */
 .globl _level5intr_clock, _interrupt_reg, _clock_intr, _clock_va
@@ -150,16 +166,6 @@ Lstackok:
 	addql	#4,sp
 	INTERRUPT_RESTORE
 	jra	rei
-
-/* SCCs */
-.align 4
-_level6intr:
-	INTERRUPT_HANDLE(6)
-
-/* Memory Error/NMI */
-.align 4
-_level7intr:
-	INTERRUPT_HANDLE(7)
 
 
 #undef	INTERRUPT_SAVEREG

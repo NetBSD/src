@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1994/12/01 22:46:29 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 1994/12/12 18:59:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -110,10 +110,12 @@ struct zsinfo {
 struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch(struct device *, void *, void *);
-static void	zsattach(struct device *, struct device *, void *);
-struct cfdriver zscd =
-    { NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zsinfo) };
+static int	zs_match(struct device *, void *, void *);
+static void	zs_attach(struct device *, struct device *, void *);
+
+struct cfdriver zscd = {
+	NULL, "zs", zs_match, zs_attach,
+	DV_TTY, sizeof(struct zsinfo) };
 
 /* Interrupt handlers. */
 static int	zshard(int);
@@ -163,7 +165,13 @@ static struct conk_state {	/* console keyboard state */
 int zshardscope;
 int zsshortcuts;		/* number of "shortcut" software interrupts */
 
-static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
+int zssoftpending;		/* We have done isr_soft_request() */
+
+static struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
+
+/* Default OBIO addresses. */
+static int zs_physaddr[NZS] = { OBIO_ZS, OBIO_KEYBD_MS };
+	
 
 /* Find PROM mappings (for console support). */
 void zs_init()
@@ -181,15 +189,23 @@ void zs_init()
  * not set up the keyboard as ttya, etc.
  */
 static int
-zsmatch(struct device *parent, void *vcf, void *aux)
+zs_match(struct device *parent, void *vcf, void *args)
 {
 	struct cfdata *cf = vcf;
-	struct obio_cf_loc *obio_loc;
-	caddr_t zs_addr;
+	struct confargs *ca = args;
+	int unit, x;
 
-	obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
-	zs_addr = (caddr_t) obio_loc->obio_addr;
-	return !obio_probe_byte(zs_addr);
+	unit = cf->cf_unit;
+	if (unit < 0 || unit >= NZS)
+		return (0);
+
+	if (ca->ca_paddr == -1)
+		ca->ca_paddr = zs_physaddr[unit];
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = ZSHARD_PRI;
+
+	/* The peek returns non-zero on error. */
+	return !bus_peek(ca, 0, 1, &x);
 }
 
 /*
@@ -199,34 +215,37 @@ zsmatch(struct device *parent, void *vcf, void *aux)
  * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
  */
 static void
-zsattach(struct device *parent, struct device *dev, void *aux)
+zs_attach(struct device *parent, struct device *self, void *args)
 {
-	struct obio_cf_loc *obio_loc = OBIO_LOC(dev);
-	register int zs = dev->dv_unit, unit;
+	struct cfdata *cf;
+	struct confargs *ca;
+	register int zs, unit;
 	register struct zsinfo *zi;
 	register struct zs_chanstate *cs;
 	register volatile struct zsdevice *addr;
 	register struct tty *tp, *ctp;
-	int softcar, obio_addr;
+	int softcar;
 	static int didintr;
 
-	obio_addr = obio_loc->obio_addr;
-	obio_print(obio_addr, ZSSOFT_PRI);
-	printf(" hwpri %d\n", ZSHARD_PRI);
+	cf = self->dv_cfdata;
+	zs = self->dv_unit;
+	ca = args;
+
+	printf(" softpri %d\n", ZSSOFT_PRI);
 
 	if (zsaddr[zs] == NULL) {
 		zsaddr[zs] = (struct zsdevice *)
-			obio_alloc(obio_addr, OBIO_ZS_SIZE);
+			obio_alloc(ca->ca_paddr, OBIO_ZS_SIZE);
 	}
 	addr = zsaddr[zs];
 
 	if (!didintr) {
 		didintr = 1;
-		isr_add(ZSSOFT_PRI, zssoft, 0);
-		isr_add(ZSHARD_PRI, zshard, 0);
+		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
+		isr_add_autovect(zshard, NULL, ZSHARD_PRI);
 	}
 
-	zi = (struct zsinfo *)dev;
+	zi = (struct zsinfo *)self;
 	zi->zi_zs = addr;
 	unit = zs * 2;
 	cs = zi->zi_cs;
@@ -240,7 +259,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	if (unit == 0) {
 		softcar = 0;
 	} else
-		softcar = dev->dv_cfdata->cf_flags;
+		softcar = cf->cf_flags;
 
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
@@ -765,7 +784,10 @@ zshard(int intrarg)
 	}
 #undef b
 	if (intflags & 1) {
-	    isr_soft_request(ZSSOFT_PRI);
+		if (zssoftpending == 0) {
+			zssoftpending = ZSSOFT_PRI;
+			isr_soft_request(ZSSOFT_PRI);
+		}
 	}
 	return (intflags & 2);
 }
@@ -923,6 +945,10 @@ zssoft(int arg)
 	register struct tty *tp;
 	register int get, n, c, cc, unit, s;
 
+	if (zssoftpending == 0)
+		return (0);
+
+	zssoftpending = 0;
 	isr_soft_clear(ZSSOFT_PRI);
 
 	for (cs = zslist; cs != NULL; cs = cs->cs_next) {

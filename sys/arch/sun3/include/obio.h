@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.12 1994/11/21 21:33:56 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.13 1994/12/12 18:59:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -71,21 +71,7 @@
 #define OBIO_DES_SIZE		0x00004		
 #define OBIO_ECCREG_SIZE	0x00100			
 
-/* autoconfiguration data */
-struct obio_cf_loc {
-    int obio_addr;
-    int obio_level;
-};
-
 caddr_t obio_alloc __P((int, int));
 caddr_t obio_vm_alloc __P((int));
-void obio_print __P((int addr, int level));
-void obio_probe __P((int addr));
-
-#define OBIO_DEFAULT_PARAM(cast, arg, default) \
-     (cast) (arg == -1 ? default : arg)
-
-#define OBIO_LOC(device) (struct obio_cf_loc *) device->dv_cfdata->cf_loc
-
-caddr_t obio_find_mapping(int pa, int size);
+caddr_t obio_find_mapping __P((int pa, int size));
 

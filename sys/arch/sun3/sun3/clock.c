@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1994/11/21 21:38:21 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 1994/12/12 18:59:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -70,34 +70,25 @@ volatile char *clock_va;
 #define intersil_clock ((volatile struct intersil7170 *) clock_va)
 
 #define intersil_command(run, interrupt) \
-    (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-     INTERSIL_CMD_NORMAL_MODE)
+	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
+	 INTERSIL_CMD_NORMAL_MODE)
 
 #define intersil_disable() \
-    intersil_clock->clk_cmd_reg = \
-    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE)
+	intersil_clock->clk_cmd_reg = \
+	intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE)
 
 #define intersil_enable() \
-    intersil_clock->clk_cmd_reg = \
-    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE)
+	intersil_clock->clk_cmd_reg = \
+	intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE)
 
 #define intersil_clear() intersil_clock->clk_intr_reg
 
-
-struct clock_softc {
-    struct device clock_dev;
-    caddr_t clock_va;
-    int clock_level;
-};
-
-struct clock_softc *intersil_softc = NULL;
-
+int clockmatch __P((struct device *, void *vcf, void *args));
 void clockattach __P((struct device *, struct device *, void *));
-int clockmatch __P((struct device *, struct cfdata *, void *args));
 
 struct cfdriver clockcd = 
-{ NULL, "clock", always_match, clockattach, DV_DULL,
-      sizeof(struct clock_softc), 0};
+{ NULL, "clock", clockmatch, clockattach, DV_DULL,
+	sizeof(struct device), 0};
 
 /* Called very earyl by internal_configure. */
 void clock_init()
@@ -107,39 +98,42 @@ void clock_init()
 		mon_panic("clock VA not found\n");
 }
 
-int clockmatch(parent, cf, args)
-     struct device *parent;
-     struct cfdata *cf;
-     void *args;
+int clockmatch(parent, vcf, args)
+    struct device *parent;
+    void *vcf, *args;
 {
-    return (1);
+    struct cfdata *cf = vcf;
+	struct confargs *ca = args;
+
+	/* This driver only supports one unit. */
+	if (cf->cf_unit != 0)
+		return (0);
+	if (clock_va == NULL)
+		return (0);
+	if (ca->ca_paddr == -1)
+		ca->ca_paddr = OBIO_CLOCK;
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 5;
+	return (1);
 }
 
+extern void level5intr_clock();
 void clockattach(parent, self, args)
-     struct device *parent;
-     struct device *self;
-     void *args;
+	struct device *parent;
+	struct device *self;
+	void *args;
 {
-    struct clock_softc *clock = (struct clock_softc *) self;
-    struct obio_cf_loc *obio_loc = OBIO_LOC(self);
-    int clock_addr;
-    int clock_intr();
-    void level5intr_clock();
+	struct confargs *ca = args;
 
-    clock_addr = OBIO_CLOCK;
-    clock->clock_level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 5);
-    clock->clock_va = (caddr_t) clock_va;
-    obio_print(clock_addr, clock->clock_level);
-    if (clock->clock_level != 5) {
-		printf(": level != 5\n");
-		return;
-    }
-    intersil_softc = clock;
-    intersil_disable();
-    set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
-    isr_add_custom(clock->clock_level, level5intr_clock);
-    set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
-    printf("\n");
+	printf("\n");
+	if (ca->ca_intpri != 5)
+		panic("clock: level != 5");
+
+	/* Initialize, connect ISR. */
+	intersil_disable();
+	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
+	isr_add_custom(ca->ca_intpri, level5intr_clock);	/* XXX */
+	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
 }
 
 /*
@@ -149,7 +143,7 @@ void clockattach(parent, self, args)
  */
 set_clk_mode(on, off, enable)
 	u_char on, off;
-        int enable;
+	int enable;
 {
 	register u_char interreg, dummy;
 	/*
@@ -199,19 +193,19 @@ set_clk_mode(on, off, enable)
 void
 cpu_initclocks(void)
 {
-    struct timer_softc *clock;
-    unsigned char dummy;
+	struct timer_softc *clock;
+	unsigned char dummy;
 
-    if (clockcd.cd_ndevs < 1 ||
-	!(clock = clockcd.cd_devs[0]))
-	panic("cpu_initclocks: no timer");
+	if (clockcd.cd_ndevs < 1 ||
+		!(clock = clockcd.cd_devs[0]))
+		panic("cpu_initclocks: no timer");
 
 	/* make sure irq5/7 stuff is resolved :) */
 
-    dummy = intersil_clear();
+	dummy = intersil_clear();
 
-    intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
-    intersil_clock->clk_cmd_reg =
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 }
 
@@ -232,25 +226,25 @@ setstatclockrate(newhz)
  */
 void startrtclock()
 {
-    char dummy;
+	char dummy;
   
-    if (!intersil_softc)
+	if (!intersil_clock)
 		panic("clock: not initialized");
-    
-    intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
-    intersil_clock->clk_cmd_reg =
+
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-    dummy = intersil_clear();
+	dummy = intersil_clear();
 }
 
 void enablertclock()
 {
-    unsigned char dummy;
+	unsigned char dummy;
 	/* make sure irq5/7 stuff is resolved :) */
 
-    dummy = intersil_clear();
-    intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
-    intersil_clock->clk_cmd_reg =
+	dummy = intersil_clear();
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 }
 
@@ -259,17 +253,17 @@ int clock_count = 0;
 void clock_intr(frame)
 	struct clockframe *frame;
 {
-    static unsigned char led_pattern = 0xFE;
+	static unsigned char led_pattern = 0xFE;
 
 	/* XXX - Move this LED frobbing to the idle loop? */
-    clock_count++;
+	clock_count++;
 	if ((clock_count & 7) == 0) {
 		led_pattern = (led_pattern << 1) | 1;
 		if (led_pattern == 0xFF)
 			led_pattern = 0xFE;
 		set_control_byte((char *) DIAG_REG, led_pattern);
 	}
-    hardclock(frame);
+	hardclock(frame);
 }
 
 
@@ -296,8 +290,8 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+		tvp->tv_usec <= lasttime.tv_usec &&
+		(tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -408,7 +402,7 @@ static void clk_get_dt(struct date_time *dt)
 		*dst++ = *src++;
 	} while (dst < (char*)dt);
 
-    intersil_clock->clk_cmd_reg =
+	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
@@ -430,7 +424,7 @@ static void clk_set_dt(struct date_time *dt)
 		*dst++ = *src++;
 	} while (src < (char *)dt);
 
-    intersil_clock->clk_cmd_reg =
+	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }

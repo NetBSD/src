@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13 1994/11/21 21:38:39 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.14 1994/12/12 19:00:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -46,6 +46,8 @@
 #include "vector.h"
 #include "interreg.h"
 
+extern int intrcnt[];	/* statistics */
+
 /*
  * Justification:
  *
@@ -58,23 +60,23 @@
 volatile u_char *interrupt_reg;
 
 extern void level0intr(), level1intr(), level2intr(), level3intr(),
-    level4intr(), level5intr(), level6intr(), level7intr();
+	level4intr(), level5intr(), level6intr(), level7intr();
 
 struct level_intr {
-    void (*level_intr)();
-    int used;
+	void (*level_intr)();
+	int used;
 } level_intr_array[NISR] = {
-    { level0intr, 0 },		/* this is really the spurious interrupt */
-    { level1intr, 0 },
-    { level2intr, 0 }, 
-    { level3intr, 0 },
-    { level4intr, 0 }, 
-    { level5intr, 0 },
-    { level6intr, 0 },
-    { level7intr, 0 }
+	{ level0intr, 0 },		/* this is really the spurious interrupt */
+	{ level1intr, 0 },
+	{ level2intr, 0 }, 
+	{ level3intr, 0 },
+	{ level4intr, 0 }, 
+	{ level5intr, 0 },
+	{ level6intr, 0 },
+	{ level7intr, 0 }
 };
 
-     
+
 struct isr *isr_array[NISR];
 
 void isr_init()
@@ -89,147 +91,144 @@ void isr_init()
 		mon_panic("interrupt reg VA not found\n");
 }
 
-void isr_add_custom(level, handler)
-     int level;
-     void (*handler)();
+void isr_add_custom(level, handler)		/* XXX */
+	int level;
+	void (*handler)();
 {
-    level_intr_array[level].used++;
-    set_vector_entry(VEC_INTERRUPT_BASE + level, handler);
+	level_intr_array[level].used++;
+	set_vector_entry(AUTO_VECTOR_BASE + level, handler);
 }
 
 
 void isr_activate(level)
-     int level;
+	int level;
 {
-    level_intr_array[level].used++;
-    set_vector_entry(VEC_INTERRUPT_BASE + level,
-		     level_intr_array[level].level_intr);
+	level_intr_array[level].used++;
+	set_vector_entry(AUTO_VECTOR_BASE + level,
+					 level_intr_array[level].level_intr);
 }
 
 void isr_cleanup()
 {
-    int i;
+	int i;
 
-    for (i = 0; i <NISR; i++) {
-	if (level_intr_array[i].used) continue;
-	isr_activate(i);
-    }
+	for (i = 0; i <NISR; i++) {
+		if (level_intr_array[i].used) continue;
+		isr_activate(i);
+	}
 }
 
-void isr_add(level, handler, arg)
-     int level;
-     int (*handler)();
-     int arg;
+void isr_add_autovect(handler, arg, level)
+	int (*handler)();
+	void *arg;
+	int level;
 {
-    struct isr *new_isr;
-    int first_isr;
+	struct isr *new_isr;
+	int first_isr;
 
-    first_isr = 0;
-    if ((level < 0) || (level >= NISR))
-	panic("isr_add: attempt to add handler for bad level");
-    new_isr = (struct isr *)
-	malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
-    if (!new_isr)
-	panic("isr_add: allocation of new 'isr' failed");
-    new_isr->isr_arg = arg;
-    new_isr->isr_ipl = level;
-    new_isr->isr_intr = handler;
-    new_isr->isr_back = NULL;
-    new_isr->isr_forw = isr_array[level];
-    if (!isr_array[level]) first_isr++;
-    isr_array[level] = new_isr;
-    if (first_isr) 
-	isr_activate(level);
+	first_isr = 0;
+	if ((level < 0) || (level >= NISR))
+		panic("isr_add: attempt to add handler for bad level");
+	new_isr = (struct isr *)
+		malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
+	if (!new_isr)
+		panic("isr_add: allocation of new 'isr' failed");
+
+	new_isr->isr_arg = arg;
+	new_isr->isr_ipl = level;
+	new_isr->isr_intr = handler;
+	new_isr->isr_back = NULL;
+	new_isr->isr_forw = isr_array[level];
+	if (!isr_array[level])
+		first_isr++;
+	isr_array[level] = new_isr;
+	if (first_isr) 
+		isr_activate(level);
 }
 
-
+static int isr_soft_pending;
 void isr_soft_request(level)
-     int level;
+	int level;
 {
-    u_char bit, reg_val;
-    int s;
+	u_char bit, reg_val;
+	int s;
 
-    if ((level < 1) || (level > 3))
-	panic("isr_soft_request");
-    s = splhigh();
-    reg_val = *interrupt_reg;
-    *interrupt_reg &= ~IREG_ALL_ENAB;
-    switch(level) {
-    case 1:
-	bit = IREG_SOFT_ENAB_1;
-	break;
-    case 2:
-	bit = IREG_SOFT_ENAB_2;
-	break;
-    case 3:
-	bit = IREG_SOFT_ENAB_3;
-	break;
-    }
-    *interrupt_reg |= bit;
-    *interrupt_reg |= IREG_ALL_ENAB;
-    splx(s);
+	if ((level < 1) || (level > 3))
+		panic("isr_soft_request");
+
+	bit = 1 << level;
+
+	/* XXX - Should do this in the callers... */
+	if (isr_soft_pending & bit)
+		return;
+
+	s = splhigh();
+	isr_soft_pending |= bit;
+	reg_val = *interrupt_reg;
+	*interrupt_reg &= ~IREG_ALL_ENAB;
+
+	*interrupt_reg |= bit;
+	*interrupt_reg |= IREG_ALL_ENAB;
+	splx(s);
 }
 void isr_soft_clear(level)
-     int level;
+	int level;
 {
-    u_char bit, reg_val;
-    int s;
+	u_char bit, reg_val;
+	int s;
 
-    if ((level < 1) || (level > 3))
-	panic("isr_soft_clear");
-    s = splhigh();
-    reg_val = *interrupt_reg;
-    *interrupt_reg &= ~IREG_ALL_ENAB;
-    switch(level) {
-    case 1:
-	bit = IREG_SOFT_ENAB_1;
-	break;
-    case 2:
-	bit = IREG_SOFT_ENAB_2;
-	break;
-    case 3:
-	bit = IREG_SOFT_ENAB_3;
-	break;
-    }
-    *interrupt_reg &= ~bit;
-    *interrupt_reg |= IREG_ALL_ENAB;
-    splx(s);
+	if ((level < 1) || (level > 3))
+		panic("isr_soft_clear");
+
+	bit = 1 << level;
+
+	s = splhigh();
+	isr_soft_pending &= ~bit;
+	reg_val = *interrupt_reg;
+	*interrupt_reg &= ~IREG_ALL_ENAB;
+
+	*interrupt_reg &= ~bit;
+	*interrupt_reg |= IREG_ALL_ENAB;
+	splx(s);
 }
 
-extern int intrcnt[];
-void intrhand(ipl)
+/*
+ * This is called by the first-level assembly routines
+ * for handling auto-vectored interupts.
+ */
+void isr_autovec(ipl)
 	int ipl;
 {
-    struct isr *isr;
-    int found;
+	struct isr *isr;
+	int found;
 
 	intrcnt[ipl]++;
 	cnt.v_intr++;
 
-    isr = isr_array[ipl];
-    if (!isr) {
-	printf("intrhand: unexpected ipl %d\n", ipl);
-	return;
-    }
-    if (!ipl) {
-	printf("intrhand: spurious interrupt\n");
-	return;
-    }
-    found = 0;
-    for (; isr != NULL; isr = isr->isr_forw)
-	if (isr->isr_intr(isr->isr_arg)) {
-	    found++;
-	    break;
+	isr = isr_array[ipl];
+	if (!isr) {
+		printf("intrhand: unexpected ipl %d\n", ipl);
+		return;
 	}
-    if (!found)
-	printf("intrhand: stray interrupt, ipl %d\n", ipl);
+	if (!ipl) {
+		printf("intrhand: spurious interrupt\n");
+		return;
+	}
+	/* Give all the handlers a chance. */
+	found = 0;
+	while (isr) {
+		found |= isr->isr_intr(isr->isr_arg);
+		isr = isr->isr_forw;
+	}
+	if (!found)
+		printf("intrhand: stray interrupt, ipl %d\n", ipl);
 }
 
 /*
  * XXX - This really belongs in some common file, like
  * src/sys/net/netisr.c  -gwr
  */
-netintr()
+void netintr()
 {
 	int n, s;
 
@@ -274,30 +273,37 @@ netintr()
  *	Network software interrupt
  *	Soft clock interrupt
  */
-int
-soft1intr(fp)
+int soft1intr(fp)
 	void *fp;
 {
+	union sun3sir sir;
+	int n, s;
+
+	s = splhigh();
+	sir.sir_any = sun3sir.sir_any;
+	sun3sir.sir_any = 0;
 	isr_soft_clear(1);
-	if (sun3sir.sir_any) {
+	splx(s);
+
+	if (sir.sir_any) {
 		cnt.v_soft++;
-		if (sun3sir.sir_which[SIR_NET]) {
-			sun3sir.sir_which[SIR_NET] = 0;
+		if (sir.sir_which[SIR_NET]) {
+			sir.sir_which[SIR_NET] = 0;
 			netintr();
 		}
-		if (sun3sir.sir_which[SIR_CLOCK]) {
-			sun3sir.sir_which[SIR_CLOCK] = 0;
+		if (sir.sir_which[SIR_CLOCK]) {
+			sir.sir_which[SIR_CLOCK] = 0;
 			softclock();
 		}
-		if (sun3sir.sir_which[SIR_SPARE2]) {
-			sun3sir.sir_which[SIR_SPARE2] = 0;
+		if (sir.sir_which[SIR_SPARE2]) {
+			sir.sir_which[SIR_SPARE2] = 0;
 			/* spare2intr(); */
 		}
-		if (sun3sir.sir_which[SIR_SPARE3]) {
-			sun3sir.sir_which[SIR_SPARE3] = 0;
+		if (sir.sir_which[SIR_SPARE3]) {
+			sir.sir_which[SIR_SPARE3] = 0;
 			/* spare3intr(); */
-			sun3_rom_abort();	/* XXX - Test: db> w sun3sir 1 */
 		}
+		return (1);
 	}
-	return (1);
+	return(0);
 }

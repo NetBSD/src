@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.6 1994/12/01 22:46:24 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.7 1994/12/12 18:59:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -252,6 +252,9 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
 	k->k_kbd = tp;
 	k->k_open = iopen;
 	k->k_close = iclose;
+
+	/* Now attach the Keyboard/Display (kd) pseudo-driver. */
+	kd_attach(1);	/* This calls kbd_ascii() */
 }
 
 /*

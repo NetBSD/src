@@ -1,6 +1,7 @@
-/*	$NetBSD: obmem.c,v 1.5 1994/11/21 21:31:15 gwr Exp $	*/
+/*	$NetBSD: obmem.c,v 1.6 1994/12/12 18:59:23 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -31,46 +32,39 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * On-board MEMory (OBMEM)
+ * Used by frame buffers...
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/obmem.h>
-#include <machine/param.h>
 
-extern void obmemattach __P((struct device *, struct device *, void *));
-     
-struct obmem_softc {
-    struct device obmem_dev;
-};
+static void obmem_attach __P((struct device *, struct device *, void *));
+static void obmem_scan __P((struct device *, void *));
 
-struct cfdriver obmemcd = 
-{ NULL, "obmem", always_match, obmemattach, DV_DULL,
-      sizeof(struct obmem_softc), 0};
+struct cfdriver obmemcd = {
+	NULL, "obmem", always_match, obmem_attach, DV_DULL,
+	sizeof(struct device), 0 };
 
-void obmem_print(addr, size, level)
-     caddr_t addr;
-     int size;
-     int level;
+static void
+obmem_attach(parent, self, args)
+	struct device *parent;
+	struct device *self;
+	void *args;
 {
-    printf(" addr 0x%x size 0x%x", addr, size);
-    if (level <0)
-	printf(" level %d\n", level);
+	printf("\n");
+	config_scan(obmem_scan, self);
 }
 
-void obmemattach(parent, self, args)
-     struct device *parent;
-     struct device *self;
-     void *args;
+static void
+obmem_scan(parent, child)
+	struct device *parent;
+	void *child;
 {
-    struct cfdata *new_match;
-
-    printf("\n");
-    while (1) {
-	new_match = config_search(NULL, self, NULL);
-	if (!new_match) break;
-	config_attach(self, new_match, NULL, NULL);
-    }
-
+	bus_scan(parent, child, BUS_OBMEM);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.6 1994/11/21 21:33:47 gwr Exp $	*/
+/*	$NetBSD: isr.h,v 1.7 1994/12/12 18:59:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -41,14 +41,15 @@ struct isr {
 	struct	isr *isr_forw;
 	struct	isr *isr_back;
 	int	(*isr_intr)();
-	int	isr_arg;
+	void *isr_arg;
 	int	isr_ipl;
 };
 
 #define NISR 8
 
 void isr_init __P((void));
-void isr_add __P((int, int (*handler)(), int ));
 void isr_cleanup __P((void));
 void isr_add_custom __P((int, void (*handler)()));
+void isr_add_autovect __P((int (*handler)(), void *arg, int level));
+void isr_add_vectored __P((int (*handler)(), void *arg, int pri, int vec));
 

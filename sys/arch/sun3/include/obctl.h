@@ -1,4 +1,4 @@
-/*	$NetBSD: obctl.h,v 1.5 1994/11/21 21:33:53 gwr Exp $	*/
+/*	$NetBSD: obctl.h,v 1.6 1994/12/12 18:59:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -31,14 +31,4 @@
  * SUCH DAMAGE.
  */
 
-struct obctl_cf_loc {
-    int obctl_addr;
-    int obctl_size;
-};
-
-#define OBCTL_DEFAULT_PARAM(cast, arg, default) \
-     (cast) (arg == -1 ? default : arg)
-
-#define OBCTL_LOC(device) (struct obctl_cf_loc *) device->dv_cfdata->cf_loc
-
-
+/* XXX: everything is in control.h -- should this perish? */

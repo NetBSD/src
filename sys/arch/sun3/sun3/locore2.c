@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.27 1994/11/21 21:39:09 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.28 1994/12/12 19:00:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -70,6 +70,7 @@ unsigned int *old_vector_table;
 static struct idprom identity_prom;
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
+int cpu_has_vme = 0;
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
@@ -95,7 +96,7 @@ static void initialize_vector_table()
 			set_vector_entry(i, (void(*)())old_vector_table[i]);
 	}
 	setvbr((unsigned int *) vector_table);
-	orig_nmi_vector = get_vector_entry(VEC_LEVEL_7_INT);
+	orig_nmi_vector = get_vector_entry(AUTO_VECTOR_BASE+7);
 }
 
 vm_offset_t high_segment_alloc(npages)
@@ -584,6 +585,7 @@ void sun3_verify_hardware()
 #endif
 		cpu_string = "110";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_160:
@@ -592,6 +594,7 @@ void sun3_verify_hardware()
 #endif
 		cpu_string = "160";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_260:
@@ -600,6 +603,7 @@ void sun3_verify_hardware()
 #endif
 		cpu_string = "260";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_E  :
@@ -608,6 +612,7 @@ void sun3_verify_hardware()
 #endif
 		cpu_string = "E";
 		cpuspeed = 30; /* MHz */	/* XXX - Correct? */
+		cpu_has_vme = TRUE;
 		break;
 
 	default:

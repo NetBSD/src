@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.5 1994/12/02 18:18:44 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.6 1994/12/12 18:59:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
