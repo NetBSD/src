@@ -1,0 +1,6 @@
+# $NetBSD: dlopen.exp,v 1.1 2000/12/08 19:22:51 drochner Exp $
+# real output must start in line 4
+
+constructor
+OK
+destructor
