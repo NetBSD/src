@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getprocs.3,v 1.7 2000/06/13 15:48:57 simonb Exp $
+.\"	$NetBSD: kvm_getprocs.3,v 1.8 2002/01/15 02:52:49 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
 .Sh DESCRIPTION
 .Fn kvm_getprocs
 returns a (sub-)set of active processes in the kernel indicated by
-.Fa kd.
+.Fa kd .
 The
 .Fa op
 and
@@ -206,7 +206,7 @@ If called against an active kernel, the
 .Fn kvm_getproc2 ,
 .Fn kvm_getargv2 ,
 and
-.Fn kvm_getenvv2  
+.Fn kvm_getenvv2
 functions will use the
 .Xr sysctl 3
 interface and do not require access to the kernel memory device
@@ -222,9 +222,6 @@ and
 all return
 .Dv NULL
 on failure.
-.Pp
-.Sh BUGS
-These routines do not belong in the kvm interface.
 .Sh SEE ALSO
 .Xr kvm 3 ,
 .Xr kvm_close 3 ,
@@ -234,3 +231,5 @@ These routines do not belong in the kvm interface.
 .Xr kvm_openfiles 3 ,
 .Xr kvm_read 3 ,
 .Xr kvm_write 3
+.Sh BUGS
+These routines do not belong in the kvm interface.
