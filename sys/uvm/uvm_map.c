@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.181 2005/01/14 14:25:40 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.182 2005/01/17 04:37:20 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.181 2005/01/14 14:25:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.182 2005/01/17 04:37:20 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1444,7 +1444,7 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 	 */
 
 	if (uoffset != UVM_UNKNOWN_OFFSET)
-		PMAP_PREFER(uoffset, start);
+		PMAP_PREFER(uoffset, start, length, topdown);
 #endif
 	if (align != 0) {
 		if ((*start & (align - 1)) != 0) {
@@ -1455,6 +1455,7 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 		}
 		/*
 		 * XXX Should we PMAP_PREFER() here again?
+		 * eh...i think we're okay
 		 */
 	}
 
