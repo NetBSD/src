@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lkm3,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: lkm3,v 1.2 2000/03/11 20:10:21 veego Exp $
 #
 
 # PROVIDE: aftermountlkm
@@ -10,7 +10,9 @@
 . /etc/rc.conf
 
 name="lkm3"
+start_precmd="checkyesno lkm"
 start_cmd="do_lkm3 start"
+stop_precmd="$start_precmd"
 stop_cmd="do_lkm3 stop"
 
 do_lkm3()
