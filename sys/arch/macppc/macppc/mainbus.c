@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1998/05/15 10:15:58 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1998/07/13 19:22:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,7 +49,6 @@ struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-extern struct bandit_addr bandit_f2, bandit_f4;
 void pci_init();
 
 /*
@@ -75,7 +74,7 @@ mainbus_attach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node;
+	int node, n;
 
 	printf("\n");
 
@@ -92,28 +91,18 @@ mainbus_attach(parent, self, aux)
 	pci_init();
 
 #if NPCI > 0
-	/* pci0 */
-	if (bandits[0].addr) {
-		bzero(&pba, sizeof(pba));
-		pba.pba_busname = "pci";
-		pba.pba_iot = bandits[0].iot;
-		pba.pba_memt = (bus_space_tag_t)0;
-		pba.pba_bus = 0;
-		pba.pba_pc = 0;
-		pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-		config_found(self, &pba, mainbus_print);
-	}
-	/* pci1 */
-	if (bandits[1].addr) {
-		bzero(&pba, sizeof(pba));
-		pba.pba_busname = "pci";
-		pba.pba_iot = bandits[1].iot;
-		pba.pba_memt = (bus_space_tag_t)0;
-		pba.pba_bus = 0;
-		pba.pba_pc = 1;
-		pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-		config_found(self, &pba, mainbus_print);
-	}
+	for (n = 0; n < 2; n++)
+		if (pci_bridges[n].addr) {
+			bzero(&pba, sizeof(pba));
+			pba.pba_busname = "pci";
+			pba.pba_iot = pci_bridges[n].iot;
+			pba.pba_memt = (bus_space_tag_t)0;
+			pba.pba_bus = 0;
+			pba.pba_pc = pci_bridges[n].pc;
+			pba.pba_flags =
+				PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+			config_found(self, &pba, mainbus_print);
+		}
 #endif
 }
 
