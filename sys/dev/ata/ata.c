@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.58 2004/08/21 00:28:34 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.59 2004/08/21 00:48:32 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.58 2004/08/21 00:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.59 2004/08/21 00:48:32 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -332,10 +332,10 @@ atabus_thread(void *arg)
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
 			chp->ch_flags |= ATACH_TH_RUN;
 		}
-		splx(s);
-		if (chp->ch_flags & ATACH_SHUTDOWN)
+		if (chp->ch_flags & ATACH_SHUTDOWN) {
+			splx(s);
 			break;
-		s = splbio();
+		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/*
 			 * ata_reset_channel() will freeze 2 times, so
