@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.23 2001/06/14 20:32:49 thorpej Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.23.2.1 2001/07/10 13:25:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -62,6 +62,17 @@ struct filedesc {
 	int		fd_lastfile;	/* high-water mark of fd_ofiles */
 	int		fd_freefile;	/* approx. next free file */
 	int		fd_refcnt;	/* reference count */
+
+	int		fd_knlistsize;	/* size of fd_knlist */
+	struct klist	*fd_knlist;	/*
+					 * list of attached fd knotes,
+					 * indexed by fd number
+					 */
+	u_long		fd_knhashmask;	/* size of fd_knhash */
+	struct klist	*fd_knhash;	/*
+					 * hash table for attached
+					 * non-fd knotes
+					 */
 };
 
 struct cwdinfo {
