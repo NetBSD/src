@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.45 2001/04/15 17:14:28 kleink Exp $
+# $NetBSD: md.pmax,v 1.46 2001/09/19 18:51:04 thorpej Exp $
 ./usr/include/pmax	comp-c-include
 ./usr/include/pmax/_G_config.h	comp-c-include
 ./usr/include/pmax/ansi.h	comp-c-include
@@ -19,7 +19,6 @@
 ./usr/include/pmax/elf_machdep.h	comp-c-include
 ./usr/include/pmax/endian.h	comp-c-include
 ./usr/include/pmax/endian_machdep.h	comp-c-include
-./usr/include/pmax/fbio.h	comp-c-include
 ./usr/include/pmax/fbvar.h	comp-c-include
 ./usr/include/pmax/float.h	comp-c-include
 ./usr/include/pmax/ieee.h	comp-c-include
