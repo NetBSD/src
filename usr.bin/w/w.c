@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.58 2003/02/26 19:10:28 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.59 2003/07/12 14:05:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.58 2003/02/26 19:10:28 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.59 2003/07/12 14:05:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,8 +378,7 @@ main(int argc, char **argv)
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		char host_buf[MAXHOSTNAMELEN + 1];
 
-		host_buf[MAXHOSTNAMELEN] = '\0';
-		strncpy(host_buf, ep->host, MAXHOSTNAMELEN);
+		strlcpy(host_buf, ep->host, sizeof(host_buf));
 		p = *host_buf ? host_buf : "-";
 
 		for (x = p; x < p + MAXHOSTNAMELEN; x++)
