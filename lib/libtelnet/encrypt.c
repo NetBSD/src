@@ -31,9 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/* from: static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: encrypt.c,v 1.4 1996/02/24 01:15:19 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
+#else
+__RCSID("$NetBSD: encrypt.c,v 1.5 1997/10/09 13:52:41 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
