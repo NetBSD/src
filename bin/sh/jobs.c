@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.22 1997/07/04 21:02:04 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.22 1997/07/04 21:02:04 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ restartjob(jp)
 	INTOFF;
 	killpg(jp->ps[0].pid, SIGCONT);
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
-		if ((ps->status & 0377) == 0177) {
+		if (WIFSTOPPED(ps->status)) {
 			ps->status = -1;
 			jp->state = 0;
 		}
@@ -305,19 +305,21 @@ showjobs(change)
 			s[0] = '\0';
 			if (ps->status == -1) {
 				/* don't print anything */
-			} else if ((ps->status & 0xFF) == 0) {
-				fmtstr(s, 64, "Exit %d", ps->status >> 8);
+			} else if (WIFEXITED(ps->status)) {
+				fmtstr(s, 64, "Exit %d", 
+				       WEXITSTATUS(ps->status));
 			} else {
-				i = ps->status;
 #if JOBS
-				if ((i & 0xFF) == 0177)
-					i >>= 8;
+				if (WIFSTOPPED(ps->status)) 
+					i = WSTOPSIG(ps->status);
+				else /* WIFSIGNALED(ps->status) */
 #endif
+					i = WTERMSIG(ps->status);
 				if ((i & 0x7F) < NSIG && sys_siglist[i & 0x7F])
 					scopy(sys_siglist[i & 0x7F], s);
 				else
 					fmtstr(s, 64, "Signal %d", i & 0x7F);
-				if (i & 0x80)
+				if (WCOREDUMP(ps->status))
 					strcat(s, " (core dumped)");
 			}
 			out1str(s);
@@ -373,7 +375,7 @@ waitcmd(argc, argv)
 	char **argv;
 {
 	struct job *job;
-	int status;
+	int status, retval;
 	struct job *jp;
 
 	if (argc > 1) {
@@ -385,17 +387,19 @@ waitcmd(argc, argv)
 		if (job != NULL) {
 			if (job->state) {
 				status = job->ps[job->nprocs - 1].status;
-				if ((status & 0xFF) == 0)
-					status = status >> 8 & 0xFF;
+				if (WIFEXITED(status))
+					retval = WEXITSTATUS(status);
 #if JOBS
-				else if ((status & 0xFF) == 0177)
-					status = (status >> 8 & 0x7F) + 128;
+				else if (WIFSTOPPED(status))
+					retval = WSTOPSIG(status) + 128;
 #endif
-				else
-					status = (status & 0x7F) + 128;
+				else {
+					/* XXX: limits number of signals */
+					retval = WTERMSIG(status) + 128;
+				}
 				if (! iflag)
 					freejob(job);
-				return status;
+				return retval;
 			}
 		} else {
 			for (jp = jobtab ; ; jp++) {
@@ -714,18 +718,18 @@ waitforjob(jp)
 #endif
 	status = jp->ps[jp->nprocs - 1].status;
 	/* convert to 8 bits */
-	if ((status & 0xFF) == 0)
-		st = status >> 8 & 0xFF;
+	if (WIFEXITED(status))
+		st = WEXITSTATUS(status);
 #if JOBS
-	else if ((status & 0xFF) == 0177)
-		st = (status >> 8 & 0x7F) + 128;
+	else if (WIFSTOPPED(status))
+		st = WSTOPSIG(status) + 128;
 #endif
 	else
-		st = (status & 0x7F) + 128;
+		st = WTERMSIG(status) + 128;
 	if (! JOBS || jp->state == JOBDONE)
 		freejob(jp);
 	CLEAR_PENDING_INT;
-	if ((status & 0x7F) == SIGINT)
+	if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT)
 		kill(getpid(), SIGINT);
 	INTON;
 	return st;
@@ -750,6 +754,7 @@ dowait(block, job)
 	int done;
 	int stopped;
 	int core;
+	int sig;
 
 	TRACE(("dowait(%d) called\n", block));
 	do {
@@ -768,13 +773,13 @@ dowait(block, job)
 				if (sp->pid == -1)
 					continue;
 				if (sp->pid == pid) {
-					TRACE(("Changin status of proc %d from 0x%x to 0x%x\n", pid, sp->status, status));
+					TRACE(("Changing status of proc %d from 0x%x to 0x%x\n", pid, sp->status, status));
 					sp->status = status;
 					thisjob = jp;
 				}
 				if (sp->status == -1)
 					stopped = 0;
-				else if ((sp->status & 0377) == 0177)
+				else if (WIFSTOPPED(sp->status))
 					done = 0;
 			}
 			if (stopped) {		/* stopped or done */
@@ -792,29 +797,32 @@ dowait(block, job)
 	}
 	INTON;
 	if (! rootshell || ! iflag || (job && thisjob == job)) {
+		core = WCOREDUMP(status);
 #if JOBS
-		if ((status & 0xFF) == 0177)
-			status >>= 8;
+		if (WIFSTOPPED(status)) sig = WSTOPSIG(status);
+		else
 #endif
-		core = status & 0x80;
-		status &= 0x7F;
-		if (status != 0 && status != SIGINT && status != SIGPIPE) {
+		if (WIFEXITED(status)) sig = 0;
+		else sig = WTERMSIG(status);
+
+		if (sig != 0 && sig != SIGINT && sig != SIGPIPE) {
 			if (thisjob != job)
 				outfmt(out2, "%d: ", pid);
 #if JOBS
-			if (status == SIGTSTP && rootshell && iflag)
+			if (sig == SIGTSTP && rootshell && iflag)
 				outfmt(out2, "%%%d ", job - jobtab + 1);
 #endif
-			if (status < NSIG && sys_siglist[status])
-				out2str(sys_siglist[status]);
+			if (sig < NSIG && sys_siglist[sig])
+				out2str(sys_siglist[sig]);
 			else
-				outfmt(out2, "Signal %d", status);
+				outfmt(out2, "Signal %d", sig);
 			if (core)
 				out2str(" - core dumped");
 			out2c('\n');
 			flushout(&errout);
 		} else {
-			TRACE(("Not printing status: status=%d\n", status));
+			TRACE(("Not printing status: status=%d, sig=%d\n", 
+			       status, sig));
 		}
 	} else {
 		TRACE(("Not printing status, rootshell=%d, job=0x%x\n", rootshell, job));
