@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasicvar.h,v 1.1 1998/03/24 05:12:00 thorpej Exp $ */
+/* $NetBSD: zs_ioasicvar.h,v 1.2 1998/10/22 01:03:10 briggs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,4 +43,3 @@
  */
 #define	ZIP_FLAGS_DCDCTS	0x01	/* channel has DCD and CTS signals */
 
-int	zs_ioasic_cnattach __P((tc_addr_t, tc_offset_t, int, int, int));

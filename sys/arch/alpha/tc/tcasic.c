@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.23 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: tcasic.c,v 1.24 1998/10/22 01:03:09 briggs Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.23 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.24 1998/10/22 01:03:09 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,3 +165,45 @@ tcasicprint(aux, pnp)
 		printf("tc at %s", pnp);
 	return (UNCONF);
 }
+
+#include "wsdisplay.h"
+
+#if NWSDISPLAY > 0
+
+#include "cfb.h"
+#include "sfb.h"
+#include <alpha/tc/sfbvar.h>
+#include <alpha/tc/cfbvar.h>
+
+extern int	tc_checkslot __P((tc_addr_t, char *));
+
+/*
+ * tc_fb_cnattach --
+ *	Attempt to attach the appropriate display driver to the
+ * output console.
+ */
+int
+tc_fb_cnattach(tcaddr)
+	tc_addr_t tcaddr;
+{
+	char tcname[TC_ROM_LLEN];
+
+	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0)) {
+		return 0;
+	}
+
+#if NSFB > 0
+	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
+		sfb_cnattach(tcaddr);
+		return 1;
+	}
+#endif
+#if NCFB > 0
+	if (strncmp("PMAG-BA ", tcname, TC_ROM_LLEN) == 0) {
+		cfb_cnattach(tcaddr);
+		return 1;
+	}
+#endif
+	return 0;
+}
+#endif /* if NWSDISPLAY > 0 */
