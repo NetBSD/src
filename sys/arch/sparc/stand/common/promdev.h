@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.8 2003/02/26 17:39:08 pk Exp $ */
+/*	$NetBSD: promdev.h,v 1.9 2003/03/01 13:01:56 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,11 @@ extern void	dvma_free __P((char *, int));
 extern int	net_open __P((struct promdata *));
 extern int	net_close __P((struct promdata *));
 extern int	net_mountroot __P((void));
+
+/* In mmu.c */
+extern int	mmu_init(void);
+extern int	(*pmap_map)(vaddr_t, paddr_t, psize_t);
+extern int	(*pmap_extract)(vaddr_t, paddr_t *);
 
 /* In str0.S: */
 extern void	sparc_noop __P((void));
