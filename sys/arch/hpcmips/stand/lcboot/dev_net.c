@@ -1,4 +1,4 @@
-/* $NetBSD: dev_flash.c,v 1.2 2003/08/09 08:01:43 igy Exp $ */
+/* $NetBSD: dev_net.c,v 1.1 2003/08/09 08:01:45 igy Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,58 +26,80 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_flash.c,v 1.2 2003/08/09 08:01:43 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_net.c,v 1.1 2003/08/09 08:01:45 igy Exp $");
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <machine/stdarg.h>
 
 #include "extern.h"
 
-#define READ_CHUNK	0x10000
+extern struct in_addr	servip;
+
+static int	netdev_sock = -1;
 
 int
-flash_strategy(void *devdata, int rw, daddr_t blk,
-	       size_t size, void *buf , size_t *rsize)
+net_strategy(void *devdata, int rw, daddr_t blk,
+	     size_t size, void *buf , size_t *rsize)
 {
-	u_int8_t	*src;
-	size_t		count;
-
-	if (rw != F_READ)
-		return EIO;
-
-	src = (u_int8_t *) KERN_ROMBASE + dbtob(blk);
-	count = size < READ_CHUNK ? size : READ_CHUNK;
-	bcopy(src, buf, count);
-	*rsize = count;
-        return 0;
+	return EIO;
 }
 
 int
-flash_open(struct open_file *f, ...)
+net_open(struct open_file *f, ...)
 {
-	char	*fname;
-	char	**file;
-	va_list	ap;
+	char		*fname;
+	char		**file;
+	struct iodesc	*s;
+	va_list		ap;
 
 	va_start(ap, f);
 	fname = va_arg(ap, char *);
 	file = va_arg(ap, char **);
 	va_end(ap);
 
-	*file = NULL;
+	f->f_devdata = &netdev_sock;
+	netdev_sock = netif_open(NULL);
+
+	bootfile[0] = '\0';
+	if (bootopts.b_flags & B_F_USE_BOOTP) {
+		printf("bootp is not yet supported\n");
+		netif_close(netdev_sock);
+		return EIO;
+	} else {
+		s = socktodesc(netdev_sock);
+
+		servip = s->destip = bootopts.b_remote_ip;
+		myip = s->myip = bootopts.b_local_ip;
+		netmask = bootopts.b_netmask;
+		gateip = bootopts.b_gate_ip;
+
+		if (fname[0] == '\0') {
+			printf("no boot filename\n");
+			netif_close(netdev_sock);
+			return EIO;
+		}
+		strlcpy(bootfile, fname, sizeof bootfile);
+		*file = fname;
+	}
 
 	return 0;
 }
 
 int
-flash_close(struct open_file *f)
+net_close(struct open_file *f)
 {
+	int	sock;
+
+	sock = *((int *) f->f_devdata);
+	netif_close(sock);
+	f->f_devdata = NULL;
 	return 0;
 }
 
 int
-flash_ioctl(struct open_file *f, u_long cmd, void *data)
+net_ioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return EIO;
 }

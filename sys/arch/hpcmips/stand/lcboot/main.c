@@ -1,11 +1,8 @@
-/* $NetBSD: main.c,v 1.3 2003/06/24 12:27:04 igy Exp $ */
+/* $NetBSD: main.c,v 1.4 2003/08/09 08:01:49 igy Exp $ */
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 Naoto Shimazaki.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Naoto Shimazaki of YOKOGAWA Electric Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * THIS SOFTWARE IS PROVIDED BY NAOTO SHIMAZAKI AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE NAOTO OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -116,8 +106,11 @@
  * 
  *
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.4 2003/08/09 08:01:49 igy Exp $");
 
 #include <lib/libsa/stand.h>
+
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
@@ -127,10 +120,6 @@
 
 #include "extern.h"
 #include "i28f128reg.h"
-
-#define VRETIMEL	0x0b0000c0
-#define VRETIMEM	0x0b0000c2
-#define VRETIMEH	0x0b0000c4
 
 /* XXX */
 #define ISABRGCTL	0x00
@@ -151,6 +140,16 @@ static void command_boot(char *opt);
 static void command_load(char *opt);
 static void command_fill(char *opt);
 static void command_write(char *opt);
+static void command_option(char *subcmd);
+static void opt_subcmd_print(char *opt);
+static void opt_subcmd_read(char *opt);
+static void opt_subcmd_write(char *opt);
+static void opt_subcmd_path(char *opt);
+static void opt_subcmd_bootp(char *opt);
+static void opt_subcmd_ip(char *opt);
+
+
+struct boot_option	bootopts;
 
 static struct bootmenu_command commands[] = {
 	{ "?",		command_help },
@@ -160,6 +159,17 @@ static struct bootmenu_command commands[] = {
 	{ "l",		command_load },
 	{ "f",		command_fill },
 	{ "w",		command_write },
+	{ "o",		command_option },
+	{ NULL,		NULL },
+};
+
+static struct bootmenu_command opt_subcommands[] = {
+	{ "p",		opt_subcmd_print },
+	{ "r",		opt_subcmd_read },
+	{ "w",		opt_subcmd_write },
+	{ "path",	opt_subcmd_path },
+	{ "bootp",	opt_subcmd_bootp },
+	{ "ip",		opt_subcmd_ip },
 	{ NULL,		NULL },
 };
 
@@ -173,23 +183,6 @@ print_banner(void)
 	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 #endif
 }
-
-#if 1
-void foo(void);
-void foo(void)
-{
-	extern int start[];
-	extern int edata[];
-
-	int *p = (int*)0xbfc01000;
-	int *q = start;
-	int *f = edata;
-
-	do {
-		*q++ = *p++;
-	} while (q < f);
-}
-#endif
 
 static void
 init_devices(void)
@@ -414,12 +407,22 @@ static void
 command_help(char *opt)
 {
 	printf("commands are:\n"
-	       "boot: b\n"
-	       "dump: d addr [addr]\n"
-	       "fill: f addr addr char\n"
-	       "load: l [offset] (with following S-Record)\n"
-	       "write: w dst src len\n"
-	       "help: h|?\n");
+	       "boot:\tb\n"
+	       "dump:\td addr [addr]\n"
+	       "fill:\tf addr addr char\n"
+	       "load:\tl [offset] (with following S-Record)\n"
+	       "write:\tw dst src len\n"
+	       "option:\to subcommand [params]\n"
+	       "help:\th|?\n"
+	       "\n"
+	       "option subcommands are:\n"
+	       "print:\to p\n"
+	       "read:\to r\n"
+	       "write:\to w\n"
+	       "path:\to path pathname\n"
+	       "bootp:\to bootp yes|no\n"
+	       "ip:\to ip remote local netmask gateway\n"
+		);
 }
 
 static void
@@ -497,8 +500,10 @@ command_boot(char *opt)
 	u_long	marks[MARK_MAX];
 
 	marks[MARK_START] = 0;
-	if (loadfile("n", marks, LOAD_KERNEL))
-		panic("loadfile failed");
+	if (loadfile(bootopts.b_pathname, marks, LOAD_KERNEL)) {
+		printf("loadfile failed\n");
+		return;
+	}
 	start_netbsd();
 	/* no return */
 }
@@ -671,29 +676,10 @@ command_fill(char *opt)
 	memset(p, c, limit - p);
 }
 
-
 static void
-command_write(char *opt)
+check_write_verify_flash(u_int32_t src, u_int32_t dst, size_t len)
 {
-	char		*endptr;
-	u_int32_t	src;
-	u_int32_t	dst;
-	size_t		len;
 	int		status;
-
-	dst = strtoul(opt, &endptr, 16);
-	if (opt == endptr)
-		goto out;
-
-	opt = get_next_arg(opt);
-	src = strtoul(opt, &endptr, 16);
-	if (opt == endptr)
-		goto out;
-
-	opt = get_next_arg(opt);
-	len = strtoul(opt, &endptr, 16);
-	if (opt == endptr)
-		goto out;
 
 	if ((dst & I28F128_BLOCK_MASK) != 0) {
 		printf("dst addr must be aligned to block boundary (0x%x)\n",
@@ -721,11 +707,120 @@ command_write(char *opt)
 	printf("ok\n");
 
 	printf("writing memory to flash succeeded\n");
+}
+
+static void
+command_write(char *opt)
+{
+	char		*endptr;
+	u_int32_t	src;
+	u_int32_t	dst;
+	size_t		len;
+
+	dst = strtoul(opt, &endptr, 16);
+	if (opt == endptr)
+		goto out;
+
+	opt = get_next_arg(opt);
+	src = strtoul(opt, &endptr, 16);
+	if (opt == endptr)
+		goto out;
+
+	opt = get_next_arg(opt);
+	len = strtoul(opt, &endptr, 16);
+	if (opt == endptr)
+		goto out;
+
+	check_write_verify_flash(src, dst, len);
 	return;
 
 out:
 	bad_param();
 	return;
+}
+
+static void
+command_option(char *subcmd)
+{
+	char	*opt;
+	int	i;
+
+	opt = get_next_arg(subcmd);
+
+	/* dispatch subcommand */
+	for (i = 0; opt_subcommands[i].c_name != NULL; i++) {
+		if (strcmp(subcmd, opt_subcommands[i].c_name) == 0) {
+			opt_subcommands[i].c_fn(opt);
+			break;
+		}
+	}
+	if (opt_subcommands[i].c_name == NULL) {
+		printf("unknown option subcommand\n");
+		command_help(NULL);
+	}
+}
+
+static void
+opt_subcmd_print(char *opt)
+{
+	printf("boot options:\n"
+	       "magic:\t\t%s\n"
+	       "pathname:\t`%s'\n"
+	       "bootp:\t\t%s\n",
+	       bootopts.b_magic == BOOTOPT_MAGIC ? "ok" : "bad",
+	       bootopts.b_pathname,
+	       bootopts.b_flags & B_F_USE_BOOTP ? "yes" : "no");
+	printf("remote IP:\t%s\n", inet_ntoa(bootopts.b_remote_ip));
+	printf("local IP:\t%s\n", inet_ntoa(bootopts.b_local_ip));
+	printf("netmask:\t%s\n", intoa(bootopts.b_netmask));
+	printf("gateway IP:\t%s\n", inet_ntoa(bootopts.b_gate_ip));
+}
+
+static void
+opt_subcmd_read(char *opt)
+{
+	bootopts = *((struct boot_option *) BOOTOPTS_BASE);
+	if (bootopts.b_magic != BOOTOPT_MAGIC)
+		bootopts.b_pathname[0] = '\0';
+}
+
+static void
+opt_subcmd_write(char *opt)
+{
+	bootopts.b_magic = BOOTOPT_MAGIC;
+
+	check_write_verify_flash((u_int32_t) &bootopts, BOOTOPTS_BASE,
+				 sizeof bootopts);
+}
+
+static void
+opt_subcmd_path(char *opt)
+{
+	strlcpy(bootopts.b_pathname, opt, sizeof bootopts.b_pathname);
+}
+
+static void
+opt_subcmd_bootp(char *opt)
+{
+	if (strcmp(opt, "yes") == 0) {
+		bootopts.b_flags |= B_F_USE_BOOTP;
+	} else if (strcmp(opt, "no") == 0) {
+		bootopts.b_flags &= ~B_F_USE_BOOTP;
+	} else {
+		bad_param();
+	}
+}
+
+static void
+opt_subcmd_ip(char *opt)
+{
+	bootopts.b_remote_ip.s_addr = inet_addr(opt);
+	opt = get_next_arg(opt);
+	bootopts.b_local_ip.s_addr = inet_addr(opt);
+	opt = get_next_arg(opt);
+	bootopts.b_netmask = inet_addr(opt);
+	opt = get_next_arg(opt);
+	bootopts.b_gate_ip.s_addr = inet_addr(opt);
 }
 
 static void
@@ -811,6 +906,8 @@ main(void)
 
 	comcninit();
 
+	opt_subcmd_read(NULL);
+
 	print_banner();
 
 	c = awaitkey();
@@ -820,6 +917,11 @@ main(void)
 	}
 
 	command_boot(NULL);
-	/* never reach */
+	/*
+	 * command_boot() returns only if it failed to boot.
+	 * we enter to boot menu in this case.
+	 */
+	bootmenu();
+	
 	return 0;
 }

@@ -1,11 +1,8 @@
-/* $NetBSD: extern.h,v 1.2 2003/06/24 12:27:04 igy Exp $ */
+/* $NetBSD: extern.h,v 1.3 2003/08/09 08:01:47 igy Exp $ */
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 Naoto Shimazaki.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Naoto Shimazaki of YOKOGAWA Electric Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,29 +12,29 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * THIS SOFTWARE IS PROVIDED BY NAOTO SHIMAZAKI AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE NAOTO OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _LOCORE
 #include <sys/types.h>
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+
 #include <mips/cpuregs.h>
 
 #include <dev/ic/comreg.h>
@@ -50,9 +47,28 @@ struct bootmenu_command {
 	void (*c_fn)(char*);
 };
 
+#define BOOTOPT_MAGIC	0x4c43424fU	/* LCBO */
+#define B_F_USE_BOOTP	0x00000001
+
+struct boot_option {
+	u_int32_t	b_magic;
+	u_int32_t	b_flags;
+	struct in_addr	b_remote_ip;
+	struct in_addr	b_local_ip;
+	struct in_addr	b_gate_ip;
+	u_long		b_netmask;
+	char		b_pathname[FNAME_SIZE];
+};
+
 #define ROMCS0_BASE	0xbe000000U
 #define ROMCS3_BASE	0xbf800000U
 #define FLASH_BASE	ROMCS0_BASE
+#define BOOTOPTS_BASE	0xbfd20000U
+
+/* ElapsedTime registers */
+#define VRETIMEL	0x0b0000c0
+#define VRETIMEM	0x0b0000c2
+#define VRETIMEH	0x0b0000c4
 
 #ifdef ROMICE
 #define KERN_ROMBASE	0x80800000U
@@ -95,6 +111,9 @@ typedef void		*bus_space_tag_t;
 typedef u_int32_t	bus_space_handle_t;
 typedef size_t		bus_size_t;
 
+extern struct netif_driver	cs_driver;
+extern struct boot_option	bootopts;
+
 void comcninit(void);
 int iskey(void);
 void start_netbsd(void);
@@ -106,6 +125,12 @@ int flash_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 int flash_open(struct open_file *, ...);
 int flash_close(struct open_file *);
 int flash_ioctl(struct open_file *, u_long, void *);
+
+/* dev_net */
+int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int net_open(struct open_file *, ...);
+int net_close(struct open_file *);
+int net_ioctl(struct open_file *, u_long, void *);
 
 #endif /* !_LOCORE */
 
