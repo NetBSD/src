@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.76 2002/05/17 21:42:38 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.76.2.1 2002/06/20 03:52:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.76 2002/05/17 21:42:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.76.2.1 2002/06/20 03:52:11 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1174,7 +1174,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct lfs *fs;
-	int error, flags, ronly, s;
+	int error, flags, ronly;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -1231,10 +1231,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	vgone(fs->lfs_ivnode);
 
 	/* Wait for superblock writes to complete */
-	s = splbio();
 	while (fs->lfs_iocount)
 		tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0);
-	splx(s);
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
