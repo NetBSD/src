@@ -1,3 +1,5 @@
+/*	$NetBSD: privs.h,v 1.3 1995/03/25 18:13:41 glass Exp $	*/
+
 /*
  * privs.h - header for privileged operations
  * Copyright (c) 1993 by Thomas Koenig
@@ -23,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: privs.h,v 1.2 1994/04/16 03:41:59 cgd Exp $
  */
 
 #ifndef _PRIVS_H

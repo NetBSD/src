@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1993/12/05 11:35:35 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/03/25 18:13:27 glass Exp $
 
 PROG=	at
 SRCS=	at.c panic.c parsetime.c

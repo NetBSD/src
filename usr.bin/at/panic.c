@@ -1,3 +1,5 @@
+/*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
+
 /*
  * panic.c - terminate fast in case of error
  * Copyright (c) 1993 by Thomas Koenig
@@ -38,7 +40,9 @@
 
 /* File scope variables */
 
-static char rcsid[] = "$Id: panic.c,v 1.1 1993/12/05 11:36:51 cgd Exp $";
+#ifndef lint
+static char rcsid[] = "$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $";
+#endif
 
 /* External variables */
 
