@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.21 2002/05/04 18:43:22 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -67,8 +67,6 @@ struct siop_common_xfer {
 	scr_table_t t_status;	/* 88 */
 	scr_table_t data[SIOP_NSG]; /* 96 */
 } __attribute__((__packed__));
-
-#define offsetof(type, member)     ((size_t)(&((type *)0)->member))
 
 /* status can hold the SCSI_* status values, and 2 additionnal values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
