@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_tcp.c,v 1.1 1993/10/07 07:29:45 cgd Exp $";
+static char *rcsid = "$Id: clnt_tcp.c,v 1.2 1994/08/20 00:55:26 deraadt Exp $";
 #endif
  
 /*
@@ -399,7 +399,6 @@ readtcp(ct, buf, len)
 	caddr_t buf;
 	register int len;
 {
-#ifdef FD_SETSIZE
 	fd_set mask;
 	fd_set readfds;
 
@@ -407,17 +406,9 @@ readtcp(ct, buf, len)
 		return (0);
 	FD_ZERO(&mask);
 	FD_SET(ct->ct_sock, &mask);
-#else
-	register int mask = 1 << (ct->ct_sock);
-	int readfds;
-
-	if (len == 0)
-		return (0);
-
-#endif /* def FD_SETSIZE */
 	while (TRUE) {
 		readfds = mask;
-		switch (select(_rpc_dtablesize(), &readfds, (int*)NULL, (int*)NULL,
+		switch (select(ct->ct_sock+1, &readfds, (int*)NULL, (int*)NULL,
 			       &(ct->ct_wait))) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
