@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.84 2003/07/22 11:01:09 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.85 2003/07/22 11:12:15 itojun Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.84 2003/07/22 11:01:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.85 2003/07/22 11:12:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -495,7 +495,7 @@ found:
 }
 
 /*
- * allocating an SA entry for a *OUTBOUND* packet.
+ * allocating an SA entry for an *OUTBOUND* packet.
  * checking each request entries in SP, and acquire an SA if need.
  * OUT:	0: there are valid requests.
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
@@ -1372,7 +1372,7 @@ fail:
 
 /*
  * SADB_X_SPDADD, SADB_X_SPDSETIDX or SADB_X_SPDUPDATE processing
- * add a entry to SP database, when received
+ * add an entry to SP database, when received
  *   <base, address(SD), (lifetime(H),) policy>
  * from the user(?).
  * Adding to SP database,
@@ -1451,16 +1451,16 @@ key_spdadd(so, m, mhp)
 
 	/* check policy */
 	/* key_spdadd() accepts DISCARD, NONE and IPSEC. */
-	if (xpl0->sadb_x_policy_type == IPSEC_POLICY_ENTRUST
-	 || xpl0->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
+	if (xpl0->sadb_x_policy_type == IPSEC_POLICY_ENTRUST ||
+	    xpl0->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
 		ipseclog((LOG_DEBUG, "key_spdadd: Invalid policy type.\n"));
 		return key_senderror(so, m, EINVAL);
 	}
 
 	/* policy requests are mandatory when action is ipsec. */
-        if (mhp->msg->sadb_msg_type != SADB_X_SPDSETIDX
-	 && xpl0->sadb_x_policy_type == IPSEC_POLICY_IPSEC
-	 && mhp->extlen[SADB_X_EXT_POLICY] <= sizeof(*xpl0)) {
+	if (mhp->msg->sadb_msg_type != SADB_X_SPDSETIDX &&
+	    xpl0->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
+	    mhp->extlen[SADB_X_EXT_POLICY] <= sizeof(*xpl0)) {
 		ipseclog((LOG_DEBUG, "key_spdadd: some policy requests part required.\n"));
 		return key_senderror(so, m, EINVAL);
 	}
@@ -1654,7 +1654,7 @@ key_spdadd(so, m, mhp)
  * and send,
  *   <base, address(SD), policy(*)>
  * to the ikmpd.
- * policy(*) including direction of policy.
+ * policy(*) including the direction of the policy.
  *
  * m will always be freed.
  */
@@ -1715,7 +1715,7 @@ key_spddelete(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 
-	/* save policy id to buffer to be returned. */
+	/* save policy id to be returned. */
 	xpl0->sadb_x_policy_id = sp->id;
 
 	key_sp_dead(sp);
@@ -1753,7 +1753,7 @@ key_spddelete(so, m, mhp)
  * and send,
  *   <base, policy(*)>
  * to the ikmpd.
- * policy(*) including direction of policy.
+ * policy(*) including the policy id.
  *
  * m will always be freed.
  */
@@ -1846,7 +1846,7 @@ key_spddelete2(so, m, mhp)
 }
 
 /*
- * SADB_X_GET processing
+ * SADB_X_SPDGET processing
  * receive
  *   <base, policy(*)>
  * from the user(?),
@@ -1924,7 +1924,7 @@ key_spdacquire(sp)
 	if (sp->policy != IPSEC_POLICY_IPSEC)
 		panic("key_spdacquire: policy mismathed. IPsec is expected.");
 
-	/* get a entry to check whether sent message or not. */
+	/* get an entry to check whether sent message or not. */
 	if ((newspacq = key_getspacq(sp->spidx)) != NULL) {
 		if (key_blockacq_count < newspacq->count) {
 			/* reset counter and do send message. */
@@ -2180,7 +2180,7 @@ key_getspreqmsglen(sp)
 }
 
 /*
- * SADB_SPDEXPIRE processing
+ * SADB_X_SPDEXPIRE processing
  * send
  *   <base, address(SD), lifetime(CH), policy>
  * to KMD by PF_KEY.
@@ -2202,11 +2202,7 @@ key_spdexpire(sp)
 		panic("policy-on-pcb to key_spdexpire");
 
 	/* XXX: Why do we lock ? */
-#ifdef __NetBSD__
 	s = splsoftnet();	/*called from softclock()*/
-#else
-	s = splnet();	/*called from softclock()*/
-#endif
 
 	/* sanity check */
 	if (sp == NULL)
@@ -2955,8 +2951,8 @@ key_mature(sav)
 	switch (sav->sah->saidx.proto) {
 	case IPPROTO_ESP:
 		/* check flags */
-		if ((sav->flags & SADB_X_EXT_OLD)
-		 && (sav->flags & SADB_X_EXT_DERIV)) {
+		if ((sav->flags & SADB_X_EXT_OLD) &&
+		    (sav->flags & SADB_X_EXT_DERIV)) {
 			ipseclog((LOG_DEBUG, "key_mature: "
 			    "invalid flag (derived) given to old-esp.\n"));
 			return EINVAL;
@@ -2988,8 +2984,8 @@ key_mature(sav)
 				"protocol and algorithm mismated.\n"));
 			return (EINVAL);
 		}
-		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0
-		 && ntohl(sav->spi) >= 0x10000) {
+		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0 &&
+		    ntohl(sav->spi) >= 0x10000) {
 			ipseclog((LOG_DEBUG, "key_mature: invalid cpi for IPComp.\n"));
 			return (EINVAL);
 		}
@@ -3648,9 +3644,8 @@ key_cmpsaidx_exactly(saidx0, saidx1)
 	if (saidx0 == NULL || saidx1 == NULL)
 		return 0;
 
-	if (saidx0->proto != saidx1->proto
-	 || saidx0->mode != saidx1->mode
-	 || saidx0->reqid != saidx1->reqid)
+	if (saidx0->proto != saidx1->proto || saidx0->mode != saidx1->mode ||
+	    saidx0->reqid != saidx1->reqid)
 		return 0;
 
 	if (bcmp(&saidx0->src, &saidx1->src, saidx0->src.ss_len) != 0 ||
@@ -3805,14 +3800,14 @@ key_cmpspidx_withmask(spidx0, spidx1)
 		return 0;
 
 	/* if spidx.ul_proto == IPSEC_ULPROTO_ANY, ignore. */
-	if (spidx0->ul_proto != (u_int16_t)IPSEC_ULPROTO_ANY
-	 && spidx0->ul_proto != spidx1->ul_proto)
+	if (spidx0->ul_proto != (u_int16_t)IPSEC_ULPROTO_ANY &&
+	    spidx0->ul_proto != spidx1->ul_proto)
 		return 0;
 
 	switch (spidx0->src.ss_family) {
 	case AF_INET:
-		if (satosin(&spidx0->src)->sin_port != IPSEC_PORT_ANY
-		 && satosin(&spidx0->src)->sin_port !=
+		if (satosin(&spidx0->src)->sin_port != IPSEC_PORT_ANY &&
+		    satosin(&spidx0->src)->sin_port !=
 		    satosin(&spidx1->src)->sin_port)
 			return 0;
 		if (!key_bbcmp((caddr_t)&satosin(&spidx0->src)->sin_addr,
@@ -3820,8 +3815,8 @@ key_cmpspidx_withmask(spidx0, spidx1)
 			return 0;
 		break;
 	case AF_INET6:
-		if (satosin6(&spidx0->src)->sin6_port != IPSEC_PORT_ANY
-		 && satosin6(&spidx0->src)->sin6_port !=
+		if (satosin6(&spidx0->src)->sin6_port != IPSEC_PORT_ANY &&
+		    satosin6(&spidx0->src)->sin6_port !=
 		    satosin6(&spidx1->src)->sin6_port)
 			return 0;
 		/*
@@ -3846,8 +3841,8 @@ key_cmpspidx_withmask(spidx0, spidx1)
 
 	switch (spidx0->dst.ss_family) {
 	case AF_INET:
-		if (satosin(&spidx0->dst)->sin_port != IPSEC_PORT_ANY
-		 && satosin(&spidx0->dst)->sin_port !=
+		if (satosin(&spidx0->dst)->sin_port != IPSEC_PORT_ANY &&
+		    satosin(&spidx0->dst)->sin_port !=
 		    satosin(&spidx1->dst)->sin_port)
 			return 0;
 		if (!key_bbcmp((caddr_t)&satosin(&spidx0->dst)->sin_addr,
@@ -3855,8 +3850,8 @@ key_cmpspidx_withmask(spidx0, spidx1)
 			return 0;
 		break;
 	case AF_INET6:
-		if (satosin6(&spidx0->dst)->sin6_port != IPSEC_PORT_ANY
-		 && satosin6(&spidx0->dst)->sin6_port !=
+		if (satosin6(&spidx0->dst)->sin6_port != IPSEC_PORT_ANY &&
+		    satosin6(&spidx0->dst)->sin6_port !=
 		    satosin6(&spidx1->dst)->sin6_port)
 			return 0;
 		/*
@@ -4068,11 +4063,12 @@ key_timehandler(arg)
 			}
 
 			/* check SOFT lifetime */
-			if (sav->lft_s->sadb_lifetime_addtime != 0
-			 && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
+			if (sav->lft_s->sadb_lifetime_addtime != 0 &&
+			    tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
-				 * check SA to be used whether or not.
-				 * when SA hasn't been used, delete it.
+				 * check the SA if it has been used.
+				 * when it hasn't been used, delete it.
+				 * i don't think such SA will be used.
 				 */
 				if (sav->lft_c->sadb_lifetime_usetime == 0) {
 					key_sa_chgstate(sav, SADB_SASTATE_DEAD);
@@ -4088,6 +4084,7 @@ key_timehandler(arg)
 					key_expire(sav);
 				}
 			}
+
 			/* check SOFT lifetime by bytes */
 			/*
 			 * XXX I don't know the way to delete this SA
@@ -4125,8 +4122,8 @@ key_timehandler(arg)
 				continue;
 			}
 
-			if (sav->lft_h->sadb_lifetime_addtime != 0
-			 && tv.tv_sec - sav->created > sav->lft_h->sadb_lifetime_addtime) {
+			if (sav->lft_h->sadb_lifetime_addtime != 0 &&
+			    tv.tv_sec - sav->created > sav->lft_h->sadb_lifetime_addtime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				key_freesav(sav);
 				sav = NULL;
@@ -4193,8 +4190,8 @@ key_timehandler(arg)
 
 		nextacq = LIST_NEXT(acq, chain);
 
-		if (tv.tv_sec - acq->created > key_blockacq_lifetime
-		 && __LIST_CHAINED(acq)) {
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime &&
+		    __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
 			KFREE(acq);
 		}
@@ -4212,8 +4209,8 @@ key_timehandler(arg)
 
 		nextacq = LIST_NEXT(acq, chain);
 
-		if (tv.tv_sec - acq->created > key_blockacq_lifetime
-		 && __LIST_CHAINED(acq)) {
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime &&
+		    __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
 			KFREE(acq);
 		}
@@ -4685,8 +4682,8 @@ key_update(so, m, mhp)
 
 	/* find a SA with sequence number. */
 #ifdef IPSEC_DOSEQCHECK
-	if (mhp->msg->sadb_msg_seq != 0
-	 && (sav = key_getsavbyseq(sah, mhp->msg->sadb_msg_seq)) == NULL) {
+	if (mhp->msg->sadb_msg_seq != 0 &&
+	    (sav = key_getsavbyseq(sah, mhp->msg->sadb_msg_seq)) == NULL) {
 		ipseclog((LOG_DEBUG,
 		    "key_update: no larval SA with sequence %u exists.\n",
 		    mhp->msg->sadb_msg_seq));
@@ -4791,7 +4788,7 @@ key_getsavbyseq(sah, seq)
 
 /*
  * SADB_ADD processing
- * add a entry to SA database, when received
+ * add an entry to SA database, when received
  *   <base, SA, (SA2), (lifetime(HSC),) address(SD), (address(P),)
  *       key(AE), (identity(SD),) (sensitivity)>
  * from the ikmpd,
@@ -5319,7 +5316,7 @@ key_getcomb_setlifetime(comb)
 	comb->sadb_comb_hard_bytes = 0;
 	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
 	comb->sadb_comb_soft_addtime = comb->sadb_comb_hard_addtime * 80 / 100;
-	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
+	comb->sadb_comb_hard_usetime = 28800;	/* 8 hours */
 	comb->sadb_comb_soft_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
 }
 
@@ -5605,7 +5602,7 @@ key_acquire(saidx, sp)
 	 * getting something message from IKEd.  In later case, to be
 	 * managed with ACQUIRING list.
 	 */
-	/* get a entry to check whether sending message or not. */
+	/* get an entry to check whether sending message or not. */
 	if ((newacq = key_getacq(saidx)) != NULL) {
 		if (key_blockacq_count < newacq->count) {
 			/* reset counter and do send message. */
@@ -5624,7 +5621,6 @@ key_acquire(saidx, sp)
 		LIST_INSERT_HEAD(&acqtree, newacq, chain);
 	}
 #endif
-
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	seq = newacq->seq;
@@ -6166,8 +6162,7 @@ key_freereg(so)
 	 */
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
 		LIST_FOREACH(reg, &regtree[i], chain) {
-			if (reg->so == so
-			 && __LIST_CHAINED(reg)) {
+			if (reg->so == so && __LIST_CHAINED(reg)) {
 				LIST_REMOVE(reg, chain);
 				KFREE(reg);
 				break;
@@ -6348,8 +6343,8 @@ key_flush(so, m, mhp)
 	     sah = nextsah) {
 		nextsah = LIST_NEXT(sah, chain);
 
-		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
-		 && proto != sah->saidx.proto)
+		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
 			continue;
 
 		for (stateidx = 0;
@@ -6428,8 +6423,8 @@ key_dump(so, m, mhp)
 	/* count sav entries to be sent to the userland. */
 	cnt = 0;
 	LIST_FOREACH(sah, &sahtree, chain) {
-		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
-		 && proto != sah->saidx.proto)
+		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
 			continue;
 
 		for (stateidx = 0;
@@ -6448,8 +6443,8 @@ key_dump(so, m, mhp)
 	/* send this to the userland, one at a time. */
 	newmsg = NULL;
 	LIST_FOREACH(sah, &sahtree, chain) {
-		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
-		 && proto != sah->saidx.proto)
+		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
 			continue;
 
 		/* map proto to satype */
@@ -6723,8 +6718,8 @@ key_parse(m, so)
 	}
 
 	/* check field of upper layer protocol and address family */
-	if (mh.ext[SADB_EXT_ADDRESS_SRC] != NULL
-	 && mh.ext[SADB_EXT_ADDRESS_DST] != NULL) {
+	if (mh.ext[SADB_EXT_ADDRESS_SRC] != NULL &&
+	    mh.ext[SADB_EXT_ADDRESS_DST] != NULL) {
 		struct sadb_address *src0, *dst0;
 		u_int plen;
 
@@ -6956,7 +6951,7 @@ key_validate_ext(ext, len)
 {
 	struct sockaddr *sa;
 	enum { NONE, ADDR } checktype = NONE;
-	int baselen;
+	int baselen = 0;
 	const int sal = offsetof(struct sockaddr, sa_len) + sizeof(sa->sa_len);
 
 	if (len != PFKEY_UNUNIT64(ext->sadb_ext_len))
@@ -7207,8 +7202,8 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
-		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
+		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len &&
+		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)NULL;
 		}
