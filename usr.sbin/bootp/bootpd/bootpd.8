@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$NetBSD: bootpd.8,v 1.8 2002/02/08 01:38:46 ross Exp $
+.\"	$NetBSD: bootpd.8,v 1.9 2002/10/29 16:12:25 wiz Exp $
 .\"
 .TH BOOTPD 8 "November 06, 1993" "Carnegie Mellon University"
 .SH NAME
@@ -135,7 +135,7 @@ while checking the existence and size of client boot files.  This is
 useful when client boot files are specified as relative pathnames, and
 .I bootpd
 needs to use the same current directory as the TFTP server
-(typically /tftpboot).  This option is not recoginzed by
+(typically /tftpboot).  This option is not recognized by
 .IR bootpgw .
 .TP
 .B \-i
@@ -227,7 +227,7 @@ or the dumpfile specified as a command line parameter.
 During initialization, both programs
 determine the UDP port numbers to be used by calling
 .I getservbyname
-(which nomally uses
+(which normally uses
 .IR /etc/services).
 Two service names (and port numbers) are used:
 .IP
