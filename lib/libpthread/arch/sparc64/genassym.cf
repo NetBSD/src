@@ -1,0 +1,56 @@
+#	$NetBSD: genassym.cf,v 1.1.2.1 2002/02/22 03:00:47 petrov Exp $
+
+
+include <ucontext.h>
+include <sys/queue.h>
+include <machine/reg.h>
+include <machine/mcontext.h>
+include <machine/frame.h>
+include "pthread.h"
+include "pthread_int.h"
+include "pthread_md.h"
+
+define PT_NEXT          offsetof(struct pthread_st, pt_next)
+define PT_STATE         offsetof(struct pthread_st, pt_state)
+define PT_SWITCHTO      offsetof(struct pthread_st, pt_switchto)
+define PT_SWITCHTOUC    offsetof(struct pthread_st, pt_switchtouc)
+define PT_SLEEPUC       offsetof(struct pthread_st, pt_sleepuc)
+define PT_SPINLOCKS     offsetof(struct pthread_st, pt_spinlocks)
+define PT_HELDLOCK      offsetof(struct pthread_st, pt_heldlock)
+define PT_UC            offsetof(struct pthread_st, pt_uc)
+define CONTEXTSIZE      sizeof(ucontext_t)
+define UC_FLAGS		offsetof(ucontext_t, uc_flags)
+define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
+define UC_FPREGS	offsetof(ucontext_t, uc_mcontext.__fpregs)
+define PT_STATE_RECYCLABLE      PT_STATE_RECYCLABLE
+define STACKSPACE       STACKSPACE
+define _UC_USER_BIT	_UC_USER_BIT
+define _UC_CPU		_UC_CPU
+define _UC_FPU		_UC_FPU
+
+define CC64FSZ		CC64FSZ
+# define BIAS		BIAS
+
+define FPRS_FEF		FPRS_FEF
+
+define	_REG_CCR	_REG_CCR
+define	_REG_PC		_REG_PC
+define	_REG_nPC	_REG_nPC
+define	_REG_Y		_REG_Y
+define	_REG_G1		_REG_G1
+define	_REG_G2		_REG_G2
+define	_REG_G3		_REG_G3
+define	_REG_G4		_REG_G4
+define	_REG_G5		_REG_G5
+define	_REG_G6		_REG_G6
+define	_REG_G7		_REG_G7
+define	_REG_O0		_REG_O0
+define	_REG_O1		_REG_O1
+define	_REG_O2		_REG_O2
+define	_REG_O3		_REG_O3
+define	_REG_O4		_REG_O4
+define	_REG_O5		_REG_O5
+define	_REG_O6		_REG_O6
+define	_REG_O7		_REG_O7
+define	_REG_ASI	_REG_ASI
+define	_REG_FPRS	_REG_FPRS
