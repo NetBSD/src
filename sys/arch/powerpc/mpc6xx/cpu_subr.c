@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.26 2002/08/06 06:20:08 chs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.27 2002/08/23 16:08:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -343,37 +343,44 @@ cpu_setup(self, ci)
 }
 
 struct cputab {
-	int version;
-	char *name;
+	const char name[8];
+	uint16_t version;
+	uint16_t revfmt;
 };
+#define	REVFMT_MAJMIN	1		/* %u.%u */
+#define	REVFMT_HEX	2		/* 0x%04x */
+#define	REVFMT_DEC	3		/* %u */
 static const struct cputab models[] = {
-	{ MPC601,     "601" },
-	{ MPC602,     "602" },
-	{ MPC603,     "603" },
-	{ MPC603e,    "603e" },
-	{ MPC603ev,   "603ev" },
-	{ MPC604,     "604" },
-	{ MPC604ev,   "604ev" },
-	{ MPC620,     "620" },
-	{ IBM750FX,   "750FX" },
-	{ MPC750,     "750" },
-	{ MPC7400,   "7400" },
-	{ MPC7410,   "7410" },
-	{ MPC7450,   "7450" },
-	{ MPC7455,   "7455" },
-	{ MPC8240,   "8240" },
-	{ MPC8245,   "8245" },
-	{ 0,	       NULL }
+	{ "601",	MPC601,		REVFMT_DEC },
+	{ "602",	MPC602,		REVFMT_DEC },
+	{ "603",	MPC603,		REVFMT_MAJMIN },
+	{ "603e",	MPC603e,	REVFMT_MAJMIN },
+	{ "603ev",	MPC603ev,	REVFMT_MAJMIN },
+	{ "604",	MPC604,		REVFMT_MAJMIN },
+	{ "604ev",	MPC604ev,	REVFMT_MAJMIN },
+	{ "620",	MPC620,  	REVFMT_HEX },
+	{ "750",	MPC750,		REVFMT_MAJMIN },
+	{ "750FX",	IBM750FX,	REVFMT_MAJMIN },
+	{ "7400",	MPC7400,	REVFMT_MAJMIN },
+	{ "7410",	MPC7410,	REVFMT_MAJMIN },
+	{ "7450",	MPC7450,	REVFMT_MAJMIN },
+	{ "7455",	MPC7455,	REVFMT_MAJMIN },
+	{ "8240",	MPC8240,	REVFMT_MAJMIN },
+	{ "",		0,		REVFMT_HEX }
 };
 
 void
 cpu_identify(char *str, size_t len)
 {
-	u_int pvr, vers, maj, min;
+	u_int pvr, maj, min;
+	uint16_t vers, rev, revfmt;
 	const struct cputab *cp;
+	const char *name;
+	size_t n;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
+	rev = pvr;
 	switch (vers) {
 	case MPC7410:
 		min = (pvr >> 0) & 0xff;
@@ -384,7 +391,7 @@ cpu_identify(char *str, size_t len)
 		min = (pvr >>  0) & 0xf;
 	}
 
-	for (cp = models; cp->name != NULL; cp++) {
+	for (cp = models; cp->name[0] != '\0'; cp++) {
 		if (cp->version == vers)
 			break;
 	}
@@ -395,11 +402,30 @@ cpu_identify(char *str, size_t len)
 		cpu = vers;
 	}
 
-	if (cp->name != NULL) {
-		snprintf(str, len, "%s (Revision %u.%u)", cp->name, maj, min);
+	revfmt = cp->revfmt;
+	name = cp->name;
+	if (rev == MPC750 && pvr == 15) {
+		name = "755";
+		revfmt = REVFMT_HEX;
+	}
+
+	if (cp->name[0] != '\0') {
+		n = snprintf(str, len, "%s (Revision ", cp->name);
 	} else {
-		snprintf(str, len, "Version %x (Revision %u.%u)", vers, maj,
-		    min);
+		n = snprintf(str, len, "Version %#x (Revision ", vers);
+	}
+	if (len > n) {
+		switch (revfmt) {
+		case REVFMT_MAJMIN:
+			snprintf(str + n, len - n, "%u.%u)", maj, min);
+			break;
+		case REVFMT_HEX:
+			snprintf(str + n, len - n, "0x%04x)", rev);
+			break;
+		case REVFMT_DEC:
+			snprintf(str + n, len - n, "%u)", rev);
+			break;
+		}
 	}
 }
 
@@ -435,11 +461,12 @@ cpu_config_l2cr(int vers)
 		msr = mfmsr();
 		mtmsr(msr & ~PSL_EE);
 #ifdef ALTIVEC
-		asm volatile("dssall");
+		if (cpu_altivec)
+			__asm __volatile("dssall");
 #endif
-		asm volatile("sync");
+		__asm __volatile("sync");
 		mtspr(SPR_L2CR, l2cr & ~L2CR_L2E);
-		asm volatile("sync");
+		__asm __volatile("sync");
 
 		/* Wait for L2 clock to be stable (640 L2 clocks). */
 		delay(100);
