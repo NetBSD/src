@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.8 1998/09/05 15:42:42 pk Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.9 2000/01/17 16:57:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,13 +43,14 @@
 
 #ifndef _LOCORE
 struct fdcio {
+	bus_space_handle_t	fdcio_handle;
 	/*
 	 * 82072 (sun4c) and 82077 (sun4m) controllers have different
-	 * register layout; so we cache some here.
+	 * register layout; so we cache offsets to the registers here.
 	 */
-	volatile u_int8_t	*fdcio_reg_msr;
-	volatile u_int8_t	*fdcio_reg_fifo;
-	volatile u_int8_t	*fdcio_reg_dor;	/* 82077 only */
+	u_int	fdcio_reg_msr;
+	u_int	fdcio_reg_fifo;
+	u_int	fdcio_reg_dor;		/* 82077 only */
 
 	/*
 	 * Interrupt state.

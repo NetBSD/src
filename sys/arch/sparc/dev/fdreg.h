@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.6 1997/05/02 13:03:44 pk Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.7 2000/01/17 16:57:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -42,33 +42,26 @@
 /* uses NEC765 controller */
 #include <dev/ic/nec765reg.h>
 
-#ifndef _LOCORE
-struct fdreg_77 {
-	u_int8_t	fd_statusA;
-	u_int8_t	fd_statusB;
-	u_int8_t	fd_dor;		/* Digital Output Register (R/W) */
-	u_int8_t	fd_tdr;		/* Tape Control Register (R/W) */
-	u_int8_t	fd_msr;		/* Main Status Register (R) */
-#define fd_drs		fd_msr		/* Data Rate Select Register (W) */
-	u_int8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
-	u_int8_t	fd_reserved;
-	u_int8_t	fd_dir;		/* Digital Input Register (R) */
-#define fd_ccr		fd_dir		/* Configuration Control (W) */
-};
+/*
+ * Register offsets for the 82077 controller.
+ */
+#define FDREG77_STATUSA	0
+#define FDREG77_STATUSB	1
+#define FDREG77_DOR	2		/* Digital Output Register (R/W) */
+#define FDREG77_TDR	3		/* Tape Control Register (R/W) */
+#define FDREG77_MSR	4		/* Main Status Register (R) */
+#define FDREG77_DRS	4		/* Data Rate Select Register (W) */
+#define FDREG77_FIFO	5		/* Data (FIFO) register (R/W) */
+#define FDREG77_DIR	7		/* Digital Input Register (R) */
+#define FDREG77_CCR	7		/* Configuration Control (W) */
 
-struct fdreg_72 {
-	u_int8_t	fd_msr;		/* Main Status Register (R) */
-#if already_a_define
-#define fd_drs	fd_msr			/* Data Rate Select Register (W) */
-#endif
-	u_int8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
-};
+/*
+ * Register offsets for the 82077 controller.
+ */
+#define FDREG72_MSR	0		/* Main Status Register (R) */
+#define FDREG72_DRS	0		/* Data Rate Select Register (W) */
+#define FDREG72_FIFO	1		/* Data (FIFO) register (R/W) */
 
-union fdreg {
-	struct fdreg_72 fun72;
-	struct fdreg_77 fun77;
-};
-#endif
 
 /* Data Select Register bits */
 #define DRS_RESET	0x80
