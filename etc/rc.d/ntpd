@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.9 2002/06/18 14:35:39 lukem Exp $
+# $NetBSD: ntpd,v 1.10 2002/07/02 14:47:22 itohy Exp $
 #
 
 # PROVIDE: ntpd
@@ -36,6 +36,13 @@ ntpd_precmd()
 	#	- The kernel has "pseudo-device clockctl" compiled in
 	#	- /dev/clockctl is present
 	#
+	if (: </dev/clockctl) 2>/dev/null; then
+		: exists and works
+	else
+		logger -s -p daemon.warning -t ntpd \
+		    "WARNING: not chrooting -- no working /dev/clockctl device"
+		return 0
+	fi
 	if [ ! -c "${ntpd_chrootdir}/dev/clockctl" ]; then
 		rm -f "${ntpd_chrootdir}/dev/clockctl"
 		( cd /dev ; /bin/pax -rw -pe clockctl "${ntpd_chrootdir}/dev" )
