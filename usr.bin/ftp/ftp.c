@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.56 1999/07/17 22:39:18 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.57 1999/07/20 17:52:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.56 1999/07/17 22:39:18 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.57 1999/07/20 17:52:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1316,6 +1316,7 @@ reinit:
 				result = command(pasvcmd = "LPSV");
 			break;
 		default:
+			result = COMPLETE + 1;
 			break;
 		}
 		if (result != COMPLETE) {
@@ -1380,21 +1381,22 @@ reinit:
 			case AF_INET:
 				error = sscanf(pasv,
 "%u,%u,%u,%u,%u,%u,%u,%u,%u",
-					&af, &hal, 
+					&af, &hal,
 					&addr[0], &addr[1], &addr[2], &addr[3],
 					&pal, &port[0], &port[1]);
-				if (af != 4 || hal != 4 || pal != 2) {
-					fputs(
-"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-					error = 1;
-					goto bad;
-				}
 				if (error != 9) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
 					error = 1;
 					goto bad;
 				}
+				if (af != 4 || hal != 4 || pal != 2) {
+					fputs(
+"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
+					error = 1;
+					goto bad;
+				}
+
 				error = 0;
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET;
@@ -1413,15 +1415,15 @@ reinit:
 					&addr[11], &addr[12], &addr[13],
 					&addr[14], &addr[15],
 					&pal, &port[0], &port[1]);
-				if (af != 6 || hal != 16 || pal != 2) {
-					fputs(
-"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-					error = 1;
-					goto bad;
-				}
 				if (error != 21) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
+					error = 1;
+					goto bad;
+				}
+				if (af != 6 || hal != 16 || pal != 2) {
+					fputs(
+"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
 					error = 1;
 					goto bad;
 				}
@@ -1456,16 +1458,14 @@ reinit:
 			if (sscanf(pasv, "%c%c%c%d%c", &delim[0],
 					&delim[1], &delim[2], &port[1],
 					&delim[3]) != 5) {
-				fputs("parse error 1!\n", ttyout);
-				fputs(pasv, ttyout);
-				fputs("\n", ttyout);
+				fputs("parse error!\n", ttyout);
+				error = 1;
 				goto bad;
 			}
 			if (delim[0] != delim[1] || delim[0] != delim[2]
 			 || delim[0] != delim[3]) {
-				fputs("parse error 2!\n", ttyout);
-				fputs(pasv, ttyout);
-				fputs("\n", ttyout);
+				fputs("parse error!\n", ttyout);
+				error = 1;
 				goto bad;
 			}
 			data_addr = hisctladdr;
