@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs.h,v 1.45 2003/01/29 13:14:33 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.46 2003/02/17 23:48:16 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,10 +95,43 @@
 #define BW_CLEAN	1
 #define MIN_FREE_SEGS	2
 #define LFS_MAX_ACTIVE	10
-#define LFS_MAXDIROP	(desiredvnodes >> 2)
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0
 #endif
+
+/* Local definition for LFS's usage of PG_PAGER1 */
+#define PG_DELWRI	PG_PAGER1
+
+/* Types for lfs_newbuf and lfs_malloc */
+#define LFS_NB_UNKNOWN -1
+#define LFS_NB_SUMMARY	0
+#define LFS_NB_SBLOCK	1
+#define LFS_NB_IBLOCK	2
+#define LFS_NB_CLUSTER	3
+#define LFS_NB_CLEAN	4
+#define LFS_NB_COUNT	5 /* always last */
+
+/* Number of reserved memory blocks of each type */
+#define LFS_N_SUMMARIES 2
+#define LFS_N_SBLOCKS   1   /* Always 1, to throttle superblock writes */
+#define LFS_N_IBLOCKS   16  /* In theory ssize/bsize; in practice around 2 */
+#define LFS_N_CLUSTERS  16  /* In theory ssize/MAXPHYS */
+#define LFS_N_CLEAN     0
+
+/* Total count of "large" (non-pool) types */
+#define LFS_N_TOTAL (LFS_N_SUMMARIES + LFS_N_SBLOCKS + LFS_N_IBLOCKS + LFS_N_CLUSTERS + LFS_N_CLEAN)
+
+/* Counts for pool types */
+#define LFS_N_CL        LFS_N_CLUSTERS
+#define LFS_N_BPP       2
+#define LFS_N_SEG	2
+
+/* Structure to keep reserved blocks */
+typedef struct lfs_res_blk {
+	void *p;
+	LIST_ENTRY(lfs_res_blk) res;
+	char inuse;
+} res_t;
 
 /*
  * #define WRITE_THRESHHOLD    ((nbuf >> 1) - 10)
@@ -109,7 +142,16 @@
 /* These are new ... is LFS taking up too much memory in its buffers? */
 #define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * NBPG)
 #define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
+#define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
 #define LFS_BUFWAIT         2
+
+#define LFS_MAX_PAGES \
+     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
+#define LFS_WAIT_PAGES \
+     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
+
+#define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) && 		\
+     ((bp)->b_iodone == lfs_callback || (bp)->b_iodone == lfs_fakebuf_iodone))
 
 #define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
@@ -237,7 +279,21 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);		\
 } while (0)
 
-#define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & \
+/*
+ * How to find out whether a vnode had dirty buffers or pages,
+ * to know whether it needs to retain IN_MODIFIED after a write.
+ */
+#ifdef LFS_UBC
+int lfs_checkifempty(struct vnode *);
+#  define VPISEMPTY(vp)  lfs_checkifempty(vp)
+#else
+# define VPISEMPTY(vp)  ((vp)->v_dirtyblkhd.lh_first == NULL)
+#endif
+/*
+ * WRITEINPROG does not use VPISEMPTY because any dirty pages will
+ * have been given buffer headers, if they are "in progress".
+ */
+#define WRITEINPROG(vp) ((vp)->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & \
 				(IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
 
 /* Here begins the berkeley code */
@@ -257,6 +313,7 @@ struct segusage {
 #define	SEGUSE_DIRTY		0x02	/*  segment has data in it */
 #define	SEGUSE_SUPERBLOCK	0x04	/*  segment contains a superblock */
 #define SEGUSE_ERROR            0x08    /*  cleaner: do not clean segment */
+#define SEGUSE_EMPTY            0x10    /*  segment is empty */
 	u_int32_t su_flags;		/* 12: segment flags */
 	u_int64_t su_lastmod;		/* 16: last modified timestamp */
 };
@@ -304,7 +361,7 @@ struct dlfs {
         u_int32_t dlfs_frag;      /* 28: number of frags in a block in fs */
 
 /* Checkpoint region. */
-        u_int32_t dlfs_free;      /* 32: start of the free list */
+        u_int32_t dlfs_freehd;      /* 32: start of the free list */
         u_int32_t dlfs_bfree;     /* 36: number of free disk blocks */
         u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
         int32_t   dlfs_avail;     /* 44: blocks available for writing */
@@ -371,9 +428,6 @@ struct dlfs {
 	u_int32_t dlfs_cksum;     /* 508: checksum for superblock checking */
 };
 
-/* Maximum number of io's we can have pending at once */
-#define LFS_THROTTLE  32 /* XXX should be better paramtrized - ? */
-
 /* In-memory super block. */
 struct lfs {
         struct dlfs lfs_dlfs;           /* on-disk parameters */
@@ -385,7 +439,7 @@ struct lfs {
 #define lfs_bsize lfs_dlfs.dlfs_bsize
 #define lfs_fsize lfs_dlfs.dlfs_fsize
 #define lfs_frag lfs_dlfs.dlfs_frag
-#define lfs_free lfs_dlfs.dlfs_free
+#define lfs_freehd lfs_dlfs.dlfs_freehd
 #define lfs_bfree lfs_dlfs.dlfs_bfree
 #define lfs_nfiles lfs_dlfs.dlfs_nfiles
 #define lfs_avail lfs_dlfs.dlfs_avail
@@ -455,20 +509,26 @@ struct lfs {
 #define LFS_WARNED  0x04
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_int16_t lfs_activesb;         /* toggle between superblocks */
-#ifdef LFS_TRACK_IOS
-	daddr_t   lfs_pending[LFS_THROTTLE]; /* daddrs of pending writes */
-#endif /* LFS_TRACK_IOS */
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 	struct vnode *lfs_flushvp;      /* vnode being flushed */
 	struct vnode *lfs_unlockvp;     /* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	size_t lfs_devbsize;		/* Device block size */
 	size_t lfs_devbshift;		/* Device block shift */
-	struct lock lfs_freelock;
 	struct lock lfs_fraglock;
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int       lfs_nadirop;		/* number of active dirop nodes */
 	long      lfs_ravail;           /* blocks pre-reserved for writing */
+	res_t *lfs_resblk;		/* Reserved memory for pageout */
+	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
+	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
+#define LFS_RESHASH_WIDTH 17
+	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH]; 
+	int       lfs_pdflush;           /* pagedaemon wants us to flush */
+	u_int32_t **lfs_suflags;	/* Segment use flags */
+	struct pool lfs_clpool;		/* Pool for struct lfs_cluster */
+	struct pool lfs_bpppool;	/* Pool for bpp */
+	struct pool lfs_segpool;	/* Pool for struct segment */
 };
 
 /*
@@ -659,14 +719,14 @@ struct segsum {
 #define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {                       \
 	if ((FS)->lfs_version > 1) {                                    \
 		LFS_CLEANERINFO((CIP), (FS), (BP));                     \
-		(FS)->lfs_free = (CIP)->free_head;			\
+		(FS)->lfs_freehd = (CIP)->free_head;			\
 		brelse(BP);                                             \
 	}								\
-	*(FREEP) = (FS)->lfs_free;					\
+	*(FREEP) = (FS)->lfs_freehd;					\
 } while (0)
 
 #define LFS_PUT_HEADFREE(FS, CIP, BP, VAL) do {                         \
-	(FS)->lfs_free = (VAL);						\
+	(FS)->lfs_freehd = (VAL);						\
 	if ((FS)->lfs_version > 1) {                                    \
 		LFS_CLEANERINFO((CIP), (FS), (BP));                     \
 		(CIP)->free_head = (VAL);                 		\
@@ -721,6 +781,15 @@ struct segsum {
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % (F)->lfs_sepb);	\
 } while(0)
 
+#define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
+	if ((SP)->su_nbytes == 0)					\
+		(SP)->su_flags |= SEGUSE_EMPTY;				\
+	else								\
+		(SP)->su_flags &= ~SEGUSE_EMPTY;			\
+	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
+	LFS_BWRITE_LOG(BP);						\
+} while(0)
+
 /* Determine if a buffer belongs to the ifile */
 #define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
 
@@ -773,15 +842,16 @@ struct segment {
 #define	SEGM_CLEAN	0x02		/* cleaner call; don't sort */
 #define	SEGM_SYNC	0x04		/* wait for segment */
 #define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
+#define SEGM_PAGEDAEMON 0x10		/* pagedaemon called us */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 	u_int32_t seg_iocount;		/* number of ios pending */
 	int	  ndupino;              /* number of duplicate inodes */
 };
 
 struct lfs_cluster {
+	size_t bufsize;        /* Size of kept data */
 	struct buf **bpp;      /* Array of kept buffers */
 	int bufcount;          /* Number of kept buffers */
-	size_t bufsize;        /* Size of kept data */
 #define LFS_CL_MALLOC	0x00000001
 #define LFS_CL_SHIFT	0x00000002
 #define LFS_CL_SYNC	0x00000004
@@ -789,8 +859,24 @@ struct lfs_cluster {
 	struct lfs *fs;        /* LFS that this belongs to */
 	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
 	void *saveaddr;        /* Original contents of saveaddr */
-	char *olddata;		/* Original b_data, if LFS_CL_MALLOC */
+	char *olddata;	       /* Original b_data, if LFS_CL_MALLOC */
 };
+
+/*
+ * LFS inode extensions; moved from <ufs/ufs/inode.h> so that file didn't
+ * have to change every time LFS changed.
+ */
+struct lfs_inode_ext {
+	off_t	  lfs_osize;		/* size of file on disk */
+	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
+	size_t    lfs_fragsize[NDADDR]; /* size of on-disk direct blocks */
+	TAILQ_ENTRY(inode) lfs_dchain; /* Dirop chain. */
+	TAILQ_ENTRY(inode) lfs_pchain; /* Paging chain. */
+};
+#define i_lfs_osize		inode_ext.lfs->lfs_osize
+#define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
+#define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
+#define i_lfs_dchain		inode_ext.lfs->lfs_dchain
 
 /*
  * Macros for determining free space on the disk, with the variable metadata

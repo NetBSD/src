@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_debug.c,v 1.19 2003/01/29 13:14:34 yamt Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.20 2003/02/17 23:48:18 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.19 2003/01/29 13:14:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.20 2003/02/17 23:48:18 perseant Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -167,7 +167,7 @@ lfs_dump_super(struct lfs *lfsp)
 	
 	printf("Checkpoint Info\n");
 	printf("%s%d\t%s%x\t%s%d\n",
-	       "free	 ", lfsp->lfs_free,
+	       "freehd	 ", lfsp->lfs_freehd,
 	       "idaddr	 ", lfsp->lfs_idaddr,
 	       "ifile	 ", lfsp->lfs_ifile);
 	printf("%s%x\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",

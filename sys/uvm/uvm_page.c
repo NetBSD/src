@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.83 2003/02/01 06:23:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.84 2003/02/17 23:48:24 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.83 2003/02/01 06:23:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.84 2003/02/17 23:48:24 perseant Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1254,7 +1254,7 @@ uvm_pagefree(pg)
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
-		pg->flags &= ~(PG_WANTED|PG_BUSY|PG_RELEASED);
+		pg->flags &= ~(PG_WANTED|PG_BUSY|PG_RELEASED|PG_PAGER1);
 #ifdef UVM_PAGE_TRKOWN
 		pg->owner_tag = NULL;
 #endif

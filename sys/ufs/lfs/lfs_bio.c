@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_bio.c,v 1.57 2003/02/05 21:38:45 pk Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.58 2003/02/17 23:48:17 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.57 2003/02/05 21:38:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.58 2003/02/17 23:48:17 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.57 2003/02/05 21:38:45 pk Exp $");
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 
-#include <sys/malloc.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+
+#include <uvm/uvm.h>
 
 /* Macros to clear/set/test flags. */
 # define	SET(t, f)	(t) |= (f)
@@ -102,11 +103,14 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.57 2003/02/05 21:38:45 pk Exp $");
  * No write cost accounting is done.
  * This is almost certainly wrong for synchronous operations and NFS.
  */
-int	locked_queue_count   = 0;	/* XXX Count of locked-down buffers. */
-long	locked_queue_bytes   = 0L;	/* XXX Total size of locked buffers. */
+int	locked_queue_count   = 0;	/* Count of locked-down buffers. */
+long	locked_queue_bytes   = 0L;	/* Total size of locked buffers. */
+int	lfs_subsys_pages     = 0L;      /* Total number LFS-written pages */
 int	lfs_writing          = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
+struct simplelock lfs_subsys_lock;	/* Lock on subsys_pages */
 extern int lfs_dostats;
+extern int lfs_do_flush;
 
 /*
  * reserved number/bytes of locked buffers
@@ -402,7 +406,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	int fsb, s;
 
 	KASSERT(bp->b_flags & B_BUSY);
-	KASSERT(flags & BW_CLEAN || !(bp->b_flags & B_CALL));
+	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
 
 	/*
 	 * Don't write *any* blocks if we're mounted read-only.
@@ -411,7 +415,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
         if (VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
 		bp->b_flags &= ~(B_DELWRI | B_READ | B_ERROR);
 		LFS_UNLOCK_BUF(bp);
-		if (bp->b_flags & B_CALL)
+		if (LFS_IS_MALLOC_BUF(bp))
 			bp->b_flags &= ~B_BUSY;
 		else
 			brelse(bp);
@@ -465,28 +469,26 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 void
 lfs_flush_fs(struct lfs *fs, int flags)
 {
-	if (fs->lfs_ronly == 0 && fs->lfs_dirops == 0)
-	{
-		/* disallow dirops during flush */
-		fs->lfs_writer++;
+	if (fs->lfs_ronly)
+		return;
 
-		/*
-		 * We set the queue to 0 here because we
-		 * are about to write all the dirty
-		 * buffers we have.  If more come in
-		 * while we're writing the segment, they
-		 * may not get written, so we want the
-		 * count to reflect these new writes
-		 * after the segwrite completes.
-		 */
-		if (lfs_dostats)
-			++lfs_stats.flush_invoked;
-		lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
+	/* disallow dirops during flush */
+	fs->lfs_writer++;
 
-		/* XXX KS - allow dirops again */
-		if (--fs->lfs_writer == 0)
-			wakeup(&fs->lfs_dirops);
+	/* drain dirops */
+	while (fs->lfs_dirops > 0) {
+		++fs->lfs_diropwait;
+		tsleep(&fs->lfs_writer, PRIBIO+1, "fldirop", 0);
+		--fs->lfs_diropwait; 
 	}
+
+	if (lfs_dostats)
+		++lfs_stats.flush_invoked;
+	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
+
+	/* allow dirops again */
+	if (--fs->lfs_writer == 0)
+		wakeup(&fs->lfs_dirops);
 }
 
 /*
@@ -512,6 +514,9 @@ lfs_flush(struct lfs *fs, int flags)
 	}
 	lfs_writing = 1;
 	
+	lfs_subsys_pages = 0; /* XXXUBC need a better way to count this */
+	wakeup(&lfs_subsys_pages);
+
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
@@ -525,7 +530,6 @@ lfs_flush(struct lfs *fs, int flags)
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
-
 	LFS_DEBUG_COUNTLOCKED("flush");
 
 	lfs_writing = 0;
@@ -562,25 +566,40 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	while (fs->lfs_dirops > 0 &&
 	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
                 locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
-                lfs_dirvcount > LFS_MAXDIROP || fs->lfs_diropwait > 0))
+		lfs_subsys_pages > LFS_MAX_PAGES ||
+                lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
 	{
 		++fs->lfs_diropwait;
 		tsleep(&fs->lfs_writer, PRIBIO+1, "bufdirop", 0);
 		--fs->lfs_diropwait;
 	}
 
+#ifdef DEBUG_LFS_FLUSH
+	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS)
+		printf("lqc = %d, max %d\n", locked_queue_count + INOCOUNT(fs),
+			LFS_MAX_BUFS);
+	if (locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
+		printf("lqb = %ld, max %d\n", locked_queue_bytes + INOBYTES(fs),
+			LFS_MAX_BYTES);
+	if (lfs_subsys_pages > LFS_MAX_PAGES)
+		printf("lssp = %d, max %d\n", lfs_subsys_pages, LFS_MAX_PAGES);
+	if (lfs_dirvcount > LFS_MAX_DIROP)
+		printf("ldvc = %d, max %d\n", lfs_dirvcount, LFS_MAX_DIROP);
+	if (fs->lfs_diropwait > 0)
+		printf("ldvw = %d\n", fs->lfs_diropwait);
+#endif
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
-	    lfs_dirvcount > LFS_MAXDIROP || fs->lfs_diropwait > 0)
+	    lfs_subsys_pages > LFS_MAX_PAGES ||
+	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0)
 	{
-		++fs->lfs_writer;
 		lfs_flush(fs, flags);
-		if (--fs->lfs_writer == 0)
-			wakeup(&fs->lfs_dirops);
 	}
 
-	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS
-	       || locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES)
+	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
+		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
+		lfs_subsys_pages > LFS_WAIT_PAGES ||
+		lfs_dirvcount > LFS_MAX_DIROP)
 	{
 		if (lfs_dostats)
 			++lfs_stats.wait_exceeded;
@@ -601,10 +620,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 		    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
 		{
-			++fs->lfs_writer;
 			lfs_flush(fs, flags | SEGM_CKP);
-			if (--fs->lfs_writer == 0)
-				wakeup(&fs->lfs_dirops);
 		}
 	}
 	return (error);
@@ -613,15 +629,8 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 /*
  * Allocate a new buffer header.
  */
-#ifdef MALLOCLOG
-# define DOMALLOC(S, T, F) _malloc((S), (T), (F), file, line)
 struct buf *
-lfs_newbuf_malloclog(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, char *file, int line)
-#else
-# define DOMALLOC(S, T, F) malloc((S), (T), (F))
-struct buf *
-lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size)
-#endif
+lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int type)
 {
 	struct buf *bp;
 	size_t nbytes;
@@ -629,11 +638,13 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size)
 	
 	nbytes = roundup(size, fsbtob(fs, 1));
 	
-	bp = DOMALLOC(sizeof(struct buf), M_SEGMENT, M_WAITOK);
-	bzero(bp, sizeof(struct buf));
+	s = splbio();
+	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
+	memset(bp, 0, sizeof(struct buf));
 	if (nbytes) {
-		bp->b_data = DOMALLOC(nbytes, M_SEGMENT, M_WAITOK);
-		bzero(bp->b_data, nbytes);
+		bp->b_data = lfs_malloc(fs, nbytes, type);
+		/* memset(bp->b_data, 0, nbytes); */
 	}
 #ifdef DIAGNOSTIC	
 	if (vp == NULL)
@@ -659,27 +670,20 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size)
 	return (bp);
 }
 
-#ifdef MALLOCLOG
-# define DOFREE(A, T) _free((A), (T), file, line)
 void
-lfs_freebuf_malloclog(struct buf *bp, char *file, int line)
-#else
-# define DOFREE(A, T) free((A), (T))
-void
-lfs_freebuf(struct buf *bp)
-#endif
+lfs_freebuf(struct lfs *fs, struct buf *bp)
 {
 	int s;
 	
 	s = splbio();
 	if (bp->b_vp)
 		brelvp(bp);
-	splx(s);
 	if (!(bp->b_flags & B_INVAL)) { /* B_INVAL indicates a "fake" buffer */
-		DOFREE(bp->b_data, M_SEGMENT);
+		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
-	DOFREE(bp, M_SEGMENT);
+	pool_put(&bufpool, bp);
+	splx(s);
 }
 
 /*
@@ -707,7 +711,7 @@ lfs_countlocked(int *count, long *bytes, char *msg)
 
 	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
 	    bp = bp->b_freelist.tqe_next) {
-		if (bp->b_flags & B_CALL) /* Malloced buffer */
+		if (bp->b_flags & B_CALL)
 			continue;
 		n++;
 		size += bp->b_bufsize;
