@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.5 2002/06/20 11:43:08 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.6 2002/07/04 23:30:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -173,6 +173,9 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 			srv6 = (struct sockaddr_in6 *)get_nsaddr(statp, ns);
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
+#ifdef HAVE_SIN6_SCOPE_ID
+			    srv6->sin6_scope_id == in6p->sin6_scope_id &&
+#endif
 			    (IN6_IS_ADDR_UNSPECIFIED(&srv6->sin6_addr) ||
 			     IN6_ARE_ADDR_EQUAL(&srv6->sin6_addr, &in6p->sin6_addr)))
 				return (1);

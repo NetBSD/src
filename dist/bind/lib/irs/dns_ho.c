@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_ho.c,v 1.4 2002/06/28 06:11:53 itojun Exp $	*/
+/*	$NetBSD: dns_ho.c,v 1.5 2002/07/04 23:30:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993
@@ -365,7 +365,7 @@ ho_byaddr(struct irs_ho *this, const void *addr, int len, int af)
 	struct hostent *hp = NULL;
 	struct addrinfo ai;
 	struct dns_res_target *q, *q2, *p;
-	int n, size;
+	int n, size, i;
 	int querystate = RESQRY_FAIL;
 	
 	if (init(this) == -1)
@@ -442,18 +442,24 @@ ho_byaddr(struct irs_ho *this, const void *addr, int len, int af)
 		if (q->action != RESTGT_IGNORE) {
 			qp = q->qname;
 			for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-				qp += SPRINTF((qp, "%x.%x.",
+				i = SPRINTF((qp, "%x.%x.",
 					       uaddr[n] & 0xf,
 					       (uaddr[n] >> 4) & 0xf));
+				if (i < 0)
+					abort();
+				qp += i;
 			}
 			strcpy(qp, res_get_nibblesuffix(pvt->res));
 		}
 		if (q2->action != RESTGT_IGNORE) {
 			qp = q2->qname;
 			for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-				qp += SPRINTF((qp, "%x.%x.",
+				i = SPRINTF((qp, "%x.%x.",
 					       uaddr[n] & 0xf,
 					       (uaddr[n] >> 4) & 0xf));
+				if (i < 0)
+					abort();
+				qp += i;
 			}
 			strcpy(qp, res_get_nibblesuffix2(pvt->res));
 		}
