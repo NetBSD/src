@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.47 2002/02/28 20:08:11 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.48 2002/02/28 23:52:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.47 2002/02/28 20:08:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.48 2002/02/28 23:52:37 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -642,10 +642,15 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	/* Enable bus mastering. */
+	/*
+	 * Make sure bus mastering is enabled.  Also make sure
+	 * Write/Invalidate is enabled if we're allowed to use it.
+	 */
+	pmreg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+		pmreg |= PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
+	    pmreg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
