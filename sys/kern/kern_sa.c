@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.42 2003/11/12 21:27:46 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.43 2003/11/17 22:52:09 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.42 2003/11/12 21:27:46 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.43 2003/11/17 22:52:09 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.42 2003/11/12 21:27:46 cl Exp $");
 
 #include <uvm/uvm_extern.h>
 
+static __inline int sast_compare(struct sastack *, struct sastack *);
 static void sa_setwoken(struct lwp *);
 static int sa_newcachelwp(struct lwp *);
 static struct lwp *sa_vp_repossess(struct lwp *l);
 
-static int sa_pagefault(struct lwp *, ucontext_t *);
+static __inline int sa_pagefault(struct lwp *, ucontext_t *);
 
 void sa_upcall_getstate(union sau_state *, struct lwp *);
 
@@ -83,6 +84,9 @@ int	sadebug = 0;
 #define SA_LWP_STATE_UNLOCK(l, f) do {				\
 	(l)->l_flag |= (f) & L_SA;				\
 } while (/*CONSTCOND*/ 0)
+
+SPLAY_PROTOTYPE(sasttree, sastack, sast_node, sast_compare);
+SPLAY_GENERATE(sasttree, sastack, sast_node, sast_compare);
 
 
 /*
@@ -152,13 +156,11 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_vp = NULL;
 		sa->sa_wokenq_head = NULL;
 		sa->sa_concurrency = 1;
-		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
-		    M_SA, M_WAITOK);
+		SPLAY_INIT(&sa->sa_stackstree);
+		SLIST_INIT(&sa->sa_stackslist);
 		sa->sa_nstacks = 0;
 		sa->sa_vp_faultaddr = 0;
 		sa->sa_vp_ofaultaddr = 0;
-		sa->sa_vp_stacks_low = 0;
-		sa->sa_vp_stacks_high = 0;
 		LIST_INIT(&sa->sa_lwpcache);
 		SIMPLEQ_INIT(&sa->sa_upcalls);
 		p->p_sa = sa;
@@ -177,6 +179,38 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+void
+sa_release(struct proc *p)
+{
+	struct sadata *sa;
+	struct sastack *sast, *next;
+
+	sa = p->p_sa;
+	KDASSERT(sa != NULL);
+
+	for (sast = SPLAY_MIN(sasttree, &sa->sa_stackstree); sast != NULL;
+	     sast = next) {
+		next = SPLAY_NEXT(sasttree, &sa->sa_stackstree, sast);
+		SPLAY_REMOVE(sasttree, &sa->sa_stackstree, sast);
+		pool_put(&sastack_pool, sast);
+	}
+
+	p->p_flag &= ~P_SA;
+	pool_put(&sadata_pool, sa);
+	p->p_sa = NULL;
+}
+
+static __inline int
+sast_compare(struct sastack *a, struct sastack *b)
+{
+	if ((vaddr_t)a->sast_stack.ss_sp + a->sast_stack.ss_size <=
+	    (vaddr_t)b->sast_stack.ss_sp)
+		return (-1);
+	if ((vaddr_t)a->sast_stack.ss_sp >=
+	    (vaddr_t)b->sast_stack.ss_sp + b->sast_stack.ss_size)
+		return (1);
+	return (0);
+}
 
 int
 sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
@@ -187,6 +221,7 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sadata *sa = l->l_proc->p_sa;
 	struct lwp *l2;
+	struct sastack *sast, newsast;
 	int count, error, f, i;
 
 	/* We have to be using scheduler activations */
@@ -196,59 +231,59 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	count = SCARG(uap, num);
 	if (count < 0)
 		return (EINVAL);
-	count = min(count, SA_NUMSTACKS - sa->sa_nstacks);
 
 	SA_LWP_STATE_LOCK(l, f);
-	error = copyin(SCARG(uap, stacks), sa->sa_stacks + sa->sa_nstacks,
-	    sizeof(stack_t) * count);
-	SA_LWP_STATE_UNLOCK(l, f);
-	if (error)
-		return (error);
 
-	for (i = sa->sa_nstacks; i < sa->sa_nstacks + count; i++) {
-		LIST_FOREACH(l2, &l->l_proc->p_lwps, l_sibling) {
-			if ((l2->l_upcallstack == sa->sa_stacks[i].ss_sp)) {
+	error = 0;
+
+	for (i = 0; i < count; i++) {
+		error = copyin(SCARG(uap, stacks) + i, &newsast.sast_stack,
+		    sizeof(stack_t));
+		if (error) {
+			count = i;
+			break;
+		}
+		if ((sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &newsast))) {
+			DPRINTFN(9, ("sa_stacks(%d.%d) returning stack %p\n",
+				     l->l_proc->p_pid, l->l_lid,
+				     newsast.sast_stack.ss_sp));
+			if ((l2 = sast->sast_blocker)) {
 				l2->l_upcallstack = NULL;
+				sast->sast_blocker = NULL;
 				wakeup(&l2->l_upcallstack);
 			}
+			if (SLIST_NEXT(sast, sast_list) != (void *)-1) {
+				count = i;
+				error = EEXIST;
+				break;
+			}
+		} else if (sa->sa_nstacks >= SA_MAXNUMSTACKS * sa->sa_concurrency) {
+			DPRINTFN(9, ("sa_stacks(%d.%d) already using %d stacks\n",
+				     l->l_proc->p_pid, l->l_lid,
+				     SA_MAXNUMSTACKS * sa->sa_concurrency));
+			count = i;
+			error = ENOMEM;
+			break;
+		} else {
+			DPRINTFN(9, ("sa_stacks(%d.%d) adding stack %p\n",
+				     l->l_proc->p_pid, l->l_lid,
+				     newsast.sast_stack.ss_sp));
+			sast = pool_get(&sastack_pool, PR_WAITOK);
+			sast->sast_stack = newsast.sast_stack;
+			sast->sast_blocker = NULL;
+			SPLAY_INSERT(sasttree, &sa->sa_stackstree, sast);
+			sa->sa_nstacks++;
 		}
+		SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 	}
 
-	if ((sa->sa_nstacks == 0) && (sa->sa_wokenq_head != NULL))
+	if (SLIST_EMPTY(&sa->sa_stackslist) && (sa->sa_wokenq_head != NULL))
 		l->l_flag |= L_SA_UPCALL; 
 
-	/*
-	 * Save addresses of the first and last stack on initial load
-	 * the pagefault code uses the saved address to detect threads
-	 * running on an upcall stack.
-	 * XXX assumes all stacks are adjoining
-	 * XXX assumes initial load includes all stacks ever used
-	 */
-	if (sa->sa_vp_stacks_low == 0) {
-		vaddr_t low = VM_MAXUSER_ADDRESS;
-		vaddr_t high = 0;
-
-		for (i = 0; i < count; i++) {
-			stack_t *stackp = &sa->sa_stacks[sa->sa_nstacks + i];
-
-			low = min(low, (vaddr_t)stackp->ss_sp);
-			high = max(high,
-			    (vaddr_t)stackp->ss_sp + stackp->ss_size);
-		}
-		sa->sa_vp_stacks_low = low;
-		sa->sa_vp_stacks_high = high;
-		DPRINTFN(11,("sys_sa_stacks(%d.%d): low 0x%llx high 0x%llx\n",
-			     l->l_proc->p_pid, l->l_lid,
-			     (unsigned long long)sa->sa_vp_stacks_low,
-			     (unsigned long long)sa->sa_vp_stacks_high));
-	}
-
-	sa->sa_nstacks += count;
-	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d\n",
-	    l->l_proc->p_pid, l->l_lid, count, sa->sa_nstacks));
+	SA_LWP_STATE_UNLOCK(l, f);
 
 	*retval = count;
-	return (0);
+	return (error);
 }
 
 
@@ -431,17 +466,15 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 	struct sadata *sa = l->l_proc->p_sa;
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
+	struct sastack sast;
 	int error, f, s;
 	void *preempted;
 
 	if (sa == NULL)
 		return (EINVAL);
 
-	if (sa->sa_nstacks == SA_NUMSTACKS)
-		return (EINVAL);
-
 	SA_LWP_STATE_LOCK(l, f);
-	error = copyin(SCARG(uap, up_stack), sa->sa_stacks + sa->sa_nstacks,
+	error = copyin(SCARG(uap, up_stack), &sast.sast_stack,
 	    sizeof(stack_t));
 	if (error) {
 		SA_LWP_STATE_UNLOCK(l, f);
@@ -469,7 +502,8 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 		SCHED_UNLOCK(s);
 		return (ESRCH);
 	}
-	if (l2->l_upcallstack != sa->sa_stacks[sa->sa_nstacks].ss_sp) {
+	if (l2->l_upcallstack->sast_blocker != l2 ||
+		sast.sast_stack.ss_sp != l2->l_upcallstack->sast_stack.ss_sp) {
 		SCHED_UNLOCK(s);
 		return (EINVAL);
 	}
@@ -491,9 +525,9 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			     "(was %sready) upcall stack %p\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
 			     (l2->l_wchan == &l2->l_upcallstack) ? "" :
-			     "not ", sa->sa_stacks[sa->sa_nstacks].ss_sp));
+			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
 
-		l2->l_upcallstack = (void *)-1;
+		l2->l_upcallstack->sast_blocker = NULL;
 		if (l2->l_wchan == &l2->l_upcallstack) {
 			unsleep(l2);
 			if (l2->l_stat == LSSLEEP) {
@@ -511,11 +545,13 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			     "(is %sready) upcall stack %p\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
 			     (l2->l_wchan == &l2->l_upcallstack) ? "" :
-			     "not ", sa->sa_stacks[sa->sa_nstacks].ss_sp));
+			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
 
 		sa->sa_vp = l2;
-		sa->sa_nstacks += 1;
 		l2->l_flag &= ~L_SA_BLOCKING;
+		l2->l_upcallstack->sast_blocker = NULL;
+		SLIST_INSERT_HEAD(&sa->sa_stackslist, l2->l_upcallstack,
+		    sast_list);
 		l2->l_upcallstack = NULL;
 
 		if (l2->l_wchan == &l2->l_upcallstack) {
@@ -559,7 +595,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 {
 	struct sadata_upcall *sau;
 	struct sadata *sa = l->l_proc->p_sa;
-	stack_t st;
+	struct sastack *sast;
 	int error, f;
 
 	/* XXX prevent recursive upcalls if we sleep formemory */
@@ -567,20 +603,23 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	sau = sadata_upcall_alloc(1);
 	SA_LWP_STATE_UNLOCK(l, f);
 
-	if (sa->sa_nstacks == 0) {
+	sast = SLIST_FIRST(&sa->sa_stackslist);
+	if (sast == NULL) {
 		/* assign to assure that it gets freed */
 		sau->sau_type = type & SA_UPCALL_TYPE_MASK;
 		sau->sau_arg = arg;
 		sadata_upcall_free(sau);
 		return (ENOMEM);
 	}
-	st = sa->sa_stacks[--sa->sa_nstacks];
-	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d\n", 
-	    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
+	SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
+	SLIST_NEXT(sast, sast_list) = (void *)-1;
+	DPRINTFN(9,("sa_upcall(%d.%d) using stack %p\n", 
+	    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
-	error = sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
+	error = sa_upcall0(l, type, event, interrupted, argsize, arg, sau,
+	    &sast->sast_stack);
 	if (error) {
-		sa->sa_stacks[sa->sa_nstacks++] = st;
+		SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 		sadata_upcall_free(sau);
 		return (error);
 	}
@@ -646,12 +685,12 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
  * - pagefaults on upcalls are detected by checking if the userspace
  *   thread is running on an upcall stack
  */
-static int
+static __inline int
 sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 {
 	struct proc *p;
 	struct sadata *sa;
-	vaddr_t usp;
+	struct sastack sast;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -664,10 +703,10 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 		return 1;
 	}
 
-	usp = (uintptr_t)_UC_MACHINE_SP(l_ctx);
+	sast.sast_stack.ss_sp = (void *)_UC_MACHINE_SP(l_ctx);
+	sast.sast_stack.ss_size = 1;
 
-	if ((usp >= sa->sa_vp_stacks_low) &&
-	    (usp < sa->sa_vp_stacks_high)) {
+	if (SPLAY_FIND(sasttree, &sa->sa_stackstree, &sast)) {
 		DPRINTFN(10,("sa_pagefault(%d.%d) upcall page fault\n",
 			     p->p_pid, l->l_lid));
 		return 1;
@@ -692,7 +731,7 @@ sa_switch(struct lwp *l, int type)
 	struct sadata *sa = p->p_sa;
 	struct sadata_upcall *sau;
 	struct lwp *l2;
-	stack_t st;
+	struct sastack *sast;
 	int error, s;
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
@@ -750,7 +789,8 @@ sa_switch(struct lwp *l, int type)
 			return;
 		}
 
-		if (sa->sa_nstacks == 0) {
+		sast = SLIST_FIRST(&sa->sa_stackslist);
+		if (sast == NULL) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d flag %x): Not enough stacks.\n",
 			    p->p_pid, l->l_lid, l->l_flag);
@@ -759,6 +799,10 @@ sa_switch(struct lwp *l, int type)
 			mi_switch(l, NULL);
 			return;
 		}
+		SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
+		SLIST_NEXT(sast, sast_list) = (void *)-1;
+		DPRINTFN(9,("sa_switch(%d.%d) using stack %p\n", 
+		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
 		/*
 		 * XXX We need to allocate the sadata_upcall structure here,
@@ -769,28 +813,24 @@ sa_switch(struct lwp *l, int type)
 		sau = sadata_upcall_alloc(0);
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
-			printf("sa_switch(%d.%d): "
-			    "couldn't allocate upcall data.\n",
+			printf("sa_switch(%d.%d): couldn't allocate upcall data.\n",
 			    p->p_pid, l->l_lid);
 #endif
+			SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			return;
 		}
 
-		st = sa->sa_stacks[--sa->sa_nstacks];
-		DPRINTFN(9,("sa_switch(%d.%d) nstacks--   = %2d\n", 
-		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
-
 		cpu_setfunc(l2, sa_switchcall, l2);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL,
-		    sau, &st);
+		    sau, &sast->sast_stack);
 		if (error) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): Error %d from sa_upcall()\n",
 			    p->p_pid, l->l_lid, error);
 #endif
-			sa->sa_stacks[sa->sa_nstacks++] = st;
+			SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			return;
@@ -808,7 +848,7 @@ sa_switch(struct lwp *l, int type)
 		if ((l->l_flag & L_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
 			sadata_upcall_free(sau);
-			sa->sa_stacks[sa->sa_nstacks++] = st;
+			SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			DPRINTFN(10,("sa_switch(%d.%d) page fault resolved\n",
@@ -820,7 +860,8 @@ sa_switch(struct lwp *l, int type)
 		l2->l_flag |= L_SA_UPCALL;
 
 		l->l_flag |= L_SA_BLOCKING;
-		l->l_upcallstack = st.ss_sp;
+		sast->sast_blocker = l;
+		l->l_upcallstack = sast;
 		l2->l_priority = l2->l_usrpri;
 		sa->sa_vp = l2;
 		setrunnable(l2);
@@ -978,7 +1019,7 @@ sa_unblock_userret(struct lwp *l)
 	struct lwp *l2;
 	struct sadata *sa;
 	struct sadata_upcall *sau;
-	stack_t st;
+	struct sastack *sast;
 	int f, s;
 
 	p = l->l_proc;
@@ -996,7 +1037,7 @@ sa_unblock_userret(struct lwp *l)
 	    l->l_flag));
 
 	while (l->l_upcallstack != NULL) {
-		if (l->l_upcallstack == (void *)-1) {
+		if (l->l_upcallstack->sast_blocker == NULL) {
 			SCHED_LOCK(s);
 			l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING);
 			l->l_upcallstack = NULL;
@@ -1012,6 +1053,7 @@ sa_unblock_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 		if ((l->l_flag & L_SA_BLOCKING) == 0) {
+			l->l_upcallstack->sast_blocker = NULL;
 			l->l_upcallstack = NULL;
 			break;
 		}
@@ -1046,17 +1088,19 @@ sa_unblock_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 
-		KDASSERT(sa->sa_nstacks > 0);
-		st = sa->sa_stacks[--sa->sa_nstacks];
-		DPRINTFN(9,("sa_unblock_userret(%d.%d) nstacks--   = %2d\n",
-		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
+		sast = SLIST_FIRST(&sa->sa_stackslist);
+		KDASSERT(sast != NULL);
+		SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
+		SLIST_NEXT(sast, sast_list) = (void *)-1;
+		DPRINTFN(9,("sa_unblock_userret(%d.%d) using stack %p\n",
+		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 		
 		/*
 		 * Defer saving the event lwp's state because a
 		 * PREEMPT upcall could be on the queue already.
 		 */
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER_EVENT,
-			l, l2, 0, NULL, sau, &st) != 0) {
+			l, l2, 0, NULL, sau, &sast->sast_stack) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
@@ -1092,7 +1136,7 @@ sa_upcall_userret(struct lwp *l)
 	struct sa_t self_sa;
 	struct sa_t *sas[3], *sasp;
 	union sau_state e_ss;
-	stack_t st;
+	struct sastack *sast;
 	void *stack, *ap;
 	ucontext_t u, *up;
 	int f, i, nint, nevents, s, type;
@@ -1112,15 +1156,17 @@ sa_upcall_userret(struct lwp *l)
 
 	SCHED_LOCK(s);
 	if (SIMPLEQ_EMPTY(&sa->sa_upcalls) && sa->sa_wokenq_head != NULL &&
-		sa->sa_nstacks > 0) {
+		!SLIST_EMPTY(&sa->sa_stackslist)) {
 		/* Invoke an "unblocked" upcall */
 		l2 = sa->sa_wokenq_head;
 		sa->sa_wokenq_head = l2->l_forw;
 
-		KDASSERT(sa->sa_nstacks > 0);
-		st = sa->sa_stacks[--sa->sa_nstacks];
-		DPRINTFN(9,("sa_upcall_userret(%d.%d) nstacks--   = %2d\n",
-		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
+		sast = SLIST_FIRST(&sa->sa_stackslist);
+		KDASSERT(sast != NULL);
+		SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
+		SLIST_NEXT(sast, sast_list) = (void *)-1;
+		DPRINTFN(9,("sa_upcall_userret(%d.%d) using stack %p\n",
+		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
 		SCHED_UNLOCK(s);
 
@@ -1139,7 +1185,7 @@ sa_upcall_userret(struct lwp *l)
 		}
 
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED, l2, l, 0, NULL, sau,
-		    &st) != 0) {
+		    &sast->sast_stack) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
@@ -1539,7 +1585,6 @@ debug_print_sa(struct proc *p)
 				(sa->sa_vp->l_flag & L_SA_IDLE ?
 				    "idle" : "yielding") : "");
 		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
-		printf("%d upcall stacks\n", sa->sa_nstacks);
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
 		    debug_print_lwp(l);
 	}

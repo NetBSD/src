@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.12 2003/11/12 21:27:46 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.13 2003/11/17 22:52:09 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #define _SYS_SAVAR_H
 
 #include <sys/lock.h>
+#include <sys/tree.h>
 #include <sys/queue.h>
 
 union sau_state {
@@ -77,6 +78,13 @@ struct sadata_upcall {
 #define	SA_UPCALL_DEFER			(SA_UPCALL_DEFER_EVENT | \
 					 SA_UPCALL_DEFER_INTERRUPTED)
 
+struct sastack {
+	stack_t			sast_stack;
+	SPLAY_ENTRY(sastack)	sast_node;
+	SLIST_ENTRY(sastack)	sast_list;
+	struct lwp		*sast_blocker;
+};
+
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
 	int	sa_flag;		/* SA_* flags */
@@ -84,15 +92,14 @@ struct sadata {
 	struct lwp	*sa_vp;		/* "virtual processor" allocation */
 	struct lwp	*sa_wokenq_head;	/* list of woken lwps */
 	struct lwp	**sa_wokenq_tailp;	/* list of woken lwps */
-	vaddr_t	sa_vp_stacks_low;	/* SA upcall stack lowest address */
-	vaddr_t	sa_vp_stacks_high;	/* SA upcall stack highest address */
 	vaddr_t	sa_vp_faultaddr;	/* page fault address */
 	vaddr_t	sa_vp_ofaultaddr;	/* old page fault address */
 	int	sa_concurrency;		/* desired concurrency */
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of available lwps */
 	int	sa_ncached;		/* list length */
-	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
-	int	sa_nstacks;		/* number of valid stacks */
+	SPLAY_HEAD(sasttree, sastack) sa_stackstree; /* tree of upcall stacks */
+	SLIST_HEAD(, sastack)	sa_stackslist; /* list of upcall stacks */
+	int	sa_nstacks;		/* number of upcall stacks */
 	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
 };
 
@@ -100,6 +107,7 @@ struct sadata {
 
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
 extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
+extern struct pool sastack_pool;	/* memory pool for sastack structs */
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
@@ -107,11 +115,12 @@ extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 MALLOC_DECLARE(M_SA);
 #endif
 
-#define SA_NUMSTACKS	16	/* Number of stacks allocated. XXX */
+#define	SA_MAXNUMSTACKS	16		/* Maximum number of upcall stacks per VP. */
 
 struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);
 
+void	sa_release(struct proc *);
 void	sa_switch(struct lwp *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
