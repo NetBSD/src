@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.12.2.1 1997/05/23 21:14:54 lukem Exp $	*/
+/*	$NetBSD: res_init.c,v 1.12.2.2 1998/11/02 03:29:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -53,17 +53,22 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static char rcsid[] = "Id: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp";
+static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.12.2.1 1997/05/23 21:14:54 lukem Exp $";
+__RCSID("$NetBSD: res_init.c,v 1.12.2.2 1998/11/02 03:29:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if defined(_LIBC)
+#include "namespace.h"
+#endif
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -72,6 +77,11 @@ static char rcsid[] = "$NetBSD: res_init.c,v 1.12.2.1 1997/05/23 21:14:54 lukem 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
+#if defined(_LIBC) && defined(__weak_alias)
+__weak_alias(res_init,_res_init);
+#endif
 
 static void res_setoptions __P((char *, char *));
 static u_int32_t net_mask __P((struct in_addr));
@@ -116,13 +126,14 @@ res_init()
 	register FILE *fp;
 	register char *cp, **pp, *net;
 	register int n;
-	char buf[BUFSIZ], buf2[BUFSIZ];
+	char buf[MAXDNAME];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
 	int nsort = 0;
+#ifdef SEARCH_LOCAL_DOMAINS
 	int dots;
-	u_long mask;
+#endif
 
 	_res.id = res_randomid();
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
@@ -309,8 +320,11 @@ res_init()
 	    (void) fclose(fp);
 	}
 	if (_res.defdname[0] == 0) {
-		if (gethostname(buf, sizeof(_res.defdname) - 1) == 0 &&
-		   (cp = strchr(buf, '.')))
+		int rv;
+
+		rv = gethostname(buf, sizeof(_res.defdname));
+		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		if (rv == 0 && (cp = strchr(buf, '.')))
 			(void)strncpy(_res.defdname, cp + 1, sizeof(_res.defdname) - 1);
 	}
 
