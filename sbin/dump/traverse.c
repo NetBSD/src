@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traverse.c	8.2 (Berkeley) 9/23/93";*/
-static char *rcsid = "$Id: traverse.c,v 1.5 1994/06/14 22:49:57 mycroft Exp $";
+static char *rcsid = "$Id: traverse.c,v 1.6 1994/09/17 23:59:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -394,7 +394,7 @@ dumpino(dp, ino)
 		return;
 
 	default:
-		msg("Warning: undefined file type 0%o\n", dp->di_mode & IFMT);
+		msg("Warning: undefined file type 0%o\n", dp->di_mode & S_IFMT);
 		return;
 	}
 	if (dp->di_size > NDADDR * sblock->fs_bsize)
