@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: keysym.c,v 1.2 1999/01/02 19:01:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ bcmp_ksym(a, b)
 	const void *a;
 	const void *b;
 {
-	return(((struct ksym *) b)->value - (int) a);
+	return(((struct ksym *) b)->value - *((int *) a));
 }
 
 static void
@@ -149,7 +149,7 @@ ksym2name(k)
 	if (first_time)
 		sort_ksym_tab();
 
-	r = bsearch((void *) k, ksym_tab_by_ksym,
+	r = bsearch(&k, ksym_tab_by_ksym,
 		    NUMKSYMS, sizeof(struct ksym), bcmp_ksym);
 
 	if (r != NULL)
