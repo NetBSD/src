@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.48 2000/03/30 11:27:17 augustss Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.49 2000/05/15 01:12:07 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -463,7 +463,7 @@ linux_fakedev(dev)
 	return dev;
 }
 
-#if (NWSDISPLAY > 0) && defined(XSERVER)
+#if (NWSDISPLAY > 0)
 /*
  * That's not complete, but enough to get an X server running.
  */
@@ -564,7 +564,7 @@ linux_machdepioctl(p, v, retval)
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
 #endif
-#if (NWSDISPLAY > 0) && defined(XSERVER)
+#if (NWSDISPLAY > 0)
 	struct kbentry kbe;
 #endif
 
@@ -643,7 +643,6 @@ linux_machdepioctl(p, v, retval)
 	case LINUX_VT_GETSTATE:
 		com = VT_GETSTATE;
 		break;
-#ifdef XSERVER
 	case LINUX_KDGKBTYPE:
 		/* This is what Linux does. */
 		return (subyte(SCARG(uap, data), KB_101));
@@ -663,7 +662,6 @@ linux_machdepioctl(p, v, retval)
 		kbe.kb_value = linux_keytabs[kbe.kb_table][kbe.kb_index];
 		return (copyout(&kbe, SCARG(uap, data),
 				sizeof(struct kbentry)));
-#endif
 #endif
 	default:
 		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
