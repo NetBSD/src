@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.115 2003/07/02 12:47:00 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.116 2003/07/15 05:52:48 itojun Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.115 2003/07/02 12:47:00 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.116 2003/07/15 05:52:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1060,9 +1060,9 @@ dopool(int verbose)
 		if (pp->pr_nget == 0 && !verbose)
 			continue;
 		if (pp->pr_maxpages == UINT_MAX)
-			sprintf(maxp, "inf");
+			snprintf(maxp, sizeof(maxp), "inf");
 		else
-			sprintf(maxp, "%u", pp->pr_maxpages);
+			snprintf(maxp, sizeof(maxp), "%u", pp->pr_maxpages);
 /*
  * Print single word.  `ovflow' is number of characters didn't fit
  * on the last word.  `fmt' is a format string to print this word.
