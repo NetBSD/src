@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.1 2003/05/11 21:05:19 fvdl Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.2 2003/08/09 17:35:43 yamt Exp $	*/
 
 #include <machine/cpufunc.h>
 
@@ -19,6 +19,7 @@ do { \
 	"	lock			;" \
 	"	cmpxchgl %%edx,(%1)	;" \
 	"	jnz 1b			;" \
+	"	andb $0x3,%%dl		;" \
 	"	cmpb $0x3,%%dl		;" \
 	"	sbbl %%eax,%%eax	" \
 	: "=a" (Acq), "=c" (dummy) \
