@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.82 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.83 2003/10/20 13:53:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.82 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.83 2003/10/20 13:53:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,7 +802,6 @@ loan_fail:
 			uiop->uio_rw = UIO_READ;
 			uiop->uio_segflg = UIO_SYSSPACE;
 			error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
-			off = uiop->uio_offset;
 			free((caddr_t)iv2, M_TEMP);
 		}
 read_error:
@@ -825,8 +824,10 @@ read_error:
 	if (uiop->uio_resid || padlen)
 		nfs_zeropad(mb, uiop->uio_resid, padlen);
 	if (v3) {
+		/* count */
 		*tl++ = txdr_unsigned(len);
-		if (len < reqlen)
+		/* eof */
+		if (off + len >= va.va_size)
 			*tl++ = nfs_true;
 		else
 			*tl++ = nfs_false;
