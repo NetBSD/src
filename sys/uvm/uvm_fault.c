@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.4 1999/08/02 23:16:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.5 1999/08/02 23:39:29 thorpej Exp $	*/
 
 /*
  *
@@ -885,7 +885,6 @@ ReFault:
 				    PGO_LOCKED|PGO_SYNCIO);
 
 		/* locked: nothing, pgo_fault has unlocked everything */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 
 		if (result == VM_PAGER_OK)
 			return (KERN_SUCCESS);	/* pgo_fault did pmap enter */
@@ -920,8 +919,6 @@ ReFault:
 				pages, &gotpages, centeridx,
 				access_type & MASK(ufi.entry),
 				ufi.entry->advice, PGO_LOCKED);
-
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 		/*
 		 * check for pages to map, if we got any
@@ -998,7 +995,6 @@ ReFault:
 		}   /* "gotpages" != 0 */
 
 		/* note: object still _locked_ */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	} else {
 		
 		uobjpage = NULL;
@@ -1043,9 +1039,6 @@ ReFault:
 
 	/* locked: maps(read), amap, anon */
 
-	simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
-	simple_lock_assert(&anon->an_lock, SLOCK_LOCKED);
-
 	/*
 	 * no matter if we have case 1A or case 1B we are going to need to
 	 * have the anon's memory resident.   ensure that now.
@@ -1079,11 +1072,6 @@ ReFault:
 	uobj = anon->u.an_page->uobject;	/* locked by anonget if !NULL */
 
 	/* locked: maps(read), amap, anon, uobj(if one) */
-	simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
-	simple_lock_assert(&anon->an_lock, SLOCK_LOCKED);
-	if (uobj) {
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
-	}
 
 	/*
 	 * special handling for loaned pages 
@@ -1236,8 +1224,6 @@ ReFault:
 	}
 
 	/* locked: maps(read), amap, oanon */
-	simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
-	simple_lock_assert(&oanon->an_lock, SLOCK_LOCKED);
 
 	/*
 	 * now map the page in ...
@@ -1293,9 +1279,6 @@ Case2:
 	 * locked:
 	 * maps(read), amap(if there), uobj(if !null), uobjpage(if !null)
 	 */
-	if (uobj) {
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
-	}
 
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
@@ -1334,7 +1317,6 @@ Case2:
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);
 		/* locked: uobj */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 		uvmexp.fltget++;
 		gotpages = 1;
@@ -1344,7 +1326,6 @@ Case2:
 		    PGO_SYNCIO);
 
 		/* locked: uobjpage(if result OK) */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 
 		/*
 		 * recover from I/O
@@ -1384,7 +1365,6 @@ Case2:
 		
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
 		/* locked(!locked): uobj, uobjpage */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 		/*
 		 * verify that the page has not be released and re-verify
@@ -1446,19 +1426,12 @@ Case2:
 		 */
 
 		/* locked: maps(read), amap(if !null), uobj, uobjpage */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	}
 
 	/*
 	 * locked:
 	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
 	 */
-	if (amap) {
-		simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
-	}
-	if (uobj) {
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
-	}
 
 	/*
 	 * notes:
@@ -1597,8 +1570,6 @@ Case2:
 			 */
 			if (uobjpage != PGO_DONTCARE) {
 				/* still holding object lock */
-				simple_lock_assert(&uobj->vmobjlock,
-						   SLOCK_LOCKED);
 
 				if (uobjpage->flags & PG_WANTED)
 					/* still holding object lock */
@@ -1639,8 +1610,6 @@ Case2:
 		 */
 
 		if (uobjpage != PGO_DONTCARE) {
-			simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
-
 			uvmexp.flt_prcopy++;
 			/* copy page [pg now dirty] */
 			uvm_pagecopy(uobjpage, pg);
