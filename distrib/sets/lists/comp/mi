@@ -48,6 +48,8 @@
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/ic
 ./usr/include/dev/ic/ad1848reg.h
+./usr/include/dev/ic/ahareg.h
+./usr/include/dev/ic/ahavar.h
 ./usr/include/dev/ic/aic7xxxreg.h
 ./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
@@ -89,8 +91,6 @@
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
-./usr/include/dev/isa/ahareg.h
-./usr/include/dev/isa/ahavar.h
 ./usr/include/dev/isa/btreg.h
 ./usr/include/dev/isa/comreg.h
 ./usr/include/dev/isa/comvar.h
@@ -138,7 +138,6 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
-./usr/include/dev/ramdisk.h
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
@@ -499,6 +498,8 @@
 ./usr/include/locale.h
 ./usr/include/malloc.h
 ./usr/include/math.h
+./usr/include/md4.h
+./usr/include/md5.h
 ./usr/include/memory.h
 ./usr/include/mpool.h
 ./usr/include/ndbm.h
@@ -737,6 +738,7 @@
 ./usr/include/sys/ipc.h
 ./usr/include/sys/kcore.h
 ./usr/include/sys/kernel.h
+./usr/include/sys/kgdb.h
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/lkm.h
 ./usr/include/sys/localedef.h
@@ -1104,6 +1106,18 @@
 ./usr/share/man/cat2/waitpid.0
 ./usr/share/man/cat2/write.0
 ./usr/share/man/cat2/writev.0
+./usr/share/man/cat3/MD4Data.0
+./usr/share/man/cat3/MD4End.0
+./usr/share/man/cat3/MD4File.0
+./usr/share/man/cat3/MD4Final.0
+./usr/share/man/cat3/MD4Init.0
+./usr/share/man/cat3/MD4Update.0
+./usr/share/man/cat3/MD5Data.0
+./usr/share/man/cat3/MD5End.0
+./usr/share/man/cat3/MD5File.0
+./usr/share/man/cat3/MD5Final.0
+./usr/share/man/cat3/MD5Init.0
+./usr/share/man/cat3/MD5Update.0
 ./usr/share/man/cat3/_longjmp.0
 ./usr/share/man/cat3/_setjmp.0
 ./usr/share/man/cat3/abort.0
@@ -1466,6 +1480,8 @@
 ./usr/share/man/cat3/lsearch.0
 ./usr/share/man/cat3/malloc.0
 ./usr/share/man/cat3/math.0
+./usr/share/man/cat3/md4.0
+./usr/share/man/cat3/md5.0
 ./usr/share/man/cat3/memccpy.0
 ./usr/share/man/cat3/memchr.0
 ./usr/share/man/cat3/memcmp.0

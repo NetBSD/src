@@ -218,6 +218,7 @@
 ./usr/bin/mailx
 ./usr/bin/make
 ./usr/bin/man
+./usr/bin/md5
 ./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mkdep
@@ -481,6 +482,7 @@
 ./usr/sbin/ipmon
 ./usr/sbin/ipnat
 ./usr/sbin/kvm_mkdb
+./usr/sbin/lastlogin
 ./usr/sbin/lpc
 ./usr/sbin/lpd
 ./usr/sbin/lptest
