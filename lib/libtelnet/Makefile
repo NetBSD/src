@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.18 2003/07/23 08:01:54 itojun Exp $
+#	$NetBSD: Makefile,v 1.19 2003/07/23 13:19:43 tron Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -23,7 +23,7 @@ CPPFLAGS+= -DDES_ENCRYPTION
 .if (${USE_KERBEROS4} != "no")
 SRCS+=	kerberos.c
 CPPFLAGS+= -DKRB4
-CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
+CPPFLAGS+= -I${DESTDIR}/usr/include -I${DESTDIR}/usr/include/kerberosIV
 .endif
 
 .if (${USE_KERBEROS} != "no")
