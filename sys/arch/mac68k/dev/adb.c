@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27.2.3 1999/11/28 10:13:17 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.27.2.4 2000/02/13 06:12:04 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,6 @@
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
-#include <mac68k/dev/itevar.h>
 #include <mac68k/dev/akbdvar.h>
 
 #include "aed.h"		/* ADB Event Device for compatibility */
