@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.14 1998/08/09 03:12:39 mrg Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.15 1998/09/13 21:05:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -77,11 +77,7 @@ const char sunos_emul_path[] = "/emul/sunos";
 struct emul emul_sunos = {
 	"sunos",
 	NULL,
-#ifdef __sparc__
-	sendsig,
-#else
 	sunos_sendsig,
-#endif
 	SUNOS_SYS_syscall,
 	SUNOS_SYS_MAXSYSCALL,
 	sunos_sysent,
