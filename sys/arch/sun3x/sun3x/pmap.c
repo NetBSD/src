@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1997/03/06 00:04:18 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 1997/03/06 00:15:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -890,13 +890,6 @@ pmap_bootstrap(nextva)
 	pmap_bootstrap_copyprom();
 	pmap_takeover_mmu();
 	pmap_bootstrap_setprom();
-
-	/*
-	 * XXX - Todo:  Fill in the PROM's level-A table for the VA range
-	 * KERNBASE ... 0xFE000000 so that the PROM monitor can see our
-	 * mappings.  This should make bouncing in/out of PROM easier.
-	 * XXX - Add (i.e.) pmap_setup_prommap();
-	 */
 
 	/* Notify the VM system of our page size. */
 	PAGE_SIZE = NBPG;
@@ -3772,26 +3765,8 @@ pmap_count(pmap, type)
  **
  * Return the page descriptor the describes the kernel mapping
  * of the given virtual address.
- *
- * XXX - It might be nice if this worked outside of the MMU
- * structures we manage.  (Could do it with ptest). -gwr
  */
-#if 0	/* XXX old version - kernel only */
-vm_offset_t
-get_pte(va)
-	vm_offset_t va;
-{
-	u_long idx;
-
-	if (va < KERNBASE)
-		return 0;
-
-	idx = (u_long) sun3x_btop(va - KERNBASE);
-	return (kernCbase[idx].attr.raw);
-}
-#else
-extern u_long ptest_addr __P((u_long));	/* locore.s */
-
+extern u_long ptest_addr __P((u_long));	/* XXX: locore.s */
 u_long
 get_pte(va)
 	vm_offset_t va;
@@ -3813,7 +3788,6 @@ get_pte(va)
 	/* ... and just return its contents. */
 	return (pte->attr.raw);
 }
-#endif
 
 
 /* set_pte			INTERNAL
