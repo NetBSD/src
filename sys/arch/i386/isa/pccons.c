@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.48 1994/02/25 05:15:31 mycroft Exp $
+ *	$Id: pccons.c,v 1.49 1994/02/25 05:36:51 mycroft Exp $
  */
 
 /*
@@ -1554,6 +1554,8 @@ top:
 				shift_state &= ~NUM;
 				break;
 			}
+			if (shift_state & NUM)
+				break;
 			shift_state |= NUM;
 			lock_state ^= NUM;
 			async_update();
@@ -1563,6 +1565,8 @@ top:
 				shift_state &= ~CAPS;
 				break;
 			}
+			if (shift_state & CAPS)
+				break;
 			shift_state |= CAPS;
 			lock_state ^= CAPS;
 			async_update();
@@ -1572,6 +1576,8 @@ top:
 				shift_state &= ~SCROLL;
 				break;
 			}
+			if (shift_state & SCROLL)
+				break;
 			shift_state |= SCROLL;
 			lock_state ^= SCROLL;
 			if ((lock_state & SCROLL) == 0)
