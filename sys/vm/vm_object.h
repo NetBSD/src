@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.13 1994/06/29 06:48:23 cgd Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.14 1994/12/10 11:46:31 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -163,6 +163,8 @@ void		 vm_object_pmap_copy __P((vm_object_t,
 		    vm_offset_t, vm_offset_t));
 void		 vm_object_pmap_remove __P((vm_object_t,
 		    vm_offset_t, vm_offset_t));
+void		 vm_object_prefer __P((vm_object_t,
+		    vm_offset_t, vm_offset_t *));
 void		 vm_object_print __P((vm_object_t, boolean_t));
 void		 _vm_object_print __P((vm_object_t, boolean_t,
 		    void (*)(const char *, ...)));
