@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.10 2002/05/20 17:52:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.11 2002/10/22 19:00:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,13 +79,20 @@ static void
 pthread__debug_printcounters(void)
 {
 	int i;
+	int counts[PTHREADD_NCOUNTERS];
 
-	if (getenv("PTHREAD_DEBUGCOUNTERS") == NULL)
-		return;
+	/*
+	 * Copy the counters before printing anything to so that we don't see
+	 * the effect of printing the counters.
+	 * There will still be one more mutex lock than unlock, because
+	 * atexit() handling itself will call us back with a mutex locked.
+	 */
+	for (i = 0; i < PTHREADD_NCOUNTERS; i++)
+		counts[i] = pthread__debug_counters[i];
 
 	printf("Pthread event counters:\n");
 	for (i = 0; i < PTHREADD_NCOUNTERS; i++)
-		printf("Counter %2d: %9d\n", i, pthread__debug_counters[i]);
+		printf("Counter %2d: %9d\n", i, counts[i]);
 	printf("\n");
 }
 
