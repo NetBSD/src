@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.46 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.47 1999/06/26 06:16:47 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_inet_conf.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
@@ -101,7 +102,13 @@
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	1
 #endif
+
+#ifndef HOSTZEROBROADCAST
+#define HOSTZEROBROADCAST 1
+#endif
+
 int subnetsarelocal = SUBNETSARELOCAL;
+int hostzeroisbroadcast = HOSTZEROBROADCAST;
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -571,12 +578,13 @@ in_broadcast(in, ifp)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
 		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||
 		     in_hosteq(in, ia->ia_netbroadcast) ||
-		     /*
-		      * Check for old-style (host 0) broadcast.
-		      */
-		     in.s_addr == ia->ia_subnet ||
-		     in.s_addr == ia->ia_net))
-			    return 1;
+		     (hostzeroisbroadcast && 
+		      /*
+		       * Check for old-style (host 0) broadcast.
+		       */
+		      (in.s_addr == ia->ia_subnet ||
+		       in.s_addr == ia->ia_net))))
+			return 1;
 	return (0);
 #undef ia
 }
