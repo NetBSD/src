@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.11 1996/10/13 01:38:32 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.12 1996/10/16 20:43:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1035,7 +1035,7 @@ kbd_stint(cs)
 
 	k = cs->cs_private;
 
-	cs->cs_rr0_new = zs_read_csr(cs);
+	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 #if 0
@@ -1046,7 +1046,17 @@ kbd_stint(cs)
 	}
 #endif
 
+	/*
+	 * We have to accumulate status line changes here.
+	 * Otherwise, if we get multiple status interrupts
+	 * before the softint runs, we could fail to notice
+	 * some status line changes in the softint routine.
+	 * Fix from Bill Studenmund, October 1996.
+	 */
+	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
+	cs->cs_rr0 = rr0;
 	k->k_intr_flags |= INTR_ST_CHECK;
+
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
 }
@@ -1127,7 +1137,7 @@ kbd_softint(cs)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
 		    k->k_dev.dv_xname);
-		cs->cs_rr0 = cs->cs_rr0_new;
+		cs->cs_rr0_delta = 0;
 	}
 
 	splx(s);
