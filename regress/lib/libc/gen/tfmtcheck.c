@@ -1,4 +1,4 @@
-/*	$NetBSD: tfmtcheck.c,v 1.1 2000/10/20 18:59:54 briggs Exp $	*/
+/*	$NetBSD: tfmtcheck.c,v 1.2 2000/11/02 18:06:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char *__fmtcheck __P((const char *f1, const char *f2))
+const char *fmtcheck __P((const char *f1, const char *f2))
                 __attribute__((__format_arg__(2)));
 
 #include <err.h>
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 	for (i=0 ; i<n ; i++) {
 		f1 = test_fmts[i].fmt1;
 		f2 = test_fmts[i].fmt2;
-		f = __fmtcheck(f1, f2);
+		f = fmtcheck(f1, f2);
 		if (test_fmts[i].correct == 1) {
 			cf = f1;
 		} else {
