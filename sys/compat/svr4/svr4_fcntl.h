@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.h,v 1.4 1997/03/18 18:57:19 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.h,v 1.5 1997/10/28 18:55:59 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -59,17 +59,32 @@
 #define	SVR4_F_SETLK		6
 #define	SVR4_F_SETLKW		7
 #define	SVR4_F_CHKFL		8
-
+#define SVR4_F_DUP2FD		9
 #define	SVR4_F_ALLOCSP		10
 #define	SVR4_F_FREESP		11
-#define	SVR4_F_GETLK		14
 
+#define SVR4_F_ISSTREAM		13
+#define	SVR4_F_GETLK		14
+#define	SVR4_F_PRIV		15
+#define	SVR4_F_NPRIV		16
+#define	SVR4_F_QUOTACTL		17
+#define	SVR4_F_BLOCKS		18
+#define	SVR4_F_BLKSIZE		19
 #define SVR4_F_RSETLK		20
 #define SVR4_F_RGETLK		21
 #define SVR4_F_RSETLKW		22
-
 #define	SVR4_F_GETOWN		23
 #define	SVR4_F_SETOWN		24
+#define	SVR4_F_REVOKE		25
+
+#define SVR4_F_FREESP64		27
+
+#define SVR4_F_GETLK64		33
+#define SVR4_F_SETLK64		34
+#define SVR4_F_SETLKW64		35
+
+#define SVR4_F_SHARE		40
+#define SVR4_F_UNSHARE		41
 
 #define SVR4_F_CHSIZE_XENIX	0x6000
 #define SVR4_F_RDCHK_XENIX	0x6001
@@ -106,4 +121,13 @@ struct svr4_flock {
 	long		pad[4];
 };
 
+struct svr4_flock64 {
+	short		l_type;
+	short		l_whence;
+	svr4_off64_t	l_start;
+	svr4_off64_t	l_len;
+	long		l_sysid;
+	svr4_pid_t	l_pid;
+	long		pad[4];
+};
 #endif /* !_SVR4_FCNTL_H_ */
