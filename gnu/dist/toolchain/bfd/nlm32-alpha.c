@@ -651,7 +651,7 @@ nlm_alpha_read_import (abfd, sym)
   while (sym -> rcnt < rcount)
     {
       asection *section;
-      
+
       if (nlm_alpha_read_reloc (abfd, sym, &section,
 				&nlm_relocs -> reloc)
 	  == false)
@@ -828,7 +828,7 @@ nlm_alpha_write_external (abfd, count, sym, relocs)
   arelent r;
 
   len = strlen (sym->name);
-  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof(bfd_byte))
+  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof (bfd_byte))
       || bfd_write (sym->name, len, 1, abfd) != len)
     return false;
 

@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef VMS_H
 #define VMS_H
 
-
 /* Constants starting with 'Exxx_' are for openVMS/Alpha (EVAX object language)  */
 
 /* VMS Text, information and relocation record (TIR/ETIR) definitions.  */
@@ -530,7 +529,6 @@ struct hdr_struc {
   char *hdr_c_src;
   char *hdr_c_ttl;
 };
-
 
 /* vms end of module  */
 

@@ -33,7 +33,7 @@ const bfd_arch_info_type bfd_a29k_arch =
     "a29k",
     4,
     true, /* the one and only */
-    bfd_default_compatible, 
+    bfd_default_compatible,
     bfd_default_scan ,
     0,
   };

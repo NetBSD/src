@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 
-
 #define TARGET_SHL_SYM shlpe_vec
 #define TARGET_SHL_NAME "pe-shl"
 #define COFF_WITH_PE

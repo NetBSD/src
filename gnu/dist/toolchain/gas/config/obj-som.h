@@ -26,7 +26,7 @@
 
 #define OBJ_SOM 1
 
-#include <bfd.h>
+#include "bfd.h"
 #include "bfd/som.h"
 #include "targ-cpu.h"
 
@@ -36,7 +36,7 @@
 #endif
 
 /* should be conditional on address size!  */
-#define som_symbol(asymbol) ((som_symbol_type *)(&(asymbol)->the_bfd))
+#define som_symbol(asymbol) ((som_symbol_type *) (&(asymbol)->the_bfd))
 
 extern void som_file_symbol PARAMS ((char *));
 extern void obj_som_version PARAMS ((int));

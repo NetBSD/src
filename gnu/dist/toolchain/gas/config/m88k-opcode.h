@@ -54,7 +54,7 @@ struct m88k_opcode
   char *op_spec;
 };
 
-/* and introducing... the Motorola 88100 and 88110 instruction sets... */
+/* and introducing... the Motorola 88100 and 88110 instruction sets...  */
 
 /* By default, include the 88110 instructions.  */
 #define MC88110

@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "coff/ecoff.h"
 /* The 64 bit versions of the mdebug data structures are in alpha.h.  */
 #include "coff/alpha.h"
-#define ECOFF_64
+#define ECOFF_SIGNED_64
 #include "ecoffswap.h"
 
 static void mips_elf64_swap_reloc_in
@@ -623,7 +623,7 @@ static reloc_howto_type mips_elf64_howto_table_rel[] =
 	 0,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  /* Protected jump conversion.  This is an optimization hint.  No 
+  /* Protected jump conversion.  This is an optimization hint.  No
      relocation is required for correctness.  */
   HOWTO (R_MIPS_JALR,	        /* type */
 	 0,			/* rightshift */
@@ -1177,7 +1177,7 @@ static reloc_howto_type mips_elf64_howto_table_rela[] =
 	 0,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  /* Protected jump conversion.  This is an optimization hint.  No 
+  /* Protected jump conversion.  This is an optimization hint.  No
      relocation is required for correctness.  */
   HOWTO (R_MIPS_JALR,	        /* type */
 	 0,			/* rightshift */
@@ -1270,7 +1270,7 @@ mips_elf64_be_swap_reloc_in (abfd, src, dst)
 {
   Elf64_Mips_Internal_Rel mirel;
 
-  mips_elf64_swap_reloc_in (abfd, 
+  mips_elf64_swap_reloc_in (abfd,
 			    (const Elf64_Mips_External_Rel *) src,
 			    &mirel);
 
@@ -1292,7 +1292,7 @@ mips_elf64_be_swap_reloca_in (abfd, src, dst)
 {
   Elf64_Mips_Internal_Rela mirela;
 
-  mips_elf64_swap_reloca_in (abfd, 
+  mips_elf64_swap_reloca_in (abfd,
 			     (const Elf64_Mips_External_Rela *) src,
 			     &mirela);
 
@@ -1324,7 +1324,7 @@ mips_elf64_be_swap_reloc_out (abfd, src, dst)
   mirel.r_ssym = STN_UNDEF;
   mirel.r_type3 = R_MIPS_NONE;
 
-  mips_elf64_swap_reloc_out (abfd, &mirel, 
+  mips_elf64_swap_reloc_out (abfd, &mirel,
 			     (Elf64_Mips_External_Rel *) dst);
 }
 
@@ -1346,7 +1346,7 @@ mips_elf64_be_swap_reloca_out (abfd, src, dst)
   mirela.r_ssym = STN_UNDEF;
   mirela.r_type3 = R_MIPS_NONE;
 
-  mips_elf64_swap_reloca_out (abfd, &mirela, 
+  mips_elf64_swap_reloca_out (abfd, &mirela,
 			      (Elf64_Mips_External_Rela *) dst);
 }
 
@@ -2150,7 +2150,7 @@ const struct elf_size_info mips_elf64_size_info =
 #define elf_backend_plt_header_size	0
 #define elf_backend_may_use_rel_p       1
 
-/* We don't set bfd_elf64_bfd_is_local_label_name because the 32-bit 
+/* We don't set bfd_elf64_bfd_is_local_label_name because the 32-bit
    MIPS-specific function only applies to IRIX5, which had no 64-bit
    ABI.  */
 #define bfd_elf64_find_nearest_line	_bfd_mips_elf_find_nearest_line

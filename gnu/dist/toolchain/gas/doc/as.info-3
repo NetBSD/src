@@ -6,24 +6,151 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
 Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided that
-the entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
-File: as.info,  Node: Irp,  Next: Irpc,  Prev: Int,  Up: Pseudo Ops
+File: as.info,  Node: hword,  Next: Ident,  Prev: Hidden,  Up: Pseudo Ops
+
+`.hword EXPRESSIONS'
+====================
+
+   This expects zero or more EXPRESSIONS, and emits a 16 bit number for
+each.
+
+   This directive is a synonym for `.short'; depending on the target
+architecture, it may also be a synonym for `.word'.
+
+
+File: as.info,  Node: Ident,  Next: If,  Prev: hword,  Up: Pseudo Ops
+
+`.ident'
+========
+
+   This directive is used by some assemblers to place tags in object
+files.  `as' simply accepts the directive for source-file compatibility
+with such assemblers, but does not actually emit anything for it.
+
+
+File: as.info,  Node: If,  Next: Include,  Prev: Ident,  Up: Pseudo Ops
+
+`.if ABSOLUTE EXPRESSION'
+=========================
+
+   `.if' marks the beginning of a section of code which is only
+considered part of the source program being assembled if the argument
+(which must be an ABSOLUTE EXPRESSION) is non-zero.  The end of the
+conditional section of code must be marked by `.endif' (*note `.endif':
+Endif.); optionally, you may include code for the alternative
+condition, flagged by `.else' (*note `.else': Else.).  If you have
+several conditions to check, `.elseif' may be used to avoid nesting
+blocks if/else within each subsequent `.else' block.
+
+   The following variants of `.if' are also supported:
+`.ifdef SYMBOL'
+     Assembles the following section of code if the specified SYMBOL
+     has been defined.
+
+`.ifc STRING1,STRING2'
+     Assembles the following section of code if the two strings are the
+     same.  The strings may be optionally quoted with single quotes.
+     If they are not quoted, the first string stops at the first comma,
+     and the second string stops at the end of the line.  Strings which
+     contain whitespace should be quoted.  The string comparison is
+     case sensitive.
+
+`.ifeq ABSOLUTE EXPRESSION'
+     Assembles the following section of code if the argument is zero.
+
+`.ifeqs STRING1,STRING2'
+     Another form of `.ifc'.  The strings must be quoted using double
+     quotes.
+
+`.ifge ABSOLUTE EXPRESSION'
+     Assembles the following section of code if the argument is greater
+     than or equal to zero.
+
+`.ifgt ABSOLUTE EXPRESSION'
+     Assembles the following section of code if the argument is greater
+     than zero.
+
+`.ifle ABSOLUTE EXPRESSION'
+     Assembles the following section of code if the argument is less
+     than or equal to zero.
+
+`.iflt ABSOLUTE EXPRESSION'
+     Assembles the following section of code if the argument is less
+     than zero.
+
+`.ifnc STRING1,STRING2.'
+     Like `.ifc', but the sense of the test is reversed: this assembles
+     the following section of code if the two strings are not the same.
+
+`.ifndef SYMBOL'
+`.ifnotdef SYMBOL'
+     Assembles the following section of code if the specified SYMBOL
+     has not been defined.  Both spelling variants are equivalent.
+
+`.ifne ABSOLUTE EXPRESSION'
+     Assembles the following section of code if the argument is not
+     equal to zero (in other words, this is equivalent to `.if').
+
+`.ifnes STRING1,STRING2'
+     Like `.ifeqs', but the sense of the test is reversed: this
+     assembles the following section of code if the two strings are not
+     the same.
+
+
+File: as.info,  Node: Include,  Next: Int,  Prev: If,  Up: Pseudo Ops
+
+`.include "FILE"'
+=================
+
+   This directive provides a way to include supporting files at
+specified points in your source program.  The code from FILE is
+assembled as if it followed the point of the `.include'; when the end
+of the included file is reached, assembly of the original file
+continues.  You can control the search paths used with the `-I'
+command-line option (*note Command-Line Options: Invoking.).  Quotation
+marks are required around FILE.
+
+
+File: as.info,  Node: Int,  Next: Internal,  Prev: Include,  Up: Pseudo Ops
+
+`.int EXPRESSIONS'
+==================
+
+   Expect zero or more EXPRESSIONS, of any section, separated by commas.
+For each expression, emit a number that, at run time, is the value of
+that expression.  The byte order and bit size of the number depends on
+what kind of target the assembly is for.
+
+
+File: as.info,  Node: Internal,  Next: Irp,  Prev: Int,  Up: Pseudo Ops
+
+`.internal NAMES'
+=================
+
+   This one of the ELF visibility directives.  The other two are
+`.hidden' (*note `.hidden': Hidden.) and `.protected' (*note
+`.protected': Protected.).
+
+   This directive overrides the named symbols default visibility (which
+is set by their binding: local, global or weak).  The directive sets
+the visibility to `internal' which means that the symbols are
+considered to be `hidden' (ie not visible to other components), and
+that some extra, processor specific processing must also be performed
+upon the  symbols as well.
+
+
+File: as.info,  Node: Irp,  Next: Irpc,  Prev: Internal,  Up: Pseudo Ops
 
 `.irp SYMBOL,VALUES'...
 =======================
@@ -326,7 +453,7 @@ the intervening bytes are filled with FILL which should be an absolute
 expression.  If the comma and FILL are omitted, FILL defaults to zero.
 
 
-File: as.info,  Node: P2align,  Next: Print,  Prev: Org,  Up: Pseudo Ops
+File: as.info,  Node: P2align,  Next: PopSection,  Prev: Org,  Up: Pseudo Ops
 
 `.p2align[wl] ABS-EXPR, ABS-EXPR, ABS-EXPR'
 ===========================================
@@ -363,7 +490,41 @@ bytes depends upon the endianness of the processor).  If it skips 1 or
 3 bytes, the fill value is undefined.
 
 
-File: as.info,  Node: Print,  Next: Psize,  Prev: P2align,  Up: Pseudo Ops
+File: as.info,  Node: Previous,  Next: Print,  Prev: PopSection,  Up: Pseudo Ops
+
+`.previous'
+===========
+
+   This is one of the ELF section stack manipulation directives.  The
+others are `.section' (*note Section::), `.subsection' (*note
+SubSection::), `.pushsection' (*note PushSection::), and `.popsection'
+(*note PopSection::).
+
+   This directive swaps the current section (and subsection) with most
+recently referenced section (and subsection) prior to this one.
+Multiple `.previous' directives in a row will flip between two sections
+(and their subsections).
+
+   In terms of the section stack, this directive swaps the current
+section with the top section on the section stack.
+
+
+File: as.info,  Node: PopSection,  Next: Previous,  Prev: P2align,  Up: Pseudo Ops
+
+`.popsection'
+=============
+
+   This is one of the ELF section stack manipulation directives.  The
+others are `.section' (*note Section::), `.subsection' (*note
+SubSection::), `.pushsection' (*note PushSection::), and `.previous'
+(*note Previous::).
+
+   This directive replaces the current section (and subsection) with
+the top section (and subsection) on the section stack.  This section is
+popped off the stack.
+
+
+File: as.info,  Node: Print,  Next: Protected,  Prev: Previous,  Up: Pseudo Ops
 
 `.print STRING'
 ===============
@@ -372,7 +533,23 @@ File: as.info,  Node: Print,  Next: Psize,  Prev: P2align,  Up: Pseudo Ops
 must put STRING in double quotes.
 
 
-File: as.info,  Node: Psize,  Next: Purgem,  Prev: Print,  Up: Pseudo Ops
+File: as.info,  Node: Protected,  Next: Psize,  Prev: Print,  Up: Pseudo Ops
+
+`.protected NAMES'
+==================
+
+   This one of the ELF visibility directives.  The other two are
+`.hidden' (*note Hidden::) and `.internal' (*note Internal::).
+
+   This directive overrides the named symbols default visibility (which
+is set by their binding: local, global or weak).  The directive sets
+the visibility to `protected' which means that any references to the
+symbols from within the components that defines them must be resolved
+to the definition in that component, even if a definition in another
+component would normally preempt this.
+
+
+File: as.info,  Node: Psize,  Next: Purgem,  Prev: Protected,  Up: Pseudo Ops
 
 `.psize LINES , COLUMNS'
 ========================
@@ -391,7 +568,7 @@ exceeded (or whenever you explicitly request one, using `.eject').
 explicitly specified with `.eject'.
 
 
-File: as.info,  Node: Purgem,  Next: Quad,  Prev: Psize,  Up: Pseudo Ops
+File: as.info,  Node: Purgem,  Next: PushSection,  Prev: Psize,  Up: Pseudo Ops
 
 `.purgem NAME'
 ==============
@@ -400,7 +577,23 @@ File: as.info,  Node: Purgem,  Next: Quad,  Prev: Psize,  Up: Pseudo Ops
 expanded.  *Note Macro::.
 
 
-File: as.info,  Node: Quad,  Next: Rept,  Prev: Purgem,  Up: Pseudo Ops
+File: as.info,  Node: PushSection,  Next: Quad,  Prev: Purgem,  Up: Pseudo Ops
+
+`.pushsection NAME , SUBSECTION'
+================================
+
+   This is one of the ELF section stack manipulation directives.  The
+others are `.section' (*note Section::), `.subsection' (*note
+SubSection::), `.popsection' (*note PopSection::), and `.previous'
+(*note Previous::).
+
+   This directive is a synonym for `.section'.  It pushes the current
+section (and subsection) onto the top of the section stack, and then
+replaces the current section and subsection with `name' and
+`subsection'.
+
+
+File: as.info,  Node: Quad,  Next: Rept,  Prev: PushSection,  Up: Pseudo Ops
 
 `.quad BIGNUMS'
 ===============
@@ -464,8 +657,8 @@ directive but ignores it.
 
 File: as.info,  Node: Section,  Next: Set,  Prev: Scl,  Up: Pseudo Ops
 
-`.section NAME'
-===============
+`.section NAME' (COFF version)
+==============================
 
    Use the `.section' directive to assemble the following code into a
 section named NAME.
@@ -476,6 +669,7 @@ accepted, even with a standard `a.out' section name.
 
    For COFF targets, the `.section' directive is used in one of the
 following ways:
+
      .section NAME[, "FLAGS"]
      .section NAME[, SUBSEGMENT]
 
@@ -510,10 +704,20 @@ the section to be loaded and writable.
    If the optional argument to the `.section' directive is not quoted,
 it is taken as a subsegment number (*note Sub-Sections::).
 
+`.section NAME' (ELF version)
+=============================
+
+   This is one of the ELF section stack manipulation directives.  The
+others are `.subsection' (*note SubSection::), `.pushsection' (*note
+PushSection::), `.popsection' (*note PopSection::), and `.previous'
+(*note Previous::).
+
    For ELF targets, the `.section' directive is used like this:
-     .section NAME[, "FLAGS"[, @TYPE]]
+
+     .section NAME [, "FLAGS"[, @TYPE]]
+
    The optional FLAGS argument is a quoted string which may contain any
-combintion of the following characters:
+combination of the following characters:
 `a'
      section is allocatable
 
@@ -538,7 +742,9 @@ in memory, nor writable, nor executable.  The section will contain data.
 
    For ELF targets, the assembler supports another type of `.section'
 directive for compatibility with the Solaris assembler:
+
      .section "NAME"[, FLAGS...]
+
    Note that the section name is quoted.  There may be a sequence of
 comma separated flags:
 `#alloc'
@@ -549,6 +755,12 @@ comma separated flags:
 
 `#execinstr'
      section is executable
+
+   This directive replaces the current section and subsection.  The
+replaced section and subsection are pushed onto the section stack.  See
+the contents of the gas testsuite directory `gas/testsuite/gas/elf' for
+some examples of how this directive and the other section stack
+directives work.
 
 
 File: as.info,  Node: Set,  Next: Short,  Prev: Section,  Up: Pseudo Ops
@@ -592,8 +804,8 @@ Dependencies::.
 
 File: as.info,  Node: Size,  Next: Skip,  Prev: Single,  Up: Pseudo Ops
 
-`.size'
-=======
+`.size' (COFF version)
+======================
 
    This directive is generated by compilers to include auxiliary
 debugging information in the symbol table.  It is only permitted inside
@@ -601,6 +813,14 @@ debugging information in the symbol table.  It is only permitted inside
 
    `.size' is only meaningful when generating COFF format output; when
 `as' is generating `b.out', it accepts this directive but ignores it.
+
+`.size NAME , EXPRESSION' (ELF version)
+=======================================
+
+   This directive is used to set the size associated with a symbol NAME.
+The size in bytes is computed from EXPRESSION which can make use of
+label arithmetic.  This directive is typically used to set the size of
+function symbols.
 
 
 File: as.info,  Node: Sleb128,  Next: Space,  Prev: Skip,  Up: Pseudo Ops
@@ -711,7 +931,7 @@ string with a 0 byte.  You can use any of the escape sequences
 described in *Note Strings: Strings.
 
 
-File: as.info,  Node: Struct,  Next: Symver,  Prev: String,  Up: Pseudo Ops
+File: as.info,  Node: Struct,  Next: SubSection,  Prev: String,  Up: Pseudo Ops
 
 `.struct EXPRESSION'
 ====================
@@ -732,7 +952,22 @@ to use a `.section' directive of some sort to change to some other
 section before further assembly.
 
 
-File: as.info,  Node: Symver,  Next: Tag,  Prev: Struct,  Up: Pseudo Ops
+File: as.info,  Node: SubSection,  Next: Symver,  Prev: Struct,  Up: Pseudo Ops
+
+`.subsection NAME'
+==================
+
+   This is one of the ELF section stack manipulation directives.  The
+others are `.section' (*note Section::), `.pushsection' (*note
+PushSection::), `.popsection' (*note PopSection::), and `.previous'
+(*note Previous::).
+
+   This directive replaces the current subsection with `name'.  The
+current section is not changed.  The replaced subsection is put onto
+the section stack in place of the then current top of stack subsection.
+
+
+File: as.info,  Node: Symver,  Next: Tag,  Prev: SubSection,  Up: Pseudo Ops
 
 `.symver'
 =========
@@ -744,23 +979,41 @@ There are cases where it may make sense to use this in objects to be
 bound into an application itself so as to override a versioned symbol
 from a shared library.
 
-   For ELF targets, the `.symver' directive is used like this:
+   For ELF targets, the `.symver' directive can be used like this:
      .symver NAME, NAME2@NODENAME
+   If the symbol NAME is defined within the file being assembled, the
+`.symver' directive effectively creates a symbol alias with the name
+NAME2@NODENAME, and in fact the main reason that we just don't try and
+create a regular alias is that the @ character isn't permitted in
+symbol names.  The NAME2 part of the name is the actual name of the
+symbol by which it will be externally referenced.  The name NAME itself
+is merely a name of convenience that is used so that it is possible to
+have definitions for multiple versions of a function within a single
+source file, and so that the compiler can unambiguously know which
+version of a function is being mentioned.  The NODENAME portion of the
+alias should be the name of a node specified in the version script
+supplied to the linker when building a shared library.  If you are
+attempting to override a versioned symbol from a shared library, then
+NODENAME should correspond to the nodename of the symbol you are trying
+to override.
+
+   If the symbol NAME is not defined within the file being assembled,
+all references to NAME will be changed to NAME2@NODENAME.  If no
+reference to NAME is made, NAME2@NODENAME will be removed from the
+symbol table.
+
+   Another usage of the `.symver' directive is:
+     .symver NAME, NAME2@@NODENAME
    In this case, the symbol NAME must exist and be defined within the
-file being assembled.  The `.versym' directive effectively creates a
-symbol alias with the name NAME2@NODENAME, and in fact the main reason
-that we just don't try and create a regular alias is that the @
-character isn't permitted in symbol names.  The NAME2 part of the name
-is the actual name of the symbol by which it will be externally
-referenced.  The name NAME itself is merely a name of convenience that
-is used so that it is possible to have definitions for multiple
-versions of a function within a single source file, and so that the
-compiler can unambiguously know which version of a function is being
-mentioned.  The NODENAME portion of the alias should be the name of a
-node specified in the version script supplied to the linker when
-building a shared library.  If you are attempting to override a
-versioned symbol from a shared library, then NODENAME should correspond
-to the nodename of the symbol you are trying to override.
+file being assembled. It is similar to NAME2@NODENAME. The difference
+is NAME2@@NODENAME will also be used to resolve references to NAME2 by
+the linker.
+
+   The third usage of the `.symver' directive is:
+     .symver NAME, NAME2@@@NODENAME
+   When NAME is not defined within the file being assembled, it is
+treated as NAME2@NODENAME. When NAME is defined within the file being
+assembled, the symbol name, NAME, will be changed to NAME2@@NODENAME.
 
 
 File: as.info,  Node: Tag,  Next: Text,  Prev: Symver,  Up: Pseudo Ops
@@ -799,10 +1052,10 @@ file name and pagenumber) when generating assembly listings.
 if it appears within ten lines of the top of a page.
 
 
-File: as.info,  Node: Type,  Next: Val,  Prev: Title,  Up: Pseudo Ops
+File: as.info,  Node: Type,  Next: Uleb128,  Prev: Title,  Up: Pseudo Ops
 
-`.type INT'
-===========
+`.type INT' (COFF version)
+==========================
 
    This directive, permitted only within `.def'/`.endef' pairs, records
 the integer INT as the type attribute of a symbol table entry.
@@ -810,8 +1063,42 @@ the integer INT as the type attribute of a symbol table entry.
    `.type' is associated only with COFF format output; when `as' is
 configured for `b.out' output, it accepts this directive but ignores it.
 
+`.type NAME , TYPE DESCRIPTION' (ELF version)
+=============================================
+
+   This directive is used to set the type of symbol NAME to be either a
+function symbol or an object symbol.  There are five different syntaxes
+supported for the TYPE DESCRIPTION field, in order to provide
+compatibility with various other assemblers.  The syntaxes supported
+are:
+
+       .type <name>,#function
+       .type <name>,#object
+     
+       .type <name>,@function
+       .type <name>,@object
+     
+       .type <name>,%function
+       .type <name>,%object
+     
+       .type <name>,"function"
+       .type <name>,"object"
+     
+       .type <name> STT_FUNCTION
+       .type <name> STT_OBJECT
+
 
-File: as.info,  Node: Val,  Next: Visibility,  Prev: Type,  Up: Pseudo Ops
+File: as.info,  Node: Uleb128,  Next: Val,  Prev: Type,  Up: Pseudo Ops
+
+`.uleb128 EXPRESSIONS'
+======================
+
+   ULEB128 stands for "unsigned little endian base 128."  This is a
+compact, variable length representation of numbers used by the DWARF
+symbolic debugging format.  *Note `.sleb128': Sleb128.
+
+
+File: as.info,  Node: Val,  Next: Version,  Prev: Uleb128,  Up: Pseudo Ops
 
 `.val ADDR'
 ===========
@@ -823,46 +1110,46 @@ the address ADDR as the value attribute of a symbol table entry.
 `b.out', it accepts this directive but ignores it.
 
 
-File: as.info,  Node: Uleb128,  Next: Word,  Prev: Visibility,  Up: Pseudo Ops
+File: as.info,  Node: Version,  Next: VTableEntry,  Prev: Val,  Up: Pseudo Ops
 
-`.uleb128 EXPRESSIONS'
-======================
+`.version "STRING"'
+===================
 
-   ULEB128 stands for "unsigned little endian base 128."  This is a
-compact, variable length representation of numbers used by the DWARF
-symbolic debugging format.  *Note `.sleb128': Sleb128.
-
-
-File: as.info,  Node: Visibility,  Next: Uleb128,  Prev: Val,  Up: Pseudo Ops
-
-`.internal', `.hidden', `.protected'
-====================================
-
-   These directives can be used to set the visibility of a specified
-symbol.  By default a symbol's visibility is set by its binding (local,
-global or weak), but these directives can be used to override that.
-
-   A visibility of `protected' means that any references to the symbol
-from within the component that defines the symbol must be resolved to
-the definition in that component, even if a definition in another
-component would normally preempt this.
-
-   A visibility of `hidden' means that the symbol is not visible to
-other components.  Such a symbol is always considered to be protected
-as well.
-
-   A visibility of `internal' is the same as a visibility of `hidden',
-except that some extra, processor specific processing must also be
-performed upon the symbol.
-
-   For ELF targets, the directives are used like this:
-
-     .internal NAME
-     .hidden NAME
-     .protected NAME
+   This directive creates a `.note' section and places into it an ELF
+formatted note of type NT_VERSION.  The note's name is set to `string'.
 
 
-File: as.info,  Node: Word,  Next: Deprecated,  Prev: Uleb128,  Up: Pseudo Ops
+File: as.info,  Node: VTableEntry,  Next: VTableInherit,  Prev: Version,  Up: Pseudo Ops
+
+`.vtable_entry TABLE, OFFSET'
+=============================
+
+   This directive finds or creates a symbol `table' and creates a
+`VTABLE_ENTRY' relocation for it with an addend of `offset'.
+
+
+File: as.info,  Node: VTableInherit,  Next: Weak,  Prev: VTableEntry,  Up: Pseudo Ops
+
+`.vtable_inherit CHILD, PARENT'
+===============================
+
+   This directive finds the symbol `child' and finds or creates the
+symbol `parent' and then creates a `VTABLE_INHERIT' relocation for the
+parent whose addend is the value of the child symbol.  As a special
+case the parent name of `0' is treated as refering the `*ABS*' section.
+
+
+File: as.info,  Node: Weak,  Next: Word,  Prev: VTableInherit,  Up: Pseudo Ops
+
+`.weak NAMES'
+=============
+
+   This directive sets the weak attribute on the comma separated list
+of symbol `names'.  If the symbols do not already exist, they will be
+created.
+
+
+File: as.info,  Node: Word,  Next: Deprecated,  Prev: Weak,  Up: Pseudo Ops
 
 `.word EXPRESSIONS'
 ===================
@@ -881,7 +1168,7 @@ interest to you does 32-bit addressing (or doesn't require it; *note
 Machine Dependencies::), you can ignore this issue.
 
    In order to assemble compiler output into something that works, `as'
-occasionlly does strange things to `.word' directives.  Directives of
+occasionally does strange things to `.word' directives.  Directives of
 the form `.word sym1-sym2' are often emitted by compilers as part of
 jump tables.  Therefore, when `as' assembles a directive of the form
 `.word sym1-sym2', and the difference between `sym1' and `sym2' does
@@ -950,11 +1237,17 @@ subject, see the hardware manufacturer's manual.
 
 * ESA/390-Dependent::           IBM ESA/390 Dependent Features
 
-* i386-Dependent::              Intel 80386 Dependent Features
+* i386-Dependent::              Intel 80386 and AMD x86-64 Dependent Features
+
+* i860-Dependent::              Intel 80860 Dependent Features
 
 * i960-Dependent::              Intel 80960 Dependent Features
 
+* M32R-Dependent::              M32R Dependent Features
+
 * M68K-Dependent::              M680x0 Dependent Features
+
+* M68HC11-Dependent::           M68HC11 and 68HC12 Dependent Features
 
 * MIPS-Dependent::              MIPS Dependent Features
 
@@ -978,43 +1271,90 @@ ARC Dependent Features
 
 * Menu:
 
-* ARC-Opts::                    Options
-* ARC-Float::                   Floating Point
-* ARC-Directives::              Sparc Machine Directives
+* ARC Options::              Options
+* ARC Syntax::               Syntax
+* ARC Floating Point::       Floating Point
+* ARC Directives::           ARC Machine Directives
+* ARC Opcodes::              Opcodes
 
 
-File: as.info,  Node: ARC-Opts,  Next: ARC-Float,  Up: ARC-Dependent
+File: as.info,  Node: ARC Options,  Next: ARC Syntax,  Up: ARC-Dependent
 
 Options
 -------
 
-   The ARC chip family includes several successive levels (or other
-variants) of chip, using the same core instruction set, but including a
-few additional instructions at each level.
+`-marc[5|6|7|8]'
+     This option selects the core processor variant. Using `-marc' is
+     the same as `-marc5', which is also the default.
 
-   By default, `as' assumes the core instruction set (ARC base).  The
-`.cpu' pseudo-op is intended to be used to select the variant.
+    `arc5'
+          Base instruction set.
 
-`-mbig-endian'
-`-mlittle-endian'
-     Any ARC configuration of `as' can select big-endian or
-     little-endian output at run time (unlike most other GNU development
-     tools, which must be configured for one or the other).  Use
-     `-mbig-endian' to select big-endian output, and `-mlittle-endian'
-     for little-endian.
+    `arc6'
+          Jump-and-link (jl) instruction. No requirement of an
+          instruction between setting flags and conditional jump. For
+          example:
+
+                 mov.f r0,r1
+                 beq   foo
+
+    `arc7'
+          Break (brk) and sleep (sleep) instructions.
+
+    `arc8'
+          Software interrupt (swi) instruction.
+
+     Note: the `.option' directive can to be used to select a core
+     variant from within assembly code.
+
+`-EB'
+     This option specifies that the output generated by the assembler
+     should be marked as being encoded for a big-endian processor.
+
+`-EL'
+     This option specifies that the output generated by the assembler
+     should be marked as being encoded for a little-endian processor -
+     this is the default.
 
 
-File: as.info,  Node: ARC-Float,  Next: ARC-Directives,  Prev: ARC-Opts,  Up: ARC-Dependent
+File: as.info,  Node: ARC Syntax,  Next: ARC Floating Point,  Prev: ARC Options,  Up: ARC-Dependent
+
+Syntax
+------
+
+* Menu:
+
+* ARC-Chars::                Special Characters
+* ARC-Regs::                 Register Names
+
+
+File: as.info,  Node: ARC-Chars,  Next: ARC-Regs,  Up: ARC Syntax
+
+Special Characters
+..................
+
+   *TODO*
+
+
+File: as.info,  Node: ARC-Regs,  Prev: ARC-Chars,  Up: ARC Syntax
+
+Register Names
+..............
+
+   *TODO*
+
+
+File: as.info,  Node: ARC Floating Point,  Next: ARC Directives,  Prev: ARC Syntax,  Up: ARC-Dependent
 
 Floating Point
 --------------
 
-   The ARC cpu family currently does not have hardware floating point
-support.  Software floating point support is provided by `GCC' and uses
+   The ARC core does not currently have hardware floating point
+support. Software floating point support is provided by `GCC' and uses
 IEEE floating-point numbers.
 
 
-File: as.info,  Node: ARC-Directives,  Prev: ARC-Float,  Up: ARC-Dependent
+File: as.info,  Node: ARC Directives,  Next: ARC Opcodes,  Prev: ARC Floating Point,  Up: ARC-Dependent
 
 ARC Machine Directives
 ----------------------
@@ -1022,10 +1362,64 @@ ARC Machine Directives
    The ARC version of `as' supports the following additional machine
 directives:
 
-`.cpu'
-     This must be followed by the desired cpu.  The ARC is intended to
-     be customizable, `.cpu' is used to select the desired variant
-     [though currently there are none].
+`.2byte EXPRESSIONS'
+     *TODO*
+
+`.3byte EXPRESSIONS'
+     *TODO*
+
+`.4byte EXPRESSIONS'
+     *TODO*
+
+`.extAuxRegister NAME,ADDRESS,MODE'
+     *TODO*
+
+            .extAuxRegister mulhi,0x12,w
+
+`.extCondCode SUFFIX,VALUE'
+     *TODO*
+
+            .extCondCode is_busy,0x14
+
+`.extCoreRegister NAME,REGNUM,MODE,SHORTCUT'
+     *TODO*
+
+            .extCoreRegister mlo,57,r,can_shortcut
+
+`.extInstruction NAME,OPCODE,SUBOPCODE,SUFFIXCLASS,SYNTAXCLASS'
+     *TODO*
+
+            .extInstruction mul64,0x14,0x0,SUFFIX_COND,SYNTAX_3OP|OP1_MUST_BE_IMM
+
+`.half EXPRESSIONS'
+     *TODO*
+
+`.long EXPRESSIONS'
+     *TODO*
+
+`.option ARC|ARC5|ARC6|ARC7|ARC8'
+     The `.option' directive must be followed by the desired core
+     version. Again `arc' is an alias for `arc5'.
+
+     Note: the `.option' directive overrides the command line option
+     `-marc'; a warning is emitted when the version is not consistent
+     between the two - even for the implicit default core version
+     (arc5).
+
+`.short EXPRESSIONS'
+     *TODO*
+
+`.word EXPRESSIONS'
+     *TODO*
+
+
+File: as.info,  Node: ARC Opcodes,  Prev: ARC Directives,  Up: ARC-Dependent
+
+Opcodes
+-------
+
+   For information on the ARC instruction set, see `ARC Programmers
+Reference Manual', ARC Cores Ltd.
 
 
 File: as.info,  Node: AMD29K-Dependent,  Next: ARC-Dependent,  Up: Machine Dependencies
@@ -1126,364 +1520,4 @@ Floating Point
 --------------
 
    The AMD 29K family uses IEEE floating-point numbers.
-
-
-File: as.info,  Node: AMD29K Directives,  Next: AMD29K Opcodes,  Prev: AMD29K Floating Point,  Up: AMD29K-Dependent
-
-AMD 29K Machine Directives
---------------------------
-
-`.block SIZE , FILL'
-     This directive emits SIZE bytes, each of value FILL.  Both SIZE
-     and FILL are absolute expressions.  If the comma and FILL are
-     omitted, FILL is assumed to be zero.
-
-     In other versions of the GNU assembler, this directive is called
-     `.space'.
-
-`.cputype'
-     This directive is ignored; it is accepted for compatibility with
-     other AMD 29K assemblers.
-
-`.file'
-     This directive is ignored; it is accepted for compatibility with
-     other AMD 29K assemblers.
-
-          _Warning:_ in other versions of the GNU assembler, `.file' is
-          used for the directive called `.app-file' in the AMD 29K
-          support.
-
-`.line'
-     This directive is ignored; it is accepted for compatibility with
-     other AMD 29K assemblers.
-
-`.sect'
-     This directive is ignored; it is accepted for compatibility with
-     other AMD 29K assemblers.
-
-`.use SECTION NAME'
-     Establishes the section and subsection for the following code;
-     SECTION NAME may be one of `.text', `.data', `.data1', or `.lit'.
-     With one of the first three SECTION NAME options, `.use' is
-     equivalent to the machine directive SECTION NAME; the remaining
-     case, `.use .lit', is the same as `.data 200'.
-
-
-File: as.info,  Node: AMD29K Opcodes,  Prev: AMD29K Directives,  Up: AMD29K-Dependent
-
-Opcodes
--------
-
-   `as' implements all the standard AMD 29K opcodes.  No additional
-pseudo-instructions are needed on this family.
-
-   For information on the 29K machine instruction set, see `Am29000
-User's Manual', Advanced Micro Devices, Inc.
-
-
-File: as.info,  Node: ARM-Dependent,  Next: D10V-Dependent,  Prev: ARC-Dependent,  Up: Machine Dependencies
-
-ARM Dependent Features
-======================
-
-* Menu:
-
-* ARM Options::              Options
-* ARM Syntax::               Syntax
-* ARM Floating Point::       Floating Point
-* ARM Directives::           ARM Machine Directives
-* ARM Opcodes::              Opcodes
-
-
-File: as.info,  Node: ARM Options,  Next: ARM Syntax,  Up: ARM-Dependent
-
-Options
--------
-
-`-marm`[2|250|3|6|60|600|610|620|7|7m|7d|7dm|7di|7dmi|70|700|700i|710|710c|7100|7500|7500fe|7tdmi|8|810|9|9tdmi|920|strongarm|strongarm110|strongarm1100]''
-     This option specifies the target processor.  The assembler will
-     issue an error message if an attempt is made to assemble an
-     instruction which will not execute on the target processor.
-
-`-marmv`[2|2a|3|3m|4|4t|5|5t]''
-     This option specifies the target architecture.  The assembler will
-     issue an error message if an attempt is made to assemble an
-     instruction which will not execute on the target architecture.
-
-`-mthumb'
-     This option specifies that only Thumb instructions should be
-     assembled.
-
-`-mall'
-     This option specifies that any Arm or Thumb instruction should be
-     assembled.
-
-`-mfpa [10|11]'
-     This option specifies the floating point architecture in use on the
-     target processor.
-
-`-mfpe-old'
-     Do not allow the assemble of floating point multiple instructions.
-
-`-mno-fpu'
-     Do not allow the assembly of any floating point instructions.
-
-`-mthumb-interwork'
-     This option specifies that the output generated by the assembler
-     should be marked as supporting interworking.
-
-`-mapcs [26|32]'
-     This option specifies that the output generated by the assembler
-     should be marked as supporting the indicated version of the Arm
-     Procedure.  Calling Standard.
-
-`-mapcs-float'
-     This indicates the the floating point variant of the APCS should be
-     used.  In this variant floating point arguments are passed in FP
-     registers rather than integer registers.
-
-`-mapcs-reentrant'
-     This indicates that the reentrant variant of the APCS should be
-     used.  This variant supports position independent code.
-
-`-EB'
-     This option specifies that the output generated by the assembler
-     should be marked as being encoded for a big-endian processor.
-
-`-EL'
-     This option specifies that the output generated by the assembler
-     should be marked as being encoded for a little-endian processor.
-
-`-k'
-     This option enables the generation of PIC (position independent
-     code).
-
-`-moabi'
-     This indicates that the code should be assembled using the old ARM
-     ELF conventions, based on a beta release release of the ARM-ELF
-     specifications, rather than the default conventions which are
-     based on the final release of the ARM-ELF specifications.
-
-
-File: as.info,  Node: ARM Syntax,  Next: ARM Floating Point,  Prev: ARM Options,  Up: ARM-Dependent
-
-Syntax
-------
-
-* Menu:
-
-* ARM-Chars::                Special Characters
-* ARM-Regs::                 Register Names
-
-
-File: as.info,  Node: ARM-Chars,  Next: ARM-Regs,  Up: ARM Syntax
-
-Special Characters
-..................
-
-   The presence of a `@' on a line indicates the start of a comment
-that extends to the end of the current line.  If a `#' appears as the
-first character of a line, the whole line is treated as a comment.
-
-   On ARM systems running the GNU/Linux operating system, `;' can be
-used instead of a newline to separate statements.
-
-   Either `#' or `$' can be used to indicate immediate operands.
-
-   *TODO* Explain about /data modifier on symbols.
-
-
-File: as.info,  Node: ARM-Regs,  Prev: ARM-Chars,  Up: ARM Syntax
-
-Register Names
-..............
-
-   *TODO* Explain about ARM register naming, and the predefined names.
-
-
-File: as.info,  Node: ARM Floating Point,  Next: ARM Directives,  Prev: ARM Syntax,  Up: ARM-Dependent
-
-Floating Point
---------------
-
-   The ARM family uses IEEE floating-point numbers.
-
-
-File: as.info,  Node: ARM Directives,  Next: ARM Opcodes,  Prev: ARM Floating Point,  Up: ARM-Dependent
-
-ARM Machine Directives
-----------------------
-
-`.align EXPRESSION [, EXPRESSION]'
-     This is the generic .ALIGN directive.  For the ARM however if the
-     first argument is zero (ie no alignment is needed) the assembler
-     will behave as if the argument had been 2 (ie pad to the next four
-     byte boundary).  This is for compatability with ARM's own
-     assembler.
-
-`NAME .req REGISTER NAME'
-     This creates an alias for REGISTER NAME called NAME.  For example:
-
-                  foo .req r0
-
-`.code [16|32]'
-     This directive selects the instruction set being generated. The
-     value 16 selects Thumb, with the value 32 selecting ARM.
-
-`.thumb'
-     This performs the same action as .CODE 16.
-
-`.arm'
-     This performs the same action as .CODE 32.
-
-`.force_thumb'
-     This directive forces the selection of Thumb instructions, even if
-     the target processor does not support those instructions
-
-`.thumb_func'
-     This directive specifies that the following symbol is the name of a
-     Thumb encoded function.  This information is necessary in order to
-     allow the assembler and linker to generate correct code for
-     interworking between Arm and Thumb instructions and should be used
-     even if interworking is not going to be performed.
-
-`.thumb_set'
-     This performs the equivalent of a `.set' directive in that it
-     creates a symbol which is an alias for another symbol (possibly
-     not yet defined).  This directive also has the added property in
-     that it marks the aliased symbol as being a thumb function entry
-     point, in the same way that the `.thumb_func' directive does.
-
-`.ltorg'
-     This directive causes the current contents of the literal pool to
-     be dumped into the current section (which is assumed to be the
-     .text section) at the current location (aligned to a word
-     boundary).
-
-`.pool'
-     This is a synonym for .ltorg.
-
-
-File: as.info,  Node: ARM Opcodes,  Prev: ARM Directives,  Up: ARM-Dependent
-
-Opcodes
--------
-
-   `as' implements all the standard ARM opcodes.  It also implements
-several pseudo opcodes, including several synthetic load instructions.
-
-`NOP'
-            nop
-
-     This pseudo op will always evaluate to a legal ARM instruction
-     that does nothing.  Currently it will evaluate to MOV r0, r0.
-
-`LDR'
-            ldr <register> , = <expression>
-
-     If expression evaluates to a numeric constant then a MOV or MVN
-     instruction will be used in place of the LDR instruction, if the
-     constant can be generated by either of these instructions.
-     Otherwise the constant will be placed into the nearest literal
-     pool (if it not already there) and a PC relative LDR instruction
-     will be generated.
-
-`ADR'
-            adr <register> <label>
-
-     This instruction will load the address of LABEL into the indicated
-     register.  The instruction will evaluate to a PC relative ADD or
-     SUB instruction depending upon where the label is located.  If the
-     label is out of range, or if it is not defined in the same file
-     (and section) as the ADR instruction, then an error will be
-     generated.  This instruction will not make use of the literal pool.
-
-`ADRL'
-            adrl <register> <label>
-
-     This instruction will load the address of LABEL into the indicated
-     register.  The instruction will evaluate to one or two a PC
-     relative ADD or SUB instructions depending upon where the label is
-     located.  If a second instruction is not needed a NOP instruction
-     will be generated in its place, so that this instruction is always
-     8 bytes long.
-
-     If the label is out of range, or if it is not defined in the same
-     file (and section) as the ADRL instruction, then an error will be
-     generated.  This instruction will not make use of the literal pool.
-
-   For information on the ARM or Thumb instruction sets, see `ARM
-Software Development Toolkit Reference Manual', Advanced RISC Machines
-Ltd.
-
-
-File: as.info,  Node: D10V-Dependent,  Next: D30V-Dependent,  Prev: ARM-Dependent,  Up: Machine Dependencies
-
-D10V Dependent Features
-=======================
-
-* Menu:
-
-* D10V-Opts::                   D10V Options
-* D10V-Syntax::                 Syntax
-* D10V-Float::                  Floating Point
-* D10V-Opcodes::                Opcodes
-
-
-File: as.info,  Node: D10V-Opts,  Next: D10V-Syntax,  Up: D10V-Dependent
-
-D10V Options
-------------
-
-   The Mitsubishi D10V version of `as' has a few machine dependent
-options.
-
-`-O'
-     The D10V can often execute two sub-instructions in parallel. When
-     this option is used, `as' will attempt to optimize its output by
-     detecting when instructions can be executed in parallel.
-
-`--nowarnswap'
-     To optimize execution performance, `as' will sometimes swap the
-     order of instructions. Normally this generates a warning. When
-     this option is used, no warning will be generated when
-     instructions are swapped.
-
-
-File: as.info,  Node: D10V-Syntax,  Next: D10V-Float,  Prev: D10V-Opts,  Up: D10V-Dependent
-
-Syntax
-------
-
-   The D10V syntax is based on the syntax in Mitsubishi's D10V
-architecture manual.  The differences are detailed below.
-
-* Menu:
-
-* D10V-Size::                 Size Modifiers
-* D10V-Subs::                 Sub-Instructions
-* D10V-Chars::                Special Characters
-* D10V-Regs::                 Register Names
-* D10V-Addressing::           Addressing Modes
-* D10V-Word::                 @WORD Modifier
-
-
-File: as.info,  Node: D10V-Size,  Next: D10V-Subs,  Up: D10V-Syntax
-
-Size Modifiers
-..............
-
-   The D10V version of `as' uses the instruction names in the D10V
-Architecture Manual.  However, the names in the manual are sometimes
-ambiguous.  There are instruction names that can assemble to a short or
-long form opcode.  How does the assembler pick the correct form?  `as'
-will always pick the smallest form if it can.  When dealing with a
-symbol that is not defined yet when a line is being assembled, it will
-always use the long form.  If you need to force the assembler to use
-either the short or long form of the instruction, you can append either
-`.s' (short) or `.l' (long) to it.  For example, if you are writing an
-assembly program and you want to do a branch to a symbol that is
-defined later in your program, you can write `bra.s   foo'.  Objdump
-and GDB will always append `.s' or `.l' to instructions which have both
-short and long forms.
 

@@ -192,6 +192,36 @@ PE/PEI rearrangement (and code added): Donn Terry
 #define PUT_SCNHDR_LNNOPTR bfd_h_put_32
 #endif
 
+#ifdef COFF_WITH_PEP64
+
+#define GET_OPTHDR_IMAGE_BASE bfd_h_get_64
+#define PUT_OPTHDR_IMAGE_BASE bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_put_64
+#define GET_PDATA_ENTRY bfd_get_64
+
+#else /* !COFF_WITH_PEP64 */
+
+#define GET_OPTHDR_IMAGE_BASE bfd_h_get_32
+#define PUT_OPTHDR_IMAGE_BASE bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_put_32
+#define GET_PDATA_ENTRY bfd_get_32
+
+#endif /* !COFF_WITH_PEP64 */
+
 /* These functions are architecture dependent, and are in peicode.h:
    coff_swap_reloc_in
    int coff_swap_reloc_out

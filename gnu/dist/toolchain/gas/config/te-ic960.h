@@ -18,10 +18,8 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-/*
- * This file is te-ic960.h and is intended to define ic960 environment
- * specific differences.
- */
+/* This file is te-ic960.h and is intended to define ic960 environment
+   specific differences.  */
 
 #define OBJ_COFF_OMIT_OPTIONAL_HEADER
 

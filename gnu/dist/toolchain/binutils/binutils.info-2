@@ -20,21 +20,15 @@ START-INFO-DIR-ENTRY
 * dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
 END-INFO-DIR-ENTRY
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
 Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided also
-that the entire resulting derived work is distributed under the terms
-of a permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: binutils.info,  Node: size,  Next: strings,  Prev: readelf,  Up: Top
@@ -347,6 +341,9 @@ output.  All results are printed on the standard output.
     `edg'
           the one used by the EDG compiler
 
+    `gnu-new-abi'
+          the one used by the GNU compiler with the new ABI.
+
 `--help'
      Print a summary of the options to `c++filt' and exit.
 
@@ -376,7 +373,7 @@ addr2line
 *********
 
      addr2line [ -b BFDNAME | --target=BFDNAME ]
-               [ -C | --demangle ]
+               [ -C | --demangle[=STYLE ]
                [ -e FILENAME | --exe=FILENAME ]
                [ -f | --functions ] [ -s | --basename ]
                [ -H | --help ] [ -V | --version ]
@@ -420,11 +417,13 @@ equivalent.
      BFDNAME.
 
 `-C'
-`--demangle'
+`--demangle[=STYLE]'
      Decode ("demangle") low-level symbol names into user-level names.
      Besides removing any initial underscore prepended by the system,
-     this makes C++ function names readable.  *Note c++filt::, for more
-     information on demangling.
+     this makes C++ function names readable.  Different compilers have
+     different mangling styles. The optional demangling style argument
+     can be used to choose an appropriate demangling style for your
+     compiler. *Note c++filt::, for more information on demangling.
 
 `-e FILENAME'
 `--exe=FILENAME'
@@ -898,7 +897,7 @@ readelf
              [ -V | --version-info]
              [ -D | --use-dynamic]
              [ -x <number> | --hex-dump=<number>]
-             [ -w[liapr] | --debug-dump[=info,=line,=abbrev,=pubnames,=ranges]]
+             [ -w[liaprf] | --debug-dump[=info,=line,=abbrev,=pubnames,=ranges,=frames]]
              [      --histogram]
              [ -v | --version]
              [ -H | --help]
@@ -976,8 +975,8 @@ equivalent.  At least one option besides `-v' or `-H' must be given.
      Displays the contents of the indicated section as a hexadecimal
      dump.
 
-`-w[liapr]'
-`--debug-dump[=line,=info,=abbrev,=pubnames,=ranges]'
+`-w[liaprf]'
+`--debug-dump[=line,=info,=abbrev,=pubnames,=ranges,=frames]'
      Displays the contents of the debug sections in the file, if any are
      present.  If one of the optional letters or words follows the
      switch then only data found in those specific sections will be
@@ -1211,7 +1210,7 @@ In particular, it consists of
      `EMUL' in `config/TARGET.mt'
 
 
-File: binutils.info,  Node: Reporting Bugs,  Next: Index,  Prev: Selecting The Target System,  Up: Top
+File: binutils.info,  Node: Reporting Bugs,  Next: GNU Free Documentation License,  Prev: Selecting The Target System,  Up: Top
 
 Reporting Bugs
 **************
@@ -1265,7 +1264,7 @@ organization, we recommend you contact that organization first.
 individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
 
    In any event, we also recommend that you send bug reports for the
-binary utilities to `bug-gnu-utils@gnu.org'.
+binary utilities to `bug-binutils@gnu.org'.
 
    The fundamental principle of reporting bugs usefully is this:
 *report all the facts*.  If you are not sure whether to state a fact or
@@ -1318,7 +1317,7 @@ to respond to them_ except to chide the sender to report bugs properly.
      the bug.  If the utility is reading an object file or files, then
      it is generally most helpful to send the actual object files,
      uuencoded if necessary to get them through the mail system.  Note
-     that `bug-gnu-utils@gnu.org' is a mailing list, so you should avoid
+     that `bug-binutils@gnu.org' is a mailing list, so you should avoid
      sending very large files to it.  Making the files available for
      anonymous FTP is OK.
 

@@ -22,8 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-
-static boolean 
+static boolean
 scan_mach (info, string)
      const struct bfd_arch_info *info;
      const char *string;
@@ -32,7 +31,6 @@ scan_mach (info, string)
     return true;
   return false;
 }
-
 
 #if 0
 /* This routine is provided two arch_infos and returns whether
@@ -49,8 +47,7 @@ compatible (a,b)
 }
 #endif
 
-
-static const bfd_arch_info_type arch_info_struct[] = 
+static const bfd_arch_info_type arch_info_struct[] =
 {
   {
     32,				/* 32 bits in a word */

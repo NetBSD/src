@@ -22,10 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-
 int bfd_default_scan_num_mach();
 
-static boolean 
+static boolean
 scan_mach (info, string)
      const struct bfd_arch_info *info ATTRIBUTE_UNUSED;
      const char *string;
@@ -34,8 +33,6 @@ scan_mach (info, string)
   if (strcmp(string,"w65816") == 0) return true;
   return false;
 }
-
-
 
 const bfd_arch_info_type bfd_w65_arch =
 {

@@ -22,9 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-
-
-
 const bfd_arch_info_type bfd_m88k_arch =
   {
     32,	/* 32 bits in a word */
@@ -36,7 +33,7 @@ const bfd_arch_info_type bfd_m88k_arch =
     "m88k:88100",
     3,
     true, /* the one and only */
-    bfd_default_compatible, 
+    bfd_default_compatible,
     bfd_default_scan ,
     0,
   };

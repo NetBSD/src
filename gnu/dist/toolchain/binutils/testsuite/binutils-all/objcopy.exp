@@ -80,7 +80,7 @@ if ![string match "" $got] then {
     setup_xfail "h8300-*-hms" "h8300-*-coff"
     setup_xfail "h8500-*-hms" "h8500-*-coff"
     setup_xfail "hppa*-*-*"
-    clear_xfail "hppa*-*-*elf*"
+    clear_xfail "hppa*-*-*elf*" "hppa*-*-linux*"
     setup_xfail "m88*-*-coff" "m88*-motorola-sysv*"
     setup_xfail "z8*-*-coff"
 
@@ -473,7 +473,7 @@ proc copy_executable { prog flags test1 test2 } {
 	# mips_elf_sym_is_global.
 	setup_xfail "mips*-*-elf"
 
-	setup_xfail "arm*-*-coff"
+	setup_xfail "*arm*-*-coff"
 	setup_xfail "arm*-*-pe"
 	setup_xfail "thumb*-*-coff"
 	setup_xfail "thumb*-*-pe"

@@ -20,21 +20,15 @@ START-INFO-DIR-ENTRY
 * dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
 END-INFO-DIR-ENTRY
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
 Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided also
-that the entire resulting derived work is distributed under the terms
-of a permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: binutils.info,  Node: Top,  Next: ar,  Up: (dir)
@@ -43,7 +37,11 @@ Introduction
 ************
 
    This brief manual contains preliminary documentation for the GNU
-binary utilities (collectively version 2.10.1):
+binary utilities (collectively version 2.11):
+
+   This document is distributed under the terms of the GNU Free
+Documentation License.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 * Menu:
 
@@ -64,6 +62,7 @@ binary utilities (collectively version 2.10.1):
 * dlltool::			Create files needed to build and use DLLs
 * Selecting The Target System:: How these utilities determine the target.
 * Reporting Bugs::              Reporting Bugs
+* GNU Free Documentation License::  GNU Free Documentation License
 * Index::                       Index
 
 
@@ -123,7 +122,7 @@ File: binutils.info,  Node: ar cmdline,  Next: ar scripts,  Up: ar
 Controlling `ar' on the command line
 ====================================
 
-     ar [-]P[MOD [RELPOS] [COUNT]] ARCHIVE [MEMBER...]
+     ar [-X32_64] [-]P[MOD [RELPOS] [COUNT]] ARCHIVE [MEMBER...]
 
    When you use `ar' in the Unix style, `ar' insists on at least two
 arguments to execute: one keyletter specifying the _operation_
@@ -312,6 +311,12 @@ to specify variations on an operation's behavior:
 `V'
      This modifier shows the version number of `ar'.
 
+   `ar' ignores an initial option spelt `-X32_64', for compatibility
+with AIX.  The behaviour produced by this option is the default for GNU
+`ar'.  `ar' does not support any of the other `-X' options; in
+particular, it does not support `-X32' which is the default for AIX
+`ar'.
+
 
 File: binutils.info,  Node: ar scripts,  Prev: ar cmdline,  Up: ar
 
@@ -461,14 +466,14 @@ nm
 **
 
      nm [ -a | --debug-syms ]  [ -g | --extern-only ]
-        [ -B ]  [ -C | --demangle ] [ -D | --dynamic ]
+        [ -B ]  [ -C | --demangle[=STYLE] ] [ -D | --dynamic ]
         [ -s | --print-armap ]  [ -A | -o | --print-file-name ]
         [ -n | -v | --numeric-sort ]  [ -p | --no-sort ]
         [ -r | --reverse-sort ]  [ --size-sort ] [ -u | --undefined-only ]
         [ -t RADIX | --radix=RADIX ] [ -P | --portability ]
         [ --target=BFDNAME ] [ -f FORMAT | --format=FORMAT ]
-        [ --defined-only ] [-l | --line-numbers ]
-        [ --no-demangle ] [ -V | --version ]  [ --help ]  [ OBJFILE... ]
+        [ --defined-only ] [-l | --line-numbers ]  [ --no-demangle ]
+        [ -V | --version ]  [ -X 32_64 ]  [ --help ]  [ OBJFILE... ]
 
    GNU `nm' lists the symbols from object files OBJFILE....  If no
 object files are listed as arguments, `nm' assumes the file `a.out'.
@@ -574,11 +579,13 @@ equivalent.
      The same as `--format=bsd' (for compatibility with the MIPS `nm').
 
 `-C'
-`--demangle'
+`--demangle[=STYLE]'
      Decode ("demangle") low-level symbol names into user-level names.
      Besides removing any initial underscore prepended by the system,
-     this makes C++ function names readable.  *Note c++filt::, for more
-     information on demangling.
+     this makes C++ function names readable. Different compilers have
+     different mangling styles. The optional demangling style argument
+     can be used to choose an appropriate demangling style for your
+     compiler. *Note c++filt::, for more information on demangling.
 
 `--no-demangle'
      Do not demangle low-level symbol names.  This is the default.
@@ -662,6 +669,12 @@ equivalent.
 `--version'
      Show the version number of `nm' and exit.
 
+`-X'
+     This option is ignored for compatibility with the AIX version of
+     `nm'.  It takes one parameter which must be the string `32_64'.
+     The default mode of AIX `nm' corresponds to `-X 32', which is not
+     supported by GNU `nm'.
+
 `--help'
      Show a summary of the options to `nm' and exit.
 
@@ -695,6 +708,7 @@ objcopy
              [ --set-section-flags SECTION=FLAGS ]
              [ --add-section SECTIONNAME=FILENAME ]
              [ --change-leading-char ] [ --remove-leading-char ]
+             [ --srec-len=IVAL ] [ --srec-forceS3 ]
              [ --redefine-sym OLD=NEW ] [ --weaken ]
              [ -v | --verbose ] [ -V | --version ]  [ --help ]
              INFILE [OUTFILE]
@@ -703,7 +717,10 @@ objcopy
 another.  `objcopy' uses the GNU BFD Library to read and write the
 object files.  It can write the destination object file in a format
 different from that of the source object file.  The exact behavior of
-`objcopy' is controlled by command-line options.
+`objcopy' is controlled by command-line options.  Note that `objcopy'
+should be able to copy a fully linked file between any two formats.
+However, copying a relocatable object file between any two formats may
+not work as expected.
 
    `objcopy' creates temporary files to do its translations and deletes
 them afterward.  `objcopy' uses BFD to do all its translation work; it
@@ -725,6 +742,11 @@ address of the lowest section copied into the output file.
 to use `-S' to remove sections containing debugging information.  In
 some cases `-R' will be useful to remove sections which contain
 information that is not needed by the binary file.
+
+   Note - `objcopy' is not able to change the endianness of its input
+files.  If the input format has an endianness, (some formats do not),
+`objcopy' can only copy the inputs into file formats that have the same
+endianness or which have no endianness (eg `srec').
 
 `INFILE'
 `OUTFILE'
@@ -940,6 +962,15 @@ information that is not needed by the binary file.
      because it always changes the symbol name when appropriate,
      regardless of the object file format of the output file.
 
+`--srec-len=IVAL'
+     Meaningful only for srec output.  Set the maximum length of the
+     Srecords being produced to IVAL.  This length covers both address,
+     data and crc fields.
+
+`--srec-forceS3'
+     Meaningful only for srec output.  Avoid generation of S1/S2
+     records, creating S3-only record format.
+
 `--redefine-sym OLD=NEW'
      Change the name of a symbol OLD, to NEW.  This can be useful when
      one is trying link two things together for which you have no
@@ -972,7 +1003,7 @@ objdump
 
      objdump [ -a | --archive-headers ]
              [ -b BFDNAME | --target=BFDNAME ]
-             [ -C | --demangle ]
+             [ -C | --demangle[=STYLE] ]
              [ -d | --disassemble ]
              [ -D | --disassemble-all ]
              [ -z | --disassemble-zeroes ]
@@ -1049,11 +1080,13 @@ equivalent.  At least one option from the list
      for more information.
 
 `-C'
-`--demangle'
+`--demangle[=STYLE]'
      Decode ("demangle") low-level symbol names into user-level names.
      Besides removing any initial underscore prepended by the system,
-     this makes C++ function names readable.  *Note c++filt::, for more
-     information on demangling.
+     this makes C++ function names readable.  Different compilers have
+     different mangling styles. The optional demangling style argument
+     can be used to choose an appropriate demangling style for your
+     compiler. *Note c++filt::, for more information on demangling.
 
 `-G'
 
