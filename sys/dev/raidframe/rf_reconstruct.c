@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.21 2000/03/07 02:59:50 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.22 2000/03/13 23:52:36 soren Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -917,7 +917,7 @@ ProcessReconEvent(raidPtr, frow, event)
  * head-separation wait request and return.
  *
  * ctrl->{ru_count, curPSID, diskOffset} and
- * rbuf->failedDiskSectorOffset are maintained to point the the unit
+ * rbuf->failedDiskSectorOffset are maintained to point to the unit
  * we're currently accessing.  Note that this deviates from the
  * standard C idiom of having counters point to the next thing to be
  * accessed.  This allows us to easily retry when we're blocked by

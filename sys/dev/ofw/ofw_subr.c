@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.5 1998/02/24 07:14:17 mycroft Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.6 2000/03/13 23:52:36 soren Exp $	*/
 
 /*
  * Copyright 1998
@@ -162,7 +162,7 @@ out:
  * Return Value:
  *	-1 if the device path name could not be obtained or would
  *	not fit in the allocated temporary buffer, or zero otherwise
- *	(meaning the the leaf node name was successfully extracted).
+ *	(meaning that the leaf node name was successfully extracted).
  *
  * Side Effects:
  *	If the leaf node name was successfully extracted, 'buf' is

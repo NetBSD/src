@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.198 2000/02/29 22:19:53 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.199 2000/03/13 23:52:26 soren Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2000/02/29 22:19:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2000/03/13 23:52:26 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +417,7 @@ nobootinfo:
 	strcpy(cpu_model, platform.model);
 
 	/*
-	 * Initalize the real console, so the the bootstrap console is
+	 * Initalize the real console, so that the bootstrap console is
 	 * no longer necessary.
 	 */
 	(*platform.cons_init)();
@@ -425,7 +425,7 @@ nobootinfo:
 #ifdef DIAGNOSTIC
 	/* Paranoid sanity checking */
 
-	/* We should always be running on the the primary. */
+	/* We should always be running on the primary. */
 	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25 1999/09/13 06:17:27 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.26 2000/03/13 23:52:27 soren Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -242,7 +242,7 @@ syscall(frame, code)
 #endif	/* DDB && PORTMASTER */
 
 	case SYS_syscall:
-		/* Don't have to look in user space, we have it in the the trapframe */
+		/* Don't have to look in user space, we have it in the trapframe */
 /*		code = fuword(params);*/
 		code = ReadWord(params);
 		params += sizeof(int);

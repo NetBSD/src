@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.50 1998/10/04 00:02:38 fvdl Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.51 2000/03/13 23:52:35 soren Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ linux_sys_oldolduname(p, v, retval)
 	strncpy(luts.l_version, version, sizeof(luts.l_version));
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
 
-	/* This part taken from the the uname() in libc */
+	/* This part taken from the uname() in libc */
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp) {
 		if (*cp == '\n' || *cp == '\t') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.49 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: dtop.c,v 1.50 2000/03/13 23:52:32 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.49 2000/03/06 21:36:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.50 2000/03/13 23:52:32 soren Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -191,7 +191,7 @@ static void	dtopstart __P((struct tty *));
  *        The fix is to adjust the division table by changing the start
  *        of division 6 (which includes the shift and control keys) to
  *        include the right shift [0xab] and changing the end of division
- *        8 to be the the up arrow [0xaa].  The initial key mode is also
+ *        8 to be the up arrow [0xaa].  The initial key mode is also
  *        modified to include the right shift key as up/down.
  */
 static u_char divbeg[NUMDIVS] = {0xbf, 0x91, 0xbc, 0xbd, 0xb0, 0xab, 0xa6,

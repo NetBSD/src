@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.4 1999/10/25 23:34:31 wrstuden Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.5 2000/03/13 23:52:40 soren Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the the name of the National Aeronautics & Space Administration
+ * 3. Neither the name of the National Aeronautics & Space Administration
  *    nor the names of its contributors may be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
