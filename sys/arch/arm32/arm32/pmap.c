@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 1997/10/14 11:31:30 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 1998/01/02 22:36:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -1173,27 +1173,46 @@ pmap_pageable(pmap, sva, eva, pageable)
 }                                     
 
 
+/*
+ * Activate the address space for the specified process.  If the process
+ * is the current process, load the new MMU context.
+ */
 void
-pmap_activate(pmap, pcbp)
-	pmap_t pmap;
-	struct pcb *pcbp;
+pmap_activate(p)
+	struct proc *p;
 {
-	if (pmap != NULL) {
-		pcbp->pcb_pagedir = (pd_entry_t *)pmap_extract(kernel_pmap,
-		    (vm_offset_t)pmap->pm_pdir);
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("pmap_activate: pmap=%p pcb=%p pdir=%p l1=%p\n",
-			    pmap, pcbp, pmap->pm_pdir,
-			    pcbp->pcb_pagedir);
-#endif	/* PMAP_DEBUG */
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-		if (pmap == curproc->p_vmspace->vm_map.pmap) {
-			printf("pmap: Setting TTB\n");
-			setttb((u_int)pcbp->pcb_pagedir);
-		}
-/*		pmap->pm_pdchanged = FALSE;*/
+	pcb->pcb_pagedir = (pd_entry_t *)pmap_extract(kernel_pmap,
+	    (vm_offset_t)pmap->pm_pdir);
+
+#ifdef PMAP_DEBUG
+	if (pmap_debug_level >= 0)
+		printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
+		    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir);
+#endif
+
+	if (p == curproc) {
+#if PMAP_DEBUG
+		if (pmap_debug_level >= 0)
+			printf("pmap_activate: setting TTB\n");
+#endif
+		setttb((u_int)pcb->pcb_pagedir);
 	}
+#if 0
+	pmap->pm_pdchanged = FALSE;
+#endif
+}
+
+
+/*
+ * Deactivate the address space of the specified process.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
 }
 
 
