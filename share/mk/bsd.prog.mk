@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.58 1996/12/13 08:02:52 mikel Exp $
+#	$NetBSD: bsd.prog.mk,v 1.59 1996/12/20 16:39:03 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -95,6 +95,14 @@ clean: _SUBDIRUSE
 .endif
 
 cleandir: _SUBDIRUSE clean
+
+.if defined(SRCS)
+afterdepend: .depend
+	@(TMP=/tmp/_depend$$$$; \
+	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.ln:/' \
+	      < .depend > $$TMP; \
+	    mv $$TMP .depend)
+.endif
 
 .if !target(install)
 .if !target(beforeinstall)
