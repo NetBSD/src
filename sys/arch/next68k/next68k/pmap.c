@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2001/09/10 21:19:21 chris Exp $        */
+/*	$NetBSD: pmap.c,v 1.37 2001/09/29 22:00:35 chs Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -1641,7 +1641,7 @@ pmap_kremove(va, len)
 				 */
 
 				*pte = PG_NV;
-				TBIS(va);
+				TBIS(sva);
 			}
 			pte++;
 			sva += NBPG;
