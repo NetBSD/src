@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2002/04/09 19:48:07 hubertf Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2002/07/28 08:58:59 grant Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -137,7 +137,9 @@ message parttable
 }
 
 message editpart
-{Edytujesz partycje %d. Podswietlona partycja to ta, ktora edytujesz.}
+{Edytujesz partycje %d. Podswietlona partycja to ta, ktora edytujesz.
+
+}
 
 message editparttable
 {Wyedytuj DOSowa tablice partycji. Podswietlona partycja jest aktualnie

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.25 2002/07/09 14:49:25 wiz Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.26 2002/07/28 08:58:59 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,7 +137,9 @@ message parttable
 
 message editpart
 {You are editing partition %d. The highlighted partition is the partition
-you are editing.}
+you are editing.
+
+}
 
 message editparttable
 {Edit your DOS partition table.  The highlighted partition is the currently
