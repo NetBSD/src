@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.7 2002/09/27 20:37:47 thorpej Exp $	*/
+/*	$NetBSD: dzms.c,v 1.8 2002/09/30 20:53:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.7 2002/09/27 20:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.8 2002/09/30 20:53:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,8 @@ static int  dzms_match __P((struct device *, struct cfdata *, void *));
 static void dzms_attach __P((struct device *, struct device *, void *));
 static int dzms_input __P((void *, int));
 
-const struct cfattach dzms_ca = {
-	sizeof(struct dzms_softc), dzms_match, dzms_attach,
-};
+CFATTACH_DECL(dzms, sizeof(struct dzms_softc),
+    dzms_match, dzms_attach, NULL, NULL)
 
 static int  dzms_enable __P((void *));
 static int  dzms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));

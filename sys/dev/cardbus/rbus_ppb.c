@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.6 2002/09/27 20:37:46 thorpej Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.7 2002/09/30 20:52:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.6 2002/09/27 20:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.7 2002/09/30 20:52:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,13 +129,8 @@ struct ppb_cardbus_softc {
   int foo;
 };
 
-const struct cfattach rbus_ppb_ca = {
-	sizeof(struct ppb_cardbus_softc),
-	ppb_cardbus_match,
-	ppb_cardbus_attach,
-	ppb_cardbus_detach,
-	ppb_activate
-};
+CFATTACH_DECL(rbus_ppb, sizeof(struct ppb_cardbus_softc),
+    ppb_cardbus_match, ppb_cardbus_attach, ppb_cardbus_detach, ppb_activate)
 
 #ifdef  CBB_DEBUG
 int rbus_ppb_debug = 0;   /* hack with kdb */
