@@ -1,4 +1,4 @@
-.\"	$NetBSD: audioplay.1,v 1.5 1999/07/13 14:02:33 kleink Exp $
+.\"	$NetBSD: audioplay.1,v 1.6 1999/09/13 19:36:30 tron Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -102,20 +102,41 @@ sample rate.
 .It Fl c
 when combined with the
 .Fl f
-option, sets the number of channels to it's argument.
+option, sets the number of channels to its argument.
 .It Fl e
 when combined with the
 .Fl f
-option, sets the encoding to it's argument
+option, sets the encoding to its argument. Possible values are
+.Cm mulaw ,
+.Cm ulaw ,
+.Cm alaw ,
+.Cm slinear ,
+.Cm linear ,
+.Cm ulinear ,
+.Cm adpcm ,
+.Cm ADPCM ,
+.Cm slinear_le ,
+.Cm linear_le ,
+.Cm ulinear_le ,
+.Cm slinear_be ,
+.Cm linear_be ,
+.Cm ulinear_be ,
+.Cm mpeg_l1_stream ,
+.Cm mpeg_l1_packets ,
+.Cm mpeg_l1_system ,
+.Cm mpeg_l2_stream ,
+.Cm mpeg_l2_packets ,
+and
+.Cm mpeg_l2_system .
 .It Fl P
 when combined with the
 .Fl f
-option, sets the precision to it's argument.  This value must be either
+option, sets the precision to its argument.  This value must be either
 8, 16, 24 or 32.
 .It Fl s
 when combined with the
 .Fl f
-option, sets the sample rate to it's argument.  This value must be a
+option, sets the sample rate to its argument.  This value must be a
 valid value for the audio device or an error will be returned.
 .El
 .Sh ENVIRONMENT
@@ -125,6 +146,11 @@ the audio control device to be used.
 .It AUDIODEVICE
 the audio device to be used.
 .El
+.Sh EXAMPLES
+Play a raw dump taken from an audio CD ROM:
+.Pp
+.Dl "audioplay -f -c 2 -P 16 -s 44100 e slinear_le filename
+.Pp
 .Sh NOTES
 .Nm
 can be used to play Sun/NeXT audio files, and also RIFF WAVE audio files.
