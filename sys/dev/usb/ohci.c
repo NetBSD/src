@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.2 1998/07/23 01:46:27 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.3 1998/07/23 13:41:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,13 +80,14 @@ void		ohci_rhsc __P((ohci_softc_t *, usbd_request_handle));
 void		ohci_process_done __P((ohci_softc_t *, ohci_physaddr_t));
 void		ohci_ctrl_done __P((ohci_softc_t *, usbd_request_handle));
 void		ohci_intr_done __P((ohci_softc_t *, usbd_request_handle));
+void		ohci_bulk_done __P((ohci_softc_t *, usbd_request_handle));
 
 usbd_status	ohci_allocmem __P((ohci_softc_t *,size_t,size_t, ohci_dma_t*));
 void		ohci_freemem __P((ohci_softc_t *, ohci_dma_t *));
 
 usbd_status	ohci_device_request __P((usbd_request_handle reqh));
-void		ohci_add_ed __P((ohci_softc_t *, ohci_soft_ed_t *, 
-				 ohci_soft_ed_t *));
+void		ohci_add_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
+void		ohci_rem_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
 void		ohci_hash_add_td __P((ohci_softc_t *, ohci_soft_td_t *));
 void		ohci_hash_rem_td __P((ohci_softc_t *, ohci_soft_td_t *));
 ohci_soft_td_t *ohci_hash_find_td __P((ohci_softc_t *, ohci_physaddr_t));
@@ -102,6 +103,10 @@ void		ohci_root_intr_close __P((usbd_pipe_handle));
 usbd_status	ohci_device_ctrl_transfer __P((usbd_request_handle));
 void		ohci_device_ctrl_abort __P((usbd_request_handle));
 void		ohci_device_ctrl_close __P((usbd_pipe_handle));
+
+usbd_status	ohci_device_bulk_transfer __P((usbd_request_handle));
+void		ohci_device_bulk_abort __P((usbd_request_handle));
+void		ohci_device_bulk_close __P((usbd_pipe_handle));
 
 usbd_status	ohci_device_intr_transfer __P((usbd_request_handle));
 void		ohci_device_intr_abort __P((usbd_request_handle));
@@ -152,6 +157,11 @@ struct ohci_pipe {
 			int nslots;
 			int pos;
 		} intr;
+		/* Bulk pipe */
+		struct {
+			ohci_dma_t datadma;
+			u_int length;
+		} bulk;
 	} u;
 };
 
@@ -179,6 +189,12 @@ struct usbd_methods ohci_device_intr_methods = {
 	ohci_device_intr_transfer,
 	ohci_device_intr_abort,
 	ohci_device_intr_close,
+};
+
+struct usbd_methods ohci_device_bulk_methods = {	
+	ohci_device_bulk_transfer,
+	ohci_device_bulk_abort,
+	ohci_device_bulk_close,
 };
 
 usbd_status
@@ -673,7 +689,7 @@ ohci_process_done(sc, done)
 					ohci_intr_done(sc, reqh);
 					break;
 				case UE_BULK:
-					printf("ohci_process_done: BULK done?\n");
+					ohci_bulk_done(sc, reqh);
 					break;
 				case UE_ISOCHRONOUS:
 					printf("ohci_process_done: ISO done?\n");
@@ -781,6 +797,24 @@ ohci_intr_done(sc, reqh)
 	} else {
 		ohci_freemem(sc, dma);
 	}
+}
+
+void
+ohci_bulk_done(sc, reqh)
+	ohci_softc_t *sc;
+	usbd_request_handle reqh;
+{
+	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
+	ohci_dma_t *dma;
+
+
+	DPRINTFN(10,("ohci_bulk_done: reqh=%p, actlen=%d\n", 
+		     reqh, reqh->actlen));
+
+	dma = &opipe->u.bulk.datadma;
+	if (reqh->request.bmRequestType & UT_READ)
+		memcpy(reqh->buffer, KERNADDR(dma), reqh->actlen);
+	ohci_freemem(sc, dma);
 }
 
 void
@@ -1002,8 +1036,7 @@ ohci_device_request(reqh)
  * Add an ED to the schedule.  Called at splusb().
  */
 void
-ohci_add_ed(sc, sed, head)
-	ohci_softc_t *sc;
+ohci_add_ed(sed, head)
 	ohci_soft_ed_t *sed; 
 	ohci_soft_ed_t *head; 
 {
@@ -1011,6 +1044,25 @@ ohci_add_ed(sc, sed, head)
 	sed->ed->ed_nexted = head->ed->ed_nexted;
 	head->next = sed;
 	head->ed->ed_nexted = sed->physaddr;
+}
+
+/*
+ * Remove an ED from the schedule.  Called at splusb().
+ */
+void
+ohci_rem_ed(sed, head)
+	ohci_soft_ed_t *sed; 
+	ohci_soft_ed_t *head; 
+{
+	ohci_soft_ed_t *p; 
+
+	/* XXX */
+	for (p = head; p && p->next != sed; p = p->next)
+		;
+	if (!p)
+		panic("ohci_rem_ed: ED not found\n");
+	p->next = sed->next;
+	p->ed->ed_nexted = sed->ed->ed_nexted;
 }
 
 /*
@@ -1171,7 +1223,7 @@ ohci_open(pipe)
 			if (r != USBD_NORMAL_COMPLETION)
 				goto bad;
 			s = splusb();
-			ohci_add_ed(sc, sed, sc->sc_ctrl_head);
+			ohci_add_ed(sed, sc->sc_ctrl_head);
 			splx(s);
 			break;
 		case UE_INTERRUPT:
@@ -1181,8 +1233,11 @@ ohci_open(pipe)
 			printf("ohci_open: open iso unimplemented\n");
 			return (USBD_XXX);
 		case UE_BULK:
-			printf("ohci_open: open bulk unimplemented\n");
-			return (USBD_XXX);
+			pipe->methods = &ohci_device_bulk_methods;
+			s = splusb();
+			ohci_add_ed(sed, sc->sc_bulk_head);
+			splx(s);
+			break;
 		}
 	}
 	return (USBD_NORMAL_COMPLETION);
@@ -1581,6 +1636,7 @@ void
 ohci_root_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
+	/* Nothing to do, all transfers are syncronous. */
 }
 
 /* Close the root pipe. */
@@ -1615,11 +1671,12 @@ ohci_root_intr_transfer(reqh)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a root control request. */
+/* Abort a root interrupt request. */
 void
 ohci_root_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
+	/* No need to abort. */
 }
 
 /* Close the root pipe. */
@@ -1661,8 +1718,9 @@ void
 ohci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* XXX */
-	usbd_delay_ms(2);	/* make sure it is finished */
+	/* XXX inactivate */
+	usbd_delay_ms(1);	/* make sure it is finished */
+	/* XXX call done */
 }
 
 /* Close a device control pipe. */
@@ -1672,19 +1730,128 @@ ohci_device_ctrl_close(pipe)
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 	ohci_softc_t *sc = (ohci_softc_t *)pipe->device->bus;
-	ohci_soft_ed_t *p, *sed = opipe->sed;
+	ohci_soft_ed_t *sed = opipe->sed;
 	int s;
 
 	s = splusb();
 	sed->ed->ed_flags |= OHCI_ED_SKIP;
 	if ((sed->ed->ed_tailp & OHCI_TAILMASK) != sed->ed->ed_headp)
 		usbd_delay_ms(2);
-	/* XXX */
-	for (p = sc->sc_ctrl_head; p && p->next != opipe->sed; p = p->next)
-		;
-	if (!p)
-		panic("ohci_device_ctrl_close: ED not found\n");
-	p->next = p->next->next;
+	ohci_rem_ed(sed, sc->sc_ctrl_head);
+	splx(s);
+	ohci_free_std(sc, opipe->tail);
+	ohci_free_sed(sc, opipe->sed);
+	/* XXX free other resources */
+}
+
+/************************/
+
+usbd_status
+ohci_device_bulk_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
+	usbd_device_handle dev = opipe->pipe.device;
+	ohci_softc_t *sc = (ohci_softc_t *)dev->bus;
+	int addr = dev->address;
+	ohci_soft_td_t *xfer, *tail;
+	ohci_soft_ed_t *sed;
+	ohci_dma_t *dmap;
+	usbd_status r;
+	int s, len, isread;
+
+	if (reqh->isreq) {
+		/* XXX panic */
+		printf("ohci_device_bulk_transfer: a request\n");
+		return (USBD_INVAL);
+	}
+
+	len = reqh->length;
+	dmap = &opipe->u.bulk.datadma;
+	isread = reqh->pipe->endpoint->edesc->bEndpointAddress & UE_IN;
+	sed = opipe->sed;
+
+	opipe->u.bulk.length = len;
+
+	r = ohci_allocmem(sc, len, 0, dmap);
+	if (r != USBD_NORMAL_COMPLETION)
+		goto ret1;
+
+	tail = ohci_alloc_std(sc);
+	if (!tail) {
+		r = USBD_NOMEM;
+		goto ret2;
+	}
+	tail->reqh = 0;
+
+	/* Update device address */
+	sed->ed->ed_flags = 
+		(sed->ed->ed_flags & ~OHCI_ED_ADDRMASK) |
+		OHCI_ED_SET_FA(addr);
+
+	/* Set up data transaction */
+	xfer = opipe->tail;
+	xfer->td->td_flags = 
+		(isread ? OHCI_TD_IN : OHCI_TD_OUT) | OHCI_TD_NOCC |
+		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY;
+	xfer->td->td_cbp = DMAADDR(dmap);
+	xfer->nexttd = tail;
+	xfer->td->td_nexttd = tail->physaddr;
+	xfer->td->td_be = xfer->td->td_cbp + len - 1;
+	xfer->len = len;
+	xfer->reqh = reqh;
+
+	reqh->actlen = 0;
+	reqh->hcpriv = xfer;
+
+	if (!isread)
+		memcpy(KERNADDR(dmap), reqh->buffer, len);
+
+	/* Insert ED in schedule */
+	s = splusb();
+	ohci_hash_add_td(sc, xfer);
+	sed->ed->ed_tailp = tail->physaddr;
+	opipe->tail = tail;
+	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
+	if (reqh->timeout && !usbd_use_polling)
+		timeout(ohci_timeout, reqh, MS_TO_TICKS(reqh->timeout));
+	splx(s);
+
+	return (USBD_IN_PROGRESS);
+
+ ret2:
+	ohci_freemem(sc, dmap);
+ ret1:
+	return (r);
+}
+
+/* Abort a device bulk request. */
+void
+ohci_device_bulk_abort(reqh)
+	usbd_request_handle reqh;
+{
+#if 0
+	sed->ed->ed_flags |= OHCI_ED_SKIP;
+	if ((sed->ed->ed_tailp & OHCI_TAILMASK) != sed->ed->ed_headp)
+		usbd_delay_ms(2);
+#endif
+	/* XXX inactivate */
+	usbd_delay_ms(1);	/* make sure it is finished */
+	/* XXX call done */
+}
+
+/* Close a device bulk pipe. */
+void
+ohci_device_bulk_close(pipe)
+	usbd_pipe_handle pipe;
+{
+	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
+	usbd_device_handle dev = opipe->pipe.device;
+	ohci_softc_t *sc = (ohci_softc_t *)dev->bus;
+	int s;
+
+	s = splusb();
+	ohci_rem_ed(opipe->sed, sc->sc_bulk_head);
 	splx(s);
 	ohci_free_std(sc, opipe->tail);
 	ohci_free_sed(sc, opipe->sed);
@@ -1787,8 +1954,8 @@ ohci_device_intr_abort(reqh)
 {
 	struct uhci_pipe *opipe;
 
-	/* XXX */
-	usbd_delay_ms(2);	/* make sure it is finished */
+	/* XXX inactivate */
+	usbd_delay_ms(1);	/* make sure it is finished */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;
