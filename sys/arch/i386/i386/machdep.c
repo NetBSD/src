@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230.4.3 1997/05/25 00:25:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230.4.4 1997/06/06 00:43:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1955,9 +1955,12 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
 	 * of ALLOCNOW notifies others that we've reserved these resources,
 	 * and they are not to be freed.
+	 *
+	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
+	 * the (nsegments - 1).
 	 */
 	mapsize = sizeof(struct i386_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * nsegments);
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DEVBUF,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
