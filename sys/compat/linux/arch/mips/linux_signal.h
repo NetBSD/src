@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.5 2001/10/14 17:21:47 manu Exp $ */
+/* $NetBSD: linux_signal.h,v 1.6 2002/02/19 14:11:49 rafal Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -108,6 +108,8 @@ struct linux_pt_regs {
 /* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_SIGINFO	0x00000008
+#define LINUX_SA_NOCLDWAIT	0x00010000
+#define LINUX_SA_RESTORER	0x04000000    
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
@@ -115,7 +117,7 @@ struct linux_pt_regs {
 #define LINUX_SA_RESETHAND	0x80000000
 #define LINUX_SA_NOMASK		LINUX_SA_NODEFER
 #define LINUX_SA_ONESHOT	LINUX_SA_RESETHAND
-#define LINUX_SA_ALLBITS	0xf8000001 /* XXX from i386, not in mips. */
+#define LINUX_SA_ALLBITS	0xfc010009 /* XXX from i386, not in mips. */
 
 typedef void (*linux___sighandler_t) __P((int));
 
