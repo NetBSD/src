@@ -11,9 +11,6 @@ Bugs:
 - MD bug: tetts/thread2 panics the alpha somewhere after the first
   unblocked upcall. The kernel appears to jump into space.
 
-- Implement better management of the lwp cache for a sa process. High-water 
-  mark needed, at the very least.
-
 Wishlist:
 
 - exit1() is too fragile. A cleaner solution to the LWPWAIT_EXITCONTROL
@@ -36,3 +33,6 @@ Wishlist:
   "representative" LWP of a process.
 
 - Lazy FPU upcall notifications.
+
+- Implement better management of the lwp cache for a sa process. High-water 
+  mark needed, at the very least.
