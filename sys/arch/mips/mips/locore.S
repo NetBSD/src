@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.82 1999/12/22 04:54:16 jun Exp $	*/
+/*	$NetBSD: locore.S,v 1.83 1999/12/29 04:41:12 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1279,7 +1279,9 @@ XNESTED(MachFPTrap)
 	nop
 
 #ifdef SOFTFLOAT
-	sw	zero, FRAME_ZERO(a3)		# ensure zero has value 0
+	REG_PROLOGUE
+	REG_S	zero, FRAME_ZERO(a3)		# ensure zero has value 0
+	REG_EPILOGUE
 
 	beq	t0, MIPS_OPCODE_LWC1, 5f
 	nop
@@ -1298,7 +1300,9 @@ XNESTED(MachFPTrap)
 	li	t0, 0xFFFFFF00
 	and	a1, a1, t0
 	ori	a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
-	sw	a1, FRAME_CAUSE(a3)
+	REG_PROLOGUE
+	REG_S	a1, FRAME_CAUSE(a3)
+	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process

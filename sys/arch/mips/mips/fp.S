@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.15 1999/12/22 04:54:15 jun Exp $	*/
+/*	$NetBSD: fp.S,v 1.16 1999/12/29 04:41:13 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,14 @@
 #define COND_EQUAL	0x2
 #define COND_LESS	0x4
 #define COND_SIGNAL	0x8
+
+#if SZREG == 8
+#define SZREG_SHFT	3
+#define SZREG_MASK	0x00f8
+#else
+#define SZREG_SHFT	2
+#define SZREG_MASK	0x007c
+#endif
 
 /*----------------------------------------------------------------------------
  *
@@ -470,21 +478,24 @@ mfromc1:
 
 	lw	v0, U_PCB_FPREGS+FRAME_FP0(t0)
 
-	srl	t0, a0, 16-2
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 16-SZREG_SHFT
+	andi	t0, t0, SZREG_MASK
 	addu	t0, t0, a1
 
-	sw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_ZERO(t0)
+	REG_EPILOGUE
 
 	b	done
 
 mtoc1:
-	sw	zero, FRAME_ZERO(a1)		# ensure zero has value 0
-
-	srl	t0, a0, 16-2
-	andi	t0, t0, 0x007C
+	REG_PROLOGUE
+	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	srl	t0, a0, 16-SZREG_SHFT
+	andi	t0, t0, SZREG_MASK
 	addu	v0, a1, t0
-	lw	v0, FRAME_ZERO(v0)
+	REG_L	v0, FRAME_ZERO(v0)
+	REG_EPILOGUE
 
 	lw	t0, _C_LABEL(fpcurproc)
 	srl	t1, a0, 11-2
@@ -509,27 +520,33 @@ cfromc1:
 
 cfinvalid:
 
-	srl	t0, a0, 16-2
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 16-SZREG_SHFT
+	andi	t0, t0, SZREG_MASK
 	addu	t0, t0, a1
 
-	sw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_ZERO(t0)
+	REG_EPILOGUE
 
 	b	done
 
 ctoc1:
-	sw	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	REG_PROLOGUE
+	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	REG_EPILOGUE
 
 	srl	t0, a0, 11
 	andi	t0, t0, 0x001F
 	li	t1, 0x1F
 	bne	t0, t1, done
 
-	srl	t0, a0, 16-2
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 16-SZREG_SHFT
+	andi	t0, t0, SZREG_MASK
 	addu	v0, a1, t0
 	lw	t0, _C_LABEL(fpcurproc)
-	lw	v0, FRAME_ZERO(v0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(v0)
+	REG_EPILOGUE
 	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	sw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
 
@@ -592,23 +609,29 @@ bcfalse_l:
 	li	v0, MIPS_FPU_COND_BIT
 	and	v0, v0, a2
 	beq	v0, zero, bcemul_branch
-	lw	v0, FRAME_EPC(a1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_EPC(a1)
 	addiu	v0, v0, 4
-	sw	v0, FRAME_EPC(a1)
+	REG_S	v0, FRAME_EPC(a1)
+	REG_EPILOGUE
 	b	done
 bctrue_l:
 	li	v0, MIPS_FPU_COND_BIT
 	and	v0, v0, a2
 	bne	v0, zero, bcemul_branch
-	lw	v0, FRAME_EPC(a1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_EPC(a1)
 	addiu	v0, v0, 4
-	sw	v0, FRAME_EPC(a1)
+	REG_S	v0, FRAME_EPC(a1)
+	REG_EPILOGUE
 	b	done
 
 bcemul_branch:
 	/* Fetch delay slot instruction */
 	sw	a1, CALLFRAME_SIZ + 4(sp)
-	lw	a0, FRAME_EPC(a1)
+	REG_PROLOGUE
+	REG_L	a0, FRAME_EPC(a1)
+	REG_EPILOGUE
 	addiu	a0, a0, 4
 	jal	_C_LABEL(fuiword)
 
@@ -2359,7 +2382,9 @@ done:
  * so compute the next PC.
  */
 	lw	t0, CALLFRAME_SIZ + 8(sp)
-	lw	v0, FRAME_EPC(a1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_EPC(a1)
+	REG_EPILOGUE
 	bgez	t0, 1f				# Check the branch delay bit.
 /*
  * The instruction is in the branch delay slot so the branch will have to
@@ -2381,7 +2406,9 @@ done:
 1:
 	addiu	v0, v0, 4			# v0 = next pc
 2:
-	sw	v0, FRAME_EPC(a1)		# save new pc
+	REG_PROLOGUE
+	REG_S	v0, FRAME_EPC(a1)		# save new pc
+	REG_EPILOGUE
 
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
@@ -3939,7 +3966,9 @@ END(renorm_ft_d)
  * It should be used to emulate instruction in branch delay slot.
  */
 LEAF(bcemul_delay_slot)
-	sw	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	REG_PROLOGUE
+	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	REG_EPILOGUE
 
 	srl	t0, a0, 26-2
 	andi	t0, t0, 0x00FC
@@ -4088,15 +4117,17 @@ bcemul_specialtbl:
 	.text
 
 bcemul_addi:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_EPILOGUE
 	addu	t0, v0, t2
 
 	/* Overflow check */
@@ -4111,299 +4142,353 @@ bcemul_addi:
 	j	_C_LABEL(bcemul_sigfpe)
 
 addiok:
-	sw	t0, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_S	t0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_addiu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	addu	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_slti:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	slt	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sltiu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	sltu	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_andi:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	andi	t2, a0, 0xFFFF
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	and	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_ori:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	andi	t2, a0, 0xFFFF
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	or	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_xori:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	andi	t2, a0, 0xFFFF
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	xor	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_lui:
-	srl	t0, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
 	addu	t0, a1, t0
 	sll	v0, a0, 16
-	sw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_ZERO(t0)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sll:
-	srl	t0, a0, 16-2		# rt
-	srl	t1, a0, 11-2		# rd
+	srl	t0, a0, 16-SZREG_SHFT	# rt
+	srl	t1, a0, 11-SZREG_SHFT	# rd
 	srl	t2, a0, 6		# sa
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	andi	t2, t2, 0x001F
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	sllv	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_srl:
-	srl	t0, a0, 16-2		# rt
-	srl	t1, a0, 11-2		# rd
+	srl	t0, a0, 16-SZREG_SHFT	# rt
+	srl	t1, a0, 11-SZREG_SHFT	# rd
 	srl	t2, a0, 6		# sa
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	andi	t2, t2, 0x001F
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	srlv	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sra:
-	srl	t0, a0, 16-2		# rt
-	srl	t1, a0, 11-2		# rd
+	srl	t0, a0, 16-SZREG_SHFT	# rt
+	srl	t1, a0, 11-SZREG_SHFT	# rd
 	srl	t2, a0, 6		# sa
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	andi	t2, t2, 0x001F
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
 	srav	v0, v0, t2
-	sw	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sllv:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	sllv	v0, v1, v0
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_srlv:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	srlv	v0, v1, v0
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_srav:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	srav	v0, v1, v0
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sync:
 	b	bcemul_done
 
 bcemul_mfhi:
-	srl	t0, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
 	addu	t0, a1, t0
-	lw	v0, FRAME_MULHI(a1)
-	sw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_MULHI(a1)
+	REG_S	v0, FRAME_ZERO(t0)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mthi:
-	srl	t0, a0, 21-2		# rs
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	andi	t0, t0, SZREG_MASK
 	addu	t0, a1, t0
-	lw	v0, FRAME_ZERO(t0)
-	sw	v0, FRAME_MULHI(a1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_MULHI(a1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mflo:
-	srl	t0, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
 	addu	t0, a1, t0
-	lw	v0, FRAME_MULLO(a1)
-	sw	v0, FRAME_ZERO(t0)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_MULLO(a1)
+	REG_S	v0, FRAME_ZERO(t0)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mtlo:
-	srl	t0, a0, 21-2		# rs
-	andi	t0, t0, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	andi	t0, t0, SZREG_MASK
 	addu	t0, a1, t0
-	lw	v0, FRAME_ZERO(t0)
-	sw	v0, FRAME_MULLO(a1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_MULLO(a1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mult:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	mult	v0, v1
 	mflo	v0
 	mfhi	v1
-	sw	v0, FRAME_MULLO(a1)
-	sw	v1, FRAME_MULHI(a1)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_MULLO(a1)
+	REG_S	v1, FRAME_MULHI(a1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_multu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	multu	v0, v1
 	mflo	v0
 	mfhi	v1
-	sw	v0, FRAME_MULLO(a1)
-	sw	v1, FRAME_MULHI(a1)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_MULLO(a1)
+	REG_S	v1, FRAME_MULHI(a1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_div:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	div	v0, v1
 	mflo	v0
 	mfhi	v1
-	sw	v0, FRAME_MULLO(a1)
-	sw	v1, FRAME_MULHI(a1)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_MULLO(a1)
+	REG_S	v1, FRAME_MULHI(a1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_divu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	divu	v0, v1
 	mflo	v0
 	mfhi	v1
-	sw	v0, FRAME_MULLO(a1)
-	sw	v1, FRAME_MULHI(a1)
+	REG_PROLOGUE
+	REG_S	v0, FRAME_MULLO(a1)
+	REG_S	v1, FRAME_MULHI(a1)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_add:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	addu	t0, v0, v1
 
 	/* Overflow check */
@@ -4418,37 +4503,43 @@ bcemul_add:
 	j	_C_LABEL(bcemul_sigfpe)
 
 addok:
-	sw	t0, FRAME_ZERO(t2)
+	REG_PROLOGUE
+	REG_S	t0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_addu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	addu	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sub:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
+	REG_EPILOGUE
 	subu	t0, v0, v1
 
 	/* Overflow check */
@@ -4463,118 +4554,135 @@ bcemul_sub:
 	j	_C_LABEL(bcemul_sigfpe)
 
 subok:
-	sw	t0, FRAME_ZERO(t2)
+	REG_PROLOGUE
+	REG_S	t0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_subu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	subu	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_and:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	and	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_or:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	or	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_xor:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	xor	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_nor:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	nor	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_slt:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	slt	v0, v0, v1
-	sw	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sltu:
-	srl	t0, a0, 21-2		# rs
-	srl	t1, a0, 16-2		# rt
-	srl	t2, a0, 11-2		# rd
-	andi	t0, t0, 0x007C
-	andi	t1, t1, 0x007C
-	andi	t2, t2, 0x007C
+	srl	t0, a0, 21-SZREG_SHFT	# rs
+	srl	t1, a0, 16-SZREG_SHFT	# rt
+	srl	t2, a0, 11-SZREG_SHFT	# rd
+	andi	t0, t0, SZREG_MASK
+	andi	t1, t1, SZREG_MASK
+	andi	t2, t2, SZREG_MASK
 	addu	t0, a1, t0
 	addu	t1, a1, t1
 	addu	t2, a1, t2
-	lw	v0, FRAME_ZERO(t0)
-	lw	v1, FRAME_ZERO(t1)
+	REG_PROLOGUE
+	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v1, FRAME_ZERO(t1)
 	sltu	v0, v0, v1
+	REG_S	v0, FRAME_ZERO(t2)
+	REG_EPILOGUE
 	sw	v0, FRAME_ZERO(t2)
 #	b	bcemul_done		# fall through to bcemul_done
 
@@ -4588,7 +4696,9 @@ bcemul_done:
 	sw	a1, CALLFRAME_SIZ + 4(sp)
 
 	/* Fetch previous branch instruction */
-	lw	a0, FRAME_EPC(a1)
+	REG_PROLOGUE
+	REG_L	a0, FRAME_EPC(a1)
+	REG_EPILOGUE
 	jal	_C_LABEL(fuiword)
 
 	lw	a1, CALLFRAME_SIZ + 4(sp)
@@ -4596,10 +4706,12 @@ bcemul_done:
 	/* Calculate branch destination */
 	sll	t0, v0, 16
 	sra	t0, t0, 16-2
-	lw	t1, FRAME_EPC(a1)
+	REG_PROLOGUE
+	REG_L	t1, FRAME_EPC(a1)
 	addiu	t0, t0, 4
 	addu	t1, t1, t0
-	sw	t1, FRAME_EPC(a1)
+	REG_S	t1, FRAME_EPC(a1)
+	REG_EPILOGUE
 
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
@@ -4620,7 +4732,9 @@ XLEAF(bcemul_sigill)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
-	sw	a2, FRAME_CAUSE(a1)
+	REG_PROLOGUE
+	REG_S	a2, FRAME_CAUSE(a1)
+	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process
@@ -4632,7 +4746,9 @@ LEAF(fpemul_sigfpe)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_FPE << MIPS_CR_EXC_CODE_SHIFT
-	sw	a2, FRAME_CAUSE(a1)
+	REG_PROLOGUE
+	REG_S	a2, FRAME_CAUSE(a1)
+	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process
@@ -4645,7 +4761,9 @@ LEAF(bcemul_sigfpe)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_OVFLOW << MIPS_CR_EXC_CODE_SHIFT
-	sw	a2, FRAME_CAUSE(a1)
+	REG_PROLOGUE
+	REG_S	a2, FRAME_CAUSE(a1)
+	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process
