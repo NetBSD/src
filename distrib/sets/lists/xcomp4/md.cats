@@ -1,5 +1,5 @@
 
-# $NetBSD: md.cats,v 1.1.2.2 2002/08/05 12:52:44 lukem Exp $
+# $NetBSD: md.cats,v 1.1.2.3 2003/10/19 08:04:54 tron Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h
 ./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/xf86dga.h
@@ -30,3 +30,16 @@
 ./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0
 ./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
 ./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
+./usr/X11R6/include/X11/extensions/xf86dga1.h
+./usr/X11R6/include/X11/extensions/xf86dga1str.h
+./usr/X11R6/include/xf86Optrec.h
+./usr/X11R6/include/xf86Parser.h
+./usr/X11R6/man/cat3/XF86VidModeGetDotClocks.0
+./usr/X11R6/man/cat3/XF86VidModeGetGamma.0
+./usr/X11R6/man/cat3/XF86VidModeGetGammaRamp.0
+./usr/X11R6/man/cat3/XF86VidModeGetGammaRampSize.0
+./usr/X11R6/man/cat3/XF86VidModeGetPermissions.0
+./usr/X11R6/man/cat3/XF86VidModeSetClientVersion.0
+./usr/X11R6/man/cat3/XF86VidModeSetGamma.0
+./usr/X11R6/man/cat3/XF86VidModeSetGammaRamp.0
+./usr/X11R6/man/cat4/fpit.0
