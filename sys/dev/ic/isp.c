@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.72.2.9 2002/02/28 04:13:23 nathanw Exp $ */
+/* $NetBSD: isp.c,v 1.72.2.10 2002/02/28 20:15:41 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.72.2.9 2002/02/28 04:13:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.72.2.10 2002/02/28 20:15:41 nathanw Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -273,7 +273,6 @@ isp_reset(struct ispsoftc *isp)
 			btype = "2200";
 			break;
 		case ISP_HA_FC_2300:
-		case ISP_HA_FC_2312:
 			btype = "2300";
 			break;
 		case ISP_HA_FC_2312:
