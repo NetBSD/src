@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1999/03/30 07:34:49 tron Exp $
+	$NetBSD: syscalls.master,v 1.10 1999/05/13 23:42:34 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -459,7 +459,7 @@
 309	UNIMPL		get_kernel_syms
 310	UNIMPL		syslog
 311	NOARGS		{ int sys_reboot(int opt); }
-312	UNIMPL		clone
+312	UNIMPL		{ int linux_sys_clone(int flags, void *stack); }
 ; XXX XAX does alpha linux really have a.out exec?
 #ifdef EXEC_AOUT
 313	STD		{ int linux_sys_uselib(char *path); }
