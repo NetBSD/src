@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.19 2000/06/01 18:11:13 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.20 2000/06/03 15:29:08 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -486,3 +486,87 @@ sys/miscfs/procfs/procfs_cmdline.c		1.8
   Fix a possible kernel memory leak - if the command line of a
   process was requested after it had started to exit but before it
   became a zombie a page of kernel memory would not be freed.
+
+sys/arch/i386/i386/pmap.new.c			patch
+sys/arch/pc532/pc532/pmap.new.c			patch
+
+  When allocating new PT pages during early bootstrap (i.e. before
+  pmap_init() has finished), make sure to zero them.
+
+usr.bin/ipcs/ipcs.1				1.9
+
+  Finish an unfinished sentence.
+
+bin/test/test.c		1.21
+
+  Fix operator precedence consistency.  Fixes PR#7015.
+
+bin/test/test.c		1.22
+bin/sh/builtins.def	1.15
+bin/sh/Makefile		1.50
+
+  Enable test as a shell builtin.  Fixes PR#9847.
+
+sys/arch/amiga/conf/GENERIC			patch
+sys/arch/arm32/conf/GENERIC			patch
+sys/arch/atari/conf/GENERIC			patch
+sys/arch/bebox/conf/GENERIC			patch
+sys/arch/hp300/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/mac68k/conf/GENERIC			patch
+sys/arch/macppc/conf/GENERIC			patch
+sys/arch/newsmips/conf/GENERIC			patch
+sys/arch/next68k/conf/GENERIC			patch
+sys/arch/ofppc/conf/GENERIC			patch
+sys/arch/pc532/conf/GENERIC			patch
+sys/arch/pmax/conf/GENERIC			patch
+sys/arch/sparc/conf/GENERIC			patch
+sys/arch/sparc64/conf/GENERIC			patch
+sys/arch/sun3/conf/GENERIC			patch
+sys/arch/vax/conf/GENERIC			patch
+sys/arch/x68k/conf/GENERIC			patch
+sys/arch/arm32/conf/A7000			patch
+sys/arch/sun3/conf/GENERIC3X			patch
+
+  Disable the UNION file system, to avoid a repeat of the 1.4.1
+  and 1.4.2 LAST_MINUTE changes.  It is reportedly buggy, and can
+  be used by ordinary users to crash the system.
+
+distrib/notes/common/main			patch
+
+  The version of IPF shipped with 1.4.2 was 3.3.6, not 3.3.5.
+  Correct the notes correspondingly.
+
+distrib/i386/floppies/bootfloppy-common/Makefile.inc	patch
+distrib/i386/floppies/fdset-common/Makefile.inc	patch
+
+  ``Make release'' goes to installation/floppy; use gzip -9.
+
+distrib/macppc/floppies/ramdisk/Makefile	patch
+
+  Don't rely on /etc/disktab, instead construct a disktab on
+  the fly based on numbers supplied here.
+
+sys/arch/sparc/conf/INSTALL			patch
+distrib/sparc/ramdisk/Makefile			patch
+
+  Use 3240 and not 3528 as miniroot size.
+
+distrib/sparc/bootfs/Makefile			patch
+
+  Don't strip kernel, copy INSTALL kernel to kernel directory
+  under ``make release''.
+
+distrib/sparc/bootfs.sysinst/Makefile		patch
+
+  Don't strip kernel, use boot.700000, copy sysinst INSTALL
+  kernel to kernel directory under ``make release''.
+
+distrib/sparc/ramdisk/list			patch
+
+  Make the "ramdisk" devices, not the "floppy" devices.
+
+distrib/utils/sysinst/arch/vax/md.h		patch
+
+  Don't offer to install xserver set -- it's not built in
+  this version.
