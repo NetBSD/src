@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.11 1998/12/21 17:22:33 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.12 1998/12/29 15:21:33 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.11 1998/12/21 17:18:29 augustss Exp 
+ *	NetBSD: usbdevs,v 1.12 1998/12/29 15:19:40 augustss Exp 
  */
 
 /*
@@ -129,6 +129,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "QuickCam",
 	},
 	{
+	    USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_MOUSE,
+	    0,
+	    "Cypress Semiconductor",
+	    "mouse",
+	},
+	{
 	    USB_VENDOR_3COM, USB_PRODUCT_3COM_USR56K,
 	    0,
 	    "3Com",
@@ -147,28 +153,16 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "J-6502 speakers",
 	},
 	{
-	    USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_MOUSE,
-	    0,
-	    "Cypress Semiconductor",
-	    "mouse",
-	},
-	{
 	    USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC1284,
 	    0,
 	    "ATen",
 	    "Parallel printer adapter",
 	},
 	{
-	    USB_VENDOR_AGILER, USB_PRODUCT_AGILER_MOUSE29UO,
+	    USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1,
 	    0,
-	    "Agiler",
-	    "mouse 29UO",
-	},
-	{
-	    USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U002,
-	    0,
-	    "Belkin",
-	    "Parallel printer adapter",
+	    "Peracom",
+	    "Serial Converter",
 	},
 	{
 	    USB_VENDOR_EIZO, USB_PRODUCT_EIZO_HUB,
@@ -181,6 +175,18 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "EIZO",
 	    "monitor",
+	},
+	{
+	    USB_VENDOR_AGILER, USB_PRODUCT_AGILER_MOUSE29UO,
+	    0,
+	    "Agiler",
+	    "mouse 29UO",
+	},
+	{
+	    USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U002,
+	    0,
+	    "Belkin",
+	    "Parallel printer adapter",
 	},
 	{
 	    USB_VENDOR_EIZONANAO, USB_PRODUCT_EIZONANAO_HUB,
@@ -312,6 +318,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_ATEN, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "ATen",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_PERACOM, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Peracom",
 	    NULL,
 	},
 	{
