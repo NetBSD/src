@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.15 1995/01/12 06:23:45 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.16 1995/03/02 09:33:40 glass Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -95,10 +95,10 @@ rip_input(m)
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
 		if (inp->inp_laddr.s_addr &&
-		    inp->inp_laddr.s_addr == ip->ip_dst.s_addr)
+		    inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
 			continue;
 		if (inp->inp_faddr.s_addr &&
-		    inp->inp_faddr.s_addr == ip->ip_src.s_addr)
+		    inp->inp_faddr.s_addr != ip->ip_src.s_addr)
 			continue;
 		if (last) {
 			struct mbuf *n;
