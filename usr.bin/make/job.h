@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.20 2003/08/07 11:14:52 agc Exp $	*/
+/*	$NetBSD: job.h,v 1.21 2003/12/20 00:18:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -235,9 +235,13 @@ typedef struct Job {
  * Some special stuff goes on if a shell doesn't have error control. In such
  * a case, errCheck becomes a printf template for echoing the command,
  * should echoing be on and ignErr becomes another printf template for
- * executing the command while ignoring the return status. If either of these
- * strings is empty when hasErrCtl is FALSE, the command will be executed
- * anyway as is and if it causes an error, so be it.
+ * executing the command while ignoring the return status. Finally errOut
+ * is a printf template for running the command and causing the shell to 
+ * exit on error. If any of these strings are empty when hasErrCtl is FALSE, 
+ * the command will be executed anyway as is and if it causes an error, so be 
+ * it. Any templates setup to echo the command will escape any '$ ` \ "'i
+ * characters in the command string to avoid common problems with 
+ * echo "%s\n" as a template.
  */
 typedef struct Shell {
     const char	 *name;		/* the name of the shell. For Bourne and C
@@ -257,6 +261,9 @@ typedef struct Shell {
 				 * individual commands */
     const char	 *errCheck;	/* string to turn error checking on */
     const char	 *ignErr;	/* string to turn off error checking */
+    const char	 *errOut;	/* string to use for testing exit code */
+    char   commentChar;		/* character used by shell for comment lines */
+
     /*
      * command-line flags
      */
