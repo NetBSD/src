@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.2 1996/03/27 22:42:26 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.3 1996/10/15 02:26:11 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -85,15 +85,14 @@ process_frame(p)
 	return (p->p_md.md_regs);
 }
 
-static inline struct fp_state *
+#ifndef ARMFPE
+static inline struct fpe_sp_state *
 process_fpframe(p)
 	struct proc *p;
 {
-
-        /* is this correct ? don't we need fpregs in the trapframe ?
-	   or doesn't the kernel use fp ? */
 	return (&p->p_addr->u_pcb.pcb_fpstate);
 }
+#endif
 
 int
 process_read_regs(p, regs)
@@ -116,12 +115,18 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	struct fp_state		*statep;
+#ifndef ARMFPE
+#error "Non ARMFPE configs need debugging"
+	struct fpe_sp_state *statep;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	statep = process_fpframe(p);
 	bcopy(statep, regs, sizeof(struct fpreg));
 	return (0);
+#else
+	arm_fpe_getcontext(p, regs);
+	return (0);
+#endif
 }
 
 int
@@ -146,12 +151,18 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-        struct fp_state *statep;
+#ifndef ARMFPE
+#error "Non ARMFPE configs need debugging"
+        struct fpe_sp_state *statep;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	statep = process_fpframe(p);
 	bcopy(regs, statep, sizeof(struct fpreg));
 	return (0);
+#else
+	arm_fpe_setcontext(p, regs);
+	return (0);
+#endif
 }
 
 int
