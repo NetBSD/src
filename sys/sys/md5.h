@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1 1997/04/30 00:47:30 thorpej Exp $	*/
+/*	$NetBSD: md5.h,v 1.2 1997/04/30 00:50:10 thorpej Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -45,9 +45,11 @@ __BEGIN_DECLS
 void	MD5Init __P((MD5_CTX *));
 void	MD5Update __P((MD5_CTX *, const unsigned char *, unsigned int));
 void	MD5Final __P((unsigned char[16], MD5_CTX *));
+#ifndef _KERNEL
 char	*MD5End __P((MD5_CTX *, char *));
 char	*MD5File __P((const char *, char *));
 char	*MD5Data __P((const unsigned char *, unsigned int, char *));
+#endif /* _KERNEL */
 __END_DECLS
 
 #endif /* _SYS_MD5_H_ */
