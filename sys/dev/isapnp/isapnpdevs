@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.1 1998/07/23 19:30:45 christos Exp $
+$NetBSD: isapnpdevs,v 1.2 1998/07/30 09:45:16 drochner Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -58,6 +58,7 @@ devlogic	aic	ADP1520		Adaptec AHA-1520B
 devlogic	com	BDP3336		Best Data Prods. 336F
 devlogic	com	OZO8039		Zoom 56k flex
 devlogic	com	BRI1400		Boca 33.6 PnP
+devlogic	com	BRIB400		Boca 56k PnP
 devlogic	com	ROK0010		Rockwell ?
 devlogic	com	USR2070		USR Sportster 56k
 devcompat	com	PNP0500		Generic 8250/16450
@@ -134,4 +135,4 @@ devlogic	wss	CSC0000		Windows Sound System
 /*
  * ym
  */
-devlogic	ym	YMH0021		OPL3-SA3
+devlogic	ym	YMH0021		OPL3-SA2, OPL3-SA3
