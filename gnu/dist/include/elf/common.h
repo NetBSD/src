@@ -82,7 +82,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define EM_MIPS_RS4_BE 10	/* MIPS R4000 big-endian */
 
-#define EM_SPARC64     11	/* SPARC v9 (not official) 64-bit */
+#define EM_SPARC64     43	/* Sun SPARC V9 (64-bit) */
 
 #define EM_PARISC      15	/* HPPA */
 
