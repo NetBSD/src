@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.3 1993/07/07 12:06:36 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.4 1993/07/13 10:04:29 cgd Exp $
  */
 
 #include "param.h"
@@ -227,7 +227,7 @@ nfs_mountroot()
 		{
 			struct vattr attr;
 
-			if (nfs_dogetattr(vp,&attr,0,0,0)) {
+			if (nfs_dogetattr(vp,&attr,NOCRED,0,0)) {
 			    panic("nfs swap");
 			}
 			swdevt[0].sw_nblks = attr.va_size / DEV_BSIZE;

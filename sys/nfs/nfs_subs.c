@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.4 1993/07/07 12:06:34 cgd Exp $
+ *	$Id: nfs_subs.c,v 1.5 1993/07/13 10:04:28 cgd Exp $
  */
 
 /*
@@ -123,7 +123,7 @@ struct mbuf *nfsm_reqh(prog, vers, procid, cred, hsiz, bpos, mb, retxid)
 	static char authnull[4*NFSX_UNSIGNED];
 
 	NFSMGETHDR(mreq);
-	if (cred) {
+	if (cred != NOCRED) {
 	    asiz = ((((cred->cr_ngroups - 1) > numgrps) ? numgrps :
 		      (cred->cr_ngroups - 1)) << 2);
 #ifdef FILLINHOST
@@ -160,7 +160,7 @@ struct mbuf *nfsm_reqh(prog, vers, procid, cred, hsiz, bpos, mb, retxid)
 	*tl++ = procid;
 
 	/* Now we can call nfs_unixauth() and copy it in */
-	if (cred)
+	if (cred != NOCRED)
 	    ap = nfs_unixauth(cred);
 	else
 	    ap = authnull;
