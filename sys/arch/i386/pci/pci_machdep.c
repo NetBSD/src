@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.13 1995/05/23 03:43:58 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.14 1995/06/05 03:07:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -275,19 +275,13 @@ pci_map_io(tag, reg, iobasep)
 	panic("pci_map_io: not implemented");
 }
 
-#ifndef PCI_PMEM_START
-#define PCI_PMEM_START	0xc0000000
-#endif
-
-vm_offset_t pci_paddr = PCI_PMEM_START;
-
 int
 pci_map_mem(tag, reg, vap, pap)
 	pcitag_t tag;
 	int reg;
 	vm_offset_t *vap, *pap;
 {
-	pcireg_t data;
+	pcireg_t address, mask;
 	int cachable;
 	vm_size_t size;
 	vm_offset_t va, pa;
@@ -296,22 +290,27 @@ pci_map_mem(tag, reg, vap, pap)
 		panic("pci_map_mem: bad request");
 
 	/*
-	 * Section 6.2.5.1, `Address Maps', says that a device which wants 2^n
-	 * bytes of memory will hardwire the bottom n bits of the address to 0.
-	 * As recommended, we write all 1s and see what we get back.
+	 * Section 6.2.5.1, `Address Maps', tells us that:
+	 *
+	 * 1) The builtin software should have already mapped the device in a
+	 * reasonable way.
+	 *
+	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
+	 * n bits of the address to 0.  As recommended, we write all 1s and see
+	 * what we get back.
 	 */
+	address = pci_conf_read(tag, reg);
 	pci_conf_write(tag, reg, 0xffffffff);
-	data = pci_conf_read(tag, reg);
+	mask = pci_conf_read(tag, reg);
+	pci_conf_write(tag, reg, address);
 
-	if (data & PCI_MAP_IO)
+	if (address & PCI_MAP_IO)
 		panic("pci_map_mem: attempt to memory map an I/O region");
 
-	switch (data & PCI_MAP_MEMORY_TYPE_MASK) {
+	switch (address & PCI_MAP_MEMORY_TYPE_MASK) {
 	case PCI_MAP_MEMORY_TYPE_32BIT:
-		break;
 	case PCI_MAP_MEMORY_TYPE_32BIT_1M:
-		printf("pci_map_mem: attempt to map restricted 32-bit region\n");
-		return EOPNOTSUPP;
+		break;
 	case PCI_MAP_MEMORY_TYPE_64BIT:
 		printf("pci_map_mem: attempt to map 64-bit region\n");
 		return EOPNOTSUPP;
@@ -320,7 +319,10 @@ pci_map_mem(tag, reg, vap, pap)
 		return EINVAL;
 	}
 
-	size = round_page(-(data & PCI_MAP_MEMORY_ADDRESS_MASK));
+	pa = address & PCI_MAP_MEMORY_ADDRESS_MASK;
+	size = -(mask & PCI_MAP_MEMORY_ADDRESS_MASK);
+	if (size < NBPG)
+		size = NBPG;
 
 	va = kmem_alloc_pageable(kernel_map, size);
 	if (va == 0) {
@@ -329,21 +331,21 @@ pci_map_mem(tag, reg, vap, pap)
 	}
 
 	/*
-	 * Since the bottom address bits are forced to 0, the region must
-	 * be aligned by its size.
+	 * Tell the driver where we mapped it.
+	 *
+	 * If the region is smaller than one page, adjust the virtual address
+	 * to the same page offset as the physical address.
 	 */
-	pci_paddr = pa = (pci_paddr + size - 1) & -size;
-	pci_paddr += size;
-
-	/* Tell the driver where we mapped it. */
-	*vap = va;
+	*vap = va + (pa & PGOFSET);
 	*pap = pa;
 
-	/* Tell the device where we mapped it. */
-	pci_conf_write(tag, reg, pa);
+#if 1
+	printf("pci_map_mem: mapping memory at virtual %08x, physical %08x\n", *vap, *pap);
+#endif
 
 	/* Map the space into the kernel page table. */
-	cachable = !!(data & PCI_MAP_MEMORY_CACHABLE);
+	cachable = !!(address & PCI_MAP_MEMORY_CACHABLE);
+	pa &= ~PGOFSET;
 	while (size) {
 		pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
 		    TRUE);
@@ -355,10 +357,6 @@ pci_map_mem(tag, reg, vap, pap)
 		pa += NBPG;
 		size -= NBPG;
 	}
-
-#if 1
-	printf("pci_map_mem: memory mapped at %08x-%08x\n", *pap, pci_paddr - 1);
-#endif
 
 	return 0;
 }
@@ -394,7 +392,8 @@ pci_map_int(tag, level, func, arg)
 	 * `no connection' either doesn't have an interrupt (in which case the
 	 * pin number should be 0, and would have been noticed above), or
 	 * wasn't configured by the BIOS (in which case we punt, since there's
-	 * no real way we can know how the chipset is configured).
+	 * no real way we can know how the interrupt lines are mapped in the
+	 * hardware).
 	 *
 	 * XXX
 	 * Since IRQ 0 is only used by the clock, and we can't actually be sure
