@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2000/05/20 07:11:25 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2000/05/22 15:03:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -272,10 +272,13 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Victor InterLink MP-C101"), BIFB_D16_0000,
 		640, 480, 0, 0,
 		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_VICTOR_INTERLINK_MPC101},
-	{ TEXT("Sharp Telios HC-AJ1"), BIFB_D16_0000,
+	{ TEXT("Sharp Telios HC-AJ1/AJ2"), BIFB_D16_0000,
 		800, 600, 0, 0,
 		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_SHARP_TELIOS_HCAJ1},
-	{ TEXT("Sharp Mobilon HC-4100"), BIFB_D2_M2L_0, /* XXX 4bit greyscale */
+	{ TEXT("Sharp Telios HC-VJ1C (Japanese)"), BIFB_D16_0000,
+		800, 480, 0, 0,
+		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_SHARP_TELIOS_HCVJ1C_JP},
+	{ TEXT("Sharp Mobilon HC-4100/4500"), BIFB_D2_M2L_0, /* XXX 4bit greyscale */
 		640, 240, 0, 0,
 		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_SHARP_MOBILON_HC4100},
 	{ TEXT("Sharp HC-1200"), BIFB_D2_M2L_0, /* XXX 4bit greyscale */
