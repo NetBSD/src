@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.83 2003/04/24 21:21:05 drochner Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.84 2003/05/21 13:31:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.83 2003/04/24 21:21:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.84 2003/05/21 13:31:04 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1253,40 +1253,42 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 		 * verifier back, otherwise just RPCAUTH_NULL.
 		 */
 		if (nd->nd_flag & ND_KERBFULL) {
-		    struct nfsuid *nuidp;
-		    struct timeval ktvin, ktvout;
+			struct nfsuid *nuidp;
+			struct timeval ktvin, ktvout;
 
-		    LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
-			nu_hash) {
-			if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
-			    (!nd->nd_nam2 || netaddr_match(NU_NETFAM(nuidp),
-			     &nuidp->nu_haddr, nd->nd_nam2)))
-			    break;
-		    }
-		    if (nuidp) {
-			ktvin.tv_sec =
-			    txdr_unsigned(nuidp->nu_timestamp.tv_sec - 1);
-			ktvin.tv_usec =
-			    txdr_unsigned(nuidp->nu_timestamp.tv_usec);
+			LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
+			    nu_hash) {
+				if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
+				    (!nd->nd_nam2 || netaddr_match(
+				    NU_NETFAM(nuidp), &nuidp->nu_haddr,
+				    nd->nd_nam2)))
+					break;
+			}
+			if (nuidp) {
+				ktvin.tv_sec =
+				    txdr_unsigned(nuidp->nu_timestamp.tv_sec
+					- 1);
+				ktvin.tv_usec =
+				    txdr_unsigned(nuidp->nu_timestamp.tv_usec);
 
-			/*
-			 * Encrypt the timestamp in ecb mode using the
-			 * session key.
-			 */
+				/*
+				 * Encrypt the timestamp in ecb mode using the
+				 * session key.
+				 */
 #ifdef NFSKERB
-			XXX
+				XXX
 #endif
 
-			*tl++ = rpc_auth_kerb;
-			*tl++ = txdr_unsigned(3 * NFSX_UNSIGNED);
-			*tl = ktvout.tv_sec;
-			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-			*tl++ = ktvout.tv_usec;
-			*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
-		    } else {
-			*tl++ = 0;
-			*tl++ = 0;
-		    }
+				*tl++ = rpc_auth_kerb;
+				*tl++ = txdr_unsigned(3 * NFSX_UNSIGNED);
+				*tl = ktvout.tv_sec;
+				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+				*tl++ = ktvout.tv_usec;
+				*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
+			} else {
+				*tl++ = 0;
+				*tl++ = 0;
+			}
 		} else {
 			*tl++ = 0;
 			*tl++ = 0;
