@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257 1997/10/06 20:38:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.258 1997/10/14 03:55:06 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -152,9 +152,14 @@
 #endif
 
 #include "apm.h"
+#include "bioscall.h"
 
 #if NAPM > 0
 #include <machine/apmvar.h>
+#endif
+
+#if NBIOSCALL > 0
+#include <machine/bioscall.h>
 #endif
 
 #include "isa.h"
@@ -309,7 +314,7 @@ cpu_startup()
 	vm_size_t size;
 	struct pcb *pcb;
 	int x;
-#if NAPM > 0
+#if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
@@ -397,7 +402,7 @@ cpu_startup()
 	 */
 	bufinit();
 
-#if NAPM > 0
+#if NBIOSCALL > 0
 	/*
 	 * this should be caught at kernel build time, but put it here
 	 * in case someone tries to fake it out...
@@ -408,13 +413,13 @@ cpu_startup()
 		  biostramp_image_size, NBPG);
 #endif
 	pmap_enter(pmap_kernel(),
-		   (vm_offset_t)APM_BIOSTRAMP, /* virtual */
-		   (vm_offset_t)APM_BIOSTRAMP, /* physical */
+		   (vm_offset_t)BIOSTRAMP_BASE, /* virtual */
+		   (vm_offset_t)BIOSTRAMP_BASE, /* physical */
 		   VM_PROT_ALL,		/* protection */
 		   TRUE);		/* wired down */
-	bcopy(biostramp_image, (caddr_t)APM_BIOSTRAMP, biostramp_image_size);
+	bcopy(biostramp_image, (caddr_t)BIOSTRAMP_BASE, biostramp_image_size);
 #ifdef DEBUG
-	printf("biostramp installed @ %x\n", APM_BIOSTRAMP);
+	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
 #endif
 #endif
 	/*
@@ -1508,7 +1513,7 @@ init386(first_avail)
 	}
 #endif
 
-#if NAPM > 0
+#if NBIOSCALL > 0
 	avail_start = 2*NBPG;	/* save us a page! */
 #else
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
