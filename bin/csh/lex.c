@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.17 2000/05/31 22:48:45 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.18 2000/12/14 00:13:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.17 2000/05/31 22:48:45 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.18 2000/12/14 00:13:07 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ static struct wordent *exclnxt = NULL;
 static int exclc = 0;
 
 /* "Globp" for alias resubstitution */
-Char *alvecp = NULL;
+Char **alvec, *alvecp;
 int aret = F_SEEK;
 
 /*
