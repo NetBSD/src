@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.4 1998/08/15 03:02:35 mycroft Exp $	*/
+/*	$NetBSD: lms.c,v 1.4.26.1 2001/09/09 02:44:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -354,7 +354,7 @@ lmsintr(arg)
 			sc->sc_state &= ~LMS_ASLP;
 			wakeup((caddr_t)sc);
 		}
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 	}
 
 	return -1;
@@ -378,4 +378,53 @@ lmspoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_lmsrdetach(struct knote *kn)
+{
+	struct lms_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_lmsread(struct knote *kn, long hint)
+{
+	struct lms_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops lmsread_filtops =
+	{ 1, NULL, filt_lmsrdetach, filt_lmsread };
+
+int
+lmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &lmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
