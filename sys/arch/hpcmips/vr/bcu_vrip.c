@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.2 1999/12/09 02:14:00 sato Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.3 1999/12/16 09:36:19 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -49,16 +49,11 @@
 #include <hpcmips/vr/bcureg.h>
 #include <hpcmips/vr/bcuvar.h>
 
-struct vrbcu_vrip_softc {
-  struct vrbcu_softc sc_vrbcu;
-};
+static int vrbcu_match __P((struct device *, struct cfdata *, void *));
+static void vrbcu_attach __P((struct device *, struct device *, void *));
 
-/* Definition of the mainbus driver. */
-static int	vrbcu_vrip_match __P((struct device *,
-				      struct cfdata *, void *));
-static void	vrbcu_vrip_attach __P((struct device *,
-
-				       struct device *, void*));
+static void vrbcu_write __P((struct vrbcu_softc *, int, unsigned short));
+static unsigned short vrbcu_read __P((struct vrbcu_softc *, int));
 
 char	*vr_cpuname=NULL;
 int	vr_major=-1;
@@ -66,11 +61,30 @@ int	vr_minor=-1;
 int	vr_cpuid=-1;
 
 struct cfattach vrbcu_ca = {
-	sizeof(struct vrbcu_vrip_softc), vrbcu_vrip_match, vrbcu_vrip_attach
+	sizeof(struct vrbcu_softc), vrbcu_match, vrbcu_attach
 };
 
+struct vrbcu_softc *the_bcu_sc = NULL;
+
+static inline void
+vrbcu_write(sc, port, val)
+	struct vrbcu_softc *sc;
+	int port;
+	unsigned short val;
+{
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
+}
+
+static inline unsigned short
+vrbcu_read(sc, port)
+	struct vrbcu_softc *sc;
+	int port;
+{
+	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
+}
+
 static int
-vrbcu_vrip_match(parent, cf, aux)
+vrbcu_match(parent, cf, aux)
      struct device *parent;
      struct cfdata *cf;
      void *aux;
@@ -79,20 +93,21 @@ vrbcu_vrip_match(parent, cf, aux)
 }
 
 static void
-vrbcu_vrip_attach(parent, self, aux)
+vrbcu_attach(parent, self, aux)
      struct device *parent;
      struct device *self;
      void *aux;
 {
 	struct vrip_attach_args *va = aux;
-	struct vrbcu_vrip_softc *sc = (struct vrbcu_vrip_softc *)self;
+	struct vrbcu_softc *sc = (struct vrbcu_softc *)self;
 
-	sc->sc_vrbcu.sc_iot = va->va_iot;
-	bus_space_map(sc->sc_vrbcu.sc_iot, va->va_addr, va->va_size,
+	sc->sc_iot = va->va_iot;
+	bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
 		0, /* no flags */
-		&sc->sc_vrbcu.sc_ioh);
+		&sc->sc_ioh);
 
 	printf("\n");
+	the_bcu_sc = sc;
 }
 
 static char *cpuname[] = {
