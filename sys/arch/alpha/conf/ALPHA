@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.43 1997/03/23 00:48:37 cgd Exp $
+#	$NetBSD: ALPHA,v 1.44 1997/03/25 20:35:03 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -132,8 +132,8 @@ scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 asc0	at	tcds? slot ?
 asc1	at	tcds? slot ?
-cfb*	at	tc? slot ? offset ?
-sfb*	at	tc? slot ? offset ?
+#cfb*	at	tc? slot ? offset ?
+#sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
@@ -204,9 +204,9 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # Workstation Console attachments
-wscons*	at	cfb?
+#wscons* at	cfb?
 wscons*	at	vga?
-wscons*	at	sfb?
+#wscons* at	sfb?
 wscons*	at	tga?
 
 pseudo-device	bpfilter	16
