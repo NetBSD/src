@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.14 2000/05/19 04:03:58 thorpej Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -141,6 +141,7 @@ const struct ex_cardbus_product {
 	  "3c575B-TX Ethernet" },
 
 	{ 0,
+	  0,
 	  0,
 	  0,
 	  NULL },

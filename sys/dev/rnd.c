@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.17 2000/03/23 07:01:26 thorpej Exp $	*/
+/*	$NetBSD: rnd.c,v 1.18 2000/05/19 04:03:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@ rndpool_t   rnd_pool;
 static rndsource_t rnd_source_no_collect = {
 	{ 'N', 'o', 'C', 'o', 'l', 'l', 'e', 'c', 't', 0, 0, 0, 0, 0, 0, 0 },
 	0, 0, 0, 0,
+	RND_TYPE_UNKNOWN,
 	(RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN),
 	NULL
 };
@@ -274,7 +275,7 @@ rnd_init(void)
 	SIMPLEQ_INIT(&rnd_samples);
 
 	pool_init(&rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample",
-		  0, NULL, NULL, NULL);
+		  0, NULL, NULL, 0);
 
 	rndpool_init(&rnd_pool);
 
