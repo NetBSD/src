@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.59 2003/02/26 06:31:11 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.60 2003/04/10 18:55:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.59 2003/02/26 06:31:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.60 2003/04/10 18:55:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ unp_output(m, control, unp, p)
 	    control) == 0) {
 		m_freem(control);
 		m_freem(m);
-		return (EINVAL);
+		return (ENOBUFS);
 	} else {
 		sorwakeup(so2);
 		return (0);
