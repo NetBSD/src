@@ -1,4 +1,4 @@
-.\"	$NetBSD: st.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: st.4,v 1.6 2001/04/11 19:07:16 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ The
 .Nm \&st
 driver was written especially to support the Exabyte
 .Tn EXB-8200 8MM
-Cartridge 
+Cartridge
 Tape Subsystem.  It has several extensions specific to the Exabyte,
 but should support other tape drives as long has they follow
 the
@@ -64,7 +64,7 @@ Archive
 tape drive.
 The
 .Nm \&st
-tape interface provides a standard tape drive interface 
+tape interface provides a standard tape drive interface
 as described in
 .Xr mtio 4
 with the following exceptions:
@@ -190,7 +190,7 @@ will not work
 .Pf ( Dq Li tar c
 is ok).  One can only start writing at  1) beginning of tape, 2) on the
 end of what was last written, 3) "front" side of a regular (long) filemark.
-For example, you have a tape with 3 tar files. If you want to save the first 
+For example, you have a tape with 3 tar files. If you want to save the first
 file, but overwrite the second two files with new data, on a normal
 1/4" or 1/2" drive you would do:
 .Pp
