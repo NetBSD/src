@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.10 1998/12/14 13:54:25 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.11 1999/02/28 14:26:38 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -175,7 +175,8 @@ pckbc_send_cmd(iot, ioh_c, val)
 	return (1);
 }
 
-static int pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
+static int
+pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
 	pckbc_slot_t slot;
@@ -350,7 +351,8 @@ pckbc_submatch(parent, cf, aux)
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
-int pckbc_attach_slot(sc, slot)
+int
+pckbc_attach_slot(sc, slot)
 	struct pckbc_softc *sc;
 	pckbc_slot_t slot;
 {
@@ -427,10 +429,14 @@ pckbc_attach(parent, self, aux)
 		return;
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
 
-	if (res == 0 || res == 0xfa) {
+	/*
+	 * Normally, we should get a "0" here.
+	 * But there are keyboard controllers behaving differently.
+	 */
+	if (res == 0 || res == 0xfa || res == 0x01) {
 #ifdef PCKBCDEBUG
-		if (res == 0xfa)
-			printf("kbc: returned 0xfa on kbd slot test\n");
+		if (res != 0)
+			printf("kbc: returned %x on kbd slot test\n", res);
 #endif
 		if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT))
 			cmdbits |= KC8_KENABLE;
@@ -446,10 +452,10 @@ pckbc_attach(parent, self, aux)
 		return;
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
 
-	if (res == 0 || res == 0xfa) {
+	if (res == 0 || res == 0xfa || res == 0x01) {
 #ifdef PCKBCDEBUG
-		if (res == 0xfa)
-			printf("kbc: returned 0xfa on aux slot test\n");
+		if (res != 0)
+			printf("kbc: returned %x on aux slot test\n", res);
 #endif
 		t->t_haveaux = 1;
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
