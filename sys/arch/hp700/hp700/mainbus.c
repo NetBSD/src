@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 2005/01/31 18:22:24 jkunz Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25 2005/04/01 11:59:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2005/01/31 18:22:24 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2005/04/01 11:59:27 yamt Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1250,7 +1250,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	}
 
 	/* Get a chunk of kernel virtual space. */
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -1292,7 +1292,9 @@ mbus_dmamem_unmap(void *v, caddr_t kva, size_t size)
 		return;
 
 	size = round_page(size);
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_kremove((vaddr_t)kva, size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*

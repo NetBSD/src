@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.16 2005/03/26 21:22:45 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.17 2005/04/01 11:59:36 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.16 2005/03/26 21:22:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.17 2005/04/01 11:59:36 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -443,11 +443,13 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		if (sc->sc_backend_state == BEST_CLOSED) {
 			/* Move from CLOSED to DISCONNECTED state. */
 			sc->sc_tx = (netif_tx_interface_t *)
-				uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+			    uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+			    UVM_KMF_VAONLY);
 			if (sc->sc_tx == NULL)
 				panic("netif: no tx va");
 			sc->sc_rx = (netif_rx_interface_t *)
-				uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+			    uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+			    UVM_KMF_VAONLY);
 			if (sc->sc_rx == NULL)
 				panic("netif: no rx va");
 			sc->sc_pg_tx = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
@@ -849,8 +851,8 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 
 	nr_pfns = 0;
 
-	rxpages = uvm_km_valloc_align(kernel_map, RX_ENTRIES * PAGE_SIZE,
-	    PAGE_SIZE);
+	rxpages = uvm_km_alloc(kernel_map, RX_ENTRIES * PAGE_SIZE,
+	    PAGE_SIZE, UVM_KMF_VAONLY);
 
 	s = splnet();
 	for (va = rxpages; va < rxpages + RX_ENTRIES * PAGE_SIZE;
@@ -941,8 +943,9 @@ network_alloc_tx_buffers(struct xennet_softc *sc)
 	struct xennet_txbuf *txbuf;
 	int i;
 
-	txpages = uvm_km_valloc_align(kernel_map,
-	    (TX_ENTRIES / TXBUF_PER_PAGE) * PAGE_SIZE, PAGE_SIZE);
+	txpages = uvm_km_alloc(kernel_map,
+	    (TX_ENTRIES / TXBUF_PER_PAGE) * PAGE_SIZE, PAGE_SIZE,
+	    UVM_KMF_VAONLY);
 	for (va = txpages;
 	     va < txpages + (TX_ENTRIES / TXBUF_PER_PAGE) * PAGE_SIZE;
 	     va += PAGE_SIZE) {

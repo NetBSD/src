@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 2005/04/01 11:59:36 yamt Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2005/04/01 11:59:36 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -283,7 +283,7 @@ i386_set_ldt(l, args, retval)
 
 		simple_unlock(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
-		    new_len);
+		    new_len, 0, UVM_KMF_WIRED);
 		simple_lock(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
@@ -295,7 +295,8 @@ i386_set_ldt(l, args, retval)
 			 * hey.. not our problem if user applications
 			 * have race conditions like that.
 			 */
-			uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len);
+			uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
+			    UVM_KMF_WIRED);
 			goto copy;
 		}
 
@@ -312,7 +313,8 @@ i386_set_ldt(l, args, retval)
 		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
 
 		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
+			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
+			    UVM_KMF_WIRED);
 
 		pmap->pm_ldt = new_ldt;
 		pmap->pm_ldt_len = ldt_len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 2005/02/11 15:03:56 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 2005/04/01 11:59:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2005/02/11 15:03:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2005/04/01 11:59:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -193,7 +193,8 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	msgbuf_vaddr =  uvm_km_valloc(kernel_map, ns532_round_page(MSGBUFSIZE));
+	msgbuf_vaddr =  uvm_km_alloc(kernel_map, ns532_round_page(MSGBUFSIZE),
+	    0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 

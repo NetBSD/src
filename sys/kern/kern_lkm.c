@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.84 2005/03/27 08:34:41 matt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.85 2005/04/01 11:59:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.84 2005/03/27 08:34:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.85 2005/04/01 11:59:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -75,8 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.84 2005/03/27 08:34:41 matt Exp $");
 
 struct vm_map *lkm_map;
 
-#define	LKM_SPACE_ALLOC(size)		uvm_km_alloc(lkm_map, (size))
-#define	LKM_SPACE_FREE(addr, size)	uvm_km_free(lkm_map, (addr), (size))
+#define	LKM_SPACE_ALLOC(size) \
+	uvm_km_alloc(lkm_map, (size), 0, UVM_KMF_WIRED)
+#define	LKM_SPACE_FREE(addr, size) \
+	uvm_km_free(lkm_map, (addr), (size), UVM_KMF_WIRED)
 
 #if !defined(DEBUG) && defined(LKMDEBUG)
 # define DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.253 2005/03/09 19:04:45 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.254 2005/04/01 11:59:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2005/03/09 19:04:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2005/04/01 11:59:34 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -226,7 +226,7 @@ cpu_startup()
 	pmap_update(pmap_kernel());
 
 	/* Allocate virtual memory space */
-	va0 = va = uvm_km_valloc(kernel_map, size);
+	va0 = va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("cpu_start: no virtual memory for message buffer");
 
@@ -1722,7 +1722,9 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_kremove((vaddr_t)kva, size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*
@@ -1790,8 +1792,10 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	 * First, find a region large enough to contain any aligned chunk
 	 */
 	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
+	sva = vm_map_min(kernel_map);
+	if (uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
+	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, UVM_FLAG_NOWAIT)))
 		return (0);
 
 	/*
@@ -2075,7 +2079,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
