@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.34 1999/06/11 19:05:13 wrstuden Exp $        */
+/*      $NetBSD: ukbd.c,v 1.35 1999/06/14 17:09:57 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -684,11 +684,11 @@ ukbd_cngetc(v, type, data)
 	int *data;
 {
 	struct ukbd_softc *sc = v;
-	usbd_lock_token s;
+	int s;
 	int c;
 
 	DPRINTFN(-1,("ukbd_cngetc: enter\n"));
-	s = usbd_lock();
+	s = splusb();
 	sc->sc_polling = 1;
 	while(sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_iface);
@@ -699,7 +699,7 @@ ukbd_cngetc(v, type, data)
 	       sc->sc_npollchar * sizeof(u_int16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
-	usbd_unlock(s);
+	splx(s);
 	DPRINTFN(-1,("ukbd_cngetc: return 0x%02x\n", c));
 }
 
