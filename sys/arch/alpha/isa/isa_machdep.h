@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.5 1998/04/15 20:43:07 drochner Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.6 1998/05/23 18:35:03 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -40,7 +40,9 @@ struct alpha_isa_chipset {
 	void	*(*ic_intr_establish) __P((void *, int, int, int,
 		    int (*)(void *), void *));
 	void	(*ic_intr_disestablish) __P((void *, void *));
+	int	(*ic_intr_alloc) __P((void *, int, int, int *));
 };
+
 
 /*
  * Functions provided to machine-independent ISA code.
@@ -51,6 +53,8 @@ struct alpha_isa_chipset {
     (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
+#define	isa_intr_alloc(c, m, t, i)					\
+    (*(c)->ic_intr_alloc)((c)->ic_v, (m), (t), (i))
 
 /*
  * alpha-specific ISA functions.
