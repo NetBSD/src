@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.24 2000/08/25 06:25:59 enami Exp $	*/
+/*	$NetBSD: chown.c,v 1.25 2000/12/17 22:47:14 mike Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.24 2000/08/25 06:25:59 enami Exp $");
+__RCSID("$NetBSD: chown.c,v 1.25 2000/12/17 22:47:14 mike Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: chown.c,v 1.24 2000/08/25 06:25:59 enami Exp $");
 #include <unistd.h>
 
 static void	a_gid __P((const char *));
-static int	a_uid __P((const char *));
+static void	a_uid __P((const char *));
 static id_t	id __P((const char *, const char *));
 	int	main __P((int, char **));
 static void	usage __P((void));
@@ -153,13 +153,13 @@ main(argc, argv)
 		}
 #ifdef SUPPORT_DOT
 		else if ((cp = strrchr(*argv, '.')) != NULL) {
-			if (a_uid(*argv) == -1) {
+			if (uid_from_user(*argv, &uid) == -1) {
 				*cp++ = '\0';
 				a_gid(cp);
 			}
 		}
 #endif
-		(void) a_uid(*argv);
+		a_uid(*argv);
 	} else
 		a_gid(*argv);
 
@@ -228,26 +228,24 @@ a_gid(s)
 
 	if (*s == '\0')			/* Argument was "uid[:.]". */
 		return;
-	gid = ((gr = getgrnam(s)) == NULL) ? id(s, "group") : gr->gr_gid;
+	gr = getgrnam(s);
+	if (gr == NULL)
+		gid = id(s, "group");
+	else
+		gid = gr->gr_gid;
+	return;
 }
 
-static int
+static void
 a_uid(s)
 	const char *s;
 {
-	struct passwd *pw;
-
 	if (*s == '\0')			/* Argument was "[:.]gid". */
-		return 0;
-	pw = getpwnam(s);
-	if (pw != NULL) {
-		uid = pw->pw_uid;
-		return 0;
+		return;
+	if (uid_from_user(s, &uid) == -1) {
+		uid = id(s, "user");
 	}
-	if (isalpha(*s))
-		return -1;
-	uid = id(s, "user");
-	return 0;
+	return;
 }
 
 static id_t
