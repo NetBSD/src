@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 1998/10/06 20:50:17 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 1998/10/07 18:29:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ void	softnet __P((void *));
 void	icu_init __P((u_char *));
 
 /* trap.c */
-void	child_return __P((struct proc *, void *));
+void	child_return __P((struct proc *));
 
 /* vm_machdep.c */
 int	kvtop __P((caddr_t));
