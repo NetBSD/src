@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.13 2000/04/09 14:14:50 uch Exp $
+#	$NetBSD: TX3922,v 1.14 2000/04/10 17:44:06 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -88,7 +88,7 @@ options 	INET6		# IPV6
 #options 	CCITT,LLC,HDLC	# X.25
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP         # FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 
 options 	NFS_BOOT_DHCP
@@ -193,6 +193,13 @@ audio*	at uaudio?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Prolofic PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
 
 # USB Generic driver
 ugen*	at uhub? port ?
