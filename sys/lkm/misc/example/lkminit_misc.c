@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.2 2001/11/12 23:23:25 lukem Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.3 2003/09/01 17:11:03 jdolecek Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2 2001/11/12 23:23:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.3 2003/09/01 17:11:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2 2001/11/12 23:23:25 lukem Exp $
 #include <sys/syscall.h>
 
 
-int	misccall __P((struct proc *, void *, register_t *));
+int	misccall __P((struct lwp *, void *, register_t *));
 int	misc_example_lkmentry __P((struct lkm_table *lkmtp, int, int));
 
 static int miscmod_handle __P((struct lkm_table *, int));
@@ -63,7 +63,7 @@ static int miscmod_handle __P((struct lkm_table *, int));
  * have 0 arguments to our system call.
  */
 static struct sysent newent = {
-	0, 0,	misccall		/* # of args, args size, fn pointer*/
+	0, 0, 0, misccall		/* # of args, args size, fn pointer*/
 };
 
 /*
@@ -71,7 +71,7 @@ static struct sysent newent = {
  */
 static struct sysent	oldent;		/* save are for old callslot entry*/
 
-MOD_MISC( "miscmod")
+MOD_MISC( "miscmod");
 
 
 /*
@@ -119,7 +119,7 @@ miscmod_handle( lkmtp, cmd)
 		 * Search the table looking for a slot...
 		 */
 		for (i = 0; i < SYS_MAXSYSCALL; i++)
-			if (sysent[i].sy_call == sys_lkmnosys)
+			if ((void *)sysent[i].sy_call == sys_lkmnosys)
 				break;		/* found it!*/
 		/* out of allocable slots?*/
 		if (i == SYS_MAXSYSCALL) {
