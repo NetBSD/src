@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.18 1999/08/21 06:17:46 simonb Exp $
+#	$NetBSD: bsd.nls.mk,v 1.19 1999/09/04 21:48:33 fredb Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -45,7 +45,7 @@ nlsinstall:: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
 .endif
 
