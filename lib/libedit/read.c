@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.15 1999/10/04 23:23:21 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.16 2000/01/19 18:30:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.15 1999/10/04 23:23:21 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.16 2000/01/19 18:30:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -209,10 +209,10 @@ read_getcmd(el, cmdnum, ch)
     el_action_t *cmdnum;
     char *ch;
 {
-    el_action_t  cmd = 0;
+    el_action_t  cmd = ED_UNASSIGNED;
     int     num;
 
-    while (cmd == 0 || cmd == ED_SEQUENCE_LEAD_IN) {
+    while (cmd == ED_UNASSIGNED || cmd == ED_SEQUENCE_LEAD_IN) {
 	if ((num = el_getc(el, ch)) != 1)	/* if EOF or error */
 	    return num;
 
@@ -322,7 +322,7 @@ el_getc(el, cp)
 #endif /* DEBUG_READ */
     num_read = read_char(el, cp);
 #ifdef DEBUG_READ
-    (void) fprintf(el->el_errfile, "Got it %c\n", cp);
+    (void) fprintf(el->el_errfile, "Got it %c\n", *cp);
 #endif /* DEBUG_READ */
     return num_read;
 }
