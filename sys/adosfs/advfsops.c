@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.4 1994/06/29 06:29:30 cgd Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.5 1994/07/11 05:07:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -409,6 +409,16 @@ adosfs_vget(mp, an, vpp)
 	ap->hashf = adoswordn(bp, ap->nwords - 4);
 	ap->linknext = adoswordn(bp, ap->nwords - 10);
 	ap->linkto = adoswordn(bp, ap->nwords - 11);
+
+	/*
+	 * setup last indirect block cache.
+	 */
+	ap->lastlindblk = 0;
+	if (ap->type == AFILE) 
+		ap->lastindblk = ap->block;
+	else if (ap->type == ALFILE)
+		ap->lastindblk = ap->linkto;
+
 	if (ap->type == AROOT)
 		ap->adprot = 0;
 	else 

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.8 1994/06/29 06:29:32 cgd Exp $	*/
+/*	$NetBSD: advnops.c,v 1.9 1994/07/11 05:07:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -401,7 +401,7 @@ adosfs_bmap(sp)
 {
 	struct anode *ap;
 	struct buf *flbp;
-	long nb, flblk, flblkoff;
+	long nb, flblk, flblkoff, fcnt;
 	daddr_t *bnp;
 	daddr_t bn;
 	int error; 
@@ -442,6 +442,17 @@ adosfs_bmap(sp)
 
 	flblk = bn / ANODENDATBLKENT(ap);
 	flbp = NULL;
+
+	/*
+	 * check last indirect block cache
+	 */
+	if (flblk > ap->lastlindblk) 
+		fcnt = 0;
+	else {
+		flblk -= ap->lastlindblk;
+		fcnt = ap->lastlindblk;
+		nb = ap->lastindblk;
+	}
 	while (flblk >= 0) {
 		if (flbp)
 			brelse(flbp);
@@ -463,6 +474,12 @@ adosfs_bmap(sp)
 			error = EINVAL;
 			goto reterr;
 		}
+		/*
+		 * update last indirect block cache
+		 */
+		ap->lastlindblk = fcnt++;
+		ap->lastindblk = nb;
+
 		nb = adoswordn(flbp, ap->nwords - 2);
 		flblk--;
 	}
