@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1998/09/09 20:58:06 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1998/12/28 00:38:18 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -255,15 +255,25 @@ zsc_attach(parent, self, aux)
 	u_int regs[6];
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
-	node = ca->ca_node;
 
-	node = OF_child(node);	/* ch-a */
+	ca->ca_reg[0] += ca->ca_baseaddr;
+	zsaddr[0] = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
+
+	node = OF_child(ca->ca_node);	/* ch-a */
 
 	for (channel = 0; channel < 2; channel++) {
-		OF_getprop(node, "AAPL,interrupts",
-			intr[channel], sizeof(intr[channel]));
-		OF_getprop(node, "reg", regs, sizeof(regs));
-		regs[0] += ca->ca_baseaddr;
+		if (OF_getprop(node, "AAPL,interrupts",
+			       intr[channel], sizeof(int)) == -1 &&
+		    OF_getprop(node, "interrupts",
+			       intr[channel], sizeof(int)) == -1) {
+			printf(": cannot find interrupt property\n");
+			return;
+		}
+
+		if (OF_getprop(node, "reg", regs, sizeof(regs)) < 24) {
+			printf(": cannot find reg property\n");
+			return;
+		}
 		regs[2] += ca->ca_baseaddr;
 		regs[4] += ca->ca_baseaddr;
 #ifdef ZS_TXDMA
@@ -275,7 +285,6 @@ zsc_attach(parent, self, aux)
 #endif
 		node = OF_peer(node);	/* ch-b */
 	}
-	zsaddr[0] = mapiodev(regs[0], regs[1]);
 
 	printf(": irq %d,%d\n", intr[0][0], intr[1][0]);
 
