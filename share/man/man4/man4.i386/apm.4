@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: apm.4,v 1.5 1999/04/15 01:01:17 jtk Exp $
+.\"   $NetBSD: apm.4,v 1.6 1999/09/09 03:52:22 itohy Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -71,6 +71,11 @@ Force the length of the APM BIOS code and data segments to 64KB.
 Enable kernel printout of events received from the APM BIOS.
 .It Dv APMCALLDEBUG
 Enable kernel printout of every call to the APM BIOS (this is very noisy).
+.It Dv APM_NO_POWER_PRINT
+Do not print power state on console at
+.Dv APM_POWER_CHANGE
+events.  (Some systems generate the events too frequently,
+and printing the status may disturb single-user operations.)
 .El
 .Pp
 If no processes are holding open file descriptors to the APM device, the
