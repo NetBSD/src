@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.30 2000/06/28 15:39:32 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.31 2000/07/09 03:03:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -5124,9 +5124,14 @@ netbsd32___stat13(p, v, retval)
 	struct stat sb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg;
+	char *path;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    (caddr_t)(u_long)SCARG(uap, path), p);
+	path = (char *)(u_long)SCARG(uap, path);
+	sg = stackgap_init(p->p_emul);
+	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -5193,9 +5198,14 @@ netbsd32___lstat13(p, v, retval)
 	struct stat sb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg;
+	char *path;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    (caddr_t)(u_long)SCARG(uap, path), p);
+	path = (char *)(u_long)SCARG(uap, path);
+	sg = stackgap_init(p->p_emul);
+	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
