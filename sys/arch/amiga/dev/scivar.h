@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.12 1998/11/19 21:44:37 thorpej Exp $	*/
+/*	$NetBSD: scivar.h,v 1.13 2001/04/25 17:53:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,20 +40,13 @@
 #ifndef _SCIVAR_H_
 #define _SCIVAR_H_
 
-struct	sci_pending {
-	TAILQ_ENTRY(sci_pending) link;
-	struct scsipi_xfer *xs;
-};
-
 struct sci_softc;
 
 struct	sci_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
-	struct	scsipi_link sc_link;	/* proto for sub devices */
 	struct	scsipi_adapter sc_adapter;
-	TAILQ_HEAD(,sci_pending) sc_xslist;
-	struct	sci_pending sc_xsstore[8][8];
+	struct	scsipi_channel sc_channel;
 	struct	scsipi_xfer *sc_xs;	/* transfer from high level code */
 
 	volatile u_char	*sci_data;	/* r: Current data */
@@ -143,7 +136,7 @@ struct buf;
 struct scsipi_xfer;
 
 void sci_minphys __P((struct buf *));
-int sci_scsicmd __P((struct scsipi_xfer *));
+void sci_scsipi_request __P((struct scsipi_channel *, scsipi_adapter_req_t, void *));
 void scireset __P((struct sci_softc *));
 
 #endif /* _SCIVAR_H_ */

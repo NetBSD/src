@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.2 2001/04/19 18:25:26 thorpej Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.3 2001/04/25 17:53:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.2 2001/04/19 18:25:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.3 2001/04/25 17:53:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 		if (parent->dv_parent != scsidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */

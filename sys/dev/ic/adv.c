@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.23 2001/03/27 17:24:03 bouyer Exp $	*/
+/*	$NetBSD: adv.c,v 1.24 2001/04/25 17:53:28 bouyer Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -78,12 +78,13 @@ static int adv_create_ccbs __P((ASC_SOFTC *, ADV_CCB *, int));
 static void adv_free_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_reset_ccb __P((ADV_CCB *));
 static int adv_init_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *, int));
+static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *));
 static void adv_queue_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_start_ccbs __P((ASC_SOFTC *));
 
 
-static int adv_scsi_cmd __P((struct scsipi_xfer *));
+static void adv_scsipi_request __P((struct scsipi_channel *,
+	scsipi_adapter_req_t, void *));
 static void advminphys __P((struct buf *));
 static void adv_narrow_isr_callback __P((ASC_SOFTC *, ASC_QDONE_INFO *));
 
@@ -94,20 +95,8 @@ static void adv_watchdog __P((void *));
 
 /******************************************************************************/
 
-
-/* the below structure is so we have a default dev struct for out link struct */
-struct scsipi_device adv_dev =
-{
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
-
 #define ADV_ABORT_TIMEOUT       2000	/* time to wait for abort (mSec) */
 #define ADV_WATCH_TIMEOUT       1000	/* time to wait for watchdog (mSec) */
-
 
 /******************************************************************************/
 /*                             Control Blocks routines                        */
@@ -121,8 +110,8 @@ adv_alloc_control_data(sc)
 	int error;
 
 	/*
-         * Allocate the control blocks.
-         */
+ 	* Allocate the control blocks.
+	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
 			   PAGE_SIZE, 0, &sc->sc_control_seg, 1,
 			   &sc->sc_control_nsegs, BUS_DMA_NOWAIT)) != 0) {
@@ -139,8 +128,8 @@ adv_alloc_control_data(sc)
 		return (error);
 	}
 	/*
-         * Create and load the DMA map used for the control blocks.
-         */
+	 * Create and load the DMA map used for the control blocks.
+	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct adv_control),
 			   1, sizeof(struct adv_control), 0, BUS_DMA_NOWAIT,
 				       &sc->sc_dmamap_control)) != 0) {
@@ -219,17 +208,8 @@ adv_free_ccb(sc, ccb)
 	int             s;
 
 	s = splbio();
-
 	adv_reset_ccb(ccb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-         * If there were none, wake anybody waiting for one to come free,
-         * starting with queued entries.
-         */
-	if (ccb->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_ccb);
-
 	splx(s);
 }
 
@@ -253,8 +233,8 @@ adv_init_ccb(sc, ccb)
 	callout_init(&ccb->ccb_watchdog);
 
 	/*
-         * Create the DMA map for this CCB.
-         */
+	 * Create the DMA map for this CCB.
+	 */
 	error = bus_dmamap_create(sc->sc_dmat,
 				  (ASC_MAX_SG_LIST - 1) * PAGE_SIZE,
 			 ASC_MAX_SG_LIST, (ASC_MAX_SG_LIST - 1) * PAGE_SIZE,
@@ -286,34 +266,18 @@ adv_init_ccb(sc, ccb)
  * If there are none, see if we can allocate a new one
  */
 static ADV_CCB *
-adv_get_ccb(sc, flags)
+adv_get_ccb(sc)
 	ASC_SOFTC      *sc;
-	int             flags;
 {
 	ADV_CCB        *ccb = 0;
 	int             s;
 
 	s = splbio();
-
-	/*
-         * If we can and have to, sleep waiting for one to come free
-         * but only if we can't allocate a new one.
-         */
-	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-
-		tsleep(&sc->sc_free_ccb, PRIBIO, "advccb", 0);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
 	}
-
-	ccb->flags |= CCB_ALLOC;
-
-out:
 	splx(s);
 	return (ccb);
 }
@@ -398,8 +362,8 @@ adv_init(sc)
 	}
 
 	/*
-         * Read the board configuration
-         */
+	 * Read the board configuration
+	 */
 	AscInitASC_SOFTC(sc);
 	warn = AscInitFromEEP(sc);
 	if (warn) {
@@ -442,8 +406,8 @@ adv_init(sc)
 		sc->scsi_reset_wait = ASC_MAX_SCSI_RESET_WAIT;
 
 	/*
-         * Modify the board configuration
-         */
+	 * Modify the board configuration
+	 */
 	warn = AscInitFromASC_SOFTC(sc);
 	if (warn) {
 		printf("%s -set: ", sc->sc_dev.dv_xname);
@@ -470,11 +434,13 @@ void
 adv_attach(sc)
 	ASC_SOFTC      *sc;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 	int             i, error;
 
 	/*
-         * Initialize board RISC chip and enable interrupts.
-         */
+	 * Initialize board RISC chip and enable interrupts.
+	 */
 	switch (AscInitDriver(sc)) {
 	case 0:
 		/* AllOK */
@@ -500,40 +466,40 @@ adv_attach(sc)
 	}
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in the scsipi_adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = adv_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = advminphys;
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	/* adapt_openings initialized below */
+	/* adapt_max_periph initialized below */
+	adapt->adapt_request = adv_scsipi_request;
+	adapt->adapt_minphys = advminphys;
 
 	/*
-         * fill in the prototype scsipi_link.
-         */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = sc->chip_scsi_id;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &adv_dev;
-	sc->sc_link.openings = 4;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
-
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = sc->chip_scsi_id;
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
-	TAILQ_INIT(&sc->sc_queue);
-
 
 	/*
-         * Allocate the Control Blocks and the overrun buffer.
-         */
+	 * Allocate the Control Blocks and the overrun buffer.
+	 */
 	error = adv_alloc_control_data(sc);
 	if (error)
 		return; /* (error) */
 
 	/*
-         * Create and initialize the Control Blocks.
-         */
+	 * Create and initialize the Control Blocks.
+	 */
 	i = adv_create_ccbs(sc, sc->sc_control->ccbs, ADV_MAX_CCB);
 	if (i == 0) {
 		printf("%s: unable to create control blocks\n",
@@ -543,7 +509,11 @@ adv_attach(sc)
 		printf("%s: WARNING: only %d of %d control blocks created\n",
 		       sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
 	}
-	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	adapt->adapt_openings = i;
+	adapt->adapt_max_periph = adapt->adapt_openings;
+
+	sc->sc_child = config_found(&sc->sc_dev, chan, scsiprint);
 }
 
 int
@@ -576,227 +546,225 @@ advminphys(bp)
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-static int
-adv_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+
+static void
+adv_scsipi_request(chan, req, arg)
+ 	struct scsipi_channel *chan;
+ 	scsipi_adapter_req_t req; 
+ 	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	ASC_SOFTC      *sc = sc_link->adapter_softc;
-	bus_dma_tag_t   dmat = sc->sc_dmat;
-	ADV_CCB        *ccb;
-	int             s, flags, error, nsegs;
-	int             fromqueue = 0, dontqueue = 0, nowait = 0;
-
-
-	s = splbio();		/* protect the queue */
-
-	/*
-         * If we're running the queue from adv_done(), we've been
-         * called with the first queue entry as our argument.
-         */
-	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-		nowait = 1;
-	} else {
-
-		/* Polled requests can't be queued for later. */
-		dontqueue = xs->xs_control & XS_CTL_POLL;
-
-		/*
-                 * If there are jobs in the queue, run them first.
-                 */
-		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
-			/*
-                         * If we can't queue, we have to abort, since
-                         * we have to preserve order.
-                         */
-			if (dontqueue) {
-				splx(s);
-				xs->error = XS_DRIVER_STUFFUP;
-				return (TRY_AGAIN_LATER);
-			}
-			/*
-                         * Swap with the first queue entry.
-                         */
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-			xs = TAILQ_FIRST(&sc->sc_queue);
-			TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-			fromqueue = 1;
-		}
-	}
-
-
-	/*
-         * get a ccb to use. If the transfer
-         * is from a buf (possibly from interrupt time)
-         * then we can't allow it to sleep
-         */
-
-	flags = xs->xs_control;
-	if (nowait)
-		flags |= XS_CTL_NOSLEEP;
-	if ((ccb = adv_get_ccb(sc, flags)) == NULL) {
-		/*
-                 * If we can't queue, we lose.
-                 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
-		}
-		/*
-                 * Stuff ourselves into the queue, in front
-                 * if we came off in the first place.
-                 */
-		if (fromqueue)
-			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-	splx(s);		/* done playing with the queue */
-
-	ccb->xs = xs;
-	ccb->timeout = xs->timeout;
-
-	/*
-         * Build up the request
-         */
-	memset(&ccb->scsiq, 0, sizeof(ASC_SCSI_Q));
-
-	ccb->scsiq.q2.ccb_ptr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-		    ADV_CCB_OFF(ccb);
-
-	ccb->scsiq.cdbptr = &xs->cmd->opcode;
-	ccb->scsiq.q2.cdb_len = xs->cmdlen;
-	ccb->scsiq.q1.target_id = ASC_TID_TO_TARGET_ID(sc_link->scsipi_scsi.target);
-	ccb->scsiq.q1.target_lun = sc_link->scsipi_scsi.lun;
-	ccb->scsiq.q2.target_ix = ASC_TIDLUN_TO_IX(sc_link->scsipi_scsi.target,
-						   sc_link->scsipi_scsi.lun);
-	ccb->scsiq.q1.sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-		ADV_CCB_OFF(ccb) + offsetof(struct adv_ccb, scsi_sense);
-	ccb->scsiq.q1.sense_len = sizeof(struct scsipi_sense_data);
-
-	/*
-         * If  there  are  any  outstanding  requests  for  the  current target,
-         * then  every  255th request  send an  ORDERED request.  This heuristic
-         * tries  to  retain  the  benefit  of request  sorting while preventing
-         * request starvation. 255 is the max number of tags or pending commands
-         * a device may have outstanding.
-         */
-	sc->reqcnt[sc_link->scsipi_scsi.target]++;
-	if ((sc->reqcnt[sc_link->scsipi_scsi.target] > 0) &&
-	    (sc->reqcnt[sc_link->scsipi_scsi.target] % 255) == 0) {
-		ccb->scsiq.q2.tag_code = M2_QTAG_MSG_ORDERED;
-	} else {
-		if((xs->bp != NULL) && xs->bp->b_flags & B_ASYNC)
-			ccb->scsiq.q2.tag_code = M2_QTAG_MSG_SIMPLE;
-		else
-			ccb->scsiq.q2.tag_code = M2_QTAG_MSG_ORDERED;
-	}
-
-
-	if (xs->datalen) {
-		/*
-                 * Map the DMA transfer.
-                 */
-#ifdef TFS
-		if (flags & SCSI_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat, ccb->dmamap_xfer,
-			    (struct uio *) xs->data,
-			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
-		} else
-#endif				/* TFS */
-		{
-			error = bus_dmamap_load(dmat, ccb->dmamap_xfer,
-			    xs->data, xs->datalen, NULL,
-			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
-		}
-
-		if (error) {
-			if (error == EFBIG) {
-				printf("%s: adv_scsi_cmd, more than %d dma"
-				       " segments\n",
-				       sc->sc_dev.dv_xname, ASC_MAX_SG_LIST);
-			} else {
-				printf("%s: adv_scsi_cmd, error %d loading"
-				       " dma map\n",
-				       sc->sc_dev.dv_xname, error);
-			}
-
-			xs->error = XS_DRIVER_STUFFUP;
-			adv_free_ccb(sc, ccb);
-			return (COMPLETE);
-		}
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
-				ccb->dmamap_xfer->dm_mapsize,
-			      (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
-				BUS_DMASYNC_PREWRITE);
-
-
-		memset(&ccb->sghead, 0, sizeof(ASC_SG_HEAD));
-
-		for (nsegs = 0; nsegs < ccb->dmamap_xfer->dm_nsegs; nsegs++) {
-
-			ccb->sghead.sg_list[nsegs].addr =
-				ccb->dmamap_xfer->dm_segs[nsegs].ds_addr;
-			ccb->sghead.sg_list[nsegs].bytes =
-				ccb->dmamap_xfer->dm_segs[nsegs].ds_len;
-		}
-
-		ccb->sghead.entry_cnt = ccb->scsiq.q1.sg_queue_cnt =
-			ccb->dmamap_xfer->dm_nsegs;
-
-		ccb->scsiq.q1.cntl |= ASC_QC_SG_HEAD;
-		ccb->scsiq.sg_head = &ccb->sghead;
-		ccb->scsiq.q1.data_addr = 0;
-		ccb->scsiq.q1.data_cnt = 0;
-	} else {
-		/*
-                 * No data xfer, use non S/G values.
-                 */
-		ccb->scsiq.q1.data_addr = 0;
-		ccb->scsiq.q1.data_cnt = 0;
-	}
-
-#ifdef ASC_DEBUG
-	printf("id = %d, lun = %d, cmd = %d, ccb = 0x%lX \n",
-			sc_link->scsipi_scsi.target,
-			sc_link->scsipi_scsi.lun, xs->cmd->opcode,
-			(unsigned long)ccb);
+ 	struct scsipi_xfer *xs;
+ 	struct scsipi_periph *periph;
+ 	ASC_SOFTC      *sc = (void *)chan->chan_adapter->adapt_dev;
+ 	bus_dma_tag_t   dmat = sc->sc_dmat;
+ 	ADV_CCB        *ccb;
+ 	int             s, flags, error, nsegs;
+ 
+ 	switch (req) {
+ 	case ADAPTER_REQ_RUN_XFER:
+ 		xs = arg;
+ 		periph = xs->xs_periph;
+ 		flags = xs->xs_control;
+ 
+ 		/*
+ 		 * Get a CCB to use.
+ 		 */
+ 		ccb = adv_get_ccb(sc);
+#ifdef DIAGNOSTIC
+ 		/*
+ 		 * This should never happen as we track the resources
+ 		 * in the mid-layer.
+ 		 */
+ 		if (ccb == NULL) {
+ 			scsipi_printaddr(periph);
+ 			printf("unable to allocate ccb\n");
+ 			panic("adv_scsipi_request");
+ 		}
 #endif
-	s = splbio();
-	adv_queue_ccb(sc, ccb);
-	splx(s);
+ 
+ 		ccb->xs = xs;
+ 		ccb->timeout = xs->timeout;
+ 
+ 		/*
+ 		 * Build up the request
+ 		 */
+ 		memset(&ccb->scsiq, 0, sizeof(ASC_SCSI_Q));
+ 
+ 		ccb->scsiq.q2.ccb_ptr =
+ 		    sc->sc_dmamap_control->dm_segs[0].ds_addr +
+ 		    ADV_CCB_OFF(ccb);
+ 
+ 		ccb->scsiq.cdbptr = &xs->cmd->opcode;
+ 		ccb->scsiq.q2.cdb_len = xs->cmdlen;
+ 		ccb->scsiq.q1.target_id =
+ 		    ASC_TID_TO_TARGET_ID(periph->periph_target);
+ 		ccb->scsiq.q1.target_lun = periph->periph_lun;
+ 		ccb->scsiq.q2.target_ix =
+ 		    ASC_TIDLUN_TO_IX(periph->periph_target,
+ 		    periph->periph_lun);
+ 		ccb->scsiq.q1.sense_addr =
+ 		    sc->sc_dmamap_control->dm_segs[0].ds_addr +
+ 		    ADV_CCB_OFF(ccb) + offsetof(struct adv_ccb, scsi_sense);
+ 		ccb->scsiq.q1.sense_len = sizeof(struct scsipi_sense_data);
+ 
+ 		/*
+ 		 * If there are any outstanding requests for the current
+ 		 * target, then every 255th request send an ORDERED request.
+ 		 * This heuristic tries to retain the benefit of request
+ 		 * sorting while preventing request starvation. 255 is the
+ 		 * max number of tags or pending commands a device may have
+ 		 * outstanding.
+ 		 */
+ 		sc->reqcnt[periph->periph_target]++;
+ 		if (((sc->reqcnt[periph->periph_target] > 0) &&
+ 		    (sc->reqcnt[periph->periph_target] % 255) == 0) ||
+		    xs->bp == NULL || (xs->bp->b_flags & B_ASYNC) == 0) {
+ 			ccb->scsiq.q2.tag_code = M2_QTAG_MSG_ORDERED;
+ 		} else {
+ 			ccb->scsiq.q2.tag_code = M2_QTAG_MSG_SIMPLE;
+ 		}
+ 
+ 		if (xs->datalen) {
+ 			/*
+ 			 * Map the DMA transfer.
+ 			 */
+#ifdef TFS
+ 			if (flags & SCSI_DATA_UIO) {
+ 				error = bus_dmamap_load_uio(dmat,
+ 				    ccb->dmamap_xfer, (struct uio *) xs->data,
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+ 			} else
+#endif /* TFS */
+ 			{
+ 				error = bus_dmamap_load(dmat, ccb->dmamap_xfer,
+ 				    xs->data, xs->datalen, NULL,
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+ 			}
+ 
+ 			switch (error) {
+ 			case 0:
+ 				break;
 
-	/*
-         * Usually return SUCCESSFULLY QUEUED
-         */
-	if ((flags & XS_CTL_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+ 
+ 			case ENOMEM:
+ 			case EAGAIN:
+ 				xs->error = XS_RESOURCE_SHORTAGE;
+ 				goto out_bad;
+ 
+ 			default:
+ 				xs->error = XS_DRIVER_STUFFUP;
+				if (error == EFBIG) {
+					printf("%s: adv_scsi_cmd, more than %d"
+					    " dma segments\n",
+					    sc->sc_dev.dv_xname,
+					    ASC_MAX_SG_LIST);
+				} else {
+					printf("%s: adv_scsi_cmd, error %d"
+					    " loading dma map\n",
+					    sc->sc_dev.dv_xname, error);
+				}
 
-	/*
-         * If we can't use interrupts, poll on completion
-         */
-	if (adv_poll(sc, xs, ccb->timeout)) {
-		adv_timeout(ccb);
-		if (adv_poll(sc, xs, ccb->timeout))
-			adv_timeout(ccb);
-	}
-	return (COMPLETE);
+out_bad:
+ 				adv_free_ccb(sc, ccb);
+ 				scsipi_done(xs);
+ 				return;
+ 			}
+ 			bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+ 			    ccb->dmamap_xfer->dm_mapsize,
+ 			    (flags & XS_CTL_DATA_IN) ?
+ 			     BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+ 
+ 			memset(&ccb->sghead, 0, sizeof(ASC_SG_HEAD));
+ 
+ 			for (nsegs = 0;
+ 			     nsegs < ccb->dmamap_xfer->dm_nsegs; nsegs++) {
+ 				ccb->sghead.sg_list[nsegs].addr =
+ 				    ccb->dmamap_xfer->dm_segs[nsegs].ds_addr;
+ 				ccb->sghead.sg_list[nsegs].bytes =
+ 				    ccb->dmamap_xfer->dm_segs[nsegs].ds_len;
+ 			}
+ 
+ 			ccb->sghead.entry_cnt = ccb->scsiq.q1.sg_queue_cnt =
+ 			    ccb->dmamap_xfer->dm_nsegs;
+ 
+ 			ccb->scsiq.q1.cntl |= ASC_QC_SG_HEAD;
+ 			ccb->scsiq.sg_head = &ccb->sghead;
+ 			ccb->scsiq.q1.data_addr = 0;
+ 			ccb->scsiq.q1.data_cnt = 0;
+ 		} else {
+ 			/*
+ 			 * No data xfer, use non S/G values.
+ 			 */
+ 			ccb->scsiq.q1.data_addr = 0;
+ 			ccb->scsiq.q1.data_cnt = 0;
+ 		}
+ 
+#ifdef ASC_DEBUG
+ 		printf("id = 0, lun = 0, cmd = 0, ccb = 0x0 \n",
+ 		    periph->periph_target,
+ 		    periph->periph_lun, xs->cmd->opcode,
+ 		    (unsigned long)ccb);
+#endif
+ 		s = splbio();
+ 		adv_queue_ccb(sc, ccb);
+ 		splx(s);
+ 
+ 		if ((flags & XS_CTL_POLL) == 0)
+ 			return;
+ 
+ 		/* Not allowed to use interrupts, poll for completion. */
+ 		if (adv_poll(sc, xs, ccb->timeout)) {
+ 			adv_timeout(ccb);
+ 			if (adv_poll(sc, xs, ccb->timeout))
+ 				adv_timeout(ccb);
+ 		}
+ 		return;
+ 	
+ 	case ADAPTER_REQ_GROW_RESOURCES:
+ 		/* XXX Not supported. */
+ 		return;
+ 
+ 	case ADAPTER_REQ_SET_XFER_MODE:
+ 	    {
+ 		/*
+ 		 * We can't really set the mode, but we know how to
+ 		 * query what the firmware negotiated.
+ 		 */
+ 		struct scsipi_xfer_mode *xm = arg;
+ 		u_int8_t sdtr_data;
+ 		ASC_SCSI_BIT_ID_TYPE tid_bit;
+ 
+ 		tid_bit = ASC_TIX_TO_TARGET_ID(xm->xm_target);
+ 
+ 		xm->xm_mode = 0;
+ 		xm->xm_period = 0;
+ 		xm->xm_offset = 0;
+ 
+ 		if (sc->init_sdtr & tid_bit) {
+ 			xm->xm_mode |= PERIPH_CAP_SYNC;
+ 			sdtr_data = sc->sdtr_data[xm->xm_target];
+ 			xm->xm_period =
+ 			    sc->sdtr_period_tbl[(sdtr_data >> 4) &
+ 			    (sc->max_sdtr_index - 1)];
+ 			xm->xm_offset = sdtr_data & ASC_SYN_MAX_OFFSET;
+ 		}
+ 
+ 		if (sc->use_tagged_qng & tid_bit)
+ 			xm->xm_mode |= PERIPH_CAP_TQING;
+ 
+ 		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+ 		return;
+ 	    }
+ 	}
 }
-
 
 int
 adv_intr(arg)
 	void           *arg;
 {
 	ASC_SOFTC      *sc = arg;
-	struct scsipi_xfer *xs;
 
 #ifdef ASC_DEBUG
 	int int_pend = FALSE;
@@ -812,17 +780,6 @@ adv_intr(arg)
 	if(int_pend)
 		printf("\n");
 #endif
-
-	/*
-         * If there are queue entries in the software queue, try to
-         * run the first one.  We should be more or less guaranteed
-         * to succeed, since we just freed a CCB.
-         *
-         * NOTE: adv_scsi_cmd() relies on our calling it with
-         * the first entry in the queue.
-         */
-	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
-		(void) adv_scsi_cmd(xs);
 
 	return (1);
 }
@@ -856,19 +813,20 @@ adv_timeout(arg)
 {
 	ADV_CCB        *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	ASC_SOFTC      *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	ASC_SOFTC      *sc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int             s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();
 
 	/*
-         * If it has been through before, then a previous abort has failed,
-         * don't try abort again, reset the bus instead.
-         */
+	 * If it has been through before, then a previous abort has failed,
+	 * don't try abort again, reset the bus instead.
+	 */
 	if (ccb->flags & CCB_ABORT) {
 		/* abort timed out */
 		printf(" AGAIN. Resetting Bus\n");
@@ -897,8 +855,9 @@ adv_watchdog(arg)
 {
 	ADV_CCB        *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	ASC_SOFTC      *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	ASC_SOFTC      *sc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int             s;
 
 	s = splbio();
@@ -937,15 +896,15 @@ adv_narrow_isr_callback(sc, qdonep)
 #ifdef ASC_DEBUG
 	printf(" - ccb=0x%lx, id=%d, lun=%d, cmd=%d, ",
 			(unsigned long)ccb,
-			xs->sc_link->scsipi_scsi.target,
-			xs->sc_link->scsipi_scsi.lun, xs->cmd->opcode);
+			xs->xs_periph->periph_target,
+			xs->xs_periph->periph_lun, xs->cmd->opcode);
 #endif
 	callout_stop(&ccb->xs->xs_callout);
 
 	/*
-         * If we were a data transfer, unload the map that described
-         * the data buffer.
-         */
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
 				ccb->dmamap_xfer->dm_mapsize,
@@ -959,8 +918,8 @@ adv_narrow_isr_callback(sc, qdonep)
 		return;
 	}
 	/*
-         * 'qdonep' contains the command's ending status.
-         */
+	 * 'qdonep' contains the command's ending status.
+	 */
 #ifdef ASC_DEBUG
 	printf("d_s=%d, h_s=%d", qdonep->d3.done_stat, qdonep->d3.host_stat);
 #endif
@@ -979,14 +938,14 @@ adv_narrow_isr_callback(sc, qdonep)
 		}
 
 		/*
-                 * If an INQUIRY command completed successfully, then call
-                 * the AscInquiryHandling() function to patch bugged boards.
-                 */
+	         * If an INQUIRY command completed successfully, then call
+	         * the AscInquiryHandling() function to patch bugged boards.
+	         */
 		if ((xs->cmd->opcode == SCSICMD_Inquiry) &&
-		    (xs->sc_link->scsipi_scsi.lun == 0) &&
+		    (xs->xs_periph->periph_lun == 0) &&
 		    (xs->datalen - qdonep->remain_bytes) >= 8) {
 			AscInquiryHandling(sc,
-				      xs->sc_link->scsipi_scsi.target & 0x7,
+				      xs->xs_periph->periph_target & 0x7,
 					   (ASC_SCSI_INQUIRY *) xs->data);
 		}
 		break;
@@ -1019,6 +978,5 @@ adv_narrow_isr_callback(sc, qdonep)
 
 
 	adv_free_ccb(sc, ccb);
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 }

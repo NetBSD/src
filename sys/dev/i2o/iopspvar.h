@@ -1,7 +1,7 @@
-/*	$NetBSD: iopspvar.h,v 1.3 2001/03/20 13:01:49 ad Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.4 2001/04/25 17:53:28 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,11 +39,11 @@
 #ifndef _I2O_IOPSPVAR_H_
 #define	_I2O_IOPSPVAR_H_
 
-#define	IOPSP_MAX_LUN		7
+#define	IOPSP_MAX_LUN		8
 #define	IOPSP_MAX_SCSI_TARGET	15
-#define	IOPSP_MAX_FCAL_TARGET	126
+#define	IOPSP_MAX_FCAL_TARGET	127
 
-#define	IOPSP_TIDMAP(map, t, l)	(map[(t) * (IOPSP_MAX_LUN + 1) + (l)])
+#define	IOPSP_TIDMAP(map, t, l)	(map[(t) * IOPSP_MAX_LUN + (l)])
 #define	IOPSP_TID_ABSENT	0x0000	/* Device is absent */
 #define	IOPSP_TID_INUSE		0xffff	/* Device in use by another module */
 
@@ -60,10 +60,11 @@ struct iopsp_target {
 struct iopsp_softc {
 	struct	device sc_dv;			/* Generic device data */
 	struct	scsipi_adapter sc_adapter;	/* scsipi adapter */
-	struct	scsipi_link sc_link;		/* Prototype link */
+	struct	scsipi_channel sc_channel;	/* Prototype link */
 	struct	iop_initiator sc_ii;		/* I2O initiator state */
 	u_short	*sc_tidmap;			/* Target/LUN -> TID map */
 	u_int	sc_chgind;			/* Last LCT change # */
+	u_int	sc_curqd;			/* Current queue depth */
 #ifdef I2OVERBOSE
 	struct	iopsp_target *sc_targetmap;	/* Target information */
 #endif

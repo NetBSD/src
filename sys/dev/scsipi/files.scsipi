@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.25 2001/02/24 01:59:46 lukem Exp $
+#	$NetBSD: files.scsipi,v 1.26 2001/04/25 17:53:39 bouyer Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -6,6 +6,12 @@
 
 defopt	opt_scsi.h	SCSIVERBOSE ST_ENABLE_EARLYWARN ST_MOUNT_DELAY
 			SES_ENABLE_PASSTHROUGH
+
+defopt	opt_scsipi_debug.h	SCSIPI_DEBUG
+				SCSIPI_DEBUG_TYPE
+				SCSIPI_DEBUG_TARGET
+				SCSIPI_DEBUG_LUN
+				SCSIPI_DEBUG_FLAGS
 
 file	dev/scsipi/scsipiconf.c		scsi | atapibus
 file	dev/scsipi/scsipi_base.c	scsi | atapibus
@@ -49,9 +55,10 @@ device	st: tape
 attach	st at scsibus
 file	dev/scsipi/st.c			st			needs-flag
 
-device	ses
-attach	ses at scsibus
-file	dev/scsipi/ses.c		ses			needs-flag
+device ses
+attach ses at scsibus
+file   dev/scsipi/ses.c			ses			needs-flag
+
 
 device	ss
 attach	ss at scsibus

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.34 2001/02/04 20:36:33 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.35 2001/04/25 17:53:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,8 +215,8 @@ si_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n%s: NCR5380, SCSI ID %d\n", ncr_sc->sc_dev.dv_xname, target);
 
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = target;
+	ncr_sc->sc_adapter.adapt_minphys = si_minphys;
+	ncr_sc->sc_channel.chan_id = target;
 
 	/*
 	 * Init the vsbus DMA resource queue struct */

@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.4 1998/11/19 21:44:59 thorpej Exp $ */
+/* $NetBSD: escvar.h,v 1.5 2001/04/25 17:53:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -129,17 +129,13 @@ struct nexus {
 #define ESC_NS_DISCONNECTED	9	/* We are disconnected */
 #define ESC_NS_RESELECTED	10	/* We was reselected */
 #define ESC_NS_DONE		11	/* Done. Prephsase to FINISHED */
-#define ESC_NS_FINISHED	12	/* Realy done. Call scsi_done */
-#define ESC_NS_SENSE		13	/* We are requesting sense */
-#define ESC_NS_RESET		14	/* We are reseting this unit */
+#define ESC_NS_FINISHED		12	/* Realy done. Call scsi_done */
+#define ESC_NS_RESET		13	/* We are reseting this unit */
 
 /* SCSI nexus flags */
 #define ESC_NF_UNIT_BUSY	0x0001	/* Unit is not available */
 
 #define ESC_NF_SELECT_ME	0x0002	/* Nexus is set up, waiting for bus */
-
-#define ESC_NF_REQUEST_SENSE	0x0004	/* We should request sense */
-#define ESC_NF_SENSING		0x0008	/* We are sensing */
 
 #define ESC_NF_HAS_MSG		0x0010	/* We have recieved a complete msg */
 
@@ -156,7 +152,7 @@ struct nexus {
 
 struct	esc_softc {
 	struct	device		 sc_dev;	/* System required struct */
-	struct	scsipi_link	 sc_link;	/* For sub devices */
+	struct	scsipi_channel	 sc_channel;	/* For sub devices */
 	struct	scsipi_adapter	 sc_adapter;
 	irqhandler_t		 sc_ih;		/* Interrupt chain struct */
 
@@ -262,7 +258,8 @@ struct	esc_softc {
 
 void	escinitialize __P((struct esc_softc *sc));
 void	esc_minphys   __P((struct buf *bp));
-int	esc_scsicmd   __P((struct scsipi_xfer *));
+void	esc_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 void	escintr       __P((struct esc_softc *dev));
 
 #endif /* _ESCVAR_H_ */

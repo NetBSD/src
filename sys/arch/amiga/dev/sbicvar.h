@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.15 2000/03/23 06:33:13 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.16 2001/04/25 17:53:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,6 @@ struct sbic_acb {
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
 #define ACB_DONE	0x04
-#define ACB_CHKSENSE	0x08
 #define ACB_BBUF	0x10	/* DMA input needs to be copied from bounce */
 #define	ACB_DATAIN	0x20	/* DMA direction flag */
 	struct scsi_generic cmd;	/* SCSI command block */
@@ -95,7 +94,6 @@ struct sbic_tinfo {
 	int	dconns;		/* #disconnects */
 	int	touts;		/* #timeouts */
 	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
 	u_char*	bounce;		/* Bounce buffer for this device */
 	ushort	lubusy;		/* What local units/subr. are busy? */
 	u_char  flags;
@@ -114,8 +112,8 @@ struct	sbic_softc {
 	} sc_sync[8];
 	u_char	target;			/* Currently active target */
 	u_char  lun;
-	struct	scsipi_link sc_link;	/* proto for sub devices */
 	struct	scsipi_adapter sc_adapter;
+	struct	scsipi_channel sc_channel;
 	sbic_regmap_t	sc_sbic;	/* the two SBIC pointers */
 	volatile void 	*sc_cregs;	/* driver specific regs */
 
@@ -227,7 +225,8 @@ struct buf;
 struct scsipi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
-int sbic_scsicmd __P((struct scsipi_xfer *));
+void sbic_scsipi_request __P((struct scsipi_channel *,
+			scsipi_adapter_req_t, void *));
 void sbicinit __P((struct sbic_softc *));
 int  sbicintr __P((struct sbic_softc *));
 #ifdef DEBUG

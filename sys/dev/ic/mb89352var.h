@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.2 2000/01/07 08:12:15 nisimura Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.3 2001/04/25 17:53:33 bouyer Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -115,7 +115,7 @@ struct spc_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct scsipi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_channel sc_channel; /* prototype for subdevs */
 	struct scsipi_adapter sc_adapter;
 
 	TAILQ_HEAD(, spc_acb) free_list, ready_list, nexus_list;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.15 2000/10/03 14:07:37 simonb Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.16 2001/04/25 17:53:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -92,29 +92,48 @@ typedef u_int8_t physlen[4];
 #define	BHA_NOP			0x00	/* No operation */
 #define BHA_MBX_INIT		0x01	/* Mbx initialization */
 #define BHA_START_SCSI		0x02	/* start scsi command */
+#define	BHA_EXECUTE_BIOS_CMD	0x03	/* execute BIOS command */
 #define BHA_INQUIRE_REVISION	0x04	/* Adapter Inquiry */
 #define BHA_MBO_INTR_EN		0x05	/* Enable MBO available interrupt */
-#if 0
 #define BHA_SEL_TIMEOUT_SET	0x06	/* set selection time-out */
 #define BHA_BUS_ON_TIME_SET	0x07	/* set bus-on time */
 #define BHA_BUS_OFF_TIME_SET	0x08	/* set bus-off time */
-#define BHA_SPEED_SET		0x09	/* set transfer speed */
-#endif
+#define BHA_BUS_SPEED_SET	0x09	/* set bus transfer speed */
 #define BHA_INQUIRE_DEVICES	0x0a	/* return installed devices 0-7 */
 #define BHA_INQUIRE_CONFIG	0x0b	/* return configuration data */
 #define BHA_TARGET_EN		0x0c	/* enable target mode */
 #define BHA_INQUIRE_SETUP	0x0d	/* return setup data */
-#define BHA_ECHO		0x1e	/* Echo command data */
+#define	BHA_WRITE_LRAM		0x1a	/* write adapter local RAM */
+#define	BHA_READ_LRAM		0x1b	/* read adapter local RAM */
+#define	BHA_WRITE_CHIP_FIFO	0x1c	/* write bus master chip FIFO */
+#define	BHA_READ_CHIP_FIFO	0x1d	/* read bus master chip FIFO */
+#define BHA_ECHO		0x1f	/* Echo command byte */
+#define	BHA_ADAPTER_DIAGNOSTICS	0x20	/* host adapter diagnostics */
+#define	BHA_SET_ADAPTER_OPTIONS	0x21	/* set adapter options */
 #define BHA_INQUIRE_DEVICES_2	0x23	/* return installed devices 8-15 */
+#define	BHA_INQUIRE_TARG_DEVS	0x24	/* inquire target devices */
+#define	BHA_DISABLE_HAC_INTR	0x25	/* disable host adapter interrupt */
 #define BHA_MBX_INIT_EXTENDED	0x81	/* Mbx initialization */
+#define	BHA_EXECUTE_SCSI_CMD	0x83	/* execute SCSI command */
 #define BHA_INQUIRE_REVISION_3	0x84	/* Get 3rd firmware version byte */
 #define BHA_INQUIRE_REVISION_4	0x85	/* Get 4th firmware version byte */
+#define	BHA_INQUIRE_PCI_INFO	0x86	/* get PCI host adapter information */
 #define BHA_INQUIRE_MODEL	0x8b	/* Get hardware ID and revision */
 #define	BHA_INQUIRE_PERIOD	0x8c	/* Get synchronous period */
 #define BHA_INQUIRE_EXTENDED	0x8d	/* Adapter Setup Inquiry */
-#define	BHA_ROUND_ROBIN		0x8f	/* Enable/Disable(default) round robin */
+#define	BHA_ROUND_ROBIN		0x8f	/* Enable/Disable(default)
+					   round robin */
+#define	BHA_STORE_LRAM		0x90	/* store host adapter local RAM */
+#define	BHA_FETCH_LRAM		0x91	/* fetch host adapter local RAM */
+#define	BHA_SAVE_TO_EEPROM	0x92	/* store local RAM data in EEPROM */
+#define	BHA_UPLOAD_AUTOSCSI	0x94	/* upload AutoSCSI code */
 #define BHA_MODIFY_IOPORT	0x95	/* change or disable I/O port */
-
+#define	BHA_SET_CCB_FORMAT	0x96	/* set CCB format (legacy/wide lun) */
+#define	BHA_WRITE_INQUIRY_BUF	0x9a	/* write inquiry buffer */
+#define	BHA_READ_INQUIRY_BUF	0x9b	/* read inquiry buffer */
+#define	BHA_FLASH_UP_DOWNLOAD	0xa7	/* flash upload/downlod */
+#define	BHA_READ_SCAM_DATA	0xa8	/* read SCAM data */
+#define	BHA_WRITE_SCAM_DATA	0xa9	/* write SCAM data */
 
 /*
  * BHA_INTR bits
@@ -127,14 +146,16 @@ typedef u_int8_t physlen[4];
 
 struct bha_mbx_out {
 	physaddr ccb_addr;
-	u_char dummy[3];
-	u_char cmd;
+	u_int8_t reserved[3];
+	u_int8_t cmd;
 };
 
 struct bha_mbx_in {
 	physaddr ccb_addr;
-	u_char dummy[3];
-	u_char stat;
+	u_int8_t host_stat;
+	u_int8_t target_stat;
+	u_int8_t reserved;
+	u_int8_t comp_stat;
 };
 
 /*
@@ -145,7 +166,7 @@ struct bha_mbx_in {
 #define BHA_MBO_ABORT	0x2	/* MBO abort entry */
 
 /*
- * mbi.stat values
+ * mbi.comp_stat values
  */
 #define BHA_MBI_FREE	0x0	/* MBI entry is free */
 #define BHA_MBI_OK	0x1	/* completed without error */
@@ -164,7 +185,7 @@ WARNING...THIS WON'T WORK(won't fit on 1 page)
 #endif /* BIG_DMA */
 
 struct bha_scat_gath {
-	physlen seg_len;
+	physlen  seg_len;
 	physaddr seg_addr;
 };
 
@@ -186,13 +207,13 @@ struct bha_ccb {
 	u_int8_t	scsi_cmd_length;
 	u_int8_t	req_sense_length;
 	/*------------------------------------longword boundary */
-	physlen data_length;
+	physlen		data_length;
 	/*------------------------------------longword boundary */
-	physaddr data_addr;
+	physaddr	data_addr;
 	/*------------------------------------longword boundary */
-	u_char dummy1[2];
-	u_char host_stat;
-	u_char target_stat;
+	u_int8_t	reserved1[2];
+	u_int8_t	host_stat;
+	u_int8_t	target_stat;
 	/*------------------------------------longword boundary */
 	u_int8_t	target;
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -208,18 +229,20 @@ struct bha_ccb {
 	u_int8_t	reserved2[1];
 	u_int8_t	link_id;
 	/*------------------------------------longword boundary */
-	physaddr link_addr;
+	physaddr	link_addr;
 	/*------------------------------------longword boundary */
-	physaddr sense_ptr;
+	physaddr	sense_ptr;
 /*-----end of HW fields-----------------------longword boundary */
 	struct scsipi_sense_data scsi_sense;
 	/*------------------------------------longword boundary */
 	struct bha_scat_gath scat_gath[BHA_NSEG];
 	/*------------------------------------longword boundary */
 	TAILQ_ENTRY(bha_ccb) chain;
-	struct bha_ccb *nexthash;
-	u_long hashkey;
+	struct bha_ccb	*nexthash;
+	bus_addr_t	hashkey;
+
 	struct scsipi_xfer *xs;		/* the scsipi_xfer for this cmd */
+
 	int flags;
 #define	CCB_ALLOC	0x01
 #define	CCB_ABORT	0x02
@@ -240,25 +263,41 @@ struct bha_ccb {
  */
 #define BHA_INITIATOR_CCB	0x00	/* SCSI Initiator CCB */
 #define BHA_TARGET_CCB		0x01	/* SCSI Target CCB */
-#define BHA_INIT_SCAT_GATH_CCB	0x02	/* SCSI Initiator with scattter gather */
+#define BHA_INIT_SCAT_GATH_CCB	0x02	/* SCSI Initiator with S/G */
+#define	BHA_INIT_RESID_CCB	0x03	/* SCSI Initiator w/ residual */
+#define	BHA_INIT_RESID_SG_CCB	0x04	/* SCSI Initiator w/ residual and S/G */
 #define BHA_RESET_CCB		0x81	/* SCSI Bus reset */
 
 /*
  * bha_ccb.host_stat values
  */
-#define BHA_OK		0x00	/* cmd ok */
-#define BHA_LINK_OK	0x0a	/* Link cmd ok */
-#define BHA_LINK_IT	0x0b	/* Link cmd ok + int */
-#define BHA_SEL_TIMEOUT	0x11	/* Selection time out */
-#define BHA_OVER_UNDER	0x12	/* Data over/under run */
-#define BHA_BUS_FREE	0x13	/* Bus dropped at unexpected time */
-#define BHA_INV_BUS	0x14	/* Invalid bus phase/sequence */
-#define BHA_BAD_MBO	0x15	/* Incorrect MBO cmd */
-#define BHA_BAD_CCB	0x16	/* Incorrect ccb opcode */
-#define BHA_BAD_LINK	0x17	/* Not same values of LUN for links */
-#define BHA_INV_TARGET	0x18	/* Invalid target direction */
-#define BHA_CCB_DUP	0x19	/* Duplicate CCB received */
-#define BHA_INV_CCB	0x1a	/* Invalid CCB or segment list */
+#define BHA_OK			0x00	/* cmd ok */
+#define BHA_LINK_OK		0x0a	/* Link cmd ok */
+#define BHA_LINK_IT		0x0b	/* Link cmd ok + int */
+#define	BHA_DATA_UNDRN		0x0c	/* data underrun error */
+#define BHA_SEL_TIMEOUT		0x11	/* Selection time out */
+#define BHA_OVER_UNDER		0x12	/* Data over/under run */
+#define BHA_BUS_FREE		0x13	/* Bus dropped at unexpected time */
+#define BHA_INV_BUS		0x14	/* Invalid bus phase/sequence */
+#define BHA_BAD_MBO		0x15	/* Incorrect MBO cmd */
+#define BHA_BAD_CCB		0x16	/* Incorrect ccb opcode */
+#define BHA_BAD_LINK		0x17	/* Not same values of LUN for links */
+#define BHA_INV_TARGET		0x18	/* Invalid target direction */
+#define BHA_CCB_DUP		0x19	/* Duplicate CCB received */
+#define BHA_INV_CCB		0x1a	/* Invalid CCB or segment list */
+#define	BHA_AUTOSENSE_FAILED	0x1b	/* auto REQUEST SENSE failed */
+#define	BHA_TAGGED_MSG_REJ	0x1c	/* tagged queueing message rejected */
+#define	BHA_UNSUP_MSG_RECVD	0x1d	/* unsupported message received */
+#define	BHA_HARDWARE_FAILURE	0x20	/* host adapter hardware failure */
+#define	BHA_TARG_IGNORED_ATN	0x21	/* target ignored ATN signal */
+#define	BHA_HA_SCSI_BUS_RESET	0x22	/* host adapter asserted RST */
+#define	BHA_OTHER_SCSI_BUS_RESET 0x23	/* other device asserted RST */
+#define	BHA_BAD_RECONNECT	0x24	/* target reconnected improperly */
+#define	BHA_HA_BUS_DEVICE_RESET	0x25	/* host adapter performed BDR */
+#define	BHA_ABORT_QUEUE		0x26	/* abort queue generated */
+#define	BHA_SOFTWARE_FAILURE	0x27	/* host adapter software failure */
+#define	BHA_HARDWARE_WATCHDOG	0x30	/* host adapter watchdog timer fired */
+#define	BHA_SCSI_PARITY_ERROR	0x34	/* SCSI parity error detected */
 
 struct bha_extended_inquire {
 	struct {
@@ -273,16 +312,18 @@ struct bha_extended_inquire {
 		u_char	bios_address;	/* Address of adapter BIOS */
 		u_short sg_limit;
 		u_char	mbox_count;
-		u_char	mbox_baseaddr[4]; /* packed/unaligned uint_32_t */
+		u_char	mbox_baseaddr[4]; /* packed/unaligned u_int32_t */
 		u_char	intrflags;
-#define BHA_INTR_LEVEL	0x40		/* bit 6: level-sensitive interrupt */
+#define	BHA_INTR_FASTEISA	0x04
+#define BHA_INTR_LEVEL		0x40	/* bit 6: level-sensitive interrupt */
 		u_char	firmware_level[3]; /* last 3 digits of firmware rev */
-		u_char	scsi_flags;	/* supported SCSI  features */
-#define BHA_SCSI_WIDE		0x01
-#define BHA_SCSI_DIFFERENTIAL	0x02
-#define BHA_SCSI_AUTOCONF	0x04
-#define BHA_SCSI_ULTRA		0x08
-#define BHA_SCSI_TERMINATION	0x10
+		u_char	scsi_flags;	/* supported SCSI features */
+#define BHA_SCSI_WIDE		0x01	/* host adapter is wide */
+#define BHA_SCSI_DIFFERENTIAL	0x02	/* host adapter is differential */
+#define BHA_SCSI_SCAM		0x04	/* host adapter supports SCAM */
+#define BHA_SCSI_ULTRA		0x08	/* host adapter supports Ultra */
+#define BHA_SCSI_TERMINATION	0x10	/* host adapter supports smart
+					   termination */
 	} reply;
 };
 
@@ -387,15 +428,22 @@ struct bha_setup_reply {
 	u_int8_t	num_mbx;
 	u_int8_t	mbx[3];		/*XXX */
 	/* doesn't make sense with 32bit addresses */
-	struct bha_sync sync[8];
-	u_char  disc_sts;
+	struct bha_sync	sync_low[8];
+	u_int8_t	low_disc_info;
 };
 
 /* additional reply data supplied by wide controlers */
-struct bus_setup_reply_wide {
-	u_char	pad[5];			/* ??? */
-	struct bha_sync sync[8];
-	u_char	disc_sts;
+struct bha_setup_reply_wide {
+	u_int8_t	signature;
+	u_int8_t	letter_d;
+	u_int8_t	ha_type;
+	u_int8_t	low_wide_allowed;
+	u_int8_t	low_wide_active;
+	struct bha_sync	sync_high[8];
+	u_int8_t	high_disc_info;
+	u_int8_t	reserved;
+	u_int8_t	high_wide_allowed;
+	u_int8_t	high_wide_active;
 };
 
 struct bha_setup {
@@ -404,7 +452,7 @@ struct bha_setup {
 		u_char	len;
 	} cmd;
 	struct bha_setup_reply reply;
-	struct bus_setup_reply_wide reply_w;	/* for wide controllers */
+	struct bha_setup_reply_wide reply_w;	/* for wide controllers */
 };
 
 struct bha_period_reply {
