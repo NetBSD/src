@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.73 2003/10/31 13:54:39 drochner Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.74 2004/02/10 13:50:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ typedef struct {
 #define	EI_ABIVERSION	8	/* ABI version */
 #define	EI_PAD		9	/* Start of padding bytes up to EI_NIDENT*/
 
-/* e_ident[ELFMAG0,ELFMAG3] */
+/* e_ident[EI_MAG0,EI_MAG3] */
 #define	ELFMAG0		0x7f
 #define	ELFMAG1		'E'
 #define	ELFMAG2		'L'
