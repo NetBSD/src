@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 1999/11/27 01:58:37 simonb Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2000/01/09 15:34:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _PMAX_DISKLABEL_H_
+#define _PMAX_DISKLABEL_H_
 
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
@@ -43,4 +43,4 @@ struct cpu_disklabel {
 	int	cd_dummy;			/* must have one element. */
 };
 
-#endif /* _MACHINE_DISKLABEL_H_ */
+#endif	/* !_PMAX_DISKLABEL_H_ */

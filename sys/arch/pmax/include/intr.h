@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2000/01/08 01:02:38 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2000/01/09 15:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -125,4 +125,4 @@ extern int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned));
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
 
-#endif /* !_PMAX_INTR_H_ */
+#endif	/* !_PMAX_INTR_H_ */
