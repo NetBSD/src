@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.11 2000/11/13 21:36:22 jdolecek Exp $	*/
+/*	$NetBSD: dump.c,v 1.11.2.1 2002/06/07 19:42:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.11 2000/11/13 21:36:22 jdolecek Exp $");
+__RCSID("$NetBSD: dump.c,v 1.11.2.1 2002/06/07 19:42:06 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -322,14 +322,44 @@ ktrsyscall(ktr, nohdr, buff, bufsz, lenp)
 			switch (ktr->ktr_code) {
 			/*
 			 * All these have a path as the first param.
+			 * The order is same as syscalls.master.
 			 */
-			case SYS_open : case SYS_chdir :
-			case SYS___stat13 : case SYS_chroot :
-			case SYS_execve : case SYS_pathconf :
-			case SYS_rmdir : case SYS_rename :
-			case SYS_symlink : case SYS_chflags :
-			case SYS_link : case SYS_mkdir :
-			case SYS_mknod : case SYS_mkfifo :
+			case SYS_open:
+			case SYS_link:
+			case SYS_unlink:
+			case SYS_chdir:
+			case SYS_mknod:
+			case SYS_chmod:
+			case SYS_chown:
+			case SYS_unmount:
+			case SYS_access:
+			case SYS_chflags:
+			case SYS_acct:
+			case SYS_revoke:
+			case SYS_symlink:
+			case SYS_readlink:
+			case SYS_execve:
+			case SYS_chroot:
+			case SYS_rename:
+			case SYS_mkfifo:
+			case SYS_mkdir:
+			case SYS_rmdir:
+			case SYS_utimes:
+			case SYS_quotactl:
+			case SYS_statfs:
+			case SYS_getfh:
+			case SYS_pathconf:
+			case SYS_truncate:
+			case SYS_undelete:
+			case SYS___posix_rename:
+			case SYS_lchmod:
+			case SYS_lchown:
+			case SYS_lutimes:
+			case SYS___stat13:
+			case SYS___lstat13:
+			case SYS___posix_chown:
+			case SYS___posix_lchown:
+			case SYS_lchflags:
 				if (BLEFT > 1)
 					*bp++ = '(';
 				eol = 0;
