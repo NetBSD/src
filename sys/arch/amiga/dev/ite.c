@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.54 2000/11/02 00:28:01 eeh Exp $	*/
+/*	$NetBSD: ite.c,v 1.55 2001/01/13 02:09:27 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -473,7 +473,7 @@ iteopen(dev, mode, devtype, p)
 	if (error) 
 		goto bad;
 
-	error = (*tp->t_linesw->l_open) (dev, tp);
+	error = tp->t_linesw->l_open(dev, tp);
 	if (error)
 		goto bad;
 
@@ -498,7 +498,7 @@ iteclose(dev, flag, mode, p)
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	(*tp->t_linesw->l_close) (tp, flag);
+	tp->t_linesw->l_close(tp, flag);
 	ttyclose(tp);
 	ite_off(dev, 0);
 	return (0);
@@ -515,7 +515,7 @@ iteread(dev, uio, flag)
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*tp->t_linesw->l_read) (tp, uio, flag));
+	return tp->t_linesw->l_read(tp, uio, flag);
 }
 
 int
@@ -529,7 +529,7 @@ itewrite(dev, uio, flag)
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*tp->t_linesw->l_write) (tp, uio, flag));
+	return tp->t_linesw->l_write(tp, uio, flag);
 }
 
 struct tty *
@@ -566,7 +566,7 @@ iteioctl(dev, cmd, addr, flag, p)
 
 	KDASSERT(tp);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, addr, flag, p);
@@ -1026,9 +1026,9 @@ ite_filter(c, caller)
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
-		(*linesw[kbd_tty->t_line].l_rint) (27, kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) ('O', kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) (out[cp - in], kbd_tty);
+		kbd_tty->t_linesw->l_rint(27, kbd_tty);
+		kbd_tty->t_linesw->l_rint('O', kbd_tty);
+		kbd_tty->t_linesw->l_rint(out[cp - in], kbd_tty);
 		splx(s);
 		return;
 	} else {
@@ -1057,11 +1057,11 @@ ite_filter(c, caller)
 		 * in the default keymap
 		 */
 		for (i = *str++; i; i--)
-			(*linesw[kbd_tty->t_line].l_rint) (*str++, kbd_tty);
+			kbd_tty->t_linesw->l_rint(*str++, kbd_tty);
 		splx(s);
 		return;
 	}
-	(*linesw[kbd_tty->t_line].l_rint) (code, kbd_tty);
+	kbd_tty->t_linesw->l_rint(code, kbd_tty);
 
 	splx(s);
 	return;
@@ -1077,7 +1077,7 @@ ite_sendstr(str)
 	kbd_tty = kbd_ite->tp;
 	KDASSERT(kbd_tty);
 	while (*str)
-		(*linesw[kbd_tty->t_line].l_rint) (*str++, kbd_tty);
+		kbd_tty->t_linesw->l_rint(*str++, kbd_tty);
 }
 
 static void
