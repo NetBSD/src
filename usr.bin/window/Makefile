@@ -1,8 +1,7 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/07/30 22:28:33 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 11:20:21 cgd Exp $
 
 PROG=	window
-CFLAGS+=-R
 SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	context.c error.c lcmd.c lcmd1.c lcmd2.c main.c mloop.c parser1.c \
 	parser2.c parser3.c parser4.c parser5.c scanner.c startup.c string.c \
