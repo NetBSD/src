@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.48 1994/07/01 20:10:02 mycroft Exp $
+#	$Id: files.i386,v 1.49 1994/08/07 10:43:56 mycroft Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/conf.c		standard
@@ -52,6 +52,7 @@ arch/i386/isa/pcvt/pcvt_out.c	optional vt device-driver requires isa not pc
 arch/i386/isa/pcvt/pcvt_sup.c	optional vt device-driver requires isa not pc
 arch/i386/isa/pcvt/pcvt_vtf.c	optional vt device-driver requires isa not pc
 arch/i386/isa/pms.c		optional pms device-driver requires isa
+arch/i386/isa/rtfps.c		optional rtfps device-driver requires com isa
 arch/i386/isa/sb.c		optional sb device-driver requires isa
 arch/i386/isa/seagate.c		optional sea requires isa scsi
 arch/i386/isa/spkr.c		optional speaker device-driver requires isa
