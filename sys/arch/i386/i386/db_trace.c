@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.43 2004/02/28 01:00:30 dbj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.44 2004/02/28 02:58:35 dbj Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2004/02/28 01:00:30 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2004/02/28 02:58:35 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,8 +392,6 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	if (!have_addr) {
 		frame = (int *)ddb_regs.tf_ebp;
 		callpc = (db_addr_t)ddb_regs.tf_eip;
-		retaddr = frame + 1;
-		arg0 = frame + 2;
 	} else {
 		if (trace_thread) {
 			struct proc *p;
@@ -411,16 +409,26 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				return;
 			}
 			u = l->l_addr;
-			frame = (int *)u->u_pcb.pcb_ebp;
-			(*pr)("at %p\n", frame);
-		} else
+			if (p == curproc && l == curlwp) {
+				frame = (int *)ddb_regs.tf_ebp;
+				callpc = (db_addr_t)ddb_regs.tf_eip;
+				(*pr)(" at %p\n", frame);
+			} else {
+				frame = (int *)u->u_pcb.pcb_ebp;
+				callpc = (db_addr_t)
+				    db_get_value((int)(frame + 1), 4, FALSE);
+				(*pr)(" at %p\n", frame);
+				frame = (int *)*frame; /* XXXfvdl db_get_value? */
+			}
+		} else {
 			frame = (int *)addr;
-		callpc = (db_addr_t)
-			 db_get_value((int)(frame + 1), 4, FALSE);
-		frame = (int *)*frame; /* XXXfvdl db_get_value? */
-		retaddr = frame + 1;
-		arg0 = frame + 2;
+			callpc = (db_addr_t)
+			    db_get_value((int)(frame + 1), 4, FALSE);
+			frame = (int *)*frame; /* XXXfvdl db_get_value? */
+		}
 	}
+	retaddr = frame + 1;
+	arg0 = frame + 2;
 
 	lastframe = 0;
 	while (count && frame != 0) {
