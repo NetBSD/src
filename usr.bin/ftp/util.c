@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 1997/01/19 14:19:17 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.2 1997/01/30 03:36:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.1 1997/01/19 14:19:17 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.2 1997/01/30 03:36:26 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -402,7 +402,7 @@ progressmeter(flag)
 
 	if (flag < 0)
 		(void) gettimeofday(&start, (struct timezone *)0);
-	if (!progress || filesize < 0)
+	if (!progress || filesize <= 0)
 		return;
 	if (flag < 0) {
 		before.tv_sec = -1;
