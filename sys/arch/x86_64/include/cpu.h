@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2002/12/03 22:03:01 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2003/01/26 00:05:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -107,25 +107,35 @@ extern struct cpu_info *cpu_info_list;
  */
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_rip)
 
+#define aston(p)		((p)->p_md.md_astpending = 1)
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;		/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
+extern struct lwp *curlwp;
+#define	need_resched(ci)		\
+do {					\
+	want_resched = 1;		\
+	if (curlwp != NULL)		\
+		aston(curlwp->l_proc);	\
+} while (/*CONSTCOND*/0)
+
+#define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		setsoftast()
+#define	signotify(p)		aston(p)
 
 /*
  * We need a machine-independent name for this.
@@ -151,6 +161,7 @@ void	dumpconf __P((void));
 void	cpu_reset __P((void));
 void	x86_64_proc0_tss_ldt_init __P((void));
 void	x86_64_bufinit __P((void));
+void	cpu_proc_fork __P((struct proc *, struct proc *));
 
 /* locore.s */
 struct region_descriptor;
@@ -159,7 +170,7 @@ void	fillw __P((short, void *, size_t));
 
 struct pcb;
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
 void	proc_trampoline __P((void));
 void	child_trampoline __P((void));
 

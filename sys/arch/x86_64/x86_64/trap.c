@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2002/07/04 10:42:00 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,10 @@
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/reboot.h>
+#include <sys/pool.h>
+
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -159,9 +163,10 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	register struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int type = (int)frame.tf_trapno;
-	struct pcb *pcb = NULL;
+	struct pcb *pcb;
 	extern char fusuintrfailure[],
 		    resume_iret[], IDTVEC(oosyscall)[];
 #if 0
@@ -174,19 +179,23 @@ trap(frame)
 
 	uvmexp.traps++;
 
+	pcb = (p != NULL) ? &l->l_addr->u_pcb : NULL;
+
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
 		       "cpl %x\n",
 		    type, frame.tf_err, frame.tf_rip, frame.tf_cs,
 		    frame.tf_rflags, rcr2(), cpl);
-		printf("curproc %p\n", curproc);
+		printf("curlwp %p\n", curlwp);
+		if (curlwp)
+			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
 	}
 #endif
 
 	if (!KERNELMODE(frame.tf_cs, frame.tf_rflags)) {
 		type |= T_USER;
-		p->p_md.md_regs = &frame;
+		l->l_md.md_regs = &frame;
 	}
 
 	switch (type) {
@@ -229,8 +238,9 @@ trap(frame)
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
+		if (p == NULL)
+			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
 copyefault:
 			error = EFAULT;
@@ -295,12 +305,12 @@ copyfault:
 	case T_NMI|T_USER:
 		printf("pid %d (%s): BUS at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, frame.tf_rip, rcr2());
-		trapsignal(p, SIGBUS, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(p, SIGILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGILL, type & ~T_USER);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -317,14 +327,14 @@ copyfault:
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		trapsignal(p, SIGKILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGKILL, type &~ T_USER);
 		goto out;
 	}
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGFPE, type &~ T_USER);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
@@ -333,9 +343,8 @@ copyfault:
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
+		if (l == NULL)
 			goto we_re_toast;
-		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
@@ -399,10 +408,10 @@ copyfault:
 		}
 
 		/* Fault the original page in. */
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = NULL;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		error = uvm_fault(map, va, 0, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -427,13 +436,13 @@ copyfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(l, SIGKILL, T_PAGEFLT);
 		} else {
 #if 1
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
 			    p->p_pid, p->p_comm, frame.tf_rip, va);
 #endif
-			trapsignal(p, SIGSEGV, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
 		}
 		break;
 	}
@@ -453,7 +462,7 @@ copyfault:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		trapsignal(p, SIGTRAP, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGTRAP, type &~ T_USER);
 		break;
 
 #if	NISA > 0
@@ -483,5 +492,24 @@ copyfault:
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p);
+	userret(l);
+}
+
+void
+startlwp(void *arg)
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l);
+}
+
+void
+upcallret(struct lwp *l)
+{
+	userret(l);
 }

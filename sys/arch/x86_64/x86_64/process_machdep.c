@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.4 2002/06/12 19:13:28 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.5 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,35 +75,35 @@
 #include <machine/segments.h>
 #include <machine/fpu.h>
 
-static __inline struct trapframe *process_frame __P((struct proc *));
-static __inline struct fxsave64 *process_fpframe __P((struct proc *));
+static __inline struct trapframe *process_frame __P((struct lwp *));
+static __inline struct fxsave64 *process_fpframe __P((struct lwp *));
 #if 0
 static __inline int verr_gdt __P((struct pmap *, int sel));
 static __inline int verr_ldt __P((struct pmap *, int sel));
 #endif
 
 static __inline struct trapframe *
-process_frame(p)
-	struct proc *p;
+process_frame(l)
+	struct lwp *l;
 {
 
-	return (p->p_md.md_regs);
+	return (l->l_md.md_regs);
 }
 
 static __inline struct fxsave64 *
-process_fpframe(p)
-	struct proc *p;
+process_fpframe(l)
+	struct lwp *l;
 {
 
-	return (&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave);
+	return (&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave);
 }
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
+process_read_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	regs->r_rflags = tf->tf_rflags;
 	regs->r_rdi = tf->tf_rdi;
@@ -130,15 +130,15 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
+process_read_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	struct fxsave64 *frame = process_fpframe(p);
+	struct fxsave64 *frame = process_fpframe(l);
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
-		if (fpuproc == p)
-			fpusave();
+	if (l->l_md.md_flags & MDP_USEDFPU) {
+		if (fpulwp == l)
+			fpusave(l);
 	} else {
 		u_int16_t cw;
 
@@ -152,7 +152,7 @@ process_read_fpregs(p, regs)
 		frame->fx_fcw = cw;
 		frame->fx_fsw = 0x0000;
 		frame->fx_ftw = 0xff;
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	memcpy(&regs->fxstate, frame, sizeof(*regs));
@@ -200,12 +200,12 @@ verr_gdt(pmap, sel)
 #endif
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
+process_write_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct trapframe *tf = process_frame(p);
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct trapframe *tf = process_frame(l);
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 #if 0
 	union descriptor *gdt = (union descriptor *)gdtstore;
 #endif
@@ -258,17 +258,17 @@ process_write_regs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
+process_write_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	struct fxsave64 *frame = process_fpframe(p);
+	struct fxsave64 *frame = process_fpframe(l);
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
-		if (fpuproc == p)
+	if (l->l_md.md_flags & MDP_USEDFPU) {
+		if (fpulwp == l)
 			fpudrop();
 	} else {
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	memcpy(frame, regs, sizeof(*regs));
@@ -276,10 +276,10 @@ process_write_fpregs(p, regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(l, sstep)
+	struct lwp *l;
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	if (sstep)
 		tf->tf_rflags |= PSL_T;
@@ -290,11 +290,11 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
+process_set_pc(l, addr)
+	struct lwp *l;
 	caddr_t addr;
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	tf->tf_rip = (u_int64_t)addr;
 
