@@ -1,4 +1,4 @@
-.\"	$NetBSD: rarpd.8,v 1.5 1997/06/21 14:30:03 lukem Exp $
+.\"	$NetBSD: rarpd.8,v 1.6 1997/10/17 12:48:11 lukem Exp $
 .\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -25,15 +25,15 @@
 .Nm rarpd 
 .Nd Reverse ARP Daemon
 .Sh SYNOPSIS
-.Nm rarpd 
+.Nm
 .Op Fl adf
 .Op Ar interface
 .Sh DESCRIPTION
-.Nm Rarpd
+.Nm
 services Reverse ARP requests on the Ethernet connected to
-.Ar interface.
+.Ar interface .
 Upon receiving a request, 
-.Nm rarpd
+.Nm
 maps the target hardware address to an IP address via its name, which 
 must be present in both the
 .Xr ethers 5
@@ -57,7 +57,7 @@ proceed and a reply will not be sent.
 .\" .Sq CB080312 .
 .Pp
 In normal operation, 
-.Nm rarpd
+.Nm
 forks a copy of itself and runs in
 the background.  Anomalies and errors are reported via 
 .Xr syslog 3 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.9 1997/06/21 09:36:48 lukem Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.10 1997/10/17 12:40:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: quotaon.c,v 1.9 1997/06/21 09:36:48 lukem Exp $";
+__RCSID("$NetBSD: quotaon.c,v 1.10 1997/10/17 12:40:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
