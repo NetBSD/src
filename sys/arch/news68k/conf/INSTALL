@@ -1,10 +1,10 @@
-# 	$NetBSD: INSTALL,v 1.4 2000/02/12 03:34:41 thorpej Exp $
+# 	$NetBSD: INSTALL,v 1.5 2000/03/13 12:58:58 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
 include		"arch/news68k/conf/std.news68k"
 
-maxusers	8
+maxusers	4
 
 options 	news1200		# news1200 support
 options 	news1700		# news1[4567]00 support
@@ -14,7 +14,7 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=4096	# 2 Megabytes
+options 	MINIROOTSIZE=2880	# 1.44 Megabytes
 
 makeoptions	COPTS="-Os"
 
@@ -35,9 +35,9 @@ makeoptions	COPTS="-Os"
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Compatibility options
-options 	COMPAT_43		# compatibility with 4.3BSD binaries
-options 	COMPAT_13		# NetBSD 1.3 binary compatibility
-options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+#options 	COMPAT_43		# compatibility with 4.3BSD binaries
+#options 	COMPAT_13		# NetBSD 1.3 binary compatibility
+#options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 #options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 
 # Filesystem options
@@ -125,7 +125,6 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 
 # Misc.
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals
 pseudo-device	md		1	# memory disk device
-pseudo-device	sl		2	# SLIP interfaces
-pseudo-device	ppp		2	# PPP interfaces
+pseudo-device	sl		1	# SLIP interfaces
