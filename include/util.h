@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.12 1998/07/26 22:01:48 mycroft Exp $	*/
+/*	$NetBSD: util.h,v 1.13 1999/06/06 01:50:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -74,6 +74,7 @@ pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
 int	opendisk __P((const char *, int, char *, size_t, int));
+void	pidfile __P((const char *));
 int	pidlock __P((const char *, int, pid_t *, const char *));
 int	ttylock __P((const char *, int, pid_t *));
 int	ttyunlock __P((const char *));
