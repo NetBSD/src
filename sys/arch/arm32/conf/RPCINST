@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.13 1998/06/26 01:53:50 lukem Exp $
+#	$NetBSD: RPCINST,v 1.14 1998/08/14 03:56:22 mark Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -48,6 +48,7 @@ file-system	NFS		# Network file system
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
+file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	PORTAL		# portal filesystem (still experimental)

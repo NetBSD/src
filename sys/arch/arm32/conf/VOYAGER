@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.36 1998/07/06 00:49:21 mark Exp $
+#	$NetBSD: VOYAGER,v 1.37 1998/08/14 03:56:22 mark Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -48,6 +48,7 @@ file-system 	EXT2FS		# second extended file system (linux)
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
+file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	PORTAL		# portal filesystem (still experimental)

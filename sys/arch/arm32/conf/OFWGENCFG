@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.4 1998/07/06 00:49:20 mark Exp $
+#	$NetBSD: OFWGENCFG,v 1.5 1998/08/14 03:56:21 mark Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -42,6 +42,7 @@ file-system	NFS
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
+#file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	PORTAL		# portal filesystem (still experimental)
