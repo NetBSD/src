@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.3 1999/02/26 22:50:03 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.4 1999/02/27 10:24:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ static int reloc_target_bitmask[] = {
 	_BM(10), _BM(13), _BM(22),	/* GOT10, GOT13, GOT22 */
 	_BM(10), _BM(22),		/* _PC10, _PC22 */  
 	_BM(30), 0,			/* _WPLT30, _COPY */
-	-1, -1, _BM(22),		/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
+	-1, -1, -1,			/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 	_BM(32), _BM(32),		/* _UA32, PLT32 */
 	_BM(22), _BM(10),		/* _HIPLT22, LOPLT10 */
 	_BM(32), _BM(22), _BM(10),	/* _PCPLT32, _PCPLT22, _PCPLT10 */
@@ -174,8 +174,12 @@ _rtld_relocate_nonplt_object(
 	if (type == R_TYPE(NONE))
 		return (0);
 
-	/* We do JMP_SLOTs in relocate_plt_objject() below */
+	/* We do JMP_SLOTs in relocate_plt_object() below */
 	if (type == R_TYPE(JMP_SLOT))
+		return (0);
+
+	/* COPY relocs are also handles elsewhere */
+	if (type == R_TYPE(COPY))
 		return (0);
 
 	/*
@@ -185,16 +189,17 @@ _rtld_relocate_nonplt_object(
 	if (type > R_TYPE(6))
 		return (-1);
 
+	value = rela->r_addend;
+
 	/*
 	 * Handle relative relocs here, because we might not
 	 * be able to access globals yet
 	 */
 	if (!dodebug && type == R_TYPE(RELATIVE)) {
-		*where += (Elf_Addr)(obj->relocbase + rela->r_addend);
+		*where += (Elf_Addr)(obj->relocbase + value);
 		return (0);
 	}
 
-	value = rela->r_addend;
 	if (RELOC_RESOLVE_SYMBOL(type)) {
 
 		/* Find the symbol */
@@ -212,7 +217,7 @@ _rtld_relocate_nonplt_object(
 	}
 
 	if (RELOC_BASE_RELATIVE(type)) {
-		value += (Elf_Word)obj->relocbase;
+		value += (Elf_Word)(obj->relocbase + *where);
 	}
 
 	mask = RELOC_VALUE_BITMASK(type);
