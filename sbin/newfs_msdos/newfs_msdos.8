@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.9 2002/10/01 13:40:47 wiz Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.10 2003/04/21 07:58:55 dbj Exp $
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
 .\"
@@ -127,6 +127,19 @@ File system size.
 .It Fl u Ar track-size
 Number of sectors per track.
 .El
+.Pp
+If
+.Nm
+receives a
+.Dv SIGINFO
+signal
+(see the
+.Sy status
+argument for
+.Xr stty 1 ) ,
+a line will be written to the standard error output indicating
+the name of the device currently being formatted, the sector
+number being written, and the total number of sectors to be written.
 .Sh NOTES
 FAT file system parameters occupy a "Boot Sector BPB (BIOS Parameter
 Block)" in the first of the "reserved" sectors which precede the actual
