@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.10.4.1 1998/11/09 06:06:39 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.10.4.2 1999/02/25 04:35:55 chs Exp $	 */
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -240,12 +240,13 @@ uvm_dump()
 	    uvmexp.flt_przero);
 
 	printf("  daemon and swap counts:\n");
-	printf("    woke=%d, revs=%d, scans=%d, swout=%d\n", uvmexp.pdwoke,
-	    uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdswout);
+	printf("    woke=%d, revs=%d, scans=%d, obscans=%d, anscans=%d\n",
+	    uvmexp.pdwoke, uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdobscan,
+	    uvmexp.pdanscan);
 	printf("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
 	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
-	printf("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
-	    uvmexp.pdpending, uvmexp.nswget);
+	printf("    swout=%d, pageouts=%d, pending=%d, nswget=%d\n",
+	    uvmexp.pdswout, uvmexp.pdpageouts, uvmexp.pdpending, uvmexp.nswget);
 	printf("    nswapdev=%d, nanon=%d, nanonneeded=%d nfreeanon=%d\n",
 	    uvmexp.nswapdev, uvmexp.nanon, uvmexp.nanonneeded,
 	    uvmexp.nfreeanon);
