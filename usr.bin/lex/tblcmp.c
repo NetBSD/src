@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/tblcmp.c,v 1.6 1993/12/09 19:06:29 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/tblcmp.c,v 1.7 1995/05/05 05:35:43 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -310,7 +310,7 @@ void expand_nxt_chk()
 	chk = reallocate_integer_array( chk, current_max_xpairs );
 
 	zero_out( (char *) (chk + old_max),
-		MAX_XPAIRS_INCREMENT * sizeof( int ) / sizeof( char ) );
+		(size_t) (MAX_XPAIRS_INCREMENT * sizeof( int )) );
 	}
 
 
@@ -436,8 +436,7 @@ void inittbl()
 	{
 	register int i;
 
-	zero_out( (char *) chk,
-		current_max_xpairs * sizeof( int ) / sizeof( char ) );
+	zero_out( (char *) chk, (size_t) (current_max_xpairs * sizeof( int )) );
 
 	tblend = 0;
 	firstfree = tblend + 1;
