@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.5 1998/01/15 07:17:21 thorpej Exp $
+# $NetBSD: INSTALL,v 1.6 1998/02/01 00:24:26 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -134,7 +134,7 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
-le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
+#le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
