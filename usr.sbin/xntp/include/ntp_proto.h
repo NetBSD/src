@@ -1,3 +1,6 @@
+/*	$NetBSD: ntp_proto.h,v 1.2 1999/02/15 04:03:03 hubertf Exp $
+ */
+
 #ifndef __ntp_proto_h
 #define __ntp_proto_h
 

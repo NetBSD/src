@@ -1,3 +1,4 @@
+/*	$NetBSD: trig.h,v 1.3 1999/02/15 04:07:42 hubertf Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
