@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.13 1999/02/18 02:12:09 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.14 1999/02/18 02:24:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -121,12 +121,10 @@ epic_attach(sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, rseg, error, attach_stage;
+	int i, rseg, error;
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
 	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
-
-	attach_stage = 0;
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -137,20 +135,16 @@ epic_attach(sc)
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		goto fail;
+		goto fail_0;
 	}
-
-	attach_stage = 1;
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct epic_control_data), (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		goto fail;
+		goto fail_1;
 	}
-
-	attach_stage = 2;
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct epic_control_data), 1,
@@ -158,20 +152,16 @@ epic_attach(sc)
 	    &sc->sc_cddmamap)) != 0) {
 		printf("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
-		goto fail;
+		goto fail_2;
 	}
-
-	attach_stage = 3;
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct epic_control_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		goto fail;
+		goto fail_3;
 	}
-
-	attach_stage = 4;
 
 	/*
 	 * Create the transmit buffer DMA maps.
@@ -182,11 +172,9 @@ epic_attach(sc)
 		    &EPIC_DSTX(sc, i)->ds_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail;
+			goto fail_4;
 		}
 	}
-
-	attach_stage = 5;
 
 	/*
 	 * Create the recieve buffer DMA maps.
@@ -197,11 +185,9 @@ epic_attach(sc)
 		    &EPIC_DSRX(sc, i)->ds_dmamap)) != 0) {
 			printf("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail;
+			goto fail_5;
 		}
 	}
-
-	attach_stage = 6;
 
 	/*
 	 * Pre-allocate the receive buffers.
@@ -210,11 +196,9 @@ epic_attach(sc)
 		if ((error = epic_add_rxbuf(sc, i)) != 0) {
 			printf("%s: unable to allocate or map rx buffer %d\n,"
 			    " error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail;
+			goto fail_6;
 		}
 	}
-
-	attach_stage = 7;
 
 	/*
 	 * Bring the chip out of low-power mode and reset it to a known state.
@@ -288,51 +272,40 @@ epic_attach(sc)
 		    sc->sc_dev.dv_xname);
 	return;
 
- fail:
 	/*
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
-	switch (attach_stage) {
-	case 7:
-		for (i = 0; i < EPIC_NRXDESC; i++) {
-			if (EPIC_DSRX(sc, i)->ds_mbuf != NULL) {
-				bus_dmamap_unload(sc->sc_dmat,
-				    EPIC_DSRX(sc, i)->ds_dmamap);
-				m_freem(EPIC_DSRX(sc, i)->ds_mbuf);
-			}
+ fail_6:
+	for (i = 0; i < EPIC_NRXDESC; i++) {
+		if (EPIC_DSRX(sc, i)->ds_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    EPIC_DSRX(sc, i)->ds_dmamap);
+			m_freem(EPIC_DSRX(sc, i)->ds_mbuf);
 		}
-		/* FALLTHROUGH */
-
-	case 6:
-		for (i = 0; i < EPIC_NRXDESC; i++)
+	}
+ fail_5:
+	for (i = 0; i < EPIC_NRXDESC; i++) {
+		if (EPIC_DSRX(sc, i)->ds_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    EPIC_DSRX(sc, i)->ds_dmamap);
-		/* FALLTHROUGH */
-
-	case 5:
-		for (i = 0; i < EPIC_NTXDESC; i++)
+	}
+ fail_4:
+	for (i = 0; i < EPIC_NTXDESC; i++) {
+		if (EPIC_DSTX(sc, i)->ds_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    EPIC_DSTX(sc, i)->ds_dmamap);
-		/* FALLTHROUGH */
-
-	case 4:
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
-		/* FALLTHROUGH */
-
-	case 3:
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-		/* FALLTHROUGH */
-
-	case 2:
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
-		    sizeof(struct epic_control_data));
-		/* FALLTHROUGH */
-
-	case 1:
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		break;
 	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+ fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	    sizeof(struct epic_control_data));
+ fail_1:
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+ fail_0:
+	return;
 }
 
 /*
