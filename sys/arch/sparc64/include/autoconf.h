@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.20 2004/03/19 15:22:43 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.21 2004/03/21 14:10:08 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <machine/bus.h>
-/*notyet:#include <machine/promlib.h>*/
+#include <machine/promlib.h>
 #include <dev/sbus/sbusvar.h>
 
 /* This is used to map device classes to IPLs */
@@ -126,20 +126,6 @@ struct mainbus_attach_args {
 };
 
 /*
- * length; the others convert or make some other guarantee.
- */
-long	prom_getproplen __P((int node, char *name));
-int	prom_getprop __P((int, char *, size_t, int *, void *));
-char	*prom_getpropstring __P((int node, char *name));
-int	prom_getpropint __P((int node, char *name, int deflt));
-
-	/* new interfaces: */
-char	*prom_getpropstringA __P((int, char *, char *, size_t));
-
-struct idprom	*prom_getidprom(void);
-void		prom_getether(int, u_char *);
-
-/*
  * The matchbyname function is useful in drivers that are matched
  * by romaux name, i.e., all `mainbus attached' devices.  It expects
  * its aux pointer to point to a pointer to the name (the address of
@@ -172,16 +158,5 @@ void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 				      struct device *));
 
 void	bootstrap __P((int));
-int	firstchild __P((int));
-int	nextsibling __P((int));
-void	callrom __P((void));
 struct device *getdevunit __P((char *, int));
-void	*findzs __P((int));
-void	rominterpret __P((char *));
 int	romgetcursoraddr __P((int **, int **));
-int	findroot __P((void));
-int	findnode __P((int, const char *));
-int	node_has_property __P((int, const char *));
-int	prom_getoptionsnode __P((void));
-int	prom_getoption __P((const char *name, char *buf, int buflen));
-
