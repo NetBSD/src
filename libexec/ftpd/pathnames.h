@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.3 1994/04/06 20:50:15 cgd Exp $
+ *	from: @(#)pathnames.h   5.2 (Berkeley) 6/1/90
+ *	$Id: pathnames.h,v 1.4 1994/06/29 01:49:49 deraadt Exp $
  */
 
 #include <paths.h>
 
-#define	_PATH_FTPUSERS	"/etc/ftpusers"
-#define	_PATH_FTPCHROOT "/etc/ftpchroot"
+#define	_PATH_FTPUSERS		"/etc/ftpusers"
+#define	_PATH_FTPCHROOT		"/etc/ftpchroot"
+#define	_PATH_FTPWELCOME	"/etc/ftpwelcome"
+#define	_PATH_FTPLOGINMESG	"/etc/motd"
