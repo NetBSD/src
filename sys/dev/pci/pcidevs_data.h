@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.459 2002/07/30 20:43:57 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.460 2002/07/31 11:16:50 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.457 2002/07/30 20:43:12 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.458 2002/07/31 11:16:17 bouyer Exp 
  */
 
 /*
@@ -3908,12 +3908,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801CAM LPC Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
-	    0,
-	    "Intel",
-	    "82801DB LPC Interface Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,

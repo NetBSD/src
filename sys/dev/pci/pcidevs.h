@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.461 2002/07/30 20:43:57 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.462 2002/07/31 11:16:49 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.457 2002/07/30 20:43:12 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.458 2002/07/31 11:16:17 bouyer Exp 
  */
 
 /*
@@ -1439,7 +1439,6 @@
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_1	0x248A		/* 82801CA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_2	0x248B		/* 82801CA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801CAM_LPC	0x248C		/* 82801CAM LPC Interface */
-#define	PCI_PRODUCT_INTEL_82801DB_LPC	0x24C0		/* 82801DB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801DB_LPC	0x24C0		/* 82801DB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801DB_USB_1	0x24C2		/* 82801DB USB UHCI Controller #1 */
 #define	PCI_PRODUCT_INTEL_82801DB_SMB	0x24C3		/* 82801DB SMBus Controller */
