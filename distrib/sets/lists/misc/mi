@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 1999/04/19 03:11:35 simonb Exp $
+# $NetBSD: mi,v 1.20 1999/07/19 04:34:46 abs Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -234,6 +234,7 @@
 ./usr/share/examples/ipf/nat.eg
 ./usr/share/examples/ipf/server
 ./usr/share/examples/ipf/tcpstate
+./usr/share/examples/named/named.conf
 ./usr/share/examples/supfiles/ftp.cs.umn.edu
 ./usr/share/examples/supfiles/sup.au.netbsd.org
 ./usr/share/examples/supfiles/sup.de.netbsd.org
