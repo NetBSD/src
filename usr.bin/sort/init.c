@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2000/10/16 21:41:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: init.c,v 1.3 2000/10/16 21:41:05 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -47,8 +47,8 @@ __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #include <string.h>
 
 static void insertcol __P((struct field *));
-char *setcolumn __P((char *, struct field *, int));
-int setfield __P((char *, struct field *, int));
+static const char *setcolumn __P((const char *, struct field *, int));
+int setfield __P((const char *, struct field *, int));
 
 extern struct coldesc clist[(ND+1)*2];
 extern int ncols;
@@ -110,9 +110,9 @@ fldreset(fldtab)
 /*
  * interprets a column in a -k field
  */
-char *
+static const char *
 setcolumn(pos, cur_fld, gflag)
-	char *pos;
+	const char *pos;
 	struct field *cur_fld;
 	int gflag;
 {
@@ -147,13 +147,12 @@ setcolumn(pos, cur_fld, gflag)
 
 int
 setfield(pos, cur_fld, gflag)
-	char *pos;
+	const char *pos;
 	struct field *cur_fld;
 	int gflag;
 {
 	static int nfields = 0;
 	int tmp;
-	char *setcolumn __P((char *, struct field *, int));
 	if (++nfields == ND)
 		errx(2, "too many sort keys. (Limit is %d)", ND-1);
 	cur_fld->weights = ascii;
