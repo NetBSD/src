@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.12 2000/12/13 20:07:32 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13 2001/01/10 04:47:10 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -162,9 +162,8 @@ static	int request_cleanup __P((int, int));
 static	void add_to_worklist __P((struct worklist *));
 static	struct buf *softdep_setup_pagecache __P((struct inode *, ufs_lbn_t,
 						 long));
-static	void softdep_collect_pagecache __P((struct vnode *,
-					    struct bufq_head *));
-static	void softdep_free_pagecache __P((struct bufq_head *));
+static	void softdep_collect_pagecache __P((struct inode *));
+static	void softdep_free_pagecache __P((struct inode *));
 static	struct vnode *softdep_lookupvp(struct fs *, ino_t);
 static	struct buf *softdep_lookup_pcbp __P((struct vnode *, ufs_lbn_t));
 void softdep_pageiodone __P((struct buf *));
@@ -1618,7 +1617,6 @@ softdep_setup_freeblocks(ip, length)
 	struct allocdirect *adp;
 	struct vnode *vp = ITOV(ip);
 	struct buf *bp;
-	struct bufq_head fbqh;
 	struct fs *fs = ip->i_fs;
 	int i, error, delay;
 #ifdef FFS_EI
@@ -1694,7 +1692,7 @@ softdep_setup_freeblocks(ip, length)
 	 * free the pagecache markers until after we've freed all the
 	 * dependencies that reference them later.
 	 */
-	softdep_collect_pagecache(vp, &fbqh);
+	softdep_collect_pagecache(ip);
 	merge_inode_lists(inodedep);
 	while ((adp = TAILQ_FIRST(&inodedep->id_inoupdt)) != 0)
 		free_allocdirect(&inodedep->id_inoupdt, adp, 1);
@@ -1717,7 +1715,7 @@ softdep_setup_freeblocks(ip, length)
 		brelse(bp);
 		ACQUIRE_LOCK(&lk);
 	}
-	softdep_free_pagecache(&fbqh);
+	softdep_free_pagecache(ip);
 	if (inodedep_lookup(fs, ip->i_number, 0, &inodedep) != 0)
 		(void) free_inodedep(inodedep);
 	FREE_LOCK(&lk);
@@ -4860,12 +4858,12 @@ softdep_setup_pagecache(ip, lbn, size)
 		s = splbio();
 		bp = pool_get(&sdpcpool, PR_WAITOK);
 		splx(s);
-		memset(bp, 0, sizeof(*bp));
 
 		bp->b_vp = vp;
 		bp->b_lblkno = lbn;
 		LIST_INIT(&bp->b_dep);
 		LIST_INSERT_HEAD(&pcbphashhead[PCBPHASH(vp, lbn)], bp, b_hash);
+		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
 	}
 	bp->b_bcount = bp->b_resid = size;
 	return bp;
@@ -4878,36 +4876,25 @@ softdep_setup_pagecache(ip, lbn, size)
  */
 
 static void
-softdep_collect_pagecache(vp, bqhp)
-	struct vnode *vp;
-	struct bufq_head *bqhp;
+softdep_collect_pagecache(ip)
+	struct inode *ip;
 {
-	struct buf *bp, *nextbp;
-	int i;
+	struct buf *bp;
 
-	TAILQ_INIT(bqhp);
-	for (i = 0; i < PCBPHASHSIZE; i++) {
-		for (bp = LIST_FIRST(&pcbphashhead[i]);
-		     bp != NULL;
-		     bp = nextbp) {
-			nextbp = LIST_NEXT(bp, b_hash);
-			if (bp->b_vp == vp) {
-				LIST_REMOVE(bp, b_hash);
-				TAILQ_INSERT_HEAD(bqhp, bp, b_freelist);
-			}
-		}
+	LIST_FOREACH(bp, &ip->i_pcbufhd, b_vnbufs) {
+		LIST_REMOVE(bp, b_hash);
 	}
 }
 
 static void
-softdep_free_pagecache(bqhp)
-	struct bufq_head *bqhp;
+softdep_free_pagecache(ip)
+	struct inode *ip;
 {
 	struct buf *bp, *nextbp;
 
-	for (bp = TAILQ_FIRST(bqhp); bp != NULL; bp = nextbp) {
-		nextbp = TAILQ_NEXT(bp, b_freelist);
-		TAILQ_REMOVE(bqhp, bp, b_freelist);
+	for (bp = LIST_FIRST(&ip->i_pcbufhd); bp != NULL; bp = nextbp) {
+		nextbp = LIST_NEXT(bp, b_vnbufs);
+		LIST_REMOVE(bp, b_vnbufs);
 		KASSERT(LIST_FIRST(&bp->b_dep) == NULL);
 		pool_put(&sdpcpool, bp);
 	}
@@ -5060,6 +5047,7 @@ softdep_pageiodone(bp)
 				}
 			}
 			LIST_REMOVE(pcbp, b_hash);
+			LIST_REMOVE(pcbp, b_vnbufs);
 			pool_put(&sdpcpool, pcbp);
 			pcbp = NULL;
 		}
