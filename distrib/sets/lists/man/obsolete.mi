@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.12 2000/06/13 00:57:23 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.13 2000/06/13 01:54:28 wiz Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
@@ -24,6 +24,7 @@
 /usr/share/man/cat4/i386/pms.0
 /usr/share/man/cat4/i386/speaker.0
 /usr/share/man/cat4/imp.0
+/usr/share/man/cat4/mvme68k/le.0
 /usr/share/man/cat4/pmax/le.0
 /usr/share/man/cat4/rl.0
 /usr/share/man/cat4/rtpphy.0
@@ -81,6 +82,7 @@
 /usr/share/man/man4/i386/pms.4
 /usr/share/man/man4/i386/speaker.4
 /usr/share/man/man4/imp.4
+/usr/share/man/man4/mvme68k/le.4
 /usr/share/man/man4/pmax/le.4
 /usr/share/man/man4/rl.4
 /usr/share/man/man4/rtpphy.4
