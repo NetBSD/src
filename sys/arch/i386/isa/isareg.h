@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isareg.h,v 1.2 1994/10/01 03:48:49 mycroft Exp $
+ *	$Id: isareg.h,v 1.3 1994/10/01 03:52:46 mycroft Exp $
  */
 
 /*
@@ -47,7 +47,7 @@
 unsigned char rtcin __P((int));
 void sysbeep __P((int, int));
 unsigned kbd_8042cmd __P((int));
-#endif
+#endif /* !LOCORE */
 
 
 /*
@@ -61,9 +61,10 @@ unsigned kbd_8042cmd __P((int));
 #define	IO_DMA1		0x000		/* 8237A DMA Controller #1 */
 #define	IO_ICU1		0x020		/* 8259A Interrupt Controller #1 */
 #define	IO_PMP1		0x026		/* 82347 Power Management Peripheral */
-#define	IO_TIMER1	0x040		/* 8252 Timer #1 */
-#define	IO_TIMER2	0x048		/* 8252 Timer #2 (EISA only) */
+#define	IO_TIMER1	0x040		/* 8253 Timer #1 */
+#define	IO_TIMER2	0x048		/* 8253 Timer #2 (EISA only) */
 #define	IO_KBD		0x060		/* 8042 Keyboard */
+#define	IO_PPI		0x061		/* Programmable Peripheral Interface */
 #define	IO_RTC		0x070		/* RTC */
 #define	IO_NMI		IO_RTC		/* NMI Control */
 #define	IO_DMAPG	0x080		/* DMA Page Registers */
@@ -130,7 +131,7 @@ unsigned kbd_8042cmd __P((int));
 #define	IO_COM1		0x3f8		/* COM1 i/o address */
 
 #define	IO_ISAEND	0x3FF		/* - 0x3FF End of I/O Registers */
-#endif	IO_ISABEGIN
+#endif /* !IO_ISABEGIN */
 
 /*
  * Input / Output Port Sizes - these are from several sources, and tend
@@ -157,8 +158,7 @@ unsigned kbd_8042cmd __P((int));
 #define	IO_NPXSIZE	16	/* 80387/80487 NPX registers */
 #define	IO_VGASIZE	16	/* VGA controllers */
 #define	IO_PMPSIZE	2	/* 82347 Power Management Peripheral */
-
-#endif	/* IO_ISASIZES */
+#endif /* !IO_ISASIZES */
 
 /*
  * Input / Output Memory Physical Addresses
@@ -168,7 +168,7 @@ unsigned kbd_8042cmd __P((int));
 #define	IOM_BEGIN	0x0a0000		/* Start of I/O Memory "hole" */
 #define	IOM_END		0x100000		/* End of I/O Memory "hole" */
 #define	IOM_SIZE	(IOM_END - IOM_BEGIN)
-#endif	IOM_BEGIN
+#endif /* !IOM_BEGIN */
 
 /*
  * RAM Physical Address Space (ignoring the above mentioned "hole")
@@ -178,7 +178,7 @@ unsigned kbd_8042cmd __P((int));
 #define	RAM_BEGIN	0x0000000	/* Start of RAM Memory */
 #define	RAM_END		0x1000000	/* End of RAM Memory */
 #define	RAM_SIZE	(RAM_END - RAM_BEGIN)
-#endif	RAM_BEGIN
+#endif /* !RAM_BEGIN */
 
 /*
  * Oddball Physical Memory Addresses
@@ -188,7 +188,7 @@ unsigned kbd_8042cmd __P((int));
 #define	COMPAQ_RAMSETUP	0x80c00002	/* Compaq RAM setup */
 #define	WEITEK_FPU	0xC0000000	/* WTL 2167 */
 #define	CYRIX_EMC	0xC0000000	/* Cyrix EMC */
-#endif	COMPAQ_RAMRELOC
+#endif /* !COMPAQ_RAMRELOC */
 
 /* stuff that used to be in pccons.c */
 #define	MONO_BASE	0x3B4
@@ -207,4 +207,4 @@ unsigned kbd_8042cmd __P((int));
 
 #ifndef LOCORE
 extern vm_offset_t isaphysmem;
-#endif
+#endif /* !LOCORE */
