@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.18 1996/03/07 14:33:39 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.19 1996/03/13 21:06:38 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -435,7 +435,7 @@ db_error(s)
 	if (s)
 	    db_printf(s);
 	db_flush_lex();
-	longjmp(db_recover, 1);
+	longjmp(db_recover);
 }
 
 
