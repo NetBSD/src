@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.9 1997/11/02 06:18:27 scottr Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.10 1997/11/03 00:19:41 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -129,10 +129,9 @@ dp8390_config(sc, media, nmedia, defmedia)
 	/* Initialize media goo. */
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	if (media != NULL) {
-		for (i = 0; i < nmedia; i++) {
+		for (i = 0; i < nmedia; i++)
 			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
-			ifmedia_set(&sc->sc_media, defmedia);
-		}
+		ifmedia_set(&sc->sc_media, defmedia);
 	} else {
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
