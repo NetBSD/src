@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2003/07/15 02:46:32 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2004/06/29 12:01:11 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2003/07/15 02:46:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2004/06/29 12:01:11 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ delay(n)
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }
 
 /*
