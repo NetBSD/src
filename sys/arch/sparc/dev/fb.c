@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.27 1999/04/26 04:25:38 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.28 1999/04/27 17:37:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -340,7 +340,7 @@ donesize:
 
 static void fb_bell __P((int));
 
-#if defined(RASTERCONS_FULLSCREEN)
+#if !defined(RASTERCONS_FULLSCREEN)
 static int a2int __P((char *, int));
 
 static int
