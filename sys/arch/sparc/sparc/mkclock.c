@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.8 2003/11/01 22:59:24 tsutsui Exp $ */
+/*	$NetBSD: mkclock.c,v 1.9 2003/11/02 12:59:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.8 2003/11/01 22:59:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.9 2003/11/02 12:59:18 tsutsui Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -245,7 +245,7 @@ clockattach(sc, node)
 	if (CPU_ISSUN4) {
 		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
 		    cpuinfo.cpu_type == CPUTYP_4_400) {
-			eeprom_va = bus_space_vaddr(bt, bh);
+			eeprom_va = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 			eeprom_nvram_wenable = mk_nvram_wenable;
 		}
 	}
