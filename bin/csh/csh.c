@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.34 2003/08/07 09:05:04 agc Exp $ */
+/* $NetBSD: csh.c,v 1.35 2004/08/19 22:31:38 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.34 2003/08/07 09:05:04 agc Exp $");
+__RCSID("$NetBSD: csh.c,v 1.35 2004/08/19 22:31:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1318,7 +1318,9 @@ defaultpath(void)
 #define DIRAPPEND(a)  \
 	if (stat(ptr = a, &stb) == 0 && S_ISDIR(stb.st_mode)) \
 		*blkp++ = SAVE(ptr)
-
+#ifdef RESCUEDIR
+    DIRAPPEND(RESCUEDIR);
+#endif
     DIRAPPEND(_PATH_BIN);
     DIRAPPEND(_PATH_USRBIN);
 
