@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.7 1997/05/01 14:42:24 christos Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.8 1997/05/01 23:07:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -84,11 +84,22 @@ struct llc {
 	    } type_raw;
 	} llc_un;
 };
+
+struct frmrinfo {
+	u_int8_t frmr_pdu0;
+	u_int8_t frmr_pdu1;
+	u_int8_t frmr_control;
+	u_int8_t frmr_control_ext;
+	u_int8_t frmr_cause;
+};
+
 #define	llc_control		llc_un.type_u.control
 #define	llc_control_ext		llc_un.type_raw.control_ext
 #define	llc_fid			llc_un.type_u.format_id
 #define	llc_class		llc_un.type_u.class
 #define	llc_window		llc_un.type_u.window_x2
+#define	llc_frmrinfo \
+    *((struct frmrinfo *) llc_un.type_frmr.frmr_pdu0)
 #define	llc_frmr_pdu0		llc_un.type_frmr.frmr_pdu0
 #define	llc_frmr_pdu1		llc_un.type_frmr.frmr_pdu1
 #define	llc_frmr_control	llc_un.type_frmr.frmr_control
