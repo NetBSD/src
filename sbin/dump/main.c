@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2004/04/21 01:05:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.56 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.57 2004/04/21 01:05:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	int dirty;
 	union dinode *dp;
 	struct fstab *dt;
-	struct statfs *mntinfo, fsbuf;
+	struct statvfs *mntinfo, fsbuf;
 	char *map;
 	int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, Fflag = 0, honorlevel = 1;
@@ -281,8 +281,8 @@ main(int argc, char *argv[])
 			mountpoint = xstrdup(dt->fs_file);
 			goto multicheck;
 		}
-		if (statfs(argv[i], &fsbuf) == -1)
-			quit("Cannot statfs %s: %s\n", argv[i],
+		if (statvfs(argv[i], &fsbuf) == -1)
+			quit("Cannot statvfs %s: %s\n", argv[i],
 			    strerror(errno));
 		disk = fsbuf.f_mntfromname;
 		if (strcmp(argv[i], fsbuf.f_mntonname) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.40 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.41 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.40 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.41 2004/04/21 01:05:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -74,7 +74,7 @@ int	portal_unmount __P((struct mount *, int, struct proc *));
 int	portal_root __P((struct mount *, struct vnode **));
 int	portal_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct proc *));
-int	portal_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	portal_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	portal_vget __P((struct mount *, ino_t, struct vnode **));
 int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
@@ -159,7 +159,7 @@ portal_mount(mp, path, data, ndp, p)
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
-	return set_statfs_info(path, UIO_USERSPACE, args.pa_config,
+	return set_statvfs_info(path, UIO_USERSPACE, args.pa_config,
 	    UIO_USERSPACE, mp, p);
 }
 
@@ -259,25 +259,25 @@ portal_quotactl(mp, cmd, uid, arg, p)
 }
 
 int
-portal_statfs(mp, sbp, p)
+portal_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_frsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
 	sbp->f_files = 1;		/* Allow for "." */
 	sbp->f_ffree = 0;		/* See comments above */
-#ifdef COMPAT_09
-	sbp->f_type = 12;
-#else
-	sbp->f_type = 0;
-#endif
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 0;		/* See comments above */
+	sbp->f_fresvd = 0;
+	sbp->f_namemax = MAXNAMLEN;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -367,7 +367,7 @@ struct vfsops portal_vfsops = {
 	portal_unmount,
 	portal_root,
 	portal_quotactl,
-	portal_statfs,
+	portal_statvfs,
 	portal_sync,
 	portal_vget,
 	portal_fhtovp,

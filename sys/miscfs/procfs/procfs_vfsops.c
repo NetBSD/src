@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.52 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.53 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.52 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.53 2004/04/21 01:05:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,7 +108,7 @@ int	procfs_start __P((struct mount *, int, struct proc *));
 int	procfs_unmount __P((struct mount *, int, struct proc *));
 int	procfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct proc *));
-int	procfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	procfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	procfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	procfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
@@ -168,7 +168,7 @@ procfs_mount(mp, path, data, ndp, p)
 	mp->mnt_data = pmnt;
 	vfs_getnewfsid(mp);
 
-	error = set_statfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
 	    mp, p);
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
 	pmnt->pmnt_flags = args.flags;
@@ -226,25 +226,25 @@ procfs_start(mp, flags, p)
  * Get file system statistics.
  */
 int
-procfs_statfs(mp, sbp, p)
+procfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 
 	sbp->f_bsize = PAGE_SIZE;
+	sbp->f_frsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
 	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
 	sbp->f_files = maxproc;			/* approx */
 	sbp->f_ffree = maxproc - nprocs;	/* approx */
-#ifdef COMPAT_09
-	sbp->f_type = 10;
-#else
-	sbp->f_type = 0;
-#endif
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = maxproc - nprocs;	/* approx */
+	sbp->f_fresvd = 0;
+	sbp->f_namemax = MAXNAMLEN;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -368,7 +368,7 @@ struct vfsops procfs_vfsops = {
 	procfs_unmount,
 	procfs_root,
 	procfs_quotactl,
-	procfs_statfs,
+	procfs_statvfs,
 	procfs_sync,
 	procfs_vget,
 	procfs_fhtovp,

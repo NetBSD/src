@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.11 2003/11/19 15:48:21 christos Exp $ */
+/*	$NetBSD: compat_file.c,v 1.12 2004/04/21 01:05:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.11 2003/11/19 15:48:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.12 2004/04/21 01:05:36 christos Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -639,15 +639,15 @@ bsd_sys_statfs(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_statfs_args /* {
+	struct compat_20_sys_statfs_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	return sys_statfs(l, uap, retval);
+	return compat_20_sys_statfs(l, uap, retval);
 }
 
 #if defined(NFS) || defined(NFSSERVER)

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.14 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.15 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.14 2004/01/25 18:06:49 hannken Exp $
+ *	$Id: layer_vnops.c,v 1.15 2004/04/21 01:05:41 christos Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.14 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.15 2004/04/21 01:05:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,7 +531,7 @@ layer_getattr(v)
 	if ((error = LAYERFS_DO_BYPASS(vp, ap)) != 0)
 		return (error);
 	/* Requires that arguments be restored. */
-	ap->a_vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	ap->a_vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	return (0);
 }
 

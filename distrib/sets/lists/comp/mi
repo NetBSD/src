@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.692 2004/04/21 00:08:04 christos Exp $
+#	$NetBSD: mi,v 1.693 2004/04/21 01:05:31 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1296,6 +1296,7 @@
 ./usr/include/sys/float_ieee.h			comp-obsolete		obsolete
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
+./usr/include/sys/fstypes.h			comp-c-include
 ./usr/include/sys/gmon.h			comp-c-include
 ./usr/include/sys/hash.h			comp-c-include
 ./usr/include/sys/ieee754.h			comp-c-include
@@ -1363,6 +1364,7 @@
 ./usr/include/sys/sockio.h			comp-c-include
 ./usr/include/sys/soundcard.h			comp-c-include
 ./usr/include/sys/stat.h			comp-c-include
+./usr/include/sys/statvfs.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
 ./usr/include/sys/swap.h			comp-c-include
 ./usr/include/sys/syscall.h			comp-c-include
@@ -1932,13 +1934,17 @@
 ./usr/share/man/cat2/fdatasync.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fhopen.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fhstat.0			comp-c-catman		.cat
-./usr/share/man/cat2/fhstatfs.0			comp-c-catman		.cat
+./usr/share/man/cat2/fhstatfs.0			comp-obsolete		obsolete
+./usr/share/man/cat2/fhstatvfs.0		comp-c-catman		.cat
+./usr/share/man/cat2/fhstatvfs1.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fktrace.0			comp-c-catman		.cat
 ./usr/share/man/cat2/flock.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fork.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fpathconf.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fstat.0			comp-c-catman		.cat
-./usr/share/man/cat2/fstatfs.0			comp-c-catman		.cat
+./usr/share/man/cat2/fstatfs.0			comp-obsolete		obsolete
+./usr/share/man/cat2/fstatvfs.0			comp-c-catman		.cat
+./usr/share/man/cat2/fstatvfs1.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fsync.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fsync_range.0		comp-c-catman		.cat
 ./usr/share/man/cat2/ftruncate.0		comp-c-catman		.cat
@@ -1949,7 +1955,7 @@
 ./usr/share/man/cat2/getegid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/geteuid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getfh.0			comp-c-catman		.cat
-./usr/share/man/cat2/getfsstat.0		comp-c-catman		.cat
+./usr/share/man/cat2/getfsstat.0		comp-obsolete		obsolete
 ./usr/share/man/cat2/getgid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getgroups.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getitimer.0		comp-c-catman		.cat
@@ -1967,6 +1973,7 @@
 ./usr/share/man/cat2/getsockopt.0		comp-c-catman		.cat
 ./usr/share/man/cat2/gettimeofday.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getuid.0			comp-c-catman		.cat
+./usr/share/man/cat2/getvfsstat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/i386_get_ioperm.0		comp-c-catman		.cat
 ./usr/share/man/cat2/i386_get_ldt.0		comp-c-catman		.cat
 ./usr/share/man/cat2/i386_get_mtrr.0		comp-c-catman		.cat
@@ -2095,7 +2102,9 @@
 ./usr/share/man/cat2/socket.0			comp-c-catman		.cat
 ./usr/share/man/cat2/socketpair.0		comp-c-catman		.cat
 ./usr/share/man/cat2/stat.0			comp-c-catman		.cat
-./usr/share/man/cat2/statfs.0			comp-c-catman		.cat
+./usr/share/man/cat2/statfs.0			comp-obsolete		obsolete
+./usr/share/man/cat2/statvfs.0			comp-c-catman		.cat
+./usr/share/man/cat2/statvfs1.0			comp-c-catman		.cat
 ./usr/share/man/cat2/swapctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/swapon.0			comp-obsolete		obsolete
 ./usr/share/man/cat2/symlink.0			comp-c-catman		.cat
@@ -5624,13 +5633,17 @@
 ./usr/share/man/man2/fdatasync.2		comp-c-man		.man
 ./usr/share/man/man2/fhopen.2			comp-c-man		.man
 ./usr/share/man/man2/fhstat.2			comp-c-man		.man
-./usr/share/man/man2/fhstatfs.2			comp-c-man		.man
+./usr/share/man/man2/fhstatfs.2			comp-obsolete		obsolete
+./usr/share/man/man2/fhstatvfs.2		comp-c-man		.man
+./usr/share/man/man2/fhstatvfs1.2		comp-c-man		.man
 ./usr/share/man/man2/fktrace.2			comp-c-man		.man
 ./usr/share/man/man2/flock.2			comp-c-man		.man
 ./usr/share/man/man2/fork.2			comp-c-man		.man
 ./usr/share/man/man2/fpathconf.2		comp-c-man		.man
 ./usr/share/man/man2/fstat.2			comp-c-man		.man
-./usr/share/man/man2/fstatfs.2			comp-c-man		.man
+./usr/share/man/man2/fstatfs.2			comp-obsolete		obsolete
+./usr/share/man/man2/fstatvfs.2			comp-c-man		.man
+./usr/share/man/man2/fstatvfs1.2		comp-c-man		.man
 ./usr/share/man/man2/fsync.2			comp-c-man		.man
 ./usr/share/man/man2/fsync_range.2		comp-c-man		.man
 ./usr/share/man/man2/ftruncate.2		comp-c-man		.man
@@ -5640,7 +5653,7 @@
 ./usr/share/man/man2/getegid.2			comp-c-man		.man
 ./usr/share/man/man2/geteuid.2			comp-c-man		.man
 ./usr/share/man/man2/getfh.2			comp-c-man		.man
-./usr/share/man/man2/getfsstat.2		comp-c-man		.man
+./usr/share/man/man2/getfsstat.2		comp-obsolete		obsolete
 ./usr/share/man/man2/getgid.2			comp-c-man		.man
 ./usr/share/man/man2/getgroups.2		comp-c-man		.man
 ./usr/share/man/man2/getitimer.2		comp-c-man		.man
@@ -5658,6 +5671,7 @@
 ./usr/share/man/man2/getsockopt.2		comp-c-man		.man
 ./usr/share/man/man2/gettimeofday.2		comp-c-man		.man
 ./usr/share/man/man2/getuid.2			comp-c-man		.man
+./usr/share/man/man2/getvfsstat.2		comp-c-man		.man
 ./usr/share/man/man2/i386_get_ioperm.2		comp-c-man		.man
 ./usr/share/man/man2/i386_get_ldt.2		comp-c-man		.man
 ./usr/share/man/man2/i386_get_mtrr.2		comp-c-man		.man
@@ -5786,7 +5800,9 @@
 ./usr/share/man/man2/socket.2			comp-c-man		.man
 ./usr/share/man/man2/socketpair.2		comp-c-man		.man
 ./usr/share/man/man2/stat.2			comp-c-man		.man
-./usr/share/man/man2/statfs.2			comp-c-man		.man
+./usr/share/man/man2/statfs.2			comp-obsolete		obsolete
+./usr/share/man/man2/statvfs.2			comp-c-man		.man
+./usr/share/man/man2/statvfs1.2			comp-c-man		.man
 ./usr/share/man/man2/swapctl.2			comp-c-man		.man
 ./usr/share/man/man2/symlink.2			comp-c-man		.man
 ./usr/share/man/man2/sync.2			comp-c-man		.man

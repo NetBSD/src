@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.151 2004/03/26 21:49:35 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.152 2004/04/21 01:05:32 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -24,13 +24,13 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c
+SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c lseek.c mmap.c \
 	msync.c ntp_adjtime.c pread.c preadv.c pwrite.c pwritev.c semctl.c \
-	settimeofday.c sigaltstack.c stat.c swapon.c truncate.c
+	settimeofday.c sigaltstack.c stat.c statfs.c swapon.c truncate.c
 
 # glue to syscalls that may pass structs or unions, which cannot be
 # handled portably and easily by the syscall interface. The glue
@@ -45,10 +45,10 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	chmod.S chown.S chroot.S clock_getres.S clock_gettime.S \
 	dup.S dup2.S  \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
-	fdatasync.S fhopen.S fhstat.S fhstatfs.S \
-	fktrace.S flock.S fpathconf.S __fstat13.S fstatfs.S \
+	fdatasync.S fhopen.S fhstat.S fhstatvfs1.S \
+	fktrace.S flock.S fpathconf.S __fstat13.S fstatvfs1.S \
 	futimes.S __getcwd.S \
-	getdents.S getfh.S getfsstat.S getgroups.S getitimer.S \
+	getdents.S getfh.S getvfsstat.S getgroups.S getitimer.S \
 	__getlogin.S getpeername.S getpgid.S getpgrp.S \
 	getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
 	getsockopt.S gettimeofday.S ioctl.S kevent.S kqueue.S \
@@ -70,7 +70,7 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	__shmctl13.S shmdt.S shmget.S shutdown.S \
 	__sigaltstack14.S __sigpending14.S \
 	__sigaction_sigtramp.S __sigtimedwait.S \
-	socket.S socketpair.S __stat13.S statfs.S \
+	socket.S socketpair.S __stat13.S statvfs1.S \
 	swapctl.S symlink.S umask.S undelete.S unlink.S \
 	unmount.S utimes.S utrace.S uuidgen.S vadvise.S \
 	__sysctl.S \
@@ -138,7 +138,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 getdirentries.3 \
-	getfh.2 getfsstat.2 getgid.2 getgroups.2 \
+	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
 	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
@@ -160,7 +160,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
 	sigprocmask.2 sigstack.2 sigsuspend.2 sigtimedwait.2 \
 	socket.2 \
-	socketpair.2 stat.2 statfs.2 swapctl.2 swapon.3 symlink.2 \
+	socketpair.2 stat.2 statvfs.2 swapctl.2 swapon.3 symlink.2 \
 	sync.2 sysarch.2 syscall.2 timer_create.2 timer_delete.2 \
 	timer_settime.2 truncate.2 umask.2 undelete.2 \
 	unlink.2 utimes.2 utrace.2 uuidgen.2 vfork.2 wait.2 write.2
@@ -176,7 +176,7 @@ MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
-MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
+MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
 MLINKS+=fsync.2 fsync_range.2
 MLINKS+=getcontext.2 setcontext.2
 MLINKS+=getgid.2 getegid.2
@@ -211,7 +211,9 @@ MLINKS+=timer_settime.2 timer_gettime.2 timer_settime.2 timer_getoverrun.2
 MLINKS+=sigtimedwait.2 sigwaitinfo.2
 MLINKS+=sigtimedwait.2 sigwait.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
-MLINKS+=statfs.2 fstatfs.2
+MLINKS+=statvfs.2 fstatvfs.2
+MLINKS+=statvfs.2 statvfs1.2
+MLINKS+=statvfs.2 fstatvfs1.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2

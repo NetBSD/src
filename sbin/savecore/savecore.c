@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.62 2004/03/30 19:52:02 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.63 2004/04/21 01:05:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.62 2004/03/30 19:52:02 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.63 2004/04/21 01:05:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,7 +698,7 @@ check_space(void)
 	FILE *fp;
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
-	struct statfs fsbuf;
+	struct statvfs fsbuf;
 	char mbuf[100], path[MAXPATHLEN];
 
 #ifdef __GNUC__
@@ -710,12 +710,12 @@ check_space(void)
 		exit(1);
 	}
 	kernelsize = st.st_blocks * S_BLKSIZE;
-	if (statfs(dirname, &fsbuf) < 0) {
+	if (statvfs(dirname, &fsbuf) < 0) {
 		syslog(LOG_ERR, "%s: %m", dirname);
 		exit(1);
 	}
 	spacefree = fsbuf.f_bavail;
-	spacefree *= fsbuf.f_bsize;
+	spacefree *= fsbuf.f_frsize;
 	spacefree /= 1024;
 
 	(void)snprintf(path, sizeof(path), "%s/minfree", dirname);

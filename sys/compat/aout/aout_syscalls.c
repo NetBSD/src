@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscalls.c,v 1.26 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: aout_syscalls.c,v 1.27 2004/04/21 01:05:36 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_syscalls.c,v 1.26 2004/03/26 15:29:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_syscalls.c,v 1.27 2004/04/21 01:05:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -49,7 +49,11 @@ const char *const aout_syscallnames[] = {
 	"chmod",			/* 15 = chmod */
 	"chown",			/* 16 = chown */
 	"break",			/* 17 = break */
+#ifdef COMPAT_20
 	"getfsstat",			/* 18 = getfsstat */
+#else
+	"#18 (excluded compat_20_sys_getfsstat)",		/* 18 = excluded compat_20_sys_getfsstat */
+#endif
 	"olseek",			/* 19 = olseek */
 	"getpid",			/* 20 = getpid */
 	"mount",			/* 21 = mount */
@@ -197,7 +201,11 @@ const char *const aout_syscallnames[] = {
 #endif
 	"ogetdirentries",			/* 156 = ogetdirentries */
 	"statfs",			/* 157 = statfs */
+#ifdef COMPAT_20
 	"fstatfs",			/* 158 = fstatfs */
+#else
+	"#158 (excluded compat_20_sys_fstatfs)",		/* 158 = excluded compat_20_sys_fstatfs */
+#endif
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
@@ -424,7 +432,11 @@ const char *const aout_syscallnames[] = {
 	"fchroot",			/* 297 = fchroot */
 	"fhopen",			/* 298 = fhopen */
 	"fhstat",			/* 299 = fhstat */
+#ifdef COMPAT_20
 	"fhstatfs",			/* 300 = fhstatfs */
+#else
+	"#300 (excluded compat_20_sys_fhstatfs)",		/* 300 = excluded compat_20_sys_fhstatfs */
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 	"____semctl13",			/* 301 = ____semctl13 */
 #else
