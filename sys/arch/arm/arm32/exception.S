@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.11 2003/10/26 11:34:29 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.12 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -46,9 +46,6 @@
  */
 
 #include "opt_ipkdb.h"
-#include "opt_compat_netbsd.h"
-#include "opt_execfmt.h"
-#include "opt_multiprocessor.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -57,46 +54,7 @@
 	.text	
 	.align	0
 
-.Lastpending:
-	.word	_C_LABEL(astpending)
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-.Lcpufuncs:
-	.word	_C_LABEL(cpufuncs)
-#ifndef MULTIPROCESSOR
-.Lcurpcb:
-	.word	_C_LABEL(curpcb)
-.Lcpu_info_store:
-	.word	_C_LABEL(cpu_info_store)
-#define	GET_CURPCB							\
-	ldr	r1, .Lcurpcb						;\
-	ldr	r1, [r1]
-#define	GET_CPUINFO							\
-	ldr	r0, .Lcpu_info_store
-#else
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-#define	GET_CURPCB							\
-	ldr	r4, .Lcpu_info						;\
-	bl	_C_LABEL(cpu_number)					;\
-	ldr	r0, [r4, r0, lsl #2]					;\
-	ldr	r1, [r0, #CI_CURPCB]
-#define	GET_CPUINFO	/* nothing to do */
-#endif
-#define	ENABLE_ALIGNMENT_FAULTS						\
-	GET_CURPCB							;\
-	cmp	r1, #0x00		/* curpcb NULL?			;\
-	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
-	tstne	r1, #PCB_NOALIGNFLT					;\
-	beq	1f		/* Alignment faults already enabled */	;\
-	GET_CPUINFO							;\
-	ldr	r2, .Lcpufuncs						;\
-	ldr	r1, [r0, #CI_CTRL]	/* Fetch control register */	;\
-	mov	r0, #-1							;\
-	mov	lr, pc							;\
-	ldr	pc, [r2, #CF_CONTROL]	/* Enable alignment faults */	;\
-1:
-#endif /* COMPAT_15 && EXEC_AOUT */
-
+AST_ALIGNMENT_FAULT_LOCALS
 
 /*
  * General exception exit handler
@@ -106,72 +64,15 @@
  * Interrupts are disabled at suitable points to avoid ASTs
  * being posted between testing and exit to user mode.
  *
- * This function uses PULLFRAMEFROMSVCANDEXIT thus should
+ * This function uses PULLFRAMEFROMSVCANDEXIT and
+ * DO_AST_AND_RESTORE_ALIGNMENT_FAULTS thus should
  * only be called if the exception handler used PUSHFRAMEINSVC
+ * followed by ENABLE_ALIGNMENT_FAULTS.
  */
 
 exception_exit:
-	mrs     r4, cpsr		/* Get CPSR */
-
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the AST */
-	teq	r0, #(PSR_USR32_MODE)
-	bne	.Ldo_exit		/* Not USR mode so no AST delivery */
-
-	ldr	r5, .Lastpending	/* Get address of astpending */
-#if defined(COMPAT_15) && defined(EXEC_AOUT) && !defined(MULTIPROCESSOR)
-	ldr	r6, .Lcurpcb
-	ldr	r7, .Lcpu_info_store
-#endif
-
-Lexception_exit_loop:
-	orr     r0, r4, #(I32_bit)	/* Block IRQs */
-	msr     cpsr_all, r0
-
-	ldr	r1, [r5]		/* Do we have an AST pending */
-	teq	r1, #0x00000000
-	bne	.Ldo_ast
-
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-	/* Disable alignment faults for the process, if necessary. */
-#ifdef MULTIPROCESSOR
-	ldr	r7, .Lcpu_info
-	bl	_C_LABEL(cpu_number)
-	ldr	r7, [r7, r0, lsl #2]
-	ldr	r1, [r7, #CI_CURPCB]
-#else
-	ldr	r1, [r6]
-#endif
-	cmp	r1, #0x00		/* curpcb NULL? */
-	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
-	tstne	r1, #PCB_NOALIGNFLT
-	beq	1f			/* Keep alignment faults enabled */
-	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
-	ldr	r2, .Lcpufuncs
-	mov	r0, #-1
-	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable alignment faults */
-	mov	lr, pc
-	ldr	pc, [r2, #CF_CONTROL]	/* Set the new control register value */
-1:
-#endif
-
-	PULLFRAMEFROMSVCANDEXIT		/* No AST so exit */
-
-.Ldo_ast:
-	mov	r1, #0x00000000		/* Clear ast pending */
-	str	r1, [r5]
-
-	msr     cpsr_all, r4		/* Restore interrupts */
-
-	mov	r0, sp			/* arg 0 = trap frame */
-	bl	_C_LABEL(ast)		/* call the AST handler */
-	b	Lexception_exit_loop	/* Try and exit again */
-
-.Ldo_exit:
-	orr     r0, r4, #(I32_bit)	/* Disable interrupts */
-	msr     cpsr_all, r0
-
-	PULLFRAMEFROMSVCANDEXIT		/* Restore the trap frame and exit */
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
+	PULLFRAMEFROMSVCANDEXIT
 
 /*
  * reset_entry:
@@ -194,64 +95,14 @@ Lreset_panicmsg:
  */
 ASENTRY_NP(swi_entry)
 	PUSHFRAME
-
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
 	ENABLE_ALIGNMENT_FAULTS
-#endif
 
 	mov	r0, sp			/* Pass the frame to any function */
-
 	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
 
-	ldr	r5, .Lastpending	/* Get address of astpending */
-	mrs     r4, cpsr		/* Get CPSR */
-#if defined(COMPAT_15) && defined(EXEC_AOUT) && !defined(MULTIPROCESSOR)
-	ldr	r6, .Lcurpcb
-	ldr	r7, .Lcpu_info_store
-#endif
-
-.Lswi_exit_loop:
-	orr     r0, r4, #(I32_bit)	/* Disable IRQs */
-	msr     cpsr_all, r0
-
-	ldr	r1, [r5]		/* Do we have an AST pending */
-	teq	r1, #0x00000000
-	bne	.Ldo_swi_ast
-
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-	/* Disable alignment faults for the process, if necessary. */
-#ifdef MULTIPROCESSOR
-	ldr	r7, .Lcpu_info
-	bl	_C_LABEL(cpu_number)
-	ldr	r7, [r7, r0, lsl #2]
-	ldr	r1, [r7, #CI_CURPCB]
-#else
-	ldr	r1, [r6]
-#endif
-	cmp	r1, #0x00		/* curpcb NULL? */
-	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
-	tstne	r1, #PCB_NOALIGNFLT
-	beq	1f			/* Keep alignment faults enabled */
-	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
-	ldr	r2, .Lcpufuncs
-	mov	r0, #-1
-	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable alignment faults */
-	mov	lr, pc
-	ldr	pc, [r2, #CF_CONTROL]	/* Set the new control register value */
-1:
-#endif
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAME
 	movs	pc, lr			/* Exit */
-
-.Ldo_swi_ast:
-	mov	r1, #0x00000000		/* Clear ast pending */
-	str	r1, [r5]
-
-	msr     cpsr_all, r4		/* Restore interrupts */
-
-	mov	r0, sp			/* arg 0 = trap frame */
-	bl	_C_LABEL(ast)		/* call the AST handler */
-	b	.Lswi_exit_loop		/* Try and exit again */
 
 /*
  * prefetch_abort_entry:
@@ -262,17 +113,13 @@ ASENTRY_NP(prefetch_abort_entry)
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
 	PUSHFRAMEINSVC
-
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
 	ENABLE_ALIGNMENT_FAULTS
-#endif
 
- 	mov	r0, sp			/* pass the stack pointer as r0 */
-
-	adr	lr, exception_exit
 	ldr	r1, Lprefetch_abort_handler_address
+	adr	lr, exception_exit
+ 	mov	r0, sp			/* pass the stack pointer as r0 */
 	ldr	pc, [r1]
-	
+
 Lprefetch_abort_handler_address:
 	.word	_C_LABEL(prefetch_abort_handler_address)
 
@@ -301,19 +148,11 @@ ASENTRY_NP(data_abort_entry)
 
 	PUSHFRAMEINSVC			/* Push trap frame and switch */
 					/* to SVC32 mode */
-
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode (r0 = spsr_all)*/
-	teq	r0, #(PSR_USR32_MODE)
-	bne	99f			/* Not USR mode so skip AFLT check */
 	ENABLE_ALIGNMENT_FAULTS
-99:
-#endif
 
-	mov	r0, sp			/* pass the stack pointer as r0 */
-
-	adr	lr, exception_exit
 	ldr	r1, Ldata_abort_handler_address
+	adr	lr, exception_exit
+	mov	r0, sp			/* pass the stack pointer as r0 */
 	ldr	pc, [r1]
 
 Ldata_abort_handler_address:
@@ -417,37 +256,10 @@ ASENTRY_NP(undefined_entry)
  * Now to IPKDB.
  */
 .Lgoipkdb:
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-	ENABLE_ALIGNMENT_FAULTS
-#endif
 	mov	r0, sp
 	bl	_C_LABEL(ipkdb_trap_glue)
 	ldr	r1, .Lipkdb_trap_return
 	str	r0,[r1]
-
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-#ifdef MULTIPROCESSOR
-	ldr	r7, .Lcpu_info
-	bl	_C_LABEL(cpu_number)
-	ldr	r7, [r7, r0, lsl #2]
-	ldr	r1, [r7, #CI_CURPCB]
-#else
-	ldr	r6, .Lcurpcb
-	ldr	r7, .Lcpu_info_store
-	ldr	r1, [r6]
-#endif
-	cmp	r1, #0x00		/* curpcb NULL? */
-	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
-	tstne	r1, #PCB_NOALIGNFLT
-	beq	1f			/* Keep alignment faults enabled */
-	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
-	ldr	r2, .Lcpufuncs
-	mov	r0, #-1
-	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable alignment faults */
-	mov	lr, pc
-	ldr	pc, [r2, #CF_CONTROL]	/* Set the new control register value */
-1:
-#endif
 
 /*
  * Have to load all registers from the stack.
@@ -530,17 +342,11 @@ Lundefined_handler_indirection:
 
 ENTRY_NP(undefinedinstruction_bounce)
 	PUSHFRAMEINSVC
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode (r0 = spsr_all)*/
-	teq	r0, #(PSR_USR32_MODE)
-	bne	99f			/* Not USR mode so skip AFLT check */
 	ENABLE_ALIGNMENT_FAULTS
-99:
-#endif
-	mov	r0, sp
-	bl	_C_LABEL(undefinedinstruction)
 
-	b	exception_exit
+	mov	r0, sp
+	adr	lr, exception_exit
+	b	_C_LABEL(undefinedinstruction)
 
 	.data
 	.align	0
