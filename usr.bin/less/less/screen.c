@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.4 1997/04/22 14:16:23 mrg Exp $	*/
+/*	$NetBSD: screen.c,v 1.5 1997/09/21 12:41:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -36,11 +36,15 @@
 #include "cmd.h"
 
 #if MSDOS_COMPILER
+#include "pckeys.h"
 #if MSDOS_COMPILER==MSOFTC
 #include <graph.h>
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 #include <conio.h>
+#if MSDOS_COMPILER==DJGPPC
+#include <pc.h>
+#endif
 #else
 #if MSDOS_COMPILER==WIN32C
 #include <windows.h>
@@ -80,9 +84,6 @@
 #if OS2
 #include <sys/signal.h>
 #endif
-#if HAVE_SYS_WINDOW_H
-#include <sys/window.h>
-#endif
 #if HAVE_SYS_STREAM_H
 #include <sys/stream.h>
 #endif
@@ -114,7 +115,7 @@ static long msec_loops;
 #define	SETCOLORS(fg,bg)	_settextcolor(fg); _setbkcolor(bg);
 #endif
 
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 static unsigned short *whitescreen;
 #define _settextposition(y,x)   gotoxy(x,y)
 #define _clearscreen(m)         clrscr()
@@ -133,10 +134,19 @@ static int keyCount = 0;
 static WORD curr_attr;
 static int pending_scancode = 0;
 static WORD *whitescreen;
-static constant COORD TOPLEFT = {0, 0};
+
+static HANDLE con_out_save = INVALID_HANDLE_VALUE; /* previous console */
+static HANDLE con_out_ours = INVALID_HANDLE_VALUE; /* our own */
+HANDLE con_out = INVALID_HANDLE_VALUE;             /* current console */
+
+#if 1
+extern int quitting;
+static void win32_init_term();
+static void win32_deinit_term();
+#endif
+
 #define FG_COLORS       (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)
 #define BG_COLORS       (BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY)
-HANDLE con_out;
 #define	MAKEATTR(fg,bg)		((WORD)((fg)|((bg)<<4)))
 #define	SETCOLORS(fg,bg)	curr_attr = MAKEATTR(fg,bg); \
 				SetConsoleTextAttribute(con_out, curr_attr);
@@ -225,6 +235,9 @@ extern int swindow;
 extern int no_init;
 extern int quit_at_eof;
 extern int more_mode;
+extern int sigs;
+extern int wscroll;
+extern int screen_trashed;
 #if HILITE_SEARCH
 extern int hilite_search;
 #endif
@@ -256,6 +269,7 @@ raw_mode(on)
     {
 	struct termios s;
 	static struct termios save_term;
+	static int saved_term = 0;
 
 	if (on) 
 	{
@@ -267,7 +281,11 @@ raw_mode(on)
 		/*
 		 * Save modes and set certain variables dependent on modes.
 		 */
-		save_term = s;
+		if (!saved_term)
+		{
+			save_term = s;
+			saved_term = 1;
+		}
 #if HAVE_OSPEED
 		switch (cfgetospeed(&s))
 		{
@@ -432,6 +450,7 @@ raw_mode(on)
     {
 	struct termio s;
 	static struct termio save_term;
+	static int saved_term = 0;
 
 	if (on)
 	{
@@ -443,7 +462,11 @@ raw_mode(on)
 		/*
 		 * Save modes and set certain variables dependent on modes.
 		 */
-		save_term = s;
+		if (!saved_term)
+		{
+			save_term = s;
+			saved_term = 1;
+		}
 #if HAVE_OSPEED
 		ospeed = s.c_cflag & CBAUD;
 #endif
@@ -477,6 +500,7 @@ raw_mode(on)
     {
 	struct sgttyb s;
 	static struct sgttyb save_term;
+	static int saved_term = 0;
 
 	if (on)
 	{
@@ -488,7 +512,11 @@ raw_mode(on)
 		/*
 		 * Save modes and set certain variables dependent on modes.
 		 */
-		save_term = s;
+		if (!saved_term)
+		{
+			save_term = s;
+			saved_term = 1;
+		}
 #if HAVE_OSPEED
 		ospeed = s.sg_ospeed;
 #endif
@@ -515,6 +543,7 @@ raw_mode(on)
     {
 	struct sgbuf s;
 	static struct sgbuf save_term;
+	static int saved_term = 0;
 
 	if (on)
 	{
@@ -526,7 +555,11 @@ raw_mode(on)
 		/*
 		 * Save modes and set certain variables dependent on modes.
 		 */
-		save_term = s;
+		if (!saved_term)
+		{
+			save_term = s;
+			saved_term = 1;
+		}
 		erase_char = s.sg_bspch;
 		kill_char = s.sg_dlnch;
 		werase_char = CONTROL('W');
@@ -554,7 +587,11 @@ raw_mode(on)
 	LSIGNAL(SIGINT, SIG_IGN);
 #endif
 	erase_char = '\b';
-	kill_char = '\033'; /* ESC */
+#if MSDOS_COMPILER==DJGPPC
+	kill_char = CONTROL('U');
+#else
+	kill_char = ESC;
+#endif
 	werase_char = CONTROL('W');
 #endif
 #endif
@@ -569,10 +606,25 @@ raw_mode(on)
  */
 static int hardcopy;
 
+	static char *
+ltget_env(capname)
+	char *capname;
+{
+	char name[16];
+
+	strcpy(name, "LESS_TERMCAP_");
+	strcat(name, capname);
+	return (lgetenv(name));
+}
+
 	static int
 ltgetflag(capname)
 	char *capname;
 {
+	char *s;
+
+	if ((s = ltget_env(capname)) != NULL)
+		return (*s != '\0' && *s != '0');
 	if (hardcopy)
 		return (0);
 	return (tgetflag(capname));
@@ -582,6 +634,10 @@ ltgetflag(capname)
 ltgetnum(capname)
 	char *capname;
 {
+	char *s;
+
+	if ((s = ltget_env(capname)) != NULL)
+		return (atoi(s));
 	if (hardcopy)
 		return (-1);
 	return (tgetnum(capname));
@@ -592,6 +648,10 @@ ltgetstr(capname, pp)
 	char *capname;
 	char **pp;
 {
+	char *s;
+
+	if ((s = ltget_env(capname)) != NULL)
+		return (s);
 	if (hardcopy)
 		return (NULL);
 	return (tgetstr(capname, pp));
@@ -605,39 +665,52 @@ ltgetstr(capname, pp)
 scrsize()
 {
 	register char *s;
+	int sys_height;
+	int sys_width;
+#if !MSDOS_COMPILER
+	int n;
+#endif
 
-	sc_width = sc_height = 0;
+#define	DEF_SC_WIDTH	80
+#if MSDOS_COMPILER
+#define	DEF_SC_HEIGHT	25
+#else
+#define	DEF_SC_HEIGHT	24
+#endif
+
+
+	sys_width = sys_height = 0;
 
 #if MSDOS_COMPILER==MSOFTC
 	{
 		struct videoconfig w;
 		_getvideoconfig(&w);
-		sc_height = w.numtextrows;
-		sc_width = w.numtextcols;
+		sys_height = w.numtextrows;
+		sys_width = w.numtextcols;
 	}
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 	{
 		struct text_info w;
 		gettextinfo(&w);
-		sc_height = w.screenheight;
-		sc_width = w.screenwidth;
+		sys_height = w.screenheight;
+		sys_width = w.screenwidth;
 	}
 #else
 #if MSDOS_COMPILER==WIN32C
 	{
 		CONSOLE_SCREEN_BUFFER_INFO scr;
 		GetConsoleScreenBufferInfo(con_out, &scr);
-		sc_height = scr.srWindow.Bottom - scr.srWindow.Top + 1;
-		sc_width = scr.srWindow.Right - scr.srWindow.Left + 1;
+		sys_height = scr.srWindow.Bottom - scr.srWindow.Top + 1;
+		sys_width = scr.srWindow.Right - scr.srWindow.Left + 1;
 	}
 #else
 #if OS2
 	{
 		int s[2];
 		_scrsize(s);
-		sc_width = s[0];
-		sc_height = s[1];
+		sys_width = s[0];
+		sys_height = s[1];
 	}
 #else
 #ifdef TIOCGWINSZ
@@ -646,9 +719,9 @@ scrsize()
 		if (ioctl(2, TIOCGWINSZ, &w) == 0)
 		{
 			if (w.ws_row > 0)
-				sc_height = w.ws_row;
+				sys_height = w.ws_row;
 			if (w.ws_col > 0)
-				sc_width = w.ws_col;
+				sys_width = w.ws_col;
 		}
 	}
 #else
@@ -658,9 +731,9 @@ scrsize()
 		if (ioctl(2, WIOCGETD, &w) == 0)
 		{
 			if (w.uw_height > 0)
-				sc_height = w.uw_height / w.uw_vs;
+				sys_height = w.uw_height / w.uw_vs;
 			if (w.uw_width > 0)
-				sc_width = w.uw_width / w.uw_hs;
+				sys_width = w.uw_width / w.uw_hs;
 		}
 	}
 #endif
@@ -669,27 +742,28 @@ scrsize()
 #endif
 #endif
 #endif
-	if (sc_height > 0)
-		;
-	else if ((s = lgetenv("LINES")) != NULL)
-		sc_height = atoi(s);
-#if !MSDOS_COMPILER
-	else
- 		sc_height = ltgetnum("li");
-#endif
-	if (sc_height <= 0)
-		sc_height = 24;
 
-	if (sc_width > 0)
-		;
-	else if ((s = lgetenv("COLUMNS")) != NULL)
-		sc_width = atoi(s);
+	if ((s = lgetenv("LINES")) != NULL)
+		sc_height = atoi(s);
+	else if (sys_height > 0)
+		sc_height = sys_height;
 #if !MSDOS_COMPILER
-	else
- 		sc_width = ltgetnum("co");
+	else if ((n = ltgetnum("li")) > 0)
+ 		sc_height = n;
 #endif
- 	if (sc_width <= 0)
-  		sc_width = 80;
+	else
+		sc_height = DEF_SC_HEIGHT;
+
+	if ((s = lgetenv("COLUMNS")) != NULL)
+		sc_width = atoi(s);
+	else if (sys_width > 0)
+		sc_width = sys_width;
+#if !MSDOS_COMPILER
+	else if ((n = ltgetnum("co")) > 0)
+ 		sc_width = n;
+#endif
+	else
+		sc_width = DEF_SC_WIDTH;
 }
 
 #if MSDOS_COMPILER==MSOFTC
@@ -765,22 +839,24 @@ get_editkeys()
  * Table of line editting characters, for editchar() in decode.c.
  */
 static char kecmdtable[] = {
-	'\340','\115',0,	EC_RIGHT,	/* RIGHTARROW */
-	'\340','\113',0,	EC_LEFT,	/* LEFTARROW */
-	'\340','\163',0,	EC_W_LEFT,	/* CTRL-LEFTARROW */
-	'\340','\164',0,	EC_W_RIGHT,	/* CTRL-RIGHTARROW */
-	'\340','\122',0,	EC_INSERT,	/* INSERT */
-	'\340','\123',0,	EC_DELETE,	/* DELETE */
-	'\340','\223',0,	EC_W_DELETE,	/* CTRL-DELETE */
+	'\340',PCK_RIGHT,0,	EC_RIGHT,	/* RIGHTARROW */
+	'\340',PCK_LEFT,0,	EC_LEFT,	/* LEFTARROW */
+	'\340',PCK_CTL_RIGHT,0,	EC_W_RIGHT,	/* CTRL-RIGHTARROW */
+	'\340',PCK_CTL_LEFT,0,	EC_W_LEFT,	/* CTRL-LEFTARROW */
+	'\340',PCK_INSERT,0,	EC_INSERT,	/* INSERT */
+	'\340',PCK_DELETE,0,	EC_DELETE,	/* DELETE */
+	'\340',PCK_CTL_DELETE,0,EC_W_DELETE,	/* CTRL-DELETE */
 	'\177',0,		EC_W_BACKSPACE,	/* CTRL-BACKSPACE */
-	'\340','\107',0,	EC_HOME,	/* HOME */
-	'\340','\117',0,	EC_END,		/* END */
-	'\340','\110',0,	EC_UP,		/* UPARROW */
-	'\340','\120',0,	EC_DOWN,	/* DOWNARROW */
+	'\340',PCK_HOME,0,	EC_HOME,	/* HOME */
+	'\340',PCK_END,0,	EC_END,		/* END */
+	'\340',PCK_UP,0,	EC_UP,		/* UPARROW */
+	'\340',PCK_DOWN,0,	EC_DOWN,	/* DOWNARROW */
 	'\t',0,			EC_F_COMPLETE,	/* TAB */
 	'\17',0,		EC_B_COMPLETE,	/* BACKTAB (?) */
-	'\340','\17',0,		EC_B_COMPLETE,	/* BACKTAB */
+	'\340',PCK_SHIFT_TAB,0,	EC_B_COMPLETE,	/* BACKTAB */
 	'\14',0,		EC_EXPAND,	/* CTRL-L */
+	'\340',PCK_CAPS_LOCK,0,	EC_NOACTION,	/* CAPS LOCK */
+	'\340',PCK_NUM_LOCK,0,	EC_NOACTION,	/* NUM LOCK */
 	0  /* Extra byte to terminate; subtracted from size, below */
 };
 static int sz_kecmdtable = sizeof(kecmdtable) -1;
@@ -791,14 +867,18 @@ static char kfcmdtable[] =
 	 * PC function keys.
 	 * Note that '\0' is converted to '\340' on input.
 	 */
-	'\340','\120',0,		A_F_LINE,		/* down arrow */
-	'\340','\121',0,		A_F_SCREEN,		/* page down */
-	'\340','\110',0,		A_B_LINE,		/* up arrow */
-	'\340','\111',0,		A_B_SCREEN,		/* page up */
-	'\340','\107',0,		A_GOLINE,		/* home */
-	'\340','\117',0,		A_GOEND,		/* end */
-	'\340','\073',0,		A_HELP,			/* F1 */
-	'\340','\022',0,		A_EXAMINE,		/* Alt-E */
+	'\340',PCK_DOWN,0,	A_F_LINE,	/* DOWNARROW */
+	'\340',PCK_PAGEDOWN,0,	A_F_SCREEN,	/* PAGEDOWN */
+	'\340',PCK_UP,0,	A_B_LINE,	/* UPARROW */
+	'\340',PCK_PAGEUP,0,	A_B_SCREEN,	/* PAGEUP */
+	'\340',PCK_RIGHT,0,	A_RSHIFT,	/* RIGHTARROW */
+	'\340',PCK_LEFT,0,	A_LSHIFT,	/* LEFTARROW */
+	'\340',PCK_HOME,0,	A_GOLINE,	/* HOME */
+	'\340',PCK_END,0,	A_GOEND,	/* END */
+	'\340',PCK_F1,0,	A_HELP,		/* F1 */
+	'\340',PCK_ALT_E,0,	A_EXAMINE,	/* Alt-E */
+	'\340',PCK_CAPS_LOCK,0,	A_NOACTION,	/* CAPS LOCK */
+	'\340',PCK_NUM_LOCK,0,	A_NOACTION,	/* NUM LOCK */
 	0
 };
 static int sz_kfcmdtable = sizeof(kfcmdtable) - 1;
@@ -836,6 +916,7 @@ static int sz_kfcmdtable = sizeof(kfcmdtable) - 1;
 	{
 		put_ecmd(s, EC_RIGHT);
 		put_esc_ecmd(s, EC_W_RIGHT);
+		put_fcmd(s, A_RSHIFT);
 	}
 	
 	/* LEFT ARROW */
@@ -844,6 +925,7 @@ static int sz_kfcmdtable = sizeof(kfcmdtable) - 1;
 	{
 		put_ecmd(s, EC_LEFT);
 		put_esc_ecmd(s, EC_W_LEFT);
+		put_fcmd(s, A_LSHIFT);
 	}
 	
 	/* UP ARROW */
@@ -923,40 +1005,6 @@ static int sz_kfcmdtable = sizeof(kfcmdtable) - 1;
 	add_ecmd_table(kecmdtable, sz_kecmdtable);
 }
 
-#if DEBUG
-	static void
-get_debug_term()
-{
-	auto_wrap = 1;
-	ignaw = 1;
-	so_s_width = so_e_width = 0;
-	bo_s_width = bo_e_width = 0;
-	ul_s_width = ul_e_width = 0;
-	bl_s_width = bl_e_width = 0;
-	sc_s_keypad =	"(InitKey)";
-	sc_e_keypad =	"(DeinitKey)";
-	sc_init =	"(InitTerm)";
-	sc_deinit =	"(DeinitTerm)";
-	sc_eol_clear =	"(ClearEOL)";
-	sc_eos_clear =	"(ClearEOS)";
-	sc_clear =	"(ClearScreen)";
-	sc_move =	"(Move<%d,%d>)";
-	sc_s_in =	"(SO+)";
-	sc_s_out =	"(SO-)";
-	sc_u_in =	"(UL+)";
-	sc_u_out =	"(UL-)";
-	sc_b_in =	"(BO+)";
-	sc_b_out =	"(BO-)";
-	sc_bl_in =	"(BL+)";
-	sc_bl_out =	"(BL-)";
-	sc_visual_bell ="(VBell)";
-	sc_backspace =	"(BS)";
-	sc_home =	"(Home)";
-	sc_lower_left =	"(LL)";
-	sc_addline =	"(AddLine)";
-}
-#endif
-
 /*
  * Get terminal capabilities via termcap.
  */
@@ -973,20 +1021,20 @@ get_term()
 	 */
 	nm_fg_color = 7;
 	nm_bg_color = 0;
-	bo_fg_color = 15;
+	bo_fg_color = 11;
 	bo_bg_color = 0;
 	ul_fg_color = 9;
 	ul_bg_color = 0;
-	so_fg_color = 0;
-	so_bg_color = 7;
-	bl_fg_color = 12;
+	so_fg_color = 15;
+	so_bg_color = 9;
+	bl_fg_color = 15;
 	bl_bg_color = 0;
 #if MSDOS_COMPILER==MSOFTC
 	sy_bg_color = _getbkcolor();
 	sy_fg_color = _gettextcolor();
 	get_clock();
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
     {
 	struct text_info w;
 	gettextinfo(&w);
@@ -999,29 +1047,17 @@ get_term()
 	DWORD nread;
 	CONSOLE_SCREEN_BUFFER_INFO scr;
 
-	con_out = GetStdHandle(STD_OUTPUT_HANDLE);
-
+	con_out_save = con_out = GetStdHandle(STD_OUTPUT_HANDLE);
+	/*
+	 * Always open stdin in binary. Note this *must* be done
+	 * before any file operations have been done on fd0.
+	 */
+	SET_BINARY(0);
 	GetConsoleScreenBufferInfo(con_out, &scr);
 	ReadConsoleOutputAttribute(con_out, &curr_attr, 
 					1, scr.dwCursorPosition, &nread);
 	sy_bg_color = (curr_attr & BG_COLORS) >> 4; /* normalize */
 	sy_fg_color = curr_attr & FG_COLORS;
-
-	/*
-	 * If we use the default bg colors, for some as-yet-undetermined 
-	 * reason, when you scroll the text colors get messed up in what 
-	 * seems to be a random manner. Portions of text will be in 
-	 * nm_bg_color but the remainder of that line (which was fine 
-	 * before the scroll) will now appear in sy_bg_color. Too strange!
-	 */
-	nm_bg_color = sy_bg_color;
-	bo_bg_color = sy_bg_color;
-	ul_bg_color = sy_bg_color;
-	bl_bg_color = sy_bg_color;
-
-	/* Make standout = inverse video. */
-	so_fg_color = sy_bg_color;
-	so_bg_color = sy_fg_color;
     }
 #endif
 #endif
@@ -1075,14 +1111,6 @@ get_term()
 	 */
 	scrsize();
 	pos_init();
-
-#if DEBUG
-	if (strncmp(term,"LESSDEBUG",9) == 0)
-	{
-		get_debug_term();
-		return;
-	}
-#endif /* DEBUG */
 
 	auto_wrap = ltgetflag("am");
 	ignaw = ltgetflag("xn");
@@ -1358,8 +1386,11 @@ tmodes(incap, outcap, instr, outstr, def_instr, def_outstr, spp)
 _settextposition(int row, int col)
 {
 	COORD cpos;
-	cpos.X = (short)(col-1);
-	cpos.Y = (short)(row-1);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+	GetConsoleScreenBufferInfo(con_out, &csbi);
+	cpos.X = csbi.srWindow.Left + (col - 1);
+	cpos.Y = csbi.srWindow.Top + (row - 1);
 	SetConsoleCursorPosition(con_out, cpos);
 }
 #endif
@@ -1395,6 +1426,59 @@ initcolor()
 }
 #endif
 
+#if MSDOS_COMPILER==WIN32C
+
+/*
+ * Termcap-like init with a private win32 console.
+ */
+	static void
+win32_init_term()
+{
+	CONSOLE_SCREEN_BUFFER_INFO scr;
+	COORD size;
+
+	if (con_out_save == INVALID_HANDLE_VALUE)
+		return;
+
+	GetConsoleScreenBufferInfo(con_out_save, &scr);
+
+	if (con_out_ours == INVALID_HANDLE_VALUE)
+	{
+		/*
+		 * Create our own screen buffer, so that we
+		 * may restore the original when done.
+		 */
+		con_out_ours = CreateConsoleScreenBuffer(
+			GENERIC_WRITE | GENERIC_READ,
+			FILE_SHARE_WRITE | FILE_SHARE_READ,
+			(LPSECURITY_ATTRIBUTES) NULL,
+			CONSOLE_TEXTMODE_BUFFER,
+			(LPVOID) NULL);
+	}
+
+	size.X = scr.srWindow.Right - scr.srWindow.Left + 1;
+	size.Y = scr.srWindow.Bottom - scr.srWindow.Top + 1;
+	SetConsoleScreenBufferSize(con_out_ours, size);
+	SetConsoleActiveScreenBuffer(con_out_ours);
+	con_out = con_out_ours;
+}
+
+/*
+ * Restore the startup console.
+ */
+static void
+win32_deinit_term()
+{
+	if (con_out_save == INVALID_HANDLE_VALUE)
+		return;
+	if (quitting)
+		(void) CloseHandle(con_out_ours);
+	SetConsoleActiveScreenBuffer(con_out_save);
+	con_out = con_out_save;
+}
+
+#endif
+
 /*
  * Initialize terminal
  */
@@ -1402,11 +1486,21 @@ initcolor()
 init()
 {
 	if (no_init)
+	{
+#if MSDOS_COMPILER==WIN32C
+		/* no_init or not, never trash win32 console colors. */
+		initcolor();
+		flush();
+#endif
 		return;
+	}
 #if !MSDOS_COMPILER
 	tputs(sc_init, sc_height, putchr);
 	tputs(sc_s_keypad, sc_height, putchr);
 #else
+#if MSDOS_COMPILER==WIN32C
+	win32_init_term();
+#endif
 	initcolor();
 	flush();
 #endif
@@ -1420,7 +1514,14 @@ init()
 deinit()
 {
 	if (no_init)
+	{
+#if MSDOS_COMPILER==WIN32C
+		/* no_init or not, never trash win32 console colors. */
+		SETCOLORS(sy_fg_color, sy_bg_color);
+#endif
 		return;
+	}
+
 	if (!init_done)
 		return;
 #if !MSDOS_COMPILER
@@ -1428,7 +1529,9 @@ deinit()
 	tputs(sc_deinit, sc_height, putchr);
 #else
 	SETCOLORS(sy_fg_color, sy_bg_color);
-	putstr("\n");
+#if MSDOS_COMPILER==WIN32C
+	win32_deinit_term();
+#endif
 #endif
 	init_done = 0;
 }
@@ -1462,7 +1565,7 @@ add_line()
 	_scrolltextwindow(_GSCROLLDOWN);
 	_settextposition(1,1);
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 	movetext(1,1, sc_width,sc_height-1, 1,2);
 	gotoxy(1,1);
 	clreol();
@@ -1471,16 +1574,25 @@ add_line()
     {
 	CHAR_INFO fillchar;
 	SMALL_RECT rcSrc, rcClip;
-	COORD new_org = {0, 1};
+	COORD new_org;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-	rcClip.Left = 0;
-	rcClip.Top = 0;
-	rcClip.Right = (short)(sc_width - 1);
-	rcClip.Bottom = (short)(sc_height - 1);
-	rcSrc.Left = 0;
-	rcSrc.Top = 0;
-	rcSrc.Right = (short)(sc_width - 1);
-	rcSrc.Bottom = (short)(sc_height - 2);
+	GetConsoleScreenBufferInfo(con_out,&csbi);
+
+	/* Get the extent of all-visible-rows-but-the-last. */
+	rcSrc.Left = csbi.srWindow.Left;
+	rcSrc.Top = csbi.srWindow.Top;
+	rcSrc.Right = csbi.srWindow.Right;
+	rcSrc.Bottom = csbi.srWindow.Bottom - 1;
+
+	/* The clip rectangle is the same as the source. */
+	rcClip = rcSrc;
+
+	/* Move the top left corner of the source window down one row. */
+	new_org.X = rcSrc.Left;
+	new_org.Y = rcSrc.Top + 1;
+
+	/* Fill the right character and attributes. */
 	fillchar.Char.AsciiChar = ' ';
 	curr_attr = MAKEATTR(nm_fg_color, nm_bg_color);
 	fillchar.Attributes = curr_attr;
@@ -1490,6 +1602,61 @@ add_line()
 #endif
 #endif
 #endif
+#endif
+}
+
+/*
+ * Remove the n topmost lines and scroll everything below it in the 
+ * window upward.  This is needed to stop leaking the topmost line 
+ * into the scrollback buffer when we go down-one-line (in WIN32).
+ */
+	public void
+remove_top(n)
+       int n;
+{
+#if MSDOS_COMPILER==WIN32C
+	SMALL_RECT rcSrc, rcClip;
+	CHAR_INFO fillchar;
+	COORD new_org;
+	CONSOLE_SCREEN_BUFFER_INFO csbi; /* to get buffer info */
+
+	if (n >= sc_height - 1)
+	{
+		clear();
+		home();
+		return;
+	}
+
+	flush();
+
+	GetConsoleScreenBufferInfo(con_out, &csbi);
+
+	/* Get the extent of all-visible-rows-but-the-last. */
+	rcSrc.Left = csbi.srWindow.Left;
+	rcSrc.Top = csbi.srWindow.Top + n;
+	rcSrc.Right = csbi.srWindow.Right;
+	rcSrc.Bottom = csbi.srWindow.Bottom;
+
+	/* Get the clip rectangle. */
+	rcClip.Left = rcSrc.Left;
+	rcClip.Top = csbi.srWindow.Top;
+	rcClip.Right = rcSrc.Right;
+	rcClip.Bottom = rcSrc.Bottom - 1;
+
+	/* Move the source window up n rows. */
+	new_org.X = rcSrc.Left;
+	new_org.Y = rcSrc.Top - n;
+
+	/* Fill the right character and attributes. */
+	fillchar.Char.AsciiChar = ' ';
+	curr_attr = MAKEATTR(nm_fg_color, nm_bg_color);
+	fillchar.Attributes = curr_attr;
+
+	ScrollConsoleScreenBuffer(con_out, &rcSrc, &rcClip,
+	new_org, &fillchar);
+
+	/* Position cursor on first blank line. */
+	goto_line(sc_height - n - 1);
 #endif
 }
 
@@ -1504,6 +1671,37 @@ lower_left()
 #else
 	flush();
 	_settextposition(sc_height, 1);
+#endif
+}
+
+/*
+ * Check if the console size has changed and reset internals 
+ * (in lieu of SIGWINCH for WIN32).
+ */
+	public void
+check_winch()
+{
+#if MSDOS_COMPILER==WIN32C
+	CONSOLE_SCREEN_BUFFER_INFO scr;
+	COORD size;
+
+	if (con_out == INVALID_HANDLE_VALUE)
+		return;
+ 
+        flush();
+        GetConsoleScreenBufferInfo(con_out, &scr);
+	size.Y = scr.srWindow.Bottom - scr.srWindow.Top + 1;
+	size.X = scr.srWindow.Right - scr.srWindow.Left + 1;
+	if (size.Y != sc_height || size.X != sc_width)
+	{
+		sc_height = size.Y;
+		sc_width = size.X;
+		if (!no_init && con_out_ours == con_out)
+			SetConsoleScreenBufferSize(con_out, size);
+		pos_init();
+		wscroll = (sc_height + 1) / 2;
+		screen_trashed = 1;
+	}
 #endif
 }
 
@@ -1596,6 +1794,9 @@ vbell()
 		return;
 	tputs(sc_visual_bell, sc_height, putchr);
 #else
+#if MSDOS_COMPILER==DJGPPC
+	ScreenVisualBell();
+#else
 #if MSDOS_COMPILER==MSOFTC
 	/*
 	 * Create a flash screen on the second video page.
@@ -1623,8 +1824,7 @@ vbell()
 		return;
 	currscreen = (unsigned short *) 
 		malloc(sc_width * sc_height * sizeof(short));
-	if (currscreen == NULL)
-		return;
+	if (currscreen == NULL) return;
 	gettext(1, 1, sc_width, sc_height, currscreen);
 	puttext(1, 1, sc_width, sc_height, whitescreen);
 	delay(100);
@@ -1632,25 +1832,15 @@ vbell()
 	free(currscreen);
 #else
 #if MSDOS_COMPILER==WIN32C
-	WORD *currscreen;
-	DWORD nread;
+	/* paint screen with an inverse color */
+	clear();
 
-	if (!flash_created)
-		create_flash();
-	if (whitescreen == NULL)
-		return;
-	currscreen = (WORD *) 
-		malloc(sc_width * sc_height * sizeof(WORD));
-	if (currscreen == NULL)
-		return;
-	ReadConsoleOutputAttribute(con_out, currscreen, 
-				sc_height * sc_width, TOPLEFT, &nread);
-	WriteConsoleOutputAttribute(con_out, whitescreen,
-				sc_height * sc_width, TOPLEFT, &nread);
+	/* leave it displayed for 100 msec. */
 	Sleep(100);
-	WriteConsoleOutputAttribute(con_out, currscreen,
-				sc_height * sc_width, TOPLEFT, &nread);
-	free(currscreen);
+
+	/* restore with a redraw */
+	repaint();
+#endif
 #endif
 #endif
 #endif
@@ -1697,14 +1887,30 @@ clear()
 #else
 	flush();
 #if MSDOS_COMPILER==WIN32C
-    {
+       /*
+        * This will clear only the currently visible rows of the NT
+        * console buffer, which means none of the precious scrollback
+        * rows are touched making for faster scrolling.  Note that, if
+        * the window has fewer columns than the console buffer (i.e.
+        * there is a horizontal scrollbar as well), the entire width
+        * of the visible rows will be cleared.
+        */
+     {
+	COORD topleft;
 	DWORD nchars;
+	DWORD winsz;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+	/* get the number of cells in the current buffer */
+	GetConsoleScreenBufferInfo(con_out, &csbi);
+	winsz = csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+	topleft.X = 0;
+	topleft.Y = csbi.srWindow.Top;
+
 	curr_attr = MAKEATTR(nm_fg_color, nm_bg_color);
-	FillConsoleOutputCharacter(con_out, ' ', 
-			sc_width * sc_height, TOPLEFT, &nchars);
-	FillConsoleOutputAttribute(con_out, curr_attr, 
-			sc_width * sc_height, TOPLEFT, &nchars);
-    }
+	FillConsoleOutputCharacter(con_out, ' ', winsz, topleft, &nchars);
+	FillConsoleOutputAttribute(con_out, curr_attr, winsz, topleft, &nchars);
+     }
 #else
 	_clearscreen(_GCLEARSCREEN);
 #endif
@@ -1745,7 +1951,7 @@ clear_eol()
 	_settextwindow(top, left, bot, right);
 	_settextposition(tpos.row, tpos.col);
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 	flush();
 	clreol();
 #else
@@ -1761,9 +1967,9 @@ clear_eol()
 	cpos.Y = scr.dwCursorPosition.Y;
 	curr_attr = MAKEATTR(nm_fg_color, nm_bg_color);
 	FillConsoleOutputAttribute(con_out, curr_attr,
-		sc_width - cpos.X, cpos, &nchars);
-	FillConsoleOutputCharacter(con_out, ' ',
-		sc_width - cpos.X, cpos, &nchars);
+		scr.dwSize.X - cpos.X, cpos, &nchars);
+        FillConsoleOutputCharacter(con_out, ' ',
+		scr.dwSize.X - cpos.X, cpos, &nchars);
 #endif
 #endif
 #endif
@@ -1779,7 +1985,26 @@ clear_bot()
 {
 	lower_left();
 #if MSDOS_COMPILER
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
+	{
+		unsigned char save_attr;
+		struct text_info txinfo;
+
+		/*
+		 * Clear bottom, but with the background color of the text
+		 * window, not with background of stand-out color, so the the
+		 * bottom line stays stand-out only to the extent of prompt.
+		 */
+		gettextinfo(&txinfo);
+		save_attr = txinfo.attribute;
+		lower_left();
+		textbackground(nm_bg_color);
+		clear_eol();
+		textbackground(save_attr >> 4);
+	}
+#else
 	clear_eol();
+#endif
 #else
 	if (below_mem)
 		tputs(sc_eos_clear, 1, putchr);
@@ -1927,22 +2152,23 @@ backspace()
 	_outtext(" ");
 	_settextposition(tpos.row, tpos.col-1);
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 	cputs("\b");
 #else
 #if MSDOS_COMPILER==WIN32C
-        COORD cpos;
+	COORD cpos;
+	DWORD cChars;
 	CONSOLE_SCREEN_BUFFER_INFO scr;
 
-        flush();
-        GetConsoleScreenBufferInfo(con_out, &scr);
-        cpos.X = scr.dwCursorPosition.X;
-        cpos.Y = scr.dwCursorPosition.Y;
-        if (cpos.X <= 0)
-                return;
-        _settextposition(cpos.Y, cpos.X-1);
-        putch(' ');
-        _settextposition(cpos.Y, cpos.X-1);
+	flush();
+	GetConsoleScreenBufferInfo(con_out, &scr);
+	cpos = scr.dwCursorPosition;
+	if (cpos.X <= 0)
+		return;
+	cpos.X--;
+	SetConsoleCursorPosition(con_out, cpos);
+	FillConsoleOutputCharacter(con_out, (TCHAR)' ', 1, cpos, &cChars);
+	SetConsoleCursorPosition(con_out, cpos);
 #endif
 #endif
 #endif
@@ -1968,15 +2194,15 @@ putbs()
 		row = tpos.row;
 		col = tpos.col;
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 		row = wherey();
 		col = wherex();
 #else
 #if MSDOS_COMPILER==WIN32C
 		CONSOLE_SCREEN_BUFFER_INFO scr;
 		GetConsoleScreenBufferInfo(con_out, &scr);
-		row = scr.dwCursorPosition.Y + 1;
-		col = scr.dwCursorPosition.X + 1;
+		row = scr.dwCursorPosition.Y - scr.srWindow.Top + 1;
+		col = scr.dwCursorPosition.X - scr.srWindow.Left + 1;
 #endif
 #endif
 #endif
@@ -1996,34 +2222,58 @@ win32_kbhit(tty)
 	DWORD read;
 
 	if (keyCount > 0)
-		return TRUE;
+		return (TRUE);
 
-	currentKey.scan = 0;
 	currentKey.ascii = 0;
+	currentKey.scan = 0;
 
-	for (;;)
+	/*
+	 * Wait for a real key-down event, but
+	 * ignore SHIFT and CONTROL key events.
+	 */
+	do
 	{
 		PeekConsoleInput(tty, &ip, 1, &read);
 		if (read == 0)
-			return FALSE;
+			return (FALSE);
 		ReadConsoleInput(tty, &ip, 1, &read);
- 
-		if (ip.EventType == KEY_EVENT &&
-		    ip.Event.KeyEvent.bKeyDown == TRUE &&
-		    ip.Event.KeyEvent.wVirtualScanCode != 0)
+	} while (ip.EventType != KEY_EVENT ||
+		ip.Event.KeyEvent.bKeyDown != TRUE ||
+		ip.Event.KeyEvent.wVirtualScanCode == 0 ||
+		ip.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT ||
+		ip.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL ||
+		ip.Event.KeyEvent.wVirtualKeyCode == VK_MENU);
+		
+	currentKey.ascii = ip.Event.KeyEvent.uChar.AsciiChar;
+	currentKey.scan = ip.Event.KeyEvent.wVirtualScanCode;
+	keyCount = ip.Event.KeyEvent.wRepeatCount;
+
+	if (ip.Event.KeyEvent.dwControlKeyState & 
+		(LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
+	{
+		switch (currentKey.scan)
 		{
-			/* Filter out SHIFT and CONTROL key events */
-			if (ip.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT ||
-			    ip.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL ||
-			    ip.Event.KeyEvent.wVirtualKeyCode == VK_MENU)
-				continue;
-			
-			currentKey.ascii = ip.Event.KeyEvent.uChar.AsciiChar;
-			currentKey.scan = ip.Event.KeyEvent.wVirtualScanCode;
-			keyCount = ip.Event.KeyEvent.wRepeatCount;
-			return TRUE;
+		case PCK_ALT_E:     /* letter 'E' */
+			currentKey.ascii = 0;
+			break;
+		}
+	} else if (ip.Event.KeyEvent.dwControlKeyState & 
+		(LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))
+	{
+		switch (currentKey.scan)
+		{
+		case PCK_RIGHT: /* right arrow */
+			currentKey.scan = PCK_CTL_RIGHT;
+			break;
+		case PCK_LEFT: /* left arrow */
+			currentKey.scan = PCK_CTL_LEFT;
+			break;
+		case PCK_DELETE: /* delete */
+			currentKey.scan = PCK_CTL_DELETE;
+			break;
 		}
 	}
+	return (TRUE);
 }
 
 	public char
@@ -2039,7 +2289,12 @@ WIN32getch(tty)
 	}
 
 	while (win32_kbhit((HANDLE)tty) == FALSE)
+	{
+		Sleep(20);
+		if (ABORT_SIGS())
+			return ('\003');
 		continue;
+	}
 	keyCount --;
 	ascii = currentKey.ascii;
 	/*
