@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.20 2003/10/27 16:18:18 mycroft Exp $ */
+/* $NetBSD: j720ssp.c,v 1.21 2003/10/27 17:17:42 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.20 2003/10/27 16:18:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.21 2003/10/27 17:17:42 mycroft Exp $");
 
 #include "apm.h"
 
@@ -751,6 +751,9 @@ j720lcdparam(ctx, type, id, msg)
 		default:
 			return 0;
 		}
+
+	default:
+		return 0;
 	}
 
 	s = splbio();
