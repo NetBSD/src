@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.11 2003/08/18 15:28:17 pooka Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.12 2004/04/23 22:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.11 2003/08/18 15:28:17 pooka Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.12 2004/04/23 22:14:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ static boolean  pass = FALSE;	/*
 
 static int	blklevel;	/* current nesting level */
 static int	comtype;	/* type of comment */
-static char    *defsfile[2] = { _PATH_VGRINDEFS, 0 };
+static const char *defsfile[2] = { _PATH_VGRINDEFS, 0 };
 				/* name of language definitions file */
 static int	margin;
 static int	plstack[PSMAX];	/* the procedure nesting level stack */
@@ -122,18 +122,20 @@ char	*l_prcbeg;		/* regular expr for procedure begin */
 char    *l_strbeg;		/* delimiter for string constant */
 char    *l_strend;		/* delimiter for string constant */
 boolean	 l_toplex;		/* procedures only defined at top lex level */
-char	*language = "c";	/* the language indicator */
+const char *language = "c";	/* the language indicator */
 
 int	main __P((int, char **));
 
 #define	ps(x)	printf("%s", x)
+static char minus[] = "-";
+static char minusn[] = "-n";
 
 int
 main(argc, argv)
     int argc;
     char *argv[];
 {
-    char *fname = "";
+    const char *fname = "";
     struct stat stbuf;
     char buf[BUFSIZ];
     char *defs;
@@ -163,7 +165,7 @@ main(argc, argv)
 	    if (!strcmp(argv[0], "-f")) {
 		filter++;
 		argv[0] = argv[argc-1];
-		argv[argc-1] = "-";
+		argv[argc-1] = minus;
 		continue;
 	    }
 
@@ -176,7 +178,7 @@ main(argc, argv)
 	    /* build an index */
 	    if (!strcmp(argv[0], "-x")) {
 		idx++;
-		argv[0] = "-n";
+		argv[0] = minusn;
 	    }
 
 	    /* indicate no keywords */
@@ -697,12 +699,10 @@ iskw(s)
 	int i = 1;
 	char *cp = s;
 
-/*###705 [cc] warning: subscript has type `char'%%%*/
-	while (++cp, isidchr(*cp))
+	while (++cp, isidchr((unsigned char)*cp))
 		i++;
 	while ((cp = *ss++) != NULL)
-/*###708 [cc] warning: subscript has type `char'%%%*/
-		if (!STRNCMP(s,cp,i) && !isidchr(cp[i]))
+		if (!STRNCMP(s,cp,i) && !isidchr((unsigned char)cp[i]))
 			return (i);
 	return (0);
 }

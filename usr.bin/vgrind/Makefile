@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.19 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2004/04/23 22:14:57 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
 
+WARNS=	3
 PROG=	vfontedpr
 SRCS=	regexp.c vfontedpr.c
 MAN=	vgrind.1 vgrindefs.5

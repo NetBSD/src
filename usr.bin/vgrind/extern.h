@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2003/08/07 11:17:00 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2004/04/23 22:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -51,7 +51,7 @@ extern char    *l_prcbeg;              /* regular expr for procedure begin */
 extern char    *l_strbeg;              /* delimiter for string constant */
 extern char    *l_strend;              /* delimiter for string constant */
 extern boolean  l_toplex;              /* procedures only defined at top lex level */
-extern char    *language;              /* the language indicator */
+extern const char *language;           /* the language indicator */
 
 #include <sys/cdefs.h>
 
