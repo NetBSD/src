@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.9 1998/12/09 12:28:36 christos Exp $	*/
+/*	$NetBSD: xlint.c,v 1.9.2.1 1999/04/07 23:27:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.9 1998/12/09 12:28:36 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.9.2.1 1999/04/07 23:27:22 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -342,8 +342,15 @@ main(argc, argv)
 
 #ifdef MACHINE_ARCH
 	if (strcmp(un.machine, MACHINE_ARCH) != 0) {
-		appdef(&cppflags, MACHINE_ARCH);
-		appstrg(&lcppflgs, concat2("-D", MACHINE_ARCH));
+		if (strcmp(MACHINE_ARCH, "mipseb") == 0 ||
+		    strcmp(MACHINE_ARCH, "mipsel") == 0) {
+			appdef(&cppflags, "mips");
+			appstrg(&lcppflgs, concat2("-D", "mips"));
+		}
+		else {
+			appdef(&cppflags, MACHINE_ARCH);
+			appstrg(&lcppflgs, concat2("-D", MACHINE_ARCH));
+		}
 	}
 #endif
 	
