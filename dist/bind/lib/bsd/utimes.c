@@ -1,3 +1,5 @@
+/*	$NetBSD: utimes.c,v 1.1.1.1.2.1 2002/06/28 11:42:27 lukem Exp $	*/
+
 /*
  * Copyright (c) 1997,1999 by Internet Software Consortium.
  *
