@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.13 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.14 2004/12/11 06:41:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.13 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.14 2004/12/11 06:41:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -119,7 +119,7 @@ pw_scan(bp, pw, flags)
 		*flags |= _PASSWORD_NOGID;
 
 	if (inflags & _PASSWORD_OLDFMT) {
-		pw->pw_class = "";
+		pw->pw_class = __UNCONST("");
 		pw->pw_change = 0;
 		pw->pw_expire = 0;
 		*flags |= (_PASSWORD_NOCHG | _PASSWORD_NOEXP);
