@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.163 2002/02/28 02:22:59 tv Exp $
+#	$NetBSD: Makefile,v 1.164 2002/03/01 06:02:41 jmc Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -110,12 +110,11 @@ whatis.db:
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
 
-# XXX I wish there was a more rational place to do this, but I can't
-# think of one. There is no one place the info/dir file gets generated.
+# Let install-info track this as it's the program creating/updating the
+# dir file
 infodir-meta:
 .if defined(UNPRIVED) && (${MKINFO} != "no")
-	echo "${DESTDIR}/usr/share/info/dir type=file mode=0644 uname=root gname=wheel" | \
-		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+	(cd ${.CURDIR}/gnu/usr.bin/texinfo/install-info && ${MAKE} infodir-meta)
 .endif
 
 afterinstall: whatis.db infodir-meta
