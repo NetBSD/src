@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 1995/03/11 18:42:42 ws Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 1995/03/31 02:49:39 christos Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -46,6 +46,9 @@
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
+#ifdef COMPAT_SVR4
+#include <compat/svr4/svr4_syscall.h>
+#endif
 
 #include <machine/cputypes.h>
 #include <machine/param.h>
@@ -621,6 +624,19 @@ ENTRY(sigcode)
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
+#ifdef COMPAT_SVR4
+ENTRY(svr4_sigcode)
+	call	SVR4_SIGF_HANDLER(%esp)
+	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
+					# copy at SIGF_UCP(%esp))
+	pushl	%eax
+	pushl	$1			# setcontext(p) == syscontext(1, p) 
+	pushl	%eax			# junk to fake return address
+	movl	$SVR4_SYS_svr4_context,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$SVR4_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+#endif
 	.globl	_esigcode
 _esigcode:
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.32 1995/03/28 18:38:22 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.33 1995/03/31 02:49:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -52,6 +52,10 @@
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
 
+#ifdef COMPAT_SVR4
+#include <compat/svr4/svr4_ucontext.h>
+#endif
+
 #include "isa.h"
 #if NISA > 0
 #include <i386/isa/isavar.h>
@@ -67,6 +71,9 @@ main()
 	struct uprof *uprof = 0;
 #if NISA > 0
 	struct intrhand *ih = 0;
+#endif
+#ifdef COMPAT_SVR4
+	struct svr4_sigframe *svr4_sigf = 0;
 #endif
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
@@ -123,6 +130,11 @@ main()
 	def("IH_ARG", &ih->ih_arg);
 	def("IH_COUNT", &ih->ih_count);
 	def("IH_NEXT", &ih->ih_next);
+#endif
+
+#ifdef COMPAT_SVR4
+	def("SVR4_SIGF_HANDLER", &svr4_sigf->sf_handler);
+	def("SVR4_SIGF_UC", &svr4_sigf->sf_uc);
 #endif
 
 	exit(0);

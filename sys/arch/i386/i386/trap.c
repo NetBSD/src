@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 1995/03/26 08:03:50 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 1995/03/31 02:49:55 christos Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -672,19 +672,28 @@ syscall(frame)
 		break;
 	default:
 	bad:
+		switch (p->p_emul) {
 #ifdef COMPAT_SVR4
-		if (p->p_emul == EMUL_IBCS2_ELF)
-			error = svr4_error[error];
+		case EMUL_IBCS2_ELF:
+		    error = svr4_error[error];
+		    break;
 #endif
 #ifdef COMPAT_LINUX
-		if (p->p_emul == EMUL_LINUX && !fromtramp)
-			error = -linux_error[error];
+		case EMUL_LINUX:
+			if (!fromtramp)
+				error = -linux_error[error];
+			break;
 #endif
 #ifdef COMPAT_IBCS2
-		if (p->p_emul == EMUL_IBCS2_COFF
-		    || p->p_emul == EMUL_IBCS2_XOUT)
+		case EMUL_IBCS2_COFF:
+		case EMUL_IBCS2_XOUT:
 			error = bsd2ibcs_errno[error];
+			break;
 #endif
+		default:
+			break;
+		}
+
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
