@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.6 2000/07/05 15:45:34 msaitoh Exp $
+.\"	$NetBSD: rnd.4,v 1.7 2001/06/11 01:23:24 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -68,7 +68,7 @@ User code can obtain random values from the kernel in two ways.
 Reading from
 .Pa /dev/random
 will only return values while sufficient entropy exists in the
-internal pool.  When sufficent entropy does not exist, EAGAIN is
+internal pool.  When sufficient entropy does not exist, EAGAIN is
 returned for non-blocking reads, or the read will block for blocking
 reads.
 .Pp
@@ -197,7 +197,7 @@ is 0xff, only the device name stored in
 is used.  If it is any other value, all devices of type
 .Va type
 are altered.  This allows all network interfaces to be disabled for
-entropy collection with one call, for example. 
+entropy collection with one call, for example.
 The
 .Va flags
 and
