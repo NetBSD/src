@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.89 2000/07/24 16:21:02 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.90 2000/07/25 15:15:32 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4113,6 +4113,7 @@ ret_from_intr_vector:
 97:
 #endif
 	ba,a	ret_from_intr_vector
+	 nop				! XXX spitfire bug?
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
@@ -4303,6 +4304,7 @@ sparc_intr_check_slot:
 	 inc	PTRSZ, %l4		! Next slot
 
 	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
+	 nop				! XXX spitfire bug?
 
 1:
 	/*
@@ -4381,6 +4383,7 @@ sparc_intr_check_slot:
 	 add	%sp, CC64FSZ + STKB, %o0
 
 	ba,a,pt	%icc, sparc_intr_check_slot	! Try another
+	 nop					! XXX spitfire bug?
 
 #if 0	/* UNUSED INTERRUPT CODE */
 	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
