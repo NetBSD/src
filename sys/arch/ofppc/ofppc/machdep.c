@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1999/04/17 21:16:47 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1999/05/05 00:03:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,7 +87,8 @@ int astpending;
 
 char *bootpath;
 
-#define MSGBUFADDR 0x3000
+paddr_t msgbuf_paddr;
+vaddr_t msgbuf_vaddr;
 
 caddr_t allocsys __P((caddr_t));
 
@@ -373,13 +374,19 @@ cpu_startup()
 	paddr_t minaddr, maxaddr;
 	int base, residual;
 
+	proc0.p_addr = proc0paddr;
+	v = (caddr_t)proc0paddr + USPACE;
+
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
-
-	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
+	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
+		panic("startup: no room for message buffer");
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
+		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
 	identifycpu();
