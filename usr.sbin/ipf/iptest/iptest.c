@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.4.2.1 1997/10/30 07:17:38 mrg Exp $	*/
+/*	$NetBSD: iptest.c,v 1.4.2.2 1998/07/23 01:43:11 mellon Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed
@@ -14,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptest.c,v 2.0.2.8 1997/10/12 09:48:39 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: iptest.c,v 2.0.2.8.2.1 1997/11/28 03:36:18 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <netdb.h>
@@ -99,7 +99,8 @@ char **argv;
 	struct	tcpiphdr *ti;
 	struct	in_addr	gwip;
 	ip_t	*ip;
-	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
+	char	*name =  argv[0], host[MAXHOSTNAMELEN + 1];
+	char	*gateway = NULL, *dev = NULL;
 	char	*src = NULL, *dst;
 	int	mtu = 1500, tests = 0, pointtest = 0, c;
 
@@ -148,13 +149,14 @@ char **argv;
 			usage(name);
 		}
 
-	if (argc - optind < 2 && !tests)
+	if ((argc <= optind) || !argv[optind])
 		usage(name);
 	dst = argv[optind++];
 
 	if (!src)
 	    {
 		gethostname(host, sizeof(host));
+		host[sizeof(host) - 1] = '\0';
 		src = host;
 	    }
 
@@ -211,6 +213,13 @@ char **argv;
 		ip_test7(dev, mtu, (ip_t *)ti, gwip, pointtest);
 		break;
 	default :
+		ip_test1(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test2(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test3(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test4(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test5(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test6(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test7(dev, mtu, (ip_t *)ti, gwip, pointtest);
 		break;
 	}
 	return 0;
