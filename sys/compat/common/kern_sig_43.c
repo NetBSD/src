@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.9 1998/09/11 12:50:07 mycroft Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.10 1998/09/14 21:03:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ compat_43_sys_sigstack(p, v, retval)
 		return (error);
 	if (SCARG(uap, oss)) {
 		compat_43_sigaltstack_to_sigstack(&osa, &oss);
-		error = copyout(SCARG(uap, oss), &oss, sizeof(oss));
+		error = copyout(&oss, SCARG(uap, oss), sizeof(oss));
 		if (error)
 			return (error);
 	}
@@ -248,7 +248,7 @@ compat_43_sys_sigvec(p, v, retval)
 		return (error);
 	if (SCARG(uap, osv)) {
 		compat_43_sigaction_to_sigvec(&osa, &osv);
-		error = copyout(SCARG(uap, osv), &osv, sizeof(osv));
+		error = copyout(&osv, SCARG(uap, osv), sizeof(osv));
 		if (error)
 			return (error);
 	}
