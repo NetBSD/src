@@ -35,7 +35,7 @@ extern initialize_file_ftype _initialize_infptrace;
 extern initialize_file_ftype _initialize_inftarg;
 extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_kcore_nbsd;
-extern initialize_file_ftype _initialize_sparcnbsd_nat;
+extern initialize_file_ftype _initialize_sp64nbsd_nat;
 extern initialize_file_ftype _initialize_solib;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
@@ -107,7 +107,7 @@ initialize_all_files (void)
   _initialize_inftarg ();
   _initialize_corelow ();
   _initialize_kcore_nbsd ();
-  _initialize_sparcnbsd_nat ();
+  _initialize_sp64nbsd_nat ();
   _initialize_solib ();
   _initialize_remote ();
   _initialize_dcache ();
