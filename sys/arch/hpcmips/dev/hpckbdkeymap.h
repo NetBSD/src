@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.1 2000/09/21 14:17:29 takemura Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.2 2000/09/27 09:30:47 sato Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -349,6 +349,35 @@ static u_int8_t intertop_keytrans[] = {
 /*58*/	29,	221,	123,	121,	184,	IGN,	IGN,	IGN,
 };
 
+/* DoCoMo sigmarion (Japan) */
+static u_int8_t sigmarion_jp_keytrans[] = {
+/*00	right	ent	p	.	y	b	z	space	*/
+/*08	down	/	o	,	t	v	a	nfer	*/
+/*10	left	\	i	m	r	c	w	menu	*/
+/*18	|	-	u	-	e	x	q	1	*/
+/*20	pgdn	h/z	0	l	:	g	tab	f1	*/
+/*28	xfer	;	9	n	5	f	2	k	*/
+/*30	up	[	8	j	4	d	6	-	*/
+/*38	-	@	7	h	3	]	s	-	*/
+/*40	caps	-	-	-	bs	-	f8	f3	*/
+/*48	-	alt	-	-	^	k/h	f7	f4	*/
+/*50	-	-	ctrl	-	f10	pgup	f6	f2	*/
+/*58	-	-	-	shift	del	f9	f5	esc	*/
+/*----------------------------------------------------------------------*/
+/*00*/	 77,	 28,	 25,	 52,	 21,	 48,	 44,	 57,
+/*08*/	 80,	 53,	 24,	 51,	 20,	 47,	 30,	123,
+/*10*/	 75,	115,	 23,	 50,	 19,	 46,	 17,	221,
+/*18*/	125,	IGN,	 22,	IGN,	 18,	 45,	 16,	  2,
+/*20*/	 81,	 41,	 11,	 38,	 40,	 34,	 15,	IGN,
+/*28*/	121,	 39,	 10,	 49,	  6,	 33,	  3,	 37,
+/*30*/	 72,	 27,	  9,	 36,	  5,	 32,	  7,	IGN,
+/*38*/	 12,	 26,	  8,	 35,	  4,	 43,	 31,	IGN,
+/*40*/	 58,	IGN,	IGN,	IGN,	 14,	IGN,	 66,	IGN,
+/*48*/	IGN,	 56,	IGN,	IGN,	 13,	112,	 65,	IGN,
+/*50*/	IGN,	IGN,	 29,	IGN,	 68,	 73,	 64,	IGN,
+/*58*/	IGN,	IGN,	IGN,	 42,	 14,	 67,	IGN,	  1,
+};
+
 const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
 	const u_int8_t	*ht_keymap;
@@ -395,6 +424,10 @@ const struct hpckbd_keymap_table {
 		mobilepro_keytrans,
 		NULL,
 		KB_US },
+	{	&platid_mask_MACH_NEC_MCR_SIGMARION,
+		sigmarion_jp_keytrans,
+		NULL,
+		KB_JP },
 	{	&platid_mask_MACH_NEC_MCR,
 		mcr_jp_keytrans,
 		NULL,
