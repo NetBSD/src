@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	    num = opt;
 	    opt = 0;
 	  }
-	  for (const char *ptr = num; *ptr; ptr++)
+	  const char *ptr; for (ptr = num; *ptr; ptr++)
 	    if (!csdigit(*ptr)) {
 	      error("bad character `%1' in argument to -f option", *ptr);
 	      break;
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	break;
       case 'a':
 	{
-	  for (const char *ptr = ++opt; *ptr; ptr++)
+	  const char *ptr; for (ptr = ++opt; *ptr; ptr++)
 	    if (!csdigit(*ptr)) {
 	      error("argument to `a' option not a number");
 	      break;
@@ -697,7 +697,7 @@ static unsigned store_reference(const string &str)
   reference *ref = make_reference(str, &flags);
   ref->compute_hash_code();
   unsigned h = ref->hash();
-  for (reference **ptr = reference_hash_table + (h % hash_table_size);
+  reference **ptr; for (ptr = reference_hash_table + (h % hash_table_size);
        *ptr != 0;
        ((ptr == reference_hash_table)
 	? (ptr = reference_hash_table + hash_table_size - 1)
@@ -727,7 +727,7 @@ static unsigned store_reference(const string &str)
 	reference_hash_table[i] = 0;
       for (i = 0; i < old_size; i++)
 	if (old_table[i]) {
-	  for (reference **p = (reference_hash_table
+	  reference **p; for (p = (reference_hash_table
 				+ (old_table[i]->hash() % hash_table_size));
 	       *p;
 	       ((p == reference_hash_table)
@@ -785,7 +785,7 @@ static void output_citation_group(reference **v, int n, label_type type,
     for (int i = 1; i < n; i++) {
       int num = v[i]->get_number();
       reference *temp = v[i];
-      for (int j = i - 1; j >= 0 && v[j]->get_number() > num; j--)
+      int j; for (j = i - 1; j >= 0 && v[j]->get_number() > num; j--)
 	v[j + 1] = v[j];
       v[j + 1] = temp;
     }
@@ -1213,7 +1213,7 @@ int next_size(int n)
     16000057, 32000011, 64000031, 128000003, 0 
   };
 
-  for (const int *p = table_sizes; *p <= n && *p != 0; p++)
+  const int *p; for (p = table_sizes; *p <= n && *p != 0; p++)
     ;
   assert(*p != 0);
   return *p;

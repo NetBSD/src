@@ -284,7 +284,7 @@ int main(int argc, char **argv)
   commands[TROFF_INDEX].append_arg("-T", device);
   commands[EQN_INDEX].append_arg("-T", device);
 
-  for (int first_index = 0; first_index < TROFF_INDEX; first_index++)
+  int first_index; for (first_index = 0; first_index < TROFF_INDEX; first_index++)
     if (commands[first_index].get_name() != 0)
       break;
   if (optind < argc) {
@@ -352,7 +352,7 @@ void handle_unknown_desc_command(const char *command, const char *arg,
 
 void print_commands()
 {
-  for (int last = SPOOL_INDEX; last >= 0; last--)
+  int last; for (last = SPOOL_INDEX; last >= 0; last--)
     if (commands[last].get_name() != 0)
       break;
   for (int i = 0; i <= last; i++)
@@ -466,7 +466,7 @@ void append_arg_to_string(const char *arg, string &str)
   str += ' ';
   int needs_quoting = 0;
   int contains_single_quote = 0;
-  for (const char *p = arg; *p != '\0'; p++)
+  const char *p; for (p = arg; *p != '\0'; p++)
     switch (*p) {
     case ';':
     case '&':

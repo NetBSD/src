@@ -64,7 +64,7 @@ void printer::load_font(int n, const char *nm)
       if (n >= nfonts)
 	nfonts = n + 1;
       font_table = new font *[nfonts];
-      for (int i = 0; i < old_nfonts; i++)
+      int i; for (i = 0; i < old_nfonts; i++)
 	font_table[i] = old_font_table[i];
       for (i = old_nfonts; i < nfonts; i++)
 	font_table[i] = 0;

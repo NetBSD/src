@@ -44,7 +44,7 @@ static const unsigned table_sizes[] = {
 
 unsigned next_ptable_size(unsigned n)
 {
-  for (const unsigned *p = table_sizes; *p <= n; p++)
+  const unsigned *p; for (p = table_sizes; *p <= n; p++)
     if (*p == 0)
       fatal("cannot expand table");
   return *p;

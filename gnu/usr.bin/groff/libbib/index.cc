@@ -506,7 +506,7 @@ const int *index_search_item::search(const char *ptr, int length,
     return first_list;
   if (*second_list < 0)
     return second_list;
-  for (const int *p = first_list; *p >= 0; p++)
+  const int *p; for (p = first_list; *p >= 0; p++)
     ;
   int len = p - first_list;
   for (p = second_list; *p >= 0; p++)
@@ -586,7 +586,7 @@ void index_search_item::read_common_words_file()
 void index_search_item::add_out_of_date_file(int fd, const char *filename,
 					     int fid)
 {
-  for (search_item **pp = &out_of_date_files; *pp; pp = &(*pp)->next)
+  search_item **pp; for (pp = &out_of_date_files; *pp; pp = &(*pp)->next)
     if ((*pp)->is_named(filename))
       return;
   *pp = make_linear_search_item(fd, filename, fid);

@@ -940,7 +940,7 @@ object_spec:
 	| object_spec text   %prec TEXT
 		{
 		  $$ = $1;
-		  for (text_item **p = & $$->text; *p; p = &(*p)->next)
+		  text_item **p; for (p = & $$->text; *p; p = &(*p)->next)
 		    ;
 		  *p = new text_item($2.str, $2.filename, $2.lineno);
 		}
@@ -948,7 +948,7 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    for (text_item *p = $$->text; p->next; p = p->next)
+		    text_item *p; for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.h = LEFT_ADJUST;
 		  }
@@ -957,7 +957,7 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    for (text_item *p = $$->text; p->next; p = p->next)
+		    text_item *p; for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.h = RIGHT_ADJUST;
 		  }
@@ -966,7 +966,7 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    for (text_item *p = $$->text; p->next; p = p->next)
+		    text_item *p; for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.v = ABOVE_ADJUST;
 		  }
@@ -975,7 +975,7 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    for (text_item *p = $$->text; p->next; p = p->next)
+		    text_item *p; for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.v = BELOW_ADJUST;
 		  }
@@ -1162,7 +1162,7 @@ nth_primitive:
 	ordinal object_type
 		{
 		  int count = 0;
-		  for (object *p = olist.head; p != 0; p = p->next)
+		  object *p; for (p = olist.head; p != 0; p = p->next)
 		    if (p->type() == $2 && ++count == $1) {
 		      $$ = p;
 		      break;
@@ -1176,7 +1176,7 @@ nth_primitive:
 	| optional_ordinal_last object_type
 		{
 		  int count = 0;
-		  for (object *p = olist.tail; p != 0; p = p->prev)
+		  object *p; for (p = olist.tail; p != 0; p = p->prev)
 		    if (p->type() == $2 && ++count == $1) {
 		      $$ = p;
 		      break;

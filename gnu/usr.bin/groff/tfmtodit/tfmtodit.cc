@@ -825,10 +825,10 @@ int main(int argc, char **argv)
       m[4] = g.get_left_adjustment(i);
       m[5] = g.get_right_adjustment(i);
       printf("%s\t%d", p->ch, m[0]*MULTIPLIER);
-      for (int j = int(sizeof(m)/sizeof(m[0])) - 1; j > 0; j--)
+      int j; for (j = int(sizeof(m)/sizeof(m[0])) - 1; j > 0; j--)
 	if (m[j] != 0)
 	  break;
-      for (int k = 1; k <= j; k++)
+      for (k = 1; k <= j; k++)
 	printf(",%d", m[k]*MULTIPLIER);
       int type = 0;
       if (m[2] > 0)

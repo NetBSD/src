@@ -276,7 +276,7 @@ static void define_extensible_string(char *delim, int uid,
   printf(".ds " DELIM_STRING "\n");
   delimiter *d = delim_table;
   int delim_len = strlen(delim);
-  for (int i = 0; i < DELIM_TABLE_SIZE; i++, d++)
+  int i; for (i = 0; i < DELIM_TABLE_SIZE; i++, d++)
     if (strncmp(delim, d->name, delim_len) == 0 
 	&& (left_or_right & d->flags) != 0)
       break;
