@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.27 1996/10/13 03:39:29 christos Exp $	*/
+/*	$NetBSD: dc.c,v 1.28 1996/10/13 12:25:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,7 +132,10 @@ void dcrint	 __P((struct dc_softc *sc));
 void dcxint	__P((struct tty *));
 int dcmctl	 __P((dev_t dev, int bits, int how));
 void dcscan	__P((void *));
-int dcparam	__P((struct tty *, struct termios *));
+int dcparam	__P((struct tty *tp, struct termios *t));
+static int cold_dcparam __P((struct tty *tp, struct termios *t, 
+		      dcregs *dcaddr, int allow_19200));
+
 extern void ttrstrt __P((void *));
 
 void	dc_reset __P ((dcregs *dcaddr));
@@ -250,10 +253,11 @@ dc_consinit(dev, dcaddr)
 	bzero(&ctty, sizeof(ctty));
 	ctty.t_dev = dev;
 	dccons.cn_dev = dev;
-	cterm.c_cflag = CS8;
 	cterm.c_cflag |= CLOCAL;
+	cterm.c_cflag = CS8;
+	cterm.c_ospeed = 9600;
 	*cn_tab = dccons;
-	dcparam(&ctty, &cterm); /* XXX untested on 5000/200*/
+	cold_dcparam(&ctty, &cterm, dcaddr, 0); /* XXX untested */
 }
 
 
@@ -583,6 +587,10 @@ dcioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+/*
+ * Set line parameters
+ */
+
 int
 dcparam(tp, t)
 	register struct tty *tp;
@@ -590,6 +598,25 @@ dcparam(tp, t)
 {
 	register struct dc_softc *sc;
 	register dcregs *dcaddr;
+
+
+	/*
+	 * Extract softc data, and pass entire request onto
+	 * cold_dcparam() for argument checking and execution.
+	 */
+	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
+	return (cold_dcparam(tp, t, dcaddr, sc->dc_19200));
+
+}
+
+int
+cold_dcparam(tp, t, dcaddr, allow_19200)
+	register struct tty *tp;
+	register struct termios *t;
+	register dcregs *dcaddr;
+	int allow_19200;
+{
 	register int lpr;
 	register int cflag = t->c_cflag;
 	int unit = minor(tp->t_dev);
@@ -598,13 +625,11 @@ dcparam(tp, t)
 	int line;
 
 	line = DCLINE(tp->t_dev);
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-
 
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed) ||
             (cflag & CSIZE) == CS5 || (cflag & CSIZE) == CS6 ||
-	    (t->c_ospeed >= 19200 && sc->dc_19200 != 1))
+	    (t->c_ospeed >= 19200 && allow_19200 != 1))
                 return (EINVAL);
         /* and copy to tty */
         tp->t_ispeed = t->c_ispeed;
@@ -644,7 +669,6 @@ dcparam(tp, t)
 	if (cflag & CSTOPB)
 		lpr |= LPR_2_STOP;
 out:
-	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	s = spltty();
 	dcaddr->dc_lpr = lpr;
 	wbflush();
@@ -652,6 +676,7 @@ out:
 	DELAY(10);
 	return (0);
 }
+
 
 /*
  * Check for interrupts from all devices.
