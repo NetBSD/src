@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.21 2001/01/04 00:16:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.22 2001/01/04 04:44:33 thorpej Exp $	*/
 
 /*
  *
@@ -3219,7 +3219,7 @@ pmap_tlb_ipispin(void)
 			splx(s);
 
 			printf("%s: waiting for %s fg %d fu %d fi %d\n",
-			    me->ci_dev.dv_xname, them->ci_dev.dv_xname,
+			    me->ci_dev->dv_xname, them->ci_dev->dv_xname,
 			    flushg, flushu, cnt);
 			
 			count += flushg;
@@ -3286,8 +3286,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 	CPU_INFO_ITERATOR cii;
 	int s;
 
-	/* XXX MP -- i386_boot_cpu should be cpu_info_list */
-	if (pmap_initialized == FALSE || i386_boot_cpu == NULL) {
+	if (pmap_initialized == FALSE) {
 		pmap_update_pg(va);
 		return;
 	}
@@ -3414,7 +3413,8 @@ pmap_do_tlb_shootdown(struct cpu_info *ci)
 
 #if 0
 	printf("%s: tlbf %d:%d:%d\n",
-	    cpu_info[cpu_id]->ci_dev.dv_xname,
+	    cpu_info[cpu_id]->ci_dev == NULL ? "BOOT" :
+		cpu_info[cpu_id]->ci_dev->dv_xname,
 	    pq->pq_flushg,
 	    pq->pq_flushu,
 	    pq->pq_count);
@@ -3449,7 +3449,8 @@ pmap_do_tlb_shootdown(struct cpu_info *ci)
 	simple_unlock(&pq->pq_slock);
 #if 0
 	printf("%s: tlbf done\n",
-	    cpu_info[cpu_id]->ci_dev.dv_xname);
+	    cpu_info[cpu_id]->ci_dev == NULL ? "BOOT" :
+		cpu_info[cpu_id]->ci_dev->dv_xname);
 #endif
 	splx(s);
 }

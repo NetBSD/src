@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.11 2001/01/02 06:58:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.12 2001/01/04 04:44:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -718,7 +718,7 @@ identifycpu(ci)
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	struct cpu_cpuid_nameclass *cpup = NULL;
-	char *cpuname = ci->ci_dev.dv_xname;
+	char *cpuname = ci->ci_dev->dv_xname;
 	
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.14 2000/11/18 22:50:31 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.15 2001/01/04 04:44:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,10 +66,10 @@
  */
 
 struct cpu_info {
-	struct device ci_dev;		/* pointer to our device */
+	struct device *ci_dev;		/* pointer to our device */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
-	
+
 	/*
 	 * Public members.
 	 */
@@ -97,8 +97,8 @@ struct cpu_info {
 
 	u_int32_t	ci_level;
 	u_int32_t	ci_vendor[4];
-	u_int32_t	ci_signature;		/* X86 cpuid type */
-	u_int32_t	ci_feature_flags;	/* X86 CPUID feature bits */
+	u_int32_t	ci_signature;	 /* X86 cpuid type */
+	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
 	u_int32_t	cpu_class;	 /* CPU class */
 
 	struct cpu_functions *ci_func;  /* start/stop functions */
@@ -106,7 +106,7 @@ struct cpu_info {
 
 	int		ci_want_resched;
 	int		ci_astpending;
-	struct trapframe	*ci_ddb_regs;
+	struct trapframe *ci_ddb_regs;
 };
 
 /*
@@ -128,6 +128,18 @@ struct cpu_info {
 #define	CPUF_RUNNING	0x2000		/* CPU is running */
 #define	CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
 
+/*
+ * We statically allocate the CPU info for the primary CPU (or,
+ * the only CPU on uniprocessors), and the primary CPU is the
+ * first CPU on the CPU info list.
+ */
+extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
+
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+					ci != NULL; ci = ci->ci_next
+
 #ifdef MULTIPROCESSOR
 
 #define I386_MAXPROCS		0x10
@@ -136,22 +148,21 @@ struct cpu_info {
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
-#define curcpu()	(cpu_info[cpu_number()])
+#define cpu_number() 		(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
+#define curcpu()		(cpu_info[cpu_number()])
 
-#define CPU_IS_PRIMARY(ci) ((ci)->ci_flags & CPUF_PRIMARY)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define	curpcb		curcpu()->ci_curpcb
+#define	curpcb			curcpu()->ci_curpcb
 #if 0
 #define i386_ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
 #else
 #define i386_ipisend(ci)	0
 #endif
-#define aston(ci)	((ci)->ci_astpending = 1, i386_ipisend(ci))
+
+#define aston(ci)		((ci)->ci_astpending = 1, i386_ipisend(ci))
+
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
-extern  struct cpu_info *i386_boot_cpu;
-#define CPU_INFO_ITERATOR int
-#define CPU_INFO_FOREACH(cii, ci) cii=0,ci = i386_boot_cpu; ci != NULL; ci = ci->ci_next
 
 void cpu_boot_secondary_processors __P((void));
 void cpu_init_idle_pcbs __P((void));
@@ -169,14 +180,15 @@ volatile u_int32_t astpending;
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
-#define	curcpu()			(&cpu_info_store)
+#define	curcpu()		(&cpu_info_primary)
 #endif
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_number()			0
+#define	cpu_number()		0
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -186,13 +198,13 @@ do {									\
 	struct cpu_info *__ci = (ci);					\
 	__ci->ci_want_resched = 1;					\
 	aston(__ci);							\
-} while(0)
+} while (0)
 	
 #define aston(ci)		(astpending = 1)
 
 #endif
 
-#define	cpu_swapin(p)			/* nothing */
+#define	cpu_swapin(p)		/* nothing */
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -207,7 +219,6 @@ do {									\
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
-
 
 /*
  * Give a profiling tick to the current process when the user profiling

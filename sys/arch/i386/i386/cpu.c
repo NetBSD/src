@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.16 2000/11/19 01:07:28 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.17 2001/01/04 04:44:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -110,16 +111,29 @@
 int     cpu_match __P((struct device *, struct cfdata *, void *));
 void    cpu_attach __P((struct device *, struct device *, void *));
 
+struct cpu_softc {
+	struct device sc_dev;		/* device tree glue */
+	struct cpu_info *sc_info;	/* pointer to CPU info */
+};
+
+struct cfattach cpu_ca = {
+	sizeof(struct cpu_softc), cpu_match, cpu_attach
+};
+
+/*
+ * Statically-allocated CPU info for the primary CPU (or the only
+ * CPU, on uniprocessors).  The CPU info list is initialized to
+ * point at it.
+ */
+struct cpu_info cpu_info_primary;
+struct cpu_info *cpu_info_list = &cpu_info_primary;
+
 #ifdef MULTIPROCESSOR
 /*
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-
-static struct cpu_info dummy_cpu_info; /* XXX */
-struct cpu_info *cpu_info[I386_MAXPROCS] = { &dummy_cpu_info };
-
-struct cpu_info *i386_boot_cpu;
+struct cpu_info *cpu_info[I386_MAXPROCS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
 
@@ -129,8 +143,9 @@ static void	cpu_copy_trampoline __P((void));
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
- * the local APIC has been mapped.
- * Called from mpbios_scan();
+ * the local APIC on the boot processor has been mapped.
+ *
+ * Called from lapic_boot_init() (from mpbios_scan()).
  */
 void
 cpu_init_first()
@@ -139,24 +154,20 @@ cpu_init_first()
 
 	if (cpunum != 0) {
 		cpu_info[0] = NULL;
-		cpu_info[cpunum] = &dummy_cpu_info;
+		cpu_info[cpunum] = &cpu_info_primary;
 	}
 
 	cpu_copy_trampoline();
 }
 #endif
-	
-struct cfattach cpu_ca = {
-	sizeof(struct cpu_info), cpu_match, cpu_attach
-};
 
 int
 cpu_match(parent, match, aux)
-    struct device *parent;  
-    struct cfdata *match;   
-    void *aux;
+	struct device *parent;  
+	struct cfdata *match;   
+	void *aux;
 {
-	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
+	struct cpu_attach_args *caa = aux;
 
 	if (strcmp(caa->caa_name, match->cf_driver->cd_name) == 0)
 		return 1;
@@ -168,61 +179,68 @@ cpu_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cpu_info *ci = (struct cpu_info *)self;  
-	struct cpu_attach_args  *caa = (struct cpu_attach_args  *) aux;
-
-#ifdef MULTIPROCESSOR
+	struct cpu_softc *sc = (void *) self;
+	struct cpu_attach_args *caa = aux;
+	struct cpu_info *ci;  
+#if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 	vaddr_t kstack;
 	struct pcb *pcb;
+#endif
 
-	if (caa->cpu_role != CPU_ROLE_AP) {
+	/*
+	 * If we're an Application Processor, allocate a cpu_info
+	 * structure, otherwise use the primary's.
+	 */
+	if (caa->cpu_role == CPU_ROLE_AP) {
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
+		memset(ci, 0, sizeof(*ci));
+#if defined(MULTIPROCESSOR)
+		if (cpu_info[cpunum] != NULL)
+			panic("cpu at apic id %d already attached?", cpunum);
+		cpu_info[cpunum] = ci;
+#endif
+	} else {
+		ci = &cpu_info_primary;
+#if defined(MULTIPROCESSOR)
 		if (cpunum != cpu_number()) {
 			panic("%s: running cpu is at apic %d"
 			    " instead of at expected %d\n",
-			    self->dv_xname, cpu_number(), cpunum);
+			    sc->sc_dev.dv_xname, cpu_number(), cpunum);
 		}
-		i386_boot_cpu = ci;
-		ci->ci_next = NULL;
-		/* special-case boot CPU */			    /* XXX */
-		if (cpu_info[cpunum] == &dummy_cpu_info) {	    /* XXX */
-			ci->ci_curproc = dummy_cpu_info.ci_curproc; /* XXX */
-			cpu_info[cpunum] = NULL; 		    /* XXX */
-			ci->ci_curproc->p_cpu = ci;		    /* XXX */
-		}				 		    /* XXX */
+#endif
 	}
-	if (cpu_info[cpunum] != NULL)
-		panic("cpu at apic id %d already attached?", cpunum);
 
-	cpu_info[cpunum] = ci;
-#endif			
+	sc->sc_info = ci;
 
+	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_signature = caa->cpu_signature;
 	ci->ci_feature_flags = caa->feature_flags;
 	ci->ci_func = caa->cpu_func;
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-
 	kstack = uvm_km_alloc (kernel_map, USPACE);
 	if (kstack == 0) {
-		if (cpunum == 0) { /* XXX */
+		if (caa->cpu_role != CPU_ROLE_AP) {
 			panic("cpu_attach: unable to allocate idle stack for"
 			    " primary");
 		}
 		printf("%s: unable to allocate idle stack\n",
-		    ci->ci_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	pcb = ci->ci_idle_pcb = (struct pcb *) kstack;
 	memset(pcb, 0, USPACE);
 
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = kstack + USPACE - 16 - sizeof (struct trapframe);
-	pcb->pcb_tss.tss_esp = kstack + USPACE - 16 - sizeof (struct trapframe);
+	pcb->pcb_tss.tss_esp0 =
+	    kstack + USPACE - 16 - sizeof (struct trapframe);
+	pcb->pcb_tss.tss_esp =
+	    kstack + USPACE - 16 - sizeof (struct trapframe);
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
 #endif
@@ -240,10 +258,8 @@ cpu_attach(parent, self, aux)
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (", caa->cpu_number);
-		printf("boot processor");
+		printf("apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
-		printf(")\n");
 		identifycpu(ci);
 		cpu_init(ci);
 
@@ -263,25 +279,23 @@ cpu_attach(parent, self, aux)
 		/*
 		 * report on an AP
 		 */
-		printf("apid %d (", caa->cpu_number);
+		printf("apid %d (application processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
-		printf("application processor");
-		printf(")\n");
 		identifycpu(ci);
-		ci->ci_next = i386_boot_cpu->ci_next;
-		i386_boot_cpu->ci_next = ci;
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
 		break;
 		
 	default:
 		panic("unknown processor type??\n");
 	}
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",
-		    ci->ci_dev.dv_xname, kstack, USPACE);
+		    sc->sc_dev.dv_xname, kstack, USPACE);
 		printf("%s: idle pcb at %p, idle sp at 0x%x\n", 
-		    ci->ci_dev.dv_xname, pcb, pcb->pcb_esp);
+		    sc->sc_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
 #endif
 }
@@ -382,7 +396,7 @@ cpu_boot_secondary (ci)
 	
 	pcb = ci->ci_idle_pcb;
 
-	printf("%s: starting\n", ci->ci_dev.dv_xname);
+	printf("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
 
@@ -421,7 +435,7 @@ cpu_hatch(void *v)
 	gdt_init_cpu();
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	if (ci->ci_flags & CPUF_RUNNING) {
-		panic("%s: already running!?", ci->ci_dev.dv_xname);
+		panic("%s: already running!?", ci->ci_dev->dv_xname);
 	}
 	lapic_enable();
 	lapic_set_lvt();
@@ -431,7 +445,7 @@ cpu_hatch(void *v)
 	s = splhigh();
 	enable_intr();
 	lapic_initclocks();
-	printf("%s: CPU %d running\n",ci->ci_dev.dv_xname, cpu_number());
+	printf("%s: CPU %d running\n",ci->ci_dev->dv_xname, cpu_number());
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
@@ -447,17 +461,15 @@ cpu_hatch(void *v)
 void
 cpu_debug_dump(void)
 {
-	int i;
 	struct cpu_info *ci;
-	
+	CPU_INFO_ITERATOR cii;
+
 	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
-	for (i=0; i < I386_MAXPROCS; i++) {
-		ci = cpu_info[i];
-		if (ci == NULL)
-			continue;
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
-		    ci->ci_dev.dv_xname, ci->ci_cpuid,
+		    ci->ci_dev == NULL ? "BOOT" : ci->ci_dev->dv_xname,
+		    ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curproc,
 		    ci->ci_fpcurproc);
@@ -482,4 +494,3 @@ cpu_copy_trampoline()
 }
 
 #endif
-

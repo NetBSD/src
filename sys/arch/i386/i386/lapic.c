@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.11 2000/08/18 03:26:44 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.12 2001/01/04 04:44:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,9 +123,9 @@ lapic_set_lvt ()
 	struct cpu_info *ci = curcpu();
 	
 	if (mp_verbose) {
-		apic_format_redir (ci->ci_dev.dv_xname, "prelint", 0, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (ci->ci_dev.dv_xname, "prelint", 1, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
@@ -136,15 +136,15 @@ lapic_set_lvt ()
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir (ci->ci_dev.dv_xname, "timer", 0, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
 		    i82489_readreg(LAPIC_LVTT));
-		apic_format_redir (ci->ci_dev.dv_xname, "pcint", 0, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "pcint", 0, 0,
 		    i82489_readreg(LAPIC_PCINT));
-		apic_format_redir (ci->ci_dev.dv_xname, "lint", 0, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "lint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (ci->ci_dev.dv_xname, "lint", 1, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "lint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
-		apic_format_redir (ci->ci_dev.dv_xname, "err", 0, 0,
+		apic_format_redir (ci->ci_dev->dv_xname, "err", 0, 0,
 		    i82489_readreg(LAPIC_LVERR));
 	}
 #endif
@@ -239,7 +239,7 @@ lapic_calibrate_timer(ci)
 	int i;
 	char tbuf[9];
 	
-	printf("%s: calibrating local timer\n", ci->ci_dev.dv_xname);
+	printf("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
 	
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -282,7 +282,7 @@ lapic_calibrate_timer(ci)
 
 	humanize_number(tbuf, sizeof(tbuf), tmp, "Hz", 1000);
 	   
-	printf("%s: apic clock running at %s\n", ci->ci_dev.dv_xname, tbuf);
+	printf("%s: apic clock running at %s\n", ci->ci_dev->dv_xname, tbuf);
 
 	if (lapic_per_second != 0) {
 		/*
