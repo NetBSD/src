@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.35 1996/12/20 08:39:29 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.36 1996/12/20 09:08:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -99,6 +99,7 @@ ip_output(m0, va_alist)
 #ifdef PFIL_HOOKS
 	struct packet_filter_hook *pfh;
 	struct mbuf *m1;
+	int rv;
 #endif /* PFIL_HOOKS */
 
 	va_start(ap, m0);
@@ -306,11 +307,11 @@ ip_output(m0, va_alist)
 	m1 = m;
 	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.le_next)
 		if (pfh->pfil_func) {
-		    	if (pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 1, &m1)) {
+		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
+			ip = mtod(m = m1, struct ip *);
+			if (rv) {
 				error = EHOSTUNREACH;
 				goto done;
-			} else {
-				ip = mtod(m = m1, struct ip *);
 			}
 		}
 #endif /* PFIL_HOOKS */
