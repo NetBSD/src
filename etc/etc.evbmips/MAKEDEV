@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.4 2002/06/18 13:40:18 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.5 2002/06/18 13:58:36 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,10 +99,10 @@
 #	isdntrc*	trace device
 #
 # Special purpose devices:
-#       clockctl clock control for non root users
 #	audio*	audio devices
 #	bpf*	Berkeley packet filter devices
 #	ch*	SCSI media changer
+#	clockctl	clock control for non root users
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP filter
 #	kbd	keyboard (provides events, for X11)
