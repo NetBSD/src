@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.9.2.1 1997/10/30 07:13:52 mrg Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.9.2.2 1997/11/17 16:33:26 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -9,17 +9,21 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24 1997/10/29 12:14:15 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24.2.3 1997/11/12 10:55:34 darrenr Exp ";
 #endif
 
-#if !defined(_KERNEL) && !defined(KERNEL)
+#if !defined(_KERNEL) && !defined(KERNEL) && !defined(__KERNEL__)
 # include <stdlib.h>
 # include <string.h>
+#else
+# ifdef linux
+#  include <linux/kernel.h>
+#  include <linux/module.h>
+# endif
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/file.h>
 #if defined(KERNEL) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
@@ -27,14 +31,19 @@ static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24 1997/10/29 12:14:15 d
 #else
 # include <sys/ioctl.h>
 #endif
+#include <sys/time.h>
 #include <sys/uio.h>
+#ifndef linux
 #include <sys/protosw.h>
+#endif
 #include <sys/socket.h>
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(linux)
 # include <sys/systm.h>
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/filio.h>
 # include <sys/byteorder.h>
@@ -51,13 +60,15 @@ static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24 1997/10/29 12:14:15 d
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_fsm.h>
+#ifndef linux
+# include <netinet/ip_var.h>
+# include <netinet/tcp_fsm.h>
+#endif
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
@@ -95,6 +106,65 @@ ips_stat_t *fr_statetstats()
 	return &ips_stats;
 }
 
+int fr_state_flush __P((int));
+
+/*
+ * flush state tables.  two actions currently defined:
+ * which == 0 : flush all state table entries
+ * which == 1 : flush TCP connections which have started to close but are
+ *              stuck for some reason.
+ */
+int fr_state_flush(which)
+int which;
+{
+	register int i;
+	register ipstate_t *is, **isp;
+#if defined(_KERNEL) && !SOLARIS
+	int s;
+#endif
+	int delete, removed = 0;
+
+	SPL_NET(s);
+	MUTEX_ENTER(&ipf_state);
+	for (i = 0; i < IPSTATE_SIZE; i++)
+		for (isp = &ips_table[i]; (is = *isp); ) {
+			delete = 0;
+
+			switch (which)
+			{
+			case 0 :
+				delete = 1;
+				break;
+			case 1 :
+				if ((is->is_p == IPPROTO_TCP) &&
+				    (((is->is_state[0] <= TCPS_ESTABLISHED) &&
+				     (is->is_state[1] > TCPS_ESTABLISHED)) ||
+				    ((is->is_state[1] <= TCPS_ESTABLISHED) &&
+				     (is->is_state[0] > TCPS_ESTABLISHED))))
+					delete = 1;
+				break;
+			}
+
+			if (delete) {
+				*isp = is->is_next;
+				if (is->is_p == IPPROTO_TCP)
+					ips_stats.iss_fin++;
+				else
+					ips_stats.iss_expire++;
+#ifdef	IPFILTER_LOG
+				ipstate_log(is, ISL_FLUSH);
+#endif
+				KFREE(is);
+				ips_num--;
+				removed++;
+			} else
+				isp = &is->is_next;
+		}
+	MUTEX_EXIT(&ipf_state);
+	SPL_X(s);
+	return removed;
+}
+
 
 int fr_state_ioctl(data, cmd, mode)
 caddr_t data;
@@ -105,8 +175,20 @@ int cmd;
 #endif
 int mode;
 {
+	int	arg, ret, error = 0;
+
 	switch (cmd)
 	{
+	case SIOCIPFFL :
+		IRCOPY(data, (caddr_t)&arg, sizeof(arg));
+		if (arg == 0 || arg == 1) {
+			MUTEX_ENTER(&ipf_state);
+			ret = fr_state_flush(arg);
+			MUTEX_EXIT(&ipf_state);
+			IWCOPY((caddr_t)&ret, data, sizeof(ret));
+		} else
+			error = EINVAL;
+		break;
 	case SIOCGIPST :
 		IWCOPY((caddr_t)fr_statetstats(), data, sizeof(ips_stat_t));
 		break;
@@ -117,9 +199,9 @@ int mode;
 #endif
 		break;
 	default :
-		return -1;
+		return EINVAL;
 	}
-	return 0;
+	return error;
 }
 
 
@@ -192,7 +274,7 @@ u_int pass;
 		is->is_dwin = is->is_swin;	/* start them the same */
 		ips_stats.iss_tcp++;
 		/*
-		 * If we're creating state for a starting connectoin, start the
+		 * If we're creating state for a starting connection, start the
 		 * timer on it as we'll never see an error if it fails to
 		 * connect.
 		 */
@@ -247,16 +329,12 @@ u_int pass;
  * change timeout depending on whether new packet is a SYN-ACK returning for a
  * SYN or a RST or FIN which indicate time to close up shop.
  */
-#ifdef __STDC__
-int fr_tcpstate(ipstate_t *is, fr_info_t *fin, ip_t *ip, tcphdr_t *tcp, u_short sport)
-#else
 int fr_tcpstate(is, fin, ip, tcp, sport)
 register ipstate_t *is;
 fr_info_t *fin;
 ip_t *ip;
 tcphdr_t *tcp;
 u_short sport;
-#endif
 {
 	register int seqskew, ackskew;
 	register u_short swin, dwin;
@@ -274,6 +352,11 @@ u_short sport;
 		ack = source ? is->is_ack : is->is_seq;
 
 	if (source) {
+		if (!is->is_seq)
+			/*
+			 * Must be an outgoing SYN-ACK in reply to a SYN.
+			 */
+			is->is_seq = seq;
 		seqskew = seq - is->is_seq;
 		ackskew = ack - is->is_ack;
 	} else {
@@ -592,13 +675,9 @@ int dir;
 
 
 #ifdef	IPFILTER_LOG
-#ifdef __STDC__
-void ipstate_log(struct ipstate *is, u_short type)
-#else
 void ipstate_log(is, type)
 struct ipstate *is;
 u_short type;
-#endif
 {
 	struct	ipslog	ipsl;
 	void *items[1];

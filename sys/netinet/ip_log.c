@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.1.4.1 1997/10/30 07:13:48 mrg Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.1.4.2 1997/11/17 16:33:08 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.0.2.13 1997/10/29 12:14:11 darrenr Exp 
+ * Id: ip_log.c,v 2.0.2.13.2.2 1997/11/12 10:52:21 darrenr Exp 
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
@@ -41,7 +41,7 @@
 #  include <sys/ioctl.h>
 # endif
 # include <sys/time.h>
-# ifdef  _KERNEL
+# if defined(_KERNEL) && !defined(linux)
 #  include <sys/systm.h>
 # endif
 # include <sys/uio.h>
@@ -51,7 +51,9 @@
 #  else
 #   include <sys/dir.h>
 #  endif
-#  include <sys/mbuf.h>
+#  ifndef linux
+#   include <sys/mbuf.h>
+#  endif
 # else
 #  include <sys/filio.h>
 #  include <sys/cred.h>
@@ -63,7 +65,9 @@
 #  include <sys/dditypes.h>
 #  include <sys/cmn_err.h>
 # endif
-# include <sys/protosw.h>
+# ifndef linux
+#  include <sys/protosw.h>
+# endif
 # include <sys/socket.h>
 
 # include <net/if.h>
@@ -75,26 +79,28 @@
 # endif
 # include <net/route.h>
 # include <netinet/in.h>
-#ifdef __sgi
-#include <sys/ddi.h>
-# ifdef IFF_DRVRLOCK /* IRIX6 */
-#include <sys/hashing.h>
+# ifdef __sgi
+#  include <sys/ddi.h>
+#  ifdef IFF_DRVRLOCK /* IRIX6 */
+#   include <sys/hashing.h>
+#  endif
 # endif
-#endif
-#if !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /* IRIX < 6 */
-# include <netinet/in_var.h>
-#endif
+# if !defined(linux) && !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /*IRIX<6*/
+#  include <netinet/in_var.h>
+# endif
 # include <netinet/in_systm.h>
 # include <netinet/ip.h>
-# include <netinet/ip_var.h>
 # include <netinet/tcp.h>
 # include <netinet/udp.h>
-# include <netinet/tcpip.h>
 # include <netinet/ip_icmp.h>
+# ifndef linux
+#  include <netinet/ip_var.h>
+# endif
 # ifndef _KERNEL
 #  include <syslog.h>
 # endif
 # include "netinet/ip_compat.h"
+# include <netinet/tcpip.h>
 # include "netinet/ip_fil.h"
 # include "netinet/ip_proxy.h"
 # include "netinet/ip_nat.h"
@@ -106,17 +112,20 @@
 # endif
 
 
-#if SOLARIS || defined(__sgi)
+# if SOLARIS || defined(__sgi)
 extern	kmutex_t	ipl_mutex;
-# if SOLARIS
+#  if SOLARIS
 extern	kcondvar_t	iplwait;
+#  endif
 # endif
-#endif
 
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
 int	iplused[IPL_LOGMAX+1];
 u_long	iplcrc[IPL_LOGMAX+1];
 u_long	iplcrcinit;
+#ifdef	linux
+static struct wait_queue *iplwait[IPL_LOGMAX+1];
+#endif
 
 
 /*
@@ -210,7 +219,9 @@ mb_t *m;
 	(defined(OpenBSD) && (OpenBSD >= 199603))
 	strncpy(ipfl.fl_ifname, ifp->if_xname, IFNAMSIZ);
 #  else
+#   ifndef linux
 	ipfl.fl_unit = (u_char)ifp->if_unit;
+#   endif
 	if ((ipfl.fl_ifname[0] = ifp->if_name[0]))
 		if ((ipfl.fl_ifname[1] = ifp->if_name[1]))
 			if ((ipfl.fl_ifname[2] = ifp->if_name[2]))
@@ -221,6 +232,7 @@ mb_t *m;
 	ipfl.fl_plen = (u_char)mlen;
 	ipfl.fl_hlen = (u_char)hlen;
 	ipfl.fl_rule = fin->fin_rule;
+	ipfl.fl_group = fin->fin_group;
 	ipfl.fl_flags = flags;
 	ptrs[0] = (void *)&ipfl;
 	sizes[0] = sizeof(ipfl);
@@ -309,12 +321,9 @@ int *types, cnt;
 	ipl->ipl_count = 1;
 	ipl->ipl_next = NULL;
 	ipl->ipl_dsize = len;
-# if SOLARIS
+# if SOLARIS || defined(sun) || defined(linux)
 	uniqtime((struct timeval *)&ipl->ipl_sec);
 # else
-#  ifdef	sun
-	uniqtime((struct timeval *)&ipl->ipl_sec);
-#  endif
 #  if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
 	microtime((struct timeval *)&ipl->ipl_sec);
 #  endif
@@ -344,7 +353,11 @@ int *types, cnt;
 	mutex_exit(&ipl_mutex);
 # else
 	MUTEX_EXIT(&ipl_mutex);
+#  ifdef linux
+	wake_up_interruptible(&iplwait[dev]);
+#  else
 	wakeup(&iplh[dev]);
+#  endif
 # endif
 	return 1;
 }
@@ -355,7 +368,7 @@ int unit;
 struct uio *uio;
 {
 	iplog_t *ipl;
-	int error = 0, dlen;
+	int error = 0, dlen, copied;
 # if defined(_KERNEL) && !SOLARIS
 	int s;
 # endif
@@ -386,6 +399,11 @@ struct uio *uio;
 			return EINTR;
 		}
 # else
+#  ifdef linux
+		interruptible_sleep_on(&iplwait[unit]);
+		if (current->signal & ~current->blocked)
+			return -EINTR;
+#  else
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
 		error = SLEEP(&iplh[unit], "ipl sleep");
@@ -393,14 +411,15 @@ struct uio *uio;
 			return error;
 		SPL_NET(s);
 		MUTEX_ENTER(&ipl_mutex);
-# endif
+#  endif /* linux */
+# endif /* SOLARIS */
 	}
 
 # if BSD >= 199306 || defined(__FreeBSD__)
 	uio->uio_rw = UIO_READ;
 # endif
 
-	while ((ipl = iplt[unit])) {
+	for (copied = 0; (ipl = iplt[unit]); copied += dlen) {
 		dlen = ipl->ipl_dsize;
 		if (dlen + sizeof(iplog_t) > uio->uio_resid)
 			break;
@@ -427,7 +446,13 @@ struct uio *uio;
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
 	}
+#ifdef 	linux
+	if (!error)
+		return copied;
+	return -error;
+#else
 	return error;
+#endif
 }
 
 
