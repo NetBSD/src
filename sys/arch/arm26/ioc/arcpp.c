@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.1 2001/04/22 15:01:25 bjh21 Exp $ */
+/* $NetBSD: arcpp.c,v 1.1.8.1 2001/10/10 11:55:55 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1 2001/04/22 15:01:25 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1.8.1 2001/10/10 11:55:55 fvdl Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -167,13 +167,17 @@ arcpp_attach(struct device *parent, struct device *self, void *aux)
  * Wait until the printer's selected and not busy.
  */
 int
-arcppopen(dev_t dev, int flag, int mode, struct proc *p)
+arcppopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	u_char flags = ARCPPFLAGS(dev);
+	u_char flags;
 	struct arcpp_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int error;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
+	flags = ARCPPFLAGS(dev);
 
 	sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
 	if (sc == NULL)
@@ -187,6 +191,8 @@ arcppopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (sc->sc_state)
 		return EBUSY;
+
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state = ARCPP_INIT;
 	sc->sc_flags = flags;
@@ -231,9 +237,11 @@ arcppwakeup(void *arg)
  * Close the device, and free the local line buffer.
  */
 int
-arcppclose(dev_t dev, int flag, int mode, struct proc *p)
+arcppclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct arcpp_softc *sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
+	struct arcpp_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_count)
 		(void) arcpppushbytes(sc);
@@ -268,11 +276,13 @@ arcpppushbytes(sc)
 }
 
 int
-arcppwrite(dev_t dev, struct uio *uio, int flags)
+arcppwrite(struct vnode *devvp, struct uio *uio, int flags)
 {
-	struct arcpp_softc *sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
+	struct arcpp_softc *sc;
 	size_t n;
 	int error = 0;
+
+	sc = vdev_privdata(devvp);
 
 	while ((n = min(ARCPP_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);
@@ -328,7 +338,8 @@ arcppintr(void *arg)
 }
 
 int
-arcppioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+arcppioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	   struct proc *p)
 {
 
 	return ENODEV;

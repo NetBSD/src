@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.10.4.2 2001/10/01 12:45:50 fvdl Exp $	*/
+/*	$NetBSD: agp.c,v 1.10.4.3 2001/10/10 11:56:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -74,6 +74,7 @@
 #include <sys/fcntl.h>
 #include <sys/agpio.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -762,8 +763,9 @@ agp_unbind_user(struct agp_softc *sc, agp_unbind *unbind)
 }
 
 int
-agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
+agpopen(struct vnode *devvp, int oflags, int devtype, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
 	if (sc == NULL)
@@ -777,13 +779,15 @@ agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	else
 		return EBUSY;
 
+	vdev_setprivdata(devvp, sc);
+
 	return 0;
 }
 
 int
-agpclose(dev_t dev, int fflag, int devtype, struct proc *p)
+agpclose(struct vnode *devvp, int fflag, int devtype, struct proc *p)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = vdev_privdata(devvp);
 
 	/*
 	 * Clear the GATT and force release on last close
@@ -796,9 +800,10 @@ agpclose(dev_t dev, int fflag, int devtype, struct proc *p)
 }
 
 int
-agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
+agpioctl(struct vnode *devvp, u_long cmd, caddr_t data, int fflag,
+	 struct proc *p)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = vdev_privdata(devvp);
 
 	if (sc == NULL)
 		return ENODEV;
@@ -837,9 +842,9 @@ agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 }
 
 paddr_t
-agpmmap(dev_t dev, off_t offset, int prot)
+agpmmap(struct vnode *devvp, off_t offset, int prot)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = vdev_privdata(devvp);
 
 	if (offset > AGP_GET_APERTURE(sc))
 		return -1;

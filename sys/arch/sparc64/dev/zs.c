@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29.4.1 2001/10/01 12:42:26 fvdl Exp $	*/
+/*	$NetBSD: zs.c,v 1.29.4.2 2001/10/10 11:56:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -380,7 +381,7 @@ zs_attach(zsc, zsd, pri)
 			struct tty *tp;
 
 			kma.kmta_tp = tp = zst->zst_tty;
-			kma.kmta_dev = tp->t_dev;
+			kma.kmta_dev = vdev_rdev(tp->t_devvp);
 			kma.kmta_consdev = zsc_args.consdev;
 			
 			/* Attach 'em if we got 'em. */

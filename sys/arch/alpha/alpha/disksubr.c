@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.22.6.1 2001/09/07 04:45:19 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.22.6.2 2001/10/10 11:55:48 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22.6.1 2001/09/07 04:45:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22.6.2 2001/10/10 11:55:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -271,10 +271,18 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_devvp->v_rdev);
+	struct partition *p;
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;
-	int maxsz = p->p_size;
+	int maxsz;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
+	maxsz = p->p_size;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */ 

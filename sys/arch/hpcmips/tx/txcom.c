@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.14 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.14.4.1 2001/10/10 11:56:10 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <dev/cons.h> /* consdev */
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
@@ -766,8 +767,9 @@ txcom_txsoft(void *arg)
 }
 
 int
-txcomopen(dev_t dev, int flag, int mode, struct proc *p)
+txcomopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct txcom_chip *chip;
 	struct tty *tp;
@@ -784,19 +786,22 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
+	vdev_setprivdata(devvp, sc);
+
 	s = spltty();
 
 	if (txcom_enable(sc->sc_chip)) {
 		splx(s);
 		goto out;
 	}
+
 	/*
 	 * Do the following iff this is a first open.
 	 */
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 		
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		t.c_ispeed = 0;
 		if (ISSET(chip->sc_hwflags, TXCOM_HW_CONSOLE)) {
@@ -844,7 +849,7 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 		DPRINTF(("txcomopen: ttyopen failed\n"));
 		goto out;
 	}
-	if ((err = (*tp->t_linesw->l_open)(dev, tp))) {
+	if ((err = (*tp->t_linesw->l_open)(devvp, tp))) {
 		DPRINTF(("txcomopen: line dicipline open failed\n"));
 		goto out;
 	}
@@ -865,9 +870,9 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-txcomclose(dev_t dev, int flag, int mode, struct proc *p)
+txcomclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -890,44 +895,44 @@ txcomclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-txcomread(dev_t dev, struct uio *uio, int flag)
+txcomread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-txcomwrite(dev_t dev, struct uio *uio, int flag)
+txcomwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-txcompoll(dev_t dev, int events, struct proc *p)
+txcompoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-txcomtty(dev_t dev)
+txcomtty(struct vnode *devvp)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = vdev_privdata(devvp);
 	
 	return sc->sc_tty;
 }
 
 int
-txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+txcomioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 	int s, err;
 
@@ -988,8 +993,10 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 void
 txcomstop(struct tty *tp, int flag)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
+	struct txcom_softc *sc;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
 
 	s = spltty();
 
@@ -1007,7 +1014,7 @@ txcomstop(struct tty *tp, int flag)
 void
 txcomstart(struct tty *tp)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
+	struct txcom_softc *sc = vdev_privdata(tp->t_devvp);
 	struct txcom_chip *chip = sc->sc_chip;
 	tx_chipset_tag_t tc = chip->sc_tc;
 	int slot = chip->sc_slot;
@@ -1050,7 +1057,7 @@ txcomstart(struct tty *tp)
 int
 txcomparam(struct tty *tp, struct termios *t)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
+	struct txcom_softc *sc = vdev_privdata(tp->d_devvp);
 	struct txcom_chip *chip;
 	int ospeed;
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.10 2000/03/23 06:39:56 thorpej Exp $	*/
+/*	$NetBSD: aed.c,v 1.10.6.1 2001/10/10 11:56:13 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -405,15 +406,17 @@ aed_enqevent(event)
 }
 
 int 
-aedopen(dev, flag, mode, p)
-    dev_t dev;
+aedopen(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag, mode;
     struct proc *p;
 {
 	int unit;
 	int error = 0;
 	int s;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = minor(dev);
 
 	if (unit != 0)
@@ -435,8 +438,8 @@ aedopen(dev, flag, mode, p)
 
 
 int 
-aedclose(dev, flag, mode, p)
-    dev_t dev;
+aedclose(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag, mode;
     struct proc *p;
 {
@@ -451,8 +454,8 @@ aedclose(dev, flag, mode, p)
 
 
 int 
-aedread(dev, uio, flag)
-    dev_t dev;
+aedread(devvp, uio, flag)
+    struct vnode *devvp;
     struct uio *uio;
     int flag;
 {
@@ -500,8 +503,8 @@ aedread(dev, uio, flag)
 
 
 int 
-aedwrite(dev, uio, flag)
-    dev_t dev;
+aedwrite(devvp, uio, flag)
+    struct vnode *devvp;
     struct uio *uio;
     int flag;
 {
@@ -510,8 +513,8 @@ aedwrite(dev, uio, flag)
 
 
 int 
-aedioctl(dev, cmd, data, flag, p)
-    dev_t dev;
+aedioctl(devvp, cmd, data, flag, p)
+    struct vnode *devvp;
     int cmd;
     caddr_t data;
     int flag;
@@ -579,8 +582,8 @@ aedioctl(dev, cmd, data, flag, p)
 
 
 int 
-aedpoll(dev, events, p)
-	dev_t dev;
+aedpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {

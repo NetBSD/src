@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 2001/07/14 07:38:31 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38.2.1 2001/10/10 11:56:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -75,6 +75,7 @@
 #include <sys/disklabel.h>
 #include <sys/disklabel_mbr.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/bswap.h>
 
@@ -427,8 +428,8 @@ read_bsd_label(dlbuf, lp, match)
  * string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -450,11 +451,11 @@ readdisklabel(dev, strat, lp, osdep)
 	 */
 	bp = geteblk((int)lp->d_secsize * (NUM_PARTS + 1));
 
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize * (NUM_PARTS + 1);
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -473,6 +474,7 @@ readdisklabel(dev, strat, lp, osdep)
 			msg = "no disk label";
 	}
 
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -544,8 +546,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  *  we want to write dos disklabels some day. Really!
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -563,10 +565,10 @@ writedisklabel(dev, strat, lp, osdep)
 		labelpart = 0;
 	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 	if (error = biowait(bp))
 		goto done;
@@ -586,6 +588,7 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	error = ESRCH;
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 #else
@@ -598,7 +601,7 @@ done:
 	 * in-core disk label when it is "written" to disk.
 	 * This code was originally developed by Bob Nestor on 9/13/99.
 	 */
-	return (readdisklabel(dev, strat, lp, osdep) ? EINVAL : 0);
+	return (readdisklabel(devvp, strat, lp, osdep) ? EINVAL : 0);
 #endif
 }
 
@@ -613,11 +616,17 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	struct partition *p;
 #if 0
 	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
 #endif
-	int sz;
+	int sz, part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 

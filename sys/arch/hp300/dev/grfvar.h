@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.13 2000/07/17 06:50:32 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.13.2.1 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,12 +123,13 @@ struct	grfdev_attach_args {
 
 #ifdef _KERNEL
 extern	struct grf_data grf_cn;		/* grf_data for console device */
+struct vnode;
 
 /* grf.c prototypes */
-int	grfmap __P((dev_t, caddr_t *, struct proc *));
-int	grfunmap __P((dev_t, caddr_t, struct proc *));
-int	grfon __P((dev_t));
-int	grfoff __P((dev_t));
+int	grfmap __P((struct vnode *, caddr_t *, struct proc *));
+int	grfunmap __P((struct vnode *, caddr_t, struct proc *));
+int	grfon __P((struct vnode *));
+int	grfoff __P((struct vnode *));
 paddr_t	grfaddr __P((struct grf_softc *, off_t));
 
 #ifndef _LKM
@@ -136,14 +137,14 @@ paddr_t	grfaddr __P((struct grf_softc *, off_t));
 #endif
 
 #ifdef COMPAT_HPUX
-int	hpuxgrfioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	hpuxgrfioctl __P((struct vnode *, int, caddr_t, int, struct proc *));
 
 int	grflock __P((struct grf_data *, int));
 int	grfunlock __P((struct grf_data *));
 int	grfdevno __P((dev_t));
 
-int	iommap __P((dev_t, caddr_t *));
-int	iounmmap __P((dev_t, caddr_t));
+int	iommap __P((struct vnode *, caddr_t *));
+int	iounmmap __P((struct vnode *, caddr_t));
 
 int	grffindpid __P((struct grf_data *));
 void	grfrmpid __P((struct grf_data *));

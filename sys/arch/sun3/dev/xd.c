@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.34 2001/09/05 14:03:49 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.34.2.1 2001/10/10 11:56:38 fvdl Exp $	*/
 
 /*
  *
@@ -73,6 +73,7 @@
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -220,7 +221,7 @@ int	xdc_cmd __P((struct xdc_softc *, int, int, int, int, int, char *, int));
 char   *xdc_e2str __P((int));
 int	xdc_error __P((struct xdc_softc *, struct xd_iorq *,
 		   struct xd_iopb *, int, int));
-int	xdc_ioctlcmd __P((struct xd_softc *, dev_t dev, struct xd_iocmd *));
+int	xdc_ioctlcmd __P((struct xd_softc *, struct xd_iocmd *));
 void	xdc_perror __P((struct xd_iorq *, struct xd_iopb *, int));
 int	xdc_piodriver __P((struct xdc_softc *, int, int));
 int	xdc_remove_iorq __P((struct xdc_softc *));
@@ -305,6 +306,8 @@ xdgetdisklabel(xd, b)
 {
 	char *err;
 	struct sun_disklabel *sdl;
+	struct vnode vn;
+	struct specinfo si;
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xd_labeldata = b;
@@ -312,8 +315,11 @@ xdgetdisklabel(xd, b)
 	/* Required parameter for readdisklabel() */
 	xd->sc_dk.dk_label->d_secsize = XDFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
-			    xddummystrat,
+	vn.v_specinfo = &si;
+	vn.v_devcookie = xd;
+	vn.v_rdev = MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART);
+
+	err = readdisklabel(&vn, xddummystrat,
 			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 	if (err) {
 		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
@@ -740,13 +746,13 @@ done:
  * xdclose: close device
  */
 int
-xdclose(dev, flag, fmt, p)
-	dev_t   dev;
+xdclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int     flag, fmt;
 	struct proc *p;
 {
-	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
-	int     part = DISKPART(dev);
+	struct xd_softc *xd = vdev_privdata(devvp);
+	int     part = DISKPART(vdev_rdev(devvp));
 
 	/* clear mask bits */
 
@@ -806,8 +812,8 @@ xddump(dev, blkno, va, sz)
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
 int
-xdioctl(dev, command, addr, flag, p)
-	dev_t   dev;
+xdioctl(devvp, command, addr, flag, p)
+	struct vnode *devvp;
 	u_long  command;
 	caddr_t addr;
 	int     flag;
@@ -816,11 +822,12 @@ xdioctl(dev, command, addr, flag, p)
 {
 	struct xd_softc *xd;
 	struct xd_iocmd *xio;
-	int     error, s, unit;
+	int     error, s;
+	dev_t dev;
 
-	unit = DISKUNIT(dev);
-
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
+	xd = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
+	if (xd == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -877,9 +884,8 @@ xdioctl(dev, command, addr, flag, p)
 
 			/* Simulate opening partition 0 so write succeeds. */
 			xd->sc_dk.dk_openmask |= (1 << 0);
-			error = writedisklabel(MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
-			    xdstrategy, xd->sc_dk.dk_label,
-			    xd->sc_dk.dk_cpulabel);
+			error = writedisklabel(devvp, xdstrategy,
+			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 			xd->sc_dk.dk_openmask =
 			    xd->sc_dk.dk_copenmask | xd->sc_dk.dk_bopenmask;
 		}
@@ -889,7 +895,7 @@ xdioctl(dev, command, addr, flag, p)
 		xio = (struct xd_iocmd *) addr;
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
-		return (xdc_ioctlcmd(xd, dev, xio));
+		return (xdc_ioctlcmd(xd, xio));
 
 	default:
 		return ENOTTY;
@@ -900,15 +906,17 @@ xdioctl(dev, command, addr, flag, p)
  * xdopen: open drive
  */
 int
-xdopen(dev, flag, fmt, p)
-	dev_t   dev;
+xdopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int     flag, fmt;
 	struct proc *p;
 {
-	int err, unit, part, s;
+	int err, part, s, unit;
 	struct xd_softc *xd;
+	dev_t dev;
 
 	/* first, could it be a valid target? */
+	dev = vdev_rdev(devvp);
 	unit = DISKUNIT(dev);
 	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -944,6 +952,8 @@ xdopen(dev, flag, fmt, p)
 		goto done;
 	}
 
+	vdev_setprivdata(devvp, xd);
+
 	/* set open masks */
 	switch (fmt) {
 	case S_IFCHR:
@@ -961,23 +971,23 @@ done:
 }
 
 int
-xdread(dev, uio, flags)
-	dev_t   dev;
+xdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(xdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-xdwrite(dev, uio, flags)
-	dev_t   dev;
+xdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(xdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 
@@ -991,6 +1001,7 @@ xdsize(dev)
 {
 	struct xd_softc *xdsc;
 	int     unit, part, size, omask;
+	struct vnode *vp;
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
@@ -1000,8 +1011,14 @@ xdsize(dev)
 	part = DISKPART(dev);
 	omask = xdsc->sc_dk.dk_openmask & (1 << part);
 
-	if (omask == 0 && xdopen(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
+	if (omask == 0) {
+		if (bdevvp(dev, &vp) != 0)
+			return (-1);
+		if (xdopen(vp, 0, S_IFBLK, NULL) != 0) {
+			vrele(vp);
+			return (-1);
+		}
+	}
 
 	/* do it */
 	if (xdsc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
@@ -1009,8 +1026,11 @@ xdsize(dev)
 	else
 		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size *
 		    (xdsc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (omask == 0 && xdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
+	if (omask == 0) {
+		if (xdclose(vp, 0, S_IFBLK, NULL) != 0)
+			size = -1;
+		vrele(vp);
+	}
 	return (size);
 }
 
@@ -1024,14 +1044,14 @@ xdstrategy(bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
-	int     s, unit;
-
-	unit = DISKUNIT(bp->b_dev);
+	int     s;
+	dev_t	dev;
 
 	/* check for live device */
 
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == 0 ||
-	    bp->b_blkno < 0 ||
+	xd = vdev_privdata(bp->b_devvp);
+	dev = vdev_rdev(bp->b_devvp);
+	if (xd  == NULL || bp->b_blkno < 0 ||
 	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -1043,7 +1063,8 @@ xdstrategy(bp)
 		goto bad;
 	}
 
-	if (xd->state != XD_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
+	if (xd->state != XD_DRIVE_ONLINE && !(bp->b_flags & B_DKLABEL) &&
+	    DISKPART(dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
 		goto bad;
@@ -1058,7 +1079,8 @@ xdstrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, xd->sc_dk.dk_label,
+	if ((bp->b_flags & B_DKLABEL) == 0 &&
+	     bounds_check_with_label(bp, xd->sc_dk.dk_label,
 		(xd->flags & XD_WLABEL) != 0) <= 0)
 		goto done;
 
@@ -1378,9 +1400,10 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		if (bp == NULL)
 			panic("xdc_startbuf bp");
 		BUFQ_REMOVE(&xdcsc->sc_wq, bp);
-		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
+		xdsc = xdcsc->sc_drives[DISKUNIT(vdev_rdev(bp->b_devvp))];
 	}
-	partno = DISKPART(bp->b_dev);
+	partno = (bp->b_flags & B_DKLABEL) ? RAW_PART :
+	    DISKPART(vdev_rdev(bp->b_devvp));
 #ifdef XDC_DEBUG
 	printf("xdc_startbuf: %s%c: %s block %d\n", xdsc->sc_dev.dv_xname,
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
@@ -1961,7 +1984,7 @@ xdc_perror(iorq, iopb, still_trying)
 		iorq->xd->sc_dev.dv_xname :
 		iorq->xdc->sc_dev.dv_xname);
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		printf("%c: ", 'a' + DISKPART(vdev_rdev(iorq->buf->b_devvp)));
 	if (iopb->comm == XDCMD_RD || iopb->comm == XDCMD_WR)
 		printf("%s %d/%d/%d: ",
 			(iopb->comm == XDCMD_RD) ? "read" : "write",
@@ -2147,9 +2170,8 @@ xdc_tick(arg)
  * an error code.   called at user priority.
  */
 int
-xdc_ioctlcmd(xd, dev, xio)
+xdc_ioctlcmd(xd, xio)
 	struct xd_softc *xd;
-	dev_t   dev;
 	struct xd_iocmd *xio;
 
 {

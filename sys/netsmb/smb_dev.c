@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.3 2001/06/14 20:32:48 thorpej Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.3.4.1 2001/10/10 11:57:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -175,8 +175,9 @@ netsmbattach(num)
 }
 
 int
-nsmb_dev_open(dev_t dev, int oflags, int devtype, struct proc *p)
+nsmb_dev_open(struct vnode *devvp, int oflags, int devtype, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct smb_dev *sdp;
 #ifndef FB_RELENG3
 	struct ucred *cred = p->p_ucred;
@@ -214,8 +215,9 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 int
-nsmb_dev_close(dev_t dev, int flag, int fmt, struct proc *p)
+nsmb_dev_close(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct smb_dev *sdp;
 	struct smb_conn *scp;
 	struct smb_vc *vcp;
@@ -265,9 +267,10 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 nsmb_dev_ioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 #endif
 #else
-nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+nsmb_dev_ioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p)
 #endif
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct smb_dev *sdp;
 	struct smb_conn *scp;
 	struct smb_vc *vcp;
@@ -430,19 +433,19 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-nsmb_dev_read(dev_t dev, struct uio *uio, int flag)
+nsmb_dev_read(struct vnode *devvp, struct uio *uio, int flag)
 {
 	return EACCES;
 }
 
 int
-nsmb_dev_write(dev_t dev, struct uio *uio, int flag)
+nsmb_dev_write(struct vnode *devvp, struct uio *uio, int flag)
 {
 	return EACCES;
 }
 
 int
-nsmb_dev_poll(dev_t dev, int events, struct proc *p)
+nsmb_dev_poll(struct vnode *devvp, int events, struct proc *p)
 {
 	return ENODEV;
 }

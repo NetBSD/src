@@ -1,4 +1,4 @@
-/*	$NetBSD: fbreg.h,v 1.8 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: fbreg.h,v 1.8.6.1 2001/10/10 11:56:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,6 +65,8 @@ typedef struct {
 	char byteCount;			/* mouse report byte count	*/
 } MouseReport;
 
+struct vnode;
+
 /*
  * Macro to translate from a time struct to milliseconds.
  */
@@ -77,6 +79,6 @@ void	fbScroll __P((struct fbinfo *));
 void	fbPutc __P((dev_t, int));
 void	fbBlitc __P((int, struct fbinfo *));
 int	tb_kbdmouseconfig __P((struct fbinfo *fi));
-int	fbmmap_fb __P((struct fbinfo *, dev_t, caddr_t, struct proc *));
+int	fbmmap_fb __P((struct fbinfo *, struct vnode *, caddr_t, struct proc *));
 
 void	init_pmaxfbu __P((struct fbinfo *fi));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.35.6.1 2001/10/01 12:41:28 fvdl Exp $	*/
+/*	$NetBSD: fb.c,v 1.35.6.2 2001/10/10 11:56:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -68,6 +68,7 @@
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/conf.h>
 #include <dev/sun/fbio.h>

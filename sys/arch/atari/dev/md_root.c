@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.15 2000/11/27 08:39:40 chs Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15.2.1 2001/10/10 11:56:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -43,6 +43,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/dkbad.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 #include <dev/md.h>
@@ -154,6 +155,11 @@ struct proc		*proc;
 	struct bdevsw		*bdp = &bdevsw[major(ld_dev)];
 	struct disklabel	dl;
 	struct read_info	rs;
+	struct vnode		*devvp;
+
+	error = bdevvp(ld_dev, &devvp);
+	if (error != 0)
+		return error;
 
 	/*
 	 * Initialize our buffer header:
@@ -161,7 +167,7 @@ struct proc		*proc;
 	memset(&buf, 0, sizeof(buf));
 	buf.b_vnbufs.le_next = NOLIST;
 	buf.b_flags = B_BUSY;
-	buf.b_dev   = ld_dev;
+	buf.b_devvp = devvp;
 	buf.b_error = 0;
 	buf.b_proc  = proc;
 
@@ -180,9 +186,11 @@ struct proc		*proc;
 	/*
 	 * Open device and try to get some statistics.
 	 */
-	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, proc)) != 0)
+	if((error = bdp->d_open(devvp, FREAD | FNONBLOCK, 0, proc)) != 0) {
+		vrele(devvp);
 		return(error);
-	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (caddr_t)&dl, FREAD, proc) == 0) {
+	}
+	if(bdp->d_ioctl(devvp, DIOCGDINFO, (caddr_t)&dl, FREAD, proc) == 0) {
 		/* Read on a cylinder basis */
 		rs.chunk    = dl.d_secsize * dl.d_secpercyl;
 		rs.media_sz = dl.d_secperunit * dl.d_secsize;
@@ -195,7 +203,8 @@ struct proc		*proc;
 #endif /* support_compression */
 		error = ramd_norm_read(&rs);
 
-	bdp->d_close(ld_dev,FREAD | FNONBLOCK, 0, proc);
+	bdp->d_close(devvp,FREAD | FNONBLOCK, 0, proc);
+	vrele(devvp);
 	return(error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
+/*	$NetBSD: pcons.c,v 1.7.4.1 2001/10/10 11:56:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -46,6 +46,7 @@
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -108,26 +109,30 @@ static int pconsparam __P((struct tty *, struct termios *));
 static void pcons_poll __P((void *));
 
 int
-pconsopen(dev, flag, mode, p)
-	dev_t dev;
+pconsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct pconssoftc *sc;
-	int unit = minor(dev);
+	int unit;
 	struct tty *tp;
-	
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	unit = minor(rdev);
 	if (unit >= pcons_cd.cd_ndevs)
 		return ENXIO;
 	sc = pcons_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
+	vdev_setprivdata(devvp, sc);
 	if (!(tp = sc->of_tty))
 		sc->of_tty = tp = ttymalloc();
 	tp->t_oproc = pconsstart;
 	tp->t_param = pconsparam;
-	tp->t_dev = dev;
-	cn_tab->cn_dev = dev;
+	tp->t_devvp = devvp;
+	cn_tab->cn_dev = rdev;
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -146,18 +151,20 @@ pconsopen(dev, flag, mode, p)
 		callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 	}
 
-	return (*tp->t_linesw->l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(devvp, tp);
 }
 
 int
-pconsclose(dev, flag, mode, p)
-	dev_t dev;
+pconsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->of_tty;
+	struct pconssoftc *sc;
+	struct tty *tp;
 
+	sc = vdev_privdata(devvp);
+	tp = sc->of_tty;
 	callout_stop(&sc->sc_poll_ch);
 	sc->of_flags &= ~OFPOLL;
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -166,52 +173,64 @@ pconsclose(dev, flag, mode, p)
 }
 
 int
-pconsread(dev, uio, flag)
-	dev_t dev;
+pconsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->of_tty;
-	
+	struct pconssoftc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->of_tty;
+
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
-pconswrite(dev, uio, flag)
-	dev_t dev;
+pconswrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->of_tty;
+	struct pconssoftc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->of_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-pconspoll(dev, events, p)
-	dev_t dev;
+pconspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->of_tty;
+	struct pconssoftc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->of_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-pconsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+pconsioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->of_tty;
+	struct pconssoftc *sc;
+	struct tty *tp;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->of_tty;
 	
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
@@ -221,11 +240,12 @@ pconsioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-pconstty(dev)
-	dev_t dev;
+pconstty(devvp)
+	struct vnode *devvp;
 {
-	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
+	struct pconssoftc *sc;
 
+	sc = vdev_privdata(devvp);
 	return sc->of_tty;
 }
 
@@ -290,7 +310,7 @@ pcons_poll(aux)
 	char ch;
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
-		cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
+		cn_check_magic(vdev_rdev(tp->t_devvp), ch, pcons_cnm_state);
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*tp->t_linesw->l_rint)(ch, tp);
 	}

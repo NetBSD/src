@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.14 2001/05/14 14:43:45 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.14.4.1 2001/10/10 11:56:44 fvdl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/mtpr.h>
 #include <machine/rsp.h>
@@ -126,11 +127,11 @@ ctuinit(void)
 }
 
 int
-ctuopen(dev_t dev, int oflags, int devtype, struct proc *p)
+ctuopen(struct vnode *devvp, int oflags, int devtype, struct proc *p)
 {
 	int error;
 
-	if (minor(dev))
+	if (minor(vdev_rdev(devvp)))
 		return ENXIO;
 
 	if (tu_sc.sc_state != TU_IDLE)
@@ -153,7 +154,7 @@ ctuopen(dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 int
-ctuclose(dev_t dev, int oflags, int devtype, struct proc *p)
+ctuclose(struct vnode *devvp, int oflags, int devtype, struct proc *p)
 {
 	struct buf *bp;
 	int s = spl7();
@@ -223,7 +224,8 @@ ctustart()
 }
 
 int
-ctuioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
+ctuioctl(struct vnode *devvp, u_long cmd, caddr_t data, int fflag,
+	 struct proc *p)
 {
 	return ENOTTY;
 }

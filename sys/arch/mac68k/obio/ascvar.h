@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.6 2000/06/26 04:55:48 simonb Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.6.2.1 2001/10/10 11:56:15 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
@@ -39,10 +39,10 @@ struct asc_softc {
 	struct callout		sc_bell_ch;
 };
 
-int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	ascclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	ascread __P((dev_t, struct uio *, int));
-int	ascwrite __P((dev_t, struct uio *, int));
-int	ascioctl __P((dev_t, int, caddr_t, int, struct proc *p));
-int	ascpoll __P((dev_t dev, int events, struct proc *p));
-paddr_t	ascmmap __P((dev_t dev, off_t off, int prot));
+int	ascopen __P((struct vnode * dev, int flag, int mode, struct proc *p));
+int	ascclose __P((struct vnode * dev, int flag, int mode, struct proc *p));
+int	ascread __P((struct vnode *, struct uio *, int));
+int	ascwrite __P((struct vnode *, struct uio *, int));
+int	ascioctl __P((struct vnode *, int, caddr_t, int, struct proc *p));
+int	ascpoll __P((struct vnode * dev, int events, struct proc *p));
+paddr_t	ascmmap __P((struct vnode * dev, off_t off, int prot));

@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.3 2001/03/24 12:40:32 martin Exp $
+ *	$Id: i4b_rbch.c,v 1.3.4.1 2001/10/10 11:57:06 fvdl Exp $
  *
  * $FreeBSD$
  *
@@ -50,6 +50,7 @@
 #include <net/if.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
@@ -170,13 +171,13 @@ static void rbch_clrq(int unit);
 #define PDEVSTATIC	/* - not static - */
 #define IOCTL_CMD_T	u_long
 void i4brbchattach __P((void));
-int i4brbchopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4brbchclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4brbchread __P((dev_t dev, struct uio *uio, int ioflag));
-int i4brbchwrite __P((dev_t dev, struct uio *uio, int ioflag));
-int i4brbchioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct proc* pr));
+int i4brbchopen __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+int i4brbchclose __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+int i4brbchread __P((struct vnode * dev, struct uio *uio, int ioflag));
+int i4brbchwrite __P((struct vnode * dev, struct uio *uio, int ioflag));
+int i4brbchioctl __P((struct vnode * dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct proc* pr));
 #ifdef OS_USES_POLL
-int i4brbchpoll __P((dev_t dev, int events, struct proc *p));
+int i4brbchpoll __P((struct vnode * dev, int events, struct proc *p));
 #else
 PDEVSTATIC int i4brbchselect __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -338,8 +339,9 @@ i4brbchattach()
  *	open rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchopen(dev_t dev, int flag, int fmt, struct proc *p)
+i4brbchopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 	
 	if(unit >= NI4BRBCH)
@@ -351,7 +353,7 @@ i4brbchopen(dev_t dev, int flag, int fmt, struct proc *p)
 #if 0
 	rbch_clrq(unit);
 #endif
-	
+
 	rbch_softc[unit].sc_devstate |= ST_ISOPEN;		
 
 	NDBGL4(L4_RBCHDBG, "unit %d, open", unit);	
@@ -363,8 +365,9 @@ i4brbchopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchclose(dev_t dev, int flag, int fmt, struct proc *p)
+i4brbchclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
 	
@@ -384,8 +387,9 @@ i4brbchclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	read from rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchread(dev_t dev, struct uio *uio, int ioflag)
+i4brbchread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct mbuf *m;
 	int error = 0;
 	int unit = minor(dev);
@@ -486,8 +490,9 @@ i4brbchread(dev_t dev, struct uio *uio, int ioflag)
  *	write to rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchwrite(dev_t dev, struct uio * uio, int ioflag)
+i4brbchwrite(struct vnode *devvp, struct uio * uio, int ioflag)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct mbuf *m;
 	int error = 0;
 	int unit = minor(dev);
@@ -611,8 +616,9 @@ i4brbchwrite(dev_t dev, struct uio * uio, int ioflag)
  *	rbch device ioctl handlibg
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
+i4brbchioctl(struct vnode *devvp, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int error = 0;
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -710,8 +716,9 @@ i4brbchioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
  *	device driver poll
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchpoll(dev_t dev, int events, struct proc *p)
+i4brbchpoll(struct vnode *devvp, int events, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int revents = 0;	/* Events we found */
 	int s;
 	int unit = minor(dev);

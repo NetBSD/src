@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.h,v 1.3 2001/06/08 00:19:17 matt Exp $ */
+/*	$NetBSD: openfirmio.h,v 1.3.4.1 2001/10/10 11:56:57 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,9 +63,9 @@ struct ofiocdesc {
 #define	OFIOCFINDDEVICE	_IOWR('O', 7, struct ofiocdesc) /* find a specific device */
 
 #ifdef _KERNEL
-int openfirmopen(dev_t, int, int, struct proc *);
-int openfirmclose(dev_t, int, int, struct proc *);
-int openfirmioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int openfirmopen(struct vnode *, int, int, struct proc *);
+int openfirmclose(struct vnode *, int, int, struct proc *);
+int openfirmioctl(struct vnode *, u_long, caddr_t, int, struct proc *);
 #endif
 
 #endif /* _DEV_OFW_OPENFIRMIO_H_ */

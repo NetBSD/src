@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.2 2001/06/04 18:59:31 uch Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.2.4.1 2001/10/10 11:56:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -42,6 +42,9 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#ifdef notyet
+#include <sys/vnode.h>
+#endif
 
 #include "opt_wsdisplay_compat.h"
 #include <dev/wscons/wsconsio.h>
@@ -290,31 +293,32 @@ btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
 
 #ifdef notyet
 int
-btnmgropen(dev_t dev, int flag, int mode, struct proc *p)
+btnmgropen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrclose(dev_t dev, int flag, int mode, struct proc *p)
+btnmgrclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrread(dev_t dev, struct uio *uio, int flag)
+btnmgrread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrwrite(dev_t dev, struct uio *uio, int flag)
+btnmgrwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+btnmgrioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	    struct proc *p)
 {
 	return (EINVAL);
 }

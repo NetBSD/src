@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.22.2.1 2001/10/01 12:42:45 fvdl Exp $	*/
+/*	$NetBSD: cg4.c,v 1.22.2.2 2001/10/10 11:56:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -325,21 +326,23 @@ cg4attach(parent, self, args)
 }
 
 int
-cg4open(dev, flags, mode, p)
-	dev_t dev;
+cg4open(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= cgfour_cd.cd_ndevs || cgfour_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, cgfour_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-cg4close(dev, flags, mode, p)
-	dev_t dev;
+cg4close(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -348,14 +351,14 @@ cg4close(dev, flags, mode, p)
 }
 
 int
-cg4ioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cg4ioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
+	struct cg4_softc *sc = vdev_privdata(devvp);
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -372,12 +375,12 @@ cg4ioctl(dev, cmd, data, flags, p)
  * The hardware looks completely different.
  */
 paddr_t
-cg4mmap(dev, off, prot)
-	dev_t dev;
+cg4mmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
+	struct cg4_softc *sc = vdev_privdata(devvp);
 	int physbase;
 
 	if (off & PGOFSET)

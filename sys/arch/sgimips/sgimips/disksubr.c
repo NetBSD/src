@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2000/11/27 06:00:09 soren Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.2.1 2001/10/10 11:56:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -37,6 +37,7 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 
 #include <machine/disklabel.h>
 
@@ -53,8 +54,8 @@
  */
 
 char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp; 
 	struct cpu_disklabel *clp;
@@ -76,11 +77,11 @@ readdisklabel(dev, strat, lp, clp)
 	bp = geteblk((int)lp->d_secsize);
 
 	/* Next, dig out the disk label. */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 
 	/* If successful, locate disk label within block and validate. */
@@ -89,6 +90,7 @@ readdisklabel(dev, strat, lp, clp)
 		/* Save the whole block in case it has info we need. */
 		memcpy(block, bp->b_un.b_addr, sizeof(block));
 	}
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	if (error != 0)
 		return "error reading disklabel";
@@ -146,8 +148,8 @@ setdisklabel(olp, nlp, openmask, clp)
 }
 
 int     
-writedisklabel(dev, strat, lp, clp)
-        dev_t dev; 
+writedisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
         void (*strat)(struct buf *);
         struct disklabel *lp;
         struct cpu_disklabel *clp;
@@ -169,9 +171,17 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int maxsz = p->p_size;
+	struct partition *p;
+	int part;
+	int maxsz;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
+	maxsz = p->p_size;
 
 	/*
 	 * Overwriting disk label?

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2001/06/07 08:35:29 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36.4.1 2001/10/10 11:55:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -38,6 +38,7 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
@@ -193,6 +194,7 @@ findroot(void)
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
+	struct vnode *devvp;
 
 	if (boothowto & RB_ASKNAME)
 		return;		/* Don't bother looking */
@@ -222,13 +224,18 @@ findroot(void)
 			if (maj >= nblkdev)
 				panic("findroot: impossible");
 #endif
+			if (bdevvp(MAKEDISKDEV(maj, unit, 0), &devvp) != 0)
+				continue;
 
 			/* Open disk; forces read of disklabel. */
-			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
+			if ((*bdevsw[maj].d_open)(devvp, FREAD|FNONBLOCK, 0,
+			    &proc0)) {
+				vrele(devvp);
 				continue;
-			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
+			}
+			(void)(*bdevsw[maj].d_close)(devvp, FREAD|FNONBLOCK, 0,
+			    &proc0);
+			vrele(devvp);
 			
 			pp = &dkp->dk_label->d_partitions[booted_partition];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2000/11/01 12:28:50 abs Exp $	*/
+/*	$NetBSD: rtc.c,v 1.11.2.1 2001/10/10 11:55:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,6 +50,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 #include <machine/rtc.h>
 #include <arm32/dev/iic.h>
 #include <arm32/dev/todclockvar.h>
@@ -337,13 +338,14 @@ rtcattach(parent, self, aux)
 
 
 int
-rtcopen(dev, flag, mode, p)
-	dev_t dev;
+rtcopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct rtc_softc *sc;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
     
 	if (unit >= rtc_cd.cd_ndevs)
@@ -358,20 +360,22 @@ rtcopen(dev, flag, mode, p)
 
 	sc->sc_flags |= RTC_OPEN;
 
+	vdev_setprivdata(devvp, sc);
+
 	return(0);
 }
 
 
 int
-rtcclose(dev, flag, mode, p)
-	dev_t dev;
+rtcclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct rtc_softc *sc = rtc_cd.cd_devs[unit];
-    
+	struct rtc_softc *sc;
+
+	sc = vdev_privdata(devvp);
 	sc->sc_flags &= ~RTC_OPEN;
 
 	return(0);
@@ -379,8 +383,8 @@ rtcclose(dev, flag, mode, p)
 
 
 int
-rtcread(dev, uio, flag)
-	dev_t dev;
+rtcread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -428,8 +432,8 @@ twodigits(buffer, pos)
 }
 
 int
-rtcwrite(dev, uio, flag)
-	dev_t dev;
+rtcwrite(devvp, uio, flag)	
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -474,14 +478,14 @@ rtcwrite(dev, uio, flag)
 
 
 int
-rtcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+rtcioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-/*	struct rtc_softc *sc = rtc_cd.cd_devs[minor(dev)];*/
+/*	struct rtc_softc *sc = vdev_privdata(devvp);*/
 
 /*	switch (cmd) {
 	case RTCIOC_READ:

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.18 2001/05/26 21:24:38 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.18.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 
@@ -118,7 +119,7 @@ static	void	dlxint (void *);
 static	void	dlstart (struct tty *);
 static	int	dlparam (struct tty *, struct termios *);
 static	void	dlbrk (struct dl_softc *, int);
-struct	tty *	dltty (dev_t);
+struct	tty *	dltty (struct vnode *);
 
 cdev_decl(dl);
 
@@ -281,12 +282,14 @@ dlxint(void *arg)
 }
 
 int
-dlopen(dev_t dev, int flag, int mode, struct proc *p)
+dlopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	struct dl_softc *sc;
 	int unit;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = minor(dev);
 
 	if (unit >= dl_cd.cd_ndevs || dl_cd.cd_devs[unit] == NULL)
@@ -298,7 +301,9 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 		return ENODEV;
 	tp->t_oproc = dlstart;
 	tp->t_param = dlparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
+
+	vdev_setprivdata(devvp, sc);
 
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
@@ -315,14 +320,14 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 	} else if ((tp->t_state & TS_XCLUDE) && p->p_ucred->cr_uid != 0)
 		return EBUSY;
 
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(devvp, tp));
 }
 
 /*ARGSUSED*/
 int
-dlclose(dev_t dev, int flag, int mode, struct proc *p)
+dlclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -334,36 +339,37 @@ dlclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-dlread(dev_t dev, struct uio *uio, int flag)
+dlread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-dlwrite(dev_t dev, struct uio *uio, int flag)
+dlwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-dlpoll(dev_t dev, int events, struct proc *p)
+dlpoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
+dlioctl(struct vnode *devvp, unsigned long cmd, caddr_t data, int flag,
+	struct proc *p)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = vdev_privdata(devvp);
         struct tty *tp = sc->sc_tty;
         int error;
 
@@ -397,9 +403,9 @@ dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 struct tty *
-dltty(dev_t dev)
+dltty(struct vnode *devvp)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = vdev_privdata(devvp);
 
 	return sc->sc_tty;
 }
@@ -417,7 +423,7 @@ dlstop(struct tty *tp, int flag)
 static void
 dlstart(struct tty *tp)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(tp->t_dev)];
+	struct dl_softc *sc = vdev_privdata(tp->t_devvp);
 	int s = spltty();
 
         if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))

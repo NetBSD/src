@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.4.24.1 2001/10/01 12:38:23 fvdl Exp $	*/
+/*	$NetBSD: lms.c,v 1.4.24.2 2001/10/10 11:56:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -147,12 +147,13 @@ lmsattach(parent, self, aux)
 }
 
 int
-lmsopen(dev, flag, mode, p)
-	dev_t dev;
+lmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = LMSUNIT(dev);
 	struct lms_softc *sc;
 
@@ -167,6 +168,8 @@ lmsopen(dev, flag, mode, p)
 
 	if (clalloc(&sc->sc_q, LMS_BSIZE, 0) == -1)
 		return ENOMEM;
+
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state |= LMS_OPEN;
 	sc->sc_status = 0;
@@ -185,8 +188,9 @@ lmsclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc;
 
+	sc = vdev_privdata(devvp);
 	/* Disable interrupts. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMS_CNTRL, 0x10);
 
@@ -198,16 +202,18 @@ lmsclose(dev, flag, mode, p)
 }
 
 int
-lmsread(dev, uio, flag)
-	dev_t dev;
+lmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc;
 	int s;
 	int error = 0;
 	size_t length;
 	u_char buffer[LMS_CHUNK];
+
+	sc = vdev_privdata(devvp);
 
 	/* Block until mouse activity occurred. */
 
@@ -246,17 +252,19 @@ lmsread(dev, uio, flag)
 }
 
 int
-lmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+lmsioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc;
 	struct mouseinfo info;
 	int s;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case MOUSEIOCREAD:
@@ -361,14 +369,16 @@ lmsintr(arg)
 }
 
 int
-lmspoll(dev, events, p)
-	dev_t dev;
+lmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc;
 	int revents = 0;
 	int s = spltty();
+
+	sc = vdev_privdata(devvp);
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (sc->sc_q.c_cc > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.6 1999/06/15 15:04:56 minoura Exp $	*/
+/*	$NetBSD: sram.c,v 1.6.14.1 2001/10/10 11:56:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -36,6 +36,7 @@
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <machine/sram.h>
 #include <x68k/dev/sramvar.h>
@@ -52,9 +53,9 @@ int sramdebug = SRAM_DEBUG_IOCTL;
 #endif
 
 void sramattach __P((int));
-int sramopen __P((dev_t, int));
-void sramclose __P((dev_t, int));
-int sramioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int sramopen __P((struct vnode *, int, int, struct proc *));
+void sramclose __P((struct vnode *, int, int, struct proc *));
+int sramioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
 
 /* 
  *  functions for probeing.
@@ -75,10 +76,12 @@ sramattach(num)
 
 /*ARGSUSED*/
 int
-sramopen(dev, flags)
-	dev_t dev;
-	int flags;
+sramopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
+	int flags, fmt;
+	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct sram_softc *su = &sram_softc;
 
 #ifdef DEBUG
@@ -104,9 +107,10 @@ sramopen(dev, flags)
 
 /*ARGSUSED*/
 void
-sramclose (dev, flags)
-	dev_t dev;
-	int flags;
+sramclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
+	int flags, fmt;
+	struct proc *p;
 {
 	struct sram_softc *su = &sram_softc;
 
@@ -126,8 +130,8 @@ extern
 
 /*ARGSUSED*/
 int
-sramioctl (dev, cmd, data, flag, p)
-	dev_t dev;
+sramioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.7 2000/03/23 06:47:33 thorpej Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.7.6.1 2001/10/10 11:56:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -55,6 +55,7 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <x68k/x68k/iodevice.h>
 #include <machine/opmbellio.h>
@@ -145,11 +146,12 @@ bellattach(num)
 }
 
 int
-bellopen(dev, flags, mode, p)
-	dev_t dev;
+bellopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register int unit = UNIT(dev);
 	register struct bell_softc *sc = &bell_softc[unit];
 
@@ -159,6 +161,8 @@ bellopen(dev, flags, mode, p)
 	if (sc->sc_flags & BELLF_OPEN)
 		return EBUSY;
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags |= BELLF_OPEN;
 	sc->sc_flags |= (flags & (FREAD | FWRITE));
 
@@ -166,28 +170,27 @@ bellopen(dev, flags, mode, p)
 }
 
 int
-bellclose(dev, flags, mode, p)
-	dev_t dev;
+bellclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = UNIT(dev);
-	struct bell_softc *sc = &bell_softc[unit];
+	struct bell_softc *sc = vdev_privdata(devvp);
 
 	sc->sc_flags &= ~BELLF_OPEN;
 	return 0;
 }
 
 int
-bellioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+bellioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	int unit = UNIT(dev);
-	struct bell_softc *sc = &bell_softc[unit];
+	struct bell_softc *sc = vdev_privdata(devvp);
+	int unit = UNIT(vdev_rdev(devvp));
 
 	switch (cmd) {
 	case BELLIOCGPARAM:

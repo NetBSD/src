@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2001/04/20 16:58:19 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11.4.1 2001/10/10 11:56:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -45,6 +45,7 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #define	b_cylinder	b_resid
 
@@ -56,8 +57,8 @@
  * string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -74,10 +75,10 @@ readdisklabel(dev, strat, lp, osdep)
 	lp->d_partitions[0].p_offset = 0;
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp))
@@ -98,6 +99,7 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -147,28 +149,34 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	int labelpart;
 	int error = 0;
+#if 0
+	int labelpart;
+	dev_t dev = vdev_rdev(devvp);
 
+	/*
+	 * Not needed, B_DKLABEL makes sure the raw partition is used.
+	 */
 	labelpart = DISKPART(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
 		if (lp->d_partitions[0].p_offset != 0)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
+#endif
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
@@ -180,7 +188,7 @@ writedisklabel(dev, strat, lp, osdep)
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
 			bp->b_flags &= ~(B_READ|B_DONE);
-			bp->b_flags |= B_WRITE;
+			bp->b_flags |= B_WRITE | B_DKLABEL;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;
@@ -188,6 +196,7 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	error = ESRCH;
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 }
@@ -203,10 +212,19 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = &lp->d_partitions[DISKPART(bp->b_dev)];
+	dev_t dev = vdev_rdev(bp->b_devvp);
+	struct partition *p;
 	int labelsect = lp->d_partitions[0].p_offset;
-	int maxsz = p->p_size;
+	int part;
+	int maxsz;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(dev);
+	p = &lp->d_partitions[part];
+	maxsz = p->p_size;
 
 	/* Overwriting disk label? */
 	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.47 2001/05/30 15:24:29 lukem Exp $	*/
+/*	$NetBSD: dcm.c,v 1.47.4.1 2001/10/10 11:56:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -297,7 +298,7 @@ void	dcmmint __P((struct dcm_softc *, int, int));
 int	dcmparam __P((struct tty *, struct termios *));
 void	dcmstart __P((struct tty *));
 void	dcmstop __P((struct tty *, int));
-int	dcmmctl __P((dev_t, int, int));
+int	dcmmctl __P((struct vnode *, int, int));
 void	dcmsetischeme __P((int, int));
 void	dcminit __P((struct dcmdevice *, int, int));
 
@@ -467,8 +468,8 @@ dcmattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-dcmopen(dev, flag, mode, p)
-	dev_t dev;
+dcmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -476,6 +477,7 @@ dcmopen(dev, flag, mode, p)
 	struct tty *tp;
 	int unit, brd, port;
 	int error = 0, mbits, s;
+	dev_t dev = vdev_rdev(devvp);
 
 	unit = DCMUNIT(dev);
 	brd = DCMBOARD(unit);
@@ -496,12 +498,14 @@ dcmopen(dev, flag, mode, p)
 
 	tp->t_oproc = dcmstart;
 	tp->t_param = dcmparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
 
 	s = spltty();
 
@@ -528,11 +532,11 @@ dcmopen(dev, flag, mode, p)
 		if (sc->sc_flags & DCM_STDDCE)
 			mbits |= MO_SR;	/* pin 23, could be used as RTS */
 
-		(void) dcmmctl(dev, mbits, DMSET);	/* enable port */
+		(void) dcmmctl(devvp, mbits, DMSET);	/* enable port */
 
 		/* Set soft-carrier if so configured. */
 		if ((sc->sc_softCAR & (1 << port)) ||
-		    (dcmmctl(dev, MO_OFF, DMGET) & MI_CD))
+		    (dcmmctl(devvp, MO_OFF, DMGET) & MI_CD))
 			tp->t_state |= TS_CARR_ON;
 	}
 
@@ -554,7 +558,7 @@ dcmopen(dev, flag, mode, p)
 		printf("%s port %d: dcmopen: st %x fl %x\n",
 			sc->sc_dev.dv_xname, port, tp->t_state, tp->t_flags);
 #endif
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 
  bad:
 	return (error);
@@ -562,20 +566,18 @@ dcmopen(dev, flag, mode, p)
  
 /*ARGSUSED*/
 int
-dcmclose(dev, flag, mode, p)
-	dev_t dev;
+dcmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int s, unit, board, port;
+	int s, port;
 	struct dcm_softc *sc;
 	struct tty *tp;
  
-	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
-	port = DCMPORT(unit);
+	port = DCMPORT(DCMUNIT(vdev_rdev(devvp)));
 
-	sc = dcm_cd.cd_devs[board];
+	sc = vdev_privdata(devvp);
 	tp = sc->sc_tty[port];
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -584,7 +586,7 @@ dcmclose(dev, flag, mode, p)
 
 	if (tp->t_cflag & HUPCL || tp->t_wopen != 0 ||
 	    (tp->t_state & TS_ISOPEN) == 0)
-		(void) dcmmctl(dev, MO_OFF, DMSET);
+		(void) dcmmctl(devvp, MO_OFF, DMSET);
 #ifdef DEBUG
 	if (dcmdebug & DDB_OPENCLOSE)
 		printf("%s port %d: dcmclose: st %x fl %x\n",
@@ -601,77 +603,65 @@ dcmclose(dev, flag, mode, p)
 }
  
 int
-dcmread(dev, uio, flag)
-	dev_t dev;
+dcmread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	int unit, board, port;
+	int port;
 	struct dcm_softc *sc;
 	struct tty *tp;
 
-	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
-	port = DCMPORT(unit);
-
-	sc = dcm_cd.cd_devs[board];
+	port = DCMPORT(DCMUNIT(vdev_rdev(devvp)));
+	sc = vdev_privdata(devvp);
 	tp = sc->sc_tty[port];
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-dcmwrite(dev, uio, flag)
-	dev_t dev;
+dcmwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	int unit, board, port;
+	int port;
 	struct dcm_softc *sc;
 	struct tty *tp;
 
-	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
-	port = DCMPORT(unit);
-
-	sc = dcm_cd.cd_devs[board];
+	port = DCMPORT(DCMUNIT(vdev_rdev(devvp)));
+	sc = vdev_privdata(devvp);
 	tp = sc->sc_tty[port];
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-dcmpoll(dev, events, p)
-	dev_t dev;
+dcmpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	int unit, board, port;
+	int port;
 	struct dcm_softc *sc;
 	struct tty *tp;
 
-	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
-	port = DCMPORT(unit);
-
-	sc = dcm_cd.cd_devs[board];
+	port = DCMPORT(DCMUNIT(vdev_rdev(devvp)));
+	sc = vdev_privdata(devvp);
 	tp = sc->sc_tty[port];
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-dcmtty(dev)
-	dev_t dev;
+dcmtty(devvp)
+	struct vnode *devvp;
 {
-	int unit, board, port;
+	int port;
 	struct dcm_softc *sc;
 
-	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
-	port = DCMPORT(unit);
-
-	sc = dcm_cd.cd_devs[board];
+	port = DCMPORT(DCMUNIT(vdev_rdev(devvp)));
+	sc = vdev_privdata(devvp);
 
 	return (sc->sc_tty[port]);
 }
@@ -819,6 +809,7 @@ dcmreadbuf(sc, port)
 	int c, stat;
 	u_int head;
 	int nch = 0;
+	dev_t dev;
 #ifdef DCMSTATS
 	struct dcmstats *dsp = &sc->sc_stats;
 
@@ -828,9 +819,11 @@ dcmreadbuf(sc, port)
 	if (tp == NULL)
 		return;
 
+	dev = vdev_rdev(tp->t_devvp);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
-		if ((makedev(dcmmajor, minor(tp->t_dev)) == kgdb_dev) &&
+		if ((makedev(dcmmajor, minor(dev)) == kgdb_dev) &&
 		    (head = pp->r_head & RX_MASK) != (pp->r_tail & RX_MASK) &&
 		    dcm->dcm_rfifos[3-port][head>>1].data_char == FRAME_START) {
 			pp->r_head = (head + 2) & RX_MASK;
@@ -963,8 +956,8 @@ dcmmint(sc, port, mcnd)
 }
 
 int
-dcmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+dcmioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -973,13 +966,11 @@ dcmioctl(dev, cmd, data, flag, p)
 	struct dcm_softc *sc;
 	struct tty *tp;
 	struct dcmdevice *dcm;
-	int board, port, unit = DCMUNIT(dev);
+	int port;
 	int error, s;
 
-	port = DCMPORT(unit);
-	board = DCMBOARD(unit);
-
-	sc = dcm_cd.cd_devs[board];
+	port = DCMPORT(DCMUNIT(vdev_rdev(devvp)));
+	sc = vdev_privdata(devvp);
 	dcm = sc->sc_dcm;
 	tp = sc->sc_tty[port];
  
@@ -1018,27 +1009,27 @@ dcmioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) dcmmctl(dev, MO_ON, DMBIS);
+		(void) dcmmctl(devvp, MO_ON, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) dcmmctl(dev, MO_ON, DMBIC);
+		(void) dcmmctl(devvp, MO_ON, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) dcmmctl(dev, *(int *)data, DMSET);
+		(void) dcmmctl(devvp, *(int *)data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) dcmmctl(dev, *(int *)data, DMBIS);
+		(void) dcmmctl(devvp, *(int *)data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) dcmmctl(dev, *(int *)data, DMBIC);
+		(void) dcmmctl(devvp, *(int *)data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = dcmmctl(dev, 0, DMGET);
+		*(int *)data = dcmmctl(devvp, 0, DMGET);
 		break;
 
 	case TIOCGFLAGS: {
@@ -1090,7 +1081,7 @@ dcmparam(tp, t)
 	int unit, board, port, mode, cflag = t->c_cflag;
 	int ospeed = ttspeedtab(t->c_ospeed, dcmspeedtab);
 
-	unit = DCMUNIT(tp->t_dev);
+	unit = DCMUNIT(vdev_rdev(tp->t_devvp));
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
@@ -1105,7 +1096,7 @@ dcmparam(tp, t)
         tp->t_ospeed = t->c_ospeed;
         tp->t_cflag = cflag;
 	if (ospeed == 0) {
-		(void) dcmmctl(DCMUNIT(tp->t_dev), MO_OFF, DMSET);
+		(void) dcmmctl(tp->t_devvp, MO_OFF, DMSET);
 		return (0);
 	}
 
@@ -1177,7 +1168,7 @@ dcmstart(tp)
 	int tch = 0;
 #endif
 
-	unit = DCMUNIT(tp->t_dev);
+	unit = DCMUNIT(vdev_rdev(tp->t_devvp));
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
@@ -1309,19 +1300,18 @@ dcmstop(tp, flag)
  * Modem control
  */
 int
-dcmmctl(dev, bits, how)
-	dev_t dev;
+dcmmctl(devvp, bits, how)
+	struct vnode *devvp;
 	int bits, how;
 {
 	struct dcm_softc *sc;
 	struct dcmdevice *dcm;
-	int s, unit, brd, port, hit = 0;
+	int s, port, unit, hit = 0;
 
-	unit = DCMUNIT(dev);
-	brd = DCMBOARD(unit);
+	unit = DCMUNIT(vdev_rdev(devvp));
 	port = DCMPORT(unit);
 
-	sc = dcm_cd.cd_devs[brd];
+	sc = vdev_privdata(devvp);
 	dcm = sc->sc_dcm;
 
 #ifdef DEBUG

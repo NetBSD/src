@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37.2.1 2001/10/01 12:37:15 fvdl Exp $	*/
+/*	$NetBSD: grf.c,v 1.37.2.2 2001/10/10 11:55:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,13 +82,13 @@
 #define ite_reinit(d)
 #endif
 
-int grfon __P((dev_t));
-int grfoff __P((dev_t));
-int grfsinfo __P((dev_t, struct grfdyninfo *));
+int grfon __P((struct vnode *));
+int grfoff __P((struct vnode *));
+int grfsinfo __P((struct vnode *, struct grfdyninfo *));
 #ifdef BANKEDDEVPAGER
-int grfbanked_get __P((dev_t, off_t, int));
-int grfbanked_cur __P((dev_t));
-int grfbanked_set __P((dev_t, int));
+int grfbanked_get __P((struct vnode *, off_t, int));
+int grfbanked_cur __P((struct vnode *));
+int grfbanked_set __P((struct vnode *, int));
 #endif
 
 void grfattach __P((struct device *, struct device *, void *));
@@ -176,12 +176,15 @@ grfprint(auxp, pnp)
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, devtype, p)
-	dev_t dev;
+grfopen(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
 	struct grf_softc *gp;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (GRFUNIT(dev) >= NGRF || (gp = grfsp[GRFUNIT(dev)]) == NULL)
 		return(ENXIO);
@@ -192,29 +195,31 @@ grfopen(dev, flags, devtype, p)
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
 
+	vdev_setprivdata(devvp, gp);
+
 	return(0);
 }
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
-	dev_t dev;
+grfclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
 	struct grf_softc *gp;
 
-	gp = grfsp[GRFUNIT(dev)];
-	(void)grfoff(dev);
+	gp = vdev_privdata(devvp);
+	(void)grfoff(devvp);
 	gp->g_flags &= GF_ALIVE;
 	return(0);
 }
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+grfioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -222,8 +227,10 @@ grfioctl(dev, cmd, data, flag, p)
 {
 	struct grf_softc *gp;
 	int error;
+	dev_t dev;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 	error = 0;
 
 	switch (cmd) {
@@ -235,13 +242,13 @@ grfioctl(dev, cmd, data, flag, p)
 		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
 		break;
 	case GRFIOCON:
-		error = grfon(dev);
+		error = grfon(devvp);
 		break;
 	case GRFIOCOFF:
-		error = grfoff(dev);
+		error = grfoff(devvp);
 		break;
 	case GRFIOCSINFO:
-		error = grfsinfo(dev, (struct grfdyninfo *) data);
+		error = grfsinfo(devvp, (struct grfdyninfo *) data);
 		break;
 	case GRFGETVMODE:
 		return(gp->g_mode(gp, GM_GRFGETVMODE, data, 0, 0));
@@ -292,7 +299,7 @@ grfioctl(dev, cmd, data, flag, p)
 		 * XXX 
 		 */
 		if (GRFUNIT(dev) == 0)
-			return(viewioctl(dev, cmd, data, flag, p));
+			return(viewioctl(devvp, cmd, data, flag, p));
 #endif
 		error = EINVAL;
 		break;
@@ -303,8 +310,8 @@ grfioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-grfpoll(dev, events, p)
-	dev_t dev;
+grfpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -316,15 +323,15 @@ grfpoll(dev, events, p)
  * memory space.
  */
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t dev;
+grfmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
 	struct grf_softc *gp;
 	struct grfinfo *gi;
 	
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
 	gi = &gp->g_display;
 
 	/* 
@@ -349,12 +356,14 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfon(dev)
-	dev_t dev;
+grfon(devvp)
+	struct vnode *devvp;
 {
 	struct grf_softc *gp;
+	dev_t dev;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 
 	if (gp->g_flags & GF_GRFON)
 		return(0);
@@ -368,13 +377,15 @@ grfon(dev)
 }
 
 int
-grfoff(dev)
-	dev_t dev;
+grfoff(devvp)
+	struct vnode *devvp;
 {
 	struct grf_softc *gp;
 	int error;
+	dev_t dev;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 
 	if ((gp->g_flags & GF_GRFON) == 0)
 		return(0);
@@ -393,14 +404,14 @@ grfoff(dev)
 }
 
 int
-grfsinfo(dev, dyninfo)
-	dev_t dev;
+grfsinfo(devvp, dyninfo)
+	struct vnode *devvp;
 	struct grfdyninfo *dyninfo;
 {
 	struct grf_softc *gp;
 	int error;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
 	error = gp->g_mode(gp, GM_GRFCONFIG, dyninfo, 0, 0);
 
 	/*
@@ -414,8 +425,8 @@ grfsinfo(dev, dyninfo)
 #ifdef BANKEDDEVPAGER
 
 int
-grfbanked_get (dev, off, prot)
-     dev_t dev;
+grfbanked_get (devvp, off, prot)
+     struct vnode *devvp;
      off_t off;
      int   prot;
 {
@@ -423,7 +434,7 @@ grfbanked_get (dev, off, prot)
 	struct grfinfo *gi;
 	int error, bank;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
 	gi = &gp->g_display;
 
 	off -= gi->gd_regsize;
@@ -435,26 +446,26 @@ grfbanked_get (dev, off, prot)
 }
 
 int
-grfbanked_cur (dev)
-	dev_t dev;
+grfbanked_cur (devvp)
+	struct vnode *devvp;
 {
 	struct grf_softc *gp;
 	int error, bank;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
 
 	error = gp->g_mode(gp, GM_GRFGETCURBANK, &bank, 0, 0);
 	return(error ? -1 : bank);
 }
 
 int
-grfbanked_set (dev, bank)
-	dev_t dev;
+grfbanked_set (devvp, bank)
+	struct vnode *devvp;
 	int bank;
 {
 	struct grf_softc *gp;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
 	return(gp->g_mode(gp, GM_GRFSETBANK, &bank, 0, 0) ? -1 : 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.4 2001/07/05 08:38:24 toshii Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.4.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_red.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -219,8 +219,8 @@ static void fv_dropbyred __P((struct flowvalve *fv, struct altq_pktattr *,
 altqdev_decl(red);
 
 int
-redopen(dev, flag, fmt, p)
-	dev_t dev;
+redopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -229,8 +229,8 @@ redopen(dev, flag, fmt, p)
 }
 
 int
-redclose(dev, flag, fmt, p)
-	dev_t dev;
+redclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -248,8 +248,8 @@ redclose(dev, flag, fmt, p)
 }
 
 int
-redioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+redioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.5 2001/08/05 11:16:56 jdolecek Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.5.2.1 2001/10/10 11:57:05 fvdl Exp $ 
  *
  * $FreeBSD$
  *
@@ -68,6 +68,7 @@
 
 #ifdef __NetBSD__
 #include <sys/types.h>
+#include <sys/vnode.h>
 #endif
 
 #if defined(__FreeBSD__)
@@ -133,13 +134,13 @@ static void *devfs_token;
 
 #define	PDEVSTATIC	/* - not static - */
 PDEVSTATIC void i4battach __P((void));
-PDEVSTATIC int i4bopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int i4bclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int i4bread __P((dev_t dev, struct uio *uio, int ioflag));
-PDEVSTATIC int i4bioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC int i4bopen __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int i4bclose __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int i4bread __P((struct vnode * dev, struct uio *uio, int ioflag));
+PDEVSTATIC int i4bioctl __P((struct vnode * dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 #ifdef OS_USES_POLL
-PDEVSTATIC int i4bpoll __P((dev_t dev, int events, struct proc *p));
+PDEVSTATIC int i4bpoll __P((struct vnode * dev, int events, struct proc *p));
 #else
 PDEVSTATIC int i4bselect __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -279,11 +280,11 @@ i4battach()
  *	i4bopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
+i4bopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	int x;
 
-	if(minor(dev))
+	if(minor(vdev_rdev(devvp)))
 		return(ENXIO);
 
 	if(openflag)
@@ -301,7 +302,7 @@ i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
+i4bclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	int x = splnet();
 	openflag = 0;
@@ -315,13 +316,13 @@ i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bread - device driver read routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bread(dev_t dev, struct uio *uio, int ioflag)
+i4bread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
 	struct mbuf *m;
 	int x;
 	int error = 0;
 
-	if(minor(dev))
+	if(minor(vdev_rdev(devvp)))
 		return(ENODEV);
 
 	x = splnet();
@@ -354,12 +355,12 @@ i4bread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+i4bioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	call_desc_t *cd;
 	int error = 0;
 	
-	if(minor(dev))
+	if(minor(vdev_rdev(devvp)))
 		return(ENODEV);
 
 	switch(cmd)
@@ -927,11 +928,11 @@ i4bselect(dev_t dev, int rw, struct proc *p)
  *	i4bpoll - device driver poll routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bpoll(dev_t dev, int events, struct proc *p)
+i4bpoll(struct vnode *devvp, int events, struct proc *p)
 {
 	int x;
 	
-	if(minor(dev))
+	if(minor(vdev_rdev(devvp)))
 		return(ENODEV);
 
 	if((events & POLLIN) || (events & POLLRDNORM))

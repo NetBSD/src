@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 1999/03/27 01:21:37 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.17.20.1 2001/10/10 11:56:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -659,7 +659,7 @@ zscnputc(dev, c)
 	zs_putc(c);
 }
 
-extern int zsopen(dev_t, int, int, struct proc *);
+extern int zsopen(struct vnode *, int, int, struct proc *);
 
 void
 zscnprobe(cd)

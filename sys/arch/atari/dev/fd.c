@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37 2001/07/26 22:55:13 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.2.1 2001/10/10 11:55:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -217,7 +217,7 @@ static void	fdminphys __P((struct buf *));
 static void	fdtestdrv __P((struct fd_softc *));
 static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
 		    int));
-static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
+static int	fdgetdisklabel __P((struct fd_softc *, struct vnode *));
 static int	fdselect __P((int, int, int));
 static void	fddeselect __P((void));
 static void	fdmoff __P((struct fd_softc *));
@@ -406,8 +406,8 @@ void		*auxp;
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-dev_t		dev;
+fdioctl(devvp, cmd, addr, flag, p)
+struct vnode 	*devvp;
 u_long		cmd;
 int		flag;
 caddr_t		addr;
@@ -415,7 +415,7 @@ struct proc	*p;
 {
 	struct fd_softc *sc;
 
-	sc = getsoftc(fd_cd, DISKUNIT(dev));
+	sc = vdev_privdata(devvp);
 
 	if((sc->flags & FLPF_HAVELAB) == 0)
 		return(EBADF);
@@ -457,13 +457,16 @@ struct proc	*p;
  *	partition 1: 780Kb
  */
 int
-fdopen(dev, flags, devtype, proc)
-dev_t		dev;
+fdopen(devvp, flags, devtype, proc)
+struct vnode	*devvp;
 int		flags, devtype;
 struct proc	*proc;
 {
 	struct fd_softc	*sc;
 	int		sps;
+	dev_t		dev;
+
+	dev = vdev_rdev(devvp);
 
 #ifdef FLP_DEBUG
 	printf("fdopen dev=0x%x\n", dev);
@@ -488,6 +491,8 @@ struct proc	*proc;
 		write_fdreg(FDC_CS, IRUPT);
 		delay(40);
 	}
+
+	vdev_setprivdata(devvp, sc);
 
 	/*
 	 * Sleep while other process is opening the device
@@ -551,7 +556,7 @@ struct proc	*proc;
 		if(sc->density != fdtypes[DISKPART(dev)].density)
 			return(ENXIO);	/* XXX temporarely out of business */
 	}
-	fdgetdisklabel(sc, dev);
+	fdgetdisklabel(sc, devvp);
 #ifdef FLP_DEBUG
 	printf("fdopen open succeeded on type %d\n", sc->part);
 #endif
@@ -559,14 +564,15 @@ struct proc	*proc;
 }
 
 int
-fdclose(dev, flags, devtype, proc)
-dev_t		dev;
+fdclose(devvp, flags, devtype, proc)
+struct vnode	*devvp;
 int		flags, devtype;
 struct proc	*proc;
 {
 	struct fd_softc	*sc;
 
-	sc = getsoftc(fd_cd, DISKUNIT(dev));
+	sc = vdev_privdata(devvp);
+
 	free_stmem(sc->bounceb);
 	sc->flags = 0;
 	nopens--;
@@ -585,7 +591,7 @@ struct buf	*bp;
 	struct disklabel *lp;
 	int		 sps, sz;
 
-	sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev));
+	sc = vdev_privdata(bp->b_devvp);
 
 #ifdef FLP_DEBUG
 	printf("fdstrategy: %p, b_bcount: %ld\n", bp, bp->b_bcount);
@@ -671,21 +677,21 @@ dev_t dev;
 }
 
 int
-fdread(dev, uio, flags)
-dev_t		dev;
+fdread(devvp, uio, flags)
+struct vnode	*devvp;
 struct uio	*uio;
 int		flags;
 {
-	return(physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio));
+	return(physio(fdstrategy, NULL, devvp, B_READ, fdminphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-dev_t		dev;
+fdwrite(devvp, uio, flags)
+struct vnode	*devvp;
 struct uio	*uio;
 int		flags;
 {
-	return(physio(fdstrategy, NULL, dev, B_WRITE, fdminphys, uio));
+	return(physio(fdstrategy, NULL, devvp, B_WRITE, fdminphys, uio));
 }
 
 /*
@@ -1358,9 +1364,9 @@ fdgetdefaultlabel(sc, lp, part)
  * from 'sc'.
  */
 static int
-fdgetdisklabel(sc, dev)
+fdgetdisklabel(sc, devvp)
 struct fd_softc *sc;
-dev_t			dev;
+struct vnode *devvp;
 {
 	struct disklabel	*lp;
 	int			part;

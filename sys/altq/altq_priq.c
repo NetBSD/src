@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.3.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -79,9 +79,6 @@ static struct mbuf *priq_getq __P((struct priq_class *));
 static struct mbuf *priq_pollq __P((struct priq_class *));
 static void priq_purgeq __P((struct priq_class *));
 
-int priqopen __P((dev_t, int, int, struct proc *));
-int priqclose __P((dev_t, int, int, struct proc *));
-int priqioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
 static int priqcmd_if_attach __P((struct priq_interface *));
 static int priqcmd_if_detach __P((struct priq_interface *));
 static int priqcmd_add_class __P((struct priq_add_class *));
@@ -494,8 +491,8 @@ priq_purgeq(cl)
  * priq device interface
  */
 int
-priqopen(dev, flag, fmt, p)
-	dev_t dev;
+priqopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -504,8 +501,8 @@ priqopen(dev, flag, fmt, p)
 }
 
 int
-priqclose(dev, flag, fmt, p)
-	dev_t dev;
+priqclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -528,8 +525,8 @@ priqclose(dev, flag, fmt, p)
 }
 
 int
-priqioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+priqioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

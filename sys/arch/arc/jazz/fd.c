@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 2001/07/08 18:06:43 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.3.4.1 2001/10/10 11:55:53 fvdl Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -91,6 +91,7 @@
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -413,7 +414,7 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
+	struct fd_softc *fd = vdev_privdata(bp->b_devvp);
 	int sz;
  	int s;
 
@@ -527,23 +528,23 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -643,15 +644,17 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, p)
-	dev_t dev;
+fdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
 	struct fd_softc *fd;
 	const struct fd_type *type;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	fd = device_lookup(&fd_cd, FDUNIT(dev));
 	if (fd == NULL)
 		return ENXIO;
@@ -669,18 +672,21 @@ fdopen(dev, flags, mode, p)
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
+	vdev_setprivdata(devvp, fd);
+
 	return 0;
 }
 
 int
-fdclose(dev, flags, mode, p)
-	dev_t dev;
+fdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd;
 
+	fd = vdev_privdata(devvp);
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
 }
@@ -1112,16 +1118,18 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd;
 	struct disklabel buffer;
 	int error;
+
+	fd = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -1131,7 +1139,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(devvp, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1152,7 +1160,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(devvp, fdstrategy, &buffer, NULL);
 		return error;
 
 	default:

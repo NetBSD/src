@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_acorn.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
+/*	$NetBSD: disklabel_acorn.h,v 1.1.4.1 2001/10/10 11:55:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -110,12 +110,13 @@ struct filecore_bootblock {
 struct buf;
 struct cpu_disklabel;
 struct disklabel;
+struct vnode;
 
 /* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
-int	filecore_label_read __P((dev_t, void (*)(struct buf *),
+int	filecore_label_read __P((struct vnode *, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *, char **, int *,
 	    int *));
 /* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
-int	filecore_label_locate __P((dev_t, void (*)(struct buf *),
+int	filecore_label_locate __P((struct vnode *, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif

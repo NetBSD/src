@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.13 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.13.2.1 2001/10/10 11:56:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -219,14 +220,16 @@ satlinkattach(parent, self, aux)
 }
 
 int
-satlinkopen(dev, flags, fmt, p)
-	dev_t dev;
+satlinkopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
 	struct satlink_softc *sc;
 	int error;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = device_lookup(&satlink_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
@@ -247,6 +250,8 @@ satlinkopen(dev, flags, fmt, p)
 	if (error)
 		return (error);
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags |= SATF_ISOPEN;
 
 	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
@@ -255,12 +260,12 @@ satlinkopen(dev, flags, fmt, p)
 }
 
 int
-satlinkclose(dev, flags, fmt, p)
-	dev_t dev;
+satlinkclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc = vdev_privdata(devvp);
 	int s;
 
 	s = splsoftclock();
@@ -274,12 +279,12 @@ satlinkclose(dev, flags, fmt, p)
 }
 
 int
-satlinkread(dev, uio, flags)
-	dev_t dev;
+satlinkread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc = vdev_privdata(devvp);
 	int error, s, count, sptr;
 	int wrapcnt, oresid;
 
@@ -347,8 +352,8 @@ satlinkread(dev, uio, flags)
 }
 
 int
-satlinkwrite(dev, uio, flags)
-	dev_t dev;
+satlinkwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -357,14 +362,14 @@ satlinkwrite(dev, uio, flags)
 }
 
 int
-satlinkioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+satlinkioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case SATIORESET:
@@ -386,12 +391,12 @@ satlinkioctl(dev, cmd, data, flags, p)
 }
 
 int
-satlinkpoll(dev, events, p)
-	dev_t dev;
+satlinkpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc = vdev_privdata(devvp);
 	int s, revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);

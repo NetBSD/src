@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1.4.1 2001/10/10 11:56:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,6 +40,7 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 /*
  * Attempt to read a disk label from a device
@@ -57,8 +58,8 @@
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-	      struct cpu_disklabel *osdep)
+readdisklabel(struct vnode *devvp, void (*strat)(struct buf *),
+	      struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -81,11 +82,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp = geteblk((int)lp->d_secsize);
 
 	/* next, dig out disk label */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -152,6 +153,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 done:
 	bp->b_flags |= B_INVAL;
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -212,8 +214,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-	       struct cpu_disklabel *osdep)
+writedisklabel(struct vnode *devvp, void (*strat)(struct buf *),
+	       struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -230,11 +232,11 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -255,6 +257,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	error = ESRCH;
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 }
@@ -267,10 +270,16 @@ done:
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	struct partition *p;
 	int labelsector = lp->d_partitions[RAW_PART].p_offset + LABELSECTOR;
 	int sz;
+	int part;
 
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 
 	if (bp->b_blkno + sz > p->p_size) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.3.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -76,8 +77,8 @@ static void 		fifoq_purge __P((fifoq_state_t *));
 altqdev_decl(fifoq);
 
 int
-fifoqopen(dev, flag, fmt, p)
-	dev_t dev;
+fifoqopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -97,8 +98,8 @@ fifoqopen(dev, flag, fmt, p)
  *       is removed (only once with multiple simultaneous references.)
  */
 int
-fifoqclose(dev, flag, fmt, p)
-	dev_t dev;
+fifoqclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -116,8 +117,8 @@ fifoqclose(dev, flag, fmt, p)
 }
 
 int
-fifoqioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fifoqioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

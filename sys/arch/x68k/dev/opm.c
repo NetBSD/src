@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.6 2001/05/02 13:00:20 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.6.4.1 2001/10/10 11:56:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -125,8 +126,8 @@ __inline static void writeopm __P((int, int));
 __inline static int readopm __P((int));
 void opm_key_on __P((u_char));
 void opm_key_off __P((u_char));
-int opmopen __P((dev_t, int, int));
-int opmclose __P((dev_t));
+int opmopen __P((struct vnode *, int, int));
+int opmclose __P((struct vnode *));
 
 __inline static void
 writeopm(reg, dat)
@@ -259,8 +260,8 @@ opm_set_key(channel, tone)
 
 /*ARGSUSED*/
 int
-opmopen(dev, flag, mode)
-	dev_t dev;
+opmopen(devvp, flag, mode)
+	struct vnode *devvp;
 	int flag, mode;
 {
 	return 0;
@@ -268,8 +269,8 @@ opmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-opmclose(dev)
-	dev_t dev;
+opmclose(devvp)
+	struct vnode *devvp;
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6.2.1 2001/10/01 12:42:45 fvdl Exp $ */
+/*	$NetBSD: fb.c,v 1.6.2.2 2001/10/10 11:56:38 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/eeprom.h>
 #include <dev/sun/fbio.h>
@@ -82,30 +83,30 @@ fb_attach(fb, newpri)
 }
 
 int
-fbopen(dev, flags, mode, p)
-	dev_t dev;
+fbopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return ((*devfb->fb_driver->fbd_open)(dev, flags, mode, p));
+	return ((*devfb->fb_driver->fbd_open)(devvp, flags, mode, p));
 }
 
 int
-fbclose(dev, flags, mode, p)
-	dev_t dev;
+fbclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 
-	return ((*devfb->fb_driver->fbd_close)(dev, flags, mode, p));
+	return ((*devfb->fb_driver->fbd_close)(devvp, flags, mode, p));
 }
 
 int
-fbioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+fbioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
@@ -115,12 +116,12 @@ fbioctl(dev, cmd, data, flags, p)
 }
 
 paddr_t
-fbmmap(dev, off, prot)
-	dev_t dev;
+fbmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
+	return ((*devfb->fb_driver->fbd_mmap)(devvp, off, prot));
 }
 
 /*

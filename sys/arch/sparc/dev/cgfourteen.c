@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.20.2.1 2001/10/01 12:41:56 fvdl Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20.2.2 2001/10/10 11:56:31 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,6 +86,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -288,11 +289,12 @@ cgfourteenattach(parent, self, aux)
 static int cg14_opens = 0;
 
 int
-cgfourteenopen(dev, flags, mode, p)
-	dev_t dev;
+cgfourteenopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int unit = minor(dev);
 	int s, oldopens;
@@ -300,6 +302,8 @@ cgfourteenopen(dev, flags, mode, p)
 	if (unit >= cgfourteen_cd.cd_ndevs ||
 	    cgfourteen_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+
+	vdev_setprivdata(devvp, sc);
 
 	s = splhigh();
 	oldopens = cg14_opens++;
@@ -313,12 +317,12 @@ cgfourteenopen(dev, flags, mode, p)
 }
 
 int
-cgfourteenclose(dev, flags, mode, p)
-	dev_t dev;
+cgfourteenclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = vdev_privdata(devvp);
 	int s, opens;
 
 	s = splhigh();
@@ -337,14 +341,14 @@ cgfourteenclose(dev, flags, mode, p)
 }
 
 int
-cgfourteenioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cgfourteenioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = vdev_privdata(devvp);
 	struct fbgattr *fba;
 	union cg14cursor_cmap tcm;
 	int v, error;
@@ -534,12 +538,12 @@ cgfourteenunblank(dev)
  * to use?
  */
 paddr_t
-cgfourteenmmap(dev, off, prot)
-	dev_t dev;
+cgfourteenmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = vdev_privdata(devvp);
 
 #define CG3START	(128*1024 + 128*1024)
 #define CG8START	(256*1024)
@@ -595,13 +599,13 @@ cgfourteenmmap(dev, off, prot)
 }
 
 int
-cgfourteenpoll(dev, events, p)
-	dev_t dev;
+cgfourteenpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*

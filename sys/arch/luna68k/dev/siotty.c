@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $ */
+/* $NetBSD: siotty.c,v 1.8.4.1 2001/10/10 11:56:12 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8.4.1 2001/10/10 11:56:12 fvdl Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $");
 #include <sys/callout.h>
 #include <sys/fcntl.h>
 #include <dev/cons.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 
@@ -198,7 +199,7 @@ static void
 siostart(tp)
 	struct tty *tp;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(tp->t_dev)];
+	struct siotty_softc *sc = vdev_privdata(tp->t_devvp);
 	int s, c;
  
 	s = spltty();
@@ -246,7 +247,7 @@ sioparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(tp->t_dev)];
+	struct siotty_softc *sc = vdev_privdata(tp->t_devvp);
 	int wr4, s;
 
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
@@ -351,15 +352,17 @@ siomctl(sc, control, op)
 /*--------------------  cdevsw[] interface --------------------*/
 
 int
-sioopen(dev, flag, mode, p)
-	dev_t dev;
+sioopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct siotty_softc *sc;
 	struct tty *tp;
 	int error;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	if ((sc = siotty_cd.cd_devs[minor(dev)]) == NULL)
 		return ENXIO;
 	if ((tp = sc->sc_tty) == NULL) {
@@ -370,10 +373,12 @@ sioopen(dev, flag, mode, p)
 	    && p->p_ucred->cr_uid != 0)
 		return EBUSY;
 
+	vdev_setprivdata(devvp, sc);
+
 	tp->t_oproc = siostart;
 	tp->t_param = sioparam;
 	tp->t_hwiflow = NULL /* XXX siohwiflow XXX */;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		struct termios t;
 
@@ -402,16 +407,16 @@ sioopen(dev, flag, mode, p)
 	error = ttyopen(tp, 0, (flag & O_NONBLOCK));
 	if (error > 0)
 		return error;
-	return (*tp->t_linesw->l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(devvp, tp);
 }
  
 int
-sioclose(dev, flag, mode, p)
-	dev_t dev;
+sioclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 	int s;
 
@@ -432,50 +437,50 @@ sioclose(dev, flag, mode, p)
 }
  
 int
-sioread(dev, uio, flag)
-	dev_t dev;
+sioread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
  
 int
-siowrite(dev, uio, flag)
-	dev_t dev;
+siowrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-siopoll(dev, events, p)
-	dev_t dev;
+siopoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-sioioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+sioioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -526,10 +531,10 @@ sioioctl(dev, cmd, data, flag, p)
 
 /* ARSGUSED */
 struct tty *
-siotty(dev)
-	dev_t dev;
+siotty(devvp)
+	struct vnode *devvp;
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = vdev_privdata(devvp);
  
 	return sc->sc_tty;
 }

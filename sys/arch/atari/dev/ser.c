@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14 2001/05/02 10:32:15 scw Exp $	*/
+/*	$NetBSD: ser.c,v 1.14.4.1 2001/10/10 11:56:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <m68k/asm_single.h>
 
@@ -363,11 +364,12 @@ serstatus(sc, str)
 #endif /* SER_DEBUG */
 
 int
-seropen(dev, flag, mode, p)
-	dev_t dev;
+seropen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc;
 	struct tty *tp;
@@ -391,6 +393,8 @@ seropen(dev, flag, mode, p)
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
+	vdev_setprivdata(devvp, sc);
+
 	s = spltty();
 
 	/*
@@ -412,7 +416,7 @@ seropen(dev, flag, mode, p)
 	    tp->t_oproc = serstart;
 	    tp->t_param = serparam;
 	    tp->t_hwiflow = serhwiflow;
-	    tp->t_dev = dev;
+	    tp->t_devvp = devvp;
 
 	    /*
 	     * Initialize the termios status to the defaults.  Add in the
@@ -470,7 +474,7 @@ seropen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
         if (error)
 		goto bad;
 
@@ -489,14 +493,16 @@ bad:
 }
  
 int
-serclose(dev, flag, mode, p)
-	dev_t		dev;
+serclose(devvp, flag, mode, p)
+	struct vnode	*devvp;
 	int		flag, mode;
 	struct proc	*p;
 {
-	int unit = SERUNIT(dev);
-	struct ser_softc *sc = ser_cd.cd_devs[unit];
-	struct tty *tp = sc->sc_tty;
+	struct ser_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -518,63 +524,77 @@ serclose(dev, flag, mode, p)
 }
 
 int
-serread(dev, uio, flag)
-	dev_t dev;
+serread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct ser_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-serwrite(dev, uio, flag)
-	dev_t dev;
+serwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct ser_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-serpoll(dev, events, p)
-	dev_t dev;
+serpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct ser_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-sertty(dev)
-	dev_t dev;
+sertty(devvp)
+	struct vnode *devvp;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct ser_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return (tp);
 }
 
 int
-serioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+serioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = SERUNIT(dev);
-	struct ser_softc *sc = ser_cd.cd_devs[unit];
-	struct tty *tp = sc->sc_tty;
 	int error;
+	struct ser_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -680,10 +700,12 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc;
 	int ospeed = serspeed(t->c_ospeed);
 	u_char ucr;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
 
 	/* check requested parameters */
 	if (ospeed < 0)
@@ -894,7 +916,7 @@ serhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
 	if (sc->sc_mcr_rts == 0)
@@ -953,7 +975,7 @@ void
 serstart(tp)
 	struct tty *tp;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
 	s = spltty();
@@ -1025,7 +1047,7 @@ serstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
 	s = splserial();

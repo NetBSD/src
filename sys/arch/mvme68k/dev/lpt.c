@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.7 2000/03/23 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.7.6.1 2001/10/10 11:56:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -101,18 +102,20 @@ lpt_attach_subr(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
-	dev_t dev;
+lptopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev;
 	int unit;
 	u_char flags;
 	struct lpt_softc *sc;
 	int error;
 	int spin;
 
+	dev = vdev_rdev(devvp);
 	unit = LPTUNIT(dev);
 	flags = LPTFLAGS(dev);
 
@@ -130,6 +133,8 @@ lptopen(dev, flag, mode, p)
 
 	if (sc->sc_state)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
@@ -193,17 +198,15 @@ lpt_wakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
-	dev_t dev;
+lptclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct lpt_softc *sc;
-	int unit;
 
-	unit = LPTUNIT(dev);
-	sc = lpt_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -279,8 +282,8 @@ pushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
-	dev_t dev;
+lptwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -288,7 +291,7 @@ lptwrite(dev, uio, flags)
 	size_t n;
 	int error;
 
-	sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	sc = vdev_privdata(devvp);
 	error = 0;
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
@@ -335,8 +338,8 @@ lpt_intr(sc)
 
 /* ARGSUSED */
 int
-lptioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+lptioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

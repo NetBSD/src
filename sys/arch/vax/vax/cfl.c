@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.7 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: cfl.c,v 1.7.2.1 2001/10/10 11:56:43 fvdl Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -47,6 +47,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
@@ -88,14 +89,14 @@ struct {
 
 static	void cflstart __P((void));
 
-int	cflopen __P((dev_t, int, struct proc *));
-int	cflclose __P((dev_t, int, struct proc *));
-int	cflrw __P((dev_t, struct uio *, int));
+int	cflopen __P((struct vnode *, int, struct proc *));
+int	cflclose __P((struct vnode *, int, struct proc *));
+int	cflrw __P((struct vnode *, struct uio *, int));
 
 /*ARGSUSED*/
 int
-cflopen(dev, flag, p)
-	dev_t dev;
+cflopen(devvp, flag, p)
+	struct vnode *devvp;
 	int flag;
 	struct proc *p;
 {
@@ -110,8 +111,8 @@ cflopen(dev, flag, p)
 
 /*ARGSUSED*/
 int
-cflclose(dev, flag, p)
-	dev_t dev;
+cflclose(devvp, flag, p)
+	struct vnode *devvp;
 	int flag;
 	struct proc *p;
 {
@@ -125,8 +126,8 @@ cflclose(dev, flag, p)
 
 /*ARGSUSED*/
 int
-cflrw(dev, uio, flag)
-	dev_t dev;
+cflrw(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {

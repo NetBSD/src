@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.5.24.1 2001/10/01 12:38:23 fvdl Exp $	*/
+/*	$NetBSD: mms.c,v 1.5.24.2 2001/10/10 11:56:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -120,12 +120,13 @@ mmsattach(parent, self, aux)
 }
 
 int
-mmsopen(dev, flag, mode, p)
-	dev_t dev;
+mmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = MMSUNIT(dev);
 	struct mms_softc *sc;
 
@@ -141,6 +142,8 @@ mmsopen(dev, flag, mode, p)
 	if (clalloc(&sc->sc_q, MMS_BSIZE, 0) == -1)
 		return ENOMEM;
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_state |= MMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
@@ -153,14 +156,15 @@ mmsopen(dev, flag, mode, p)
 }
 
 int
-mmsclose(dev, flag, mode, p)
-	dev_t dev;
+mmsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc;
 
+	sc = vdev_privdata(devvp);
 	/* Disable interrupts. */
 	isa_outb(sc->sc_iobase + MMS_ADDR, 0x87);
 
@@ -172,16 +176,18 @@ mmsclose(dev, flag, mode, p)
 }
 
 int
-mmsread(dev, uio, flag)
-	dev_t dev;
+mmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc;
 	int s;
 	int error = 0;
 	size_t length;
 	u_char buffer[MMS_CHUNK];
+
+	sc = vdev_privdata(devvp);
 
 	/* Block until mouse activity occurred. */
 
@@ -220,17 +226,19 @@ mmsread(dev, uio, flag)
 }
 
 int
-mmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+mmsioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc;
 	struct mouseinfo info;
 	int s;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case MOUSEIOCREAD:
@@ -338,14 +346,16 @@ mmsintr(arg)
 }
 
 int
-mmspoll(dev, events, p)
-	dev_t dev;
+mmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
+	struct mms_softc *sc;
 	int revents = 0;
 	int s = spltty();
+
+	sc = vdev_privdata(devvp);
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (sc->sc_q.c_cc > 0)

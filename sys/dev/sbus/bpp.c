@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8.6.1 2001/10/01 12:46:16 fvdl Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.6.2 2001/10/10 11:57:00 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -245,11 +246,12 @@ bpp_setparams(sc, hw)
 }
 
 int
-bppopen(dev, flags, mode, p)
-	dev_t dev;
+bppopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = BPPUNIT(dev);
 	struct bpp_softc *sc;
 	struct lsi64854_softc *lsi;
@@ -271,6 +273,8 @@ bppopen(dev, flags, mode, p)
 	bpp_setparams(sc, &sc->sc_hwdefault);
 	splx(s);
 
+	vdev_setprivdata(devvp, sc);
+
 	/* Enable interrupts */
 	irq = BPP_ERR_IRQ_EN;
 	irq |= sc->sc_hwdefault.hw_irq;
@@ -279,12 +283,12 @@ bppopen(dev, flags, mode, p)
 }
 
 int
-bppclose(dev, flags, mode, p)
-	dev_t dev;
+bppclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc = vdev_privdata(devvp);
 	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
 	u_int16_t irq;
 
@@ -299,8 +303,8 @@ bppclose(dev, flags, mode, p)
 }
 
 int
-bppread(dev, uio, flags)
-	dev_t dev;
+bppread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -309,12 +313,12 @@ bppread(dev, uio, flags)
 }
 
 int
-bppwrite(dev, uio, flags)
-	dev_t dev;
+bppwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc = vdev_privdata(devvp);
 	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
 	int error = 0;
 	int s;
@@ -408,14 +412,14 @@ out:
 #define BPPIOCGPARAM	_IOR('P', 0x2, struct hwstate)
 
 int
-bppioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
+bppioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long	cmd;
 	caddr_t	data;
 	int	flag;
 	struct	proc *p;
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc = vdev_privdata(devvp);
 	struct hwstate *hw, *chw;
 	int error = 0;
 	int s;
@@ -476,12 +480,12 @@ bppioctl(dev, cmd, data, flag, p)
 }
 
 int
-bpppoll(dev, events, p)
-	dev_t dev;
+bpppoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc = vdev_privdata(devvp);
 	int revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {

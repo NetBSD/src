@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.16.2.1 2001/10/10 11:56:45 fvdl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,6 +67,7 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/reboot.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -337,6 +338,8 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	struct hdc_attach_args *ha = aux;
 	struct disklabel *dl;
 	char *msg;
+	struct vnode vn;		/* XXX */
+	struct specinfo si;		/* XXX */
 
 	rd->sc_drive = ha->ha_drive;
 	/*
@@ -354,8 +357,11 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	dl = rd->sc_disk.dk_label;
 	rdmakelabel(dl, &rd->sc_xbn);
 	printf("%s", rd->sc_dev.dv_xname);
-	msg = readdisklabel(MAKEDISKDEV(RDMAJOR, rd->sc_dev.dv_unit, RAW_PART),
-	    rdstrategy, dl, NULL);
+	vn.v_type = VBLK;
+	vn.v_specinfo = &si;
+	vn.v_rdev = MAKEDISKDEV(RDMAJOR, rd->sc_dev.dv_unit, RAW_PART);
+	vn.v_devcookie = rd;
+	msg = readdisklabel(&vn, rdstrategy, dl, NULL);
 	if (msg)
 		printf(": %s", msg);
 	printf(": size %d sectors\n", dl->d_secperunit);
@@ -425,9 +431,9 @@ rdstrategy(struct buf *bp)
 	struct rdsoftc *rd;
 	struct hdcsoftc *sc;
 	struct disklabel *lp;
-	int unit, s;
+	int unit, s, part;
 
-	unit = DISKUNIT(bp->b_dev);
+	unit = DISKUNIT(vdev_rdev(bp->b_devvp));
 	if (unit > rd_cd.cd_ndevs || (rd = rd_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
@@ -442,8 +448,11 @@ rdstrategy(struct buf *bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	part = (bp->b_flags & B_DKLABEL) ? RAW_PART:
+	    DISKPART(vdev_rdev(bp->b_devvp));
+
 	bp->b_rawblkno =
-	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	    bp->b_blkno + lp->d_partitions[part].p_offset;
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
@@ -481,6 +490,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct buf *bp;
 	int cn, sn, tn, bn, blks;
 	volatile char ch;
+	dev_t dev;
 
 	if (sc->sc_active)
 		return; /* Already doing something */
@@ -499,7 +509,8 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	} else
 		bp = ob;
 
-	rd = rd_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	dev = vdev_rdev(bp->b_devvp);
+	rd = rd_cd.cd_devs[DISKUNIT(dev)];
 	hdc_rdselect(sc, rd->sc_drive);
 	sc->sc_active = bp;
 
@@ -618,11 +629,13 @@ rdsize(dev_t dev)
  *
  */
 int
-rdopen(dev_t dev, int flag, int fmt, struct proc *p)
+rdopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	struct rdsoftc *rd;
 	int unit, part;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = DISKUNIT(dev);
 	if (unit >= rd_cd.cd_ndevs)
 		return ENXIO;
@@ -633,6 +646,8 @@ rdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	part = DISKPART(dev);
 	if (part >= rd->sc_disk.dk_label->d_npartitions)
 		return ENXIO;
+
+	vdev_setprivdata(devvp, rd);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -652,13 +667,13 @@ rdopen(dev_t dev, int flag, int fmt, struct proc *p)
  *
  */
 int
-rdclose(dev_t dev, int flag, int fmt, struct proc *p)
+rdclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	struct rdsoftc *rd;
 	int part;
 
-	rd = rd_cd.cd_devs[DISKUNIT(dev)];
-	part = DISKPART(dev);
+	rd = vdev_privdata(devvp);
+	part = DISKPART(vdev_rdev(devvp));
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -678,9 +693,10 @@ rdclose(dev_t dev, int flag, int fmt, struct proc *p)
  *
  */
 int
-rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+rdioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	struct rdsoftc *rd = rd_cd.cd_devs[DISKUNIT(dev)];
+	struct rdsoftc *rd = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	struct disklabel *lp = rd->sc_disk.dk_label;
 	int err = 0;
 
@@ -702,7 +718,7 @@ rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		else
 			err = (cmd == DIOCSDINFO ?
 			    setdisklabel(lp, (struct disklabel *)addr, 0, 0) :
-			    writedisklabel(dev, rdstrategy, lp, 0));
+			    writedisklabel(devvp, rdstrategy, lp, 0));
 		break;
 
 	case DIOCGDEFLABEL:
@@ -725,18 +741,18 @@ rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
  * 
  */
 int
-rdread(dev_t dev, struct uio *uio, int flag)
+rdread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	return (physio (rdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio (rdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 /*
  *
  */
 int
-rdwrite(dev_t dev, struct uio *uio, int flag)
+rdwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	return (physio (rdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio (rdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*

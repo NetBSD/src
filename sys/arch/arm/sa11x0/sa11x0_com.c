@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.1 2001/07/08 23:37:52 rjs Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.1.4.1 2001/10/10 11:55:54 fvdl Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -480,8 +480,8 @@ sacom_shutdown(sc)
 }
 
 int
-sacomopen(dev, flag, mode, p)
-	dev_t dev;
+sacomopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -489,7 +489,9 @@ sacomopen(dev, flag, mode, p)
 	struct tty *tp;
 	int s, s2;
 	int error;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = device_lookup(&sacom_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
@@ -497,6 +499,8 @@ sacomopen(dev, flag, mode, p)
 
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (ENXIO);
+
+	vdev_setprivdata(devvp, sc);
 
 	tp = sc->sc_tty;
 
@@ -513,7 +517,7 @@ sacomopen(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		s2 = splserial();
 		COM_LOCK(sc);
@@ -601,7 +605,7 @@ sacomopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -620,13 +624,16 @@ bad:
 }
  
 int
-sacomclose(dev, flag, mode, p)
-	dev_t dev;
+sacomclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct sacom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -651,13 +658,16 @@ sacomclose(dev, flag, mode, p)
 }
  
 int
-sacomread(dev, uio, flag)
-	dev_t dev;
+sacomread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct sacom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -666,13 +676,16 @@ sacomread(dev, uio, flag)
 }
  
 int
-sacomwrite(dev, uio, flag)
-	dev_t dev;
+sacomwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct sacom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -681,13 +694,16 @@ sacomwrite(dev, uio, flag)
 }
 
 int
-sacompoll(dev, events, p)
-	dev_t dev;
+sacompoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct sacom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -696,27 +712,32 @@ sacompoll(dev, events, p)
 }
 
 struct tty *
-sacomtty(dev)
-	dev_t dev;
+sacomtty(devvp)
+	struct vnode *devvp;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct sacom_softc *sc;
+	struct tty *tp;
 
-	return (tp);
+	sc = vdev_privdata(devvp);
+
+	return sc->sc_tty;
 }
 
 int
-sacomioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+sacomioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct sacom_softc *sc;
+	struct tty *tp;
 	int error;
 	int s;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -878,12 +899,12 @@ sacomparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc = vdev_privdata(tp->t_devvp);
 	int ospeed = SACOMSPEED(t->c_ospeed);
 	u_int cr0;
 	int s;
 
-	if (COM_ISALIVE(sc) == 0)
+	if (sc == NULL || COM_ISALIVE(sc) == 0)
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -1027,10 +1048,10 @@ sacomhwiflow(tp, block)
 	int block;
 {
 #if 0
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
-	if (COM_ISALIVE(sc) == 0)
+	if (sc == NULL || COM_ISALIVE(sc) == 0)
 		return (0);
 
 	if (sc->sc_mcr_rts == 0)
@@ -1081,12 +1102,12 @@ void
 sacomstart(tp)
 	struct tty *tp;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc = vdev_privdata(tp->t_devvp);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
 
-	if (COM_ISALIVE(sc) == 0)
+	if (sc == NULL || COM_ISALIVE(sc) == 0)
 		return;
 
 	s = spltty();
@@ -1166,7 +1187,7 @@ sacomstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
 	s = splserial();

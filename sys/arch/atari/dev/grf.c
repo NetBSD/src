@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25 2000/06/29 08:28:24 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.2.1 2001/10/10 11:55:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -159,12 +159,15 @@ const char	*name;
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, devtype, p)
-	dev_t dev;
+grfopen(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
 	struct grf_softc *gp;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (GRFUNIT(dev) >= NGRF)
 		return(ENXIO);
@@ -178,6 +181,9 @@ grfopen(dev, flags, devtype, p)
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
+
+	vdev_setprivdata(devvp, gp);
+
 	grf_viewsync(gp);
 
 	return(0);
@@ -185,15 +191,18 @@ grfopen(dev, flags, devtype, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
-	dev_t		dev;
+grfclose(devvp, flags, mode, p)
+	struct vnode	*devvp;
 	int		flags;
 	int		mode;
 	struct proc	*p;
 {
 	struct grf_softc *gp;
+	dev_t dev;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
+
 	(void)grfoff(dev);
 	gp->g_flags &= GF_ALIVE;
 	return(0);
@@ -201,8 +210,8 @@ grfclose(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
-dev_t		dev;
+grfioctl(devvp, cmd, data, flag, p)
+struct vnode	*devvp;
 u_long		cmd;
 int		flag;
 caddr_t		data;
@@ -210,8 +219,11 @@ struct proc	*p;
 {
 	struct grf_softc	*gp;
 	int			error;
+	dev_t			dev;
 
-	gp = grfsp[GRFUNIT(dev)];
+	gp = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
+
 	error = 0;
 
 	switch (cmd) {
@@ -266,8 +278,8 @@ struct proc	*p;
 
 /*ARGSUSED*/
 int
-grfpoll(dev, events, p)
-	dev_t		dev;
+grfpoll(devvp, events, p)
+	struct vnode	*devvp;
 	int		events;
 	struct proc	*p;
 {
@@ -283,16 +295,17 @@ grfpoll(dev, events, p)
  * memory space.
  */
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t	dev;
+grfmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t	off;
 	int	prot;
 {
 	struct grf_softc	*gp;
 	struct grfinfo		*gi;
 	u_int			vgabase, linbase;
-	
-	gp = grfsp[GRFUNIT(dev)];
+
+	gp = vdev_privdata(devvp);
+
 	gi = &gp->g_display;
 
 	vgabase = gi->gd_vgabase;

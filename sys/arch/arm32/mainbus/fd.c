@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 2001/07/08 18:06:43 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.35.4.1 2001/10/10 11:55:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -291,7 +292,7 @@ int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
-int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+int fdformat __P((struct vnode *, struct ne7_fd_formb *, struct proc *));
 
 int
 fdcprobe(parent, cf, aux)
@@ -599,9 +600,11 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
+	struct fd_softc *fd;
 	int sz;
  	int s;
+
+	fd = vdev_privdata(bp->b_devvp);
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
@@ -714,23 +717,23 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -830,16 +833,18 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, p)
-	dev_t dev;
+fdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev;
  	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
+	dev = vdev_rdev(devvp);
 	unit = FDUNIT(dev);
 	if (unit >= fd_cd.cd_ndevs)
 		return ENXIO;
@@ -859,18 +864,21 @@ fdopen(dev, flags, mode, p)
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
+	vdev_setprivdata(devvp, fd);
+
 	return 0;
 }
 
 int
-fdclose(dev, flags, mode, p)
-	dev_t dev;
+fdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd;
 
+	fd = vdev_privdata(devvp);
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
 	return 0;
@@ -1387,14 +1395,14 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = vdev_privdata(devvp);
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1412,7 +1420,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(devvp, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1432,7 +1440,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(devvp, fdstrategy, &buffer, NULL);
 		return error;
 
 	case FDIOCGETFORMAT:
@@ -1547,7 +1555,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(devvp, fd_formb, p);
 		free(fd_formb, M_TEMP);
 		return error;
 
@@ -1569,13 +1577,13 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
-	dev_t dev;
+fdformat(devvp, finfo, p)
+	struct vnode *devvp;
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
 	int rv = 0, s;
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = vdev_privdata(devvp);
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
@@ -1586,7 +1594,7 @@ fdformat(dev, finfo, p)
 	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/*
 	 * calculate a fake blkno, so fdstrategy() would initiate a
@@ -1631,18 +1639,21 @@ fdformat(dev, finfo, p)
 
 #include <dev/md.h>
 
-int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+int load_memory_disc_from_floppy __P((struct md_conf *md, struct vnode *devvp));
 
 int
-load_memory_disc_from_floppy(md, dev)
+load_memory_disc_from_floppy(md, devvp)
 	struct md_conf *md;
-	dev_t dev;
+	struct vnode *devvp;
 {
 	struct buf *bp;
 	int loop;
 	int s;
 	int type;
 	int floppysize;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (major(dev) != 17)	/* XXX - nice if the major was defined elsewhere */
 		return(EINVAL);
@@ -1669,11 +1680,11 @@ load_memory_disc_from_floppy(md, dev)
     
 /* request no partition relocation by driver on I/O operations */
 
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	s = spl0();
 
-	if (fdopen(bp->b_dev, 0, 0, curproc) != 0) {
+	if (fdopen(devvp, 0, 0, curproc) != 0) {
 		brelse(bp);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
@@ -1701,7 +1712,7 @@ load_memory_disc_from_floppy(md, dev)
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",
 	    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
         
-	fdclose(bp->b_dev, 0, 0, curproc);
+	fdclose(devvp, 0, 0, curproc);
 
 	brelse(bp);
 

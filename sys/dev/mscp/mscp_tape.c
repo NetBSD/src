@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.15 2000/03/30 12:45:34 augustss Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.15.10.1 2001/10/10 11:56:56 fvdl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -84,12 +85,12 @@ int	mtonline __P((struct device *, struct mscp *));
 int	mtgotstatus __P((struct device *, struct mscp *));
 int	mtioerror __P((struct device *, struct mscp *, struct buf *));
 void	mtfillin __P((struct buf *, struct mscp *));
-int	mtopen __P((dev_t, int, int, struct proc *));
-int	mtclose __P((dev_t, int, int, struct proc *));
+int	mtopen __P((struct vnode *, int, int, struct proc *));
+int	mtclose __P((struct vnode *, int, int, struct proc *));
 void	mtstrategy __P((struct buf *));
-int	mtread __P((dev_t, struct uio *));
-int	mtwrite __P((dev_t, struct uio *));
-int	mtioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	mtread __P((struct vnode *, struct uio *));
+int	mtwrite __P((struct vnode *, struct uio *));
+int	mtioctl __P((struct vnode *, int, caddr_t, int, struct proc *));
 int	mtdump __P((dev_t, daddr_t, caddr_t, size_t));
 int	mtcmd __P((struct mt_softc *, int, int, int));
 void	mtcmddone __P((struct device *, struct mscp *));
@@ -192,17 +193,19 @@ mt_putonline(mt)
  */
 /*ARGSUSED*/
 int
-mtopen(dev, flag, fmt, p)
-	dev_t dev;
+mtopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct	proc *p;
 {
 	struct mt_softc *mt;
 	int unit;
+	dev_t dev;
 
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
+	dev = vdev_rdev(devvp);
 	unit = mtunit(dev);
 	if (unit >= mt_cd.cd_ndevs)
 		return ENXIO;
@@ -214,6 +217,8 @@ mtopen(dev, flag, fmt, p)
 			return EBUSY;
 	mt->mt_inuse = 1;
 
+	vdev_setprivdata(devvp, mt);
+
 	if (mt_putonline(mt) == MSCP_FAILED) {
 		mt->mt_inuse = 0;
 		return EIO;
@@ -224,13 +229,12 @@ mtopen(dev, flag, fmt, p)
 
 /* ARGSUSED */
 int
-mtclose(dev, flags, fmt, p)
-	dev_t dev;
+mtclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct	proc *p;
 {
-	int unit = mtunit(dev);
-	struct mt_softc *mt = mt_cd.cd_devs[unit];
+	struct mt_softc *mt = vdev_privdata(devvp);
 
 	/*
 	 * If we just have finished a writing, write EOT marks.
@@ -240,7 +244,7 @@ mtclose(dev, flags, fmt, p)
 		mtcmd(mt, MTWEOF, 0, 0);
 		mtcmd(mt, MTBSR, 1, 0);
 	}
-	if (mtnorewind(dev) == 0)
+	if (mtnorewind(vdev_rdev(devvp)) == 0)
 		mtcmd(mt, MTREW, 0, 1);
 	if (mt->mt_serex)
 		mtcmd(mt, -1, 0, 0);
@@ -253,14 +257,13 @@ void
 mtstrategy(bp)
 	struct buf *bp;
 {
-	int unit;
 	struct mt_softc *mt;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
-	unit = mtunit(bp->b_dev);
-	if (unit > mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
+	mt = vdev_privdata(bp->b_devvp);
+	if (mt == NULL) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -275,21 +278,21 @@ bad:
 }
 
 int
-mtread(dev, uio)
-	dev_t dev;
+mtread(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 
-	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mtstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-mtwrite(dev, uio)
-	dev_t dev;
+mtwrite(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 
-	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mtstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -309,7 +312,7 @@ mtfillin(bp, mp)
 	struct buf *bp;
 	struct mscp *mp;
 {
-	int unit = mtunit(bp->b_dev);
+	int unit = mtunit(vdev_rdev(bp->b_devvp));
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
 
 	mp->mscp_unit = mt->mt_hwunit;
@@ -418,15 +421,14 @@ mtioerror(usc, mp, bp)
  * I/O controls.
  */
 int
-mtioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+mtioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = mtunit(dev);
-	struct mt_softc *mt = mt_cd.cd_devs[unit];
+	struct mt_softc *mt = vdev_privdata(devvp);
 	struct	mtop *mtop;
 	struct	mtget *mtget;
 	int error = 0, count;

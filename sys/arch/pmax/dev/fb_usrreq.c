@@ -1,13 +1,16 @@
-/*	$NetBSD: fb_usrreq.c,v 1.22 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.22.4.1 2001/10/10 11:56:25 fvdl Exp $	*/
 
 /*ARGSUSED*/
 int
-fbopen(dev, flag, mode, p)
-	dev_t dev;
+fbopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct fbinfo *fi;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (minor(dev) >= fbndevs)
 	    return(ENXIO);
@@ -27,6 +30,8 @@ fbopen(dev, flag, mode, p)
 		
 		fi->fi_driver->fbd_getcmap(fi, fi->fi_savedcmap, 0, 256);
 	}
+
+	vdev_setprivdata(devvp, fi);
 	
 	fi->fi_open = 1;
 	(*fi->fi_driver->fbd_initcmap)(fi);
@@ -42,18 +47,15 @@ fbopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-fbclose(dev, flag, mode, p)
-	dev_t dev;
+fbclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct fbinfo *fi;
 	struct pmax_fbtty *fbtty;
 
-	if (minor(dev) >= fbndevs)
-	    return(EBADF);
-	    
-	fi = fbdevs[minor(dev)];
+	fi = vdev_privdata(devvp);
 
 	if (!fi->fi_open)
 		return (EBADF);
@@ -84,8 +86,8 @@ fbclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-fbioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+fbioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	struct proc *p;
@@ -94,10 +96,7 @@ fbioctl(dev, cmd, data, flag, p)
 	struct pmax_fbtty *fbtty;
 	char cmap_buf [3];
 
-	if (minor(dev) >= fbndevs)
-	    return(EBADF);
-	    
-	fi = fbdevs[minor(dev)];
+	fi = vdev_privdata(devvp);
 	fbtty = fi->fi_glasstty;
 
 	switch (cmd) {
@@ -107,7 +106,7 @@ fbioctl(dev, cmd, data, flag, p)
 	 * so that X consortium Xservers work.
 	 */
 	case QIOCGINFO:
-		return (fbmmap_fb(fi, dev, data, p));
+		return (fbmmap_fb(fi, devvp, data, p));
 
 	case QIOCPMSTATE:
 		/*
@@ -213,7 +212,8 @@ fbioctl(dev, cmd, data, flag, p)
 			return (*(fi->fi_driver->fbd_unblank)) (fi);
 
 	default:
-		printf("fb%d: Unknown ioctl command %lx\n", minor(dev), cmd);
+		printf("fb%d: Unknown ioctl command %lx\n",
+		    minor(vdev_rdev(devvp)), cmd);
 		return (EINVAL);
 	}
 	return (0);
@@ -224,18 +224,15 @@ fbioctl(dev, cmd, data, flag, p)
  * Poll on Digital-OS-compatible in-kernel input-event ringbuffer.
  */
 int
-fbpoll(dev, events, p)
-	dev_t dev;
+fbpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct fbinfo *fi;
 	int revents = 0;
 
-	if (minor(dev) >= fbndevs)
-	    return(EBADF);
-	    
-	fi = fbdevs[minor(dev)];
+	fi = vdev_privdata(devvp);
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
@@ -260,8 +257,8 @@ fbpoll(dev, events, p)
  */
 /*ARGSUSED*/
 paddr_t
-fbmmap(dev, off, prot)
-	dev_t dev;
+fbmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -271,10 +268,7 @@ fbmmap(dev, off, prot)
 	if (off < 0)
 		return (-1);
 
-	if (minor(dev) >= fbndevs)
-	    return(-1);
-	    
-	fi = fbdevs[minor(dev)];
+	fi = vdev_privdata(devvp);
 
 	len = mips_round_page(((vaddr_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));

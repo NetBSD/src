@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14.4.1 2001/10/01 12:41:17 fvdl Exp $ */
+/*	$NetBSD: mem.c,v 1.14.4.2 2001/10/10 11:56:21 fvdl Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -58,6 +58,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 
@@ -72,8 +73,8 @@ static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
+mmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -83,8 +84,8 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
+mmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -94,8 +95,8 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -105,6 +106,9 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -209,8 +213,8 @@ unlock:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -222,7 +226,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(vdev_rdev(devvp)) != 0)
 		return (-1);
 	/*
 	 * Allow access only in RAM.

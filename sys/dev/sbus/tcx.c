@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.8.1 2001/10/01 12:46:20 fvdl Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.8.2 2001/10/10 11:57:01 fvdl Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #ifdef DEBUG
 #include <sys/proc.h>
@@ -232,39 +233,41 @@ tcxattach(parent, self, args)
 }
 
 int
-tcxopen(dev, flags, mode, p)
-	dev_t dev;
+tcxopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= tcx_cd.cd_ndevs || tcx_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, tcx_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-tcxclose(dev, flags, mode, p)
-	dev_t dev;
+tcxclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = vdev_privdata(devvp);
 
 	tcx_reset(sc);
 	return (0);
 }
 
 int
-tcxioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+tcxioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = vdev_privdata(devvp);
 	int error;
 
 	switch (cmd) {
@@ -329,13 +332,13 @@ tcxioctl(dev, cmd, data, flags, p)
 }
 
 int
-tcxpoll(dev, events, p)
-	dev_t dev;
+tcxpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -426,12 +429,12 @@ struct mmo {
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
 paddr_t
-tcxmmap(dev, off, prot)
-	dev_t dev;
+tcxmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = vdev_privdata(devvp);
 	struct sbus_reg *rr = sc->sc_physadr;
 	struct mmo *mo;
 	u_int u, sz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39 2001/04/04 16:43:04 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.4.1 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,11 +158,12 @@ grfprint(aux, pnp)
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, mode, p)
-	dev_t dev;
+grfopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
 	struct grf_data *gp;
@@ -201,30 +202,32 @@ grfopen(dev, flags, mode, p)
 	error = 0;
 	if ((gp->g_flags & GF_OPEN) == 0) {
 		gp->g_flags |= GF_OPEN;
-		error = grfon(dev);
+		error = grfon(devvp);
 	}
+
+	vdev_setprivdata(devvp, sc);
+
 	return(error);
 }
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
-	dev_t dev;
+grfclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
 		return (ENXIO);
 
-	(void) grfoff(dev);
+	(void) grfoff(devvp);
 #ifdef COMPAT_HPUX
 	(void) grfunlock(gp);
 #endif
@@ -234,8 +237,8 @@ grfclose(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+grfioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	int flag;
 	caddr_t data;
@@ -243,9 +246,9 @@ grfioctl(dev, cmd, data, flag, p)
 {
 	struct grf_softc *sc;
 	struct grf_data *gp;
-	int error, unit = GRFUNIT(dev);
+	int error;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
 	gp = sc->sc_data;
 
@@ -254,7 +257,7 @@ grfioctl(dev, cmd, data, flag, p)
 
 #ifdef COMPAT_HPUX
 	if (p->p_emul == &emul_hpux)
-		return(hpuxgrfioctl(dev, cmd, data, flag, p));
+		return(hpuxgrfioctl(devvp, cmd, data, flag, p));
 #endif
 	error = 0;
 	switch (cmd) {
@@ -264,19 +267,19 @@ grfioctl(dev, cmd, data, flag, p)
 		break;
 
 	case GRFIOCON:
-		error = grfon(dev);
+		error = grfon(devvp);
 		break;
 
 	case GRFIOCOFF:
-		error = grfoff(dev);
+		error = grfoff(devvp);
 		break;
 
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(devvp, (caddr_t *)data, p);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(devvp, *(caddr_t *)data, p);
 		break;
 
 	default:
@@ -289,8 +292,8 @@ grfioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-grfpoll(dev, events, p)
-	dev_t dev;
+grfpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -300,25 +303,27 @@ grfpoll(dev, events, p)
 
 /*ARGSUSED*/
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t dev;
+grfmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *sc;
 
+	sc = vdev_privdata(devvp);
 	return (grfaddr(sc, off));
 }
 
 int
-grfon(dev)
-	dev_t dev;	/* XXX */
+grfon(devvp)
+	struct vnode *devvp;
 {
-	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
 	struct grf_data *gp;
+	dev_t dev;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 	gp = sc->sc_data;
 
 	/*
@@ -333,18 +338,19 @@ grfon(dev)
 }
 
 int
-grfoff(dev)
-	dev_t dev;	/* XXX */
+grfoff(devvp)
+	struct vnode *devvp;
 {
-	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
 	struct grf_data *gp;
 	int error;
+	dev_t dev;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 	gp = sc->sc_data;
 
-	(void) grfunmap(dev, (caddr_t)0, curproc);
+	(void) grfunmap(devvp, (caddr_t)0, curproc);
 	error = (*gp->g_sw->gd_mode)(gp,
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
@@ -381,15 +387,18 @@ grfaddr(sc, off)
 
 /*ARGSUSED*/
 int
-hpuxgrfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+hpuxgrfioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd, flag;
 	caddr_t data;
 	struct proc *p;
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-	struct grf_data *gp = sc->sc_data;
+	struct grf_softc *sc;
+	struct grf_data *gp;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	gp = sc->sc_data;
 
 	error = 0;
 	switch (cmd) {
@@ -399,11 +408,11 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 		break;
 
 	case GCON:
-		error = grfon(dev);
+		error = grfon(devvp);
 		break;
 
 	case GCOFF:
-		error = grfoff(dev);
+		error = grfoff(devvp);
 		break;
 
 	case GCLOCK:
@@ -425,14 +434,15 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 
 	/* map in control regs and frame buffer */
 	case GCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(devvp, (caddr_t *)data, p);
 		break;
 
 	case GCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(devvp, *(caddr_t *)data, p);
 		/* XXX: HP-UX uses GCUNMAP to get rid of GCSLOT memory */
 		if (error)
-			error = grflckunmmap(dev, *(caddr_t *)data);
+			error = grflckunmmap(vdev_rdev(devvp),
+			    *(caddr_t *)data);
 		break;
 
 	case GCSLOT:
@@ -441,7 +451,8 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 
 		sp->slot = grffindpid(gp);
 		if (sp->slot) {
-			error = grflckmmap(dev, (caddr_t *)&sp->addr);
+			error = grflckmmap(vdev_rdev(devvp),
+			    (caddr_t *)&sp->addr);
 			if (error && gp->g_pid) {
 				free((caddr_t)gp->g_pid, M_DEVBUF);
 				gp->g_pid = NULL;
@@ -460,7 +471,7 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 	 * Will be replaced in the future with a real IOMAP interface.
 	 */
 	case IOMAPMAP:
-		error = iommap(dev, (caddr_t *)data);
+		error = iommap(devvp, (caddr_t *)data);
 #if 0
 		/*
 		 * It may not be worth kludging this (using p_devtmp) to
@@ -475,7 +486,7 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 		break;
 
 	case IOMAPUNMAP:
-		error = iounmmap(dev, *(caddr_t *)data);
+		error = iounmmap(devvp, *(caddr_t *)data);
 		break;
 
 	default:
@@ -611,17 +622,18 @@ grfdevno(dev)
 #endif	/* COMPAT_HPUX */
 
 int
-grfmap(dev, addrp, p)
-	dev_t dev;
+grfmap(devvp, addrp, p)
+	struct vnode *devvp;
 	caddr_t *addrp;
 	struct proc *p;
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-	struct grf_data *gp = sc->sc_data;
+	struct grf_softc *sc;
+	struct grf_data *gp;
 	int len, error;
-	struct vnode vn;
-	struct specinfo si;
 	int flags;
+
+	sc = vdev_privdata(devvp);
+	gp = sc->sc_data;
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
@@ -633,12 +645,9 @@ grfmap(dev, addrp, p)
 		flags |= MAP_FIXED;
 	else
 		*addrp = (caddr_t)0x1000000;	/* XXX */
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
-			 flags, (caddr_t)&vn, 0,
+			 flags, devvp, 0,
 			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
@@ -646,14 +655,17 @@ grfmap(dev, addrp, p)
 }
 
 int
-grfunmap(dev, addr, p)
-	dev_t dev;
+grfunmap(devvp, addr, p)
+	struct vnode *devvp;
 	caddr_t addr;
 	struct proc *p;
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-	struct grf_data *gp = sc->sc_data;
+	struct grf_softc *sc;
+	struct grf_data *gp;
 	vsize_t size;
+
+	sc = vdev_privdata(devvp);
+	gp = sc->sc_data;
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
@@ -669,8 +681,8 @@ grfunmap(dev, addr, p)
 
 #ifdef COMPAT_HPUX
 int
-iommap(dev, addrp)
-	dev_t dev;
+iommap(devvp, addrp)
+	struct vnode *devvp;
 	caddr_t *addrp;
 {
 
@@ -682,12 +694,12 @@ iommap(dev, addrp)
 }
 
 int
-iounmmap(dev, addr)
-	dev_t dev;
+iounmmap(devvp, addr)
+	struct vnode *devvp;
 	caddr_t addr;
 {
 #ifdef DEBUG
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
 		printf("iounmmap(%d): id %d addr %p\n",

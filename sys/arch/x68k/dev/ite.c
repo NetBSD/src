@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: ite.c,v 1.25.4.1 2001/10/10 11:56:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/kbio.h>
@@ -365,11 +366,12 @@ iteoff(dev, flag)
 
 /* ARGSUSED */
 int
-iteopen(dev, mode, devtype, p)
-	dev_t dev;
+iteopen(devvp, mode, devtype, p)
+	struct vnode *devvp;
 	int mode, devtype;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	register struct tty *tp;
 	register struct ite_softc *ip;
@@ -394,7 +396,7 @@ iteopen(dev, mode, devtype, p)
 	}
 	tp->t_oproc = itestart;
 	tp->t_param = NULL;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state&TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -405,7 +407,7 @@ iteopen(dev, mode, devtype, p)
 		tp->t_state = TS_ISOPEN|TS_CARR_ON;
 		ttsetwater(tp);
 	}
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error == 0) {
 		tp->t_winsize.ws_row = ip->rows;
 		tp->t_winsize.ws_col = ip->cols;
@@ -416,11 +418,12 @@ iteopen(dev, mode, devtype, p)
 
 /*ARGSUSED*/
 int
-iteclose(dev, flag, mode, p)
-	dev_t dev;
+iteclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -434,54 +437,59 @@ iteclose(dev, flag, mode, p)
 }
 
 int
-iteread(dev, uio, flag)
-	dev_t dev;
+iteread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-itewrite(dev, uio, flag)
-	dev_t dev;
+itewrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-itepoll(dev, events, p)
-	dev_t dev;
+itepoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register struct tty *tp = ite_tty[UNIT(dev)];
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-itetty(dev)
-	dev_t dev;
+itetty(devvp)
+	struct vnode *devvp;
 {
+	dev_t dev = vdev_rdev(devvp);
 
 	return (ite_tty[UNIT(dev)]);
 }
 
 int
-iteioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+iteioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct iterepeat *irp;
 	register struct tty *tp = ite_tty[UNIT(dev)];
 	int error;
@@ -544,8 +552,10 @@ itestart(tp)
 	struct ite_softc *ip;
 	u_char buf[ITEBURST];
 	int s, len;
+	dev_t dev;
 
-	ip = getitesp(tp->t_dev);
+	dev = vdev_rdev(tp->t_devvp);
+	ip = getitesp(dev);
 	/*
 	 * (Potentially) lower priority.  We only need to protect ourselves
 	 * from keyboard interrupts since that is all that can affect the
@@ -560,7 +570,7 @@ itestart(tp)
 	/*splx(s);*/
 
 	/* Here is a really good place to implement pre/jumpscroll() */
-	ite_putstr(buf, len, tp->t_dev);
+	ite_putstr(buf, len, dev);
 
 	/*s = spltty();*/
 	tp->t_state &= ~TS_BUSY;

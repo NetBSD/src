@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.3.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -193,8 +193,8 @@ static int dscp2index __P((u_int8_t));
 altqdev_decl(rio);
 
 int
-rioopen(dev, flag, fmt, p)
-	dev_t dev;
+rioopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -203,8 +203,8 @@ rioopen(dev, flag, fmt, p)
 }
 
 int
-rioclose(dev, flag, fmt, p)
-	dev_t dev;
+rioclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -222,8 +222,8 @@ rioclose(dev, flag, fmt, p)
 }
 
 int
-rioioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+rioioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

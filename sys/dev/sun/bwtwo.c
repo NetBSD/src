@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.2.8.1 2001/10/01 12:46:23 fvdl Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.2.8.2 2001/10/10 11:57:01 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
@@ -210,22 +211,24 @@ bwtwoattach(sc, name, isconsole)
 }
 
 int
-bwtwoopen(dev, flags, mode, p)
-	dev_t dev;
+bwtwoopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 
+	vdev_setprivdata(devvp, bwtwo_cd.cd_devs[unit]);
+
 	return (0);
 }
 
 int
-bwtwoclose(dev, flags, mode, p)
-	dev_t dev;
+bwtwoclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -234,14 +237,14 @@ bwtwoclose(dev, flags, mode, p)
 }
 
 int
-bwtwoioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+bwtwoioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 
@@ -273,13 +276,13 @@ bwtwounblank(dev)
 }
 
 int
-bwtwopoll(dev, events, p)
-	dev_t dev;
+bwtwopoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -287,12 +290,12 @@ bwtwopoll(dev, events, p)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-bwtwommap(dev, off, prot)
-	dev_t dev;
+bwtwommap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = vdev_privdata(devvp);
 
 	if (off & PGOFSET)
 		panic("bwtwommap");

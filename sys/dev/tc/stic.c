@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.9.2.1 2001/10/01 12:46:27 fvdl Exp $	*/
+/*	$NetBSD: stic.c,v 1.9.2.2 2001/10/10 11:57:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <sys/ioctl.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1435,7 +1436,7 @@ stic_set_hwcurpos(struct stic_info *si)
  * it.
  */
 int
-sticopen(dev_t dev, int flag, int mode, struct proc *p)
+sticopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct stic_info *si;
 	int s;
@@ -1455,16 +1456,18 @@ sticopen(dev_t dev, int flag, int mode, struct proc *p)
 	si->si_flags |= SI_DVOPEN;
 	splx(s);
 
+	vdev_setprivdata(devvp, si);
+
 	return (0);
 }
 
 int
-sticclose(dev_t dev, int flag, int mode, struct proc *p)
+sticclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct stic_info *si;
 	int s;
 
-	si = stic_info[minor(dev)];
+	si = vdev_privdata(devvp);
 	s = spltty();
 	si->si_flags &= ~SI_DVOPEN;
 	splx(s);
@@ -1473,13 +1476,13 @@ sticclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 paddr_t
-sticmmap(dev_t dev, off_t offset, int prot)
+sticmmap(struct vnode *devvp, off_t offset, int prot)
 {
 	struct stic_info *si;
 	struct stic_xmap *sxm;
 	paddr_t pa;
 
-	si = stic_info[minor(dev)];
+	si = vdev_privdata(devvp);
 	sxm = NULL;
 
 	if (securelevel > 0)

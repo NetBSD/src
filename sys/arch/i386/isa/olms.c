@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.1.26.1 2001/10/01 12:40:04 fvdl Exp $	*/
+/*	$NetBSD: olms.c,v 1.1.26.2 2001/10/10 11:56:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -155,12 +155,13 @@ olmsattach(parent, self, aux)
 }
 
 int
-lmsopen(dev, flag, mode, p)
-	dev_t dev;
+lmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = LMSUNIT(dev);
 	struct olms_softc *sc;
 
@@ -176,6 +177,8 @@ lmsopen(dev, flag, mode, p)
 	if (clalloc(&sc->sc_q, LMS_BSIZE, 0) == -1)
 		return ENOMEM;
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_state |= LMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
@@ -187,13 +190,13 @@ lmsopen(dev, flag, mode, p)
 }
 
 int
-lmsclose(dev, flag, mode, p)
-	dev_t dev;
+lmsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct olms_softc *sc = olms_cd.cd_devs[LMSUNIT(dev)];
+	struct olms_softc *sc = vdev_privdata(devvp);
 
 	/* Disable interrupts. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMS_CNTRL, 0x10);
@@ -206,12 +209,12 @@ lmsclose(dev, flag, mode, p)
 }
 
 int
-lmsread(dev, uio, flag)
-	dev_t dev;
+lmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct olms_softc *sc = olms_cd.cd_devs[LMSUNIT(dev)];
+	struct olms_softc *sc = vdev_privdata(devvp);
 	int s;
 	int error = 0;
 	size_t length;
@@ -254,14 +257,14 @@ lmsread(dev, uio, flag)
 }
 
 int
-lmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+lmsioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct olms_softc *sc = olms_cd.cd_devs[LMSUNIT(dev)];
+	struct olms_softc *sc = vdev_privdata(devvp);
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -365,12 +368,12 @@ olmsintr(arg)
 }
 
 int
-lmspoll(dev, events, p)
-	dev_t dev;
+lmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct olms_softc *sc = olms_cd.cd_devs[LMSUNIT(dev)];
+	struct olms_softc *sc = vdev_privdata(devvp);
 	int revents = 0;
 	int s = spltty();
 

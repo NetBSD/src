@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.34 2001/04/13 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.34.4.1 2001/10/10 11:56:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -72,6 +72,7 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -285,12 +286,13 @@ lptattach(parent, self, aux)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
-	dev_t dev;
+lptopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct lpt_softc *sc;
 	volatile struct i8255 *i8255;
 	u_char flags = LPTFLAGS(dev);
@@ -312,6 +314,8 @@ lptopen(dev, flag, mode, p)
 	if (sc->sc_ethercom.ec_if.if_flags & IFF_UP)
 		return EBUSY;
 #endif
+
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
@@ -387,13 +391,13 @@ lptout(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
-	dev_t dev;
+lptclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
+	struct lpt_softc *sc = vdev_privdata(devvp);
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -426,12 +430,12 @@ pushbytes(sc)
  * get the chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
-	dev_t dev;
+lptwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
+	struct lpt_softc *sc = vdev_privdata(devvp);
 	size_t n;
 	int error = 0;
 
@@ -500,8 +504,8 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+lptioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

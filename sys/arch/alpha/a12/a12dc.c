@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.5 2001/05/30 15:24:26 lukem Exp $ */
+/* $NetBSD: a12dc.c,v 1.5.6.1 2001/10/10 11:55:48 fvdl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5 2001/05/30 15:24:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.6.1 2001/10/10 11:55:48 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.5 $");
+	printf(": driver %s\n", "$Revision: 1.5.6.1 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -248,12 +248,12 @@ static int did_init;
 }
 
 int
-a12dcopen(dev, flag, mode, p)
-	dev_t dev;
+a12dcopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 	struct tty *tp;
 	int s;
  
@@ -280,7 +280,7 @@ a12dcopen(dev, flag, mode, p)
 
 	tp->t_oproc = a12dcstart;
 	tp->t_param = a12dcparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -300,68 +300,73 @@ a12dcopen(dev, flag, mode, p)
 
 	splx(s);
 
-	return (*tp->t_linesw->l_open)(dev, tp);
+	vdev_setprivdata(devvp, tp);
+
+	return (*tp->t_linesw->l_open)(devvp, tp);
 }
  
 int
-a12dcclose(dev, flag, mode, p)
-	dev_t dev;
+a12dcclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct tty *tp = a12dc_tty[unit];
+	struct tty *tp;
 
+	tp = vdev_privdata(devvp);
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
 }
  
 int
-a12dcread(dev, uio, flag)
-	dev_t dev;
+a12dcread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = a12dc_tty[minor(dev)];
+	struct tty *tp;
 
+	tp = vdev_privdata(devvp);
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-a12dcwrite(dev, uio, flag)
-	dev_t dev;
+a12dcwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = a12dc_tty[minor(dev)];
- 
+	struct tty *tp ;
+
+	tp = vdev_privdata(devvp); 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-a12dcpoll(dev, events, p)
-	dev_t dev;
+a12dcpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct tty *tp = a12dc_tty[minor(dev)];
- 
+	struct tty *tp;
+
+	tp = vdev_privdata(devvp); 
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
  
 int
-a12dcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+a12dcioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct tty *tp = a12dc_tty[unit];
+	struct tty *tp;
 	int error;
 
+	tp = vdev_privdata(devvp);
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
@@ -398,7 +403,7 @@ a12dcstart(tp)
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
-		a12dccnputc(tp->t_dev, getc(&tp->t_outq));
+		a12dccnputc(vdev_rdev(tp->t_devvp), getc(&tp->t_outq));
 	tp->t_state &= ~TS_BUSY;
 out:
 	splx(s);
@@ -430,7 +435,7 @@ a12dcintr(v)
 	struct tty *tp = v;
 	u_char c;
 
-	while (a12dccnlookc(tp->t_dev, &c)) {
+	while (a12dccnlookc(vdev_rdev(tp->t_devvp), &c)) {
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}
@@ -438,11 +443,11 @@ a12dcintr(v)
 }
 
 struct tty *
-a12dctty(dev)
-	dev_t dev;
+a12dctty(devvp)
+	struct vnode *devvp;
 {
 
-	if (minor(dev) != 0)
+	if (minor(vdev_rdev(devvp)) != 0)
 		panic("a12dctty: bogus");
 
 	return a12dc_tty[0];

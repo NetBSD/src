@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 2000/06/29 08:11:27 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.23.2.1 2001/10/10 11:56:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 
@@ -65,8 +66,8 @@ void *zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
+mmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -76,8 +77,8 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
+mmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -87,15 +88,18 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
+	dev_t dev;
 	vaddr_t v;
 	int c;
 	struct iovec *iov;
 	int error = 0;
+
+	dev = vdev_rdev(devvp);
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -170,8 +174,8 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {

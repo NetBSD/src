@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.3 2001/04/13 23:29:55 thorpej Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.3.4.1 2001/10/10 11:55:46 fvdl Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -333,8 +334,8 @@ afm_match(ifp, flow)
 altqdev_decl(afm);
 
 int
-afmopen(dev, flag, fmt, p)
-	dev_t dev;
+afmopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -342,8 +343,8 @@ afmopen(dev, flag, fmt, p)
 }
 
 int
-afmclose(dev, flag, fmt, p)
-	dev_t dev;
+afmclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -370,8 +371,8 @@ afmclose(dev, flag, fmt, p)
 }
 
 int
-afmioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+afmioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.18.6.2 2001/09/26 15:28:04 fvdl Exp $ */
+/* $NetBSD: promcons.c,v 1.18.6.3 2001/10/10 11:55:48 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.2 2001/09/26 15:28:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.3 2001/10/10 11:55:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ promclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 
-	tp = vdev_getprivdata(devvp);
+	tp = vdev_privdata(devvp);
 
 	callout_stop(&prom_ch);
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -136,7 +136,7 @@ promread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct tty *tp;
 
-	tp = vdev_getprivdata(devvp);
+	tp = vdev_privdata(devvp);
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
@@ -146,7 +146,7 @@ promwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct tty *tp;
 
-	tp = vdev_getprivdata(devvp);
+	tp = vdev_privdata(devvp);
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
@@ -154,10 +154,9 @@ promwrite(struct vnode *devvp, struct uio *uio, int flag)
 int
 prompoll(struct vnode *devvp, int events, struct proc *p)
 {
-	int error;
 	struct tty *tp;
 
-	tp = vdev_getprivdata(devvp);
+	tp = vdev_privdata(devvp);
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
@@ -169,7 +168,7 @@ promioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	struct tty *tp;
 	int error;
 
-	tp = vdev_getprivdata(devvp);
+	tp = vdev_privdata(devvp);
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;

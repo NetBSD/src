@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.68.4.1 2001/10/10 11:56:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68.4.1 2001/10/10 11:56:24 fvdl Exp $");
 
 /*
  * devDC7085.c --
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $");
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <dev/dec/lk201.h>
 
@@ -101,15 +102,15 @@ extern struct cfdriver dc_cd;
 /*
  * Forward declarations
  */
-struct tty	*dctty __P((dev_t  dev));
+struct tty	*dctty __P((struct vnode *devvp));
 static void	 dcstart __P((struct tty *));
 static void	 dcrint __P((struct dc_softc *sc));
 static void	 dcxint __P((struct tty *));
-static int	 dcmctl __P((dev_t dev, int bits, int how));
+static int	 dcmctl __P((struct vnode *devvp, int bits, int how));
 static void	 dcscan __P((void *));
 static int	 dcparam __P((struct tty *tp, struct termios *t));
 static int	 cold_dcparam __P((struct tty *tp, struct termios *t,
-		    struct dc_softc *sc));
+		    struct dc_softc *sc, dev_t dev));
 static void	 dc_reset __P((dcregs *dcaddr));
 
 struct callout dcscan_ch = CALLOUT_INITIALIZER;
@@ -294,7 +295,6 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 		tp = sc->dc_tty[line] = ttymalloc();
 		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
-		tp->t_dev = makedev(DCDEV, 4 * sc->sc_dv.dv_unit + line);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
@@ -380,10 +380,9 @@ dc_tty_init(sc, dev)
 	int s;
 
 	s = spltty();
-	ctty.t_dev = dev;
 	cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 	cterm.c_ospeed = cterm.c_ispeed = 9600;
-	(void) cold_dcparam(&ctty, &cterm,  sc);
+	(void) cold_dcparam(&ctty, &cterm,  sc, dev);
 	DELAY(1000);
 	splx(s);
 }
@@ -399,14 +398,13 @@ dc_kbd_init(sc, dev)
 	int s;
 
 	s = spltty();
-	ctty.t_dev = dev;
 	cterm.c_cflag = CS8;
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
 
-	(void) cold_dcparam(&ctty, &cterm, sc);
+	(void) cold_dcparam(&ctty, &cterm, sc, dev);
 	DELAY(10000);
 
-	lk_reset(ctty.t_dev, dcPutc);
+	lk_reset(dev, dcPutc);
 	DELAY(10000);
 
 	splx(s);
@@ -422,10 +420,9 @@ dc_mouse_init(sc, dev)
 	int s;
 
 	s = spltty();
-	ctty.t_dev = dev;
 	cterm.c_cflag = CS8 | PARENB | PARODD;
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
-	(void) cold_dcparam(&ctty, &cterm, sc);
+	(void) cold_dcparam(&ctty, &cterm, sc, dev);
 
 
 	/*
@@ -434,7 +431,7 @@ dc_mouse_init(sc, dev)
 	 * mouse tracking required by Xservers.
 	 */
 	DELAY(10000);
-	lk_mouseinit(ctty.t_dev, dcPutc, dcGetc);
+	lk_mouseinit(dev, dcPutc, dcGetc);
 	DELAY(10000);
 
 	splx(s);
@@ -445,11 +442,12 @@ dc_mouse_init(sc, dev)
  * open tty
  */
 int
-dcopen(dev, flag, mode, p)
-	dev_t dev;
+dcopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct tty *tp;
 	struct dc_softc *sc;
 	int unit, line;
@@ -463,6 +461,8 @@ dcopen(dev, flag, mode, p)
 	if (sc->dc_pdma[line].p_addr == (void *)0)
 		return (ENXIO);
 
+	vdev_setprivdata(devvp, sc);
+
 	tp = sc->dc_tty[line];
 	if (tp == NULL) {
 		tp = sc->dc_tty[line] = ttymalloc();
@@ -470,7 +470,7 @@ dcopen(dev, flag, mode, p)
 	}
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 #ifndef PORTSELECTOR
@@ -491,12 +491,12 @@ dcopen(dev, flag, mode, p)
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 #ifdef HW_FLOW_CONTROL
-	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);
+	(void) dcmctl(devvp, DML_DTR | DML_RTS, DMSET);
 #else
-	(void) dcmctl(dev, DML_DTR, DMSET);
+	(void) dcmctl(devvp, DML_DTR, DMSET);
 #endif
 	if ((sc->dcsoftCAR & (1 << line)) ||
-	    (dcmctl(dev, 0, DMGET) & DML_CAR))
+	    (dcmctl(devvp, 0, DMGET) & DML_CAR))
 		tp->t_state |= TS_CARR_ON;
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
@@ -510,14 +510,14 @@ dcopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	return (error);
 }
 
 /*ARGSUSED*/
 int
-dcclose(dev, flag, mode, p)
-	dev_t dev;
+dcclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -526,8 +526,8 @@ dcclose(dev, flag, mode, p)
 	int line, bit;
 	int s;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	line = DCLINE(dev);
+	sc = vdev_privdata(devvp);
+	line = DCLINE(vdev_rdev(devvp));
 	tp = sc->dc_tty[line];
 	bit = 1 << (line + 8);
 	s = spltty();
@@ -540,26 +540,29 @@ dcclose(dev, flag, mode, p)
 	(*tp->t_linesw->l_close)(tp, flag);
 	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
-		(void) dcmctl(dev, 0, DMSET);
+		(void) dcmctl(devvp, 0, DMSET);
 	return (ttyclose(tp));
 }
 
 int
-dcread(dev, uio, flag)
-	dev_t dev;
+dcread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
+	int flag;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
+	dev_t dev;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = vdev_privdata(devvp);;
+	dev = vdev_rdev(devvp);
 	tp = sc->dc_tty[DCLINE(dev)];
 
 #ifdef HW_FLOW_CONTROL
 	if ((tp->t_cflag & CRTS_IFLOW) && (tp->t_state & TS_TBLOCK) &&
 	    tp->t_rawq.c_cc < TTYHOG/5) {
 		tp->t_state &= ~TS_TBLOCK;
-		(void) dcmctl(dev, DML_RTS, DMBIS);
+		(void) dcmctl(devvp, DML_RTS, DMBIS);
 	}
 #endif /* HW_FLOW_CONTROL */
 
@@ -567,48 +570,49 @@ dcread(dev, uio, flag)
 }
 
 int
-dcwrite(dev, uio, flag)
-	dev_t dev;
+dcwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
+	int flag;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->dc_tty[DCLINE(dev)];
+	sc = vdev_privdata(devvp);
+	tp = sc->dc_tty[DCLINE(vdev_rdev(devvp))];
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-dcpoll(dev, events, p)
-	dev_t dev;
+dcpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->dc_tty[DCLINE(dev)];
+	sc = vdev_privdata(devvp);
+	tp = sc->dc_tty[DCLINE(vdev_rdev(devvp))];
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-dctty(dev)
-        dev_t dev;
+dctty(devvp)
+	struct vnode *devvp;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->dc_tty[DCLINE(dev)];
+	sc = vdev_privdata(devvp);
+	tp = sc->dc_tty[DCLINE(vdev_rdev(devvp))];
         return (tp);
 }
 
 /*ARGSUSED*/
 int
-dcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+dcioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -616,14 +620,12 @@ dcioctl(dev, cmd, data, flag, p)
 {
 	struct dc_softc *sc;
 	struct tty *tp;
-	int unit;
 	int line;
 	int error;
 
 
-	unit = DCUNIT(dev);
-	line = DCLINE(dev);
-	sc = dc_cd.cd_devs[unit];
+	line = DCLINE(vdev_rdev(devvp));
+	sc = vdev_privdata(devvp);
 	tp = sc->dc_tty[line];
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
@@ -646,27 +648,27 @@ dcioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) dcmctl(dev, DML_DTR|DML_RTS, DMBIS);
+		(void) dcmctl(devvp, DML_DTR|DML_RTS, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) dcmctl(dev, DML_DTR|DML_RTS, DMBIC);
+		(void) dcmctl(devvp, DML_DTR|DML_RTS, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) dcmctl(dev, *(int *)data, DMSET);
+		(void) dcmctl(devvp, *(int *)data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) dcmctl(dev, *(int *)data, DMBIS);
+		(void) dcmctl(devvp, *(int *)data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) dcmctl(dev, *(int *)data, DMBIC);
+		(void) dcmctl(devvp, *(int *)data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = dcmctl(dev, 0, DMGET);
+		*(int *)data = dcmctl(devvp, 0, DMGET);
 		break;
 
 	default:
@@ -684,17 +686,12 @@ dcparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct dc_softc *sc;
-	dcregs *dcaddr;
-
 
 	/*
 	 * Extract softc data, and pass entire request onto
 	 * cold_dcparam() for argument checking and execution.
 	 */
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
-	return (cold_dcparam(tp, t, sc));
+	return (cold_dcparam(tp, t, vdev_privdata(tp->t_devvp), NODEV));
 
 }
 
@@ -702,22 +699,26 @@ dcparam(tp, t)
  * ttyparam entry point, but callable when very cold.
  */
 static int
-cold_dcparam(tp, t, sc)
+cold_dcparam(tp, t, sc, dev)
 	struct tty *tp;
 	struct termios *t;
 	struct dc_softc *sc;
+	dev_t dev;
 {
 	dcregs *dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
   	int overload_exta_38400 =  0;
-
+	dev_t rdev;
 	int lpr;
 	int cflag = t->c_cflag;
-	int unit = minor(tp->t_dev);
 	int ospeed = ttspeedtab(t->c_ospeed, dcspeedtab);
 	int s;
 	int line;
 
-	line = DCLINE(tp->t_dev);
+	if (dev == NODEV)
+		rdev = vdev_rdev(tp->t_devvp);
+	else
+		rdev = dev;
+	line = DCLINE(rdev);
 
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed) ||
@@ -729,8 +730,8 @@ cold_dcparam(tp, t, sc)
         tp->t_ospeed = t->c_ospeed;
         tp->t_cflag = cflag;
 
-	if (ospeed == 0) {
-		(void) dcmctl(unit, 0, DMSET);	/* hang up line */
+	if (ospeed == 0 && dev == NODEV) {
+		(void) dcmctl(tp->t_devvp, 0, DMSET);	/* hang up line */
 		return (0);
 	}
 	lpr = LPR_RXENAB | ospeed | line;
@@ -843,7 +844,7 @@ dcrint(sc)
 				return;
 		}
 #ifdef DDB
-		if (c & RBUF_FERR && tp->t_dev == cn_tab->cn_dev) {
+		if (c & RBUF_FERR && vdev_rdev(tp->t_devvp) == cn_tab->cn_dev) {
 			console_debugger();
 			continue;
 		}
@@ -873,9 +874,9 @@ dcxint(tp)
 	dcregs *dcaddr;
 	int line, linemask;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];	/* XXX */
+	sc = vdev_privdata(tp->t_devvp);
 
-	line = DCLINE(tp->t_dev);
+	line = DCLINE(vdev_rdev(tp->t_devvp));
 	linemask = 1 << line;
 
 	dp = &sc->dc_pdma[line];
@@ -940,8 +941,8 @@ dcstart(tp)
 	int cc;
 	int line, s;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-	line = DCLINE(tp->t_dev);
+	sc = vdev_privdata(tp->t_devvp);
+	line = DCLINE(vdev_rdev(tp->t_devvp));
 	dp = &sc->dc_pdma[line];
 	dcaddr = (dcregs *)dp->p_addr;
 	s = spltty();
@@ -981,8 +982,8 @@ dcstop(tp, flag)
 	struct pdma *dp;
 	int s;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-	dp = &sc->dc_pdma[DCLINE(tp->t_dev)];
+	sc = vdev_privdata(tp->t_devvp);
+	dp = &sc->dc_pdma[DCLINE(vdev_rdev(tp->t_devvp))];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		dp->p_end = dp->p_mem;
@@ -993,8 +994,8 @@ dcstop(tp, flag)
 }
 
 static int
-dcmctl(dev, bits, how)
-	dev_t dev;
+dcmctl(devvp, bits, how)
+	struct vnode *devvp;
 	int bits, how;
 {
 	struct dc_softc *sc;
@@ -1002,9 +1003,11 @@ dcmctl(dev, bits, how)
 	int line, mbits;
 	int b, s;
 	int tcr, msr;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	line = DCLINE(dev);
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = vdev_privdata(devvp);
 	b = 1 << line;
 	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	s = spltty();

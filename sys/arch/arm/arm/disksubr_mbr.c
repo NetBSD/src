@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.1 2001/03/04 05:06:51 matt Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.1.2.1 2001/10/10 11:55:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
+#include <sys/vnode.h>
 
 #include "opt_mbr.h"
 
@@ -89,8 +90,8 @@ int fat_types[] = {
 };
 
 int
-mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
-	dev_t dev;
+mbr_label_read(devvp, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -105,7 +106,7 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
-        bp->b_dev = dev;
+        bp->b_devvp = devvp;
 
 	/* In case nothing sets them */
 	mbrpartoff = 0;
@@ -201,8 +202,8 @@ out:
 }
 
 int
-mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
-	dev_t dev;
+mbr_label_locate(devvp, strat, lp, osdep, cylp, netbsd_label_offp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -216,7 +217,7 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
-        bp->b_dev = dev;
+        bp->b_devvp = devvp;
 
 	/* do MBR partitions in the process of getting disklabel? */
 	mbrpartoff = 0;

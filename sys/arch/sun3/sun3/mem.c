@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.40.2.1 2001/10/01 12:42:48 fvdl Exp $	*/
+/*	$NetBSD: mem.c,v 1.40.2.2 2001/10/10 11:56:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,8 +74,8 @@ static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
+mmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -84,8 +85,8 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
+mmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -95,8 +96,8 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -106,6 +107,9 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (minor(dev) == 0) {
 		if (vmmap == 0)
@@ -248,8 +252,8 @@ unlock:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -259,7 +263,7 @@ mmmmap(dev, off, prot)
 	if (off & PGOFSET)
 		return (-1);
 
-	switch (minor(dev)) {
+	switch (minor(vdev_rdev(devvp))) {
 
 	case 0:		/* dev/mem */
 		/* Allow access only in "managed" RAM. */

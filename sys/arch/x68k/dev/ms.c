@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:47:33 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.10.6.1 2001/10/10 11:56:48 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 #include <sys/tty.h>
 #include <sys/device.h>
 #include <sys/signalvar.h>
+#include <sys/vnode.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -215,15 +216,17 @@ ms_attach(parent, self, aux)
  ****************************************************************/
 
 int
-msopen(dev, flags, mode, p)
-	dev_t dev;
+msopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct ms_softc *ms;
+	dev_t dev;
 	int unit;
 	int s;
 
+	dev = vdev_rdev(devvp);
 	unit = minor(dev);
 	if (unit >= ms_cd.cd_ndevs)
 		return (ENXIO);
@@ -234,6 +237,9 @@ msopen(dev, flags, mode, p)
 	/* This is an exclusive open device. */
 	if (ms->ms_events.ev_io)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, ms);
+
 	ms->ms_events.ev_io = p;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
@@ -249,14 +255,14 @@ msopen(dev, flags, mode, p)
 }
 
 int
-msclose(dev, flags, mode, p)
-	dev_t dev;
+msclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = vdev_privdata(devvp);
 	ms->ms_ready = 0;		/* stop accepting events */
 	callout_stop(&ms->ms_modem_ch);
 	ev_fini(&ms->ms_events);
@@ -266,21 +272,21 @@ msclose(dev, flags, mode, p)
 }
 
 int
-msread(dev, uio, flags)
-	dev_t dev;
+msread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = vdev_privdata(devvp);
 	return (ev_read(&ms->ms_events, uio, flags));
 }
 
 /* this routine should not exist, but is convenient to write here for now */
 int
-mswrite(dev, uio, flags)
-	dev_t dev;
+mswrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -289,8 +295,8 @@ mswrite(dev, uio, flags)
 }
 
 int
-msioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+msioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	register caddr_t data;
 	int flag;
@@ -298,7 +304,7 @@ msioctl(dev, cmd, data, flag, p)
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = vdev_privdata(devvp);
 
 	switch (cmd) {
 
@@ -328,14 +334,14 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-mspoll(dev, events, p)
-	dev_t dev;
+mspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = vdev_privdata(devvp);
 	return (ev_poll(&ms->ms_events, events, p));
 }
 

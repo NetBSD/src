@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.2.1 2001/10/10 11:56:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,6 +43,7 @@
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -61,10 +62,20 @@
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[2].p_offset;
-	int maxsz = p->p_size,
-		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	struct partition *p;
+	int part;
+	int labelsect;
+	int maxsz, sz;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
+	labelsect = lp->d_partitions[2].p_offset;
+	maxsz = p->p_size;
+	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+
 	/* overwriting disk label ? */
 	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
@@ -106,7 +117,7 @@ bad:
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *),
+readdisklabel(struct vnode *devvp, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
@@ -121,10 +132,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
@@ -140,6 +151,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 			*lp = *dlp;
 		}
 	}
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -189,7 +201,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp,
  * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
+writedisklabel(struct vnode *devvp, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
@@ -197,21 +209,22 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags &= ~(B_READ|B_DONE);
-	bp->b_flags |= B_WRITE;
+	bp->b_flags |= B_WRITE | B_DKLABEL;
 	(*strat)(bp);
 	error = biowait(bp);
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 }

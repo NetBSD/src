@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.3.4.1 2001/10/01 12:36:50 fvdl Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.3.4.2 2001/10/10 11:55:46 fvdl Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -805,8 +806,8 @@ static void cbq_purge(cbqp)
 altqdev_decl(cbq);
 
 int
-cbqopen(dev, flag, fmt, p)
-	dev_t dev;
+cbqopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -814,8 +815,8 @@ cbqopen(dev, flag, fmt, p)
 }
 
 int
-cbqclose(dev, flag, fmt, p)
-	dev_t dev;
+cbqclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -840,8 +841,8 @@ cbqclose(dev, flag, fmt, p)
 }
 
 int
-cbqioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+cbqioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

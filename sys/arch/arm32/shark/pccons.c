@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.16.4.1 2001/10/01 12:37:58 fvdl Exp $       */
+/*      $NetBSD: pccons.c,v 1.16.4.2 2001/10/10 11:55:57 fvdl Exp $       */
 
 /*
  * Copyright 1997
@@ -116,6 +116,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 #include <machine/kerndebug.h>
 
 #include <uvm/uvm_extern.h>
@@ -1089,12 +1090,13 @@ pcattach(struct device   *parent,
 **--
 */
 int
-pcopen(dev_t       dev, 
+pcopen(struct vnode *devvp, 
        int         flag, 
        int         mode, 
        struct proc *p)
 {
     struct pc_softc *sc;
+    dev_t dev = vdev_rdev(devvp);
     int unit = PCUNIT(dev);
     struct tty *tp;
     
@@ -1113,6 +1115,9 @@ pcopen(dev_t       dev,
     {
         return ENXIO;
     }
+
+    vdev_setprivdata(devvp, sc);
+
     /*
     ** Check if we have a tty structure already and create one if not 
     */
@@ -1131,7 +1136,7 @@ pcopen(dev_t       dev,
     */
     tp->t_oproc = pcstart;
     tp->t_param = pcparam;
-    tp->t_dev   = dev;
+    tp->t_devvp   = devvp;
     
     if ((tp->t_state & TS_ISOPEN) == 0) 
     {
@@ -1161,7 +1166,7 @@ pcopen(dev_t       dev,
     /* 
     ** Invoke the line discipline open routine 
     */
-    return ((*tp->t_linesw->l_open)(dev, tp));
+    return ((*tp->t_linesw->l_open)(devvp, tp));
 } /* End pcopen() */
 
 
@@ -1201,7 +1206,7 @@ pcopen(dev_t       dev,
 **--
 */
 int
-pcclose(dev_t       dev, 
+pcclose(struct vnode *devvp, 
         int         flag, 
         int         mode, 
         struct proc *p)
@@ -1212,8 +1217,12 @@ pcclose(dev_t       dev,
     ** Note : This all assumes that the system wont call us with 
     **        an invalid (ie. non-existent), device identifier.
     */
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-    struct tty      *tp = sc->sc_tty;
+    struct pc_softc *sc;
+    struct tty      *tp;
+
+    sc = vdev_privdata(devvp);
+    tp = sc->sc_tty;
+
     /*
     ** Let the line discipline clean up any pending output and
     ** flush queues.
@@ -1261,12 +1270,15 @@ pcclose(dev_t       dev,
 **--
 */
 int
-pcread(dev_t       dev, 
+pcread(struct vnode *devvp, 
        struct uio  *uio, 
        int         flag)
 {
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-    struct tty      *tp = sc->sc_tty;
+    struct pc_softc *sc;
+    struct tty      *tp;
+
+    sc = vdev_privdata(devvp);
+    tp = sc->sc_tty;
     
     return ((*tp->t_linesw->l_read)(tp, uio, flag));
 } /* End pcread() */
@@ -1308,12 +1320,15 @@ pcread(dev_t       dev,
 **--
 */
 int
-pcwrite(dev_t      dev, 
+pcwrite(struct vnode *devvp, 
         struct uio *uio, 
         int        flag)
 {
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-    struct tty      *tp = sc->sc_tty;
+    struct pc_softc *sc;
+    struct tty      *tp;
+
+    sc = vdev_privdata(devvp);
+    tp = sc->sc_tty;
     
     return ((*tp->t_linesw->l_write)(tp, uio, flag));
 } /* End pcwrite() */
@@ -1354,12 +1369,15 @@ pcwrite(dev_t      dev,
 **--
 */
 int
-pcpoll(dev_t       dev, 
+pcpoll(struct vnode *devvp, 
        int         events,
        struct proc *p)
 {
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-    struct tty      *tp = sc->sc_tty;
+    struct pc_softc *sc;
+    struct tty      *tp;
+
+    sc = vdev_privdata(devvp);
+    tp = sc->sc_tty;
     
     return ((*tp->t_linesw->l_poll)(tp, events, p));
 } /* End pcpoll() */
@@ -1396,12 +1414,12 @@ pcpoll(dev_t       dev,
 **--
 */
 struct tty *
-pctty(dev_t dev)
+pctty(struct vnode *devvp)
 {
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-    struct tty      *tp = sc->sc_tty;
-    
-    return (tp);
+    struct pc_softc *sc;
+
+    sc = vdev_privdata(devvp);
+    return sc->sc_tty; 
 } /* End pctty() */
 
 
@@ -1538,15 +1556,18 @@ pcintr(void *arg)
 **--
 */
 int
-pcioctl(dev_t       dev, 
+pcioctl(struct vnode *devvp, 
         u_long      cmd, 
         caddr_t     data, 
         int         flag, 
         struct proc *p)
 {
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-    struct tty      *tp = sc->sc_tty;
+    struct pc_softc *sc;
+    struct tty      *tp;
     int             error;
+
+    sc = vdev_privdata(devvp);
+    tp = sc->sc_tty;
     
     /* Give the line discipline first crack at doing something with
     ** the requested operation.
@@ -1810,7 +1831,9 @@ pcstart(struct tty *tp)
     struct clist *cl;
     int s, len;
     u_char buf[PCBURST];
-    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(tp->t_dev)];
+    struct pc_softc *sc;
+
+    sc = vdev_privdata(tp->t_devvp);
     
     s = spltty();
     if (!(tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)))

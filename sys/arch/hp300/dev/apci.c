@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12 2001/06/12 15:17:18 wiz Exp $	*/
+/*	$NetBSD: apci.c,v 1.12.4.1 2001/10/10 11:56:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>       
+#include <sys/vnode.h>
     
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -278,11 +279,12 @@ apciattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-apciopen(dev, flag, mode, p)
-	dev_t dev;
+apciopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = APCIUNIT(dev);
 	struct apci_softc *sc;
 	struct tty *tp;
@@ -303,12 +305,14 @@ apciopen(dev, flag, mode, p)
 		tp = sc->sc_tty;
 	tp->t_oproc = apcistart;
 	tp->t_param = apciparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
 
 	s = spltty();
 
@@ -356,7 +360,7 @@ apciopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -370,18 +374,17 @@ apciopen(dev, flag, mode, p)
 
 /* ARGSUSED */
 int
-apciclose(dev, flag, mode, p)
-	dev_t dev;
+apciclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct apci_softc *sc;
 	struct tty *tp;
 	struct apciregs *apci;
-	int unit = APCIUNIT(dev);
 	int s;
 
-	sc = apci_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 	apci = sc->sc_apci;
 	tp = sc->sc_tty;
 
@@ -407,46 +410,57 @@ apciclose(dev, flag, mode, p)
 }
 
 int
-apciread(dev, uio, flag)
-	dev_t dev;
+apciread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct apci_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-apciwrite(dev, uio, flag)
-	dev_t dev;
+apciwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct apci_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-apcipoll(dev, events, p)
-	dev_t dev;
+apcipoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct apci_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-apcitty(dev)
-	dev_t dev;
+apcitty(devvp)
+	struct vnode *devvp;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
+	struct apci_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	return (sc->sc_tty);
 }
@@ -571,17 +585,21 @@ apcimint(sc, stat)
 }
 
 int
-apciioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+apciioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
-	struct apciregs *apci = sc->sc_apci;
+	struct apci_softc *sc;
+	struct tty *tp;
+	struct apciregs *apci;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
+	apci = sc->sc_apci;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -666,7 +684,7 @@ apciparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(tp->t_dev)];
+	struct apci_softc *sc = vdev_privdata(tp->t_devvp);
 	struct apciregs *apci = sc->sc_apci;
 	int cfcr, cflag = t->c_cflag;
 	int ospeed = ttspeedtab(t->c_ospeed, apcispeedtab);
@@ -742,7 +760,7 @@ void
 apcistart(tp)
 	struct tty *tp;
 {
-	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(tp->t_dev)];
+	struct apci_softc *sc = vdev_privdata(tp->t_devvp);
 	struct apciregs *apci = sc->sc_apci;
 	int s, c;
 

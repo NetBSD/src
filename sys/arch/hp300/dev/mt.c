@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.14 2000/05/19 18:54:31 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.14.6.1 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <sys/tprintf.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -142,7 +143,7 @@ extern struct cfdriver mt_cd;
 int	mtident __P((struct mt_softc *, struct hpibbus_attach_args *));
 void	mtustart __P((struct mt_softc *));
 int	mtreaddsj __P((struct mt_softc *, int));
-int	mtcommand __P((dev_t, int, int));
+int	mtcommand __P((struct vnode *, int, int));
 void	spl_mtintr __P((void *));
 void	spl_mtstart __P((void *));
 
@@ -302,11 +303,12 @@ mtreaddsj(sc, ecmd)
 }
 
 int
-mtopen(dev, flag, mode, p)
-	dev_t dev;
+mtopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	struct mt_softc *sc;
 	int req_den;
@@ -321,17 +323,20 @@ mtopen(dev, flag, mode, p)
 	    sc->sc_flags);
 	if (sc->sc_flags & MTF_OPEN)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags |= MTF_OPEN;
 	sc->sc_ttyp = tprintf_open(p);
 	if ((sc->sc_flags & MTF_ALIVE) == 0) {
-		error = mtcommand(dev, MTRESET, 0);
+		error = mtcommand(devvp, MTRESET, 0);
 		if (error != 0 || (sc->sc_flags & MTF_ALIVE) == 0)
 			goto errout;
 		if ((sc->sc_stat1 & (SR1_BOT | SR1_ONLINE)) == SR1_ONLINE)
-			(void) mtcommand(dev, MTREW, 0);
+			(void) mtcommand(devvp, MTREW, 0);
 	}
 	for (;;) {
-		if ((error = mtcommand(dev, MTNOP, 0)) != 0)
+		if ((error = mtcommand(devvp, MTNOP, 0)) != 0)
 			goto errout;
 		if (!(sc->sc_flags & MTF_REW))
 			break;
@@ -397,7 +402,7 @@ mtopen(dev, flag, mode, p)
 			     sc->sc_type == MT7980ID
 						  ? MTSET6250DC
 						  : MTSET6250BPI))));
-			if (mtcommand(dev, mtset_density, 0) == 0)
+			if (mtcommand(devvp, mtset_density, 0) == 0)
 				sc->sc_density = req_den;
 		}
 	}
@@ -408,31 +413,33 @@ errout:
 }
 
 int
-mtclose(dev, flag, fmt, p)
-	dev_t dev;
+mtclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_flags & MTF_WRT) {
-		(void) mtcommand(dev, MTWEOF, 2);
-		(void) mtcommand(dev, MTBSF, 0);
+		(void) mtcommand(devvp, MTWEOF, 2);
+		(void) mtcommand(devvp, MTBSF, 0);
 	}
-	if ((minor(dev) & T_NOREWIND) == 0)
-		(void) mtcommand(dev, MTREW, 0);
+	if ((minor(vdev_rdev(devvp)) & T_NOREWIND) == 0)
+		(void) mtcommand(devvp, MTREW, 0);
 	sc->sc_flags &= ~MTF_OPEN;
 	tprintf_close(sc->sc_ttyp);
 	return (0);
 }
 
 int
-mtcommand(dev, cmd, cnt)
-	dev_t dev;
+mtcommand(devvp, cmd, cnt)
+	struct vnode *devvp;
 	int cmd;
 	int cnt;
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = vdev_privdata(devvp);
 	struct buf *bp = &sc->sc_bufstore;
 	int error = 0;
 
@@ -441,7 +448,7 @@ mtcommand(dev, cmd, cnt)
 		return (EBUSY);
 #endif
 	bp->b_cmd = cmd;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	do {
 		bp->b_flags = B_BUSY | B_CMD;
 		mtstrategy(bp);
@@ -467,11 +474,9 @@ mtstrategy(bp)
 	struct buf *bp;
 {
 	struct mt_softc *sc;
-	int unit;
 	int s;
 
-	unit = UNIT(bp->b_dev);
-	sc = mt_cd.cd_devs[unit];
+	sc = vdev_privdata(bp->b_devvp);
 	dlog(LOG_DEBUG, "%s strategy", sc->sc_dev.dv_xname);
 	if ((bp->b_flags & (B_CMD | B_READ)) == 0) {
 #define WRITE_BITS_IGNORED	8
@@ -937,32 +942,32 @@ mtintr(arg)
 }
 
 int
-mtread(dev, uio, flags)
-	dev_t dev;
+mtread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = vdev_privdata(devvp);
 
 	return(physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_READ, minphys, uio));
+	    devvp, B_READ, minphys, uio));
 }
 
 int
-mtwrite(dev, uio, flags)
-	dev_t dev;
+mtwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = vdev_privdata(devvp);
 
 	return(physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_WRITE, minphys, uio));
+	    devvp, B_WRITE, minphys, uio));
 }
 
 int
-mtioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+mtioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -992,7 +997,7 @@ mtioctl(dev, cmd, data, flag, p)
 		    default:
 			return (EINVAL);
 		}
-		return (mtcommand(dev, op->mt_op, cnt));
+		return (mtcommand(devvp, op->mt_op, cnt));
 
 	    case MTIOCGET:
 		break;

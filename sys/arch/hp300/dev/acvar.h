@@ -1,4 +1,4 @@
-/*	$NetBSD: acvar.h,v 1.4 1997/03/31 07:32:15 scottr Exp $	*/
+/*	$NetBSD: acvar.h,v 1.4.34.1 2001/10/10 11:56:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -88,12 +88,13 @@ struct	ac_restatdb {
 };
 
 #ifdef _KERNEL
-int	accommand __P((dev_t, int, char *, int));
+struct vnode;
+int	accommand __P((struct vnode *, int, char *, int));
 
 void	acstart __P((void *));
 void	acgo __P((void *));
 void	acintr __P((void *, int));
 
-int	acgeteinfo __P((dev_t));
+int	acgeteinfo __P((struct vnode *));
 void	acconvert __P((char *, char *, int));
 #endif /* _KERNEL */

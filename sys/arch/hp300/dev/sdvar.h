@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.9 2000/10/10 19:58:43 he Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.9.2.1 2001/10/10 11:56:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -93,8 +93,8 @@ void	sdstart __P((void *));
 void	sdgo __P((void *));
 void	sdintr __P((void *, int));
 
-int	sdgetcapacity __P((struct sd_softc *, dev_t));
-int	sdgetinfo __P((dev_t));
+int	sdgetcapacity __P((struct sd_softc *, struct vnode *));
+int	sdgetinfo __P((struct vnode *));
 
 /* sd_compat.c */
 void	sdmakedisklabel __P((int, struct disklabel *));

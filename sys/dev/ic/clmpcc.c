@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.17 2001/07/12 17:21:01 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.17.2.1 2001/10/10 11:56:53 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -496,17 +497,19 @@ clmpcc_shutdown(ch)
 }
 
 int
-clmpccopen(dev, flag, mode, p)
-	dev_t dev;
+clmpccopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev;
 	struct clmpcc_softc *sc;
 	struct clmpcc_chan *ch;
 	struct tty *tp;
 	int oldch;
 	int error;
 
+	dev = vdev_rdev(devvp);
 	sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
@@ -526,7 +529,7 @@ clmpccopen(dev, flag, mode, p)
 
 		ttychars(tp);
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
@@ -584,7 +587,7 @@ clmpccopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -603,11 +606,12 @@ bad:
 }
  
 int
-clmpccclose(dev, flag, mode, p)
-	dev_t dev;
+clmpccclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct clmpcc_softc	*sc =
 		device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan	*ch = &sc->sc_chans[CLMPCCCHAN(dev)];
@@ -638,11 +642,12 @@ clmpccclose(dev, flag, mode, p)
 }
  
 int
-clmpccread(dev, uio, flag)
-	dev_t dev;
+clmpccread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
@@ -650,11 +655,12 @@ clmpccread(dev, uio, flag)
 }
  
 int
-clmpccwrite(dev, uio, flag)
-	dev_t dev;
+clmpccwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
@@ -662,11 +668,12 @@ clmpccwrite(dev, uio, flag)
 }
 
 int
-clmpccpoll(dev, events, p)
-	dev_t dev;
+clmpccpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
 
@@ -674,22 +681,24 @@ clmpccpoll(dev, events, p)
 }
 
 struct tty *
-clmpcctty(dev)
-	dev_t dev;
+clmpcctty(devvp)
+	struct vnode *devvp;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 
 	return (sc->sc_chans[CLMPCCCHAN(dev)].ch_tty);
 }
 
 int
-clmpccioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+clmpccioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty *tp = ch->ch_tty;
@@ -849,9 +858,10 @@ clmpcc_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
+	dev_t dev = vdev_rdev(tp->t_devvp);
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
-	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	u_char cor;
 	u_char oldch;
 	int oclk, obpr;
@@ -1041,9 +1051,10 @@ static void
 clmpcc_start(tp)
 	struct tty *tp;
 {
+	dev_t dev = vdev_rdev(tp->t_devvp);
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
-	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	u_int oldch;
 	int s;
 
@@ -1089,9 +1100,10 @@ clmpccstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
+	dev_t dev = vdev_rdev(tp->t_devvp);
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
-	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	int s;
 
 	s = splserial();

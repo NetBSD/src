@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.11 2001/08/26 02:47:39 matt Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.11.2.1 2001/10/10 11:56:27 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -175,7 +176,7 @@ dk_setroot(struct ofb_disk *od, int part)
 	char type[8];
 	int maj, unit;
 	struct disklabel *lp;
-	dev_t tmpdev;
+	struct vnode *devvp;
 	char *cp;
 
 	if (OF_getprop(od->ofb_phandle, "device_type", type, sizeof type) < 0)
@@ -212,16 +213,19 @@ dk_setroot(struct ofb_disk *od, int part)
 			 * disklabel.  Use RAW_PART because all disk
 			 * drivers allow RAW_PART to be opened.
 			 */
-			tmpdev = MAKEDISKDEV(maj, unit, RAW_PART);
+			if (bdevvp(MAKEDISKDEV(maj, unit, RAW_PART), &devvp))
+				return;
 
-			if (bdevsw[maj].d_open(tmpdev, FREAD, S_IFBLK, 0)) {
+			if (bdevsw[maj].d_open(devvp, FREAD, S_IFBLK, 0)) {
 				/*
 				 * Open failed.  Device is probably not
 				 * configured.  setroot() can handle this.
 				 */
+				vrele(devvp);
 				return;
 			}
-			(void)bdevsw[maj].d_close(tmpdev, FREAD, S_IFBLK, 0);
+			(void)bdevsw[maj].d_close(devvp, FREAD, S_IFBLK, 0);
+			vrele(devvp);
 			lp = od->ofb_dk->dk_label;
 
 			/* Check for a valid `a' partition. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2001/05/30 15:24:24 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.15.4.1 2001/10/10 11:56:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -656,8 +656,7 @@ void zscninit __P((struct consdev *));
 int  zscngetc __P((dev_t));
 void zscnputc __P((dev_t, int));
 void zscnprobe __P((struct consdev *));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
-
+extern int zsopen __P((struct vnode *, int, int, struct proc *));
 void
 zscnprobe(cp)
 	struct consdev * cp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.2 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.2.2.1 2001/10/10 11:55:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
+#include <sys/vnode.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/footbridge/dc21285mem.h>
@@ -101,7 +102,7 @@ struct fcom_softc {
 static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));
 
-int fcomopen __P((dev_t dev, int flag, int mode, struct proc *p));
+int fcomopen __P((struct vnode *devvp, int flag, int mode, struct proc *p));
 static int fcom_rxintr __P((void *));
 /*static int fcom_txintr __P((void *));*/
 
@@ -210,20 +211,27 @@ static void fcomstart __P((struct tty *));
 static int fcomparam __P((struct tty *, struct termios *));
 
 int
-fcomopen(dev, flag, mode, p)
-	dev_t dev;
+fcomopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct fcom_softc *sc;
-	int unit = minor(dev);
+	int unit;
 	struct tty *tp;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
+	unit = minor(dev);
 
 	if (unit >= fcom_cd.cd_ndevs)
 		return ENXIO;
 	sc = fcom_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
+
+	vdev_setprivdata(devvp, sc);
+
 	if (!(tp = sc->sc_tty))
 		sc->sc_tty = tp = ttymalloc();
 	if (!sc->sc_rxbuffer[0]) {
@@ -238,7 +246,7 @@ fcomopen(dev, flag, mode, p)
 	}
 	tp->t_oproc = fcomstart;
 	tp->t_param = fcomparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if (!(tp->t_state & TS_ISOPEN && tp->t_wopen == 0)) {
 		ttychars(tp);
 		tp->t_cflag = TTYDEF_CFLAG;
@@ -262,17 +270,21 @@ fcomopen(dev, flag, mode, p)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
-	return (*tp->t_linesw->l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(devvp, tp);
 }
 
 int
-fcomclose(dev, flag, mode, p)
-	dev_t dev;
+fcomclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct fcom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
+
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
@@ -292,52 +304,64 @@ fcomclose(dev, flag, mode, p)
 }
 
 int
-fcomread(dev, uio, flag)
-	dev_t dev;
+fcomread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct fcom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
-fcomwrite(dev, uio, flag)
-	dev_t dev;
+fcomwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct fcom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-fcompoll(dev, events, p)
-	dev_t dev;
+fcompoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct fcom_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-fcomioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+fcomioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct fcom_softc *sc;
+	struct tty *tp;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 	
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
@@ -361,10 +385,12 @@ fcomioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-fcomtty(dev)
-	dev_t dev;
+fcomtty(devvp)
+	struct vnode *devvp;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	return sc->sc_tty;
 }
@@ -384,7 +410,7 @@ fcomstart(tp)
 	int s, len;
 	u_char buf[64];
 	int loop;
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(tp->t_dev)];
+	struct fcom_softc *sc = vdev_privdata(tp->t_devvp);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int timo;
@@ -447,7 +473,7 @@ fcomparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(tp->t_dev)];
+	struct fcom_softc *sc = vdev_privdata(tp->t_devvp);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int baudrate;

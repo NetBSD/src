@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.24 2001/05/26 21:24:38 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.24.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/scb.h>
@@ -356,8 +357,8 @@ dhuxint(arg)
 }
 
 int
-dhuopen(dev, flag, mode, p)
-	dev_t dev;
+dhuopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -365,7 +366,9 @@ dhuopen(dev, flag, mode, p)
 	int unit, line;
 	struct dhu_softc *sc;
 	int s, error = 0;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = DHU_M2U(minor(dev));
 	line = DHU_LINE(minor(dev));
 
@@ -382,12 +385,14 @@ dhuopen(dev, flag, mode, p)
 	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
 	(void) splx(s);
 
+	vdev_setprivdata(devvp, sc);
+
 	tp = sc->sc_dhu[line].dhu_tty;
 
 	tp->t_oproc   = dhustart;
 	tp->t_param   = dhuparam;
 	tp->t_hwiflow = dhuiflow;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -417,24 +422,25 @@ dhuopen(dev, flag, mode, p)
 	(void) splx(s);
 	if (error)
 		return (error);
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(devvp, tp));
 }
 
 /*ARGSUSED*/
 int
-dhuclose(dev, flag, mode, p)
-	dev_t dev;
+dhuclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct tty *tp;
-	int unit, line;
+	int line;
 	struct dhu_softc *sc;
+	dev_t dev;
 
-	unit = DHU_M2U(minor(dev));
+	dev = vdev_rdev(devvp);
 	line = DHU_LINE(minor(dev));
 
-	sc = dhu_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
 	tp = sc->sc_dhu[line].dhu_tty;
 
@@ -454,52 +460,52 @@ dhuclose(dev, flag, mode, p)
 }
 
 int
-dhuread(dev, uio, flag)
-	dev_t dev;
+dhuread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
 
-	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+	sc = vdev_privdata(devvp);
 
-	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
+	tp = sc->sc_dhu[DHU_LINE(minor(vdev_rdev(devvp)))].dhu_tty;
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-dhuwrite(dev, uio, flag)
-	dev_t dev;
+dhuwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
 
-	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+	sc = vdev_privdata(devvp);
 
-	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
+	tp = sc->sc_dhu[DHU_LINE(minor(vdev_rdev(devvp)))].dhu_tty;
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-dhupoll(dev, events, p)
-	dev_t dev;
+dhupoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
 
-	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+	sc = vdev_privdata(devvp);
 
-	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
+	tp = sc->sc_dhu[DHU_LINE(minor(vdev_rdev(devvp)))].dhu_tty;
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*ARGSUSED*/
 int
-dhuioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+dhuioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -507,12 +513,13 @@ dhuioctl(dev, cmd, data, flag, p)
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
-	int unit, line;
+	int line;
 	int error;
+	dev_t dev;
 
-	unit = DHU_M2U(minor(dev));
+	dev = vdev_rdev(devvp);
 	line = DHU_LINE(minor(dev));
-	sc = dhu_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 	tp = sc->sc_dhu[line].dhu_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
@@ -563,11 +570,13 @@ dhuioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-dhutty(dev)
-        dev_t dev;
+dhutty(devvp)
+	struct vnode *devvp;
 {
-	struct dhu_softc *sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+	dev_t dev = vdev_rdev(devvp);
+	struct dhu_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
+
         return (tp);
 }
 
@@ -579,13 +588,16 @@ dhustop(tp, flag)
 	struct dhu_softc *sc;
 	int line;
 	int s;
+	dev_t dev;
+
+	dev = vdev_rdev(tp->t_devvp);
 
 	s = spltty();
 
 	if (tp->t_state & TS_BUSY) {
 
-		sc = dhu_cd.cd_devs[DHU_M2U(minor(tp->t_dev))];
-		line = DHU_LINE(minor(tp->t_dev));
+		sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+		line = DHU_LINE(minor(dev));
 
 		if (sc->sc_dhu[line].dhu_state == STATE_DMA_RUNNING) {
 
@@ -611,6 +623,7 @@ dhustart(tp)
 	int line, cc;
 	int addr;
 	int s;
+	dev_t dev;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -628,11 +641,12 @@ dhustart(tp)
 	if (cc == 0) 
 		goto out;
 
+	dev = vdev_rdev(tp->t_devvp);
 	tp->t_state |= TS_BUSY;
 
-	sc = dhu_cd.cd_devs[DHU_M2U(minor(tp->t_dev))];
+	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
 
-	line = DHU_LINE(minor(tp->t_dev));
+	line = DHU_LINE(minor(dev));
 
 	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 
@@ -676,13 +690,14 @@ dhuparam(tp, t)
 	int ispeed = ttspeedtab(t->c_ispeed, dhuspeedtab);
 	int ospeed = ttspeedtab(t->c_ospeed, dhuspeedtab);
 	unsigned lpr, lnctrl;
-	int unit, line;
+	int line;
 	int s;
+	dev_t dev;
 
-	unit = DHU_M2U(minor(tp->t_dev));
-	line = DHU_LINE(minor(tp->t_dev));
+	dev = vdev_rdev(tp->t_devvp);
+	line = DHU_LINE(minor(dev));
 
-	sc = dhu_cd.cd_devs[unit];
+	sc = vdev_privdata(tp->t_devvp);
 
 	/* check requested parameters */
         if (ospeed < 0 || ispeed < 0)
@@ -763,10 +778,13 @@ dhuiflow(tp, flag)
 	int flag;
 {
 	struct dhu_softc *sc;
-	int line = DHU_LINE(minor(tp->t_dev));
+	dev_t dev;
+	int line;
 
+	dev = vdev_rdev(tp->t_devvp);
+	line = DHU_LINE(minor(dev));
 	if (tp->t_cflag & CRTSCTS) {
-		sc = dhu_cd.cd_devs[DHU_M2U(minor(tp->t_dev))];
+		sc = vdev_privdata(tp->t_devvp);
 		(void) dhumctl(sc, line, DML_RTS, ((flag)? DMBIC: DMBIS));
 		return (1);
 	}

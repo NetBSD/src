@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.26 2001/05/27 09:09:05 kleink Exp $	*/
+/*	$NetBSD: ct.c,v 1.26.4.1 2001/10/10 11:56:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@
 #include <sys/mtio.h>
 #include <sys/proc.h>
 #include <sys/tprintf.h>
+#include <sys/vnode.h>
+#include <sys/vnode.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -166,7 +168,7 @@ void	ctstart __P((void *));
 void	ctgo __P((void *));
 void	ctintr __P((void *));
 
-void	ctcommand __P((dev_t, int, int));
+void	ctcommand __P((struct vnode *, int, int));
 
 cdev_decl(ct);
 bdev_decl(ct);
@@ -356,14 +358,15 @@ ctreset(sc)
 
 /*ARGSUSED*/
 int
-ctopen(dev, flag, type, p)
-	dev_t dev;
+ctopen(devvp, flag, type, p)
+	struct vnode *devvp;
 	int flag, type;
 	struct proc *p;
 {
 	struct ct_softc *sc;
 	u_char stat;
 	int cc, ctlr, slave;
+	dev_t dev = vdev_rdev(devvp);
 
 	if (UNIT(dev) >= ct_cd.cd_ndevs ||
 	    (sc = ct_cd.cd_devs[UNIT(dev)]) == NULL ||
@@ -398,6 +401,8 @@ ctopen(dev, flag, type, p)
 	if (cc != sizeof(stat))
 		return(EBUSY);
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_tpr = tprintf_open(p);
 	sc->sc_flags |= CTF_OPEN;
 	return(0);
@@ -405,17 +410,18 @@ ctopen(dev, flag, type, p)
 
 /*ARGSUSED*/
 int
-ctclose(dev, flag, fmt, p)
-	dev_t dev;
+ctclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct ct_softc *sc = ct_cd.cd_devs[UNIT(dev)];
+	struct ct_softc *sc;
 
+	sc = vdev_privdata(devvp);
 	if ((sc->sc_flags & (CTF_WRT|CTF_WRTTN)) == (CTF_WRT|CTF_WRTTN) &&
 	    (sc->sc_flags & CTF_EOT) == 0 ) { /* XXX return error if EOT ?? */
-		ctcommand(dev, MTWEOF, 2);
-		ctcommand(dev, MTBSR, 1);
+		ctcommand(devvp, MTWEOF, 2);
+		ctcommand(devvp, MTBSR, 1);
 		if (sc->sc_eofp == EOFS - 1)
 			sc->sc_eofs[EOFS - 1]--;
 		else
@@ -427,8 +433,8 @@ ctclose(dev, flag, fmt, p)
 			       sc->sc_eofs[sc->sc_eofp]);
 #endif
 	}
-	if ((minor(dev) & CT_NOREW) == 0)
-		ctcommand(dev, MTREW, 1);
+	if ((minor(vdev_rdev(devvp)) & CT_NOREW) == 0)
+		ctcommand(devvp, MTREW, 1);
 	sc->sc_flags &= ~(CTF_OPEN | CTF_WRT | CTF_WRTTN);
 	tprintf_close(sc->sc_tpr);
 #ifdef DEBUG
@@ -439,19 +445,19 @@ ctclose(dev, flag, fmt, p)
 }
 
 void
-ctcommand(dev, cmd, cnt)
-	dev_t dev;
+ctcommand(devvp, cmd, cnt)
+	struct vnode *devvp;
 	int cmd;
 	int cnt;
 {
-	struct ct_softc *sc = ct_cd.cd_devs[UNIT(dev)];
+	struct ct_softc *sc = vdev_privdata(devvp);
 	struct buf *bp = &sc->sc_bufstore;
 	struct buf *nbp = 0;
 
 	if (cmd == MTBSF && sc->sc_eofp == EOFS - 1) {
 		cnt = sc->sc_eofs[EOFS - 1] - cnt;
-		ctcommand(dev, MTREW, 1);
-		ctcommand(dev, MTFSF, cnt);
+		ctcommand(devvp, MTREW, 1);
+		ctcommand(devvp, MTFSF, cnt);
 		cnt = 2;
 		cmd = MTBSR;
 	}
@@ -464,7 +470,7 @@ ctcommand(dev, cmd, cnt)
 	sc->sc_flags |= CTF_CMD;
 	sc->sc_bp = bp;
 	sc->sc_cmd = cmd;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	if (cmd == MTFSF) {
 		nbp = (struct buf *)geteblk(MAXBSIZE);
 		bp->b_data = nbp->b_data;
@@ -496,11 +502,10 @@ void
 ctstrategy(bp)
 	struct buf *bp;
 {
-	int s, unit;
+	int s;
 	struct ct_softc *sc;
 
-	unit = UNIT(bp->b_dev);
-	sc = ct_cd.cd_devs[unit];
+	sc = vdev_privdata(bp->b_devvp);
 
 	s = splbio();
 	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
@@ -890,28 +895,28 @@ ctdone(sc, bp)
 }
 
 int
-ctread(dev, uio, flags)
-	dev_t dev;
+ctread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	return (physio(ctstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(ctstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-ctwrite(dev, uio, flags)
-	dev_t dev;
+ctwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 	/* XXX: check for hardware write-protect? */
-	return (physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(ctstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*ARGSUSED*/
 int
-ctioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+ctioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	int flag;
 	caddr_t data;
@@ -942,7 +947,7 @@ ctioctl(dev, cmd, data, flag, p)
 		default:
 			return(EINVAL);
 		}
-		ctcommand(dev, op->mt_op, cnt);
+		ctcommand(devvp, op->mt_op, cnt);
 		break;
 
 	case MTIOCGET:

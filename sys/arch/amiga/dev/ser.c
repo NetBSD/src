@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.57 2001/05/30 15:24:28 lukem Exp $	*/
+/*	$NetBSD: ser.c,v 1.57.4.1 2001/10/10 11:55:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -53,6 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/vnode.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/serreg.h>
@@ -96,7 +97,7 @@ void	ser_shutdown __P((struct ser_softc *));
 int	serparam __P((struct tty *, struct termios *)); 
 void	serintr __P((void));
 int	serhwiflow __P((struct tty *, int));
-int	sermctl __P((dev_t dev, int, int));
+int	sermctl __P((struct vnode *, int, int));
 void	ser_fastint __P((void));
 void	sereint __P((int));
 static	void ser_putchar __P((struct tty *, u_short));
@@ -265,15 +266,17 @@ serattach(pdp, dp, auxp)
 
 /* ARGSUSED */
 int
-seropen(dev, flag, mode, p)
-	dev_t dev;
+seropen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct ser_softc *sc;
 	struct tty *tp;
 	int unit, error, s, s2;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	error = 0;
 	unit = SERUNIT(dev);
 
@@ -295,6 +298,8 @@ seropen(dev, flag, mode, p)
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
+	vdev_setprivdata(devvp, sc);
+
 	s = spltty();
 
 	/*
@@ -304,7 +309,7 @@ seropen(dev, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		s2 = splser();
 		/*
@@ -336,7 +341,7 @@ seropen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		s2 = splser();
-		(void)sermctl(dev, TIOCM_DTR, DMSET);
+		(void)sermctl(devvp, TIOCM_DTR, DMSET);
 		/* clear input ring */
 		sbrpt = sbwpt = serbuf;
 		sbcnt = 0;
@@ -349,7 +354,7 @@ seropen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error =  tp->t_linesw->l_open(dev, tp);
+	error =  tp->t_linesw->l_open(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -365,13 +370,19 @@ bad:
 
 /*ARGSUSED*/
 int
-serclose(dev, flag, mode, p)
-	dev_t dev;
+serclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct ser_softc *sc;
 	struct tty *tp;
+
+	/*
+	 * XXX fvdl. I don't know this code, but surely this is wrong.
+	 * I guess Amigas don't come with > 1 serial port. But that
+	 * doesn't make this right.
+	 */
 
 	sc = ser_cd.cd_devs[0];
 	tp = ser_tty;
@@ -412,7 +423,7 @@ ser_shutdown(sc)
 	 * If HUPCL is not set, leave DTR unchanged.
 	 */
 	if (tp->t_cflag & HUPCL) {
-		(void)sermctl(tp->t_dev, TIOCM_DTR, DMBIC);
+		(void)sermctl(tp->t_devvp, TIOCM_DTR, DMBIC);
 		/*
 		 * Idea from dev/ic/com.c: 
 		 * sleep a bit so that other side will notice, even if we
@@ -433,8 +444,8 @@ ser_shutdown(sc)
 }
 
 int
-serread(dev, uio, flag)
-	dev_t dev;
+serread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -444,8 +455,8 @@ serread(dev, uio, flag)
 }
 
 int
-serwrite(dev, uio, flag)
-	dev_t dev;
+serwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -455,8 +466,8 @@ serwrite(dev, uio, flag)
 }
 
 int
-serpoll(dev, events, p)
-	dev_t dev;
+serpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -466,8 +477,8 @@ serpoll(dev, events, p)
 }
 
 struct tty *
-sertty(dev)
-	dev_t dev;
+sertty(devvp)
+	struct vnode *devvp;
 {
 	/* ARGSUSED */
 
@@ -678,8 +689,8 @@ sermint(unit)
 }
 
 int
-serioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+serioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -710,27 +721,27 @@ serioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) sermctl(dev, TIOCM_DTR, DMBIS);
+		(void) sermctl(devvp, TIOCM_DTR, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) sermctl(dev, TIOCM_DTR, DMBIC);
+		(void) sermctl(devvp, TIOCM_DTR, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) sermctl(dev, *(int *) data, DMSET);
+		(void) sermctl(devvp, *(int *) data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) sermctl(dev, *(int *) data, DMBIS);
+		(void) sermctl(devvp, *(int *) data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) sermctl(dev, *(int *) data, DMBIC);
+		(void) sermctl(devvp, *(int *) data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = sermctl(dev, 0, DMGET);
+		*(int *)data = sermctl(devvp, 0, DMGET);
 		break;
 	case TIOCGFLAGS:
 		*(int *)data = serswflags;
@@ -801,13 +812,13 @@ serparam(tp, t)
 	last_ciab_pra = ciab.pra;
 
 	if (t->c_ospeed == 0)
-		(void)sermctl(tp->t_dev, 0, DMSET);	/* hang up line */
+		(void)sermctl(tp->t_devvp, 0, DMSET);	/* hang up line */
 	else {
 		/* 
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
-		(void)sermctl(tp->t_dev, TIOCM_DTR, DMSET);
+		(void)sermctl(tp->t_devvp, TIOCM_DTR, DMSET);
 		custom.serper = (0 << 15) | ospeed;
 	}
 	(void)tp->t_linesw->l_modem(tp, ISDCD(last_ciab_pra));
@@ -918,7 +929,7 @@ serstart(tp)
 		return;
 
 #ifdef DIAGNOSTIC
-	unit = SERUNIT(tp->t_dev);
+	unit = SERUNIT(vdev_rdev(tp->t_devvp));
 	if (unit)
 		panic("serstart: unit is %d\n", unit);
 #endif
@@ -991,8 +1002,8 @@ serstop(tp, flag)
 }
 
 int
-sermctl(dev, bits, how)
-	dev_t dev;
+sermctl(devvp, bits, how)
+	struct vnode *devvp;
 	int bits, how;
 {
 	int s;

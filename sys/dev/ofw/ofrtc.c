@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.9 2001/08/26 02:49:18 matt Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.9.2.1 2001/10/10 11:56:56 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -92,8 +93,9 @@ ofrtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
+ofrtc_open(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct ofrtc_softc *of;
 	int unit = minor(dev);
 	char path[256];
@@ -103,6 +105,9 @@ ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 		return ENXIO;
 	if (!(of = ofrtc_cd.cd_devs[unit]))
 		return ENXIO;
+
+	vdev_setprivdata(devvp, of);
+
 	if (!of->sc_ihandle) {
 		if ((l = OF_package_to_path(of->sc_phandle, path,
 		    sizeof path - 1)) < 0 ||
@@ -124,7 +129,7 @@ ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int
-ofrtc_close(dev_t dev, int flags, int fmt, struct proc *p)
+ofrtc_close(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
 	return 0;
 }
@@ -146,9 +151,9 @@ twodigits(char *bp)
 }
 
 int
-ofrtc_read(dev_t dev, struct uio *uio, int flag)
+ofrtc_read(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
+	struct ofrtc_softc *of = vdev_privdata(devvp);
 	int date[6];
 	char buf[14];
 	int xlen;
@@ -178,9 +183,9 @@ ofrtc_read(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ofrtc_write(dev_t dev, struct uio *uio, int flag)
+ofrtc_write(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
+	struct ofrtc_softc *of = vdev_privdata(devvp);
 	char buf[14];
 	int cnt, year, error;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.1.4.1 2001/10/01 12:45:16 fvdl Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.1.4.2 2001/10/10 11:56:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/termios.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
@@ -54,8 +55,9 @@ int	arcbios_tty_param(struct tty *, struct termios *);
 cdev_decl(arcbios_tty);
 
 int
-arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
+arcbios_ttyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 	struct tty *tp;
 	int s, error = 0, setuptimeout = 0;
@@ -71,9 +73,11 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 	} else
 		tp = arcbios_tty[unit];
 
+	vdev_setprivdata(devvp, tp);
+
 	tp->t_oproc = arcbios_tty_start;
 	tp->t_param = arcbios_tty_param;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -92,7 +96,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	splx(s);
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error == 0 && setuptimeout)
 		callout_reset(&arcbios_tty_ch, 1, arcbios_tty_poll, tp);
 
@@ -100,10 +104,9 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-arcbios_ttyclose(dev_t dev, int flag, int mode, struct proc *p)
+arcbios_ttyclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(dev);
-	struct tty *tp = arcbios_tty[unit];
+	struct tty *tp = vdev_privdata(devvp);
 
 	callout_stop(&arcbios_tty_ch);
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -112,34 +115,34 @@ arcbios_ttyclose(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-arcbios_ttyread(dev_t dev, struct uio *uio, int flag)
+arcbios_ttyread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = arcbios_tty[minor(dev)];
+	struct tty *tp = vdev_privdata(devvp);
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-arcbios_ttywrite(dev_t dev, struct uio *uio, int flag)
+arcbios_ttywrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = arcbios_tty[minor(dev)];
+	struct tty *tp = vdev_privdata(devvp);
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-arcbios_ttypoll(dev_t dev, int events, struct proc *p)
+arcbios_ttypoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct tty *tp = arcbios_tty[minor(dev)];
+	struct tty *tp = vdev_privdata(devvp);
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
  
 int
-arcbios_ttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+arcbios_ttyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+		 struct proc *p)
 {
-	int unit = minor(dev);
-	struct tty *tp = arcbios_tty[unit];
+	struct tty *tp = vdev_privdata(devvp);
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
@@ -231,11 +234,7 @@ arcbios_tty_poll(void *v)
 }
 
 struct tty *
-arcbios_ttytty(dev_t dev)
+arcbios_ttytty(struct vnode *devvp)
 {
-
-	if (minor(dev) != 0)
-		panic("arcbios_ttytty: bogus");
-
-	return (arcbios_tty[0]);
+	return vdev_privdata(devvp);
 }

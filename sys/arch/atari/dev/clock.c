@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2001/07/26 15:05:09 wiz Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.2.1 2001/10/10 11:55:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <dev/clock_subr.h>
 
@@ -459,11 +460,12 @@ gettod()
  *                   RTC-device support				       *
  ***********************************************************************/
 int
-rtcopen(dev, flag, mode, p)
-	dev_t		dev;
+rtcopen(devvp, flag, mode, p)
+	struct vnode 	*devvp;
 	int		flag, mode;
 	struct proc	*p;
 {
+	dev_t			dev = vdev_rdev(devvp);
 	int			unit = minor(dev);
 	struct clock_softc	*sc;
 
@@ -475,27 +477,28 @@ rtcopen(dev, flag, mode, p)
 	if (sc->sc_flags & RTC_OPEN)
 		return EBUSY;
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags = RTC_OPEN;
 	return 0;
 }
 
 int
-rtcclose(dev, flag, mode, p)
-	dev_t		dev;
+rtcclose(devvp, flag, mode, p)
+	struct vnode	*devvp;
 	int		flag;
 	int		mode;
 	struct proc	*p;
 {
-	int			unit = minor(dev);
-	struct clock_softc	*sc = clock_cd.cd_devs[unit];
+	struct clock_softc	*sc = vdev_privdata(devvp);
 
 	sc->sc_flags = 0;
 	return 0;
 }
 
 int
-rtcread(dev, uio, flags)
-	dev_t		dev;
+rtcread(devvp, uio, flags)
+	struct vnode	*devvp;
 	struct uio	*uio;
 	int		flags;
 {
@@ -504,7 +507,7 @@ rtcread(dev, uio, flags)
 	int			s, length;
 	char			buffer[16];
 
-	sc = clock_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
 
 	s = splhigh();
 	MC146818_GETTOD(RTC, &clkregs);
@@ -540,8 +543,8 @@ twodigits(buffer, pos)
 }
 
 int
-rtcwrite(dev, uio, flags)
-	dev_t		dev;
+rtcwrite(devvp, uio, flags)
+	struct vnode	*devvp;
 	struct uio	*uio;
 	int		flags;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.5 1999/03/24 14:11:47 minoura Exp $	*/
+/*	$NetBSD: itevar.h,v 1.5.20.1 2001/10/10 11:56:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,11 +239,11 @@ void	itecnfinish __P((struct ite_softc *));
 
 /* standard ite device entry points. */
 void	iteinit __P((dev_t));
-int	iteopen __P((dev_t, int, int, struct proc *));
-int	iteclose __P((dev_t, int, int, struct proc *));
-int	iteread __P((dev_t, struct uio *, int));
-int	itewrite __P((dev_t, struct uio *, int));
-int	iteioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	iteopen __P((struct vnode *, int, int, struct proc *));
+int	iteclose __P((struct vnode *, int, int, struct proc *));
+int	iteread __P((struct vnode *, struct uio *, int));
+int	itewrite __P((struct vnode *, struct uio *, int));
+int	iteioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
 void	itestart __P((struct tty *));
 
 /* ite functions */

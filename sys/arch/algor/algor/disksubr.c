@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2001/08/24 02:07:34 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.2.1 2001/10/10 11:55:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3 2001/08/24 02:07:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3.2.1 2001/10/10 11:55:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3 2001/08/24 02:07:34 simonb Exp $");
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -50,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3 2001/08/24 02:07:34 simonb Exp $");
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *clp)
+readdisklabel(struct vnode *devvp, void (*strat)(struct buf *),
+	      struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -74,11 +75,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp = geteblk((int)lp->d_secsize);
 
 	/* next, dig out disk label */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);  
 
 	/* if successful, locate disk label within block and validate */
@@ -106,7 +107,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		do {
 			/* read a bad sector table */
 			bp->b_flags &= ~(B_DONE);
-			bp->b_flags |= B_READ;
+			bp->b_flags |= B_READ | B_DKLABEL;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
 				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
@@ -135,6 +136,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -199,19 +201,19 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
  * label.  Hope the user was carefull.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *clp)
+writedisklabel(struct vnode *devvp, void (*strat)(struct buf *),
+	       struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp; 
 	struct disklabel *dlp;
 	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;           /* get current label */
+	bp->b_flags |= B_READ | B_DKLABEL;           /* get current label */
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
@@ -220,7 +222,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	*dlp = *lp;     /* struct assignment */
 
 	bp->b_flags &= ~(B_READ|B_DONE);
-	bp->b_flags |= B_WRITE;
+	bp->b_flags |= B_WRITE | B_DKLABEL;
 	(*strat)(bp);
 	error = biowait(bp);
 
@@ -238,10 +240,18 @@ done:
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	struct partition *p;
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;
-	int maxsz = p->p_size;
+	int maxsz;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
+	maxsz = p->p_size;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */ 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.3 2000/12/03 04:51:05 matt Exp $	*/
+/*	$NetBSD: i82072.c,v 1.3.2.1 2001/10/10 11:56:18 fvdl Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -118,13 +118,13 @@ fd_reset(struct fd_softc *sc)
 }
 
 int
-fdopen(dev_t dev, int flags, int mode, struct proc *p)
+fdopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 	return (EBADF);
 }
 
 int
-fdclose(dev_t dev, int flags, int mode, struct proc *p)
+fdclose(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 	return 0;
 }
@@ -136,7 +136,7 @@ fdstrategy(struct buf *bp)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+fdioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EINVAL);
 }

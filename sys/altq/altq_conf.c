@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.4 2000/12/14 23:50:43 thorpej Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.4.8.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_conf.c,v 1.10 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -200,17 +200,17 @@ static struct cdevsw altq_cdevsw = {
 static
 #endif
 int
-altqopen(dev, flag, fmt, p)
-	dev_t dev;
+altqopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit == 0)
 		return (0);
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_open)(dev, flag, fmt, p);
+		return (*altqsw[unit].d_open)(devvp, flag, fmt, p);
 
 	return ENXIO;
 }
@@ -219,17 +219,17 @@ altqopen(dev, flag, fmt, p)
 static
 #endif
 int
-altqclose(dev, flag, fmt, p)
-	dev_t dev;
+altqclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit == 0)
 		return (0);
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_close)(dev, flag, fmt, p);
+		return (*altqsw[unit].d_close)(devvp, flag, fmt, p);
 
 	return ENXIO;
 }
@@ -238,14 +238,14 @@ altqclose(dev, flag, fmt, p)
 static
 #endif
 int
-altqioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+altqioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit == 0) {
 		struct ifnet *ifp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.21 2001/05/30 15:24:39 lukem Exp $	*/
+/*	$NetBSD: com.c,v 1.21.4.1 2001/10/10 11:56:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #if 0
@@ -432,11 +433,12 @@ comattach(parent, dev, aux)
 }
 
 int
-comopen(dev, flag, mode, p)
-	dev_t dev;
+comopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = COMUNIT(dev);
 	struct com_softc *sc;
 	int iobase;
@@ -456,9 +458,11 @@ comopen(dev, flag, mode, p)
 	} else
 		tp = sc->sc_tty;
 
+	vdev_setprivdata(devvp, sc);
+
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
@@ -552,7 +556,7 @@ comopen(dev, flag, mode, p)
 	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
 
 	if (!error)
-		error = (*tp->t_linesw->l_open)(dev, tp);
+		error = (*tp->t_linesw->l_open)(devvp, tp);
 
 	/* XXX cleanup on error */
 
@@ -560,13 +564,12 @@ comopen(dev, flag, mode, p)
 }
  
 int
-comclose(dev, flag, mode, p)
-	dev_t dev;
+comclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = xcom_cd.cd_devs[unit];
+	struct com_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int s;
@@ -600,46 +603,46 @@ comclose(dev, flag, mode, p)
 }
  
 int
-comread(dev, uio, flag)
-	dev_t dev;
+comread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-comwrite(dev, uio, flag)
-	dev_t dev;
+comwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-compoll(dev, events, p)
-	dev_t dev;
+compoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-comtty(dev)
-	dev_t dev;
+comtty(devvp)
+	struct vnode *devvp;
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -659,15 +662,14 @@ tiocm_xxx2mcr(data)
 }
 
 int
-comioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+comioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = xcom_cd.cd_devs[unit];
+	struct com_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int error;
@@ -778,7 +780,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = vdev_privdata(tp->t_devvp);
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
@@ -890,7 +892,7 @@ static void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = vdev_privdata(tp->t_devvp);
 	int iobase = sc->sc_iobase;
 	int s;
 
