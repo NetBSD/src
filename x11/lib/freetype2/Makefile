@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/17 23:15:30 perry Exp $
+#	$NetBSD: Makefile,v 1.6 2004/04/28 14:17:57 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
 	raster.c sfnt.c smooth.c truetype.c type1.c type42.c winfnt.c
 
 INCS=	ft2build.h
-INCSDIR=${X11INCDIR}/freetype2
+INCSDIR=${X11INCDIR}
 .PATH:	${FREETYPETOP}/include
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
