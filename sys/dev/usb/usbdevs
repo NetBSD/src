@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.388 2004/11/05 13:51:16 scw Exp $
+$NetBSD: usbdevs,v 1.389 2004/12/26 07:03:29 imp Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -257,9 +257,9 @@ vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk
 vendor JENOPTIK		0x0784  Jenoptik
+vendor LOGITEC		0x0789	Logitec
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
-vendor LOGITEC		0x0789	Logitec
 vendor ABL		0x0794	ABL Electronics
 vendor SUNCOMM		0x079c	Sun Communications, Inc.
 vendor ALFADATA		0x079d	Alfadata Computer
