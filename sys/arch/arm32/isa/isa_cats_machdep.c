@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_cats_machdep.c,v 1.1 1998/10/05 01:00:57 mark Exp $	*/
+/*	$NetBSD: isa_cats_machdep.c,v 1.2 1999/02/27 11:12:44 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -515,10 +515,6 @@ isa_cats_init(iobase, membase)
 #endif
 
 	isa_io_init(iobase, membase);
-
-	/* Gross hack for CS423x PnP chips ... */
-	printf("gross pnp hack\n");
-	(void)inb(0x388);
 }
 
 void
@@ -535,9 +531,6 @@ isa_attach_hook(parent, self, iba)
 #if NISADMA > 0
 	isa_dma_init();
 #endif
-	/* Gross hack for CS423x PnP chips ... */
-	printf("gross pnp hack\n");
-	(void)inb(0x388);
 }
 
 int
