@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.36 2004/08/07 01:09:26 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.37 2004/08/07 01:18:06 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.36 2004/08/07 01:09:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.37 2004/08/07 01:18:06 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -742,6 +742,9 @@ xi_pcmcia_lan_nid_ciscallback(tuple, arg)
 		    pcmcia_tuple_read_1(tuple, 1) != ETHER_ADDR_LEN)
 			return (0);
 		break;
+
+	default:
+		return (0);
 	}
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
