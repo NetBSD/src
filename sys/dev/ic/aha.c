@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.8 1997/10/28 18:40:07 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.9 1997/10/28 23:31:30 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -125,7 +125,7 @@ int aha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct aha_softc *, int,
 integrate void aha_finish_ccbs __P((struct aha_softc *));
 integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *));
-integrate void aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
+integrate int aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
 struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
 struct aha_ccb *aha_ccb_phys_kv __P((struct aha_softc *, u_long));
 void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
@@ -497,13 +497,13 @@ aha_free_ccb(sc, ccb)
 	splx(s);
 }
 
-integrate void
+integrate int
 aha_init_ccb(sc, ccb)
 	struct aha_softc *sc;
 	struct aha_ccb *ccb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	int hashnum;
+	int hashnum, error;
 
 	/*
 	 * XXX Should we put a DIAGNOSTIC check for multiple
@@ -515,20 +515,35 @@ aha_init_ccb(sc, ccb)
 	/*
 	 * Create DMA maps for this CCB.
 	 */
-	if (bus_dmamap_create(dmat, sizeof(struct aha_ccb), 1,
-	    sizeof(struct aha_ccb), 0, BUS_DMA_NOWAIT, &ccb->dmamap_self) ||
+	error = bus_dmamap_create(dmat, sizeof(struct aha_ccb), 1,
+	    sizeof(struct aha_ccb), 0, BUS_DMA_NOWAIT, &ccb->dmamap_self);
+	if (error) {
+		printf("%s: can't create ccb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
-					/* XXX What's a good value for this? */
-	    bus_dmamap_create(dmat, AHA_MAXXFER, AHA_NSEG, AHA_MAXXFER,
-	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer))
-		panic("aha_init_ccb: can't create DMA maps");
+	error = bus_dmamap_create(dmat, AHA_MAXXFER, AHA_NSEG, AHA_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
+	if (error) {
+		printf("%s: can't create ccb dmamap_xfer\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, ccb->dmamap_self);
+		return (error);
+	}
 
 	/*
 	 * Load the permanent DMA maps.
 	 */
-	if (bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
-	    sizeof(struct aha_ccb), NULL, BUS_DMA_NOWAIT))
-		panic("aha_init_ccb: can't load permanent maps");
+	error = bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
+	    sizeof(struct aha_ccb), NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load ccb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, ccb->dmamap_self);
+		bus_dmamap_destroy(dmat, ccb->dmamap_xfer);
+		return (error);
+	}
 
 	/*
 	 * put in the phystokv hash table
@@ -539,6 +554,7 @@ aha_init_ccb(sc, ccb)
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
 	aha_reset_ccb(sc, ccb);
+	return (0);
 }
 
 /*
@@ -567,12 +583,17 @@ aha_create_ccbs(sc, mem, size, max_ccbs)
 	size = NBPG;
 	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
-	if (error)
+	if (error) {
+		printf("%s: can't allocate memory for ccbs\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
 	if (error) {
+		printf("%s: can't map memory for ccbs\n",
+		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return (error);
 	}
@@ -580,7 +601,12 @@ aha_create_ccbs(sc, mem, size, max_ccbs)
  have_mem:
 	bzero(ccb, size);
 	while (size > sizeof(struct aha_ccb) && sc->sc_numccbs < max_ccbs) {
-		aha_init_ccb(sc, ccb);
+		error = aha_init_ccb(sc, ccb);
+		if (error) {
+			printf("%s: can't initialize ccb\n",
+			    sc->sc_dev.dv_xname);
+			return (error);
+		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
 		(caddr_t)ccb += ALIGN(sizeof(struct aha_ccb));
 		size -= ALIGN(sizeof(struct aha_ccb));
@@ -617,7 +643,13 @@ aha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < AHA_CCB_MAX) {
-			if (aha_create_ccbs(sc, NULL, 0, AHA_CCB_MAX)) {
+			/*
+			 * aha_create_ccbs() might have managed to create
+			 * one before it failed.  If so, don't abort,
+			 * just grab it and continue to hobble along.
+			 */
+			if (aha_create_ccbs(sc, NULL, 0, AHA_CCB_MAX) != 0 &&
+			    sc->sc_free_ccb.tqh_first == NULL) {
 				printf("%s: can't allocate ccbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
