@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.12 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.13 1999/06/15 22:25:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -268,6 +268,8 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	long bb;
 	int error;
 	extern long locked_queue_bytes;
+	struct buf *ibp;
+	SEGUSE *sup;
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
@@ -281,6 +283,17 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		brelse(*bpp);
 		return(error);
 	}
+
+	/*
+ 	 * Fix the allocation for this fragment so that it looks like the
+         * source segment contained a block of the new size.  This overcounts;
+	 * but the overcount only lasts until the block in question
+	 * is written, so the on-disk live bytes count is always correct.
+	 */
+	LFS_SEGENTRY(sup, fs, datosn(fs,(*bpp)->b_blkno), ibp);
+	sup->su_nbytes += (nsize-osize);
+	VOP_BWRITE(ibp);
+
 #ifdef QUOTA
 	if ((error = chkdq(ip, bb, curproc->p_ucred, 0))) {
 		brelse(*bpp);
