@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.74 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.75 2003/12/06 04:25:57 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.74 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.75 2003/12/06 04:25:57 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -718,11 +718,9 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	case PROC_PID_STOPEXEC:
 		f = P_STOPEXEC;
 		break;
-#ifdef PROC_PID_STOPEXIT
 	case PROC_PID_STOPEXIT:
 		f = P_STOPEXIT;
 		break;
-#endif /* PROC_PID_STOPEXIT */
 	default:
 		return (EINVAL);
 	}
@@ -850,10 +848,8 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTLTYPE_INT, "stopexec", NULL,
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXEC, CTL_EOL);
-#ifdef PROC_PID_STOPEXIT
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_ANYWRITE,
 		       CTLTYPE_INT, "stopexit", NULL,
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
-#endif /* PROC_PID_STOPEXIT */
 }
