@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16.2.3 1997/01/31 02:26:53 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.4 1997/01/31 17:14:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -50,6 +50,8 @@ bdev_decl(sw);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "wdc.h"
+bdev_decl(wd);
 #include "sd.h"
 bdev_decl(sd);
 #include "vnd.h"
@@ -65,11 +67,11 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_notdef(),			/* 4 */
+	bdev_disk_init(NWDC,wd),	/* 4: IDE disk driver */
 	bdev_notdef(),			/* 5 */
 	bdev_disk_init(NMD,md),		/* 6: memory disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
-	bdev_disk_init(NSD,sd),		/* 8: SCSI disk */
+	bdev_disk_init(NSD,sd),		/* 8: SCSI disk driver */
 	bdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
@@ -140,6 +142,7 @@ cdev_decl(uk);
 cdev_decl(fd);
 #include "ipfilter.h"
 cdev_decl(ipl);
+cdev_decl(wd);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -184,6 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_disk_init(NFDC,fd),	/* 34: PC-ish floppy disk driver */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
+	cdev_disk_init(NWDC,wd),	/* 36: IDE disk driver */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -261,6 +265,7 @@ static int chrtoblktbl[] = {
 	/* 33 */	NODEV,
 	/* 34 */	0,		/* fd */
 	/* 35 */	NODEV,
+	/* 36 */	4,		/* wd */
 };
 
 /*

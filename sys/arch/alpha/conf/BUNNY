@@ -1,4 +1,4 @@
-#	$NetBSD: BUNNY,v 1.12.2.2 1997/01/25 01:29:53 cgd Exp $
+#	$NetBSD: BUNNY,v 1.12.2.3 1997/01/31 17:14:45 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -19,12 +19,14 @@ options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
+# File systems
+file-system 	FFS		# Fast file system
+file-system 	MFS		# Memory-based file system
+file-system 	NFS		# Sun NFS-compatible file system client
+
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
-options		FFS		# Fast file system
-options		MFS		# Memory-based file system
 options		NFSSERVER	# Sun NFS-compatible file system server
-options		NFSCLIENT	# Sun NFS-compatible file system client
 
 # Networking options
 options		INET		# Internet protocol suite
@@ -48,7 +50,7 @@ options		LKM
 options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
-config		netbsd	swap generic
+config		netbsd	root on ? type ?
 
 mainbus0 at	root
 cpu*	at	mainbus0
