@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.51 2002/06/09 14:14:50 yamt Exp $	*/
+/*	$NetBSD: file.c,v 1.52 2002/06/10 09:14:27 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.51 2002/06/09 14:14:50 yamt Exp $");
+__RCSID("$NetBSD: file.c,v 1.52 2002/06/10 09:14:27 yamt Exp $");
 #endif
 #endif
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: file.c,v 1.51 2002/06/09 14:14:50 yamt Exp $");
  * Quick check to see if a file (or dir ...) exists
  */
 Boolean
-fexists(char *fname)
+fexists(const char *fname)
 {
 	struct stat dummy;
 	if (!lstat(fname, &dummy))
@@ -57,7 +57,7 @@ fexists(char *fname)
  * Quick check to see if something is a directory
  */
 Boolean
-isdir(char *fname)
+isdir(const char *fname)
 {
 	struct stat sb;
 
@@ -71,7 +71,7 @@ isdir(char *fname)
  * Check if something is a link to a directory
  */
 Boolean
-islinktodir(char *fname)
+islinktodir(const char *fname)
 {
 	struct stat sb;
 
@@ -88,7 +88,7 @@ islinktodir(char *fname)
  * Check to see if file is a dir, and is empty
  */
 Boolean
-isemptydir(char *fname)
+isemptydir(const char *fname)
 {
 	if (isdir(fname) || islinktodir(fname)) {
 		DIR    *dirp;
@@ -113,7 +113,7 @@ isemptydir(char *fname)
  * Check if something is a regular file
  */
 Boolean
-isfile(char *fname)
+isfile(const char *fname)
 {
 	struct stat sb;
 	if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode))
@@ -126,7 +126,7 @@ isfile(char *fname)
  * a file, say "it's empty", otherwise return TRUE if zero sized.
  */
 Boolean
-isemptyfile(char *fname)
+isemptyfile(const char *fname)
 {
 	struct stat sb;
 	if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode)) {
@@ -153,7 +153,7 @@ static const url_t urls[] = {
  * Returns length of leading part of any URL from urls table, or -1
  */
 int
-URLlength(char *fname)
+URLlength(const char *fname)
 {
 	const url_t *up;
 	int     i;
@@ -237,7 +237,7 @@ fileURLFilename(char *fname, char *where, int max)
  * Wrapper routine for fileGetURL to iterate over several "sfx"s
  */
 static char   *
-fileGet1URL(char *base, char *spec, char *sfx)
+fileGet1URL(const char *base, const char *spec, const char *sfx)
 {
 	char    host[MAXHOSTNAMELEN], file[FILENAME_MAX];
 	char   *cp, *rp;
