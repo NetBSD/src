@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/26 19:02:50 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/26 19:19:59 fvdl Exp $
 #
-# Makefile for x86_64
+# Makefile for amd64
 #
 
 # have to have all of them here for crunch ...
