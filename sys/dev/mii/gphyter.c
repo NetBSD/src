@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.6 2001/11/13 07:41:36 lukem Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.7 2002/03/25 20:51:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.6 2001/11/13 07:41:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.7 2002/03/25 20:51:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &gphyter_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.29 2001/08/25 01:41:17 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.30 2002/03/25 20:51:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -151,9 +151,7 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_DOPAUSE	0x0100		/* advertise PAUSE capability */
 #define	MIIF_IS_HPNA	0x0200		/* is a HomePNA device */
 
-/* XXX ununsed
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
-*/
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
