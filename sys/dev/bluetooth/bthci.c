@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.1.4.3 2002/10/10 18:38:30 jdolecek Exp $	*/
+/*	$NetBSD: bthci.c,v 1.1.4.4 2002/10/11 21:17:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -110,7 +110,8 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC_XXX
 	if (sc->sc_methods->bt_read == NULL ||
 	    sc->sc_methods->bt_write == NULL ||
-	    sc->sc_methods->bt_poll == NULL)
+	    sc->sc_methods->bt_poll == NULL ||
+	    sc->sc_methods->bt_kqfilter == NULL)
 		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
@@ -291,3 +292,16 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 	return (sc->sc_methods->bt_poll(sc->sc_handle, events, p));
 }
 
+int
+bthcikqfilter(dev_t dev, struct knote *kn)
+{
+	struct bthci_softc *sc;
+
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+		return (EIO);
+
+	return (sc->sc_methods->bt_kqfilter(sc->sc_handle, events, p));
+}
