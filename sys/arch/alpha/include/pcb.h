@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.10 2003/06/23 11:01:01 martin Exp $ */
+/* $NetBSD: pcb.h,v 1.11 2003/06/29 18:11:14 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,9 @@
 #ifndef _ALPHA_PCB_H_
 #define	_ALPHA_PCB_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/lock.h>
 
