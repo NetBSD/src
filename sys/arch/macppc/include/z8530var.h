@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.6 2003/02/15 02:28:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -148,3 +148,8 @@ struct zschan {
 void	zs_putc __P((/* register volatile struct zschan * */void *, int));
 int	zs_getc __P((/* register volatile struct zschan * */void *));
 void zs_kgdb_init __P((void));
+
+#ifdef ZS_TXDMA
+void zstty_txdma_int __P((void *));
+void zs_dma_setup __P((struct zs_chanstate *, caddr_t, int));
+#endif
