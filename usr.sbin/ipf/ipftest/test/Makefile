@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/06/12 10:45:32 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2000/06/12 13:35:51 veego Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -25,16 +25,16 @@ ntests: n1 n2 n3 n4 n5 n6 n7
 	@(cd ..; make ipftest; )
 
 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f14:
-	@/bin/sh ./dotest $@
+	@/bin/sh ${.CURDIR}/dotest $@ ${.CURDIR}/../../../../dist/ipf/test
 
 f12:
-	@/bin/sh ./hextest $@
+	@/bin/sh ${.CURDIR}/hextest $@ ${.CURDIR}/../../../../dist/ipf/test
 
 i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11:
-	@/bin/sh ./itest $@
+	@/bin/sh ${.CURDIR}/itest $@ ${.CURDIR}/../../../../dist/ipf/test
 
 n1 n2 n3 n4 n5 n6 n7:
-	@/bin/sh ./nattest $@
+	@/bin/sh ${.CURDIR}/nattest $@ ${.CURDIR}/../../../../dist/ipf/test
 
 clean cleandir:
 	/bin/rm -f f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f14
