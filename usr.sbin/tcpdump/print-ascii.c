@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ascii.c,v 1.1 1999/09/30 14:49:12 sjg Exp $ 	*/
+/*	$NetBSD: print-ascii.c,v 1.1.6.1 1999/12/27 18:38:12 wrstuden Exp $ 	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ascii.c,v 1.1 1999/09/30 14:49:12 sjg Exp $");
+__RCSID("$NetBSD: print-ascii.c,v 1.1.6.1 1999/12/27 18:38:12 wrstuden Exp $");
 #endif
 #include <stdio.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1999/04/24 23:36:36 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.16.4.1 1999/12/27 18:37:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.16 1999/04/24 23:36:36 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.4.1 1999/12/27 18:37:12 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,6 +100,7 @@ main(argc, argv)
 
 	egid = getegid();
 	(void)setegid(getgid());
+
 	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
 		case 'M':
@@ -119,22 +120,28 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	while (argc > 0) {
+
+	for ( ; argc > 0; argc--, argv++) {
+		struct mode *p;
+		int modefound = 0;
+
 		if (isdigit(argv[0][0])) {
 			naptime = atoi(argv[0]);
 			if (naptime <= 0)
 				naptime = 5;
-		} else {
-			struct cmdtab *p;
-
-			p = lookup(&argv[0][0]);
-			if (p == (struct cmdtab *)-1)
-				errx(1, "ambiguous request: %s", &argv[0][0]);
-			if (p == 0)
-				errx(1, "unknown request: %s", &argv[0][0]);
-			curcmd = p;
+			continue;
 		}
-		argc--, argv++;
+
+		for (p = modes; p->c_name ; p++) {
+			if (strcmp(argv[0], p->c_name) == 0) {
+				curmode = p;
+				modefound++;
+				break;
+			}
+		}
+
+		if (!modefound)
+			error("%s: Unknown command.", argv[0]);
 	}
 
 	/*
@@ -182,7 +189,7 @@ main(argc, argv)
 	}
 
 	CMDLINE = LINES - 1;
-	wnd = (*curcmd->c_open)();
+	wnd = (*curmode->c_open)();
 	if (wnd == NULL) {
 		warnx("couldn't initialize display");
 		die(0);
@@ -196,8 +203,8 @@ main(argc, argv)
 	hostname[sizeof(hostname) - 1] = '\0';
 	NREAD(X_HZ, &hz, sizeof hz);
 	NREAD(X_STATHZ, &stathz, sizeof stathz);
-	(*curcmd->c_init)();
-	curcmd->c_flags |= CF_INIT;
+	(*curmode->c_init)();
+	curmode->c_flags |= CF_INIT;
 	labels();
 
 	dellave = 0.0;
@@ -213,7 +220,8 @@ main(argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "usage: systat [-M core] [-N system] [-w wait]\n");
+	fprintf(stderr, "usage: systat [-M core] [-N system] [-w wait] "
+		"[display] [refresh-interval]\n");
 	exit(1);
 }
 
@@ -221,12 +229,12 @@ usage()
 void
 labels()
 {
-	if (curcmd->c_flags & CF_LOADAV) {
+	if (curmode->c_flags & CF_LOADAV) {
 		mvaddstr(2, 20,
 		    "/0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10");
 		mvaddstr(3, 5, "Load Average");
 	}
-	(*curcmd->c_label)();
+	(*curmode->c_label)();
 #ifdef notdef
 	mvprintw(21, 25, "CPU usage on %s", hostname);
 #endif
@@ -238,11 +246,16 @@ display(signo)
 	int signo;
 {
 	int i, j;
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGALRM);
+	sigprocmask(SIG_BLOCK, &set, NULL);
 
 	/* Get the load average over the last minute. */
 	(void)getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
-	(*curcmd->c_fetch)();
-	if (curcmd->c_flags & CF_LOADAV) {
+	(*curmode->c_fetch)();
+	if (curmode->c_flags & CF_LOADAV) {
 		j = 5.0*avenrun[0] + 0.5;
 		dellave -= avenrun[0];
 		if (dellave >= 0.0)
@@ -260,12 +273,13 @@ display(signo)
 		if (j > 50)
 			wprintw(wload, " %4.1f", avenrun[0]);
 	}
-	(*curcmd->c_refresh)();
-	if (curcmd->c_flags & CF_LOADAV)
+	(*curmode->c_refresh)();
+	if (curmode->c_flags & CF_LOADAV)
 		wrefresh(wload);
 	wrefresh(wnd);
 	move(CMDLINE, col);
 	refresh();
+	sigprocmask(SIG_UNBLOCK, &set, NULL);
 	alarm(naptime);
 }
 
@@ -281,16 +295,6 @@ redraw(signo)
 	wrefresh(curscr);
 	refresh();
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
-}
-
-void
-load()
-{
-
-	(void)getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
-	mvprintw(CMDLINE, 0, "%4.1f %4.1f %4.1f",
-	    avenrun[0], avenrun[1], avenrun[2]);
-	clrtoeol();
 }
 
 void
@@ -331,7 +335,7 @@ error(fmt, va_alist)
 
 	if (wnd) {
 		getyx(stdscr, oy, ox);
-		(void) vsprintf(buf, fmt, ap);
+		(void) vsnprintf(buf, sizeof(buf), fmt, ap);
 		clrtoeol();
 		standout();
 		mvaddstr(CMDLINE, 0, buf);

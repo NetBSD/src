@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.14 1999/08/24 00:48:38 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.14.4.1 1999/12/27 18:38:00 wrstuden Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 1999/08/24 00:48:38 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.14.4.1 1999/12/27 18:38:00 wrstuden Exp $");
 #endif
 #endif
 
@@ -24,12 +24,11 @@ __RCSID("$NetBSD: main.c,v 1.14 1999/08/24 00:48:38 hubertf Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "ORhlvFf:p:P:C:c:d:i:k:r:t:X:D:m:s:b:B:";
+static char Options[] = "ORhlvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
 char   *Desc = NULL;
-char   *SrcDir = NULL;
 char   *Display = NULL;
 char   *Install = NULL;
 char   *DeInstall = NULL;
@@ -41,6 +40,9 @@ char   *Pkgdeps = NULL;
 char   *Pkgcfl = NULL;
 char   *BuildVersion = NULL;
 char   *BuildInfo = NULL;
+char   *SizePkg = NULL;
+char   *SizeAll = NULL;
+char   *SrcDir = NULL;
 char    PlayPen[FILENAME_MAX];
 size_t  PlayPenSize = sizeof(PlayPen);
 int     Dereference = 0;
@@ -87,7 +89,11 @@ main(int argc, char **argv)
 			break;
 
 		case 's':
-			SrcDir = optarg;
+			SizePkg = optarg;
+			break;
+
+		case 'S':
+			SizeAll = optarg;
 			break;
 
 		case 'f':
@@ -112,6 +118,10 @@ main(int argc, char **argv)
 
 		case 'l':
 			RelativeLinks = 1;
+			break;
+
+		case 'L':
+			SrcDir = optarg;
 			break;
 
 		case 'r':

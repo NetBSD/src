@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
+/*	$NetBSD: vif.c,v 1.2.4.1 1999/12/27 18:37:58 wrstuden Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: vif.c,v 1.2 1999/08/13 09:20:13 jinmei Exp
+ *  KAME Id: vif.c,v 1.3 1999/09/12 17:00:11 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -145,8 +145,21 @@ init_vifs()
 	if (v->uv_linklocal == NULL)
 		log(LOG_ERR, 0,
 		    "there is no link-local address on vif#%d", vifi);
-	if (phys_vif == -1)
-	    phys_vif = vifi;
+	if (phys_vif == -1) {
+	    struct phaddr *p;
+
+	    /*
+	     * If this vif has a global address, set its id
+	     * to phys_vif.
+	     */
+	    for(p = v->uv_addrs; p; p = p->pa_next) {
+		if (!IN6_IS_ADDR_LINKLOCAL(&p->pa_addr.sin6_addr) &&
+		    !IN6_IS_ADDR_SITELOCAL(&p->pa_addr.sin6_addr)) {
+		    phys_vif = vifi;
+		    break;
+		}
+	    }
+	}
 	enabled_vifs++;
     }
 
@@ -321,6 +334,64 @@ stop_vif(vifi)
 	"%s goes down; if #%u out of service", v->uv_name, vifi);
 }		
 
+/*
+ * return the max global Ipv6 address of an UP and ENABLED interface
+ * other than the MIFF_REGISTER interface.
+*/
+struct sockaddr_in6 *
+max_global_address()
+{
+	vifi_t vifi;
+	struct uvif *v;
+	struct phaddr *p;
+	struct phaddr *pmax = NULL;
+
+	for(vifi=0,v=uvifs;vifi< numvifs;++vifi,++v)
+	{
+		if(v->uv_flags & (VIFF_DISABLED | VIFF_DOWN | MIFF_REGISTER))
+			continue;
+		/*
+		 * take first the max global address of the interface
+		 * (without link local) => aliasing
+		 */
+		for(p=v->uv_addrs;p!=NULL;p=p->pa_next)
+		{
+			/*
+			 * If this is the first global address, take it anyway.
+			 */
+			if (pmax == NULL) {
+				if (!IN6_IS_ADDR_LINKLOCAL(&p->pa_addr.sin6_addr) &&
+				    !IN6_IS_ADDR_SITELOCAL(&p->pa_addr.sin6_addr))
+					pmax = p;
+			}
+			else {
+				if (inet6_lessthan(&pmax->pa_addr,
+						   &p->pa_addr) &&
+				    !IN6_IS_ADDR_LINKLOCAL(&p->pa_addr.sin6_addr) &&
+				    !IN6_IS_ADDR_SITELOCAL(&p->pa_addr.sin6_addr))
+					pmax=p;	
+			}
+		}
+	}
+
+	return(pmax ? &pmax->pa_addr : NULL);
+}
+
+struct sockaddr_in6 *
+uv_global(vifi)
+	vifi_t vifi;
+{
+	struct uvif *v = &uvifs[vifi];
+	struct phaddr *p;
+
+	for (p = v->uv_addrs; p; p = p->pa_next) {
+		if (!IN6_IS_ADDR_LINKLOCAL(&p->pa_addr.sin6_addr) &&
+		    !IN6_IS_ADDR_SITELOCAL(&p->pa_addr.sin6_addr))
+			return(&p->pa_addr);
+	}
+
+	return(NULL);
+}
 
 /*
  * See if any interfaces have changed from up state to down, or vice versa,

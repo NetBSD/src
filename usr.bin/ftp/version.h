@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.2 1999/12/12 02:12:29 lukem Exp $	*/
+/*	$NetBSD: version.h,v 1.2.2.1 1999/12/27 18:36:59 wrstuden Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.

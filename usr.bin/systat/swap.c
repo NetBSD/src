@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
+/*	$NetBSD: swap.c,v 1.9.6.1 1999/12/27 18:37:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $");
+__RCSID("$NetBSD: swap.c,v 1.9.6.1 1999/12/27 18:37:12 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,15 +108,16 @@ fetchswap()
 
 	if (swap_devices)
 		(void)free(swap_devices);
-	swap_devices = (struct swapent *)malloc(nswap * sizeof(*swap_devices));
-	if (swap_devices == NULL)
-		/* XXX */ ;	/* XXX systat doesn't do errors! */
+	if ((swap_devices = malloc(nswap * sizeof(*swap_devices))) == NULL) {
+		error("malloc failed");
+		die(0);
+	}
 
-	rnswap = swapctl(SWAP_STATS, (void *)swap_devices, nswap);
-	if (nswap < 0)
-		/* XXX */ ;	/* XXX systat doesn't do errors! */
-	if (nswap != rnswap)
-		/* XXX */ ;	/* XXX systat doesn't do errors! */
+	if ((rnswap = swapctl(SWAP_STATS, (void *)swap_devices, nswap)) != nswap) {
+		error("swapctl failed");
+		die(0);
+	}
+		
 	if (update_label)
 		labelswap();
 }

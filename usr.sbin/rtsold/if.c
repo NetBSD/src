@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.2.4.1 1999/12/27 18:38:06 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,8 +48,7 @@
 #ifdef __NetBSD__
 #include <net/if_ether.h>
 #endif
-
-#ifdef __bsdi__
+#if defined(__bsdi__) || defined(__OpenBSD__)
 # include <netinet/in.h>
 # include <netinet/if_ether.h>
 #endif
@@ -270,6 +269,8 @@ if_nametosdl(char *name)
 			if ((sa = rti_info[RTAX_IFP]) != NULL) {
 				if (sa->sa_family == AF_LINK) {
 					sdl = (struct sockaddr_dl *)sa;
+					if (strlen(name) != sdl->sdl_nlen)
+						continue; /* not same len */
 					if (strncmp(&sdl->sdl_data[0],
 						    name,
 						    sdl->sdl_nlen) == 0) {
@@ -360,7 +361,7 @@ getifa(char *name, struct in6_ifaddr *ifap)
 		KREAD(ifp, &ifnet, struct ifnet);
 		if (ifnet.if_index == index)
 			break;
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		ifp = TAILQ_NEXT(&ifnet, if_list);
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3
 		ifp = TAILQ_NEXT(&ifnet, if_link);
@@ -374,7 +375,7 @@ getifa(char *name, struct in6_ifaddr *ifap)
 		goto bad;
 	}
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	ifa = (struct in6_ifaddr *)TAILQ_FIRST(&ifnet.if_addrlist);
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3
 	ifa = (struct in6_ifaddr *)TAILQ_FIRST(&ifnet.if_addrhead);
@@ -389,7 +390,7 @@ getifa(char *name, struct in6_ifaddr *ifap)
 			return 0;
 		}
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		ifa = (struct in6_ifaddr *)
 			TAILQ_NEXT((struct ifaddr *)ifap, ifa_list);
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $ 	*/
+/*	$NetBSD: print-telnet.c,v 1.2.4.1 1999/12/27 18:38:14 wrstuden Exp $ 	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.2.4.1 1999/12/27 18:38:14 wrstuden Exp $");
 #endif
 
 #include <sys/param.h>

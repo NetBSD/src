@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.12 1998/06/04 08:28:35 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.12.4.1 1999/12/27 18:36:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.12 1998/06/04 08:28:35 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.12.4.1 1999/12/27 18:36:57 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -58,8 +57,9 @@ domacro(argc, argv)
 	char *cp1, *cp2, line2[200];
 	struct cmd *c;
 
-	if (argc < 2 && !another(&argc, &argv, "macro name")) {
-		fprintf(ttyout, "usage: %s macro_name\n", argv[0]);
+	if ((argc == 0 && argv != NULL) ||
+	    (argc < 2 && !another(&argc, &argv, "macro name"))) {
+		fprintf(ttyout, "usage: %s macro_name [args]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -83,7 +83,7 @@ TOP:
 		cp2 = line;
 		while (*cp1 != '\0') {
 		      switch(*cp1) {
-		   	    case '\\':
+			    case '\\':
 				 *cp2++ = *++cp1;
 				 break;
 			    case '$':

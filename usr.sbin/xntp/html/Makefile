@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/12/30 20:20:33 mcr Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 1999/12/27 18:38:17 wrstuden Exp $
 
 HTML += HTMLPrimer.html accopt.html authcert.html authopt.html authspeed.html
 HTML+= biblio.html build.html clockopt.html config.html confopt.html
@@ -18,6 +18,6 @@ DIR=html/xntp
 FILES=${HTML}
 
 docinstall::
-	${INSTALL} -d -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${DESTDIR}/${DOCDIR}/${DIR}
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${DESTDIR}/${DOCDIR}/${DIR}
 
 .include <bsd.doc.mk>

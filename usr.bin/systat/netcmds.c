@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.8 1998/07/12 05:59:00 mrg Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.8.6.1 1999/12/27 18:37:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.8 1998/07/12 05:59:00 mrg Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.8.6.1 1999/12/27 18:37:12 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -81,46 +81,65 @@ static void showports __P((void));
 static int selecthost __P((struct in_addr *, int));
 static void showhosts __P((void));
 
-int
-netcmd(cmd, args)
-	char *cmd, *args;
-{
+/* please note: there are also some netstat commands in netstat.c */
 
-	if (prefix(cmd, "tcp") || prefix(cmd, "udp")) {
-		selectproto(cmd);
-		return (1);
-	}
-	if (prefix(cmd, "ignore") || prefix(cmd, "display")) {
-		changeitems(args, prefix(cmd, "display"));
-		return (1);
-	}
-	if (prefix(cmd, "reset")) {
-		selectproto(0);
-		selecthost(0, 0);
-		selectport(-1, 0);
-		return (1);
-	}
-	if (prefix(cmd, "show")) {
-		move(CMDLINE, 0); clrtoeol();
-		if (*args == '\0') {
-			showprotos();
-			showhosts();
-			showports();
-			return (1);
-		}
-		if (prefix(args, "protos"))
-			showprotos();
-		else if (prefix(args, "hosts"))
-			showhosts();
-		else if (prefix(args, "ports"))
-			showports();
-		else
-			addstr("show what?");
-		return (1);
-	}
-	return (0);
+void
+netstat_display (args)
+	char *args;
+{
+	changeitems(args, 1);
 }
 
+void
+netstat_ignore (args)
+	char *args;
+{
+	changeitems(args, 0);
+}
+
+void
+netstat_reset (args)
+	char *args;
+{
+	selectproto(0);
+	selecthost(0, 0);
+	selectport(-1, 0);
+}
+
+void
+netstat_show (args)
+	char *args;
+{
+	move(CMDLINE, 0); clrtoeol();
+	if (*args == '\0') {
+		showprotos();
+		showhosts();
+		showports();
+		return;
+	}
+	if (strstr(args, "protos") == args)
+		showprotos();
+	else if (strstr(args, "hosts") == args)
+		showhosts();
+	else if (strstr(args, "ports") == args)
+		showports();
+	else
+		addstr("show what?");
+}
+
+void
+netstat_tcp (args)
+	char *args;
+{
+	selectproto("tcp");
+}
+
+void
+netstat_udp (args)
+	char *args;
+{
+	selectproto("udp");
+}
 
 static void
 changeitems(args, onoff)

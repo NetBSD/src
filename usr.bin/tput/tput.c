@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $	*/
+/*	$NetBSD: tput.c,v 1.10.6.1 1999/12/27 18:37:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $");
+__RCSID("$NetBSD: tput.c,v 1.10.6.1 1999/12/27 18:37:15 wrstuden Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $");
 #include <unistd.h>
 
 	int   main __P((int, char **));
-static void   outc __P((int));
+static int    outc __P((int));
 static void   prlongname __P((char *));
 static void   setospeed __P((void));
 static void   usage __P((void));
@@ -224,11 +224,11 @@ setospeed()
 		ospeed = cfgetospeed(&t);
 }
 
-static void
+static int
 outc(c)
 	int c;
 {
-	(void)putchar(c);
+	return (putchar(c));
 }
 
 static void

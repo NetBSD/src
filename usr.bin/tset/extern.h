@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1998/07/26 23:09:50 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.6.4.1 1999/12/27 18:37:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ void	 add_mapping __P((const char *, char *));
 void	 cat __P((char *));
 const	 char *get_termcap_entry __P((const char *, char **));
 const	 char *mapped __P((const char *));
-void	 outc __P((int));
+int	 outc __P((int));
 void	 reset_mode __P((void));
 void	 set_control_chars __P((void));
 void	 set_conversions __P((int));

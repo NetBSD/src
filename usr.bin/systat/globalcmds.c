@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.5 1999/12/20 21:49:11 lukem Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.5.2.1 1999/12/27 18:37:12 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppd.8,v 1.25 1999/08/25 02:07:45 christos Exp $
+.\"	$NetBSD: pppd.8,v 1.25.2.1 1999/12/27 18:38:03 wrstuden Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.46 1999/08/24 05:31:10 paulus Exp 
 .\" SH section heading
@@ -232,6 +232,12 @@ consume more kernel memory for compression dictionaries.
 Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
 compression in the corresponding direction.  Use \fInobsdcomp\fR or
 \fIbsdcomp 0\fR to disable BSD-Compress compression entirely.
+.TP
+.B callback \fIphone_number
+Request a call-back to the \fIphone-number\fR. This only works if the peer
+is speaking the Call Back Configuration Protocol. Don't put this into the
+main options file if you sometimes connect to servers that don't support
+it.
 .TP
 .B chap-interval \fIn
 If this option is given, pppd will rechallenge the peer every \fIn\fR

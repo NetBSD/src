@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.14 1998/07/27 00:52:03 mycroft Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.14.4.1 1999/12/27 18:38:05 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,8 @@ repquota(fs, type, qfpathname)
 	}
 	fclose(qf);
 	printf("                        Block limits               File limits\n");
-	printf("User            used    soft    hard  grace    used  soft  hard  grace\n");
+	printf(type == USRQUOTA ? "User " : "Group");
+	printf("           used    soft    hard  grace    used  soft  hard  grace\n");
 	for (id = 0; id <= highid[type]; id++) {
 		fup = lookup(id, type);
 		if (fup == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.8 1998/12/19 22:26:13 christos Exp $	*/
+/*	$NetBSD: disks.c,v 1.8.6.1 1999/12/27 18:37:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.8 1998/12/19 22:26:13 christos Exp $");
+__RCSID("$NetBSD: disks.c,v 1.8.6.1 1999/12/27 18:37:11 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,29 +53,30 @@ __RCSID("$NetBSD: disks.c,v 1.8 1998/12/19 22:26:13 christos Exp $");
 
 static void dkselect __P((char *args, int truefalse, int selections[]));
 
-int
-dkcmd(cmd, args)
-	char *cmd, *args;
+void
+disks_add (args)
+	char *args;
 {
+	dkselect(args, 1, dk_select);
+}
 
-	if (prefix(cmd, "display") || prefix(cmd, "add")) {
-		dkselect(args, 1, dk_select);
-		return (1);
-	}
-	if (prefix(cmd, "ignore") || prefix(cmd, "delete")) {
-		dkselect(args, 0, dk_select);
-		return (1);
-	}
-	if (prefix(cmd, "drives")) {
-		int i;
+void
+disks_delete (args)
+	char *args;
+{
+	dkselect(args, 0, dk_select);
+}
 
-		move(CMDLINE, 0);
-		clrtoeol();
-		for (i = 0; i < dk_ndrive; i++)
-			printw("%s ", dr_name[i]);
-		return (1);
-	}
-	return (0);
+void
+disks_drives (args)
+	char *args;
+{
+	int i;
+
+	move(CMDLINE, 0);
+	clrtoeol();
+	for (i = 0; i < dk_ndrive; i++)
+		printw("%s ", dr_name[i]);
 }
 
 static void

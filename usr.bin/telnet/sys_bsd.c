@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.15 1998/12/22 05:27:35 mcr Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.15.6.1 1999/12/27 18:37:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.15 1998/12/22 05:27:35 mcr Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.15.6.1 1999/12/27 18:37:13 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -1019,7 +1019,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     }
     if (netin) {
 	FD_SET(net, &ibits);
-	MAXFD(netin);
+	MAXFD(net);
     }
     if (netex) {
 	FD_SET(net, &xbits);
