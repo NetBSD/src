@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2000/02/11 19:25:14 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2000/11/27 08:19:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -128,6 +128,11 @@
 #define	KERNEL_VM_SIZE		0x03000000
 #endif
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
+
+/*
+ * Override the default pager_map size, there's not enough KVA.
+ */
+#define PAGER_MAP_SIZE		(4 * 1024 * 1024)
 
 /*
  * Mach derived constants
