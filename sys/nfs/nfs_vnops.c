@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.12 2002/07/12 01:40:37 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.13 2002/07/15 20:45:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.12 2002/07/12 01:40:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.13 2002/07/15 20:45:59 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2977,8 +2977,7 @@ nfs_pathconf(v)
 			nmp = VFSTONFS(vp->v_mount);
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 				if ((error = nfs_fsinfo(nmp, vp,
-				    curproc->p_ucred, 
-				    curproc)) != 0) /* XXX */
+				    curproc->p_ucred, curproc)) != 0) /* XXX */
 					break;
 			for (l = 0, maxsize = nmp->nm_maxfilesize;
 			    (maxsize >> l) > 0; l++)

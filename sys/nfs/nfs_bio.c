@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.15 2002/07/12 01:40:35 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.16 2002/07/15 20:43:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.15 2002/07/12 01:40:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.16 2002/07/15 20:43:50 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -525,8 +525,7 @@ nfs_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && 
-	    uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 		panic("nfs_write proc");
 #endif
 	if (vp->v_type != VREG)
