@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.10 2000/05/08 07:56:04 mycroft Exp $	*/
+/*	$NetBSD: mille.c,v 1.11 2001/04/06 11:13:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.10 2000/05/08 07:56:04 mycroft Exp $");
+__RCSID("$NetBSD: mille.c,v 1.11 2001/04/06 11:13:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ main(ac, av)
 		break;
 	  default:
 		printf("usage: milles [ restore_file ]\n");
-		exit(-1);
+		exit(1);
 		/* NOTREACHED */
 	}
 	Play = PLAYER;

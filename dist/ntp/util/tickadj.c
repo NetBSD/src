@@ -1,4 +1,4 @@
-/*	$NetBSD: tickadj.c,v 1.1.1.1 2000/03/29 12:39:00 simonb Exp $	*/
+/*	$NetBSD: tickadj.c,v 1.2 2001/04/06 11:13:55 wiz Exp $	*/
 
 /*
  * tickadj - read, and possibly modify, the kernel `tick' and
@@ -113,7 +113,7 @@ main(
 	if (argc > 2)
 	{
 		fprintf(stderr, "Usage: %s [tick_value]\n", argv[0]);
-		exit(-1);
+		exit(1);
 	}
 	else if (argc == 2)
 	{
@@ -124,7 +124,7 @@ main(
 #endif
 		{
 			fprintf(stderr, "Silly value for tick: %s\n", argv[1]);
-			exit(-1);
+			exit(1);
 		}
 #ifdef ADJ_TIMETICK
 		txc.modes = ADJ_TIMETICK;

@@ -107,7 +107,7 @@ int main (int argc, char **argv)
    {
       /* Create a pop-up dialog box... */
       printf ("Error: Open of <%s> failed.\n", port);
-      exit (-1);
+      exit (1);
    }
 
    termInfo.c_cflag = CRTSCTS | CLOCAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.15 2001/03/01 15:13:31 itojun Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.16 2001/04/06 11:13:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.15 2001/03/01 15:13:31 itojun Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.16 2001/04/06 11:13:51 wiz Exp $");
 #endif
 #endif
 
@@ -477,5 +477,5 @@ usage(void)
 "\t\t[ -i interface ] [ -r file ] [ -s snaplen ]\n");
 	(void)fprintf(stderr,
 "\t\t[ -T type ] [ -w file ] [ expression ]\n");
-	exit(-1);
+	exit(1);
 }

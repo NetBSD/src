@@ -1,4 +1,4 @@
-/*	$NetBSD: rip6query.c,v 1.4 2000/12/19 23:55:02 itojun Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.5 2001/04/06 11:13:51 wiz Exp $	*/
 /*	$KAME: rip6query.c,v 1.9 2000/12/19 23:54:01 itojun Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ main(argc, argv)
 
 	if (argc != 1) {
 		usage();
-		exit(-1);
+		exit(1);
 	}
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {

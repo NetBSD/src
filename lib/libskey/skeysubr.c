@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.19 2001/03/11 13:57:45 mjl Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.20 2001/04/06 11:13:55 wiz Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -358,7 +358,7 @@ static void trapped(int sig)
 	/* Turn on echo if necesary */
 	skey_echo(1);
 
-	exit(-1);
+	exit(1);
 }
 
 /*

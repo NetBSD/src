@@ -1,4 +1,4 @@
-/*	$NetBSD: get_addrs.c,v 1.6 2000/07/03 02:51:34 matt Exp $	*/
+/*	$NetBSD: get_addrs.c,v 1.7 2001/04/06 11:13:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_addrs.c,v 1.6 2000/07/03 02:51:34 matt Exp $");
+__RCSID("$NetBSD: get_addrs.c,v 1.7 2001/04/06 11:13:46 wiz Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -61,7 +61,7 @@ get_addrs(my_machine_name, his_machine_name)
 	if (hp == NULL) {
 		fprintf(stderr, "talk: %s: ", my_machine_name);
 		herror((char *)NULL);
-		exit(-1);
+		exit(1);
 	}
 	memmove((char *)&my_machine_addr, hp->h_addr, hp->h_length);
 	/*
@@ -73,7 +73,7 @@ get_addrs(my_machine_name, his_machine_name)
 		if (hp == NULL) {
 			fprintf(stderr, "talk: %s: ", his_machine_name);
 			herror((char *)NULL);
-			exit(-1);
+			exit(1);
 		}
 		memmove((char *) &his_machine_addr, hp->h_addr, hp->h_length);
 	} else
@@ -83,7 +83,7 @@ get_addrs(my_machine_name, his_machine_name)
 	if (sp == 0) {
 		fprintf(stderr, "talk: %s/%s: service is not registered.\n",
 		     "ntalk", "udp");
-		exit(-1);
+		exit(1);
 	}
 	daemon_port = sp->s_port;
 }

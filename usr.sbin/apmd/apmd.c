@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.18 2001/02/19 23:22:42 cgd Exp $	*/
+/*	$NetBSD: apmd.c,v 1.19 2001/04/06 11:13:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -557,7 +557,7 @@ do_etc_file(const char *file)
     case 0:
 	/* We are the child. */
 	execl(file, prog, NULL);
-	_exit(-1);
+	_exit(1);
 	/* NOTREACHED */
     default:
 	/* We are the parent. */

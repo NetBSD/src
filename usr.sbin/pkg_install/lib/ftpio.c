@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.28 2000/12/13 03:17:54 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.29 2001/04/06 11:13:50 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.28 2000/12/13 03:17:54 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.29 2001/04/06 11:13:50 wiz Exp $");
 #endif
 
 /*
@@ -285,7 +285,7 @@ setupCoproc(const char *base)
 		    fprintf(stderr, "[1mftp -detv %s[0m\n", base);
 	    rc1 = execl("/usr/bin/ftp", "ftp", "-detv", base, NULL);
 	    warn("setupCoproc: execl() failed");
-	    exit(-1);
+	    exit(1);
 	    break;
     default: 
 	    /* Parent */

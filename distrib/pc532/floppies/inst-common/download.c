@@ -1,4 +1,4 @@
-/*	$NetBSD: download.c,v 1.1 1995/10/06 21:00:16 phil Exp $	*/
+/*	$NetBSD: download.c,v 1.2 2001/04/06 11:13:55 wiz Exp $	*/
 
 /*
    Hacked by Phil Nelson for use with NetBSD, 10/5/95.
@@ -132,7 +132,7 @@ usage(name)
      char *name;
 {
   fprintf (stderr, "usage: %s [-r] <file>\n", name);
-  exit (-1);
+  exit (1);
 }
 
 /* Output a character.  If it is a CLT_C or ESC, then quote (preceed)
@@ -187,7 +187,7 @@ int fd;
 
   if (0 == (len = lseek (fd, (off_t)0, 2))) {
     fprintf (stderr, "file length is zero\n");
-    exit (-1);
+    exit (1);
   }
   lseek (fd, (off_t)0, 0);
   write_ch (START);
@@ -211,7 +211,7 @@ int fd;
     len = read (fd, buf, BUFSZ);
     if (-1 == len) {
       fprintf (stderr, "read failed\n");
-      exit (-1);
+      exit (1);
     }
     if (len == 0) break;
     for (p = buf; p < buf + len; ++p) {
@@ -471,19 +471,19 @@ main (argc, argv)
   if (argc == 3) {
     if (1 != sscanf (argv[2], "%d", &port_num)) {
       fprintf (stderr, "Bad serial port, use 1 or 2\n");
-      exit (-1);
+      exit (1);
     }
     --argc;
   }
   if (argc != 2) {
     fprintf (stderr, "usage: %s <file> [<serial port>]\n", argv[0]);
-    exit (-1);
+    exit (1);
   }
   if (port_num == 1) port = 0x3f8;
   else if (port_num == 2) port = 0x2f8;
   else {
     fprintf (stderr, "Bad serial port, use 1 or 2\n");
-    exit (-1);
+    exit (1);
   }
 
 #else
@@ -519,7 +519,7 @@ main (argc, argv)
 
   if (0 > (fd = open (argv[1], OPEN_FLAGS))) {
     fprintf (stderr, "can not open \"%s\" for reading\n", argv[1]);
-    exit (-1);
+    exit (1);
   }
 
   init_port(1);

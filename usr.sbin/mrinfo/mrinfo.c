@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.9 2000/10/12 06:03:32 augustss Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.10 2001/04/06 11:13:48 wiz Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -67,7 +67,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.9 2000/10/12 06:03:32 augustss Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.10 2001/04/06 11:13:48 wiz Exp $");
 #endif
 #endif
 
@@ -174,7 +174,7 @@ log(severity, syserr, format, va_alist)
 	}
 
 	if (severity <= LOG_ERR)
-		exit(-1);
+		exit(1);
 }
 
 /*
@@ -412,7 +412,7 @@ main(argc, argv)
 		|| connect(udp, (struct sockaddr *) & addr, sizeof(addr)) < 0
 		    || getsockname(udp, (struct sockaddr *) & addr, &addrlen) < 0) {
 			perror("Determining local address");
-			exit(-1);
+			exit(1);
 		}
 		close(udp);
 		our_addr = addr.sin_addr.s_addr;

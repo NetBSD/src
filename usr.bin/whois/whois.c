@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.16 2001/01/27 22:31:52 joda Exp $	*/
+/*	$NetBSD: whois.c,v 1.17 2001/04/06 11:13:46 wiz Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,7 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.16 2001/01/27 22:31:52 joda Exp $");
+__RCSID("$NetBSD: whois.c,v 1.17 2001/04/06 11:13:46 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -531,7 +531,7 @@ int main(argc, argv)
 
      if (gethostname(domainname, sizeof(domainname))) {
         fprintf(stderr, "error when doing gethostname()");
-        exit(-1);
+        exit(1);
      }
 
      passwdentry=getpwuid(getuid());

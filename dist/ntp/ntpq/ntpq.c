@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.3 2000/10/10 12:51:20 itojun Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.4 2001/04/06 11:13:54 wiz Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -629,7 +629,7 @@ openhost(
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd == INVALID_SOCKET) {
 		error("socket");
-		exit(-1);
+		exit(1);
 	}
 #else
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);

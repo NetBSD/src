@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsquery.c,v 1.2 2001/01/27 07:21:57 itojun Exp $	*/
+/*	$NetBSD: dnsquery.c,v 1.3 2001/04/06 11:13:53 wiz Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: dnsquery.c,v 8.15 2000/12/23 08:14:32 vixie Exp";
@@ -68,7 +68,7 @@ main(int argc, char *argv[]) {
 	/* if no args, exit */
 	if (argc == 1) {
 		fprintf(stderr, "Usage:  %s [-h] host [-n ns] [-t type] [-c class] [-r retry] [-p period] [-s] [-v] [-d] [-a]\n", argv[0]);
-		exit(-1);
+		exit(1);
 	}
 
 	/* handle args */
@@ -84,7 +84,7 @@ main(int argc, char *argv[]) {
 		case 'h' :	if (strlen(optarg) >= sizeof(name)) {
 					fprintf(stderr,
 						"Domain name too long (%s)\n", optarg);
-					exit(-1);
+					exit(1);
 				} else
 					strcpy(name, optarg);
 				break;
@@ -98,7 +98,7 @@ main(int argc, char *argv[]) {
 					class = proto_class;
 				else {
 				    fprintf(stderr, "Bad class (%s)\n", optarg);
-					exit(-1);
+					exit(1);
 				}
 			    }
 				break;
@@ -112,7 +112,7 @@ main(int argc, char *argv[]) {
 					type = proto_type;
 				else {
 				    fprintf(stderr, "Bad type (%s)\n", optarg);
-					exit(-1);
+					exit(1);
 				}
 			    }
 				break;
@@ -137,7 +137,7 @@ main(int argc, char *argv[]) {
 						fprintf(stderr,
 							"res_ninit() failed\n"
 							);
-						exit(-1);
+						exit(1);
 				}
 				if (nameservers >= MAXNS) break;
 				(void) inet_aton(optarg,
@@ -148,7 +148,7 @@ main(int argc, char *argv[]) {
 						fprintf(stderr,
 						       "Bad nameserver (%s)\n",
 							optarg);
-						exit(-1);
+						exit(1);
 					}
 					memcpy(&q_nsaddr[nameservers],
 					       q_nsname->h_addr, INADDRSZ);
@@ -160,14 +160,14 @@ main(int argc, char *argv[]) {
 
 		default : 	fprintf(stderr, 
 				"\tUsage:  %s [-n ns] [-h host] [-t type] [-c class] [-r retry] [-p period] [-s] [-v] [-d] [-a]\n", argv[0]);
-				exit(-1);
+				exit(1);
 		}
 	}
 	if (optind < argc) {
 		if (strlen(argv[optind]) >= sizeof(name)) {
 			fprintf(stderr,
 				"Domain name too long (%s)\n", argv[optind]);
-			exit(-1);
+			exit(1);
 		} else {
 			strcpy(name, argv[optind]);
 		}
@@ -178,7 +178,7 @@ main(int argc, char *argv[]) {
 	if (!(res.options & RES_INIT))
 		if (res_ninit(&res) == -1) {
 			fprintf(stderr, "res_ninit() failed\n");
-			exit(-1);
+			exit(1);
 		}
 
 	/* 
@@ -210,13 +210,13 @@ main(int argc, char *argv[]) {
 		if (n < 0) {
 			fprintf(stderr, "Query failed (h_errno = %d) : %s\n", 
 				h_errno, h_errlist[h_errno]);
-			exit(-1);
+			exit(1);
 		}
 	} else if ((n = res_nsearch(&res, name, class, type,
 				    answer, len)) < 0) {
 		fprintf(stderr, "Query failed (h_errno = %d) : %s\n", 
 			h_errno, h_errlist[h_errno]);
-		exit(-1);
+		exit(1);
 	}
 	res_pquery(&res, answer, n, stdout);
 	exit(0);

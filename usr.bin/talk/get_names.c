@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.8 2000/07/03 02:51:35 matt Exp $	*/
+/*	$NetBSD: get_names.c,v 1.9 2001/04/06 11:13:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.8 2000/07/03 02:51:35 matt Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.9 2001/04/06 11:13:46 wiz Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -66,18 +66,18 @@ get_names(argc, argv)
 
 	if (argc < 2 ) {
 		printf("Usage: talk user [ttyname]\n");
-		exit(-1);
+		exit(1);
 	}
 	if (!isatty(0)) {
 		printf("Standard input must be a tty, not a pipe or a file\n");
-		exit(-1);
+		exit(1);
 	}
 	if ((my_name = getlogin()) == NULL) {
 		struct passwd *pw;
 
 		if ((pw = getpwuid(getuid())) == NULL) {
 			printf("You don't exist. Go away.\n");
-			exit(-1);
+			exit(1);
 		}
 		my_name = pw->pw_name;
 	}

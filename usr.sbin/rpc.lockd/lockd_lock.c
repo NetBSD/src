@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.5 2000/11/21 03:47:41 enami Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.6 2001/04/06 11:13:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -470,7 +470,7 @@ do_lock(fl, block)
 			if(flock(fl->fd, lflags) != 0) {
 				syslog(LOG_NOTICE, "flock failed: %s",
 				    strerror(errno));
-				exit(-1);
+				exit(1);
 			}
 			/* lock granted */	
 			exit(0);
