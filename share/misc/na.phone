@@ -1,5 +1,5 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.11 1997/10/15 14:02:04 sommerfe Exp $
+#	$NetBSD: na.phone,v 1.12 1999/10/04 17:07:17 garbled Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
@@ -140,6 +140,8 @@
 425:Everett:Washington:WA
 425:Kent:Washington:WA
 441::Bermuda:
+480:Phoenix:Arizona:AZ
+480:Mesa:Arizona:AZ
 501:Little Rock:Arkansas:AR
 502:Louisville:Kentucky:KY
 502:Paducah:Kentucky:KY
@@ -189,6 +191,7 @@
 602:Phoenix:Arizona:AZ
 602:Scottsdale:Arizona:AZ
 602:Tempe:Arizona:AZ
+602:Glendale:Arizona:AZ
 603::New Hampshire:NH
 604:Sunshine:British Columbia:BC
 604:Vancouver:British Columbia:BC
@@ -223,6 +226,9 @@
 618:Centralia:Illinois:IL
 618:Madison:Illinois:IL
 619:San Diego:California:CA
+623:Glendale:Arizona:AZ
+623:Peoria:Arizona:AZ
+623:Phoenix:Arizona:AZ
 630:Aurora:Illinois:IL
 630:Chicago:Illinois:IL
 650:Mountain View:California:CA
