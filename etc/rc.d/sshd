@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.11 2001/04/25 23:18:50 lukem Exp $
+# $NetBSD: sshd,v 1.12 2001/04/25 23:27:37 lukem Exp $
 #
 
 # PROVIDE: sshd
@@ -17,7 +17,7 @@ extra_commands="keygen reload"
 
 sshd_keygen()
 {
-	_omask=`umask`
+	(
 	umask 022
 	if [ -f /etc/ssh_host_key ]; then
 		echo "You already have an RSA host key in /etc/ssh_host_key"
@@ -39,7 +39,7 @@ sshd_keygen()
 	else
 		/usr/bin/ssh-keygen -t rsa -f /etc/ssh_host_rsa_key -N ''
 	fi
-	umask $_omask
+	)
 }
 
 sshd_precmd()
