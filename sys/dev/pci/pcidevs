@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.130 1999/06/18 04:54:06 tsubai Exp $
+$NetBSD: pcidevs,v 1.131 1999/06/19 04:49:52 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -998,6 +998,7 @@ product NEC POWERVR2	0x0046	PowerVR PCX2
 
 /* Neomagic products */
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
+product NEOMAGIC NMMG2160	0x0004	MagicGraph 128XD
 product NEOMAGIC NMMM256AV_VGA	0x0005	MagicMedia 256AV VGA
 product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 
@@ -1154,6 +1155,9 @@ product TI	PCI1225		0xac1c	PCI1225 PCI-CardBus Bridge
 product TI	PCI1251		0xac1d	PCI1251 PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030 PCI-CardBus Bridge
   
+/* Sony products */
+product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
+
 /* Toshiba products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
