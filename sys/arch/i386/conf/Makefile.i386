@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.72 1996/08/25 23:39:29 jtk Exp $
+#	$NetBSD: Makefile.i386,v 1.73 1996/08/31 21:41:16 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -29,7 +29,9 @@ APMSTRIP?=	strip
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 I386=	$S/arch/i386
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc

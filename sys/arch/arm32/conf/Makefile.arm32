@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.16 1996/08/12 00:57:35 mycroft Exp $
+#	$NetBSD: Makefile.arm32,v 1.17 1996/08/31 21:40:58 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 ARM32=	$S/arch/arm32
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
