@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.h,v 1.9 1998/06/22 11:57:47 jonathan Exp $	*/
+/*	$NetBSD: asic.h,v 1.10 1999/03/14 23:59:03 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -244,8 +244,8 @@
 
 /* The following are valid for both kmin and kn03. */
 
-#define	KMIN_INTR_SCC_1			0x00000080	/* ro */ /*kmin,kn03*/
-#define	KMIN_INTR_SCC_0			0x00000040	/* ro */
+#define	IOASIC_INTR_SCC_1		0x00000080	/* ro */ /*kmin,kn03*/
+#define	IOASIC_INTR_SCC_0		0x00000040	/* ro */
 
 #define	KMIN_INTR_CLOCK			0x00000020	/* ro */
 #define	KMIN_INTR_PSWARN		0x00000010	/* ro */
