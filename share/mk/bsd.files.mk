@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.32 2004/03/18 03:32:03 jmc Exp $
+#	$NetBSD: bsd.files.mk,v 1.33 2004/03/19 06:10:27 jmc Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -97,9 +97,14 @@ cleanbuildsymlinks: .PHONY
 
 realall: ${UUDECODE_FILES}
 
+CLEANUUDECODE_FILES=${UUDECODE_FILES}
+.for i in ${UUDECODE_FILES}
+CLEANUUDECODE_FILES+=${UUDECODE_FILES_RENAME_${i}}
+.endfor
+
 clean: cleanuudecodefiles
 cleanuudecodefiles: .PHONY
-	rm -f ${UUDECODE_FILES}
+	rm -f ${CLEANUUDECODE_FILES}
 .endif								# }
 
 .endif	# !defined(_BSD_FILES_MK_)
