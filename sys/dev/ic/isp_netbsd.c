@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.13 1999/04/04 02:29:34 mjacob Exp $ */
-/* release_4_3_99 */
+/* $NetBSD: isp_netbsd.c,v 1.14 1999/05/12 18:59:24 mjacob Exp $ */
+/* release_5_11_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -99,6 +99,7 @@ isp_attach(isp)
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 			((fcparam *)isp->isp_param)->isp_loopid;
 	} else {
+		sdparam *sdp = isp->isp_param;
 		isp->isp_osinfo._link.openings = PI_OPENINGS;
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
 		if (isp->isp_bustype == ISP_BT_SBUS) {
@@ -115,7 +116,14 @@ isp_attach(isp)
 				isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
 		}
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
-			((sdparam *)isp->isp_param)->isp_initiator_id;
+		    sdp->isp_initiator_id;
+		if (IS_12X0(isp)) {
+			isp->isp_osinfo._link_b = isp->isp_osinfo._link;
+			sdp++;
+			isp->isp_osinfo._link_b.scsipi_scsi.adapter_target =
+			    sdp->isp_initiator_id;
+			isp->isp_osinfo._link_b.scsipi_scsi.channel = 1;
+		}
 	}
 	if (isp->isp_osinfo._link.openings < 2)
 		isp->isp_osinfo._link.openings = 2;
@@ -124,18 +132,16 @@ isp_attach(isp)
 	/*
 	 * Send a SCSI Bus Reset (used to be done as part of attach,
 	 * but now left to the OS outer layers).
-	 *
-	 * XXX: For now, skip resets for FC because the method by which
-	 * XXX: we deal with loop down after issuing resets (which causes
-	 * XXX: port logouts for all devices) needs interrupts to run so
-	 * XXX: that async events happen.
 	 */
 	
-	if (isp->isp_type & ISP_HA_SCSI) {
-		(void) isp_control(isp, ISPCTL_RESET_BUS, NULL);
+	if (IS_SCSI(isp)) {
+		int bus = 0;
+		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+		if (IS_12X0(isp)) {
+			bus++;
+			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+		}
 		SYS_DELAY(2*1000000);
-	} else {
-		;
 	}
 
 	/*
@@ -148,6 +154,9 @@ isp_attach(isp)
 	 * And attach children (if any).
 	 */
 	config_found((void *)isp, &isp->isp_osinfo._link, scsiprint);
+	if (IS_12X0(isp)) {
+		config_found((void *)isp, &isp->isp_osinfo._link_b, scsiprint);
+	}
 }
 
 /*
@@ -188,6 +197,7 @@ ispcmd(xs)
 	 */
 	if ((xs->flags & SCSI_AUTOCONF) == 0 && (isp->isp_type & ISP_HA_SCSI)) {
 		sdparam *sdp = isp->isp_param;
+		sdp += XS_CHANNEL(xs);
 		if (sdp->isp_devparam[XS_TGT(xs)].dev_flags !=
 		    sdp->isp_devparam[XS_TGT(xs)].cur_dflags) {
 			u_int16_t f = DPARM_WIDE|DPARM_SYNC|DPARM_TQING;
@@ -201,7 +211,7 @@ ispcmd(xs)
 				~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING);
 			sdp->isp_devparam[XS_TGT(xs)].dev_flags |= f;
 			sdp->isp_devparam[XS_TGT(xs)].dev_update = 1;
-			isp->isp_update = 1;
+			isp->isp_update |= (1 << XS_CHANNEL(xs));
 		}
 	}
 
@@ -397,15 +407,18 @@ isp_async(isp, cmd, arg)
 	ispasync_t cmd;
 	void *arg;
 {
+	int bus, tgt;
 	int s = splbio();
 	switch (cmd) {
 	case ISPASYNC_NEW_TGT_PARAMS:
 		if (isp->isp_type & ISP_HA_SCSI) {
 			sdparam *sdp = isp->isp_param;
 			char *wt;
-			int mhz, flags, tgt, period;
+			int mhz, flags, period;
 
 			tgt = *((int *) arg);
+			bus = (tgt >> 16) & 0xffff;
+			tgt &= 0xffff;
 
 			flags = sdp->isp_devparam[tgt].cur_dflags;
 			period = sdp->isp_devparam[tgt].cur_period;
@@ -447,17 +460,21 @@ isp_async(isp, cmd, arg)
 				break;
 			}
 			if (mhz) {
-				printf("%s: Target %d at %dMHz Max Offset %d%s",
-				    isp->isp_name, tgt, mhz,
+				printf("%s: Bus %d Target %d at %dMHz Max "
+				    "Offset %d%s", isp->isp_name, bus, tgt, mhz,
 				    sdp->isp_devparam[tgt].cur_offset, wt);
 			} else {
-				printf("%s: Target %d Async Mode%s",
-				    isp->isp_name, tgt, wt);
+				printf("%s: Bus %d Target %d Async Mode%s",
+				    isp->isp_name, bus, tgt, wt);
 			}
 		}
 		break;
 	case ISPASYNC_BUS_RESET:
-		printf("%s: SCSI bus reset detected\n", isp->isp_name);
+		if (arg)
+			bus = *((int *) arg);
+		else
+			bus = 0;
+		printf("%s: SCSI bus %d reset detected\n", isp->isp_name, bus);
 		break;
 	case ISPASYNC_LOOP_DOWN:
 		/*
