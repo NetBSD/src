@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_arm32.c,v 1.2 1996/03/18 22:33:16 thorpej Exp $	*/
+/*	$NetBSD: kvm_arm32.c,v 1.3 1997/08/14 16:05:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_arm32.c,v 1.2 1996/03/18 22:33:16 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_arm32.c,v 1.3 1997/08/14 16:05:21 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -201,5 +201,22 @@ _kvm_uvatop(kd, p, va, pa)
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
+	return (0);
+}
+
+/*
+ * Machine-dependent initialization for ALL open kvm descriptors,
+ * not just those for a kernel crash dump.  Some architectures
+ * have to deal with these NOT being constants!  (i.e. m68k)
+ */
+int
+_kvm_mdopen(kd)
+	kvm_t	*kd;
+{
+
+	kd->usrstack = USRSTACK;
+	kd->min_uva = VM_MIN_ADDRESS;
+	kd->max_uva = VM_MAXUSER_ADDRESS;
+
 	return (0);
 }
