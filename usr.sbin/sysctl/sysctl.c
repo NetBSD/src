@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sysctl.c,v 1.4 1994/09/18 21:59:40 mycroft Exp $";
+static char *rcsid = "$Id: sysctl.c,v 1.5 1994/12/23 16:42:26 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -186,11 +186,12 @@ parse(string, flags)
 	char *string;
 	int flags;
 {
-	int indx, type, state, size, len;
+	int indx, type, state, len;
 	int special = 0;
 	void *newval = 0;
 	int intval, newsize = 0;
 	quad_t quadval;
+	size_t size;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ], strval[BUFSIZ];
@@ -451,7 +452,8 @@ parse(string, flags)
  */
 debuginit()
 {
-	int mib[3], size, loc, i;
+	int mib[3], loc, i;
+	size_t size;
 
 	if (secondlevel[CTL_DEBUG].list != 0)
 		return;
