@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 1997/06/06 23:26:05 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1997/06/09 00:00:01 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -145,9 +145,9 @@ int _mapped = 0;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "pc532";
-char machine_arch[] = "ns32k";
-char cpu_model[] = "ns32532";
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	cpu_model[] = "ns32532";
 
 struct user *proc0paddr;
 
