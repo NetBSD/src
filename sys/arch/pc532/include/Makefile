@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/04/15 15:29:10 kleink Exp $
+#	$NetBSD: Makefile,v 1.12 2001/04/15 17:13:15 kleink Exp $
 
 KDIR=	/sys/arch/pc532/include
 INCSDIR= /usr/include/pc532
@@ -10,7 +10,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	endian.h endian_machdep.h \
 	float.h fpu.h frame.h \
 	icu.h ieee.h ieeefp.h \
-	int_const.h int_limits.h int_mwgwtypes.h int_types.h \
+	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	jmpbuf.h \
 	kcore.h \
 	limits.h lock.h \
