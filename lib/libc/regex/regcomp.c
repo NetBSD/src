@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.12 1998/12/08 13:52:48 drochner Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.13 1998/12/13 12:21:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.12 1998/12/08 13:52:48 drochner Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.13 1998/12/13 12:21:46 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -692,12 +692,14 @@ struct parse *p;
 	int invert = 0;
 
 	/* Dept of Truly Sickening Special-Case Kludges */
-	if (p->next + 5 < p->end && strncmp(p->next, "[:<:]]", 6) == 0) {
+	if (p->next + 5 < p->end && strncmp(p->next, "[:<:]]",
+					    (size_t)6) == 0) {
 		EMIT(OBOW, 0);
 		NEXTn(6);
 		return;
 	}
-	if (p->next + 5 < p->end && strncmp(p->next, "[:>:]]", 6) == 0) {
+	if (p->next + 5 < p->end && strncmp(p->next, "[:>:]]",
+					    (size_t)6) == 0) {
 		EMIT(OEOW, 0);
 		NEXTn(6);
 		return;
