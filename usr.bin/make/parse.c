@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.69 2001/06/10 02:31:00 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.70 2001/06/12 23:36:18 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.69 2001/06/10 02:31:00 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.70 2001/06/12 23:36:18 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.69 2001/06/10 02:31:00 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.70 2001/06/12 23:36:18 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1158,7 +1158,7 @@ ParseDoDependency (line)
 		break;
 #ifdef POSIX
             case Posix:
-                Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
+                Var_Set("%POSIX", "1003.2", VAR_GLOBAL, 0);
                 break;
 #endif
 	    default:
@@ -1549,12 +1549,12 @@ Parse_DoVar (line, ctxt)
 	 * so that it gets substituted!
 	 */
 	if (!Var_Exists(line, ctxt))
-	    Var_Set(line, "", ctxt);
+	    Var_Set(line, "", ctxt, 0);
 
 	cp = Var_Subst(NULL, cp, ctxt, FALSE);
 	oldVars = oldOldVars;
 
-	Var_Set(line, cp, ctxt);
+	Var_Set(line, cp, ctxt, 0);
 	free(cp);
     } else if (type == VAR_SHELL) {
 	Boolean	freeCmd = FALSE; /* TRUE if the command needs to be freed, i.e.
@@ -1572,7 +1572,7 @@ Parse_DoVar (line, ctxt)
 	}
 
 	res = Cmd_Exec(cp, &err);
-	Var_Set(line, res, ctxt);
+	Var_Set(line, res, ctxt, 0);
 	free(res);
 
 	if (err)
@@ -1584,7 +1584,7 @@ Parse_DoVar (line, ctxt)
 	/*
 	 * Normal assignment -- just do it.
 	 */
-	Var_Set(line, cp, ctxt);
+	Var_Set(line, cp, ctxt, 0);
     }
     if (strcmp(line, MAKEOVERRIDES) == 0)
 	ExportMAKEFLAGS(0);		/* re-export MAKEFLAGS */
@@ -1890,12 +1890,12 @@ ParseSetParseFile(fname)
 
     slash = strrchr(fname, '/');
     if (slash == 0) {
-	Var_Set(".PARSEDIR", ".", VAR_GLOBAL);
-	Var_Set(".PARSEFILE", fname, VAR_GLOBAL);
+	Var_Set(".PARSEDIR", ".", VAR_GLOBAL, 0);
+	Var_Set(".PARSEFILE", fname, VAR_GLOBAL, 0);
     } else {
 	*slash = '\0';
-	Var_Set(".PARSEDIR", fname, VAR_GLOBAL);
-	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL);
+	Var_Set(".PARSEDIR", fname, VAR_GLOBAL, 0);
+	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL, 0);
 	*slash = '/';
     }
 }
