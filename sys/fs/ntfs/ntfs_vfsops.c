@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.19 2004/04/27 17:37:30 jrf Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.20 2004/05/04 13:26:58 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.19 2004/04/27 17:37:30 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.20 2004/05/04 13:26:58 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ ntfs_mount (
 	 */
 
 	/* copy in user arguments*/
-	err = copyin(data, (caddr_t)&args, sizeof (struct ntfs_args));
+	err = copyin(data, &args, sizeof (struct ntfs_args));
 	if (err)
 		goto error_1;		/* can't get arguments*/
 
