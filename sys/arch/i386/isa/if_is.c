@@ -149,7 +149,7 @@ isprobe(dvp)
 	for(i=0; i < 6; i++)  ns->ns_addrp[i] = inb(isc+(i*2));
 
 	splx(s);
-	return (1);
+	return (16);
 }
 
 
