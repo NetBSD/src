@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.52 1996/03/16 02:54:27 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.53 1996/03/16 03:20:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -357,7 +357,7 @@ struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
 struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, u_long));
 struct bt_mbx_out *bt_send_mbo __P((struct bt_softc *, int, struct bt_ccb *));
 void bt_done __P((struct bt_softc *, struct bt_ccb *));
-int bt_find __P((struct bt_softc *));
+int bt_find __P((struct isa_attach_args *, struct bt_softc *));
 void bt_init __P((struct bt_softc *));
 void bt_inquire_setup_information __P((struct bt_softc *));
 void btminphys __P((struct buf *));
@@ -395,7 +395,7 @@ struct cfdriver btcd = {
 #define BT_RESET_TIMEOUT 1000
 
 /*
- * bt_cmd(bt, icnt, ocnt,wait, retval, opcode, args)
+ * bt_cmd(iobase, sc, icnt, ocnt,wait, retval, opcode, args)
  *
  * Activate Adapter command
  *    icnt:   number of args (outbound bytes written after opcode)
@@ -410,7 +410,8 @@ struct cfdriver btcd = {
  * tells it to read in a scsi command.
  */
 int
-bt_cmd(sc, icnt, ocnt, wait, retval, opcode, args)
+bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, args)
+	int iobase;
 	struct bt_softc *sc;
 	int icnt, ocnt, wait;
 	u_char *retval;
@@ -418,10 +419,15 @@ bt_cmd(sc, icnt, ocnt, wait, retval, opcode, args)
 	u_char args;
 {
 	unsigned *ic = &opcode;
-	int iobase = sc->sc_iobase;
+	const char *name;
 	u_char oc;
 	register i;
 	int sts;
+
+	if (sc == NULL)
+		name = sc->sc_dev.dv_xname;
+	else
+		name = "(probe)";
 
 	/*
 	 * multiply the wait argument by a big constant
@@ -446,7 +452,7 @@ bt_cmd(sc, icnt, ocnt, wait, retval, opcode, args)
 		}
 		if (!i) {
 			printf("%s: bt_cmd, host not idle(0x%x)\n",
-				sc->sc_dev.dv_xname, sts);
+				name, sts);
 			return ENXIO;
 		}
 	}
@@ -473,8 +479,7 @@ bt_cmd(sc, icnt, ocnt, wait, retval, opcode, args)
 			delay(10);
 		}
 		if (!i) {
-			printf("%s: bt_cmd, cmd/data port full\n",
-				sc->sc_dev.dv_xname);
+			printf("%s: bt_cmd, cmd/data port full\n", name);
 			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
 			return ENXIO;
 		}
@@ -494,7 +499,7 @@ bt_cmd(sc, icnt, ocnt, wait, retval, opcode, args)
 		}
 		if (!i) {
 			printf("bt%d: bt_cmd, cmd/data port empty %d\n",
-				sc->sc_dev.dv_xname, ocnt);
+				name, ocnt);
 			return ENXIO;
 		}
 		oc = inb(iobase + BT_CMD_DATA_PORT);
@@ -513,7 +518,7 @@ bt_cmd(sc, icnt, ocnt, wait, retval, opcode, args)
 	}
 	if (!i) {
 		printf("%s: bt_cmd, host not finished(0x%x)\n",
-			sc->sc_dev.dv_xname, sts);
+			name, sts);
 		return ENXIO;
 	}
 	outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
@@ -539,35 +544,16 @@ btprobe(parent, match, aux)
 		return 0;
 #endif
 
-	sc->sc_iobase = ia->ia_iobase;
-
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads sc->sc_irq
 	 */
-	if (bt_find(sc) != 0)
+	if (bt_find(ia, NULL) != 0)
 		return 0;
-
-	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != sc->sc_irq) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq, sc->sc_irq);
-			return 0;
-		}
-	} else
-		ia->ia_irq = sc->sc_irq;
-
-	if (ia->ia_drq != DRQUNK) {
-		if (ia->ia_drq != sc->sc_drq) {
-			printf("%s: drq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_drq, sc->sc_drq);
-			return 0;
-		}
-	} else
-		ia->ia_drq = sc->sc_drq;
 
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
+	/* IRQ and DRQ set by bt_find() */
 	return 1;
 }
 
@@ -590,10 +576,14 @@ btattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct bt_softc *sc = (void *)self;
+	struct bt_softc *sc = (struct bt_softc *)self;
 
-	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ia->ia_drq);
+	if (bt_find(ia, sc) != 0)
+		panic("btattach: bt_find of %s failed", self->dv_xname);
+	sc->sc_iobase = ia->ia_iobase;
+
+	if (sc->sc_drq != DRQUNK)
+		isa_dmacascade(sc->sc_drq);
 
 	bt_init(sc);
 	TAILQ_INIT(&sc->sc_free_ccb);
@@ -612,7 +602,7 @@ btattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, btintr,
+	sc->sc_ih = isa_intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, btintr,
 	    sc);
 
 	/*
@@ -981,14 +971,16 @@ bt_done(sc, ccb)
  * Find the board and find it's irq/drq
  */
 int
-bt_find(sc)
+bt_find(ia, sc)
+	struct isa_attach_args *ia;
 	struct bt_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	int iobase = ia->ia_iobase;
 	u_char ad[4];
 	volatile int i, sts;
 	struct bt_extended_inquire info;
 	struct bt_config conf;
+	int irq, drq;
 
 	/*
 	 * reset board, If it doesn't respond, assume
@@ -1007,14 +999,15 @@ bt_find(sc)
 #ifdef	UTEST
 		printf("bt_find: No answer from bt742a board\n");
 #endif
-		return ENXIO;
+		return 1;
 	}
 
 	/*
 	 * Check that we actually know how to use this board.
 	 */
 	delay(1000);
-	bt_cmd(sc, 1, sizeof(info), 0, &info, BT_INQUIRE_EXTENDED, sizeof(info));
+	bt_cmd(iobase, sc, 1, sizeof(info), 0, &info, BT_INQUIRE_EXTENDED,
+	    sizeof(info));
 	switch (info.bus_type) {
 	case BT_BUS_TYPE_24BIT:
 		/* XXXX How do we avoid conflicting with the aha1542 probe? */
@@ -1022,11 +1015,10 @@ bt_find(sc)
 		break;
 	case BT_BUS_TYPE_MCA:
 		/* We don't grok MicroChannel (yet). */
-		return EINVAL;
+		return 1;
 	default:
-		printf("%s: illegal bus type %c\n", sc->sc_dev.dv_xname,
-		    info.bus_type);
-		return EINVAL;
+		printf("bt_find: illegal bus type %c\n", info.bus_type);
+		return 1;
 	}
 
 	/*
@@ -1034,56 +1026,69 @@ bt_find(sc)
 	 * jumpers and save int level
 	 */
 	delay(1000);
-	bt_cmd(sc, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
+	bt_cmd(iobase, sc, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
 	switch (conf.chan) {
 	case EISADMA:
-		sc->sc_drq = DRQUNK;
+		drq = DRQUNK;
 		break;
 	case CHAN0:
-		sc->sc_drq = 0;
+		drq = 0;
 		break;
 	case CHAN5:
-		sc->sc_drq = 5;
+		drq = 5;
 		break;
 	case CHAN6:
-		sc->sc_drq = 6;
+		drq = 6;
 		break;
 	case CHAN7:
-		sc->sc_drq = 7;
+		drq = 7;
 		break;
 	default:
-		printf("%s: illegal dma setting %x\n", sc->sc_dev.dv_xname,
-		    conf.chan);
-		return EIO;
+		printf("bt_find: illegal dma setting %x\n", conf.chan);
+		return 1;
 	}
 
 	switch (conf.intr) {
 	case INT9:
-		sc->sc_irq = 9;
+		irq = 9;
 		break;
 	case INT10:
-		sc->sc_irq = 10;
+		irq = 10;
 		break;
 	case INT11:
-		sc->sc_irq = 11;
+		irq = 11;
 		break;
 	case INT12:
-		sc->sc_irq = 12;
+		irq = 12;
 		break;
 	case INT14:
-		sc->sc_irq = 14;
+		irq = 14;
 		break;
 	case INT15:
-		sc->sc_irq = 15;
+		irq = 15;
 		break;
 	default:
-		printf("%s: illegal int setting %x\n", sc->sc_dev.dv_xname,
-		    conf.intr);
-		return EIO;
+		printf("bt_find: illegal int setting %x\n", conf.intr);
+		return 1;
 	}
 
-	/* who are we on the scsi bus? */
-	sc->sc_scsi_dev = conf.scsi_dev;
+	if (sc != NULL) {
+		/* who are we on the scsi bus? */
+		sc->sc_scsi_dev = conf.scsi_dev;
+
+		sc->sc_iobase = iobase;
+		sc->sc_irq = irq;
+		sc->sc_drq = drq;
+	} else {
+		if (ia->ia_irq == IRQUNK)
+			ia->ia_irq = irq;
+		else if (ia->ia_irq != irq)
+			return 1;
+		if (ia->ia_drq == DRQUNK)
+			ia->ia_drq = drq;
+		else if (ia->ia_drq != drq)
+			return 1;
+	}
 
 	return 0;
 }
@@ -1095,6 +1100,7 @@ void
 bt_init(sc)
 	struct bt_softc *sc;
 {
+	int iobase = sc->sc_iobase;
 	u_char ad[4];
 	int i;
 
@@ -1103,7 +1109,7 @@ bt_init(sc)
 	 */
 	*((physaddr *)ad) = KVTOPHYS(&sc->sc_mbx);
 
-	bt_cmd(sc, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED, BT_MBX_SIZE,
+	bt_cmd(iobase, sc, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED, BT_MBX_SIZE,
 	    ad[0], ad[1], ad[2], ad[3]);
 
 	for (i = 0; i < BT_MBX_SIZE; i++) {
@@ -1124,25 +1130,27 @@ void
 bt_inquire_setup_information(sc)
 	struct bt_softc *sc;
 {
+	int iobase = sc->sc_iobase;
 	struct bt_boardID bID;
 	char dummy[8];
 	struct bt_setup setup;
 	int i;
 
 	/* Inquire Board ID to Bt742 for firmware version */
-	bt_cmd(sc, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
+	bt_cmd(iobase, sc, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
 	printf(": version %c.%c, ", bID.firm_revision, bID.firm_version);
 
 	if (bID.firm_revision != '2') {	/* XXXX */
 		/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
-		bt_cmd(sc, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
+		bt_cmd(iobase, sc, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
 	}
 
 	/* Inquire Installed Devices (to force synchronous negotiation) */
-	bt_cmd(sc, 0, sizeof(dummy), 10, dummy, BT_DEV_GET);
+	bt_cmd(iobase, sc, 0, sizeof(dummy), 10, dummy, BT_DEV_GET);
 
 	/* Obtain setup information from Bt742. */
-	bt_cmd(sc, 1, sizeof(setup), 0, &setup, BT_SETUP_GET, sizeof(setup));
+	bt_cmd(iobase, sc, 1, sizeof(setup), 0, &setup, BT_SETUP_GET,
+	    sizeof(setup));
 
 	printf("%s, %s, %d mbxs",
 	    setup.sync_neg ? "sync" : "async",
