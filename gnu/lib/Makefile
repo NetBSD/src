@@ -1,14 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 1998/08/28 15:34:24 tv Exp $
+#	$NetBSD: Makefile,v 1.17 1998/12/12 23:50:45 tv Exp $
 
-# XXX Temporary for USE_EGCS
-.include <bsd.own.mk>
-
-SUBDIR+= libmalloc
-.ifdef USE_EGCS
-SUBDIR+= libg2c libgcc libobjc libstdc++
-.else
-SUBDIR+= libg++
-.endif
+SUBDIR+= libg2c libgcc libmalloc libobjc libstdc++
 
 # XXX Until our bintuils is upgraded
 .if (${MACHINE_ARCH} != "powerpc")

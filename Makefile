@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 1998/12/07 01:42:34 simonb Exp $
+#	$NetBSD: Makefile,v 1.75 1998/12/12 23:44:22 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -54,7 +54,7 @@ build: beforeinstall
 .if !defined(UPDATE)
 	${MAKE} cleandir
 .endif
-.if defined(USE_EGCS) && empty(HAVE_GCC28)
+.if empty(HAVE_GCC28)
 .if defined(DESTDIR)
 	@echo "*** CAPUTE!"
 	@echo "    You attempted to compile the world with egcs.  You must"
@@ -73,13 +73,6 @@ build: beforeinstall
 	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
-.if !defined(USE_EGCS)
-.if	(${MACHINE_ARCH} != "alpha") && \
-	(${MACHINE_ARCH} != "powerpc")
-	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
-.endif
-.endif
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 # libtelnet depends on libdes and libkrb.  libkrb depends on
 # libcom_err.

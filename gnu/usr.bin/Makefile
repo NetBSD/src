@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.59 1998/11/16 18:49:54 kristerw Exp $
+#	$NetBSD: Makefile,v 1.60 1998/12/12 23:45:40 tv Exp $
 
-# XXX Temporary for USE_EGCS
-.include <bsd.own.mk>
-
-SUBDIR+=	bc binutils cpio dc diff diff3 gawk grep groff
+SUBDIR+=	bc binutils cpio dc diff diff3 egcs gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar gdb
 
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "arm32") || \
@@ -19,12 +16,6 @@ SUBDIR+=	gas
 SUBDIR+=	ld.new ld/rtld ld/ldd ld/ldconfig
 .else
 SUBDIR+=	ld
-.endif
-
-.ifdef USE_EGCS
-SUBDIR+=	egcs
-.else
-SUBDIR+=	gcc
 .endif
 
 .if (${OBJECT_FMT} == "ELF") && (${MACHINE_ARCH} != "mips")
