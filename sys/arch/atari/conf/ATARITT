@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.34 2001/04/05 12:25:15 leo Exp $
+# $NetBSD: ATARITT,v 1.35 2001/04/06 21:55:11 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: 
-#		NetBSD: ATARITT.in,v 1.1 2001/04/05 12:21:30 leo Exp $
+#		NetBSD: ATARITT.in,v 1.2 2001/04/06 21:53:39 leo Exp $
 #		NetBSD: GENERIC,v 1.76 2001/04/05 12:21:30 leo Exp $
 
 #This configuration file is for a GENERIC ATARI-TT
@@ -14,7 +14,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident  		"GENERIC-$Revision: 1.34 $"
+#ident  		"GENERIC-$Revision: 1.35 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -88,7 +88,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				#immutable) behave as system flags.
+				# immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -193,6 +193,7 @@ ite1		at grfcc1	# 2nd tty
 grfcc2		at grfbus0	# 3rd graphics driver
 ite2		at grfcc2	# 3rd tty
 lp0		at mainbus0	# centronics printer
+ser0		at mainbus0	# UART on first 68901 (ttyB0)
 avmebus0	at mainbus0	# VME bus
 vme0		at avmebus0
 le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
