@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.59 2003/08/07 16:33:11 agc Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.60 2003/08/14 07:57:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.59 2003/08/07 16:33:11 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.60 2003/08/14 07:57:40 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -244,7 +244,7 @@ struct protosw inetsw[] = {
 },
 #endif /* NSIP */
 /* raw wildcard */
-{ SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   rip_init,	0,		0,		0,
