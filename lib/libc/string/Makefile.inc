@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.25 1993/12/10 10:55:12 mycroft Exp $
+#	$Id: Makefile.inc,v 1.26 1994/02/25 07:42:01 phil Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -24,7 +24,7 @@ SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memchr.c memcmp.c memset.c \
 	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
 	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
 	strspn.c strstr.c swab.c
-SRCS+=	memmove.c strchr.c strrchr.c
+#SRCS+=	memmove.c strchr.c strrchr.c
 .elif (${MACHINE_ARCH} == "tahoe")
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.c memchr.c memcmp.S memset.c \
 	rindex.c strcat.S strcmp.S strcpy.S strcspn.c strlen.S \
