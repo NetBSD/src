@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.4 $ (SHARK) $Date: 1998/08/05 16:40:22 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.5 $ (SHARK) $Date: 1998/08/09 02:05:53 $
 **
 **++
 **
@@ -130,8 +130,12 @@
 #define ESS_XCMD_AUDIO1_CTRL2	0xB8	/* */
 #define	  ESS_AUDIO1_CTRL2_FIFO_ENABLE	0x01	/* 0=disable/1=enable */
 #define	  ESS_AUDIO1_CTRL2_DMA_READ	0x02	/* 0=DMA write/1=DMA read */
+#define	  ESS_AUDIO1_CTRL2_AUTO_INIT	0x04
 #define	  ESS_AUDIO1_CTRL2_ADC_ENABLE	0x08	/* 0=DAC mode/1=ADC mode */
 #define	ESS_XCMD_DEMAND_CTRL	0xB9	/* */
+#define	  ESS_DEMAND_CTRL_SINGLE	0x00	/* 1-byte transfers */
+#define	  ESS_DEMAND_CTRL_DEMAND_2	0x01	/* 2-byte transfers */
+#define	  ESS_DEMAND_CTRL_DEMAND_4	0x02	/* 4-byte transfers */
 
 #define ESS_ACMD_ENABLE_EXT	0xC6	/* enable ESS extension commands */
 #define ESS_ACMD_DISABLE_EXT	0xC7	/* enable ESS extension commands */
@@ -243,7 +247,10 @@
 #define ESS_MREG_XFER_COUNTLO	0x74	/* low-byte of DMA transfer size */
 #define ESS_MREG_XFER_COUNTHI	0x76	/* high-byte of DMA transfer size */
 #define ESS_MREG_AUDIO2_CTRL1	0x78	/* control register 1 for Audio2: */
-#define   ESS_AUDIO2_CTRL1_TYPE_8BYTE	0xC0
+#define   ESS_AUDIO2_CTRL1_SINGLE	0x00
+#define   ESS_AUDIO2_CTRL1_DEMAND_2	0x40
+#define   ESS_AUDIO2_CTRL1_DEMAND_4	0x80
+#define   ESS_AUDIO2_CTRL1_DEMAND_8	0xC0
 #define	  ESS_AUDIO2_CTRL1_XFER_SIZE	0x20	/* 0=8-bit/1=16-bit */
 #define   ESS_AUDIO2_CTRL1_AUTO_INIT	0x10
 #define	  ESS_AUDIO2_CTRL1_FIFO_ENABLE	0x02	/* 0=disable/1=enable */

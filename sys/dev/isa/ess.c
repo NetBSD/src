@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.9 1998/08/08 21:37:00 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.10 1998/08/09 02:05:52 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -138,6 +138,7 @@ int	ess_round_blocksize __P((void *, int));
 
 int	ess_dma_init_output __P((void *, void *, int));
 int	ess_dma_output __P((void *, void *, int, void (*)(void *), void *));
+int	ess_dma_init_input __P((void *, void *, int));
 int	ess_dma_input __P((void *, void *, int, void (*)(void *), void *));
 int	ess_halt_output __P((void *));
 int	ess_halt_input __P((void *));
@@ -215,7 +216,7 @@ struct audio_hw_if ess_hw_if = {
 	ess_round_blocksize,
 	NULL,
 	ess_dma_init_output,
-	NULL,
+	ess_dma_init_input,
 	ess_dma_output,
 	ess_dma_input,
 	ess_halt_output,
@@ -548,9 +549,12 @@ ess_setup(sc)
 	else
 		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
 				    ESS_AUDIO2_CTRL1_XFER_SIZE);
+
 #if 0
-	/* Use 8 byte per DMA */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1, 0xc0);
+	/* Use 8 bytes per output DMA. */
+	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1, ESS_AUDIO2_CTRL1_DEMAND_8);
+	/* Use 4 bytes per input DMA. */
+	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL, ESS_DEMAND_CTRL_DEMAND_4);
 #endif
 
 	DPRINTFN(2,("ess_setup: done\n"));
@@ -1345,6 +1349,7 @@ ess_dma_output(addr, p, cc, intr, arg)
 			  ESS_AUDIO2_CTRL1_DAC_ENABLE |
 			  ESS_AUDIO2_CTRL1_FIFO_ENABLE |
 			  ESS_AUDIO2_CTRL1_AUTO_INIT);
+
 #if 0
 /* XXX
  * seems like the 888 and 1888 have an interlock that
@@ -1353,8 +1358,24 @@ ess_dma_output(addr, p, cc, intr, arg)
  */
 	ess_set_xreg_bits(sc, 0xB7, 0x80);
 #endif
+
 	return (0);
 
+}
+
+int
+ess_dma_init_input(addr, buf, cc)
+	void *addr;
+	void *buf;
+	int cc;
+{
+	struct ess_softc *sc = addr;
+
+	DPRINTF(("ess_dma_init_input: buf=%p cc=%d chan=%d\n",
+		 buf, cc, sc->sc_in.drq));
+	isa_dmastart(sc->sc_ic, sc->sc_in.drq, buf,
+		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	return 0;
 }
 
 int
@@ -1368,9 +1389,6 @@ ess_dma_input(addr, p, cc, intr, arg)
 	struct ess_softc *sc = addr;
 
 	DPRINTFN(1,("ess_dma_input: cc=%d %p (%p)\n", cc, intr, arg));
-	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
-	ess_set_xreg_bits(sc, 0xB7, 0x80);
-
 #ifdef DIAGNOSTIC
 	if (sc->sc_in.channels == 2 && (cc & 1)) {
 		DPRINTF(("stereo record odd bytes (%d)\n", cc));
@@ -1378,41 +1396,31 @@ ess_dma_input(addr, p, cc, intr, arg)
 	}
 #endif
 
-	isa_dmastart(sc->sc_ic, sc->sc_in.drq, p,
-		     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
-	sc->sc_in.active = 1;
+	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
+	ess_set_xreg_bits(sc, 0xB7, 0x80);
+
 	sc->sc_in.intr = intr;
 	sc->sc_in.arg = arg;
+	if (sc->sc_in.active)
+		return (0);
 
-	if (sc->sc_in.dmacnt != cc)
-	{
-		sc->sc_in.dmacnt = cc;
+	DPRINTF(("ess_dma_input: set up DMA\n"));
 
-		/*
-		 * If doing 16-bit DMA transfers, then the number of
-		 * transfers required is half the number of bytes to
-		 * be transferred.
-		 */
-		if (IS16BITDRQ(sc->sc_out.drq))
-			cc >>= 1;
+	sc->sc_in.active = 1;
 
-		/*
-		 * Program transfer count registers with 2's
-		 * complement of count.
-		 */
-		cc = -cc;
-		ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, cc);
-		ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, cc >> 8);
-	}
+	if (IS16BITDRQ(sc->sc_out.drq))
+		cc >>= 1;	/* use word count for 16 bit DMA */
+	/* Program transfer count registers with 2's complement of count. */
+	cc = -cc;
+	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, cc);
+	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, cc >> 8);
 
-/* REVISIT: is it really necessary to clear then set these bits to get
-the next lot of DMA to happen?  Would it be sufficient to set the bits
-the first time round and leave it at that? (No, because the chip automatically clears the FIFO_ENABLE bit after the DMA is complete.)
-*/
+	/* Start auto-init DMA */
 	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-			  ESS_AUDIO1_CTRL2_DMA_READ |  /* REVISIT: once only */
-			  ESS_AUDIO1_CTRL2_ADC_ENABLE |/* REVISIT: once only */
-			  ESS_AUDIO1_CTRL2_FIFO_ENABLE);
+			  ESS_AUDIO1_CTRL2_DMA_READ |
+			  ESS_AUDIO1_CTRL2_ADC_ENABLE |
+			  ESS_AUDIO1_CTRL2_FIFO_ENABLE |
+			  ESS_AUDIO1_CTRL2_AUTO_INIT);
 
 	return (0);
 
@@ -1426,13 +1434,8 @@ ess_halt_output(addr)
 
 	DPRINTF(("ess_halt_output: sc=%p\n", sc));
 
-#if 0
-	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-			    ESS_AUDIO2_CTRL2_DMA_ENABLE);
-#else
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
 			    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
-#endif
 	return (0);
 }
 
@@ -1460,6 +1463,7 @@ ess_intr_output(arg)
 	/* clear interrupt on Audio channel 2 */
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
 			    ESS_AUDIO2_CTRL2_IRQ_LATCH);
+
 	sc->sc_out.nintr++;
 
 	if (sc->sc_out.intr != 0)
@@ -1479,24 +1483,14 @@ ess_intr_input(arg)
 
 	DPRINTFN(1,("ess_intr_input: intr=%p\n", sc->sc_in.intr));
 
-	/*
-	 * Disable DMA for Audio 1; it will be enabled again the next
-	 * time ess_dma_input is called. Note that for single DMAs,
-	 * this bit must be toggled for each DMA. For auto-initialize
-	 * DMAs, this bit should be left high.
-	 */
-	ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-			    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
-
 	/* clear interrupt on Audio channel 1*/
 	x = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
 
 	sc->sc_in.nintr++;
 
-	if (sc->sc_in.intr != 0) {
-		isa_dmadone(sc->sc_ic, sc->sc_in.drq);
+	if (sc->sc_in.intr != 0)
 		(*sc->sc_in.intr)(sc->sc_in.arg);
-	} else
+	else
 		return (0);
 
 	return (1);
