@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2001/01/14 21:30:58 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2001/01/14 21:37:55 mycroft Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -37,8 +37,6 @@ ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
 #	.if ri386 ...stuff...
 #	.Ss "Install notes for NetBSD/\*[MACHINE]"
 #
-
-CLEANFILES+=${TARGS}
 
 .for i in ps txt html more
 all: ${TARG}.$i
@@ -81,3 +79,8 @@ release:
 # make the "afterdepend" rule happy
 .depend:
 	@touch $@
+
+cleannotes:
+	rm -f [Ee]rrs mklog core *.core ${TARGS}
+
+clean cleandir distclean: cleannotes
