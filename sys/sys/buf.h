@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.67 2003/12/30 20:43:46 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.68 2003/12/30 20:44:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -293,10 +293,6 @@ void	brelse(struct buf *);
 void	bremfree(struct buf *);
 void	bufinit(void);
 int	bwrite(struct buf *);
-void	cluster_callback(struct buf *);
-int	cluster_read(struct vnode *, u_quad_t, daddr_t, long, struct ucred *,
-		     struct buf **);
-void	cluster_write(struct buf *, u_quad_t);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
 struct buf *geteblk(int);
 struct buf *getnewbuf(int, int, int);
