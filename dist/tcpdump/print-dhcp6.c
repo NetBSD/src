@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dhcp6.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
+/*	$NetBSD: print-dhcp6.c,v 1.5 2002/06/15 01:34:34 matt Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -38,7 +38,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.16 2002/01/19 08:05:54 guy Exp";
 #else
-__RCSID("$NetBSD: print-dhcp6.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
+__RCSID("$NetBSD: print-dhcp6.c,v 1.5 2002/06/15 01:34:34 matt Exp $");
 #endif
 #endif
 
@@ -118,7 +118,7 @@ dhcp6opt_print(u_char *cp, u_char *ep)
 			printf(" (duid");	/*)*/
 			if (optlen < 2) {
 				/*(*/
-				printf(" ??)");
+				printf(" ?)");
 				break;
 			}
 			tp = (u_char *)(dh6o + 1);
@@ -134,7 +134,7 @@ dhcp6opt_print(u_char *cp, u_char *ep)
 					printf(")");
 				} else {
 					/*(*/
-					printf(" ??)");
+					printf(" ?)");
 				}
 				break;
 			case 2:
@@ -146,7 +146,7 @@ dhcp6opt_print(u_char *cp, u_char *ep)
 					printf(")");
 				} else {
 					/*(*/
-					printf(" ??)");
+					printf(" ?)");
 				}
 				break;
 			case 3:
@@ -159,7 +159,7 @@ dhcp6opt_print(u_char *cp, u_char *ep)
 					printf(")");
 				} else {
 					/*(*/
-					printf(" ??)");
+					printf(" ?)");
 				}
 			}
 			break;
@@ -167,7 +167,7 @@ dhcp6opt_print(u_char *cp, u_char *ep)
 			printf(" (dnsserver");	/*)*/
 			if (optlen % 16) {
 				/*(*/
-				printf(" ??)");
+				printf(" ?)");
 				break;
 			}
 			tp = (u_char *)(dh6o + 1);
