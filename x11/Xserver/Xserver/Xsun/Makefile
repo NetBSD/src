@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/06 06:18:14 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/10 16:21:16 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ MLINKS=		Xsun.1 Xsun24.1 Xsun.1 XsunMono.1
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/sun
 
-LDADD=	${LIBDIR.hw/sun}/sunInit.o ${LDADD.hw/sun} ${LDADD.dix} ${LDADD.os} \
+LDADD=	${LIBDIR.hw/sun}/sunInit.o ${LDADD.dix} ${LDADD.hw/sun} ${LDADD.os} \
 	${LDADD.cfb} ${LDADD.mfb} ${LDADD.dix/xpstubs} ${LDADD.mi} \
 	${LDADD.Xext/ext} ${LDADD.xkb}
 
