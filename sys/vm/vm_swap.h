@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.2 1997/06/12 14:51:25 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.3 1997/06/22 19:35:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Matthew R. Green
@@ -58,6 +58,8 @@ int sys_swapctl __P((struct proc *, void *, register_t *));
 daddr_t swap_alloc __P((int size));
 void swap_free __P((int size, daddr_t addr));
 void swapinit __P((void));
+#else
+int swapctl __P((int, const void *, int));
 #endif
 
 #endif /* _VM_VM_SWAP_H_ */
