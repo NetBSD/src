@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.6 2000/02/13 05:00:57 mark Exp $	*/
+/*	$NetBSD: todclock.c,v 1.7 2000/02/19 00:27:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -222,7 +222,7 @@ resettodr()
 		month[1]=29;
 	else
 		month[1]=28;
-	while ((sec/SECPERDAY) > month[mon]) {
+	while (sec >= month[mon]*SECPERDAY) {
 		sec -= month[mon]*SECPERDAY;
 		mon++;
 	}
