@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.19.2.3 2000/08/05 11:10:44 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.19.2.4 2000/10/20 15:12:54 tv Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -41,6 +41,15 @@
 /usr/include/dev/tc/sticvar.h
 /usr/include/dev/vndioctl.h
 /usr/include/dev/vnioctl.h
+/usr/include/dev/wscons/ascii.h
+/usr/include/dev/wscons/wscons_callbacks.h
+/usr/include/dev/wscons/wscons_raster.h
+/usr/include/dev/wscons/wscons_rfont.h
+/usr/include/dev/wscons/wsdisplayvar.h
+/usr/include/dev/wscons/wsemulvar.h
+/usr/include/dev/wscons/wseventvar.h
+/usr/include/dev/wscons/wskbdvar.h
+/usr/include/dev/wscons/wsmousevar.h
 /usr/include/g++/ACG.h
 /usr/include/g++/AllocRing.h
 /usr/include/g++/Binomial.h
