@@ -424,20 +424,21 @@ BUILDING
                    Note: It is highly recommended that you upgrade your kernel
                    and reboot before performing this operation.
 
+     sets          Create distribution sets from DESTDIR into
+                   RELEASEDIR/MACHINE/binary/sets.  Should be run after ``make
+                   distribution'' (as ``make build'' does not install all of
+                   the required files).
+
      release       Do a ``make distribution'', build kernels, distribution me-
-                   dia, and install sets, and then package the system into a
-                   standard release layout as described by release(7).  This
-                   requires that RELEASEDIR be set (see above).
+                   dia, and install sets (this as per ``make sets''), and then
+                   package the system into a standard release layout as de-
+                   scribed by release(7).  This requires that RELEASEDIR be
+                   set (see above).
 
      regression-tests
                    Can only be run after building the regression tests in the
                    directory ``regress''.  Runs the compiled regression tests
                    on the local host.
-
-     sets          Create distribution sets from DESTDIR into
-                   RELEASEDIR/MACHINE/binary/sets.  Should be run after ``make
-                   distribution'' (as ``make build'' does not install all of
-                   the required files).
 
    The "build.sh" script
      This script file is a Bourne shell script designed to build the entire
@@ -573,23 +574,22 @@ BUILDING
 EXAMPLES
      ./build.sh tools kernel=GENERIC
                Build a new toolchain, and use the new toolchain to configure
-               and build a new GENERIC kernel.  This is a simpler way to
-               achieve what the first three examples do.
+               and build a new GENERIC kernel.
 
-     ./build.sh -U -D /some/DESTDIR distribution
+     ./build.sh -U -D /path/to/DESTDIR distribution
                Using unprivileged mode, build a complete distribution in
-               /some/DESTDIR.
+               /path/to/DESTDIR.
 
-     # ./build.sh -U -D /some/DESTDIR installworld=/
+     # ./build.sh -U -D /path/to/DESTDIR installworld=/
                As root, install the distribution that was built with unprivi-
-               leged mode from /some/DESTDIR to /.  (Even though this is run
-               as root, -U is required so that the permissions stored in
-               /some/DESTDIR/METALOG are correctly applied to the files as
+               leged mode from /path/to/DESTDIR to /.  (Even though this is
+               run as root, -U is required so that the permissions stored in
+               /path/to/DESTDIR/METALOG are correctly applied to the files as
                they're copied to /).
 
-     ./build.sh -U -D /some/dir/DESTDIR -R /some/dir/RELEASE release
+     ./build.sh -U -D /path/to/DESTDIR -R /path/to/RELEASE release
                Using unprivileged mode, build a complete release in
-               /some/dir/RELEASE.
+               /path/to/dir/RELEASE.
 
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j, instead.

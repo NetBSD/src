@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.11 2003/01/26 06:19:14 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.12 2003/01/26 13:15:17 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -783,21 +783,6 @@ is the not root directory if cross compiling.
 It is highly recommended that you upgrade your kernel and reboot
 before performing this operation.
 .
-.It Sy release
-Do a
-.Dq make distribution ,
-build kernels, distribution media, and install sets, and
-then package the system into a standard release layout as described by
-.Xr release 7 .
-This requires that
-.Sy RELEASEDIR
-be set (see above).
-.
-.It Sy regression-tests
-Can only be run after building the regression tests in the directory
-.Dq regress .
-Runs the compiled regression tests on the local host.
-.
 .It Sy sets
 Create distribution sets from
 .Sy DESTDIR
@@ -808,6 +793,24 @@ Should be run after
 (as
 .Dq make build
 does not install all of the required files).
+.
+.It Sy release
+Do a
+.Dq make distribution ,
+build kernels, distribution media, and install sets
+(this as per
+.Dq make sets ) ,
+and
+then package the system into a standard release layout as described by
+.Xr release 7 .
+This requires that
+.Sy RELEASEDIR
+be set (see above).
+.
+.It Sy regression-tests
+Can only be run after building the regression tests in the directory
+.Dq regress .
+Runs the compiled regression tests on the local host.
 .
 .El
 .
@@ -1128,29 +1131,28 @@ or called with an absolute path.
 .It Li "./build.sh tools kernel=GENERIC"
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
-This is a simpler way to achieve what the first three examples do.
 .
-.It Li "./build.sh -U -D /some/DESTDIR distribution"
+.It Li "./build.sh -U -D /path/to/DESTDIR distribution"
 Using unprivileged mode,
 build a complete distribution in
-.Pa /some/DESTDIR .
+.Pa /path/to/DESTDIR .
 .
-.It Li "# ./build.sh -U -D /some/DESTDIR installworld=/"
+.It Li "# ./build.sh -U -D /path/to/DESTDIR installworld=/"
 As root, install the distribution that was built with unprivileged mode from
-.Pa /some/DESTDIR
+.Pa /path/to/DESTDIR
 to
 .Pa / .
 (Even though this is run as root,
 .Fl U
 is required so that the permissions stored in
-.Pa /some/DESTDIR/METALOG
+.Pa /path/to/DESTDIR/METALOG
 are correctly applied to the files as they're copied to
 .Pa / ) .
 .
-.It Li "./build.sh -U -D /some/dir/DESTDIR -R /some/dir/RELEASE release"
+.It Li "./build.sh -U -D /path/to/DESTDIR -R /path/to/RELEASE release"
 Using unprivileged mode,
 build a complete release in
-.Pa /some/dir/RELEASE .
+.Pa /path/to/dir/RELEASE .
 .El
 .
 .Sh OBSOLETE VARIABLES
