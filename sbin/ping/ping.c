@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.69 2002/11/16 14:09:16 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.70 2002/11/16 16:02:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.69 2002/11/16 14:09:16 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.70 2002/11/16 16:02:03 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -378,11 +378,15 @@ main(int argc, char *argv[])
 #ifdef IPSEC_POLICY_IPSEC
 		case 'E':
 			pingflags |= F_POLICY;
-			if (!strncmp("in", optarg, 2))
+			if (!strncmp("in", optarg, 2)) {
 				policy_in = strdup(optarg);
-			else if (!strncmp("out", optarg, 3))
+				if (!policy_in)
+					err(1, "strdup");
+			} else if (!strncmp("out", optarg, 3)) {
 				policy_out = strdup(optarg);
-			else
+				if (!policy_out)
+					err(1, "strdup");
+			} else
 				errx(1, "invalid security policy");
 			break;
 #else
