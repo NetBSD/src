@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.18 1996/07/10 18:15:29 cgd Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.19 1996/08/13 23:25:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -211,8 +211,8 @@ malloc(size, type, flags)
 	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0)) {
 		printf("%s %ld of object %p size %ld %s %s (invalid addr %p)\n",
 			"Data modified on freelist: word", 
-			(int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
-			"previous type", savedtype, kbp->kb_next);
+			(long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
+			va, size, "previous type", savedtype, kbp->kb_next);
 		kbp->kb_next = NULL;
 	}
 
@@ -234,8 +234,9 @@ malloc(size, type, flags)
 		if (*lp == WEIRD_ADDR)
 			continue;
 		printf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
-			"Data modified on freelist: word", lp - (int32_t *)va,
-			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
+			"Data modified on freelist: word",
+			(long)(lp - (int32_t *)va), va, size, "previous type",
+			savedtype, *lp, WEIRD_ADDR);
 		break;
 	}
 
