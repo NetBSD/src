@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 1999/11/13 00:32:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 1999/12/17 08:10:59 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1682,7 +1682,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
 	int s;                   /* Used for splimp()/splx()          */
-	int flags;               /* Mapping flags. eg. Cache inhibit  */
+	int mapflags;            /* Flags for the mapping (see NOTE1) */
 	u_int a_idx, b_idx, pte_idx; /* table indices                 */
 	a_tmgr_t *a_tbl;         /* A: long descriptor table manager  */
 	b_tmgr_t *b_tbl;         /* B: short descriptor table manager */
@@ -1691,7 +1691,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	mmu_short_dte_t *b_dte;  /* B: short descriptor table         */
 	mmu_short_pte_t *c_pte;  /* C: short page descriptor table    */
 	pv_t      *pv;           /* pv list head                      */
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	boolean_t wired;         /* is the mapping to be wired?       */
 	enum {NONE, NEWA, NEWB, NEWC} llevel; /* used at end   */
 
 	if (pmap == NULL)
@@ -1701,8 +1701,31 @@ pmap_enter(pmap, va, pa, prot, flags)
 		return (KERN_SUCCESS);
 	}
 
-	flags  = (pa & ~MMU_PAGE_MASK);
-	pa    &= MMU_PAGE_MASK;
+	/*
+	 * Determine if the mapping should be wired.
+	 */
+	wired = ((flags & PMAP_WIRED) != 0);
+
+	/*
+	 * NOTE1:
+	 *
+	 * On November 13, 1999, someone changed the pmap_enter() API such
+	 * that it now accepts a 'flags' argument.  This new argument
+	 * contains bit-flags for the architecture-independent (UVM) system to
+	 * use in signalling certain mapping requirements to the architecture-
+	 * dependent (pmap) system.  The argument it replaces, 'wired', is now
+	 * one of the flags within it.
+	 *
+	 * In addition to flags signaled by the architecture-independent
+	 * system, parts of the architecture-dependent section of the sun3x
+	 * kernel pass their own flags in the lower, unused bits of the
+	 * physical address supplied to this function.  These flags are
+	 * extracted and stored in the temporary variable 'mapflags'.
+	 *
+	 * Extract sun3x specific flags from the physical address.
+	 */ 
+	mapflags  = (pa & ~MMU_PAGE_MASK);
+	pa       &= MMU_PAGE_MASK;
 
 	/*
 	 * Determine if the physical address being mapped is on-board RAM.
@@ -1710,7 +1733,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * device and hence it would be disasterous to cache its contents.
 	 */
 	if ((managed = is_managed(pa)) == FALSE)
-		flags |= PMAP_NC;
+		mapflags |= PMAP_NC;
 
 	/*
 	 * For user mappings we walk along the MMU tables of the given
@@ -2000,7 +2023,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * bits found on the lower order of the physical address.)
 	 * mark the PTE as a cache inhibited page.
 	 */
-	if (flags & PMAP_NC)
+	if (mapflags & PMAP_NC)
 		c_pte->attr.raw |= MMU_SHORT_PTE_CI;
 
 	/*
