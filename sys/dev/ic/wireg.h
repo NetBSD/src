@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.17 2002/01/21 11:28:18 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.18 2002/01/21 11:29:23 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -510,14 +510,27 @@ struct wi_ltv_mcast {
  */
 #define WI_INFO_NOTIFY		0xF000	/* Handover address */
 #define WI_INFO_COUNTERS	0xF100	/* Statistics counters */
-#define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results table (STA only) */
+#define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results */
 #define WI_INFO_LINK_STAT	0xF200	/* Link status */
 #define WI_INFO_ASSOC_STAT	0xF201	/* Association status */
+struct wi_assoc {
+	u_int16_t		wi_assoc_stat;	/* Association Status */
+#define	ASSOC		1
+#define	REASSOC		2
+#define	DISASSOC	3	
+#define	ASSOCFAIL	4
+#define	AUTHFAIL	5
+	u_int8_t		wi_assoc_sta[6];	/* Station Address */
+	u_int8_t		wi_assoc_osta[6];	/* OLD Station Address */
+	u_int16_t		wi_assoc_reason;	/* Reason */
+	u_int16_t		wi_assoc_reserve;	/* Reserved */
+};
+
 #define	WI_INFO_AUTH_REQUEST	0xF202	/* Authentication Request (AP) */
 #define	WI_INFO_POWERSAVE_COUNT	0xF203	/* PowerSave User Count (AP) */
 
 /*
- * Scan Results Table of Prism2 chip (STA only)
+ * Scan Results of Prism2 chip
  */
 
 #define MAXAPINFO		30
@@ -528,6 +541,7 @@ struct wi_scan_header {
 						   2: Firmware initiated
 						   3: Inquiry request from host */
 };
+
 struct wi_scan_data_p2 {
 	u_int16_t		wi_chid;	/* BSS Channel ID from Probe Res.(PR)*/
 	u_int16_t		wi_noise;	/* Average Noise Level of the PR */
