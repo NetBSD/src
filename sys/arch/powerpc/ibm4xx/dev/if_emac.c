@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.13 2002/10/02 15:52:27 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.14 2003/07/04 02:34:47 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -295,6 +295,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = &sc->sc_mii;
 	bus_dma_segment_t seg;
 	int error, i, nseg;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_st = oaa->opb_bt;
 	sc->sc_sh = oaa->opb_addr;
@@ -386,8 +387,16 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	emac_reset(sc);
 
+	/* Fetch the Ethernet address. */
+	if (prop_get(dev_propdb, &sc->sc_dev, "mac-addr", enaddr,
+		     sizeof(enaddr), NULL) != sizeof(enaddr)) {
+		printf("%s: unable to get mac-addr property\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(board_data.mac_address_local));
+	    ether_sprintf(enaddr));
 
 	/*
 	 * Initialise the media structures.
@@ -427,7 +436,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp, board_data.mac_address_local);
+	ether_ifattach(ifp, enaddr);
 
 #ifdef EMAC_EVENT_COUNTERS
 	/*
@@ -689,7 +698,7 @@ emac_init(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
 	struct emac_rxsoft *rxs;
-	unsigned char *enaddr = board_data.mac_address_local;
+	uint8_t *enaddr = LLADDR(ifp->if_sadl);
 	int error, i;
 
 	error = 0;
