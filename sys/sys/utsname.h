@@ -1,4 +1,4 @@
-/*	$NetBSD: utsname.h,v 1.7 1998/02/10 00:25:46 perry Exp $	*/
+/*	$NetBSD: utsname.h,v 1.8 1998/11/03 10:08:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,12 +41,18 @@
 #ifndef	_SYS_UTSNAME_H_
 #define	_SYS_UTSNAME_H_
 
+#define	_SYS_NMLN	256
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#define	SYS_NMLN	_SYS_NMLN
+#endif
+
 struct utsname {
-	char	sysname[256];	/* Name of this OS. */
-	char	nodename[256];	/* Name of this network node. */
-	char	release[256];	/* Release level. */
-	char	version[256];	/* Version level. */
-	char	machine[256];	/* Hardware type. */
+	char	sysname[_SYS_NMLN];	/* Name of this OS. */
+	char	nodename[_SYS_NMLN];	/* Name of this network node. */
+	char	release[_SYS_NMLN];	/* Release level. */
+	char	version[_SYS_NMLN];	/* Version level. */
+	char	machine[_SYS_NMLN];	/* Hardware type. */
 };
 
 #include <sys/cdefs.h>
