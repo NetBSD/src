@@ -1,5 +1,5 @@
-#	from: @(#)Makefile.inc	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile.inc,v 1.2 1993/08/01 05:46:27 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1995/03/21 12:04:12 cgd Exp $
+#	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 BINOWN?=	games
 .if defined(HIDEGAME)
