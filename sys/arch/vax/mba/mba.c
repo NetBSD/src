@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.15 1999/01/01 21:43:18 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.16 2000/01/17 04:57:31 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -57,6 +57,8 @@
 
 #include <vax/mba/mbareg.h>
 #include <vax/mba/mbavar.h>
+
+#include "opt_vax750.h"
 
 struct	mbaunit mbaunit[] = {
 	{MBADT_RP04,	"rp04", MB_RP},
@@ -136,7 +138,7 @@ mbaattach(parent, self, aux)
 	sc->sc_dsp.hoppaddr = mbaintr;
 
 	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
-#ifdef VAX750
+#if VAX750
 	if (vax_cputype == VAX_750)
 		sc->sc_physnr += 4;	/* ...but not on 11/750 */
 #endif
