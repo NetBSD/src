@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_user.c,v 1.2 1998/11/22 15:44:03 drochner Exp $	*/
+/*	$NetBSD: biosdisk_user.c,v 1.3 1999/03/30 11:51:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <err.h>
 
+#include "biosdisk_ll.h"
 #include "biosdisk_user.h"
 
 /*
@@ -52,9 +53,9 @@
 static int currentdev, currentdte;
 static int fd = -1;
 
-int
-get_diskinfo(dev)
-	int dev;
+void
+get_diskinfo(d)
+	struct biosdisk_ll *d;
 {
 	int i;
 
@@ -67,24 +68,26 @@ get_diskinfo(dev)
 	for (;;) {
 		if (emuldisktab[i].biosdev == -1)
 			break;
-		if (emuldisktab[i].biosdev == dev)
+		if (emuldisktab[i].biosdev == d->dev)
 			goto ok;
 		i++;
 	}
-	warnx("unknown device %x", dev);
-	return (0);
+	warnx("unknown device %x", d->dev);
+	return;
 
 ok:
 	fd = open(emuldisktab[i].name, O_RDONLY, 0);
 	if (fd < 0) {
 		warn("open %s", emuldisktab[i].name);
-		return (0);
+		return;
 	}
 
-	currentdev = dev;
+	currentdev = d->dev;
 	currentdte = i;
-	return (((emuldisktab[i].heads - 1) << 8)
-		+ emuldisktab[i].spt);
+
+	d->sec = emuldisktab[i].spt;
+	d->head = emuldisktab[i].heads - 1;
+	d->cyl = emuldisktab[i].cyls;
 }
 
 int
@@ -117,6 +120,13 @@ int13_extension(dev)
 	int dev;
 {
 	return (0);
+}
+
+void
+int13_getextinfo(dev, info)
+	int dev;
+	struct biosdisk_ext13info *info;
+{
 }
 
 struct ext {
