@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.9 1997/07/30 23:49:45 jtc Exp $	*/
+/*	$NetBSD: catclose.c,v 1.10 1998/11/15 17:42:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ _catclose(catd)
 	}
 	
 	if (catd) {
-		munmap(catd->__data, catd->__size);
+		munmap(catd->__data, (size_t)catd->__size);
 		free (catd);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.20 1998/11/13 15:46:57 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.21 1998/11/15 17:40:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.20 1998/11/13 15:46:57 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.21 1998/11/15 17:40:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -350,8 +350,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		n--;
-		if (n >= 0 && name[n] == '.') {
+		if (n-- != 0 && name[n] == '.') {
 			strncpy(nbuf, name, n);
 			nbuf[n] = '\0';
 		} else
