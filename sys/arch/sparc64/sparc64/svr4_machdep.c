@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.19 2001/05/08 20:46:49 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.20 2001/05/08 20:57:17 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ svr4_printmcontext(fun, mc)
 	printf("O5 = 0x%x ",  r[SVR4_SPARC_O5]);
 	printf("O6 = 0x%x ",  r[SVR4_SPARC_O6]);
 	printf("O7 = 0x%x ",  r[SVR4_SPARC_O7]);
+	printf("ASI = 0x%x ",  r[SVR4_SPARC_ASI]);
 	printf("\n");
 }
 #endif
@@ -174,6 +175,7 @@ svr4_getmcontext(p, mc, flags)
 	r[SVR4_SPARC_O5] = tf->tf_out[5];
 	r[SVR4_SPARC_O6] = tf->tf_out[6];
 	r[SVR4_SPARC_O7] = tf->tf_out[7];
+	r[SVR4_SPARC_ASI] = (tf->tf_tstate & TSTATE_ASI) >> TSTATE_ASI_SHIFT;
 
 	*flags |= SVR4_UC_CPU;
 
@@ -270,9 +272,10 @@ svr4_setmcontext(p, mc, flags)
 			return EINVAL;
 		}
 
-		/* take only tstate CCR field */
-		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
-		    ((r[SVR4_SPARC_CCR] << TSTATE_CCR_SHIFT) & TSTATE_CCR);
+		/* take only tstate ASI and CCR fields */
+		tf->tf_tstate = (tf->tf_tstate & ~(TSTATE_CCR | TSTATE_ASI)) |
+		    ((r[SVR4_SPARC_CCR] << TSTATE_CCR_SHIFT) & TSTATE_CCR) |
+		    ((r[SVR4_SPARC_ASI] << TSTATE_ASI_SHIFT) & TSTATE_ASI);
 		tf->tf_pc = r[SVR4_SPARC_PC];
 		tf->tf_npc = r[SVR4_SPARC_nPC];
 		tf->tf_y = r[SVR4_SPARC_Y];
@@ -294,6 +297,8 @@ svr4_setmcontext(p, mc, flags)
 		tf->tf_out[5] = r[SVR4_SPARC_O5];
 		tf->tf_out[6] = r[SVR4_SPARC_O6];
 		tf->tf_out[7] = r[SVR4_SPARC_O7];
+
+		/* SVR4_SPARC_ASI restored above */
 	}
 
 
