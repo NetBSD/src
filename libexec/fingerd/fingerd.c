@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.7 1997/10/08 00:56:46 enami Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.8 1998/02/03 03:20:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char const copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char const rcsid[] = "$NetBSD: fingerd.c,v 1.7 1997/10/08 00:56:46 enami Exp $";
+static char const rcsid[] = "$NetBSD: fingerd.c,v 1.8 1998/02/03 03:20:11 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char const rcsid[] = "$NetBSD: fingerd.c,v 1.7 1997/10/08 00:56:46 enami 
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include "pathnames.h"
 
 void err __P((const char *, ...));
