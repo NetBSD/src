@@ -1,5 +1,5 @@
-/* $NetBSD: isp_pci.c,v 1.35 1999/02/09 00:35:35 mjacob Exp $ */
-/* release_02_05_99 */
+/* $NetBSD: isp_pci.c,v 1.36 1999/03/17 06:16:42 mjacob Exp $ */
+/* release_03_16_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -44,6 +44,10 @@
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
+#ifndef	ISP_DISABLE_1080_SUPPORT
+static u_int16_t isp_pci_rd_reg_1080 __P((struct ispsoftc *, int));
+static void isp_pci_wr_reg_1080 __P((struct ispsoftc *, int, u_int16_t));
+#endif
 static int isp_pci_mbxdma __P((struct ispsoftc *));
 static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
 	ispreq_t *, u_int8_t *, u_int8_t));
@@ -53,6 +57,7 @@ static void isp_pci_reset1 __P((struct ispsoftc *));
 static void isp_pci_dumpregs __P((struct ispsoftc *));
 static int isp_pci_intr __P((void *));
 
+#ifndef	ISP_DISABLE_1020_SUPPORT
 static struct ispmdvec mdvec = {
 	isp_pci_rd_reg,
 	isp_pci_wr_reg,
@@ -69,7 +74,28 @@ static struct ispmdvec mdvec = {
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
 };
+#endif
 
+#ifndef	ISP_DISABLE_1080_SUPPORT
+static struct ispmdvec mdvec_1080 = {
+	isp_pci_rd_reg_1080,
+	isp_pci_wr_reg_1080,
+	isp_pci_mbxdma,
+	isp_pci_dmasetup,
+	isp_pci_dmateardown,
+	NULL,
+	isp_pci_reset1,
+	isp_pci_dumpregs,
+	0,
+	0,
+	0,
+	0,
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
+	0
+};
+#endif
+
+#ifndef	ISP_DISABLE_2100_SUPPORT
 static struct ispmdvec mdvec_2100 = {
 	isp_pci_rd_reg,
 	isp_pci_wr_reg,
@@ -86,13 +112,36 @@ static struct ispmdvec mdvec_2100 = {
 	0,				/* Irrelevant to the 2100 */
 	0
 };
+#endif
 
-#define	PCI_QLOGIC_ISP	\
-	((PCI_PRODUCT_QLOGIC_ISP1020 << 16) | PCI_VENDOR_QLOGIC)
+#ifndef	PCI_VENDOR_QLOGIC
+#define	PCI_VENDOR_QLOGIC	0x1077
+#endif
+
+#ifndef	PCI_PRODUCT_QLOGIC_ISP1020
+#define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020
+#endif
+
+#ifndef	PCI_PRODUCT_QLOGIC_ISP1080
+#define	PCI_PRODUCT_QLOGIC_ISP1080	0x1080
+#endif
+
+#ifndef	PCI_PRODUCT_QLOGIC_ISP1240
+#define	PCI_PRODUCT_QLOGIC_ISP1240	0x1240
+#endif
 
 #ifndef	PCI_PRODUCT_QLOGIC_ISP2100
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100
 #endif
+
+#define	PCI_QLOGIC_ISP	((PCI_PRODUCT_QLOGIC_ISP1020 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP1080	\
+	((PCI_PRODUCT_QLOGIC_ISP1080 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP1240	\
+	((PCI_PRODUCT_QLOGIC_ISP1240 << 16) | PCI_VENDOR_QLOGIC)
+
 #define	PCI_QLOGIC_ISP2100	\
 	((PCI_PRODUCT_QLOGIC_ISP2100 << 16) | PCI_VENDOR_QLOGIC)
 
@@ -115,6 +164,7 @@ struct isp_pcisoftc {
 	bus_dmamap_t		pci_result_dmap;
 	bus_dmamap_t		pci_xfer_dmap[MAXISPREQUEST];
 	void *			pci_ih;
+	int16_t			pci_poff[_NREG_BLKS];
 };
 
 struct cfattach isp_pci_ca = {
@@ -128,11 +178,23 @@ isp_pci_probe(parent, match, aux)
 	void *aux; 
 {       
         struct pci_attach_args *pa = aux;
-
-	if (pa->pa_id == PCI_QLOGIC_ISP ||
-	    pa->pa_id == PCI_QLOGIC_ISP2100) {
+        switch (pa->pa_id) {
+#ifndef	ISP_DISABLE_1020_SUPPORT
+	case PCI_QLOGIC_ISP:
 		return (1);
-	} else {
+#endif
+#ifndef	ISP_DISABLE_1080_SUPPORT
+	case PCI_QLOGIC_ISP1080:
+#if	0
+	case PCI_QLOGIC_ISP1240:	/* 1240 not ready yet */
+		return (1);
+#endif
+#endif
+#ifndef	ISP_DISABLE_2100_SUPPORT
+	case PCI_QLOGIC_ISP2100:
+		return (1);
+#endif
+	default:
 		return (0);
 	}
 }
@@ -181,6 +243,13 @@ isp_pci_attach(parent, self, aux)
 	pcs->pci_dmat = pa->pa_dmat;
 	pcs->pci_pc = pa->pa_pc;
 	pcs->pci_tag = pa->pa_tag;
+	pcs->pci_poff[BIU_BLOCK >> _BLK_REG_SHFT] = BIU_REGS_OFF;
+	pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] = PCI_MBOX_REGS_OFF;
+	pcs->pci_poff[SXP_BLOCK >> _BLK_REG_SHFT] = PCI_SXP_REGS_OFF;
+	pcs->pci_poff[RISC_BLOCK >> _BLK_REG_SHFT] = PCI_RISC_REGS_OFF;
+	pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
+
+#ifndef	ISP_DISABLE_1020_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
 		isp->isp_mdvec = &mdvec;
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
@@ -191,7 +260,25 @@ isp_pci_attach(parent, self, aux)
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
-	} else if (pa->pa_id == PCI_QLOGIC_ISP2100) {
+	}
+#endif
+#ifndef	ISP_DISABLE_1080_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP1080) {
+		isp->isp_mdvec = &mdvec_1080;
+		isp->isp_type = ISP_HA_SCSI_1080;
+		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf("%s: couldn't allocate sdparam table\n",
+			       isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
+#endif
+#ifndef	ISP_DISABLE_2100_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP2100) {
 		isp->isp_mdvec = &mdvec_2100;
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
@@ -201,20 +288,24 @@ isp_pci_attach(parent, self, aux)
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
-	} else {
-		return;
+		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
+		    PCI_MBOX_REGS2100_OFF;
 	}
+#endif
+
 	/*
 	 * Make sure that command register set sanely.
 	 */
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	data |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_INVALIDATE_ENABLE;
+
 	/*
 	 * Not so sure about these- but I think it's important that they get
 	 * enabled......
 	 */
 	data |= PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
+
 	/*
 	 * Make sure that latency timer and cache line size is set sanely.
 	 */
@@ -234,6 +325,25 @@ isp_pci_attach(parent, self, aux)
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
 	}
 #endif
+	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+	    pa->pa_intrline, &ih)) {
+		printf("%s: couldn't map interrupt\n", isp->isp_name);
+		free(isp->isp_param, M_DEVBUF);
+		return;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	if (intrstr == NULL)
+		intrstr = "<I dunno>";
+	pcs->pci_ih =
+	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_pci_intr, isp);
+	if (pcs->pci_ih == NULL) {
+		printf("%s: couldn't establish interrupt at %s\n",
+			isp->isp_name, intrstr);
+		free(isp->isp_param, M_DEVBUF);
+		return;
+	}
+	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
+
 	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
@@ -249,29 +359,7 @@ isp_pci_attach(parent, self, aux)
 		return;
 	}
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", isp->isp_name);
-		isp_uninit(isp);
-		ISP_UNLOCK(isp);
-		free(isp->isp_param, M_DEVBUF);
-		return;
-	}
 
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	if (intrstr == NULL)
-		intrstr = "<I dunno>";
-	pcs->pci_ih =
-	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_pci_intr, isp);
-	if (pcs->pci_ih == NULL) {
-		printf("%s: couldn't establish interrupt at %s\n",
-			isp->isp_name, intrstr);
-		isp_uninit(isp);
-		ISP_UNLOCK(isp);
-		free(isp->isp_param, M_DEVBUF);
-		return;
-	}
-	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
 
 	/*
 	 * Create the DMA maps for the data transfers.
@@ -298,8 +386,6 @@ isp_pci_attach(parent, self, aux)
 	ISP_UNLOCK(isp);
 }
 
-#define  PCI_BIU_REGS_OFF		BIU_REGS_OFF
-
 static u_int16_t
 isp_pci_rd_reg(isp, regoff)
 	struct ispsoftc *isp;
@@ -307,30 +393,20 @@ isp_pci_rd_reg(isp, regoff)
 {
 	u_int16_t rv;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
-	int offset, oldsxp = 0;
+	int offset, oldconf = 0;
 
-	if ((regoff & BIU_BLOCK) != 0) {
-		offset = PCI_BIU_REGS_OFF;
-	} else if ((regoff & MBOX_BLOCK) != 0) {
-		if (isp->isp_type & ISP_HA_SCSI)
-			offset = PCI_MBOX_REGS_OFF;
-		else
-			offset = PCI_MBOX_REGS2100_OFF;
-	} else if ((regoff & SXP_BLOCK) != 0) {
-		offset = PCI_SXP_REGS_OFF;
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		/*
 		 * We will assume that someone has paused the RISC processor.
 		 */
-		oldsxp = isp_pci_rd_reg(isp, BIU_CONF1);
-		isp_pci_wr_reg(isp, BIU_CONF1, oldsxp & ~BIU_PCI_CONF1_SXP);
-	} else {
-		offset = PCI_RISC_REGS_OFF;
+		oldconf = isp_pci_rd_reg(isp, BIU_CONF1);
+		isp_pci_wr_reg(isp, BIU_CONF1, oldconf | BIU_PCI_CONF1_SXP);
 	}
-	regoff &= 0xff;
-	offset += regoff;
+	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
 	rv = bus_space_read_2(pcs->pci_st, pcs->pci_sh, offset);
-	if ((regoff & SXP_BLOCK) != 0) {
-		isp_pci_wr_reg(isp, BIU_CONF1, oldsxp);
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
+		isp_pci_wr_reg(isp, BIU_CONF1, oldconf);
 	}
 	return (rv);
 }
@@ -342,31 +418,81 @@ isp_pci_wr_reg(isp, regoff, val)
 	u_int16_t val;
 {
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
-	int offset, oldsxp = 0;
-	if ((regoff & BIU_BLOCK) != 0) {
-		offset = PCI_BIU_REGS_OFF;
-	} else if ((regoff & MBOX_BLOCK) != 0) {
-		if (isp->isp_type & ISP_HA_SCSI)
-			offset = PCI_MBOX_REGS_OFF;
-		else
-			offset = PCI_MBOX_REGS2100_OFF;
-	} else if ((regoff & SXP_BLOCK) != 0) {
-		offset = PCI_SXP_REGS_OFF;
+	int offset, oldconf = 0;
+
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		/*
 		 * We will assume that someone has paused the RISC processor.
 		 */
-		oldsxp = isp_pci_rd_reg(isp, BIU_CONF1);
-		isp_pci_wr_reg(isp, BIU_CONF1, oldsxp & ~BIU_PCI_CONF1_SXP);
-	} else {
-		offset = PCI_RISC_REGS_OFF;
+		oldconf = isp_pci_rd_reg(isp, BIU_CONF1);
+		isp_pci_wr_reg(isp, BIU_CONF1, oldconf | BIU_PCI_CONF1_SXP);
 	}
-	regoff &= 0xff;
-	offset += regoff;
+	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
 	bus_space_write_2(pcs->pci_st, pcs->pci_sh, offset, val);
-	if ((regoff & SXP_BLOCK) != 0) {
-		isp_pci_wr_reg(isp, BIU_CONF1, oldsxp);
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
+		isp_pci_wr_reg(isp, BIU_CONF1, oldconf);
 	}
 }
+
+#ifndef	ISP_DISABLE_1080_SUPPORT
+static u_int16_t
+isp_pci_rd_reg_1080(isp, regoff)
+	struct ispsoftc *isp;
+	int regoff;
+{
+	u_int16_t rv;
+	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
+	int offset, oc = 0;
+
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
+		/*
+		 * We will assume that someone has paused the RISC processor.
+		 */
+		oc = isp_pci_rd_reg(isp, BIU_CONF1);
+		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_SXP);
+	} else if ((regoff & _BLK_REG_MASK) == DMA_BLOCK) {
+		oc = isp_pci_rd_reg(isp, BIU_CONF1);
+		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_DMA);
+	}
+	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
+	rv = bus_space_read_2(pcs->pci_st, pcs->pci_sh, offset);
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
+	    ((regoff & _BLK_REG_MASK) == DMA_BLOCK)) {
+		isp_pci_wr_reg(isp, BIU_CONF1, oc);
+	}
+	return (rv);
+}
+
+static void
+isp_pci_wr_reg_1080(isp, regoff, val)
+	struct ispsoftc *isp;
+	int regoff;
+	u_int16_t val;
+{
+	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
+	int offset, oc = 0;
+
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
+		/*
+		 * We will assume that someone has paused the RISC processor.
+		 */
+		oc = isp_pci_rd_reg(isp, BIU_CONF1);
+		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_SXP);
+	} else if ((regoff & _BLK_REG_MASK) == DMA_BLOCK) {
+		oc = isp_pci_rd_reg(isp, BIU_CONF1);
+		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_DMA);
+	}
+	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
+	bus_space_write_2(pcs->pci_st, pcs->pci_sh, offset, val);
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
+	    ((regoff & _BLK_REG_MASK) == DMA_BLOCK)) {
+		isp_pci_wr_reg(isp, BIU_CONF1, oc);
+	}
+}
+#endif
 
 static int
 isp_pci_mbxdma(isp)
