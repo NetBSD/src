@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.15 2000/04/10 09:32:03 jdolecek Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.16 2000/04/13 01:27:53 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.15 2000/04/10 09:32:03 jdolecek Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.16 2000/04/13 01:27:53 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ do_ktrace(tracefile, ops, trpoints, pid)
 
 #ifdef KTRUSS
 		if (dofork)
-			fpid = vfork();
+			fpid = fork();
 		else
 			fpid = pid;	/* XXX: Gcc */
 #else
