@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.11 1998/07/08 18:41:24 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.12 1998/07/23 20:51:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/file.h>
 #include <sys/extent.h>
 #include <sys/mount.h>
+#include <sys/pool.h>
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
@@ -191,29 +192,42 @@ struct vndbuf {
 	struct vndxfer	*vb_xfer;
 };
 
+
 /*
- * XXX: Not a very good idea in a swap strategy module!
+ * We keep a of pool vndbuf's and vndxfer structures.
  */
-#define	getvndxfer()	\
-	((struct vndxfer *)malloc(sizeof(struct vndxfer), M_DEVBUF, M_WAITOK))
+struct pool *vndxfer_pool;
+struct pool *vndbuf_pool;
 
-#define putvndxfer(vnx)	\
-	free((caddr_t)(vnx), M_DEVBUF)
+#define	getvndxfer(vnx)	do {						\
+	int s = splbio();						\
+	vnx = (struct vndxfer *)					\
+		pool_get(vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
+	splx(s);							\
+} while (0)
 
-#define getvndbuf()	\
-	((struct vndbuf *)malloc(sizeof(struct vndbuf), M_DEVBUF, M_WAITOK))
+#define putvndxfer(vnx) {						\
+	pool_put(vndxfer_pool, (void *)(vnx));				\
+}
 
-#define putvndbuf(vbp)	\
-	free((caddr_t)(vbp), M_DEVBUF)
+#define	getvndbuf(vbp)	do {						\
+	int s = splbio();						\
+	vbp = (struct vndbuf *)						\
+		pool_get(vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
+	splx(s);							\
+} while (0)
+
+#define putvndbuf(vbp) {						\
+	pool_put(vndbuf_pool, (void *)(vbp));				\
+}
+
 
 /*
  * local variables
  */
 static struct extent *swapmap;		/* controls the mapping of /dev/drum */
 SIMPLEQ_HEAD(swapbufhead, swapbuf);
-static struct swapbufhead freesbufs;	/* list of free swapbufs */
-static int sbufs_wanted = 0;		/* someone sleeping for swapbufs? */
-static simple_lock_data_t swap_buf_lock;/* locks freesbufs and sbufs_wanted */
+struct pool *swapbuf_pool;
 
 /* list of all active swap devices [by priority] */
 LIST_HEAD(swap_priority, swappri);
@@ -221,7 +235,6 @@ static struct swap_priority swap_priority;
 
 /* locks */
 lock_data_t swap_syscall_lock;
-static simple_lock_data_t swap_data_lock;
 
 /*
  * prototypes
@@ -258,9 +271,6 @@ static int uvm_swap_io __P((struct vm_page **, int, int, int));
 void
 uvm_swap_init()
 {
-	struct swapbuf *sp;
-	struct proc *p = &proc0;	/* XXX */
-	int i;
 	UVMHIST_FUNC("uvm_swap_init");
 
 	UVMHIST_CALLED(pdhist);
@@ -273,7 +283,7 @@ uvm_swap_init()
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
 	lockinit(&swap_syscall_lock, PVM, "swapsys", 0, 0);
-	simple_lock_init(&swap_data_lock);
+
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
 
@@ -294,22 +304,24 @@ uvm_swap_init()
 	 * be adjusted by MD code before we get here].
 	 */
 
-	sp = malloc(sizeof(*sp) * nswbuf, M_VMSWAP, M_NOWAIT);
-	if (sp == NULL)
-		panic("uvm_swap_init: unable to malloc swap bufs");
-	bzero(sp, sizeof(*sp) * nswbuf);
-	SIMPLEQ_INIT(&freesbufs);
-	simple_lock_init(&swap_buf_lock);
+	swapbuf_pool =
+		pool_create(sizeof(struct swapbuf), 0, 0, 0, "swp buf", 0,
+			    NULL, NULL, 0);
+	if (swapbuf_pool == NULL)
+		panic("swapinit: pool_create failed");
+	/* XXX - set a maximum on swapbuf_pool? */
 
-	/* build free list */
-	for (i = 0 ; i < nswbuf ; i++, sp++) {
-	  	/* p == proc0 */
-		sp->sw_buf.b_rcred = sp->sw_buf.b_wcred = p->p_ucred;
-		sp->sw_buf.b_vnbufs.le_next = NOLIST;
-		SIMPLEQ_INSERT_HEAD(&freesbufs, sp, sw_sq);
-	}
-	printf("uvm_swap: allocated %d swap buffer headers\n", nswbuf);
+	vndxfer_pool =
+		pool_create(sizeof(struct vndxfer), 0, 0, 0, "swp vnx", 0,
+			    NULL, NULL, 0);
+	if (vndxfer_pool == NULL)
+		panic("swapinit: pool_create failed");
 
+	vndbuf_pool =
+		pool_create(sizeof(struct vndbuf), 0, 0, 0, "swp vnd", 0,
+			    NULL, NULL, 0);
+	if (vndbuf_pool == NULL)
+		panic("swapinit: pool_create failed");
 	/*
 	 * done!
 	 */
@@ -760,8 +772,6 @@ swap_on(p, sdp)
 	struct vnode *vp;
 	int error, npages, nblocks, size;
 	long addr;
-	char *storage;
-	int storagesize;
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
@@ -885,24 +895,9 @@ swap_on(p, sdp)
 	name = malloc(12, M_VMSWAP, M_WAITOK);
 	sprintf(name, "swap0x%04x", count++);
 
-	/*
-	 * XXXCDC: what should we make of this extent storage size stuff
-	 *
-	 * XXXMRG: well, i've come to realise that we need, at most,
-	 * blocks2pages(npages)/2 extents (or so), to cover all possible
-	 * allocations that may occur in the extent -- every other page
-	 * being allocated.
-	 */
-#if 1
-	storagesize = EXTENT_FIXED_STORAGE_SIZE(maxproc * 2);
-#else
-	/* XXXMRG: this uses lots of memory */
-	storagesize = EXTENT_FIXED_STORAGE_SIZE(npages / 2);
-#endif
-	storage = malloc(storagesize, M_VMSWAP, M_WAITOK);
 	/* note that extent_create's 3rd arg is inclusive, thus "- 1" */
 	sdp->swd_ex = extent_create(name, 0, npages - 1, M_VMSWAP,
-				    storage, storagesize, EX_WAITOK);
+				    0, 0, EX_WAITOK);
 	/* allocate the `saved' region from the extent so it won't be used */
 	if (addr) {
 		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
@@ -956,6 +951,39 @@ swap_on(p, sdp)
 	 * add anon's to reflect the swap space we added
 	 */
 	uvm_anon_add(size);
+
+#if 0
+	/*
+	 * At this point we could arrange to reserve memory for the
+	 * swap buffer pools.
+	 *
+	 * I don't think this is necessary, since swapping starts well
+	 * ahead of serious memory deprivation and the memory resource
+	 * pools hold on to actively used memory. This should ensure
+	 * we always have some resources to continue operation.
+	 */
+
+	int s = splbio();
+	int n = 8 * sdp->swd_maxactive;
+
+	(void)pool_prime(swapbuf_pool, n, 0);
+
+	if (vp->v_type == VREG) {
+		/* Allocate additional vnx and vnd buffers */
+		/*
+		 * Allocation Policy:
+		 *	(8  * swd_maxactive) vnx headers per swap dev
+		 *	(16 * swd_maxactive) vnd buffers per swap dev
+		 */
+
+		n = 8 * sdp->swd_maxactive;
+		(void)pool_prime(vndxfer_pool, n, 0);
+
+		n = 16 * sdp->swd_maxactive;
+		(void)pool_prime(vndbuf_pool, n, 0);
+	}
+	splx(s);
+#endif
 
 	return (0);
 
@@ -1179,7 +1207,7 @@ sw_reg_strategy(sdp, bp, bn)
 	 * allocate a vndxfer head for this transfer and point it to
 	 * our buffer.
 	 */
-	vnx = getvndxfer();
+	getvndxfer(vnx);
 	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
@@ -1246,21 +1274,25 @@ sw_reg_strategy(sdp, bp, bn)
 		 * at the front of the nbp structure so that you can
 		 * cast pointers between the two structure easily.
 		 */
-		nbp = getvndbuf();
+		getvndbuf(nbp);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
+#if 0
 		nbp->vb_buf.b_bufsize  = bp->b_bufsize; /* XXXCDC: really? */
+#endif
+		nbp->vb_buf.b_bufsize  = sz;
 		nbp->vb_buf.b_error    = 0;
 		nbp->vb_buf.b_data     = addr;
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_proc     = bp->b_proc;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = NULLVP;
+		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
 		nbp->vb_buf.b_rcred    = sdp->swd_cred;
 		nbp->vb_buf.b_wcred    = sdp->swd_cred;
 
 		/* 
-		 * set b_dirtyoff/end and b_vaildoff/end.   this is
+		 * set b_dirtyoff/end and b_validoff/end.   this is
 		 * required by the NFS client code (otherwise it will
 		 * just discard our I/O request).
 		 */
@@ -1570,8 +1602,11 @@ uvm_swap_free(startslot, nslots)
 		panic("uvm_swap_free: unmapped address\n");
 	}
 #endif
-	extent_free(sdp->swd_ex, startslot - sdp->swd_drumoffset, nslots,
-		    EX_MALLOCOK|EX_NOWAIT);
+	if (extent_free(sdp->swd_ex, startslot - sdp->swd_drumoffset, nslots,
+			EX_MALLOCOK|EX_NOWAIT) != 0)
+		printf("warning: resource shortage: %d slots of swap lost\n",
+			nslots);
+
 	sdp->swd_npginuse -= nslots;
 	uvmexp.swpginuse -= nslots;
 #ifdef DIAGNOSTIC
@@ -1644,7 +1679,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	struct swapbuf *sbp;
 	struct	buf *bp;
 	vm_offset_t kva;
-	int	result, s, waitf;
+	int	result, s, waitf, pflag;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "<- called, startslot=%d, npages=%d, flags=%d",
@@ -1670,30 +1705,10 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * [make sure we don't put the pagedaemon to sleep...]
 	 */
 	s = splbio();
-	simple_lock(&swap_buf_lock);
-
-	/* never put the pagedaemon to sleep! */
-	if ((flags & B_ASYNC) != 0 || curproc == uvm.pagedaemon_proc) {
-
-		sbp = freesbufs.sqh_first;
-
-	} else {
-	  
-		/* we can sleep for a sbuf if needed */
-		while (freesbufs.sqh_first == NULL) {
-
-			sbufs_wanted = 1;
-			UVM_UNLOCK_AND_WAIT(&freesbufs, &swap_buf_lock, 0,
-		    		"uvmswiobuf",0);
-
-			simple_lock(&swap_buf_lock);	/* relock */
-		}
-		sbp = freesbufs.sqh_first;
-	}
-
-	if (sbp)
-		SIMPLEQ_REMOVE_HEAD(&freesbufs, sbp, sw_sq);
-	simple_unlock(&swap_buf_lock);
+	pflag = ((flags & B_ASYNC) != 0 || curproc == uvm.pagedaemon_proc)
+		? 0
+		: PR_WAITOK;
+	sbp = pool_get(swapbuf_pool, pflag);
 	splx(s);		/* drop splbio */
 
 	/*
@@ -1709,6 +1724,8 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp = &sbp->sw_buf;
 	bp->b_flags = B_BUSY | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
+	bp->b_rcred = bp->b_wcred = proc0.p_ucred;
+	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
 	VHOLD(swapdev_vp);
@@ -1773,14 +1790,8 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY);
 	if (bp->b_vp)
 		brelvp(bp);
-	
-	simple_lock(&swap_buf_lock);
-	SIMPLEQ_INSERT_HEAD(&freesbufs, sbp, sw_sq);
-	if (sbufs_wanted) {
-		sbufs_wanted = 0;
-		thread_wakeup(&freesbufs);
-	}
-	simple_unlock(&swap_buf_lock);
+
+	pool_put(swapbuf_pool, sbp);
 	splx(s);
 
 	/*
@@ -1882,13 +1893,7 @@ uvm_swap_aiodone(aio)
 	 * finally, we can dispose of the swapbuf
 	 */
 	s = splbio();
-	simple_lock(&swap_buf_lock);
-	SIMPLEQ_INSERT_HEAD(&freesbufs, sbp, sw_sq);
-	if (sbufs_wanted) {
-		sbufs_wanted = 0;
-		thread_wakeup(&freesbufs);
-	}
-	simple_unlock(&swap_buf_lock);
+	pool_put(swapbuf_pool, sbp);
 	splx(s);
 
 	/*
