@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.5 2001/07/29 21:28:46 christos Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.6 2001/07/30 22:04:08 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -106,6 +106,7 @@ netbsd32_elf32_copyargs(pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	int error;
 
 	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
 		return error;
