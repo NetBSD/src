@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.66 2002/11/26 18:44:34 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.67 2002/11/29 19:48:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.66 2002/11/26 18:44:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.67 2002/11/29 19:48:22 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -958,9 +958,11 @@ selwakeup(sip)
 	if (sip->sel_pid == 0)
 		return;
 	if (sip->sel_flags & SI_COLL) {
+		sip->sel_pid = 0;
 		nselcoll++;
 		sip->sel_flags &= ~SI_COLL;
 		wakeup((caddr_t)&selwait);
+		return;
 	}
 	p = pfind(sip->sel_pid);
 	sip->sel_pid = 0;
