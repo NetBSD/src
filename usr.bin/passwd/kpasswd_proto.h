@@ -1,8 +1,8 @@
-/*	$NetBSD: kpasswd_proto.h,v 1.2 1996/08/09 09:19:34 thorpej Exp $	*/
+/*	$NetBSD: kpasswd_proto.h,v 1.3 1996/12/28 04:30:04 tls Exp $	*/
 
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ * 	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kpasswd_proto.h	5.1 (Berkeley) 2/3/91
+ *	from: @(#)kpasswd_proto.h     8.1 (Berkeley) 6/6/93
  */
 
 /*

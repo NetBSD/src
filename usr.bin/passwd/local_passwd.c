@@ -1,8 +1,8 @@
-/*	$NetBSD: local_passwd.c,v 1.9 1996/08/09 09:19:39 thorpej Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.10 1996/12/28 04:30:05 tls Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ * 	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";
+static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: local_passwd.c,v 1.9 1996/08/09 09:19:39 thorpej Exp $";
+static char rcsid[] = "$NetBSD: local_passwd.c,v 1.10 1996/12/28 04:30:05 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,56 +51,33 @@ static char rcsid[] = "$NetBSD: local_passwd.c,v 1.9 1996/08/09 09:19:39 thorpej
 #include <fcntl.h>
 #include <util.h>
 
-uid_t uid;
+#include "extern.h"
+
+static uid_t uid;
 
 char *tempname;
 
-local_passwd(uname)
-	char *uname;
+static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
+	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+void
+to64(s, v, n)
+	char *s;
+	long v;
+	int n;
 {
-	struct passwd *pw;
-	int pfd, tfd;
-	char *getnewpasswd();
-
-	if (!(pw = getpwnam(uname))) {
-		(void)fprintf(stderr, "passwd: unknown user %s.\n", uname);
-		return(1);
+	while (--n >= 0) {
+		*s++ = itoa64[v&0x3f];
+		v >>= 6;
 	}
-
-	uid = getuid();
-	if (uid && uid != pw->pw_uid) {
-		(void)fprintf(stderr, "passwd: %s\n", strerror(EACCES));
-		return(1);
-	}
-
-	pw_init();
-	tfd = pw_lock(0);
-	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
-		pw_error(_PATH_MASTERPASSWD, 1, 1);
-
-	/*
-	 * Get the new password.  Reset passwd change time to zero; when
-	 * classes are implemented, go and get the "offset" value for this
-	 * class and reset the timer.
-	 */
-	pw->pw_passwd = getnewpasswd(pw);
-	pw->pw_change = 0;
-	pw_copy(pfd, tfd, pw);
-
-	if (pw_mkdb() < 0)
-		pw_error((char *)NULL, 0, 1);
-	return(0);
 }
 
 char *
 getnewpasswd(pw)
-	register struct passwd *pw;
+	struct passwd *pw;
 {
-	register char *p, *t;
 	int tries;
+	char *p, *t;
 	char buf[_PASSWORD_LEN+1], salt[9], *crypt(), *getpass();
 
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
@@ -124,7 +101,10 @@ getnewpasswd(pw)
 		}
 		for (t = p; *t && islower(*t); ++t);
 		if (!*t && ++tries < 2) {
-			(void)printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
+			(void)printf("Please don't use an all-lower case\
+				     password.\nUnusual capitalization,
+				     control characters or digits are\
+				     suggested.\n");
 			continue;
 		}
 		(void)strcpy(buf, p);
@@ -144,16 +124,43 @@ getnewpasswd(pw)
 	return(crypt(buf, salt));
 }
 
-static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-to64(s, v, n)
-	register char *s;
-	register long v;
-	register int n;
+int
+local_passwd(uname)
+	char *uname;
 {
-	while (--n >= 0) {
-		*s++ = itoa64[v&0x3f];
-		v >>= 6;
+	struct passwd *pw;
+	int pfd, tfd;
+	char *getnewpasswd();
+
+	if (!(pw = getpwnam(uname))) {
+		warnx("unknown user %s", uname);
+		return (1);
 	}
+
+	uid = getuid();
+	if (uid && uid != pw->pw_uid) {
+		warnx("%s", strerror(EACCES));
+		return (1);
+	}
+
+	pw_init();
+	tfd = pw_lock(0);
+	if (tfd < 0)
+		errx(1, "the passwd file is busy.");
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
+
+	/*
+	 * Get the new password.  Reset passwd change time to zero; when
+	 * classes are implemented, go and get the "offset" value for this
+	 * class and reset the timer.
+	 */
+	pw->pw_passwd = getnewpasswd(pw);
+	pw->pw_change = 0;
+	pw_copy(pfd, tfd, pw);
+
+	if (pw_mkdb() < 0)
+		pw_error((char *)NULL, 0, 1);
+	return (0);
 }
