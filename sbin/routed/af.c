@@ -1,4 +1,4 @@
-/*	$NetBSD: af.c,v 1.11 1995/07/13 10:43:23 cgd Exp $	*/
+/*	$NetBSD: af.c,v 1.12 1995/07/24 13:03:25 ws Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)af.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: af.c,v 1.11 1995/07/13 10:43:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: af.c,v 1.12 1995/07/24 13:03:25 ws Exp $";
 #endif
 #endif /* not lint */
 
@@ -244,6 +244,10 @@ inet_put(pck, sa)
 {
 	struct netinfo *n = pck;
 	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+#if BSD >= 198810
+	n->rip_family = htons(sin->sin_family);
+#else
 	n->rip_family = sin->sin_family;
+#endif
 	n->rip_dst = sin->sin_addr.s_addr;
 }
