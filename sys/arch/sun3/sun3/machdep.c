@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 2002/09/19 10:38:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,7 +55,6 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

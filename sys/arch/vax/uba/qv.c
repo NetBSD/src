@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: qv.c,v 1.9 2002/09/19 10:38:05 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -140,7 +140,6 @@
 #include "sys/map.h"
 #include "sys/buf.h"
 #include "sys/vm.h"
-#include "sys/clist.h"
 #include "sys/file.h"
 #include "sys/uio.h"
 #include "sys/kernel.h"
