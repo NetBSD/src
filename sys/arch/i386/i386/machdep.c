@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.523 2003/06/23 11:01:19 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.524 2003/06/26 16:47:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.523 2003/06/23 11:01:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.524 2003/06/26 16:47:15 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -228,6 +228,7 @@ static int exec_nomid   __P((struct proc *, struct exec_package *));
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
+unsigned int cpu_feature;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
