@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.4 2005/02/28 16:16:19 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.5 2005/02/28 16:55:58 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,14 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.4 2005/02/28 16:16:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.5 2005/02/28 16:55:58 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
