@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.17 1997/06/28 07:17:56 thorpej Exp $	*/
+/*	$NetBSD: exec.c,v 1.18 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,11 +39,6 @@
 #include <sys/stat.h>
 #endif
 #include <sys/exec.h>
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include "stand.h"
 
