@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.23 1998/05/20 16:19:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -74,14 +74,17 @@ struct ad1848_softc {
 	int	sc_recdrq;		/* record/capture DMA */
 	
 	/* We keep track of these */
-	struct ad1848_volume rec_gain, aux1_gain, aux2_gain, out_gain, mon_gain, line_gain, mono_gain;
+        struct ad1848_volume gains[6];
+
+	struct ad1848_volume rec_gain;
 
 	int	rec_port;		/* recording port */
 
 	/* ad1848 */
 	u_char	MCE_bit;
 	char	mic_gain_on;		/* CS4231 only */
-	char	mono_mute, aux1_mute, aux2_mute, line_mute, mon_mute;
+        char    mute[6];
+
 	char	*chip_name;
 	int	mode;
 	
@@ -100,6 +103,21 @@ struct ad1848_softc {
 	int	sc_iobase;
 };
 
+#define MUTE_LEFT       1
+#define MUTE_RIGHT      2
+#define MUTE_ALL        (MUTE_LEFT | MUTE_RIGHT)
+#define MUTE_MONO       MUTE_ALL
+
+/* Don't change this ordering without seriously looking around.
+   These are indexes into mute[] array and into a register information
+   array */
+#define AD1848_AUX2_CHANNEL        0
+#define AD1848_AUX1_CHANNEL        1
+#define AD1848_DAC_CHANNEL         2
+#define AD1848_LINE_CHANNEL        3
+#define AD1848_MONO_CHANNEL        4
+#define AD1848_MONITOR_CHANNEL     5    /* Doesn't seem to be on all later chips */
+
 /*
  * Ad1848 ports
  */
@@ -109,6 +127,21 @@ struct ad1848_softc {
 #define DAC_IN_PORT	3
 
 #ifdef _KERNEL
+
+#define AD1848_KIND_LVL   0
+#define AD1848_KIND_MUTE  1
+#define AD1848_KIND_RECORDGAIN 2
+#define AD1848_KIND_MICGAIN 3
+#define AD1848_KIND_RECORDSOURCE 4
+
+typedef struct ad1848_devmap {
+  int  id;
+  int  kind;
+  int  dev;
+} ad1848_devmap_t;
+
+int     ad1848_mixer_get_port __P((struct ad1848_softc *, ad1848_devmap_t *, int cnt, mixer_ctrl_t *));
+int     ad1848_mixer_set_port __P((struct ad1848_softc *, ad1848_devmap_t *, int, mixer_ctrl_t *));
 int	ad1848_mapprobe __P((struct ad1848_softc *, int));
 int	ad1848_probe __P((struct ad1848_softc *));
 void	ad1848_unmap __P((struct ad1848_softc *));
@@ -139,21 +172,16 @@ int	ad1848_intr __P((void *));
 int	ad1848_set_rec_port __P((struct ad1848_softc *, int));
 int	ad1848_get_rec_port __P((struct ad1848_softc *));
 
-int	ad1848_set_aux1_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_get_aux1_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_set_aux2_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_get_aux2_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_set_out_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_get_out_gain __P((struct ad1848_softc *, struct ad1848_volume *));
+int	ad1848_set_channel_gain __P((struct ad1848_softc *, int, struct ad1848_volume *));
+int	ad1848_get_device_gain __P((struct ad1848_softc *, int, struct ad1848_volume *));
 int	ad1848_set_rec_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_get_rec_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_set_mon_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_get_mon_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 /* Note: The mic pre-MUX gain is not a variable gain, it's 20dB or 0dB */
 int	ad1848_set_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_get_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-void	ad1848_mute_aux1 __P((struct ad1848_softc *, int /* onoff */));
-void	ad1848_mute_aux2 __P((struct ad1848_softc *, int /* onoff */));
+void     ad1848_mute_channel __P((struct ad1848_softc *, int device, int mute));
+int	ad1848_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+int	ad1848_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 
 void   *ad1848_malloc __P((void *, unsigned long, int, int));
 void	ad1848_free __P((void *, void *, int));
