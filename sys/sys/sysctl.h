@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.98 2003/09/27 07:52:34 dsl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.99 2003/09/28 13:02:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -519,13 +519,13 @@ struct kinfo_lwp {
 }
 
 /*
- * kern.drivers returns the size of one of these, followed by an array of them.
+ * kern.drivers returns and array of these.
  */
 
 struct kinfo_drivers {
-	int32_t		d_bmajor;
 	int32_t		d_cmajor;
-	char		d_name[16];
+	int32_t		d_bmajor;
+	char		d_name[24];
 };
 
 
