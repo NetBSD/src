@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2001/08/11 14:47:56 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2001/09/10 21:19:35 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2001/08/11 14:47:56 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2001/09/10 21:19:35 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -602,7 +602,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -988,7 +988,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(va);
 }
 
@@ -1389,7 +1389,7 @@ pmap_alloc_l1pt(void)
 		m = m->pageq.tqe_next;
 	}
 	pmap_unmap_ptes(pmap_kernel());
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 #ifdef DIAGNOSTIC
 	if (m)
@@ -1409,7 +1409,7 @@ pmap_free_l1pt(pt)
 {
 	/* Separate the physical memory for the virtual space */
 	pmap_remove(pmap_kernel(), pt->pt_va, pt->pt_va + PD_SIZE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/* Return the physical memory */
 	uvm_pglistfree(&pt->pt_plist);
@@ -1548,7 +1548,7 @@ pmap_pinit(pmap)
 	/* Map zero page for the pmap. This will also map the L2 for it */
 	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap);
 }
 
 
@@ -1607,7 +1607,7 @@ pmap_destroy(pmap)
 	
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update();
+	pmap_update(pmap);
 
 	/*
 	 * Free any page tables still mapped

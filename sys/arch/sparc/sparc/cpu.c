@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.121 2001/07/10 15:15:24 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.122 2001/09/10 21:19:24 chris Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -207,7 +207,7 @@ alloc_cpuinfo()
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		va += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	bzero((void *)cpi, sz);
 	cpi->eintstack = (void *)((vaddr_t)cpi + sz);

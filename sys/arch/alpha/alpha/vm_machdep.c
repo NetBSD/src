@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.74 2001/09/06 21:20:43 nathanw Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.75 2001/09/10 21:19:09 chris Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2001/09/06 21:20:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2001/09/10 21:19:09 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 }
 
 /*
@@ -335,7 +335,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

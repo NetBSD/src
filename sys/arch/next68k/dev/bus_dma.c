@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.24 2001/06/16 09:08:05 dbj Exp $ */
+/* $NetBSD: bus_dma.c,v 1.25 2001/09/10 21:19:20 chris Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2001/06/16 09:08:05 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2001/09/10 21:19:20 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,7 +661,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

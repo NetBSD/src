@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.2 2001/07/28 18:12:44 chris Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.3 2001/09/10 21:19:36 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -170,7 +170,7 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 		else
 			*pte &= ~PT_CACHEABLE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return(0);
 }

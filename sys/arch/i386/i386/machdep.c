@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.455 2001/09/10 10:12:16 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.456 2001/09/10 21:19:14 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ cpu_startup()
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
 		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -603,7 +603,7 @@ i386_bufinit()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -2703,7 +2703,7 @@ init386(first_avail)
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
 
 	/*
@@ -2718,7 +2718,7 @@ init386(first_avail)
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
-	pmap_update();
+	pmap_update(pmap_kernel());
 	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG_BIOSCALL
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
@@ -2727,12 +2727,12 @@ init386(first_avail)
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 	gdt = idt + NIDT;

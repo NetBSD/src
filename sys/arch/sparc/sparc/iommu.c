@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.54 2001/05/26 21:27:15 chs Exp $ */
+/*	$NetBSD: iommu.c,v 1.55 2001/09/10 21:19:24 chris Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -262,7 +262,7 @@ iommu_attach(parent, self, aux)
 		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		va += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Copy entries from current IOMMU table.
@@ -846,7 +846,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		va += pagesz;
 		size -= pagesz;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

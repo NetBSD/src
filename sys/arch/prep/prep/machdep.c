@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2001/08/26 02:47:35 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2001/09/10 21:19:34 chris Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -425,7 +425,7 @@ cpu_startup()
 		panic("startup: no room for interrupt register");
 	pmap_enter(pmap_kernel(), prep_intr_reg, PREP_INTR_REG,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -436,7 +436,7 @@ cpu_startup()
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
@@ -500,7 +500,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(kernel_map->pmap);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -787,7 +787,7 @@ mapiodev(pa, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (void *)(va + off);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2001/09/09 04:35:22 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 2001/09/10 21:19:37 chris Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -912,7 +912,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
  * incorrect entries NOW.
  */
 void
-pmap_update(void)
+pmap_update(struct pmap *pmap)
 {
 #ifdef MULTIPROCESSOR
 	TLBSYNC();

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.4 2001/09/09 10:33:43 toshii Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.5 2001/09/10 21:19:35 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -348,7 +348,7 @@ cpu_startup()
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * NBPG,
 		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
@@ -415,7 +415,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

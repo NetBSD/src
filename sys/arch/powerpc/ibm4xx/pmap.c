@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2001/07/22 13:08:09 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2001/09/10 21:19:38 chris Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -633,7 +633,7 @@ pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap, vaddr_t dst_addr,
  * incorrect entries NOW.
  */
 void
-pmap_update(void)
+pmap_update(struct pmap *pmap)
 {
 }
 
@@ -1504,7 +1504,7 @@ pmap_testout()
 
 	pmap_remove(pmap_kernel(), va, va+1);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);
@@ -1565,7 +1565,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_READ);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -1596,7 +1596,7 @@ pmap_testout()
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 #endif
 	*loc = 1;
 
@@ -1607,7 +1607,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_NONE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(): ref %d, mod %d\n",
@@ -1638,7 +1638,7 @@ pmap_testout()
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 #endif
 	*loc = 1;
 
@@ -1679,7 +1679,7 @@ pmap_testout()
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 #endif
 	*loc = 1;
 
@@ -1721,7 +1721,7 @@ pmap_testout()
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 #endif
 	*loc = 1;
 
@@ -1732,7 +1732,7 @@ pmap_testout()
 
 	/* Unmap page */
 	pmap_remove(pmap_kernel(), va, va+1);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("Unmapped page: ref %d, mod %d\n", ref, mod);

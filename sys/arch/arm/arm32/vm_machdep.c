@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2001/09/09 10:33:43 toshii Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2001/09/10 21:19:35 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -236,7 +236,7 @@ cpu_swapin(p)
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-	pmap_update();
+	pmap_update(p->p_vmspace->vm_map.pmap);
 }
 
 
@@ -253,7 +253,7 @@ cpu_swapout(p)
 
 	/* Free the system page mapping */
 	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update();
+	pmap_update(p->p_vmspace->vm_map.pmap);
 }
 
 
@@ -344,7 +344,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -375,7 +375,7 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 	
 	pmap_remove(pmap_kernel(), addr, addr + len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

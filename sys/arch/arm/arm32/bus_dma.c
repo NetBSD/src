@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2001/09/10 21:19:35 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -533,7 +533,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 #endif	/* DEBUG_DMA */
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 #ifdef DEBUG_DMA
 	printf("dmamem_map: =%p\n", *kvap);
 #endif	/* DEBUG_DMA */

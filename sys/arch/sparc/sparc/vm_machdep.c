@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.59 2001/08/19 18:08:30 chs Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60 2001/09/10 21:19:25 chris Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -88,7 +88,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 
@@ -142,7 +142,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
-	pmap_update();
+	pmap_update(kpmap);
 }
 
 /*
@@ -163,7 +163,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(kernel_map), kva, kva + len);
-	pmap_update();
+	pmap_update(vm_map_pmap(kernel_map));
 	uvm_km_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2001/06/02 18:09:24 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2001/09/10 21:19:30 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -246,7 +246,7 @@ cpu_startup()
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -316,7 +316,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -809,7 +809,7 @@ dumpsys()
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
@@ -1128,7 +1128,7 @@ mem_exists(mem, basemax)
 	DPRINTF ((" pmap_enter(%p, %p) for target... ", mem_v, mem));
 	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
 		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	DPRINTF ((" done.\n"));
 
 	/* only 24bits are significant on normal X680x0 systems */
@@ -1136,7 +1136,7 @@ mem_exists(mem, basemax)
 	DPRINTF ((" pmap_enter(%p, %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
 		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	DPRINTF ((" done.\n"));
 
 	m = (void*)mem_v;
@@ -1158,7 +1158,7 @@ mem_exists(mem, basemax)
 		nofault = (int *) 0;
 		pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
 		pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		DPRINTF (("Fault!!! Returning 0.\n"));
 		return 0;
 	}
@@ -1212,7 +1212,7 @@ asm("end_check_mem:");
 	nofault = (int *)0;
 	pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
 	pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	DPRINTF ((" End.\n"));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2001/06/02 18:09:18 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 2001/09/10 21:19:21 chris Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -752,14 +752,14 @@ writeback(fp, docachepush)
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
-			pmap_update();
+			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
