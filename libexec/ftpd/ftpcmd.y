@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.75 2003/03/03 01:52:13 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.76 2003/03/03 02:14:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.75 2003/03/03 01:52:13 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.76 2003/03/03 02:14:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1303,7 +1303,7 @@ static	int	check_write(const char *, int);
 static	void	help(struct tab *, const char *);
 static	void	port_check(const char *, int);
 static	void	toolong(int);
-static	int	yylex(void);
+	int	yylex(void);
 
 extern int epsvall;
 
@@ -1487,7 +1487,7 @@ ftp_loop(void)
 	/*NOTREACHED*/
 }
 
-static int
+int
 yylex(void)
 {
 	static int cpos, state;
