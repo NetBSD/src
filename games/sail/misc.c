@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 2000/02/09 22:27:56 jsm Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 2001/01/01 21:57:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 2000/02/09 22:27:56 jsm Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 2001/01/01 21:57:38 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,7 @@ __RCSID("$NetBSD: misc.c,v 1.6 2000/02/09 22:27:56 jsm Exp $");
 
 /* XXX */
 int
-range(from, to)
-struct ship *from, *to;
+range(struct ship *from, struct ship *to)
 {
 	int bow1r, bow1c, bow2r, bow2c;
 	int stern1r, stern1c, stern2c, stern2r;
@@ -80,9 +79,7 @@ struct ship *from, *to;
 }
 
 struct ship *
-closestenemy(from, side, anyship)
-struct ship *from;
-char side, anyship;
+closestenemy(struct ship *from, int side, int anyship)
 {
 	struct ship *sp;
 	char a;
@@ -109,8 +106,7 @@ char side, anyship;
 }
 
 int
-angle(dr, dc)
-int dr, dc;
+angle(int dr, int dc)
 {
 	int i;
 
@@ -136,9 +132,9 @@ int dr, dc;
 	return i % 8 + 1;
 }
 
+/* checks for target bow or stern */
 int
-gunsbear(from, to)		/* checks for target bow or stern */
-struct ship *from, *to;
+gunsbear(struct ship *from, struct ship *to)
 {
 	int Dr, Dc, i;
 	int ang;
@@ -158,11 +154,10 @@ struct ship *from, *to;
 	return 0;
 }
 
+/* returns true if fromship is shooting at onship's starboard side */
 int
-portside(from, on, quick)
-struct ship *from, *on;
-int quick;			/* returns true if fromship is */
-{				/* shooting at onship's starboard side */
+portside(struct ship *from, struct ship *on, int quick)
+{
 	int ang;
 	int Dr, Dc;
 
@@ -180,8 +175,7 @@ int quick;			/* returns true if fromship is */
 }
 
 int
-colours(sp)
-struct ship *sp;
+colours(struct ship *sp)
 {
 	char flag = '\0';
 
@@ -198,8 +192,7 @@ struct ship *sp;
 }
 
 void
-logger(s)
-struct ship *s;
+logger(struct ship *s)
 {
 	FILE *fp;
 	int persons;
@@ -226,27 +219,24 @@ struct ship *s;
 			= lp->l_gamenum = lp->l_netpoints = 0;
 	rewind(fp);
 	if (persons < 0)
-		(void) putw(1, fp);
+		putw(1, fp);
 	else
-		(void) putw(persons + 1, fp);
+		putw(persons + 1, fp);
 	for (lp = log; lp < &log[NLOG]; lp++)
 		if (net > (float)lp->l_netpoints
 		    / scene[lp->l_gamenum].ship[lp->l_shipnum].specs->pts) {
-			(void) fwrite((char *)log,
-				sizeof (struct logs), lp - log, fp);
-			(void) strcpy(log[NLOG-1].l_name, s->file->captain);
+			fwrite((char *)log, sizeof (struct logs), lp - log, fp);
+			strcpy(log[NLOG-1].l_name, s->file->captain);
 			log[NLOG-1].l_uid = getuid();
 			log[NLOG-1].l_shipnum = s->file->index;
 			log[NLOG-1].l_gamenum = game;
 			log[NLOG-1].l_netpoints = s->file->points;
-			(void) fwrite((char *)&log[NLOG-1],
-				sizeof (struct logs), 1, fp);
-			(void) fwrite((char *)lp,
-				sizeof (struct logs), &log[NLOG-1] - lp, fp);
+			fwrite((char *)&log[NLOG-1], sizeof (struct logs), 1, fp);
+			fwrite((char *)lp, sizeof (struct logs), &log[NLOG-1] - lp, fp);
 			break;
 		}
 #ifdef LOCK_EX
-	(void) flock(fileno(fp), LOCK_UN);
+	flock(fileno(fp), LOCK_UN);
 #endif
-	(void) fclose(fp);
+	fclose(fp);
 }

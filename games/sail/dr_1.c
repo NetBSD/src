@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.11 2000/11/30 22:02:20 jwise Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.12 2001/01/01 21:57:37 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.11 2000/11/30 22:02:20 jwise Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.12 2001/01/01 21:57:37 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: dr_1.c,v 1.11 2000/11/30 22:02:20 jwise Exp $");
 #include <stdlib.h>
 
 void
-unfoul()
+unfoul(void)
 {
 	struct ship *sp;
 	struct ship *to;
@@ -69,7 +69,7 @@ unfoul()
 }
 
 void
-boardcomp()
+boardcomp(void)
 {
 	int crew[3];
 	struct ship *sp, *sq;
@@ -134,9 +134,7 @@ boardcomp()
 }
 
 int
-fightitout(from, to, key)
-struct ship *from, *to;
-int key;
+fightitout(struct ship *from, struct ship *to, int key)
 {
 	struct ship *fromcap, *tocap;
 	int crewfrom[3], crewto[3], menfrom, mento;
@@ -190,7 +188,7 @@ int key;
 		subtract(from, totalfrom, crewfrom, fromcap, pcfrom);
 		subtract(to, totalto, crewto, tocap, pcto);
 		makemsg(from, "boarders from %s repelled", to->shipname);
-		(void) sprintf(message, "killed in melee: %d.  %s: %d",
+		sprintf(message, "killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
 		Writestr(W_SIGNAL, to, message);
 		if (key)
@@ -222,8 +220,7 @@ int key;
 				subtract(to, mento, crewto, tocap, pcto);
 				subtract(from, - mento, crewfrom, to, 0);
 			}
-			(void) sprintf(message, "captured by the %s!",
-				to->shipname);
+			sprintf(message, "captured by the %s!", to->shipname);
 			Writestr(W_SIGNAL, from, message);
 			(void) sprintf(message, "killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
@@ -236,7 +233,7 @@ int key;
 }
 
 void
-resolve()
+resolve(void)
 {
 	int thwart;
 	struct ship *sp, *sq;
@@ -246,7 +243,7 @@ resolve()
 			continue;
 		for (sq = sp + 1; sq < ls; sq++)
 			if (sq->file->dir && meleeing(sp, sq) && meleeing(sq, sp))
-				(void) fightitout(sp, sq, 0);
+				fightitout(sp, sq, 0);
 		thwart = 2;
 		foreachship(sq) {
 			if (sq->file->dir && meleeing(sq, sp))
@@ -267,7 +264,7 @@ resolve()
 }
 
 void
-compcombat()
+compcombat(void)
 {
 	int n;
 	struct ship *sp;
@@ -399,7 +396,7 @@ compcombat()
 }
 
 int
-next()
+next(void)
 {
 	if (++turn % 55 == 0) {
 		if (alive)
@@ -430,7 +427,7 @@ next()
 					*tp = toupper(*tp);
 				p = tp;
 			}
-			(void) strncpy(bestship->file->captain, p,
+			strncpy(bestship->file->captain, p,
 				sizeof bestship->file->captain);
 			bestship->file->captain
 				[sizeof bestship->file->captain - 1] = 0;

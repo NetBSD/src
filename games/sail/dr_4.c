@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_4.c,v 1.8 2000/11/30 22:02:20 jwise Exp $	*/
+/*	$NetBSD: dr_4.c,v 1.9 2001/01/01 21:57:37 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_4.c,v 1.8 2000/11/30 22:02:20 jwise Exp $");
+__RCSID("$NetBSD: dr_4.c,v 1.9 2001/01/01 21:57:37 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,8 +46,7 @@ __RCSID("$NetBSD: dr_4.c,v 1.8 2000/11/30 22:02:20 jwise Exp $");
 #include <stdlib.h>
 
 void
-ungrap(from, to)
-struct ship *from, *to;
+ungrap(struct ship *from, struct ship *to)
 {
 	int k;
 	char friend;
@@ -64,8 +63,7 @@ struct ship *from, *to;
 }
 
 void
-grap(from, to)
-struct ship *from, *to;
+grap(struct ship *from, struct ship *to)
 {
 	if (capship(from)->nationality != capship(to)->nationality && dieroll() > 2)
 		return;
