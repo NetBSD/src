@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.15 1994/04/07 17:34:23 mycroft Exp $
+ *	$Id: vector.s,v 1.16 1994/04/15 04:48:23 cgd Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -336,3 +336,12 @@ IDTVEC(recurse)
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
+
+/* Some bogus data, to keep vmstat happy, for now. */
+	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
+_intrnames:
+	.long	0
+_eintrnames:
+_intrcnt:
+	.long	0
+_eintrcnt:
