@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.87 1999/08/19 03:42:23 itohy Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.87.4.1 1999/10/19 12:50:18 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -782,7 +782,7 @@ msdosfs_update(v)
 	if (error)
 		return (error);
 	DE_EXTERNALIZE(dirp, dep);
-	if (ap->a_waitfor)
+	if (ap->a_waitfor == MNT_WAIT)
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);

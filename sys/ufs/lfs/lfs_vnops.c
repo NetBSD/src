@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.28 1999/09/03 22:48:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.28.4.1 1999/10/19 12:50:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, lfs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, lfs_valloc },		/* valloc */
+	{ &vop_balloc_desc, lfs_balloc },		/* balloc */
 	{ &vop_vfree_desc, lfs_vfree },			/* vfree */
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */

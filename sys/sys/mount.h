@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.77 1999/07/04 16:20:12 sommerfeld Exp $	*/
+/*	$NetBSD: mount.h,v 1.77.4.1 1999/10/19 12:50:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -80,7 +80,9 @@ struct statfs {
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
 	uid_t	f_owner;		/* user that mounted the file system */
-	long	f_spare[4];		/* spare for later */
+	long	f_syncwrites;		/* count of sync writes since mount */
+	long	f_asyncwrites;		/* count of async writes since mount */
+	long	f_spare[2];		/* spare for later */
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
@@ -122,6 +124,7 @@ struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
+	struct vnode	*mnt_syncer;		/* syncer vnode */
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
 	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
@@ -156,6 +159,7 @@ struct mount {
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
+#define MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
 
 /*
  * exported mount flags.
@@ -180,7 +184,7 @@ struct mount {
  * Since f_flags in struct statfs is short, this mask overflows on
  * most architecture.  XXX.
  */
-#define	MNT_VISFLAGMASK	0x7c00ffff
+#define	MNT_VISFLAGMASK	0xfc00ffff
 
 /*
  * External filesystem control flags.
@@ -338,8 +342,9 @@ struct vfsops {
  *
  * waitfor flags to vfs_sync() and getfsstat()
  */
-#define MNT_WAIT	1
-#define MNT_NOWAIT	2
+#define MNT_WAIT	1	/* synchronously wait for I/O to complete */
+#define MNT_NOWAIT	2	/* start all I/O, but do not wait for it */
+#define MNT_LAZY 	3	/* push data not written by filesystem syncer */
 
 /*
  * Generic file handle
