@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.23 1996/02/18 11:53:45 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.24 1996/02/20 23:45:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3180,8 +3180,8 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	register struct nfsv3_pathconf *pc;
 	register int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, getret = 1, linkmax, namemax;
-	int chownres, notrunc;
+	int error = 0, rdonly, cache, getret = 1;
+	register_t linkmax, namemax, chownres, notrunc;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
 	struct vnode *vp;
