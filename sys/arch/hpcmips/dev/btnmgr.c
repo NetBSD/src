@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.8 2000/05/18 03:27:22 sato Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.8.4.1 2000/08/06 04:16:43 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -233,6 +233,11 @@ btnmgr_hook(ctx, type, id, msg)
 		wskbd_input(sc->sc_wskbddev, evtype, 
 			    button_config[id].keycode);
 	}
+
+	if (id == CONFIG_HOOK_BUTTONEVENT_POWER && msg)
+		config_hook_call(CONFIG_HOOK_PMEVENT, 
+				 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
+
 
 	return (0);
 }
