@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.69 1999/02/20 09:57:35 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.69.2.1 1999/11/01 06:19:15 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -46,6 +46,7 @@
 #include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/intr.h>
 #include <machine/viareg.h>
 
 void	mrg_adbintr __P((void *));
@@ -53,10 +54,10 @@ void	mrg_pmintr __P((void *));
 void	rtclock_intr __P((void *));
 void	profclock __P((void *));
 
-void	via1_intr __P((struct frame *));
-void	via2_intr __P((struct frame *));
-void	rbv_intr __P((struct frame *));
-void	oss_intr __P((struct frame *));
+void	via1_intr __P((void *));
+void	via2_intr __P((void *));
+void	rbv_intr __P((void *));
+void	oss_intr __P((void *));
 void	via2_nubus_intr __P((void *));
 void	rbv_nubus_intr __P((void *));
 
@@ -66,7 +67,6 @@ static void	slot_ignore __P((void *));
 static void	slot_noint __P((void *));
 
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
-void	(*real_via2_intr) __P((struct frame *));
 
 /* VIA1 interrupt handler table */
 void (*via1itab[7]) __P((void *)) = {
@@ -77,6 +77,17 @@ void (*via1itab[7]) __P((void *)) = {
 	mrg_pmintr,
 	via1_noint,
 	rtclock_intr,
+};
+
+/* Arg array for VIA1 interrupts. */
+void *via1iarg[7] = {
+	(void *)0,
+	(void *)1,
+	(void *)2,
+	(void *)3,
+	(void *)4,
+	(void *)5,
+	(void *)6
 };
 
 /* VIA2 interrupt handler table */
@@ -144,6 +155,8 @@ via_init()
 	/* turn off timer latch */
 	via_reg(VIA1, vACR) &= 0x3f;
 
+	intr_establish((int (*)(void *)) via1_intr, NULL, mac68k_machine.via1_ipl);
+
 	if (VIA2 == VIA2OFF) {
 		/* Initialize VIA2 */
 		via2_reg(vT1L) = 0;
@@ -185,10 +198,15 @@ via_init()
 			break;
 		}
 
-		real_via2_intr = via2_intr;
+		intr_establish((int (*)(void*))via2_intr, NULL,
+				mac68k_machine.via2_ipl);
 		via2itab[1] = via2_nubus_intr;
 	} else if (current_mac_model->class == MACH_CLASSIIfx) { /* OSS */
-		real_via2_intr = oss_intr;
+		volatile u_char *ossintr;
+		ossintr = (volatile u_char *)IOBase + 0x1a006;
+		*ossintr = 0;
+		intr_establish((int (*)(void*))oss_intr, NULL,
+	 			mac68k_machine.via2_ipl);
 	} else {	/* RBV */
 #ifdef DISABLE_EXT_CACHE
 		if (current_mac_model->class == MACH_CLASSIIci) {
@@ -198,7 +216,8 @@ via_init()
 			via2_reg(rBufB) |= DB2O_CEnable;
 		}
 #endif
-		real_via2_intr = rbv_intr;
+		intr_establish((int (*)(void*))rbv_intr, NULL,
+				mac68k_machine.via2_ipl);
 		via2itab[1] = rbv_nubus_intr;
 		add_nubus_intr(0, slot_ignore, NULL);
 	}
@@ -219,8 +238,8 @@ via_set_modem(onoff)
 }
 
 void
-via1_intr(fp)
-	struct frame *fp;
+via1_intr(intr_arg)
+	void *intr_arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -242,16 +261,17 @@ via1_intr(fp)
 	bitnum = 0;
 	do {
 		if (intbits & mask) {
-			via1itab[bitnum]((void *)((int)bitnum));
+			via1itab[bitnum](via1iarg[bitnum]);
 			/* via_reg(VIA1, vIFR) = mask; */
 		}
 		mask <<= 1;
-	} while (intbits >= mask && ++bitnum);
+		++bitnum;
+	} while (intbits >= mask);
 }
 
 void
-via2_intr(fp)
-	struct frame *fp;
+via2_intr(intr_arg)
+	void *intr_arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -276,8 +296,8 @@ via2_intr(fp)
 }
 
 void
-rbv_intr(fp)
-	struct frame *fp;
+rbv_intr(intr_arg)
+	void *intr_arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -301,8 +321,8 @@ rbv_intr(fp)
 }
 
 void
-oss_intr(fp)
-	struct frame *fp;
+oss_intr(intr_arg)
+	void *intr_arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -461,8 +481,15 @@ via_powerdown()
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */
 		via2_reg(vBufB) &= ~0x04; /* Shut down */
-	} else if (VIA2 == RBVOFF)
+	} else if (VIA2 == RBVOFF) {
 		via2_reg(rBufB) &= ~0x04;
+	} else if (VIA2 == OSSOFF) {
+		/*
+		 * Thanks to Brad Boyer <flar@cegt201.bradley.edu> for the
+		 * Linux/mac68k code that I derived this from.
+		 */
+		via2_reg(OSS_oRCR) |= OSS_POWEROFF;
+	}
 }
 
 void
@@ -471,10 +498,13 @@ via1_register_irq(irq, irq_func, client_data)
 	void (*irq_func)(void *);
 	void *client_data;
 {
-	if (irq_func)
+	if (irq_func) {
  		via1itab[irq] = irq_func;
-	else
+ 		via1iarg[irq] = client_data;
+	} else {
  		via1itab[irq] = via1_noint;
+ 		via1iarg[irq] = (void *)0;
+	}
 }
 
 void

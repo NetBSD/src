@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60.2.1 1999/05/16 22:38:10 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60.2.2 1999/11/01 06:19:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,6 +86,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
+#define	cpu_number()			0
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -246,6 +247,10 @@ struct mac68k_machine_S {
 	int			scsi96;		/* Has NCR 53C96 */
 	int			scsi96_2;	/* Has 2nd 53C96 */
 	int			sonic;		/* Has SONIC e-net */
+
+	int			via1_ipl;
+	int			via2_ipl;
+	int			aux_interrupts;
 };
 
 	/* What kind of model is this */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.30.2.1 1999/05/16 22:38:13 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.30.2.2 1999/11/01 06:19:16 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -189,7 +189,11 @@ ascattach(parent, self, aux)
 
 	mac68k_set_bell_callback(asc_ring_bell, sc);
 #if __notyet__
-	via2_register_irq(VIA2_ASC, asc_intr, sc);
+	if (mac68k_machine.aux_interrupts) {
+		intr_establish((int (*)(void *))asc_intr, sc, 5);
+	} else {
+		via2_register_irq(VIA2_ASC, asc_intr, sc);
+	}
 	asc_intr_enable();
 #endif
 }
@@ -292,7 +296,7 @@ ascmmap(dev, off, prot)
 
 	sc = asc_cd.cd_devs[unit];
 	if ((u_int)off < MAC68K_ASC_LEN) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle, &pa);
 		return m68k_btop(pa + off);
 	}
 

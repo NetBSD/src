@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.11 1999/02/20 09:57:35 scottr Exp $	*/
+/*	$NetBSD: viareg.h,v 1.11.2.1 1999/11/01 06:19:12 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -57,6 +57,7 @@
 #define DB1I_Par_Err	0x80
 #define DB1O_vSndEnb	0x80
 #define DB1O_Par_Enb	0x40
+#define DB1O_AuxIntEnb	0x40	/* 0 = enabled, 1 = disabled */
 #define DB1O_vFDesk2	0x20
 #define DB1O_vFDesk1	0x10
 #define DB1I_vFDBInt	0x08
@@ -143,8 +144,10 @@
 extern volatile unsigned char *Via1Base;
 extern volatile unsigned char *Via2Base;	/* init in VIA_Initialize */
 #define VIA1_addr	Via1Base	/* at PA 0x50f00000 */
-#define VIA2OFF		1		/* VIA2 addr = VIA1_addr * 0x2000 */
-#define RBVOFF		0x13		/* RBV addr = VIA1_addr * 0x13000 */
+
+#define VIA2OFF		1		/* VIA2 addr = VIA1_addr + 0x2000 */
+#define RBVOFF		0x13		/* RBV addr = VIA1_addr + 0x26000 */
+#define OSSOFF		0xd		/* OSS addr = VIA1_addr + 0x1A000 */
 
 #define VIA1		0
 extern int VIA2;
@@ -160,7 +163,7 @@ extern int VIA2;
 #define vT1LH		0x0e00
 #define vT2C		0x1000
 #define vT2CH		0x1200
-#define vSR			0x1400	/* shift register */
+#define vSR		0x1400	/* shift register */
 #define vACR		0x1600	/* aux control register */
 #define vPCR		0x1800	/* peripheral control register */
 #define vIFR		0x1a00	/* interrupt flag register */
@@ -183,6 +186,13 @@ extern int VIA2;
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
 #define RBVMonIDStd	0x30	/* 12 inch BW or 13 inch color */
 #define RBVMonIDNone	0x38	/* No monitor connected */
+
+	/* OSS registers */
+#define OSS_IFR		0x202
+#define OSS_PENDING_IRQ	(*(volatile u_short *)(Via2Base + (OSS_IFR)))
+
+#define OSS_oRCR	0x204
+#define OSS_POWEROFF	 0x80
 
 #define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
 #define via2_reg(r) (*(Via2Base+(r)))

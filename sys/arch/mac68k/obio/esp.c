@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: esp.c,v 1.20.2.1 1999/11/01 06:19:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -139,7 +139,8 @@ int	esp_quick_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 	    size_t *, int, size_t *));
 void	esp_quick_dma_go __P((struct ncr53c9x_softc *));
 
-int	esp_dualbus_intr __P((register struct ncr53c9x_softc *sc));
+void	esp_intr __P((void *sc));
+void	esp_dualbus_intr __P((void *sc));
 static struct esp_softc		*esp0 = NULL, *esp1 = NULL;
 
 static __inline__ int esp_dafb_have_dreq __P((struct esp_softc *esc));
@@ -249,8 +250,7 @@ espattach(parent, self, aux)
 		esp0 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;
-		via2_register_irq(VIA2_SCSIIRQ,
-		    (void (*)(void *))ncr53c9x_intr, esc);
+		via2_register_irq(VIA2_SCSIIRQ, esp_intr, esc);
 		esc->irq_mask = V2IF_SCSIIRQ;
 		if (reg_offset == 0x10000) {
 			sc->sc_freq = 16500000;
@@ -265,8 +265,7 @@ espattach(parent, self, aux)
 		esp1 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase + 0x402;
-		via2_register_irq(VIA2_SCSIIRQ,
-		    (void (*)(void *))esp_dualbus_intr, NULL);
+		via2_register_irq(VIA2_SCSIIRQ, esp_dualbus_intr, NULL);
 		esc->irq_mask = 0;
 		sc->sc_freq = 25000000;
 
@@ -308,13 +307,6 @@ espattach(parent, self, aux)
 	sc->sc_maxxfer = 8 * 1024; /*64 * 1024; XXX */
 
 	/*
-	 * Now try to attach all the sub-devices
-	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
-
-	/*
 	 * Configure interrupts.
 	 */
 	if (esc->irq_mask) {
@@ -322,6 +314,13 @@ espattach(parent, self, aux)
 		via2_reg(vIFR) = esc->irq_mask;
 		via2_reg(vIER) = 0x80 | esc->irq_mask;
 	}
+
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys; 
+	ncr53c9x_attach(sc, &esp_dev);
 }
 
 /*
@@ -345,7 +344,7 @@ esp_write_reg(sc, reg, val)
 	u_char val;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char v = val;
+	u_char	v = val;
 
 	if (reg == NCR_CMD && v == (NCRCMD_TRANS|NCRCMD_DMA)) {
 		v = NCRCMD_TRANS;
@@ -391,11 +390,11 @@ int
 esp_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	register struct esp_softc *esc = (struct esp_softc *)sc;
-	register u_char	*p;
+	struct esp_softc *esc = (struct esp_softc *)sc;
 	volatile u_char *cmdreg, *intrreg, *statreg, *fiforeg;
-	register u_int	espphase, espstat, espintr;
-	register int	cnt;
+	u_char	*p;
+	u_int	espphase, espstat, espintr;
+	int	cnt, s;
 
 	if (esc->sc_active == 0) {
 		printf("dma_intr--inactive DMA\n");
@@ -442,11 +441,13 @@ esp_dma_intr(sc)
 
 		if (esc->sc_active) {
 			while (!(*statreg & 0x80));
+			s = splhigh();
 			espstat = *statreg;
 			espintr = *intrreg;
 			espphase = (espintr & NCRINTR_DIS)
 				    ? /* Disconnected */ BUSFREE_PHASE
 				    : espstat & PHASE_MASK;
+			splx(s);
 		}
 	} while (esc->sc_active && (espintr & NCRINTR_BS));
 	sc->sc_phase = espphase;
@@ -502,9 +503,8 @@ esp_quick_write_reg(sc, reg, val)
 	u_char val;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char v = val;
 
-	esc->sc_reg[reg * 16] = v;
+	esc->sc_reg[reg * 16] = val;
 }
 
 int
@@ -606,7 +606,7 @@ esp_iosb_have_dreq(esc)
 static int espspl=-1;
 #define __splx(s) __asm __volatile ("movew %0,sr" : : "di" (s));
 #define __spl2()  __splx(PSL_S|PSL_IPL2)
-#define __spl4()  __splx(PSL_S|PSL_IPL4)
+#define __spl6()  __splx(PSL_S|PSL_IPL6)
 
 void
 esp_quick_dma_go(sc)
@@ -653,7 +653,7 @@ restart_dmago:
 	if (esc->sc_datain == 0) {
 		while (esc->sc_pdmalen) {
 			WAIT;
-			__spl4(); *pdma = *(esc->sc_pdmaddr)++; __spl2()
+			__spl6(); *pdma = *(esc->sc_pdmaddr)++; __spl2()
 			esc->sc_pdmalen -= 2;
 		}
 		if (esc->sc_pad) {
@@ -662,19 +662,19 @@ restart_dmago:
 			c = (unsigned char *) esc->sc_pdmaddr;
 			us = *c;
 			WAIT;
-			__spl4(); *pdma = us; __spl2()
+			__spl6(); *pdma = us; __spl2()
 		}
 	} else {
 		while (esc->sc_pdmalen) {
 			WAIT;
-			__spl4(); *(esc->sc_pdmaddr)++ = *pdma; __spl2()
+			__spl6(); *(esc->sc_pdmaddr)++ = *pdma; __spl2()
 			esc->sc_pdmalen -= 2;
 		}
 		if (esc->sc_pad) {
 			unsigned short	us;
 			unsigned char	*c;
 			WAIT;
-			__spl4(); us = *pdma; __spl2()
+			__spl6(); us = *pdma; __spl2()
 			c = (unsigned char *) esc->sc_pdmaddr;
 			*c = us & 0xff;
 		}
@@ -693,15 +693,44 @@ gotintr:
 	if (espspl != -1) splx(espspl); espspl = -1;
 }
 
-int
-esp_dualbus_intr(sc)
-	register struct ncr53c9x_softc *sc;
+void
+esp_intr(sc)
+	void *sc;
 {
-	if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80))
-		ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+	struct esp_softc *esc = (struct esp_softc *)sc;
+	int	i = 0;
 
-	if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80))
-		ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
+	do {
+		if (esc->sc_reg[NCR_STAT * 16] & 0x80) {
+			ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+			i++;
+		}
 
-	return 0;
+		if (!i) {
+			delay(10000);
+		}
+	} while (!i++);
+}
+
+void
+esp_dualbus_intr(sc)
+	void *sc;
+{
+	int	i = 0;
+
+	do {
+		if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80)) {
+			ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+			i++;
+		}
+
+		if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80)) {
+			ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
+			i++;
+		}
+
+		if (!i) {
+			delay(10000);
+		}
+	} while (!i++);
 }

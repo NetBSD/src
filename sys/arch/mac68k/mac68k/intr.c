@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.2.1 1999/05/16 22:38:11 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.2 1999/11/01 06:19:13 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -92,39 +92,73 @@ int	intr_debug = 0;
 
 /*
  * Some of the below are not used yet, but might be used someday on the
- * Q700/900/950 where the interrupt controller may be reprogrammed to
- * interrupt on different levels as listed in locore.s
+ * IIfx/Q700/900/950/etc. where the interrupt controller may be reprogrammed
+ * to interrupt on different levels as listed in locore.s
  */
-u_short	mac68k_ttyipl;
-u_short	mac68k_bioipl;
-u_short	mac68k_netipl;
-u_short	mac68k_impipl;
-u_short	mac68k_audioipl;
-u_short	mac68k_clockipl;
-u_short	mac68k_statclockipl;
-u_short	mac68k_schedipl;
+u_short mac68k_ipls[MAC68K_NIPLS];
 
 extern	int intrcnt[];		/* from locore.s */
 
 void	intr_computeipl __P((void));
 
+#define MAX_INAME_LENGTH 53
+#define STD_INAMES \
+	"spur\0via1\0via2\0unused1\0scc\0unused2\0unused3\0nmi\0clock\0"
+#define AUX_INAMES \
+	"spur\0soft\0via2\0ethernet\0scc\0sound\0via1\0nmi\0clock\0    "
+#define AV_INAMES \
+	"spur\0via1\0via2\0ethernet\0scc\0dsp\0unused1\0nmi\0clock\0   "
+
 void
 intr_init()
 {
-	/* Standard spl(9) interrupt priorities */
-	mac68k_ttyipl = (PSL_S | PSL_IPL1);
-	mac68k_bioipl = (PSL_S | PSL_IPL2);
-	mac68k_netipl = (PSL_S | PSL_IPL2);
-	mac68k_impipl = (PSL_S | PSL_IPL2);
-	mac68k_statclockipl = (PSL_S | PSL_IPL2);
-	mac68k_clockipl = (PSL_S | PSL_IPL2);
-	mac68k_schedipl = (PSL_S | PSL_IPL3);
+	extern long	intrnames;
+	char		*inames, *g_inames;
 
-	/* Non-standard interrupt priority */
-	mac68k_audioipl = (PSL_S | PSL_IPL2);
+	mac68k_ipls[MAC68K_IPL_SOFT] = PSL_S|PSL_IPL1;
+	mac68k_ipls[MAC68K_IPL_SERIAL] = PSL_S|PSL_IPL4;
+	mac68k_ipls[MAC68K_IPL_HIGH] = PSL_S|PSL_IPL7;
 
-	if (current_mac_model->class == MACH_CLASSAV)
-		mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+	g_inames = (char *) &intrnames;
+	if (mac68k_machine.aux_interrupts) {
+
+		inames = AUX_INAMES;
+
+		/* Standard spl(9) interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL3);
+		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
+		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL6);
+		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL6);
+		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL6);
+		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL6);
+
+		/* Non-standard interrupt priority */
+		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL5);
+
+	} else {
+		inames = STD_INAMES;
+
+		/* Standard spl(9) interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
+		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL3);
+
+		/* Non-standard interrupt priority */
+		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL2);
+
+		if (current_mac_model->class == MACH_CLASSAV) {
+			inames = AV_INAMES;
+			mac68k_ipls[MAC68K_IPL_BIO] =
+			    mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL4);
+		}
+	}
+
+	memcpy(g_inames, inames, MAX_INAME_LENGTH);
 
 	intr_computeipl();
 }
@@ -138,26 +172,30 @@ void
 intr_computeipl()
 {
 	/*
-	 * Enforce `bio <= net <= tty <= imp <= statclock <= clock <= sched'
-	 * as defined in spl(9)
+	 * Enforce the following relationship, as defined in spl(9):
+	 * `bio <= net <= tty <= imp <= statclock <= clock <= sched <= serial'
 	 */
-	if (mac68k_bioipl > mac68k_netipl)
-		mac68k_netipl = mac68k_bioipl;
+	if (mac68k_ipls[MAC68K_IPL_BIO] > mac68k_ipls[MAC68K_IPL_NET])
+		mac68k_ipls[MAC68K_IPL_NET] = mac68k_ipls[MAC68K_IPL_BIO];
 
-	if (mac68k_netipl > mac68k_ttyipl)
-		mac68k_ttyipl = mac68k_netipl;
+	if (mac68k_ipls[MAC68K_IPL_NET] > mac68k_ipls[MAC68K_IPL_TTY])
+		mac68k_ipls[MAC68K_IPL_TTY] = mac68k_ipls[MAC68K_IPL_NET];
 
-	if (mac68k_ttyipl > mac68k_impipl)
-		mac68k_impipl = mac68k_ttyipl;
+	if (mac68k_ipls[MAC68K_IPL_TTY] > mac68k_ipls[MAC68K_IPL_IMP])
+		mac68k_ipls[MAC68K_IPL_IMP] = mac68k_ipls[MAC68K_IPL_TTY];
 
-	if (mac68k_impipl > mac68k_statclockipl)
-		mac68k_statclockipl = mac68k_impipl;
+	if (mac68k_ipls[MAC68K_IPL_IMP] > mac68k_ipls[MAC68K_IPL_STATCLOCK])
+		mac68k_ipls[MAC68K_IPL_STATCLOCK] = mac68k_ipls[MAC68K_IPL_IMP];
 
-	if (mac68k_statclockipl > mac68k_clockipl)
-		mac68k_clockipl = mac68k_statclockipl;
+	if (mac68k_ipls[MAC68K_IPL_STATCLOCK] > mac68k_ipls[MAC68K_IPL_CLOCK])
+		mac68k_ipls[MAC68K_IPL_CLOCK] =
+		    mac68k_ipls[MAC68K_IPL_STATCLOCK];
 
-	if (mac68k_clockipl > mac68k_schedipl)
-		mac68k_schedipl = mac68k_clockipl;
+	if (mac68k_ipls[MAC68K_IPL_CLOCK] > mac68k_ipls[MAC68K_IPL_SCHED])
+		mac68k_ipls[MAC68K_IPL_SCHED] = mac68k_ipls[MAC68K_IPL_CLOCK];
+
+	if (mac68k_ipls[MAC68K_IPL_SCHED] > mac68k_ipls[MAC68K_IPL_SERIAL])
+		mac68k_ipls[MAC68K_IPL_SERIAL] = mac68k_ipls[MAC68K_IPL_SCHED];
 }
 
 /*
@@ -247,6 +285,7 @@ void	netintr __P((void));
 void	arpintr __P((void));
 void	atintr __P((void));
 void	ipintr __P((void));
+void	ip6intr __P((void));
 void	nsintr __P((void));
 void	clnlintr __P((void));
 void	ccittintr __P((void));
@@ -273,6 +312,10 @@ netintr()
 #endif
 		if (isr & (1 << NETISR_IP))
 			ipintr();
+#endif
+#ifdef INET6
+		if (isr & (1 << NETISR_IPV6))
+			ip6intr();
 #endif
 #ifdef NETATALK
 		if (isr & (1 << NETISR_ATALK))

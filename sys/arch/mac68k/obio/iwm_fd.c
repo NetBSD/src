@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.1.2.1 1999/05/16 22:38:13 scottr Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.1.2.2 1999/11/01 06:19:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1628,8 +1628,10 @@ static int
 fdstart_Exit(fd)
 	fd_softc_t *fd;
 {
-	int i;
 	struct buf *bp;
+#ifdef DIAGNOSTIC
+	int i;
+#endif
 	
 	invalidateCylinderCache(fd);
 
