@@ -22,7 +22,7 @@
 .\"
 .\" ---------------------------------------------------------------------------
 .nh
-.TH SEND-PR 1 @VERSION@ "February 1993"
+.TH SEND-PR 1 xVERSIONx "February 1993"
 .SH NAME
 send-pr \- send problem report (PR) to a central support site
 .SH SYNOPSIS
@@ -40,9 +40,6 @@ send-pr \- send problem report (PR) to a central support site
 ]
 .br
 .in +0.8i
-[
-.B \-p
-]
 [
 .B \-P
 ]
@@ -129,19 +126,12 @@ Use the
 .I site
 argument rather than this option in nearly all cases.
 .TP
-.B \-p 
-Print the standard blank template on standard output.  No mail is sent.
-.TP
 .B \-P
 print the form specified by the environment variable 
 .B PR_FORM 
-on standard output.  No mail is sent.
-.TP
-.BI \-s " mail-agent"
-Use 
-.I mail-agent
-instead of the default mailer,
-.BR sendmail (8).
+on standard output.  If 
+.B PR_FORM
+is not set, print the standard blank PR template.  No mail is sent.
 .TP
 .B -L
 print the list of available categories.  No mail is sent.
@@ -221,26 +211,6 @@ code.
 /tmp/pf$$	copy of empty PR form, for testing purposes
 .br
 /tmp/pbad$$	file for rejected PRs
-.if !\n(PR==1 \{.
-.SH SEE ALSO
-.BR gnats.texi
-and
-.BR send-pr.texi,
-which are also installed as GNU
-.B Info
-files
-.BR gnats.info
-and 
-.BR send-pr.info;
-.LP
-.BR gnats (l),
-.BR query-pr (1),
-.BR edit-pr (1),
-.BR gnats (8),
-.BR queue-pr (8),
-.BR at-pr (8),
-.BR mkcat (8),
-.BR mkdist (8).
 .SH EMACS USER INTERFACE
 An Emacs user interface for 
 .B send-pr
@@ -257,41 +227,28 @@ installation information.  The Emacs LISP template file is
 .B send-pr-el.in
 and is installed as
 .BR send-pr.el .
-
 .SH INSTALLATION AND CONFIGURATION
 See 
 .B send-pr.info
 or
 .B INSTALL
 for installation instructions.
+.SH SEE ALSO
+.I Reporting Problems Using send-pr
+(also installed as the GNU Info file
+.BR send-pr.info ).
 .LP
-There are many ways in which 
-.B send-pr 
-can be customized to meet specific needs. As mentioned above, at
-least the
-.I submitter-id
-should be set before using
-.BR send-pr .
-You can change the 
-.I submitter-id 
-used by an already installed 
-.B send-pr
-script, by running an auxiliary script: `\|\c
-.B install_sid
-.IR submitter-id \|'.
-.LP
-The file
-.B send-pr.el
-is automatically installed when the distribution is built.  It is not,
-however, automatically loaded every time Emacs starts up.  See
-.B send-pr.info
-or 
-.B INSTALL
-for instructions on how to load 
-.B send-pr
-automatically into Emacs.
+.BR gnats (l),
+.BR query-pr (1),
+.BR edit-pr (1),
+.BR gnats (8),
+.BR queue-pr (8),
+.BR at-pr (8),
+.BR mkcat (8),
+.BR mkdist (8).
 .SH AUTHORS
-Jeffrey Osier, Brendan Kehoe, Heinz G. Seidl (Cygnus Support)
+Jeffrey Osier, Brendan Kehoe, Jason Merrill, Heinz G. Seidl (Cygnus
+Support)
 .SH COPYING
 Copyright (c) 1992, 1993 Free Software Foundation, Inc.
 .PP

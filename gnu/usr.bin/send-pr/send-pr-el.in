@@ -62,9 +62,9 @@
 (defvar mail-self-blind nil)
 (defvar mail-default-reply-to nil)
 
-(defconst send-pr::version "3.01.6")
+(defconst send-pr::version "xVERSIONx")
 
-(defvar gnats:root "/b/gnats"
+(defvar gnats:root "xGNATS_ROOTx"
   "*The top of the tree containing the GNATS database.")
 
 ;;;;---------------------------------------------------------------------------
@@ -79,7 +79,9 @@
 ;;;; constants and definitions.
 ;;;;---------------------------------------------------------------------------
 
-(defconst gnats::emacs-19p (not (string-lessp emacs-version "19"))
+(defconst gnats::emacs-19p
+  (not (or (and (boundp 'epoch::version) epoch::version)
+	   (string-lessp emacs-version "19")))
   "Is this emacs v19?")
 
 ;;; These may be changed during configuration/installation or by the individual
@@ -100,13 +102,13 @@
     ret))
 
 ;; const because it must match the script's value
-(defconst send-pr:datadir (or (gnats::get-config "DATADIR") "/usr/local/lib")
+(defconst send-pr:datadir (or (gnats::get-config "DATADIR") "xDATADIRx")
   "*Where the `gnats' subdirectory containing category lists lives.")
 
 (defvar send-pr::sites nil
   "List of GNATS support sites; computed at runtime.")
 (defvar send-pr:default-site
-  (or (gnats::get-config "GNATS_SITE") "sun-lamp")
+  (or (gnats::get-config "GNATS_SITE") "xGNATS_SITEx")
   "Default site to send bugs to.")
 (defvar send-pr:::site send-pr:default-site
   "The site to which a problem report is currently being submitted, or NIL
@@ -134,11 +136,10 @@ at runtime.")
       ("Priority" (("low") ("medium") ("high"))
        (, (or (gnats::get-config "DEFAULT_PRIORITY") 1)) enum)
       ("Release" nil
-       (, (or (gnats::get-config "DEFAULT_RELEASE") "@DEFAULT_RELEASE@"))
+       (, (or (gnats::get-config "DEFAULT_RELEASE") "xDEFAULT_RELEASEx"))
        text)
       ("Submitter-Id" nil
-       (, (or (gnats::get-config "DEFAULT_SUBMITTER") "@DEFAULT_SUBMITTER@"))
-       text)
+       (, (or (gnats::get-config "SUBMITTER") "xSUBMITTERx")) text)
       ("Synopsis" nil nil text
        (lambda (a b c) (gnats::set-mail-field "Subject" c)))))
   "AList, keyed on the name of the field, of:
@@ -197,7 +198,10 @@ it to send-pr::sites.  With arg, force update."
 (defvar send-pr:::err-buffer nil
   "The error buffer used by the current PR buffer.")
 
-(defconst gnats::indent 17 "Indent for formatting the value.")
+(defvar send-pr:::spawn-to-send nil
+  "Whether or not send-pr-mode should spawn a send-pr process to send the PR.")
+
+(defconst gnats::indent 16 "Indent for formatting the value.")
 
 ;;;;---------------------------------------------------------------------------
 ;;;; `send-pr' - command for creating and sending of problem reports
@@ -216,10 +220,11 @@ to send the PR with `send-pr -b -f -'."
   (or site (setq site send-pr:default-site))
   (let ((buf (get-buffer send-pr::pr-buffer-name)))
     (if (or (not buf)
-	    (and (switch-to-buffer buf)
-		 (or (not (buffer-modified-p buf))
-		     (y-or-n-p "Erase previous problem report? "))
-		 (or (erase-buffer) t)))
+	    (progn (switch-to-buffer buf)
+		   (cond ((or (not (buffer-modified-p buf))
+			      (y-or-n-p "Erase previous problem report? "))
+			  (erase-buffer) t)
+			 (t nil))))
 	(send-pr::start-up site))))
 
 (defun send-pr::start-up (site)
@@ -243,6 +248,7 @@ to send the PR with `send-pr -b -f -'."
   (set-buffer-modified-p nil)
   (send-pr:send-pr-mode)
   (setq send-pr:::site site)
+  (setq send-pr:::spawn-to-send t)
   (send-pr::set-categories)
   (if (null send-pr:::categories)
       (progn
@@ -272,7 +278,7 @@ buffer was loaded with emacsclient, in which case save the buffer and exit."
       (save-buffer buffer)
       (kill-buffer buffer)
       (server-buffer-done buffer)))
-   (t
+   (send-pr:::spawn-to-send
     (or (and send-pr:::err-buffer
 	     (buffer-name send-pr:::err-buffer))
 	(setq send-pr:::err-buffer
@@ -282,9 +288,9 @@ buffer was loaded with emacsclient, in which case save the buffer and exit."
       (message "running send-pr...")
       (let ((oldpr (getenv "GNATS_ROOT")))
 	(setenv "GNATS_ROOT" gnats:root)
-	;; FIXME -r flag is obsolete; remove for 3.3 release
 	(call-process-region (point-min) (point-max) "send-pr"
-			     nil err-buffer nil "-b" "-r" "-f" "-")
+			     nil err-buffer nil send-pr:::site
+			     "-b" "-f" "-")
 	(setenv "GNATS_ROOT" oldpr))
       (message "running send-pr...done")
       ;; stupidly we cannot check the return value in EMACS 18.57, thus we need
@@ -300,7 +306,10 @@ buffer was loaded with emacsclient, in which case save the buffer and exit."
 		 (set-buffer-modified-p nil)
 		 (bury-buffer))
 	(pop-to-buffer err-buffer))
-    ))))
+    ))
+   (t
+    (save-buffer)
+    (message "Exit emacs to send the PR."))))
    
 ;;;;---------------------------------------------------------------------------
 ;;;; send-pr:send-pr-mode mode
@@ -341,6 +350,7 @@ if it is not nil."
   (make-local-variable 'send-pr:::site)
   (make-local-variable 'send-pr:::categories)
   (make-local-variable 'send-pr:::err-buffer)
+  (make-local-variable 'send-pr:::spawn-to-send)
   (make-local-variable 'paragraph-separate)
   (setq paragraph-separate (concat (default-value 'paragraph-separate)
 				   "\\|" gnats::keyword "[ \t\n\f]*$"))
@@ -450,47 +460,52 @@ if it is not nil."
   "Change the value of the field containing the cursor.  With arg, ask the
 user for the field to change.  From a program, the function takes optional
 arguments of the field to change and the default value to use."
-  (interactive
-   (if current-prefix-arg
-       (list (completing-read
-	      "Field: " (if (eq major-mode 'gnats:gnats-mode) gnats::fields
-			 send-pr::fields)
-	      nil t))))
+  (interactive)
+  (or field current-prefix-arg (setq field (gnats::current-field)))
   (or field
-      (setq field (gnats::current-field)))
+      (setq field
+	    (completing-read "Field: "
+			     (if (eq major-mode 'gnats:gnats-mode)
+				 gnats::fields
+			       send-pr::fields)
+			     nil t)))
   (gnats::position-on-field field)
   (sit-for 0)
   (let* ((old (gnats::field-contents field))
 	 new)
     (if (null old)
 	(error "ACK")
-      (let ((prompt (concat ">" field ": "))
-	    (domain (gnats::field-values field))
-	    (type (gnats::field-type field))
-	    (action (gnats::field-action field)))
-	(or default (setq default (gnats::field-default field)))
-	(setq new (if (eq type 'enum)
+      (if (or (interactive-p) t)
+	  (let ((prompt (concat ">" field ": "))
+		(domain (gnats::field-values field))
+		(type (gnats::field-type field)))
+	    (or default (setq default (gnats::field-default field)))
+	    (setq new
+		  (if (eq type 'enum)
 		      (completing-read prompt domain nil t 
 				       (if gnats::emacs-19p (cons default 0)
 					 default))
 		    (read-string prompt (if gnats::emacs-19p (cons default 1)
-					  default))))
-	(gnats::set-field field new)
-	(funcall action field old new)
-	new))))
+					  default)))))
+	(setq new default))
+      (gnats::set-field field new)
+      (funcall (gnats::field-action field) field old new)
+      new)))
 
 (defun gnats::set-field (field value)
-  (gnats::position-on-field field)
-  (delete-horizontal-space)
-  (looking-at ".*$")
-  (replace-match
-   (concat (make-string (- gnats::indent (length field) 2) ?\40 ) value) t))
+  (save-excursion
+    (gnats::position-on-field field)
+    (delete-horizontal-space)
+    (looking-at ".*$")
+    (replace-match
+     (concat (make-string (- gnats::indent (length field) 2) ?\40 ) value) t)))
 
 (defun gnats::set-mail-field (field value)
-  (gnats::mail-position-on-field field)
-  (delete-horizontal-space)
-  (looking-at ".*$")
-  (replace-match (concat " " value) t))
+  (save-excursion
+    (gnats::mail-position-on-field field)
+    (delete-horizontal-space)
+    (looking-at ".*$")
+    (replace-match (concat " " value) t)))
   
 (defun gnats::before-keyword (&optional where)
   "Returns t if point is in some white space before a keyword.
@@ -623,12 +638,11 @@ field."
 
 (defun gnats::current-field ()
   (save-excursion
-    (cond ((or (gnats::in-keyword t) (gnats::after-keyword t))
-	   (looking-at gnats::keyword))
-	  ((re-search-backward gnats::keyword nil t))
-	  (t
-	   nil))
-    (buffer-substring (match-beginning 1) (match-end 1))))
+    (if (cond ((or (gnats::in-keyword t) (gnats::after-keyword t))
+	       (looking-at gnats::keyword))
+	      ((re-search-backward gnats::keyword nil t)))
+	(buffer-substring (match-beginning 1) (match-end 1))
+      nil)))
 
 ;;;;---------------------------------------------------------------------------
 ;;;; Support functions
