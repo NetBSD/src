@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 1995/09/17 21:28:33 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 1995/09/18 13:55:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1615,8 +1615,6 @@ static romvec_t romvecs[] =
 	},
 	/*
 	 * Quadra, Centris merged table (C650, 610, Q800?)
-	 * (BG - this is a mish-mash of various sources, none complete,
-	 *  so this may not work.)
 	 */
 	{			/* 6 */
 		"Quadra/Centris ROMs",
@@ -1635,7 +1633,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
+		(caddr_t) 0x408b39b6,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
