@@ -1,6 +1,8 @@
 #
-#	$NetBSD: files.atari.newconf,v 1.2 1995/04/11 09:53:10 mellon Exp $
+#	$NetBSD: files.atari.newconf,v 1.3 1995/04/16 14:50:40 leo Exp $
 #
+
+maxpartitions 16
 
 maxusers 2 8 64
 
