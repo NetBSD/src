@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.26 1998/08/30 23:29:10 cgd Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.27 1999/03/12 22:54:58 perry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -1014,7 +1014,7 @@ __C(__C(CHIP,_mem_copy_region_),BYTES)(v, h1, o1, h2, o2, c)		\
 	bus_size_t o;							\
 									\
 	if ((h1 >> 63) != 0 && (h2 >> 63) != 0) {			\
-		ovbcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES); \
+		memmove((void *)(h2 + o2), (void *)(h1 + o1), c * BYTES); \
 		return;							\
 	}								\
 									\
