@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.49 2003/01/07 16:20:14 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.50 2003/01/08 17:19:53 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -163,6 +163,10 @@ extern struct simplelock xpmsg_lock;
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
+
+	/* Scheduler flags */
+	int	want_ast;
+	int	want_resched;
 
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
