@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.24 2004/11/09 11:12:54 kent Exp $	*/
+/*	$NetBSD: yds.c,v 1.25 2004/11/13 15:00:48 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.24 2004/11/09 11:12:54 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.25 2004/11/13 15:00:48 kent Exp $");
 
 #include "mpu.h"
 
@@ -263,6 +263,18 @@ const static struct {
 #ifdef AUDIO_DEBUG
 #define YDS_CAP_BITS	"\020\005P44\004LEGFLEX\003LEGSEL\002MCODE1E\001MCODE1"
 #endif
+
+static const struct audio_format yds_formats[] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+};
+#define	YDS_NFORMATS	(sizeof(yds_formats) / sizeof(struct audio_format))
 
 #ifdef AUDIO_DEBUG
 static void
@@ -854,6 +866,10 @@ detected:
 		}
 	}
 
+	if (0 != auconv_create_encodings(yds_formats, YDS_NFORMATS,
+					 &sc->sc_encodings))
+		return;
+
 	audio_attach_mi(&yds_hw_if, sc, &sc->sc_dev);
 
 	sc->sc_legacy_iot = pa->pa_iot;
@@ -1147,58 +1163,10 @@ yds_close(void *addr)
 int
 yds_query_encoding(void *addr, struct audio_encoding *fp)
 {
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return (0);
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return (0);
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	default:
-		return (EINVAL);
-	}
+	struct yds_softc *sc;
+
+	sc = addr;
+	return auconv_query_encoding(sc->sc_encodings, fp);
 }
 
 int
@@ -1206,7 +1174,7 @@ yds_set_params(void *addr, int setmode, int usemode,
 	       struct audio_params *play, struct audio_params* rec)
 {
 	struct audio_params *p;
-	int mode;
+	int mode, i;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -1214,56 +1182,10 @@ yds_set_params(void *addr, int setmode, int usemode,
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->precision = 16;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->precision = 16;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
-			return (EINVAL);
-		}
+		i = auconv_set_converter(yds_formats, YDS_NFORMATS,
+					 mode, p, FALSE);
+		if (i < 0)
+			return EINVAL;
 	}
 
 	return 0;
@@ -1374,13 +1296,13 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 #ifdef YDS_USE_P44
 	/* The document says the P44 SRC supports only stereo, 16bit PCM. */
 	if (P44)
-		p44 = ((param->sample_rate == 44100) &&
-		       (param->channels == 2) &&
-		       (param->precision == 16));
+		p44 = ((param->hw_sample_rate == 44100) &&
+		       (param->hw_channels == 2) &&
+		       (param->hw_precision == 16));
 	else
 #endif
 		p44 = 0;
-	channels = p44 ? 1 : param->channels;
+	channels = p44 ? 1 : param->hw_channels;
 
 	s = DMAADDR(p);
 	l = ((char *)end - (char *)start);
@@ -1389,14 +1311,14 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	*sc->ptbl = htole32(channels);	/* Num of play */
 
 	sc->sc_play.factor = 1;
-	if (param->channels == 2)
+	if (param->hw_channels == 2)
 		sc->sc_play.factor *= 2;
-	if (param->precision != 8)
+	if (param->hw_precision != 8)
 		sc->sc_play.factor *= 2;
 	l /= sc->sc_play.factor;
 
 	format = ((channels == 2 ? PSLT_FORMAT_STEREO : 0) |
-		  (param->precision == 8 ? PSLT_FORMAT_8BIT : 0) |
+		  (param->hw_precision == 8 ? PSLT_FORMAT_8BIT : 0) |
 		  (p44 ? PSLT_FORMAT_SRC441 : 0));
 
 	psb = sc->pbankp[0];
@@ -1405,12 +1327,12 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	psb->pgbase = htole32(s);
 	psb->pgloopend = htole32(l);
 	if (!p44) {
-		psb->pgdeltaend = htole32((param->sample_rate * 65536 / 48000) << 12);
-		psb->lpfkend = htole32(yds_get_lpfk(param->sample_rate));
+		psb->pgdeltaend = htole32((param->hw_sample_rate * 65536 / 48000) << 12);
+		psb->lpfkend = htole32(yds_get_lpfk(param->hw_sample_rate));
 		psb->eggainend = htole32(gain);
-		psb->lpfq = htole32(yds_get_lpfq(param->sample_rate));
+		psb->lpfq = htole32(yds_get_lpfq(param->hw_sample_rate));
 		psb->pgdelta = htole32(psb->pgdeltaend);
-		psb->lpfk = htole32(yds_get_lpfk(param->sample_rate));
+		psb->lpfk = htole32(yds_get_lpfk(param->hw_sample_rate));
 		psb->eggain = htole32(gain);
 	}
 
@@ -1488,7 +1410,7 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 	    "sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 	DPRINTFN(1, (" parameters: rate=%lu, precision=%u, channels=%u\n",
-	    param->sample_rate, param->precision, param->channels));
+	    param->hw_sample_rate, param->hw_precision, param->hw_channels));
 
 	p = yds_find_dma(sc, start);
 	if (!p) {
@@ -1502,9 +1424,9 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 	sc->sc_rec.length = l;
 
 	sc->sc_rec.factor = 1;
-	if (param->channels == 2)
+	if (param->hw_channels == 2)
 		sc->sc_rec.factor *= 2;
-	if (param->precision != 8)
+	if (param->hw_precision != 8)
 		sc->sc_rec.factor *= 2;
 
 	rsb = &sc->rbank[0];
@@ -1518,9 +1440,9 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	YWRITE4(sc, YDS_ADC_IN_VOLUME, 0x3fff3fff);
 	YWRITE4(sc, YDS_REC_IN_VOLUME, 0x3fff3fff);
-	srate = 48000 * 4096 / param->sample_rate - 1;
-	format = ((param->precision == 8 ? YDS_FORMAT_8BIT : 0) |
-		  (param->channels == 2 ? YDS_FORMAT_STEREO : 0));
+	srate = 48000 * 4096 / param->hw_sample_rate - 1;
+	format = ((param->hw_precision == 8 ? YDS_FORMAT_8BIT : 0) |
+		  (param->hw_channels == 2 ? YDS_FORMAT_STEREO : 0));
 	DPRINTF(("srate=%d, format=%08x\n", srate, format));
 #ifdef YDS_USE_REC_SLOT
 	YWRITE4(sc, YDS_DAC_REC_VOLUME, 0x3fff3fff);
