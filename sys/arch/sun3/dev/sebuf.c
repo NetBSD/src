@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.4 1998/01/12 20:32:24 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.5 1999/04/09 04:26:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 #include "sereg.h"
 #include "sevar.h"
 
+#define	offsetof(type, member) ((size_t)(&((type *)0)->member))
+
 struct sebuf_softc {
 	struct	device sc_dev;		/* base device (required) */
 	struct sebuf_regs *sc_regs;
@@ -93,6 +95,8 @@ sebuf_match(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
+	struct se_regs *sreg;
+	struct ie_regs *ereg;
 	int pa, x;
 
 	if (ca->ca_paddr == -1)
@@ -104,12 +108,33 @@ sebuf_match(parent, cf, args)
 	if (x == -1)
 		return (0);
 
-	/* Does the "ie" CSR look right? */
-	pa = ca->ca_paddr + 0x1FF00;	/* XXX */
-	/* Want to poke 0xFFFF here first. XXX */
-	x = bus_peek(ca->ca_bustype, pa+2, 2);
-	if ((x == -1) || (x & 0xFFF))
+	/* Look at the CSR for the SCSI part. */
+	pa = ca->ca_paddr + offsetof(struct sebuf_regs, se_scsi_regs);
+	sreg = bus_tmapin(ca->ca_bustype, pa);
+	/* Write some bits that are wired to zero. */
+	sreg->se_csr = 0xFFF3;
+	x = peek_word((caddr_t)(&sreg->se_csr));
+	bus_tmapout(sreg);
+	if ((x == -1) || (x & 0xFCF0)) {
+#ifdef	DEBUG
+		printf("sebuf_match: SCSI csr=0x%x\n", x);
+#endif
 		return (0);
+	}
+
+	/* Look at the CSR for the Ethernet part. */
+	pa = ca->ca_paddr + offsetof(struct sebuf_regs, se_eth_regs);
+	ereg = bus_tmapin(ca->ca_bustype, pa);
+	/* Write some bits that are wired to zero. */
+	ereg->ie_csr = 0x0FFF;
+	x = peek_word((caddr_t)(&ereg->ie_csr));
+	bus_tmapout(ereg);
+	if ((x == -1) || (x & 0xFFF)) {
+#ifdef	DEBUG
+		printf("sebuf_match: Ether csr=0x%x\n", x);
+#endif
+		return (0);
+	}
 
 	/* Default interrupt priority always splbio==2 */
 	if (ca->ca_intpri == -1)
