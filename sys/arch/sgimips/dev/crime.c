@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.4.8.3 2002/10/18 02:39:38 nathanw Exp $	*/
+/*	$NetBSD: crime.c,v 1.4.8.4 2003/01/07 21:14:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -49,19 +49,25 @@
 
 #include <dev/pci/pcivar.h>
 
-#if 0
+#include <sgimips/dev/macereg.h>
 #include <sgimips/dev/crimereg.h>
-#endif
 
 #include "locators.h"
 
 static int	crime_match(struct device *, struct cfdata *, void *);
 static void	crime_attach(struct device *, struct device *, void *);
 void *		crime_intr_establish(int, int, int, int (*)(void *), void *);
-int		crime_intr(void *);
+void		crime_intr(u_int);
 
 CFATTACH_DECL(crime, sizeof(struct device),
     crime_match, crime_attach, NULL, NULL);
+
+#define CRIME_NINTR 32 	/* XXX */
+
+struct {
+	int	(*func)(void *);
+	void	*arg;
+} crime[CRIME_NINTR];
 
 static int
 crime_match(parent, match, aux)
@@ -86,37 +92,53 @@ crime_attach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	u_int32_t rev; /* really u_int64_t ! */
-	int major, minor;
+	u_int64_t crm_id;
+	int id, rev;
 
-	rev = bus_space_read_4(ma->ma_iot, ma->ma_ioh, 4) & 0xff;
+	crm_id = bus_space_read_8(ma->ma_iot, ma->ma_ioh, 0);
 
-	major = rev >> 4;
-	minor = rev & 0x0f;
+	id = (crm_id & 0xf0) >> 4;
+	rev = crm_id & 0x0f;
 
-	if (major == 0 && minor == 0)
-		printf(": petty\n");
-	else
-		printf(": rev %d.%d\n", major, minor);
+	aprint_naive(": system ASIC");
 
-#if 0
-	*(volatile u_int64_t *)0xb4000018 = 0xffffffffffffffff;
-#else
-	/* enable all mace interrupts, but no crime devices */
-	*(volatile u_int64_t *)0xb4000018 = 0x000000000000ffff;
-#endif
+	switch (id) {
+	case 0x0b:
+		aprint_normal(": rev 1.5");
+		break;
+
+	case 0x0a:
+		if ((crm_id >> 32) == 0)
+			aprint_normal(": rev 1.1");
+		else if ((crm_id >> 32) == 1)
+			aprint_normal(": rev 1.3");
+		else
+			aprint_normal(": rev 1.4");
+		break;
+
+	case 0x00:
+		aprint_normal(": Petty CRIME");
+		break;
+
+	default:
+		aprint_normal(": Unknown CRIME");
+		break;
+	}
+
+	aprint_normal(" (CRIME_ID: %llx)\n", crm_id);
+
+	/* All interrupts off.  Turned on as we register devices */
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0;
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTSTAT) = 0;
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_SOFTINT) = 0;
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_HARDINT) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_STATUS) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = 0;
 }
 
 /*
- * XXX
+ * XXX: sharing interrupts?
  */
-
-#define CRIME_NINTR 32 	/* XXX */
-
-struct {
-	int	(*func)(void *);
-	void	*arg;
-} crime[CRIME_NINTR];
 
 void *
 crime_intr_establish(irq, type, level, func, arg)
@@ -126,38 +148,24 @@ crime_intr_establish(irq, type, level, func, arg)
 	int (*func)(void *);
 	void *arg;
 {
-	int i;
+	if (crime[irq].func != NULL)
+		return NULL;	/* panic("Cannot share CRIME interrupts!"); */
 
-	for (i = 0; i <= CRIME_NINTR; i++) {
-		if (i == CRIME_NINTR)
-			panic("too many IRQs");
+	crime[irq].func = func;
+	crime[irq].arg = arg;
 
-		if (crime[i].func != NULL)
-			continue;
-
-		crime[i].func = func;
-		crime[i].arg = arg;
-		break;
-	}
-
-	return (void *)-1;
+	return (void *)&crime[irq];
 }
 
-int
-crime_intr(arg)
-	void *arg;
+void
+crime_intr(pendmask)
+	u_int pendmask;
 {
 	int i;
 
 	for (i = 0; i < CRIME_NINTR; i++) {
-int s;
-		if (crime[i].func == NULL)
-			return 0;
-
-s = spltty();
-		(*crime[i].func)(crime[i].arg);
-splx(s);
+		if ((pendmask & (1 << i)) && crime[i].func != NULL)
+			(*crime[i].func)(crime[i].arg);
 	}
-
-	return 0;
 }
+

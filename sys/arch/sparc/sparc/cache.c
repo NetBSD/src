@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57.6.8 2003/01/03 17:25:05 thorpej Exp $ */
+/*	$NetBSD: cache.c,v 1.57.6.9 2003/01/07 21:21:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -996,11 +996,6 @@ viking_pcache_flush_page(pa, invalidate_only)
  * message. This assumes the allocation of CPU contextses is a global
  * operation (remember that the actual context tables for the CPUs
  * are distinct).
- *
- * We don't do cross calls if we're cold or we're not accepting them
- * ourselves (CPUFLG_READY).
- *
- * XXX SUN4D
  */
 
 void

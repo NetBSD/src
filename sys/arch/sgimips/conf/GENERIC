@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5.2.6 2002/12/29 19:35:31 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.5.2.7 2003/01/07 21:14:31 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5.2.6 $"
+#ident		"GENERIC-$Revision: 1.5.2.7 $"
 
 maxusers	32
 
@@ -38,7 +38,6 @@ options 	IP22		# Indy / Indigo2
 options 	IP32		# O2
 
 options 	MIPS3		# MIPS3 support
-options 	MIPS3_5200
 options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
@@ -177,7 +176,6 @@ ex* 	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp* 	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
-ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 #tlp* 	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel gigabit Ethernet
 

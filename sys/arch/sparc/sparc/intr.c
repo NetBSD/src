@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56.4.10 2003/01/03 17:25:07 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.56.4.11 2003/01/07 21:21:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,28 +270,21 @@ nmi_soft(tf)
 	struct trapframe *tf;
 {
 
-	/* XXX - Most of this is superseded by xcallintr() below */
 #if defined(MULTIPROCESSOR)
-	switch (cpuinfo.msg.tag) {
-	case XPMSG_PAUSECPU:
+	switch (cpuinfo.msg_lev15.tag) {
+	case XPMSG11_PAUSECPU:
 		/* XXX - assumes DDB is the only user of mp_pause_cpu() */
-		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
+		cpuinfo.flags |= CPUFLG_PAUSED;
 #if defined(DDB)
-		__asm("ta 0x8b");	/* trap(T_DBPAUSE) */
+		/* trap(T_DBPAUSE) */
+		__asm("ta 0x8b");
 #else
-		while (cpuinfo.flags & CPUFLG_PAUSED) /**/;
+		while (cpuinfo.flags & CPUFLG_PAUSED)
+			/* spin */;
 #endif
 		return;
-	case XPMSG_FUNC:
-	    {
-		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
-
-		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
-		break;
-	    }
 	}
-	cpuinfo.msg.tag = 0;
-	cpuinfo.flags |= CPUFLG_GOTMSG;
+	cpuinfo.msg_lev15.tag = 0;
 #endif
 }
 
@@ -303,15 +296,6 @@ static void xcallintr(void *v)
 {
 
 	switch (cpuinfo.msg.tag) {
-	case XPMSG_PAUSECPU:
-		/* XXX - assumes DDB is the only user of mp_pause_cpu() */
-		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
-#if defined(DDB)
-		__asm("ta 0x8b");	/* trap(T_DBPAUSE) */
-#else
-		while (cpuinfo.flags & CPUFLG_PAUSED) /**/;
-#endif
-		return;
 	case XPMSG_FUNC:
 	    {
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
@@ -321,8 +305,8 @@ static void xcallintr(void *v)
 		break;
 	    }
 	}
-	cpuinfo.msg.tag = 0;
 	cpuinfo.flags |= CPUFLG_GOTMSG;
+	cpuinfo.msg.tag = 0;
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i8042.c,v 1.1.2.2 2002/02/28 04:11:56 nathanw Exp $	*/
+/*	$NetBSD: i8042.c,v 1.1.2.3 2003/01/07 21:14:38 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -343,7 +343,7 @@ i8042_cmd(bus_space_tag_t    iot,
         if (checkResponse == I8042_CHECK_RESPONSE)
         {
             /* get response from device and check if
-            ** successfull.
+            ** successful.
             */
             if (i8042_wait_input(iot,ioh,I8042_ANY_DATA))
             {
@@ -386,7 +386,7 @@ i8042_cmd(bus_space_tag_t    iot,
         else
         {
             /* Not requested to check for response and we did send the 
-            ** command so I guess we were successfull :-)
+            ** command so I guess we were successful :-)
             */
             status = 1;
             break;

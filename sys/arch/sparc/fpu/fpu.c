@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13.4.6 2002/07/12 01:39:47 nathanw Exp $ */
+/*	$NetBSD: fpu.c,v 1.13.4.7 2003/01/07 21:21:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,9 @@ fpu_cleanup(l, fs)
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
+		KERNEL_PROC_LOCK(l);
 		trapsignal(l, SIGFPE, fpu_codes[i - 1]);
+		KERNEL_PROC_UNLOCK(l);
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -170,7 +172,9 @@ fpu_cleanup(l, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
+		KERNEL_PROC_LOCK(l);
 		trapsignal(l, SIGFPE, -1);	/* ??? */
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	default:
@@ -187,11 +191,11 @@ fpu_cleanup(l, fs)
 		     instr.i_op3.i_op3 != IOP3_FPop2))
 			panic("bogus fpu queue");
 		error = fpu_execute(&fe, instr);
-		switch (error) {
-
-		case 0:
+		if (error == 0)
 			continue;
 
+		KERNEL_PROC_LOCK(p);
+		switch (error) {
 		case FPE:
 			trapsignal(l, SIGFPE,
 			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
@@ -211,6 +215,7 @@ fpu_cleanup(l, fs)
 			panic("fpu_cleanup 3");
 			/* NOTREACHED */
 		}
+		KERNEL_PROC_UNLOCK(p);
 		/* XXX should stop here, but queue remains */
 	}
 out:
