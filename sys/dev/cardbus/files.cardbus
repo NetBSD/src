@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.5 1999/10/29 11:31:40 joda Exp $
+#	$NetBSD: files.cardbus,v 1.6 1999/10/31 15:14:17 joda Exp $
 #
 # files.cardbus
 #
@@ -26,12 +26,11 @@ file	dev/cardbus/if_ex_cardbus.c		ex_cardbus
 #
 # Intel PRO/100 8255x based CardBus cards.
 #
+attach	fxp at cardbus with fxp_cardbus
+file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
+
 #
 #
-#attach	fxp at cardbus with fxp_cardbus
-#file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
-
-
 #attach	com at cardbus with com_cardbus
 #file	dev/cardbus/com_cardbus.c		com_cardbus
 
