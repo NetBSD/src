@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.109.2.3 2001/09/26 15:28:15 fvdl Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.109.2.4 2001/09/30 18:12:43 fvdl Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2265,7 +2265,7 @@ raidwrite_component_label(b_vp, clabel)
 
 	memcpy(bp->b_data, clabel, sizeof(RF_ComponentLabel_t));
 
-	(*bdevsw[major(vdev_rdev(b_vp)].d_strategy)(bp);
+	(*bdevsw[major(vdev_rdev(b_vp))].d_strategy)(bp);
 	error = biowait(bp); 
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -2729,7 +2729,7 @@ rf_find_raid_components()
 				       M_RAIDFRAME, M_NOWAIT);
 			if (clabel == NULL) {
 				/* XXX CLEANUP HERE */
-				vput(vp, 0);
+				vput(vp);
 				printf("RAID auto config: out of memory!\n");
 				return(NULL); /* XXX probably should panic? */
 			}
