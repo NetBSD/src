@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.11 2003/03/31 15:17:03 uwe Exp $
+#	$NetBSD: RESPONSIBLE,v 1.12 2003/04/01 00:06:54 perry Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -16,6 +16,7 @@ bc		phil, simonb
 csh		christos
 cvs		christos, wiz
 dhcp		mellon
+etcupdate	martti
 file		christos, pooka
 grep		simonb, wiz
 kerberos	assar, joda
@@ -29,6 +30,7 @@ ping		christos
 ping6		itojun
 pkg_install	agc
 postfix		perry
+postinstall	lukem
 ppp(async)	christos
 ppp(sync)	martin?
 racoon		itojun
