@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.9 1997/07/05 20:49:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -129,6 +129,13 @@ static __inline void
 enable_intr(void)
 {
 	__asm __volatile("sti");
+}
+
+/* Break into DDB/KGDB. */
+static __inline void
+breakpoint(void)
+{
+	__asm __volatile("int $3");
 }
 
 #endif /* !_I386_CPUFUNC_H_ */
