@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.40 2000/11/20 14:59:30 is Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.41 2001/01/11 01:43:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.40 2000/11/20 14:59:30 is Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.41 2001/01/11 01:43:25 lukem Exp $");
 #endif
 
 
@@ -143,7 +143,7 @@ main(argc, argv)
 	char   *ifname, *hostname;
 
 	/* All error reporting is done through syslogs. */
-	openlog(__progname, LOG_PID, LOG_DAEMON);
+	openlog("rarpd", LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "adfl")) != -1) {
