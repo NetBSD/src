@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.16 2000/03/23 06:33:11 thorpej Exp $	*/
+/*	$NetBSD: ms.c,v 1.17 2000/05/18 15:39:23 kleink Exp $	*/
 
 /*
  * based on:
@@ -76,14 +76,11 @@
 void msattach __P((struct device *, struct device *, void *));
 int msmatch __P((struct device *, struct cfdata *, void *));
 
-void msintr __P((void *));
-void ms_enable __P((dev_t));
-void ms_disable __P((dev_t));
+/* per-port state */
+struct ms_port {
+	int	ms_portno;	   /* which hardware port, for msintr() */
 
-struct ms_softc {
-	struct device sc_dev;
-
-	struct callout sc_intr_ch;
+	struct callout ms_intr_ch;
 
 	u_char	ms_horc;	   /* horizontal counter on last scan */
   	u_char	ms_verc;	   /* vertical counter on last scan */
@@ -95,11 +92,32 @@ struct ms_softc {
 	struct	evvar ms_events;   /* event queue state */
 };
 
+#define	MS_NPORTS	2
+
+struct ms_softc {
+	struct device sc_dev;		/* base device */
+	struct ms_port sc_ports[MS_NPORTS];
+};
+
 struct cfattach ms_ca = {
 	sizeof(struct ms_softc), msmatch, msattach
 };
 
+void msintr __P((void *));
+void ms_enable __P((struct ms_port *));
+void ms_disable __P((struct ms_port *));
+
 extern struct cfdriver ms_cd;
+
+#define	MS_UNIT(d)	((minor(d) & ~0x1) >> 1)
+#define	MS_PORT(d)	(minor(d) & 0x1)
+
+/*
+ * Given a dev_t, return a pointer to the port's hardware state.
+ * Assumes the unit to be valid, so do *not* utilize this in msopen().
+ */
+#define	MS_DEV2MSPORT(d) \
+    (&(((struct ms_softc *)getsoftc(ms_cd, MS_UNIT(d)))->sc_ports[MS_PORT(d)]))
 
 int
 msmatch(pdp, cfp, auxp)
@@ -107,12 +125,14 @@ msmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int ms_matched = 0;
 
-	if (matchname((char *)auxp, "ms") &&
-	    cfp->cf_unit >= 0 && cfp->cf_unit <= 1) /* only two units */
-		return 1;
+	/* Allow only one instance. */
+	if (!matchname((char *)auxp, "ms") || ms_matched)
+		return 0;
 
-	return 0;
+	ms_matched = 1;
+	return 1;
 }
 
 void
@@ -121,9 +141,13 @@ msattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct ms_softc *sc = (void *) dp;
+	int i;
 
 	printf("\n");
-	callout_init(&sc->sc_intr_ch);
+	for (i = 0; i < MS_NPORTS; i++) {
+		sc->sc_ports[i].ms_portno = i;
+		callout_init(&sc->sc_ports[i].ms_intr_ch);
+	}
 }
 
 /*
@@ -135,16 +159,12 @@ msattach(pdp, dp, auxp)
  */
 
 /*
- * enable scanner, called when someone opens the device.
- * Assume caller already validated range of dev.
+ * enable scanner, called when someone opens the port.
  */
 void
-ms_enable(dev)
-	dev_t dev;
+ms_enable(ms)
+	struct ms_port *ms;
 {
-	struct ms_softc *ms;
-
-	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 
 	/* 
 	 * use this as flag to the "interrupt" to tell it when to
@@ -152,7 +172,7 @@ ms_enable(dev)
 	 */
 	ms->ms_ready = 1;
 
-	callout_reset(&ms->sc_intr_ch, 2, msintr, ms);
+	callout_reset(&ms->ms_intr_ch, 2, msintr, ms);
 }
 
 /*
@@ -160,13 +180,11 @@ ms_enable(dev)
  * timeout taken, no further timeouts will be initiated.
  */
 void
-ms_disable(dev)
-	dev_t dev;
+ms_disable(ms)
+	struct ms_port *ms;
 {
-	struct ms_softc *ms;
 	int s;
 
-	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 	s = splhigh ();
 	ms->ms_ready = 0;
 	/*
@@ -186,14 +204,14 @@ msintr(arg)
 {
 	static const char to_one[] = { 1, 2, 2, 4, 4, 4, 4 };
 	static const int to_id[] = { MS_RIGHT, MS_MIDDLE, 0, MS_LEFT };
-	struct ms_softc *ms = arg;
+	struct ms_port *ms = arg;
 	struct firm_event *fe;
-	int mb, ub, d, get, put, any, unit;
+	int mb, ub, d, get, put, any, port;
 	u_char pra, *horc, *verc;
 	u_short pot, count;
 	short dx, dy;
 	
-	unit = ms->sc_dev.dv_unit;
+	port = ms->ms_portno;
 
 	horc = ((u_char *) &count) + 1;
 	verc = (u_char *) &count;
@@ -203,15 +221,15 @@ msintr(arg)
 	 */
 	pot  = custom.potgor;
 	pra  = ciaa.pra;
-	pot >>= unit == 0 ? 8 : 12;	/* contains right and middle button */
-	pra >>= unit == 0 ? 6 : 7;	/* contains left button */
+	pot >>= port == 0 ? 8 : 12;	/* contains right and middle button */
+	pra >>= port == 0 ? 6 : 7;	/* contains left button */
 	mb = (pot & 4) / 4 + (pot & 1) * 2 + (pra & 1) * 4;
 	mb ^= 0x07;
 
 	/*
 	 * read current values of counter registers
 	 */
-	if (unit == 0)
+	if (port == 0)
 		count = custom.joy0dat;
 	else
 		count = custom.joy1dat;
@@ -331,7 +349,7 @@ out:
 	 * handshake with ms_disable
 	 */
 	if (ms->ms_ready)
-		callout_reset(&ms->sc_intr_ch, 2, msintr, ms);
+		callout_reset(&ms->ms_intr_ch, 2, msintr, ms);
 	else
 		wakeup(ms);
 }
@@ -342,21 +360,25 @@ msopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	struct ms_softc *ms;
-	int unit;
+	struct ms_softc *sc;
+	struct ms_port *ms;
+	int unit, port;
 
-	unit = minor(dev);
-	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
+	unit = MS_UNIT(dev);
+	sc = (struct ms_softc *)getsoftc(ms_cd, unit);
 
-	if (ms == NULL)
+	if (sc == NULL)
 		return(EXDEV);
+
+	port = MS_PORT(dev);
+	ms = &sc->sc_ports[port];
 
 	if (ms->ms_events.ev_io)
 		return(EBUSY);
 
 	ms->ms_events.ev_io = p;
 	ev_init(&ms->ms_events);	/* may cause sleep */
-	ms_enable(dev);
+	ms_enable(ms);
 	return(0);
 }
 
@@ -366,13 +388,11 @@ msclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int unit;
-	struct ms_softc *ms;
+	struct ms_port *ms;
 
-	unit = minor (dev);
-	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
+	ms = MS_DEV2MSPORT(dev);
 
-	ms_disable(dev);
+	ms_disable(ms);
 	ev_fini(&ms->ms_events);
 	ms->ms_events.ev_io = NULL;
 	return(0);
@@ -384,9 +404,9 @@ msread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct ms_softc *ms;
+	struct ms_port *ms;
 
-	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
+	ms = MS_DEV2MSPORT(dev);
 
 	return(ev_read(&ms->ms_events, uio, flags));
 }
@@ -399,11 +419,9 @@ msioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ms_softc *ms;
-	int unit;
+	struct ms_port *ms;
 
-	unit = minor(dev);
-	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
+	ms = MS_DEV2MSPORT(dev);
 
 	switch (cmd) {
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -432,9 +450,9 @@ mspoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	struct ms_softc *ms;
+	struct ms_port *ms;
 
-	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
+	ms = MS_DEV2MSPORT(dev);
 
 	return(ev_poll(&ms->ms_events, events, p));
 }
