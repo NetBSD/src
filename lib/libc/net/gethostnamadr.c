@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.15 1996/10/14 10:41:07 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.16 1996/10/18 00:10:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.15 1996/10/14 10:41:07 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.16 1996/10/18 00:10:18 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,6 +152,8 @@ getanswer(answer, anslen, iquery)
 			cp += n + QFIXEDSZ;
 			host.h_name = bp;
 			n = strlen(bp) + 1;
+			if (n > MAXHOSTNAMELEN)
+				bp[MAXHOSTNAMELEN-1] = '\0';
 			bp += n;
 			buflen -= n;
 		} else
@@ -212,11 +214,11 @@ getanswer(answer, anslen, iquery)
 			cp += n;
 			continue;
 		}
-		if (n != host.h_length) {
-			cp += n;
-			continue;
-		}
 		if (haveanswer) {
+			if (n != host.h_length) {
+				cp += n;
+				continue;
+			}
 			if (class != getclass) {
 				cp += n;
 				continue;
@@ -224,10 +226,16 @@ getanswer(answer, anslen, iquery)
 		} else {
 			host.h_length = n;
 			getclass = class;
-			host.h_addrtype = (class == C_IN) ? AF_INET : AF_UNSPEC;
+			if (class == C_IN) {
+				host.h_addrtype = AF_INET;
+				host.h_length = INADDRSZ;
+			} else
+				host.h_addrtype = AF_UNSPEC;
 			if (!iquery) {
 				host.h_name = bp;
 				bp += strlen(bp) + 1;
+				if (strlen(host.h_name) >= MAXHOSTNAMELEN)
+					host.h_name[MAXHOSTNAMELEN-1] = '\0';
 			}
 		}
 
@@ -293,7 +301,7 @@ gethostbyname(name)
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
 				host.h_addrtype = AF_INET;
-				host.h_length = sizeof(u_int32_t);
+				host.h_length = INADDRSZ;
 				h_addr_ptrs[0] = (char *)&host_addr;
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
