@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
+/*	$NetBSD: db_break.c,v 1.8 1998/04/03 19:45:12 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -194,42 +194,6 @@ db_clear_breakpoints()
 		}
 	    db_breakpoints_inserted = FALSE;
 	}
-}
-
-/*
- * Set a temporary breakpoint.
- * The instruction is changed immediately,
- * so the breakpoint does not have to be on the breakpoint list.
- */
-db_breakpoint_t
-db_set_temp_breakpoint(addr)
-	db_addr_t	addr;
-{
-	register db_breakpoint_t	bkpt;
-
-	bkpt = db_breakpoint_alloc();
-	if (bkpt == 0) {
-	    db_printf("Too many breakpoints.\n");
-	    return 0;
-	}
-
-	bkpt->map = NULL;
-	bkpt->address = addr;
-	bkpt->flags = BKPT_TEMP;
-	bkpt->init_count = 1;
-	bkpt->count = 1;
-
-	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, FALSE);
-	db_put_value(bkpt->address, BKPT_SIZE, BKPT_SET(bkpt->bkpt_inst));
-	return bkpt;
-}
-
-void
-db_delete_temp_breakpoint(bkpt)
-	db_breakpoint_t	bkpt;
-{
-	db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
-	db_breakpoint_free(bkpt);
 }
 
 /*

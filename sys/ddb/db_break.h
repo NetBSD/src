@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.9 1997/06/26 01:12:05 thorpej Exp $	*/
+/*	$NetBSD: db_break.h,v 1.10 1998/04/03 19:45:12 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -57,8 +57,6 @@ db_breakpoint_t db_find_breakpoint __P((vm_map_t, db_addr_t));
 db_breakpoint_t db_find_breakpoint_here __P((db_addr_t));
 void db_set_breakpoints __P((void));
 void db_clear_breakpoints __P((void));
-db_breakpoint_t db_set_temp_breakpoint __P((db_addr_t));
-void db_delete_temp_breakpoint __P((db_breakpoint_t));
 void db_list_breakpoints __P((void));
 void db_delete_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_breakpoint_cmd __P((db_expr_t, int, db_expr_t, char *));
