@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.7 2001/10/26 23:25:03 matt Exp $
+#  $NetBSD: build.sh,v 1.8 2001/10/29 19:47:51 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -192,10 +192,10 @@ if ${rebuildmake-false} || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; the
 	cat >$makeprog <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.7 2001/10/26 23:25:03 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.8 2001/10/29 19:47:51 tv Exp $
 #
 exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
-USETOOLS=yes USE_NEW_TOOLCHAIN=yes \${1+\$@}
+USETOOLS=yes USE_NEW_TOOLCHAIN=yes TOOLDIR="$TOOLDIR" \${1+\$@}
 EOF
 	chmod +x $makeprog
 fi
