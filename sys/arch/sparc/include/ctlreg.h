@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.13 1997/03/22 19:15:53 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.14 1997/07/06 22:21:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -199,6 +199,7 @@
 #define SRMMU_SFADDR	0x00000400	/* Synchronous fault address reg */
 #define SRMMU_AFSTAT	0x00000500	/* Asynchronous fault status reg (HS) */
 #define SRMMU_AFADDR	0x00000600	/* Asynchronous fault address reg (HS)*/
+#define SRMMU_PCFG	0x00000600	/* Processor configuration reg (TURBO)*/
 #define SRMMU_TLBCTRL	0x00001000	/* TLB replacement control reg */
 
 
@@ -285,6 +286,19 @@
 #define	TURBOSPARC_PCR_PC	0x00020000	/* Parity ctrl: 0=even,1=odd */
 #define TURBOSPARC_PCR_PE	0x00040000	/* Enable parity checking */
 #define	TURBOSPARC_PCR_PMC	0x00180000	/* Page mode control */
+
+/* The Turbosparc's Processor Configuration Register */
+#define	TURBOSPARC_PCFG_SCC	0x00000007	/* e-cache config */
+#define	TURBOSPARC_PCFG_SE	0x00000008	/* e-cache enable */
+#define	TURBOSPARC_PCFG_US2	0x00000010	/* microsparc II compat */
+#define	TURBOSPARC_PCFG_WT	0x00000020	/* write-through enable */
+#define	TURBOSPARC_PCFG_SBC	0x000000c0	/* SBus Clock */
+#define	TURBOSPARC_PCFG_WS	0x03800000	/* DRAM wait states */
+#define	TURBOSPARC_PCFG_RAH	0x0c000000	/* DRAM Row Address Hold */
+#define	TURBOSPARC_PCFG_AXC	0x30000000	/* AFX Clock */
+#define	TURBOSPARC_PCFG_SNP	0x40000000	/* DVMA Snoop enable */
+#define	TURBOSPARC_PCFG_IOCLK	0x80000000	/* I/O clock ratio */
+
 
 /* Implementation and Version fields are common to all modules */
 #define SRMMU_PCR_VER	0x0f000000	/* Version of MMU implementation */
