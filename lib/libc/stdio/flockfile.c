@@ -1,4 +1,4 @@
-/*	$NetBSD: flockfile.c,v 1.5 2003/07/18 21:50:41 nathanw Exp $	*/
+/*	$NetBSD: flockfile.c,v 1.6 2003/07/19 05:06:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flockfile.c,v 1.5 2003/07/18 21:50:41 nathanw Exp $");
+__RCSID("$NetBSD: flockfile.c,v 1.6 2003/07/19 05:06:16 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -116,7 +116,7 @@ __flockfile_internal(FILE *fp, int internal)
 		if (internal) {
 			if (_LOCKINTERNAL(fp) == 0)
 				/* stash cancellation state and disable */
-				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,
+				thr_setcancelstate(PTHREAD_CANCEL_DISABLE,
 				    &_LOCKCANCELSTATE(fp));
 			_LOCKINTERNAL(fp)++;
 		}
@@ -142,7 +142,7 @@ __funlockfile_internal(FILE *fp, int internal)
 	if (internal) {
 		_LOCKINTERNAL(fp)--;
 		if (_LOCKINTERNAL(fp) == 0)
-			pthread_setcancelstate(_LOCKCANCELSTATE(fp), NULL);
+			thr_setcancelstate(_LOCKCANCELSTATE(fp), NULL);
 	}
 
 	_LOCKCOUNT(fp)--;
