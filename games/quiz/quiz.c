@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.11 1997/07/06 11:19:16 mycroft Exp $	*/
+/*	$NetBSD: quiz.c,v 1.12 1997/09/20 14:28:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: quiz.c,v 1.11 1997/07/06 11:19:16 mycroft Exp $";
+__RCSID("$NetBSD: quiz.c,v 1.12 1997/09/20 14:28:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ char	*appdstr __P((char *, char *, size_t));
 void	 downcase __P((char *));
 void	 get_cats __P((char *, char *));
 void	 get_file __P((char *));
+int	 main __P((int, char *[]));
 char	*next_cat __P((char *));
 void	 quiz __P((void));
 void	 score __P((u_int, u_int, u_int));
@@ -84,11 +85,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch;
+	int ch;
 	char *indexfile;
 
 	indexfile = _PATH_QUIZIDX;
-	while ((ch = getopt(argc, argv, "i:t")) != EOF)
+	while ((ch = getopt(argc, argv, "i:t")) != -1)
 		switch(ch) {
 		case 'i':
 			indexfile = optarg;
@@ -123,8 +124,8 @@ void
 get_file(file)
 	char *file;
 {
-	register FILE *fp;
-	register QE *qp;
+	FILE *fp;
+	QE *qp;
 	size_t len;
 	char *lp;
 
@@ -139,15 +140,18 @@ get_file(file)
 	qp = &qlist;
 	qsize = 0;
 	while ((lp = fgetln(fp, &len)) != NULL) {
-		lp[--len] = '\0';
+		if (lp[len - 1] == '\n')
+			lp[--len] = '\0';
 		if (qp->q_text && qp->q_text[strlen(qp->q_text) - 1] == '\\')
 			qp->q_text = appdstr(qp->q_text, lp, len);
 		else {
 			if ((qp->q_next = malloc(sizeof(QE))) == NULL)
-				err(1, NULL);
+				errx(1, "malloc");
 			qp = qp->q_next;
-			if ((qp->q_text = strdup(lp)) == NULL)
-				err(1, NULL);
+			if ((qp->q_text = malloc(len + 1)) == NULL)
+				errx(1, "malloc");
+			strncpy(qp->q_text, lp, len);
+			qp->q_text[len] = '\0';
 			qp->q_asked = qp->q_answered = FALSE;
 			qp->q_next = NULL;
 			++qsize;
@@ -159,8 +163,8 @@ get_file(file)
 void
 show_index()
 {
-	register QE *qp;
-	register char *p, *s;
+	QE *qp;
+	char *p, *s;
 	FILE *pf;
 
 	if ((pf = popen(_PATH_PAGER, "w")) == NULL)
@@ -170,7 +174,7 @@ show_index()
 		for (s = next_cat(qp->q_text); s; s = next_cat(s)) {
 			if (!rxp_compile(s))
 				errx(1, "%s", rxperr);
-			if (p = rxp_expand())
+			if ((p = rxp_expand()) != NULL)
 				(void)fprintf(pf, "%s ", p);
 		}
 		(void)fprintf(pf, "\n");
@@ -186,7 +190,7 @@ void
 get_cats(cat1, cat2)
 	char *cat1, *cat2;
 {
-	register QE *qp;
+	QE *qp;
 	int i;
 	char *s;
 
@@ -218,8 +222,8 @@ get_cats(cat1, cat2)
 void
 quiz()
 {
-	register QE *qp;
-	register int i;
+	QE *qp;
+	int i;
 	size_t len;
 	u_int guesses, rights, wrongs;
 	int next;
@@ -271,7 +275,8 @@ quiz()
 		qp->q_asked = TRUE;
 		(void)printf("%s?\n", question);
 		for (;; ++guesses) {
-			if ((answer = fgetln(stdin, &len)) == NULL) {
+			if ((answer = fgetln(stdin, &len)) == NULL ||
+			    answer[len - 1] != '\n') {
 				score(rights, wrongs, guesses);
 				exit(0);
 			}
@@ -298,7 +303,7 @@ quiz()
 
 char *
 next_cat(s)
-	register char *	s;
+	char *	s;
 {
 	int esc;
 
@@ -323,21 +328,23 @@ next_cat(s)
 char *
 appdstr(s, tp, len)
 	char *s;
-	register char *tp;
+	char *tp;
 	size_t len;
 {
-	register char *mp, *sp;
-	register int ch;
+	char *mp, *sp;
+	int ch;
 	char *m;
 
 	if ((m = malloc(strlen(s) + len + 1)) == NULL)
-		err(1, NULL);
-	for (mp = m, sp = s; *mp++ = *sp++;);
+		errx(1, "malloc");
+	for (mp = m, sp = s; (*mp++ = *sp++) != NULL; )
+		;
 	--mp;
 	if (*(mp - 1) == '\\')
 		--mp;
 
-	while ((ch = *mp++ = *tp++) && ch != '\n');
+	while ((ch = *mp++ = *tp++) && ch != '\n')
+		;
 	*mp = '\0';
 
 	free(s);
@@ -356,11 +363,11 @@ score(r, w, g)
 
 void
 downcase(p)
-	register char *p;
+	char *p;
 {
-	register int ch;
+	int ch;
 
-	for (; ch = *p; ++p)
+	for (; (ch = *p) != '\0'; ++p)
 		if (isascii(ch) && isupper(ch))
 			*p = tolower(ch);
 }
