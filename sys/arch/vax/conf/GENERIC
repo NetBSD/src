@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1995/02/13 00:41:55 ragge Exp $
+#	$NetBSD: GENERIC,v 1.5 1995/02/23 17:50:56 ragge Exp $
 #
 # GENERIC VAX, currently only supports 11/750 anyway.
 #
@@ -7,6 +7,7 @@ include "std.vax"
 
 # Here are all different supported CPU types listed.
 options         "VAX750"
+options         "VAX630"
 
 # Kernel identification
 options         GENERIC
@@ -57,7 +58,7 @@ ra1		at uda0 drive 1
 ra2		at uda0 drive 2
 ra3		at uda0 drive 3
 
-uda1		at uba?	csr 0172550
+uda1		at uba?	csr 0160334
 ra4		at uda1 drive 0
 ra5		at uda1 drive 1
 ra6		at uda1 drive 2
@@ -65,7 +66,10 @@ ra7		at uda1 drive 3
 
 # Ethernet cards
 de0		at uba? csr 0174510
-de1		at uba? csr 0175510
+
+# Tape drivers
+tmscp0		at uba? csr 0174500
+tms*		at tmscp0 drive ?
 
 pseudo-device   loop
 pseudo-device   pty	48

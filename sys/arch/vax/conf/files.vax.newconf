@@ -1,10 +1,10 @@
-#       $NetBSD: files.vax.newconf,v 1.7 1995/02/13 00:41:57 ragge Exp $
+#       $NetBSD: files.vax.newconf,v 1.8 1995/02/23 17:50:58 ragge Exp $
 #
 # new style config file for vax architecture
 #
 
 # maxpartitions must be first item in files.${ARCH}.newconf
-maxpartitions 8
+#maxpartitions 8
 
 maxusers 8 32 64
 
@@ -36,6 +36,11 @@ file	arch/vax/if/if_de.c		de needs-count
 device	ra at uda	
 file	arch/vax/vax/mscp.c		ra needs-count
 
+# TK50/TU81 at UBA
+device	tmscp at uba {drive = -1}
+device	tms at tmscp
+file	arch/vax/uba/tmscp.c		tmscp needs-count
+
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
 #
@@ -58,10 +63,6 @@ file	arch/vax/uba/rk.c		rk needs-count
 # TM11/TE10 at UBA
 device	te at uba
 file	arch/vax/uba/tm.c		te needs-count
-
-# TK50/TU81 at UBA
-device	tms at uba
-file	arch/vax/uba/tmscp.c		tms needs-count
 
 # TS11 at UBA
 device	ts at uba
@@ -185,7 +186,9 @@ file	arch/vax/vax/clock.c
 file	arch/vax/vax/gencons.c
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
-file	arch/vax/vax/ka750.c
+file	arch/vax/vax/ka750.c		vax750
+file	arch/vax/vax/uvaxII.c		vax630
+file	arch/vax/vax/emulate.s		vax630
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
