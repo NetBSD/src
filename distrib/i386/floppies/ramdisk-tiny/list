@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2003/03/03 05:12:46 dogcow Exp $
+#	$NetBSD: list,v 1.12 2003/06/05 14:30:14 dsl Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -36,7 +36,8 @@ PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/sed
 
-PROG	usr/mdec/installboot
+# sysinst dosn't use installboot
+# PROG	usr/sbin/installboot
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
@@ -45,8 +46,5 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
-
-# we have not switched to MI usr.sbin/installboot yet.
-SPECIAL	installboot	srcdir	sys/arch/${MACHINE}/stand/installboot
 
 LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lcrypt -ll -lm

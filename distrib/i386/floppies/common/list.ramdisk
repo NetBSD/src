@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.8 2002/05/29 04:03:01 lukem Exp $
+#	$NetBSD: list.ramdisk,v 1.9 2003/06/05 14:30:11 dsl Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -16,8 +16,10 @@ COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/services		etc/services
 
 # we need the boot block in /usr/mdec + the MBR copy
-COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
+COPY	${DESTDIR}/usr/mdec/biosboot		usr/mdec/biosboot
+COPY	${DESTDIR}/usr/mdec/bootxx_ffsv1	usr/mdec/bootxx_ffsv1
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/mbr_ext		usr/mdec/mbr_ext
 COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 
 # and the common installation tools
