@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.39 2000/12/01 19:17:41 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.1 2000/12/01 19:17:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -34,6 +34,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define ELFSIZE		32
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -43,55 +45,99 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 
+#include <sys/mman.h>
+
+#include <machine/cpu.h>
+#include <machine/reg.h>
 #include <machine/ibcs2_machdep.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 #include <compat/ibcs2/ibcs2_errno.h>
-#include <compat/ibcs2/ibcs2_syscall.h>
+#include <compat/ibcs2/ibcs2_util.h>
 
-static void ibcs2_e_proc_exec __P((struct proc *, struct exec_package *));
-
-extern struct sysent ibcs2_sysent[];
-extern const char * const ibcs2_syscallnames[];
-extern char ibcs2_sigcode[], ibcs2_esigcode[];
-
-#ifdef IBCS2_DEBUG
-int ibcs2_debug = 1;
-#else
-int ibcs2_debug = 0;
-#endif
-
-const struct emul emul_ibcs2 = {
-	"ibcs2",
-	"/emul/ibcs2",
-	native_to_ibcs2_errno,
-	ibcs2_sendsig,
-	0,
-	IBCS2_SYS_MAXSYSCALL,
-	ibcs2_sysent,
-	ibcs2_syscallnames,
-	ibcs2_sigcode,
-	ibcs2_esigcode,
-	ibcs2_e_proc_exec,
-	NULL,
-	NULL,
-	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
-};
-
+static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
+				      Elf32_Ehdr *));
+	
 /*
- * This is exec process hook. Find out if this is x.out executable, if
- * yes, set flag appropriately, so that emul code which needs to adjust
- * behaviour accordingly can do so.
- */ 
-static void
-ibcs2_e_proc_exec(p, epp)
+ * The SCO compiler adds the string "SCO" to the .notes section of all
+ * binaries I've seen so far.
+ *
+ * XXX - probably should only compare the id in the actual ELF notes struct
+ */
+
+#define SCO_SIGNATURE	"\004\0\0\0\014\0\0\0\001\0\0\0SCO\0"
+
+static int
+ibcs2_elf32_signature(p, epp, eh)
 	struct proc *p;
 	struct exec_package *epp;
+	Elf32_Ehdr *eh;
 {
-	if (epp->ep_es->es_check == exec_ibcs2_xout_makecmds)
-		p->p_emuldata = IBCS2_EXEC_XENIX;
-	else
-		p->p_emuldata = IBCS2_EXEC_OTHER;
+	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
+	size_t i;
+	static const char signature[] = SCO_SIGNATURE;
+	char buf[sizeof(signature) - 1];
+	Elf32_Shdr *sh;
+	int error;
+
+	sh = (Elf32_Shdr *)malloc(shsize, M_TEMP, M_WAITOK);
+
+	if ((error = elf32_read_from(p, epp->ep_vp, eh->e_shoff,
+	    (caddr_t)sh, shsize)) != 0)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf32_Shdr *s = &sh[i];
+		if (s->sh_type != SHT_NOTE ||
+		    s->sh_flags != 0 ||
+		    s->sh_size < sizeof(signature) - 1)
+			continue;
+
+		if ((error = elf32_read_from(p, epp->ep_vp, s->sh_offset,
+		    (caddr_t)buf, sizeof(signature) - 1)) != 0)
+			goto out;
+
+		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
+			goto out;
+		else
+			break;	/* only one .note section so quit */
+	}
+	error = EFTYPE;
+
+out:
+	free(sh, M_TEMP);
+	return error;
+}
+
+/*
+ * ibcs2_elf32_probe - search the executable for signs of SCO
+ */
+
+int
+ibcs2_elf32_probe(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	void *eh;
+	char *itp;
+	vaddr_t *pos;
+{
+	const char *bp;
+	int error;
+	size_t len;
+
+	if ((error = ibcs2_elf32_signature(p, epp, eh)) != 0)
+                return error;
+
+	if (itp[0]) {
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path, itp, &bp, 0)))
+			return error;
+		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
+			return error;
+		free((void *)bp, M_TEMP);
+	}
+	*pos = ELF32_NO_ADDR;
+	return 0;
 }
