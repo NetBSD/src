@@ -2765,6 +2765,28 @@ startmap_done:
 	call	init_tables
 	 st	%o0, [%o1 + %lo(_nwindows)]
 
+#ifdef SUN4
+	/*
+	 * Some sun4 models have fewer than 8 windows. For extra
+	 * speed, we do not need to save/restore those windows
+	 * The save/restore code has 7 "save"'s followed by 7
+	 * "restore"'s -- we "nop" out the last "save" and first
+	 * "restore"
+	 */
+	cmp	%o0, 8
+	beq	1f
+noplab:	 nop
+	set	noplab, %l0
+	ld	[%l0], %l1
+	set	wb1, %l0
+	st	%l1, [%l0 + 6*4]
+	st	%l1, [%l0 + 7*4]
+	set	wb2, %l0
+	st	%l1, [%l0 + 6*4]
+	st	%l1, [%l0 + 7*4]
+1:
+#endif
+
 	/*
 	 * Step 4: change the trap base register, now that our trap handlers
 	 * will function (they need the tables we just set up).
@@ -3479,7 +3501,7 @@ Lsw_scan:
 	 * XXX	crude; knows nwindows <= 8
 	 */
 #define	SAVE save %sp, -64, %sp
-	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE	/* 7 of each: */
+wb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE	/* 7 of each: */
 	restore; restore; restore; restore; restore; restore; restore
 
 	/*
@@ -3606,7 +3628,7 @@ ENTRY(snapshot)
 	 * 7 of each.  Minor tweak: the 7th restore is
 	 * done after a ret.
 	 */
-	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE
+wb2:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE
 	restore; restore; restore; restore; restore; restore; ret; restore
 
 1:	/* this is reached only after a child gets chosen in switch() */
@@ -4612,7 +4634,7 @@ ENTRY(random)
 	 st	%o0, [%g1 + %lo(randseed)]
 
 /*
- * void microtime(struct timeval *tv)
+ * void lo_microtime(struct timeval *tv)
  *
  * LBL's sparc bsd 'microtime': We don't need to spl (so this routine
  * can be a leaf routine) and we don't keep a 'last' timeval (there
@@ -4626,7 +4648,7 @@ ENTRY(random)
  * be and we must retry.  Typically this loop runs only once;
  * occasionally it runs twice, and only rarely does it run longer.
  */
-ENTRY(microtime)
+ENTRY(lo_microtime)
 	sethi	%hi(_time), %g2
 	sethi	%hi(TIMERREG_VA), %g3
 1:
