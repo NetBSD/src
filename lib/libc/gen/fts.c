@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.15 1997/07/21 14:07:01 jtc Exp $	*/
+/*	$NetBSD: fts.c,v 1.16 1997/09/27 22:53:07 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.15 1997/07/21 14:07:01 jtc Exp $");
+__RCSID("$NetBSD: fts.c,v 1.16 1997/09/27 22:53:07 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,6 +134,14 @@ fts_open(argv, options, compar)
 			errno = ENOENT;
 			goto mem3;
 		}
+
+		/*
+		 * Special case of "/" at the end of the path so that
+		 * slashes aren't appended which would cause paths to
+		 * be written as "....//foo".
+		 */
+		if ((*argv)[len-1] == '/')
+			len--;
 
 		p = fts_alloc(sp, *argv, len);
 		p->fts_level = FTS_ROOTLEVEL;
@@ -264,14 +272,6 @@ fts_close(sp)
 	}
 	return (0);
 }
-
-/*
- * Special case of "/" at the end of the path so that slashes
- * aren't appended which would cause paths to be written as "....//foo".
- */
-#define	NAPPEND(p)							\
-	(p->fts_path[p->fts_pathlen-1] == '/'				\
-		 ? p->fts_pathlen-1 : p->fts_pathlen)
 
 FTSENT *
 fts_read(sp)
@@ -406,7 +406,7 @@ next:	tmp = p;
 			p->fts_instr = FTS_NOINSTR;
 		}
 
-name:		t = sp->fts_path + NAPPEND(p->fts_parent);
+name:		t = sp->fts_path + p->fts_parent->fts_pathlen;
 		*t++ = '/';
 		memmove(t, p->fts_name, p->fts_namelen + 1);
 		return (sp->fts_cur = p);
@@ -659,7 +659,7 @@ fts_build(sp, type)
 	 * each new name into the path.
 	 */
 	maxlen = sp->fts_pathlen - cur->fts_pathlen - 1;
-	len = NAPPEND(cur);
+	len = cur->fts_pathlen;
 	if (ISSET(FTS_NOCHDIR)) {
 		cp = sp->fts_path + len;
 		*cp++ = '/';
