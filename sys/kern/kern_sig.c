@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.167 2003/10/12 14:32:05 pk Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.168 2003/10/12 20:09:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.167 2003/10/12 14:32:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.168 2003/10/12 20:09:50 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -113,17 +113,21 @@ static ksiginfo_t *
 ksiginfo_get(struct proc *p, int signo)
 {
 	ksiginfo_t *ksi;
+	int s;
 
+	s = splsoftclock();
 	simple_lock(&p->p_sigctx.ps_silock);
 	CIRCLEQ_FOREACH(ksi, &p->p_sigctx.ps_siginfo, ksi_list) {
 		if (ksi->ksi_signo == signo) {
 			CIRCLEQ_REMOVE(&p->p_sigctx.ps_siginfo, ksi, ksi_list);
-			simple_unlock(&p->p_sigctx.ps_silock);
-			return ksi;
+			goto out;
 		}
 	}
+	ksi = NULL;
+out:
 	simple_unlock(&p->p_sigctx.ps_silock);
-	return NULL;
+	splx(s);
+	return ksi;
 }
 
 /*
@@ -179,7 +183,9 @@ out:
 static void
 ksiginfo_exithook(struct proc *p, void *v)
 {
+	int s;
 
+	s = splsoftclock();
 	simple_lock(&p->p_sigctx.ps_silock);
 	while (!CIRCLEQ_EMPTY(&p->p_sigctx.ps_siginfo)) {
 		ksiginfo_t *ksi = CIRCLEQ_FIRST(&p->p_sigctx.ps_siginfo);
@@ -187,6 +193,7 @@ ksiginfo_exithook(struct proc *p, void *v)
 		pool_put(&ksiginfo_pool, ksi);
 	}
 	simple_unlock(&p->p_sigctx.ps_silock);
+	splx(s);
 }
 
 /*
