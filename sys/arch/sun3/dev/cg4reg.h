@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4reg.h,v 1.4 1998/02/08 05:20:08 gwr Exp $	*/
+/*	$NetBSD: cg4reg.h,v 1.5 1998/03/08 18:54:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,6 @@
 /*
  * Memory layout of the Type A hardware (OBMEM)
  */
-#define CG4A_DEF_BASE   0xFE400000	/* Sun3/110 */
 #define CG4A_OFF_ENABLE     0
 #define CG4A_OFF_PIXMAP	  0x400000
 #define CG4A_OFF_OVERLAY  0xC00000
@@ -85,7 +84,6 @@ struct amd_regs {
  * P4 appears on the Sun3/60 at 0xFF300000, so
  * define things relative to that.
  */
-#define CG4B_DEF_BASE  0xFF300000	/* Sun3/60 */
 #define CG4B_OFF_CMAP  (-0x100000)
 #define CG4B_OFF_OVERLAY 0x100000
 #define CG4B_OFF_ENABLE  0x300000
