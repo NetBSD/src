@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.2 1999/11/29 17:21:22 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.3 1999/12/12 17:04:55 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -46,8 +46,11 @@
 #include <arch/hpcmips/dev/fbvar.h>
 #endif
 
-void tx3912video_framebuffer_init __P((tx_chipset_tag_t, u_int32_t, u_int32_t));
-int  tx3912video_framebuffer_alloc __P((tx_chipset_tag_t, u_int32_t, int, int, int, u_int32_t*, u_int32_t*));
+void tx3912video_framebuffer_init __P((tx_chipset_tag_t, u_int32_t, 
+				       u_int32_t));
+int  tx3912video_framebuffer_alloc __P((tx_chipset_tag_t, u_int32_t, 
+					int, int, int, u_int32_t*, 
+					u_int32_t*));
 void tx3912video_reset __P((tx_chipset_tag_t));
 void tx3912video_resolution_init __P((tx_chipset_tag_t, int, int));
 int  tx3912video_fbdepth __P((tx_chipset_tag_t, int));
@@ -69,7 +72,8 @@ struct fb_attach_args {
 };
 
 struct cfattach tx3912video_ca = {
-	sizeof(struct tx3912video_softc), tx3912video_match, tx3912video_attach
+	sizeof(struct tx3912video_softc), tx3912video_match, 
+	tx3912video_attach
 };
 
 int
@@ -249,14 +253,17 @@ tx3912video_resolution_init(tc, h, v)
 
 	if ((val == TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR) &&
 	    !split) {
-		horzval = (h / 8) * 3 - 1; /* (LCD horizontal pixels / 8bit) * RGB - 1 */
+		/* (LCD horizontal pixels / 8bit) * RGB - 1 */
+		horzval = (h / 8) * 3 - 1; 
 	} else {
 		horzval = h / 4 - 1;
 	}
 	lineval = (split ? v / 2 : v) - 1;
 
 	/* Video rate */
-	/* XXX probably This value should be determined from DFINT and LCDINT */
+	/* XXX 
+	 *  probably This value should be determined from DFINT and LCDINT 
+	 */
 	reg = TX3912_VIDEOCTRL2_VIDRATE_SET(0, horzval + 1);
 	/* Horizontal size of LCD */
 	reg = TX3912_VIDEOCTRL2_HORZVAL_SET(reg, horzval);
@@ -303,19 +310,25 @@ tx3912video_reset(tc)
 	u_int32_t reg;
 	
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
+
 	/* Disable video logic at end of this frame */
 	reg |= TX3912_VIDEOCTRL1_ENFREEZEFRAME; 
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
+
 	/* Wait for end of frame */
 	delay(300 * 1000);
+
 	/* Make sure to disable video logic */
 	reg &= ~TX3912_VIDEOCTRL1_ENVID;
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);	
+
 	delay(1000);
+
 	/* Enable video logic again */
 	reg &= ~TX3912_VIDEOCTRL1_ENFREEZEFRAME; 
 	reg |= TX3912_VIDEOCTRL1_ENVID;
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
+
 	delay(1000);
 }
 
