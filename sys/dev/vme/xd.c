@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.35 2001/01/15 21:27:21 fvdl Exp $	*/
+/*	$NetBSD: xd.c,v 1.36 2001/03/06 22:27:59 thorpej Exp $	*/
 
 /*
  *
@@ -393,16 +393,17 @@ xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 		return (error);
 	}
 
-	if ((error = bus_dmamap_load_raw(tag, map,
-					seg, nseg, len, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamem_map(tag, seg, nseg,
+				    len, kvap,
+				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		bus_dmamem_free(tag, seg, nseg);
 		return (error);
 	}
 
-	if ((error = bus_dmamem_map(tag, seg, nseg,
-				    len, kvap,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		bus_dmamap_unload(tag, map);
+	if ((error = bus_dmamap_load(tag, map,
+				     *kvap, len, NULL,
+				     BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamem_unmap(tag, *kvap, len);
 		bus_dmamem_free(tag, seg, nseg);
 		return (error);
 	}
