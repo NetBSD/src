@@ -1,7 +1,7 @@
-/*	$NetBSD: krpc_subr.c,v 1.7 1994/09/26 16:42:31 gwr Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.8 1995/04/24 21:55:05 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon Ross, Adam Glass 
+ * Copyright (c) 1995 Gordon Ross, Adam Glass
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
  *
@@ -43,14 +43,15 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -62,9 +63,6 @@
  * Kernel support for Sun RPC
  *
  * Used currently for bootstrapping in nfs diskless configurations.
- * 
- * Note: will not work on variable-sized rpc args/results.
- *       implicit size-limit of an mbuf.
  */
 
 /*
@@ -72,30 +70,30 @@
  */
 
 struct auth_info {
-	int	rp_atype;		/* auth type */
-	u_long	rp_alen;		/* auth length */
+	int32_t	rp_atype;		/* auth type */
+	u_int32_t	rp_alen;	/* auth length */
 };
 
 struct rpc_call {
-	u_long	rp_xid;			/* request transaction id */
-	int 	rp_direction;	        /* call direction (0) */
-	u_long	rp_rpcvers;		/* rpc version (2) */
-	u_long	rp_prog;		/* program */
-	u_long	rp_vers;		/* version */
-	u_long	rp_proc;		/* procedure */
+	u_int32_t	rp_xid;		/* request transaction id */
+	int32_t 	rp_direction;	/* call direction (0) */
+	u_int32_t	rp_rpcvers;	/* rpc version (2) */
+	u_int32_t	rp_prog;	/* program */
+	u_int32_t	rp_vers;	/* version */
+	u_int32_t	rp_proc;	/* procedure */
 	struct	auth_info rp_auth;
 	struct	auth_info rp_verf;
 };
 
 struct rpc_reply {
-	u_long	rp_xid;			/* request transaction id */
-	int	rp_direction;		/* call direction (1) */
-	int	rp_astatus;		/* accept status (0: accepted) */
+	u_int32_t	rp_xid;		/* request transaction id */
+	int32_t 	rp_direction;	/* call direction (1) */
+	int32_t 	rp_astatus;	/* accept status (0: accepted) */
 	union {
-		u_long	rpu_errno;
+		u_int32_t	rpu_errno;
 		struct {
 			struct auth_info rp_auth;
-			u_long	rp_rstatus;		/* reply status */
+			u_int32_t	rp_rstatus;	/* reply status */
 		} rpu_ok;
 	} rp_u;
 };
@@ -117,18 +115,18 @@ struct rpc_reply {
 int
 krpc_portmap(sin,  prog, vers, portp)
 	struct sockaddr_in *sin;		/* server address */
-	u_long prog, vers;	/* host order */
-	u_short *portp;		/* network order */
+	u_int prog, vers;	/* host order */
+	u_int16_t *portp;		/* network order */
 {
 	struct sdata {
-		u_long	prog;		/* call program */
-		u_long	vers;		/* call version */
-		u_long	proto;		/* call protocol */
-		u_long	port;		/* call port (unused) */
+		u_int32_t	prog;		/* call program */
+		u_int32_t	vers;		/* call version */
+		u_int32_t	proto;		/* call protocol */
+		u_int32_t	port;		/* call port (unused) */
 	} *sdata;
 	struct rdata {
-		u_short pad;
-		u_short port;
+		u_int16_t pad;
+		u_int16_t port;
 	} *rdata;
 	struct mbuf *m;
 	int error;
@@ -139,12 +137,11 @@ krpc_portmap(sin,  prog, vers, portp)
 		return 0;
 	}
 
-	m = m_gethdr(M_WAIT, MT_DATA);
+	m = m_get(M_WAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
-	m->m_len = sizeof(*sdata);
-	m->m_pkthdr.len = m->m_len;
 	sdata = mtod(m, struct sdata *);
+	m->m_len = sizeof(*sdata);
 
 	/* Do the RPC to get it. */
 	sdata->prog = htonl(prog);
@@ -158,6 +155,11 @@ krpc_portmap(sin,  prog, vers, portp)
 	if (error) 
 		return error;
 
+	if (m->m_len < sizeof(*rdata)) {
+		m = m_pullup(m, sizeof(*rdata));
+		if (m == NULL)
+			return ENOBUFS;
+	}
 	rdata = mtod(m, struct rdata *);
 	*portp = rdata->port;
 
@@ -173,7 +175,7 @@ krpc_portmap(sin,  prog, vers, portp)
 int
 krpc_call(sa, prog, vers, func, data, from_p)
 	struct sockaddr_in *sa;
-	u_long prog, vers, func;
+	u_int prog, vers, func;
 	struct mbuf **data;	/* input/output */
 	struct mbuf **from_p;	/* output */
 {
@@ -184,8 +186,8 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	struct rpc_reply *reply;
 	struct uio auio;
 	int error, rcvflg, timo, secs, len;
-	static u_long xid = ~0xFF;
-	u_short tport;
+	static u_int32_t xid = ~0xFF;
+	u_int tport;
 
 	/*
 	 * Validate address family.
@@ -267,31 +269,16 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		goto out;
 	}
 	sin = mtod(nam, struct sockaddr_in *);
-	bcopy((caddr_t)sa, (caddr_t)sin, (nam->m_len = sa->sin_len));
+	bcopy((caddr_t)sa, (caddr_t)sin,
+		  (nam->m_len = sa->sin_len));
 
 	/*
 	 * Prepend RPC message header.
 	 */
-	m = *data;
-	*data = NULL;
-#ifdef	DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("krpc_call: send data w/o pkthdr");
-	if (m->m_pkthdr.len < m->m_len)
-		panic("krpc_call: pkthdr.len not set");
-#endif
-	mhead = m_prepend(m, sizeof(*call), M_WAIT);
-	if (mhead == NULL) {
-		error = ENOBUFS;
-		goto out;
-	}
-	mhead->m_pkthdr.len += sizeof(*call);
-	mhead->m_pkthdr.rcvif = NULL;
-
-	/*
-	 * Fill in the RPC header
-	 */
+	mhead = m_gethdr(M_WAIT, MT_DATA);
+	mhead->m_next = *data;
 	call = mtod(mhead, struct rpc_call *);
+	mhead->m_len = sizeof(*call);
 	bzero((caddr_t)call, sizeof(*call));
 	xid++;
 	call->rp_xid = htonl(xid);
@@ -302,6 +289,18 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	call->rp_proc = htonl(func);
 	/* call->rp_auth = 0; */
 	/* call->rp_verf = 0; */
+
+	/*
+	 * Setup packet header
+	 */
+	len = 0;
+	m = mhead;
+	while (m) {
+		len += m->m_len;
+		m = m->m_next;
+	}
+	mhead->m_pkthdr.len = len;
+	mhead->m_pkthdr.rcvif = NULL;
 
 	/*
 	 * Send it, repeatedly, until a reply is received,
@@ -393,30 +392,18 @@ krpc_call(sa, prog, vers, func, data, from_p)
  gotreply:
 
 	/*
-	 * Pull as much as we can into first mbuf, to make
-	 * result buffer contiguous.  Note that if the entire
-	 * result won't fit into one mbuf, you're out of luck.
-	 * XXX - Should not rely on making the entire reply
-	 * contiguous (fix callers instead). -gwr
+	 * Get RPC reply header into first mbuf,
+	 * get its length, then strip it off.
 	 */
-#ifdef	DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("krpc_call: received pkt w/o header?");
-#endif
-	len = m->m_pkthdr.len;
+	len = sizeof(*reply);
 	if (m->m_len < len) {
 		m = m_pullup(m, len);
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto out;
 		}
-		reply = mtod(m, struct rpc_reply *);
 	}
-
-	/*
-	 * Strip RPC header
-	 */
-	len = sizeof(*reply);
+	reply = mtod(m, struct rpc_reply *);
 	if (reply->rp_u.rpu_ok.rp_auth.rp_atype != 0) {
 		len += ntohl(reply->rp_u.rpu_ok.rp_auth.rp_alen);
 		len = (len + 3) & ~3; /* XXX? */
@@ -436,4 +423,140 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	if (from) m_freem(from);
 	soclose(so);
 	return error;
+}
+
+/*
+ * eXternal Data Representation routines.
+ * (but with non-standard args...)
+ */
+
+/*
+ * String representation for RPC.
+ */
+struct xdr_string {
+	u_int32_t len;		/* length without null or padding */
+	char data[4];	/* data (longer, of course) */
+    /* data is padded to a long-word boundary */
+};
+
+struct mbuf *
+xdr_string_encode(str, len)
+	char *str;
+	int len;
+{
+	struct mbuf *m;
+	struct xdr_string *xs;
+	int dlen;	/* padded string length */
+	int mlen;	/* message length */
+
+	dlen = (len + 3) & ~3;
+	mlen = dlen + 4;
+
+	m = m_get(M_WAIT, MT_DATA);
+	if (mlen > MLEN) {
+		if (mlen > MCLBYTES)
+			return(NULL);
+		MCLGET(m, M_WAIT);
+		if (m == NULL)
+			return NULL;
+	}
+	xs = mtod(m, struct xdr_string *);
+	m->m_len = mlen;
+	xs->len = htonl(len);
+	bcopy(str, xs->data, len);
+	return (m);
+}
+
+struct mbuf *
+xdr_string_decode(m, str, len_p)
+	struct mbuf *m;
+	char *str;
+	int *len_p;		/* bufsize - 1 */
+{
+	struct xdr_string *xs;
+	int mlen;	/* message length */
+	int slen;	/* string length */
+
+	if (m->m_len < 4) {
+		m = m_pullup(m, 4);
+		if (m == NULL)
+			return (NULL);
+	}
+	xs = mtod(m, struct xdr_string *);
+	slen = ntohl(xs->len);
+	mlen = 4 + ((slen + 3) & ~3);
+
+	if (slen > *len_p)
+		slen = *len_p;
+	m_copydata(m, 4, slen, str);
+	m_adj(m, mlen);
+
+	str[slen] = '\0';
+	*len_p = slen;
+
+	return (m);
+}
+
+
+/*
+ * Inet address in RPC messages
+ * (Note, really four ints, NOT chars.  Blech.)
+ */
+struct xdr_inaddr {
+	u_int32_t  atype;
+	int32_t	addr[4];
+};
+
+struct mbuf *
+xdr_inaddr_encode(ia)
+	struct in_addr *ia;		/* already in network order */
+{
+	struct mbuf *m;
+	struct xdr_inaddr *xi;
+	u_char *cp;
+	int32_t *ip;
+
+	m = m_get(M_WAIT, MT_DATA);
+	xi = mtod(m, struct xdr_inaddr *);
+	m->m_len = sizeof(*xi);
+	xi->atype = htonl(1);
+	ip = xi->addr;
+	cp = (u_char *)&ia->s_addr;
+	*ip++ = *cp++;
+	*ip++ = *cp++;
+	*ip++ = *cp++;
+	*ip++ = *cp++;
+
+	return (m);
+}
+
+struct mbuf *
+xdr_inaddr_decode(m, ia)
+	struct mbuf *m;
+	struct in_addr *ia;		/* already in network order */
+{
+	struct xdr_inaddr *xi;
+	u_char *cp;
+	int32_t *ip;
+
+	if (m->m_len < sizeof(*xi)) {
+		m = m_pullup(m, sizeof(*xi));
+		if (m == NULL)
+			return (NULL);
+	}
+	xi = mtod(m, struct xdr_inaddr *);
+	if (xi->atype != htonl(1)) {
+		ia->s_addr = INADDR_ANY;
+		goto out;
+	}
+	ip = xi->addr;
+	cp = (u_char *)&ia->s_addr;
+	*cp++ = *ip++;
+	*cp++ = *ip++;
+	*cp++ = *ip++;
+	*cp++ = *ip++;
+
+out:
+	m_adj(m, sizeof(*xi));
+	return (m);
 }

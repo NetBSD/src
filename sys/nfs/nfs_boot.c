@@ -1,7 +1,7 @@
-/*    $NetBSD: nfs_boot.c,v 1.15 1995/03/28 21:29:32 gwr Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.16 1995/04/24 21:55:08 gwr Exp $ */
 
 /*
- * Copyright (c) 1994 Adam Glass, Gordon Ross
+ * Copyright (c) 1995 Adam Glass, Gordon Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,9 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/reboot.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -112,8 +113,7 @@ nfs_boot_init(nd, procp)
 	struct sockaddr_in *sin;
 	struct ifnet *ifp;
 	struct socket *so;
-	int error, len;
-	u_short port;
+	int error;
 
 	/*
 	 * Find an interface, rarp for its ip address, stuff it, the
@@ -278,51 +278,6 @@ get_path_and_handle(bpsin, key, ndmntp)
 
 
 /*
- * Get an mbuf with the given length, and
- * initialize the pkthdr length field.
- */
-static struct mbuf *
-m_get_len(int msg_len)
-{
-	struct mbuf *m;
-	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return NULL;
-	if (msg_len > MHLEN) {
-		if (msg_len > MCLBYTES)
-			panic("nfs_boot: msg_len > MCLBYTES");
-		MCLGET(m, M_WAIT);
-		if (m == NULL)
-			return NULL;
-	}
-	m->m_len = msg_len;
-	m->m_pkthdr.len = m->m_len;
-	return (m);
-}
-
-
-/*
- * String representation for RPC.
- */
-struct rpc_string {
-	u_long len;		/* length without null or padding */
-	u_char data[4];	/* data (longer, of course) */
-    /* data is padded to a long-word boundary */
-};
-/* Compute space used given string length. */
-#define	RPC_STR_SIZE(slen) (4 + ((slen + 3) & ~3))
-
-/*
- * Inet address in RPC messages
- * (Note, really four longs, NOT chars.  Blech.)
- */
-struct bp_inaddr {
-	u_long  atype;
-	long	addr[4];
-};
-
-
-/*
  * RPC: bootparam/whoami
  * Given client IP address, get:
  *	client name	(hostname)
@@ -345,47 +300,37 @@ bp_whoami(bpsin, my_ip, gw_ip)
 {
 	/* RPC structures for PMAPPROC_CALLIT */
 	struct whoami_call {
-		u_long call_prog;
-		u_long call_vers;
-		u_long call_proc;
-		u_long call_arglen;
-		struct bp_inaddr call_ia;
+		u_int32_t call_prog;
+		u_int32_t call_vers;
+		u_int32_t call_proc;
+		u_int32_t call_arglen;
 	} *call;
+	struct callit_reply {
+		u_int32_t port;
+		u_int32_t encap_len;
+		/* encapsulated data here */
+	} *reply;
 
-	struct rpc_string *str;
-	struct bp_inaddr *bia;
 	struct mbuf *m, *from;
 	struct sockaddr_in *sin;
 	int error, msg_len;
-	int cn_len, dn_len;
-	u_char *p;
-	long *lp;
-
-	/*
-	 * Get message buffer of sufficient size.
-	 */
-	msg_len = sizeof(*call);
-	m = m_get_len(msg_len);
-	if (m == NULL)
-		return ENOBUFS;
+	int16_t port;
 
 	/*
 	 * Build request message for PMAPPROC_CALLIT.
 	 */
+	m = m_get(M_WAIT, MT_DATA);
 	call = mtod(m, struct whoami_call *);
+	m->m_len = sizeof(*call);
 	call->call_prog = htonl(BOOTPARAM_PROG);
 	call->call_vers = htonl(BOOTPARAM_VERS);
 	call->call_proc = htonl(BOOTPARAM_WHOAMI);
-	call->call_arglen = htonl(sizeof(struct bp_inaddr));
 
-	/* client IP address */
-	call->call_ia.atype = htonl(1);
-	p = (u_char*)my_ip;
-	lp = call->call_ia.addr;
-	*lp++ = htonl(*p);	p++;
-	*lp++ = htonl(*p);	p++;
-	*lp++ = htonl(*p);	p++;
-	*lp++ = htonl(*p);	p++;
+	/*
+	 * append encapsulated data (client IP address)
+	 */
+	m->m_next = xdr_inaddr_encode(my_ip);
+	call->call_arglen = m->m_next->m_len;
 
 	/* RPC: portmap/callit */
 	bpsin->sin_port = htons(PMAPPORT);
@@ -398,64 +343,41 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	/*
 	 * Parse result message.
 	 */
-	msg_len = m->m_len;
-	lp = mtod(m, long *);
+	if (m->m_len < sizeof(*reply)) {
+		m = m_pullup(m, sizeof(*reply));
+		if (m == NULL)
+			goto bad;
+	}
+	reply = mtod(m, struct callit_reply *);
+	port = ntohl(reply->port);
+	msg_len = ntohl(reply->encap_len);
+	m_adj(m, sizeof(*reply));
 
-	/* bootparam server port (also grab from address). */
-	if (msg_len < sizeof(*lp))
-		goto bad;
-	msg_len -= sizeof(*lp);
-	bpsin->sin_port = htons((short)ntohl(*lp++));
+	/*
+	 * Save bootparam server address
+	 */
 	sin = mtod(from, struct sockaddr_in *);
+	bpsin->sin_port = htons(port);
 	bpsin->sin_addr.s_addr = sin->sin_addr.s_addr;
 
-	/* length of encapsulated results */
-	if (msg_len < (ntohl(*lp) + sizeof(*lp)))
-		goto bad;
-	msg_len = ntohl(*lp++);
-	p = (char*)lp;
-
 	/* client name */
-	if (msg_len < sizeof(*str))
+	hostnamelen = MAXHOSTNAMELEN-1;
+	m = xdr_string_decode(m, hostname, &hostnamelen);
+	if (m == NULL)
 		goto bad;
-	str = (struct rpc_string *)p;
-	cn_len = ntohl(str->len);
-	if (msg_len < cn_len)
-		goto bad;
-	if (cn_len >= MAXHOSTNAMELEN)
-		goto bad;
-	bcopy(str->data, hostname, cn_len);
-	hostname[cn_len] = '\0';
-	hostnamelen = cn_len;
-	p += RPC_STR_SIZE(cn_len);
-	msg_len -= RPC_STR_SIZE(cn_len);
 
 	/* domain name */
-	if (msg_len < sizeof(*str))
+	domainnamelen = MAXHOSTNAMELEN-1;
+	m = xdr_string_decode(m, domainname, &domainnamelen);
+	if (m == NULL)
 		goto bad;
-	str = (struct rpc_string *)p;
-	dn_len = ntohl(str->len);
-	if (msg_len < dn_len)
-		goto bad;
-	if (dn_len >= MAXHOSTNAMELEN)
-		goto bad;
-	bcopy(str->data, domainname, dn_len);
-	domainname[dn_len] = '\0';
-	domainnamelen = dn_len;
-	p += RPC_STR_SIZE(dn_len);
-	msg_len -= RPC_STR_SIZE(dn_len);
 
 	/* gateway address */
-	if (msg_len < sizeof(*bia))
+	m = xdr_inaddr_decode(m, gw_ip);
+	if (m == NULL)
 		goto bad;
-	bia = (struct bp_inaddr *)p;
-	if (bia->atype != htonl(1))
-		goto bad;
-	p = (u_char*)gw_ip;
-	*p++ = ntohl(bia->addr[0]);
-	*p++ = ntohl(bia->addr[1]);
-	*p++ = ntohl(bia->addr[2]);
-	*p++ = ntohl(bia->addr[3]);
+
+	/* success */
 	goto out;
 
 bad:
@@ -465,7 +387,8 @@ bad:
 out:
 	if (from)
 		m_freem(from);
-	m_freem(m);
+	if (m)
+		m_freem(m);
 	return(error);
 }
 
@@ -485,40 +408,20 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 	char *serv_name;
 	char *pathname;
 {
-	struct rpc_string *str;
 	struct mbuf *m;
-	struct bp_inaddr *bia;
 	struct sockaddr_in *sin;
-	u_char *p, *q;
-	int error, msg_len;
-	int cn_len, key_len, sn_len, path_len;
-
-	/*
-	 * Get message buffer of sufficient size.
-	 */
-	cn_len = hostnamelen;
-	key_len = strlen(key);
-	msg_len = 0;
-	msg_len += RPC_STR_SIZE(cn_len);
-	msg_len += RPC_STR_SIZE(key_len);
-	m = m_get_len(msg_len);
-	if (m == NULL)
-		return ENOBUFS;
+	struct in_addr inaddr;
+	int error, sn_len, path_len;
 
 	/*
 	 * Build request message.
 	 */
-	p = mtod(m, u_char *);
-	bzero(p, msg_len);
+
 	/* client name (hostname) */
-	str = (struct rpc_string *)p;
-	str->len = htonl(cn_len);
-	bcopy(hostname, str->data, cn_len);
-	p += RPC_STR_SIZE(cn_len);
+	m  = xdr_string_encode(hostname, hostnamelen);
+
 	/* key name (root or swap) */
-	str = (struct rpc_string *)p;
-	str->len = htonl(key_len);
-	bcopy(key, str->data, key_len);
+	m->m_next = xdr_string_encode(key, strlen(key));
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
@@ -529,52 +432,32 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 	/*
 	 * Parse result message.
 	 */
-	p = mtod(m, u_char *);
-	msg_len = m->m_len;
 
 	/* server name */
-	if (msg_len < sizeof(*str))
+	sn_len = MNAMELEN-1;
+	m = xdr_string_decode(m, serv_name, &sn_len);
+	if (m == NULL)
 		goto bad;
-	str = (struct rpc_string *)p;
-	sn_len = ntohl(str->len);
-	if (msg_len < sn_len)
-		goto bad;
-	if (sn_len >= MNAMELEN)
-		goto bad;
-	bcopy(str->data, serv_name, sn_len);
-	serv_name[sn_len] = '\0';
-	p += RPC_STR_SIZE(sn_len);
-	msg_len -= RPC_STR_SIZE(sn_len);
 
-	/* server IP address (mountd) */
-	if (msg_len < sizeof(*bia))
+	/* server IP address (mountd/NFS) */
+	m = xdr_inaddr_decode(m, &inaddr);
+	if (m == NULL)
 		goto bad;
-	bia = (struct bp_inaddr *)p;
-	if (bia->atype != htonl(1))
+
+	/* server pathname */
+	path_len = MAXPATHLEN-1;
+	m = xdr_string_decode(m, pathname, &path_len);
+	if (m == NULL)
 		goto bad;
+
+	/* setup server socket address */
 	sin = md_sin;
 	bzero((caddr_t)sin, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
-	q = (u_char*) &sin->sin_addr;
-	*q++ = ntohl(bia->addr[0]);
-	*q++ = ntohl(bia->addr[1]);
-	*q++ = ntohl(bia->addr[2]);
-	*q++ = ntohl(bia->addr[3]);
-	p += sizeof(*bia);
-	msg_len -= sizeof(*bia);
+	sin->sin_addr = inaddr;
 
-	/* server pathname */
-	if (msg_len < sizeof(*str))
-		goto bad;
-	str = (struct rpc_string *)p;
-	path_len = ntohl(str->len);
-	if (msg_len < path_len)
-		goto bad;
-	if (path_len >= MAXPATHLEN)
-		goto bad;
-	bcopy(str->data, pathname, path_len);
-	pathname[path_len] = '\0';
+	/* success */
 	goto out;
 
 bad:
@@ -599,28 +482,19 @@ md_mount(mdsin, path, fhp)
 	u_char *fhp;
 {
 	/* The RPC structures */
-	struct rpc_string *str;
 	struct rdata {
-		u_long	errno;
+		u_int32_t	errno;
 		u_char	fh[NFS_FHSIZE];
 	} *rdata;
 	struct mbuf *m;
-	int error, mlen, slen;
+	int error;
 
 	/* Get port number for MOUNTD. */
 	error = krpc_portmap(mdsin, RPCPROG_MNT, RPCMNT_VER1,
 						 &mdsin->sin_port);
 	if (error) return error;
 
-	slen = strlen(path);
-	mlen = RPC_STR_SIZE(slen);
-
-	m = m_get_len(mlen);
-	if (m == NULL)
-		return ENOBUFS;
-	str = mtod(m, struct rpc_string *);
-	str->len = htonl(slen);
-	bcopy(path, str->data, slen);
+	m = xdr_string_encode(path, strlen(path));
 
 	/* Do RPC to mountd. */
 	error = krpc_call(mdsin, RPCPROG_MNT, RPCMNT_VER1,
@@ -628,9 +502,11 @@ md_mount(mdsin, path, fhp)
 	if (error)
 		return error;	/* message already freed */
 
-	mlen = m->m_len;
-	if (mlen < sizeof(*rdata))
-		goto bad;
+	if (m->m_len < sizeof(*rdata)) {
+		m = m_pullup(m, sizeof(*rdata));
+		if (m == NULL)
+			goto bad;
+	}
 	rdata = mtod(m, struct rdata *);
 	error = ntohl(rdata->errno);
 	if (error)
