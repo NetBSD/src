@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.10 2002/04/25 19:34:02 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.11 2002/04/27 17:39:52 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -87,11 +87,20 @@ ABSOLUTE cmd_slot_size	= 4;
 
 ; SCRATCHE1: last status
 
-ENTRY reselect;
+; SCRATCHE2: current command done slot
+ABSOLUTE ndone_slots	= 256 ; number of slots in CMD ring
+ABSOLUTE ndone_slots_last = 0 ; == ndonemd_slots in a 8bit counter
+; SCRATCHF: pointer in command done ring
+
 ENTRY cmdr0;
 ENTRY cmdr1;
 ENTRY cmdr2;
 ENTRY cmdr3;
+ENTRY doner0;
+ENTRY doner1;
+ENTRY doner2;
+ENTRY doner3;
+ENTRY reselect;
 ENTRY led_on1;
 ENTRY led_on2;
 ENTRY led_off;
@@ -366,7 +375,37 @@ handle_cmpl:
 	CALL REL(disconnect);
 	MOVE SCRATCHE1 to SFBR;
 	INT int_done, IF NOT 0x00; if status is not "done", let host handle it
-	MOVE ISTAT | 0x10 TO ISTAT; else signal that cmd is done in ISTAT
+	MOVE SCRATCHF0 to SFBR; load pointer in done ring
+	MOVE SFBR to DSA0;
+	MOVE SCRATCHF1 to SFBR;
+	MOVE SFBR to DSA1;
+	MOVE SCRATCHF2 to SFBR;
+	MOVE SFBR to DSA2;
+	MOVE SCRATCHF3 to SFBR;
+	MOVE SFBR to DSA3;
+wait_free:
+	LOAD SCRATCHA0, 1, from 0;
+	MOVE SCRATCHA0 to SFBR;
+	JUMP REL(wait_free), if not 0; wait for slot to be free
+	STORE NOFLUSH SCRATCHC0, 4, from 0; save current target/lun/flag
+	MOVE SCRATCHF0 + 4 to SCRATCHF0; advance to next slot
+	MOVE SCRATCHF1 + 0 to SCRATCHF1 with carry;
+	MOVE SCRATCHF2 + 0 to SCRATCHF2 with carry;
+	MOVE SCRATCHF3 + 0 to SCRATCHF3 with carry;
+	MOVE SCRATCHE2 + 1 to SCRATCHE2;
+	MOVE SCRATCHE2 to SFBR;
+	JUMP REL(is_done), if not ndone_slots_last;
+doner0:
+	MOVE 0xff to SCRATCHF0; driver will change 0xff to base of ring
+doner1:
+	MOVE 0xff to SCRATCHF1;
+doner2:
+	MOVE 0xff to SCRATCHF2;
+doner3:
+	MOVE 0xff to SCRATCHF3;
+	MOVE 0  to SCRATCHE2;
+is_done:
+	MOVE ISTAT | 0x10 TO ISTAT; signal that cmd is done in ISTAT
 	JUMP REL(script_sched); and attempt next command
 
 handle_extin:

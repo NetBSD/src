@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.10 2002/04/25 20:05:10 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.11 2002/04/27 17:39:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.10 2002/04/25 20:05:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.11 2002/04/27 17:39:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static int esiop_stat_intr_qfull = 0;
 void esiop_printstats __P((void));
 #define INCSTAT(x) x++
 #else
-#define INCSTAT(x) 
+#define INCSTAT(x)
 #endif
 
 static __inline__ void esiop_script_sync __P((struct esiop_softc *, int));
@@ -158,6 +158,8 @@ void
 esiop_attach(sc)
 	struct esiop_softc *sc;
 {
+	struct esiop_dsatbl *tagtbl_donering;
+
 	if (siop_common_attach(&sc->sc_c) != 0 )
 		return;
 
@@ -174,6 +176,29 @@ esiop_attach(sc)
 
 	sc->sc_c.sc_adapt.adapt_max_periph = ESIOP_NTAG;
 	sc->sc_c.sc_adapt.adapt_request = esiop_scsipi_request;
+
+	/*
+	 * get space for the CMD done slot. For this we use a tag table entry.
+	 * It's the same size and allows us to not waste 3/4 of a page
+	 */
+#ifdef DIAGNOSTIC
+	if (ESIOP_NTAG != A_ndone_slots) {
+		printf("%s: size of tag DSA table different from the done"
+		    "ring\n", sc->sc_c.sc_dev.dv_xname);
+		return;
+	}
+#endif
+	esiop_moretagtbl(sc);
+	tagtbl_donering = TAILQ_FIRST(&sc->free_tagtbl);
+	if (tagtbl_donering == NULL) {
+		printf("%s: no memory for command done ring\n",
+		    "ring\n", sc->sc_c.sc_dev.dv_xname);
+		return;
+	}
+	TAILQ_REMOVE(&sc->free_tagtbl, tagtbl_donering, next);
+	sc->sc_done_map = tagtbl_donering->tblblk->blkmap;
+	sc->sc_done_offset = tagtbl_donering->tbl_offset;
+	sc->sc_done_slot = &tagtbl_donering->tbl[0];
 
 	/* Do a bus reset, so that devices fall back to narrow/async */
 	siop_resetbus(&sc->sc_c);
@@ -217,14 +242,14 @@ esiop_reset(sc)
 		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh, 0,
 		    esiop_script,
 		    sizeof(esiop_script) / sizeof(esiop_script[0]));
-		for (j = 0; j <       
+		for (j = 0; j <
 		    (sizeof(E_tlq_offset_Used) / sizeof(E_tlq_offset_Used[0]));
 		    j++) {
 			bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
 			    E_tlq_offset_Used[j] * 4,
 			    sizeof(struct siop_common_xfer));
 		}
-		for (j = 0; j <       
+		for (j = 0; j <
 		    (sizeof(E_abs_msgin2_Used) / sizeof(E_abs_msgin2_Used[0]));
 		    j++) {
 			bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
@@ -303,6 +328,25 @@ esiop_reset(sc)
 	    0x78660000 | ((addr & 0x00ff0000) >>  8));
 	esiop_script_write(sc, Ent_cmdr3 / 4,
 	    0x78670000 | ((addr & 0xff000000) >> 16));
+	/* done ring */
+	for (i = 0; i < A_ndone_slots; i++)
+		sc->sc_done_slot[i] = 0;
+	bus_dmamap_sync(sc->sc_c.sc_dmat, sc->sc_done_map,
+	    sc->sc_done_offset, A_ndone_slots * sizeof(u_int32_t),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	addr = sc->sc_done_map->dm_segs[0].ds_addr + sc->sc_done_offset;
+	sc->sc_currdoneslot = 0;
+	bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCRATCHE + 2, 0);
+	bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCRATCHF, addr);
+	esiop_script_write(sc, Ent_doner0 / 4,
+	    0x786c0000 | ((addr & 0x000000ff) <<  8));
+	esiop_script_write(sc, Ent_doner1 / 4,
+	    0x786d0000 | ((addr & 0x0000ff00)      ));
+	esiop_script_write(sc, Ent_doner2 / 4,
+	    0x786e0000 | ((addr & 0x00ff0000) >>  8));
+	esiop_script_write(sc, Ent_doner3 / 4,
+	    0x786f0000 | ((addr & 0xff000000) >> 16));
+
 	/* set flags */
 	bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCRATCHC, 0);
 	/* write pointer of base of target DSA table */
@@ -394,13 +438,13 @@ again:
 		goto again;
 	}
 
-	if ((istat &(ISTAT_DIP | ISTAT_SIP | ISTAT_ABRT)) == 
+	if ((istat &(ISTAT_DIP | ISTAT_SIP | ISTAT_ABRT)) ==
 	    (ISTAT_DIP | ISTAT_ABRT)) {
 		/* clear abort */
 		bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 		    SIOP_ISTAT, 0);
 	}
-	
+
 	/* get CMD from T/L/Q */
 	tflags = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 	    SIOP_SCRATCHC);
@@ -501,7 +545,7 @@ none:
 			printf("T/L/Q=%d/%d/%d last msg_in=0x%x status=0x%x\n",
 			    target, lun, tag, esiop_cmd->cmd_tables->msg_in[0],
 			    le32toh(esiop_cmd->cmd_tables->status));
-		else 
+		else
 			printf(" current T/L/Q invalid\n");
 		need_reset = 1;
 		}
@@ -541,7 +585,7 @@ none:
 			goto reset;
 		}
 		if ((sist & SIST0_MA) && need_reset == 0) {
-			if (esiop_cmd) { 
+			if (esiop_cmd) {
 				int scratchc0;
 				dstat = bus_space_read_1(sc->sc_c.sc_rt,
 				    sc->sc_c.sc_rh, SIOP_DSTAT);
@@ -831,7 +875,7 @@ scintr:
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
-				} else if (msg == MSG_SIMPLE_Q_TAG || 
+				} else if (msg == MSG_SIMPLE_Q_TAG ||
 				    msg == MSG_HEAD_OF_Q_TAG ||
 				    msg == MSG_ORDERED_Q_TAG) {
 					if (esiop_handle_qtag_reject(
@@ -872,7 +916,7 @@ scintr:
 		case A_int_extmsgin:
 #ifdef SIOP_DEBUG_INTR
 			printf("extended message: msg 0x%x len %d\n",
-			    esiop_cmd->cmd_tables->msg_in[2], 
+			    esiop_cmd->cmd_tables->msg_in[2],
 			    esiop_cmd->cmd_tables->msg_in[1]);
 #endif
 			if (esiop_cmd->cmd_tables->msg_in[1] >
@@ -981,7 +1025,7 @@ scintr:
 				    sc->sc_c.sc_dev.dv_xname, offset);
 				goto reset;
 			}
-			/* 
+			/*
 			 * offset == SIOP_NSG may be a valid condition if
 			 * we get a sdp when the xfer is done.
 			 * Don't call memmove in this case.
@@ -1052,7 +1096,7 @@ end:
 		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
-		
+
 	return 1;
 }
 
@@ -1126,46 +1170,73 @@ esiop_checkdone(sc)
 	struct esiop_target *esiop_target;
 	struct esiop_lun *esiop_lun;
 	struct esiop_cmd *esiop_cmd;
+	u_int32_t slot;
+	int needsync = 0;
 	int status;
 
-	for (target = 0; target < sc->sc_c.sc_chan.chan_ntargets; target++) {
-		esiop_target = (struct esiop_target *)sc->sc_c.targets[target];
-		if (esiop_target == NULL)
-			continue;
-		for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
-			esiop_lun = esiop_target->esiop_lun[lun];
-			if (esiop_lun == NULL)
-				continue;
-			esiop_cmd = esiop_lun->active;
-			if (esiop_cmd) {
-				esiop_table_sync(esiop_cmd,
-				    BUS_DMASYNC_POSTREAD |
-				    BUS_DMASYNC_POSTWRITE);
-				status = le32toh(esiop_cmd->cmd_tables->status);
-				if (status == SCSI_OK) {
-					/* Ok, this command has been handled */
-					esiop_cmd->cmd_c.xs->status = status;
-					esiop_lun->active = NULL;
-					esiop_scsicmd_end(esiop_cmd);
-				}
-			}
-			for (tag = 0; tag < ESIOP_NTAG; tag++) {
-				esiop_cmd = esiop_lun->tactive[tag];
-				if (esiop_cmd == NULL)
-					continue;
-				esiop_table_sync(esiop_cmd,
-				    BUS_DMASYNC_POSTREAD |
-				    BUS_DMASYNC_POSTWRITE);
-				status = le32toh(esiop_cmd->cmd_tables->status);
-				if (status == SCSI_OK) {
-					/* Ok, this command has been handled */
-					esiop_cmd->cmd_c.xs->status = status;
-					esiop_lun->tactive[tag] = NULL;
-					esiop_scsicmd_end(esiop_cmd);
-				}
-			}
-		}
+	bus_dmamap_sync(sc->sc_c.sc_dmat, sc->sc_done_map,
+	    sc->sc_done_offset, A_ndone_slots * sizeof(u_int32_t),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+next:
+	if (sc->sc_done_slot[sc->sc_currdoneslot] == 0) {
+		if (needsync)
+			bus_dmamap_sync(sc->sc_c.sc_dmat, sc->sc_done_map,
+			    sc->sc_done_offset,
+			    A_ndone_slots * sizeof(u_int32_t),
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		return;
 	}
+
+	needsync = 1;
+
+	slot = htole32(sc->sc_done_slot[sc->sc_currdoneslot]);
+	sc->sc_done_slot[sc->sc_currdoneslot] = 0;
+	sc->sc_currdoneslot += 1;
+	if (sc->sc_currdoneslot == A_ndone_slots)
+		sc->sc_currdoneslot = 0;
+
+	target =  (slot & A_f_c_target) ? (slot >> 8) & 0xff : -1;
+	lun =  (slot & A_f_c_lun) ? (slot >> 16) & 0xff : -1;
+	tag =  (slot & A_f_c_tag) ? (slot >> 24) & 0xff : -1;
+
+	esiop_target = (target >= 0) ?
+	    (struct esiop_target *)sc->sc_c.targets[target] : NULL;
+	if (esiop_target == NULL) {
+		printf("esiop_target (target %d) not valid\n", target);
+		goto next;
+	}
+	esiop_lun = (lun >= 0) ? esiop_target->esiop_lun[lun] : NULL;
+	if (esiop_lun == NULL) {
+		printf("esiop_lun (target %d lun %d) not valid\n",
+		    target, lun);
+		goto next;
+	}
+	esiop_cmd = (tag >= 0) ? esiop_lun->tactive[tag] : esiop_lun->active;
+	if (esiop_cmd == NULL) {
+		printf("esiop_cmd (target %d lun %d tag %d) not valid\n",
+		    target, lun, tag);
+			goto next;
+	}
+
+	esiop_table_sync(esiop_cmd,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	status = le32toh(esiop_cmd->cmd_tables->status);
+#ifdef DIAGNOSTIC
+	if (status != SCSI_OK) {
+		printf("command for T/L/Q %d/%d/%d status %d\n",
+		    target, lun, tag, status);
+		goto next;
+	}
+
+#endif
+	/* Ok, this command has been handled */
+	esiop_cmd->cmd_c.xs->status = status;
+	if (tag >= 0)
+		esiop_lun->tactive[tag] = NULL;
+	else
+		esiop_lun->active = NULL;
+	esiop_scsicmd_end(esiop_cmd);
+	goto next;
 }
 
 void
@@ -1185,7 +1256,7 @@ esiop_unqueue(sc, target, lun)
 
 	for (tag = 0; tag < ESIOP_NTAG; tag++) {
 		/* look for commands in the scheduler, not yet started */
-		if (esiop_lun->tactive[tag] == NULL) 
+		if (esiop_lun->tactive[tag] == NULL)
 			continue;
 		esiop_cmd = esiop_lun->tactive[tag];
 		for (slot = 0; slot < A_ncmd_slots; slot++) {
@@ -1286,7 +1357,7 @@ esiop_handle_reset(sc)
 	esiop_checkdone(sc);
 	for (target = 0; target < sc->sc_c.sc_chan.chan_ntargets;
 	    target++) {
-		struct esiop_target *esiop_target = 
+		struct esiop_target *esiop_target =
 		    (struct esiop_target *)sc->sc_c.targets[target];
 		if (esiop_target == NULL)
 			continue;
@@ -1596,7 +1667,7 @@ esiop_start(sc, esiop_cmd)
 	if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
 		esiop_lun->tactive[esiop_cmd->cmd_c.tag] = esiop_cmd;
 		/* DSA table for reselect */
-		esiop_lun->lun_tagtbl->tbl[esiop_cmd->cmd_c.tag] = 
+		esiop_lun->lun_tagtbl->tbl[esiop_cmd->cmd_c.tag] =
 		    htole32(esiop_cmd->cmd_c.dsa);
 		bus_dmamap_sync(sc->sc_c.sc_dmat,
 		    esiop_lun->lun_tagtbl->tblblk->blkmap,
@@ -1795,7 +1866,7 @@ esiop_morecbd(sc)
 		xfer->siop_tables.t_msgout.count= htole32(1);
 		xfer->siop_tables.t_msgout.addr = htole32(dsa);
 		xfer->siop_tables.t_msgin.count= htole32(1);
-		xfer->siop_tables.t_msgin.addr = htole32(dsa + 
+		xfer->siop_tables.t_msgin.addr = htole32(dsa +
 			offsetof(struct siop_common_xfer, msg_in));
 		xfer->siop_tables.t_extmsgin.count= htole32(2);
 		xfer->siop_tables.t_extmsgin.addr = htole32(dsa +
