@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.5 2000/07/25 23:18:42 jeffs Exp $	*/
+/*	$NetBSD: puc.c,v 1.6 2000/07/28 20:43:45 castor Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -62,6 +62,8 @@
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+
+#include "opt_puccn.h"
 
 struct puc_softc {
 	struct device		sc_dev;
@@ -206,6 +208,7 @@ puc_attach(parent, self, aux)
 			tag = pa->pa_memt;
 			base =  PCI_MAPREG_MEM_ADDR(bar);
 		}
+#ifdef	PUCCN
 		if (com_is_console(tag, base, &ioh)) {
 			sc->sc_bar_mappings[i].mapped = 1;
 			sc->sc_bar_mappings[i].a = base;
@@ -214,6 +217,7 @@ puc_attach(parent, self, aux)
 			sc->sc_bar_mappings[i].h = ioh;
 			continue;
 		}
+#endif
 		sc->sc_bar_mappings[i].mapped = (pci_mapreg_map(pa,
 		    PCI_MAPREG_START + 4 * i, type, 0,
 		    &sc->sc_bar_mappings[i].t, &sc->sc_bar_mappings[i].h,
@@ -270,9 +274,13 @@ puc_attach(parent, self, aux)
 		paa.a = sc->sc_bar_mappings[barindex].a;
 		paa.t = sc->sc_bar_mappings[barindex].t;
 
-		if (!com_is_console(sc->sc_bar_mappings[barindex].t,
+		if (
+#ifdef	PUCCN
+		    !com_is_console(sc->sc_bar_mappings[barindex].t,
 		    sc->sc_bar_mappings[barindex].a, &subregion_handle)
-		   && bus_space_subregion(sc->sc_bar_mappings[barindex].t,
+		   && 
+#endif
+		    bus_space_subregion(sc->sc_bar_mappings[barindex].t,
 		    sc->sc_bar_mappings[barindex].h,
 		    sc->sc_desc->ports[i].offset,
 		    sc->sc_bar_mappings[barindex].s - 
