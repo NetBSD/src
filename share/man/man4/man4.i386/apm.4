@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: apm.4,v 1.1 1996/08/25 23:39:11 jtk Exp $
+.\"   $NetBSD: apm.4,v 1.2 1997/03/23 19:20:30 jtk Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -54,7 +54,7 @@ to the APM BIOS.
 .Pp
 The APM driver may be adjusted with several configuration options:
 .Bl -tag -width indent -compact
-.It Dv APM_NOIDLE
+.It Dv APM_NO_IDLE
 Do not call the BIOS CPU idle function from the system idle loop.  (Some
 systems will hang on certain device accesses, such as sound cards or
 floppy diskette drives, without this option)
@@ -165,4 +165,4 @@ Advanced Power Management (APM) BIOS Interface Specification (Revision
 .Sh HISTORY
 The
 .Nm apm
-pseudo-device driver appeared in NetBSD-current.
+pseudo-device driver appeared in NetBSD-1.3.
