@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.84 2004/07/17 05:03:33 petrov Exp $	 */
+/*	$NetBSD: reloc.c,v 1.85 2004/10/22 05:39:56 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -36,6 +36,11 @@
  *
  * John Polstra <jdp@polstra.com>.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: reloc.c,v 1.85 2004/10/22 05:39:56 skrll Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>

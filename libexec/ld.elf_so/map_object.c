@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.30 2003/07/24 10:12:25 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.31 2004/10/22 05:39:56 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -31,6 +31,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: map_object.c,v 1.31 2004/10/22 05:39:56 skrll Exp $");
+#endif /* not lint */
 
 #include <errno.h>
 #include <stddef.h>

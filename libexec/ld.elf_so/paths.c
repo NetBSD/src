@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.31 2004/07/05 11:50:07 cube Exp $	 */
+/*	$NetBSD: paths.c,v 1.32 2004/10/22 05:39:56 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -28,6 +28,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: paths.c,v 1.32 2004/10/22 05:39:56 skrll Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>
