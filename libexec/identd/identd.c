@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.21 2004/01/31 22:03:31 christos Exp $ */
+/* $NetBSD: identd.c,v 1.22 2004/02/05 13:18:48 christos Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -37,7 +37,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-__RCSID("$NetBSD: identd.c,v 1.21 2004/01/31 22:03:31 christos Exp $");
+__RCSID("$NetBSD: identd.c,v 1.22 2004/02/05 13:18:48 christos Exp $");
 
 #define OPSYS_NAME      "UNIX"
 #define IDENT_SERVICE   "auth"
@@ -263,8 +263,8 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
     const char *user, int timeout)
 {
 	struct sockaddr_storage ss[2];
-	char userbuf[LOGIN_NAME_MAX];
-	char idbuf[LOGIN_NAME_MAX];
+	char userbuf[LOGIN_NAME_MAX];	/* actual user name (or numeric uid) */
+	char idbuf[LOGIN_NAME_MAX];	/* name to be used in response */
 	char buf[BUFSIZ], *p;
 	int n, lport, fport;
 	struct passwd *pw;
@@ -368,21 +368,20 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		return 1;
 	}
 
-	/* Get username with the uid */
+	/* Fill in userbuf with user name if possible, else numeric uid */
 	if ((pw = getpwuid(uid)) == NULL) {
 		if (lflag)
 			syslog(LOG_ERR, "Couldn't map uid (%u) to name", uid);
-		(void)snprintf(idbuf, sizeof(idbuf), "%u", uid);
-		idparse(fd, lport, fport, charset, osname, idbuf);
-		return 0;
+		(void)snprintf(userbuf, sizeof(userbuf), "%u", uid);
+	} else {
+		if (lflag)
+		    syslog(LOG_INFO, "Successfull lookup: %d, %d: %s for %s",
+			lport, fport, pw->pw_name, gethost(&ss[0]));
+		(void)strlcpy(userbuf, pw->pw_name, sizeof(userbuf));
 	}
 
-	if (lflag)
-		syslog(LOG_INFO, "Successfull lookup: %d, %d: %s for %s",
-		    lport, fport, pw->pw_name, gethost(&ss[0]));
-
 	/* No ident enabled? */
-	if (Nflag && check_noident(pw->pw_dir)) {
+	if (Nflag && pw && check_noident(pw->pw_dir)) {
 		if (lflag)
 			syslog(LOG_NOTICE, "Returning HIDDEN-USER for user %s"
 			    " to %s", pw->pw_name, gethost(&ss[0]));
@@ -391,17 +390,20 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	}
 
 	/* User ident enabled ? */
-	if (iflag && check_userident(pw->pw_dir, idbuf, sizeof(idbuf))) {
-		(void)strlcpy(userbuf, pw->pw_name, sizeof(userbuf));
+	if (iflag && pw && check_userident(pw->pw_dir, idbuf, sizeof(idbuf))) {
 		if (!Iflag) {
-			if (strspn(idbuf, "0123456789") &&
+			if ((strspn(idbuf, "0123456789") &&
 			    getpwuid(atoi(idbuf)) != NULL)
+			    || (getpwnam(idbuf) != NULL)) {
+				if (lflag)
+					syslog(LOG_NOTICE,
+					    "Ignoring user-specified '%s' for "
+					    "user %s", idbuf, userbuf);
 				(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
-			else if (getpwnam(idbuf) != NULL)
-				(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
+			}
 		}
 		if (lflag)
-			syslog(LOG_NOTICE, "Returning user specified '%s' for "
+			syslog(LOG_NOTICE, "Returning user-specified '%s' for "
 			    "user %s to %s", idbuf, userbuf, gethost(&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
@@ -418,7 +420,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 
 		if (lflag)
 			syslog(LOG_NOTICE, "Returning random '%s' for user %s"
-			    " to %s", idbuf, pw->pw_name, gethost(&ss[0]));
+			    " to %s", idbuf, userbuf, gethost(&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
@@ -427,7 +429,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	if (nflag)
 		(void)snprintf(idbuf, sizeof(idbuf), "%u", uid);
 	else
-		(void)strlcpy(idbuf, pw->pw_name, sizeof(idbuf));
+		(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
 
 	if (Fflag) {
 		/* RFC 1413 says that 512 is the limit */
