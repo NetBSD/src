@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2002/11/17 17:10:46 chs Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -233,12 +233,11 @@ cpu_dumpconf()
 	const struct bdevsw *bdev;
 	extern int dumpsize;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bp = bdevsw_lookup(dumpdev);
-	if (bp == NULL)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdev->d_psize == NULL)
 		goto bad;
