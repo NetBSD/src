@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.2 2002/01/30 22:18:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.3 2002/02/19 23:56:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,21 @@ struct pt_alarm_t {
 timer_t pthread_alarmtimer;
 static PTQ_HEAD(, pt_alarm_t) pthread_alarmqueue = PTQ_HEAD_INITIALIZER;
 static pthread_spin_t pthread_alarmqlock;
+
+void
+pthread__alarm_init(void)
+{
+	struct sigevent ev;
+	int retval;
+
+	ev.sigev_notify = SIGEV_SA;
+	ev.sigev_signo = 0;
+	ev.sigev_value.sival_int = PT_ALARMTIMER_MAGIC;
+	retval = timer_create(CLOCK_REALTIME, &ev, &pthread_alarmtimer);
+	if (retval)
+		err(1, "timer_create");
+
+}
 
 void *
 pthread__alarm_add(pthread_t self, const struct timespec *ts, 

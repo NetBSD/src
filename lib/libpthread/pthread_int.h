@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.18 2002/01/28 19:05:49 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.19 2002/02/19 23:56:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ struct	pthread_st {
 
 #define PT_UPCALLSTACKS	16
 
+#define PT_ALARMTIMER_MAGIC	0x33330003
 #define NIDLETHREADS	4
 #define IDLESPINS	1000
 
@@ -208,6 +209,7 @@ void	pthread__sa_start(void);
 void	pthread__sa_recycle(pthread_t old, pthread_t new);
 
 /* Alarm code */
+void	pthread__alarm_init(void);
 void	*pthread__alarm_add(pthread_t, const struct timespec *,
     void (*)(void *), void *);
 void	pthread__alarm_del(pthread_t, void *);
