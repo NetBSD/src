@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151.2.6 2000/12/13 15:50:13 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.2.7 2000/12/13 18:29:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -837,8 +837,8 @@ sdminphys(bp)
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
 	if ((sd->flags & SDF_ANCIENT) &&
-	    ((sd->sc_link->flags & (SDEV_REMOVABLE | SDEV_MEDIA_LOADED)) !=
-	     SDEV_REMOVABLE)) {
+	    ((sd->sc_periph->periph_flags &
+	    (PERIPH_REMOVABLE | PERIPH_MEDIA_LOADED)) != PERIPH_REMOVABLE)) {
 		max = sd->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)
