@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: context_time.c,v 1.5 2001/05/11 09:16:45 assar Exp $"
-        "$NetBSD: context_time.c,v 1.2 2002/11/28 11:21:16 elric Exp $");
+        "$NetBSD: context_time.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
 
 OM_uint32 gss_context_time
            (OM_uint32 * minor_status,
@@ -47,7 +47,7 @@ OM_uint32 gss_context_time
     krb5_error_code kret;
     krb5_timestamp timeret;
 
-    GSSAPI_KRB5_INIT_MS(minor_status);
+    GSSAPI_KRB5_INIT ();
 
     ret = gss_inquire_context(minor_status, context_handle,
 			      NULL, NULL, &lifetime, NULL, NULL, NULL, NULL);
@@ -63,5 +63,6 @@ OM_uint32 gss_context_time
     }
 
     *time_rec = lifetime - timeret;
+    *minor_status = 0;
     return GSS_S_COMPLETE;
 }
