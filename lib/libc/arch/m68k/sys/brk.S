@@ -38,12 +38,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)brk.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: brk.S,v 1.1 1993/11/25 23:39:24 paulus Exp $"
+	.asciz "$Id: brk.S,v 1.2 1994/01/27 14:45:53 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
-
-#define	SYS_brk		17
 
 	.globl	curbrk
 	.globl	minbrk
@@ -60,7 +58,7 @@ ENTRY(brk)
 	jle	ok
 	movl	d0,sp@(4)
 ok:
-	movl	#SYS_brk,d0
+	movl	#SYS_break,d0
 	trap	#0
 	jcs	err
 #ifdef	PIC

@@ -38,17 +38,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$Id: sigsuspend.S,v 1.1 1993/11/25 23:39:37 paulus Exp $"
+	.asciz "$Id: sigsuspend.S,v 1.2 1994/01/27 14:45:57 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
-
-	.even
-err:
-#ifdef	PIC
-	movl	d0,sp@-
-#endif
-	jra	cerror
 
 ENTRY(sigsuspend)
 	movl	sp@(4),a0
@@ -58,3 +51,8 @@ ENTRY(sigsuspend)
 	jcs	err
 	clrl	d0			/* shouldn't happen */
 	rts
+err:
+#ifdef	PIC
+	movl	d0,sp@-
+#endif
+	jra	cerror
