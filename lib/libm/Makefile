@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.7 1993/10/11 19:20:24 jtc Exp $
+#	$Id: Makefile,v 1.8 1993/10/21 00:41:56 jtc Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.
@@ -44,7 +44,6 @@ SRCS+=	cabs.c cbrt.c
 
 HARDWARE=i387
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
-CFLAGS+= -Dnational
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
 	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
@@ -58,7 +57,6 @@ SRCS+=	cabs.c cbrt.c support.c
 
 HARDWARE=${MACHINE}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
-CFLAGS+= -Dnational
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
 	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \

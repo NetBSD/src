@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)support.c	5.6 (Berkeley) 10/9/90";*/
-static char rcsid[] = "$Id: support.c,v 1.3 1993/08/14 13:43:24 mycroft Exp $";
+static char rcsid[] = "$Id: support.c,v 1.4 1993/10/21 00:42:06 jtc Exp $";
 #endif /* not lint */
 
 /* 
@@ -74,6 +74,7 @@ static char rcsid[] = "$Id: support.c,v 1.3 1993/08/14 13:43:24 mycroft Exp $";
  * REVISED BY K.C. NG on 1/22/85, 2/13/85, 3/24/85.
  */
 
+#include <machine/endian.h>
 #include "mathimpl.h"
 
 #if defined(vax)||defined(tahoe)      /* VAX D format */
@@ -92,11 +93,11 @@ double x; int N;
 {
         int k;
 
-#ifdef national
+#if BYTE_ORDER == LITTLE_ENDIAN
         unsigned short *px=(unsigned short *) &x + 3;
-#else	/* national */
+#else
         unsigned short *px=(unsigned short *) &x;
-#endif	/* national */
+#endif
 
         if( x == zero )  return(x); 
 
@@ -131,13 +132,13 @@ double x; int N;
 double copysign(x,y)
 double x,y;
 {
-#ifdef national
+#if BYTE_ORDER == LITTLE_ENDIAN
         unsigned short  *px=(unsigned short *) &x+3,
                         *py=(unsigned short *) &y+3;
-#else	/* national */
+#else
         unsigned short  *px=(unsigned short *) &x,
                         *py=(unsigned short *) &y;
-#endif	/* national */
+#endif
 
 #if defined(vax)||defined(tahoe)
         if ( (*px & mexp) == 0 ) return(x);
@@ -151,11 +152,11 @@ double logb(x)
 double x; 
 {
 
-#ifdef national
+#if BYTE_ORDER == LITTLE_ENDIAN
         short *px=(short *) &x+3, k;
-#else	/* national */
+#else
         short *px=(short *) &x, k;
-#endif	/* national */
+#endif
 
 #if defined(vax)||defined(tahoe)
         return (int)(((*px&mexp)>>gap)-bias);
@@ -180,11 +181,11 @@ double x;
 #if defined(vax)||defined(tahoe)
         return(1);
 #else	/* defined(vax)||defined(tahoe) */
-#ifdef national
+#if BYTE_ORDER == LITTLE_ENDIAN
         return( (*((short *) &x+3 ) & mexp ) != mexp );
-#else	/* national */
+#else
         return( (*((short *) &x ) & mexp ) != mexp );
-#endif	/* national */
+#endif
 #endif	/* defined(vax)||defined(tahoe) */
 }
 
@@ -194,19 +195,19 @@ double x,p;
         short sign;
         double hp,dp,tmp;
         unsigned short  k; 
-#ifdef national
+#if BYTE_ORDER == LITTLE_ENDIAN
         unsigned short
               *px=(unsigned short *) &x  +3, 
               *pp=(unsigned short *) &p  +3,
               *pd=(unsigned short *) &dp +3,
               *pt=(unsigned short *) &tmp+3;
-#else	/* national */
+#else
         unsigned short
               *px=(unsigned short *) &x  , 
               *pp=(unsigned short *) &p  ,
               *pd=(unsigned short *) &dp ,
               *pt=(unsigned short *) &tmp;
-#endif	/* national */
+#endif
 
         *pp &= msign ;
 
@@ -353,9 +354,9 @@ double drem(x,y)
 double x,y;
 {
 
-#ifdef national		/* order of words in floating point number */
+#if BYTE_ORDER == LITTLE_ENDIAN 
 	static const n0=3,n1=2,n2=1,n3=0;
-#else /* VAX, SUN, ZILOG, TAHOE */
+#else
 	static const n0=0,n1=1,n2=2,n3=3;
 #endif
 
@@ -461,7 +462,7 @@ double x;
         unsigned long *py=(unsigned long *) &y   ,
                       *pt=(unsigned long *) &t   ,
                       *px=(unsigned long *) &x   ;
-#ifdef national         /* ordering of word in a floating point number */
+#if BYTE_ORDER == LITTLE_ENDIAN
         const int n0=1, n1=0; 
 #else
         const int n0=0, n1=1; 
