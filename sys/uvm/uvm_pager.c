@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.13.2.2 1999/02/25 04:23:54 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.13.2.3 1999/04/09 04:39:39 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -572,15 +572,6 @@ ReTry:
 			/* if (uobj): object still locked, as per
 			 * return-state item #3 */
 		}
-		if (result == VM_PAGER_PEND) {
-			/* XXX uvmexp.paging needs spinlock */
-			/*
-			 * XXX also, uvmexp.paging could briefly be negative
-			 * if the iodone handler runs before we bump the
-			 * counter here.
-			 */
-			uvmexp.paging += *npages;
-		}
 		return (result);
 	}
 
@@ -810,10 +801,10 @@ uvm_aio_biodone(bp)
 	int s;
 
 	s = splbio();
-	simple_lock(&uvm.pagedaemon_lock);	/* locks uvm.aio_done */
+	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
 	TAILQ_INSERT_TAIL(&uvm.aio_done, &abp->aio, aioq);
-	wakeup(&uvm.pagedaemon);
-	simple_unlock(&uvm.pagedaemon_lock);
+	wakeup(&uvm.aiodoned);
+	simple_unlock(&uvm.aiodoned_lock);
 	splx(s);
 }
 
