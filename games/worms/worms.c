@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.8 1995/04/22 08:09:22 cgd Exp $	*/
+/*	$NetBSD: worms.c,v 1.9 1997/10/12 02:18:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: worms.c,v 1.8 1995/04/22 08:09:22 cgd Exp $";
+__RCSID("$NetBSD: worms.c,v 1.9 1997/10/12 02:18:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,12 @@ static struct	worm {
 } *worm;
 
 void	 fputchar __P((int));
+int	 main __P((int, char **));
+void	 nomem __P((void));
 void	 onsig __P((int));
+int	 tgetent __P((char *, char *));
+int	 tgetflag __P((char *));
+int	 tgetnum __P((char *));
 char	*tgetstr __P((char *, char **));
 char	*tgoto __P((char *, int, int));
 int	 tputs __P((char *, int, void (*)(int)));
@@ -194,28 +199,27 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg, *UP;
-	register int x, y, h, n;
-	register struct worm *w;
-	register struct options *op;
-	register short *ip;
-	register char *term;
+	extern char *UP;
+	int x, y, h, n;
+	struct worm *w;
+	struct options *op;
+	short *ip;
+	char *term;
 	int CO, IN, LI, last, bottom, ch, length, number, trail, Wrap;
 	short **ref;
 	char *AL, *BC, *CM, *EI, *HO, *IC, *IM, *IP, *SR;
 	char *field, tcb[100], *mp;
-	long random();
 	struct termios ti;
 #ifdef TIOCGWINSZ
 	struct winsize ws;
 #endif
 
+	mp = NULL;
 	length = 16;
 	number = 3;
 	trail = ' ';
 	field = NULL;
-	while ((ch = getopt(argc, argv, "fl:n:t")) != EOF)
+	while ((ch = getopt(argc, argv, "fl:n:t")) != -1)
 		switch(ch) {
 		case 'f':
 			field = "WORM";
@@ -326,7 +330,7 @@ main(argc, argv)
 	tputs(tgetstr("ti", &tcp), 1, fputchar);
 	tputs(tgetstr("cl", &tcp), 1, fputchar);
 	if (field) {
-		register char *p = field;
+		char *p = field;
 
 		for (y = bottom; --y >= 0;) {
 			for (x = CO; --x >= 0;) {
@@ -402,7 +406,7 @@ main(argc, argv)
 			if (++h == length)
 				h = 0;
 			if (w->xpos[w->head = h] >= 0) {
-				register int x1, y1;
+				int x1, y1;
 
 				x1 = w->xpos[h];
 				y1 = w->ypos[h];
@@ -417,7 +421,7 @@ main(argc, argv)
 			case 0:
 				(void)fflush(stdout);
 				abort();
-				return;
+				return(1);
 			case 1:
 				w->orientation = op->opts[0];
 				break;
@@ -450,6 +454,7 @@ fputchar(c)
 	(void)putchar(c);
 }
 
+void
 nomem()
 {
 	(void)fprintf(stderr, "worms: not enough memory.\n");
