@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.3 2002/12/11 14:33:15 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.4 2002/12/22 11:26:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.3 2002/12/11 14:33:15 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.4 2002/12/22 11:26:20 lukem Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 		case 'E':
 			if (! optarg[0] || optarg[1])
 				goto badendian;
-			switch (tolower((int)optarg[0])) {
+			switch (toupper((int)optarg[0])) {
 			case 'B':
 				flags |= F_ENDIAN_BIG;
 				break;
