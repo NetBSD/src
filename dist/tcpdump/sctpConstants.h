@@ -1,4 +1,6 @@
-/*	$NetBSD: sctpConstants.h,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: sctpConstants.h,v 1.1.1.2 2002/02/18 09:09:02 itojun Exp $	*/
+
+/* @(#) Header: /tcpdump/master/tcpdump/sctpConstants.h,v 1.2 2001/06/28 10:17:22 guy Exp (LBL) */
 
 /* SCTP reference Implementation Copyright (C) 1999 Cisco And Motorola
  *

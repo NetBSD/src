@@ -1,6 +1,6 @@
-/*	$NetBSD: dhcp6.h,v 1.1.1.1 2001/06/25 19:26:31 itojun Exp $	*/
+/*	$NetBSD: dhcp6.h,v 1.1.1.2 2002/02/18 09:07:26 itojun Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/dhcp6.h,v 1.4 2000/12/17 23:07:48 guy Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/Attic/dhcp6.h,v 1.4 2000/12/17 23:07:48 guy Exp (LBL) */
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
  * All rights reserved.

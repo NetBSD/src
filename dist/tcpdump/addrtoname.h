@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.h,v 1.1.1.1 2001/06/25 19:26:29 itojun Exp $	*/
+/*	$NetBSD: addrtoname.h,v 1.1.1.2 2002/02/18 09:07:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,21 +20,21 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/addrtoname.h,v 1.17 2001/06/18 09:12:28 itojun Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/addrtoname.h,v 1.18 2001/09/17 21:57:51 fenner Exp (LBL)
  */
 
 /* Name to address translation routines. */
 
-extern char *linkaddr_string(const u_char *, const int);
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
+extern const char *linkaddr_string(const u_char *, const unsigned int);
+extern const char *etheraddr_string(const u_char *);
+extern const char *etherproto_string(u_short);
+extern const char *tcpport_string(u_short);
+extern const char *udpport_string(u_short);
+extern const char *getname(const u_char *);
 #ifdef INET6
-extern char *getname6(const u_char *);
+extern const char *getname6(const u_char *);
 #endif
-extern char *intoa(u_int32_t);
+extern const char *intoa(u_int32_t);
 
 extern void init_addrtoname(u_int32_t, u_int32_t);
 extern struct hnamemem *newhnamemem(void);
