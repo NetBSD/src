@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.12 2002/01/03 22:18:09 jdolecek Exp $
+.\"	$NetBSD: poll.2,v 1.13 2002/01/04 01:31:10 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,9 +120,9 @@ should never be present in the
 .Fa revents
 bitmask at the same time. If the remote end of a socket is closed,
 .Fn poll
-returns
+returns a
 POLLIN
-event, rather than
+event, rather than a
 POLLHUP.
 .It POLLNVAL
 The file descriptor is not open.  This flag is always checked, even
