@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.6 2003/07/14 15:17:20 lukem Exp $	*/
+/*	$NetBSD: ssn.c,v 1.7 2003/07/14 22:48:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -27,10 +27,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.7 2003/07/14 22:48:22 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.6 2003/07/14 15:17:20 lukem Exp $");
-
 #include <sys/device.h>
 #include <sys/systm.h>
 

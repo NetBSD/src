@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 2003/06/18 08:58:35 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 2003/07/14 22:48:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@
  *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
  *  dufault@hda.com (Peter Dufault)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.17 2003/07/14 22:48:25 lukem Exp $");
 
 #include "opt_ddb.h"
 

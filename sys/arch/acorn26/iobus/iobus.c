@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.9 2003/07/14 15:17:17 lukem Exp $ */
+/* $NetBSD: iobus.c,v 1.10 2003/07/14 22:48:21 lukem Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * iobus.c - when the IORQ* calls...
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.10 2003/07/14 22:48:21 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.9 2003/07/14 15:17:17 lukem Exp $");
-
 #include <sys/device.h>
 #include <sys/systm.h>
 

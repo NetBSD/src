@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.7 2003/07/14 15:17:21 lukem Exp $ */
+/* $NetBSD: arcvideo.c,v 1.8 2003/07/14 22:48:23 lukem Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -36,10 +36,10 @@
  * kernel, though in theory it should be possible to leave it out.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.8 2003/07/14 22:48:23 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.7 2003/07/14 15:17:21 lukem Exp $");
-
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/reboot.h>	/* For bootverbose */

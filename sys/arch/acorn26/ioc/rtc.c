@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5 2003/07/14 15:17:19 lukem Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6 2003/07/14 22:48:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -43,10 +43,10 @@
  * Philips PCF8583	Clock/calendar with 240 x 8-bit RAM
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6 2003/07/14 22:48:22 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5 2003/07/14 15:17:19 lukem Exp $");
-
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

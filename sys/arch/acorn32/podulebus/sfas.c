@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.10 2003/05/03 18:10:41 wiz Exp $	*/
+/*	$NetBSD: sfas.c,v 1.11 2003/07/14 22:48:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -48,6 +48,9 @@
 /*
  * Modified for NetBSD/arm32 by Scott Stevens
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.11 2003/07/14 22:48:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
