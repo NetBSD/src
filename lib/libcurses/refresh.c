@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.26 2000/04/28 17:11:51 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.27 2000/04/29 00:42:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.26 2000/04/28 17:11:51 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.27 2000/04/29 00:42:26 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -391,6 +391,7 @@ makech(wy)
 	int	lch, wx;
 	char	*ce, cm_buff[1024];
 	attr_t	lspc;		/* Last space colour */
+	attr_t	off, on;
 
 #ifdef __GNUC__
 	nlsp = lspc = 0;	/* XXX gcc -Wuninitialized */
@@ -518,88 +519,66 @@ makech(wy)
 			 */
 			if (!(nsp->attr & __COLOR) &&
 			    (curscr->wattr & __COLOR)) {
-					if (OC != NULL && CC == NULL)
-						tputs(OC, 0, __cputchar);
-					if (OP != NULL) {
-						tputs(OP, 0, __cputchar);
-						if (SE != NULL &&
-						    !strcmp(OP, SE))
-							curscr->wattr &=
-							    ~__STANDOUT;
-						if (UE != NULL &&
-						    !strcmp(OP, UE))
-							curscr->wattr &=
-							    ~__UNDERSCORE;
-						if (ME != NULL &&
-						    !strcmp(OP, ME))
-							curscr->wattr &=
-							    ~__TERMATTR;
-					}
-					curscr->wattr &= ~__COLOR;
+				if (OC != NULL && CC == NULL)
+					tputs(OC, 0, __cputchar);
+				if (OP != NULL) {
+					tputs(OP, 0, __cputchar);
+					curscr->wattr &= __mask_OP;
 				}
+			}
+
+			off = ~nsp->attr & curscr->wattr;
 
 			/*
 			 * Unset attributes as appropriate.  Unset first
 			 * so that the relevant attributes can be reset
 			 * (because 'me' unsets 'mb', 'md', 'mh', 'mk',
 			 * 'mp' and 'mr').  Check to see if we also turn off
-			 * standout and attributes.
-			 * XXX
-			 * Assume that we also turn off colour, as we might
-			 * have the entries ":me=\E[m:op=\E[39;49m:" (xterm)
-			 * and we can't just do a string comparison on them.
+			 * standout, attributes and colour.
 			 */
-			if ((nsp->attr & __TERMATTR) !=
-			    (curscr->wattr & __TERMATTR)) {
+			if (off & __TERMATTR && ME != NULL) {
 				tputs(ME, 0, __cputchar);
-				curscr->wattr &= ~__TERMATTR;
-				if (SE != NULL && !strcmp(ME, SE))
-					curscr->wattr &= ~__STANDOUT;
-				if (UE != NULL && !strcmp(ME, UE))
-					curscr->wattr &= ~__UNDERSCORE;
-				curscr->wattr &= ~__COLOR;
+				curscr->wattr &= __mask_ME;
+				off &= __mask_ME;
 			}
 
 			/*
 			 * Exit underscore mode if appropriate.
-			 * Check to see if we also turn off standout and
-			 * attributes.  Assume that we also turn off colour.
+			 * Check to see if we also turn off standout,
+			 * attributes and colour.
 			 */
-			if (!(nsp->attr & __UNDERSCORE) &&
-			    (curscr->wattr & __UNDERSCORE)) {
+			if (off & __UNDERSCORE && UE != NULL) {
 				tputs(UE, 0, __cputchar);
-				curscr->wattr &= ~__UNDERSCORE;
-				if (SE != NULL && !strcmp(UE, SE))
-					curscr->wattr &= ~__STANDOUT;
-				if (ME != NULL && !strcmp(UE, ME))
-					curscr->wattr &= ~__TERMATTR;
-				curscr->wattr &= ~__COLOR;
+				curscr->wattr &= __mask_UE;
+				off &= __mask_UE;
 			}
 
 			/*
-			 * Enter/exit standout mode as appropriate.
-			 * Check to see if we also turn off underscore and
-		         * attributes.  Assume that we also turn off colour.
+			 * Exit standout mode as appropriate.
+			 * Check to see if we also turn off underscore,
+			 * attributes and colour.
 			 * XXX
 			 * Should use UC if SO/SE not available.
 			 */
-			if (nsp->attr & __STANDOUT) {
-				if (!(curscr->wattr & __STANDOUT) &&
-				    SO != NULL && SE != NULL) {
-					tputs(SO, 0, __cputchar);
-					curscr->wattr |= __STANDOUT;
-				}
-			} else {
-				if (curscr->wattr & __STANDOUT) {
-					tputs(SE, 0, __cputchar);
-					curscr->wattr &= ~__STANDOUT;
-					if (UE != NULL && !strcmp(SE, UE))
-						curscr->wattr &=
-						    ~__UNDERSCORE;
-					if (ME != NULL && !strcmp(SE, ME))
-						curscr->wattr &= ~__TERMATTR;
-					curscr->wattr &= ~__COLOR;
-				}
+			if (off & __STANDOUT && SE != NULL) {
+				tputs(SE, 0, __cputchar);
+				curscr->wattr &= __mask_SE;
+				off &= __mask_SE;
+			}
+
+			if (off & __ALTCHARSET && AE != NULL) {
+				tputs(AE, 0, __cputchar);
+				curscr->wattr &= ~__ALTCHARSET;
+			}
+
+			on = nsp->attr & ~curscr->wattr;
+
+			/*
+			 * Enter standout mode if appropriate.
+			 */
+			if (on & __STANDOUT && SO != NULL && SE != NULL) {
+				tputs(SO, 0, __cputchar);
+				curscr->wattr |= __STANDOUT;
 			}
 
 			/*
@@ -607,9 +586,7 @@ makech(wy)
 			 * XXX
 			 * Should use UC if US/UE not available.
 			 */
-			if ((nsp->attr & __UNDERSCORE) &&
-			    !(curscr->wattr & __UNDERSCORE) &&
-			    US != NULL && UE != NULL) {
+			if (on & __UNDERSCORE && US != NULL && UE != NULL) {
 				tputs(US, 0, __cputchar);
 				curscr->wattr |= __UNDERSCORE;
 			}
@@ -617,41 +594,31 @@ makech(wy)
 			/*
 			 * Set other attributes as appropriate.
 			 */
-			if ((nsp->attr & __BLINK) &&
-			    !(curscr->wattr & __BLINK) &&
-			    MB != NULL && ME != NULL) {
-				tputs(MB, 0, __cputchar);
-				curscr->wattr |= __BLINK;
-			}
-			if ((nsp->attr & __BOLD) &&
-			    !(curscr->wattr & __BOLD) &&
-			    MD != NULL && ME != NULL) {
-				tputs(MD, 0, __cputchar);
-				curscr->wattr |= __BOLD;
-			}
-			if ((nsp->attr & __DIM) &&
-			    !(curscr->wattr & __DIM) &&
-			    MH != NULL && ME != NULL) {
-				tputs(MH, 0, __cputchar);
-				curscr->wattr |= __DIM;
-			}
-			if ((nsp->attr & __BLANK) &&
-			    !(curscr->wattr & __BLANK) &&
-			    MK != NULL && ME != NULL) {
-				tputs(MK, 0, __cputchar);
-				curscr->wattr |= __BLANK;
-			}
-			if ((nsp->attr & __PROTECT) &&
-			    !(curscr->wattr & __PROTECT) &&
-			    MP != NULL && ME != NULL) {
-				tputs(MP, 0, __cputchar);
-				curscr->wattr |= __PROTECT;
-			}
-			if ((nsp->attr & __REVERSE) &&
-			    !(curscr->wattr & __REVERSE) &&
-			    MR != NULL && ME != NULL) {
-				tputs(MR, 0, __cputchar);
-				curscr->wattr |= __REVERSE;
+			if (ME != NULL) {
+				if (on & __BLINK && MB != NULL) {
+					tputs(MB, 0, __cputchar);
+					curscr->wattr |= __BLINK;
+				}
+				if (on & __BOLD && MD != NULL) {
+					tputs(MD, 0, __cputchar);
+					curscr->wattr |= __BOLD;
+				}
+				if (on & __DIM && MH != NULL) {
+					tputs(MH, 0, __cputchar);
+					curscr->wattr |= __DIM;
+				}
+				if (on & __BLANK && MK != NULL) {
+					tputs(MK, 0, __cputchar);
+					curscr->wattr |= __BLANK;
+				}
+				if (on & __PROTECT && MP != NULL) {
+					tputs(MP, 0, __cputchar);
+					curscr->wattr |= __PROTECT;
+				}
+				if (on & __REVERSE && MR != NULL) {
+					tputs(MR, 0, __cputchar);
+					curscr->wattr |= __REVERSE;
+				}
 			}
 
 			/* Set/change colour as appropriate. */
@@ -667,17 +634,9 @@ makech(wy)
 			}
 
 			/* Enter/exit altcharset mode as appropriate. */
-			if (nsp->attr & __ALTCHARSET) {
-				if (!(curscr->wattr & __ALTCHARSET) &&
-				    AS != NULL && AE != NULL) {
-					tputs(AS, 0, __cputchar);
-					curscr->wattr |= __ALTCHARSET;
-				}
-			} else {
-				if (curscr->wattr & __ALTCHARSET) {
-					tputs(AE, 0, __cputchar);
-					curscr->wattr &= ~__ALTCHARSET;
-				}
+			if (on & __ALTCHARSET && AS != NULL && AE != NULL) {
+				tputs(AS, 0, __cputchar);
+				curscr->wattr |= __ALTCHARSET;
 			}
 
 			wx++;
@@ -1205,18 +1164,12 @@ __unsetattr(int checkms)
 #endif
 		
 	/*
-         * Don't leave the screen in standout mode (check against MS).
-	 * Check to see if we also turn off underscore and attributes.
-	 * Assume that we also turn off colour.
+         * Don't leave the screen in standout mode (check against MS).  Check
+	 * to see if we also turn off underscore, attributes and colour.
 	 */
 	if (curscr->wattr & __STANDOUT && isms) {
 		tputs(SE, 0, __cputchar);
-		curscr->wattr &= ~__STANDOUT;
-		if (UE != NULL && !strcmp(SE, UE))
-			curscr->wattr &= ~__UNDERSCORE;
-		if (ME != NULL && !strcmp(SE, ME))
-			curscr->wattr &= ~__TERMATTR;
-		curscr->wattr &= ~__COLOR;
+		curscr->wattr &= __mask_SE;
 	}
 	/*
 	 * Don't leave the screen in underscore mode (check against MS).
@@ -1225,10 +1178,7 @@ __unsetattr(int checkms)
 	 */
 	if (curscr->wattr & __UNDERSCORE && isms) {
 		tputs(UE, 0, __cputchar);
-		curscr->wattr &= ~__UNDERSCORE;
-		if (ME != NULL && !strcmp(UE, ME))
-			curscr->wattr &= ~__TERMATTR;
-		curscr->wattr &= ~__COLOR;
+		curscr->wattr &= __mask_UE;
 	}
 	/*
 	 * Don't leave the screen with attributes set (check against MS).
@@ -1236,8 +1186,7 @@ __unsetattr(int checkms)
 	 */
 	if (curscr->wattr & __TERMATTR && isms) {
 		tputs(ME, 0, __cputchar);
-		curscr->wattr &= ~__TERMATTR;
-		curscr->wattr &= ~__COLOR;
+		curscr->wattr &= __mask_ME;
 	}
 	/* Don't leave the screen with altcharset set (don't check MS). */
 	if (curscr->wattr & __ALTCHARSET) {
@@ -1248,8 +1197,9 @@ __unsetattr(int checkms)
 	if (curscr->wattr & __COLOR && isms) {
 		if (OC != NULL && CC == NULL)
 			tputs(OC, 0, __cputchar);
-		if (OP != NULL)
+		if (OP != NULL) {
 			tputs(OP, 0, __cputchar);
-		curscr->wattr &= ~__COLOR;
+			curscr->wattr &= __mask_OP;
+		}
 	}
 }
