@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.7 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: scanner.l,v 1.8 1999/07/05 20:01:09 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.7 1999/07/02 10:05:22 itojun Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.8 1999/07/05 20:01:09 mjacob Exp $");
 #endif
 #endif
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: scanner.l,v 1.7 1999/07/02 10:05:22 itojun Exp $");
 #ifdef INET6
 #include <netdb.h>
 #include <sys/socket.h>
+#include <memory.h>
 #endif /*INET6*/
 #include "grammar.h"
 
