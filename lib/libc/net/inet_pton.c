@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.18 2003/05/05 13:56:14 bjh21 Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.19 2003/05/05 21:35:42 bjh21 Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.18 2003/05/05 13:56:14 bjh21 Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.19 2003/05/05 21:35:42 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,8 @@ __weak_alias(inet_pton,_inet_pton)
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static int	inet_pton4 __P((const char *src, u_char *dst, int pton));
-static int	inet_pton6 __P((const char *src, u_char *dst));
+static int	inet_pton4(const char *src, u_char *dst, int pton);
+static int	inet_pton6(const char *src, u_char *dst);
 
 /* int
  * inet_pton(af, src, dst)
@@ -64,10 +64,7 @@ static int	inet_pton6 __P((const char *src, u_char *dst));
  *	Paul Vixie, 1996.
  */
 int
-inet_pton(af, src, dst)
-	int af;
-	const char *src;
-	void *dst;
+inet_pton(int af, const char *src, void *dst)
 {
 
 	_DIAGASSERT(src != NULL);
@@ -97,10 +94,7 @@ inet_pton(af, src, dst)
  *	Paul Vixie, 1996.
  */
 static int
-inet_pton4(src, dst, pton)
-	const char *src;
-	u_char *dst;
-	int pton;
+inet_pton4(const char *src, u_char *dst, int pton)
 {
 	u_int32_t val;
 	u_int digit, base;
@@ -223,9 +217,7 @@ inet_pton4(src, dst, pton)
  *	Paul Vixie, 1996.
  */
 static int
-inet_pton6(src, dst)
-	const char *src;
-	u_char *dst;
+inet_pton6(const char *src, u_char *dst)
 {
 	static const char xdigits_l[] = "0123456789abcdef",
 			  xdigits_u[] = "0123456789ABCDEF";
@@ -318,8 +310,7 @@ inet_pton6(src, dst)
  * The value returned is in network order.
  */
 in_addr_t
-inet_addr(cp)
-	register const char *cp;
+inet_addr(const char *cp)
 {
 	struct in_addr val;
 
@@ -338,9 +329,7 @@ inet_addr(cp)
  * cannot distinguish between failure and a local broadcast address.
  */
 int
-inet_aton(cp, addr)
-	register const char *cp;
-	struct in_addr *addr;
+inet_aton(const char *cp, struct in_addr *addr)
 {
 
 	_DIAGASSERT(cp != NULL);

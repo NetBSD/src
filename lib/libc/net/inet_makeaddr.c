@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.13 2003/05/05 20:12:23 bjh21 Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.14 2003/05/05 21:35:41 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.13 2003/05/05 20:12:23 bjh21 Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.14 2003/05/05 21:35:41 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,8 +56,7 @@ __weak_alias(inet_makeaddr,_inet_makeaddr)
  * building addresses stored in the ifnet structure.
  */
 struct in_addr
-inet_makeaddr(net, host)
-	in_addr_t net, host;
+inet_makeaddr(in_addr_t net, in_addr_t host)
 {
 	in_addr_t addr;
 	struct in_addr ret;

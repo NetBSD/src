@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.16 2003/05/05 19:54:59 bjh21 Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.17 2003/05/05 21:35:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.16 2003/05/05 19:54:59 bjh21 Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.17 2003/05/05 21:35:42 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,8 +60,7 @@ __weak_alias(inet_network,_inet_network)
  * network numbers.
  */
 in_addr_t
-inet_network(cp)
-	register const char *cp;
+inet_network(const char *cp)
 {
 	in_addr_t val;
 	size_t i, n;
