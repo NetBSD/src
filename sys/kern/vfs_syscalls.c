@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.152 2000/03/15 16:30:39 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.153 2000/03/23 05:16:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1014,7 +1014,7 @@ sys_open(p, v, retval)
 		}
 		if (error == ERESTART)
 			error = EINTR;
-		fdp->fd_ofiles[indx] = NULL;
+		fdremove(fdp, indx);
 		return (error);
 	}
 	p->p_dupfd = 0;
@@ -1040,7 +1040,7 @@ sys_open(p, v, retval)
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			FILE_UNUSE(fp, p);
 			ffree(fp);
-			fdp->fd_ofiles[indx] = NULL;
+			fdremove(fdp, indx);
 			return (error);
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -1204,7 +1204,7 @@ sys_fhopen(p, v, retval)
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			FILE_UNUSE(fp, p);
 			ffree(fp);
-			fdp->fd_ofiles[indx] = NULL;
+			fdremove(fdp, indx);
 			return (error);
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -1218,7 +1218,7 @@ sys_fhopen(p, v, retval)
 bad:
 	FILE_UNUSE(fp, p);
 	ffree(fp);
-	fdp->fd_ofiles[indx] = NULL;
+	fdremove(fdp, indx);
 	if (vp != NULL)
 		vput(vp);
 	return (error);
