@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.116.2.2 2004/03/31 19:59:41 tron Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.116.2.3 2004/05/10 15:00:52 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.116.2.2 2004/03/31 19:59:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.116.2.3 2004/05/10 15:00:52 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.116.2.2 2004/03/31 19:59:41 tron Ex
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
