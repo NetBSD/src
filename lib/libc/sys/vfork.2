@@ -1,4 +1,4 @@
-.\"	$NetBSD: vfork.2,v 1.11 1998/04/28 22:28:32 fair Exp $
+.\"	$NetBSD: vfork.2,v 1.12 1998/06/07 04:56:21 enami Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,14 +95,14 @@ parent processes standard I/O data structures (even with
 it is wrong to call
 .Xr exit 3
 since buffered data would then be flushed twice).
+.Sh RETURN VALUES and ERRORS
+Same as for
+.Xr fork 2 .
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr execve 2 ,
 .Xr sigaction 2 ,
 .Xr wait 2
-.Sh DIAGNOSTICS
-Same as for
-.Xr fork 2 .
 .Sh BUGS
 .\" XXX We reintroduced the original semantics.
 .\" This system call will be eliminated when proper system sharing

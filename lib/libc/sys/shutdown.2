@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.2,v 1.7 1998/04/27 13:43:23 kleink Exp $
+.\"	$NetBSD: shutdown.2,v 1.8 1998/06/07 04:56:20 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,13 +62,13 @@ further sends will be disallowed.
 .It SHUT_RDWR
 further sends and receives will be disallowed.
 .El
-.Sh DIAGNOSTICS
+.Sh RETURN VALUES
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa S
+.Fa s
 is not a valid descriptor.
 .It Bq Er EINVAL
 The
@@ -77,7 +77,7 @@ argument is invalid.
 .It Bq Er ENOTCONN
 The specified socket is not connected.
 .It Bq Er ENOTSOCK
-.Fa S
+.Fa s
 is a file, not a socket.
 .El
 .Sh SEE ALSO
