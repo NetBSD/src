@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.35 2003/10/17 22:05:27 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.36 2005/01/27 18:35:41 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -129,7 +129,12 @@ or similar device - see the
 .Sx BUGS
 section
 .Pc .
-Pressing a key within the time limit will enter interactive mode.
+.Pp
+Pressing a key within the time limit, or before the boot program starts, will
+enter interactive mode.
+When using a short or 0 timeout, it is often useful to interrupt the boot
+by holding down a shift key, as some BIOSes and BIOS extensions will drain the
+keystroke buffer at various points during POST.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
