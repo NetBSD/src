@@ -1,5 +1,5 @@
-/* Configuration for GNU C-compiler for hosts running NetBSD.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+/* Configuration file for i386 hosts running NetBSD.
+   Copyright (C) 1999 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,15 +18,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This file defines machine-independent things specific to a host
-   running NetBSD.  This file should not be specified as $xm_file itself;
-   instead $xm_file should be CPU/xm-netbsd.h, which should include both
-   CPU/xm-CPU.h and this file xm-netbsd.h.  */
+#include <xm-netbsd.h>
+#include <i386/xm-i386.h>
 
-#undef POSIX
-#define POSIX
-
-/* Ensure we get gnu C's defaults.  */
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#endif
