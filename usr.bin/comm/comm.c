@@ -1,6 +1,8 @@
+/*	$NetBSD: comm.c,v 1.6 1995/03/26 09:25:52 glass Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Case Larsen.
@@ -35,14 +37,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)comm.c	5.7 (Berkeley) 11/1/90";*/
-static char rcsid[] = "$Id: comm.c,v 1.5 1994/11/08 18:37:10 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)comm.c	8.3 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: comm.c,v 1.6 1995/03/26 09:25:52 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,23 +58,23 @@ static char rcsid[] = "$Id: comm.c,v 1.5 1994/11/08 18:37:10 jtc Exp $";
 #include <unistd.h>
 #include <err.h>
 
-#define	MAXLINELEN	(_POSIX2_LINE_MAX + 1)
+#define	MAXLINELEN	(LINE_MAX + 1)
 
 char *tabs[] = { "", "\t", "\t\t" };
 
-FILE *file __P((const char *));
-void  show __P((FILE *, char *, char *));
-void  usage __P((void));
+FILE   *file __P((const char *));
+void	show __P((FILE *, char *, char *));
+void	usage __P((void));
 
 int
-main(argc,argv)
+main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int comp, file1done, file2done, read1, read2;
-	register char *col1, *col2, *col3;
+	int comp, file1done, file2done, read1, read2;
 	int ch, flag1, flag2, flag3;
 	FILE *fp1, *fp2;
+	char *col1, *col2, *col3;
 	char **p, line1[MAXLINELEN], line2[MAXLINELEN];
 
 	setlocale(LC_ALL, "");
@@ -175,17 +180,18 @@ file(name)
 	FILE *fp;
 
 	if (!strcmp(name, "-"))
-		return(stdin);
-	if (!(fp = fopen(name, "r"))) {
-		(void)fprintf(stderr, "comm: can't read %s.\n", name);
+		return (stdin);
+	if ((fp = fopen(name, "r")) == NULL) {
+		(void)fprintf(stderr, "comm: %s: %s\n", name, strerror(errno));
 		exit(1);
 	}
-	return(fp);
+	return (fp);
 }
 
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: comm [-123] file1 file2\n");
 	exit(1);
 }
