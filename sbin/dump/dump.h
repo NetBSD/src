@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.19.6.3 2001/05/15 21:55:45 he Exp $	*/
+/*	$NetBSD: dump.h,v 1.19.6.4 2002/01/16 09:40:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -98,6 +98,7 @@ char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
 int	eflag;		/* eject flag */
+int	lflag;		/* autoload flag */
 int	diskfd;		/* disk file descriptor */
 int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
@@ -210,8 +211,9 @@ struct	dinode *getino __P((ino_t inum));
 #ifdef RDUMP
 void	rmtclose __P((void));
 int	rmthost __P((char *host));
-int	rmtopen __P((char *tape, int mode));
+int	rmtopen __P((char *tape, int mode, int verbose));
 int	rmtwrite __P((char *buf, int count));
+int	rmtioctl(int, int);
 #endif /* RDUMP */
 
 void	interrupt __P((int signo));	/* in case operator bangs on console */
