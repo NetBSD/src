@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.23 1997/05/25 15:54:22 is Exp $
+#       $NetBSD: Makefile,v 1.24 1997/05/29 01:14:31 jeremy Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -43,7 +43,6 @@ MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 untimeout.9
 MLINKS+=vslock.9 vsunlock.9
 
-SUBDIR=	man9.alpha man9.amiga man9.arm32 man9.atari man9.hp300 man9.i386 \
-	man9.mac68k man9.pmax man9.sparc man9.sun3 man9.vax man9.x68k
+SUBDIR= man9.sun3
 
 .include <bsd.prog.mk>
