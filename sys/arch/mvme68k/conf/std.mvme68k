@@ -1,0 +1,12 @@
+#	$NetBSD: std.mvme68k,v 1.10.6.2 2001/08/12 18:33:13 scw Exp $
+#
+# Options/devices that all mvme68ks should have
+#
+
+machine mvme68k m68k
+
+timekeeper0 at mainbus0
+
+options 	EXEC_AOUT	# support for exec'ing a.out
+options 	EXEC_ELF32	# support for exec'ing Elf
+options 	EXEC_SCRIPT	# support for #! scripts
