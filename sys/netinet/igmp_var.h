@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.17 2003/08/07 16:33:09 agc Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.18 2003/10/07 21:24:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@ extern	struct igmpstat igmpstat;
  * DELAY * countdown frequency).  We assume that the routine random()
  * is defined somewhere (and that it returns a positive number).
  */
-#define	IGMP_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
+#define	IGMP_RANDOM_DELAY(X)	(random() % (X) + 1)
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	IGMP_HDR_ALIGNED_P(ig)	1
