@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.4 1997/03/28 00:29:35 veego Exp $
+.\"	$NetBSD: intro.4,v 1.5 1997/10/20 14:27:49 veego Exp $
 .\"
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -96,7 +96,7 @@ A list of the supported devices is given below.
 .Sh HISTORY
 The
 .Tn Amiga
-.Nm intro
+.Nm ""
 man page first appeared in
 .Nx 1.0a
 .Sh SEE ALSO
@@ -105,9 +105,9 @@ man page first appeared in
 .Xr config 8 .
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.  Pseudo-devices are not listed.
-Devices are indicated by their functional interface.
-.Bl -tag -width "xxxxxx" -compact -offset indent
+the system. Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Bl -tag -width "xxxxxxx" -compact -offset indent
 .It Em afsc
 A4091 low level SCSI adapter interface
 .It Em ahsc
@@ -123,7 +123,22 @@ Floppy disk controller device
 .It Em fd
 Floppy disk device
 .It Em grf
-Custom Chips/Retina/Retina ZIII frame buffer
+frame buffer for Custom Chips and graphics cards
+.It Em grfcl
+color graphics driver for
+GVP Spectrum/Picasso II, II+ and IV/Piccolo/Piccolo SD64 cards
+.It Em grfcv
+color graphics driver for the Cybervision 64
+.It Em grfcv3d
+color graphics driver for the Cybervision 64/3D
+.It Em grfet
+color graphics driver for Domino/Domino16M proto/oMniBus/Merlin cards
+.It Em grful
+color graphics driver for the A2410
+.It Em grfrh
+color graphics driver for Retina BLT Z3 and Altais cards
+.It Em grfrt
+color graphics driver for the Retina Z2
 .It Em gtsc
 GVP low level SCSI adapter interface
 .It Em gvpbus
