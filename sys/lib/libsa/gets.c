@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gets.c	8.1 (Berkeley) 6/11/93
- *	     $Id: gets.c,v 1.1 1994/01/26 02:03:47 brezak Exp $
+ *	     $Id: gets.c,v 1.2 1994/07/18 18:42:06 pk Exp $
  */
 
 gets(buf)
@@ -75,6 +75,7 @@ gets(buf)
 			break;
 		default:
 			*lp++ = c;
+			putchar(c);
 		}
 	/*NOTREACHED*/
 }
