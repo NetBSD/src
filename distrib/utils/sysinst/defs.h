@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.96 2003/07/11 15:28:58 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.97 2003/07/18 09:44:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,8 +48,8 @@ extern const char * const fstypenames[];
 
 #include "msg_defs.h"
 
-#define	min(a,b)	(a < b ? a : b)
-#define	max(a,b)	(a > b ? a : b)
+#define	min(a,b)	((a) < (b) ? (a) : (b))
+#define	max(a,b)	((a) > (b) ? (a) : (b))
 
 /* Define for external varible use */ 
 #ifdef MAIN
@@ -245,32 +245,11 @@ EXTERN int  mnt2_mounted INIT(0);
 
 EXTERN char dist_postfix[STRSIZE] INIT(".tgz");
 
-/* Access to network information */
-EXTERN char net_devices[STRSIZE] INIT("");
-EXTERN char net_dev[STRSIZE] INIT("");
-EXTERN char net_domain[STRSIZE] INIT("");
-EXTERN char net_host[STRSIZE] INIT("");
-EXTERN char net_ip[STRSIZE] INIT("");
-EXTERN char net_mask[STRSIZE] INIT("");
-EXTERN char net_namesvr[STRSIZE] INIT("");
-EXTERN char net_defroute[STRSIZE] INIT("");
-EXTERN char net_media[STRSIZE] INIT("");
-EXTERN int net_dhcpconf INIT(0);
-#define DHCPCONF_IPADDR		0x01
-#define DHCPCONF_NAMESVR	0x02
-#define DHCPCONF_HOST		0x04
-#define DHCPCONF_DOMAIN		0x08
-#ifdef INET6
-EXTERN char net_ip6[STRSIZE] INIT("");
-EXTERN char net_namesvr6[STRSIZE] INIT("");
-EXTERN int net_ip6conf INIT(0);
-#define IP6CONF_AUTOHOST	0x01
-#endif
-
 /* selescted sets */
 extern distinfo dist_list[];
 extern unsigned int sets_valid;
 extern unsigned int sets_selected;
+extern unsigned int sets_installed;
 
 /* Variables for upgrade. */
 #if 0
@@ -356,6 +335,7 @@ int	do_system(const char *);
 /* from upgrade.c */
 void	do_upgrade(void);
 void	do_reinstall_sets(void);
+void	restore_etc(void);
 
 /* from util.c */
 int	askyesno(int);
