@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos5.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
+RCSID("$Id: kerberos5.c,v 1.2 2001/04/06 04:39:31 thorpej Exp $");
 
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
@@ -978,7 +978,9 @@ check_tgs_flags(KDC_REQ_BODY *b, EncTicketPart *tgt, EncTicketPart *et)
 	    old_life -= *tgt->starttime;
 	else
 	    old_life -= tgt->authtime;
-	et->endtime = min(*et->renew_till, *et->starttime + old_life);
+	et->endtime = *et->starttime + old_life;
+	if (et->renew_till != NULL)
+	    et->endtime = min(*et->renew_till, et->endtime);
     }	    
     
     /* checks for excess flags */
