@@ -6,9 +6,10 @@
 # from CFLAGS below.  To remove these strings from just the system call
 # stubs, remove just -DSYSLIBC_SCCS from CFLAGS.
 LIB=c
-CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
+CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS 
 AINC=	-I${.CURDIR}/${MACHINE}
 
+.include "${.CURDIR}/DB/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
 .include "${.CURDIR}/locale/Makefile.inc"
