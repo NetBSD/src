@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2003/03/18 16:40:22 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2003/07/28 07:58:51 scw Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -104,8 +104,6 @@
 #ifndef _PREP_BUS_H_
 #define _PREP_BUS_H_
 
-#include <powerpc/bus.h>
-
 /*
  * Values for the Be bus space tag, not to be used directly by MI code.
  */
@@ -125,5 +123,7 @@ extern struct powerpc_bus_space prep_isa_io_space_tag;
 extern struct powerpc_bus_space prep_mem_space_tag;
 extern struct powerpc_bus_space prep_isa_mem_space_tag;
 #endif
+
+#include <powerpc/bus.h>
 
 #endif /* _PREP_BUS_H_ */
