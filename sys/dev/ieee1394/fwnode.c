@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.12 2002/03/29 05:05:40 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.12 2002/03/29 05:05:40 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -167,7 +167,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	if (rcode != IEEE1394_RCODE_COMPLETE) {
 		DPRINTF(("Aborting configrom input, rcode: %d\n", rcode));
 #ifdef FWNODE_DEBUG
-		fwnode_dump_rom(sc, ab->ab_data, ab->ab_length);
+		fwnode_dump_rom(sc, ab->ab_data, ab->ab_retlen);
 #endif
 		free(ab->ab_data, M_1394DATA);
 		free(ab, M_1394DATA);
@@ -235,6 +235,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		
 		val = P1212_ALLOW_DEPENDENT_INFO_OFFSET_TYPE;
 		val |= P1212_ALLOW_DEPENDENT_INFO_IMMED_TYPE;
+		val |= P1212_ALLOW_VENDOR_DIRECTORY_TYPE;
 		sc->sc_configrom =
 		    p1212_parse(sc->sc_sc1394.sc1394_configrom,
 		    sc->sc_sc1394.sc1394_configrom_len, val);
