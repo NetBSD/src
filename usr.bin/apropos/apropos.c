@@ -1,3 +1,5 @@
+/*	$NetBSD: apropos.c,v 1.3 1995/03/25 04:36:56 glass Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)apropos.c	8.7 (Berkeley) 4/2/94";*/
-static char rcssid[] = "$Id: apropos.c,v 1.2 1994/09/25 07:55:11 glass Exp $";
+#if 0
+static char sccsid[] = "@(#)apropos.c	8.7 (Berkeley) 4/2/94";
+#else
+static char rcssid[] = "$NetBSD: apropos.c,v 1.3 1995/03/25 04:36:56 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
