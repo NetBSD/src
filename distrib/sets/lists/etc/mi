@@ -45,6 +45,7 @@
 ./etc/passwd
 ./etc/phones
 ./etc/printcap
+./etc/profile
 ./etc/protocols
 ./etc/pwd.db
 ./etc/rbootd.conf
