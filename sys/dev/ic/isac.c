@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.13 2002/04/13 11:03:54 martin Exp $ 
+ *	$Id: isac.c,v 1.14 2002/04/17 17:34:48 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.13 2002/04/13 11:03:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.14 2002/04/17 17:34:48 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.13 2002/04/13 11:03:54 martin Exp $");
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
+#include <dev/ic/ipac.h>
 #include <dev/ic/hscx.h>
 
 static u_char isic_isac_exir_hdlr(register struct isic_softc *sc, u_char exir);
@@ -674,6 +675,9 @@ isic_isac_init(struct isic_softc *sc)
 	 * Clear the extended interrupts, and reset receiver and
 	 * transmitter.
 	 */
+	if (sc->sc_ipac)
+		IPAC_READ(IPAC_ISTA);
+
 	v = ISAC_READ(I_ISTA);
 	if (v & ISAC_ISTA_EXI)
 		v = ISAC_READ(I_EXIR);
