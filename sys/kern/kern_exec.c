@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.13 2002/07/12 03:09:57 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.14 2002/07/13 23:27:02 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.13 2002/07/12 03:09:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.14 2002/07/13 23:27:02 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -619,10 +619,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 	
-	/* XXX NJWLWP the rest of this function probably needs its
-	 * head examined in the context of a multilwp process.  
-	 */
-
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
