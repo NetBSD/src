@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.235 2000/06/09 00:21:08 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.236 2000/06/12 21:12:59 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.231 2000/06/09 00:20:18 augustss Exp 
+ *	NetBSD: pcidevs,v 1.232 2000/06/12 21:12:30 bouyer Exp 
  */
 
 /*
@@ -3656,6 +3656,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9682",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
+	    0,
+	    "Triones Technologies",
+	    "HPT366/370 UDMA/66 Controller",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
