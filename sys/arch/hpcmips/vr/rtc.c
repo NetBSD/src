@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.13 2002/02/09 14:47:57 sato Exp $	*/
+/*	$NetBSD: rtc.c,v 1.14 2002/02/10 14:15:32 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -48,6 +48,7 @@
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripif.h>
+#include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 
 /*
@@ -72,6 +73,11 @@ struct vrrtc_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_ih;
+#ifndef SINGLE_VRIP_BASE
+	int sc_rtcint_reg;
+	int sc_tclk_h_reg, sc_tclk_l_reg;
+	int sc_tclk_cnt_h_reg, sc_tclk_cnt_l_reg;
+#endif /* SINGLE_VRIP_BASE */
 };
 
 void	clock_init(struct device *);
@@ -120,12 +126,47 @@ vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
+#ifndef SINGLE_VRIP_BASE
+#define RTCINT_REG_W		(sc->sc_rtcint_reg)
+#define TCLK_H_REG_W		(sc->sc_tclk_h_reg)
+#define TCLK_L_REG_W		(sc->sc_tclk_l_reg)
+#define TCLK_CNT_H_REG_W	(sc->sc_tclk_cnt_h_reg)
+#define TCLK_CNT_L_REG_W	(sc->sc_tclk_cnt_l_reg)
+#endif /* SINGLE_VRIP_BASE */
+
 void
 vrrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrrtc_softc *sc = (void *)self;
-    
+
+#ifndef SINGLE_VRIP_BASE
+	if (va->va_addr == VR4102_RTC_ADDR) {
+		sc->sc_rtcint_reg = VR4102_RTCINT_REG_W;
+		sc->sc_tclk_h_reg = VR4102_TCLK_H_REG_W;
+		sc->sc_tclk_l_reg = VR4102_TCLK_L_REG_W;
+		sc->sc_tclk_cnt_h_reg = VR4102_TCLK_CNT_H_REG_W;
+		sc->sc_tclk_cnt_l_reg = VR4102_TCLK_CNT_L_REG_W;
+	} else
+	if (va->va_addr == VR4122_RTC_ADDR) {
+		sc->sc_rtcint_reg = VR4122_RTCINT_REG_W;
+		sc->sc_tclk_h_reg = VR4122_TCLK_H_REG_W;
+		sc->sc_tclk_l_reg = VR4122_TCLK_L_REG_W;
+		sc->sc_tclk_cnt_h_reg = VR4122_TCLK_CNT_H_REG_W;
+		sc->sc_tclk_cnt_l_reg = VR4122_TCLK_CNT_L_REG_W;
+	} else
+	if (va->va_addr == VR4181_RTC_ADDR) {
+		sc->sc_rtcint_reg = VR4181_RTCINT_REG_W;
+		sc->sc_tclk_h_reg = RTC_NO_REG_W;
+		sc->sc_tclk_l_reg = RTC_NO_REG_W;
+		sc->sc_tclk_cnt_h_reg = RTC_NO_REG_W;
+		sc->sc_tclk_cnt_l_reg = RTC_NO_REG_W;
+	} else {
+		panic("%s: unknown base address 0x%lx\n",
+		    sc->sc_dev.dv_xname, va->va_addr);
+	}
+#endif /* SINGLE_VRIP_BASE */
+
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
 	    0 /* no flags */, &sc->sc_ioh)) {
@@ -178,7 +219,7 @@ vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 {
 	struct vrrtc_softc *sc = arg;
 	struct clockframe cf;
-    
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCINT_REG_W, RTCINT_ALL);
 	cf.pc = pc;
 	cf.sr = statusReg;
@@ -187,12 +228,12 @@ vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 
 #ifdef VRRTC_HEARTBEAT
 	if ((intrcnt[HARDCLOCK] % (CLOCK_RATE * 5)) == 0) {
-		struct clocktime ct;
-		clock_get((struct device *)sc, NULL, &ct);
+		struct clock_ymdhms dt;
+		clock_get((struct device *)sc, NULL, &dt);
 		printf("%s(%d): rtc_intr: %2d.%2d.%2d %02d:%02d:%02d\n",
 		    __FILE__, __LINE__,
-		    ct.year, ct.mon, ct.day,
-		    ct.hour, ct.min, ct.sec);
+		    dt.dt_year, dt.dt_mon, dt.dt_day,
+		    dt.dt_hour, dt.dt_min, dt.dt_sec);
 	}
 #endif
 	return 0;
