@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.128 2000/12/31 07:32:34 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.129 2001/01/04 21:04:43 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -173,6 +173,11 @@ include
 # ./usr/include/arpa
 arpa
 # ./usr/include/arpa
+..
+
+# ./usr/include/cdk
+cdk
+# ./usr/include/cdk
 ..
 
 # ./usr/include/g++
