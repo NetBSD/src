@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.15 1997/06/24 20:00:45 jonathan Exp $
+#	$NetBSD: Makefile,v 1.16 1997/06/28 08:21:52 jonathan Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 CFLAGS+=	-DLIBC_SCCS -fPIC -DPIC -DDYNAMIC -DELFSIZE=32
-CFLAGS+=	-I/usr/src/libexec/ld.elf_so
+CFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
 
 OBJS=		crt0.o gcrt0.o crtn.o # crtbegin.o crtend.o
 CLEANFILES+=	core a.out
