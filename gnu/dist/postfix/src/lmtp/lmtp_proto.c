@@ -139,6 +139,9 @@
   * same code that implements command pipelining, so that we can borrow from
   * the existing code for exception handling and error reporting.
   * 
+  * Client states that are associated with sending mail (up to and including
+  * SMTP_STATE_DOT) must have smaller numerical values than the non-sending
+  * states (SMTP_STATE_ABORT .. SMTP_STATE_LAST).
   */
 #define LMTP_STATE_MAIL		0
 #define LMTP_STATE_RCPT		1
@@ -313,6 +316,9 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 #define SENDER_IN_WAIT_STATE \
 	(send_state == LMTP_STATE_DOT || send_state == LMTP_STATE_LAST)
 
+#define SENDING_MAIL \
+	(recv_state <= LMTP_STATE_DOT)
+
     /*
      * Pipelining support requires two loops: one loop for sending and one
      * for receiving. Each loop has its own independent state. Most of the
@@ -454,8 +460,8 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		smtp_timeout_setup(state->session->stream,
 				   *xfer_timeouts[recv_state]);
 		if ((except = vstream_setjmp(state->session->stream)) != 0)
-		    RETURN(lmtp_stream_except(state, except,
-					      xfer_states[recv_state]));
+		    RETURN(SENDING_MAIL ? lmtp_stream_except(state, except,
+					     xfer_states[recv_state]) : -1);
 		resp = lmtp_chat_resp(state);
 
 		/*

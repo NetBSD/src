@@ -6,7 +6,7 @@
 /* SYNOPSIS
 /*	#include <sane_fsops.h>
 /*
-/*	int	sane_link(old, new)
+/*	int	sane_link(from, to)
 /*	const char *from;
 /*	const char *to;
 /* DESCRIPTION

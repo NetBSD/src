@@ -10,7 +10,7 @@
 /*	int	fd;
 /* DESCRIPTION
 /*	writable() asks the kernel if the specified file descriptor
-/*	is writable, i.e. a read operation would not block.
+/*	is writable, i.e. a write operation would not block.
 /*
 /*	Arguments:
 /* .IP fd

@@ -114,6 +114,10 @@
   * By default, the receiver skips the QUIT response. Some SMTP servers
   * disconnect after responding to ".", and some SMTP servers wait before
   * responding to QUIT.
+  * 
+  * Client states that are associated with sending mail (up to and including
+  * SMTP_STATE_DOT) must have smaller numerical values than the non-sending
+  * states (SMTP_STATE_ABORT .. SMTP_STATE_LAST).
   */
 #define SMTP_STATE_MAIL		0
 #define SMTP_STATE_RCPT		1
@@ -294,6 +298,9 @@ int     smtp_xfer(SMTP_STATE *state)
 #define SENDER_IN_WAIT_STATE \
 	(send_state == SMTP_STATE_DOT || send_state == SMTP_STATE_LAST)
 
+#define SENDING_MAIL \
+	(recv_state <= SMTP_STATE_DOT)
+
     /*
      * We use SMTP command pipelining if the server said it supported it.
      * Since we use blocking I/O, RFC 2197 says that we should inspect the
@@ -451,8 +458,8 @@ int     smtp_xfer(SMTP_STATE *state)
 		smtp_timeout_setup(state->session->stream,
 				   *xfer_timeouts[recv_state]);
 		if ((except = vstream_setjmp(state->session->stream)) != 0)
-		    RETURN(smtp_stream_except(state, except,
-					      xfer_states[recv_state]));
+		    RETURN(SENDING_MAIL ? smtp_stream_except(state, except,
+					     xfer_states[recv_state]) : -1);
 		resp = smtp_chat_resp(state);
 
 		/*
