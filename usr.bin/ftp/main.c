@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2000/07/18 07:16:56 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2000/11/15 00:11:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2000/07/18 07:16:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.74 2000/11/15 00:11:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, rval;
-	struct passwd *pw = NULL;
+	struct passwd *pw;
 	char *cp, *ep, *anonuser, *anonpass, *upload_path;
 	int dumbterm, s, len, isupload;
 
@@ -187,6 +187,11 @@ main(int argc, char *argv[])
 	upload_path = NULL;
 	isupload = 0;
 	reply_callback = NULL;
+
+	netrc[0] = '\0';
+	cp = getenv("NETRC");
+	if (cp != NULL && strlcpy(netrc, cp, sizeof(netrc)) >= sizeof(netrc))
+		errx(1, "$NETRC `%s': %s", cp, strerror(ENAMETOOLONG));
 
 	/*
 	 * Get the default socket buffer sizes if we don't already have them.
@@ -271,7 +276,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtT:u:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "AadefginN:o:pP:r:RtT:u:vV")) != -1) {
 		switch (ch) {
 		case 'A':
 			activefallback = 0;
@@ -307,6 +312,13 @@ main(int argc, char *argv[])
 
 		case 'n':
 			autologin = 0;
+			break;
+
+		case 'N':
+			if (strlcpy(netrc, optarg, sizeof(netrc))
+			    >= sizeof(netrc))
+				errx(1, "%s: %s", optarg,
+				    strerror(ENAMETOOLONG));
 			break;
 
 		case 'o':
@@ -394,21 +406,38 @@ main(int argc, char *argv[])
 	proxy = 0;	/* proxy not active */
 	crflag = 1;	/* strip c.r. on ascii gets */
 	sendport = -1;	/* not using ports */
+
 	/*
-	 * Set up the home directory in case we're globbing.
+	 * Cache the user name and home directory.
 	 */
+	localhome = NULL;
+	localname = NULL;
+	anonuser = "anonymous";
+	cp = getenv("HOME");
+	if (! EMPTYSTRING(cp))
+		localhome = xstrdup(cp);
+	pw = NULL;
 	cp = getlogin();
 	if (cp != NULL)
 		pw = getpwnam(cp);
 	if (pw == NULL)
 		pw = getpwuid(getuid());
 	if (pw != NULL) {
-		(void)strlcpy(home, pw->pw_dir, sizeof(home));
-		anonuser = pw->pw_name;
-	} else {
-		(void)strlcpy(home, "/", sizeof(home));
-		anonuser = "anonymous";
+		if (localhome == NULL && !EMPTYSTRING(pw->pw_dir))
+			localhome = xstrdup(pw->pw_dir);
+		localname = xstrdup(pw->pw_name);
+		anonuser = localname;
 	}
+	if (netrc[0] == '\0' && localhome != NULL) {
+		if (strlcpy(netrc, localhome, sizeof(netrc)) >= sizeof(netrc) ||
+	    	    strlcat(netrc, "/.netrc", sizeof(netrc)) >= sizeof(netrc)) {
+			warnx("%s/.netrc: %s", localhome,
+			    strerror(ENAMETOOLONG));
+			netrc[0] = '\0';
+		}
+	}
+	if (localhome == NULL)
+		localhome = xstrdup("/");
 
 	/*
 	 * Every anonymous FTP server I've encountered will accept the
@@ -972,7 +1001,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: %s [-AadefginpRtvV] [-o outfile] [-P port] [-r retry]\n"
+"usage: %s [-AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-r retry]\n"
 "           [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
 "           [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.73 2000/09/28 12:26:19 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.74 2000/11/15 00:10:59 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd September 28, 2000
+.Dd November 15, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -78,6 +78,9 @@ Internet file transfer program
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl AadefginpRtvV
+.Bk -words
+.Op Fl N Ar netrc
+.Ek
 .Bk -words
 .Op Fl o Ar output
 .Ek
@@ -194,6 +197,14 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
+.It Fl N Ar netrc
+Use
+.Ar netrc
+instead of
+.Pa ~/.netrc .
+Refer to
+.Sx THE .netrc FILE
+for more information.
 .It Fl o Ar output
 When auto-fetching files, save the contents in
 .Ar output .
@@ -351,7 +362,10 @@ and exit
 An end of file will also terminate the session and exit.
 .It Ic case
 Toggle remote computer file name case mapping during
+.Ic get ,
 .Ic mget
+and
+.Ic mput
 commands.
 When
 .Ic case
@@ -517,9 +531,10 @@ are used while transferring the file.
 .It Ic glob
 Toggle filename expansion for
 .Ic mdelete  ,
-.Ic mget
+.Ic mget ,
+.Ic mput ,
 and
-.Ic mput .
+.Ic mreget .
 If globbing is turned off with
 .Ic glob  ,
 the file name arguments
@@ -529,9 +544,10 @@ Globbing for
 is done as in
 .Xr csh 1 .
 For
-.Ic mdelete
+.Ic mdelete ,
+.Ic mget ,
 and
-.Ic mget  ,
+.Ic mreget ,
 each remote file name is expanded
 separately on the remote machine and the lists are not merged.
 Expansion of a directory name is likely to be
@@ -540,9 +556,10 @@ the exact result depends on the foreign operating system and ftp server,
 and can be previewed by doing
 .Ql mls remote-files \-
 Note:
-.Ic mget
-and
+.Ic mget ,
 .Ic mput
+and
+.Ic mreget
 are not meant to transfer
 entire directory subtrees of files.
 That can be done by
@@ -710,6 +727,13 @@ Resulting file names will then be processed according to
 and
 .Ic nmap
 settings.
+.It Ic mreget Ar remote-files
+As per
+.Ic mget ,
+but performs a
+.Ic reget
+instead of
+.Ic get .
 .It Ic msend Ar local-files
 A synonym for
 .Ic mput .
@@ -1712,7 +1736,12 @@ The
 .Pa .netrc
 file contains login and initialization information
 used by the auto-login process.
-It resides in the user's home directory.
+It resides in the user's home directory,
+unless overridden with the
+.Fl N Ar netrc
+option, or specified in the
+.Ev NETRC
+environment variable.
 The following tokens are recognized; they may be separated by spaces,
 tabs, or new-lines:
 .Bl -tag -width password
@@ -1939,6 +1968,10 @@ lookup of
 For default location of a
 .Pa .netrc
 file, if one exists.
+.It Ev NETRC
+An alternate location of the
+.Pa .netrc
+file.
 .It Ev PAGER
 Used by various commands to display files.
 Defaults to
