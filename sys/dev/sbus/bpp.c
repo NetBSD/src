@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8.4.3 2002/03/16 16:01:28 jdolecek Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.4.4 2002/06/18 17:15:09 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.3 2002/03/16 16:01:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.4 2002/06/18 17:15:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -517,8 +517,6 @@ filt_bpprdetach(struct knote *kn)
 static int
 filt_bppread(struct knote *kn, long hint)
 {
-	struct bpp_softc *sc = (void *) kn->kn_hook;
-
 	/* XXX Read not yet implemented. */
 	return (0);
 }
