@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.21 1993/10/27 17:22:24 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.22 1993/11/08 20:24:58 mycroft Exp $
  */
 
 
@@ -48,18 +48,18 @@
 #include "npx.h"
 #include "assym.s"
 
-#include "sys/errno.h"
-#include "sys/syscall.h"
+#include <sys/errno.h>
+#include <sys/syscall.h>
 
-#include "machine/cputypes.h"
-#include "machine/param.h"
-#include "machine/psl.h"
-#include "machine/pte.h"
-#include "machine/specialreg.h"
-#include "machine/trap.h"
+#include <machine/cputypes.h>
+#include <machine/param.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/specialreg.h>
+#include <machine/trap.h>
 
-#include "i386/isa/debug.h"
-#include "i386/isa/isa.h"
+#include <i386/isa/debug.h>
+#include <i386/isa/isa.h>
 
 #define	KDSEL		0x10
 #define	SEL_RPL_MASK	0x0003
@@ -139,25 +139,52 @@ start:	movw	$0x1234,0x472	# warm boot
  	movl	%eax,_esym-KERNBASE
 
 	/* find out our CPU type. */
-        pushfl
-        popl    %eax
-        movl    %eax,%ecx
-        xorl    $0x40000,%eax
-        pushl   %eax
-        popfl
-        pushfl
-        popl    %eax
-        xorl    %ecx,%eax
-        shrl    $18,%eax
-        andl    $1,%eax
-        push    %ecx
-        popfl
+	/* first, clear the alignment check and identification flags */
+	pushfl
+	popl	%eax
+	andl	$~(PSL_AC|PSL_ID),%eax
+	pushl	%eax
+	popfl
+	
+	/* try to frob alignment check flag; does not exist on 386 */
+	pushfl
+	popl	%eax
+	movl	%eax,%ecx
+	orl	$(PSL_AC),%eax
+	pushl	%eax
+	popfl
+	pushfl
+	popl	%eax
+	xorl	%ecx,%eax
+	andl	$(PSL_AC),%eax
+	pushl	%ecx
+	popfl
       
-        cmpl    $0,%eax
-        jne     1f
-        movl    $(CPU_386),_cpu-KERNBASE
+	testl	%eax,%eax
+	jnz	1f
+	movl    $(CPU_386),_cpu-KERNBASE
 	jmp	2f
-1:      movl    $(CPU_486),_cpu-KERNBASE
+	
+1:	/* try to frob identification flag; does not exist on 486 */
+	pushfl
+	popl	%eax
+	movl	%eax,%ecx
+	xorl	$(PSL_ID),%eax
+	pushl	%eax
+	popfl
+	pushfl
+	popl	%eax
+	xorl	%ecx,%eax
+	andl	$(PSL_ID),%eax
+	pushl	%ecx
+	popfl
+
+	testl	%eax,%eax
+	jnz	1f
+	movl	$(CPU_486),_cpu-KERNBASE
+	jmp	2f
+
+1:	movl    $(CPU_586),_cpu-KERNBASE
 2:
 
 	/*
@@ -237,10 +264,10 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%ebx,_KPTphys-KERNBASE	#    in the kernel page table,
 	fillkpt
 
-/* map I/O memory map */
+/* map I/O memory */
 
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx	# for this many pte s,
-	movl	$(IOM_BEGIN|PG_V|PG_UW),%eax	# having these bits set
+	movl	$(IOM_BEGIN|PG_V|PG_UW|PG_N),%eax	# having these bits set
 	movl	%ebx,_atdevphys-KERNBASE	# remember phys addr of ptes
 	fillkpt
 
@@ -1402,9 +1429,12 @@ ENTRY(cpu_swtch)
 1:
 #endif
 
+#if 0
 	movl	_CMAP2,%eax		# save temporary map PTE
 	movl	%eax,PCB_CMAP2(%ecx)	# in our context
-	movl	$0,_curproc		#  out of process
+#endif
+
+	movl	$0,_curproc		# out of process
 
 	movl	_cpl,%eax		# splhigh()
 	movl	$-1,_cpl
@@ -1469,8 +1499,10 @@ sw1:
 	movl	PCB_EIP(%edx),%eax
 	movl	%eax,(%esp)
 
+#if 0
 	movl	PCB_CMAP2(%edx),%eax	# get temporary map
 	movl	%eax,_CMAP2		# reload temporary map PTE
+#endif
 
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
@@ -1560,7 +1592,7 @@ ENTRY(savectx)
 	pushl	%eax
 	pushl	%eax
 	call	_npxsave
-	popl	%eax
+	addl	$4,%esp
 	popl	%eax
 	popl	%ecx
 
@@ -1575,8 +1607,10 @@ ENTRY(savectx)
 1:
 #endif
 
+#if 0
 	movl	_CMAP2,%edx		# save temporary map PTE
 	movl	%edx,PCB_CMAP2(%ecx)	# in our context
+#endif
 
 	cmpl	$0,8(%esp)
 	je	1f
@@ -1685,8 +1719,8 @@ IDTVEC(fpu)
 	pushl $0; TRAP(T_ARITHTRAP)
 #endif
 	/* 17 - 31 reserved for future exp */
-IDTVEC(rsvd0)
-	pushl $0; TRAP(17)
+IDTVEC(align)
+	pushl $0; TRAP(T_ALIGNFLT)
 IDTVEC(rsvd1)
 	pushl $0; TRAP(18)
 IDTVEC(rsvd2)
