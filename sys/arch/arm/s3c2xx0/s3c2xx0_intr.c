@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.2 2003/01/02 22:30:05 thorpej Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.3 2003/06/16 20:00:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -125,14 +125,14 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	s3c2xx0_imask[IPL_IMP] &= s3c2xx0_imask[IPL_TTY];
+	s3c2xx0_imask[IPL_VM] &= s3c2xx0_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	s3c2xx0_imask[IPL_AUDIO] &= s3c2xx0_imask[IPL_IMP];
+	s3c2xx0_imask[IPL_AUDIO] &= s3c2xx0_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.

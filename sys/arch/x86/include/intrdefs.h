@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
 #define _i386_INTRDEFS_H
@@ -28,7 +28,6 @@
 #define	IPL_SOFTSERIAL	0x8	/* serial */
 #define	IPL_TTY		0x9	/* terminal */
 #define	IPL_VM		0xa	/* memory allocation */
-#define IPL_IMP		IPL_VM
 #define	IPL_AUDIO	0xb	/* audio */
 #define	IPL_CLOCK	0xc	/* clock */
 #define IPL_SCHED	IPL_CLOCK
