@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1998/12/26 00:53:49 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,6 +111,7 @@ dev_t	swapdev = makedev(4, 0);
 #include "pty.h"
 #include "bpfilter.h"
 #include "zsc.h"
+#include "ms.h"
 #include "fb.h"
 #define fbpoll seltrue
 #include "ipfilter.h"
@@ -131,7 +132,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),        /* 9: pseudo-tty master */
 	cdev_notdef(),			/* 10: md */
 	cdev_notdef(),			/* 11: kb */
-	cdev_mouse_init(1,ms),		/* 12: ms */
+	cdev_mouse_init(NMS,ms),	/* 12: ms */
 	cdev_notdef(),			/* 13: xio */
 	cdev_fb_init(NFB,fb),		/* 14: frame buffer */
 	cdev_notdef(),			/* 15: */
