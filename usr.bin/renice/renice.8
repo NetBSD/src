@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.9 2001/12/01 16:43:23 wiz Exp $
+.\"	$NetBSD: renice.8,v 1.10 2001/12/08 19:11:33 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.9 2001/12/01 16:43:23 wiz Exp $
+.\"	$NetBSD: renice.8,v 1.10 2001/12/08 19:11:33 wiz Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -145,11 +145,11 @@ to map user names to user ID's
 .Xr nice 1 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2
-.Sh BUGS
-Non super-users can not increase scheduling priorities of their own processes,
-even if they were the ones that decreased the priorities in the first place.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.0 .
+.Sh BUGS
+Non super-users can not increase scheduling priorities of their own processes,
+even if they were the ones that decreased the priorities in the first place.
