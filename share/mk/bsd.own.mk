@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.242 2001/12/28 06:57:41 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.243 2001/12/31 23:06:34 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -255,9 +255,8 @@ OBJECT_FMT?=	COFF
 # Profiling and linting is also off on the x86_64 port at the moment.
 # The x86_64 port is incomplete.
 .if ${MACHINE_ARCH} == "x86_64"
-NOPROFILE=	# defined
 NOLINT=		# defined
-CFLAGS+=	-Wno-format -fno-builtin
+NOPROFILE=	# defined
 .endif
 
 # The m68000 port is incomplete.
@@ -370,7 +369,7 @@ MK${var}:=	no
 .endfor
 
 # MK* options which default to "yes".
-.for var in CATPAGES CRYPTO DOC INFO KERBEROS LINKLIB LINT \
+.for var in BFD CATPAGES CRYPTO DOC GCC GDB INFO KERBEROS LINKLIB LINT \
 	    MAN NLS OBJ PIC PICINSTALL PROFILE SHARE
 MK${var}?=	yes
 .endfor
@@ -404,6 +403,14 @@ MKDOC:=		no
 MKINFO:=	no
 MKMAN:=		no
 MKNLS:=		no
+.endif
+
+# x86-64 cannot currently use the in-tree toolchain, but does
+# use the "new toolchain" build framework.
+.if ${MACHINE_ARCH} == "x86_64"
+MKBFD:=	no
+MKGDB:=	no
+MKGCC:=	no
 .endif
 
 .endif		# _BSD_OWN_MK_
