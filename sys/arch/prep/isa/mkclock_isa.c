@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.3 2002/09/27 20:35:06 thorpej Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.4 2002/10/01 21:40:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.3 2002/09/27 20:35:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.4 2002/10/01 21:40:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,11 +82,8 @@ struct mkclock_isa_softc {
 int	mkclock_isa_match(struct device *, struct cfdata *, void *);
 void	mkclock_isa_attach(struct device *, struct device *, void *);
 
-const struct cfattach mkclock_isa_ca = {
-	sizeof (struct mkclock_isa_softc), mkclock_isa_match,
-	    mkclock_isa_attach, 
-};
-
+CFATTACH_DECL(mkclock_isa, sizeof (struct mkclock_isa_softc),
+    mkclock_isa_match, mkclock_isa_attach, NULL, NULL)
 
 /* mk48txx interface */
 uint8_t	mkclock_isa_nvrd(bus_space_tag_t, bus_space_handle_t, int);
