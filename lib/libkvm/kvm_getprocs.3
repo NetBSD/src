@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getprocs.3,v 1.6 2000/04/15 04:38:47 simonb Exp $
+.\"	$NetBSD: kvm_getprocs.3,v 1.7 2000/06/13 15:48:57 simonb Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,6 +58,12 @@
 .Fn kvm_getargv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft char **
 .Fn kvm_getenvv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
+.Ft struct kinfo_proc2 *
+.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "int elemsize" "int *cnt"
+.Ft char **
+.Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
+.Ft char **
+.Fn kvm_getenvv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
 .Sh DESCRIPTION
 .Fn kvm_getprocs
 returns a (sub-)set of active processes in the kernel indicated by
@@ -81,10 +87,10 @@ processes with process id
 processes with process group
 .Fa arg
 .It Sy KERN_PROC_SESSION
-processes with session
+processes with sessiod id
 .Fa arg
 .It Sy KERN_PROC_TTY
-processes with tty
+processes with tty device
 .Fa arg
 .It Sy KERN_PROC_UID
 processes with effective user id
@@ -92,11 +98,19 @@ processes with effective user id
 .It Sy KERN_PROC_RUID
 processes with real user id
 .Fa arg
+.It Sy KERN_PROC_GID
+processes with effective group id
+.Fa arg
+.It Sy KERN_PROC_RGID
+processes with real group id
+.Fa arg
 .El
 .Pp
 The number of processes found is returned in the reference parameter
 .Fa cnt .
-The processes are returned as a contiguous array of kinfo_proc structures.
+The processes are returned as a contiguous array of
+.Sy kinfo_proc
+structures.
 This memory is locally allocated, and subsequent calls to
 .Fn kvm_getprocs
 and
@@ -158,11 +172,53 @@ function is similar to
 .Fn kvm_getargv
 but returns the vector of environment strings.  This data is
 also alterable by the process.
+.Pp
+.Fn kvm_getproc2
+is similar to
+.Fn kvm_getprocs
+but returns an array of
+.Sy kinfo_proc2
+structures.  Additionally, only the first
+.Fa elemsize
+bytes of each array entry are returned.
+If the size of the
+.Sy kinfo_proc2
+structure increases in size in a future release of
+.Nx
+the kernel will only return the requested amount of data for
+each array entry and programs that use
+.Fn kvm_getproc2
+will continue to function without the need for recompilation.
+.Pp
+The
+.Fn kvm_getargv2
+and
+.Fn kvm_getenvv2
+are equivalents to the
+.Fn kvm_getargv
+and
+.Fn kvm_getenvv
+functions but use a
+.Sy kinfo_proc2
+structure to specify the process.
+.Pp
+If called against an active kernel, the
+.Fn kvm_getproc2 ,
+.Fn kvm_getargv2 ,
+and
+.Fn kvm_getenvv2  
+functions will use the
+.Xr sysctl 3
+interface and do not require access to the kernel memory device
+file or swap device.
 .Sh RETURN VALUES
 .Fn kvm_getprocs ,
 .Fn kvm_getargv ,
-and
 .Fn kvm_getenvv ,
+.Fn kvm_getproc2 ,
+.Fn kvm_getargv2 ,
+and
+.Fn kvm_getenvv2
 all return
 .Dv NULL
 on failure.
