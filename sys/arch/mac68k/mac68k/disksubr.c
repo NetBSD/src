@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 1999/01/27 21:03:46 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 1999/01/27 21:25:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -96,9 +96,6 @@
 #define SWAP_PART 3
 #define HFS_PART 4
 #define SCRATCH_PART 5
-
-#define	MBRSIGOFS	0x1fe
-#define	MBRSIG		0x55aa
 
 int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 		    MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
@@ -584,7 +581,8 @@ readdisklabel(dev, strat, lp, osdep)
 		sbSigp = (u_int16_t *)bp->b_un.b_addr;
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
-		} else if (*(u_int16_t *)(bp->b_data + MBRSIGOFS) == MBRSIG) {
+		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
+			   == MBRSIG) {
 			msg = read_dos_label(dev, strat, lp, osdep);
 		} else {
 			dlp = (struct disklabel *)(bp->b_un.b_addr + 0);
