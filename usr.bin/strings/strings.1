@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strings.1	6.11 (Berkeley) 5/9/91
-.\"	$Id: strings.1,v 1.2 1993/08/01 07:28:29 mycroft Exp $
+.\"	$Id: strings.1,v 1.3 1993/11/13 01:51:00 jtc Exp $
 .\"
 .Dd May 9, 1991
 .Dt STRINGS 1
-.Os BSD 3
+.Os
 .Sh NAME
 .Nm strings
 .Nd find printable strings in a file
@@ -42,6 +42,7 @@
 .Nm strings
 .Op Fl afo
 .Op Fl n Ar number
+.Op Fl t Ar radix
 .Op Ar file ...
 .Sh DESCRIPTION
 .Nm Strings
@@ -69,14 +70,24 @@ Specifies the minimum number of characters in a sequence to be
 .Ar number ,
 instead of four.
 .It Fl o
-Each string is preceded by its decimal offset in the
-file.
+Each string is preceded by its octal offset in the file.
+.It Fl t 
+Each string is preceded by its offset in the file.  The first character of
+.Ar radix
+determines the radix of the offset: 
+.Sq o
+for octal; 
+.Sq d
+for decimal; or 
+.Sq x
+for hexadecimal.
 .El
 .Pp
 .Nm Strings
 is useful for identifying random binaries, among other things.
 .Sh SEE ALSO
-.Xr hexdump 1
+.Xr hexdump 1 ,
+.Xr od 1
 .Sh BUGS
 The algorithm for identifying strings is extremely primitive.
 In particular, machine code instructions on certain architectures
@@ -90,8 +101,13 @@ This was reasonable as strings were normally stored there.
 Given new compiler technology which installs strings in the 
 text portion of the object file, the default behavior was
 changed.
+.Sh STANDARDS
+The 
+.Nm
+utility conforms to
+.St -p1003.2-92 .
 .Sh HISTORY
 The
 .Nm
-command appeared in
+utility appeared in
 .Bx 3.0 .
