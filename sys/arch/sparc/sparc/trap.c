@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 1999/02/23 06:47:05 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.82 1999/03/18 04:27:54 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,6 +52,7 @@
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_sunos.h"
 #include "opt_compat_aout.h"
 
 #include <sys/param.h>
@@ -86,6 +87,10 @@
 #endif
 #ifdef COMPAT_SVR4
 #include <machine/svr4_machdep.h>
+#endif
+#ifdef COMPAT_SUNOS
+extern struct emul emul_sunos;
+#define SUNOS_MAXSADDR_SLOP (32 * 1024)
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
@@ -807,7 +812,13 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
+	if ((caddr_t)va >= vm->vm_maxsaddr
+#ifdef COMPAT_SUNOS
+	    && !(p->p_emul == &emul_sunos && va < USRSTACK -
+		 (vaddr_t)p->p_limit->pl_rlimit[RLIMIT_STACK].rlim_cur +
+		 SUNOS_MAXSADDR_SLOP)
+#endif
+	    ) {
 		if (rv == KERN_SUCCESS) {
 			unsigned nss = clrnd(btoc(USRSTACK - va));
 			if (nss > vm->vm_ssize)
