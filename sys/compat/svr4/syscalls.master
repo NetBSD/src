@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 1997/07/21 23:02:47 christos Exp $
+	$NetBSD: syscalls.master,v 1.24 1997/10/15 17:18:49 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -218,9 +218,9 @@
 			    svr4_mode_t mode, svr4_dev_t dev); }
 127	UNIMPL		clocal
 128	STD		{ int svr4_sys_setrlimit(int which, \
-			    struct ogetrlimit *rlp); }
+			    struct orlimit *rlp); }
 129	STD		{ int svr4_sys_getrlimit(int which, \
-			    struct ogetrlimit *rlp); }
+			    struct orlimit *rlp); }
 130	UNIMPL		lchown
 131	STD		{ int svr4_sys_memcntl(svr4_caddr_t addr, \
 			    svr4_size_t len, int cmd, svr4_caddr_t arg, \

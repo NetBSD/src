@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1997/10/10 01:55:33 enami Exp $
+	$NetBSD: syscalls.master,v 1.10 1997/10/15 17:18:17 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -256,9 +256,9 @@
 143	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); } \
 			    osethostid
 144	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
-			    struct ogetrlimit *rlp); } ogetrlimit
+			    struct orlimit *rlp); } ogetrlimit
 145	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
-			    struct ogetrlimit *rlp); } osetrlimit
+			    struct orlimit *rlp); } osetrlimit
 146	NOARGS		{ int compat_43_sys_killpg(int pgid, int signum); } \
 			    okillpg
 147	NOARGS		{ int sys_setsid(void); }

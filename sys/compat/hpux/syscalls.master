@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.14 1997/10/15 17:18:29 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -210,9 +210,9 @@
 142	UNIMPL
 143	UNIMPL
 144	STD		{ int hpux_sys_getrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
+			    struct orlimit *rlp); }
 145	STD		{ int hpux_sys_setrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
+			    struct orlimit *rlp); }
 146	UNIMPL
 147	UNIMPL
 148	UNIMPL
