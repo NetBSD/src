@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysent.c,v 1.114 2000/04/17 14:33:11 mrg Exp $	*/
+/*	$NetBSD: init_sysent.c,v 1.115 2000/04/21 16:16:15 minoura Exp $	*/
 
 /*
  * System call switch table.
@@ -787,5 +787,7 @@ struct sysent sysent[] = {
 #endif
 	{ 2, s(struct sys_lchflags_args),
 	    sys_lchflags },			/* 304 = lchflags */
+	{ 0, 0,
+	    sys_issetugid },			/* 305 = issetugid */
 };
 
