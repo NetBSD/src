@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 2000/11/03 23:15:57 lukem Exp $
+.\"	$NetBSD: prep,v 1.6 2001/07/24 18:18:32 nra Exp $
 .
 If you're installing
 .Nx*M
@@ -7,7 +7,7 @@ to look at the partition sizes of disk you intend installing
 .Nx
 on.
 .Pp
-Asumming a classic partition scheme with
+Assuming a classic partition scheme with
 .Pa /
 (root) and
 .Pa /usr
