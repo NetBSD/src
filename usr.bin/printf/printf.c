@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.26 2003/02/24 14:42:27 dsl Exp $	*/
+/*	$NetBSD: printf.c,v 1.27 2003/06/25 09:54:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.26 2003/02/24 14:42:27 dsl Exp $");
+__RCSID("$NetBSD: printf.c,v 1.27 2003/06/25 09:54:15 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,12 @@ int main(int argc, char *argv[])
 	(void)setlocale (LC_ALL, "");
 #endif
 
+/*
+ * IEEE 1003.1 (2003) doesn't say that printf(1) should conform to the
+ * "Utility Syntax Guidlines".
+ * It just says: Options: None.
+ */
+#if 0
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
 		case '?':
@@ -146,6 +152,7 @@ int main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+#endif
 
 	if (argc < 1) {
 		usage();
