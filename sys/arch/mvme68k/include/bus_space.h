@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.3 1999/04/10 14:06:27 drochner Exp $ */
+/*	$NetBSD: bus_space.h,v 1.4 2000/01/25 22:26:49 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 /*
  * Allocation and deallocation operations.
