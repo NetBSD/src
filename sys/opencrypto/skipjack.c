@@ -1,4 +1,4 @@
-/*	$NetBSD: skipjack.c,v 1.1 2003/07/25 21:12:48 jonathan Exp $ */
+/*	$NetBSD: skipjack.c,v 1.2 2003/08/27 00:20:56 thorpej Exp $ */
 /*	$OpenBSD: skipjack.c,v 1.3 2001/05/05 00:31:34 angelos Exp $	*/
 
 /* 
@@ -15,7 +15,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: skipjack.c,v 1.1 2003/07/25 21:12:48 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: skipjack.c,v 1.2 2003/08/27 00:20:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <opencrypto/skipjack.h>
@@ -67,7 +67,7 @@ static const u_int8_t ftable[0x100] =
  * k0, k1..k9
  */
 void
-subkey_table_gen (u_int8_t *key, u_int8_t **key_tables)
+subkey_table_gen (const u_int8_t *key, u_int8_t **key_tables)
 {
 	int i, k;
 

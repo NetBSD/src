@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.7 2003/08/26 15:03:26 thorpej Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.8 2003/08/27 00:20:56 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.7 2003/08/26 15:03:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.8 2003/08/27 00:20:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.7 2003/08/26 15:03:26 thorpej Exp $
 #include <opencrypto/cryptosoft.h>
 #include <opencrypto/xform.h>
 
-u_int8_t hmac_ipad_buffer[64] = {
+const u_int8_t hmac_ipad_buffer[64] = {
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -48,7 +48,7 @@ u_int8_t hmac_ipad_buffer[64] = {
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
 };
 
-u_int8_t hmac_opad_buffer[64] = {
+const u_int8_t hmac_opad_buffer[64] = {
 	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
 	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
 	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
