@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.29 2001/03/29 03:33:07 petrov Exp $	*/
+/*	$NetBSD: esp.c,v 1.30 2001/03/31 06:56:54 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ espattach_intio(parent, self, aux)
 		esc->sc_scsi_dma.nd_bst = NEXT68K_INTIO_BUS_SPACE;
 
 		if (bus_space_map(esc->sc_scsi_dma.nd_bst, NEXT_P_SCSI_CSR,
-				sizeof(struct dma_dev),0, &esc->sc_scsi_dma.nd_bsh)) {
+				DD_SIZE,0, &esc->sc_scsi_dma.nd_bsh)) {
 			panic("\n%s: can't map scsi DMA registers",
 					sc->sc_dev.dv_xname);
 		}
