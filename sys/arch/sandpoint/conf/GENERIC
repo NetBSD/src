@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.11 2001/08/30 02:08:42 briggs Exp $
+#	$NetBSD: GENERIC,v 1.12 2001/09/01 21:52:31 atatat Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -63,6 +63,7 @@ config		netbsd	root on ? type ?
 
 # network psuedo-devices
 pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	ipfilter
 pseudo-device	loop
 

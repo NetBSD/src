@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.111 2001/07/08 16:32:19 abs Exp $
+#	$NetBSD: GENERIC,v 1.112 2001/09/01 21:52:28 atatat Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	16		# estimated number of users
 
@@ -256,6 +256,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	grf		2	# grf emulation for wscons
