@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -34,12 +34,11 @@
 char copyright[] =
 "@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: main.c,v 1.1.1.6 1998/06/02 17:41:25 thorpej Exp $";
+__RCSID("$NetBSD: main.c,v 1.1.1.7 1999/02/23 09:56:50 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.6 $"
 
 #include "defs.h"
 #include "pathnames.h"
@@ -49,12 +48,6 @@ static char rcsid[] = "$NetBSD: main.c,v 1.1.1.6 1998/06/02 17:41:25 thorpej Exp
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/file.h>
-#if defined(sgi) && !defined(PRE_KUDZU)
-#include <cap_net.h>
-#else
-#define cap_socket socket
-#define cap_bind bind
-#endif
 
 pid_t	mypid;
 
@@ -71,7 +64,7 @@ int	default_gateway;		/* 1=advertise default */
 int	background = 1;
 int	ridhosts;			/* 1=reduce host routes */
 int	mhome;				/* 1=want multi-homed host route */
-int	advertise_mhome;		/* 1=must continue adverising it */
+int	advertise_mhome;		/* 1=must continue advertising it */
 int	auth_ok = 1;			/* 1=ignore auth if we do not care */
 
 struct timeval epoch;			/* when started */
@@ -104,6 +97,7 @@ main(int argc,
 	int n, mib[4], off;
 	size_t len;
 	char *p, *q;
+	const char *cp;
 	struct timeval wtime, t2;
 	time_t dt;
 	fd_set ibits;
@@ -134,7 +128,7 @@ main(int argc,
 	(void)gethostname(myname, sizeof(myname)-1);
 	(void)gethost(myname, &myaddr);
 
-	while ((n = getopt(argc, argv, "sqdghmpAtvT:F:P:")) != EOF) {
+	while ((n = getopt(argc, argv, "sqdghmpAtvT:F:P:")) != -1) {
 		switch (n) {
 		case 's':
 			supplier = 1;
@@ -151,11 +145,11 @@ main(int argc,
 			break;
 
 		case 'g':
-			bzero(&parm, sizeof(parm));
+			memset(&parm, 0, sizeof(parm));
 			parm.parm_d_metric = 1;
-			p = check_parms(&parm);
-			if (p != 0)
-				msglog("bad -g: %s", p);
+			cp = check_parms(&parm);
+			if (cp != 0)
+				msglog("bad -g: %s", cp);
 			else
 				default_gateway = 1;
 			break;
@@ -198,29 +192,29 @@ main(int argc,
 				       optarg);
 				break;
 			}
-			bzero(&parm, sizeof(parm));
+			memset(&parm, 0, sizeof(parm));
 			parm.parm_net = p_net;
 			parm.parm_mask = p_mask;
 			parm.parm_d_metric = n;
-			p = check_parms(&parm);
-			if (p != 0)
-				msglog("bad -F: %s", p);
+			cp = check_parms(&parm);
+			if (cp != 0)
+				msglog("bad -F: %s", cp);
 			break;
 
 		case 'P':
 			/* handle arbitrary parameters.
 			 */
 			q = strdup(optarg);
-			p = parse_parms(q, 0);
-			if (p != 0)
-				msglog("%s in \"-P %s\"", p, optarg);
+			cp = parse_parms(q, 0);
+			if (cp != 0)
+				msglog("%s in \"-P %s\"", cp, optarg);
 			free(q);
 			break;
 
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.10");
+			msglog("version 2.16");
 			break;
 
 		default:
@@ -298,7 +292,7 @@ usage:
 
 	/* prepare socket connected to the kernel.
 	 */
-	rt_sock = cap_socket(AF_ROUTE, SOCK_RAW, 0);
+	rt_sock = socket(AF_ROUTE, SOCK_RAW, 0);
 	if (rt_sock < 0)
 		BADERR(1,"rt_sock = socket()");
 	if (fcntl(rt_sock, F_SETFL, O_NONBLOCK) == -1)
@@ -364,7 +358,7 @@ usage:
 			dt = t2.tv_sec;
 			if (dt > 0)
 				dt -= wtime.tv_sec;
-			trace_act("time changed by %d sec", dt);
+			trace_act("time changed by %d sec", (int)dt);
 			epoch.tv_sec += dt;
 		}
 		timevalsub(&now, &clk, &epoch);
@@ -419,7 +413,7 @@ usage:
 				/* It is desirable to send routing updates
 				 * regularly.  So schedule the next update
 				 * 30 seconds after the previous one was
-				 * secheduled, instead of 30 seconds after
+				 * scheduled, instead of 30 seconds after
 				 * the previous update was finished.
 				 * Even if we just started after discovering
 				 * a 2nd interface or were otherwise delayed,
@@ -522,7 +516,7 @@ usage:
 
 /* ARGSUSED */
 void
-sigalrm(int s)
+sigalrm(int s UNUSED)
 {
 	/* Historically, SIGALRM would cause the daemon to check for
 	 * new and broken interfaces.
@@ -575,7 +569,7 @@ fix_select(void)
 
 void
 fix_sock(int sock,
-	 char *name)
+	 const char *name)
 {
 	int on;
 #define MIN_SOCKBUF (4*1024)
@@ -631,14 +625,14 @@ get_rip_sock(naddr addr,
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		BADERR(1,"rip_sock = socket()");
 
-	bzero(&sin,sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 #ifdef _HAVE_SIN_LEN
 	sin.sin_len = sizeof(sin);
 #endif
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(RIP_PORT);
 	sin.sin_addr.s_addr = addr;
-	if (cap_bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		if (serious)
 			BADERR(errno != EADDRINUSE, "bind(rip_sock)");
 		return -1;
@@ -777,7 +771,7 @@ rip_on(struct interface *ifp)
  */
 void *
 rtmalloc(size_t size,
-	 char *msg)
+	 const char *msg)
 {
 	void *p = malloc(size);
 	if (p == 0)
@@ -806,7 +800,7 @@ timevaladd(struct timeval *t1,
 {
 
 	t1->tv_sec += t2->tv_sec;
-	if ((t1->tv_usec += t2->tv_usec) > 1000000) {
+	if ((t1->tv_usec += t2->tv_usec) >= 1000000) {
 		t1->tv_sec++;
 		t1->tv_usec -= 1000000;
 	}
@@ -831,7 +825,7 @@ timevalsub(struct timeval *t1,
 /* put a message into the system log
  */
 void
-msglog(char *p, ...)
+msglog(const char *p, ...)
 {
 	va_list args;
 
@@ -857,12 +851,12 @@ msglog(char *p, ...)
  * For example, there can be many systems with the wrong password.
  */
 void
-msglim(struct msg_limit *lim, naddr addr, char *p, ...)
+msglim(struct msg_limit *lim, naddr addr, const char *p, ...)
 {
 	va_list args;
 	int i;
 	struct msg_sub *ms1, *ms;
-	char *p1;
+	const char *p1;
 
 	va_start(args, p);
 
@@ -912,7 +906,7 @@ msglim(struct msg_limit *lim, naddr addr, char *p, ...)
 
 
 void
-logbad(int dump, char *p, ...)
+logbad(int dump, const char *p, ...)
 {
 	va_list args;
 
