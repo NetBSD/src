@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.7 1998/09/28 17:55:22 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.8 1998/11/09 16:36:16 rvb Exp $	*/
 
 /*
  * 
@@ -52,6 +52,13 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.8  1998/11/09 16:36:16  rvb
+ * Change the way unmounting happens to guarantee that the
+ * client programs are allowed to finish up (coda_call is
+ * forced to complete) and release their locks.  Thus there
+ * is a reasonable chance that the vflush implicit in the
+ * unmount will not get hung on held locks.
+ *
  * Revision 1.7  1998/09/28 17:55:22  rvb
  * I want to distinguish from DEBUG printouts and CODA_VERBOSE printouts.
  * The latter are normal informational messages that are sometimes
@@ -201,6 +208,13 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #define CTL_C
 
 int coda_psdev_print_entry = 0;
+static
+int outstanding_upcalls = 0;
+int coda_call_sleep = PZERO - 1;
+#ifdef	CTL_C
+int coda_pcatch = PCATCH;
+#else
+#endif
 
 #define ENTRY if(coda_psdev_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
 
@@ -292,17 +306,17 @@ vc_nb_close (dev, flag, mode, p)
      * Put this before WAKEUPs to avoid queuing new messages between
      * the WAKEUP and the unmount (which can happen if we're unlucky)
      */
-    if (mi->mi_rootvp) {
-	/* Let unmount know this is for real */
-	VTOC(mi->mi_rootvp)->c_flags |= C_UNMOUNTING;
-	if (vfs_busy(mi->mi_vfsp, 0, 0))
-	    return (EBUSY);
-	coda_unmounting(mi->mi_vfsp);
-	err = dounmount(mi->mi_vfsp, flag, p);
-	if (err)
-	    myprintf(("Error %d unmounting vfs in vcclose(%d)\n", 
-		      err, minor(dev)));
+    if (!mi->mi_rootvp) {
+	/* just a simple open/close w no mount */
+	MARK_VC_CLOSED(vcp);
+	return 0;
     }
+
+    /* Let unmount know this is for real */
+    VTOC(mi->mi_rootvp)->c_flags |= C_UNMOUNTING;
+    if (vfs_busy(mi->mi_vfsp, 0, 0))
+	return (EBUSY);
+    coda_unmounting(mi->mi_vfsp);
     
     /* Wakeup clients so they can return. */
     for (vmp = (struct vmsg *)GETNEXT(vcp->vc_requests);
@@ -316,18 +330,34 @@ vc_nb_close (dev, flag, mode, p)
 	    CODA_FREE((caddr_t)vmp, (u_int)sizeof(struct vmsg));
 	    continue;
 	}
-	
+	outstanding_upcalls++;	
 	wakeup(&vmp->vm_sleep);
     }
-    
+
     for (vmp = (struct vmsg *)GETNEXT(vcp->vc_replys);
 	 !EOQ(vmp, vcp->vc_replys);
 	 vmp = (struct vmsg *)GETNEXT(vmp->vm_chain))
     {
+	outstanding_upcalls++;	
 	wakeup(&vmp->vm_sleep);
     }
-    
+
     MARK_VC_CLOSED(vcp);
+
+    if (outstanding_upcalls) {
+#ifdef	CODA_VERBOSE
+	printf("presleep: outstanding_upcalls = %d\n", outstanding_upcalls);
+    	(void) tsleep(&outstanding_upcalls, coda_call_sleep, "coda_umount", 0);
+	printf("postsleep: outstanding_upcalls = %d\n", outstanding_upcalls);
+#else
+    	(void) tsleep(&outstanding_upcalls, coda_call_sleep, "coda_umount", 0);
+#endif
+    }
+
+    err = dounmount(mi->mi_vfsp, flag, p);
+    if (err)
+	myprintf(("Error %d unmounting vfs in vcclose(%d)\n", 
+	           err, minor(dev)));
     return 0;
 }
 
@@ -565,13 +595,6 @@ struct coda_clstat coda_clstat;
  * (e.g. kill -9).  
  */
 
-/* If you want this to be interruptible, set this to > PZERO */
-int coda_call_sleep = PZERO - 1;
-#ifdef	CTL_C
-int coda_pcatch = PCATCH;
-#else
-#endif
-
 int
 coda_call(mntinfo, inSize, outSize, buffer) 
      struct coda_mntinfo *mntinfo; int inSize; int *outSize; caddr_t buffer;
@@ -650,6 +673,11 @@ coda_call(mntinfo, inSize, outSize, buffer)
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d SIGIO, cnt %d\n", error, i);
 #endif
+    	    } else if (sigismember(&p->p_siglist, SIGALRM)) {
+		    sigaddset(&p->p_sigmask, SIGALRM);
+#ifdef	CODA_VERBOSE
+		    printf("coda_call: tsleep returns %d SIGALRM, cnt %d\n", error, i);
+#endif
 	    } else {
 		    sigset_t tmp;
 		    tmp = p->p_siglist;		/* array assignment */
@@ -674,7 +702,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 			    p->p_sigmask.__bits[2], p->p_sigmask.__bits[3]);
 #endif
 	    }
-	} while (error && i++ < 128);
+	} while (error && i++ < 128 && VC_OPEN(vcp));
 	p->p_siglist = psig_omask;	/* array assignment */
 #else
 	(void) tsleep(&vmp->vm_sleep, coda_call_sleep, "coda_call", 0);
@@ -747,6 +775,9 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	}
 
 	CODA_FREE(vmp, sizeof(struct vmsg));
+
+	if (outstanding_upcalls > 0 && (--outstanding_upcalls == 0))
+		wakeup(&outstanding_upcalls);
 
 	if (!error)
 		error = ((struct coda_out_hdr *)buffer)->result;

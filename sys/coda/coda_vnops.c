@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.7 1998/09/28 17:55:22 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.8 1998/11/09 16:36:16 rvb Exp $	*/
 
 /*
  * 
@@ -56,6 +56,13 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.8  1998/11/09 16:36:16  rvb
+ * Change the way unmounting happens to guarantee that the
+ * client programs are allowed to finish up (coda_call is
+ * forced to complete) and release their locks.  Thus there
+ * is a reasonable chance that the vflush implicit in the
+ * unmount will not get hung on held locks.
+ *
  * Revision 1.7  1998/09/28 17:55:22  rvb
  * I want to distinguish from DEBUG printouts and CODA_VERBOSE printouts.
  * The latter are normal informational messages that are sometimes
@@ -517,7 +524,12 @@ coda_close(v)
 	    printf("coda_close: destroying container ref %d, ufs vp %p of vp %p/cp %p\n",
 		    vp->v_usecount, cp->c_ovp, vp, cp);
 #endif
+#ifdef	hmm
 	    vgone(cp->c_ovp);
+#else
+	    VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
+	    vrele(cp->c_ovp);
+#endif
 	} else {
 #ifdef	CODA_VERBOSE
 	    printf("coda_close: NO container vp %p/cp %p\n", vp, cp);
