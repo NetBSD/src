@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.16 2003/01/06 17:40:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2004/08/16 10:10:46 aymeric Exp $
 
 # Makefile for amiga tags file and boot blocks
 
 # Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
-TAMIGA=	../amiga/tags
-SAMIGA=	../amiga/amiga/*.[ch] ../amiga/include/*.h \
-	../amiga/dev/*.[ch]
-AAMIGA=	../amiga/amiga/*.s
+TAMIGA=	${SYSDIR}/arch/amiga/tags
+SAMIGA=	${SYSDIR}/arch/amiga/amiga/*.[ch] ${SYSDIR}/arch/amiga/include/*.h \
+	${SYSDIR}/arch/amiga/dev/*.[ch]
+AAMIGA=	${SYSDIR}/arch/amiga/amiga/*.s
 
 # Directories in which to place tags links
 DAMIGA=	amiga dev include
@@ -24,7 +24,7 @@ tags:
 
 links:
 	-for i in ${DAMIGA}; do \
-	    cd $$i && rm -f tags; ln -s ../tags tags; done
+	    cd ${.CURDIR}/$$i && rm -f tags; ln -s ../tags tags; done
 
 
 SUBDIR=	compile include stand
