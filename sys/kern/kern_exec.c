@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.98 1999/01/25 16:00:06 kleink Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.99 1999/02/26 23:38:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -133,7 +133,7 @@ check_exec(p, epp)
 	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
 		goto bad1;
 
-	/* unlock vp, since we don't need it locked from here on out. */
+	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
 
 	/* now we have the file, get the exec header */
@@ -183,11 +183,12 @@ check_exec(p, epp)
 
 bad2:
 	/*
-	 * unlock and close the vnode, restore the old one, free the
+	 * close and release the vnode, restore the old one, free the
 	 * pathname buf, and punt.
 	 */
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(vp, FREAD, p->p_ucred, p);
-	vrele(vp);
+	vput(vp);
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 	return error;
 
@@ -479,8 +480,9 @@ sys_execve(p, v, retval)
 #endif
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vrele(pack.ep_vp);
+	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack);
@@ -507,8 +509,9 @@ bad:
 		(void) fdrelease(p, pack.ep_fd);
 	}
 	/* close and put the exec'd file */
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vrele(pack.ep_vp);
+	vput(pack.ep_vp);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 #if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
@@ -536,8 +539,9 @@ exec_abort:
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vrele(pack.ep_vp);
+	vput(pack.ep_vp);
 #if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
