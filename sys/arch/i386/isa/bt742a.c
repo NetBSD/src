@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.6 1993/11/29 00:36:00 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.7 1994/02/02 19:17:25 mycroft Exp $
  */
 
 /*
@@ -320,7 +320,7 @@ struct bt_data {
 	int bt_scsi_dev;		/* adapters scsi id */
 	int numccbs;			/* how many we have malloc'd */
 	struct scsi_link sc_link;	/* prototype for devs */
-}	*btdata[NBT];
+};
 
 /***********debug values *************/
 #define	BT_SHOWCCBS 0x01
@@ -330,7 +330,7 @@ struct bt_data {
 int     bt_debug = 0;
 
 int bt_cmd();	/* XXX must be varargs to prototype */
-int btprobe __P((struct device *, struct cfdata *, void *));
+int btprobe __P((struct device *, struct device *, void *));
 void btattach __P((struct device *, struct device *, void *));
 u_int bt_adapter_info __P((struct bt_data *));
 int btintr __P((void *));
@@ -516,37 +516,24 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
  * autoconf.c
  */
 int
-btprobe(parent, cf, aux)
-        struct device *parent;
-        struct cfdata *cf;
+btprobe(parent, self, aux)
+        struct device *parent, *self;
         void *aux;
 {
-	int unit = cf->cf_unit;
-	struct bt_data *bt;
         register struct isa_attach_args *ia = aux;
-        u_short iobase = ia->ia_iobase;
+	struct bt_data *bt = (void *)self;
 
-        if (iobase == IOBASEUNK)
+        if (ia->ia_iobase == IOBASEUNK)
                 return 0;
 
-	bt = malloc(sizeof(struct bt_data), M_TEMP, M_NOWAIT);
-	if (!bt) {
-		printf("bt%d: cannot malloc!\n", unit);
-		return 0;
-	}
-	bzero(bt, sizeof(*bt));
-	btdata[unit] = bt;
-	bt->bt_base = iobase;
+	bt->bt_base = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads bt->bt_int
 	 */
-	if (bt_find(bt) != 0) {
-		btdata[unit] = NULL;
-		free(bt, M_TEMP);
+	if (bt_find(bt) != 0)
 		return 0;
-	}
 
 	/*
 	 * If it's there, put in it's interrupt vectors and dma channel
@@ -555,10 +542,9 @@ btprobe(parent, cf, aux)
 		ia->ia_irq = (1 << bt->bt_int);
 	} else {
 		if (ia->ia_irq != (1 << bt->bt_int)) {
-			printf("bt%d: irq mismatch, %x != %x\n", unit,
-				ia->ia_irq, (1 << bt->bt_int));
-			btdata[unit] = NULL;
-                	free(bt, M_TEMP);
+			printf("bt%d: irq mismatch, %x != %x\n",
+				bt->sc_dev.dv_unit, ia->ia_irq,
+				1 << bt->bt_int);
                 	return 0;
 		}
 	}
@@ -567,10 +553,8 @@ btprobe(parent, cf, aux)
 		ia->ia_drq = bt->bt_dma;
 	} else {
 		if (ia->ia_drq != bt->bt_dma) {
-			printf("bt%d: drq mismatch, %x != %x\n", unit,
-				ia->ia_drq, bt->bt_dma);
-			btdata[unit] = NULL;
-                	free(bt, M_TEMP);
+			printf("bt%d: drq mismatch, %x != %x\n",
+				bt->sc_dev.dv_unit, ia->ia_drq, bt->bt_dma);
                 	return 0;
 		}
 	}
@@ -593,15 +577,8 @@ btattach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	int unit = self->dv_unit;
-	struct bt_data *bt = btdata[unit];
         struct isa_attach_args *ia = aux;
-
-	bcopy((char *)bt + sizeof(struct device),
-	      (char *)self + sizeof(struct device),
-	      sizeof(struct bt_data) - sizeof(struct device));
-	free(bt, M_TEMP);
-	btdata[unit] = bt = (struct bt_data *)self;
+	struct bt_data *bt = (void *)self;
 
 	bt_init(bt);
 
