@@ -109,6 +109,62 @@ int	ath_hal_dma_beacon_response_time = 2;	/* in TU's */
 int	ath_hal_sw_beacon_response_time = 10;	/* in TU's */
 int	ath_hal_additional_swba_backoff = 0;	/* in TU's */
 
+#ifdef __NetBSD__
+/*
+ * Setup sysctl(3) MIB, ath.hal.*.
+ *
+ * TBD condition SYSCTL_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
+{
+	int rc;
+#ifdef AH_DEBUG
+	int debug_nodenum;
+#endif /* AH_DEBUG */
+	int hal_nodenum, root_nodenum, version_nodenum;
+	struct sysctlnode *node = NULL;
+
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "ath",
+	    &node, NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	root_nodenum = node->sysctl_num;
+	node = NULL;
+
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "hal",
+	    &node, NULL, 0, NULL, 0, root_nodenum, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	hal_nodenum = node->sysctl_num;
+	node = NULL;
+
+	/* HAL version */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY,
+	    CTLTYPE_STRING, "version", &node, NULL, 0, &ath_hal_version, 0,
+	    root_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	version_nodenum = node->sysctl_num;
+	node = NULL;
+
+#ifdef AH_DEBUG
+	node = NULL;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE, CTLTYPE_INT,
+	    "debug", &node, NULL, 0, &ath_hal_debug, 0,
+	    root_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	debug_nodenum = node->sysctl_num;
+
+#endif /* AH_DEBUG */
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+#endif /* __NetBSD__ */
+
 void*
 ath_hal_malloc(size_t size)
 {
