@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1999/06/22 00:43:57 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1999/06/22 15:04:15 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,7 +124,11 @@ main(argc, argv)
 			 "sysinst: screen too small\n");
 		exit(1);
 	}
-       	msg_window(win);
+	if (msg_window(win) != 0) {
+		(void)fprintf(stderr,
+			 "sysinst: couldn't initialize message window\n");
+		exit(1);
+	}
 
 	/* Watch for signals and clean up */
 	(void)atexit(cleanup);
