@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/03/06 12:04:54 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/04/01 12:16:14 lukem Exp $
 
 IMAGESIZE=	7296k
+MAKEFS_FLAGS=   -o density=4k
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
-MAKEFS_FLAGS=   -o density=4k
 IMAGEDEPENDS+=	${ARCHDIR}/../install.md ${ARCHDIR}/dot.profile \
 		${ARCHDIR}/termcap.src \
 		${DESTDIR}/etc/disktab ${DESTDIR}/etc/spwd.db \

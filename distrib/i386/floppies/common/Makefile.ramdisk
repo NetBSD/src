@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.13 2002/03/28 04:33:22 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.14 2002/04/01 12:16:12 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -24,6 +24,7 @@ PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
 .if defined(USE_SYSINST)
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
+MAKEFS_FLAGS+=	-f 15
 .endif
 
 # Use stubs to eliminate some large stuff from libc

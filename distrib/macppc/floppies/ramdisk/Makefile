@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.23 2002/03/30 07:30:37 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.24 2002/04/01 12:16:12 lukem Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	2048k
+MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
 

@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.14 2002/03/31 17:30:16 matt Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/01 12:16:14 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	1536k
+MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
 
-MAKEFS_FLAGS=	-f 15
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list  ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
