@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.8 1999/10/29 12:02:13 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.9 1999/11/01 09:59:23 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -599,17 +599,16 @@ disable_function(sc, function)
 }
 
 /*
- * int cardbus_function_enable(cardbus_devfunc_t ct)
+ * int cardbus_function_enable(struct cardbus_softc *sc, int func)
  *
  *   This function enables a function on a card.  When no power is
  *  applied on the card, power will be applied on it.
  */
 int
-cardbus_function_enable(ct)
-     cardbus_devfunc_t ct;
+cardbus_function_enable(sc, func)
+     struct cardbus_softc *sc;
+     int func;
 {
-  struct cardbus_softc *sc = ct->ct_sc;
-  int func = ct->ct_func;
   cardbus_chipset_tag_t cc = sc->sc_cc;
   cardbus_function_tag_t cf = sc->sc_cf;
   cardbusreg_t command;
@@ -623,12 +622,14 @@ cardbus_function_enable(ct)
 
   /* exiting critical area */
 
-  tag = Cardbus_make_tag(ct);
+  tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
+
   command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
   command |= (CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
-  cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
-  Cardbus_free_tag(ct, tag);
 
+  cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
+
+  cardbus_free_tag(cc, cf, tag);
 
   DPRINTF(("%x\n", sc->sc_poweron_func));
 
@@ -637,19 +638,18 @@ cardbus_function_enable(ct)
 
 
 /*
- * int cardbus_function_disable(cardbus_devfunc_t ct)
+ * int cardbus_function_disable(struct cardbus_softc *, int func)
  *
  *   This function disable a function on a card.  When no functions are
  *  enabled, it turns off the power.
  */
 int
-cardbus_function_disable(ct)
-     cardbus_devfunc_t ct;
+cardbus_function_disable(sc, func)
+     struct cardbus_softc *sc;
+     int func;
 {
-  struct cardbus_softc *sc = ct->ct_sc;
-  int func = ct->ct_func;
 
-  DPRINTF(("entering cardbus_enable_disable...  "));
+  DPRINTF(("entering cardbus_function_disable...  "));
 
   disable_function(sc, func);
 

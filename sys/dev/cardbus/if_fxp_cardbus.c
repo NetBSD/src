@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.3 1999/10/31 15:12:39 joda Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.4 1999/11/01 09:59:23 haya Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ fxp_cardbus_enable(struct fxp_softc *sc)
     cardbus_chipset_tag_t cc = psc->sc_cc;
     cardbus_function_tag_t cf = psc->sc_cf;
 
-    cardbus_function_enable(csc->ct);
+    Cardbus_function_enable(csc->ct);
 
     fxp_cardbus_setup(sc);
 
@@ -245,5 +245,5 @@ fxp_cardbus_disable(struct fxp_softc *sc)
 
     cardbus_intr_disestablish(cc, cf, sc->sc_ih); /* remove intr handler */
     
-    cardbus_function_disable(((struct fxp_cardbus_softc*)sc)->ct);
+    Cardbus_function_disable(((struct fxp_cardbus_softc*)sc)->ct);
 }
