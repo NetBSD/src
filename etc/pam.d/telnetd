@@ -1,6 +1,10 @@
-# $NetBSD: telnetd,v 1.4 2005/02/27 03:40:14 thorpej Exp $
+# $NetBSD: telnetd,v 1.5 2005/02/27 21:49:14 thorpej Exp $
 #
 # PAM configuration for the "telnetd" service
+#
+# NOTE: This service is only used if telnetd is using a built-in
+# authenticator such as SRA.  For non-authenticated telnet sessions,
+# telnetd invokes login(1), which uses the "login" service.
 #
 
 # auth
