@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.7 1995/01/04 05:35:47 mycroft Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.8 1995/01/15 07:08:57 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -165,6 +165,7 @@ struct nlist nl[] = {
 
 int	usenumflag;
 int	totalflag;
+int	kflag;
 char	*nlistf	= NULL;
 char	*memf	= NULL;
 kvm_t	*kd;
@@ -219,7 +220,7 @@ main(argc, argv)
 	char buf[_POSIX2_LINE_MAX];
 
 	fileflag = swapflag = ttyflag = vnodeflag = 0;
-	while ((ch = getopt(argc, argv, "TM:N:finstv")) != EOF)
+	while ((ch = getopt(argc, argv, "TM:N:fiknstv")) != -1)
 		switch (ch) {
 		case 'f':
 			fileflag = 1;
@@ -241,6 +242,9 @@ main(argc, argv)
 			break;
 		case 't':
 			ttyflag = 1;
+			break;
+		case 'k':
+			kflag = 1;
 			break;
 		case 'v':
 		case 'i':		/* Backward compatibility. */
@@ -1090,7 +1094,12 @@ swapmode()
 		}
 	}
 
-	header = getbsize(&hlen, &blocksize);
+	if (kflag) {
+		header = "1K-blocks";
+		blocksize = 1024;
+		hlen = strlen(header);
+	} else
+		header = getbsize(&hlen, &blocksize);
 	if (!totalflag)
 		(void)printf("%-11s %*s %8s %8s %8s  %s\n",
 		    "Device", hlen, header,
@@ -1149,6 +1158,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: pstat [-Tfnstv] [-M core] [-N system]\n");
+	    "usage: pstat [-Tfknstv] [-M core] [-N system]\n");
 	exit(1);
 }
