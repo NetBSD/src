@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.6 1996/02/02 18:05:51 mycroft Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.7 1996/02/14 08:09:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -75,7 +75,7 @@
 #undef	DBG_PIO			/* Show the polled-I/O process		*/
 #undef	DBG_INF			/* Show information transfer process	*/
 #define	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
-#define	DBG_PID		2	/* Keep track of driver			*/
+#define	DBG_PID		25	/* Keep track of driver			*/
 #define	REAL_DMA		/* Use DMA if sensible			*/
 #if defined(FALCON_SCSI)
 #define	REAL_DMA_POLL	1	/* 1: Poll for end of DMA-transfer	*/
@@ -164,6 +164,7 @@ static struct ncr_softc	*cur_softc;
 #define scsi_ienable()		scsi_tt_ienable()
 #define scsi_idisable()		scsi_tt_idisable()
 #define	scsi_clr_ipend()	scsi_tt_clr_ipend()
+#define scsi_ipending()		(GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET)
 #define scsi_dma_setup(r,p,m)	scsi_tt_dmasetup(r, p, m)
 #define wrong_dma_range(r,d)	tt_wrong_dma_range(r, d)
 #define poll_edma(reqp)		tt_poll_edma(reqp)
@@ -414,6 +415,7 @@ u_long	*bytes_left;
 #define scsi_ienable()		scsi_falcon_ienable()
 #define scsi_idisable()		scsi_falcon_idisable()
 #define	scsi_clr_ipend()	scsi_falcon_clr_ipend()
+#define	scsi_ipending()		scsi_falcon_ipending()
 #define scsi_dma_setup(r,p,m)	scsi_falcon_dmasetup(r, p, m)
 #define wrong_dma_range(r,d)	falcon_wrong_dma_range(r, d)
 #define poll_edma(reqp)		falcon_poll_edma(reqp)
@@ -459,16 +461,22 @@ extern __inline__ void scsi_falcon_ienable()
 	MFP->mf_ierb  |= IB_DINT;
 }
 
-extern __inline__ scsi_falcon_idisable()
+extern __inline__ void scsi_falcon_idisable()
 {
 	MFP->mf_ierb  &= ~IB_DINT;
 }
 
-extern __inline__ scsi_falcon_clr_ipend()
+extern __inline__ void scsi_falcon_clr_ipend()
 {
 	int	tmp;
 
 	tmp = get_falcon_5380_reg(NCR5380_IRCV);
+}
+
+extern __inline__ int scsi_falcon_ipending()
+{
+	return(!(MFP->mf_gpip & IO_DINT)
+		&& (get_falcon_5380_reg(NCR5380_DMSTAT) & SC_IRQ_SET));
 }
 
 static int falcon_wrong_dma_range(reqp, dm)
@@ -538,11 +546,9 @@ SC_REQ	*reqp;
 	DMA->dma_mode = 0x90 | dir;
 	DMA->dma_mode = 0x90 | (dir ^ DMA_WRBIT);
 	DMA->dma_mode = 0x90 | dir;
-	delay(40);	/* XXX: LWP - is this really needed ? */
 	DMA->dma_data = nsects;
-	delay(40);	/* XXX: LWP - is this really needed ? */
+	delay(2);	/* _really_ needed (Thomas Gerner) */
 	DMA->dma_mode = 0x10 | dir;
-	delay(40);	/* XXX: LWP - is this really needed ? */
 }
 
 static void scsi_falcon_dmasetup(reqp, phase, mode)
@@ -578,7 +584,7 @@ static void fscsi_int()
 	int	itype;
 	int	dma_done;
 
-	if (get_falcon_5380_reg(NCR5380_DMSTAT) & SC_IRQ_SET) {
+	if (scsi_falcon_ipending()) {
 		scsi_falcon_idisable();
 		ncr_ctrl_intr(cur_softc);
 	}
@@ -701,11 +707,18 @@ extern __inline__ void scsi_idisable()
 	else scsi_tt_idisable();
 }
 
-extern __inline__ scsi_clr_ipend()
+extern __inline__ void scsi_clr_ipend()
 {
 	if (machineid & ATARI_FALCON)
 		scsi_falcon_clr_ipend();
 	else scsi_tt_clr_ipend();
+}
+
+extern __inline__ int scsi_ipending()
+{
+	if (machineid & ATARI_FALCON)
+		return(scsi_falcon_ipending());
+	else return (GET_TT_REG(NCR5380_DMSTAT) & SC_IRQ_SET);
 }
 
 extern __inline__ scsi_dma_setup(reqp, phase, mbase)
