@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.7 1998/08/25 20:59:36 ross Exp $	*/
+/*	$NetBSD: regular.c,v 1.8 2000/03/20 18:23:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.7 1998/08/25 20:59:36 ross Exp $");
+__RCSID("$NetBSD: regular.c,v 1.8 2000/03/20 18:23:26 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,11 +79,13 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 		return (c_special(fd1, file1, skip1, fd2, file2, skip2));
 
 	if ((p1 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd1, skip1)) == (u_char *)-1)
+	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd1, skip1)) == MAP_FAILED)
 		err(ERR_EXIT, "%s", file1);
+	(void)madvise(p1, (size_t)length, MADV_SEQUENTIAL);
 	if ((p2 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd2, skip2)) == (u_char *)-1)
+	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd2, skip2)) == MAP_FAILED)
 		err(ERR_EXIT, "%s", file2);
+	(void)madvise(p2, (size_t)length, MADV_SEQUENTIAL);
 
 	dfound = 0;
 	for (byte = line = 1; length--; ++p1, ++p2, ++byte) {
