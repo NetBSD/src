@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)rdist.1	6.11 (Berkeley) 7/27/91
-.\"	$Id: rdist.1,v 1.3 1993/08/01 07:29:39 mycroft Exp $
+.\"	$Id: rdist.1,v 1.4 1994/01/11 18:28:40 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt RDIST 1
@@ -140,7 +140,7 @@ link itself.
 .It Fl i
 Ignore unresolved links.
 .Nm Rdist
-will normally try to maintain the link structure of files being transfered
+will normally try to maintain the link structure of files being transferred
 and warn the user if all the links cannot be found.
 .It Fl m Ar host
 Limit which machines are to be updated. Multiple
@@ -159,7 +159,7 @@ option suppresses this.
 .It Fl R
 Remove extraneous files. If a directory is being updated, any files that exist
 on the remote host that do not exist in the master directory are removed.
-This is useful for maintaining truely identical copies of directories.
+This is useful for maintaining truly identical copies of directories.
 .It Fl v
 Verify that the files are up to date on all the hosts. Any files
 that are out of date will be displayed but no files will be changed
@@ -288,7 +288,7 @@ unless the destination name is of the format ``login@host".
 The
 .Ic notify
 command is used to mail the list of files updated (and any errors
-that may have occured) to the listed names.
+that may have occurred) to the listed names.
 If no `@' appears in the name, the destination host is appended to
 the name
 (e.g., name1@host, name2@host, ...).
