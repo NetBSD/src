@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.370 2002/12/17 01:17:44 lukem Exp $
+# $NetBSD: mi,v 1.371 2002/12/17 04:42:06 perry Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -850,6 +850,7 @@
 ./usr/share/doc/html/bzip2		base-htmldoc-share
 ./usr/share/doc/html/ntp		base-htmldoc-share
 ./usr/share/doc/html/ntp/hints		base-htmldoc-share
+./usr/share/doc/html/postfix		base-htmldoc-share
 ./usr/share/doc/psd			base-psd-share
 ./usr/share/doc/psd/01.cacm		base-psd-share
 ./usr/share/doc/psd/02.implement	base-psd-share
