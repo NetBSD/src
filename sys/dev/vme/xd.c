@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.14 1999/03/05 10:38:16 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.15 1999/06/30 15:07:45 drochner Exp $	*/
 
 /*
  *
@@ -76,9 +76,8 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/conf.h>
+#include <machine/intr.h>
 
 #if defined(__sparc__) || defined(__sun3__)
 #include <dev/sun/disklabel.h>
@@ -238,10 +237,13 @@ int	xdcmatch __P((struct device *, struct cfdata *, void *));
 void	xdcattach __P((struct device *, struct device *, void *));
 int	xdmatch __P((struct device *, struct cfdata *, void *));
 void	xdattach __P((struct device *, struct device *, void *));
-static	int xdc_probe __P((void *, void *));
+static	int xdc_probe __P((void *, bus_space_tag_t, bus_space_handle_t));
 
 static	void xddummystrat __P((struct buf *));
 int	xdgetdisklabel __P((struct xd_softc *, void *));
+
+bdev_decl(xd);
+cdev_decl(xd);
 
 /* XXX - think about this more.. xd_machdep? */
 void	md_setup __P((void));
@@ -346,6 +348,7 @@ xdgetdisklabel(xd, b)
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 			xd->sc_dev.dv_xname, xd->pcyl);
 	}
+#endif
 
 	xd->ncyl = xd->sc_dk.dk_label->d_ncylinders;
 	xd->acyl = xd->sc_dk.dk_label->d_acylinders;
@@ -371,16 +374,17 @@ xdgetdisklabel(xd, b)
  */
 
 int
-xdc_probe(vaddr, arg)
-	void *vaddr;
+xdc_probe(arg, tag, handle)
 	void *arg;
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
 {
-	struct xdc *xdc = vaddr;
+	struct xdc *xdc = (void *)handle; /* XXX */
 	int del = 0;
 
 	xdc->xdc_csr = XDC_RESET;
 	XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
-	return (del > 0);
+	return (del > 0 ? 0 : EIO);
 }
 
 int xdcmatch(parent, cf, aux)
@@ -389,14 +393,19 @@ int xdcmatch(parent, cf, aux)
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
-	vme_mod_t		mod;
+	vme_chipset_tag_t	ct = va->va_vct;
+	vme_am_t		mod;
+	int error;
 
-	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
-	return (vme_bus_probe(ct, bt, va->vma_reg[0],
-			      offsetof(struct xdc, xdc_csr), 1,
-			      mod, xdc_probe, 0));
+	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xdc),
+			    mod))
+		return (0);
+	error = vme_probe(ct, va->r[0].offset, sizeof(struct xdc),
+			  mod, VME_D32, xdc_probe, 0);
+	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct xdc), mod);
+
+	return (error == 0);
 }
 
 /*
@@ -409,33 +418,37 @@ xdcattach(parent, self, aux)
 
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
+	vme_chipset_tag_t	ct = va->va_vct;
+	bus_space_tag_t		bt;
 	bus_space_handle_t	bh;
 	vme_intr_handle_t	ih;
-	vme_mod_t		mod;
+	vme_am_t		mod;
 	struct xdc_softc	*xdc = (void *) self;
 	struct xdc_attach_args	xa;
 	int			lcv, rqno, error;
 	struct xd_iopb_ctrl	*ctl;
 	bus_dma_segment_t	seg;
 	int			rseg;
+	vme_mapresc_t resc;
 
 	md_setup();
 
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xdc_softc. */
 
-	xdc->dmatag = va->vma_dmatag;
-	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
+	xdc->dmatag = va->va_bdt;
+	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
 
-	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct xdc),
-			mod, bt, &bh) != 0)
+	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xdc),
+			    mod))
+		panic("xdc: vme alloc");
+	if (vme_space_map(ct, va->r[0].offset, sizeof(struct xdc),
+			  mod, VME_D32, 0, &bt, &bh, &resc) != 0)
 		panic("xdc: vme_map");
 
-	xdc->xdc = (struct xdc *) bh;
-	xdc->ipl = va->vma_pri;
-	xdc->vector = va->vma_vec;
+	xdc->xdc = (struct xdc *) bh; /* XXX */
+	xdc->ipl = va->ilevel;
+	xdc->vector = va->ivector;
 
 	for (lcv = 0; lcv < XDC_MAXDEV; lcv++)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;
@@ -547,10 +560,9 @@ xdcattach(parent, self, aux)
 	}
 
 	/* link in interrupt with higher level software */
-	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
-	vme_intr_establish(ct, ih, xdcintr, xdc);
+	vme_intr_map(ct, va->ivector, va->ilevel, &ih);
+	vme_intr_establish(ct, ih, IPL_BIO, xdcintr, xdc);
 	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
-	vme_bus_establish(ct, &xdc->sc_dev);
 
 
 	/* now we must look for disks using autoconfig */
@@ -2089,7 +2101,10 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 {
 	int     errno = iorq->errno;
 	int     erract = errno & XD_ERA_MASK;
-	int     oldmode, advance, i;
+	int     oldmode, advance;
+#ifdef sparc
+	int i;
+#endif
 
 	if (erract == XD_ERA_RSET) {	/* some errors require a reset */
 		oldmode = iorq->mode;
@@ -2107,6 +2122,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	    (iorq->mode & XD_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->sectcnt;
 		XDC_ADVANCE(iorq, advance);
+#ifdef sparc
 		if ((i = isbad(&iorq->xd->dkb, iorq->blockno / iorq->xd->sectpercyl,
 			    (iorq->blockno / iorq->xd->nsect) % iorq->xd->nhead,
 			    iorq->blockno % iorq->xd->nsect)) != -1) {
@@ -2124,6 +2140,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 			xdc_start(xdcsc, 1);	/* resubmit */
 			return (XD_ERR_AOK);	/* recovered! */
 		}
+#endif
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.11 1999/03/05 10:38:16 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.12 1999/06/30 15:07:45 drochner Exp $	*/
 
 /*
  *
@@ -76,15 +76,15 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/conf.h>
+#include <machine/intr.h>
 
 #if defined(__sparc__) || defined(__sun3__)
 #include <dev/sun/disklabel.h>
 #endif
 
 #include <dev/vme/vmevar.h>
+
 #include <dev/vme/xyreg.h>
 #include <dev/vme/xyvar.h>
 #include <dev/vme/xio.h>
@@ -179,10 +179,13 @@ int	xycmatch __P((struct device *, struct cfdata *, void *));
 void	xycattach __P((struct device *, struct device *, void *));
 int	xymatch __P((struct device *, struct cfdata *, void *));
 void	xyattach __P((struct device *, struct device *, void *));
-static	int xyc_probe __P((void *, void *));
+static	int xyc_probe __P((void *, bus_space_tag_t, bus_space_handle_t));
 
 static	void xydummystrat __P((struct buf *));
 int	xygetdisklabel __P((struct xy_softc *, void *));
+
+bdev_decl(xy);
+cdev_decl(xy);
 
 /*
  * cfattach's: device driver interface to autoconfig
@@ -266,6 +269,7 @@ xygetdisklabel(xy, b)
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 		xy->sc_dev.dv_xname, xy->pcyl);
 	}
+#endif
 
 	xy->ncyl = xy->sc_dk.dk_label->d_ncylinders;
 	xy->acyl = xy->sc_dk.dk_label->d_acylinders;
@@ -290,13 +294,14 @@ xygetdisklabel(xy, b)
  * soft reset to detect the xyc.
  */
 int
-xyc_probe(vaddr, arg)
-	void *vaddr;
+xyc_probe(arg, tag, handle)
 	void *arg;
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
 {
-	struct xyc *xyc = vaddr;
+	struct xyc *xyc = (void *)handle; /* XXX */
 
-	return (xyc_unbusy(xyc, XYC_RESETUSEC) != XY_ERR_FAIL);
+	return ((xyc_unbusy(xyc, XYC_RESETUSEC) != XY_ERR_FAIL) ? 0 : EIO);
 }
 
 int xycmatch(parent, cf, aux)
@@ -305,15 +310,19 @@ int xycmatch(parent, cf, aux)
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
-	vme_mod_t		mod;
+	vme_chipset_tag_t	ct = va->va_vct;
+	vme_am_t		mod;
+	int error;
 
-	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D;
+	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xyc),
+			    mod))
+		return (0);
+	error = vme_probe(ct, va->r[0].offset, sizeof(struct xyc),
+			  mod, VME_D32, xyc_probe, 0);
+	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct xyc), mod);
 
-	return (vme_bus_probe(ct, bt, va->vma_reg[0],
-			      offsetof(struct xyc, xyc_rsetup), 1,
-			      mod, xyc_probe, 0));
+	return (error == 0);
 }
 
 /*
@@ -326,29 +335,33 @@ xycattach(parent, self, aux)
 
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
+	vme_chipset_tag_t	ct = va->va_vct;
+	bus_space_tag_t		bt;
 	bus_space_handle_t	bh;
 	vme_intr_handle_t	ih;
-	vme_mod_t		mod;
+	vme_am_t		mod;
 	struct xyc_softc	*xyc = (void *) self;
 	struct xyc_attach_args	xa;
 	int			lcv, res, pbsz, error;
 	bus_dma_segment_t	seg;
 	int			rseg;
+	vme_mapresc_t resc;
 
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xyc_softc. */
 
-	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D;
+	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
 
-	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct xyc),
-			mod, bt, &bh) != 0)
+	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xyc),
+			    mod))
+		panic("xyc: vme alloc");
+	if (vme_space_map(ct, va->r[0].offset, sizeof(struct xyc),
+			  mod, VME_D32, 0, &bt, &bh, &resc) != 0)
 		panic("xyc: vme_map");
 
-	xyc->xyc = (struct xyc *) bh;
-	xyc->ipl = va->vma_pri;
-	xyc->vector = va->vma_vec;
+	xyc->xyc = (struct xyc *) bh; /* XXX */
+	xyc->ipl = va->ilevel;
+	xyc->vector = va->ivector;
 	xyc->no_ols = 0; /* XXX should be from config */
 
 	for (lcv = 0; lcv < XYC_MAXDEV; lcv++)
@@ -462,10 +475,9 @@ xycattach(parent, self, aux)
 	}
 
 	/* link in interrupt with higher level software */
-	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
-	vme_intr_establish(ct, ih, xycintr, xyc);
+	vme_intr_map(ct, va->ivector, va->ilevel, &ih);
+	vme_intr_establish(ct, ih, IPL_BIO, xycintr, xyc);
 	evcnt_attach(&xyc->sc_dev, "intr", &xyc->sc_intrcnt);
-	vme_bus_establish(ct, &xyc->sc_dev);
 
 
 	/* now we must look for disks using autoconfig */
@@ -1959,7 +1971,10 @@ xyc_error(xycsc, iorq, iopb, comm)
 {
 	int     errno = iorq->errno;
 	int     erract = xyc_entoact(errno);
-	int     oldmode, advance, i;
+	int     oldmode, advance;
+#ifdef sparc
+	int i;
+#endif
 
 	if (erract == XY_ERA_RSET) {	/* some errors require a reset */
 		oldmode = iorq->mode;
@@ -1975,6 +1990,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 	    (iorq->mode & XY_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->scnt;
 		XYC_ADVANCE(iorq, advance);
+#ifdef sparc
 		if ((i = isbad(&iorq->xy->dkb, iorq->blockno / iorq->xy->sectpercyl,
 			    (iorq->blockno / iorq->xy->nsect) % iorq->xy->nhead,
 			    iorq->blockno % iorq->xy->nsect)) != -1) {
@@ -1991,6 +2007,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 			/* will resubmit when we come out of remove_iorq */
 			return (XY_ERR_AOK);	/* recovered! */
 		}
+#endif
 	}
 
 	/*
