@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.14 2001/05/16 10:49:06 tsubai Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.15 2002/01/21 11:35:06 ichiro Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #ifdef __NetBSD__
+#include <net/if_ieee80211.h>
 #include <dev/ic/wi_ieee.h>
 #else
 #include <dev/pcmcia/if_wavelan_ieee.h>
@@ -68,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.14 2001/05/16 10:49:06 tsubai Exp $";
+	"@(#) $Id: wiconfig.c,v 1.15 2002/01/21 11:35:06 ichiro Exp $";
 #endif
 
 struct wi_table {
@@ -86,6 +87,14 @@ struct wi_table {
 	char *wi_optval;
 };
 
+/* already define in wireg.h XXX */
+#define	WI_APRATE_0		0x00	/* NONE */
+#define WI_APRATE_1		0x0A	/* 1 Mbps */
+#define WI_APRATE_2		0x14	/* 2 Mbps */
+#define WI_APRATE_5		0x37	/* 5.5 Mbps */
+#define WI_APRATE_11		0x6E	/* 11 Mbps */
+
+static void wi_apscan		__P((char *));
 static void wi_getval		__P((char *, struct wi_req *));
 static void wi_setval		__P((char *, struct wi_req *));
 static void wi_printstr		__P((struct wi_req *));
@@ -106,6 +115,124 @@ static struct wi_table *
 static int  wi_hex2int(char c);
 static void wi_str2key		__P((char *, struct wi_key *));
 int main __P((int argc, char **argv));
+
+static void wi_apscan(iface)
+	char			*iface;
+{
+	struct wi_req		wreq;
+	struct ifreq		ifr;
+	int			s;
+	int			naps, rate;
+	int			retries = 10;
+	struct wi_apinfo	*w;
+	int			i, j;
+
+	if (iface == NULL)
+		errx(1, "must specify interface name");
+	memset((char *)&wreq, 0, sizeof(wreq));
+
+	wreq.wi_type = WI_RID_SCAN_APS;
+	wreq.wi_len = 4;
+	/* note chan. 1 is the least significant bit */
+	wreq.wi_val[0] = 0x7ff;		/* 1 bit per channel, 1-11 */
+	wreq.wi_val[1] = 3;		/* tx rate */
+
+	/* write the request */
+	wi_setval(iface, &wreq);
+
+	/* now poll for a result */
+	memset((char *)&wreq, 0, sizeof(wreq));
+
+	wreq.wi_type = WI_RID_READ_APS;
+	wreq.wi_len = WI_MAX_DATALEN;
+
+	/* we have to do this ourself as opposed to
+	 * using setval, because we cannot bail if
+ 	 * the ioctl fails
+	 */
+	memset((char *)&ifr, 0, sizeof(ifr));
+        strcpy(ifr.ifr_name, iface);
+        ifr.ifr_data = (caddr_t)&wreq;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+
+	if (s == -1)
+		err(1, "socket");
+
+	printf("scanning ...");
+	while (ioctl(s, SIOCGWAVELAN, &ifr) == -1) {
+		retries--;
+		if (retries >= 0) {
+			printf(".");
+			sleep(1);
+		} else
+			break;
+		errno = 0;
+	}
+
+	close(s);
+	if (errno) {
+		err(1, "ioctl");
+		exit(1);
+	}
+	printf("\nAP Information\n");
+
+	naps = (int)wreq.wi_val[0]; 
+	w =  (struct wi_apinfo *)(((char *)&wreq.wi_val) + sizeof(int));
+	for ( i = 0; i < naps; i++, w++) {
+		printf("ap[%d]:\n", i);
+		if (w->scanreason) {
+			static char *scanm[] = {
+				"Host initiated",
+				"Firmware initiated",
+				"Inquiry request from host"
+			};
+			printf("\tScanReason:\t\t\t[ %s ]\n",
+				scanm[w->scanreason - 1]);
+		}
+		printf("\tnetname (SSID):\t\t\t[ ");
+			for (j = 0; j < w->namelen; j++) {
+				printf("%c", w->name[j]);
+			}
+			printf(" ]\n");
+		printf("\tBSSID:\t\t\t\t[ %02x:%02x:%02x:%02x:%02x:%02x ]\n",
+			w->bssid[0]&0xff, w->bssid[1]&0xff,
+			w->bssid[2]&0xff, w->bssid[3]&0xff,
+			w->bssid[4]&0xff, w->bssid[5]&0xff);
+		printf("\tChannel:\t\t\t[ %d ]\n", w->channel);
+		printf("\tQuality/Signal/Noise [signal]:\t[ %d / %d / %d ]\n"
+		       "\t                        [dBm]:\t[ %d / %d / %d ]\n", 
+			w->quality, w->signal, w->noise,
+			w->quality, w->signal - 149, w->noise - 149);
+		printf("\tBSS Beacon Interval [Kusec]:\t[ %d ]\n", w->interval); 
+		printf("\tCapinfo:\t\t\t[ "); 
+			if (w->capinfo & IEEE80211_CAPINFO_ESS)
+				printf("ESS ");
+			if (w->capinfo & IEEE80211_CAPINFO_PRIVACY)
+				printf("WEP ");
+			printf("]\n");
+
+		switch (w->rate) {
+		case WI_APRATE_1:
+			rate = 1;
+			break;
+		case WI_APRATE_2:
+			rate = 2;
+			break;
+		case WI_APRATE_5:
+			rate = 5.5;
+			break;
+		case WI_APRATE_11:
+			rate = 11;
+			break;
+		case WI_APRATE_0:
+		default:
+			rate = 0;
+			break;
+		}
+		if (rate) printf("\tDataRate [Mbps]:\t\t[ %d ]\n", rate);
+	}
+}
 
 static void wi_getval(iface, wreq)
 	char			*iface;
@@ -453,9 +580,9 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t",
 	    'c', "create ibss" },
 	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t",
-	  'M', "microwave oven robustness enabled" },
+	    'M', "microwave oven robustness enabled" },
 	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1:firm,3:disable):\t\t",
-	  'R', "roaming mode" },
+	    'R', "roaming mode" },
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t",
 	    'a', "system scale" },
 	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t",
@@ -642,7 +769,7 @@ usage()
 
 	fprintf(stderr,
 	    "usage: %s interface "
-	    "[-o] [-t tx rate] [-n network name] [-s station name]\n"
+	    "[-oD] [-t tx rate] [-n network name] [-s station name]\n"
 	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
@@ -659,7 +786,7 @@ int main(argc, argv)
 {
 	struct wi_table *wt, **table;
 	char *iface, *key, *keyv[4], *tx_crypt_key;
-	int ch, dumpinfo, dumpstats, modifier, oldind;
+	int ch, dumpinfo, dumpstats, modifier, oldind, apscan;
 
 #define	SET_OPERAND(opr, desc) do {				\
 	if ((opr) == NULL)					\
@@ -671,6 +798,7 @@ int main(argc, argv)
 
 	dumpinfo = 1;
 	dumpstats = 0;
+	apscan = 0;
 	iface = key = keyv[0] = keyv[1] = keyv[2] = keyv[3] =
 	    tx_crypt_key = NULL;
 
@@ -680,7 +808,7 @@ int main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:A:M:S:P:R:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:A:M:S:P:R:T:DZ:")) != -1) {
 		if (ch != 'i')
 			dumpinfo = 0;
 		/*
@@ -721,6 +849,9 @@ int main(argc, argv)
 				break;
 			case 'T':
 				SET_OPERAND(tx_crypt_key, "TX encryption key");
+				break;
+			case 'D':
+				apscan = 1;
 				break;
 			case 'h':
 			default:
@@ -764,6 +895,8 @@ int main(argc, argv)
 		wi_dumpstats(iface);
 	if (dumpinfo)
 		wi_dumpinfo(iface);
+	if (apscan)
+		wi_apscan(iface);
 
 	exit(0);
 }
