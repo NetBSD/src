@@ -34,6 +34,8 @@
  */
 
 struct proc;
+void	fmt_puts __P((char *, int *));
+void	fmt_putc __P((int, int *));
 void	pr_attime __P((time_t *, time_t *));
 void	pr_idle __P((time_t));
 int	proc_compare __P((struct proc *, struct proc *));
