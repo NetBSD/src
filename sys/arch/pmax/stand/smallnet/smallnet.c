@@ -1,4 +1,4 @@
-/*	$NetBSD: smallnet.c,v 1.3 1999/11/13 21:33:13 thorpej Exp $	*/
+/*	$NetBSD: smallnet.c,v 1.4 1999/11/27 07:07:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,15 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+#include <lib/libz/zlib.h>
+
 #include <sys/param.h>
 #include <sys/exec_elf.h>
-#include <machine/dec_prom.h>
-#include <lib/libz/zlib.h>
-#include <lib/libkern/libkern.h>
 
-#include "common.h"
-#include "bootinfo.h"
+#include <machine/dec_prom.h>
+
+#include "../common/common.h"
+#include "../common/bootinfo.h"
 
 
 typedef void (*entrypt) __P((int, char **, int, const void *));
