@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.4 2000/03/13 23:22:53 soren Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.4.4.1 2000/10/18 01:46:25 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -791,7 +791,8 @@ vs_modeline(sp)
 	 */
 	if (O_ISSET(sp, O_RULER)) {
 		vs_column(sp, &curcol);
-		len = snprintf(buf, sizeof(buf), "%lu,%lu", sp->lno, curcol + 1);
+		len = snprintf(buf, sizeof(buf), "%lu,%lu",
+		    (unsigned long)sp->lno, (unsigned long)(curcol + 1));
 
 		midpoint = (cols - ((len + 1) / 2)) / 2;
 		if (curlen < midpoint) {
