@@ -57,8 +57,6 @@ file	arch/i386/isa/pms.c		pms device-driver
 
 device	lpt at isa: tty
 file	arch/i386/isa/lpt.c		lpt device-driver
-device	lpa at isa: tty
-file	arch/i386/isa/lpa.c		lpa device-driver
 
 
 device	fdc at isa {drive = -1}
