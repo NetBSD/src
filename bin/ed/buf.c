@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
+/*	$NetBSD: buf.c,v 1.16 1997/03/22 03:02:17 lukem Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.16 1997/03/22 03:02:17 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,13 +203,16 @@ char sfn[15] = "";				/* scratch file name */
 int
 open_sbuf()
 {
-	int u;
+	int u, fd;
 
 	isbinary = newline_added = 0;
+	fd = -1;
 	u = umask(077);
 	strcpy(sfn, "/tmp/ed.XXXXXX");
-	if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
-		fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
+	if ((fd = mkstemp(sfn)) == -1 || (sfp = fdopen(fd, "w+")) == NULL) {
+		if (fd != -1)
+			close(fd);
+		warn("%s", sfn);
 		sprintf(errmsg, "cannot open temp file");
 		umask(u);
 		return ERR;
