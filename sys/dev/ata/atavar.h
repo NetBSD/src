@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.10 1999/01/18 20:06:24 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.11 1999/01/29 11:36:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -66,7 +66,7 @@ struct ata_drive_datas {
      */
     u_int8_t state;
 
-    /* Number of DMA errors. reset to 0 after every successfull transferts */
+    /* Number of DMA errors. Reset to 0 after every successful transfers. */
     u_int8_t n_dmaerrs;
     /* downgrade mode after this many successive errors */
 #define NERRS_MAX 2
