@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.21 2004/07/17 19:36:59 dsl Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -178,8 +178,6 @@ md_bios_info(dev)
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 	set_bios_geom(cyl, head, sec);
-	bsize = bcyl * bhead * bsec;
-	bcylsize = bhead * bsec;
 	return 0;
 }
 
