@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.68 2002/10/04 01:50:56 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.69 2002/10/09 03:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -364,9 +364,13 @@ emitparents(FILE *fp)
 		if (fprintf(fp, "\t\"%s\", ", p->p_iattr->a_name) < 0)
 			return (1);
 		if (p->p_atdev != NULL) {
-			if (fprintf(fp, "\"%s\", %d", p->p_atdev->d_name,
-				    p->p_atunit == WILD ? -1
-				    			: p->p_atunit) < 0)
+			if (fprintf(fp, "\"%s\", ", p->p_atdev->d_name) < 0)
+				return (1);
+			if (p->p_atunit == WILD &&
+			    fprintf(fp, "DVUNIT_ANY") < 0)
+				return (1);
+			else if (p->p_atunit != WILD &&
+				 fprintf(fp, "%d", p->p_atunit) < 0)
 				return (1);
 		} else if (fprintf(fp, "NULL, 0") < 0)
 			return (1);
