@@ -13,8 +13,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_lgammaf_r.c,v 1.3 1995/05/10 20:45:47 jtc Exp $";
+__RCSID("$NetBSD: e_lgammaf_r.c,v 1.4 1997/10/09 11:29:25 lukem Exp $");
 #endif
 
 #include "math.h"
@@ -158,6 +159,7 @@ static float zero=  0.0000000000e+00;
 	float t,y,z,nadj,p,p1,p2,p3,q,r,w;
 	int i,hx,ix;
 
+	nadj = 0;
 	GET_FLOAT_WORD(hx,x);
 
     /* purge off +-inf, NaN, +-0, and negative arguments */

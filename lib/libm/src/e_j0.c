@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_j0.c,v 1.8 1995/05/10 20:45:23 jtc Exp $";
+__RCSID("$NetBSD: e_j0.c,v 1.9 1997/10/09 11:29:08 lukem Exp $");
 #endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
@@ -338,6 +339,8 @@ static double pS2[5] = {
 #endif
 	double z,r,s;
 	int32_t ix;
+
+	p = q = 0;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = pR8; q= pS8;}
@@ -474,6 +477,8 @@ static double qS2[6] = {
 #endif
 	double s,r,z;
 	int32_t ix;
+
+	p = q = 0;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = qR8; q= qS8;}

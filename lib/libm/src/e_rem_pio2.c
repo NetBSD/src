@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_rem_pio2.c,v 1.8 1995/05/10 20:46:02 jtc Exp $";
+__RCSID("$NetBSD: e_rem_pio2.c,v 1.9 1997/10/09 11:29:44 lukem Exp $");
 #endif
 
 /* __ieee754_rem_pio2(x,y)
@@ -95,6 +96,7 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	int32_t e0,i,j,nx,n,ix,hx;
 	u_int32_t low;
 
+	z = 0;
 	GET_HIGH_WORD(hx,x);		/* high word of x */
 	ix = hx&0x7fffffff;
 	if(ix<=0x3fe921fb)   /* |x| ~<= pi/4 , no need for reduction */

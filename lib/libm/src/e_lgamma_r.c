@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_lgamma_r.c,v 1.7 1995/05/10 20:45:42 jtc Exp $";
+__RCSID("$NetBSD: e_lgamma_r.c,v 1.8 1997/10/09 11:29:23 lukem Exp $");
 #endif
 
 /* __ieee754_lgamma_r(x, signgamp)
@@ -222,6 +223,7 @@ static double zero=  0.00000000000000000000e+00;
 	double t,y,z,nadj,p,p1,p2,p3,q,r,w;
 	int i,hx,lx,ix;
 
+	nadj = 0;
 	EXTRACT_WORDS(hx,lx,x);
 
     /* purge off +-inf, NaN, +-0, and negative arguments */
