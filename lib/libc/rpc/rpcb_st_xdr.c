@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.4 2001/01/04 14:42:21 lukem Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.5 2001/01/04 14:57:17 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -271,8 +271,8 @@ xdr_rpcb_stat(xdrs, objp)
  */
 bool_t
 xdr_rpcb_stat_byvers(xdrs, objp)
-    XDR *xdrs;
-    rpcb_stat_byvers objp;
+	XDR *xdrs;
+	rpcb_stat_byvers objp;
 {
 	if (!xdr_vector(xdrs, (char *)(void *)objp, RPCBVERS_STAT,
 	    sizeof (rpcb_stat), (xdrproc_t)xdr_rpcb_stat)) {
