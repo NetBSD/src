@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.103 2000/07/29 08:20:02 martin Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.104 2000/09/15 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.103 2000/07/29 08:20:02 martin Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.104 2000/09/15 14:55:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,6 +190,10 @@ int	notickets = 1;
 char	*krbtkfile_env = NULL;
 char	*tty = ttyline;
 int	login_krb5_forwardable_tgt = 0;
+#endif
+
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN MAXHOSTNAMELEN
 #endif
 
 int epsvall = 0;
@@ -340,6 +344,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
 		exit(1);
 	}
+#ifdef INET6
 	if (his_addr.su_family == AF_INET6
 	 && IN6_IS_ADDR_V4MAPPED(&his_addr.su_sin6.sin6_addr)) {
 #if 1
@@ -384,6 +389,7 @@ main(int argc, char *argv[])
 
 		mapped = 1;
 	} else
+#endif
 		mapped = 0;
 #ifdef IP_TOS
 	if (!mapped && his_addr.su_family == AF_INET) {
@@ -395,10 +401,19 @@ main(int argc, char *argv[])
 #endif
 	/* if the hostname hasn't been given, attempt to determine it */ 
 	if (hostname[0] == '\0') {
+#ifdef NI_MAXHOST
 		if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
 		    hostname, sizeof(hostname), NULL, 0, 0) != 0)
 			(void)gethostname(hostname, sizeof(hostname));
 		hostname[sizeof(hostname) - 1] = '\0';
+#else
+		struct hostent *hp;
+		if ((hp = gethostbyaddr((const char *)&ctrl_addr,
+		    ctrl_addr.su_len, AF_INET)) == NULL)
+			(void)gethostname(hostname, sizeof(hostname));
+		else
+		    (void)strlcpy(hostname, hp->h_name, sizeof(hostname));
+#endif
 	}
 
 	/* set this here so klogin can use it... */
@@ -1429,9 +1444,20 @@ dataconn(const char *name, off_t size, const char *mode)
 	if (file == NULL) {
 		char hbuf[INET6_ADDRSTRLEN];
 		char pbuf[10];
-		getnameinfo((struct sockaddr *)&data_source, data_source.su_len,
-			hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
-			NI_NUMERICHOST | NI_NUMERICSERV);
+#ifdef NI_NUMERICHOST
+		(void)getnameinfo((struct sockaddr *)&data_source,
+		    data_source.su_len, hbuf, sizeof(hbuf),
+		    pbuf, sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+#else
+		struct hostent *hp;
+		if ((hp = gethostbyaddr((const char *)&data_source,
+		    data_source.su_len, AF_INET)) == NULL)
+			(void)strcpy(hostname,
+			inet_ntoa(data_source.su_sin.sin_addr));
+		else
+		    (void)strlcpy(hostname, hp->h_name, sizeof(hostname));
+		(void)snprintf(pbuf, sizeof(pbuf), "%d", data_source.su_port);
+#endif
 		reply(425, "Can't create data socket (%s,%s): %s.",
 		      hbuf, pbuf, strerror(errno));
 		return (NULL);
@@ -1778,12 +1804,22 @@ statcmd(void)
 	reply(-211, "%s FTP server status:", hostname);
 	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);
 	ntop_buf[0] = '\0';
-	if (!getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
-			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
-	    && strcmp(remotehost, ntop_buf) != 0) {
+#ifdef NI_NUMERICHOST
+	(void)getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
+	    ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST);
+#else
+	{
+		struct hostent *hp;
+		if ((hp = gethostbyaddr((const char *)&his_addr,
+		    his_addr.su_len, AF_INET)) != NULL)
+			(void)strlcpy(ntop_buf, hp->h_name, sizeof(ntop_buf));
+	}
+#endif
+	if (ntop_buf[0] != '\0' && strcmp(remotehost, ntop_buf) != 0)
 		reply(0, "Connected to %s (%s)", remotehost, ntop_buf);
-	} else
+	else
 		reply(0, "Connected to %s", remotehost);
+
 	if (logged_in) {
 		if (curclass.type == CLASS_GUEST)
 			reply(0, "Logged in anonymously");
@@ -1846,12 +1882,14 @@ statcmd(void)
 			alen = sizeof(su->su_sin.sin_addr);
 			af = 4;
 			break;
+#ifdef INET6
 		case AF_INET6:
 			a = (u_char *) &su->su_sin6.sin6_addr;
 			p = (u_char *) &su->su_sin6.sin6_port;
 			alen = sizeof(su->su_sin6.sin6_addr);
 			af = 6;
 			break;
+#endif
 		default:
 			af = 0;
 			break;
@@ -1879,14 +1917,24 @@ statcmd(void)
 			af = 0;
 			break;
 		}
+		ntop_buf[0] = '\0';
 		if (af) {
-			if (getnameinfo((struct sockaddr *)su, su->su_len,
-				    ntop_buf, sizeof(ntop_buf), NULL, 0,
-					NI_NUMERICHOST) == 0) {
+#ifdef NI_NUMERICHOST
+			(void)getnameinfo((struct sockaddr *)su, su->su_len,
+			    ntop_buf, sizeof(ntop_buf), NULL, 0,
+			    NI_NUMERICHOST);
+#else
+			struct hostent *hp;
+
+			if ((hp = gethostbyaddr((const char *)su,
+			    su->su_len, AF_INET)) != NULL)
+				(void)strlcpy(ntop_buf, hp->h_name,
+				    sizeof(ntop_buf));
+#endif
+			if (ntop_buf[0] != '\0')
 				reply(0, "%s (|%d|%s|%d|)",
 				    ispassive ? "EPSV" : "EPRT",
 				    af, ntop_buf, ntohs(su->su_port));
-			}
 		}
 	} else
 		reply(0, "No data connection");
@@ -2020,7 +2068,18 @@ reply(int n, const char *fmt, ...)
 static void
 dolog(struct sockaddr *who)
 {
-	getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost), NULL,0,0);
+#ifdef NI_MAXHOST
+	(void)getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost),
+	    NULL, 0, 0);
+#else
+	struct hostent *hp;
+
+	if ((hp = gethostbyaddr((const char *)who, who->sa_len, 
+	    AF_INET)) == NULL)
+		strcpy(remotehost,
+		    inet_ntoa(((struct sockaddr_in *)who)->sin_addr));
+#endif
+
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
@@ -2239,6 +2298,7 @@ long_passive(char *cmd, int pf)
 				4, 4, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				2, UC(p[0]), UC(p[1]));
 			return;
+#ifdef INET6
 		case AF_INET6:
 			a = (char *) &pasv_addr.su_sin6.sin6_addr;
 			reply(228, "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
@@ -2249,6 +2309,7 @@ long_passive(char *cmd, int pf)
 				UC(a[12]), UC(a[13]), UC(a[14]), UC(a[15]),
 				2, UC(p[0]), UC(p[1]));
 			return;
+#endif
 		}
 #undef UC
 	} else if (strcmp(cmd, "EPSV") == 0) {
