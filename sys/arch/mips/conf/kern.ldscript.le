@@ -1,6 +1,6 @@
-/* $NetBSD: kern.ldscript,v 1.2 1997/06/23 02:40:28 jonathan Exp $ */
+/* $NetBSD: kern.ldscript.le,v 1.1 2000/05/21 02:50:13 soren Exp $ */
 
-/*  ldscript for NetBSD/mips kernels */
+/*  ldscript for NetBSD/mipsel kernels */
 OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips",
 	      "elf32-littlemips")
 OUTPUT_ARCH(mips)
