@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.102 2002/03/16 20:43:53 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.103 2002/03/22 15:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.102 2002/03/16 20:43:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.103 2002/03/22 15:21:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,63 +439,24 @@ linux_sys_mmap(p, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_mmap_args cma;
-	int flags;
+	int flags, fl = SCARG(uap, flags);
 	
 	flags = 0;
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_FIXED, MAP_FIXED);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_ANON, MAP_ANON);
 	/* XXX XAX ERH: Any other flags here?  There are more defined... */
 
-	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
-	SCARG(&cma,len) = SCARG(uap, len);
-	SCARG(&cma,prot) = SCARG(uap, prot);
-	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
-		SCARG(&cma,prot) |= VM_PROT_READ;
-	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
-	SCARG(&cma,pad) = 0;
-	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
-
-	return sys_mmap(p, &cma, retval);
-}
-
-/*
- * Newer type Linux mmap call.
- */
-int
-linux_sys_mmap2(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_mmap2_args /* {
-		syscallarg(void *) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) prot;
-		syscallarg(int) flags;
-		syscallarg(int) fd;
-		syscallarg(off_t) offset;
-	} */ *uap = v;
-	struct sys_mmap_args cma;
-	int flags;
-	
-	flags = 0;
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
-	/* XXX XAX ERH: Any other flags here?  There are more defined... */
-
-	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
-	SCARG(&cma,len) = SCARG(uap, len);
-	SCARG(&cma,prot) = SCARG(uap, prot);
-	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
-		SCARG(&cma,prot) |= VM_PROT_READ;
-	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
-	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
+	SCARG(&cma, addr) = (void *)SCARG(uap, addr);
+	SCARG(&cma, len) = SCARG(uap, len);
+	SCARG(&cma, prot) = SCARG(uap, prot);
+	if (SCARG(&cma, prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(&cma, prot) |= VM_PROT_READ;
+	SCARG(&cma, flags) = flags;
+	SCARG(&cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
+	SCARG(&cma, pad) = 0;
+	SCARG(&cma, pos) = (off_t)SCARG(uap, offset);
 
 	return sys_mmap(p, &cma, retval);
 }
@@ -572,6 +533,48 @@ linux_sys_msync(p, v, retval)
 	SCARG(&bma, flags) = SCARG(uap, fl);
 
 	return sys___msync13(p, &bma, retval);
+}
+
+int
+linux_sys_mprotect(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_mprotect_args /* {
+		syscallarg(const void *) start;
+		syscallarg(unsigned long) len;
+		syscallarg(int) prot;
+	} */ *uap = v;
+	unsigned long end, start = (unsigned long)SCARG(uap, start), len;
+	int prot = SCARG(uap, prot);
+	struct vm_map_entry *entry;
+	struct vm_map *map = &p->p_vmspace->vm_map;
+
+	if (start & PAGE_MASK)
+		return EINVAL;
+
+	len = round_page(SCARG(uap, len));
+	end = start + len;
+
+	if (end < start)
+		return EINVAL;
+	else if (end == start)
+		return 0;
+
+	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;
+
+	vm_map_lock(map);
+#ifdef notdef
+	VM_MAP_RANGE_CHECK(map, start, end);
+#endif
+	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
+		vm_map_unlock(map);
+		return EFAULT;
+	}
+	vm_map_unlock(map);
+	return uvm_map_protect(map, start, end, prot, FALSE);
 }
 
 /*
