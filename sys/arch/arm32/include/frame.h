@@ -1,7 +1,7 @@
-/* $NetBSD: frame.h,v 1.2 1996/03/06 22:53:50 mark Exp $ */
+/* $NetBSD: frame.h,v 1.3 1996/03/13 21:06:34 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -108,6 +108,19 @@ struct sigframe {
 	struct	sigcontext sf_sc;
 };
 
+/*
+ * Switch frame
+ */
+
+struct switchframe {
+	int	sf_spl;
+	u_int	sf_r4;
+	u_int	sf_r5;
+	u_int	sf_r6;
+	u_int	sf_r7;
+	u_int	sf_pc;
+};
+ 
 /*
  * Stack frame. Used during stack traces (db_trace.c)
  */
