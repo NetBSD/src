@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_clock.c,v 1.9 1996/10/13 03:05:45 christos Exp $ */
+/* $NetBSD: iomd_clock.c,v 1.10 1996/10/15 21:35:23 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -91,7 +91,8 @@ clockhandler(frame)
 	leds++;
 	if (leds >> 3)
 		leds = 0;
-#endif
+#endif	/* RC7500 */
+
 	hardclock(frame);
 	return(0);	/* Pass the interrupt on down the chain */
 }
@@ -133,7 +134,7 @@ setstatclockrate(hz)
 	WriteByte(IOMD_T1LOW,  (count >> 0) & 0xff);
 	WriteByte(IOMD_T1HIGH, (count >> 8) & 0xff);
 
-/* reload the counter */
+	/* reload the counter */
 
 	WriteByte(IOMD_T1GO, 0);
 }
@@ -151,17 +152,17 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
-/*
- * Load timer 0 with count down value
- * This timer generates 100Hz interrupts for the system clock
- */
+	/*
+	 * Load timer 0 with count down value
+	 * This timer generates 100Hz interrupts for the system clock
+	 */
 
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
 	WriteByte(IOMD_T0LOW,  (TIMER0_COUNT >> 0) & 0xff);
 	WriteByte(IOMD_T0HIGH, (TIMER0_COUNT >> 8) & 0xff);
 
-/* reload the counter */
+	/* reload the counter */
 
 	WriteByte(IOMD_T0GO, 0);
 
@@ -203,10 +204,10 @@ microtime(tvp)
 
 	s = splhigh();
 
-/*
- * Latch the current value of the timer and then read it. This garentees
- * an atmoic reading of the time.
- */
+	/*
+	 * Latch the current value of the timer and then read it.
+	 * This garentees an atmoic reading of the time.
+	 */
  
 	WriteByte(IOMD_T0LATCH, 0);
 	tm = ReadByte(IOMD_T0LOW) + (ReadByte(IOMD_T0HIGH) << 8);
@@ -218,19 +219,23 @@ microtime(tvp)
 	}
 	oldtm = tm;
 
-/* Fill in the timeval struct */
+	/* Fill in the timeval struct */
 
 	*tvp = time;    
+#ifdef HIGHLY_DUBIOUS
 	tvp->tv_usec += (deltatm / TICKS_PER_MICROSECOND);
+#else
+	tvp->tv_usec += (tm / TICKS_PER_MICROSECOND);
+#endif
 
-/* Make sure the micro seconds don't overflow. */
+	/* Make sure the micro seconds don't overflow. */
 
 	while (tvp->tv_usec > 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
 
-/* Make sure the time has advanced. */
+	/* Make sure the time has advanced. */
 
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
@@ -350,10 +355,10 @@ inittodr(base)
 	int year;
 	rtc_t rtc;
 
-/*
- * We ignore the suggested time for now and go for the RTC
- * clock time stored in the CMOS RAM.
- */
+	/*
+	 * We ignore the suggested time for now and go for the RTC
+	 * clock time stored in the CMOS RAM.
+	 */
 
 	s = splclock();
 	if (rtc_read(&rtc) == 0) {
@@ -385,11 +390,11 @@ inittodr(base)
 	time.tv_sec = n;
 	time.tv_usec = 0;
 
-/* timeset is used to ensure the time is valid before a resettodr() */
+	/* timeset is used to ensure the time is valid before a resettodr() */
 
 	timeset = 1;
 
-/* If the base was 0 then keep quiet */
+	/* If the base was 0 then keep quiet */
 
 	if (base) {
 		printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
