@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.2 1995/04/10 08:55:47 mycroft Exp $	*/
+/*	$NetBSD: grf.c,v 1.3 1995/05/21 10:52:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -512,7 +512,7 @@ struct grf_softc *gp;
 		 */
 		vs.width  = 640;
 		vs.height = 400;
-		vs.depth  = 2;
+		vs.depth  = 1;
 	}
 	gi->gd_colors = 1 << vs.depth;
 	gi->gd_planes = vs.depth;
