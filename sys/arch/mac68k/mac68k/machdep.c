@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 1997/04/08 03:21:10 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 1997/04/08 05:27:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -3126,14 +3126,9 @@ bus_probe(t, bsh, offset, sz)
 	int i;
 	label_t faultbuf;
 
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
+	nofault = (int *)&faultbuf;
+	if (setjmp((label_t *)nofault)) {
+		nofault = (int *)0;
 		return (0);
 	}
 
@@ -3153,10 +3148,10 @@ bus_probe(t, bsh, offset, sz)
 #ifdef DIAGNOSTIC
 		printf("bus_probe: unsupported data size %d\n", sz);
 #endif
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		return (0);
 	}
 
-	nofault = (int *) 0;
+	nofault = (int *)0;
 	return (1);
 }
