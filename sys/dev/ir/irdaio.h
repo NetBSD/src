@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaio.h,v 1.3 2001/12/05 20:00:15 augustss Exp $	*/
+/*	$NetBSD: irdaio.h,v 1.4 2001/12/12 15:34:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,13 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_DEV_IRDA_H_
-#define _SYS_DEV_IRDA_H_
+#ifndef _SYS_DEV_IRDAIO_H_
+#define _SYS_DEV_IRDAIO_H_
 
 struct irda_params {
-	int speed;
-	int ebofs;
-	int maxsize;
+	u_int speed;
+	u_int ebofs;
+	u_int maxsize;
 };
 
 /* SIR speeds */
@@ -74,6 +74,7 @@ struct irda_params {
 #define IRDA_TURNT_10		0x40
 #define IRDA_TURNT_0		0x80
 
+/* Coordinate numbering with cirio.h. */
 #define IRDA_RESET_PARAMS	_IO ('I', 1)
 #define IRDA_SET_PARAMS		_IOW('I', 2, struct irda_params)
 #define IRDA_GET_SPEEDMASK	_IOR('I', 3, int)
@@ -93,5 +94,5 @@ struct irda_params {
 #define   DONGLE_GIRBIL		6
 #define   DONGLE_MAX		7
 
-#endif /* _SYS_DEV_IRDA_H_ */
+#endif /* _SYS_DEV_IRDAIO_H_ */
 
