@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.11 1998/09/27 00:00:16 christos Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.12 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.11 1998/09/27 00:00:16 christos Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.12 1999/07/02 15:49:12 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,7 +120,7 @@ ttymsg(iov, iovcnt, line, tmout)
 				--iovcnt;
 			}
 			if (wret) {
-				iov->iov_base = 
+				iov->iov_base =
 				    (char *)iov->iov_base + wret;
 				iov->iov_len -= wret;
 			}

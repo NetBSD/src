@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.3 1999/05/12 00:37:43 augustss Exp $	*/
+/*	$NetBSD: usage.c,v 1.4 1999/07/02 15:46:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -107,9 +107,9 @@ hid_init(char *hidname)
 				     hidname, lineno);
 			if (curpage->pagesize >= curpage->pagesizemax) {
 				curpage->pagesizemax += 10;
-				curpage->page_contents = 
+				curpage->page_contents =
 					realloc(curpage->page_contents,
-						curpage->pagesizemax * 
+						curpage->pagesizemax *
 						sizeof (struct usage_in_page));
 				if (!curpage->page_contents)
 					err(1, "realloc");
@@ -121,12 +121,12 @@ hid_init(char *hidname)
 			if (npages >= npagesmax) {
 				if (pages == 0) {
 					npagesmax = 5;
-					pages = malloc(npagesmax * 
+					pages = malloc(npagesmax *
 						  sizeof (struct usage_page));
 				} else {
 					npagesmax += 5;
-					pages = realloc(pages, 
-						   npagesmax * 
+					pages = realloc(pages,
+						   npagesmax *
 						   sizeof (struct usage_page));
 				}
 				if (!pages)
@@ -137,8 +137,8 @@ hid_init(char *hidname)
 			curpage->usage = no;
 			curpage->pagesize = 0;
 			curpage->pagesizemax = 10;
-			curpage->page_contents = 
-				malloc(curpage->pagesizemax * 
+			curpage->page_contents =
+				malloc(curpage->pagesizemax *
 				       sizeof (struct usage_in_page));
 			if (!curpage->page_contents)
 				err(1, "malloc");

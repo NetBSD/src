@@ -1,8 +1,8 @@
-/* $NetBSD: inffast.c,v 1.3 1998/11/01 20:33:26 tron Exp $ */
+/* $NetBSD: inffast.c,v 1.4 1999/07/02 15:51:39 simonb Exp $ */
 
 /* inffast.c -- process literals and length/distance pairs fast
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 #include "zutil.h"
