@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)archive.c	5.7 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: archive.c,v 1.3 1993/08/01 18:18:36 mycroft Exp $";
+static char rcsid[] = "$Id: archive.c,v 1.4 1993/12/07 10:22:06 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -130,7 +130,8 @@ get_arobj(fd)
 {
 	struct ar_hdr *hdr;
 	register int len, nr;
-	register char *p, buf[20];
+	register char *p;
+	char buf[20];
 
 	nr = read(fd, hb, sizeof(HDR));
 	if (nr != sizeof(HDR)) {
