@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.52 2002/05/26 16:05:45 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.53 2003/02/03 23:37:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.52 2002/05/26 16:05:45 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.53 2003/02/03 23:37:09 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -669,7 +669,7 @@ tcp_dump(pcbaddr)
 	printf("Timers:\n");
 	for (i = 0; i < TCPT_NTIMERS; i++) {
 		printf("\t%s: %llu", tcptimers[i],
-		    (tcpcb.t_timer[i].c_flags & CALLOUT_ACTIVE) ?
+		    (tcpcb.t_timer[i].c_flags & CALLOUT_PENDING) ?
 		    (unsigned long long) tcpcb.t_timer[i].c_time : 0);
 	}
 	printf("\n\n");
