@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
- *	$Id: vm_machdep.c,v 1.12 1994/05/23 06:15:44 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.13 1994/05/23 09:21:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -145,7 +145,7 @@ cpu_coredump(p, vp, cred)
 	 * grok it.
 	 */
 	if (p->p_emul == EMUL_HPUX)
-		return (hpuxdumpu(vp, cred));
+		return (hpux_dumpu(vp, cred));
 #endif
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
 	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
