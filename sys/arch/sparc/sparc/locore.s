@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.108 1998/11/26 22:36:43 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.109 1999/02/14 12:33:55 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3437,6 +3437,13 @@ dostart:
 #if defined(SUN4C) || defined(SUN4M)
 	mov	%o0, %g7		! save prom vector pointer
 
+	/* First, check `romp->pv_magic' */
+	ld	[%g7 + PV_MAGIC], %o0	! v = pv->pv_magic
+	set	OBP_MAGIC, %o1
+	cmp	%o0, %o1		! if ( v != OBP_MAGIC) {
+	bne	is_openfirm		!    assume this is an OPENFIRM machine
+	 nop				! }
+
 	/*
 	 * are we on a sun4c or a sun4m?
 	 */
@@ -3466,6 +3473,10 @@ dostart:
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
+
+is_openfirm:
+	mov	%o3, %g7		! OPENFIRMWARE entry point is in %o3
+	/* FALLTHROUGH to sun4m case */
 
 is_sun4m:
 #if defined(SUN4M)
@@ -3787,8 +3798,8 @@ startmap_done:
 	 * (which we just zeroed).
 	 * This depends on the fact that bzero does not use %g7.
 	 */
-	sethi	%hi(_promvec), %l0
-	st	%g7, [%l0 + %lo(_promvec)]
+	sethi	%hi(_romp), %l0
+	st	%g7, [%l0 + %lo(_romp)]
 
 	/*
 	 * Step 3: compute number of windows and set up tables.
@@ -6266,6 +6277,6 @@ _intrcnt:
 _eintrcnt:
 
 	.comm	_nwindows, 4
-	.comm	_promvec, 4
+	.comm	_romp, 4
 	.comm	_qs, 32 * 8
 	.comm	_whichqs, 4
