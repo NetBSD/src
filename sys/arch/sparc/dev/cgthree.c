@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.47 2000/06/29 07:40:07 mrg Exp $ */
+/*	$NetBSD: cgthree.c,v 1.48 2000/07/09 20:38:34 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,13 +102,13 @@
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <machine/cpu.h>
-#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgthreereg.h>
 #include <sparc/dev/sbusvar.h>
+
+#include <machine/conf.h>
 
 /* per-display variables */
 struct cgthree_softc {

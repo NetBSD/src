@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.52 2000/06/29 07:40:06 mrg Exp $ */
+/*	$NetBSD: cgsix.c,v 1.53 2000/07/09 20:38:35 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <machine/fbio.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
@@ -107,11 +106,10 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
+#include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <machine/cpu.h>
-#include <machine/eeprom.h>
-#include <machine/conf.h>
+
+#include <dev/sbus/sbusvar.h>	/* XXX */
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
@@ -124,6 +122,8 @@
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsconsio.h>
 #endif
+
+#include <machine/conf.h>
 
 static void	cg6_unblank __P((struct device *));
 

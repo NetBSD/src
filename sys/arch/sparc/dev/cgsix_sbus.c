@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.4 2000/06/29 07:40:06 mrg Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.5 2000/07/09 20:38:35 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,16 +59,13 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/fbvar.h>
-#include <machine/cpu.h>
-#include <machine/eeprom.h>
-#include <machine/conf.h>
+
+#include <sparc/dev/sbusvar.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
-#include <sparc/dev/sbusvar.h>
 #include <sparc/dev/cgsixreg.h>
 #include <sparc/dev/cgsixvar.h>
-
 
 /* autoconfiguration driver */
 static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
