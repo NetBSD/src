@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.4 2003/04/28 08:05:48 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.5 2003/04/28 12:54:29 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -29,4 +29,24 @@ sys/dev/pci/if_rtk_pci.c			1.18
 	Set RTK_ENABLE flag when it attached. This fixed multicast problem.
 	Found by FUKAUMI Naoki <naoki@fukaumi.org>.
 	[kanaoka, ticket #1134]
+
+sys/netinet/in.h				1.59
+
+	C++ does not permit static a data member to have the same name as its
+	class, so in a C++ environment rename the ip_opts member to Ip_opts as
+	observed in several other implementations; from Jon Olsson in
+	PR toolchain/19880.
+	[kleink, ticket #1119]
+
+etc/services					1.63
+
+	Add ms-sql-{s,m}, currently quite popular in packet filter logs
+	worldwide.
+	[ross, ticket #1132]
+
+usr.bin/tftp/tftp.c				1.16
+
+	Fix sendto return value check (incomplete change in 1.14).
+	Noted by Brian Ginsbach in PR 19842.
+	[wiz, ticket #1139]
 
