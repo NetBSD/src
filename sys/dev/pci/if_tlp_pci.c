@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.69 2002/10/08 15:09:54 minoura Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.70 2002/10/09 16:59:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.69 2002/10/08 15:09:54 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.70 2002/10/09 16:59:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -1305,7 +1305,7 @@ tlp_pci_vpc_21140_quirks(psc, enaddr)
 	char *p2 = &sc->sc_name[0];
 
 	do {
-		if (*p1 < 0)
+		if ((unsigned char) *p1 & 0x80)
 			*p2++ = ' ';
 		else
 			*p2++ = *p1;
