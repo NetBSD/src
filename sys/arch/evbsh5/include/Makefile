@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2002/10/23 13:26:37 scw Exp $
+#	$NetBSD: Makefile,v 1.8 2002/11/23 09:05:27 scw Exp $
 
 KDIR=	/sys/arch/evbsh5/include
 INCSDIR= /usr/include/evbsh5
 
-INCS=	ansi.h aout_machdep.h asm.h \
+INCS=	alphaledio.h ansi.h aout_machdep.h asm.h \
 	bswap.h \
 	cdefs.h conreg.h cpu.h \
 	db_machdep.h disklabel.h \
