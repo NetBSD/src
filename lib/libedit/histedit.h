@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.12 1999/07/02 15:21:25 simonb Exp $	*/
+/*	$NetBSD: histedit.h,v 1.13 1999/09/20 23:43:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -142,9 +142,9 @@ void		 el_resize	__P((EditLine *));
 /*
  * User-defined function interface.
  */
-const LineInfo	 *el_line	__P((EditLine *));
-int   		  el_insertstr	__P((EditLine *, char *));
-void		  el_deletestr	__P((EditLine *, int));
+const LineInfo	*el_line	__P((EditLine *));
+int   		 el_insertstr	__P((EditLine *, char *));
+void		 el_deletestr	__P((EditLine *, int));
 
 /*
  * ==== History ====
@@ -163,7 +163,7 @@ typedef struct HistEvent {
 History *	history_init	__P((void));
 void 		history_end	__P((History *));
 
-int 		history		__P((History *, HistEvent *, int, ...));
+int		history		__P((History *, HistEvent *, int, ...));
 
 #define H_FUNC		 0	/* , UTSL		*/
 #define H_SETSIZE	 1	/* , const int);	*/
