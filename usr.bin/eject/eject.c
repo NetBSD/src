@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.6 1997/12/07 19:04:36 msaitoh Exp $	*/
+/*	$NetBSD: eject.c,v 1.7 1999/02/08 16:35:33 bouyer Exp $	*/
 /*
  * Copyright (c) 1995
  *	Matthieu Herrb.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.6 1997/12/07 19:04:36 msaitoh Exp $");
+__RCSID("$NetBSD: eject.c,v 1.7 1999/02/08 16:35:33 bouyer Exp $");
 #endif
 
 /*
@@ -71,29 +71,35 @@ typedef struct DEVTAB {
  * (used for selecting the proper ioctl to eject them)
  */
 #define DISK   0x00000002
+#define CDROM  0x00000003
 #define TAPE   0x00010000
 
 #define MOUNTABLE(x) ((x) & 0x0000ffff)
 
+#define RPART ('a' + RAW_PART)
+
 static DEVTAB devtab[] = {
-	{ "diskette", "/dev/fd0", 'a', DISK },
-	{ "diskette0", "/dev/fd0", 'a', DISK },
-	{ "diskette1", "/dev/fd1", 'a', DISK },
-	{ "floppy", "/dev/fd0", 'a', DISK },
-	{ "floppy0", "/dev/fd0", 'a', DISK },
-	{ "floppy1", "/dev/fd1", 'a', DISK },
-	{ "fd", "/dev/fd0", 'a', DISK },
-	{ "fd0", "/dev/fd0", 'a', DISK },
-	{ "fd1", "/dev/fd1", 'a', DISK },
-	{ "cdrom", "/dev/cd0", 'a', DISK },
-	{ "cdrom0", "/dev/cd0", 'a', DISK },
-	{ "cdrom1", "/dev/cd1", 'a', DISK },
-	{ "cd", "/dev/cd0", 'a', DISK },
-	{ "cd0", "/dev/cd0", 'a', DISK },
-	{ "cd1", "/dev/cd1", 'a', DISK },
-	{ "mcd", "/dev/mcd0", 'a', DISK },
-	{ "mcd0", "/dev/mcd0", 'a', DISK },
-	{ "mcd1", "/dev/mcd1", 'a', DISK },
+	{ "diskette", "/dev/rfd0", 'a', DISK },
+	{ "diskette0", "/dev/rfd0", 'a', DISK },
+	{ "diskette1", "/dev/rfd1", 'a', DISK },
+	{ "floppy", "/dev/rfd0", 'a', DISK },
+	{ "floppy0", "/dev/rfd0", 'a', DISK },
+	{ "floppy1", "/dev/rfd1", 'a', DISK },
+	{ "fd", "/dev/rfd0", 'a', DISK },
+	{ "fd0", "/dev/rfd0", 'a', DISK },
+	{ "fd1", "/dev/rfd1", RPART, DISK },
+	{ "sd0", "/dev/rsd0", RPART, DISK },
+	{ "sd1", "/dev/rsd1", RPART, DISK },
+	{ "sd2", "/dev/rsd2", RPART, DISK },
+	{ "cdrom", "/dev/rcd0", RPART, CDROM },
+	{ "cdrom0", "/dev/rcd0", RPART, CDROM },
+	{ "cdrom1", "/dev/rcd1", RPART, CDROM },
+	{ "cd", "/dev/rcd0", RPART, CDROM },
+	{ "cd0", "/dev/rcd0", RPART, CDROM },
+	{ "cd1", "/dev/rcd1", RPART, CDROM },
+	{ "mcd", "/dev/rmcd0", RPART, CDROM },
+	{ "mcd0", "/dev/rmcd0", RPART, CDROM },
+	{ "mcd1", "/dev/rmcd1", RPART, CDROM },
 	{ "tape", "/dev/rst0", '\0', TAPE },
 	{ "tape0", "/dev/rst0", '\0', TAPE },
 	{ "tape1", "/dev/rst1", '\0', TAPE },
@@ -115,7 +121,7 @@ struct types {
 } types[] = {
 	{ "diskette", DISK },
 	{ "floppy", DISK },
-	{ "cdrom", DISK },
+	{ "cdrom", CDROM },
 	{ "disk", DISK },
 	{ "tape", TAPE },
 	{ NULL, 0 }
@@ -126,7 +132,8 @@ int verbose;
 static	void	usage __P((void));
 static	char   *device_by_name __P((char *, int *, char *));
 static	char   *device_by_nickname __P((char *, int *, char *));
-static	void	eject_disk __P((char *));
+static	void	load_cdrom __P((char *));
+static	void	eject_disk __P((char *, int));
 static	void	eject_tape __P((char *));
 	int	main __P((int, char **));
 static	void	umount_mounted __P((char *));
@@ -138,7 +145,8 @@ static void
 usage()
 {
 	fprintf(stderr,
-	    "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]\n");
+	    "usage: eject [-n][-f][-l][-t devtype][[-d] raw device | "
+	    "nickname ]\n");
 	exit(1);
 	/*NOTREACHED*/
 }
@@ -191,11 +199,33 @@ device_by_name(device, pdevtype, pqualifier)
 }
 
 /*
+ * load a disk (cdrom only)
+ */
+static void
+load_cdrom(device)
+	char   *device;
+{
+	int     fd;
+
+	fd = open(device, O_RDONLY);
+	if (fd < 0) {
+		err(1, "%s: open", device);
+	}
+
+	if (ioctl(fd, CDIOCCLOSE, NULL) < 0) {
+		err(1, "%s: DIOCEJECT", device);
+	}
+	if (close(fd) != 0)
+		err(1, "%s: close", device);
+}
+
+/*
  * eject a disk (including floppy and cdrom)
  */
 static void
-eject_disk(device)
+eject_disk(device, umount_flag)
 	char   *device;
+	int    umount_flag;
 {
 	int     fd, arg = 0;
 
@@ -203,10 +233,13 @@ eject_disk(device)
 	if (fd < 0) {
 		err(1, "%s: open", device);
 	}
-	if (ioctl(fd, DIOCLOCK, (char *)&arg) < 0) {
-		err(1, "%s: DIOCLOCK", device);
+	if (umount_flag == 0) {
+		if (ioctl(fd, DIOCLOCK, (char *)&arg) < 0) {
+			err(1, "%s: DIOCLOCK", device);
+		}
+		arg = 1; /* eject without device busy check */
 	}
-	if (ioctl(fd, DIOCEJECT, 0) < 0) {
+	if (ioctl(fd, DIOCEJECT, (char *)&arg) < 0) {
 		err(1, "%s: DIOCEJECT", device);
 	}
 	if (close(fd) != 0)
@@ -245,14 +278,29 @@ umount_mounted(device)
 {
 	struct statfs *mntbuf;
 	int     i, n, l;
+	static char blkdev[32];
+	struct stat stb;
+	const char *dp;
 
+	/* convert path to block device if needed, remove partition letter */
+	if (stat(device, &stb) < 0)
+		return;
+	if (S_ISBLK(stb.st_mode)) {
+		strncpy(blkdev, device, 32);
+	} else if ((dp = strrchr(device, '/')) != 0 && dp[1] == 'r') {
+		snprintf(blkdev, 32, "%.*s/%s", (int)(dp - device),
+		    device, dp + 2);
+	} else
+		return;
+	blkdev[strlen(blkdev) - 1] = '\0';
+			
 	n = getmntinfo(&mntbuf, MNT_NOWAIT);
 	if (n == 0) {
 		err(1, "getmntinfo");
 	}
-	l = strlen(device);
+	l = strlen(blkdev);
 	for (i = 0; i < n; i++) {
-		if (strncmp(device, mntbuf[i].f_mntfromname, l) == 0) {
+		if (strncmp(blkdev, mntbuf[i].f_mntfromname, l) == 0) {
 			if (verbose)
 				printf("Unmounting: %s\n",
 					mntbuf[i].f_mntonname);
@@ -278,21 +326,25 @@ main(argc, argv)
 	char    device[MAXPATHLEN];
 	char	*devpath;
 	char	qualifier;
-	int     umount_flag, devtype;
+	int     umount_flag, load_flag, devtype;
 	int     i, ch;
 
 	/* Default options values */
 	devpath = NULL;
 	devtype = -1;
 	umount_flag = 1;
+	load_flag = 0;
 
-	while ((ch = getopt(argc, argv, "d:fnt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "d:flnt:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			devpath = optarg;
 			break;
 		case 'f':
 			umount_flag = 0;
+			break;
+		case 'l':
+			load_flag = 1;
 			break;
 		case 'n':
 			for (i = 0; devtab[i].name != NULL; i++) {
@@ -365,16 +417,27 @@ main(argc, argv)
 		/*NOTREACHED*/
 	}
 
-	if (umount_flag && MOUNTABLE(devtype)) {
-		umount_mounted(devpath);
+	snprintf(device, sizeof(device), "%s%c", devpath, qualifier);
+
+	if (load_flag) {
+		if (devtype != CDROM)
+			errx(1, "Can only load CDROM device type\n");
+		if (verbose)
+			printf("Loading device `%s'\n", device);
+		load_cdrom(device);
+		exit(0);
 	}
 
-	snprintf(device, sizeof(device), "%s%c", devpath, qualifier);
+	if (umount_flag && MOUNTABLE(devtype)) {
+		umount_mounted(device);
+	}
+
 	if (verbose)
 		printf("Ejecting device `%s'\n", device);
 	switch (devtype) {
 	case DISK:
-		eject_disk(device);
+	case CDROM:
+		eject_disk(device, umount_flag);
 		break;
 	case TAPE:
 		eject_tape(device);
