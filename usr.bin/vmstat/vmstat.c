@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.37 1997/10/18 14:41:48 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.38 1997/10/20 03:11:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.37 1997/10/18 14:41:48 mrg Exp $";
+__RCSID("$NetBSD: vmstat.c,v 1.38 1997/10/20 03:11:57 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,24 +158,34 @@ void	domem __P((void));
 void	dosum __P((void));
 void	dovmstat __P((u_int, int));
 void	kread __P((int, void *, size_t));
+void	needhdr __P((int));
+long	getuptime __P((void));
+void	printhdr __P((void));
+long	pct __P((long, long));
 void	usage __P((void));
 #ifdef notdef
 void	dotimes __P((void));
 void	doforkst __P((void));
 #endif
 
+int	main __P((int, char **));
 char	**choosedrives __P((char **));
+
+extern int dkinit __P((int));
+extern void dkreadstats __P((void));
+extern void dkswap __P((void));
 
 /* Namelist and memory file names. */
 char	*nlistf, *memf;
 
+int
 main(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 {
 	extern int optind;
 	extern char *optarg;
-	register int c, todo;
+	int c, todo;
 	u_int interval;
 	int reps;
         char errbuf[_POSIX2_LINE_MAX];
@@ -306,9 +316,7 @@ char **
 choosedrives(argv)
 	char **argv;
 {
-	register int i;
-	register char **cp;
-	char buf[30];
+	int i;
 
 	/*
 	 * Choose drives to be displayed.  Priority goes to (in order) drives
@@ -367,7 +375,6 @@ dovmstat(interval, reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
-	void needhdr();
 	int mib[2];
 	size_t size;
 
@@ -395,8 +402,8 @@ dovmstat(interval, reps)
 		}
 		(void)printf("%2d%2d%2d",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
-#define pgtok(a) ((a) * (sum.v_page_size >> 10))
-#define	rate(x)	(((x) + halfuptime) / uptime)	/* round */
+#define pgtok(a) (long)((a) * (sum.v_page_size >> 10))
+#define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
 		(void)printf("%6ld%6ld ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 #ifdef NEWVM
@@ -405,7 +412,7 @@ dovmstat(interval, reps)
 		    rate(sum.v_reactivated - osum.v_reactivated));
 		(void)printf("%3lu ", rate(sum.v_pageins - osum.v_pageins));
 		(void)printf("%3lu %3lu ",
-		    rate(sum.v_pageouts - osum.v_pageouts), 0);
+		    rate(sum.v_pageouts - osum.v_pageouts), (u_long)0);
 #else
 		(void)printf("%3lu %2lu ",
 		    rate(sum.v_pgrec - (sum.v_xsfrec+sum.v_xifrec) -
@@ -441,9 +448,10 @@ dovmstat(interval, reps)
 	}
 }
 
+void
 printhdr()
 {
-	register int i;
+	int i;
 
 	(void)printf(" procs   memory     page%*s", 20, "");
 	if (ndrives > 0)
@@ -479,7 +487,8 @@ printhdr()
  * Force a header to be prepended to the next output.
  */
 void
-needhdr()
+needhdr(dummy)
+	int dummy;
 {
 
 	hdrcnt = 1;
@@ -505,6 +514,7 @@ dotimes()
 }
 #endif
 
+long
 pct(top, bot)
 	long top, bot;
 {
@@ -516,7 +526,7 @@ pct(top, bot)
 	return (ans);
 }
 
-#define	PCT(top, bot) pct((long)(top), (long)(bot))
+#define	PCT(top, bot) (int)pct((long)(top), (long)(bot))
 
 #if defined(tahoe)
 #include <machine/cpu.h>
@@ -647,9 +657,8 @@ doforkst()
 void
 dkstats()
 {
-	register int dn, state;
+	int dn, state;
 	double etime;
-	long tmp;
 
 	/* Calculate disk stat deltas. */
 	dkswap();
@@ -670,7 +679,7 @@ dkstats()
 void
 cpustats()
 {
-	register int state;
+	int state;
 	double pct, total;
 
 	total = 0;
@@ -693,7 +702,7 @@ cpustats()
 void
 dointr()
 {
-	register long i, j, inttotal, uptime;
+	long i, j, inttotal, uptime;
 	static char iname[64];
 	struct iv ivt[32], *ivp = ivt;
 
@@ -725,9 +734,9 @@ dointr()
 void
 dointr()
 {
-	register long *intrcnt, inttotal, uptime;
-	register int nintr, inamlen;
-	register char *intrname;
+	long *intrcnt, inttotal, uptime;
+	int nintr, inamlen;
+	char *intrname;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
 	struct device dev;
@@ -759,19 +768,19 @@ dointr()
 	while (evptr) {
 		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
 		    sizeof evcnt) != sizeof evcnt) {
-			(void)fprintf(stderr, "vmstat: event chain trashed\n",
+			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
 			    kvm_geterr(kd));
 			exit(1);
 		}
 		if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
 		    sizeof dev) != sizeof dev) {
-			(void)fprintf(stderr, "vmstat: event chain trashed\n",
+			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
 			    kvm_geterr(kd));
 			exit(1);
 		}
 		if (evcnt.ev_count)
 			(void)printf("%-14s %8ld %8ld\n", dev.dv_xname,
-			    evcnt.ev_count, evcnt.ev_count / uptime);
+			    (long)evcnt.ev_count, evcnt.ev_count / uptime);
 		inttotal += evcnt.ev_count++;
 
 		evptr = evcnt.ev_list.tqe_next;
@@ -788,9 +797,9 @@ char *kmemnames[] = INITKMEMNAMES;
 void
 domem()
 {
-	register struct kmembuckets *kp;
-	register struct kmemstats *ks;
-	register int i, j;
+	struct kmembuckets *kp;
+	struct kmemstats *ks;
+	int i, j;
 	int len, size, first;
 	long totuse = 0, totfree = 0, totreq = 0;
 	char *name;
