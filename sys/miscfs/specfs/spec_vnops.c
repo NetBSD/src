@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.26 1995/07/24 21:20:11 cgd Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.27 1995/10/15 05:18:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -103,7 +103,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_vfree_desc, spec_vfree },		/* vfree */
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, spec_update },		/* update */
-	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
 };
 struct vnodeopv_desc spec_vnodeop_opv_desc =
