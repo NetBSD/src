@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.8 2000/10/12 00:19:57 itojun Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.9 2000/10/12 00:28:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.8 2000/10/12 00:19:57 itojun Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.9 2000/10/12 00:28:33 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -59,8 +59,6 @@ __RCSID("$NetBSD: login_cap.c,v 1.8 2000/10/12 00:19:57 itojun Exp $");
 #include <unistd.h>
 #include <util.h>
 
-static char	*classfiles[] = { _PATH_LOGIN_CONF, 0 };
-
 static void	setuserpath(login_cap_t *, char *);
 static u_quad_t	multiply(u_quad_t, u_quad_t);
 static u_quad_t	strtolimit(char *, char **, int);
@@ -72,12 +70,16 @@ static int	isinfinite(const char *);
 login_cap_t *
 login_getclass(char *class)
 {
+	char *classfiles[2];
 	login_cap_t *lc;
 	int res;
 
-	for (res = 0; classfiles[res]; ++res)
-		if (secure_path(classfiles[res]) < 0)
-			return (0);
+	if (secure_path(_PATH_LOGIN_CONF) == 0) {
+		classfiles[0] = _PATH_LOGIN_CONF;
+		classfiles[1] = NULL;
+	} else {
+		classfiles[0] = NULL;
+	}
 
 	if ((lc = malloc(sizeof(login_cap_t))) == NULL) {
 		syslog(LOG_ERR, "%s:%d malloc: %m", __FILE__, __LINE__);
@@ -95,6 +97,14 @@ login_getclass(char *class)
 		free(lc);
 		return (0);
 	}
+
+	/*
+	 * Not having a login.conf file is not an error condition.
+	 * The individual routines deal reasonably with missing
+	 * capabilities and use default values.
+	 */
+	if (classfiles[0] == NULL)
+		return(lc);
 
 	if ((res = cgetent(&lc->lc_cap, classfiles, lc->lc_class)) != 0) {
 		lc->lc_cap = 0;
