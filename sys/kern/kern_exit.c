@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_exit.c,v 1.71 1999/07/20 21:54:05 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.72 1999/07/22 18:13:37 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -153,7 +153,7 @@ exit1(p, rv)
 	register struct proc *q, *nq;
 	register struct vmspace *vm;
 
-	if (p->p_pid == 1)
+	if (p == initproc)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 #ifdef PGINPROF
@@ -246,18 +246,24 @@ exit1(p, rv)
 	ktrderef(p);
 #endif
 	/*
-	 * Remove proc from allproc queue and pidhash chain.
-	 * Unlink from parent's child list.
-	 */
-	LIST_REMOVE(p, p_list);
-	p->p_stat = SZOMB;
-
-	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
+	p->p_stat = SDEAD;
 
+	/*
+	 * Remove proc from pidhash chain so looking it up won't
+	 * work.  Move it from allproc to zombproc, but do not yet
+	 * wake up the reaper.  We will put the proc on the
+	 * deadproc list later (using the p_hash member), and
+	 * wake up the reaper when we do.
+	 */
 	LIST_REMOVE(p, p_hash);
+	LIST_REMOVE(p, p_list);
+	LIST_INSERT_HEAD(&zombproc, p, p_list);
 
+	/*
+	 * Give orphaned children to init(8).
+	 */
 	q = p->p_children.lh_first;
 	if (q)		/* only need this if any child is S_ZOMB */
 		wakeup((caddr_t)initproc);
@@ -335,13 +341,23 @@ exit1(p, rv)
 /*
  * We are called from cpu_exit() once it is safe to schedule the
  * dead process's resources to be freed.
+ *
+ * NOTE: One must be careful with locking in this routine.  It's
+ * called from a critical section in machine-dependent code, so
+ * we should refrain from changing any interrupt state.
+ *
+ * We lock the deadproc list (a spin lock), place the proc on that
+ * list (using the p_hash member), and wake up the reaper.
  */
 void
 exit2(p)
 	struct proc *p;
 {
 
-	LIST_INSERT_HEAD(&deadproc, p, p_list);
+	simple_lock(&deadproc_slock);
+	LIST_INSERT_HEAD(&deadproc, p, p_hash);
+	simple_unlock(&deadproc_slock);
+
 	wakeup(&deadproc);
 }
 
@@ -356,15 +372,18 @@ reaper()
 	struct proc *p;
 
 	for (;;) {
+		simple_lock(&deadproc_slock);
 		p = LIST_FIRST(&deadproc);
 		if (p == NULL) {
 			/* No work for us; go to sleep until someone exits. */
+			simple_unlock(&deadproc_slock);
 			(void) tsleep(&deadproc, PVM, "reaper", 0);
 			continue;
 		}
 
 		/* Remove us from the deadproc list. */
-		LIST_REMOVE(p, p_list);
+		LIST_REMOVE(p, p_hash);
+		simple_unlock(&deadproc_slock);
 
 		/*
 		 * Give machine-dependent code a chance to free any
@@ -382,7 +401,7 @@ reaper()
 		uvm_exit(p);
 
 		/* Process is now a true zombie. */
-		LIST_INSERT_HEAD(&zombproc, p, p_list);
+		p->p_stat = SZOMB;
 
 		/* Wake up the parent so it can get exit status. */
 		if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
