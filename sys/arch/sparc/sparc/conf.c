@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62 1999/12/15 08:03:43 garbled Exp $ */
+/*	$NetBSD: conf.c,v 1.63 2000/03/19 14:20:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NKBD,kd), 	/* 1: Sun keyboard/display */
+	cdev_tty_init(1,kd), 		/* 1: PROM-based console (internal) */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4 */
