@@ -1,12 +1,13 @@
-/* $NetBSD: asc_pmaz.c,v 1.1.2.1 1998/10/15 02:48:58 nisimura Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.1.2.2 1998/12/06 21:09:53 drochner Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.1 1998/10/15 02:48:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.2 1998/12/06 21:09:53 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -35,15 +36,6 @@ int	asc_pmaz_setup __P((struct ncr53c9x_softc *, caddr_t *,
 						size_t *, int, size_t *));
 void	asc_pmaz_go __P((struct ncr53c9x_softc *));
 void	asc_pmaz_stop __P((struct ncr53c9x_softc *));
-
-extern u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
-extern void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-extern int	asc_dma_isintr __P((struct ncr53c9x_softc *));
-extern int	asc_dma_isactive __P((struct ncr53c9x_softc *));
-extern void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
-
-extern struct scsipi_adapter asc_switch;
-extern struct scsipi_device asc_dev;
 
 struct ncr53c9x_glue asc_pmaz_glue = {
         asc_read_reg,
@@ -161,7 +153,9 @@ asc_pmaz_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_switch, &asc_dev);
+	sc->sc_adapter.scsipi_cmd = asc_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+	ncr53c9x_attach(sc, &asc_dev);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: ascvar.h,v 1.1.2.1 1998/10/15 02:48:59 nisimura Exp $ */
+/* $NetBSD: ascvar.h,v 1.1.2.2 1998/12/06 21:09:53 drochner Exp $ */
 
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -34,3 +34,12 @@ struct asc_softc {
 	bus_space_handle_t sc_bsh;
 #endif
 };
+
+extern struct scsipi_device asc_dev;
+
+u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
+void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+int	asc_dma_isintr __P((struct ncr53c9x_softc *));
+int	asc_dma_isactive __P((struct ncr53c9x_softc *));
+void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
+int	asc_scsi_cmd __P((struct scsipi_xfer *));
