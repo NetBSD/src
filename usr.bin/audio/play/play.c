@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.32 2002/01/31 00:03:23 augustss Exp $	*/
+/*	$NetBSD: play.c,v 1.33 2002/01/31 00:33:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -46,12 +46,12 @@
 
 #include "libaudio.h"
 
-int main (int, char *[]);
-void usage (void);
-void play (char *);
-void play_fd (const char *, int);
-ssize_t audioctl_write_fromhdr (void *, size_t, int, size_t *);
-void cleanup (int) __attribute__((__noreturn__));
+int main(int, char *[]);
+void usage(void);
+void play(char *);
+void play_fd(const char *, int);
+ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *);
+void cleanup(int) __attribute__((__noreturn__));
 
 audio_info_t	info;
 int	volume;
@@ -59,6 +59,7 @@ int	balance;
 int	port;
 int	fflag;
 int	qflag;
+int	verbose;
 int	sample_rate;
 int	encoding;
 char	*encoding_str;
@@ -78,7 +79,6 @@ main(argc, argv)
 	size_t	len;
 	int	ch;
 	int	iflag = 0;
-	int	verbose = 0;
 	const char *device = NULL;
 	const char *ctldev = NULL;
 
@@ -435,6 +435,11 @@ set_audio_mode:
 		hdr_len = 0;
 	}
 	info.mode = AUMODE_PLAY_ALL;
+
+	if (verbose)
+		printf("sample_rate=%d channels=%d precision=%d encoding=%s\n",
+		   info.play.sample_rate, info.play.channels,
+		   info.play.precision, audio_enc_from_val(info.play.encoding));
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
