@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.59 1997/04/17 07:21:14 mikel Exp $	*/
+/*	$NetBSD: ncr.c,v 1.60 1997/07/01 00:41:43 cjs Exp $	*/
 
 /**************************************************************************
 **
@@ -423,6 +423,7 @@
 #define	QUIRK_NOMSG	(0x02)
 #define QUIRK_NOSYNC	(0x10)
 #define QUIRK_NOWIDE16	(0x20)
+#define QUIRK_NOTAGS	(0x40)
 #define	QUIRK_UPDATE	(0x80)
 
 /*==========================================================
@@ -1326,7 +1327,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.59 1997/04/17 07:21:14 mikel Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.60 1997/07/01 00:41:43 cjs Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3936,12 +3937,10 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 #else
 		tp->quirks = ncr_lookup ((char*) &tp->inqdata[0]);
 #endif
-#ifndef NCR_GETCC_WITHMSG
-		if (tp->quirks) {
+		if (tp->quirks & ~QUIRK_NOMSG) {
 			PRINT_ADDR(xp);
 			printf ("quirks=%x.\n", tp->quirks);
 		};
-#endif
 	};
 
 	/*---------------------------------------------------
@@ -4942,6 +4941,9 @@ static void ncr_settags (tcb_p tp, lcb_p lp)
 	*/
 	if ((tp->inqdata[7] & INQ7_QUEUE) == 0) {
 	    tp->usrtags=0;
+	}
+	if (tp->quirks & QUIRK_NOTAGS) {
+		tp->usrtags = 0;
 	}
 	if (tp->usrtags && ((tp->inqdata[0] & 0x1f) == 0x00)) {
 		reqtags = tp->usrtags;
@@ -6959,6 +6961,7 @@ struct table_entry {
 static struct table_entry device_tab[] =
 {
 #ifdef NCR_GETCC_WITHMSG
+	{"HP      ", "C372", "", QUIRK_NOTAGS|QUIRK_NOMSG},
 	{"", "", "", QUIRK_NOMSG},
 	{"SONY", "SDT-5000", "3.17", QUIRK_NOMSG},
 	{"WangDAT", "Model 2600", "01.7", QUIRK_NOMSG},
