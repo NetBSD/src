@@ -1,0 +1,4 @@
+# .sshrc
+# $NetBSD: sshrc,v 1.1 2002/05/17 17:52:37 lukem Exp $
+path /sbin:/bin
+run cat /.welcome
