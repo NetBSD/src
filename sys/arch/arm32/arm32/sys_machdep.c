@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 1997/10/17 00:09:48 mark Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.9 1998/01/21 22:28:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -82,8 +82,6 @@ arm32_drain_writebuf(p, args, retval)
 	char *args;
 	register_t *retval;
 {
-	int error;
-
 	/* No args. */
 
 	cpu_drain_writebuf();
