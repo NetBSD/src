@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 1998/08/16 15:33:48 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12 1998/08/22 10:55:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,9 +63,9 @@ int	nvualarm;
 vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
-	register_t *retval;
+	int *retval;
 {
-	register struct vtrace_args /* {
+	struct vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -105,8 +105,8 @@ vtrace(p, v, retval)
 vdoualarm(arg)
 	void *arg;
 {
-	register int pid = (int)arg;
-	register struct proc *p;
+	int pid = (int)arg;
+	struct proc *p;
 
 	p = pfind(pid);
 	if (p)
@@ -142,7 +142,7 @@ cachectl(req, addr, len)
 
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
-		register int inc = 0;
+		int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end;
 #ifdef COMPAT_HPUX
@@ -176,7 +176,7 @@ cachectl(req, addr, len)
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vm_offset_t)addr);
+						  (vaddr_t)addr);
 				if (pa == 0)
 					doall = 1;
 			}
@@ -261,7 +261,7 @@ int
 sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
-	register_t *retval;
+	int *retval;
 {
 	struct sysarch_args /* {
 		syscallarg(int) op; 

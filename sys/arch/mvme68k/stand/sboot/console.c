@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.3 1998/01/05 07:03:04 perry Exp $	*/
+/*	$NetBSD: console.c,v 1.4 1998/08/22 10:55:37 scw Exp $	*/
 
 /*
  *
@@ -55,8 +55,8 @@ struct zs_hw *zs =  (struct zs_hw *)CONS_ZS_ADDR;
 consinit()
 
 {
-  register int mark = time();
-  register int rr1;
+  int mark = time();
+  int rr1;
   while (1) {
     if (time() > mark + 5) break;
     zs->ctl = 1; rr1 = zs->ctl;

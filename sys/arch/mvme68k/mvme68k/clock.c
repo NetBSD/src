@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.9 1998/01/12 19:51:19 thorpej Exp $	*/
+/*      $NetBSD: clock.c,v 1.10 1998/08/22 10:55:34 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@ clock_config(dev, clockregs, nvram, nvramsize, initfunc)
 void
 cpu_initclocks()
 {
-	register int statint, minint;
+	int statint, minint;
 
 	if (RTCbase == NULL)
 		panic("clock not configured");
@@ -185,7 +185,7 @@ setstatclockrate(newhz)
 
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;
@@ -225,9 +225,9 @@ const short dayyr[12] =
 
 static long
 chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
+	int sec, min, hour, day, mon, year;
 {
-	register int days, yr;
+	int days, yr;
 
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
@@ -251,9 +251,9 @@ chiptotime(sec, min, hour, day, mon, year)
 
 static void
 timetochip(c)
-        register struct chiptime *c;
+        struct chiptime *c;
 {
-        register int t, t2, t3, now = time.tv_sec;
+        int t, t2, t3, now = time.tv_sec;
 
         /* compute the year */
         t2 = now / SECDAY;
@@ -302,7 +302,7 @@ void
 inittodr(base)
         time_t base;
 {
-        register struct clockreg *cl = RTCbase;
+        struct clockreg *cl = RTCbase;
         int sec, min, hour, day, mon, year;
         int badbase = 0, waszero = base == 0;
 
@@ -357,7 +357,7 @@ inittodr(base)
 void
 resettodr()
 {
-        register struct clockreg *cl;
+        struct clockreg *cl;
         struct chiptime c;
 
         if (!time.tv_sec || (cl = RTCbase) == NULL)
