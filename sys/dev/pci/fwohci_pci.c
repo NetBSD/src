@@ -35,6 +35,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/device.h>
