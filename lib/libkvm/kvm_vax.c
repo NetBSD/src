@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.14 2001/11/29 23:32:42 thorpej Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.15 2003/05/16 10:24:56 wiz Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ _kvm_initvtop(kd)
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
  * the number of bytes that are contiguously available from this
- * physical address.  This routine is used only for crashdumps.
+ * physical address.  This routine is used only for crash dumps.
  */
 int
 _kvm_kvatop(kd, va, pa)
@@ -136,8 +136,8 @@ _kvm_kvatop(kd, va, pa)
 }
 
 /*
- * Translate a physical address to a file-offset in the crash-dump.
- * XXX - crash-dumps doesn't work anyway.
+ * Translate a physical address to a file-offset in the crash dump.
+ * XXX - crash dump doesn't work anyway.
  */
 off_t
 _kvm_pa2off(kd, pa)
