@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.39 2003/12/25 17:34:09 nonaka Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.40 2003/12/27 23:57:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.39 2003/12/25 17:34:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.40 2003/12/27 23:57:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,20 +400,15 @@ wi_pcmcia_find(psc, pa, cfe)
 
 	/* Allocate/map I/O space. */
 	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, WI_IOSIZE,
-	    &psc->sc_pcioh) != 0) {
-		printf("%s: can't allocate i/o space\n",
-			sc->sc_dev.dv_xname);
+	    cfe->iospace[0].length, WI_IOSIZE, &psc->sc_pcioh) != 0) {
+		printf("%s: can't allocate i/o space\n", sc->sc_dev.dv_xname);
 		goto fail1;
 	}
-	printf("%s:", sc->sc_dev.dv_xname);
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0,
-	    psc->sc_pcioh.size, &psc->sc_pcioh,
-	    &psc->sc_io_window) != 0) {
-		printf(" can't map i/o space\n");
+	    psc->sc_pcioh.size, &psc->sc_pcioh, &psc->sc_io_window) != 0) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto fail2;
 	}
-	printf("\n");
 	/* Enable the card */
 	pcmcia_function_init(psc->sc_pf, cfe);
 	if (pcmcia_function_enable(psc->sc_pf)) {
