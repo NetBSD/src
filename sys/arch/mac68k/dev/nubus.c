@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.20 1996/05/06 01:08:41 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.21 1996/05/06 03:27:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -77,7 +77,6 @@ nubusmatch(parent, vcf, aux)
 
 	if (ca->ca_bustype != BUS_NUBUS)
 		return (0);
-printf("nubus match.\n");
 	return(1);
 }
 
