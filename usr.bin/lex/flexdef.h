@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: flexdef.h,v 1.14 2002/01/29 10:20:34 tv Exp $ */
+/* $NetBSD: flexdef.h,v 1.15 2003/10/28 20:43:51 christos Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -57,12 +57,12 @@
 #include <sys/types.h>
 #endif
 
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#else
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
-
-#ifdef STDC_HEADERS
-#include <stdlib.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
