@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.155 2005/02/25 21:51:10 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.156 2005/02/26 18:04:19 matt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -73,8 +73,9 @@ ASM=	access.S acct.S \
 		mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
 		munlock.S munlockall.S munmap.S \
 	nfssvc.S ntp_gettime.S \
-	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
+	pathconf.S pmc_get_info.S pmc_control.S pollts.S __posix_chown.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
+		pselect.S \
 	quotactl.S \
 	rasctl.S readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
@@ -223,8 +224,10 @@ MLINKS+=mount.2 unmount.2
 MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=pmc_control.2 pmc_get_info.2
+MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
+MLINKS+=select.2 pselect.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2

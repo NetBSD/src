@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.23 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: select.2,v 1.24 2005/02/26 18:04:19 matt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,17 @@
 .In unistd.h
 .Ft int
 .Fn select "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "struct timeval *timeout"
+.Ft int
+.Fn pselect "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "const struct timespec *timeout" "const sigset_t *sigmask"
 .Fn FD_SET fd \*[Am]fdset
 .Fn FD_CLR fd \*[Am]fdset
 .Fn FD_ISSET fd \*[Am]fdset
 .Fn FD_ZERO \*[Am]fdset
 .Sh DESCRIPTION
 .Fn select
-examines the I/O descriptor sets whose addresses are passed in
+and
+.Fn pselect
+examine the I/O descriptor sets whose addresses are passed in
 .Fa readfds ,
 .Fa writefds ,
 and
@@ -65,11 +69,15 @@ i.e., the descriptors from 0 through
 in the descriptor sets are examined.
 On return,
 .Fn select
-replaces the given descriptor sets
+and
+.Fn pselect
+replace the given descriptor sets
 with subsets consisting of those descriptors that are ready
 for the requested operation.
 .Fn select
-returns the total number of ready descriptors in all the sets.
+and
+.Fn pselect
+return the total number of ready descriptors in all the sets.
 .Pp
 The descriptor sets are stored as bit fields in arrays of integers.
 The following macros are provided for manipulating such descriptor sets:
@@ -108,13 +116,24 @@ If
 is a nil pointer, the select blocks indefinitely.
 To affect a poll, the
 .Fa timeout
-argument should be non-nil, pointing to a zero-valued timeval structure.
+argument should be non-nil, pointing to a zero-valued timeval or timespec
+structure, as appropriate.
 .Fa timeout
 is not changed by
 .Fn select ,
 and may be reused on subsequent calls; however, it is good style to
 re-initialize it before each invocation of
 .Fn select .
+.Pp
+If
+.Fa sigmask
+is a non-nil pointer, then the
+.Fn pselect
+function shall replace the signal mask of the caller by the set of
+signals pointed to by
+.Fa sigmask
+before examining the descriptors, and shall restore the signal mask
+of the calling thread before returning.
 .Pp
 Any of
 .Fa readfds ,
