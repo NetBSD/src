@@ -358,7 +358,7 @@ ttllist:
 			{ DOREM(fr->fr_ttl = $3; fr->fr_mttl = 0xff;) }
 	;
 
-proto:	| protox protocol		{ yyresetdict(); }
+proto:	| protox protocol		{ yyresetdict(); yyvarnext = 0; }
 	;
 
 protox:	IPFY_PROTO			{ setipftype();
