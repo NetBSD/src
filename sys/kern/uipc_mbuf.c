@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.75 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.76 2004/01/21 02:11:20 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.75 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.76 2004/01/21 02:11:20 atatat Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -199,7 +199,7 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 	node.sysctl_data = &newval;
 	switch (rnode->sysctl_num) {
 	case MBUF_NMBCLUSTERS:
-		if (mb_map == NULL) {
+		if (mb_map != NULL) {
 			node.sysctl_flags &= ~SYSCTL_READWRITE;
 			node.sysctl_flags |= SYSCTL_READONLY;
 		}
@@ -227,11 +227,11 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 		break;
 	case MBUF_MBLOWAT:
 		mblowat = newval;
-		pool_setlowat(&mclpool, mblowat);
+		pool_setlowat(&mbpool, mblowat);
 		break;
 	case MBUF_MCLLOWAT:
-		mblowat = newval;
-		pool_setlowat(&mclpool, mblowat);
+		mcllowat = newval;
+		pool_setlowat(&mclpool, mcllowat);
 		break;
 	}
 
