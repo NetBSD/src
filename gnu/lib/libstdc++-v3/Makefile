@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/28 01:10:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/19 14:52:03 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -27,11 +27,9 @@ SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS} xmalloc.c xexit.c
 CXXFLAGS+=	-fno-implicit-templates -fdiagnostics-show-location=once
 
 CONF=		${DIST}/libstdc++-v3/config
-CLEANFILES+=    basic_file.cc c++locale.cc
-basic_file.cc: ${CONF}/io/basic_file_stdio.cc
-	cp $> ${.TARGET}
-c++locale.cc: ${CONF}/locale/generic/c_locale.cc
-	cp $> ${.TARGET}
+
+BUILDSYMLINKS+=	${CONF}/io/basic_file_stdio.cc		basic_file.cc \
+		${CONF}/locale/generic/c_locale.cc	c++locale.cc
 
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 

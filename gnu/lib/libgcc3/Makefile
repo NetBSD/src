@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/10/16 06:15:20 tron Exp $
+#	$NetBSD: Makefile,v 1.14 2003/10/19 14:52:03 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -34,13 +34,19 @@ DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
 ${LIB2DIVMOD}: ${.CURDIR}/Makefile
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
 .if !empty(LIB1ASMFUNCS)
 ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
 .endif
 
@@ -59,12 +65,18 @@ CPICFLAGS:=
 .endif
 
 ${LIB2_EH:.c=.o}:
+	${_MKMSGCOMPILE}
+	${_MKCMD}\
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -o ${.TARGET} ${.IMPSRC}
 
 ${G_LIB2_DIVMOD_FUNCS:=.o}:
+	${_MKMSGCOMPILE}
+	${_MKCMD}\
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -fnon-call-exceptions -o ${.TARGET} ${.IMPSRC}
 
 dp-bit.c: ${.CURDIR}/Makefile
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	printf '#define FLOAT\n#include <fp-bit.c>\n' >${.TARGET}
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config \
@@ -72,12 +84,13 @@ dp-bit.c: ${.CURDIR}/Makefile
 
 .include <bsd.lib.mk>
 
-# XXX /bin/sh
 tconfig.h:
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	TM_DEFINES="$(G_tm_defines)" \
 	HEADERS="$(G_xm_file)" XM_DEFINES="$(G_xm_defines)" \
 	TARGET_CPU_DEFAULT="" \
-	/bin/sh $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
+	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
 
 .else
 .include <bsd.prog.mk> # do nothing

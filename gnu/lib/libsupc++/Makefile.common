@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.3 2003/10/06 21:36:59 veego Exp $
+#	$NetBSD: Makefile.common,v 1.4 2003/10/19 14:52:03 lukem Exp $
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
 GNUHOSTDIST=	${DIST}
@@ -16,7 +16,4 @@ CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 CPPFLAGS.cxa_demangle.c=-DIN_GLIBCPP_V3
 CPPFLAGS.dyn-string.c=-DIN_GLIBCPP_V3
 
-CLEANFILES+=    cxa_demangle.c
-cxa_demangle.c: ${DIST}/libiberty/cp-demangle.c
-	rm -f ${.TARGET}
-	ln -s $> ${.TARGET}
+BUILDSYMLINKS+=	${DIST}/libiberty/cp-demangle.c cxa_demangle.c
