@@ -2,13 +2,14 @@
  * and placed in the public domain.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <a.out.h>
+#include <machine/param.h>
 
-char *malloc ();
+#define FILE_OFFSET(vadr) (((vadr) - text_adr) - N_DATADDR(hdr) + \
+			   N_DATOFF(hdr) + N_TXTADDR(hdr))
 
-#define FILE_OFFSET_FUDGE (N_TXTADDR(hdr))
-#define FILE_OFFSET(vadr) (((vadr) & ~0xff000000)-N_DATADDR(hdr)+N_DATOFF(hdr) \
-			   + FILE_OFFSET_FUDGE)
+u_long text_adr = KERNBASE;
 
 struct nlist *old_syms;
 int num_old_syms;
@@ -30,7 +31,7 @@ int zap_locals = 0;
 
 usage ()
 {
-	fprintf (stderr, "usage: dbsym [-l] file\n");
+	fprintf (stderr, "usage: dbsym [-l] [-T addr] file\n");
 	exit (1);
 }
 
@@ -49,11 +50,16 @@ char **argv;
 	int len;
 
 
-	while ((c = getopt (argc, argv, "l")) != EOF) {
+	while ((c = getopt (argc, argv, "lT:")) != EOF) {
 		switch (c) {
                 case 'l':
                         zap_locals = 1;
                         break;
+		case 'T':
+			text_adr = strtoul(optarg, &p, 16);
+			if (*p)
+				err("illegal text address: %s", optarg);
+			break;
 		default:
 			usage ();
 		}
