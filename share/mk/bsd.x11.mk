@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.29 2004/02/06 11:52:48 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.30 2004/02/11 11:28:17 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -6,8 +6,6 @@
 BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
 MANDIR=			${X11MANDIR}
-
-FOOBAR=	foo
 
 X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
 
