@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.3 2001/11/13 07:23:15 lukem Exp $ */
+/* $NetBSD: dtide.c,v 1.4 2001/11/13 13:32:34 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dtide.c,v 1.3 2001/11/13 07:23:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.4 2001/11/13 13:32:34 lukem Exp $");
 
 #include <sys/param.h>
 
