@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/10/31 15:57:55 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/08/18 14:59:34 itojun Exp $
 #	$KAME: Makefile.inc,v 1.3 2000/11/08 05:58:24 itojun Exp $
 
 .if !target(regress)
@@ -13,3 +13,6 @@ BENCHROUNDS?=	10000
 benchmark:
 	@time ./${PROG} ${BENCHROUNDS}
 .endif
+
+# do not install regression test programs
+proginstall::
