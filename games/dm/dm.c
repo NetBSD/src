@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.14 1999/09/22 18:54:03 jsm Exp $	*/
+/*	$NetBSD: dm.c,v 1.15 1999/09/22 18:54:42 jsm Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.14 1999/09/22 18:54:03 jsm Exp $");
+__RCSID("$NetBSD: dm.c,v 1.15 1999/09/22 18:54:42 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ load()
 	double avenrun[3];
 
 	if (getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0])) < 0)
-		err(1, "getloadavg() failed.");
+		err(1, "getloadavg() failed");
 	return (avenrun[2]);
 }
 
