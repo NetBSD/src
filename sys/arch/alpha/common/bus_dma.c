@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.22 1998/06/03 04:15:05 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.23 1998/06/03 18:25:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 1998/06/03 04:15:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 1998/06/03 18:25:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,10 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
-	map->_dm_boundary = boundary;
+	if (t->_boundary != 0 && t->_boundary < boundary)
+		map->_dm_boundary = t->_boundary;
+	else
+		map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;

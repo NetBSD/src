@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.9 1998/05/13 21:21:17 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.10 1998/06/03 18:25:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.9 1998/05/13 21:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.10 1998/06/03 18:25:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ lca_dma_init(lcp)
 	t->_wbase = LCA_DIRECT_MAPPED_BASE;
 	t->_wsize = LCA_DIRECT_MAPPED_SIZE;
 	t->_next_window = NULL;
+	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = lca_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
@@ -138,6 +139,7 @@ lca_dma_init(lcp)
 	t->_wbase = LCA_SGMAP_MAPPED_BASE;
 	t->_wsize = LCA_SGMAP_MAPPED_SIZE;
 	t->_next_window = NULL;
+	t->_boundary = 0;
 	t->_sgmap = &lcp->lc_sgmap;
 	t->_get_tag = lca_dma_get_tag;
 	t->_dmamap_create = lca_bus_dmamap_create_sgmap;
