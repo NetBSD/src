@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61.4.4 2004/04/20 06:19:31 tron Exp $
+#	$NetBSD: INSTALL,v 1.61.4.5 2004/04/24 22:13:37 tron Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -86,6 +86,7 @@ iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+wdc*	at pci? dev ? function ?	# Kauai ATA
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
 pciide*	at pci? dev ? function ?	# PCI IDE Controller
