@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.7 2003/07/26 17:35:00 salo Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.8 2004/01/18 09:07:07 yamt Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -11,71 +11,78 @@
 #include <sys/cdefs.h>
 #include <nl_types.h>
 
-#define D_T_FMT		0	/* String for formatting date and time */
-#define D_FMT		1	/* Date format string */
-#define	T_FMT		2	/* Time format string */
-#define T_FMT_AMPM	3	/* Time format string with 12 hour clock */
-#define AM_STR		4	/* Ante Meridiem afix */
-#define PM_STR		5	/* Post Meridiem afix */
+#define D_T_FMT		((nl_item)0)	/* String for formatting date and
+					   time */
+#define D_FMT		((nl_item)1)	/* Date format string */
+#define	T_FMT		((nl_item)2)	/* Time format string */
+#define T_FMT_AMPM	((nl_item)3)	/* Time format string with 12 hour
+					   clock */
+#define AM_STR		((nl_item)4)	/* Ante Meridiem afix */
+#define PM_STR		((nl_item)5)	/* Post Meridiem afix */
 
-#define DAY_1		6	/* Name of the first day of the week */
-#define DAY_2		7
-#define DAY_3		8
-#define DAY_4		9
-#define DAY_5		10
-#define DAY_6		11
-#define DAY_7		12
+#define DAY_1		((nl_item)6)	/* Name of the first day of the week */
+#define DAY_2		((nl_item)7)
+#define DAY_3		((nl_item)8)
+#define DAY_4		((nl_item)9)
+#define DAY_5		((nl_item)10)
+#define DAY_6		((nl_item)11)
+#define DAY_7		((nl_item)12)
 
-#define ABDAY_1		13	/* Abbrev. name of the first day of the week */
-#define ABDAY_2		14
-#define ABDAY_3		15
-#define ABDAY_4		16
-#define ABDAY_5		17
-#define ABDAY_6		18
-#define ABDAY_7		19
+#define ABDAY_1		((nl_item)13)	/* Abbrev. name of the first day of
+					   the week */
+#define ABDAY_2		((nl_item)14)
+#define ABDAY_3		((nl_item)15)
+#define ABDAY_4		((nl_item)16)
+#define ABDAY_5		((nl_item)17)
+#define ABDAY_6		((nl_item)18)
+#define ABDAY_7		((nl_item)19)
 
-#define MON_1		20	/* Name of the first month */
-#define MON_2		21
-#define MON_3		22
-#define MON_4		23
-#define MON_5		24
-#define MON_6		25
-#define MON_7		26
-#define MON_8		27
-#define MON_9		28
-#define MON_10		29
-#define MON_11		30
-#define MON_12		31
+#define MON_1		((nl_item)20)	/* Name of the first month */
+#define MON_2		((nl_item)21)
+#define MON_3		((nl_item)22)
+#define MON_4		((nl_item)23)
+#define MON_5		((nl_item)24)
+#define MON_6		((nl_item)25)
+#define MON_7		((nl_item)26)
+#define MON_8		((nl_item)27)
+#define MON_9		((nl_item)28)
+#define MON_10		((nl_item)29)
+#define MON_11		((nl_item)30)
+#define MON_12		((nl_item)31)
 
-#define ABMON_1		32	/* Abbrev. name of the first month */
-#define ABMON_2		33
-#define ABMON_3		34
-#define ABMON_4		35
-#define ABMON_5		36
-#define ABMON_6		37
-#define ABMON_7		38
-#define ABMON_8		39
-#define ABMON_9		40
-#define ABMON_10	41
-#define ABMON_11	42
-#define ABMON_12	43
+#define ABMON_1		((nl_item)32)	/* Abbrev. name of the first month */
+#define ABMON_2		((nl_item)33)
+#define ABMON_3		((nl_item)34)
+#define ABMON_4		((nl_item)35)
+#define ABMON_5		((nl_item)36)
+#define ABMON_6		((nl_item)37)
+#define ABMON_7		((nl_item)38)
+#define ABMON_8		((nl_item)39)
+#define ABMON_9		((nl_item)40)
+#define ABMON_10	((nl_item)41)
+#define ABMON_11	((nl_item)42)
+#define ABMON_12	((nl_item)43)
 
-#define RADIXCHAR	44	/* Radix character */
-#define THOUSEP		45	/* Separator for thousands */
-#define YESSTR		46	/* Affirmitive response for yes/no queries */
-#define YESEXPR		47	/* Affirmitive response for yes/no queries */
-#define NOSTR		48	/* Negative response for yes/no queries */
-#define NOEXPR		49	/* Negative response for yes/no queries */
-#define CRNCYSTR	50	/* Currency symbol */
+#define RADIXCHAR	((nl_item)44)	/* Radix character */
+#define THOUSEP		((nl_item)45)	/* Separator for thousands */
+#define YESSTR		((nl_item)46)	/* Affirmitive response for yes/no
+					   queries */
+#define YESEXPR		((nl_item)47)	/* Affirmitive response for yes/no
+					   queries */
+#define NOSTR		((nl_item)48)	/* Negative response for yes/no
+					   queries */
+#define NOEXPR		((nl_item)49)	/* Negative response for yes/no
+					   queries */
+#define CRNCYSTR	((nl_item)50)	/* Currency symbol */
 
-#define CODESET		51	/* codeset name */
+#define CODESET		((nl_item)51)	/* codeset name */
 
-#define ERA		52	/* Era description segments */
-#define ERA_D_FMT	53	/* Era date format string */
-#define ERA_D_T_FMT	54	/* Era date and time format string */
-#define ERA_T_FMT	55	/* Era time format string */
+#define ERA		((nl_item)52)	/* Era description segments */
+#define ERA_D_FMT	((nl_item)53)	/* Era date format string */
+#define ERA_D_T_FMT	((nl_item)54)	/* Era date and time format string */
+#define ERA_T_FMT	((nl_item)55)	/* Era time format string */
 
-#define ALT_DIGITS	56	/* Alternative symbols for digits */
+#define ALT_DIGITS	((nl_item)56)	/* Alternative symbols for digits */
 
 __BEGIN_DECLS
 char *nl_langinfo __P((nl_item));
