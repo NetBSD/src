@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ping.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: ping.c,v 1.9 1994/09/23 14:27:48 mycroft Exp $";
+static char *rcsid = "$Id: ping.c,v 1.10 1994/09/23 23:49:18 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -599,7 +599,7 @@ pr_pack(buf, cc, from)
 				continue;
 			if (i == old_rrlen
 			    && cp == (u_char *)buf + sizeof(struct ip) + 2
-			    && !bcmp((char *)cp, old_rr, i)
+			    && !memcmp(cp, old_rr, i)
 			    && !(options & F_FLOOD)) {
 				(void)printf("\t(same route)");
 				i = ((i + 3) / 4) * 4;
