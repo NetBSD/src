@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.3 2001/12/23 13:10:46 takemura Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.4 2002/01/07 07:43:52 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -268,7 +268,7 @@ r5k_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line16(va + size);
 
-	va = trunc_line(va);
+	va = trunc_line16(va);
 
 	while ((eva - va) >= (32 * 16)) {
 		cache_r4k_op_32lines_16(va,
