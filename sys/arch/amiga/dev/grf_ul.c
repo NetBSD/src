@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.1 1995/08/18 16:15:43 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.2 1995/08/18 16:46:57 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -71,7 +71,7 @@ u_int8_t ul_ovl_palette[] = {
 	128, 0, 0, 0, 
 	128, 0, 0, 0};
 
-struct grfvideo_mode monitor_defs[] = {
+struct grfvideo_mode ul_monitor_defs[] = {
 
  	/*
 	 * Horizontal values are given in TMS units, that is, for the 
@@ -119,7 +119,7 @@ struct grfvideo_mode monitor_defs[] = {
 		54,  8, 57,  3, 58, 503, 23, 514, 3, 515},
 };
 
-int ulowell_mon_max = sizeof (monitor_defs)/sizeof (monitor_defs[0]);
+int ulowell_mon_max = sizeof (ul_monitor_defs)/sizeof (ul_monitor_defs[0]);
 
 /* option settable */
 #ifndef ULOWELL_OSC1
@@ -451,7 +451,7 @@ grfulmatch(pdp, cfp, auxp)
 		if ((unsigned)ulowell_default_mon >= ulowell_mon_max)
 			ulowell_default_mon = 1;
 
-		current_mon = monitor_defs + ulowell_default_mon - 1;
+		current_mon = ul_monitor_defs + ulowell_default_mon - 1;
 		if (ulowell_alive(current_mon) == 0)
 			return(0);
 #ifdef ULOWELLCONSOLE 
@@ -552,9 +552,9 @@ ul_getvmode (gp, vm)
 		return EINVAL;
 
 	if (! vm->mode_num)
-		vm->mode_num = current_mon - monitor_defs + 1;
+		vm->mode_num = current_mon - ul_monitor_defs + 1;
 
-	md = monitor_defs + vm->mode_num - 1;
+	md = ul_monitor_defs + vm->mode_num - 1;
 	strncpy (vm->mode_descr, md, 
 		sizeof (vm->mode_descr));
 
@@ -603,7 +603,7 @@ ul_setvmode (gp, mode)
 
 	ba = (struct gspregs *)gp->g_regkva;
 	gup = (struct grf_ul_softc *)gp;
-	current_mon = monitor_defs + mode - 1;
+	current_mon = ul_monitor_defs + mode - 1;
 
 	error = ul_load_mon (gp, current_mon) ? 0 : EINVAL;
 
@@ -674,8 +674,8 @@ ul_mode(gp, cmd, arg, a2, a3)
 	case GM_GRFCONFIG:
 		gd = (struct grfdyninfo *)arg;
 		for (i=0; i<ulowell_mon_max; ++i) {
-			if (monitor_defs[i].disp_width == gd->gdi_dwidth &&
-			    monitor_defs[i].disp_height == gd->gdi_dheight)
+			if (ul_monitor_defs[i].disp_width == gd->gdi_dwidth &&
+			    ul_monitor_defs[i].disp_height == gd->gdi_dheight)
 				return ul_setvmode(gp, i+1);
 		}
 		return EINVAL;
