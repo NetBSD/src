@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.9 2001/03/13 20:20:43 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.10 2001/05/13 13:48:11 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.9 2001/03/13 20:20:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.10 2001/05/13 13:48:11 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -61,6 +61,10 @@ extern void main __P((void)); /* XXX Should be in a header file */
 struct bootconfig bootconfig;
 
 struct user *proc0paddr;
+
+/* We don't pass a command line yet. */
+char *boot_args = "";
+char *boot_file = "";
 
 #ifdef DIAGNOSTIC
 #define BOOT_SANITY 0x89345846
