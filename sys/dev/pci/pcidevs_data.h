@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.6 2004/06/22 15:32:02 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.7 2004/07/05 22:31:35 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.615.2.6 2004/07/05 22:30:49 he Exp 
  */
 
 /*
@@ -7924,82 +7924,100 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Broadband Adapter",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX5,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP,
 	    0,
 	    "ServerWorks",
-	    "PCIHB5",
+	    "CNB20-LE PCI/AGP bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB20,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI,
 	    0,
 	    "ServerWorks",
-	    "I/O Bridge",
+	    "CNB30-LE PCI bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX7,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_LE_PCI,
 	    0,
 	    "ServerWorks",
-	    "PCIHB7",
+	    "CNB20-LE PCI bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20HE,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI,
 	    0,
 	    "ServerWorks",
-	    "CNB20HE Host",
+	    "CNB20-HE PCI bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20LE,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_AGP,
 	    0,
 	    "ServerWorks",
-	    "CNB20LE Host",
+	    "CNB20-HE PCI/AGP bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB30,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X,
 	    0,
 	    "ServerWorks",
-	    "CIOB30",
+	    "CIOB-X PCI-X bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE,
 	    0,
 	    "ServerWorks",
-	    "CMIC_HE Host",
+	    "CMIC-HE PCI/AGP bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB30_HE,
+	    0,
+	    "ServerWorks",
+	    "CNB30-HE PCI bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI2,
+	    0,
+	    "ServerWorks",
+	    "CNB20-HE PCI/AGP bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_LE,
 	    0,
 	    "ServerWorks",
-	    "CMIC_LE Host",
+	    "CMIC-LE PCI/AGP bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_SL,
 	    0,
 	    "ServerWorks",
-	    "CMIC_SL Host",
+	    "CMIC-SL PCI/AGP bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOBX2,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X2,
 	    0,
 	    "ServerWorks",
-	    "CIOB-X2",
+	    "CIOB-X2 PCI-X bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_E,
+	    0,
+	    "ServerWorks",
+	    "CIOB-E PCI-X bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
 	    0,
 	    "ServerWorks",
-	    "OSB4 SouthBridge",
+	    "OSB4 ISA bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5,
 	    0,
 	    "ServerWorks",
-	    "CSB5 SouthBridge",
+	    "CSB5 ISA bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6,
 	    0,
 	    "ServerWorks",
-	    "CSB6 SouthBridge",
+	    "CSB6 ISA bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
@@ -8017,13 +8035,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_RAID,
 	    0,
 	    "ServerWorks",
-	    "CSB6 RAID/IDE",
+	    "CSB6 IDE/RAID",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IDE,
 	    0,
 	    "ServerWorks",
-	    "CSB6 IDE",
+	    "CSB6 IDE/RAID",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_USB,
@@ -8038,10 +8056,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CSB6 USB Host Controller",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IB,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_LPC,
 	    0,
 	    "ServerWorks",
-	    "CSB6 ISA bridge",
+	    "CSB6 LPC bridge",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
