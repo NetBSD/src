@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.67 1995/04/10 16:53:40 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.68 1995/04/15 05:01:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -428,7 +428,8 @@ sdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, &sd->sc_dk.dk_label,
+	if (SDPART(bp->b_dev) != RAW_PART &&
+	    bounds_check_with_label(bp, &sd->sc_dk.dk_label,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
