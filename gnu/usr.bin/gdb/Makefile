@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 1999/03/17 00:46:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31 1999/04/04 19:02:31 eeh Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -85,6 +85,9 @@ TDEPFILES.powerpc=	rs6000-tdep.c
 NATDEPFILES.sparc=	sparcnbsd-nat.c
 TDEPFILES.sparc=	sparc-tdep.c
 
+NATDEPFILES.sparc64=	sp64nbsd-nat.c
+TDEPFILES.sparc64=	sparc-tdep.c
+
 NATDEPFILES.vax=	vaxnbsd-nat.c
 TDEPFILES.vax=		vax-tdep.c
 
@@ -103,7 +106,7 @@ init.o: ${OBJS:Ninit.o} Makefile
 
 ${OBJS}: nm.h tm.h xm.h
 
-ARCHSUBDIR= ${MACHINE_GNU_ARCH:C/mipse[bl]/mips/}
+ARCHSUBDIR= ${MACHINE_GNU_ARCH:C/mipse[bl]/mips/:C/sparc64/sparc/}
 
 nm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/nm-nbsd.h
 	@-rm -f $@
