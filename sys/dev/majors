@@ -1,6 +1,6 @@
-# $NetBSD: majors,v 1.1 2003/10/05 08:04:24 jdolecek Exp $
+# $NetBSD: majors,v 1.2 2003/10/10 21:05:32 agc Exp $
 #
-# Device majors for Machine-Independant drivers. Majors below 192 are
-# reserved for machine-dependant drivers and for traditional machine-specific
+# Device majors for Machine-Independent drivers. Majors below 192 are
+# reserved for machine-dependent drivers and for traditional machine-specific
 # major mapping.
 
