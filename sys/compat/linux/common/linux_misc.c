@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.90 2001/06/02 11:46:09 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.91 2001/06/03 18:22:27 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1254,7 +1254,7 @@ linux_sys_ptrace(p, v, retval)
 					case LINUX_PTRACE_PEEKTEXT:
 					case LINUX_PTRACE_PEEKDATA:
 						error = copyout (retval, 
-						    (caddr_t)SCARG(&pta, data), 
+						    (caddr_t)(u_long)SCARG(&pta, data), 
 						    sizeof retval);
 						*retval = SCARG(&pta, data);
 						break;
