@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.20 1999/08/16 03:02:46 simonb Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.21 1999/12/23 01:02:52 mjl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.20 1999/08/16 03:02:46 simonb Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.21 1999/12/23 01:02:52 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,8 +74,7 @@ extern	char *__progname;		/* from crt0.o */
 extern	int yflag, yppwd;
 
 static	char		*getnewpasswd __P((struct passwd *, char **));
-static	struct passwd	*interpret __P((struct passwd *, char *));
-static	struct passwd	*ypgetpwnam __P((char *));
+static	int		 ypgetpwnam __P((char *));
 static	void		 pw_error __P((char *, int, int));
 static	void		 test_local __P((char *));
 
@@ -119,7 +118,7 @@ yp_passwd(username)
 	struct passwd *pw;
 	struct timeval tv;
 	CLIENT *client;
-	
+
 	uid = getuid();
 
 	/*
@@ -155,8 +154,10 @@ yp_passwd(username)
 	if (rpcport >= IPPORT_RESERVED)
 		errx(1, "yppasswd daemon is on an invalid port.");
 
-	/* Get user's login identity */
-	if (!(pw = ypgetpwnam(username))) {
+	/* Bail out if this is a local (non-yp) user, */
+	/* then get user's login identity */
+	if (!ypgetpwnam(username) ||
+	    !(pw = getpwnam(username))) {
 		test_local(username);
 		errx(1, "unknown user %s", username);
 	}
@@ -260,66 +261,10 @@ getnewpasswd(pw, old_pass)
 	return(strdup(crypt(buf, salt)));
 }
 
-static char *pwskip __P((char *));
-
-static char *
-pwskip(p)
-	char *p;
-{
-
-	while (*p && *p != ':' && *p != '\n')
-		++p;
-	if (*p)
-		*p++ = 0;
-	return (p);
-}
-
-static struct passwd *
-interpret(pwent, line)
-	struct passwd *pwent;
-	char *line;
-{
-	char	*p = line;
-
-	pwent->pw_passwd = "*";
-	pwent->pw_uid = 0;
-	pwent->pw_gid = 0;
-	pwent->pw_gecos = "";
-	pwent->pw_dir = "";
-	pwent->pw_shell = "";
-	pwent->pw_change = 0;
-	pwent->pw_expire = 0;
-	pwent->pw_class = "";
-	
-	/* line without colon separators is no good, so ignore it */
-	if (!strchr(p,':'))
-		return (NULL);
-
-	pwent->pw_name = p;
-	p = pwskip(p);
-	pwent->pw_passwd = p;
-	p = pwskip(p);
-	pwent->pw_uid = (uid_t)strtoul(p, NULL, 10);
-	p = pwskip(p);
-	pwent->pw_gid = (gid_t)strtoul(p, NULL, 10);
-	p = pwskip(p);
-	pwent->pw_gecos = p;
-	p = pwskip(p);
-	pwent->pw_dir = p;
-	p = pwskip(p);
-	pwent->pw_shell = p;
-	while (*p && *p != '\n')
-		p++;
-	*p = '\0';
-	return (pwent);
-}
-
-static struct passwd *
+static int
 ypgetpwnam(nam)
 	char *nam;
 {
-	static struct passwd pwent;
-	static char line[1024];
 	char *val;
 	int reason, vallen;
 	
@@ -329,14 +274,10 @@ ypgetpwnam(nam)
 	if (reason != 0) {
 		if (val != NULL)
 			free(val);
-		return (NULL);
+		return 0;
 	}
-	val[vallen] = '\0';
-	(void)strncpy(line, val, sizeof(line) - 1);
-	line[sizeof(line) - 1] = '\0';
 	free(val);
-
-	return (interpret(&pwent, line));
+	return 1;
 }
 
 #endif	/* YP */
