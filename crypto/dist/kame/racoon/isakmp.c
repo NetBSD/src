@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.124 2001/01/26 04:02:46 thorpej Exp $	*/
+/*	$KAME: isakmp.c,v 1.125 2001/01/28 17:17:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,6 +55,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <ctype.h>
 
 #if !defined(HAVE_GETADDRINFO) || !defined(HAVE_GETNAMEINFO)
 #include "addrinfo.h"
@@ -2046,6 +2047,7 @@ char *getname __P((const u_char *));
 #ifdef INET6
 char *getname6 __P((const u_char *));
 #endif
+int safeputchar __P((int));
 
 /*
  * Return a name for the IP address pointed to by ap.  This address
@@ -2094,6 +2096,19 @@ getname6(ap)
 	return ntop_buf;
 }
 #endif /* INET6 */
+
+int
+safeputchar(c)
+	int c;
+{
+	unsigned char ch;
+
+	ch = (unsigned char)(c & 0xff);
+	if (c < 0x80 && isprint(c))
+		return printf("%c", c & 0xff);
+	else
+		return printf("\\%03o", c & 0xff);
+}
 
 void
 isakmp_printpacket(msg, from, my, decoded)
