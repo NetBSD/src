@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1997/09/26 16:38:37 gwr Exp $
+# $NetBSD: Makefile,v 1.3 1997/09/26 18:09:58 gwr Exp $
 
 # PROG=	gdb # No, this needs custom rules.
 # Use <bsd.prog.mk> somehow?
@@ -84,6 +84,7 @@ LDADD+= -ltermcap
 DPADD+= $(LIBTERMCAP)
 
 # Note custom rules - did NOT set PROG
+CLEANFILES+= gdb
 all: gdb
 
 .include <bsd.prog.mk>
@@ -132,10 +133,8 @@ m2-exp.c m2-exp.tab.h : m2-exp.y
 m2-exp.o : m2-exp.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(.IMPSRC)
 
-clean:
-	-rm -f gdb
-	-rm -f $(CLEANFILES)
-	-rm -f $(OBJS)
+cleandepend:
+	-rm -f .depend
 
 DPSRCS = ${OBJS:.o=.c} nm.h tm.h
 depend: .depend
@@ -155,8 +154,4 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROGNAME}
 	${INSTALL} ${COPY} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${.ALLSRC} ${.TARGET}
-
-.if exists(.depend)
-.include ".depend"
-.endif
 
