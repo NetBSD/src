@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.32 2001/04/25 17:53:10 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.33 2001/05/13 13:53:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -184,13 +184,9 @@ ascattach(pdp, dp, auxp)
 	printf(": hostid=%d", sbic->sc_channel.chan_id);
 
 #if ASC_POLL > 0
-        if (boot_args) {
-        	char *ptr;
-       
-		ptr = strstr(boot_args, "ascpoll");
-		if (ptr)
-			asc_poll = 1;
-	}
+        if (boot_args)
+		get_bootconf_option(boot_args, "ascpoll", BOOTOPT_TYPE_BOOLEAN,
+		    &asc_poll);
 
 	if (asc_poll)
 		printf(" polling");
