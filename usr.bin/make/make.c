@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.24 1999/09/16 00:54:14 mycroft Exp $	*/
+/*	$NetBSD: make.c,v 1.25 2000/01/31 13:21:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.24 1999/09/16 00:54:14 mycroft Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.25 2000/01/31 13:21:20 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.24 1999/09/16 00:54:14 mycroft Exp $");
+__RCSID("$NetBSD: make.c,v 1.25 2000/01/31 13:21:20 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -202,7 +202,8 @@ Make_OODate (gn)
 	    printf(".USE node...");
 	}
 	oodate = FALSE;
-    } else if ((gn->type & OP_LIB) && Arch_IsLib(gn)) {
+    } else if ((gn->type & OP_LIB) &&
+	       ((gn->mtime==0) || Arch_IsLib(gn))) {
 	if (DEBUG(MAKE)) {
 	    printf("library...");
 	}
