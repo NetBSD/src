@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 1998/08/08 03:15:44 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1998/09/28 09:03:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 1998/08/08 03:15:44 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 1998/09/28 09:03:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,7 +277,7 @@ main(argc, argv)
 	}
 
 	setttywidth(0);
-	(void)signal(SIGWINCH, setttywidth);
+	(void)xsignal(SIGWINCH, setttywidth);
 
 #ifdef __GNUC__			/* to shut up gcc warnings */
 	(void)&argc;
