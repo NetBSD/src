@@ -1,7 +1,8 @@
-/*	$NetBSD: krpc.h,v 1.5 1996/10/20 13:13:22 fvdl Exp $	*/
+/*	$NetBSD: krpc.h,v 1.6 2003/05/05 13:21:00 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 
+#ifdef _KERNEL
 int krpc_call __P((struct sockaddr_in *sin,
 	u_int prog, u_int vers, u_int func,
 	struct mbuf **data, struct mbuf **from));
@@ -13,6 +14,7 @@ struct mbuf *xdr_string_encode __P((char *str, int len));
 struct mbuf *xdr_string_decode __P((struct mbuf *m, char *str, int *len_p));
 struct mbuf *xdr_inaddr_encode __P((struct in_addr *ia));
 struct mbuf *xdr_inaddr_decode __P((struct mbuf *m, struct in_addr *ia));
+#endif /* _KERNEL */
 
 
 /*
