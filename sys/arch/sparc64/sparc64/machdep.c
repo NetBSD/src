@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2005/01/30 16:56:26 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.178 2005/03/04 22:04:51 scw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2005/01/30 16:56:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2005/03/04 22:04:51 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1112,9 +1112,6 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	while (m) {
 		vaddr_t vaddr = mtod(m, vaddr_t);
 		long buflen = (long)m->m_len;
-
-		if (buflen == 0)
-			continue;
 
 		len += buflen;
 		while (buflen > 0 && i < MAX_DMA_SEGS) {
