@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.21 1995/04/12 15:01:14 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.22 1995/04/13 03:58:18 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -24,6 +24,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -57,6 +58,7 @@
 
 #include "../mac68k/via.h"
 #include "nubus.h"
+#include <dev/ic/dp8390.h>
 #include "if_aereg.h"
 
 /*
@@ -102,9 +104,9 @@ struct	ae_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 };
 
-int ae_probe __P((struct device *, void *, void *));
-void ae_attach __P((struct device *, struct device *, void *));
-int ae_intr __P((int));
+int aeprobe __P((struct device *, void *, void *));
+void aeattach __P((struct device *, struct device *, void *));
+void aeintr __P((struct ae_softc *));
 int ae_ioctl __P((struct ifnet *, u_long, caddr_t));
 void ae_start __P((struct ifnet *));
 void ae_watchdog __P((/* short */));
@@ -116,14 +118,14 @@ u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ae_get_packet __P((struct ae_softc *, caddr_t, u_short));
+void ae_get_packet __P((/* struct ae_softc *, caddr_t, u_short */));
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
 static inline caddr_t ae_ring_copy __P((/* struct ae_softc *, caddr_t, caddr_t,
 					u_short */));
 
 struct cfdriver aecd = {
-	NULL, "ae", ae_probe, ae_attach, DV_IFNET, sizeof(struct ae_softc)
+	NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
 };
 
 #define	ETHER_MIN_LEN	64
@@ -165,7 +167,6 @@ bszero(u_short *addr, int len)
 /*
  * Memory copy, copies word at time.
  */
-#if 1
 static inline void
 word_copy(a, b, len)
 	caddr_t a, b;
@@ -174,38 +175,14 @@ word_copy(a, b, len)
 	u_short *x = (u_short *)a,
 		*y = (u_short *)b;
 
+if (len & 1) {
+	printf("if_ae.c: word_copy, len = %d.\n", len);
+	panic("not good.\n");
+}
 	len >>= 1;
 	while (len--)
 		*y++ = *x++;
-}  
-#else
-static inline void
-word_copy(src, dest, len)
-	caddr_t src, dest;
-	int len;
-{
-	u_short *d = (u_short *)dest;
-	u_short *s = (u_short *)src;
-	char b1, b2;
-
-	/* odd case, src addr is unaligned */
-	if ( ((u_long)src) & 1 ) {
-		while (len > 0) {
-			b1 = *src++;
-			b2 = len > 1 ? *src++ : (*d & 0xff);
-			*d++ = (b1 << 8) | b2;
-			len -= 2;
-		}
-		return;
-	}
-
-	/* normal case, aligned src & dst */
-	while (len > 0) {
-		*d++ = *s++;
-		len -= 2;
-	}
 }
-#endif
 
 void
 ae_id_card(nu, sc)
@@ -268,7 +245,7 @@ ae_size_card_memory(sc)
 }
 
 int
-ae_probe(parent, match, aux)
+aeprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -338,7 +315,7 @@ ae_probe(parent, match, aux)
 		break;
 	}
 
-	sc->cr_proto = AE_CR_RD2;
+	sc->cr_proto = ED_CR_RD2;
 
 	/* Allocate one xmit buffer if < 16k, two buffers otherwise. */
 	if ((memsize < 16384) || (flags & AE_FLAGS_NO_DOUBLE_BUFFERING))
@@ -347,9 +324,9 @@ ae_probe(parent, match, aux)
 		sc->txb_cnt = 2;
 
 	sc->tx_page_start = 0;
-	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * AE_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + (memsize >> AE_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start + (sc->rec_page_start << AE_PAGE_SHIFT);
+	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + (memsize >> ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
 
@@ -371,8 +348,8 @@ ae_probe(parent, match, aux)
  * Install interface into kernel networking data structures
  */
 void
-ae_attach(parent, self, aux)
-	struct device	*parent, *self;
+aeattach(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
 	struct ae_softc *sc = (void *)self;
@@ -411,7 +388,7 @@ ae_attach(parent, self, aux)
 #endif
 
 	/* make sure interrupts are vectored to us */
-	add_nubus_intr((int)sc->rom_addr & 0xFF000000, ae_intr, ifp->if_unit);
+	add_nubus_intr( (int) sc->rom_addr & 0xFF000000, aeintr, sc);
 }
 
 /*
@@ -439,14 +416,14 @@ ae_stop(sc)
 	int n = 5000;
 
 	/* Stop everything on the interface, and select page 0 registers. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STP);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
 	/*
 	 * Wait for interface to enter stopped state, but limit # of checks to
 	 * 'n' (about 5ms).  It shouldn't even take 5us on modern DS8390's, but
 	 * just in case it's an old one.
 	 */
-	while (((NIC_GET(sc, AE_P0_ISR) & AE_ISR_RST) == 0) && --n);
+	while (((NIC_GET(sc, ED_P0_ISR) & ED_ISR_RST) == 0) && --n);
 }
 
 /*
@@ -516,35 +493,35 @@ ae_init(sc)
 	sc->txb_next_tx = 0;
 
 	/* Set interface for page 0, remote DMA complete, stopped. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STP);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
 	/*
 	 * Set FIFO threshold to 8, No auto-init Remote DMA, byte
 	 * order=80x86, word-wide DMA xfers,
 	 */
-	NIC_PUT(sc, AE_P0_DCR,
-	    AE_DCR_FT1 | AE_DCR_WTS | AE_DCR_LS);
+	NIC_PUT(sc, ED_P0_DCR,
+	    ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 
 	/* Clear remote byte count registers. */
-	NIC_PUT(sc, AE_P0_RBCR0, 0);
-	NIC_PUT(sc, AE_P0_RBCR1, 0);
+	NIC_PUT(sc, ED_P0_RBCR0, 0);
+	NIC_PUT(sc, ED_P0_RBCR1, 0);
 
 	/* Tell RCR to do nothing for now. */
-	NIC_PUT(sc, AE_P0_RCR, AE_RCR_MON);
+	NIC_PUT(sc, ED_P0_RCR, ED_RCR_MON);
 
 	/* Place NIC in internal loopback mode. */
-	NIC_PUT(sc, AE_P0_TCR, AE_TCR_LB0);
+	NIC_PUT(sc, ED_P0_TCR, ED_TCR_LB0);
 
 	/* Initialize receive buffer ring. */
-	NIC_PUT(sc, AE_P0_BNRY, sc->rec_page_start);
-	NIC_PUT(sc, AE_P0_PSTART, sc->rec_page_start);
-	NIC_PUT(sc, AE_P0_PSTOP, sc->rec_page_stop);
+	NIC_PUT(sc, ED_P0_BNRY, sc->rec_page_start);
+	NIC_PUT(sc, ED_P0_PSTART, sc->rec_page_start);
+	NIC_PUT(sc, ED_P0_PSTOP, sc->rec_page_stop);
 
 	/*
 	 * Clear all interrupts.  A '1' in each bit position clears the
 	 * corresponding flag.
 	 */
-	NIC_PUT(sc, AE_P0_ISR, 0xff);
+	NIC_PUT(sc, ED_P0_ISR, 0xff);
 
 	/*
 	 * Enable the following interrupts: receive/transmit complete,
@@ -552,47 +529,47 @@ ae_init(sc)
 	 *
 	 * Counter overflow and Remote DMA complete are *not* enabled.
 	 */
-	NIC_PUT(sc, AE_P0_IMR,
-	    AE_IMR_PRXE | AE_IMR_PTXE | AE_IMR_RXEE | AE_IMR_TXEE |
-	    AE_IMR_OVWE);
+	NIC_PUT(sc, ED_P0_IMR,
+	    ED_IMR_PRXE | ED_IMR_PTXE | ED_IMR_RXEE | ED_IMR_TXEE |
+	    ED_IMR_OVWE);
 
 	/* Program command register for page 1. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_1 | AE_CR_STP);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STP);
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		NIC_PUT(sc, AE_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
+		NIC_PUT(sc, ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
 
 	/* Set multicast filter on chip. */
 	ae_getmcaf(&sc->sc_arpcom, mcaf);
 	for (i = 0; i < 8; i++)
-		NIC_PUT(sc, AE_P1_MAR0 + i, ((u_char *)mcaf)[i]);
+		NIC_PUT(sc, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
 	/*
 	 * Set current page pointer to one page after the boundary pointer, as
 	 * recommended in the National manual.
 	 */
 	sc->next_packet = sc->rec_page_start + 1;
-	NIC_PUT(sc, AE_P1_CURR, sc->next_packet);
+	NIC_PUT(sc, ED_P1_CURR, sc->next_packet);
 
 	/* Program command register for page 0. */
-	NIC_PUT(sc, AE_P1_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STP);
+	NIC_PUT(sc, ED_P1_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
-	i = AE_RCR_AB | AE_RCR_AM;
+	i = ED_RCR_AB | ED_RCR_AM;
 	if (ifp->if_flags & IFF_PROMISC) {
 		/*
 		 * Set promiscuous mode.  Multicast filter was set earlier so
 		 * that we should receive all multicast packets.
 		 */
-		i |= AE_RCR_PRO | AE_RCR_AR | AE_RCR_SEP;
+		i |= ED_RCR_PRO | ED_RCR_AR | ED_RCR_SEP;
 	}
-	NIC_PUT(sc, AE_P0_RCR, i);
+	NIC_PUT(sc, ED_P0_RCR, i);
 
 	/* Take interface out of loopback. */
-	NIC_PUT(sc, AE_P0_TCR, 0);
+	NIC_PUT(sc, ED_P0_TCR, 0);
 
 	/* Fire up the interface. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STA);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
 	/* Set 'running' flag, and clear output active flag. */
 	ifp->if_flags |= IFF_RUNNING;
@@ -617,18 +594,18 @@ ae_xmit(sc)
 	len = sc->txb_len[sc->txb_next_tx];
 
 	/* Set NIC for page 0 register access. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STA);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
 	/* Set TX buffer start page. */
-	NIC_PUT(sc, AE_P0_TPSR, sc->tx_page_start +
-	    sc->txb_next_tx * AE_TXBUF_SIZE);
+	NIC_PUT(sc, ED_P0_TPSR, sc->tx_page_start +
+	    sc->txb_next_tx * ED_TXBUF_SIZE);
 
 	/* Set TX length. */
-	NIC_PUT(sc, AE_P0_TBCR0, len);
-	NIC_PUT(sc, AE_P0_TBCR1, len >> 8);
+	NIC_PUT(sc, ED_P0_TBCR0, len);
+	NIC_PUT(sc, ED_P0_TBCR1, len >> 8);
 
 	/* Set page 0, remote DMA complete, transmit packet, and *start*. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_TXP | AE_CR_STA);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP | ED_CR_STA);
 	sc->xmit_busy = 1;
 
 	/* Point to next transmit buffer slot and wrap if necessary. */
@@ -693,7 +670,7 @@ outloop:
 	m0 = m;
 
 	/* txb_new points to next open buffer slot. */
-	buffer = sc->mem_start + ((sc->txb_new * AE_TXBUF_SIZE) << AE_PAGE_SHIFT);
+	buffer = sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	len = ae_put(sc, m, buffer);
 
@@ -727,14 +704,14 @@ ae_rint(sc)
 	struct ae_softc *sc;
 {
 	u_char boundary, current;
-	u_short len, len_save;
+	u_short len;
 	u_char nlen;
-	struct ae_ring packet_hdr;
+	struct ed_ring packet_hdr;
 	caddr_t packet_ptr;
 
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_1 | AE_CR_STA);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
 
 	/*
 	 * 'sc->next_packet' is the logical beginning of the ring-buffer - i.e.
@@ -744,25 +721,27 @@ loop:
 	 * until the logical beginning equals the logical end (or in other
 	 * words, until the ring-buffer is empty).
 	 */
-	current = NIC_GET(sc, AE_P1_CURR);
+	current = NIC_GET(sc, ED_P1_CURR);
 	if (sc->next_packet == current)
 		return;
 
 	/* Set NIC to page 0 registers to update boundary register. */
-	NIC_PUT(sc, AE_P1_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STA);
+	NIC_PUT(sc, ED_P1_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
 	do {
 		/* Get pointer to this buffer's header structure. */
 		packet_ptr = sc->mem_ring +
-		    ((sc->next_packet - sc->rec_page_start) << AE_PAGE_SHIFT);
+		    ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
 
 		/*
 		 * The byte count includes a 4 byte header that was added by
 		 * the NIC.
 		 */
-		packet_hdr = *(struct ae_ring *)packet_ptr;
+		packet_hdr = *(struct ed_ring *)packet_ptr;
+		packet_hdr.count =
+		    ((packet_hdr.count >> 8) & 0xff) |
+		    ((packet_hdr.count & 0xff) << 8);
 		len = packet_hdr.count;
-		len_save = len = ((len >> 8) & 0xff) | ((len & 0xff) << 8);
 
 		/*
 		 * Try do deal with old, buggy chips that sometimes duplicate
@@ -778,11 +757,11 @@ loop:
 			nlen = ((packet_hdr.next_packet - sc->rec_page_start) +
 				(sc->rec_page_stop - sc->next_packet));
 		--nlen;
-		if ((len & AE_PAGE_MASK) + sizeof(packet_hdr) > AE_PAGE_SIZE)
+		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
 			--nlen;
-		len = (len & AE_PAGE_MASK) | (nlen << AE_PAGE_SHIFT);
+		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
-		if (len != len_save) {
+		if (len != packet_hdr.count) {
 			printf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
 			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
@@ -804,8 +783,8 @@ loop:
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			ae_get_packet(sc, packet_ptr + sizeof(struct ae_ring),
-			    len - sizeof(struct ae_ring));
+			ae_get_packet(sc, packet_ptr + sizeof(struct ed_ring),
+			    len - sizeof(struct ed_ring));
 			++sc->sc_arpcom.ac_if.if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
@@ -827,28 +806,27 @@ loop:
 		boundary = sc->next_packet - 1;
 		if (boundary < sc->rec_page_start)
 			boundary = sc->rec_page_stop - 1;
-		NIC_PUT(sc, AE_P0_BNRY, boundary);
+		NIC_PUT(sc, ED_P0_BNRY, boundary);
 	} while (sc->next_packet != current);
 
 	goto loop;
 }
 
 /* Ethernet interface interrupt processor. */
-int
-ae_intr(unit)
-	int unit;
+void
+aeintr(sc)
+	struct ae_softc *sc;
 {
-	struct ae_softc *sc = aecd.cd_devs[unit];
 	u_char isr;
 
 	aeintr_ctr++;
 
 	/* Set NIC to page 0 registers. */
-	NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STA);
+	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
-	isr = NIC_GET(sc, AE_P0_ISR);
+	isr = NIC_GET(sc, ED_P0_ISR);
 	if (!isr)
-		return (0);
+		return;
 
 	/* Loop until there are no more new interrupts. */
 	for (;;) {
@@ -857,14 +835,14 @@ ae_intr(unit)
 		 * '1' to each bit position that was set.
 		 * (Writing a '1' *clears* the bit.)
 		 */
-		NIC_PUT(sc, AE_P0_ISR, isr);
+		NIC_PUT(sc, ED_P0_ISR, isr);
 
 		/*
 		 * Handle transmitter interrupts.  Handle these first because
 		 * the receiver will reset the board under some conditions.
 		 */
-		if (isr & (AE_ISR_PTX | AE_ISR_TXE)) {
-			u_char collisions = NIC_GET(sc, AE_P0_NCR) & 0x0f;
+		if (isr & (ED_ISR_PTX | ED_ISR_TXE)) {
+			u_char collisions = NIC_GET(sc, ED_P0_NCR) & 0x0f;
 
 			/*
 			 * Check for transmit error.  If a TX completed with an
@@ -875,12 +853,12 @@ ae_intr(unit)
 			 * course, with UDP we're screwed, but this is expected
 			 * when a network is heavily loaded.
 			 */
-			(void) NIC_GET(sc, AE_P0_TSR);
-			if (isr & AE_ISR_TXE) {
+			(void) NIC_GET(sc, ED_P0_TSR);
+			if (isr & ED_ISR_TXE) {
 				/*
 				 * Excessive collisions (16).
 				 */
-				if ((NIC_GET(sc, AE_P0_TSR) & AE_TSR_ABT)
+				if ((NIC_GET(sc, ED_P0_TSR) & ED_TSR_ABT)
 				    && (collisions == 0)) {
 					/*
 					 * When collisions total 16, the P0_NCR
@@ -925,7 +903,7 @@ ae_intr(unit)
 		}
 
 		/* Handle receiver interrupts. */
-		if (isr & (AE_ISR_PRX | AE_ISR_RXE | AE_ISR_OVW)) {
+		if (isr & (ED_ISR_PRX | ED_ISR_RXE | ED_ISR_OVW)) {
 			/*
 			 * Overwrite warning.  In order to make sure that a
 			 * lockup of the local DMA hasn't occurred, we reset
@@ -935,7 +913,7 @@ ae_intr(unit)
 			 * only with early rev chips - Methinks this bug was
 			 * fixed in later revs.  -DG
 			 */
-			if (isr & AE_ISR_OVW) {
+			if (isr & ED_ISR_OVW) {
 				++sc->sc_arpcom.ac_if.if_ierrors;
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING,
@@ -950,12 +928,12 @@ ae_intr(unit)
 				 * frame alignment error FIFO overrun, or
 				 * missed packet.
 				 */
-				if (isr & AE_ISR_RXE) {
+				if (isr & ED_ISR_RXE) {
 					++sc->sc_arpcom.ac_if.if_ierrors;
 #ifdef AE_DEBUG
 					printf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
-					    NIC_GET(sc, AE_P0_RSR));
+					    NIC_GET(sc, ED_P0_RSR));
 #endif
 				}
 
@@ -984,22 +962,22 @@ ae_intr(unit)
 		 * set in the transmit routine, is *okay* - it is 'edge'
 		 * triggered from low to high).
 		 */
-		NIC_PUT(sc, AE_P0_CR, sc->cr_proto | AE_CR_PAGE_0 | AE_CR_STA);
+		NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
 		/*
 		 * If the Network Talley Counters overflow, read them to reset
 		 * them.  It appears that old 8390's won't clear the ISR flag
 		 * otherwise - resulting in an infinite loop.
 		 */
-		if (isr & AE_ISR_CNT) {
-			(void) NIC_GET(sc, AE_P0_CNTR0);
-			(void) NIC_GET(sc, AE_P0_CNTR1);
-			(void) NIC_GET(sc, AE_P0_CNTR2);
+		if (isr & ED_ISR_CNT) {
+			(void) NIC_GET(sc, ED_P0_CNTR0);
+			(void) NIC_GET(sc, ED_P0_CNTR1);
+			(void) NIC_GET(sc, ED_P0_CNTR2);
 		}
 
-		isr = NIC_GET(sc, AE_P0_ISR);
+		isr = NIC_GET(sc, ED_P0_ISR);
 		if (!isr)
-			return (1);
+			return;
 	}
 }
 
