@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.67 2002/08/26 07:37:26 itojun Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.68 2002/08/26 07:38:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.67 2002/08/26 07:37:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.68 2002/08/26 07:38:34 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1583,10 +1583,10 @@ SIP_DECL(intr)(void *arg)
 
 #define	PRINTERR(bit, str)						\
 			do {						\
-				if ((ifp->if_flags & IFF_DEBUG) != 0 && \
-				    (isr & (bit)) != 0) {		\
-					printf("%s: %s\n",		\
-					    sc->sc_dev.dv_xname, str);	\
+				if ((isr & (bit)) != 0) {		\
+					if ((ifp->if_flags & IFF_DEBUG) != 0) \
+						printf("%s: %s\n",	\
+						    sc->sc_dev.dv_xname, str); \
 					want_init = 1;			\
 				}					\
 			} while (/*CONSTCOND*/0)
