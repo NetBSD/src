@@ -1,4 +1,4 @@
-/*	$NetBSD: va-ppc.h,v 1.5 2000/02/03 16:16:09 kleink Exp $	*/
+/*	$NetBSD: va-ppc.h,v 1.6 2000/02/09 12:54:47 tsubai Exp $	*/
 
 /* GNU C varargs support for the PowerPC with V.4 calling sequence */
 
@@ -102,6 +102,9 @@ __extension__ ({							\
 #define __va_longlong_p(TYPE) \
   ((__builtin_classify_type(*(TYPE *)0) == 1) && (sizeof(TYPE) == 8))
 
+#ifdef __lint__
+#define va_arg(ap, type)	(*(type *)(void *)(ap)) 
+#else
 #define va_arg(AP,TYPE)							\
 ((TYPE) __extension__ (*({						\
   register TYPE *__ptr;							\
@@ -151,9 +154,9 @@ __extension__ ({							\
 									\
   __ptr;								\
 })))
+#endif /* __lint__ */
 
-#define __va_copy(dest, src) \
-  (*(dest) = *(src))
+#define __va_copy(dest, src)	(*(dest) = *(src))
 
 #define va_end(AP)	((void)0)
 
