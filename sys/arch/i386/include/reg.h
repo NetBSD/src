@@ -37,6 +37,9 @@
  *	reg.h,v 1.4 1993/09/05 03:54:15 sef Exp
  */
 
+#ifndef _I386_REG_H_
+#define _I386_REG_H_
+
 /*
  * Location of the users' stored
  * registers within appropriate frame of 'trap' and 'syscall', relative to
@@ -51,7 +54,7 @@
 #define	tEDI	(2)
 #define	tESI	(3)
 #define	tEBP	(4)
-#define tISP	(5)
+#define	tISP	(5)
 #define	tEBX	(6)
 #define	tEDX	(7)
 #define	tECX	(8)
@@ -87,3 +90,5 @@ struct regs {
 	unsigned int	r_fs;
 	unsigned int	r_gs;
 };
+
+#endif /* !_I386_REG_H_ */
