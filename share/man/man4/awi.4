@@ -1,4 +1,4 @@
-.\"     $NetBSD: awi.4,v 1.7 2000/06/09 13:06:32 onoe Exp $
+.\"     $NetBSD: awi.4,v 1.8 2000/07/04 14:37:37 onoe Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4 
@@ -111,7 +111,11 @@ for information on how to increase the memory available to the PCMCIA
 controller.
 .It "awi0: failed to complete selftest (%s)"
 The device failed to complete its self test.
-.It "awi0: synced with %s ssid %s at chanset %d"
+.It "awi0: synced with no-bssid at channel %d"
+The device is ready to relay traffic at specified channel.
+.It "awi0: synced with %s ssid %s at channel %d"
+The device has successfully synchronized with at least one of the
+identified stations and is ready to relay traffic.
 .It "awi0: associated with %s ssid %s channel %d signal %d"
 The device has successfully synchronized with the identified Access
 Point and is ready to relay traffic.
@@ -131,7 +135,6 @@ The device failed to complete the request from the system.
 .El
 .Sh BUGS
 .Pp
-Doesn't support WEP.
 Doesn't create IBSS itself.
 .Pp
 .Sh SEE ALSO
