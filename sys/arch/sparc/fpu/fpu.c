@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 1997/07/29 10:09:51 fair Exp $ */
+/*	$NetBSD: fpu.c,v 1.7 2000/06/18 06:54:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,11 @@ static u_char fpu_codes[] = {
 void
 fpu_cleanup(p, fs)
 	register struct proc *p;
+#ifndef SUN4U
 	register struct fpstate *fs;
+#else /* SUN4U */
+	register struct fpstate64 *fs;
+#endif /* SUN4U */
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
@@ -107,7 +111,7 @@ fpu_cleanup(p, fs)
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 
 	case FSR_TT_NONE:
-		panic("fpu_cleanup 1");	/* ??? */
+		panic("fpu_cleanup: No fault");	/* ??? */
 		break;
 
 	case FSR_TT_IEEE:
@@ -118,9 +122,18 @@ fpu_cleanup(p, fs)
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
+#ifdef SUN4U
+		if (fs->fs_qsize == 0) {
+			printf("fpu_cleanup: unfinished fpop");
+			/* The book sez reexecute or emulate. */
+			return;
+		}
+		break;
+
+#endif /* SUN4U */
 	case FSR_TT_UNIMP:
 		if (fs->fs_qsize == 0)
-			panic("fpu_cleanup 2");
+			panic("fpu_cleanup: unimplemented fpop");
 		break;
 
 	case FSR_TT_SEQ:
@@ -159,6 +172,12 @@ fpu_cleanup(p, fs)
 			break;
 
 		case NOTFPU:
+#ifdef SUN4U
+#ifdef DEBUG
+			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n", p);
+			Debugger();
+#endif
+#endif /* SUN4U */
 			trapsignal(p, SIGILL, 0);	/* ??? code?  */
 			break;
 
@@ -183,7 +202,11 @@ out:
 fpu_emulate(p, tf, fs)
 	struct proc *p;
 	register struct trapframe *tf;
+#ifndef SUN4U
 	register struct fpstate *fs;
+#else /* SUN4U */
+	register struct fpstate64 *fs;
+#endif /* SUN4U */
 {
 
 	do {
@@ -234,8 +257,13 @@ fpu_execute(fe, instr)
 	union instr instr;
 {
 	register struct fpn *fp;
+#ifndef SUN4U
 	register int opf, rs1, rs2, rd, type, mask, fsr, cx;
 	register struct fpstate *fs;
+#else /* SUN4U */
+	register int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
+	register struct fpstate64 *fs;
+#endif /* SUN4U */
 	u_int space[4];
 
 	/*
@@ -256,6 +284,119 @@ fpu_execute(fe, instr)
 	fs = fe->fe_fpstate;
 	fe->fe_fsr = fs->fs_fsr & ~FSR_CX;
 	fe->fe_cx = 0;
+#ifdef SUN4U
+	/*
+	 * Check to see if we're dealing with a fancy cmove and handle
+	 * it first.
+	 */
+	if (instr.i_op3.i_op3 == IOP3_FPop2 && (opf&0xff0) != (FCMP&0xff0)) {
+		switch (opf >>= 2) {
+		case FMVFC0 >> 2:
+			cond = (fs->fs_fsr>>FSR_FCC_SHIFT)&FSR_FCC_MASK;
+			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;
+		case FMVFC1 >> 2:
+			cond = (fs->fs_fsr>>FSR_FCC1_SHIFT)&FSR_FCC_MASK;
+			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;
+		case FMVFC2 >> 2:
+			cond = (fs->fs_fsr>>FSR_FCC2_SHIFT)&FSR_FCC_MASK;
+			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;
+		case FMVFC3 >> 2:
+			cond = (fs->fs_fsr>>FSR_FCC3_SHIFT)&FSR_FCC_MASK;
+			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;
+		case FMVIC >> 2:
+			/* Presume we're curproc */
+			cond = (curproc->p_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
+			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVXC >> 2:
+			/* Presume we're curproc */
+			cond = (curproc->p_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
+			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVRZ >> 2:
+			/* Presume we're curproc */
+			rs1 = instr.i_fmovr.i_rs1;
+			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] != 0)
+				return (0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVRLEZ >> 2:
+			/* Presume we're curproc */
+			rs1 = instr.i_fmovr.i_rs1;
+			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] > 0)
+				return (0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVRLZ >> 2:
+			/* Presume we're curproc */
+			rs1 = instr.i_fmovr.i_rs1;
+			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] >= 0)
+				return (0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVRNZ >> 2:
+			/* Presume we're curproc */
+			rs1 = instr.i_fmovr.i_rs1;
+			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] == 0)
+				return (0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVRGZ >> 2:
+			/* Presume we're curproc */
+			rs1 = instr.i_fmovr.i_rs1;
+			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] <= 0)
+				return (0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FMVRGEZ >> 2:
+			/* Presume we're curproc */
+			rs1 = instr.i_fmovr.i_rs1;
+			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] < 0)
+				return (0); /* success */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;			
+		case FCMP >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fpu_compare(fe, 0);
+			goto cmpdone;
+			
+		case FCMPE >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fpu_compare(fe, 1);
+		cmpdone:
+			/*
+			 * The only possible exception here is NV; catch it
+			 * early and get out, as there is no result register.
+			 */
+			cx = fe->fe_cx;
+			fsr = fe->fe_fsr | (cx << FSR_CX_SHIFT);
+			if (cx != 0) {
+				if (fsr & (FSR_NV << FSR_TEM_SHIFT)) {
+					fs->fs_fsr = (fsr & ~FSR_FTT) |
+						(FSR_TT_IEEE << FSR_FTT_SHIFT);
+					return (FPE);
+				}
+				fsr |= FSR_NV << FSR_AX_SHIFT;
+			}
+			fs->fs_fsr = fsr;
+			return (0);
+		default:
+			return (NOTFPU);
+		}
+	}
+#endif /* SUN4U */
 	switch (opf >>= 2) {
 
 	default:
@@ -272,7 +413,14 @@ fpu_execute(fe, instr)
 	case FABS >> 2:
 		rs1 = fs->fs_regs[rs2] & ~(1 << 31);
 	mov:
+#ifndef SUN4U
 		fs->fs_regs[rd] = rs1;
+#else /* SUN4U */
+		i = 1<<type;
+		fs->fs_regs[rd++] = rs1;
+		while (--i) 
+			fs->fs_regs[rd++] = fs->fs_regs[++rs2];
+#endif /* SUN4U */
 		fs->fs_fsr = fe->fe_fsr;
 		return (0);	/* success */
 
@@ -305,6 +453,7 @@ fpu_execute(fe, instr)
 		fp = fpu_div(fe);
 		break;
 
+#ifndef SUN4U
 	case FCMP >> 2:
 		fpu_explode(fe, &fe->fe_f1, type, rs1);
 		fpu_explode(fe, &fe->fe_f2, type, rs2);
@@ -333,6 +482,7 @@ fpu_execute(fe, instr)
 		fs->fs_fsr = fsr;
 		return (0);
 
+#endif /* not SUN4U */
 	case FSMULD >> 2:
 	case FDMULX >> 2:
 		if (type == FTYPE_EXT)
@@ -343,9 +493,27 @@ fpu_execute(fe, instr)
 		fp = fpu_mul(fe);
 		break;
 
+#ifdef SUN4U
+	case FXTOS >> 2:
+	case FXTOD >> 2:
+	case FXTOQ >> 2:
+		type = FTYPE_LNG;
+		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
+		type = opf & 3;	/* sneaky; depends on instruction encoding */
+		break;
+
+	case FTOX >> 2:
+		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
+		type = FTYPE_LNG;
+#endif /* SUN4U */
+
 	case FTOS >> 2:
 	case FTOD >> 2:
+#ifndef SUN4U
 	case FTOX >> 2:
+#else /* SUN4U */
+	case FTOQ >> 2:
+#endif /* SUN4U */
 	case FTOI >> 2:
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = opf & 3;	/* sneaky; depends on instruction encoding */
@@ -374,7 +542,11 @@ fpu_execute(fe, instr)
 	}
 	fs->fs_fsr = fsr;
 	fs->fs_regs[rd] = space[0];
+#ifndef SUN4U
 	if (type >= FTYPE_DBL) {
+#else /* SUN4U */
+	if (type >= FTYPE_DBL || type == FTYPE_LNG) {
+#endif /* SUN4U */
 		fs->fs_regs[rd + 1] = space[1];
 		if (type > FTYPE_DBL) {
 			fs->fs_regs[rd + 2] = space[2];
