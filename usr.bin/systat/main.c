@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1997/07/21 07:05:03 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1997/10/19 23:36:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.11 1997/07/21 07:05:03 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1997/10/19 23:36:26 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ main(argc, argv)
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
 
-	while ((ch = getopt(argc, argv, "M:N:w:")) != EOF)
+	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -221,7 +221,7 @@ void
 display(signo)
 	int signo;
 {
-	register int i, j;
+	int i, j;
 
 	/* Get the load average over the last minute. */
 	(void) getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));

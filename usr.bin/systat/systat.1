@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.8 1997/07/25 01:59:42 mrg Exp $
+.\"	$NetBSD: systat.1,v 1.9 1997/10/19 23:36:32 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,20 +40,20 @@
 .Nm systat
 .Nd display system statistics on a crt
 .Sh SYNOPSIS
-.Nm systat
+.Nm
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl w Ar wait
 .Op Ar display
 .Op Ar refresh-interval
 .Sh DESCRIPTION
-.Nm Systat
+.Nm
 displays various system statistics in a screen oriented fashion
 using the curses screen display library,
 .Xr curses 3 .
 .Pp
 While
-.Nm systat
+.Nm
 is running the screen is usually divided into two windows (an exception
 is the vmstat display which uses the entire screen).  The
 upper window depicts the current system load average.  The
@@ -62,7 +62,7 @@ user commands.  The last line on the screen is reserved for user
 input and error messages.
 .Pp
 By default
-.Nm systat
+.Nm
 displays the processes getting the largest percentage of the processor
 in the lower window.  Other displays show swap space usage, disk
 .Tn I/O
@@ -116,7 +116,7 @@ flag.
 .El
 .Pp
 Certain characters cause immediate action by
-.Nm systat  .
+.Nm ""  .
 These are
 .Bl -tag -width Fl
 .It Ic \&^L
@@ -126,7 +126,7 @@ Print the name of the current ``display'' being shown in
 the lower window and the refresh interval.
 .It Ic \&^Z
 Stop
-.Nm systat  .
+.Nm ""  .
 .It Ic \&:
 Move the cursor to the command line and interpret the input
 line typed as a command.  While entering a command the
@@ -155,7 +155,7 @@ Supplying only a number will set the refresh interval to this
 value.
 .It Ic quit
 Exit
-.Nm systat  .
+.Nm ""  .
 (This may be abbreviated to
 .Ic q  . )
 .El
@@ -416,12 +416,13 @@ For port names.
 .El
 .Sh NOTES
 Much of the information that
-.Nm systat vmstat
+.Nm
+.Ic vmstat
 uses is obtained from
 .Cm struct vmmeter cnt .
 .Sh HISTORY
 The
-.Nm systat
+.Nm
 program appeared in
 .Bx 4.3 .
 .Sh BUGS
