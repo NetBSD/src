@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1999/10/09 16:11:16 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.29 2000/07/02 12:31:25 bjh21 Exp $
 
 MKLINKLIB=no
 MKMAN=	no
@@ -15,6 +15,9 @@ YHEADER=1
 GCC_ARCH?=	mips
 .elif (${MACHINE_ARCH} == "sparc64")
 GCC_ARCH?=	sparc
+# GCC uses "arm", not "armv2" internally.
+.elif (${MACHINE_ARCH} == "arm26")
+GCC_ARCH?=	arm
 .else
 GCC_ARCH?=	${MACHINE_GNU_ARCH}
 .endif
