@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.4 1994/06/29 06:46:37 cgd Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.4.2.1 1994/11/23 08:49:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -479,6 +479,15 @@ ffs_oldfscompat(fs)
 		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
 		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
 	}							/* XXX */
+#ifndef KLUGE_BEGONE
+	{
+		quad_t maxfilesize;
+
+		maxfilesize = (quad_t)0x80000000 * fs->fs_bsize - 1;
+		if (fs->fs_maxfilesize > maxfilesize)
+			fs->fs_maxfilesize = maxfilesize;
+	}
+#endif
 	return (0);
 }
 
@@ -832,13 +841,15 @@ ffs_sbupdate(mp, waitfor)
 	int blks;
 	caddr_t space;
 	int i, size, error = 0;
+	struct fs *cfs;
 
 	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, 0);
 	bcopy((caddr_t)fs, bp->b_data, (u_int)fs->fs_sbsize);
+	cfs = (struct fs *)bp->b_data;
 	/* Restore compatibility to old file systems.		   XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-		((struct fs *)bp->b_data)->fs_nrpos = -1;	/* XXX */
+		cfs->fs_nrpos = -1;				/* XXX */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		long *lp, tmp;					/* XXX */
 								/* XXX */
@@ -848,6 +859,17 @@ ffs_sbupdate(mp, waitfor)
 			lp[i] = lp[i-1];			/* XXX */
 		lp[0] = tmp;					/* XXX */
 	}							/* XXX */
+#ifndef KLUGE_BEGONE
+	{
+		quad_t sizepb = fs->fs_bsize;			/* XXX */
+								/* XXX */
+		cfs->fs_maxfilesize = fs->fs_bsize * NDADDR - 1; /* XXX */
+		for (i = 0; i < NIADDR; i++) {			/* XXX */
+			sizepb *= NINDIR(fs);			/* XXX */
+			cfs->fs_maxfilesize += sizepb;		/* XXX */
+		}						/* XXX */
+	}
+#endif
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
 	else
