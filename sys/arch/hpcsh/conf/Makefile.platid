@@ -1,5 +1,0 @@
-#	$NetBSD: Makefile.platid,v 1.1 2001/01/28 03:40:25 uch Exp $
-
-SUBDIR= ../../hpc/hpc/platid_gen
-
-.include <bsd.subdir.mk>
