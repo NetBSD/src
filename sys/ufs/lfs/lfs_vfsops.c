@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28 1999/03/25 21:39:19 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.29 1999/04/04 09:56:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -212,9 +212,11 @@ lfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
+#if 0
 	/* Until LFS can do NFS right.		XXX */
 	if (args.export.ex_flags & MNT_EXPORTED)
 		return (EINVAL);
+#endif
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -222,6 +224,7 @@ lfs_mount(mp, path, data, ndp, p)
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		ump = VFSTOUFS(mp);
+		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
@@ -338,12 +341,10 @@ lfs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
-	else {
+	else
 		size = dpart.disklab->d_secsize;
-	}
 
 	/* Don't free random space on error. */
 	bp = NULL;
@@ -364,7 +365,8 @@ lfs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	adfs = (struct dlfs *)abp->b_data;
-	if(adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
+
+	if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
 		dfs = adfs;
 
 	/* Check the basics. */
@@ -375,9 +377,11 @@ lfs_mountfs(devvp, mp, p)
 	}
 
 	/* Allocate the mount structure, copy the superblock into it. */
-	ump = (struct ufsmount *)malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	fs = ump->um_lfs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
-	bcopy(bp->b_data, &(fs->lfs_dlfs), sizeof(struct dlfs));
+	fs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
+	memcpy(&fs->lfs_dlfs, dfs, sizeof(struct dlfs));
+	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
+	memset((caddr_t)ump, 0, sizeof *ump);
+	ump->um_lfs = fs;
 	if (sizeof(struct lfs) < LFS_SBPAD)			/* XXX why? */
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -393,7 +397,7 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_sbactive = NULL;
 #endif
 #ifdef LFS_TRACK_IOS
-	for(i=0;i<LFS_THROTTLE;i++)
+	for (i=0;i<LFS_THROTTLE;i++)
 		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
 #endif
 
