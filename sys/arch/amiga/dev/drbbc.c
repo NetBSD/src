@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.4 1999/02/16 23:34:11 is Exp $	*/
+/*	$NetBSD: drbbc.c,v 1.5 1999/03/14 22:42:12 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@ void draco_ds_reset __P((void *));
 void drbbc_attach __P((struct device *, struct device *, void *));
 int drbbc_match __P((struct device *, struct cfdata *, void *));
 
-time_t dracogettod __P((void));
+int dracougettod __P((struct timeval *));
 #ifdef __NOTYET__
-int dracosettod __P((time_t));
+int dracousettod __P((struct timeval *));
 #endif
 
 struct drbbc_softc {
@@ -119,8 +119,8 @@ drbbc_attach(pdp, dp, auxp)
 		rombuf[3], rombuf[2], rombuf[1], rombuf[0],
 		hostid); 
 		
-	gettod = dracogettod;
-	settod = (void *)0;
+	ugettod = dracougettod;
+	usettod = (void *)0;
 	drbbc_sc = sc;
 }
 
@@ -169,24 +169,23 @@ draco_ds_reset(p)
 	draco_ioct->io_clockrst = 0;
 }
 
-/*
- * We could return 1/256 of a seconds, but would need to change the interface
- */
-
-time_t
-dracogettod()
+int
+dracougettod(tvp)
+	struct timeval *tvp;
 {
 	u_int32_t clkbuf;
+	u_int32_t usecs;
 
 	drbbc_sc->sc_dsh.ds_reset(drbbc_sc->sc_dsh.ds_hw_handle);
 
 	ds_write_byte(&drbbc_sc->sc_dsh, DS_ROM_SKIP);
 
 	ds_write_byte(&drbbc_sc->sc_dsh, DS_MEM_READ_MEMORY);
-	/* address of full seconds: */
-	ds_write_byte(&drbbc_sc->sc_dsh, 0x03);
+	/* address of seconds/256: */
+	ds_write_byte(&drbbc_sc->sc_dsh, 0x02);
 	ds_write_byte(&drbbc_sc->sc_dsh, 0x02);
 	
+	usecs = (ds_read_byte(&drbbc_sc->sc_dsh) * 1000000) / 256;
 	clkbuf = ds_read_byte(&drbbc_sc->sc_dsh)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<8)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<16)
@@ -196,5 +195,8 @@ dracogettod()
 
 	clkbuf += (8*365 + 2) * 86400;	
 
-	return ((time_t)clkbuf);
+	tvp->tv_sec = clkbuf;
+	tvp->tv_usec = usecs;
+
+	return (1);
 }
