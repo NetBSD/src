@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.S,v 1.1 2002/10/17 11:53:33 scw Exp $	*/
+/*	$NetBSD: scanc.S,v 1.2 2002/10/19 08:54:23 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,12 +42,11 @@
  */
 ENTRY(scanc)
 #ifndef _LP64
+	addz.l	r2, r63, r2
 	add.l	r3, r63, r3
 	add.l	r4, r63, r4
-	addz.l	r2, r3, r2		/* r2 = &cp[size] */
-#else
-	add	r2, r3, r2		/* r2 = &cp[size] */
 #endif
+	add	r2, r3, r2		/* r2 = &cp[size] */
 	pta/l	1f, tr1
 	pta/u	2f, tr2
 	ptabs/u	r18, tr0
