@@ -1,0 +1,2 @@
+# $NetBSD: md.evbarm.armeb,v 1.1 2003/05/26 15:43:14 thorpej Exp $
+./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
