@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.3 2000/11/17 19:33:25 bouyer Exp $ */
+/* $NetBSD: if_tireg.h,v 1.4 2001/05/15 14:37:36 lukem Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -973,15 +973,15 @@ struct ti_event_desc {
  */
 
 #define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->ti_btag, sc->ti_bhandle, reg, val)
+	bus_space_write_4(sc->ti_btag, sc->ti_bhandle, (reg), (val))
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->ti_btag, sc->ti_bhandle, reg)
+	bus_space_read_4(sc->ti_btag, sc->ti_bhandle, (reg))
 
 #define TI_SETBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | x))
+	CSR_WRITE_4(sc, (reg), (CSR_READ_4(sc, (reg)) | (x)))
 #define TI_CLRBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~x))
+	CSR_WRITE_4(sc, (reg), (CSR_READ_4(sc, (reg)) & ~(x)))
 
 /*
  * Memory management stuff. Note: the SSLOTS, MSLOTS and JSLOTS
