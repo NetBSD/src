@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.152 2003/02/23 13:04:37 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.153 2003/02/24 19:26:49 erh Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.152 2003/02/23 13:04:37 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.153 2003/02/24 19:26:49 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2909,7 +2909,8 @@ send_file_list(const char *whichf)
 	DIR *dirp = NULL;
 	struct dirent *dir;
 	FILE *dout = NULL;
-	char **dirlist, *dirname, *notglob, *p;
+	char **dirlist, *dirname, *p;
+	char *notglob = NULL;
 	int simple = 0;
 	int freeglob = 0;
 	glob_t gl;
