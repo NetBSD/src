@@ -26,18 +26,6 @@
  * the rights to redistribute these changes.
  */
 
-/*
- * HISTORY
- * $Log: README.MACH,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
- * after 0.2.2 "stable" patches applied
- *
- * Revision 2.2  92/04/04  11:33:55  rpd
- * 	From 2.5
- * 	[92/03/30            mg32]
- * 
- */
-
 ********NOTE: This is not all relevant to the 386BSD version**********
 
 		AT386 Protected Mode Bootstrap Loader
