@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 2001/02/14 04:57:44 itojun Exp $
+#	$NetBSD: GENERIC,v 1.10 2001/06/24 04:57:58 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -27,7 +27,8 @@ options		DREAMCAST
 # options		SH4_PCMCIA
 options 	EVBSH4
 #options 	MMEYE
-options		PCLOCK=50000000		# 50MHz
+options 	PCLOCK=49900000		# 50MHz
+#options 	PCLOCK=50000000		# 50MHz
 options		IOM_ROM_BEGIN=0x00000000
 options		IOM_ROM_SIZE=0x00100000	#  1MB
 options		IOM_RAM_BEGIN=0x8c000000
