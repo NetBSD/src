@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.10 1997/03/15 21:06:09 cgd Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.11 1997/03/24 00:35:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fta.c,v 1.3 1996/05/17 01:15:18 thomas Exp
+ * Id: if_fta.c,v 1.4 1997/03/21 13:45:45 thomas Exp
  *
  */
 
@@ -48,13 +48,12 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/if_ether.h>
+#include <net/if_fddi.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-#include <net/if_fddi.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -101,12 +100,12 @@ pdq_tc_attach(
     sc->sc_if.if_softc = sc;
 
     if (bus_space_map(sc->sc_csrtag, ta->ta_addr + PDQ_TC_CSR_OFFSET,
-		    PDQ_TC_CSR_SPACE, 0, &sc->sc_csrhandle)) {
-        printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
+		      PDQ_TC_CSR_SPACE, 0, &sc->sc_membase)) {
+	printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
-    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFTA);
     if (sc->sc_pdq == NULL) {

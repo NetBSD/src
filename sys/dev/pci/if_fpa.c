@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.17 1997/03/15 18:11:59 is Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.18 1997/03/24 00:35:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fpa.c,v 1.8 1996/05/17 01:15:18 thomas Exp
+ * Id: if_fpa.c,v 1.10 1997/03/21 13:45:45 thomas Exp
  *
  */
 
@@ -51,9 +51,7 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#if !defined(__NetBSD__)
 #include <net/route.h>
-#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -61,18 +59,10 @@
 #include <net/bpfdesc.h>
 #endif
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
-
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__NetBSD__)
-#include <netinet/if_inarp.h>
-#else
-#include <netinet/if_ether.h>
 #endif
-#endif
+
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
 #else
@@ -85,20 +75,24 @@
 
 #if defined(__FreeBSD__)
 #include "fpa.h"
+#include <netinet/if_ether.h>
 #include <pci/pcivar.h>
 #include <i386/isa/icu.h>
-#include <pci/pdqvar.h>
-#include <pci/pdqreg.h>
+#include <dev/pdq/pdqvar.h>
+#include <dev/pdq/pdqreg.h>
 #elif defined(__bsdi__)
-#if BSDI_VERSION < 199401
+#include <netinet/if_ether.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
+#ifndef DRQNONE
 #define	DRQNONE		0
+#endif
+#if _BSDI_VERSION < 199401
 #define IRQSHARE	0
 #endif
 #include <i386/pci/pci.h>
-#include <i386/pci/pdqvar.h>
-#include <i386/pci/pdqreg.h>
+#include <dev/pdq/pdqvar.h>
+#include <dev/pdq/pdqreg.h>
 #elif defined(__NetBSD__)
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -119,6 +113,10 @@
 #define	PCI_CBIO	0x14	/* Configuration Base I/O Address */
 
 #if defined(__FreeBSD__)
+#if NFPA < 4
+#undef NFPA
+#define NFPA	4
+#endif
 static pdq_softc_t *pdqs_pci[NFPA];
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	(pdqs_pci[unit])
 #if BSD >= 199506
@@ -145,6 +143,14 @@ pdq_pci_ifwatchdog(
 }
 #endif
 
+#if defined(__FreeBSD__) && BSD >= 199506
+static void
+pdq_pci_ifintr(
+    void *arg)
+{
+    (void) pdq_interrupt(((pdq_softc_t *) arg)->sc_pdq);
+}
+#else
 static int
 pdq_pci_ifintr(
     void *arg)
@@ -157,6 +163,7 @@ pdq_pci_ifintr(
     return 1;
 #endif
 }
+#endif /* __FreeBSD && BSD */
 
 #if defined(__FreeBSD__)
 /*
@@ -184,7 +191,7 @@ pdq_pci_attach(
     vm_offset_t va_csrs, pa_csrs;
     pdq_uint32_t data;
 
-    if (unit > NFPA) {
+    if (unit == NFPA) {
 	printf("fpa%d: not configured; kernel is built for only %d device%s.\n",
 	       unit, NFPA, NFPA == 1 ? "" : "s");
 	return;
@@ -217,6 +224,7 @@ pdq_pci_attach(
 	free((void *) sc, M_DEVBUF);
 	return;
     }
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);
@@ -336,15 +344,14 @@ pdq_pci_attach(
     sc->sc_membase = (pdq_bus_memaddr_t) mapphys((vm_offset_t)ia->ia_maddr, ia->ia_msize);
 
     sc->sc_pdq = pdq_initialize(PDQ_BUS_PCI, sc->sc_membase,
-				sc->sc_if.if_nme, sc->sc_if.if_unit,
+				sc->sc_if.if_name, sc->sc_if.if_unit,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
 	printf("fpa%d: initialization failed\n", sc->sc_if.if_unit);
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
-	LLADDR(ifp->if_sadl), 6);
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
@@ -415,32 +422,16 @@ pdq_pci_attach(
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    /*
-     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
-     * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
-     */
-#ifdef PDQ_IOMAPPED
-    sc->sc_csrtag = pa->pa_iot;
-    if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &csrbase, &csrsize)) {
-	printf("\n%s: can't find I/O space!\n", sc->sc_dev.dv_xname);
+    if (!pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &csrbase, &csrsize, &cacheable))
+	sc->sc_csrtag = pa->pa_memt;
+    else if (!pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &csrbase, &csrsize))
+	sc->sc_csrtag = pa->pa_iot;
+    else
 	return;
-    }
-#else
-    sc->sc_csrtag = pa->pa_memt;
-    if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &csrbase, &csrsize,
-      &cacheable)) {
-	printf("\n%s: can't find memory space!\n", sc->sc_dev.dv_xname);
+    if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable, &sc->sc_membase))
 	return;
-    }
-#endif
 
-    if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable,
-      &sc->sc_csrhandle)) {
-	printf("\n%s: can't map CSRs!\n", sc->sc_dev.dv_xname);
-	return;
-    }
-
-    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
@@ -448,8 +439,6 @@ pdq_pci_attach(
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
-	LLADDR(sc->sc_if.if_sadl), 6);
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
     if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
