@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.22 2000/04/14 12:14:40 itojun Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.23 2000/04/27 09:48:59 itojun Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.22 2000/04/14 12:14:40 itojun Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.23 2000/04/27 09:48:59 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -30,6 +30,8 @@ __RCSID("$NetBSD: bootparamd.c,v 1.22 2000/04/14 12:14:40 itojun Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <ifaddrs.h>
+
+#include <net/if.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -432,7 +434,8 @@ get_localaddr(ifname, sin)
 		if (ifa->ifa_flags & IFF_LOOPBACK)
 			continue;
 #else
-		if (strncmp(ifa->ifa_name, "lo", 2) == 0)
+		if (strncmp(ifa->ifa_name, "lo", 2) == 0 &&
+		    (isdigit(ifa->ifa_name[2]) || ifa->ifa_name[2] == '\0'))
 			continue;
 #endif
 
