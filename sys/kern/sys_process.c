@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.67 2001/03/17 09:38:36 pooka Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.68 2001/06/13 16:06:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -397,13 +397,4 @@ sys_ptrace(p, v, retval)
 	panic("ptrace: impossible");
 #endif
 	return 0;
-}
-
-int
-trace_req(a1)
-	struct proc *a1;
-{
-
-	/* just return 1 to keep other parts of the system happy */
-	return (1);
 }
