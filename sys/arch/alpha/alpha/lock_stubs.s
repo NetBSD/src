@@ -1,4 +1,4 @@
-/* $NetBSD: lock_stubs.s,v 1.1.2.1 2002/03/10 21:41:32 thorpej Exp $ */
+/* $NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/11 17:21:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(7, "$NetBSD: lock_stubs.s,v 1.1.2.1 2002/03/10 21:41:32 thorpej Exp $")
+__KERNEL_RCSID(7, "$NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/11 17:21:03 thorpej Exp $")
 
 /*
  * Assembly language lock stubs.  These handle the common ("easy")
@@ -95,8 +95,8 @@ NESTED_NOPROFILE(mutex_exit, 1, 0, ra, 0, 0)
 	cmpeq	t0, t1, t0		/* are they the same? */
 	bfalse	t0, 1f			/* no, hard case */
 
-	stq	zero, 0(a0)		/* release lock */
 	mb
+	stq	zero, 0(a0)		/* release lock */
 	RET
 
 	/* Do a tail-call to mutex_vector_exit() */
