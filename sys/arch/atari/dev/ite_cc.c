@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.7 1996/09/16 06:43:41 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.8 1996/10/04 07:27:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -593,7 +593,10 @@ cursor32(struct ite_softc *ip, int flag)
 	/* 
 	 * draw the cursor
 	 */
-	ip->cursorx = min(ip->curx, ip->cols-1);
+	cend = min(ip->curx, ip->cols-1);
+	if (ip->cursorx == cend && ip->cursory == ip->cury)
+		return;
+	ip->cursorx = cend;
 	ip->cursory = ip->cury;
 	cend        = ip->font.height-1; 
 	pl          = cci->column_offset[ip->cursorx]

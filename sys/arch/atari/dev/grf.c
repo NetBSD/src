@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.13 1996/09/25 15:03:41 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.14 1996/10/04 07:27:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -386,8 +386,6 @@ struct grf_softc *gp;
 	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
 	gi->gd_regaddr = bm.hw_regs;
 	gi->gd_regsize = bm.reg_size;
-	gp->g_fbkva    = bm.plane;
-	gp->g_regkva   = bm.regs;
 
 	if(viewioctl(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0, NOPROC)) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.10 1996/09/25 15:03:43 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.11 1996/10/04 07:28:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -124,6 +124,10 @@ view_display (vu)
 				splx(s);
 				return;
 			}
+			if (views[i].view) {
+				grf_save_view(views[i].view);
+				views[i].view->flags &= ~VF_DISPLAY;
+			}
 			views[i].flags &= ~VUF_DISPLAY;
 		}
 	}
@@ -134,6 +138,7 @@ view_display (vu)
 		vu->view->display.y = vu->size.y;
 
 		grf_display_view(vu->view);
+		vu->view->flags |= VF_DISPLAY;
 
 		vu->size.x = vu->view->display.x;
 		vu->size.y = vu->view->display.y;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.5 1996/09/25 15:03:41 leo Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.6 1996/10/04 07:27:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,8 +79,6 @@ struct	grf_softc {
 	void		(*g_itecursor) __P((struct ite_softc *, int));
 	void		(*g_itescroll) __P((struct ite_softc *, int, int,
 								int, int));
-	volatile caddr_t g_regkva;	/* KVA of registers		*/
-	volatile caddr_t g_fbkva;	/* KVA of frame buffer		*/
 };
 
 /* flags */
