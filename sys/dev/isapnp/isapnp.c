@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.15 1998/01/12 09:27:14 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.16 1998/04/15 01:53:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -258,8 +258,8 @@ isapnp_alloc_drq(isa, i)
 		return 0;
 	}
 
-	for (b = 0; b < 16; b++)
-		if ((i->bits & (1 << b)) && isa_drq_isfree(isa, b)) {
+	for (b = 0; b < 7; b++)
+		if ((i->bits & (1 << b)) && ISA_DRQ_ISFREE(isa, b)) {
 			i->num = b;
 			return 0;
 		}
