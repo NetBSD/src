@@ -1,0 +1,6 @@
+#	$NetBSD#
+#
+# Configuration info for Intel i80200 CPU support
+#
+
+file	arch/arm/xscale/i80200_icu.c
