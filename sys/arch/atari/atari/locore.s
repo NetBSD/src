@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 1995/06/09 19:45:42 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 1995/07/11 21:25:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -677,11 +677,6 @@ Lnosir:
 Ldorte:
 	rte				|  real return	
 
-/*
- * Kernel access to the current processes kernel stack is via a fixed
- * virtual address.  It is at the same address as in the users VA space.
- * Umap contains the KVA of the first of UPAGES PTEs mapping VA _kstack.
- */
 	.data
 _esym:	.long	0
 	.globl	_esym
