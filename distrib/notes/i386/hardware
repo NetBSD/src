@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.112 2003/06/30 07:24:57 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.113 2004/02/13 10:00:54 wiz Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -307,7 +307,7 @@ Intel EtherExpress 100 Fast Ethernet adapters
 .It
 Novell NE1000, NE2000 (ISA, PCI, PCMCIA, ISA PnP)
 .It
-RealTek 8129/8139 based boards
+Realtek 8129/8139 based boards
 .It
 SMC/WD 8003, 8013, and the SMC
 .Sq Elite16

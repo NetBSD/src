@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.78 2003/12/14 01:32:01 thorpej Exp $
+# $NetBSD: INSTALL,v 1.79 2004/02/13 10:05:49 wiz Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -215,7 +215,7 @@ slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics

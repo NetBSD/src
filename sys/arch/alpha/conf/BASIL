@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.23 2003/12/14 01:32:01 thorpej Exp $
+# $NetBSD: BASIL,v 1.24 2004/02/13 10:05:49 wiz Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.23 $"
+#ident 		"BASIL-$Revision: 1.24 $"
 
 maxusers 64
 
@@ -243,7 +243,7 @@ slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 #sv*	at	pci? dev ? function ?		# S3 SonicVibes

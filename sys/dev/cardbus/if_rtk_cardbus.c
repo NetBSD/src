@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.17 2003/11/02 09:56:38 wiz Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.18 2004/02/13 10:05:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -29,14 +29,14 @@
 
 /*
  * if_rtk_cardbus.c:
- *	Cardbus specific routines for RealTek 8139 ethernet adapter.
+ *	Cardbus specific routines for Realtek 8139 ethernet adapter.
  *	Tested for 
  *		- elecom-Laneed	LD-10/100CBA (Accton MPX5030)
- *		- MELCO		LPC3-TX-CB   (RealTek 8139)
+ *		- MELCO		LPC3-TX-CB   (Realtek 8139)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.17 2003/11/02 09:56:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.18 2004/02/13 10:05:50 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.17 2003/11/02 09:56:38 wiz Exp 
  * there appear to be problems with memory mapped mode: it looks like
  * doing too many memory mapped access back to back in rapid succession
  * can hang the bus. I'm inclined to blame this on crummy design/construction
- * on the part of RealTek. Memory mapped mode does appear to work on
+ * on the part of Realtek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
 #define RTK_USEIOSPACE 
@@ -108,9 +108,9 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 	{ CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
 		RTK_8139, "D-Link DFE-690TXD 10/100BaseTX" },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
-		RTK_8139, "RealTek 8138 10/100BaseTX" },
+		RTK_8139, "Realtek 8138 10/100BaseTX" },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
-		RTK_8139, "RealTek 8139 10/100BaseTX" },
+		RTK_8139, "Realtek 8139 10/100BaseTX" },
 	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
 		RTK_8139, "Corega FEther CB-TXD 10/100BaseTX" },
 	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_2CB_TXD,

@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.20 2003/12/14 01:32:01 thorpej Exp $
+#	$NetBSD: P6032,v 1.21 2004/02/13 10:05:49 wiz Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.20 $"
+#ident 		"P6032-$Revision: 1.21 $"
 
 maxusers 32
 
@@ -151,7 +151,7 @@ slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-#rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+#rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 #sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 #sv*	at	pci? dev ? function ?		# S3 SonicVibes
 #tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics

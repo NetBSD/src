@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.239 2004/01/14 22:29:03 jonathan Exp $
+# $NetBSD: GENERIC,v 1.240 2004/02/13 10:05:49 wiz Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.239 $"
+#ident 		"GENERIC-$Revision: 1.240 $"
 
 maxusers 32
 
@@ -321,7 +321,7 @@ slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 stge*	at	pci? dev ? function ?		# Sundance/Tamarack TC9021 GigE
