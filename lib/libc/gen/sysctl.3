@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.57 2000/06/13 14:42:55 simonb Exp $
+.\"	$NetBSD: sysctl.3,v 1.58 2000/06/16 00:45:48 simonb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -283,6 +283,7 @@ information.
 .It KERN\_MEMLOCK	integer	no
 .It KERN\_MEMLOCK\_RANGE	integer	no
 .It KERN\_MEMORY\_PROTECTION	integer	no
+.It KERN\_MSGBUF	char[\|]	no
 .It KERN\_MSGBUFSIZE	integer	no
 .It KERN\_NGROUPS	integer	no
 .It KERN\_NTPTIME	struct ntptimeval	no
@@ -441,6 +442,11 @@ otherwise 0.
 Returns 1 if the POSIX 1003.1b Memory Protection Option is available
 on this system,
 otherwise 0.
+.It Li KERN_MSGBUF
+The kernel message buffer, rotated so that the head of the circular kernel
+message buffer is returned at the start of the buffer specified by
+.Fa oldp .
+The returned data may contain NUL bytes.
 .It Li KERN_MSGBUFSIZE
 The maximum number of characters that the kernel message buffer can hold.
 .It Li KERN_NGROUPS
