@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2003/01/12 01:50:51 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.60 2003/01/14 22:54:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ void	cpu_boot_secondary_processors __P((void));
 #endif
 
 /*
- * Arguments to hardclock, softclock and gatherstats encapsulate the
+ * Arguments to hardclock, softclock and statclock encapsulate the
  * previous machine state in an opaque clockframe.  The ipl is here
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
@@ -116,6 +116,7 @@ extern int eintstack[];
 
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)
+#define	CLKF_LOPRI(framep,n)	(((framep)->psr & PSR_PIL) < (n) << 8)
 #define	CLKF_PC(framep)		((framep)->pc)
 #if defined(MULTIPROCESSOR)
 #define	CLKF_INTR(framep)						\
