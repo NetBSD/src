@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.35 2002/11/03 12:29:03 skrll Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.36 2002/12/16 18:17:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ struct pt_clean_t {
 
 struct pt_alarm_t {
 	PTQ_ENTRY(pt_alarm_t)	pta_next;
+	pthread_spin_t	pta_lock;
 	const struct timespec	*pta_time;
 	void	(*pta_func)(void *);
 	void	*pta_arg;
@@ -230,7 +231,7 @@ void	pthread__alarm_init(void);
 void	pthread__alarm_add(pthread_t, struct pt_alarm_t *,
     const struct timespec *, void (*)(void *), void *);
 void	pthread__alarm_del(pthread_t, struct pt_alarm_t *);
-int	pthread__alarm_fired(void *);
+int	pthread__alarm_fired(struct pt_alarm_t *);
 void	pthread__alarm_process(pthread_t self, void *arg);
 
 /* Internal locking primitives */
