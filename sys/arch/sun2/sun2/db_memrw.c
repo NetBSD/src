@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 2001/04/18 03:19:21 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -121,6 +121,9 @@ db_write_text(dst, size, data)
 
 	pgva = m68k_trunc_page((long)dst);
 
+	old_ctx = get_context();
+	set_context(0);
+
 	goto firstpage;
 	do {
 
@@ -138,8 +141,6 @@ db_write_text(dst, size, data)
 			set_pte(prevpg, oldpte);
 
 		firstpage:
-			old_ctx = get_context();
-			set_context(0);
 			oldpte = get_pte(pgva);
 			if ((oldpte & PG_VALID) == 0) {
 				printf(" address %p not a valid page\n", dst);
@@ -154,7 +155,6 @@ db_write_text(dst, size, data)
 			tmppte |= (PG_WRITE | PG_NC);
 
 			set_pte(pgva, tmppte);
-			set_context(old_ctx);
 			prevpg = pgva;
 		}
 
@@ -165,6 +165,7 @@ db_write_text(dst, size, data)
 
 	/* Restore old PTE for the last page touched. */
 	set_pte(prevpg, oldpte);
+	set_context(old_ctx);
 }
 
 /*
