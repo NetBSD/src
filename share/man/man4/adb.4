@@ -1,4 +1,4 @@
-.\"	$NetBSD: adb.4,v 1.1 2003/09/26 19:15:15 mbw Exp $
+.\"	$NetBSD: adb.4,v 1.2 2003/12/14 18:08:43 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Alex Zepeda <zipzippy@sonic.net>
 .\" Copyright (c) 1997 Colin Wood
@@ -41,7 +41,7 @@
 .Pp
 .Cd "options MRG_ADB"
 .Pp
-.Cd "#include \*[Lt]machine/adbsys.h\*[Gt]"
+.In machine/adbsys.h
 .Sh DESCRIPTION
 The Apple Desktop Bus
 .Pq Tn ADB
@@ -54,22 +54,26 @@ provides support for the Apple Desktop Bus as found on all supported
 mac68k models, as well as macppc models with on-board
 .Tn ADB
 (PowerBooks and
-.Dq Old World"
+.Dq Old World
 models).
 .Pp
 The
 .Nm
-driver access the
-.Tn ADB controller using the so-called
+driver accesses the
+.Tn ADB
+controller using the so-called
 .Dq HWDIRECT
-method.  This method of access bypasses the Macintosh ROM and uses only
+method.
+This method of access bypasses the Macintosh ROM and uses only
 .Nx
-routines for ADB access.  This is the only method supported on macppc
-and is the default for mac68k systems.
+routines for ADB access.
+This is the only method supported on macppc and is the default for
+mac68k systems.
 .Pp
 On mac68k systems there is an alternate method of accessing the
 .Tn ADB
-controller.  With the Macintosh ROM Glue
+controller.
+With the Macintosh ROM Glue
 .Pq Tn MRG
 method, the routines written for MacOS are used.
 To enable this method of
@@ -97,8 +101,9 @@ Device Info
 The
 .Nm
 event device will return an array of information containing an entry
-for each device connected to the bus.  Each entry contains the
-current address, default address, and handler ID for the corresponding
+for each device connected to the bus.
+Each entry contains the current address, default address, and
+handler ID for the corresponding
 .Tn ADB
 device.
 .It Dv ADBIOC_GETREPEAT
@@ -236,8 +241,8 @@ Thus absolute-position and other exotic devices will not work.
 Some of the diagnostic messages in this man page need to be updated.
 .El
 .Pp
-Some mac68k machines contain so-called dirty ROM.  These machines are 
-the: Mac SE/30, Mac II, Mac IIx, and Mac IIcx.
+Some mac68k machines contain so-called dirty ROM.
+These machines are the: Mac SE/30, Mac II, Mac IIx, and Mac IIcx.
 Machines with dirty ROM may experience trouble booting if the MRG code
 is used, especially under the following conditions:
 .Bl -bullet -compact -offset indent
@@ -248,10 +253,10 @@ An extended keyboard is attached to the computer.
 .El
 .Pp
 On (some) machines with dirty ROM, the ROM indicates the presence of a
-"ghost" keyboard or mouse.
+.Dq ghost
+keyboard or mouse.
 When this non-existant device is probed for, the result is an infinite
 loop.
 This is believed to be triggered by the
 .Nm
 driver probing for extended mice, and non-EMP Logitech mice.
-
