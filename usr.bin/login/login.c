@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.62 2001/01/01 20:19:06 thorpej Exp $       */
+/*     $NetBSD: login.c,v 1.63 2001/01/10 12:24:38 lukem Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.62 2001/01/01 20:19:06 thorpej Exp $");
+__RCSID("$NetBSD: login.c,v 1.63 2001/01/10 12:24:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -211,7 +211,7 @@ main(argc, argv)
 	(void)signal(SIGINT, SIG_IGN);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
-	openlog("login", LOG_ODELAY, LOG_AUTH);
+	openlog("login", 0, LOG_AUTH);
 
 	/*
 	 * -p is used by getty to tell login not to destroy the environment
@@ -637,7 +637,7 @@ main(argc, argv)
 #ifdef LOGIN_CAP
 	if ((shell = login_getcapstr(lc, "shell", NULL, NULL)) != NULL) {
 		if ((shell = strdup(shell)) == NULL) {
-                	syslog(LOG_NOTICE, "Cannot alloc mem");
+                	syslog(LOG_ERR, "Cannot alloc mem");
                 	sleepexit(1);
 		}
 		pwd->pw_shell = shell;
