@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.5 2000/10/02 23:41:32 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.6 2001/01/26 01:18:25 jhawk Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -328,11 +328,11 @@ icmp6_input(mp, offp, proto)
 	code = icmp6->icmp6_code;
 
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
+#ifdef ND6DEBUG
 		log(LOG_ERR,
 		    "ICMP6 checksum error(%d|%x) %s\n",
-		    icmp6->icmp6_type,
-		    sum,
-		    ip6_sprintf(&ip6->ip6_src));
+		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src));
+#endif
 		icmp6stat.icp6s_checksum++;
 		goto freeit;
 	}
