@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.10 2004/03/30 19:40:58 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.11 2004/04/02 22:53:15 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -89,6 +89,7 @@ static void usage PROTO ((void));
 
 void do_release(struct client_state *);
 
+#if !defined (SMALL)
 static isc_result_t
 verify_addr (omapi_object_t *l, omapi_addr_t *addr)
 {
@@ -102,6 +103,7 @@ verify_auth (omapi_object_t *p, omapi_auth_key_t *a)
 		return ISC_R_INVALIDKEY;
 	return ISC_R_SUCCESS;
 }
+#endif
 
 int main (argc, argv, envp)
 	int argc;
