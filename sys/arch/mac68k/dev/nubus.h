@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.9 1995/07/30 21:35:51 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.10 1995/08/25 21:20:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -64,6 +64,11 @@
 #define   NUBUS_DRSW_ASANTE	0x0104
 #define    NUBUS_DRHW_SONIC	0x0110
 #define   NUBUS_DRSW_FARALLON	0x010C
+
+#define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
+#define  NUBUS_TYPE_RS232	0x0002
+#define   NUBUS_DRSW_HDS	0x0102
+#define    NUBUS_DRHW_HDS	0x0102
 
 #define NUBUS_CATEGORY_FONT	0x0009	/* KanjiTalk Font Card? */
 
