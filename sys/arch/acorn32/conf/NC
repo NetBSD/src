@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.11 2002/04/25 15:06:20 atatat Exp $
+#	$NetBSD: NC,v 1.11.4.1 2002/06/10 16:34:44 tv Exp $
 #
 #	NC - with vidcconsole
 #
@@ -271,10 +271,6 @@ pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
-#makeoptions	MONITOR="Taxan875+LR"
-makeoptions	MONITOR="AKF85"
-makeoptions	MODES="640,480,70"
-#makeoptions	MODES="800,600,60"
-#makeoptions	MONITOR="PALTV"
-#makeoptions	MODES="640,256,60 640,480,60 1024,768,60 1024,768,70 800,600,60 1280,1024 1152,900"
-
+makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="AKF60"
+makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
