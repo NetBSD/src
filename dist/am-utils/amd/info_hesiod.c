@@ -1,7 +1,7 @@
-/*	$NetBSD: info_hesiod.c,v 1.3 2003/07/29 12:08:59 markd Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_hesiod.c,v 1.13 2002/12/27 22:43:49 ezk Exp
+ * Id: info_hesiod.c,v 1.15 2004/01/06 03:56:20 ezk Exp
  *
  */
 

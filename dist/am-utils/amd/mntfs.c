@@ -1,7 +1,7 @@
-/*	$NetBSD: mntfs.c,v 1.2 2003/03/10 00:03:21 christos Exp $	*/
+/*	$NetBSD: mntfs.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mntfs.c,v 1.24 2002/12/27 22:43:50 ezk Exp
+ * Id: mntfs.c,v 1.34 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -75,27 +75,15 @@ init_mntfs(mntfs *mf, am_ops *ops, am_opts *mo, char *mp, char *info, char *auto
   mf->mf_fsflags = ops->nfs_fs_flags;
   mf->mf_fo = mo;
   mf->mf_mount = strdup(mp);
-  mf->mf_real_mount = strdup(mp);
   mf->mf_info = strdup(info);
   mf->mf_auto = strdup(auto_opts);
   mf->mf_mopts = strdup(mopts);
   mf->mf_remopts = strdup(remopts);
   mf->mf_loopdev = NULL;
   mf->mf_refc = 1;
-#ifdef HAVE_FS_AUTOFS
-  /* Note: mo can be NULL for the root pseudo-mountpoint */
-  if (mo && mo->opt_mount_type &&
-      STREQ(mo->opt_mount_type, "autofs") &&
-      amd_use_autofs)
-    mf->mf_flags = MFF_AUTOFS;
-  else
-#endif /* HAVE_FS_AUTOFS */
-    mf->mf_flags = 0;
+  mf->mf_flags = 0;
   mf->mf_error = -1;
   mf->mf_cid = 0;
-#ifdef HAVE_FS_AUTOFS
-  mf->mf_autofs_fh = 0;
-#endif /* HAVE_FS_AUTOFS */
   mf->mf_private = 0;
   mf->mf_prfree = 0;
 
@@ -119,15 +107,25 @@ alloc_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, cha
 }
 
 
+/* find a matching mntfs in our list */
 mntfs *
-find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char *mopts, char *remopts)
+locate_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char *mopts, char *remopts)
 {
   mntfs *mf;
 
-  dlog("Locating mntfs reference to %s with %s", mp, info);
+  dlog("Locating mntfs reference to (%s,%s)", mp, info);
 
   ITER(mf, mntfs, &mfhead) {
-    if (STREQ(mf->mf_mount, mp) && STREQ(mf->mf_info, info)) {
+    /*
+     * For backwards compatibility purposes, we treat already-mounted
+     * filesystems differently and only require a match of their mount point,
+     * not of their server info. After all, there is little we can do if
+     * the user asks us to mount two different things onto the same mount: one
+     * will always cover the other one.
+     */
+    if (STREQ(mf->mf_mount, mp) &&
+	((mf->mf_flags & MFF_MOUNTED && !(mf->mf_fsflags & FS_DIRECT))
+	 || (STREQ(mf->mf_info, info) && mf->mf_ops == ops))) {
       /*
        * Handle cases where error ops are involved
        */
@@ -140,15 +138,9 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 	  continue;
 	else
 	  return dup_mntfs(mf);
-      } else {			/* ops != &amfs_error_ops */
-	/*
-	 * If the existing ops are amfs_error_ops
-	 * then continue...
-	 */
-	if (mf->mf_ops == &amfs_error_ops)
-	  continue;
       }
 
+#if 0
       if ((mf->mf_flags & MFF_RESTART) && amd_state == Run) {
 	/*
 	 * Restart a previously mounted filesystem.
@@ -165,6 +157,17 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
       }
 
       mf->mf_fo = mo;
+#else
+      mf->mf_fo = mo;
+      if ((mf->mf_flags & MFF_RESTART) && amd_state == Run) {
+	/*
+	 * Restart a previously mounted filesystem.
+	 */
+	dlog("Restarting filesystem %s", mf->mf_mount);
+	return mf;
+      }
+#endif
+
       if (!(mf->mf_flags & (MFF_MOUNTED | MFF_MOUNTING | MFF_UNMOUNTING))) {
 	fserver *fs;
 	mf->mf_flags &= ~MFF_ERROR;
@@ -188,6 +191,18 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
     } /* end of "if (STREQ(mf-> ..." */
   } /* end of ITER */
 
+  return 0;
+}
+
+
+/* find a matching mntfs in our list, create a new one if none is found */
+mntfs *
+find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char *mopts, char *remopts)
+{
+  mntfs *mf = locate_mntfs(ops, mo, mp, info, auto_opts, mopts, remopts);
+  if (mf)
+    return mf;
+
   return alloc_mntfs(ops, mo, mp, info, auto_opts, mopts, remopts);
 }
 
@@ -210,20 +225,11 @@ uninit_mntfs(mntfs *mf)
     XFREE(mf->mf_remopts);
   if (mf->mf_info)
     XFREE(mf->mf_info);
-#ifdef HAVE_FS_AUTOFS
-  /* shouldn't be necessary, but we do it just in case */
-  if (mf->mf_autofs_fh) {
-    autofs_release_fh(mf->mf_autofs_fh);
-    mf->mf_autofs_fh = 0;
-  }
-#endif /* HAVE_FS_AUTOFS */
   if (mf->mf_private && mf->mf_prfree)
     (*mf->mf_prfree) (mf->mf_private);
 
   if (mf->mf_mount)
     XFREE(mf->mf_mount);
-  if (mf->mf_real_mount)
-    XFREE(mf->mf_real_mount);
 
   /*
    * Clean up the file server
@@ -274,9 +280,9 @@ flush_mntfs(void)
 
 
 void
-free_mntfs(voidp v)
+free_mntfs(opaque_t arg)
 {
-  mntfs *mf = v;
+  mntfs *mf = (mntfs *) arg;
 
   dlog("free_mntfs <%s> type %s mf_refc %d flags %x",
        mf->mf_mount, mf->mf_ops->fs_type, mf->mf_refc, mf->mf_flags);
@@ -335,7 +341,7 @@ realloc_mntfs(mntfs *mf, am_ops *ops, am_opts *mo, char *mp, char *info, char *a
   mntfs *mf2;
 
   if (mf->mf_refc == 1 &&
-      mf->mf_ops == &amfs_inherit_ops &&
+      mf->mf_flags & MFF_RESTART &&
       STREQ(mf->mf_mount, mp)) {
     /*
      * If we are inheriting then just return
@@ -357,23 +363,5 @@ realloc_mntfs(mntfs *mf, am_ops *ops, am_opts *mo, char *mp, char *info, char *a
 
   mf2 = find_mntfs(ops, mo, mp, info, auto_opts, mopts, remopts);
   free_mntfs(mf);
-#if 0
-  /*
-   * XXX: EZK IS THIS RIGHT???
-   * The next "if" statement is what supposedly fixes bgmount() in
-   * that it will actually use the ops structure of the next mount
-   * entry, if the previous one failed.
-   */
-  if (mf2 &&
-      ops &&
-      mf2->mf_ops != ops &&
-      mf2->mf_ops != &amfs_inherit_ops &&
-      mf2->mf_ops != &amfs_toplvl_ops &&
-      mf2->mf_ops != &amfs_error_ops) {
-    plog(XLOG_WARNING, "realloc_mntfs: copy fallback ops \"%s\" over \"%s\"",
-	 ops->fs_type, mf2->mf_ops->fs_type);
-    mf2->mf_ops = ops;
-  }
-#endif
   return mf2;
 }

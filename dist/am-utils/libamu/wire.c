@@ -1,7 +1,7 @@
-/*	$NetBSD: wire.c,v 1.7 2003/07/14 17:25:42 itojun Exp $	*/
+/*	$NetBSD: wire.c,v 1.8 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wire.c,v 1.18 2002/12/27 22:44:11 ezk Exp
+ * Id: wire.c,v 1.20 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -441,12 +441,6 @@ getwire(char **name1, char **number1)
   u_long address;
   addrlist *al = NULL, *tail = NULL;
   char buf[GFBUFLEN];
-#if 0
-  u_long net;
-  u_long mask;
-  u_long subnetshift;
-  char buf[GFBUFLEN], *s;
-#endif
 
 #ifndef SIOCGIFFLAGS
   /* if cannot get interface flags, return nothing */
