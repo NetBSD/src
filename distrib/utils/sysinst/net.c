@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.22 1997/11/25 00:24:54 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.23 1997/11/25 06:53:11 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -254,7 +254,7 @@ get_via_ftp (void)
 	cd_dist_dir ("ftp");
 
 	/* Fill in final values for ftp_dir. */
-	strncat (ftp_dir, rels, STRSIZE-strlen(ftp_dir));
+	strncat (ftp_dir, rel, STRSIZE-strlen(ftp_dir));
 	strcat  (ftp_dir, "/");
 	strncat (ftp_dir, machine, STRSIZE-strlen(ftp_dir));
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
@@ -267,7 +267,7 @@ get_via_ftp (void)
 			list++;
 			continue;
 		}
-		snprintf (filename, SSTRSIZE, list->name, rels, dist_postfix);
+		snprintf (filename, SSTRSIZE, "%s%s", list->name, dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
 			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s",
 				       ftp_host, ftp_dir,
