@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.20 1994/04/28 08:28:35 mycroft Exp $
+ *	$Id: intr.c,v 1.21 1994/05/05 16:05:57 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -152,13 +152,85 @@ int fastvec;
 int intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
+/*
+ * Recalculate the interrupt masks from scratch.
+ * We could code special registry and deregistry versions of this function that
+ * would be faster, but the code would be nastier, and we don't expect this to
+ * happen very much anyway.
+ */
+void
+intr_calculatemasks()
+{
+	int irq, level;
+	struct intrhand *q;
+
+	/* First, figure out which levels each IRQ uses. */
+	for (irq = 0; irq < ICU_LEN; irq++) {
+		register int levels = 0;
+		for (q = intrhand[irq]; q; q = q->ih_next)
+			if (q->ih_level != IPL_NONE)
+				levels |= 1 << q->ih_level;
+		intrlevel[irq] = levels;
+	}
+
+	/* Then figure out which IRQs use each level. */
+	for (level = 0; level < 4; level++) {
+		register int irqs = 0;
+		for (irq = 0; irq < ICU_LEN; irq++)
+			if (intrlevel[irq] & (1 << level))
+				irqs |= 1 << irq;
+		/* Preserve any softintr dependencies we set up earlier. */
+		imask[level] = (imask[level] & -(1 << ICU_LEN)) | irqs;
+	}
+
+#include "sl.h"
+#include "ppp.h"
+#if NSL > 0 || NPPP > 0
+	/* In the presence of SLIP or PPP, splimp > spltty. */
+	imask[IPL_NET] |= imask[IPL_TTY];
+#endif
+
+	/* And eventually calculate the complete masks. */
+	for (irq = 0; irq < ICU_LEN; irq++) {
+		register int irqs = 1 << irq;
+		for (q = intrhand[irq]; q; q = q->ih_next)
+			if (q->ih_level != IPL_NONE)
+				irqs |= imask[q->ih_level];
+		intrmask[irq] = irqs;
+	}
+
+	/* Lastly, determine which IRQs are actually in use. */
+	{
+		register int irqs = 0;
+		for (irq = 0; irq < ICU_LEN; irq++)
+			if (intrhand[irq])
+				irqs |= 1 << irq;
+		if (irqs >= 0x100) /* any IRQs >= 8 in use */
+			irqs |= IRQ_SLAVE;
+		imen = ~irqs;
+		SET_ICUS();
+	}
+}
+
+int
+fakeintr(arg)
+	void *arg;
+{
+
+	return 0;
+}
+
+/*
+ * Set up an interrupt handler to start being called.
+ */
 void
 intr_establish(mask, ih)
 	int mask;
 	struct intrhand *ih;
 {
-	int n, irq;
+	int irq;
 	struct intrhand **p, *q;
+	static struct intrhand fakehand = {fakeintr};
 
 	irq = ffs(mask) - 1;
 
@@ -167,38 +239,41 @@ intr_establish(mask, ih)
 	if (fastvec & mask)
 		panic("intr_establish: irq is already fast vector");
 
-	if (ih->ih_level != IPL_NONE) {
-		imask[ih->ih_level] |= mask;
-		for (n = 0; n < ICU_LEN; n++)
-			if (intrlevel[n] & (1 << ih->ih_level))
-				intrmask[n] |= mask;
-		intrlevel[irq] |= 1 << ih->ih_level;
-		intrmask[irq] |= imask[ih->ih_level];
-	} else
-		intrmask[irq] |= mask;
-
-	ih->ih_count = 0;
-	ih->ih_next = NULL;
-
 	/*
+	 * Figure out where to put the handler.
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
 	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
 		;
-	*p = ih;
 
-	if (irq >= 8)
-		mask |= IRQ_SLAVE;
-	INTREN(mask);
+	/*
+	 * Actually install a fake handler momentarily, since we might be doing
+	 * this with interrupts enabled and don't want the real routine called
+	 * until masking is set up.
+	 */
+	fakehand.ih_level = ih->ih_level;
+	*p = &fakehand;
+
+	intr_calculatemasks();
+
+	/*
+	 * Poke the real handler in now.
+	 */
+	ih->ih_count = 0;
+	ih->ih_next = NULL;
+	*p = ih;
 }
 
+/*
+ * Deregister an interrupt handler.
+ */
 void
 intr_disestablish(mask, ih)
 	int mask;
 	struct intrhand *ih;
 {
-	int n, irq, maxirq;
+	int irq;
 	struct intrhand **p, *q;
 
 	irq = ffs(mask) - 1;
@@ -208,7 +283,10 @@ intr_disestablish(mask, ih)
 	if (fastvec & mask)
 		fastvec &= ~mask;
 
-	/* Remove the handler from the chain. */
+	/*
+	 * Remove the handler from the chain.
+	 * This is O(n^2), too.
+	 */
 	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
 		;
 	if (q)
@@ -216,42 +294,5 @@ intr_disestablish(mask, ih)
 	else
 		panic("intr_disestablish: handler not registered");
 
-	/* See if there are still any handlers with the same level. */
-	for (q = intrhand[irq]; q; q = q->ih_next)
-		if (q->ih_level == ih->ih_level)
-			break;
-	/* If so, we're done. */
-	if (q)
-		return;
-
-	/*
-	 * Remove the IRQ from any interrupt masks with the old IPL, and remove
-	 * anu IRQs which no longer share a common level from this IRQ's mask.
-	 */
-	if (ih->ih_level != IPL_NONE) {
-		intrlevel[irq] &= ~(1 << ih->ih_level);
-		for (n = 0; n < ICU_LEN; n++)
-			if ((intrlevel[n] & (1 << ih->ih_level)) &&
-			    (intrlevel[n] & intrlevel[irq]) == 0) {
-				intrmask[n] &= ~mask;
-				intrmask[irq] &= ~(1 << n);
-			}
-	}
-
-	/* If there are more handlers on this IRQ, we're done. */
-	if (intrhand[irq])
-		return;
-
-	/* Figure out if we should deactivate the slave IRQ. */
-	maxirq = 7;
-	for (n = 8; n < ICU_LEN; n++)
-		if (intrhand[n]) {
-			maxirq = n;
-			break;
-		}
-	if (maxirq < 8)
-		mask |= IRQ_SLAVE;
-
-	/* Deactivate the interrupt. */
-	INTRDIS(mask);
+	intr_calculatemasks();
 }
