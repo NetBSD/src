@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.40 2000/01/02 13:39:50 msaitoh Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.41 2000/01/17 02:59:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,6 +40,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
+#include "opt_compat_vax1k.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
