@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.45 2001/09/15 16:13:01 chs Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.46 2001/09/15 20:36:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,6 +70,15 @@ extern int prtactive;
 
 #define TRUE	1
 #define	FALSE	0
+
+void nfs_gop_size(struct vnode *, off_t, off_t *);
+int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+
+struct genfs_ops nfs_genfsops = {
+	nfs_gop_size,
+	nfs_gop_alloc,
+	nfs_gop_write,
+};
 
 /*
  * Initialize hash links for nfsnodes
@@ -195,10 +204,12 @@ loop:
 	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
+	genfs_node_init(vp, &nfs_genfsops);
 
 	/*
 	 * Insert the nfsnode in the hash queue for its new file handle
 	 */
+
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
 		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
@@ -208,23 +219,14 @@ loop:
 	np->n_fhsize = fhsize;
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
-
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
-
-	/*
-	 * XXXUBC doing this while holding the nfs_hashlock is bad,
-	 * but there's no alternative at the moment.
-	 */
+	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
 	if (error) {
-		lockmgr(&vp->v_lock, LK_RELEASE, 0);
-		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		vgone(vp);
 		return error;
 	}
 	uvm_vnp_setsize(vp, np->n_vattr->va_size);
-
-	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	*npp = np;
 	return (0);
 }
@@ -320,4 +322,17 @@ nfs_reclaim(v)
 	pool_put(&nfs_node_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
+}
+
+void
+nfs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
+{
+	*eobp = MAX(size, vp->v_size);
+}
+
+int
+nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
+{
+	return 0;
 }

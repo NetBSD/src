@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.67 2001/09/15 16:13:05 chs Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.68 2001/09/15 20:36:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1400,12 +1400,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Initialize the vnode from the inode, check for aliases.  In all
 	 * cases re-init ip, the underlying vnode/inode may have changed.
 	 */
-	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
-	if (error) {
-		vput(vp);
-		*vpp = NULL;
-		return (error);
-	}
+	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 #ifdef DIAGNOSTIC
 	if(vp->v_type == VNON) {
 		panic("lfs_vget: ino %d is type VNON! (ifmt %o)\n",
