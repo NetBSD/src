@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.6 1999/02/26 23:44:44 wrstuden Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.6.2.1 1999/10/18 05:05:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -345,7 +345,9 @@ out:
 #endif
 		brelse(bp);
 	}
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	VOP_UNLOCK(devvp, 0);
 	if (fcmp) {
 		free((caddr_t)fcmp, M_FILECOREMNT);
 		mp->mnt_data = (qaddr_t)0;
@@ -392,8 +394,9 @@ filecore_unmount(mp, mntflags, p)
 	fcmp = VFSTOFILECORE(mp);
 
 	fcmp->fc_devvp->v_specflags &= ~SI_MOUNTEDON;
+	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, p);
-	vrele(fcmp->fc_devvp);
+	vput(fcmp->fc_devvp);
 	free((caddr_t)fcmp, M_FILECOREMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
