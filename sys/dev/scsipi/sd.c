@@ -1,7 +1,7 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
- * Hacked by Theo de Raadt <deraadt@fsa.ca>
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
+ * Hacked by Theo de Raadt <deraadt@fsa.ca>
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
@@ -63,7 +63,7 @@ int sd_debug = 0;
  * A device suitable for this driver
  */
 int
-sdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
+sdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 {
 	struct scsi_xfer *sd_scsi_xfer;
 	struct disk_parms *dp;
@@ -76,17 +76,22 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 	lun = physid & 7;
 
 	/*printf("sdattach: sd%d at %s%d target %d lun %d\n",
-		unit, sw->name, masunit, targ, lun);*/
+		*unit, sw->name, masunit, targ, lun);*/
 
-	if(unit > NSD)
-		return -1;
-	if(sd_data[unit])
-		return -1;
+	if(*unit == -1) {
+		for(i=0; i<NSD && *unit==-1; i++)
+			if(sd_data[*unit]==NULL)
+				*unit = i;
+	}
+	if(*unit > NSD || *unit==-1)
+		return 0;
+	if(sd_data[*unit])
+		return 0;
 
-	sd = sd_data[unit] = (struct sd_data *)malloc(sizeof *sd,
+	sd = sd_data[*unit] = (struct sd_data *)malloc(sizeof *sd,
 		M_TEMP, M_NOWAIT);
 	if(!sd)
-		return -1;
+		return 0;
 	bzero(sd, sizeof *sd);
 
 	/* store information needed to contact our base driver */
@@ -123,14 +128,14 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	sd_get_parms(unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
+	sd_get_parms(*unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
 	printf("sd%d at %s%d targ %d lun %d: %dMB %d cyl, %d head, %d sec, %d byte/sec\n",
-		unit, sw->name, masunit, targ, lun,
+		*unit, sw->name, masunit, targ, lun,
 		(dp->cyls*dp->heads*dp->sectors*dp->secsiz)/ (1024*1024),
 		dp->cyls, dp->heads, dp->sectors, dp->secsiz);
 
 	sd->flags |= SDINIT;
-	return 0;
+	return 1;
 }
 
 

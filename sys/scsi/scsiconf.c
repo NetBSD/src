@@ -1,7 +1,7 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
- * Hacked by Theo de Raadt <deraadt@fsa.ca>
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
+ * Hacked by Theo de Raadt <deraadt@fsa.ca>
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
@@ -126,14 +126,14 @@ scsi_probe(int masunit, struct scsi_switch *sw, int physid, int type, int want)
 
 	if( scsi_ready(masunit, targ, lun, sw,
 	    SCSI_NOSLEEP | SCSI_NOMASK) != COMPLETE)
-		return (struct scsidevs *)-1;
+		return (struct scsidevs *)0;
 
 	if( scsi_inquire(masunit, targ, lun, sw, (u_char *)&inqbuf,
 	    SCSI_NOSLEEP | SCSI_NOMASK) != COMPLETE)
-		return (struct scsidevs *)-1;
+		return (struct scsidevs *)0;
 
 	if( inqbuf.device_qualifier==3 && inqbuf.device_type==T_NODEVICE)
-		return (struct scsidevs *)-1;
+		return (struct scsidevs *)0;
 
 	switch(inqbuf.device_qualifier) {
 	case 0:
@@ -293,7 +293,7 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 		lun = *physid & 7;
 
 		if( (sw->empty[targ] & (1<<lun)) || (sw->used[targ] & (1<<lun)) )
-			return -1;
+			return 0;
 
 		match = scsi_probe(masunit, sw, *physid, type, 0);
 		if(match == (struct scsidevs *)-1) {
@@ -302,12 +302,12 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 				sw->empty[targ] = 0xff;
 			else
 				sw->empty[targ] |= (1<<lun);
-			return -1;
+			return 0;
 		}
 
 		sw->printed[targ] |= (1<<lun);
 		if(!match)
-			return -1;
+			return 0;
 
 		ret = (*(match->attach_rtn))(masunit, sw, *physid, *unit);
 		goto success;
@@ -335,13 +335,13 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 				break;
 			}
 			ret = (*(match->attach_rtn))(masunit, sw, *physid, *unit);
-			if(ret==0)
+			if(ret)
 				goto success;
-			return -1;
+			return 0;
 		}
 	}
 	*physid = -1;	/* failed... */
-	return -1;
+	return 0;
 
 success:
 	targ = *physid >> 3;
@@ -353,7 +353,7 @@ success:
 		sw->used[targ] = 0xff;
 		sw->printed[targ] = 0xff;
 	}
-	return 0;
+	return ret;
 }
 
 /*

@@ -27,7 +27,7 @@ struct	st_data {
 #define	ST_PER_OPEN	(ST_OPEN | ST_NOREWIND | ST_WRITTEN | ST_PER_ACTION)
 #define	ST_PER_MEDIA	ST_FIXEDBLOCKS
 
-int stattach(int, struct scsi_switch *, int, int);
+int stattach(int, struct scsi_switch *, int, int *);
 int stopen(dev_t);
 int stclose(dev_t);
 void stminphys(struct buf *);

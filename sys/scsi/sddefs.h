@@ -33,7 +33,7 @@ struct sd_data {
 	int blockwait;
 };
 
-int sdattach(int, struct scsi_switch *, int, int);
+int sdattach(int, struct scsi_switch *, int, int *);
 int sdopen(int);
 struct scsi_xfer *sd_get_xs(int, int);
 void sd_free_xs(int, struct scsi_xfer *, int);

@@ -24,7 +24,13 @@
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.4  1993/04/15 07:57:54  deraadt
+ * Revision 1.5  1993/05/04 08:32:44  deraadt
+ * support for making dev->id_alive be set, this is for iostat to
+ * find disk devices. wee bit of a kludge. sub-device attach()
+ * routines must now return 1 for successful attach(), 0 otherwise.
+ * Other bsd's do this too..
+ *
+ * Revision 1.4  1993/04/15  07:57:54  deraadt
  * ioconf changes, see previous cvs's that dumped core
  *
  * Revision 1.3  1993/04/12  08:17:28  deraadt
@@ -654,19 +660,17 @@ struct	isa_dev	*dev;
 {
 	static int firsttime;
 	int masunit = dev->id_masunit;
-	int id = dev->id_unit;
+	int r;
 
-	scsi_attach(masunit, bt_scsi_dev[masunit], &bt_switch,
-		&dev->id_physid, &id, dev->id_flags);
-
-	/*scsi_warn(dev->id_unit, bt_scsi_dev[unit], &bt_switch);*/
+	r = scsi_attach(masunit, bt_scsi_dev[masunit], &bt_switch,
+		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(firsttime==0 && masunit==0) {
 		firsttime = 1;
 		bt_timeout(0);
 	}
-	return;
+	return r;
 }
 
 /***********************************************\

@@ -1,7 +1,7 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
- * Hacked by Theo de Raadt <deraadt@fsa.ca>
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
+ * Hacked by Theo de Raadt <deraadt@fsa.ca>
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
