@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2004/09/25 22:08:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -48,11 +48,11 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <sys/cpu_data.h>
 #include <sh3/psl.h>
 #include <sh3/frame.h>
 
 #ifdef _KERNEL
+#include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 };
