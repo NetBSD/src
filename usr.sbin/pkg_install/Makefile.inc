@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.10.8.1 2000/09/03 04:17:01 hubertf Exp $
-# Original from Freebsd, no rcs id.
+# $NetBSD: Makefile.inc,v 1.10.8.2 2001/04/25 09:21:03 he Exp $
+# Original from FreeBSD, no rcs id.
 
-LIBINSTALL != cd ${.CURDIR}/../lib;\
-    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
+
+LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 
 .if !defined(OPSYS)
@@ -16,26 +17,24 @@ OPSYS="unknown"
 .endif
 
 .if ${OPSYS} == "NetBSD"
-CHMOD= /bin/chmod
-CHOWN= /usr/sbin/chown
-CHGRP= /usr/bin/chgrp
+CHMOD?= /bin/chmod
+CHOWN?= /usr/sbin/chown
+CHGRP?= /usr/bin/chgrp
 .elif ${OPSYS} == "SunOS"
-.if exists(/etc/mk.conf)
-.include "/etc/mk.conf"
-.endif
 LOCALBASE?= /usr/local
-TAR_CMD?= gtar
-TAR_FULLPATHNAME?= ${LOCALBASE}/bin/${TAR_CMD}
+TAR_CMD?= tar
+ZOULARISBASE?=	${LOCALBASE}/bsd
+TAR_FULLPATHNAME?= ${ZOULARISBASE}/bin/${TAR_CMD}
 CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DTAR_FULLPATHNAME='"${TAR_FULLPATHNAME}"'
-BINDIR=${LOCALBASE}/bsd/bin
-CHMOD= /usr/bin/chmod
-CHOWN= /usr/bin/chown
-CHGRP= /usr/bin/chgrp
+BINDIR=${ZOULARISBASE}/bin
+CHMOD?= /usr/bin/chmod
+CHOWN?= /usr/bin/chown
+CHGRP?= /usr/bin/chgrp
 WARNS=0
 .elif ${OPSYS} == "Linux"
-CHMOD= /bin/chmod
-CHOWN= /bin/chown
-CHGRP= /bin/chgrp
+CHMOD?= /bin/chmod
+CHOWN?= /bin/chown
+CHGRP?= /bin/chgrp
 .endif
 
 CPPFLAGS+= -DCHMOD='"${CHMOD}"' -DCHOWN='"${CHOWN}"' -DCHGRP='"${CHGRP}"'
