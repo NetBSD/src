@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.40 1998/12/03 06:28:45 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.41 1998/12/07 04:21:57 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.40 1998/12/03 06:28:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.41 1998/12/07 04:21:57 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -663,10 +663,10 @@ setregs(p, pack, stack)
 	 *	a2	rtld object (filled in by dynamic loader)
 	 *	a3	ps_strings
 	 */
-	f->f_regs[A0] = (mips_reg_t)stack;
+	f->f_regs[A0] = (int)stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (mips_reg_t)PS_STRINGS;
+	f->f_regs[A3] = (int)PS_STRINGS;
 
 	if (fpcurproc == p)
 		fpcurproc = (struct proc *)0;
