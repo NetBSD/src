@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.66 2003/02/04 15:50:06 jdolecek Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.67 2003/03/10 21:49:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.66 2003/02/04 15:50:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.67 2003/03/10 21:49:56 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -630,8 +630,9 @@ sys_timer_delete(struct lwp *l, void *v, register_t *retval)
 }
 
 /*
- * Set up the given timer. The value in pt->pt_time.it_value is taken to be
- * relative to now.
+ * Set up the given timer. The value in pt->pt_time.it_value is taken
+ * to be an absolute time for CLOCK_REALTIME timers and a relative
+ * time for virtual timers.
  * Must be called at splclock().
  */
 void
@@ -643,8 +644,6 @@ timer_settime(struct ptimer *pt)
 	if (pt->pt_type == CLOCK_REALTIME) {
 		callout_stop(&pt->pt_ch);
 		if (timerisset(&pt->pt_time.it_value)) {
-			timeradd(&pt->pt_time.it_value, &time,
-			    &pt->pt_time.it_value);
 			/*
 			 * Don't need to check hzto() return value, here.
 			 * callout_reset() does it for us.
@@ -763,11 +762,31 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 	pt->pt_time = val;
 
 	s = splclock();
-	/* If we've been passed an absolute time, convert it to relative. */
-	if (timerisset(&pt->pt_time.it_value) &&
-	    (SCARG(uap, flags) & TIMER_ABSTIME))
-		timersub(&pt->pt_time.it_value, &time,
-		    &pt->pt_time.it_value);
+	/*
+	 * If we've been passed a relative time for a realtime timer,
+	 * convert it to absolute; if an absolute time for a virtual
+	 * timer, convert it to relative and make sure we don't set it
+	 * to zero, which would cancel the timer, or let it go
+	 * negative, which would confuse the comparison tests.
+	 */
+	if (timerisset(&pt->pt_time.it_value)) {
+		if (pt->pt_type == CLOCK_REALTIME) {
+			if ((SCARG(uap, flags) & TIMER_ABSTIME) == 0)
+				timeradd(&pt->pt_time.it_value, &time,
+				    &pt->pt_time.it_value);
+		} else {
+			if ((SCARG(uap, flags) & TIMER_ABSTIME) != 0) {
+				timersub(&pt->pt_time.it_value, &time,
+				    &pt->pt_time.it_value);
+				if (!timerisset(&pt->pt_time.it_value) ||
+				    pt->pt_time.it_value.tv_sec < 0) {
+					pt->pt_time.it_value.tv_sec = 0;
+					pt->pt_time.it_value.tv_usec = 1;
+				}
+			}
+		}
+	}
+
 	timer_settime(pt);
 	splx(s);
 
@@ -1009,6 +1028,10 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	p->p_timers->pts_timers[which] = pt;
 
 	s = splclock();
+	if ((which == ITIMER_REAL) && timerisset(&pt->pt_time.it_value)) {
+		/* Convert to absolute time */
+		timeradd(&pt->pt_time.it_value, &time, &pt->pt_time.it_value);
+	}
 	timer_settime(pt);
 	splx(s);
 
