@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.h,v 1.3 2000/05/31 03:18:02 itojun Exp $	*/
-/*	$KAME: faithd.h,v 1.2 2000/05/31 03:06:07 itojun Exp $	*/
+/*	$NetBSD: faithd.h,v 1.3.2.1 2000/10/18 17:01:51 tv Exp $	*/
+/*	$KAME: faithd.h,v 1.6 2000/10/05 22:20:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -39,9 +39,12 @@ extern int ftp_active __P((int, int, int *, int *));
 extern int ftp_passive __P((int, int, int *, int *));
 extern void rsh_relay __P((int, int));
 extern void rsh_dual_relay __P((int, int));
-extern void exit_error __P((const char *fmt, ...));
-extern void exit_success __P((const char *fmt, ...));
-extern void exit_failure __P((const char *fmt, ...));
+extern void exit_error __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+extern void exit_success __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+extern void exit_failure __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 
 #define DEFAULT_PORT_NAME	"telnet"
 #define DEFAULT_PATH	"/usr/libexec/telnetd"
