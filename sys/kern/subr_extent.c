@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.12 1998/06/06 02:25:47 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.13 1998/07/15 12:38:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -877,8 +877,11 @@ extent_free(ex, start, size, flags)
 			/* Adjust current descriptor. */
 			rp->er_end = start - 1;
 
-			/* Instert new descriptor after current. */
+			/* Insert new descriptor after current. */
 			LIST_INSERT_AFTER(rp, nrp, er_link);
+
+			/* We used the new descriptor, so don't free it below */
+			nrp = NULL;
 			goto done;
 		}
 	}
@@ -890,6 +893,8 @@ extent_free(ex, start, size, flags)
 	panic("extent_free: region not found");
 
  done:
+	if (nrp != NULL)
+		extent_free_region_descriptor(ex, nrp);
 	if (ex->ex_flags & EXF_WANTED) {
 		ex->ex_flags &= ~EXF_WANTED;
 		wakeup(ex);
