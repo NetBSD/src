@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2000/02/08 12:57:11 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2000/02/09 05:48:31 shin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,7 +76,7 @@
 # ifndef INET
 #  include <netinet/in.h>
 # endif
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 

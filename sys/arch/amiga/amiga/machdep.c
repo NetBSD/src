@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 2000/01/19 20:05:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146 2000/02/09 05:48:29 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,7 +125,7 @@
 # ifndef INET
 #  include <netinet/in.h>
 # endif
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 #ifdef NS

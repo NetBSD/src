@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2000/01/19 20:05:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2000/02/09 05:48:32 shin Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -103,7 +103,7 @@
 # ifndef INET
 #  include <netinet/in.h>
 # endif
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 #ifdef NETATALK
