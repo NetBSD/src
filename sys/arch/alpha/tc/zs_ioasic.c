@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.1 1998/03/24 05:12:00 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.2 1998/05/23 00:51:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1 1998/03/24 05:12:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.2 1998/05/23 00:51:10 thorpej Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -704,25 +704,6 @@ zs_putc(cs, c)
 	do {
 		rr0 = zs_read_csr(cs);
 	} while ((rr0 & ZSRR0_TX_READY) == 0);
-
-	/*
-	 * If the transmitter was busy doing regular tty I/O (ZSWR1_TIE on),
-	 * defer our output until the transmit interrupt runs. We still
-	 * sync with TX_READY so we can get by with a single-char "queue".
-	 */
-	if (cs->cs_preg[1] & ZSWR1_TIE) {
-		/*
-		 * If a previous held character has not yet gone out, we can
-		 * send it now;  zsxint() will field the interrupt for our
-		 * char, but doesn't care. We're running at sufficiently
-		 * high spl for this to work.
-		 */
-		if (cs->cs_heldchar != 0)
-			zs_write_data(cs, cs->cs_heldchar);
-		cs->cs_heldchar = c;
-		splx(s);
-		return;
-	}
 
 	zs_write_data(cs, c);
 
