@@ -33,9 +33,6 @@ struct segment_info_struct;
 struct internal_reloc;
 #endif
 
-/* Whether in little endian mode.  */
-extern int shl;
-
 /* Whether -relax was used.  */
 extern int sh_relax;
 
@@ -75,7 +72,7 @@ extern boolean sh_fix_adjustable PARAMS ((struct fix *));
 
 #define IGNORE_NONSTANDARD_ESCAPES
 
-#define LISTING_HEADER (shl ? "Hitachi Super-H GAS Little Endian" : "Hitachi Super-H GAS Big Endian")
+#define LISTING_HEADER (!target_big_endian ? "Hitachi Super-H GAS Little Endian" : "Hitachi Super-H GAS Big Endian")
 
 #define md_operand(x)
 
@@ -117,7 +114,7 @@ extern void sh_frob_file PARAMS ((void));
 
 #define BFD_ARCH TARGET_ARCH
 
-#define COFF_MAGIC (shl ? SH_ARCH_MAGIC_LITTLE : SH_ARCH_MAGIC_BIG)
+#define COFF_MAGIC (!target_big_endian ? SH_ARCH_MAGIC_LITTLE : SH_ARCH_MAGIC_BIG)
 
 /* We need to write out relocs which have not been completed.  */
 #define TC_COUNT_RELOC(fix) ((fix)->fx_addsy != NULL)
@@ -162,11 +159,11 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *));
 extern int target_big_endian;
 
 #ifdef TE_NetBSD
-#define TARGET_FORMAT (shl ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
+#define TARGET_FORMAT (!target_big_endian ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
 #elif defined(TE_LINUX)
-#define TARGET_FORMAT (shl ? "elf32-sh-linux" : "elf32-shbig-linux")
+#define TARGET_FORMAT (!target_big_endian ? "elf32-sh-linux" : "elf32-shbig-linux")
 #else
-#define TARGET_FORMAT (shl ? "elf32-shl" : "elf32-sh")
+#define TARGET_FORMAT (!target_big_endian ? "elf32-shl" : "elf32-sh")
 #endif
 
 #define elf_tc_final_processing sh_elf_final_processing
