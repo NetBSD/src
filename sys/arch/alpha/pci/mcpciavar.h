@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.1 1998/04/15 00:50:14 mjacob Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.2 1999/02/17 03:17:17 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -38,7 +38,7 @@
 #define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
 
 /*
- * DWLPX configuration.
+ * MPCIA configuration.
  */
 struct mcpcia_config {
 	int				cc_initted;
