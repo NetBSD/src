@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.92 2003/08/08 18:57:04 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.93 2003/08/09 14:16:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.92 2003/08/08 18:57:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.93 2003/08/09 14:16:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1174,10 +1174,12 @@ linux_exec_setup_stack(struct proc *p, struct exec_package *epp)
 
 	if (epp->ep_minsaddr > LINUX_USRSTACK)
 		epp->ep_minsaddr = LINUX_USRSTACK;
-#ifdef DIAGNOSTIC
+#ifdef DEBUG_LINUX
 	else {
 		/*
 		 * Someone needs to make KERNBASE and TEXTADDR
+		 * java versions < 1.4.2 need the stack to be
+		 * at 0xC0000000
 		 */
 		uprintf("Cannot setup stack to 0xC0000000, "
 		    "java will not work properly\n");
