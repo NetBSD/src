@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.13 2000/09/10 10:51:17 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.14 2000/09/17 23:03:43 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.13 2000/09/10 10:51:17 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.14 2000/09/17 23:03:43 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -293,6 +293,23 @@ cypher()
 			lflag = use();
 			break;
 
+		case OPEN:
+			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
+				for (n = 0; n < NUMOFOBJECTS; n++)
+					if (testbit(inven, n)) {
+						things++;
+						wordvalue[wordnumber + 1] = n;
+						dooropen();
+					}
+				wordnumber += 2;
+				if (!things)
+					puts("Nothing to open!");
+			} else
+				dooropen();
+			break;
+
 		case LOOK:
 			if (!notes[CANTSEE] || testbit(inven, LAMPON) ||
 			    testbit(location[position].objects, LAMPON)
@@ -385,6 +402,16 @@ cypher()
 			}
 			save(rfilename);
 			free(rfilename);
+			break;
+
+		case VERBOSE:
+			verbose = 1;
+			printf("[Maximum verbosity]\n");
+			break;
+
+		case BRIEF:
+			verbose = 0;
+			printf("[Standard verbosity]\n");
 			break;
 
 		case FOLLOW:
