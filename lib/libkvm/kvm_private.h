@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.11 2003/01/18 10:40:41 thorpej Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.12 2003/05/11 13:37:34 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,6 @@ struct __kvm {
 	const char *program;
 	char	*errp;		/* XXX this can probably go away */
 	char	errbuf[_POSIX2_LINE_MAX];
-	DB	*db;
 	int	pmfd;		/* physical memory file (or crashdump) */
 	int	vmfd;		/* virtual memory file (-1 if crashdump) */
 	int	swfd;		/* swap file (e.g., /dev/drum) */
