@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.105 2000/04/15 21:14:51 tsarna Exp $
+.\"	$NetBSD: options.4,v 1.106 2000/04/17 16:58:38 augustss Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1449,6 +1449,14 @@ the cache in write-back mode. It is not turned on by default because it
 is known to have problems in certain motherboard implementations. In order
 for this option to take effect, option
 .Em CYRIX_CACHE_WORKS must also be specified.
+.It Cd options PCIBIOS
+Enable support for initializing the
+.Tn PCI
+bus using information from the
+.Tn BIOS .
+See
+.Xr pcibios 4
+for details.
 .El
 .Ss isa-specific Options
 Options specific to
@@ -1590,6 +1598,7 @@ bolded
 .Xr iso 4 ,
 .Xr lkm 4 ,
 .Xr ns 4 ,
+.Xr pcibios 4 ,
 .Xr pcmcia 4 ,
 .Xr config 8 ,
 .Xr edquota 8 ,
