@@ -1,4 +1,4 @@
-/* $NetBSD: mach_services.h,v 1.2 2003/11/15 17:44:39 manu Exp $ */
+/* $NetBSD: mach_services.h,v 1.3 2003/11/15 17:45:34 manu Exp $ */
 
 /*
  * Mach services prototypes.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services.h,v 1.2 2003/11/15 17:44:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services.h,v 1.3 2003/11/15 17:45:34 manu Exp $");
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
