@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2002/11/02 07:37:33 jdolecek Exp $	*/
+/*	$NetBSD: syscall.c,v 1.11 2002/11/03 23:17:18 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -55,22 +55,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-#ifdef COMPAT_LINUX
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_errno.h>
-#include <compat/linux/linux_syscall.h>
-#include <compat/linux/common/linux_signal.h>
-#include <compat/linux/common/linux_siginfo.h>
-#include <compat/linux/arch/powerpc/linux_siginfo.h>
-#include <compat/linux/arch/powerpc/linux_machdep.h>
-#endif
-
-#ifdef COMPAT_MACH
-#include <sys/syscall.h>
-#include <compat/mach/mach_syscall.h>
-extern struct sysent mach_sysent[];
-#endif
-
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
@@ -81,7 +65,7 @@ extern struct sysent mach_sysent[];
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2002/11/02 07:37:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2002/11/03 23:17:18 manu Exp $");
 
 void
 child_return(void *arg)
@@ -130,16 +114,9 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
-#ifdef MACH_SYSCALL
-	if (code < 0) {
-#ifdef DEBUG_MACH
-		printf("->mach(%d)\n", code);
-#endif /* DEBUG_MACH */
-		code = -code;
-		callp = mach_sysent;
-		nsysent = MACH_SYS_NSYSENT;
-	} else
-#endif /* MACH_SYSCALL */
+#ifdef COMPAT_MACH
+	if (mach_syscall_dispatch(&code, &callp, &nsysent) == 0)
+#endif /* COMPAT_MACH */
 	{
 		callp = p->p_emul->e_sysent;
 		nsysent = p->p_emul->e_nsysent;
@@ -243,16 +220,9 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
-#ifdef MACH_SYSCALL
-	if (code < 0) {
-#ifdef DEBUG_MACH
-		printf("->mach(%d)\n", code);
-#endif /* DEBUG_MACH */
-		code = -code;
-		callp = mach_sysent;
-		nsysent = MACH_SYS_NSYSENT;
-	} else 
-#endif /* MACH_SYSCALL */
+#ifdef COMPAT_MACH
+	if (mach_syscall_dispatch(&code, &callp, &nsysent) == 0)
+#endif /* COMPAT_MACH */
 	{
 		callp = p->p_emul->e_sysent;
 		nsysent = p->p_emul->e_nsysent;
