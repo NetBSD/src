@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.12 1998/11/04 23:28:15 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.13 1998/11/04 23:44:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ exphymatch(parent, match, aux)
 	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ex") != 0)
 		return (0);
 
-	return (1);
+	return (10);
 }
 
 void

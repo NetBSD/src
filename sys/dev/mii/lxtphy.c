@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.5 1998/11/04 23:28:15 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.6 1998/11/04 23:44:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ lxtphymatch(parent, match, aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_LEVEL1 &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_LEVEL1_LXT970)
-		return (1);
+		return (10);
 
 	return (0);
 }

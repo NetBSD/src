@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.14 1998/11/04 23:28:15 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.15 1998/11/04 23:44:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ tlphymatch(parent, match, aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TI &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_TI_TLAN10T)
-		return (1);
+		return (10);
 
 	return (0);
 }
