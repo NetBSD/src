@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.50 2001/12/14 08:25:40 gmcgarry Exp $	*/
+/*	$NetBSD: ite.c,v 1.51 2002/03/15 05:45:23 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@
  * the hardware dependent routines.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.51 2002/03/15 05:45:23 gmcgarry Exp $");                                                  
+
 #include "hil.h"
 
 #include <sys/param.h>
@@ -127,6 +130,9 @@ void	iteattach __P((struct device *, struct device *, void *));
 struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
 };
+
+/* XXX this has always been global, but shouldn't be */
+static struct kbdmap *ite_km;
 
 extern struct cfdriver ite_cd;
 
@@ -208,15 +214,13 @@ iteattach(parent, self, aux)
 		 */
 		cn_tab->cn_dev = makedev(ite_major(), self->dv_unit);
 	} else {
-		ite->sc_data =
-		    (struct ite_data *)malloc(sizeof(struct ite_data),
-		    M_DEVBUF, M_NOWAIT);
+		MALLOC(ite->sc_data, struct ite_data *,
+		    sizeof(struct ite_data), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ite->sc_data == NULL) {
 			printf("\n%s: malloc for ite_data failed\n",
 			    ite->sc_dev.dv_xname);
 			return;
 		}
-		memset(ite->sc_data, 0, sizeof(struct ite_data));
 		ite->sc_data->flags = ITE_ALIVE;
 	}
 
@@ -227,6 +231,13 @@ iteattach(parent, self, aux)
 	grf->sc_ite = ite;
 
 	printf("\n");
+}
+
+void
+iteinstallkeymap(v)
+	void *v;
+{
+	ite_km = (struct kbdmap *)v;
 }
 
 /*
@@ -284,9 +295,8 @@ iteinit(ip)
 
 	ip->attribute = 0;
 	if (ip->attrbuf == NULL)
-		ip->attrbuf = (u_char *)
-			malloc(ip->rows * ip->cols, M_DEVBUF, M_WAITOK);
-	memset(ip->attrbuf, 0, (ip->rows * ip->cols));
+		ip->attrbuf = (u_char *)malloc(ip->rows * ip->cols,
+		    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ip->imode = 0;
 	ip->flags |= ITE_INITED;
@@ -576,25 +586,25 @@ itefilter(stat, c)
 	default:
 	case KBD_KEY:
 	        if (!capsmode) {
-			code = kbd_keymap[(int)c];
+			code = ite_km->kbd_keymap[(int)c];
 			break;
 		}
 		/* FALLTHROUGH */
 
 	case KBD_SHIFT:
-		code = kbd_shiftmap[(int)c];
+		code = ite_km->kbd_shiftmap[(int)c];
 		break;
 
 	case KBD_CTRL:
-		code = kbd_ctrlmap[(int)c];
+		code = ite_km->kbd_ctrlmap[(int)c];
 		break;
 		
 	case KBD_CTRLSHIFT:	
-		code = kbd_ctrlshiftmap[(int)c];
+		code = ite_km->kbd_ctrlshiftmap[(int)c];
 		break;
         }
 
-	if (code == '\0' && (str = kbd_stringmap[(int)c]) != '\0') {
+	if (code == '\0' && (str = ite_km->kbd_stringmap[(int)c]) != '\0') {
 		while (*str)
 			(*kbd_tty->t_linesw->l_rint)(*str++, kbd_tty);
 	} else {
