@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.9 2002/03/10 19:56:44 lukem Exp $
+# 	$NetBSD: INSTALL,v 1.10 2002/03/16 16:50:34 tsutsui Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -45,8 +45,8 @@ options 	NFS_BOOT_BOOTPARAM
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	FONT_GALLANT12x22
-#options 	FONT_SONY8x16
+#options 	FONT_GALLANT12x22
+options 	FONT_SONY8x16
 
 config		netbsd	root on ? type ?
 
