@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.75 2000/11/27 10:19:12 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.76 2001/06/20 02:12:22 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 15, 2000
+.Dd June 20, 2001
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1265,6 +1265,12 @@ Defaults to
 Defaults to
 .Ev $FTPRPROMPT .
 .El
+.It Ic site Ar arg1 arg2 ...
+The arguments specified are sent, verbatim, to the remote
+.Tn FTP
+server as a
+.Dv SITE
+command.
 .It Ic size Ar remote-file
 Return size of
 .Ar remote-file
@@ -1272,12 +1278,6 @@ on remote machine.
 .It Ic sndbuf Ar size
 Set the size of the socket send buffer to
 .Ar size .
-.It Ic site Ar arg1 arg2 ...
-The arguments specified are sent, verbatim, to the remote
-.Tn FTP
-server as a
-.Dv SITE
-command.
 .It Ic status
 Show the current status of
 .Nm ftp .
