@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sii.4,v 1.8 2001/07/08 17:22:54 wiz Exp $
+.\"	$NetBSD: sii.4,v 1.9 2001/08/26 14:23:26 wiz Exp $
 .\"
-.Dd August 6, 1996
+.Dd August 26, 2001
 .Dt SII 4 pmax
 .Os
 .Sh NAME
@@ -61,8 +61,6 @@ The driver uses this "window" area as a bounce buffer, copying data
 to and from the DMA region.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr rz 4 ,
-.Xr tz 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,
@@ -72,24 +70,3 @@ The
 .Nm
 driver first appeared in
 .Bx 4.4 .
-.Sh BUGS
-The
-.Nm
-driver only supports the
-.Nm oldscsibus
-higher-level layer, and the
-.Nm rz
-and
-.Nm tz
-devices, which first appeared in
-.Bx 4.4 /pmax .
-It should be re-written to support the
-.Nm scsibus
-machine-independent higher-level SCSI layer and the
-.Nm sd ,
-.Nm st ,
-and
-.Nm cd
-drivers.
-This is
-.Ud .
