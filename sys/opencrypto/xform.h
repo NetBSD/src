@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.1 2003/07/25 21:12:49 jonathan Exp $ */
+/*	$NetBSD: xform.h,v 1.2 2003/07/28 19:37:03 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -26,7 +26,7 @@
 #ifndef _CRYPTO_XFORM_H_
 #define _CRYPTO_XFORM_H_
 
-#include <sys/md5k.h>
+#include <sys/md5.h>
 #include <sys/sha1.h>
 #include <crypto/sha2/sha2.h>
 #include <opencrypto/rmd160.h>
