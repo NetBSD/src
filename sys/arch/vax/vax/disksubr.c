@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 1999/03/24 05:51:16 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -52,7 +52,7 @@
 #include <machine/pcb.h>
 #include <machine/cpu.h>
 
-#include <arch/vax/mscp/mscp.h> /* For disk encoding scheme */
+#include <dev/mscp/mscp.h> /* For disk encoding scheme */
 
 #define b_cylin b_resid
 
