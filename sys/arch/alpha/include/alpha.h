@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.7 2000/02/29 22:19:54 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.8 2000/04/10 06:04:28 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,28 +44,6 @@
 
 #ifndef _ALPHA_H_
 #define _ALPHA_H_
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_ROOT_DEVICE		2	/* string: root device name */
-#define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
-#define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
-#define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
-#define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
-#define	CPU_MAXID		7	/* 6 valid machdep IDs */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "root_device", CTLTYPE_STRING }, \
-	{ "unaligned_print", CTLTYPE_INT }, \
-	{ "unaligned_fix", CTLTYPE_INT }, \
-	{ "unaligned_sigbus", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-}
-
 #ifdef _KERNEL
 
 #include <machine/bus.h>
