@@ -1,4 +1,4 @@
-.\"	$NetBSD: ec.4,v 1.1 1997/11/10 23:18:29 thorpej Exp $
+.\"	$NetBSD: ec.4,v 1.2 1997/11/11 05:11:27 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,26 +65,20 @@ or
 .Em bnc
 media type.
 .Sh DIAGNOSTICS
-ec0: wildcarded IRQ is not allowed
-.in +4
+.Bl -diag
+.It "ec0: wildcarded IRQ is not allowed"
 The IRQ was wildcarded in the kernel configuration file.  This is not
 supported.
-.in -4
-.Pp
-ec0: invalid IRQ <n>, must be 3, 4, 5, or 9
-.in +4
+.It "ec0: invalid IRQ <n>, must be 3, 4, 5, or 9"
 An IRQ other than the above listed IRQs was specified in the kernel
 configuration file.  The Etherlink II hardware only supports the
 above listed IRQs.
-.in -4
-.Pp
-ec0: failed to clear shared memory at offset <off>
-.in +4
+.It "ec0: failed to clear shared memory at offset <off>"
 The memory test was unable to clear shared the interface's shared memory
 region.  This often indicates that the card is configured at a conflicting
 .Em iomem
 address.
-.in -4
+.El
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
