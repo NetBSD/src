@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.11 2003/03/24 18:08:51 jdolecek Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.12 2003/03/30 09:44:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.11 2003/03/24 18:08:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.12 2003/03/30 09:44:28 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,10 +759,10 @@ smb_nbst_setparam(struct smb_vc *vcp, int param, void *data)
 	struct nbpcb *nbp = vcp->vc_tdata;
 
 	switch (param) {
-	    case SMBTP_SELECTID:
+	case SMBTP_SELECTID:
 		nbp->nbp_selectid = data;
 		break;
-	    default:
+	default:
 		return EINVAL;
 	}
 	return 0;
