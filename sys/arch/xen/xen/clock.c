@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2005/03/10 21:44:31 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/03/10 21:44:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,8 @@ void
 xen_initclocks()
 {
 	int irq = bind_virq_to_irq(VIRQ_TIMER);
+
+	aprint_verbose("Xen clock: using irq %d\n", irq);
 
 	get_time_values_from_xen();
 	processed_system_time = shadow_system_time;
