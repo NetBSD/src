@@ -1,4 +1,4 @@
-/*	$NetBSD: acpidevs_data.h,v 1.2 2003/02/04 01:43:11 perry Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.3 2003/12/12 06:51:36 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -218,7 +218,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0901",
-	    "Video Seven VRAM/VRAM II/1024i ",
+	    "Video Seven VRAM/VRAM II/1024i",
 	},
 	{
 	    "PNP0902",
@@ -1110,7 +1110,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP8389",
-	    "",
+	    "Peer IrLAN infrared driver (Microsoft-supplied)",
 	},
 	{
 	    "PNP8390",
@@ -1198,7 +1198,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNPB006",
-	    "MPU401 compatible ",
+	    "MPU401 compatible",
 	},
 	{
 	    "PNPB007",
