@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.34 2005/01/08 03:23:15 ginsbach Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.35 2005/03/11 03:19:31 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.34 2005/01/08 03:23:15 ginsbach Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.35 2005/03/11 03:19:31 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,6 +155,7 @@ main(int argc, char *argv[])
 	uid_t uid;
 	int argoff, ch, dflag, one;
 	int i, len, len2;
+	int family = AF_UNSPEC;
 	char *host, *p, *user, *name, term[1024] = "network";
 	speed_t ospeed;
 	struct sigaction sa;
@@ -187,12 +188,18 @@ main(int argc, char *argv[])
 	}
 
 #ifdef KERBEROS
-#define	OPTIONS	"8EKde:p:k:l:x"
+#define	OPTIONS	"468EKde:p:k:l:x"
 #else
-#define	OPTIONS	"8EKde:p:l:"
+#define	OPTIONS	"468EKde:p:l:"
 #endif
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
+		case '4':
+			family = AF_INET;
+			break;
+		case '6':
+			family = AF_INET6;
+			break;
 		case '8':
 			eight = 1;
 			break;
@@ -400,13 +407,12 @@ try_connect:
 		if (doencrypt)
 			errx(1, "the -x flag requires Kerberos authentication.");
 #endif /* CRYPT */
-		rem = rcmd_af(&host, sp->s_port, name, user, term, 0,
-		    PF_UNSPEC);
+		rem = rcmd_af(&host, sp->s_port, name, user, term, 0, family);
 		if (rem < 0)
 			exit(1);
 	}
 #else
-	rem = rcmd_af(&host, sp->s_port, name, user, term, 0, PF_UNSPEC);
+	rem = rcmd_af(&host, sp->s_port, name, user, term, 0, family);
 
 #endif /* KERBEROS */
 
@@ -949,12 +955,12 @@ usage(void)
 	    "usage: rlogin [-%s]%s[-e char] [-l username] [-p port] [username@]host\n",
 #ifdef KERBEROS
 #ifdef CRYPT
-	    "8EKdx", " [-k realm] ");
+	    "468EKdx", " [-k realm] ");
 #else
-	    "8EKd", " [-k realm] ");
+	    "468EKd", " [-k realm] ");
 #endif
 #else
-	    "8Ed", " ");
+	    "468Ed", " ");
 #endif
 	exit(1);
 }
