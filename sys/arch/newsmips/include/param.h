@@ -1,4 +1,4 @@
-/*	from $NetBSD: param.h,v 1.4 1998/08/26 12:07:21 tsubai Exp $	*/
+/*	from $NetBSD: param.h,v 1.5 1999/02/09 17:15:51 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,8 @@
  * Machine dependent constants for mips-based NEWS.
  */
 
+#define	_MACHINE_ARCH	mipseb
+#define	MACHINE_ARCH	"mipseb"
 #define	_MACHINE	newsmips
 #define	MACHINE		"newsmips"
 #define	MID_MACHINE	MID_MIPS
