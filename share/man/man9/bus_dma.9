@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.22 2002/02/13 08:18:36 ross Exp $
+.\" $NetBSD: bus_dma.9,v 1.23 2002/06/12 15:23:34 fvdl Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -366,6 +366,11 @@ will never block
 on resources if the handle was created with
 .Dv BUS_DMA_ALLOCNOW .
 .Pp
+.Fn bus_dmamap_unload
+will not perform any implicit synchronization of DMA buffers. This
+must be done explicitly by
+.Fn bus_dmamap_sync .
+.Pp
 Behavior is not defined if invalid arguments are passed to
 .Fn bus_dmamap_unload .
 .Pp
@@ -432,14 +437,14 @@ On platforms which implement reordered stores,
 .Fn bus_dmamap_sync
 will always cause the store buffer to be flushed.
 .Pp
-This function exists so that multiple read and write transfers can be
-performed with the same buffer, and so that drivers can explicitly
-inform the
-.Nm
-code when their data is 'ready' in its DMA buffer.
+This function exists to ensure that the host and the device have
+a consistent view of a range of DMA memory, before and after
+a DMA operation.
 .Pp
-An example of multiple read-write use of a single mapping
-might look like:
+An example of using
+.Fn bus_dmamamp_sync
+, involving multiple read-write use of a single mapping
+might look like this:
 .Bd -literal
 bus_dmamap_load(...);
 
@@ -470,6 +475,14 @@ while (not done) {
 bus_dmamap_unload(...);
 .Ed
 .Pp
+This function
+.Em must
+be called to synchronize DMA buffers before and after a DMA operation.
+Other
+.Nm
+functions can
+.Em not
+be relied on to do this synchronization implicitly.
 If DMA read and write operations are not preceded and followed by the
 appropriate synchronization operations, behavior is undefined.
 .Pp
