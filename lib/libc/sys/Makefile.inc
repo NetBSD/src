@@ -1,22 +1,22 @@
-#	$NetBSD: Makefile.inc,v 1.112 2001/04/18 08:28:10 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.113 2001/07/18 23:03:10 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
-	sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
+SRCS+=	Ovfork.S __clone.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S \
+	ptrace.S sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
 	syscall.S __syscall.S
 SRCS+=	cerror.S
 
-LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
-DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
+LSRCS+=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
+	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
+	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
+DPSRCS+= Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
+	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
+	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -188,8 +188,8 @@ LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
-	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 close.2 connect.2 \
-	dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
+	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
+	connect.2 dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getdents.2 getdirentries.3 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
@@ -211,6 +211,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
 
 MLINKS+=brk.2 sbrk.2
+MLINKS+=clone.2 __clone.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
