@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.6 2003/02/01 00:57:31 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.7 2003/02/15 04:38:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <sys/cdefs.h>
 #include <sys/time.h>
@@ -44,8 +43,6 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
-
-#undef PTHREAD_COND_DEBUG
 
 #ifdef PTHREAD_COND_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -299,8 +296,10 @@ pthread_cond_signal(pthread_cond_t *cond)
 			cond->ptc_mutex = NULL;
 #endif
 		pthread_spinunlock(self, &cond->ptc_lock);
-		if (signaled != NULL)
+		if (signaled != NULL) {
 			pthread__sched(self, signaled);
+			PTHREADD_ADD(PTHREADD_COND_WOKEUP);
+		}
 	}
 
 	return 0;
@@ -331,6 +330,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #endif
 		pthread_spinunlock(self, &cond->ptc_lock);
 		pthread__sched_sleepers(self, &blockedq);
+		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 	}
 
 	return 0;
