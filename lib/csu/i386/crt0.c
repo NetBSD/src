@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.15 1994/04/05 02:26:13 cgd Exp $
+ *	$Id: crt0.c,v 1.16 1995/01/17 06:09:43 mycroft Exp $
  */
 
 
@@ -343,14 +343,12 @@ _getenv(name)
 	asm("		popl %ecx");
 	asm("		popl %eax");
 	asm("		pushl %ecx");
-	asm("		.byte 0x9a");
-	asm("		.long 0");
-	asm("		.word 7");
+	asm("		int $0x80");
 	asm("		pushl %ecx");
 	asm("		jc 1f");
 	asm("		ret");
 	asm("	1:");
-	asm("		movl	$-1,%eax");
+	asm("		movl $-1,%eax");
 	asm("		ret");
 
 #endif /* DYNAMIC */
