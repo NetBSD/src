@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/08/02 12:15:00 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2001/08/02 15:27:22 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ MAN=	racoon.8 racoon.conf.5
 
 # debugging code with print-isakmp.c
 SRCS+=	print-isakmp.c
+CPPFLAGS+=-DRACOON_PKG_VERSION="\"${PKGVERSION}\""
 CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
 .if (${MKKERBEROS} != "no")
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
