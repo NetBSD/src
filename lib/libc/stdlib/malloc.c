@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.33 2000/07/06 03:13:22 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.34 2000/12/20 20:56:01 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -298,7 +298,7 @@ map_pages(size_t pages)
 {
     caddr_t result, tail;
 
-    result = (caddr_t)pageround((size_t)(u_long)sbrk(0));
+    result = (caddr_t)pageround((size_t)(u_long)sbrk((intptr_t)0));
     tail = result + (pages << malloc_pageshift);
 
     if (brk(tail)) {
@@ -464,7 +464,8 @@ malloc_init (void)
      * We need a maximum of malloc_pageshift buckets, steal these from the
      * front of the page_directory;
      */
-    malloc_origo = pageround((size_t)(u_long)sbrk(0)) >> malloc_pageshift;
+    malloc_origo = pageround((size_t)(u_long)sbrk((intptr_t)0))
+	>> malloc_pageshift;
     malloc_origo -= malloc_pageshift;
 
     malloc_ninfo = malloc_pagesize / sizeof *page_dir;
@@ -924,7 +925,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
     if (!pf->next &&				/* If we're the last one, */
       pf->size > malloc_cache &&		/* ..and the cache is full, */
       pf->end == malloc_brk &&			/* ..and none behind us, */
-      malloc_brk == sbrk(0)) {			/* ..and it's OK to do... */
+      malloc_brk == sbrk((intptr_t)0)) {	/* ..and it's OK to do... */
 
 	/*
 	 * Keep the cache intact.  Notice that the '>' above guarantees that
