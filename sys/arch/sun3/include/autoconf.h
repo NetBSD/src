@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 1994/12/12 18:59:39 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8 1994/12/13 18:26:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -57,4 +57,4 @@ struct confargs {
 int always_match __P((struct device *, void *, void *));
 void bus_scan __P((struct device *, void *, int));
 int  bus_print __P((void *, char *));
-int  bus_peek __P((struct confargs *, int off, int sz, int *));
+int  bus_peek __P((int, int, int));
