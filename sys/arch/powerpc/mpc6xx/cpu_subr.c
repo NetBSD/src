@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.27 2002/08/23 16:08:10 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28 2002/11/25 02:06:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -237,7 +237,7 @@ cpu_setup(self, ci)
 		break;
 
 	default:
-		/* No power-saving mode is available. */
+		/* No power-saving mode is available. */ ;
 	}
 
 #ifdef NAPMODE
