@@ -38,7 +38,8 @@
  */
 
 #include <unistd.h>
-# include <regex.h>
+#include <errno.h>
+#include <regex.h>
 #if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
 # include <sys/param.h>		/* for MAXPATHLEN */
 #endif
@@ -103,10 +104,10 @@ typedef struct undo {
 #  define min(a,b)	((a) < (b) ? (a) : (b))
 #endif
 
-/* nextln: return line after l wrt k */
+/* nextln: return line after l mod k */
 #define nextln(l,k)	((l)+1 > (k) ? 0 : (l)+1)
 
-/* nextln: return line before l wrt k */
+/* nextln: return line before l mod k */
 #define prevln(l,k)	((l)-1 < 0 ? (k) : (l)-1)
 
 #define	skipblanks() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
@@ -165,6 +166,7 @@ long dowrite __P((long, long, char *, char *));
 char *esctos __P((char *));
 long find __P((pattern_t *, int));
 void freecmdv __P((void));
+long getaddr __P((line_t *));
 char *getcmdv __P((void));
 char *getfn __P((void));
 int getkey __P((void));
