@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.10 1996/02/18 05:43:03 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.11 1996/03/27 14:44:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -609,6 +609,7 @@ spp_ctlinput(cmd, sa, arg)
 		return NULL;
 	type = NS_ERR_UNREACH_HOST;
 
+
 	switch (cmd) {
 
 	case PRC_ROUTEDEAD:
@@ -623,12 +624,31 @@ spp_ctlinput(cmd, sa, arg)
 		na = &sns->sns_addr;
 		break;
 
+	case PRC_REDIRECT_NET:
+	case PRC_REDIRECT_HOST:
+	case PRC_REDIRECT_TOSNET:
+	case PRC_REDIRECT_TOSHOST:
+		/*
+		 * PRC_IS_REDIRECT: Call ns_rtchange to flush the route, so
+		 * that the next time we attempt output we try a new one
+		 * XXX: Is this the right way? ns_rtchange has a comment
+		 * that needs to be fixed.
+		 */
+		sns = (struct sockaddr_ns *) sa;
+		if (sns->sns_family != AF_NS)
+			return NULL;
+		na = &sns->sns_addr;
+		ns_pcbnotify(na, (int)nsctlerrmap[cmd], ns_rtchange, (long) 0);
+		return NULL;
+
 	default:
 		errp = arg;
 		na = &errp->ns_err_idp.idp_dna;
 		type = errp->ns_err_num;
 		type = ntohs((u_short)type);
+		break;
 	}
+
 	switch (type) {
 
 	case NS_ERR_UNREACH_HOST:
