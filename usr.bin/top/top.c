@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.5 2000/10/04 17:58:44 itojun Exp $	*/
+/*	$NetBSD: top.c,v 1.6 2000/10/04 20:09:05 mjl Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -215,7 +215,7 @@ char *argv[];
 	    optind = 1;
 	}
 
-	while ((i = getopt(ac, av, "SIbinquvs:d:U:o:")) != EOF)
+	while ((i = getopt(ac, av, "SIbinquvs:d:U:o:")) != -1)
 	{
 	    switch(i)
 	    {
