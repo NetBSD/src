@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.21 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.22 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -133,3 +133,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		from a list that is built at run-time.  [thorpej 20021003]
 	Add CryptoGraphic Disk driver, cgd(4).  [elric 20021004]
 	pciide(4): Added support for VIA VT8235 [kent 20021005]
+	auvia(4): Added support for VT8233/VT8235 [kent 20021005]
