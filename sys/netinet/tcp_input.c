@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.110 2000/07/02 08:04:10 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.111 2000/07/05 21:45:14 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3361,7 +3361,7 @@ syn_cache_respond(sc, m)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && tlen > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == NULL) {
+		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
 			m = NULL;
 		}
