@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.19 1999/06/10 20:34:26 tls Exp $
+#	$NetBSD: bsd.obj.mk,v 1.20 1999/06/10 20:48:28 kim Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -27,11 +27,11 @@ __usrobjdirpf=
 .endif
 .endif
 
-PWD?=		/bin/pwd
+PAWD?=		/bin/pwd
 
 obj:
 	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
-	here='${PWD}'; subdir=$${here#${BSDSRCDIR}/}; \
+	here=`${PAWD}`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
 		echo "$$here/${__objdir} -> $$dest"; \
