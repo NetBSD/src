@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2002/03/24 18:36:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2002/03/25 02:44:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,27 +42,33 @@
 /*
  * a pmap describes a processes' 4GB virtual address space.  this
  * virtual address space can be broken up into 4096 1MB regions which
- * are described by PDEs in the PDP.  the PDEs are defined as follows:
+ * are described by L1 PTEs in the L1 table.
  *
- * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
- * (the following assumes that KERNBASE is 0xf0000000)
+ * There is a line drawn at KERNEL_BASE.  Everything below that line
+ * changes when the VM context is switched.  Everything above that line
+ * is the same no matter which VM context is running.  This is achieved
+ * by making the L1 PTEs for those slots above KERNEL_BASE reference
+ * kernel L2 tables.
  *
- * PDE#s	VA range		usage
- * 0->3835	0x0 -> 0xefc00000	user address space
- * 3836->3839	0xefc00000->		recursive mapping of PDP (used for
- *			0xf0000000	linear mapping of PTPs)
- * 3840->3851	0xf0000000->		kernel text address space (constant
- *			0xf0c00000	across all pmap's/processes)
- * 3852->3855	0xf0c00000->		"alternate" recursive PDP mapping
- *			0xf1000000	(for other pmaps)
- * 3856->4095	0xf1000000->		KVM and device mappings, constant
- *			0x00000000	across all pmaps
+ * The L2 tables are mapped linearly starting at PTE_BASE.  PTE_BASE
+ * is below KERNEL_BASE, which means that the current process's PTEs
+ * are always available starting at PTE_BASE.  Another region of KVA
+ * above KERNEL_BASE, APTE_BASE, is reserved for mapping in the PTEs
+ * of another process, should we need to manipulate them.
  *
- * The maths works out that to then map each 1MB block into 4k pages requires
- * 256 entries, of 4 bytes each, totaling 1k per 1MB.  However as we use 4k
- * pages we allocate 4 PDE's at a time, allocating the same access permissions
- * to them all.  This means we only need 1024 entries in the page table page
- * table, IE we use 1 4k page to linearly map all the other page tables used.
+ * The basic layout of the virtual address space thus looks like this:
+ *
+ *	0xffffffff
+ *	.
+ *	.
+ *	.
+ *	KERNEL_BASE
+ *	--------------------
+ *	PTE_BASE
+ *	.
+ *	.
+ *	.
+ *	0x00000000
  */
 
 /*
