@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.399 2002/01/29 06:08:36 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.400 2002/01/30 01:53:00 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.396 2002/01/29 06:07:16 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.397 2002/01/30 01:52:32 tron Exp 
  */
 
 /*
@@ -9034,9 +9034,9 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_SYNEMA, 0,
+	    PCI_VENDOR_RENDITION, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Synema Corporation",
+	    "Rendition Inc.",
 	    NULL,
 	},
 	{
