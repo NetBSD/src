@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.6 1998/07/11 07:06:16 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.7 1998/07/19 21:41:16 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -240,7 +240,7 @@ mb8795_config(sc)
 
 
 /****************************************************************/
-
+#if 0
 #define XCHR(x) "0123456789abcdef"[(x) & 0xf]
 static void
 hex_dump(unsigned char *pkt, size_t len)
@@ -260,7 +260,7 @@ hex_dump(unsigned char *pkt, size_t len)
 	}
 	printf("\n");
 }
-
+#endif
 
 /*
  * Controller receive interrupt.
@@ -854,7 +854,6 @@ mb8795_txdma_completed(map, arg)
 	void *arg;
 {
 	struct mb8795_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
   DPRINTF(("%s: mb8795_txdma_completed()\n",sc->sc_dev.dv_xname));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1998/07/04 22:18:34 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1998/07/19 21:41:17 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -174,6 +174,15 @@ next68k_init()
 {
   int i;
 
+#if 0
+  /* @@@ Since the boot rom doesn't know how to pass in
+	 * these parameters yet, I manually set them here while debugging
+	 * the scsi driver.
+	 * Darrin B. Jewell <dbj@netbsd.org>  Sun Jul 19 06:14:52 1998
+	 */
+	boothowto = RB_KDB | RB_ASKNAME;
+#endif
+
   /* Initialize the interrupt handlers. */
   isrinit();
 
@@ -228,13 +237,11 @@ consinit()
     cninit();
 
 #ifdef DDB
-#ifdef DEBUG
-#if 0
-    printf("This kernel was compiled with DEBUG: entering debugger\n");
-    Debugger();
+		if (boothowto & RB_KDB) {
+			Debugger();
+		}
 #endif
-#endif
-#endif
+
     init = 1;
   }
   else

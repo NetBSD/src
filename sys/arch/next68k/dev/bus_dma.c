@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.2 1998/07/17 21:10:01 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.3 1998/07/19 21:41:16 dbj Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 1998/07/17 21:10:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 1998/07/19 21:41:16 dbj Exp $");
 #endif
 
 #include <sys/param.h>
@@ -337,6 +337,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+#if 0
 	vm_offset_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
@@ -383,7 +384,8 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base + offset;
 
 		error = _bus_dmamap_load_buffer_direct_common(map, addr,
-		    minlen, p, flags, &lastaddr, &seg, first);
+		    minlen, p, flags, 
+				&lastaddr, &seg, first);
 		first = 0;
 
 		offset = 0;
@@ -394,6 +396,16 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 		map->dm_nsegs = seg + 1;
 	}
 	return (error);
+#else
+	/* @@@ This needs to be re-synced with the
+	 * arch/alpha/common/bus_dma.c driver. (and probably
+	 * that should be moved to MI code.  Unfortunately,
+	 * the above addition won't compile until this is updated.
+	 * Hopefully, I will get to this shortly.
+   * Darrin B. Jewell <dbj@netbsd.org>  Sun Jul 19 17:28:16 1998
+	 */
+	panic("_bus_dmamap_load_uio_direct: not implemented");
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.2 1998/07/13 04:01:39 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.3 1998/07/19 21:41:16 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -151,8 +151,6 @@ bus_dmamap_t esp_dmacb_continue __P((void *arg));
 void esp_dmacb_completed __P((bus_dmamap_t map, void *arg));
 void esp_dmacb_shutdown __P((void *arg));
 
-void	espattach	__P((struct esp_softc *));
-
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch_intio, espattach_intio
@@ -208,8 +206,12 @@ espmatch_intio(parent, cf, aux)
   /* should probably probe here */
   /* Should also probably set up data from config */
 
+#if 1
 /* this code isn't working yet, don't match on it */
 	return(0);
+#else
+	return(1);
+#endif
 }
 
 void
@@ -223,57 +225,12 @@ espattach_intio(parent, self, aux)
 	esc->sc_bst = NEXT68K_INTIO_BUS_SPACE;
 	if (bus_space_map(esc->sc_bst, NEXT_P_SCSI, 
 			ESP_DEVICE_SIZE, 0, &esc->sc_bsh)) {
-    panic("\n%s: can't map ncr53c90 registers\n",
+    panic("\n%s: can't map ncr53c90 registers",
 				sc->sc_dev.dv_xname);
 	}
 
 	sc->sc_id = 7;
 	sc->sc_freq = 20;							/* Mhz */
-
-	/* @@@ Some ESP_DCTL bits probably need setting */
-
-	/* Set up SCSI DMA */
-	{
-		esc->sc_scsi_dma.nd_bst = NEXT68K_INTIO_BUS_SPACE;
-
-		if (bus_space_map(esc->sc_scsi_dma.nd_bst, NEXT_P_SCSI_CSR,
-				sizeof(struct dma_dev),0, &esc->sc_scsi_dma.nd_bsh)) {
-			panic("\n%s: can't map scsi DMA registers\n",
-					sc->sc_dev.dv_xname);
-		}
-
-		esc->sc_scsi_dma.nd_intr = NEXT_I_SCSI_DMA;
-		esc->sc_scsi_dma.nd_chaining_flag = 0;
-		esc->sc_scsi_dma.nd_shutdown_cb  = &esp_dmacb_shutdown;
-		esc->sc_scsi_dma.nd_continue_cb  = &esp_dmacb_continue;
-		esc->sc_scsi_dma.nd_completed_cb = &esp_dmacb_completed;
-		esc->sc_scsi_dma.nd_cb_arg       = sc;
-		nextdma_config(&esc->sc_scsi_dma);
-		nextdma_init(&esc->sc_scsi_dma);
-
-		/* @@@ maxxfer is not set yet here */
-		{
-			int error;
-			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
-					sc->sc_maxxfer, 1, sc->sc_maxxfer,
-					0, BUS_DMA_ALLOCNOW, &esc->sc_dmamap)) != 0) {
-				panic("%s: can't create i/o DMA map, error = %d\n",
-						sc->sc_dev.dv_xname,error);
-			}
-		}
-
-		espattach(esc);
-	}
-}
-
-/*
- * Attach this instance, and then all the sub-devices
- */
-void
-espattach(esc)
-	struct esp_softc *esc;
-{
-	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
@@ -358,10 +315,42 @@ espattach(esc)
 		break;
 	}
 
-	/* Establish interrupt channel */
-	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
-			NEXT_I_IPL(NEXT_I_SCSI), 0);
-	INTR_ENABLE(NEXT_I_SCSI);
+	/* @@@ Some ESP_DCTL bits probably need setting */
+	NCR_WRITE_REG(sc, ESP_DCTL, 
+			ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_RESET);
+	DELAY(10);
+	NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_20MHZ | ESPDCTL_INTENB);
+	DELAY(10);
+
+	/* Set up SCSI DMA */
+	{
+		esc->sc_scsi_dma.nd_bst = NEXT68K_INTIO_BUS_SPACE;
+
+		if (bus_space_map(esc->sc_scsi_dma.nd_bst, NEXT_P_SCSI_CSR,
+				sizeof(struct dma_dev),0, &esc->sc_scsi_dma.nd_bsh)) {
+			panic("\n%s: can't map scsi DMA registers",
+					sc->sc_dev.dv_xname);
+		}
+
+		esc->sc_scsi_dma.nd_intr = NEXT_I_SCSI_DMA;
+		esc->sc_scsi_dma.nd_chaining_flag = 0;
+		esc->sc_scsi_dma.nd_shutdown_cb  = &esp_dmacb_shutdown;
+		esc->sc_scsi_dma.nd_continue_cb  = &esp_dmacb_continue;
+		esc->sc_scsi_dma.nd_completed_cb = &esp_dmacb_completed;
+		esc->sc_scsi_dma.nd_cb_arg       = sc;
+		nextdma_config(&esc->sc_scsi_dma);
+		nextdma_init(&esc->sc_scsi_dma);
+
+		{
+			int error;
+			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
+					sc->sc_maxxfer, 1, sc->sc_maxxfer,
+					0, BUS_DMA_ALLOCNOW, &esc->sc_dmamap)) != 0) {
+				panic("%s: can't create i/o DMA map, error = %d",
+						sc->sc_dev.dv_xname,error);
+			}
+		}
+	}
 
 	/* register interrupt stats */
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
@@ -372,10 +361,20 @@ espattach(esc)
 #if 0
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
-
-	bootpath_store(1, NULL);
+#else
+	ncr53c9x_dmaselect = 0;
 #endif
 
+	esc->sc_slop_bgn_addr = 0;
+	esc->sc_slop_bgn_size = 0;
+	esc->sc_slop_end_addr = 0;
+	esc->sc_slop_end_size = 0;
+	esc->sc_datain = -1;
+
+	/* Establish interrupt channel */
+	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
+			NEXT_I_IPL(NEXT_I_SCSI), 0);
+	INTR_ENABLE(NEXT_I_SCSI);
 }
 
 /*
@@ -415,7 +414,18 @@ esp_dma_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	if (esc->sc_dmamap->dm_mapsize != 0) {
+		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
+	}
+
 	nextdma_reset(&esc->sc_scsi_dma);
+
+	esc->sc_slop_bgn_addr = 0;
+	esc->sc_slop_bgn_size = 0;
+	esc->sc_slop_end_addr = 0;
+	esc->sc_slop_end_size = 0;
+	esc->sc_datain = -1;
 }
 
 int
@@ -439,19 +449,69 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 #ifdef DIAGNOSTIC
-	if (esc->sc_datain != -1) {
-		panic("%s: map already loaded in esp_dma_setup, datain = %d",
-				sc->sc_dev.dv_xname,esc->sc_datain);
+	if ((esc->sc_datain != -1) ||
+			(esc->sc_dmamap->dm_mapsize != 0)) {
+		panic("%s: map already loaded in esp_dma_setup\n"
+				"\tdatain = %d\n\tmapsize=%d",
+				sc->sc_dev.dv_xname,esc->sc_datain,esc->sc_dmamap->dm_mapsize);
 	}
 #endif
 
+	/* Deal with DMA alignment issues, by stuffing the FIFO.
+	 * This assumes that if bus_dmamap_load is given an aligned
+	 * buffer, then it will generate aligned hardware addresses
+	 * to give to the device.  Perhaps that is not a good assumption,
+	 * but it is probably true. [dbj@netbsd.org:19980719.0135EDT]
+	 */
 	{
-		int error;
-		error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
-				esc->sc_dmamap, *addr, *dmasize, NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			panic("%s: can't start DMA\n");
+		int slop_bgn_size; /* # bytes to be fifo'd at beginning */
+		int slop_end_size; /* # bytes to be fifo'd at end */
+
+		{
+			u_long bgn = (u_long)(*addr);
+			u_long end = (u_long)(*addr+*dmasize);
+
+			slop_bgn_size = DMA_BEGINALIGNMENT-(bgn % DMA_BEGINALIGNMENT);
+			slop_end_size = end % DMA_ENDALIGNMENT;
 		}
+
+		/* Check to make sure we haven't counted the slop twice
+		 * as would happen for a very short dma buffer */
+		if (slop_bgn_size+slop_end_size > *dmasize) {
+#if defined(DIAGNOSTIC)
+			if ((slop_bgn_size != *dmasize) ||
+					(slop_end_size != *dmasize)) {
+				printf("slop_bgn_size %d",slop_bgn_size);
+				printf("slop_end_size %d",slop_bgn_size);
+				panic("%s: confused alignment calculation\n"
+						"\tslop_bgn_size %d\n\tslop_end_size %d\n\tdmasize %d",
+						sc->sc_dev.dv_xname,slop_bgn_size,slop_end_size,*dmasize);
+			}
+#endif
+			slop_end_size = 0;
+		}
+
+		if (slop_bgn_size+slop_end_size < *dmasize) {
+			int error;
+			error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
+					esc->sc_dmamap, 
+					*addr+slop_bgn_size,
+					*dmasize-(slop_bgn_size+slop_end_size),
+					NULL, BUS_DMA_NOWAIT);
+			if (error) {
+				panic("%s: can't load dma map. error = %d",error);
+			}
+
+		} else {
+			/* If there's no DMA, then coalesce the fifo buffers */
+			slop_bgn_size += slop_end_size;
+			slop_end_size = 0;
+		}
+
+		esc->sc_slop_bgn_addr = *addr;
+		esc->sc_slop_bgn_size = slop_bgn_size;
+		esc->sc_slop_end_addr = (*addr+*dmasize)-slop_end_size;
+		esc->sc_slop_end_size = slop_end_size;
 	}
 
 	esc->sc_datain = datain;
@@ -464,8 +524,23 @@ esp_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	nextdma_start(&esc->sc_scsi_dma, 
-			(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
+
+	/* @@@ Stuff the bgn slop into fifo */
+	
+	if (esc->sc_dmamap->dm_mapsize != 0) {
+		nextdma_start(&esc->sc_scsi_dma, 
+				(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
+	} else {
+#if defined(DIAGNOSTIC)
+		/* @@@ verify that end slop is 0, since the shutdown
+		 * callback will not be called.
+		 */
+#endif
+		esc->sc_slop_bgn_addr = 0;
+		esc->sc_slop_bgn_size = 0;
+		esc->sc_slop_end_addr = 0;
+		esc->sc_slop_end_size = 0;
+	}
 }
 
 void
@@ -545,5 +620,12 @@ esp_dmacb_shutdown(arg)
 #endif
 
 	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
+
+	/* @@@ Stuff the end slop into fifo */
+
 	esc->sc_datain = -1;
+	esc->sc_slop_bgn_addr = 0;
+	esc->sc_slop_bgn_size = 0;
+	esc->sc_slop_end_addr = 0;
+	esc->sc_slop_end_size = 0;
 }

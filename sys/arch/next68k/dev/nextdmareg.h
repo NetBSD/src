@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.2 1998/07/19 21:41:17 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -29,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* I think the chip can handle 64k per chain, but I don't
+ * know how much per segment for sure.  We might try
+ * experimenting with this value.  Can we cross page boundaries?
+ */
 #define MAX_DMASIZE 8192
 
 /* from nextdev/dma.h */
