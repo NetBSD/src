@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.112 2003/06/15 13:49:46 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.113 2003/07/31 06:57:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.112 2003/06/15 13:49:46 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.113 2003/07/31 06:57:07 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -176,15 +176,22 @@ static void
 parse_feat(const char *line)
 {
 
-	if (strcasecmp(line, " MDTM") == 0)
+			/*
+			 * work-around broken ProFTPd servers that can't
+			 * even obey RFC 2389.
+			 */
+	while (*line && isspace((int)*line))
+		line++;
+
+	if (strcasecmp(line, "MDTM") == 0)
 		features[FEAT_MDTM] = 1;
-	else if (strncasecmp(line, " MLST", sizeof(" MLST") - 1) == 0) {
+	else if (strncasecmp(line, "MLST", sizeof("MLST") - 1) == 0) {
 		features[FEAT_MLST] = 1;
-	} else if (strcasecmp(line, " REST STREAM") == 0)
+	} else if (strcasecmp(line, "REST STREAM") == 0)
 		features[FEAT_REST_STREAM] = 1;
-	else if (strcasecmp(line, " SIZE") == 0)
+	else if (strcasecmp(line, "SIZE") == 0)
 		features[FEAT_SIZE] = 1;
-	else if (strcasecmp(line, " TVFS") == 0)
+	else if (strcasecmp(line, "TVFS") == 0)
 		features[FEAT_TVFS] = 1;
 }
 
@@ -264,9 +271,16 @@ getremoteinfo(void)
 		features[FEAT_FEAT] = 1;
 	} else
 		features[FEAT_FEAT] = 0;
-	if (debug)
-		for (i = 0; i < FEAT_max; i++)
-			printf("features[%d] = %d\n", i, features[i]);
+	if (debug) {
+#define DEBUG_FEAT(x) fprintf(ttyout, "features[" #x "] = %d\n", features[(x)])
+		DEBUG_FEAT(FEAT_FEAT);
+		DEBUG_FEAT(FEAT_MDTM);
+		DEBUG_FEAT(FEAT_MLST);
+		DEBUG_FEAT(FEAT_REST_STREAM);
+		DEBUG_FEAT(FEAT_SIZE);
+		DEBUG_FEAT(FEAT_TVFS);
+#undef DEBUG_FEAT
+	}
 	reply_callback = NULL;
 
 	verbose = overbose;
