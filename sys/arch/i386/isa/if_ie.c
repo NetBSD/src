@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.21 1995/01/02 20:39:35 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.22 1995/01/02 20:54:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -252,31 +252,30 @@ struct ie_softc {
 
 int iewatchdog __P((/* short */));
 int ieintr __P((struct ie_softc *));
-int ieinit __P((struct ie_softc *sc));
-int ieioctl __P((struct ifnet *ifp, u_long command, caddr_t data));
-int iestart __P((struct ifnet *ifp));
+int ieinit __P((struct ie_softc *));
+int ieioctl __P((struct ifnet *, u_long, caddr_t));
+int iestart __P((struct ifnet *));
 static void el_reset_586 __P((struct ie_softc *));
 static void sl_reset_586 __P((struct ie_softc *));
 static void el_chan_attn __P((struct ie_softc *));
 static void sl_chan_attn __P((struct ie_softc *));
 void iereset __P((struct ie_softc *));
-static void ie_readframe __P((struct ie_softc *sc, int bufno));
-static void ie_drop_packet_buffer __P((struct ie_softc *sc));
+static void ie_readframe __P((struct ie_softc *, int));
+static void ie_drop_packet_buffer __P((struct ie_softc *));
 static void slel_get_address __P((struct ie_softc *));
 static void find_ie_mem_size __P((struct ie_softc *));
-static int command_and_wait __P((struct ie_softc *sc, int command,
-    void volatile *pcmd, int));
-/*static*/ void ierint __P((struct ie_softc *sc));
-/*static*/ void ietint __P((struct ie_softc *sc));
-/*static*/ void iernr __P((struct ie_softc *sc));
-static void start_receiver __P((struct ie_softc *sc));
+static int command_and_wait __P((struct ie_softc *, int,
+    void volatile *, int));
+/*static*/ void ierint __P((struct ie_softc *));
+/*static*/ void ietint __P((struct ie_softc *));
+static void start_receiver __P((struct ie_softc *));
 static int ieget __P((struct ie_softc *, struct mbuf **,
 		      struct ether_header *, int *));
-static caddr_t setup_rfa __P((caddr_t ptr, struct ie_softc *sc));
+static caddr_t setup_rfa __P((caddr_t ptr, struct ie_softc *));
 static int mc_setup __P((struct ie_softc *, caddr_t));
-static void mc_reset __P((struct ie_softc *sc));
+static void mc_reset __P((struct ie_softc *));
 #ifdef IEDEBUG
-void print_rbd __P((volatile struct ie_recv_buf_desc *rbd));
+void print_rbd __P((volatile struct ie_recv_buf_desc *));
 int in_ierint = 0;
 int in_ietint = 0;
 #endif
@@ -612,11 +611,9 @@ loop:
 	}
 
 	if (status & IE_ST_RNR) {
-#ifdef IEDEBUG
-		if (sc->sc_debug & IED_RNR)
-			printf("%s: rnr\n", sc->sc_dev.dv_xname);
-#endif
-		iernr(sc);
+		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_ierrors++;
+		iereset(sc);
 	}
 
 #ifdef IEDEBUG
@@ -730,27 +727,6 @@ ietint(sc)
 	}
 
 	iestart(&sc->sc_arpcom.ac_if);
-}
-
-/*
- * Process a receiver-not-ready interrupt.  I believe that we get these
- * when there aren't enough buffers to go around.  For now (FIXME), we
- * just restart the receiver, and hope everything's ok.
- */
-void
-iernr(sc)
-	struct ie_softc *sc;
-{
-
-	command_and_wait(sc, IE_RU_DISABLE, 0, 0); /* just in case */
-	setup_rfa((caddr_t)sc->rframes[0], sc);
-
-	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
-	command_and_wait(sc, IE_RU_START, 0, 0); /* was ENABLE */
-
-	ie_ack(sc, IE_ST_WHENCE);
-
-	sc->sc_arpcom.ac_if.if_ierrors++;
 }
 
 /*
@@ -1272,12 +1248,12 @@ iestart(ifp)
 		sc->xmit_buffs[sc->xmit_count]->ie_xmit_flags = IE_XMIT_LAST | len;
 		sc->xmit_buffs[sc->xmit_count]->ie_xmit_next = 0xffff;
 		sc->xmit_buffs[sc->xmit_count]->ie_xmit_buf = 
-			MK_24(MEM, sc->xmit_cbuffs[sc->xmit_count]);
+		    MK_24(MEM, sc->xmit_cbuffs[sc->xmit_count]);
 		
 		sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_cmd = IE_CMD_XMIT;
 		sc->xmit_cmds[sc->xmit_count]->ie_xmit_status = 0;
 		sc->xmit_cmds[sc->xmit_count]->ie_xmit_desc = 
-			MK_16(MEM, sc->xmit_buffs[sc->xmit_count]);
+		    MK_16(MEM, sc->xmit_buffs[sc->xmit_count]);
 		
 		*bptr = MK_16(MEM, sc->xmit_cmds[sc->xmit_count]);
 		bptr = &sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_link;
@@ -1612,8 +1588,7 @@ start_receiver(sc)
 }
 
 /*
- * Here is a helper routine for iernr() and ieinit().  This sets up
- * the RFA.
+ * Here is a helper routine for ieinit().  This sets up the RFA.
  */
 static caddr_t
 setup_rfa(ptr, sc)
