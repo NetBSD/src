@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.10 2001/01/18 21:40:15 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.11 2001/01/19 10:13:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.10 2001/01/18 21:40:15 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.11 2001/01/19 10:13:21 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ extern char *toutpath;
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
-#define MSTART		(MAXFCT - 16)
+#define MSTART		(MAXFCT - MERGE_FNUM)
 
 void
 fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
@@ -164,7 +164,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
 				if (panic >= PANIC) {
-					fstack[MAXFCT-16+mfct].fp = ftmp();
+					fstack[MSTART + mfct].fp = ftmp();
 					if ((stable_sort)
 						? sradixsort(keylist, nelem,
 							weights, REC_D)
@@ -172,11 +172,11 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 							weights, REC_D) )
 						err(2, NULL);
 					append(keylist, nelem, depth,
-					    fstack[MAXFCT-16+mfct].fp, putrec,
+					    fstack[MSTART + mfct].fp, putrec,
 					    ftbl);
 					mfct++;
 					/* reduce number of open files */
-					if (mfct == 16 ||(c == EOF && ntfiles)) {
+					if (mfct == MERGE_FNUM ||(c == EOF && ntfiles)) {
 						tmpbuf = malloc(bufend -
 						    crec->data);
 						memmove(tmpbuf, crec->data,
