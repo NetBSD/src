@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.11 2001/12/10 23:23:24 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.12 2001/12/15 20:43:31 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.11 2001/12/10 23:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.12 2001/12/15 20:43:31 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -91,14 +91,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.11 2001/12/10 23:23:24 martin Exp $")
 		PPPOE_ADD_16(PTR, SESS);	\
 		PPPOE_ADD_16(PTR, LEN)
 
+#define	PPPOE_DISC_TIMEOUT	hz/5
+#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times */
+#define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
+
 struct pppoe_softc {
 	struct sppp sc_sppp;		/* contains a struct ifnet as first element */
 	LIST_ENTRY(pppoe_softc) sc_list;
 	struct ifnet *sc_eth_if;	/* ethernet interface we are using */
-
-#define	PPPOE_DISC_TIMEOUT	hz/5
-#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times */
-#define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 	
 #define PPPOE_STATE_INITIAL	0
 #define PPPOE_STATE_PADI_SENT	1
@@ -287,24 +287,20 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 
 	if (sc != t) {
 #ifdef PPPOE_DEBUG
-		printf("pppoe: invalid host unique value\n");
+		printf("pppoe: alien host unique tag, no session found\n");
 #endif
 		return NULL;
 	}
 
 	/* should be safe to access *sc now */
 	if (sc->sc_state < PPPOE_STATE_PADI_SENT || sc->sc_state >= PPPOE_STATE_SESSION) {
-#ifdef PPPOE_DEBUG
-		printf("%s: state=%d, not accepting host unique\n",
+		printf("%s: host unique tag found, but it belongs to a connection in state %d\n",
 			sc->sc_sppp.pp_if.if_xname, sc->sc_state);
-#endif
 		return NULL;
 	}
 	if (sc->sc_eth_if != rcvif) {
-#ifdef PPPOE_DEBUG
 		printf("%s: wrong interface, not accepting host unique\n",
 			sc->sc_sppp.pp_if.if_xname);
-#endif
 		return NULL;
 	}
 	return sc;
@@ -965,7 +961,7 @@ pppoe_tlf(struct sppp *sp)
 	 * function and defer disconnecting to the timeout handler.
 	 */
 	sc->sc_state = PPPOE_STATE_CLOSING;
-	callout_reset(&sc->sc_timeout, hz/100, pppoe_timeout, sc);
+	callout_reset(&sc->sc_timeout, hz/50, pppoe_timeout, sc);
 }
 
 static void
