@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1995/09/18 13:55:09 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 1995/09/19 03:18:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -446,9 +446,9 @@ again:
 #ifdef DIAGNOSTIC
 		printf("I/O map kludge for old ROMs that use hardware %s",
 			"addresses directly.\n");
+#endif
 		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
 			 VM_PROT_READ|VM_PROT_WRITE);
-#endif
 	}
 }
 
