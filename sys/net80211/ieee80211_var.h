@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.6 2004/04/30 23:51:50 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_var.h,v 1.10 2003/10/17 23:15:30 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_var.h,v 1.15 2004/04/05 22:10:26 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_VAR_H_
 #define _NET80211_IEEE80211_VAR_H_
@@ -49,6 +49,9 @@
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
 #define	IEEE80211_CHAN_ANYC \
 	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
+
+#define	IEEE80211_TXPOWER_MAX	100	/* max power */
+#define	IEEE80211_TXPOWER_MIN	0	/* kill radio (if possible) */
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
@@ -75,6 +78,15 @@ enum ieee80211_opmode {
 	IEEE80211_M_AHDEMO	= 3,	/* Old lucent compatible adhoc demo */
 	IEEE80211_M_HOSTAP	= 6,	/* Software Access Point */
 	IEEE80211_M_MONITOR	= 8	/* Monitor mode */
+};
+
+/*
+ * 802.11g protection mode.
+ */
+enum ieee80211_protmode {
+	IEEE80211_PROT_NONE	= 0,	/* no protection */
+	IEEE80211_PROT_CTSONLY	= 1,	/* CTS to self */
+	IEEE80211_PROT_RTSCTS	= 2,	/* RTS-CTS */
 };
 
 /*
@@ -179,6 +191,7 @@ struct ieee80211com {
 	enum ieee80211_state	ic_state;	/* 802.11 state */
 	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
 	u_int16_t		ic_max_aid;
+	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
 	struct ifmedia		ic_media;	/* interface media config */
 #ifdef __FreeBSD__
 	struct bpf_if		*ic_rawbpf;	/* packet filter structure */
@@ -249,6 +262,8 @@ struct ieee80211com {
 #define IEEE80211_F_TXPOW_AUTO	0x00010000	/* TX Power: undefined */
 #define	IEEE80211_F_SHSLOT	0x00020000	/* CONF: short slot time */
 #define	IEEE80211_F_SHPREAMBLE	0x00040000	/* CONF: short preamble */
+#define	IEEE80211_F_USEPROT	0x00100000	/* STATUS: protection enabled */
+#define	IEEE80211_F_USEBARKER	0x00200000	/* STATUS: use barker preamble*/
 
 /* ic_caps */
 #define	IEEE80211_C_WEP		0x00000001	/* CAPABILITY: WEP available */
@@ -261,7 +276,6 @@ struct ieee80211com {
 #define	IEEE80211_C_SHSLOT	0x00000080	/* CAPABILITY: short slottime */
 #define	IEEE80211_C_SHPREAMBLE	0x00000100	/* CAPABILITY: short preamble */
 #define	IEEE80211_C_MONITOR	0x00000200	/* CAPABILITY: monitor mode */
-#define	IEEE80211_C_RCVMGT	0x00000400	/* CAPABILITY: rcv mgt frames */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
