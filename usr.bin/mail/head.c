@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.8 1998/12/19 16:32:52 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.9 2002/03/02 13:57:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.8 1998/12/19 16:32:52 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.9 2002/03/02 13:57:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,7 @@ __RCSID("$NetBSD: head.c,v 1.8 1998/12/19 16:32:52 christos Exp $");
  * accomodate all funny formats.
  */
 int
-ishead(linebuf)
-	char linebuf[];
+ishead(char linebuf[])
 {
 	char *cp;
 	struct headline hl;
@@ -85,8 +84,7 @@ ishead(linebuf)
 
 /*ARGSUSED*/
 void
-fail(linebuf, reason)
-	char linebuf[], reason[];
+fail(char linebuf[], char reason[])
 {
 
 	/*
@@ -103,9 +101,7 @@ fail(linebuf, reason)
  * structure.  Actually, it scans.
  */
 void
-parse(line, hl, pbuf)
-	char line[], pbuf[];
-	struct headline *hl;
+parse(char line[], struct headline *hl, char pbuf[])
 {
 	char *cp;
 	char *sp;
@@ -138,9 +134,7 @@ parse(line, hl, pbuf)
  * the left string into it.
  */
 char *
-copyin(src, space)
-	char *src;
-	char **space;
+copyin(char *src, char **space)
 {
 	char *cp;
 	char *top;
@@ -175,8 +169,7 @@ char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
 char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
 
 int
-isdate(date)
-	char date[];
+isdate(char date[])
 {
 
 	return cmatch(date, ctype) || 
@@ -189,8 +182,7 @@ isdate(date)
  * Return 1 if they match, 0 if they don't
  */
 int
-cmatch(cp, tp)
-	char *cp, *tp;
+cmatch(char *cp, char *tp)
 {
 
 	while (*cp && *tp)
@@ -236,8 +228,7 @@ cmatch(cp, tp)
  * or NOSTR if none follow.
  */
 char *
-nextword(wp, wbuf)
-	char *wp, *wbuf;
+nextword(char *wp, char *wbuf)
 {
 	int c;
 
