@@ -1,4 +1,5 @@
-.\" $NetBSD: pac.8,v 1.4 1995/11/15 22:52:07 pk Exp $
+.\"	$NetBSD: pac.8,v 1.5 1997/10/05 15:12:25 mrg Exp $
+.\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -39,7 +40,7 @@
 .Nm pac
 .Nd printer/plotter accounting information
 .Sh SYNOPSIS
-.Nm pac
+.Nm
 .Op Fl P Ns Ar printer
 .Op Fl c
 .Op Fl m
@@ -48,7 +49,7 @@
 .Op Fl r
 .Op Ar name ...
 .Sh DESCRIPTION
-.Nm Pac
+.Nm
 reads the printer/plotter accounting files, accumulating the number
 of pages (the usual case) or feet (for raster devices)
 of paper consumed by each user, and printing out

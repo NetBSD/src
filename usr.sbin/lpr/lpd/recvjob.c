@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.9 1997/10/05 11:52:35 mrg Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.10 1997/10/05 15:12:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.9 1997/10/05 11:52:35 mrg Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.10 1997/10/05 15:12:15 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ __RCSID("$NetBSD: recvjob.c,v 1.9 1997/10/05 11:52:35 mrg Exp $");
 
 #define ack()	(void)write(1, sp, 1);
 
-static char	 dfname[40];	/* data files */
+static char	 dfname[NAME_MAX];	/* data files */
 static int	 minfree;       /* keep at least minfree blocks available */
 static char	*sp = "";
-static char	 tfname[40];	/* tmp copy of cf before linking */
+static char	 tfname[NAME_MAX];	/* tmp copy of cf before linking */
 
 static int        chksize __P((int));
 static void       frecverr __P((const char *, ...));
@@ -140,8 +140,8 @@ recvjob()
 static int
 readjob()
 {
-	register int size, nfiles;
-	register char *cp;
+	int size, nfiles;
+	char *cp;
 
 	ack();
 	nfiles = 0;
@@ -153,10 +153,13 @@ readjob()
 		do {
 			if ((size = read(1, cp, 1)) != 1) {
 				if (size < 0)
-					frecverr("%s: Lost connection",printer);
+					frecverr("%s: Lost connection",
+					    printer);
 				return(nfiles);
 			}
-		} while (*cp++ != '\n');
+		} while (*cp++ != '\n' && (cp - line + 1) < sizeof(line));
+		if (cp - line + 1 >= sizeof(line))
+			frecverr("readjob overflow");
 		*--cp = '\0';
 		cp = line;
 		switch (*cp++) {
@@ -177,8 +180,13 @@ readjob()
 			 * returns
 			 */
 			(void)strncpy(cp + 6, from, sizeof(line) - strlen(line) - 1);
+			line[sizeof(line) - 1 ] = '\0';
 			(void)strncpy(tfname, cp, sizeof(tfname) - 1);
+			tfname[sizeof(tfname) - 1 ] = '\0';
 			tfname[0] = 't';
+			if (strchr(tfname, '/'))
+				frecverr("readjob: %s: illegal path name",
+				    tfname);
 			if (!chksize(size)) {
 				(void)write(1, "\2", 1);
 				continue;
@@ -205,7 +213,8 @@ readjob()
 				continue;
 			}
 			(void)strncpy(dfname, cp, sizeof(dfname) - 1);
-			if (index(dfname, '/'))
+			dfname[sizeof(dfname) - 1] = '\0';
+			if (strchr(dfname, '/'))
 				frecverr("readjob: %s: illegal path name",
 					dfname);
 			(void)readfile(dfname, size);
@@ -223,9 +232,9 @@ readfile(file, size)
 	char *file;
 	int size;
 {
-	register char *cp;
+	char *cp;
 	char buf[BUFSIZ];
-	register int i, j, amt;
+	int i, j, amt;
 	int fd, err;
 
 	fd = open(file, O_CREAT|O_EXCL|O_WRONLY, FILMOD);
@@ -303,7 +312,7 @@ read_number(fn)
 	char *fn;
 {
 	char lin[80];
-	register FILE *fp;
+	FILE *fp;
 
 	if ((fp = fopen(fn, "r")) == NULL)
 		return (0);
@@ -334,14 +343,14 @@ rcleanup(signo)
 	dfname[0] = '\0';
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 static void
-#if __STDC__
+#ifdef __STDC__
 frecverr(const char *msg, ...)
 #else
 frecverr(msg, va_alist)
@@ -351,7 +360,7 @@ frecverr(msg, va_alist)
 {
 	extern char fromb[];
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);

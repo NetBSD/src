@@ -1,4 +1,5 @@
-/*	$NetBSD: lprm.c,v 1.6 1996/12/09 09:57:49 mrg Exp $	*/
+/*	$NetBSD: lprm.c,v 1.7 1997/10/05 15:12:22 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +34,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: lprm.c,v 1.7 1997/10/05 15:12:22 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -64,6 +66,7 @@ static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "lp.h"
 #include "lp.local.h"
 
@@ -79,14 +82,15 @@ uid_t	 uid, euid;		/* real and effective user id's */
 
 static char	luser[16];	/* buffer for person */
 
-void usage __P((void));
+static void usage __P((void));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *arg;
+	char *arg;
 	struct passwd *p;
 
 	uid = getuid();
@@ -100,6 +104,7 @@ main(argc, argv)
 	if (strlen(p->pw_name) >= sizeof(luser))
 		fatal("Your name is too long");
 	strncpy(luser, p->pw_name, sizeof(luser) - 1);
+	luser[sizeof(luser) - 1] = '\0';
 	person = luser;
 	while (--argc) {
 		if ((arg = *++argv)[0] == '-')
@@ -141,7 +146,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 usage()
 {
 	fprintf(stderr, "usage: lprm [-] [-Pprinter] [[job #] [user] ...]\n");
