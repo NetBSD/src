@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.154 2005/02/19 22:19:02 matt Exp $ */
+/* $NetBSD: syscall.h,v 1.155 2005/02/25 19:55:18 matt Exp $ */
 
 /*
  * System call numbers.
@@ -1018,6 +1018,12 @@
 
 /* syscall: "extattr_list_link" ret: "int" args: "const char *" "int" "void *" "size_t" */
 #define	SYS_extattr_list_link	372
+
+/* syscall: "pselect" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "const struct timespec *" "const sigset_t *" */
+#define	SYS_pselect	373
+
+/* syscall: "pollts" ret: "int" args: "struct pollfd *" "u_int" "const struct timespec *" "const sigset_t *" */
+#define	SYS_pollts	374
 
 #define	SYS_MAXSYSCALL	375
 #define	SYS_NSYSENT	512
