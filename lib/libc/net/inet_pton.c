@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.9 1998/11/13 15:46:54 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.9.2.1 1999/10/20 23:57:05 he Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.9 1998/11/13 15:46:54 christos Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.9.2.1 1999/10/20 23:57:05 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -240,7 +240,8 @@ inet_pton6(src, dst)
 					return (0);
 				colonp = tp;
 				continue;
-			}
+			} else if (*src == '\0')
+				return (0);
 			if (tp + INT16SZ > endp)
 				return (0);
 			*tp++ = (u_char) (val >> 8) & 0xff;
@@ -271,6 +272,8 @@ inet_pton6(src, dst)
 		const int n = tp - colonp;
 		int i;
 
+		if (tp == endp)
+			return (0);
 		for (i = 1; i <= n; i++) {
 			endp[- i] = colonp[n - i];
 			colonp[n - i] = 0;
