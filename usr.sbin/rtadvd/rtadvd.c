@@ -1,5 +1,5 @@
-/*	$NetBSD: rtadvd.c,v 1.16 2002/05/21 23:16:39 itojun Exp $	*/
-/*	$KAME: rtadvd.c,v 1.58 2002/05/21 13:59:45 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.17 2002/05/21 23:35:18 itojun Exp $	*/
+/*	$KAME: rtadvd.c,v 1.63 2002/05/21 23:33:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,6 +55,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <util.h>
+
 #include "rtadvd.h"
 #include "rrenum.h"
 #include "advcap.h"
@@ -77,7 +79,6 @@ struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 struct in6_addr in6a_site_allrouters;
 static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurable */
-static char *pidfilename = "/var/run/rtadvd.pid"; /* should be configurable */
 static char *mcastif;
 int sock;
 int rtsock = -1;
@@ -153,8 +154,6 @@ main(argc, argv)
 	struct timeval *timeout;
 	int i, ch;
 	int fflag = 0, logopt;
-	FILE *pidfp;
-	pid_t pid;
 
 	/* get command line options and arguments */
 #ifdef MIP6
@@ -243,15 +242,7 @@ main(argc, argv)
 	sock_open();
 
 	/* record the current PID */
-	pid = getpid();
-	if ((pidfp = fopen(pidfilename, "w")) == NULL) {
-		syslog(LOG_ERR,
-		    "<%s> failed to open a log file(%s), run anyway.",
-		    __FUNCTION__, pidfilename);
-	} else {
-		fprintf(pidfp, "%d\n", pid);
-		fclose(pidfp);
-	}
+	pidfile(NULL);
 
 	FD_ZERO(&fdset);
 	FD_SET(sock, &fdset);
@@ -1219,7 +1210,12 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			goto bad;
 		}
 
-		if (hdr->nd_opt_type > ND_OPT_MTU) {
+#ifdef MIP6
+		if (hdr->nd_opt_type > ND_OPT_HOMEAGENT_INFO)
+#else
+		if (hdr->nd_opt_type > ND_OPT_MTU)
+#endif
+		{
 			syslog(LOG_INFO, "<%s> unknown ND option(type %d)",
 			    __FUNCTION__, hdr->nd_opt_type);
 			continue;
@@ -1236,6 +1232,10 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
 		case ND_OPT_MTU:
+#ifdef MIP6
+		case ND_OPT_ADVINTERVAL:
+		case ND_OPT_HOMEAGENT_INFO:
+#endif
 			if (ndopts->nd_opt_array[hdr->nd_opt_type]) {
 				syslog(LOG_INFO,
 				    "<%s> duplicated ND option (type = %d)",
