@@ -1,5 +1,5 @@
 # from:	@(#)GENERIC.sparc	8.1 (Berkeley) 6/11/93
-# $Id: GENERIC.sparc,v 1.1.2.1 1994/07/28 09:04:50 cgd Exp $
+# $Id: GENERIC.sparc,v 1.1.2.2 1994/08/12 06:36:33 mycroft Exp $
 # Generic SPARC
 
 include	"std.sparc"
@@ -20,8 +20,8 @@ options		DST=1			# daylight savings rules (for param.c)
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		DEBUG, DIAGNOSTIC	# extra kernel debugging
 options		KTRACE			# system call tracing support
-options		KGDB			# support for kernel gdb
-options		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
+#options	KGDB			# support for kernel gdb
+#options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 makeoptions	DEBUG="-g"			# symbols for kgdb
 options		RCONSOLE		# fast rasterop console
 
