@@ -19,7 +19,7 @@
  * Modified by Paul Mackerras (paulus@cs.anu.edu.au)
  * Added PPP_MRU, sc_outm, sc_fastq, sc_bpf.
  *
- * $Id: if_ppp.h,v 1.4 1994/01/15 20:13:11 deraadt Exp $
+ * $Id: if_ppp.h,v 1.5 1994/01/25 05:56:08 deraadt Exp $
  */
 
 /*
@@ -40,7 +40,7 @@ struct ppp_header {
 	u_short	ph_protocol;	/* Protocol Field */
 };
 
-#define PPP_HEADER_LEN	4	/* octets, must == sizeof(struct ppp_header) */
+#define PPP_HDRLEN	4	/* sizeof(struct ppp_header) */
 #define PPP_FCS_LEN	2	/* octets for FCS */
 
 #define	PPP_ALLSTATIONS	0xff	/* All-Stations broadcast address */
