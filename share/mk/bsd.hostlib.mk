@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.1 2001/11/28 04:42:49 tv Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.2 2002/01/03 22:45:25 tv Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -9,9 +9,10 @@ clean:		cleanlib
 
 ##### Default values
 CFLAGS+=	${COPTS}
+HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
 
 # Override these:
-MKDEP:=		CC=${HOST_CC:Q} ${MKDEP:NCC=*}
+MKDEP:=		${HOST_MKDEP}
 
 .if defined(USE_NEW_TOOLCHAIN)
 OBJHOSTMACHINE=	# set
