@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/06/25 17:24:21 cdi Exp $
+#	$NetBSD: Makefile,v 1.2 2003/10/08 01:40:22 simonb Exp $
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -8,6 +8,12 @@ PROG=	${BOOTPROG}
 # .PATH:	${.CURDIR}/../common
 
 BINMODE?= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PHONY:		machine-links
 beforedepend:	machine-links
