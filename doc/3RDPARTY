@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.158 2003/11/10 12:08:21 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.159 2003/12/01 08:41:46 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -268,7 +268,7 @@ Responsible:	thorpej, mrg
 Notes:
 
 Package:	gdb
-Version:	5.0/5.3
+Version:	5.3
 Current Vers:	6.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
