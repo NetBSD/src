@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.7 1996/02/27 22:09:39 thorpej Exp $ */
+/*	$NetBSD: fbvar.h,v 1.8 1996/10/04 20:34:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@ struct fbdriver {
 	int	(*fbd_open) __P((dev_t, int, int, struct proc *));
 	int	(*fbd_close) __P((dev_t, int, int, struct proc *));
 	int	(*fbd_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
+	int	(*fbd_poll) __P((dev_t, int, struct proc *));
 	int	(*fbd_mmap) __P((dev_t, int, int));
 #ifdef notyet
 	void	(*fbd_wrrop)();		/* `write region' rasterop */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.16 1996/05/18 12:19:14 mrg Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.17 1996/10/04 20:34:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,13 +91,12 @@ struct cgtwo_softc {
 /* autoconfiguration driver */
 static void	cgtwoattach __P((struct device *, struct device *, void *));
 static int	cgtwomatch __P((struct device *, void *, void *));
-int		cgtwoopen __P((dev_t, int, int, struct proc *));
-int		cgtwoclose __P((dev_t, int, int, struct proc *));
-int		cgtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgtwommap __P((dev_t, int, int));
 static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
+
+/* cdevsw prototypes */
+cdev_decl(cgtwo);
 
 struct cfattach cgtwo_ca = {
 	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
@@ -109,7 +108,7 @@ struct cfdriver cgtwo_cd = {
 
 /* frame buffer generic driver */
 static struct fbdriver cgtwofbdriver = {
-	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwommap
+	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwopoll, cgtwommap
 };
 
 extern int fbnode;
@@ -317,6 +316,16 @@ cgtwoioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
+}
+
+int
+cgtwopoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.2 1996/10/01 00:06:45 abrown Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.3 1996/10/04 20:34:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -102,12 +102,10 @@
 /* autoconfiguration driver */
 static void	cgfourteenattach(struct device *, struct device *, void *);
 static int	cgfourteenmatch(struct device *, void *, void *);
-int		cgfourteenopen __P((dev_t, int, int, struct proc *));
-int		cgfourteenclose __P((dev_t, int, int, struct proc *));
-int		cgfourteenioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgfourteenmmap __P((dev_t, int, int));
-int		cgfourteenpoll __P((dev_t, int, struct proc *));
 static void	cgfourteenunblank(struct device *);
+
+/* cdevsw prototypes */
+cdev_decl(cgfourteen);
 
 struct cfattach cgfourteen_ca = {
 	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach
@@ -120,7 +118,7 @@ struct cfdriver cgfourteen_cd = {
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl, 
-	cgfourteenmmap
+	cgfourteenpoll, cgfourteenmmap
 };
 
 extern int fbnode;
@@ -626,7 +624,8 @@ cgfourteenpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	return(enodev());
+
+	return (seltrue(dev, events, p));
 } 
 
 /*

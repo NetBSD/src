@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.8 1996/08/13 20:52:43 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.9 1996/10/04 20:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -94,13 +94,12 @@ struct cgfour_softc {
 /* autoconfiguration driver */
 static void	cgfourattach __P((struct device *, struct device *, void *));
 static int	cgfourmatch __P((struct device *, void *, void *));
-int		cgfouropen __P((dev_t, int, int, struct proc *));
-int		cgfourclose __P((dev_t, int, int, struct proc *));
-int		cgfourioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgfourmmap __P((dev_t, int, int));
 #if defined(SUN4)
 static void	cgfourunblank __P((struct device *));
 #endif
+
+/* cdevsw prototypes */
+cdev_decl(cgfour);
 
 struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
@@ -113,7 +112,8 @@ struct cfdriver cgfour_cd = {
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgfourfbdriver = {
-	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourmmap
+	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourpoll,
+	cgfourmmap
 };
 
 extern int fbnode;
@@ -370,6 +370,16 @@ cgfourioctl(dev, cmd, data, flags, p)
 	}
 #endif
 	return (0);
+}
+
+int
+cgfourpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.28 1996/05/31 09:59:22 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.29 1996/10/04 20:34:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,11 +90,10 @@ struct cgthree_softc {
 /* autoconfiguration driver */
 static void	cgthreeattach(struct device *, struct device *, void *);
 static int	cgthreematch(struct device *, void *, void *);
-int		cgthreeopen __P((dev_t, int, int, struct proc *));
-int		cgthreeclose __P((dev_t, int, int, struct proc *));
-int		cgthreeioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgthreemmap __P((dev_t, int, int));
 static void	cgthreeunblank(struct device *);
+
+/* cdevsw prototypes */
+cdev_decl(cgthree);
 
 struct cfattach cgthree_ca = {
 	sizeof(struct cgthree_softc), cgthreematch, cgthreeattach
@@ -106,7 +105,8 @@ struct cfdriver cgthree_cd = {
 
 /* frame buffer generic driver */
 static struct fbdriver cgthreefbdriver = {
-	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreemmap
+	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreepoll,
+	cgthreemmap
 };
 
 extern int fbnode;
@@ -349,6 +349,16 @@ cgthreeioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
+}
+
+int
+cgthreepoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*
