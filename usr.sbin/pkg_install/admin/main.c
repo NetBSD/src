@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.39 2003/09/08 22:11:12 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2003/09/13 05:48:50 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.39 2003/09/08 22:11:12 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2003/09/13 05:48:50 jlam Exp $");
 #endif
 
 /*
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: main.c,v 1.39 2003/09/08 22:11:12 jlam Exp $");
 
 #define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
 
-static const char Options[] = "K:s:V";
+static const char Options[] = "bd:K:s:V";
 
 void    usage(void);
 
@@ -364,7 +364,13 @@ lspattern_fn(const char *pkg, void *vp)
 {
 	char *data = vp;
 	printf("%s/%s\n", data, pkg);
-	
+	return 0;
+}
+
+static int
+lsbasepattern_fn(const char *pkg, void *vp)
+{
+	printf("%s\n", pkg);
 	return 0;
 }
 
@@ -372,8 +378,11 @@ int
 main(int argc, char *argv[])
 {
 	int	ch;
+	char	lsdir[FILENAME_MAX];
+	char   *lsdirp = NULL;
 	char	sfx[FILENAME_MAX];
 	Boolean	use_default_sfx = TRUE;
+	Boolean show_basename_only = FALSE;
 
 	setprogname(argv[0]);
 
@@ -382,6 +391,15 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
+		case 'b':
+			show_basename_only = TRUE;
+			break;
+
+		case 'd':
+			(void) strlcpy(lsdir, optarg, sizeof(lsdir));
+			lsdirp = lsdir;
+			break;
+
 		case 'K':
 			_pkgdb_setPKGDB_DIR(optarg);
 			break;
@@ -501,7 +519,7 @@ main(int argc, char *argv[])
 			char cwd[MAXPATHLEN];
 			char base[FILENAME_MAX];
 
-			dir = dirname_of(*argv);
+			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
 			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
@@ -512,7 +530,12 @@ main(int argc, char *argv[])
 
 			if (getcwd(cwd, sizeof(cwd)) == NULL)
 				err(EXIT_FAILURE, "getcwd");
-			if (findmatchingname(cwd, base, lspattern_fn, cwd) == -1)
+
+			if (show_basename_only)
+				rc = findmatchingname(cwd, base, lsbasepattern_fn, cwd);
+			else
+				rc = findmatchingname(cwd, base, lspattern_fn, cwd);
+			if (rc == -1)
 				errx(EXIT_FAILURE, "Error in findmatchingname(\"%s\", \"%s\", ...)",
 				     cwd, base);
 
@@ -539,7 +562,7 @@ main(int argc, char *argv[])
 			char base[FILENAME_MAX];
 			char *p;
 
-			dir = dirname_of(*argv);
+			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
 			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
@@ -552,7 +575,10 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "getcwd");
 			p = findbestmatchingname(cwd, base);
 			if (p) {
-				printf("%s/%s\n", cwd, p);
+				if (show_basename_only)
+					printf("%s\n", p);
+				else
+					printf("%s/%s\n", cwd, p);
 				free(p);
 			}
 			
@@ -631,7 +657,7 @@ main(int argc, char *argv[])
 void 
 usage(void)
 {
-	printf("usage: pkg_admin [-V] [-s sfx] command args ...\n"
+	printf("usage: pkg_admin [-b] [-d lsdir] [-V] [-s sfx] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]             - check md5 checksum of installed files\n"
