@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2001/07/28 17:18:59 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.129 2001/07/31 05:29:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2001/07/28 17:18:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2001/07/31 05:29:24 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1358,14 +1358,16 @@ pmap_kenter_pa(va, pa, prot)
 		printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot);
 #endif
 
-	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit() | MIPS3_PG_G;
+	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit();
 	if (prot & VM_PROT_WRITE) {
 		npte |= mips_pg_rwpage_bit();
 	} else {
 		npte |= mips_pg_ropage_bit();
 	}
-	if (!CPUISMIPS3) {
-		npte |= MIPS1_PG_V;
+	if (CPUISMIPS3) {
+		npte |= MIPS3_PG_G;
+	} else {
+		npte |= MIPS1_PG_V | MIPS1_PG_G;
 	}
 	pte = kvtopte(va);
 #if 0 /* XXXJRT */
