@@ -46,6 +46,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <netbsd.h>
 
+/* The NetBSD/arm32 assembler (or, at least the one that I have) doesn't
+   seem to do the right thing with weak references, which causes libgcc
+   c++ function lossage. */
+#undef ASM_WEAKEN_LABEL
+
 /* Some defines for CPP.
    arm32 is the NetBSD port name, so we always define arm32 and __arm32__.  */
 #undef CPP_PREDEFINES
