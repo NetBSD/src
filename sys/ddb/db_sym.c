@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.29 2001/11/20 08:43:44 lukem Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.30 2002/01/05 20:09:52 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.29 2001/11/20 08:43:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.30 2002/01/05 20:09:52 jhawk Exp $");
 
 #include "opt_ddb.h"
 
@@ -522,6 +522,40 @@ extern char end[];
 unsigned long	db_lastsym = (unsigned long)end;
 unsigned int	db_maxoff = 0x10000000;
 
+void
+db_symstr(buf, off, strategy)
+	char		*buf;
+	db_expr_t	off;
+	db_strategy_t	strategy;
+{
+	db_expr_t	d;
+	char 		*filename;
+	char		*name;
+	db_expr_t	value;
+	int 		linenum;
+	db_sym_t	cursym;
+
+	if (off <= db_lastsym) {
+		cursym = db_search_symbol(off, strategy, &d);
+		db_symbol_values(cursym, &name, &value);
+		if (name && (d < db_maxoff) && value) {
+			strcpy(buf, name);
+			if (d) {
+				strcat(buf, "+");
+				db_format_radix(buf+strlen(buf), 24, d, TRUE);
+			}
+			if (strategy == DB_STGY_PROC) {
+				if (db_line_at_pc(cursym, &filename, &linenum,
+				    off))
+					sprintf(buf+strlen(buf),
+					    " [%s:%d]", filename, linenum);
+			}
+			return;
+		}
+	}
+	strcpy(buf, db_num_to_str(off));
+	return;
+}
 
 void
 db_printsym(off, strategy, pr)
