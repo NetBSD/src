@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.8 1998/10/01 21:16:27 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.9 1998/10/03 16:24:08 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -105,6 +105,10 @@ struct _pack {
 };
 typedef struct _pack Package;
 
+/* type of function to be handed to findmatchingname; return value of this
+ * is currently ignored */
+typedef int (*matchfn)(const char *found, char *data);
+
 /* Prototypes */
 /* Misc */
 int		vsystem(const char *, ...);
@@ -123,7 +127,12 @@ Boolean		suffix(char *, char *);
 void		nuke_suffix(char *);
 void		str_lowercase(char *);
 char		*basename_of(char *);
+char		*dirname_of(const char *);
 char		*strconcat(char *, char *);
+int		pmatch(const char *, const char *);
+int		findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong here */
+char		*findbestmatchingname(const char *, const char *); /* neither */
+int		ispkgpattern(const char *);
 
 /* File */
 Boolean		fexists(char *);

@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.15 1998/10/01 21:16:27 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.16 1998/10/03 16:24:08 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.15 1998/10/01 21:16:27 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.16 1998/10/03 16:24:08 hubertf Exp $");
 #endif
 #endif
 
@@ -33,6 +33,7 @@ __RCSID("$NetBSD: file.c,v 1.15 1998/10/01 21:16:27 hubertf Exp $");
 
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <err.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -314,10 +315,18 @@ fileFindByPath(char *base, char *fname)
     static char tmp[FILENAME_MAX];
     char *cp;
 
-    if (fexists(fname) && isfile(fname)) {
-	strcpy(tmp, fname);
-	return tmp;
+    if (ispkgpattern(fname)) {
+	if (cp=findbestmatchingname(".",fname)) {
+	    strcpy (tmp, cp);
+	    return tmp;
+	}
+    }else{
+	if (fexists(fname) && isfile(fname)) {
+	    strcpy(tmp, fname);
+	    return tmp;
+	}
     }
+    
     if (base) {
 	strcpy(tmp, base);
 
@@ -331,8 +340,20 @@ fileFindByPath(char *base, char *fname)
 	    strcat(cp, "All/");
 	    strcat(cp, fname);
 	    strcat(cp, ".tgz");
-	    if (fexists(tmp))
+	    if (ispkgpattern(tmp)) {
+		cp=findbestmatchingname(dirname_of(tmp), basename_of(tmp));
+		if (cp) {
+		    char *s;
+		    s=strrchr(tmp,'/');
+		    assert(s != NULL);
+		    strcpy(s+1, cp);
+		    return tmp;
+		}
+	    } else {
+		if (fexists(tmp)) {
 		return tmp;
+	}
+    }
 	}
     }
 
@@ -341,9 +362,22 @@ fileFindByPath(char *base, char *fname)
 	char *cp2 = strsep(&cp, ":");
 
 	snprintf(tmp, FILENAME_MAX, "%s/%s.tgz", cp2 ? cp2 : cp, fname);
-	if (fexists(tmp) && isfile(tmp))
+	if (ispkgpattern(tmp)) {
+	    char *s;
+	    s = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
+	    if (s){
+		char *t;
+		t=strrchr(tmp, '/');
+		strcpy(t+1, s);
+		return tmp;
+	    }
+	}else{
+	    if (fexists(tmp) && isfile(tmp)) {
 	    return tmp;
     }
+	}
+    }
+    
     return NULL;
 }
 
