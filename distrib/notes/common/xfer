@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.38 2003/07/26 17:07:02 salo Exp $
+.\"	$NetBSD: xfer,v 1.39 2003/09/06 23:52:25 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -513,12 +513,17 @@ Remote NFS partition
 Tape
 .\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
 .
-.if !\n[macppc]:\n[news68k] \{\
+.if !\n[news68k] \{\
 .It
 Existing
 .Nx
+.if \n[macppc] \{\
+or
+.Tn MacOS X
+UFS
+.\} \" \n[macppc]
 partitions, if performing an upgrade
-.\} \" ! \n[macppc]:\n[news68k]
+.\} \" ! \n[news68k]
 .
 .bullet)
 .Pp
@@ -801,7 +806,7 @@ If you're upgrading an existing installation, go directly to the section
 on upgrading.
 .\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
 .
-.if !\n[macppc]:\n[news68k] \{\
+.if !\n[news68k] \{\
 .It Em Upgrade
 If you are upgrading
 .Nx ,
@@ -845,6 +850,6 @@ that you should review and update by hand.
 .Pp
 Once you have done this, you can proceed to the next step in
 the upgrade process, actually upgrading your system.
-.\} \" ! \n[macppc]:\n[news68k]
+.\} \" ! \n[news68k]
 .
 .tag)
