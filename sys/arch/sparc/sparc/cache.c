@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.21 1997/03/21 15:35:51 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.22 1997/03/22 19:17:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -123,7 +123,7 @@ ms1_cache_enable()
 
 	/* Turn on caches via MMU */
 	sta(SRMMU_PCR, ASI_SRMMU,
-	    lda(SRMMU_PCR,ASI_SRMMU) | SRMMU_PCR_DCE | SRMMU_PCR_ICE);
+	    lda(SRMMU_PCR,ASI_SRMMU) | MS1_PCR_DCE | MS1_PCR_ICE);
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
 
@@ -147,7 +147,7 @@ viking_cache_enable()
 
 	/* Turn on caches via MMU */
 	sta(SRMMU_PCR, ASI_SRMMU,
-	    lda(SRMMU_PCR,ASI_SRMMU) | SRMMU_PCR_DCE | SRMMU_PCR_ICE);
+	    lda(SRMMU_PCR,ASI_SRMMU) | VIKING_PCR_DCE | VIKING_PCR_ICE);
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
 
@@ -176,7 +176,7 @@ hypersparc_cache_enable()
 	 * First we determine what type of cache we have, and
 	 * setup the anti-aliasing constants appropriately.
 	 */
-	if (i & SRMMU_PCR_CS) {
+	if (i & HYPERSPARC_PCR_CS) {
 		cache_alias_bits = CACHE_ALIAS_BITS_HS256k;
 		cache_alias_dist = CACHE_ALIAS_DIST_HS256k;
 	} else {
@@ -188,7 +188,7 @@ hypersparc_cache_enable()
 		sta(i, ASI_DCACHETAG, 0);
 
 	sta(SRMMU_PCR, ASI_SRMMU, /* Enable write-back cache */
-	    lda(SRMMU_PCR, ASI_SRMMU) | SRMMU_PCR_CE | SRMMU_PCR_CM);
+	    lda(SRMMU_PCR, ASI_SRMMU) | HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
 	CACHEINFO.c_enabled = 1;
 
 	CACHEINFO.c_vactype = VAC_NONE;
@@ -219,11 +219,11 @@ cypress_cache_enable()
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	scr = lda(SRMMU_PCR, ASI_SRMMU);
-	scr &= ~(SRMMU_PCR_CE | SRMMU_PCR_CM);
-	scr |= SRMMU_PCR_CE;
+	scr &= ~(CYPRESS_PCR_CE | CYPRESS_PCR_CM);
+	scr |= CYPRESS_PCR_CE;
 	/* If put in write-back mode, turn it on */
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-		scr |= SRMMU_PCR_CM;
+		scr |= CYPRESS_PCR_CM;
 	sta(SRMMU_PCR, ASI_SRMMU, scr);
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");

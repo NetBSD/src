@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 1997/03/21 16:29:34 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.75 1997/03/22 19:17:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1022,7 +1022,7 @@ mmu_reservemon4m(kpmap, kmemtop)
 	 */
 	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
 		sta(SRMMU_PCR, ASI_SRMMU, 	/* set MMU AC bit */
-		    ((mmupcrsave = lda(SRMMU_PCR,ASI_SRMMU)) | SRMMU_PCR_AC));
+		    ((mmupcrsave = lda(SRMMU_PCR,ASI_SRMMU)) | VIKING_PCR_AC));
 	}
 
 	te = lda(rom_ctxtbl, ASI_BYPASS);	/* i.e. context 0 */
