@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)util.c	8.34 (Berkeley) 12/23/93"; */
-static char *rcsid = "$Id: util.c,v 1.3 1994/02/09 07:06:11 cgd Exp $";
+static char *rcsid = "$Id: util.c,v 1.4 1994/03/02 01:54:11 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -499,6 +499,9 @@ baud_from_bval(sp)
 	SCR *sp;
 {
 	speed_t v;
+
+	if (!F_ISSET(sp->gp, G_HAVETTY))
+		return (9600);
 
 	switch (v = cfgetospeed(&sp->gp->original_termios)) {
 	case B50:
