@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/10/14 14:41:22 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2002/10/14 16:03:51 lukem Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -56,6 +56,8 @@ CPPFLAGS+=	-DSUPPORT_RMT
 
 LDADD+=	-lutil -lrmt
 DPADD+=	${LIBUTIL} ${LIBRMT}
+.endif
 
+.if !defined(HOSTPROG)
 .include <bsd.prog.mk>
 .endif
