@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.7 2003/07/04 07:45:06 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.8 2003/10/06 05:24:54 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.7 2003/07/04 07:45:06 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.8 2003/10/06 05:24:54 lukem Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -127,7 +127,7 @@ i386_setboot(ib_params *params)
 	if (params->flags & IB_TIMEOUT)
 		bp->bp_timeout = htole32(params->timeout);
 	if (params->flags & IB_RESETVIDEO)
-		bp->bp_flags |= htole32(BP_RESET_VIDEO);
+		bp->bp_flags |= htole32(I386_BP_FLAGS_RESET_VIDEO);
 	if (params->flags & IB_CONSPEED)
 		bp->bp_conspeed = htole32(params->conspeed);
 	if (params->flags & IB_CONSOLE) {
@@ -154,7 +154,7 @@ i386_setboot(ib_params *params)
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, params->password, strlen(params->password));
 		MD5Final(bp->bp_password, &md5ctx);
-		bp->bp_flags |= htole32(BP_PASSWORD);
+		bp->bp_flags |= htole32(I386_BP_FLAGS_PASSWORD);
 	}
 
 	if (params->flags & IB_NOWRITE) {
