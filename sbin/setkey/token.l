@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.14 2003/09/12 07:45:22 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.15 2003/10/21 02:38:15 fvdl Exp $	*/
 /*	$KAME: token.l,v 1.43 2003/07/25 09:35:28 itojun Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ tagged		{ return(TAGGED); }
 			/* count up for nl */
 			    {
 				char *p;
-				for (p = yytext; *p != NULL; p++)
+				for (p = yytext; *p != 0; p++)
 					if (*p == '\n')
 						lineno++;
 			    }
@@ -223,7 +223,7 @@ any		{ return(ANY); }
 {quotedstring}	{
 			char *p = yytext;
 			while (*++p != '"') ;
-			*p = NULL;
+			*p = 0;
 			yytext++;
 			yylval.val.len = yyleng - 2;
 			yylval.val.buf = strdup(yytext);
