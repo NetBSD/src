@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.14 1998/08/04 04:03:19 perry Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.14.6.1 2000/06/27 15:22:32 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,6 +63,26 @@ int	lockf_debug = 0;
 #define OTHERS	0x2
 
 /*
+ * XXX TODO
+ * Misc cleanups: "caddr_t id" should be visible in the API as a
+ * "struct proc *".
+ * (This requires rototilling all VFS's which support advisory locking).
+ *
+ * Use pools for lock allocation.
+ */
+
+/*
+ * XXXSMP TODO: Using either (a) a global lock, or (b) the vnode's
+ * interlock should be sufficient; (b) requires a change to the API
+ * because the vnode isn't visible here.
+ *
+ * If there's a lot of lock contention on a single vnode, locking
+ * schemes which allow for more paralleism would be needed.  Given how
+ * infrequently byte-range locks are actually used in typical BSD
+ * code, a more complex approach probably isn't worth it.
+ */
+
+/*
  * Do an advisory lock operation.
  */
 int
@@ -71,10 +91,10 @@ lf_advlock(head, size, id, op, fl, flags)
 	off_t size;
 	caddr_t id;
 	int op;
-	register struct flock *fl;
+	struct flock *fl;
 	int flags;
 {
-	register struct lockf *lock;
+	struct lockf *lock;
 	off_t start, end;
 	int error;
 
@@ -157,9 +177,9 @@ lf_advlock(head, size, id, op, fl, flags)
  */
 int
 lf_setlock(lock)
-	register struct lockf *lock;
+	struct lockf *lock;
 {
-	register struct lockf *block;
+	struct lockf *block;
 	struct lockf **head = lock->lf_head;
 	struct lockf **prev, *overlap, *ltmp;
 	static char lockstr[] = "lockf";
@@ -196,12 +216,12 @@ lf_setlock(lock)
 		 * Deadlock detection is done by looking through the
 		 * wait channels to see if there are any cycles that
 		 * involve us. MAXDEPTH is set just to make sure we
-		 * do not go off into neverland.
+		 * do not go off into neverneverland.
 		 */
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
-			register struct proc *wproc;
-			register struct lockf *waitblock;
+			struct proc *wproc;
+			struct lockf *waitblock;
 			int i = 0;
 
 			/* The block is waiting on something */
@@ -219,6 +239,15 @@ lf_setlock(lock)
 					free(lock, M_LOCKF);
 					return (EDEADLK);
 				}
+			}
+			/*
+			 * If we're still following a dependancy chain
+			 * after maxlockdepth iterations, assume we're in
+			 * a cycle to be safe.
+			 */
+			if (i >= maxlockdepth) {
+				free(lock, M_LOCKF);
+				return (EDEADLK);
 			}
 		}
 		/*
@@ -245,18 +274,20 @@ lf_setlock(lock)
 		}
 #endif /* LOCKF_DEBUG */
 		error = tsleep((caddr_t)lock, priority, lockstr, 0);
+
+		/*
+		 * We may have been awakened by a signal (in
+		 * which case we must remove ourselves from the
+		 * blocked list) and/or by another process
+		 * releasing a lock (in which case we have already
+		 * been removed from the blocked list and our
+		 * lf_next field set to NOLOCKF).
+		 */
+		if (lock->lf_next != NOLOCKF) {
+			TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock, lf_block);
+			lock->lf_next = NOLOCKF;
+		}
 		if (error) {
-			/*
-			 * We may have been awakened by a signal (in
-			 * which case we must remove ourselves from the
-			 * blocked list) and/or by another process
-			 * releasing a lock (in which case we have already
-			 * been removed from the blocked list and our
-			 * lf_next field set to NOLOCKF).
-			 */
-			if (lock->lf_next)
-				TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock,
-				    lf_block);
 			free(lock, M_LOCKF);
 			return (error);
 		}
@@ -334,8 +365,10 @@ lf_setlock(lock)
 				lf_wakelock(overlap);
 			} else {
 				while ((ltmp = overlap->lf_blkhd.tqh_first)) {
+					KASSERT(ltmp->lf_next == overlap);
 					TAILQ_REMOVE(&overlap->lf_blkhd, ltmp,
 					    lf_block);
+					ltmp->lf_next = lock;
 					TAILQ_INSERT_TAIL(&lock->lf_blkhd,
 					    ltmp, lf_block);
 				}
@@ -396,10 +429,10 @@ lf_setlock(lock)
  */
 int
 lf_clearlock(unlock)
-	register struct lockf *unlock;
+	struct lockf *unlock;
 {
 	struct lockf **head = unlock->lf_head;
-	register struct lockf *lf = *head;
+	struct lockf *lf = *head;
 	struct lockf *overlap, **prev;
 	int ovcase;
 
@@ -466,10 +499,10 @@ lf_clearlock(unlock)
  */
 int
 lf_getlock(lock, fl)
-	register struct lockf *lock;
-	register struct flock *fl;
+	struct lockf *lock;
+	struct flock *fl;
 {
-	register struct lockf *block;
+	struct lockf *block;
 
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 1)
@@ -500,7 +533,7 @@ lf_getlock(lock, fl)
  */
 struct lockf *
 lf_getblock(lock)
-	register struct lockf *lock;
+	struct lockf *lock;
 {
 	struct lockf **prev, *overlap, *lf = *(lock->lf_head);
 	int ovcase;
@@ -531,7 +564,7 @@ lf_getblock(lock)
  */
 int
 lf_findoverlap(lf, lock, type, prev, overlap)
-	register struct lockf *lf;
+	struct lockf *lf;
 	struct lockf *lock;
 	int type;
 	struct lockf ***prev;
@@ -641,10 +674,10 @@ lf_findoverlap(lf, lock, type, prev, overlap)
  */
 void
 lf_split(lock1, lock2)
-	register struct lockf *lock1;
-	register struct lockf *lock2;
+	struct lockf *lock1;
+	struct lockf *lock2;
 {
-	register struct lockf *splitlock;
+	struct lockf *splitlock;
 
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 2) {
@@ -690,9 +723,10 @@ void
 lf_wakelock(listhead)
 	struct lockf *listhead;
 {
-	register struct lockf *wakelock;
+	struct lockf *wakelock;
 
 	while ((wakelock = listhead->lf_blkhd.tqh_first)) {
+		KASSERT(wakelock->lf_next == listhead);
 		TAILQ_REMOVE(&listhead->lf_blkhd, wakelock, lf_block);
 		wakelock->lf_next = NOLOCKF;
 #ifdef LOCKF_DEBUG
@@ -710,7 +744,7 @@ lf_wakelock(listhead)
 void
 lf_print(tag, lock)
 	char *tag;
-	register struct lockf *lock;
+	struct lockf *lock;
 {
 	
 	printf("%s: lock %p for ", tag, lock);
@@ -734,7 +768,7 @@ lf_printlist(tag, lock)
 	char *tag;
 	struct lockf *lock;
 {
-	register struct lockf *lf, *blk;
+	struct lockf *lf, *blk;
 
 	printf("%s: Lock list:\n", tag);
 	for (lf = *lock->lf_head; lf; lf = lf->lf_next) {
