@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.8 2004/06/27 03:45:25 chs Exp $
+# $NetBSD: list,v 1.9 2004/07/03 13:45:58 chs Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -121,6 +121,7 @@ LINK		   bin/test		bin/[
 LINK		   bin/pax		usr/bin/tar
 
 SYMLINK	/usr/lib libexec
+SYMLINK	/usr/lib usr/libexec
 
 # Shared library stuff...
 # libcrypt: init
