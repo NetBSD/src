@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: vmstat.c,v 1.17 1994/12/24 17:02:20 cgd Exp $";
+static char *rcsid = "$Id: vmstat.c,v 1.18 1995/03/14 07:35:49 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,6 +54,7 @@ static char *rcsid = "$Id: vmstat.c,v 1.17 1994/12/24 17:02:20 cgd Exp $";
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
+#include <sys/device.h>
 #include <vm/vm.h>
 #include <time.h>
 #include <nlist.h>
@@ -97,20 +98,22 @@ struct nlist namelist[] = {
 	{ "_kmemstats" },
 #define	X_KMEMBUCKETS	13
 	{ "_bucket" },
+#define X_ALLEVENTS	14
+	{ "_allevents" },
 #ifdef notdef
-#define	X_DEFICIT	14
+#define	X_DEFICIT	15
 	{ "_deficit" },
-#define	X_FORKSTAT	15
+#define	X_FORKSTAT	16
 	{ "_forkstat" },
-#define X_REC		16
+#define X_REC		17
 	{ "_rectime" },
-#define X_PGIN		17
+#define X_PGIN		18
 	{ "_pgintime" },
-#define	X_XSTATS	18
+#define	X_XSTATS	19
 	{ "_xstats" },
-#define X_END		18
+#define X_END		20
 #else
-#define X_END		14
+#define X_END		15
 #endif
 #if defined(hp300) || defined(luna68k)
 #define	X_HPDINIT	(X_END)
@@ -711,6 +714,8 @@ dointr()
 	register long *intrcnt, inttotal, uptime;
 	register int nintr, inamlen;
 	register char *intrname;
+	struct evcnt evcnt, *allevents;
+	struct device dev;
 
 	uptime = getuptime();
 	nintr = namelist[X_EINTRCNT].n_value - namelist[X_INTRCNT].n_value;
@@ -733,6 +738,27 @@ dointr()
 			    *intrcnt, *intrcnt / uptime);
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
+	}
+	kread(X_ALLEVENTS, &allevents, sizeof allevents);
+	while (allevents) {
+		if (kvm_read(kd, (int)allevents, (void *)&evcnt,
+		    sizeof evcnt) != sizeof evcnt) {
+			(void)fprintf(stderr, "vmstat: event chain trashed\n",
+			    kvm_geterr(kd));
+			exit(1);
+		}
+		if (strcmp(evcnt.ev_name, "intr") == 0) {
+			if (kvm_read(kd, (int)evcnt.ev_dev, (void *)&dev,
+			    sizeof dev) != sizeof dev) {
+				(void)fprintf(stderr, "vmstat: event chain trashed\n",
+				    kvm_geterr(kd));
+				exit(1);
+			}
+			if (evcnt.ev_count)
+				(void)printf("%-12s %8ld %8ld\n", dev.dv_xname,
+				    evcnt.ev_count, evcnt.ev_count / uptime);
+		}
+		allevents = evcnt.ev_next;
 	}
 	(void)printf("Total        %8ld %8ld\n", inttotal, inttotal / uptime);
 }
@@ -873,3 +899,4 @@ usage()
 #endif
 	exit(1);
 }
+
