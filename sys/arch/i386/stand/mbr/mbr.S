@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.7 2004/05/08 21:18:22 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.8 2004/07/04 00:38:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -72,7 +72,7 @@
  * Minimum and maximum drive number that is considered to be valid.
  */
 #define MINDRV		0x80
-#define MAXDRV		0x87
+#define MAXDRV		0x8f
 
 #ifdef TERSE_ERROR
 /*
