@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.67 2003/11/18 13:21:53 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.68 2003/11/18 14:21:59 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.67 2003/11/18 13:21:53 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.68 2003/11/18 14:21:59 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -874,7 +874,7 @@ ktrmmsg(mmsg, len)
 	}
 
 	if ((service_name = mach_service_name(id)) != NULL)
-		printf("%s%s\n", service_name, reply);
+		printf("%s%s [%d]\n", service_name, reply, mmsg->ktr_id);
 	else 
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
