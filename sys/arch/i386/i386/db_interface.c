@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.2 2000/08/18 13:28:28 sommerfeld Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.3 2000/08/25 03:59:53 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -61,27 +61,27 @@ extern int trap_types;
 
 int	db_active = 0;
 
-#if 0
-void db_mach_kick (db_expr_t, int, db_expr_t, char *);
-void db_mach_unkick (db_expr_t, int, db_expr_t, char *);
-#endif
 void db_mach_cpu (db_expr_t, int, db_expr_t, char *);
 
 struct db_command db_machine_cmds[] = {
-#if 0
-	{ "kick",	db_mach_kick,	0,	0 },
-	{ "unkick",	db_mach_unkick,	0,	0 },
+#ifdef MULTIPROCESSOR
+	{ "cpu",	db_mach_cpu,	0,	0 },
 #endif
-	{ "cpu",	db_mach_cpu,	0,	0 },		
 	{ (char *)0, },
 };
 
 void kdbprinttrap __P((int, int));
 #ifdef MULTIPROCESSOR
+extern void ddb_ipi(int, struct trapframe);
+static void ddb_suspend(struct trapframe *);
 int ddb_vec;
 #endif
 
 db_regs_t *ddb_regp = 0;
+
+#define NOCPU -1
+
+int ddb_cpu = NOCPU;
 
 typedef void (vector) __P((void));
 extern vector Xintrddbipi;
@@ -102,18 +102,24 @@ db_machine_init()
 
 __cpu_simple_lock_t db_lock;
 
-static void
+static int
 db_suspend_others(void)
 {
-	if (ddb_vec == 0)
-		return;
+	int cpu_me = cpu_number();
+	int win;
 	
-	if (!__cpu_simple_lock_try(&db_lock)) {
-		db_printf("cpu%d lost race\n", cpu_number());
-		__cpu_simple_lock(&db_lock);
+	if (ddb_vec == 0)
+		return 1;
+
+	__cpu_simple_lock(&db_lock);
+	if (ddb_cpu == NOCPU)
+		ddb_cpu = cpu_me;
+	win = (ddb_cpu == cpu_me);
+	__cpu_simple_unlock(&db_lock);
+	if (win) {
+		i386_ipi (ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 	}
-	db_printf("ddb: cpu%d won race\n", cpu_number());
-	i386_ipi (ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+	return win;
 }
 
 static void
@@ -121,7 +127,9 @@ db_resume_others(void)
 {
 	int i;
 
-	__cpu_simple_unlock(&db_lock);
+	__cpu_simple_lock(&db_lock);
+	ddb_cpu = NOCPU;
+	__cpu_simple_unlock(&db_lock);	
 
 	for (i=0; i<I386_MAXPROCS; i++) {
 		struct cpu_info *ci = cpu_info[i];
@@ -134,8 +142,6 @@ db_resume_others(void)
 }
 
 #endif
-
-
 
 /*
  * Print trap reason.
@@ -181,9 +187,11 @@ kdb_trap(type, code, regs)
 	}
 
 #ifdef MULTIPROCESSOR
+	if (!db_suspend_others()) {
+		ddb_suspend(regs);
+	} else {
 	curcpu()->ci_ddb_regs = &dbreg;
 	ddb_regp = &dbreg;
-	db_suspend_others();
 #endif
 	/* XXX Should switch to kdb's own stack here. */
 	ddb_regs = *regs;
@@ -204,6 +212,7 @@ kdb_trap(type, code, regs)
 	splx(s);
 #ifdef MULTIPROCESSOR
 	db_resume_others();
+	}
 #endif
 	ddb_regp = &dbreg;
 
@@ -236,8 +245,6 @@ cpu_Debugger()
 
 #ifdef MULTIPROCESSOR
 
-extern void ddb_ipi(int, struct trapframe);
-
 /*
  * Called when we receive a debugger IPI (inter-processor interrupt).
  * As with trap() in trap.c, this function is called from an assembly
@@ -248,15 +255,22 @@ extern void ddb_ipi(int, struct trapframe);
 void
 ddb_ipi(int cpl, struct trapframe frame)
 {
+
+	ddb_suspend(&frame);
+}
+
+static void
+ddb_suspend(struct trapframe *frame)
+{
 	volatile struct cpu_info *ci = curcpu();
 	db_regs_t regs;
 
-	regs = frame;
+	regs = *frame;
 	if (KERNELMODE(regs.tf_cs, regs.tf_eflags)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
-		regs.tf_esp = (int)&frame.tf_esp; /* kernel stack pointer */
+		regs.tf_esp = (int)&frame->tf_esp; /* kernel stack pointer */
 		asm("movw %%ss,%w0" : "=r" (regs.tf_ss));
 	}
 
@@ -264,54 +278,11 @@ ddb_ipi(int cpl, struct trapframe frame)
 
 	i386_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
 
-	db_printf("cpu%d waiting; cpl was %x\n", cpu_number(), cpl);
 	while (ci->ci_flags & CPUF_PAUSE)
 		;
 	ci->ci_ddb_regs = 0;
-	db_printf("cpu%d running\n", cpu_number());	
 }
 
-#if 0
-
-void
-db_mach_kick(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
-{
-#if 0
-	if (ddb_vec == 0)
-		return;
-	
-	if (!__cpu_simple_lock_try(&db_lock)) {
-		db_printf("cpu%d lost race\n", cpu_number());
-		__cpu_simple_lock(&db_lock);
-	}
-	db_printf("ddb: cpu%d won race\n", cpu_number());
-#endif
-	i386_ipi (ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
-}
-
-void
-db_mach_unkick(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
-{
-	int i;
-	struct cpu_info *ci = curcpu();
-	
-	for (i=0; i<I386_MAXPROCS; i++) {
-		struct cpu_info *ci = cpu_info[i];
-		if (ci == NULL)
-			continue;
-		if (ci->ci_flags & CPUF_PAUSE)
-			i386_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
-	}
-}
-#endif
 
 extern void cpu_debug_dump(void); /* XXX */
 
