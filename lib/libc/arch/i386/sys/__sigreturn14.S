@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.6 2003/09/12 13:29:46 christos Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.7 2004/03/26 21:29:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,10 +33,10 @@
  *
  *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
  */
-#define __HAVE_SIGINFO
+
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigreturn14.S,v 1.6 2003/09/12 13:29:46 christos Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.7 2004/03/26 21:29:07 drochner Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
