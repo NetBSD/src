@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.10 2003/05/16 18:10:38 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.11 2003/05/16 22:59:50 dsl Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -352,8 +352,8 @@ update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
     if (src != 0 && (metric < 1 || metric >= 2*UNREACHABLE)) {
 	logit(LOG_WARNING, 0,
 	    "%s reports out-of-range metric %u for origin %s",
-	    inet_fmt(src, s1, sizeof(s1)), metric,
-	    inet_fmts(origin, mask, s2, sizeof(s2)));
+	    inet_fmt(src), metric,
+	    inet_fmts(origin, mask));
 	return;
     }
     adj_metric = metric + uvifs[vifi].uv_metric;
@@ -374,8 +374,8 @@ update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
 	if (src != 0 && !inet_valid_subnet(origin, mask)) {
 	    logit(LOG_WARNING, 0,
 		"%s reports an invalid origin (%s) and/or mask (%08x)",
-		inet_fmt(src, s1, sizeof(s1)),
-		inet_fmt(origin, s2, sizeof(s2)), ntohl(mask));
+		inet_fmt(src),
+		inet_fmt(origin), ntohl(mask));
 	    return;
 	}
 
@@ -689,7 +689,7 @@ accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
 	logit(LOG_INFO, 0,
-    	    "ignoring probe from non-neighbor %s", inet_fmt(src, s1, sizeof(s1)));
+    	    "ignoring probe from non-neighbor %s", inet_fmt(src));
 	return;
     }
 
@@ -743,7 +743,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
 	logit(LOG_INFO, 0,
-    	    "ignoring route report from non-neighbor %s", inet_fmt(src, s1, sizeof(s1)));
+    	    "ignoring route report from non-neighbor %s", inet_fmt(src));
 	return;
     }
 
@@ -753,7 +753,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
     if (datalen > 2*4096) {
 	logit(LOG_INFO, 0,
     	    "ignoring oversize (%d bytes) route report from %s",
-	    datalen, inet_fmt(src, s1, sizeof(s1)));
+	    datalen, inet_fmt(src));
 	return;
     }
 
@@ -762,7 +762,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	if (datalen < 3) {
 	    logit(LOG_WARNING, 0,
 		"received truncated route report from %s", 
-		inet_fmt(src, s1, sizeof(s1)));
+		inet_fmt(src));
 	    return;
 	}
 	((u_char *)&mask)[0] = 0xff;            width = 1;
@@ -772,8 +772,8 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	if (!inet_valid_mask(ntohl(mask))) {
 	    logit(LOG_WARNING, 0,
 		"%s reports bogus netmask 0x%08x (%s)",
-		inet_fmt(src, s1, sizeof(s1)), ntohl(mask),
-		inet_fmt(mask, s2, sizeof(s2)));
+		inet_fmt(src), ntohl(mask),
+		inet_fmt(mask));
 	    return;
 	}
 	datalen -= 3;
@@ -782,7 +782,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	    if (datalen < width + 1) {
 		logit(LOG_WARNING, 0,
 		    "received truncated route report from %s", 
-		    inet_fmt(src, s1, sizeof(s1)));
+		    inet_fmt(src));
 		return;
 	    }
 	    origin = 0;
@@ -806,13 +806,13 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	rt[nrt-1].mask = 0;
 
     logit(LOG_DEBUG, 0, "Updating %d routes from %s to %s", nrt,
-		inet_fmt(src, s1, sizeof(s1)), inet_fmt(dst, s2, sizeof(s2)));
+		inet_fmt(src), inet_fmt(dst));
     for (i = 0; i < nrt; ++i) {
 	if (i != 0 && rt[i].origin == rt[i-1].origin &&
 		      rt[i].mask == rt[i-1].mask) {
 	    logit(LOG_WARNING, 0, "%s reports duplicate route for %s",
-		inet_fmt(src, s1, sizeof(s1)),
-		inet_fmts(rt[i].origin, rt[i].mask, s2, sizeof(s2)));
+		inet_fmt(src),
+		inet_fmts(rt[i].origin, rt[i].mask));
 	    continue;
 	}
 	update_route(rt[i].origin, rt[i].mask, rt[i].metric, 
@@ -1101,8 +1101,8 @@ dump_routes(FILE *fp)
     for (r = routing_table; r != NULL; r = r->rt_next) {
 
 	fprintf(fp, " %-18s %-15s ",
-		inet_fmts(r->rt_origin, r->rt_originmask, s1, sizeof(s1)),
-		(r->rt_gateway == 0) ? "" : inet_fmt(r->rt_gateway, s2, sizeof(s2)));
+		inet_fmts(r->rt_origin, r->rt_originmask),
+		(r->rt_gateway == 0) ? "" : inet_fmt(r->rt_gateway));
 
 	fprintf(fp, (r->rt_metric == UNREACHABLE) ? "  NR " : "%4u ",
 		r->rt_metric);
