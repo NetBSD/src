@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.16 2002/07/17 19:56:54 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.17 2002/08/30 23:59:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.16 2002/07/17 19:56:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.17 2002/08/30 23:59:43 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -741,8 +741,9 @@ realtimerupcall(struct lwp *l, void *arg)
 	 * to touch sa_vp.
 	 */
 	pt = (struct ptimer *)arg;
-	sa_upcall(l, SA_UPCALL_SIGEV, NULL, l, sizeof(siginfo_t), 
-	    &pt->pt_info);
+	if (sa_upcall(l, SA_UPCALL_SIGEV, NULL, l, sizeof(siginfo_t), 
+	    &pt->pt_info) != 0)
+		pt->pt_overruns++;
 	
 	/* The upcall should only be generated once. */
 	l->l_proc->p_userret = NULL;
