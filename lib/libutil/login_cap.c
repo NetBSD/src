@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.7 2000/09/21 10:15:32 ad Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.8 2000/10/12 00:19:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.7 2000/09/21 10:15:32 ad Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.8 2000/10/12 00:19:57 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -96,7 +96,7 @@ login_getclass(char *class)
 		return (0);
 	}
 
-	if ((res = cgetent(&lc->lc_cap, classfiles, lc->lc_class)) != 0 ) {
+	if ((res = cgetent(&lc->lc_cap, classfiles, lc->lc_class)) != 0) {
 		lc->lc_cap = 0;
 		switch (res) {
 		case 1: 
@@ -431,7 +431,7 @@ setuserenv(login_cap_t *lc)
 	char **res;
 	char *str = login_getcapstr(lc, "setenv", NULL, NULL);
 		  
-	if(str == NULL || *str == '\0')
+	if (str == NULL || *str == '\0')
 		return 0;
 	
 	/* count the sub-strings */
@@ -439,13 +439,13 @@ setuserenv(login_cap_t *lc)
 		ptr += strcspn(ptr, stop);
 		if (*ptr)
 			ptr++;
-		}
+	}
 
 	/* allocate ptr array and string */
 	count = i;
-	res = malloc( count * sizeof(char *) + strlen(str) + 1 );
+	res = malloc(count * sizeof(char *) + strlen(str) + 1);
 
-	if(!res)
+	if (!res)
 		return -1;
 	
 	ptr = (char *)res + count * sizeof(char *);
@@ -457,7 +457,7 @@ setuserenv(login_cap_t *lc)
 		ptr += strcspn(ptr, stop);
 		if (*ptr)
 			*ptr++ = '\0';
-		}
+	}
 	
 	res[i] = NULL;
 
@@ -723,7 +723,7 @@ isinfinite(const char *s)
 	};
 	const char **i;
 
-	for(i = infs; *i; i++) {
+	for (i = infs; *i; i++) {
 		if (!strcasecmp(s, *i))
 			return 1;
 	}
@@ -813,4 +813,3 @@ multiply(u_quad_t n1, u_quad_t n2)
 
 	return (m);
 }
-
