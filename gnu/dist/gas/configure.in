@@ -212,7 +212,9 @@ changequote([,])dnl
       m88k-*-coff*)         fmt=coff targ=m88kcoff ;;
 
       # don't change em like *-*-bsd does
-      mips-dec-netbsd*)	    fmt=elf targ=mips-lit endian=little ;;
+      mipsel-*-netbsd* | mips-dec-netbsd*)
+			    fmt=elf targ=mips-lit endian=little ;;
+      mipseb-*-netbsd*)     fmt=elf targ=mips-big endian=big ;;
       mips-dec-openbsd*)    fmt=elf targ=mips-lit endian=little ;;
       mips-dec-bsd*)        fmt=aout targ=mips-lit ;;
       mips-sony-bsd*)       fmt=ecoff targ=mips-big ;;
