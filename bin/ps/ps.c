@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
+/*	$NetBSD: ps.c,v 1.16 1996/09/27 02:59:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ps.c,v 1.16 1996/09/27 02:59:53 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -432,7 +432,7 @@ kludge_oldps_options(s)
 	char *newopts, *ns, *cp;
 
 	len = strlen(s);
-	if ((newopts = ns = malloc(len + 2)) == NULL)
+	if ((newopts = ns = malloc(len + 3)) == NULL)
 		err(1, NULL);
 	/*
 	 * options begin with '-'
