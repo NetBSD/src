@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.19 2000/03/30 13:53:36 augustss Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.20 2000/07/08 17:45:53 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -886,7 +886,7 @@ pk_procerror(error, lcp, errstr, diagnostic)
 	int diagnostic;
 {
 
-	pk_message(lcp->lcd_lcn, lcp->lcd_pkp->pk_xcp, errstr);
+	pk_message(lcp->lcd_lcn, lcp->lcd_pkp->pk_xcp, "%s", errstr);
 
 	switch (error) {
 	case PK_CLEAR:
