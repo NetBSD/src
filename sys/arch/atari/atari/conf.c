@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1995/04/10 08:51:09 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1995/04/10 08:54:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -296,6 +296,7 @@ chrtoblk(dev)
 #include <dev/cons.h>
 
 cons_decl(ser);
+#define	itecnpollc	nullcnpollc
 cons_decl(ite);
 
 struct	consdev constab[] = {
