@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sgimips,v 1.1 2000/06/14 15:45:37 soren Exp $
+#	$NetBSD: Makefile.sgimips,v 1.2 2000/12/02 06:23:48 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -59,7 +59,7 @@ CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
-		-mno-abicalls -mno-half-pic
+		-mno-abicalls -mno-half-pic -EB
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-T ${MIPS}/conf/kern.ldscript.be -Ttext ${TEXTADDR} \
 		-e start ${GP}
