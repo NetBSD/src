@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.31 2002/12/28 17:11:51 matt Exp $ */
+/* $NetBSD: pnpbios.c,v 1.32 2003/01/01 01:24:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.31 2002/12/28 17:11:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.32 2003/01/01 01:24:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,12 +774,12 @@ pnpbios_print(aux, pnp)
 	if (pnp)
 		return (QUIET);
 
-	printf(" index %d (%s", aa->idx, aa->primid);
+	aprint_normal(" index %d (%s", aa->idx, aa->primid);
 	if (aa->resc->longname)
-		printf(", %s", aa->resc->longname);
+		aprint_normal(", %s", aa->resc->longname);
 	if (aa->idstr != aa->primid)
-		printf(", attached as %s", aa->idstr);
-	printf(")");
+		aprint_normal(", attached as %s", aa->idstr);
+	aprint_normal(")");
 
 	return (0);
 }
