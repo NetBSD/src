@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/10/07 06:41:37 itojun Exp $
+# $NetBSD: Makefile,v 1.5 2000/10/08 06:40:42 itojun Exp $
 
 PROG=	traceroute6
 MAN=	traceroute6.8
@@ -10,7 +10,6 @@ CPPFLAGS+=-DINET6 -DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 
-# it seems that, if we use poll(2), the timing changes.  commented out for now
-#CPPFLAGS+=-DHAVE_POLL
+CPPFLAGS+=-DHAVE_POLL
 
 .include <bsd.prog.mk>
