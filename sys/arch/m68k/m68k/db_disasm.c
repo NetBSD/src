@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.22 1998/10/07 06:08:47 scottr Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.23 1999/06/09 07:53:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -645,6 +645,10 @@ opcode_misc(dbuf, opc)
 			addchar(',');
 			get_modregstr(dbuf, 2, AR_DIR, 0, 0);
 		}
+		return;
+	case SWAP_INST:
+		addstr(dbuf, "swap\t");
+		get_modregstr(dbuf, 2, DR_DIR, 0, 0);
 		return;
 	case UNLK_INST:
 		addstr(dbuf, "unlk\t");
