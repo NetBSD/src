@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.38 2003/07/18 13:45:16 fredb Exp $
+#	$NetBSD: configure.ac,v 1.39 2003/07/25 03:21:15 atatat Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -83,6 +83,7 @@ AC_CHECK_MEMBERS([DIR.dd_fd, struct dirent.d_namlen],,,
 [#include <sys/types.h>
 #include <dirent.h>])
 AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
+	struct stat.st_birthtime, struct stat.st_atim,
 	struct stat.st_mtimensec],,, [#include <sys/stat.h>])
 AC_CHECK_MEMBERS(struct statfs.f_iosize,,, [#include <sys/mount.h>])
 
@@ -96,7 +97,7 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
 AC_FUNC_ALLOCA
-AC_CHECK_FUNCS(atoll asprintf asnprintf basename dirfd dirname \
+AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
 	isblank issetugid lchflags lchmod lchown lutimes mkstemp mkdtemp \
 	poll pread putc_unlocked pwcache_userdb pwrite random setenv \
