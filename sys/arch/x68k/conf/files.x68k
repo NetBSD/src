@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.22.2.3 1999/01/30 15:07:40 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22.2.4 1999/01/31 06:44:25 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -101,7 +101,7 @@ file	arch/x68k/dev/ite.c		ite needs-flag
 file	arch/x68k/dev/ite_tv.c		grf|ite
 file	arch/x68k/dev/kbdmap.c		ite
 
-device	intio {[addr = -1], [intr = -1], [errintr = -1], [dma = -1]}
+device	intio {[addr = -1], [intr = -1], [dma = -1], [dmaintr = -1]}
 attach	intio at mainbus
 file	arch/x68k/dev/intio.c		intio
 
