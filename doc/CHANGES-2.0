@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.273 2004/06/14 20:26:39 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.274 2004/06/15 23:18:40 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3773,3 +3773,118 @@ usr.bin/vi/ex/version.h				1.16
 	Fixes PR bin/25849.
 	[aymeric, ticket #496]
 
+lib/libc/time/Theory				1.8
+lib/libc/time/zic.c				1.23
+lib/libc/time/tz-link.htm			1.5
+
+	Update to tzcode2004a.
+	[kleink, ticket #407]
+
+share/zoneinfo/asia				1.1.1.27
+share/zoneinfo/backward				1.1.1.13
+share/zoneinfo/europe				1.1.1.27
+share/zoneinfo/leapseconds			1.1.1.9
+share/zoneinfo/northamerica			1.1.1.26
+share/zoneinfo/southamerica			1.1.1.25
+
+	Update to tzdata2004a.  Relevant change is a DST change
+	for the Argentinian province of Mendoza.
+	[kleink, ticket #408]
+
+doc/3RDPARTY					1.220
+
+	Note that tzcode2004a and tzdata2004a is out and has been
+	integrated.
+	[kleink, ticket #409]
+
+distrib/notes/common/sysinst			1.69
+
+	Add sparc64 tags.  Update sysinst menu example to say 2.0.
+	[mbw, ticket #475]
+
+distrib/notes/common/contents			1.99-1.102
+
+	Reword for sparc64 installation tools.
+	Fix distribution sizes for macppc, sparc, and sparc64.
+	Add some missing info for macppc, sparc, and sparc64.
+	Mention that sparc64 users can install 32-bit sparc distr.
+	All platforms use XFree86 4.4.0.
+	[mbw, ticket #476]
+
+distrib/notes/common/netboot			1.21-1.22
+
+	Add sparc64 tags and info.  Mention that macppc machines
+	observe the next-server info and try to load their bootloader
+	from the machine, not just NFS kernel.
+	[mbw, ticket #477]
+
+distrib/notes/common/main			1.257-1.258
+
+	Add sparc64 to "Quick install notes for the impatient" section.
+	sparc64 has OpenFirmware, not OpenBOOT PROM.
+	[mbw, ticket #478]
+
+distrib/notes/common/upgrade			1.21
+
+	Add sparc64 tag.  Also describe that sysinst now tries to
+	merge /etc, not move to /etc.old.
+	[mbw, ticket #479]
+
+distrib/notes/common/xfer			1.40-1.41
+
+	Add sparc64 tags (i.e. remove floppy option from sparc64).
+	Add IPv6 address of ftp.NetBSD.org as of June 2004.
+	[mbw, ticket #480]
+
+distrib/notes/sparc64/hardware			1.15-1.17
+distrib/notes/sparc64/install			1.21-1.23
+distrib/notes/sparc64/prep			1.9-1.10
+
+	Major overhaul of sparc64 install notes.  Reflects currently
+	supported hardware installation methods along with additional
+	info.  Also expand PCI card compat descriptions and list
+	known working cards.  Correct 0680 card as SiS.  Use MI
+	sysinst documentation.  sparc64 has OpenFirmware, not
+	OpenBoot PROM.  Redo suggested partitioning info with more
+	reasonable sizes.
+	[mbw, ticket #482]
+
+distrib/notes/sparc64/upgrade			1.5
+
+	Use MI upgrade procedure.
+	[mbw, ticket #483]
+
+distrib/notes/sparc64/whatis			1.12-1.14
+
+	Fix .Nx tag.
+	2.0 will be the third major release of sparc64.
+	Mention that more models are supported in this release.
+	[mbw, ticket #484]
+
+distrib/notes/sparc/hardware			1.30-1.31
+
+	Note that cgeight is TC.
+	Remove the "not well tested" from hme -- it is stable.
+	Add a little more JavaStation-NC info.
+	zx (leo) doesn't have X server support.
+	Mention that hme cards are not supported on sun4c systems.
+	[mbw, ticket #485]
+
+distrib/notes/common/postinstall		1.57
+
+	Fix a formatting nit.
+	[mbw, ticket #486]
+
+distrib/notes/sparc/prep			1.22
+distrib/notes/sparc64/prep			1.11
+
+	Mention that the installer defaults to serial setting of
+	9600 8N1, the user might want to prepare for that.  Fixes
+	PR#11946.
+	[mbw, ticket #487]
+
+distrib/notes/common/main			1.259
+
+	Removed references to split sets, which are no longer
+	being distributed.  Fixes PR#24434.
+	[mbw, ticket #488]
