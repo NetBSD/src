@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.47 2001/06/18 17:04:45 simonb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.48 2001/07/04 17:46:06 scw Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -35,7 +35,7 @@ LINTFLAGS+= -d ${DESTDIR}/usr/include
 CPPFLAGS+= -D__AUDIT__
 .endif
 
-.if (${MKSOFTFLOAT} != "no")
+.if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
 .endif
