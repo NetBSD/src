@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.18 2000/05/09 22:51:34 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.19 2000/05/10 14:16:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -320,7 +320,8 @@ beattach(parent, self, aux)
 		sc->sc_rb.rb_ntbuf * BE_PKT_BUF_SZ +
 		sc->sc_rb.rb_nrbuf * BE_PKT_BUF_SZ;
 
-	if ((error = bus_dmamap_create(dmatag, size, 1, size, NBPG,
+	/* Get a DMA handle */
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n", self->dv_xname, error);
 		return;
