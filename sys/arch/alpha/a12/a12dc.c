@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.11 2003/01/20 05:29:57 simonb Exp $ */
+/* $NetBSD: a12dc.c,v 1.12 2004/08/30 15:05:15 drochner Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.11 2003/01/20 05:29:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.12 2004/08/30 15:05:15 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,7 +149,6 @@ a12dcmatch(parent, match, aux)
 	struct pcibus_attach_args *pba = aux;
 
 	return	cputype == ST_AVALON_A12
-	    &&	strcmp(pba->pba_busname, a12dc_cd.cd_name) == 0
 	    &&	!a12dcfound;
 }
 
@@ -164,7 +163,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.11 $");
+	printf(": driver %s\n", "$Revision: 1.12 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.2 2004/08/26 16:52:27 jkunz Exp $ */
+/*	$NetBSD: dino.c,v 1.3 2004/08/30 15:05:17 drochner Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.2 2004/08/26 16:52:27 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.3 2004/08/30 15:05:17 drochner Exp $");
 
 /* #include "cardbus.h" */
 
@@ -249,7 +249,6 @@ void dino_dmamem_free(void *, bus_dma_segment_t *, int);
 int dino_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *, int);
 void dino_dmamem_unmap(void *, caddr_t, size_t);
 paddr_t dino_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
-int dinoprint(void *, const char *);
 
 
 void
@@ -1557,16 +1556,6 @@ const struct hppa_pci_chipset_tag dino_pc = {
 };
 
 int
-dinoprint(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		printf("%s at %s\n", pba->pba_busname, pnp);
-	return UNCONF;
-}
-
-int
 dinomatch(parent, cfdata, aux)
 	struct device *parent;
 	struct cfdata *cfdata;
@@ -1705,7 +1694,6 @@ dinoattach(parent, self, aux)
 	pdc_scanbus(self, ca, MAXMODBUS);
 #endif
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmatag;
@@ -1713,5 +1701,5 @@ dinoattach(parent, self, aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found(self, &pba, dinoprint);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.7 2003/07/15 01:37:34 lukem Exp $	*/
+/*	$NetBSD: gt.c,v 1.8 2004/08/30 15:05:17 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.7 2003/07/15 01:37:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8 2004/08/30 15:05:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,6 @@ gt_attach(parent, self, aux)
 	printf("\n");
 
 #if NPCI > 0
-	pba.pba_busname = "pci";
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
@@ -125,7 +124,7 @@ gt_attach(parent, self, aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &mcp->mc_pc;
 
-	config_found(self, &pba, gt_print);
+	config_found_ia(self, "pcibus", &pba, gt_print);
 #endif
 	return;
 }

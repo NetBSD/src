@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.6 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7 2004/08/30 15:05:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2004/08/30 15:05:18 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,6 @@ CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
 
 void	pcib_callback(struct device *);
-int	pcib_print(void *, const char *);
 
 int
 pcibmatch(parent, cf, aux)
@@ -165,25 +164,12 @@ pcib_callback(self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_busname = "isa";
 	iba.iba_ic = &sc->sc_chipset;
 	iba.iba_iot = &mvmeppc_isa_io_bs_tag;
 	iba.iba_memt = &mvmeppc_isa_mem_bs_tag;
 #if NISADMA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
-	config_found(&sc->sc_dev, &iba, pcib_print);
+	config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
 #endif
-}
-
-int
-pcib_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	/* Only ISAs can attach to pcib's; easy. */
-	if (pnp)
-		aprint_normal("isa at %s", pnp);
-	return (UNCONF);
 }

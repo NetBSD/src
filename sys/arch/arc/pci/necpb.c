@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.17 2003/11/01 19:23:52 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.18 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.17 2003/11/01 19:23:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.18 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.17 2003/11/01 19:23:52 tsutsui Exp $");
 
 int	necpbmatch __P((struct device *, struct cfdata *, void *));
 void	necpbattach __P((struct device *, struct device *, void *));
-
-static	int	necpbprint __P((void *, const char *));
 
 void		necpb_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -239,7 +237,6 @@ necpbattach(parent, self, aux)
 
 	(*platform->set_intr)(MIPS_INT_MASK_2, necpb_intr, 3);
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_ncp->nc_iot;
 	pba.pba_memt = &sc->sc_ncp->nc_memt;
 	pba.pba_dmat = &sc->sc_ncp->nc_dmat;
@@ -249,20 +246,7 @@ necpbattach(parent, self, aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	config_found(self, &pba, necpbprint);
-}
-
-static int
-necpbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 void

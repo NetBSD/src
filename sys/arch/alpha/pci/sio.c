@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.37 2004/04/23 21:13:05 itojun Exp $ */
+/* $NetBSD: sio.c,v 1.38 2004/08/30 15:05:16 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.37 2004/04/23 21:13:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.38 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,12 +121,10 @@ CFATTACH_DECL(pceb, sizeof(struct sio_softc),
     pcebmatch, sioattach, NULL, NULL);
 
 union sio_attach_args {
-	const char *sa_name;			/* XXX should be common */
 	struct isabus_attach_args sa_iba;
 	struct eisabus_attach_args sa_eba;
 };
 
-int	sioprint __P((void *, const char *pnp));
 void	sio_isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
 void	sio_eisa_attach_hook __P((struct device *, struct device *,
@@ -237,13 +235,13 @@ sio_bridge_callback(self)
 			ec.ec_intr_disestablish = sio_intr_disestablish;
 		}
 
-		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_iot = sc->sc_iot;
 		sa.sa_eba.eba_memt = sc->sc_memt;
 		sa.sa_eba.eba_dmat =
 		    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_EISA);
 		sa.sa_eba.eba_ec = &ec;
-		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
+		config_found_ia(&sc->sc_dv, "eisabus", &sa.sa_eba,
+				eisabusprint);
 	}
 
 	/*
@@ -281,25 +279,12 @@ sio_bridge_callback(self)
 		sc->sc_ic->ic_intr_alloc = sio_intr_alloc;
 	}
 
-	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
 	sa.sa_iba.iba_memt = sc->sc_memt;
 	sa.sa_iba.iba_dmat =
 	    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_ISA);
 	sa.sa_iba.iba_ic = sc->sc_ic;
-	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
-}
-
-int
-sioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-        register union sio_attach_args *sa = aux;
-
-        if (pnp)
-                aprint_normal("%s at %s", sa->sa_name, pnp);
-        return (UNCONF);
+	config_found_ia(&sc->sc_dv, "isabus", &sa.sa_iba, isabusprint);
 }
 
 void

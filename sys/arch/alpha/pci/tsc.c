@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.11 2003/06/15 23:08:55 fvdl Exp $ */
+/* $NetBSD: tsc.c,v 1.12 2004/08/30 15:05:16 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11 2003/06/15 23:08:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.12 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,6 @@ CFATTACH_DECL(tsp, sizeof(struct tsp_softc),
     tspmatch, tspattach, NULL, NULL);
 
 extern struct cfdriver tsp_cd;
-
-static int tspprint __P((void *, const char *pnp));
 
 static int tsp_bus_get_window __P((int, int,
 	struct alpha_bus_space_translation *));
@@ -190,7 +188,6 @@ tspattach(parent, self, aux)
 
 	pci_6600_pickintr(pcp);
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &pcp->pc_iot;
 	pba.pba_memt = &pcp->pc_memt;
 	pba.pba_dmat =
@@ -201,7 +198,7 @@ tspattach(parent, self, aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, tspprint);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 struct tsp_config *
@@ -229,19 +226,6 @@ tsp_init(mallocsafe, n)
 	tsp_pci_init(&pcp->pc_pc, pcp);
 	pcp->pc_initted = 1;
 	return pcp;
-}
-
-static int
-tspprint(aux, p)
-	void *aux;
-	const char *p;
-{
-	register struct pcibus_attach_args *pci = aux;
-
-	if(p)
-		aprint_normal("%s at %s", pci->pba_busname, p);
-	aprint_normal(" bus %d", pci->pba_bus);
-	return UNCONF;
 }
 
 static int

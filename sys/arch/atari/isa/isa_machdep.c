@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.27 2003/07/15 01:19:54 lukem Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.28 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27 2003/07/15 01:19:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.28 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,7 @@ struct atari_bus_dma_tag isa_bus_dma_tag = {
 };
 #endif /* NISADMA == 0 */
 
-static int	isabusprint __P((void *auxp, const char *));
+static int	atariisabusprint __P((void *auxp, const char *));
 static int	isabusmatch __P((struct device *, struct cfdata *, void *));
 static void	isabusattach __P((struct device *, struct device *, void *));
 
@@ -122,7 +122,6 @@ void		*auxp;
 	extern struct atari_bus_dma_tag isa_bus_dma_tag;
 	extern void isa_bus_init(void);
 
-	iba.iba_busname = "isa";
 	iba.iba_dmat	= &isa_bus_dma_tag;
 	iba.iba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
 	iba.iba_memt    = leb_alloc_bus_space_tag(&bs_storage[1]);
@@ -145,11 +144,11 @@ void		*auxp;
 	}
 
 	printf("\n");
-	config_found(dp, &iba, isabusprint);
+	config_found_ia(dp, "isabus", &iba, atariisabusprint);
 }
 
 int
-isabusprint(auxp, name)
+atariisabusprint(auxp, name)
 void		*auxp;
 const char	*name;
 {

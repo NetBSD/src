@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.65 2004/08/30 10:30:38 drochner Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.66 2004/08/30 15:05:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ struct pci_softc;
  * PCI bus attach arguments.
  */
 struct pcibus_attach_args {
-	char		*pba_busname;	/* XXX should be common */
+	char		*_pba_busname;	/* XXX placeholder */
 	bus_space_tag_t pba_iot;	/* pci i/o space tag */
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
 	bus_dma_tag_t pba_dmat;		/* DMA tag */

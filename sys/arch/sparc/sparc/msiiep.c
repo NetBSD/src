@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.22 2004/07/10 22:30:29 martin Exp $ */
+/*	$NetBSD: msiiep.c,v 1.23 2004/08/30 15:05:18 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.22 2004/07/10 22:30:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.23 2004/08/30 15:05:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -335,7 +335,6 @@ mspcic_attach(parent, self, aux)
 	/*
 	 * Attach the PCI bus.
 	 */
-	pba.pba_busname = "pci";
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_iot = sc->sc_iot;
@@ -345,7 +344,7 @@ mspcic_attach(parent, self, aux)
 	pba.pba_pc = &mspcic_pc_tag;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-	config_found(self, &pba, mspcic_print);
+	config_found_ia(self, "pcibus", &pba, mspcic_print);
 }
 
 

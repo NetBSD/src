@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2003/07/15 01:26:30 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2003/07/15 01:26:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,11 +59,6 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 
 int	mainbus_print (void *, const char *);
 
-union mainbus_attach_args {
-	const char *mba_busname;		/* first elem of all */
-	struct pcibus_attach_args mba_pba;
-};
-
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -79,7 +74,7 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	union mainbus_attach_args mba;
+	struct pcibus_attach_args pba;
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext, *memext;
 #endif
@@ -89,8 +84,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Always find the CPU
 	 */
-	mba.mba_busname = "cpu";
-	config_found(self, &mba, mainbus_print);
+	config_found_ia(self, "mainbus", NULL, mainbus_print);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -108,15 +102,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	extent_destroy(ioext);
 	extent_destroy(memext);
 #endif
-	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = &bebox_io_bs_tag;
-	mba.mba_pba.pba_memt = &bebox_mem_bs_tag;
-	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
-	mba.mba_pba.pba_dmat64 = NULL;
-	mba.mba_pba.pba_bus = 0;
-	mba.mba_pba.pba_bridgetag = NULL;
-	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found(self, &mba.mba_pba, mainbus_print);
+	pba.pba_iot = &bebox_io_bs_tag;
+	pba.pba_memt = &bebox_mem_bs_tag;
+	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
+	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
 }
 
@@ -131,10 +124,6 @@ extern struct cfdriver cpu_cd;
 int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	union mainbus_attach_args *mba = aux;
-
-	if (strcmp(mba->mba_busname, cpu_cd.cd_name) != 0)
-		return 0;
 
 	if (cpu_info[0].ci_dev != NULL)
 		return 0;
@@ -151,11 +140,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 int
 mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	if (!strcmp(mba->mba_busname, "pci"))
-		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
+		aprint_normal("cpu at %s", pnp);
 	return (UNCONF);
 }

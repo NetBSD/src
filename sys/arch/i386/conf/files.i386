@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.259 2004/07/10 18:51:01 cube Exp $
+#	$NetBSD: files.i386,v 1.260 2004/08/30 15:05:17 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -132,12 +132,18 @@ file	arch/i386/i386/bioscall.S	bioscall needs-flag
 define	bios32
 file	arch/i386/i386/bios32.c		bios32 needs-flag
 
+# i386 specific mainbus attributes
+define apmbus {}
+define pnpbiosbus {}
+define vesabiosbus {}
+
 #
 # System bus types
 #
 
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32, acpibus
+device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
+	cpubus, apmbus, pnpbiosbus, vesabiosbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -297,7 +303,7 @@ include "dev/gpib/files.gpib"
 
 # Advanced Power Management support (APM)
 device	apm: bioscall
-attach	apm at mainbus
+attach	apm at apmbus
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.S	apm
 
@@ -305,7 +311,7 @@ file	arch/i386/i386/apmcall.S	apm
 
 define cpu { [apid = -1] }
 device cpu
-attach cpu at mainbus
+attach cpu at cpubus
 file	arch/i386/i386/cpu.c		cpu
 
 #
@@ -456,7 +462,7 @@ attach	npx at acpi with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 device	vesabios {}
-attach vesabios at mainbus
+attach vesabios at vesabiosbus
 file	arch/i386/bios/vesabios.c		vesabios needs-flag
 defflag	opt_vesabios.h	VESABIOSVERBOSE
 

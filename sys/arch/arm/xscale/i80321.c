@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.15 2003/10/06 16:06:05 thorpej Exp $	*/
+/*	$NetBSD: i80321.c,v 1.16 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.15 2003/10/06 16:06:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.16 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ struct bus_space i80321_bs_tag;
 struct i80321_softc *i80321_softc;
 
 static int i80321_iopxs_print(void *, const char *);
-static int i80321_pcibus_print(void *, const char *);
 
 /* Built-in devices. */
 static const struct iopxs_device {
@@ -260,7 +259,8 @@ i80321_attach(struct i80321_softc *sc)
 		ia.ia_offset = id->id_offset;
 		ia.ia_size = id->id_size;
 
-		(void) config_found(&sc->sc_dev, &ia, i80321_iopxs_print);
+		(void) config_found_ia(&sc->sc_dev, "iopxs", &ia,
+				       i80321_iopxs_print);
 	}
 
 	/*
@@ -270,7 +270,6 @@ i80321_attach(struct i80321_softc *sc)
 	preg = PCIXSR_BUSNO(preg);
 	if (preg == 0xff)
 		preg = 0;
-	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
@@ -282,7 +281,7 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found(&sc->sc_dev, &pba, i80321_pcibus_print);
+	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 /*
@@ -296,25 +295,6 @@ i80321_iopxs_print(void *aux, const char *pnp)
 {
 
 	return (QUIET);
-}
-
-/*
- * i80321_pcibus_print:
- *
- *	Autoconfiguration cfprint routine when attaching
- *	to the "pcibus" attribute.
- */
-static int
-i80321_pcibus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
 }
 
 /*

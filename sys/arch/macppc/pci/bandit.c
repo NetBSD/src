@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.23 2003/07/15 02:43:33 lukem Exp $	*/
+/*	$NetBSD: bandit.c,v 1.24 2004/08/30 15:05:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.23 2003/07/15 02:43:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.24 2004/08/30 15:05:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,6 @@ struct bandit_softc {
 
 void bandit_attach __P((struct device *, struct device *, void *));
 int bandit_match __P((struct device *, struct cfdata *, void *));
-int bandit_print __P((void *, const char *));
 
 pcireg_t bandit_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void bandit_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
@@ -121,7 +120,6 @@ bandit_attach(parent, self, aux)
 	bandit_init(sc);
 
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_busname = "pci";
 	pba.pba_memt = pc->memt;
 	pba.pba_iot = pc->iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
@@ -131,20 +129,7 @@ bandit_attach(parent, self, aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-	config_found(self, &pba, bandit_print);
-}
-
-int
-bandit_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pa = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pa->pba_busname, pnp);
-	aprint_normal(" bus %d", pa->pba_bus);
-	return UNCONF;
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 pcireg_t

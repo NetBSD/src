@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.8 2003/11/28 19:03:03 chs Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.9 2004/08/30 15:05:17 drochner Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.8 2003/11/28 19:03:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.9 2004/08/30 15:05:17 drochner Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -205,7 +205,6 @@ struct mongoose_softc {
 };
 
 union mongoose_attach_args {
-	char *mongoose_name;
 	struct eisabus_attach_args mongoose_eisa;
 	struct isabus_attach_args mongoose_isa;
 };
@@ -241,7 +240,6 @@ void mg_isa_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
 int	mgmatch(struct device *, struct cfdata *, void *);
 void	mgattach(struct device *, struct device *, void *);
-int	mgprint(void *, const char *);
 
 CFATTACH_DECL(mongoose, sizeof(struct mongoose_softc),
     mgmatch, mgattach, NULL, NULL);
@@ -659,12 +657,11 @@ mgattach(struct device *parent, struct device *self, void *aux)
 	bt->hbt_unmap = mg_eisa_memunmap;
 
 	/* attachment guts */
-	ea.mongoose_eisa.eba_busname = "eisa";
 	ea.mongoose_eisa.eba_iot = &sc->sc_eiot;
 	ea.mongoose_eisa.eba_memt = &sc->sc_ememt;
 	ea.mongoose_eisa.eba_dmat = NULL /* &sc->sc_edmat */;
 	ea.mongoose_eisa.eba_ec = &sc->sc_ec;
-	config_found(self, &ea.mongoose_eisa, mgprint);
+	config_found_ia(self, "eisabus", &ea.mongoose_eisa, eisabusprint);
 
 	sc->sc_ic.ic_v = sc;
 	sc->sc_ic.ic_attach_hook = mg_isa_attach_hook;
@@ -681,14 +678,13 @@ mgattach(struct device *parent, struct device *self, void *aux)
 	/* TODO: DMA tags */
 
 	/* attachment guts */
-	ea.mongoose_isa.iba_busname = "isa";
 	ea.mongoose_isa.iba_iot = &sc->sc_iiot;
 	ea.mongoose_isa.iba_memt = &sc->sc_imemt;
 #if NISADMA > 0
 	ea.mongoose_isa.iba_dmat = &sc->sc_idmat;
 #endif
 	ea.mongoose_isa.iba_ic = &sc->sc_ic;
-	config_found(self, &ea.mongoose_isa, mgprint);
+	config_found_ia(self, "isabus", &ea.mongoose_isa, isabusprint);
 #undef	R
 
 	/* attach interrupt */
@@ -696,15 +692,3 @@ mgattach(struct device *parent, struct device *self, void *aux)
 					 mg_intr, sc,
 					 &int_reg_cpu, ca->ca_irq);
 }
-
-int
-mgprint(void *aux, const char *pnp)
-{
-	union mongoose_attach_args *ea = aux;
-
-	if (pnp)
-		aprint_normal ("%s at %s", ea->mongoose_name, pnp);
-
-	return (UNCONF);
-}
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2004/04/23 21:13:05 itojun Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.3 2004/04/23 21:13:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.4 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.3 2004/04/23 21:13:05 itojun Exp $");
 
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
-
-int	pchb_print __P((void *, const char *));
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
@@ -123,17 +121,4 @@ pchbattach(parent, self, aux)
 			break;
 	}
 
-}
-
-int
-pchb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
 }

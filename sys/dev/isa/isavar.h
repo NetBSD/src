@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.42 2004/08/30 10:30:38 drochner Exp $	*/
+/*	$NetBSD: isavar.h,v 1.43 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct isabus_attach_args;
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	char	*iba_busname;		/* XXX should be common */
+	char	*_iba_busname;		/* XXX placeholder */
 	bus_space_tag_t iba_iot;	/* isa i/o space tag */
 	bus_space_tag_t iba_memt;	/* isa mem space tag */
 	bus_dma_tag_t iba_dmat;		/* isa DMA tag */

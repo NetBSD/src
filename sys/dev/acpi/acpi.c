@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.66 2004/06/07 15:33:17 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.67 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.66 2004/06/07 15:33:17 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.67 2004/08/30 15:05:19 drochner Exp $");
 
 #include "opt_acpi.h"
 
@@ -223,11 +223,6 @@ acpi_probe(void)
 static int
 acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct acpibus_attach_args *aa = aux;
-
-	if (strcmp(aa->aa_busname, acpi_cd.cd_name) != 0)
-		return 0;
-
 	/*
 	 * XXX Check other locators?  Hard to know -- machine
 	 * dependent code has already checked for the presence

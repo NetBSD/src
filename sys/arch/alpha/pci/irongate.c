@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.11 2003/06/15 23:08:55 fvdl Exp $ */
+/* $NetBSD: irongate.c,v 1.12 2004/08/30 15:05:16 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.11 2003/06/15 23:08:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.12 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ void	irongate_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(irongate, sizeof(struct irongate_softc),
     irongate_match, irongate_attach, NULL, NULL);
-
-int	irongate_print(void *, const char *pnp);
 
 extern struct cfdriver irongate_cd;
 
@@ -178,7 +176,6 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 
 	tag = pci_make_tag(&icp->ic_pc, 0, IRONGATE_PCIHOST_DEV, 0);
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &icp->ic_iot;
 	pba.pba_memt = &icp->ic_memt;
 	pba.pba_dmat =
@@ -192,7 +189,6 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_get_capability(&icp->ic_pc, tag, PCI_CAP_AGP,
 	    NULL, NULL) != 0) {
-		apa.apa_busname = "agp";
 		apa.apa_pci_args.pa_iot = pba.pba_iot;
 		apa.apa_pci_args.pa_memt = pba.pba_memt;
 		apa.apa_pci_args.pa_dmat = pba.pba_dmat;
@@ -207,23 +203,10 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 		    irongate_conf_read0(icp, tag, PCI_CLASS_REG);
 		apa.apa_pci_args.pa_flags = pba.pba_flags;
 
-		(void) config_found(self, &apa, irongate_print);
+		(void) config_found_ia(self, "agpbus", &apa, agpbusprint);
 	}
 
-	(void) config_found(self, &pba, irongate_print);
-}
-
-int
-irongate_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	/* Only PCIs can attach to Irongates; easy. */
-	if (pnp != NULL)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	if (strcmp(pba->pba_busname, "pci") == 0)
-		aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
+	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 int

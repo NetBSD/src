@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.18 2004/04/24 15:49:00 kleink Exp $ */
+/*	$NetBSD: ifpga.c,v 1.19 2004/08/30 15:05:17 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.18 2004/04/24 15:49:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.19 2004/08/30 15:05:17 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.18 2004/04/24 15:49:00 kleink Exp $");
 static int  ifpga_match		(struct device *, struct cfdata *, void *);
 static void ifpga_attach	(struct device *, struct device *, void *);
 static int  ifpga_print		(void *, const char *);
-static int  ifpga_pci_print	(void *, const char *);
 
 /* Drive and attach structures */
 CFATTACH_DECL(ifpga, sizeof(struct ifpga_softc),
@@ -110,30 +109,15 @@ ifpga_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-#if NPCI > 0
 static int
-ifpga_pci_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pci_pba = (struct pcibus_attach_args *)aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pci_pba->pba_busname, pnp);
-	if (strcmp(pci_pba->pba_busname, "pci") == 0)
-		aprint_normal(" bus %d", pci_pba->pba_bus);
-
-	return UNCONF;
-}
-#endif
-
-static int
-ifpga_search(struct device *parent, struct cfdata *cf, void *aux)
+ifpga_search(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct ifpga_softc *sc = (struct ifpga_softc *)parent;
 	struct ifpga_attach_args ifa;
 	int tryagain;
 
 	do {
-		ifa.ifa_name = "ifpga_periph";
 		ifa.ifa_iot = sc->sc_iot;
 		ifa.ifa_addr = cf->cf_iobase;
 		ifa.ifa_irq = cf->cf_irq;
@@ -328,12 +312,11 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 #endif /* NPCI > 0 */
 
 	/* Finally, search for children.  */
-	config_search(ifpga_search, self, NULL);
+	config_search_ia(ifpga_search, self, "ifpga", NULL);
 
 #if NPCI > 0
 	integrator_pci_dma_init(&ifpga_pci_bus_dma_tag);
 
-	pci_pba.pba_busname = "pci";
 	pci_pba.pba_pc = &ifpga_pci_chipset;
 	pci_pba.pba_iot = &ifpga_pci_io_tag;
 	pci_pba.pba_memt = &ifpga_pci_mem_tag;
@@ -343,7 +326,7 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 	
-	config_found(self, &pci_pba, ifpga_pci_print);
+	config_found_ia(self, "pcibus", &pci_pba, pcibusprint);
 #endif
 }
 
