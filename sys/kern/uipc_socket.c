@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.2 1993/05/18 18:19:36 cgd Exp $
+ *	$Id: uipc_socket.c,v 1.3 1993/06/27 06:08:15 andrew Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "file.h"
 #include "malloc.h"
@@ -55,6 +56,7 @@
  * switching out to the protocol specific routines.
  */
 /*ARGSUSED*/
+int
 socreate(dom, aso, type, proto)
 	struct socket **aso;
 	register int type;
@@ -91,6 +93,7 @@ socreate(dom, aso, type, proto)
 	return (0);
 }
 
+int
 sobind(so, nam)
 	struct socket *so;
 	struct mbuf *nam;
@@ -105,6 +108,7 @@ sobind(so, nam)
 	return (error);
 }
 
+int
 solisten(so, backlog)
 	register struct socket *so;
 	int backlog;
@@ -127,6 +131,7 @@ solisten(so, backlog)
 	return (0);
 }
 
+int
 sofree(so)
 	register struct socket *so;
 {
@@ -148,6 +153,7 @@ sofree(so)
  * Initiate disconnect if connected.
  * Free socket when disconnect complete.
  */
+int
 soclose(so)
 	register struct socket *so;
 {
@@ -198,6 +204,7 @@ discard:
 /*
  * Must be called at splnet...
  */
+int
 soabort(so)
 	struct socket *so;
 {
@@ -207,6 +214,7 @@ soabort(so)
 		(struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0));
 }
 
+int
 soaccept(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;
@@ -223,6 +231,7 @@ soaccept(so, nam)
 	return (error);
 }
 
+int
 soconnect(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;
@@ -250,6 +259,7 @@ soconnect(so, nam)
 	return (error);
 }
 
+int
 soconnect2(so1, so2)
 	register struct socket *so1;
 	struct socket *so2;
@@ -263,6 +273,7 @@ soconnect2(so1, so2)
 	return (error);
 }
 
+int
 sodisconnect(so)
 	register struct socket *so;
 {
@@ -301,6 +312,7 @@ bad:
  * must check for short counts if EINTR/ERESTART are returned.
  * Data and control buffers are freed on return.
  */
+int
 sosend(so, addr, uio, top, control, flags)
 	register struct socket *so;
 	struct mbuf *addr;
@@ -467,6 +479,7 @@ out:
  * an mbuf **mp0 for use in returning the chain.  The uio is then used
  * only for the count in uio_resid.
  */
+int
 soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	register struct socket *so;
 	struct mbuf **paddr;
@@ -481,6 +494,7 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	int moff, type;
+	int orig_resid = uio->uio_resid;
 
 	mp = mp0;
 	if (paddr)
@@ -532,7 +546,7 @@ restart:
 	while (m == 0 || so->so_rcv.sb_cc < uio->uio_resid &&
 	    (so->so_rcv.sb_cc < so->so_rcv.sb_lowat ||
 	    ((flags & MSG_WAITALL) && uio->uio_resid <= so->so_rcv.sb_hiwat)) &&
-	    m->m_nextpkt == 0) {
+	    m->m_nextpkt == 0 && (pr->pr_flags & PR_ATOMIC) == 0) {
 #ifdef DIAGNOSTIC
 		if (m == 0 && so->so_rcv.sb_cc)
 			panic("receive 1");
@@ -582,6 +596,7 @@ dontblock:
 		if (m->m_type != MT_SONAME)
 			panic("receive 1a");
 #endif
+		orig_resid = 0;
 		if (flags & MSG_PEEK) {
 			if (paddr)
 				*paddr = m_copy(m, 0, m->m_len);
@@ -620,8 +635,10 @@ dontblock:
 				m = so->so_rcv.sb_mb;
 			}
 		}
-		if (controlp)
+		if (controlp) {
+			orig_resid = 0;
 			controlp = &(*controlp)->m_next;
+		}
 	}
 	if (m) {
 		if ((flags & MSG_PEEK) == 0)
@@ -714,7 +731,7 @@ dontblock:
 		 * Keep sockbuf locked against other readers.
 		 */
 		while (flags & MSG_WAITALL && m == 0 && uio->uio_resid > 0 &&
-		    !sosendallatonce(so)) {
+		    !sosendallatonce(so) && !nextrecord) {
 			if (so->so_error || so->so_state & SS_CANTRCVMORE)
 				break;
 			error = sbwait(&so->so_rcv);
@@ -727,18 +744,27 @@ dontblock:
 				nextrecord = m->m_nextpkt;
 		}
 	}
+
+	if (m && pr->pr_flags & PR_ATOMIC) {
+		flags |= MSG_TRUNC;
+		if ((flags & MSG_PEEK) == 0)
+			(void) sbdroprecord(&so->so_rcv);
+	}
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == 0)
 			so->so_rcv.sb_mb = nextrecord;
-		else if (pr->pr_flags & PR_ATOMIC) {
-			flags |= MSG_TRUNC;
-			(void) sbdroprecord(&so->so_rcv);
-		}
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
 			    (struct mbuf *)flags, (struct mbuf *)0,
 			    (struct mbuf *)0);
 	}
+	if (orig_resid == uio->uio_resid && orig_resid &&
+	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
+		sbunlock(&so->so_rcv);
+		splx(s);
+		goto restart;
+	}
+		
 	if (flagsp)
 		*flagsp |= flags;
 release:
