@@ -1,9 +1,22 @@
-#	$NetBSD: Makefile,v 1.11 1999/03/05 12:19:17 drochner Exp $
+#	$NetBSD: Makefile,v 1.12 1999/06/10 00:49:51 simonb Exp $
 
-ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
+ARCHDIRS= arm32 i386 m68k
 
-.if exists(${ARCHSUBDIR})
-SUBDIR+= ${ARCHSUBDIR}
+.for arch in ${ARCHDIRS}
+.include "${.CURDIR}/${arch:C/mipse[bl]/mips/}/Makefile.inc"
+.PATH:	${.CURDIR}/${arch:C/mipse[bl]/mips/}
+.endfor
+
+OBJS+= ${ASM}
+POBJS+=	${ASM:.o=.po}
+CLEANFILES+= ${ASM} ${POBJS}
+
+# Build the library if SRCS is now defined ...
+.if defined(SRCS)
+LIB=    ${MACHINE_ARCH:C/mipse[bl]/mips/}
+
+.include <bsd.lib.mk>
+.else
+# ... otherwise just build the manpages
+.include <bsd.man.mk>
 .endif
-
-.include <bsd.subdir.mk>
