@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.1 2000/03/16 14:52:24 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.2 2000/03/16 15:07:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@ struct cac_ccb {
 	struct cac_hdr	ccb_hdr;
 	struct cac_req	ccb_req;
 	struct cac_sgb	ccb_seg[CAC_SG_SIZE];
-	u_int32_t	ccb_junk_context;
 
 	/* Data the controller won't touch */
 	int		ccb_flags;
