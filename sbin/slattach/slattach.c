@@ -49,14 +49,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)slattach.c	4.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: slattach.c,v 1.10 1994/02/10 05:39:15 cgd Exp $";
+static char rcsid[] = "$Id: slattach.c,v 1.11 1994/02/10 18:03:23 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <termios.h>
-#include <sys/socket.h>
-#include <net/slip.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <stdio.h>
