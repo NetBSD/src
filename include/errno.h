@@ -1,8 +1,13 @@
-/*	$NetBSD: saerrno.h,v 1.7 1999/01/12 03:08:14 kleink Exp $	*/
+/*	$NetBSD: errno.h,v 1.1 1999/01/12 03:08:14 kleink Exp $	*/
 
 /*
- * Copyright (c) 1988, 1993
+ * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,24 +37,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)saerrno.h	8.1 (Berkeley) 6/11/93
+ *	from: @(#)errno.h	8.5 (Berkeley) 1/21/94
  */
 
+#ifndef _ERRNO_H_
+#define _ERRNO_H_
+
+#include <sys/cdefs.h>
 #include <sys/errno.h>
+#include <sys/featuretest.h>
 
+__BEGIN_DECLS
+#ifdef _REENTRANT
+extern int *__errno __P((void));
+#define errno (*__errno())
+#else
 extern int errno;
+#endif
 
-/* special stand error codes */
-#define	EADAPT	(ELAST+1)	/* bad adaptor */
-#define	ECTLR	(ELAST+2)	/* bad controller */
-#define	EUNIT	(ELAST+3)	/* bad drive */
-#define	EPART	(ELAST+4)	/* bad partition */
-#define	ERDLAB	(ELAST+5)	/* can't read disk label */
-#define	EUNLAB	(ELAST+6)	/* unlabeled disk */
-#define	EOFFSET	(ELAST+7)	/* relative seek not supported */
-#define	ECMD	(ELAST+8)	/* undefined driver command */
-#define	EBSE	(ELAST+9)	/* bad sector error */
-#define	EWCK	(ELAST+10)	/* write check error */
-#define	EECC	(ELAST+11)	/* uncorrectable ecc error */
-#define	EHER	(ELAST+12)	/* hard error */
-#define	ESALAST	(ELAST+12)	/* */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+extern __const int sys_nerr __RENAME(__sys_nerr14);
+extern __const char *__const *sys_errlist __RENAME(__sys_errlist14);
+#endif
+__END_DECLS
+
+#endif /* !_ERRNO_H_ */
