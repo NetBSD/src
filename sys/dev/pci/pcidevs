@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.190 2000/02/03 16:51:42 dante Exp $
+$NetBSD: pcidevs,v 1.191 2000/02/08 16:22:37 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -508,6 +508,7 @@ vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
+vendor USR		0x12b9	US Robotics (3Com)
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor AUREAL		0x12eb	Aureal Semiconductor
@@ -1377,6 +1378,9 @@ product UMC UM8891N	0xe891	UM8891N
 
 /* ULSI Systems products */
 product ULSI US201	0x0201	US201
+
+/* US Robotics products */
+product USR 3CP5609	0x1008	3CP5609 PCI 16550 Modem
 
 /* V3 Semiconductor products */
 product V3 V292PBC	0x0292	V292PBC AMD290x0 Host-PCI Bridge
