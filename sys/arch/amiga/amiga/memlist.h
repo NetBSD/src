@@ -1,4 +1,7 @@
-/* define memory list passed by loadbsd */
+/* define memory list passed by loadbsd 
+ *
+ *	$Id: memlist.h,v 1.2 1994/02/11 06:59:50 chopps Exp $
+ */
 
 struct Mem_List {
 	u_int	num_mem;

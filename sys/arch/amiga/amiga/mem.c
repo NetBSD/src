@@ -38,6 +38,7 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	@(#)mem.c	7.5 (Berkeley) 5/7/91
+ *	$Id: mem.c,v 1.5 1994/02/11 06:59:48 chopps Exp $
  */
 
 /*

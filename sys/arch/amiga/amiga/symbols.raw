@@ -1,4 +1,5 @@
 #	@(#)symbols.raw	7.6 (Berkeley) 5/8/91
+#	$Id: symbols.raw,v 1.2 1994/02/11 07:00:01 chopps Exp $
 
 	_version
 #dmesg

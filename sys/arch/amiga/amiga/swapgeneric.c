@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
+ *	$Id: swapgeneric.c,v 1.6 1994/02/11 06:59:57 chopps Exp $
  */
 
 #include "sys/param.h"

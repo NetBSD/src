@@ -35,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
+ *	$Id: pmap.c,v 1.6 1994/02/11 06:59:53 chopps Exp $
  */
 
 /*

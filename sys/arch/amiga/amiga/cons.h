@@ -38,6 +38,7 @@
  * from: Utah $Hdr: cons.h 1.1 90/07/09$
  *
  *	@(#)cons.h	7.3 (Berkeley) 11/2/90
+ *	$Id: cons.h,v 1.4 1994/02/11 06:59:33 chopps Exp $
  */
 
 struct consdev {
