@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 2000/01/14 08:21:22 itohy Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 2000/05/14 14:10:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1066,10 +1066,16 @@ ENTRY(switch_exit)
  */
 ASENTRY_NOPROFILE(Idle)
 	stop	#PSL_LOWIPL
-	movw	#PSL_HIGHIPL,sr
-	movl	_C_LABEL(whichqs),d0
+	movw	#PSL_HIGHIPL,%sr
+	movl	_C_LABEL(whichqs),%d0
+	jne	Lsw1
+	movw	#PSL_LOWIPL,%sr
+
+	/* Try to zero some pages. */
+	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%d0
 	jeq	_ASM_LABEL(Idle)
-	jra	Lsw1
+	jbsr	_C_LABEL(uvm_pageidlezero)
+	jra	_ASM_LABEL(Idle)
 
 Lbadsw:
 	PANIC("switch")
@@ -1299,241 +1305,6 @@ Lslerr:
 Lsldone:
 	movl	_C_LABEL(curpcb),a1	| current pcb
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
-	rts
-#endif
-
-#if 0
-/*
- * Invalidate entire TLB.
- */
-ENTRY(TBIA)
-_C_LABEL(_TBIA):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu3		| no, skip
-	.word	0xf518			| yes, pflusha
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiano60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0		| clear all branch cache entries
-	movc	d0,cacr
-Ltbiano60:
-#endif
-	rts
-Lmotommu3:
-#endif
-	pflusha				| flush entire TLB
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851a		| 68851 implies no d-cache
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-Lmc68851a:
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush entire TLB
-#endif
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu4		| no, skip
-	movl	sp@(4),a0
-	movc	dfc,d1
-	moveq	#FC_USERD,d0		| user space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	moveq	#FC_SUPERD,d0		| supervisor space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	movc	d1,dfc
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbisno60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0		| clear all branch cache entries
-	movc	d0,cacr
-Ltbisno60:
-#endif
-	rts
-Lmotommu4:
-#endif
-	movl	sp@(4),a0		| get addr to flush
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851b		| is 68851?
-	pflush	#0,#0,a0@		| flush address from both sides
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip data cache
-	rts
-Lmc68851b:
-	pflushs	#0,#0,a0@		| flush address from both sides
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu5		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiasno60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0		| clear all branch cache entries
-	movc	d0,cacr
-Ltbiasno60:
-#endif
-	rts
-Lmotommu5:
-#endif
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851c		| 68851?
-	pflush #4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4			| flush supervisor TLB entries
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu6		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiauno60
-	movc	cacr,d0
-	orl	#IC60_CUBC,d0		| clear user branch cache entries
-	movc	d0,cacr
-Ltbiauno60:
-#endif
-	rts
-Lmotommu6:
-#endif
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851d		| 68851?
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851d:
-	pflushs	#0,#4			| flush user TLB entries
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-#if defined(M68040) || defined(M68060)
-ENTRY(ICPA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	Lmotommu7		| no, skip
-	.word	0xf498			| cinva ic
-	rts
-Lmotommu7:
-#endif
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			| invalidate i-cache
-	rts
-
-/*
- * Invalidate data cache.
- * HP external cache allows for invalidation of user/supervisor portions.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-_C_LABEL(_DCIA):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	Lmotommu8		| no, skip
-	/* XXX implement */
-Lmotommu8:
-#endif
-	rts
-
-ENTRY(DCIS)
-_C_LABEL(_DCIS):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	Lmotommu9		| no, skip
-	/* XXX implement */
-Lmotommu9:
-#endif
-	rts
-
-ENTRY(DCIU)
-_C_LABEL(_DCIU):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	LmotommuA		| no, skip
-	/* XXX implement */
-LmotommuA:
-#endif
-	rts
-
-#if defined(M68040) || defined(M68060)
-ENTRY(ICPL)
-	movl	sp@(4),a0		| address
-	.word	0xf488			| cinvl ic,a0@
-	rts
-ENTRY(ICPP)
-	movl	sp@(4),a0		| address
-	.word	0xf490			| cinvp ic,a0@
-	rts
-ENTRY(DCPL)
-	movl	sp@(4),a0		| address
-	.word	0xf448			| cinvl dc,a0@
-	rts
-ENTRY(DCPP)
-	movl	sp@(4),a0		| address
-	.word	0xf450			| cinvp dc,a0@
-	rts
-ENTRY(DCPA)
-	.word	0xf458			| cinva dc
-	rts
-ENTRY(DCFL)
-	movl	sp@(4),a0		| address
-	.word	0xf468			| cpushl dc,a0@
-	rts
-ENTRY(DCFP)
-	movl	sp@(4),a0		| address
-	.word	0xf470			| cpushp dc,a0@
-	rts
-#endif
-
-ENTRY(PCIA)
-#if defined(M68040) || defined(M68060)
-ENTRY(DCFA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	LmotommuB		| no, skip
-	.word	0xf478			| cpusha dc
-	rts
-LmotommuB:
-#endif
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 #endif
 
