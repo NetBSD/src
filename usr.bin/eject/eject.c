@@ -64,31 +64,30 @@ typedef struct DEVTAB {
  * known device nicknames and types
  * (used for selecting the proper ioctl to eject them)
  */
-#define FLOPPY 0x00000001
-#define CDROM  0x00000002
+#define DISK   0x00000002
 #define TAPE   0x00010000
 
 #define MOUNTABLE(x) ((x) & 0x0000ffff)
 
 static DEVTAB devtab[] = {
-	{ "diskette", "/dev/fd0", 'a', FLOPPY },
-	{ "diskette0", "/dev/fd0", 'a', FLOPPY },
-	{ "diskette1", "/dev/fd1", 'a', FLOPPY },
-	{ "floppy", "/dev/fd0", 'a', FLOPPY },
-	{ "floppy0", "/dev/fd0", 'a', FLOPPY },
-	{ "floppy1", "/dev/fd1", 'a', FLOPPY },
-	{ "fd", "/dev/fd0", 'a', FLOPPY },
-	{ "fd0", "/dev/fd0", 'a', FLOPPY },
-	{ "fd1", "/dev/fd1", 'a', FLOPPY },
-	{ "cdrom", "/dev/cd0", 'a', CDROM },
-	{ "cdrom0", "/dev/cd0", 'a', CDROM },
-	{ "cdrom1", "/dev/cd1", 'a', CDROM },
-	{ "cd", "/dev/cd0", 'a', CDROM },
-	{ "cd0", "/dev/cd0", 'a', CDROM },
-	{ "cd1", "/dev/cd1", 'a', CDROM },
-	{ "mcd", "/dev/mcd0", 'a', CDROM },
-	{ "mcd0", "/dev/mcd0", 'a', CDROM },
-	{ "mcd1", "/dev/mcd1", 'a', CDROM },
+	{ "diskette", "/dev/fd0", 'a', DISK },
+	{ "diskette0", "/dev/fd0", 'a', DISK },
+	{ "diskette1", "/dev/fd1", 'a', DISK },
+	{ "floppy", "/dev/fd0", 'a', DISK },
+	{ "floppy0", "/dev/fd0", 'a', DISK },
+	{ "floppy1", "/dev/fd1", 'a', DISK },
+	{ "fd", "/dev/fd0", 'a', DISK },
+	{ "fd0", "/dev/fd0", 'a', DISK },
+	{ "fd1", "/dev/fd1", 'a', DISK },
+	{ "cdrom", "/dev/cd0", 'a', DISK },
+	{ "cdrom0", "/dev/cd0", 'a', DISK },
+	{ "cdrom1", "/dev/cd1", 'a', DISK },
+	{ "cd", "/dev/cd0", 'a', DISK },
+	{ "cd0", "/dev/cd0", 'a', DISK },
+	{ "cd1", "/dev/cd1", 'a', DISK },
+	{ "mcd", "/dev/mcd0", 'a', DISK },
+	{ "mcd0", "/dev/mcd0", 'a', DISK },
+	{ "mcd1", "/dev/mcd1", 'a', DISK },
 	{ "tape", "/dev/rst0", '\0', TAPE },
 	{ "tape0", "/dev/rst0", '\0', TAPE },
 	{ "tape1", "/dev/rst1", '\0', TAPE },
@@ -108,9 +107,10 @@ struct types {
 	char	*str;
 	int	type;
 } types[] = {
-	{ "diskette", FLOPPY },
-	{ "floppy", FLOPPY },
-	{ "cdrom", CDROM },
+	{ "diskette", DISK },
+	{ "floppy", DISK },
+	{ "cdrom", DISK },
+	{ "disk", DISK },
 	{ "tape", TAPE },
 	{ NULL, 0 }
 };
@@ -176,51 +176,27 @@ device_by_name(device, pdevtype, pqualifier)
 }
 
 /*
- * eject a floppy
+ * eject a disk (including floppy and cdrom)
  */
 static void
-eject_floppy(device)
+eject_disk(device)
 	char   *device;
 {
-#ifdef __i386
-	printf("You may now press the eject button on the floppy drive...\n");
-	return;
-#else
-	int     fd;
-
-	fd = open(device, O_RDONLY);
-	if (fd < 0) {
-		err(1, "open %s", device);
-	}
-	if (ioctl(fd, DIOCEJECT, 0) < 0) {
-		err(1, device);
-	}
-	close(fd);
-#endif
-} /* eject_floppy */
-
-/*
- * eject a cd
- */
-static void
-eject_cdrom(device)
-	char   *device;
-{
-	int     fd;
+	int     fd, arg = 0;
 
 	fd = open(device, O_RDONLY);
 	if (fd < 0) {
 		err(1, "%s: open", device);
 	}
-	if (ioctl(fd, CDIOCALLOW) < 0) {
-		err(1, "%s: CDIOCALLOW", device);
+	if (ioctl(fd, DIOCLOCK, (char *)&arg) < 0) {
+		err(1, "%s: DIOCLOCK", device);
 	}
-	if (ioctl(fd, CDIOCEJECT, 0) < 0) {
-		err(1, "%s: CDIOCEJECT", device);
+	if (ioctl(fd, DIOCEJECT, 0) < 0) {
+		err(1, "%s: DIOCEJECT", device);
 	}
 	if (close(fd) != 0)
 		err(1, "%s: close", device);
-} /* eject_cdrom */
+} /* eject_disk */
 
 /*
  * eject a tape
@@ -277,7 +253,7 @@ umount_mounted(device)
 
 /*
  * Eject - ejects various removable devices, including cdrom, tapes,
- * diskettes
+ * diskettes, and other removable disks (like ZIP drives)
  */
 int
 main(argc, argv)
@@ -377,11 +353,8 @@ main(argc, argv)
 	if (verbose)
 		printf("Ejecting device `%s'\n", device);
 	switch (devtype) {
-	case FLOPPY:
-		eject_floppy(device);
-		break;
-	case CDROM:
-		eject_cdrom(device);
+	case DISK:
+		eject_disk(device);
 		break;
 	case TAPE:
 		eject_tape(device);
