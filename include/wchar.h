@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.18 2003/04/28 23:16:15 bjh21 Exp $	*/
+/*	$NetBSD: wchar.h,v 1.19 2003/07/08 05:39:23 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -146,19 +146,19 @@ int	wctob __P((wint_t));
 int	wcwidth __P((wchar_t));
 
 unsigned long int wcstoul __P((const wchar_t * __restrict,
-	wchar_t ** __restrict, int base));
+	wchar_t ** __restrict, int));
 long int wcstol __P((const wchar_t * __restrict,
-	wchar_t ** __restrict, int base));
+	wchar_t ** __restrict, int));
 double wcstod __P((const wchar_t * __restrict, wchar_t ** __restrict));
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
     defined(_NETBSD_SOURCE)
 /* LONGLONG */
 long long int wcstoll __P((const wchar_t * __restrict,
-	wchar_t ** __restrict, int base));
+	wchar_t ** __restrict, int));
 /* LONGLONG */
 unsigned long long int wcstoull __P((const wchar_t * __restrict,
-	wchar_t ** __restrict, int base));
+	wchar_t ** __restrict, int));
 #endif
 
 wint_t ungetwc __P((wint_t, FILE *));
