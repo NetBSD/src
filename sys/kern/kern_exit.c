@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.23 2002/10/18 02:44:51 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.24 2002/10/22 00:18:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.23 2002/10/18 02:44:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.24 2002/10/22 00:18:30 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -595,12 +595,13 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	struct proc	*p, *q, *t;
 	int		nfound, status, error, s;
 
+	q = l->l_proc;
+
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
 		return (EINVAL);
 
-	q = l->l_proc;
  loop:
 	nfound = 0;
 	LIST_FOREACH(p, &q->p_children, p_sibling) {
