@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.13 1998/06/20 13:12:54 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.14 1999/03/05 10:38:16 pk Exp $	*/
 
 /*
  *
@@ -80,7 +80,9 @@
 #include <machine/bus.h>
 #include <machine/conf.h>
 
+#if defined(__sparc__) || defined(__sun3__)
 #include <dev/sun/disklabel.h>
+#endif
 
 #include <dev/vme/vmevar.h>
 
@@ -244,7 +246,7 @@ int	xdgetdisklabel __P((struct xd_softc *, void *));
 /* XXX - think about this more.. xd_machdep? */
 void	md_setup __P((void));
 int	XDC_DELAY;
-#ifdef sparc
+#ifdef __sparc__
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 void	md_setup()
@@ -255,7 +257,7 @@ void	md_setup()
 		XDC_DELAY = XDC_DELAY_SPARC;
 }
 #endif
-#ifdef sun3
+#ifdef __sun3__
 void	md_setup()
 {
 	XDC_DELAY = XDC_DELAY_SUN3;
@@ -311,7 +313,9 @@ xdgetdisklabel(xd, b)
 	void *b;
 {
 	char *err;
+#if defined(__sparc__) || defined(__sun3__)
 	struct sun_disklabel *sdl;
+#endif
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xd_labeldata = b;
@@ -327,11 +331,14 @@ xdgetdisklabel(xd, b)
 		return(XD_ERR_FAIL);
 	}
 
+#if defined(__sparc__) || defined(__sun3__)
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel->cd_block;
-	if (sdl->sl_magic == SUN_DKMAGIC)
+	if (sdl->sl_magic == SUN_DKMAGIC) {
 		xd->pcyl = sdl->sl_pcylinders;
-	else {
+	} else
+#endif
+	{
 		printf("%s: WARNING: no `pcyl' in disk label.\n",
 							xd->sc_dev.dv_xname);
 		xd->pcyl = xd->sc_dk.dk_label->d_ncylinders +
