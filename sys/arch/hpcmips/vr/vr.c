@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.6 1999/11/28 10:59:06 sato Exp $	*/
+/*	$NetBSD: vr.c,v 1.7 1999/12/04 10:55:18 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -99,7 +99,6 @@ void	vr_device_register __P((struct device *, void *));
 void    vr_fb_init __P((caddr_t*));
 int     vr_mem_init __P((caddr_t));
 void	vr_reboot __P((int howto, char *bootstr));
-void	vr_powerdown __P((int howto, char *bootstr));
 
 char	*vrbcu_vrip_getcpuname __P((void));
 int	vrbcu_vrip_getcpumajor __P((void));
@@ -138,7 +137,6 @@ vr_init()
 	platform.fb_init = vr_fb_init;
 	platform.mem_init = vr_mem_init;
 	platform.reboot = vr_reboot;
-	platform.powerdown = vr_powerdown;
 
 	sprintf(cpu_model, "NEC %s rev%d.%d", 
 		vrbcu_vrip_getcpuname(),
@@ -282,37 +280,45 @@ vr_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	splhigh();
-	if ( !(howto & RB_HALT)) {
+	/*
+	 * power down
+	 */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		printf("fake powerdown\n");
+		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_HIBERNATE)));
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm(".set reorder");
+		/* not reach */
+		vr_reboot(howto&~RB_HALT, bootstr);
+	}
+	/*
+	 * reset
+	 */
+	if (!(howto & RB_HALT)) {
 #if NVRDSU
 		vrdsu_reset();
 #else
 		printf("%s(%d): There is no DSU.", __FILE__, __LINE__);
 #endif
 	}
+	/*
+	 * halt
+	 */
+	splhigh();
 	while (1) {
-		__asm(".word   0x42000021");/* STANDBY */
+		__asm(".set noreorder");
+		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_SUSPEND)));
 		__asm("nop");
 		__asm("nop");
 		__asm("nop");
 		__asm("nop");
 		__asm("nop");
+		__asm(".set reorder");
 	}
-}
-
-void
-vr_powerdown(howto, bootstr)
-	int howto;
-	char *bootstr;
-{
-	printf("fake powerdown\n");
-	__asm(".word   0x42000023");/* HIBERNATE */
-	__asm("nop");
-	__asm("nop");
-	__asm("nop");
-	__asm("nop");
-	__asm("nop");
-	vr_reboot(howto&~RB_HALT, bootstr);
 }
 
 void *
