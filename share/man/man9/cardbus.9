@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.7 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: cardbus.9,v 1.8 2003/04/14 18:34:26 kleink Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,6 +66,7 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]machine/bus.h\*[Gt]
 .Fd #include \*[Lt]dev/cardbus/cardbusvar.h\*[Gt]
+.Fd #include \*[Lt]dev/cardbus/cardbusreg.h\*[Gt]
 .Fd #include \*[Lt]dev/cardbus/cardbusdevs.h\*[Gt]
 .Ft int
 .Fn cardbus_attach_card "struct cardbus_softc *csc"
