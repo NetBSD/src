@@ -129,8 +129,8 @@ extern enum cmodel sparc_cmodel;
 #define ASM_CPU32_DEFAULT_SPEC ""
 
 #if TARGET_CPU_DEFAULT == TARGET_CPU_v9
-/* ??? What does Sun's CC pass?  */
-#define CPP_CPU64_DEFAULT_SPEC "-D__sparc_v9__"
+/* Sun's CC passes __sparcv9 */
+#define CPP_CPU64_DEFAULT_SPEC "-D__sparc_v9__ -D__sparcv9"
 /* ??? It's not clear how other assemblers will handle this, so by default
    use GAS.  Sun's Solaris assembler recognizes -xarch=v8plus, but this case
    is handled in sol2.h.  */
