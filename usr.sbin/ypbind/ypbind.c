@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.26 1996/07/25 18:53:43 ws Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.27 1996/10/01 00:22:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.26 1996/07/25 18:53:43 ws Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.27 1996/10/01 00:22:30 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ static char rcsid[] = "$NetBSD: ypbind.c,v 1.26 1996/07/25 18:53:43 ws Exp $";
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -65,13 +66,16 @@ static char rcsid[] = "$NetBSD: ypbind.c,v 1.26 1996/07/25 18:53:43 ws Exp $";
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
+#include "pathnames.h"
+
 #ifndef O_SHLOCK
 #define O_SHLOCK 0
 #endif
 
 #define BUFSIZE		1400
-#define BINDINGDIR	"/var/yp/binding"
-#define YPBINDLOCK	"/var/run/ypbind.lock"
+
+#define YPSERVERSFILE	".ypservers"
+#define BINDINGDIR	__CONCAT(_PATH_VAR_YP, "binding")
 
 struct _dom_binding {
 	struct _dom_binding *dom_pnext;
@@ -93,10 +97,19 @@ static char *domainname;
 static struct _dom_binding *ypbindlist;
 static int check;
 
-#define YPSET_NO	0
-#define YPSET_LOCAL	1
-#define YPSET_ALL	2
-static int ypsetmode = YPSET_NO;
+typedef enum {
+	YPBIND_DIRECT, YPBIND_BROADCAST, YPBIND_SETLOCAL, YPBIND_SETALL
+} ypbind_mode_t;
+
+ypbind_mode_t ypbindmode;
+
+/*
+ * If ypbindmode is YPBIND_SETLOCAL or YPBIND_SETALL, this indicates
+ * whether or not we've been "ypset".  If we haven't, we behave like
+ * YPBIND_BROADCAST.  If we have, we behave like YPBIND_DIRECT.
+ */
+int been_ypset;
+
 #ifdef DEBUG
 static int debug;
 #endif
@@ -119,7 +132,7 @@ static void *ypbindproc_setdom_2 __P((SVCXPRT *, void *));
 static void ypbindprog_2 __P((struct svc_req *, SVCXPRT *));
 static void checkwork __P((void));
 static int ping __P((struct _dom_binding *));
-static int broadcast __P((struct _dom_binding *));
+static int nag_servers __P((struct _dom_binding *));
 static enum clnt_stat handle_replies __P((void));
 static enum clnt_stat handle_ping __P((void));
 static void rpc_received __P((char *, struct sockaddr_in *, int));
@@ -127,6 +140,9 @@ static struct _dom_binding *xid2ypdb __P((int));
 static int unique_xid __P((struct _dom_binding *));
 static struct _dom_binding *xid2ypdb __P((int xid));
 static int unique_xid __P((struct _dom_binding *ypdb));
+static int broadcast __P((char *, int));
+static int direct __P((char *, int));
+static int direct_set __P((char *, int, struct _dom_binding *));
 
 static void
 usage()
@@ -297,8 +313,8 @@ ypbindproc_setdom_2(transp, argp)
 	(void) memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
 
-	switch (ypsetmode) {
-	case YPSET_LOCAL:
+	switch (ypbindmode) {
+	case YPBIND_SETLOCAL:
 		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
 #ifdef DEBUG
 			if (debug)
@@ -307,10 +323,14 @@ ypbindproc_setdom_2(transp, argp)
 #endif
 			return NULL;
 		}
+		/* FALLTHROUGH */
+
+	case YPBIND_SETALL:
+		been_ypset = 1;
 		break;
-	case YPSET_ALL:
-		break;
-	case YPSET_NO:
+
+	case YPBIND_DIRECT:
+	case YPBIND_BROADCAST:
 	default:
 #ifdef DEBUG
 		if (debug)
@@ -421,17 +441,41 @@ main(argc, argv)
 	fd_set fdsr;
 	int width, lockfd;
 	int evil = 0, one;
+	char pathname[MAXPATHLEN];
+	struct stat st;
 
 	yp_get_default_domain(&domainname);
 	if (domainname[0] == '\0')
 		errx(1, "Domainname not set. Aborting.");
 
+	/*
+	 * Per traditional ypbind(8) semantics, if a ypservers
+	 * file does not exist, we default to broadcast mode.
+	 * If the file does exist, we default to direct mode.
+	 * Note that we can still override direct mode by passing
+	 * the -broadcast flag.
+	 */
+	snprintf(pathname, sizeof(pathname), "%s%s/%s", _PATH_VAR_YP,
+	    domainname, YPSERVERSFILE);
+	if (stat(pathname, &st) < 0) {
+#ifdef DEBUG
+		if (debug)
+			fprintf(stderr,
+			    "%s does not exist, defaulting to broadcast\n",
+			    pathname);
+#endif
+		ypbindmode = YPBIND_BROADCAST;
+	} else
+		ypbindmode = YPBIND_DIRECT;
+
 	while (--argc) {
 		++argv;
 		if (!strcmp("-ypset", *argv))
-			ypsetmode = YPSET_ALL;
+			ypbindmode = YPBIND_SETALL;
 		else if (!strcmp("-ypsetme", *argv))
-			ypsetmode = YPSET_LOCAL;
+			ypbindmode = YPBIND_SETLOCAL;
+		else if (!strcmp("-broadcast", *argv))
+			ypbindmode = YPBIND_BROADCAST;
 #ifdef DEBUG
 		else if (!strcmp("-d", *argv))
 			debug++;
@@ -442,9 +486,9 @@ main(argc, argv)
 
 	/* blow away everything in BINDINGDIR */
 
-	lockfd = open(YPBINDLOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
+	lockfd = open(_PATH_YPBIND_LOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
 	if (lockfd == -1)
-		err(1, "Cannot create %s", YPBINDLOCK);
+		err(1, "Cannot create %s", _PATH_YPBIND_LOCK);
 
 #if O_SHLOCK == 0
 	(void) flock(lockfd, LOCK_SH);
@@ -468,6 +512,7 @@ main(argc, argv)
 	    IPPROTO_TCP))
 		errx(1, "Unable to register (YPBINDPROG, YPBINDVERS, tcp).");
 
+	/* XXX use SOCK_STREAM for direct queries? */
 	if ((rpcsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		err(1, "rpc socket");
 	if ((pingsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -496,14 +541,14 @@ main(argc, argv)
 
 	checkwork();
 
-	while (1) {
-		width = svc_maxfd;
-		if (rpcsock > width)
-			width = rpcsock;
-		if (pingsock > width)
-			width = pingsock;
-		width++;
+	width = svc_maxfd;
+	if (rpcsock > width)
+		width = rpcsock;
+	if (pingsock > width)
+		width = pingsock;
+	width++;
 
+	for (;;) {
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
 		FD_SET(pingsock, &fdsr);
@@ -562,7 +607,7 @@ checkwork()
 			if (ypdb->dom_alive == 1)
 				ping(ypdb);
 			else
-				broadcast(ypdb);
+				nag_servers(ypdb);
 			time(&t);
 			ypdb->dom_check_t = t + 5;
 		}
@@ -631,19 +676,15 @@ ping(ypdb)
 
 }
 
-int
-broadcast(ypdb)
+static int
+nag_servers(ypdb)
 	struct _dom_binding *ypdb;
 {
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg msg;
-	char buf[BUFSIZE], inbuf[8192];
+	char buf[BUFSIZE];
 	enum clnt_stat st;
-	int outlen, i, sock, len;
-	struct sockaddr_in bindsin;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
-	struct in_addr in;
+	int outlen;
 	AUTH *rpcua;
 	XDR xdr;
 
@@ -696,28 +737,65 @@ broadcast(ypdb)
 		removelock(ypdb);
 	}
 
-	(void) memset(&bindsin, 0, sizeof bindsin);
-	bindsin.sin_family = AF_INET;
-	bindsin.sin_len = sizeof(bindsin);
-	bindsin.sin_port = htons(PMAPPORT);
-
 	if (ypdb->dom_alive == 2) {
 		/*
 		 * This resolves the following situation:
 		 * ypserver on other subnet was once bound,
 		 * but rebooted and is now using a different port
 		 */
+		struct sockaddr_in bindsin;
+
+		memset(&bindsin, 0, sizeof bindsin);
+		bindsin.sin_family = AF_INET;
+		bindsin.sin_len = sizeof(bindsin);
+		bindsin.sin_port = htons(PMAPPORT);
 		bindsin.sin_addr = ypdb->dom_server_addr.sin_addr;
+
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 			   sizeof bindsin) == -1)
 			warn("broadcast: sendto");
 	}
+
+	switch (ypbindmode) {
+	case YPBIND_SETALL:
+	case YPBIND_SETLOCAL:
+		if (been_ypset)
+			return direct_set(buf, outlen, ypdb);
+		/* FALLTHROUGH */
+
+	case YPBIND_BROADCAST:
+		return broadcast(buf, outlen);
+
+	case YPBIND_DIRECT:
+		return direct(buf, outlen);
+	}
+
+	return -1;
+}
+
+static int
+broadcast(buf, outlen)
+	char *buf;
+	int outlen;
+{
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	struct in_addr in;
+	int i, sock, len;
+	char inbuf[8192];
+	struct sockaddr_in bindsin;
+
 	/* find all networks and send the RPC packet out them all */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		warn("broadcast: socket");
 		return -1;
 	}
-	
+
+	memset(&bindsin, 0, sizeof bindsin);
+	bindsin.sin_family = AF_INET;
+	bindsin.sin_len = sizeof(bindsin);
+	bindsin.sin_port = htons(PMAPPORT);
+
 	ifc.ifc_len = sizeof inbuf;
 	ifc.ifc_buf = inbuf;
 	if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
@@ -764,6 +842,131 @@ broadcast(ypdb)
 			warn("broadcast: sendto");
 	}
 	(void) close(sock);
+	return 0;
+}
+
+static int
+direct(buf, outlen)
+	char *buf;
+	int outlen;
+{
+	static FILE *df;
+	static char ypservers_path[MAXPATHLEN];
+	char line[_POSIX2_LINE_MAX];
+	char *p;
+	struct hostent *hp;
+	struct sockaddr_in bindsin;
+	int i, count = 0;
+
+	if (df)
+		rewind(df);
+	else {
+		snprintf(ypservers_path, sizeof(ypservers_path),
+		    "%s%s/%s", _PATH_VAR_YP, domainname, YPSERVERSFILE);
+		df = fopen(ypservers_path, "r");
+		if (df == NULL)
+			err(1, ypservers_path);
+	}
+
+	memset(&bindsin, 0, sizeof bindsin);
+	bindsin.sin_family = AF_INET;
+	bindsin.sin_len = sizeof(bindsin);
+	bindsin.sin_port = htons(PMAPPORT);
+
+	while(fgets(line, sizeof(line), df) != NULL) {
+		/* skip lines that are too big */
+		p = strchr(line, '\n');
+		if (p == NULL) {
+			int c;
+
+			while ((c = getc(df)) != '\n' && c != EOF)
+				;
+			continue;
+		}
+		*p = '\0';
+		p = line;
+		while (isspace(*p))
+			p++;
+		if (*p == '#')
+			continue;
+		hp = gethostbyname(p);
+		if (!hp) {
+			herror(p);
+			continue;
+		}
+		/* step through all addresses in case first is unavailable */
+		for (i = 0; hp->h_addr_list[i]; i++) {
+			memmove(&bindsin.sin_addr, hp->h_addr_list[0],
+			    hp->h_length);
+			if (sendto(rpcsock, buf, outlen, 0,
+			    (struct sockaddr *)&bindsin, sizeof bindsin) < 0) {
+				warn("direct: sendto");
+				continue;
+			} else
+				count++;
+		}
+	}
+	if (!count)
+		errx(1, "no contactable servers found in %s",
+		    ypservers_path);
+
+	return 0;
+}
+
+static int
+direct_set(buf, outlen, ypdb)
+	char *buf;
+	int outlen;
+	struct _dom_binding *ypdb;
+{
+	struct sockaddr_in bindsin;
+	char path[MAXPATHLEN];
+	struct iovec iov[2];
+	struct ypbind_resp ybr;
+	SVCXPRT dummy_svc;
+	int fd, bytes;
+
+	/*
+	 * Gack, we lose if binding file went away.  We reset
+	 * "been_set" if this happens, otherwise we'll never
+	 * bind again.
+	 */
+	snprintf(path, sizeof(path), "%s/%s.%d", BINDINGDIR,
+	    ypdb->dom_domain, ypdb->dom_vers);
+
+	if ((fd = open(path, O_SHLOCK|O_RDONLY, 0644)) == -1) {
+		warn(path);
+		been_ypset = 0;
+		return -1;
+	}
+
+#if O_SHLOCK == 0
+	(void) flock(fd, LOCK_SH);
+#endif
+
+	/* Read the binding file... */
+	iov[0].iov_base = (caddr_t)&(dummy_svc.xp_port);
+	iov[0].iov_len = sizeof(dummy_svc.xp_port);
+	iov[1].iov_base = (caddr_t)&ybr;
+	iov[1].iov_len = sizeof(ybr);
+	bytes = readv(fd, iov, 2);
+	(void)close(fd);
+	if (bytes != (iov[0].iov_len + iov[1].iov_len)) {
+		/* Binding file corrupt? */
+		warn(path);
+		been_ypset = 0;
+		return -1;
+	}
+
+	bindsin.sin_addr =
+	    ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr;
+
+	if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
+	    sizeof(bindsin)) < 0) {
+		warn("direct_set: sendto");
+		return -1;
+	}
+
 	return 0;
 }
 
