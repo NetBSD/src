@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.12 2001/04/01 14:59:56 ad Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.13 2001/05/15 15:11:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ device_format(argc, argv)
 {
 	struct scsi_format_unit cmd;
 	struct {
-		struct scsi_mode_header header;
+		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
 		struct page_disk_format format_page;
 	} data;
