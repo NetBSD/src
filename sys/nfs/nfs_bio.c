@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.97 2003/05/03 16:46:39 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.98 2003/05/03 17:27:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.97 2003/05/03 16:46:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.98 2003/05/03 17:27:20 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -990,8 +990,8 @@ again:
 			needcommit = FALSE;
 		}
 		if ((pgs[i]->flags & (PG_RELEASED|PG_PAGEOUT)) ||
-		    pgs[i]->uobject != uobj) {
-			KASSERT(i == 0 || iomode == NFSV3WRITE_FILESYNC);
+		    pgs[i]->uobject != uobj ||
+		    pgs[i]->offset != uiop->uio_offset + (i << PAGE_SHIFT)) {
 			iomode = NFSV3WRITE_FILESYNC;
 		}
 	}
