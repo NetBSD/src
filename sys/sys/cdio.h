@@ -1,5 +1,5 @@
 /*
- *	$Id: cdio.h,v 1.5 1993/08/04 19:33:38 brezak Exp $
+ *	$Id: cdio.h,v 1.6 1994/02/01 20:27:20 mycroft Exp $
  */
 
 #ifndef _SYS_CDIO_H_
@@ -142,6 +142,8 @@ struct	ioc_vol
 #define	CDIOCSTART	_IO('c',22)
 #define	CDIOCSTOP	_IO('c',23)
 #define	CDIOCEJECT	_IO('c',24)
+#define	CDIOCALLOW	_IO('c',25)
+#define	CDIOCPREVENT	_IO('c',26)
 
 struct ioc_play_msf
 {
