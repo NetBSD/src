@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.12.4.3 2002/03/16 15:59:48 jdolecek Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.12.4.4 2002/06/18 17:13:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1214,7 +1214,7 @@ filt_tctrlrdetach(struct knote *kn)
 	splx(s);
 }
 
-static void
+static int
 filt_tctrlread(struct knote *kn, long hint)
 {
 	struct tctrl_softc *sc = (void *) kn->kn_hook;
@@ -1230,6 +1230,7 @@ int
 tctrlkqfilter(dev_t dev, struct knote *kn)
 {
 	struct tctrl_softc *sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
