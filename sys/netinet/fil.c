@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.48 2001/11/04 20:55:25 matt Exp $	*/
+/*	$NetBSD: fil.c,v 1.49 2001/11/13 00:32:34 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,8 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.48 2001/11/04 20:55:25 matt Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.49 2001/11/13 00:32:34 lukem Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp";

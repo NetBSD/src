@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.21 2001/10/29 07:02:33 simonb Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.22 2001/11/13 00:32:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.22 2001/11/13 00:32:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

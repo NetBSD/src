@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.65 2001/11/04 20:55:27 matt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.66 2001/11/13 00:32:37 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,9 @@
  *
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.66 2001/11/13 00:32:37 lukem Exp $");
 
 #include "opt_ipsec.h"
 
