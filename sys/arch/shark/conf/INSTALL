@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.10 2003/04/18 11:11:51 scw Exp $
+#	$NetBSD: INSTALL,v 1.11 2003/05/03 00:47:04 thorpej Exp $
 #
 #	Shark installation kernel
 #
@@ -124,8 +124,6 @@ options 	INSECURE		# disable kernel securelevel
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
-options 	ARM32_PMAP_NEW	# Use new pmap
-options 	ARM32_PMAP_NEEDS_PTE_SYNC
 
 # Development and Debugging options
 
