@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.4 2003/01/10 20:00:30 christos Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.5 2003/01/15 00:09:31 thorpej Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.36 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -41,8 +41,16 @@
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
 menu getboottype, title "Wybor bootblokow";
-	option "Uzyj normalnych bootblokow", exit, action  {boottype = "normal";};
-	option "Uzyj bootblokow na zewn. konsole", exit, action  {boottype = "serial";};
+	option "Uzyj normalnych bootblokow", exit, action
+	    {boottype = "normal";};
+	option "Uzyj bootblokow na zewn. konsole (9600)", exit, action
+	    {boottype = "serial9600";};
+	option "Uzyj bootblokow na zewn. konsole (38400)", exit, action
+	    {boottype = "serial38400";};
+	option "Uzyj bootblokow na zewn. konsole (57600)", exit, action
+	    {boottype = "serial57600";};
+	option "Uzyj bootblokow na zewn. konsole (115200)", exit, action
+	    {boottype = "serial115200";};
 
 menu fullpart, title  "Wybierz";
 	option "Uzyj tylko czesci dysku", exit, action  {usefull = 0;};
