@@ -1,3 +1,4 @@
+/*	$NetBSD: pio.h,v 1.2 2000/01/23 21:01:57 soda Exp $	*/
 /*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
 
 /*

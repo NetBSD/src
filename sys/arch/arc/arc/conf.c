@@ -1,4 +1,5 @@
-/*	$NetBSD: conf.c,v 1.13 2000/01/23 20:09:06 soda Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2000/01/23 21:01:51 soda Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 1997/05/21 18:31:31 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,9 +60,16 @@ bdev_decl(sd);
 #include "cd.h"
 bdev_decl(cd);
 #include "fdc.h"
-#define fdopen Fdopen
 bdev_decl(fd);
-#undef fdopen
+#include "wd.h"
+bdev_decl(wd);
+#if 0 /* XXX - should be fixed */
+#include "acd.h"
+bdev_decl(acd);
+#endif
+#include "ccd.h"
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
@@ -69,13 +77,15 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 1: should be here swap pseudo-dev */
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_notdef(),			/* 4:  */
+	bdev_disk_init(NWD,wd),		/* 4: ST506/ESDI/IDE disk */
+#if 0 /* XXX - should be fixed */
+	bdev_disk_init(NACD,acd),	/* 5: ATAPI CD-ROM */
+#else
 	bdev_notdef(),			/* 5:  */
-	bdev_notdef(),			/* 6:  */
-#define fdopen Fdopen
+#endif
+	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
 	bdev_disk_init(NFDC,fd),	/* 7: Floppy disk driver */
-#undef fdopen
-	bdev_notdef(),			/* 8:  */
+	bdev_disk_init(NMD,md),		/* 8: memory disk (for install) */
 	bdev_notdef(),			/* 9:  */
 	bdev_notdef(),			/* 10:  */
 	bdev_notdef(),			/* 11:  */
@@ -112,6 +122,9 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 cdev_decl(cn);
 cdev_decl(sw);
 cdev_decl(ctty);
+#if 0 /* XXX - should be fixed */
+cdev_decl(random);
+#endif
 #define mmread mmrw
 #define mmwrite mmrw
 dev_type_read(mmrw);
@@ -128,23 +141,32 @@ cdev_decl(fd);
 #include "st.h"
 cdev_decl(st);
 #include "fdc.h"
-#define fdopen Fdopen
 bdev_decl(fd);
-#undef fdopen
 cdev_decl(vnd);
+cdev_decl(md);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "pcom.h"
+#include "com.h"
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(sd);
 #include "pc.h"
 cdev_decl(pc);
-cdev_decl(pms);
+cdev_decl(opms);
 cdev_decl(cd);
-dev_decl(filedesc,open);
+#include "ss.h"
+#include "uk.h"
+cdev_decl(uk);
+cdev_decl(wd);
+#if 0 /* XXX - should be fixed */
+cdev_decl(acd);
+#endif
+
+/* open, close, read, ioctl */
 #include "ipfilter.h"
+cdev_decl(ipl);
+
 #include "rnd.h"
 
 #include "scsibus.h"
@@ -165,19 +187,21 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
-#define fdopen Fdopen
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
-#undef fdopen
-	cdev_pc_init(1,pc),		/* 14: builtin pc style console dev */
-	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
-	cdev_lpt_init(NLPT,lpt),	/* 16: lpt paralell printer interface */
-	cdev_tty_init(NPCOM,com),	/* 17: com 16C450 serial interface */
-	cdev_notdef(),			/* 18: */
+	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
+	cdev_mouse_init(NPC,opms),	/* 15: builtin PS2 style mouse */
+	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
+	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
+	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
+#if 0 /* XXX - should be fixed */
+	cdev_disk_init(NACD,acd),	/* 19: ATAPI CD-ROM */
+#else
 	cdev_notdef(),			/* 19: */
+#endif
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_notdef(),			/* 22: */
-	cdev_notdef(),			/* 23: */
+	cdev_disk_init(NMD,md),		/* 22: memory disk device */
+	cdev_disk_init(NCCD,ccd),       /* 23: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
 	cdev_notdef(),			/* 25: */
 	cdev_notdef(),			/* 26: */
@@ -185,9 +209,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 28: */
 	cdev_notdef(),			/* 29: */
 	cdev_notdef(),			/* 30: */
-	cdev_ipf_init(NIPFILTER,ipl),	/* 31: ip-filter device */
-	cdev_rnd_init(NRND,rnd),	/* 32: random source pseudo-device */
-	cdev_scsibus_init(NSCSIBUS,scsibus), /* 33: SCSI bus */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 31: IP filter log */
+	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
+	cdev_rnd_init(NRND,rnd),	/* 33: random source pseudo-device */
+	cdev_scanner_init(NSS,ss),           /* 34: SCSI scanner */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 35: SCSI bus */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -260,11 +286,11 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	NODEV,
-	/* 19 */	NODEV,
+	/* 18 */	4,
+	/* 19 */	5,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
-	/* 22 */	NODEV,
+	/* 22 */	8,
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
@@ -315,24 +341,3 @@ chrtoblk(dev)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }
-
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
-#include <dev/cons.h>
-
-cons_decl(pc);
-cons_decl(com);
-
-struct	consdev constab[] = {
-#if NPC + NVT > 0
-	cons_init(pc),
-#endif
-#if NPCOM > 0
-	cons_init(com),
-#endif
-	{ 0 },
-};

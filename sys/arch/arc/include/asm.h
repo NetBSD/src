@@ -1,3 +1,3 @@
-/*	$NetBSD: asm.h,v 1.7 2000/01/23 20:08:17 soda Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 2000/01/23 21:01:55 soda Exp $	*/
 
 #include <mips/asm.h>

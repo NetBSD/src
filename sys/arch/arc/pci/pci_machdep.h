@@ -1,3 +1,4 @@
+/*	$NetBSD: pci_machdep.h,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
 /*	$OpenBSD: pci_machdep.h,v 1.2 1997/04/19 17:20:02 pefo Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$NetBSD: desktech.h,v 1.2 2000/01/23 21:01:55 soda Exp $	*/
 /*	$OpenBSD: desktech.h,v 1.4 1996/10/01 20:50:12 pefo Exp $ */
 
 /*

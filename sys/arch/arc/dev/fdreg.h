@@ -1,5 +1,6 @@
+/*	$NetBSD: fdreg.h,v 1.2 2000/01/23 21:01:54 soda Exp $	*/
 /*	$OpenBSD: fdreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*	$NetBSD: fdreg.h,v 1.1.1.3 2000/01/23 20:24:27 soda Exp $	*/
+/*	NetBSD: fdreg.h,v 1.8 1995/06/28 04:30:57 cgd Exp 	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

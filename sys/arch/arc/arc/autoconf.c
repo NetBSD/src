@@ -1,6 +1,8 @@
-/*	$NetBSD: autoconf.c,v 1.12 2000/01/23 20:09:01 soda Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2000/01/23 21:01:50 soda Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
+ * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,7 +60,11 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
+#include <machine/cpu.h>
 #include <machine/autoconf.h>
+
+void findroot __P((struct device **devpp, int *partp));
+int getpno __P((char **cp));
 
 /*
  * The following several variables are related to
@@ -66,11 +72,8 @@
  * the machine.
  */
 int	cpuspeed = 150;	/* approx # instr per usec. */
-extern	int pica_boardtype;
 
-void	findroot __P((struct device **devpp, int *partp));
-int	getpno __P((char **cp));
-
+void	findroot __P((struct device **, int *));
 
 /*
  *  Configure all devices found that we know about.
@@ -79,12 +82,17 @@ int	getpno __P((char **cp));
 void
 cpu_configure()
 {
-
-	(void)splhigh();	/* To be really shure.. */
-	if(config_rootfound("mainbus", "mainbus") == NULL)
+	(void)splhigh();	/* To be really sure.. */
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
-	(void)spl0();
+
+	/* Configuration is finished, turn on interrupts. */
+	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 }
+
+#if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
+int nfs_boot_rfc951 = 1;
+#endif
 
 void
 cpu_rootconf()
@@ -150,35 +158,59 @@ findroot(devpp, partp)
 	}
 }
 
-
+struct devmap {
+	char *attachment;
+	char *dev;
+};
 
 /*
  * Look at the string 'cp' and decode the boot device.
  * Boot names look like: scsi()disk(n)rdisk()partition(1)\bsd
+ * (beware for empty scsi id's...)
  */
 void
 makebootdev(cp)
 	char *cp;
 {
-	int majdev, unit, ctrl;
-	char dv[8];
+	int ctrl, unit, part, i;
+	static struct devmap devmap[] = {
+		{ "multi", "fd" },
+		{ "eisa", "wd" },
+		{ "scsi", "sd" },
+		{ NULL, NULL }
+	};
+	struct devmap *dp = &devmap[0];
 
 	bootdev = B_DEVMAGIC;
 
-	dv[0] = *cp;
-	ctrl = getpno(&cp);
-	if(*cp++ == ')') {
-		dv[1] = *cp;
-		unit = getpno(&cp);
-
-		for (majdev = 0; majdev < sizeof(dev_name2blk)/sizeof(dev_name2blk[0]); majdev++)
-			if (dv[0] == dev_name2blk[majdev].d_name[0] &&
-			    dv[1] == dev_name2blk[majdev].d_name[1] &&
-			    cp[0] == ')')
-				bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit,0);
+	while (dp->attachment) {
+		if (strncmp (cp, dp->attachment, strlen(dp->attachment)) == 0)
+			break;
+		dp++;
 	}
-}
+	if (!dp->attachment) {
+		printf("Warning: boot device unrecognized: %s\n", cp);
+		return;
+	}
+	ctrl = getpno(&cp);
+	if (*cp++ == ')')
+		unit = getpno(&cp);
+	else
+		unit = 0;
+	if (*cp++ == ')')
+		getpno(&cp);
+#if 0 /* ignore partition number */
+	if (*cp++ == ')')
+		part = getpno(&cp) - 1;
+	else
+#endif
+		part = 0;
 
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (strcmp(dp->dev, dev_name2blk[i].d_name) == 0)
+			bootdev = MAKEBOOTDEV(dev_name2blk[i].d_maj, 0,
+			    ctrl, unit, part);
+}
 
 int
 getpno(cp)

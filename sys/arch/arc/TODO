@@ -1,37 +1,59 @@
-$NetBSD: TODO,v 1.3 2000/01/23 20:08:00 soda Exp $
+$NetBSD: TODO,v 1.4 2000/01/23 21:01:48 soda Exp $
 
 To do list (not in any particular order).
 
-    o	Improve pmap_zero_page and pmap_copy_page. Speed and flushing.
-
     o	Move the RO and WIRED attribute from the pte to the pv table.
 	This saves four instructions in the tlb miss handler.
-InWork: Have a test version. The system hangs after a while. Not solved yet.
-        Also, is it worth the effort to remove 4 instr. in TLB-miss handler?
-
-    o	Update MAKEDEV to create all devices correctly.
 
     o   Boot. Standalone boot program instead of booting the kernel directly?
-
-    o   Create boot package for distribution.
 
     o   sigsetjmp/siglongjmp missing....
 
     o   Add more videomodes to pccons driver. 50kHz and 64kHz monitors?
-InWork: This seems to be hard. Need more info on the chip.
+	This seems to be hard. Need more info on the chip.
 
     o   Find out why bitmap load to S3-928 flashes screen.
-Know why (enable linear mode). Need S3 info.
-
-    o   Would be nice to have Motif...
-
-    o   ELF shared libraries......
-
-    o   GDB. The current one does not work correctly with current toolchain.
-
-    o   ISA driver. ISA dma, interrupt etc.
+	Know why (enable linear mode). Need S3 info.
 
     o   Can we have 32 double registers?
 
+    o	64bit kernel/userland
+
+    o	source code structure is quite obsolete,
+	general clean up is needed as nisimura-san suggested.
+	especially:
+
+ 	-   introduce struct platform and remove ugly ``switch (cputype)''
+	    in many places.
+
+	-   implement and use bus_dma
+
+	-   clean up bus_space implementation, remove inb/outb
+
+	-   eliminate OpenBSD compat #define symbols
+
+    o	fix kernel start address
+
+    o	merge new wscons
+
+    o	parse ARC BIOS configuration information and use it
+
+    o	fix implementation of DELAY(), clean up clock implementation
+
+    o	if_sn.c ether address handling clean up
+
+    o	use MI driver
+
+	-   use MI ncr53c9x driver instead of home grown asc
+
+	-   use MI bha driver instead of home grown btl
+
+	-   make sonic driver MI, and share it with mac68k, newsmips/apbus
+
+	-   make fd driver MI, and share it with i386
+	    (contact christos about MI fd driver)
+
+	-   make pccons MI, and share it with i386,
+	    or simply eliminate pccons
 
 Lots of other things.....

@@ -1,4 +1,5 @@
-/*	$NetBSD: arc_trap.c,v 1.7 2000/01/23 20:08:51 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.8 2000/01/23 21:01:49 soda Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 1996/09/02 11:33:24 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,21 +43,23 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
-#include "opt_ktrace.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
 #include <net/netisr.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>
@@ -64,64 +67,70 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/mips_opcode.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
-#include <pica/pica/pica.h>
+#include <arc/pica/pica.h>
+#include <arc/arc/arctype.h>
+extern u_int cputype;
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
-struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
-
 struct {
 	int	int_mask;
-	int	(*int_hand)();
+	int	(*int_hand)(u_int, struct clockframe *);
 } cpu_int_tab[8];
 
 int cpu_int_mask;	/* External cpu interrupt mask */
 
 int
-pica_hardware_intr(mask, pc, statusReg, causeReg)
+arc_hardware_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
 	unsigned statusReg;
 	unsigned causeReg;
 {
 	register int i;
+	struct clockframe cf;
+
+	cf.pc = pc;
+	cf.sr = statusReg;
+#if 0 /* remove this for merged mips trap code. (this member isn't used) */
+	cf.cr = causeReg;
+#endif
+
 	/*
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
 	for(i = 0; i < 5; i++) {
 		if(cpu_int_tab[i].int_mask & mask) {
-			causeReg &= (*cpu_int_tab[i].int_hand)(mask, pc, statusReg, causeReg);
+			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
 		}
 	}
 
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
-	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
-		 MIPS_SR_INT_ENAB);
+	return ((statusReg & ~causeReg & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
-
+/*
+ *	Set up handler for external interrupt events.
+ *	Events are checked in priority order.
+ */
 void
 set_intr(mask, int_hand, prio)
 	int	mask;
-	int	(*int_hand)();
+	int	(*int_hand)(u_int, struct clockframe *);
 	int	prio;
 {
-	if(prio > 4)
+	if(prio > 5)
 		panic("set_intr: to high priority");
 
-	if(cpu_int_tab[prio].int_mask != 0)
+	if(cpu_int_tab[prio].int_mask != 0 &&
+	   (cpu_int_tab[prio].int_mask != mask ||
+	    cpu_int_tab[prio].int_hand != int_hand))
 		panic("set_intr: int already set");
 
 	cpu_int_tab[prio].int_hand = int_hand;
@@ -129,17 +138,30 @@ set_intr(mask, int_hand, prio)
 	cpu_int_mask |= mask >> 10;
 
 	/*
-	 *  Update external interrupt mask but dont enable clock.
+	 *  Update external interrupt mask but don't enable clock.
 	 */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask & (~MIPS_INT_MASK_4 >> 10));
+	switch(cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		out32(R4030_SYS_EXT_IMASK,
+		    cpu_int_mask & (~MIPS_INT_MASK_4 >> 10));
+		break;
+
+	case DESKSTATION_TYNE:
+		break;
+	case DESKSTATION_RPC44:
+		break;
+	case ALGOR_P4032:
+		break;
+	}
 }
 
-
+#if 0
 /*
  *----------------------------------------------------------------------
  *
  * MemErrorInterrupts --
- *   pica_errintr - for the ACER PICA_61
+ *   arc_errintr - for the ACER PICA_61
  *
  *	Handler an interrupt for the control register.
  *
@@ -152,26 +174,19 @@ set_intr(mask, int_hand, prio)
  *----------------------------------------------------------------------
  */
 static void
-pica_errintr()
+arc_errintr()
 {
-
-	/*
-	 * XXX
-	 * how does the Pica report memory errors?
-	 * how should we handle them?
-	 */
-#if 0
 	volatile u_short *sysCSRPtr =
-		(u_short *)MACH_PHYS_TO_UNCACHED(KN01_SYS_CSR);
+		(u_short *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 	u_short csr;
 
 	csr = *sysCSRPtr;
 
 	if (csr & KN01_CSR_MERR) {
 		printf("Memory error at 0x%x\n",
-			*(unsigned *)MACH_PHYS_TO_UNCACHED(KN01_SYS_ERRADR));
+			*(unsigned *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
 	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
-#endif
 }
+#endif

@@ -1,3 +1,4 @@
+/*	$NetBSD: algorbus.c,v 1.2 2000/01/23 21:01:49 soda Exp $	*/
 /*	$OpenBSD: algorbus.c,v 1.3 1997/04/19 17:19:37 pefo Exp $ */
 
 /*
@@ -38,7 +39,6 @@
 #include <sys/user.h>
 #include <sys/device.h>
 
-#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -56,7 +56,7 @@ struct algor_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-int	algormatch(struct device *, void *, void *);
+int	algormatch(struct device *, struct cfdata *, void *);
 void	algorattach(struct device *, struct device *, void *);
 int	algorprint(void *, const char *);
 
@@ -148,12 +148,11 @@ struct algor_dev *algor_cpu_devs[] = {
 int nalgor_cpu_devs = sizeof algor_cpu_devs / sizeof algor_cpu_devs[0];
 
 int
-algormatch(parent, cfdata, aux)
+algormatch(parent, match, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a ALGORITHMICS BUS */
@@ -161,7 +160,7 @@ algormatch(parent, cfdata, aux)
                 return (0);
 
         /* Make sure that unit exists. */
-	if (cf->cf_unit != 0 ||
+	if (match->cf_unit != 0 ||
 	    cputype > nalgor_cpu_devs || algor_cpu_devs[cputype] == NULL)
 		return (0);
 
@@ -184,8 +183,8 @@ algorattach(parent, self, aux)
 	sc->sc_devs = algor_cpu_devs[cputype];
 
 	/* set up interrupt handlers */
-	set_intr(INT_MASK_1, algor_iointr, 2);
-	set_intr(INT_MASK_4, algor_errintr, 0);
+	set_intr(MIPS_INT_MASK_1, algor_iointr, 2);
+	set_intr(MIPS_INT_MASK_4, algor_errintr, 0);
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_ALGOR;
@@ -256,10 +255,10 @@ algor_intr_establish(ca, handler, arg)
 	outb(P4032_IXR2, p4032_ixr >> 16);
 
 	if(slot == 0) {		/* Slot 0 is special, clock */
-		set_intr(INT_MASK_0 << ipl, algor_clkintr, ipl + 1);
+		set_intr(MIPS_INT_MASK_0 << ipl, algor_clkintr, ipl + 1);
 	}
 	else {
-		set_intr(INT_MASK_0 << ipl, algor_iointr, ipl + 1);
+		set_intr(MIPS_INT_MASK_0 << ipl, algor_iointr, ipl + 1);
 	}
 
 	p4032_imask |= dev->ps_mask;
@@ -308,7 +307,7 @@ algor_pci_intr_establish(ih, level, handler, arg, name)
 	outb(P4032_IXR1, p4032_ixr >> 8);
 	outb(P4032_IXR2, p4032_ixr >> 16);
 
-	set_intr(INT_MASK_0 << level, algor_iointr, level + 1);
+	set_intr(MIPS_INT_MASK_0 << level, algor_iointr, level + 1);
 
 	p4032_imask |= imask;
 	outb(P4032_IMR, p4032_imask);
@@ -403,9 +402,9 @@ algor_clkintr(mask, cf)
 	hardclock(cf);
 
 	/* Re-enable clock interrupts */
-	splx(INT_MASK_0 << IPL_CLOCK | SR_INT_ENAB);
+	splx(MIPS_INT_MASK_0 << IPL_CLOCK | MIPS_SR_INT_IE);
 
-	return(~(INT_MASK_0 << IPL_CLOCK)); /* Keep clock interrupts enabled */
+	return(~(MIPS_INT_MASK_0 << IPL_CLOCK)); /* Keep clock interrupts enabled */
 }
 
 /*

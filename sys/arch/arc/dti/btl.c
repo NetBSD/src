@@ -1,7 +1,9 @@
-/*	$NetBSD: btl.c,v 1.1.1.1 2000/01/23 20:24:28 soda Exp $	*/
+/*	$NetBSD: btl.c,v 1.2 2000/01/23 21:01:55 soda Exp $	*/
 
 #undef BTDIAG
 #define integrate
+
+#define notyet /* XXX - #undef this, if this driver does actually work */
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -64,8 +66,9 @@
 
 #include <arc/dti/desktech.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 #include <arc/dti/btlreg.h>
@@ -107,16 +110,8 @@ extern int cputype;  /* XXX */
 #define PHYSTOKV(x)	((cputype == DESKSTATION_TYNE) ? \
 	(((int)(x) & 0x7fffff) | TYNE_V_BOUNCE) : ((int)(x)))
 
-#include "aha.h"
-#include "btl.h"
-#if NAHA > 0
-int btports[NBT];
-int nbtports;
-#endif
-
 struct bt_softc {
 	struct device sc_dev;
-	struct isadev sc_id;
 	void *sc_ih;
 
 	int sc_iobase;
@@ -133,7 +128,8 @@ struct bt_softc {
 	int sc_numccbs, sc_mbofull;
 	int sc_numbufs;
 	int sc_scsi_dev;		/* adapters scsi id */
-	struct scsi_link sc_link;	/* prototype for devs */
+	struct scsipi_link sc_link;	/* prototype for devs */
+	struct scsipi_adapter sc_adapter;
 };
 
 #ifdef BTDEBUG
@@ -156,41 +152,30 @@ int bt_find __P((struct isa_attach_args *, struct bt_softc *));
 void bt_init __P((struct bt_softc *));
 void bt_inquire_setup_information __P((struct bt_softc *));
 void btminphys __P((struct buf *));
-int bt_scsi_cmd __P((struct scsi_xfer *));
-int bt_poll __P((struct bt_softc *, struct scsi_xfer *, int));
+int bt_scsi_cmd __P((struct scsipi_xfer *));
+int bt_poll __P((struct bt_softc *, struct scsipi_xfer *, int));
 void bt_timeout __P((void *arg));
 void bt_free_buf __P((struct bt_softc *, struct bt_buf *));
 struct bt_buf * bt_get_buf __P((struct bt_softc *, int));
-
-struct scsi_adapter bt_switch = {
-	bt_scsi_cmd,
-	btminphys,
-	0,
-	0,
-};
 
 /* XXX static buffer as a kludge.  DMA isn't cache coherent on the rpc44, so 
  * we always use uncached buffers for DMA. */
 static char rpc44_buffer[ TYNE_S_BOUNCE ];
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device bt_dev = {
+struct scsipi_device bt_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
 
-int	btprobe __P((struct device *, void *, void *));
+int	btprobe __P((struct device *, struct cfdata *, void *));
 void	btattach __P((struct device *, struct device *, void *));
 int	btprint __P((void *, const char *));
 
 struct cfattach btl_ca = {
 	sizeof(struct bt_softc), btprobe, btattach
-};
-
-struct cfdriver btl_cd = {
-	NULL, "bt", DV_DULL
 };
 
 #define BT_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
@@ -338,7 +323,8 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 int
 btprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	register struct isa_attach_args *ia = aux;
 
@@ -355,17 +341,6 @@ btprobe(parent, match, aux)
 	ia->ia_iosize = 4;
 	/* IRQ and DRQ set by bt_find(). */
 	return 1;
-}
-
-int
-btprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
 }
 
 /*
@@ -428,24 +403,30 @@ btattach(parent, self, aux)
 		sc->sc_numbufs++;
 	}
 	/*
-	 * fill in the prototype scsi_link.
+	 * Fill in the adapter.
 	 */
+	sc->sc_adapter.scsipi_cmd = bt_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = btminphys;
+	/*
+	 * fill in the prototype scsipi_link.
+	 */
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
-	sc->sc_link.adapter = &bt_switch;
+	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_scsi_dev;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &bt_dev;
 	sc->sc_link.openings = 1;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
+	sc->sc_link.type = BUS_SCSI;
 
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
-	    IPL_BIO, btintr, sc, sc->sc_dev.dv_xname);
+	    IPL_BIO, btintr, sc);
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, btprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 integrate void
@@ -666,9 +647,9 @@ bt_init_ccb(sc, ccb)
  * If there are none, either return an error or sleep.
  */
 struct bt_ccb *
-bt_get_ccb(sc, flags)
+bt_get_ccb(sc, nosleep)
 	struct bt_softc *sc;
-	int flags;
+	int nosleep;
 {
 	struct bt_ccb *ccb;
 	int s;
@@ -684,7 +665,7 @@ bt_get_ccb(sc, flags)
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if (nosleep)
 			goto out;
 		tsleep(&sc->sc_free_ccb, PRIBIO, "btccb", 0);
 	}
@@ -702,9 +683,9 @@ out:
  * If there are none, either return an error or sleep.
  */
 struct bt_buf *
-bt_get_buf(sc, flags)
+bt_get_buf(sc, nosleep)
 	struct bt_softc *sc;
-	int flags;
+	int nosleep;
 {
 	struct bt_buf *buf;
 	int s;
@@ -721,7 +702,7 @@ bt_get_buf(sc, flags)
 			sc->sc_numbufs--;
 			break;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if (nosleep)
 			goto out;
 		tsleep(&sc->sc_free_buf, PRIBIO, "btbuf", 0);
 	}
@@ -832,7 +813,7 @@ bt_start_ccbs(sc)
 		/* Tell the card to poll immediately. */
 		isa_outb(iobase + BT_CMD_PORT, BT_START_SCSI);
 
-		if ((ccb->xs->flags & SCSI_POLL) == 0)
+		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			timeout(bt_timeout, ccb, (ccb->timeout * hz) / 1000);
 
 		++sc->sc_mbofull;
@@ -852,8 +833,8 @@ bt_done(sc, ccb)
 	struct bt_softc *sc;
 	struct bt_ccb *ccb;
 {
-	struct scsi_sense_data *s1, *s2;
-	struct scsi_xfer *xs = ccb->xs;
+	struct scsipi_sense_data *s1, *s2;
+	struct scsipi_xfer *xs = ccb->xs;
 
 	u_long thiskv, thisbounce;
 	int bytes_this_page, datalen;
@@ -893,7 +874,7 @@ bt_done(sc, ccb)
 			switch (ccb->target_stat) {
 			case SCSI_CHECK:
 				s1 = &ccb->scsi_sense;
-				s2 = &xs->sense;
+				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
@@ -918,7 +899,7 @@ bt_done(sc, ccb)
 		while (seg) {
 			thisbounce = PHYSTOKV(phystol(sg->seg_addr));
 			bytes_this_page = phystol(sg->seg_len);
-			if(xs->flags & SCSI_DATA_IN) {
+			if(xs->xs_control & XS_CTL_DATA_IN) {
 				bcopy((void *)thisbounce, (void *)thiskv, bytes_this_page);
 			}
 			bt_free_buf(sc, (struct bt_buf *)thisbounce);
@@ -931,8 +912,8 @@ bt_done(sc, ccb)
 	}
 
 	bt_free_ccb(sc, ccb);
-	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	xs->xs_status |= XS_STS_DONE;
+	scsipi_done(xs);
 }
 
 /*
@@ -949,6 +930,13 @@ bt_find(ia, sc)
 	struct bt_extended_inquire inquire;
 	struct bt_config config;
 	int irq, drq;
+
+#ifndef notyet
+	/* Check something is at the ports we need to access */
+	sts = isa_inb(iobase + BHA_STAT_PORT);
+	if (sts == 0xFF)
+		return (0);
+#endif
 
 	/*
 	 * reset board, If it doesn't respond, assume
@@ -972,6 +960,26 @@ bt_find(ia, sc)
 		return 1;
 	}
 
+#ifndef notyet
+	/*
+	 * The BusLogic cards implement an Adaptec 1542 (aha)-compatible
+	 * interface. The native bha interface is not compatible with 
+	 * an aha. 1542. We need to ensure that we never match an
+	 * Adaptec 1542. We must also avoid sending Adaptec-compatible
+	 * commands to a real bha, lest it go into 1542 emulation mode.
+	 * (On an indirect bus like ISA, we should always probe for BusLogic
+	 * interfaces before Adaptec interfaces).
+	 */
+
+	/*
+	 * Make sure we don't match an AHA-1542A or AHA-1542B, by checking
+	 * for an extended-geometry register.  The 1542[AB] don't have one.
+	 */
+	sts = isa_inb(iobase +  BT_EXTGEOM_PORT);
+	if (sts == 0xFF)
+		return (0);
+#endif /* notyet */
+
 	/*
 	 * Check that we actually know how to use this board.
 	 */
@@ -979,8 +987,27 @@ bt_find(ia, sc)
 	bzero(&inquire, sizeof inquire);
 	inquire.cmd.opcode = BT_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
-	bt_cmd(iobase, sc, sizeof(inquire.cmd), (u_char *)&inquire.cmd,
+	i = bt_cmd(iobase, sc, sizeof(inquire.cmd), (u_char *)&inquire.cmd,
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
+
+#ifndef notyet
+	/*
+	 * Some 1542Cs (CP, perhaps not CF, may depend on firmware rev)
+	 * have the extended-geometry register and also respond to
+	 * BHA_INQUIRE_EXTENDED.  Make sure we never match such cards,
+	 * by checking the size of the reply is what a BusLogic card returns.
+	 */
+	if (i) { /* XXX - this doesn't really check the size. ??? see bha.c */
+#ifdef BTDEBUG
+		printf("bt_find: board returned %d instead of %d to %s\n",
+		       i, sizeof(inquire.reply), "INQUIRE_EXTENDED");
+#endif
+		return (0);
+	}
+
+	/* OK, we know we've found a buslogic adaptor. */
+#endif /* notyet */
+
 	switch (inquire.reply.bus_type) {
 	case BT_BUS_TYPE_24BIT:
 	case BT_BUS_TYPE_32BIT:
@@ -992,16 +1019,6 @@ bt_find(ia, sc)
 		printf("bt_find: illegal bus type %c\n", inquire.reply.bus_type);
 		return 1;
 	}
-
-#if NAHA > 0
-	/* Adaptec 1542 cards do not support this */
-	digit.reply.digit = '@';
-	digit.cmd.opcode = BT_INQUIRE_REVISION_3;
-	bt_cmd(iobase, sc, sizeof(digit.cmd), (u_char *)&digit.cmd,
-	    sizeof(digit.reply), (u_char *)&digit.reply);
-	if (digit.reply.digit == '@')
-		return 1;
-#endif
 
 	/*
 	 * Assume we have a board at this stage setup dma channel from
@@ -1074,10 +1091,6 @@ bt_find(ia, sc)
 			return 1;
 	}
 
-#if NAHA > 0
-	/* XXXX To avoid conflicting with the aha1542 probe */
-	btports[nbtports++] = iobase;
-#endif
 	return 0;
 }
 
@@ -1236,15 +1249,15 @@ btminphys(bp)
  */
 int
 bt_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct bt_softc *sc = sc_link->adapter_softc;
 	struct bt_ccb *ccb;
 	struct bt_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
 	u_long thiskv, thisbounce;
-	int bytes_this_page, datalen, flags;
+	int bytes_this_page, datalen, control;
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bt_scsi_cmd\n"));
@@ -1253,8 +1266,8 @@ bt_scsi_cmd(xs)
 	 * is from a buf (possibly from interrupt time)
 	 * then we can't allow it to sleep
 	 */
-	flags = xs->flags;
-	if ((ccb = bt_get_ccb(sc, flags)) == NULL) {
+	control = xs->xs_control;
+	if ((ccb = bt_get_ccb(sc, control & XS_CTL_NOSLEEP)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
@@ -1264,7 +1277,7 @@ bt_scsi_cmd(xs)
 	/*
 	 * Put all the arguments for the xfer in the ccb
 	 */
-	if (flags & SCSI_RESET) {
+	if (control & XS_CTL_RESET) {
 		ccb->opcode = BT_RESET_CCB;
 		ccb->scsi_cmd_length = 0;
 	} else {
@@ -1290,12 +1303,13 @@ bt_scsi_cmd(xs)
 		while (datalen && seg < BT_NSEG) {
 
 			/* put in the base address of a buf */
-			thisbounce = (u_long)bt_get_buf(sc, flags);
+			thisbounce = (u_long)
+				bt_get_buf(sc, control & XS_CTL_NOSLEEP);
 			if(thisbounce == 0)
 				break;
 			ltophys(KVTOPHYS(thisbounce), sg->seg_addr);
 			bytes_this_page = min(sizeof(struct bt_buf), datalen);
-			if(flags & SCSI_DATA_OUT) {
+			if (control & XS_CTL_DATA_OUT) {
 				bcopy((void *)thiskv, (void *)thisbounce, bytes_this_page);
 			}
 			thiskv += bytes_this_page;
@@ -1320,8 +1334,8 @@ bt_scsi_cmd(xs)
 
 	ccb->data_out = 0;
 	ccb->data_in = 0;
-	ccb->target = sc_link->target;
-	ccb->lun = sc_link->lun;
+	ccb->target = sc_link->scsipi_scsi.target;
+	ccb->lun = sc_link->scsipi_scsi.lun;
 	ltophys(KVTOPHYS(&ccb->scsi_sense), ccb->sense_ptr);
 	ccb->req_sense_length = sizeof(ccb->scsi_sense);
 	ccb->host_stat = 0x00;
@@ -1337,7 +1351,7 @@ bt_scsi_cmd(xs)
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
-	if ((flags & SCSI_POLL) == 0)
+	if ((control & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	/*
@@ -1369,7 +1383,7 @@ badbuf:
 int
 bt_poll(sc, xs, count)
 	struct bt_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	int iobase = sc->sc_iobase;
@@ -1382,7 +1396,7 @@ bt_poll(sc, xs, count)
 		 */
 		if (isa_inb(iobase + BT_INTR_PORT) & BT_INTR_ANYINTR)
 			btintr(sc);
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			return 0;
 		delay(1000);	/* only happens in boot so ok */
 		count--;
@@ -1395,12 +1409,12 @@ bt_timeout(arg)
 	void *arg;
 {
 	struct bt_ccb *ccb = arg;
-	struct scsi_xfer *xs = ccb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = ccb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct bt_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();

@@ -1,4 +1,5 @@
-/*	$NetBSD: clock.c,v 1.8 2000/01/23 20:09:03 soda Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2000/01/23 21:01:50 soda Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1997/04/19 17:19:39 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,24 +49,37 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/machConst.h>
-#include <pica/pica/clockvar.h>
-#include <pica/pica/picatype.h>
+#include <machine/cpu.h>
+#include <arc/arc/clockvar.h>
+#include <arc/arc/arctype.h>
 
+#include <dev/isa/isavar.h>
+#include <machine/isa_machdep.h>
 
 extern int cputype;	/* What kind of cpu we are running on */
 
+int	clock_started = 0;
+
 /* Definition of the driver for autoconfig. */
-static int	clockmatch __P((struct device *, void *, void *));
+static int	clockmatch __P((struct device *, struct cfdata *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
 
-struct cfattach clock_ca = {
+extern struct cfdriver aclock_cd;
+
+struct cfattach aclock_isa_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
 
-extern struct cfdriver clock_cd;
+struct cfattach aclock_pica_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
+
+struct cfattach aclock_algor_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
 
 void	mcclock_attach __P((struct device *, struct device *, void *));
+int	clockintr __P((void *));
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
@@ -75,32 +89,46 @@ void	mcclock_attach __P((struct device *, struct device *, void *));
 #define	LEAPYEAR(year)	(((year) % 4) == 0)
 
 static int
-clockmatch(parent, cfdata, aux)
+clockmatch(parent, match, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
 	/* See how many clocks this system has */	
 	switch (cputype) {
 
-	case MIPS_PICA_61:
+	case ACER_PICA_61:
+	case MAGNUM:
 		/* make sure that we're looking for this type of device. */
 		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
 			return (0);
 
-		if (cf->cf_unit >= 1)
-			return (0);
+		break;
 
+	case DESKSTATION_RPC44:
+	case DESKSTATION_TYNE:
+	case ALGOR_P4032:
 		break;
 
 	default:
 		panic("unknown CPU");
 	}
 
+	if (match->cf_unit >= 1)
+		return (0);
+
 	return (1);
+}
+
+int
+clockintr(cf)
+	void *cf;
+{
+	if(clock_started)
+		hardclock((struct clockframe *)cf);
+	return(1);
 }
 
 static void
@@ -109,23 +137,32 @@ clockattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	struct isa_attach_args *ia = aux;
+
+	mcclock_attach(parent, self, aux);
 
 	switch (cputype) {
 
-	case MIPS_PICA_61:
-		mcclock_attach(parent, self, aux);
+	case ACER_PICA_61:
+	case ALGOR_P4032:
+		BUS_INTR_ESTABLISH((struct confargs *)aux,
+			(intr_handler_t)hardclock, self);
+		break;
+
+	case MAGNUM:
+		BUS_INTR_ESTABLISH((struct confargs *)aux,
+			(intr_handler_t)clockintr, self);
+		break;
+
+	case DESKSTATION_RPC44:
+	case DESKSTATION_TYNE:
+		(void)isa_intr_establish(ia->ia_ic,
+				0, 1, 3, clockintr, 0);
 		break;
 
 	default:
 		panic("clockattach: it didn't get here.  really.");
 	}
-
-
-	/*
-	 * establish the clock interrupt; it's a special case
-	 */
-	BUS_INTR_ESTABLISH((struct confargs *)aux,
-			   (intr_handler_t) hardclock, self);
 
 	printf("\n");
 }
@@ -162,15 +199,20 @@ void
 cpu_initclocks()
 {
 	extern int tickadj;
-	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)aclock_cd.cd_devs[0];
 
-	hz = 100;		/* 100 Hz */
-	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 
-	/*
-	 * Start the clock.
-	 */
+	/*  Assume 100 Hz */
+	hz = 100;
+
+	/* Start the clock.  */
 	(*csc->sc_init)(csc);
+
+	/* Recalculate theese if clock init changed hz */
+	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
+	tickadj = 240000 / (60 * hz);           /* can adjust 240ms in 60s */
+
+	clock_started++;
 }
 
 /*
@@ -202,10 +244,10 @@ inittodr(base)
 	time_t base;
 {
 	struct tod_time c;
-	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)aclock_cd.cd_devs[0];
 	register int days, yr;
 	long deltat;
-	int badbase, s;
+	int badbase;
 
 	if (base < 5*SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -254,7 +296,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %ld days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 bad:
@@ -272,9 +314,10 @@ void
 resettodr()
 {
 	struct tod_time c;
-	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
-	register int t, t2;
-	int s;
+	struct clock_softc *csc = (struct clock_softc *)aclock_cd.cd_devs[0];
+	int t, t2;
+
+	(void) &t;		/* shut off gcc unused-variable warnings */
 
 	if(!csc->sc_initted)
 		return;

@@ -1,10 +1,41 @@
-/*	$NetBSD: kbdreg.h,v 1.3 2000/01/23 20:08:23 soda Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.4 2000/01/23 21:01:57 soda Exp $	*/
+/*	$OpenBSD: kbdreg.h,v 1.3 1996/09/04 21:18:24 pefo Exp $	*/
 
 /*
+ * Copyright (c) 1996 Per Fogelstrom
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Per Fogelstrom.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
  * Keyboard definitions
+ *
  */
 
-#define	KBSTATP		(PICA_SYS_KBD + 0x61)	/* controller status port (I) */
+#define	KBSTATP		(0x61)	/* controller status port (I) */
 #define	 KBS_DIB	0x01	/* data in buffer */
 #define	 KBS_IBF	0x02	/* input buffer low */
 #define	 KBS_WARM	0x04	/* input buffer low */
@@ -14,9 +45,9 @@
 #define	 KBS_RERR	0x40	/* receive error */
 #define	 KBS_PERR	0x80	/* parity error */
 
-#define	KBCMDP		(PICA_SYS_KBD + 0x61)	/* controller port (O) */
-#define	KBDATAP		(PICA_SYS_KBD + 0x60)	/* data port (I) */
-#define	KBOUTP		(PICA_SYS_KBD + 0x60)	/* data port (O) */
+#define	KBCMDP		(0x61)	/* controller port (O) */
+#define	KBDATAP		(0x60)	/* data port (I) */
+#define	KBOUTP		(0x60)	/* data port (O) */
 
 #define	K_RDCMDBYTE	0x20
 #define	K_LDCMDBYTE	0x60
