@@ -1,0 +1,10 @@
+#	$NetBSD: files.filecorefs,v 1.1 2002/04/16 23:14:06 thorpej Exp $
+
+deffs	FILECORE
+
+file	filecorefs/filecore_bmap.c	filecore
+file	filecorefs/filecore_lookup.c	filecore
+file	filecorefs/filecore_node.c	filecore
+file	filecorefs/filecore_utils.c	filecore
+file	filecorefs/filecore_vfsops.c	filecore
+file	filecorefs/filecore_vnops.c	filecore  

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.515 2002/04/16 21:27:13 thorpej Exp $
+#	$NetBSD: files,v 1.516 2002/04/16 23:14:05 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -24,13 +24,6 @@ defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
 defflag	opt_ntp.h		PPS_SYNC NTP
-
-defflag	opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
-				NFS_BOOT_GATEWAY NFS_BOOT_TCP
-defparam opt_nfs_boot.h		NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS
-				NFS_BOOT_RWSIZE
-defflag	opt_nfs.h		NFS_V2_ONLY
-defflag				NFSSERVER
 
 defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
 defflag	opt_malloclog.h		MALLOCLOG
@@ -109,34 +102,10 @@ defparam			SB_MAX
 #
 defflag	opt_uvmhist.h		UVMHIST UVMHIST_PRINT
 
-# file systems
-#
-deffs				FFS EXT2FS
-deffs	fs_mfs.h		MFS			# XXX
-deffs	fs_lfs.h		LFS
-deffs	fs_ntfs.h		NTFS
-deffs				CD9660
-deffs				ADOSFS
-deffs				MSDOSFS
-deffs				FILECORE
-deffs	fs_nfs.h		NFS
-deffs				NULLFS
-deffs				OVERLAY
-deffs				SMBFS
-deffs				FDESC
-deffs				PORTAL
-deffs				UMAPFS
-deffs				PROCFS
-deffs	fs_kernfs.h		KERNFS		# XXX
-deffs	fs_union.h		UNION
-deffs	fs_coda.h		CODA
-
 # file system options
 #
-defflag				SOFTDEP
-defflag				QUOTA
-defflag	opt_ffs.h		FFS_EI
-defflag	opt_ntfs.h		NTFS_DEBUG
+defflag				SOFTDEP			# XXX files.ufs?
+defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_OP_NOINLINE
 
 # buffer cache size options
@@ -856,7 +825,6 @@ file	dev/ic/daic.c			daic
 defpseudo vnd:		disk
 defpseudo ccd:		disk
 defpseudo md:		disk
-defpseudo vcoda
 defpseudo netsmb
 
 defpseudo pty:		tty
@@ -896,18 +864,30 @@ defpseudo isdn:		isdndev, tty
 defpseudo irip:		isdndev, ifnet
 defpseudo ippp:		isdndev, sppp, ifnet
 
+#
+# File systems
+#
+include "adosfs/files.adosfs"
+include "coda/files.coda"
+include "filecorefs/files.filecorefs"
+include "fs/smbfs/files.smbfs"
+include "isofs/cd9660/files.cd9660"
+include "miscfs/fdesc/files.fdesc"
+include "miscfs/kernfs/files.kernfs"
+include "miscfs/nullfs/files.nullfs"
+include "miscfs/overlay/files.overlay"
+include "miscfs/portal/files.portal"
+include "miscfs/procfs/files.procfs"
+include "miscfs/umapfs/files.umapfs"
+include "miscfs/union/files.union"
+include "msdosfs/files.msdosfs"
+include "nfs/files.nfs"
+include "ntfs/files.ntfs"
+include "ufs/files.ufs"
+
+#
 # kernel sources
 #
-file	adosfs/adlookup.c		adosfs
-file	adosfs/adutil.c			adosfs
-file	adosfs/advfsops.c		adosfs
-file	adosfs/advnops.c		adosfs
-file	coda/coda_namecache.c		coda
-file	coda/coda_psdev.c		vcoda			needs-count
-file	coda/coda_subr.c		coda
-file	coda/coda_venus.c		coda
-file	coda/coda_vfsops.c		coda
-file	coda/coda_vnops.c		coda
 file	crypto/arc4/arc4.c		wlan
 file	crypto/des/des_ecb.c		ipsec & ipsec_esp
 file	crypto/des/des_setkey.c		ipsec & ipsec_esp
@@ -958,25 +938,6 @@ file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/vnd.c			vnd			needs-flag
-file	filecorefs/filecore_bmap.c	filecore
-file	filecorefs/filecore_lookup.c	filecore
-file	filecorefs/filecore_node.c	filecore
-file	filecorefs/filecore_utils.c	filecore
-file	filecorefs/filecore_vfsops.c	filecore
-file	filecorefs/filecore_vnops.c	filecore
-file	fs/smbfs/smbfs_io.c		smbfs
-file	fs/smbfs/smbfs_node.c		smbfs
-file	fs/smbfs/smbfs_smb.c		smbfs
-file	fs/smbfs/smbfs_subr.c		smbfs
-file	fs/smbfs/smbfs_vfsops.c		smbfs
-file	fs/smbfs/smbfs_vnops.c		smbfs
-file	isofs/cd9660/cd9660_bmap.c	cd9660
-file	isofs/cd9660/cd9660_lookup.c	cd9660
-file	isofs/cd9660/cd9660_node.c	cd9660
-file	isofs/cd9660/cd9660_rrip.c	cd9660
-file	isofs/cd9660/cd9660_util.c	cd9660
-file	isofs/cd9660/cd9660_vfsops.c	cd9660
-file	isofs/cd9660/cd9660_vnops.c	cd9660
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c
@@ -1062,48 +1023,17 @@ file	kern/vfs_syscalls.c
 file	kern/vfs_vnops.c
 file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
-file	miscfs/fdesc/fdesc_vfsops.c	fdesc
-file	miscfs/fdesc/fdesc_vnops.c	fdesc
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
-file	miscfs/kernfs/kernfs_vfsops.c	kernfs
-file	miscfs/kernfs/kernfs_vnops.c	kernfs
-file	miscfs/nullfs/null_vfsops.c	nullfs
-file	miscfs/nullfs/null_vnops.c	nullfs
-file	miscfs/overlay/overlay_vfsops.c	overlay
-file	miscfs/overlay/overlay_vnops.c	overlay
-file	miscfs/portal/portal_vfsops.c	portal
-file	miscfs/portal/portal_vnops.c	portal
-file	miscfs/procfs/procfs_cmdline.c	procfs
-file	miscfs/procfs/procfs_ctl.c	procfs
-file	miscfs/procfs/procfs_fpregs.c
-file	miscfs/procfs/procfs_linux.c	procfs
-file	miscfs/procfs/procfs_map.c	procfs
-file	miscfs/procfs/procfs_mem.c
-file	miscfs/procfs/procfs_note.c	procfs
-file	miscfs/procfs/procfs_regs.c
-file	miscfs/procfs/procfs_status.c	procfs
-file	miscfs/procfs/procfs_subr.c	procfs
-file	miscfs/procfs/procfs_vfsops.c	procfs
-file	miscfs/procfs/procfs_vnops.c	procfs
+file	miscfs/procfs/procfs_fpregs.c	# XXX
+file	miscfs/procfs/procfs_mem.c	# XXX
+file	miscfs/procfs/procfs_regs.c	# XXX
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
-file	miscfs/umapfs/umap_subr.c	umapfs
-file	miscfs/umapfs/umap_vfsops.c	umapfs
-file	miscfs/umapfs/umap_vnops.c	umapfs
-file	miscfs/union/union_subr.c	union
-file	miscfs/union/union_vfsops.c	union
-file	miscfs/union/union_vnops.c	union
-file	msdosfs/msdosfs_conv.c		msdosfs
-file	msdosfs/msdosfs_denode.c	msdosfs
-file	msdosfs/msdosfs_fat.c		msdosfs
-file	msdosfs/msdosfs_lookup.c	msdosfs
-file	msdosfs/msdosfs_vfsops.c	msdosfs
-file	msdosfs/msdosfs_vnops.c		msdosfs
 file	net/bpf.c			bpfilter		needs-count
 file	net/bpf_filter.c		bpf_filter
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
@@ -1298,67 +1228,7 @@ file	netsmb/smb_subr.c		netsmb	needs-count
 file	netsmb/smb_trantcp.c		netsmb	needs-count
 file	netsmb/smb_usr.c		netsmb	needs-count
 file	netsmb/subr_mchain.c		netsmb
-file	nfs/krpc_subr.c			nfs
-file	nfs/nfs_bio.c			nfs
-file	nfs/nfs_boot.c			nfs
-file	nfs/nfs_bootdhcp.c		nfs & (nfs_boot_bootp | nfs_boot_dhcp)
-file	nfs/nfs_bootparam.c		nfs & nfs_boot_bootparam
-file	nfs/nfs_node.c			nfs
-file	nfs/nfs_nqlease.c		nfsserver | nfs
-file	nfs/nfs_serv.c			nfsserver
-file	nfs/nfs_socket.c		nfsserver | nfs
-file	nfs/nfs_srvcache.c		nfsserver
-file	nfs/nfs_subs.c			nfsserver | nfs
-file	nfs/nfs_syscalls.c		nfsserver | nfs
-file	nfs/nfs_vfsops.c		nfs
-file	nfs/nfs_vnops.c			nfs
-file	ntfs/ntfs_compr.c		ntfs
-file	ntfs/ntfs_conv.c		ntfs
-file	ntfs/ntfs_ihash.c		ntfs
-file	ntfs/ntfs_subr.c		ntfs
-file	ntfs/ntfs_vfsops.c		ntfs
-file	ntfs/ntfs_vnops.c		ntfs
-file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
-file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
-file	ufs/ext2fs/ext2fs_bmap.c	ext2fs
-file	ufs/ext2fs/ext2fs_bswap.c	ext2fs
-file	ufs/ext2fs/ext2fs_inode.c	ext2fs
-file	ufs/ext2fs/ext2fs_lookup.c	ext2fs
-file	ufs/ext2fs/ext2fs_readwrite.c	ext2fs
-file	ufs/ext2fs/ext2fs_subr.c	ext2fs
-file	ufs/ext2fs/ext2fs_vfsops.c	ext2fs
-file	ufs/ext2fs/ext2fs_vnops.c	ext2fs
-file	ufs/ffs/ffs_alloc.c		ffs | mfs
-file	ufs/ffs/ffs_balloc.c		ffs | mfs
-file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
-file	ufs/ffs/ffs_inode.c		ffs | mfs
-file	ufs/ffs/ffs_softdep.c		ffs & softdep
-file	ufs/ffs/ffs_softdep.stub.c	(ffs & !softdep) |
-					    (!ffs & (lfs | mfs | ext2fs))
-file	ufs/ffs/ffs_subr.c		ffs | mfs
-file	ufs/ffs/ffs_tables.c		ffs | mfs
-file	ufs/ffs/ffs_vfsops.c		ffs | mfs
-file	ufs/ffs/ffs_vnops.c		ffs | mfs
-file	ufs/lfs/lfs_alloc.c		lfs
-file	ufs/lfs/lfs_balloc.c		lfs
-file	ufs/lfs/lfs_bio.c		lfs
-file	ufs/lfs/lfs_cksum.c		lfs
-file	ufs/lfs/lfs_debug.c		lfs
-file	ufs/lfs/lfs_inode.c		lfs
-file	ufs/lfs/lfs_segment.c		lfs
-file	ufs/lfs/lfs_subr.c		lfs
-file	ufs/lfs/lfs_syscalls.c		lfs
-file	ufs/lfs/lfs_vfsops.c		lfs
-file	ufs/lfs/lfs_vnops.c		lfs
-file	ufs/mfs/mfs_vfsops.c		mfs
-file	ufs/mfs/mfs_vnops.c		mfs
-file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs
-file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
-file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
+
 file	uvm/uvm_amap.c
 file	uvm/uvm_anon.c
 file	uvm/uvm_aobj.c
