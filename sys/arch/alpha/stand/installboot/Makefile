@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.5 1997/04/06 08:41:11 cgd Exp $
-
-.PATH:	${.CURDIR}/..
+# $NetBSD: Makefile,v 1.6 1997/05/18 12:14:55 mycroft Exp $
 
 PROG=	installboot
 BINDIR=	/usr/mdec

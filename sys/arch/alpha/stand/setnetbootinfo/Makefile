@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1997/04/06 08:41:36 cgd Exp $
-
-.PATH:	${.CURDIR}/..
+# $NetBSD: Makefile,v 1.5 1997/05/18 12:14:57 mycroft Exp $
 
 PROG=	setnetbootinfo
 BINDIR=	/usr/mdec
