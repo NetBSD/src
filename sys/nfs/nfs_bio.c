@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.18 1995/01/10 06:50:03 mycroft Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.19 1995/01/12 12:08:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -208,7 +208,8 @@ nfs_bioread(vp, uio, ioflag, cred)
 				    rabp->b_flags |= B_INVAL;
 				    brelse(rabp);
 				}
-			    }
+			    } else
+				brelse(rabp);
 			}
 		    }
 		}
@@ -315,7 +316,8 @@ again:
 				    rabp->b_flags |= B_INVAL;
 				    brelse(rabp);
 				}
-			    }
+			    } else
+				brelse(rabp);
 			}
 		}
 		on = 0;
