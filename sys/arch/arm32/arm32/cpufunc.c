@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.9 1998/07/06 02:40:42 mark Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.10 2001/01/12 13:43:12 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -52,7 +52,7 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bootconfig.h>
-#include <arm32/arm32/disassem.h>
+#include <arch/arm/arm/disassem.h>
 
 #ifdef CPU_ARM6
 struct cpu_functions arm6_cpufuncs = {

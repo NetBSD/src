@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.h,v 1.3 1998/02/21 22:38:40 mark Exp $	*/
+/*	$NetBSD: disassem.h,v 1.1 2001/01/12 13:43:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
