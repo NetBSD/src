@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.37 1994/01/25 04:32:02 hpeyerl Exp $
+ *	$Id: pccons.c,v 1.38 1994/01/28 13:43:41 deraadt Exp $
  */
 
 #include "pc.h"
@@ -150,7 +150,6 @@ static	int	char_count;
 
 void	pcstart();
 int	pcparam();
-int	ttrstrt();
 char	partab[];
 
 static void set_typematic(u_char data);
