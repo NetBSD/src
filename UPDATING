@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.100 2003/12/12 12:36:37 keihan Exp $
+$NetBSD: UPDATING,v 1.101 2003/12/31 16:20:54 junyoung Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -40,7 +40,7 @@ Recent changes:
 	make MKINFO=no dependall install
 
 20030630:
-	Groff was update to 1.19; it's probably necessary to do
+	Groff was updated to 1.19; it's probably necessary to do
 		cd share/mk && make install
 		cd src/gnu/usr.bin/groff
 		make MKMAN=no dependall install
