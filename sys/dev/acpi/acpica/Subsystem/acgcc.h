@@ -192,7 +192,10 @@
 #define disable() __cli()
 #define enable()  __sti()
 #define halt()    __asm__ __volatile__ ("sti; hlt":::"memory")
+/* XXX conflicts with inline in <machine/cpufunc.h> */
+#if !defined(__NetBSD__)
 #define wbinvd()  __asm__ __volatile__ ("wbinvd":::"memory")
+#endif /* __NetBSD__ */
 
 /*! [Begin] no source code translation
  *
