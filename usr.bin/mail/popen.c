@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.14 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: popen.c,v 1.15 2003/03/29 21:27:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.14 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: popen.c,v 1.15 2003/03/29 21:27:38 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,11 +337,12 @@ int
 wait_child(int pid)
 {
 	sigset_t nset, oset;
-	struct child *cp = findchild(pid);
+	struct child *cp;
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
 
+	cp = findchild(pid);
 	while (!cp->done)
 		sigsuspend(&oset);
 	wait_status = cp->status;
@@ -357,11 +358,12 @@ void
 free_child(int pid)
 {
 	sigset_t nset, oset;
-	struct child *cp = findchild(pid);
+	struct child *cp;
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
 
+	cp = findchild(pid);
 	if (cp->done)
 		delchild(cp);
 	else
