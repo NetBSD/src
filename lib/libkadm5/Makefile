@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2001/01/10 21:30:05 phil Exp $
+# $NetBSD: Makefile,v 1.6 2001/02/12 23:24:34 cgd Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 kadm5_err.c kadm5_err.h: kadm5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/kadm5/kadm5_err.et
 
-clean cleandir:
+clean cleandir distclean:
 	rm -f kadm5_err.c kadm5_err.h
 
 cleanhtml:
