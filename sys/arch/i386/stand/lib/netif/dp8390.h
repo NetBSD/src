@@ -1,3 +1,5 @@
+/*	$NetBSD: dp8390.h,v 1.3 1998/05/06 13:32:18 drochner Exp $	*/
+
 extern int dp8390_config __P((void));
 extern void dp8390_stop __P((void));
 
