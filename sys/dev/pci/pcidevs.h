@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.616 2004/04/01 08:00:32 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.617 2004/04/03 00:41:10 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2208,6 +2208,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8139B	0x8138		/* 8139B 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 
 /* RICOH products */
 #define	PCI_PRODUCT_RICOH_Rx5C465	0x0465		/* 5C465 PCI-CardBus bridge */
