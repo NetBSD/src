@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2001/06/02 18:09:16 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 2001/06/10 16:48:19 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,14 +180,11 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
 /*
- * On the 68020/68030, the value of delay_divisor is roughly
+ * On the 68020/68030 (mvme14x), the value of delay_divisor is roughly
  * 8192 / cpuspeed (where cpuspeed is in MHz).
  *
- * On the 68040, the value of delay_divisor is roughly
- * 3072 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68060, the value of delay_divisor is roughly
- * 1024 / cpuspeed (where cpuspeed is in MHz).
+ * On the other boards (mvme162 and up), the cpuspeed is passed
+ * in from the firmware.
  */
 int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 512;	/* assume some reasonable value to start */
@@ -328,10 +325,13 @@ mvme147_init()
 
 	/* calculate cpuspeed */
 	cpuspeed = 8192 / delay_divisor;
+	cpuspeed *= 100;
 }
 #endif /* MVME147 */
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
+int	get_cpuspeed __P((void));
+
 /*
  * MVME-1[67]x specific initializaion.
  */
@@ -363,7 +363,33 @@ mvme1xx_init()
 	bus_space_unmap(bt, bh, PCC2REG_SIZE);
 
 	/* calculate cpuspeed */
-	cpuspeed = ((cputype == CPU_68060) ? 1024 : 3072) / delay_divisor;
+	cpuspeed = get_cpuspeed();
+	if (cpuspeed < 1250 || cpuspeed > 6000) {
+		printf("mvme1xx_init: Warning! Firmware has " \
+		    "bogus CPU speed: `%s'\n", boardid.speed);
+		cpuspeed = ((cputype == CPU_68060) ? 1000 : 3072) /
+		    delay_divisor;
+		cpuspeed *= 100;
+		printf("mvme1xx_init: Approximating speed using "\
+		    "delay_divisor\n");
+	}
+}
+
+/*
+ * Parse the `speed' field of Bug's boardid structure.
+ */
+int
+get_cpuspeed()
+{
+	int rv, i;
+
+	for (i = 0, rv = 0; i < sizeof(boardid.speed); i++) {
+		if (boardid.speed[i] < '0' || boardid.speed[i] > '9')
+			return (0);
+		rv = (rv * 10) + (boardid.speed[i] - '0');
+	}
+
+	return (rv);
 }
 #endif
 
@@ -685,8 +711,10 @@ identifycpu()
 		panic("startup");
 	}
 
-	len = sprintf(cpu_model, "Motorola MVME-%s: %dMHz %s", board_str,
-	    cpuspeed, cpu_str);
+	len = sprintf(cpu_model, "Motorola MVME-%s: %d.%dMHz %s", board_str,
+	    cpuspeed / 100, (cpuspeed % 100) / 10, cpu_str);
+
+	cpuspeed /= 100;
 
 	if (mmu_str[0] != '\0')
 		len += sprintf(cpu_model + len, ", %s", mmu_str);
