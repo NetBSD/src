@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.62 2003/10/28 01:25:33 mrg Exp $
+#	$NetBSD: bsd.dep.mk,v 1.63 2003/11/10 18:21:55 dsl Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -9,7 +9,8 @@ realdepend:	beforedepend .depend afterdepend
 beforedepend .depend afterdepend: # ensure existence
 
 ##### Default values
-MKDEP?=		mkdep
+MKDEP?=			mkdep
+MKDEP_SUFFIXES?=	.o
 
 ##### Build rules
 # some of the rules involve .h sources, so remove them from mkdep line
@@ -32,7 +33,7 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .depend: ${__DPSRCS.d}
 	${_MKTARGET_CREATE}
 	rm -f .depend
-	cat ${__DPSRCS.d} /dev/null > .depend
+	${MKDEP} -d -f ${.TARGET} -s ${MKDEP_SUFFIXES:Q} ${__DPSRCS.d}
 
 .SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
 
