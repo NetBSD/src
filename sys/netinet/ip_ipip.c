@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.6 1999/04/04 09:10:27 tron Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.7 1999/08/26 02:56:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #include "ipip.h"
 #include "opt_mrouting.h"
+#include "opt_ipsec.h"
 
 #if NIPIP > 0 || defined(MROUTING)
 
@@ -272,6 +273,9 @@ ipip_output(ifp, m0, dst, rt)
 	ifp->if_opackets++;
 	ifp->if_obytes += m0->m_pkthdr.len;
 
+#ifdef IPSEC
+	m0->m_pkthdr.rcvif = NULL;
+#endif
 	error = ip_output(m0, NULL, &sc->sc_route, 0, NULL);
 	if (error)
 		ifp->if_oerrors++;
