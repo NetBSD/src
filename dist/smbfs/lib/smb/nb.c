@@ -159,7 +159,7 @@ nb_ctx_readrcsection(struct rcfile *rcfile, struct nb_ctx *ctx,
 	return 0;
 }
 
-static const char *nb_err_rcode[] = {
+static const char * const nb_err_rcode[] = {
 	"bad request/response format",
 	"NBNS server failure",
 	"no such name",
@@ -168,7 +168,7 @@ static const char *nb_err_rcode[] = {
 	"name already registered"
 };
 
-static const char *nb_err[] = {
+static const char * const nb_err[] = {
 	"host not found",
 	"too many redirects",
 	"invalid response",
