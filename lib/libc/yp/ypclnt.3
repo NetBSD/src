@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.21 2003/04/16 13:34:58 wiz Exp $
+.\"	$NetBSD: ypclnt.3,v 1.22 2003/05/10 12:14:27 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -297,7 +297,7 @@ Where:
 .Bl -tag -width "inkey, inval"
 .It Fa instatus
 Holds one of the return status values described in
-.Nm \*[Lt]rpcsvc/yp_prot.h\*[Gt] :
+.Aq Pa rpcsvc/yp_prot.h :
 see
 .Fn ypprot_err
 below for a function that will translate
@@ -305,7 +305,7 @@ below for a function that will translate
 protocol errors into a
 .Nm ypclnt
 layer error code as described in
-.Nm \*[Lt]rpcsvc/ypclnt.h\*[Gt] .
+.Aq Pa rpcsvc/ypclnt.h .
 .It Fa inkey, inval
 The key and value arguments are somewhat different here than described
 above.
@@ -364,7 +364,7 @@ suite which are of type
 return 0 upon success or one of the following error codes upon failure:
 .Bl -tag -width "YPERR_BADARGS   "
 .It Bq Er YPERR_BADARGS
-The passed arguments to the function are invalid
+The passed arguments to the function are invalid.
 .It Bq Er YPERR_BADDB
 The
 .Tn YP
