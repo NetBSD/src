@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: exception.S,v 1.2 2001/11/28 01:06:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -90,10 +90,10 @@ Lexception_exit_loop:
 	PULLFRAMEFROMSVCANDEXIT		/* No AST so exit */
 
 do_ast:
-	msr     cpsr_all, r4		/* Restore interrupts */
-
 	mov	r1, #0x00000000		/* Clear ast pending */
 	str	r1, [r5]
+
+	msr     cpsr_all, r4		/* Restore interrupts */
 
 	mov	r0, sp			/* arg 0 = trap frame */
 	bl	_C_LABEL(ast)		/* call the AST handler */
@@ -116,13 +116,9 @@ ASENTRY_NP(data_abort_entry)
 
 	mov	r0, sp			/* pass the stack pointer as r0 */
 
-/*	add	lr, pc, #exception_exitLdata_abort_return - . - 8*/
 	add	lr, pc, #exception_exit - . - 8
 	ldr	r1, Ldata_abort_handler_address
 	ldr	pc, [r1]
-	
-Ldata_abort_return:	/* XXX - could just straight to exception_exit */
-	b	exception_exit
 
 Ldata_abort_handler_address:
 	.word	_C_LABEL(data_abort_handler_address)
@@ -149,14 +145,10 @@ ASENTRY_NP(prefetch_abort_entry)
 
  	mov	r0, sp			/* pass the stack pointer as r0 */
 
-#	add	lr, pc, #Lprefetch_abort_return - . - 8
 	add	lr, pc, #exception_exit - . - 8
 	ldr	r1, Lprefetch_abort_handler_address
 	ldr	pc, [r1]
 	
-Lprefetch_abort_return:	/* XXX - could just straight to exception_exit */
-	b	exception_exit
-
 Lprefetch_abort_handler_address:
 	.word	_C_LABEL(prefetch_abort_handler_address)
 
@@ -209,10 +201,10 @@ swi_exit_loop:
 	movs	pc, lr			/* Exit */
 
 do_swi_ast:
-	msr     cpsr_all, r4		/* Restore interrupts */
-
 	mov	r1, #0x00000000		/* Clear ast pending */
 	str	r1, [r5]
+
+	msr     cpsr_all, r4		/* Restore interrupts */
 
 	mov	r0, sp			/* arg 0 = trap frame */
 	bl	_C_LABEL(ast)		/* call the AST handler */
