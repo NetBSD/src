@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.9 1997/07/04 21:24:11 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.10 1998/04/08 22:38:18 fair Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.9 1997/07/04 21:24:11 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.10 1998/04/08 22:38:18 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: time.c,v 1.9 1997/07/04 21:24:11 christos Exp $");
  * C Shell - routines handling process timing and niceing
  */
 static void	pdeltat __P((struct timeval *, struct timeval *));
+extern char * strpct __P((u_long num, u_long denom, u_int digits));
 
 void
 settimes()
@@ -174,9 +175,11 @@ prusage(r0, r1, e, b)
 
 	    case 'P':		/* percent time spent running */
 		/* check if it did not run at all */
-		i = (ms == 0) ? 0 : (t * 1000 / ms);
-		/* nn.n% */
-		(void) fprintf(cshout, "%ld.%01ld%%", i / 10, i % 10);
+		if (ms == 0) {
+			(void) fputs("0.0%", cshout);
+		} else {
+			(void) fputs(strpct((ulong)t, (ulong)ms, 1), cshout);
+		}
 		break;
 
 	    case 'W':		/* number of swaps */
