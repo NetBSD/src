@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.4 1994/12/09 21:04:42 phil Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.1 1997/05/17 13:56:10 matthias Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
@@ -15,7 +15,9 @@
  * this code.
  ****************************************************************************/
 
-#include "so.h"
+#include <lib/libsa/stand.h>
+
+#include <pc532/stand/common/so.h>
 
 #define OK 		0
 #define NOT_OK		OK+1
@@ -282,7 +284,7 @@ scsi_interrupt()
     dummy = RD_ADR (SC_RESETIP);	/* clear interrupt request */
     if (!sc_accept_int ||		/* return if spurious interrupt */
         (!sc_watchdog_error &&
-         (stat2 & SC_S_BSYERR) == 0 && (stat2 & SC_S_PHASE) == 1))
+         (stat2 & SC_S_BSYERR) == 0 && (stat2 & SC_S_PHASE) == SC_S_PHASE))
     {
 #     ifdef DEBUG
         ++sc_spurious_int;

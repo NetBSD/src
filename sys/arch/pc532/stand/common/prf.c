@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1995/08/29 21:55:42 phil Exp $	*/
+/*	$NetBSD: prf.c,v 1.1 1997/05/17 13:56:07 matthias Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,28 +32,47 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	8.1 (Berkeley) 6/10/93
+ *	@(#)prf.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/param.h>
-#include "stand.h"
+#include <lib/libsa/stand.h>
 
-int	rdstrategy __P((void *devdata, int rw,
-			daddr_t blk, u_int size, char *buf, u_int *rsize));
-int	rdopen __P((struct open_file *f, ...));
+#include <pc532/stand/common/samachdep.h>
 
-int	sdstrategy __P((void *devdata, int rw,
-			daddr_t blk, u_int size, char *buf, u_int *rsize));
-int	sdopen __P((struct open_file *f, ...));
+int
+tgetchar()
+{
+	int c;
 
-#define	sdioctl	noioctl
-#define rdioctl noioctl
+	if ((c = cngetc()) == 0)
+		return(0);
+	
+	if (c == '\r')
+		c = '\n';
+	else if (c == ('c' & 037)) {
+		panic("^C");
+		/* NOTREACHED */
+	}
+	if (c != '\b' && c != '\177')
+		putchar(c);
+	return(c);
+}
 
-struct devsw devsw[] = {
-	{ "sd",	sdstrategy, sdopen, nullsys, sdioctl }, /*0*/
-	{ NULL,	      NULL,   NULL,    NULL,    NULL },
-	{ NULL,	      NULL,   NULL,    NULL,    NULL },
-	{ "rd",	rdstrategy, rdopen, nullsys, rdioctl }, /*3*/
-};
+int
+getchar()
+{
+	int c;
 
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+	while((c = tgetchar()) == 0)
+		;
+	return(c);
+}
+
+void
+putchar(c)
+	int c;
+{
+	cnputc(c);
+	if (c == '\n')
+		cnputc('\r');
+}
