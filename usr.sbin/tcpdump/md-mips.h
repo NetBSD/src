@@ -18,18 +18,55 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.11 94/06/14 20:11:41 leres Exp (LBL)
+ * @(#) Header: md-mips.h,v 1.9 94/06/14 20:12:40 leres Exp (LBL)
  */
 
-/* Name to address translation routines. */
+#define TCPDUMP_ALIGN
 
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
-extern char *intoa(u_int32);
+/*
+ * There are MIPS machines, and then there are SPIM machines,
+ * and you can tell because SPIM <=> Ultrix.
+ */
 
-extern void init_addrtoname(int, u_int32, u_int32);
+#ifdef	ultrix
+/* SPIM */
+#ifndef BYTE_ORDER
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
 
-#define ipaddr_string(p) getname((const u_char *)(p))
+/* These should be fixed to be real macros, for speed */
+
+#ifndef NTOHL
+#define NTOHL(x)	(x) = ntohl(x)
+#define NTOHS(x)	(x) = ntohs(x)
+#define HTONL(x)	(x) = htonl(x)
+#define HTONS(x)	(x) = htons(x)
+#endif
+
+#else
+/* MIPS */
+#ifndef BYTE_ORDER
+#define BYTE_ORDER BIG_ENDIAN
+#endif
+
+#ifndef NTOHL
+#define NTOHL(x)
+#define NTOHS(x)
+#define HTONL(x)
+#define HTONS(x)
+#endif
+
+#ifndef ntohl
+#define	ntohl(x) (x)
+#define	ntohs(x) (x)
+#define	htonl(x) (x)
+#define	htons(x) (x)
+#endif
+#endif
+
+/* 32-bit data types */
+/* N.B.: this doesn't address printf()'s %d vs. %ld formats */
+typedef	long	int32;		/* signed 32-bit integer */
+#if !(defined(sgi) && defined(AUTH_UNIX))
+typedef	u_long	u_int32;	/* unsigned 32-bit integer */
+#endif
