@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.29 1997/08/03 06:25:58 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.30 1997/08/03 06:42:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -60,7 +60,7 @@ static void	grfmv_intr_cb264 __P((void *vsc, int slot));
 static void	grfmv_intr_cb364 __P((void *vsc, int slot));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+static caddr_t	grfmv_phys __P((struct grf_softc *gp));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
