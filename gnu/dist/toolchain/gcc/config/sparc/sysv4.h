@@ -103,11 +103,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* This is defined in sparc.h but is not used by svr4.h.  */
 #undef ASM_LONG
-#if TARGET_CPU_DEFAULT == TARGET_CPU_v9 || TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc
-#define ASM_LONG ".xword"
-#else
 #define ASM_LONG ".long"
-#endif
 
 /* This is the format used to print the second operand of a .type pseudo-op
    for the Sparc/svr4 assembler.  */
@@ -213,6 +209,29 @@ do {									\
 #undef ASM_OUTPUT_ALIGNED_BSS
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
   asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
+
+/* A C statement (sans semicolon) to output an element in the table of
+   global constructors.  */
+#undef ASM_OUTPUT_CONSTRUCTOR
+#define ASM_OUTPUT_CONSTRUCTOR(FILE,NAME)				\
+  do {									\
+    ctors_section ();							\
+    fprintf (FILE, "\t%s\t ", TARGET_ARCH64 ? ASM_LONGLONG : INT_ASM_OP); \
+    assemble_name (FILE, NAME);						\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
+/* A C statement (sans semicolon) to output an element in the table of
+   global destructors.  */
+#undef ASM_OUTPUT_DESTRUCTOR
+#define ASM_OUTPUT_DESTRUCTOR(FILE,NAME)       				\
+  do {									\
+    dtors_section ();                   				\
+    fprintf (FILE, "\t%s\t ", TARGET_ARCH64 ? ASM_LONGLONG : INT_ASM_OP); \
+    assemble_name (FILE, NAME);              				\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
 
 /* Override the name of the mcount profiling function.  */
 
