@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.573 2003/05/26 09:22:29 lha Exp $
+#	$NetBSD: mi,v 1.574 2003/05/28 20:07:47 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2886,6 +2886,7 @@
 ./usr/share/man/cat3/re_comp.0	comp-c-catman
 ./usr/share/man/cat3/re_exec.0	comp-c-catman
 ./usr/share/man/cat3/readdir.0	comp-c-catman
+./usr/share/man/cat3/readdir_r.0	comp-c-catman
 ./usr/share/man/cat3/realloc.0	comp-c-catman
 ./usr/share/man/cat3/realpath.0	comp-c-catman
 ./usr/share/man/cat3/recno.0	comp-c-catman
@@ -6141,7 +6142,7 @@
 ./usr/share/man/man3/rcmd_af.3		comp-c-man
 ./usr/share/man/man3/re_comp.3		comp-c-man
 ./usr/share/man/man3/re_exec.3		comp-c-man
-./usr/share/man/man3/readdir.3		comp-c-man
+./usr/share/man/man3/readdir_r.3		comp-c-man
 ./usr/share/man/man3/realloc.3		comp-c-man
 ./usr/share/man/man3/realpath.3		comp-c-man
 ./usr/share/man/man3/recno.3		comp-c-man
