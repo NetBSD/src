@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.72 2002/06/15 18:24:56 wiz Exp $	*/
+/*	$NetBSD: job.c,v 1.73 2002/11/16 22:22:23 gson Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.72 2002/06/15 18:24:56 wiz Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.73 2002/11/16 22:22:23 gson Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.72 2002/06/15 18:24:56 wiz Exp $");
+__RCSID("$NetBSD: job.c,v 1.73 2002/11/16 22:22:23 gson Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -241,9 +241,6 @@ static Boolean	wantToken;	/* we want a token */
  * the output channels of children
  */
 #ifndef RMT_WILL_WATCH
-#ifdef USE_SELECT
-static fd_set  	outputs;
-#else
 static struct pollfd *fds = NULL;
 static Job **jobfds = NULL;
 static int nfds = 0;
@@ -254,7 +251,6 @@ static int readyfd(Job *);
 #define JBSTART 256
 #define JBFACTOR 2
 #endif
-#endif
 
 STATIC GNode   	*lastNode;	/* The node for which output was most recently
 				 * produced. */
@@ -263,6 +259,9 @@ STATIC char    	*targFmt;   	/* Format string to use to head output from a
 				 * from */
 static Job tokenWaitJob;	/* token wait pseudo-job */
 int	job_pipe[2] = { -1, -1 }; /* job server pipes. */
+
+static Job childExitJob;	/* child exit pseudo-job */
+int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 
 #ifdef REMOTE
 # define TARG_FMT  "--- %s at %s ---\n" /* Default format */
@@ -311,7 +310,7 @@ sigset_t	caught_signals;	/* Set of signals we handle */
 
 static int JobCondPassSig(ClientData, ClientData);
 static void JobPassSig(int);
-static void JobIgnoreSig(int);
+static void JobChildSig(int);
 #ifdef USE_PGRP
 static void JobContinueSig(int);
 #endif
@@ -409,8 +408,8 @@ JobCondPassSig(ClientData jobp, ClientData signop)
 
 /*-
  *-----------------------------------------------------------------------
- * JobIgnoreSig --
- *	No-op signal handler so we wake up from poll.
+ * JobChldSig --
+ *	SIGCHLD handler.
  *
  * Input:
  *	signo		The signal number we've received
@@ -419,17 +418,15 @@ JobCondPassSig(ClientData jobp, ClientData signop)
  *	None.
  *
  * Side Effects:
- *	None.
+ *	Sends a token on the child exit pipe to wake us up from
+ *	select()/poll().
  *
  *-----------------------------------------------------------------------
  */
 static void
-JobIgnoreSig(int signo)
+JobChildSig(int signo)
 {
-	/*
-	 * Do nothing.  The mere fact that we've been called will cause
-	 * poll/select in Job_CatchOutput() to return early.
-	 */
+    write(exit_pipe[1], ".", 1);
 }
 
 
@@ -814,11 +811,7 @@ JobClose(Job *job)
 #ifdef RMT_WILL_WATCH
 	Rmt_Ignore(job->inPipe);
 #else
-#ifdef USE_SELECT
-	FD_CLR(job->inPipe, &outputs);
-#else
 	clearfd(job);
-#endif
 #endif
 	if (job->outPipe != job->inPipe) {
 	   (void) close(job->outPipe);
@@ -1471,11 +1464,7 @@ JobExec(Job *job, char **argv)
 #ifdef RMT_WILL_WATCH
 	    Rmt_Watch(job->inPipe, JobLocalInput, job);
 #else
-#ifdef USE_SELECT
-	    FD_SET(job->inPipe, &outputs);
-#else
 	    watchfd(job);
-#endif
 #endif /* RMT_WILL_WATCH */
 	}
 
@@ -1862,9 +1851,7 @@ JobStart(GNode *gn, int flags, Job *previous)
     }
 
 #ifndef RMT_WILL_WATCH
-#ifndef USE_SELECT
     job->inPollfd = NULL;
-#endif
 #endif
     /*
      * If the -n flag wasn't given, we open up OUR (not the child's)
@@ -2056,11 +2043,6 @@ JobStart(GNode *gn, int flags, Job *previous)
 	    if (pipe(fd) == -1)
 		Punt("Cannot create pipe: %s", strerror(errno));
 	    job->inPipe = fd[0];
-#ifdef USE_SELECT
-	    if (job->inPipe >= FD_SETSIZE)
-		Punt("Ran out of fd_set slots; " 
-		    "recompile with a larger FD_SETSIZE.");
-#endif
 	    job->outPipe = fd[1];
 	    (void) fcntl(job->inPipe, F_SETFD, 1);
 	    (void) fcntl(job->outPipe, F_SETFD, 1);
@@ -2498,40 +2480,28 @@ Job_CatchOutput(void)
     }
 #else
     if (usePipes) {
-#ifdef USE_SELECT
-	struct timeval	timeout;
-	fd_set         	readfds;
-
-	readfds = outputs;
-	timeout.tv_sec = SEL_SEC;
-	timeout.tv_usec = SEL_USEC;
-
-	if ((nready = select(FD_SETSIZE, &readfds, (fd_set *) 0,
-			   (fd_set *) 0, &timeout)) <= 0)
-	    return;
-#else
 	if ((nready = poll((wantToken ? fds : (fds + 1)),
-	  		   (wantToken ? nfds : (nfds - 1)), POLL_MSEC)) <= 0)
+	  		   (wantToken ? nfds : (nfds - 1)), POLL_MSEC)) <= 0) {
 	    return;
-#endif
-	else {
+	} else {
 	    sigset_t	mask;
 	    JobSigLock(&mask);
 	    if (Lst_Open(jobs) == FAILURE) {
 		Punt("Cannot open job table");
 	    }
+
+	    if (readyfd(&childExitJob)) {
+		char token;
+		(void) read(childExitJob.inPipe, &token, 1);
+		nready -= 1;
+	    }
+
 	    while (nready && (ln = Lst_Next(jobs)) != NILLNODE) {
 		job = (Job *) Lst_Datum(ln);
-#ifdef USE_SELECT
-		if (FD_ISSET(job->inPipe, &readfds))
-#else
-		if (readyfd(job))
-#endif
-		{
+		if (readyfd(job)) {
 		    JobDoOutput(job, FALSE);
 		    nready -= 1;
 		}
-		
 	    }
 	    Lst_Close(jobs);
 	    JobSigUnlock(&mask);
@@ -2629,11 +2599,18 @@ Job_Init(int maxproc, int maxlocal)
 	commandShell->echo = "";
     }
 
+    if (pipe(exit_pipe) < 0)
+	Fatal("error in pipe: %s", strerror(errno));
+    fcntl(job_pipe[0], F_SETFD, 1);
+    fcntl(job_pipe[1], F_SETFD, 1);
+
+    childExitJob.inPipe = exit_pipe[0];
+
     sigemptyset(&caught_signals);
     /*
-     * Install a NOOP  SIGCHLD handler so we are woken up if we're blocked.
+     * Install a SIGCHLD handler.
      */
-    (void)signal(SIGCHLD, JobIgnoreSig);
+    (void)signal(SIGCHLD, JobChildSig);
     sigaddset(&caught_signals, SIGCHLD);
 
 #define ADDSIG(s,h)				\
@@ -3332,7 +3309,6 @@ JobRestartJobs(void)
 }
 
 #ifndef RMT_WILL_WATCH
-#ifndef USE_SELECT
 static void
 watchfd(Job *job)
 {
@@ -3348,6 +3324,12 @@ watchfd(Job *job)
 	fds[0].events = POLLIN;
 	jobfds[0] = &tokenWaitJob;
 	tokenWaitJob.inPollfd = &fds[0];
+	nfds++;
+
+	fds[1].fd = exit_pipe[0];
+	fds[1].events = POLLIN;
+	jobfds[1] = &childExitJob;
+	childExitJob.inPollfd = &fds[1];
 	nfds++;
     } else if (nfds == maxfds) {
 	maxfds *= JBFACTOR;
@@ -3390,7 +3372,6 @@ readyfd(Job *job)
 	Punt("Polling unwatched job");
     return (job->inPollfd->revents & POLLIN) != 0;
 }
-#endif
 #endif
 
 /*-
@@ -3564,3 +3545,63 @@ Job_TokenFlush(void)
     }
 }
 
+#ifdef USE_SELECT
+int
+emul_poll(struct pollfd *fd, int nfd, int timeout)
+{
+    fd_set rfds, wfds;
+    int i, maxfd, nselect, npoll;
+    struct timeval tv, *tvp;
+    long usecs;
+
+    FD_ZERO(&rfds);
+    FD_ZERO(&wfds);
+
+    maxfd = -1;
+    for (i = 0; i < nfd; i++) {
+	fd[i].revents = 0;
+
+	if (fd[i].events & POLLIN)
+	    FD_SET(fd[i].fd, &rfds);
+
+	if (fd[i].events & POLLOUT)
+	    FD_SET(fd[i].fd, &wfds);
+
+	if (fd[i].fd > maxfd)
+	    maxfd = fd[i].fd;
+    }
+    
+    if (maxfd >= FD_SETSIZE) {
+	Punt("Ran out of fd_set slots; " 
+	     "recompile with a larger FD_SETSIZE.");
+    }
+
+    if (timeout < 0) {
+	tvp = NULL;
+    } else {
+	usecs = timeout * 1000;
+	tv.tv_sec = usecs / 1000000;
+	tv.tv_usec = usecs % 1000000;
+        tvp = &tv;
+    }
+
+    nselect = select(maxfd + 1, &rfds, &wfds, 0, tvp);
+
+    if (nselect <= 0)
+	return nselect;
+
+    npoll = 0;
+    for (i = 0; i < nfd; i++) {
+	if (FD_ISSET(fd[i].fd, &rfds))
+	    fd[i].revents |= POLLIN;
+
+	if (FD_ISSET(fd[i].fd, &wfds))
+	    fd[i].revents |= POLLOUT;
+
+	if (fd[i].revents)
+	    npoll++;
+    }
+
+    return npoll;
+}
+#endif /* USE_SELECT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.16 2002/06/15 18:24:57 wiz Exp $	*/
+/*	$NetBSD: job.h,v 1.17 2002/11/16 22:22:23 gson Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -52,19 +52,31 @@
 
 #ifdef USE_SELECT
 /*
- * The SEL_ constants determine the maximum amount of time spent in select
- * before coming out to see if a child has finished. SEL_SEC is the number of
- * seconds and SEL_USEC is the number of micro-seconds
+ * Emulate poll() in terms of select().  This is not a complete
+ * emulation but it is sufficient for make's purposes.
  */
-#define SEL_SEC		5
-#define SEL_USEC	0
-#else
+
+#define poll emul_poll
+#define pollfd emul_pollfd
+
+struct emul_pollfd {
+    int fd;
+    short events;
+    short revents;
+};
+
+#define	POLLIN		0x0001
+#define	POLLOUT		0x0004
+
+int
+emul_poll(struct pollfd *fd, int nfd, int timeout);
+#endif
+
 /*
  * The POLL_MSEC constant determines the maximum number of milliseconds spent
  * in poll before coming out to see if a child has finished. 
  */
 #define POLL_MSEC	5000
-#endif
 
 
 /*-
@@ -100,9 +112,7 @@
  * traversal of the dependency graph.
  */
 #ifndef RMT_WILL_WATCH
-#ifndef USE_SELECT
 struct pollfd;
-#endif
 #endif
 
 #define JOB_BUFSIZE	1024
@@ -137,9 +147,7 @@ typedef struct Job {
 	    int	  	op_inPipe;	/* Input side of pipe associated
 					 * with job's output channel */
 #ifndef RMT_WILL_WATCH
-#ifndef USE_SELECT
 	    struct pollfd *op_inPollfd;	/* pollfd associated with inPipe */
-#endif
 #endif
 	    int   	op_outPipe;	/* Output side of pipe associated with
 					 * job's output channel */
