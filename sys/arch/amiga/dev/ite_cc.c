@@ -234,9 +234,10 @@ ite_view_init(ip)
 }
 
 int
-ite_grf_ioctl (ip, cmd, addr, flag)
-  struct ite_softc *ip;
-  caddr_t addr; 
+ite_grf_ioctl (ip, cmd, addr, flag, p)
+	struct ite_softc *ip;
+	caddr_t addr;
+	struct proc *p;
 {
     int error = 0;
     struct ite_window_size *is;
@@ -267,7 +268,7 @@ ite_grf_ioctl (ip, cmd, addr, flag)
 	    ite_reset (ip);
 	    /* XXX tell tty about the change *and* the process group should */
 	    /* XXX be signalled---this is messy, but works nice :^) */
-	    iteioctl (0, TIOCSWINSZ, &ws, 0);
+	    iteioctl (0, TIOCSWINSZ, &ws, 0, p);
         }
         break;
 

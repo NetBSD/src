@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.6 1994/02/01 11:52:19 chopps Exp $
+ *	$Id: ite.c,v 1.7 1994/02/11 05:02:36 chopps Exp $
  *
  * Original author: unknown
  * Amiga author:: Markus Wild
@@ -86,7 +86,7 @@ extern int iteopen (dev_t dev, int mode, int devtype, struct proc *p);
 extern int iteclose (dev_t dev, int flag, int mode, struct proc *p);
 extern int iteread (dev_t dev, struct uio *uio, int flag);
 extern int itewrite (dev_t dev, struct uio *uio, int flag);
-extern int iteioctl (dev_t dev, int cmd, caddr_t addr, int flag);
+extern int iteioctl (dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p);
 extern int itestart (register struct tty *tp);
 extern int itefilter (register u_char c, enum caller caller);
 extern void iteputchar (register int c, dev_t dev);
@@ -434,9 +434,10 @@ itewrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
-iteioctl(dev, cmd, addr, flag)
+iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	caddr_t addr;
+	struct proc *p;
 {
 	register struct tty *tp = ite_tty[UNIT(dev)];
 	struct ite_softc *ip = &ite_softc[UNIT(dev)];
@@ -446,10 +447,10 @@ iteioctl(dev, cmd, addr, flag)
 	  return ENXIO;
 
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, addr, flag);
+	error = ttioctl(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -477,7 +478,7 @@ iteioctl(dev, cmd, addr, flag)
 
 	/* XXX */
 	if (UNIT(dev) == 0)
-	    return ite_grf_ioctl (ip, cmd, addr, flag);
+	    return ite_grf_ioctl (ip, cmd, addr, flag, p);
 
 	return (ENOTTY);
 }
