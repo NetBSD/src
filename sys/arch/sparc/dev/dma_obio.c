@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.2 1998/08/29 21:43:46 pk Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.3 1999/04/12 23:01:00 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,5 +101,7 @@ dmaattach_obio(parent, self, aux)
 		return;
 	}
 
+	/* Any point in setting `sc_burst' to anything here? */
+	sc->sc_channel = L64854_CHANNEL_SCSI;
 	lsi64854_attach(sc);
 }
