@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.8 1995/09/02 05:38:38 jtc Exp $	*/
+/*	$NetBSD: calendar.c,v 1.9 1997/06/20 08:11:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-static char rcsid[] = "$NetBSD: calendar.c,v 1.8 1995/09/02 05:38:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: calendar.c,v 1.9 1997/06/20 08:11:34 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -253,7 +253,8 @@ getfield(p, endp, flags)
 	int val;
 	char *start, savech;
 
-	for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p);
+	for (; *p != '\0' && !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+		;
 	if (*p == '*') {			/* `*' is current month */
 		*flags |= F_ISMONTH;
 		*endp = p+1;
@@ -261,11 +262,14 @@ getfield(p, endp, flags)
 	}
 	if (isdigit(*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
-		for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p);
+		for (; *p != '\0' && !isdigit(*p) && !isalpha(*p) && *p != '*';
+		    ++p)
+			;
 		*endp = p;
 		return (val);
 	}
-	for (start = p; isalpha(*++p););
+	for (start = p; *p != '\0' && isalpha(*++p);)
+		;
 	savech = *p;
 	*p = '\0';
 	if ((val = getmonth(start)) != 0)
@@ -276,7 +280,10 @@ getfield(p, endp, flags)
 		*p = savech;
 		return (0);
 	}
-	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p);
+	for (*p = savech;
+	    *p != '\0' && !isdigit(*p) && !isalpha(*p) && *p != '*';
+	    ++p)
+		;
 	*endp = p;
 	return (val);
 }
