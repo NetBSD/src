@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.160 2001/06/17 21:01:36 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.161 2001/06/18 02:00:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -322,12 +322,12 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		trapsignal(p, SIGBUS, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGBUS, type & ~T_USER);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(p, SIGILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGILL, type & ~T_USER);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -349,12 +349,12 @@ copyfault:
 				goto trace;
 			return;
 		}
-		trapsignal(p, rv, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, rv, type & ~T_USER);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		trapsignal(p, SIGKILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGKILL, type & ~T_USER);
 		goto out;
 #endif
 	}
@@ -362,11 +362,11 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGFPE, type & ~T_USER);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		trapsignal(p, SIGFPE, frame.tf_err);
+		(*p->p_emul->e_trapsignal)(p, SIGFPE, frame.tf_err);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -469,9 +469,9 @@ copyfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(p, SIGKILL, T_PAGEFLT);
 		} else {
-			trapsignal(p, SIGSEGV, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(p, SIGSEGV, T_PAGEFLT);
 		}
 		break;
 	}
@@ -491,7 +491,7 @@ copyfault:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		trapsignal(p, SIGTRAP, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGTRAP, type & ~T_USER);
 		break;
 
 #if	NISA > 0 || NMCA > 0

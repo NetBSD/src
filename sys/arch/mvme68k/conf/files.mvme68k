@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.43 2001/04/30 09:05:59 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.44 2001/06/18 02:00:50 christos Exp $
 
 # config file for mvme68k
 
@@ -145,6 +145,7 @@ include "compat/svr4/files.svr4"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.86 2001/06/07 07:23:02 leo Exp $
+#	$NetBSD: files.atari,v 1.87 2001/06/18 02:00:48 christos Exp $
 
 maxpartitions 16
 
@@ -237,6 +237,7 @@ include "compat/svr4/files.svr4"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

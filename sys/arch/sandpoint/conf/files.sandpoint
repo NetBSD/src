@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.6 2001/06/12 17:13:35 tsubai Exp $
+#	$NetBSD: files.sandpoint,v 1.7 2001/06/18 02:00:51 christos Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -49,7 +49,8 @@ include "compat/ossaudio/files.ossaudio"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
+file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
+file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # RAIDframe

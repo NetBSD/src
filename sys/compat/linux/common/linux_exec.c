@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.51 2001/06/16 21:44:29 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.52 2001/06/18 02:00:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ const struct emul emul_linux = {
 	linux_sysent,
 	linux_syscallnames,
 	linux_sendsig,
+	linux_trapsignal,
 	linux_sigcode,
 	linux_esigcode,
 	linux_e_proc_exec,
