@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.23 1998/02/02 06:39:41 mikel Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.24 1998/02/07 16:19:16 ghudson Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.23 1998/02/02 06:39:41 mikel Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.24 1998/02/07 16:19:16 ghudson Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -576,7 +576,7 @@ intuit_translated_geometry()
 		return;
 
 	/* Estimate the number of cylinders. */
-	cylinders = dos_cylinders * dos_cylindersectors / heads / sectors;
+	cylinders = disklabel.d_secperunit / heads / sectors;
 
 	/* Now verify consistency with each of the partition table entries.
 	 * Be willing to shove cylinders up a little bit to make things work,
