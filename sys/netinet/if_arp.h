@@ -31,11 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.h	7.5 (Berkeley) 6/28/90
- *	$Id: if_arp.h,v 1.5 1993/12/13 15:10:40 hpeyerl Exp $
+ *	$Id: if_arp.h,v 1.6 1993/12/30 04:17:40 deraadt Exp $
  */
 
 #ifndef _NETINET_IF_ETHER_H_
 #define _NETINET_IF_ETHER_H_
+
+/*
+ * Ethernet address - 6 octets
+ * this is only used by the ethers(3) functions.
+ */
+struct ether_addr {
+	u_char ether_addr_octet[6];
+};
 
 /*
  * Structure of a 10Mb/s Ethernet header.
