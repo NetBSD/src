@@ -1,9 +1,9 @@
-/*	$NetBSD: sqvar.h,v 1.2 2001/06/07 23:05:51 thorpej Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.3 2002/03/13 13:12:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -31,7 +31,7 @@
 #define	_ARCH_SGIMIPS_HPC_SQVAR_H_
 
 #include "rnd.h"
- 
+
 #include <sys/queue.h>
 #include <sys/callout.h>
 
@@ -82,7 +82,7 @@ struct sq_softc {
 	bus_space_tag_t 	sc_hpct;
 	bus_space_handle_t 	sc_hpch;
 
-	
+
 	/* HPC external ethernet registers: aka Seeq 8003 registers */
 	bus_space_tag_t 	sc_regt;
 	bus_space_handle_t 	sc_regh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.3 2001/07/08 21:04:50 thorpej Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.4 2002/03/13 13:12:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static u_char zs_kgdb_regs[16] = {
 	ZSWR9_MASTER_IE | ZSWR9_NO_VECTOR,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD | ZSWR11_TRXC_OUT_ENA,
-	10,     /*12: BAUDLO (updated by KGDB_RATE) */
+	10,	/*12: BAUDLO (updated by KGDB_RATE) */
 	0,	/*13: BAUDHI (updated by KGDB_RATE) */
 	ZSWR14_BAUD_ENA,
 	ZSWR15_BREAK_IE,
@@ -152,7 +152,7 @@ zs_kgdb_init()
 }
 
 /*
- * This is a "hook" called by the MI zstty_attach driver 
+ * This is a "hook" called by the MI zstty_attach driver
  * to allow the tty to be "taken over" for exclusive use by kgdb.
  * Return non-zero if this is the kgdb port.
  *
