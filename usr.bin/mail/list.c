@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.9 1998/12/19 16:33:24 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.10 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.9 1998/12/19 16:33:24 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.10 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -670,7 +670,7 @@ matchsender(str, mesg)
 	while (*cp2) {
 		if (*cp == 0)
 			return(1);
-		if (raise(*cp++) != raise(*cp2++)) {
+		if (upcase(*cp++) != upcase(*cp2++)) {
 			cp2 = ++backup;
 			cp = str;
 		}
@@ -708,7 +708,7 @@ matchto(str, mesg)
 			while (*cp2) {
 				if (*cp == 0)
 					return(1);
-				if (raise(*cp++) != raise(*cp2++)) {
+				if (upcase(*cp++) != upcase(*cp2++)) {
 					cp2 = ++backup;
 					cp = str;
 				}
@@ -752,7 +752,7 @@ matchsubj(str, mesg)
 
 	if (value("searchheaders") && (cp = strchr(str, ':'))) {
 		/* Check for special case "/To:" */
-		if (raise(str[0]) == 'T' && raise(str[1]) == 'O' &&
+		if (upcase(str[0]) == 'T' && upcase(str[1]) == 'O' &&
 		    str[2] == ':')
 			return(matchto(cp, mesg));
 		*cp++ = '\0';
@@ -769,7 +769,7 @@ matchsubj(str, mesg)
 	while (*cp2) {
 		if (*cp == 0)
 			return(1);
-		if (raise(*cp++) != raise(*cp2++)) {
+		if (upcase(*cp++) != upcase(*cp2++)) {
 			cp2 = ++backup;
 			cp = str;
 		}
