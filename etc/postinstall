@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.5 2002/04/29 06:05:24 lukem Exp $
+# $NetBSD: postinstall,v 1.6 2002/04/29 08:23:35 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -164,6 +164,31 @@ rcconf_isset()
 	)
 }
 
+# move_file op src dest --
+#	check (op == "check") or move (op != "check") from src to dest.
+#	returns 0 if ok, 1 otherwise.
+#
+move_file()
+{
+	[ $# -eq 3 ] || err 2 "USAGE: move_file op src dest"
+	_fm_op=$1
+	_fm_src=$2
+	_fm_dest=$3
+
+	if [ -f "${_fm_src}" -a ! -f "${_fm_dest}" ]; then
+		if [ "${_fm_op}" = "check" ]; then
+			msg "Move ${_fm_src} to ${_fm_dest}"
+			return 1
+		fi
+		if ! mv ${_fm_src} ${_fm_dest}; then
+			msg "Can't move ${_fm_src} to ${_fm_dest}"
+			return 1
+		fi
+		msg "Moved ${_fm_src} to ${_fm_dest}"
+	fi
+	return 0
+}
+
 
 #
 #	items
@@ -267,45 +292,51 @@ do_ssh()
 	op=$1
 
 	failed=0
-	_dest=${DEST_ETC}/ssh
-	if [ ! -d "${_dest}" ]; then
+	_etcssh=${DEST_ETC}/ssh
+	if [ ! -d "${_etcssh}" ]; then
 		if [ "${op}" = "check" ]; then
-			msg "${_dest} is not a directory"
+			msg "${_etcssh} is not a directory"
 			failed=1
-		elif ! mkdir ${_dest} ; then
-			msg "Can't create missing ${_dest}"
+		elif ! mkdir ${_etcssh} ; then
+			msg "Can't create missing ${_etcssh}"
 			failed=1
 		else
-			msg "Missing ${_dest} created"
+			msg "Missing ${_etcssh} created"
 		fi
 	fi
 
 	if [ ${failed} -eq 0 ]; then
 		for f in \
-			    sshd.conf ssh.conf \
 			    ssh_known_hosts ssh_known_hosts2 \
 			    ssh_host_dsa_key ssh_host_dsa_key.pub \
 			    ssh_host_rsa_key ssh_host_rsa_key.pub \
 			    ssh_host_key ssh_host_key.pub \
 		    ; do
-			fs=${DEST_ETC}/${f}
-			fd=${_dest}/${f}
-			if [ -f "${fs}" -a ! -f "${fd}" ]; then
-				if [ "${op}" = "check" ]; then
-					msg "Move ${fs} to ${fd}"
-					failed=1
-				elif ! mv ${fs} ${fd}; then
-					msg "Can't move ${fs} to ${fd}"
-					failed=1
-				else
-					msg "Moved ${fs} to ${fd}"
-				fi
+			if ! move_file ${op} ${DEST_ETC}/${f} ${_etcssh}/${f};
+			then
+				failed=1
+			fi
+		done
+		for f in sshd.conf ssh.conf ; do
+				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
+			if ! move_file ${op} \
+			    ${DEST_ETC}/${f} ${_etcssh}/${f%.conf}_config ;
+			then
+				failed=1
+			fi
+				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
+			if ! move_file ${op} \
+			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ;
+			then
+				failed=1
 			fi
 		done
 	fi
 
-	if [ -f "${_dest}/sshd.conf" ]; then
-		sshdconf=${_dest}/sshd.conf
+	if [ -f "${_etcssh}/sshd_config" ]; then
+		sshdconf=${_etcssh}/sshd_config
+	elif [ -f "${_etcssh}/sshd.conf" ]; then
+		sshdconf=${_etcssh}/sshd.conf
 	elif [ -f "${DEST_ETC}/sshd.conf" ]; then
 		sshdconf=${DEST_ETC}/sshd.conf
 	else
@@ -445,10 +476,10 @@ main()
 			fi
 		done
 
-		if [ "${op}" = "fix" ]; then
-			plural="fixes"
-		else
+		if [ "${op}" = "check" ]; then
 			plural="checks"
+		else
+			plural="fixes"
 		fi
 
 		echo "${PROGNAME} ${plural} passed:${items_passed}"

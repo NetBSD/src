@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.17 2002/04/29 05:55:06 lukem Exp $
+# $NetBSD: sshd,v 1.18 2002/04/29 08:23:34 lukem Exp $
 #
 
 # PROVIDE: sshd
@@ -12,7 +12,7 @@ name="sshd"
 rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
-required_files="/etc/ssh/${name}.conf"
+required_files="/etc/ssh/sshd_config"
 extra_commands="keygen reload"
 
 sshd_keygen()

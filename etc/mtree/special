@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.56 2002/04/29 07:28:27 lukem Exp $
+#	$NetBSD: special,v 1.57 2002/04/29 08:23:35 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -224,7 +224,7 @@
 ./etc/shosts.equiv		type=file mode=0600 optional
 ./etc/spwd.db			type=file mode=0600 tags=exclude
 ./etc/ssh			type=dir  mode=0755 optional
-./etc/ssh/ssh.conf		type=file mode=0644 optional
+./etc/ssh/ssh_config		type=file mode=0644 optional
 ./etc/ssh/ssh_host_dsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff
@@ -233,7 +233,7 @@
 ./etc/ssh/ssh_host_rsa_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_known_hosts	type=file mode=0644 optional
 ./etc/ssh/ssh_known_hosts2	type=file mode=0644 optional
-./etc/ssh/sshd.conf		type=file mode=0644 optional
+./etc/ssh/sshd_config		type=file mode=0644 optional
 ./etc/sysctl.conf		type=file mode=0644
 ./etc/syslog.conf		type=file mode=0644
 ./etc/ttyaction			type=file mode=0644 optional

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.10 2002/04/22 07:59:41 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.11 2002/04/29 08:23:35 lukem Exp $	*/
 /*	$OpenBSD: pathnames.h,v 1.12 2002/03/19 03:03:43 stevesk Exp $	*/
 
 /*
@@ -29,8 +29,8 @@
  * Of these, ssh_host_key must be readable only by root, whereas ssh_config
  * should be world-readable.
  */
-#define _PATH_SERVER_CONFIG_FILE	SSHDIR "/sshd.conf"
-#define _PATH_HOST_CONFIG_FILE		SSHDIR "/ssh.conf"
+#define _PATH_SERVER_CONFIG_FILE	SSHDIR "/sshd_config"
+#define _PATH_HOST_CONFIG_FILE		SSHDIR "/ssh_config"
 #define _PATH_HOST_KEY_FILE		SSHDIR "/ssh_host_key"
 #define _PATH_HOST_DSA_KEY_FILE		SSHDIR "/ssh_host_dsa_key"
 #define _PATH_HOST_RSA_KEY_FILE		SSHDIR "/ssh_host_rsa_key"
