@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.124 2000/02/11 19:25:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.125 2000/03/01 00:43:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2000/02/11 19:25:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2000/03/01 00:43:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,7 +537,7 @@ int	pmap_physpage_delref __P((void *));
  *	Check to see if a pmap is active on the current processor.
  */
 #define	PMAP_ISACTIVE_TEST(pm)						\
-	(((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
+	(((pm)->pm_cpus & (1UL << cpu_number())) != 0)
 
 #ifdef DEBUG
 #define	PMAP_ISACTIVE(pm)						\
@@ -952,13 +952,13 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
 	proc0.p_addr->u_pcb.pcb_hw.apcb_asn =
-	    pmap_kernel()->pm_asn[alpha_pal_whami()];
+	    pmap_kernel()->pm_asn[cpu_number()];
 
 	/*
 	 * Mark the kernel pmap `active' on this processor.
 	 */
 	alpha_atomic_setbits_q(&pmap_kernel()->pm_cpus,
-	    (1UL << alpha_pal_whami()));
+	    (1UL << cpu_number()));
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -1278,7 +1278,7 @@ pmap_remove(pmap, sva, eva)
 	pt_entry_t *saved_l1pte, *saved_l2pte, *saved_l3pte;
 	vaddr_t l1eva, l2eva, vptva;
 	boolean_t needisync = FALSE;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -1441,7 +1441,7 @@ pmap_page_protect(pg, prot)
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
 	boolean_t needisync = FALSE;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
@@ -1530,7 +1530,7 @@ pmap_protect(pmap, sva, eva, prot)
 	boolean_t isactive;
 	boolean_t hadasm;
 	vaddr_t l1eva, l2eva;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1631,7 +1631,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t needisync;
 	boolean_t isactive;
 	boolean_t wired;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 	int error;
 
 #ifdef DEBUG
@@ -1933,7 +1933,7 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *pte, npte;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 	boolean_t needisync = FALSE;
 	pmap_t pmap = pmap_kernel();
 
@@ -2030,7 +2030,7 @@ pmap_kremove(va, size)
 {
 	pt_entry_t *pte;
 	boolean_t needisync = FALSE;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 	pmap_t pmap = pmap_kernel();
 
 #ifdef DEBUG
@@ -2264,7 +2264,7 @@ pmap_activate(p)
 	struct proc *p;
 {
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2320,7 +2320,7 @@ pmap_deactivate(p)
 	/*
 	 * Mark the pmap no longer in use by this processor.
 	 */
-	alpha_atomic_clearbits_q(&pmap->pm_cpus, (1UL << alpha_pal_whami()));
+	alpha_atomic_clearbits_q(&pmap->pm_cpus, (1UL << cpu_number()));
 }
 
 /*
@@ -2415,7 +2415,7 @@ pmap_clear_modify(pg)
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv = FALSE;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2451,7 +2451,7 @@ pmap_clear_reference(pg)
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv = FALSE;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2810,7 +2810,7 @@ pmap_emulate_reference(p, v, user, write)
 	paddr_t pa;
 	struct pv_head *pvh;
 	boolean_t didlock = FALSE;
-	long cpu_id = alpha_pal_whami();
+	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -3160,7 +3160,7 @@ pmap_pv_alloc()
 					continue;
 				}
 
-				cpu_id = alpha_pal_whami();
+				cpu_id = cpu_number();
 
 				/*
 				 * Okay!  We have a mapping we can steal;
@@ -3587,7 +3587,7 @@ pmap_ptpage_steal(pmap, usage, pap)
 	vaddr_t va;
 	paddr_t pa;
 	struct prm_thief prmt;
-	u_long cpu_id = alpha_pal_whami();
+	u_long cpu_id = cpu_number();
 	boolean_t needisync = FALSE;
 
 	prmt.prmt_flags = PRMT_PTP;
@@ -3993,7 +3993,7 @@ pmap_tlb_shootdown(pmap, va, pte)
 	vaddr_t va;
 	pt_entry_t pte;
 {
-	u_long i, ipinum, cpu_id = alpha_pal_whami();
+	u_long i, ipinum, cpu_id = cpu_number();
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
@@ -4046,7 +4046,7 @@ pmap_tlb_shootdown(pmap, va, pte)
 void
 pmap_do_tlb_shootdown()
 {
-	u_long cpu_id = alpha_pal_whami();
+	u_long cpu_id = cpu_number();
 	u_long cpu_mask = (1UL << cpu_id);
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
 	struct pmap_tlb_shootdown_job *pj;
