@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.7.6.2 2002/02/06 23:18:51 nathanw Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.7.6.3 2002/05/02 17:07:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vasprintf.c,v 1.7.6.2 2002/02/06 23:18:51 nathanw Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.7.6.3 2002/05/02 17:07:39 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -60,7 +60,7 @@ vasprintf(str, fmt, ap)
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
-	ret = vfprintf(&f, fmt, ap);
+	ret = vfprintf_unlocked(&f, fmt, ap);
 	if (ret == -1)
 		goto err;
 	*f._p = '\0';
