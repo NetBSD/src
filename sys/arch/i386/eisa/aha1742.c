@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.34 1994/07/27 13:14:14 mycroft Exp $
+ *      $Id: aha1742.c,v 1.35 1994/07/28 02:39:21 mycroft Exp $
  */
 
 /*
@@ -86,24 +86,14 @@ typedef u_long physaddr;
 #define	AHB_NSEG	33	/* number of dma segments supported       */
 
 /*
- * AHA1740 standard EISA Host ID regs  (Offset from slot base)
+ * EISA registers (offset from slot base)
  */
-#define HID0		0xC80	/* 0,1: msb of ID2, 3-7: ID1      */
-#define HID1		0xC81	/* 0-4: ID3, 4-7: LSB ID2         */
-#define HID2		0xC82	/* product, 0=174[20] 1 = 1744    */
-#define	 PRODUCT_1742	0x00
-#define	 PRODUCT_1744	0x01
-#define HID3		0xC83	/* firmware revision              */
-
-#define CHAR1(B1,B2) (((B1>>2) & 0x1F) | '@')
-#define CHAR2(B1,B2) (((B1<<3) & 0x18) | ((B2>>5) & 0x7)|'@')
-#define CHAR3(B1,B2) ((B2 & 0x1F) | '@')
-
-/*
- * AHA1740 EISA board control registers (Offset from slot base)
- */
-#define	EBCTRL		0xC84
-#define  CDEN		0x01
+#define	EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
+#define	EISA_MODEL		0x0c82	/* model number (2 ports) */
+#define	EISA_CONTROL		0x0c84
+#define	 EISA_RESET		0x04
+#define	 EISA_ERROR		0x02
+#define	 EISA_ENABLE		0x01
 
 /*
  * AHA1740 EISA board mode registers (Offset from slot base)
@@ -353,8 +343,8 @@ ahb_send_mbox(ahb, opcode, target, ecb)
 	int opcode, target;
 	struct ecb *ecb;
 {
-	u_short port = ahb->iobase;
-	u_short stport = port + G2STAT;
+	u_short iobase = ahb->iobase;
+	u_short stport = iobase + G2STAT;
 	int wait = 300;	/* 1ms should be enough */
 	int s = splbio();
 
@@ -369,8 +359,8 @@ ahb_send_mbox(ahb, opcode, target, ecb)
 		Debugger();
 	}
 
-	outl(port + MBOXOUT0, KVTOPHYS(ecb));	/* don't know this will work */
-	outb(port + ATTN, opcode | target);
+	outl(iobase + MBOXOUT0, KVTOPHYS(ecb));	/* don't know this will work */
+	outb(iobase + ATTN, opcode | target);
 
 	splx(s);
 }
@@ -383,8 +373,8 @@ ahb_poll(ahb, wait)
 	struct ahb_softc *ahb;
 	int wait;
 {				/* in msec  */
-	u_short port = ahb->iobase;
-	u_short stport = port + G2STAT;
+	u_short iobase = ahb->iobase;
+	u_short stport = iobase + G2STAT;
 
     retry:
 	while (--wait) {
@@ -397,9 +387,9 @@ ahb_poll(ahb, wait)
 		return EIO;
 	}
 
-	if (cheat != ahb_ecb_phys_kv(ahb, inl(port + MBOXIN0))) {
-		printf("discarding %x ", inl(port + MBOXIN0));
-		outb(port + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+	if (cheat != ahb_ecb_phys_kv(ahb, inl(iobase + MBOXIN0))) {
+		printf("discarding %x ", inl(iobase + MBOXIN0));
+		outb(iobase + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 		delay(50000);
 		goto retry;
 	}
@@ -418,8 +408,8 @@ ahb_send_immed(ahb, target, cmd)
 	int target;
 	u_long cmd;
 {
-	u_short port = ahb->iobase;
-	u_short stport = port + G2STAT;
+	u_short iobase = ahb->iobase;
+	u_short stport = iobase + G2STAT;
 	int wait = 100;	/* 1 ms enough? */
 	int s = splbio();
 
@@ -434,9 +424,9 @@ ahb_send_immed(ahb, target, cmd)
 		Debugger();
 	}
 
-	outl(port + MBOXOUT0, cmd);	/* don't know this will work */
-	outb(port + G2CNTRL, G2CNTRL_SET_HOST_READY);
-	outb(port + ATTN, OP_IMMED | target);
+	outl(iobase + MBOXOUT0, cmd);	/* don't know this will work */
+	outb(iobase + G2CNTRL, G2CNTRL_SET_HOST_READY);
+	outb(iobase + ATTN, OP_IMMED | target);
 	splx(s);
 }
 
@@ -452,8 +442,8 @@ ahbprobe(parent, self, aux)
 {
 	struct ahb_softc *ahb = (void *)self;
 	struct isa_attach_args *ia = aux;
-	u_short port;
-	u_char byte1, byte2, byte3;
+	u_short iobase;
+	u_short vendor, model;
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase != IOBASEUNK)
@@ -462,19 +452,30 @@ ahbprobe(parent, self, aux)
 
 	while (ahb_slot < MAX_SLOTS) {
 		ahb_slot++;
-		port = 0x1000 * ahb_slot;
-		byte1 = inb(port + HID0);
-		byte2 = inb(port + HID1);
-		byte3 = inb(port + HID2);
-		if (byte1 == 0xff)
+		iobase = 0x1000 * ahb_slot;
+
+		vendor = htons(inw(iobase + EISA_VENDOR));
+		if (vendor != 0x0490)	/* `ADP' */
 			continue;
-		if (CHAR1(byte1, byte2) != 'A' ||
-		    CHAR2(byte1, byte2) != 'D' ||
-		    CHAR3(byte1, byte2) != 'P' ||
-		    (byte3 != PRODUCT_1742 && byte3 != PRODUCT_1744)) {
+
+		model = htons(inw(iobase + EISA_MODEL));
+		if ((model & 0xfff0) != 0x0000 &&
+		    (model & 0xfff0) != 0x0100) {
+#ifndef trusted
+			printf("ahbprobe: ignoring model %04x\n", model);
+#endif
 			continue;
 		}
-		ia->ia_iobase = port;
+
+		printf("ahbprobe: resetting card\n");
+
+		outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+		delay(10);
+		outb(iobase + EISA_CONTROL, EISA_ENABLE);
+		/* Wait for reset? */
+		delay(1000);
+
+		ia->ia_iobase = iobase;
 		if (ahbprobe1(ahb, ia))
 			return 1;
 	}
@@ -534,7 +535,7 @@ ahbattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct ahb_softc *ahb = (void *)self;
-	u_char x;
+	u_short model;
 
 	ahb_init(ahb);
 
@@ -547,19 +548,16 @@ ahbattach(parent, self, aux)
 	ahb->sc_link.device = &ahb_dev;
 
 	printf(": ");
-	x = inb(ahb->iobase + HID2);
-	switch (x) {
-	case PRODUCT_1742:
+	model = htons(inw(ahb->iobase + EISA_MODEL));
+	switch (model & 0xfff0) {
+	case 0x0000:
 		printf("model 1740 or 1742");
 		break;
-	case PRODUCT_1744:
+	case 0x0100:
 		printf("model 1744");
 		break;
-	default:
-		printf("unknown model 0x%02x", x);
 	}
-	x = inb(ahb->iobase + HID3);
-	printf(", revision %d\n", x);
+	printf(", revision %d\n", model & 0x000f);
 
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
@@ -597,13 +595,13 @@ ahbintr(ahb)
 	struct ecb *ecb;
 	u_char stat, ahbstat;
 	u_long mboxval;
-	u_short port = ahb->iobase;
+	u_short iobase = ahb->iobase;
 
 #ifdef	AHBDEBUG
 	printf("ahbintr ");
 #endif /*AHBDEBUG */
 
-	if (!(inb(port + G2STAT) & G2STAT_INT_PEND))
+	if (!(inb(iobase + G2STAT) & G2STAT_INT_PEND))
 		return 0;
 
 	do {
@@ -611,10 +609,10 @@ ahbintr(ahb)
 		 * First get all the information and then 
 		 * acknowlege the interrupt
 		 */
-		ahbstat = inb(port + G2INTST);
+		ahbstat = inb(iobase + G2INTST);
 		stat = ahbstat & G2INTST_INT_STAT;
-		mboxval = inl(port + MBOXIN0);	/* don't know this will work */
-		outb(port + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+		mboxval = inl(iobase + MBOXIN0);	/* don't know this will work */
+		outb(iobase + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 
 #ifdef	AHBDEBUG
 		printf("status = 0x%x ", ahbstat);
@@ -667,7 +665,7 @@ ahbintr(ahb)
 			untimeout(ahb_timeout, ecb);
 			ahb_done(ahb, ecb, stat != AHB_ECB_OK);
 		}
-	} while (inb(port + G2STAT) & G2STAT_INT_PEND);
+	} while (inb(iobase + G2STAT) & G2STAT_INT_PEND);
 	return 1;
 }
 
@@ -870,11 +868,13 @@ int
 ahb_find(ahb)
 	struct ahb_softc *ahb;
 {
-	u_short port = ahb->iobase;
-	u_short stport = port + G2STAT;
+	u_short iobase = ahb->iobase;
+	u_short stport = iobase + G2STAT;
 	u_char intdef;
 	int i;
 	int wait = 1000;	/* 1 sec enough? */
+
+	outb(iobase + PORTADDR, PORTADDR_ENHANCED);
 
 #define	NO_NO 1
 #ifdef NO_NO
@@ -882,12 +882,9 @@ ahb_find(ahb)
 	 * reset board, If it doesn't respond, assume 
 	 * that it's not there.. good for the probe
 	 */
-	outb(port + EBCTRL, CDEN);	/* enable full card */
-	outb(port + PORTADDR, PORTADDR_ENHANCED);
-
-	outb(port + G2CNTRL, G2CNTRL_HARD_RESET);
+	outb(iobase + G2CNTRL, G2CNTRL_HARD_RESET);
 	delay(1000);
-	outb(port + G2CNTRL, 0);
+	outb(iobase + G2CNTRL, 0);
 	delay(10000);
 	while (--wait) {
 		if ((inb(stport) & G2STAT_BUSY) == 0)
@@ -901,22 +898,23 @@ ahb_find(ahb)
 #endif /*AHBDEBUG */
 		return ENXIO;
 	}
-	i = inb(port + MBOXIN0);
+	i = inb(iobase + MBOXIN0);
 	if (i) {
 		printf("self test failed, val = 0x%x\n", i);
 		return EIO;
 	}
+
+	/* Set it again, just to be sure. */
+	outb(iobase + PORTADDR, PORTADDR_ENHANCED);
 #endif
 
 	while (inb(stport) & G2STAT_INT_PEND) {
 		printf(".");
-		outb(port + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+		outb(iobase + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 		delay(10000);
 	}
-	outb(port + EBCTRL, CDEN);	/* enable full card */
-	outb(port + PORTADDR, PORTADDR_ENHANCED);
 
-	intdef = inb(port + INTDEF);
+	intdef = inb(iobase + INTDEF);
 	switch (intdef & 0x07) {
 	case INT9:
 		ahb->ahb_int = IRQ9;
@@ -941,10 +939,10 @@ ahb_find(ahb)
 		return EIO;
 	}
 
-	outb(port + INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
+	outb(iobase + INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
 
 	/* who are we on the scsi bus? */
-	ahb->ahb_scsi_dev = (inb(port + SCSIDEF) & HSCSIID);
+	ahb->ahb_scsi_dev = (inb(iobase + SCSIDEF) & HSCSIID);
 
 	/*
 	 * Note that we are going and return (to probe)
