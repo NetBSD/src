@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.3 2003/01/18 18:45:57 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.4 2003/01/24 17:43:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -580,8 +580,8 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	pthread_spinlock(self, &self->pt_statelock);
 	if (oldstate == PT_STATE_RUNNABLE) {
 		pthread_spinlock(self, &pthread__runqueue_lock);
-		pthread_spinunlock(self, &self->pt_statelock);
 		self->pt_state = PT_STATE_RUNNABLE;
+		pthread_spinunlock(self, &self->pt_statelock);
 		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
 		pthread__locked_switch(self, next, &pthread__runqueue_lock);
 	} else if (oldstate == PT_STATE_BLOCKED_QUEUE) {
