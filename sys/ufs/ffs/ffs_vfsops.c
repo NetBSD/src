@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.48 1999/02/26 23:44:49 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.49 1999/03/05 12:02:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -519,7 +519,7 @@ ffs_mountfs(devvp, mp, p)
 		error = EINVAL;
 		goto out;
 	}
-	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+	if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs)) {
 		error = EINVAL;
 		goto out;
 	}
@@ -530,7 +530,10 @@ ffs_mountfs(devvp, mp, p)
 	if (needswap)
 		ffs_sb_swap((struct fs*)bp->b_data, fs, 0);
 #endif
-
+	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+		error = EINVAL;
+		goto out;
+	}
 	 /* make sure cylinder group summary area is a reasonable size. */
 	if (fs->fs_cgsize == 0 || fs->fs_cpg == 0 ||
 	    fs->fs_ncg > fs->fs_ncyl / fs->fs_cpg + 1 ||
