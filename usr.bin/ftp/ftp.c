@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.122 2003/08/07 11:13:55 agc Exp $	*/
+/*	$NetBSD: ftp.c,v 1.123 2003/12/10 12:34:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.122 2003/08/07 11:13:55 agc Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.123 2003/12/10 12:34:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,8 @@ hookup(char *host, char *port)
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
-			warn("setsockopt TOS (ignored)");
+			if (debug)
+				warn("setsockopt TOS (ignored)");
 	}
 #endif
 	cin = fdopen(s, "r");
@@ -1325,7 +1326,8 @@ initconn(void)
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			       sizeof(on)) < 0)
-			warn("setsockopt (ignored)");
+			if (debug)
+				warn("setsockopt (ignored)");
 		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
 		case AF_INET:
@@ -1563,7 +1565,8 @@ initconn(void)
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 				       sizeof(int)) < 0)
-				warn("setsockopt TOS (ignored)");
+				if (debug)
+					warn("setsockopt TOS (ignored)");
 		}
 #endif
 		return (0);
@@ -1596,7 +1599,8 @@ initconn(void)
 	if (options & SO_DEBUG &&
 	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			sizeof(on)) < 0)
-		warn("setsockopt (ignored)");
+		if (debug)
+			warn("setsockopt (ignored)");
 	len = sizeof(data_addr.si_su);
 	memset((char *)&data_addr, 0, sizeof (data_addr));
 	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) < 0) {
@@ -1696,7 +1700,8 @@ initconn(void)
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
-			warn("setsockopt TOS (ignored)");
+			if (debug)
+				warn("setsockopt TOS (ignored)");
 	}
 #endif
 	return (0);
@@ -1729,7 +1734,8 @@ dataconn(const char *lmode)
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 				sizeof(int)) < 0) {
-			warn("setsockopt TOS (ignored)");
+			if (debug)
+				warn("setsockopt TOS (ignored)");
 		}
 	}
 #endif
