@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 1998/07/19 18:35:16 drochner Exp $
+#	$NetBSD: Makefile,v 1.44 1998/07/31 23:44:41 perry Exp $
 
 LIB=	kern
 NOPIC=
@@ -57,6 +57,33 @@ memcpy.so: bcopy.c
 LOBJS+= memcpy.ln
 memcpy.ln: bcopy.c
 	${LINT} -DMEMCOPY ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	    ${.ALLSRC}
+.endif
+
+# if no machine specific memcpy(3), build one out of bcopy(3).
+.if empty(SRCS:Mmemmove.S)
+OBJS+=	memmove.o
+memmove.o: bcopy.c
+	@echo ${COMPILE.c:Q} -DMEMMOVE ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMMOVE ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+memmove.po: bcopy.c
+	@echo ${COMPILE.c:Q} -DMEMMOVE -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMMOVE -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+memmove.so: bcopy.c
+	@echo ${COMPILE.c:Q} -DMEMMOVE ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMMOVE ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+LOBJS+= memmove.ln
+memmove.ln: bcopy.c
+	${LINT} -DMEMMOVE ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
 	    ${.ALLSRC}
 .endif
 
