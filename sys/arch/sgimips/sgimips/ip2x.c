@@ -1,4 +1,4 @@
-/*	$NetBSD: ip2x.c,v 1.4 2004/01/10 05:22:09 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.5 2004/01/12 03:26:08 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.4 2004/01/10 05:22:09 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.5 2004/01/12 03:26:08 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -177,11 +177,7 @@ ip2x_init(void)
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
  */
 void
-ip2x_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+ip2x_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	u_int32_t newcnt;
 	struct clockframe cf;
@@ -235,7 +231,7 @@ ip2x_intr(status, cause, pc, ipending)
 }
 
 int
-ip2x_mappable_intr(void* arg)
+ip2x_mappable_intr(void *arg)
 {
 	int i;
 	int ret;
@@ -246,7 +242,7 @@ ip2x_mappable_intr(void* arg)
 
 	ret = 0;
 	mstat = bus_space_read_4(iot, ioh, INT2_MAP_STATUS);
-	mmask = bus_space_read_4(iot, ioh, INT2_MAP_MASK0 + (which * 4));
+	mmask = bus_space_read_4(iot, ioh, INT2_MAP_MASK0 + (which << 2));
 
 	mstat &= mmask;
 
@@ -266,7 +262,7 @@ ip2x_mappable_intr(void* arg)
 }
 
 int
-ip2x_local0_intr()
+ip2x_local0_intr(void)
 {
 	int i;
 	int ret;
@@ -292,7 +288,7 @@ ip2x_local0_intr()
 }
 
 int
-ip2x_local1_intr()
+ip2x_local1_intr(void)
 {
 	int i;
 	int ret;
@@ -320,11 +316,7 @@ ip2x_local1_intr()
 }
 
 void
-ip2x_intr_establish(level, ipl, handler, arg)
-	int level;
-	int ipl;
-	int (*handler) (void *);
-	void *arg;
+ip2x_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 {
 	u_int32_t mask;
 
