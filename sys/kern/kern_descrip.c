@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.79 2001/07/01 18:12:00 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.80 2001/07/18 05:34:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1362,6 +1362,9 @@ fdcloseexec(struct proc *p)
 {
 	struct filedesc	*fdp;
 	int		fd;
+
+	fdunshare(p);
+	cwdunshare(p);
 
 	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
