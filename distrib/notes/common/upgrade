@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.20 2002/07/22 14:16:29 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.20.2.1 2004/06/15 22:45:46 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ To do the upgrade, you must first boot the system as described in the
 section.
 .\}
 .el \{\
-.ie \n[mac68k]:\n[macppc]:\n[sparc] \{\
+.ie \n[mac68k]:\n[macppc]:\n[sparc]:\n[sparc64] \{\
 To do the upgrade, you must boot from the installer kernel using one of
 the methods described above.
 .\}
@@ -110,14 +110,11 @@ Make sure you know whether or not to install the bootloader.
 The upgrade procedure using the
 .Ic sysinst
 tool is similar to an installation, but without the hard disk partitioning.
-The original
+.Ic sysinst
+will attempt to merge the settings stored in your
 .Pa /etc
-directory is renamed to
-.Pa /etc.old ,
-and no attempt is made to merge any of the previous configuration into
-the new system except that the previous
-.Pa /etc/fstab
-file is copied into the new configuration.
+directory with the new version of
+.Nx .
 Getting the binary
 sets is done in the same manner as the installation procedure;
 refer to the installation part of the document
