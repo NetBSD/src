@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.9 2002/04/04 08:46:11 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.10 2002/05/04 19:44:34 jdolecek Exp $
 /etc/default/daily.conf
 /etc/default/monthly.conf
 /etc/default/rc.conf
@@ -13,3 +13,15 @@
 /etc/rc.d/systemfs
 /etc/rc.d/xntpd
 /etc/rc.wscons
+/etc/fstab.nfs
+/etc/fstab.sd
+/etc/fstab.sd0
+/etc/fstab.sd1
+/etc/fstab.sd2
+/etc/fstab.sd3
+/etc/fstab.sd4
+/etc/fstab.sd5
+/etc/fstab.sd6
+/etc/fstab.sd7
+/etc/fstab.tmp
+/etc/fstab.wd

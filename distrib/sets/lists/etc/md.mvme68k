@@ -1,4 +1,2 @@
-# $NetBSD: md.mvme68k,v 1.5 2001/01/26 01:39:18 jwise Exp $
-./etc/fstab.nfs		etc-sys-etc
-./etc/fstab.sd		etc-sys-etc
+# $NetBSD: md.mvme68k,v 1.6 2002/05/04 19:44:30 jdolecek Exp $
 ./etc/ld.so.conf	etc-sys-etc

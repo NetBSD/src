@@ -1,3 +1,2 @@
-# $NetBSD: md.luna68k,v 1.2 2001/01/26 01:39:17 jwise Exp $
-./etc/fstab.sd		etc-sys-etc
+# $NetBSD: md.luna68k,v 1.3 2002/05/04 19:44:29 jdolecek Exp $
 ./etc/ld.so.conf	etc-sys-etc
