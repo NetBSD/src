@@ -70,28 +70,8 @@ extern "C" {
 #define BF_ENCRYPT	1
 #define BF_DECRYPT	0
 
-/*
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! BF_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! BF_LONG_LOG2 has to be defined along.                        !
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- */
-
-#if defined(WIN16) || defined(__LP32__)
-#define BF_LONG unsigned long
-#elif defined(_CRAY) || defined(__ILP64__)
-#define BF_LONG unsigned long
-#define BF_LONG_LOG2 3
-/*
- * _CRAY note. I could declare short, but I have no idea what impact
- * does it have on performance on none-T3E machines. I could declare
- * int, but at least on C90 sizeof(int) can be chosen at compile time.
- * So I've chosen long...
- *					<appro@fy.chalmers.se>
- */
-#else
-#define BF_LONG unsigned int
-#endif
+#include <sys/types.h>
+#define	BF_LONG	u_int32_t
 
 #define BF_ROUNDS	16
 #define BF_BLOCK	8

@@ -67,10 +67,12 @@ extern "C" {
 #error IDEA is disabled.
 #endif
 
+#include <sys/types.h>
+#define	IDEA_INT	u_int32_t
+
 #define IDEA_ENCRYPT	1
 #define IDEA_DECRYPT	0
 
-#include <openssl/opensslconf.h> /* IDEA_INT */
 #define IDEA_BLOCK	8
 #define IDEA_KEY_LENGTH	16
 
@@ -91,7 +93,7 @@ void idea_cfb64_encrypt(unsigned char *in, unsigned char *out,
 	int *num,int enc);
 void idea_ofb64_encrypt(unsigned char *in, unsigned char *out,
 	long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int *num);
-void idea_encrypt(unsigned long *in, IDEA_KEY_SCHEDULE *ks);
+void idea_encrypt(IDEA_INT *in, IDEA_KEY_SCHEDULE *ks);
 #ifdef  __cplusplus
 }
 #endif
