@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bgp.c,v 1.1 1999/12/10 05:45:07 itojun Exp $	*/
+/*	$NetBSD: print-bgp.c,v 1.2 1999/12/11 18:20:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -43,6 +43,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
