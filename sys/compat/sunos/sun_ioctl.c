@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sun_ioctl.c,v 1.5 1993/11/22 22:54:48 deraadt Exp $
+ * $Id: sun_ioctl.c,v 1.6 1993/12/12 20:43:20 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -32,6 +32,9 @@
 #include <sys/ioctl.h>
 #include <sys/termios.h>
 #include <sys/tty.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 /*
  * SunOS ioctl calls.
@@ -534,6 +537,130 @@ sun_ioctl(p, uap, retval)
 		stios2btios (&sts, &bts);
 		return (*ctl)(fp, uap->cmd - SUN_TCSETS + TIOCSETA,
 		    (caddr_t)&bts, p);
+	    }
+/*
+ * Pseudo-tty ioctl translations.
+ */
+	case _IOW('t', 32, int):	/* TIOCTCNTL */
+		return EOPNOTSUPP;
+	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
+		int error, sig;
+
+		if (error = copyin (uap->data, (caddr_t)&sig, sizeof (sig)))
+			return error;
+		return (*ctl)(fp, TIOCSIG, (caddr_t)sig, p);
+	}
+
+/*
+ * Socket ioctl translations.
+ */
+#define IFREQ_IN(a) { \
+	struct ifreq ifreq; \
+	if (error = copyin (uap->data, (caddr_t)&ifreq, sizeof (ifreq))) \
+		return error; \
+	return (*ctl)(fp, a, (caddr_t)&ifreq, p); \
+}
+#define IFREQ_INOUT(a) { \
+	struct ifreq ifreq; \
+	if (error = copyin (uap->data, (caddr_t)&ifreq, sizeof (ifreq))) \
+		return error; \
+	if (error = (*ctl)(fp, a, (caddr_t)&ifreq, p)) \
+		return error; \
+	return copyout ((caddr_t)&ifreq, uap->data, sizeof (ifreq)); \
+}
+
+	case _IOW('i', 12, struct ifreq):
+		/* SIOCSIFADDR */
+		break;
+
+	case _IOWR('i', 13, struct ifreq):
+		IFREQ_INOUT(OSIOCGIFADDR);
+
+	case _IOW('i', 14, struct ifreq):
+		/* SIOCSIFDSTADDR */
+		break;
+
+	case _IOWR('i', 15, struct ifreq):
+		IFREQ_INOUT(OSIOCGIFDSTADDR);
+
+	case _IOW('i', 16, struct ifreq):
+		/* SIOCSIFFLAGS */
+		break;
+
+	case _IOWR('i', 17, struct ifreq):
+		/* SIOCGIFFLAGS */
+		break;
+
+	case _IOW('i', 21, struct ifreq):
+		IFREQ_IN(SIOCSIFMTU);
+
+	case _IOWR('i', 22, struct ifreq):
+		IFREQ_INOUT(SIOCGIFMTU);
+
+	case _IOWR('i', 23, struct ifreq):
+		IFREQ_INOUT(SIOCGIFBRDADDR);
+
+	case _IOW('i', 24, struct ifreq):
+		IFREQ_IN(SIOCSIFBRDADDR);
+
+	case _IOWR('i', 25, struct ifreq):
+		IFREQ_INOUT(OSIOCGIFNETMASK);
+
+	case _IOW('i', 26, struct ifreq):
+		IFREQ_IN(SIOCSIFNETMASK);
+
+	case _IOWR('i', 27, struct ifreq):
+		IFREQ_INOUT(SIOCGIFMETRIC);
+
+	case _IOWR('i', 28, struct ifreq):
+		IFREQ_IN(SIOCSIFMETRIC);
+
+	case _IOW('i', 30, struct arpreq):
+		/* SIOCSARP */
+		break;
+
+	case _IOWR('i', 31, struct arpreq):
+	    {
+		struct arpreq arpreq;
+
+		if (error = copyin (uap->data, (caddr_t)&arpreq, sizeof (arpreq)))
+			return error;
+		if (error = (*ctl)(fp, OSIOCGARP, (caddr_t)&arpreq, p))
+			return error;
+		return copyout ((caddr_t)&arpreq, uap->data, sizeof (arpreq));
+	    }
+
+	case _IOW('i', 32, struct arpreq):
+		/* SIOCDARP */
+		break;
+
+	case _IOW('i', 18, struct ifreq):	/* SIOCSIFMEM */
+	case _IOWR('i', 19, struct ifreq):	/* SIOCGIFMEM */
+	case _IOW('i', 40, struct ifreq):	/* SIOCUPPER */
+	case _IOW('i', 41, struct ifreq):	/* SIOCLOWER */
+	case _IOW('i', 44, struct ifreq):	/* SIOCSETSYNC */
+	case _IOWR('i', 45, struct ifreq):	/* SIOCGETSYNC */
+	case _IOWR('i', 46, struct ifreq):	/* SIOCSDSTATS */
+	case _IOWR('i', 47, struct ifreq):	/* SIOCSESTATS */
+	case _IOW('i', 48, int):		/* SIOCSPROMISC */
+	case _IOW('i', 49, struct ifreq):	/* SIOCADDMULTI */
+	case _IOW('i', 50, struct ifreq):	/* SIOCDELMULTI */
+		return EOPNOTSUPP;
+
+	case _IOWR('i', 20, struct ifconf):	/* SIOCGIFCONF */
+	    {
+		struct ifconf ifconf;
+
+		/*
+		 * XXX: two more problems
+		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
+		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
+		 */
+		if (error = copyin (uap->data, (caddr_t)&ifconf, sizeof (ifconf)))
+			return error;
+		if (error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, p))
+			return error;
+		return copyout ((caddr_t)&ifconf, uap->data, sizeof (ifconf));
 	    }
 	}
 	return (ioctl(p, uap, retval));
