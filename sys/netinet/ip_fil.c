@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.34.2.4 2000/08/09 18:07:45 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.34.2.5 2000/12/14 00:00:26 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.34.2.4 2000/08/09 18:07:45 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.34.2.5 2000/12/14 00:00:26 he Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.14 1999/12/11 05:31:08 darrenr Exp";
@@ -436,7 +436,7 @@ int mode;
 		 * Since the default rule is to pass all packets,
 		 * this shouldn't cause any noticeable side-effects.
 		 */
-		if (fr_running == 0) {
+		if (ipl_inited == 0) {
 #if defined(_KERNEL)
 			error = ipl_enable();
 #else
