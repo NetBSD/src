@@ -38,9 +38,9 @@ char copyright[] =
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: rtquery.c,v 1.1.1.3 1997/02/03 21:06:47 christos Exp $";
+static char rcsid[] = "$NetBSD: rtquery.c,v 1.1.1.4 1998/06/02 17:41:28 thorpej Exp $";
 #endif
-#ident "$Revision: 1.1.1.3 $"
+#ident "$Revision: 1.1.1.4 $"
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -107,6 +107,8 @@ char	passwd[RIP_AUTH_PW_LEN];
 u_long	keyid;
 
 struct timeval sent;			/* when query sent */
+
+static char *default_argv[2] = {"localhost", 0};
 
 static void rip_input(struct sockaddr_in*, int);
 static int out(char *);
@@ -252,13 +254,17 @@ main(int argc,
 	}
 	argv += optind;
 	argc -= optind;
-	if ((not_trace && trace) || argc == 0) {
-usage:		fprintf(stderr, "%s: [-np1v] [-r tgt_rt] [-w wtime]"
+	if (not_trace && trace) {
+usage:		fprintf(stderr, "%s: [-np1] [-r tgt_rt] [-w wtime]"
 			" [-a type=passwd] host1 [host2 ...]\n"
 			"or\t-t {on=filename|more|off|dump}"
 			" host1 [host2 ...]\n",
 			pgmname);
 		exit(1);
+	}
+	if (argc == 0) {
+		argc = 1;
+		argv = default_argv;
 	}
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
