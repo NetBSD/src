@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.3 1999/12/07 05:02:01 sato Exp $ */
+/* $NetBSD: clock.c,v 1.4 1999/12/08 15:57:12 uch Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 1999/12/07 05:02:01 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 1999/12/08 15:57:12 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -174,7 +174,6 @@ setstatclockrate(newhz)
 	/* nothing we can do */
 }
 
-#define DEBUG 
 /*
  * Initialze the time of day register, based on the time base which is, e.g.
  * from a filesystem.  Base provides the time to within six months,
