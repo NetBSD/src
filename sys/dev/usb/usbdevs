@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.340 2003/09/20 09:16:44 jdolecek Exp $
+$NetBSD: usbdevs,v 1.341 2003/09/28 06:55:57 jdolecek Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1181,6 +1181,7 @@ product PHILIPSSEMI HUB1122	0x1122	hub
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
+product PIENGINEERING XKEYS58	0x0232	Xkeys Programmable Keyboard (58 Keys)
 product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
 
 /* Pilotech Systems Co., Ltd products */
