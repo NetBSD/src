@@ -1,4 +1,4 @@
-# $KAME: racoon.conf.sample,v 1.26 2001/08/16 06:33:40 itojun Exp $
+# $KAME: racoon.conf.sample,v 1.27 2001/09/05 22:46:39 sakane Exp $
 
 # "path" affects "include" directive.  "path" must be specified before any
 # "include" directive with relative file path.
@@ -53,7 +53,7 @@ sainfo anonymous
 {
 	pfs_group 2;
 	lifetime time 12 hour ;
-	encryption_algorithm 3des, cast128, blowfish 448, des, twofish, rijndael ;
+	encryption_algorithm 3des, cast128, blowfish 448, des, rijndael ;
 	authentication_algorithm hmac_sha1, hmac_md5 ;
 	compression_algorithm deflate ;
 }

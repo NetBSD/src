@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_inf.c,v 1.71 2001/08/07 14:29:50 sakane Exp $	*/
+/*	$KAME: isakmp_inf.c,v 1.81 2002/04/15 01:58:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
@@ -360,7 +361,7 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 	n = (struct isakmp_pl_n *)payload->v;
 	n->h.np = ISAKMP_NPTYPE_NONE;
 	n->h.len = htons(tlen);
-	n->doi = IPSEC_DOI;
+	n->doi = htonl(IPSEC_DOI);
 	n->proto_id = IPSECDOI_KEY_IKE;
 	n->spi_size = spisiz;
 	n->type = htons(type);
@@ -768,8 +769,7 @@ isakmp_info_recv_n(iph1, msg)
 			/* delete ph1 */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
 				"delete phase1 handle.\n");
-			remph1(iph1);
-			delph1(iph1);
+			return -1;
 		} else {
 			iph2 = getph2bymsgid(iph1, msgid);
 			if (iph2 == NULL) {
@@ -788,9 +788,10 @@ isakmp_info_recv_n(iph1, msg)
 	}
 
 	/* get spi and allocate */
-	if (ntohs(n->h.len) != sizeof(*n) + n->spi_size) {
+	if (ntohs(n->h.len) < sizeof(*n) + n->spi_size) {
 		plog(LLV_ERROR, LOCATION, iph1->remote,
 			"invalid spi_size in notification payload.\n");
+		return -1;
 	}
 	spi = val2str((u_char *)(n + 1), n->spi_size);
 
@@ -820,7 +821,7 @@ purge_isakmp_spi(proto, spi, n)
 			continue;
 
 		plog(LLV_INFO, LOCATION, NULL,
-			"proto_id %s purging spi=%s.\n",
+			"purged ISAKMP-SA proto_id=%s spi=%s.\n",
 			s_ipsecdoi_proto(proto),
 			isakmp_pindex(&spi[i], 0));
 
@@ -922,7 +923,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			}
 
 			plog(LLV_INFO, LOCATION, NULL,
-				"proto_id %s purging spi=%u.\n",
+				"purged IPsec-SA proto_id=%s spi=%u.\n",
 				s_ipsecdoi_proto(proto),
 				ntohl(spi[i]));
 		}
@@ -935,7 +936,11 @@ purge_ipsec_spi(dst0, proto, spi, n)
 }
 
 /*
- * delete all IKE/IPSEC-SA relatived to remote address.
+ * delete all phase2 sa relatived to the destination address.
+ * Don't delete Phase 1 handlers on INITIAL-CONTACT, and don't ignore
+ * an INITIAL-CONTACT if we have contacted the peer.  This matches the
+ * Sun IKE behavior, and makes rekeying work much better when the peer
+ * restarts.
  */
 static void
 info_recv_initialcontact(iph1)
@@ -1060,7 +1065,7 @@ info_recv_initialcontact(iph1)
 		if (cmpsaddrwop(iph1->local, src) == 0 &&
 		    cmpsaddrwop(iph1->remote, dst) == 0)
 			;
-		else if (cmpsaddrwop(iph1->remote, src)  == 0 &&
+		else if (cmpsaddrwop(iph1->remote, src) == 0 &&
 		    cmpsaddrwop(iph1->local, dst) == 0)
 			;
 		else {
@@ -1241,8 +1246,7 @@ isakmp_info_recv_d(iph1, msg)
 			continue;
 		}
 
-		plog(LLV_INFO, LOCATION, NULL,
-			"packet properly proteted, purge SPIs.\n");
+		plog(LLV_DEBUG, LOCATION, NULL, "purged SAs.\n");
 	}
 
 	vfree(pbuf);
@@ -1275,7 +1279,8 @@ isakmp_check_notify(gen, iph1)
 		break;
 	case ISAKMP_NTYPE_INITIAL_CONTACT:
 		plog(LLV_WARNING, LOCATION, iph1->remote,
-			"ignore INITIAL-CONTACT notification.\n");
+			"ignore INITIAL-CONTACT notification, "
+			"because it is only accepted after phase1.\n");
 		break;
 	default:
 		isakmp_info_send_n1(iph1, ISAKMP_NTYPE_INVALID_PAYLOAD_TYPE, NULL);

@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.68 2001/08/20 06:46:28 itojun Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.71 2002/04/25 09:48:32 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -664,34 +664,9 @@ eay_get_x509sign(source, privkey, cert)
 	vchar_t *privkey;
 	vchar_t *cert;
 {
-	EVP_PKEY *evp;
-	u_char *bp;
 	vchar_t *sig = NULL;
-	int len;
 
-	bp = privkey->v;
-
-	/* XXX to be handled EVP_PKEY_DSA */
-	evp = d2i_PrivateKey(EVP_PKEY_RSA, NULL, &bp, privkey->l);
-	if (evp == NULL)
-		return NULL;
-
-	/* XXX: to be handled EVP_dss() */
-	/* XXX: Where can I get such parameters ?  From my cert ? */
-
-	len = RSA_size(evp->pkey.rsa);
-
-	sig = vmalloc(len);
-	if (sig == NULL)
-		return NULL;
-
-	len = RSA_private_encrypt(source->l, source->v, sig->v,
-				evp->pkey.rsa, RSA_PKCS1_PADDING);
-	EVP_PKEY_free(evp);
-	if (len == 0 || len != sig->l) {
-		vfree(sig);
-		sig = NULL;
-	}
+	sig = eay_rsa_sign(source, privkey);
 
 	return sig;
 }
@@ -710,10 +685,8 @@ eay_check_x509sign(source, sig, cert)
 	vchar_t *cert;
 {
 	X509 *x509;
-	EVP_PKEY *evp;
 	u_char *bp;
-	vchar_t *xbuf = NULL;
-	int error, len;
+	vchar_t pubkey;
 
 	bp = cert->v;
 
@@ -725,47 +698,10 @@ eay_check_x509sign(source, sig, cert)
 		return -1;
 	}
 
-	evp = X509_get_pubkey(x509);
-#ifndef EAYDEBUG
-	if (evp == NULL)
-		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#endif
-	X509_free(x509);
-	if (evp == NULL)
-		return -1;
-
-	/* Verify the signature */
-	/* XXX: to be handled EVP_dss() */
-
-	len = RSA_size(evp->pkey.rsa);
-
-	xbuf = vmalloc(len);
-	if (xbuf == NULL) {
-#ifndef EAYDEBUG
-		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#endif
-		EVP_PKEY_free(evp);
-		return -1;
-	}
-
-	len = RSA_public_decrypt(sig->l, sig->v, xbuf->v,
-				evp->pkey.rsa, RSA_PKCS1_PADDING);
-#ifndef EAYDEBUG
-	if (len == 0 || len != source->l)
-		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#endif
-	EVP_PKEY_free(evp);
-	if (len == 0 || len != source->l) {
-		vfree(xbuf);
-		return -1;
-	}
-
-	error = memcmp(source->v, xbuf->v, source->l);
-	vfree(xbuf);
-	if (error != 0)
-		return -1;
-
-	return 0;
+	pubkey.v = x509->cert_info->key->public_key->data;
+	pubkey.l = x509->cert_info->key->public_key->length;
+	
+	return eay_rsa_verify(source, sig, &pubkey);
 }
 
 /*
@@ -930,6 +866,87 @@ end:
 	return pkey;
 }
 #endif
+
+vchar_t *
+eay_rsa_sign(src, privkey)
+	vchar_t *src, *privkey; 
+{
+	EVP_PKEY *evp;
+	u_char *bp = privkey->v;
+	vchar_t *sig = NULL;
+	int len;
+	int pad = RSA_PKCS1_PADDING;
+
+	/* XXX to be handled EVP_PKEY_DSA */
+	evp = d2i_PrivateKey(EVP_PKEY_RSA, NULL, &bp, privkey->l);
+	if (evp == NULL)
+		return NULL;
+
+	/* XXX: to be handled EVP_dss() */
+	/* XXX: Where can I get such parameters ?  From my cert ? */
+
+	len = RSA_size(evp->pkey.rsa);
+
+	sig = vmalloc(len);
+	if (sig == NULL)
+		return NULL;
+
+	len = RSA_private_encrypt(src->l, src->v, sig->v, evp->pkey.rsa, pad);
+	EVP_PKEY_free(evp);
+	if (len == 0 || len != sig->l) {
+		vfree(sig);
+		sig = NULL;
+	}
+
+	return sig;
+}
+
+int
+eay_rsa_verify(src, sig, pubkey)
+	vchar_t *src, *sig, *pubkey;
+{
+	EVP_PKEY *evp;
+	u_char *bp = pubkey->v;
+	vchar_t *xbuf = NULL;
+	int pad = RSA_PKCS1_PADDING;
+	int len = 0;
+	int error;
+
+	evp = d2i_PUBKEY(NULL, &bp, pubkey->l);
+	if (evp == NULL)
+#ifndef EAYDEBUG
+		return NULL;
+#endif
+
+	len = RSA_size(evp->pkey.rsa);
+
+	xbuf = vmalloc(len);
+	if (xbuf == NULL) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+#endif
+		EVP_PKEY_free(evp);
+		return -1;
+	}
+
+	len = RSA_public_decrypt(sig->l, sig->v, xbuf->v, evp->pkey.rsa, pad);
+#ifndef EAYDEBUG
+	if (len == 0 || len != src->l)
+		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+#endif
+	EVP_PKEY_free(evp);
+	if (len == 0 || len != src->l) {
+		vfree(xbuf);
+		return -1;
+	}
+
+	error = memcmp(src->v, xbuf->v, src->l);
+	vfree(xbuf);
+	if (error != 0)
+		return -1;
+
+	return 0;
+}
 
 /*
  * get error string
@@ -1457,6 +1474,13 @@ eay_twofish_keylen(len)
 	if (len < 0 || len > 256)
 		return -1;
 	return len;
+}
+
+int
+eay_null_keylen(len)
+	int len;
+{
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$KAME: main.c,v 1.41 2001/08/17 07:06:26 itojun Exp $	*/
+/*	$KAME: main.c,v 1.44 2002/03/05 15:34:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,13 +76,14 @@ int f_local = 0;	/* local test mode.  behave like a wall. */
 int vflag = 1;		/* for print-isakmp.c */
 static int loading_sa = 0;	/* install sa when racoon boots up. */
 
-#define RACOON_VERSION	"20001216 sakane@ydc.co.jp"
+#define RACOON_VERSION	"20001216 sakane@kame.net"
 #ifdef RACOON_PKG_VERSION
 static char version0[] = "@(#)package version " RACOON_PKG_VERSION ;
 static char version[] = "@(#)internal version " RACOON_VERSION ;
 #else
 static char version[] = "@(#)racoon 20001216 " RACOON_VERSION ;
 #endif
+static pid_t racoon_pid = 0;
 
 int main __P((int, char **));
 static void usage __P((void));
@@ -149,6 +150,10 @@ main(ac, av)
 		/* NOTREACHED*/
 	}
 
+#ifdef DEBUG_RECORD_MALLOCATION
+	DRM_init();
+#endif
+
 	initlcconf();
 	initrmconf();
 	oakley_dhinit();
@@ -197,7 +202,6 @@ main(ac, av)
 		close(0);
 	else {
 		const char *pid_file = _PATH_VARRUN "racoon.pid";
-		pid_t pid;
 		FILE *fp;
 
 		if (daemon(0, 0) < 0) {
@@ -214,7 +218,7 @@ main(ac, av)
 				"cannot clear logname: %s\n", strerror(errno));
 			/* no big deal if it fails.. */
 		}
-		pid = getpid();
+		racoon_pid = getpid();
 		fp = fopen(pid_file, "w");
 		if (fp) {
 			if (fchmod(fileno(fp),
@@ -223,7 +227,7 @@ main(ac, av)
 				fclose(fp);
 				exit(1);
 			}
-			fprintf(fp, "%ld\n", (long)pid);
+			fprintf(fp, "%ld\n", (long)racoon_pid);
 			fclose(fp);
 		} else {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -245,9 +249,14 @@ main(ac, av)
 static void
 cleanup_pidfile()
 {
-	const char *pid_file = _PATH_VARRUN "racoon.pid";
+	pid_t p = getpid();
 
-	(void) unlink(pid_file);
+	/* if it's not child process, clean everything */
+	if (racoon_pid == p) {
+		const char *pid_file = _PATH_VARRUN "racoon.pid";
+
+		(void) unlink(pid_file);
+	}
 }
 
 static void

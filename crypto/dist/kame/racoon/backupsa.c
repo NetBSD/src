@@ -1,4 +1,4 @@
-/*	$KAME: backupsa.c,v 1.12 2001/08/20 06:46:28 itojun Exp $	*/
+/*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -342,13 +343,11 @@ do { \
 
 	/*
 	 * There is a possibility that an abnormal system down will happen
-	 * again.  Any old SA will not be installed because racoon checks
-	 * the lifetime and compare with current time.
+	 * again before new negotiation will be started.  so racoon clears
+	 * the backup file here.  it's ok that old SAs are remained in the
+	 * file.  any old SA will not be installed because racoon checks the
+	 * lifetime and compare with current time.
 	 */
-#if 0
-	/* clean the file if SA installation succeed. */
-	backupsa_clean();
-#endif
 
 	return 0;
 }
@@ -369,6 +368,7 @@ backupsa_clean()
 			lcconf->pathinfo[LC_PATHTYPE_BACKUPSA]);
 		return -1;
 	}
+	fclose(fp);
 	return 0;
 }
 

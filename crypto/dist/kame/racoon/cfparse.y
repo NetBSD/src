@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.107 2001/08/16 20:24:59 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.112 2002/02/21 14:47:38 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -85,7 +85,6 @@ static int num2dhgroup[] = {
 	OAKLEY_ATTR_GRP_DESC_MODP1536,
 };
 
-static struct policyindex *cur_spidx;
 static struct remoteconf *cur_rmconf;
 static int tmpalgtype[MAXALGCLASS];
 static struct sainfo *cur_sainfo;
@@ -113,7 +112,6 @@ static int fix_lifebyte __P((u_long));
 %union {
 	unsigned long num;
 	vchar_t *val;
-	struct policyindex *spidx;
 	struct remoteconf *rmconf;
 	struct sockaddr *saddr;
 	struct sainfoalg *alg;
@@ -136,22 +134,18 @@ static int fix_lifebyte __P((u_long));
 %token RETRY_PHASE1 RETRY_PHASE2
 	/* algorithm */
 %token ALGORITHM_CLASS ALGORITHMTYPE STRENGTHTYPE
-	/* policy */
-%token POLICY DIRTYPE ACTION
-%token PLADDRTYPE PROPOSAL WHICHSIDE
-%token PROTOCOL SECLEVEL SECLEVELTYPE SECMODE SECMODETYPE
 	/* sainfo */
 %token SAINFO
 	/* remote */
 %token REMOTE ANONYMOUS
 %token EXCHANGE_MODE EXCHANGETYPE DOI DOITYPE SITUATION SITUATIONTYPE
 %token CERTIFICATE_TYPE CERTTYPE PEERS_CERTFILE VERIFY_CERT SEND_CERT SEND_CR
-%token IDENTIFIERTYPE MY_IDENTIFIER PEERS_IDENTIFIER
+%token IDENTIFIERTYPE MY_IDENTIFIER PEERS_IDENTIFIER VERIFY_IDENTIFIER
 %token DNSSEC CERT_X509
 %token NONCE_SIZE DH_GROUP KEEPALIVE PASSIVE INITIAL_CONTACT
 %token PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL
 %token GENERATE_POLICY SUPPORT_MIP6
-%token POST_COMMAND
+%token PROPOSAL
 %token EXEC_PATH EXEC_COMMAND EXEC_SUCCESS EXEC_FAILURE
 %token GSSAPI_ID
 %token COMPLEX_BUNDLE
@@ -169,15 +163,13 @@ static int fix_lifebyte __P((u_long));
 %type <num> PATHTYPE IDENTIFIERTYPE LOGLEV 
 %type <num> ALGORITHM_CLASS dh_group_num
 %type <num> ALGORITHMTYPE STRENGTHTYPE
-%type <num> PREFIX prefix PORT port ike_port DIRTYPE ACTION PLADDRTYPE WHICHSIDE
-%type <num> ul_proto UL_PROTO secproto
-%type <num> SECLEVELTYPE SECMODETYPE 
+%type <num> PREFIX prefix PORT port ike_port
+%type <num> ul_proto UL_PROTO
 %type <num> EXCHANGETYPE DOITYPE SITUATIONTYPE
 %type <num> CERTTYPE CERT_X509 PROPOSAL_CHECK_LEVEL
 %type <num> unittype_time unittype_byte
 %type <val> QUOTEDSTRING HEXSTRING ADDRSTRING sainfo_id
 %type <val> identifierstring
-%type <spidx> policy_index
 %type <saddr> remote_index ike_addrinfo_port
 %type <alg> algorithm
 
@@ -195,7 +187,6 @@ statement
 	|	padding_statement
 	|	listen_statement
 	|	timer_statement
-	|	policy_statement
 	|	sainfo_statement
 	|	remote_statement
 	|	special_statement
@@ -396,263 +387,6 @@ timer_stmt
 		EOS
 	;
 
-	/* policy */
-policy_statement
-	:	POLICY policy_index
-		{
-			/*XXX to be deleted*/
-			cur_spidx = $2;
-		}
-		policy_specswrap
-	;
-policy_specswrap
-	:	EOS
-		{
-			/*
-			if (cur_spidx->action == IPSEC_POLICY_IPSEC) {
-				yyerror("must define policy for IPsec");
-				return -1;
-			}
-			*/
-		}
-	|	BOC
-		{
-			/*
-			if (cur_spidx->action != IPSEC_POLICY_IPSEC) {
-				yyerror("must not define policy for no IPsec");
-				return -1;
-			}
-
-			cur_spidx->policy = newipsp();
-			if (cur_spidx->policy == NULL) {
-				yyerror("failed to allocate ipsec policy");
-				return -1;
-			}
-			cur_spidx->policy->spidx = cur_spidx;
-			*/
-		}
-		policy_specs EOC
-		{
-			/*
-			if (set_ipsec_proposal(cur_spidx, prhead) != 0)
-				return -1;
-			*/
-
-			/* DH group settting if PFS is required. */
-			/*
-			if (cur_spidx->policy->pfs_group != 0
-			 && oakley_setdhgroup(cur_spidx->policy->pfs_group,
-					&cur_spidx->policy->pfsgrp) == -1) {
-				yyerror("failed to set DH value.\n");
-				return -1;
-			}
-
-#if 0
-			ipsecdoi_printsa(cur_spidx->policy->proposal);
-#endif
-			insspidx(cur_spidx);
-
-			cleanprhead();
-			*/
-		}
-	;
-policy_index
-	:	ADDRSTRING prefix port
-		ADDRSTRING prefix port ul_proto DIRTYPE ACTION
-		{
-			/*
-			$$ = parse_spidx($1->v, $2, $3, $4->v, $5, $6, $7, $8);
-			$$->action = $9;
-			vfree($1);
-			vfree($4);
-			*/
-		}
-	;
-prefix
-	:	/* nothing */ { $$ = ~0; }
-	|	PREFIX { $$ = $1; }
-	;
-port
-	:	/* nothing */ { $$ = IPSEC_PORT_ANY; }
-	|	PORT { $$ = $1; }
-	|	PORTANY { $$ = IPSEC_PORT_ANY; }
-	;
-ul_proto
-	:	NUMBER { $$ = $1; }
-	|	UL_PROTO { $$ = $1; }
-	|	ANY { $$ = IPSEC_ULPROTO_ANY; }
-	;
-policy_specs
-	:	/* nothing */
-	|	policy_specs policy_spec
-	;
-policy_spec
-	:	PFS_GROUP dh_group_num
-		{
-			/*
-			cur_spidx->policy->pfs_group = $2;
-			*/
-		}
-		EOS
-	|	PROPOSAL
-		{
-			/*
-			struct proposalspec *prspec;
-
-			prspec = newprspec();
-			if (prspec == NULL)
-				return -1;
-			prspec->lifetime = ipsecdoi_get_defaultlifetime();
-			insprspec(prspec, &prhead);
-			*/
-		}
-		BOC ipsecproposal_specs EOC
-	;
-ipsecproposal_specs
-	:	/* nothing */
-	|	ipsecproposal_specs ipsecproposal_spec
-	;
-ipsecproposal_spec
-	:	LIFETIME LIFETYPE_TIME NUMBER unittype_time
-		{
-			prhead->lifetime = $3 * $4;
-		}
-		EOS
-	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
-		{
-#if 1
-			yyerror("byte lifetime support is deprecated");
-			return -1;
-#else
-			prhead->lifebyte = fix_lifebyte($3 * $4);
-			if (prhead->lifebyte == 0)
-				return -1;
-#endif
-		}
-		EOS
-	|	PROTOCOL secproto
-		{
-			struct secprotospec *spspec;
-	
-			spspec = newspspec();
-			if (spspec == NULL)
-				return -1;
-			insspspec(spspec, &prhead);
-
-			prhead->spspec->proto_id = ipproto2doi($2);
-		}
-		BOC secproto_specs EOC
-	;
-secproto
-	:	UL_PROTO {
-			switch ($1) {
-			case IPPROTO_ESP:
-			case IPPROTO_AH:
-			case IPPROTO_IPCOMP:
-				break;
-			default:
-				yyerror("It's not security protocol");
-				return -1;
-			}
-			$$ = $1;
-		}
-	;
-secproto_specs
-	:	/* nothing */
-	|	secproto_specs secproto_spec
-	;
-secproto_spec
-	:	SECLEVEL SECLEVELTYPE { prhead->spspec->ipsec_level = $2; } EOS
-	|	SECMODE secmode EOS
-	|	STRENGTH
-		{
-			yyerror("strength directive is obsoleted.");
-		} STRENGTHTYPE EOS
-	|	ALGORITHM_CLASS ALGORITHMTYPE keylength
-		{
-			int doi;
-			int defklen;
-
-			doi = algtype2doi($1, $2);
-			if (doi == -1) {
-				yyerror("algorithm mismatched");
-				return -1;
-			}
-			switch ($1) {
-			case algclass_ipsec_enc:
-				if (prhead->spspec->proto_id != IPSECDOI_PROTO_IPSEC_ESP) {
-					yyerror("algorithm mismatched");
-					return -1;
-				}
-				prhead->spspec->algclass[algclass_ipsec_enc] = doi;
-				defklen = default_keylen($1, $2);
-				if (defklen == 0) {
-					if ($3) {
-						yyerror("keylen not allowed");
-						return -1;
-					}
-				} else {
-					if ($3 && check_keylen($1, $2, $3) < 0) {
-						yyerror("invalid keylen %d", $3);
-						return -1;
-					}
-				}
-				if ($3)
-					prhead->spspec->encklen = $3;
-				else
-					prhead->spspec->encklen = defklen;
-				break;
-			case algclass_ipsec_auth:
-				if (prhead->spspec->proto_id == IPSECDOI_PROTO_IPCOMP) {
-					yyerror("algorithm mismatched");
-					return -1;
-				}
-				prhead->spspec->algclass[algclass_ipsec_auth] = doi;
-				break;
-			case algclass_ipsec_comp:
-				if (prhead->spspec->proto_id != IPSECDOI_PROTO_IPCOMP) {
-					yyerror("algorithm mismatched");
-					return -1;
-				}
-				prhead->spspec->algclass[algclass_ipsec_comp] = doi;
-				break;
-			default:
-				yyerror("algorithm mismatched");
-				return -1;
-			}
-		}
-		EOS
-	;
-secmode
-	:	SECMODETYPE {
-			if ($1 == IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
-				yyerror("must specify peer's address");
-				return -1;
-			}
-			prhead->spspec->encmode = $1;
-			prhead->spspec->remote = NULL;
-		}
-	|	SECMODETYPE ADDRSTRING {
-			struct sockaddr *saddr;
-
-			if ($1 != IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
-				yyerror("should not specify peer's address");
-				return -1;
-			}
-			prhead->spspec->encmode = $1;
-
-			saddr = str2saddr($2->v, NULL);
-			vfree($2);
-			if (saddr == NULL)
-				return -1;
-			prhead->spspec->remote = saddr;
-		}
-	;
-keylength
-	:	/* nothing */ { $$ = 0; }
-	|	NUMBER { $$ = $1; }
-	;
-
 	/* sainfo */
 sainfo_statement
 	:	SAINFO
@@ -815,25 +549,12 @@ sainfo_spec
 		algorithms EOS
 	|	IDENTIFIER IDENTIFIERTYPE
 		{
-			/*XXX to be deleted */
-			if ($2 == IDTYPE_ASN1DN) {
-				yyerror("id type forbidden: %d", $2);
-				return -1;
-			}
-			cur_sainfo->idvtype = $2;
+			yyerror("it's deprecated to specify a identifier in phase 2");
 		}
 		EOS
 	|	MY_IDENTIFIER IDENTIFIERTYPE QUOTEDSTRING
 		{
-			if ($2 == IDTYPE_ASN1DN) {
-				yyerror("id type forbidden: %d", $2);
-				return -1;
-			}
-			if (set_identifier(&cur_sainfo->idv, $2, $3) != 0) {
-				yyerror("failed to set identifer.\n");
-				return -1;
-			}
-			cur_sainfo->idvtype = $2;
+			yyerror("it's deprecated to specify a identifier in phase 2");
 		}
 		EOS
 	;
@@ -901,6 +622,24 @@ algorithm
 			}
 		}
 	;
+prefix
+	:	/* nothing */ { $$ = ~0; }
+	|	PREFIX { $$ = $1; }
+	;
+port
+	:	/* nothing */ { $$ = IPSEC_PORT_ANY; }
+	|	PORT { $$ = $1; }
+	|	PORTANY { $$ = IPSEC_PORT_ANY; }
+	;
+ul_proto
+	:	NUMBER { $$ = $1; }
+	|	UL_PROTO { $$ = $1; }
+	|	ANY { $$ = IPSEC_ULPROTO_ANY; }
+	;
+keylength
+	:	/* nothing */ { $$ = 0; }
+	|	NUMBER { $$ = $1; }
+	;
 
 	/* remote */
 remote_statement
@@ -955,7 +694,8 @@ remote_statement
 					}
 					yyerror("DH group must be equal "
 						"to each proposals's "
-						"when aggressive mode.\n");
+						"when aggressive mode is "
+						"used.\n");
 					return -1;
 				}
 				cur_rmconf->dh_group = b;
@@ -1054,6 +794,7 @@ remote_spec
 			cur_rmconf->idvtype_p = $2;
 		}
 		EOS
+	|	VERIFY_IDENTIFIER SWITCH { cur_rmconf->verify_identifier = $2; } EOS
 	|	NONCE_SIZE NUMBER { cur_rmconf->nonce_size = $2; } EOS
 	|	DH_GROUP
 		{

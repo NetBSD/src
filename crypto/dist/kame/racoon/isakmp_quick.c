@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.83 2001/07/09 08:10:32 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.92 2002/03/05 15:34:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -84,7 +84,7 @@
 #include "strnames.h"
 
 /* quick mode */
-static vchar_t *quick_ir1sendmx __P((struct ph2handle *, vchar_t *));
+static vchar_t *quick_ir1mx __P((struct ph2handle *, vchar_t *, vchar_t *));
 static int get_sainfo_r __P((struct ph2handle *));
 static int get_proposal_r __P((struct ph2handle *));
 static u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
@@ -129,7 +129,7 @@ quick_i1prep(iph2, msg)
 	plog(LLV_DEBUG, LOCATION, NULL, "pfkey getspi sent.\n");
 
 	iph2->sce = sched_new(lcconf->wait_ph2complete,
-	    pfkey_timeover_stub, iph2);
+		pfkey_timeover_stub, iph2);
 
 	error = 0;
 
@@ -147,6 +147,7 @@ quick_i1send(iph2, msg)
 	vchar_t *msg; /* must be null pointer */
 {
 	vchar_t *body = NULL;
+	vchar_t *hash = NULL;
 	struct isakmp_gen *gen;
 	char *p;
 	int tlen;
@@ -156,6 +157,11 @@ quick_i1send(iph2, msg)
 	struct ipsecdoi_id_b *id, *id_p;
 
 	/* validity check */
+	if (msg != NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"msg has to be NULL in this function.\n");
+		goto end;
+	}
 	if (iph2->status != PHASE2ST_GETSPIDONE) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"status mismatched %d.\n", iph2->status);
@@ -265,28 +271,30 @@ quick_i1send(iph2, msg)
 		p = set_isakmp_payload(p, iph2->id_p, ISAKMP_NPTYPE_NONE);
 
 	/* generate HASH(1) */
-	iph2->hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, body);
-	if (iph2->hash == NULL)
+	hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, body);
+	if (hash == NULL)
 		goto end;
 
 	/* send isakmp payload */
-	iph2->sendbuf = quick_ir1sendmx(iph2, body);
+	iph2->sendbuf = quick_ir1mx(iph2, body, hash);
 	if (iph2->sendbuf == NULL)
+		goto end;
+
+	/* send the packet, add to the schedule to resend */
+	iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
+	if (isakmp_ph2resend(iph2) == -1)
 		goto end;
 
 	/* change status of isakmp status entry */
 	iph2->status = PHASE2ST_MSG1SENT;
-
-	/* add to the schedule to resend */
-	iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
-	iph2->scr = sched_new(iph2->ph1->rmconf->retry_interval,
-	    isakmp_ph2resend_stub, iph2);
 
 	error = 0;
 
 end:
 	if (body != NULL)
 		vfree(body);
+	if (hash != NULL)
+		vfree(hash);
 
 	return error;
 }
@@ -535,6 +543,7 @@ quick_i2send(iph2, msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *buf = NULL;
+	vchar_t *hash = NULL;
 	char *p = NULL;
 	int tlen;
 	int error = ISAKMP_INTERNAL_ERROR;
@@ -561,16 +570,16 @@ quick_i2send(iph2, msg0)
 	memcpy(tmp->v, iph2->nonce->v, iph2->nonce->l);
 	memcpy(tmp->v + iph2->nonce->l, iph2->nonce_p->v, iph2->nonce_p->l);
 
-	iph2->hash = oakley_compute_hash3(iph2->ph1, iph2->msgid, tmp);
+	hash = oakley_compute_hash3(iph2->ph1, iph2->msgid, tmp);
 	vfree(tmp);
 
-	if (iph2->hash == NULL)
+	if (hash == NULL)
 		goto end;
     }
 
 	/* create buffer for isakmp payload */
 	tlen = sizeof(struct isakmp)
-		+ sizeof(struct isakmp_gen) + iph2->hash->l;
+		+ sizeof(struct isakmp_gen) + hash->l;
 	buf = vmalloc(tlen);
 	if (buf == NULL) { 
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -584,7 +593,7 @@ quick_i2send(iph2, msg0)
 		goto end;
 
 	/* add HASH(3) payload */
-	p = set_isakmp_payload(p, iph2->hash, ISAKMP_NPTYPE_NONE);
+	p = set_isakmp_payload(p, hash, ISAKMP_NPTYPE_NONE);
 
 #ifdef HAVE_PRINT_ISAKMP_C
 	isakmp_printpacket(buf, iph2->ph1->local, iph2->ph1->remote, 1);
@@ -595,11 +604,25 @@ quick_i2send(iph2, msg0)
 	if (iph2->sendbuf == NULL)
 		goto end;
 
-	/* send HDR*;HASH(3) */
-	if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0)
-		goto end;
+	/* if there is commit bit, need resending */
+	if (ISSET(iph2->flags, ISAKMP_FLAG_C)) {
+		/* send the packet, add to the schedule to resend */
+		iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
+		if (isakmp_ph2resend(iph2) == -1)
+			goto end;
+	} else {
+		/* send the packet */
+		if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0)
+			goto end;
+	}
 
-	/* XXX: How resend ? */
+	/* the sending message is added to the received-list. */
+	if (add_recvdpkt(iph2->ph1->remote, iph2->ph1->local,
+			iph2->sendbuf, msg0) == -1) {
+		plog(LLV_ERROR , LOCATION, NULL,
+			"failed to add a response packet to the tree.\n");
+		goto end;
+	}
 
 	/* compute both of KEYMATs */
 	if (oakley_compute_keymat(iph2, INITIATOR) < 0)
@@ -642,6 +665,8 @@ end:
 		vfree(buf);
 	if (msg != NULL)
 		vfree(msg);
+	if (hash != NULL)
+		vfree(hash);
 
 	return error;
 }
@@ -1024,25 +1049,20 @@ quick_r1recv(iph2, msg0)
 	/* check the existence of ID payload and create responder's proposal */
 	error = get_proposal_r(iph2);
 	switch (error) {
+	case -2:
+		/* generate a policy template from peer's proposal */
+		if (set_proposal_from_proposal(iph2)) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to generate a proposal template "
+				"from client's proposal.\n");
+			return ISAKMP_INTERNAL_ERROR;
+		}
+		/*FALLTHROUGH*/
 	case 0:
 		/* select single proposal or reject it. */
 		if (ipsecdoi_selectph2proposal(iph2) < 0) {
 			error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 			goto end;
-		}
-		break;
-	case -2:
-		/*
-		 * generate a policy from peer's proposal.
-		 * if there is no suitable policy in SPD and 
-		 */
-		error = set_proposal_from_proposal(iph2);
-		if (error) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to generate saprop "
-				"from client's proposal.\n");
-
-			return ISAKMP_INTERNAL_ERROR;
 		}
 		break;
 	default:
@@ -1064,6 +1084,12 @@ quick_r1recv(iph2, msg0)
 		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 		goto end;
 	}
+
+	/*
+	 * save the packet from the initiator in order to resend the
+	 * responder's first packet against this packet.
+	 */
+	iph2->msg1 = vdup(msg0);
 
 	/* change status of isakmp status entry */
 	iph2->status = PHASE2ST_STATUS2;
@@ -1115,7 +1141,7 @@ quick_r1prep(iph2, msg)
 	plog(LLV_DEBUG, LOCATION, NULL, "pfkey getspi sent.\n");
 
 	iph2->sce = sched_new(lcconf->wait_ph2complete,
-	    pfkey_timeover_stub, iph2);
+		pfkey_timeover_stub, iph2);
 
 	error = 0;
 
@@ -1130,9 +1156,10 @@ end:
 int
 quick_r2send(iph2, msg)
 	struct ph2handle *iph2;
-	vchar_t *msg;	/* to be zero */
+	vchar_t *msg;
 {
 	vchar_t *body = NULL;
+	vchar_t *hash = NULL;
 	struct isakmp_gen *gen;
 	char *p;
 	int tlen;
@@ -1141,6 +1168,11 @@ quick_r2send(iph2, msg)
 	u_int8_t *np_p = NULL;
 
 	/* validity check */
+	if (msg != NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"msg has to be NULL in this function.\n");
+		goto end;
+	}
 	if (iph2->status != PHASE2ST_GETSPIDONE) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"status mismatched %d.\n", iph2->status);
@@ -1280,31 +1312,40 @@ quick_r2send(iph2, msg)
 	memcpy(tmp->v, iph2->nonce_p->v, iph2->nonce_p->l);
 	memcpy(tmp->v + iph2->nonce_p->l, body->v, body->l);
 
-	iph2->hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, tmp);
+	hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, tmp);
 	vfree(tmp);
 
-	if (iph2->hash == NULL)
+	if (hash == NULL)
 		goto end;
     }
 
 	/* send isakmp payload */
-	iph2->sendbuf = quick_ir1sendmx(iph2, body);
+	iph2->sendbuf = quick_ir1mx(iph2, body, hash);
 	if (iph2->sendbuf == NULL)
 		goto end;
 
+	/* send the packet, add to the schedule to resend */
+	iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
+	if (isakmp_ph2resend(iph2) == -1)
+		goto end;
+
+	/* the sending message is added to the received-list. */
+	if (add_recvdpkt(iph2->ph1->remote, iph2->ph1->local, iph2->sendbuf, iph2->msg1) == -1) {
+		plog(LLV_ERROR , LOCATION, NULL,
+			"failed to add a response packet to the tree.\n");
+		goto end;
+	}
+
 	/* change status of isakmp status entry */
 	iph2->status = PHASE2ST_MSG1SENT;
-
-	/* add to the schedule to resend */
-	iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
-	iph2->scr = sched_new(iph2->ph1->rmconf->retry_interval,
-	    isakmp_ph2resend_stub, iph2);
 
 	error = 0;
 
 end:
 	if (body != NULL)
 		vfree(body);
+	if (hash != NULL)
+		vfree(hash);
 
 	return error;
 }
@@ -1509,11 +1550,16 @@ quick_r3send(iph2, msg0)
 	if (iph2->sendbuf == NULL)
 		goto end;
 
-	/* send HDR*;HASH(3) */
+	/* send the packet */
 	if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0)
 		goto end;
 
-	/* XXX: How resend ? */
+	/* the sending message is added to the received-list. */
+	if (add_recvdpkt(iph2->ph1->remote, iph2->ph1->local, iph2->sendbuf, msg0) == -1) {
+		plog(LLV_ERROR , LOCATION, NULL,
+			"failed to add a response packet to the tree.\n");
+		goto end;
+	}
 
 	iph2->status = PHASE2ST_COMMIT;
 
@@ -1638,9 +1684,9 @@ end:
  * create HASH, body (SA, NONCE) payload with isakmp header.
  */
 static vchar_t *
-quick_ir1sendmx(iph2, body)
+quick_ir1mx(iph2, body, hash)
 	struct ph2handle *iph2;
-	vchar_t *body;
+	vchar_t *body, *hash;
 {
 	struct isakmp *isakmp;
 	vchar_t *buf = NULL, *new = NULL;
@@ -1651,7 +1697,7 @@ quick_ir1sendmx(iph2, body)
 
 	/* create buffer for isakmp payload */
 	tlen = sizeof(*isakmp)
-		+ sizeof(*gen) + iph2->hash->l
+		+ sizeof(*gen) + hash->l
 		+ body->l;
 	buf = vmalloc(tlen);
 	if (buf == NULL) { 
@@ -1670,7 +1716,7 @@ quick_ir1sendmx(iph2, body)
 
 	/* add HASH payload */
 	/* XXX is next type always SA ? */
-	p = set_isakmp_payload(p, iph2->hash, ISAKMP_NPTYPE_SA);
+	p = set_isakmp_payload(p, hash, ISAKMP_NPTYPE_SA);
 
 	/* add body payload */
 	memcpy(p, body->v, body->l);
@@ -1687,10 +1733,6 @@ quick_ir1sendmx(iph2, body)
 	vfree(buf);
 
 	buf = new;
-
-	/* send HDR*;HASH(1);SA;Nr to responder */
-	if (isakmp_send(iph2->ph1, buf) < 0)
-		goto end;
 
 	error = 0;
 
@@ -1959,6 +2001,13 @@ get_proposal_r(iph2)
 		saddr2str((struct sockaddr *)&spidx.dst),
 		spidx.prefd, spidx.ul_proto);
 
+	/*
+	 * convert the ul_proto if it is 0
+	 * because 0 in ID payload means a wild card.
+	 */
+	if (spidx.ul_proto == 0)
+		spidx.ul_proto = IPSEC_ULPROTO_ANY;
+
 	/* get inbound policy */
 	sp_in = getsp_r(&spidx);
 	if (sp_in == NULL) {
@@ -2006,7 +2055,7 @@ get_proposal_r(iph2)
 		"suitable SP found:%s\n", spidx2str(&spidx));
 
 	/*
-	 * In the responder side, the inbound policy should be using IPSec.
+	 * In the responder side, the inbound policy should be using IPsec.
 	 * outbound policy is not checked currently.
 	 */
 	if (sp_in->policy != IPSEC_POLICY_IPSEC) {

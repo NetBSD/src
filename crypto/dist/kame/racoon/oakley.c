@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.102 2001/08/17 13:24:11 sakane Exp $	*/
+/*	$KAME: oakley.c,v 1.112 2001/12/24 15:05:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,6 +99,7 @@ struct dhgroup dh_modp1536;
 struct dhgroup dh_modp2048;
 struct dhgroup dh_modp3072;
 struct dhgroup dh_modp4096;
+struct dhgroup dh_modp6144;
 struct dhgroup dh_modp8192;
 
 static int oakley_compute_keymat_x __P((struct ph2handle *, int, int));
@@ -132,6 +133,8 @@ oakley_dhinit()
 		OAKLEY_ATTR_GRP_DESC_MODP3072, OAKLEY_ATTR_GRP_TYPE_MODP);
 	INITDHVAL(dh_modp4096, OAKLEY_PRIME_MODP4096,
 		OAKLEY_ATTR_GRP_DESC_MODP4096, OAKLEY_ATTR_GRP_TYPE_MODP);
+	INITDHVAL(dh_modp6144, OAKLEY_PRIME_MODP6144,
+		OAKLEY_ATTR_GRP_DESC_MODP6144, OAKLEY_ATTR_GRP_TYPE_MODP);
 	INITDHVAL(dh_modp8192, OAKLEY_PRIME_MODP8192,
 		OAKLEY_ATTR_GRP_DESC_MODP8192, OAKLEY_ATTR_GRP_TYPE_MODP);
 
@@ -467,12 +470,6 @@ oakley_compute_keymat_x(iph2, side, sa_dir)
 		encklen = authklen = 0;
 		switch (pr->proto_id) {
 		case IPSECDOI_PROTO_IPSEC_ESP:
-#if 0
-			/* safety: ESP uses max 192bit, for fixed-keylen */
-			/* safety: ESP hash uses max 512bit, for fixed-keylen */
-			encklen = 192;
-			authklen = 512;
-#endif
 			for (tr = pr->head; tr; tr = tr->next) {
 				l = alg_ipsec_encdef_keylen(tr->trns_id,
 				    tr->encklen);
@@ -485,10 +482,6 @@ oakley_compute_keymat_x(iph2, side, sa_dir)
 			}
 			break;
 		case IPSECDOI_PROTO_IPSEC_AH:
-#if 0
-			/* safety: AH uses max 512bit, for fixed-keylen */
-			authklen = 512;
-#endif
 			for (tr = pr->head; tr; tr = tr->next) {
 				l = alg_ipsec_hmacdef_hashlen(tr->trns_id);
 				if (l > authklen)
@@ -496,23 +489,18 @@ oakley_compute_keymat_x(iph2, side, sa_dir)
 			}
 			break;
 		default:
-#if 0
-			/* safety: ESP 192 + AH 512 */
-			encklen = 192;
-			authklen = 512;
-#endif
 			break;
 		}
 		plog(LLV_DEBUG, LOCATION, NULL, "encklen=%d authklen=%d\n",
-		    encklen, authklen);
+			encklen, authklen);
 
 		dupkeymat = (encklen + authklen) / 8 / res->l;
 		dupkeymat += 2;	/* safety mergin */
 		if (dupkeymat < 3)
 			dupkeymat = 3;
 		plog(LLV_DEBUG, LOCATION, NULL,
-		    "generating %d bits of key (dupkeymat=%d)\n",
-		    dupkeymat * 8 * res->l, dupkeymat);
+			"generating %d bits of key (dupkeymat=%d)\n",
+			dupkeymat * 8 * res->l, dupkeymat);
 		if (0 < --dupkeymat) {
 			vchar_t *prev = res;	/* K(n-1) */
 			vchar_t *seed = NULL;	/* seed for Kn */
@@ -520,13 +508,13 @@ oakley_compute_keymat_x(iph2, side, sa_dir)
 
 			/*
 			 * generating long key (isakmp-oakley-08 5.5)
-			 *	KEYMAT = K1 | K2 | K3 | ...
+			 *   KEYMAT = K1 | K2 | K3 | ...
 			 * where
-			 *	src = [ g(qm)^xy | ] protocol | SPI | Ni_b | Nr_b
-			 *	K1 = prf(SKEYID_d, src)
-			 *	K2 = prf(SKEYID_d, K1 | src)
-			 *	K3 = prf(SKEYID_d, K2 | src)
-			 *	Kn = prf(SKEYID_d, K(n-1) | src)
+			 *   src = [ g(qm)^xy | ] protocol | SPI | Ni_b | Nr_b
+			 *   K1 = prf(SKEYID_d, src)
+			 *   K2 = prf(SKEYID_d, K1 | src)
+			 *   K3 = prf(SKEYID_d, K2 | src)
+			 *   Kn = prf(SKEYID_d, K(n-1) | src)
 			 */
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"generating K1...K%d for KEYMAT.\n",
@@ -546,7 +534,8 @@ oakley_compute_keymat_x(iph2, side, sa_dir)
 
 				memcpy(seed->v, prev->v, prev->l);
 				memcpy(seed->v + prev->l, buf->v, buf->l);
-				this = oakley_prf(iph2->ph1->skeyid_d, seed, iph2->ph1);
+				this = oakley_prf(iph2->ph1->skeyid_d, seed,
+							iph2->ph1);
 				if (!this) {
 					plog(LLV_ERROR, LOCATION, NULL,
 						"oakley_prf memory overflow\n");
@@ -558,7 +547,8 @@ oakley_compute_keymat_x(iph2, side, sa_dir)
 				}
 
 				l = res->l;
-				if (!VREALLOC(res, l + this->l)) {
+				res = vrealloc(res, l + this->l);
+				if (res == NULL) {
 					plog(LLV_ERROR, LOCATION, NULL,
 						"failed to get keymat buffer.\n");
 					if (prev && prev != res)
@@ -1226,8 +1216,7 @@ oakley_validate_auth(iph1)
 		case ISAKMP_GETCERT_PAYLOAD:
 			if (iph1->cert_p == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
-					"no peer's CERT payload found "
-					"even though CR sent.\n");
+					"no peer's CERT payload found.\n");
 				return ISAKMP_INTERNAL_ERROR;
 			}
 			break;
@@ -1288,7 +1277,6 @@ oakley_validate_auth(iph1)
 			case ISAKMP_CERT_X509SIGN:
 				error = eay_check_x509cert(&iph1->cert_p->cert,
 					lcconf->pathinfo[LC_PATHTYPE_CERT]);
-				/* XXX to be checked subjectAltName */
 				break;
 			default:
 				plog(LLV_ERROR, LOCATION, NULL,
@@ -2038,23 +2026,35 @@ oakley_skeyid(iph1)
 	/* SKEYID */
 	switch(iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
-		if (iph1->etype != ISAKMP_ETYPE_IDENT)
+		if (iph1->etype != ISAKMP_ETYPE_IDENT) {
 			iph1->authstr = getpskbyname(iph1->id_p);
+			if (iph1->authstr == NULL) {
+				if (iph1->rmconf->verify_identifier) {
+					plog(LLV_ERROR, LOCATION, iph1->remote,
+						"couldn't find the pskey.\n");
+					goto end;
+				}
+				plog(LLV_NOTIFY, LOCATION, iph1->remote,
+					"couldn't find the proper pskey, "
+					"try to get one by the peer's address.\n");
+			}
+		}
 		if (iph1->authstr == NULL) {
 			/*
-			 * If main mode or If failed to get psk by ID,
-			 * we try to get it by remote IP address.
-			 * It's may be nonsense.
+			 * If the exchange type is the main mode or if it's
+			 * failed to get the psk by ID, racoon try to get
+			 * the psk by remote IP address.
+			 * It may be nonsense.
 			 */
 			iph1->authstr = getpskbyaddr(iph1->remote);
 			if (iph1->authstr == NULL) {
 				plog(LLV_ERROR, LOCATION, iph1->remote,
-					"couldn't find pskey for %s.\n",
+					"couldn't find the pskey for %s.\n",
 					saddrwop2str(iph1->remote));
 				goto end;
 			}
 		}
-		plog(LLV_DEBUG, LOCATION, NULL, "psk found.\n");
+		plog(LLV_DEBUG, LOCATION, NULL, "the psk found.\n");
 		/* should be secret PSK */
 		plog(LLV_DEBUG2, LOCATION, NULL, "psk: ");
 		plogdump(LLV_DEBUG2, iph1->authstr->v, iph1->authstr->l);
