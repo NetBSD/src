@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2002/12/31 15:05:48 pk Exp $
+#	$NetBSD: genassym.cf,v 1.38 2003/01/08 17:49:39 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,6 +152,8 @@ define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
 define	CPUINFO_CURPROC		offsetof(struct cpu_info, ci_curproc)
 define	CPUINFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPUINFO_FLAGS		offsetof(struct cpu_info, flags)
+define	CPUINFO_WANT_AST	offsetof(struct cpu_info, want_ast)
+define	CPUINFO_WANT_RESCHED	offsetof(struct cpu_info, want_resched)
 define	CPUINFO_TT		offsetof(struct cpu_info, ci_tt)
 
 # PTE bits and related information
