@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.31 2000/03/16 18:08:26 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.32 2000/11/08 14:28:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -316,8 +316,8 @@ void
 procfs_hashinit()
 {
 	lockinit(&pfs_hashlock, PINOD, "pfs_hashlock", 0, 0);
-	pfs_hashtbl = hashinit(desiredvnodes / 4, M_UFSMNT, M_WAITOK,
-	    &pfs_ihash);
+	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
+	    M_WAITOK, &pfs_ihash);
 	simple_lock_init(&pfs_hash_slock);
 }
 
