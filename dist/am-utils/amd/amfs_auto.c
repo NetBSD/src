@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_auto.c,v 1.3 2003/03/09 01:38:39 christos Exp $	*/
+/*	$NetBSD: amfs_auto.c,v 1.4 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -1109,7 +1109,7 @@ amfs_auto_lookup_mntfs(am_node *new_mp, int *error_return)
   if (mp->am_pref) {
     if (strlen(mp->am_pref) + strlen(new_mp->am_name) >= sizeof(path_name))
       ereturn(ENAMETOOLONG);
-    sprintf(path_name, "%s%s", mp->am_pref, new_mp->am_name);
+    snprintf(path_name, sizeof(path_name), "%s%s", mp->am_pref, new_mp->am_name);
     pfname = path_name;
   } else {
     pfname = new_mp->am_name;

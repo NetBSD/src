@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.c,v 1.5 2003/03/09 01:38:40 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.6 2003/07/15 09:01:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -1079,7 +1079,7 @@ expand_op(char *opt, int sel_p)
 	    /*
 	     * Copy the string across unexpanded
 	     */
-	    sprintf(xbuf, "${%s%s%s}",
+	    snprintf(xbuf, sizeof(xbuf), "${%s%s%s}",
 		    todo == E_File ? "/" :
 		    todo == E_Domain ? "." : "",
 		    nbuf,
@@ -1144,7 +1144,7 @@ expand_op(char *opt, int sel_p)
 	    }
 
 	    if (BUFSPACE(ep, vlen)) {
-	      strcpy(ep, vptr);
+	      strlcpy(ep, vptr, sizeof(expbuf) - (ep - expbuf));
 	      ep += vlen;
 	    } else {
 	      plog(XLOG_ERROR, expand_error, opt);
@@ -1173,7 +1173,7 @@ expand_op(char *opt, int sel_p)
 	  int vlen = strlen(env);
 
 	  if (BUFSPACE(ep, vlen)) {
-	    strcpy(ep, env);
+	    strlcpy(ep, env, sizeof(expbuf) - (ep - expbuf));
 	    ep += vlen;
 	  } else {
 	    plog(XLOG_ERROR, expand_error, opt);
@@ -1204,7 +1204,7 @@ out:
      * Finish off the expansion
      */
     if (BUFSPACE(ep, strlen(cp))) {
-      strcpy(ep, cp);
+      strlcpy(ep, cp, sizeof(expbuf) - (ep - expbuf));
       /* ep += strlen(ep); */
     } else {
       plog(XLOG_ERROR, expand_error, opt);

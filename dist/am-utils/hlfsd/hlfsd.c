@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.6 2003/03/09 01:38:47 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.7 2003/07/15 09:01:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -459,32 +459,32 @@ main(int argc, char *argv[])
   /*
    * setup options to mount table (/etc/{mtab,mnttab}) entry
    */
-  sprintf(hostpid_fs, "%s:(pid%d)", hostname, masterpid);
+  snprintf(hostpid_fs, sizeof(hostpid_fs), "%s:(pid%d)", hostname, masterpid);
   memset((char *) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir_name;	/* i.e., "/mail" */
   mnt.mnt_fsname = hostpid_fs;
   if (mntopts) {
     mnt.mnt_opts = mntopts;
   } else {
-    strcpy(preopts, default_mntopts);
+    strlcpy(preopts, default_mntopts, sizeof(preopts));
     /*
      * Turn off all kinds of attribute and symlink caches as
      * much as possible.  Also make sure that mount does not
      * show up to df.
      */
 #ifdef MNTTAB_OPT_INTR
-    strcat(preopts, ",");
-    strcat(preopts, MNTTAB_OPT_INTR);
+    strlcat(preopts, ",", sizeof(preopts));
+    strlcat(preopts, MNTTAB_OPT_INTR, sizeof(preopts));
 #endif /* MNTTAB_OPT_INTR */
 #ifdef MNTTAB_OPT_IGNORE
-    strcat(preopts, ",");
-    strcat(preopts, MNTTAB_OPT_IGNORE);
+    strlcat(preopts, ",", sizeof(preopts));
+    strlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
 #endif /* MNTTAB_OPT_IGNORE */
 #ifdef MNT2_GEN_OPT_CACHE
-    strcat(preopts, ",nocache");
+    strlcat(preopts, ",nocache", sizeof(preopts));
 #endif /* MNT2_GEN_OPT_CACHE */
 #ifdef MNT2_NFS_OPT_SYMTTL
-    strcat(preopts, ",symttl=0");
+    strlcat(preopts, ",symttl=0", sizeof(preopts));
 #endif /* MNT2_NFS_OPT_SYMTTL */
     mnt.mnt_opts = preopts;
   }
@@ -512,11 +512,11 @@ main(int argc, char *argv[])
    * Update hostname field.
    * Make some name prog:pid (i.e., hlfsd:174) for hostname
    */
-  sprintf(progpid_fs, "%s:%d", am_get_progname(), masterpid);
+  snprintf(progpid_fs, sizeof(progpid_fs), "%s:%d", am_get_progname(), masterpid);
 
   /* Most kernels have a name length restriction. */
   if ((int) strlen(progpid_fs) >= (int) MAXHOSTNAMELEN)
-    strcpy(progpid_fs + MAXHOSTNAMELEN - 3, "..");
+    strlcpy(progpid_fs + MAXHOSTNAMELEN - 3, "..", sizeof(progpid_fs) - (MAXHOSTNAMELEN - 3));
 
   genflags = compute_mount_flags(&mnt);
 
@@ -909,7 +909,7 @@ fatal(char *mess)
     if (!STREQ(&mess[messlen + 1 - sizeof(ERRM)], ERRM))
       fprintf(stderr, "%s: %s\n", am_get_progname(), mess);
     else {
-      strcpy(lessmess, mess);
+      strlcpy(lessmess, mess, sizeof(lessmess));
       lessmess[messlen - 4] = '\0';
 
       fprintf(stderr, "%s: %s: %s\n",
