@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/04/19 07:29:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/09 16:51:41 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -20,7 +20,7 @@ host_phantglobs.o: ${.CURDIR}/phantglobs.c
 setup.o: ${.CURDIR}/setup.c
 	${HOST_COMPILE.c} ${.CURDIR}/setup.c
 
-beforeinstall: 
+afterinstall: 
 	./setup -m ${.CURDIR}/monsters.asc
 	chown games:bin ${DESTDIR}/var/games/phantasia/*
 
