@@ -535,6 +535,11 @@ case "${targ}" in
     ;;
 #endif
 
+  vax-*-netbsd*)
+    targ_defvec=vaxnetbsd_vec
+    targ_underscore=yes
+    ;;
+
   we32k-*-*)
     targ_defvec=we32kcoff_vec
     ;;
