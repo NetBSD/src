@@ -1,6 +1,6 @@
 #
 # GENERIC VAX, currently only supports 11/750 anyway.
-#	$Id: GENERIC,v 1.1 1994/08/02 20:19:21 ragge Exp $
+#	$Id: GENERIC,v 1.2 1994/10/08 15:42:27 ragge Exp $
 #
 
 include "std.vax"
@@ -10,10 +10,11 @@ options         "VAX750"
 options		SWAPPAGER, DEVPAGER, VNODEPAGER
 options         INET
 options		FFS
+options		COMPAT_43
 options		COMPAT_09
 maxusers	16
 
-options           GENERIC
+options         GENERIC
 
 config          vmunix          swap generic
 
