@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.131 1999/11/15 20:03:50 dante Exp $
+#	$NetBSD: INSTALL,v 1.132 1999/12/07 19:38:55 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -496,6 +496,7 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
