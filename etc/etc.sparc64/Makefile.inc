@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.18 2002/12/02 13:18:13 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2002/12/02 13:31:22 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
-
-TOP= $(.CURDIR)/..
 
 # Specify whether or not to build 32-bit libs.
 MK32BITLIBS?=no
