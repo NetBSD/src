@@ -23,7 +23,7 @@ size, and note its starting offset and its length (preferably in units
 of disk sectors or cylinders).  You will need that information when
 installing NetBSD (and if the offset and length are not in those
 units, you will have to convert them).  Once you have created the new
-NetBSD partition, mark it as having a partition type of 0xA5 (265, in
+NetBSD partition, mark it as having a partition type of 0xA5 (165, in
 decimal).  If you used "fdisk" to partition your disk, you will
 probably have to use a different partition editor to mark the
 partition with the correct type.
