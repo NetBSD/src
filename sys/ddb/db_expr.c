@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.6 1997/02/03 19:56:04 cgd Exp $	*/
+/*	$NetBSD: db_expr.c,v 1.7 1997/06/26 01:13:11 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -117,7 +117,8 @@ db_unary(valuep)
 		db_error("Syntax error\n");
 		/*NOTREACHED*/
 	    }
-	    *valuep = db_get_value((db_addr_t)*valuep, sizeof(int), FALSE);
+	    *valuep = db_get_value((db_addr_t)*valuep, sizeof(db_expr_t),
+	        FALSE);
 	    return (TRUE);
 	}
 	db_unread_token(t);
