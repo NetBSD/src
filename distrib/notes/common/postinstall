@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.35 2002/06/29 08:32:31 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.36 2002/07/01 20:31:32 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -272,7 +272,7 @@ X11R6 FAQ.
 .Lk http://www.netbsd.org/Ports/macppc/x11.html
 .\}
 .\} \" ! !\n[next68k]
-.if \n[cats]:\n[i386]:\n[shark] \{\
+.if \n[i386]:\n[shark] \{\
 .Pp
 You will need to set up a configuration file, see
 .Pa /usr/X11R6/lib/X11/XF86Config.eg
