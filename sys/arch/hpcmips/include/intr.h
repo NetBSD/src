@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2001/06/13 06:03:11 enami Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2001/09/15 15:04:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -82,13 +82,13 @@
 
 extern const u_int32_t ipl_si_to_sr[_IPL_NSOFT];
 
-int	_splraise __P((int));
-int	_spllower __P((int));
-int	_splset __P((int));
-int	_splget __P((void));
-void	_splnone __P((void));
-void	_setsoftintr __P((int));
-void	_clrsoftintr __P((int));
+int	_splraise(int);
+int	_spllower(int);
+int	_splset(int);
+int	_splget(void);
+void	_splnone(void);
+void	_setsoftintr(int);
+void	_clrsoftintr(int);
 
 #define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)_spllower(0)
