@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.61 2003/05/02 14:36:38 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.62 2003/05/02 14:42:48 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -586,7 +586,11 @@ initarm(argc, argv, bi)
 #endif
 	/* Map page tables */
 	pmap_map_chunk(l1pagetable, KERNEL_BASE, KERNEL_BASE, pt_size,
+#ifdef ARM32_PMAP_NEW
 	    VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
+#else
+	    VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
+#endif
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
