@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2003/09/26 22:23:58 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2004/05/16 15:44:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2003/09/26 22:23:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2004/05/16 15:44:10 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1203,7 +1203,7 @@ get_a_table()
 	tbl = a_pool.tqh_first;
 	if (tbl == NULL) {
 		/*
-		 * XXX - Instead of panicing here and in other get_x_table
+		 * XXX - Instead of panicking here and in other get_x_table
 		 * functions, we do have the option of sleeping on the head of
 		 * the table pool.  Any function which updates the table pool
 		 * would then issue a wakeup() on the head, thus waking up any
