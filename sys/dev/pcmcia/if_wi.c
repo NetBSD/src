@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21.2.2 2000/07/21 18:45:47 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.3 2000/07/21 18:52:10 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -117,6 +117,15 @@
 static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
 #endif
 
+struct wi_pcmcia_product {
+	u_int32_t	pp_vendor;	/* vendor ID */
+	u_int32_t	pp_product;	/* product ID */
+	const char	*pp_cisinfo[4]; /* CIS information */
+	const char	*pp_name;	/* product name */
+	int		pp_prism2;	/* prism2 chipset */
+};
+
+static struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
 static int wi_match		__P((struct device *, struct cfdata *, void *));
 static void wi_attach		__P((struct device *, struct device *, void *));
 static int wi_detach		__P((struct device *, int));
@@ -165,6 +174,71 @@ struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
 };
 
+static struct wi_pcmcia_product wi_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_STR_LUCENT_WAVELAN_IEEE,
+	  0 },
+
+	{ PCMCIA_VENDOR_3COM,
+	  PCMCIA_PRODUCT_3COM_3CRWE737A,
+	  PCMCIA_CIS_3COM_3CRWE737A,
+	  PCMCIA_STR_3COM_3CRWE737A,
+	  1 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
+	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCC_11,
+	  1 },
+
+	{ PCMCIA_VENDOR_INTERSIL,
+	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
+	  PCMCIA_CIS_INTERSIL_PRISM2,
+	  PCMCIA_STR_INTERSIL_PRISM2,
+	  1 },
+
+	{ 0,
+	  0,
+	  { NULL, NULL, NULL, NULL },
+	  NULL,
+	  0 }
+};
+
+static struct wi_pcmcia_product *
+wi_lookup(pa)
+	struct pcmcia_attach_args *pa;
+{
+	struct wi_pcmcia_product *pp;
+
+	/*
+	 * match by CIS information first
+	 * XXX: Farallon SkyLINE 11mb uses PRISM II but vendor ID
+	 *	and product ID is the same as Lucent WaveLAN
+	 */
+	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
+		if (pa->card->cis1_info[0] != NULL &&
+		    pp->pp_cisinfo[0] != NULL &&
+		    strcmp(pa->card->cis1_info[0], pp->pp_cisinfo[0]) == 0 &&
+		    pa->card->cis1_info[1] != NULL &&
+		    pp->pp_cisinfo[1] != NULL &&
+		    strcmp(pa->card->cis1_info[1], pp->pp_cisinfo[1]) == 0)
+			return pp;
+	}
+
+	/* match by vendor/product id */
+	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
+		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
+		    pa->manufacturer == pp->pp_vendor &&
+		    pa->product != PCMCIA_PRODUCT_INVALID &&
+		    pa->product == pp->pp_product)
+			return pp;
+	}
+
+	return NULL;
+}
+
 static int
 wi_match(parent, match, aux)
 	struct device *parent;
@@ -173,14 +247,8 @@ wi_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_VENDOR_LUCENT &&
-	    pa->product == PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE)
-	  return 1;
-
-	if (pa->manufacturer == PCMCIA_VENDOR_3COM &&
-	    pa->product == PCMCIA_PRODUCT_3COM_3CRWE737A)
-	  return 1;
-
+	if (wi_lookup(pa) != NULL)
+		return 1;
 	return 0;
 }
 
@@ -232,6 +300,7 @@ wi_attach(parent, self, aux)
 	struct wi_softc *sc = (void *) self;
 	struct pcmcia_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
@@ -259,6 +328,13 @@ wi_attach(parent, self, aux)
 	}
 	sc->wi_btag = sc->sc_pcioh.iot;
 	sc->wi_bhandle = sc->sc_pcioh.ioh;
+
+	pp = wi_lookup(pa);
+	if (pp == NULL) {
+		/* should not happen */
+		sc->sc_prism2 = 0;
+	} else
+		sc->sc_prism2 = pp->pp_prism2;
 
 	callout_init(&sc->wi_inquire_ch);
 

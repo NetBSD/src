@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.9.4.1 2000/07/21 18:45:47 onoe Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.9.4.2 2000/07/21 18:52:11 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -46,6 +46,7 @@ struct wi_softc	{
 	struct pcmcia_io_handle sc_pcioh;
 	int sc_iowin;
 	int sc_enabled;
+	int sc_prism2;
 
 	bus_space_tag_t		wi_btag;
 	bus_space_handle_t	wi_bhandle;
