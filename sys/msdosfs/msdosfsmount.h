@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.9 1994/12/14 16:33:19 mycroft Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.10 1995/07/24 06:38:52 leo Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -79,6 +79,9 @@ struct msdosfsmount {
 	char pm_ronly;		/* read only if non-zero */
 	char pm_waitonfat;	/* wait for writes of the fat to complt, when 0 use bdwrite, else use bwrite */
 	struct netexport pm_export;	/* export information */
+#ifdef	atari
+	u_int  pm_fatentrysize;	/* size of fat entry (12/16) */
+#endif	/* atari */
 };
 
 #define	VFSTOMSDOSFS(mp)	((struct msdosfsmount *)mp->mnt_data)
