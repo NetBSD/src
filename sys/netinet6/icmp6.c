@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.72 2001/12/07 10:10:43 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.73 2001/12/20 07:26:36 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.72 2001/12/07 10:10:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.73 2001/12/20 07:26:36 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2206,7 +2206,13 @@ icmp6_reflect(m, off)
 	(void)ipsec_setsocket(m, NULL);
 #endif /* IPSEC */
 
-	if (ip6_output(m, NULL, NULL, 0, NULL, &outif) != 0 && outif)
+	/*
+	 * To avoid a "too big" situation at an intermediate router
+	 * and the path MTU discovery process, specify the IPV6_MINMTU flag.
+	 * Note that only echo and node information replies are affected,
+	 * since the length of ICMP6 errors is limited to the minimum MTU.
+	 */
+	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, &outif) != 0 && outif)
 		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)

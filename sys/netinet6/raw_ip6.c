@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.40 2001/12/18 03:04:05 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.41 2001/12/20 07:26:37 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.40 2001/12/18 03:04:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.41 2001/12/20 07:26:37 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -515,7 +515,7 @@ rip6_output(m, va_alist)
 #endif /* IPSEC */
 
 	flags = 0;
-#ifdef IPV6_MINMTU
+#ifdef IN6P_MINMTU
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 #endif

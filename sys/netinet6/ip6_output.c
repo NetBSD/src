@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.42 2001/12/18 03:04:04 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.43 2001/12/20 07:26:37 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.42 2001/12/18 03:04:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.43 2001/12/20 07:26:37 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -751,6 +751,11 @@ skip_ipsec2:;
 		}
 	} else {
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
+	}
+
+	if (mtu > IPV6_MMTU &&
+	    (flags & IPV6_MINMTU)) {
+		mtu = IPV6_MMTU;
 	}
 
 	/* Fake scoped addresses */
@@ -1788,16 +1793,9 @@ ip6_setmoptions(optname, im6op, m)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		imm = malloc(sizeof(*imm), M_IPMADDR, M_WAITOK);
-		if (imm == NULL) {
-			error = ENOBUFS;
+		imm = in6_joingroup(ifp, &mreq->ipv6mr_multiaddr, &error);
+		if (!imm)
 			break;
-		}
-		if ((imm->i6mm_maddr =
-		     in6_addmulti(&mreq->ipv6mr_multiaddr, ifp, &error)) == NULL) {
-			free(imm, M_IPMADDR);
-			break;
-		}
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
 		break;
 
@@ -1860,8 +1858,7 @@ ip6_setmoptions(optname, im6op, m)
 		 * membership points.
 		 */
 		LIST_REMOVE(imm, i6mm_chain);
-		in6_delmulti(imm->i6mm_maddr);
-		free(imm, M_IPMADDR);
+		in6_leavegroup(imm);
 		break;
 
 	default:
@@ -1944,9 +1941,7 @@ ip6_freemoptions(im6o)
 
 	while ((imm = im6o->im6o_memberships.lh_first) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
-		if (imm->i6mm_maddr)
-			in6_delmulti(imm->i6mm_maddr);
-		free(imm, M_IPMADDR);
+		in6_leavegroup(imm);
 	}
 	free(im6o, M_IPMOPTS);
 }
