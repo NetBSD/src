@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.6 2002/08/25 20:21:41 thorpej Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.7 2002/08/28 06:27:20 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -464,23 +464,12 @@ mpc6xx_startup(const char *model)
 		panic("startup: table size inconsistency");
 
 	/*
-	 * allocate away the pages that map to 0xDEA[CDE]xxxx.
-	 */
-	minaddr = 0xDEAC0000;
-	error = uvm_map(kernel_map, &minaddr, 0x30000,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
-			UVM_ADV_NORMAL, UVM_FLAG_FIXED));
-	if (error || minaddr != 0xDEAC0000)
-		printf("mpc6xx_startup: failed to allocate DEAD "
-		    "ZONE: error=%d\n", error);
- 
-	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
+	 * Allocate the buffer starting at the top of the kernel VM space.
 	 */
 	sz = MAXBSIZE * nbuf;
-	minaddr = 0;
+	minaddr = VM_MAX_KERNEL_ADDRESS - round_page(sz);
 	if (uvm_map(kernel_map, &minaddr, round_page(sz),
 		NULL, UVM_UNKNOWN_OFFSET, 0,
 		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
@@ -516,8 +505,25 @@ mpc6xx_startup(const char *model)
 	pmap_update(pmap_kernel());
 
 	/*
+	 * Allocate away the pages that map to 0xDEA[CDE]xxxx.  Do this after
+	 * the bufpages are allocated in case they overlap since it's not
+	 * fatal if we can't allocate these.
+	 */
+	minaddr = 0xDEAC0000;
+	error = uvm_map(kernel_map, &minaddr, 0x30000,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
+			UVM_ADV_NORMAL, UVM_FLAG_FIXED));
+	if (error != 0 || minaddr != 0xDEAC0000) {
+		printf("mpc6xx_startup: failed to allocate DEAD "
+		    "ZONE: error=%d\n", error);
+		minaddr = 0;
+	}
+ 
+	/*
 	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
+	 * limits the number of processes exec'ing at any time. These
+	 * submaps will be allocated after the dead zone.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
