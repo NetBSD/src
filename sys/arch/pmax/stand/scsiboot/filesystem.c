@@ -30,19 +30,21 @@
  *
  *	filesystem.c
  *
- *	$NetBSD: filesystem.c,v 1.2 1997/10/13 14:22:45 lukem Exp $
+ *	$NetBSD: filesystem.c,v 1.3 1999/02/22 10:18:40 simonb Exp $
  */
 
 #include <stand.h>
 #include <ufs.h>
+
+#ifdef UFS_NOCLOSE
+#define ufs_close	0
+#endif
+#ifdef UFS_NOWRITE
+#define ufs_write	0
+#endif
  
 struct fs_ops file_system[] = {
-#ifdef SMALL
-	{ ufs_open, 0, 	       ufs_read, 0,         ufs_seek, ufs_stat }
-#else
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
-#endif
 };
  
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
-
