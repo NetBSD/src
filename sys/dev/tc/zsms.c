@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.5 2002/03/17 19:41:04 atatat Exp $	*/
+/*	$NetBSD: zsms.c,v 1.6 2002/05/06 00:48:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.5 2002/03/17 19:41:04 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.6 2002/05/06 00:48:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ zsms_ioctl(v, cmd, data, flag, p)
 		return 0;
 	}
 	return EPASSTHROUGH;
-
+}
 
 static void
 zsms_input(vsc, data)
