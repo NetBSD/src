@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.61 2003/02/25 10:34:41 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.62 2003/03/22 11:37:49 kristerw Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -645,11 +645,11 @@ and
 .Dq ||
 are AND-OR list operators.
 .Dq \*[Am]\*[Am]
-executes the first command, and then executes the second command iff the
-exit status of the first command is zero.
+executes the first command, and then executes the second command if and only
+if the exit status of the first command is zero.
 .Dq ||
-is similar, but executes the second command iff the exit status of the first
-command is nonzero.
+is similar, but executes the second command if and only if the exit status
+of the first command is nonzero.
 .Dq \*[Am]\*[Am]
 and
 .Dq ||
