@@ -57,6 +57,92 @@
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
+static int
+sttygetoflags(tp)
+	struct termios *tp;
+{
+	register tcflag_t iflag = tp->t_iflag;
+	register tcflag_t lflag = tp->t_lflag;
+	register tcflag_t oflag = tp->t_oflag;
+	register tcflag_t cflag = tp->t_cflag;
+	register int flags = 0;
+
+	if (ISSET(cflag, PARENB)) {
+		if (ISSET(iflag, INPCK)) {
+			if (ISSET(cflag, PARODD))
+				SET(flags, ODDP);
+			else
+				SET(flags, EVENP);
+		} else
+			SET(flags, EVENP|ODDP);
+	}
+	if (ISSET(cflag, CSIZE) == CS8) {
+		if (!ISSET(iflag, ISTRIP))
+			SET(flags, PASS8);
+		if (!ISSET(oflag, OPOST))
+			SET(flags, LITOUT);
+	}
+
+	if (!ISSET(lflag, ICANON)) {
+		/* fudge */
+		if (ISSET(iflag, IXON) || ISSET(lflag, ISIG|IEXTEN) ||
+		    ISSET(cflag, PARENB))
+			SET(flags, CBREAK);
+		else
+			SET(flags, RAW);
+	}
+
+	return (flags);
+}
+
+static void
+sttysetoflags(tp, flags)
+	struct termios *tp;
+	int flags;
+{
+	register tcflag_t iflag = tp->c_iflag;
+	register tcflag_t oflag = tp->c_oflag;
+	register tcflag_t lflag = tp->c_lflag;
+	register tcflag_t cflag = tp->c_cflag;
+
+	switch (ISSET(flags, ANYP)) {
+	case EVENP:
+		SET(iflag, INPCK);
+		CLR(cflag, PARODD);
+		break;
+	case ODDP:
+		SET(iflag, INPCK);
+		SET(cflag, PARODD);
+		break;
+	default:
+		CLR(iflag, INPCK);
+		break;
+	}
+
+	if (ISSET(flags, RAW|LITOUT|PASS8)) {
+		CLR(cflag, CSIZE|PARENB);
+		SET(cflag, CS8);
+		if (!ISSET(flags, RAW|PASS8))
+			SET(iflag, ISTRIP);
+		else
+			CLR(iflag, ISTRIP);
+		if (!ISSET(flags, RAW|LITOUT))
+			SET(oflag, OPOST);
+		else
+			CLR(oflag, OPOST);
+	} else {
+		CLR(cflag, CSIZE);
+		SET(cflag, CS7|PARENB);
+		SET(iflag, ISTRIP);
+		SET(oflag, OPOST);
+	}
+
+	tp->c_iflag = iflag;
+	tp->c_oflag = oflag;
+	tp->c_lflag = lflag;
+	tp->c_cflag = cflag;
+}
+
 void
 sttyclearflags(tp, flags)
 	struct termios *tp;
@@ -66,6 +152,7 @@ sttyclearflags(tp, flags)
 	register tcflag_t oflag = tp->c_oflag;
 	register tcflag_t lflag = tp->c_lflag;
 	register tcflag_t cflag = tp->c_cflag;
+	register int oflags = sttygetoflags(tp) & ~flags;
 
 	if (ISSET(flags, TANDEM))
 		CLR(iflag, IXOFF);
@@ -88,30 +175,12 @@ sttyclearflags(tp, flags)
 			SET(lflag, ICANON);
 	}
 
-	/* XXX */
-	switch (ISSET(flags, ANYP)) {
-	case EVENP:
-		SET(iflag, INPCK);
-		SET(cflag, PARODD);
-		break;
-	case ODDP:
-		SET(iflag, INPCK);
-		CLR(cflag, PARODD);
-		break;
-	}
-
-	/* XXX */
-	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE);
-		SET(cflag, CS7|PARENB);
-		SET(iflag, ISTRIP);
-		SET(oflag, OPOST);
-	}
-
 	tp->c_iflag = iflag;
 	tp->c_oflag = oflag;
 	tp->c_lflag = lflag;
 	tp->c_cflag = cflag;
+
+	sttysetoflags(tp, oflags);
 }
 
 void
@@ -123,6 +192,7 @@ sttysetflags(tp, flags)
 	register tcflag_t oflag = tp->c_oflag;
 	register tcflag_t lflag = tp->c_lflag;
 	register tcflag_t cflag = tp->c_cflag;
+	register int oflags = sttygetoflags(tp) | flags;
 
 	if (ISSET(flags, TANDEM))
 		SET(iflag, IXOFF);
@@ -140,36 +210,12 @@ sttysetflags(tp, flags)
 		CLR(lflag, ISIG|ICANON|IEXTEN);
 	}
 
-	/* XXX */
-	switch (ISSET(flags, ANYP)) {
-	case EVENP:
-		SET(iflag, INPCK);
-		CLR(cflag, PARODD);
-		break;
-	case ODDP:
-		SET(iflag, INPCK);
-		SET(cflag, PARODD);
-		break;
-	}
-
-	/* XXX */
-	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE|PARENB);
-		SET(cflag, CS8);
-		if (!ISSET(flags, RAW|PASS8))
-			SET(iflag, ISTRIP);
-		else
-			CLR(iflag, ISTRIP);
-		if (!ISSET(flags, RAW|LITOUT))
-			SET(oflag, OPOST);
-		else
-			CLR(oflag, OPOST);
-	}
-
 	tp->c_iflag = iflag;
 	tp->c_oflag = oflag;
 	tp->c_lflag = lflag;
 	tp->c_cflag = cflag;
+
+	sttysetoflags(tp, oflags);
 }
 
 void
@@ -181,6 +227,7 @@ sttyclearlflags(tp, flags)
 	register tcflag_t oflag = tp->c_oflag;
 	register tcflag_t lflag = tp->c_lflag;
 	register tcflag_t cflag = tp->c_cflag;
+	register int oflags = sttygetoflags(tp) & ~flags;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))
@@ -200,18 +247,12 @@ sttyclearlflags(tp, flags)
 		SET(iflag, IXANY);
 	CLR(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
-	/* XXX */
-	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE);
-		SET(cflag, CS7|PARENB);
-		SET(iflag, ISTRIP);
-		SET(oflag, OPOST);
-	}
-
 	tp->c_iflag = iflag;
 	tp->c_oflag = oflag;
 	tp->c_lflag = lflag;
 	tp->c_cflag = cflag;
+
+	sttysetoflags(tp, oflags);
 }
 
 void
@@ -223,6 +264,7 @@ sttysetlflags(tp, flags)
 	register tcflag_t oflag = tp->c_oflag;
 	register tcflag_t lflag = tp->c_lflag;
 	register tcflag_t cflag = tp->c_cflag;
+	register int oflags = sttygetoflags(tp) | flags;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))
@@ -242,22 +284,10 @@ sttysetlflags(tp, flags)
 		CLR(iflag, IXANY);
 	SET(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
-	/* XXX */
-	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE|PARENB);
-		SET(cflag, CS8);
-		if (!ISSET(flags, RAW|PASS8))
-			SET(iflag, ISTRIP);
-		else
-			CLR(iflag, ISTRIP);
-		if (!ISSET(flags, RAW|LITOUT))
-			SET(oflag, OPOST);
-		else
-			CLR(oflag, OPOST);
-	}
-
 	tp->c_iflag = iflag;
 	tp->c_oflag = oflag;
 	tp->c_lflag = lflag;
 	tp->c_cflag = cflag;
+
+	sttysetoflags(tp, oflags);
 }
