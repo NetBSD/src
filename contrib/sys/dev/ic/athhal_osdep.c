@@ -34,7 +34,7 @@
  * SUCH DAMAGES.
  *
  * $NetBSD$
- * $Id: ah_osdep.c,v 1.22 2003/07/26 14:58:00 sam Exp $
+ * $Id: ah_osdep.c,v 1.28 2003/11/01 01:43:21 sam Exp $
  */
 #ifdef __FreeBSD__
 #include "opt_ah.h"
@@ -60,23 +60,30 @@
 
 #define	AH_TIMEOUT	1000
 
-#ifdef DELAY
-#undef DELAY
-#endif
-
 #ifdef bcopy
 #undef bcopy
 #endif
 
-extern	void DELAY(int);
+#ifdef bzero
+#undef bzero
+#endif
+
+#ifdef __NetBSD__
+#define __va_list va_list
+#define __printflike(x, y)
+#endif
+
 extern	void ath_hal_delay(int);
 extern	u_int32_t ath_hal_getuptime(struct ath_hal *);
 void	bcopy(const void *, void *, size_t);
+void	bzero(void *, size_t);
 
 extern	HAL_BOOL ath_hal_wait(struct ath_hal *, u_int reg,
 		u_int32_t mask, u_int32_t val);
-extern	void ath_hal_printf(struct ath_hal *, const char*, ...);
-extern	void ath_hal_vprintf(struct ath_hal *, const char*, va_list);
+extern	void ath_hal_printf(struct ath_hal *, const char*, ...)
+		__printflike(2,3);
+extern	void ath_hal_vprintf(struct ath_hal *, const char*, __va_list)
+		__printflike(2, 0);
 extern	const char* ath_hal_ether_sprintf(const u_int8_t *mac);
 extern	void *ath_hal_malloc(size_t);
 extern	void ath_hal_free(void *);
@@ -93,31 +100,14 @@ extern	void HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...);
 static	int ath_hal_debug = 0;		/* XXX */
 #endif /* AH_DEBUG */
 
-#include <../contrib/sys/dev/ic/athhal_version.h>
-char ath_hal_version[] = ATH_HAL_VERSION;
+#ifdef __FreeBSD__
+SYSCTL_STRING(_hw_ath_hal, OID_AUTO, version, CTLFLAG_RD, ath_hal_version, 0,
+	"Atheros HAL version");
+#endif /* __FreeBSD__ */
 
 int	ath_hal_dma_beacon_response_time = 2;	/* in TU's */
 int	ath_hal_sw_beacon_response_time = 10;	/* in TU's */
 int	ath_hal_additional_swba_backoff = 0;	/* in TU's */
-
-/*
- * Poll the register looking for a specific value.
- */
-HAL_BOOL
-ath_hal_wait(struct ath_hal *ah, u_int reg, u_int32_t mask, u_int32_t val)
-{
-	int i;
-
-	for (i = 0; i < AH_TIMEOUT; i++) {
-		if ((OS_REG_READ(ah, reg) & mask) == val)
-			return AH_TRUE;
-		DELAY(10);
-	}
-	ath_hal_printf(ah, "ath_hal_wait: timeout on reg 0x%x: "
-		"0x%08x & 0x%08x != 0x%08x\n", reg, OS_REG_READ(ah, reg),
-		 mask, val);
-	return AH_FALSE;
-}
 
 void*
 ath_hal_malloc(size_t size)
@@ -270,7 +260,7 @@ ath_hal_alq_get(struct ath_hal *ah)
 }
 
 void
-OS_REG_WRITE(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
+ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
 	if (ath_hal_alq) {
 		struct ale *ale = ath_hal_alq_get(ah);
@@ -282,15 +272,24 @@ OS_REG_WRITE(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 			alq_post(ath_hal_alq, ale);
 		}
 	}
-	bus_space_write_4(ah->ah_st, ah->ah_sh, reg, val);
+#if _BYTE_ORDER == _BIG_ENDIAN
+	if (reg >= 0x4000 && reg < 0x5000)
+		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
+	else
+#endif
+		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, val);
 }
 
 u_int32_t
-OS_REG_READ(struct ath_hal *ah, u_int32_t reg)
+ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
 	u_int32_t val;
 
 	val = bus_space_read_4(ah->ah_st, ah->ah_sh, reg);
+#if _BYTE_ORDER == _BIG_ENDIAN
+	if (reg >= 0x4000 && reg < 0x5000)
+		val = le32toh(val);
+#endif
 	if (ath_hal_alq) {
 		struct ale *ale = ath_hal_alq_get(ah);
 		if (ale) {
@@ -318,7 +317,42 @@ OS_MARK(struct ath_hal *ah, u_int id, u_int32_t v)
 		}
 	}
 }
-#endif /* AH_DEBUG_ALQ */
+#elif defined(AH_DEBUG) || defined(AH_REGOPS_FUNC)
+/*
+ * Memory-mapped device register read/write.  These are here
+ * as routines when debugging support is enabled and/or when
+ * explicitly configured to use function calls.  The latter is
+ * for architectures that might need to do something before
+ * referencing memory (e.g. remap an i/o window).
+ *
+ * NB: see the comments in ah_osdep.h about byte-swapping register
+ *     reads and writes to understand what's going on below.
+ */
+
+void
+ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
+{
+#if _BYTE_ORDER == _BIG_ENDIAN
+	if (reg >= 0x4000 && reg < 0x5000)
+		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
+	else
+#endif
+		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, val);
+}
+
+u_int32_t
+ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
+{
+	u_int32_t val;
+
+	val = bus_space_read_4(ah->ah_st, ah->ah_sh, reg);
+#if _BYTE_ORDER == _BIG_ENDIAN
+	if (reg >= 0x4000 && reg < 0x5000)
+		val = le32toh(val);
+#endif
+	return val;
+}
+#endif /* AH_DEBUG || AH_REGOPS_FUNC */
 
 #ifdef AH_ASSERT
 void
@@ -330,16 +364,13 @@ ath_hal_assert_failed(const char* filename, int lineno, const char *msg)
 }
 #endif /* AH_ASSERT */
 
-u_int32_t
-OS_GETUPTIME(struct ath_hal *ah)
+/*
+ * Delay n microseconds.
+ */
+void
+ath_hal_delay(int n)
 {
-	struct timeval tv;
-	int s;
-	s = splclock();
-	tv = mono_time;
-	splx(s);
-
-	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+	DELAY(n);
 }
 
 u_int32_t
@@ -355,19 +386,13 @@ ath_hal_getuptime(struct ath_hal *ah)
 }
 
 void
-DELAY(int delay)
-{
-	delay(delay);
-}
-
-void
-ath_hal_delay(int delay)
-{
-	delay(delay);
-}
-
-void
 bcopy(const void *src, void *dst, size_t len)
 {
 	(void)memmove(dst, src, len);
+}
+
+void
+bzero(void *dst, size_t len)
+{
+	(void)memset(dst, 0, len);
 }
