@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.22 1997/05/25 10:28:22 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.23 1997/06/15 18:03:26 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -107,6 +107,7 @@
 #include <pmax/pmax/asic.h>
 #include <pmax/dev/sccreg.h>
 #include <pmax/tc/sccvar.h>	/* XXX */
+#include <machine/locore.h>	/* XXX wbflush() */
 #endif
 
 #ifdef alpha
