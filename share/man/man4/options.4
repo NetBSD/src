@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.136 2001/04/21 20:51:18 fvdl Exp $
+.\"	$NetBSD: options.4,v 1.137 2001/06/05 13:45:10 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -879,7 +879,9 @@ Unfortunately, in many cases where the hardware clock
 is kept in local time, it is adjusted for Daylight Savings
 Time; this means that attempting to use
 .Em RTC_OFFSET
-to let NetBSD coexist with such an operating system, like Windows,
+to let
+.Nx
+coexist with such an operating system, like Windows,
 would necessitate changing
 .Em RTC_OFFSET
 twice a year. As such, this solution is imperfect.
@@ -1416,8 +1418,12 @@ When you get "can't get KPT page" panics, you should increase
 by one.
 .It Cd options P5PPC68KBOARD
 Add special support for Phase5 mixed 68k+PPC boards. Currently, this only
-affects rebooting from NetBSD and is only needed on 68040+PPC, not on
-68060+PPC; without this, affected machines will hang after NetBSD has shut
+affects rebooting from
+.Nx
+and is only needed on 68040+PPC, not on
+68060+PPC; without this, affected machines will hang after
+.Nx
+has shut
 down and will only restart after a keyboard reset or a power cycle.
 .El
 .Ss arm32-specific Options
