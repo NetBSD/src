@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.29 1995/11/28 20:49:15 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.30 1995/11/28 22:49:33 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -258,6 +258,8 @@ espattach(parent, self, aux)
 	 */
 	switch (sc->sc_rev) {
 	case ESP100:
+		sc->sc_minsync = 0;	/* No synch on old chip? */
+		break;
 	case ESP100A:
 		sc->sc_minsync = esp_cpb2stp(sc, 5); /* Min clocks/byte is 5 */
 		break;
@@ -453,9 +455,10 @@ esp_init(sc, doreset)
 	for (r = 0; r < 8; r++) {
 		struct esp_tinfo *tp = &sc->sc_tinfo[r];
 
-		tp->flags = T_NEGOTIATE | T_NEED_TO_RESET | (tp->flags & T_XXX);
+		tp->flags = (sc->sc_minsync ? T_NEGOTIATE : 0) |
+				T_NEED_TO_RESET | (tp->flags & T_XXX);
 		tp->period = sc->sc_minsync;
-		tp->offset = ESP_SYNC_REQ_ACK_OFS;
+		tp->offset = 0;
 	}
 	sc->sc_flags &= ~ESP_ABORTING;
 
@@ -1053,7 +1056,11 @@ printf("<<esp:target%d: MSG_PARITY_ERROR>>", ecb->xs->sc_link->target);
 	}
 				ti->period = sc->sc_imess[3];
 				ti->offset = sc->sc_imess[4];
-				if (ti->offset == 0) {
+				if (sc->sc_minsync == 0) {
+					/* We won't do synch */
+					ti->offset = 0;
+					esp_sched_msgout(SEND_SDTR);
+				} else if (ti->offset == 0) {
 					printf("%s:%d: async\n", "esp",
 						ecb->xs->sc_link->target);
 					ti->offset = 0;

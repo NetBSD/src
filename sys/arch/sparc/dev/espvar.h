@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.8 1995/11/28 20:49:12 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.9 1995/11/28 22:49:31 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -28,8 +28,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define ESP_SYNC_REQ_ACK_OFS 	0
-
 #define ESP_DEBUG 0
 
 #define FREQTOCCF(freq)	(((freq + 4) / 5))
@@ -47,11 +45,6 @@ struct esp_dma_seg {
 	long		len;
 };
 #endif
-
-extern int delaycount;
-#define FUDGE(X)	((X)>>1) 	/* get 1 ms spincount */
-#define MINIFUDGE(X)	((X)>>4) 	/* get (approx) 125us spincount */
-#define NUM_CONCURRENT	7	/* Only one per target for now */
 
 /* 
  * ECB. Holds additional information for each SCSI command Comments: We
