@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.3 1999/07/01 23:55:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.4 1999/07/04 01:57:35 chs Exp $	*/
 
 /*
  *
@@ -393,8 +393,9 @@ void			uvm_page_physload __P((vaddr_t, vaddr_t,
 void			uvm_setpagesize __P((void));
 
 /* uvm_pager.c */
+void			uvm_aio_biodone1 __P((struct buf *));
 void			uvm_aio_biodone __P((struct buf *));
-void			uvm_aio_aiodone __P((struct uvm_aiodesc *));
+void			uvm_aio_aiodone __P((struct buf *));
 
 /* uvm_pdaemon.c */
 void			uvm_pageout __P((void));
@@ -427,8 +428,7 @@ struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
 void			uvn_findpages __P((struct uvm_object *, vaddr_t,
 					   int *, struct vm_page **, int));
 void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
-void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t,
-					      size_t));
+void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t));
 
 #endif /* _KERNEL */
 
