@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.7 1997/08/25 19:31:52 kleink Exp $	*/
+/*	$NetBSD: newfs.c,v 1.8 1997/09/15 06:55:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.3 (Berkeley) 4/22/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.7 1997/08/25 19:31:52 kleink Exp $";
+__RCSID("$NetBSD: newfs.c,v 1.8 1997/09/15 06:55:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ main(argc, argv)
 		opstring += 2;
 
 	debug = lfs = segsize = 0;
-	while ((ch = getopt(argc, argv, opstring)) != EOF)
+	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
 		case 'B':	/* LFS segment size */
 			if ((segsize = atoi(optarg)) < LFS_MINSEGSIZE)
