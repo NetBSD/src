@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.16 1994/12/24 14:05:51 cgd Exp $	*/
+/*	$NetBSD: vnd.c,v 1.17 1995/01/25 04:45:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,8 @@
  *
  * NOTE 3: Doesn't interact with leases, should it?
  */
-#include "vn.h"
-#if NVN > 0
+#include "vnd.h"
+#if NVND > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,11 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <dev/vnioctl.h>
+#include <dev/vndioctl.h>
 
 #ifdef DEBUG
-int dovncluster = 1;
-int vndebug = 0x00;
+int dovndcluster = 1;
+int vnddebug = 0x00;
 #define VDB_FOLLOW	0x01
 #define VDB_INIT	0x02
 #define VDB_IO		0x04
@@ -92,16 +92,16 @@ int vndebug = 0x00;
 
 #define b_cylin	b_resid
 
-#define	vnunit(x)	((minor(x) >> 3) & 0x7)	/* for consistency */
+#define	vndunit(x)	((minor(x) >> 3) & 0x7)	/* for consistency */
 
-#define	getvnbuf()	\
+#define	getvndbuf()	\
 	((struct buf *)malloc(sizeof(struct buf), M_DEVBUF, M_WAITOK))
-#define putvnbuf(bp)	\
+#define putvndbuf(bp)	\
 	free((caddr_t)(bp), M_DEVBUF)
 
-struct vn_softc {
+struct vnd_softc {
 	int		 sc_flags;	/* flags */
-	size_t		 sc_size;	/* size of vn */
+	size_t		 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
@@ -113,20 +113,20 @@ struct vn_softc {
 #define VNF_INITED	0x02
 
 #if 0	/* if you need static allocation */
-struct vn_softc vn_softc[NVN];
-int numvnd = NVN;
+struct vnd_softc vn_softc[NVND];
+int numvnd = NVND;
 #else
-struct vn_softc *vn_softc;
+struct vnd_softc *vnd_softc;
 int numvnd;
 #endif
 
-void	vnclear __P((struct vn_softc *));
-void	vnstart __P((struct vn_softc *));
-int	vnsetcred __P((struct vn_softc *, struct ucred *));
-void	vnthrottle __P((struct vn_softc *, struct vnode *));
+void	vndclear __P((struct vnd_softc *));
+void	vndstart __P((struct vnd_softc *));
+int	vndsetcred __P((struct vnd_softc *, struct ucred *));
+void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 
 void
-vnattach(num)
+vndattach(num)
 	int num;
 {
 	char *mem;
@@ -134,28 +134,28 @@ vnattach(num)
 
 	if (num <= 0)
 		return;
-	size = num * sizeof(struct vn_softc);
+	size = num * sizeof(struct vnd_softc);
 	mem = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL) {
 		printf("WARNING: no memory for vnode disks\n");
 		return;
 	}
 	bzero(mem, size);
-	vn_softc = (struct vn_softc *)mem;
+	vnd_softc = (struct vnd_softc *)mem;
 	numvnd = num;
 }
 
 int
-vnopen(dev, flags, mode, p)
+vndopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = vnunit(dev);
+	int unit = vndunit(dev);
 
 #ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnopen(%x, %x, %x, %x)\n", dev, flags, mode, p);
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndopen(%x, %x, %x, %x)\n", dev, flags, mode, p);
 #endif
 	if (unit >= numvnd)
 		return(ENXIO);
@@ -163,14 +163,14 @@ vnopen(dev, flags, mode, p)
 }
 
 int
-vnclose(dev, flags, mode, p)
+vndclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
 	struct proc *p;
 {
 #ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnclose(%x, %x, %x, %x)\n", dev, flags, mode, p);
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndclose(%x, %x, %x, %x)\n", dev, flags, mode, p);
 #endif
 	return 0;
 }
@@ -181,22 +181,22 @@ vnclose(dev, flags, mode, p)
  * since nfs_strategy on the vax cannot handle u-areas and page tables.
  */
 void
-vnstrategy(bp)
+vndstrategy(bp)
 	register struct buf *bp;
 {
-	int unit = vnunit(bp->b_dev);
-	register struct vn_softc *vn = &vn_softc[unit];
+	int unit = vndunit(bp->b_dev);
+	register struct vnd_softc *vnd = &vnd_softc[unit];
 	register struct buf *nbp;
 	register int bn, bsize, resid;
 	register caddr_t addr;
 	int sz, flags, error;
-	extern void vniodone();
+	extern void vndiodone();
 
 #ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnstrategy(%x): unit %d\n", bp, unit);
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndstrategy(%x): unit %d\n", bp, unit);
 #endif
-	if ((vn->sc_flags & VNF_INITED) == 0) {
+	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -205,8 +205,8 @@ vnstrategy(bp)
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	bp->b_resid = bp->b_bcount;
-	if (bn < 0 || bn + sz > vn->sc_size) {
-		if (bn != vn->sc_size) {
+	if (bn < 0 || bn + sz > vnd->sc_size) {
+		if (bn != vnd->sc_size) {
 			bp->b_error = EINVAL;
 			bp->b_flags |= B_ERROR;
 		}
@@ -214,7 +214,7 @@ vnstrategy(bp)
 		return;
 	}
 	bn = dbtob(bn);
- 	bsize = vn->sc_vp->v_mount->mnt_stat.f_iosize;
+ 	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
 	flags = bp->b_flags | B_CALL;
 	for (resid = bp->b_resid; resid; resid -= sz) {
@@ -223,11 +223,11 @@ vnstrategy(bp)
 		int off, s, nra;
 
 		nra = 0;
-		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn, &nra);
+		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
 #ifdef DEBUG
-		if (!dovncluster)
+		if (!dovndcluster)
 			nra = 0;
 #endif
 
@@ -238,12 +238,12 @@ vnstrategy(bp)
 		if (resid < sz)
 			sz = resid;
 #ifdef DEBUG
-		if (vndebug & VDB_IO)
-			printf("vnstrategy: vp %x/%x bn %x/%x sz %x\n",
-			       vn->sc_vp, vp, bn, nbn, sz);
+		if (vnddebug & VDB_IO)
+			printf("vndstrategy: vp %x/%x bn %x/%x sz %x\n",
+			       vnd->sc_vp, vp, bn, nbn, sz);
 #endif
 
-		nbp = getvnbuf();
+		nbp = getvndbuf();
 		nbp->b_flags = flags;
 		nbp->b_bcount = sz;
 		nbp->b_bufsize = bp->b_bufsize;
@@ -255,11 +255,11 @@ vnstrategy(bp)
 		nbp->b_data = addr;
 		nbp->b_blkno = nbn + btodb(off);
 		nbp->b_proc = bp->b_proc;
-		nbp->b_iodone = vniodone;
+		nbp->b_iodone = vndiodone;
 		nbp->b_vp = vp;
 		nbp->b_pfcent = (int) bp;	/* XXX */
-		nbp->b_rcred = vn->sc_cred;	/* XXX crdup? */
-		nbp->b_wcred = vn->sc_cred;	/* XXX crdup? */
+		nbp->b_rcred = vnd->sc_cred;	/* XXX crdup? */
+		nbp->b_wcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->b_dirtyoff = bp->b_dirtyoff;
 		nbp->b_dirtyend = bp->b_dirtyend;
 		nbp->b_validoff = bp->b_validoff;
@@ -285,10 +285,10 @@ vnstrategy(bp)
 		 */
 		nbp->b_cylin = nbp->b_blkno;
 		s = splbio();
-		disksort(&vn->sc_tab, nbp);
-		if (vn->sc_tab.b_active < vn->sc_maxactive) {
-			vn->sc_tab.b_active++;
-			vnstart(vn);
+		disksort(&vnd->sc_tab, nbp);
+		if (vnd->sc_tab.b_active < vnd->sc_maxactive) {
+			vnd->sc_tab.b_active++;
+			vndstart(vnd);
 		}
 		splx(s);
 		bn += sz;
@@ -303,8 +303,8 @@ vnstrategy(bp)
  * server.
  */
 void
-vnstart(vn)
-	register struct vn_softc *vn;
+vndstart(vnd)
+	register struct vnd_softc *vnd;
 {
 	register struct buf *bp;
 
@@ -312,12 +312,12 @@ vnstart(vn)
 	 * Dequeue now since lower level strategy routine might
 	 * queue using same links
 	 */
-	bp = vn->sc_tab.b_actf;
-	vn->sc_tab.b_actf = bp->b_actf;
+	bp = vnd->sc_tab.b_actf;
+	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
-	if (vndebug & VDB_IO)
-		printf("vnstart(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
-		    vn-vn_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
+	if (vnddebug & VDB_IO)
+		printf("vndstart(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
+		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
 	if ((bp->b_flags & B_READ) == 0)
@@ -326,63 +326,63 @@ vnstart(vn)
 }
 
 void
-vniodone(bp)
+vndiodone(bp)
 	register struct buf *bp;
 {
 	register struct buf *pbp = (struct buf *)bp->b_pfcent;	/* XXX */
-	register struct vn_softc *vn = &vn_softc[vnunit(pbp->b_dev)];
+	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	int s;
 
 	s = splbio();
 #ifdef DEBUG
-	if (vndebug & VDB_IO)
-		printf("vniodone(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
-		    vn-vn_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
+	if (vnddebug & VDB_IO)
+		printf("vndiodone(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
+		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
 	if (bp->b_error) {
 #ifdef DEBUG
-		if (vndebug & VDB_IO)
-			printf("vniodone: bp %x error %d\n", bp, bp->b_error);
+		if (vnddebug & VDB_IO)
+			printf("vndiodone: bp %x error %d\n", bp, bp->b_error);
 #endif
 		pbp->b_flags |= B_ERROR;
 		pbp->b_error = biowait(bp);
 	}
 	pbp->b_resid -= bp->b_bcount;
-	putvnbuf(bp);
+	putvndbuf(bp);
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
-		if (vndebug & VDB_IO)
-			printf("vniodone: pbp %x iodone\n", pbp);
+		if (vnddebug & VDB_IO)
+			printf("vndiodone: pbp %x iodone\n", pbp);
 #endif
 		biodone(pbp);
 	}
-	if (vn->sc_tab.b_actf)
-		vnstart(vn);
+	if (vnd->sc_tab.b_actf)
+		vndstart(vnd);
 	else
-		vn->sc_tab.b_active--;
+		vnd->sc_tab.b_active--;
 	splx(s);
 }
 
 /* ARGSUSED */
 int
-vnioctl(dev, cmd, data, flag, p)
+vndioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = vnunit(dev);
-	register struct vn_softc *vn;
-	struct vn_ioctl *vio;
+	int unit = vndunit(dev);
+	register struct vnd_softc *vnd;
+	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
 	int error;
 
 #ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnioctl(%x, %lx, %x, %x, %x): unit %d\n",
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndioctl(%x, %lx, %x, %x, %x): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
@@ -391,12 +391,12 @@ vnioctl(dev, cmd, data, flag, p)
 	if (unit >= numvnd)
 		return (ENXIO);
 
-	vn = &vn_softc[unit];
-	vio = (struct vn_ioctl *)data;
+	vnd = &vnd_softc[unit];
+	vio = (struct vnd_ioctl *)data;
 	switch (cmd) {
 
-	case VNIOCSET:
-		if (vn->sc_flags & VNF_INITED)
+	case VNDIOCSET:
+		if (vnd->sc_flags & VNF_INITED)
 			return(EBUSY);
 		/*
 		 * Always open for read and write.
@@ -404,7 +404,7 @@ vnioctl(dev, cmd, data, flag, p)
 		 * weed out directories, sockets, etc. so we don't
 		 * have to worry about them.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vn_file, p);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
 		if (error = vn_open(&nd, FREAD|FWRITE, 0))
 			return(error);
 		if (error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p)) {
@@ -413,29 +413,29 @@ vnioctl(dev, cmd, data, flag, p)
 			return(error);
 		}
 		VOP_UNLOCK(nd.ni_vp);
-		vn->sc_vp = nd.ni_vp;
-		vn->sc_size = btodb(vattr.va_size);	/* note truncation */
-		if (error = vnsetcred(vn, p->p_ucred)) {
+		vnd->sc_vp = nd.ni_vp;
+		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
+		if (error = vndsetcred(vnd, p->p_ucred)) {
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			return(error);
 		}
-		vnthrottle(vn, vn->sc_vp);
-		vio->vn_size = dbtob(vn->sc_size);
-		vn->sc_flags |= VNF_INITED;
+		vndthrottle(vnd, vnd->sc_vp);
+		vio->vnd_size = dbtob(vnd->sc_size);
+		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
-		if (vndebug & VDB_INIT)
-			printf("vnioctl: SET vp %x size %x\n",
-			    vn->sc_vp, vn->sc_size);
+		if (vnddebug & VDB_INIT)
+			printf("vndioctl: SET vp %x size %x\n",
+			    vnd->sc_vp, vnd->sc_size);
 #endif
 		break;
 
-	case VNIOCCLR:
-		if ((vn->sc_flags & VNF_INITED) == 0)
+	case VNDIOCCLR:
+		if ((vnd->sc_flags & VNF_INITED) == 0)
 			return(ENXIO);
-		vnclear(vn);
+		vndclear(vnd);
 #ifdef DEBUG
-		if (vndebug & VDB_INIT)
-			printf("vnioctl: CLRed\n");
+		if (vnddebug & VDB_INIT)
+			printf("vndioctl: CLRed\n");
 #endif
 		break;
 
@@ -452,8 +452,8 @@ vnioctl(dev, cmd, data, flag, p)
  * if some other uid can write directly to the mapped file (NFS).
  */
 int
-vnsetcred(vn, cred)
-	register struct vn_softc *vn;
+vndsetcred(vnd, cred)
+	register struct vnd_softc *vnd;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -461,19 +461,19 @@ vnsetcred(vn, cred)
 	char *tmpbuf;
 	int error;
 
-	vn->sc_cred = crdup(cred);
+	vnd->sc_cred = crdup(cred);
 	tmpbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = min(DEV_BSIZE, dbtob(vn->sc_size));
+	aiov.iov_len = min(DEV_BSIZE, dbtob(vnd->sc_size));
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
-	error = VOP_READ(vn->sc_vp, &auio, 0, vn->sc_cred);
+	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
 
 	free(tmpbuf, M_TEMP);
 	return (error);
@@ -483,68 +483,68 @@ vnsetcred(vn, cred)
  * Set maxactive based on FS type
  */
 void
-vnthrottle(vn, vp)
-	register struct vn_softc *vn;
+vndthrottle(vnd, vp)
+	register struct vnd_softc *vnd;
 	struct vnode *vp;
 {
 #ifdef NFSCLIENT
 	extern int (**nfsv2_vnodeop_p)();
 
 	if (vp->v_op == nfsv2_vnodeop_p)
-		vn->sc_maxactive = 2;
+		vnd->sc_maxactive = 2;
 	else
 #endif
-		vn->sc_maxactive = 8;
+		vnd->sc_maxactive = 8;
 
-	if (vn->sc_maxactive < 1)
-		vn->sc_maxactive = 1;
+	if (vnd->sc_maxactive < 1)
+		vnd->sc_maxactive = 1;
 }
 
 void
-vnshutdown()
+vndshutdown()
 {
-	register struct vn_softc *vn;
+	register struct vnd_softc *vnd;
 
-	for (vn = &vn_softc[0]; vn < &vn_softc[numvnd]; vn++)
-		if (vn->sc_flags & VNF_INITED)
-			vnclear(vn);
+	for (vnd = &vnd_softc[0]; vnd < &vnd_softc[numvnd]; vnd++)
+		if (vnd->sc_flags & VNF_INITED)
+			vndclear(vnd);
 }
 
 void
-vnclear(vn)
-	register struct vn_softc *vn;
+vndclear(vnd)
+	register struct vnd_softc *vnd;
 {
-	register struct vnode *vp = vn->sc_vp;
+	register struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 
 #ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnclear(%x): vp %x\n", vp);
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndclear(%x): vp %x\n", vp);
 #endif
-	vn->sc_flags &= ~VNF_INITED;
+	vnd->sc_flags &= ~VNF_INITED;
 	if (vp == (struct vnode *)0)
-		panic("vnioctl: null vp");
-	(void) vn_close(vp, FREAD|FWRITE, vn->sc_cred, p);
-	crfree(vn->sc_cred);
-	vn->sc_vp = (struct vnode *)0;
-	vn->sc_cred = (struct ucred *)0;
-	vn->sc_size = 0;
+		panic("vndioctl: null vp");
+	(void) vn_close(vp, FREAD|FWRITE, vnd->sc_cred, p);
+	crfree(vnd->sc_cred);
+	vnd->sc_vp = (struct vnode *)0;
+	vnd->sc_cred = (struct ucred *)0;
+	vnd->sc_size = 0;
 }
 
 int
-vnsize(dev)
+vndsize(dev)
 	dev_t dev;
 {
-	int unit = vnunit(dev);
-	register struct vn_softc *vn = &vn_softc[unit];
+	int unit = vndunit(dev);
+	register struct vnd_softc *vnd = &vnd_softc[unit];
 
-	if (unit >= numvnd || (vn->sc_flags & VNF_INITED) == 0)
+	if (unit >= numvnd || (vnd->sc_flags & VNF_INITED) == 0)
 		return(-1);
-	return(vn->sc_size);
+	return(vnd->sc_size);
 }
 
 int
-vndump(dev)
+vnddump(dev)
 	dev_t dev;
 {
 
