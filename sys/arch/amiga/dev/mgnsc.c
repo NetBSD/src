@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.10 1995/02/12 19:19:17 chopps Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.11 1995/03/05 13:01:28 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -53,6 +53,7 @@
 int mgnscprint __P((void *auxp, char *));
 void mgnscattach __P((struct device *, struct device *, void *));
 int mgnscmatch __P((struct device *, struct cfdata *, void *));
+int siopintr __P((struct siop_softc *));
 int mgnsc_dmaintr __P((struct siop_softc *));
 
 struct scsi_adapter mgnsc_scsiswitch = {
@@ -126,7 +127,7 @@ mgnscattach(pdp, dp, auxp)
 
 	sc->sc_isr.isr_intr = mgnsc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
-	sc->sc_isr.isr_ipl = 2;
+	sc->sc_isr.isr_ipl = 6;
 	add_isr (&sc->sc_isr);
 
 	/*
@@ -148,7 +149,13 @@ mgnscprint(auxp, pnp)
 	return(QUIET);
 }
 
-
+/*
+ * Level 6 interrupt processing for the Magnum/40 SCSI. Because the
+ * level 6 interrupt is above splbio, the interrupt status is saved
+ * and an sicallback to the level 2 interrupt handler scheduled.
+ * This way, the actual processing of the interrupt can be deferred
+ * until splbio is unblocked.
+ */
 int
 mgnsc_dmaintr(sc)
 	struct siop_softc *sc;
@@ -169,6 +176,7 @@ mgnsc_dmaintr(sc)
 	sc->sc_istat = istat;
 	sc->sc_dstat = rp->siop_dstat;
 	sc->sc_sstat0 = rp->siop_sstat0;
+	add_sicallback(siopintr, sc, NULL);
 	siopintr(sc);
 	return (1);
 }
