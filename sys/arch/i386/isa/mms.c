@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.17 1995/01/03 01:30:51 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.18 1995/04/17 12:07:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -40,7 +40,7 @@
 #include <machine/pio.h>
 #include <machine/mouse.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 #define	MMS_ADDR	0	/* offset for register select */
 #define	MMS_DATA	1	/* offset for InPort data */
@@ -52,7 +52,7 @@
 
 struct mms_softc {		/* driver status information */
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
@@ -66,7 +66,7 @@ struct mms_softc {		/* driver status information */
 
 int mmsprobe __P((struct device *, void *, void *));
 void mmsattach __P((struct device *, struct device *, void *));
-int mmsintr __P((struct mms_softc *));
+int mmsintr __P((void *));
 
 struct cfdriver mmscd = {
 	NULL, "mms", mmsprobe, mmsattach, DV_TTY, sizeof(struct mms_softc)
@@ -109,10 +109,8 @@ mmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
-	sc->sc_ih.ih_fun = mmsintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NONE;
-	intr_establish(ia->ia_irq, IST_PULSE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_PULSE, ISA_IPL_NONE,
+	    mmsintr, sc);
 }
 
 int
@@ -263,9 +261,10 @@ mmsioctl(dev, cmd, addr, flag)
 }
 
 int
-mmsintr(sc)
-	struct mms_softc *sc;
+mmsintr(arg)
+	void *arg;
 {
+	struct mms_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	u_char buttons, changed, status;
 	char dx, dy;

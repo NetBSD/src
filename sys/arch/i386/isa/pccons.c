@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.80 1995/04/10 01:04:33 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.81 1995/04/17 12:07:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -66,8 +66,9 @@
 #include <machine/pc/display.h>
 #include <machine/pccons.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>
 #include <i386/isa/kbdreg.h>
 
 #define	XFREE86_BUG_COMPAT
@@ -113,7 +114,7 @@ static struct video_state {
 
 int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
-int pcintr __P((void));
+int pcintr __P((void *));
 
 struct cfdriver pccd = {
 	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct device)
@@ -462,15 +463,12 @@ pcattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	static struct intrhand pchand;
 
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	pchand.ih_fun = pcintr;
-	pchand.ih_arg = 0;
-	pchand.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, IST_EDGE, &pchand);
+	(void)isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
+	    pcintr, 0);
 }
 
 int
@@ -554,7 +552,8 @@ pcwrite(dev, uio, flag)
  * Catch the character, and see who it goes to.
  */
 int
-pcintr()
+pcintr(arg)
+	void *arg;
 {
 	register struct tty *tp = pc_tty[0];	/* XXX */
 	u_char *cp;
@@ -762,7 +761,7 @@ pccnpollc(dev, on)
 		 * won't get any further interrupts.
 		 */
 		s = spltty();
-		pcintr();
+		pcintr(0);
 		splx(s);
 	}
 }	

@@ -1,4 +1,4 @@
-/*	$NetBSD: isareg.h,v 1.4 1994/10/27 04:17:49 cgd Exp $	*/
+/*	$NetBSD: isareg.h,v 1.5 1995/04/17 12:09:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,20 +42,11 @@
  * ISA Bus conventions
  */
 
-#ifndef LOCORE
-#include <sys/cdefs.h>
-
-unsigned char rtcin __P((int));
-void sysbeep __P((int, int));
-unsigned kbd_8042cmd __P((int));
-#endif /* !LOCORE */
-
-
 /*
  * Input / Output Port Assignments
  */
 
-#ifndef IO_BEGIN
+#ifndef IO_ISABEGIN
 #define	IO_ISABEGIN	0x000		/* 0x000 - Beginning of I/O Registers */
 
 		/* CPU Board */
@@ -143,7 +134,7 @@ unsigned kbd_8042cmd __P((int));
 #ifndef	IO_ISASIZES
 #define	IO_ISASIZES
 
-#define	IO_COMSIZE	8	/* 8250, 16X50 com controllers (*/
+#define	IO_COMSIZE	8	/* 8250, 16X50 com controllers */
 #define	IO_CGASIZE	16	/* CGA controllers */
 #define	IO_DMASIZE	16	/* 8237 DMA controllers */
 #define	IO_DPGSIZE	32	/* 74LS612 DMA page reisters */
@@ -170,42 +161,3 @@ unsigned kbd_8042cmd __P((int));
 #define	IOM_END		0x100000		/* End of I/O Memory "hole" */
 #define	IOM_SIZE	(IOM_END - IOM_BEGIN)
 #endif /* !IOM_BEGIN */
-
-/*
- * RAM Physical Address Space (ignoring the above mentioned "hole")
- */
-
-#ifndef	RAM_BEGIN
-#define	RAM_BEGIN	0x0000000	/* Start of RAM Memory */
-#define	RAM_END		0x1000000	/* End of RAM Memory */
-#define	RAM_SIZE	(RAM_END - RAM_BEGIN)
-#endif /* !RAM_BEGIN */
-
-/*
- * Oddball Physical Memory Addresses
- */
-#ifndef	COMPAQ_RAMRELOC
-#define	COMPAQ_RAMRELOC	0x80c00000	/* Compaq RAM relocation/diag */
-#define	COMPAQ_RAMSETUP	0x80c00002	/* Compaq RAM setup */
-#define	WEITEK_FPU	0xC0000000	/* WTL 2167 */
-#define	CYRIX_EMC	0xC0000000	/* Cyrix EMC */
-#endif /* !COMPAQ_RAMRELOC */
-
-/* stuff that used to be in pccons.c */
-#define	MONO_BASE	0x3B4
-#define	MONO_BUF	(KERNBASE + 0xB0000)
-#define	CGA_BASE	0x3D4
-#define	CGA_BUF		(KERNBASE + 0xB8000)
-#define	IOPHYSMEM	0xA0000
-
-/*
- * size of dma bounce buffer in pages
- * - currently 1 page per channel
- */
-#ifndef DMA_BOUNCE
-#define	DMA_BOUNCE      8
-#endif
-
-#ifndef LOCORE
-extern vm_offset_t isaphysmem;
-#endif /* !LOCORE */

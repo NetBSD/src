@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.16 1995/01/04 00:47:53 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.17 1995/04/17 12:08:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -37,11 +37,11 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 struct ast_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_alive;		/* mask of slave units attached */
@@ -50,7 +50,7 @@ struct ast_softc {
 
 int astprobe();
 void astattach();
-int astintr __P((struct ast_softc *));
+int astintr __P((void *));
 
 struct cfdriver astcd = {
 	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
@@ -137,16 +137,15 @@ astattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih.ih_fun = astintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
+	    astintr, sc);
 }
 
 int
-astintr(sc)
-	struct ast_softc *sc;
+astintr(arg)
+	void *arg;
 {
+	struct ast_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 	int bits;

@@ -81,8 +81,9 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
 
 #define	SEA_SCB_MAX	32	/* allow maximally 8 scsi control blocks */
 #define SCB_TABLE_SIZE	8	/* start with 8 scb entries in table */
@@ -186,7 +187,7 @@ struct sea_scb {
 struct sea_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int type;			/* board type */
 	caddr_t	maddr;			/* Base address for card */
@@ -266,7 +267,7 @@ static const char *bases[] = {
 
 #define	nbases		(sizeof(bases) / sizeof(bases[0]))
 
-int seaintr __P((struct sea_softc *));
+int seaintr __P((void *));
 int sea_scsi_cmd __P((struct scsi_xfer *));
 void sea_timeout __P((void *));
 void seaminphys __P((struct buf *));
@@ -430,10 +431,8 @@ seaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sea->sc_id, &sea->sc_deV);
 #endif
-	sea->sc_ih.ih_fun = seaintr;
-	sea->sc_ih.ih_arg = sea;
-	sea->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &sea->sc_ih);
+	sea->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    seaintr, sea);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -445,9 +444,10 @@ seaattach(parent, self, aux)
  * Catch an interrupt from the adaptor
  */
 int
-seaintr(sea)
-	struct sea_softc *sea;
+seaintr(arg)
+	void *arg;
 {
+	struct sea_softc *sea = arg;
 
 #ifdef DEBUG	/* extra overhead, and only needed for intr debugging */
 	if ((STATUS & STAT_PARITY) == 0 &&

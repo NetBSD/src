@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.2 1995/03/25 00:01:07 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.3 1995/04/17 12:07:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: wss.c,v 1.2 1995/03/25 00:01:07 mycroft Exp $
+ *	$Id: wss.c,v 1.3 1995/04/17 12:07:50 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -51,8 +51,8 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/icu.h>
 
 #include <i386/isa/ad1848var.h>
@@ -89,14 +89,14 @@ int	wssdebug = 0;
 struct wss_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
 
 	struct  ad1848_softc sc_ad1848;
 #define wss_iobase sc_ad1848.sc_iobase
 #define wss_irq    sc_ad1848.sc_irq
 #define wss_drq    sc_ad1848.sc_drq
 
-	int mic_mute, cd_mute, dac_mute;
+	int 	mic_mute, cd_mute, dac_mute;
 };
 
 struct audio_device wss_device = {
@@ -251,10 +251,8 @@ wssattach(parent, self, aux)
 #ifdef NEWCONFIG
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-    sc->sc_ih.ih_fun = ad1848_intr;
-    sc->sc_ih.ih_arg = &sc->sc_ad1848;
-    sc->sc_ih.ih_level = IPL_BIO;
-    intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	ad1848_intr, &sc->sc_ad1848);
 
     ad1848_attach(&sc->sc_ad1848);
     

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 1995/04/10 13:15:02 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12 1995/04/17 12:07:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -54,10 +54,13 @@
 #include <machine/pio.h>
 
 #include <i386/isa/icu.h>
+#include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
 int pci_mode = -1;
+
+static isa_intrlevel	pcilevel_to_isa __P((pci_intrlevel level));
 
 int
 pcimatch(parent, match, aux)
@@ -328,10 +331,12 @@ pci_map_mem(tag, reg, vap, pap)
 	return 0;
 }
 
-int
-pci_map_int(tag, ih)
+void *
+pci_map_int(tag, level, func, arg)
 	pcitag_t tag;
-	struct intrhand *ih;
+	pci_intrlevel level;
+	int (*func) __P((void *));
+	void *arg;
 {
 	pcireg_t data;
 	int pin, line;
@@ -348,7 +353,7 @@ pci_map_int(tag, ih)
 
 	if (pin > 4) {
 		printf("pci_map_int: bad interrupt pin %d\n", pin);
-		return EINVAL;
+		return NULL;
 	}
 
 	/*
@@ -366,11 +371,11 @@ pci_map_int(tag, ih)
 	 */
 	if (line == 0 || line == 255) {
 		printf("pci_map_int: no mapping for pin %c\n", '@' + pin);
-		return EINVAL;
+		return NULL;
 	} else {
 		if (line >= ICU_LEN) {
 			printf("pci_map_int: bad interrupt line %d\n", line);
-			return EINVAL;
+			return NULL;
 		}
 		if (line == 2) {
 			printf("pci_map_int: changed line 2 to line 9\n");
@@ -382,6 +387,32 @@ pci_map_int(tag, ih)
 	printf("pci_map_int: pin %c mapped to line %d\n", '@' + pin, line);
 #endif
 
-	intr_establish(line, IST_LEVEL, ih);
-	return 0;
+	return isa_intr_establish(line, ISA_IST_LEVEL, pcilevel_to_isa(level),
+	    func, arg);
+}
+
+static isa_intrlevel
+pcilevel_to_isa(level)
+	pci_intrlevel level;
+{
+
+	switch (level) {
+	case PCI_IPL_NONE:
+		return (ISA_IPL_NONE);
+
+	case PCI_IPL_BIO:
+		return (ISA_IPL_BIO);
+
+	case PCI_IPL_NET:
+		return (ISA_IPL_NET);
+
+	case PCI_IPL_TTY:
+		return (ISA_IPL_TTY);
+
+	case PCI_IPL_CLOCK:
+		return (ISA_IPL_CLOCK);
+
+	default:
+		panic("pcilevel_to_isa: unknown level %d\n", level);
+	}
 }
