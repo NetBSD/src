@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_superio.c,v 1.5 2002/10/02 05:33:54 thorpej Exp $	*/
+/*	$NetBSD: if_sm_sysfpga.c,v 1.1 2002/10/22 15:19:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,13 +41,10 @@
  * Based almost entirely on dev/isa/if_sm_isa.c
  *
  * There are just enough differences to make this copy worthwhile.
- * Note that this call isa_intr_establish() because most of the Super IO
- * device is abstracted through an isa bus. The sm(4) device happens
- * to use one of the Super IO device's interrupt pins for itself...
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.5 2002/10/02 05:33:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_sysfpga.c,v 1.1 2002/10/22 15:19:08 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,44 +72,35 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.5 2002/10/02 05:33:54 thorpej Ex
 
 #include <dev/isa/isavar.h>
 
-#include <evbsh5/dev/superiovar.h>
+#include <evbsh5/dev/sysfpgavar.h>
 
-static int	sm_superio_match(struct device *, struct cfdata *, void *);
-static void	sm_superio_attach(struct device *, struct device *, void *);
+static int	sm_sysfpga_match(struct device *, struct cfdata *, void *);
+static void	sm_sysfpga_attach(struct device *, struct device *, void *);
 
-struct sm_superio_softc {
+struct sm_sysfpga_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(sm_superio, sizeof(struct sm_superio_softc),
-    sm_superio_match, sm_superio_attach, NULL, NULL);
+CFATTACH_DECL(sm_sysfpga, sizeof(struct sm_sysfpga_softc),
+    sm_sysfpga_match, sm_sysfpga_attach, NULL, NULL);
 extern struct cfdriver sm_cd;
 
 static int
-sm_superio_match(struct device *parent, struct cfdata *cf, void *aux)
+sm_sysfpga_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct superio_attach_args *saa = aux;
-	bus_space_tag_t iot = saa->saa_bust;
+	struct sysfpga_attach_args *sa = aux;
+	bus_space_tag_t iot = sa->sa_bust;
 	bus_space_handle_t ioh;
 	u_int16_t tmp;
 	int rv = 0;
 	extern const char *smc91cxx_idstrs[];
 
-	if (strcmp(saa->saa_name, sm_cd.cd_name) != 0)
+	if (strcmp(sa->sa_name, sm_cd.cd_name) != 0)
 		return (0);
-
-	/* Disallow wildcarded values. */
-	if (cf->cf_loc[SUPERIOCF_OFFSET] == SUPERIOCF_OFFSET_DEFAULT)
-		return (0);
-	if (cf->cf_loc[SUPERIOCF_IRQ] == SUPERIOCF_IRQ_DEFAULT)
-		return (0);
-
-	saa->saa_offset += cf->cf_loc[SUPERIOCF_OFFSET];
-	saa->saa_irq = cf->cf_loc[SUPERIOCF_IRQ];
 
 	/* Map the device. */
-	if (bus_space_map(iot, saa->saa_offset, SMC_IOSIZE, 0, &ioh))
+	if (bus_space_map(iot, sa->sa_offset, SMC_IOSIZE, 0, &ioh))
 		return (0);
 
 	/* Check that high byte of BANK_SELECT is what we expect. */
@@ -146,19 +134,19 @@ sm_superio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sm_superio_attach(struct device *parent, struct device *self, void *aux)
+sm_sysfpga_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sm_superio_softc *isc = (struct sm_superio_softc *)self;
+	struct sm_sysfpga_softc *isc = (struct sm_sysfpga_softc *)self;
 	struct smc91cxx_softc *sc = &isc->sc_smc;
-	struct superio_attach_args *saa = aux;
-	bus_space_tag_t iot = saa->saa_bust;
+	struct sysfpga_attach_args *sa = aux;
+	bus_space_tag_t iot = sa->sa_bust;
 	bus_space_handle_t ioh;
 
 	printf("\n");
 
 	/* Map the device. */
-	if (bus_space_map(iot, saa->saa_offset, SMC_IOSIZE, 0, &ioh))
-		panic("sm_superio_attach: can't map device registers");
+	if (bus_space_map(iot, sa->sa_offset, SMC_IOSIZE, 0, &ioh))
+		panic("sm_sysfpga_attach: can't map device registers");
 
 	sc->sc_bst = iot;
 	sc->sc_bsh = ioh;
@@ -176,8 +164,8 @@ sm_superio_attach(struct device *parent, struct device *self, void *aux)
 	smc91cxx_attach(sc, NULL);
 
 	/* Establish the interrupt handler. */
-	isc->sc_ih = isa_intr_establish(NULL, saa->saa_irq,
-	    IST_EDGE, IPL_NET, smc91cxx_intr, sc);
+	isc->sc_ih = sysfpga_intr_establish(SYSFPGA_IGROUP_IRL1, IPL_NET,
+	    SYSFPGA_IRL1_INUM_LAN, smc91cxx_intr, sc);
 	if (isc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
