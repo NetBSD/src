@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1998/07/14 03:17:05 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1998/08/12 19:46:13 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -262,6 +262,7 @@ extern caddr_t	msgbufaddr;
 extern vm_offset_t msgbufpa;
 
 u_long	noncontig_enable;
+extern const vm_offset_t amiga_uptbase;
 
 extern vm_offset_t z2mem_start;
 
@@ -660,7 +661,7 @@ pmap_init()
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
 	    FALSE, &st_map_store);
 
-	addr = AMIGA_UPTBASE;
+	addr = amiga_uptbase;
 	if ((AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE) < maxproc) {
 		s = AMIGA_UPTMAXSIZE;
 		/*
@@ -679,7 +680,7 @@ pmap_init()
 	 * Slightly modified version of kmem_suballoc() to get page table
 	 * map where we want it.
 	 */
-	addr = AMIGA_UPTBASE;
+	addr = amiga_uptbase;
 	s = min(AMIGA_UPTMAXSIZE, maxproc * AMIGA_UPTSIZE);
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
@@ -1644,8 +1645,8 @@ validate:
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 && 
 	    pmap == pmap_kernel()) {
 		char *s;
-		if (va >= AMIGA_UPTBASE && 
-		    va < (AMIGA_UPTBASE + AMIGA_UPTMAXSIZE))
+		if (va >= amiga_uptbase && 
+		    va < (amiga_uptbase + AMIGA_UPTMAXSIZE))
 			s = "UPT";
 		else if (va >= (u_int)Sysmap && 
 		    va < ((u_int)Sysmap + AMIGA_KPTSIZE))
@@ -1666,7 +1667,7 @@ validate:
 	}
 #endif
 	if (mmutype == MMU_68040 && pmap == pmap_kernel() && (
-	    (va >= AMIGA_UPTBASE && va < (AMIGA_UPTBASE + AMIGA_UPTMAXSIZE)) ||
+	    (va >= amiga_uptbase && va < (amiga_uptbase + AMIGA_UPTMAXSIZE)) ||
 	    (va >= (u_int)Sysmap && va < ((u_int)Sysmap + AMIGA_KPTSIZE))))
 		cacheable = FALSE;	/* don't cache user page tables */
 #endif
