@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10 2000/06/14 17:26:23 cgd Exp $ */
+/* $NetBSD: main.c,v 1.11 2000/07/29 19:12:17 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.10 2000/06/14 17:26:23 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/07/29 19:12:17 christos Exp $");
 #endif
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: main.c,v 1.10 2000/06/14 17:26:23 cgd Exp $");
 #include <sys/acct.h>
 #include <ctype.h>
 #include <err.h>
+#include <vis.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -69,6 +70,7 @@ static int	cmp_avgdkio	__P((const DBT *, const DBT *));
 static int	cmp_cpumem	__P((const DBT *, const DBT *));
 static int	cmp_avgcpumem	__P((const DBT *, const DBT *));
 static int	cmp_calls	__P((const DBT *, const DBT *));
+static void	usage		__P((void)) __attribute__((__noreturn__));
 
 int aflag, bflag, cflag, dflag, Dflag, fflag, iflag, jflag, kflag;
 int Kflag, lflag, mflag, qflag, rflag, sflag, tflag, uflag, vflag;
@@ -91,93 +93,92 @@ main(argc, argv)
 	error = 0;
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)
 		switch (ch) {
-			case 'a':
-				/* print all commands */
-				aflag = 1;
-				break;
-			case 'b':
-				/* sort by per-call user/system time average */
-				bflag = 1;
-				sa_cmp = cmp_avgusrsys;
-				break;
-			case 'c':
-				/* print percentage total time */
-				cflag = 1;
-				break;
-			case 'd':
-				/* sort by averge number of disk I/O ops */
-				dflag = 1;
-				sa_cmp = cmp_avgdkio;
-				break;
-			case 'D':
-				/* print and sort by total disk I/O ops */
-				Dflag = 1;
-				sa_cmp = cmp_dkio;
-				break;
-			case 'f':
-				/* force no interactive threshold comprison */
-				fflag = 1;
-				break;
-			case 'i':
-				/* do not read in summary file */
-				iflag = 1;
-				break;
-			case 'j':
-				/* instead of total minutes, give sec/call */
-				jflag = 1;
-				break;
-			case 'k':
-				/* sort by cpu-time average memory usage */
-				kflag = 1;
-				sa_cmp = cmp_avgcpumem;
-				break;
-			case 'K':
-				/* print and sort by cpu-storage integral */
-				sa_cmp = cmp_cpumem;
-				Kflag = 1;
-				break;
-			case 'l':
-				/* seperate system and user time */
-				lflag = 1;
-				break;
-			case 'm':
-				/* print procs and time per-user */
-				mflag = 1;
-				break;
-			case 'n':
-				/* sort by number of calls */
-				sa_cmp = cmp_calls;
-				break;
-			case 'q':
-				/* quiet; error messages only */
-				qflag = 1;
-				break;
-			case 'r':
-				/* reverse order of sort */
-				rflag = 1;
-				break;
-			case 's':
-				/* merge accounting file into summaries */
-				sflag = 1;
-				break;
-			case 't':
-				/* report ratio of user and system times */
-				tflag = 1;
-				break;
-			case 'u':
-				/* first, print uid and command name */
-				uflag = 1;
-				break;
-			case 'v':
-				/* cull junk */
-				vflag = 1;
-				cutoff = atoi(optarg);
-				break;
-			case '?':
-	                default:
-				(void)fprintf(stderr,   
-				    "usage: sa [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n");
-				exit(1);
+		case 'a':
+			/* print all commands */
+			aflag = 1;
+			break;
+		case 'b':
+			/* sort by per-call user/system time average */
+			bflag = 1;
+			sa_cmp = cmp_avgusrsys;
+			break;
+		case 'c':
+			/* print percentage total time */
+			cflag = 1;
+			break;
+		case 'd':
+			/* sort by averge number of disk I/O ops */
+			dflag = 1;
+			sa_cmp = cmp_avgdkio;
+			break;
+		case 'D':
+			/* print and sort by total disk I/O ops */
+			Dflag = 1;
+			sa_cmp = cmp_dkio;
+			break;
+		case 'f':
+			/* force no interactive threshold comprison */
+			fflag = 1;
+			break;
+		case 'i':
+			/* do not read in summary file */
+			iflag = 1;
+			break;
+		case 'j':
+			/* instead of total minutes, give sec/call */
+			jflag = 1;
+			break;
+		case 'k':
+			/* sort by cpu-time average memory usage */
+			kflag = 1;
+			sa_cmp = cmp_avgcpumem;
+			break;
+		case 'K':
+			/* print and sort by cpu-storage integral */
+			sa_cmp = cmp_cpumem;
+			Kflag = 1;
+			break;
+		case 'l':
+			/* seperate system and user time */
+			lflag = 1;
+			break;
+		case 'm':
+			/* print procs and time per-user */
+			mflag = 1;
+			break;
+		case 'n':
+			/* sort by number of calls */
+			sa_cmp = cmp_calls;
+			break;
+		case 'q':
+			/* quiet; error messages only */
+			qflag = 1;
+			break;
+		case 'r':
+			/* reverse order of sort */
+			rflag = 1;
+			break;
+		case 's':
+			/* merge accounting file into summaries */
+			sflag = 1;
+			break;
+		case 't':
+			/* report ratio of user and system times */
+			tflag = 1;
+			break;
+		case 'u':
+			/* first, print uid and command name */
+			uflag = 1;
+			break;
+		case 'v':
+			/* cull junk */
+			vflag = 1;
+			cutoff = atoi(optarg);
+			break;
+		case '?':
+		default:
+			usage();
+			/*NOTREACHED*/
 		}
 
 	argc -= optind;
@@ -302,14 +303,15 @@ acct_load(pn, wr)
 {
 	struct acct ac;
 	struct cmdinfo ci;
-	ssize_t rv;
-	int fd, i;
+	int i;
+	int nr;
+	FILE *fp;
 
 	/*
 	 * open the file
 	 */
-	fd = open(pn, wr ? O_RDWR : O_RDONLY, 0);
-	if (fd == -1) {
+	fp = fopen(pn, wr ? "r+" : "r");
+	if (fp == NULL) {
 		warn("open %s %s", pn, wr ? "for read/write" : "read-only");
 		return (-1);
 	}
@@ -318,15 +320,18 @@ acct_load(pn, wr)
 	 * read all we can; don't stat and open because more processes
 	 * could exit, and we'd miss them
 	 */
-	while (1) {
+	for (nr = 0;; nr++) {
 		/* get one accounting entry and punt if there's an error */
-		rv = read(fd, &ac, sizeof(struct acct));
-		if (rv == -1)
-			warn("error reading %s", pn);
-		else if (rv > 0 && rv < sizeof(struct acct))
-			warnx("short read of accounting data in %s", pn);
-		if (rv != sizeof(struct acct))
+		if (fread(&ac, sizeof(struct acct), 1, fp) != 1) {
+			if (feof(fp))
+				break;
+			if (ferror(fp))
+				warn("error reading %s", pn);
+			else
+				warnx("short read of accounting data in %s",
+				    pn);
 			break;
+		}
 
 		/* decode it */
 		ci.ci_calls = 1;
@@ -365,7 +370,7 @@ acct_load(pn, wr)
 	}
 
 	/* finally, return the file descriptor for possible truncation */
-	return (fd);
+	return (fileno(fp));
 }
 
 static u_quad_t
@@ -548,4 +553,26 @@ cmp_calls(d1, d2)
 		return (cmp_comm(c1.ci_comm, c2.ci_comm));
 	else
 		return 1;
+}
+
+static void
+usage()
+{
+	extern char *__progname;
+	(void)fprintf(stderr,
+	    "Usage: %s [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n",
+	    __progname);
+	exit(0);
+}
+
+const char *
+fmt(key)
+	const DBT *key;
+{
+	static char *buf = NULL;
+	static size_t len = 0;
+	if (len < key->size * 4 + 1)
+		buf = realloc(buf, len = key->size * 4 + 1);
+	(void)strvisx(buf, key->data, key->size, 0);
+	return buf;
 }
