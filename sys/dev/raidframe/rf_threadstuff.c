@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.8 2002/08/08 02:54:29 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.9 2002/09/21 07:12:46 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.8 2002/08/08 02:54:29 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.9 2002/09/21 07:12:46 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -92,7 +92,7 @@ RF_DECLARE_MUTEX(*m)
 	return (rc);
 }
 
-
+#if 0
 int 
 _rf_create_managed_lkmgr_mutex(listp, m, file, line)
 	RF_ShutdownList_t **listp;
@@ -115,7 +115,7 @@ RF_DECLARE_LKMGR_MUTEX(*m)
 	}
 	return (rc);
 }
-
+#endif
 int 
 _rf_create_managed_cond(listp, c, file, line)
 	RF_ShutdownList_t **listp;
@@ -157,7 +157,7 @@ _rf_init_managed_threadgroup(listp, g, file, line)
 	g->created = g->running = g->shutdown = 0;
 	return (0);
 }
-
+#if 0
 int 
 _rf_destroy_threadgroup(g, file, line)
 	RF_ThreadGroup_t *g;
@@ -192,7 +192,7 @@ _rf_init_threadgroup(g, file, line)
 	g->created = g->running = g->shutdown = 0;
 	return (0);
 }
-
+#endif
 
 /*
  * Kernel
