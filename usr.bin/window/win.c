@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.4 1995/09/28 10:35:03 tls Exp $	*/
+/*	$NetBSD: win.c,v 1.5 1995/09/29 00:44:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,12 +40,13 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: win.c,v 1.4 1995/09/28 10:35:03 tls Exp $";
+static char rcsid[] = "$NetBSD: win.c,v 1.5 1995/09/29 00:44:08 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 #include "char.h"
+#include <string.h>
 
 /*
  * Higher level routines for dealing with windows.

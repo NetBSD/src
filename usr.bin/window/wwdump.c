@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdump.c,v 1.4 1995/09/28 10:35:25 tls Exp $	*/
+/*	$NetBSD: wwdump.c,v 1.5 1995/09/29 00:44:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,12 +40,13 @@
 #if 0
 static char sccsid[] = "@(#)wwdump.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwdump.c,v 1.4 1995/09/28 10:35:25 tls Exp $";
+static char rcsid[] = "$NetBSD: wwdump.c,v 1.5 1995/09/29 00:44:09 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include <string.h>
 
 static char cmap[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
