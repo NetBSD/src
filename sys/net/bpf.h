@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.7 1994/10/30 21:48:44 cgd Exp $	*/
+/*	$NetBSD: bpf.h,v 1.8 1995/01/13 00:34:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)bpf.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_BPF_H_
+#define _NET_BPF_H_
 
 /*
  * Alignment macros.  BPF_WORDALIGN rounds up to the next 
@@ -250,3 +253,4 @@ u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
  */
 #define BPF_MEMWORDS 16
 
+#endif /* _NET_BPF_H_ */
