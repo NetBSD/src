@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.7 1994/12/13 20:15:43 mycroft Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.8 1995/01/18 06:15:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1138,7 +1138,8 @@ lease_updatetime(deltat)
 	 * Search the mount list for all nqnfs mounts and do their timer
 	 * queues.
 	 */
-	for (mp = mountlist.tqh_first; mp != NULL; mp = mp->mnt_list.tqe_next) {
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	     mp = mp->mnt_list.cqe_next) {
 		if (!strcmp(&mp->mnt_stat.f_fstypename[0], MOUNT_NFS)) {
 			nmp = VFSTONFS(mp);
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
