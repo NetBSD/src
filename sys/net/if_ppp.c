@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.45 1998/07/09 22:30:01 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.46 1998/08/02 15:09:50 sommerfe Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -1021,7 +1021,8 @@ pppintr()
     s = splsoftnet();
     for (i = 0; i < NPPP; ++i, ++sc) {
 	if (!(sc->sc_flags & SC_TBUSY)
-	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head)) {
+	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head
+		|| sc->sc_outm)) {
 	    s2 = splimp();
 	    sc->sc_flags |= SC_TBUSY;
 	    splx(s2);
