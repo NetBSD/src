@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.19 2002/02/11 07:55:51 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.20 2002/02/11 08:15:41 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -165,21 +165,6 @@ static const struct vrip_unit vrip_units[] = {
 			    BCUINT_REG_W,	MBCUINT_REG_W	},
 };
 
-int
-vripmatch(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct mainbus_attach_args *ma = aux;
-   
-#ifdef TX39XX 
-	if (!platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
-		return (0);
-#endif /* TX39XX */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
-		return (0);
-
-	return (1);
-}
-
 void
 vripattach(struct device *parent, struct device *self, void *aux)
 {
@@ -196,6 +181,21 @@ vripattach(struct device *parent, struct device *self, void *aux)
 	vripattach_common(parent, self, aux);
 }
 #endif /* SINGLE_VRIP_BASE */
+
+int
+vripmatch(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+   
+#if defined(SINGLE_VRIP_BASE) && defined(TX39XX)
+	if (!platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+		return (0);
+#endif /* SINGLE_VRIP_BASE && TX39XX */
+	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+		return (0);
+
+	return (1);
+}
 
 void
 vripattach_common(struct device *parent, struct device *self, void *aux)
