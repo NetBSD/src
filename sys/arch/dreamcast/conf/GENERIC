@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2004/11/10 17:54:04 christos Exp $
+# $NetBSD: GENERIC,v 1.47 2005/01/07 11:32:43 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -135,6 +135,9 @@ options 	INET6		# IPV6
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
+
+options 	KLOADER		# in-kernel bootloader
+#options 	KLOADER_DEBUG
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
