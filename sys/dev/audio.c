@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.182 2004/01/31 00:07:56 fredb Exp $	*/
+/*	$NetBSD: audio.c,v 1.182.2.1 2004/07/23 23:05:50 he Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.182 2004/01/31 00:07:56 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.182.2.1 2004/07/23 23:05:50 he Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2164,8 +2164,10 @@ audiostartp(struct audio_softc *sc)
 		 sc->sc_pr.start, sc->sc_pr.used, sc->sc_pr.usedhigh,
 		 sc->sc_pr.mmapped));
 
-	if (!sc->sc_pr.mmapped && sc->sc_pr.used < sc->sc_pr.blksize)
+	if (!sc->sc_pr.mmapped && sc->sc_pr.used < sc->sc_pr.blksize) {
+		wakeup(&sc->sc_wchan);
 		return 0;
+	}
 
 	if (sc->hw_if->trigger_output)
 		error = sc->hw_if->trigger_output(sc->hw_hdl, sc->sc_pr.start,
