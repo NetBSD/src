@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.11 1995/06/11 15:06:16 fvdl Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.12 1995/06/24 20:29:25 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -355,7 +355,7 @@ svr4_signal(p, uap, retval)
 {
 	int	nsig = svr4_to_bsd_signum(SVR4_SIGNO(SCARG(uap, signum)));
 	int	error;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	if (nsig >= SVR4_NSIG || nsig < 0) {
 		if (SVR4_SIGCALL(SCARG(uap, signum)) == SVR4_SIGNAL_MASK ||
@@ -599,7 +599,7 @@ svr4_sigaction(p, uap, retval)
 	struct sigaction bsa;
 	struct sigaction_args sa_args;
 	struct svr4_sigaction sa;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
 	int nsig = svr4_to_bsd_signum(SCARG(uap, signum));
 
@@ -699,7 +699,7 @@ svr4_sigaltstack(p, uap, retval)
 	struct sigaltstack bs;
 	struct sigaltstack_args sa;
 	int error;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	if (SCARG(uap, nss)) {
 		if ((error = copyin(SCARG(uap, nss), &ss, sizeof(ss))) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.8 1995/03/21 13:34:20 mycroft Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.9 1995/06/24 20:29:21 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -183,8 +183,8 @@ svr4_open(p, uap, retval)
 	int			error;
 	struct open_args	cup;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
@@ -215,8 +215,8 @@ svr4_creat(p, uap, retval)
 {
 	struct open_args cup;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
@@ -234,8 +234,8 @@ svr4_access(p, uap, retval)
 {
 	struct access_args cup;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = SCARG(uap, flags);
@@ -280,7 +280,7 @@ svr4_fcntl(p, uap, retval)
 		{
 			struct svr4_flock	 ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 
 			flp = stackgap_alloc(&sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
