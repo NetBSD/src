@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.203 2004/06/27 08:53:03 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.204 2004/07/08 11:12:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.203 2004/06/27 08:53:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.204 2004/07/08 11:12:14 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1736,6 +1736,8 @@ nfs_create(v)
 	if (vap->va_type == VSOCK)
 		return (nfs_mknodrpc(dvp, ap->a_vpp, cnp, vap));
 
+	KASSERT(vap->va_type == VREG);
+
 #ifdef VA_EXCLUSIVE
 	if (vap->va_vaflags & VA_EXCLUSIVE)
 		fmode |= O_EXCL;
@@ -1798,8 +1800,28 @@ again:
 			fmode &= ~O_EXCL;
 			goto again;
 		}
-	} else if (v3 && (fmode & O_EXCL))
+	} else if (v3 && (fmode & O_EXCL)) {
+		struct timeval tm = time;
+
+		/*
+		 * make sure that we'll update timestamps as
+		 * most server implementations use them to store
+		 * the create verifier.
+		 *
+		 * XXX it's better to use TOSERVER always.
+		 */
+
+		if (vap->va_atime.tv_sec == VNOVAL) {
+			vap->va_atime.tv_sec = tm.tv_sec;
+			vap->va_atime.tv_nsec = tm.tv_usec * 1000;
+		}
+		if (vap->va_mtime.tv_sec == VNOVAL) {
+			vap->va_mtime.tv_sec = tm.tv_sec;
+			vap->va_mtime.tv_nsec = tm.tv_usec * 1000;
+		}
+
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
+	}
 	if (error == 0) {
 		if (cnp->cn_flags & MAKEENTRY)
 			nfs_cache_enter(dvp, newvp, cnp);
