@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.2.2 1997/06/06 00:14:04 cgd Exp $ */
+/* $NetBSD: intr.h,v 1.4.2.3 1997/07/22 05:40:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -54,7 +54,7 @@
 #define splsoftnet()            splsoft()
 
 /* IPL-raising functions/macros */
-static __inline int _splraise __P((int));
+static __inline int _splraise __P((int)) __attribute__ ((unused));
 static __inline int
 _splraise(s)
 	int s;
