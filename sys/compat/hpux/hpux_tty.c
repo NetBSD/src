@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.8 1994/10/26 02:45:21 cgd Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.9 1995/05/10 16:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,12 +61,14 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 
-#include <hp300/hpux/hpux.h>
-#include <hp300/hpux/hpux_termio.h>
+#include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_termio.h>
+#include <compat/hpux/hpux_syscallargs.h>
 
 /*
  * Map BSD/POSIX style termios info to and from SYS5 style termio stuff.
  */
+int
 hpux_termio(fd, com, data, p)
 	int fd, com;
 	caddr_t data;
@@ -373,6 +375,7 @@ hpux_termio(fd, com, data, p)
 	return(error);
 }
 
+int
 termiototermios(tio, tios, bsdtios)
 	struct hpux_termio *tio;
 	struct hpux_termios *tios;
@@ -404,6 +407,7 @@ termiototermios(tio, tios, bsdtios)
 	tios->c_cc[HPUXVSTOP] = bsdtios->c_cc[VSTOP];
 }
 
+int
 termiostotermio(tios, tio)
 	struct hpux_termios *tios;
 	struct hpux_termio *tio;
@@ -426,6 +430,7 @@ termiostotermio(tios, tio)
 	}
 }
 
+int
 bsdtohpuxbaud(bsdspeed)
 	long bsdspeed;
 {
@@ -450,6 +455,7 @@ bsdtohpuxbaud(bsdspeed)
 	}
 }
 
+int
 hpuxtobsdbaud(hpux_speed)
 	int hpux_speed;
 {
@@ -463,35 +469,31 @@ hpuxtobsdbaud(hpux_speed)
 	return(hpuxtobsdbaudtab[hpux_speed & TIO_CBAUD]);
 }
 
-#ifdef COMPAT_OHPUX
-struct ohpux_sgtty_args {
-	int	fdes;
-	caddr_t	cmarg;
-};
-ohpux_gtty(p, uap, retval)
+#ifdef COMPAT_HPUX_6X
+
+int
+compat_hpux_6x_gtty(p, uap, retval)
 	struct proc *p;
-	struct ohpux_sgtty_args *uap;
+	struct compat_hpux_6x_gtty_args *uap;
 	register_t *retval;
 {
-
-	return (getsettty(p, SCARG(uap, fdes), HPUXTIOCGETP,
-	    SCARG(uap, cmarg)));
+	return (getsettty(p, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
-ohpux_stty(p, uap, retval)
+int
+compat_hpux_6x_stty(p, uap, retval)
 	struct proc *p;
-	struct ohpux_sgtty_args *uap;
+	struct compat_hpux_6x_stty_args *uap;
 	register_t *retval;
 {
-
-	return (getsettty(p, SCARG(uap, fdes), HPUXTIOCSETP,
-	    SCARG(uap, cmarg)));
+	return (getsettty(p, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }
 
 /*
  * Simplified version of ioctl() for use by
  * gtty/stty and TIOCGETP/TIOCSETP.
  */
+int
 getsettty(p, fdes, com, cmarg)
 	struct proc *p;
 	int fdes, com;
