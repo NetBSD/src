@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.16 2001/04/06 01:54:02 he Exp $
+# $NetBSD: mi,v 1.169.2.17 2001/04/21 19:21:11 he Exp $
 .
 ./altroot
 ./bin
@@ -1256,6 +1256,7 @@
 ./usr/share/zoneinfo/America/Dominica
 ./usr/share/zoneinfo/America/Edmonton
 ./usr/share/zoneinfo/America/El_Salvador
+./usr/share/zoneinfo/America/Eirunepe
 ./usr/share/zoneinfo/America/Ensenada
 ./usr/share/zoneinfo/America/Fort_Wayne
 ./usr/share/zoneinfo/America/Fortaleza
@@ -1282,6 +1283,9 @@
 ./usr/share/zoneinfo/America/Jamaica
 ./usr/share/zoneinfo/America/Jujuy
 ./usr/share/zoneinfo/America/Juneau
+./usr/share/zoneinfo/America/Kentucky
+./usr/share/zoneinfo/America/Kentucky/Louisville
+./usr/share/zoneinfo/America/Kentucky/Monticello
 ./usr/share/zoneinfo/America/Knox_IN
 ./usr/share/zoneinfo/America/La_Paz
 ./usr/share/zoneinfo/America/Lima
@@ -1317,7 +1321,9 @@
 ./usr/share/zoneinfo/America/Puerto_Rico
 ./usr/share/zoneinfo/America/Rainy_River
 ./usr/share/zoneinfo/America/Rankin_Inlet
+./usr/share/zoneinfo/America/Recife
 ./usr/share/zoneinfo/America/Regina
+./usr/share/zoneinfo/America/Rio_Branco
 ./usr/share/zoneinfo/America/Rosario
 ./usr/share/zoneinfo/America/Santiago
 ./usr/share/zoneinfo/America/Santo_Domingo
@@ -1350,6 +1356,7 @@
 ./usr/share/zoneinfo/Antarctica/Palmer
 ./usr/share/zoneinfo/Antarctica/South_Pole
 ./usr/share/zoneinfo/Antarctica/Syowa
+./usr/share/zoneinfo/Antarctica/Vostok
 ./usr/share/zoneinfo/Arctic
 ./usr/share/zoneinfo/Arctic/Longyearbyen
 ./usr/share/zoneinfo/Asia
@@ -1359,6 +1366,7 @@
 ./usr/share/zoneinfo/Asia/Anadyr
 ./usr/share/zoneinfo/Asia/Aqtau
 ./usr/share/zoneinfo/Asia/Aqtobe
+./usr/share/zoneinfo/Asia/Ashgabat
 ./usr/share/zoneinfo/Asia/Ashkhabad
 ./usr/share/zoneinfo/Asia/Baghdad
 ./usr/share/zoneinfo/Asia/Bahrain
@@ -1372,6 +1380,7 @@
 ./usr/share/zoneinfo/Asia/Colombo
 ./usr/share/zoneinfo/Asia/Dacca
 ./usr/share/zoneinfo/Asia/Damascus
+./usr/share/zoneinfo/Asia/Dhaka
 ./usr/share/zoneinfo/Asia/Dili
 ./usr/share/zoneinfo/Asia/Dubai
 ./usr/share/zoneinfo/Asia/Dushanbe
@@ -1419,6 +1428,7 @@
 ./usr/share/zoneinfo/Asia/Tehran
 ./usr/share/zoneinfo/Asia/Tel_Aviv
 ./usr/share/zoneinfo/Asia/Thimbu
+./usr/share/zoneinfo/Asia/Thimpu
 ./usr/share/zoneinfo/Asia/Tokyo
 ./usr/share/zoneinfo/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/Asia/Ulaanbaatar
@@ -1553,6 +1563,7 @@
 ./usr/share/zoneinfo/Europe/Minsk
 ./usr/share/zoneinfo/Europe/Monaco
 ./usr/share/zoneinfo/Europe/Moscow
+./usr/share/zoneinfo/Europe/Nicosia
 ./usr/share/zoneinfo/Europe/Oslo
 ./usr/share/zoneinfo/Europe/Paris
 ./usr/share/zoneinfo/Europe/Prague
