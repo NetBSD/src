@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.3 2000/12/26 00:30:51 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.4 2000/12/26 00:34:49 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.3 2000/12/26 00:30:51 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.4 2000/12/26 00:34:49 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -363,7 +363,23 @@ _Read_CTypeAsRune(fp)
 	for (x = 0; x < _CACHED_RUNES; ++x) {
 		if (x > len)
 			continue;
-		rl->__runetype[x] = new_ctype[1 + x];
+
+		if (new_ctype[1 + x] & _U)
+			rl->__runetype[x] |= _CTYPE_U;
+		if (new_ctype[1 + x] & _L)
+			rl->__runetype[x] |= _CTYPE_L;
+		if (new_ctype[1 + x] & _N)
+			rl->__runetype[x] |= _CTYPE_D;
+		if (new_ctype[1 + x] & _S)
+			rl->__runetype[x] |= _CTYPE_S;
+		if (new_ctype[1 + x] & _P)
+			rl->__runetype[x] |= _CTYPE_P;
+		if (new_ctype[1 + x] & _C)
+			rl->__runetype[x] |= _CTYPE_C;
+		if (new_ctype[1 + x] & _X)
+			rl->__runetype[x] |= _CTYPE_X;
+		if (new_ctype[1 + x] & _B)
+			rl->__runetype[x] |= _CTYPE_B;
 
 		/* XXX may fail on non-8bit encoding only */
 		rl->__mapupper[x] = ntohs(new_toupper[1 + x]);
