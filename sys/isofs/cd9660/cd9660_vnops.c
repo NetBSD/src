@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.54 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.55 1999/08/03 20:19:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -923,6 +923,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_read_desc, cd9660_read },		/* read */
 	{ &vop_write_desc, cd9660_write },		/* write */
 	{ &vop_lease_desc, cd9660_lease_check },	/* lease */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, cd9660_ioctl },		/* ioctl */
 	{ &vop_poll_desc, cd9660_poll },		/* poll */
 	{ &vop_revoke_desc, cd9660_revoke },		/* revoke */
@@ -976,6 +977,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
@@ -1026,6 +1028,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
