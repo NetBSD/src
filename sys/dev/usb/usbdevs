@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.27 1999/05/09 14:34:41 augustss Exp $
+$NetBSD: usbdevs,v 1.28 1999/05/11 09:56:32 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 
 /* Kensington products */
+product KENSINGTON COMFORT	0x4d01	Comfort
 product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
 
 /* Cherry products */
