@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.21 2003/08/07 16:33:42 agc Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.22 2003/08/11 15:17:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.21 2003/08/07 16:33:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.22 2003/08/11 15:17:31 itojun Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -110,13 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.21 2003/08/07 16:33:42 agc Exp $");
 #include <netiso/tp_var.h>
 #include <netiso/cons.h>
 #include <netiso/clnp.h>
-
-
-#ifdef TRUE
-#undef MNULL
-#undef FALSE
-#undef TRUE
-#endif
 
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.15 2003/08/07 16:33:39 agc Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.16 2003/08/11 15:17:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.15 2003/08/07 16:33:39 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.16 2003/08/11 15:17:30 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ tp_inputprep(m)
 
 	while (m->m_len < 1) {
 		/*
-		 * The "m_free" logic if( (m = m_free(m)) == MNULL ) return
+		 * The "m_free" logic if( (m = m_free(m)) == NULL ) return
 		 * (struct mbuf *)0; would cause a system crash if ever
 		 * executed. This logic will be executed if the first mbuf in
 		 * the chain only contains a CLNP header. The m_free routine
@@ -145,8 +145,8 @@ tp_inputprep(m)
 		 * calls "panic" if M_PKTHDR is not set. m_pullup is a cheap
 		 * way of keeping the head of the chain from being freed.
 		 */
-		if ((m = m_pullup(m, 1)) == MNULL)
-			return (MNULL);
+		if ((m = m_pullup(m, 1)) == NULL)
+			return (NULL);
 	}
 	if (((long) m->m_data) & 0x3) {
 		/*
@@ -171,7 +171,7 @@ tp_inputprep(m)
 	 * now pull up the whole tp header
 	 */
 	if (m->m_len < hdrlen) {
-		if ((m = m_pullup(m, hdrlen)) == MNULL) {
+		if ((m = m_pullup(m, hdrlen)) == NULL) {
 			IncStat(ts_recv_drop);
 			return (struct mbuf *) 0;
 		}
@@ -507,7 +507,7 @@ again:
 				chain_length++;
 			}
 #endif
-			if (n->m_next == MNULL) {
+			if (n->m_next == NULL) {
 				break;
 			}
 			n = n->m_next;
@@ -1587,7 +1587,7 @@ again:
 		 * prevent m_freem() after tp_driver() from throwing it all
 		 * away
 		 */
-		m = MNULL;
+		m = NULL;
 	}
 	IncStat(ts_tpdu_rcvd);
 
@@ -1597,7 +1597,7 @@ again:
 		       tpcb->tp_state, e.ev_number, m);
 		printf(" e.e_data %p\n", e.TPDU_ATTR(DT).e_data);
 		printf("takes_data 0x%x m_len 0x%x, tpdu_len 0x%x\n",
-		       takes_data, (m == MNULL) ? 0 : m->m_len, tpdu_len);
+		       takes_data, (m == NULL) ? 0 : m->m_len, tpdu_len);
 	}
 #endif
 
@@ -1636,7 +1636,7 @@ again:
 	 */
 
 	if (takes_data == 0) {
-		ASSERT(m != MNULL);
+		ASSERT(m != NULL);
 		/*
 		 * we already peeled off the prev. tp header so we can just
 		 * pull up some more and repeat
@@ -1656,7 +1656,7 @@ again:
 			goto again;
 		}
 	}
-	if (m != MNULL) {
+	if (m != NULL) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
 			printf("tp_input : m_freem(%p)\n", m);

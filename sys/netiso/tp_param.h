@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.13 2003/08/07 16:33:40 agc Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.14 2003/08/11 15:17:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -230,9 +230,6 @@ extern int      N_TPREF;
 #define 	TP_FORCE 	0x1
 #define 	TP_STRICT 	0x2
 
-#ifndef 	MNULL
-#define 	MNULL				(struct mbuf *)0
-#endif				/* MNULL */
 /*
  * if ../sys/mbuf.h gets MT_types up to 0x40, these will have to be changed:
  */
