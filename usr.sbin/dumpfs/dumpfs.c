@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.41 2003/12/29 14:25:07 dbj Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.42 2004/01/03 19:32:58 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.41 2003/12/29 14:25:07 dbj Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.42 2004/01/03 19:32:58 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,8 @@ union fsun {
 } fsun;
 #define	afs	fsun.fs
 
+uint16_t opostblsave[32*8];
+
 union {
 	struct cg cg;
 	char pad[MAXBSIZE];
@@ -82,8 +84,8 @@ union {
 #define opt_inodes	OPT_FLAG('i')
 #define opt_verbose	OPT_FLAG('v')
 #define DFLT_CHECK (opt_alt_super | opt_cg_info | opt_inodes | \
-	opt_cg_summary | opt_superblock)
-#define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info)
+    opt_cg_summary | opt_superblock)
+#define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info | opt_verbose)
 
 long	dev_bsize = 512;
 int	needswap, printold, is_ufs2;
@@ -92,29 +94,28 @@ int	Fflag;
 uint	opt_flags;
 
 int	dumpfs(const char *);
-int	print_superblock(struct fs *, const char *, int, off_t);
+int	print_superblock(struct fs *, uint16_t *, const char *, int, off_t);
 int	print_cgsum(const char *, int);
 int	print_cginfo(const char *, int);
-int	print_inodes(const char *, int);
+int	print_inodes(const char *, int, int, int);
 int	print_alt_super(const char *, int);
 int	dumpcg(const char *, int, int);
 int	main(int, char **);
 int	openpartition(const char *, int, char *, size_t);
 void	pbits(int, void *, int);
 void	usage(void);
-void	swap_cg(struct cg *);
 void	print_ufs1_inode(int, int, void *);
 void	print_ufs2_inode(int, int, void *);
-void	fix_superblock(struct fs *);
+void	fix_superblock(struct fs *, uint16_t *);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "Facimsv")) != -1)
+	while ((ch = getopt(argc, argv, "acimsvF")) != -1)
 		switch(ch) {
-		case 'a':	/* alternate suberblocks */
+		case 'a':	/* alternate superblocks */
 		case 'c':	/* cylinder group info */
 		case 'i':	/* actual inodes */
 		case 'm':	/* cylinder group summary */
@@ -140,7 +141,6 @@ main(int argc, char *argv[])
 
 	for (eval = 0; *argv; ++argv) {
 		eval |= dumpfs(*argv);
-		printf("\n");
 	}
 
 	exit(eval);
@@ -192,7 +192,7 @@ dumpfs(const char *name)
 		break;
 	}
 
-	fix_superblock(&afs);
+	fix_superblock(&afs, opostblsave);
 
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 
@@ -200,15 +200,15 @@ dumpfs(const char *name)
 	printf("file system: %s\n", name);
 
 	if (ISOPT(opt_superblock))
-		rval = print_superblock(&afs, name, fd, sblock_try[i]);
-	if (rval == 0 && ISOPT(opt_alt_super))
-		rval = print_alt_super(name, fd);
+		rval = print_superblock(&afs, opostblsave, name, fd, sblock_try[i]);
 	if (rval == 0 && ISOPT(opt_cg_summary))
 		rval = print_cgsum(name, fd);
+	if (rval == 0 && ISOPT(opt_alt_super))
+		rval = print_alt_super(name, fd);
 	if (rval == 0 && ISOPT(opt_cg_info))
 		rval = print_cginfo(name, fd);
-	if (rval == 0 && ISOPT(opt_inodes))
-		rval = print_inodes(name, fd);
+	else if (rval == 0 && ISOPT(opt_inodes))
+		rval = print_inodes(name, fd, 0, afs.fs_ncg);
 
     err:
 	if (fd != -1)
@@ -219,8 +219,20 @@ dumpfs(const char *name)
 }
 
 void
-fix_superblock(struct fs *fs)
+fix_superblock(struct fs *fs, uint16_t *opostbl)
 {
+	if (needswap &&
+	    ((bswap32(fs->fs_old_postblformat) == FS_42POSTBLFMT) ||
+	     (bswap32(fs->fs_old_postbloff) == offsetof(struct fs, fs_old_postbl_start)))) {
+		int i;
+		memcpy(opostbl, &fs->fs_old_postbl_start, 512);
+		for(i=0;i<256;i++)
+			opostbl[i] = bswap16(opostbl[i]);
+	} else if (!needswap &&
+	   ((fs->fs_old_postblformat == FS_42POSTBLFMT) ||
+	    (fs->fs_old_postbloff == offsetof(struct fs, fs_old_postbl_start)))) {
+		memcpy(opostbl, &fs->fs_old_postbl_start, 512);
+	}
 
 	if (needswap)
 		ffs_sb_swap(fs, fs);
@@ -228,6 +240,7 @@ fix_superblock(struct fs *fs)
 	printold = (fs->fs_magic == FS_UFS1_MAGIC &&
 		    (fs->fs_old_flags & FS_FLAGS_UPDATED) == 0);
 	if (printold) {
+		fs->fs_sblockloc = SBLOCK_UFS1;
 		fs->fs_flags = fs->fs_old_flags;
 		fs->fs_maxbsize = fs->fs_bsize;
 		fs->fs_time = fs->fs_old_time;
@@ -245,10 +258,12 @@ fix_superblock(struct fs *fs)
 }
 
 int
-print_superblock(struct fs *fs, const char *name, int fd, off_t sblock)
+print_superblock(struct fs *fs, uint16_t *opostbl,
+    const char *name, int fd, off_t sblock)
 {
 	int i, size;
 	time_t t;
+	int32_t fsflags;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (needswap)
@@ -259,14 +274,17 @@ print_superblock(struct fs *fs, const char *name, int fd, off_t sblock)
 	else
 		printf("endian\tlittle-endian\n");
 	t = fs->fs_time;
-	printf("location%lld\tmagic\t%x\ttime\t%s", (long long)sblock,
-	    fs->fs_magic, ctime(&t));
+	if ((sblock != SBLOCK_UFS1) || ISOPT(opt_alt_super))
+		printf("location %lld\t(-b %lld)\n",
+		    (long long)sblock, (long long)(sblock/dev_bsize));
+	printf("magic\t%x (UFS%d)\ttime\t%s",
+	    fs->fs_magic, is_ufs2+1, ctime(&t));
 
 	if (is_ufs2)
-		i = 4;
+		i = 5;
 	else {
 		i = 0;
-		if (!printold && fs->fs_old_postblformat != FS_42POSTBLFMT) {
+		if (fs->fs_old_postblformat != FS_42POSTBLFMT) {
 			i++;
 			if (fs->fs_old_inodefmt >= FS_44INODEFMT) {
 				int max;
@@ -278,70 +296,130 @@ print_superblock(struct fs *fs, const char *name, int fd, off_t sblock)
 				    || (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
 					i++;
 			}
+			if (fs->fs_old_flags & FS_FLAGS_UPDATED) {
+				i = 4;
+			}
 		}
 	}
-	printf("id\t[ %x %x ]\n", fs->fs_id[0], fs->fs_id[1]);
-	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\tsoftdep %sabled\n",
+	if (!printold || fs->fs_sblockloc != SBLOCK_UFS1 ||
+	    fs->fs_id[0] || fs->fs_id[1])
+		printf("superblock location\t%jd\tid\t[ %x %x ]\n",
+		    (intmax_t)fs->fs_sblockloc, fs->fs_id[0], fs->fs_id[1]);
+	printf("cylgrp\t%s\tinodes\t%s\tsblock\t%s\tfslevel %d\n",
 	    i < 1 ? "static" : "dynamic",
-	    i < 2 ? "4.2/4.3BSD" : i < 4 ? "4.4BSD" : "FFSv2", i,
-	    (fs->fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
+	    i < 2 ? "4.2/4.3BSD" : i < 5 ? "4.4BSD" : "FFSv2",
+			i < 4 ? "FFSv1" : "FFSv2", i);
 	printf("nbfree\t%lld\tndir\t%lld\tnifree\t%lld\tnffree\t%lld\n",
 	    (long long)fs->fs_cstotal.cs_nbfree,
 	    (long long)fs->fs_cstotal.cs_ndir,
 	    (long long)fs->fs_cstotal.cs_nifree,
 	    (long long)fs->fs_cstotal.cs_nffree);
-	printf("ncg\t%d\tsize\t%lld\tblocks\t%lld\n",
-	    fs->fs_ncg, (long long)fs->fs_size, (long long)fs->fs_dsize);
 	if (printold)
-		printf("ncyl\t%d\n", fs->fs_old_ncyl);
+		printf("ncg\t%d\tncyl\t%d\tsize\t%lld\tblocks\t%lld\n",
+		    fs->fs_ncg, fs->fs_old_ncyl, (long long)fs->fs_size, (long long)fs->fs_dsize);
+	else
+		printf("ncg\t%d\tsize\t%lld\tblocks\t%lld\n",
+		    fs->fs_ncg, (long long)fs->fs_size, (long long)fs->fs_dsize);
 	printf("bsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    fs->fs_bsize, fs->fs_bshift, fs->fs_bmask);
 	printf("fsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    fs->fs_fsize, fs->fs_fshift, fs->fs_fmask);
 	printf("frag\t%d\tshift\t%d\tfsbtodb\t%d\n",
 	    fs->fs_frag, fs->fs_fragshift, fs->fs_fsbtodb);
+	if (printold)
+		printf("cpg\t%d\t", fs->fs_old_cpg);
 	printf("bpg\t%d\tfpg\t%d\tipg\t%d\n",
 	    fs->fs_fpg / fs->fs_frag, fs->fs_fpg, fs->fs_ipg);
 	printf("minfree\t%d%%\toptim\t%s\tmaxcontig %d\tmaxbpg\t%d\n",
 	    fs->fs_minfree, fs->fs_optim == FS_OPTSPACE ? "space" : "time",
 	    fs->fs_maxcontig, fs->fs_maxbpg);
 	if (printold) {
-		printf("cpg\t%d\trotdelay %dms\trps\t%d\n",
-		    fs->fs_old_cpg, fs->fs_old_rotdelay, fs->fs_old_rps);
+		printf("rotdelay %dms\theadswitch %dus\ttrackseek %dus\trps\t%d\n",
+		    fs->fs_old_rotdelay, fs->fs_old_headswitch,
+		    fs->fs_old_trkseek, fs->fs_old_rps);
 		printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
 		    fs->fs_spare2, fs->fs_old_nsect, fs->fs_old_npsect,
 		    fs->fs_old_spc);
-		printf("trackskew %d\tinterleave %d\n",
-		    fs->fs_old_trackskew, fs->fs_old_interleave);
 	}
-	printf("symlinklen %d\tcontigsumsize %d\n",
-	    fs->fs_maxsymlinklen, fs->fs_contigsumsize);
+	printf("symlinklen %d\t", fs->fs_maxsymlinklen);
+	if (printold)
+		printf("trackskew %d\tinterleave %d\t",
+		    fs->fs_old_trackskew, fs->fs_old_interleave);
+	printf("contigsumsize %d\n", fs->fs_contigsumsize);
 	printf("maxfilesize 0x%016llx\n",
 	    (unsigned long long)fs->fs_maxfilesize);
-	printf("nindir\t%d\tinopb\t%d\n", fs->fs_nindir, fs->fs_inopb);
 	if (printold)
-		printf("nspf\t%d\n", fs->fs_old_nspf);
-	printf("avgfilesize %d\tavgfpdir %d\n",
-	    fs->fs_avgfilesize, fs->fs_avgfpdir);
+		printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n", fs->fs_nindir,
+		    fs->fs_inopb, fs->fs_old_nspf);
+	else 
+		printf("nindir\t%d\tinopb\t%d\n", fs->fs_nindir, fs->fs_inopb);
+	if (!printold || (fs->fs_avgfilesize > 0) || (fs->fs_avgfpdir > 0))
+		printf("avgfilesize %d\tavgfpdir %d\n",
+		    fs->fs_avgfilesize, fs->fs_avgfpdir);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
 	    fs->fs_sblkno, fs->fs_cblkno, fs->fs_iblkno, fs->fs_dblkno);
-	printf("sbsize\t%d\tcgsize\t%d\n", fs->fs_sbsize, fs->fs_cgsize);
+	printf("sbsize\t%d\tcgsize\t%d", fs->fs_sbsize, fs->fs_cgsize);
 	if (printold)
-		printf("offset\t%d\tmask\t0x%08x\n",
+		printf("\toffset\t%d\tmask\t0x%08x",
 		    fs->fs_old_cgoffset, fs->fs_old_cgmask);
-	printf("csaddr\t%lld\tcssize %d\n",
+	printf("\ncsaddr\t%lld\tcssize\t%d",
 	    (long long)fs->fs_csaddr, fs->fs_cssize);
 	if (printold)
-		printf("shift\t%d\tmask\t0x%08x\n",
-		    fs->fs_spare1[0], fs->fs_spare1[1]);
-	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
+		printf("\tshift\t%d\tmask\t0x%08x",
+		    fs->fs_old_csshift, fs->fs_old_csmask);
+	printf("\ncgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
 	    fs->fs_cgrotor, fs->fs_fmod, fs->fs_ronly, fs->fs_clean);
+	printf("flags\t");
+	if (fs->fs_flags == 0)
+		printf("none");
+	if (fs->fs_flags & FS_UNCLEAN)
+		printf("unclean ");
+	if (fs->fs_flags & FS_DOSOFTDEP)
+		printf("soft-updates ");
+	if (fs->fs_flags & FS_NEEDSFSCK)
+		printf("needs fsck run ");
+	if (fs->fs_flags & FS_INDEXDIRS)
+		printf("indexed directories ");
+	if (fs->fs_flags & FS_ACLS)
+		printf("acls ");
+	if (fs->fs_flags & FS_MULTILABEL)
+		printf("multilabel ");
+	if (fs->fs_flags & FS_FLAGS_UPDATED)
+		printf("fs_flags expanded ");
+	fsflags = fs->fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_NEEDSFSCK | FS_INDEXDIRS |
+			FS_ACLS | FS_MULTILABEL | FS_FLAGS_UPDATED);
+	if (fsflags != 0)
+		printf("unknown flags (%#x)", fsflags);
+	printf("\nfsmnt\t%s\n", fs->fs_fsmnt);
+	if (!printold)
+		printf("volname\t%s\tswuid\t%ju\n",
+		    fs->fs_volname, (uintmax_t)fs->fs_swuid);
 	if (printold) {
 		if (fs->fs_old_cpc != 0)
 			printf("blocks available in each of %d rotational "
-			       "positions", fs->fs_old_nrpos);
+			       "positions\n", fs->fs_old_nrpos);
 		else
-			printf("(no rotational position table)\n");
+			printf("(no rotational position table)\n\n");
+		if (ISOPT(opt_verbose)) {
+			int c, i, j, k;
+			for (c = 0; c < fs->fs_old_cpc; c++) {
+				printf("cylinder number %d:", c);
+				for (i = 0; i < fs->fs_old_nrpos; i++) {
+					if (old_fs_postbl(&afs, c, opostbl)[i] == -1)
+						continue;
+					printf("\n   position %d:\t", i);
+					for (j = old_fs_postbl(&afs, c, opostbl)[i], k = 1; ;
+							 j += old_fs_rotbl(&afs)[j], k++) {
+						printf("%5d", j);
+						if (k % 12 == 0)
+							printf("\n\t\t");
+						if (old_fs_rotbl(&afs)[j] == 0)
+							break;
+					}
+				}
+				printf("\n");
+			}
+		}
 	}
 
 	return 0;
@@ -368,7 +446,7 @@ print_cgsum(const char *name, int fd)
 			ffs_csum_swap(ccsp, ccsp, size);
 	}
 
-	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
+	printf("cs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
 	for (i = 0; i < afs.fs_ncg; i++) {
 		struct csum *cs = &afs.fs_cs(&afs, i);
 		if (i && i % 4 == 0)
@@ -376,16 +454,13 @@ print_cgsum(const char *name, int fd)
 		printf("(%d,%d,%d,%d) ",
 		    cs->cs_nbfree, cs->cs_ndir, cs->cs_nifree, cs->cs_nffree);
 	}
-	if (i % 4 == 0)
-		printf("\n");
-
+	printf("\n");
 	if (printold && (afs.fs_old_ncyl % afs.fs_old_cpg)) {
 		printf("cylinders in last group %d\n",
 		    i = afs.fs_old_ncyl % afs.fs_old_cpg);
 		printf("blocks in last group %d\n",
 		    i * afs.fs_old_spc / (afs.fs_old_nspf << afs.fs_fragshift));
 	}
-	printf("\n");
 	free(afs.fs_csp);
 	afs.fs_csp = NULL;
 
@@ -398,16 +473,23 @@ print_alt_super(const char *name, int fd)
 	union fsun alt;
 	int i;
 	off_t loc;
+	uint16_t alt_opostblsave[32*8];
+	int save_printold;
 
 	for (i = 0; i < afs.fs_ncg; i++) {
-		printf("\nalternate %d:\n", i);
-		loc = fsbtodb(&afs, cgtod(&afs, i)) * dev_bsize - afs.fs_bsize;
+		loc = fsbtodb(&afs, cgsblock(&afs, i)) * dev_bsize;
+		printf("\nalternate %d\n", i);
 		if (pread(fd, &alt, sizeof alt, loc) != sizeof alt) {
 			warnx("%s: error reading alt %d", name, i);
 			return (1);
 		}
-		if (print_superblock(&alt.fs, name, fd, loc))
+		save_printold = printold;
+		fix_superblock(&alt.fs, alt_opostblsave);
+		if (print_superblock(&alt.fs, alt_opostblsave, name, fd, loc)) {
+			printold = save_printold;
 			return 1;
+		}
+		printold = save_printold;
 	}
 	return 0;
 }
@@ -417,14 +499,19 @@ print_cginfo(const char *name, int fd)
 {
 	int i;
 
-	for (i = 0; i < afs.fs_ncg; i++)
+	printf("\n");
+	for (i = 0; i < afs.fs_ncg; i++) {
+		printf("\n");
 		if (dumpcg(name, fd, i))
 			return 1;
+		if (ISOPT(opt_inodes) && print_inodes(name, fd, i, 1))
+			return 1;
+	}
 	return 0;
 }
 
 int
-print_inodes(const char *name, int fd)
+print_inodes(const char *name, int fd, int c, int n)
 {
 	void *ino_buf = malloc(afs.fs_bsize);
 	void (*print_inode)(int, int, void *);
@@ -435,7 +522,7 @@ print_inodes(const char *name, int fd)
 
 	print_inode = is_ufs2 ? print_ufs2_inode : print_ufs1_inode;
 
-	for (inum = 0; inum < afs.fs_ncg * afs.fs_ipg; inum += afs.fs_inopb) {
+	for (inum = c * afs.fs_ipg ; inum < (c+n) * afs.fs_ipg; inum += afs.fs_inopb) {
 		if (pread(fd, ino_buf, afs.fs_bsize,
 		    ino_to_fsba(&afs, inum) * afs.fs_fsize) != afs.fs_bsize)
 			return 1;
@@ -454,7 +541,7 @@ dumpcg(const char *name, int fd, int c)
 	int i, j;
 	time_t t;
 
-	printf("\ncg %d:\n", c);
+	printf("cg %d:\n", c);
 	if ((cur = lseek(fd, (off_t)(fsbtodb(&afs, cgtod(&afs, c))) * dev_bsize,
 	    SEEK_SET)) == (off_t)-1)
 		return (1);
@@ -464,13 +551,21 @@ dumpcg(const char *name, int fd, int c)
 	}
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &afs);
-	t = acg.cg_time;
+	if (printold)
+		t = acg.cg_old_time;
+	else
+		t = acg.cg_time;
 	printf("magic\t%x\ttell\t%llx\ttime\t%s",
 	    afs.fs_old_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
 	    (long long)cur, ctime(&t));
-	printf("cgx\t%d\tniblk\t%d\tndblk\t%d\n",
-	    acg.cg_cgx, acg.cg_niblk, acg.cg_ndblk);
+	if (printold)
+		printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
+		    acg.cg_cgx, acg.cg_old_ncyl, acg.cg_old_niblk,
+		    acg.cg_ndblk);
+	else
+		printf("cgx\t%d\tniblk\t%d\tndblk\t%d\n",
+		    acg.cg_cgx, acg.cg_niblk, acg.cg_ndblk);
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    acg.cg_cs.cs_nbfree, acg.cg_cs.cs_ndir,
 	    acg.cg_cs.cs_nifree, acg.cg_cs.cs_nffree);
@@ -497,9 +592,24 @@ dumpcg(const char *name, int fd, int c)
 	} else
 		printf("\n");
 	printf("iused:\t");
-	pbits(c * afs.fs_ipg, cg_inosused(&acg, 0), afs.fs_ipg);
+	pbits(0 * c * afs.fs_ipg, cg_inosused(&acg, 0), afs.fs_ipg);
 	printf("free:\t");
 	pbits(0, cg_blksfree(&acg, 0), afs.fs_fpg);
+	if (printold && ISOPT(opt_verbose)) {
+		printf("b:\n");
+		for (i = 0; i < afs.fs_old_cpg; i++) {
+			if (old_cg_blktot(&acg, 0)[i] == 0)
+				continue;
+			printf("   c%d:\t(%d)\t", i, old_cg_blktot(&acg, 0)[i]);
+			for (j = 0; j < afs.fs_old_nrpos; j++) {
+				if (afs.fs_old_cpc > 0 &&
+						old_fs_postbl(&afs, i % afs.fs_old_cpc, opostblsave)[j] == -1)
+					continue;
+				printf(" %d", old_cg_blks(&afs, &acg, i, 0)[j]);
+			}
+			printf("\n");
+		}
+	}
 	return (0);
 }
 
@@ -510,8 +620,16 @@ print_ufs1_inode(int inum, int i_off, void *ibuf)
 
 	i += i_off;
 
-	if (inum == 0)
-		printf("\n   inode:   mode  nlink                 size"
+	if (needswap)
+		ffs_dinode1_swap(i,i);
+
+	if (afs.fs_old_inodefmt < FS_44INODEFMT) {
+		i->di_uid = i->di_ouid;
+		i->di_gid = i->di_ogid;
+	}
+
+	if (inum % afs.fs_ipg == 0)
+		printf("   inode:   mode  nlink                 size"
 		    "      ctime.nsec         flags     blocks"
 		    " generation      uid        gid\n");
 	if (i->di_mode == 0 && i->di_nlink == 0 && !ISOPT(opt_verbose))
@@ -529,8 +647,11 @@ print_ufs2_inode(int inum, int i_off, void *ibuf)
 
 	i += i_off;
 
-	if (inum == 0)
-		printf("\n   inode:   mode  nlink                 size"
+	if (needswap)
+		ffs_dinode2_swap(i,i);
+
+	if (inum % afs.fs_ipg == 0)
+		printf("   inode:   mode  nlink                 size"
 		    "      ctime.nsec         flags     blocks"
 		    " generation      uid        gid\n");
 
