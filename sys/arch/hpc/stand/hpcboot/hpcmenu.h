@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.2 2001/03/02 18:26:37 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.3 2001/03/22 18:26:46 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,11 @@ public:
 		BOOL	load_debug_info;
 		BOOL	safety_message;
 	};
+	struct support_status {
+		u_int32_t cpu, machine;
+		const TCHAR *cause;
+	};
+	static struct support_status _unsupported[];
 
 	RootWindow		*_root;
 	MainTabWindow		*_main;
@@ -137,7 +142,6 @@ public:
 private:
 	static HpcMenuInterface *_instance;
 
-	BOOL _find_pref_dir(TCHAR *);
 	void _set_default_pref(void) {
 		// set default.
 		_pref._magic		= HPCBOOT_MAGIC;
@@ -195,10 +199,7 @@ public:
 		_boot_hook = arg;
 	}
 	// call architecture dependent boot function.
-	void boot(void) {
-		if (_boot_hook.func)
-			_boot_hook.func(_boot_hook.arg, _pref);
-	}
+	void boot(void);
 	// Progress bar.
 	void progress(void);
 

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.3 2001/03/02 18:26:37 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.4 2001/03/22 18:26:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <framebuffer.h>
 #include <console.h>
 
+static BOOL _find_pref_dir(TCHAR *);
 //
 // Main window
 //
@@ -234,6 +235,11 @@ public:
 //
 class ConsoleTabWindow : public TabWindow
 {
+private:
+	HWND _filename_edit;
+	BOOL _filesave;
+	HANDLE _logfile;
+	BOOL _open_log_file(void);
 public:
 	HWND _edit;
 
@@ -241,68 +247,46 @@ public:
 	explicit ConsoleTabWindow(TabWindowBase &base, int id)
 		: TabWindow(base, id, TEXT("WConsole")) {
 		_edit = NULL;
+		_logfile = INVALID_HANDLE_VALUE;
 	}
-	virtual ~ConsoleTabWindow(void) { /* NO-OP */ }
-	virtual void init(HWND w) {
-		// at this time _window is NULL.
-		// use argument of window procedure.
-		TabWindow::init(w);
-		_edit = GetDlgItem(w, IDC_CONS_EDIT);
-		MoveWindow(_edit, 5, 20, _rect.right - _rect.left - 10,
-			   _rect.bottom - _rect.top - 20, TRUE);
-		Edit_FmtLines(_edit, TRUE);
+	virtual ~ConsoleTabWindow(void) {
+		if (_logfile != INVALID_HANDLE_VALUE)
+			CloseHandle(_logfile);
 	}
-	virtual void command(int id, int msg) {
-		HpcMenuInterface &menu = HpcMenuInterface::Instance();
-		struct HpcMenuInterface::cons_hook_args *hook = 0;
-		int bit;
+	virtual void init(HWND);
+	virtual void command(int, int);
 
-		switch(id) {
-		case IDC_CONS_CHK0:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK1:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK2:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK3:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK4:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK5:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK6:
-			/* FALLTHROUGH */
-		case IDC_CONS_CHK7:
-			bit = 1 << (id - IDC_CONS_CHK_);
-			if (SendDlgItemMessage(_window, id, BM_GETCHECK, 0, 0))
-				menu._cons_parameter |= bit;
-			else
-				menu._cons_parameter &= ~bit;
-			break;
-		case IDC_CONS_BTN0:
-			/* FALLTHROUGH */
-		case IDC_CONS_BTN1:
-			/* FALLTHROUGH */
-		case IDC_CONS_BTN2:
-			/* FALLTHROUGH */
-		case IDC_CONS_BTN3:
-			hook = &menu._cons_hook[id - IDC_CONS_BTN_];
-			if (hook->func)
-				hook->func(hook->arg, menu._cons_parameter);
-			
-			break;
-		}
-	}
-
-	void print(TCHAR *buf);
+	void print(TCHAR *buf, BOOL = FALSE);
 };
 
 void
-ConsoleTabWindow::print(TCHAR *buf)
+ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 {
 	int cr;
 	TCHAR *p;
 
+	if (force_display)
+		goto display;
+
+	if (_filesave) {
+		if (_logfile == INVALID_HANDLE_VALUE && !_open_log_file()) {
+			_filesave = FALSE;
+			_set_check(IDC_CONS_FILESAVE, _filesave);
+			EnableWindow(_filename_edit, _filesave);
+			goto display;
+		}
+		DWORD cnt;
+		char c;
+		for (int i = 0; *buf != TEXT('\0'); buf++) {
+			c = *buf & 0x7f;
+			WriteFile(_logfile, &c, 1, &cnt, 0);
+		}
+
+		FlushFileBuffers(_logfile);
+		return;
+	}
+
+ display:
 	// count # of '\n'
 	for (cr = 0, p = buf; p = wcschr(p, TEXT('\n')); cr++, p++)
 		;
@@ -336,6 +320,94 @@ ConsoleTabWindow::print(TCHAR *buf)
 	UpdateWindow(_edit);
 
 	free(p);
+}
+
+void
+ConsoleTabWindow::init(HWND w)
+{
+	// at this time _window is NULL.
+	// use argument of window procedure.
+	TabWindow::init(w);
+	_edit = GetDlgItem(w, IDC_CONS_EDIT);
+	MoveWindow(_edit, 5, 60, _rect.right - _rect.left - 10,
+		   _rect.bottom - _rect.top - 60, TRUE);
+	Edit_FmtLines(_edit, TRUE);
+	
+	// log file.
+	_filename_edit = GetDlgItem(w, IDC_CONS_FILENAME);
+	_filesave = FALSE;
+	Edit_SetText(_filename_edit, L"bootlog.txt");
+	EnableWindow(_filename_edit, _filesave);
+}
+
+void
+ConsoleTabWindow::command(int id, int msg)
+{
+	HpcMenuInterface &menu = HpcMenuInterface::Instance();
+	struct HpcMenuInterface::cons_hook_args *hook = 0;
+	int bit;
+
+	switch(id) {
+	case IDC_CONS_FILESAVE:
+		_filesave = _is_checked(IDC_CONS_FILESAVE);
+		EnableWindow(_filename_edit, _filesave);
+		break;
+	case IDC_CONS_CHK0:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK1:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK2:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK3:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK4:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK5:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK6:
+		/* FALLTHROUGH */
+	case IDC_CONS_CHK7:
+		bit = 1 << (id - IDC_CONS_CHK_);
+		if (SendDlgItemMessage(_window, id, BM_GETCHECK, 0, 0))
+			menu._cons_parameter |= bit;
+		else
+			menu._cons_parameter &= ~bit;
+		break;
+	case IDC_CONS_BTN0:
+		/* FALLTHROUGH */
+	case IDC_CONS_BTN1:
+		/* FALLTHROUGH */
+	case IDC_CONS_BTN2:
+		/* FALLTHROUGH */
+	case IDC_CONS_BTN3:
+		hook = &menu._cons_hook[id - IDC_CONS_BTN_];
+		if (hook->func)
+			hook->func(hook->arg, menu._cons_parameter);
+			
+		break;
+	}
+}
+
+BOOL
+ConsoleTabWindow::_open_log_file()
+{
+	TCHAR path[MAX_PATH];
+	TCHAR filename[MAX_PATH];
+	TCHAR filepath[MAX_PATH];
+	
+	if (!_find_pref_dir(path))
+		print(L"couldn't find temporary directory.\n", TRUE);
+	Edit_GetText(_filename_edit, filename, MAX_PATH);
+	wsprintf(filepath, TEXT("\\%s\\%s"), path, filename);
+	_logfile = CreateFile(filepath, GENERIC_WRITE, 0, 0,
+			      CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+			      0);
+	if (_logfile == INVALID_HANDLE_VALUE)
+		return FALSE;
+	wsprintf(path, TEXT("log file is %s\n"), filepath);
+	print(path, TRUE);
+	
+	return TRUE;
 }
 
 TabWindow *
@@ -373,7 +445,7 @@ TabWindowBase::boot(int id)
 HpcMenuInterface *HpcMenuInterface::_instance = 0;
 
 HpcMenuInterface &
-HpcMenuInterface::Instance(void)
+HpcMenuInterface::Instance()
 {
 	if (!_instance)
 		_instance = new HpcMenuInterface();
@@ -381,7 +453,7 @@ HpcMenuInterface::Instance(void)
 }
 
 void
-HpcMenuInterface::Destroy(void)
+HpcMenuInterface::Destroy()
 {
 	if (_instance)
 		delete _instance;
@@ -395,7 +467,7 @@ HpcMenuInterface::print(TCHAR *buf)
 }
 
 void
-HpcMenuInterface::get_options(void)
+HpcMenuInterface::get_options()
 {
 	_main->get();
 	_option->get();
@@ -419,13 +491,13 @@ HpcMenuInterface::dir(int i)
 }
 
 int
-HpcMenuInterface::dir_default(void)
+HpcMenuInterface::dir_default()
 {
 	return _pref.dir_user ? IDS_DIR_SEQ(IDS_DIR_USER_DEFINED) : 0;
 }
 
 BOOL
-HpcMenuInterface::load(void)
+HpcMenuInterface::load()
 {
 	TCHAR path[MAX_PATH];
 
@@ -458,7 +530,7 @@ HpcMenuInterface::load(void)
 }
 
 BOOL
-HpcMenuInterface::save(void)
+HpcMenuInterface::save()
 {
 	TCHAR path[MAX_PATH];
   
@@ -474,30 +546,6 @@ HpcMenuInterface::save(void)
 		return cnt == _pref._size;
 	}
 
-	return FALSE;
-}
-
-BOOL
-HpcMenuInterface::_find_pref_dir(TCHAR *path)
-{
-	WIN32_FIND_DATA fd;
-	HANDLE find;
-
-	lstrcpy(path, TEXT("\\*.*"));
-	find = FindFirstFile(path, &fd);
-
-	if (find != INVALID_HANDLE_VALUE) {
-		do {
-			int attr = fd.dwFileAttributes;
-			if ((attr & FILE_ATTRIBUTE_DIRECTORY) &&
-			    (attr & FILE_ATTRIBUTE_TEMPORARY)) {
-				wcscpy(path, fd.cFileName);
-				FindClose(find);
-				return TRUE;
-			}
-		} while (FindNextFile(find, &fd));
-	}
-	FindClose(find);
 	return FALSE;
 }
 
@@ -596,7 +644,57 @@ HpcMenuInterface::setup_bootinfo(struct bootinfo &bi)
 
 // Progress bar
 void
-HpcMenuInterface::progress(void)
+HpcMenuInterface::progress()
 {
 	SendMessage(_root->_progress_bar->_window, PBM_STEPIT, 0, 0);
+}
+
+void
+HpcMenuInterface::boot()
+{
+	struct support_status *tab = _unsupported;
+	u_int32_t cpu = _pref.platid_hi;
+	u_int32_t machine = _pref.platid_lo;
+
+	if (_pref.safety_message)
+		for (; tab->cpu; tab++) {
+			if (tab->cpu == cpu && tab->machine == machine) {
+				MessageBox(_root->_window,
+					   tab->cause ? tab->cause :
+					   L"not supported yet.",
+					   TEXT("BOOT FAILED"), 0);
+				return;
+			}
+		}
+
+	if (_boot_hook.func)
+		_boot_hook.func(_boot_hook.arg, _pref);
+}
+
+//
+// Common utility
+//
+static BOOL
+_find_pref_dir(TCHAR *path)
+{
+	WIN32_FIND_DATA fd;
+	HANDLE find;
+
+	lstrcpy(path, TEXT("\\*.*"));
+	find = FindFirstFile(path, &fd);
+
+	if (find != INVALID_HANDLE_VALUE) {
+		do {
+			int attr = fd.dwFileAttributes;
+			if ((attr & FILE_ATTRIBUTE_DIRECTORY) &&
+			    (attr & FILE_ATTRIBUTE_TEMPORARY)) {
+				wcscpy(path, fd.cFileName);
+				FindClose(find);
+				return TRUE;
+			}
+		} while (FindNextFile(find, &fd));
+	}
+	FindClose(find);
+
+	return FALSE;
 }

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.1 2001/02/09 18:35:12 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.2 2001/03/22 18:26:46 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,6 +107,8 @@
 #define IDC_CONS_BTN2		312
 #define IDC_CONS_BTN3		313
 #define IDC_CONS_EDIT		320
+#define IDC_CONS_FILESAVE	321
+#define IDC_CONS_FILENAME	322
 
 // String table.
 #define IDS_APP_TITLE			10000
