@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.38 1994/12/14 19:07:12 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.39 1995/02/03 11:35:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -924,14 +924,6 @@ issignal(p)
 			}
 
 			/*
-			 * If the traced bit got turned off, go back up
-			 * to the top to rescan signals.  This ensures
-			 * that p_sig* and ps_sigact are consistent.
-			 */
-			if ((p->p_flag & P_TRACED) == 0)
-				continue;
-
-			/*
 			 * If parent wants us to take the signal,
 			 * then it will leave it in p->p_xstat;
 			 * otherwise we just look for signals again.
@@ -947,7 +939,8 @@ issignal(p)
 			 */
 			mask = sigmask(signum);
 			p->p_siglist |= mask;
-			if (p->p_sigmask & mask)
+			if ((p->p_flag & P_TRACED) == 0 ||
+			    (p->p_sigmask & mask) != 0)
 				continue;
 		}
 
