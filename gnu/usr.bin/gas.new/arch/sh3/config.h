@@ -81,9 +81,14 @@
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */
+#ifdef DEFAULT_ELF
+/* #define DEFAULT_EMULATION "shbelf" */
+#define EMULATIONS &shlelf, &shbelf, &shelf,
+#define USE_EMULATIONS 1
+#else
 #define DEFAULT_EMULATION ""
-#define EMULATIONS 
-/* #undef USE_EMULATIONS */
+#define EMULATIONS
+#endif
 /* #undef OBJ_MAYBE_AOUT */
 /* #undef OBJ_MAYBE_BOUT */
 /* #undef OBJ_MAYBE_COFF */
