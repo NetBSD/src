@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.18 1994/11/03 20:12:10 mycroft Exp $
+#	$NetBSD: KICKME,v 1.19 1994/11/03 22:18:41 mycroft Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -112,7 +112,7 @@ scsibus* at aha?
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt*	at eisa? slot ? irq ?
 #scsibus* at bt?
-#ncr*	at pci? bus ? dev ? function ?	# NCR 538XX SCSI controllers
+#ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
