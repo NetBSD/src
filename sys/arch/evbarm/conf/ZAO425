@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.5 2003/05/31 23:57:46 ichiro Exp $
+#	$NetBSD: ZAO425,v 1.6 2003/06/01 01:52:40 ichiro Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -155,8 +155,8 @@ ixpclk*		at ixpsip? addr 0xc8005000 size 0x30
 ixdpled*	at ixpsip? addr 0x52000000 size 0x1000
 
 # On-board device support
-ixpcom0		at ixpsip? addr 0xc8000000 size 0x1000
-ixpcom1		at ixpsip? addr 0xc8001000 size 0x1000
+ixpcom0		at ixpsip? addr 0xc8000000 size 0x1000 index 0
+ixpcom1		at ixpsip? addr 0xc8001000 size 0x1000 index 1
 
 # IXP425 fast bus
 ixpio0		at mainbus?
