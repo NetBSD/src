@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.118 2004/04/18 20:42:19 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.119 2004/04/18 21:34:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -119,8 +119,8 @@ struct  tarstats {
 	int nskipped;
 } tarstats;
 
-static int extract_file(char *path);
-static int extract_dist(void);
+static int extract_file(int, int, char *path);
+static int extract_dist(int);
 int	distribution_sets_exist_p(const char *path);
 static int check_for(unsigned int mode, const char *pathname);
 
@@ -684,7 +684,7 @@ ask_verbose_dist(void)
 }
 
 static int
-extract_file(char *path)
+extract_file(int set, int update, char *path)
 {
 	char *owd;
 	int   tarexit;
@@ -702,7 +702,11 @@ extract_file(char *path)
 
 	tarstats.nfound++;	
 	/* cd to the target root. */
-	target_chdir_or_die("/");	
+	if (update && set == SET_ETC) {
+		make_target_dir("/.sysinst");
+		target_chdir_or_die("/.sysinst");
+	} else
+		target_chdir_or_die("/");
 
 	/* now extract set files files into "./". */
 	if (verbose == 1)
@@ -726,6 +730,11 @@ extract_file(char *path)
 		return yesno;
 	}
 
+	if (update && set == SET_ETC) {
+		run_program(RUN_DISPLAY | RUN_CHROOT,
+			"/etc/postinstall -s /.sysinst -d / fix");
+	}
+
 	tarstats.nsuccess++;
 	return 2;
 }
@@ -738,7 +747,7 @@ extract_file(char *path)
  */
 
 static int
-extract_dist(void)
+extract_dist(int update)
 {
 	char fname[STRSIZE];
 	distinfo *list;
@@ -762,7 +771,7 @@ extract_dist(void)
 		    ext_dir, list->name, dist_postfix);
 
 		/* if extraction failed and user aborted, punt. */
-		extracted = extract_file(fname);
+		extracted = extract_file(list->set, update, fname);
 		if (extracted == 2)
 			sets_installed |= list->set;
 	}
@@ -792,7 +801,7 @@ extract_dist(void)
  * success_msg and failure_msg must both be 0-adic messages.
  */
 int
-get_and_unpack_sets(msg success_msg, msg failure_msg)
+get_and_unpack_sets(int update, msg success_msg, msg failure_msg)
 {
 	int got_dist;
 
@@ -823,7 +832,7 @@ get_and_unpack_sets(msg success_msg, msg failure_msg)
 	}
 
 	/* Extract the distribution, abort on errors. */
-	if (extract_dist())
+	if (extract_dist(update))
 		return 1;
 
 	/* Configure the system */
