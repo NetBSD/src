@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pci_machdep.c,v 1.1 1994/08/09 00:47:51 mycroft Exp $
+ *	$Id: pci_machdep.c,v 1.2 1994/08/10 04:37:53 mycroft Exp $
  */
 
 /*
@@ -199,7 +199,7 @@ pci_mode_detect()
 	 * for mode 2 also.
 	 *
 	 * XXX
-	 * This should really be done using the PCI BIOS, if possible.
+	 * This should really be done using the PCI BIOS.
 	 */
 
 	outb(PCI_MODE2_ENABLE_REG, 0);
@@ -324,8 +324,10 @@ pci_map_mem(tag, reg, vap, pap)
 /*
  * XXX
  * Different machines map the PCI interrupts to ISA/EISA interrupts in
- * different ways.  Unless there is a way to ask the BIOS or the bridge, this
- * info has to be statically configured in the kernel config file.
+ * different ways.  If the interrupts weren't confgiured on the devices
+ * at boot time, then we have to rely on this statically configured
+ * information to do the mapping.  In theory, we should never need this,
+ * but we're talking about Intel here.
  */
 #ifndef PCI_INT_A
 #define	PCI_INT_A	IRQUNK
