@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.28 1999/08/14 03:47:07 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.29 1999/08/14 23:34:18 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -682,13 +682,6 @@ raidioctl(dev, cmd, data, flag, p)
 	int     error = 0;
 	int     part, pmask;
 	struct raid_softc *rs;
-#if 0
-	int     r, c;
-#endif
-	/* struct raid_ioctl *ccio = (struct ccd_ioctl *)data; */
-
-	/* struct ccdbuf *cbp; */
-	/* struct raidbuf *raidbp; */
 	RF_Config_t *k_cfg, *u_cfg;
 	u_char *specific_buf;
 	int retcode = 0;
@@ -1035,14 +1028,6 @@ raidioctl(dev, cmd, data, flag, p)
 		splx(s);
 		return(retcode);
 
-		/* issue a test-unit-ready through raidframe to the indicated
-		 * device */
-#if 0				/* XXX not supported yet (ever?) */
-	case RAIDFRAME_TUR:
-		/* debug only */
-		retcode = rf_SCSI_DoTUR(0, 0, 0, 0, *(dev_t *) data);
-		return (retcode);
-#endif
 	case RAIDFRAME_GET_INFO:
 		{
 			RF_Raid_t *raid = raidPtrs[unit];
@@ -1424,11 +1409,6 @@ rf_GetSpareTableFromDaemon(req)
 	while (!rf_sparet_resp_queue) {
 		tsleep(&rf_sparet_resp_queue, PRIBIO,
 		    "raidframe getsparetable", 0);
-#if 0
-		mpsleep(&rf_sparet_resp_queue, PZERO, "sparet resp", 0, 
-			(void *) simple_lock_addr(rf_sparet_wait_mutex), 
-			MS_LOCK_SIMPLE);
-#endif
 	}
 	req = rf_sparet_resp_queue;
 	rf_sparet_resp_queue = req->next;
@@ -1809,20 +1789,6 @@ InitBP(
 	bp->b_vp = b_vp;
 
 }
-/* Extras... */
-
-#if 0
-int 
-rf_GetSpareTableFromDaemon(req)
-	RF_SparetWait_t *req;
-{
-	int     retcode = 1;
-	printf("This is supposed to do something useful!!\n");	/* XXX */
-
-	return (retcode);
-
-}
-#endif
 
 static void
 raidgetdefaultlabel(raidPtr, rs, lp)
