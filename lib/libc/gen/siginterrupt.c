@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)siginterrupt.c	5.5 (Berkeley) 6/1/90";*/
-static char *rcsid = "$Id: siginterrupt.c,v 1.3 1993/08/26 00:45:06 jtc Exp $";
+static char *rcsid = "$Id: siginterrupt.c,v 1.4 1993/11/30 21:21:42 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -45,17 +45,17 @@ static char *rcsid = "$Id: siginterrupt.c,v 1.3 1993/08/26 00:45:06 jtc Exp $";
 siginterrupt(sig, flag)
 	int sig, flag;
 {
-	extern sigset_t _sigintr;
+	extern sigset_t __sigintr;
 	struct sigaction sa;
 	int ret;
 
 	if ((ret = sigaction(sig, (struct sigaction *)0, &sa)) < 0)
 		return (ret);
 	if (flag) {
-		sigaddset(&_sigintr, sig);
+		sigaddset(&__sigintr, sig);
 		sa.sa_flags &= ~SA_RESTART;
 	} else {
-		sigdelset(&_sigintr, sig);
+		sigdelset(&__sigintr, sig);
 		sa.sa_flags |= SA_RESTART;
 	}
 	return (sigaction(sig, &sa, (struct sigaction *)0));
