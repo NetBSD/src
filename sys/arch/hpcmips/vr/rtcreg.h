@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.5 2001/09/30 11:24:07 sato Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.6 2001/12/24 01:22:50 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -47,10 +47,14 @@
 #define	MREF		1
 #define	DREF		1
 
+#ifndef YBASE
 #define YBASE		1900
+#endif
 
 #define EPOCHOFF	0			/* epoch offset */
+#ifndef EPOCHYEAR
 #define EPOCHYEAR	1850	/* XXX */	/* WINCE epoch year */
+#endif
 #define EPOCHMONTH	1			/* WINCE epoch month of year */
 #define EPOCHDATE	1			/* WINCE epoch date of month */
 
