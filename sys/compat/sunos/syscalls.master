@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.51 1999/02/09 20:29:24 christos Exp $
+	$NetBSD: syscalls.master,v 1.52 1999/03/22 17:28:21 sommerfe Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -299,7 +299,7 @@
 			    int nbytes); }
 175	NOARGS		{ int sys_setsid(void); }
 176	NOARGS		{ int sys_fchdir(int fd); }
-177	STD		{ int sunos_sys_fchroot(int fd); }
+177	NOARGS		{ int sys_fchroot(int fd); }
 178	UNIMPL		vpixsys
 179	UNIMPL		aioread
 180	UNIMPL		aiowrite
