@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.138 2000/06/23 06:14:33 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.139 2000/06/27 21:12:42 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -108,6 +108,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # This table maps an architecture name to its GNU counterpart.
 # Use as so:  ${GNU_ARCH.${TARGET_ARCH}} or ${MACHINE_GNU_ARCH}
 GNU_ARCH.alpha=alpha
+GNU_ARCH.arm26=armv2
 GNU_ARCH.arm32=arm
 GNU_ARCH.i386=i386
 GNU_ARCH.m68k=m68k
