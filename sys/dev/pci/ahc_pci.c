@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.29 2001/01/18 20:28:15 jdolecek Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.30 2001/03/24 02:04:40 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -719,7 +719,10 @@ ahc_pci_attach(parent, self, aux)
 		sfunct = ahc_inb(ahc, SFUNCT) & ~ALT_MODE;
 		ahc_outb(ahc, SFUNCT, sfunct | ALT_MODE);
 		optionmode = ahc_inb(ahc, OPTIONMODE);
-		printf("OptionMode = %x\n", optionmode);
+#ifdef DEBUG
+		printf("%s: OptionMode = %x\n", ahc->sc_dev.dv_xname,
+		    optionmode);
+#endif
 		ahc_outb(ahc, OPTIONMODE, OPTIONMODE_DEFAULTS);
 		/* Send CRC info in target mode every 4K */
 		ahc_outb(ahc, TARGCRCCNT, 0);
