@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122 1999/07/21 06:51:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.123 1999/07/22 20:10:16 is Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -237,23 +237,11 @@ release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 .if exists(../domestic) && !defined(EXPORTABLE_SYSTEM)
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/security secr
-	(cd ${RELEASEDIR}/binary/security && \
-		cksum -o 1 *.tgz >BSDSUM && \
-		cksum *.tgz >CKSUM && \
-		cksum -m *.tgz >MD5 && \
-		cksum -o 2 *.tgz >SYSVSUM )
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/security
 .endif
-	(cd ${RELEASEDIR}/binary/sets && \
-		cksum -o 1 *.tgz >BSDSUM && \
-		cksum *.tgz >CKSUM && \
-		cksum -m *.tgz >MD5 && \
-		cksum -o 2 *.tgz >SYSVSUM )
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/sets
 .ifdef EXTRA_KERNELS
-	(cd ${RELEASEDIR}/binary/kernel && \
-		cksum -o 1 *.gz >BSDSUM && \
-		cksum *.gz >CKSUM && \
-		cksum -m *.gz >MD5 && \
-		cksum -o 2 *.gz >SYSVSUM )
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
 .endif
 
 snap_pre:
