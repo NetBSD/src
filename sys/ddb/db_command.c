@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.22 1997/05/07 18:51:58 gwr Exp $	*/
+/*	$NetBSD: db_command.c,v 1.23 1997/09/11 06:55:56 scottr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
@@ -363,8 +364,9 @@ struct db_command db_command_table[] = {
 	{ "trace",	db_stack_trace_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
 	{ "ps",		db_show_all_procs,	0,		NULL },
-	{ "kill",	db_kill_proc,	CS_OWN,		NULL },
+	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
 	{ "callout",	db_show_callout,	0,		NULL },
+	{ "reboot",	db_reboot_cmd,		CS_OWN,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
 	{ NULL, 	NULL,			0,		NULL }
 };
@@ -501,4 +503,23 @@ db_fncall(addr, have_addr, count, modif)
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
 			 args[5], args[6], args[7], args[8], args[9]);
 	db_printf("%#ln\n", retval);
+}
+
+void
+db_reboot_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	db_expr_t bootflags;
+
+	/* Flags, default to RB_AUTOBOOT */
+	if (!db_expression(&bootflags))
+		bootflags = (db_expr_t)RB_AUTOBOOT;
+	if (db_read_token() != tEOL) {
+	    db_error("?\n");
+	    /*NOTREACHED*/
+	}
+	cpu_reboot((int)bootflags, NULL);
 }
