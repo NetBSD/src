@@ -19,6 +19,10 @@ attach cpu at mainbus, hydrabus
 file	arch/arm32/mainbus/cpu.c		cpu needs-flag
 major	{cpu = 38}
 
+device iomd
+attach iomd at mainbus
+file	arch/arm32/mainbus/iomd.c		iomd needs-flag
+
 # Standard NetBSD wd driver
 device  wdc {drive = -1}
 attach	wdc at mainbus
@@ -201,7 +205,7 @@ file	arch/arm32/arm32/machdep.c
 file	arch/arm32/arm32/sys_machdep.c
 file	arch/arm32/arm32/vm_machdep.c
 file	arch/arm32/arm32/pmap.c
-file	arch/arm32/arm32/fusu.c
+file	arch/arm32/arm32/fusu.S
 
 file	netinet/in_cksum.c			inet
 file	netns/ns_cksum.c			ns
