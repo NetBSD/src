@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.64 1994/12/14 15:23:45 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.65 1995/01/03 01:46:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -299,7 +299,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih.ih_fun = fdcintr;
 	fdc->sc_ih.ih_arg = fdc;
 	fdc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &fdc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &fdc->sc_ih);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
