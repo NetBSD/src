@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2005/01/23 17:27:04 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -34,6 +34,7 @@
 #define _SUN68K_INTR_H_
 
 #include <sys/queue.h>
+#include <m68k/psl.h>
 
 /*
  * Interrupt levels.  Right now these correspond to real
@@ -89,5 +90,75 @@ extern void isr_add_autovect(isr_func_t, void *, int);
 extern void isr_add_vectored(isr_func_t, void *, int, int);
 extern void isr_add_custom(int, void *);
 
-#endif /* _KERNEL */
+/*
+ * Define inline functions for PSL manipulation.
+ * These are as close to macros as one can get.
+ * When not optimizing gcc will call the locore.s
+ * functions by the same names, so breakpoints on
+ * these functions will work normally, etc.
+ * (See the GCC extensions info document.)
+ */
+
+static __inline int _getsr(void);
+
+/* Get current sr value. */
+static __inline int
+_getsr(void)
+{
+	int rv;
+
+	__asm __volatile ("clrl %0; movew %%sr,%0" : "=&d" (rv));
+	return (rv);
+}
+
+/*
+ * The rest of this is sun68k specific, because other ports may
+ * need to do special things in spl0() (i.e. simulate SIR).
+ * Suns have a REAL interrupt register, so spl0() and splx(s)
+ * have no need to check for any simulated interrupts, etc.
+ */
+
+#define spl0()  _spl0()		/* we have real software interrupts */
+#define splx(x)	_spl(x)
+
+/* IPL used by soft interrupts: netintr(), softclock() */
+#define	spllowersoftclock() spl1()
+#define splsoftclock()  splraise1()
+#define splsoftnet()    splraise1()
+
+/* Highest block device (strategy) IPL. */
+#define splbio()        splraise2()
+
+/* Highest network interface IPL. */
+#define splnet()        splraise3()
+
+/* Highest tty device IPL. */
+#define spltty()        splraise4()
+
+/*
+ * Requirement: imp >= (highest network, tty, or disk IPL)
+ * This is used mostly in the VM code.
+ * Note that the VM code runs at spl7 during kernel
+ * initialization, and later at spl0, so we have to 
+ * use splraise to avoid enabling interrupts early.
+ */
+#define splvm()         _splraise(PSL_S|PSL_IPL4)
+
+/* Intersil or Am9513 clock hardware interrupts (hard-wired at 5) */
+#define splclock()      splraise5()
+#define splstatclock()  splclock()
+
+/* Zilog Serial hardware interrupts (hard-wired at 6) */
+#define splzs()		spl6()
+
+/* Block out all interrupts (except NMI of course). */
+#define splhigh()       spl7()
+#define splsched()      spl7()
+#define spllock()	spl7()
+
+/* This returns true iff the spl given is spl0. */
+#define	is_spl0(s)	(((s) & PSL_IPL7) == 0)
+
+#endif	/* _KERNEL */
+
 #endif	/* _SUN68K_INTR_H */
