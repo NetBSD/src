@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.351 2002/09/24 10:49:15 agc Exp $
+# $NetBSD: mi,v 1.352 2002/09/25 01:07:42 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1363,6 +1363,7 @@
 ./usr/share/man/cat8/news68k		base-man-share
 ./usr/share/man/cat8/newsmips		base-man-share
 ./usr/share/man/cat8/next68k		base-man-share
+./usr/share/man/cat8/ofppc		base-man-share
 ./usr/share/man/cat8/pc532		base-man-share
 ./usr/share/man/cat8/playstation2	base-man-share
 ./usr/share/man/cat8/pmax		base-man-share
@@ -1458,6 +1459,7 @@
 ./usr/share/man/man8/news68k		base-man-share
 ./usr/share/man/man8/newsmips		base-man-share
 ./usr/share/man/man8/next68k		base-man-share
+./usr/share/man/man8/ofppc		base-man-share
 ./usr/share/man/man8/pc532		base-man-share
 ./usr/share/man/man8/playstation2	base-man-share
 ./usr/share/man/man8/pmax		base-man-share
@@ -1551,6 +1553,7 @@
 ./usr/share/man/html8/news68k		base-man-share
 ./usr/share/man/html8/newsmips		base-man-share
 ./usr/share/man/html8/next68k		base-man-share
+./usr/share/man/html8/ofppc		base-man-share
 ./usr/share/man/html8/pc532		base-man-share
 ./usr/share/man/html8/playstation2	base-man-share
 ./usr/share/man/html8/pmax		base-man-share
