@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.9 1998/02/11 19:02:14 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.10 1998/05/05 07:17:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -237,32 +237,41 @@ struct cfattach tl_ca = {
 struct tl_product_desc {
 	u_int32_t tp_product;
 	u_int32_t tp_adapter;
+	int tp_flags;
 	const char *tp_desc;
 };
 
+/* tp_flags */
+#define	TPF_BROKEN_MEM	0x00000001	/* memory-mapped access is broken */
+
 const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, COMPAQ_NETLIGENT_10_100,
-	  "Compaq Netelligent 10/100 TX" },
+	  0, "Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_N10T, COMPAQ_NETLIGENT_10,
-	  "Compaq Netelligent 10 T" },
+	  0, "Compaq Netelligent 10 T" },
 	{ PCI_PRODUCT_COMPAQ_IntNF3P, COMPAQ_INT_NETFLEX,
-	  "Compaq Integrated NetFlex 3/P" },
+	  0, "Compaq Integrated NetFlex 3/P" },
 	{ PCI_PRODUCT_COMPAQ_IntPL100TX, COMPAQ_INT_NETLIGENT_10_100,
-	  "Compaq ProLiant Integrated Netelligent 10/100 TX" },
+	  0, "Compaq ProLiant Integrated Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_DPNet100TX, COMPAQ_DUAL_NETLIGENT_10_100,
-	  "Compaq Dual Port Netelligent 10/100 TX" },
+	  0, "Compaq Dual Port Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_DP4000, COMPAQ_DSKP4000,
-	  "Compaq Deskpro 4000 5233MMX" },
+	  0, "Compaq Deskpro 4000 5233MMX" },
 	{ PCI_PRODUCT_COMPAQ_NF3P_BNC, COMPAQ_NETFLEX_BNC,
-	  "Compaq NetFlex 3/P w/ BNC" },
+	  0, "Compaq NetFlex 3/P w/ BNC" },
 	{ PCI_PRODUCT_COMPAQ_NF3P, COMPAQ_NETFLEX,
-	  "Compaq NetFlex 3/P" },
+	  0, "Compaq NetFlex 3/P" },
 	{ 0, 0, NULL },
 };
 
 const struct tl_product_desc tl_ti_products[] = {
+	/*
+	 * Built-in Ethernet on the TI TravelMate 5000
+	 * docking station; better product description?
+	 * XXX Seems to have broken memory-mapped access.
+	 */
 	{ PCI_PRODUCT_TI_TLAN, TI_TLAN,
-	  "Texas Instruments ThunderLAN" },
+	  TPF_BROKEN_MEM, "Texas Instruments ThunderLAN" },
 	{ 0, 0, NULL },
 };
 
@@ -342,6 +351,10 @@ tl_pci_attach(parent, self, aux)
 
 	printf("\n");
 
+	tp = tl_lookup_product(pa->pa_id);
+	if (tp == NULL)
+		panic("tl_pci_attach: impossible");
+
 	/* Map the card space. */
 	ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
@@ -349,28 +362,7 @@ tl_pci_attach(parent, self, aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    0, &memt, &memh, NULL, NULL) == 0);
 
-#if 1
-	/*
-	 * XXX HACK!  Due to a bug in a previous revision of this driver,
-	 * XXX i/o space was always selected.  Now that this bug is fixed,
-	 * XXX we discover that memory mapped use fails on at least one
-	 * XXX ThunderLAN variant - the built-in Ethernet on TI Travelmate
-	 * XXX docking stations.  We hack around this by "prefering" i/o
-	 * XXX access for now.
-	 */
-	if (ioh_valid) {
-		sc->tl_bustag = iot;
-		sc->tl_bushandle = ioh;
-	} else if (memh_valid) {
-		sc->tl_bustag = memt;
-		sc->tl_bushandle = memh;
-	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-#else
-	if (memh_valid) {
+	if (memh_valid && (tp->tp_flags & TPF_BROKEN_MEM) == 0) {
 		sc->tl_bustag = memt;
 		sc->tl_bushandle = memh;
 	} else if (ioh_valid) {
@@ -381,16 +373,11 @@ tl_pci_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-#endif
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
-
-	tp = tl_lookup_product(pa->pa_id);
-	if (tp == NULL)
-		panic("tl_pci_attach: impossible");
 
 	printf("%s: %s\n", sc->sc_dev.dv_xname, tp->tp_desc);
 	sc->mii.adapter_id = tp->tp_adapter;
