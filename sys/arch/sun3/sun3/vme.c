@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.11 2002/09/27 20:36:39 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.12 2002/10/01 05:32:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@ static const struct {
 static int  vme_match __P((struct device *, struct cfdata *, void *));
 static void vme_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach vme_ca = {
-	sizeof(struct device), vme_match, vme_attach
-};
+CFATTACH_DECL(vme, sizeof(struct device),
+    vme_match, vme_attach, NULL, NULL)
 
 static int
 vme_match(parent, cf, aux)

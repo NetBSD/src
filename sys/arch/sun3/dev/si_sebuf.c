@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.16 2002/09/27 20:36:31 thorpej Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.17 2002/10/01 05:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,9 +138,8 @@ static void se_reset __P((struct ncr5380_softc *));
 static int	se_match __P((struct device *, struct cfdata *, void *));
 static void	se_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach si_sebuf_ca = {
-	sizeof(struct se_softc), se_match, se_attach
-};
+CFATTACH_DECL(si_sebuf, sizeof(struct se_softc),
+    se_match, se_attach, NULL, NULL)
 
 static void	se_minphys __P((struct buf *));
 

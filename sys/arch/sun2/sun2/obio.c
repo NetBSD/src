@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 2002/09/27 20:36:21 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 2002/10/01 05:39:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,9 +61,8 @@ struct obio_softc {
 	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
 };
 
-const struct cfattach obio_ca = {
-	sizeof(struct obio_softc), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct obio_softc),
+    obio_match, obio_attach, NULL, NULL)
 
 static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       off_t, int, int));

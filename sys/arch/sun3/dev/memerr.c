@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.12 2002/09/27 20:36:30 thorpej Exp $ */
+/*	$NetBSD: memerr.c,v 1.13 2002/10/01 05:32:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,9 +77,8 @@ static void memerr_attach __P((struct device *, struct device *, void *));
 static int  memerr_interrupt __P((void *));
 static void memerr_correctable __P((struct memerr_softc *));
 
-const struct cfattach memerr_ca = {
-	sizeof(struct memerr_softc), memerr_match, memerr_attach
-};
+CFATTACH_DECL(memerr, sizeof(struct memerr_softc),
+    memerr_match, memerr_attach, NULL, NULL)
 
 int memerr_attached;
 

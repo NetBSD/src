@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.7 2002/09/27 20:36:30 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.8 2002/10/01 05:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,9 +84,8 @@ static int  sebuf_match __P((struct device *, struct cfdata *, void *));
 static void sebuf_attach __P((struct device *, struct device *, void *));
 static int  sebuf_print __P((void *, const char *));
 
-const struct cfattach sebuf_ca = {
-	sizeof(struct sebuf_softc), sebuf_match, sebuf_attach
-};
+CFATTACH_DECL(sebuf, sizeof(struct sebuf_softc),
+    sebuf_match, sebuf_attach, NULL, NULL)
 
 static int
 sebuf_match(parent, cf, args)
