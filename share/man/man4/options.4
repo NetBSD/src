@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.22 1997/08/28 07:12:35 mikel Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -219,16 +219,15 @@ conditionalized debugging code. Note that many parts of the kernel
 (typically device drivers) include their own
 .Em #ifdef XXX_DEBUG
 conditionals instead.
-This option also turns on certain other options, notably the
-.Em KMEMSTATS
-option, which may decrease system performance.
+This option also turns on certain other options,
+which may decrease system performance.
 .It Cd options DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.  This
 code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd options KTRACE
 Add hooks for the system call tracing facility, which allows users to
-watch the system call invokation behavior of processes. See
+watch the system call invocation behavior of processes. See
 .Xr ktrace 1
 for details.
 .El
@@ -599,7 +598,7 @@ each component buffer.  It defaults to 8.
 The kernel memory allocator,
 .Xr malloc 9 ,
 will keep statistics on its performance if this option is enabled.
-Unfortunately, this option therefore essentially disables 
+Unfortunately, this option therefore essentially disables the
 .Fn MALLOC
 and
 .Fn FREE
@@ -616,8 +615,6 @@ the
 .Xr ncr 4
 driver,
 and much of the networking code.
-.Em N.B. This option is silently
-.Em turned on by the DEBUG option.
 .El
 .Ss Networking Options
 .Bl -ohang
