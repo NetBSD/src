@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.19 2002/11/30 03:10:58 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.20 2004/10/30 16:01:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.19 2002/11/30 03:10:58 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.20 2004/10/30 16:01:48 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -285,20 +285,20 @@ create_database(char *infile, char *database, char *yp_input_file,
 	    (p = fparseln(data_file, &len, &line_no, NULL, FPARSELN_UNESCALL));
 	    free(p)) {
 		k = p;				/* set start of key */
-		while (*k && isspace(*k))	/* skip leading whitespace */
+		while (*k && isspace((unsigned char)*k)) /* skip leading whitespace */
 			k++;
 
 		if (! *k)
 			continue;
 
 		v = k;
-		while (*v && !isspace(*v)) {	/* find leading whitespace */
+		while (*v && !isspace((unsigned char)*v)) {	/* find leading whitespace */
 				/* convert key to lower case if forcing. */
-			if (lflag && isupper(*v))
-				*v = tolower(*v);
+			if (lflag && isupper((unsigned char)*v))
+				*v = tolower((unsigned char)*v);
 			v++;
 		}
-		while (*v && isspace(*v))	/* replace space with <NUL> */
+		while (*v && isspace((unsigned char)*v))	/* replace space with <NUL> */
 			*v++ = '\0';
 
 		if (add_record(new_db, k, v, TRUE)) {    /* save record */

@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.23 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: apropos.c,v 1.24 2004/10/30 16:10:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.23 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.24 2004/10/30 16:10:46 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ lowstr(from, to)
 	char ch;
 
 	while ((ch = *from++) && ch != '\n')
-		*to++ = isupper((unsigned char)ch) ? tolower(ch) : ch;
+		*to++ = tolower((unsigned char)ch);
 	*to = '\0';
 }
 
