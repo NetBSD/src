@@ -1,4 +1,4 @@
-/*	$NetBSD: look_up.c,v 1.3 1994/12/09 02:14:21 jtc Exp $	*/
+/*	$NetBSD: look_up.c,v 1.4 1997/10/20 00:23:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,28 +33,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: look_up.c,v 1.3 1994/12/09 02:14:21 jtc Exp $";
+__RCSID("$NetBSD: look_up.c,v 1.4 1997/10/20 00:23:26 lukem Exp $");
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <protocols/talkd.h>
-#include <errno.h>
-#include "talk_ctl.h"
 #include "talk.h"
+#include <errno.h>
+#include <unistd.h>
+#include "talk_ctl.h"
 
 /*
  * See if the local daemon has an invitation for us.
  */
+int
 check_local()
 {
 	CTL_RESPONSE response;
-	register CTL_RESPONSE *rp = &response;
+	CTL_RESPONSE *rp = &response;
 
 	/* the rest of msg was set up in get_names */
 #ifdef MSG_EOR
@@ -94,16 +93,16 @@ check_local()
 	}
 	p_error("Unable to connect with initiator");
 	/*NOTREACHED*/
+	return (0);
 }
 
 /*
  * Look for an invitation on 'machine'
  */
+int
 look_for_invite(rp)
 	CTL_RESPONSE *rp;
 {
-	struct in_addr machine_addr;
-
 	current_state = "Checking for invitation on caller's machine";
 	ctl_transact(his_machine_addr, msg, LOOK_UP, rp);
 	/* the switch is for later options, such as multiple invitations */
