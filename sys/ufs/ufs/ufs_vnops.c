@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.23 1997/03/27 07:30:25 mikel Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.24 1997/04/23 05:47:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -340,6 +340,9 @@ ufs_setattr(v)
 			ip->i_flags = vap->va_flags;
 		} else {
 			if (ip->i_flags & (SF_IMMUTABLE | SF_APPEND))
+				return (EPERM);
+			if ((ip->i_flags & SF_SETTABLE) !=
+			    (vap->va_flags & SF_SETTABLE))
 				return (EPERM);
 			ip->i_flags &= SF_SETTABLE;
 			ip->i_flags |= (vap->va_flags & UF_SETTABLE);
