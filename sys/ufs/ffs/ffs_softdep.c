@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.59 2004/05/25 14:54:59 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.60 2004/08/29 10:13:48 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.59 2004/05/25 14:54:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.60 2004/08/29 10:13:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3362,12 +3362,9 @@ static void
 handle_workitem_freefile(freefile)
 	struct freefile *freefile;
 {
-	struct vnode vp;
-	struct inode tip;
 #ifdef DEBUG
 	struct inodedep *idp;
 #endif
-	struct vop_vfree_args args;
 	int error;
 
 #ifdef DEBUG
@@ -3376,17 +3373,9 @@ handle_workitem_freefile(freefile)
 		panic("handle_workitem_freefile: inodedep survived");
 	FREE_LOCK(&lk);
 #endif
-	tip.i_devvp = freefile->fx_devvp;
-	tip.i_dev = freefile->fx_devvp->v_rdev;
-	tip.i_fs = freefile->fx_fs;
 	freefile->fx_fs->fs_pendinginodes -= 1;
-	vp.v_data = &tip;
-	vp.v_mount = freefile->fx_devvp->v_specmountpoint;
-	tip.i_vnode = &vp;
-	args.a_pvp = &vp;
-	args.a_ino = freefile->fx_oldinum;
-	args.a_mode = freefile->fx_mode;
-	if ((error = ffs_freefile(&args)) != 0)
+	if ((error = ffs_freefile(freefile->fx_fs, freefile->fx_devvp,
+	    freefile->fx_oldinum, freefile->fx_mode)) != 0)
 		softdep_error("handle_workitem_freefile", error);
 	WORKITEM_FREE(freefile, D_FREEFILE);
 }
