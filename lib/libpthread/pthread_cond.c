@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.14 2002/10/28 17:44:22 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.15 2002/12/16 18:24:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -192,14 +192,16 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
 	pthread__block(self, &cond->ptc_lock);
 	/* Spinlock is unlocked on return */
+	SDPRINTF(("(cond timed wait %p) Woke up on %p, mutex %p\n",
+	    self, cond));
+	pthread__alarm_del(self, &alarm);
 	if (pthread__alarm_fired(&alarm))
 		retval = ETIMEDOUT;
-	pthread__alarm_del(self, &alarm);
+	SDPRINTF(("(cond timed wait %p) %s\n",
+	    self, (retval == ETIMEDOUT) ? "(timed out)" : ""));
 	pthread_mutex_lock(mutex);
 	pthread__testcancel(self);
 
-	SDPRINTF(("(cond timed wait %p) Woke up on %p, mutex %p %s\n",
-	    self, cond, mutex, (retval == ETIMEDOUT) ? "(timed out)" : ""));
 
 	return retval;
 }
@@ -213,14 +215,22 @@ pthread_cond_wait__callback(void *arg)
 	a = arg;
 	self = pthread__self();
 
+	/*
+	 * Don't dequeue and schedule the thread if it's already been
+	 * queued up by a signal or broadcast (but hasn't yet run as far
+	 * as pthread__alarm_del(), or we wouldn't be here, and hence can't
+	 * have become blocked on some *other* queue).
+	 */
 	pthread_spinlock(self, &a->ptw_cond->ptc_lock);
-	PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
+	if (a->ptw_thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
+		PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
 #ifdef ERRORCHECK
-	if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
-		a->ptw_cond->ptc_mutex = NULL;
+		if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
+			a->ptw_cond->ptc_mutex = NULL;
 #endif
+		pthread__sched(self, a->ptw_thread);
+	}
 	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
-	pthread__sched(self, a->ptw_thread);
 }
 
 int
@@ -244,10 +254,9 @@ pthread_cond_signal(pthread_cond_t *cond)
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
 #endif
-	pthread_spinunlock(self, &cond->ptc_lock);
-
 	if (signaled != NULL)
 		pthread__sched(self, signaled);
+	pthread_spinunlock(self, &cond->ptc_lock);
 
 	return 0;
 }
@@ -273,10 +282,9 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #ifdef ERRORCHECK
 	cond->ptc_mutex = NULL;
 #endif
-	pthread_spinunlock(self, &cond->ptc_lock);
-
 	PTQ_FOREACH(signaled, &blockedq, pt_sleep)
 	    pthread__sched(self, signaled);
+	pthread_spinunlock(self, &cond->ptc_lock);
 
 	return 0;
 
