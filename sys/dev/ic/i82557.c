@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.75 2003/05/26 16:14:49 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.76 2003/08/01 14:54:12 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.75 2003/05/26 16:14:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.76 2003/08/01 14:54:12 scw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1083,7 +1083,7 @@ fxp_intr(void *arg)
 	int claimed = 0;
 	u_int8_t statack;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || sc->sc_enabled == 0)
 		return (0);
 	/*
 	 * If the interface isn't running, don't try to
