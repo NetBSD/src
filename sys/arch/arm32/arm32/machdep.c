@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 1996/10/16 19:32:22 ws Exp $ */
+/* $NetBSD: machdep.c,v 1.14 1996/10/17 02:48:39 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -2979,6 +2979,7 @@ vmem_cachectl(flag)
 {
 	u_int l2pagetable;
 	u_int logical;
+	u_int pa;
 
 	if (bootconfig.vram[0].address == 0 || bootconfig.vram[0].pages == 0)
 		return(ENOMEM);
@@ -2990,20 +2991,39 @@ vmem_cachectl(flag)
 
 	/* Map the VRAM into the video memory area */
 
-	if (flag & 1) {
-		printf("Enabling caching of VRAM\n");
-		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			map_entry(l2pagetable, logical, bootconfig.vram[0].address
-			    + logical);
-			map_entry(l2pagetable, logical + 0x200000,
-			    bootconfig.vram[0].address + logical);
-		}
-	} else {
-		printf("Disabling caching of VRAM\n");
+	if (flag == 0) {
+		printf("Disabling caching and buffering of VRAM\n");
 		for (logical = 0; logical < 0x200000; logical += NBPG) {
 			map_entry_nc(l2pagetable, logical, bootconfig.vram[0].address
 			    + logical);
 			map_entry_nc(l2pagetable, logical + 0x200000,
+			    bootconfig.vram[0].address + logical);
+		}
+	} else if (flag == 1) {
+		printf("Disabling caching of VRAM\n");
+		for (logical = 0; logical < 0x200000; logical += NBPG) {
+			pa = bootconfig.vram[0].address + logical;
+			WriteWord(l2pagetable + ((logical >> 10) & 0x00000ffc),
+			    L2_PTE_NC((pa & PG_FRAME), AP_KRW));
+			WriteWord(l2pagetable + (((logical+0x200000) >> 10) & 0x00000ffc),
+			    L2_PTE_NC((pa & PG_FRAME), AP_KRW));
+		}
+	} else if (flag == 2) {
+		printf("Disabling buffering of VRAM\n");
+		for (logical = 0; logical < 0x200000; logical += NBPG) {
+			pa = bootconfig.vram[0].address + logical;
+			WriteWord(l2pagetable + ((logical >> 10) & 0x00000ffc),
+			    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW)|PT_C);
+			WriteWord(l2pagetable + (((logical+0x200000) >> 10) & 0x00000ffc),
+			    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW)|PT_C);
+		}
+	}
+	else {
+		printf("Enabling caching and buffering of VRAM\n");
+		for (logical = 0; logical < 0x200000; logical += NBPG) {
+			map_entry(l2pagetable, logical, bootconfig.vram[0].address
+			    + logical);
+			map_entry(l2pagetable, logical + 0x200000,
 			    bootconfig.vram[0].address + logical);
 		}
 	}
