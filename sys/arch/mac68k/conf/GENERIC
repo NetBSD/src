@@ -1,5 +1,6 @@
-# ALLEN
-# Mac II, etc.
+# GENERIC
+#
+#     $Id: GENERIC,v 1.8 1994/02/23 04:41:04 briggs Exp $
 
 include	"std.mac68k"
 
@@ -23,8 +24,8 @@ options		DDB
 options		FFS
 options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
-options		NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
+#options	NFSSERVER	# Sun NFS-compatible filesystem
+#options	NFSCLIENT	# Sun NFS-compatible filesystem
 options		LOFS		# Loop-back filesystem
 options		ISOFS		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
