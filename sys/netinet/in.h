@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.29 1997/12/16 00:02:05 thorpej Exp $	*/
+/*	$NetBSD: in.h,v 1.30 1997/12/30 02:54:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -68,13 +68,12 @@
 
 /*
  * Local port number conventions:
- * Ports < IPPORT_RESERVED are reserved for
- * privileged processes (e.g. root).
- * Ports > IPPORT_USERRESERVED are reserved
- * for servers, not necessarily privileged.
+ * Ports < IPPORT_RESERVED are reserved for privileged processes (e.g. root).
+ * IPPORT_USERLOW <= Ports <= IPPORT_USERHIGH are for dynamic connections.
  */
 #define	IPPORT_RESERVED		1024
-#define	IPPORT_USERRESERVED	5000
+#define	IPPORT_USERLOW		49152
+#define	IPPORT_USERHIGH		65535
 
 /*
  * Internet address (a structure for historical reasons)
