@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: autoconf.c 1.31 91/01/21
- *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.7 1994/05/23 06:13:52 mycroft Exp $
+ * from: Utah $Hdr: autoconf.c 1.36 92/12/20$
+ *
+ *	from: @(#)autoconf.c	8.2 (Berkeley) 1/12/94
+ *	$Id: autoconf.c,v 1.8 1994/05/25 11:53:10 mycroft Exp $
  */
 
 /*
@@ -48,22 +49,22 @@
  * and the drivers are initialized.
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/map.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/conf.h"
-#include "sys/dmap.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/map.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
+#include <sys/reboot.h>
 
-#include "../include/vmparam.h"
-#include "../include/cpu.h"
-#include "../include/pte.h"
-#include "isr.h"
-#include "../dev/device.h"
-#include "../dev/grfioctl.h"
-#include "../dev/grfvar.h"
+#include <machine/vmparam.h>
+#include <machine/cpu.h>
+#include <machine/pte.h>
+#include <hp300/hp300/isr.h>
+#include <hp300/dev/device.h>
+#include <hp300/dev/grfreg.h>
+#include <hp300/dev/hilreg.h>
 
 /*
  * The following several variables are related to
@@ -72,7 +73,7 @@
  */
 int	cold;		    /* if 1, still working on cold-start */
 int	dkn;		    /* number of iostat dk numbers assigned so far */
-int	cpuspeed = MHZ_8;   /* relative cpu speed */
+int	cpuspeed = 0;	    /* relative cpu speed -- can be patched */	
 struct	isr isrqueue[NISR];
 struct	hp_hw sc_table[MAXCTLRS];
 
@@ -97,7 +98,8 @@ configure()
 	/*
 	 * XXX: these should be consolidated into some kind of table
 	 */
-	hilinit();
+	hilsoftinit(0, HILADDR);
+	hilinit(0, HILADDR);
 	isrinit();
 	dmainit();
 
@@ -122,14 +124,6 @@ configure()
 		}
 #endif
 	}
-
-#include "cd.h"
-#if NCD > 0
-	/*
-	 * Now deal with concatenated disks
-	 */
-	find_cdevices();
-#endif
 
 #if GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
@@ -327,9 +321,19 @@ find_slaves(hc)
 	 * to look at the first 6 slaves.
 	 */
 	if (dr_type(hc->hp_driver, "hpib"))
-		find_busslaves(hc, MAXSLAVES);
+		find_busslaves(hc, 0, MAXSLAVES-1);
 	else if (dr_type(hc->hp_driver, "scsi"))
-		find_busslaves(hc, MAXSLAVES-1);
+#ifdef SCSI_REVPRI
+		/*
+		 * Later releases of the HP boot ROM start searching for
+		 * boot devices starting with slave 6 and working down.
+		 * This is apparently the order in which priority is given
+		 * to slaves on the host adaptor.
+		 */
+		find_busslaves(hc, MAXSLAVES-2, 0);
+#else
+		find_busslaves(hc, 0, MAXSLAVES-2);
+#endif
 }
 
 /*
@@ -341,9 +345,9 @@ find_slaves(hc)
  * unused position instead of where it really is.  To save grief, non-
  * identifing devices should always be fully qualified.
  */
-find_busslaves(hc, maxslaves)
+find_busslaves(hc, startslave, endslave)
 	register struct hp_ctlr *hc;
-	int maxslaves;
+	int startslave, endslave;
 {
 	register int s;
 	register struct hp_device *hd;
@@ -351,12 +355,15 @@ find_busslaves(hc, maxslaves)
 	int new_s, new_c, old_s, old_c;
 	int rescan;
 	
+#define NEXTSLAVE(s) (startslave < endslave ? (s)++ : (s)--)
+#define LASTSLAVE(s) (startslave < endslave ? (s)-- : (s)++)
 #ifdef DEBUG
 	if (acdebug)
 		printf("find_busslaves: for %s%d\n",
 		       hc->hp_driver->d_name, hc->hp_unit);
 #endif
-	for (s = 0; s < maxslaves; s++) {
+	NEXTSLAVE(endslave);
+	for (s = startslave; s != endslave; NEXTSLAVE(s)) {
 		rescan = 1;
 		match_s = NULL;
 		for (hd = hp_dinit; hd->hp_driver; hd++) {
@@ -501,7 +508,7 @@ find_busslaves(hc, maxslaves)
 							hd->hp_alive = -1;
 					}
 				}
-				s--;
+				LASTSLAVE(s);
 				continue;
 			}
 		}
@@ -512,6 +519,8 @@ find_busslaves(hc, maxslaves)
 			if (hd->hp_alive == -1)
 				hd->hp_alive = 0;
 	}
+#undef NEXTSLAVE
+#undef LASTSLAVE
 }
 
 caddr_t
@@ -787,7 +796,7 @@ find_devs()
 			/* 98544-547 topcat */
 			case 2:
 				break;
-			/* 98720/721 */
+			/* 98720/721 renassiance */
 			case 4:
 				if (sc < 132) {
 					hw->hw_size *= 2;
@@ -800,12 +809,15 @@ find_devs()
 			case 7:
 			case 9:
 				break;
-			/* 98730/731 */
+			/* 98730/731 davinci */
 			case 8:
 				if (sc < 132) {
 					hw->hw_size *= 2;
 					sc++;
 				}
+				break;
+			/* A1096A hyperion */
+			case 14:
 				break;
 			/* 987xx */
 			default:
@@ -890,35 +902,6 @@ iounmap(kva, size)
 	rmfree(extiomap, btoc(size), ix);
 }
 
-#if NCD > 0
-#include "../dev/cdvar.h"
-
-find_cdevices()
-{
-	register struct cddevice *cd;
-
-	for (cd = cddevice; cd->cd_unit >= 0; cd++) {
-		/*
-		 * XXX
-		 * Assign disk index first so that init routine
-		 * can use it (saves having the driver drag around
-		 * the cddevice pointer just to set up the dk_*
-		 * info in the open routine).
-		 */
-		if (dkn < DK_NDRIVE)
-			cd->cd_dk = dkn++;
-		else
-			cd->cd_dk = -1;
-		if (cdinit(cd))
-			printf("cd%d configured\n", cd->cd_unit);
-		else if (cd->cd_dk >= 0) {
-			cd->cd_dk = -1;
-			dkn--;
-		}
-	}
-}
-#endif
-
 isrinit()
 {
 	register int i;
@@ -982,21 +965,22 @@ setroot()
 {
 	register struct hp_ctlr *hc;
 	register struct hp_device *hd;
-	int  majdev, mindev, unit, part, adaptor;
+	int  majdev, mindev, unit, part, controller, adaptor;
 	dev_t temp, orootdev;
 	struct swdevt *swp;
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
+	majdev = B_TYPE(bootdev);
+	if (majdev >= sizeof(devname) / sizeof(devname[0]))
 		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
+	adaptor = B_ADAPTOR(bootdev);
+	controller = B_CONTROLLER(bootdev);
+	part = B_PARTITION(bootdev);
+	unit = B_UNIT(bootdev);
 	/*
-	 * First, find the controller type which support this device.
+	 * First, find the controller type which supports this device.
 	 */
 	for (hd = hp_dinit; hd->hp_driver; hd++)
 		if (hd->hp_driver->d_name[0] == devname[majdev][0] &&
@@ -1005,8 +989,8 @@ setroot()
 	if (hd->hp_driver == 0)
 		return;
 	/*
-	 * Next, find the controller of that type corresponding to
-	 * the adaptor number.
+	 * Next, find the "controller" (bus adaptor) of that type
+	 * corresponding to the adaptor number.
 	 */
 	for (hc = hp_cinit; hc->hp_driver; hc++)
 		if (hc->hp_alive && hc->hp_unit == adaptor &&
@@ -1015,15 +999,27 @@ setroot()
 	if (hc->hp_driver == 0)
 		return;
 	/*
-	 * Finally, find the device in question attached to that controller.
+	 * Finally, find the "device" (controller or slave) in question
+	 * attached to that "controller".
 	 */
 	for (hd = hp_dinit; hd->hp_driver; hd++)
-		if (hd->hp_alive && hd->hp_slave == unit &&
+		if (hd->hp_alive && hd->hp_slave == controller &&
 		    hd->hp_cdriver == hc->hp_driver &&
 		    hd->hp_ctlr == hc->hp_unit)
 			break;
 	if (hd->hp_driver == 0)
 		return;
+	/*
+	 * XXX note that we are missing one level, the unit, here.
+	 * Most HP drives come with one controller per disk.  There
+	 * are some older drives (e.g. 7946) which have two units
+	 * on the same controller but those are typically a disk as
+	 * unit 0 and a tape as unit 1.  This would have to be
+	 * rethought if you ever wanted to boot from other than unit 0.
+	 */
+	if (unit != 0)
+		printf("WARNING: using device at unit 0 of controller\n");
+
 	mindev = hd->hp_unit;
 	/*
 	 * Form a new rootdev
@@ -1044,7 +1040,7 @@ setroot()
 
 #ifdef DOSWAP
 	mindev &= ~PARTITIONMASK;
-	for (swp = swdevt; swp->sw_dev; swp++) {
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
 		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
 			temp = swdevt[0].sw_dev;
@@ -1053,7 +1049,7 @@ setroot()
 			break;
 		}
 	}
-	if (swp->sw_dev == 0)
+	if (swp->sw_dev == NODEV)
 		return;
 
 	/*
