@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.30 2003/06/11 21:35:35 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.31 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.30 2003/06/11 21:35:35 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.31 2003/06/16 19:42:14 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,12 +63,11 @@ struct ptn_menu_info {
 /*
  * local prototypes
  */
-static int boringpart (partinfo *lp, int i, int rawpart, int bsdpart);
+static int boringpart(partinfo *, int, int, int);
 
-int	checklabel (partinfo *lp, int nparts, int rawpart, int bsdpart,
-		    int *bad1, int *bad2);
-void	translate_partinfo (partinfo *lp, struct partition *pp);
-void	atofsb (const char *, int *, int *);
+int	checklabel(partinfo *, int, int, int, int *, int *);
+void	translate_partinfo(partinfo *lp, struct partition *pp);
+void	atofsb(const char *, int *, int *);
 
 
 /*
@@ -76,11 +75,7 @@ void	atofsb (const char *, int *, int *);
  * for overlapping partitions.
  */
 static int
-boringpart(lp, i, rawpart, bsdpart)
-	partinfo *lp;
-	int i;
-	int rawpart;
-	int bsdpart;
+boringpart(partinfo *lp, int i, int rawpart, int bsdpart)
 {
 
 	if (i == rawpart || i == bsdpart ||
@@ -98,13 +93,8 @@ boringpart(lp, i, rawpart, bsdpart)
  * overlapping partitions if any are found.
  */
 int
-checklabel(lp, nparts, rawpart, bsdpart, ovly1, ovly2)
-	partinfo *lp;
-	int nparts;
-	int rawpart;
-	int bsdpart;
-	int *ovly1;
-	int *ovly2;
+checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
+	int *ovly1, int *ovly2)
 {
 	int i;
 	int j;
@@ -392,11 +382,7 @@ set_label_texts(menudesc *menu, void *arg)
  * Ask the user if they want to edit the parittion or give up.
  */
 int
-edit_and_check_label(lp, nparts, rawpart, bsdpart)
-	partinfo *lp;
-	int nparts;
-	int rawpart;
-	int bsdpart;
+edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 {
 	static struct menu_ent *menu;
 	static struct ptn_menu_info *pi;
@@ -447,8 +433,7 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 
 	
 void
-emptylabel(lp)
-	partinfo *lp;
+emptylabel(partinfo *lp)
 {
 	register int i, maxpart;
 
@@ -467,9 +452,7 @@ emptylabel(lp)
  * XXX MSDOS?
  */
 void
-translate_partinfo(lp, pp)
-	partinfo *lp;
-	struct partition *pp;
+translate_partinfo(partinfo *lp, struct partition *pp)
 {
 
 	lp->pi_fstype = pp->p_fstype;
@@ -504,9 +487,7 @@ translate_partinfo(lp, pp)
  * Read a label from disk into a sysist label structure.
  */
 int
-incorelabel(dkname, lp)
-	const char *dkname;
-	partinfo *lp;
+incorelabel(const char *dkname, partinfo *lp)
 {
 	struct disklabel lab;
 	int fd;
@@ -652,10 +633,7 @@ getpartsize(int partstart, int defpartsize)
  */
 
 void
-atofsb(str, p_val, localsizemult)
-	const char *str;
-	int *p_val;
-	int *localsizemult;
+atofsb(const char *str, int *p_val, int *localsizemult)
 {
 	int i;
 	int val;
