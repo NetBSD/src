@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 1997/04/30 00:43:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.64 1997/05/12 16:41:03 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -20,7 +20,7 @@ AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
-CLEANFILES+=tags
+CLEANFILES+=${.CURDIR}/tags
 
 # Don't try to lint the C libarary against itself when creating llib-lc.ln
 LLIBS=
@@ -86,14 +86,14 @@ rm-from-libkern:
 	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_ARCH}/$$i; done
 .endif
 
-all: tags
-tags: ${SRCS}
+all: ${.CURDIR}/tags
+${.CURDIR}/tags: ${SRCS}
 	ctags ${.ALLSRC:M*.c}
 	egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> tags; sort -o tags tags
+	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
 
-FILES=tags
+FILES=${.CURDIR}/tags
 FILESNAME_tags=libc.tags
 FILESDIR=/var/db
 
