@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.5 1999/11/21 16:26:03 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 1999/11/21 16:39:54 itojun Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
 	${BIND_DIST_DIR}/man
 
+NAMEDOBJ!=cd ${.CURDIR}/../named; make print-objdir
+
 PROG=	named-xfer
 SRCS=	${PROG}.c db_glue.c ns_glue.c tmp_version.c
-CPPFLAGS+= ${INCLUDE} -I${.OBJDIR}/../named
-# how to deal with this in a clean manner??
-CPPFLAGS+= -I${.CURDIR}/../named/obj
+CPPFLAGS+= ${INCLUDE} -I${NAMEDOBJ}
 LDADD=	${LIBRARY}
 CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
