@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.21 1998/07/06 07:50:18 mrg Exp $	*/
+/*	$NetBSD: ps.c,v 1.22 1998/07/27 17:06:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.21 1998/07/06 07:50:18 mrg Exp $");
+__RCSID("$NetBSD: ps.c,v 1.22 1998/07/27 17:06:48 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ main(argc, argv)
 	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
+	const char *ttname;
 
 	(void)setegid(getgid());
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
@@ -202,10 +203,12 @@ main(argc, argv)
 			sumrusage = 1;
 			break;
 		case 'T':
-			if ((optarg = ttyname(STDIN_FILENO)) == NULL)
+			if ((ttname = ttyname(STDIN_FILENO)) == NULL)
 				errx(1, "stdin: not a terminal");
-			/* FALLTHROUGH */
-		case 't': {
+			goto tty;
+		case 't':
+			ttname = optarg;
+		tty: {
 			struct stat sb;
 			char *ttypath, pathbuf[MAXPATHLEN];
 
