@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.13 1996/10/02 05:30:29 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.14 1996/10/07 18:24:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -45,6 +45,8 @@
 #include <sys/fcntl.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
 
 #include <sys/mman.h>
 #include <vm/vm.h>
@@ -70,8 +72,9 @@
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 static int ELFNAME(check_header) __P((Elf_Ehdr *, int));
-static int ELFNAME(load_file) __P((struct proc *, char *,
-	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *));
+static int ELFNAME(load_file) __P((struct proc *, struct exec_package *,
+	    char *, struct exec_vmcmd_set *, u_long *, struct elf_args *,
+	    Elf_Addr *));
 static void ELFNAME(load_psection) __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf_Phdr *, Elf_Addr *, u_long *, int *));
 
@@ -183,10 +186,6 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
  * elf_check_header():
  *
  * Check header for validity; return 0 of ok ENOEXEC if error
- *
- * XXX machine type needs to be moved to <machine/param.h> so
- * just one comparison can be done. Unfortunately, there is both
- * em_486 and em_386, so this would not work on the i386.
  */
 static int
 ELFNAME(check_header)(eh, type)
@@ -318,8 +317,9 @@ ELFNAME(read_from)(p, vp, off, buf, size)
  * so it might be used externally.
  */
 static int
-ELFNAME(load_file)(p, path, vcset, entry, ap, last)
+ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	struct proc *p;
+	struct exec_package *epp;
 	char *path;
 	struct exec_vmcmd_set *vcset;
 	u_long *entry;
@@ -328,6 +328,8 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 {
 	int error, i;
 	struct nameidata nd;
+	struct vnode *vp;
+	struct vattr attr;
 	Elf_Ehdr eh;
 	Elf_Phdr *ph = NULL;
 	u_long phsize;
@@ -343,15 +345,48 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
 		return error;
+	vp = nd.ni_vp;
+
+	/* check for regular file */
+	if (vp->v_type != VREG) {
+		error = EACCES;
+		goto badunlock;
+	}
+
+        /* get attributes */
+	if ((error = VOP_GETATTR(vp, &attr, p->p_ucred, p)) != 0)
+		goto badunlock;
+
+	/*
+	 * Check mount point.  Though we're not trying to exec this binary,
+	 * we will be executing code from it, so if the mount point (or
+	 * tracing) disallows execution or set-id-ness, we punt or kill
+	 * the set-id.
+	 */
+	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
+		error = EACCES;
+		goto badunlock;
+	}
+	if (vp->v_mount->mnt_flag & MNT_NOSUID)
+		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
+
+	/*
+	 * Similarly, if it's not marked as executable, we don't allow
+	 * it to be used.  For root we have to see if any exec bit on.
+	 */
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+		goto badunlock;
+	if ((attr.va_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
+		error = EACCES;  
+		goto badunlock;
+	}
+
 #ifdef notyet /* XXX cgd 960926 */
-	XXX cgd 960926: check vnode type
-	XXX cgd 960926: check mount point for MNT_NOEXEC
-	XXX cgd 960926: check VOP_ACCESS on it.
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
 #endif
-	VOP_UNLOCK(nd.ni_vp);
+	VOP_UNLOCK(vp);
 
-	if ((error = ELFNAME(read_from)(p, nd.ni_vp, 0, (caddr_t) &eh,
+	if ((error = ELFNAME(read_from)(p, vp, 0, (caddr_t) &eh,
 				    sizeof(eh))) != 0)
 		goto bad;
 
@@ -361,7 +396,7 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
 
-	if ((error = ELFNAME(read_from)(p, nd.ni_vp, eh.e_phoff,
+	if ((error = ELFNAME(read_from)(p, vp, eh.e_phoff,
 	    (caddr_t) ph, phsize)) != 0)
 		goto bad;
 
@@ -374,7 +409,7 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 
 		switch (ph[i].p_type) {
 		case Elf_pt_load:
-			ELFNAME(load_psection)(vcset, nd.ni_vp, &ph[i], &addr,
+			ELFNAME(load_psection)(vcset, vp, &ph[i], &addr,
 						&size, &prot);
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
@@ -397,8 +432,11 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 
 	free((char *) ph, M_TEMP);
 	*last = addr;
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return 0;
+
+badunlock:
+	VOP_UNLOCK(vp);
 
 bad:
 	if (ph != NULL)
@@ -406,7 +444,7 @@ bad:
 #ifdef notyet /* XXX cgd 960926 */
 	(maybe) VOP_CLOSE it
 #endif
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return error;
 }
 
@@ -584,8 +622,8 @@ ELFNAME2(exec,makecmds)(p, epp)
 
 		ap = (struct elf_args *) malloc(sizeof(struct elf_args),
 						 M_TEMP, M_WAITOK);
-		if ((error = ELFNAME(load_file)(p, interp, &epp->ep_vmcmds,
-				&epp->ep_entry, ap, &pos)) != 0) {
+		if ((error = ELFNAME(load_file)(p, epp, interp,
+		    &epp->ep_vmcmds, &epp->ep_entry, ap, &pos)) != 0) {
 			free((char *) ap, M_TEMP);
 			goto bad;
 		}
