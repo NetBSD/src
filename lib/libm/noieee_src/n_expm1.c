@@ -1,4 +1,4 @@
-/*      $NetBSD: n_expm1.c,v 1.1 1995/10/10 23:36:46 ragge Exp $ */
+/*      $NetBSD: n_expm1.c,v 1.2 1997/10/20 14:12:26 ragge Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)expm1.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /* EXPM1(X)
@@ -155,7 +157,7 @@ double x;
 		else 
 		     /* expm1(-big#) rounded to -1 (inexact) */
 		     if(finite(x))  
-			 { ln2hi+ln2lo; return(-one);}
+			 { c=ln2hi+ln2lo; return(-one);} /* ??? -ragge */
 
 		     /* expm1(-INF) is -1 */
 		     else return(-one);

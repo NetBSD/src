@@ -1,4 +1,4 @@
-/*	$NetBSD: n_erf.c,v 1.1 1995/10/10 23:36:43 ragge Exp $	*/
+/*	$NetBSD: n_erf.c,v 1.2 1997/10/20 14:12:10 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 #include "mathimpl.h"
@@ -148,7 +150,7 @@ static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
 
 #if defined(vax) || defined(tahoe)
 #define _IEEE	0
-#define TRUNC(x) (double) (float) (x)
+#define TRUNC(x) (double)(x) = (float)(x)
 #else
 #define _IEEE	1
 #define TRUNC(x) *(((int *) &x) + 1) &= 0xf8000000
@@ -267,7 +269,7 @@ rd13 =	-1.42821001129434127360582351685e+007;
 double erf(x)
 	double x;
 {
-	double R,S,P,Q,ax,s,y,z,r,fabs(),exp();
+	double R,S,P,Q,ax,s,y,z,r;
 	if(!finite(x)) {		/* erf(nan)=nan */
 	    if (isnan(x))
 		return(x);
@@ -325,7 +327,7 @@ double erf(x)
 double erfc(x) 
 	double x;
 {
-	double R,S,P,Q,s,ax,y,z,r,fabs(),__exp__D();
+	double R,S,P,Q,s,ax,y,z,r;
 	if (!finite(x)) {
 		if (isnan(x))		/* erfc(NaN) = NaN */
 			return(x);
