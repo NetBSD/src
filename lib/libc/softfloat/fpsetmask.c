@@ -1,4 +1,4 @@
-/*	$NetBSD: fplib_libc.c,v 1.1 2000/05/09 21:55:46 bjh21 Exp $	*/
+/* $NetBSD: fpsetmask.c,v 1.1 2000/06/06 08:15:04 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,51 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include "environment.h"
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fpsetmask.c,v 1.1 2000/06/06 08:15:04 bjh21 Exp $");
+#endif /* LIBC_SCCS and not lint */
+
+#include <ieeefp.h>
+#ifdef SOFTFLOAT_FOR_GCC
+#include "softfloat-for-gcc.h"
+#endif
+#include "milieu.h"
 #include "softfloat.h"
 
-void sfp_setround __P((int rnd_dir));
-int sfp_getround __P((void));
-void sfp_setmask __P((int mask));
-int sfp_getmask __P((void));
-void sfp_setsticky __P((int except));
-int sfp_getsticky __P((void));
-
-void
-sfp_setround(rnd_dir)
-	int rnd_dir;
+fp_except
+fpsetmask(fp_except mask)
 {
-	float_rounding_mode = rnd_dir;
-}
 
-int
-sfp_getround(void)
-{
-	return(float_rounding_mode);
-}
-
-void
-sfp_setmask(mask)
-	int mask;
-{
-}
-
-int
-sfp_getmask(void)
-{
-	return(0);
-}
-
-void
-sfp_setsticky(except)
-	int except;
-{
-	float_exception_flags = except;
-}
-
-int
-sfp_getsticky(void)
-{
-	return(float_exception_flags);
+	return 0;
 }
