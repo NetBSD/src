@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/03/13 04:22:15 mycroft Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/03/13 04:37:20 mycroft Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -133,7 +133,6 @@ define	VM_PMAP			offsetof(struct vmspace, vm_pmap)
 define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
 
 # interrupt/fault metering
-define	V_SWTCH			offsetof(struct vmmeter, v_swtch)
 define	V_INTR			offsetof(struct vmmeter, v_intr)
 
 # PSL values (should just include psl.h?)
