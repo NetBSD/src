@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.124 2004/01/05 23:23:32 jmmv Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.125 2004/01/18 16:25:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.124 2004/01/05 23:23:32 jmmv Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.125 2004/01/18 16:25:59 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -651,16 +651,16 @@ readmbr(int f)
 	next_ext = 0;
 	for (;;) {
 		this_ext = next_ext;
-		next_ext += ext_base;
-		if (pread(f, &mbr, sizeof mbr, next_ext * (off_t)DEV_BSIZE)
+		next_ext = 0;
+		if (pread(f, &mbr, sizeof mbr, this_ext * (off_t)DEV_BSIZE)
 		    != sizeof(mbr)) {
-			warn("Can't read master boot record %d", next_ext);
+			warn("Can't read master boot record %d", this_ext);
 			return 0;
 		}
 
 		/* Check if table is valid. */
 		if (mbr.mbr_magic != htole16(MBR_MAGIC)) {
-			warnx("Invalid signature in mbr record %d", next_ext);
+			warnx("Invalid signature in mbr record %d", this_ext);
 			return 0;
 		}
 
@@ -670,7 +670,6 @@ readmbr(int f)
 		memcpy(mbr, dp, MBR_PART_COUNT * sizeof(*dp));
 		dp = (struct mbr_partition *)mbr;
 #endif	/* ! __i386__ */
-		next_ext = 0;
 
 		/* Find NetBSD partition. */
 		for (part = 0; part < MBR_PART_COUNT; dp++, part++) {
@@ -702,14 +701,14 @@ readmbr(int f)
 		if (next_ext == 0)
 			/* No more extended partitions */
 			break;
+		next_ext += ext_base;
+		if (ext_base == 0)
+			ext_base = next_ext;
+
 		if (next_ext <= this_ext) {
 			warnx("Invalid extended chain %x <= %x",
 				next_ext, this_ext);
 			break;
-		}
-		if (ext_base == 0) {
-			ext_base = next_ext;
-			next_ext = 0;
 		}
 	}
 
@@ -722,7 +721,7 @@ readmbr(int f)
 		return 0;
 	}
 
-	netbsd_part.mbrp_start += ext_base;
+	netbsd_part.mbrp_start += this_ext;
 	return &netbsd_part;
 }
 #endif	/* USE_MBR */
