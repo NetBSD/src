@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.5 2000/04/10 16:11:23 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.6 2000/04/15 03:07:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -323,9 +323,6 @@ sabre_init(sc, pba)
 	 * macros to provide the proper ASI based on the bus tag.
 	 */
 	sc->sc_configtag = psycho_alloc_config_tag(sc->sc_simba_a);
-#if 0
-	sc->sc_configaddr = (paddr_t)sc->sc_basepaddr + 0x01000000;
-#else
 	if (bus_space_map2(sc->sc_bustag,
 			  PCI_CONFIG_BUS_SPACE,
 			  sc->sc_basepaddr + 0x01000000,
@@ -335,7 +332,6 @@ sabre_init(sc, pba)
 			  &bh))
 		panic("could not map sabre PCI configuration space");
 	sc->sc_configaddr = (paddr_t)bh;
-#endif
 }
 
 /*
