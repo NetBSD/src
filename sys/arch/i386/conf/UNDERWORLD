@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.5 1999/07/29 10:37:18 augustss Exp $
+#	$NetBSD: UNDERWORLD,v 1.6 1999/09/19 21:50:06 ad Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -152,6 +152,8 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# use a large software cursor that doesn't blink
+#options	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
