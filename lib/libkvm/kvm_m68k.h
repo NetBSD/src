@@ -1,11 +1,11 @@
-/*	$NetBSD: kvm_m68k.h,v 1.1 1997/03/21 18:44:24 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k.h,v 1.2 1997/04/09 21:15:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Gordon W. Ross and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +41,13 @@ struct kvm_ops {
 	void  (*freevtop) __P((kvm_t *));
 	int	  (*kvatop)   __P((kvm_t *, u_long, u_long *));
 	off_t (*pa2off)   __P((kvm_t *, u_long));
+};
+
+struct vmstate {
+	struct kvm_ops *ops;	/* ops vector */
+	u_int32_t pgshift;	/* log2(page_size) */
+	u_int32_t pgofset;	/* mask to find offset into page */
+	void *private;		/* private to the bottom layer */
 };
 
 extern struct kvm_ops _kvm_ops_cmn;

@@ -1,11 +1,11 @@
-/*	$NetBSD: kvm_m68k.c,v 1.10 1997/03/21 18:44:23 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.11 1997/04/09 21:15:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Gordon W. Ross and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,13 +40,11 @@
  * Run-time kvm dispatcher for m68k machines.
  * The actual MD code is in the files:
  * kvm_m68k_cmn.c kvm_sun3.c ...
- *
- * Note: This file has to build on ALL m68k machines,
- * so do NOT include any <machine/*.h> files here.
  */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/kcore.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -58,25 +56,24 @@
 #include <kvm.h>
 #include <db.h>
 
+#include <machine/kcore.h>
+
 #include "kvm_private.h"
 #include "kvm_m68k.h"
 
-/* Could put this in struct vmstate, but this is easier. */
-static struct kvm_ops *ops;
-
 struct name_ops {
-	char *name;
+	const char *name;
 	struct kvm_ops *ops;
 };
 
+/*
+ * Match specific kcore types first, falling into a default.
+ */
 static struct name_ops optbl[] = {
-	{ "amiga", &_kvm_ops_cmn },
-	{ "atari", &_kvm_ops_cmn },
-	{ "sun3",  &_kvm_ops_sun3 },
-	{ "sun3x",  &_kvm_ops_sun3x },
-	{ NULL, NULL },
+	{ "sun3",	&_kvm_ops_sun3 },
+	{ "sun3x",	&_kvm_ops_sun3x },
+	{ NULL,		&_kvm_ops_cmn },
 };
-
 
 /*
  * Prepare for translation of kernel virtual addresses into offsets
@@ -86,33 +83,55 @@ int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	char machine[256];
-	int mib[2], len, rval;
+	cpu_kcore_hdr_t *h;
 	struct name_ops *nop;
+	struct vmstate *vm;
 
-	/* Which set of kvm functions should we use? */
-	mib[0] = CTL_HW;
-	mib[1] = HW_MACHINE;
-	len = sizeof(machine);
-	if (sysctl(mib, 2, machine, &len, NULL, 0) == -1)
+	vm = (struct vmstate *)_kvm_malloc(kd, sizeof (*vm));
+	if (vm == 0)
 		return (-1);
 
-	for (nop = optbl; nop->name; nop++)
-		if (!strcmp(machine, nop->name))
-			goto found;
-	_kvm_err(kd, 0, "%s: unknown machine!", machine);
-	return (-1);
+	kd->vmst = vm;
 
-found:
-	ops = nop->ops;
-	return ((ops->initvtop)(kd));
+	/*
+	 * Use the machine name in the kcore header to determine
+	 * our ops vector.  When we reach an ops vector with
+	 * no name, we've found a default.
+	 */
+	h = kd->cpu_data;
+	h->name[sizeof(h->name) - 1] = '\0';	/* sanity */
+	for (nop = optbl; nop->name != NULL; nop++)
+		if (strcmp(nop->name, h->name) == 0)
+			break;
+
+	vm->ops = nop->ops;
+
+	/*
+	 * Compute pgshift and pgofset.
+	 */
+	for (vm->pgshift = 0; (1 << vm->pgshift) < h->page_size; vm->pgshift++)
+		/* nothing */ ;
+	if ((1 << vm->pgshift) != h->page_size)
+		goto bad;
+	vm->pgofset = h->page_size - 1;
+
+	if ((vm->ops->initvtop)(kd) < 0)
+		goto bad;
+
+	return (0);
+
+ bad:
+	kd->vmst = NULL;
+	free(vm);
+	return (-1);
 }
 
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-	(ops->freevtop)(kd);
+	(kd->vmst->ops->freevtop)(kd);
+	free(kd->vmst);
 }
 
 int
@@ -121,7 +140,7 @@ _kvm_kvatop(kd, va, pap)
 	u_long va;
 	u_long *pap;
 {
-	return ((ops->kvatop)(kd, va, pap));
+	return ((kd->vmst->ops->kvatop)(kd, va, pap));
 }
 
 off_t
@@ -129,5 +148,5 @@ _kvm_pa2off(kd, pa)
 	kvm_t	*kd;
 	u_long	pa;
 {
-	return ((ops->pa2off)(kd, pa));
+	return ((kd->vmst->ops->pa2off)(kd, pa));
 }

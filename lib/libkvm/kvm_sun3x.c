@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3x.c,v 1.1 1997/03/21 18:44:26 gwr Exp $	*/
+/*	$NetBSD: kvm_sun3x.c,v 1.2 1997/04/09 21:16:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sun3x.c,v 1.1 1997/03/21 18:44:26 gwr Exp $";
+static char *rcsid = "$NetBSD: kvm_sun3x.c,v 1.2 1997/04/09 21:16:00 thorpej Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,8 @@ static char *rcsid = "$NetBSD: kvm_sun3x.c,v 1.1 1997/03/21 18:44:26 gwr Exp $";
 #include <kvm.h>
 #include <db.h>
 
+#include <m68k/kcore.h>
+
 #include "kvm_private.h"
 #include "kvm_m68k.h"
 
@@ -74,40 +76,12 @@ struct kvm_ops _kvm_ops_sun3x = {
 	_kvm_sun3x_kvatop,
 	_kvm_sun3x_pa2off };
 
-/*
- * XXX: I don't like this, but until all arch/.../include files
- * are exported into some user-accessable place, there is no
- * convenient alternative to copying these definitions here.
- */
-
-/* sun3x/include/param.h */
-#define PGSHIFT 	13
-#define NBPG		8192
-#define PGOFSET 	(NBPG-1)
-#define KERNBASE	0xF8000000
-
-/* sun3x/sun3x/pmap.c */
-#define	KVAS_SIZE	(-KERNBASE)
-#define	NKPTES		(KVAS_SIZE >> PGSHIFT)
-
-#define PG_FRAME	0xffffff00
-#define PG_VALID 	0x00000001
-
-#define PG_PA(pte)	(pte & PG_FRAME)
-
-/* sun3x/include/kcore.h */
-#define NPHYS_RAM_SEGS 4
-typedef struct {
-	u_long	start;		/* Physical start address	*/
-	u_long	size;		/* Size in bytes		*/
-} cpu_ram_seg_t;
-typedef struct cpu_kcore_hdr {
-	u_long ckh_contig_end;
-	u_long ckh_kernCbase;
-	cpu_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];
-} cpu_kcore_hdr_t;
-
-/* Finally, our local stuff... */
+#define	_kvm_kvas_size(h)	\
+	(-((h)->kernbase))
+#define	_kvm_nkptes(h, v)	\
+	(_kvm_kvas_size((h)) >> (v)->pgshift)
+#define	_kvm_pg_pa(pte, h)	\
+	((pte) & (h)->pg_frame)
 
 /*
  * Prepare for translation of kernel virtual addresses into offsets
@@ -138,17 +112,18 @@ _kvm_sun3x_kvatop(kd, va, pap)
 	u_long va;
 	u_long *pap;
 {
-	register cpu_kcore_hdr_t *ckh;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct sun3x_kcore_hdr *s = &h->un._sun3x;
+	struct vmstate *v = kd->vmst;
 	int idx, len, offset, pte;
 	u_long pteva, pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return((off_t)0);
+		return(0);
 	}
-	ckh = kd->cpu_data;
 
-	if (va < KERNBASE) {
+	if (va < h->kernbase) {
 		_kvm_err(kd, 0, "not a kernel address");
 		return(0);
 	}
@@ -159,9 +134,9 @@ _kvm_sun3x_kvatop(kd, va, pap)
 	 * kvm_read to access the kernel page table, which
 	 * is guaranteed to be in the contiguous range.
 	 */
-	if (va < ckh->ckh_contig_end) {
-		len = va - ckh->ckh_contig_end;
-		pa = va - KERNBASE;
+	if (va < s->contig_end) {
+		len = va - s->contig_end;
+		pa = va - h->kernbase;
 		goto done;
 	}
 
@@ -169,19 +144,19 @@ _kvm_sun3x_kvatop(kd, va, pap)
 	 * The KVA is beyond the contiguous range, so we must
 	 * read the PTE for this KVA from the page table.
 	 */
-	idx = ((va - KERNBASE) >> PGSHIFT);
-	pteva = ckh->ckh_kernCbase + (idx * 4);
+	idx = ((va - h->kernbase) >> v->pgshift);
+	pteva = s->kernCbase + (idx * 4);
 	if (kvm_read(kd, pteva, &pte, 4) != 4) {
 		_kvm_err(kd, 0, "can not read PTE!");
 		return (0);
 	}
-	if ((pte & PG_VALID) == 0) {
+	if ((pte & s->pg_valid) == 0) {
 		_kvm_err(kd, 0, "page not valid (VA=0x%x)", va);
 		return (0);
 	}
-	offset = va & PGOFSET;
-	len = (NBPG - offset);
-	pa = PG_PA(pte) + offset;
+	offset = va & v->pgofset;
+	len = (h->page_size - offset);
+	pa = _kvm_pg_pa(pte, s) + offset;
 
 done:
 	*pap = pa;
@@ -197,18 +172,18 @@ _kvm_sun3x_pa2off(kd, pa)
 	u_long	pa;
 {
 	off_t		off;
-	cpu_ram_seg_t	*rsp;
-	register cpu_kcore_hdr_t *cpu_kh;
+	phys_ram_seg_t	*rsp;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct sun3x_kcore_hdr *s = &h->un._sun3x;
 
-	cpu_kh = kd->cpu_data;
 	off = 0;
-	for (rsp = cpu_kh->ram_segs; rsp->size; rsp++) {
+	for (rsp = s->ram_segs; rsp->size; rsp++) {
 		if (pa >= rsp->start && pa < rsp->start + rsp->size) {
 			pa -= rsp->start;
 			break;
 		}
 		off += rsp->size;
 	}
-	return(kd->dump_off + off + pa);
+	return (kd->dump_off + off + pa);
 }
 
