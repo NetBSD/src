@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 1997/07/31 04:08:24 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1997/08/22 11:10:42 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,11 +73,11 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2
-	sh MAKEDEV sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3 apci0
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3 lkm ipl
-	sh MAKEDEV local
+	sh $0 std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2
+	sh $0 sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
+	sh $0 hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3 apci0
+	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3 lkm ipl
+	sh $0 local
 	;;
 
 std)
@@ -109,7 +109,6 @@ fd)
 	;;
 
 ct*|mt*|st*)
-	umask 0
 	case $i in
 	ct*) name=ct; unit=${i#ct}; blk=0; chr=7;;
 	mt*) name=mt; unit=${i#mt}; blk=1; chr=16;;
@@ -127,8 +126,12 @@ ct*|mt*|st*)
 		#mknod ${name}${four}	b $blk $four
 		#mknod ${name}${eight}	b $blk $eight
 		#mknod ${name}${twelve}	b $blk $twelve
-		#mknod n${name}${unit}	b $blk $four ;: sanity w/pdp11 v7
-		#mknod n${name}${eight}	b $blk $twelve ;: ditto
+		#ln ${name}{$four} n${name}${unit}	;: sanity w/pdp11 v7
+		#ln ${name}{$twelve} n${name}${eight}	;: ditto
+		#chgrp operator ${name}${unit} ${name}${four} ${name}${eight} \
+		#    ${name}${twelve} n${name}${unit} n${name}${eight}
+		#chmod 660 ${name}${unit} ${name}${four} ${name}${eight} \
+		#    ${name}${twelve} n${name}${unit} n${name}${eight}
 		#
 		rm -f r${name}${unit} r${name}${four} r${name}${eight} \
 		    r${name}${twelve} nr${name}${unit} nr${name}${eight}
@@ -136,14 +139,19 @@ ct*|mt*|st*)
 		mknod r${name}${four}	c $chr $four
 		mknod r${name}${eight}	c $chr $eight
 		mknod r${name}${twelve}	c $chr $twelve
-		ln r${name}${four} nr${name}${unit} ;: sanity w/pdp11 v7
-		ln r${name}${twelve} nr${name}${eight} ;: ditto
+		ln r${name}${four} nr${name}${unit}	;: sanity w/pdp11 v7
+		ln r${name}${twelve} nr${name}${eight}	;: ditto
+		chgrp operator r${name}${unit} r${name}${four} \
+		    r${name}${eight} r${name}${twelve} nr${name}${unit} \
+		    nr${name}${eight}
+		chmod 660 r${name}${unit} r${name}${four} \
+		    r${name}${eight} r${name}${twelve} nr${name}${unit} \
+		    nr${name}${eight}
 		;;
 	*)
 		echo bad unit for tape in: $1
 		;;
 	esac
-	umask 77
 	;;
 
 bpf*)
@@ -163,7 +171,6 @@ tun*)
 	;;
 
 ccd*|fd*|rd*|sd*|vnd*)
-	umask 2
 	case $i in
 	rd*) name=rd; unit=${i#rd}; blk=2; chr=9;;
 	sd*) name=sd; unit=${i#sd}; blk=4; chr=8;;
@@ -197,7 +204,6 @@ ccd*|fd*|rd*|sd*|vnd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 dca*)
@@ -262,7 +268,7 @@ grf*)
 	0|1|2|3)
 		rm -f grf${unit}
 		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
-#		echo "grf${unit}: use MAKEDEV.hpux to make HP-UX names for device"
+#		echo "grf${unit}: use $0.hpux to make HP-UX names for device"
 		;;
 	*)
 		echo bad unit for grf in: $i
@@ -301,7 +307,7 @@ hil)
 		ln hil3 locator
 	fi
 	chmod 666 hil*
-#	echo "hil: use MAKEDEV.hpux to make HP-UX names for devices"
+#	echo "hil: use $0.hpux to make HP-UX names for devices"
 	;;
 
 lkm)
@@ -370,7 +376,8 @@ pty*)
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
+	umask 77
 	;;
 *)
 	echo $i: unknown device
