@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.152 2005/01/23 18:41:56 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.153 2005/01/24 21:25:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.152 2005/01/23 18:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.153 2005/01/24 21:25:09 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -1662,7 +1662,7 @@ ifconf(cmd, data)
 	} else {
 		sign = 1;
 	}
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));

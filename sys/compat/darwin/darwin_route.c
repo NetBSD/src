@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.8 2004/11/07 04:08:37 david Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.9 2005/01/24 21:25:09 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.8 2004/11/07 04:08:37 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.9 2005/01/24 21:25:09 matt Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ darwin_ifaddrs(af, dst, sizep)
 
 	af = darwin_to_native_af[af];
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		struct ifaddr *ifa;
 		struct sockaddr_dl *laddr = NULL;
 		struct sockaddr_storage dladdr;
@@ -75,7 +75,7 @@ darwin_ifaddrs(af, dst, sizep)
 		 * Find the link layer info as it is needed 
 		 * for computing darwin_if_msghdr's dim_len
 		 */
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if ((ifa->ifa_addr) &&
 			    (ifa->ifa_addr->sa_family == AF_LINK)) {
 				laddr = (struct sockaddr_dl *)ifa->ifa_addr;
@@ -144,7 +144,7 @@ darwin_ifaddrs(af, dst, sizep)
 			dst += ALIGN(dladdr.ss_len);
 		}
 		
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			struct darwin_ifa_msghdr diam;
 			int iaf;
 

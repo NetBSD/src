@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.100 2004/08/08 09:52:41 yamt Exp $	*/
+/*	$NetBSD: in.c,v 1.101 2005/01/24 21:25:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.100 2004/08/08 09:52:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.101 2005/01/24 21:25:09 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -736,7 +736,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 			}
 		}
 
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (!cmp)
@@ -1042,7 +1042,7 @@ in_broadcast(in, ifp)
 	 * with a broadcast address.
 	 */
 #define ia (ifatoia(ifa))
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
 		    !in_hosteq(in, ia->ia_addr.sin_addr) &&
 		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||

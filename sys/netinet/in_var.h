@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.53 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: in_var.h,v 1.54 2005/01/24 21:25:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ extern	const	int	inetctlerrmap[];
 { \
 	struct ifaddr *ifa; \
 \
-	TAILQ_FOREACH(ifa, &(ifp)->if_addrlist, ifa_list) { \
+	IFADDR_FOREACH(ifa, ifp) { \
 		if (ifa->ifa_addr->sa_family == AF_INET) \
 			break; \
 	} \

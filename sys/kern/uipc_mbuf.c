@@ -384,9 +384,10 @@ m_reclaim(void *arg, int flags)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
 	}
-	TAILQ_FOREACH(ifp, &ifnet, if_list)
+	IFNET_FOREACH(ifp) {
 		if (ifp->if_drain)
 			(*ifp->if_drain)(ifp);
+	}
 	splx(s);
 	mbstat.m_drain++;
 }

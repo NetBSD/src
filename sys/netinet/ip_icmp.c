@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.87 2004/08/03 13:58:59 cube Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.88 2005/01/24 21:25:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.87 2004/08/03 13:58:59 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.88 2005/01/24 21:25:09 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -669,7 +669,7 @@ icmp_reflect(m)
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && m->m_pkthdr.rcvif &&
 	    (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
-		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
@@ -726,7 +726,7 @@ icmp_reflect(m)
 	 * when the incoming packet was encapsulated
 	 */
 	if (sin == (struct sockaddr_in *)0 && m->m_pkthdr.rcvif) {
-		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);

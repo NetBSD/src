@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.73 2005/01/23 18:41:57 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.74 2005/01/24 21:25:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.73 2005/01/23 18:41:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.74 2005/01/24 21:25:09 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -896,7 +896,7 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 	int	len, error = 0;
 
 	memset(&info, 0, sizeof(info));
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);
