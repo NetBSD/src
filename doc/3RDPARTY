@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.76 2003/03/26 00:24:12 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.77 2003/03/27 17:45:59 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -237,7 +237,7 @@ for the next release).
 
 Package:	file
 Version:	4.00
-Current Vers:	4.00
+Current Vers:	4.01
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Mailing List:	file@mx.gw.com
@@ -257,7 +257,7 @@ internally not even the version number changed.
 
 Package:	gawk
 Version:	3.0.3
-Current Vers:	3.1.1
+Current Vers:	3.1.2
 Maintainer:	Arnold Robbins <arnold@skeeve.atl.ga.us>,
 Maintainer:	David Trueman <david@cs.dal.ca>
 Archive Site:	ftp://ftp.gnu.org/gnu/gawk/
