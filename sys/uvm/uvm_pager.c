@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.53 2001/11/06 08:07:51 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.54 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  *
@@ -34,11 +34,14 @@
  * from: Id: uvm_pager.c,v 1.1.2.23 1998/02/02 20:38:06 chuck Exp
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_pager.c: generic functions used to assist the pagers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.54 2001/11/10 07:37:00 lukem Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

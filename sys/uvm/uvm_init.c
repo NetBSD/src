@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.15 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  *
@@ -37,6 +37,9 @@
 /*
  * uvm_init.c: init the vm system.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.15 2001/11/10 07:37:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
