@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.42 2003/06/19 01:36:18 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.43 2003/06/19 01:47:36 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -579,3 +579,24 @@ sys/sys/shm.h					1.33
 	before use.  remove extra ntohs() which is not needed.  from Charles
 	Blundell
 	[kleink, ticket #1301]
+
+distrib/notes/macppc/hardware			1.31-1.34
+
+	- Add mention of experimental MP support in -current
+	- Apple's official name for recent iBooks is actually (16VRAM).
+	- D'oh -- PowerComputing PowerBase models are actually Open Firmware
+	  2.0.
+
+	- misc small typos and wording cleanup
+	- PowerBase is actually Open Firmware 2.0.x
+	- add iBook (16VRAM) and iBook (Summer2002) as supported models
+	- mention next release of NetBSD will support multiple CPUs
+	- mention that some L3 caches on CPU upgrades may not be enabled by
+	  default
+	- PowerMacintosh G4 (FW 800) model is reported to work with 1.6.1
+	- macppc uses gem driver instead of gm ethernet driver now
+	- macppc uses tlp driver instead of de ethernet driver now
+	- AirPort Extreme is unsupported
+	- full wscons capabilities not supported (virtual terminals and color)
+	- keyboard problems with iMac and B&W G3 seem to have been cleared up
+	[mbw, ticket #1305]
