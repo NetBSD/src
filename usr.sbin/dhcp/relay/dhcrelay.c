@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.1.1.7 1999/02/24 04:11:06 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.8 1999/03/05 17:43:46 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -76,7 +76,7 @@ struct server_list {
 static char copyright [] =
 "Copyright 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl15";
+static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl18";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -273,10 +273,11 @@ void relay (ip, packet, length, from_port, from, hfrom)
 		to.sin_len = sizeof to;
 #endif
 
-		memcpy (hto.haddr, packet -> chaddr,
-			(packet -> hlen > sizeof hto.haddr
-			 ? sizeof hto.haddr
-			 : packet -> hlen));
+		/* Set up the hardware destination address. */
+		hto.hlen = packet -> hlen;
+		if (hto.hlen > sizeof hto.haddr)
+			hto.hlen = sizeof hto.haddr;
+		memcpy (hto.haddr, packet -> chaddr, hto.hlen);
 		hto.htype = packet -> htype;
 
 		/* Find the interface that corresponds to the giaddr
