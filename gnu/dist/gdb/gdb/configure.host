@@ -135,6 +135,7 @@ powerpc-*-aix4.3.[0-1]*)	gdb_host=aix ;;
 powerpc-*-aix*)		gdb_host=aix432 ;;
 powerpc-*-linux*)	gdb_host=linux ;;
 powerpc-*-netbsd*)	gdb_host=nbsd ;;
+powerpc-*-darwin*)	gdb_host=darwin ;;
 
 rs6000-*-lynxos*)	gdb_host=rs6000lynx ;;
 rs6000-*-aix4*)		gdb_host=aix4 ;;

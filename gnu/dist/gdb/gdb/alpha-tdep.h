@@ -51,6 +51,7 @@
 
 #define ALPHA_V0_REGNUM	     0  /* Function integer return value */
 #define ALPHA_T7_REGNUM	     8  /* Return address register for OSF/1 __add* */
+#define ALPHA_S0_REGNUM	     9  /* First callee-saved register */  
 #define ALPHA_GCC_FP_REGNUM 15  /* Used by gcc as frame register */
 #define ALPHA_A0_REGNUM     16  /* Loc of first arg during a subr call */
 #define ALPHA_T9_REGNUM     23  /* Return address register for OSF/1 __div* */

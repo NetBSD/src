@@ -24,4 +24,8 @@
 
 #define ATTACH_DETACH
 
-#include "solib.h"		/* Support for shared libraries. */
+#define	FETCH_KCORE_REGISTERS
+
+#if !defined(NO_SOLIB)
+#include "solib.h"             /* Support for shared libraries. */
+#endif

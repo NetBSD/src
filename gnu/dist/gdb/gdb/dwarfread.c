@@ -3203,7 +3203,10 @@ decode_modified_type (char *modifiers, unsigned int modcount, int mtype)
 	  break;
 	default:
 	  if (!(MOD_lo_user <= (unsigned char) modifier
-		&& (unsigned char) modifier <= MOD_hi_user))
+#if MOD_hi_user != 0xff
+		&& (unsigned char) modifier <= MOD_hi_user
+#endif
+		))
 	    {
 	      complain (&unknown_type_modifier, DIE_ID, DIE_NAME, modifier);
 	    }

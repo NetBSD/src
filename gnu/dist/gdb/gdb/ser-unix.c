@@ -1337,7 +1337,7 @@ void
 _initialize_ser_hardwire (void)
 {
   struct serial_ops *ops = XMALLOC (struct serial_ops);
-  memset (ops, sizeof (struct serial_ops), 0);
+  memset (ops, 0, sizeof (struct serial_ops));
   ops->name = "hardwire";
   ops->next = 0;
   ops->open = hardwire_open;
