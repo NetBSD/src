@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 2001/08/10 18:27:13 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 2001/10/27 03:46:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -77,16 +77,13 @@
 	ldc	r8, r0_bank	; \
 	ldc	r9, r1_bank	; \
 	ldc	r10, r3_bank	; \
-	mov	r15, r8		; /* Check if kernel stack is already used */ \
-	mov	#0x3, r9	; \
 	mov	#30, r10	; \
-	shld	r10, r9		; /* r9 = 0xc0000000 */ \
-	and	r9, r8		; \
 	mov	#2, r9		; \
 	shld	r10, r9		; /* r9 = 0x80000000 */ \
 	and	r15, r9		; \
+	xor	r8, r8		; \
 	cmp/eq	r8, r9		; \
-	bt	1f		; /* If already kernel mode then jump */ \
+	bf	1f		; /* If already kernel mode then jump */ \
 	ldc	r15, r2_bank	; \
 	mov.l	3f, r8		; /* 3f = Kernel Stack */ \
 	mov.l	@r8, r15	; /* Change to Kernel Stack */ \
