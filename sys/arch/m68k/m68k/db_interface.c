@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 1998/07/04 22:18:27 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 1999/10/12 17:08:58 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -150,7 +150,7 @@ kdbprinttrap(type, code)
 }
 
 void
-Debugger()
+cpu_Debugger()
 {
 	asm ("trap #15");
 }
