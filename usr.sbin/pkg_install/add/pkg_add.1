@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33.4.2 2003/08/17 04:55:21 jlam Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.4.3 2003/08/18 04:58:07 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -243,9 +243,10 @@ directory is set by
 Set the
 .Ar view
 to which packages should be added after installation.
-The default view is the empty view but may be overridden by the
-.Ev PKG_VIEW
-environment variable.
+The default
+.Ar view
+is set by
+.Xr pkg_view 1 .
 .El
 .Pp
 One or more
@@ -467,8 +468,6 @@ Where to register packages instead of
 Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
-.Ss PKG_VIEW
-The default view to which packages are added after installation.
 .Sh EXAMPLES
 In all cases,
 .Nm
