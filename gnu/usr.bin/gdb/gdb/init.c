@@ -20,6 +20,9 @@ void initialize_all_files () {
   {extern void _initialize_inflow (); _initialize_inflow ();}
   {extern void _initialize_infrun (); _initialize_infrun ();}
   {extern void _initialize_inftarg (); _initialize_inftarg ();}
+#ifdef KERNEL_DEBUG
+  {extern void _initialize_kcorelow (); _initialize_kcorelow ();}
+#endif
   {extern void _initialize_language (); _initialize_language ();}
   {extern void _initialize_m2_language (); _initialize_m2_language ();}
   {extern void _initialize_maint_cmds (); _initialize_maint_cmds ();}

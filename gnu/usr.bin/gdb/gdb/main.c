@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: main.c,v 1.1 1994/01/28 12:40:11 pk Exp $
+	$Id: main.c,v 1.2 1994/05/17 14:01:49 pk Exp $
 */
 
 #include "defs.h"
@@ -324,6 +324,11 @@ int baud_rate = -1;
 
 int remote_debug = 0;
 
+#ifdef KERNEL_DEBUG
+/* Non-zero means we are debugging a kernel core file */
+int kernel_debugging = 0;
+#endif
+
 /* Signal to catch ^Z typed while reading a command: SIGTSTP or SIGCONT.  */
 
 #ifndef STOP_SIGNAL
@@ -608,6 +613,10 @@ main (argc, argv)
 	{"tty", required_argument, 0, 't'},
 	{"baud", required_argument, 0, 'b'},
 	{"b", required_argument, 0, 'b'},
+#ifdef KERNEL_DEBUG
+	{"kernel", no_argument, &kernel_debugging, 1},
+	{"k", no_argument, &kernel_debugging, 1},
+#endif
 /* Allow machine descriptions to add more options... */
 #ifdef ADDITIONAL_OPTIONS
 	ADDITIONAL_OPTIONS
@@ -685,6 +694,11 @@ main (argc, argv)
 		baud_rate = i;
 	    }
 	    break;
+#ifdef KERNEL_DEBUG
+	  case 'k':
+	    kernel_debugging = 1;
+	    break;
+#endif
 
 #ifdef ADDITIONAL_OPTION_CASES
 	  ADDITIONAL_OPTION_CASES
@@ -725,6 +739,11 @@ main (argc, argv)
   initialize_all_files ();
   init_main ();		/* But that omits this file!  Do it now */
   init_signals ();
+
+#ifdef KERNEL_DEBUG
+    if (kernel_debugging)
+	    prompt = savestring ("(kgdb) ", 7);
+#endif
 
   /* Do these (and anything which might call wrap_here or *_filtered)
      after initialize_all_files.  */

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: target.h,v 1.1 1994/01/28 12:40:59 pk Exp $
+	$Id: target.h,v 1.2 1994/05/17 14:01:52 pk Exp $
 */
 
 #if !defined (TARGET_H)
@@ -49,6 +49,9 @@ enum strata {
 	dummy_stratum,		/* The lowest of the low */
 	file_stratum,		/* Executable files, etc */
 	core_stratum,		/* Core dump files */
+#ifdef KERNEL_DEBUG
+	kcore_stratum,		/* Kernel core files */
+#endif
 	process_stratum		/* Executing processes */
 };
 

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: gdbcore.h,v 1.1 1994/01/28 12:39:45 pk Exp $
+	$Id: gdbcore.h,v 1.2 1994/05/17 14:01:47 pk Exp $
 */
 
 /* Interface routines for core, executable, etc.  */
@@ -116,6 +116,9 @@ extern CORE_ADDR kernel_u_addr;
 
 /* The target vector for core files */
 extern struct target_ops core_ops;
+#ifdef KERNEL_DEBUG
+extern struct target_ops kcore_ops;
+#endif
 
  /* target vector functions called directly from elsewhere */
 void

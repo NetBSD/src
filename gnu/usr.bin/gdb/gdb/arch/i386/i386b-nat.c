@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.1 1994/01/28 12:41:35 pk Exp $
+	$Id: i386b-nat.c,v 1.2 1994/05/17 14:02:02 pk Exp $
 */
 
 #include <sys/types.h>
@@ -291,5 +291,35 @@ i386_float_info ()
     }
   
   print_387_status (0, (struct env387 *)buf);
+}
+
+void
+fetch_kcore_registers (pcb)
+struct pcb *pcb;
+{
+	int	i;
+	int	*pcb_regs = (int *)pcb;
+
+        /*
+         * get the register values out of the sys pcb and
+         * store them where `read_register' will find them.
+         */
+	for (i = 0; i < 8; ++i)
+		supply_register(i, &pcb_regs[i+10]);
+	supply_register(8, &pcb_regs[8]);	/* eip */
+	supply_register(9, &pcb_regs[9]);	/* eflags */
+	for (i = 10; i < 13; ++i)		/* cs, ss, ds */
+		supply_register(i, &pcb_regs[i+9]);
+	supply_register(13, &pcb_regs[18]);	/* es */
+	for (i = 14; i < 16; ++i)		/* fs, gs */
+		supply_register(i, &pcb_regs[i+8]);
+
+	/* XXX 80387 registers? */
+}
+
+void
+clear_regs()
+{
+	return;
 }
 
