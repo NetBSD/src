@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.11 2003/02/25 09:09:31 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.12 2003/03/03 21:17:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.11 2003/02/25 09:09:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.12 2003/03/03 21:17:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +351,7 @@ smbfs_smb_setptime2(struct smbnode *np, struct timespec *mtime,
 /*
  * NT level. Specially for win9x
  */
+#if 0
 int
 smbfs_smb_setpattrNT(struct smbnode *np, u_short attr, struct timespec *mtime,
 	struct timespec *atime, struct smb_cred *scred)
@@ -397,6 +398,7 @@ smbfs_smb_setpattrNT(struct smbnode *np, u_short attr, struct timespec *mtime,
 	smb_t2_done(t2p);
 	return error;
 }
+#endif
 
 /*
  * Set file atime and mtime. Doesn't supported by core dialect.
@@ -682,6 +684,7 @@ smbfs_smb_rename(struct smbnode *src, struct smbnode *tdnp,
 	return error;
 }
 
+#ifdef notnow
 int
 smbfs_smb_move(struct smbnode *src, struct smbnode *tdnp,
 	const char *tname, int tnmlen, u_int16_t flags, struct smb_cred *scred)
@@ -716,6 +719,7 @@ smbfs_smb_move(struct smbnode *src, struct smbnode *tdnp,
 	smb_rq_done(rqp);
 	return error;
 }
+#endif
 
 int
 smbfs_smb_mkdir(struct smbnode *dnp, const char *name, int len,
