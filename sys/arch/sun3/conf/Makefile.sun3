@@ -20,7 +20,7 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS=	as ${DEBUG}
+AS=	gas ${DEBUG}
 CC=	cc ${DEBUG}
 CPP=	cpp
 LD=	ld
@@ -97,7 +97,7 @@ symbols.sort: ${SUN3}/sun3/symbols.raw
 	grep -v '^#' ${SUN3}/sun3/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/sun3/vectors.s ${SUN3/sun3/lib.s
+locore.o: assym.s ${SUN3}/sun3/locore.s 
 locore.o: ${SUN3}/include/trap.h ${SUN3}/include/psl.h 
 locore.o: ${SUN3}/include/cpu.h ${SUN3}/include/control.h
 #locore.o: assym.s ${SUN3}/sun3/vectors.s ${SUN3}/sun3/locore.s 
