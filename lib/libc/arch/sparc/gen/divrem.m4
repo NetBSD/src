@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
- * $Id: divrem.m4,v 1.1 1993/10/07 00:21:28 cgd Exp $
+ * $Id: divrem.m4,v 1.2 1995/04/22 09:33:49 pk Exp $
  */
 
 /*
@@ -136,7 +136,9 @@ ifelse(S, `true',
 `	! compute sign of result; if neither is negative, no problem
 	orcc	divisor, dividend, %g0	! either negative?
 	bge	2f			! no, go do the divide
-	xor	divisor, dividend, SIGN	! compute sign in any case
+	ifelse(OP, `div',
+		`xor	divisor, dividend, SIGN',
+		`mov	dividend, SIGN')	! compute sign in any case
 	tst	divisor
 	bge	1f
 	tst	dividend
