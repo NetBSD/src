@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.3 1997/07/24 08:54:56 phil Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.3.2.1 1998/11/06 21:54:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -94,7 +94,8 @@ make_passwd(argp, rqstp, transp)
 	if (!pw)
 		RETURN(1);
 
-	if (strcmp(crypt(argp->oldpass, pw->pw_passwd), pw->pw_passwd) != 0)
+	if (*pw->pw_passwd &&
+	    strcmp(crypt(argp->oldpass, pw->pw_passwd), pw->pw_passwd) != 0)
 		RETURN(1);
 
 	pw_init();
