@@ -1,4 +1,4 @@
-/*	$NetBSD: isnanl.c,v 1.1 2003/10/24 00:58:01 kleink Exp $	*/
+/*	$NetBSD: isnanl.c,v 1.2 2003/10/25 17:57:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnanl.c,v 1.1 2003/10/24 00:58:01 kleink Exp $");
+__RCSID("$NetBSD: isnanl.c,v 1.2 2003/10/25 17:57:15 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,16 @@ __weak_alias(isnanl,_isnanl)
 int
 isnanl(long double ld)
 {
-#ifndef __VFP_FP__
+#ifdef __VFP_FP__
+	union {
+		long double ld;
+		struct ieee_double dbl;
+	} u;
+
+	u.ld = ld;
+	return (u.dbl.dbl_exp == DBL_EXP_INFNAN &&
+	    (u.dbl.dbl_frach != 0 || u.dbl.dbl_fracl != 0));
+#else
 	union {
 		long double ld;
 		struct ieee_ext ldbl;
@@ -68,14 +77,5 @@ isnanl(long double ld)
 	return (u.ldbl.ext_exp == EXT_EXP_INFNAN &&
 	    (u.ldbl.ext_frach != 0 || u.ldbl.ext_frachm != 0 ||
 	     u.ldbl.ext_fraclm != 0 || u.ldbl.ext_fracl != 0));
-#else
-	union {
-		long double ld;
-		struct ieee_double dbl;
-	} u;
-
-	u.ld = ld;
-	return (u.dbl.dbl_exp == DBL_EXP_INFNAN &&
-	    (u.dbl.dbl_frach != 0 || u.dbl.dbl_fracl != 0));
-#endif /* !__VFP_FP__ */
+#endif /* __VFP_FP__ */
 }
