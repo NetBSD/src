@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.18 2000/05/11 19:24:35 is Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.19 2000/05/15 07:57:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,20 +83,21 @@ struct mbe_pcmcia_get_enaddr_args {
 };
 int	mbe_pcmcia_get_enaddr_from_cis __P((struct pcmcia_tuple *, void *));
 int	mbe_pcmcia_get_enaddr_from_mem __P((struct mbe_pcmcia_softc *,
-				    struct mbe_pcmcia_get_enaddr_args *));
+	    struct mbe_pcmcia_get_enaddr_args *));
 
 const struct mbe_pcmcia_product {
 	struct pcmcia_product mpp_product;
-	u_int32_t	mpp_ioalign;	/* required alignment */
-	int enet_maddr;
+	u_int32_t mpp_ioalign;			/* required alignment */
+	int mpp_enet_maddr;
 } mbe_pcmcia_products[] = {
 	{ { PCMCIA_STR_TDK_LAK_CD021BX,		PCMCIA_VENDOR_TDK,
 	    PCMCIA_PRODUCT_TDK_LAK_CD021BX,	0 },
-	  0, -1}, 
+	  0, -1 }, 
 
 	{ { PCMCIA_STR_TDK_LAK_CF010,		PCMCIA_VENDOR_TDK,
 	    PCMCIA_PRODUCT_TDK_LAK_CF010,	0 },
-	  0, -1},
+	  0, -1 },
+
 #if 0 /* XXX 86960-based? */
 	{ { PCMCIA_STR_TDK_LAK_DFL9610,		PCMCIA_VENDOR_TDK,
 	    PCMCIA_PRODUCT_TDK_LAK_DFL9610,	1 },
@@ -197,33 +198,33 @@ mbe_pcmcia_attach(parent, self, aux)
 	printf(": %s\n", mpp->mpp_product.pp_name);
 
 	/* Read station address from mem or CIS. */
-	if (mpp->enet_maddr >= 0) {
-		pgea.maddr = mpp->enet_maddr;
+	if (mpp->mpp_enet_maddr >= 0) {
+		pgea.maddr = mpp->mpp_enet_maddr;
 		if (mbe_pcmcia_get_enaddr_from_mem(psc, &pgea) != 0) {
 			printf("%s: Couldn't get ethernet address "
-			       "from mem\n", sc->sc_dev.dv_xname);
+			    "from mem\n", sc->sc_dev.dv_xname);
 			goto no_enaddr;
 		}
 	} else {
-		rv = pcmcia_scan_cis(parent, 
-				     mbe_pcmcia_get_enaddr_from_cis, &pgea);
+		rv = pcmcia_scan_cis(parent,
+		    mbe_pcmcia_get_enaddr_from_cis, &pgea);
 		if (rv == -1) {
 			printf("%s: Couldn't read CIS to get ethernet "
-			       "address\n", sc->sc_dev.dv_xname);
+			    "address\n", sc->sc_dev.dv_xname);
 			goto no_enaddr;
 		} else if (rv == 0) {
 			printf("%s: Couldn't get ethernet address "
-			       "from CIS\n", sc->sc_dev.dv_xname);
+			    "from CIS\n", sc->sc_dev.dv_xname);
 			goto no_enaddr;
 		}
 #ifdef DIAGNOSTIC
 		if (rv != 1) {
 			printf("%s: pcmcia_scan_cis returns %d\n",
-			       sc->sc_dev.dv_xname, rv);
+			    sc->sc_dev.dv_xname, rv);
 			panic("mbe_pcmcia_attach");
 		}
 		printf("%s: Ethernet address from CIS: %s\n",
-		       sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr));
+		    sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr));
 #endif
 	}
 
@@ -259,7 +260,7 @@ mbe_pcmcia_detach(self, flags)
 	int error;
 
 	if (psc->sc_io_window == -1)
-		/* Nothing to detach since we've failed to attach.  */
+		/* Nothing to detach.  */
 		return (0);
 
 	error = mb86960_detach(&psc->sc_mb86960);
@@ -347,20 +348,20 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 
 	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
 		printf("%s: can't alloc mem for enet addr\n", 
-		       sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, ea->maddr,
-			   ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
+	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
 		printf("%s: can't map mem for enet addr\n", 
-		       sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		ea->enaddr[i] = bus_space_read_1(pcmh.memt, pcmh.memh,
-						 offset + (i * 2));
+		    offset + (i * 2));
 
 	pcmcia_mem_unmap(psc->sc_pf, mwindow);
 	pcmcia_mem_free(psc->sc_pf, &pcmh);
