@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2001/03/04 16:51:05 uch Exp $
+# $NetBSD: Makefile,v 1.3 2001/03/13 16:31:31 uch Exp $
 
-BUILD_ARCH	= ARM SH3 MIPS
+BUILD_ARCH	= ARM SH3 SH4 MIPS
 
 vc5: clean
 	TYPE=application sh gen_template.sh vc5 SH MIPS
