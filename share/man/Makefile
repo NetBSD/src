@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$Id: Makefile,v 1.4 1993/07/31 15:29:16 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/02/07 05:10:30 cgd Exp $
 
 SUBDIR=	man1 man3 man4 man5 man7 man8
 
@@ -10,10 +10,6 @@ afterinstall:
 	    ${DESTDIR}/usr/share/man/COPYRIGHT
 
 makedb:
-	for file in `find /usr/share/man -type f -name '*.0' -print`; do \
-		sed -n -f /usr/share/man/makewhatis.sed $$file; \
-	done | sort -u > whatis.db
-	install -o ${BINOWN} -g ${BINGRP} -m 444 whatis.db \
-	    ${DESTDIR}/usr/share/man
+	/usr/libexec/makewhatis
 
 .include <bsd.subdir.mk>
