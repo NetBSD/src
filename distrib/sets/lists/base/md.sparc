@@ -1,4 +1,5 @@
-# $NetBSD: md.sparc,v 1.48 2000/01/24 07:25:02 mycroft Exp $
+# $NetBSD: md.sparc,v 1.49 2000/05/08 06:09:57 mycroft Exp $
+./dev/apm
 ./sbin/edlabel
 ./usr/bin/fdformat
 ./usr/lkm/adosfs.o
@@ -18,9 +19,13 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/binstall
 ./usr/mdec/boot
+./usr/mdec/boot.200000
+./usr/mdec/boot.300000
+./usr/mdec/boot.400000
+./usr/mdec/boot.700000
 ./usr/mdec/boot.net
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/sbin/eeprom
 ./usr/sbin/apmd
-./usr/sbin/tadepolectl
+./usr/sbin/tadpolectl
