@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$NetBSD: kdump.c,v 1.15 1997/01/27 21:39:50 cgd Exp $";
+static char *rcsid = "$NetBSD: kdump.c,v 1.16 1997/05/17 19:46:27 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ static struct emulation emulations[] = {
 	{ "sunos",     sunos_syscallnames,  SUNOS_SYS_MAXSYSCALL },
 	{ "svr4",       svr4_syscallnames,   SVR4_SYS_MAXSYSCALL },
 	{ "ultrix",   ultrix_syscallnames, ULTRIX_SYS_MAXSYSCALL },
-	{ NULL,			     NULL,		    NULL }
+	{ NULL,			     NULL,		    0    }
 };
 
 struct emulation *current;
@@ -387,13 +387,13 @@ ktrsysret(ktr)
 	(void)putchar('\n');
 }
 
-ktrnamei(cp, len) 
+ktrnamei(cp, len)
 	char *cp;
 {
 	(void)printf("\"%.*s\"\n", len, cp);
 }
 
-ktremul(cp, len) 
+ktremul(cp, len)
 	char *cp;
 {
 	char name[1024];
