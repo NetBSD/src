@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.8 1998/04/01 23:00:14 mark Exp $	*/
+/*	$NetBSD: copystr.S,v 1.9 1998/06/17 20:10:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -31,8 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * RiscBSD kernel project
- *
  * copystr.S
  *
  * optimised and fault protected copystr functions
@@ -45,11 +43,16 @@
 #include <sys/errno.h>
 
 	.text
+	.align	0
 Lcurpcb:
 	.word	_curpcb
 
-Lcurproc:
-	.word	_curproc
+Lvm_min_address:
+	.word	VM_MIN_ADDRESS
+Lvm_maxuser_address:
+	.word	VM_MAXUSER_ADDRESS
+Lvm_maxkern_address:
+	.word	VM_MAXKERN_ADDRESS
 
 /*
  * r0 - from
@@ -100,13 +103,8 @@ Lcopystrexit:
 
 ENTRY(copyinstr)
 	stmfd	sp!, {r4-r6}
-	teq	r2, #0x00000000
-	moveq	r5, #0x00000000
-	moveq	r6, #0x00000000
-	beq	Lcopyinstrexit
 
-/* Validate addresses */
-
+	/* Validate user and kernel addresses */
 	ldr	r4, Lvm_min_address
 	cmp	r0, r4
 	bcc	Lbadaddress
@@ -119,38 +117,8 @@ ENTRY(copyinstr)
 	cmp	r1, r4
 	bcs	Lbadaddress
 
-	ldr	r4, Lcurpcb
-	ldr	r4, [r4]
-
-#ifdef DIAGNOSTIC
-	teq	r4, #0x00000000
-	beq	Lcopystrpcbfault
-#endif
-
-	add	r5, pc, #Lcopystrfault - . - 8
-	str	r5, [r4, #PCB_ONFAULT]
-	mov 	r6, #0x00000000
-
-Lcopyinstr_loop:
-	ldrb	r5, [r0], #0x0001
-	strb	r5, [r1], #0x0001
-	add	r6, r6, #0x00000001
-	teq	r5, #0x00000000
-	teqne	r6, r2
-	bne	Lcopyinstr_loop
-
-Lcopyinstrexit:
-	teq	r3, #0x00000000
-	strne	r6, [r3]
-
-	teq	r5, #0x00000000
-	moveq	r0, #0x00000000
-	movne	r0, #ENAMETOOLONG
-
-	mov	r6, #0x00000000
-	str	r6, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4-r6}
-	mov	pc, lr
+	/* Do the actual copy */
+	b	do_copyinoutstr
 
 /*
  * r0 - kernel space address
@@ -163,13 +131,8 @@ Lcopyinstrexit:
 
 ENTRY(copyoutstr)
 	stmfd	sp!, {r4-r6}
-	teq	r2, #0x00000000
-	moveq	r5, #0x00000000
-	moveq	r6, #0x00000000
-	beq	Lcopyinstrexit
 
-/* Validate addresses */
-
+	/* Validate user and kernel addresses */
 	ldr	r4, Lvm_min_address
 	cmp	r1, r4
 	bcc	Lbadaddress
@@ -181,6 +144,13 @@ ENTRY(copyoutstr)
 	ldr	r4, Lvm_maxkern_address
 	cmp	r0, r4
 	bcs	Lbadaddress
+
+	/* Do the actual copy */
+do_copyinoutstr:
+	teq	r2, #0x00000000
+	moveq	r5, #0x00000000
+	moveq	r6, #0x00000000
+	beq	Lcopyinoutstrexit
 
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
@@ -194,15 +164,15 @@ ENTRY(copyoutstr)
 	str	r5, [r4, #PCB_ONFAULT]
 	mov 	r6, #0x00000000
 
-Lcopyoutstr_loop:
+Lcopyinoutstr_loop:
 	ldrb	r5, [r0], #0x0001
 	strb	r5, [r1], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
 	teqne	r6, r2
-	bne	Lcopyoutstr_loop
+	bne	Lcopyinoutstr_loop
 
-Lcopyoutstrexit:
+Lcopyinoutstrexit:
 	teq	r3, #0x00000000
 	strne	r6, [r3]
 
@@ -215,35 +185,27 @@ Lcopyoutstrexit:
 	ldmfd	sp!, {r4-r6}
 	mov	pc, lr
 
-Lvm_min_address:
-	.word	VM_MIN_ADDRESS
-Lvm_maxuser_address:
-	.word	VM_MAXUSER_ADDRESS
-Lvm_maxkern_address:
-	.word	VM_MAXKERN_ADDRESS
-
+/* A fault occurred during the copy */
 Lcopystrfault:
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
-	mov	r0, #EFAULT
-	ldmfd	sp!, {r4-r6}
-	mov	pc, lr
 
+	/* FALLTHROUGH */
+
+/* Source or Destination address was bad so fail */
 Lbadaddress:
-	mov	r0, #EFAULT
 	ldmfd	sp!, {r4-r6}
+	mov	r0, #EFAULT
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
 Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
-	ldr	r2, Lcurproc
-	ldr	r2, [r2]
 	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
 	b	_panic
 
 Lcopystrpcbfaulttext:
-	.asciz	"Yikes - no valid PCB during copystr() addr1=%08x addr2=%08x curproc=%08x\n"
+	.asciz	"No valid PCB during copyinoutstr() addr1=%08x addr2=%08x\n"
 	.align	0
 #endif
