@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: catman.8,v 1.3 1994/01/29 01:43:12 jtc Exp $
+.\"	$Id: catman.8,v 1.4 1994/04/26 20:15:50 chopps Exp $
 .\"
 .Dd July 30, 1993
 .Dt CATMAN 8
@@ -38,7 +38,7 @@
 .Nd format cat pages from man pages
 .Sh SYNOPSIS
 .Nm catman
-.Op Fl npw
+.Op Fl knpsw
 .Op Fl M Ar directory
 .Op Ar sections
 .Sh DESCRIPTION
@@ -56,6 +56,8 @@ database.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl k
+Ignore errors form nroff when building manpages.
 .It Fl n
 Do not create the 
 .Nm whatis
@@ -63,6 +65,11 @@ database.
 .It Fl p
 Display the commands that would have been executed, but do not actually
 execute them.
+.It Fl s
+Perform work silently do not echo commands as they are executed.  This
+flag is ignored if 
+.Fl p
+is specified.
 .It Fl w
 Only create the 
 .Nm whatis 
@@ -75,3 +82,7 @@ Update manual pages in
 .Xr apropos 1 ,
 .Xr man 1 ,
 .Xr whatis 1
+.Sh BUGS
+Currently knows nothing about 
+.Pa /etc/man.conf 
+and machine specific man pages.
