@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.19 1995/06/04 06:46:08 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.20 1995/06/04 06:55:30 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -97,7 +97,7 @@ static	void tbf_control __P((struct vif *, struct mbuf *, struct ip *,
 static	void tbf_queue __P((struct vif *, struct mbuf *, struct ip *));
 static	void tbf_dequeue __P((struct vif *, int));
 static	void tbf_process_q __P((struct vif *));
-static	void tbf_reprocess_q __P((struct vif *));
+static	void tbf_reprocess_q __P((void *));
 static	int tbf_dq_sel __P((struct vif *, struct ip *));
 static	void tbf_send_packet __P((struct vif *, struct mbuf *));
 static	void tbf_update_tokens __P((struct vif *));
@@ -1517,7 +1517,7 @@ tbf_control(vifp, m, ip, p_len)
 	} else {
 	    /* queue packet and timeout till later */
 	    tbf_queue(vifp, m, ip);
-	    timeout(tbf_reprocess_q, (caddr_t)vifp, 1);
+	    timeout(tbf_reprocess_q, vifp, 1);
 	}
     } else if (vifp->v_tbf.q_len < MAXQSIZE) {
 	/* finite queue length, so queue pkts and process queue */
@@ -1621,18 +1621,19 @@ tbf_dequeue(vifp, j)
 }
 
 static void
-tbf_reprocess_q(vifp)
-    register struct vif *vifp;
+tbf_reprocess_q(arg)
+	void *arg;
 {
-    if (ip_mrouter == NULL) 
-	return;
+	register struct vif *vifp = arg;
 
-    tbf_update_tokens(vifp);
+	if (ip_mrouter == NULL) 
+		return;
 
-    tbf_process_q(vifp);
+	tbf_update_tokens(vifp);
+	tbf_process_q(vifp);
 
-    if (vifp->v_tbf.q_len)
-	timeout(tbf_reprocess_q, (caddr_t)vifp, 1);
+	if (vifp->v_tbf.q_len)
+		timeout(tbf_reprocess_q, vifp, 1);
 }
 
 /* function that will selectively discard a member of the queue
