@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.20 2002/02/15 16:47:58 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.21 2002/02/18 22:24:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2002/02/15 16:47:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2002/02/18 22:24:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Grab the signal mask */
-	linux_to_native_sigset(&sigframe.uc.uc_sigmask, &mask);
+	linux_to_native_sigset(&mask, &sigframe.uc.uc_sigmask);
 
 	return(linux_restore_sigcontext(p, sigframe.uc.uc_mcontext, &mask));
 }
@@ -486,7 +486,7 @@ linux_sys_sigreturn(p, v, retval)
 
 	/* Grab the signal mask. */
 	/* XXX use frame.extramask */
-	linux_old_to_native_sigset(frame.sf_sc.sc_mask, &mask);
+	linux_old_to_native_sigset(&mask, frame.sf_sc.sc_mask);
 
 	return(linux_restore_sigcontext(p, frame.sf_sc, &mask));
 }
