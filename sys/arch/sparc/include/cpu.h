@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2003/01/12 01:19:00 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.59 2003/01/12 01:50:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,7 +134,6 @@ void	*softnet_cookie;
  * Preempt the current process on the target CPU if in interrupt from
  * user mode, or after the current trap/syscall if in system mode.
  */
-#if schedcpu_is_fixed
 #define need_resched(ci) do {						\
 	(ci)->want_resched = 1;						\
 	(ci)->want_ast = 1;						\
@@ -143,12 +142,6 @@ void	*softnet_cookie;
 	if ((ci)->ci_cpuid != cpu_number())				\
 		XCALL0(sparc_noop, 1U << (ci)->ci_cpuid);		\
 } while(0)
-#else
-#define need_resched(ci) do {						\
-	(ci)->want_resched = 1;						\
-	(ci)->want_ast = 1;						\
-} while(0)
-#endif
 
 /*
  * Give a profiling tick to the current process when the user profiling
