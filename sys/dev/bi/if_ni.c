@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.4 2000/06/04 06:17:00 matt Exp $ */
+/*	$NetBSD: if_ni.c,v 1.5 2000/06/05 00:09:17 matt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -250,7 +250,8 @@ niattach(parent, self, aux)
 
 	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
 		niintr, sc, &sc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->sc_dev.dv_xname, "intr");
 
 	ni_getpgs(sc, sizeof(struct ni_gvppqb), (caddr_t *)&sc->sc_gvppqb, 
 	    (paddr_t *)&sc->sc_pgvppqb);

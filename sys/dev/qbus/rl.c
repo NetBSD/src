@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.4 2000/06/04 06:17:04 matt Exp $	*/
+/*	$NetBSD: rl.c,v 1.5 2000/06/05 00:09:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -181,7 +181,8 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ua->ua_dmat;
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
 		rlcintr, sc, &sc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
 	printf("\n");
 
 	/*

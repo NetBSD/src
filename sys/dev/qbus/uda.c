@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
+/*	$NetBSD: uda.c,v 1.37 2000/06/05 00:09:19 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -197,7 +197,8 @@ udaattach(parent, self, aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
 		udaintr, sc, &sc->sc_intrcnt);
 	uba_reset_establish(udareset, &sc->sc_dev);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.7 2000/06/04 02:19:25 matt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.8 2000/06/05 00:09:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -231,7 +231,8 @@ le_vsbus_attach(parent, self, aux)
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc,
 		SCB_ISTACK, &sc->sc_intrcnt);
-	evcnt_attach(self, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		self->dv_xname, "intr");
 
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.

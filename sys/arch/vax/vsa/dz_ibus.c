@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.17 2000/06/04 02:19:29 matt Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.18 2000/06/05 00:09:20 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -149,7 +149,7 @@ dz_vsbus_attach(parent, self, aux)
 
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc);
+	dzattach(sc, NULL);
 
 	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
 	    (vax_boardtype == VAX_BTYP_48))

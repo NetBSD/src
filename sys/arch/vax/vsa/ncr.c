@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.29 2000/06/04 06:16:59 matt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.30 2000/06/05 00:09:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -152,7 +152,8 @@ si_attach(parent, self, aux)
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 		SCB_ISTACK, &sc->ncr_intrcnt);
-	evcnt_attach(self, "intr", &sc->ncr_intrcnt);
+	evcnt_attach_dynamic(&sc->ncr_intrcnt, EVCNT_TYPE_INTR, NULL,
+		self->dv_xname, "intr");
 
 	/*
 	 * DMA area mapin.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.20 2000/06/04 06:17:01 matt Exp $ */
+/*	$NetBSD: kdb.c,v 1.21 2000/06/05 00:09:17 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -154,6 +154,8 @@ kdbattach(parent, self, aux)
 	printf("\n");
 	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
 		kdbintr, sc, &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->sc_dev.dv_xname, "intr");
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_ioh = ba->ba_ioh;

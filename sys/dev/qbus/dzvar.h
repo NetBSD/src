@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.8 2000/06/04 02:14:12 matt Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.9 2000/06/05 00:09:18 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ struct	dz_softc {
 	} sc_dz[NDZLINE];
 };
 
-void	dzattach(struct dz_softc *);
+void	dzattach(struct dz_softc *, struct evcnt *);
 void	dzrint(void *);
 void	dzxint(void *);
 void	dzreset(struct device *);

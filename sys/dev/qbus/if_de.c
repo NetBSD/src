@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.3 2000/06/04 06:17:03 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.4 2000/06/05 00:09:18 matt Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -304,7 +304,8 @@ deattach(struct device *parent, struct device *self, void *aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr,
 		sc, &sc->sc_intrcnt);
 	uba_reset_establish(dereset, &sc->sc_dev);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;

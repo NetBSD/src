@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.47 2000/06/04 19:30:16 matt Exp $	   */
+/*	$NetBSD: uba.c,v 1.48 2000/06/05 00:09:20 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -154,7 +154,8 @@ dw780_attach(parent, self, aux)
 	for (i = 0; i < 4; i++)
 		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
 		    sc->uh_dev.dv_unit, SCB_ISTACK, &sc->uh_intrcnt);
-	evcnt_attach(&sc->uh_dev, "intr", &sc->uh_intrcnt);
+	evcnt_attach_dynamic(&sc->uh_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->uh_dev.dev_xname, "intr");
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
 	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
