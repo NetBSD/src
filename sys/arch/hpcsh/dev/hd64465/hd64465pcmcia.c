@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.15 2004/08/11 06:16:10 mycroft Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.16 2004/08/11 06:30:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.15 2004/08/11 06:16:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.16 2004/08/11 06:30:15 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -681,8 +681,15 @@ hd64465pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct hd64465pcmcia_channel *ch = (struct hd64465pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
+	bus_addr_t gcr;
+	u_int8_t r;
 
 	DPRINTF("enable channel %d\n", channel);
+	gcr = HD64461_PCCGCR(channel);
+
+	r = hd64465_reg_read_1(gcr);
+	r &= ~HD64461_PCC0GCR_P0PCCT;
+	hd64465_reg_write_1(gcr, r);
 
 	/* Set Common memory area #0. */
 	hd64465pcmcia_memory_window16_switch(channel, MEMWIN_16M_COMMON_0);
