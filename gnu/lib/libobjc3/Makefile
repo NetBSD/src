@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/08/04 01:53:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/19 14:52:03 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -28,10 +28,8 @@ GCPPFLAGS=	${G_ALL_CFLAGS} ${G_INCLUDES}
 CPPFLAGS+=	-I. -I${GCCARCH} -I${LIBGCCOBJ} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${GCCLIBXX}
 
-CLEANFILES+=	bits
-beforedepend:
-	rm -f bits
-	ln -s ${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH} bits
+BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH} bits
+DPSRCS+=	bits
 
 .for f in Protocol.m Object.m NXConstStr.m linking.m
 COPTS.{$f}=	-fgnu-runtime
@@ -43,7 +41,10 @@ INCSDIR=	/usr/include/objc
 DPSRCS+=	runtime-info.h
 CLEANFILES+=	rtscratch rtscratch.s runtime-info.h
 runtime-info.h:
-	@touch rtscratch
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	touch rtscratch
+	${_MKCMD}\
 	`${OBJC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@
 
 .PATH: ${DIST}/libobjc ${DIST}/libobjc/objc
