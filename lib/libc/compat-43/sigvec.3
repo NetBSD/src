@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigvec.2	6.7 (Berkeley) 4/29/91
-.\"	$Id: sigvec.3,v 1.3 1993/11/29 22:06:07 jtc Exp $
+.\"	$Id: sigvec.3,v 1.4 1994/01/11 00:13:27 jtc Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 2
@@ -54,7 +54,7 @@ This interface is made obsolete by sigaction(2).
 .Ef
 .Pp
 The system defines a set of signals that may be delivered to a process.
-Signal delivery resembles the occurence of a hardware interrupt:
+Signal delivery resembles the occurrence of a hardware interrupt:
 the signal is blocked from further occurrence, the current process 
 context is saved, and a new one is built.  A process may specify a
 .Em handler
