@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.62 2003/06/15 23:08:54 fvdl Exp $ */
+/* $NetBSD: cia.c,v 1.63 2004/08/30 15:05:15 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.62 2003/06/15 23:08:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.63 2004/08/30 15:05:15 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,6 @@ CFATTACH_DECL(cia, sizeof(struct cia_softc),
     ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
-
-static int	ciaprint __P((void *, const char *pnp));
 
 int	cia_bus_get_window __P((int, int,
 	    struct alpha_bus_space_translation *));
@@ -410,7 +408,6 @@ ciaattach(parent, self, aux)
 		panic("ciaattach: shouldn't be here, really...");
 	}
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &ccp->cc_iot;
 	pba.pba_memt = &ccp->cc_memt;
 	pba.pba_dmat =
@@ -423,21 +420,7 @@ ciaattach(parent, self, aux)
 	if ((ccp->cc_flags & CCF_PYXISBUG) == 0)
 		pba.pba_flags |= PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, ciaprint);
-}
-
-static int
-ciaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	register struct pcibus_attach_args *pba = aux;
-
-	/* only PCIs can attach to CIAs; easy. */
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 int

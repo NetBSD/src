@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.14 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: mca.c,v 1.15 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.14 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.15 2004/08/30 15:05:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,6 @@ mca_match(parent, cf, aux)
 	void *aux;
 {
 	struct mcabus_attach_args *mba = aux;
-
-	if (strcmp(mba->mba_busname, cf->cf_name))
-		return (0);
 
 	/* sanity (only mca0 supported currently) */
 	if (mba->mba_bus < 0 || mba->mba_bus > 0)

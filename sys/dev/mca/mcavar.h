@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.5 2004/08/30 10:30:38 drochner Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.6 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <machine/mca_machdep.h>
 
 struct mcabus_attach_args {
-	const char *mba_busname;
+	const char *_mba_busname;	/* XXX placeholder */
 	bus_space_tag_t mba_iot;	/* MCA I/O space tag */
 	bus_space_tag_t mba_memt;	/* MCA mem space tag */
 	bus_dma_tag_t mba_dmat;		/* MCA DMA tag */
