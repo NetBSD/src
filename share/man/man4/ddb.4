@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.79 2004/09/29 23:54:11 reinoud Exp $
+.\"	$NetBSD: ddb.4,v 1.80 2004/09/30 09:20:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 2, 2004
+.Dd September 30, 2004
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1137,7 +1137,8 @@ who don't have a serial console but want to recall
 .Nm
 output from a crash investigation.
 This option is more generic than the /l command modifier possible for
-selected commands as discussed above to log the output. Mixing both /l
+selected commands as discussed above to log the output.
+Mixing both /l
 and this setting can give double loggings.
 .\" .It Va work Ns Sy xx
 .\" Temporary work variable.
