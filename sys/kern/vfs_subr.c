@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.44 1995/06/01 22:44:08 jtc Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.45 1995/07/02 18:13:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -909,7 +909,7 @@ vclean(vp, flags)
 	 */
 	if (active) {
 		if (flags & DOCLOSE)
-			VOP_CLOSE(vp, IO_NDELAY, NOCRED, NULL);
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
 		VOP_INACTIVE(vp);
 	}
 	/*
