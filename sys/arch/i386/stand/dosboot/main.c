@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/02/12 05:14:23 cjs Exp $	 */
+/*	$NetBSD: main.c,v 1.12 1999/04/14 11:53:43 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -40,17 +40,17 @@
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
 
 #include <libi386.h>
 
-extern void ls  __P((char *));
 extern int getopt __P((int, char **, const char *));
 
 #ifdef SUPPORT_LYNX
 extern int exec_lynx __P((const char*, int));
 #endif
 
-int             errno;
+int errno;
 
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
@@ -61,6 +61,11 @@ static char    *current_fsmode;
 static char    *default_devname;
 static int      default_unit, default_partition;
 static char    *default_filename;
+
+char *sprint_bootsel __P((const char *));
+static void bootit __P((const char *, int, int));
+void usage __P((void));
+int main __P((int, char **));
 
 void	command_help __P((char *));
 void	command_ls __P((char *));
@@ -151,8 +156,9 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 	return (0);
 }
 
-char *sprint_bootsel(filename)
-const char *filename;
+char *
+sprint_bootsel(filename)
+	const char *filename;
 {
 	char *fsname, *devname;
 	int unit, partition;
@@ -164,12 +170,13 @@ const char *filename;
 		if (!strcmp(fsname, "dos"))
 			sprintf(buf, "dos:%s", file);
 		else if (!strcmp(fsname, "ufs"))
-			sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+			sprintf(buf, "%s%d%c:%s", devname, unit,
+				'a' + partition, file);
 		else goto bad;
-		return(buf);
+		return (buf);
 	}
 bad:
-	return("(invalid)");
+	return ("(invalid)");
 }
 
 static void
@@ -324,7 +331,7 @@ command_ls(arg)
 		return;
 	}
 	default_filename = "/";
-	ls(arg);
+	ufs_ls(arg);
 	default_filename = help;
 }
 
@@ -334,7 +341,7 @@ command_quit(arg)
 	char *arg;
 {
 	printf("Exiting... goodbye...\n");
-	exit();
+	exit(0);
 }
 
 void
