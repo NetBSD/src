@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.2 1997/07/06 05:11:28 thorpej Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.3 1997/07/07 22:21:21 fvdl Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed & Guido van Rooij.
@@ -264,7 +264,7 @@ frentry_t *fr, **frptr;
 			else {
 				*faep = fae->fae_next;
 				*frptr = fr->fr_next;
-				(void) KFREE(fae);
+				KFREE(fae);
 			}
 		} else {
 			KMALLOC(fae, frauthent_t *, sizeof(*fae));
