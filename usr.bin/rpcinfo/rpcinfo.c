@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.12 2000/06/02 23:19:38 fvdl Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.13 2000/06/03 15:34:44 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -832,12 +832,12 @@ failed:
 		printf("No remote programs registered.\n");
 	} else if (dumptype == RPCBDUMP) {
 		printf(
-"   program version netid     address             service    owner\n");
+"   program version netid     address                service    owner\n");
 		for (; head != NULL; head = head->rpcb_next) {
 			printf("%10u%5u    ",
 				head->rpcb_map.r_prog, head->rpcb_map.r_vers);
 			printf("%-9s ", head->rpcb_map.r_netid);
-			printf("%-19s", head->rpcb_map.r_addr);
+			printf("%-22s", head->rpcb_map.r_addr);
 			rpc = getrpcbynumber(head->rpcb_map.r_prog);
 			if (rpc)
 				printf(" %-10s", rpc->r_name);
