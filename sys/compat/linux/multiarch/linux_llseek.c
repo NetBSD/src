@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.2 1995/03/05 23:23:40 fvdl Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.3 1995/04/04 04:21:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -228,16 +228,16 @@ bsd_to_linux_flock(bfp, lfp)
 	lfp->l_start = bfp->l_start;
 	lfp->l_len = bfp->l_len;
 	lfp->l_pid = bfp->l_pid;
-	lfp->l_type = bfp->l_type;
-	switch (bfp->l_whence) {
+	lfp->l_whence = bfp->l_whence;
+	switch (bfp->l_type) {
 	case F_RDLCK:
-		lfp->l_whence = LINUX_F_RDLCK;
+		lfp->l_type = LINUX_F_RDLCK;
 		break;
 	case F_UNLCK:
-		lfp->l_whence = LINUX_F_UNLCK;
+		lfp->l_type = LINUX_F_UNLCK;
 		break;
 	case F_WRLCK:
-		lfp->l_whence = LINUX_F_WRLCK;
+		lfp->l_type = LINUX_F_WRLCK;
 		break;
 	}
 }
@@ -250,16 +250,16 @@ linux_to_bsd_flock(lfp, bfp)
 	bfp->l_start = lfp->l_start;
 	bfp->l_len = lfp->l_len;
 	bfp->l_pid = lfp->l_pid;
-	bfp->l_type = lfp->l_type;
-	switch (lfp->l_whence) {
+	bfp->l_whence = lfp->l_whence;
+	switch (lfp->l_type) {
 	case LINUX_F_RDLCK:
-		bfp->l_whence = F_RDLCK;
+		bfp->l_type = F_RDLCK;
 		break;
 	case LINUX_F_UNLCK:
-		bfp->l_whence = F_UNLCK;
+		bfp->l_type = F_UNLCK;
 		break;
 	case LINUX_F_WRLCK:
-		bfp->l_whence = F_WRLCK;
+		bfp->l_type = F_WRLCK;
 		break;
 	}
 }
