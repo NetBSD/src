@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.16 1994/07/15 21:20:48 mycroft Exp $
+ *	$Id: if_le.c,v 1.17 1994/07/25 22:55:19 mycroft Exp $
  */
 
 #include "le.h"
@@ -598,29 +598,33 @@ letint(unit)
 #endif
 		sc->sc_arpcom.ac_if.if_opackets++;
 		--sc->sc_no_td;
-		if (cdm->flags & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
-			if (cdm->flags & LE_TBUFF)
+		if (cdm->mcnt & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
+			if (cdm->mcnt & LE_TBUFF)
 				printf("le%d: TBUFF\n", unit);
-			if ((cdm->flags & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
+			if ((cdm->mcnt & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
 				printf("le%d: UFLO\n", unit);
-			if (cdm->flags & LE_UFLO) {
+			if (cdm->mcnt & LE_UFLO) {
 				lereset(sc);
 				return;
 			}
 #if 0
-			if (cdm->flags & LE_LCOL) {
+			if (cdm->mcnt & LE_LCOL) {
 				printf("le%d: late collision\n", unit);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
-			if (cdm->flags & LE_LCAR)
+			if (cdm->mcnt & LE_LCAR)
 				printf("le%d: lost carrier\n", unit);
-			if (cdm->flags & LE_RTRY) {
+			if (cdm->mcnt & LE_RTRY) {
 				printf("le%d: excessive collisions, tdr %d\n",
-				    unit, cdm->flags & 0x1ff);
-				sc->sc_arpcom.ac_if.if_collisions++;
+				    unit, cdm->mcnt & 0x1ff);
+				sc->sc_arpcom.ac_if.if_collisions += 16;
 			}
 #endif
-		}
+		} else if (cdm->flags & LE_ONE)
+			sc->sc_arpcom.ac_if.if_collisions++;
+		else if (cdm->flags & LE_MORE)
+			/* Real number is unknown. */
+			sc->sc_arpcom.ac_if.if_collisions += 2;
 		NEXTTDS;
 	} while ((cdm->flags & LE_OWN) == 0);
 
