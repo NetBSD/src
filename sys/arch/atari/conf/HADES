@@ -1,11 +1,11 @@
 #
-# $NetBSD: HADES,v 1.25 2001/04/05 12:25:15 leo Exp $
+# $NetBSD: HADES,v 1.26 2001/04/06 21:55:12 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: 
-#		NetBSD: HADES.in,v 1.1 2001/04/05 12:21:30 leo Exp $
+#		NetBSD: HADES.in,v 1.2 2001/04/06 21:53:40 leo Exp $
 #		NetBSD: GENERIC,v 1.76 2001/04/05 12:21:30 leo Exp $
 
 #This configuration file is for a generic Medusa-Hades
@@ -14,7 +14,7 @@
 
 include "arch/atari/conf/std.hades"
 
-#ident  		"GENERIC-$Revision: 1.25 $"
+#ident  		"GENERIC-$Revision: 1.26 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -87,7 +87,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				#immutable) behave as system flags.
+				# immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -184,6 +184,7 @@ scsibus0	at ncrscsi0	# SCSI bus
 zs0		at mainbus0	# Serial support through 8530
 nvr0		at mainbus0	# nvram driver
 lp0		at mainbus0	# centronics printer
+ser0		at mainbus0	# UART on first 68901 (ttyB0)
 grfbus0		at mainbus0	# bitmapped display's
 grfet0		at grfbus0	# et4000/et6000/et6100 consoles
 ite0		at grfet0
@@ -217,4 +218,10 @@ ch* 	at scsibus? target ? lun ?	# SCSI autochangers
 ss* 	at scsibus? target ? lun ?	# SCSI scanners
 se* 	at scsibus? target ? lun ?	# SCSI ethernet
 uk* 	at scsibus? target ? lun ?	# SCSI unknown
+
+ne0	at isa0 port 0x300 irq 5	# NE2000 ethernet
+ep*	at pci0 dev ? function 0	# 3Com 3c59x/3c90x Ethernet
+
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+audio*	at eso?
 
