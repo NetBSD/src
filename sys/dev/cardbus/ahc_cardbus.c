@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.10 2003/04/19 19:35:09 fvdl Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.11 2003/04/20 15:48:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.10 2003/04/19 19:35:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.11 2003/04/20 15:48:45 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,6 +184,9 @@ ahc_cardbus_attach(parent, self, aux)
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG|AHC_CACHETHEN_BUG|AHC_PCI_MWI_BUG;
 	if (PCI_REVISION(ca->ca_class) >= 1)
 		ahc->bugs |= AHC_PCI_2_1_RETRY_BUG;
+
+	if (ahc_softc_init(ahc) != 0)
+		return;
 
 	/*
 	 * On all CardBus adapters, we allow SCB paging.
