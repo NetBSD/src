@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.16 2002/10/02 16:52:35 thorpej Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.17 2002/12/10 12:21:02 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.16 2002/10/02 16:52:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.17 2002/12/10 12:21:02 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,8 @@ void	*dmabus_intr_establish __P((
 		int,			/*`device class' level*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
-		void *));		/*handler arg*/
+		void *,			/*handler arg*/
+		void (*) __P((void))));	/*optional fast trap handler*/
 
 static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
 
@@ -235,13 +236,14 @@ dmaattach_sbus(parent, self, aux)
 }
 
 void *
-dmabus_intr_establish(t, pri, level, flags, handler, arg)
+dmabus_intr_establish(t, pri, level, flags, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
 	void *arg;
+	void (*fastvec) __P((void));	/* ignored */
 {
 	struct lsi64854_softc *sc = t->cookie;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.24 2002/10/02 16:52:43 thorpej Exp $ */
+/*	$NetBSD: qec.c,v 1.25 2002/12/10 12:21:03 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.24 2002/10/02 16:52:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.25 2002/12/10 12:21:03 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,8 @@ static void *qec_intr_establish __P((
 		int,			/*`device class' interrupt level*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
-		void *));		/*arg*/
+		void *,			/*arg*/
+		void (*) __P((void))));	/*optional fast trap handler*/
 
 CFATTACH_DECL(qec, sizeof(struct qec_softc),
     qecmatch, qecattach, NULL, NULL);
@@ -259,13 +260,14 @@ qec_bus_map(t, baddr, size, flags, va, hp)
 }
 
 void *
-qec_intr_establish(t, pri, level, flags, handler, arg)
+qec_intr_establish(t, pri, level, flags, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
 	void *arg;
+	void (*fastvec) __P((void));	/* ignored */
 {
 	struct qec_softc *sc = t->cookie;
 
