@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.19 2001/03/31 00:14:32 enami Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.20 2001/06/12 00:57:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.19 2001/03/31 00:14:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.20 2001/06/12 00:57:10 uwe Exp $");
 
 #include "opt_wsfont.h"
 
@@ -717,7 +717,7 @@ wsfont_map_unichar(font, c)
 			  map1->level2[hi - map1->base];
 
 			if (map2 != NULL &&
-			    lo >= map2->base && hi < map2->base + map2->size) {
+			    lo >= map2->base && lo < map2->base + map2->size) {
 
 			  	lo -= map2->base;
 
