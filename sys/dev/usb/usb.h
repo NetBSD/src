@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.10 1998/12/28 03:27:00 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.11 1998/12/28 12:35:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -336,9 +336,9 @@ typedef struct {
 
 /* 
  * Minimum time a device needs to be powered down to go through 
- * a power cycle.  XXX Is this time in the spec?
+ * a power cycle.  XXX Are these time in the spec?
  */
-#define USB_POWER_DOWN_TIME	1000 /* ms */
+#define USB_POWER_DOWN_TIME	200 /* ms */
 #define USB_PORT_POWER_DOWN_TIME	100 /* ms */
 
 #if 0
@@ -349,8 +349,8 @@ typedef struct {
 #define USB_SET_ADDRESS_SETTLE	2   /* ms */
 #else
 /* Allow for marginal (i.e. non-conforming) devices. */
-#define USB_PORT_RESET_DELAY	10  /* ms */
-#define USB_PORT_RESET_RECOVERY	20  /* ms */
+#define USB_PORT_RESET_DELAY	20  /* ms */
+#define USB_PORT_RESET_RECOVERY	50  /* ms */
 #define USB_PORT_POWERUP_DELAY	200 /* ms */
 #define USB_SET_ADDRESS_SETTLE	10  /* ms */
 #endif
@@ -359,7 +359,7 @@ typedef struct {
 #define USB_MAX_POWER		500 /* mA */
 
 
-#define USB_RESET_DELAY		100 /* ms XXX?*/
+#define USB_BUS_RESET_DELAY	100 /* ms XXX?*/
 #define USB_RESUME_DELAY	10  /* ms XXX?*/
 
 /*** ioctl() related stuff ***/
