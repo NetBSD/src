@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6 2002/05/29 09:30:35 martin Exp $ */
+/* $NetBSD: pms.c,v 1.7 2002/07/08 07:43:31 martin Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,12 +24,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6 2002/05/29 09:30:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.7 2002/07/08 07:43:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/kthread.h>
 
 #include <machine/bus.h>
@@ -253,9 +254,6 @@ do_enable(sc)
 {
 	u_char cmd[1];
 	int res;
-#ifdef PMS_PREFER_PROTOCOL
-	int i;
-#endif
 
 	sc->inputstate = 0;
 	sc->buttons = 0;
@@ -431,6 +429,7 @@ pms_reset_thread(arg)
 	struct pms_softc *sc = arg;
 	u_char cmd[1], resp[2];
 	int res;
+	int save_protocol;
 
 	for (;;) {
 		tsleep(&sc->sc_enabled, PWAIT, "pmsreset", 0);
@@ -441,6 +440,7 @@ pms_reset_thread(arg)
 			printf("%s: resetting mouse interface\n", 
 			    sc->sc_dev.dv_xname);
 #endif
+		save_protocol = sc->protocol;
 		pms_disable(sc);
 		cmd[0] = PMS_RESET;
 		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1,
@@ -448,8 +448,36 @@ pms_reset_thread(arg)
 		if (res)
 			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
 			    res));
-		sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
+		sc->protocol = PMS_UNKNOWN;
 		pms_enable(sc);
+		if (sc->protocol != save_protocol) {
+#if defined(PMSDEBUG) || defined(DIAGNOSTIC)
+			printf("%s: protocol change, sleeping and retrying\n",
+			    sc->sc_dev.dv_xname);
+#endif
+			pms_disable(sc);
+			cmd[0] = PMS_RESET;
+			res = pckbc_enqueue_cmd(sc->sc_kbctag,
+			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
+			if (res)
+				DPRINTF(("%s: reset error %d\n",
+				    sc->sc_dev.dv_xname, res));
+			tsleep(pms_reset_thread, PWAIT, "pmsreset", hz);
+			cmd[0] = PMS_RESET;
+			res = pckbc_enqueue_cmd(sc->sc_kbctag,
+			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
+			if (res)
+				DPRINTF(("%s: reset error %d\n",
+				    sc->sc_dev.dv_xname, res));
+			sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
+			pms_enable(sc);
+#if defined(PMSDEBUG) || defined(DIAGNOSTIC)
+			if (sc->protocol != save_protocol) {
+				printf("%s: protocol changed.\n",
+				    sc->sc_dev.dv_xname);
+			}
+#endif
+		}
 	}
 }
 
