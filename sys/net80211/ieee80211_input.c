@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.17 2004/01/13 23:37:30 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.18 2004/01/14 04:11:09 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.17 2004/01/13 23:37:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.18 2004/01/14 04:11:09 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -124,14 +124,14 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		m_adj(m, -IEEE80211_CRC_LEN);
 		m->m_flags &= ~M_HASFCS;
 	}
-	IASSERT(m->m_pkthdr.len >= sizeof(struct ieee80211_frame_min),
-		("frame length too short: %u", m->m_pkthdr.len));
 
 	/*
 	 * In monitor mode, send everything directly to bpf.
+	 * Also do not process frames w/o i_addr2 any further.
 	 * XXX may want to include the CRC
 	 */
-	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+	if (ic->ic_opmode == IEEE80211_M_MONITOR || 
+	    m->m_pkthdr.len < sizeof(struct ieee80211_frame_min))
 		goto out;
 
 	wh = mtod(m, struct ieee80211_frame *);
