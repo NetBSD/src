@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.19 2001/02/07 12:40:45 tsutsui Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.20 2001/02/18 20:13:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -269,14 +269,13 @@ ufs_balloc_range(vp, off, len, cred, flags)
 
 	/*
 	 * unbusy any pages we are holding.
-	 * if we got an error, set the vnode size back to what it was before.
-	 * this will free any pages we created past the old eof.
+	 * if we got an error, free any pages we created past the old eob.
 	 */
 
 out:
 	simple_lock(&uobj->vmobjlock);
 	if (error) {
-		(void) (uobj->pgops->pgo_flush)(uobj, oldeof, pagestart + ppb,
+		(void) (uobj->pgops->pgo_flush)(uobj, round_page(oldeob), 0,
 		    PGO_FREE);
 	}
 	if (pgs1[0] != NULL) {
