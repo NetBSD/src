@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.3 2003/08/02 11:41:21 jdolecek Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.4 2003/09/07 22:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -56,6 +56,7 @@ struct msdosfs_args {
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t  mask;		/* mask to be applied for msdosfs perms */
+	int	gmtoff;		/* offset from UTC in seconds */
 	int	flags;		/* see below */
 
 	/* Following items added after versioning support */
@@ -102,6 +103,7 @@ struct msdosfsmount {
 				   for files */
 	mode_t pm_dirmask;	/* mask to and with file protection bits
 				   for directories */
+	int pm_gmtoff;		/* offset from UTC in seconds */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
 	u_long pm_FATsecs;	/* actual number of fat sectors */
