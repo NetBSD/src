@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.95 2003/09/07 11:59:40 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.96 2003/09/24 10:44:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.95 2003/09/07 11:59:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.96 2003/09/24 10:44:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,7 +724,15 @@ start:
 	simple_unlock(&bp->b_interlock);
 	simple_unlock(&bqueue_slock);
 	splx(s);
-	allocbuf(bp, size);
+	/*
+	 * LFS can't track total size of B_LOCKED buffer (locked_queue_bytes)
+	 * if we re-size buffers here.
+	 */
+	if (ISSET(bp->b_flags, B_LOCKED)) {
+		KASSERT(bp->b_bufsize >= size);
+	} else {
+		allocbuf(bp, size);
+	}
 	return (bp);
 }
 
