@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.42 1998/06/05 19:53:00 kleink Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.43 1999/03/22 17:24:22 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1026,13 +1026,26 @@ union_fsync(v)
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
-		int  a_waitfor;
+		int  a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
 	int error = 0;
-	struct proc *p = ap->a_p;
-	struct vnode *targetvp = OTHERVP(ap->a_vp);
+	struct proc *p;
+	struct vnode *targetvp;
 
+	/*
+	 * If vinvalbuf is calling us, it's a "shallow fsync" -- don't
+	 * bother syncing the underlying vnodes, since (a) they'll be
+	 * fsync'ed when reclaimed and (b) we could deadlock if
+	 * they're locked; otherwise, pass it through to the
+	 * underlying layer.
+	 */
+	if (ap->a_flags & FSYNC_RECLAIM)
+		return 0;
+	
+	targetvp = OTHERVP(ap->a_vp);
+	p = ap->a_p;
+	
 	if (targetvp != NULLVP) {
 		int dolock = (targetvp == LOWERVP(ap->a_vp));
 

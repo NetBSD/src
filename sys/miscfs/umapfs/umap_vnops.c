@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.11 1999/03/19 21:46:26 perseant Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.12 1999/03/22 17:24:22 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@ int	umap_strategy	__P((void *));
 int	umap_bwrite	__P((void *));
 int	umap_lock	__P((void *));
 int	umap_unlock	__P((void *));
+int	umap_fsync	__P((void *));
 
 extern int  null_bypass __P((void *));
 
@@ -85,6 +86,7 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_getattr_desc, umap_getattr },
 	{ &vop_lock_desc, umap_lock },
 	{ &vop_unlock_desc, umap_unlock },
+	{ &vop_fsync_desc, umap_fsync },
 	{ &vop_inactive_desc, umap_inactive },
 	{ &vop_reclaim_desc, umap_reclaim },
 	{ &vop_print_desc, umap_print },
@@ -336,6 +338,30 @@ umap_unlock(v)
 	genfs_nounlock(ap);
 	ap->a_flags &= ~LK_INTERLOCK;
 	return (null_bypass(ap));
+}
+
+/*
+ * If vinvalbuf is calling us, it's a "shallow fsync" -- don't bother
+ * syncing the underlying vnodes, since (a) they'll be fsync'ed when
+ * reclaimed and (b) we could deadlock if they're locked; otherwise,
+ * pass it through to the underlying layer.
+ */
+
+int
+umap_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int  a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	if (ap->a_flags & FSYNC_RECLAIM)
+		return 0;
+
+	return (umap_bypass(ap));
 }
 
 /*
