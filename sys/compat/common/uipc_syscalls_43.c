@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.15 2001/07/17 11:49:40 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.16 2001/07/22 13:46:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -241,7 +241,7 @@ compat_43_sys_recvmsg(p, v, retval)
 
 		ucmsg = stackgap_alloc(&sg, CMSG_SPACE(omsg.msg_accrightslen));
 		if (ucmsg == NULL)
-			return (ENOMEM);
+			return (EMSGSIZE);
 
 		msg.msg_control = ucmsg;
 		msg.msg_controllen = CMSG_SPACE(omsg.msg_accrightslen);
@@ -260,6 +260,7 @@ compat_43_sys_recvmsg(p, v, retval)
 	if (!error && omsg.msg_accrights && msg.msg_controllen > 0) {
 		struct cmsghdr *cmsg;
 
+		/* safe - msg.msg_controllen set by kernel */
 		cmsg = (struct cmsghdr *) malloc(msg.msg_controllen,
 		    M_TEMP, M_WAITOK);
 		
@@ -419,7 +420,7 @@ compat_43_sys_sendmsg(p, v, retval)
 		ucmsg = stackgap_alloc(&sg, CMSG_SPACE(omsg.msg_accrightslen));
 		if (!ucmsg) {
 			free(cmsg, M_TEMP);
-			return (ENOMEM);
+			return (EMSGSIZE);
 		}
 
 		(void) copyout(cmsg, ucmsg, CMSG_SPACE(omsg.msg_accrightslen));
