@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.5 1997/05/08 13:39:03 matthias Exp $	*/
+/*	$NetBSD: exect.S,v 1.5.2.1 1998/11/22 04:12:47 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -22,14 +22,9 @@
  */
 
 #include "SYS.h"
-#include <machine/psl.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: exect.S,v 1.5 1997/05/08 13:39:03 matthias Exp $")
+	RCSID("$NetBSD: exect.S,v 1.5.2.1 1998/11/22 04:12:47 cgd Exp $")
 #endif
 
-ENTRY(exect)
-	bispsrb	PSL_T
-	SYSTRAP(execve)
-	bcs	_ASM_LABEL(cerror)
-	ret	0
+PSEUDO(exect,execve)
