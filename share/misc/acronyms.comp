@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.30 2004/01/13 22:53:56 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.31 2004/01/13 23:00:32 keihan Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -160,6 +160,7 @@ SLDRAM	synchronous-link dynamic random access memory
 SMART	self-monitoring analysis and reporting technology
 SMP	symmetric multiprocessing
 SMTP	simple mail transfer protocol
+SNMP	simple network management protocol
 SPD	serial presence detect
 SRAM	static random access memory
 SSH	secure shell
