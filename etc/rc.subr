@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.29 2000/11/17 03:47:43 lukem Exp $
+# $NetBSD: rc.subr,v 1.30 2001/02/28 16:49:19 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -117,16 +117,16 @@ check_pidfile()
 	fi
 	_procnamebn=${_procname##*/}
 	ps -p $_pid -o 'pid,command' | while read _npid _arg0 _argv; do
-		if [ "$_npid" = "PID" ]; then
-			continue
-		fi
-		if [   "$_arg0" = "$_procname" \
-		    -o "$_arg0" = "$_procnamebn" \
-		    -o "$_arg0" = "${_procnamebn}:" \
-		    -o "$_arg0" = "(${_procnamebn})" ]; then
+		case "$_npid" in
+		    PID)
+			continue ;;
+		esac
+		case "$_arg0" in
+		    $_procname|$_procnamebn|${_procnamebn}:|"(${_procnamebn})")
 			echo $_npid
 			return
-		fi
+			;;
+		esac
 	done
 }
 
@@ -144,16 +144,16 @@ check_process()
 	_procnamebn=${_procname##*/}
 	_pref=
 	ps -ax -o 'pid,command' | while read _npid _arg0 _argv; do
-		if [ "$_npid" = "PID" ]; then
-			continue
-		fi
-		if [   "$_arg0" = "$_procname" \
-		    -o "$_arg0" = "$_procnamebn" \
-		    -o "$_arg0" = "${_procnamebn}:" \
-		    -o "$_arg0" = "(${_procnamebn})" ]; then
+		case "$_npid" in
+		    PID)
+			continue ;;
+		esac
+		case "$_arg0" in
+		    $_procname|$_procnamebn|${_procnamebn}:|"(${_procnamebn})")
 			echo -n "$_pref$_npid"
 			_pref=" "
-		fi
+			;;
+		esac
 	done
 }
 
@@ -256,7 +256,7 @@ run_rc_command()
 {
 	_arg=$1
 	if [ -z "$name" ]; then
-		err 3 '$name is not set.'
+		err 3 'run_rc_command: $name is not set.'
 	fi
 
 	case "$_arg" in
@@ -297,18 +297,16 @@ run_rc_command()
 	else
 		eval _flags=\$${name}_flags
 	fi
-	eval _chdir=\$${name}_chdir
-	eval _chroot=\$${name}_chroot
-	eval _nice=\$${name}_nice
-	eval _user=\$${name}_user
-	eval _group=\$${name}_group
-	eval _groups=\$${name}_groups
+	eval _chdir=\$${name}_chdir	_chroot=\$${name}_chroot \
+	    _nice=\$${name}_nice	_user=\$${name}_user \
+	    _group=\$${name}_group	_groups=\$${name}_groups
 
 					# if ${rcvar} is set, and $1 is not
 					# "rcvar" or "status", then run
 					#	checkyesno ${rcvar}
 					# and return if that failed
 					#
+	# XXXX use case?
 	if [ -n "${rcvar}" -a "$_arg" != "rcvar" -a "$_arg" != "status" ]; then
 		if ! checkyesno ${rcvar}; then
 			return 0
@@ -325,8 +323,7 @@ run_rc_command()
 					# if there's a custom ${XXX_cmd},
 					# run that instead of the default
 					#
-		eval _cmd=\$${_arg}_cmd
-		eval _precmd=\$${_arg}_precmd
+		eval _cmd=\$${_arg}_cmd _precmd=\$${_arg}_precmd
 		if [ -n "$_cmd" ]; then
 					# if the precmd failed and force
 					# isn't set, exit
@@ -515,14 +512,21 @@ run_rc_script()
 		err 3 'USAGE: run_rc_script file arg'
 	fi
 
-	case "$_file" in
-	*.sh)				# run in current shell
+	if [ -n "$rc_fast_and_loose" ]; then
+		unset name command command_args extra_commands pidfile rcvar
+		unset required_dirs required_files required_vars
+		eval unset ${_arg}_cmd ${_arg}_precmd
 		set $_arg ; . $_file
-		;;
-	*)				# run in subshell
-		( set $_arg ; . $_file )
-		;;
-	esac
+	else
+		case "$_file" in
+		*.sh)				# run in current shell
+			set $_arg ; . $_file
+			;;
+		*)				# run in subshell
+			( set $_arg ; . $_file )
+			;;
+		esac
+	fi
 }
 
 #
@@ -536,7 +540,10 @@ load_rc_config()
 		err 3 'USAGE: load_rc_config command'
 	fi
 
-	. /etc/rc.conf
+	if [ -z "$_rc_conf_loaded" ]; then
+		. /etc/rc.conf
+		_rc_conf_loaded=YES
+	fi
 	if [ -f /etc/rc.conf.d/"$_command" ]; then
 		. /etc/rc.conf.d/"$_command"
 	fi
