@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.4 2003/09/28 02:40:14 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.5 2003/10/13 20:05:09 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.4 2003/07/20 21:36:08 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.4 2003/09/28 02:40:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.5 2003/10/13 20:05:09 dyoung Exp $");
 #endif
 
 /*
@@ -1063,7 +1063,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211NWKEY:
 		nwkey = (struct ieee80211_nwkey *)data;
-		if ((ic->ic_flags & IEEE80211_C_WEP) == 0 &&
+		if ((ic->ic_caps & IEEE80211_C_WEP) == 0 &&
 		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
 			error = EINVAL;
 			break;
@@ -1135,7 +1135,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		power = (struct ieee80211_power *)data;
 		ic->ic_lintval = power->i_maxsleep;
 		if (power->i_enabled != 0) {
-			if ((ic->ic_flags & IEEE80211_C_PMGT) == 0)
+			if ((ic->ic_caps & IEEE80211_C_PMGT) == 0)
 				error = EINVAL;
 			else if ((ic->ic_flags & IEEE80211_F_PMGTON) == 0) {
 				ic->ic_flags |= IEEE80211_F_PMGTON;
