@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.14 2002/04/12 08:11:17 gmcgarry Exp $
+#	$NetBSD: INDY,v 1.15 2002/04/16 11:49:55 wiz Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -89,10 +89,8 @@ cd*		at scsibus? target ? lun ?
 
 #pckbd*		at pckbc?
 #pms*		at pckbc?
-#pmsi*		at pckbc?
 #wskbd*		at pckbd? console ?
 #wsmouse* 	at pms? mux 0
-#wsmouse* 	at pmsi? mux 0
 #wsdisplay* 	at foofb? console ?
 
 # Indy

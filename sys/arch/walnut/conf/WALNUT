@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.15 2002/04/12 08:11:27 gmcgarry Exp $
+#	$NetBSD: WALNUT,v 1.16 2002/04/16 11:49:56 wiz Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -230,8 +230,6 @@ pckbd*		at pckbc?
 wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
-pmsi*		at pckbc?
-wsmouse*	at pmsi? mux 0
 
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
