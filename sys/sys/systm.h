@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.83 1998/10/29 21:22:33 jonathan Exp $	*/
+/*	$NetBSD: systm.h,v 1.84 1998/11/11 06:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -295,7 +295,7 @@ void	consinit __P((void));
 void	cpu_startup __P((void));
 void	cpu_rootconf __P((void));
 void	cpu_dumpconf __P((void));
-void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+void	cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
 
 
 #ifdef GPROF
