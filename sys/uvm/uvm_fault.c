@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.36 1999/06/16 22:11:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.37 1999/06/16 23:02:40 thorpej Exp $	*/
 
 /*
  *
@@ -1777,6 +1777,7 @@ uvm_fault_unwire_locked(map, start, end)
 	vm_map_t map;
 	vaddr_t start, end;
 {
+	vm_map_entry_t entry;
 	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;
@@ -1784,7 +1785,7 @@ uvm_fault_unwire_locked(map, start, end)
 
 #ifdef DIAGNOSTIC
 	if (map->flags & VM_MAP_INTRSAFE)
-		panic("uvm_fault_unwire: intrsafe map");
+		panic("uvm_fault_unwire_locked: intrsafe map");
 #endif
 
 	/*
@@ -1793,17 +1794,51 @@ uvm_fault_unwire_locked(map, start, end)
 	 * the PAs from the pmap.   we also lock out the page daemon so that
 	 * we can call uvm_pageunwire.
 	 */
-	
+
 	uvm_lock_pageq();
+
+	/*
+	 * find the beginning map entry for the region.
+	 */
+#ifdef DIAGNOSTIC
+	if (start < vm_map_min(map) || end > vm_map_max(map))
+		panic("uvm_fault_unwire_locked: address out of range");
+#endif
+	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
+		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
 		pa = pmap_extract(pmap, va);
 
 		/* XXX: assumes PA 0 cannot be in map */
 		if (pa == (paddr_t) 0) {
-			panic("uvm_fault_unwire: unwiring non-wired memory");
+			panic("uvm_fault_unwire_locked: unwiring "
+			    "non-wired memory");
 		}
-		pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */
+
+		/*
+		 * make sure the current entry is for the address we're
+		 * dealing with.  if not, grab the next entry.
+		 */
+#ifdef DIAGNOSTIC
+		if (va < entry->start)
+			panic("uvm_fault_unwire_locked: hole 1");
+#endif
+		if (va >= entry->end) {
+#ifdef DIAGNOSTIC
+			if (entry->next == &map->header ||
+			    entry->next->start > entry->end)
+				panic("uvm_fault_unwire_locked: hole 2");
+#endif
+			entry = entry->next;
+		}
+
+		/*
+		 * if the entry is no longer wired, tell the pmap.
+		 */
+		if (VM_MAPENT_ISWIRED(entry) == 0)
+			pmap_change_wiring(pmap, va, FALSE);
+
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg)
 			uvm_pageunwire(pg);
@@ -1817,5 +1852,4 @@ uvm_fault_unwire_locked(map, start, end)
 	 */
 
 	pmap_pageable(pmap, start, end, TRUE);
-
 }
