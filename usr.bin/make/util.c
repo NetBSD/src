@@ -1,11 +1,11 @@
-/*	$NetBSD: util.c,v 1.8 1996/11/06 17:59:28 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.9 1996/11/11 15:16:10 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.8 1996/11/06 17:59:28 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.9 1996/11/11 15:16:10 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ strdup(str)
     const char *str;
 {
     size_t len;
+    char *p;
 
     if (str == NULL)
 	return NULL;
