@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.183 2003/12/04 19:39:57 atatat Exp $	*/
+/*	$NetBSD: param.h,v 1.184 2004/01/10 14:46:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * needs to be updated and the changes sent back to the groff maintainers.
  */
 
-#define	__NetBSD_Version__	106330000	/* NetBSD 1.6ZG */
+#define	__NetBSD_Version__	106340000	/* NetBSD 1.6ZH */
 
 /*
  * Historical NetBSD #define
