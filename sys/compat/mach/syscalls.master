@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2003/01/18 08:18:50 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.6 2003/12/30 00:15:46 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -109,7 +109,8 @@
 			    mach_port_name_t signal_name); }
 35	STD		{ mach_kern_return_t \
 			    mach_sys_semaphore_signal_thread_trap( \
-			    mach_port_name_t signal_name); }
+			    mach_port_name_t signal_name, \
+			    mach_port_name_t thread); }
 36	STD		{ mach_kern_return_t \
 			    mach_sys_semaphore_wait_trap( \
 			    mach_port_name_t wait_name); }
