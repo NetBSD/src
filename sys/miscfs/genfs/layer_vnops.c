@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.4 2000/09/19 22:01:59 fvdl Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.5 2000/12/21 03:51:02 enami Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.4 2000/09/19 22:01:59 fvdl Exp $
+ *	$Id: layer_vnops.c,v 1.5 2000/12/21 03:51:02 enami Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -737,6 +737,7 @@ layer_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
 
 	/*
 	 * Do nothing (and _don't_ bypass).
@@ -750,7 +751,11 @@ layer_inactive(v)
 	 * like they do in the name lookup cache code.
 	 * That's too much work for now.
 	 */
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(vp, 0);
+
+	/* ..., but don't cache the device node. */
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		vgone(vp);
 	return (0);
 }
 
