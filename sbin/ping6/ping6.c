@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.6 1999/07/04 02:46:28 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.7 1999/12/03 02:13:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: ping6.c,v 1.7 1999/12/03 02:13:55 itojun Exp $");
 #endif
 #endif
 
