@@ -142,3 +142,41 @@ _initialize_core_ppcnbsd ()
 {
   add_core_fns (&ppcnbsd_core_fns);
 }
+
+
+/*
+ * kernel_u_size() is not helpful on NetBSD because
+ * the "u" struct is NOT in the core dump file.
+ */
+
+#ifdef	FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
+void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  struct trapframe tf;
+  int regno, regs[32];
+
+  /*
+   * get the register values out of the sys pcb and
+   * store them where `read_register' will find them.
+   */
+  if (target_read_memory(pcb->pcb_sp, (char *)&tf, sizeof(tf)))
+    error("Cannot read trapframe.");
+  for (regno = 0; regno < 32; regno++)
+    supply_register(regno, (char *)&tf.fixreg[regno]);
+  supply_register(LR_REGNUM, (char *)&tf.lr);
+  supply_register(PC_REGNUM, (char *)&tf.srr0);
+  supply_register(PS_REGNUM, (char *)&tf.srr1);
+  supply_register(CR_REGNUM, (char *)&tf.cr);
+  supply_register(XER_REGNUM, (char *)&tf.xer);
+  supply_register(CTR_REGNUM, (char *)&tf.ctr);
+
+  /* The kernel does not use the FPU, so ignore it. */
+  registers_fetched ();
+}
+#endif	/* FETCH_KCORE_REGISTERS */
