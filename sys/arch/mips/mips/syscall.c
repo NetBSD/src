@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2003/10/27 01:17:59 simonb Exp $	*/
+/*	$NetBSD: syscall.c,v 1.19 2003/10/27 02:58:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2003/10/27 01:17:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2003/10/27 02:58:31 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -201,7 +201,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	register_t copyrval[2];
 #endif
 	mips_reg_t ov0;
-	size_t numsys, nsaved, nargs;
+	size_t nsaved, nargs;
 	const struct sysent *callp;
 	int code, error;
 
@@ -213,7 +213,6 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 		frame->f_regs[PC] = opc + sizeof(int);
 
 	callp = p->p_emul->e_sysent;
-	numsys = p->p_emul->e_nsysent;
 	ov0 = code = frame->f_regs[V0] - SYSCALL_SHIFT;
 
 	switch (code) {
@@ -349,7 +348,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	register_t copyrval[2];
 #endif
 	mips_reg_t ov0;
-	size_t numsys, nsaved, nargs;
+	size_t nsaved, nargs;
 	const struct sysent *callp;
 	int code, error;
 
@@ -361,7 +360,6 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 		frame->f_regs[PC] = opc + sizeof(int);
 
 	callp = p->p_emul->e_sysent;
-	numsys = p->p_emul->e_nsysent;
 	ov0 = code = frame->f_regs[V0] - SYSCALL_SHIFT;
 
 	switch (code) {
