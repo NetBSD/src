@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.6 1998/08/15 03:02:35 mycroft Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.7 2000/03/23 06:36:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,6 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -160,10 +161,11 @@ void
 sysbeep(pitch, period)
 	int pitch, period;
 {
+	static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
 	static int last_pitch;
 
 	if (beeping)
-		untimeout(sysbeepstop, 0);
+		callout_stop(&sysbeep_ch);
 	if (pitch == 0 || period == 0) {
 		sysbeepstop(0);
 		last_pitch = 0;
@@ -180,7 +182,7 @@ sysbeep(pitch, period)
 	}
 	last_pitch = pitch;
 	beeping = 1;
-	timeout(sysbeepstop, 0, period);
+	callout_reset(&sysbeep_ch, period, sysbeepstop, NULL);
 }
 
 void

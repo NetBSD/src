@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.7 2000/03/06 21:36:07 thorpej Exp $ */
+/*	$NetBSD: txcom.c,v 1.8 2000/03/23 06:38:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -86,6 +86,9 @@ struct txcom_softc {
 	struct	device		sc_dev;
 	struct tty		*sc_tty;
 	struct txcom_chip	*sc_chip;
+
+	struct callout		sc_txsoft_ch;
+	struct callout		sc_rxsoft_ch;
 
  	u_int8_t	*sc_tba;	/* transmit buffer address */
  	int		sc_tbc;		/* transmit byte count */
@@ -673,7 +676,7 @@ txcom_rxintr(arg)
 	sc->sc_rbuf[sc->sc_rbput] = c;
 	sc->sc_rbput = (sc->sc_rbput + 1) % TXCOM_RING_MASK;
 	
-	timeout(txcom_rxsoft, arg, 1);
+	callout_reset(&sc->sc_rxsoft_ch, 1, txcom_rxsoft, sc);
 
 	return 0;
 }
@@ -724,7 +727,7 @@ txcom_txintr(arg)
 		sc->sc_tbc--;
 		sc->sc_tba++;
 	} else {
-		timeout(txcom_txsoft, arg, 1);
+		callout_reset(&sc->sc_rxsoft_ch, 1, txcom_txsoft, sc);
 	}
 
 	return 0;

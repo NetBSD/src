@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.41 2000/03/19 07:37:58 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.42 2000/03/23 06:39:55 thorpej Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -67,6 +67,7 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 
 #include <machine/viareg.h>
 #include <machine/param.h>
@@ -266,6 +267,8 @@ int	tickle_count = 0;		/* how many tickles seen for this packet? */
 int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
+struct callout adb_cuda_tickle_ch = CALLOUT_INITIALIZER;
+
 extern struct mac68k_machine_S mac68k_machine;
 
 void	pm_setup_adb __P((void));
@@ -370,7 +373,8 @@ adb_cuda_tickle(void)
 		tickle_count = 0;
 	}
 
-	timeout((void *)adb_cuda_tickle, 0, ADB_TICKLE_TICKS);
+	callout_reset(&adb_cuda_tickle_ch, ADB_TICKLE_TICKS,
+	    (void *)adb_cuda_tickle, NULL);
 }
 
 /*
@@ -2331,7 +2335,8 @@ adb_reinit(void)
 #endif
 
 	if (adbHardware == ADB_HW_CUDA)
-		timeout((void *)adb_cuda_tickle, 0, ADB_TICKLE_TICKS);
+		callout_reset(&adb_cuda_tickle_ch, ADB_TICKLE_TICKS,
+		    (void *)adb_cuda_tickle, NULL);
 
 	/* ints must be on for PB & IOP (at least, for now) */
 	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.24 1999/07/08 18:05:26 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.25 2000/03/23 06:35:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -47,6 +47,7 @@
 #include <sys/audioio.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
@@ -86,6 +87,8 @@ struct audio_general {
 	int open;
 	int drain;
 } ag;
+
+static struct callout ag_drain_ch = CALLOUT_INITIALIZER;
 
 struct lmcaudio_softc {
 	struct device device;
@@ -338,7 +341,7 @@ lmcaudio_drain(addr)
 	void *addr;
 {
 	ag.drain = 1;
-	timeout(lmcaudio_timeout, &ag.drain, 30 * hz);
+	callout_reset(&ag_drain_ch, 30 * hz, lmcaudio_timeout, &ag.drain);
 	(void) tsleep(lmcaudio_timeout, PWAIT | PCATCH, "lmcdrain", 0);
 	ag.drain = 0;
 	return(0);
@@ -664,7 +667,7 @@ lmcaudio_intr(arg)
 	}
 
 	if (xcur == 0) {
-		untimeout(lmcaudio_timeout, &ag.drain);
+		callout_stop(&ag_drain_ch);
 		wakeup(lmcaudio_timeout);
 		return(0);
 #if 0

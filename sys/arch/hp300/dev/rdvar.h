@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.8 2000/01/21 23:29:03 thorpej Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.9 2000/03/23 06:37:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  *	@(#)rdvar.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/callout.h>
+
 struct	rdidentinfo {
 	short	ri_hwid;		/* 2 byte HW id */
 	short	ri_maxunum;		/* maximum allowed unit number */
@@ -63,6 +65,7 @@ struct rdstats {
 struct	rd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dkdev;
+	struct	callout sc_restart_ch;
 	int	sc_slave;		/* HP-IB slave */
 	int	sc_punit;		/* physical unit on slave */
 	int	sc_flags;

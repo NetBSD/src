@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.86 2000/02/11 19:22:54 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.87 2000/03/23 06:31:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -53,6 +53,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 /*
  * One structure allocated per session.
@@ -156,10 +157,12 @@ struct	proc {
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
 	void	*p_wchan;	 /* Sleep address. */
+	struct callout p_tsleep_ch;/* callout for tsleep */
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
 
+	struct	callout p_realit_ch;	/* real time callout */
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeval p_rtime;	/* Real time. */
 	u_quad_t p_uticks;		/* Statclock hits in user mode. */

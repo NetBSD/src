@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.43 2000/02/16 12:36:19 itojun Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.44 2000/03/23 06:30:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -517,10 +517,11 @@ sys_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (which == ITIMER_REAL) {
-		untimeout(realitexpire, p);
+		callout_stop(&p->p_realit_ch);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, p, hzto(&aitv.it_value));
+			callout_reset(&p->p_realit_ch, hzto(&aitv.it_value),
+			    realitexpire, p);
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -555,8 +556,8 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout(realitexpire, p,
-			    hzto(&p->p_realtimer.it_value));
+			callout_reset(&p->p_realit_ch,
+			    hzto(&p->p_realtimer.it_value), realitexpire, p);
 			splx(s);
 			return;
 		}

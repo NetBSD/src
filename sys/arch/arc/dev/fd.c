@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.17 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: fd.c,v 1.18 2000/03/23 06:34:23 thorpej Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -78,6 +78,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -130,6 +131,9 @@ enum fdc_state {
 /* software state, per controller */
 struct fdc_softc {
 	struct device sc_dev;		/* boilerplate */
+
+	struct callout sc_timo_ch;	/* timeout callout */
+	struct callout sc_intr_ch;	/* pseudo-intr callout */
 
 	struct dma_softc __dma;
 	struct dma_softc *dma;
@@ -189,6 +193,8 @@ struct fd_softc {
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
+
+	struct callout sc_motor_ch;
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
@@ -321,6 +327,9 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
+	callout_init(&fdc->sc_timo_ch); 
+	callout_init(&fdc->sc_intr_ch);
+
 	BUS_INTR_ESTABLISH(ca, fdcintr, fdc);
 
 	/*
@@ -396,6 +405,8 @@ fdattach(parent, self, aux)
 	struct fdc_attach_args *fa = aux;
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
+
+	callout_init(&fd->sc_motor_ch); 
 
 	/* XXX Allow `flags' to override device type? */
 
@@ -507,7 +518,7 @@ fdstrategy(bp)
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort_cylinder(&fd->sc_q, bp);
-	untimeout(fd_motor_off, fd); /* a good idea */
+	callout_stop(&fd->sc_motor_ch);		/* a good idea */
 	if (fd->sc_active == 0)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
@@ -571,7 +582,7 @@ fdfinish(fd, bp)
 	BUFQ_REMOVE(&fd->sc_q, bp);
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout(fd_motor_off, fd, 10 * hz);
+	callout_reset(&fd->sc_motor_ch, 10 * hz, fd_motor_off, fd);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -861,7 +872,7 @@ loop:
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
 		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
-		untimeout(fd_motor_off, fd);
+		callout_stop(&fd->fd_motor_ch);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
 			return 1;
@@ -870,14 +881,15 @@ loop:
 			/* Turn on the motor, being careful about pairing. */
 			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
-				untimeout(fd_motor_off, ofd);
+				callout_stop(&ofd->fd_motor_ch);
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* Allow .5s for motor to stabilize. */
-			timeout(fd_motor_on, fd, hz / 2);
+			callout_reset(&fd->sc_motor_ch, hz / 2,
+			    fd_motor_on, fd);
 			return 1;
 		}
 		/* Make sure the right drive is selected. */
@@ -899,7 +911,7 @@ loop:
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
-		timeout(fdctimeout, fdc, 4 * hz);
+		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
 		return 1;
 
 	case DOIO:
@@ -947,14 +959,15 @@ loop:
 		out_fdc(iobase, type->datalen);		/* data length */
 		fdc->sc_state = IOCOMPLETE;
 		/* allow 2 seconds for operation */
-		timeout(fdctimeout, fdc, 2 * hz);
+		callout_reset(&fdc->sc_timo_ch, 2 * hz, fdctimeout, fdc);
 		return 1;				/* will return later */
 
 	case SEEKWAIT:
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
-		timeout(fdcpseudointr, fdc, hz / 50);
+		callout_reset(&fdc->sc_intr_ch, hz / 50,
+		    fdcpseudointr, fdc);
 		return 1;
 		
 	case SEEKCOMPLETE:
@@ -981,7 +994,7 @@ loop:
 		goto loop;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
 			DMA_RESET(fdc->dma);
 #ifdef FD_DEBUG
@@ -1017,11 +1030,11 @@ loop:
 		delay(100);
 		fd_set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
-		timeout(fdctimeout, fdc, hz / 2);
+		callout_reset(&fdc->sc_timo_ch, hz / 2, fdctimeout, fdc);
 		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		/* clear the controller output buffer */
 		for (i = 0; i < 4; i++) {
 			out_fdc(iobase, NE7CMD_SENSEI);
@@ -1033,14 +1046,15 @@ loop:
 		out_fdc(iobase, NE7CMD_RECAL);	/* recalibrate function */
 		out_fdc(iobase, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
-		timeout(fdctimeout, fdc, 5 * hz);
+		callout_reset(&fdc->sc_timo_ch, 5 * hz, fdctimeout, fdc);
 		return 1;			/* will return later */
 
 	case RECALWAIT:
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
-		timeout(fdcpseudointr, fdc, hz / 30);
+		callout_reset(&fdc->sc_intr_ch, hz / 30,
+		    fdcpseudointr, fdc);
 		return 1;			/* will return later */
 
 	case RECALCOMPLETE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.7 1999/09/10 22:49:33 bad Exp $	*/
+/*	$NetBSD: apci.c,v 1.8 2000/03/23 06:37:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ struct apci_softc {
 	struct	device sc_dev;		/* generic device glue */
 	struct	apciregs *sc_apci;	/* device registers */
 	struct	tty *sc_tty;		/* tty glue */
+	struct	callout sc_diag_ch;
 	int	sc_ferr,
 		sc_perr,
 		sc_oflow,
@@ -229,6 +230,8 @@ apciattach(parent, self, aux)
 	sc->sc_apci = apci =
 	    (struct apciregs *)IIOV(FRODO_BASE + fa->fa_offset);
 	sc->sc_flags = 0;
+
+	callout_init(&sc->sc_diag_ch);
 
 	/* Are we the console? */
 	if (apci == apci_cn) {
@@ -359,7 +362,7 @@ apciopen(dev, flag, mode, p)
 
 	/* clear errors, start timeout */
 	sc->sc_ferr = sc->sc_perr = sc->sc_oflow = sc->sc_toterr = 0;
-	timeout(apcitimeout, sc, hz);
+	callout_reset(&sc->sc_diag_ch, hz, apcitimeout, sc);
 
  bad:
 	return (error);
@@ -865,7 +868,7 @@ apcitimeout(arg)
 		    sc->sc_dev.dv_xname, ferr, perr, oflow, sc->sc_toterr);
 	}
 
-	timeout(apcitimeout, sc, hz);
+	callout_reset(&sc->sc_diag_ch, hz, apcitimeout, sc);
 }
 
 /*

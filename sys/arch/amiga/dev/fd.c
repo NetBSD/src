@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.44 2000/03/16 16:37:20 kleink Exp $	*/
+/*	$NetBSD: fd.c,v 1.45 2000/03/23 06:33:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,6 +33,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
@@ -143,6 +144,8 @@ struct fd_softc {
 	struct disk dkdev;	/* generic disk info */
 	struct buf_queue bufq;	/* queue pending I/O operations */
 	struct buf curbuf;	/* state of current I/O operation */
+	struct callout calibrate_ch;
+	struct callout motor_ch;
 	struct fdtype *type;
 	void *cachep;		/* cached track data (write through) */
 	int cachetrk;		/* cahced track -1 for none */
@@ -389,6 +392,8 @@ fdattach(pdp, dp, auxp)
 	sc = (struct fd_softc *)dp;
 
 	BUFQ_INIT(&sc->bufq);
+	callout_init(&sc->calibrate_ch);
+	callout_init(&sc->motor_ch);
 
 	sc->curcyl = sc->cachetrk = -1;
 	sc->openpart = -1;
@@ -1468,11 +1473,11 @@ fdcalibrate(arg)
 	 * trk++, trk, trk++, trk, trk++, trk, trk++, trk and dma
 	 */
 	if (loopcnt < 8)
-		timeout(fdcalibrate, sc, hz / 8);
+		callout_reset(&sc->calibrate_ch, hz / 8, fdcalibrate, sc);
 	else {
 		loopcnt = 0;
 		fdc_indma = NULL;
-		timeout(fdmotoroff, sc, 3 * hz / 2);
+		callout_reset(&sc->motor_ch, 3 * hz / 2, fdmotoroff, sc);
 		fddmastart(sc, sc->cachetrk);
 	}
 }
@@ -1486,7 +1491,7 @@ fddmadone(sc, timeo)
 	printf("fddmadone: unit %d, timeo %d\n", sc->hwunit, timeo);
 #endif
 	fdc_indma = NULL;
-	untimeout(fdmotoroff, sc);
+	callout_stop(&sc->motor_ch);
 	FDDMASTOP;
 
 	/*
@@ -1502,7 +1507,7 @@ fddmadone(sc, timeo)
 		/*
 		 * motor runs for 1.5 seconds after last dma
 		 */
-		timeout(fdmotoroff, sc, 3 * hz / 2);
+		callout_reset(&sc->motor_ch, 3 * hz / 2, fdmotoroff, sc);
 	}
 	if (sc->flags & FDF_DIRTY) {
 		/*
@@ -1550,7 +1555,7 @@ fddmadone(sc, timeo)
 			/*
 			 * this will be restarted at end of calibrate loop.
 			 */
-			untimeout(fdmotoroff, sc);
+			callout_stop(&sc->motor_ch);
 			fdcalibrate(sc);
 			return;
 		}

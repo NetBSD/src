@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.7 2000/02/24 05:02:33 scottr Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.8 2000/03/23 06:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,6 +34,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -469,6 +470,7 @@ fd_attach(parent, self, auxp)
 	iwm->drives++;
 
 	BUFQ_INIT(&fd->bufQueue);
+	callout_init(&fd->motor_ch);
 
 	printf(" drive %d: ", fd->unit);
 
@@ -567,7 +569,7 @@ fd_mod_free(void)
 			 * Let's hope there is only one task per drive,
 			 * see timeout(9). 
 			 */
-			untimeout(motor_off, iwm->fd[unit]);
+			callout_stop(&iwm->fd[unit].motor_ch);
 			disk_detach(&iwm->fd[unit]->diskInfo);
 			free(iwm->fd[unit], M_DEVBUF);
 			iwm->fd[unit] = NULL;
@@ -1130,7 +1132,7 @@ fdstrategy(bp)
 			    bp->b_cylinder);
 		}
 		spl = splbio();
-		untimeout(motor_off, fd);
+		callout_stop(&fd->motor_ch);
 		disksort_cylinder(&fd->bufQueue, bp);
 		if (fd->sc_active == 0)
 			fdstart(fd);
@@ -1678,7 +1680,7 @@ fdstart_Exit(fd)
 	 * XXX Unloading the module while the timeout is still
 	 *     running WILL crash the machine. 
 	 */
-	timeout(motor_off, fd, 10 * hz);
+	callout_reset(&fd->motor_ch, 10 * hz, motor_off, fd);
 
 	return state_Done;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: aedvar.h,v 1.3 2000/02/14 07:01:45 scottr Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.4 2000/03/23 06:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -30,6 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/callout.h>
 #include <machine/adbsys.h>
 
 /* Event queue definitions */
@@ -40,6 +41,8 @@
 
 struct aed_softc {
 	struct  device  sc_dev;
+
+	struct callout sc_repeat_ch;
 
 	/* ADB info */
 	int		origaddr;	/* ADB device type (ADBADDR_AED) */

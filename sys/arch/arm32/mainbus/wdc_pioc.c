@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.11 1998/12/31 09:37:12 mark Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.12 2000/03/23 06:35:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -82,7 +82,7 @@ wdc_pioc_probe(parent, cf, aux)
 	void *aux;
 {
 	struct pioc_attach_args *pa = aux;
-	struct channel_softc ch = { 0 };
+	struct channel_softc ch;
 	int res;
 	u_int iobase;
 
@@ -92,6 +92,8 @@ wdc_pioc_probe(parent, cf, aux)
 	/* We need an offset */
 	if (pa->pa_offset == PIOCCF_OFFSET_DEFAULT)
 		return(0);
+
+	memset(&ch, 0, sizeof(ch));
 
 	iobase = pa->pa_iobase + pa->pa_offset;
 	ch.cmd_iot = pa->pa_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.40 2000/02/11 23:00:47 kleink Exp $	*/
+/*	$NetBSD: rd.c,v 1.41 2000/03/23 06:37:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -334,6 +334,8 @@ rdattach(parent, self, aux)
 
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
+
+	callout_init(&sc->sc_restart_ch);
 
 	/* Initialize the hpib job queue entry */
 	sc->sc_hq.hq_softc = sc;
@@ -1024,7 +1026,7 @@ rderror(unit)
 		rs->sc_stats.rdtimeouts++;
 #endif
 		hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
-		timeout(rdrestart, rs, rdtimo * hz);
+		callout_reset(&rs->sc_restart_ch, rdtimo * hz, rdrestart, rs);
 		return(0);
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.4 2000/01/21 23:29:06 thorpej Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.5 2000/03/23 06:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -134,6 +134,7 @@ struct fd_softc {
 	struct disk diskInfo;		/* generic disk info */
 	struct buf_queue bufQueue;	/* queue of buf's */
 	int sc_active;			/* number of active requests */
+	struct callout motor_ch;	/* motor callout */
 
 /* private stuff here */
 /* errors & retries in current I/O job */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.4 1997/10/10 05:54:57 scottr Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.5 2000/03/23 06:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/callout.h>
+
 #define ASCUNIT(d)	((d) & 0x7)
 
 struct asc_softc {
@@ -34,6 +36,7 @@ struct asc_softc {
 	bus_space_handle_t	sc_handle;
 	int			sc_open;
 	int			sc_ringing;
+	struct callout		sc_bell_ch;
 };
 
 int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));

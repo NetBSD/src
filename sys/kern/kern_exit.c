@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.74 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.75 2000/03/23 06:30:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ exit1(p, rv)
 	sigfillset(&p->p_sigignore);
 	sigemptyset(&p->p_siglist);
 	p->p_sigcheck = 0;
-	untimeout(realitexpire, (caddr_t)p);
+	callout_stop(&p->p_realit_ch);
 
 	/*
 	 * Close open files and release open-file table.

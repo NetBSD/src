@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.17 2000/03/16 23:21:10 darrenr Exp $	*/
+/*	$NetBSD: console.c,v 1.18 2000/03/23 06:35:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -737,7 +737,7 @@ physconstart(tp)
 
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 
 	if (cl->c_cc <= tp->t_lowat) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.34 2000/03/13 23:52:28 soren Exp $	*/
+/*	$NetBSD: fd.c,v 1.35 2000/03/23 06:36:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
@@ -132,6 +133,7 @@ struct fd_softc {
 	struct device	sc_dv;		/* generic device info		*/
 	struct disk	dkdev;		/* generic disk info		*/
 	struct buf_queue bufq;		/* queue of buf's		*/
+	struct callout	sc_motor_ch;
 	int		unit;		/* unit for atari controlling hw*/
 	int		nheads;		/* number of heads in use	*/
 	int		nsectors;	/* number of sectors/track	*/
@@ -315,6 +317,7 @@ void		*auxp;
 	}
 
 	if(nfound) {
+		struct fd_softc *fdsc = getsoftc(fd_cd, first_found);
 
 		/*
 		 * Make sure motor will be turned of when a floppy is
@@ -322,7 +325,7 @@ void		*auxp;
 		 */
 		fdselect(first_found, 0, FLP_DD);
 		fd_state = FLP_MON;
-		timeout((FPV)fdmotoroff, (void*)getsoftc(fd_cd,first_found), 0);
+		callout_reset(&fdsc->sc_motor_ch, 0, (FPV)fdmotoroff, fdsc);
 
 		/*
 		 * enable disk related interrupts
@@ -375,6 +378,8 @@ void		*auxp;
 	u_short		swtch;
 
 	sc = (struct fd_softc *)dp;
+
+	callout_init(&sc->sc_motor_ch);
 
 	/*
 	 * Find out if an Ajax chip might be installed. Set the default
@@ -623,7 +628,7 @@ struct buf	*bp;
 	disksort_blkno(&sc->bufq, bp);	/* XXX disksort_cylinder */
 	if (!lock_stat) {
 		if (fd_state & FLP_MON)
-			untimeout((FPV)fdmotoroff, (void*)sc);
+			callout_stop(&sc->sc_motor_ch);
 		fd_state = FLP_IDLE;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc,
 							&lock_stat, 0);
@@ -776,7 +781,8 @@ register struct fd_softc	*sc;
 		if (BUFQ_FIRST(&sc1->bufq) != NULL)
 			break;
 		if(i == sc->unit) {
-			timeout((FPV)fdmotoroff, (void*)sc, FLP_MONDELAY);
+			callout_reset(&sc->sc_motor_ch, FLP_MONDELAY,
+			    (FPV)fdmotoroff, sc);
 #ifdef FLP_DEBUG
 			printf("fddone: Nothing to do\n");
 #endif
@@ -895,7 +901,8 @@ struct fd_softc	*sc;
 		 */
 		fd_cmd = RESTORE;
 		write_fdreg(FDC_CS, RESTORE|VBIT|hbit);
-		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
+		callout_reset(&sc->sc_motor_ch, FLP_XFERDELAY,
+		    (FPV)fdmotoroff, sc);
 
 #ifdef FLP_DEBUG
 		printf("fd_xfer:Recalibrating drive %d\n", sc->unit);
@@ -913,7 +920,8 @@ struct fd_softc	*sc;
 		sc->curtrk = track;	/* be optimistic */
 		write_fdreg(FDC_DR, track);
 		write_fdreg(FDC_CS, SEEK|RATE6|VBIT|hbit);
-		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
+		callout_reset(&sc->sc_motor_ch, FLP_XFERDELAY,
+		    (FPV)fdmotoroff, sc);
 		fd_cmd = SEEK;
 #ifdef FLP_DEBUG
 		printf("fd_xfer:Seek to track %d on drive %d\n",track,sc->unit);
@@ -957,7 +965,7 @@ struct fd_softc	*sc;
 		write_fdreg(DMA_WRBIT | FDC_CS, F_WRITE|hbit|EBIT|PBIT);
 		fd_cmd = F_WRITE;
 	}
-	timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
+	callout_reset(&sc->sc_motor_ch, FLP_XFERDELAY, (FPV)fdmotoroff, sc);
 }
 
 /* return values of fd_xfer_ok(): */
@@ -982,7 +990,7 @@ struct fd_softc	*sc;
 	/*
 	 * Cancel timeout (we made it, didn't we)
 	 */
-	untimeout((FPV)fdmotoroff, (void*)sc);
+	callout_stop(&sc->sc_motor_ch);
 
 	switch(fd_xfer_ok(sc)) {
 		case X_ERROR :
@@ -1267,7 +1275,9 @@ struct fd_softc	*fdsoftc;
 			fddeselect();
 			fd_state = FLP_IDLE;
 		}
-		else timeout((FPV)fdmotoroff, (void*)fdsoftc, 10*FLP_MONDELAY);
+		else
+			callout_reset(&fdsoftc->sc_motor_ch, 10*FLP_MONDELAY,
+			    (FPV)fdmotoroff, fdsoftc);
 	}
 	st_dmafree(fdsoftc, &tmp);
 }

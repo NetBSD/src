@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.8 1999/03/19 04:58:45 cgd Exp $       */
+/*      $NetBSD: pccons.c,v 1.9 2000/03/23 06:35:16 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -255,6 +255,7 @@ struct pc_softc
     } vs;
 };
 
+static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
 /*
 ** Forward routine declarations
@@ -782,7 +783,7 @@ async_update(struct pc_softc *sc,
         */ 
         if (sc->sc_flags & SC_ASYNC_SCHEDULED)
         {
-            untimeout(do_async_update, NULL);
+	    callout_stop(&async_update_ch);
         }
         do_async_update(sc);
     } 
@@ -791,7 +792,7 @@ async_update(struct pc_softc *sc,
         /* Schedule an update 
         */
         sc->sc_flags |= SC_ASYNC_SCHEDULED;
-        timeout(do_async_update, sc, 1);
+	callout_reset(&async_update_ch, 1, do_async_update, sc);
     }
 
     return;
@@ -1780,7 +1781,7 @@ pcstart(struct tty *tp)
         if (cl->c_cc) 
         {
             tp->t_state |= TS_TIMEOUT;
-            timeout(ttrstrt, tp, 1);
+	    callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
         }
         /* 
         ** Check if we are under the low water mark and

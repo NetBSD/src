@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.164 2000/03/10 01:13:18 enami Exp $	*/
+/*	$NetBSD: init_main.c,v 1.165 2000/03/23 06:30:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -207,11 +207,14 @@ main()
 
 	uvm_init();
 
+	/* Initialize callouts. */
+	callout_startup();
+
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Initialize callouts. */
-	callout_startup();
+	/* Finish initializing callouts. */
+	callout_startup1();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
@@ -263,6 +266,9 @@ main()
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
+
+	callout_init(&p->p_realit_ch);
+	callout_init(&p->p_tsleep_ch);
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;

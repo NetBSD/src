@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.20 1998/01/12 18:30:50 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.21 2000/03/23 06:37:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -145,6 +146,8 @@ struct fhpib_softc {
 	struct fhpibdevice *sc_regs;	/* device registers */
 	int	sc_cmd;
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
+	struct callout sc_dmadone_ch;
+	struct callout sc_ppwatch_ch;
 };
 
 int	fhpibmatch __P((struct device *, struct cfdata *, void *));
@@ -190,6 +193,9 @@ fhpibattach(parent, self, aux)
 
 	/* Establish the interrupt handler. */
 	(void) dio_intr_establish(fhpibintr, sc, ipl, IPL_BIO);
+
+	callout_init(&sc->sc_dmadone_ch);
+	callout_init(&sc->sc_ppwatch_ch);
 
 	ha.ha_ops = &fhpib_controller;
 	ha.ha_type = HPIBC;			/* XXX */
@@ -511,7 +517,8 @@ fhpibdone(hs)
 	if (hs->sc_flags & HPIBF_READ) {
 		hd->hpib_imask = IM_IDLE | IM_BYTE;
 		if (hs->sc_flags & HPIBF_TIMO)
-			timeout(fhpibdmadone, hs, hz >> 2);
+			callout_reset(&sc->sc_dmadone_ch, hz >> 2,
+			    fhpibdmadone, hs);
 	} else {
 		cnt = hs->sc_count;
 		if (cnt) {
@@ -567,7 +574,7 @@ fhpibintr(arg)
 	hq = hs->sc_queue.tqh_first;
 	if (hs->sc_flags & HPIBF_IO) {
 		if (hs->sc_flags & HPIBF_TIMO)
-			untimeout(fhpibdmadone, hs);
+			callout_stop(&sc->sc_dmadone_ch);
 		stat0 = hd->hpib_cmd;
 		hd->hpib_cmd = sc->sc_cmd & ~CT_8BIT;
 		hd->hpib_stat = 0;
@@ -676,7 +683,7 @@ fhpibppwatch(arg)
 			hd->hpib_stat = ST_IENAB;
 			hd->hpib_imask = IM_IDLE | IM_ROOM;
 		} else
-			timeout(fhpibppwatch, sc, 1);
+			callout_reset(&sc->sc_ppwatch_ch, 1, fhpibppwatch, sc);
 		return;
 	}
 	if ((fhpibdebug & FDB_PPOLL) && sc->sc_dev.dv_unit == fhpibdebugunit)

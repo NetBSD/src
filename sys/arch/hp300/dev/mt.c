@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.12 2000/02/06 11:14:56 frueauf Exp $	*/
+/*	$NetBSD: mt.c,v 1.13 2000/03/23 06:37:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -98,6 +99,8 @@ int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 struct	mt_softc {
 	struct	device sc_dev;
+	struct	callout sc_start_ch;
+	struct	callout sc_intr_ch;
 	int	sc_hpibno;	/* logical HPIB this slave it attached to */
 	int	sc_slave;	/* HPIB slave address (0-6) */
 	short	sc_flags;	/* see below */
@@ -180,6 +183,8 @@ mtattach(parent, self, aux)
 	slave = ha->ha_slave;
 
 	BUFQ_INIT(&sc->sc_tab);
+	callout_init(&sc->sc_start_ch);
+	callout_init(&sc->sc_intr_ch);
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
@@ -580,7 +585,8 @@ mtstart(arg)
 			 * but not otherwise.
 			 */
 			if (sc->sc_flags & (MTF_DSJTIMEO | MTF_STATTIMEO)) {
-				timeout(spl_mtstart, sc, hz >> 5);
+				callout_reset(&sc->sc_start_ch, hz >> 5,
+				    spl_mtstart, sc);
 				return;
 			}
 		    case 2:
@@ -666,7 +672,8 @@ mtstart(arg)
 				break;
 
 			    case -2:
-				timeout(spl_mtstart, sc, hz >> 5);
+				callout_reset(&sc->sc_start_ch, hz >> 5,
+				    spl_mtstart, sc);
 				return;
 			}
 
@@ -681,7 +688,7 @@ mtstart(arg)
 				    sc->sc_dev.dv_xname);
 				goto fatalerror;
 			}
-			timeout(spl_mtintr, sc, 4 * hz);
+			callout_reset(&sc->sc_intr_ch, 4 * hz, spl_mtintr, sc);
 			hpibawait(sc->sc_hpibno);
 			return;
 
@@ -816,7 +823,7 @@ mtintr(arg)
 		 * to the request for DSJ.  It's probably just "busy" figuring
 		 * it out and will know in a little bit...
 		 */
-		timeout(spl_mtintr, sc, hz >> 5);
+		callout_reset(&sc->sc_intr_ch, hz >> 5, spl_mtintr, sc);
 		return;
 
 	    default:
@@ -834,7 +841,7 @@ mtintr(arg)
 			sc->sc_stat3, sc->sc_stat5);
 
 		if ((bp->b_flags & B_CMD) && bp->b_cmd == MTRESET)
-			untimeout(spl_mtintr, sc);
+			callout_stop(&sc->sc_intr_ch);
 		if (sc->sc_stat3 & SR3_POWERUP)
 			sc->sc_flags &= MTF_OPEN | MTF_EXISTS;
 		goto error;
@@ -886,7 +893,7 @@ mtintr(arg)
 				sc->sc_flags |= MTF_HITBOF;
 		}
 		if (bp->b_cmd == MTRESET) {
-			untimeout(spl_mtintr, sc);
+			callout_stop(&sc->sc_intr_ch);
 			sc->sc_flags |= MTF_ALIVE;
 		}
 	} else {

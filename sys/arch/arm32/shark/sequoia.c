@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.4 1999/03/19 05:13:17 cgd Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.5 2000/03/23 06:35:16 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,6 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <machine/bus.h>
@@ -133,6 +134,7 @@ static int      ledColor;           /* present color of led */
 static int      ledBlockCount;;     /* reference count of block calles */                            
 int sequoia_index_cache = -1;       /* set to silly value so that we dont cache on init */
 
+static struct callout led_timo_ch = CALLOUT_INITIALIZER;
 
 /*
 **
@@ -194,7 +196,7 @@ void sequoiaInit(void)
     ledLastActive.tv_usec = 0;
     ledLastActive.tv_sec = 0;
     ledBlockCount = 0;
-    timeout(ledTimeout,NULL,LED_TIMEOUT);
+    callout_reset(&led_timo_ch, LED_TIMEOUT, ledTimeout, NULL);
     /* 
     ** 
     ** setup the pins associated with the smart card reader *
@@ -545,7 +547,7 @@ static void   ledTimeout(void * arg)
     }
 
     /* resubmint the timeout */
-    timeout(ledTimeout,NULL,LED_TIMEOUT);
+    callout_reset(&led_timo_ch, LED_TIMEOUT, ledTimeout, NULL);
 
 }
 

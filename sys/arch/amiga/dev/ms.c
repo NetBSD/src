@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.15 1998/01/12 10:40:04 thorpej Exp $	*/
+/*	$NetBSD: ms.c,v 1.16 2000/03/23 06:33:11 thorpej Exp $	*/
 
 /*
  * based on:
@@ -59,6 +59,7 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 
@@ -81,6 +82,8 @@ void ms_disable __P((dev_t));
 
 struct ms_softc {
 	struct device sc_dev;
+
+	struct callout sc_intr_ch;
 
 	u_char	ms_horc;	   /* horizontal counter on last scan */
   	u_char	ms_verc;	   /* vertical counter on last scan */
@@ -117,7 +120,10 @@ msattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
+	struct ms_softc *sc = (void *) dp;
+
 	printf("\n");
+	callout_init(&sc->sc_intr_ch);
 }
 
 /*
@@ -146,7 +152,7 @@ ms_enable(dev)
 	 */
 	ms->ms_ready = 1;
 
-	timeout(msintr, (void *)minor(dev), 2);
+	callout_reset(&ms->sc_intr_ch, 2, msintr, ms);
 }
 
 /*
@@ -180,15 +186,14 @@ msintr(arg)
 {
 	static const char to_one[] = { 1, 2, 2, 4, 4, 4, 4 };
 	static const int to_id[] = { MS_RIGHT, MS_MIDDLE, 0, MS_LEFT };
-	struct ms_softc *ms;
+	struct ms_softc *ms = arg;
 	struct firm_event *fe;
 	int mb, ub, d, get, put, any, unit;
 	u_char pra, *horc, *verc;
 	u_short pot, count;
 	short dx, dy;
 	
-	unit = (int)arg;
-	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
+	unit = ms->sc_dev.dv_unit;
 
 	horc = ((u_char *) &count) + 1;
 	verc = (u_char *) &count;
@@ -326,7 +331,7 @@ out:
 	 * handshake with ms_disable
 	 */
 	if (ms->ms_ready)
-		timeout(msintr, (void *)unit, 2);
+		callout_reset(&ms->sc_intr_ch, 2, msintr, ms);
 	else
 		wakeup(ms);
 }

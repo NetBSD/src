@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.42 2000/03/13 23:52:28 soren Exp $	*/
+/*	$NetBSD: ite.c,v 1.43 2000/03/23 06:37:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -504,7 +504,7 @@ itestart(tp)
 		}
 		if (hiwat) {
 			tp->t_state |= TS_TIMEOUT;
-			timeout(ttrstrt, tp, 1);
+			callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 		}
 	}
 	tp->t_state &= ~TS_BUSY;
