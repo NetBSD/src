@@ -1,6 +1,8 @@
+/*	$NetBSD: fpr.c,v 1.3 1995/09/01 01:34:16 jtc Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Robert Corbett.
@@ -35,14 +37,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fpr.c	5.4 (Berkeley) 2/6/91";*/
-static char rcsid[] = "$Id: fpr.c,v 1.2 1993/08/01 18:15:47 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)fpr.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: fpr.c,v 1.3 1995/09/01 01:34:16 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
