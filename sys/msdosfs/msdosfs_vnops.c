@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.71 1998/04/21 09:37:23 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.72 1998/08/02 18:57:23 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -519,6 +519,8 @@ msdosfs_read(v)
 			dep->de_flag |= DE_ACCESS;
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
+		error = deupdat(dep, 1);
 	return (error);
 }
 
@@ -720,7 +722,7 @@ errexit:
 			if (uio->uio_resid != resid)
 				error = 0;
 		}
-	} else if (ioflag & IO_SYNC)
+	} else if ((ioflag & IO_SYNC) == IO_SYNC)
 		error = deupdat(dep, 1);
 	return (error);
 }
