@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.28 1998/08/13 02:11:05 eeh Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.29 1998/08/18 17:31:25 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -459,7 +459,7 @@ kmem_alloc_poolpage1(map)
 	vm_map_t	map;
 {
 #if defined(PMAP_MAP_POOLPAGE)
-	vm_page_t pg
+	vm_page_t pg;
 	vaddr_t va;
 
 	pg = vm_page_alloc1();
