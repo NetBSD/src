@@ -1,15 +1,7 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$NetBSD: Makefile,v 1.1.1.2 1997/07/24 21:23:01 christos Exp $
 
-PROG = amq
-SRCS = amq.c amq_clnt.c amq_xdr.c misc_rpc.c
-LDADD+=-lrpc
-CFLAGS+=-I${.CURDIR}/../include
-CFLAGS+=-I${.CURDIR}/../rpcx
-CFLAGS+=-I${.CURDIR}/../config
-CFLAGS+=-DARCH_REP=\"${MACHINE}\"
-CFLAGS+=-DOS_REP=\"bsd44\"
-CFLAGS+=-DOS_HDR=\"os-bsd44.h\"
-.PATH: ${.CURDIR}/../rpcx ${.CURDIR}/../amd
+PROG= amq
+SRCS=	amq_xdr.c amq_clnt.c amq.c 
+MAN+= amq.8
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
