@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.6 1994/05/05 09:53:43 deraadt Exp $
+ * $Id: zs.c,v 1.7 1994/05/14 06:39:05 deraadt Exp $
  */
 
 /*
@@ -583,6 +583,14 @@ zsclose(dev_t dev, int flags, int mode, struct proc *p)
 		/* hold low for 1 second */
 		(void) tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
 	}
+	if (cs->cs_creg[5] & ZSWR5_BREAK)
+	{
+		s = splzs();
+		cs->cs_preg[5] &= ~ZSWR5_BREAK;
+		cs->cs_creg[5] &= ~ZSWR5_BREAK;
+		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+		splx(s);
+	}
 	ttyclose(tp);
 #ifdef KGDB
 	/* Reset the speed if we're doing kgdb on this port */
@@ -961,7 +969,8 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	int unit = minor(dev);
 	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
 	register struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
-	register int error;
+	register int error, s;
+	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
 
 	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -973,9 +982,24 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 
 	case TIOCSBRK:
-		/* FINISH ME ... need implicit TIOCCBRK in zsclose as well */
+		{
+			s = splzs();
+			cs->cs_preg[5] |= ZSWR5_BREAK;
+			cs->cs_creg[5] |= ZSWR5_BREAK;
+			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+			splx(s);
+			break;
+		}
 
 	case TIOCCBRK:
+		{
+			s = splzs();
+			cs->cs_preg[5] &= ~ZSWR5_BREAK;
+			cs->cs_creg[5] &= ~ZSWR5_BREAK;
+			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+			splx(s);
+			break;
+		}
 
 	case TIOCSDTR:
 
