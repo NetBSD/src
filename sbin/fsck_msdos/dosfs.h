@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.h,v 1.3 1996/05/28 19:51:20 ws Exp $	*/
+/*	$NetBSD: dosfs.h,v 1.4 1997/01/03 14:32:48 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -72,6 +72,7 @@ struct bootblock {
 	/* Now some statistics: */
 	u_int	NumFiles;		/* # of plain files */
 	u_int	NumFree;		/* # of free clusters */
+	u_int	NumBad;			/* # of bad clusters */
 };
 
 struct fatEntry {
