@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.2 1998/12/03 15:06:25 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -363,7 +363,7 @@ int rf_ConfigureSpareDisks(
   RF_Config_t         *cfgPtr)
 {
   char buf[256];
-  int i, ret;
+  int r,c,i, ret;
   RF_DiskOp_t *rdcap_op = NULL, *tur_op = NULL;
   unsigned bs;
   RF_RaidDisk_t *disks;
@@ -444,6 +444,22 @@ int rf_ConfigureSpareDisks(
 fail:
 #ifndef SIMULATE
 #if defined(__NetBSD__) && defined(_KERNEL)
+
+  /* Release the hold on the main components.  We've failed to allocate a 
+     spare, and since we're failing, we need to free things.. */
+
+  for(r=0;r<raidPtr->numRow;r++) {
+	  for(c=0;c<raidPtr->numCol;c++) {
+		  /* Cleanup.. */
+#ifdef DEBUG
+		  printf("Cleaning up row: %d col: %d\n",r,c);
+#endif
+		  if (raidPtr->raid_cinfo[r][c].ci_vp) {
+			  (void)vn_close(raidPtr->raid_cinfo[r][c].ci_vp, 
+					 FREAD|FWRITE, proc->p_ucred, proc);
+		  }
+	  }
+  }
 
   for(i=0;i<raidPtr->numSpare;i++) {
 	  /* Cleanup.. */
