@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.103 2004/01/04 16:17:13 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.104 2004/01/06 13:51:09 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.103 2004/01/04 16:17:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.104 2004/01/06 13:51:09 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ struct pool bufpool;
 /* Buffer memory pools */
 static struct pool bmempools[NMEMPOOLS];
 
-static struct vm_map *buf_map;
+struct vm_map *buf_map;
 
 /*
  * Buffer memory pool allocator.
@@ -1478,12 +1478,25 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 {
-	struct sysctlnode *rnode;
 
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT,
 		       CTLTYPE_NODE, "buf", NULL,
 		       sysctl_dobuf, 0, NULL, 0,
 		       CTL_KERN, KERN_BUF, CTL_EOL);
+}
+
+SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
+{
+	struct sysctlnode *rnode;
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vm", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VM, CTL_EOL);
 
 	rnode = NULL;
 	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
