@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.3 1997/01/02 11:13:19 pk Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.4 1998/03/15 23:13:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -49,15 +49,18 @@ __END_DECLS
 /* Values for dlopen `mode'. */
 #define RTLD_LAZY	1
 #define RTLD_NOW	2
-#define DL_LAZY		RTLD_LAZY		/* Compat */
+#define RTLD_GLOBAL	0x100		/* Allow global searches in object */
+#define DL_LAZY		RTLD_LAZY	/* Compat */
 
 /*
  * dlctl() commands
  */
 #define DL_GETERRNO	1
+#if 0
 #define DL_SETSRCHPATH	x
 #define DL_GETLIST	x
 #define DL_GETREFCNT	x
 #define DL_GETLOADADDR	x
+#endif
 
 #endif /* _DLFCN_H_ */
