@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.11 2003/08/25 20:17:12 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.12 2003/08/25 20:58:04 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -191,6 +191,13 @@ is a space-separated list of shell glob patterns that match files relative
 to the
 .Ar package
 directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
+This is overridden by any
+.Ev _PLIST_IGNORE_FILES
+setting in a package's
+.Ar build-info-file
+(see
+.Xr pkg_create 1
+) if it exists.
 .It Ev PKG_VIEW
 The default view can be specified in the
 .Ev PKG_VIEW
