@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.63 2004/05/31 13:40:04 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.64 2004/05/31 14:04:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.63 2004/05/31 13:40:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64 2004/05/31 14:04:59 tsutsui Exp $");
 
 #include "hil.h"
 
@@ -647,7 +647,7 @@ itefilter(stat, c)
 		break;
         }
 
-	if (code == '\0' && (str = ite_km->kbd_stringmap[(int)c]) != '\0') {
+	if (code == '\0' && (str = ite_km->kbd_stringmap[(int)c]) != NULL) {
 		while (*str)
 			(*kbd_tty->t_linesw->l_rint)(*str++, kbd_tty);
 	} else {
