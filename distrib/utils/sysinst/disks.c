@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.59 2003/06/16 19:42:13 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.60 2003/06/16 20:10:02 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -279,14 +279,14 @@ disp_cur_fspart(int disp, int showall)
 
 /*
  * Label a disk using an MD-specific string DISKLABEL_CMD for
- * to invoke  disklabel.
+ * to invoke disklabel.
  * if MD code does not define DISKLABEL_CMD, this is a no-op.
  *
- * i386  port uses "/sbin/disklabel -w -r", just like i386
+ * i386 port uses "/sbin/disklabel -w -r", just like i386
  * miniroot scripts, though this may leave a bogus incore label.
  *
- * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"
- * to get incore  to ondisk inode translation for the Sun proms.
+ * Sun ports should use DISKLABEL_CMD "/sbin/disklabel -w"
+ * to get incore to ondisk inode translation for the Sun proms.
  */
 int
 write_disklabel (void)
@@ -537,8 +537,8 @@ fsck_with_error_menu(const char *diskpart)
 /*
  * Do target_mount, but print a message and do menu_ok() before
  * proceeding, to inform the user.
- * returns 0 if  the mount completed without indicating errors,
- *  and an nonzero error code from target_mount() otherwise.
+ * returns 0 if the mount completed without indicating errors,
+ * and an nonzero error code from target_mount() otherwise.
  */
 int target_mount_with_error_menu(const char *opt,
 		 char *diskpart, const char *mntpoint)
@@ -558,7 +558,7 @@ int target_mount_with_error_menu(const char *opt,
 		return error;
 	} else {
 #ifdef DEBUG
-	  printf("mount %s %s %s OK\n", opt, diskpart, mntpoint);
+		printf("mount %s %s %s OK\n", opt, diskpart, mntpoint);
 #endif
 	}
 
@@ -571,10 +571,10 @@ int target_mount_with_error_menu(const char *opt,
 int
 fsck_root(void)
 {
-	int   error;
+	int	error;
 	char	rootdev[STRSIZE];
 
-	/* cons up the root name:  partition 'a' on the target diskdev.*/
+	/* cons up the root name: partition 'a' on the target diskdev.*/
 	snprintf(rootdev, STRSIZE, "%s%c", diskdev, 'a');
 #ifdef DEBUG
 	printf("fsck_root: rootdev is %s\n", rootdev);
@@ -587,11 +587,11 @@ fsck_root(void)
 		return (0);
 	}
 
-	/* Mount /dev/<diskdev>a on  target's "".
+	/* Mount /dev/<diskdev>a on target's "".
 	 * If we pass "" as mount-on, Prefixing will DTRT.
 	 * for now, use no options.
 	 * XXX consider -o remount in case target root is
-	 * current root, still  readonly from single-user?
+	 * current root, still readonly from single-user?
 	 */
 	error = target_mount_with_error_menu("", rootdev, "");
 
@@ -637,7 +637,7 @@ fsck_disks(void)
 	free(fstab);
 
 	for (i = 0; i < devcnt; i++) {
-	  	if (fsck_with_error_menu(dev[i]))
+		if (fsck_with_error_menu(dev[i]))
 			return 0;
 
 #ifdef DEBUG
