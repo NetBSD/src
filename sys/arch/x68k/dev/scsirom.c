@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.4 1999/04/22 12:55:53 minoura Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.5 1999/04/22 16:22:49 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ scsirom_find (parent, ia)
 		bus_space_unmap (ia->ia_bst, ioh, ia->ia_size);
 		return -1;
 	}
+	bus_space_read_region_1 (ia->ia_bst, ioh, SCSIROM_ID, buf, 6);
 	if (memcmp(buf, scsirom_descr[which].id, 6) == 0)
 		r = which;
 	bus_space_unmap (ia->ia_bst, ioh, ia->ia_size);
