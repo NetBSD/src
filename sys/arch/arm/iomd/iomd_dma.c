@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.6 2002/09/27 15:35:45 provos Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.7 2003/04/01 23:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -206,7 +206,7 @@ fill:
 #endif
 	if (dp->dc_len == 0) goto done;
 	PHYS(dp->dc_nextaddr, &cur);
-	len = NBPG - (cur & PGOFSET);
+	len = PAGE_SIZE - (cur & PGOFSET);
 	if (len > dp->dc_len) {
 		/* Last buffer */
 		len = dp->dc_len;

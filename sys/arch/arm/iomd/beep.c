@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.16 2002/10/23 09:10:42 jdolecek Exp $	*/
+/*	$NetBSD: beep.c,v 1.17 2003/04/01 23:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.16 2002/10/23 09:10:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.17 2003/04/01 23:19:10 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -135,19 +135,19 @@ beepattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_open = 0;
 	sc->sc_count = 0;
 
-	sc->sc_buffer0 = uvm_km_zalloc(kernel_map, NBPG);
+	sc->sc_buffer0 = uvm_km_zalloc(kernel_map, PAGE_SIZE);
 	if (sc->sc_buffer0 == 0) 
 		panic("beep: Cannot allocate buffer memory");
-	if ((sc->sc_buffer0 & (NBPG -1)) != 0)
+	if ((sc->sc_buffer0 & (PAGE_SIZE -1)) != 0)
 		panic("beep: Cannot allocate page aligned buffer");
 	sc->sc_buffer1 = sc->sc_buffer0;
 
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0,
 	    (paddr_t *)&sc->sc_sound_cur0);
-	sc->sc_sound_end0 = (sc->sc_sound_cur0 + NBPG - 16) | 0x00000000;
+	sc->sc_sound_end0 = (sc->sc_sound_cur0 + PAGE_SIZE - 16) | 0x00000000;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer1,
 	    (paddr_t *)&sc->sc_sound_cur1);
-	sc->sc_sound_end1 = (sc->sc_sound_cur1 + NBPG - 16) | 0x00000000;
+	sc->sc_sound_end1 = (sc->sc_sound_cur1 + PAGE_SIZE - 16) | 0x00000000;
 
 	bcopy(beep_waveform, (void *)sc->sc_buffer0, sizeof(beep_waveform));
 
@@ -284,7 +284,7 @@ beepioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case BEEP_SET:
 /*		printf("set %08x\n", (u_int)data);
 		printf("set %08x %08x\n", (u_int)wave->addr, wave->size);*/
-		if (wave->size < 16 || wave->size > NBPG)
+		if (wave->size < 16 || wave->size > PAGE_SIZE)
 			return(ENXIO);
 		copyin(wave->addr, (char *)sc->sc_buffer0, wave->size);
 		sc->sc_sound_end0 = (sc->sc_sound_cur0 + wave->size - 16);
