@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.12 2003/01/06 00:31:49 seb Exp $
+.\"     $NetBSD: newbtconf.8,v 1.13 2003/01/06 11:37:19 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 18, 2001
+.Dd January 6, 2003
 .Dt NEWBTCONF 8
 .Os
 .Sh NAME
@@ -37,9 +37,9 @@
 .Ar new-conf-name
 .Op Ar orig-conf-name
 .Nm ""
-.Li init
+.Cm init
 .Nm ""
-.Li revert
+.Cm revert
 .Sh DESCRIPTION
 .Bl -tag -width indent
 .Nm
@@ -145,7 +145,8 @@ will have been created,
 priming the directory with the appropriate files for editing.
 For example, if we do
 .Nm
-\fInonet\fP \fInetwork\fP it would create a directory named
+.Ar nonet network
+it would create a directory named
 .Pa /etc/etc.nonet
 and copy all the files from
 .Pa /etc/etc.network
@@ -202,15 +203,18 @@ would also need to be undertaken.
 Multiple boot configurations can be deactivated by running
 .Nm
 with an argument of
-.Sq revert .
+.Cm revert .
 All the symlinks mentioned above are then removed and the files they point to
-are copied to their default place. This effectively make the currently selected
-configuration the only one active. The symbolic links 
+are copied to their default place.
+This effectively makes the currently selected
+configuration the only one active.
+The symbolic links
 .Pa /etc/etc.current
 and
 .Pa /etc/etc.default
-are also removed so upon rebooting no configuration selection menu is 
-displayed. Note that the previously created configurations (in 
+are also removed so upon rebooting no configuration selection menu is
+displayed.
+Note that the previously created configurations (in
 .Pa /etc/etc.\*[Lt]name\*[Gt] )
 are not removed.
 .El
