@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.2 2002/06/20 11:43:04 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.3 2002/06/28 06:21:29 itojun Exp $	*/
 
 /*	$KAME: getaddrinfo.c,v 1.14 2001/01/06 09:41:15 jinmei Exp $	*/
 
@@ -597,7 +597,7 @@ explore_fqdn(pai, hostname, servname, res)
 	char tmp[NS_MAXDNAME];
 	const char *cp;
 
-	result = NULL;
+	*res = NULL;
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
