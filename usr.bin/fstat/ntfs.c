@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.5 2000/02/04 10:35:46 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.6 2000/02/04 10:43:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntfs.c,v 1.5 2000/02/04 10:35:46 jdolecek Exp $");
+__RCSID("$NetBSD: ntfs.c,v 1.6 2000/02/04 10:43:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: ntfs.c,v 1.5 2000/02/04 10:35:46 jdolecek Exp $");
 #undef dprintf
 #include <ntfs/ntfs_inode.h>
 
+#include <err.h>
 #include <kvm.h>
 #include "fstat.h"
 
@@ -69,15 +70,15 @@ ntfs_filestat(vp, fsp)
 	 * to read appropriate struct fnode and then getting the address
 	 * of ntnode and reading it's contents */
 	if (!KVM_READ(VTOF(vp), &fn, sizeof (fn))) {
-		printf("can't read fnode at %p for pid %d", VTOF(vp), Pid);
+		dprintf("can't read fnode at %p for pid %d", VTOF(vp), Pid);
 		return 0;
 	}
 	if (!KVM_READ(FTONT(&fn), &ntnode, sizeof (ntnode))) {
-		printf("can't read ntnode at %p for pid %d", FTONT(&fn), Pid);
+		dprintf("can't read ntnode at %p for pid %d", FTONT(&fn), Pid);
 		return 0;
 	}
 	if (!KVM_READ(ntnode.i_mp, &ntm, sizeof (ntm))) {
-		printf("can't read ntfsmount at %p for pid %d",
+		dprintf("can't read ntfsmount at %p for pid %d",
 			FTONT(&fn), Pid);
 		return 0;
 	}
