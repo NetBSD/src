@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.2 2002/07/31 17:34:24 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.3 2002/08/17 20:46:27 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -56,8 +56,8 @@ ixp12x0_pci_dma_init(bus_dma_tag_t dmat, void *cookie)
 	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
 	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
 	dmat->_dmamap_unload = _bus_dmamap_unload;
-	dmat->_dmamap_sync = _bus_dmamap_sync;
-
+	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
+	dmat->_dmamap_sync_post = NULL;
 	dmat->_dmamem_alloc = _bus_dmamem_alloc;
 	dmat->_dmamem_free = _bus_dmamem_free;
 	dmat->_dmamem_map = _bus_dmamem_map;
