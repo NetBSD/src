@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.370 2001/10/25 11:57:44 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.371 2001/11/07 18:55:30 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.367 2001/10/25 11:57:15 augustss Exp 
+ *	NetBSD: pcidevs,v 1.368 2001/11/07 18:53:51 thorpej Exp 
  */
 
 /*
@@ -2072,6 +2072,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Z above 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700,
+	    0,
+	    "Cyclone Micro",
+	    "IQ80310 (PCI-700)",
 	},
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_MEDIAGX_PCHB,
