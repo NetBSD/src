@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.7 2001/07/26 15:05:08 wiz Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.8 2002/11/08 00:13:07 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,7 +48,7 @@ static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(getnetconfig,_getnetconfig)
