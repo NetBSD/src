@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2002/04/09 00:31:41 lukem Exp $
+#	$NetBSD: list,v 1.9 2002/10/17 06:38:18 lukem Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -42,7 +42,6 @@ PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
-SPECIAL	ftp		srcdir	distrib/utils/x_ftp
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	mount		srcdir	distrib/utils/x_mount
 SPECIAL	ping		srcdir	distrib/utils/x_ping

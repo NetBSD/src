@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/06/01 16:36:09 lukem Exp $
+#	$NetBSD: list,v 1.3 2002/10/17 06:38:22 lukem Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -70,7 +70,6 @@ ARGVLN	sh -sh
 
 SPECIAL	chat		srcdir	usr.sbin/pppd/chat
 SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
-SPECIAL	ftp		srcdir	distrib/utils/x_ftp
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	pppd		srcdir	usr.sbin/pppd/pppd
