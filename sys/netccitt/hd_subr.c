@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.11 2000/02/01 22:52:07 thorpej Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.12 2000/03/30 13:53:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -72,9 +72,9 @@ hd_ctlinput(prc, addr, ext)
 	struct sockaddr *addr;
 	void           *ext;
 {
-	register struct x25config *xcp = (struct x25config *) addr;
-	register struct hdcb *hdp;
-	register struct ifaddr *ifa;
+	struct x25config *xcp = (struct x25config *) addr;
+	struct hdcb *hdp;
+	struct ifaddr *ifa;
 	struct ifnet   *ifp;
 
 	if (addr->sa_family != AF_CCITT)
@@ -155,10 +155,10 @@ hd_ctlinput(prc, addr, ext)
 
 void
 hd_initvars(hdp)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 {
-	register struct mbuf *m;
-	register int    i;
+	struct mbuf *m;
+	int    i;
 
 	/* Clear Transmit queue. */
 	while ((m = hd_remove(&hdp->hd_txq)) != NULL)
@@ -182,13 +182,13 @@ hd_initvars(hdp)
 
 int
 hd_decode(hdp, frame)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 	struct Hdlc_frame *frame;
 {
-	register int    frametype = ILLEGAL;
-	register struct Hdlc_iframe *iframe = (struct Hdlc_iframe *) frame;
-	register struct Hdlc_sframe *sframe = (struct Hdlc_sframe *) frame;
-	register struct Hdlc_uframe *uframe = (struct Hdlc_uframe *) frame;
+	int    frametype = ILLEGAL;
+	struct Hdlc_iframe *iframe = (struct Hdlc_iframe *) frame;
+	struct Hdlc_sframe *sframe = (struct Hdlc_sframe *) frame;
+	struct Hdlc_uframe *uframe = (struct Hdlc_uframe *) frame;
 
 	if (iframe->hdlc_0 == 0) {
 		frametype = IFRAME;
@@ -245,13 +245,13 @@ hd_decode(hdp, frame)
 
 void
 hd_writeinternal(hdp, frametype, pf)
-	register struct hdcb *hdp;
-	register int    frametype, pf;
+	struct hdcb *hdp;
+	int    frametype, pf;
 {
-	register struct mbuf *buf;
+	struct mbuf *buf;
 	struct Hdlc_frame *frame;
-	register struct Hdlc_sframe *sframe;
-	register struct Hdlc_uframe *uframe;
+	struct Hdlc_sframe *sframe;
+	struct Hdlc_uframe *uframe;
 
 	MGETHDR(buf, M_DONTWAIT, MT_HEADER);
 	if (buf == 0)
@@ -331,7 +331,7 @@ struct mbuf *
 hd_remove(q)
 	struct hdtxq   *q;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	m = q->head;
 	if (m) {
@@ -344,8 +344,8 @@ hd_remove(q)
 
 void
 hd_append(q, m)
-	register struct hdtxq *q;
-	register struct mbuf *m;
+	struct hdtxq *q;
+	struct mbuf *m;
 {
 
 	m->m_act = NULL;
@@ -360,8 +360,8 @@ void
 hd_flush(ifp)
 	struct ifnet   *ifp;
 {
-	register struct mbuf *m;
-	register int    s;
+	struct mbuf *m;
+	int    s;
 
 	while (1) {
 		s = splimp();

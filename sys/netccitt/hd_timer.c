@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_timer.c,v 1.7 1998/09/13 16:21:17 christos Exp $	*/
+/*	$NetBSD: hd_timer.c,v 1.8 2000/03/30 13:53:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -76,8 +76,8 @@ int             hd_n2 = N2;
 void
 hd_timer()
 {
-	register struct hdcb *hdp;
-	register int    s = splimp();
+	struct hdcb *hdp;
+	int    s = splimp();
 
 	for (hdp = hdcbhead; hdp; hdp = hdp->hd_next) {
 		if (hdp->hd_rrtimer && (--hdp->hd_rrtimer == 0)) {

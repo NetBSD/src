@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_timer.c,v 1.4 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_timer.c,v 1.5 2000/03/30 13:53:34 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -82,11 +82,11 @@ int     llc_DACTION_timer       = LLC_DACTION_TIMER;
 void
 llc_timer()
 {
-	register struct llc_linkcb *linkp;
-	register struct llc_linkcb *nlinkp;
-	register int timer;
-	register int action;
-	register int s = splimp();
+	struct llc_linkcb *linkp;
+	struct llc_linkcb *nlinkp;
+	int timer;
+	int action;
+	int s = splimp();
 
 	/*
 	 * All links are accessible over the doubly linked list llccb_q
@@ -108,8 +108,8 @@ llc_timer()
 				LLC_AGETIMER(linkp,DACTION);
 				break;
 			case LLC_TIMER_EXPIRED: {
-				register int cmdrsp;
-				register int pollfinal;
+				int cmdrsp;
+				int pollfinal;
 
 				switch (LLC_GETFLAG(linkp,DACTION)) {
 				case LLC_DACKCMD:
