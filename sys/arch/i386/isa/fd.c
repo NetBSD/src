@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.53 1994/10/20 00:52:23 mycroft Exp $
+ *	$Id: fd.c,v 1.54 1994/10/20 03:38:13 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -956,10 +956,9 @@ again:
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
+			printf("blkno %d nblks %d\n",
+			    fd->sc_blkno, fd->sc_nblks);
 #endif
-			printf("blkno %d skip %d cylin %d status %x\n",
-			    bp->b_blkno, fd->sc_skip, bp->b_cylin,
-			    fdc->sc_status[0]);
 			fdcretry(fdc);
 			goto again;
 		}
