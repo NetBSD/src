@@ -45,6 +45,7 @@
 ./etc/nsswitch.conf
 ./etc/passwd
 ./etc/phones
+./etc/postfix
 ./etc/printcap
 ./etc/profile
 ./etc/protocols
