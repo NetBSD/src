@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.65 1998/09/09 21:44:18 thorpej Exp $
+	$NetBSD: INSTALL,v 1.66 1998/09/18 06:15:58 abs Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -402,6 +402,22 @@ NetBSD _VER:
 
 		/dev/sd0b	none	swap	sw,priority=0
 		/dev/sd1b	none	swap	sw,priority=5
+
+* NFS now uses reserved ports
+
+  Description:
+	Earlier versions of NetBSD did not use a reserved (<= 1023)
+	port when making NFS client requests. When acting as a server
+	NetBSD now requires reserved ports by default.
+
+	Old clients mounting a new server will receive a 'permission
+	denied' response when the directory is accessed. New clients
+	should work fine with old servers.
+
+  Fix:
+	Add '-P' to the mount options in the old client's /etc/fstab,
+	or (less preferred), add '-noresvport,noresvmnt' to the
+	options on the new server's /etc/exports.
 
 * NFS daemons and other programs in /sbin moved
 
