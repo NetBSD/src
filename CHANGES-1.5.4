@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.103 2003/05/27 05:56:41 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.104 2003/06/17 05:36:46 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2078,3 +2078,14 @@ sys/netiso/clnp_er.c			1.13
 	Keep pkthdr when prepending new mbuf in front of a given chain.
 	This keeps us from panic()ing in the interface output routine.
 	[Ignatios, ticket #45]
+
+sys/arch/mac68k/dev/if_mc.c		1.21
+sys/arch/macppc/dev/am79c950.c		1.14
+
+	Don't bring down mc(4) interfaces when they underflow.
+	Fixes PR#12088. [bjh21, ticket #46]
+
+sys/netinet6/ip6_mroute.c		1.47
+
+	Don't try to forward multicast packet to mif that went away.
+	[itojun, ticket #47]
