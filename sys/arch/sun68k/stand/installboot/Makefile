@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 12:24:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/15 23:09:51 fredette Exp $
 
 NOMAN= # defined
 
@@ -8,14 +8,15 @@ PROG=	installboot
 BINDIR=/usr/mdec
 S= ${.CURDIR}/../../../..
 LIBSA=${S}/lib/libsa
-CPPFLAGS+= -I${LIBSA} -I.
+CPPFLAGS+= -I${LIBSA} -I. -I${.CURDIR}/../libsa
 WARNS?= 1
 
 # Need this to work in the miniroot
 LDSTATIC?=	-static
 
-.PATH.c: ${LIBSA}
+.PATH.c: ${LIBSA} ${S}/ufs/ffs
 
-SRCS=	installboot.c byteorder.c loadfile.c loadfile_aout.c loadfile_elf32.c
+SRCS=	installboot.c byteorder.c ffs_bswap.c \
+	loadfile.c loadfile_aout.c loadfile_elf32.c
 
 .include <bsd.prog.mk>
