@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.4 2002/11/08 20:26:50 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.5 2002/11/26 18:44:34 christos Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -334,7 +334,7 @@ filt_kqdetach(struct knote *kn)
 	struct kqueue *kq;
 
 	kq = (struct kqueue *)kn->kn_fp->f_data;
-	SLIST_REMOVE(&kq->kq_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&kq->kq_sel.sel_klist, kn, knote, kn_selnext);
 }
 
 /*
@@ -1152,7 +1152,7 @@ kqueue_kqfilter(struct file *fp, struct knote *kn)
 	if (kn->kn_filter != EVFILT_READ)
 		return (1);
 	kn->kn_fop = &kqread_filtops;
-	SLIST_INSERT_HEAD(&kq->kq_sel.si_klist, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&kq->kq_sel.sel_klist, kn, kn_selnext);
 	return (0);
 }
 
