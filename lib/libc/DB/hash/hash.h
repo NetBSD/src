@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hash.h	5.6 (Berkeley) 9/8/91
+ *	@(#)hash.h	5.7 (Berkeley) 5/23/93
  */
 
 /* Operations */
@@ -115,12 +115,13 @@ typedef struct htab {		/* Memory resident data structure */
 #define MIN_BUFFERS		6
 #define MINHDRSIZE		512
 #define DEF_BUFSIZE		65536		/* 64 K */
-#define DEF_BUCKET_SIZE		256
-#define DEF_BUCKET_SHIFT	8		/* log2(BUCKET) */
+#define DEF_BUCKET_SIZE		4096
+#define DEF_BUCKET_SHIFT	12		/* log2(BUCKET) */
 #define DEF_SEGSIZE		256
 #define DEF_SEGSIZE_SHIFT	8		/* log2(SEGSIZE)	 */
 #define DEF_DIRSIZE		256
-#define DEF_FFACTOR		5
+#define DEF_FFACTOR		65536
+#define MIN_FFACTOR		4
 #define SPLTMAX			8
 #define CHARKEY			"%$sniglet^&"
 #define NUMKEY			1038583

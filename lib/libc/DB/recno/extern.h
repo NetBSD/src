@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.3 (Berkeley) 11/13/92
+ *	@(#)extern.h	5.5 (Berkeley) 5/24/93
  */
 
 #include "../btree/extern.h"
@@ -38,6 +38,7 @@
 int	 __rec_close __P((DB *));
 int	 __rec_delete __P((const DB *, const DBT *, u_int));
 int	 __rec_dleaf __P((BTREE *, PAGE *, int));
+int	 __rec_fd __P((const DB *));
 int	 __rec_fmap __P((BTREE *, recno_t));
 int	 __rec_fout __P((BTREE *));
 int	 __rec_fpipe __P((BTREE *, recno_t));
@@ -47,7 +48,7 @@ int	 __rec_put __P((const DB *dbp, DBT *, const DBT *, u_int));
 int	 __rec_ret __P((BTREE *, EPG *, recno_t, DBT *, DBT *));
 EPG	*__rec_search __P((BTREE *, recno_t, enum SRCHOP));
 int	 __rec_seq __P((const DB *, DBT *, DBT *, u_int));
-int	 __rec_sync __P((const DB *));
+int	 __rec_sync __P((const DB *, u_int));
 int	 __rec_vmap __P((BTREE *, recno_t));
 int	 __rec_vout __P((BTREE *));
 int	 __rec_vpipe __P((BTREE *, recno_t));

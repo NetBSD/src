@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)rec_open.c	5.15 (Berkeley) 3/19/93";
+static char sccsid[] = "@(#)rec_open.c	5.20 (Berkeley) 5/24/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -76,10 +76,14 @@ __rec_open(fname, flags, mode, openinfo)
 			goto einval;
 		btopeninfo.flags = 0;
 		btopeninfo.cachesize = openinfo->cachesize;
-		btopeninfo.psize = 0;
+		btopeninfo.maxkeypage = 0;
+		btopeninfo.minkeypage = 0;
+		btopeninfo.psize = openinfo->psize;
 		btopeninfo.compare = NULL;
+		btopeninfo.prefix = NULL;
 		btopeninfo.lorder = openinfo->lorder;
-		dbp = __bt_open(NULL, O_RDWR, S_IRUSR | S_IWUSR, &btopeninfo);
+		dbp = __bt_open(openinfo->bfname,
+		    O_RDWR, S_IRUSR | S_IWUSR, &btopeninfo);
 	} else
 		dbp = __bt_open(NULL, O_RDWR, S_IRUSR | S_IWUSR, NULL);
 	if (dbp == NULL)
@@ -94,7 +98,7 @@ __rec_open(fname, flags, mode, openinfo)
 	t = dbp->internal;
 	if (openinfo) {
 		if (openinfo->flags & R_FIXEDLEN) {
-			SET(t, BTF_FIXEDLEN);
+			SET(t, R_FIXLEN);
 			t->bt_reclen = openinfo->reclen;
 			if (t->bt_reclen == 0)
 				goto einval;
@@ -103,9 +107,9 @@ __rec_open(fname, flags, mode, openinfo)
 	} else
 		t->bt_bval = '\n';
 
-	SET(t, BTF_RECNO);
+	SET(t, R_RECNO);
 	if (fname == NULL)
-		SET(t, BTF_EOF | BTF_RINMEM);
+		SET(t, R_EOF | R_INMEM);
 	else
 		t->bt_rfd = rfd;
 	t->bt_rcursor = 0;
@@ -114,42 +118,52 @@ __rec_open(fname, flags, mode, openinfo)
 	 * In 4.4BSD stat(2) returns true for ISSOCK on pipes.  Until
 	 * then, this is fairly close.  Pipes are read-only.
 	 */
-	if (fname != NULL)
+	if (fname != NULL) {
 		if (lseek(rfd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE) {
-			switch(flags & O_ACCMODE) {
+			switch (flags & O_ACCMODE) {
 			case O_RDONLY:
-				SET(t, BTF_RDONLY);
+				SET(t, R_RDONLY);
 				break;
-			case O_RDWR:
-			case O_WRONLY:
 			default:
 				goto einval;
 			}
 slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 				goto err;
-			SET(t, BTF_CLOSEFP);
+			SET(t, R_CLOSEFP);
 			t->bt_irec =
-			    ISSET(t, BTF_FIXEDLEN) ? __rec_fpipe : __rec_vpipe;
+			    ISSET(t, R_FIXLEN) ? __rec_fpipe : __rec_vpipe;
 		} else {
-			switch(flags & O_ACCMODE) {
+			switch (flags & O_ACCMODE) {
 			case O_RDONLY:
-				SET(t, BTF_RDONLY);
+				SET(t, R_RDONLY);
 				break;
 			case O_RDWR:
 				break;
-			case O_WRONLY:
 			default:
 				goto einval;
 			}
-				
+
 			if (fstat(rfd, &sb))
 				goto err;
-			if (sb.st_size > (off_t)SSIZE_MAX) {
-				errno = EFBIG;
-				goto err;
+			/*
+			 * Kludge -- but we don't know what size an off_t
+			 * is or what size a size_t is, although we do
+			 * know that the former is signed and the latter
+			 * unsigned.
+			 */
+			if (sizeof(sb.st_size) > sizeof(size_t)) {
+				if (sb.st_size > (off_t)INT_MAX) {
+					errno = EFBIG;
+					goto err;
+				}
+			} else {
+				if ((size_t)sb.st_size > INT_MAX) {
+					errno = EFBIG;
+					goto err;
+				}
 			}
 			if (sb.st_size == 0)
-				SET(t, BTF_EOF);
+				SET(t, R_EOF);
 			else {
 				t->bt_msize = sb.st_size;
 				if ((t->bt_smap =
@@ -158,15 +172,17 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 					goto slow;
 				t->bt_cmap = t->bt_smap;
 				t->bt_emap = t->bt_smap + sb.st_size;
-				t->bt_irec = ISSET(t, BTF_FIXEDLEN) ?
+				t->bt_irec = ISSET(t, R_FIXLEN) ?
 				    __rec_fmap : __rec_vmap;
-				SET(t, BTF_MEMMAPPED);
+				SET(t, R_MEMMAPPED);
 			}
 		}
+	}
 
 	/* Use the recno routines. */
 	dbp->close = __rec_close;
 	dbp->del = __rec_delete;
+	dbp->fd = __rec_fd;
 	dbp->get = __rec_get;
 	dbp->put = __rec_put;
 	dbp->seq = __rec_seq;
@@ -182,7 +198,7 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 		mpool_put(t->bt_mp, h, 0);
 
 	if (openinfo && openinfo->flags & R_SNAPSHOT &&
-	    !ISSET(t, BTF_EOF | BTF_RINMEM) &&
+	    !ISSET(t, R_EOF | R_INMEM) &&
 	    t->bt_irec(t, MAX_REC_NUMBER) == RET_ERROR)
                 goto err;
 	return (dbp);
@@ -195,4 +211,19 @@ err:	sverrno = errno;
 		(void)close(rfd);
 	errno = sverrno;
 	return (NULL);
+}
+
+int
+__rec_fd(dbp)
+	const DB *dbp;
+{
+	BTREE *t;
+
+	t = dbp->internal;
+
+	if (ISSET(t, R_INMEM)) {
+		errno = ENOENT;
+		return (-1);
+	}
+	return (t->bt_rfd);
 }

@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)dbopen.3	5.23 (Berkeley) 12/4/92
+.\"	@(#)dbopen.3	5.26 (Berkeley) 5/24/93
 .\"
-.TH DBOPEN 3 "December 4, 1992"
+.TH DBOPEN 3 "May 24, 1993"
 .UC 7
 .SH NAME
 dbopen \- database access methods
@@ -104,11 +104,12 @@ typedef struct {
 DBTYPE type;
 int (*close)(const DB *db);
 int (*del)(const DB *db, const DBT *key, u_int flags);
+int (*fd)(const DB *db);
 int (*get)(const DB *db, DBT *key, DBT *data, u_int flags);
 int (*put)(const DB *db, DBT *key, const DBT *data,
 .ti +5
 u_int flags);
-int (*sync)(const DB *db);
+int (*sync)(const DB *db, u_int flags);
 int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
 .RE
 } DB;
@@ -157,6 +158,28 @@ routines return -1 on error (setting
 .I key
 was not in the file.
 .TP
+fd
+A pointer to a routine which returns a file descriptor representative
+of the underlying database.
+A file descriptor referencing the same file will be returned to all
+processes which call
+.I dbopen
+with the same
+.I file
+name.
+This file descriptor may be safely used as a argument to the
+.IR fcntl (2)
+and
+.IR flock (2)
+locking functions.
+The file descriptor is not necessarily associated with any of the
+underlying files used by the access method.
+No file descriptor is available for in memory databases.
+.I Fd
+routines return -1 on error (setting
+.IR errno ),
+and the file descriptor on success.
+.TP
 get
 A pointer to a routine which is the interface for keyed retrieval from
 the database.
@@ -182,19 +205,6 @@ may be set to one of the following values:
 R_CURSOR
 Replace the key/data pair referenced by the cursor.
 The cursor must have previously been initialized.
-.TP
-R_CURSORLOG
-Store the data into the tree after the record referenced by the cursor,
-creating a new key/data pair if the database is empty or if the cursor
-references the last entry in the database, otherwise overwriting the
-record after the cursor.
-If the cursor is unitialized, the first record in the database is
-created or overwritten.
-In any case, the cursor is set to reference the stored record, and the
-record number of the stored record is returned in the
-.I key
-structure.
-(Applicable only to the DB_RECNO access method.)
 .TP
 R_IAFTER
 Append the data immediately after the data referenced by
@@ -227,7 +237,7 @@ R_SETCURSOR is available only for the DB_BTREE and DB_RECNO access
 methods because it implies that the keys have an inherent order
 which does not change.
 .IP
-R_CURSORLOG, R_IAFTER and R_IBEFORE are available only for the DB_RECNO
+R_IAFTER and R_IBEFORE are available only for the DB_RECNO
 access method because they each imply that the access method is able to
 create new keys.
 This is only true if the keys are ordered and independent, record numbers
@@ -323,6 +333,21 @@ A pointer to a routine to flush any cached information to disk.
 If the database is in memory only, the
 .I sync
 routine has no effect and will always succeed.
+.IP
+The flag value may be set to the following value:
+.RS
+.TP
+R_RECNOSYNC
+If the DB_RECNO access method is being used, this flag causes
+the sync routine to apply to the btree file which underlies the
+recno file, not the recno file itself.
+(See the
+.I bfname
+field of the
+.IR recno (3)
+manual page for more information.)
+.RE
+.IP
 .I Sync
 routines return -1 on error (setting
 .IR errno )
@@ -401,6 +426,12 @@ or
 .IR malloc (3).
 .PP
 The
+.I fd
+routines will fail and set
+.I errno
+to ENOENT for in memory databases.
+.PP
+The
 .I sync
 routines may fail and set
 .I errno
@@ -414,6 +445,9 @@ for any of the errors specified for the library routine
 .SH BUGS
 The typedef DBT is a mnemonic for ``data base thang'', and was used
 because noone could think of a reasonable name that wasn't already used.
+.PP
+The file descriptor interface is a kluge and will be deleted in a
+future version of the interface.
 .PP
 None of the access methods provide any form of concurrent access,
 locking, or transactions.

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_split.c	5.15 (Berkeley) 2/19/93";
+static char sccsid[] = "@(#)bt_split.c	5.17 (Berkeley) 5/22/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 	PAGE *h, *l, *r, *lchild, *rchild;
 	indx_t nxtindex;
 	size_t n, nbytes, nksize;
-	int nosplit;
+	int parentsplit;
 	char *dest;
 
 	/*
@@ -116,14 +116,14 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 	 */
 	h->linp[skip] = h->upper -= ilen;
 	dest = (char *)h + h->upper;
-	if (ISSET(t, BTF_RECNO))
+	if (ISSET(t, R_RECNO))
 		WR_RLEAF(dest, data, flags)
 	else
 		WR_BLEAF(dest, key, data, flags)
 
 	/* If the root page was split, make it look right. */
 	if (sp->pgno == P_ROOT &&
-	    (ISSET(t, BTF_RECNO) ?
+	    (ISSET(t, R_RECNO) ?
 	    bt_rroot(t, sp, l, r) : bt_broot(t, sp, l, r)) == RET_ERROR)
 		goto err2;
 
@@ -150,7 +150,7 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 	 * This code must make sure that all pins are released other than the
 	 * root page or overflow page which is unlocked elsewhere.
 	 */
-	for (nosplit = 0; (parent = BT_POP(t)) != NULL;) {
+	while ((parent = BT_POP(t)) != NULL) {
 		lchild = l;
 		rchild = r;
 
@@ -221,12 +221,13 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 			    bt_page(t, h, &l, &r, &skip, nbytes);
 			if (h == NULL)
 				goto err1;
+			parentsplit = 1;
 		} else {
 			if (skip < (nxtindex = NEXTINDEX(h)))
 				memmove(h->linp + skip + 1, h->linp + skip,
 				    (nxtindex - skip) * sizeof(indx_t));
 			h->lower += sizeof(indx_t);
-			nosplit = 1;
+			parentsplit = 0;
 		}
 
 		/* Insert the key into the parent page. */
@@ -248,38 +249,54 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 				goto err1;
 			break;
 		case P_RINTERNAL:
-			/* Update both left and right page counts. */
+			/*
+			 * Update the left page count.  If split
+			 * added at index 0, fix the correct page.
+			 */
+			if (skip > 0)
+				dest = (char *)h + h->linp[skip - 1];
+			else
+				dest = (char *)l + l->linp[NEXTINDEX(l) - 1];
+			((RINTERNAL *)dest)->nrecs = rec_total(lchild);
+			((RINTERNAL *)dest)->pgno = lchild->pgno;
+
+			/* Update the right page count. */
 			h->linp[skip] = h->upper -= nbytes;
 			dest = (char *)h + h->linp[skip];
 			((RINTERNAL *)dest)->nrecs = rec_total(rchild);
 			((RINTERNAL *)dest)->pgno = rchild->pgno;
-			dest = (char *)h + h->linp[skip - 1];
-			((RINTERNAL *)dest)->nrecs = rec_total(lchild);
-			((RINTERNAL *)dest)->pgno = lchild->pgno;
 			break;
 		case P_RLEAF:
-			/* Update both left and right page counts. */
+			/*
+			 * Update the left page count.  If split
+			 * added at index 0, fix the correct page.
+			 */
+			if (skip > 0)
+				dest = (char *)h + h->linp[skip - 1];
+			else
+				dest = (char *)l + l->linp[NEXTINDEX(l) - 1];
+			((RINTERNAL *)dest)->nrecs = NEXTINDEX(lchild);
+			((RINTERNAL *)dest)->pgno = lchild->pgno;
+
+			/* Update the right page count. */
 			h->linp[skip] = h->upper -= nbytes;
 			dest = (char *)h + h->linp[skip];
 			((RINTERNAL *)dest)->nrecs = NEXTINDEX(rchild);
 			((RINTERNAL *)dest)->pgno = rchild->pgno;
-			dest = (char *)h + h->linp[skip - 1];
-			((RINTERNAL *)dest)->nrecs = NEXTINDEX(lchild);
-			((RINTERNAL *)dest)->pgno = lchild->pgno;
 			break;
 		default:
 			abort();
 		}
 
 		/* Unpin the held pages. */
-		if (nosplit) {
+		if (!parentsplit) {
 			mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 			break;
 		}
 
 		/* If the root page was split, make it look right. */
 		if (sp->pgno == P_ROOT &&
-		    (ISSET(t, BTF_RECNO) ?
+		    (ISSET(t, R_RECNO) ?
 		    bt_rroot(t, sp, l, r) : bt_broot(t, sp, l, r)) == RET_ERROR)
 			goto err1;
 
@@ -687,7 +704,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	 * one.  If the cursor is on the right page, it is decremented by the
 	 * number of records split to the left page.
 	 *
-	 * Don't bother checking for the BTF_SEQINIT flag, the page number will
+	 * Don't bother checking for the B_SEQINIT flag, the page number will
 	 * be P_INVALID.
 	 */
 	c = &t->bt_bcursor;

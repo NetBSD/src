@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_open.c	5.26 (Berkeley) 2/16/93";
+static char sccsid[] = "@(#)bt_open.c	5.31 (Berkeley) 5/24/93";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,6 +62,7 @@ static char sccsid[] = "@(#)bt_open.c	5.26 (Berkeley) 2/16/93";
 #include <db.h>
 #include "btree.h"
 
+static int byteorder __P((void));
 static int nroot __P((BTREE *));
 static int tmp __P((void));
 
@@ -93,7 +94,7 @@ __bt_open(fname, flags, mode, openinfo)
 	DB *dbp;
 	pgno_t ncache;
 	struct stat sb;
-	int nr;
+	int machine_lorder, nr;
 
 	t = NULL;
 
@@ -104,6 +105,7 @@ __bt_open(fname, flags, mode, openinfo)
 	 * file is opened.  Also, the file's page size can cause the cachesize
 	 * to change.
 	 */
+	machine_lorder = byteorder();
 	if (openinfo) {
 		b = *openinfo;
 
@@ -117,7 +119,7 @@ __bt_open(fname, flags, mode, openinfo)
 		 * transfer size.
 		 */
 		if (b.psize &&
-		    (b.psize < MINPSIZE || b.psize > MAX_PAGE_OFFSET ||
+		    (b.psize < MINPSIZE || b.psize > MAX_PAGE_OFFSET + 1 ||
 		    b.psize & sizeof(indx_t) - 1))
 			goto einval;
 
@@ -136,18 +138,20 @@ __bt_open(fname, flags, mode, openinfo)
 		}
 
 		if (b.lorder == 0)
-			b.lorder = BYTE_ORDER;
-		else if (b.lorder != BIG_ENDIAN && b.lorder != LITTLE_ENDIAN)
-			goto einval;
+			b.lorder = machine_lorder;
 	} else {
 		b.compare = __bt_defcmp;
 		b.cachesize = 0;
 		b.flags = 0;
-		b.lorder = BYTE_ORDER;
+		b.lorder = machine_lorder;
 		b.minkeypage = DEFMINKEYPAGE;
 		b.prefix = __bt_defpfx;
 		b.psize = 0;
 	}
+
+	/* Check for the ubiquitous PDP-11. */
+	if (b.lorder != BIG_ENDIAN && b.lorder != LITTLE_ENDIAN)
+		goto einval;
 
 	/* Allocate and initialize DB and BTREE structures. */
 	if ((t = malloc(sizeof(BTREE))) == NULL)
@@ -161,15 +165,19 @@ __bt_open(fname, flags, mode, openinfo)
 	t->bt_sp = t->bt_maxstack = 0;
 	t->bt_kbuf = t->bt_dbuf = NULL;
 	t->bt_kbufsz = t->bt_dbufsz = 0;
+	t->bt_lorder = b.lorder;
 	t->bt_order = NOT;
 	t->bt_cmp = b.compare;
 	t->bt_pfx = b.prefix;
 	t->bt_flags = 0;
+	if (t->bt_lorder != machine_lorder)
+		SET(t, B_NEEDSWAP);
 
 	dbp->type = DB_BTREE;
 	dbp->internal = t;
 	dbp->close = __bt_close;
 	dbp->del = __bt_delete;
+	dbp->fd = __bt_fd;
 	dbp->get = __bt_get;
 	dbp->put = __bt_put;
 	dbp->seq = __bt_seq;
@@ -182,7 +190,7 @@ __bt_open(fname, flags, mode, openinfo)
 	if (fname) {
 		switch(flags & O_ACCMODE) {
 		case O_RDONLY:
-			SET(t, BTF_RDONLY);
+			SET(t, B_RDONLY);
 			break;
 		case O_RDWR:
 			break;
@@ -200,7 +208,7 @@ __bt_open(fname, flags, mode, openinfo)
 			goto einval;
 		if ((t->bt_fd = tmp()) == -1)
 			goto err;
-		SET(t, BTF_INMEM);
+		SET(t, B_INMEM);
 	}
 
 	if (fcntl(t->bt_fd, F_SETFD, 1) == -1)
@@ -218,14 +226,15 @@ __bt_open(fname, flags, mode, openinfo)
 		/*
 		 * Read in the meta-data.  This can change the notion of what
 		 * the lorder, page size and flags are, and, when the page size
-		 * changes the cachesize value can change as well.
-		 *
-		 * Lorder is always stored in host-independent format.
+		 * changes, the cachesize value can change too.  If the user
+		 * specified the wrong byte order for an existing database, we
+		 * don't bother to return an error, we just clear the NEEDSWAP
+		 * bit.
 		 */
-		m.m_lorder = ntohl(m.m_lorder);
-		if (m.m_lorder != BIG_ENDIAN && m.m_lorder != LITTLE_ENDIAN)
-			goto eftype;
-		if (m.m_lorder != BYTE_ORDER) {
+		if (m.m_magic == BTREEMAGIC)
+			CLR(t, B_NEEDSWAP);
+		else {
+			SET(t, B_NEEDSWAP);
 			BLSWAP(m.m_magic);
 			BLSWAP(m.m_version);
 			BLSWAP(m.m_psize);
@@ -235,7 +244,7 @@ __bt_open(fname, flags, mode, openinfo)
 		}
 		if (m.m_magic != BTREEMAGIC || m.m_version != BTREEVERSION)
 			goto eftype;
-		if (m.m_psize < MINPSIZE || m.m_psize > MAX_PAGE_OFFSET ||
+		if (m.m_psize < MINPSIZE || m.m_psize > MAX_PAGE_OFFSET + 1 ||
 		    m.m_psize & sizeof(indx_t) - 1)
 			goto eftype;
 		if (m.m_flags & ~SAVEMETA)
@@ -243,7 +252,6 @@ __bt_open(fname, flags, mode, openinfo)
 		b.psize = m.m_psize;
 		t->bt_flags |= m.m_flags;
 		t->bt_free = m.m_free;
-		t->bt_lorder = m.m_lorder;
 		t->bt_nrecs = m.m_nrecs;
 	} else {
 		/*
@@ -254,15 +262,17 @@ __bt_open(fname, flags, mode, openinfo)
 			b.psize = sb.st_blksize;
 			if (b.psize < MINPSIZE)
 				b.psize = MINPSIZE;
-			if (b.psize > MAX_PAGE_OFFSET)
-				b.psize = MAX_PAGE_OFFSET;
+			if (b.psize > MAX_PAGE_OFFSET + 1)
+				b.psize = MAX_PAGE_OFFSET + 1;
 		}
+
+		/* Set flag if duplicates permitted. */
 		if (!(b.flags & R_DUP))
-			SET(t, BTF_NODUPS);
+			SET(t, B_NODUPS);
+
 		t->bt_free = P_INVALID;
-		t->bt_lorder = b.lorder;
 		t->bt_nrecs = 0;
-		SET(t, BTF_METADIRTY);
+		SET(t, B_METADIRTY);
 	}
 
 	t->bt_psize = b.psize;
@@ -297,7 +307,7 @@ __bt_open(fname, flags, mode, openinfo)
 	if ((t->bt_mp =
 	    mpool_open(NULL, t->bt_fd, t->bt_psize, ncache)) == NULL)
 		goto err;
-	if (!ISSET(t, BTF_INMEM))
+	if (!ISSET(t, B_INMEM))
 		mpool_filter(t->bt_mp, __bt_pgin, __bt_pgout, t);
 
 	/* Create a root page if new tree. */
@@ -382,4 +392,37 @@ tmp()
 		(void)unlink(path);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);
+}
+
+static int
+byteorder()
+{
+	u_long x;			/* XXX: 32-bit assumption. */
+	u_char *p;
+
+	x = 0x01020304;
+	p = (u_char *)&x;
+	switch (*p) {
+	case 1:
+		return (BIG_ENDIAN);
+	case 4:
+		return (LITTLE_ENDIAN);
+	default:
+		return (0);
+	}
+}
+
+int
+__bt_fd(dbp)
+        const DB *dbp;
+{
+	BTREE *t;
+
+	t = dbp->internal;
+
+	if (ISSET(t, B_INMEM)) {
+		errno = ENOENT;
+		return (-1);
+	}
+	return (t->bt_fd);
 }

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_utils.c	5.10 (Berkeley) 2/16/93";
+static char sccsid[] = "@(#)bt_utils.c	5.11 (Berkeley) 5/1/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -169,7 +169,7 @@ __bt_cmp(t, k1, e)
 			return (RET_ERROR);
 		k2.data = t->bt_dbuf;
 	}
-	return((*t->bt_cmp)(k1, &k2));
+	return ((*t->bt_cmp)(k1, &k2));
 }
 
 /*
@@ -194,8 +194,8 @@ __bt_defcmp(a, b)
 	len = MIN(a->size, b->size);
 	for (p1 = a->data, p2 = b->data; len--; ++p1, ++p2)
 		if (diff = *p1 - *p2)
-			return(diff);
-	return(a->size - b->size);
+			return (diff);
+	return (a->size - b->size);
 }
 
 /*
@@ -220,7 +220,7 @@ __bt_defpfx(a, b)
 	len = MIN(a->size, b->size);
 	for (p1 = a->data, p2 = b->data; len--; ++p1, ++p2, ++cnt)
 		if (*p1 != *p2)
-			return(cnt);
+			return (cnt);
 
 	/* a->size must be <= b->size, or they wouldn't be in this order. */
 	return (a->size < b->size ? a->size + 1 : a->size);

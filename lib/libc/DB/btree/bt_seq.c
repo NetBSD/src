@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_seq.c	5.9 (Berkeley) 2/14/93";
+static char sccsid[] = "@(#)bt_seq.c	5.10 (Berkeley) 5/16/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ __bt_seq(dbp, key, data, flags)
 	switch(flags) {
 	case R_NEXT:
 	case R_PREV:
-		if (ISSET(t, BTF_SEQINIT)) {
+		if (ISSET(t, B_SEQINIT)) {
 			status = bt_seqadv(t, &e, flags);
 			break;
 		}
@@ -117,7 +117,7 @@ __bt_seq(dbp, key, data, flags)
 		t->bt_bcursor.pgno = e.page->pgno;
 		t->bt_bcursor.index = e.index;
 		mpool_put(t->bt_mp, e.page, 0);
-		SET(t, BTF_SEQINIT);
+		SET(t, B_SEQINIT);
 	}
 	return (status);
 }
@@ -154,7 +154,7 @@ bt_seqset(t, ep, key, flags)
 	 * the cursor pointed to it.  Since going to a specific key, should
 	 * delete any logically deleted records so they aren't found.
 	 */
-	if (ISSET(t, BTF_DELCRSR) && __bt_crsrdel(t, &t->bt_bcursor))
+	if (ISSET(t, B_DELCRSR) && __bt_crsrdel(t, &t->bt_bcursor))
 		return (RET_ERROR);
 
 	/*
@@ -280,7 +280,7 @@ bt_seqadv(t, e, flags)
 
 	/* Save the current cursor if going to delete it. */
 	c = &t->bt_bcursor;
-	if (ISSET(t, BTF_DELCRSR))
+	if (ISSET(t, B_DELCRSR))
 		delc = *c;
 
 	if ((h = mpool_get(t->bt_mp, c->pgno, 0)) == NULL)
@@ -329,8 +329,8 @@ bt_seqadv(t, e, flags)
 	 * down by one if the record we're deleting is on the same page and has
 	 * a larger index.
 	 */
-	if (ISSET(t, BTF_DELCRSR)) {
-		CLR(t, BTF_DELCRSR);			/* Don't try twice. */
+	if (ISSET(t, B_DELCRSR)) {
+		CLR(t, B_DELCRSR);			/* Don't try twice. */
 		if (c->pgno == delc.pgno && c->index > delc.index)
 			--c->index;
 		if (__bt_crsrdel(t, &delc))
@@ -356,7 +356,7 @@ __bt_crsrdel(t, c)
 	PAGE *h;
 	int status;
 
-	CLR(t, BTF_DELCRSR);			/* Don't try twice. */
+	CLR(t, B_DELCRSR);			/* Don't try twice. */
 	if ((h = mpool_get(t->bt_mp, c->pgno, 0)) == NULL)
 		return (RET_ERROR);
 	status = __bt_dleaf(t, h, c->index);

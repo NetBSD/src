@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)recno.3	5.5 (Berkeley) 12/4/92
+.\"	@(#)recno.3	5.6 (Berkeley) 5/16/93
 .\"
-.TH RECNO 3 "December 4, 1992"
+.TH RECNO 3 "May 16, 1993"
 .UC 7
 .SH NAME
 recno \- record number database access method
@@ -70,11 +70,15 @@ u_char bval;
 .br
 u_int cachesize;
 .br
+index_t psize;
+.br
 u_long flags;
 .br
 int lorder;
 .br
 size_t reclen;
+.br
+char *bfname;
 .RE
 } RECNOINFO;
 .PP
@@ -93,6 +97,20 @@ A suggested maximum size, in bytes, of the memory cache.
 This value is
 .B only
 advisory, and the access method will allocate more memory rather than fail.
+.TP
+psize
+The recno access method stores the in-memory copies of its records
+in a btree.
+This value is the size (in bytes) of the pages used for nodes in that tree.
+See
+.IR btree (3)
+for more information.
+.TP
+bfname
+The recno access method stores the in-memory copies of its records
+in a btree.
+If bfname is non-NULL, it specifies the name of the btree file,
+as if specified as the file name for a dbopen of a btree file.
 .TP
 flags
 The flag value is specified by
