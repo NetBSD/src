@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.163 2000/06/16 03:47:24 thorpej Exp $
+#	$NetBSD: files.i386,v 1.163.2.1 2000/08/10 23:07:45 soda Exp $
 #
 # new style config file for i386 architecture
 #
@@ -38,8 +38,10 @@ defopt	opt_xserver.h XSERVER XSERVER_DDB
 defopt	COMPAT_OLDBOOT
 
 # PCI BIOS options
-defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE PCIBIOS_INTR_FIXUP
-	PCIINTR_DEBUG PCIBIOS_BUS_FIXUP PCIBIOS_ADDR_FIXUP
+defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE
+	PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
+	PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
+	PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
