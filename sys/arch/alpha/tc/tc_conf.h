@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_conf.h,v 1.2 1996/07/14 04:06:30 cgd Exp $	*/
+/*	$NetBSD: tc_conf.h,v 1.3 1996/11/15 23:59:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -41,8 +41,10 @@ extern void	tc_3000_500_intr_disestablish __P((struct device *, void *));
 
 extern int	tc_3000_500_nslots;
 extern struct tc_slotdesc tc_3000_500_slots[];
-extern int	tc_3000_500_nbuiltins;
-extern struct tc_builtin tc_3000_500_builtins[];
+extern int	tc_3000_500_graphics_nbuiltins;
+extern struct tc_builtin tc_3000_500_graphics_builtins[];
+extern int	tc_3000_500_nographics_nbuiltins;
+extern struct tc_builtin tc_3000_500_nographics_builtins[];
 #endif /* DEC_3000_500 */
 
 #ifdef DEC_3000_300
