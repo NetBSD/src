@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/07/18 16:18:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2003/08/04 04:20:25 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SUBDIR+= libskey
 .endif
 
 .if ${MKCRYPTO} != "no"
-SUBDIR+= libcrypto 
+SUBDIR+= libcrypto libdes
 .endif
 
 .include <bsd.subdir.mk>
