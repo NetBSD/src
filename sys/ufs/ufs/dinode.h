@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.8 1998/03/01 02:23:36 fvdl Exp $	*/
+/*	$NetBSD: dinode.h,v 1.9 1998/10/23 00:28:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -123,3 +123,6 @@ struct dinode {
 #define	IFLNK		0120000		/* Symbolic link. */
 #define	IFSOCK		0140000		/* UNIX domain socket. */
 #define	IFWHT		0160000		/* Whiteout. */
+
+/* Size of the on-disk inode. */
+#define	DINODE_SIZE	(sizeof(struct dinode))		/* 128 */
