@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.33 1997/05/19 14:41:54 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.34 1997/05/19 22:08:56 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -336,7 +336,8 @@ vndstrategy(bp)
 			nbp->vb_buf.b_dirtyoff =
 			    max(0, bp->b_dirtyoff - (bp->b_bcount - resid));
 			nbp->vb_buf.b_dirtyend =
-			    min(sz, bp->b_dirtyend - (bp->b_bcount - resid));
+			    min(sz,
+				max(0, bp->b_dirtyend - (bp->b_bcount-resid)));
 		}
 		if (bp->b_validend == 0) {
 			nbp->vb_buf.b_validoff = 0;
@@ -345,7 +346,8 @@ vndstrategy(bp)
 			nbp->vb_buf.b_validoff =
 			    max(0, bp->b_validoff - (bp->b_bcount - resid));
 			nbp->vb_buf.b_validend =
-			    min(sz, bp->b_validend - (bp->b_bcount - resid));
+			    min(sz,
+				max(0, bp->b_validend - (bp->b_bcount-resid)));
 		}
 
 		/* save a reference to the old buffer */
