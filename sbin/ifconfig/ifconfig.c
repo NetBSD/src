@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.89 2000/09/27 23:00:24 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.90 2000/10/02 22:30:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.89 2000/09/27 23:00:24 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.90 2000/10/02 22:30:40 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1939,14 +1939,28 @@ tunnel_status()
 		dstcmd = SIOCGIFPDSTADDR_IN6;
 		ifrp = (struct ifreq *)&in6_ifr;
 	}
+ try_again:
 #else /* INET6 */
 	srccmd = SIOCGIFPSRCADDR;
 	dstcmd = SIOCGIFPDSTADDR;
 	ifrp = &ifr;
 #endif /* INET6 */
 
-	if (ioctl(s, srccmd, (caddr_t)ifrp) < 0)
+	if (ioctl(s, srccmd, (caddr_t)ifrp) < 0) {
+#ifdef INET6
+		if (srccmd == SIOCGIFPSRCADDR_IN6) {
+			/*
+			 * Driver probably doesn't support IPv6
+			 * src/dst addrs.  Use the sockaddr versions.
+			 */
+			srccmd = SIOCGIFPSRCADDR;
+			dstcmd = SIOCGIFPDSTADDR;
+			ifrp = &ifr;
+			goto try_again;
+		}
+#endif
 		return;
+	}
 #ifdef INET6
 	if (ifrp->ifr_addr.sa_family == AF_INET6)
 		in6_fillscopeid((struct sockaddr_in6 *)&ifrp->ifr_addr);
