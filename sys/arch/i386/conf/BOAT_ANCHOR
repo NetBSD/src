@@ -12,6 +12,8 @@ options		KERNFS,FDESC,PCFS
 options		KTRACE
 options		DDB
 
+options		ACCOUNTING
+
 config		netbsd	root on wd0 swap on wd0
 
 controller	isa0

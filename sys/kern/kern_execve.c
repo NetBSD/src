@@ -76,6 +76,7 @@
 #include "wait.h"
 #include "mman.h"
 #include "malloc.h"
+#include "acct.h"
 
 #include "vm/vm.h"
 #include "vm/vm_param.h"
@@ -489,10 +490,13 @@ dont_bother:
 	fdcloseexec(p);
 	execsigs(p);
 
-	/* name this process - nameiexec(p, ndp) */
+	/* name this process - nameiexec(p, ndp), and set up
+	 * other accounting information
+	 */
 	len = MIN(ndp->ni_namelen,MAXCOMLEN);
 	bcopy(ndp->ni_ptr, p->p_comm, len);
 	p->p_comm[len] = 0;
+	p->p_acflag &= ~AFORK;
 	
 	/* mark as executable, wakeup any process that was vforked and tell
 	 * it that it now has it's own resources back */
