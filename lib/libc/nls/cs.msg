@@ -167,6 +167,8 @@ $ ENOMSG
 83 Neexistuje zpráva ¾ádaného typu
 $ EOVERFLOW
 84 Hodnota je pro daný datový typ pøíli¹ velká
+$ EILSEQ
+85 Neplatná posloupnost bajtù
 $set 2
 $ SIGHUP
 1 Terminál odpojen
