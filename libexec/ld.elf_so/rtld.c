@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.73 2002/09/24 17:51:11 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.74 2002/09/24 18:23:14 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -266,7 +266,6 @@ _rtld(sp, relocbase)
 	     &sp[3], (char *) sp[3]));
 	dbg(("got is at %p, dynamic is at %p",
 	    _GLOBAL_OFFSET_TABLE_, &_DYNAMIC));
-	debug = 1;
 	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
@@ -335,10 +334,6 @@ _rtld(sp, relocbase)
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
 	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase);
 
-#ifdef RTLD_DEBUG
-	dbg(("_ctype_ is %p", _ctype_));
-#endif
-
 	__progname = _rtld_objself.path;
 	environ = env;
 
@@ -355,8 +350,6 @@ _rtld(sp, relocbase)
 		const char     *ld_debug = getenv("LD_DEBUG");
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
-		else
-			debug = 0;
 #endif
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	}
