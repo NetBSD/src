@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.20 1997/02/15 10:02:28 mikel Exp $
+#	$NetBSD: services,v 1.21 1997/02/25 07:37:20 mikel Exp $
 #
 # Network services, Internet style
 #
@@ -8,7 +8,7 @@
 # Updated from RFC 1340, ``Assigned Numbers'' (July 1992).  Not all ports
 # are included, only the more common ones.
 #
-#	from: @(#)services	8.1 (Berkeley) 6/9/93
+#	from: @(#)services	8.2 (Berkeley) 3/26/95
 #
 tcpmux		1/tcp		# TCP port multiplexer (RFC1078)
 echo		7/tcp
