@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.604 2003/03/16 11:50:27 jdolecek Exp $
+#	$NetBSD: files,v 1.605 2003/04/06 09:48:41 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -384,6 +384,10 @@ device	lfmiop { port=-1 }
 device	lfmport: scsi
 attach	lfmport at lfmiop
 file	dev/ic/lfmiop.c			lfmiop
+
+# Symbios/NCR 53c700 SCSI controllers
+device	oosiop: scsi
+file	dev/ic/oosiop.c			oosiop
 
 # Symbios/NCR 53c710 SCSI controllers
 #

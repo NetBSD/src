@@ -1,9 +1,7 @@
-;	$NetBSD: oosiop.ss,v 1.1 2001/12/05 18:27:13 fredette Exp $
+;	$NetBSD: oosiop.ss,v 1.2 2003/04/06 09:48:42 tsutsui Exp $
 
 ;
-; Copyright (c) 2001 Matt Fredette
-; Copyright (c) 1995 Michael L. Hitch
-; All rights reserved.
+; Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -13,11 +11,8 @@
 ; 2. Redistributions in binary form must reproduce the above copyright
 ;    notice, this list of conditions and the following disclaimer in the
 ;    documentation and/or other materials provided with the distribution.
-; 3. All advertising materials mentioning features or use of this software
-;    must display the following acknowledgement:
-;      This product includes software developed by Michael L. Hitch.
-; 4. The name of the author may not be used to endorse or promote products
-;    derived from this software without specific prior written permission
+; 3. The name of the author may not be used to endorse or promote products
+;    derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 ; IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,211 +28,123 @@
 
 ; NCR 53c700 script
 ;
+
 ARCH 700
-;
-EXTERNAL ds_Device
-EXTERNAL ds_MsgOut
-EXTERNAL ds_Cmd
-EXTERNAL ds_Status
-EXTERNAL ds_Msg
-EXTERNAL ds_MsgIn
-EXTERNAL ds_ExtMsg
-EXTERNAL ds_SyncMsg
-EXTERNAL ds_Data1
+
+; interrupt codes
+ABSOLUTE int_done	= 0xbeef0000
+ABSOLUTE int_msgin	= 0xbeef0001
+ABSOLUTE int_extmsg	= 0xbeef0002
+ABSOLUTE int_resel	= 0xbeef0003
+ABSOLUTE int_res_id	= 0xbeef0004
+ABSOLUTE int_resfail	= 0xbeef0005
+ABSOLUTE int_disc	= 0xbeef0006
+ABSOLUTE int_err 	= 0xdeadbeef
+
+; patch entries
+ENTRY p_resel_msgin_move
+ENTRY p_select
+ENTRY p_datain_jump
+ENTRY p_dataout_jump
+ENTRY p_msgin_move
+ENTRY p_msgout_move
+ENTRY p_cmdout_move
+ENTRY p_status_move
+ENTRY p_extmsglen_move
+ENTRY p_extmsgin_move
 
 
-ABSOLUTE ok		= 0xff00
-ABSOLUTE int_disc	= 0xff01
-ABSOLUTE int_disc_wodp	= 0xff02
-ABSOLUTE int_reconnect	= 0xff03
-ABSOLUTE int_connect	= 0xff04
-ABSOLUTE int_phase	= 0xff05
-ABSOLUTE int_msgin	= 0xff06
-ABSOLUTE int_extmsg	= 0xff07
-ABSOLUTE int_msgsdp	= 0xff08
-ABSOLUTE int_identify	= 0xff09
-ABSOLUTE int_status	= 0xff0a
-ABSOLUTE int_syncmsg	= 0xff0b
+PROC  oosiop_script:
 
-ENTRY	scripts
-ENTRY	switch
-ENTRY	wait_reselect
-ENTRY	dataout
-ENTRY	datain
-ENTRY	clear_ack
+ENTRY wait_reselect
+wait_reselect:
+	WAIT RESELECT REL(reselect_fail)
+	INT int_resel
+reselect_fail:
+	INT int_resfail
 
-PROC	oosiop_script:
+ENTRY wait_resel_identify
+wait_resel_identify:
+	INT int_err, WHEN NOT MSG_IN
+p_resel_msgin_move:
+	MOVE 0, 0, WHEN MSG_IN
+	INT int_res_id
 
-scripts:
+ENTRY start_select
+start_select:
+p_select:
+	SELECT ATN 0, REL(wait_reselect)
 
-	SELECT ATN ds_Device, reselect
-;
-switch:
-	JUMP msgin, WHEN MSG_IN
-	JUMP msgout, IF MSG_OUT
-	JUMP command_phase, IF CMD
-	JUMP dataout, IF DATA_OUT
-	JUMP datain, IF DATA_IN
-	JUMP end, IF STATUS
-
-	INT int_phase			; Unrecognized phase
+ENTRY phasedispatch
+phasedispatch:
+	JUMP REL(msgin), WHEN MSG_IN
+	JUMP REL(msgout), WHEN MSG_OUT
+	JUMP REL(status), WHEN STATUS
+	JUMP REL(cmdout), WHEN CMD
+p_datain_jump:
+	JUMP 0, WHEN DATA_IN
+p_dataout_jump:
+	JUMP 0, WHEN DATA_OUT
+	INT int_err
 
 msgin:
-	MOVE 0, ds_MsgIn, WHEN MSG_IN
-	JUMP ext_msg, IF 0x01		; extended message
-	JUMP disc, IF 0x04		; disconnect message
-	JUMP msg_sdp, IF 0x02		; save data pointers
-	JUMP msg_rej, IF 0x07		; message reject
-	JUMP msg_rdp, IF 0x03		; restore data pointers
-	INT int_msgin			; unrecognized message
-
-msg_rej:
-; Do we need to interrupt host here to let it handle the reject?
-msg_rdp:
-clear_ack:
-	CLEAR ACK
 	CLEAR ATN
-	JUMP switch
+p_msgin_move:
+	MOVE 0, 0, WHEN MSG_IN
+	JUMP REL(complete), IF 0x00
+	JUMP REL(extmsgsetup), IF 0x01
+	JUMP REL(disconnect), IF 0x04
+	INT int_msgin
 
-ext_msg:
+ENTRY ack_msgin
+ack_msgin:
 	CLEAR ACK
-	MOVE 0, ds_ExtMsg, WHEN MSG_IN
-	JUMP sync_msg, IF 0x03
-	int int_extmsg			; extended message not SDTR
+	JUMP REL(phasedispatch)
 
-sync_msg:
-	CLEAR ACK
-	MOVE 0, ds_SyncMsg, WHEN MSG_IN
-	int int_syncmsg			; Let host handle the message
-; If we continue from the interrupt, the host has set up a response
-; message to be sent.  Set ATN, clear ACK, and continue.
+ENTRY sendmsg
+sendmsg:
 	SET ATN
 	CLEAR ACK
-	JUMP switch
-
-disc:
-	CLEAR ACK
-	WAIT DISCONNECT
-
-	int int_disc_wodp		; signal disconnect w/o save DP
-
-msg_sdp:
-	CLEAR ACK			; acknowledge message
-	JUMP switch, WHEN NOT MSG_IN
-	MOVE 0, ds_ExtMsg, WHEN MSG_IN
-	INT int_msgsdp, IF NOT 0x04	; interrupt if not disconnect
-	CLEAR ACK
-	WAIT DISCONNECT
-
-	INT int_disc			; signal disconnect
-
-reselect:
-wait_reselect:
-	WAIT RESELECT select_adr
-	; NB: these NOPs are CRITICAL to preserve the 1:1
-	; correspondence between instructions in this script
-	; and instructions in the osiop (53c710) script:
-	NOP
-	NOP				; reselect ID already in SFBR
-
-	INT int_identify, WHEN NOT MSG_IN
-	MOVE 0, ds_Msg, WHEN MSG_IN
-	INT int_reconnect		; let host know about reconnect
-	CLEAR ACK			; acknowlege the message
-	JUMP switch
-
-select_adr:
-	MOVE SCNTL1 & 0x10 to SFBR	; get connected status
-	INT int_connect, IF 0x00	; tell host if not connected
-	NOP				; Sig_P doesn't exist on the 53c700
-	JUMP wait_reselect		; and try reselect again
-
 msgout:
-	MOVE 0, ds_MsgOut, WHEN MSG_OUT
-	JUMP switch
-
-command_phase:
+p_msgout_move:
+	MOVE 0, 0, WHEN MSG_OUT
 	CLEAR ATN
-	MOVE 0, ds_Cmd, WHEN CMD
-	JUMP switch
+	JUMP REL(phasedispatch)
 
-dataout:
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch, WHEN NOT DATA_OUT
-	MOVE 0, ds_Data1, WHEN DATA_OUT
-	CALL switch
+cmdout:
+	CLEAR ATN
+p_cmdout_move:
+	MOVE 0, 0, WHEN CMD
+	JUMP REL(phasedispatch)
 
-datain:
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch, WHEN NOT DATA_IN
-	MOVE 0, ds_Data1, WHEN DATA_IN
-	CALL switch
+status:
+p_status_move:
+	MOVE 0, 0, WHEN STATUS
+	JUMP REL(phasedispatch)
 
-end:
-	MOVE 0, ds_Status, WHEN STATUS
-	int int_status, WHEN NOT MSG_IN	; status not followed by msg
-	MOVE 0, ds_Msg, WHEN MSG_IN
+disconnect:
 	CLEAR ACK
 	WAIT DISCONNECT
-	INT ok				; signal completion
-	JUMP wait_reselect
+	INT int_disc
+
+complete:
+	CLEAR ACK
+	WAIT DISCONNECT
+	INT int_done
+
+; receive extended message length
+extmsgsetup:
+	CLEAR ACK
+	INT int_err, IF NOT MSG_IN
+p_extmsglen_move:
+	MOVE 0, 0, WHEN MSG_IN
+	INT int_extmsg
+
+; receive extended message
+ENTRY rcv_extmsg
+rcv_extmsg:
+	CLEAR ACK
+	INT int_err, IF NOT MSG_IN
+p_extmsgin_move:
+	MOVE 0, 0, WHEN MSG_IN
+	INT int_msgin
