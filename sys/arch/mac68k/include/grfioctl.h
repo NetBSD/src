@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.2 1994/10/26 08:46:32 cgd Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.3 1995/04/29 20:23:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,43 @@
  *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
  */
 
+struct grfmode {
+	u_int8_t	mode_id;	/* Identifier for mode. */
+	caddr_t		fbbase;		/* Base of frame buffer */
+	u_int32_t	fbsize;		/* Size of frame buffer */
+	u_int16_t	rowbytes;	/* Screen rowbytes */
+	u_int16_t	width;		/* Screen width */
+	u_int16_t	height;		/* Screen height */
+	u_int16_t	hres;		/* Horizontal resolution (dpi) */
+	u_int16_t	vres;		/* Vertical resolution (dpi) */
+	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct */
+	u_int16_t	psize;		/* Screen depth */
+};
+
+struct grfmodes {
+	int		nmodes;		/* Number of modes in modelist */
+	struct grfmode	*modelist;	/* Pointer to space for modes */
+};
+
+/*
+ * BSD ioctls (first few match HP/UX ioctl()s.  In case we want
+ * compatibility later, start our own at 16).
+ */
+#define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
+#define	GRFIOCON	_IO('G', 1)		/* turn graphics on */
+#define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
+#define GRFIOCMAP	_IOWR('G', 5, int)	/* map in regs+framebuffer */
+#define GRFIOCUNMAP	_IOW('G', 6, int)	/* unmap regs+framebuffer */
+
+#define GRFIOCLISTMODES	_IOWR('G', 16, struct grfmodes) /* Get list of modes */
+#define GRFIOCGETMODE	_IOR('G', 17, int)	/* Get list of modes */
+#define GRFIOCSETMODE	_IOW('G', 18, int)	/* Set to mode_id mode */
+
+/*
+ * Obsolete structure.
+ * Only used to return information to older programs that still
+ * depend on GRFIOCGINFO.
+ */
 struct	grfinfo {
 	int	gd_id;			/* HPUX identifier */
 	caddr_t	gd_regaddr;		/* control registers physaddr */
@@ -50,7 +87,6 @@ struct	grfinfo {
 	int	gd_fbsize;		/* frame buffer size */
 	short	gd_colors;		/* number of colors */
 	short	gd_planes;		/* number of planes */
-/* new stuff */
 	int	gd_fbwidth;		/* frame buffer width */
 	int	gd_fbheight;		/* frame buffer height */
 	int	gd_fbrowbytes;		/* frame buffer rowbytes */
@@ -59,50 +95,3 @@ struct	grfinfo {
 	int	gd_pad[6];		/* for future expansion */
 };
 
-/* types */
-#define GRFMAC	8
-
-/*
- * HPUX ioctls (here for the benefit of the driver)
- */
-struct	grf_slot {
-	int	slot;
-	u_char	*addr;
-};
-
-#ifndef _IOH
-#define _IOH(x,y)	(IOC_IN|((x)<<8)|y)	/* IOC_IN is IOC_VOID */
-
-#define	GCID		_IOR('G', 0, int)
-#define	GCON		_IOH('G', 1)
-#define	GCOFF		_IOH('G', 2)
-#define	GCAON		_IOH('G', 3)
-#define	GCAOFF		_IOH('G', 4)
-#define	GCMAP		_IOWR('G', 5, int)
-#define	GCUNMAP		_IOWR('G', 6, int)
-#define	GCLOCK		_IOH('G', 7)
-#define	GCUNLOCK	_IOH('G', 8)
-#define	GCLOCK_MINIMUM	_IOH('G', 9)
-#define	GCUNLOCK_MINIMUM _IOH('G', 10)
-#define	GCSTATIC_CMAP	_IOH('G', 11)
-#define	GCVARIABLE_CMAP _IOH('G', 12)
-#define GCSLOT		_IOWR('G', 13, struct grf_slot)
-
-/* XXX: for now */
-#define	IOMAPID		_IOR('M',0,int)	/* ??? */
-#define	IOMAPMAP	_IOWR('M',1,int)
-#define	IOMAPUNMAP	_IOWR('M',2,int)
-#endif
-
-/*
- * BSD ioctls
- */
-#define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
-#define	GRFIOCON	_IO('G', 1)		/* turn graphics on */
-#define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
-#define GRFIOCMAP	_IOWR('G', 5, int)	/* map in regs+framebuffer */
-#define GRFIOCUNMAP	_IOW('G', 6, int)	/* unmap regs+framebuffer */
-
-/* compat - for old grfinfo structure */
-struct ogrfinfo { char	oinfo[24]; };
-#define	OGRFIOCGINFO	_IOR('G', 0, struct ogrfinfo)
