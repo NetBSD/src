@@ -36,8 +36,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 12/2/92";*/
-static char rcsid[] = "$Id: process.c,v 1.5 1993/08/13 02:26:40 alm Exp $";
+static char sccsid[] = "@(#)process.c	5.10 (Berkeley) 12/2/92";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -316,6 +315,7 @@ substitute(cp)
 	SPACE tspace;
 	regex_t *re;
 	size_t re_off;
+	size_t re_eoff;
 	int n;
 	char *s;
 	char *eos;
@@ -340,14 +340,15 @@ substitute(cp)
 		do {
 			/* Locate start of replaced string. */
 			re_off = match[0].rm_so;
+			re_eoff = match[0].rm_eo;
 			/* Copy leading retained string. */
 			cspace(&SS, s, re_off, APPEND);
 			/* Add in regular expression. */
 			regsub(&SS, s, cp->u.s->new);
 			/* Move past this match. */
 			s += match[0].rm_eo;
-		} while(*s && re_off && regexec_e(re, s, REG_NOTBOL, 0));
-		if (eos - s > 0 && !re_off)
+		} while(*s && re_eoff && regexec_e(re, s, REG_NOTBOL, 0));
+		if (eos - s > 0 && !re_eoff)
 			err(FATAL, "infinite substitution loop");
 		/* Copy trailing retained string. */
 		cspace(&SS, s, strlen(s), APPEND);
@@ -570,7 +571,7 @@ cspace(sp, p, len, spflag)
 	 * NULL.
 	 */
 /*	tlen = sp->len + len + spflag == APPENDNL ? 2 : 1; */
-	tlen = sp->len + len + (spflag == APPENDNL ? 2 : 1); /* XXX */
+	tlen = sp->len + len + (spflag == APPENDNL ? 2 : 1);  /* XXX */
 	if (tlen > sp->blen) {
 		sp->blen = tlen + 1024;
 		sp->space = sp->back = xrealloc(sp->back, sp->blen);
