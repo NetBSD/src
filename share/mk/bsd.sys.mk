@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.62 2001/11/15 12:15:09 wiz Exp $
+#	$NetBSD: bsd.sys.mk,v 1.63 2001/11/17 22:48:48 thorpej Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -59,6 +59,7 @@ RPCGEN?=	rpcgen
 STRIP?=		strip
 MDSETIMAGE?=	mdsetimage
 MKLOCALE?=	mklocale
+MKDEP?=		mkdep
 MTREE?=		mtree
 
 .SUFFIXES:	.m .o .ln .lo
