@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.1.1.1 1997/01/14 20:57:02 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.2 1997/01/27 22:16:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
 #include <machine/obio.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 
 /*
@@ -88,11 +89,11 @@ idprom_init()
 
 	if (xorsum != 0) {
 		mon_printf("idprom_fetch: bad checksum=%d\n", xorsum);
-		mon_exit_to_mon();
+		sunmon_abort();
 	}
 	if (idp->idp_format < 1) {
 		mon_printf("idprom_fetch: bad version=%d\n", idp->idp_format);
-		mon_exit_to_mon();
+		sunmon_abort();
 	}
 
 	/*
