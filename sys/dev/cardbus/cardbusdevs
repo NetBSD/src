@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.19 2001/06/20 05:39:17 ichiro Exp $
+$NetBSD: cardbusdevs,v 1.20 2002/01/04 15:22:41 kanaoka Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -49,6 +49,7 @@ vendor REALTEK		0x10ec	Realtek Semiconductor
 vendor IODATA		0x10fc	IO Data
 vendor ACCTON		0x1113	Accton Technology
 vendor XIRCOM		0x115d	Xircom
+vendor DLINK		0x1186	D-Link Systems
 vendor COREGA		0x1259	Corega
 vendor ALLIEDTELESYN	0x1259	Allied Telesyn International
 vendor ABOCOM		0x13d1	AboCom Systems
@@ -99,6 +100,9 @@ product XIRCOM	X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM	X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
 product	XIRCOM	MODEM56		0x0103	56k Modem
+
+/* D-Link products */
+product DLINK	DFE_690TXD	0x1340	DFE-690TXD 10/100 Ethernet
 
 /* Corega products */
 product COREGA CB_TXD	0xa117	FEther CB-TXD 10/100 Ethernet
