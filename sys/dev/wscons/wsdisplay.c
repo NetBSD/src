@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.30 1999/10/12 16:47:41 jdolecek Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.31.2.2 1999/10/19 00:03:19 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.30 1999/10/12 16:47:41 jdolecek Exp $";
+    "$NetBSD: wsdisplay.c,v 1.31.2.2 1999/10/19 00:03:19 mycroft Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -890,6 +890,12 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 	unit = WSDISPLAYUNIT(dev);
 	sc = wsdisplay_cd.cd_devs[unit];
 
+#ifdef WSDISPLAY_COMPAT_USL
+	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, p);
+	if (error >= 0)
+		return (error);
+#endif
+
 	if (ISWSDISPLAYCTL(dev))
 		return (wsdisplay_cfg_ioctl(sc, cmd, data, flag, p));
 
@@ -912,7 +918,7 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 	}
 
 #ifdef WSDISPLAY_COMPAT_USL
-	error = wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p);
+	error = wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 #endif
