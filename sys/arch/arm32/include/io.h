@@ -1,4 +1,4 @@
-/* $NetBSD: io.h,v 1.3 1996/03/28 21:28:21 mark Exp $ */
+/* $NetBSD: io.h,v 1.4 1996/05/16 17:45:10 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -71,8 +71,6 @@
 
 #define PARALLEL_CONTROLLER_BASE	0xf62109e0
 
-#define IO_MOUSE_BUTTONS		0xf6010000
-
 #ifdef RC7500
 
 #define IDE_CONTROLLER_BASE2		0xf622B000
@@ -112,9 +110,5 @@
 
 #define NETSLOT_BASE		0xf622b000
 #define MAX_NETSLOTS		1
-
-#define MOUSE_BUTTON_RIGHT	0x10
-#define MOUSE_BUTTON_MIDDLE	0x20
-#define MOUSE_BUTTON_LEFT	0x40
 
 /* End of io.h */
