@@ -1,4 +1,4 @@
-#	$NetBSD: rc.lkm,v 1.6 2000/09/10 16:50:05 jdolecek Exp $
+#	$NetBSD: rc.lkm,v 1.7 2000/10/07 07:36:56 lukem Exp $
 #
 # this script loads or unloads LKMs (loadable kernel modules).
 
@@ -85,7 +85,7 @@ if [ -s /etc/lkm.conf ]; then
 				flags="-A $booted_kernel $flags"
 			fi
 
-			echo -n "`basename $path .o`: "
+			echo -n "${path##*/}: "
 			modload $flags $path
 			rm -f /tmp/lkm.$$
 		done) < /etc/lkm.conf
