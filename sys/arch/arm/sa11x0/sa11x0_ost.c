@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.5 2002/01/08 11:21:02 rjs Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.6 2002/01/08 11:40:56 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -235,21 +235,22 @@ cpu_initclocks()
 
 	printf("clock: hz=%d stathz = %d\n", hz, stathz);
 
-	/* Zero the counter value */
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
-
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
 	saost_sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
 
+	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
+	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
+
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_SR, 0xf);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 3);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
 			  saost_sc->sc_clock_count);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
 			  saost_sc->sc_statclock_count);
 
-	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
-	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
+	/* Zero the counter value */
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
 }
 
 int
