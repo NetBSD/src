@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 1998/09/22 02:48:45 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.18 1998/10/08 02:31:41 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,6 +52,7 @@
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_sparc32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +542,7 @@ trap(type, tstate, pc, tf)
 	cnt.v_trap++;
 #endif
 #ifdef DEBUG
-	if ((trapdebug & TDB_TL) && tl()) {
+	if ((trapdebug&(TDB_FOLLOW|TDB_TRAP)) || ((trapdebug & TDB_TL) && tl())) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
 		printf("trap: type 0x%x: lvl=%d pc=%lx &tf=%lx",
@@ -1855,7 +1856,7 @@ syscall(code, tf, pc)
 #ifdef DEBUG
 /*	printf("code=%x, nsys=%x\n", code, nsys);*/
 	if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-		printf("%d syscall(%x): tstate=%x:%x %s\n", curproc?curproc->p_pid:-1, code,
+		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", curproc?curproc->p_pid:-1, code, code,
 		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
 		       (code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code]);
 	p->p_addr->u_pcb.lastcall = ((code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code]);
@@ -1932,18 +1933,15 @@ syscall(code, tf, pc)
 		register32_t *argp;
 		/* 32-bit stack */
 		callp += code;
-#ifdef _LP64
+
+#if defined(_LP64) && COMPAT_SPARC32 != 1
 #ifdef DEBUG
 		printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
 		Debugger();
 #endif
 #endif
 
-#if 1
 		i = (long)callp->sy_argsize / sizeof(register32_t);
-#else
-		i = callp->sy_narg; /* Why divide? */
-#endif
 		if (i > nap) {	/* usually false */
 			register32_t temp[6];
 			int j = 0;

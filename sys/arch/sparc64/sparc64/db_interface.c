@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 1998/09/22 02:48:43 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.10 1998/10/08 02:31:40 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -258,6 +258,7 @@ db_read_bytes(addr, size, data)
 {
 	register char	*src;
 
+	addr = addr & 0x0ffffffffL; /* XXXXX */
 	src = (char *)addr;
 	while (size-- > 0) {
 		if (src >= (char *)VM_MIN_KERNEL_ADDRESS)
@@ -544,11 +545,14 @@ db_proc_cmd(addr, have_addr, count, modif)
 		  p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap, 
 		  p->p_vmspace->vm_map.pmap->pm_ctx,
 		  p->p_wchan, p->p_priority, p->p_usrpri);
-	db_printf("thread @ %p = %p tf:%p\n", &p->p_thread, p->p_thread,
+	db_printf("thread @ %p = %p tf:%p ", &p->p_thread, p->p_thread,
 		  p->p_md.md_tf);
 	db_printf("maxsaddr:%p ssiz:%dpg or %pB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  ctob(p->p_vmspace->vm_ssize));
+	db_printf("profile timer: %ld sec %ld usec\n",
+		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
+		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
 	return;
 }
 

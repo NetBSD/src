@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 1998/09/22 02:48:44 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.7 1998/10/08 02:31:40 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -172,8 +172,11 @@ u_int64_t frame;
 			db_printf("%llx %llx %llx %llx ",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
 			db_printf("%llx %llx %llxsp %llxpc=",
-				  f->fr_arg[0], f->fr_arg[1], f->fr_fp, f->fr_pc);
+				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
+#if 0
+			/* Sometimes this don't work.  Dunno why. */
 			db_printsym(f->fr_pc, DB_STGY_PROC);
+#endif
 			db_printf("\n");
 		} else {
 			struct frame64 fr;
@@ -187,7 +190,7 @@ u_int64_t frame;
 			db_printf("%llx %llx %llx %llx ",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
 			db_printf("%llx %llx %llxsp %llxpc=",
-				  f->fr_arg[0], f->fr_arg[1], f->fr_fp, f->fr_pc);
+				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
 			db_printf("\n");	 
 		}
 	} else {
@@ -200,7 +203,7 @@ u_int64_t frame;
 				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc:",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[0], f->fr_arg[1], f->fr_fp, f->fr_pc);
+				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
 			db_printsym(f->fr_pc, DB_STGY_PROC);
 			db_printf("\n");
 		} else {
@@ -216,7 +219,7 @@ u_int64_t frame;
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc\n",
 				  f->fr_arg[0], f->fr_arg[1], 
 				  f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[0], f->fr_arg[1], 
+				  f->fr_arg[4], f->fr_arg[5], 
 				  f->fr_fp, f->fr_pc);
 		}
 	}
