@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 5/31/93
-#	$Id: Makefile,v 1.7 1994/12/18 11:42:39 cgd Exp $
+#	$Id: Makefile,v 1.8 1994/12/22 09:23:05 cgd Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -16,7 +16,6 @@ SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	sem.c set.c str.c time.c
 #.PATH:	${.CURDIR}/../../usr.bin/printf
 
-MAN1=	csh.0
 MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
 	csh.1 foreach.1 csh.1 history.1 csh.1 jobs.1 csh.1 popd.1 \
 	csh.1 pushd.1 csh.1 rehash.1 csh.1 repeat.1 csh.1 suspend.1 \
