@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.5 1994/09/28 11:31:25 mycroft Exp $	*/
+/*	$NetBSD: fat.h,v 1.6 1995/03/29 22:08:56 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -73,7 +73,7 @@
 
 #define	MSDOSFSEOF(cn)	(((cn) & 0xfff8) == 0xfff8)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * These are the values for the function argument to the function
  * fatentry().
@@ -96,4 +96,4 @@ void fc_purge __P((struct denode *, u_int));
 void fc_lookup __P((struct denode *, u_long, u_long *, u_long *));
 int fillinusemap __P((struct msdosfsmount *));
 int freeclusterchain __P((struct msdosfsmount *, u_long));
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.11 1995/03/26 20:24:28 jtc Exp $	*/
+/*	$NetBSD: mtio.h,v 1.12 1995/03/29 22:10:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -121,7 +121,7 @@ struct mtget {
 #define	DEFTAPE	"/dev/rst0"
 #endif
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 /*
  * minor device number
  */

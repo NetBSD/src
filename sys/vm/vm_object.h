@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.15 1995/03/26 20:39:12 jtc Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.16 1995/03/29 22:10:28 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -115,7 +115,7 @@ struct vm_object_hash_entry {
 
 typedef struct vm_object_hash_entry	*vm_object_hash_entry_t;
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 TAILQ_HEAD(object_q, vm_object);
 
 struct object_q	vm_object_cached_list;	/* list of objects persisting */

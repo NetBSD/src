@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.7 1994/12/13 09:58:11 mycroft Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.8 1995/03/29 22:08:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  * #Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp #
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct fdescmount {
 	struct vnode	*f_root;	/* Root node */
 };
@@ -80,4 +80,4 @@ extern int fdesc_root __P((struct mount *, struct vnode **));
 extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
 extern int (**fdesc_vnodeop_p)();
 extern struct vfsops fdesc_vfsops;
-#endif /* KERNEL */
+#endif /* _KERNEL */

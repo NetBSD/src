@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.13 1994/10/30 19:08:35 cgd Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.14 1995/03/29 22:10:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -353,7 +353,7 @@ struct mbstat {
 	u_short	m_mtypes[256];	/* type specific mbuf allocations */
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 extern	struct mbuf *mbutl;		/* virtual address of mclusters */
 extern	char *mclrefcnt;		/* cluster reference counts */
 struct	mbstat mbstat;
