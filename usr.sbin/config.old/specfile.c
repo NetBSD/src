@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: specfile.c,v 1.5 1993/08/02 17:56:56 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <ctype.h>
 #include <setjmp.h>

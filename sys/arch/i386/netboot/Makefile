@@ -1,21 +1,4 @@
-# netboot
-#
-# $Log: Makefile,v $
-# Revision 1.1  1993/07/08 16:03:44  brezak
-# Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
-#
-# Revision 1.4  1993/06/30  20:14:08  mckim
-# Added BOOTP support.
-#
-# Revision 1.3  1993/06/08  14:37:18  mckim
-# TAG rule missed proto.h.
-#
-# Revision 1.2  1993/05/28  20:01:24  mckim
-# Fixed various StartProg() problems.
-#
-# Revision 1.1.1.1  1993/05/28  11:41:08  mckim
-# Initial version.
-#
+#	$Id: Makefile,v 1.2 1993/08/02 17:52:45 mycroft Exp $
 
 # uncomment one of these as appropriate for the board being used
 #ETH_OBJ = ne2100.o

@@ -4,6 +4,11 @@
  * after a regexp match has been found.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: regsub.c,v 1.3 1993/08/02 17:54:07 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"

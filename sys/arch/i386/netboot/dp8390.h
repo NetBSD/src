@@ -1,17 +1,10 @@
-/* netboot
- *
- * $Log: dp8390.h,v $
- * Revision 1.1  1993/07/08 16:03:56  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * National Semiconductor DP8390 Network Interface Controller
+ *
+ *	$Id: dp8390.h,v 1.2 1993/08/02 17:52:52 mycroft Exp $
  */
 
 /* page 0: for reading */

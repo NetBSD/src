@@ -11,7 +11,8 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
-*/
+ *	$Id: if_is.c,v 1.10 1993/08/02 17:52:32 mycroft Exp $
+ */
 
 /* TODO
 

@@ -3,6 +3,8 @@
  *
  * Caveat:  this is V8 regexp(3) [actually, a reimplementation thereof],
  * not the System V one.
+ *
+ *	$Id: regexp.h,v 1.2 1993/08/02 17:54:07 mycroft Exp $
  */
 #define NSUBEXP  10
 

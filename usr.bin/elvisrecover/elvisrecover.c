@@ -9,6 +9,10 @@
  *	kirkenda@cs.pdx.edu
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: elvisrecover.c,v 1.3 1993/08/02 17:54:21 mycroft Exp $";
+#endif /* not lint */
+
 
 #include <stdio.h>
 #include "config.h"

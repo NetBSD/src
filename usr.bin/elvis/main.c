@@ -10,6 +10,11 @@
 
 /* This file contains the main() function of vi */
 
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.3 1993/08/02 17:53:55 mycroft Exp $";
+#endif /* not lint */
+
+
 /* HACK! bcc needs to disable use of precompiled headers for this file,
    or else command line args will not be passed to elvis */
 #if __BORLANDC__

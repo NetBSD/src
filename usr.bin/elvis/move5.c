@@ -10,6 +10,11 @@
 
 /* This file contains the word-oriented movement functions */
 
+#ifndef lint
+static char rcsid[] = "$Id: move5.c,v 1.3 1993/08/02 17:54:01 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"

@@ -20,6 +20,11 @@
  * and any O.S./Compiler combination which adheres to UNIX forking conventions.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: system.c,v 1.3 1993/08/02 17:54:08 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 #ifndef XDOS

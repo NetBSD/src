@@ -1,13 +1,6 @@
-/* $Header: /cvsroot/src/usr.bin/patch/Attic/version.c,v 1.1 1993/04/09 11:34:12 cgd Exp $
- *
- * $Log: version.c,v $
- * Revision 1.1  1993/04/09 11:34:12  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0  86/09/17  15:40:11  lwall
- * Baseline for netwide release.
- * 
- */
+#ifndef lint
+static char rcsid[] = "$Id: version.c,v 1.2 1993/08/02 17:55:25 mycroft Exp $";
+#endif /* not lint */
 
 #include "EXTERN.h"
 #include "common.h"

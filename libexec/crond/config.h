@@ -1,8 +1,3 @@
-/* config.h - configurables for Vixie Cron
- *
- * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.4 1993/05/28 08:56:47 cgd Exp $
- */
-
 /* Copyright 1988,1990,1993 by Paul Vixie
  * All rights reserved
  *
@@ -19,6 +14,8 @@
  * I'll try to keep a version up to date.  I can be reached as follows:
  * Paul Vixie, 329 Noe Street, San Francisco, CA, 94114, (415) 864-7013,
  * paul@vixie.sf.ca.us || {hoptoad,pacbell,decwrl,crash}!vixie!paul
+ *
+ *	$Id: config.h,v 1.5 1993/08/02 17:50:20 mycroft Exp $
  */
 
 #ifndef	_CONFIG_FLAG

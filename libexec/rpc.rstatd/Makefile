@@ -1,8 +1,4 @@
-#
-# a makefile for /usr/sbin/rpc.rstatd
-#
-#	$Header: /cvsroot/src/libexec/rpc.rstatd/Makefile,v 1.3 1993/06/08 01:19:09 brezak Exp $
-#
+#	$Id: Makefile,v 1.4 1993/08/02 17:50:37 mycroft Exp $
 
 PROG =	rpc.rstatd
 SRCS =	rstatd.c rstat_proc.c

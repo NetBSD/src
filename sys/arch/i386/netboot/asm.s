@@ -1,19 +1,4 @@
-/* netboot
- *
- * $Log: asm.s,v $
- * Revision 1.1  1993/07/08 16:03:50  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.3  1993/06/08  14:22:36  mckim
- * Fast in line assembly bcopy(), bzero().
- *
- * Revision 1.2  1993/05/28  20:01:26  mckim
- * Fixed various StartProg() problems.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the 386BSD boot blocks written by Julian Elischer.
  *
@@ -42,6 +27,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
+ *
+ *	$Id: asm.s,v 1.2 1993/08/02 17:52:49 mycroft Exp $
  */
 
 /*

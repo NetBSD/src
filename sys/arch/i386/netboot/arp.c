@@ -1,19 +1,4 @@
-/* netboot
- *
- * $Log: arp.c,v $
- * Revision 1.2  1993/07/09 15:24:10  brezak
- * Cleanup warnings and add netbsd kernel name suffix.
- *
- * Revision 1.1  1993/07/08  16:03:47  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/30  20:14:10  mckim
- * Added BOOTP support.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:06  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
@@ -21,6 +6,8 @@
  * No doubt this code is overkill, but I had it lying around.
  *
  * Copyright (c) 1992 by Leendert van Doorn
+ *
+ *	$Id: arp.c,v 1.3 1993/08/02 17:52:47 mycroft Exp $
  */
 
 #include "proto.h"

@@ -1,4 +1,4 @@
-/* vector.s */
+/*	$Id: vector.s,v 1.10 1993/08/02 17:52:37 mycroft Exp $ */
 
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"

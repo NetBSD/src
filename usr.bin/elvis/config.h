@@ -2,6 +2,8 @@
  * vi configuration file
  * We try to automatically configure to various compilers and operating
  * systems. Extend the autoconf section as needed.
+ *
+ *	$Id: config.h,v 1.3 1993/08/02 17:53:46 mycroft Exp $
  */
 
 #ifndef _CONFIG_H

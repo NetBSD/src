@@ -1,16 +1,6 @@
-/* $Header: /cvsroot/src/usr.bin/patch/inp.c,v 1.1 1993/04/09 11:34:00 cgd Exp $
- *
- * $Log: inp.c,v $
- * Revision 1.1  1993/04/09 11:34:00  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0.1.1  88/06/03  15:06:13  lwall
- * patch10: made a little smarter about sccs files
- * 
- * Revision 2.0  86/09/17  15:37:02  lwall
- * Baseline for netwide release.
- * 
- */
+#ifndef lint
+static char rcsid[] = "$Id: inp.c,v 1.2 1993/08/02 17:55:16 mycroft Exp $";
+#endif /* not lint */
 
 #include "EXTERN.h"
 #include "common.h"

@@ -1,7 +1,3 @@
-#if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/env.c,v 1.3 1993/05/28 08:34:20 cgd Exp $";
-#endif
-
 /* Copyright 1988,1990 by Paul Vixie
  * All rights reserved
  *
@@ -19,6 +15,10 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/env.c,v 1.3 199
  * Paul Vixie, 329 Noe Street, San Francisco, CA, 94114, (415) 864-7013,
  * paul@vixie.sf.ca.us || {hoptoad,pacbell,decwrl,crash}!vixie!paul
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: env.c,v 1.4 1993/08/02 17:50:25 mycroft Exp $";
+#endif
 
 
 #include "cron.h"

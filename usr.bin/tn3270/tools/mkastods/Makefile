@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/tools/mkastods/Attic/Makefile,v 1.3 1993/04/27 06:47:42 cgd Exp $
+#	$Id: Makefile,v 1.4 1993/08/02 17:56:01 mycroft Exp $
 
 CFLAGS += -I${.CURDIR}/.. -I.
 

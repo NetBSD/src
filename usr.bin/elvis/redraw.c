@@ -17,6 +17,11 @@
  *	idx2col()	- converts a markidx() value to a logical column number.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: redraw.c,v 1.3 1993/08/02 17:54:04 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 #ifdef CRUNCH

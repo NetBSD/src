@@ -10,6 +10,11 @@
 
 /* This file contains the code for reading ex commands. */
 
+#ifndef lint
+static char rcsid[] = "$Id: ex.c,v 1.4 1993/08/02 17:53:53 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"

@@ -28,8 +28,8 @@
  */
 
 #ifndef lint
-static char rcsid[] = "/b/source/CVS/src/usr.sbin/rwalld/rwalld.c,v 1.2 1993/04/10 17:59:30 cgd Exp";
-#endif
+static char rcsid[] = "$Id: rwalld.c,v 1.2 1993/08/02 17:50:55 mycroft Exp $";
+#endif /* not lint */
 
 #include <unistd.h>
 #include <sys/types.h>

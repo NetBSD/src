@@ -1,8 +1,4 @@
-#
-# a makefile for /usr/sbin/rpc.rwalld
-#
-#	/b/source/CVS/src/libexec/rpc.rwalld/Makefile,v 1.2 1993/06/04 14:55:58 brezak Exp
-#
+#	$Id: Makefile,v 1.4 1993/08/02 17:50:53 mycroft Exp $
 
 PROG =	rpc.rwalld
 SRCS =	rwalld.c

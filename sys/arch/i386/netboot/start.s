@@ -1,19 +1,4 @@
-/* netboot
- *
- * $Log: start.s,v $
- * Revision 1.1  1993/07/08 16:04:11  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.3  1993/06/30  20:19:14  mckim
- * Exit to BIOS support added.
- *
- * Revision 1.2  1993/05/28  20:01:30  mckim
- * Fixed various StartProg() problems.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
- */
+/*	$Id: start.s,v 1.2 1993/08/02 17:53:03 mycroft Exp $ */
 
 #include "asm.h"
 

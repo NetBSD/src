@@ -28,9 +28,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "yppoll.c,v 1.1 1993/05/28 09:20:07 brezak Exp";
-#endif
+#ifndef lint
+static char rcsid[] = "$Id: yppoll.c,v 1.2 1993/08/02 17:57:20 mycroft Exp $";
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

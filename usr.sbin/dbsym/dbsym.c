@@ -1,6 +1,11 @@
 /* Written by Pace Willisson (pace@blitz.com)
  * and placed in the public domain.
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: dbsym.c,v 1.8 1993/08/02 17:57:02 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <a.out.h>

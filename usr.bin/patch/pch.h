@@ -1,16 +1,4 @@
-/* $Header: /cvsroot/src/usr.bin/patch/pch.h,v 1.1 1993/04/09 11:34:09 cgd Exp $
- *
- * $Log: pch.h,v $
- * Revision 1.1  1993/04/09 11:34:09  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0.1.1  87/01/30  22:47:16  lwall
- * Added do_ed_script().
- * 
- * Revision 2.0  86/09/17  15:39:57  lwall
- * Baseline for netwide release.
- * 
- */
+/*	$Id: pch.h,v 1.2 1993/08/02 17:55:22 mycroft Exp $ */
 
 EXT FILE *pfp INIT(Nullfp);		/* patch file pointer */
 

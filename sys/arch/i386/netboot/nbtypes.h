@@ -1,16 +1,4 @@
-/* netboot
- *
- * $Log: nbtypes.h,v $
- * Revision 1.1  1993/07/08 16:04:04  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/08  14:27:10  mckim
- * Reboot options (argv[1]) passed to kernel.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * various 386BSD system header files.
  * The intent is to render these sources compilable from environments
@@ -46,6 +34,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	$Id: nbtypes.h,v 1.2 1993/08/02 17:52:58 mycroft Exp $
  */
 
 #ifndef __nbtypes_h_

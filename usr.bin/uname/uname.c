@@ -7,7 +7,12 @@
  * -v prints os version
  * -m prints machine name
  * -a prinst all the above information 
-*/
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: uname.c,v 1.2 1993/08/02 17:56:27 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/utsname.h>

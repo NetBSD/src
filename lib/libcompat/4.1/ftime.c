@@ -31,6 +31,10 @@
  * SUCH DAMAGE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: ftime.c,v 1.2 1993/08/02 17:50:05 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timeb.h>

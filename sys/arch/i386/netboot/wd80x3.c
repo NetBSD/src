@@ -1,25 +1,12 @@
-/* netboot
- *
- * $Log: wd80x3.c,v $
- * Revision 1.2  1993/07/09 15:24:14  brezak
- * Cleanup warnings and add netbsd kernel name suffix.
- *
- * Revision 1.1  1993/07/08  16:04:14  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/08  14:35:17  mckim
- * *** empty log message ***
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * A very simple network driver for WD80x3 boards that polls.
  *
  * Copyright (c) 1992 by Leendert van Doorn
+ *
+ *	$Id: wd80x3.c,v 1.3 1993/08/02 17:53:06 mycroft Exp $
  */
 
 #include "proto.h"

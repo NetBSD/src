@@ -32,6 +32,11 @@
  * precedence is structured in regular expressions.  Serious changes in
  * regular-expression syntax might require a total rethink.
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: regexp.c,v 1.2 1993/08/02 17:49:30 mycroft Exp $";
+#endif /* not lint */
+
 #include <regexp.h>
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/mset/Attic/Makefile,v 1.5 1993/04/29 11:05:59 cgd Exp $
+#	$Id: Makefile,v 1.6 1993/08/02 17:55:52 mycroft Exp $
 
 .include <../../Makefile.inc>
 

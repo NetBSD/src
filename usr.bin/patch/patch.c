@@ -1,97 +1,14 @@
-char rcsid[] =
-	"$Header: /cvsroot/src/usr.bin/patch/patch.c,v 1.1 1993/04/09 11:34:05 cgd Exp $";
-
 /* patch - a program to apply diffs to original files
  *
  * Copyright 1986, Larry Wall
  *
  * This program may be copied as long as you don't try to make any
  * money off of it, or pretend that you wrote it.
- *
- * $Log: patch.c,v $
- * Revision 1.1  1993/04/09 11:34:05  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0.2.0  90/05/01  22:17:50  davison
- * patch12u: unidiff support added
- * 
- * Revision 2.0.1.6  88/06/22  20:46:39  lwall
- * patch12: rindex() wasn't declared
- * 
- * Revision 2.0.1.5  88/06/03  15:09:37  lwall
- * patch10: exit code improved.
- * patch10: better support for non-flexfilenames.
- * 
- * Revision 2.0.1.4  87/02/16  14:00:04  lwall
- * Short replacement caused spurious "Out of sync" message.
- * 
- * Revision 2.0.1.3  87/01/30  22:45:50  lwall
- * Improved diagnostic on sync error.
- * Moved do_ed_script() to pch.c.
- * 
- * Revision 2.0.1.2  86/11/21  09:39:15  lwall
- * Fuzz factor caused offset of installed lines.
- * 
- * Revision 2.0.1.1  86/10/29  13:10:22  lwall
- * Backwards search could terminate prematurely.
- * 
- * Revision 2.0  86/09/17  15:37:32  lwall
- * Baseline for netwide release.
- * 
- * Revision 1.5  86/08/01  20:53:24  lwall
- * Changed some %d's to %ld's.
- * Linted.
- * 
- * Revision 1.4  86/08/01  19:17:29  lwall
- * Fixes for machines that can't vararg.
- * Added fuzz factor.
- * Generalized -p.
- * General cleanup.
- * 
- * 85/08/15 van%ucbmonet@berkeley
- * Changes for 4.3bsd diff -c.
- *
- * Revision 1.3  85/03/26  15:07:43  lwall
- * Frozen.
- * 
- * Revision 1.2.1.9  85/03/12  17:03:35  lwall
- * Changed pfp->_file to fileno(pfp).
- * 
- * Revision 1.2.1.8  85/03/12  16:30:43  lwall
- * Check i_ptr and i_womp to make sure they aren't null before freeing.
- * Also allow ed output to be suppressed.
- * 
- * Revision 1.2.1.7  85/03/12  15:56:13  lwall
- * Added -p option from jromine@uci-750a.
- * 
- * Revision 1.2.1.6  85/03/12  12:12:51  lwall
- * Now checks for normalness of file to patch.
- * 
- * Revision 1.2.1.5  85/03/12  11:52:12  lwall
- * Added -D (#ifdef) option from joe@fluke.
- * 
- * Revision 1.2.1.4  84/12/06  11:14:15  lwall
- * Made smarter about SCCS subdirectories.
- * 
- * Revision 1.2.1.3  84/12/05  11:18:43  lwall
- * Added -l switch to do loose string comparison.
- * 
- * Revision 1.2.1.2  84/12/04  09:47:13  lwall
- * Failed hunk count not reset on multiple patch file.
- * 
- * Revision 1.2.1.1  84/12/04  09:42:37  lwall
- * Branch for sdcrdcf changes.
- * 
- * Revision 1.2  84/11/29  13:29:51  lwall
- * Linted.  Identifiers uniqified.  Fixed i_ptr malloc() bug.  Fixed
- * multiple calls to mktemp().  Will now work on machines that can only
- * read 32767 chars.  Added -R option for diffs with new and old swapped.
- * Various cosmetic changes.
- * 
- * Revision 1.1  84/11/09  17:03:58  lwall
- * Initial revision
- * 
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: patch.c,v 1.2 1993/08/02 17:55:19 mycroft Exp $";
+#endif /* not lint */
 
 #include "INTERN.h"
 #include "common.h"

@@ -29,6 +29,11 @@
  * That right, this file contains TWO versions of the code.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: regexp.c,v 1.3 1993/08/02 17:54:06 mycroft Exp $";
+#endif /* not lint */
+
+
 #include <setjmp.h>
 #include "config.h"
 #include "ctype.h"

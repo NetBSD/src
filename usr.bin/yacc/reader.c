@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: reader.c,v 1.3 1993/08/02 17:56:49 mycroft Exp $";
+#endif /* not lint */
+
 #include "defs.h"
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/

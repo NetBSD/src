@@ -1,11 +1,11 @@
 /*
- * 06 Apr 93, Rodney W. Grimes, changed MOUNT_PCFS to MOUNT_MSDOS, whole
- * thing should be renamed msdosfs...
- *
- * No copyright as supplied to the patchkit???
  * Who wrote this???
- *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: mount_msdos.c,v 1.2 1993/08/02 17:51:11 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/mount.h>

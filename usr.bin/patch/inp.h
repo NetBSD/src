@@ -1,13 +1,4 @@
-/* $Header: /cvsroot/src/usr.bin/patch/inp.h,v 1.1 1993/04/09 11:34:01 cgd Exp $
- *
- * $Log: inp.h,v $
- * Revision 1.1  1993/04/09 11:34:01  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0  86/09/17  15:37:25  lwall
- * Baseline for netwide release.
- * 
- */
+/*	$Id: inp.h,v 1.2 1993/08/02 17:55:17 mycroft Exp $ */
 
 EXT LINENUM input_lines INIT(0);	/* how long is input file in lines */
 EXT LINENUM last_frozen_line INIT(0);	/* how many input lines have been */

@@ -13,6 +13,11 @@
  * BSD, SysV, and V7 all need quite different implementations.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: unix.c,v 1.3 1993/08/02 17:54:12 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #if ANY_UNIX
 # include "vi.h"
