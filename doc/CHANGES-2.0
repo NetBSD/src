@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.113 2004/04/21 04:14:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.114 2004/04/21 04:20:34 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1137,3 +1137,10 @@ distrib/x68k/floppies/ramdisk/Makefile		1.25
 	(i386 ramdisk-tiny).  Files added to list.sysinst, list.sysinst.en is 
 	used when these files cannot be added.
 	[dsl, ticket #168]
+
+bin/pax/ar_subs.c				1.30
+bin/pax/tar.c					1.50-1.51
+bin/pax/file_subs.c				1.42
+
+	Fixes for multiple pax pr's. PR#25200. PR#25207.
+	[christos, ticket #170]
