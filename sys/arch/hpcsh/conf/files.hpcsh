@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.29 2002/10/26 13:50:29 jdolecek Exp $
+#	$NetBSD: files.hpcsh,v 1.30 2003/09/26 00:52:33 uwe Exp $
 #
 maxpartitions 8
 
@@ -69,8 +69,7 @@ file	arch/hpcsh/dev/pfckbd.c			pfckbd	needs-flag
 #
 # HD64461
 #
-define	hd64461if {}
-device	hd64461if: hd64461if
+device	hd64461if {}
 attach	hd64461if at shb
 file	arch/hpcsh/dev/hd64461/hd64461.c		hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461_machdep.c	hd64461if
@@ -90,8 +89,7 @@ file	dev/hpc/video_subr.c			hd64461video
 #
 # HD64465
 #
-define	hd64465if {}
-device	hd64465if: hd64465if
+device	hd64465if {}
 attach	hd64465if at shb
 file	arch/hpcsh/dev/hd64465/hd64465.c	hd64465if	needs-flag
 
