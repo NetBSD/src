@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.24 2003/05/05 17:16:20 wiz Exp $
+.\"	$NetBSD: inet.3,v 1.25 2003/06/30 15:14:18 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 5, 2003
+.Dd June 30, 2003
 .Dt INET 3
 .Os
 .Sh NAME
@@ -69,9 +69,9 @@
 .Ft char *
 .Fn inet_ntoa "struct in_addr in"
 .Ft const char *
-.Fn inet_ntop "int af" "const void *src" "char *dst" "socklen_t size"
+.Fn inet_ntop "int af" "const void * restrict src" "char * restrict dst" "socklen_t size"
 .Ft int
-.Fn inet_pton "int af" "const char *src" "void *dst"
+.Fn inet_pton "int af" "const char * restrict src" "void * restrict dst"
 .Sh DESCRIPTION
 The routines
 .Fn inet_aton ,
