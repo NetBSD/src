@@ -42,7 +42,7 @@
  *	@(#)types.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: types.h,v 1.5 92/11/26 02:00:07 torek Exp  (LBL)
- * $Id: types.h,v 1.2 1994/05/24 02:17:47 deraadt Exp $
+ * $Id: types.h,v 1.2.2.1 1994/07/20 05:49:02 cgd Exp $
  */
 
 #ifndef	_MACHTYPES_H_
@@ -65,6 +65,7 @@ typedef	unsigned long	vm_size_t;
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
+#define	__BIT_TYPES_DEFINED__
 typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
