@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.4 2001/06/19 16:50:07 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.5 2003/12/18 12:34:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -148,8 +148,9 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 			menu.get_options();
 			if (menu._pref.safety_message) {
 				if (MessageBox(_window,
-				    TEXT("Data in memory will be lost.\n Are you sure?"),
-				    TEXT("WARNING"), MB_YESNO) != IDYES)
+				    TEXT("Data in memory will be lost.\nAre you sure?"),
+				    TEXT("WARNING"),
+				    MB_ICONQUESTION | MB_YESNO) != IDYES)
 					break;
 			}
 		boot:
@@ -159,7 +160,7 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 			menu.get_options();
 			// save options to `hpcboot.cnf'
 			menu.save();
-			// atart boot sequence.
+			// start boot sequence.
 			menu.boot();
 			// NOTREACHED
 			break;
