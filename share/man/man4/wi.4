@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.27 2002/08/12 17:35:15 wiz Exp $
+.\"     $NetBSD: wi.4,v 1.28 2002/08/21 04:08:06 onoe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.27 2002/08/12 17:35:15 wiz Exp $
+.\"	$Id: wi.4,v 1.28 2002/08/21 04:08:06 onoe Exp $
 .\"
 .Dd January 11, 2001
 .Dt WI 4
@@ -86,18 +86,20 @@ in the implementation of this special ad-hoc mode, Lucent-based cards with
 different firmware revisions may not interoperate in this mode.  This mode
 is no longer the default and must be selected using the
 .Xr ifconfig 8
-.Pq media option Dq adhoc
+.Pq media option Dq adhoc,flag0
 or
 .Xr wiconfig 8
 utilities.
 .Pp
 Recent versions of Lucent and PRISM-II firmware support IBSS creation.
-IBSS is the standard IEEE 802.11 ad-hoc mode.  In this mode, one station
-should be configured as the IBSS
-.Dq master .
-The nwid is
-.Em not
-ignored in IBSS mode.
+IBSS is the standard IEEE 802.11 ad-hoc mode.  In this mode, the nwid
+should be specified.  At least one node must be able to create IBSS.
+The IBSS mode is enabled by
+.Dq adhoc
+or
+.Dq ibss
+media option.
+The IBSS creation is automatically enabled if supported.
 .Pp
 Recent versions of PRISM-II firmware support operating as an 802.11
 Access Point.  In this mode, the Access Point station should set the
