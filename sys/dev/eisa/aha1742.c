@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.49 1995/08/12 23:01:31 mycroft Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.50 1995/09/26 19:32:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,11 +66,9 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#ifdef DDB
-int Debugger();
-#else /* DDB */
+#ifndef DDB
 #define Debugger() panic("should call debugger here (aha1742.c)")
-#endif /* DDB */
+#endif /* ! DDB */
 
 typedef u_long physaddr;
 typedef u_long physlen;
