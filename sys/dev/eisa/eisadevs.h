@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.18 1999/08/19 08:06:50 tron Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.19 1999/09/29 17:45:22 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.16 1999/08/19 08:06:31 tron Exp 
+ *	NetBSD: eisadevs,v 1.17 1999/09/29 17:40:18 ad Exp 
  */
 
 /*
@@ -55,6 +55,9 @@
 /* AMI products */
 #define	EISA_PRODUCT_AMI4801	"AMI Series 48 SCSI"
 
+/* AT&T products */
+#define	EISA_PRODUCT_ATT2408	"AT&T EATA SCSI controller"
+
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
@@ -65,6 +68,19 @@
 #define	EISA_PRODUCT_DEC3002	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3003	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3004	"Digital Equipment DEFEA FDDI Controller"
+
+/* DPT products */
+#define	EISA_PRODUCT_DPT2402	"Distributed Processing Technology PM2012A/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA401	"Distributed Processing Technology PM2012B/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA402	"Distributed Processing Technology PM2012B2/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA410	"Distributed Processing Technology PM2x22A/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA411	"Distributed Processing Technology Spectre EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA412	"Distributed Processing Technology PM2021A/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA420	"Distributed Processing Technology PM2042 EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA501	"Distributed Processing Technology PM2012B1/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA502	"Distributed Processing Technology PM2012Bx/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTA701	"Distributed Processing Technology PM2011B1/9X EATA SCSI controller"
+#define	EISA_PRODUCT_DPTBC01	"Distributed Processing Technology PM3011/7X ESDI controller"
 
 /* FORE Systems products */
 #define	EISA_PRODUCT_FSI2001	"FORE Systems ESA-200 ATM"
@@ -79,6 +95,9 @@
 
 /* ETI products */
 #define	EISA_PRODUCT_ETI1001	"Microdyne NE3300 Ethernet Rev. C & D"
+
+/* NEC products */
+#define	EISA_PRODUCT_NEC8200	"NEC EATA SCSI controller"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
