@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.34 1999/11/29 11:15:13 pk Exp $	*/
+/*	$NetBSD: w.c,v 1.35 2000/05/26 03:10:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.34 1999/11/29 11:15:13 pk Exp $");
+__RCSID("$NetBSD: w.c,v 1.35 2000/05/26 03:10:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,12 +105,12 @@ char		domain[MAXHOSTNAMELEN + 1];
 struct	entry {
 	struct	entry *next;
 	struct	utmp utmp;
-	dev_t	tdev;		/* dev_t of terminal */
-	time_t	idle;		/* idle time of terminal in seconds */
-	struct	kinfo_proc *kp;	/* `most interesting' proc */
+	dev_t	tdev;			/* dev_t of terminal */
+	time_t	idle;			/* idle time of terminal in seconds */
+	struct	kinfo_proc2 *kp;	/* `most interesting' proc */
 } *ep, *ehead = NULL, **nextp = &ehead;
 
-static void	 pr_args __P((struct kinfo_proc *));
+static void	 pr_args __P((struct kinfo_proc2 *));
 static void	 pr_header __P((time_t *, int));
 static struct stat
 		*ttystat __P((char *));
@@ -123,17 +123,14 @@ main(argc, argv)
 	char **argv;
 {
 	extern char *__progname;
-	struct kinfo_proc *kp;
+	struct kinfo_proc2 *kp;
 	struct hostent *hp;
 	struct stat *stp;
 	FILE *ut;
 	struct in_addr l;
 	int ch, i, nentries, nusers, wcmd;
-	gid_t egid = getegid();
 	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
-
-	(void)setegid(getgid());
 
 	/* Are we w(1) or uptime(1)? */
 	p = __progname;
@@ -176,23 +173,9 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	if (nlistf != NULL || memf != NULL)
-		(void)setgid(getgid());
-	else
-		(void)setegid(egid);
-
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
+	if ((kd = kvm_openfiles(nlistf, memf, NULL,
+	    memf == NULL ? KVM_NO_FILES : O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);
-
-	/* get rid of it now anyway */
-	if (nlistf == NULL && memf == NULL)
-		(void)setgid(getgid());
 
 	(void)time(&now);
 	if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
@@ -246,21 +229,20 @@ main(argc, argv)
 #define WUSED	(sizeof (HEADER) - sizeof ("WHAT\n"))
 	(void)printf(HEADER);
 
-	if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL)
+	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc),
+	    &nentries)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 	for (i = 0; i < nentries; i++, kp++) {
-		struct proc *p = &kp->kp_proc;
-		struct eproc *e;
 
-		if (p->p_stat == SIDL || p->p_stat == SZOMB)
+		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
 			continue;
-		e = &kp->kp_eproc;
 		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (ep->tdev == e->e_tdev && e->e_pgid == e->e_tpgid) {
+			if (ep->tdev == kp->p_tdev &&
+			    kp->p__pgid == kp->p_tpgid) {
 				/*
 				 * Proc is in foreground of this terminal
 				 */
-				if (proc_compare(&ep->kp->kp_proc, p))
+				if (proc_compare(ep->kp, kp))
 					ep->kp = kp;
 				break;
 			}
@@ -345,7 +327,7 @@ main(argc, argv)
 
 static void
 pr_args(kp)
-	struct kinfo_proc *kp;
+	struct kinfo_proc2 *kp;
 {
 	char **argv;
 	int left;
@@ -353,7 +335,7 @@ pr_args(kp)
 	if (kp == 0)
 		goto nothing;
 	left = argwidth;
-	argv = kvm_getargv(kd, kp, argwidth);
+	argv = kvm_getargv2(kd, kp, argwidth);
 	if (argv == 0)
 		goto nothing;
 	while (*argv) {
