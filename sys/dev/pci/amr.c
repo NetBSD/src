@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.6 2002/10/02 16:51:02 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.7 2003/01/01 00:10:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.6 2002/10/02 16:51:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.7 2003/01/01 00:10:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,8 +444,8 @@ amr_print(void *aux, const char *pnp)
 	amra = (struct amr_attach_args *)aux;
 
 	if (pnp != NULL)
-		printf("block device at %s", pnp);
-	printf(" unit %d", amra->amra_unit);
+		aprint_normal("block device at %s", pnp);
+	aprint_normal(" unit %d", amra->amra_unit);
 	return (UNCONF);
 }
 

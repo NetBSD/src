@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.5 2002/10/02 03:10:48 thorpej Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.6 2003/01/01 00:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.5 2002/10/02 03:10:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.6 2003/01/01 00:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,8 @@ ioat66print(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		printf("com at %s", pnp);
-	printf(" slave %d", ca->ca_slave);
+		aprint_normal("com at %s", pnp);
+	aprint_normal(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ir.c,v 1.1 2001/12/02 10:44:43 augustss Exp $	*/
+/*	$NetBSD: ir.c,v 1.2 2003/01/01 00:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ ir_print(void *aux, const char *pnp)
 			type = "cir";
 			break;
 		}
-		printf("%s at %s", type, pnp);
+		aprint_normal("%s at %s", type, pnp);
 	}
 
 	return (UNCONF);
