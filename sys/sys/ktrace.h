@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.9 2005/02/15 18:04:48 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.10 2005/02/16 07:42:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -48,18 +48,6 @@
 #define KTRFLAG_DESCEND		4	/* perform op on all children too */
 
 /*
- * ktrace record compat header
- */
-struct ktr_compat {
-	int	ktc_len;		/* length of ktr_buf */
-	short	ktc_type;		/* trace record type */
-	pid_t	ktc_pid;		/* process id */
-	char	ktc_comm[MAXCOMLEN+1];	/* command name */
-	struct	timeval ktc_time;	/* timestamp */
-	const void *ktc_unused;		/* unused */
-};
-
-/*
  * ktrace record header
  */
 struct ktr_header {
@@ -89,9 +77,6 @@ struct ktr_header {
 #define ktr_unused _ktr_id._buf
 
 #define	KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
-#define	KTRv0_LEN	sizeof(struct ktr_compat)
-#define	KTRv1_LEN	sizeof(struct ktr_header)
-
 
 /*
  * Test for kernel trace point
