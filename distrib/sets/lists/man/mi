@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.372 2001/06/21 02:34:50 assar Exp $
+# $NetBSD: mi,v 1.373 2001/06/27 20:40:12 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -571,8 +571,8 @@
 ./usr/share/man/cat4/fta.0			man-sys-catman
 ./usr/share/man/cat4/fxp.0			man-sys-catman
 ./usr/share/man/cat4/gif.0			man-sys-catman
-./usr/share/man/cat4/gre.0			man-sys-catman
 ./usr/share/man/cat4/gphyter.0			man-sys-catman
+./usr/share/man/cat4/gre.0			man-sys-catman
 ./usr/share/man/cat4/gsip.0			man-sys-catman
 ./usr/share/man/cat4/gus.0			man-sys-catman
 ./usr/share/man/cat4/guspnp.0			man-sys-catman
@@ -1023,6 +1023,7 @@
 ./usr/share/man/cat5/man.conf.0			man-man-catman
 ./usr/share/man/cat5/map3270.0			man-tn3270-catman
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman
+./usr/share/man/cat5/moduli.0			man-secsh-catman
 ./usr/share/man/cat5/monthly.conf.0		man-sys-catman
 ./usr/share/man/cat5/motd.0			man-sys-catman
 ./usr/share/man/cat5/named.conf.0		man-bind-catman
@@ -1037,7 +1038,6 @@
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman
 ./usr/share/man/cat5/pcre_table.0		man-postfix-catman
 ./usr/share/man/cat5/phones.0			man-uucp-catman
-./usr/share/man/cat5/primes.0			man-secsh-catman
 ./usr/share/man/cat5/printcap.0			man-lpr-catman
 ./usr/share/man/cat5/protocols.0		man-net-catman
 ./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
@@ -1291,12 +1291,12 @@
 ./usr/share/man/cat8/mdconfig.0			man-sysutil-catman
 ./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman
 ./usr/share/man/cat8/mfs.0			man-sys-catman
+./usr/share/man/cat8/mipsco/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/mipsco/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/mk-amd-map.0		man-amd-catman
 ./usr/share/man/cat8/mkalias.0			man-nis-catman
 ./usr/share/man/cat8/mknetid.0			man-nis-catman
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman
-./usr/share/man/cat8/mipsco/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/mipsco/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-man
 ./usr/share/man/cat8/mmeye/MAKEDEV.0		man-sysutil-catman
@@ -2110,8 +2110,8 @@
 ./usr/share/man/man4/fta.4			man-sys-man
 ./usr/share/man/man4/fxp.4			man-sys-man
 ./usr/share/man/man4/gif.4			man-sys-man
-./usr/share/man/man4/gre.4			man-sys-man
 ./usr/share/man/man4/gphyter.4			man-sys-man
+./usr/share/man/man4/gre.4			man-sys-man
 ./usr/share/man/man4/gsip.4			man-sys-man
 ./usr/share/man/man4/gus.4			man-sys-man
 ./usr/share/man/man4/guspnp.4			man-sys-man
@@ -2562,6 +2562,7 @@
 ./usr/share/man/man5/man.conf.5			man-man-man
 ./usr/share/man/man5/map3270.5			man-tn3270-man
 ./usr/share/man/man5/master.passwd.5		man-sys-man
+./usr/share/man/man5/moduli.5			man-secsh-man
 ./usr/share/man/man5/monthly.conf.5		man-sys-man
 ./usr/share/man/man5/motd.5			man-sys-man
 ./usr/share/man/man5/named.conf.5		man-bind-man
@@ -2576,7 +2577,6 @@
 ./usr/share/man/man5/passwd.conf.5		man-sys-man
 ./usr/share/man/man5/pcre_table.5		man-postfix-man
 ./usr/share/man/man5/phones.5			man-uucp-man
-./usr/share/man/man5/primes.5			man-secsh-man
 ./usr/share/man/man5/printcap.5			man-lpr-man
 ./usr/share/man/man5/protocols.5		man-net-man
 ./usr/share/man/man5/racoon.conf.5		man-netutil-man
