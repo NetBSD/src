@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 1996/11/23 06:38:49 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 1997/04/06 23:13:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * Machine-specific functions for PCI autoconfiguration.
+ * Machine-specific functions for ISA autoconfiguration.
  */
 
 #include <sys/types.h>
