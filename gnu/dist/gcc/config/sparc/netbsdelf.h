@@ -5,15 +5,17 @@
 
 /* ok, clean up after <sparc/elf.h> */
 
-#undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__sparc__ -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__"
-
 /* clean up after <sparc/elf.h> */
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC ""
 
 #define NETBSD_ELF
 #include <netbsd.h>
+
+#undef CPP_PREDEFINES
+#define CPP_PREDEFINES "\
+-D__sparc__ -D__sparc -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ \
+-Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
