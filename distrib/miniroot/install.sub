@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.28 1999/05/16 20:42:27 is Exp $
+#	$NetBSD: install.sub,v 1.29 1999/06/27 12:55:58 mrg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -374,6 +374,7 @@ configure_ifs() {
 	local _interface_mediumtype
 	local _interface_supported_media
 	local _m
+	local _t
 
 	_interface_name=$1
 	_up=DOWN
@@ -382,21 +383,28 @@ configure_ifs() {
 	fi
 
 	_interface_supported_media=`ifconfig -m $_interface_name | sed -n '
-		3s/supported media: //p'`
+		/^[ 	]*media autoselect/d
+		4,$s/[ 	]*media //p'`
 
-	set -- `ifconfig $_interface_name | sed -n '
-		2s/media: \([^ ][^ ]*\).*/\1/p
-		3s/inet//
-		3s/--> [0-9.][0-9.]*//
-		3s/netmask//
-		3s/broadcast//
-		3p'`
+	# get current "media" "ip" and "netmask" ("broadcast")
+	_t=`ifconfig $_interface_name | sed -n '
+		s/^[ 	]*media: [^ 	]* \([^ ][^ ]*\).*/\1/p'`
 
-	if [ "$1" != "manual" ]; then
+	if [ "$_t" != "manual" -a "$_t" != "media:" -a "$_t" != "autoselect" ];
+	then
 		_interface_mediumtype=$1
 	fi
-	_interface_ip=$2
-	_interface_mask=$3
+
+	set -- `ifconfig $_interface_name | sed -n '
+		/^[ 	]*inet/{
+		s/inet//
+		s/--> [0-9.][0-9.]*//
+		s/netmask//
+		s/broadcast//
+		p;}'`
+
+	_interface_ip=$1
+	_interface_mask=$2
 
 	# Get IP address
 	resp=""		# force one iteration
@@ -424,11 +432,11 @@ configure_ifs() {
 
 	echo "Your network interface might require explicit selection"
 	echo "of the type of network medium attached. Supported media:"
-	echo " $_interface_supported_media."
-	echo -n "Additional media type arguments? [$_interface_mediumtype] "
+	echo "$_interface_supported_media"
+	echo -n "Additional media type arguments (none)? [$_interface_mediumtype] "
 	getresp "$_interface_mediumtype"
 	_m=""
-	if [ "X${resp}" != X"" ]; then
+	if [ "X${resp}" != X"" -a "X${resp}" != Xnone ]; then
 		_interface_mediumtype=$resp
 		_m="media ${resp}"
 	fi
@@ -438,9 +446,9 @@ configure_ifs() {
 	echo "directives (like \`link0'). If this is the case you can enter"
 	echo "these at the next prompt."
 	echo ""
-	echo -n "Additional link-layer arguments? [$_interface_extra] "
+	echo -n "Additional link-layer arguments (none)? [$_interface_extra] "
 	getresp "$_interface_extra"
-	if [ "X${resp}" != X"" ]; then
+	if [ "X${resp}" != X"" -a "X${resp}" != Xnone ]; then
 		_interface_extra=$resp
 	fi
 
@@ -749,6 +757,7 @@ install_from_mounted_fs() {
 	local _filename
 	local _sets
 	local _next
+	local _all
 	local _f
 	local _dirname
 
@@ -803,13 +812,17 @@ install_from_mounted_fs() {
 		echo ""
 
 		_next=""
+		_all=""
 		for _f in $_sets ; do
 			if isin $_f $_setsdone; then
 				echo -n "[X] "
 				_next=""
 			else
 				echo -n "    "
-				if [ -z "$_next" ]; then _next=$_f; fi
+				if [ -z "$_next" ]; then
+					_next=$_f;
+				fi
+				_all="$_all $_f"
 			fi
 			echo $_f
 		done
@@ -823,26 +836,32 @@ install_from_mounted_fs() {
 			break
 		fi
 
-		echo -n "File name [$_next]? "
+		echo -n "File name(s) (or "all") [$_next]? "
 		getresp "$_next"
-		_f=$resp
-		_filename="/${_dirname}/$_f"
-
-		# Ensure file exists
-		if [ ! -f $_filename ]; then
-			if [ -f ${_filename}.aa ]; then
-				_filename=${_filename}.\?\?
-			else
-			 echo "File $_filename does not exist.  Check to make"
-			 echo "sure you entered the information properly."
-			 continue
-			fi
+		if [ "x$resp" = xall ]; then
+			resp="$_all"
 		fi
 
-		# Extract file
-		cat $_filename | (cd /mnt; pax -zrvpe)
-		echo "Extraction complete."
-		_setsdone="$_f $_setsdone"
+		for _f in $resp; do
+			_filename="/${_dirname}/$_f"
+
+			# Ensure file exists
+			if [ ! -f $_filename ]; then
+				if [ -f ${_filename}.aa ]; then
+					_filename=${_filename}.\?\?
+				else
+			 echo "File $_filename does not exist.  Check to make"
+			 echo "sure you entered the information properly."
+			 continue 2
+				fi
+			fi
+
+			# Extract file
+			echo "Extracting the $_f set:"
+			cat $_filename | (cd /mnt; pax -zrvpe)
+			echo "Extraction complete."
+			_setsdone="$_f $_setsdone"
+		done
 
 	done
 }
@@ -1389,7 +1408,7 @@ mount_fs()
 		# Mount the filesystem.  If the mount fails, exit
 		# with an error condition to tell the outer
 		# later to bail.
-		if ! mount -v -t $_fstype -o $_opt $_dev $_mp ; then
+		if ! mount -v -t $_fstype -o async -o $_opt $_dev $_mp ; then
 			# error message displated by mount
 			exit 1
 		fi

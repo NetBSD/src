@@ -1,74 +1,89 @@
-#	$NetBSD: list,v 1.8 1999/04/08 21:17:14 pk Exp $
+#	$NetBSD: list,v 1.9 1999/06/27 12:56:00 mrg Exp $
+
+LIBS	libhack.o -lz -lpcap -lbz2
+
+CRUNCHSPECIAL	dd srcdir distrib/utils/x_dd
+CRUNCHSPECIAL	ftp srcdir distrib/utils/x_ftp
+CRUNCHSPECIAL	gzip srcdir distrib/utils/x_gzip
+CRUNCHSPECIAL	ifconfig srcdir distrib/utils/x_ifconfig
+CRUNCHSPECIAL	init srcdir distrib/utils/init_s
+CRUNCHSPECIAL	netstat srcdir distrib/utils/x_netstat
+CRUNCHSPECIAL	route srcdir distrib/utils/x_route
+CRUNCHSPECIAL	sh srcdir distrib/utils/x_sh
+
+SRCDIRS bin gnu/usr.bin/binutils gnu/usr.bin sbin sys/arch/sparc/stand usr.bin/less usr.bin usr.sbin/pppd usr.sbin
 
 # copy the crunched binary, link to it, and kill it
-COPY	${OBJDIR}/ramdiskbin		instbin
-LINK	instbin				bin/cat
-LINK	instbin				bin/chmod
-LINK	instbin				bin/cp
-LINK	instbin				bin/dd
-LINK	instbin				bin/df
-LINK	instbin				bin/ed
-LINK	instbin				bin/expr
-LINK	instbin				bin/hostname
-LINK	instbin				bin/ln
-LINK	instbin				bin/ls
-LINK	instbin				bin/mkdir
-LINK	instbin				bin/mt
-LINK	instbin				bin/mv
-LINK	instbin				bin/pax usr/bin/tar usr/bin/cpio
-LINK	instbin				bin/rm
-LINK	instbin				bin/rcmd
-LINK	instbin				bin/rcp
-LINK	instbin				bin/sh
-LINK	instbin				bin/stty
-LINK	instbin				bin/sync
-LINK	instbin				bin/test
-LINK	instbin				bin/[
+COPY	${OBJDIR}/ramdiskbin		ramdiskbin
+LINK	ramdiskbin			bin/cat
+LINK	ramdiskbin			bin/chmod
+LINK	ramdiskbin			bin/cp
+LINK	ramdiskbin			bin/dd
+LINK	ramdiskbin			bin/df
+LINK	ramdiskbin			bin/ed
+LINK	ramdiskbin			bin/expr
+LINK	ramdiskbin			bin/hostname
+LINK	ramdiskbin			bin/kill
+LINK	ramdiskbin			bin/ln
+LINK	ramdiskbin			bin/ls
+LINK	ramdiskbin			bin/mkdir
+LINK	ramdiskbin			bin/mt
+LINK	ramdiskbin			bin/mv
+LINK	ramdiskbin			bin/pax usr/bin/tar usr/bin/cpio
+LINK	ramdiskbin			bin/rm
+LINK	ramdiskbin			bin/rcmd
+LINK	ramdiskbin			bin/rcp
+LINK	ramdiskbin			bin/sh
+LINK	ramdiskbin			bin/sleep
+LINK	ramdiskbin			bin/stty
+LINK	ramdiskbin			bin/sync
+LINK	ramdiskbin			bin/test bin/[
 
-LINK	instbin				sbin/dmesg
-LINK	instbin				sbin/edlabel
-LINK	instbin				sbin/fsck
-LINK	instbin				sbin/fsck_ffs
-LINK	instbin				sbin/ifconfig
-LINK	instbin				sbin/init sbin/init
-LINK	instbin				sbin/mknod
-LINK	instbin				sbin/mount
-LINK	instbin				sbin/mount_cd9660
-LINK	instbin				sbin/mount_ffs
-LINK	instbin				sbin/mount_kernfs
-LINK	instbin				sbin/mount_nfs
-LINK	instbin				sbin/newfs sbin/mount_mfs
-LINK	instbin				sbin/ping
-LINK	instbin				sbin/reboot sbin/halt
-LINK	instbin				sbin/restore sbin/rrestore
-LINK	instbin				sbin/route
-LINK	instbin				sbin/umount
+LINK	ramdiskbin			sbin/disklabel
+LINK	ramdiskbin			sbin/fsck
+LINK	ramdiskbin			sbin/fsck_ffs
+LINK	ramdiskbin			sbin/ifconfig
+LINK	ramdiskbin			sbin/init
+LINK	ramdiskbin			sbin/mknod
+LINK	ramdiskbin			sbin/mount
+LINK	ramdiskbin			sbin/mount_cd9660
+LINK	ramdiskbin			sbin/mount_ffs
+LINK	ramdiskbin			sbin/mount_kernfs
+LINK	ramdiskbin			sbin/mount_nfs
+LINK	ramdiskbin			sbin/newfs sbin/mount_mfs
+LINK	ramdiskbin			sbin/ping
+LINK	ramdiskbin			sbin/reboot sbin/halt
+LINK	ramdiskbin			sbin/restore sbin/rrestore
+LINK	ramdiskbin			sbin/route
+LINK	ramdiskbin			sbin/umount
 
-LINK	instbin				usr/bin/bzip2 usr/bin/bunzip2 usr/bin/bzcat
-LINK	instbin				usr/bin/chflags
-LINK	instbin				usr/bin/ftp
-LINK	instbin				usr/bin/getopt
-LINK	instbin				usr/bin/gzip usr/bin/gunzip usr/bin/zcat
-LINK	instbin				usr/bin/less
-LINK	instbin				usr/bin/more
-LINK	instbin				usr/bin/netstat
-LINK	instbin				usr/bin/rsh
-LINK	instbin				usr/bin/sed
-LINK	instbin				usr/bin/sort
-LINK	instbin				usr/mdec/installboot
-LINK	instbin				usr/sbin/chown usr/bin/chgrp
-LINK	instbin				usr/sbin/chroot
-LINK	instbin				usr/sbin/update
-LINK	instbin				usr/sbin/pppd
+LINK	ramdiskbin			usr/bin/bzip2 usr/bin/bunzip2 usr/bin/bzcat
+LINK	ramdiskbin			usr/bin/chflags
+LINK	ramdiskbin			usr/bin/ftp
+LINK	ramdiskbin			usr/bin/getopt
+LINK	ramdiskbin			usr/bin/gzip usr/bin/gunzip usr/bin/zcat
+LINK	ramdiskbin			usr/bin/less usr/bin/more
+LINK	ramdiskbin			usr/bin/netstat
+LINK	ramdiskbin			usr/bin/rsh
+LINK	ramdiskbin			usr/bin/sed
+LINK	ramdiskbin			usr/bin/sort
+
+LINK	ramdiskbin			usr/mdec/installboot
+
+LINK	ramdiskbin			usr/sbin/chown usr/bin/chgrp
+LINK	ramdiskbin			usr/sbin/chroot
+LINK	ramdiskbin			usr/sbin/update
+LINK	ramdiskbin			usr/sbin/pppd
+LINK	ramdiskbin			usr/sbin/sysctl
 
 # `internal' crunchgen links
-LINK 	sbin/mount_ffs			sbin/ffs
-LINK 	sbin/mount_nfs			sbin/nfs
-LINK 	sbin/mount_cd9660		sbin/cd9660
-LINK 	bin/sh				bin/-sh
+ARGVLINK mount_ffs      ffs
+ARGVLINK mount_nfs      nfs
+ARGVLINK mount_cd9660   cd9660
+ARGVLINK sh             -sh
 
 # no longer needed...
-SPECIAL	/bin/rm instbin
+SPECIAL	/bin/rm ramdiskbin
 
 # copy the MAKEDEV script and make some devices
 COPY	${TOPDIR}/../../etc/etc.sparc/MAKEDEV	dev/MAKEDEV
