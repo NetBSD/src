@@ -162,6 +162,7 @@ strongarm-*-*)		gdb_host=arm ;;
 
 # OBSOLETE tahoe-*-*)		gdb_host=tahoe ;;
 
+vax-*-netbsd*)		gdb_host=nbsd ;;
 vax-*-bsd*)		gdb_host=vaxbsd ;;
 vax-*-ultrix2*)		gdb_host=vaxult2 ;;
 vax-*-ultrix*)		gdb_host=vaxult ;;
