@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.16 1998/12/02 10:44:53 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.17 1999/02/26 07:30:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -691,6 +691,11 @@ abortit:
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
+	if ((nlink_t) ip->i_e2fs_nlink >= LINK_MAX) {
+		VOP_UNLOCK(fvp, 0);
+		error = EMLINK;
+		goto abortit;
+	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
 		VOP_UNLOCK(fvp, 0);
