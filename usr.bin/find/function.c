@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.24 1998/02/21 22:47:20 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.25 1998/10/14 00:50:43 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.24 1998/02/21 22:47:20 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.25 1998/10/14 00:50:43 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -954,7 +954,7 @@ c_type(argvp, isok)
 {
 	char *typestring = **argvp;
 	PLAN *new;
-	mode_t  mask;
+	mode_t  mask = (mode_t)0;
     
 	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
