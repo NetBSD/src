@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.582 2002/12/04 00:28:39 haya Exp $
+#	$NetBSD: files,v 1.583 2002/12/23 17:15:20 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -963,7 +963,7 @@ defpseudo fwiso:	ieee1394
 #
 # File systems
 #
-include "adosfs/files.adosfs"
+include "fs/adosfs/files.adosfs"
 include "coda/files.coda"
 include "filecorefs/files.filecorefs"
 include "fs/smbfs/files.smbfs"

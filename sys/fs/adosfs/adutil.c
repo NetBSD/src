@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.21 2001/11/12 22:59:17 lukem Exp $	*/
+/*	$NetBSD: adutil.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.21 2001/11/12 22:59:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.21 2001/11/12 22:59:17 lukem Exp $");
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
-#include <adosfs/adosfs.h>
+#include <fs/adosfs/adosfs.h>
 
 /*
  * look for anode in the mount's hash table, return locked.
