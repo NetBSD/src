@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.128 1999/08/07 02:51:51 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.129 1999/09/23 11:04:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <sys/scsiio.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -91,6 +92,7 @@
 
 #define	CDUNIT(z)			DISKUNIT(z)
 #define	CDPART(z)			DISKPART(z)
+#define	CDMINOR(unit, part)		DISKMINOR(unit, part)
 #define	MAKECDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define MAXTRACK	99
@@ -176,6 +178,82 @@ cdattach(parent, cd, sc_link, ops)
 	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+}
+
+int
+cdactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
+int
+cddetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct cd_softc *cd = (struct cd_softc *) self;
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* locate the major number */
+	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == cdopen)
+			break;
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == cdopen)
+			break;
+
+	s = splbio();
+
+	/* Kill off any queued buffers. */
+	while ((bp = cd->buf_queue.b_actf) != NULL) {
+		cd->buf_queue.b_actf = bp->b_actf;
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+
+	/* Kill off any pending commands. */
+	scsipi_kill_pending(cd->sc_link);
+
+	splx(s);
+
+	/* Nuke the the vnodes for any open instances */
+	mn = CDMINOR(self->dv_unit, 0);
+	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
+	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
+
+	/* Detach from the disk list. */
+	disk_detach(&cd->sc_dk);
+
+#if 0
+	/* Get rid of the shutdown hook. */
+	if (cd->sc_sdhook != NULL)
+		shutdownhook_disestablish(cd->sc_sdhook);
+#endif
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&cd->rnd_source);
+#endif
+
+	return (0);
 }
 
 /*

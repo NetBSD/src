@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.25 1999/08/09 09:49:48 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.26 1999/09/23 11:04:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -114,7 +114,8 @@ wdc_atapibus_attach(chp)
 	aa_link.aa_openings = 1;
 	aa_link.aa_drv_data = chp->ch_drive; /* pass the whole array */
 	aa_link.aa_bus_private = &wdc->sc_atapi_adapter;
-	(void)config_found(&wdc->sc_dev, (void *)&aa_link, atapi_print);
+	chp->atapibus = config_found(&wdc->sc_dev, (void *)&aa_link,
+	    atapi_print);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.26 1999/07/08 14:24:42 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.27 1999/09/23 11:04:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -47,6 +47,7 @@
 #include "locators.h"
 
 #define SILENT_PRINTF(flags,string) if (!(flags & A_SILENT)) printf string
+#define MAX_TARGET 1
 
 struct atapibus_softc {
 	struct device sc_dev;
@@ -58,13 +59,17 @@ struct atapibus_softc {
 int	atapibusmatch __P((struct device *, struct cfdata *, void *));
 int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
 void	atapibusattach __P((struct device *, struct device *, void *));
+int	atapibusactivate __P((struct device *, enum devact));
+int	atapibusdetach __P((struct device *, int flags));
+
 int	atapiprint __P((void *, const char *));
 
 int	atapi_probe_bus __P((int, int));
 void	atapi_probedev __P((struct atapibus_softc *, int ));
 
 struct cfattach atapibus_ca = {
-	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach
+	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach,
+	atapibusdetach, atapibusactivate,
 };
 
 extern struct cfdriver atapibus_cd;
@@ -200,6 +205,71 @@ atapibusattach(parent, self, aux)
 		panic("scsibusattach: can't allocate target links");
 	memset(sc_ab->sc_link, 0, nbytes);
 	atapi_probe_bus(sc_ab->sc_dev.dv_unit, -1);
+}
+
+int
+atapibusactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct atapibus_softc *sc = (struct atapibus_softc *)self;
+	struct scsipi_link *sc_link;
+	int target, error = 0, s;
+
+	s = splbio();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		for (target = 0; target <= MAX_TARGET; target++) {
+			sc_link = sc->sc_link[target];
+			if (sc_link == NULL)
+				continue;
+			error = config_deactivate(sc_link->device_softc);
+			if (error != 0)
+				goto out;
+		}
+		break;
+	}
+ out:
+	splx(s);
+	return (error);
+}
+
+int
+atapibusdetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct atapibus_softc *sc = (struct atapibus_softc *)self;
+	struct scsipi_link *sc_link;
+	int target, error;
+
+	for (target = 0; target <= MAX_TARGET; target++) {
+		sc_link = sc->sc_link[target];
+		if (sc_link == NULL)
+			continue;
+		error = config_detach(sc_link->device_softc, flags);
+		if (error != 0)
+			return (error);
+
+		/*
+		 * We have successfully detached the child.  Drop the
+		 * direct reference for the child so that wdcdetach
+		 * won't call detach routine twice.
+		 */
+#ifdef DIAGNOSTIC
+		if (sc_link->device_softc != sc->sc_drvs[target].drv_softc)
+			panic("softc mismatch");
+#endif
+		sc->sc_drvs[target].drv_softc = NULL;
+
+		free(sc_link, M_DEVBUF);
+		sc->sc_link[target] = NULL;
+	}
+	return (0);
 }
 
 int

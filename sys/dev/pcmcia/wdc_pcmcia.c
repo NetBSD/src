@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.20 1999/09/22 10:03:37 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21 1999/09/23 11:04:33 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,9 +83,11 @@ struct wdc_pcmcia_softc {
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
+static int wdc_pcmcia_detach	__P((struct device *, int));
 
 struct cfattach wdc_pcmcia_ca = {
-	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach
+	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach,
+	wdc_pcmcia_detach, wdcactivate
 };
 
 struct wdc_pcmcia_product {
@@ -319,7 +321,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
 		printf(": can't map second I/O space\n");
 		return;
-	}
+	} else
+		sc->sc_auxiowindow = -1;
 
 	printf("\n");
 
@@ -356,6 +359,30 @@ wdc_pcmcia_attach(parent, self, aux)
 	pcmcia_function_disable(pa->pf);
 
 	wdcattach(&sc->wdc_channel);
+}
+
+int
+wdc_pcmcia_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
+	int error;
+
+	if ((error = wdcdetach(self, flags)) != 0)
+		return (error);
+
+	free(sc->wdc_channel.ch_queue, M_DEVBUF);
+
+	/* Unmap our i/o window and i/o space. */
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+	if (sc->sc_auxiowindow != -1) {
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+	}
+
+	return (0);
 }
 
 int
