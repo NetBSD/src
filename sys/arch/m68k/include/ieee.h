@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.3 2003/10/23 15:04:00 kleink Exp $ */
+/*	$NetBSD: ieee.h,v 1.4 2003/10/23 16:57:20 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,8 @@ struct ieee_ext {
 	u_int	ext_sign:1;
 	u_int	ext_exp:15;
 	u_int	ext_zero:16;
-	u_int	ext_frach;
+	u_int	ext_int:1;
+	u_int	ext_frach:31;
 	u_int	ext_fracl;
 };
 
