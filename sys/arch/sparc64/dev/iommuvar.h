@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.3 2000/04/22 17:06:03 mrg Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.4 2000/05/17 02:31:13 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -63,6 +63,8 @@ int	iommu_dvmamap_load __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int));
 void	iommu_dvmamap_unload __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dmamap_t));
+int	iommu_dvmamap_load_raw __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 void	iommu_dvmamap_sync __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dmamap_t, bus_addr_t, bus_size_t, int));
 int	iommu_dvmamem_alloc __P((bus_dma_tag_t, struct iommu_state *,
