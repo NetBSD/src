@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.20 2002/03/16 20:43:55 christos Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.21 2003/01/18 08:32:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.20 2002/03/16 20:43:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.21 2003/01/18 08:32:04 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.20 2002/03/16 20:43:55 christos Exp
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/osf1/osf1.h>
@@ -111,12 +112,13 @@ static int	osf1_mount_nfs __P((struct proc *,
 		    struct osf1_sys_mount_args *, struct sys_mount_args *));
 
 int
-osf1_sys_fstatfs(p, v, retval)
-	struct proc *p;
+osf1_sys_fstatfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_fstatfs_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -140,12 +142,13 @@ osf1_sys_fstatfs(p, v, retval)
 }
 
 int
-osf1_sys_getfsstat(p, v, retval)
-	struct proc *p;
+osf1_sys_getfsstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_getfsstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -188,8 +191,8 @@ osf1_sys_getfsstat(p, v, retval)
 }
 
 int
-osf1_sys_mount(p, v, retval)
-	struct proc *p;
+osf1_sys_mount(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -205,12 +208,12 @@ osf1_sys_mount(p, v, retval)
 
 	switch (SCARG(uap, type)) {
 	case OSF1_MOUNT_NFS:
-		if ((error = osf1_mount_nfs(p, uap, &a)))
+		if ((error = osf1_mount_nfs(l->l_proc, uap, &a)))
 			return error;
 		break;
 
 	case OSF1_MOUNT_MFS:
-		if ((error = osf1_mount_mfs(p, uap, &a)))
+		if ((error = osf1_mount_mfs(l->l_proc, uap, &a)))
 			return error;
 		break;
 
@@ -218,16 +221,17 @@ osf1_sys_mount(p, v, retval)
 		return (EINVAL);
 	}
 
-	return sys_mount(p, &a, retval);
+	return sys_mount(l, &a, retval);
 }
 
 int
-osf1_sys_statfs(p, v, retval)
-	struct proc *p;
+osf1_sys_statfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_statfs_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -249,8 +253,8 @@ osf1_sys_statfs(p, v, retval)
 }
 
 int
-osf1_sys_unmount(p, v, retval)
-	struct proc *p;
+osf1_sys_unmount(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -266,7 +270,7 @@ osf1_sys_unmount(p, v, retval)
 	    (SCARG(uap, flags) & OSF1_MNT_NOFORCE) == 0)
 		SCARG(&a, flags) |= MNT_FORCE;
 
-	return sys_unmount(p, &a, retval);
+	return sys_unmount(l, &a, retval);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.68 2002/04/08 14:51:18 christos Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.69 2003/01/18 08:32:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.68 2002/04/08 14:51:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.69 2003/01/18 08:32:04 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.68 2002/04/08 14:51:18 christos Exp 
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
@@ -102,8 +103,8 @@ extern int scdebug;
 #endif
 
 int
-osf1_sys_classcntl(p, v, retval)
-	struct proc *p;
+osf1_sys_classcntl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -113,8 +114,8 @@ osf1_sys_classcntl(p, v, retval)
 }
 
 int
-osf1_sys_reboot(p, v, retval)
-	struct proc *p;
+osf1_sys_reboot(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -130,16 +131,17 @@ osf1_sys_reboot(p, v, retval)
 
 	SCARG(&a, bootstr) = NULL;
 
-	return sys_reboot(p, &a, retval);
+	return sys_reboot(l, &a, retval);
 }
 
 int
-osf1_sys_set_program_attributes(p, v, retval)
-	struct proc *p;
+osf1_sys_set_program_attributes(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_set_program_attributes_args *uap = v;
+	struct proc *p = l->l_proc;
 	segsz_t tsize, dsize;
 
 	tsize = btoc(SCARG(uap, tsize));
@@ -159,7 +161,7 @@ osf1_sys_set_program_attributes(p, v, retval)
 }
 
 int
-osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
+osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 {
 	extern int ncpus;
 	struct osf1_sys_getsysinfo_args *uap = v;
@@ -189,7 +191,7 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		retval[0] = 1;
 		break;
 	case OSF_GET_IEEE_FP_CONTROL:
-		if (((fpflags = alpha_read_fp_c(p)) & IEEE_INHERIT) != 0) {
+		if (((fpflags = alpha_read_fp_c(l)) & IEEE_INHERIT) != 0) {
 			fpflags |= 1ULL << 63;
 			fpflags &= ~IEEE_INHERIT;
 		}
@@ -266,8 +268,8 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 }
 
 int
-osf1_sys_setsysinfo(p, v, retval)
-	struct proc *p;
+osf1_sys_setsysinfo(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -284,7 +286,7 @@ osf1_sys_setsysinfo(p, v, retval)
 			break;
 		if (temp >> 63 != 0)
 			temp |= IEEE_INHERIT;
-		alpha_write_fp_c(p, temp);
+		alpha_write_fp_c(l, temp);
 		break;
 	default:
 		uprintf("osf1_setsysinfo called with op=%ld\n", SCARG(uap, op));
@@ -295,8 +297,8 @@ osf1_sys_setsysinfo(p, v, retval)
 }
 
 int
-osf1_sys_sysinfo(p, v, retval)
-	struct proc *p;
+osf1_sys_sysinfo(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -366,8 +368,8 @@ dont_care:
 }
 
 int
-osf1_sys_uname(p, v, retval)
-	struct proc *p;
+osf1_sys_uname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -397,8 +399,8 @@ osf1_sys_uname(p, v, retval)
 }
 
 int
-osf1_sys_usleep_thread(p, v, retval)
-	struct proc *p;
+osf1_sys_usleep_thread(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -421,7 +423,7 @@ osf1_sys_usleep_thread(p, v, retval)
 	tv = time;
 	splx(s);
 
-	tsleep(p, PUSER|PCATCH, "uslpthrd", ticks);	/* XXX */
+	tsleep(l, PUSER|PCATCH, "uslpthrd", ticks);	/* XXX */
 
 	if (SCARG(uap, slept) != NULL) {
 		s = splclock();
@@ -438,12 +440,13 @@ osf1_sys_usleep_thread(p, v, retval)
 }
 
 int
-osf1_sys_wait4(p, v, retval)
-	struct proc *p;
+osf1_sys_wait4(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_wait4_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_wait4_args a;
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
@@ -467,7 +470,7 @@ osf1_sys_wait4(p, v, retval)
 		SCARG(&a, rusage) = stackgap_alloc(p, &sg, sizeof netbsd_rusage);
 	}
 
-	error = sys_wait4(p, &a, retval);
+	error = sys_wait4(l, &a, retval);
 
 	if (error == 0 && SCARG(&a, rusage) != NULL) {
 		error = copyin((caddr_t)SCARG(&a, rusage),
