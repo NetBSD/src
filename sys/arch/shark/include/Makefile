@@ -1,4 +1,4 @@
-#	$NetBSD#
+#	$NetBSD: Makefile,v 1.2 2002/02/10 09:29:19 kleink Exp $
 
 KDIR=	/sys/arch/shark/include
 INCSDIR= /usr/include/shark
