@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.6.2.2 1998/10/04 14:53:30 bouyer Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.6.2.3 1998/10/05 21:16:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -36,12 +36,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/irqhandler.h>
 
 #include <arm32/mainbus/piocvar.h>
 
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 #include "locators.h"
@@ -91,16 +93,13 @@ wdc_pioc_probe(parent, cf, aux)
 		return(0);
 
 	iobase = pa->pa_iobase + pa->pa_offset;
-	memset(&ad, 0, sizeof(ad));
-	ad.iot = pa->pa_iot;
-	ad.auxiot = pa->pa_iot;
 
 	if (bus_space_map(ch.cmd_iot, iobase, WDC_PIOC_REG_NPORTS, 0,
 	    &ch.cmd_ioh))
 		return(0);
 	if (bus_space_map(ch.ctl_iot, iobase + WDC_PIOC_AUXREG_OFFSET,
 	    WDC_PIOC_AUXREG_NPORTS, 0, &ch.ctl_ioh)) {
-		bus_space_unmap(ad.iot, ad.ioh, WDC_PIOC_REG_NPORTS);
+		bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_PIOC_REG_NPORTS);
 		return(0);
 	}
 
