@@ -38,13 +38,14 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.1.1.1 2000/06/16 19:18:30 thorpej Exp $ */
+/* $Id: roken.h,v 1.2 2000/08/03 03:54:21 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <signal.h>
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -94,6 +95,8 @@ char * strlwr(char *);
 
 size_t strnlen(const char*, size_t);
 
+
+ssize_t strsep_copy(const char**, const char*, char*, size_t);
 
 
 
@@ -189,8 +192,8 @@ getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
 		     char *serv, size_t servlen,
 		     int flags);
 
-int
-roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
+int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
+int roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
 
 
@@ -207,5 +210,8 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 #define roken_openlog(a,b,c) openlog(a,b,c)
 
 void set_progname(char *argv0);
+const char *get_progname(void);
+
+#define ROKEN_VERSION 0.3a
 
 #endif /* __ROKEN_H__ */
