@@ -1,0 +1,20 @@
+# $NetBSD: std.dreamcast,v 1.5.6.2 2002/05/09 12:32:33 uch Exp $
+#
+# standard, required NetBSD/dreamcast 'options'
+
+machine dreamcast sh3
+
+options 	EXEC_SCRIPT	# exec #! scripts
+
+# CPU support
+options 	SH4
+options 	SH7750
+options 	PCLOCK=49900000			# 50MHz
+#options 	PCLOCK=50000000			# 50MHz 
+options 	IOM_ROM_BEGIN=0x00000000
+options 	IOM_ROM_SIZE=0x00100000         # 1MB
+options 	IOM_RAM_BEGIN=0x0c000000
+options 	IOM_RAM_SIZE=0x01000000         # 16MB
+
+makeoptions	ENDIAN="-EL"
+makeoptions	LDSCRIPTBASE="shl.x"	# for little endian
