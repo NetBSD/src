@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.20 1999/04/17 21:00:09 kleink Exp $	*/
+/*	$NetBSD: ipc.h,v 1.21 1999/08/25 05:05:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,15 +52,37 @@
 #define _SYS_IPC_H_
 
 struct ipc_perm {
+	uid_t		uid;	/* user id */
+	gid_t		gid;	/* group id */
+	uid_t		cuid;	/* creator user id */
+	gid_t		cgid;	/* creator group id */
+	mode_t		mode;	/* r/w permission */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	unsigned short	_seq;	/* sequence # (to generate unique
+				   msg/sem/shm id) */
+	key_t		_key;	/* user specified msg/sem/shm key */
+};
+
+
+#ifdef _KERNEL
+/*
+ * Old IPC permission structure used before NetBSD 1.5.
+ */
+struct ipc_perm14 {
 	unsigned short	cuid;	/* creator user id */
 	unsigned short	cgid;	/* creator group id */
 	unsigned short	uid;	/* user id */
 	unsigned short	gid;	/* group id */
 	unsigned short	mode;	/* r/w permission */
-	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm
-				   id) */
+	unsigned short	seq;	/* sequence # (to generate unique
+				   msg/sem/shm id) */
 	key_t	key;		/* user specified msg/sem/shm key */
 };
+#endif /* _KERNEL */
 
 /* X/Open required constants (same values as system 5) */
 #define	IPC_CREAT	001000	/* create entry if key does not exist */
@@ -77,14 +99,17 @@ struct ipc_perm {
 /* Macros to convert between ipc ids and array indices or sequence ids */
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
-#define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
+#define	IXSEQ_TO_IPCID(ix,perm)	(((perm._seq) << 16) | (ix & 0xffff))
 
 /* Common access type bits, used with ipcperm(). */
 #define	IPC_R		000400	/* read permission */
 #define	IPC_W		000200	/* write/alter permission */
 #define	IPC_M		010000	/* permission to change control info */
 
-int ipcperm __P((struct ucred *, struct ipc_perm *, int));
+int	ipcperm __P((struct ucred *, struct ipc_perm *, int));
+
+void	ipc_perm14_to_native __P((struct ipc_perm14 *, struct ipc_perm *));
+void	native_to_ipc_perm14 __P((struct ipc_perm *, struct ipc_perm14 *));
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
