@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.14 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: sysdb,v 1.15 2004/10/12 13:23:44 lukem Exp $
 #
 
 # PROVIDE: sysdb
@@ -26,7 +26,7 @@ sysdb_start()
 build_devdb()
 {
 	if [ /var/run/dev.db -nt /dev ]; then
-		# it's fine
+		: # it's fine
 	else
 		dev_mkdb
 	fi
