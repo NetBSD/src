@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.41 1998/05/22 09:59:55 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.42 1998/05/31 23:25:43 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -79,6 +79,7 @@ LIBCOMPAT=      ${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
