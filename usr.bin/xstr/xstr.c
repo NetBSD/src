@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.12 2001/02/19 23:03:54 cgd Exp $	*/
+/*	$NetBSD: xstr.c,v 1.13 2002/01/12 02:13:12 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.12 2001/02/19 23:03:54 cgd Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.13 2002/01/12 02:13:12 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,8 @@ process(name)
 	char *cp;
 	int c;
 	int incomm = 0;
+	int inasm = 0;
+	int asmparnest = 0;
 	int ret;
 
 	printf("extern char\t%s[];\n", array);
@@ -190,7 +192,7 @@ process(name)
 		for (cp = linebuf; (c = *cp++);) switch (c) {
 
 		case '"':
-			if (incomm)
+			if (incomm || inasm)
 				goto def;
 			if ((ret = (int) yankstr(&cp)) == -1)
 				goto out;
@@ -198,7 +200,7 @@ process(name)
 			break;
 
 		case '\'':
-			if (incomm)
+			if (incomm || inasm)
 				goto def;
 			putchar(c);
 			if (*cp)
@@ -222,6 +224,33 @@ process(name)
 			}
 			goto def;
 
+		case '(':
+			if (!incomm && inasm)
+				asmparnest++;
+			goto def;
+
+		case ')':
+			if (!incomm && inasm && !--asmparnest)
+				inasm = 0;
+			goto def;
+
+		case '_':
+			if (incomm || inasm)
+				goto def;
+			if (!strncmp(cp, "_asm", 4)) {
+				cp += 4;
+				printf("__asm");
+				if (!strncmp(cp, "__", 2)) {
+					cp += 2;
+					printf("__");
+				}
+				if (isalnum(*cp) || *cp == '_')
+					goto def;
+				asmparnest = 0;
+				inasm = 1;
+			} else
+				goto def;
+			break;
 def:
 		default:
 			putchar(c);
