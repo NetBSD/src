@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
+/*      $NetBSD: raidctl.c,v 1.28 2001/09/26 02:59:40 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ main(argc,argv)
 		exit(1);
 	}
 
-	raidID = RF_DEV2RAIDID(st.st_rdev);
+	raidID = DISKUNIT(st.st_rdev);
 
 	switch(action) {
 	case RAIDFRAME_ADD_HOT_SPARE:
