@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.4 2000/12/21 03:37:59 enami Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.5 2000/12/27 04:44:42 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -204,7 +204,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct vnode *vp;
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, slot_offset;
-	int i, rv, npages;
+	int i, error, rv, npages;
 	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT], *pg;
 	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
 
@@ -276,22 +276,17 @@ again:
 	UVMHIST_LOG(ubchist, "getpages vp %p offset 0x%x npages %d",
 		    uobj, umap->offset + slot_offset, npages, 0);
 
-	rv = VOP_GETPAGES(vp, umap->offset + slot_offset, pgs, &npages, 0,
-			  access_type, 0, flags);
-	UVMHIST_LOG(ubchist, "getpages rv %d npages %d", rv, npages,0,0);
+	error = VOP_GETPAGES(vp, umap->offset + slot_offset, pgs, &npages, 0,
+	    access_type, 0, flags);
+	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages,0,0);
 
-	switch (rv) {
-	case VM_PAGER_OK:
-		break;
-
-	case VM_PAGER_AGAIN:
+	if (error == EAGAIN) {
 		tsleep(&lbolt, PVM, "ubc_fault", 0);
 		goto again;
-
-	default:
-		return rv;
 	}
-
+	if (error) {
+		return VM_PAGER_ERROR;
+	}
 	if (npages == 0) {
 		return VM_PAGER_OK;
 	}
