@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.6 2004/04/23 06:21:21 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.7 2004/05/08 21:18:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -48,6 +48,11 @@
  * NO_CHS	- all reads are LBA
  * NO_LBA_CHECK	- no check if bios supports LBA reads
  */
+
+#ifdef BOOT_EXTENDED
+#define NO_CHS	1
+#define BOOTSEL	1
+#endif
 
 #include <machine/asm.h>
 #include <sys/bootblock.h>
@@ -120,7 +125,6 @@ mbr:
 	push	%dx			/* save drive number */
 	push	%dx			/* twice - for err_msg loop */
 
-#ifdef BOOTSEL
 /*
  * Walk through the selector (name) table printing used entries.
  */
@@ -134,8 +138,9 @@ next_extended:
 	lea	parttab - nametab(%bx), %bp
 next_ptn:
 	movb	4(%bp), %al		/* partition type */
-#ifdef BOOT_EXTENDED
+#ifdef NO_CHS
 	movl	8(%bp), %edi		/* partition sector number */
+#ifdef BOOT_EXTENDED
 	cmpb	$MBR_PTYPE_EXT, %al	/* Extended partition */
 	je	1f
 	cmpb	$MBR_PTYPE_EXT_LBA, %al	/* Extended LBA partition */
@@ -143,14 +148,26 @@ next_ptn:
 	cmpb	$MBR_PTYPE_EXT_LNX, %al	/* Linux extended partition */
 	jne	2f
 1:	movl	%edi, %edx		/* save next extended ptn */
-	jmp	3f
+	jmp	4f
 2:
 #endif
+	addl	lba_sector, %edi	/* add in extended ptn base */
+#endif
 	test	%al, %al		/* undefined partition */
-	je	3f
+	je	4f
+	cmpb	$0x80, (%bp)		/* check for active partition */
+	jne	3f			/* jump if not... */
+#define	ENTER	(4 * ((SCAN_ENTER - SCAN_F1) & 0xff))
+#ifdef NO_CHS
+	movl	%edi, ptn_list + ENTER	/* save location of active ptn */
+#else
+	mov	%bp, ptn_list + ENTER
+#endif
+#undef ENTER
+3:
+#ifdef BOOTSEL
 	cmpb	$0, (%bx)		/* check for prompt */
-	jz	3f
-
+	jz	4f
 	/* output menu item */
 	movw	$prefix, %si
 	incb	(%si)
@@ -159,7 +176,6 @@ next_ptn:
 	shl	$2, %si			/* const + count * 4 */
 #define	CONST	(4 * ((':' << 8) + '1' - ((SCAN_1 - SCAN_F1) & 0xff)))
 #ifdef NO_CHS
-	addl	lba_sector, %edi
 	movl	%edi, ptn_list - CONST(%si)	/* sector to read */
 #else
 	mov	%bp, ptn_list - CONST(%si)	/* partition info */
@@ -169,7 +185,8 @@ next_ptn:
 	call	message			/* prompt */
 	movw	$crlf, %si
 	call	message
-3:
+#endif
+4:
 	add	$0x10, %bp
 	add	$TABENTRYSIZE, %bx
 	cmpb	$(nametab - start - 0x100) + 4 * TABENTRYSIZE, %bl
@@ -197,6 +214,21 @@ next_ptn:
 	je	next_extended
 #endif
 
+/*
+ * If we haven't output any menu entries, then the system sits waiting
+ * for a keypress with the user looking at a blank screen wondering
+ * why nothing is happening.
+ * To stop this we generate <ENTER> - to boot the active partition
+ * if we haven't output any menu texts.
+ * The non-bootsel code also traverses this code path.
+ */
+
+#ifndef BOOTSEL
+	movb	$SCAN_ENTER - SCAN_F1, %al
+#else
+	movb	$SCAN_ENTER, %al	/* default to active partition */
+	cmpb	$'0', prefix		/* did we output a menu ? */
+	je	check_key		/* Nope - process SCAN_ENTER */
 /*
  * Get the initial time value for the timeout comparison. It is returned
  * by int 1a in cx:dx. We do sums modulo 2^16 so it doesn't matter if
@@ -234,41 +266,12 @@ get_key:
  */
 check_key:
 /*
- * <enter> -> boot active partition.
- */
-	cmpb	$SCAN_ENTER, %al
-	jne	boot_disk
-#endif	/* BOOTSEL */
-
-/*
- * Scan MBR for first active partition, and boot it.
- */
-	mov	$MBR_PART_COUNT, %cx
-	mov	$parttab, %si
-1:
-	cmpb	$0x80, (%si)
-#ifdef NO_CHS
-	jne	10f			/* not active */
-	movl	8(%si), %ebp		/* sector number of ptn */
-	jmp	boot_lba
-10:
-#else
-	je	boot_si
-#endif
-	add	$0x10, %si
-	loop	1b
-	set_err(ERR_INVPART)
-	jmp	err_msg
-
-#ifdef BOOTSEL
-/*
  * F1-F10 -> boot disk 0-9. Check if the requested disk isn't above
  * the number of disks actually in the system as stored in 0:0475 by
  * the BIOS.
  * If we trust loc 475, we needn't check the upper bound on the keystroke
  * This is always sector 0, so always read using chs.
  */
-boot_disk:
 	subb	$SCAN_F1, %al
 	cmpb	0x0475, %al
 	jae	boot_ptn
@@ -282,6 +285,7 @@ boot_disk:
 	movw	$chs_zero, %si		/* chs read sector zero info */
 	jmp	read_chs
 #endif
+#endif	/* BOOTSEL */
 
 /*
  * Boot requested partition.
@@ -303,9 +307,12 @@ boot_ptn:
 	test	%si, %si
 	jnz	boot_si
 #endif
+#ifdef BOOTSEL
 	set_err(ERR_KEY)
+#else
+	set_err(ERR_INVPART)
+#endif
   /*	jmp	err_msg */
-#endif	/* BOOTSEL */
 
 /* Something went wrong...
  * Output error code,
