@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2000/12/09 05:27:29 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.24 2001/01/27 07:53:10 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -76,7 +76,7 @@
 			    struct hpux_ostat *sb); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
 21	UNIMPL		mount
 22	UNIMPL		umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
