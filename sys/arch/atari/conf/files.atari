@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.101 2002/12/08 21:31:37 leo Exp $
+#	$NetBSD: files.atari,v 1.102 2003/02/02 18:26:24 thomas Exp $
 
 maxpartitions 16
 
@@ -29,9 +29,10 @@ file	dev/clock_subr.c
 file	arch/atari/dev/clock.c
 
 # keyboard
-device	kbd: event
+device	kbd: event,wskbddev
 attach	kbd at mainbus
 file	arch/atari/dev/kbd.c		kbd needs-flag
+file	arch/atari/dev/wskbdmap_atari.c	kbd
 
 # serial port via 68901 (ttyB0/ttyB1)
 device	ser: tty

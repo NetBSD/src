@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.46 2002/12/28 22:13:22 leo Exp $
+# $NetBSD: HADES,v 1.47 2003/02/02 18:26:23 thomas Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -155,6 +155,7 @@ options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
 
 options 	TT_SCSI			# SCSI-support for TT
 options 	TT_VIDEO		# Graphics support for TT
+#options	ET4000_HAS_2MB_MEM	# et4000 with 2 MB video memory
 
 options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
@@ -246,6 +247,10 @@ grfet2		at grfbus0
 ite2		at grfet2
 pcib0		at mainbus0	# PCI-bus
 pci0		at pcib0
+#wsdisplay/keybd: if used, remove grfbus* grfet* and ite*
+#vga0		at pci? dev ? function ? # a PCI VGA card
+#wsdisplay*	at vga? console ?	# as a wscons console
+#wskbd0		at kbd0 console ?	# Keyboard
 avmebus0	at mainbus0	# VME bus
 vme0		at avmebus0
 le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
