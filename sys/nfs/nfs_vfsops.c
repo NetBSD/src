@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.41 1996/02/09 21:48:38 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.42 1996/02/13 17:53:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -197,6 +197,7 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
+	nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root);
 	mp = nfs_mount_diskless(&nd.nd_root, "/", 0, &vp);
 	printf("root on %s\n", nd.nd_root.ndm_host);
 
@@ -248,6 +249,7 @@ nfs_mountroot()
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 */
+	nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap);
 	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0, &vp);
 	printf("swap on %s\n", nd.nd_swap.ndm_host);
 
@@ -291,7 +293,7 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 
 	/* Create the mount point. */
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
-	    M_MOUNT, M_NOWAIT);
+	    M_MOUNT, M_WAITOK);
 	if (mp == NULL)
 		panic("nfs_mountroot: malloc mount for %s", mntname);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
