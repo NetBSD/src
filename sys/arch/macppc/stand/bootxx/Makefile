@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/02/28 05:24:56 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2004/04/09 04:01:42 matt Exp $
 
 PROG=		bootxx
 NOMAN=		# defined
@@ -11,8 +11,8 @@ LINKFLAGS=	-x -N -Ttext 4000 -e _start
 CLEANFILES+=	${PROG}.sym
 
 ${PROG}: ${OBJS}
+	${_MKTARGET_LINK}
 	${LD} -o ${.TARGET}.sym ${LINKFLAGS} ${OBJS}
-	@${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
 
 .include <bsd.prog.mk>
