@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11 2000/06/29 07:07:55 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.12 2001/02/21 12:39:17 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ db_write_text(addr, size, data)
 		 * with this mapping and subtract it from the
 		 * total size.
 		 */
-		limit = NBPG - ((u_long)dst & PGOFSET);
+		limit = NBPG - m68k_page_offset(dst);
 		if (limit > size)
 			limit = size;
 		size -= limit;
