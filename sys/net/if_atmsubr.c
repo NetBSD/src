@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.12 1997/03/15 21:10:45 cgd Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.13 1998/03/24 18:48:59 bouyer Exp $       */
 
 /*
  *
@@ -259,7 +259,7 @@ atm_input(ifp, ah, m, rxhand)
 	      m_freem(m);
               return;
 	    }
-	    etype = ATM_LLC_TYPE(alc);
+	    etype = ntohs(ATM_LLC_TYPE(alc));
 	    m_adj(m, sizeof(*alc));
 	  }
 
