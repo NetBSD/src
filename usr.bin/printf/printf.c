@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.6 1993/11/19 20:50:27 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.7 1993/11/19 21:05:37 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,8 +52,8 @@ static char rcsid[] = "$Id: printf.c,v 1.6 1993/11/19 20:50:27 jtc Exp $";
 #include <locale.h>
 #include <err.h>
 
-static void	 print_escape_str();
-static int	 print_escape();
+static int	 print_escape_str __P((const char *));
+static int	 print_escape __P((const char *));
 
 static int	 getchr __P((void));
 static double	 getdouble __P((void));
@@ -126,7 +126,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	static char *skip1, *skip2;
 	register char *fmt, *start;
 	register int fieldwidth, precision;
 	char convch, nextch;
@@ -156,6 +155,8 @@ main(argc, argv)
 	format = *argv;
 	gargv = ++argv;
 
+#define SKIP1	"#-+ 0"
+#define SKIP2	"*0123456789"
 	do {
 		/*
 		 * Basic algorithm is to scan the format string for conversion
@@ -165,8 +166,6 @@ main(argc, argv)
 		 * provided arguments, arguments of zero/null string are 
 		 * provided to use up the format string.
 		 */
-		skip1 = "#-+ 0";
-		skip2 = "*0123456789";
 
 		/* find next format specification */
 		for (fmt = format; *fmt; fmt++) {
@@ -179,21 +178,23 @@ main(argc, argv)
 					break;
 				} else if (*fmt == 'b') {
 					char *p = getstr();
-					print_escape_str(p);
+					if (print_escape_str(p)) {
+						return (rval);
+					}
 					break;
 				}
 
 				/* skip to field width */
-				for (; index(skip1, *fmt); ++fmt);
+				for (; index(SKIP1, *fmt); ++fmt);
 				fieldwidth = *fmt == '*' ? getint() : 0;
 
 				/* skip to possible '.', get following precision */
-				for (; index(skip2, *fmt); ++fmt);
+				for (; index(SKIP2, *fmt); ++fmt);
 				if (*fmt == '.')
 					++fmt;
 				precision = *fmt == '*' ? getint() : 0;
 
-				for (; index(skip2, *fmt); ++fmt);
+				for (; index(SKIP2, *fmt); ++fmt);
 				if (!*fmt) {
 					warnx ("missing format character");
 					rval = 1;
@@ -214,14 +215,23 @@ main(argc, argv)
 					PF(start, p);
 					break;
 				}
-				case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': {
+				case 'd':
+				case 'i':
+				case 'o':
+				case 'u':
+				case 'x':
+				case 'X': {
 					char *f = mklong(start, convch);
 					long p = getlong();
 					PF(f, p);
 					free(f);
 					break;
 				}
-				case 'e': case 'E': case 'f': case 'g': case 'G': {
+				case 'e':
+				case 'E':
+				case 'f':
+				case 'g':
+				case 'G': {
 					double p = getdouble();
 					PF(start, p);
 					break;
@@ -250,10 +260,11 @@ main(argc, argv)
 
 /*
  * Print SysV echo(1) style escape string 
+ *	Halts processing string and returns 1 if a \c escape is encountered.
  */
-static void
+static int
 print_escape_str(str)
-	register char *str;
+	register const char *str;
 {
 	int value;
 	int c;
@@ -275,7 +286,7 @@ print_escape_str(str)
 				putchar (value);
 				str--;
 			} else if (*str == 'c') {
-				exit (rval);
+				return 1;
 			} else {
 				str--;			
 				str += print_escape(str);
@@ -285,6 +296,8 @@ print_escape_str(str)
 		}
 		str++;
 	}
+
+	return 0;
 }
 
 /*
@@ -292,9 +305,9 @@ print_escape_str(str)
  */
 static int
 print_escape(str)
-	register char *str;
+	register const char *str;
 {
-	char *start = str;
+	const char *start = str;
 	int c;
 	int value;
 
