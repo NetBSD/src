@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.598 2004/04/29 11:54:24 minoura Exp $
+# $NetBSD: GENERIC,v 1.599 2004/04/30 02:08:17 lukem Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.598 $"
+#ident 		"GENERIC-$Revision: 1.599 $"
 
 maxusers	32		# estimated number of users
 
@@ -38,6 +38,9 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines
 #options 	PIC_DELAY
+
+# Enhanced SpeedStep Technology in the Pentium M
+options		ENHANCED_SPEEDSTEP
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
