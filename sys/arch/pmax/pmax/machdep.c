@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1995/08/13 00:29:03 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1995/08/17 09:27:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,6 @@ int	(*Mach_spltty)() = splhigh;
 int	(*Mach_splimp)() = splhigh;
 int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
-void	(*tc_slot_hand_fill)();
 extern	volatile struct chiptime *Mach_clock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
 #ifdef DS5000_240
@@ -195,13 +194,11 @@ void	kn02_enable_intr  __P ((u_int slotno, void (*handler)(),
 #ifdef DS5000_100
 void kmin_enable_intr  __P ((u_int slotno, void (*handler)(),
 			     int unit, int onoff));
-void kmin_slot_hand_fill __P((tc_option_t *slot));
 #endif /*DS5000_100*/
 
 #ifdef DS5000_25
 void xine_enable_intr __P ((u_int slotno, void (*handler)(),
 			    int unit, int onoff));
-void xine_slot_hand_fill  __P((tc_option_t *slot));
 #endif /*DS5000_25*/
 
 #ifdef DS5000_240
@@ -441,7 +438,6 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[1] = KMIN_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KMIN_PHYS_TC_2_START;
 		asic_base = MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
-		tc_slot_hand_fill = kmin_slot_hand_fill;
 		pmax_hardware_intr = kmin_intr;
 		tc_enable_interrupt = kmin_enable_intr;
 		kmin_tc3_imask = (KMIN_INTR_CLOCK | KMIN_INTR_PSWARN |
@@ -486,7 +482,6 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[0] = XINE_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = XINE_PHYS_TC_1_START;
 		asic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
-		tc_slot_hand_fill = xine_slot_hand_fill;
 		pmax_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
 		Mach_splbio = Mach_spl3;
@@ -732,6 +727,10 @@ consinit()
  */
 xconsinit()
 {
+
+#ifdef DEBUG
+/*XXX*/			printf("xconsinit: Looking for console device\n");
+#endif
 
 	if (pmax_boardtype == DS_PMAX && kbd == 1)
 		cn_tab.cn_screen = 1;
@@ -1374,6 +1373,8 @@ initcpu()
 
 	/* clear any pending interrupts */
 	switch (pmax_boardtype) {
+	case DS_PMAX:
+		break;	/* nothing to  do for KN01. */
 	case DS_3MAXPLUS:
 	case DS_3MIN:
 	case DS_MAXINE:
@@ -1698,7 +1699,7 @@ kn02_enable_intr(slotno, handler, unit, on)
  *
  *	We pretend we actually have 8 slots even if we really have
  *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
- *	slots 3-7 (see kmin_slot_hand_fill).
+ *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
  */
 void
 kmin_enable_intr(slotno, handler, unit, on)
@@ -1747,7 +1748,7 @@ kmin_enable_intr(slotno, handler, unit, on)
  *	We pretend we actually have 11 slots even if we really have
  *	only 3: TCslots 0-1 maps to slots 0-1, TCslot 2 is used for
  *	the system (TCslot3), TCslot3 maps to slots 3-10
- *	(see xine_slot_hand_fill).
+ *	 (see pmax/tc/ds-asic-conf.c).
  *	Note that all these interrupts come in via the IMR.
  */
 void
@@ -1817,7 +1818,7 @@ kn03_tc_reset()
  *
  *	We pretend we actually have 8 slots even if we really have
  *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
- *	slots 3-7 (see kn03_slot_hand_fill).
+ *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
  */
 void
 kn03_enable_intr(slotno, handler, unit, on)
@@ -1877,137 +1878,6 @@ done:
 	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
 }
 #endif /* DS5000_240 */
-
-/*
- *	Object:
- *		kmin_slot_hand_fill		EXPORTED function
- *
- *	Fill in by hand the info for TC slots that are non-standard.
- *	This is the system slot on a 3min, which we think of as a
- *	set of non-regular size TC slots.
- *
- */
-void
-kmin_slot_hand_fill(slot)
-	tc_option_t *slot;
-{
-	register int i;
-
-	for (i = KMIN_SCSI_SLOT; i < KMIN_ASIC_SLOT+1; i++) {
-		slot[i].present = 1;
-		slot[i].slot_size = 1;
-		slot[i].rom_width = 1;
-		slot[i].unit = 0;
-		bcopy("DEC KMIN", slot[i].module_id, TC_ROM_LLEN+1);
-	}
-
-	/* scsi */
-	bcopy("PMAZ-AA ", slot[KMIN_SCSI_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KMIN_SCSI_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KMIN_SYS_SCSI);
-
-	/* lance */
-	bcopy("PMAD-AA ", slot[KMIN_LANCE_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KMIN_LANCE_SLOT].k1seg_address = 0;
-
-	/* scc */
-	bcopy("Z8530   ", slot[KMIN_SCC0_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KMIN_SCC0_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KMIN_SYS_SCC_0);
-
-	slot[KMIN_SCC1_SLOT].unit = 1;
-	bcopy("Z8530   ", slot[KMIN_SCC1_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KMIN_SCC1_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KMIN_SYS_SCC_1);
-
-	/* asic */
-	bcopy("ASIC    ", slot[KMIN_ASIC_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KMIN_ASIC_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
-	asic_init(0);
-
-	/*
-	 * Explicitly enable interrupts from on-motherboard `options'.
-	 */
-	for (i = KMIN_SCC0_SLOT; i >= KMIN_SCSI_SLOT; i--)
-		kmin_enable_intr(i, 0, slot[i].unit, 1);
-}
-
-/*
- *	Object:
- *		xine_slot_hand_fill		EXPORTED function
- *
- *	Fill in by hand the info for TC slots that are non-standard.
- *	This is the system slot on a 3min, which we think of as a
- *	set of non-regular size TC slots.
- *
- */
-void
-xine_slot_hand_fill(slot)
-	tc_option_t *slot;
-{
-	register int i;
-
-	for (i = XINE_FLOPPY_SLOT; i < XINE_FRC_SLOT+1; i++) {
-		slot[i].present = 1;
-		slot[i].slot_size = 1;
-		slot[i].rom_width = 1;
-		slot[i].unit = 0;
-		bcopy("DEC XINE", slot[i].module_id, TC_ROM_LLEN+1);
-	}
-
-	/* floppy */
-	bcopy("XINE-FDC", slot[XINE_FLOPPY_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_FLOPPY_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_FLOPPY);
-
-	/* scsi */
-	bcopy("PMAZ-AA ", slot[XINE_SCSI_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_SCSI_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_SCSI);
-
-	/* lance */
-	bcopy("PMAD-AA ", slot[XINE_LANCE_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_LANCE_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_LANCE);
-
-	/* scc */
-	bcopy("Z8530   ", slot[XINE_SCC0_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_SCC0_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_SCC_0);
-
-	/* Desktop */
-	bcopy("DTOP    ", slot[XINE_DTOP_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_DTOP_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_DTOP+0x20000); /* why? */
-
-	/* ISDN */
-	bcopy("AMD79c30", slot[XINE_ISDN_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_ISDN_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_ISDN);
-
-	/* Video */
-	bcopy("PMAG-DV ", slot[XINE_CFB_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_CFB_SLOT].k1seg_address =
-		MACH_PHYS_TO_CACHED(XINE_PHYS_CFB_START);
-
-	/* asic */
-	bcopy("ASIC    ", slot[XINE_ASIC_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_ASIC_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
-
-	/* free-running counter (high resolution mapped time) */
-	bcopy("XINE-FRC", slot[XINE_FRC_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[XINE_FRC_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(XINE_REG_FCTR);
-	asic_init(1);
-
-	/*
-	 * Explicitly enable interrupts from on-motherboard `options'.
-	 */
-	for (i = XINE_DTOP_SLOT ; i >= XINE_SCSI_SLOT; i--)
-		xine_enable_intr(i, 0, slot[i].unit, 1);
-}
 
 
 /*
