@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.89 2001/11/26 10:38:59 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.90 2001/11/26 14:06:31 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.89 2001/11/26 10:38:59 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.90 2001/11/26 14:06:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,6 +137,9 @@ __RCSID("$NetBSD: vmstat.c,v 1.89 2001/11/26 10:38:59 lukem Exp $");
 
 #include "dkstats.h"
 
+/*
+ * General namelist
+ */
 struct nlist namelist[] =
 {
 #define	X_BOOTTIME	0
@@ -165,50 +168,70 @@ struct nlist namelist[] =
 	{ "_pool_head" },
 #define	X_UVMEXP	12
 	{ "_uvmexp" },
-#define	X_NFSNODE	13
-	{ "_nfsnodehash" },
-#define	X_NFSNODETBL	14
-	{ "_nfsnodehashtbl" },
-#define	X_IHASH		15
-	{ "_ihash" },
-#define	X_IHASHTBL	16
-	{ "_ihashtbl" },
-#define	X_BUFHASH	17
-	{ "_bufhash" },
-#define	X_BUFHASHTBL	18
-	{ "_bufhashtbl" },
-#define	X_PIDHASH	19
-	{ "_pidhash" },
-#define	X_PIDHASHTBL	20
-	{ "_pidhashtbl" },
-#define	X_PGRPHASH	21
-	{ "_pgrphash" },
-#define	X_PGRPHASHTBL	22
-	{ "_pgrphashtbl" },
-#define	X_UIHASH	23
-	{ "_uihash" },
-#define	X_UIHASHTBL	24
-	{ "_uihashtbl" },
-#define	X_IFADDRHASH	25
-	{ "_in_ifaddrhash" },
-#define	X_IFADDRHASHTBL	26
-	{ "_in_ifaddrhashtbl" },
-#define	X_NCHASH	27
-	{ "_nchash" },
-#define	X_NCHASHTBL	28
-	{ "_nchashtbl" },
-#define	X_NCVHASH	29
-	{ "_ncvhash" },
-#define	X_NCVHASHTBL	30
-	{ "_ncvhashtbl" },
-
-#define	X_END		31
+#define	X_END		13
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
 #endif
-	{ "" },
+	{ NULL },
 };
+
+/*
+ * Namelist for hash statistics
+ */
+struct nlist hashnl[] =
+{
+#define	X_NFSNODE	0
+	{ "_nfsnodehash" },
+#define	X_NFSNODETBL	1
+	{ "_nfsnodehashtbl" },
+#define	X_IHASH		2
+	{ "_ihash" },
+#define	X_IHASHTBL	3
+	{ "_ihashtbl" },
+#define	X_BUFHASH	4
+	{ "_bufhash" },
+#define	X_BUFHASHTBL	5
+	{ "_bufhashtbl" },
+#define	X_PIDHASH	6
+	{ "_pidhash" },
+#define	X_PIDHASHTBL	7
+	{ "_pidhashtbl" },
+#define	X_PGRPHASH	8
+	{ "_pgrphash" },
+#define	X_PGRPHASHTBL	9
+	{ "_pgrphashtbl" },
+#define	X_UIHASH	10
+	{ "_uihash" },
+#define	X_UIHASHTBL	11
+	{ "_uihashtbl" },
+#define	X_IFADDRHASH	12
+	{ "_in_ifaddrhash" },
+#define	X_IFADDRHASHTBL	13
+	{ "_in_ifaddrhashtbl" },
+#define	X_NCHASH	14
+	{ "_nchash" },
+#define	X_NCHASHTBL	15
+	{ "_nchashtbl" },
+#define	X_NCVHASH	16
+	{ "_ncvhash" },
+#define	X_NCVHASHTBL	17
+	{ "_ncvhashtbl" },
+#define X_HASHNL_SIZE	18	/* must be last */
+	{ NULL },
+
+};
+
+/*
+ * Namelist for UVM histories
+ */
+struct nlist histnl[] =
+{
+	{ "_uvm_histories" },
+#define	X_UVM_HISTORIES		0
+	{ NULL },
+};
+
 
 
 struct	uvmexp uvmexp, ouvmexp;
@@ -357,19 +380,19 @@ main(int argc, char *argv[])
 	}
 
 	if ((c = kvm_nlist(kd, namelist)) != 0) {
-		if (c > 0) {
-			(void)fprintf(stderr,
-			    "vmstat: undefined symbols:");
-			for (c = 0;
-			    c < sizeof(namelist) / sizeof(namelist[0]); c++)
-				if (namelist[c].n_type == 0)
-					fprintf(stderr, " %s",
-					    namelist[c].n_name);
-			(void)fputc('\n', stderr);
-		} else
-			warnx("kvm_nlist: %s", kvm_geterr(kd));
+		if (c == -1)
+			errx(1, "kvm_nlist: %s %s", "namelist", kvm_geterr(kd));
+		(void)fprintf(stderr, "vmstat: undefined symbols:");
+		for (c = 0; c < sizeof(namelist) / sizeof(namelist[0]); c++)
+			if (namelist[c].n_type == 0)
+				fprintf(stderr, " %s", namelist[c].n_name);
+		(void)fputc('\n', stderr);
 		exit(1);
 	}
+	if ((c = kvm_nlist(kd, hashnl)) == -1 || c == X_HASHNL_SIZE)
+		errx(1, "kvm_nlist: %s %s", "hashnl", kvm_geterr(kd));
+	if (kvm_nlist(kd, histnl) == -1)
+		errx(1, "kvm_nlist: %s %s", "histnl", kvm_geterr(kd));
 
 	if (todo & VMSTAT) {
 		struct winsize winsize;
@@ -1129,6 +1152,7 @@ dopool(void)
 	    inuse, total, (double)(100 * inuse) / total);
 }
 
+
 enum hashtype {			/* from <sys/systm.h> */
 	HASH_LIST,
 	HASH_TAILQ
@@ -1141,41 +1165,51 @@ struct uidinfo {		/* XXX: no kernel header file */
 };
 
 struct kernel_hash {
-	int		hashsize;
-	int		hashtbl;
-	enum hashtype	type;
-	size_t		offset;
+	const char *	description;	/* description */
+	int		hashsize;	/* nlist index for hash size */
+	int		hashtbl;	/* nlist index for hash table */
+	enum hashtype	type;		/* type of hash table */
+	size_t		offset;		/* offset of {LIST,TAILQ}_NEXT */ 
 } khashes[] =
 {
 	{
-		X_NFSNODE, X_NFSNODETBL,
-		HASH_LIST, offsetof(struct nfsnode, n_hash)
-	} , {
-		X_IHASH, X_IHASHTBL,
-		HASH_LIST, offsetof(struct inode, i_hash)
-	} , {
+		"buffer hash",
 		X_BUFHASH, X_BUFHASHTBL,
 		HASH_LIST, offsetof(struct buf, b_hash)
-	} , {
-		X_PIDHASH, X_PIDHASHTBL,
-		HASH_LIST, offsetof(struct proc, p_hash)
-	} , {
-		X_PGRPHASH, X_PGRPHASHTBL,
-		HASH_LIST, offsetof(struct pgrp, pg_hash),
-	} , {
-		X_UIHASH, X_UIHASHTBL,
-		HASH_LIST, offsetof(struct uidinfo, ui_hash),
-	} , {
+	}, {
+		"inode cache (ihash)",
+		X_IHASH, X_IHASHTBL,
+		HASH_LIST, offsetof(struct inode, i_hash)
+	}, {
+		"ipv4 address -> interface hash",
 		X_IFADDRHASH, X_IFADDRHASHTBL,
 		HASH_LIST, offsetof(struct in_ifaddr, ia_hash),
-	} , {
+	}, {
+		"name cache hash",
 		X_NCHASH, X_NCHASHTBL,
 		HASH_LIST, offsetof(struct namecache, nc_hash),
-	} , {
+	}, {
+		"name cache directory hash",
 		X_NCVHASH, X_NCVHASHTBL,
 		HASH_LIST, offsetof(struct namecache, nc_vhash),
-	} , {
-		-1, -1, 0, 0
+	}, {
+		"nfs client node cache",
+		X_NFSNODE, X_NFSNODETBL,
+		HASH_LIST, offsetof(struct nfsnode, n_hash)
+	}, {
+		"process group (pgrp) hash",
+		X_PGRPHASH, X_PGRPHASHTBL,
+		HASH_LIST, offsetof(struct pgrp, pg_hash),
+	}, {
+		"process id (pid) hash",
+		X_PIDHASH, X_PIDHASHTBL,
+		HASH_LIST, offsetof(struct proc, p_hash)
+	}, {
+		"user info (uid -> used processes) hash",
+		X_UIHASH, X_UIHASHTBL,
+		HASH_LIST, offsetof(struct uidinfo, ui_hash),
+	}, {
+		NULL, -1, -1, 0, 0,
 	}
 };
 
@@ -1194,25 +1228,30 @@ dohashstat(int verbose, int todo, const char *hashname)
 	hashbufsize = 0;
 
 	if (todo & HASHLIST) {
-		const char *prefix = "";
-
-		printf("Supported hashes:\n\t");
-		for (curhash = khashes; curhash->hashsize != -1; curhash++) {
-			printf("%s%s",
-			    prefix, namelist[curhash->hashsize].n_name + 1);
-			prefix = ", ";
+		printf("Supported hashes:\n");
+		for (curhash = khashes; curhash->description; curhash++) {
+			if (hashnl[curhash->hashsize].n_value == 0 || 
+			    hashnl[curhash->hashtbl].n_value == 0)
+				continue;
+			printf("\t%-16s%s\n",
+			    hashnl[curhash->hashsize].n_name + 1,
+			    curhash->description);
 		}
 		return;
 	}
 
 	if (hashname != NULL) {
-		for (curhash = khashes; curhash->hashsize != -1; curhash++) {
-			if (strcmp(namelist[curhash->hashsize].n_name + 1,
-			    hashname) == 0)
+		for (curhash = khashes; curhash->description; curhash++) {
+			if (strcmp(hashnl[curhash->hashsize].n_name + 1,
+			    hashname) == 0 &&
+			    hashnl[curhash->hashsize].n_value != 0 && 
+			    hashnl[curhash->hashtbl].n_value != 0)
 				break;
 		}
-		if (curhash->hashsize == -1)
-			errx(1, "%s: no such hash", hashname);
+		if (curhash->description == NULL) {
+			warnx("%s: no such hash", hashname);
+			return;
+		}
 	}
 
 	printf(
@@ -1222,28 +1261,35 @@ dohashstat(int verbose, int todo, const char *hashname)
 	    "hash table", "buckets", "buckets", "%", "items", "chain",
 	    "chain");
 
-	for (curhash = khashes; curhash->hashsize != -1; curhash++) {
+	for (curhash = khashes; curhash->description; curhash++) {
+		if (hashnl[curhash->hashsize].n_value == 0 || 
+		    hashnl[curhash->hashtbl].n_value == 0)
+			continue;
 		if (hashname != NULL &&
-		    strcmp(namelist[curhash->hashsize].n_name + 1, hashname))
+		    strcmp(hashnl[curhash->hashsize].n_name + 1, hashname))
 			continue;
 		elemsize = curhash->type == HASH_LIST ?
 		    sizeof(*hashtbl_list) : sizeof(*hashtbl_tailq);
-		kread(curhash->hashsize, &hashsize, sizeof(hashsize));
+		deref_kptr((void *)hashnl[curhash->hashsize].n_value,
+		    &hashsize, sizeof(hashsize),
+		    hashnl[curhash->hashsize].n_name);
 		hashsize++;
-		kread(curhash->hashtbl, &hashaddr, sizeof(hashaddr));
+		deref_kptr((void *)hashnl[curhash->hashtbl].n_value,
+		    &hashaddr, sizeof(hashaddr),
+		    hashnl[curhash->hashtbl].n_name);
 		if (verbose)
 			printf("%s %lu, %s %p, offset %ld, elemsize %d\n",
-			    namelist[curhash->hashsize].n_name + 1, hashsize,
-			    namelist[curhash->hashtbl].n_name + 1, hashaddr,
+			    hashnl[curhash->hashsize].n_name + 1, hashsize,
+			    hashnl[curhash->hashtbl].n_name + 1, hashaddr,
 			    (long)curhash->offset, elemsize);
 		thissize = hashsize * elemsize;
 		if (thissize > hashbufsize) {
 			hashbufsize = thissize;
 			if ((hashbuf = realloc(hashbuf, hashbufsize)) == NULL)
-				errx(1, "malloc %d", hashbufsize);
+				errx(1, "malloc hashbuf %d", hashbufsize);
 		}
 		deref_kptr(hashaddr, hashbuf, thissize,
-		    namelist[curhash->hashtbl].n_name);
+		    hashnl[curhash->hashtbl].n_name);
 		used = 0;
 		items = maxchain = 0;
 		if (curhash->type == HASH_LIST)
@@ -1282,14 +1328,14 @@ dohashstat(int verbose, int todo, const char *hashname)
 				maxchain = chain;
 		}
 		printf("%-16s %8ld %8d %8.2f %8d %8d %8d\n",
-		    namelist[curhash->hashsize].n_name + 1,
+		    hashnl[curhash->hashsize].n_name + 1,
 		    hashsize, used, used * 100.0 / hashsize,
 		    items, used ? items / used : 0, maxchain);
 	}
 }
 
 /*
- * kread reads something from the kernel, given its nlist index.
+ * kread reads something from the kernel, given its nlist index in namelist[].
  */
 void
 kread(int nlx, void *addr, size_t size)
@@ -1319,14 +1365,6 @@ deref_kptr(const void *kptr, void *ptr, size_t len, const char *msg)
 		errx(1, "kptr %lx: %s: %s", (u_long)kptr, msg, kvm_geterr(kd));
 }
 
-
-struct nlist histnl[] =
-{
-	{ "_uvm_histories" },
-#define	X_UVM_HISTORIES		0
-	{ NULL },
-};
-
 /*
  * Traverse the UVM history buffers, performing the requested action.
  *
@@ -1340,7 +1378,7 @@ hist_traverse(int todo, const char *histname)
 	char *name = NULL;
 	size_t namelen = 0;
 
-	if (kvm_nlist(kd, histnl) != 0) {
+	if (histnl[0].n_value == 0) {
 		warnx("UVM history is not compiled into the kernel.");
 		return;
 	}
