@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.19 2004/01/17 21:24:29 bjh21 Exp $	*/
+/*	$NetBSD: beep.c,v 1.20 2004/01/17 21:25:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.19 2004/01/17 21:24:29 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.20 2004/01/17 21:25:25 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -276,7 +276,7 @@ beepioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		rate = *(int *)data;
 	    
 		if (rate < 3 || rate > 255)
-			return(EINVAL);
+			return EINVAL;
 
 		WriteWord(vidc_base, VIDC_SFR | rate);
 		break;
@@ -285,18 +285,17 @@ beepioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 /*		printf("set %08x\n", (u_int)data);
 		printf("set %08x %08x\n", (u_int)wave->addr, wave->size);*/
 		if (wave->size < 16 || wave->size > PAGE_SIZE)
-			return(ENXIO);
+			return ENXIO;
 		copyin(wave->addr, (char *)sc->sc_buffer0, wave->size);
 		sc->sc_sound_end0 = (sc->sc_sound_cur0 + wave->size - 16);
 		sc->sc_sound_end1 = (sc->sc_sound_cur1 + wave->size - 16);
 		break;
 
 	default:
-		return(ENXIO);
-		break;
+		return ENXIO;
 	}   
 
-	return(0);
+	return 0;
 }
 
 
@@ -316,7 +315,7 @@ beepintr(void *arg)
 	}
 
 	beepdma(sc, sc->sc_count & 1);
-	return(1);	/* Claim the interrupt */
+	return 1;	/* Claim the interrupt */
 }
 
 
