@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sysent.c,v 1.25 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: hpux_sysent.c,v 1.26 1998/10/19 22:31:50 tron Exp $	*/
 
 /*
  * System call switch table.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.17 1998/02/19 00:37:43 thorpej Exp 
  */
 
+#include "opt_sysv.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
