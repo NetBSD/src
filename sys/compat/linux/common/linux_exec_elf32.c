@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.43 1999/10/25 13:55:07 kleink Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.44 2000/06/26 14:38:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
