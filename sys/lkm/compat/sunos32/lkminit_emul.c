@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2001/11/12 23:23:05 lukem Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.3.26.1 2005/03/19 08:36:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.3 2001/11/12 23:23:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.3.26.1 2005/03/19 08:36:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ MOD_COMPAT("compat_sunos32", -1, &emul_sunos);
  */
 int
 compat_sunos32_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

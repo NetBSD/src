@@ -27,14 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.9 2002/05/21 10:31:12 martin Exp $
+ *	$Id: isic_bchan.c,v 1.9.18.1 2005/03/19 08:34:02 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.9 2002/05/21 10:31:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.9.18.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -93,13 +93,13 @@ isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	int s = splnet();
-	
+
 	if(activate == 0)
 	{
 		/* deactivation */
 		isic_hscx_init(sc, h_chan, activate);
 	}
-		
+
 	NDBGL1(L1_BCHAN, "%s, channel=%d, %s",
 		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
 
@@ -116,28 +116,28 @@ isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 	chan->rx_queue.ifq_maxlen = IFQ_MAXLEN;
 
 	chan->rxcount = 0;		/* reset rx counter */
-	
+
 	i4b_Bfreembuf(chan->in_mbuf);	/* clean rx mbuf */
 
 	chan->in_mbuf = NULL;		/* reset mbuf ptr */
 	chan->in_cbptr = NULL;		/* reset mbuf curr ptr */
 	chan->in_len = 0;		/* reset mbuf data len */
-	
+
 	/* transmitter part */
 
 	i4b_Bcleanifq(&chan->tx_queue);	/* clean tx queue */
 
 	chan->tx_queue.ifq_maxlen = IFQ_MAXLEN;
-	
+
 	chan->txcount = 0;		/* reset tx counter */
-	
+
 	i4b_Bfreembuf(chan->out_mbuf_head);	/* clean tx mbuf */
 
 	chan->out_mbuf_head = NULL;	/* reset head mbuf ptr */
-	chan->out_mbuf_cur = NULL;	/* reset current mbuf ptr */	
+	chan->out_mbuf_cur = NULL;	/* reset current mbuf ptr */
 	chan->out_mbuf_cur_ptr = NULL;	/* reset current mbuf data ptr */
 	chan->out_mbuf_cur_len = 0;	/* reset current mbuf data cnt */
-	
+
 	if(activate != 0)
 	{
 		/* activation */
@@ -171,9 +171,9 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	}
 
 	/* get next mbuf from queue */
-	
+
 	IF_DEQUEUE(&chan->tx_queue, chan->out_mbuf_head);
-	
+
 	if(chan->out_mbuf_head == NULL)		/* queue empty ? */
 	{
 		splx(s);			/* leave critical section */
@@ -181,11 +181,11 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	}
 
 	/* init current mbuf values */
-	
+
 	chan->out_mbuf_cur = chan->out_mbuf_head;
 	chan->out_mbuf_cur_len = chan->out_mbuf_cur->m_len;
-	chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;	
-	
+	chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;
+
 	/* activity indicator for timeout handling */
 
 	if(chan->bprot == BPROT_NONE)
@@ -200,7 +200,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	}
 
 	chan->state |= HSCX_TX_ACTIVE;	/* we start transmitting */
-	
+
 	if(sc->sc_trace & TRACE_B_TX)	/* if trace, send mbuf to trace dev */
 	{
 		i4b_trace_hdr hdr;
@@ -209,7 +209,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.count = ++sc->sc_trace_bcount;
 		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr,
 			chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
-	}			
+	}
 
 	len = 0;	/* # of chars put into HSCX tx fifo this time */
 
@@ -221,23 +221,23 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	 * is the last mbuf and we tell the HSCX that it has to send
 	 * CRC and closing flag
 	 */
-	 
+
 	while((len < sc->sc_bfifolen) && chan->out_mbuf_cur)
 	{
 		/*
 		 * put as much data into the HSCX fifo as is
 		 * available from the current mbuf
 		 */
-		 
+
 		if((len + chan->out_mbuf_cur_len) >= sc->sc_bfifolen)
 			next_len = sc->sc_bfifolen - len;
 		else
 			next_len = chan->out_mbuf_cur_len;
 
-#ifdef NOTDEF		
+#ifdef NOTDEF
 		printf("b:mh=%x, mc=%x, mcp=%x, mcl=%d l=%d nl=%d # ",
 			chan->out_mbuf_head,
-			chan->out_mbuf_cur,			
+			chan->out_mbuf_cur,
 			chan->out_mbuf_cur_ptr,
 			chan->out_mbuf_cur_len,
 			len,
@@ -263,7 +263,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		 * mbuf in the chain. If there is one, get ptr to it
 		 * and update the data ptr and the length
 		 */
-		 
+
 		if((chan->out_mbuf_cur_len <= 0)	&&
 		  ((chan->out_mbuf_cur = chan->out_mbuf_cur->m_next) != NULL))
 		{
@@ -277,11 +277,11 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 					TRC_CH_B1 : TRC_CH_B2);
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_bcount;
-				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, 
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token,
 					&hdr,
 					chan->out_mbuf_cur->m_len,
 					chan->out_mbuf_cur->m_data);
-			}			
+			}
 		}
 	}
 
@@ -293,7 +293,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	 * an XTF and an XME (message end) command which will then
 	 * send the CRC and the closing HDLC flag sequence
 	 */
-	 
+
 	if(chan->out_mbuf_cur && (chan->out_mbuf_cur_len > 0))
 	{
 		/*
@@ -301,36 +301,36 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		 * next xfer to HSCX tx fifo is done in the
 		 * HSCX interrupt routine.
 		 */
-		 
+
 		cmd |= HSCX_CMDR_XTF;
 	}
 	else
 	{
 		/* end of mbuf chain */
-	
+
 		if(chan->bprot == BPROT_NONE)
 			cmd |= HSCX_CMDR_XTF;
 		else
 			cmd |= HSCX_CMDR_XTF | HSCX_CMDR_XME;
-		
+
 		i4b_Bfreembuf(chan->out_mbuf_head);	/* free mbuf chain */
-		
+
 		chan->out_mbuf_head = NULL;
-		chan->out_mbuf_cur = NULL;			
+		chan->out_mbuf_cur = NULL;
 		chan->out_mbuf_cur_ptr = NULL;
 		chan->out_mbuf_cur_len = 0;
 	}
 
 	/* call timeout handling routine */
-	
+
 	if(activity == ACT_RX || activity == ACT_TX)
 		(*chan->l4_driver->bch_activity)(
 		    chan->l4_driver_softc, activity);
 
 	if(cmd)
 		isic_hscx_cmd(sc, h_chan, cmd);
-		
-	splx(s);	
+
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -344,7 +344,7 @@ isic_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 	int s;
 
 	s = splnet();
-	
+
 	bsp->outbytes = chan->txcount;
 	bsp->inbytes = chan->rxcount;
 
@@ -355,7 +355,7 @@ isic_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 }
 
 /*---------------------------------------------------------------------------*
- *	return the address of isic drivers linktab	
+ *	return the address of isic drivers linktab
  *---------------------------------------------------------------------------*/
 isdn_link_t *
 isic_ret_linktab(void *token, int channel)
@@ -366,7 +366,7 @@ isic_ret_linktab(void *token, int channel)
 
 	return(&chan->isdn_linktab);
 }
- 
+
 /*---------------------------------------------------------------------------*
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
@@ -406,9 +406,9 @@ isic_init_linktab(struct isic_softc *sc)
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
 	lt->rx_queue = &chan->rx_queue;
 
-	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
-	lt->rx_mbuf = &chan->in_mbuf;	
-                                                
+	/* used by HDLC data transfers, i.e. ipr and isp drivers */
+	lt->rx_mbuf = &chan->in_mbuf;
+
 	chan = &sc->sc_chan[HSCX_CH_B];
 	lt = &chan->isdn_linktab;
 
@@ -420,6 +420,6 @@ isic_init_linktab(struct isic_softc *sc)
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
 	lt->rx_queue = &chan->rx_queue;
 
-	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
-	lt->rx_mbuf = &chan->in_mbuf;	
+	/* used by HDLC data transfers, i.e. ipr and isp drivers */
+	lt->rx_mbuf = &chan->in_mbuf;
 }

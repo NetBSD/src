@@ -1,5 +1,5 @@
-/*	$NetBSD: mii.h,v 1.11 2004/04/09 20:39:44 thorpej Exp $	*/
- 
+/*	$NetBSD: mii.h,v 1.11.6.1 2005/03/19 08:34:59 yamt Exp $	*/
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *

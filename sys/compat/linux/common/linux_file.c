@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.64 2004/12/12 20:42:54 abs Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.64.4.1 2005/03/19 08:33:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.64 2004/12/12 20:42:54 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.64.4.1 2005/03/19 08:33:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ linux_sys_open(l, v, retval)
 	 * If we are a session leader, and we don't have a controlling
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
-	 */ 
+	 */
         if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
                 struct file     *fp;
@@ -346,7 +346,7 @@ linux_sys_fcntl(l, v, retval)
 		 * memory to hold the data. This is compatible enough
 		 * with NetBSD semantics to not do anything about the
 		 * difference.
-		 * 
+		 *
 		 * Linux does NOT send SIGIO for pipes. Deal with socketpair
 		 * ones and DTYPE_PIPE ones. For these, we don't set
 		 * the underlying flags (we don't pass O_ASYNC flag down
@@ -417,7 +417,7 @@ linux_sys_fcntl(l, v, retval)
 		break;
 
 	case LINUX_F_SETOWN:
-	case LINUX_F_GETOWN:	
+	case LINUX_F_GETOWN:
 		/*
 		 * We need to route fcntl() for tty descriptors around normal
 		 * fcntl(), since NetBSD tty TIOC{G,S}PGRP semantics is too
@@ -515,6 +515,11 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
+#ifdef LINUX_STAT_HAS_NSEC
+	lsp->lst_atime_nsec   = bsp->st_atimensec;
+	lsp->lst_mtime_nsec   = bsp->st_mtimensec;
+	lsp->lst_ctime_nsec   = bsp->st_ctimensec;
+#endif
 }
 
 /*
@@ -791,7 +796,7 @@ linux_sys_chown16(l, v, retval)
 		(uid_t)-1 : SCARG(uap, uid);
 	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
-	
+
 	return sys___posix_chown(l, &bca, retval);
 }
 
@@ -813,7 +818,7 @@ linux_sys_fchown16(l, v, retval)
 		(uid_t)-1 : SCARG(uap, uid);
 	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
-	
+
 	return sys___posix_fchown(l, &bfa, retval);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.7 2004/02/04 06:58:24 soren Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.7.10.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -204,5 +204,5 @@
 #define AGP_I855_GCC1_GMS_STOLEN_8M	0x30
 #define AGP_I855_GCC1_GMS_STOLEN_16M	0x40
 #define AGP_I855_GCC1_GMS_STOLEN_32M	0x50
- 
+
 #endif /* !_PCI_AGPREG_H_ */

@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 1996, 1998 Gary Jennejohn. All rights reserved. 
+ *   Copyright (c) 1996, 1998 Gary Jennejohn. All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions
@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,7 +30,7 @@
  *
  *---------------------------------------------------------------------------
  *
- *	$Id: hscx.h,v 1.1 2001/02/20 22:24:33 martin Exp $ 
+ *	$Id: hscx.h,v 1.1.36.1 2005/03/19 08:34:02 yamt Exp $
  *
  *      last edit-date: [Sun Feb 14 10:26:56 1999]
  *
@@ -39,17 +39,17 @@
  *
  *---------------------------------------------------------------------------
  */
- 
+
 #ifndef I4B_HSCX_H_
 #define I4B_HSCX_H_
 
 enum HSCX_VERSIONS {
 	HSCX_VA1,	/* 82525 A1  */
-	HSCX_UNKN1,	/* unknown 1 */	
+	HSCX_UNKN1,	/* unknown 1 */
 	HSCX_VA2,	/* 82525 A2  */
 	HSCX_UNKN3,	/* unknown 3 */
 	HSCX_VA3,	/* 82525 A3  */
-	HSCX_V21,	/* 82525 2.1 */	
+	HSCX_V21,	/* 82525 2.1 */
 	HSCX_UNKN	/* unknown version */
 };
 
@@ -61,7 +61,7 @@ enum HSCX_VERSIONS {
 /*
  * definitions of registers and bits for the HSCX ISDN chip.
  */
- 
+
 typedef struct hscx_reg {
 
 	/* 32 byte deep FIFO always first */

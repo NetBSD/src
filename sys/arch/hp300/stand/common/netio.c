@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.9 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: netio.c,v 1.9.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -149,8 +149,7 @@ netopen(struct open_file *f, ...)
 }
 
 int
-netclose(f)
-	struct open_file *f;
+netclose(struct open_file *f)
 {
 	/* On last close, do netif close, etc. */
 	if (open_count > 0)
@@ -162,13 +161,8 @@ netclose(f)
 }
 
 int
-netstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+netstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 
 	*rsize = size;
@@ -176,9 +170,7 @@ netstrategy(devdata, func, dblk, size, v_buf, rsize)
 }
 
 int
-netmountroot(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+netmountroot(struct open_file *f, char *devname)
 {
 	int error;
 	struct iodesc *d;

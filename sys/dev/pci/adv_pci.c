@@ -1,10 +1,10 @@
-/*	$NetBSD: adv_pci.c,v 1.14.12.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.14.12.2 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
- * 
+ *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14.12.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14.12.2 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ CFATTACH_DECL(adv_pci, sizeof(ASC_SOFTC),
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int 
+int
 adv_pci_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -124,7 +124,7 @@ adv_pci_match(parent, match, aux)
 }
 
 
-void 
+void
 adv_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

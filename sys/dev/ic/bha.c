@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.61 2004/12/07 14:57:19 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.61.4.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.61 2004/12/07 14:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.61.4.1 2005/03/19 08:34:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -915,7 +915,7 @@ bha_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 
 	/*
 	 * The BusLogic cards implement an Adaptec 1542 (aha)-compatible
-	 * interface. The native bha interface is not compatible with 
+	 * interface. The native bha interface is not compatible with
 	 * an aha. 1542. We need to ensure that we never match an
 	 * Adaptec 1542. We must also avoid sending Adaptec-compatible
 	 * commands to a real bha, lest it go into 1542 emulation mode.
@@ -1243,7 +1243,7 @@ bha_info(struct bha_softc *sc)
 	switch (sc->sc_firmware[0]) {
 	case '5':
 		sc->sc_max_ccbs = 192;
-		sc->sc_flags |= BHAF_TAGGED_QUEUEING;      
+		sc->sc_flags |= BHAF_TAGGED_QUEUEING;
 		break;
 
 	case '4':
@@ -1700,7 +1700,7 @@ bha_collect_mbo(struct bha_softc *sc)
 #ifdef BHADIAG
 	struct bha_ccb *ccb;
 #endif
-	
+
 	mbo = sc->sc_cmbo;
 
 	while (sc->sc_mbofull > 0) {
@@ -1899,7 +1899,7 @@ bha_init_ccb(struct bha_softc *sc, struct bha_ccb *ccb)
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
 	bha_reset_ccb(ccb);
-	
+
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
 	sc->sc_cur_ccbs++;
 

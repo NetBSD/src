@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.17 2003/11/05 04:03:43 christos Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.17.10.1 2005/03/19 08:33:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.17 2003/11/05 04:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.17.10.1 2005/03/19 08:33:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -349,7 +349,7 @@ ibcs2_sys_semsys(l, v, retval)
 			    struct ibcs2_semid_ds *isp, isi;
 			    struct semid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p, 0);
-  
+
 			    isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
 			    sp = stackgap_alloc(p, &sg, sizeof(struct semid_ds14));
 			    SCARG(uap, a5) = (int)sp;
@@ -369,7 +369,7 @@ ibcs2_sys_semsys(l, v, retval)
 			    struct ibcs2_semid_ds isp;
 			    struct semid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p, 0);
-  
+
 			    error = copyin((caddr_t)SCARG(uap, a5),
 					   (caddr_t)&isp, sizeof(isp));
 			    if (error)
@@ -484,7 +484,7 @@ ibcs2_sys_shmsys(l, v, retval)
 			    struct ibcs2_shmid_ds *isp, is;
 			    struct shmid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p, 0);
-  
+
 			    isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
 			    sp = stackgap_alloc(p, &sg, sizeof(*sp));
 			    SCARG(uap, a4) = (int)sp;
@@ -504,7 +504,7 @@ ibcs2_sys_shmsys(l, v, retval)
 			    struct ibcs2_shmid_ds is;
 			    struct shmid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p, 0);
-  
+
 			    error = copyin((caddr_t)SCARG(uap, a4),
 					   (caddr_t)&is, sizeof(is));
 			    if (error)

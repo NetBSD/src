@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.7 2004/09/20 18:51:55 jdolecek Exp $ */
+/*	$NetBSD: linux_types.h,v 1.7.6.1 2005/03/19 08:33:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _MIPS_LINUX_TYPES_H
 #define _MIPS_LINUX_TYPES_H
 
-/* 
- * from Linux's include/asm-mips/posix-types.h 
+/*
+ * from Linux's include/asm-mips/posix-types.h
  */
 typedef int linux_uid_t;
 typedef int linux_gid_t;
@@ -62,8 +62,8 @@ typedef linux_ino_t linux_ino_t32;
 typedef linux_nlink_t linux_nlink_t32;
 #endif
 
-/* 
- * From Linux's include/asm-mips/termbits.h 
+/*
+ * From Linux's include/asm-mips/termbits.h
  */
 typedef unsigned char linux_cc_t;
 #if defined(ELFSIZE) && (ELFSIZE == 64)
@@ -75,9 +75,9 @@ typedef unsigned long linux_tcflag_t;
 #endif
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
-/* 
+/*
  * From Linux's include/asm-mips64/stat.h
- * 64 bit version of struct linux_stat memory layout is the 
+ * 64 bit version of struct linux_stat memory layout is the
  * same as of struct stat64 of the 32-bit Linux kernel
  */
 struct linux_stat {
@@ -125,14 +125,14 @@ struct stat32 {
  	int		lst_pad4[14];
 };
 #else
-/* 
+/*
  * This matches struct stat64 in glibc2.1, hence the absolutely
  * insane amounts of padding around dev_t's.
  *
- * Still from Linux's include/asm-mips/stat.h 
- */  
+ * Still from Linux's include/asm-mips/stat.h
+ */
 struct linux_stat64 {
-	unsigned long	lst_dev;   
+	unsigned long	lst_dev;
 	unsigned long	lst_pad0[3];
 	unsigned long long lst_ino;
 #define lst_ino64 lst_ino
@@ -141,7 +141,7 @@ struct linux_stat64 {
 	linux_uid_t	lst_uid;
 	linux_gid_t	lst_gid;
 	unsigned long	lst_rdev;
-	unsigned long	lst_pad1[3];  
+	unsigned long	lst_pad1[3];
 	long long	lst_size;
 	linux_time_t	lst_atime;
 	unsigned long 	lreserved0;
@@ -153,12 +153,12 @@ struct linux_stat64 {
 	long long 	lst_blocks;
 };
 
-/* 
+/*
  * struct linux_stat is defined in Linux's include/asm-mips/stat.h
  * There is also a old_kernel_stat in Linux
  */
 struct linux_stat {
-	linux_dev_t	lst_dev; 
+	linux_dev_t	lst_dev;
 	long		lst_pad[3];
 	linux_ino_t32	lst_ino;
 	linux_mode_t	lst_mode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.1 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.1.4.1 2005/03/19 08:37:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -63,7 +63,7 @@ static MALLOC_DEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
 
 static int ufs_dirhashminblks = 5;
 static int ufs_dirhashmaxmem = 2 * 1024 * 1024;
-static int ufs_dirhashmem; 
+static int ufs_dirhashmem;
 static int ufs_dirhashcheck = 0;
 
 static int ufsdirhash_hash(struct dirhash *dh, const char *name, int namelen);
@@ -102,7 +102,7 @@ ufsdirhash_build(struct inode *ip)
 	struct vnode *vp;
 	doff_t bmask, pos;
 	int dirblocks, i, j, memreqd, nblocks, narrays, nslots, slot;
-	const int needswap = UFS_MPNEEDSWAP(ip->i_ump); 
+	const int needswap = UFS_MPNEEDSWAP(ip->i_ump);
 	int dirblksiz = ip->i_ump->um_dirblksiz;
 
 	/* Check if we can/should use dirhash. */
@@ -309,7 +309,7 @@ ufsdirhash_lookup(struct inode *ip, const char *name, int namelen, doff_t *offp,
 	struct buf *bp;
 	doff_t blkoff, bmask, offset, prevoff;
 	int i, slot;
-	const int needswap = UFS_MPNEEDSWAP(ip->i_ump); 
+	const int needswap = UFS_MPNEEDSWAP(ip->i_ump);
 	int dirblksiz = ip->i_ump->um_dirblksiz;
 
 	if ((dh = ip->i_dirhash) == NULL)
@@ -377,9 +377,9 @@ restart:
 			 * We found an entry with the expected offset. This
 			 * is probably the entry we want, but if not, the
 			 * code below will turn off seqoff and retry.
-			 */ 
+			 */
 			slot = i;
-		} else 
+		} else
 			dh->dh_seqopt = 0;
 	}
 
@@ -478,7 +478,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	struct buf *bp;
 	doff_t pos, slotstart;
 	int dirblock, error, freebytes, i;
-	const int needswap = UFS_MPNEEDSWAP(ip->i_ump); 
+	const int needswap = UFS_MPNEEDSWAP(ip->i_ump);
 	int dirblksiz = ip->i_ump->um_dirblksiz;
 
 	if ((dh = ip->i_dirhash) == NULL)

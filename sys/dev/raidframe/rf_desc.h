@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.16 2004/12/12 20:53:15 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.16.4.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -78,14 +78,13 @@ struct RF_RaidAccessDesc_s {
 	int     status;		/* pass/fail status of the last operation */
 	int     numRetries;     /* number of times this IO has been attempted */
 	RF_DagList_t *dagList;	/* list of dag lists, one list per stripe */
-	RF_VoidPointerListElem_t *iobufs; /* iobufs that need to be cleaned 
+	RF_VoidPointerListElem_t *iobufs; /* iobufs that need to be cleaned
 					     up at the end of this IO */
-	RF_VoidPointerListElem_t *stripebufs; /* stripe buffers that need to 
+	RF_VoidPointerListElem_t *stripebufs; /* stripe buffers that need to
 						 be cleaned up at the end of
 						 this IO */
 	RF_AccessStripeMapHeader_t *asmap;	/* the asm for this I/O */
-	void   *bp;		/* buf pointer for this RAID acc.  ignored
-				 * outside the kernel */
+	struct buf *bp;		/* buf pointer for this RAID acc */
 	RF_AccTraceEntry_t tracerec;	/* perf monitoring information for a
 					 * user access (not for dag stats) */
 	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this

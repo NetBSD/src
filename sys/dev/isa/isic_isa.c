@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.20.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.20.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -94,7 +94,7 @@ static int isic_isa_probe(struct device *, struct cfdata *, void *);
 static void isic_isa_attach(struct device *, struct device *, void *);
 static int setup_io_map(int flags, bus_space_tag_t iot,
 	bus_space_tag_t memt, bus_size_t iobase, bus_size_t maddr,
-	int *num_mappings, struct isic_io_map *maps, int *iosize, 
+	int *num_mappings, struct isic_io_map *maps, int *iosize,
 	int *msize);
 static void args_unmap(int *num_mappings, struct isic_io_map *maps);
 
@@ -208,7 +208,7 @@ isic_isa_probe(parent, cf, aux)
 
 #ifdef ISICISA_TEL_S0_16_3
 		case FLAG_TELES_S0_163:
-			ret = isic_probe_s0163(&args);		
+			ret = isic_probe_s0163(&args);
 			break;
 #endif
 
@@ -243,7 +243,7 @@ isic_isa_probe(parent, cf, aux)
 				{
 					ret = isic_probe_s08(&args);
 				}
-#endif /* ISICISA_TEL_S0_8 */				
+#endif /* ISICISA_TEL_S0_8 */
 			} else if (maddr == ISA_UNKNOWN_IOMEM) {
 				ret = 0;
 #ifdef ISICISA_TEL_S0_16_3
@@ -282,7 +282,7 @@ isic_isa_probe(parent, cf, aux)
 					if (ret)
 						break;
 				}
-#endif /* ISICISA_USR_STI */				
+#endif /* ISICISA_USR_STI */
 
 #ifdef ISICISA_ITKIX1
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
@@ -295,7 +295,7 @@ isic_isa_probe(parent, cf, aux)
 					if (ret)
 						break;
 				}
-#endif /* ISICISA_ITKIX1 */				
+#endif /* ISICISA_ITKIX1 */
 
 			} else {
 #ifdef ISICISA_TEL_S0_16_3
@@ -422,7 +422,7 @@ isicattach(int flags, struct isic_softc *sc)
 		"82525 or 21525 Version 2.1",
 		"Unknown Version"
 	};
-	
+
 	/* card dependent setup */
 	switch(FLAGS)
 	{
@@ -448,7 +448,7 @@ isicattach(int flags, struct isic_softc *sc)
 
 #ifdef ISICISA_TEL_S0_16_3
 		case FLAG_TELES_S0_163:
-			ret = isic_attach_s0163(PARM);		
+			ret = isic_attach_s0163(PARM);
 			break;
 #endif
 
@@ -460,7 +460,7 @@ isicattach(int flags, struct isic_softc *sc)
 
 #ifdef ISICISA_USR_STI
 		case FLAG_USR_ISDN_TA_INT:
-			ret = isic_attach_usrtai(PARM);		
+			ret = isic_attach_usrtai(PARM);
 			break;
 #endif
 
@@ -504,13 +504,13 @@ isicattach(int flags, struct isic_softc *sc)
 
 #ifdef CRTX_S0_P
 		case FLAG_CREATIX_S0_PnP:
-			ret = isic_attach_Cs0P(PARM2);		
+			ret = isic_attach_Cs0P(PARM2);
 			break;
 #endif
 
 #ifdef DRN_NGO
 		case FLAG_DRN_NGO:
-			ret = isic_attach_drnngo(PARM2);		
+			ret = isic_attach_drnngo(PARM2);
 			break;
 #endif
 
@@ -553,7 +553,7 @@ isicattach(int flags, struct isic_softc *sc)
 
 	if(ret == 0)
 		return(0);
-		
+
 	if(sc->sc_ipac)
 	{
 		sc->sc_ipac_version = IPAC_READ(IPAC_ID);
@@ -574,7 +574,7 @@ isicattach(int flags, struct isic_softc *sc)
 	else
 	{
 		sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
-	
+
 		switch(sc->sc_isac_version)
 		{
 			case ISAC_VA:
@@ -582,7 +582,7 @@ isicattach(int flags, struct isic_softc *sc)
 			case ISAC_VB2:
 			case ISAC_VB3:
 				break;
-	
+
 			default:
 				printf(ISIC_FMT "Error, ISAC version %d unknown!\n",
 				ISIC_PARM, sc->sc_isac_version);
@@ -599,7 +599,7 @@ isicattach(int flags, struct isic_softc *sc)
 			case HSCX_VA3:
 			case HSCX_V21:
 				break;
-				
+
 			default:
 				printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
 					ISIC_PARM, sc->sc_hscx_version);
@@ -613,7 +613,7 @@ isicattach(int flags, struct isic_softc *sc)
 	/* HSCX setup */
 
 	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
-	
+
 	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
@@ -640,16 +640,16 @@ isicattach(int flags, struct isic_softc *sc)
 
 #if defined(__FreeBSD__) && __FreeBSD__ >=3
 	callout_handle_init(&sc->sc_T3_callout);
-	callout_handle_init(&sc->sc_T4_callout);	
+	callout_handle_init(&sc->sc_T4_callout);
 #endif
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	callout_init(&sc->sc_T3_callout);
 	callout_init(&sc->sc_T4_callout);
 #endif
-	
+
 	/* announce manufacturer and card type */
-	
+
 	switch(FLAGS)
 	{
 		case FLAG_TELES_S0_8:
@@ -732,7 +732,7 @@ isicattach(int flags, struct isic_softc *sc)
 		printf(ISIC_FMT "%s\n", ISIC_PARM, drvid);
 
 	/* announce chip versions */
-	
+
 	if(sc->sc_ipac)
 	{
 		if(sc->sc_ipac_version == IPAC_V11)
@@ -756,11 +756,11 @@ isicattach(int flags, struct isic_softc *sc)
 					ISACversion[sc->sc_isac_version],
 					sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
 		}
-	
+
 #ifdef __FreeBSD__
 		printf("(Addr=0x%lx)\n", (u_long)ISAC_BASE);
 #endif
-		
+
 		if(sc->sc_hscx_version >= HSCX_UNKN)
 		{
 			printf(ISIC_FMT "HSCX Version UNKNOWN (VN=0x%x)" TERMFMT,
@@ -774,14 +774,14 @@ isicattach(int flags, struct isic_softc *sc)
 					ISIC_PARM,
 					HSCXversion[sc->sc_hscx_version]);
 		}
-	
-#ifdef __FreeBSD__	
+
+#ifdef __FreeBSD__
 		printf("(AddrA=0x%lx, AddrB=0x%lx)\n", (u_long)HSCX_A_BASE, (u_long)HSCX_B_BASE);
 
 #endif /* __FreeBSD__ */
 	}
 
-#ifdef __FreeBSD__	
+#ifdef __FreeBSD__
 	next_isic_unit++;
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300003
@@ -966,7 +966,7 @@ isic_isa_attach(parent, self, aux)
 			break;
 	}
 
-#if defined(__OpenBSD__)	
+#if defined(__OpenBSD__)
 	isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 		IPL_NET, isicintr, sc, sc->sc_dev.dv_xname);
 
@@ -1041,7 +1041,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[0].t = memt;
 			maps[0].offset = 0;
 			maps[0].size = 0x1000;
-			if (bus_space_map(maps[0].t, maddr, 
+			if (bus_space_map(maps[0].t, maddr,
 				maps[0].size, 0, &maps[0].h)) {
 				return 1;
 			}
@@ -1069,7 +1069,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[0].t = iot;
 			maps[0].offset = 0;
 			maps[0].size = 8;
-			if (bus_space_map(maps[0].t, iobase, 
+			if (bus_space_map(maps[0].t, iobase,
 				maps[0].size, 0, &maps[0].h)) {
 				return 1;
 			}
@@ -1077,7 +1077,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[1].t = memt;
 			maps[1].offset = 0;
 			maps[1].size = 0x1000;
-			if (bus_space_map(maps[1].t, maddr, 
+			if (bus_space_map(maps[1].t, maddr,
 				maps[1].size, 0, &maps[1].h)) {
 				return 1;
 			}
@@ -1101,7 +1101,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[0].t = iot;
 			maps[0].offset = 0;
 			maps[0].size = 8;
-			if (bus_space_map(maps[0].t, iobase, 
+			if (bus_space_map(maps[0].t, iobase,
 				maps[0].size, 0, &maps[0].h)) {
 				return 1;
 			}
@@ -1111,7 +1111,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[1].size = 0x40;	/* XXX - ??? */
 			if ((iobase - 0xd80 + 0x980) < 0 || (iobase - 0xd80 + 0x980) > 0x0ffff)
 				return 1;
-			if (bus_space_map(maps[1].t, iobase - 0xd80 + 0x980, 
+			if (bus_space_map(maps[1].t, iobase - 0xd80 + 0x980,
 				maps[1].size, 0, &maps[1].h)) {
 				return 1;
 			}
@@ -1121,7 +1121,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[2].size = 0x40;	/* XXX - ??? */
 			if ((iobase - 0xd80 + 0x180) < 0 || (iobase - 0xd80 + 0x180) > 0x0ffff)
 				return 1;
-			if (bus_space_map(maps[2].t, iobase - 0xd80 + 0x180, 
+			if (bus_space_map(maps[2].t, iobase - 0xd80 + 0x180,
 				maps[2].size, 0, &maps[2].h)) {
 				return 1;
 			}
@@ -1131,7 +1131,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[3].size = 0x40;	/* XXX - ??? */
 			if ((iobase - 0xd80 + 0x580) < 0 || (iobase - 0xd80 + 0x580) > 0x0ffff)
 				return 1;
-			if (bus_space_map(maps[3].t, iobase - 0xd80 + 0x580, 
+			if (bus_space_map(maps[3].t, iobase - 0xd80 + 0x580,
 				maps[3].size, 0, &maps[3].h)) {
 				return 1;
 			}

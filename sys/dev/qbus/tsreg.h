@@ -1,4 +1,4 @@
-/*	$NetBSD: tsreg.h,v 1.2 2001/05/13 15:32:40 ragge Exp $ */
+/*	$NetBSD: tsreg.h,v 1.2.34.1 2005/03/19 08:35:38 yamt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -35,7 +35,7 @@
 
 /*
  * TSV05 u.g. 5-11:
- * 
+ *
  * The TSV05 Subsystem has four device registers that occupy only two
  * LSI-11 Bus word locations: a Data Buffer (TSDB), a Bus Address
  * Register (TSBA), a Status Register (TSSR), and an Extended Data
@@ -54,7 +54,7 @@ struct tsdevice {
 #define	TSDBX	3
 
 /*
- * TSSR Register bit definitions 
+ * TSSR Register bit definitions
  */
 #define TS_SC	0x8000	/* Special Condition */
 #define TS_UPE	0x4000	/* not used in TSV05, UPE in TS11 */
@@ -63,7 +63,7 @@ struct tsdevice {
 #define TS_NXM	0x0800	/* Nonexistent Memory */
 #define TS_NBA	0x0400	/* Need Buffer Address */
 #define TS_A11	0x0300	/* Address Bits 17-16 */
-#define TS_SSR	0x0080 	/* Subsystem Ready */
+#define TS_SSR	0x0080	/* Subsystem Ready */
 #define TS_OFL	0x0040	/* Off Line */
 #define TS_FTC	0x0030	/* Fatal Termination Class Code */
 #define TS_TC	0x000E	/* Termination Class Code */
@@ -72,7 +72,7 @@ struct tsdevice {
 #define TS_TSSR_BITS	"\20\20SC\17UPE\16SCE\15RMR\14NXM\13NBA\12A17\11A16" \
 			   "\10SSR\7OFL\6FTC\5FTC\4FTL\3ERR\2ATTN\1NU"
 
-/* 
+/*
  * Termination Codes
  */
 #define TS_FTC_IDF	(0<<4)	/* internal diagnostic failure */
@@ -113,7 +113,7 @@ struct cmd {			/* command packet (not all words required) */
 #define TS_CC_READ	0x01			/* READ */
 #define TS_CMD_RNF	TS_CMD(0,TS_CC_READ)	/* Read Next (Forward) */
 #define TS_CMD_RPR	TS_CMD(1,TS_CC_READ)	/* Read Previous (Reverse) */
-#define TS_CMD_RPF	TS_CMD(2,TS_CC_READ)	/* Read Previous (Forward) */ 
+#define TS_CMD_RPF	TS_CMD(2,TS_CC_READ)	/* Read Previous (Forward) */
 #define TS_CMD_RNR	TS_CMD(3,TS_CC_READ)	/* Read Next (Reverse) */
 
 #define TS_CC_WCHAR	0x04			/* WRITE CHARACTERISTICS */
@@ -182,8 +182,8 @@ struct chr {
 /*
  * Status flags
  *
- * Extended Status register 0 (XST0)  --  XST0 appears as the fourth word 
- * in the message buffer stored by the TSV05 subsystem upon completion of 
+ * Extended Status register 0 (XST0)  --  XST0 appears as the fourth word
+ * in the message buffer stored by the TSV05 subsystem upon completion of
  * a command or an ATTN
  */
 #define TS_SF_TMK	(1<<15)	/* Tape Mark Detected */
@@ -206,8 +206,8 @@ struct chr {
 #define TS_XST0_BITS	"\20\20TMK\17RLS\16LET\15RLL\14WLE\13NEF\12ILC\11ILA" \
 			   "\10MOT\07ONL\06IE \05VCK\04PED\03WLK\02BOT\01EOT"
 /*
- * Extended Status register 1 (XST1)  --  XST1 appears as the fifth word 
- * in the message buffer stored by the TSV05 subsystem upon completion of 
+ * Extended Status register 1 (XST1)  --  XST1 appears as the fifth word
+ * in the message buffer stored by the TSV05 subsystem upon completion of
  * a command or an ATTN
  */
 #define TS_SF_DLT	(1<<15)	/* Data Late */
@@ -230,7 +230,7 @@ struct chr {
 			   "\10IPR\07IPO\06SYN\05IED\04POS\03POL\02UNC\01MTE"
 
 /*
- * Extended Status register 2 (XST2)  --  sixth word 
+ * Extended Status register 2 (XST2)  --  sixth word
  */
 #define TS_SF_OPM	(1<<15)	/* Operation in Progress (tape moving) */
 #define TS_SF_RCE	(1<<14)	/* RAM Checksum Error */
@@ -248,7 +248,7 @@ struct chr {
 #define TS_XST2_BITS	"\20\20OPM\17RCE\16SBP\15CAF\13WCF\11PDT\10EFES\7BES"
 
 /*
- * Extended Status register 3 (XST3))  --  seventh word 
+ * Extended Status register 3 (XST3))  --  seventh word
  */
 #define TS_SF_MDE	0xFF00	/* Micro-Diagnostics Error Code */
 #define TS_SF_LMX	(1<< 7)	/* TS11: Tension Arm Limit Exceeded */
@@ -263,7 +263,7 @@ struct chr {
 #define TS_XST3_BITS	"\20\10LMX\07OPI\06REV\05CRF\04DCK\03NBE\02LSA\01RIB"
 
 /*
- * Extended Status register 4 (XST4))  --  eighth word 
+ * Extended Status register 4 (XST4))  --  eighth word
  */
 #define TS_SF_HSP	(1<<15)	/* High Speed */
 #define TS_SF_RCX	(1<<14)	/* Retry Count Exceeded */

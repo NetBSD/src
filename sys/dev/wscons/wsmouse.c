@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.34 2003/11/28 13:19:46 drochner Exp $ */
+/* $NetBSD: wsmouse.c,v 1.34.10.1 2005/03/19 08:36:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.34 2003/11/28 13:19:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.34.10.1 2005/03/19 08:36:02 yamt Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -136,7 +136,7 @@ static void wsmouse_attach(struct device *, struct device *, void *);
 static int  wsmouse_detach(struct device *, int);
 static int  wsmouse_activate(struct device *, enum devact);
 
-static int  wsmouse_do_ioctl(struct wsmouse_softc *, u_long, caddr_t, 
+static int  wsmouse_do_ioctl(struct wsmouse_softc *, u_long, caddr_t,
 			     int, struct proc *);
 
 #if NWSMUX > 0

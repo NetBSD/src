@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.16 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.16.6.1 2005/03/19 08:33:12 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.16 2004/04/16 23:58:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.16.6.1 2005/03/19 08:33:12 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -115,6 +115,7 @@ enable_fpu(void)
 	tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 	ci->ci_fpulwp = l;
 	pcb->pcb_fpcpu = ci;
+	pcb->pcb_flags |= PCB_OWNFPU;
 	__asm __volatile ("sync");
 	mtmsr(msr);
 }
@@ -215,7 +216,7 @@ save_fpu_lwp(struct lwp *l, int discard)
 		KASSERT(l == pcb->pcb_fpcpu->ci_fpulwp);
 		pcb->pcb_fpcpu->ci_fpulwp = NULL;
 		pcb->pcb_fpcpu = NULL;
-		pcb->pcb_flags &= ~PCB_FPU;
+		pcb->pcb_flags &= ~PCB_OWNFPU;
 		return;
 	}
 
@@ -255,6 +256,7 @@ get_fpu_fault_code(void)
 
 	KASSERT(pcb->pcb_fpcpu == ci);
 	KASSERT(pcb->pcb_flags & PCB_FPU);
+	KASSERT(pcb->pcb_flags & PCB_OWNFPU);
 	KASSERT(ci->ci_fpulwp == curlwp);
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);

@@ -1,11 +1,11 @@
-/*	$NetBSD: synapticsreg.h,v 1.2 2005/01/02 22:37:12 scw Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.2.6.1 2005/03/19 08:35:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
  * Copyright (c) 2004, Ales Krenek
  * Copyright (c) 2004, Kentaro A. Kurahone
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

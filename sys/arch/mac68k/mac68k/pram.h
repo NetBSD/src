@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.h,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: pram.h,v 1.5.4.1 2005/03/19 08:33:05 yamt Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -56,10 +56,10 @@
  *	     warned!!
  */
 
-void readPram    (char *addr, int loc, int len);
-void writePram   (char *addr, int loc, int len);
-void readExtPram (char *addr, int loc, int len);
-void writeExtPram(char *addr, int loc, int len);
+void readPram(char *, int, int);
+void writePram(char *, int, int);
+void readExtPram(char *, int, int);
+void writeExtPram(char *, int, int);
 
 /*
  * The following routines are used to get/set the PRAM time
@@ -67,7 +67,7 @@ void writeExtPram(char *addr, int loc, int len);
  */
 
 unsigned long	getPramTime(void);
-void 		setPramTime __P((unsigned long));
+void 		setPramTime(unsigned long);
 
 unsigned long	pram_readtime(void);
 void		pram_settime(unsigned long);
@@ -81,4 +81,3 @@ unsigned long	getPramTimeII(void);
 void		setPramTimeII(unsigned long);
 
 #endif /* !MRG_ADB */
-

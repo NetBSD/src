@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.63 2003/06/29 22:30:13 fvdl Exp $	*/
+/*	$NetBSD: lpt.c,v 1.63.12.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -15,25 +15,25 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This software is a component of "386BSD" developed by 
+ *	This software is a component of "386BSD" developed by
  *	William F. Jolitz, TeleMuse.
  * 4. Neither the name of the developer nor the name "386BSD"
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS A COMPONENT OF 386BSD DEVELOPED BY WILLIAM F. JOLITZ 
- * AND IS INTENDED FOR RESEARCH AND EDUCATIONAL PURPOSES ONLY. THIS 
- * SOFTWARE SHOULD NOT BE CONSIDERED TO BE A COMMERCIAL PRODUCT. 
- * THE DEVELOPER URGES THAT USERS WHO REQUIRE A COMMERCIAL PRODUCT 
+ * THIS SOFTWARE IS A COMPONENT OF 386BSD DEVELOPED BY WILLIAM F. JOLITZ
+ * AND IS INTENDED FOR RESEARCH AND EDUCATIONAL PURPOSES ONLY. THIS
+ * SOFTWARE SHOULD NOT BE CONSIDERED TO BE A COMMERCIAL PRODUCT.
+ * THE DEVELOPER URGES THAT USERS WHO REQUIRE A COMMERCIAL PRODUCT
  * NOT MAKE USE OF THIS WORK.
  *
  * FOR USERS WHO WISH TO UNDERSTAND THE 386BSD SYSTEM DEVELOPED
- * BY WILLIAM F. JOLITZ, WE RECOMMEND THE USER STUDY WRITTEN 
- * REFERENCES SUCH AS THE  "PORTING UNIX TO THE 386" SERIES 
- * (BEGINNING JANUARY 1991 "DR. DOBBS JOURNAL", USA AND BEGINNING 
- * JUNE 1991 "UNIX MAGAZIN", GERMANY) BY WILLIAM F. JOLITZ AND 
- * LYNNE GREER JOLITZ, AS WELL AS OTHER BOOKS ON UNIX AND THE 
- * ON-LINE 386BSD USER MANUAL BEFORE USE. A BOOK DISCUSSING THE INTERNALS 
+ * BY WILLIAM F. JOLITZ, WE RECOMMEND THE USER STUDY WRITTEN
+ * REFERENCES SUCH AS THE  "PORTING UNIX TO THE 386" SERIES
+ * (BEGINNING JANUARY 1991 "DR. DOBBS JOURNAL", USA AND BEGINNING
+ * JUNE 1991 "UNIX MAGAZIN", GERMANY) BY WILLIAM F. JOLITZ AND
+ * LYNNE GREER JOLITZ, AS WELL AS OTHER BOOKS ON UNIX AND THE
+ * ON-LINE 386BSD USER MANUAL BEFORE USE. A BOOK DISCUSSING THE INTERNALS
  * OF 386BSD ENTITLED "386BSD FROM THE INSIDE OUT" WILL BE AVAILABLE LATE 1992.
  *
  * THIS SOFTWARE IS PROVIDED BY THE DEVELOPER ``AS IS'' AND
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.63 2003/06/29 22:30:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.63.12.1 2005/03/19 08:34:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ lptnotready(status, sc)
 			log(LOG_NOTICE,
 			    "%s: output error\n", sc->sc_dev.dv_xname);
 	}
-	
+
 	return status;
 }
 
@@ -344,7 +344,7 @@ lptpushbytes(sc)
 	return 0;
 }
 
-/* 
+/*
  * Copy a line from user space to a local buffer, then call putc to get the
  * chars moved to the output queue.
  */

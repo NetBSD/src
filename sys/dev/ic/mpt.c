@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: mpt.c,v 1.4.10.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.4.10.1 2005/03/19 08:34:03 yamt Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -162,7 +162,7 @@ mpt_soft_reset(mpt_softc_t *mpt)
 }
 
 /* This is a magic diagnostic reset that resets all the ARM
- * processors in the chip. 
+ * processors in the chip.
  */
 void
 mpt_hard_reset(mpt_softc_t *mpt)
@@ -443,7 +443,7 @@ mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 {
 	MSG_IOC_FACTS f_req;
 	int error;
-	
+
 	bzero(&f_req, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_IOC_FACTS;
 	f_req.MsgContext =  0x12071942;
@@ -459,7 +459,7 @@ mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
 {
 	MSG_PORT_FACTS f_req;
 	int error;
-	
+
 	/* XXX: Only getting PORT FACTS for Port 0 */
 	bzero(&f_req, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_PORT_FACTS;
@@ -784,7 +784,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 			    mpt->mpt_dev_page0[i].Header.PageNumber,
 			    mpt->mpt_dev_page0[i].Header.PageType);
 		}
-		
+
 		rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_SCSI_DEVICE,
 		    1, i, &mpt->mpt_dev_page1[i].Header);
 		if (rv) {
@@ -1016,7 +1016,7 @@ void
 mpt_disable_ints(mpt_softc_t *mpt)
 {
 	/* Mask all interrupts */
-	mpt_write(mpt, MPT_OFFSET_INTR_MASK, 
+	mpt_write(mpt, MPT_OFFSET_INTR_MASK,
 	    MPT_INTR_REPLY_MASK | MPT_INTR_DB_MASK);
 }
 
@@ -1053,7 +1053,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	default:
 		break;
 	}
-	
+
 	for (try = 0; try < MPT_MAX_TRYS; try++) {
 		/*
 		 * No need to reset if the IOC is already in the READY state.
@@ -1061,7 +1061,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		 * Force reset if initialization failed previously.
 		 * Note that a hard_reset of the second channel of a '929
 		 * will stop operation of the first channel.  Hopefully, if the
-		 * first channel is ok, the second will not require a hard 
+		 * first channel is ok, the second will not require a hard
 		 * reset.
 		 */
 		if ((mpt_rd_db(mpt) & MPT_DB_STATE_MASK) !=
@@ -1137,8 +1137,8 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		 *
 		 * Do *not* except global credits.
 		 */
-		for (val = 0, pptr = mpt->reply_phys; 
-		    (pptr + MPT_REPLY_SIZE) < (mpt->reply_phys + PAGE_SIZE); 
+		for (val = 0, pptr = mpt->reply_phys;
+		    (pptr + MPT_REPLY_SIZE) < (mpt->reply_phys + PAGE_SIZE);
 		     pptr += MPT_REPLY_SIZE) {
 			mpt_free_reply(mpt, pptr);
 			if (++val == mpt->mpt_global_credits - 1)

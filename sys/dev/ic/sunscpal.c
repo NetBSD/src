@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.15.6.1 2005/02/12 18:17:44 yamt Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.15.6.2 2005/03/19 08:34:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.15.6.1 2005/02/12 18:17:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.15.6.2 2005/03/19 08:34:04 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -260,7 +260,7 @@ sunscpal_dma_start(sc)
 	/* Let'er rip! */
 	icr = SUNSCPAL_READ_2(sc, sunscpal_icr);
 	icr |= SUNSCPAL_ICR_DMA_ENABLE |
-	    ((xlen & 1) ? 0 : SUNSCPAL_ICR_WORD_MODE) | 
+	    ((xlen & 1) ? 0 : SUNSCPAL_ICR_WORD_MODE) |
 	    ((sr->sr_flags & SR_IMMED) ? 0 : SUNSCPAL_ICR_INTERRUPT_ENABLE);
 	SUNSCPAL_WRITE_2(sc, sunscpal_icr, icr);
 
@@ -342,14 +342,14 @@ sunscpal_dma_stop(sc)
 
 #ifdef	SUNSCPAL_USE_BUS_DMA
 	/*
-	 * XXX - this function is supposed to be independent of 
+	 * XXX - this function is supposed to be independent of
 	 * the host's DMA implementation.
 	 */
  {
 	 sunscpal_dma_handle_t dh = sr->sr_dma_hand;
-	
+
 	 /* sync the DMA map: */
-	 bus_dmamap_sync(sc->sunscpal_dmat, dh->dh_dmamap, 0, dh->dh_maplen, 
+	 bus_dmamap_sync(sc->sunscpal_dmat, dh->dh_dmamap, 0, dh->dh_maplen,
 	     ((xs->xs_control & XS_CTL_DATA_OUT) == 0 ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
  }
 #endif /* SUNSCPAL_USE_BUS_DMA */
@@ -421,7 +421,7 @@ sunscpal_sched_msgout(sc, msg_code)
 	struct sunscpal_softc *sc;
 	int msg_code;
 {
-	/* 
+	/*
 	 * This controller does not allow you to assert ATN, which
 	 * will eventually leave us with no option other than to reset
 	 * the bus.  We keep this function as a placeholder, though,
@@ -593,7 +593,7 @@ sunscpal_intr(arg)
 	 * The remaining documented interrupt causes are a DMA complete
 	 * condition.
 	 *
-	 * The procedure is to let sunscpal_machine() figure out what 
+	 * The procedure is to let sunscpal_machine() figure out what
 	 * to do next.
 	 */
 	if (sc->sc_state & SUNSCPAL_WORKING) {
@@ -1194,7 +1194,7 @@ void
 sunscpal_reselect(sc)
 	struct sunscpal_softc *sc;
 {
-	/* 
+	/*
 	 * This controller does not implement disconnect/reselect, so
 	 * we really don't have anything to do here.  We keep this
 	 * function as a placeholder, though.
@@ -1519,7 +1519,7 @@ static int
 sunscpal_msg_out(sc)
 	struct sunscpal_softc *sc;
 {
-	/* 
+	/*
 	 * This controller does not allow you to assert ATN, which
 	 * means we will never get the opportunity to send messages to
 	 * the target (the bus will never enter this MSG_OUT phase).
@@ -1930,7 +1930,7 @@ sunscpal_show_scsi_cmd(xs)
 		}
 		printf("-\n");
 	} else {
-		
+
 		printf("-RESET-\n");
 	}
 }
@@ -2147,7 +2147,7 @@ sunscpal_minphys(struct buf *bp)
 
 /*
  * Allocate a DMA handle and put it in sr->sr_dma_hand.  Prepare
- * for DMA transfer.  
+ * for DMA transfer.
  */
 static void
 sunscpal_dma_alloc(sc)
@@ -2243,8 +2243,8 @@ sunscpal_dma_free(sc)
 }
 
 /*
- * This function is called during the SELECT phase that 
- * precedes a COMMAND phase, in case we need to setup the 
+ * This function is called during the SELECT phase that
+ * precedes a COMMAND phase, in case we need to setup the
  * DMA engine before the bus enters a DATA phase.
  *
  * On the sc version, setup the start address and the count.
@@ -2280,7 +2280,7 @@ sunscpal_dma_setup(sc)
 #endif
 
 	/* sync the DMA map: */
-	bus_dmamap_sync(sc->sunscpal_dmat, dh->dh_dmamap, 0, dh->dh_maplen, 
+	bus_dmamap_sync(sc->sunscpal_dmat, dh->dh_dmamap, 0, dh->dh_maplen,
 	    ((xs->xs_control & XS_CTL_DATA_OUT) == 0 ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
 
 	/* Load the start address and the count. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.9 2003/01/20 05:30:08 simonb Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.9.12.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.9 2003/01/20 05:30:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.9.12.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -61,7 +61,7 @@ typedef struct RF_InterdeclusterConfigInfo_s {
 	RF_SectorNum_t mirrorStripeOffset;
 }       RF_InterdeclusterConfigInfo_t;
 
-int 
+int
 rf_ConfigureInterDecluster(
     RF_ShutdownList_t ** listp,
     RF_Raid_t * raidPtr,
@@ -123,19 +123,19 @@ rf_ConfigureInterDecluster(
 	return (0);
 }
 
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersInterDecluster(RF_Raid_t * raidPtr)
 {
 	return (30);
 }
 
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimitInterDecluster(RF_Raid_t * raidPtr)
 {
 	return (raidPtr->sectorsPerDisk);
 }
 
-RF_ReconUnitCount_t 
+RF_ReconUnitCount_t
 rf_GetNumSpareRUsInterDecluster(
     RF_Raid_t * raidPtr)
 {
@@ -146,7 +146,7 @@ rf_GetNumSpareRUsInterDecluster(
 	 * sparing region */
 }
 /* Maps to the primary copy of the data, i.e. the first mirror pair */
-void 
+void
 rf_MapSectorInterDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
@@ -185,7 +185,7 @@ rf_MapSectorInterDecluster(
 	}
 }
 /* Maps to the second copy of the mirror pair. */
-void 
+void
 rf_MapParityInterDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
@@ -223,7 +223,7 @@ rf_MapParityInterDecluster(
 	}
 }
 
-void 
+void
 rf_IdentifyStripeInterDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t addr,
@@ -240,7 +240,7 @@ rf_IdentifyStripeInterDecluster(
 	*diskids = info->stripeIdentifier[SUID];
 }
 
-void 
+void
 rf_MapSIDToPSIDInterDecluster(
     RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID,
@@ -259,7 +259,7 @@ rf_MapSIDToPSIDInterDecluster(
  *              createFunc - name of function to use to create the graph
  *****************************************************************************/
 
-void 
+void
 rf_RAIDIDagSelect(
     RF_Raid_t * raidPtr,
     RF_IoType_t type,

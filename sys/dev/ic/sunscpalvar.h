@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.4.6.1 2005/02/12 18:17:44 yamt Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.4.6.2 2005/03/19 08:34:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -124,12 +124,12 @@
 #define	SUNSCPAL_MAX_DMA_LEN 0xE000
 
 #ifdef SUNSCPAL_USE_BUS_DMA
-/* 
- * This structure is used to keep track of mapped DMA requests. 
+/*
+ * This structure is used to keep track of mapped DMA requests.
  */
 struct sunscpal_dma_handle {
 	int		dh_flags;
-#define	SUNSCDH_BUSY	0x01		/* This DH is in use */ 
+#define	SUNSCDH_BUSY	0x01		/* This DH is in use */
 	u_char *	dh_mapaddr;	/* Original data pointer */
 	int		dh_maplen;	/* Original data length */
 	bus_dmamap_t	dh_dmamap;

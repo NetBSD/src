@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.18.6.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.18.6.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.18.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.18.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.18.6.1 2005/02/12 18:17:45 yamt Exp 
 #include <dev/ic/ne2000var.h>
 
 #include <dev/ic/rtl80x9reg.h>
-#include <dev/ic/rtl80x9var.h>          
+#include <dev/ic/rtl80x9var.h>
 
 #include <dev/isa/isavar.h>
 

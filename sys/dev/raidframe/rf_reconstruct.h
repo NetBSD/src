@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.18.6.1 2005/02/12 18:17:50 yamt Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.18.6.2 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -181,7 +181,7 @@ int rf_ReconstructFailedDiskBasic(RF_Raid_t *, RF_RowCol_t);
 int rf_ReconstructInPlace(RF_Raid_t *, RF_RowCol_t);
 int rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *);
 int rf_ForceOrBlockRecon(RF_Raid_t *, RF_AccessStripeMap_t *,
-			 void (*cbFunc) (RF_Raid_t *, void *), 
+			 void (*cbFunc) (RF_Raid_t *, void *),
 			 void *);
 int rf_UnblockRecon(RF_Raid_t *, RF_AccessStripeMap_t *);
 

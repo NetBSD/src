@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.17 2004/12/20 23:03:39 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.17.4.1 2005/03/19 08:36:35 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.13 2004/03/30 22:57:57 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.17 2004/12/20 23:03:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.17.4.1 2005/03/19 08:36:35 yamt Exp $");
 #endif
 
 /*
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.17 2004/12/20 23:03:39 dyoung 
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
- 
+
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_media.h>
@@ -835,7 +835,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		case IEEE80211_IOC_WEP:
 			if ((ic->ic_caps & IEEE80211_C_WEP) == 0) {
-				ireq->i_val = IEEE80211_WEP_NOSUP; 
+				ireq->i_val = IEEE80211_WEP_NOSUP;
 			} else {
 				if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 					ireq->i_val =
@@ -964,7 +964,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (kid >= IEEE80211_WEP_NKID) {
 				error = EINVAL;
 				break;
-			} 
+			}
 			if (ireq->i_len > sizeof(tmpkey)) {
 				error = EINVAL;
 				break;

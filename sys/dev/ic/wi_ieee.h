@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.22 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.22.10.1 2005/03/19 08:34:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -145,7 +145,7 @@ struct wi_mgmt_hdr {
 	u_int16_t		seq_ctl;
 };
 
-/* 
+/*
  * Lucent/wavelan IEEE signal strength cache
  *
  * driver keeps cache of last
@@ -368,7 +368,7 @@ struct wi_apinfo {
 	int			quality;	/* Quality */
 	int			namelen;	/* Length of SSID string */
 	char			name[32];	/* SSID string */
-	int			capinfo;	/* Capability info. */ 
+	int			capinfo;	/* Capability info. */
 	int			interval;	/* BSS Beacon Interval */
 	int			rate;		/* Data Rate */
 };

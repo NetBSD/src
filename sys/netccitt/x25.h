@@ -1,4 +1,4 @@
-/*	$NetBSD: x25.h,v 1.12 2003/08/07 16:33:06 agc Exp $	*/
+/*	$NetBSD: x25.h,v 1.12.10.1 2005/03/19 08:36:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993
@@ -86,7 +86,7 @@
 #define PRC_LINKDOWN	5
 #define PRC_LINKRESET	6
 #define PRC_LINKDONTCOPY	7
-#ifndef PRC_DISCONNECT_REQUEST  
+#ifndef PRC_DISCONNECT_REQUEST
 #define PRC_DISCONNECT_REQUEST 10
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.8 2004/09/29 04:45:26 sekiya Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.8.6.1 2005/03/19 08:36:21 yamt Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
 #include <machine/cdefs.h>	/* Get SZREG correct */
@@ -10,8 +10,8 @@
 #define SUBU    dsubu
 #else
 #define ADDU    addu
-#define SUBU    subu    
-#endif  
+#define SUBU    subu
+#endif
 
 .set	push
 .set noreorder
@@ -55,7 +55,7 @@ XLEAF(memcpy)
 	 * 	aligned,unaligned -> unaligned	(almost never)
 	 *
 	 *	Note that we could add another case that checks if
-	 *	the destination and source are unaligned but the 
+	 *	the destination and source are unaligned but the
 	 *	copy is alignable.  eg if src and dest are both
 	 *	on a halfword boundary.
 	 */
@@ -134,10 +134,10 @@ wordcopy:
 	lw	t3,0(a1)
 	ADDU	a1,4
 	sw	t3,0(a0)
-#ifdef MIPS3_5900	
+#ifdef MIPS3_5900
 	nop
 	nop
-#endif	
+#endif
 	bne	a1,t0,1b
 	ADDU	a0,4		# BDSLOT
 
@@ -149,9 +149,9 @@ bytecopy:
 	ADDU	a1,1
 	sb	t3,0(a0)
 	SUBU	a2,1
-#ifdef MIPS3_5900	
+#ifdef MIPS3_5900
 	nop
-#endif	
+#endif
 	bgtz	a2,2b
 	ADDU	a0,1		# BDSLOT
 
@@ -175,7 +175,7 @@ destaligned:
 	sw	t3,0(a0)
 #ifdef MIPS3_5900
 	nop
-#endif	
+#endif
 	bne	a1,a3,3b
 	addi	a0,4		# BDSLOT
 
@@ -190,18 +190,18 @@ backcopy:
 	ADDU	t0,a1,a2	# BDSLOT: end of source
 	ADDU	t1,a0,a2	# end of destination
 4:
-	lb	t3,-1(t0)	
+	lb	t3,-1(t0)
 	SUBU	t0,1
 	sb	t3,-1(t1)
 #ifdef MIPS3_5900
 	nop
 	nop
-#endif	
+#endif
 	bne	t0,a1,4b
 	SUBU	t1,1		# BDSLOT
 	j	ra
 	nop
-	
+
 	.set	at
 END(bcopy)
 .set	pop

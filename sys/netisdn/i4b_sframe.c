@@ -27,7 +27,7 @@
  *	i4b_sframe.c - s frame handling routines
  *	----------------------------------------
  *
- *	$Id: i4b_sframe.c,v 1.6 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_sframe.c,v 1.6.10.1 2005/03/19 08:36:42 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_sframe.c,v 1.6 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_sframe.c,v 1.6.10.1 2005/03/19 08:36:42 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -78,7 +78,7 @@ void
 i4b_rxd_s_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	u_char *ptr = m->m_data;
-	
+
 	if(!((l2sc->tei_valid == TEI_VALID) &&
 	     (l2sc->tei == GETTEI(*(ptr+OFF_TEI)))))
 	{
@@ -91,7 +91,7 @@ i4b_rxd_s_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 	l2sc->rxd_NR = GETSNR(*(ptr + OFF_SNR));
 
 	i4b_rxd_ack(l2sc, drv, l2sc->rxd_NR);
-	
+
 	switch(*(ptr + OFF_SRCR))
 	{
 		case RR:
@@ -118,7 +118,7 @@ i4b_rxd_s_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 			i4b_print_frame(m->m_len, m->m_data);
 			break;
 	}
-	i4b_Dfreembuf(m);	
+	i4b_Dfreembuf(m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -148,7 +148,7 @@ i4b_tx_rr_response(l2_softc_t *l2sc, fbit_t fbit)
 
 	NDBGL2(L2_S_MSG, "tx RR, isdnif = %d", l2sc->drv->isdnif);
 
-	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, RR);	
+	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, RR);
 
 	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
@@ -165,7 +165,7 @@ i4b_tx_rnr_command(l2_softc_t *l2sc, pbit_t pbit)
 
 	NDBGL2(L2_S_MSG, "tx RNR, isdnif = %d", l2sc->drv->isdnif);
 
-	m = i4b_build_s_frame(l2sc, CR_CMD_TO_NT, pbit, RNR);	
+	m = i4b_build_s_frame(l2sc, CR_CMD_TO_NT, pbit, RNR);
 
 	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
@@ -203,7 +203,7 @@ i4b_tx_rej_response(l2_softc_t *l2sc, fbit_t fbit)
 
 	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
-	l2sc->stat.tx_rej++; /* update statistics */	
+	l2sc->stat.tx_rej++; /* update statistics */
 }
 
 /*---------------------------------------------------------------------------*
@@ -213,12 +213,12 @@ struct mbuf *
 i4b_build_s_frame(l2_softc_t *l2sc, crbit_to_nt_t crbit, pbit_t pbit, u_char type)
 {
 	struct mbuf *m;
-	
+
 	if((m = i4b_Dgetmbuf(S_FRAME_LEN)) == NULL)
 		return(NULL);
 
 	PUTSAPI(SAPI_CCP, crbit, m->m_data[OFF_SAPI]);
-		
+
 	PUTTEI(l2sc->tei, m->m_data[OFF_TEI]);
 
 	m->m_data[OFF_SRCR] = type;

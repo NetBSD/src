@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.85 2005/01/02 16:08:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.85.4.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.85 2005/01/02 16:08:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.85.4.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include "fs_union.h"
 
@@ -225,7 +225,7 @@ restart:
 			}
 		}
 #endif
-		
+
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, p)) != 0)
 				goto bad;
@@ -927,16 +927,16 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
 
 	if ((ioflg & IO_NODELOCKED) == 0)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	
+
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, NULL,
 	    p);
-	
+
 	if ((ioflg & IO_NODELOCKED) == 0)
 		VOP_UNLOCK(vp, 0);
-	
+
 	if (error == 0)
 		*buflen = *buflen - auio.uio_resid;
-	
+
 	return (error);
 }
 
@@ -996,7 +996,7 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 	if (error == EOPNOTSUPP)
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
 		    NULL, p);
-	
+
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		vn_finished_write(mp, 0);
 		VOP_UNLOCK(vp, 0);

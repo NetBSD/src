@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.3 2004/12/10 18:47:52 christos Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.3.6.1 2005/03/19 08:33:26 yamt Exp $	*/
 
 /*
  *
@@ -37,6 +37,7 @@
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+#include <machine/evtchn.h>
 #include <machine/xenpmap.h>
 #include <machine/pte.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.26 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: neo.c,v 1.26.4.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.26 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.26.4.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.26 2005/01/15 15:19:52 kent Exp $");
 
 
 /* -------------------------------------------------------------------- */
-/* 
+/*
  * As of 04/13/00, public documentation on the Neomagic 256 is not available.
  * These comments were gleaned by looking at the driver carefully.
  *
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.26 2005/01/15 15:19:52 kent Exp $");
  * memory. However you carve this and how much you can carve seems to be
  * voodoo. The algorithm is in nm_init.
  *
- * Most Neomagic audio chips use the AC-97 codec interface. However, there 
+ * Most Neomagic audio chips use the AC-97 codec interface. However, there
  * seem to be a select few chips 256AV chips that do not support AC-97.
  * This driver does not support them but there are rumors that it
  * might work with wss isa drivers. This might require some playing around
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.26 2005/01/15 15:19:52 kent Exp $");
  * unlike many DMA engines.  Instead, it allows you to specify one
  * location in each ring buffer (called the watermark). When the chip
  * passes that location while playing, it signals an interrupt.
- * 
+ *
  * The ring buffer size is currently 16k. That is about 100ms of audio
  * at 44.1kHz/stero/16 bit. However, to keep the buffer full, interrupts
  * are generated more often than that, so 20-40 interrupts per second

@@ -1,6 +1,6 @@
-/*	$NetBSD: strchr.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
+/*	$NetBSD: strchr.S,v 1.2.58.1 2005/03/19 08:36:22 yamt Exp $	*/
 
-/* 
+/*
  * Written by Matthias Pfaller, 1996
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.2.58.1 2005/03/19 08:36:22 yamt Exp $")
 # if defined(INDEX)
 	RCSID("$Masqueraded: as index $")
 # endif
@@ -81,13 +81,13 @@ KENTRY(index, 8)
 	 *	 aabbccdd
 	 *  bic  xxyyzztt
 	 *	---------
-	 *       eeffgghh   ee=0x80 if xx=0, ff=0x80 if yy=0, etc. 
+	 *       eeffgghh   ee=0x80 if xx=0, ff=0x80 if yy=0, etc.
 	 *
 	 *		This whole result will be zero if there
 	 *		was no zero byte, it will be non-zero if
 	 *		there is a zero byte present.
 	 */
-   
+
 5:	movd	0x01010101,r2		/* Magic number to use */
 	movd	0x80808080,r3		/* Another magic number. */
 
@@ -124,7 +124,7 @@ notfound:
 	movqd	0,r0
 	exit	[r3,r4,r5]
 	ret	ARGS
-	
+
 6:	exit	[r3,r4,r5]
 	ret	ARGS
 

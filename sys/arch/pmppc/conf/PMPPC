@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.21.6.1 2005/02/12 18:17:38 yamt Exp $
+#	$NetBSD: PMPPC,v 1.21.6.2 2005/03/19 08:33:10 yamt Exp $
 #
 #	PMPPC
 #
@@ -49,6 +49,8 @@ options 	SYMTAB_SPACE=450000	# size for embedded symbol table
 #options 	COMPAT_12	# NetBSD 1.2,
 #options 	COMPAT_13	# NetBSD 1.3,
 #options 	COMPAT_14	# NetBSD 1.4,
+#options 	COMPAT_16	# NetBSD 1.6,
+#options 	COMPAT_20	# NetBSD 2.0,
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -76,7 +78,7 @@ file-system 	UNION		# union file system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

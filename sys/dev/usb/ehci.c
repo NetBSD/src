@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.90 2004/12/21 16:41:24 fvdl Exp $ */
+/*	$NetBSD: ehci.c,v 1.90.4.1 2005/03/19 08:35:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -52,20 +52,20 @@
  *
  * 2) The EHCI driver lacks support for interrupt isochronous transfers, so
  *    devices using them don't work.
- *    Interrupt transfers are not difficult, it's just not done. 
+ *    Interrupt transfers are not difficult, it's just not done.
  *
  * 3) The meaty part to implement is the support for USB 2.0 hubs.
  *    They are quite complicated since the need to be able to do
  *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
  *    So the hub driver needs to handle and schedule these things, to
  *    assign place in frame where different devices get to go. See chapter
- *    on hubs in USB 2.0 for details. 
+ *    on hubs in USB 2.0 for details.
  *
  * 4) command failures are not recovered correctly
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.90 2004/12/21 16:41:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.90.4.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -803,12 +803,12 @@ ehci_idone(struct ehci_xfer *ex)
 			actlen += sqtd->len - EHCI_QTD_GET_BYTES(status);
 	}
 
-	/* 
+	/*
 	 * If there are left over TDs we need to update the toggle.
 	 * The default pipe doesn't need it since control transfers
 	 * start the toggle at 0 every time.
 	 */
-	if (sqtd != lsqtd->nextqtd && 
+	if (sqtd != lsqtd->nextqtd &&
 	    xfer->pipe->device->default_pipe != xfer->pipe) {
 		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
 #if 0
@@ -818,7 +818,7 @@ ehci_idone(struct ehci_xfer *ex)
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
 
-	/* 
+	/*
 	 * For a short transfer we need to update the toggle for the missing
 	 * packets within the qTD.
 	 */

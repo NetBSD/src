@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.6 2004/05/20 06:34:29 atatat Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.6.6.1 2005/03/19 08:36:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2004/05/20 06:34:29 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6.6.1 2005/03/19 08:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -76,7 +76,7 @@ MOD_VFS("ffs", -1, &ffs_vfsops);
  */
 int
 ffs_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -86,7 +86,7 @@ ffs_lkmentry(lkmtp, cmd, ver)
 
 int
 load(lkmtp, cmd)
-	struct lkm_table *lkmtp;        
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 
@@ -96,7 +96,7 @@ load(lkmtp, cmd)
 
 int
 unload(lkmtp, cmd)
-	struct lkm_table *lkmtp;        
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 

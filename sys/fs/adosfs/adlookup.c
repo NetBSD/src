@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.5 2004/02/24 15:23:16 wiz Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.5.10.1 2005/03/19 08:36:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.5 2004/02/24 15:23:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.5.10.1 2005/03/19 08:36:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ adosfs_lookup(v)
 	pelt = (const u_char *)cnp->cn_nameptr;
 	plen = cnp->cn_namelen;
 	nocache = 0;
-	
-	/* 
+
+	/*
 	 * Check accessiblity of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc)) != 0)
@@ -130,7 +130,7 @@ adosfs_lookup(v)
 	 * fake a ".."
 	 */
 	if (flags & ISDOTDOT) {
-		if (vdp->v_type == VDIR && (vdp->v_flag & VROOT)) 
+		if (vdp->v_type == VDIR && (vdp->v_flag & VROOT))
 			panic("adosfs .. attempted through root");
 		/*
 		 * cannot get `..' while `vdp' is locked
@@ -141,16 +141,16 @@ adosfs_lookup(v)
 		 * window size is not reasonably possible.
 		 *
 		 * basically unlock the parent, try and lock the child (..)
-		 * if that fails relock the parent (ignoring error) and 
+		 * if that fails relock the parent (ignoring error) and
 		 * fail.  Otherwise we have the child (..) if this is the
 		 * last and the caller requested LOCKPARENT, attempt to
 		 * relock the parent.  If that fails unlock the child (..)
 		 * and fail. Otherwise we have succeded.
-		 * 
+		 *
 		 */
 		VOP_UNLOCK(vdp, 0); /* race */
 		cnp->cn_flags |= PDIRUNLOCK;
-		if ((error = VFS_VGET(vdp->v_mount, 
+		if ((error = VFS_VGET(vdp->v_mount,
 				      (ino_t)adp->pblock, vpp)) != 0) {
 			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -187,7 +187,7 @@ adosfs_lookup(v)
 		ap = VTOA(*vpp);
 		if (i <= 0) {
 			if (--i < adp->tabi[hval])
-				adp->tabi[hval] = i;	
+				adp->tabi[hval] = i;
 			/*
 			 * last header in chain lock count down by
 			 * negating it to positive
@@ -200,7 +200,7 @@ adosfs_lookup(v)
 				adp->tabi[hval] = -adp->tabi[hval];
 			}
 		}
-		if (strmatch(pelt, plen, ap->name, strlen(ap->name), 
+		if (strmatch(pelt, plen, ap->name, strlen(ap->name),
 		    IS_INTER(adp->amp)))
 			goto found;
 		bn = ap->hashf;
@@ -247,7 +247,7 @@ found:
 			return (error);
 		}
 		nocache = 1;
-	} 
+	}
 	if (nameiop == RENAME && wantp && last) {
 		if (vdp == *vpp)
 			return(EISDIR);

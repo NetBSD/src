@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.11 2004/03/04 01:53:26 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.11.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.11 2004/03/04 01:53:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.11.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -58,13 +58,13 @@ rf_FifoCreate(RF_SectorCount_t sectPerDisk, RF_AllocListElem_t *clList,
 {
 	RF_FifoHeader_t *q;
 
-	RF_MallocAndAdd(q, sizeof(RF_FifoHeader_t), 
+	RF_MallocAndAdd(q, sizeof(RF_FifoHeader_t),
 				(RF_FifoHeader_t *), clList);
 	q->hq_count = q->lq_count = 0;
 	return ((void *) q);
 }
 
-void 
+void
 rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t *elem, int priority)
 {
 	RF_FifoHeader_t *q = (RF_FifoHeader_t *) q_in;
@@ -86,7 +86,7 @@ rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t *elem, int priority)
 		RF_ASSERT(elem->next == NULL);
 #if RF_DEBUG_QUEUE
 		if (rf_fifoDebug) {
-			printf("raid%d: fifo: ENQ lopri\n", 
+			printf("raid%d: fifo: ENQ lopri\n",
 			       elem->raidPtr->raidid);
 		}
 #endif
@@ -137,7 +137,7 @@ rf_FifoDequeue(void *q_in)
 			q->lq_count--;
 #if RF_DEBUG_QUEUE
 			if (rf_fifoDebug) {
-				printf("raid%d: fifo: DEQ lopri %lx\n", 
+				printf("raid%d: fifo: DEQ lopri %lx\n",
 				       nd->raidPtr->raidid, (long) nd);
 			}
 #endif
@@ -172,7 +172,7 @@ rf_FifoPeek(void *q_in)
  * the low priority queue to the end of the normal priority queue.
  * We assume the queue is locked upon entry.
  */
-int 
+int
 rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
 	       RF_ReconUnitNum_t which_ru)
 {
@@ -208,7 +208,7 @@ rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
 				q->hq_tail->next = lp;
 				q->hq_tail = lp;
 			}
-			 /* append to hi-priority queue */ 
+			 /* append to hi-priority queue */
 			else {
 				q->hq_head = q->hq_tail = lp;
 			}

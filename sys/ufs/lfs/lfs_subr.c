@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.47 2004/03/09 06:43:18 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.47.10.1 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.47 2004/03/09 06:43:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.47.10.1 2005/03/19 08:37:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,12 +103,12 @@ lfs_blkatoff(void *v)
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
-	
+
 	ip = VTOI(ap->a_vp);
 	fs = ip->i_lfs;
 	lbn = lblkno(fs, ap->a_offset);
 	bsize = blksize(fs, ip, lbn);
-	
+
 	*ap->a_bpp = NULL;
 	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
@@ -120,7 +120,7 @@ lfs_blkatoff(void *v)
 	return (0);
 }
 
-#ifdef LFS_DEBUG_MALLOC
+#ifdef DEBUG
 char *lfs_res_names[LFS_NB_COUNT] = {
 	"summary",
 	"superblock",
@@ -213,7 +213,7 @@ lfs_mhash(void *vp)
 /*
  * Return memory of the given size for the given purpose, or use one of a
  * number of spare last-resort buffers, if malloc returns NULL.
- */ 
+ */
 void *
 lfs_malloc(struct lfs *fs, size_t size, int type)
 {
@@ -258,13 +258,9 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 				return r;
 			}
 		}
-#ifdef LFS_DEBUG_MALLOC
-		printf("sleeping on %s (%d)\n", lfs_res_names[type], lfs_res_qty[type]);
-#endif
+		DLOG((DLOG_MALLOC, "sleeping on %s (%d)\n", lfs_res_names[type], lfs_res_qty[type]));
 		tsleep(&fs->lfs_resblk, PVM, "lfs_malloc", 0);
-#ifdef LFS_DEBUG_MALLOC
-		printf("done sleeping on %s\n", lfs_res_names[type]);
-#endif
+		DLOG((DLOG_MALLOC, "done sleeping on %s\n", lfs_res_names[type]));
 	}
 	/* NOTREACHED */
 	return r;
@@ -314,7 +310,7 @@ int
 lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
-	
+
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
@@ -329,7 +325,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 			(void)ltsleep(&fs->lfs_seglock, PRIBIO + 1,
 				      "lfs seglock", 0, &fs->lfs_interlock);
 	}
-	
+
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
 	simple_unlock(&fs->lfs_interlock);
@@ -344,7 +340,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	sp->vp = NULL;
 	sp->seg_iocount = 0;
 	(void) lfs_initseg(fs);
-	
+
 	/*
 	 * Keep a cumulative count of the outstanding I/O operations.  If the
 	 * disk drive catches up with us it could go to zero before we finish,
@@ -399,7 +395,7 @@ lfs_unmark_dirop(struct lfs *fs)
 static void
 lfs_auto_segclean(struct lfs *fs)
 {
-	int i, error;
+	int i, error, s, waited;
 
 	/*
 	 * Now that we've swapped lfs_activesb, but while we still
@@ -407,6 +403,7 @@ lfs_auto_segclean(struct lfs *fs)
 	 * the empty ones clean.
 	 * XXX - do we really need to do them all at once?
 	 */
+	waited = 0;
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		if ((fs->lfs_suflags[0][i] &
 		     (SEGUSE_ACTIVE | SEGUSE_DIRTY | SEGUSE_EMPTY)) ==
@@ -415,10 +412,16 @@ lfs_auto_segclean(struct lfs *fs)
 		     (SEGUSE_ACTIVE | SEGUSE_DIRTY | SEGUSE_EMPTY)) ==
 		    (SEGUSE_DIRTY | SEGUSE_EMPTY)) {
 
+			/* Make sure the sb is written before we clean */
+			s = splbio();
+			while (waited == 0 && fs->lfs_sbactive)
+				tsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs asb",
+					0);
+			splx(s);
+			waited = 1;
+
 			if ((error = lfs_do_segclean(fs, i)) != 0) {
-#ifdef DEBUG
-				printf("lfs_auto_segclean: lfs_do_segclean returned %d for seg %d\n", error, i);
-#endif /* DEBUG */
+				DLOG((DLOG_CLEAN, "lfs_auto_segclean: lfs_do_segclean returned %d for seg %d\n", error, i));
 			}
 		}
 		fs->lfs_suflags[1 - fs->lfs_activesb][i] =
@@ -437,7 +440,7 @@ lfs_segunlock(struct lfs *fs)
 	unsigned long sync, ckp;
 	struct buf *bp;
 	int do_unmark_dirop = 0;
-	
+
 	sp = fs->lfs_sp;
 
 	simple_lock(&fs->lfs_interlock);
@@ -453,7 +456,7 @@ lfs_segunlock(struct lfs *fs)
 			bp = *sp->bpp;
 			lfs_freebuf(fs, bp);
 		} else
-			printf ("unlock to 0 with no summary");
+			DLOG((DLOG_SEG, "lfs_segunlock: unlock to 0 with no summary"));
 
 		pool_put(&fs->lfs_bpppool, sp->bpp);
 		sp->bpp = NULL;
@@ -502,7 +505,7 @@ lfs_segunlock(struct lfs *fs)
 		while (sync && sp->seg_iocount) {
 			(void)tsleep(&sp->seg_iocount, PRIBIO + 1,
 				     "seg_iocount", 0);
-			/* printf("sleeping on iocount %x == %d\n", sp, sp->seg_iocount); */
+			DLOG((DLOG_SEG, "sleeping on iocount %x == %d\n", sp, sp->seg_iocount));
 		}
 		if (sync)
 			pool_put(&fs->lfs_segpool, sp);
@@ -514,8 +517,12 @@ lfs_segunlock(struct lfs *fs)
 			if (sync)
 				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
 			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
-			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT))
+			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT)) {
 				lfs_auto_segclean(fs);
+				/* If sync, we can clean the remainder too */
+				if (sync)
+					lfs_auto_segclean(fs);
+			}
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
@@ -550,10 +557,10 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 	fs->lfs_writer++;
 
 	while (fs->lfs_dirops > 0) {
-		++fs->lfs_diropwait;  
+		++fs->lfs_diropwait;
 		error = ltsleep(&fs->lfs_writer, PRIBIO+1, wmesg, 0,
 		    &fs->lfs_interlock);
-		--fs->lfs_diropwait; 
+		--fs->lfs_diropwait;
 	}
 
 	if (error)

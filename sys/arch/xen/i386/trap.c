@@ -1,5 +1,5 @@
-/*	$NetBSD: trap.c,v 1.4 2004/08/28 17:53:03 jdolecek Exp $	*/
-/*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
+/*	$NetBSD: trap.c,v 1.4.8.1 2005/03/19 08:33:21 yamt Exp $	*/
+/*	NetBSD: trap.c,v 1.202 2004/08/28 17:53:01 jdolecek Exp		*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.4 2004/08/28 17:53:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.4.8.1 2005/03/19 08:33:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -268,6 +268,10 @@ trap(frame)
 			}
 		}
 #endif
+#ifdef DDB
+		if (kdb_trap(type, 0, frame))
+			return;
+#endif
 #ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
@@ -281,10 +285,6 @@ trap(frame)
 				return;
 			}
 		}
-#endif
-#ifdef DDB
-		if (kdb_trap(type, 0, frame))
-			return;
 #endif
 		if (frame->tf_trapno < trap_types)
 			printf("fatal %s", trap_type[frame->tf_trapno]);
@@ -690,7 +690,7 @@ copyfault:
 		}
 		break;
 
-#if	NISA > 0 || NMCA > 0
+#if	XXXNISA > 0 || NMCA > 0
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -713,13 +713,13 @@ copyfault:
 			goto we_re_toast;
 		else
 			return;
-#else /* NISA > 0 */
+#else /* XXXNISA > 0 */
 		if (x86_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;
 #endif /* NMCA > 0 */
-#endif /* NISA > 0 || NMCA > 0 */
+#endif /* XXXNISA > 0 || NMCA > 0 */
 	}
 
 	if ((type & T_USER) == 0)

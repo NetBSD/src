@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.6 2004/12/18 05:26:41 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.6.4.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.6 2004/12/18 05:26:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.6.4.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ ptyfs_getattr(void *v)
 	struct vattr *vap = ap->a_vap;
         struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts); 
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	ptyfs_time(ptyfs, &ts, &ts);
 
 	/* start by zeroing out the attributes */
@@ -343,7 +343,7 @@ ptyfs_getattr(void *v)
 		if (pty_isfree(ptyfs->ptyfs_pty, 1))
 			return ENOENT;
 		vap->va_bytes = vap->va_size = 0;
-		vap->va_rdev = ap->a_vp->v_rdev; 
+		vap->va_rdev = ap->a_vp->v_rdev;
 		break;
 	case PTYFSroot:
 		vap->va_rdev = 0;
@@ -398,7 +398,7 @@ ptyfs_setattr(void *v)
 			    securelevel > 0)
 				return EPERM;
 			/* Snapshot flag cannot be set or cleared */
-			if ((vap->va_flags & SF_SNAPSHOT) != 
+			if ((vap->va_flags & SF_SNAPSHOT) !=
 			    (ptyfs->ptyfs_flags & SF_SNAPSHOT))
 				return EPERM;
 			ptyfs->ptyfs_flags = vap->va_flags;
@@ -439,7 +439,7 @@ ptyfs_setattr(void *v)
 			return EPERM;
 		if (cred->cr_uid != ptyfs->ptyfs_uid &&
 		    (error = suser(cred, &p->p_acflag)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -556,7 +556,7 @@ ptyfs_access(void *v)
  *
  * Locking isn't hard here, just poorly documented.
  *
- * If we're looking up ".", just vref the parent & return it. 
+ * If we're looking up ".", just vref the parent & return it.
  *
  * If we're looking up "..", unlock the parent, and lock "..". If everything
  * went ok, and we're on the last component and the caller requested the
@@ -603,7 +603,7 @@ ptyfs_lookup(void *v)
 		/*
 		 * Shouldn't get here with .. in the root node.
 		 */
-		if (cnp->cn_flags & ISDOTDOT) 
+		if (cnp->cn_flags & ISDOTDOT)
 			return EIO;
 
 		pty = atoi(pname, cnp->cn_namelen);
@@ -779,10 +779,10 @@ ptyfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
         struct timespec ts;
- 
+
         simple_lock(&vp->v_interlock);
         if (vp->v_usecount > 1) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts); 
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		ptyfs_time(ptyfs, &ts, &ts);
         }
         simple_unlock(&vp->v_interlock);
@@ -967,7 +967,7 @@ ptyfs_time(struct ptyfsnode *ptyfs, struct timespec *atime,
 		ptyfs->ptyfs_ctime = *atime;
 	ptyfs->ptyfs_flag = 0;
 }
-	
+
 /*
  * convert decimal ascii to int
  */

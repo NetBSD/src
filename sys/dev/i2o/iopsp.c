@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.18 2003/06/13 02:33:09 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.18.12.1 2005/03/19 08:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.18 2003/06/13 02:33:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.18.12.1 2005/03/19 08:34:00 yamt Exp $");
 
 #include "opt_i2o.h"
 
@@ -155,7 +155,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 
 	fc = (param.p.ci.bustype == I2O_HBA_BUS_FCA);
 
-	/* 
+	/*
 	 * Say what the device is.  If we can find out what the controling
 	 * device is, say what that is too.
 	 */
@@ -240,7 +240,7 @@ iopsp_reconfig(struct device *dv)
 	u_short *tidmap;
 #ifdef I2OVERBOSE
 	struct iopsp_target *it;
-	int syncrate;	
+	int syncrate;
 #endif
 
 	sc = (struct iopsp_softc *)dv;
@@ -445,7 +445,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				xs->error = XS_DRIVER_STUFFUP;
 			} else
 				xs->error = XS_NOERROR;
-				
+
 			scsipi_done(xs);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.12 2003/08/07 16:32:08 agc Exp $	*/
+/*	$NetBSD: mcount.c,v 1.12.10.1 2005/03/19 08:36:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.12 2003/08/07 16:32:08 agc Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.12.10.1 2005/03/19 08:36:21 yamt Exp $");
 #endif
 #endif
 
@@ -56,7 +56,7 @@ _MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__));	/* see below. */
  * _mcount updates data structures that represent traversals of the
  * program's call graph edges.  frompc and selfpc are the return
  * address and function address that represents the given call graph edge.
- * 
+ *
  * Note: the original BSD code used the same variable (frompcindex) for
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
@@ -168,7 +168,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 			*frompcindex = toindex;
 			goto done;
 		}
-		
+
 	}
 done:
 	p->state = GMON_PROF_ON;

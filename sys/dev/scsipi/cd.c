@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.212.4.1 2005/02/12 18:17:50 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.212.4.2 2005/03/19 08:35:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.212.4.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.212.4.2 2005/03/19 08:35:47 yamt Exp $");
 
 #include "rnd.h"
 
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.212.4.1 2005/02/12 18:17:50 yamt Exp $");
 #include <sys/rnd.h>
 #endif
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_cd.h>
 #include <dev/scsipi/scsipi_disk.h>	/* rw_big and start_stop come */
@@ -345,7 +346,7 @@ cddetach(struct device *self, int flags)
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
-static int 
+static int
 cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *cd;
@@ -433,7 +434,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		periph->periph_flags |= PERIPH_OPEN;
 
 		/* Lock the pack in. */
-		error = scsipi_prevent(periph, PR_PREVENT,
+		error = scsipi_prevent(periph, SPAMR_PREVENT_DT,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("cdopen: scsipi_prevent, error=%d\n", error));
@@ -485,7 +486,7 @@ bad2:
 
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {
-		scsipi_prevent(periph, PR_ALLOW,
+		scsipi_prevent(periph, SPAMR_ALLOW,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		periph->periph_flags &= ~PERIPH_OPEN;
 	}
@@ -502,7 +503,7 @@ bad4:
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-static int 
+static int
 cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
@@ -528,7 +529,7 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsipi_wait_drain(periph);
 
-		scsipi_prevent(periph, PR_ALLOW,
+		scsipi_prevent(periph, SPAMR_ALLOW,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
 		    XS_CTL_IGNORE_NOT_READY);
 		periph->periph_flags &= ~PERIPH_OPEN;
@@ -734,7 +735,7 @@ done:
  * must be called at the correct (highish) spl level
  * cdstart() is called at splbio from cdstrategy, cdrestart and scsipi_done
  */
-static void 
+static void
 cdstart(struct scsipi_periph *periph)
 {
 	struct cd_softc *cd = (void *)periph->periph_dev;
@@ -788,7 +789,7 @@ cdstart(struct scsipi_periph *periph)
 		/*
 		 * We have a buf, now we should make a command.
 		 */
-		
+
 		nblks = howmany(bp->b_bcount, cd->params.blksize);
 
 		/*
@@ -907,7 +908,7 @@ cdbounce(struct buf *bp)
 	}
 	if (obp->b_flags & B_READ) {
 		/* Copy data to the final destination and free the buf. */
-		memcpy(obp->b_data, bp->b_data+obp->b_rawblkno, 
+		memcpy(obp->b_data, bp->b_data+obp->b_rawblkno,
 			obp->b_bcount);
 	} else {
 		/*
@@ -987,17 +988,17 @@ static int
 cd_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
 	int retval = EJUSTRETURN;
 
 	/*
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
-	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFERRED */
+	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
+	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
 		return (retval);
-	}
 
 	/*
 	 * If we got a "Unit not ready" (SKEY_NOT_READY) and "Logical Unit
@@ -1005,9 +1006,9 @@ cd_interpret_sense(struct scsipi_xfer *xs)
 	 * wait a bit for the drive to spin up
 	 */
 
-	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
-	    sense->add_sense_code == 0x4 &&
-	    sense->add_sense_code_qual == 0x01)	{
+	if (SSD_SENSE_KEY(sense->flags) == SKEY_NOT_READY &&
+	    sense->asc == 0x4 &&
+	    sense->ascq == 0x01)	{
 		/*
 		 * Sleep for 5 seconds to wait for the drive to spin up
 		 */
@@ -1071,7 +1072,7 @@ cdwrite(dev_t dev, struct uio *uio, int ioflag)
  */
 static void
 lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
-{   
+{
 	u_long tmp;
 
 	tmp = lba + CD_BLOCK_OFFSET;	/* offset of first logical frame */
@@ -1416,7 +1417,7 @@ bad:
 	case CDIOCSTOP:
 		return (scsipi_start(periph, SSS_STOP, 0));
 	case CDIOCCLOSE:
-		return (scsipi_start(periph, SSS_START|SSS_LOEJ, 
+		return (scsipi_start(periph, SSS_START|SSS_LOEJ,
 		    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE));
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
@@ -1427,12 +1428,12 @@ bad:
 			if ((cd->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
 			    cd->sc_dk.dk_bopenmask + cd->sc_dk.dk_copenmask ==
 			    cd->sc_dk.dk_openmask) {
-				error = scsipi_prevent(periph, PR_ALLOW,
+				error = scsipi_prevent(periph, SPAMR_ALLOW,
 				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
 					return (error);
 			} else {
-				return (EBUSY); 
+				return (EBUSY);
 			}
 		}
 		/* FALLTHROUGH */
@@ -1440,12 +1441,12 @@ bad:
 	case ODIOCEJECT:
 		return (scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0));
 	case CDIOCALLOW:
-		return (scsipi_prevent(periph, PR_ALLOW, 0));
+		return (scsipi_prevent(periph, SPAMR_ALLOW, 0));
 	case CDIOCPREVENT:
-		return (scsipi_prevent(periph, PR_PREVENT, 0));
+		return (scsipi_prevent(periph, SPAMR_PREVENT_DT, 0));
 	case DIOCLOCK:
 		return (scsipi_prevent(periph,
-		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
+		    (*(int *)addr) ? SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
 	case CDIOCSETDEBUG:
 		cd->sc_periph->periph_dbflags |= (SCSIPI_DB1 | SCSIPI_DB2);
 		return (0);
@@ -2150,12 +2151,12 @@ cd_mode_sense(struct cd_softc *cd, u_int8_t byte2, void *sense, size_t size,
 	if (cd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
 		*big = 1;
 		return scsipi_mode_sense_big(cd->sc_periph, byte2, page, sense,
-		    size + sizeof(struct scsipi_mode_header_big),
+		    size + sizeof(struct scsi_mode_parameter_header_10),
 		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	} else {
 		*big = 0;
 		return scsipi_mode_sense(cd->sc_periph, byte2, page, sense,
-		    size + sizeof(struct scsipi_mode_header),
+		    size + sizeof(struct scsi_mode_parameter_header_6),
 		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	}
 }
@@ -2166,18 +2167,18 @@ cd_mode_select(struct cd_softc *cd, u_int8_t byte2, void *sense, size_t size,
 {
 
 	if (big) {
-		struct scsipi_mode_header_big *header = sense;
+		struct scsi_mode_parameter_header_10 *header = sense;
 
 		_lto2b(0, header->data_length);
 		return scsipi_mode_select_big(cd->sc_periph, byte2, sense,
-		    size + sizeof(struct scsipi_mode_header_big),
+		    size + sizeof(struct scsi_mode_parameter_header_10),
 		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	} else {
-		struct scsipi_mode_header *header = sense;
+		struct scsi_mode_parameter_header_6 *header = sense;
 
 		header->data_length = 0;
 		return scsipi_mode_select(cd->sc_periph, byte2, sense,
-		    size + sizeof(struct scsipi_mode_header),
+		    size + sizeof(struct scsi_mode_parameter_header_6),
 		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	}
 }
@@ -2187,8 +2188,8 @@ cd_set_pa_immed(struct cd_softc *cd, int flags)
 {
 	struct {
 		union {
-			struct scsipi_mode_header small;
-			struct scsipi_mode_header_big big;
+			struct scsi_mode_parameter_header_6 small;
+			struct scsi_mode_parameter_header_10 big;
 		} header;
 		struct cd_audio_page page;
 	} data;
@@ -2225,7 +2226,7 @@ try_again:
 		return (0);
 
 	return (cd_mode_select(cd, SMS_PF, &data,
-	    sizeof(struct scsipi_mode_page_header) + page->pg_length,
+	    sizeof(struct scsi_mode_page_header) + page->pg_length,
 	    flags, big));
 }
 
@@ -2234,8 +2235,8 @@ cd_setchan(struct cd_softc *cd, int p0, int p1, int p2, int p3, int flags)
 {
 	struct {
 		union {
-			struct scsipi_mode_header small;
-			struct scsipi_mode_header_big big;
+			struct scsi_mode_parameter_header_6 small;
+			struct scsi_mode_parameter_header_10 big;
 		} header;
 		struct cd_audio_page page;
 	} data;
@@ -2270,7 +2271,7 @@ try_again:
 	page->port[3].channels = p3;
 
 	return (cd_mode_select(cd, SMS_PF, &data,
-	    sizeof(struct scsipi_mode_page_header) + page->pg_length,
+	    sizeof(struct scsi_mode_page_header) + page->pg_length,
 	    flags, big));
 }
 
@@ -2279,8 +2280,8 @@ cd_getvol(struct cd_softc *cd, struct ioc_vol *arg, int flags)
 {
 	struct {
 		union {
-			struct scsipi_mode_header small;
-			struct scsipi_mode_header_big big;
+			struct scsi_mode_parameter_header_6 small;
+			struct scsi_mode_parameter_header_10 big;
 		} header;
 		struct cd_audio_page page;
 	} data;
@@ -2322,8 +2323,8 @@ cd_setvol(struct cd_softc *cd, const struct ioc_vol *arg, int flags)
 {
 	struct {
 		union {
-			struct scsipi_mode_header small;
-			struct scsipi_mode_header_big big;
+			struct scsi_mode_parameter_header_6 small;
+			struct scsi_mode_parameter_header_10 big;
 		} header;
 		struct cd_audio_page page;
 	} data, mask;
@@ -2343,7 +2344,7 @@ try_again:
 		return (error);
 	}
 	if ((error = cd_mode_sense(cd, byte2, &mask, sizeof(mask.page),
-	    AUDIO_PAGE|SMS_PAGE_CTRL_CHANGEABLE, flags, &big)) != 0)
+	    AUDIO_PAGE|SMS_PCTRL_CHANGEABLE, flags, &big)) != 0)
 		return (error);
 
 	if (big) {
@@ -2371,7 +2372,7 @@ try_again:
 	page->port[1].channels = CHANNEL_1;
 
 	return (cd_mode_select(cd, SMS_PF, &data,
-	    sizeof(struct scsipi_mode_page_header) + page->pg_length,
+	    sizeof(struct scsi_mode_page_header) + page->pg_length,
 	    flags, big));
 }
 
@@ -2394,14 +2395,14 @@ cd_setblksize(struct cd_softc *cd)
 {
 	struct {
 		union {
-			struct scsipi_mode_header small;
-			struct scsipi_mode_header_big big;
+			struct scsi_mode_parameter_header_6 small;
+			struct scsi_mode_parameter_header_10 big;
 		} header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_general_block_descriptor blk_desc;
 	} data;
 	int error;
 	int big, bsize;
-	struct scsi_blk_desc *bdesc;
+	struct scsi_general_block_descriptor *bdesc;
 
 	if ((error = cd_mode_sense(cd, 0, &data, sizeof(data.blk_desc), 0, 0,
 	    &big)) != 0)
@@ -2423,7 +2424,7 @@ printf("cd_setblksize: trying to change bsize, but no blk_desc\n");
 printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 		return (EINVAL);
 	}
-		
+
 	_lto3b(2048, bdesc->blklen);
 
 	return (cd_mode_select(cd, SMS_PF, &data, sizeof(data.blk_desc), 0,

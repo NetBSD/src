@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.4.12.1 2005/02/12 18:17:52 yamt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.4.12.2 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4.12.1 2005/02/12 18:17:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4.12.2 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ read_sector(mbr_args_t *a, uint sector)
 	return error;
 }
 
-/* 
+/*
  * Scan MBR for partitions, call 'action' routine for each.
  */
 

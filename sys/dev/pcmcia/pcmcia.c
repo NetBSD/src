@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.71.6.1 2005/02/12 18:17:50 yamt Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.71.6.2 2005/03/19 08:35:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.71.6.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.71.6.2 2005/03/19 08:35:34 yamt Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -415,7 +415,7 @@ pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
 
 #ifdef DIAGNOSTIC
 	if (sizeof *pp > ent_size)
-		panic("pcmcia_product_lookup: bogus ent_size %ld", 
+		panic("pcmcia_product_lookup: bogus ent_size %ld",
 		      (long) ent_size);
 #endif
 
@@ -610,7 +610,7 @@ pcmcia_function_enable(pf)
 			       pcmcia_ccr_read(tmp, 3),
 
 			       pcmcia_ccr_read(tmp, 5),
-			       pcmcia_ccr_read(tmp, 6), 
+			       pcmcia_ccr_read(tmp, 6),
 			       pcmcia_ccr_read(tmp, 7),
 			       pcmcia_ccr_read(tmp, 8),
 

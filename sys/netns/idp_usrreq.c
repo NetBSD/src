@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.23 2004/04/19 00:10:48 matt Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.23.6.1 2005/03/19 08:36:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.23 2004/04/19 00:10:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.23.6.1 2005/03/19 08:36:49 yamt Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -165,7 +165,7 @@ idp_output(struct mbuf *m0, ...)
 	/*
 	 * Make sure packet is actually of even length.
 	 */
-	
+
 	if (len & 1) {
 		m = mprev;
 		if ((m->m_flags & M_EXT) == 0 &&
@@ -255,7 +255,7 @@ idp_ctloutput(int req, struct socket *so, int level, int name,
 		case SO_HEADERS_ON_INPUT:
 			mask = NSP_RAWIN;
 			goto get_flags;
-			
+
 		case SO_HEADERS_ON_OUTPUT:
 			mask = NSP_RAWOUT;
 		get_flags:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.15 2003/01/17 02:43:41 matt Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.15.12.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -1069,7 +1069,7 @@ typedef enum {
     PDQ_LINK_EVENT_ARGUMENT_REASON=0,		/* pdq_rireason_t */
     PDQ_LINK_EVENT_ARGUMENT_DATA_LINK_HEADER=1,	/* pdq_dlhdr_t */
     PDQ_LINK_EVENT_ARGUMENT_SOURCE=2,		/* pdq_lanaddr_t */
-    PDQ_LINK_EVENT_ARGUMENT_UPSTREAM_NEIGHBOR=3,/* pdq_lanaddr_t */	
+    PDQ_LINK_EVENT_ARGUMENT_UPSTREAM_NEIGHBOR=3,/* pdq_lanaddr_t */
     PDQ_LINK_EVENT_ARGUMENT_EOL=0xFF
 } pdq_link_event_argument_t;
 

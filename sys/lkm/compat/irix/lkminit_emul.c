@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 2004/05/20 06:34:27 atatat Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.6.1 2005/03/19 08:36:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2 2004/05/20 06:34:27 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2.6.1 2005/03/19 08:36:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -66,7 +66,7 @@ static struct sysctllog *_emul_irix_log;
  */
 int
 compat_irix_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -76,7 +76,7 @@ compat_irix_lkmentry(lkmtp, cmd, ver)
 
 int
 load(lkmtp, cmd)
-	struct lkm_table *lkmtp; 
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 
@@ -86,7 +86,7 @@ load(lkmtp, cmd)
 
 int
 unload(lkmtp, cmd)
-	struct lkm_table *lkmtp; 
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 

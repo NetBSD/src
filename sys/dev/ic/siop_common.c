@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.36 2004/05/17 20:12:34 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.36.6.1 2005/03/19 08:34:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.36 2004/05/17 20:12:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.36.6.1 2005/03/19 08:34:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ siop_common_attach(sc)
 	 * Allocate DMA-safe memory for the script and map it.
 	 */
 	if ((sc->features & SF_CHIP_RAM) == 0) {
-		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, 
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
 			aprint_error(
@@ -443,7 +443,7 @@ siop_ppr_neg(siop_cmd)
 			siop_target->period = 0;
 			goto reject;
 		}
-			
+
 		if (offset > sc->maxoff || sync < sc->dt_minsync ||
 		    sync > sc->dt_maxsync) {
 			printf("%s: ppr negotiation for target %d: "
@@ -489,7 +489,7 @@ siop_ppr_neg(siop_cmd)
 			/* DT mode can only be done with wide transfers */
 			siop_target->status = TARST_ASYNC;
 			goto reject;
-		} 
+		}
 		siop_target->flags |= TARF_ISWIDE;
 		sc->targets[target]->id |= (SCNTL3_EWS << 24);
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
@@ -804,7 +804,7 @@ siop_sdp(siop_cmd, offset)
 	int offset;
 {
 	scr_table_t *table;
-	
+
 	if ((siop_cmd->xs->xs_control & (XS_CTL_DATA_OUT | XS_CTL_DATA_IN))
 	    == 0)
 	    return; /* no data pointers to save */
@@ -825,7 +825,7 @@ siop_sdp(siop_cmd, offset)
 #endif
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the begginning of the data not yet transfered. 
+	 * at the begginning of the data not yet transfered.
 	 * offset points to the first table with untransfered data.
 	 */
 

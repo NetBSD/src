@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.8.6.1 2005/02/12 18:17:45 yamt Exp $ */
+/* $NetBSD: cms.c,v 1.8.6.2 2005/03/19 08:34:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.8.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.8.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ cms_on(ms, chan, note, vel)
 	/* enable the voice */
 	reg = CMS_READ(sc, chip, CMS_IREG_FREQ_CTL);
 	reg |= (1<<voice);
-	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);	
+	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);
 }
 
 void
@@ -303,7 +303,7 @@ cms_off(ms, chan, note, vel)
 	/* disable the channel */
 	reg = CMS_READ(sc, chip, CMS_IREG_FREQ_CTL);
 	reg &= ~(1<<voice);
-	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);	
+	CMS_WRITE(sc, chip, CMS_IREG_FREQ_CTL, reg);
 }
 
 static void
@@ -323,8 +323,8 @@ cms_reset(sc)
 	}
 
 	for (i = 0; i < 3; i++) {
-		CMS_WRITE(sc, 0, CMS_IREG_OCTAVE_1_0+i, 0x00);	
-		CMS_WRITE(sc, 1, CMS_IREG_OCTAVE_1_0+i, 0x00);	
+		CMS_WRITE(sc, 0, CMS_IREG_OCTAVE_1_0+i, 0x00);
+		CMS_WRITE(sc, 1, CMS_IREG_OCTAVE_1_0+i, 0x00);
 	}
 
 	CMS_WRITE(sc, 0, CMS_IREG_FREQ_CTL, 0x00);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.22.6.1 2005/02/12 18:17:48 yamt Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.22.6.2 2005/03/19 08:35:12 yamt Exp $	*/
 
 
 /*
@@ -22,7 +22,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.22.6.1 2005/02/12 18:17:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.22.6.2 2005/03/19 08:35:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.22.6.1 2005/02/12 18:17:48 yamt 
 int atadebug_pciide_mask = 0;
 #endif
 
-static const char dmaerrfmt[] = 
+static const char dmaerrfmt[] =
     "%s:%d: unable to %s table DMA map for drive %d, error=%d\n";
 
 /* Default product description for devices not known from this controller */
@@ -104,7 +104,7 @@ const struct pciide_product_desc default_product_desc = {
 	0,
 	"Generic PCI IDE controller",
 	default_chip_map,
-};      
+};
 
 const struct pciide_product_desc *
 pciide_lookup_product(id, pp)
@@ -114,7 +114,7 @@ pciide_lookup_product(id, pp)
 	for (; pp->chip_map != NULL; pp++)
 		if (PCI_PRODUCT(id) == pp->ide_product)
 			break;
-    
+
 	if (pp->chip_map == NULL)
 		return NULL;
 	return pp;
@@ -268,7 +268,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 			aprint_error("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			goto bad;
-		}	
+		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);
@@ -386,7 +386,7 @@ pciide_mapreg_dma(sc, pa)
 			break;
 		}
 		/* FALLTHROUGH */
-	
+
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
@@ -522,6 +522,9 @@ pciide_channel_dma_setup(cp)
 	}
 }
 
+#define NIDEDMA_TABLES(sc)	\
+	(MAXPHYS/(min((sc)->sc_dma_maxsegsz, PAGE_SIZE)) + 1)
+
 int
 pciide_dma_table_setup(sc, channel, drive)
 	struct pciide_softc *sc;
@@ -530,7 +533,7 @@ pciide_dma_table_setup(sc, channel, drive)
 	bus_dma_segment_t seg;
 	int error, rseg;
 	const bus_size_t dma_table_size =
-	    sizeof(struct idedma_table) * NIDEDMA_TABLES;
+	    sizeof(struct idedma_table) * NIDEDMA_TABLES(sc);
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
 
@@ -577,8 +580,8 @@ pciide_dma_table_setup(sc, channel, drive)
 	    (unsigned long)dma_maps->dmamap_table->dm_segs[0].ds_addr),
 	    DEBUG_PROBE);
 	/* Create a xfer DMA map for this drive */
-	if ((error = bus_dmamap_create(sc->sc_dmat, IDEDMA_BYTE_COUNT_MAX,
-	    NIDEDMA_TABLES, sc->sc_dma_maxsegsz, sc->sc_dma_boundary,
+	if ((error = bus_dmamap_create(sc->sc_dmat, MAXPHYS,
+	    NIDEDMA_TABLES(sc), sc->sc_dma_maxsegsz, sc->sc_dma_boundary,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &dma_maps->dmamap_xfer)) != 0) {
 		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,

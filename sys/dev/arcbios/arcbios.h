@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.6 2004/10/02 03:11:14 sekiya Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.6.6.1 2005/03/19 08:33:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -122,8 +122,8 @@ struct arcbios_component {
 	char		*Identifier;
 };
 
-/* 
- * SGI ARCS likes to be `special', so it moved some of the class/type 
+/*
+ * SGI ARCS likes to be `special', so it moved some of the class/type
  * numbers around from the ARC standard definitions.
  */
 #if defined(sgimips)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.16 2004/01/04 06:37:16 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.16.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.16 2004/01/04 06:37:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.16.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -79,13 +79,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.16 2004/01/04 06:37:16 oster Exp $")
 
 static const RF_AccessState_t DefaultStates[] = {
 					   rf_QuiesceState,
-					   rf_IncrAccessesCountState, 
-					   rf_MapState, 
-					   rf_LockState, 
+					   rf_IncrAccessesCountState,
+					   rf_MapState,
+					   rf_LockState,
 					   rf_CreateDAGState,
-					   rf_ExecuteDAGState, 
-					   rf_ProcessDAGState, 
-					   rf_CleanupState, 
+					   rf_ExecuteDAGState,
+					   rf_ProcessDAGState,
+					   rf_CleanupState,
 					   rf_DecrAccessesCountState,
 					   rf_LastState};
 
@@ -398,7 +398,7 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
  * configuration routine to finish the configuration.
  *
  ****************************************************************************/
-int 
+int
 rf_ConfigureLayout(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		   RF_Config_t *cfgPtr)
 {
@@ -414,9 +414,9 @@ rf_ConfigureLayout(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 	if (layoutPtr->sectorsPerStripeUnit <= 0) {
 		RF_ERRORMSG2("raid%d: Invalid sectorsPerStripeUnit: %d\n",
-			     raidPtr->raidid, 
+			     raidPtr->raidid,
 			     (int)layoutPtr->sectorsPerStripeUnit );
-		return (EINVAL); 
+		return (EINVAL);
 	}
 
 	layoutPtr->stripeUnitsPerDisk = raidPtr->sectorsPerDisk / layoutPtr->sectorsPerStripeUnit;
@@ -458,7 +458,7 @@ rf_ConfigureLayout(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
  * the parity stripe identifier associated with a stripe ID.  There is also
  * a RaidAddressToParityStripeID macro in layout.h
  */
-RF_StripeNum_t 
+RF_StripeNum_t
 rf_MapStripeIDToParityStripeID(RF_RaidLayout_t *layoutPtr,
 			       RF_StripeNum_t stripeID,
 			       RF_ReconUnitNum_t *which_ru)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.27 2005/01/21 22:57:30 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.27.2.1 2005/03/19 08:36:35 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.27 2005/01/21 22:57:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.27.2.1 2005/03/19 08:36:35 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.27 2005/01/21 22:57:30 dyoung
 #endif /* __NetBSD__ */
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.27 2005/01/21 22:57:30 dyoung
 #endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #ifdef __FreeBSD__
 #include <netinet/if_ether.h>
 #else
@@ -185,7 +185,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
  * Encapsulate an outbound data frame.  The mbuf chain is updated and
  * a reference to the destination node is returned.  If an error is
  * encountered NULL is returned and the node reference will also be NULL.
- * 
+ *
  * NB: The caller is responsible for free'ing a returned node reference.
  *     The convention is ic_bss is not reference counted; the caller must
  *     maintain that.
@@ -213,7 +213,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_OUTPUT,
 			("%s: no node for dst %s, discard frame\n",
 			__func__, ether_sprintf(eh.ether_dhost)));
-		ic->ic_stats.is_tx_nonode++; 
+		ic->ic_stats.is_tx_nonode++;
 		goto bad;
 	}
 	ni->ni_inact = 0;
@@ -474,7 +474,7 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 	return frm;
 }
 
-/* 
+/*
  * Add an ssid elemet to a frame.
  */
 static u_int8_t *
@@ -817,7 +817,7 @@ bad:
 }
 
 void
-ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni, 
+ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 		  struct mbuf *m)
 {
 	/* Store the new packet on our queue, changing the TIM if necessary */
@@ -831,8 +831,8 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (ic->ic_if.if_flags & IFF_DEBUG)
 			printf("%s: station %s power save queue overflow"
 			       " of size %d drops %d\n",
-			       ic->ic_if.if_xname, 
-			       ether_sprintf(ni->ni_macaddr), 
+			       ic->ic_if.if_xname,
+			       ether_sprintf(ni->ni_macaddr),
 			       IEEE80211_PS_MAX_QUEUE,
 			       ni->ni_savedq.ifq_drops);
 	} else {

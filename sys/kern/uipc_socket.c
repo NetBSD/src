@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.107.6.1 2005/01/25 12:59:35 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.107.6.2 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.107.6.1 2005/01/25 12:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.107.6.2 2005/03/19 08:36:12 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -873,7 +873,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					break;
 				}
 			} while (space > 0 && atomic);
-			
+
 			s = splsoftnet();
 
 			if (so->so_state & SS_CANTSENDMORE)
@@ -1331,7 +1331,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		splx(s);
 		goto restart;
 	}
-		
+
 	if (flagsp)
 		*flagsp |= flags;
  release:
@@ -1640,7 +1640,7 @@ filt_soread(struct knote *kn, long hint)
 	so = (struct socket *)kn->kn_fp->f_data;
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
-		kn->kn_flags |= EV_EOF; 
+		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;
 		return (1);
 	}
@@ -1671,7 +1671,7 @@ filt_sowrite(struct knote *kn, long hint)
 	so = (struct socket *)kn->kn_fp->f_data;
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
-		kn->kn_flags |= EV_EOF; 
+		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;
 		return (1);
 	}
@@ -1696,7 +1696,7 @@ filt_solisten(struct knote *kn, long hint)
 	/*
 	 * Set kn_data to number of incoming connections, not
 	 * counting partial (incomplete) connections.
-	 */ 
+	 */
 	kn->kn_data = so->so_qlen;
 	return (kn->kn_data > 0);
 }

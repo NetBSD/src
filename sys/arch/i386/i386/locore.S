@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.S,v 1.31.6.1 2005/02/13 10:47:14 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.31.6.2 2005/03/19 08:33:02 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1162,6 +1162,7 @@ ENTRY(copyoutstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1216,6 +1217,7 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx

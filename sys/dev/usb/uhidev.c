@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.22.6.1 2005/02/12 18:17:51 yamt Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.22.6.2 2005/03/19 08:35:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.22.6.1 2005/02/12 18:17:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.22.6.2 2005/03/19 08:35:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,8 @@ USB_ATTACH(uhidev)
 				}
 #endif
 #if NRND > 0
-				rnd_attach_source(&dev->rnd_source, 
-						  USBDEVNAME(dev->sc_dev), 
+				rnd_attach_source(&dev->rnd_source,
+						  USBDEVNAME(dev->sc_dev),
 						  RND_TYPE_TTY, 0);
 #endif
 			}

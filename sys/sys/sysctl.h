@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.127.6.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.127.6.2 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -267,7 +267,8 @@ struct ctlname {
 #define	KERN_ROOT_PARTITION	74	/* int: root partition */
 #define	KERN_DRIVERS		75	/* struct: driver names and majors #s */
 #define	KERN_BUF		76	/* struct: buffers */
-#define	KERN_MAXID		77	/* number of valid kern ids */
+#define	KERN_FILE2		77	/* struct: file entries */
+#define	KERN_MAXID		78	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -347,6 +348,8 @@ struct ctlname {
 	{ "somaxkva", CTLTYPE_INT}, \
 	{ "root_partition", CTLTYPE_INT}, \
 	{ "drivers", CTLTYPE_STRUCT }, \
+	{ "buf", CTLTYPE_NODE }, \
+	{ "file2", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -641,6 +644,47 @@ struct buf_sysctl {
 };
 
 /*
+ * kern.file2 returns an array of these structures, which are designed
+ * both to be immune to be immune to 32/64 bit emulation issues and to
+ * provide backwards compatibility.  The order differs slightly from
+ * that of the real struct file, and some fields are taken from other
+ * structures (struct vnode, struct proc) in order to make the file
+ * information more useful.
+ */
+struct kinfo_file {
+	uint64_t	ki_fileaddr;	/* PTR: address of struct file */
+	uint32_t	ki_flag;	/* INT: flags (see fcntl.h) */
+	uint32_t	ki_iflags;	/* INT: internal flags */
+	uint32_t	ki_ftype;	/* INT: descriptor type */
+	uint32_t	ki_count;	/* UINT: reference count */
+	uint32_t	ki_msgcount;	/* UINT: references from msg queue */
+	uint32_t	ki_usecount;	/* INT: number active users */
+	uint64_t	ki_fucred;	/* PTR: creds for descriptor */
+	uint32_t	ki_fuid;	/* UID_T: descriptor credentials */
+	uint32_t	ki_fgid;	/* GID_T: descriptor credentials */
+	uint64_t	ki_fops;	/* PTR: address of fileops */
+	uint64_t	ki_foffset;	/* OFF_T: offset */
+	uint64_t	ki_fdata;	/* PTR: descriptor data */
+
+	/* vnode information to glue this file to something */
+	uint64_t	ki_vun;		/* PTR: socket, specinfo, etc */
+	uint64_t	ki_vsize;	/* OFF_T: size of file */
+	uint32_t	ki_vtype;	/* ENUM: vnode type */
+	uint32_t	ki_vtag;	/* ENUM: type of underlying data */
+	uint64_t	ki_vdata;	/* PTR: private data for fs */
+
+	/* process information when retrieved via KERN_FILE_BYPID */
+	uint32_t	ki_pid;		/* PID_T: process id */
+	int32_t		ki_fd;		/* INT: descriptor number */
+	uint32_t	ki_ofileflags;	/* CHAR: open file flags */
+	uint32_t	_ki_padto64bits;
+};
+
+#define	KERN_FILE_BYFILE	1
+#define	KERN_FILE_BYPID		2
+#define	KERN_FILESLOP		10
+
+/*
  * CTL_HW identifiers
  */
 #define	HW_MACHINE	 1		/* string: machine class */
@@ -849,6 +893,9 @@ struct buf_sysctl {
 #if defined(_KERNEL_OPT)
 #include "opt_sysctl.h"
 #endif
+
+/* Root node of the kernel sysctl tree */
+extern struct sysctlnode sysctl_root;
 
 /*
  * A log of nodes created by a setup function or set of setup

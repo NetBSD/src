@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2004/10/23 17:12:23 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.8.1 2005/03/19 08:33:21 yamt Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,11 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2004/10/23 17:12:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.8.1 2005/03/19 08:33:21 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_nfs_boot.h"
+#include "xennet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +544,7 @@ device_register(struct device *dev, void *aux)
 	 * not available driver independantly later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
-#ifdef XEN
+#if NXENNET > 0
 	if (dev->dv_class == DV_IFNET) {
 		union xen_cmdline_parseinfo xcp;
 

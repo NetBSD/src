@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.11 2004/12/27 18:14:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.11.4.1 2005/03/19 08:36:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.11 2004/12/27 18:14:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.11.4.1 2005/03/19 08:36:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static signed int ntfs_toupper_usecount;
   !ntfs_uastrcmp(ntmp, aalp->al_name,aalp->al_namelen,name,namelen) )
 
 /*
- * 
+ *
  */
 int
 ntfs_ntvattrrele(vap)
@@ -333,7 +333,7 @@ ntfs_loadntnode(
 	ap = (struct attr *) ((caddr_t)mfrp + off);
 
 	LIST_INIT(&ip->i_valist);
-	
+
 	while (ap->a_hdr.a_type != -1) {
 		error = ntfs_attrtontvattr(ntmp, &nvap, ap);
 		if (error)
@@ -361,7 +361,7 @@ out:
 	free(mfrp, M_TEMP);
 	return (error);
 }
-		
+
 /*
  * Routine locks ntnode and increase usecount, just opposite of
  * ntfs_ntput().
@@ -483,7 +483,7 @@ ntfs_ntput(ip)
 }
 
 /*
- * increment usecount of ntnode 
+ * increment usecount of ntnode
  */
 void
 ntfs_ntref(ip)
@@ -495,7 +495,7 @@ ntfs_ntref(ip)
 
 	dprintf(("ntfs_ntref: ino %d, usecount: %d\n",
 		ip->i_number, ip->i_usecount));
-			
+
 }
 
 /*
@@ -727,7 +727,7 @@ ntfs_uastrcmp(ntmp, ustr, ustrlen, astr, astrlen)
 		return 1;
 }
 
-/* 
+/*
  * Search fnode in ntnode, if not found allocate and preinitialize.
  *
  * ntnode should be locked on entry.
@@ -749,7 +749,7 @@ ntfs_fget(
 		dprintf(("ntfs_fget: fnode: attrtype: %d, attrname: %s\n",
 			fp->f_attrtype, fp->f_attrname?fp->f_attrname:""));
 
-		if ((attrtype == fp->f_attrtype) && 
+		if ((attrtype == fp->f_attrtype) &&
 		    ((!attrname && !fp->f_attrname) ||
 		     (attrname && fp->f_attrname &&
 		      !strcmp(attrname,fp->f_attrname)))){
@@ -803,7 +803,7 @@ ntfs_frele(
 }
 
 /*
- * Lookup attribute name in format: [[:$ATTR_TYPE]:$ATTR_NAME], 
+ * Lookup attribute name in format: [[:$ATTR_TYPE]:$ATTR_NAME],
  * $ATTR_TYPE is searched in attrdefs read from $AttrDefs.
  * If $ATTR_TYPE not specified, ATTR_A_DATA assumed.
  */
@@ -836,7 +836,7 @@ ntfs_ntlookupattr(
 
 		adp = ntmp->ntm_ad;
 		for (i = 0; i < ntmp->ntm_adnum; i++, adp++){
-			if (syslen != adp->ad_namelen || 
+			if (syslen != adp->ad_namelen ||
 			   strncmp(sys, adp->ad_name, syslen) != 0)
 				continue;
 
@@ -937,7 +937,7 @@ ntfs_ntlookupfile(
 			ddprintf(("scan: %d, %d\n",
 				  (u_int32_t) iep->ie_number,
 				  (u_int32_t) iep->ie_fnametype));
- 
+
 			/* check the name - the case-insensitive check
 			 * has to come first, to break from this for loop
 			 * if needed, so we can dive correctly */
@@ -1022,9 +1022,9 @@ ntfs_ntlookupfile(
 			if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
 			   (nfp->f_attrtype == NTFS_A_DATA) &&
 			   (nfp->f_attrname == NULL))
-				f_type = VDIR;	
+				f_type = VDIR;
 			else
-				f_type = VREG;	
+				f_type = VREG;
 
 			nvp->v_type = f_type;
 
@@ -1079,7 +1079,7 @@ ntfs_ntlookupfile(
 				"$I30", ntfs_cntob(cn), rdsize, rdbuf, NULL);
 			if (error)
 				goto fail;
-			
+
 			if (cn != 0) {
 				error = ntfs_procfixups(ntmp, NTFS_INDXMAGIC,
 						rdbuf, rdsize);
@@ -1193,7 +1193,7 @@ ntfs_ntreaddir(
 	if (fp->f_dirblbuf == NULL) {
 		fp->f_dirblsz = vap->va_a_iroot->ir_size;
 		fp->f_dirblbuf = (caddr_t) malloc(
-		       max(vap->va_datalen,fp->f_dirblsz), M_NTFSDIR, M_WAITOK);
+		       MAX(vap->va_datalen,fp->f_dirblsz), M_NTFSDIR, M_WAITOK);
 	}
 
 	blsize = fp->f_dirblsz;
@@ -1368,8 +1368,8 @@ ntfs_times(
 }
 
 /*
- * Get file sizes from corresponding attribute. 
- * 
+ * Get file sizes from corresponding attribute.
+ *
  * ntnode under fnode should be locked.
  */
 int
@@ -1414,7 +1414,7 @@ int
 ntfs_writeattr_plain(
 	struct ntfsmount * ntmp,
 	struct ntnode * ip,
-	u_int32_t attrnum,	
+	u_int32_t attrnum,
 	char *attrname,
 	off_t roff,
 	size_t rsize,
@@ -1434,7 +1434,7 @@ ntfs_writeattr_plain(
 					ntfs_btocn(off), &vap);
 		if (error)
 			return (error);
-		towrite = min(left, ntfs_cntob(vap->va_vcnend + 1) - off);
+		towrite = MIN(left, ntfs_cntob(vap->va_vcnend + 1) - off);
 		ddprintf(("ntfs_writeattr_plain: o: %d, s: %d (%d - %d)\n",
 			 (u_int32_t) off, (u_int32_t) towrite,
 			 (u_int32_t) vap->va_vcnstart,
@@ -1447,7 +1447,7 @@ ntfs_writeattr_plain(
 			       "ntfs_writentvattr_plain failed: o: %d, s: %d\n",
 			       (u_int32_t) off, (u_int32_t) towrite));
 			dprintf(("ntfs_writeattr_plain: attrib: %d - %d\n",
-			       (u_int32_t) vap->va_vcnstart, 
+			       (u_int32_t) vap->va_vcnstart,
 			       (u_int32_t) vap->va_vcnend));
 			ntfs_ntvattrrele(vap);
 			break;
@@ -1523,13 +1523,19 @@ ntfs_writentvattr_plain(
 		off = ntfs_btocnoff(off);
 
 		while (left && ccl) {
-			tocopy = min(left,
-				  min(ntfs_cntob(ccl) - off, MAXBSIZE - off));
+			/*
+			 * Always read and write single clusters at a time -
+			 * we need to avoid requesting differently-sized
+			 * blocks at the same disk offsets to avoid
+			 * confusing the buffer cache.
+			 */
+			tocopy = MIN(left, ntfs_cntob(1) - off);
 			cl = ntfs_btocl(tocopy + off);
+			KASSERT(cl == 1 && tocopy <= ntfs_cntob(1));
 			ddprintf(("ntfs_writentvattr_plain: write: " \
 				"cn: 0x%x cl: %d, off: %d len: %d, left: %d\n",
-				(u_int32_t) cn, (u_int32_t) cl, 
-				(u_int32_t) off, (u_int32_t) tocopy, 
+				(u_int32_t) cn, (u_int32_t) cl,
+				(u_int32_t) off, (u_int32_t) tocopy,
 				(u_int32_t) left));
 			if ((off == 0) && (tocopy == ntfs_cntob(cl)))
 			{
@@ -1621,31 +1627,26 @@ ntfs_readntvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
-					tocopy = min(left,
-						  min(ntfs_cntob(ccl) - off,
-						      MAXBSIZE - off));
-					cl = ntfs_btocl(tocopy + off);
-
 					/*
-					 * If 'off' pushes us to next
-					 * block, don't attempt to read whole
-					 * 'tocopy' at once. This is to avoid
-					 * bread() with varying 'size' for
-					 * same 'blkno', which is not good.
+					 * Always read single clusters at a
+					 * time - we need to avoid reading
+					 * differently-sized blocks at the
+					 * same disk offsets to avoid
+					 * confusing the buffer cache.
 					 */
-					if (cl > ntfs_btocl(tocopy)) {
-						tocopy -=
-						    ntfs_btocnoff(tocopy + off);
-						cl--;
-					}
+					tocopy = MIN(left,
+					    ntfs_cntob(1) - off);
+					cl = ntfs_btocl(tocopy + off);
+					KASSERT(cl == 1 &&
+					    tocopy <= ntfs_cntob(1));
 
 					ddprintf(("ntfs_readntvattr_plain: " \
 						"read: cn: 0x%x cl: %d, " \
 						"off: %d len: %d, left: %d\n",
-						(u_int32_t) cn, 
-						(u_int32_t) cl, 
-						(u_int32_t) off, 
-						(u_int32_t) tocopy, 
+						(u_int32_t) cn,
+						(u_int32_t) cl,
+						(u_int32_t) off,
+						(u_int32_t) tocopy,
 						(u_int32_t) left));
 					error = bread(ntmp->ntm_devvp,
 						      ntfs_cntobn(cn),
@@ -1671,12 +1672,12 @@ ntfs_readntvattr_plain(
 					ccl -= cl;
 				}
 			} else {
-				tocopy = min(left, ntfs_cntob(ccl) - off);
+				tocopy = MIN(left, ntfs_cntob(ccl) - off);
 				ddprintf(("ntfs_readntvattr_plain: "
 					"hole: ccn: 0x%x ccl: %d, off: %d, " \
-					" len: %d, left: %d\n", 
-					(u_int32_t) ccn, (u_int32_t) ccl, 
-					(u_int32_t) off, (u_int32_t) tocopy, 
+					" len: %d, left: %d\n",
+					(u_int32_t) ccn, (u_int32_t) ccl,
+					(u_int32_t) off, (u_int32_t) tocopy,
 					(u_int32_t) left));
 				left -= tocopy;
 				off = 0;
@@ -1684,7 +1685,7 @@ ntfs_readntvattr_plain(
 					size_t remains = tocopy;
 					for(; remains; remains--)
 						uiomove("", 1, uio);
-				} else 
+				} else
 					bzero(data, tocopy);
 				data = data + tocopy;
 			}
@@ -1696,7 +1697,7 @@ ntfs_readntvattr_plain(
 		}
 	} else {
 		ddprintf(("ntfs_readnvattr_plain: data is in mft record\n"));
-		if (uio) 
+		if (uio)
 			uiomove(vap->va_datap + roff, rsize, uio);
 		else
 			memcpy(rdata, vap->va_datap + roff, rsize);
@@ -1713,7 +1714,7 @@ int
 ntfs_readattr_plain(
 	struct ntfsmount * ntmp,
 	struct ntnode * ip,
-	u_int32_t attrnum,	
+	u_int32_t attrnum,
 	char *attrname,
 	off_t roff,
 	size_t rsize,
@@ -1733,7 +1734,7 @@ ntfs_readattr_plain(
 					ntfs_btocn(off), &vap);
 		if (error)
 			return (error);
-		toread = min(left, ntfs_cntob(vap->va_vcnend + 1) - off);
+		toread = MIN(left, ntfs_cntob(vap->va_vcnend + 1) - off);
 		ddprintf(("ntfs_readattr_plain: o: %d, s: %d (%d - %d)\n",
 			 (u_int32_t) off, (u_int32_t) toread,
 			 (u_int32_t) vap->va_vcnstart,
@@ -1746,7 +1747,7 @@ ntfs_readattr_plain(
 			       "ntfs_readntvattr_plain failed: o: %d, s: %d\n",
 			       (u_int32_t) off, (u_int32_t) toread);
 			printf("ntfs_readattr_plain: attrib: %d - %d\n",
-			       (u_int32_t) vap->va_vcnstart, 
+			       (u_int32_t) vap->va_vcnstart,
 			       (u_int32_t) vap->va_vcnend);
 			ntfs_ntvattrrele(vap);
 			break;
@@ -1820,7 +1821,7 @@ ntfs_readattr(
 			if (error)
 				break;
 
-			tocopy = min(left, ntfs_cntob(NTFS_COMPUNIT_CL) - off);
+			tocopy = MIN(left, ntfs_cntob(NTFS_COMPUNIT_CL) - off);
 
 			if (init == ntfs_cntob(NTFS_COMPUNIT_CL)) {
 				if (uio)
@@ -1928,7 +1929,7 @@ ntfs_procfixups(
 	}
 	if ((fhp->fh_fnum - 1) * ntmp->ntm_bps != len) {
 		printf("ntfs_procfixups: " \
-		       "bad fixups number: %d for %ld bytes block\n", 
+		       "bad fixups number: %d for %ld bytes block\n",
 		       fhp->fh_fnum, (long)len);	/* XXX printf kludge */
 		return (EINVAL);
 	}
@@ -1953,7 +1954,7 @@ ntfs_procfixups(
 #if UNUSED_CODE
 int
 ntfs_runtocn(
-	     cn_t * cn,	
+	     cn_t * cn,
 	     struct ntfsmount * ntmp,
 	     u_int8_t * run,
 	     u_long len,
@@ -2021,7 +2022,7 @@ ntfs_toupper_use(mp, ntmp)
 
 	/* get exclusive access */
 	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
-	
+
 	/* only read the translation data from a file if it hasn't been
 	 * read already */
 	if (ntfs_toupper_tab)
@@ -2069,7 +2070,7 @@ ntfs_toupper_unuse()
 			ntfs_toupper_usecount);
 	}
 #endif
-	
+
 	/* release the lock */
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
-} 
+}

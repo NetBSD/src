@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.43.6.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: time.h,v 1.43.6.2 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -189,7 +189,7 @@ struct 	ptimer {
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;
 	int	pt_entry;
-	struct proc *pt_proc; 
+	struct proc *pt_proc;
 };
 
 #define pt_ch	pt_data.pt_ch
@@ -216,7 +216,7 @@ void	microtime(struct timeval *tv);
 int	settime(struct timeval *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
-int	settimeofday1(const struct timeval *, const struct timezone *, 
+int	settimeofday1(const struct timeval *, const struct timezone *,
 	    struct proc *);
 int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
 int	clock_settime1(clockid_t, const struct timespec *);
@@ -228,6 +228,12 @@ void	realtimerexpire(void *);
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE
+#if (_POSIX_C_SOURCE - 0) >= 200112L || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#include <sys/select.h>
+#endif
+
 #include <time.h>
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)

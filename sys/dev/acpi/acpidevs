@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.3 2003/02/04 01:12:06 perry Exp $
+# $NetBSD: acpidevs,v 1.3.12.1 2005/03/19 08:33:55 yamt Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -68,7 +68,7 @@ PNP0701	Standard floppy controller supporting MS Device Bay Spec
 PNP0802	Microsoft Sound System compatible device
 # --Display Adapters--
 PNP0900	VGA Compatible
-PNP0901	Video Seven VRAM/VRAM II/1024i 
+PNP0901	Video Seven VRAM/VRAM II/1024i
 PNP0902	8514/A Compatible
 PNP0903	Trident VGA
 PNP0904	Cirrus Logic Laptop VGA
@@ -320,7 +320,7 @@ PNPB002	Sound Blaster Pro sound device
 PNPB003	Sound Blaster 16 sound device
 PNPB004	Thunderboard-compatible sound device
 PNPB005	Adlib-compatible FM synthesizer device
-PNPB006	MPU401 compatible 
+PNPB006	MPU401 compatible
 PNPB007	Microsoft Windows Sound System-compatible sound device
 PNPB008	Compaq Business Audio
 PNPB009	Plug and Play Microsoft Windows Sound System Device

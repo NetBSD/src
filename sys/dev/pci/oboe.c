@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.17 2003/10/28 23:56:00 mycroft Exp $	*/
+/*	$NetBSD: oboe.c,v 1.17.10.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.17 2003/10/28 23:56:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.17.10.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ struct oboe_softc {
 	/* I/O Base device */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	bus_dma_tag_t		sc_dmatag;	
+	bus_dma_tag_t		sc_dmatag;
 	struct selinfo		sc_rsel;
 	struct selinfo		sc_wsel;
 
@@ -116,12 +116,12 @@ struct oboe_softc {
 	int			sc_flags;
 	int			sc_speed;
 	int			sc_ebofs;
-	
+
 	struct oboe_dma		*sc_dmas;
 	struct OboeTaskFile	*sc_taskfile;    /* The taskfile   */
 	u_char *		sc_xmit_bufs[TX_SLOTS];
 	u_char *		sc_recv_bufs[RX_SLOTS];
-	void *			sc_xmit_stores[TX_SLOTS];  
+	void *			sc_xmit_stores[TX_SLOTS];
 	void *			sc_recv_stores[RX_SLOTS];
 	int			sc_txs; /* Current transmit slot number */
 	int			sc_rxs; /* Current receive slot number */
@@ -237,9 +237,9 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txs = 0;
 	sc->sc_rxs = 0;
 
-	sc->sc_speeds = 
-		IRDA_SPEED_2400   | IRDA_SPEED_9600    | IRDA_SPEED_19200 | 
-		IRDA_SPEED_38400  | IRDA_SPEED_57600   | IRDA_SPEED_115200 | 
+	sc->sc_speeds =
+		IRDA_SPEED_2400   | IRDA_SPEED_9600    | IRDA_SPEED_19200 |
+		IRDA_SPEED_38400  | IRDA_SPEED_57600   | IRDA_SPEED_115200 |
 		IRDA_SPEED_576000 | IRDA_SPEED_1152000 | IRDA_SPEED_4000000;
 
 	oboe_alloc_taskfile(sc);
@@ -300,7 +300,7 @@ oboe_close(void *h, int flag, int mode, struct proc *p)
 	struct oboe_softc *sc = h;
 	int error = 0;
 	int s = splir();
-	
+
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
 	/* Wait for output to drain */
 
@@ -322,11 +322,11 @@ oboe_read(void *h, struct uio *uio, int flag)
 	int s;
 	int slot;
 
-	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n", 
-		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
+	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
+		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
-	s = splir();	
+	s = splir();
 	while (sc->sc_saved == 0) {
 		if (flag & IO_NDELAY) {
 			splx(s);
@@ -343,7 +343,7 @@ oboe_read(void *h, struct uio *uio, int flag)
 	}
 
 	/* Do just one frame transfer per read */
-	
+
 	if (!error) {
 		slot = (sc->sc_rxs - sc->sc_saved + RX_SLOTS) % RX_SLOTS;
 		if (uio->uio_resid < sc->sc_lens[slot]) {
@@ -351,10 +351,10 @@ oboe_read(void *h, struct uio *uio, int flag)
 			    "(%d < %d)\n", uio->uio_resid, sc->sc_lens[slot]));
 			error = EINVAL;
 		} else {
-			DPRINTF(("oboe_read: moving %d bytes from %p\n", 
+			DPRINTF(("oboe_read: moving %d bytes from %p\n",
 				 sc->sc_lens[slot],
 				 sc->sc_recv_stores[slot]));
-			error = uiomove(sc->sc_recv_stores[slot], 
+			error = uiomove(sc->sc_recv_stores[slot],
 					sc->sc_lens[slot], uio);
 		}
 	}
@@ -392,7 +392,7 @@ oboe_write(void *h, struct uio *uio, int flag)
 	if (sc->sc_taskfile->xmit[sc->sc_txs].control) {
 		DPRINTF(("oboe_write: slot overrun\n"));
 	}
-		
+
 	n = irda_sir_frame(sc->sc_xmit_bufs[sc->sc_txs], TX_BUF_SZ, uio,
 			   sc->sc_ebofs);
 	if (n < 0) {
@@ -405,7 +405,7 @@ oboe_write(void *h, struct uio *uio, int flag)
 	OUTB(sc, 0x1e, OBOE_REG_11);
 
 	sc->sc_taskfile->xmit[sc->sc_txs].control = 0x84;
-		
+
 	/* XXX Need delay here??? */
 	delay(1000);
 
@@ -589,7 +589,7 @@ oboe_intr(void *p)
 			       len);
 			sc->sc_lens[sc->sc_rxs] = len;
 			sc->sc_saved++;
-#if 0			
+#if 0
 			(void)b_to_q(sc->sc_recv_bufs[sc->sc_rxs],
 				     len, &sc->sc_q);
 #endif
@@ -597,7 +597,7 @@ oboe_intr(void *p)
 			sc->sc_taskfile->recv[sc->sc_rxs].len = 0x0;
 			sc->sc_rxs = (sc->sc_rxs + 1) % RX_SLOTS;
 			DPRINTF(("oboe_intr new rxs=%d\n", sc->sc_rxs));
-		}		
+		}
 		DPRINTF(("oboe_intr no more frames available\n"));
 		if (sc->sc_state & OBOE_RSLP) {
 			DPRINTF(("oboe_intr changing state to ~OBOE_RSLP\n"));
@@ -639,20 +639,20 @@ oboe_init_taskfile(struct oboe_softc *sc)
 	for (i = 0; i < TX_SLOTS; ++i) {
 		sc->sc_taskfile->xmit[i].len = 0;
 		sc->sc_taskfile->xmit[i].control = 0x00;
-		sc->sc_taskfile->xmit[i].buffer = 
+		sc->sc_taskfile->xmit[i].buffer =
 			vtophys((u_int)sc->sc_xmit_bufs[i]); /* u_int? */
 	}
 
 	for (i = 0; i < RX_SLOTS; ++i) {
 		sc->sc_taskfile->recv[i].len = 0;
 		sc->sc_taskfile->recv[i].control = 0x83;
-		sc->sc_taskfile->recv[i].buffer = 
+		sc->sc_taskfile->recv[i].buffer =
 			vtophys((u_int)sc->sc_recv_bufs[i]); /* u_int? */
 	}
 
 	sc->sc_txpending = 0;
 
-	splx(s);	
+	splx(s);
 }
 
 static int
@@ -669,9 +669,9 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 	sc->sc_taskfile = (struct OboeTaskFile *) addr;
 
 	for (i = 0; i < TX_SLOTS; ++i) {
-		sc->sc_xmit_bufs[i] = 
+		sc->sc_xmit_bufs[i] =
 			malloc(TX_BUF_SZ, M_DEVBUF, M_WAITOK);
-		sc->sc_xmit_stores[i] = 
+		sc->sc_xmit_stores[i] =
 			malloc(TX_BUF_SZ, M_DEVBUF, M_WAITOK);
 		if (sc->sc_xmit_bufs[i] == NULL ||
 		    sc->sc_xmit_stores[i] == NULL) {
@@ -679,9 +679,9 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 		}
 	}
 	for (i = 0; i < RX_SLOTS; ++i) {
-		sc->sc_recv_bufs[i] = 
+		sc->sc_recv_bufs[i] =
 			malloc(RX_BUF_SZ, M_DEVBUF, M_WAITOK);
-		sc->sc_recv_stores[i] = 
+		sc->sc_recv_stores[i] =
 			malloc(RX_BUF_SZ, M_DEVBUF, M_WAITOK);
 		if (sc->sc_recv_bufs[i] == NULL ||
 		    sc->sc_recv_stores[i] == NULL) {
@@ -709,14 +709,14 @@ oboe_startchip (struct oboe_softc *sc)
 	OUTB(sc, 0xff, OBOE_REG_1B);
 
 	physaddr = vtophys((u_int)sc->sc_taskfile); /* u_int? */
-	
+
 	OUTB(sc, (physaddr >> 0x0a) & 0xff, OBOE_TFP0);
 	OUTB(sc, (physaddr >> 0x12) & 0xff, OBOE_TFP1);
 	OUTB(sc, (physaddr >> 0x1a) & 0x3f, OBOE_TFP2);
-	
+
 	OUTB(sc, 0x0e, OBOE_REG_11);
 	OUTB(sc, 0x80, OBOE_RST);
-	
+
 	(void)oboe_setbaud(sc, 9600);
 
 	sc->sc_rxs = INB(sc, OBOE_RCVT);
@@ -748,7 +748,7 @@ OUTB(sc, OBOE_PMDL_##type, OBOE_PMDL); \
 OUTB(sc, OBOE_SMDL_##type, OBOE_SMDL); \
 OUTB(sc, divisor, OBOE_UDIV); \
 break
-	
+
 static int
 oboe_setbaud(struct oboe_softc *sc, int baud)
 {
@@ -776,7 +776,7 @@ oboe_setbaud(struct oboe_softc *sc, int baud)
 	OUTB(sc, 0x00, OBOE_RST);
 	OUTB(sc, 0x80, OBOE_RST);
 	OUTB(sc, 0x01, OBOE_REG_9);
-	
+
 	sc->sc_speed = baud;
 
 	splx(s);

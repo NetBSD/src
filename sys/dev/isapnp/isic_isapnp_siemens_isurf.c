@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,14 +37,14 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.4.20.1 2005/02/12 18:17:46 yamt Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.4.20.2 2005/03/19 08:34:40 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.4.20.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.4.20.2 2005/03/19 08:34:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,7 +118,7 @@ void isic_attach_siemens_isurf(struct isic_softc *sc);
  *---------------------------------------------------------------------------*/
 #if defined(__FreeBSD__)
 
-static void             
+static void
 siemens_isurf_read_fifo(void *buf, const void *base, size_t len)
 {
 	if(((u_int)base & SIE_ISURF_OFF_MASK) == SIE_ISURF_IDHSCXB)
@@ -130,12 +130,12 @@ siemens_isurf_read_fifo(void *buf, const void *base, size_t len)
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, IPAC_HSCXA_OFF);
 		insb((((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW), (u_char *)buf, (u_int)len);
-	}		
+	}
 	else /* if(((u_int)base & SIE_ISURF_OFF_MASK) == SIE_ISURF_IDISAC) */
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, IPAC_ISAC_OFF);
 		insb((((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW), (u_char *)buf, (u_int)len);
-	}		
+	}
 }
 
 #else
@@ -180,7 +180,7 @@ siemens_isurf_write_fifo(void *base, const void *buf, size_t len)
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, IPAC_HSCXA_OFF);
 		outsb((((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW), (const u_char *)buf, (u_int)len);
-	}		
+	}
 	else /* if(((u_int)base & SIE_ISURF_OFF_MASK) == SIE_ISURF_IDISAC) */
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, IPAC_ISAC_OFF);
@@ -225,22 +225,22 @@ siemens_isurf_write_reg(u_char *base, u_int offset, u_int v)
 	{
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_HSCXB_OFF));
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW, (u_char)v);
-	}		
+	}
 	else if(((u_int)base & SIE_ISURF_OFF_MASK) == SIE_ISURF_IDHSCXA)
 	{
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_HSCXA_OFF));
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW, (u_char)v);
-	}		
+	}
 	else if(((u_int)base & SIE_ISURF_OFF_MASK) == SIE_ISURF_IDISAC)
 	{
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_ISAC_OFF));
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW, (u_char)v);
-	}		
+	}
 	else /* IPAC */
 	{
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_IPAC_OFF));
 	        outb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW, (u_char)v);
-	}		
+	}
 }
 
 #else
@@ -289,17 +289,17 @@ siemens_isurf_read_reg(u_char *base, u_int offset)
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_HSCXA_OFF));
 		return(inb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW));
-	}		
+	}
 	else if(((u_int)base & SIE_ISURF_OFF_MASK) == SIE_ISURF_IDISAC)
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_ISAC_OFF));
 		return(inb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW));
-	}		
+	}
 	else /* IPAC */
 	{
 	        outb((u_int)((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_ALE, (u_char)(offset+IPAC_IPAC_OFF));
 		return(inb(((u_int)base & SIE_ISURF_BASE_MASK) + SIE_ISURF_OFF_RW));
-	}		
+	}
 }
 
 #else
@@ -337,15 +337,15 @@ int
 isic_probe_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 {
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Siemens I-Surf 2.0 PnP\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -353,15 +353,15 @@ isic_probe_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 	switch(ffs(dev->id_irq) - 1)
 	{
 		case 3:
-		case 4:		
+		case 4:
 		case 5:
 		case 7:
 		case 10:
 		case 11:
 		case 12:
-		case 15:		
+		case 15:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Siemens I-Surf 2.0 PnP!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
@@ -379,7 +379,7 @@ isic_probe_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 		return(0);
 	}
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 
 	if(!((dev->id_iobase >= 0x100) && (dev->id_iobase <= 0xfffc)))
@@ -401,19 +401,19 @@ isic_probe_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 	sc->writefifo = siemens_isurf_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_SIE_ISURF2;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	/* setup chip type = IPAC ! */
-	
+
 	sc->sc_ipac = 1;
 	sc->sc_bfifolen = IPAC_BFIFO_LEN;
-	
-        
+
+
 	return (1);
 }
 
@@ -468,7 +468,7 @@ isic_attach_siemens_isurf(struct isic_softc *sc)
 	/* setup chip type = IPAC ! */
 
 	sc->sc_ipac = 1;
-	sc->sc_bfifolen = IPAC_BFIFO_LEN;        
+	sc->sc_bfifolen = IPAC_BFIFO_LEN;
 
 	/* enable hscx/isac irq's */
 

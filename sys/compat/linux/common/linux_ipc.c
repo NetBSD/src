@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.30 2004/09/28 19:05:19 jdolecek Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.30.6.1 2005/03/19 08:33:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.30 2004/09/28 19:05:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.30.6.1 2005/03/19 08:33:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -399,7 +399,7 @@ linux_sys_shmat(l, v, retval)
 	if ((error = copyout(&retval[0], (caddr_t) SCARG(uap, raddr),
 	     sizeof retval[0])))
 		return error;
-	
+
 	retval[0] = 0;
 	return 0;
 }

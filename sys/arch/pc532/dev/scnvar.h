@@ -1,4 +1,4 @@
-/*	$NetBSD: scnvar.h,v 1.3 1997/03/13 10:24:16 matthias Exp $	*/
+/*	$NetBSD: scnvar.h,v 1.3.64.1 2005/03/19 08:33:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -46,6 +46,8 @@
 #define SCN_SIZE	         0x8	/* address space for port */
 
 #define SCN_CONSOLE 		   0	/* minor number of console */
+#define SCN_CONSDUART		   0
+#define SCN_CONSCHAN		   0
 
 #define SCN_CON_MAP_STAT  0xFFC80001	/* raw addresses for console */
 #define SCN_CON_MAP_DATA  0xFFC80003	/* Mapped .... */
@@ -97,11 +99,13 @@
 struct duart {
 	volatile u_char *base;
 	struct chan {
-	    int32_t ispeed, ospeed;
-	    u_char icode, ocode;
-	    u_char mr0;			/* MR0[7:3] */
-	    u_char new_mr1;		/* held changes */
-	    u_char new_mr2;		/* held changes */
+		struct scn_softc *sc;
+		struct tty *tty;
+		int32_t ispeed, ospeed;
+		u_char icode, ocode;
+		u_char mr0;			/* MR0[7:3] */
+		u_char new_mr1;		/* held changes */
+		u_char new_mr2;		/* held changes */
 	} chan[2];
 	enum scntype { SCNUNK, SCN2681, SCN2692, SC26C92 } type;
 	u_int16_t counter;		/* C/T generated bps, or zero */
@@ -123,6 +127,9 @@ struct scn_softc {
 	struct device sc_dev;
 	struct tty *sc_tty;
 	int     sc_unit;		/* unit number of this line (base 0) */
+	int	sc_channel;
+	int	sc_isconsole;
+	int	sc_iskgdb;
 	struct duart *sc_duart;	/* pointer to duart struct */
 	volatile u_char *sc_chbase;	/* per-channel registers (CH_xxx) */
 	u_char	sc_swflags;		/* from config / TIOCxFLAGS */

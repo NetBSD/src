@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.13 2004/01/01 20:39:58 oster Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.13.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@ void rf_print_assert_panic_message(int, char *, char *);
 void rf_print_unable_to_init_mutex(char *, int, int);
 void rf_print_unable_to_add_shutdown(char *, int, int);
 
-	
+
 extern char rf_panicbuf[];
 #define RF_PANIC() {rf_print_panic_message(__LINE__,__FILE__); panic(rf_panicbuf);}
 

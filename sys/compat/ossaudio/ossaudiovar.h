@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.9 2000/07/04 09:59:31 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.9.34.1 2005/03/19 08:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ struct oss_synth_info {
 	int	nr_voices;
 	int	nr_drums;
 	int	instr_bank_size;
-	u_int	capabilities;	
+	u_int	capabilities;
 #define OSS_SYNTH_CAP_PERCMODE		0x00000001
 #define OSS_SYNTH_CAP_OPL3		0x00000002
 #define OSS_SYNTH_CAP_INPUT		0x00000004

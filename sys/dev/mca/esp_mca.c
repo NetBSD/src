@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.7.10.1 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.7.10.2 2005/03/19 08:34:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,14 +38,14 @@
 
 /*
  * Driver for NCR 53c90, MCA version, with 86c01 DMA controller chip.
- * 
+ *
  * Some of the information used to write this driver was taken
  * from Tymm Twillman <tymm@computer.org>'s Linux MCA NC53c90 driver,
  * in drivers/scsi/mca_53c9x.c
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.7.10.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.7.10.2 2005/03/19 08:34:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ esp_mca_attach(parent, self, aux)
 	 * NCR SCSI Adapter (ADF 7f4f)
 	 *
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *     \_/ \___/ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *      |      \____ I/O base (32B): 001=0x240 010=0x340 011=0x400
@@ -171,14 +171,14 @@ esp_mca_attach(parent, self, aux)
 	 *       \__________ IRQ: 00=3 01=5 10=7 11=9
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * 1 1 1 | \_____/
 	 *       |       \__ DMA level
 	 *        \_________ Fairness: 1=enabled 0=disabled
 	 *
 	 * POS register 5: (adf pos3)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * 1   |     \___/
 	 *     |         \__ Static Ram: 0xC8000-0xC87FF + XX*0x4000
@@ -352,7 +352,7 @@ esp_dma_intr(sc)
 		*esc->sc_xfer_len,
 		(esc->sc_flags & ESP_XFER_READ)
 			? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	
+
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
 	esc->sc_flags &= ~ESP_XFER_LOADED;
 
@@ -401,7 +401,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0,
 		*len, (datain) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	
+
 	esc->sc_flags |= ESP_XFER_LOADED | (datain ? ESP_XFER_READ : 0);
 	esc->sc_xfer_addr = addr;
 	esc->sc_xfer_len  = len;

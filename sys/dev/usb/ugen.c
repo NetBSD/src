@@ -1,7 +1,7 @@
-/*	$NetBSD: ugen.c,v 1.69 2004/12/03 08:53:40 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.69.6.1 2005/03/19 08:35:58 yamt Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.69 2004/12/03 08:53:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.69.6.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1464,7 +1464,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			kn->kn_fop = &ugenread_isoc_filtops;
 			break;
 		case UE_BULK:
-			/* 
+			/*
 			 * We have no easy way of determining if a read will
 			 * yield any data or a write will happen.
 			 * So, emulate "seltrue".

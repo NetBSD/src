@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.138.4.1 2005/02/12 18:17:54 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.138.4.2 2005/03/19 08:36:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.138.4.1 2005/02/12 18:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.138.4.2 2005/03/19 08:36:38 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -512,8 +512,8 @@ sendit:
 
 #ifdef IPSEC_NAT_T
 	/*
-	 * NAT-T ESP fragmentation: don't do IPSec processing now, 
-	 * we'll do it on each fragmented packet. 
+	 * NAT-T ESP fragmentation: don't do IPSec processing now,
+	 * we'll do it on each fragmented packet.
 	 */
 	if (sp->req->sav &&
 	    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
@@ -732,7 +732,7 @@ skip_ipsec:
 		/*
 		 * If deferred crypto processing is needed, check that
 		 * the interface supports it.
-		 */ 
+		 */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
 		if (mtag != NULL && (ifp->if_capenable & IFCAP_IPSEC) == 0) {
 			/* notify IPsec to do its own crypto */
@@ -758,6 +758,8 @@ spd_done:
 	hlen = ip->ip_hl << 2;
 #endif /* PFIL_HOOKS */
 
+	m->m_pkthdr.csum_data |= hlen << 16;
+
 #if IFA_STATS
 	/*
 	 * search for the source address structure to
@@ -772,9 +774,11 @@ spd_done:
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
-	 * If small enough for mtu of path, can just send directly.
+	 * If small enough for mtu of path, or if using TCP segmentation
+	 * offload, can just send directly.
 	 */
-	if (ip_len <= mtu) {
+	if (ip_len <= mtu ||
+	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 #if IFA_STATS
 		if (ia)
 			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
@@ -785,20 +789,23 @@ spd_done:
 		 */
 		ip->ip_sum = 0;
 
-		/*
-		 * Perform any checksums that the hardware can't do
-		 * for us.
-		 *
-		 * XXX Does any hardware require the {th,uh}_sum
-		 * XXX fields to be 0?
-		 */
-		if (sw_csum & M_CSUM_IPv4) {
-			ip->ip_sum = in_cksum(m, hlen);
-			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
-		}
-		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(m);
-			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+			/*
+			 * Perform any checksums that the hardware can't do
+			 * for us.
+			 *
+			 * XXX Does any hardware require the {th,uh}_sum
+			 * XXX fields to be 0?
+			 */
+			if (sw_csum & M_CSUM_IPv4) {
+				ip->ip_sum = in_cksum(m, hlen);
+				m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+			}
+			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+				in_delayed_cksum(m);
+				m->m_pkthdr.csum_flags &=
+				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+			}
 		}
 
 #ifdef IPSEC
@@ -852,16 +859,16 @@ spd_done:
 			ipsec_delaux(m);
 
 #ifdef IPSEC_NAT_T
-			/* 
+			/*
 			 * If we get there, the packet has not been handeld by
-			 * IPSec whereas it should have. Now that it has been 
+			 * IPSec whereas it should have. Now that it has been
 			 * fragmented, re-inject it in ip_output so that IPsec
 			 * processing can occur.
 			 */
 			if (natt_frag) {
-				error = ip_output(m, opt, 
+				error = ip_output(m, opt,
 				    ro, flags, imo, so, mtu_p);
-			} else 
+			} else
 #endif /* IPSEC_NAT_T */
 #endif /* IPSEC */
 			{
@@ -977,6 +984,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		} else {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			m->m_pkthdr.csum_data |= mhlen << 16;
 		}
 		ipstat.ips_ofragments++;
 		fragments++;
@@ -996,6 +1004,8 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 	} else {
 		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
+		KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
+			sizeof(struct ip));
 	}
 sendorfree:
 	/*
@@ -1037,7 +1047,7 @@ in_delayed_cksum(struct mbuf *m)
 	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
 		csum = 0xffff;
 
-	offset += m->m_pkthdr.csum_data;	/* checksum offset */
+	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
 
 	if ((offset + sizeof(u_int16_t)) > m->m_len) {
 		/* This happen when ip options were inserted

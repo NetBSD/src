@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticio.h,v 1.1 2001/09/18 19:51:23 ad Exp $	*/
+/* 	$NetBSD: sticio.h,v 1.1.34.1 2005/03/19 08:35:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct stic_xcomm {
 };
 
 /*
- * stic_xmap: a description of the area returned by mapping the board. 
+ * stic_xmap: a description of the area returned by mapping the board.
  * sxm_xcomm and sxm_buf are physically contigious and of variable size as a
  * whole; the combined size is learnt from stic_xinfo::sxi_buf_size.
  */

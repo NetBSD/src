@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.16 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.16.6.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,11 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.16 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.16.6.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.16 2004/08/21 23:48:33 thorpej Exp $
 #include <sys/callout.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>

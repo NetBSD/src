@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.19 2004/11/26 22:29:36 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.19.6.1 2005/03/19 08:34:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.19 2004/11/26 22:29:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.19.6.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1359,7 +1359,7 @@ igsfb_accel_copycols(cookie, row, src, dst, num)
 	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
 	uint32_t rowp, srp, dsp;
 	uint16_t width, height;
-	
+
 	width = num * ri->ri_font->fontwidth;
 	height = ri->ri_font->fontheight;
 
@@ -1370,7 +1370,7 @@ igsfb_accel_copycols(cookie, row, src, dst, num)
 	srp = rowp + src * ri->ri_font->fontwidth;
 	dsp = rowp + dst * ri->ri_font->fontwidth;
 
-	igsfb_accel_copy(dc, srp, dsp, width, height);	
+	igsfb_accel_copy(dc, srp, dsp, width, height);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.3 2004/11/30 21:36:28 martin Exp $	*/
+/*	$NetBSD: iso.h,v 1.3.6.1 2005/03/19 08:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -223,7 +223,7 @@ isonum_722(p)
 #else
 	return ((char)*p << 8)|p[1];
 #endif
-} 
+}
 
 /* 7.2.3: unsigned both-endian (little, then big) 16-bit value */
 static __inline uint16_t

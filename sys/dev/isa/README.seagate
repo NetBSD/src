@@ -1,4 +1,4 @@
-#	$NetBSD: README.seagate,v 1.3 2003/05/03 18:11:25 wiz Exp $
+#	$NetBSD: README.seagate,v 1.3.12.1 2005/03/19 08:34:33 yamt Exp $
 
 The hardware:
 
@@ -28,7 +28,7 @@ completion of the command depending on the supplied flags. A timer is started
 for every command placed in the queue. The commands are added in the order they
 are received. There is a possiblity to make all REQUEST SENSE commands be
 queued before all other commands, but I dont think it is a good thing (Linux
-do however use this). 
+do however use this).
 
 The card is mostly controlled by the sea_main function. It is called by
 scsi_cmd, the interrupt routine, and the timeout routine. The sea_main routine

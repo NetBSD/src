@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.c,v 1.5 2003/10/28 17:02:54 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.c,v 1.5.12.1 2005/03/19 08:36:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.5 2003/10/28 17:02:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.5.12.1 2005/03/19 08:36:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,7 +124,7 @@ void capi_info_ind(capi_softc_t *sc, struct mbuf *m_in)
     msg = capimsg_getu32(msg, &PLCI);
 
     /* i4b_l4_info_ind() */
-    
+
     msg = capimsg_setu16(mtod(m, u_int8_t*), m->m_len);
     msg = capimsg_setu16(msg, applid);
     msg = capimsg_setu16(msg, CAPI_INFO_RESP);
@@ -245,7 +245,7 @@ void capi_connect_req(capi_softc_t *sc, call_desc_t *cd)
 
     msg = capimsg_setu8(msg + slen, 0); /* Called & */
     msg = capimsg_setu8(msg, 0); /* Calling party subaddress */
-    
+
     msg = capimsg_setu8(msg, 15); /* B protocol */
     if (cd->bprot == BPROT_NONE)
 	msg = capimsg_setu16(msg, 1); /* B1 protocol = transparent */

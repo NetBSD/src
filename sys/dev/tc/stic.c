@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.27 2003/12/17 03:59:33 ad Exp $	*/
+/*	$NetBSD: stic.c,v 1.27.10.1 2005/03/19 08:35:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.27 2003/12/17 03:59:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.27.10.1 2005/03/19 08:35:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.27 2003/12/17 03:59:33 ad Exp $");
 
 #include <dev/wsfont/wsfont.h>
 
-#include <dev/ic/bt459reg.h>	
+#include <dev/ic/bt459reg.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/sticreg.h>
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.27 2003/12/17 03:59:33 ad Exp $");
  *			u_int8_t u0;
  *			u_int8_t u1;
  *			u_int8_t u2;
- *			unsigned :8; 
+ *			unsigned :8;
  *		} bt_lo;
  *		struct {
  *
@@ -278,7 +278,7 @@ static const struct wsdisplay_emulops stic_emulops = {
 };
 
 static struct wsscreen_descr stic_stdscreen = {
-	"std", 
+	"std",
 	0, 0,
 	&stic_emulops,
 	0, 0,
@@ -447,7 +447,7 @@ stic_attach(struct device *self, struct stic_info *si, int console)
 
 	/*
 	 * Allocate backing for the console.  We could trawl back through
-	 * msgbuf and and fill the backing, but it's not worth the hassle. 
+	 * msgbuf and and fill the backing, but it's not worth the hassle.
 	 * We could also grab backing using pmap_steal_memory() early on,
 	 * but that's a little ugly.
 	 */
@@ -660,7 +660,7 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct stic_screen *ss;
 
 	si = (struct stic_info *)v;
-	
+
 	if ((stic_consscr.ss_flags & SS_ALLOCED) == 0)
 		ss = &stic_consscr;
 	else {
@@ -743,7 +743,7 @@ stic_do_switch(void *cookie)
 	sp = ss->ss_backing;
 	ss->ss_backing = NULL;
 
-	/* 
+	/*
 	 * We assume that most of the screen is blank and blast it with
 	 * eraserows(), because eraserows() is cheap.
 	 */
@@ -934,7 +934,7 @@ stic_copyrows(void *cookie, int src, int dst, int height)
 		pb[0] = STAMP_CMD_COPYSPANS | STAMP_LW_PERPACKET;
 		pb[1] = (num << 24) | 0xffffff;
 		pb[2] = 0x0;
-		pb[3] = STAMP_UPDATE_ENABLE | STAMP_METHOD_COPY | STAMP_SPAN | 
+		pb[3] = STAMP_UPDATE_ENABLE | STAMP_METHOD_COPY | STAMP_SPAN |
 		    STAMP_COPYSPAN_ALIGNED;
 		pb[4] = 1; /* linewidth */
 
@@ -1331,7 +1331,7 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= 2 || (index + count) > 2)			
+		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
 		error = copyin(p->cmap.red, &r[index], count);
 		if (error)
@@ -1502,7 +1502,7 @@ sticmmap(dev_t dev, off_t offset, int prot)
 
 	if (securelevel > 0)
 		return (-1L);
-	if (si->si_dispmode != WSDISPLAYIO_MODE_MAPPED)	
+	if (si->si_dispmode != WSDISPLAYIO_MODE_MAPPED)
 		return (-1L);
 
 	if (offset < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.21 2004/02/19 03:42:01 matt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.21.10.1 2005/03/19 08:36:11 yamt Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.21 2004/02/19 03:42:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.21.10.1 2005/03/19 08:36:11 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -269,12 +269,12 @@ ptree_gen(char *off, struct symtab *tab)
  * Finds a certain symbol name in a certain symbol table.
  */
 static Elf_Sym *
-findsym(char *name, struct symtab *table, int userreq)
+findsym(char *name, struct symtab *table)
 {
 	Elf_Sym *start = table->sd_symstart;
 	int i, sz = table->sd_symsize/sizeof(Elf_Sym);
 	char *np;
-	caddr_t realstart = table->sd_strstart - (userreq ? 0 : table->sd_usroffset);
+	caddr_t realstart = table->sd_strstart - table->sd_usroffset;
 
 #ifdef USE_PTREE
 	if (table == &kernel_symtab && (i = ptree_find(name)) != 0)
@@ -340,7 +340,7 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 
 #ifdef KSYMS_DEBUG
 	printf("start %p sym %p symsz %d str %p strsz %d send %p\n",
-	    start, tab->sd_symstart, tab->sd_symsize, 
+	    start, tab->sd_symstart, tab->sd_symsize,
 	    tab->sd_strstart, tab->sd_strsize, send);
 #endif
 
@@ -491,13 +491,13 @@ ksyms_init(int symsize, void *start, void *end)
 
 /*
  * Get the value associated with a symbol.
- * "mod" is the module name, or null if any module. 
+ * "mod" is the module name, or null if any module.
  * "sym" is the symbol name.
  * "val" is a pointer to the corresponding value, if call succeeded.
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getval(const char *mod, char *sym, unsigned long *val, int type, int userreq)
+ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
 {
 	struct symtab *st;
 	Elf_Sym *es;
@@ -513,7 +513,7 @@ ksyms_getval(const char *mod, char *sym, unsigned long *val, int type, int userr
 	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
 		if (mod && strcmp(st->sd_name, mod))
 			continue;
-		if ((es = findsym(sym, st, userreq)) == NULL)
+		if ((es = findsym(sym, st)) == NULL)
 			continue;
 
 		/* Skip if bad binding */
@@ -583,10 +583,21 @@ ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
 #if NKSYMS
 static int symsz, strsz;
 
+/*
+ * In case we exposing the symbol table to the userland using the pseudo-
+ * device /dev/ksyms, it is easier to provide all the tables as one.
+ * However, it means we have to change all the st_name fields for the
+ * symbols so they match the ELF image that the userland will read
+ * through the device.
+ *
+ * The actual (correct) value of st_name is preserved through a global
+ * offset stored in the symbol table structure.
+ */
+
 static void
 ksyms_sizes_calc(void)
-{               
-        struct symtab *st; 
+{
+        struct symtab *st;
 	int i;
 
         symsz = strsz = 0;
@@ -617,7 +628,7 @@ struct syminfo {
 	int *symnmoff;
 	char *symnames;
 };
-	
+
 
 /*
  * Add a symbol to the temporary save area for symbols.
@@ -638,7 +649,7 @@ addsym(struct syminfo *info, const Elf_Sym *sym, const char *name,
 		mlen = 1 + strlen(mod);
 	else
 		mlen = 0;
-	if (info->cursyms == info->maxsyms || 
+	if (info->cursyms == info->maxsyms ||
 	    (len + mlen + info->curnamep) > info->maxnamep) {
 		printf("addsym: too many symbols, skipping '%s'\n", name);
 		return;
@@ -730,10 +741,9 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		/* XXX - save local symbols if DDB */
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
-			
+
 		/* Check if the symbol exists */
-		if (ksyms_getval_from_kernel(NULL, symname,
-		    &rval, KSYMS_EXTERN) == 0) {
+		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
 			if (sym[i].st_value != rval) {
 				if (specialsym(symname)) {
@@ -775,10 +785,9 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		/* XXX - save local symbols if DDB */
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
-			
+
 		/* Check if the symbol exists */
-		if (ksyms_getval_from_kernel(NULL, symname,
-		    &rval, KSYMS_EXTERN) == 0) {
+		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
 			if ((sym[i].st_value != rval) && specialsym(symname)) {
 				addsym(&info, &sym[i], symname, mod);
 			}
@@ -1135,7 +1144,7 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		 */
 		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
-		if ((error = ksyms_getval_from_userland(NULL, str, &val, KSYMS_EXTERN)))
+		if ((error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN)))
 			break;
 		error = copyout(&val, kg->kg_value, sizeof(long));
 		break;
@@ -1148,7 +1157,7 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
 		CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
-			if ((sym = findsym(str, st, 1)) == NULL) /* from userland */
+			if ((sym = findsym(str, st)) == NULL) /* from userland */
 				continue;
 
 			/* Skip if bad binding */
@@ -1158,6 +1167,12 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 			}
 			break;
 		}
+		/*
+		 * XXX which value of sym->st_name should be returned?  The real
+		 * one, or the one that matches what reading /dev/ksyms get?
+		 *
+		 * Currently, we're returning the /dev/ksyms one.
+		 */
 		if (sym != NULL)
 			error = copyout(sym, kg->kg_sym, sizeof(Elf_Sym));
 		else

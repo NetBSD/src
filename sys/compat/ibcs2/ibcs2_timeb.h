@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_timeb.h,v 1.2 1996/05/03 17:05:34 christos Exp $	*/
+/*	$NetBSD: ibcs2_timeb.h,v 1.2.74.1 2005/03/19 08:33:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -33,7 +33,7 @@
 #ifndef	_IBCS2_TIMEB_H
 #define	_IBCS2_TIMEB_H
 
-#pragma pack(2) 
+#pragma pack(2)
 struct xenix_timeb {
         ibcs2_time_t time;
 	unsigned short millitm;

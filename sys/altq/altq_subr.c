@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.11 2004/02/13 11:36:09 wiz Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.11.10.1 2005/03/19 08:32:44 yamt Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.11 2004/02/13 11:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.11.10.1 2005/03/19 08:32:44 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -199,7 +199,7 @@ altq_enable(ifq)
 	struct ifaltq *ifq;
 {
 	int s;
-    
+
 	if (!ALTQ_IS_READY(ifq))
 		return ENXIO;
 	if (ALTQ_IS_ENABLED(ifq))
@@ -221,7 +221,7 @@ altq_disable(ifq)
 	struct ifaltq *ifq;
 {
 	int s;
-    
+
 	if (!ALTQ_IS_ENABLED(ifq))
 		return 0;
 
@@ -319,7 +319,7 @@ tbr_set(ifq, profile)
 		printf("tbr_set: no CPU clock available!\n");
 		return (ENXIO);
 	}
-	
+
 	if (profile->rate == 0) {
 		/* delete this tbr */
 		if ((tbr = ifq->altq_tbr) == NULL)
@@ -438,13 +438,13 @@ tbr_get(ifq, profile)
 #define	IPPROTO_AH	51		/* authentication header */
 #endif
 
-/* 
+/*
  * extract flow information from a given packet.
  * filt_mask shows flowinfo fields required.
  * we assume the ip header is in one mbuf, and addresses and ports are
  * in network byte order.
  */
-int 
+int
 altq_extractflow(m, af, flow, filt_bmask)
 	struct mbuf *m;
 	int af;
@@ -1505,7 +1505,7 @@ extern u_int64_t cycles_per_usec;	/* alpha CPU clock frequency */
 #endif /* __alpha__ */
 
 void
-init_machclk(void) 
+init_machclk(void)
 {
 	/* sanity check */
 #ifdef __i386__

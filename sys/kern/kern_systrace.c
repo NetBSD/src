@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.42 2004/11/30 04:25:43 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.42.6.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.42 2004/11/30 04:25:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.42.6.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -572,7 +572,7 @@ systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 	fst->p_ruid = p->p_cred->p_ruid;
 	fst->p_rgid = p->p_cred->p_rgid;
 
-	return fdclone(p, fp, fd, &systracefops, fst);
+	return fdclone(p, fp, fd, flag, &systracefops, fst);
 }
 
 void
@@ -970,7 +970,7 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 		SET(strp->flags, STR_PROC_SETEGID);
 		strp->setegid = ans->stra_setegid;
 	}
-	
+
 
 	/* Clearing the flag indicates to the process that it woke up */
 	CLR(strp->flags, STR_PROC_WAITANSWER);
@@ -1491,7 +1491,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc,
 
 	proc->p_systrace = strp;
 	SET(proc->p_flag, P_SYSTRACE);
-	
+
 	/* Pass the new pointer back to the caller */
 	if (pstrp != NULL)
 		*pstrp = strp;
@@ -1677,7 +1677,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 	cont->strp = strp;
 
 	msg = &cont->msg;
-	
+
 	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
 		    msg, strp->pid, npid));
 
@@ -1708,7 +1708,7 @@ systrace_msg_policyfree(struct fsystrace *fst, struct str_policy *strpol)
 	memset(cont, 0, sizeof(struct str_msgcontainer));
 
 	msg = &cont->msg;
-	
+
 	DPRINTF(("%s: free %d\n", __func__, strpol->nr));
 
 	msg->msg_type = SYSTR_MSG_POLICYFREE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.1 2005/01/24 01:17:03 joff Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.1.4.1 2005/03/19 08:35:58 yamt Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -122,7 +122,7 @@ struct atu_cdata {
 	struct atu_list_head	atu_tx_free;
 
 	u_int8_t		atu_tx_inuse;
-	u_int8_t		atu_tx_last_idx;	
+	u_int8_t		atu_tx_last_idx;
 };
 
 #define MAX_SSID_LEN		32
@@ -156,11 +156,11 @@ struct atu_softc {
 	struct atu_cdata	atu_cdata;
 
 	struct timeval		atu_rx_notice;
-	
+
 	u_int8_t		atu_bssid[ETHER_ADDR_LEN];
 	enum atu_radio_type	atu_radio;
 	u_int16_t		atu_quirk;
-	
+
 	u_int8_t		atu_ssid[MAX_SSID_LEN];
 	u_int8_t		atu_ssidlen;
 	u_int8_t		atu_channel;
@@ -258,7 +258,7 @@ struct atu_cmd_card_config {
 	uByte			Cmd;
 	uByte			Reserved;
 	uWord			Size;
-		
+
 	uByte			ExcludeUnencrypted;
 	uByte			PromiscuousMode;
 	uByte			ShortRetryLimit;
@@ -282,7 +282,7 @@ struct atu_cmd_do_scan {
 	uByte			Cmd;
 	uByte			Reserved;
 	uWord			Size;
-	
+
 	uByte			BSSID[ETHER_ADDR_LEN];
 	uByte			SSID[MAX_SSID_LEN];
 	uByte			ScanType;
@@ -291,7 +291,7 @@ struct atu_cmd_do_scan {
 	uWord			MinChannelTime;
 	uWord			MaxChannelTime;
 	uByte			SSID_Len;
-	uByte			InternationalScan;  
+	uByte			InternationalScan;
 } UPACKED;
 
 #define ATU_SCAN_ACTIVE		0x00
@@ -302,7 +302,7 @@ struct atu_cmd_join {
 	uByte			Cmd;
 	uByte			Reserved;
 	uWord			Size;
-	
+
 	uByte			bssid[ETHER_ADDR_LEN];
 	uByte			essid[32];
 	uByte			bss_type;
@@ -317,13 +317,13 @@ struct atu_cmd_start_ibss {
 	uByte		Cmd;
 	uByte		Reserved;
 	uWord		Size;
-	
+
 	uByte		BSSID[ETHER_ADDR_LEN];
 	uByte		SSID[32];
-	uByte		BSSType; 
-	uByte		Channel; 
+	uByte		BSSType;
+	uByte		Channel;
 	uByte		SSIDSize;
-	uByte		Res[3];  
+	uByte		Res[3];
 } UPACKED;
 
 /*
@@ -367,7 +367,7 @@ struct atu_fw {
 	u_int8_t		patch;
 	u_int8_t		build;
 } UPACKED;
-        
+
 /*
  * The header the AT76c503 puts in front of RX packets (for both managment &
  * data)

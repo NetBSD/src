@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.21.6.1 2005/02/12 18:17:38 yamt Exp $
+#	$NetBSD: SALMON,v 1.21.6.2 2005/03/19 08:33:09 yamt Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -27,6 +27,10 @@ options 	COMPAT_09	# NetBSD-0.9
 options 	COMPAT_10	# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+options 	COMPAT_16
+options 	COMPAT_20
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -42,6 +46,7 @@ file-system 	KERNFS			# kernel file system; recommended
 #options 	QUOTA			# file system quotas
 options 	NFSSERVER		# Network File System server
 #options 	FASTLINKS		# fast symbolic links in FFS
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # networking options
 #eptions 	GATEWAY			# packet forwarding

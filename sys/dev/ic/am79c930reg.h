@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930reg.h,v 1.4 2003/11/02 11:07:45 wiz Exp $ */
+/* $NetBSD: am79c930reg.h,v 1.4.10.1 2005/03/19 08:34:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@
 #define AM79C930_LMA_HI 3	/* Local Memory Address register (high byte) */
 
 				/* set this bit to turn off ISAPnP version */
-#define AM79C930_LMA_HI_ISAPWRDWN	0x80	
- 
+#define AM79C930_LMA_HI_ISAPWRDWN	0x80
+
 /*
  * mmm, inconsistency in chip documentation:
  * According to page 79--80, all four of the following are equivalent

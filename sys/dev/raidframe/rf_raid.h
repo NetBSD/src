@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.33 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.33.6.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -98,8 +98,8 @@ struct RF_ThroughputStats_s {
 struct RF_Raid_s {
 	/* This portion never changes, and can be accessed without locking */
 	/* an exception is Disks[][].status, which requires locking when it is
-	 * changed.  XXX this is no longer true.  numSpare and friends can 
-	 * change now. 
+	 * changed.  XXX this is no longer true.  numSpare and friends can
+	 * change now.
          */
 	u_int   numCol;		/* number of columns of disks, typically == #
 				 * of disks/rank */
@@ -131,7 +131,7 @@ struct RF_Raid_s {
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
 	RF_LockTableEntry_t *quiesceLock;	/* quiesnce table */
 	int     numFailures;	/* total number of failures in the array */
-	int     numNewFailures; /* number of *new* failures (that havn't 
+	int     numNewFailures; /* number of *new* failures (that havn't
 				   caused a mod_counter update */
 
 	int     parity_good;    /* !0 if parity is known to be correct */
@@ -140,19 +140,19 @@ struct RF_Raid_s {
 	int     clean;          /* the clean bit for this array. */
 
 	int     openings;       /* Number of IO's which can be scheduled
-				   simultaneously (high-level - not a 
+				   simultaneously (high-level - not a
 				   per-component limit)*/
 
 	int maxOutstanding;   /* maxOutstanding requests (per-component) */
-	int autoconfigure;    /* automatically configure this RAID set. 
+	int autoconfigure;    /* automatically configure this RAID set.
 				 0 == no, 1 == yes */
 	int root_partition;   /* Use this set as /
 				 0 == no, 1 == yes*/
-	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0) 
+	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0)
 				 of this component.  Used for autoconfigure
 				 only. */
 	int config_order;     /* 0 .. n.  The order in which the component
-				 should be auto-configured.  E.g. 0 is will 
+				 should be auto-configured.  E.g. 0 is will
 				 done first, (and would become raid0).
 				 This may be in conflict with last_unit!!?! */
 	                      /* Not currently used. */
@@ -160,7 +160,7 @@ struct RF_Raid_s {
 	/* queue to gather up requests from KernelWakeupFunc() and let
 	   a kernel thread deal with calling rf_DiskIOComplete and any
 	   callback functions. */
-	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone; 
+	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone;
 	/* and a lock to protect it */
 	struct simplelock iodone_lock;
 

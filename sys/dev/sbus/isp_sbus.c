@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.62 2004/03/17 17:04:58 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.62.10.1 2005/03/19 08:35:47 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.62 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.62.10.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,7 +571,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 		rq->req_seg_count = 2;
 		MEMZERO((void *)crq, sizeof (*crq));
 		crq->req_header.rqs_entry_count = 1;
-		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
+		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;
 		crq->req_dataseg[0].ds_count = xs->datalen;
 		crq->req_dataseg[0].ds_base = dmap->dm_segs[0].ds_addr;
 		isp_put_cont_req(isp, crq, cqe);

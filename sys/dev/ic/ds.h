@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.h,v 1.4.20.1 2005/02/12 18:17:43 yamt Exp $	*/
+/*	$NetBSD: ds.h,v 1.4.20.2 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Definitions for access to Dallas Semiconductor chips which attach to 
+ * Definitions for access to Dallas Semiconductor chips which attach to
  * the same 1-wire bus as the DS2404 RTC.
  */
 
@@ -66,13 +66,13 @@
 
 /*
  * Memory access codes. These are available from the 1- or 3-wire bus, and
- * but you must use one of the ROM access codes first, if using the 1-wire 
+ * but you must use one of the ROM access codes first, if using the 1-wire
  * bus.
  *
  * You can read from any starting address up to the end of the chip, or
  * abort the read with a reset pulse.
  * You first write 2-32 bytes beginning some address to the scratchpad.
- * Starting address and final byte stream length are remembered by the 
+ * Starting address and final byte stream length are remembered by the
  * chip. After reading data and address/length back from the scratchpad,
  * and verifying the information, you can issue the copy scratchpad command
  * to copy the written parts of the scratchpad to the corresponding parts
@@ -80,7 +80,7 @@
  */
 
 #define DS_MEM_WRITE_SCRATCH	0x0f	/* 0F low-ads high-ads data ... */
-#define DS_MEM_READ_SCRATCH	0xaa	/* AA -> low-ads high-ads end-ofs 
+#define DS_MEM_READ_SCRATCH	0xaa	/* AA -> low-ads high-ads end-ofs
 					 * data ... */
 #define DS_MEM_COPY_SCRATCH	0x55	/* 55 low-ads high-ads end-ofs */
 #define DS_MEM_READ_MEMORY	0xf0	/* F0 low-ads high-ads -> data ...*/
@@ -97,7 +97,7 @@ struct ds_handle {
 };
 
 /*
- * Functions for access to Dallas Semiconductor chips which attach to 
+ * Functions for access to Dallas Semiconductor chips which attach to
  * the same 1-wire bus as the DS2404 RTC.
  */
 

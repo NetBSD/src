@@ -27,14 +27,14 @@
  *	i4b_usr_sti.c - USRobotics Sportster ISDN TA intern (Tina-pp)
  *	-------------------------------------------------------------
  *
- *	$Id: isic_isa_usr_sti.c,v 1.4 2002/03/24 20:35:49 martin Exp $ 
+ *	$Id: isic_isa_usr_sti.c,v 1.4.20.1 2005/03/19 08:34:33 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_usr_sti.c,v 1.4 2002/03/24 20:35:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_usr_sti.c,v 1.4.20.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_USR_STI
@@ -103,12 +103,12 @@ static u_char intr_no[] = { 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 4, 5, 0, 6, 7 };
 /*---------------------------------------------------------------------------*
  *	USRobotics read fifo routine
  *---------------------------------------------------------------------------*/
-static void		
+static void
 usrtai_read_fifo(void *buf, const void *base, size_t len)
 {
 	register int offset = 0;
 
-	for(;len > 0; len--, offset++)	
+	for(;len > 0; len--, offset++)
 		*((u_char *)buf + offset) = inb((int)base + ADDR(offset));
 }
 
@@ -119,7 +119,7 @@ static void
 usrtai_write_fifo(void *base, const void *buf, size_t len)
 {
 	register int offset = 0;
-	
+
 	for(;len > 0; len--, offset++)
 		outb((int)base + ADDR(offset), *((u_char *)buf + offset));
 }
@@ -149,15 +149,15 @@ int
 isic_probe_usrtai(struct isa_device *dev)
 {
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= MAXUNIT for USR Sportster TA!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -179,7 +179,7 @@ isic_probe_usrtai(struct isa_device *dev)
 		return(0);
 	}
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 
 	switch(dev->id_iobase)
@@ -201,7 +201,7 @@ isic_probe_usrtai(struct isa_device *dev)
 		case 0x270:
 		case 0x278:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid iobase 0x%x specified for USR Sportster TA!\n",
 				dev->id_unit, dev->id_iobase);
@@ -209,7 +209,7 @@ isic_probe_usrtai(struct isa_device *dev)
 			break;
 	}
 	sc->sc_port = dev->id_iobase;
-	
+
 	/* setup ISAC access routines */
 
 	sc->clearirq = NULL;
@@ -224,19 +224,19 @@ isic_probe_usrtai(struct isa_device *dev)
 	sc->sc_cardtyp = CARD_TYPEP_USRTA;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* setup ISAC and HSCX base addr */
-	
+
 	ISAC_BASE   = (caddr_t)dev->id_iobase + USR_ISAC_OFF;
 	HSCX_A_BASE = (caddr_t)dev->id_iobase + USR_HSCXA_OFF;
 	HSCX_B_BASE = (caddr_t)dev->id_iobase + USR_HSCXB_OFF;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for USR Sportster TA based
 	 * boards is 0x05 in the least significant bits.
 	 */
@@ -251,8 +251,8 @@ isic_probe_usrtai(struct isa_device *dev)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
-	
+	}
+
 	return (1);
 }
 
@@ -263,9 +263,9 @@ int
 isic_attach_usrtai(struct isa_device *dev)
 {
 	u_char irq = 0;
-	
+
 	/* reset the HSCX and ISAC chips */
-	
+
 	outb(dev->id_iobase + USR_INTL_OFF, USR_RES_BIT);
 	DELAY(SEC_DELAY / 10);
 
@@ -356,7 +356,7 @@ usrtai_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 static void
 usrtai_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
-	int map = map_base[what] + (offs / 4), 
+	int map = map_base[what] + (offs / 4),
 	    off = USR_REG_OFFS(offs);
 	bus_space_tag_t t = sc->sc_maps[map].t;
 	bus_space_handle_t h = sc->sc_maps[map].h;
@@ -370,7 +370,7 @@ usrtai_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data
 static u_char
 usrtai_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
-	int map = map_base[what] + (offs / 4), 
+	int map = map_base[what] + (offs / 4),
 	    off = USR_REG_OFFS(offs);
 	bus_space_tag_t t = sc->sc_maps[map].t;
 	bus_space_handle_t h = sc->sc_maps[map].h;
@@ -384,7 +384,7 @@ usrtai_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_usrtai(struct isic_attach_args *ia)
 {
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for IOM2 based
 	 * boards is 0x05 in the least significant bits.
 	 */
@@ -392,7 +392,7 @@ isic_probe_usrtai(struct isic_attach_args *ia)
 	if(((bus_space_read_1(ia->ia_maps[USR_HSCXA_MAP(H_VSTR)].t, ia->ia_maps[USR_HSCXA_MAP(H_VSTR)].h, USR_REG_OFFS(H_VSTR)) & 0x0f) != 0x05) ||
 	   ((bus_space_read_1(ia->ia_maps[USR_HSCXB_MAP(H_VSTR)].t, ia->ia_maps[USR_HSCXB_MAP(H_VSTR)].h, USR_REG_OFFS(H_VSTR)) & 0x0f) != 0x05))
 	    	return 0;
-	
+
 	return (1);
 }
 
@@ -404,7 +404,7 @@ isic_attach_usrtai(struct isic_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
-	u_char irq = intr_no[sc->sc_irq];	
+	u_char irq = intr_no[sc->sc_irq];
 
 	sc->clearirq = NULL;
 	sc->readreg = usrtai_read_reg;
@@ -418,14 +418,14 @@ isic_attach_usrtai(struct isic_softc *sc)
 	sc->sc_cardtyp = CARD_TYPEP_USRTA;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;	
+	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
 	/* reset the HSCX and ISAC chips */
-	
+
 	bus_space_write_1(t, h, 0, USR_RES_BIT);
 	DELAY(SEC_DELAY / 10);
 

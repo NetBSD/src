@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.23 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.23.6.1 2005/03/19 08:35:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.23 2004/09/17 23:30:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.23.6.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ atapi_interpret_sense(struct scsipi_xfer *xs)
 			msg = "unit attention";
 			error = EIO;
 			break;
-		case SKEY_WRITE_PROTECT:
+		case SKEY_DATA_PROTECT:
 			msg = "readonly device";
 			error = EROFS;
 			break;

@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.15.2.1 2005/02/12 18:17:34 yamt Exp $
+# $NetBSD: VIRTUALPC,v 1.15.2.2 2005/03/19 08:33:02 yamt Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.15.2.1 $"
+#ident 		"VIRTUALPC-$Revision: 1.15.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -151,7 +151,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

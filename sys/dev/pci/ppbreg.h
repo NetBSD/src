@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.4 2001/11/08 03:18:12 thorpej Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.4.26.1 2005/03/19 08:35:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -88,7 +88,7 @@
 #define PPB_MEM_SHIFT  16
 #define PPB_MEM_MIN    0x00100000
 
-/* 
+/*
  * bridge control register (see table 3.9 of ppb rev. 1.1)
  *
  * Note these are in the *upper* 16 bits if the Bridge Control

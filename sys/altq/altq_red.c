@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.10 2004/02/13 18:02:05 wiz Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.10.10.1 2005/03/19 08:32:44 yamt Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.10 2004/02/13 18:02:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.10.10.1 2005/03/19 08:32:44 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.10 2004/02/13 18:02:05 wiz Exp $");
  *	linterm=30
  *	dropmech=drop-tail
  *	bytes=false (can't be handled by 32-bit fixed-point)
- *	doubleq=false dqthresh=false 
+ *	doubleq=false dqthresh=false
  *	wait=true
  */
 /*
@@ -275,7 +275,7 @@ redioctl(dev, cmd, addr, flag, p)
 			return (error);
 		break;
 	}
-    
+
 	switch (cmd) {
 
 	case RED_ENABLE:
@@ -466,7 +466,7 @@ redioctl(dev, cmd, addr, flag, p)
 			default_inv_pmax = rp->inv_pmax;
 		} while (0);
 		break;
-		
+
 	default:
 		error = EINVAL;
 		break;
@@ -517,7 +517,7 @@ red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
 	red_t 	*rp;
 	int	w, i;
 	int	npkts_per_sec;
-	
+
 	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
 	if (rp == NULL)
 		return (NULL);
@@ -548,7 +548,7 @@ red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
 	if (pkttime == 0)
 		/* default packet time: 1000 bytes / 10Mbps * 8 * 1000000 */
 		rp->red_pkttime = 800;
-	else 
+	else
 		rp->red_pkttime = pkttime;
 
 	if (weight == 0) {
@@ -574,7 +574,7 @@ red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
 		       rp->red_weight, w);
 		rp->red_weight = w;
 	}
-	
+
 	/*
 	 * thmin_s and thmax_s are scaled versions of th_min and th_max
 	 * to be compared with avg.
@@ -613,7 +613,7 @@ red_destroy(rp)
 	FREE(rp, M_DEVBUF);
 }
 
-void 
+void
 red_getstats(rp, sp)
 	red_t *rp;
 	struct redstats *sp;
@@ -725,7 +725,7 @@ red_addq(rp, q, m, pktattr)
 #ifdef RED_STATS
 				rp->red_stats.marked_packets++;
 #endif
-			} else { 
+			} else {
 				/* unforced drop by red */
 				droptype = DTYPE_EARLY;
 			}
@@ -852,7 +852,7 @@ mark_ecn(m, pktattr, flags)
 			struct ip *ip = (struct ip *)pktattr->pattr_hdr;
 			u_int8_t otos;
 			int sum;
-	    
+
 			if (ip->ip_v != 4)
 				return (0);	/* version mismatch! */
 
@@ -941,7 +941,7 @@ red_getq(rp, q)
 	class_queue_t *q;
 {
 	struct mbuf *m;
-	
+
 	if ((m = _getq(q)) == NULL) {
 		if (rp->red_idle == 0) {
 			rp->red_idle = 1;
@@ -1022,7 +1022,7 @@ wtab_alloc(weight)
 	return (w);
 }
 
-int 
+int
 wtab_destroy(w)
 	struct wtab *w;
 {
@@ -1043,7 +1043,7 @@ wtab_destroy(w)
 	return (0);
 }
 
-int32_t 
+int32_t
 pow_w(w, n)
 	struct wtab *w;
 	int n;
@@ -1086,7 +1086,7 @@ pow_w(w, n)
 #define	FV_N			10	/* update fve_f every FV_N packets */
 
 #define	FV_BACKOFFTHRESH	1  /* backoff threshold interval in second */
-#define	FV_TTHRESH		3  /* time threshold to delete fve */  
+#define	FV_TTHRESH		3  /* time threshold to delete fve */
 #define	FV_ALPHA		5  /* extra packet count */
 
 #if (__FreeBSD_version > 300000)
@@ -1110,21 +1110,21 @@ pow_w(w, n)
 #define	BRTT_PMAX	(1 << (FV_PSHIFT + FP_SHIFT))
 
 const int brtt_tab[BRTT_SIZE] = {
-	0, 1262010, 877019, 703694, 598706, 525854, 471107, 427728, 
-	392026, 361788, 335598, 312506, 291850, 273158, 256081, 240361, 
-	225800, 212247, 199585, 187788, 178388, 169544, 161207, 153333, 
-	145888, 138841, 132165, 125836, 119834, 114141, 108739, 103612, 
-	98747, 94129, 89746, 85585, 81637, 77889, 74333, 70957, 
-	67752, 64711, 61824, 59084, 56482, 54013, 51667, 49440, 
-	47325, 45315, 43406, 41591, 39866, 38227, 36667, 35184, 
-	33773, 32430, 31151, 29933, 28774, 27668, 26615, 25611, 
-	24653, 23740, 22868, 22035, 21240, 20481, 19755, 19062, 
-	18399, 17764, 17157, 16576, 16020, 15487, 14976, 14487, 
-	14017, 13567, 13136, 12721, 12323, 11941, 11574, 11222, 
-	10883, 10557, 10243, 9942, 9652, 9372, 9103, 8844, 
-	8594, 8354, 8122, 7898, 7682, 7474, 7273, 7079, 
-	6892, 6711, 6536, 6367, 6204, 6046, 5893, 5746, 
-	5603, 5464, 5330, 5201, 5075, 4954, 4836, 4722, 
+	0, 1262010, 877019, 703694, 598706, 525854, 471107, 427728,
+	392026, 361788, 335598, 312506, 291850, 273158, 256081, 240361,
+	225800, 212247, 199585, 187788, 178388, 169544, 161207, 153333,
+	145888, 138841, 132165, 125836, 119834, 114141, 108739, 103612,
+	98747, 94129, 89746, 85585, 81637, 77889, 74333, 70957,
+	67752, 64711, 61824, 59084, 56482, 54013, 51667, 49440,
+	47325, 45315, 43406, 41591, 39866, 38227, 36667, 35184,
+	33773, 32430, 31151, 29933, 28774, 27668, 26615, 25611,
+	24653, 23740, 22868, 22035, 21240, 20481, 19755, 19062,
+	18399, 17764, 17157, 16576, 16020, 15487, 14976, 14487,
+	14017, 13567, 13136, 12721, 12323, 11941, 11574, 11222,
+	10883, 10557, 10243, 9942, 9652, 9372, 9103, 8844,
+	8594, 8354, 8122, 7898, 7682, 7474, 7273, 7079,
+	6892, 6711, 6536, 6367, 6204, 6046, 5893, 5746,
+	5603, 5464, 5330, 5201, 5075, 4954, 4836, 4722,
 	4611, 4504, 4400, 4299, 4201, 4106, 4014, 3924
 };
 

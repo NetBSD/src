@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.66.6.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: pss.c,v 1.66.6.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.66.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.66.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,12 +117,12 @@ struct pss_softc {
 	int	sc_drq;			/* DMA channel */
 
 	struct	ad1848_softc *ad1848_sc;
-	
+
 	int	out_port;
-	
+
 	struct	ad1848_volume master_volume;
 	int	master_mode;
-	
+
 	int	monitor_treble;
 	int	monitor_bass;
 
@@ -133,7 +133,7 @@ struct pss_softc {
 struct mpu_softc {
 	struct	device sc_dev;		/* base device */
 	void	*sc_ih;			/* interrupt vectoring */
-    
+
 	int	sc_iobase;		/* MIDI I/O port base address */
 	int	sc_irq;			/* MIDI interrupt */
 };
@@ -156,12 +156,12 @@ int	pssdebug = 0;
 
 int	pssprobe(struct device *, struct cfdata *, void *);
 void	pssattach(struct device *, struct device *, void *);
-static	int pssfind(struct device *, struct pss_softc *, 
+static	int pssfind(struct device *, struct pss_softc *,
 			 struct isa_attach_args *);
 
 int	spprobe(struct device *, struct cfdata *, void *);
 void	spattach(struct device *, struct device *, void *);
-static	int spfind(struct device *, struct ad1848_isa_softc *, 
+static	int spfind(struct device *, struct ad1848_isa_softc *,
 			struct isa_attach_args *);
 
 #ifdef notyet
@@ -310,7 +310,7 @@ pss_setaddr(addr, configAddr)
 	int configAddr;
 {
     int val;
-    
+
     val = inw(configAddr);
     val &= ADDR_MASK;
     val |= (addr << 4);
@@ -318,8 +318,8 @@ pss_setaddr(addr, configAddr)
 }
 
 /* pss_setint
- * This function sets the correct bits in the 
- * configuration register to 
+ * This function sets the correct bits in the
+ * configuration register to
  * enable the chosen interrupt.
  */
 int
@@ -379,7 +379,7 @@ pss_setdma(dmaNum, configAddress)
 	int configAddress;
 {
     int val;
-    
+
     switch(dmaNum) {
     case 0:
 	val = inw(configAddress);
@@ -575,17 +575,17 @@ pss_reset_dsp(sc)
 
     for (i = 0; i < 32768; i++)
 	inw(pss_base+PSS_CONTROL);
- 
+
     outw(pss_base+PSS_CONTROL, 0);
 
     return 1;
 }
 
 /*
- * This function loads an image into the PSS 
+ * This function loads an image into the PSS
  * card.  The function loads the file by
  * resetting the dsp and feeding it the boot bytes.
- * First you feed the ASIC the first byte of 
+ * First you feed the ASIC the first byte of
  * the boot sequence. The ASIC waits until it
  * detects a BMS and RD and asserts BR
  * and outputs the byte.  The host must poll for
@@ -600,7 +600,7 @@ pss_download_dsp(sc, block, size)
 {
     int i, val, count;
     int pss_base = sc->sc_iobase;
-    
+
     DPRINTF(("pss: downloading boot code..."));
 
     /* Warn DSP software that a boot is coming */
@@ -623,7 +623,7 @@ pss_download_dsp(sc, block, size)
 	    if (inw(pss_base+PSS_STATUS) & PSS_FLAG3)
 		break;
  	}
- 
+
 	if (j==327670) {
 	    /* It's ok we timed out when the file was empty */
 	    if (count >= size)
@@ -684,7 +684,7 @@ pss_dump_regs(sc)
     printf("PSS regs: status=%04x vers=%04x ",
 	   (u_short)inw(sc->sc_iobase+PSS_STATUS),
 	   (u_short)inw(sc->sc_iobase+PSS_ID_VERS));
-	
+
     printf("config=%04x wss_config=%04x\n",
 	   (u_short)inw(sc->sc_iobase+PSS_CONFIG),
 	   (u_short)inw(sc->sc_iobase+PSS_WSS_CONFIG));
@@ -794,7 +794,7 @@ pss_found:
 	    ia->ia_drq[0].ir_drq);
 	return 0;
     }
-      
+
     ia->ia_io[0].ir_size = PSS_NPORT;
 
     /* Initialize PSS irq and DMA */
@@ -845,7 +845,7 @@ spfind(parent, sc, ia)
     int i;
 
     sc->sc_ad1848.sc_iot = ia->ia_iot;
-    
+
     /* Set WSS io address */
     pss_setaddr(cf->cf_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
 
@@ -854,7 +854,7 @@ spfind(parent, sc, ia)
 	DPRINTF(("sp: no ad1848 ? iobase=%x\n", sc->sc_iobase));
 	return 0;
     }
-	
+
     /* Setup WSS interrupt and DMA if auto */
     if (cf->cf_irq == ISA_UNKNOWN_IRQ) {
 
@@ -919,12 +919,12 @@ spfind(parent, sc, ia)
     outb(sc->sc_iobase+WSS_CONFIG, (bits | 0x40));
     if ((inb(sc->sc_iobase+WSS_STATUS) & 0x40) == 0)	/* XXX What do these bits mean ? */
 	DPRINTF(("sp: IRQ %x\n", inb(sc->sc_iobase+WSS_STATUS)));
-    
+
     outb(sc->sc_iobase+WSS_CONFIG, (bits | wss_dma_bits[sc->sc_playdrq]));
 
     pc->ad1848_sc = (struct ad1848_softc *)sc;
     sc->sc_ad1848.parent = pc;
-    
+
     return 1;
 }
 
@@ -962,7 +962,7 @@ pssattach(parent, self, aux)
     int iobase = ia->ia_io[0].ir_addr;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
-    
+
     if (!pssfind(parent, sc, ia)) {
 	printf("%s: pssfind failed\n", sc->sc_dev.dv_xname);
 	return;
@@ -977,7 +977,7 @@ pssattach(parent, self, aux)
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
-    
+
     (void)config_found(self, ia, NULL);		/* XXX */
 
     sc->out_port = PSS_MASTER_VOL;
@@ -1047,7 +1047,7 @@ pcdattach(parent, self, aux)
     struct pcd_softc *sc = (struct pcd_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
     int iobase = cf->cf_iobase;
-    
+
     /*
      * The pss driver simply enables the cd interface. The CD
      * appropriate driver - scsi (aic6360) or Sony needs to be
@@ -1069,7 +1069,7 @@ pss_set_master_gain(sc, gp)
     struct ad1848_volume *gp;
 {
     DPRINTF(("pss_set_master_gain: %d:%d\n", gp->left, gp->right));
-	
+
 #ifdef PSS_DSP
     if (gp->left > PHILLIPS_VOL_MAX)
 	gp->left = PHILLIPS_VOL_MAX;
@@ -1098,7 +1098,7 @@ pss_set_master_mode(sc, mode)
     short phillips_mode;
 
     DPRINTF(("pss_set_master_mode: %d\n", mode));
-	
+
     if (mode == PSS_SPKR_STEREO)
 	phillips_mode = PSS_STEREO;
     else if (mode == PSS_SPKR_PSEUDO)
@@ -1109,7 +1109,7 @@ pss_set_master_mode(sc, mode)
 	phillips_mode = PSS_MONO;
     else
 	return (EINVAL);
-    
+
 #ifdef PSS_DSP
     pss_dspwrite(sc, SET_MASTER_COMMAND);
     pss_dspwrite(sc, MASTER_SWITCH | mode);
@@ -1161,7 +1161,7 @@ pss_set_bass(sc, bass)
 
     return(0);
 }
-	
+
 int
 pss_get_master_gain(sc, gp)
     struct pss_softc *sc;
@@ -1212,20 +1212,20 @@ pssintr(arg)
 {
     struct pss_softc *sc = arg;
     u_short sr;
-    
+
     sr = inw(sc->sc_iobase+PSS_STATUS);
-    
+
     DPRINTF(("pssintr: sc=%p st=%x\n", sc, sr));
 
     /* Acknowledge intr */
     outw(sc->sc_iobase+PSS_IRQ_ACK, 0);
-    
+
     /* Is it one of ours ? */
     if (sr & (PSS_WRITE_EMPTY|PSS_READ_FULL|PSS_IRQ|PSS_DMQ_TC)) {
 	/* XXX do something */
 	return 1;
     }
-    
+
     return 0;
 }
 
@@ -1236,7 +1236,7 @@ mpuintr(arg)
 {
     struct mpu_softc *sc = arg;
     u_char sr;
-    
+
     sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
 
     printf("mpuintr: sc=%p sr=%x\n", sc, sr);
@@ -1281,7 +1281,7 @@ pss_mixer_set_port(addr, cp)
     struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     int error = ad1848_mixer_set_port(ac, mappings, nummap, cp);
-    
+
     if (error != ENXIO)
       return (error);
 
@@ -1312,7 +1312,7 @@ pss_mixer_set_port(addr, cp)
 	    return ENXIO;
 	    /*NOTREACHED*/
     }
-    
+
     return 0;
 }
 
@@ -1476,28 +1476,28 @@ pss_query_devinfo(addr, dip)
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
 	strcpy(dip->label.name, AudioCmonitor);
 	break;
-	    
+
     case PSS_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
 	strcpy(dip->label.name, AudioCrecord);
 	break;
-	
+
     case PSS_MIC_IN_MUTE:
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = PSS_MIC_IN_LVL;
 	dip->next = AUDIO_MIXER_LAST;
 	goto mute;
-	
+
     case PSS_LINE_IN_MUTE:
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = PSS_LINE_IN_LVL;
 	dip->next = AUDIO_MIXER_LAST;
 	goto mute;
-	
+
     case PSS_DAC_MUTE:
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->type = AUDIO_MIXER_ENUM;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.226 2004/08/21 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.226.6.1 2005/03/19 08:35:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.226 2004/08/21 21:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.226.6.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct scsi_initq {
 	TAILQ_ENTRY(scsi_initq) scsi_initq;
 };
 
-static TAILQ_HEAD(, scsi_initq) scsi_initq_head = 
+static TAILQ_HEAD(, scsi_initq) scsi_initq_head =
     TAILQ_HEAD_INITIALIZER(scsi_initq_head);
 static struct simplelock scsibus_interlock = SIMPLELOCK_INITIALIZER;
 
@@ -185,7 +185,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	/* Initialize the channel structure first */
 	chan->chan_init_cb = scsibus_config;
 	chan->chan_init_cb_arg = sc;
-	
+
 	scsi_initq = malloc(sizeof(struct scsi_initq), M_DEVBUF, M_WAITOK);
 	scsi_initq->sc_channel = chan;
 	TAILQ_INSERT_TAIL(&scsi_initq_head, scsi_initq, scsi_initq);
@@ -222,7 +222,7 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 		scsi_initq = TAILQ_FIRST(&scsi_initq_head);
 		if (scsi_initq->sc_channel == chan)
 			break;
-		ltsleep(&scsi_initq_head, PRIBIO, "scsi_initq", 0, 
+		ltsleep(&scsi_initq_head, PRIBIO, "scsi_initq", 0,
 		    &scsibus_interlock);
 	}
 
@@ -251,7 +251,7 @@ scsibussubmatch(struct device *parent, struct cfdata *cf,
 	    cf->cf_loc[SCSIBUSCF_TARGET] != ldesc->locs[0])
 		return (0);
 	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_LUN] != ldesc->locs[1]) 
+	    cf->cf_loc[SCSIBUSCF_LUN] != ldesc->locs[1])
 		return (0);
 	return (config_match(parent, cf, aux));
 }
@@ -385,7 +385,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 				break;
 			/* otherwise something says we should look further */
 		}
-		
+
 		/*
 		 * Now that we've discovered all of the LUNs on this
 		 * I_T Nexus, update the xfer mode for all of them
@@ -504,7 +504,7 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:841", ""},     PQUIRK_NOLUNS},
         {{T_CDROM, T_REMOV,
-	 "OLYMPUS ", "CDS620E         ", "1.1d"}, 
+	 "OLYMPUS ", "CDS620E         ", "1.1d"},
 			       PQUIRK_NOLUNS|PQUIRK_NOSYNC|PQUIRK_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
 	 "PIONEER ", "CD-ROM DR-124X  ", "1.01"}, PQUIRK_NOLUNS},

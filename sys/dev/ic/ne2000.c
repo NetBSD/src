@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.44.6.1 2005/02/12 18:17:44 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.44.6.2 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.44.6.1 2005/02/12 18:17:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.44.6.2 2005/03/19 08:34:03 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -623,6 +623,10 @@ ne2000_write_mbuf(sc, m, buf)
 		}
 	}
 	NIC_BARRIER(nict, nich);
+
+	/* AX88796 doesn't seem to have remote DMA complete */
+	if (sc->sc_flags & DP8390_NO_REMOTE_DMA_COMPLETE)
+		return(savelen);
 
 	/*
 	 * Wait for remote DMA to complete.  This is necessary because on the

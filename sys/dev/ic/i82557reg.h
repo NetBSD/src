@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.15 2004/05/16 02:59:04 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.15.6.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -477,7 +477,7 @@ struct fxp_stats {
 };
 #define FXP_STATS_DUMP_COMPLETE	0xa005
 #define FXP_STATS_DR_COMPLETE	0xa007
-	
+
 /*
  * Serial EEPROM control register bits
  */

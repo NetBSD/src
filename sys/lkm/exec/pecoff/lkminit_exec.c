@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.4 2003/08/18 09:04:45 oki Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.4.10.1 2005/03/19 08:36:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.4 2003/08/18 09:04:45 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.4.10.1 2005/03/19 08:36:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ MOD_EXEC("exec_pecoff", -1, &exec_pecoff, "pecoff");
  */
 int
 exec_pecoff_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

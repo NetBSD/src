@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.19 2004/08/23 21:30:35 bouyer Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.19.6.1 2005/03/19 08:35:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -427,7 +427,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		}
 		ATADEBUG_PRINT(("pdc202xx_setup_channel: %s:%d:%d "
 		    "timings 0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, 
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 		    chp->ch_channel, drive, mode), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PDC2xx_TIM(chp->ch_channel, drive), mode);
@@ -449,8 +449,8 @@ pdc20268_setup_channel(struct ata_channel *chp)
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int u100;
 
-	/* setup DMA if needed */     
-	pciide_channel_dma_setup(cp); 
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
 
 	idedma_ctl = 0;
 
@@ -496,7 +496,7 @@ pdc202xx_pci_intr(void *arg)
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
-	int i, rv, crv; 
+	int i, rv, crv;
 	u_int32_t scr;
 
 	rv = 0;
@@ -526,7 +526,7 @@ pdc20265_pci_intr(void *arg)
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
-	int i, rv, crv; 
+	int i, rv, crv;
 	u_int32_t dmastat;
 
 	rv = 0;

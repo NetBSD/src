@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.h,v 1.3 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_exception.h,v 1.3.12.1 2005/03/19 08:33:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define MACH_EXC_MAX			MACH_EXC_RPC_ALERT
 
 #define MACH_EXC_MASK_BAD_ACCESS	(1 << MACH_EXC_BAD_ACCESS)
-#define MACH_EXC_MASK_BAD_INSTRUCTION	(1 << MACH_EXC_BAD_INSTRUCTION)	
+#define MACH_EXC_MASK_BAD_INSTRUCTION	(1 << MACH_EXC_BAD_INSTRUCTION)
 #define MACH_EXC_MASK_ARITHMETIC	(1 << MACH_EXC_ARITHMETIC)
 #define MACH_EXC_MASK_EMULATION		(1 << MACH_EXC_EMULATION)
 #define MACH_EXC_MASK_SOFTWARE		(1 << MACH_EXC_SOFTWARE)
@@ -60,7 +60,7 @@
 #define MACH_EXC_MASK_MACH_SYSCALL	(1 << MACH_EXC_MACH_SYSCALL)
 #define MACH_EXC_MASK_RPC_ALERT		(1 << MACH_EXC_RPC_ALERT)
 
-/* 
+/*
  * Exception codes. Values < 0x10000 are machine dependent, and
  * are defined in sys/<arch>/include/mach_machdep.h.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyterreg.h,v 1.2 2001/05/31 20:30:21 thorpej Exp $	*/
+/*	$NetBSD: nsphyterreg.h,v 1.2.32.1 2005/03/19 08:34:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 	/* below are MacPHYTER only */
 #define	MIPGSR_MSK_LINK		0x4000	/* mask link status event */
 #define	MIPGSR_MSK_JAB		0x2000	/* mask jabber event */
-#define	MIPGSR_MSK_RF		0x1000	/* mask remote fault event */ 
+#define	MIPGSR_MSK_RF		0x1000	/* mask remote fault event */
 #define	MIPGSR_MSK_ANC		0x0800	/* mask auto-neg complete event */
 #define	MIPGSR_MSK_FHF		0x0400	/* mask false carrier half full event */
 #define	MIPGSR_MSK_RHF		0x0200	/* mask rx error half full event */

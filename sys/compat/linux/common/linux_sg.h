@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.h,v 1.1.4.2 2005/02/12 18:17:41 yamt Exp $ */
+/* $NetBSD: linux_sg.h,v 1.1.4.3 2005/03/19 08:33:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -93,7 +93,7 @@ struct linux_sg_io_hdr {
  * Host codes
  */
 #define LINUX_DID_OK		0x00	/* OK */
-#define LINUX_DID_NO_CONNECT	0x01	/* timeout during connect */ 
+#define LINUX_DID_NO_CONNECT	0x01	/* timeout during connect */
 #define LINUX_DID_BUS_BUSY	0x02	/* timeout during command */
 #define LINUX_DID_TIME_OUT	0x03	/* other timeout */
 #define LINUX_DID_BAD_TARGET	0x04	/* bad target */
@@ -118,14 +118,14 @@ struct linux_sg_io_hdr {
 #define LINUX_DRIVER_TIMEOUT	0x06
 #define LINUX_DRIVER_HARD	0x07
 #define LINUX_DRIVER_SENSE	0x08
- 
+
 #define LINUX_SUGGEST_RETRY	0x10
 #define LINUX_SUGGEST_ABORT	0x20
 #define LINUX_SUGGEST_REMAP	0x30
 #define LINUX_SUGGEST_DIE	0x40
 #define LINUX_SUGGEST_SENSE	0x80
 #define LINUX_SUGGEST_IS_OK	0xff
-  
+
 #define LINUX_DRIVER_MASK	0x0f
 #define LINUX_SUGGEST_MASK	0xf0
 

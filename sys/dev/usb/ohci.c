@@ -1,13 +1,15 @@
-/*	$NetBSD: ohci.c,v 1.154 2004/12/22 19:36:13 joff Exp $	*/
+/*	$NetBSD: ohci.c,v 1.154.4.1 2005/03/19 08:35:58 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.154 2004/12/22 19:36:13 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.154.4.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +145,6 @@ Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
 Static void		ohci_softintr(void *);
 Static void		ohci_waitintr(ohci_softc_t *, usbd_xfer_handle);
-Static void		ohci_add_done(ohci_softc_t *, ohci_physaddr_t);
 Static void		ohci_rhsc(ohci_softc_t *, usbd_xfer_handle);
 
 Static usbd_status	ohci_device_request(usbd_xfer_handle xfer);
@@ -208,7 +209,6 @@ Static int		ohci_str(usb_string_descriptor_t *, int, const char *);
 
 Static void		ohci_timeout(void *);
 Static void		ohci_timeout_task(void *);
-Static void		ohci_rhsc_able(ohci_softc_t *, int);
 Static void		ohci_rhsc_enable(void *);
 
 Static void		ohci_close_pipe(usbd_pipe_handle, ohci_soft_ed_t *);
@@ -1111,9 +1111,9 @@ ohci_intr(void *p)
 		DPRINTFN(16, ("ohci_intr: ignored interrupt while polling\n"));
 #endif
 		/* for level triggered intrs, should do something to ack */
-		OWRITE4(sc, OHCI_INTERRUPT_STATUS, 
+		OWRITE4(sc, OHCI_INTERRUPT_STATUS,
 			OREAD4(sc, OHCI_INTERRUPT_STATUS));
-		
+
 		return (0);
 	}
 
@@ -1124,7 +1124,6 @@ Static int
 ohci_intr1(ohci_softc_t *sc)
 {
 	u_int32_t intrs, eintrs;
-	ohci_physaddr_t done;
 
 	DPRINTFN(14,("ohci_intr1: enter\n"));
 
@@ -1136,22 +1135,11 @@ ohci_intr1(ohci_softc_t *sc)
 		return (0);
 	}
 
-        intrs = 0;
-	done = le32toh(sc->sc_hcca->hcca_done_head);
-	if (done != 0) {
-		if (done & ~OHCI_DONE_INTRS)
-			intrs = OHCI_WDH;
-		if (done & OHCI_DONE_INTRS)
-			intrs |= OREAD4(sc, OHCI_INTERRUPT_STATUS);
-		sc->sc_hcca->hcca_done_head = 0;
-	} else
-		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & ~OHCI_WDH;
-
+	intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS);
 	if (!intrs)
 		return (0);
 
-	intrs &= ~OHCI_MIE;
-	OWRITE4(sc, OHCI_INTERRUPT_STATUS, intrs); /* Acknowledge */
+	OWRITE4(sc, OHCI_INTERRUPT_STATUS, intrs & ~(OHCI_MIE|OHCI_WDH)); /* Acknowledge */
 	eintrs = intrs & sc->sc_eintrs;
 	if (!eintrs)
 		return (0);
@@ -1173,9 +1161,11 @@ ohci_intr1(ohci_softc_t *sc)
 		eintrs &= ~OHCI_SO;
 	}
 	if (eintrs & OHCI_WDH) {
-		ohci_add_done(sc, done &~ OHCI_DONE_INTRS);
+		/*
+		 * We block the interrupt below, and reenable it later from
+		 * ohci_softintr().
+		 */
 		usb_schedsoftintr(&sc->sc_bus);
-		eintrs &= ~OHCI_WDH;
 	}
 	if (eintrs & OHCI_RD) {
 		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
@@ -1188,41 +1178,26 @@ ohci_intr1(ohci_softc_t *sc)
 		/* XXX what else */
 	}
 	if (eintrs & OHCI_RHSC) {
-		ohci_rhsc(sc, sc->sc_intrxfer);
 		/*
-		 * Disable RHSC interrupt for now, because it will be
-		 * on until the port has been reset.
+		 * We block the interrupt below, and reenable it later from
+		 * a timeout.
 		 */
-		ohci_rhsc_able(sc, 0);
+		ohci_rhsc(sc, sc->sc_intrxfer);
 		/* Do not allow RHSC interrupts > 1 per second */
                 usb_callout(sc->sc_tmo_rhsc, hz, ohci_rhsc_enable, sc);
-		eintrs &= ~OHCI_RHSC;
 	}
 
 	sc->sc_bus.intr_context--;
 
 	if (eintrs != 0) {
-		/* Block unprocessed interrupts. XXX */
+		/* Block unprocessed interrupts. */
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, eintrs);
 		sc->sc_eintrs &= ~eintrs;
-		printf("%s: blocking intrs 0x%x\n",
-		       USBDEVNAME(sc->sc_bus.bdev), eintrs);
+		DPRINTFN(1, ("%s: blocking intrs 0x%x\n",
+		    USBDEVNAME(sc->sc_bus.bdev), eintrs));
 	}
 
 	return (1);
-}
-
-void
-ohci_rhsc_able(ohci_softc_t *sc, int on)
-{
-	DPRINTFN(4, ("ohci_rhsc_able: on=%d\n", on));
-	if (on) {
-		sc->sc_eintrs |= OHCI_RHSC;
-		OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_RHSC);
-	} else {
-		sc->sc_eintrs &= ~OHCI_RHSC;
-		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_RHSC);
-	}
 }
 
 void
@@ -1232,7 +1207,8 @@ ohci_rhsc_enable(void *v_sc)
 	int s;
 
 	s = splhardusb();
-	ohci_rhsc_able(sc, 1);
+	sc->sc_eintrs |= OHCI_RHSC;
+	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_RHSC);
 	splx(s);
 }
 
@@ -1258,10 +1234,28 @@ char *ohci_cc_strs[] = {
 #endif
 
 void
-ohci_add_done(ohci_softc_t *sc, ohci_physaddr_t done)
+ohci_softintr(void *v)
 {
-	ohci_soft_itd_t *sitd, *sidone, **ip;
-	ohci_soft_td_t  *std,  *sdone,  **p;
+	ohci_softc_t *sc = v;
+	ohci_soft_itd_t *sitd, *sidone, *sitdnext;
+	ohci_soft_td_t  *std,  *sdone,  *stdnext;
+	usbd_xfer_handle xfer;
+	struct ohci_pipe *opipe;
+	int len, cc, s;
+	int i, j, actlen, iframes, uedir;
+	ohci_physaddr_t done;
+
+	DPRINTFN(10,("ohci_softintr: enter\n"));
+
+	sc->sc_bus.intr_context++;
+
+	s = splhardusb();
+	done = le32toh(sc->sc_hcca->hcca_done_head) & ~OHCI_DONE_INTRS;
+	sc->sc_hcca->hcca_done_head = 0;
+	OWRITE4(sc, OHCI_INTERRUPT_STATUS, OHCI_WDH);
+	sc->sc_eintrs |= OHCI_WDH;
+	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_WDH);
+	splx(s);
 
 	/* Reverse the done list. */
 	for (sdone = NULL, sidone = NULL; done != 0; ) {
@@ -1281,40 +1275,8 @@ ohci_add_done(ohci_softc_t *sc, ohci_physaddr_t done)
 			DPRINTFN(5,("add ITD %p\n", sitd));
 			continue;
 		}
-		panic("ohci_add_done: addr 0x%08lx not found", (u_long)done);
+		panic("ohci_softintr: addr 0x%08lx not found", (u_long)done);
 	}
-
-	/* sdone & sidone now hold the done lists. */
-	/* Put them on the already processed lists. */
-	for (p = &sc->sc_sdone; *p != NULL; p = &(*p)->dnext)
-		;
-	*p = sdone;
-	for (ip = &sc->sc_sidone; *ip != NULL; ip = &(*ip)->dnext)
-		;
-	*ip = sidone;
-}
-
-void
-ohci_softintr(void *v)
-{
-	ohci_softc_t *sc = v;
-	ohci_soft_itd_t *sitd, *sidone, *sitdnext;
-	ohci_soft_td_t  *std,  *sdone,  *stdnext;
-	usbd_xfer_handle xfer;
-	struct ohci_pipe *opipe;
-	int len, cc, s;
-	int i, j, actlen, iframes, uedir;
-
-	DPRINTFN(10,("ohci_softintr: enter\n"));
-
-	sc->sc_bus.intr_context++;
-
-	s = splhardusb();
-	sdone = sc->sc_sdone;
-	sc->sc_sdone = NULL;
-	sidone = sc->sc_sidone;
-	sc->sc_sidone = NULL;
-	splx(s);
 
 	DPRINTFN(10,("ohci_softintr: sdone=%p sidone=%p\n", sdone, sidone));
 
@@ -2564,7 +2526,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_C_PORT_RESET:
 			/* Enable RHSC interrupt if condition is cleared. */
 			if ((OREAD4(sc, port) >> 16) == 0)
-				ohci_rhsc_able(sc, 1);
+				ohci_rhsc_enable(sc);
 			break;
 		default:
 			break;

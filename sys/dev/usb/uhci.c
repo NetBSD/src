@@ -1,8 +1,8 @@
-/*	$NetBSD: uhci.c,v 1.183 2004/12/21 16:41:24 fvdl Exp $	*/
+/*	$NetBSD: uhci.c,v 1.183.4.1 2005/03/19 08:35:58 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.183 2004/12/21 16:41:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.183.4.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3098,7 +3098,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 		DPRINTFN(1,("uhci port %d reset timed out\n", index));
 		return (USBD_TIMEOUT);
 	}
-	
+
 	sc->sc_isreset = 1;
 	return (USBD_NORMAL_COMPLETION);
 }

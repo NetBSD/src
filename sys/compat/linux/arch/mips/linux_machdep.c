@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.21 2004/06/19 18:45:30 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.21.6.1 2005/03/19 08:33:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2004/06/19 18:45:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21.6.1 2005/03/19 08:33:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,17 +96,17 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2004/06/19 18:45:30 manu Exp 
 #include <dev/wscons/wsdisplay_usl_io.h>
 #endif
 
-/* 
+/*
  * Set set up registers on exec.
  * XXX not used at the moment since in sys/kern/exec_conf, LINUX_COMPAT
  * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(l, pack, stack) 
+linux_setregs(l, pack, stack)
 	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
-{	
+{
 	setregs(l, pack, stack);
 	return;
 }
@@ -139,8 +139,8 @@ linux_sendsig(ksi, mask)
 #endif /* DEBUG_LINUX */
 	f = (struct frame *)l->l_md.md_regs;
 
-	/* 
-	 * Do we need to jump onto the signal stack? 
+	/*
+	 * Do we need to jump onto the signal stack?
 	 */
 	onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -152,8 +152,8 @@ linux_sendsig(ksi, mask)
 	 */
 	onstack=0;
 
-	/* 
-	 * Allocate space for the signal handler context. 
+	/*
+	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
 		fp = (struct linux_sigframe *)
@@ -163,8 +163,8 @@ linux_sendsig(ksi, mask)
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
 		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[_R_SP];
 
-	/* 
-	 * Build stack frame for signal trampoline. 
+	/*
+	 * Build stack frame for signal trampoline.
 	 */
 	memset(&sf, 0, sizeof sf);
 
@@ -186,7 +186,7 @@ linux_sendsig(ksi, mask)
 	sf.lsf_sc.lsc_cause = f->f_regs[_R_CAUSE];
 	sf.lsf_sc.lsc_badvaddr = f->f_regs[_R_BADVADDR];
 
-	/* 
+	/*
 	 * Save signal stack.  XXX broken
 	 */
 	/* kregs.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK; */
@@ -258,7 +258,7 @@ linux_sys_sigreturn(l, v, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	sf = SCARG(uap, sf); 
+	sf = SCARG(uap, sf);
 
 	if ((error = copyin(sf, &ksf, sizeof(ksf))) != 0)
 		return (error);
@@ -285,7 +285,7 @@ linux_sys_sigreturn(l, v, retval)
 
 
 int
-linux_sys_rt_sigreturn(l, v, retval)  
+linux_sys_rt_sigreturn(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -301,18 +301,18 @@ linux_sys_modify_ldt(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* 
+	/*
 	 * This syscall is not implemented in Linux/Mips: we should not
 	 * be here
 	 */
 #ifdef DEBUG_LINUX
-	printf("linux_sys_modify_ldt: should not be here.\n");	 
+	printf("linux_sys_modify_ldt: should not be here.\n");
 #endif /* DEBUG_LINUX */
   return 0;
 }
 #endif
 
-/* 
+/*
  * major device numbers remapping
  */
 dev_t
@@ -332,7 +332,7 @@ linux_machdepioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
-{ 
+{
 	return 0;
 }
 
@@ -346,26 +346,26 @@ linux_sys_ioperm(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* 
+	/*
 	 * This syscall is not implemented in Linux/Mips: we should not be here
 	 */
 #ifdef DEBUG_LINUX
-	printf("linux_sys_ioperm: should not be here.\n");	 
+	printf("linux_sys_ioperm: should not be here.\n");
 #endif /* DEBUG_LINUX */
 	return 0;
 }
 
 /*
- * wrapper linux_sys_new_uname() -> linux_sys_uname() 
+ * wrapper linux_sys_new_uname() -> linux_sys_uname()
  */
-int	
-linux_sys_new_uname(l, v, retval) 
+int
+linux_sys_new_uname(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 /*
- * Use this if you want to try Linux emulation with a glibc-2.2 
+ * Use this if you want to try Linux emulation with a glibc-2.2
  * or higher. Note that signals will not work
  */
 #if 0
@@ -404,7 +404,7 @@ linux_sys_cacheflush(l, v, retval)
 }
 
 /*
- * This system call is depecated in Linux, but 
+ * This system call is depecated in Linux, but
  * some binaries and some libraries use it.
  */
 int
@@ -421,7 +421,7 @@ linux_sys_sysmips(l, v, retval)
 	} *uap = v;
 	struct proc *p = l->l_proc;
 	int error;
-	
+
 	switch (SCARG(uap, cmd)) {
 	case LINUX_SETNAME: {
 		char nodename [LINUX___NEW_UTS_LEN + 1];
@@ -430,14 +430,14 @@ linux_sys_sysmips(l, v, retval)
 
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return error;
-		if ((error = copyinstr((char *)SCARG(uap, arg1), nodename, 
+		if ((error = copyinstr((char *)SCARG(uap, arg1), nodename,
 		    LINUX___NEW_UTS_LEN, &len)) != 0)
 			return error;
 
 		name[0] = CTL_KERN;
 		name[1] = KERN_HOSTNAME;
 		return (old_sysctl(&name[0], 2, 0, 0, nodename, len, NULL));
-		
+
 		break;
 	}
 	case LINUX_MIPS_ATOMIC_SET: {
@@ -476,8 +476,8 @@ linux_sys_sysmips(l, v, retval)
 		break;
 	}
 #ifdef DEBUG_LINUX
-	printf("linux_sys_sysmips(): unimplemented command %d\n", 
-	    SCARG(uap,cmd));	
+	printf("linux_sys_sysmips(): unimplemented command %d\n",
+	    SCARG(uap,cmd));
 #endif /* DEBUG_LINUX */
 	return 0;
 }

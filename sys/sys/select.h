@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.18 2003/08/07 16:34:13 agc Exp $	*/
+/*	$NetBSD: select.h,v 1.18.10.1 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,22 +34,20 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
-#include <sys/event.h>		/* for struct klist */
-
-/*
- * Used to maintain information about processes that wish to be
- * notified when I/O becomes possible.
- */
-struct selinfo {
-	struct klist	sel_klist;	/* knotes attached to this selinfo */
-	pid_t		sel_pid;	/* process to be notified */
-	uint8_t		sel_collision;	/* non-zero if a collision occurred */
-};
 
 #ifdef _KERNEL
-struct proc;
+#include <sys/selinfo.h>		/* for struct selinfo */
+#include <sys/signal.h>			/* for sigset_t */
 
+struct lwp;
+struct proc;
+struct timeval;
+
+int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
+	    fd_set *, struct timeval *, sigset_t *);
 void	selrecord(struct proc *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 
@@ -61,6 +59,19 @@ selnotify(struct selinfo *sip, long knhint)
 		selwakeup(sip);
 	KNOTE(&sip->sel_klist, knhint);
 }
-#endif
+
+#else /* _KERNEL */
+
+#include <sys/sigtypes.h>
+#include <time.h>
+
+__BEGIN_DECLS
+int	pselect(int, fd_set * __restrict, fd_set * __restrict,
+	    fd_set * __restrict, const struct timespec * __restrict,
+	    const sigset_t * __restrict);
+int	select(int, fd_set * __restrict, fd_set * __restrict,
+	    fd_set * __restrict, struct timeval * __restrict);
+__END_DECLS
+#endif /* _KERNEL */
 
 #endif /* !_SYS_SELECT_H_ */

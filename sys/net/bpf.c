@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.105 2004/11/30 04:28:43 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.105.6.1 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.105 2004/11/30 04:28:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.105.6.1 2005/03/19 08:36:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ bpfopen(dev, flag, mode, p)
 
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
 
-	return fdclone(p, fp, fd, &bpf_fileops, d);
+	return fdclone(p, fp, fd, flag, &bpf_fileops, d);
 }
 
 /*
@@ -1296,7 +1296,7 @@ void
 bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
-	
+
 	m0.m_flags = 0;
 	m0.m_next = m;
 	m0.m_len = 4;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.18.16.1 2005/02/12 18:17:50 yamt Exp $	*/
+/*	$NetBSD: if_en.c,v 1.18.16.2 2005/03/19 08:35:47 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 /*
  *
- * i f _ e n _ s b u s . c  
+ * i f _ e n _ s b u s . c
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  * started: spring, 1996.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.18.16.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.18.16.2 2005/03/19 08:35:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.5.16.1 2005/03/19 08:33:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,13 +41,13 @@
 
 #include <compat/linux/common/linux_signal.h>
 
-/* 
- * From Linux's include/asm-ppc/ptrace.h 
- * Needed for sigcontext 
+/*
+ * From Linux's include/asm-ppc/ptrace.h
+ * Needed for sigcontext
  */
 struct linux_pt_regs {
 #define lpt_regs_fixreg_begin lgpr[0]
-	unsigned long lgpr[32];  
+	unsigned long lgpr[32];
 #define lpt_regs_fixreg_end lgpr[31]
 	unsigned long lnip;
 	unsigned long lmsr;
@@ -64,13 +64,13 @@ struct linux_pt_regs {
 	unsigned long lresult;	/* Result of a system call */
 };
 
-/* 
- * From Linux's include/asm-ppc/sigcontext.h 
- * Linux/ppc calls that struct sigcontect_struct 
+/*
+ * From Linux's include/asm-ppc/sigcontext.h
+ * Linux/ppc calls that struct sigcontect_struct
  */
-struct linux_sigcontext { 
+struct linux_sigcontext {
 	unsigned long _unused[4];
-	int lsignal;  
+	int lsignal;
 	unsigned long lhandler;
 	unsigned long lmask;
 	struct linux_pt_regs	*lregs;
@@ -94,43 +94,43 @@ typedef linux_elf_greg_t linux_elf_gregset_t[LINUX_ELF_NGREG];
  * handler, but use the BSD way of calling the handler and sigreturn().
  * This means that we need to pass the pointer to the handler too.
  * It is appended to the frame to not interfere with the rest of it.
- * 
+ *
  * The following is from Linux's arch/ppc/kern/signal.c:
- * 
+ *
  * > When we have signals to deliver, we set up on the
  * > user stack, going down from the original stack pointer:
  * > a sigregs struct
  * > one or more sigcontext structs with
  * > a gap of LINUX__SIGNAL_FRAMESIZE bytes
- * > 
+ * >
  * > Each of these things must be a multiple of 16 bytes in size.
- *  
+ *
  * linux_sigregs is a linux_sigframe on other Linux ports. Linux/PowerPC
  * defines a rt_sigframe struct, but it is only used for RT signals. for
  * non RT signals, struct sigregs is used instead.
  *
  * About the ltramp filed: that trampoline code is not used. Instead, the
- * sigcode (7 bytes long) trampoline code, copied by exec() on program startup 
- * is used. However, Linux binaries might expect it to be here.  
+ * sigcode (7 bytes long) trampoline code, copied by exec() on program startup
+ * is used. However, Linux binaries might expect it to be here.
  */
 struct linux_sigregs {
 	linux_elf_gregset_t lgp_regs;
 	double lfp_regs[LINUX_ELF_NFPREG];
-	unsigned long ltramp[2]; 
-	/* 
+	unsigned long ltramp[2];
+	/*
 	 * Programs using the rs6000/xcoff abi can save up to 19 gp regs
-	 * and 18 fp regs below sp before decrementing it. 
+	 * and 18 fp regs below sp before decrementing it.
 	 */
 	int labigap[56];
 };
 
-/* 
+/*
  * The following is not from Linux, we define it for convenience. It is the
  * size of the abigap field of linux_sigregs.
  */
 #define LINUX_ABIGAP	(56*sizeof(int))
 
-/* 
+/*
  * linux sigframe in a nutshell (however we don't use it):
  *
  * struct linux_sigframe {
@@ -159,7 +159,7 @@ struct linux_rt_sigframe
 	unsigned long  _unused[2];
 	struct linux_siginfo *lpinfo;
 	void *lpuc;
-	struct linux_siginfo linfo; 
+	struct linux_siginfo linfo;
 	struct linux_ucontext luc;
 };
 
@@ -169,12 +169,12 @@ struct linux_rt_sigframe
  *
  * LINUX_CONS_MAJOR is from Linux's include/linux/major.h
  */
-#define LINUX_CONS_MAJOR 4  
+#define LINUX_CONS_MAJOR 4
 
 /*
  * Linux ioctl calls for the keyboard.
  *
- * From Linux's include/linux/kd.h 
+ * From Linux's include/linux/kd.h
  */
 #define LINUX_KDGKBMODE	0x4b44
 #define LINUX_KDSKBMODE	0x4b45
@@ -195,7 +195,7 @@ struct linux_rt_sigframe
 #define LINUX_K_MEDIUMRAW 2
 
 /*
- * VT ioctl calls in Linux (the ones that the pcvt emulation in 
+ * VT ioctl calls in Linux (the ones that the pcvt emulation in
  * wscons can handle)
  *
  * From Linux's include/linux/vt.h
@@ -213,7 +213,7 @@ struct linux_rt_sigframe
  * This range used by VMWare (XXX)
  *
  * From Linux's include/linux/vt.h
- * XXX It's not sure this s needed for powerpc 
+ * XXX It's not sure this s needed for powerpc
  */
 #define LINUX_VMWARE_NONE 200
 #define LINUX_VMWARE_LAST 237
@@ -221,7 +221,7 @@ struct linux_rt_sigframe
 /*
  * Range of ioctls to just pass on, so that LKMs (like VMWare) can
  * handle them.
- * 
+ *
  * From Linux's include/linux/vt.h
  */
 #define LINUX_IOCTL_MIN_PASS LINUX_VMWARE_NONE

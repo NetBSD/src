@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.9 2002/10/02 16:52:24 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.9.16.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.9 2002/10/02 16:52:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.9.16.1 2005/03/19 08:35:37 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -91,7 +91,7 @@ int
 eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	
+
 	return pa->pa_product == PODULE_ETHER3;
 }
 
@@ -108,7 +108,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	char *ptr;
 	int i;
-	
+
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
 	/* Set the address of the controller for easy access */

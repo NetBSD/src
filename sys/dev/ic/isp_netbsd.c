@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.64 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.64.10.1 2005/03/19 08:34:03 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.64 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.64.10.1 2005/03/19 08:34:03 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -232,13 +232,13 @@ ispminphys(struct buf *bp)
 	minphys(bp);
 }
 
-static int      
+static int
 ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 	struct proc *p)
 {
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
 	int retval = ENOTTY;
-	
+
 	switch (cmd) {
 #ifdef	ISP_FW_CRASH_DUMP
 	case ISP_GET_FW_CRASH_DUMP:
@@ -600,7 +600,7 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 	case CMD_COMPLETE:
 		scsipi_done(xs);
 		return;
-		
+
 	}
 
 	/*
@@ -779,7 +779,7 @@ isp_fc_worker(void *arg)
 {
 	void scsipi_run_queue(struct scsipi_channel *);
 	struct ispsoftc *isp = arg;
-	
+
 	for (;;) {
 		int s;
 
@@ -947,7 +947,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		};
 		fcparam *fcp = isp->isp_param;
 		int tgt = *((int *) arg);
-		struct lportdb *lp = &fcp->portdb[tgt]; 
+		struct lportdb *lp = &fcp->portdb[tgt];
 
 		isp_prt(isp, ISP_LOGINFO, fmt, tgt, lp->loopid, lp->portid,
 		    roles[lp->roles & 0x3],
@@ -1106,7 +1106,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 	{
 		u_int16_t mbox1, mbox6;
 		mbox1 = ISP_READ(isp, OUTMAILBOX1);
-		if (IS_DUALBUS(isp)) { 
+		if (IS_DUALBUS(isp)) {
 			mbox6 = ISP_READ(isp, OUTMAILBOX6);
 		} else {
 			mbox6 = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.19 2003/12/04 19:38:22 atatat Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.19.10.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.19 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.19.10.1 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ compat_43_sys_gethostname(struct lwp *l, void *v, register_t *retval)
 /*
  * The string data is appended to the end of the bsdi_si structure during
  * copyout. The "char *" offsets in the bsdi_si struct are relative to the
- * base of the bsdi_si struct. 
+ * base of the bsdi_si struct.
  */
 struct bsdi_si {
         char    *machine;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.15 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.15.6.1 2005/03/19 08:36:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.15 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.15.6.1 2005/03/19 08:36:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -325,7 +325,7 @@ clnp_emit_er(m, reason)
 
 	/* allocate mbuf for er pdu header: punt on no space */
 	/*
-	 * fixed part, two addresses and their length bytes, and a 
+	 * fixed part, two addresses and their length bytes, and a
 	 * 4-byte option
 	 */
 

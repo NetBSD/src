@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.7 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.7.6.1 2005/03/19 08:33:12 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.7 2004/04/16 23:58:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.7.6.1 2005/03/19 08:33:12 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -111,6 +111,7 @@ enable_vec(void)
 	 */
 	curcpu()->ci_veclwp = l;
 	pcb->pcb_veccpu = curcpu();
+	pcb->pcb_flags |= PCB_OWNALTIVEC;
 	__asm __volatile ("sync");
 
 	/*
@@ -215,7 +216,7 @@ save_vec_lwp(struct lwp *l, int discard)
 		KASSERT(l == pcb->pcb_veccpu->ci_veclwp);
 		pcb->pcb_veccpu->ci_veclwp = NULL;
 		pcb->pcb_veccpu = NULL;
-		pcb->pcb_flags &= ~PCB_ALTIVEC;
+		pcb->pcb_flags &= ~PCB_OWNALTIVEC;
 		return;
 	}
 

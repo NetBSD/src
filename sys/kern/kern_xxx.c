@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.53 2003/08/07 16:31:51 agc Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.53.10.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.53 2003/08/07 16:31:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.53.10.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -113,7 +113,7 @@ scdebug_call(l, code, args)
 #endif
 	    || sy->sy_call == sys_nosys))
 		return;
-		
+
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -150,13 +150,13 @@ scdebug_ret(l, code, error, retval)
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 
+	if (!(scdebug & SCDEBUG_ALL || code < 0
 #ifndef __HAVE_MINIMAL_EMUL
 	    || code >= em->e_nsysent
 #endif
 	    || sy->sy_call == sys_nosys))
 		return;
-		
+
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0
 #ifndef __HAVE_MINIMAL_EMUL

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.9 2004/08/23 06:03:19 thorpej Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.9.6.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.9 2004/08/23 06:03:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.9.6.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,12 +145,12 @@ cac_eisa_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	const char *intrstr;
 	int irq, i;
-	
+
 	ea = aux;
 	sc = (struct cac_softc *)self;
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
-	
+
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    CAC_EISA_SLOT_OFFSET, CAC_EISA_IOSIZE, 0, &ioh)) {
 		printf("can't map i/o space\n");
@@ -161,7 +161,7 @@ cac_eisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ea->ea_dmat;
 
-	/* 
+	/*
 	 * Map and establish the interrupt.
 	 */
 	switch (bus_space_read_1(iot, ioh, CAC_EISA_IOCONF) & 0xf0) {
@@ -186,7 +186,7 @@ cac_eisa_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't map interrupt (%d)\n", irq);
 		return;
 	}
-	
+
 	intrstr = eisa_intr_string(ec, ih);
 	if ((sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    cac_intr, sc)) == NULL) {

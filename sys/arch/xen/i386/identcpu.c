@@ -1,5 +1,5 @@
-/*	$NetBSD: identcpu.c,v 1.3 2004/04/17 12:47:38 cl Exp $	*/
-/*	NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp 	*/
+/*	$NetBSD: identcpu.c,v 1.3.10.1 2005/03/19 08:33:21 yamt Exp $	*/
+/*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.3 2004/04/17 12:47:38 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.3.10.1 2005/03/19 08:33:21 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -240,7 +240,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium III (Coppermine)",
 				"Pentium M (Banias)", 
 				"Pentium III Xeon (Cascades)",
-				"Pentium III (Tualatin)", 0, 0, 0, 0,
+				"Pentium III (Tualatin)", 0,
+				"Pentium M (Dothan)", 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
@@ -463,12 +464,12 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, "C3 Samuel",
 				"C3 Samuel 2/Ezra", "C3 Ezra-T",
-				0, 0, 0, 0, 0, 0, 0,
+				"C3 Nehemiah", 0, 0, 0, 0, 0, 0,
 				"C3"	/* Default */
 			},
 			NULL,
 			via_cpu_probe,
-			NULL,
+			via_cpu_cacheinfo,
 		},
 		/* Family > 6, not yet available from VIA */
 		{
@@ -542,6 +543,7 @@ void
 cyrix6x86_cpu_setup(ci)
 	struct cpu_info *ci;
 {
+	u_char c3;
 	/*
 	 * i8254 latch check routine:
 	 *     National Geode (formerly Cyrix MediaGX) has a serious bug in
@@ -564,14 +566,15 @@ cyrix6x86_cpu_setup(ci)
 	/* Enable suspend on halt */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
 	/* enable access to ccr4/ccr5 */
-	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) | 0x10);
+	c3 = cyrix_read_reg(0xC3);
+	cyrix_write_reg(0xC3, c3 | 0x10);
 	/* cyrix's workaround  for the "coma bug" */
 	cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
 	cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
 	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
-	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+	cyrix_write_reg(0xC3, c3);
 
 	/*
 	 * XXX disable page zero in the idle loop, it seems to
@@ -610,7 +613,7 @@ via_cpu_probe(struct cpu_info *ci)
 	 */
 	if (lfunc >= 0x80000001) {
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
-		ci->ci_feature_flags = descs[3];
+		ci->ci_feature_flags |= descs[3];
 	}
 }
 
@@ -824,7 +827,7 @@ amd_family6_probe(struct cpu_info *ci)
 	for (i = 1; i < sizeof(amd_brand) / sizeof(amd_brand[0]); i++)
 		if ((p = strstr((char *)brand, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
-			strcpy(amd_brand_name, p);
+			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
 			break;
 		}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.11 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.11.6.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.11 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.11.6.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ union_init()
 void
 union_done()
 {
-	
+
 	/* Make sure to unset the readdir hook. */
 	vn_union_readdir_hook = NULL;
 }
@@ -506,7 +506,7 @@ loop:
 		/*
 		 * otherwise lock the vp list while we call getnewvnode
 		 * since that can block.
-		 */ 
+		 */
 		hash = UNION_HASH(uppervp, lowervp);
 
 		if (union_list_lock(hash))
@@ -1233,7 +1233,7 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct proc *p)
 		vput(lvp);
 		return (error);
 	}
-		
+
 	error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
 	if (error) {
 		vput(lvp);

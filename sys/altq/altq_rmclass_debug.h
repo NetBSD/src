@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass_debug.h,v 1.4 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_rmclass_debug.h,v 1.4.10.1 2005/03/19 08:32:44 yamt Exp $	*/
 /*	$KAME: altq_rmclass_debug.h,v 1.2 2000/02/22 14:00:35 itojun Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  * SUN MICROSYSTEMS DOES NOT CLAIM MERCHANTABILITY OF THIS SOFTWARE OR THE
  * SUITABILITY OF THIS SOFTWARE FOR ANY PARTICULAR PURPOSE.  The software is
  * provided "as is" without express or implied warranty of any kind.
- *  
+ *
  * These notices must be retained in any copies of any part of this software.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.35.6.1 2005/02/12 18:17:48 yamt Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.35.6.2 2005/03/19 08:35:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.35.6.1 2005/02/12 18:17:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.35.6.2 2005/03/19 08:35:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ static const struct mbe_pcmcia_product {
 } mbe_pcmcia_products[] = {
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	    PCMCIA_CIS_TDK_LAK_CD021BX },
-	  -1 }, 
+	  -1 },
 
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CF010,
 	    PCMCIA_CIS_TDK_LAK_CF010 },
@@ -303,7 +303,7 @@ int
 mbe_pcmcia_get_enaddr_from_io(psc, ea)
 	struct mbe_pcmcia_softc *psc;
 	struct mbe_pcmcia_get_enaddr_args *ea;
-{                       
+{
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	int i;
 
@@ -327,14 +327,14 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 		goto bad_memaddr;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
-		printf("%s: can't alloc mem for enet addr\n", 
+		printf("%s: can't alloc mem for enet addr\n",
 		    sc->sc_dev.dv_xname);
 		goto memalloc_failed;
 	}
 
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, ea->maddr,
 	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
-		printf("%s: can't map mem for enet addr\n", 
+		printf("%s: can't map mem for enet addr\n",
 		    sc->sc_dev.dv_xname);
 		goto memmap_failed;
 	}

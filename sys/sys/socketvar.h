@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.80 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.80.6.1 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,7 +34,8 @@
 #ifndef _SYS_SOCKETVAR_H_
 #define	_SYS_SOCKETVAR_H_
 
-#include <sys/select.h>			/* for struct selinfo */
+#include <sys/select.h>
+#include <sys/selinfo.h>		/* for struct selinfo */
 #include <sys/queue.h>
 
 #if !defined(_KERNEL) || defined(LKM)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.12 2002/11/17 19:24:50 chs Exp $
+#	$NetBSD: genassym.sh,v 1.12.16.1 2005/03/19 08:36:11 yamt Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -51,7 +51,7 @@ do
 		eval export "$1"
 		shift
 		;;
-	*)	
+	*)
 		break
 		;;
 	esac

@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.18 2004/05/17 18:37:02 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.18.6.1 2005/03/19 08:34:58 yamt Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -55,8 +55,8 @@ ABSOLUTE int_extmsgin	= 0xff02;
 ABSOLUTE int_extmsgdata	= 0xff03;
 ABSOLUTE int_disc	= 0xff04;
 ; interrupts that don't have a valid I/T/Q
-ABSOLUTE int_resfail	= 0xff80;     
-ABSOLUTE int_err	= 0xffff;     
+ABSOLUTE int_resfail	= 0xff80;
+ABSOLUTE int_err	= 0xffff;
 
 ; We use the various scratch[a-j] registers to keep internal status:
 
@@ -123,8 +123,8 @@ PROC  esiop_script:
 no_cmd:
 	LOAD SCRATCHB0, 4, abs_sem; pending done command ?
 	MOVE SCRATCHB0 & sem_done TO SFBR;
-	INTFLY 0, IF NOT 0x00; 
-	MOVE SCRATCHB0 | sem_start TO SCRATCHB0; we are there because the 
+	INTFLY 0, IF NOT 0x00;
+	MOVE SCRATCHB0 | sem_start TO SCRATCHB0; we are there because the
 	STORE NOFLUSH SCRATCHB0, 4, abs_sem;     cmd ring is empty
 reselect:
 	MOVE 0x00 TO SCRATCHA1;
@@ -161,7 +161,7 @@ nextisn:
 	MOVE SFBR & 0x07 to SCRATCHC2;
 	MOVE SCRATCHC0 | f_c_lun to SCRATCHC0; save LUN
 	CLEAR ACK and CARRY;
-	MOVE SCRATCHC2 SHL SFBR; 
+	MOVE SCRATCHC2 SHL SFBR;
 	MOVE SFBR SHL SFBR;
 	MOVE SFBR SHL SFBR; lun * 8
 	MOVE DSA0 + SFBR TO DSA0;
@@ -282,7 +282,7 @@ ignore_cmd:
 	MOVE SCRATCHD3 to SFBR;
 	MOVE SFBR to DSA3;
 	MOVE SCRATCHE0 + 1 to SCRATCHE0;
-	MOVE SCRATCHD0 + cmd_slot_size to SCRATCHD0; 
+	MOVE SCRATCHD0 + cmd_slot_size to SCRATCHD0;
 	MOVE SCRATCHD1 + 0 to SCRATCHD1 WITH CARRY;
 	MOVE SCRATCHD2 + 0 to SCRATCHD2 WITH CARRY;
 	MOVE SCRATCHD3 + 0 to SCRATCHD3 WITH CARRY;
@@ -323,9 +323,9 @@ led_on1:
 send_msgout: ; entry point for msgout after a msgin or status phase
 	SET ATN;
 	CLEAR ACK;
-msgout: 
+msgout:
         MOVE FROM t_msg_out, WHEN MSG_OUT;
-	CLEAR ATN;  
+	CLEAR ATN;
 	JUMP REL(waitphase);
 
 
@@ -349,9 +349,9 @@ handle_msgin:
 	INT int_disc;
 
 cmdout:
-        MOVE FROM t_cmd, WHEN CMD; 
+        MOVE FROM t_cmd, WHEN CMD;
 	JUMP REL(waitphase);
-status: 
+status:
         MOVE FROM t_status, WHEN STATUS;
 	MOVE SFBR TO SCRATCHE1;
 	JUMP REL(waitphase);
@@ -387,9 +387,9 @@ dataout_loop:
 
 savedsa:
         MOVE DSA0 to SFBR;
-	MOVE SFBR to SCRATCHB0;       
+	MOVE SFBR to SCRATCHB0;
 	MOVE DSA1 to SFBR;
-	MOVE SFBR to SCRATCHB1;       
+	MOVE SFBR to SCRATCHB1;
 	MOVE DSA2 to SFBR;
 	MOVE SFBR to SCRATCHB2;
 	MOVE DSA3 to SFBR;
@@ -403,7 +403,7 @@ restoredsa:
 	MOVE SFBR TO DSA1;
 	MOVE SCRATCHB2 TO SFBR;
 	MOVE SFBR TO DSA2;
-	MOVE SCRATCHB3 TO SFBR;       
+	MOVE SCRATCHB3 TO SFBR;
 	MOVE SFBR TO DSA3;
 	RETURN;
 
@@ -421,7 +421,7 @@ handle_extin:
 get_extmsgdata:
 	CLEAR ACK;
 	MOVE FROM t_ext_msg_data, WHEN MSG_IN;
-	INT int_extmsgdata; 
+	INT int_extmsgdata;
 
 PROC esiop_led_on:
 	MOVE GPREG & 0xfe TO GPREG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.89 2004/11/30 04:25:44 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.89.6.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.89 2004/11/30 04:25:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.89.6.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -471,7 +471,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 #ifdef KTRACE
 	struct iovec	*ktriov;
 #endif
-	
+
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
@@ -660,7 +660,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
-	
+
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);

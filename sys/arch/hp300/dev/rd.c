@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.65.6.1 2005/02/12 18:17:32 yamt Exp $	*/
+/*	$NetBSD: rd.c,v 1.65.6.2 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.65.6.1 2005/02/12 18:17:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.65.6.2 2005/03/19 08:32:58 yamt Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -147,6 +147,8 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.65.6.1 2005/02/12 18:17:32 yamt Exp $");
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
+
+#include "ioconf.h"
 
 int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
 
@@ -317,8 +319,6 @@ static void	rdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rd, sizeof(struct rd_softc),
     rdmatch, rdattach, NULL, NULL);
-
-extern struct cfdriver rd_cd;
 
 static dev_type_open(rdopen);
 static dev_type_close(rdclose);

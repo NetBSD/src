@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.h,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.h,v 1.3.52.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #define _RF__RF_PARITYLOGGINGDAGS_H_
 
 /* routines that create DAGs */
-void 
+void
 rf_CommonCreateParityLoggingLargeWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h,
     void *bp, RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,

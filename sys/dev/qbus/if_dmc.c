@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.8 2005/01/24 21:25:09 matt Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.8.2.1 2005/03/19 08:35:37 yamt Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.8 2005/01/24 21:25:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.8.2.1 2005/03/19 08:35:37 yamt Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.8 2005/01/24 21:25:09 matt Exp $");
 static int dmc_timeout = 20;
 
 #define NRCV 7
-#define NXMT 3 
+#define NXMT 3
 #define NCMDS	(NRCV+NXMT+4)	/* size of command queue */
 
 #define DMC_WBYTE(csr, val) \
@@ -198,7 +198,7 @@ CFATTACH_DECL(dmc, sizeof(struct dmc_softc),
 	(qp)->qp_next = (head); \
 	(head) = (qp); \
 	if ((tail) == (struct dmc_command *) 0) \
-		(tail) = (head) 
+		(tail) = (head)
 
 #define QUEUE_AT_TAIL(qp, head, tail) \
 	if ((tail)) \
@@ -358,7 +358,7 @@ dmcinit(struct ifnet *ifp)
 		rp->ubinfo = ifrw->ifrw_info;
 		rp->cc = DMCMTU + sizeof (struct dmc_header);
 		rp->flags = DBUF_OURS|DBUF_RCV;
-		ifrw++; 
+		ifrw++;
 	}
 	/* transmits */
 	ifxp = &sc->sc_ifw[0];
@@ -366,7 +366,7 @@ dmcinit(struct ifnet *ifp)
 		rp->ubinfo = ifxp->ifw_info;
 		rp->cc = 0;
 		rp->flags = DBUF_OURS|DBUF_XMIT;
-		ifxp++; 
+		ifxp++;
 	}
 
 	/* set up command queues */
@@ -447,7 +447,7 @@ dmcstart(struct ifnet *ifp)
 			rp->cc &= DMC_CCOUNT;
 			if (++sc->sc_oused == 1)
 				sc->sc_if.if_timer = dmc_timeout;
-			dmcload(sc, DMC_WRITE, rp->ubinfo, 
+			dmcload(sc, DMC_WRITE, rp->ubinfo,
 				rp->cc | ((rp->ubinfo>>2)&DMC_XMEM));
 		}
 		n++;
@@ -474,7 +474,7 @@ dmcload(struct dmc_softc *sc, int type, u_short w0, u_short w1)
 	qp->qp_cmd = (type | DMC_RQI);
 	qp->qp_ubaddr = w0;
 	qp->qp_cc = w1;
-	
+
 	if (sc->sc_qactive) {	/* command in progress */
 		if (type == DMC_READ) {
 			QUEUE_AT_HEAD(qp, sc->sc_qhead, sc->sc_qtail);
@@ -548,7 +548,7 @@ dmcrint(void *arg)
 void
 dmcxint(void *a)
 {
-        struct dmc_softc *sc = a;
+	struct dmc_softc *sc = a;
 
 	struct ifnet *ifp;
 	struct mbuf *m;
@@ -574,7 +574,7 @@ dmcxint(void *a)
 
 		case DMC_OUR:
 			/*
-			 * A read has completed.  
+			 * A read has completed.
 			 * Pass packet to type specific
 			 * higher-level input routine.
 			 */
@@ -648,7 +648,7 @@ dmcxint(void *a)
 			/* is this needed? */
 			rp->ubinfo = ifrw->ifrw_info;
 
-			dmcload(sc, DMC_READ, rp->ubinfo, 
+			dmcload(sc, DMC_READ, rp->ubinfo,
 			    ((rp->ubinfo >> 2) & DMC_XMEM) | rp->cc);
 			break;
 
@@ -748,7 +748,7 @@ dmcxint(void *a)
 			break;
 
 		default:
-			printf("%s: bad control %o\n", 
+			printf("%s: bad control %o\n",
 			    sc->sc_dev.dv_xname, cmd);
 			break;
 		}
@@ -845,14 +845,14 @@ dmcioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
-			dmcinit(ifp); 
+			dmcinit(ifp);
 		break;
 
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
-			dmcinit(ifp); 
+			dmcinit(ifp);
 		break;
-		
+
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    sc->sc_flag & DMC_RUNNING)
@@ -877,7 +877,7 @@ void
 dmcrestart(struct dmc_softc *sc)
 {
 	int s, i;
-	
+
 #ifdef DMCDEBUG
 	/* dump base table */
 	printf("%s base table:\n", sc->sc_dev.dv_xname);

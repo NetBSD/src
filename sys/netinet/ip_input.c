@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.209.2.1 2005/02/12 18:17:54 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.209.2.2 2005/03/19 08:36:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.209.2.1 2005/02/12 18:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.209.2.2 2005/03/19 08:36:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -223,7 +223,7 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 int	ipqmaxlen = IFQ_MAXLEN;
 u_long	in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
-struct in_ifaddrhead in_ifaddrhead;	
+struct in_ifaddrhead in_ifaddrhead;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 u_long	in_multihash;				/* size of hash table - 1 */
 int	in_multientries;			/* total number of addrs */
@@ -257,7 +257,7 @@ do {								\
 	(((((x) & 0xF) | ((((x) >> 8) & 0xF) << 4)) ^ (y)) & IPREASS_HMASK)
 struct ipqhead ipq[IPREASS_NHASH];
 int	ipq_locked;
-static int	ip_nfragpackets;	/* packets in reass queue */ 
+static int	ip_nfragpackets;	/* packets in reass queue */
 static int	ip_nfrags;		/* total fragments in reass queues */
 
 int	ip_maxfragpackets = 200;	/* limit on packets. XXX sysctl */
@@ -267,7 +267,7 @@ int	ip_maxfrags;		        /* limit on fragments. XXX sysctl */
 /*
  * Additive-Increase/Multiplicative-Decrease (AIMD) strategy for
  * IP reassembly queue buffer managment.
- * 
+ *
  * We keep a count of total IP fragments (NB: not fragmented packets!)
  * awaiting reassembly (ip_nfrags) and a limit (ip_maxfrags) on fragments.
  * If ip_nfrags exceeds ip_maxfrags the limit, we drop half the
@@ -275,7 +275,7 @@ int	ip_maxfrags;		        /* limit on fragments. XXX sysctl */
  * repeatedly deleting single packets under heavy fragmentation load
  * (e.g., from lossy NFS peers).
  */
-static u_int	ip_reass_ttl_decr(u_int ticks); 
+static u_int	ip_reass_ttl_decr(u_int ticks);
 static void	ip_reass_drophalf(void);
 
 
@@ -668,7 +668,7 @@ ip_input(struct mbuf *m)
 		 * default route for hosts on 1.1.1.0/24.  Of course this
 		 * also requires a "map tlp0 ..." to complete the story.
 		 * One might argue whether or not this kind of network config.
-		 * should be supported in this manner... 
+		 * should be supported in this manner...
 		 */
 		srcrt = (odst.s_addr != ip->ip_dst.s_addr);
 	}
@@ -836,7 +836,7 @@ ip_input(struct mbuf *m)
 			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
 		} else {
 			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-						   IP_FORWARDING, &error);   
+						   IP_FORWARDING, &error);
 		}
 		if (sp == NULL) {	/* NB: can happen if error */
 			splx(s);
@@ -986,7 +986,7 @@ found:
 		 * done.  If so, then just pass it along.  This tag gets
 		 * set during AH, ESP, etc. input handling, before the
 		 * packet is returned to the ip input queue for delivery.
-		 */ 
+		 */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
 		s = splsoftnet();
 		if (mtag != NULL) {
@@ -994,7 +994,7 @@ found:
 			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
 		} else {
 			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-						   IP_FORWARDING, &error);   
+						   IP_FORWARDING, &error);
 		}
 		if (sp != NULL) {
 			/*
@@ -1075,7 +1075,7 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, struct ipqhead *ipqhead)
 	 * We are about to add a fragment; increment frag count.
 	 */
 	ip_nfrags++;
-	
+
 	/*
 	 * If first fragment to arrive, create a reassembly queue.
 	 */
@@ -1285,10 +1285,10 @@ ip_reass_ttl_decr(u_int ticks)
 	u_int nfrags, median, dropfraction, keepfraction;
 	struct ipq *fp, *nfp;
 	int i;
-	
+
 	nfrags = 0;
 	memset(fragttl_histo, 0, sizeof fragttl_histo);
-	
+
 	for (i = 0; i < IPREASS_NHASH; i++) {
 		for (fp = LIST_FIRST(&ipq[i]); fp != NULL; fp = nfp) {
 			fp->ipq_ttl = ((fp->ipq_ttl  <= ticks) ?
@@ -2139,7 +2139,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
 	if (s)
 		return (s);
-	
+
 	s = splsoftnet();
 	ipflow_reap(0);
 	splx(s);
@@ -2170,7 +2170,7 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       SYSCTL_DESCR("IPv4 related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
-	
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "forwarding",

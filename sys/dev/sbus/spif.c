@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.1 2004/07/24 12:37:20 mrg Exp $	*/
+/*	$NetBSD: spif.c,v 1.1.8.1 2005/03/19 08:35:47 yamt Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.1 2004/07/24 12:37:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.1.8.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -155,7 +155,7 @@ spif_match(parent, vcf, aux)
 	return (1);
 }
 
-void    
+void
 spif_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -699,7 +699,7 @@ stty_poll(dev, events, p)
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 	struct tty *tp = sp->sp_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 

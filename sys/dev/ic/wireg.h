@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.50 2003/12/14 10:04:33 dyoung Exp $	*/
+/*	$NetBSD: wireg.h,v 1.50.10.1 2005/03/19 08:34:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -92,7 +92,7 @@
 #define WI_IOSIZE		0x40
 
 /*
- * Hermes & Prism2 register definitions 
+ * Hermes & Prism2 register definitions
  */
 
 /* Hermes command/status registers. */
@@ -401,7 +401,7 @@ struct wi_pcf {
  * 0 == IBSS (802.11 compliant mode) (Only PRISM2)
  * 1 == Basic Service Set (BSS)
  * 2 == Wireless Distribution System (WDS)
- * 3 == Pseudo IBSS 
+ * 3 == Pseudo IBSS
  *	(Only PRISM2; not 802.11 compliant mode, testing use only)
  * 6 == HOST AP (Only PRISM2)
  */
@@ -474,7 +474,7 @@ struct wi_assoc {
 	u_int16_t		wi_assoc_stat;	/* Association Status */
 #define	ASSOC		1
 #define	REASSOC		2
-#define	DISASSOC	3	
+#define	DISASSOC	3
 #define	ASSOCFAIL	4
 #define	AUTHFAIL	5
 	u_int8_t		wi_assoc_sta[6];	/* Station Address */

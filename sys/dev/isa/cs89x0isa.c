@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.9 2004/09/14 20:20:46 drochner Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.9.6.1 2005/03/19 08:34:33 yamt Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.9 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.9.6.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 
 		/*
 		 * process all of the DMA frames in memory
-		 * 
+		 *
 		 * This loop relies on the dma_mem_ptr variable being set to the
 		 * next frames start address.
 		 */
@@ -347,7 +347,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 
 				cs_ether_input(sc, m);
 			}
-			/* (status & RX_OK) */ 
+			/* (status & RX_OK) */
 			else {
 				/* the frame was not received OK */
 				/* Increment the input error count */
@@ -365,7 +365,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 			 * now update the current frame pointer. the
 			 * dma_mem_ptr should point to the next packet to be
 			 * received, without the alignment considerations.
-			 * 
+			 *
 			 * The cs8900 pads all frames to start at the next 32bit
 			 * aligned addres. hence we need to pad our offset
 			 * pointer.

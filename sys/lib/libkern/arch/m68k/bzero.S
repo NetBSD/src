@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.7 2003/08/07 16:32:15 agc Exp $	*/
+/*	$NetBSD: bzero.S,v 1.7.10.1 2005/03/19 08:36:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bzero.S,v 1.7 2003/08/07 16:32:15 agc Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.7.10.1 2005/03/19 08:36:21 yamt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,7 @@ ENTRY(bzero)
 
 	movql	#0,%d2
 
-	/* 
+	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
@@ -96,7 +96,7 @@ ENTRY(bzero)
 	/* word align */
 	movl	%a0,%d0
 	btst	#0,%d0			| if (dst & 1)
-	jeq	Lbzalgndw		| 
+	jeq	Lbzalgndw		|
 	movb	%d2,%a0@+		| 	*(char *)dst++ = 0
 	subql	#1,%d1			|	len--
 Lbzalgndw:

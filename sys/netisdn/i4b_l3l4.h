@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l3l4.h,v 1.15 2003/10/03 16:38:44 pooka Exp $	*/
+/*	$NetBSD: i4b_l3l4.h,v 1.15.10.1 2005/03/19 08:36:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.15 2003/10/03 16:38:44 pooka Exp $
+ *	$Id: i4b_l3l4.h,v 1.15.10.1 2005/03/19 08:36:42 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -94,12 +94,12 @@ typedef struct call_desc
 
 	int	bchan_driver_index;	/* driver to use for B channel	*/
 	int	bchan_driver_unit;	/* unit for above driver number	*/
-	
+
 	cause_t	cause_in;		/* cause value from NT	*/
 	cause_t	cause_out;		/* cause value to NT	*/
 
 	int	call_state;		/* from incoming SETUP	*/
-	
+
 	u_char	dst_telno[TELNO_MAX];	/* destination number	*/
 	u_char	src_telno[TELNO_MAX];	/* source number	*/
 	u_char	src_subaddr[SUBADDR_MAX];
@@ -108,7 +108,7 @@ typedef struct call_desc
 	int	scr_ind;		/* screening ind for incoming call */
 	int	prs_ind;		/* presentation ind for incoming call */
 	int	type_plan;		/* type and plan for incoming number */
-	
+
 	int	Q931state;		/* Q.931 state for call	*/
 	int	event;			/* event to be processed */
 
@@ -126,7 +126,7 @@ typedef struct call_desc
 
 	int	T310;			/* CALL PROC received		*/
 
-	int	T313;			/* CONNECT sent timeout		*/ 
+	int	T313;			/* CONNECT sent timeout		*/
 
 	int	T400;			/* L4 timeout */
 
@@ -163,7 +163,7 @@ typedef struct call_desc
 					/* for incoming connections:	*/
 	time_t	max_idle_time;		/* max time without activity	*/
 
-					/* for outgoing connections:	*/	
+					/* for outgoing connections:	*/
 	msg_shorthold_t shorthold_data;	/* shorthold data to use */
 
 	int	aocd_flag;		/* AOCD used for unitlength calc*/
@@ -175,7 +175,7 @@ typedef struct call_desc
 	int	isdntxdelay;		/* isdn tx delay after connect	*/
 
 	u_char	display[DISPLAY_MAX];	/* display information element	*/
-	char	datetime[DATETIME_MAX];	/* date/time information element*/	
+	char	datetime[DATETIME_MAX];	/* date/time information element*/
 } call_desc_t;
 
 extern call_desc_t call_desc[];
@@ -188,7 +188,7 @@ extern int num_call_desc;
 struct isdn_l4_bchannel_functions {
 	void (*bch_config)(void*, int channel, int bprot, int updown);
 	void (*bch_tx_start)(void*, int channel);
-	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
+	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);
 };
 
 /*
@@ -235,8 +235,8 @@ struct isdn_dr_prot;
 struct isdn_l3_driver_functions {
 	isdn_link_t* (*get_linktab)(void*, int channel);
 	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
-	
-	void	(*N_CONNECT_REQUEST)	(struct call_desc *cd);	
+
+	void	(*N_CONNECT_REQUEST)	(struct call_desc *cd);
 	void	(*N_CONNECT_RESPONSE)	(struct call_desc *cd, int, int);
 	void	(*N_DISCONNECT_REQUEST)	(struct call_desc *cd, int);
 	void	(*N_ALERT_REQUEST)	(struct call_desc *cd);
@@ -269,7 +269,7 @@ struct isdn_l3_driver {
 
 	int	dl_est;			/* layer 2 established	*/
 #define DL_DOWN	0
-#define DL_UP	1	
+#define DL_UP	1
 
 	int	nbch;			/* number of B-channels */
 	int	*bch_state;		/* states of the nbch b channels */
@@ -288,7 +288,7 @@ struct isdn_l3_driver {
 
 void i4b_l4_contr_ev_ind(int controller, int attach);
 struct isdn_l3_driver * isdn_attach_isdnif(const char *devname,
-    const char *cardname, void *l1_token, 
+    const char *cardname, void *l1_token,
     const struct isdn_l3_driver_functions * l3driver, int nbch);
 int isdn_detach_isdnif(struct isdn_l3_driver *);
 void isdn_isdnif_ready(int isdnif);

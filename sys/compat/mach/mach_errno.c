@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.14 2003/12/09 17:10:02 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.14.10.1 2005/03/19 08:33:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.14 2003/12/09 17:10:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.14.10.1 2005/03/19 08:33:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.14 2003/12/09 17:10:02 manu Exp $")
 #include <compat/mach/mach_errno.h>
 
 int native_to_mach_errno[] = {
-	MACH_KERN_SUCCESS,					/* 0 */	
+	MACH_KERN_SUCCESS,					/* 0 */
 	MACH_KERN_PROTECTION_FAILURE, 		/* EPERM */
 	MACH_KERN_FAILURE, 			/* ENOENT */
 	MACH_KERN_FAILURE, 			/* ESRCH */
@@ -94,12 +94,12 @@ int native_to_mach_errno[] = {
 	MACH_KERN_FAILURE,			/* EMSGSIZE */
 	MACH_KERN_FAILURE,			/* EPROTOTYPE */
 	MACH_KERN_FAILURE,			/* ENOPROTOOPT */
-	MACH_KERN_FAILURE,			/* ESOCKTNOSUPPORT */ 
+	MACH_KERN_FAILURE,			/* ESOCKTNOSUPPORT */
 	MACH_KERN_FAILURE,			/* EOPNOTSUPP */ /* 45 */
 	MACH_KERN_FAILURE,			/* EPFNOSUPPORT */
 	MACH_KERN_FAILURE,			/* EAFNOSUPPORT */
 	MACH_KERN_FAILURE,			/* EADDRINUSE */
-	MACH_KERN_FAILURE,			/* EADDRNOTAVAIL */ 
+	MACH_KERN_FAILURE,			/* EADDRNOTAVAIL */
 	MACH_KERN_FAILURE,			/* ENETDOWN */	/* 50 */
 	MACH_KERN_FAILURE,			/* ENETUNREACH */
 	MACH_KERN_FAILURE,			/* ENETRESET */
@@ -142,7 +142,7 @@ int
 mach_msg_error(args, error)
 	struct mach_trap_args *args;
 	int error;
-{	
+{
 	mach_msg_header_t *req = args->smsg;
 	mach_error_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
@@ -156,7 +156,7 @@ mach_msg_error(args, error)
 
 #ifdef DEBUG_MACH
 	if (error != 0)
-		printf("failure in kernel service %d (err %x, native %d)\n", 
+		printf("failure in kernel service %d (err %x, native %d)\n",
 		    req->msgh_id, (int)rep->rep_retval, error);
 #endif
 	return 0;
@@ -166,7 +166,7 @@ int
 mach_iokit_error(args, error)
 	struct mach_trap_args *args;
 	int error;
-{	
+{
 	mach_msg_header_t *req = args->smsg;
 	mach_error_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
@@ -178,7 +178,7 @@ mach_iokit_error(args, error)
 
 #ifdef DEBUG_MACH
 	if (error != 0)
-		printf("failure in kernel service %d (Mach err %x)\n", 
+		printf("failure in kernel service %d (Mach err %x)\n",
 		    req->msgh_id, error);
 #endif
 	mach_set_trailer(rep, *msglen);

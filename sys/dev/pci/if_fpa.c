@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.43 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.43.12.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.43 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.43.12.1 2005/03/19 08:35:11 yamt Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -250,7 +250,7 @@ pdq_pci_shutdown(
     void *sc)
 {
     pdq_hwreset(((pdq_softc_t *)sc)->sc_pdq);
-}   
+}
 #endif
 
 static u_long pdq_pci_count;

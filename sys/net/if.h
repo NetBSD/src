@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.100 2005/01/24 21:25:09 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.100.2.1 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "agr.h"
 #endif
 
 struct mbuf;
@@ -288,6 +289,10 @@ struct ifnet {				/* and the entries */
 
 	void	*if_afdata[AF_MAX];
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
+
+#if NAGR > 0
+	void	*if_agrprivate;
+#endif
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -347,6 +352,7 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_UDPv6	0x0010	/* can do IPv6/UDP checksums */
 #define	IFCAP_CSUM_TCPv4_Rx	0x0020	/* can do IPv4/TCP (Rx only) */
 #define	IFCAP_CSUM_UDPv4_Rx	0x0040	/* can do IPv4/UDP (Rx only) */
+#define	IFCAP_TSOv4		0x0080	/* can do TCPv4 segmentation offload */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -397,7 +403,7 @@ do {									\
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #ifndef IFQ_MAXLEN
-#define	IFQ_MAXLEN	50
+#define	IFQ_MAXLEN	256
 #endif
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
@@ -549,13 +555,13 @@ struct ifmediareq {
 	int	*ifm_ulist;			/* media words */
 };
 
- 
+
 struct  ifdrv {
 	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	unsigned long	ifd_cmd;
 	size_t		ifd_len;
 	void		*ifd_data;
-}; 
+};
 
 /*
  * Structure used in SIOCGIFCONF request.
@@ -825,7 +831,7 @@ int	sysctl_ifq __P((int *name, u_int namelen, void *oldp,
 
 #ifdef _NETBSD_SOURCE
 /*
- * sysctl for ifq (per-protocol packet input queue variant of ifqueue) 
+ * sysctl for ifq (per-protocol packet input queue variant of ifqueue)
  */
 #define CTL_IFQ_NAMES  { \
 	{ 0, 0 }, \

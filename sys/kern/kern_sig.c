@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.201.4.1 2005/01/25 12:59:35 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.201.4.2 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,12 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.201.4.1 2005/01/25 12:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.201.4.2 2005/03/19 08:36:11 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"	
+#include "opt_compat_netbsd32.h"
 
 #define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>
@@ -318,8 +318,8 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 	 */
 	if ((vers != 0 && tramp == NULL) ||
 #ifdef SIGTRAMP_VALID
-	    (nsa != NULL && 
-	    ((vers == 0) ? 
+	    (nsa != NULL &&
+	    ((vers == 0) ?
 		(p->p_emul->e_sigcode == NULL) :
 		!SIGTRAMP_VALID(vers))) ||
 #endif
@@ -580,7 +580,7 @@ sigprocmask1(struct proc *p, int how, const sigset_t *nss, sigset_t *oss)
 
 	return (0);
 }
-	
+
 /*
  * Manipulate signal mask.
  * Note that we receive new mask, not pointer,
@@ -665,7 +665,7 @@ sigsuspend1(struct proc *p, const sigset_t *ss)
 
 	while (tsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0) == 0)
 		/* void */;
-	
+
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
 }
@@ -805,16 +805,16 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 	struct pgrp	*pgrp;
 	int		nfound;
 	int		signum = ksi->ksi_signo;
-	
+
 	pc = cp->p_cred;
 	nfound = 0;
 	if (all) {
-		/* 
-		 * broadcast 
+		/*
+		 * broadcast
 		 */
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
+			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
 			    p == cp || !CANSIGNAL(cp, pc, p, signum))
 				continue;
 			nfound++;
@@ -823,8 +823,8 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		}
 		proclist_unlock_read();
 	} else {
-		if (pgid == 0)		
-			/* 
+		if (pgid == 0)
+			/*
 			 * zero pgid means send to my process group.
 			 */
 			pgrp = cp->p_pgrp;
@@ -1000,7 +1000,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data, int dolock)
 	kpsignal2(p, ksi, dolock);
 }
 
-static void 
+static void
 kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 {
 	struct lwp *l, *suspended = NULL;
@@ -1153,7 +1153,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 					goto out;
 					/*NOTREACHED*/
 				}
-				if (l->l_stat == LSSLEEP && 
+				if (l->l_stat == LSSLEEP &&
 				    l->l_flag & L_SINTR) {
 					/* ok to signal vp lwp */
 				} else
@@ -1171,12 +1171,12 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		}
 	} else if (p->p_nrlwps > 0 && (p->p_stat != SSTOP)) {
 		/*
-		 * At least one LWP is running or on a run queue. 
-		 * The signal will be noticed when one of them returns 
+		 * At least one LWP is running or on a run queue.
+		 * The signal will be noticed when one of them returns
 		 * to userspace.
 		 */
 		signotify(p);
-		/* 
+		/*
 		 * The signal will be noticed very soon.
 		 */
 		goto out;
@@ -1188,12 +1188,12 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		 */
 		allsusp = 1;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_stat == LSSLEEP && 
+			if (l->l_stat == LSSLEEP &&
 			    l->l_flag & L_SINTR)
 				break;
 			if (l->l_stat == LSSUSPENDED)
 				suspended = l;
-			else if ((l->l_stat != LSZOMB) && 
+			else if ((l->l_stat != LSZOMB) &&
 			    (l->l_stat != LSDEAD))
 				allsusp = 0;
 		}
@@ -1205,7 +1205,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 
 		if (l != NULL && (p->p_flag & P_TRACED))
 			goto run;
-			     
+
 		/*
 		 * If SIGCONT is default (or ignored) and process is
 		 * asleep, we are finished; the process should not
@@ -1289,7 +1289,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 				goto runfast;
 			goto done;
 		}
-			
+
 		if (prop & SA_CONT) {
 			/*
 			 * If SIGCONT is default (or ignored),
@@ -1303,10 +1303,10 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 			 * itself.  If it isn't waiting on an
 			 * event, then it goes back to run
 			 * state.  Otherwise, process goes
-			 * back to sleep state.  
+			 * back to sleep state.
 			 */
 			if (action == SIG_DFL)
-				sigdelset(&p->p_sigctx.ps_siglist, 
+				sigdelset(&p->p_sigctx.ps_siglist,
 				    signum);
 			l = proc_unstop(p);
 			if (l && (action == SIG_CATCH))
@@ -1359,7 +1359,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		ksiginfo_put(p, ksi);
 		action = SIG_HOLD;
 	}
-	
+
 	setrunnable(l);		/* XXXSMP: recurse? */
  out:
 	if (action == SIG_CATCH)
@@ -1383,7 +1383,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		/* XXXUPSXXX What if not on sa_vp ? */
 
 		f = l->l_flag & L_SA;
-		l->l_flag &= ~L_SA; 
+		l->l_flag &= ~L_SA;
 		si = pool_get(&siginfo_pool, PR_WAITOK);
 		si->_info = ksi->ksi_info;
 		le = li = NULL;
@@ -1391,7 +1391,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 			le = l;
 		else
 			li = l;
-		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
+		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li,
 		    sizeof(*si), si) != 0) {
 			pool_put(&siginfo_pool, si);
 			if (KSI_TRAP_P(ksi))
@@ -1656,7 +1656,7 @@ proc_stop(struct proc *p, int wakeup)
 	if (p->p_flag & P_SA) {
 		/*
 		 * Only (try to) put the LWP on the VP in stopped
-		 * state. 
+		 * state.
 		 * All other LWPs will suspend in sa_setwoken()
 		 * because the VP-LWP in stopped state cannot be
 		 * repossessed.
@@ -1680,8 +1680,8 @@ proc_stop(struct proc *p, int wakeup)
 		goto out;
 	}
 
-	/* 
-	 * Put as many LWP's as possible in stopped state. 
+	/*
+	 * Put as many LWP's as possible in stopped state.
 	 * Sleeping ones will notice the stopped state as they try to
 	 * return to userspace.
 	 */
@@ -1689,7 +1689,7 @@ proc_stop(struct proc *p, int wakeup)
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_stat == LSONPROC) {
 			/* XXX SMP this assumes that a LWP that is LSONPROC
-			 * is curlwp and hence is about to be mi_switched 
+			 * is curlwp and hence is about to be mi_switched
 			 * away; the only callers of proc_stop() are:
 			 * - psignal
 			 * - issignal()
@@ -1706,7 +1706,7 @@ proc_stop(struct proc *p, int wakeup)
 			l->l_stat = LSSTOP;
 			p->p_nrlwps--;
 		} else if ((l->l_stat == LSSLEEP) ||
-		    (l->l_stat == LSSUSPENDED) || 
+		    (l->l_stat == LSSUSPENDED) ||
 		    (l->l_stat == LSZOMB) ||
 		    (l->l_stat == LSDEAD)) {
 			/*
@@ -1724,7 +1724,7 @@ proc_stop(struct proc *p, int wakeup)
 #ifdef DIAGNOSTIC
 		else {
 			panic("proc_stop: process %d lwp %d "
-			      "in unstoppable state %d.\n", 
+			      "in unstoppable state %d.\n",
 			    p->p_pid, l->l_lid, l->l_stat);
 		}
 #endif
@@ -1738,7 +1738,7 @@ proc_stop(struct proc *p, int wakeup)
 }
 
 /*
- * Given a process in state SSTOP, set the state back to SACTIVE and 
+ * Given a process in state SSTOP, set the state back to SACTIVE and
  * move LSSTOP'd LWPs to LSSLEEP or make them runnable.
  *
  * If no LWPs ended up runnable (and therefore able to take a signal),
@@ -1965,7 +1965,7 @@ lwp_coredump_hook(struct lwp *l, void *arg)
 	l->l_stat = LSSUSPENDED;
 	l->l_proc->p_nrlwps--;
 	/* XXX NJWLWP check if this makes sense here: */
-	l->l_proc->p_stats->p_ru.ru_nvcsw++; 
+	l->l_proc->p_stats->p_ru.ru_nvcsw++;
 	mi_switch(l, NULL);
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
@@ -1985,7 +1985,7 @@ sigexit(struct lwp *l, int signum)
 	p = l->l_proc;
 
 	/*
-	 * Don't permit coredump() or exit1() multiple times 
+	 * Don't permit coredump() or exit1() multiple times
 	 * in the same process.
 	 */
 	if (p->p_flag & P_WEXIT) {
@@ -2016,10 +2016,10 @@ sigexit(struct lwp *l, int signum)
 
 		if (kern_logsigexit) {
 			/* XXX What if we ever have really large UIDs? */
-			int uid = p->p_cred && p->p_ucred ? 
+			int uid = p->p_cred && p->p_ucred ?
 				(int) p->p_ucred->cr_uid : -1;
 
-			if (error) 
+			if (error)
 				log(LOG_INFO, lognocoredump, p->p_pid,
 				    p->p_comm, uid, signum, error);
 			else
@@ -2034,7 +2034,7 @@ sigexit(struct lwp *l, int signum)
 }
 
 /*
- * Dump core, into a file named "progname.core" or "core" (depending on the 
+ * Dump core, into a file named "progname.core" or "core" (depending on the
  * value of shortcorename), unless the process was setuid/setgid.
  */
 int
@@ -2145,7 +2145,7 @@ build_corename(struct proc *p, char *dst, const char *src, size_t len)
 	const char	*s;
 	char		*d, *end;
 	int		i;
-	
+
 	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {
 			switch (*(s + 1)) {
@@ -2326,7 +2326,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 			ksi->ksi_info._signo = signum;
 			ksi->ksi_info._code = SI_USER;
 		}
-			
+
 		goto sig;
 	}
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: smdk2800_start.S,v 1.4 2003/06/18 03:17:49 bsh Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.4.12.1 2005/03/19 08:32:56 yamt Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2005 Fujitsu Component Limited
+ * Copyright (c) 2002, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>	/* for S3C2800_DBANK0_START */
 
+#include <evbarm/smdk2xx0/smdk2800var.h>
+
 /*
  * Kernel start routine for Samsung SMDK2800.
  * This code is excuted at the very first after the kernel is loaded
@@ -46,9 +48,6 @@
  */
 	.text
 
-#ifndef	SDRAM_START
-#define	SDRAM_START	S3C2800_DBANK0_START
-#endif
 #define KERNEL_TEXT_ADDR	(SDRAM_START+0x00200000)
 
 	.global	_C_LABEL(smdk2800_start)
@@ -160,5 +159,7 @@ mmu_init_table:
 	/* map VA 0xc0000000..0xc3ffffff to PA 0x08000000..0x0bffffff */
 	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
 
+	/* Map all built-in peripheral registers at 0xfd000000 */
+	MMU_INIT(SMDK2800_IO_AREA_VBASE, S3C2800_PERIPHERALS, 2, L1_TYPE_S|L1_S_AP(AP_KRW))
 	.word 0	/* end of table */
 

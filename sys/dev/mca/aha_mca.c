@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.10.16.1 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.10.16.2 2005/03/19 08:34:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.10.16.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.10.16.2 2005/03/19 08:34:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ aha_mca_attach(parent, self, aux)
 	/*
 	 * POS registers differ much between 8003 and 8013, so they are
 	 * divided to two sections.
-	 * 
+	 *
 	 * POS register 2: (adf pos0)
 	 * 7 6 5 4 3 2 1 0
 	 * | 0 0 0 0 0 0 \__ enable: 0=adapter disabled, 1=adapter enabled
@@ -123,7 +123,7 @@ aha_mca_attach(parent, self, aux)
 	 * POS register 3: (adf pos1)
 	 * 7 6 5 4 3 2 1 0
 	 * \_/ \___/ \___/
-	 *  |    |       \__ I/O Port Address (upper part) 
+	 *  |    |       \__ I/O Port Address (upper part)
 	 *  |    |__________ Adapter BIOS location
 	 *  |_______________ I/O Port Address (lower part)
 	 *
@@ -134,7 +134,7 @@ aha_mca_attach(parent, self, aux)
 	 *   |   | |________ Sync xfer started by AHA-1640: 1=YES 2=NO
 	 *   |   |__________ SCSI Parity Checking On/Off
 	 *   |______________ SCSI Address
-	 * 
+	 *
 	 * POS register 3: (adf pos3)
 	 * 7 6 5 4 3 2 1 0
 	 *       | \_____/

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.63.6.1 2005/02/12 18:17:47 yamt Exp $ */
+/* $NetBSD: if_ti.c,v 1.63.6.2 2005/03/19 08:35:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -38,7 +38,7 @@
  * Alteon Networks Tigon PCI gigabit ethernet driver for FreeBSD.
  * Manuals, sample driver and firmware source kits are available
  * from http://www.alteon.com/support/openkits.
- * 
+ *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
  * Electrical Engineering Department
  * Columbia University, New York City
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.63.6.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.63.6.2 2005/03/19 08:35:11 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -643,7 +643,7 @@ static int ti_alloc_jumbo_mem(sc)
 	for (i = 0; i < TI_JSLOTS; i++) {
 		sc->ti_cdata.ti_jslots[i] = ptr;
 		ptr += TI_JLEN;
-		entry = malloc(sizeof(struct ti_jpool_entry), 
+		entry = malloc(sizeof(struct ti_jpool_entry),
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
 			free(sc->ti_cdata.ti_jumbo_buf, M_DEVBUF);
@@ -667,9 +667,9 @@ static void *ti_jalloc(sc)
 	struct ti_softc		*sc;
 {
 	struct ti_jpool_entry   *entry;
-	
+
 	entry = SIMPLEQ_FIRST(&sc->ti_jfree_listhead);
-	
+
 	if (entry == NULL) {
 		printf("%s: no free jumbo buffers\n", sc->sc_dev.dv_xname);
 		return(NULL);
@@ -1384,9 +1384,9 @@ static int ti_chipinit(sc)
 	/*
 	 * From the Alteon sample driver:
 	 * Must insure that we do not cross an 8K (bytes) boundary
-	 * for DMA reads.  Our highest limit is 1K bytes.  This is a 
-	 * restriction on some ALPHA platforms with early revision 
-	 * 21174 PCI chipsets, such as the AlphaPC 164lx 
+	 * for DMA reads.  Our highest limit is 1K bytes.  This is a
+	 * restriction on some ALPHA platforms with early revision
+	 * 21174 PCI chipsets, such as the AlphaPC 164lx
 	 */
 	TI_SETBIT(sc, TI_PCI_STATE, pci_writemax|TI_PCI_READMAX_1024);
 #else
@@ -1499,7 +1499,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/* Set up the jumbo receive ring. */
@@ -1511,7 +1511,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/*
@@ -1530,7 +1530,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/*
@@ -1574,7 +1574,7 @@ static int ti_gibinit(sc)
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|
 		    TI_RCB_FLAG_NO_PHDR_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 	rcb->ti_max_len = TI_TX_RING_CNT;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
@@ -1696,7 +1696,7 @@ static void ti_attach(parent, self, aux)
 	}
 	if (nolinear == 0)
 		sc->ti_vhandle = bus_space_vaddr(sc->ti_btag, sc->ti_bhandle);
-	else 
+	else
 		sc->ti_vhandle = NULL;
 
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -1723,7 +1723,7 @@ static void ti_attach(parent, self, aux)
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
 	 * doing do could allow DMA to corrupt kernel memory during the
 	 * reboot before the driver initializes.
-	 */ 
+	 */
 	(void) shutdownhook_establish(ti_shutdown, sc);
 
 	if (ti_chipinit(sc)) {
@@ -1948,8 +1948,6 @@ static void ti_rxeof(sc)
 		struct ti_rx_desc	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
-		u_int16_t		vlan_tag = 0;
-		int			have_tag = 0;
 		struct ether_header	*eh;
 		bus_dmamap_t dmamap;
 
@@ -1957,12 +1955,6 @@ static void ti_rxeof(sc)
 		    &sc->ti_rdata->ti_rx_return_ring[sc->ti_rx_saved_considx];
 		rxidx = cur_rx->ti_idx;
 		TI_INC(sc->ti_rx_saved_considx, TI_RETURN_RING_CNT);
-
-		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			have_tag = 1;
-			/* ti_vlan_tag also has the priority, trim it */
-			vlan_tag = cur_rx->ti_vlan_tag & 4095;
-		}
 
 		if (cur_rx->ti_flags & TI_BDFLAG_JUMBO_RING) {
 			TI_INC(sc->ti_jumbo, TI_JUMBO_RX_RING_CNT);
@@ -2077,22 +2069,13 @@ static void ti_rxeof(sc)
 			break;
 		}
 
-		if (have_tag) {
-			struct m_tag *mtag;
-
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag) {
-				*(u_int *)(mtag + 1) = vlan_tag;
-				m_tag_prepend(m, mtag);
-				have_tag = vlan_tag = 0;
-			} else {
-				printf("%s: no mbuf for tag\n", ifp->if_xname);
-				m_freem(m);
-				have_tag = vlan_tag = 0;
-				continue;
-			}
+		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
+			VLAN_INPUT_TAG(ifp, m,
+			    /* ti_vlan_tag also has the priority, trim it */
+			    cur_rx->ti_vlan_tag & 4095,
+			    continue);
 		}
+
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -2343,10 +2326,9 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL);
-		if (mtag) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = *(u_int *)(mtag + 1);
+			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2438,10 +2420,9 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL);
-		if (mtag) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = *(u_int *)(mtag + 1);
+			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2785,7 +2766,7 @@ ti_ether_ioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 		ti_init(sc);
 	}
-		
+
 	switch (cmd) {
 	case SIOCSIFADDR:
 

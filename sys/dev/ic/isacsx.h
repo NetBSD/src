@@ -1,6 +1,6 @@
-/* $NetBSD: isacsx.h,v 1.1 2002/10/25 21:03:48 leo Exp $	*/
+/* $NetBSD: isacsx.h,v 1.1.18.1 2005/03/19 08:34:02 yamt Exp $	*/
 /*
- *   Copyright (c) 2001 Gary Jennejohn. All rights reserved. 
+ *   Copyright (c) 2001 Gary Jennejohn. All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions
@@ -16,7 +16,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,7 +36,7 @@
  *      last edit-date: [Wed Jan 24 09:10:42 2001]
  *
  *---------------------------------------------------------------------------*/
- 
+
 #ifndef I4B_ISACSX_H_
 #define I4B_ISACSX_H_
 
@@ -63,7 +63,7 @@
 /*
  * definitions of registers and bits for the ISAC-SX ISDN chip.
  */
- 
+
 typedef struct isacsx_reg {
 
 	/* 32 byte deep FIFO always first */

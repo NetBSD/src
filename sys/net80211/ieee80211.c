@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.32 2004/08/10 00:57:21 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.32.6.1 2005/03/19 08:36:35 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.32 2004/08/10 00:57:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.32.6.1 2005/03/19 08:36:35 yamt Exp $");
 #endif
 
 /*
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.32 2004/08/10 00:57:21 dyoung Exp $"
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.32 2004/08/10 00:57:21 dyoung Exp $"
 #ifdef __FreeBSD__
 #include <machine/atomic.h>
 #endif
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.32 2004/08/10 00:57:21 dyoung Exp $"
 #include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #ifdef __FreeBSD__
 #include <netinet/if_ether.h>
 #else
@@ -322,7 +322,7 @@ ieee80211_media_init(struct ifnet *ifp,
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
 	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {
-		static const u_int mopts[] = { 
+		static const u_int mopts[] = {
 			IFM_AUTO,
 			IFM_IEEE80211_11A,
 			IFM_IEEE80211_11B,
@@ -976,7 +976,7 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
  *
  *	If there is any single 802.11 interface, ieee80211_node_walkfirst
  *	must not return NULL.
- */	
+ */
 static struct ieee80211_node *
 ieee80211_node_walkfirst(struct ieee80211_node_walk *nw,
     u_short if_index)

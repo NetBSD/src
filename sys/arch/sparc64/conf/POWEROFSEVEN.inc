@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.28.6.1 2005/02/12 18:17:40 yamt Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.28.6.2 2005/03/19 08:33:14 yamt Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -18,11 +18,6 @@ maxusers	64
 options 	SUN4U		# sun4u - UltraSPARC
 
 ## System options specific to the sparc machine type
-
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-# XXX broken on sparc64
-#options 	RASTERCONSOLE		# fast rasterop console
 
 options 	BLINK			# Blink the system LED
 
@@ -123,6 +118,8 @@ options 	COMPAT_10	# NetBSD 1.0 binary compatibility (SUNOS)
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility (SUNOS)
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility
+options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
@@ -153,7 +150,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

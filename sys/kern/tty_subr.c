@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.27 2004/03/23 13:22:05 junyoung Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.27.10.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.27 2004/03/23 13:22:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.27.10.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
  * defined we allocate an array of bits -- 1/8th as much memory but
  * setbit(), clrbit(), and isset() take more CPU. If QBITS is
  * undefined, we just use an array of bytes.
- * 
+ *
  * If TTY_QUOTE functionality isn't required by a line discipline,
  * it can free c_cq and set it to NULL. This speeds things up,
  * and also does not use any extra memory. This is useful for (say)
@@ -294,7 +294,7 @@ out:
 	if (clp->c_cq) {
 #ifdef QBITS
 		if (c & TTY_QUOTE)
-			setbit(clp->c_cq, i); 
+			setbit(clp->c_cq, i);
 		else
 			clrbit(clp->c_cq, i);
 #else

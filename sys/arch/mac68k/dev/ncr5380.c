@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.57 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.57.4.1 2005/03/19 08:33:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.57 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.57.4.1 2005/03/19 08:33:05 yamt Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -67,7 +67,7 @@ u_char	ncr_test_link = 0x7f;
  * This is the default sense-command we send.
  */
 static	u_char	sense_cmd[] = {
-		REQUEST_SENSE, 0, 0, 0, sizeof(struct scsipi_sense_data), 0
+		SCSI_REQUEST_SENSE, 0, 0, 0, sizeof(struct scsi_sense_data), 0
 };
 
 /*
@@ -337,7 +337,8 @@ ncr5380_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		 */
 		sps = splbio();
 		link = NULL;
-		if ((issue_q == NULL) || (reqp->xcmd.opcode == REQUEST_SENSE)) {
+		if ((issue_q == NULL) ||
+		    (reqp->xcmd.opcode == SCSI_REQUEST_SENSE)) {
 			reqp->next = issue_q;
 			issue_q    = reqp;
 		} else {
@@ -395,8 +396,9 @@ ncr5380_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #ifdef DBG_REQ
 		if (dbg_target_mask & (1 << reqp->targ_id))
-			show_request(reqp, (reqp->xcmd.opcode == REQUEST_SENSE) ?
-								"HEAD":"TAIL");
+			show_request(reqp,
+			    (reqp->xcmd.opcode == SCSI_REQUEST_SENSE) ?
+			    "HEAD":"TAIL");
 #endif
 
 		run_main(sc);

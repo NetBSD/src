@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.49.6.1 2005/02/12 18:17:49 yamt Exp $ */
+/*	$NetBSD: if_xi.c,v 1.49.6.2 2005/03/19 08:35:34 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.49.6.1 2005/02/12 18:17:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.49.6.2 2005/03/19 08:35:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -336,7 +336,7 @@ xi_intr(arg)
 	esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
 	isr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ISR0);
 	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
-				
+
 	/* Check to see if card has been ejected. */
 	if (isr == 0xff) {
 #ifdef DIAGNOSTIC
@@ -379,7 +379,7 @@ xi_intr(arg)
 		esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
 		rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
 	}
-	
+
 	/* Packet too long? */
 	if (rsr & RSR_TOO_LONG) {
 		ifp->if_ierrors++;
@@ -404,7 +404,7 @@ xi_intr(arg)
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, CLR_RX_OVERRUN);
 		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));
 	}
-			
+
 	/* Try to start more packets transmitting. */
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		xi_start(ifp);
@@ -415,13 +415,13 @@ xi_intr(arg)
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, RESTART_TX);
 		ifp->if_oerrors++;
 	}
-	
+
 	if ((tx_status & TX_ABORT) && ifp->if_opackets > 0)
 		ifp->if_oerrors++;
 
 	/* have handled the interrupt */
-#if NRND > 0    
-	rnd_add_uint32(&sc->sc_rnd_source, tx_status);  
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, tx_status);
 #endif
 
 end:
@@ -443,7 +443,7 @@ xi_get(sc)
 	struct mbuf *top, **mp, *m;
 	u_int16_t pktlen, len, recvcount = 0;
 	u_int8_t *data;
-	
+
 	DPRINTF(XID_CONFIG, ("xi_get()\n"));
 
 	PAGE(sc, 0);
@@ -471,7 +471,7 @@ xi_get(sc)
 	len = MHLEN;
 	top = 0;
 	mp = &top;
-	
+
 	while (pktlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
@@ -518,12 +518,12 @@ xi_get(sc)
 	m_adj(top, -ETHER_CRC_LEN);
 
 	ifp->if_ipackets++;
-	
+
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
-	
+
 	(*ifp->if_input)(ifp, top);
 	return (recvcount);
 }
@@ -756,7 +756,7 @@ xi_stop(sc)
 
 	PAGE(sc, 1);
 	bus_space_write_1(bst, bsh, IMR0, 0);
-	
+
 	/* Cancel watchdog timer. */
 	sc->sc_ethercom.ec_if.if_timer = 0;
 }

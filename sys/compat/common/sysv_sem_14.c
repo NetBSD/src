@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.5.12.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5.12.1 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ compat_14_sys___semctl(struct lwp *l, void *v, register_t *retval)
 	cmd = SCARG(uap, cmd);
 
 	switch (cmd) {
-	case IPC_SET:    
+	case IPC_SET:
 	case IPC_STAT:
 		pass_arg = &sembuf;
 		break;
@@ -121,10 +121,10 @@ compat_14_sys___semctl(struct lwp *l, void *v, register_t *retval)
 	if (pass_arg != NULL) {
 		error = copyin(SCARG(uap, arg), &arg, sizeof(arg));
 		if (error)
-			return (error);  
-		if (cmd == IPC_SET) { 
+			return (error);
+		if (cmd == IPC_SET) {
 			error = copyin(arg.buf, &osembuf, sizeof(osembuf));
-			if (error)  
+			if (error)
 				return (error);
 			semid_ds14_to_native(&osembuf, &sembuf);
 		}

@@ -1,12 +1,14 @@
-/*	$NetBSD: kern_synch.c,v 1.146 2004/12/09 21:52:24 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.146.4.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.146 2004/12/09 21:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.146.4.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -611,7 +613,7 @@ unsleep(struct lwp *l)
 __inline void
 sa_awaken(struct lwp *l)
 {
- 
+
 	SCHED_ASSERT_LOCKED();
 
 	if (l == l->l_savp->savp_lwp && l->l_flag & L_SA_YIELD)

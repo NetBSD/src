@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.h,v 1.3 2004/01/28 17:58:42 jdolecek Exp $ */
+/* $NetBSD: ppbus_base.h,v 1.3.12.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -88,13 +88,13 @@
 
 /* ECR register bit definitions */
 #define ECR_FIFO_EMPTY        0x1     /* ecr register - bit 0 */
-#define ECR_FIFO_FULL         0x2     /* ecr register - bit 1 */   
-#define ECR_SERVICE_INTR      0x4     /* ecr register - bit 2 */  
+#define ECR_FIFO_FULL         0x2     /* ecr register - bit 1 */
+#define ECR_SERVICE_INTR      0x4     /* ecr register - bit 2 */
 #define ECR_ENABLE_DMA        0x8     /* ecr register - bit 3 */
-#define ECR_nFAULT_INTR       0x10    /* ecr register - bit 4 */ 
+#define ECR_nFAULT_INTR       0x10    /* ecr register - bit 4 */
 /* bits 5 through 7 */
 #define ECR_STD           0x00    /* Standard mode */
-#define ECR_PS2           0x20    /* Bidirectional mode */ 
+#define ECR_PS2           0x20    /* Bidirectional mode */
 #define ECR_FIFO          0x40    /* Fast Centronics mode */
 #define ECR_ECP           0x60    /* ECP mode */
 #define ECR_EPP           0x80    /* EPP mode */
@@ -148,8 +148,8 @@ int ppbus_read_ivar(struct device *, int, unsigned int *);
 int ppbus_write_ivar(struct device *, int, unsigned int *);
 int ppbus_reset_epp_timeout(struct device *);
 int ppbus_ecp_sync(struct device *);
-int ppbus_set_mode(struct device *, int, int);	
-int ppbus_get_mode(struct device *);		
+int ppbus_set_mode(struct device *, int, int);
+int ppbus_get_mode(struct device *);
 int ppbus_write(struct device *, char *, int, int, size_t *);
 int ppbus_read(struct device *, char *, int, int, size_t *);
 int ppbus_exec_microseq(struct device *, struct ppbus_microseq * *);
@@ -157,6 +157,6 @@ int ppbus_io(struct device *, int, u_char *, int, u_char);
 int ppbus_dma_malloc(struct device *, caddr_t *, bus_addr_t *, bus_size_t);
 int ppbus_dma_free(struct device *, caddr_t *, bus_addr_t *, bus_size_t);
 int ppbus_add_handler(struct device *, void (*)(void *), void *);
-int ppbus_remove_handler(struct device *, void (*)(void *)); 
+int ppbus_remove_handler(struct device *, void (*)(void *));
 
 #endif /* __PPBUS_BASE_H */

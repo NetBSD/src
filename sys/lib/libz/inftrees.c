@@ -1,8 +1,8 @@
-/* $NetBSD: inftrees.c,v 1.8 2004/06/30 15:44:55 christos Exp $ */
+/* $NetBSD: inftrees.c,v 1.8.6.1 2005/03/19 08:36:26 yamt Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 #include "zutil.h"

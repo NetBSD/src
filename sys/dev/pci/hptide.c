@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.16 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: hptide.c,v 1.16.6.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -149,7 +149,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product);
 	}
 
-	/* 
+	/*
 	 * when the chip is in native mode it identifies itself as a
 	 * 'misc mass storage'. Fake interface in this case.
 	 */
@@ -245,7 +245,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
-	     revision == HPT372_REV)) || 
+	     revision == HPT372_REV)) ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT302 ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT371 ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||

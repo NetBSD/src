@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.5 2005/01/22 04:34:22 briggs Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.5.2.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -99,7 +99,7 @@ static void	re_pci_attach(struct device *, struct device *, void *);
 /*
  * Various supported device vendors/types and their names.
  */
-static struct rtk_type re_devs[] = {
+static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139, RTK_HWREV_8139CPLUS,
 		"RealTek 8139C+ 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169,
@@ -111,7 +111,7 @@ static struct rtk_type re_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-static struct rtk_hwrev re_hwrevs[] = {
+static const struct rtk_hwrev re_hwrevs[] = {
 	{ RTK_HWREV_8139, RTK_8139,  "" },
 	{ RTK_HWREV_8139A, RTK_8139, "A" },
 	{ RTK_HWREV_8139AG, RTK_8139, "A-G" },
@@ -138,7 +138,7 @@ CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
 static int
 re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct rtk_type		*t;
+	const struct rtk_type		*t;
 	struct pci_attach_args	*pa = aux;
 	bus_space_tag_t		rtk_btag;
 	bus_space_handle_t	rtk_bhandle;
@@ -155,12 +155,21 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 			 * Temporarily map the I/O space
 			 * so we can read the chip ID register.
 			 */
+#ifdef RE_USEIOSPACE
 			if (pci_mapreg_map(pa, RTK_PCI_LOIO,
 			    PCI_MAPREG_TYPE_IO, 0, &rtk_btag,
 			    &rtk_bhandle, NULL, &bsize)) {
 				aprint_error("can't map i/o space\n");
 				return 0;
 			}
+#else
+			if (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+			    PCI_MAPREG_TYPE_MEM, 0, &rtk_btag,
+			    &rtk_bhandle, NULL, &bsize)) {
+				aprint_error("can't map mem space\n");
+				return 0;
+			}
+#endif
 			hwrev = bus_space_read_4(rtk_btag, rtk_bhandle,
 			    RTK_TXCFG) & RTK_TXCFG_HWREV;
 			bus_space_unmap(rtk_btag, rtk_bhandle, bsize);
@@ -182,8 +191,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	struct rtk_type		*t;
-	struct rtk_hwrev	*hw_rev;
+	const struct rtk_type	*t;
+	const struct rtk_hwrev	*hw_rev;
 	int			hwrev;
 	int			error = 0;
 	int			pmreg;
@@ -271,7 +280,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * mark the card enabled now.
 	 */
 	sc->sc_flags |= RTK_ENABLED;
-	
+
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -294,7 +303,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	re_attach(sc);
 
 	/*
-	 * Perform hardware diagnostic. 
+	 * Perform hardware diagnostic.
 	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
 	 * busses: PCI, but not CardBus.
 	 */
@@ -305,7 +314,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 		re_detach(sc);
-		
+
 		if (psc->sc_ih != NULL) {
 			pci_intr_disestablish(pc, psc->sc_ih);
 			psc->sc_ih = NULL;

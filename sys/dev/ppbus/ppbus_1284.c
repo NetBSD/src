@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.6 2004/02/24 15:12:52 wiz Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.6.12.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.6 2004/02/24 15:12:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.6.12.1 2005/03/19 08:35:37 yamt Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.6 2004/02/24 15:12:52 wiz Exp $");
 static int
 do_1284_wait(struct ppbus_softc * bus, char mask, char status)
 {
-	return (ppbus_poll_bus(&(bus->sc_dev), 4, mask, status, 
+	return (ppbus_poll_bus(&(bus->sc_dev), 4, mask, status,
 		PPBUS_NOINTR | PPBUS_POLL));
 }
 
@@ -59,7 +59,7 @@ do_1284_wait(struct ppbus_softc * bus, char mask, char status)
 static int
 do_peripheral_wait(struct ppbus_softc * bus, char mask, char status)
 {
-	return (ppbus_poll_bus(&(bus->sc_dev), 100, mask, status, 
+	return (ppbus_poll_bus(&(bus->sc_dev), 100, mask, status,
 		PPBUS_NOINTR | PPBUS_POLL));
 }
 
@@ -112,10 +112,10 @@ ppbus_1284_set_error(struct ppbus_softc * bus, int error, int event)
 	}
 
 #ifdef DEBUG_1284
-	printf("%s<1284>: error=%d status=0x%x event=%d\n", 
-		bus->sc_dev.dv_xname, error, ppbus_rstr((struct device *)bus), 
+	printf("%s<1284>: error=%d status=0x%x event=%d\n",
+		bus->sc_dev.dv_xname, error, ppbus_rstr((struct device *)bus),
 		event);
-		
+
 #endif
 
 	return 0;
@@ -131,7 +131,7 @@ ppbus_request_mode(int mode, int options)
 	if (options & PPBUS_EXTENSIBILITY_LINK) {
 		request_mode = EXT_LINK_1284_NORMAL;
 
-	} 
+	}
 	else {
 		switch (mode) {
 		case PPBUS_NIBBLE:
@@ -212,7 +212,7 @@ ppbus_peripheral_negotiate(struct device * dev, int mode, int options)
 			ppbus_1284_set_error(bus, PPBUS_MODE_UNSUPPORTED, 4);
 			error = EINVAL;
 			goto error;
-		} 
+		}
 		else {
 			ppbus_1284_set_state(dev, PPBUS_PERIPHERAL_IDLE);
 #ifdef DEBUG_1284
@@ -220,7 +220,7 @@ ppbus_peripheral_negotiate(struct device * dev, int mode, int options)
 #endif
 			/* negotiation succeeds */
 		}
-	} 
+	}
 	else {
 		/* Event 5 - mode not supported */
 		ppbus_wctr(dev, SELECTIN);
@@ -284,7 +284,7 @@ ppbus_peripheral_terminate(struct device * dev, int how)
 		ppbus_1284_set_error(bus, PPBUS_TIMEOUT, 28);
 		goto error;
 	}
-	
+
 error:
 	ppbus_1284_terminate(dev);
 	ppbus_1284_set_state(dev, PPBUS_FORWARD_IDLE);
@@ -355,7 +355,7 @@ error:
 
 /* Write n bytes to host in BYTE mode (peripheral side) */
 int
-byte_peripheral_write(struct device * dev, char *buffer, int len, 
+byte_peripheral_write(struct device * dev, char *buffer, int len,
 	int *sent)
 {
 	int error = 0, i;
@@ -409,7 +409,7 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 	int error;
 	int old_ivar;
 	int new_ivar = 1;
-	
+
 	error = ppbus_read_ivar(dev, PPBUS_IVAR_IEEE, &old_ivar);
 	if(error) {
 		printf("%s(%s): error reading PPBUS_IVAR_IEEE.\n", __func__,
@@ -433,27 +433,27 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 		error = ppbus_set_mode(dev, mode, PPBUS_REQUEST_ID);
 		if(error) {
 			goto end_read_id;
-			printf("%s(%s): error setting bus mode.\n", __func__, 
+			printf("%s(%s): error setting bus mode.\n", __func__,
 				dev->dv_xname);
 		}
 		break;
 	default:
 		printf("%s(%s): mode does not support returning device ID.\n",
 			__func__, dev->dv_xname);
-		error = ENODEV;	
+		error = ENODEV;
 		goto end_read_id;
 	}
-	
-	error = ppbus_read(dev, &length_field, 1, 0, read); 
+
+	error = ppbus_read(dev, &length_field, 1, 0, read);
 	if(error) {
-		printf("%s(%s): error reading first byte.\n", __func__, 
+		printf("%s(%s): error reading first byte.\n", __func__,
 			dev->dv_xname);
 		goto end_read_id;
 	}
 	msg_sz = length_field;
-	error = ppbus_read(dev, &length_field, 1, 0, read); 
-	if(error) { 
-		printf("%s(%s): error reading second byte.\n", 
+	error = ppbus_read(dev, &length_field, 1, 0, read);
+	if(error) {
+		printf("%s(%s): error reading second byte.\n",
 			__func__, dev->dv_xname);
 		goto end_read_id;
 	}
@@ -467,13 +467,13 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 	}
 	*buffer = malloc(msg_sz, M_DEVBUF, M_WAITOK);
 	*size = msg_sz;
-	error = ppbus_read(dev, *buffer, msg_sz, 0, read); 
+	error = ppbus_read(dev, *buffer, msg_sz, 0, read);
 
 end_read_id:
 	ppbus_set_mode(dev, old_mode, 0);
 	if(old_ivar == 0) {
 		if(ppbus_write_ivar(dev, PPBUS_IVAR_IEEE, &old_ivar)) {
-			printf("%s(%s): error restoring PPBUS_IVAR_IEEE.\n", 
+			printf("%s(%s): error restoring PPBUS_IVAR_IEEE.\n",
 				__func__, dev->dv_xname);
 		}
 	}
@@ -481,7 +481,7 @@ end_read_id:
 }
 
 /*
- * IEEE1284 negotiation phase: after negotiation, nFAULT is low if data is 
+ * IEEE1284 negotiation phase: after negotiation, nFAULT is low if data is
  * available for reverse modes.
  */
 int
@@ -535,7 +535,7 @@ ppbus_1284_negotiate(struct device * dev, int mode, int options)
 	ppbus_wctr(dev, (nINIT | AUTOFEED) & ~(STROBE | SELECTIN));
 
 #ifdef PERIPH_1284
-	/* ignore the PError line, wait a bit more, remote host's 
+	/* ignore the PError line, wait a bit more, remote host's
 	 * interrupts don't respond fast enough */
 	if (ppbus_poll_bus(bus, 40, nACK | SELECT | nFAULT,
 				SELECT | nFAULT, PPBUS_NOINTR | PPBUS_POLL)) {
@@ -627,7 +627,7 @@ ppbus_1284_negotiate(struct device * dev, int mode, int options)
 	default:
 		panic("%s: unknown mode (%d)!", __func__, mode);
 	}
-	
+
 	return 0;
 
 error:
@@ -637,7 +637,7 @@ error:
 
 /*
  * IEEE1284 termination phase, return code should ignored since the host
- * is _always_ in compatible mode after ppbus_1284_terminate()  
+ * is _always_ in compatible mode after ppbus_1284_terminate()
  */
 int
 ppbus_1284_terminate(struct device * dev)

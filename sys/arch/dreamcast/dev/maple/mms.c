@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.9 2003/12/10 10:30:45 tsutsui Exp $	*/
+/*	$NetBSD: mms.c,v 1.9.10.1 2005/03/19 08:32:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.9 2003/12/10 10:30:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.9.10.1 2005/03/19 08:32:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,7 +122,7 @@ mms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return (ma->ma_function == MAPLE_FN_MOUSE ? MAPLE_MATCH_FUNC : 0);
+	return ma->ma_function == MAPLE_FN_MOUSE ? MAPLE_MATCH_FUNC : 0;
 }
 
 void
@@ -187,7 +187,7 @@ mms_enable(void *v)
 	struct mms_softc *sc = v;
 
 	maple_enable_periodic(sc->sc_parent, sc->sc_unit, MAPLE_FN_MOUSE, 1);
-	return (0);
+	return 0;
 }
 
 void
@@ -209,13 +209,13 @@ mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSMOUSEIO_SRES:
 		/* XXX */
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 
-	return (0);
+	return 0;
 }
 
 void

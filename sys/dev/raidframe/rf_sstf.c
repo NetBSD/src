@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.11 2004/03/04 01:57:54 oster Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.11.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.11 2004/03/04 01:57:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.11.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.11 2004/03/04 01:57:54 oster Exp $");
 #define QSUM(_sstfq_) (((_sstfq_)->lopri.qlen)+((_sstfq_)->left.qlen)+((_sstfq_)->right.qlen))
 
 
-static void 
+static void
 do_sstf_ord_q(RF_DiskQueueData_t **,
     RF_DiskQueueData_t **,
     RF_DiskQueueData_t *);
@@ -69,7 +69,7 @@ closest_to_arm(RF_SstfQ_t *,
 static void do_dequeue(RF_SstfQ_t *, RF_DiskQueueData_t *);
 
 
-static void 
+static void
 do_sstf_ord_q(queuep, tailp, req)
 	RF_DiskQueueData_t **queuep;
 	RF_DiskQueueData_t **tailp;
@@ -286,7 +286,7 @@ rf_CscanCreate(sect_per_disk, cl_list, listp)
 	return ((void *) cscanq);
 }
 
-void 
+void
 rf_SstfEnqueue(qptr, req, priority)
 	void   *qptr;
 	RF_DiskQueueData_t *req;
@@ -303,7 +303,7 @@ rf_SstfEnqueue(qptr, req, priority)
 			dq = (RF_DiskQueue_t *) req->queue;
 			printf("raid%d: ENQ lopri %d queues are %d,%d,%d\n",
 			       req->raidPtr->raidid,
-			       dq->col, 
+			       dq->col,
 			       sstfq->left.qlen, sstfq->right.qlen,
 			       sstfq->lopri.qlen);
 		}
@@ -321,7 +321,7 @@ rf_SstfEnqueue(qptr, req, priority)
 	}
 }
 
-static void 
+static void
 do_dequeue(queue, req)
 	RF_SstfQ_t *queue;
 	RF_DiskQueueData_t *req;
@@ -366,7 +366,7 @@ rf_SstfDequeue(qptr)
 		dq = (RF_DiskQueue_t *) req->queue;
 		RF_ASSERT(QSUM(sstfq) == dq->queueLength);
 		printf("raid%d: sstf: Dequeue %d queues are %d,%d,%d\n",
-		       req->raidPtr->raidid, dq->col, 
+		       req->raidPtr->raidid, dq->col,
 		       sstfq->left.qlen, sstfq->right.qlen, sstfq->lopri.qlen);
 	}
 #endif
@@ -430,8 +430,8 @@ rf_ScanDequeue(qptr)
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
 		RF_ASSERT(QSUM(scanq) == dq->queueLength);
-		printf("raid%d: scan: Dequeue %d queues are %d,%d,%d\n", 
-		       req->raidPtr->raidid, dq->col, 
+		printf("raid%d: scan: Dequeue %d queues are %d,%d,%d\n",
+		       req->raidPtr->raidid, dq->col,
 		       scanq->left.qlen, scanq->right.qlen, scanq->lopri.qlen);
 	}
 #endif
@@ -487,7 +487,7 @@ rf_CscanDequeue(qptr)
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
 		RF_ASSERT(QSUM(cscanq) == dq->queueLength);
-		printf("raid%d: scan: Dequeue %d queues are %d,%d,%d\n", 
+		printf("raid%d: scan: Dequeue %d queues are %d,%d,%d\n",
 		       req->raidPtr->raidid, dq->col,
 		       cscanq->left.qlen, cscanq->right.qlen,
 		       cscanq->lopri.qlen);
@@ -638,7 +638,7 @@ rf_CscanPeek(qptr)
 	return (req);
 }
 
-int 
+int
 rf_SstfPromote(qptr, parityStripeID, which_ru)
 	void   *qptr;
 	RF_StripeNum_t parityStripeID;
@@ -669,7 +669,7 @@ rf_SstfPromote(qptr, parityStripeID, which_ru)
 #if RF_DEBUG_QUEUE
 	if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
 		printf("raid%d: promoted %d matching I/Os queues are %d,%d,%d\n",
-		       r->raidPtr->raidid, n, sstfq->left.qlen, 
+		       r->raidPtr->raidid, n, sstfq->left.qlen,
 		       sstfq->right.qlen, sstfq->lopri.qlen);
 	}
 #endif

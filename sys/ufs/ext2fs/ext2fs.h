@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.15.10.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.15.10.2 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -340,12 +340,12 @@ void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
 #define fragroundup(fs, size)	/* calculates roundup(size, fs->e2fs_bsize) */ \
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
-/* 
+/*
  * Determine the number of available frags given a
  * percentage to hold in reserve.
- */   
+ */
 #define freespace(fs) \
-   ((fs)->e2fs.e2fs_fbcount - (fs)->e2fs.e2fs_rbcount) 
+   ((fs)->e2fs.e2fs_fbcount - (fs)->e2fs.e2fs_rbcount)
 
 /*
  * Number of indirects in a file system block.

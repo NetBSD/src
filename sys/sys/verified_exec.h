@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.4.10.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.4.10.2 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -83,7 +83,7 @@ struct veriexec_dev_list {
 	LIST_ENTRY(veriexec_dev_list) entries;
 };
 
-struct veriexec_inode_list 
+struct veriexec_inode_list
 {
 	unsigned char type;
 	unsigned char fp_type;

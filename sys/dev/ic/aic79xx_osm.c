@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.10 2004/10/04 11:23:39 fvdl Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.10.6.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.10 2004/10/04 11:23:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.10.6.1 2005/03/19 08:34:01 yamt Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.10 2004/10/04 11:23:39 fvdl Exp $"
 #define AHD_TMODE_ENABLE 0
 #endif
 
-static int	ahd_ioctl(struct scsipi_channel *channel, u_long cmd, 
+static int	ahd_ioctl(struct scsipi_channel *channel, u_long cmd,
 			  caddr_t addr, int flag, struct proc *p);
-static void	ahd_action(struct scsipi_channel *chan, 
+static void	ahd_action(struct scsipi_channel *chan,
 			   scsipi_adapter_req_t req, void *arg);
 static void	ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs,
 				int nsegments);
@@ -81,7 +81,7 @@ ahd_attach(struct ahd_softc *ahd)
 
 	ahd->sc_adapter.adapt_dev = &ahd->sc_dev;
 	ahd->sc_adapter.adapt_nchannels = 1;
-	
+
 	ahd->sc_adapter.adapt_openings = AHD_MAX_QUEUE;
 	ahd->sc_adapter.adapt_max_periph = 32;
 
@@ -109,7 +109,7 @@ ahd_attach(struct ahd_softc *ahd)
 }
 
 static int
-ahd_ioctl(struct scsipi_channel *channel, u_long cmd, 
+ahd_ioctl(struct scsipi_channel *channel, u_long cmd,
 	  caddr_t addr, int flag, struct proc *p)
 {
         struct ahd_softc *ahd = (void *)channel->chan_adapter->adapt_dev;
@@ -136,8 +136,8 @@ void
 ahd_platform_intr(void *arg)
 {
 	struct	ahd_softc *ahd;
-	
-	ahd = (struct ahd_softc *)arg; 
+
+	ahd = (struct ahd_softc *)arg;
 
 	printf("%s; ahd_platform_intr\n", ahd_name(ahd));
 
@@ -189,7 +189,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		 */
 		LIST_FOREACH(list_scb, &ahd->pending_scbs, pending_links) {
 			struct scsipi_xfer	*txs = list_scb->xs;
-			
+
 			if (!(txs->xs_control & XS_CTL_POLL)) {
                                 callout_reset(&txs->xs_callout,
                                     (txs->timeout > 1000000) ?
@@ -202,7 +202,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		if (ahd_get_transaction_status(scb) != XS_NOERROR)
 		  ahd_set_transaction_status(scb, XS_TIMEOUT);
                 scsipi_printaddr(xs->xs_periph);
-		printf("%s: no longer in timeout, status = %x\n", 
+		printf("%s: no longer in timeout, status = %x\n",
 		       ahd_name(ahd), xs->status);
 	}
 
@@ -211,7 +211,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	} else if ((xs->status == SCSI_STATUS_BUSY) ||
 		   (xs->status == SCSI_STATUS_QUEUE_FULL)) {
 	  	ahd_set_transaction_status(scb, XS_BUSY);
-		printf("%s: drive (ID %d, LUN %d) queue full (SCB 0x%x)\n", 
+		printf("%s: drive (ID %d, LUN %d) queue full (SCB 0x%x)\n",
 		       ahd_name(ahd), SCB_GET_TARGET(ahd,scb), SCB_GET_LUN(scb), SCB_GET_TAG(scb));
         } else if ((scb->flags & SCB_SENSE) != 0) {
                 /*
@@ -227,8 +227,8 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
                  */
                 memset(&xs->sense.scsi_sense, 0, sizeof(xs->sense.scsi_sense));
                 memcpy(&xs->sense.scsi_sense, ahd_get_sense_buf(ahd, scb),
-		       sizeof(struct scsipi_sense_data));
-		       
+		       sizeof(struct scsi_sense_data));
+
                 ahd_set_transaction_status(scb, XS_SENSE);
         } else if ((scb->flags & SCB_PKT_SENSE) != 0) {
 		struct scsi_status_iu_header *siu;
@@ -243,7 +243,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		sense_len = MIN(scsi_4btoul(siu->sense_length),
 				sizeof(xs->sense.scsi_sense));
 		memset(&xs->sense.scsi_sense, 0, sizeof(xs->sense.scsi_sense));
-		memcpy(&xs->sense.scsi_sense, 
+		memcpy(&xs->sense.scsi_sense,
 		       scb->sense_data + SIU_SENSE_OFFSET(siu), sense_len);
 #ifdef AHD_DEBUG
 		printf("Copied %d bytes of sense data offset %d:", sense_len,
@@ -263,7 +263,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
         if (scb->flags & SCB_REQUEUE)
                 ahd_set_transaction_status(scb, XS_REQUEUE);
 
-        ahd_lock(ahd, &s);       
+        ahd_lock(ahd, &s);
         ahd_free_scb(ahd, scb);
         ahd_unlock(ahd, &s);
 
@@ -299,7 +299,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
                 SC_DEBUG(periph, SCSIPI_DB3, ("ahd_action\n"));
 
 		target_id = periph->periph_target;
-                our_id = ahd->our_id; 
+                our_id = ahd->our_id;
                 channel = (chan->chan_channel == 1) ? 'B' : 'A';
 
                 /*
@@ -364,7 +364,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		u_int ppr_options, period, offset;
 		uint16_t old_autoneg;
 
-		target_id = xm->xm_target;	
+		target_id = xm->xm_target;
 		our_id = chan->chan_id;
 		channel = 'A';
 		s = splbio();
@@ -468,7 +468,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		splx(s);
 	    }
 	}
-	
+
 	return;
 }
 
@@ -506,13 +506,13 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 					  /*last*/i == 1);
 			dm_segs++;
 		}
-		
+
 		if (xs->xs_control & XS_CTL_DATA_IN)
 			op = BUS_DMASYNC_PREREAD;
 		else
 			op = BUS_DMASYNC_PREWRITE;
 
-		bus_dmamap_sync(ahd->parent_dmat, scb->dmamap, 0, 
+		bus_dmamap_sync(ahd->parent_dmat, scb->dmamap, 0,
 				scb->dmamap->dm_mapsize, op);
 	}
 
@@ -642,7 +642,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 		 * greater than 16 bytes, we could use
 		 * the sense buffer to store the CDB.
 		 */
-		ahd_set_transaction_status(scb, 
+		ahd_set_transaction_status(scb,
 					   XS_DRIVER_STUFFUP);
 
 		ahd_lock(ahd, &s);
@@ -651,7 +651,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 		scsipi_done(xs);
 	}
 	memcpy(hscb->shared_data.idata.cdb, xs->cmd, hscb->cdb_len);
-	
+
 	/* Only use S/G if there is a transfer */
         if (xs->datalen) {
                 int error;
@@ -690,7 +690,7 @@ ahd_timeout(void *arg)
 	ahd_mode_state	   saved_modes;
 	int		   s;
 
-	scb = (struct scb *)arg; 
+	scb = (struct scb *)arg;
 	ahd = (struct ahd_softc *)scb->ahd_softc;
 
 	printf("%s: ahd_timeout\n", ahd_name(ahd));

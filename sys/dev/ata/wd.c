@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.297 2004/11/18 22:14:53 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.297.6.1 2005/03/19 08:33:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.297 2004/11/18 22:14:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.297.6.1 2005/03/19 08:33:55 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.297 2004/11/18 22:14:53 bouyer Exp $");
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef ATADEBUG
-int wdcdebug_wd_mask = 0x0; 
+int wdcdebug_wd_mask = 0x0;
 #define ATADEBUG_PRINT(args, level) \
 	if (wdcdebug_wd_mask & (level)) \
 		printf args

@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.30.6.1 2005/02/12 18:17:43 yamt Exp $	*/
+/*	$NetBSD: lance.c,v 1.30.6.2 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.30.6.1 2005/02/12 18:17:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.30.6.2 2005/03/19 08:34:03 yamt Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.30.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
+#include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>

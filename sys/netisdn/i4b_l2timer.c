@@ -27,7 +27,7 @@
  *	i4b_l2timer.c - layer 2 timer handling
  *	--------------------------------------
  *
- *	$Id: i4b_l2timer.c,v 1.7 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l2timer.c,v 1.7.10.1 2005/03/19 08:36:41 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.7 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.7.10.1 2005/03/19 08:36:41 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -90,7 +90,7 @@ i4b_T200_start(l2_softc_t *l2sc)
 {
 	if(l2sc->T200 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
 	l2sc->T200 = TIMER_ACTIVE;
 
@@ -143,7 +143,7 @@ static void
 i4b_T202_timeout(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_T_ERR, "isdnif %d, N202 = %d", l2sc->drv->isdnif, l2sc->N202);
-	
+
 	if(--(l2sc->N202))
 	{
 		(*l2sc->T202func)(l2sc);
@@ -160,7 +160,7 @@ i4b_T202_start(l2_softc_t *l2sc)
 		return;
 
 	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
-	l2sc->N202 = N202DEF;	
+	l2sc->N202 = N202DEF;
 	l2sc->T202 = TIMER_ACTIVE;
 
 	START_TIMER(l2sc->T202_callout, i4b_T202_timeout, l2sc, T202DEF);
@@ -204,7 +204,7 @@ i4b_T203_start(l2_softc_t *l2sc)
 #if I4B_T203_ACTIVE
 	if (l2sc->T203 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->isdnif);
 	l2sc->T203 = TIMER_ACTIVE;
 
@@ -250,7 +250,7 @@ i4b_T203_restart(l2_softc_t *l2sc)
 		l2sc->T203 = TIMER_ACTIVE;
 	}
 
-	START_TIMER(l2sc->T203_callout, i4b_T203_timerout, l2sc, T203DEF);	
+	START_TIMER(l2sc->T203_callout, i4b_T203_timerout, l2sc, T203DEF);
 	splx(s);
 	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->isdnif);
 #endif

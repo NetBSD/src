@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.8.6.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.8.6.2 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.8.6.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.8.6.2 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ fwlynx_pci_match(struct device *parent, struct cfdata *match, void *aux)
         if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI &&
             PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_TSB12LV21)
                 return 1;
- 
+
         return 0;
 }
 

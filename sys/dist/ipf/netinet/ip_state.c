@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.3.4.1 2005/02/12 18:17:52 yamt Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.3.4.2 2005/03/19 08:36:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,10 +110,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.3.4.1 2005/02/12 18:17:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.3.4.2 2005/03/19 08:36:06 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.23 2004/12/20 23:36:48 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.25 2005/02/17 05:56:26 darrenr Exp";
 #endif
 #endif
 
@@ -2678,24 +2678,27 @@ int why;
 	 * Since we want to delete this, remove it from the state table,
 	 * where it can be found & used, first.
 	 */
-	*is->is_pnext = is->is_next;
+	if (is->is_pnext != NULL) {
+		*is->is_pnext = is->is_next;
 
-	if (is->is_next != NULL)
-		is->is_next->is_pnext = is->is_pnext;
+		if (is->is_next != NULL)
+			is->is_next->is_pnext = is->is_pnext;
 
+		is->is_pnext = NULL;
+		is->is_next = NULL;
+	}
 
-	is->is_pnext = NULL;
-	is->is_next = NULL;
+	if (is->is_phnext != NULL) {
+		*is->is_phnext = is->is_hnext;
+		if (is->is_hnext != NULL)
+			is->is_hnext->is_phnext = is->is_phnext;
+		if (ips_table[is->is_hv] == NULL)
+			ips_stats.iss_inuse--;
+		ips_stats.iss_bucketlen[is->is_hv]--;
 
-	*is->is_phnext = is->is_hnext;
-	if (is->is_hnext != NULL)
-		is->is_hnext->is_phnext = is->is_phnext;
-	if (ips_table[is->is_hv] == NULL)
-		ips_stats.iss_inuse--;
-	ips_stats.iss_bucketlen[is->is_hv]--;
-
-	is->is_phnext = NULL;
-	is->is_hnext = NULL;
+		is->is_phnext = NULL;
+		is->is_hnext = NULL;
+	}
 
 	/*
 	 * Because ips_stats.iss_wild is a count of entries in the state
@@ -2706,26 +2709,28 @@ int why;
 		if (!(is->is_flags & SI_CLONED)) {
 			ATOMIC_DECL(ips_stats.iss_wild);
 		}
+		is->is_flags &= ~(SI_WILDP|SI_WILDA);
 	}
-
 
 	/*
 	 * Next, remove it from the timeout queue it is in.
 	 */
 	tqe = &is->is_sti;
 	ifq = tqe->tqe_ifq;
-	if (tqe->tqe_pnext != NULL) {
-		*tqe->tqe_pnext = tqe->tqe_next;
-		if (tqe->tqe_next != NULL)
-			tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
-		else	/* we must be the tail anyway */
-			ifq->ifq_tail = tqe->tqe_pnext;
-		tqe->tqe_pnext = NULL;
-		tqe->tqe_ifq = NULL;
-	}
+	if (ifq != NULL) {
+		if (tqe->tqe_pnext != NULL) {
+			*tqe->tqe_pnext = tqe->tqe_next;
+			if (tqe->tqe_next != NULL)
+				tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
+			else	/* we must be the tail anyway */
+				ifq->ifq_tail = tqe->tqe_pnext;
+			tqe->tqe_pnext = NULL;
+			tqe->tqe_ifq = NULL;
+		}
 
-	if ((ifq->ifq_flags & IFQF_USER) != 0)
-		fr_deletetimeoutqueue(ifq);
+		if ((ifq->ifq_flags & IFQF_USER) != 0)
+			fr_deletetimeoutqueue(ifq);
+	}
 
 	/*
 	 * If it is still in use by something else, do not go any further,
@@ -3671,31 +3676,25 @@ ipstate_t **isp;
 	fin = fin;	/* LINT */
 	is = *isp;
 	*isp = NULL;
-	MUTEX_ENTER(&is->is_lock);
+	WRITE_ENTER(&ipf_state);
 	is->is_ref--;
 	if (is->is_ref == 0) {
 		is->is_ref++;		/* To counter ref-- in fr_delstate() */
-		MUTEX_EXIT(&is->is_lock);
-		WRITE_ENTER(&ipf_state);
 		fr_delstate(is, ISL_EXPIRE);
-		RWLOCK_EXIT(&ipf_state);
 #ifndef	_KERNEL
 #if 0
 	} else if (((fin->fin_out == 1) || (eol == 1)) &&
 		   ((ostate == IPF_TCPS_LAST_ACK) &&
 		   (nstate == IPF_TCPS_TIME_WAIT))) {
+		;
 #else
 	} else if ((is->is_sti.tqe_state[0] > IPF_TCPS_ESTABLISHED) ||
 		   (is->is_sti.tqe_state[1] > IPF_TCPS_ESTABLISHED)) {
 #endif
-		MUTEX_EXIT(&is->is_lock);
-		WRITE_ENTER(&ipf_state);
 		fr_delstate(is, ISL_ORPHAN);
-		RWLOCK_EXIT(&ipf_state);
 #endif
-	} else {
-		MUTEX_EXIT(&is->is_lock);
 	}
+	RWLOCK_EXIT(&ipf_state);
 }
 
 

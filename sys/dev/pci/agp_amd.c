@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.10 2004/10/20 21:47:13 xtraeme Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.10.6.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.10 2004/10/20 21:47:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.10.6.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Install the gatt. */
 	WRITE4(AGP_AMD751_ATTBASE, gatt->ag_physical);
-	
+
 	/* Enable synchronisation between host and agp. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_AMD751_MODECTRL);
 	reg &= ~0x00ff00ff;
@@ -247,12 +247,12 @@ agp_amd_detach(struct agp_softc *sc)
 	/* Disable the TLB.. */
 	WRITE2(AGP_AMD751_STATUS,
 	       READ2(AGP_AMD751_STATUS) & ~AGP_AMD751_STATUS_GCE);
-	
+
 	/* Disable host-agp sync */
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_AMD751_MODECTRL);
 	reg &= 0xffffff00;
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_AMD751_MODECTRL, reg);
-	
+
 	/* Clear the GATT base */
 	WRITE4(AGP_AMD751_ATTBASE, 0);
 
@@ -300,7 +300,7 @@ agp_amd_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_AMD751_APCTRL);
 	reg = (reg & ~0x06) | (vas << 1);
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_AMD751_APCTRL, reg);
-	
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.4 2004/10/28 07:07:40 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.4.6.1 2005/03/19 08:33:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.4 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.4.6.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include "rnd.h"
 
@@ -375,7 +375,7 @@ rdattach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	memset(name, 0, sizeof(name)); 
+	memset(name, 0, sizeof(name));
 	for (i=0, n=0; i<3; i++) {
 		name[n++] = (csd.d_name[i] >> 4) + '0';
 		name[n++] = (csd.d_name[i] & 0x0f) + '0';

@@ -27,7 +27,7 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.6 2002/09/27 15:37:55 provos Exp $ 
+ *	$Id: i4b_l2fsm.c,v 1.6.16.1 2005/03/19 08:36:41 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.6 2002/09/27 15:37:55 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.6.16.1 2005/03/19 08:36:41 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -106,7 +106,7 @@ static char *l2event_text[N_EVENTS] = {
 	"EV_DLRELRQ",
 	"EV_T203EXP",
 	"EV_OWNBUSY",
-	"EV_OWNRDY", 
+	"EV_OWNRDY",
 	"EV_RXRR",
 	"EV_RXREJ",
 	"EV_RXRNR",
@@ -192,7 +192,7 @@ static void F_NCNA __P((l2_softc_t *, struct isdn_l3_driver *));
 
 /*---------------------------------------------------------------------------*
  *	FSM illegal state default action
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_ILL(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -201,7 +201,7 @@ F_ILL(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM No change, No action
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_NCNA(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -210,7 +210,7 @@ F_NCNA(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	layer 2 state transition table
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 struct l2state_tab {
 	void (*func) __P((l2_softc_t *, struct isdn_l3_driver *));	/* function to execute */
 	int newstate;				/* next state */
@@ -243,7 +243,7 @@ struct l2state_tab {
 
 /*---------------------------------------------------------------------------*
  *	event handler, executes function and sets new state
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
 {
 	int currstate, newstate;
@@ -255,13 +255,13 @@ void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
 
 	/* get current state and check it */
 	if((currstate = l2sc->Q921_state) > N_STATES) 	/* failsafe */
-		panic("i4b_l2fsm.c: currstate > N_STATES");	
+		panic("i4b_l2fsm.c: currstate > N_STATES");
 
 	/* get new state and check it */
 	if((newstate = l2state_tab[event][currstate].newstate) > N_STATES)
-		panic("i4b_l2fsm.c: newstate > N_STATES");	
-	
-	
+		panic("i4b_l2fsm.c: newstate > N_STATES");
+
+
 	if(newstate != ST_SUBSET)
 	{	/* state function does NOT set new state */
 		NDBGL2(L2_F_MSG, "FSM event [%s]: [%s/%d => %s/%d]",
@@ -279,7 +279,7 @@ void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
                                            l2state_text[currstate],
                                            l2state_text[l2sc->Q921_state]);
         }
-        
+
 	/* check for illegal new state */
 
 	if(newstate == ST_ILL)
@@ -308,7 +308,7 @@ void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
 #if DO_I4B_DEBUG
 /*---------------------------------------------------------------------------*
  *	return pointer to current state description
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 char *i4b_print_l2state(l2_softc_t *l2sc)
 {
 	return((char *) l2state_text[l2sc->Q921_state]);
@@ -317,7 +317,7 @@ char *i4b_print_l2state(l2_softc_t *l2sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_UNAS event dl establish request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TU01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -327,7 +327,7 @@ F_TU01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_UNAS event mdl assign request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TU03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -336,7 +336,7 @@ F_TU03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_ASG_AW_TEI event mdl assign request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TA03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -345,7 +345,7 @@ F_TA03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_ASG_AW_TEI event mdl error response
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TA04(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -354,7 +354,7 @@ F_TA04(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_ASG_AW_TEI event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TA05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -363,7 +363,7 @@ F_TA05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_EST_AW_TEI event mdl assign request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TE03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -374,7 +374,7 @@ F_TE03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_EST_AW_TEI event mdl error response
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TE04(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -385,7 +385,7 @@ F_TE04(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_EST_AW_TEI event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TE05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -396,7 +396,7 @@ F_TE05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event dl establish request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -407,7 +407,7 @@ F_T01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -416,7 +416,7 @@ F_T05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event mdl remove request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -426,7 +426,7 @@ F_T06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event rx'd SABME
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -445,24 +445,24 @@ F_T07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	i4b_clear_exception_conditions(l2sc);
 
 	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
-	
+
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
 	l2sc->vs = 0;
 	l2sc->va = 0;
-	l2sc->vr = 0;	
+	l2sc->vr = 0;
 
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_establish_ind;
 
-	i4b_T203_start(l2sc);	
+	i4b_T203_start(l2sc);
 
 	l2sc->Q921_state = ST_MULTIFR;
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event rx'd DISC
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -473,18 +473,18 @@ F_T08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event rx'd UA
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T09 executing");
 	i4b_mdl_error_ind(l2sc, "F_T09", MDL_ERR_C);
-	i4b_mdl_error_ind(l2sc, "F_T09", MDL_ERR_D);	
+	i4b_mdl_error_ind(l2sc, "F_T09", MDL_ERR_D);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event rx'd DM
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -513,7 +513,7 @@ F_T10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TEI_ASGD event dl release request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -524,26 +524,26 @@ F_T13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event dl establish request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE01 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
-	
+
 	l2sc->l3initiated = 1;
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE05 executing");
 
-	i4b_Dcleanifq(&l2sc->i_queue);	
+	i4b_Dcleanifq(&l2sc->i_queue);
 
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
@@ -553,13 +553,13 @@ F_AE05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event mdl remove request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE06 executing");
 
-	i4b_Dcleanifq(&l2sc->i_queue);	
+	i4b_Dcleanifq(&l2sc->i_queue);
 
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
@@ -571,7 +571,7 @@ F_AE06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event rx'd SABME
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -582,7 +582,7 @@ F_AE07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event rx'd DISC
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -592,7 +592,7 @@ F_AE08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event rx'd UA
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -623,7 +623,7 @@ F_AE09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 		}
 
 		i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
-		
+
 		i4b_T200_stop(l2sc);
 		i4b_T203_start(l2sc);
 
@@ -636,7 +636,7 @@ F_AE09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event rx'd DM
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -655,13 +655,13 @@ F_AE10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 		i4b_T200_stop(l2sc);
 
-		l2sc->Q921_state = ST_TEI_ASGD;		
+		l2sc->Q921_state = ST_TEI_ASGD;
 	}
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event T200 expiry
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -692,7 +692,7 @@ F_AE11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_EST event dl data request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AE12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -706,7 +706,7 @@ F_AE12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -720,7 +720,7 @@ F_AR05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event mdl remove request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -731,33 +731,33 @@ F_AR06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 	i4b_T200_stop(l2sc);
 
-/*XXX*/	i4b_mdl_assign_ind(l2sc);	
+/*XXX*/	i4b_mdl_assign_ind(l2sc);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event rx'd SABME
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
-	NDBGL2(L2_F_MSG, "FSM function F_AR07 executing");	
+	NDBGL2(L2_F_MSG, "FSM function F_AR07 executing");
 	i4b_tx_dm(l2sc, l2sc->rxd_PF);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event rx'd DISC
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR08 executing");
 	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_IDLE);
-	i4b_tx_ua(l2sc, l2sc->rxd_PF);	
+	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event rx'd UA
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -775,14 +775,14 @@ F_AR09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	else
 	{
 		i4b_mdl_error_ind(l2sc, "F_AR09", MDL_ERR_D);
-		
+
 		l2sc->Q921_state = ST_AW_REL;
 	}
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event rx'd DM
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -805,7 +805,7 @@ F_AR10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_AW_REL event T200 expiry
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -834,7 +834,7 @@ F_AR11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event dl establish request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -843,49 +843,49 @@ F_MF01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	i4b_Dcleanifq(&l2sc->i_queue);
 
 	i4b_establish_data_link(l2sc);
-	
+
 	l2sc->l3initiated = 1;
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF05 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
-	
+
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
-	
+
 	i4b_T200_stop(l2sc);
 	i4b_T203_stop(l2sc);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event mdl remove request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF06 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
-	
+
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
-	
+
 	i4b_T200_stop(l2sc);
 	i4b_T203_stop(l2sc);
 
-/*XXX*/	i4b_mdl_assign_ind(l2sc);	
+/*XXX*/	i4b_mdl_assign_ind(l2sc);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd SABME
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -893,7 +893,7 @@ F_MF07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 	i4b_clear_exception_conditions(l2sc);
 
-	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);	
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
 
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -902,7 +902,7 @@ F_MF07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	if(l2sc->vs != l2sc->va)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);
-	
+
 		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_establish_ind;
 	}
@@ -912,12 +912,12 @@ F_MF07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 	l2sc->vs = 0;
 	l2sc->va = 0;
-	l2sc->vr = 0;	
+	l2sc->vr = 0;
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd DISC
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -926,7 +926,7 @@ F_MF08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	i4b_Dcleanifq(&l2sc->i_queue);
 	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
-	
+
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
@@ -936,7 +936,7 @@ F_MF08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd UA
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -949,7 +949,7 @@ F_MF09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd DM
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -958,24 +958,24 @@ F_MF10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	if(l2sc->rxd_PF)
 	{
 		i4b_mdl_error_ind(l2sc, "F_MF10", MDL_ERR_B);
-		
+
 		l2sc->Q921_state = ST_MULTIFR;
 	}
 	else
 	{
 		i4b_mdl_error_ind(l2sc, "F_MF10", MDL_ERR_E);
-		
+
 		i4b_establish_data_link(l2sc);
 
 		l2sc->l3initiated = 0;
-		
+
 		l2sc->Q921_state = ST_AW_EST;
 	}
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event T200 expiry
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -990,7 +990,7 @@ F_MF11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event dl data request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1001,7 +1001,7 @@ F_MF12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event dl release request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1012,14 +1012,14 @@ F_MF13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	l2sc->RC = 0;
 
 	i4b_tx_disc(l2sc, P1);
-	
+
 	i4b_T203_stop(l2sc);
-	i4b_T200_restart(l2sc);	
+	i4b_T200_restart(l2sc);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event T203 expiry
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF14(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1032,7 +1032,7 @@ F_MF14(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event set own rx busy
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF15(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1050,7 +1050,7 @@ F_MF15(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event clear own rx busy
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF16(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1068,7 +1068,7 @@ F_MF16(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd RR
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF17(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1115,7 +1115,7 @@ F_MF17(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd REJ
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF18(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1149,13 +1149,13 @@ F_MF18(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	else
 	{
 		i4b_nr_error_recovery(l2sc);
-		l2sc->Q921_state = ST_AW_EST;		
+		l2sc->Q921_state = ST_AW_EST;
 	}
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd RNR
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF19(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1188,13 +1188,13 @@ F_MF19(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
         else
         {
                 i4b_nr_error_recovery(l2sc);
-		l2sc->Q921_state = ST_AW_EST;                
+		l2sc->Q921_state = ST_AW_EST;
         }
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_MULTIFR event rx'd FRMR
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_MF20(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1209,7 +1209,7 @@ F_MF20(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event dl establish request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1224,13 +1224,13 @@ F_TR01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event persistent deactivation
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR05 executing");
 
-	i4b_Dcleanifq(&l2sc->i_queue);	
+	i4b_Dcleanifq(&l2sc->i_queue);
 
 	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
@@ -1240,7 +1240,7 @@ F_TR05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event mdl remove request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1253,12 +1253,12 @@ F_TR06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 	i4b_T200_stop(l2sc);
 
-/*XXX*/	i4b_mdl_assign_ind(l2sc);	
+/*XXX*/	i4b_mdl_assign_ind(l2sc);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd SABME
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1267,14 +1267,14 @@ F_TR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	i4b_clear_exception_conditions(l2sc);
 
 	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
-	
+
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
 	i4b_mdl_error_ind(l2sc, "F_TR07", MDL_ERR_F);
 
 	if(l2sc->vs != l2sc->va)
 	{
-		i4b_Dcleanifq(&l2sc->i_queue);		
+		i4b_Dcleanifq(&l2sc->i_queue);
 
 		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_establish_ind;
@@ -1282,7 +1282,7 @@ F_TR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 	i4b_T200_stop(l2sc);
 	i4b_T203_start(l2sc);
-	
+
 	l2sc->vs = 0;
 	l2sc->va = 0;
 	l2sc->vr = 0;
@@ -1290,13 +1290,13 @@ F_TR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd DISC
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR08 executing");
 
-	i4b_Dcleanifq(&l2sc->i_queue);		
+	i4b_Dcleanifq(&l2sc->i_queue);
 	i4b_mdl_status_ind(drv, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -1308,7 +1308,7 @@ F_TR08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd UA
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1316,12 +1316,12 @@ F_TR09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 	if(l2sc->rxd_PF)
 		i4b_mdl_error_ind(l2sc, "F_TR09", MDL_ERR_C);
 	else
-		i4b_mdl_error_ind(l2sc, "F_TR09", MDL_ERR_D);	
+		i4b_mdl_error_ind(l2sc, "F_TR09", MDL_ERR_D);
 }
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd DM
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1343,7 +1343,7 @@ F_TR10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event T200 expiry
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1371,7 +1371,7 @@ F_TR11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event dl data request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1382,13 +1382,13 @@ F_TR12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event dl release request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR13 executing");
 
-	i4b_Dcleanifq(&l2sc->i_queue);			
+	i4b_Dcleanifq(&l2sc->i_queue);
 
 	l2sc->RC = 0;
 
@@ -1399,7 +1399,7 @@ F_TR13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event set own rx busy
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR15(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1417,7 +1417,7 @@ F_TR15(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event clear own rx busy
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR16(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1435,7 +1435,7 @@ F_TR16(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd RR
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR17(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1485,8 +1485,8 @@ F_TR17(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 }
 
 /*---------------------------------------------------------------------------*
- *	FSM state ST_TIMREC event 
- *---------------------------------------------------------------------------*/	
+ *	FSM state ST_TIMREC event
+ *---------------------------------------------------------------------------*/
 static void
 F_TR18(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1537,7 +1537,7 @@ F_TR18(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd RNR
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR19(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1587,7 +1587,7 @@ F_TR19(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 /*---------------------------------------------------------------------------*
  *	FSM state ST_TIMREC event rx'd FRMR
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_TR20(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
@@ -1599,5 +1599,5 @@ F_TR20(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 
 	l2sc->l3initiated = 0;
 }
-	
+
 #endif /* NI4BQ921 > 0 */

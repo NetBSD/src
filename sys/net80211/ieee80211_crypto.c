@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.5.12.1 2005/03/19 08:36:35 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,14 +35,14 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.3 2003/10/17 23:15:30 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5.12.1 2005/03/19 08:36:35 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung 
 #ifdef __FreeBSD__
 #include <machine/atomic.h>
 #endif
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung 
 #include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #ifdef __FreeBSD__
 #include <netinet/if_ether.h>
 #else

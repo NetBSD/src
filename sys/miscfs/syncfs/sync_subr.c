@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.16 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.16.10.1 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.16 2004/02/13 11:36:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.16.10.1 2005/03/19 08:36:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,20 +48,20 @@ __KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.16 2004/02/13 11:36:23 wiz Exp $");
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-/* 
- * Defines and variables for the syncer process. 
+/*
+ * Defines and variables for the syncer process.
  */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
-time_t syncdelay = 30;			/* max time to delay syncing data */ 
+time_t syncdelay = 30;			/* max time to delay syncing data */
 time_t filedelay = 30;			/* time to delay syncing files */
 time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 
 struct lock syncer_lock;		/* used to freeze syncer */
 
-static int rushjob;			/* number of slots to run ASAP */ 
+static int rushjob;			/* number of slots to run ASAP */
 static int stat_rush_requests;		/* number of times I/O speeded up */
- 
+
 static int syncer_delayno = 0;
 static long syncer_last;
 static struct synclist *syncer_workitem_pending;
@@ -85,7 +85,7 @@ vn_initialize_syncerd()
 
 /*
  * The workitem queue.
- * 
+ *
  * It is useful to delay writes of file data and filesystem metadata
  * for tens of seconds so that quickly created and deleted files need
  * not waste disk bandwidth being created and removed. To realize this,
@@ -156,7 +156,7 @@ vn_syncer_remove_from_worklist(vp)
 /*
  * System filesystem synchronizer daemon.
  */
-void 
+void
 sched_sync(v)
 	void *v;
 {
@@ -167,7 +167,7 @@ sched_sync(v)
 	int s;
 
 	updateproc = curlwp;
-	
+
 	for (;;) {
 		starttime = time.tv_sec;
 

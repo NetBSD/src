@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.688.2.2 2005/02/12 18:17:48 yamt Exp $
+$NetBSD: pcidevs,v 1.688.2.3 2005/03/19 08:35:12 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -957,9 +957,17 @@ product	ATI RADEON_9600_XT_S	0x4172	Radeon 9600 XT Secondary
 product ATI RADEON_U1		0x4336	Radeon Mobility U1
 product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
 product	ATI IXP_AUDIO_200	0x4341	IXP AC'97 Audio Controller
+product	ATI SB200_PPB		0x4342	SB200 PCI-PCI Bridge
+product	ATI SB200_EHCI		0x4345	SB200 USB2 Host Controller
+product	ATI SB200_OHCI_1	0x4347	SB200 USB Host Controller
+product	ATI SB200_OHCI_2	0x4348	SB200 USB Host Controller
+product	ATI SB200_ISA		0x434c	SB200 PCI-ISA Bridge
+product	ATI SB200_SMB		0x4353	SB200 SMBus Controller
 product	ATI IXP_AUDIO_300	0x4361	IXP AC'97 Audio Controller
 product	ATI IXP_AUDIO_400	0x4370	IXP AC'97 Audio Controller
-product ATI IXP_IDE		0x4349	IXP IDE Controller
+product	ATI IXP_IDE_200		0x4349	IXP IDE Controller
+product	ATI IXP_IDE_300		0x4369	IXP IDE Controller
+product	ATI IXP_IDE_400		0x4376	IXP IDE Controller
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP)
@@ -1052,6 +1060,9 @@ product ATI RAGE24X		0x534e	Rage 128 4x
 product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VTB		0x5655	Mach64 VTB
 product ATI MACH64_VT4		0x5656	Mach64 VT4
+product ATI RS300_HB		0x5833	RS300 Host Bridge
+product ATI RADEON_9100_IGP	0x5834	Radeon 9100 IGP
+product ATI RS300_AGP		0x5838	RS300 AGP Interface
 product ATI RADEON_9200		0x5961	Radeon 9200
 product ATI RADEON_9200_2	0x5962	Radeon 9200
 product ATI RADEON_9200_3	0x5963	Radeon 9200
@@ -1416,13 +1427,13 @@ product EMULEX LP9000	0xf900	LP9000 FibreChannel adapter
 product EMULEX LP9802	0xf980	LP9802 FibreChannel adapter
 
 /* ENE Technology products */
-product ENE MCR510	0x510	MCR510 PCI Memory Card Reader Controller
-product ENE CB710	0x710	CB710 CardBus Controller
-product ENE CB720	0x720	CB720 CardBus Controller
+product ENE MCR510	0x0510	MCR510 PCI Memory Card Reader Controller
 product ENE CB1211	0x1211	CB1211 CardBus Controller
 product ENE CB1225	0x1225	CB1225 CardBus Controller
 product ENE CB1410	0x1410	CB1410 CardBus Controller
+product ENE CB710	0x1411	CB710 CardBus Controller
 product ENE CB1420	0x1420	CB1420 CardBus Controller
+product ENE CB720	0x1421	CB720 CardBus Controller
 
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
@@ -1965,7 +1976,7 @@ product LUCENT LTMODEM_045a	0x045a	LTMODEM
 product LUCENT OR3LP26		0x5400	ORCA FPGA w/32-bit PCI ASIC core
 product LUCENT OR3TP12		0x5401	ORCA FPGA w/64-bit PCI ASIC core
 product LUCENT USBHC		0x5801	USB Host Controller
-product	LUCENT EVDO		0x5802	Sierra Wireless AirCard 580 
+product	LUCENT EVDO		0x5802	Sierra Wireless AirCard 580
 product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 Host Controller
 
 /* Macronix */
@@ -2426,6 +2437,7 @@ product S3 TRIO3D2X	0x8a13	Trio3D/2X
 product S3 SAVAGE3D	0x8a20	Savage3D
 product S3 SAVAGE3D_MV	0x8a21	Savage3D+MV
 product S3 SAVAGE4	0x8a22	Savage4
+product S3 PROSAVAGE_KM133  0x8a26  ProSavage KM133
 product S3 VIRGE_MX	0x8c01	ViRGE/MX
 product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product S3 SAVAGE_MX_MV	0x8c10	Savage/MX+MV
@@ -2814,6 +2826,7 @@ product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 product VIATECH VT6305		0x0130	VT6305 IEEE 1394 Host Controller
+product VIATECH KT880           0x0269  KT880 CPU to PCI Bridge
 product VIATECH VT8363_HB	0x0305	VT8363 (Apollo KT133) Host Bridge
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 (Apollo MVP4) Host Bridge
@@ -2834,8 +2847,10 @@ product VIATECH VT82C693	0x0693	VT82C693 (Apollo Pro Plus) Host-PCI
 product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
+product VIATECH KT880_1         0x1269  KT880 CPU to PCI Bridge
 product VIATECH VT82C586_IDE	0x1571	VT82C586 IDE Controller
 product VIATECH VT82C595_2	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
+product VIATECH KT880_2         0x2269  KT880 CPU to PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
@@ -2850,16 +2865,21 @@ product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT8653		0x3101	VT8653 (Apollo Pro 266T) CPU-PCI Bridge
 product VIATECH VT8237_EHCI	0x3104	VT8237 EHCI USB Controller
 product VIATECH VT6105		0x3106	VT6105 (Rhine III) 10/100 Ethernet
-product VIATECH VT61XX		0x3119	VT61XX (Velocity) 10/100/1000 Ethernet
+product VIATECH VT612X		0x3119	VT612X (Velocity) 10/100/1000 Ethernet
 product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
 product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
 product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
+product VIATECH KT880_3         0x3269  KT880 CPU to PCI bridge
 product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
 product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
+product VIATECH VT8378          0x3205  VT8378 Apollo KM400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
+product VIATECH KT880_4         0x4269  KT880 CPU to PCI Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
+product VIATECH VT8378_IG       0x7205  VT8378 KM400 UniChrome Integrated Graphics
+product VIATECH KT880_5         0x7269  KT880 CPU to PCI Bridge
 product VIATECH VT8231		0x8231	VT8231 IDE Controller
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
@@ -2871,7 +2891,7 @@ product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
 product VIATECH VT8633AGP	0xb091	VT8633 (Apollo Pro 266) CPU-AGP Bridge
 product VIATECH VT8366AGP	0xb099	VT8366 (Apollo KT266) CPU-AGP Bridge
 product VIATECH VT8377AGP	0xb168	VT8377 CPU-AGP Bridge
-product VIATECH VT8377CEAGP	0xb198	VT8377CE CPU-AGP Bridge (KT600)
+product VIATECH VT8377CEAGP	0xb198	VT8377CE CPU-AGP Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_60x0		0x0000	GDT6000/6020/6050

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.2 2004/03/02 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: key.h,v 1.2.12.1 2005/03/19 08:36:41 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -65,7 +65,7 @@ extern void _key_freesp(struct secpolicy **, const char*, int);
  * that can happen either by network swi's or by continuations that
  * occur on crypto callbacks.  Much of this could go away if
  * key_checkrequest were redone.
- */ 
+ */
 #define	KEY_ALLOCSP(spidx, dir)					\
 	key_allocsp(spidx, dir, __FILE__, __LINE__)
 #define	KEY_ALLOCSP2(spi, dst, proto, dir)			\

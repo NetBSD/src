@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmcreg.h,v 1.2 2003/08/07 16:31:14 agc Exp $	*/
+/*	$NetBSD: if_dmcreg.h,v 1.2.10.1 2005/03/19 08:35:37 yamt Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -36,10 +36,10 @@
 
 #ifdef notdef
 struct dmcdevice {
-        char    bsel0;
-	char 	bsel1;
+	char	bsel0;
+	char	bsel1;
 	char	bsel2;
-	char 	bsel3;
+	char	bsel3;
 	short	sel4;
 	short	sel6;
 };
@@ -70,7 +70,7 @@ struct dmc_header {
 #define	DMC_NTRAILER	16
 
 /*
- * DMCMTU includes space for data (1024) + 
+ * DMCMTU includes space for data (1024) +
  * protocol header (256) + trailer descriptor (4).
  * The software link encapsulation header (dmc_header)
  * is handled separately.

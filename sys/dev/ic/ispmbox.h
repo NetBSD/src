@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.47 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: ispmbox.h,v 1.47.10.1 2005/03/19 08:34:03 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -481,7 +481,7 @@ typedef struct {
 	u_int8_t	req_sense_data[60];
 } ispstatus_cont_t;
 
-/* 
+/*
  * For Qlogic 2X00, the high order byte of SCSI status has
  * additional meaning.
  */
@@ -491,7 +491,7 @@ typedef struct {
 #define	RQCS_SV	0x200	/* Sense Length Valid */
 #define	RQCS_RV	0x100	/* FCP Response Length Valid */
 
-/* 
+/*
  * Completion Status Codes.
  */
 #define RQCS_COMPLETE			0x0000
@@ -536,7 +536,7 @@ typedef struct {
 #define	RQCS_PORT_BUSY			0x002B
 
 /*
- * 1X00 specific State Flags 
+ * 1X00 specific State Flags
  */
 #define RQSF_GOT_BUS			0x0100
 #define RQSF_GOT_TARGET			0x0200
@@ -689,7 +689,7 @@ typedef struct isp_icb {
 #define	ICBXOPT_RIO_32BIT	2
 #define	ICBXOPT_RIO_16BIT_IOCB	3
 #define	ICBXOPT_RIO_32BIT_IOCB	4
-#define	ICBXOPT_ZIO		5	
+#define	ICBXOPT_ZIO		5
 
 #define	ICBZOPT_ENA_RDXFR_RDY	0x01
 #define	ICBZOPT_ENA_OOF		(1 << 6) /* out of order frame handling */

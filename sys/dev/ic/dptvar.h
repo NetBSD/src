@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.10 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.10.10.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -41,14 +41,14 @@
 
 #define CCB_ABORT	0x01	/* abort has been issued on this CCB */
 #define CCB_INTR	0x02	/* HBA interrupted for this CCB */
-#define CCB_PRIVATE	0x04	/* ours; don't talk to scsipi when done */ 
+#define CCB_PRIVATE	0x04	/* ours; don't talk to scsipi when done */
 #define CCB_WAIT	0x08	/* sleeping on completion */
 
 struct dpt_ccb {
 	/* Data that will be touched by the HBA */
 	struct eata_cp	ccb_eata_cp;		/* EATA command packet */
 	struct eata_sg	ccb_sg[DPT_SG_SIZE];	/* SG element list */
-	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
+	struct scsi_sense_data ccb_sense;	/* SCSI sense data on error */
 
 	/* Data that will not be touched by the HBA */
 	volatile int	ccb_flg;		/* CCB flags */

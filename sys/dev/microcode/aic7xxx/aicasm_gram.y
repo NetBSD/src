@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_gram.y,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
+/*	$NetBSD: aicasm_gram.y,v 1.3.12.1 2005/03/19 08:34:42 yamt Exp $	*/
 
 /*
  * Parser for the Aic7xxx SCSI Host adapter sequencer assembler.
@@ -306,13 +306,13 @@ reg_definition:
 				stop("Register multiply defined", EX_DATAERR);
 				/* NOTREACHED */
 			}
-			cur_symbol = $1; 
+			cur_symbol = $1;
 			cur_symbol->type = cur_symtype;
 			initialize_symbol(cur_symbol);
 		}
 		reg_attribute_list
 	'}'
-		{                    
+		{
 			/*
 			 * Default to allowing everything in for registers
 			 * with no bit or mask definitions.
@@ -342,7 +342,7 @@ reg_attribute_list:
 |	reg_attribute_list reg_attribute
 ;
 
-reg_attribute:		
+reg_attribute:
 	reg_address
 |	size
 |	access_mode
@@ -707,7 +707,7 @@ expression:
 ;
 
 constant:
-	T_CONST T_SYMBOL expression 
+	T_CONST T_SYMBOL expression
 	{
 		if ($2->type != UNINITIALIZED) {
 			stop("Re-definition of symbol as a constant",
@@ -1512,7 +1512,7 @@ initialize_symbol(symbol_t *symbol)
 		       sizeof(struct cond_info));
 		break;
 	case MACRO:
-		symbol->info.macroinfo = 
+		symbol->info.macroinfo =
 		    (struct macro_info *)malloc(sizeof(struct macro_info));
 		if (symbol->info.macroinfo == NULL) {
 			stop("Can't create macro info", EX_SOFTWARE);
@@ -1536,7 +1536,7 @@ add_macro_arg(const char *argtext, int argnum)
 	struct macro_arg *marg;
 	int i;
 	int retval;
-		
+
 
 	if (cur_symbol == NULL || cur_symbol->type != MACRO) {
 		stop("Invalid current symbol for adding macro arg",
@@ -1781,7 +1781,7 @@ format_3_instr(int opcode, symbol_ref_t *src,
 static void
 test_readable_symbol(symbol_t *symbol)
 {
-	
+
 	if ((symbol->info.rinfo->modes & (0x1 << src_mode)) == 0) {
 		snprintf(errbuf, sizeof(errbuf),
 			"Register %s unavailable in source reg mode %d",
@@ -1799,7 +1799,7 @@ test_readable_symbol(symbol_t *symbol)
 static void
 test_writable_symbol(symbol_t *symbol)
 {
-	
+
 	if ((symbol->info.rinfo->modes & (0x1 << dst_mode)) == 0) {
 		snprintf(errbuf, sizeof(errbuf),
 			"Register %s unavailable in destination reg mode %d",

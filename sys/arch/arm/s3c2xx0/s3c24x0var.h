@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0var.h,v 1.1 2003/07/31 19:49:44 bsh Exp $ */
+/* $NetBSD: s3c24x0var.h,v 1.1.12.1 2005/03/19 08:32:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -42,6 +42,7 @@ struct s3c24x0_softc {
 };
 
 void	s3c24x0_clock_freq(struct s3c2xx0_softc *);
+void	s3c24x0_clock_freq2(vaddr_t, int *, int *, int *);
 void	*s3c24x0_intr_establish(int, int, int, s3c2xx0_irq_handler_t, void *);
 
 #endif /* _ARM_S3C24X0VAR_H_ */

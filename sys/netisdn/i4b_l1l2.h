@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.9 2003/12/04 13:57:31 keihan Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.9.10.1 2005/03/19 08:36:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #define _I4B_L1L2_H_
 
 /*
- * This file defines the D-channel interface between layer 1 (physical 
- * card hardware) and layer 2 of a passive ISDN card (i.e. a card that 
+ * This file defines the D-channel interface between layer 1 (physical
+ * card hardware) and layer 2 of a passive ISDN card (i.e. a card that
  * does not run it's own ISDN stack in firmware).
  *
  * Since each layer 1 driver knows in advance it will need to attach
@@ -88,6 +88,6 @@ int isdn_layer2_trace_ind(struct l2_softc *, struct isdn_l3_driver *, struct i4b
 
 /* Pass status informations to layer 2. */
 int isdn_layer2_status_ind(struct l2_softc *, struct isdn_l3_driver *, int, int);
-	
+
 #endif /* !_I4B_L1L2_H_ */
 

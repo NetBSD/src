@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.14 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: am79900.c,v 1.14.6.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -110,14 +110,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.14 2004/08/24 00:53:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.14.6.1 2005/03/19 08:34:01 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
+#include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -479,7 +479,7 @@ am79900_intr(void *arg)
 		am79900_rint(sc);
 	if (isr & LE_C0_TINT)
 		am79900_tint(sc);
-	
+
 #if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, isr);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.9 2005/01/15 11:01:46 dyoung Exp $	*/
+/*	$NetBSD: anvar.h,v 1.9.4.1 2005/03/19 08:34:01 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -54,7 +54,7 @@
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define bus_space_write_multi_stream_2	bus_space_write_multi_2
 #define bus_space_read_multi_stream_2	bus_space_read_multi_2
-#endif                        
+#endif
 
 #define CSR_WRITE_MULTI_STREAM_2(sc, reg, val, count)	\
 	bus_space_write_multi_stream_2(sc->sc_iot, sc->sc_ioh, reg, val, count)
@@ -65,7 +65,7 @@
 		(sizeof(struct an_txframe) + ETHER_TYPE_LEN + ETHER_MAX_LEN)
 #define AN_TX_RING_CNT		4
 #define AN_INC(x, y)		(x) = (x + 1) % y
- 
+
 struct an_wepkey {
 	int			an_wep_key[16];
 	int			an_wep_keylen;

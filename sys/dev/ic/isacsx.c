@@ -1,4 +1,4 @@
-/* $NetBSD: isacsx.c,v 1.2 2003/05/08 21:16:19 martin Exp $	*/
+/* $NetBSD: isacsx.c,v 1.2.12.1 2005/03/19 08:34:02 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  * Copyright (c) 2001 Gary Jennejohn. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_ifpi2_isac.c - i4b Fritz PCI Version 2 ISACSX handler
  *	--------------------------------------------
  *
- *	$Id: isacsx.c,v 1.2 2003/05/08 21:16:19 martin Exp $ 
+ *	$Id: isacsx.c,v 1.2.12.1 2005/03/19 08:34:02 yamt Exp $
  *
  * $FreeBSD: src/sys/i4b/layer1/ifpi2/i4b_ifpi2_isacsx.c,v 1.3 2002/09/02 00:52:07 brooks Exp $
  *
@@ -37,7 +37,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isacsx.c,v 1.2 2003/05/08 21:16:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isacsx.c,v 1.2.12.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,46 +114,46 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 			c |= isic_isacsx_exir_hdlr(sc, istad);
 		}
 	}
-	
+
 	if(istad & ISACSX_ISTAD_RME)	/* receive message end */
 	{
 		register int rest;
 		u_char rsta;
 
 		/* get rx status register */
-		
+
 		rsta = ISAC_READ(I_RSTAD);
 
 		/* Check for Frame and CRC valid */
 		if((rsta & ISACSX_RSTAD_MASK) != (ISACSX_RSTAD_VFR|ISACSX_RSTAD_CRC))
 		{
 			int error = 0;
-			
+
 			if(!(rsta & ISACSX_RSTAD_VFR))	/* VFR error */
 			{
 				error++;
 				NDBGL1(L1_I_ERR, "%s: Frame not valid error", sc->sc_dev.dv_xname);
 			}
-	
+
 			if(!(rsta & ISACSX_RSTAD_CRC))	/* CRC error */
 			{
 				error++;
 				NDBGL1(L1_I_ERR, "%s: CRC error", sc->sc_dev.dv_xname);
 			}
-	
+
 			if(rsta & ISACSX_RSTAD_RDO)	/* ReceiveDataOverflow */
 			{
 				error++;
 				NDBGL1(L1_I_ERR, "%s: Data Overrun error", sc->sc_dev.dv_xname);
 			}
-	
+
 			if(rsta & ISACSX_RSTAD_RAB)	/* ReceiveABorted */
 			{
 				error++;
 				NDBGL1(L1_I_ERR, "%s: Receive Aborted error", sc->sc_dev.dv_xname);
 			}
 
-			if(error == 0)			
+			if(error == 0)
 				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTAD = 0x%02x!", sc->sc_dev.dv_xname, rsta);
 
 			i4b_Dfreembuf(sc->sc_ibuf);
@@ -188,7 +188,7 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 			ISAC_RDFIFO(sc->sc_ib, rest);
 			 /* the  last byte contains status, strip it */
 			sc->sc_ilen += rest - 1;
-			
+
 			sc->sc_ibuf->m_pkthdr.len =
 				sc->sc_ibuf->m_len = sc->sc_ilen;
 
@@ -241,7 +241,7 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 		if(sc->sc_ilen <= (MAX_DFRAME_LEN - ISACSX_FIFO_LEN))
 		{
 			ISAC_RDFIFO(sc->sc_ib, ISACSX_FIFO_LEN);
-			sc->sc_ilen += ISACSX_FIFO_LEN;			
+			sc->sc_ilen += ISACSX_FIFO_LEN;
 			sc->sc_ib += ISACSX_FIFO_LEN;
 			c |= ISACSX_CMDRD_RMC;
 		}
@@ -252,7 +252,7 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 			sc->sc_ibuf = NULL;
 			sc->sc_ib = NULL;
 			sc->sc_ilen = 0;
-			c |= ISACSX_CMDRD_RMC|ISACSX_CMDRD_RRES;			
+			c |= ISACSX_CMDRD_RMC|ISACSX_CMDRD_RRES;
 		}
 	}
 
@@ -265,13 +265,13 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 			sc->sc_op = sc->sc_obuf->m_data;
 			sc->sc_ol = sc->sc_obuf->m_len;
 			sc->sc_obuf2 = NULL;
-#ifdef NOTDEF			
+#ifdef NOTDEF
 			printf("ob2=%x, op=%x, ol=%d, f=%d #",
 				sc->sc_obuf,
 				sc->sc_op,
 				sc->sc_ol,
 				sc->sc_state);
-#endif				
+#endif
 		}
 		else
 		{
@@ -282,12 +282,12 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 				sc->sc_ol,
 				sc->sc_state);
 #endif
-		}			
-		
+		}
+
 		if(sc->sc_obuf)
-		{			
+		{
 			ISAC_WRFIFO(sc->sc_op, min(sc->sc_ol, ISACSX_FIFO_LEN));
-	
+
 			if(sc->sc_ol > ISACSX_FIFO_LEN)	/* length > 32 ? */
 			{
 				sc->sc_op += ISACSX_FIFO_LEN; /* bufferptr+32 */
@@ -304,7 +304,7 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 				sc->sc_obuf = NULL;
 				sc->sc_op = NULL;
 				sc->sc_ol = 0;
-	
+
 				c |= ISACSX_CMDRD_XTF | ISACSX_CMDRD_XME;
 			}
 		}
@@ -313,21 +313,21 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 			sc->sc_state &= ~ISAC_TX_ACTIVE;
 		}
 	}
-	
+
 	if(ista & ISACSX_ISTA_CIC)	/* channel status change CISQ */
 	{
 		register u_char ci;
-	
+
 		/* get command/indication rx register*/
-	
+
 		ci = ISAC_READ(I_CIR0);
 
 		/* C/I code change IRQ (flag already cleared by CIR0 read) */
-	
+
 		if(ci & ISACSX_CIR0_CIC0)
 			isic_isacsx_ind_hdlr(sc, (ci >> 4) & 0xf);
 	}
-	
+
 	if(c)
 	{
 		ISAC_WRITE(I_CMDRD, c);
@@ -341,14 +341,14 @@ static u_char
 isic_isacsx_exir_hdlr(register struct isic_softc *sc, u_char exir)
 {
 	u_char c = 0;
-	
+
 	if(exir & ISACSX_ISTAD_XMR)
 	{
 		NDBGL1(L1_I_ERR, "EXIRQ Tx Message Repeat");
 
 		c |= ISACSX_CMDRD_XRES;
 	}
-	
+
 	if(exir & ISACSX_ISTAD_XDU)
 	{
 		NDBGL1(L1_I_ERR, "EXIRQ Tx Data Underrun");
@@ -377,7 +377,7 @@ isic_isacsx_exir_hdlr(register struct isic_softc *sc, u_char exir)
 	if(exir & ISACSX_EXIR_SAW)
 	{
 		/* cannot happen, STCR:TSF is set to 0 */
-		
+
 		NDBGL1(L1_I_ERR, "EXIRQ Subscriber Awake");
 	}
 
@@ -399,7 +399,7 @@ static void
 isic_isacsx_ind_hdlr(register struct isic_softc *sc, int ind)
 {
 	register int event;
-	
+
 	switch(ind)
 	{
 		case ISACSX_CIR0_IAI8:
@@ -409,7 +409,7 @@ isic_isacsx_ind_hdlr(register struct isic_softc *sc, int ind)
 			event = EV_INFO48;
 			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_ACTIVE);
 			break;
-			
+
 		case ISACSX_CIR0_IAI10:
 			NDBGL1(L1_I_CICO, "rx AI10 in state %s", isic_printstate(sc));
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
@@ -431,9 +431,9 @@ isic_isacsx_ind_hdlr(register struct isic_softc *sc, int ind)
 		case ISACSX_CIR0_IDR:
 			NDBGL1(L1_I_CICO, "rx DR in state %s", isic_printstate(sc));
 			isic_isacsx_l1_cmd(sc, CMD_DIU);
-			event = EV_DR;			
+			event = EV_DR;
 			break;
-			
+
 		case ISACSX_CIR0_IDID:
 			NDBGL1(L1_I_CICO, "rx DID in state %s", isic_printstate(sc));
 			event = EV_INFO0;
@@ -470,7 +470,7 @@ isic_isacsx_ind_hdlr(register struct isic_softc *sc, int ind)
 			NDBGL1(L1_I_CICO, "rx SD in state %s", isic_printstate(sc));
 			event = EV_INFO0;
 			break;
-		
+
 		default:
 			NDBGL1(L1_I_ERR, "UNKNOWN Indication 0x%x in state %s", ind, isic_printstate(sc));
 			event = EV_INFO0;
@@ -481,7 +481,7 @@ isic_isacsx_ind_hdlr(register struct isic_softc *sc, int ind)
 
 /*---------------------------------------------------------------------------*
  *	execute a layer 1 command
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 void
 isic_isacsx_l1_cmd(struct isic_softc *sc, int command)
 {
@@ -490,7 +490,7 @@ isic_isacsx_l1_cmd(struct isic_softc *sc, int command)
 #ifdef I4B_SMP_WORKAROUND
 
 	/* XXXXXXXXXXXXXXXXXXX */
-	
+
 	/*
 	 * patch from Wolfgang Helbig:
 	 *
@@ -499,7 +499,7 @@ isic_isacsx_l1_cmd(struct isic_softc *sc, int command)
 	 * This is a gross workaround, but anyway it works *and* provides
 	 * some information as how to finally fix this problem.
 	 */
-	
+
 	HSCX_WRITE(0, H_MASK, 0xff);
 	HSCX_WRITE(1, H_MASK, 0xff);
 	ISAC_WRITE(I_MASKD, 0xff);
@@ -511,7 +511,7 @@ isic_isacsx_l1_cmd(struct isic_softc *sc, int command)
 	ISAC_WRITE(I_MASK, isacsx_imask);
 
 	/* XXXXXXXXXXXXXXXXXXX */
-	
+
 #endif /* I4B_SMP_WORKAROUND */
 
 	if(command < 0 || command > CMD_ILL)
@@ -637,7 +637,7 @@ void
 isic_isacsx_recover(struct isic_softc *sc)
 {
 	u_char byte, istad;
-	
+
 
 	/*
 	 * XXX
@@ -651,7 +651,7 @@ isic_isacsx_recover(struct isic_softc *sc)
 	byte = ISAC_READ(I_ISTAD);
 
 	NDBGL1(L1_ERROR, "  ISAC: ISTAD = 0x%x", byte);
-	
+
 	if(byte & ISACSX_ISTA_ICD) {
 		istad = ISAC_READ(I_ISTAD);
 		NDBGL1(L1_ERROR, "  ISACSX: istad = 0x%02x", istad);
@@ -660,15 +660,15 @@ isic_isacsx_recover(struct isic_softc *sc)
 	if(byte & ISACSX_ISTA_CIC)
 	{
 		byte = ISAC_READ(I_CIR0);
-	
+
 		NDBGL1(L1_ERROR, "  ISACSX: CIR0 = 0x%x", byte);
 	}
 
 	NDBGL1(L1_ERROR, "  ISACSX: IMASKD/IMASK = 0x%02x/%02x", isacsx_imaskd,
 							isacsx_imask);
 
-	ISAC_WRITE(I_MASKD, 0xff);	
-	ISAC_WRITE(I_MASK, 0xff);	
+	ISAC_WRITE(I_MASKD, 0xff);
+	ISAC_WRITE(I_MASK, 0xff);
 	DELAY(100);
 	ISAC_WRITE(I_MASKD, isacsx_imaskd);
 	ISAC_WRITE(I_MASK, isacsx_imask);

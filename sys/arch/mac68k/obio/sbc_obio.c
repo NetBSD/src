@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.19 2005/01/19 02:04:49 chs Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.19.2.1 2005/03/19 08:33:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.19 2005/01/19 02:04:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.19.2.1 2005/03/19 08:33:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,6 +116,7 @@ sbc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	char bits[64];
 	extern vaddr_t SCSIBase;
 
@@ -146,7 +147,7 @@ sbc_obio_attach(struct device *parent, struct device *self, void *aux)
 	case MACH_MACPB270:
 	case MACH_MACPB280:
 	case MACH_MACPB280C:
-		if (ncr_sc->sc_dev.dv_unit == 1) {
+		if (oa->oa_addr == 1) {
 			sc->sc_regs = (struct sbc_regs *)(0xfee00000 + SBC_REG_OFS_DUO2);
 			sc->sc_drq_addr = (vaddr_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
 			sc->sc_nodrq_addr = (vaddr_t)(0xfee00000 + SBC_DMA_OFS_DUO2);

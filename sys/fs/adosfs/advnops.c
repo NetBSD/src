@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.14 2005/01/09 16:42:43 chs Exp $	*/
+/*	$NetBSD: advnops.c,v 1.14.4.1 2005/03/19 08:36:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.14 2005/01/09 16:42:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.14.4.1 2005/03/19 08:36:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -195,7 +195,7 @@ adosfs_getattr(v)
 		vap->va_bytes = amp->bsize;
 		vap->va_size = amp->bsize;
 	} else {
-		/* 
+		/*
 		 * XXX actually we can track this if we were to walk the list
 		 * of links if it exists.
 		 * XXX for now, just set nlink to 2 if this is a hard link
@@ -203,7 +203,7 @@ adosfs_getattr(v)
 		 */
 		vap->va_nlink = 1 + (ap->linkto != 0);
 		/*
-		 * round up to nearest blocks add number of file list 
+		 * round up to nearest blocks add number of file list
 		 * blocks needed and mutiply by number of bytes per block.
 		 */
 		fblks = howmany(ap->fsize, amp->dbsize);
@@ -219,7 +219,7 @@ adosfs_getattr(v)
 	return(0);
 }
 /*
- * are things locked??? they need to be to avoid this being 
+ * are things locked??? they need to be to avoid this being
  * deleted or changed (data block pointer blocks moving about.)
  */
 int
@@ -247,7 +247,7 @@ adosfs_read(v)
 	error = 0;
 	uio = sp->a_uio;
 	ap = VTOA(sp->a_vp);
-	amp = ap->amp;	
+	amp = ap->amp;
 	/*
 	 * Return EOF for character devices, EIO for others
 	 */
@@ -263,7 +263,7 @@ adosfs_read(v)
 	}
 
 	/*
-	 * to expensive to let general algorithm figure out that 
+	 * to expensive to let general algorithm figure out that
 	 * we are beyond the file.  Do it now.
 	 */
 	if (uio->uio_offset >= ap->fsize)
@@ -302,7 +302,7 @@ adosfs_read(v)
 		on = uio->uio_offset % size;
 		n = MIN(size - on, uio->uio_resid);
 		diff = ap->fsize - uio->uio_offset;
-		/* 
+		/*
 		 * check for EOF
 		 */
 		if (diff <= 0)
@@ -311,7 +311,7 @@ adosfs_read(v)
 			n = diff;
 		/*
 		 * read ahead could possibly be worth something
-		 * but not much as ados makes little attempt to 
+		 * but not much as ados makes little attempt to
 		 * make things contigous
 		 */
 		error = bread(sp->a_vp, lbn, amp->bsize, NOCRED, &bp);
@@ -426,15 +426,15 @@ reterr:
 }
 
 int
-adosfs_link(v) 
+adosfs_link(v)
 	void *v;
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
-		struct vnode *a_vp;  
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -451,7 +451,7 @@ adosfs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-  
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -476,7 +476,7 @@ adosfs_bmap(v)
 	long nb, flblk, flblkoff, fcnt;
 	daddr_t *bnp;
 	daddr_t bn;
-	int error; 
+	int error;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -521,7 +521,7 @@ adosfs_bmap(v)
 	/*
 	 * check last indirect block cache
 	 */
-	if (flblk < ap->lastlindblk) 
+	if (flblk < ap->lastlindblk)
 		fcnt = 0;
 	else {
 		flblk -= ap->lastlindblk;
@@ -561,7 +561,7 @@ adosfs_bmap(v)
 		nb = adoswordn(flbp, ap->nwords - 2);
 		flblk--;
 	}
-	/* 
+	/*
 	 * calculate offset of block number in table.  The table starts
 	 * at nwords - 51 and goes to offset 6 or less if indicated by the
 	 * valid table entries stored at offset ADBI_NBLKTABENT.
@@ -572,7 +572,7 @@ adosfs_bmap(v)
 		*bnp = adoswordn(flbp, flblkoff) * ap->amp->bsize / DEV_BSIZE;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("flblk offset %ld too large in lblk %ld blk %" PRId64 "\n", 
+		printf("flblk offset %ld too large in lblk %ld blk %" PRId64 "\n",
 		    flblkoff, (long)bn, flbp->b_blkno);
 #endif
 		error = EINVAL;
@@ -610,8 +610,8 @@ struct adirent {
 	char    namlen;
 	char    name[ADMAXNAMELEN+2];	/* maxlen plus 2 NUL's */
 };
-	
-int 
+
+int
 adosfs_readdir(v)
 	void *v;
 {
@@ -916,7 +916,7 @@ adosfs_reclaim(v)
 }
 
 /*
- * POSIX pathconf info, grabbed from kern/u fs, probably need to 
+ * POSIX pathconf info, grabbed from kern/u fs, probably need to
  * investigate exactly what each return type means as they are probably
  * not valid currently
  */

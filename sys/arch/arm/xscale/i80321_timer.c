@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.7.10.1 2005/02/12 18:17:30 yamt Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.7.10.2 2005/03/19 08:32:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.7.10.1 2005/02/12 18:17:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.7.10.2 2005/03/19 08:32:51 yamt Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -374,7 +374,7 @@ inittodr(time_t base)
 
 	if (!badbase) {
 		/*
-		 * See if we tained/lost two or more days; if
+		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
 		deltat = time.tv_sec - base;

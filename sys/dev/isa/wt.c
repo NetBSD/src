@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.62.6.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: wt.c,v 1.62.6.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -24,17 +24,17 @@
  * All rights reserved.
  *
  * Authors: Robert Baron
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.62.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.62.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,8 @@ wtprobe(parent, match, aux)
 		return (0);
 	if (ia->ia_nirq < 1)
 		return (0);
-	if (ia->ia_ndrq < 1);
+	if (ia->ia_ndrq < 1)
+		return (0);
 
 	/* Disallow wildcarded i/o address. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
@@ -907,7 +908,7 @@ wtcmd(sc, cmd)
 		splx(s);
 		return 0;
 	}
-	
+
 	/* output the command */
 	bus_space_write_1(iot, ioh, sc->regs.CMDPORT, cmd);
 
@@ -1166,7 +1167,7 @@ wtstatus(sc)
 
 	p = (char *)&sc->error;
 	while (p < (char *)&sc->error + 6) {
-		u_char x = wtsoft(sc, sc->regs.BUSY | sc->regs.NOEXCEP, 
+		u_char x = wtsoft(sc, sc->regs.BUSY | sc->regs.NOEXCEP,
 		    sc->regs.BUSY | sc->regs.NOEXCEP);
 
 		if ((x & sc->regs.NOEXCEP) == 0) {	/* error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32.h,v 1.7 2004/03/26 15:01:16 drochner Exp $	 */
+/*	$NetBSD: sunos32.h,v 1.7.10.1 2005/03/19 08:33:45 yamt Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -85,5 +85,5 @@ __END_DECLS
 
 #define SUNOS32_CHECK_ALT_CREAT(p, sgp, path) \
     emul_find(p, sgp, p->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_CREAT)
- 
+
 #endif /* _COMPAT_SUNOS32_SUNOS32_H_ */

@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.9 2004/08/02 18:43:38 mycroft Exp $
+#	$NetBSD: devlist2h.awk,v 1.9.6.1 2005/03/19 08:35:10 yamt Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -37,6 +37,7 @@ BEGIN {
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+	gsub(/ $/, "", VERSION)
 
 	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
@@ -64,7 +65,7 @@ NF > 0 && $1 == "vendor" {
 	vendorindex[$2] = nvendors;		# record index for this name, for later.
 	vendors[nvendors, 1] = $2;		# name
 	vendors[nvendors, 2] = $3;		# id
-	printf("#define\tPCI_VENDOR_%s\t%s\t", vendors[nvendors, 1],
+	printf("#define\tPCI_VENDOR_%s\t%s", vendors[nvendors, 1],
 	    vendors[nvendors, 2]) > hfile
 
 	i = 3; f = 4;
@@ -72,7 +73,7 @@ NF > 0 && $1 == "vendor" {
 	# comments
 	ocomment = oparen = 0
 	if (f <= NF) {
-		printf("\t/* ") > hfile
+		printf("\t\t/* ") > hfile
 		ocomment = 1;
 	}
 	while (f <= NF) {
@@ -109,7 +110,7 @@ NF > 0 && $1 == "product" {
 	products[nproducts, 1] = $2;		# vendor name
 	products[nproducts, 2] = $3;		# product id
 	products[nproducts, 3] = $4;		# id
-	printf("#define\tPCI_PRODUCT_%s_%s\t%s\t", products[nproducts, 1],
+	printf("#define\tPCI_PRODUCT_%s_%s\t%s", products[nproducts, 1],
 	    products[nproducts, 2], products[nproducts, 3]) > hfile
 
 	i=4; f = 5;
@@ -117,7 +118,7 @@ NF > 0 && $1 == "product" {
 	# comments
 	ocomment = oparen = 0
 	if (f <= NF) {
-		printf("\t/* ") > hfile
+		printf("\t\t/* ") > hfile
 		ocomment = 1;
 	}
 	while (f <= NF) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.4 2004/12/12 21:03:06 abs Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.4.4.1 2005/03/19 08:32:55 yamt Exp $ */
 
 /*
- * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
+ * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.4 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.4.4.1 2005/03/19 08:32:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -347,112 +347,66 @@ read_ttb(void)
 }
 
 /*
- * Mapping table for core kernel memory. These areas are mapped in
- * init time at fixed virtual address with section mappings. 
+ * Static device mappings. These peripheral registers are mapped at
+ * fixed virtual addresses very early in initarm() so that we can use
+ * them while booting the kernel, and stay at the same address
+ * throughout whole kernel's life time.
+ *
+ * We use this table twice; once with bootstrap page table, and once
+ * with kernel's page table which we build up in initarm().
+ *
+ * Since we map these registers into the bootstrap page table using
+ * pmap_devmap_bootstrap() which calls pmap_map_chunk(), we map
+ * registers segment-aligned and segment-rounded in order to avoid
+ * using the 2nd page tables.
  */
-struct l1_sec_map {
-	vaddr_t	va;
-	vaddr_t	pa;
-	vsize_t	size;
-	int flags;
-} l1_sec_table[] = {
+
+#define	_A(a)	((a) & ~L1_S_OFFSET)
+#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
+
+static const struct pmap_devmap lubbock_devmap[] = {
     {
 	    LUBBOCK_OBIO_VBASE,
-	    LUBBOCK_OBIO_PBASE,
-	    LUBBOCK_OBIO_SIZE,
-	    PTE_NOCACHE,
+	    _A(LUBBOCK_OBIO_PBASE),
+	    _S(LUBBOCK_OBIO_SIZE),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
     {
 	    LUBBOCK_GPIO_VBASE,
-	    PXA2X0_GPIO_BASE,
-	    PXA2X0_GPIO_SIZE,
-	    PTE_NOCACHE,
+	    _A(PXA2X0_GPIO_BASE),
+	    _S(PXA2X0_GPIO_SIZE),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
     {
 	    LUBBOCK_CLKMAN_VBASE,
-	    PXA2X0_CLKMAN_BASE,
-	    PXA2X0_CLKMAN_SIZE,
-	    PTE_NOCACHE,
+	    _A(PXA2X0_CLKMAN_BASE),
+	    _S(PXA2X0_CLKMAN_SIZE),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
     {
 	    LUBBOCK_INTCTL_VBASE,
-	    PXA2X0_INTCTL_BASE,
-	    PXA2X0_INTCTL_SIZE,
-	    PTE_NOCACHE,
+	    _A(PXA2X0_INTCTL_BASE),
+	    _S(PXA2X0_INTCTL_SIZE),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
+    {
+	    LUBBOCK_FFUART_VBASE,
+	    _A(PXA2X0_FFUART_BASE),
+	    _S(4 * COM_NPORTS),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+    },
+    {
+	    LUBBOCK_BTUART_VBASE,
+	    _A(PXA2X0_BTUART_BASE),
+	    _S(4 * COM_NPORTS),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+    },
+
     {0, 0, 0, 0,}
 };
 
-static void
-map_io_area(paddr_t pagedir)
-{
-	int loop;
-
-	/*
-	 * Map devices we can map w/ section mappings.
-	 */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
-
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(pagedir, l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    VM_PROT_READ|VM_PROT_WRITE,
-			    l1_sec_table[loop].flags);
-		++loop;
-	}
-}
-
-/*
- * simple memory mapping function used in early bootstrap stage
- * before pmap is initialized.
- * size and cacheability are ignored and map one section with nocache.
- */
-static vaddr_t section_free = LUBBOCK_VBASE_FREE;
-
-static int
-bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
-{
-	u_long startpa;
-	vaddr_t va;
-	pd_entry_t *pagedir = read_ttb();
-	/* This assumes PA==VA for page directory */
-
-	va = section_free;
-	section_free += L1_S_SIZE;
-
-	startpa = trunc_page(bpa);
-	pmap_map_section((vaddr_t)pagedir, va, startpa, 
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	cpu_tlb_flushD();
-
-	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
-
-	return(0);
-}
-
-static void
-copy_io_area_map(pd_entry_t *new_pd)
-{
-	pd_entry_t *cur_pd = read_ttb();
-	vaddr_t va;
-
-	for (va = LUBBOCK_IO_AREA_VBASE;
-	     (cur_pd[va>>L1_S_SHIFT] & L1_TYPE_MASK) == L1_TYPE_S;
-	     va += L1_S_SIZE) {
-
-		new_pd[va>>L1_S_SHIFT] = cur_pd[va>>L1_S_SHIFT];
-	}
-}
-
-
+#undef	_A
+#undef	_S
 
 /*
  * u_int initarm(...)
@@ -481,27 +435,32 @@ initarm(void *arg)
 #ifdef DIAGNOSTIC
 	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
 #endif
-	struct bus_space tmp_bs_tag;
-	int	(*map_func_save)(void *, bus_addr_t, bus_size_t, int, 
-	    bus_space_handle_t *);
 #define LEDSTEP_P() 	ioreg_write(LUBBOCK_OBIO_PBASE+LUBBOCK_HEXLED, led_data++)
 #define LEDSTEP() hex_led(led_data++)
 
 	/* use physical address until pagetable is set */
 	LEDSTEP_P();
 
+	/* map some peripheral registers at static I/O area */
+	pmap_devmap_bootstrap((vaddr_t)read_ttb(), lubbock_devmap);
+
+	LEDSTEP_P();
+
 	/* start 32.768KHz OSC */
-	ioreg_write(PXA2X0_CLKMAN_BASE + 0x08, 2);
+	ioreg_write(LUBBOCK_CLKMAN_VBASE + 0x08, 2);
+	/* Get ready for splfoo() */
+	pxa2x0_intr_bootstrap(LUBBOCK_INTCTL_VBASE);
+
+	LEDSTEP();
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
-	LEDSTEP_P();
 
-	/* Get ready for splfoo() */
-	pxa2x0_intr_bootstrap(PXA2X0_INTCTL_BASE);
+	LEDSTEP();
+
 
 #if 0
 	/* Calibrate the delay loop. */
@@ -538,24 +497,16 @@ initarm(void *arg)
 	 * 0xc0000000 - 0xcfffffff  Y Y Y  Cache Flush Region 
 	 * (done by this routine)
 	 * 0xfd000000 - 0xfd0000ff  N N N  I/O baseboard registers
-	 * 0xfd100000 - 0xfd2fffff  N N N  Processor Registers.
+	 * 0xfd100000 - 0xfd3fffff  N N N  Processor Registers.
+	 * 0xfd400000 - 0xfd4fffff  N N N  FF-UART
+	 * 0xfd500000 - 0xfd5fffff  N N N  BT-UART
 	 *
-	 * The first level page table is at 0xa0004000.  There are also
-	 * 2 second-level tables at 0xa0008000 and 0xa0008400.
+	 * RedBoot's first level page table is at 0xa0004000.  There
+	 * are also 2 second-level tables at 0xa0008000 and
+	 * 0xa0008400.  We will continue to use them until we switch to
+	 * our pagetable by setttb().
 	 *
 	 */
-
-	{
-		/*
-		 * Tweak RedBoot's pagetable so that we can access to
-		 * some registers at same VA before and after installing 
-		 * our page table. 
-		 */
-		paddr_t ttb = (paddr_t)read_ttb();
-
-		map_io_area(ttb);
-		cpu_tlb_flushD();
-	}
 
 	/* setup GPIO for BTUART, in case bootloader doesn't take care of it */
 	pxa2x0_gpio_bootstrap(LUBBOCK_GPIO_VBASE);
@@ -570,14 +521,6 @@ initarm(void *arg)
 	    ioreg_read(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN));
 
 	LEDSTEP();
-
-	tmp_bs_tag = pxa2x0_bs_tag;
-	tmp_bs_tag.bs_map = bootstrap_bs_map;
-	map_func_save = pxa2x0_a4x_bs_tag.bs_map;
-	pxa2x0_a4x_bs_tag.bs_map = bootstrap_bs_map;
-
-	LEDSTEP();
-
 
 	consinit();
 	LEDSTEP();
@@ -879,7 +822,7 @@ initarm(void *arg)
 	 * map integrated peripherals at same address in l1pagetable
 	 * so that we can continue to use console.
 	 */
-	copy_io_area_map((pd_entry_t *)l1pagetable);
+	pmap_devmap_bootstrap(l1pagetable, lubbock_devmap);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately
@@ -915,12 +858,6 @@ initarm(void *arg)
 	       physical_freestart, free_pages, free_pages);
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
-
-	LEDSTEP();
-
-	/* set new intc register address so that splfoo() doesn't
-	   touch illegal address.  */
-	pxa2x0_intr_bootstrap(LUBBOCK_INTCTL_VBASE);
 
 	LEDSTEP();
 
@@ -1027,8 +964,6 @@ initarm(void *arg)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	pxa2x0_a4x_bs_tag.bs_map = map_func_save ;
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
@@ -1147,20 +1082,19 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	paddr_t paddr = 0;
-	enum pxa2x0_uart_id uart_id;
 	uint32_t ckenreg = ioreg_read(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN);
 
 	if (0 == strcmp(kgdb_devname, "ffuart")) {
 		paddr = PXA2X0_FFUART_BASE;
-		clenreg |= CKEN_FFUART;
+		ckenreg |= CKEN_FFUART;
 	}
 	else if (0 == strcmp(kgdb_devname, "btuart")) {
 		paddr = PXA2X0_BTUART_BASE;
-		clenreg |= CKEN_BTUART;
+		ckenreg |= CKEN_BTUART;
 	}
 
 	if (paddr &&
-	    0 == com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
+	    0 == com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 		kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
 		ioreg_write(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN, ckenreg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.10.12.1 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.10.12.2 2005/03/19 08:34:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.10.12.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.10.12.2 2005/03/19 08:34:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ ate_mca_attach(parent, self, aux)
 	 *               \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * \_/ \___/ \___/
 	 *   \     \     \__ I/O Port Addresses: 000=0x400-0x4FF 100=0x1400-
@@ -163,7 +163,7 @@ ate_mca_attach(parent, self, aux)
 	 *        \_________ Lower 2 bit of Interrupt Request Number
 	 *
 	 * POS register 4: (adf pos2)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *   \      \_______ Twisted Pair Type: 0=100 ohm, Unshielded
 	 *    \                1=150 ohm, Shielded

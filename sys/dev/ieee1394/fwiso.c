@@ -1,4 +1,4 @@
-/*	$NetBSD: fwiso.c,v 1.4 2004/05/13 17:34:48 christos Exp $	*/
+/*	$NetBSD: fwiso.c,v 1.4.6.1 2005/03/19 08:34:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 and 2002
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwiso.c,v 1.4 2004/05/13 17:34:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwiso.c,v 1.4.6.1 2005/03/19 08:34:32 yamt Exp $");
 
 #include "fwiso.h"
 
@@ -188,7 +188,7 @@ struct fwohci_it_ctx;
 extern int fwohci_it_ctx_clear(ieee1394_it_tag_t);
 extern u_int16_t fwohci_it_cycletimer(ieee1394_it_tag_t);
 extern ieee1394_it_tag_t fwohci_it_set(struct ieee1394_softc *, int, int);
-extern int fwohci_it_ctx_writedata(ieee1394_it_tag_t, int, 
+extern int fwohci_it_ctx_writedata(ieee1394_it_tag_t, int,
     struct ieee1394_it_datalist *, int);
 
 
@@ -728,7 +728,7 @@ fwisoioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		error = EINVAL;
 		break;
 	}
-	
+
 	return error;
 }
 
@@ -884,7 +884,7 @@ fwiso_set_handler(struct fwiso_data *fd)
 		return ENXIO;
 	}
 	fd->fd_flags |= FWISO_SETHANDLER;
- 
+
 	splx(s);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.26 2004/10/27 19:29:57 david Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.26.6.1 2005/03/19 08:33:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.26 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.26.6.1 2005/03/19 08:33:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ hpux_sys_fcntl(l, v, retval)
 
 	if ((fp = fd_getfile(p->p_fd, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	
+
 	/* This array dereference is validated by fd_getfile */
 	pop = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 	arg = SCARG(uap, arg);
@@ -310,7 +310,7 @@ hpux_sys_fcntl(l, v, retval)
 			*pop |= HPUX_UF_FNDELAY_ON;
 		else
 			*pop &= ~HPUX_UF_FNDELAY_ON;
-		
+
 		if (*pop & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON|HPUX_UF_FIONBIO_ON))
 			arg |= FNONBLOCK;
 		else
@@ -479,7 +479,7 @@ hpux_sys_fstat(l, v, retval)
  */
 int
 hpux_sys_stat(l, v, retval)
-	struct lwp *l; 
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -790,7 +790,7 @@ hpux_sys_chmod(l, v, retval)
 {
 	struct hpux_sys_chmod_args /* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode; 
+		syscallarg(int) mode;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.60.6.1 2005/01/25 13:03:14 yamt Exp $	*/
+/*	$NetBSD: twe.c,v 1.60.6.2 2005/03/19 08:35:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.60.6.1 2005/01/25 13:03:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.60.6.2 2005/03/19 08:35:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.60.6.1 2005/01/25 13:03:14 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>
@@ -119,6 +120,8 @@ static int	twe_submatch(struct device *, struct cfdata *,
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
+static void twe_clear_pci_abort(struct twe_softc *sc);
+static void twe_clear_pci_parity_error(struct twe_softc *sc);
 
 static int	twe_add_unit(struct twe_softc *, int);
 static int	twe_del_unit(struct twe_softc *, int);
@@ -135,10 +138,13 @@ const struct cdevsw twe_cdevsw = {
 	nostop, notty, nopoll, nommap,
 };
 
-extern struct	cfdriver twe_cd; 
+extern struct	cfdriver twe_cd;
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
     twe_match, twe_attach, NULL, NULL);
+
+/* FreeBSD driver revision for sysctl expected by the 3ware cli */
+const char twever[] = "1.50.01.002";
 
 /*
  * Tables to convert numeric codes to strings.
@@ -192,6 +198,7 @@ const struct twe_code_table twe_table_unittype[] = {
 	{ TWE_AD_CONFIG_TwinStor,		"TwinStor" },
 	{ TWE_AD_CONFIG_RAID5,			"RAID5" },
 	{ TWE_AD_CONFIG_RAID10,			"RAID10" },
+	{ TWE_UD_CONFIG_JBOD,			"JBOD" },
 
 	{ 0,					NULL }
 };
@@ -202,6 +209,10 @@ const struct twe_code_table twe_table_stripedepth[] = {
 	{ TWE_AD_STRIPE_16k,			"16K" },
 	{ TWE_AD_STRIPE_32k,			"32K" },
 	{ TWE_AD_STRIPE_64k,			"64K" },
+	{ TWE_AD_STRIPE_128k,			"128K" },
+	{ TWE_AD_STRIPE_256k,			"256K" },
+	{ TWE_AD_STRIPE_512k,			"512K" },
+	{ TWE_AD_STRIPE_1024k,			"1024K" },
 
 	{ 0,					NULL }
 };
@@ -300,7 +311,7 @@ twe_match(struct device *parent, struct cfdata *cfdata, void *aux)
 
 	pa = aux;
 
-	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE &&	 
+	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE_ASIC));
 }
@@ -322,6 +333,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	int s, size, i, rv, rseg;
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
+        struct ctlname ctlnames[] = CTL_NAMES;
+        struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
@@ -378,14 +391,14 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	 */
         size = sizeof(struct twe_cmd) * TWE_MAX_QUEUECNT;
 
-	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1, 
+	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to allocate commands, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
 		return;
 	}
 
-	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size, 
+	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (caddr_t *)&sc->sc_cmds,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map commands, rv = %d\n",
@@ -393,14 +406,14 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((rv = bus_dmamap_create(sc->sc_dmat, size, size, 1, 0, 
+	if ((rv = bus_dmamap_create(sc->sc_dmat, size, size, 1, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		aprint_error("%s: unable to create command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
 		return;
 	}
 
-	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_cmds, 
+	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_cmds,
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to load command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
@@ -467,6 +480,37 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
 	    TWE_CTL_UNMASK_RESP_INTR |
 	    TWE_CTL_ENABLE_INTRS);
+
+	/* sysctl set-up for 3ware cli */
+	if (sysctl_createv(NULL, 0, NULL, NULL,
+				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+				NULL, NULL, 0, NULL, 0,
+				CTL_HW, CTL_EOL) != 0) {
+		printf("%s: could not create %s sysctl node\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name);
+		return;
+	}
+	if (sysctl_createv(NULL, 0, NULL, &node,
+        			0, CTLTYPE_NODE, sc->sc_dv.dv_xname,
+        			SYSCTL_DESCR("twe driver information"),
+        			NULL, 0, NULL, 0,
+				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
+                printf("%s: could not create %s.%s sysctl node\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->sc_dv.dv_xname);
+		return;
+	}
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_STRING, "driver_version",
+        			SYSCTL_DESCR("twe0 driver version"),
+        			NULL, 0, &twever, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create %s.%s.driver_version sysctl\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->sc_dv.dv_xname);
+		return;
+	}
 }
 
 void
@@ -522,7 +566,7 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	if (unit < 0 || unit >= TWE_MAX_UNITS)
 		return (EINVAL);
 
-	/* Find attached units. */ 
+	/* Find attached units. */
 	rv = twe_param_get(sc, TWE_PARAM_UNITSUMMARY,
 	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL, &dtp);
 	if (rv != 0) {
@@ -796,7 +840,7 @@ twe_intr(void *arg)
 	/*
 	 * Command interrupts, signalled when the controller can accept more
 	 * commands.  We don't use this; instead, we try to submit commands
-	 * when we receive them, and when other commands have completed. 
+	 * when we receive them, and when other commands have completed.
 	 * Mask it so we don't get another one.
 	 */
 	if ((status & TWE_STS_CMD_INTR) != 0) {
@@ -1096,7 +1140,7 @@ twe_param_get_4(struct twe_softc *sc, int table_id, int param_id,
 
 /*
  * Execute a TWE_OP_GET_PARAM command.  If a callback function is provided,
- * it will be called with generated context when the command has completed. 
+ * it will be called with generated context when the command has completed.
  * If no callback is provided, the command will be executed synchronously
  * and a pointer to a buffer containing the data returned.
  *
@@ -1224,7 +1268,7 @@ done:
 }
 
 /*
- * Execute a TWE_OP_INIT_CONNECTION command.  Return non-zero on error. 
+ * Execute a TWE_OP_INIT_CONNECTION command.  Return non-zero on error.
  * Must be called with interrupts blocked.
  */
 static int
@@ -1323,6 +1367,29 @@ twe_status_wait(struct twe_softc *sc, u_int32_t status, int timo)
 }
 
 /*
+ * Clear a PCI parity error.
+ */
+static void
+twe_clear_pci_parity_error(struct twe_softc *sc)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x0, TWE_CTL_CLEAR_PARITY_ERROR);
+
+	//FreeBSD: pci_write_config(sc->twe_dev, PCIR_STATUS, TWE_PCI_CLEAR_PARITY_ERROR, 2);
+}
+
+
+/*
+ * Clear a PCI abort.
+ */
+static void
+twe_clear_pci_abort(struct twe_softc *sc)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x0, TWE_CTL_CLEAR_PCI_ABORT);
+
+	//FreeBSD: pci_write_config(sc->twe_dev, PCIR_STATUS, TWE_PCI_CLEAR_PCI_ABORT, 2);
+}
+
+/*
  * Complain if the status bits aren't what we expect.
  */
 static int
@@ -1342,6 +1409,17 @@ twe_status_check(struct twe_softc *sc, u_int status)
 		printf("%s: unexpected status bits: 0x%08x\n",
 		    sc->sc_dv.dv_xname, status & TWE_STS_UNEXPECTED_BITS);
 		rv = -1;
+		if (status & TWE_STS_PCI_PARITY_ERROR) {
+			printf("%s: PCI parity error: Reseat card, move card "
+			       "or buggy device present.\n",
+			       sc->sc_dv.dv_xname);
+			twe_clear_pci_parity_error(sc);
+		}
+		if (status & TWE_STS_PCI_ABORT) {
+			printf("%s: PCI abort, clearing.\n",
+			       sc->sc_dv.dv_xname);
+			twe_clear_pci_abort(sc);
+		}
 	}
 
 	return (rv);
@@ -1369,7 +1447,7 @@ twe_ccb_alloc(struct twe_softc *sc, int flags)
 	struct twe_ccb *ccb;
 	int s;
 
-	s = splbio();	
+	s = splbio();
 	if (__predict_false((flags & TWE_CCB_AEN) != 0)) {
 		/* Use the reserved CCB. */
 		ccb = sc->sc_ccbs;
@@ -1822,7 +1900,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EFAULT;
 			goto done;
 		}
-		error = copyout(param->tp_data, tp->tp_data, 
+		error = copyout(param->tp_data, tp->tp_data,
 		    param->tp_param_size);
 		goto done;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.14.10.1 2005/02/12 18:17:50 yamt Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.14.10.2 2005/03/19 08:35:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.14.10.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.14.10.2 2005/03/19 08:35:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ rcons_cnputc(c)
 {
 	char buf[1];
 	long attr;
-	
+
 	/* Swap in kernel attribute */
 	attr = mydevicep->rc_attr;
 	mydevicep->rc_attr = mydevicep->rc_kern_attr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.13 2003/11/16 20:32:05 oster Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.13.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.13 2003/11/16 20:32:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.13.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.13 2003/11/16 20:32:05 oster Exp $");
 RF_RedFuncs_t rf_pFuncs = {rf_RegularONPFunc, "Regular Old-New P", rf_SimpleONPFunc, "Simple Old-New P"};
 RF_RedFuncs_t rf_pRecoveryFuncs = {rf_RecoveryPFunc, "Recovery P Func", rf_RecoveryPFunc, "Recovery P Func"};
 
-int 
+int
 rf_RegularONPFunc(node)
 	RF_DagNode_t *node;
 {
@@ -66,21 +66,21 @@ rf_RegularONPFunc(node)
    same as simpleONQ func, but the coefficient is always 1
 */
 
-int 
+int
 rf_SimpleONPFunc(node)
 	RF_DagNode_t *node;
 {
 	return (rf_SimpleXorFunc(node));
 }
 
-int 
+int
 rf_RecoveryPFunc(node)
 	RF_DagNode_t *node;
 {
 	return (rf_RecoveryXorFunc(node));
 }
 
-int 
+int
 rf_RegularPFunc(node)
 	RF_DagNode_t *node;
 {
@@ -89,10 +89,10 @@ rf_RegularPFunc(node)
 #endif /* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0) */
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
-static void 
+static void
 QDelta(char *dest, char *obuf, char *nbuf, unsigned length,
     unsigned char coeff);
-static void 
+static void
 rf_InvertQ(unsigned long *qbuf, unsigned long *abuf,
     unsigned length, unsigned coeff);
 
@@ -100,7 +100,7 @@ RF_RedFuncs_t rf_qFuncs = {rf_RegularONQFunc, "Regular Old-New Q", rf_SimpleONQF
 RF_RedFuncs_t rf_qRecoveryFuncs = {rf_RecoveryQFunc, "Recovery Q Func", rf_RecoveryQFunc, "Recovery Q Func"};
 RF_RedFuncs_t rf_pqRecoveryFuncs = {rf_RecoveryPQFunc, "Recovery PQ Func", rf_RecoveryPQFunc, "Recovery PQ Func"};
 
-void 
+void
 rf_PQDagSelect(
     RF_Raid_t * raidPtr,
     RF_IoType_t type,
@@ -221,7 +221,7 @@ rf_PQDagSelect(
    Used as a stop gap info function
 */
 #if 0
-static void 
+static void
 PQOne(raidPtr, nSucc, nAnte, asmap)
 	RF_Raid_t *raidPtr;
 	int    *nSucc;
@@ -231,7 +231,7 @@ PQOne(raidPtr, nSucc, nAnte, asmap)
 	*nSucc = *nAnte = 1;
 }
 
-static void 
+static void
 PQOneTwo(raidPtr, nSucc, nAnte, asmap)
 	RF_Raid_t *raidPtr;
 	int    *nSucc;
@@ -249,7 +249,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQCreateLargeWriteDAG)
 	    rf_RegularPQFunc, RF_FALSE);
 }
 
-int 
+int
 rf_RegularONQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -314,7 +314,7 @@ rf_RegularONQFunc(node)
    raidPtr
 */
 
-int 
+int
 rf_SimpleONQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -364,7 +364,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQCreateSmallWriteDAG)
 
 static void RegularQSubr(RF_DagNode_t *node, char   *qbuf);
 
-static void 
+static void
 RegularQSubr(node, qbuf)
 	RF_DagNode_t *node;
 	char   *qbuf;
@@ -408,7 +408,7 @@ RegularQSubr(node, qbuf)
 
 static void DegrQSubr(RF_DagNode_t *node);
 
-static void 
+static void
 DegrQSubr(node)
 	RF_DagNode_t *node;
 {
@@ -470,7 +470,7 @@ DegrQSubr(node)
    corrupt the input for the q calculation.
 */
 
-int 
+int
 rf_RegularPQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -478,7 +478,7 @@ rf_RegularPQFunc(node)
 	return (rf_RegularXorFunc(node));	/* does the wakeup */
 }
 
-int 
+int
 rf_RegularQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -507,7 +507,7 @@ rf_RegularQFunc(node)
    We treat this identically to the regularPQ case, ignoring the failedPDA extra argument.
 */
 
-void 
+void
 rf_Degraded_100_PQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -550,7 +550,7 @@ rf_Degraded_100_PQFunc(node)
  *
  *
  */
-int 
+int
 rf_RecoveryQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -590,7 +590,7 @@ rf_RecoveryQFunc(node)
 	return (0);
 }
 
-int 
+int
 rf_RecoveryPQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -611,7 +611,7 @@ rf_RecoveryPQFunc(node)
    This is a "simple style" recovery func.
 */
 
-void 
+void
 rf_PQ_DegradedWriteQFunc(node)
 	RF_DagNode_t *node;
 {
@@ -669,7 +669,7 @@ rf_PQ_DegradedWriteQFunc(node)
    length in bytes;
 */
 
-void 
+void
 rf_IncQ(dest, buf, length, coeff)
 	unsigned long *dest;
 	unsigned long *buf;
@@ -740,7 +740,7 @@ rf_IncQ(dest, buf, length, coeff)
    length in bytes.
 */
 
-static void 
+static void
 QDelta(
     char *dest,
     char *obuf,
@@ -823,7 +823,7 @@ QDelta(
  *
  * Everything about this seems wrong.
  */
-void 
+void
 rf_PQ_recover(pbuf, qbuf, abuf, bbuf, length, coeff_a, coeff_b)
 	unsigned long *pbuf;
 	unsigned long *qbuf;
@@ -888,7 +888,7 @@ rf_PQ_recover(pbuf, qbuf, abuf, bbuf, length, coeff_a, coeff_b)
 
 
 
-static void 
+static void
 rf_InvertQ(
     unsigned long *qbuf,
     unsigned long *abuf,

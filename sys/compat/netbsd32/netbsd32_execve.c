@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.18.10.1 2005/01/25 12:59:57 yamt Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.18.10.2 2005/03/19 08:33:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.18.10.1 2005/01/25 12:59:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.18.10.2 2005/03/19 08:33:43 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -65,7 +65,7 @@ extern u_int exec_maxhdrsz;
 extern struct lock exec_lock;
 #endif
 
-/* 
+/*
  * Need to completly reimplement this syscall due to argument copying.
  */
 /* ARGSUSED */
@@ -195,7 +195,7 @@ netbsd32_execve2(l, uap, retval)
 			goto bad;
 		if (!sp)
 			break;
-		if ((error = copyinstr((char *)(u_long)sp, dp, 
+		if ((error = copyinstr((char *)(u_long)sp, dp,
 				       len, &len)) != 0) {
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
@@ -215,7 +215,7 @@ netbsd32_execve2(l, uap, retval)
 				goto bad;
 			if (!sp)
 				break;
-			if ((error = copyinstr((char *)(u_long)sp, 
+			if ((error = copyinstr((char *)(u_long)sp,
 					       dp, len, &len)) != 0) {
 				if (error == ENAMETOOLONG)
 					error = E2BIG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.42 2004/11/06 07:31:55 christos Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.42.6.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.42 2004/11/06 07:31:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.42.6.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ soo_ioctl(fp, cmd, data, p)
 		return (ifioctl(so, cmd, data, p));
 	if (IOCGROUP(cmd) == 'r')
 		return (rtioctl(cmd, data, p));
-	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
+	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, p));
 }
 

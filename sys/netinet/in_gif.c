@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.36.6.1 2005/02/12 18:17:54 yamt Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.36.6.2 2005/03/19 08:36:38 yamt Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.36.6.1 2005/02/12 18:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.36.6.2 2005/03/19 08:36:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -311,7 +311,7 @@ in_gif_input(struct mbuf *m, ...)
 #if NBRIDGE > 0
 	case IPPROTO_ETHERIP:
 		af = AF_LINK;
-		break;	
+		break;
 #endif
 	default:
 		ipstat.ips_nogif++;

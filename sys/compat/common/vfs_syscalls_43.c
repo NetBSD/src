@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.28 2004/08/15 07:19:54 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.28.6.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.28 2004/08/15 07:19:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.28.6.1 2005/03/19 08:33:28 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -231,7 +231,7 @@ compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
 		    sizeof (oub));
 	}
 
-	
+
 	return (error);
 }
 
@@ -466,7 +466,7 @@ unionread:
 				lvp = NULL;
 			}
 		}
-		
+
 		if (lvp != NULLVP) {
 			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
 			VOP_UNLOCK(lvp, 0);

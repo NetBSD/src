@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2004/05/11 10:54:51 drochner Exp $
+	$NetBSD: syscalls.master,v 1.46.6.1 2005/03/19 08:33:31 yamt Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -405,7 +405,7 @@
 200	STD		{ int freebsd_sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	NOARGS		{ int sys___sysctl(int *name, u_int namelen, \
+202	STD		{ int freebsd_sys_sysctl(int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, void *new, \
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.15.10.1 2005/02/12 18:17:51 yamt Exp $	*/
+/*	$NetBSD: event.c,v 1.15.10.2 2005/03/19 08:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.15.10.1 2005/02/12 18:17:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.15.10.2 2005/03/19 08:35:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -185,7 +185,7 @@ filt_evrdetach(struct knote *kn)
 
 static int
 filt_evread(struct knote *kn, long hint)
-{               
+{
 	struct evvar *ev = kn->kn_hook;
 
 	if (ev->ev_get == ev->ev_put)

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.25 2004/03/28 14:27:26 pooka Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.25.10.1 2005/03/19 08:36:41 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.25 2004/03/28 14:27:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.25.10.1 2005/03/19 08:36:41 yamt Exp $");
 
 #include "isdn.h"
 
@@ -211,7 +211,7 @@ void dummy_i4battach(struct device*, struct device *, void *);
 static struct cfdriver i4bcd =
 	{ NULL, "i4b", i4bmatch, dummy_i4battach, DV_DULL,
 	  sizeof(struct cfdriver) };
-struct devsw i4bsw = 
+struct devsw i4bsw =
 	{ &i4bcd,
 	  i4bopen,	i4bclose,	i4bread,	nowrite,
 	  i4bioctl,	i4bselect,	nommap,		nostrat,
@@ -321,12 +321,12 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
 	IF_DEQUEUE(&i4b_rdqueue, m);
 
 	splx(x);
-		
+
 	if(m && m->m_len)
 		error = uiomove(m->m_data, m->m_len, uio);
 	else
 		error = EIO;
-		
+
 	if(m)
 		i4b_Dfreembuf(m);
 
@@ -342,7 +342,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct isdn_l3_driver *d;
 	call_desc_t *cd;
 	int error = 0;
-	
+
 	if(minor(dev))
 		return(ENODEV);
 
@@ -358,9 +358,9 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			mir->cdid = cd->cdid;
 			break;
 		}
-		
+
 		/* connect request, dial out to remote */
-		
+
 		case I4B_CONNECT_REQ:
 		{
 			msg_connect_req_t *mcr;
@@ -368,7 +368,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			if((cd = cd_by_cdid(mcr->cdid)) == NULL)/* get cd */
 			{
-				NDBGL4(L4_ERR, "I4B_CONNECT_REQ ioctl, cdid not found!"); 
+				NDBGL4(L4_ERR, "I4B_CONNECT_REQ ioctl, cdid not found!");
 				error = EINVAL;
 				break;
 			}
@@ -408,13 +408,13 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				cd->aocd_flag = 1;
 			else
 				cd->aocd_flag = 0;
-				
+
 			cd->cunits = 0;
 
 			cd->max_idle_time = 0;	/* this is outgoing */
 
 			cd->dir = DIR_OUTGOING;
-			
+
 			NDBGL4(L4_TIMO, "I4B_CONNECT_REQ times, algorithm=%ld unitlen=%ld idle=%ld earlyhup=%ld",
 					(long)cd->shorthold_data.shorthold_algorithm, (long)cd->shorthold_data.unitlen_time,
 					(long)cd->shorthold_data.idle_time, (long)cd->shorthold_data.earlyhup_time);
@@ -427,7 +427,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			SET_CAUSE_TYPE(cd->cause_in, CAUSET_I4B);
 			SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_NORMAL);
-			
+
 			/*
 			 * If we want a specific channel, check if that
 			 * one is available.
@@ -458,7 +458,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			cd->channelid = mcr->channel;
 
 			cd->isdntxdelay = mcr->txdelay;
-			
+
 			if((GET_CAUSE_VAL(cd->cause_in)) != CAUSE_I4B_NORMAL)
 			{
 				i4b_l4_disconnect_ind(cd);
@@ -470,18 +470,18 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			break;
 		}
-		
+
 		/* connect response, accept/reject/ignore incoming call */
-		
+
 		case I4B_CONNECT_RESP:
 		{
 			msg_connect_resp_t *mcrsp;
-			
+
 			mcrsp = (msg_connect_resp_t *)data;
 
 			if((cd = cd_by_cdid(mcrsp->cdid)) == NULL)/* get cd */
 			{
-				NDBGL4(L4_ERR, "I4B_CONNECT_RESP ioctl, cdid not found!"); 
+				NDBGL4(L4_ERR, "I4B_CONNECT_RESP ioctl, cdid not found!");
 				error = EINVAL;
 				break;
 			}
@@ -497,8 +497,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			cd->shorthold_data.idle_time = 0;
 			cd->shorthold_data.earlyhup_time = 0;
 
-			cd->isdntxdelay = mcrsp->txdelay;			
-			
+			cd->isdntxdelay = mcrsp->txdelay;
+
 			NDBGL4(L4_TIMO, "I4B_CONNECT_RESP max_idle_time set to %ld seconds", (long)cd->max_idle_time);
 
 			d = isdn_find_l3_by_isdnif(cd->isdnif);
@@ -509,18 +509,18 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			d->l3driver->N_CONNECT_RESPONSE(cd, mcrsp->response, mcrsp->cause);
 			break;
 		}
-		
+
 		/* disconnect request, actively terminate connection */
-		
+
 		case I4B_DISCONNECT_REQ:
 		{
 			msg_discon_req_t *mdr;
-			
+
 			mdr = (msg_discon_req_t *)data;
 
 			if((cd = cd_by_cdid(mdr->cdid)) == NULL)/* get cd */
 			{
-				NDBGL4(L4_ERR, "I4B_DISCONNECT_REQ ioctl, cdid %d not found!", mdr->cdid); 
+				NDBGL4(L4_ERR, "I4B_DISCONNECT_REQ ioctl, cdid %d not found!", mdr->cdid);
 				error = EINVAL;
 				break;
 			}
@@ -537,7 +537,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			d->l3driver->N_DISCONNECT_REQUEST(cd, mdr->cause);
 			break;
 		}
-		
+
 		/* controller info request */
 
 		case I4B_CTRL_INFO_REQ:
@@ -545,7 +545,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			msg_ctrl_info_req_t *mcir;
 			struct isdn_l3_driver *d;
 			int isdnif;
-			
+
 			mcir = (msg_ctrl_info_req_t *)data;
 			isdnif = mcir->controller;
 			memset(mcir, 0, sizeof(msg_ctrl_info_req_t));
@@ -563,15 +563,15 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			break;
 		}
-		
+
 		/* dial response */
-		
+
 		case I4B_DIALOUT_RESP:
 		{
 			const struct isdn_l4_driver_functions *drv;
 			msg_dialout_resp_t *mdrsp;
 			void * l4_softc;
-			
+
 			mdrsp = (msg_dialout_resp_t *)data;
 			drv = isdn_l4_get_driver(mdrsp->driver, mdrsp->driver_unit);
 
@@ -581,23 +581,23 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			break;
 		}
-		
+
 		/* update timeout value */
-		
+
 		case I4B_TIMEOUT_UPD:
 		{
 			msg_timeout_upd_t *mtu;
 			int x;
-			
+
 			mtu = (msg_timeout_upd_t *)data;
 
 			NDBGL4(L4_TIMO, "I4B_TIMEOUT_UPD ioctl, alg %d, unit %d, idle %d, early %d!",
 					mtu->shorthold_data.shorthold_algorithm, mtu->shorthold_data.unitlen_time,
-					mtu->shorthold_data.idle_time, mtu->shorthold_data.earlyhup_time); 
+					mtu->shorthold_data.idle_time, mtu->shorthold_data.earlyhup_time);
 
 			if((cd = cd_by_cdid(mtu->cdid)) == NULL)/* get cd */
 			{
-				NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, cdid not found!"); 
+				NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, cdid not found!");
 				error = EINVAL;
 				break;
 			}
@@ -614,11 +614,11 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					     mtu->shorthold_data.idle_time >= 0    &&
 					     mtu->shorthold_data.earlyhup_time >= 0))
 					{
-						NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, invalid args for fix unit algorithm!"); 
+						NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, invalid args for fix unit algorithm!");
 						error = EINVAL;
 					}
 					break;
-	
+
 				case SHA_VARU:
 					/*
 					 * For this algorithm unitlen_time and
@@ -631,13 +631,13 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					     mtu->shorthold_data.idle_time >= 0   &&
 					     mtu->shorthold_data.earlyhup_time == 0))
 					{
-						NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, invalid args for var unit algorithm!"); 
+						NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, invalid args for var unit algorithm!");
 						error = EINVAL;
 					}
 					break;
-	
+
 				default:
-					NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, invalid algorithm!"); 
+					NDBGL4(L4_ERR, "I4B_TIMEOUT_UPD ioctl, invalid algorithm!");
 					error = EINVAL;
 					break;
 			}
@@ -657,9 +657,9 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			splx(x);
 			break;
 		}
-			
+
 		/* soft enable/disable interface */
-		
+
 		case I4B_UPDOWN_IND:
 		{
 			msg_updown_ind_t *mui;
@@ -676,24 +676,24 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			break;
 		}
-		
+
 		/* send ALERT request */
-		
+
 		case I4B_ALERT_REQ:
 		{
 			msg_alert_req_t *mar;
-			
+
 			mar = (msg_alert_req_t *)data;
 
 			if((cd = cd_by_cdid(mar->cdid)) == NULL)
 			{
-				NDBGL4(L4_ERR, "I4B_ALERT_REQ ioctl, cdid not found!"); 
+				NDBGL4(L4_ERR, "I4B_ALERT_REQ ioctl, cdid not found!");
 				error = EINVAL;
 				break;
 			}
 
 			T400_stop(cd);
-			
+
 			d = cd->l3drv;
 			if (d == NULL) {
 				error = EINVAL;
@@ -705,7 +705,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		/* version/release number request */
-		
+
 		case I4B_VR_REQ:
                 {
 			msg_vr_req_t *mvr;
@@ -714,16 +714,16 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			mvr->version = VERSION;
 			mvr->release = REL;
-			mvr->step = STEP;			
+			mvr->step = STEP;
 			break;
 		}
 
 		/* set D-channel protocol for a controller */
-		
+
 		case I4B_PROT_IND:
 		{
 			msg_prot_ind_t *mpi;
-			
+
 			mpi = (msg_prot_ind_t *)data;
 
 			d = isdn_find_l3_by_isdnif(mpi->controller);
@@ -732,7 +732,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 			d->protocol = mpi->protocol;
-			
+
 			break;
 		}
 
@@ -745,7 +745,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				error = ENXIO;
 			break;
 		}
-		
+
 		/* Download request */
 		case I4B_CTRL_DOWNLOAD:
 		{
@@ -785,7 +785,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			{
 				prots2[i].microcode = malloc(prots[i].bytecount, M_DEVBUF, M_WAITOK);
 				copyin(prots[i].microcode, prots2[i].microcode, prots[i].bytecount);
-				prots2[i].bytecount = prots[i].bytecount; 
+				prots2[i].bytecount = prots[i].bytecount;
 			}
 
 			error = d->l3driver->N_DOWNLOAD(
@@ -865,7 +865,7 @@ download_done:
 					goto diag_done;
 				}
 			}
-			
+
 			error = d->l3driver->N_DIAGNOSTICS(d->l1_token, &req);
 
 			if(!error && req.out_param_len)
@@ -874,7 +874,7 @@ download_done:
 diag_done:
 			if(req.in_param)
 				free(req.in_param, M_DEVBUF);
-				
+
 			if(req.out_param)
 				free(req.out_param, M_DEVBUF);
 
@@ -882,12 +882,12 @@ diag_done:
 		}
 
 		/* default */
-		
+
 		default:
 			error = ENOTTY;
 			break;
 	}
-	
+
 	return(error);
 }
 
@@ -900,7 +900,7 @@ PDEVSTATIC int
 i4bselect(dev_t dev, int rw, struct proc *p)
 {
 	int x;
-	
+
 	if(minor(dev))
 		return(ENODEV);
 
@@ -932,7 +932,7 @@ PDEVSTATIC int
 isdnpoll(dev_t dev, int events, struct proc *p)
 {
 	int x;
-	
+
 	if(minor(dev))
 		return(ENODEV);
 
@@ -1024,7 +1024,7 @@ void
 i4bputqueue(struct mbuf *m)
 {
 	int x;
-	
+
 	if(!openflag)
 	{
 		i4b_Dfreembuf(m);
@@ -1032,7 +1032,7 @@ i4bputqueue(struct mbuf *m)
 	}
 
 	x = splnet();
-	
+
 	if(IF_QFULL(&i4b_rdqueue))
 	{
 		struct mbuf *m1;
@@ -1043,7 +1043,7 @@ i4bputqueue(struct mbuf *m)
 
 	IF_ENQUEUE(&i4b_rdqueue, m);
 
-	splx(x);	
+	splx(x);
 
 	if(readflag)
 	{
@@ -1065,7 +1065,7 @@ void
 i4bputqueue_hipri(struct mbuf *m)
 {
 	int x;
-	
+
 	if(!openflag)
 	{
 		i4b_Dfreembuf(m);
@@ -1073,7 +1073,7 @@ i4bputqueue_hipri(struct mbuf *m)
 	}
 
 	x = splnet();
-	
+
 	if(IF_QFULL(&i4b_rdqueue))
 	{
 		struct mbuf *m1;
@@ -1084,7 +1084,7 @@ i4bputqueue_hipri(struct mbuf *m)
 
 	IF_PREPEND(&i4b_rdqueue, m);
 
-	splx(x);	
+	splx(x);
 
 	if(readflag)
 	{

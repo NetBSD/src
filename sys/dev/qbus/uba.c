@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.70 2004/12/14 02:32:03 chs Exp $	   */
+/*	$NetBSD: uba.c,v 1.70.4.1 2005/03/19 08:35:38 yamt Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.70 2004/12/14 02:32:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.70.4.1 2005/03/19 08:35:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -127,7 +127,7 @@ void
 uba_done(struct uba_softc *uh)
 {
 	struct uba_unit *uu;
- 
+
 	while ((uu = SIMPLEQ_FIRST(&uh->uh_resq))) {
 		SIMPLEQ_REMOVE_HEAD(&uh->uh_resq, uu_resq);
 		if ((*uu->uu_ready)(uu) == 0) {

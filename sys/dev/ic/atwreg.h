@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.10 2004/07/23 05:01:29 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.10.8.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -232,7 +232,7 @@
 #define ATW_C_FRCTL_CTX_DATA	BIT(22)		/* 0: set by CSR28
 						 * 1: random
 						 */
-#define ATW_C_FRCTL_RSVFRM	BIT(21)		/* 1: receive "reserved" 
+#define ATW_C_FRCTL_RSVFRM	BIT(21)		/* 1: receive "reserved"
 						 * frames, 0: ignore
 						 * reserved frames
 						 */
@@ -353,7 +353,7 @@
 #define ATW_IER_REIE		BIT(12)		/* RX packet filled its first
 						 * descriptor
 						 */
-#define ATW_IER_RCIE		BIT(6)		/* completed RX */ 
+#define ATW_IER_RCIE		BIT(6)		/* completed RX */
 #define ATW_IER_TDUIE		BIT(2)		/* transmit descriptor
 						 * unavailable
 						 */
@@ -428,7 +428,7 @@
 /* Running - close transmit descriptor */
 #define ATW_TEST0_TS_CLOSE		LSHIFT(7, ATW_TEST0_TS_MASK)
 
-/* ADM8211C/CR registers */ 
+/* ADM8211C/CR registers */
 /* Suspended */
 #define ATW_C_TEST0_TS_SUSPENDED	LSHIFT(4, ATW_TEST0_TS_MASK)
 /* Descriptor write */
@@ -687,7 +687,7 @@
 #define ATW_PAR0_PAB2_MASK	BITS(16, 23)	/* MAC address byte 2 */
 #define ATW_PAR0_PAB3_MASK	BITS(24, 31)	/* MAC address byte 3 */
 
-#define	ATW_C_PAR1_CTD		BITS(16,31)	/* Continuous Tx pattern */ 
+#define	ATW_C_PAR1_CTD		BITS(16,31)	/* Continuous Tx pattern */
 #define ATW_PAR1_PAB5_MASK	BITS(8, 15)	/* MAC address byte 5 */
 #define ATW_PAR1_PAB4_MASK	BITS(0, 7)	/* MAC address byte 4 */
 
@@ -891,8 +891,8 @@
 
 /* Function Event/Status registers */
 
-#define ATW_FER_INTR		BIT(15)	/* interrupt: set regardless of mask */ 
-#define ATW_FER_GWAKE		BIT(4)	/* general wake-up: set regardless of mask */ 
+#define ATW_FER_INTR		BIT(15)	/* interrupt: set regardless of mask */
+#define ATW_FER_GWAKE		BIT(4)	/* general wake-up: set regardless of mask */
 
 #define ATW_FEMR_INTR_EN	BIT(15)	/* enable INTA# */
 #define ATW_FEMR_WAKEUP_EN	BIT(14)	/* enable wake-up */
@@ -950,7 +950,7 @@
 #define ATW_SR_CHECKSUM		(0x7e/2)	/* for data 0x00-0x7d */
 #define ATW_SR_CIS		(0x80/2)	/* Cardbus CIS */
 
-/* Tx descriptor */ 
+/* Tx descriptor */
 struct atw_txdesc {
 	u_int32_t	at_ctl;
 #define at_stat at_ctl
@@ -984,7 +984,7 @@ struct atw_txdesc {
 #define ATW_TXFLAG_TBS2_MASK	BITS(23,12)	/* at_buf2 byte count */
 #define ATW_TXFLAG_TBS1_MASK	BITS(11,0)	/* at_buf1 byte count */
 
-/* Rx descriptor */ 
+/* Rx descriptor */
 struct atw_rxdesc {
     u_int32_t	ar_stat;
     u_int32_t	ar_ctl;
@@ -1000,7 +1000,7 @@ struct atw_rxdesc {
 #define ATW_RXCTL_RBS1_MASK	BITS(11,0)	/* ar_buf1 byte count */
 
 #define ATW_RXSTAT_OWN		BIT(31)		/* 1: NIC may fill descriptor */
-#define ATW_RXSTAT_ES		BIT(30)		/* error summary, 0 on 
+#define ATW_RXSTAT_ES		BIT(30)		/* error summary, 0 on
 						 * success
 						 */
 #define ATW_RXSTAT_SQL		BIT(29)		/* has signal quality (?) */

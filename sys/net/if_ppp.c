@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.95 2004/12/05 15:03:13 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.95.6.1 2005/03/19 08:36:31 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.95 2004/12/05 15:03:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.95.6.1 2005/03/19 08:36:31 yamt Exp $");
 
 #include "ppp.h"
 
@@ -356,7 +356,7 @@ pppalloc(pid)
     int i;
 
     simple_lock(&ppp_list_mutex);
-    for (scf = LIST_FIRST(&ppp_softc_list); scf != NULL; 
+    for (scf = LIST_FIRST(&ppp_softc_list); scf != NULL;
 	scf = LIST_NEXT(scf, sc_iflist)) {
 	if (scf->sc_xfer == pid) {
 	    scf->sc_xfer = 0;
@@ -1167,12 +1167,12 @@ ppp_dequeue(sc)
      * Grab a packet to send: first try the fast queue, then the
      * normal queue.
      */
-    s = splnet();    
+    s = splnet();
     IF_DEQUEUE(&sc->sc_fastq, m);
     if (m == NULL)
 	IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
     splx(s);
-    
+
     if (m == NULL)
 	return NULL;
 
@@ -1289,7 +1289,7 @@ pppnetisr(void)
 {
 	struct ppp_softc *sc;
 
-	for (sc = LIST_FIRST(&ppp_softc_list); sc != NULL; 
+	for (sc = LIST_FIRST(&ppp_softc_list); sc != NULL;
 	    sc = LIST_NEXT(sc, sc_iflist))
 		pppintr(sc);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.7 2004/05/25 01:36:37 mhitch Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.7.6.1 2005/03/19 08:36:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2004/05/25 01:36:37 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7.6.1 2005/03/19 08:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -77,7 +77,7 @@ static struct sysctllog *_union_log;
  */
 int
 union_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -87,7 +87,7 @@ union_lkmentry(lkmtp, cmd, ver)
 
 int
 load(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 
@@ -97,7 +97,7 @@ load(lkmtp, cmd)
 
 int
 unload(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 

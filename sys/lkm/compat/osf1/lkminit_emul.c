@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.5 2001/11/12 23:23:04 lukem Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.5.26.1 2005/03/19 08:36:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5 2001/11/12 23:23:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5.26.1 2005/03/19 08:36:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -63,7 +63,7 @@ MOD_COMPAT("compat_osf1", -1, &emul_osf1);
  */
 int
 compat_osf1_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

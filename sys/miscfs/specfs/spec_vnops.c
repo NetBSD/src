@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.79 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.79.6.1 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.79 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.79.6.1 2005/03/19 08:36:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -846,7 +846,7 @@ spec_pathconf(v)
 	/* NOTREACHED */
 }
 
-/* 
+/*
  * Advisory record locking support.
  */
 int

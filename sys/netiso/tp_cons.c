@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.18 2004/04/21 23:19:49 matt Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.18.6.1 2005/03/19 08:36:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.18 2004/04/21 23:19:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.18.6.1 2005/03/19 08:36:48 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -336,7 +336,7 @@ tpcons_output_dg(struct mbuf *m0, ...)
 	va_end(ap);
 
 	return tpcons_output(m0, datalen,
-			     ((struct pklcd *) chan)->lcd_upnext, 
+			     ((struct pklcd *) chan)->lcd_upnext,
 			     0);
 }
 #else

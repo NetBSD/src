@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyio.h,v 1.1 2001/07/30 19:59:06 ad Exp $	*/
+/*	$NetBSD: mlyio.h,v 1.1.34.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  * management tools.
  *
  * The member naming here is consistent with the Linux driver, with which this
- * interface is basically compatible. 
+ * interface is basically compatible.
  */
 
 #ifndef _PCI_MLYIO_H_

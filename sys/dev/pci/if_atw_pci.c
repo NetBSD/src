@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.8 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.8.6.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,11 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.8 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.8.6.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.8 2004/08/21 23:48:33 thorpej Exp $
 #include <sys/device.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -291,7 +291,7 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pc, psc->psc_ih); 
+	intrstr = pci_intr_string(pc, psc->psc_ih);
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    atw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {

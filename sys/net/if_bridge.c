@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.27.6.1 2005/02/12 18:17:53 yamt Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.27.6.2 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,12 +35,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.27.6.1 2005/02/12 18:17:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.27.6.2 2005/03/19 08:36:31 yamt Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -88,19 +88,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.27.6.1 2005/02/12 18:17:53 yamt Exp 
 #include "bpfilter.h"
 #include "gif.h"
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/proc.h> 
+#include <sys/proc.h>
 #include <sys/pool.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
@@ -357,7 +357,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_brtmax = BRIDGE_RTABLE_MAX;
 	sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
-	sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;   
+	sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;
 	sc->sc_bridge_hello_time = BSTP_DEFAULT_HELLO_TIME;
 	sc->sc_bridge_forward_delay = BSTP_DEFAULT_FORWARD_DELAY;
 	sc->sc_bridge_priority = BSTP_DEFAULT_BRIDGE_PRIORITY;
@@ -944,7 +944,7 @@ bridge_ioctl_gfd(struct bridge_softc *sc, void *arg)
 int
 bridge_ioctl_sfd(struct bridge_softc *sc, void *arg)
 {
-	struct ifbrparam *param = arg; 
+	struct ifbrparam *param = arg;
 
 	if (param->ifbrp_fwddelay == 0)
 		return (EINVAL);
@@ -1013,7 +1013,7 @@ bridge_ioctl_gfilt(struct bridge_softc *sc, void *arg)
 int
 bridge_ioctl_sfilt(struct bridge_softc *sc, void *arg)
 {
-	struct ifbrparam *param = arg; 
+	struct ifbrparam *param = arg;
 	uint32_t nflags, oflags;
 
 	if (param->ifbrp_filter & ~IFBF_FILT_MASK)
@@ -1979,9 +1979,9 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	/*
 	 * Check for SNAP/LLC.
 	 */
-        if (ether_type < ETHERMTU) { 
+        if (ether_type < ETHERMTU) {
                 struct llc *llc = (struct llc *)(eh1 + 1);
-                            
+
                 if ((*mp)->m_len >= ETHER_HDR_LEN + 8 &&
                     llc->llc_dsap == LLC_SNAP_LSAP &&
                     llc->llc_ssap == LLC_SNAP_LSAP &&
@@ -1989,7 +1989,7 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
                 	ether_type = htons(llc->llc_un.type_snap.ether_type);
 			snap = 1;
                 }
-        }       
+        }
 
 	/*
 	 * If we're trying to filter bridge traffic, don't look at anything
@@ -2108,7 +2108,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
 			ipstat.ips_toosmall++;
 			goto bad;
-		} 
+		}
 	}
 	ip = mtod(m, struct ip *);
 	if (ip == NULL) goto bad;

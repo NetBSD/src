@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.77 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.77.6.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,11 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.77 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.77.6.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.77 2004/08/21 23:48:33 thorpej Exp 
 #include <sys/device.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -912,7 +912,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 			if (!sc->sc_srom[20] && !sc->sc_srom[21] &&
 			    !sc->sc_srom[22]) {
 				prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
-			} else 
+			} else
 #endif
 			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
 		}
@@ -962,7 +962,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		intrstr = pci_intr_string(pc, ih); 
+		intrstr = pci_intr_string(pc, ih);
 		psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET,
 		    (psc->sc_flags & TULIP_PCI_SHAREDINTR) ?
 		    tlp_pci_shared_intr : tlp_intr, sc);
@@ -994,7 +994,7 @@ tlp_pci_shared_intr(void *arg)
 	     slave != NULL;
 	     slave = LIST_NEXT(slave, sc_intrq))
 		rv |= tlp_intr(&slave->sc_tulip);
-	
+
 	return (rv);
 }
 

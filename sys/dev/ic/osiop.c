@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.20 2005/01/02 12:22:18 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.20.4.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.20 2005/01/02 12:22:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.20.4.1 2005/03/19 08:34:03 yamt Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -158,6 +158,7 @@ int osiop_reset_delay = 250;	/* delay after reset, in milliseconds */
 #define DEBUG_CMD	0x20
 #define DEBUG_ALL	0xff
 int osiop_debug = 0; /*DEBUG_ALL;*/
+
 int osiopsync_debug = 0;
 int osiopdma_hits = 1;
 int osiopstarts = 0;
@@ -374,7 +375,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	int err, flags, s;
 
 	sc = (struct osiop_softc *)chan->chan_adapter->adapt_dev;
-	
+
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
@@ -413,7 +414,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		err = bus_dmamap_load(sc->sc_dmat, acb->cmddma,
 		    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
 		if (err) {
-			printf("%s: unable to load cmd DMA map: %d",
+			printf("%s: unable to load cmd DMA map: %d\n",
 			    sc->sc_dev.dv_xname, err);
 			xs->error = XS_DRIVER_STUFFUP;
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
@@ -430,7 +431,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (err) {
-				printf("%s: unable to load data DMA map: %d",
+				printf("%s: unable to load data DMA map: %d\n",
 				    sc->sc_dev.dv_xname, err);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
@@ -481,7 +482,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			 * If we're not going to negotiate, send the
 			 * notification now, since it won't happen later.
 			 */
-			if (ti->state == NEG_DONE) 
+			if (ti->state == NEG_DONE)
 				osiop_update_xfer_mode(sc, xm->xm_target);
 
 			return;
@@ -851,6 +852,8 @@ osiop_reset(struct osiop_softc *sc)
 	    | OSIOP_CTEST0_BTD | OSIOP_CTEST0_EAN);
 	osiop_write_1(sc, OSIOP_CTEST7,
 	    osiop_read_1(sc, OSIOP_CTEST7) | sc->sc_ctest7);
+	osiop_write_1(sc, OSIOP_CTEST4,
+	    osiop_read_1(sc, OSIOP_CTEST4) | sc->sc_ctest4);
 
 	/* will need to re-negotiate sync xfers */
 	for (i = 0; i < OSIOP_NTGT; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.94 2005/01/09 20:25:26 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.94.4.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.94 2005/01/09 20:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.94.4.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ sys_ptrace(l, v, retval)
 		if (!write)
 			*retval = tmp;
 		return (error);
-		
+
 	case  PT_IO:
 		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
 		if (error)
@@ -357,7 +357,7 @@ sys_ptrace(l, v, retval)
 			int len = SCARG(uap, data);
 			if (len >= MAXPATHLEN)
 				return EINVAL;
-			dst = malloc(len + 1, M_TEMP, M_WAITOK); 
+			dst = malloc(len + 1, M_TEMP, M_WAITOK);
 			if ((error = copyin(path, dst, len)) != 0) {
 				free(dst, M_TEMP);
 				return error;
@@ -736,7 +736,7 @@ process_domem(curp, p, uio)
 	vm = p->p_vmspace;
 
 	simple_lock(&vm->vm_map.ref_lock);
-	if ((p->p_flag & P_WEXIT) || vm->vm_refcnt < 1) 
+	if ((p->p_flag & P_WEXIT) || vm->vm_refcnt < 1)
 		error = EFAULT;
 	if (error == 0)
 		p->p_vmspace->vm_refcnt++;  /* XXX */
@@ -796,6 +796,6 @@ process_checkioperm(p, t)
 	 */
 	if (!proc_isunder(t, p))
 		return (EPERM);
-	
+
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.37 2005/01/16 11:36:54 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.37.4.1 2005/03/19 08:36:35 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.37 2005/01/16 11:36:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.37.4.1 2005/03/19 08:36:35 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.37 2005/01/16 11:36:54 dyoung 
 #endif /* __NetBSD__ */
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.37 2005/01/16 11:36:54 dyoung 
 #ifdef __FreeBSD__
 #include <machine/atomic.h>
 #endif
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.37 2005/01/16 11:36:54 dyoung 
 #endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #ifdef __FreeBSD__
 #include <netinet/if_ether.h>
 #else
@@ -151,7 +151,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	 * Also do not process frames w/o i_addr2 any further.
 	 * XXX may want to include the CRC
 	 */
-	if (ic->ic_opmode == IEEE80211_M_MONITOR || 
+	if (ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    m->m_pkthdr.len < sizeof(struct ieee80211_frame_min))
 		goto out;
 
@@ -214,7 +214,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		/* turn off power save mode, dequeue stored packets */
 
 		ni->ni_pwrsave = 0;
-		if (ic->ic_set_tim) 
+		if (ic->ic_set_tim)
 			ic->ic_set_tim(ic, ni->ni_associd, 0);
 
 		if (ifp->if_flags & IFF_DEBUG)
@@ -1150,7 +1150,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 * refcnt.  Otherwise we want to hold the reference for
 		 * ibss neighbors so the nodes don't get released prematurely.
 		 * Anything else can be discarded (XXX and should be handled
-		 * above so we don't do so much work). 
+		 * above so we don't do so much work).
 		 */
 		if (ic->ic_opmode == IEEE80211_M_IBSS || (is_new &&
 		    ISPROBE(subtype))) {
@@ -1551,13 +1551,13 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	}
 	wh = mtod(m, struct ieee80211_frame *);
 
-	/* 
+	/*
 	 * If this is the last packet, turn off the TIM fields.
 	 * If there are more packets, set the more packets bit.
 	 */
 
 	if (IF_IS_EMPTY(&ni->ni_savedq)) {
-		if (ic->ic_set_tim) 
+		if (ic->ic_set_tim)
 			ic->ic_set_tim(ic, ni->ni_associd, 0);
 	} else {
 		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;

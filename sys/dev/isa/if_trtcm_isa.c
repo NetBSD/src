@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.6.6.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.6.6.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -21,7 +21,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.6.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.6.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -75,7 +75,7 @@ void	trtcm_isa_mediastatus(struct tr_softc *, struct ifmediareq *);
 
 /*
  * TODO:
- * 
+ *
  * if_media handling in the 3com case
  * mediachange() and mediastatus() function
  * certain newer cards can set their speed on the fly via

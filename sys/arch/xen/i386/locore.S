@@ -1,5 +1,5 @@
-/*	$NetBSD: locore.S,v 1.8.4.1 2005/02/13 10:20:49 yamt Exp $	*/
-/*	NetBSD: locore.S,v 1.26 2004/04/12 13:17:46 yamt Exp 	*/
+/*	$NetBSD: locore.S,v 1.8.4.2 2005/03/19 08:33:21 yamt Exp $	*/
+/*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -112,12 +112,12 @@
 #include <machine/asm.h>
 
 #if defined(MULTIPROCESSOR)
-	
+
 #define SET_CURLWP(lwp,cpu)				\
 	movl	CPUVAR(SELF),cpu		; 	\
 	movl	lwp,CPUVAR(CURLWP)	;	\
 	movl	cpu,L_CPU(lwp)
-	
+
 #else
 
 #define SET_CURLWP(lwp,tcpu)		movl	lwp,CPUVAR(CURLWP)
@@ -125,7 +125,7 @@
 
 #endif
 
-#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
+#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
 
 #define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
@@ -154,26 +154,20 @@
 #ifdef MULTIPROCESSOR
 #include <machine/i82489reg.h>
 #endif
-	
-/*
- * PTmap is recursive pagemap at top of virtual address space.
- * Within PTmap, the page directory can be found (third indirection).
- *
- * XXX 4 == sizeof pde
- */
-	.set	_C_LABEL(PTmap),(PDSLOT_PTE << PDSHIFT)
-	.set	_C_LABEL(PTD),(_C_LABEL(PTmap) + PDSLOT_PTE * PAGE_SIZE)
-	.set	_C_LABEL(PTDpde),(_C_LABEL(PTD) + PDSLOT_PTE * 4)
+
+/* This shouldn't conflict with a macro of the same name defined in pmap.h */ 
+#define PTE_BASE	(PDSLOT_PTE << PDSHIFT)
 
 /*
- * APTmap, APTD is the alternate recursive pagemap.
- * It's used when modifying another process's page tables.
- *
- * XXX 4 == sizeof pde
+ * Xen guest identifier and loader selection
  */
-	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * PAGE_SIZE)
-	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
+.section __xen_guest
+	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
+	.ascii	",LOADER=generic"
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+	.ascii	",BSD_SYMTAB"
+#endif
+	.byte	0
 
 
 /*
@@ -182,19 +176,19 @@
 	.data
 
 	.globl	_C_LABEL(cpu)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
+	.globl	_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 #ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
 #endif
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
 	.globl	_C_LABEL(idt)
 #endif
-	.globl	_C_LABEL(lapic_tpr)	
-	
+	.globl	_C_LABEL(lapic_tpr)
+
 #if NLAPIC > 0
 #ifdef __ELF__
 	.align	PAGE_SIZE
@@ -204,27 +198,26 @@
 	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
 _C_LABEL(local_apic):
 	.space	LAPIC_ID
-_C_LABEL(lapic_id):	
+_C_LABEL(lapic_id):
 	.long	0x00000000
 	.space  LAPIC_TPRI-(LAPIC_ID+4)
-_C_LABEL(lapic_tpr):		
+_C_LABEL(lapic_tpr):
 	.space  LAPIC_PPRI-LAPIC_TPRI
-_C_LABEL(lapic_ppr):		
+_C_LABEL(lapic_ppr):
 	.space	LAPIC_ISR-LAPIC_PPRI
 _C_LABEL(lapic_isr):
 	.space	PAGE_SIZE-LAPIC_ISR
 #else
-_C_LABEL(lapic_tpr):	
+_C_LABEL(lapic_tpr):
 	.long 0
 #endif
-	
+
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
-_C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
-_C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
+_C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
 #else
@@ -260,22 +253,14 @@ start:
 
 	movl	%esi,%ebx		# save start_info pointer
 
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	/* Save the symbol locations. */
-/* XXX assym.h */
-#define MOD_START   20
-#define MOD_LEN     24
-	movl	MOD_START(%ebx),%esi
-	addl	MOD_LEN(%ebx),%esi
-	movl	%esi,RELOC(esym)
-#endif
-
         /* Clear BSS first so that there are no surprises... */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
 	subl	%edi,%ecx
 	rep stosb
+
+	movl	%ebx,RELOC(avail_start)
 
 	/* Copy the necessary stuff from start_info structure. */
         /* We need to copy shared_info early, so that sti/cli work */
@@ -311,7 +296,7 @@ start:
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack 
+ * text | data | bss | [syms] | page dir | proc0 kstack
  *			      0          1       2      3
  */
 #define	PROC0PDIR	((0)              * PAGE_SIZE)
@@ -320,19 +305,9 @@ start:
 #define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkpde * PAGE_SIZE */
 
 	/* Find end of kernel image. */
-	movl	$RELOC(end),%edi
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	/* Save the symbols (if loaded). */
-	movl	RELOC(esym),%eax
-	testl	%eax,%eax
-	jz	1f
-	movl	%eax,%edi
-1:
-#endif
+	movl	RELOC(avail_start),%edi
 	/* Calculate where to start the bootstrap tables. */
-	movl	%edi,%esi			# edi = esym ? esym : end
-	addl	$PGOFSET,%esi			# page align up
-	andl	$~PGOFSET,%esi
+	movl	%edi,%esi
 
 	/*
 	 * Calculate the size of the kernel page table directory, and
@@ -354,7 +329,7 @@ start:
 	addl	%esi,%ecx			# end of tables
 	movl	%ecx,RELOC(gdt)
 	addl	$PAGE_SIZE,%ecx
-	movl	%ecx,RELOC(xpmap_phys_to_machine_mapping)
+	movl	%ecx,RELOC(avail_start)
 	subl	%edi,%ecx			# size of tables
 	shrl	$2,%ecx
 	xorl	%eax,%eax
@@ -380,7 +355,7 @@ start:
 	/* Calculate end of text segment, rounded to a page. */
 	leal	(RELOC(etext)+PGOFSET),%edx
 	andl	$~PGOFSET,%edx
-	
+
 	/* Skip over the first 1MB. */
 	movl	$KERNTEXTOFF,%eax
 	movl	%eax,%ecx
@@ -395,16 +370,8 @@ start:
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
-/* XXX assym.h */
-#define NR_PAGES 0
 	/* Map the data, BSS, and bootstrap tables read-write. */
-	movl	$RELOC(start_info_union),%eax
-	movl	NR_PAGES(%eax),%eax
-	shll	$2,%eax
-	movl	RELOC(xpmap_phys_to_machine_mapping),%ecx
-	addl	%eax,%ecx
-	addl	$PGOFSET,%ecx			# page align up
-	andl	$~PGOFSET,%ecx
+	movl	RELOC(avail_start),%ecx
 						    # end of tables
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
@@ -427,21 +394,15 @@ start:
 	leal	(PROC0PDIR+PG_V/*|PG_KW*/)(%esi),%eax	# pte for ptd
 	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
 
-	/* Save phys. addr of PTD, for libkvm. */
-	movl	%esi,RELOC(PTDpaddr)
+	/* Save phys. addr of PDP, for libkvm. */
+	movl	%esi,RELOC(PDPpaddr)
 
     	call	xpmap_init
 
 	/* cr0 is 0x8005003b */
 
 	/* Relocate atdevbase. */
-	movl	$_C_LABEL(start_info_union),%edx
-	movl	NR_PAGES(%edx),%edx
-	shll	$2,%edx
-	movl	_C_LABEL(xpmap_phys_to_machine_mapping),%eax
-	addl	%eax,%edx
-	addl	$PGOFSET,%edx			# page align up
-	andl	$~PGOFSET,%edx
+	movl	_C_LABEL(avail_start),%edx
 	movl	%edx,_C_LABEL(HYPERVISOR_shared_info)
 	addl	$PAGE_SIZE,%edx			# shared_inf
 	movl	%edx,_C_LABEL(atdevbase)
@@ -670,7 +631,7 @@ ENTRY(i386_copyout)
 	pushl	%esi
 	pushl	%edi
 	pushl	$0
-	
+
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
@@ -710,9 +671,9 @@ ENTRY(i386_copyout)
 	movl	$2f,PCB_ONFAULT(%edx)
 
 1:	/* Check PTE for each page. */
-	testb	$PG_RW,_C_LABEL(PTmap)(,%edi,4)
+	testb	$PG_RW,PTE_BASE(,%edi,4)
 	jz	2f
-	
+
 4:	incl	%edi
 	decl	%ecx
 	jns	1b
@@ -720,7 +681,7 @@ ENTRY(i386_copyout)
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
 	jmp	3f
-	
+
 2:	/* Simulate a trap. */
 	pushl	%ecx
 	movl	%edi,%eax
@@ -760,7 +721,7 @@ ENTRY(i486_copyout)
 	pushl	%esi
 	pushl	%edi
 	pushl	$0
-	
+
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
@@ -815,7 +776,7 @@ ENTRY(i386_copyin)
 	GET_CURPCB(%eax)
 	pushl	$0
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
-	
+
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
@@ -920,7 +881,7 @@ ENTRY(copyoutstr)
 	movl	%edi,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	2f
 
 6:	/* Simulate a trap. */
@@ -968,6 +929,7 @@ ENTRY(copyoutstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1022,6 +984,7 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1130,7 +1093,7 @@ ENTRY(fuword)
 	movl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
-	
+
 /*
  * int fusword(const void *uaddr);
  * Fetch a short from the user's address space.
@@ -1147,7 +1110,7 @@ ENTRY(fusword)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
-	
+
 /*
  * int fuswintr(const void *uaddr);
  * Fetch a short from the user's address space.  Can be called during an
@@ -1167,7 +1130,7 @@ ENTRY(fuswintr)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
-	
+
 /*
  * int fubyte(const void *uaddr);
  * Fetch a byte from the user's address space.
@@ -1236,7 +1199,7 @@ ENTRY(suword)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 3:	/* Simulate a trap. */
@@ -1260,7 +1223,7 @@ ENTRY(suword)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
-	
+
 /*
  * int susword(void *uaddr, short x);
  * Store a short in the user's address space.
@@ -1284,7 +1247,7 @@ ENTRY(susword)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 3:	/* Simulate a trap. */
@@ -1334,7 +1297,7 @@ ENTRY(suswintr)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 	/* Simulate a trap. */
@@ -1367,12 +1330,12 @@ ENTRY(subyte)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-	GET_CURPCB(%eax)	
+	GET_CURPCB(%eax)
 	movl	$3f,PCB_ONFAULT(%eax)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 3:	/* Simulate a trap. */
@@ -1477,9 +1440,9 @@ NENTRY(switch_error)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
- *	
+ *
  * Note that the stack frame layout is known to "struct switchframe"
- * in <machine/frame.h> and to the code in cpu_fork() which initializes 
+ * in <machine/frame.h> and to the code in cpu_fork() which initializes
  * it for a new lwp.
  */
 ENTRY(cpu_switch)
@@ -1494,7 +1457,7 @@ ENTRY(cpu_switch)
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
 2:	.asciz	"not splsched() in cpu_switch!"
-1:	
+1:
 #endif /* DEBUG */
 
 	movl	16(%esp),%esi		# current
@@ -1571,8 +1534,8 @@ ENTRY(cpu_switch)
 
 	xorl	%esi,%esi
 	STI(%eax)
-idle_unlock:	
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
+idle_unlock:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Interrupts are okay again. */
@@ -1580,7 +1543,7 @@ idle_unlock:
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	addl	$4,%esp
 	jmp	idle_start
-idle_zero:		
+idle_zero:
 	STIC(%eax)
     	jz	4f
 	call	_C_LABEL(stipending)
@@ -1600,6 +1563,9 @@ idle_loop:
 	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
 	testl	%ecx,%ecx
 	jnz	idle_zero
+	call	_C_LABEL(idle_block)
+	cmpl	$0,_C_LABEL(sched_whichqs)
+	jnz	idle_exit
 	STIC(%eax)
     	jz	4f
 	call	_C_LABEL(stipending)
@@ -1614,14 +1580,14 @@ idle_loop:
 	movl	$__SCHEDOP_yield,%ebx
 	TRAP_INSTR
 NENTRY(mpidle)
-idle_start:	
+idle_start:
 	CLI(%eax)
 	cmpl	$0,_C_LABEL(sched_whichqs)
 	jz	idle_loop
-idle_exit:	
+idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	STI(%eax)
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)
 #endif
 	movl	_C_LABEL(sched_whichqs),%ecx
@@ -1635,10 +1601,10 @@ idle_exit:
 	movl	%ecx,_C_LABEL(xen_once)
 	popl	%ecx
 #endif
-switch_dequeue:		
-	/* 
+switch_dequeue:
+	/*
 	 * we're running at splhigh(), but it's otherwise okay to take
-	 * interrupts here. 
+	 * interrupts here.
 	 */
 	STI(%edi)
 	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
@@ -1754,12 +1720,15 @@ switch_exited:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call    _C_LABEL(sched_unlock_idle)
 #endif
+	cmpl	$0,CPUVAR(IPENDING)
+	jz	3f
 	pushl	$IPL_NONE		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	addl	$4,%esp
+3:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
 
 	movl	%ebx,%eax
@@ -1826,8 +1795,8 @@ ENTRY(cpu_switchto)
 
 /*
  * void cpu_exit(struct lwp *l)
- * Switch to the appropriate idle context (lwp0's if uniprocessor; the CPU's 
- * if multiprocessor) and deallocate the address space and kernel stack for p. 
+ * Switch to the appropriate idle context (lwp0's if uniprocessor; the CPU's
+ * if multiprocessor) and deallocate the address space and kernel stack for p.
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
  */
 #ifndef MULTIPROCESSOR
@@ -1883,7 +1852,7 @@ ENTRY(cpu_exit)
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = p->p_addr
-  
+
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
@@ -1927,7 +1896,7 @@ syscall1:
 #ifdef DDB
 	int	$3
 #endif
-1:	
+1:
 #endif /* DIAGNOSTIC */
 	movl	CPUVAR(CURLWP),%edx
 	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
@@ -1935,7 +1904,7 @@ syscall1:
 	pushl	%esp
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 	addl	$4,%esp
-syscall_checkast:
+.Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
 	CHECK_ASTPENDING(%eax)
@@ -1947,7 +1916,7 @@ syscall_checkast:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	jmp	syscall_checkast
+	jmp	.Lsyscall_checkast
 1:	STI(%eax)
 	CHECK_DEFERRED_SWITCH(%eax)
 	jnz	9f
@@ -1966,11 +1935,11 @@ syscall_checkast:
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"	
-6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"     
+5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
+6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
 9:	call    _C_LABEL(pmap_load)
-	jmp     syscall_checkast        /* re-check ASTs */
+	jmp     .Lsyscall_checkast        /* re-check ASTs */
 
 #if NNPX > 0
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.4 2004/09/29 04:45:26 sekiya Exp $	*/
+/*	$NetBSD: memset.S,v 1.4.6.1 2005/03/19 08:36:21 yamt Exp $	*/
 #include <machine/cdefs.h>
 #include <mips/asm.h>
 #include <machine/endian.h>
@@ -6,10 +6,10 @@
 #if defined(_LP64)
 #define ADDU    daddu
 #define SUBU    dsubu
-#else   
-#define ADDU    addu    
+#else
+#define ADDU    addu
 #define SUBU    subu
-#endif 
+#endif
 
 	.set	noreorder
 
@@ -36,7 +36,7 @@ LEAF(memset)
 1:
 	and	v1, a2, 3		# compute number of whole words left
 	SUBU	t0, a2, v1
-	SUBU	a2, a2, t0 
+	SUBU	a2, a2, t0
 	ADDU	t0, t0, a0		# compute ending address
 2:
 	ADDU	a0, a0, 4		# clear words
@@ -45,7 +45,7 @@ LEAF(memset)
 	nop
 	nop
 	nop
-#endif	
+#endif
 	bne	a0, t0, 2b		#  unrolling loop does not help
 	sw	t1, -4(a0)		#  since we are limited by memory speed
 
@@ -54,12 +54,12 @@ smallclr:
 	ADDU	t0, a2, a0		# compute ending address
 1:
 	ADDU	a0, a0, 1		# clear bytes
-#ifdef MIPS3_5900	
+#ifdef MIPS3_5900
 	nop
 	nop
 	nop
 	nop
-#endif	
+#endif
 	bne	a0, t0, 1b
 	sb	a1, -1(a0)
 2:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.11 2002/10/01 01:39:38 thorpej Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.11.16.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -227,7 +227,7 @@ typedef struct {
 /*
  * While 21x4x allows chaining of its descriptors, this driver
  * doesn't take advantage of it.  We keep the descriptors in a
- * traditional FIFO ring.  
+ * traditional FIFO ring.
  */
 struct lmc_ringinfo {
     lmc_desc_t *ri_first;	/* first entry in ring */
@@ -255,11 +255,11 @@ struct lmc_ringinfo {
  * And the number of receive descriptors multiplied by the size
  * of the receive buffers must equal the recevive space.  This
  * is so that we can manipulate the page tables so that even if a
- * packet wraps around the end of the receive space, we can 
+ * packet wraps around the end of the receive space, we can
  * treat it as virtually contiguous.
  *
  * The above used to be true (the stupid restriction is still true)
- * but we gone to directly DMA'ing into MBUFs (unless it's on an 
+ * but we gone to directly DMA'ing into MBUFs (unless it's on an
  * architecture which can't handle unaligned accesses) because with
  * 100Mb/s cards the copying is just too much of a hit.
  */
@@ -309,7 +309,7 @@ typedef struct {
 
 /*
  * Now to important stuff.  This is softc structure (where does softc
- * come from??? No idea) for the tulip device.  
+ * come from??? No idea) for the tulip device.
  *
  */
 struct lmc___softc {
@@ -319,7 +319,7 @@ struct lmc___softc {
     struct intrhand lmc_ih;		/* intrrupt vectoring */
     struct atshutdown lmc_ats;		/* shutdown hook */
     struct	p2pcom lmc_p2pcom;	/* point-to-point common stuff */
-    
+
 #define lmc_if	lmc_p2pcom.p2p_if	/* network-visible interface */
 #endif /* __bsdi__ */
 

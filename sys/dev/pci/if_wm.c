@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.89.6.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.89.6.2 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,14 +47,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.89.6.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.89.6.2 2005/03/19 08:35:11 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -72,11 +72,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.89.6.1 2005/02/12 18:17:47 yamt Exp $");
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h> 
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
@@ -137,7 +137,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
 
-#define	WM_MAXTXDMA		ETHER_MAX_LEN_JUMBO
+#define	WM_MAXTXDMA		round_page(IP_MAXPACKET) /* for TSO */
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -276,13 +276,8 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
-
-			/* m_pullup() needed for Tx offload */
-	struct evcnt sc_ev_txpullup_needed;
-			/* ...failed due to no memory */
-	struct evcnt sc_ev_txpullup_nomem;
-			/* ...failed due to lack of space in first mbuf */
-	struct evcnt sc_ev_txpullup_fail;
+	struct evcnt sc_ev_txtso;	/* TCP seg offload out-bound */
+	struct evcnt sc_ev_txtsopain;	/* painful header manip. for TSO */
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
@@ -326,6 +321,7 @@ struct wm_softc {
 	uint32_t sc_ctrl_ext;		/* prototype CTRL_EXT register */
 #endif
 	uint32_t sc_icr;		/* prototype interrupt bits */
+	uint32_t sc_itr;		/* prototype intr throttling reg */
 	uint32_t sc_tctl;		/* prototype TCTL register */
 	uint32_t sc_rctl;		/* prototype RCTL register */
 	uint32_t sc_txcw;		/* prototype TXCW register */
@@ -1220,6 +1216,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |=
 		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
+	/* 
+	 * If we're a i82544 or greater (except i82547), we can do
+	 * TCP segmentation offload.
+	 */
+	if (sc->sc_type >= WM_T_82544 && sc->sc_type != WM_T_82547)
+		ifp->if_capabilities |= IFCAP_TSOv4;
+
 	/*
 	 * Attach the interface.
 	 */
@@ -1256,12 +1259,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_needed, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup needed");
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_nomem, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup nomem");
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_fail, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup fail");
+	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtso");
+	evcnt_attach_dynamic(&sc->sc_ev_txtsopain, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtsopain");
 
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
@@ -1349,11 +1350,10 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 {
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
-	uint32_t ipcs, tucs;
-	struct ip *ip;
+	uint32_t ipcs, tucs, cmd, cmdlen, seg;
 	struct ether_header *eh;
 	int offset, iphl;
-	uint8_t fields = 0;
+	uint8_t fields;
 
 	/*
 	 * XXX It would be nice if the mbuf pkthdr had offset
@@ -1363,12 +1363,10 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
-		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN;
 		break;
 
 	case ETHERTYPE_VLAN:
-		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 
@@ -1381,38 +1379,66 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		return (0);
 	}
 
-	if (m0->m_len < (offset + iphl)) {
-		/*
-		 * Packet headers aren't in the first mbuf.  Let's hope
-		 * there is space at the end if it for them.
-		 */
-		WM_EVCNT_INCR(&sc->sc_ev_txpullup_needed);
-		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
-			WM_EVCNT_INCR(&sc->sc_ev_txpullup_nomem);
-			log(LOG_ERR,
-			    "%s: wm_tx_offload: mbuf allocation failed, "
-			    "packet dropped\n", sc->sc_dev.dv_xname);
-			return (ENOMEM);
-		} else if (m0 != txs->txs_mbuf) {
-			/*
-			 * The DMA map has already been loaded, so we
-			 * would have to unload and reload it.  But then
-			 * if that were to fail, we are already committed
-			 * to transmitting the packet (can't put it back
-			 * on the queue), so we have to drop the packet.
-			 */
-			WM_EVCNT_INCR(&sc->sc_ev_txpullup_fail);
-			log(LOG_ERR, "%s: wm_tx_offload: packet headers did "
-			    "not fit in first mbuf, packet dropped\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(txs->txs_mbuf);
-			txs->txs_mbuf = NULL;
-			return (EINVAL);
-		}
-	}
+	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 
-	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
-	iphl = ip->ip_hl << 2;
+	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
+	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
+	seg = 0;
+	fields = 0;
+
+	if (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
+		int hlen = offset + iphl;
+		WM_EVCNT_INCR(&sc->sc_ev_txtso);
+		if (__predict_false(m0->m_len <
+				    (hlen + sizeof(struct tcphdr)))) {
+			/*
+			 * TCP/IP headers are not in the first mbuf; we need
+			 * to do this the slow and painful way.  Let's just
+			 * hope this doesn't happen very often.
+			 */
+			struct ip ip;
+			struct tcphdr th;
+
+			WM_EVCNT_INCR(&sc->sc_ev_txtsopain);
+
+			m_copydata(m0, offset, sizeof(ip), &ip);
+			m_copydata(m0, hlen, sizeof(th), &th);
+
+			ip.ip_len = 0;
+
+			m_copyback(m0, hlen + offsetof(struct ip, ip_len),
+			    sizeof(ip.ip_len), &ip.ip_len);
+
+			th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+			    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+
+			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(th.th_sum), &th.th_sum);
+
+			hlen += th.th_off << 2;
+		} else {
+			/*
+			 * TCP/IP headers are in the first mbuf; we can do
+			 * this the easy way.
+			 */
+			struct ip *ip =
+			    (struct ip *) (mtod(m0, caddr_t) + offset);
+			struct tcphdr *th =
+			    (struct tcphdr *) (mtod(m0, caddr_t) + hlen);
+
+			ip->ip_len = 0;
+			th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+			    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+
+			hlen += th->th_off << 2;
+		}
+
+		cmd |= WTX_TCPIP_CMD_TSE;
+		cmdlen |= WTX_TCPIP_CMD_TSE | WTX_TCPIP_CMD_IP |
+		    WTX_TCPIP_CMD_TCP | (m0->m_pkthdr.len - hlen);
+		seg = WTX_TCPIP_SEG_HDRLEN(hlen) |
+		    WTX_TCPIP_SEG_MSS(m0->m_pkthdr.segsz);
+	}
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1423,19 +1449,20 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	ipcs = WTX_TCPIP_IPCSS(offset) |
 	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
 	    WTX_TCPIP_IPCSE(offset + iphl - 1);
-	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+	if (m0->m_pkthdr.csum_flags & (M_CSUM_IPv4|M_CSUM_TSOv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= WTX_IXSM;
 	}
 
 	offset += iphl;
 
-	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+	if (m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
-		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
-		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
+		   WTX_TCPIP_TUCSO(offset + M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
+		   WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else {
 		/* Just initialize it to a valid TCP context. */
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1448,14 +1475,14 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	    &sc->sc_txdescs[sc->sc_txnext];
 	t->tcpip_ipcs = htole32(ipcs);
 	t->tcpip_tucs = htole32(tucs);
-	t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
-	t->tcpip_seg = 0;
+	t->tcpip_cmdlen = htole32(cmdlen);
+	t->tcpip_seg = htole32(seg);
 	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
 	sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
 	txs->txs_ndesc++;
 
-	*cmdp = WTX_CMD_DEXT | WTX_DTYP_D;
+	*cmdp = cmd;
 	*fieldsp = fields;
 
 	return (0);
@@ -1582,7 +1609,7 @@ wm_start(struct ifnet *ifp)
 #endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx = -1, ofree, seg, segs_needed;
+	int error, nexttx, lasttx = -1, ofree, seg, segs_needed, use_tso;
 	bus_addr_t curaddr;
 	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
@@ -1626,6 +1653,22 @@ wm_start(struct ifnet *ifp)
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
 
+		use_tso = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+
+		/*
+		 * So says the Linux driver:
+		 * The controller does a simple calculation to make sure
+		 * there is enough room in the FIFO before initiating the
+		 * DMA for each buffer.  The calc is:
+		 *	4 = ceil(buffer len / MSS)
+		 * To make sure we don't overrun the FIFO, adjust the max
+		 * buffer len if the MSS drops.
+		 */
+		dmamap->dm_maxsegsz =
+		    (use_tso && (m0->m_pkthdr.segsz << 2) < WTX_MAX_LEN)
+		    ? m0->m_pkthdr.segsz << 2
+		    : WTX_MAX_LEN;
+
 		/*
 		 * Load the DMA map.  If this fails, the packet either
 		 * didn't fit in the allotted number of segments, or we
@@ -1657,6 +1700,10 @@ wm_start(struct ifnet *ifp)
 		}
 
 		segs_needed = dmamap->dm_nsegs;
+		if (use_tso) {
+			/* For sentinel descriptor; see below. */
+			segs_needed++;
+		}
 
 		/*
 		 * Ensure we have enough descriptors free to describe
@@ -1738,7 +1785,7 @@ wm_start(struct ifnet *ifp)
 			cksumfields = 0;
 		}
 
-		cksumcmd |= WTX_CMD_IDE;
+		cksumcmd |= WTX_CMD_IDE | WTX_CMD_IFCS;
 
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -1755,6 +1802,17 @@ wm_start(struct ifnet *ifp)
 			     curaddr += curlen, seglen -= curlen,
 			     nexttx = WM_NEXTTX(sc, nexttx)) {
 				curlen = seglen;
+
+				/*
+				 * So says the Linux driver:
+				 * Work around for premature descriptor
+				 * write-backs in TSO mode.  Append a
+				 * 4-byte sentinel descriptor.
+				 */
+				if (use_tso &&
+				    seg == dmamap->dm_nsegs - 1 &&
+				    curlen > 8)
+					curlen -= 4;
 
 				wm_set_dma_addr(
 				    &sc->sc_txdescs[nexttx].wtx_addr,
@@ -1784,7 +1842,7 @@ wm_start(struct ifnet *ifp)
 		 * delay the interrupt.
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
-		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
+		    htole32(WTX_CMD_EOP | WTX_CMD_RS);
 
 #if 0 /* XXXJRT */
 		/*
@@ -1793,12 +1851,11 @@ wm_start(struct ifnet *ifp)
 		 *
 		 * This is only valid on the last descriptor of the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_VLE);
 			sc->sc_txdescs[lasttx].wtx_fields.wtxu_vlan
-			    = htole16(*(u_int *)(mtag + 1) & 0xffff);
+			    = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
 		}
 #endif /* XXXJRT */
 
@@ -2232,23 +2289,10 @@ wm_rxintr(struct wm_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (status & WRX_ST_VP) != 0) {
-			struct m_tag *vtag;
-
-			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (vtag == NULL) {
-				ifp->if_ierrors++;
-				log(LOG_ERR,
-				    "%s: unable to allocate VLAN tag\n",
-				    sc->sc_dev.dv_xname);
-				m_freem(m);
-				continue;
-			}
-
-			*(u_int *)(vtag + 1) =
-			    le16toh(sc->sc_rxdescs[i].wrx_special);
+		if ((status & WRX_ST_VP) != 0) {
+			VLAN_INPUT_TAG(ifp, m,
+			    le16toh(sc->sc_rxdescs[i].wrx_special,
+			    continue);
 		}
 #endif /* XXXJRT */
 
@@ -2533,7 +2577,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 128);
+		CSR_WRITE(sc, WMREG_TIDV, 64);
+		CSR_WRITE(sc, WMREG_TADV, 128);
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -2574,7 +2619,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
-		CSR_WRITE(sc, WMREG_RDTR, 28 | RDTR_FPD);
+		CSR_WRITE(sc, WMREG_RDTR, 0 | RDTR_FPD);
+		CSR_WRITE(sc, WMREG_RADV, 128);
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -2625,7 +2671,7 @@ wm_init(struct ifnet *ifp)
 
 #if 0 /* XXXJRT */
 	/* Deal with VLAN enables. */
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		sc->sc_ctrl |= CTRL_VME;
 	else
 #endif /* XXXJRT */
@@ -2666,6 +2712,12 @@ wm_init(struct ifnet *ifp)
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
+
+	if (sc->sc_type >= WM_T_82543) {
+		/* Set up the interrupt throttling register (units of 256ns) */
+		sc->sc_itr = 1000000000 / (7000 * 256);
+		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
+	}
 
 #if 0 /* XXXJRT */
 	/* Set the VLAN ethernetype. */
@@ -2725,7 +2777,7 @@ wm_init(struct ifnet *ifp)
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 
 	/* ...all done! */
-	ifp->if_flags |= IFF_RUNNING; 
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.81 2004/07/29 22:29:37 jmmv Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.81.6.1 2005/03/19 08:36:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.81 2004/07/29 22:29:37 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.81.6.1 2005/03/19 08:36:02 yamt Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -163,7 +163,7 @@ CFATTACH_DECL(wsdisplay_emul, sizeof (struct wsdisplay_softc),
 
 CFATTACH_DECL(wsdisplay_noemul, sizeof (struct wsdisplay_softc),
     wsdisplay_noemul_match, wsdisplay_noemul_attach, NULL, NULL);
- 
+
 dev_type_open(wsdisplayopen);
 dev_type_close(wsdisplayclose);
 dev_type_read(wsdisplayread);
@@ -437,7 +437,7 @@ wsdisplay_scroll(void *arg, int op)
 		if (op & WSDISPLAY_SCROLL_BACKWARD)
 			lines = -(lines);
 	}
-	
+
 	if (sc->sc_accessops->scroll) {
 		(*sc->sc_accessops->scroll)(sc->sc_accesscookie,
 		    sc->sc_focus->scr_dconf->emulcookie, lines);
@@ -675,9 +675,9 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 			break;
 	}
 
-	if (i > start) 
+	if (i > start)
 		wsdisplay_addscreen_print(sc, start, i-start);
-	
+
 	if (hookset == 0)
 		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
 	hookset = 1;
@@ -929,7 +929,7 @@ wsdisplaykqfilter(dev, kn)
 
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
 		return (1);
-	
+
 
 	if (WSSCREEN_HAS_TTY(scr))
 		return (ttykqfilter(dev, kn));
@@ -1399,7 +1399,7 @@ wsdisplaystart(struct tty *tp)
 	struct wsscreen *scr;
 	int s, n;
 	u_char *buf;
-		
+
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
 		splx(s);
@@ -1408,7 +1408,7 @@ wsdisplaystart(struct tty *tp)
 	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)]) == NULL) {
 		splx(s);
-		return; 
+		return;
 	}
 
 	if (scr->scr_hold_screen) {
@@ -1416,15 +1416,15 @@ wsdisplaystart(struct tty *tp)
 		splx(s);
 		return;
 	}
-	tp->t_state |= TS_BUSY; 
+	tp->t_state |= TS_BUSY;
 	splx(s);
-	
+
 	/*
 	 * Drain output from ring buffer.
-	 * The output will normally be in one contiguous chunk, but when the 
-	 * ring wraps, it will be in two pieces.. one at the end of the ring, 
-	 * the other at the start.  For performance, rather than loop here, 
-	 * we output one chunk, see if there's another one, and if so, output 
+	 * The output will normally be in one contiguous chunk, but when the
+	 * ring wraps, it will be in two pieces.. one at the end of the ring,
+	 * the other at the start.  For performance, rather than loop here,
+	 * we output one chunk, see if there's another one, and if so, output
 	 * it too.
 	 */
 
@@ -1972,7 +1972,7 @@ wsdisplay_cnputc(dev_t dev, int i)
 	if (!wsdisplay_console_initted)
 		return;
 
-	if ((wsdisplay_console_device != NULL) && 
+	if ((wsdisplay_console_device != NULL) &&
 	    (wsdisplay_console_device->sc_scr[0] != NULL) &&
 	    (wsdisplay_console_device->sc_scr[0]->scr_flags & SCR_GRAPHICS))
 		return;

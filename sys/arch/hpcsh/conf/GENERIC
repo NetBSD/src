@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43.6.1 2005/02/12 18:17:33 yamt Exp $
+# $NetBSD: GENERIC,v 1.43.6.2 2005/03/19 08:33:01 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -55,8 +55,8 @@ options 	SH3
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 #options 	KLOADER_DEBUG
 
-#options	HPC_DEBUG_INTERRUPT_MONITOR
-#options	KSTACK_DEBUG
+#options 	HPC_DEBUG_INTERRUPT_MONITOR
+#options 	KSTACK_DEBUG
 
 
 # Standard system options
@@ -106,7 +106,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 #options 	BSDDISKLABEL_EI	# endian independent disklabel support
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
@@ -131,7 +131,7 @@ file-system 	PROCFS		# /proc
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

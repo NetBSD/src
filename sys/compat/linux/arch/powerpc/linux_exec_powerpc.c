@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.15 2004/07/25 23:26:44 chs Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.15.6.1 2005/03/19 08:33:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,26 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * From NetBSD's sys/compat/arch/alpha/linux_exec_alpha.c, with some 
+/*
+ * From NetBSD's sys/compat/arch/alpha/linux_exec_alpha.c, with some
  * powerpc add-ons (ifdef LINUX_SHIFT).
- * 
- * This code is to be common to alpha and powerpc. If it works on alpha, it 
- * should be moved to common/linux_exec_elf32.c. Beware that it needs 
+ *
+ * This code is to be common to alpha and powerpc. If it works on alpha, it
+ * should be moved to common/linux_exec_elf32.c. Beware that it needs
  * LINUX_ELF_AUX_ENTRIES in arch/<arch>/linux_exec.h to also be moved to common
- * 
+ *
  * Emmanuel Dreyfus <p99dreyf@criens.u-psud.fr>
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.15 2004/07/25 23:26:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.15.6.1 2005/03/19 08:33:37 yamt Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
 #elif defined (__powerpc__)
 #define ELFSIZE 32
 #else
-#error Unified linux_elf_{32|64}copyargs not tested for this platform 
+#error Unified linux_elf_{32|64}copyargs not tested for this platform
 #endif
 
 #include <sys/param.h>
@@ -88,10 +88,10 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	int error;
 
 #ifdef LINUX_SHIFT
-	/* 
+	/*
 	 * Seems that PowerPC Linux binaries expect argc to start on a 16 bytes
 	 * aligned address. And we need one more 16 byte shift if it was already
-	 * 16 bytes aligned,	
+	 * 16 bytes aligned,
 	 */
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~LINUX_SHIFT);
 #endif
@@ -100,14 +100,14 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 		return error;
 
 #ifdef LINUX_SHIFT
-	/* 
-	 * From Linux's arch/ppc/kernel/process.c:shove_aux_table(). GNU ld.so 
+	/*
+	 * From Linux's arch/ppc/kernel/process.c:shove_aux_table(). GNU ld.so
 	 * expects the ELF auxiliary table to start on a 16 bytes boundary on
 	 * the PowerPC.
 	 */
 	*stackp = (char *)(((unsigned long)(*stackp) + LINUX_SHIFT)
 	    & ~LINUX_SHIFT);
-#endif 
+#endif
 
 	memset(ai, 0, sizeof(AuxInfo) * LINUX_ELF_AUX_ENTRIES);
 
@@ -190,6 +190,6 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 
 	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
-	*stackp += len; 
+	*stackp += len;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.93.4.1 2005/02/12 18:17:54 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.93.4.2 2005/03/19 08:36:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,12 +30,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe and Kevin M. Lahey of the Numerical Aerospace Simulation
  * Facility, NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.93.4.1 2005/02/12 18:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.93.4.2 2005/03/19 08:36:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1178,6 +1180,183 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 }
 
 /*
+ * sysctl helper for the inet and inet6 pcblists.  handles tcp/udp and
+ * inet/inet6, as well as raw pcbs for each.  specifically not
+ * declared static so that raw sockets and udp/udp6 can use it as
+ * well.
+ */
+int
+sysctl_inpcblist(SYSCTLFN_ARGS)
+{
+#ifdef INET
+	struct sockaddr_in *in;
+	struct inpcb *inp;
+#endif
+#ifdef INET6
+	struct sockaddr_in6 *in6;
+	struct in6pcb *in6p;
+#endif
+	const struct inpcbtable *pcbtbl = rnode->sysctl_data;
+	struct inpcb_hdr *inph;
+	struct tcpcb *tp;
+	struct kinfo_pcb pcb;
+	char *dp;
+	u_int op, arg;
+	size_t len, needed, elem_size, out_size;
+	int error, elem_count, pf, proto, pf2;
+
+	if (namelen != 4)
+		return (EINVAL);
+
+	error = 0;
+	dp = oldp;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	op = name[0];
+	arg = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+	out_size = MIN(sizeof(pcb), elem_size);
+	needed = 0;
+
+	elem_count = INT_MAX;
+	elem_size = out_size = sizeof(pcb);
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (name - oname != 4)
+		return (EINVAL);
+
+	pf = oname[1];
+	proto = oname[2];
+	pf2 = (oldp == NULL) ? 0 : pf;
+
+	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
+#ifdef INET
+		inp = (struct inpcb *)inph;
+#endif
+#ifdef INET6
+		in6p = (struct in6pcb *)inph;
+#endif
+
+		if (inph->inph_af != pf)
+			continue;
+
+		memset(&pcb, 0, sizeof(pcb));
+
+		pcb.ki_family = pf;
+		pcb.ki_type = proto;
+
+		switch (pf2) {
+		case 0:
+			/* just probing for size */
+			break;
+#ifdef INET
+		case PF_INET:
+			pcb.ki_family = inp->inp_socket->so_proto->
+			    pr_domain->dom_family;
+			pcb.ki_type = inp->inp_socket->so_proto->
+			    pr_type;
+			pcb.ki_protocol = inp->inp_socket->so_proto->
+			    pr_protocol;
+			pcb.ki_pflags = inp->inp_flags;
+
+			pcb.ki_sostate = inp->inp_socket->so_state;
+			pcb.ki_prstate = inp->inp_state;
+			if (proto == IPPROTO_TCP) {
+				tp = intotcpcb(inp);
+				pcb.ki_tstate = tp->t_state;
+				pcb.ki_tflags = tp->t_flags;
+			}
+
+			pcb.ki_pcbaddr = PTRTOUINT64(inp);
+			pcb.ki_ppcbaddr = PTRTOUINT64(inp->inp_ppcb);
+			pcb.ki_sockaddr = PTRTOUINT64(inp->inp_socket);
+
+			pcb.ki_rcvq = inp->inp_socket->so_rcv.sb_cc;
+			pcb.ki_sndq = inp->inp_socket->so_snd.sb_cc;
+
+			in = satosin(&pcb.ki_src);
+			in->sin_len = sizeof(*in);
+			in->sin_family = pf;
+			in->sin_port = inp->inp_lport;
+			in->sin_addr = inp->inp_laddr;
+			if (pcb.ki_prstate >= INP_CONNECTED) {
+				in = satosin(&pcb.ki_dst);
+				in->sin_len = sizeof(*in);
+				in->sin_family = pf;
+				in->sin_port = inp->inp_fport;
+				in->sin_addr = inp->inp_faddr;
+			}
+			break;
+#endif
+#ifdef INET6
+		case PF_INET6:
+			pcb.ki_family = in6p->in6p_socket->so_proto->
+			    pr_domain->dom_family;
+			pcb.ki_type = in6p->in6p_socket->so_proto->pr_type;
+			pcb.ki_protocol = in6p->in6p_socket->so_proto->
+			    pr_protocol;
+			pcb.ki_pflags = in6p->in6p_flags;
+
+			pcb.ki_sostate = in6p->in6p_socket->so_state;
+			pcb.ki_prstate = in6p->in6p_state;
+			if (proto == IPPROTO_TCP) {
+				tp = in6totcpcb(in6p);
+				pcb.ki_tstate = tp->t_state;
+				pcb.ki_tflags = tp->t_flags;
+			}
+
+			pcb.ki_pcbaddr = PTRTOUINT64(in6p);
+			pcb.ki_ppcbaddr = PTRTOUINT64(in6p->in6p_ppcb);
+			pcb.ki_sockaddr = PTRTOUINT64(in6p->in6p_socket);
+
+			pcb.ki_rcvq = in6p->in6p_socket->so_rcv.sb_cc;
+			pcb.ki_sndq = in6p->in6p_socket->so_snd.sb_cc;
+
+			in6 = satosin6(&pcb.ki_src);
+			in6->sin6_len = sizeof(*in6);
+			in6->sin6_family = pf;
+			in6->sin6_port = in6p->in6p_lport;
+			in6->sin6_flowinfo = in6p->in6p_flowinfo;
+			in6->sin6_addr = in6p->in6p_laddr;
+			in6->sin6_scope_id = 0; /* XXX? */
+
+			if (pcb.ki_prstate >= IN6P_CONNECTED) {
+				in6 = satosin6(&pcb.ki_dst);
+				in6->sin6_len = sizeof(*in6);
+				in6->sin6_family = pf;
+				in6->sin6_port = in6p->in6p_fport;
+				in6->sin6_flowinfo = in6p->in6p_flowinfo;
+				in6->sin6_addr = in6p->in6p_faddr;
+				in6->sin6_scope_id = 0; /* XXX? */
+			}
+			break;
+#endif
+		}
+
+		if (len >= elem_size && elem_count > 0) {
+			error = copyout(&pcb, dp, out_size);
+			if (error)
+				return (error);
+			dp += elem_size;
+			len -= elem_size;
+		}
+		if (elem_count > 0) {
+			needed += elem_size;
+			if (elem_count != INT_MAX)
+				elem_count--;
+		}
+	}
+
+	*oldlenp = needed;
+	if (oldp == NULL)
+		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
+
+	return (error);
+}
+
+/*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
  * (which is currently used for ipv4 and ipv6)
  */
@@ -1268,8 +1447,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sack",
-		       SYSCTL_DESCR("Enable RFC2018 Selection ACKnowledgement "
-				    "(not implemented)"),
+		       SYSCTL_DESCR("Enable RFC2018 Selection ACKnowledgement"),
 		       NULL, 0, &tcp_do_sack, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -1389,6 +1567,13 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       NULL, 0, &tcp_do_loopback_cksum, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_LOOPBACKCKSUM,
 		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("TCP protocol control block list"),
+		       sysctl_inpcblist, 0, &tcbtable, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
+		       CTL_EOL);
 }
 
 /*
@@ -1409,4 +1594,3 @@ SYSCTL_SETUP(sysctl_net_inet6_tcp6_setup, "sysctl net.inet6.tcp6 subtree setup")
 	sysctl_net_inet_tcp_setup2(clog, PF_INET6, "inet6", "tcp6");
 }
 #endif /* INET6 */
-

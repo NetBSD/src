@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.58 2004/12/16 00:35:48 heas Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.58.4.1 2005/03/19 08:33:49 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -10,7 +10,7 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 #
-# To specify debugging, add the config line: makeoptions DEBUG="-g" 
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
 # A better way is to specify -g only for a few files.
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
@@ -108,7 +108,7 @@ NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 ##
-## (3) libkern and compat 
+## (3) libkern and compat
 ##
 ## Set KERN_AS in the port Makefile to "obj" or "library".  The
 ## default is "library", as documented in $S/lib/libkern/Makefile.inc.

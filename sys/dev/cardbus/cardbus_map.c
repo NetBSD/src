@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.14.26.1 2005/02/12 18:17:42 yamt Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.14.26.2 2005/03/19 08:33:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.14.26.1 2005/02/12 18:17:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.14.26.2 2005/03/19 08:33:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
 	cardbusreg_t address, mask;
 	int s;
 
-	if (reg != CARDBUS_ROM_REG && 
+	if (reg != CARDBUS_ROM_REG &&
 	    (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
 		panic("cardbus_mem_find: bad request");
 	}
@@ -222,7 +222,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
 		*flagsp = PCI_MAPREG_MEM_PREFETCHABLE(address) ?
 		    BUS_SPACE_MAP_PREFETCHABLE : 0;
 	}
-	
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98 2004/10/23 17:12:23 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.98.6.1 2005/03/19 08:33:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2004/10/23 17:12:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98.6.1 2005/03/19 08:33:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,6 +91,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2004/10/23 17:12:23 thorpej Exp $"
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif
+
+#ifdef RASTERCONSOLE
+#error options RASTERCONSOLE is obsolete for sparc64 - remove it from your config file
 #endif
 
 #include "ksyms.h"
@@ -750,7 +754,6 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 
-#ifdef RASTERCONSOLE
 /*
  * Try to figure out where the PROM stores the cursor row & column
  * variables.  Returns nonzero on error.
@@ -768,11 +771,10 @@ romgetcursoraddr(rowp, colp)
 	 * 64-bit values.  To convert them to pointers to integers, add
 	 * 4 to the address.
 	 */
-	*rowp = (int *)(row+4);
-	*colp = (int *)(col+4);
+	*rowp = (int *)(intptr_t)(row+4);
+	*colp = (int *)(intptr_t)(col+4);
 	return (row == 0UL || col == 0UL);
 }
-#endif /* RASTERCONSOLE */
 
 #if 0
 void callrom()

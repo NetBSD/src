@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.12.2.1 2005/02/11 14:24:47 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.12.2.2 2005/03/19 08:33:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.12.2.1 2005/02/11 14:24:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.12.2.2 2005/03/19 08:33:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,10 +214,11 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct sun68k_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_align = PAGE_SIZE;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 

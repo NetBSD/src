@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.4.12.1 2005/03/19 08:36:41 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.4.12.1 2005/03/19 08:36:41 yamt Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -377,7 +377,7 @@ ipcomp_output(
 	default:
 		ipcompstat.ipcomps_nopf++;
 		DPRINTF(("ipcomp_output: unknown/unsupported protocol family %d"
-		    ", IPCA %s/%08lx\n", 
+		    ", IPCA %s/%08lx\n",
 		    sav->sah->saidx.dst.sa.sa_family,
 		    ipsec_address(&sav->sah->saidx.dst),
 		    (u_long) ntohl(sav->spi)));
@@ -401,7 +401,7 @@ ipcomp_output(
 	m = m_clone(m);
 	if (m == NULL) {
 		ipcompstat.ipcomps_hdrops++;
-		DPRINTF(("ipcomp_output: cannot clone mbuf chain, IPCA %s/%08lx\n", 
+		DPRINTF(("ipcomp_output: cannot clone mbuf chain, IPCA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst),
 		    (u_long) ntohl(sav->spi)));
 		error = ENOBUFS;
@@ -567,9 +567,9 @@ ipcomp_output_cb(struct cryptop *crp)
 		default:
 			ipcompstat.ipcomps_nopf++;
 			DPRINTF(("ipcomp_output: unknown/unsupported protocol "
-			    "family %d, IPCA %s/%08lx\n", 
+			    "family %d, IPCA %s/%08lx\n",
 			    sav->sah->saidx.dst.sa.sa_family,
-			    ipsec_address(&sav->sah->saidx.dst), 
+			    ipsec_address(&sav->sah->saidx.dst),
 			    (u_long) ntohl(sav->spi)));
 			error = EPFNOSUPPORT;
 			goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2004/04/24 21:45:58 cl Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3.10.1 2005/03/19 08:33:26 yamt Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2004/04/24 21:45:58 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.10.1 2005/03/19 08:33:26 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2004/04/24 21:45:58 cl Exp $");
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 
+#include "xencons.h"
 #include "vga.h"
 #include "ega.h"
 #include "pcdisplay.h"
@@ -73,12 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2004/04/24 21:45:58 cl Exp $");
 
 #include "opt_xen.h"
 #if (XEN > 0)
-#include "vga_xen.h"
-#include "xenkbc.h"
 #include <machine/xen.h>
 #include <dev/pckbport/pckbportvar.h>
-#include <machine/xenkbcvar.h>
-#include <machine/vga_xenvar.h>
 #include <machine/hypervisor.h>
 #endif
 
@@ -153,88 +150,37 @@ int comkgdbmode = KGDB_DEVMODE;
 void
 consinit()
 {
-	const struct btinfo_console *consinfo;
-	static int initted;
+	static int initted = 0;
+	union xen_cmdline_parseinfo xcp;
 
-	if (initted)
+	if (initted) {
 		return;
+	}
 	initted = 1;
-
-#if (XEN > 0)
-#if (NVGA_XEN > 0) && (NXENKBC > 0)
-#ifndef CONS_OVERRIDE
-	if (xen_start_info.flags & SIF_CONSOLE) {
-		union xen_cmdline_parseinfo xcp;
-
-		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
-		if (strcmp(xcp.xcp_console, "xencons") == 0) {
-			xenconscn_attach();
+	xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
+	
+#if (NVGA > 0)
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+#ifdef CONS_OVERRIDE
+		if (strcmp(default_consinfo.devname, "tty0") == 0 ||
+		    strcmp(default_consinfo.devname, "pc") == 0)) {
+#else
+		if (strcmp(xcp.xcp_console, "tty0") == 0 || /* linux name */
+		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
+#endif /* CONS_OVERRIDE */
+			vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
+			    -1, 1);
+			pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
+			    PCKBC_KBD_SLOT);
 			return;
 		}
 	}
-#endif
-	if ((xen_start_info.flags & SIF_CONSOLE) &&
-	    strcmp(default_consinfo.devname, "xencons") != 0) {
-		if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
-			panic("Console access without privileged status");
-
-		vga_xen_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM);
-		xenkbc_cnattach(PCKBPORT_KBD_SLOT);
-		return;
-	}
-#endif
+#endif /* NVGA */
+#if NXENCONS > 0
 	xenconscn_attach();
 	return;
-#endif
-
-#ifndef CONS_OVERRIDE
-	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
-	if (!consinfo)
-#endif
-		consinfo = &default_consinfo;
-
-#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
-	if (!strcmp(consinfo->devname, "pc")) {
-#if (NVGA > 0)
-		if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
-				  -1, 1))
-			goto dokbd;
-#endif
-#if (NEGA > 0)
-		if (!ega_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM))
-			goto dokbd;
-#endif
-#if (NPCDISPLAY > 0)
-		if (!pcdisplay_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM))
-			goto dokbd;
-#endif
-#if (NPC > 0)
-		pccnattach();
-#endif
-		if (0) goto dokbd; /* XXX stupid gcc */
-dokbd:
-#if (NPCKBC > 0)
-		pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
-#endif
-#if NPCKBC == 0 && NUKBD > 0
-		ukbd_cnattach();
-#endif
-		return;
-	}
-#endif /* PC | VT | VGA | PCDISPLAY */
-#if (NCOM > 0)
-	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = X86_BUS_SPACE_IO;
-
-		if (comcnattach(tag, consinfo->addr, consinfo->speed,
-				COM_FREQ, COM_TYPE_NORMAL, comcnmode))
-			panic("can't init serial console @%x", consinfo->addr);
-
-		return;
-	}
-#endif
-	panic("invalid console device %s", consinfo->devname);
+#endif /* NXENCONS */
+	panic("consinit: no console");
 }
 
 #if (NPCKBC > 0) && (NPCKBD == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.h,v 1.4 2001/10/04 15:58:53 oster Exp $	*/
+/*	$NetBSD: rf_fifo.h,v 1.4.28.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,12 +50,12 @@ typedef struct RF_FifoHeader_s {
 extern void *
 rf_FifoCreate(RF_SectorCount_t sectPerDisk,
     RF_AllocListElem_t * clList, RF_ShutdownList_t ** listp);
-extern void 
+extern void
 rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t * elem,
     int priority);
 extern RF_DiskQueueData_t *rf_FifoDequeue(void *q_in);
 extern RF_DiskQueueData_t *rf_FifoPeek(void *q_in);
-extern int 
+extern int
 rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
     RF_ReconUnitNum_t which_ru);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.2.12.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -63,12 +63,12 @@
  * Additional Copyright (c) 2002 by Matthew Jacob under same license.
  */
 
-/* 
+/*
  * mpt_netbsd.h:
  *
  * NetBSD-specific definitions for LSI Fusion adapters.
  *
- * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for      
+ * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
  */
 
@@ -119,7 +119,7 @@
  * assume we have 480-48 == 432 bytes to have simple SG elements and/or
  * chain elements. If we assume 32 bit addressing, this works out to
  * 54 SG or chain elements. If we assume 5 chain elements, then we have
- * a maximum of 49 seperate actual SG segments. 
+ * a maximum of 49 seperate actual SG segments.
  */
 #define	MPT_SGL_MAX		49
 

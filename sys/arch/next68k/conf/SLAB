@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.23.6.1 2005/02/12 18:17:38 yamt Exp $
+# $NetBSD: SLAB,v 1.23.6.2 2005/03/19 08:33:09 yamt Exp $
 #
 # deberg's development machine
 #
@@ -56,6 +56,7 @@ options 	SWAPDEBUG
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

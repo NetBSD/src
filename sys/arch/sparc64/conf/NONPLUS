@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.43.6.1 2005/02/12 18:17:40 yamt Exp $
+# 	$NetBSD: NONPLUS,v 1.43.6.2 2005/03/19 08:33:14 yamt Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -16,14 +16,6 @@ options 	SUN4U		# sun4u - UltraSPARC
 options 	__ELF__		# we use elf
 #options 	__SWAP_BROKEN
 makeoptions	SPARC_BINARIES=1
-
-## System options specific to the sparc machine type
-
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
@@ -124,6 +116,8 @@ options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility
+options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
@@ -155,7 +149,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

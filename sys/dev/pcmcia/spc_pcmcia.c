@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.12.6.1 2005/02/12 18:17:50 yamt Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.12.6.2 2005/03/19 08:35:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.12.6.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.12.6.2 2005/03/19 08:35:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,9 @@ struct spc_pcmcia_softc {
 #define	SPC_PCMCIA_ATTACHED	3
 };
 
-int	spc_pcmcia_match(struct device *, struct cfdata *, void *); 
+int	spc_pcmcia_match(struct device *, struct cfdata *, void *);
 int	spc_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	spc_pcmcia_attach(struct device *, struct device *, void *);  
+void	spc_pcmcia_attach(struct device *, struct device *, void *);
 int	spc_pcmcia_detach(struct device *, int);
 int	spc_pcmcia_enable(struct device *, int);
 

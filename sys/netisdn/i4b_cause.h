@@ -27,7 +27,7 @@
  *	i4b_cause.h - causes and cause handling for i4b
  *	-----------------------------------------------
  *
- *	$Id: i4b_cause.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $
+ *	$Id: i4b_cause.h,v 1.1.1.1.36.1 2005/03/19 08:36:41 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -72,7 +72,7 @@
 #define CAUSE_I4B_MAX		9
 	/* NOTE: update isdnd/pcause.c when adding causes !!!!!		*/
 	/* NOTE: update layer3/i4b_q931.c when adding causes !!!!!	*/
-	
+
 /* CAUSET_Q850 - causes defined in Q.850 */
 
 #define	CAUSE_Q850_SHUTDN	0x00	/* normal D-channel shutdown */

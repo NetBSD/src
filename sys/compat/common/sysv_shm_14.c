@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.5.12.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.5.12.1 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/shm.h>  
+#include <sys/shm.h>
 
 #ifndef SYSVSHM
 #define	SYSVSHM
@@ -112,7 +112,7 @@ compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 
 	if (cmd == IPC_SET) {
 		error = copyin(SCARG(uap, buf), &oshmbuf, sizeof(oshmbuf));
-		if (error) 
+		if (error)
 			return (error);
 		shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
@@ -121,7 +121,7 @@ compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_shmid_ds14(&shmbuf, &oshmbuf);     
+		native_to_shmid_ds14(&shmbuf, &oshmbuf);
 		error = copyout(&oshmbuf, SCARG(uap, buf), sizeof(oshmbuf));
 	}
 

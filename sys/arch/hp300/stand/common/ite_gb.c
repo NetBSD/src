@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_gb.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: ite_gb.c,v 1.3.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -91,8 +91,7 @@
 void gbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
-gbox_init(ip)
-	struct ite_data *ip;
+gbox_init(struct ite_data *ip)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
 
@@ -148,21 +147,18 @@ gbox_init(ip)
 }
 
 void
-gbox_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx;
-	int c, mode;
+gbox_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
 {
+
 	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			dy * ip->ftheight, dx * ip->ftwidth,
 			ip->ftheight, ip->ftwidth, RR_COPY);
 }
 
 void
-gbox_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+gbox_cursor(struct ite_data *ip, int flag)
 {
+
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
 	else if (flag == MOVE_CURSOR) {
@@ -173,10 +169,9 @@ gbox_cursor(ip, flag)
 }
 
 void
-gbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+gbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
+
 	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			sy * ip->ftheight, sx * ip->ftwidth,
 			h  * ip->ftheight, w  * ip->ftwidth,
@@ -194,10 +189,7 @@ gbox_clear(ip, sy, sx, h, w)
 			RR_COPY)
 
 void
-gbox_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy;
-	int dir, sx, count;
+gbox_scroll(struct ite_data *ip, int sy, int dir, int sx, int count)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
 	int height, dy, i;
@@ -214,10 +206,8 @@ gbox_scroll(ip, sy, sx, count, dir)
 }
 
 void
-gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, mask;
-	int h, w;
+gbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int mask,
+    int h, int w)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
 	int src, dest;

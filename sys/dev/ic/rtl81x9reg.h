@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.9 2005/01/09 12:25:25 kanaoka Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.9.4.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -371,7 +371,7 @@
 
 #define RTK_BUSFREQ_33MHZ	0x00
 #define RTK_BUSFREQ_66MHZ	0x01
-                                        
+
 #define RTK_BUSWIDTH_32BITS	0x00
 #define RTK_BUSWIDTH_64BITS	0x08
 
@@ -386,7 +386,7 @@
 
 /* C+ early transmit threshold */
 
-#define RTK_EARLYTXTHRESH_CNT	0x003F	/* byte count times 8 */ 
+#define RTK_EARLYTXTHRESH_CNT	0x003F	/* byte count times 8 */
 
 /*
  * Gigabit PHY access register (8169 only)
@@ -465,6 +465,7 @@ struct rtk_desc {
 #define RTK_TDESC_CMD_UDPCSUM	0x00020000	/* UDP checksum enable */
 #define RTK_TDESC_CMD_IPCSUM	0x00040000	/* IP header checksum enable */
 #define RTK_TDESC_CMD_MSSVAL	0x07FF0000	/* Large send MSS value */
+#define RTK_TDESC_CMD_MSSVAL_SHIFT 16		/* Shift of the above */
 #define RTK_TDESC_CMD_LGSEND	0x08000000	/* TCP large send enb */
 #define RTK_TDESC_CMD_EOF	0x10000000	/* end of frame marker */
 #define RTK_TDESC_CMD_SOF	0x20000000	/* start of frame marker */
@@ -567,5 +568,3 @@ struct rtk_stats {
 
 #define RTK_JUMBO_FRAMELEN	9018
 #define RTK_JUMBO_MTU		(RTK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
-
-#define RTK_NTXSEGS		32

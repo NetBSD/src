@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.46 2004/09/15 15:49:10 drochner Exp $	*/
+/*	$NetBSD: iop.c,v 1.46.6.1 2005/03/19 08:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.46 2004/09/15 15:49:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.46.6.1 2005/03/19 08:34:00 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -128,7 +128,7 @@ struct iop_class {
 	const char	*ic_caption;
 #endif
 } static const iop_class[] = {
-	{	
+	{
 		I2O_CLASS_EXECUTIVE,
 		0,
 		IFVERBOSE("executive")
@@ -178,12 +178,12 @@ struct iop_class {
 		IC_CONFIGURE,
 		IFVERBOSE("ATE port")
 	},
-	{	
+	{
 		I2O_CLASS_ATE_PERIPHERAL,
 		0,
 		COMMENT("ATE peripheral")
 	},
-	{	
+	{
 		I2O_CLASS_FLOPPY_CONTROLLER,
 		IC_CONFIGURE,
 		IFVERBOSE("floppy controller")
@@ -875,7 +875,7 @@ iop_devinfo(int class, char *devinfo, size_t l)
 	for (i = 0; i < sizeof(iop_class) / sizeof(iop_class[0]); i++)
 		if (class == iop_class[i].ic_class)
 			break;
-	
+
 	if (i == sizeof(iop_class) / sizeof(iop_class[0]))
 		snprintf(devinfo, l, "device (class 0x%x)", class);
 	else
@@ -916,7 +916,7 @@ iop_submatch(struct device *parent, struct cfdata *cf,
 
 /*
  * Shut down all configured IOPs.
- */ 
+ */
 static void
 iop_shutdown(void *junk)
 {
@@ -1143,7 +1143,7 @@ iop_hrt_get(struct iop_softc *sc)
 	DPRINTF(("%s: %d hrt entries\n", sc->sc_dv.dv_xname,
 	    le16toh(hrthdr.numentries)));
 
-	size = sizeof(struct i2o_hrt) + 
+	size = sizeof(struct i2o_hrt) +
 	    (le16toh(hrthdr.numentries) - 1) * sizeof(struct i2o_hrt_entry);
 	hrt = (struct i2o_hrt *)malloc(size, M_DEVBUF, M_NOWAIT);
 
@@ -1607,7 +1607,7 @@ iop_reset(struct iop_softc *sc)
 		return (EIO);
 	}
 
-	/* 
+	/*
 	 * IOP is now in the INIT state.  Wait no more than 10 seconds for
 	 * the inbound queue to become responsive.
 	 */
@@ -1696,7 +1696,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 	if ((le32toh(rb->msgflags) & I2O_MSGFLAGS_64BIT) != 0)
 		panic("iop_handle_reply: 64-bit reply");
 #endif
-	/* 
+	/*
 	 * Find the initiator.
 	 */
 	ictx = le32toh(rb->msgictx);
@@ -1847,7 +1847,7 @@ iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 	printf("%s: event 0x%08x received\n", dv->dv_xname, event);
 }
 
-/* 
+/*
  * Allocate a message wrapper.
  */
 struct iop_msg *
@@ -1883,7 +1883,7 @@ iop_msg_alloc(struct iop_softc *sc, int flags)
 	return (im);
 }
 
-/* 
+/*
  * Free a message wrapper.
  */
 void
@@ -1903,7 +1903,7 @@ iop_msg_free(struct iop_softc *sc, struct iop_msg *im)
 }
 
 /*
- * Map a data transfer.  Write a scatter-gather list into the message frame. 
+ * Map a data transfer.  Write a scatter-gather list into the message frame.
  */
 int
 iop_msg_map(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
@@ -2109,7 +2109,7 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
 	struct iop_xfer *ix;
 	int i;
 
-#ifdef I2ODEBUG	
+#ifdef I2ODEBUG
 	if (im->im_xfer[0].ix_size == 0)
 		panic("iop_msg_unmap: no transfers mapped");
 #endif
@@ -2123,7 +2123,7 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
 		/* Only the first DMA map is static. */
 		if (i != 0)
 			bus_dmamap_destroy(sc->sc_dmat, ix->ix_map);
-		if ((++ix)->ix_size == 0) 
+		if ((++ix)->ix_size == 0)
 			break;
 		if (++i >= IOP_MAX_MSG_XFERS)
 			break;
@@ -2216,7 +2216,7 @@ iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int timo)
 	return (rv);
 }
 
-/* 
+/*
  * Spin until the specified message is replied to.
  */
 static void
@@ -2256,7 +2256,7 @@ iop_msg_poll(struct iop_softc *sc, struct iop_msg *im, int timo)
 			printf("iop_msg_poll: unable to retrieve status\n");
 		else
 			printf("iop_msg_poll: IOP state = %d\n",
-			    (le32toh(sc->sc_status.segnumber) >> 16) & 0xff); 
+			    (le32toh(sc->sc_status.segnumber) >> 16) & 0xff);
 #endif
 	}
 
@@ -2286,7 +2286,7 @@ iop_msg_wait(struct iop_softc *sc, struct iop_msg *im, int timo)
 			printf("iop_msg_wait: unable to retrieve status\n");
 		else
 			printf("iop_msg_wait: IOP state = %d\n",
-			    (le32toh(sc->sc_status.segnumber) >> 16) & 0xff); 
+			    (le32toh(sc->sc_status.segnumber) >> 16) & 0xff);
 	}
 #endif
 }
@@ -2330,10 +2330,10 @@ iop_reply_print(struct iop_softc *sc, struct i2o_reply *rb)
 	else
 		statusstr = "undefined error code";
 
-	printf("%s:   function=0x%02x status=0x%02x (%s)\n", 
+	printf("%s:   function=0x%02x status=0x%02x (%s)\n",
 	    sc->sc_dv.dv_xname, function, rb->reqstatus, statusstr);
 #else
-	printf("%s:   function=0x%02x status=0x%02x\n", 
+	printf("%s:   function=0x%02x status=0x%02x\n",
 	    sc->sc_dv.dv_xname, function, rb->reqstatus);
 #endif
 	printf("%s:   detail=0x%04x ictx=0x%08x tctx=0x%08x\n",
@@ -2395,7 +2395,7 @@ iop_strvis(struct iop_softc *sc, const char *src, int slen, char *dst, int dlen)
 		}
 		src++;
 	}
-	
+
 	dst[lc] = '\0';
 }
 
@@ -2454,7 +2454,7 @@ iop_util_claim(struct iop_softc *sc, struct iop_initiator *ii, int release,
 	rv = iop_msg_post(sc, im, &mf, 5000);
 	iop_msg_free(sc, im);
 	return (rv);
-}	
+}
 
 /*
  * Perform an abort.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.41 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.41.6.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,12 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.41 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.41.6.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

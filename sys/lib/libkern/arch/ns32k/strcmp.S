@@ -1,6 +1,6 @@
-/*	$NetBSD: strcmp.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.2.58.1 2005/03/19 08:36:22 yamt Exp $	*/
 
-/* 
+/*
  * Written by Randy Hyde, 1993
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.2.58.1 2005/03/19 08:36:22 yamt Exp $")
 #endif
 
 /*
@@ -76,16 +76,16 @@ KENTRY(strcmp, 8)
 	 *	 aabbccdd
 	 *  bic  xxyyzztt
 	 *	---------
-	 *       eeffgghh   ee=0x80 if xx=0, ff=0x80 if yy=0, etc. 
+	 *       eeffgghh   ee=0x80 if xx=0, ff=0x80 if yy=0, etc.
 	 *
 	 *		This whole result will be zero if there
 	 *		was no zero byte, it will be non-zero if
 	 *		there is a zero byte present.
 	 */
-   
+
 5:	movd	0x01010101,r3		/* Magic number to use */
 	movd	0x80808080,r4		/* Another magic number. */
-	
+
 	movd	0(r1),r5		/* Get 1st double word. */
 	movd	r5,r0			/* Save for storage later. */
 	subd	r3,r0			/* Gets borrow if byte = 0. */

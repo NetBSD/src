@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsunvar.h,v 1.3 2003/08/07 16:31:26 agc Exp $ */
+/*	$NetBSD: kbdsunvar.h,v 1.3.10.1 2005/03/19 08:35:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,6 +139,6 @@ struct kbd_sun_softc {
 extern const struct kbd_ops kbd_ops_sun;
 
 /* Methods for the lower layer to call. */
-extern void	kbd_sun_input(struct kbd_sun_softc *k, int);
+extern int	kbd_sun_input(struct kbd_sun_softc *k, int);
 extern void	kbd_sun_output(struct kbd_sun_softc *k, int c);
 extern void	kbd_sun_start_tx(struct kbd_sun_softc *k);

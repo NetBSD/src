@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_2300.h,v 1.5 2004/01/21 16:59:45 briggs Exp $	*/
+/*	$NetBSD: asm_2300.h,v 1.5.10.1 2005/03/19 08:34:47 yamt Exp $	*/
 /* @(#)asm_2300.h 1.7 */
 /*
  * Copyright (C) 2001 Qlogic, Inc.
@@ -24,7 +24,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /************************************************************************
  *									*

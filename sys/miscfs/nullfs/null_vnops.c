@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.31 2004/06/30 17:42:55 hannken Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.31.6.1 2005/03/19 08:36:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *      Id: lofs_vnops.c,v 1.11 1992/05/30 10:05:43 jsp Exp jsp 
+ *      Id: lofs_vnops.c,v 1.11 1992/05/30 10:05:43 jsp Exp jsp
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -151,7 +151,7 @@
  * this or other null vnode stacks.
  *
  * New vnode stacks come into existence as a result of
- * an operation which returns a vnode.  
+ * an operation which returns a vnode.
  * The bypass routine stacks a null-node above the new
  * vnode before returning it to the caller.
  *
@@ -161,7 +161,7 @@
  * the root null-node (which was created when the null layer was mounted).
  * Now consider opening "sys".  A vop_lookup would be
  * done on the root null-node.  This operation would bypass through
- * to the lower layer which would return a vnode representing 
+ * to the lower layer which would return a vnode representing
  * the UFS "sys".  null_bypass then builds a null-node
  * aliasing the UFS "sys" and returns this to the caller.
  * Later operations on the null-node "sys" will repeat this
@@ -175,13 +175,13 @@
  * then begin modifying the copy.  sed(1) can be used to easily rename
  * all variables.
  *
- * The umap layer is an example of a layer descended from the 
+ * The umap layer is an example of a layer descended from the
  * null layer.
  *
  *
  * INVOKING OPERATIONS ON LOWER LAYERS
  *
- * There are two techniques to invoke operations on a lower layer 
+ * There are two techniques to invoke operations on a lower layer
  * when the operation cannot be completely bypassed.  Each method
  * is appropriate in different situations.  In both cases,
  * it is the responsibility of the aliasing layer to make
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.31 2004/06/30 17:42:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.31.6.1 2005/03/19 08:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.7 2003/01/18 21:21:37 thorpej Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.7.12.1 2005/03/19 08:33:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ struct linux_sys_socket_args {
 
 struct linux_sys_socketpair_args {
 	syscallarg(int) domain;
-	syscallarg(int) type;	
+	syscallarg(int) type;
 	syscallarg(int) protocol;
 	syscallarg(int *) rsv;
 };

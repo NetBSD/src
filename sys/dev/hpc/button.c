@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.9 2002/10/02 16:33:49 thorpej Exp $	*/
+/*	$NetBSD: button.c,v 1.9.16.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.9 2002/10/02 16:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.9.16.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ button_attach(struct device *parent, struct device *self, void *aux)
 	int *loc;
 	struct button_softc *sc = (void*)self;
 	int mode;
-    
+
 	loc = sc->sc_dev.dv_cfdata->cf_loc;
 	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
@@ -139,7 +139,7 @@ button_attach(struct device *parent, struct device *self, void *aux)
 		    hpcio_intr_establish(sc->sc_hc, sc->sc_port,
 			mode, button_intr, sc);
 	sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET, sc->sc_id,
-	    CONFIG_HOOK_SHARE, button_state, sc);	
+	    CONFIG_HOOK_SHARE, button_state, sc);
 	printf("\n");
 }
 

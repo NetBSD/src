@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 2003/08/07 16:32:22 agc Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3.10.1 2005/03/19 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #ifdef notdef
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: ffs.S,v 1.3 2003/08/07 16:32:22 agc Exp $"
+	.asciz "$NetBSD: ffs.S,v 1.3.10.1 2005/03/19 08:36:26 yamt Exp $"
 #endif  /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -93,7 +93,7 @@ ENTRY(ffs)
 	ldsb	[%o2 + %o0], %o0
 	retl
 	 add	%o0, 24, %o0
-	
+
 	.globl	_C_LABEL(__ffstab)
 _C_LABEL(__ffstab):
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */

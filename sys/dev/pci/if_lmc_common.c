@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_common.c,v 1.9 2002/01/04 12:21:24 martin Exp $	*/
+/*	$NetBSD: if_lmc_common.c,v 1.9.26.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_common.c,v 1.9 2002/01/04 12:21:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_common.c,v 1.9.26.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc_common.c,v 1.9 2002/01/04 12:21:24 martin Exp
 #if defined(__NetBSD__)
 #include <dev/pci/if_lmc_types.h>
 #include <dev/pci/if_lmcioctl.h>
-#include <dev/pci/if_lmcvar.h>  
+#include <dev/pci/if_lmcvar.h>
 #elif defined(__FreeBSD__)
 #include "pci/if_lmc_types.h"
 #include "pci/if_lmcioctl.h"
@@ -269,7 +269,7 @@ lmc_dec_reset(lmc_softc_t * const sc)
 
 	/*
 	 * Reset the chip with a software reset command.
-	 * Wait 10 microseconds (actually 50 PCI cycles but at 
+	 * Wait 10 microseconds (actually 50 PCI cycles but at
 	 * 33MHz that comes to two microseconds but wait a
 	 * bit longer anyways)
 	 */
@@ -378,7 +378,7 @@ lmc_dec_reset(lmc_softc_t * const sc)
 #endif
 
 	/*
-	 * We need to collect all the mbufs were on the 
+	 * We need to collect all the mbufs were on the
 	 * receive ring before we reinit it either to put
 	 * them back on or to know if we have to allocate
 	 * more.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hpcmips.h,v 1.2 2002/01/06 12:39:55 takemura Exp $	*/
+/*	$NetBSD: bus_dma_hpcmips.h,v 1.2.30.1 2005/03/19 08:33:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -64,7 +64,7 @@ struct bus_dmamap_hpcmips {
 	struct bus_dmamap bdm;
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz;/* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 	struct bus_dma_segment_hpcmips _dm_segs[1];

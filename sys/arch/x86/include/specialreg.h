@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.6.6.1 2005/02/12 18:17:41 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.6.6.2 2005/03/19 08:33:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -128,6 +128,15 @@
 #define CPUID_MASK2	0x00ffe000
 #define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37IA64\40SBF"
 #define CPUID_MASK3	0xff000000
+
+/*
+ * CPUID Intel extended features
+ */
+#define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
+#define CPUID_EM64T	0x20000000	/* Intel EM64T */
+
+#define CPUID_MASK4	0x20000800
+#define CPUID_FLAGS4	"\20\14SYSCALL/SYSRET\36EM64T"
 
 /*
  * AMD/VIA processor specific flags.

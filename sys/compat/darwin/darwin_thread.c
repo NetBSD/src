@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.6 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.6.6.1 2005/03/19 08:33:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.6 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.6.6.1 2005/03/19 08:33:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.6 2004/07/28 22:24:06 manu Exp $
 
 #include <machine/darwin_machdep.h>
 
-/* 
+/*
  * darwin_fork_child_return() sets the return values as expected by Darwin
- * userland: libSystem stub expects the child pid to be in retval[0] for 
- * the parent as well as the child. 
+ * userland: libSystem stub expects the child pid to be in retval[0] for
+ * the parent as well as the child.
  */
 int
 darwin_sys_fork(l, v, retval)
@@ -72,10 +72,10 @@ darwin_sys_fork(l, v, retval)
 {
 	int error;
 
-	if ((error = fork1(l, 0, SIGCHLD, NULL, 0, 
+	if ((error = fork1(l, 0, SIGCHLD, NULL, 0,
 	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
 		return error;
-	
+
 	return 0;
 }
 
@@ -87,7 +87,7 @@ darwin_sys_vfork(l, v, retval)
 {
 	int error;
 
-	if ((error = fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, 
+	if ((error = fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0,
 	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
 		return error;
 
@@ -109,7 +109,7 @@ darwin_sys_pthread_exit(l, v, retval)
 	int error;
 
 	/* Get the status or use zero if it is not possible */
-	if ((error = copyin(SCARG(uap, value_ptr), &SCARG(&cup, rval), 
+	if ((error = copyin(SCARG(uap, value_ptr), &SCARG(&cup, rval),
 	    sizeof(void *))) != 0)
 		SCARG(&cup, rval) = 0;
 

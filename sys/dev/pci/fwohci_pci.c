@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.19.6.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.19.6.2 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.19.6.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.19.6.2 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ fwohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
 		return 1;
- 
+
 	return 0;
 }
 

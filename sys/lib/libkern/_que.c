@@ -1,4 +1,4 @@
-/*	$NetBSD: _que.c,v 1.1 2001/08/12 08:35:34 jdolecek Exp $	*/
+/*	$NetBSD: _que.c,v 1.1.34.1 2005/03/19 08:36:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /*
  * Use <sys/queue.h> macros for new code, queue functions provided here
  * are obsolete. Once the remaining code using this would be converted
- * to use <sys/queue.h>, this would be removed. 
+ * to use <sys/queue.h>, this would be removed.
  */
 
 #include <sys/types.h>

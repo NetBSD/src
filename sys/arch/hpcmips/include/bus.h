@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2003/06/15 23:08:59 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.12.1 2005/03/19 08:33:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1087,6 +1087,7 @@ struct bus_dma_segment {
  *	Describes a DMA mapping.
  */
 struct bus_dmamap {
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t *dm_segs;	/* segments; variable length */

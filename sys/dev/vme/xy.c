@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.56.6.1 2005/02/12 18:17:51 yamt Exp $	*/
+/*	$NetBSD: xy.c,v 1.56.6.2 2005/03/19 08:36:02 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.56.6.1 2005/02/12 18:17:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.56.6.2 2005/03/19 08:36:02 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1840,7 +1840,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 					(iorq->buf->b_flags & B_READ)
 						? BUS_DMASYNC_POSTREAD
 						: BUS_DMASYNC_POSTWRITE);
-                
+
 			    bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
 			    (void)BUFQ_GET(&iorq->xy->xyq);
@@ -2024,7 +2024,7 @@ xyc_remove_iorq(xycsc)
 					(iorq->buf->b_flags & B_READ)
 						? BUS_DMASYNC_POSTREAD
 						: BUS_DMASYNC_POSTWRITE);
-                
+
 			bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
 			(void)BUFQ_GET(&iorq->xy->xyq);

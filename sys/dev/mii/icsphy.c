@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.34 2004/08/23 06:16:06 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.34.6.1 2005/03/19 08:34:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.34 2004/08/23 06:16:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.34.6.1 2005/03/19 08:34:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

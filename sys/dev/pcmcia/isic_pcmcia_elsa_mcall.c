@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.7.6.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.7.6.2 2005/03/19 08:35:34 yamt Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_MCALL
@@ -98,7 +98,7 @@ static void elsa_mcall_write_fifo(struct isic_softc *sc, int what, const void *d
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 static int PCMCIA_IO_BASE = 0;		/* ap: XXX hack */
-static void		
+static void
 elsa_mcall_read_fifo(void *buf, const void *base, size_t len)
 {
 }
@@ -229,7 +229,7 @@ isic_attach_elsamcall(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry 
 	sc->writefifo = elsa_mcall_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 1;

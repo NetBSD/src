@@ -1,6 +1,6 @@
-/*	$NetBSD: ffs.S,v 1.2 1998/04/03 22:59:29 matthias Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2.58.1 2005/03/19 08:36:21 yamt Exp $	*/
 
-/* 
+/*
  * Written by Matthias Pfaller, 1996
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ffs.S,v 1.2 1998/04/03 22:59:29 matthias Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.2.58.1 2005/03/19 08:36:21 yamt Exp $")
 #endif
 
 KENTRY(ffs, 4)

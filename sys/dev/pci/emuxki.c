@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.40 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.40.4.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.40 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.40.4.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -835,7 +835,7 @@ emuxki_init(struct emuxki_softc *sc)
 		emuxki_write(sc, 0, EMU_A2_SPDIF_SAMPLERATE, EMU_A2_SPDIF_UNKNOWN);
 
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_PTR, EMU_A2_SRCSEL);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_DATA, 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_DATA,
 			EMU_A2_SRCSEL_ENABLE_SPDIF | EMU_A2_SRCSEL_ENABLE_SRCMULTI);
 
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_A2_PTR, EMU_A2_SRCMULTI);

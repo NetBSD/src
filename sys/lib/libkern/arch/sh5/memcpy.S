@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.2 2002/10/22 12:25:18 scw Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.2.18.1 2005/03/19 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,7 +106,7 @@ Laligned:
 	sub	r4, r1, r4
 	xor	r1, r6, r1
 	addi	r1, 2, r1
-	ptrel/l	r1, tr1	
+	ptrel/l	r1, tr1
 	blink	tr1, r63
 	ld.q	r3, -24, r0
 	st.q	r7, -24, r0

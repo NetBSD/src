@@ -1,7 +1,7 @@
-/*	$NetBSD: s3c2410.c,v 1.5 2004/06/22 11:18:32 bsh Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.5.8.1 2005/03/19 08:32:51 yamt Exp $ */
 
 /*
- * Copyright (c) 2003  Genetec corporation.  All rights reserved.
+ * Copyright (c) 2003, 2005  Genetec corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.5 2004/06/22 11:18:32 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.5.8.1 2005/03/19 08:32:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,11 @@ s3c2410_attach(struct device *parent, struct device *self, void *aux)
 
 	/* calculate current clock frequency */
 	s3c24x0_clock_freq(&sc->sc_sx);
-	printf(": fclk %d MHz hclk %d MHz pclk %d MHz",
+	aprint_normal(": fclk %d MHz hclk %d MHz pclk %d MHz\n",
 	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
 	       sc->sc_sx.sc_pclk / 1000000);
 
-	printf("\n");
+	aprint_naive("\n");
 
 	/* get busdma tag for the platform */
 	sc->sc_sx.sc_dmat = s3c2xx0_bus_dma_init(&s3c2xx0_bus_dma);
@@ -197,30 +197,44 @@ s3c2410_search(struct device * parent, struct cfdata * cf, void *aux)
 
 /*
  * fill sc_pclk, sc_hclk, sc_fclk from values of clock controller register.
+ *
+ * s3c24x0_clock_freq2() is meant to be called from kernel startup routines.
+ * s3c24x0_clock_freq() is for after kernel initialization is done.
  */
 void
-s3c24x0_clock_freq(struct s3c2xx0_softc *sc)
+s3c24x0_clock_freq2(vaddr_t clkman_base, int *fclk, int *hclk, int *pclk)
 {
+	uint32_t pllcon, divn;
 	int mdiv, pdiv, sdiv;
-	int pllcon, divn;
+	int f, h, p;
 
-	pllcon = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
-	    CLKMAN_MPLLCON);
-	divn = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
-	    CLKMAN_CLKDIVN);
+	pllcon = *(volatile uint32_t *)(clkman_base + CLKMAN_MPLLCON);
+	divn = *(volatile uint32_t *)(clkman_base + CLKMAN_CLKDIVN);
 
 	mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
 	pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
 	sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
 
-	sc->sc_fclk = ((mdiv + 8) * S3C2XX0_XTAL_CLK) / 
-	    ((pdiv + 2) * (1 << sdiv));
-	sc->sc_hclk = sc->sc_fclk;
+	f = ((mdiv + 8) * S3C2XX0_XTAL_CLK) / ((pdiv + 2) * (1 << sdiv));
+	h = f;
 	if (divn & CLKDIVN_HDIVN)
-		sc->sc_hclk /= 2;
-	sc->sc_pclk = sc->sc_hclk;
+		h /= 2;
+	p = h;
 	if (divn & CLKDIVN_PDIVN)
-		sc->sc_pclk /= 2;
+		p /= 2;
+
+	if (fclk) *fclk = f;
+	if (hclk) *hclk = h;
+	if (pclk) *pclk = p;
+
+}
+
+void
+s3c24x0_clock_freq(struct s3c2xx0_softc *sc)
+{
+	s3c24x0_clock_freq2(
+		(vaddr_t)bus_space_vaddr(sc->sc_iot, sc->sc_clkman_ioh),
+		&sc->sc_fclk, &sc->sc_hclk, &sc->sc_pclk);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.77.6.1 2005/02/12 18:17:55 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.77.6.2 2005/03/19 08:36:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.77.6.1 2005/02/12 18:17:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.77.6.2 2005/03/19 08:36:51 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -112,7 +112,7 @@ nfs_nhreinit()
 
 	hash = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE, M_WAITOK,
 	    &mask);
-	
+
 	lockmgr(&nfs_hashlock, LK_EXCLUSIVE, NULL);
 	oldhash = nfsnodehashtbl;
 	oldmask = nfsnodehash;

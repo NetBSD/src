@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.16.10.1 2005/02/12 18:17:43 yamt Exp $ */
+/* $NetBSD: isic_l1.h,v 1.16.10.2 2005/03/19 08:34:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -79,7 +79,7 @@ struct isic_io_map {
 	bus_space_tag_t t;	/* which bus-space is this? */
 	bus_space_handle_t h;	/* handle of mapped bus space region */
 	bus_size_t offset;	/* offset into region */
-	bus_size_t size;	/* size of region, zero if not ours 
+	bus_size_t size;	/* size of region, zero if not ours
 				   (i.e.: don't ever unmap it!) */
 };
 
@@ -129,7 +129,7 @@ typedef struct
 	/* link between b channel and driver */
 
 	isdn_link_t	isdn_linktab;		/* b channel driver data	*/
-	const struct isdn_l4_driver_functions 
+	const struct isdn_l4_driver_functions
 			*l4_driver;		/* layer 4 driver		*/
 	void		*l4_driver_softc;	/* layer 4 driver instance	*/
 

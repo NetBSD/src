@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.41 2004/12/07 14:50:56 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.41.4.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.41 2004/12/07 14:50:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.41.4.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -541,7 +541,7 @@ static void
 ahb_done(struct ahb_softc *sc, struct ahb_ecb *ecb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ecb->xs;
 
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("ahb_done\n"));

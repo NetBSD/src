@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.22.10.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.22.10.2 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.22.10.1 2005/02/12 18:17:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.22.10.2 2005/03/19 08:37:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -330,8 +330,8 @@ fail:
 			*allocib = 0;
 		} else {
 			int r;
-	
-			r = bread(vp, indirs[unwindidx].in_lbn, 
+
+			r = bread(vp, indirs[unwindidx].in_lbn,
 			    (int)fs->e2fs_bsize, NOCRED, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
@@ -401,7 +401,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 				    (off + bsize) & 0xffffffff);
 			error = ext2fs_setsize(ip, off + bsize);
 			if (error) {
-				UVMHIST_LOG(ubcist, "error %d", error, 0,0,0);
+				UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
 				return error;
 			}
 		}

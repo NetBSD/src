@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.12.1 2005/02/13 10:20:49 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.12.2 2005/03/19 08:33:21 yamt Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.12.1 2005/02/13 10:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.12.2 2005/03/19 08:33:21 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -376,7 +376,7 @@ i386_iopl(l, args, retval)
 
 	/* Force the change at ring 0. */
 	op.cmd = DOM0_IOPL;
-	op.u.iopl.domain = xen_start_info.dom_id;
+	op.u.iopl.domain = DOMID_SELF;
 	op.u.iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
 	HYPERVISOR_dom0_op(&op);
 

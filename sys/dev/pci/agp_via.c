@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.5.12.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.5.12.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 	/* Install the gatt. */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_VIA_ATTBASE,
 			 gatt->ag_physical | 3);
-	
+
 	/* Enable the aperture. */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_VIA_GARTCTRL, 0x0000000f);
 

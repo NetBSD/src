@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.35 2004/08/21 22:48:18 thorpej Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.35.6.1 2005/03/19 08:35:11 yamt Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.35 2004/08/21 22:48:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.35.6.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ struct wi_pci_softc {
 	struct wi_softc psc_wi;		/* real "wi" softc */
 
 	/* PCI-specific goo */
-	pci_intr_handle_t psc_ih;	
+	pci_intr_handle_t psc_ih;
 	pci_chipset_tag_t psc_pc;
 
 	void *sc_powerhook;		/* power hook descriptor */
@@ -142,7 +142,7 @@ wi_pci_enable(struct wi_softc *sc)
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
 	/* establish the interrupt. */
-	sc->sc_ih = pci_intr_establish(psc->psc_pc, 
+	sc->sc_ih = pci_intr_establish(psc->psc_pc,
 					psc->psc_ih, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
@@ -183,7 +183,7 @@ wi_pci_reset(struct wi_softc *sc)
 	for (i = 200000; i--; DELAY(10))
 		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
 			break;
- 
+
 	if (i < 0) {
 		printf("%s: PCI reset timed out\n", sc->sc_dev.dv_xname);
 	} else if (sc->sc_if.if_flags & IFF_DEBUG) {
@@ -275,7 +275,7 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * the National Datacomm Corporation NCP130. Values
 		 * for registers acquired from OpenBSD, which in
 		 * turn got them from a Linux driver.
-		 */   
+		 */
 		/* Map COR and I/O registers. */
 		if (pci_mapreg_map(pa, WI_TMD_COR, PCI_MAPREG_TYPE_IO, 0,
 		    &tmdt, &tmdh, NULL, NULL) != 0) {

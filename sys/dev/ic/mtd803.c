@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.6.6.1 2005/02/12 18:17:43 yamt Exp $ */
+/* $NetBSD: mtd803.c,v 1.6.6.2 2005/03/19 08:34:03 yamt Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.6.6.1 2005/02/12 18:17:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.6.6.2 2005/03/19 08:34:03 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -692,7 +692,7 @@ mtd_rxirq(sc)
 		/* Error summary set? */
 		if (sc->desc[sc->cur_rx].stat & MTD_RXD_ERRSUM) {
 			printf("%s: received packet with errors\n",
-				sc->dev.dv_xname); 
+				sc->dev.dv_xname);
 			/* Give up packet, since an error occurred */
 			sc->desc[sc->cur_rx].stat = MTD_RXD_OWNER;
 			sc->desc[sc->cur_rx].conf = MTD_RXBUF_SIZE &
@@ -708,7 +708,7 @@ mtd_rxirq(sc)
 		len -= ETHER_CRC_LEN;
 
 		/* Check packet size */
-		if (len <= sizeof(struct ether_header)) { 
+		if (len <= sizeof(struct ether_header)) {
 			printf("%s: invalid packet size %d; dropping\n",
 				sc->dev.dv_xname, len);
 			sc->desc[sc->cur_rx].stat = MTD_RXD_OWNER;
@@ -773,7 +773,7 @@ mtd_bufirq(sc)
 	struct mtd_softc *sc;
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
-	
+
 	/* Clear timeout */
 	ifp->if_timer = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2003/06/15 23:08:58 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.8.12.1 2005/03/19 08:32:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -140,84 +140,84 @@ struct dreamcast_bus_space {
 	void *		(*dbs_vaddr)(void *, bus_space_handle_t);
 
 	/* read (single) */
-	u_int8_t	(*dbs_r_1)(void *, bus_space_handle_t,
+	uint8_t		(*dbs_r_1)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int16_t	(*dbs_r_2)(void *, bus_space_handle_t,
+	uint16_t	(*dbs_r_2)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int32_t	(*dbs_r_4)(void *, bus_space_handle_t,
+	uint32_t	(*dbs_r_4)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int64_t	(*dbs_r_8)(void *, bus_space_handle_t,
+	uint64_t	(*dbs_r_8)(void *, bus_space_handle_t,
 			    bus_size_t);
 
 	/* read multiple */
 	void		(*dbs_rm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*dbs_rm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*dbs_rm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*dbs_rm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* read region */
 	void		(*dbs_rr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*dbs_rr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*dbs_rr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*dbs_rr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* write (single) */
 	void		(*dbs_w_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t);
+			    bus_size_t, uint8_t);
 	void		(*dbs_w_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t);
+			    bus_size_t, uint16_t);
 	void		(*dbs_w_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t);
+			    bus_size_t, uint32_t);
 	void		(*dbs_w_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t);
+			    bus_size_t, uint64_t);
 
 	/* write multiple */
 	void		(*dbs_wm_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*dbs_wm_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*dbs_wm_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*dbs_wm_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 					
 	/* write region */
 	void		(*dbs_wr_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*dbs_wr_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*dbs_wr_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*dbs_wr_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 
 	/* set multiple */
 	void		(*dbs_sm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*dbs_sm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*dbs_sm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*dbs_sm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* set region */
 	void		(*dbs_sr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*dbs_sr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*dbs_sr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*dbs_sr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* copy */
 	void		(*dbs_c_1)(void *, bus_space_handle_t, bus_size_t,
@@ -314,110 +314,110 @@ do {									\
 /*
  * Bus read (single) operations.
  */
-#define	bus_space_read_1(t, h, o)	__dbs_rs(1,u_int8_t,(t),(h),(o))
-#define	bus_space_read_2(t, h, o)	__dbs_rs(2,u_int16_t,(t),(h),(o))
-#define	bus_space_read_4(t, h, o)	__dbs_rs(4,u_int32_t,(t),(h),(o))
-#define	bus_space_read_8(t, h, o)	__dbs_rs(8,u_int64_t,(t),(h),(o))
+#define	bus_space_read_1(t, h, o)	__dbs_rs(1,uint8_t,(t),(h),(o))
+#define	bus_space_read_2(t, h, o)	__dbs_rs(2,uint16_t,(t),(h),(o))
+#define	bus_space_read_4(t, h, o)	__dbs_rs(4,uint32_t,(t),(h),(o))
+#define	bus_space_read_8(t, h, o)	__dbs_rs(8,uint64_t,(t),(h),(o))
 
 
 /*
  * Bus read multiple operations.
  */
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
-	__dbs_nonsingle(rm,1,u_int8_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rm,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_2(t, h, o, a, c)				\
-	__dbs_nonsingle(rm,2,u_int16_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rm,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
-	__dbs_nonsingle(rm,4,u_int32_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
-	__dbs_nonsingle(rm,8,u_int64_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rm,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus read region operations.
  */
 #define	bus_space_read_region_1(t, h, o, a, c)				\
-	__dbs_nonsingle(rr,1,u_int8_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rr,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_2(t, h, o, a, c)				\
-	__dbs_nonsingle(rr,2,u_int16_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rr,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_4(t, h, o, a, c)				\
-	__dbs_nonsingle(rr,4,u_int32_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_8(t, h, o, a, c)				\
-	__dbs_nonsingle(rr,8,u_int64_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(rr,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write (single) operations.
  */
-#define	bus_space_write_1(t, h, o, v)	__dbs_ws(1,u_int8_t,(t),(h),(o),(v))
-#define	bus_space_write_2(t, h, o, v)	__dbs_ws(2,u_int16_t,(t),(h),(o),(v))
-#define	bus_space_write_4(t, h, o, v)	__dbs_ws(4,u_int32_t,(t),(h),(o),(v))
-#define	bus_space_write_8(t, h, o, v)	__dbs_ws(8,u_int64_t,(t),(h),(o),(v))
+#define	bus_space_write_1(t, h, o, v)	__dbs_ws(1,uint8_t,(t),(h),(o),(v))
+#define	bus_space_write_2(t, h, o, v)	__dbs_ws(2,uint16_t,(t),(h),(o),(v))
+#define	bus_space_write_4(t, h, o, v)	__dbs_ws(4,uint32_t,(t),(h),(o),(v))
+#define	bus_space_write_8(t, h, o, v)	__dbs_ws(8,uint64_t,(t),(h),(o),(v))
 
 
 /*
  * Bus write multiple operations.
  */
 #define	bus_space_write_multi_1(t, h, o, a, c)				\
-	__dbs_nonsingle(wm,1,u_int8_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wm,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_2(t, h, o, a, c)				\
-	__dbs_nonsingle(wm,2,u_int16_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wm,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_4(t, h, o, a, c)				\
-	__dbs_nonsingle(wm,4,u_int32_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-	__dbs_nonsingle(wm,8,u_int64_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wm,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write region operations.
  */
 #define	bus_space_write_region_1(t, h, o, a, c)				\
-	__dbs_nonsingle(wr,1,u_int8_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wr,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_2(t, h, o, a, c)				\
-	__dbs_nonsingle(wr,2,u_int16_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wr,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_4(t, h, o, a, c)				\
-	__dbs_nonsingle(wr,4,u_int32_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
-	__dbs_nonsingle(wr,8,u_int64_t,(t),(h),(o),(a),(c))
+	__dbs_nonsingle(wr,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Set multiple operations.
  */
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
-	__dbs_set(sm,1,u_int8_t,(t),(h),(o),(v),(c))
+	__dbs_set(sm,1,uint8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_2(t, h, o, v, c)				\
-	__dbs_set(sm,2,u_int16_t,(t),(h),(o),(v),(c))
+	__dbs_set(sm,2,uint16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_4(t, h, o, v, c)				\
-	__dbs_set(sm,4,u_int32_t,(t),(h),(o),(v),(c))
+	__dbs_set(sm,4,uint32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_8(t, h, o, v, c)				\
-	__dbs_set(sm,8,u_int64_t,(t),(h),(o),(v),(c))
+	__dbs_set(sm,8,uint64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Set region operations.
  */
 #define	bus_space_set_region_1(t, h, o, v, c)				\
-	__dbs_set(sr,1,u_int8_t,(t),(h),(o),(v),(c))
+	__dbs_set(sr,1,uint8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_2(t, h, o, v, c)				\
-	__dbs_set(sr,2,u_int16_t,(t),(h),(o),(v),(c))
+	__dbs_set(sr,2,uint16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_4(t, h, o, v, c)				\
-	__dbs_set(sr,4,u_int32_t,(t),(h),(o),(v),(c))
+	__dbs_set(sr,4,uint32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_8(t, h, o, v, c)				\
-	__dbs_set(sr,8,u_int64_t,(t),(h),(o),(v),(c))
+	__dbs_set(sr,8,uint64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Copy region operations.
  */
 #define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
-	__dbs_copy(1, u_int8_t, (t), (h1), (o1), (h2), (o2), (c))
+	__dbs_copy(1, uint8_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
-	__dbs_copy(2, u_int16_t, (t), (h1), (o1), (h2), (o2), (c))
+	__dbs_copy(2, uint16_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
-	__dbs_copy(4, u_int32_t, (t), (h1), (o1), (h2), (o2), (c))
+	__dbs_copy(4, uint32_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
-	__dbs_copy(8, u_int64_t, (t), (h1), (o1), (h2), (o2), (c))
+	__dbs_copy(8, uint64_t, (t), (h1), (o1), (h2), (o2), (c))
 
 /*
  * Bus stream operations--defined in terms of non-stream counterparts
@@ -577,7 +577,7 @@ struct dreamcast_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
@@ -589,6 +589,7 @@ struct dreamcast_bus_dmamap {
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 };
 
 #endif /* _DREAMCAST_BUS_H_ */

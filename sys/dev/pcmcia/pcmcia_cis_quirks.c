@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.24 2004/10/24 22:17:07 enami Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.24.6.1 2005/03/19 08:35:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.24 2004/10/24 22:17:07 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.24.6.1 2005/03/19 08:35:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,11 +220,11 @@ static const struct pcmcia_config_entry pcmcia_fujitsu_j181_func0_cfe0 = {
 };
 
 static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID, 
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT, PCMCIA_CIS_INVALID, 
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
@@ -244,7 +244,7 @@ static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  PCMCIA_CIS_FUJITSU_FMV_J181,
 	  &pcmcia_fujitsu_j181_func0, &pcmcia_fujitsu_j181_func0_cfe0 },
 };
-	
+
 static const int pcmcia_cis_nquirks =
    sizeof(pcmcia_cis_quirks) / sizeof(pcmcia_cis_quirks[0]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.13 2004/11/16 16:45:52 oster Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.13.6.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * rf_driver.h
  */
@@ -47,13 +47,14 @@ int rf_UnbootRaidframe(void);
 int rf_Shutdown(RF_Raid_t *);
 int rf_Configure(RF_Raid_t *, RF_Config_t *, RF_AutoConfig_t *);
 RF_RaidAccessDesc_t *rf_AllocRaidAccDesc(RF_Raid_t *, RF_IoType_t,
-					 RF_RaidAddr_t, RF_SectorCount_t, 
-					 caddr_t, void *, 
-					 RF_RaidAccessFlags_t, 
+					 RF_RaidAddr_t, RF_SectorCount_t,
+					 caddr_t, void *,
+					 RF_RaidAccessFlags_t,
 					 const RF_AccessState_t *);
 void rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *);
-int rf_DoAccess(RF_Raid_t *, RF_IoType_t, int, RF_RaidAddr_t, 
-		RF_SectorCount_t, caddr_t, void *, RF_RaidAccessFlags_t);
+int rf_DoAccess(RF_Raid_t *, RF_IoType_t, int, RF_RaidAddr_t,
+		RF_SectorCount_t, caddr_t, struct buf *,
+		RF_RaidAccessFlags_t);
 #if 0
 int rf_SetReconfiguredMode(RF_Raid_t *, RF_RowCol_t, RF_RowCol_t);
 #endif

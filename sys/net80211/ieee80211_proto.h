@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.8 2005/01/04 00:56:52 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.8.4.1 2005/03/19 08:36:35 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -65,7 +65,7 @@ extern	int ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
 		int, int);
 extern	struct mbuf *ieee80211_encap(struct ifnet *, struct mbuf *,
 		struct ieee80211_node **);
-extern	void ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *, 
+extern	void ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *,
 		struct mbuf *);
 extern	struct mbuf *ieee80211_decap(struct ifnet *, struct mbuf *);
 extern	u_int8_t *ieee80211_add_rates(u_int8_t *frm,

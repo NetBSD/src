@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_isa.c,v 1.1 2001/12/16 22:35:31 thorpej Exp $	*/
+/*	$NetBSD: weasel_isa.c,v 1.1.30.1 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.1 2001/12/16 22:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.1.30.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ void
 weasel_isa_init(struct weasel_handle *wh)
 {
 	struct weasel_config_block cfg;
-	int i, j; 
-	u_int8_t *cp, sum; 
+	int i, j;
+	u_int8_t *cp, sum;
 	const char *vers, *mode;
 
 	/*
@@ -241,7 +241,7 @@ weasel_isa_wdog_setmode(struct sysmon_wdog *smw)
 int
 weasel_isa_wdog_tickle(struct sysmon_wdog *smw)
 {
-	struct weasel_handle *wh = smw->smw_cookie; 
+	struct weasel_handle *wh = smw->smw_cookie;
 	u_int8_t reg;
 	int x;
 	int s;
@@ -257,16 +257,16 @@ weasel_isa_wdog_tickle(struct sysmon_wdog *smw)
 	/*
 	 * then we check to make sure the weasel is still armed. If someone
 	 * has rebooted the weasel for whatever reason (firmware update),
-	 * then the watchdog timer would no longer be armed and we'd be 
+	 * then the watchdog timer would no longer be armed and we'd be
 	 * servicing nothing. Let the user know that the machine is no
 	 * longer being monitored by the weasel.
 	 */
 	if((x = weasel_isa_wdog_query_state(wh)) == -1)
 		error = EIO;
-	if (x == 1) { 
+	if (x == 1) {
 		error = 0;
 	} else {
-		printf("%s: Watchdog timer disabled on PC/Weasel! Disarming wdog.\n", 
+		printf("%s: Watchdog timer disabled on PC/Weasel! Disarming wdog.\n",
 			wh->wh_parent->dv_xname);
 		wh->wh_wdog_armed = 0;
 		error = 1;
@@ -329,7 +329,7 @@ weasel_isa_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
 		case -1:
 			error = EIO;
 			break;
-		case 0: 
+		case 0:
 			if (mode == WDT_DISABLE) {
 				wh->wh_wdog_armed = 0;
 				error = 0;
@@ -344,7 +344,7 @@ weasel_isa_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
 				error = EIO;
 			break;
 	}
-				
+
 	splx(s);
 	return(error);
 }

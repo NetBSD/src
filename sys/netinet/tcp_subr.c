@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.177.4.1 2005/02/12 18:17:54 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.177.4.2 2005/03/19 08:36:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.177.4.1 2005/02/12 18:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.177.4.2 2005/03/19 08:36:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -907,6 +907,8 @@ static struct tcpcb tcpcb_template = {
 
 	.snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT,
+
+	.t_partialacks = -1,
 };
 
 /*
@@ -928,11 +930,6 @@ tcp_tcpcb_template(void)
 		flags |= TF_REQ_SCALE;
 	if (tcp_do_rfc1323 && tcp_do_timestamps)
 		flags |= TF_REQ_TSTMP;
-	if (tcp_do_sack == 2)
-		flags |= TF_WILL_SACK;
-	else if (tcp_do_sack == 1)
-		flags |= TF_WILL_SACK|TF_IGNR_RXSACK;
-	flags |= TF_CANT_TXSACK;
 	tp->t_flags = flags;
 
 	/*
@@ -965,6 +962,7 @@ tcp_newtcpcb(int family, void *aux)
 	TAILQ_INIT(&tp->segq);
 	TAILQ_INIT(&tp->timeq);
 	tp->t_family = family;		/* may be overridden later on */
+	TAILQ_INIT(&tp->snd_holes);
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
 	/* Don't sweat this loop; hopefully the compiler will unroll it. */
@@ -1187,6 +1185,9 @@ tcp_close(struct tcpcb *tp)
 	(void) tcp_freeq(tp);
 	TCP_REASS_UNLOCK(tp);
 
+	/* free the SACK holes list. */
+	tcp_free_sackholes(tp);
+
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
@@ -1240,6 +1241,8 @@ tcp_freeq(tp)
 		pool_put(&tcpipqent_pool, qe);
 		rv = 1;
 	}
+	tp->t_segqlen = 0;
+	KASSERT(TAILQ_EMPTY(&tp->timeq));
 	return (rv);
 }
 
@@ -1542,7 +1545,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 /*
- * When a source quence is received, we are being notifed of congestion.
+ * When a source quench is received, we are being notified of congestion.
  * Close the congestion window down to the Loss Window (one segment).
  * We will gradually open it again as we proceed.
  */
@@ -2188,7 +2191,7 @@ tcp_optlen(struct tcpcb *tp)
 
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) 
+	if (tp->t_family == AF_INET)
 #endif
 	if (tp->t_flags & TF_SIGNATURE)
 		optlen += TCPOLEN_SIGNATURE + 2;

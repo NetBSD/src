@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.209 2005/01/21 20:27:03 imp Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.209.2.1 2005/03/19 08:35:35 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp 
+ *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 

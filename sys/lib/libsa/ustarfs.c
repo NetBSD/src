@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.23 2003/08/31 22:40:49 fvdl Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.23.10.1 2005/03/19 08:36:26 yamt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -80,8 +80,8 @@
  */
 
 /* virtual offset to volume number */
- 
-#define	vda2vn(_v,_volsize) ((_v) / (_volsize))	
+
+#define	vda2vn(_v,_volsize) ((_v) / (_volsize))
 
 /* conversions between the three different levels of disk addresses */
 

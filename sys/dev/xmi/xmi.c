@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.5 2003/04/01 02:08:01 thorpej Exp $	*/
+/*	$NetBSD: xmi.c,v 1.5.12.1 2005/03/19 08:36:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.5 2003/04/01 02:08:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.5.12.1 2005/03/19 08:36:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ xmi_attach(struct xmi_softc *sc)
 	for (nodenr = 0; nodenr < NNODEXMI; nodenr++) {
 		if (bus_space_map(sc->sc_iot, sc->sc_addr + XMI_NODE(nodenr),
 		    PAGE_SIZE, 0, &xa.xa_ioh)) {
-			printf("xmi_attach: bus_space_map failed, node %d\n", 
+			printf("xmi_attach: bus_space_map failed, node %d\n",
 			    nodenr);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.28 2004/03/17 17:04:58 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.28.10.1 2005/03/19 08:35:47 yamt Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.28 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.28.10.1 2005/03/19 08:35:47 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -532,7 +532,7 @@ magma_hard(arg)
 
 			mbpp = &sc->ms_mbpp->ms_port[port];
 			cd = mbpp->mp_cd1400;
- 
+
 			/* don't think we have to handle exceptions */
 			n_chars = cd1400_read_reg(cd, CD1400_RDCR);
 			while (n_chars--) {
@@ -1083,7 +1083,7 @@ mttypoll(dev, events, p)
 	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 

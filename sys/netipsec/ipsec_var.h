@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_var.h,v 1.2 2004/07/17 16:36:39 atatat Exp $ */
+/*	$NetBSD: ipsec_var.h,v 1.2.8.1 2005/03/19 08:36:41 yamt Exp $ */
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@ struct newipsecstat {
 	u_int64_t ips_spdcache_miss;
 #endif /* __NetBSD__ */
 
-	/* 
+	/*
 	 * Temporary statistics for performance analysis.
 	 */
 	/* See where ESP/AH/IPCOMP header land in mbuf on input */

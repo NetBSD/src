@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.47.6.1 2005/02/12 18:17:53 yamt Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.47.6.2 2005/03/19 08:36:31 yamt Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.47.6.1 2005/02/12 18:17:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.47.6.2 2005/03/19 08:36:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -416,12 +416,12 @@ gifintr(arg)
 		if(m->m_flags & M_PROTO1) {
 			M_PREPEND(m, sizeof(int), M_DONTWAIT);
 			if (!m) {
-				ifp->if_oerrors++;				
+				ifp->if_oerrors++;
 				continue;
 			}
 			*mtod(m, int *) = AF_LINK;
 		}
-			
+
 #endif
 		/* grab and chop off inner af type */
 		if (sizeof(int) > m->m_len) {
@@ -453,7 +453,7 @@ gifintr(arg)
 			break;
 #endif
 		default:
-			m_freem(m);		
+			m_freem(m);
 			error = ENETDOWN;
 			break;
 		}
@@ -461,7 +461,7 @@ gifintr(arg)
 		if (error)
 			ifp->if_oerrors++;
 		else {
-			ifp->if_opackets++;	
+			ifp->if_opackets++;
 			ifp->if_obytes += len;
 		}
 	}
@@ -486,7 +486,7 @@ gif_input(m, af, ifp)
 	}
 
 	m->m_pkthdr.rcvif = ifp;
-	
+
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, af, m);
@@ -535,7 +535,7 @@ gif_input(m, af, ifp)
 				return;
 			}
 		}
-		eh = mtod(m, struct ether_header *); 	
+		eh = mtod(m, struct ether_header *);
 		m->m_flags &= ~(M_BCAST|M_MCAST);
 		if (eh->ether_dhost[0] & 1) {
 			if (bcmp((caddr_t) etherbroadcastaddr,
@@ -596,7 +596,7 @@ gif_ioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		break;
-		
+
 	case SIOCSIFDSTADDR:
 		break;
 
@@ -734,7 +734,7 @@ gif_ioctl(ifp, cmd, data)
 		gif_delete_tunnel(&sc->gif_if);
 		break;
 #endif
-			
+
 	case SIOCGIFPSRCADDR:
 #ifdef INET6
 	case SIOCGIFPSRCADDR_IN6:
@@ -766,7 +766,7 @@ gif_ioctl(ifp, cmd, data)
 			return EINVAL;
 		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
-			
+
 	case SIOCGIFPDSTADDR:
 #ifdef INET6
 	case SIOCGIFPDSTADDR_IN6:

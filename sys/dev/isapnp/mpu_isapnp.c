@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.8.16.1 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.8.16.2 2005/03/19 08:34:40 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.8.16.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.8.16.2 2005/03/19 08:34:40 yamt Exp $");
 
 #include "midi.h"
 
@@ -67,7 +67,7 @@ mpu_isapnp_attach(parent, self, aux)
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
+		printf("%s: error in region allocation\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,9 +1,9 @@
-/*	$NetBSD: llc_var.h,v 1.13 2003/08/07 16:33:03 agc Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.13.10.1 2005/03/19 08:36:38 yamt Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Dirk Husemann and the Computer Science Department (IV) of
  * the University of Erlangen-Nuremberg, Germany.
@@ -35,11 +35,11 @@
  *	@(#)llc_var.h	8.2 (Berkeley) 2/9/95
  */
 
-/* 
+/*
  * Copyright (c) 1990, 1991, 1992
- *		Dirk Husemann, Computer Science Department IV, 
+ *		Dirk Husemann, Computer Science Department IV,
  * 		University of Erlangen-Nuremberg, Germany.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Dirk Husemann and the Computer Science Department (IV) of
  * the University of Erlangen-Nuremberg, Germany.
@@ -96,9 +96,9 @@ struct npaidbentry {
 			u_short SI_window;
 			u_short SI_trace;
 			u_short SI_xchxid;
-			void (*SI_input) 
+			void (*SI_input)
 				__P((struct mbuf *,...));
-			void *(*SI_ctlinput) 
+			void *(*SI_ctlinput)
 				__P((int,struct sockaddr *,void *));
 		} SI;
 	} NESIun;
@@ -161,7 +161,7 @@ extern struct bitslice llc_bitslice[];
  * LLC events --- These events may either be frames received from the
  *		  remote LLC DSAP,request from the network layer user,
  *		  timer events from llc_timer(),or diagnostic events from
- *		  llc_input().	
+ *		  llc_input().
  */
 
 /* LLC frame types */
@@ -192,26 +192,26 @@ extern struct bitslice llc_bitslice[];
 #define LLC_LOCAL_BUSY_CLEARED		20 * LLC_MAXCMDRSP
 
 /* Network layer user requests */
-/* 
+/*
  * NL_CONNECT_REQUEST --- The user has requested that a data link connection
  *			  be established with a remote LLC DSAP.
  */
 #define NL_CONNECT_REQUEST		21 * LLC_MAXCMDRSP
-/* 
+/*
  * NL_CONNECT_RESPONSE --- The user has accepted the data link connection.
  */
 #define NL_CONNECT_RESPONSE		22 * LLC_MAXCMDRSP
-/* 
+/*
  * NL_RESET_REQUEST --- The user has requested that the data link with the
  *			remote LLC DSAP be reset.
  */
 #define NL_RESET_REQUEST		23 * LLC_MAXCMDRSP
-/* 
+/*
  * NL_RESET_RESPONSE --- The user has accepted the reset of the data link
  *			 connection.
  */
 #define NL_RESET_RESPONSE		24 * LLC_MAXCMDRSP
-/* 
+/*
  * NL_DISCONNECT_REQUEST --- The user has requested that the data link
  *			     connection with remote LLC DSAP be terminated.
  */
@@ -299,12 +299,12 @@ extern struct bitslice llc_bitslice[];
 
 #define INFORMATION_CONTROL	0x00
 #define SUPERVISORY_CONTROL	0x02
-#define UNUMBERED_CONTROL	0x03 
- 
+#define UNUMBERED_CONTROL	0x03
+
 /*
  * Other necessary definitions
  */
- 
+
 #define LLC_MAX_SEQUENCE    128
 #define LLC_MAX_WINDOW	    127
 #define LLC_WINDOW_SIZE	    7
@@ -486,7 +486,7 @@ struct sdl_hdr {
 /*
  * LLC2 macro definitions
  */
-				    
+
 
 #define LLC_START_ACK_TIMER(l) LLC_STARTTIMER((l),ACK)
 #define LLC_STOP_ACK_TIMER(l) LLC_STOPTIMER((l),ACK)
@@ -621,7 +621,7 @@ struct sdl_hdr {
 #else /* LLCDEBUG */
 #define LLC_TRACE(lp,l,msg) /* NOOP */
 #endif /* LLCDEBUG */
-				      
+
 #define LLC_N2_VALUE	  15		  /* up to 15 retries */
 #define LLC_ACK_TIMER	  10		  /*  5 secs */
 #define LLC_P_TIMER	   4		  /*  2 secs */
@@ -653,7 +653,7 @@ extern struct ifqueue llcintrq;
 extern struct llccb_q llccb_q;
 extern char *frame_names[];
 
-/* 
+/*
  * Function prototypes
  */
 /* llc_input.c */

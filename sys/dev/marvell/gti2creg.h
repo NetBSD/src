@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2creg.h,v 1.1.4.2 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: gti2creg.h,v 1.1.4.3 2005/03/19 08:34:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -19,7 +19,7 @@
  *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY BROCADE COMMUNICATIONS, INC. ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL EITHER BROCADE COMMUNICATIONS, INC. BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
@@ -53,7 +53,7 @@
 #define	I2C_Control_IntEn	0x80
 
 /*
- * F(I2C) = F(Tclk) / ( 10 * (M + 1) * (2^(N+1))) 
+ * F(I2C) = F(Tclk) / ( 10 * (M + 1) * (2^(N+1)))
  * For Tclk = 100MHz, M =  4, N = 4: F = 62.5KHz
  * For Tclk = 100MHz, M = 13, N = 3: F = 96.2KHz
  */

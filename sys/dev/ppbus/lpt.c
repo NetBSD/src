@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.12 2004/02/03 21:15:03 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.12.12.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.12 2004/02/03 21:15:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.12.12.1 2005/03/19 08:35:37 yamt Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -98,7 +98,7 @@ static void lpt_attach(struct device *, struct device *, void *);
 static int lpt_detach(struct device *, int);
 
 /* Autoconf structure */
-CFATTACH_DECL(lpt_ppbus, sizeof(struct lpt_softc), lpt_probe, lpt_attach, 
+CFATTACH_DECL(lpt_ppbus, sizeof(struct lpt_softc), lpt_probe, lpt_attach,
 	lpt_detach, NULL);
 
 extern struct cfdriver lpt_cd;
@@ -111,7 +111,7 @@ dev_type_ioctl(lptioctl);
 
 const struct cdevsw lpt_cdevsw = {
         lptopen, lptclose, lptread, lptwrite, lptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter 
+	nostop, notty, nopoll, nommap, nokqfilter
 };
 
 
@@ -128,13 +128,13 @@ static int
 lpt_probe(struct device * parent, struct cfdata * match, void * aux)
 {
 	/* Test ppbus's capability */
-	return lpt_detect(parent); 
+	return lpt_detect(parent);
 }
 
 static void
 lpt_attach(struct device * parent, struct device * self, void * aux)
 {
-	struct lpt_softc * sc = (struct lpt_softc *) self; 
+	struct lpt_softc * sc = (struct lpt_softc *) self;
 	struct ppbus_device_softc * ppbdev = &(sc->ppbus_dev);
 	struct ppbus_attach_args * args = aux;
 	char buf[64];
@@ -143,7 +143,7 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 	error = lpt_request_ppbus(sc, 0);
 	if(error) {
 		printf("%s(%s): error (%d) requesting bus(%s). Device not "
-			"properly attached.\n", __func__, self->dv_xname, 
+			"properly attached.\n", __func__, self->dv_xname,
 			error, parent->dv_xname);
 		return;
 	}
@@ -153,17 +153,17 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 
 	/* Allocate memory buffers */
 	if(ppbdev->capabilities & PPBUS_HAS_DMA) {
-		if(ppbus_dma_malloc(parent, &(sc->sc_inbuf), 
+		if(ppbus_dma_malloc(parent, &(sc->sc_inbuf),
 			&(sc->sc_in_baddr), BUFSIZE)) {
-			
+
 			printf(" : cannot allocate input DMA buffer. Device "
 				"not properly attached!\n");
 			return;
 		}
-		if(ppbus_dma_malloc(parent, &(sc->sc_outbuf), 
+		if(ppbus_dma_malloc(parent, &(sc->sc_outbuf),
 			&(sc->sc_out_baddr), BUFSIZE)) {
-			
-			ppbus_dma_free(parent, &(sc->sc_inbuf), 
+
+			ppbus_dma_free(parent, &(sc->sc_inbuf),
 				&(sc->sc_in_baddr), BUFSIZE);
 			printf(" : cannot allocate output DMA buffer. Device "
 				"not properly attached!\n");
@@ -196,10 +196,10 @@ lpt_detach(struct device * self, int flags)
 	if(lpt->sc_state & HAVEBUS) {
 		err = lpt_release_ppbus(lpt, 0);
 		if(err) {
-			printf("%s error (%d) while releasing bus", 
-				self->dv_xname, err); 
+			printf("%s error (%d) while releasing bus",
+				self->dv_xname, err);
 			if(flags & DETACH_FORCE) {
-				printf(", continuing (DETACH_FORCE)!\n"); 
+				printf(", continuing (DETACH_FORCE)!\n");
 			}
 			else {
 				printf(", terminating!\n");
@@ -213,9 +213,9 @@ lpt_detach(struct device * self, int flags)
 
 	/* Free memory buffers */
 	if(ppbdev->capabilities & PPBUS_HAS_DMA) {
-		ppbus_dma_free(self->dv_parent, &(lpt->sc_inbuf), 
-			&(lpt->sc_in_baddr), BUFSIZE); 
-		ppbus_dma_free(self->dv_parent, &(lpt->sc_outbuf), 
+		ppbus_dma_free(self->dv_parent, &(lpt->sc_inbuf),
+			&(lpt->sc_in_baddr), BUFSIZE);
+		ppbus_dma_free(self->dv_parent, &(lpt->sc_outbuf),
 			&(lpt->sc_out_baddr), BUFSIZE);
 	} else {
 		free(lpt->sc_inbuf, M_DEVBUF);
@@ -241,7 +241,7 @@ lpt_request_ppbus(struct lpt_softc * lpt, int how)
 		lpt->sc_state |= HAVEBUS;
 	}
 	else {
-		LPT_DPRINTF(("%s(%s): error %d requesting bus.\n", __func__, 
+		LPT_DPRINTF(("%s(%s): error %d requesting bus.\n", __func__,
 			dev->dv_xname, error));
 	}
 
@@ -256,7 +256,7 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
 	int error;
 
 	if(lpt->sc_state & HAVEBUS) {
-		error = ppbus_release_bus(dev->dv_parent, dev, how, (hz)); 
+		error = ppbus_release_bus(dev->dv_parent, dev, how, (hz));
 		if(!(error))
 			lpt->sc_state &= ~HAVEBUS;
 		else
@@ -265,7 +265,7 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
 	}
 	else {
 		error = EINVAL;
-		LPT_DPRINTF(("%s(%s): device does not own bus.\n", __func__, 
+		LPT_DPRINTF(("%s(%s): device does not own bus.\n", __func__,
 			dev->dv_xname));
 	}
 
@@ -347,7 +347,7 @@ lpt_detect(struct device * dev)
 		if((var = ppbus_rdtr(dev)) != testbyte[i]) {
 			status = 0;
 			LPT_DPRINTF(("%s(%s): byte value %x cannot be written "
-				"and read from data port (got %x instead).\n", 
+				"and read from data port (got %x instead).\n",
 				__func__, dev->dv_xname, testbyte[i], var));
 			goto end;
 		}
@@ -361,9 +361,9 @@ lpt_detect(struct device * dev)
 			status = 0;
 			LPT_DPRINTF(("%s(%s): byte value %x (unmasked value "
 				"%x) cannot be written and read from control "
-				"port (got %x instead).\n", __func__, 
-				dev->dv_xname, (testbyte[i] & 0x14), 
-				testbyte[i], (var & 0x14))); 
+				"port (got %x instead).\n", __func__,
+				dev->dv_xname, (testbyte[i] & 0x14),
+				testbyte[i], (var & 0x14)));
 			break;
 		}
 	}
@@ -378,7 +378,7 @@ end:
 }
 
 /* Log status of status register for printer port */
-static int 
+static int
 lpt_logstatus(const struct device * const dev, const unsigned char status)
 {
 	int err;
@@ -416,74 +416,74 @@ lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
 	struct device * dev;
 	struct lpt_softc * lpt;
 	struct ppbus_device_softc * ppbus_dev;
-	struct device * ppbus; 
-	
+	struct device * ppbus;
+
 	dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
 	if(!dev) {
-		LPT_DPRINTF(("%s(): device not configured.\n", __func__)); 
+		LPT_DPRINTF(("%s(): device not configured.\n", __func__));
 		return ENXIO;
 	}
-	
+
 	lpt = (struct lpt_softc *) dev;
-	
+
 	ppbus = dev->dv_parent;
 	ppbus_dev = &(lpt->ppbus_dev);
 
 	/* Request the ppbus */
 	err = lpt_request_ppbus(lpt, PPBUS_WAIT|PPBUS_INTR);
 	if(err) {
-		LPT_DPRINTF(("%s(%s): error (%d) while requesting bus.\n", 
+		LPT_DPRINTF(("%s(%s): error (%d) while requesting bus.\n",
 			__func__, dev->dv_xname, err));
 		return (err);
 	}
 
 	/* Update bus mode */
 	ppbus_dev->ctx.mode = ppbus_get_mode(ppbus);
-	
+
 	/* init printer */
 	if ((lpt->sc_flags & LPT_PRIME) && !LPTCTL(dev_id)) {
-		LPT_VPRINTF(("%s(%s): initializing printer.\n", __func__, 
+		LPT_VPRINTF(("%s(%s): initializing printer.\n", __func__,
 			dev->dv_xname));
 		lpt->sc_state |= LPTINIT;
 		ppbus_wctr(ppbus, LPC_SEL | LPC_NINIT);
-		
+
 		/* wait till ready (printer running diagnostics) */
-		for(trys = 0, status = ppbus_rstr(ppbus); (status & RDY_MASK) 
-			!= LP_READY; trys += LPT_STEP, status = 
+		for(trys = 0, status = ppbus_rstr(ppbus); (status & RDY_MASK)
+			!= LP_READY; trys += LPT_STEP, status =
 			ppbus_rstr(ppbus)) {
-		
+
 			/* Time up waiting for the printer */
 			if(trys >= LPT_TIMEOUT)
 				break;
 			/* wait LPT_STEP ticks, give up if we get a signal */
 			else {
-				err = tsleep((caddr_t)lpt, LPPRI|PCATCH, 
-					"lptinit", LPT_STEP); 
-				if((err) && (err != EWOULDBLOCK)) { 
+				err = tsleep((caddr_t)lpt, LPPRI|PCATCH,
+					"lptinit", LPT_STEP);
+				if((err) && (err != EWOULDBLOCK)) {
 					lpt->sc_state &= ~LPTINIT;
 					LPT_DPRINTF(("%s(%s): interrupted "
-					"during initialization.\n", __func__, 
-					dev->dv_xname)); 
+					"during initialization.\n", __func__,
+					dev->dv_xname));
 					lpt_release_ppbus(lpt, PPBUS_WAIT);
 					return (err);
 				}
 			}
 		}
-		
+
 		lpt->sc_state &= ~LPTINIT;
 		if(trys >= LPT_TIMEOUT) {
 			LPT_DPRINTF(("%s(%s): timed out while initializing "
-				"printer. [status %x]\n", __func__, 
+				"printer. [status %x]\n", __func__,
 				dev->dv_xname, status));
 			err = lpt_logstatus(dev, status);
 			lpt_release_ppbus(lpt, PPBUS_WAIT);
 			return (err);
 		}
 		else
-			LPT_VPRINTF(("%s(%s): printer ready.\n", __func__, 
+			LPT_VPRINTF(("%s(%s): printer ready.\n", __func__,
 				dev->dv_xname));
 	}
-	
+
 	/* Set autolinefeed if requested */
 	if (lpt->sc_flags & LPT_AUTOLF)
 		ppbus_wctr(ppbus, LPC_AUTOL);
@@ -510,12 +510,12 @@ lptclose(dev_t dev_id, int flags, int fmt, struct proc *p)
 
 	err = lpt_release_ppbus(sc, PPBUS_WAIT|PPBUS_INTR);
 	if(err) {
-		LPT_DPRINTF(("%s(%s): error (%d) while releasing ppbus.\n", 
+		LPT_DPRINTF(("%s(%s): error (%d) while releasing ppbus.\n",
 			__func__, dev->dv_xname, err));
 	}
 
 	sc->sc_state = 0;
-	
+
 	return err;
 }
 
@@ -532,22 +532,22 @@ lptread(dev_t dev_id, struct uio *uio, int ioflag)
 
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to read using device which does "
-			"not own the bus(%s).\n", __func__, dev->dv_xname, 
+			"not own the bus(%s).\n", __func__, dev->dv_xname,
 			dev->dv_parent->dv_xname));
 		return (ENODEV);
 	}
- 
+
 	sc->sc_state &= ~INTERRUPTED;
 	while (uio->uio_resid) {
-		error = ppbus_read(dev->dv_parent, sc->sc_outbuf, 
+		error = ppbus_read(dev->dv_parent, sc->sc_outbuf,
 			min(BUFSIZE, uio->uio_resid), 0, &len);
 
 		/* If error or no more data, stop */
 		if (error) {
 			if (error != EWOULDBLOCK)
-				sc->sc_state |= INTERRUPTED;	
+				sc->sc_state |= INTERRUPTED;
 			break;
-		} 
+		}
 		if (len == 0)
 			break;
 
@@ -575,7 +575,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 	/* Check state and flags */
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to write using device which does "
-			"not own the bus(%s).\n", __func__, dev->dv_xname, 
+			"not own the bus(%s).\n", __func__, dev->dv_xname,
 			dev->dv_parent->dv_xname));
 		return EINVAL;
 	}
@@ -591,11 +591,11 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 		if (error)
 			break;
 
-		error = ppbus_write(dev->dv_parent, sc->sc_inbuf, n, ioflag, 
+		error = ppbus_write(dev->dv_parent, sc->sc_inbuf, n, ioflag,
 			&cnt);
 		if (error) {
 			if (error != EWOULDBLOCK)
-				sc->sc_state |= INTERRUPTED;	
+				sc->sc_state |= INTERRUPTED;
 			break;
 		}
 	}
@@ -617,7 +617,7 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to perform ioctl on device which "
-			"does not own the bus(%s).\n", __func__, dev->dv_xname, 
+			"does not own the bus(%s).\n", __func__, dev->dv_xname,
 			dev->dv_parent->dv_xname));
 		return EBUSY;
 	}
@@ -692,7 +692,7 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (val)
 			fl |= LPT_DMA;
 
-		/* IEEE mode negotiation */	
+		/* IEEE mode negotiation */
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
 		if (error)
 			break;

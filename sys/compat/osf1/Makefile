@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/15 20:30:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2005/03/19 08:33:43 yamt Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -8,5 +8,6 @@ OBJS=	osf1_sysent.c osf1_syscalls.c osf1_syscall.h osf1_syscallargs.h
 ${OBJS}: ${DEP}
 	${HOST_SH} ../../kern/makesyscalls.sh syscalls.conf syscalls.master
 
-clean:
-	rm -f ${OBJS}
+all: ${OBJS}
+
+.include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.55.10.1 2005/02/12 18:17:41 yamt Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.55.10.2 2005/03/19 08:33:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.55.10.1 2005/02/12 18:17:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.55.10.2 2005/03/19 08:33:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ exec_linux_aout_prep_omagic(p, epp)
 	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
 	 * respectively to page boundaries.
 	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
+	 * text page.
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);

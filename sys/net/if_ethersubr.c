@@ -1,9 +1,9 @@
-/*	$NetBSD: if_ethersubr.c,v 1.118.4.1 2005/02/12 18:17:53 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.118.4.2 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.118.4.1 2005/02/12 18:17:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.118.4.2 2005/03/19 08:36:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.118.4.1 2005/02/12 18:17:53 yamt 
 #include "bridge.h"
 #include "bpfilter.h"
 #include "arp.h"
+#include "agr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.118.4.1 2005/02/12 18:17:53 yamt 
 #error You have included NETATALK or a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you really need pseudo-device bridge, pppoe, vlan or options NETATALK.
 #endif
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
@@ -118,6 +119,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.118.4.1 2005/02/12 18:17:53 yamt 
 
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
+#endif
+
+#if NAGR > 0
+#include <net/agr/ieee8023_slowprotocols.h>	/* XXX */
+#include <net/agr/ieee8023ad.h>
+#include <net/agr/if_agrvar.h>
 #endif
 
 #if NBRIDGE > 0
@@ -178,6 +185,8 @@ extern u_char	aarp_org_code[3];
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
+    { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 #define senderr(e) { error = (e); goto bad;}
 
 #define SIN(x) ((struct sockaddr_in *)x)
@@ -223,7 +232,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				if (rt->rt_ifp != ifp)
 					return (*rt->rt_ifp->if_output)
 							(ifp, m0, dst, rt);
-			} else 
+			} else
 				senderr(EHOSTUNREACH);
 		}
 		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
@@ -277,7 +286,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		else
 			bcopy((caddr_t)ar_tha(ah),
 				(caddr_t)edst, sizeof(edst));
-		
+
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
 		switch (ntohs(ah->ar_op)) {
@@ -318,7 +327,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		    (struct sockaddr_at *)dst, ifp);
 		if (aa == NULL)
 		    goto bad;
-		
+
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
 		 * llc header.  Since we must preserve the value of m,
@@ -411,7 +420,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		struct sockaddr_dl *sdl = 
+		struct sockaddr_dl *sdl =
 			(struct sockaddr_dl *) rt -> rt_gateway;
 
 		if (sdl && sdl->sdl_family == AF_LINK
@@ -438,14 +447,14 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			printf("ether_output: sending LLC2 pkt to: ");
 			for (i=0; i<6; i++)
 				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
+			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n",
 			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
 			    l->llc_control & 0xff);
 
 		}
 #endif /* LLC_DEBUG */
 		} break;
-#endif /* LLC */	
+#endif /* LLC */
 
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
@@ -489,7 +498,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		uint8_t *dstp = (uint8_t *) &eh->ether_type;
 #if BYTE_ORDER == BIG_ENDIAN
 		dstp[0] = etype >> 8;
-		dstp[1] = etype; 
+		dstp[1] = etype;
 #else
 		dstp[0] = etype;
 		dstp[1] = etype >> 8;
@@ -742,7 +751,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			 */
 			ifp = m->m_pkthdr.rcvif;
 		}
-	} else 
+	} else
 #endif /* NBRIDGE > 0 */
 	{
 		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
@@ -783,6 +792,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+#if NAGR > 0
+	if (ifp->if_agrprivate &&
+	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
+		m->m_flags &= ~M_PROMISC;
+		agr_input(ifp, m);
+		return;
+	}
+#endif /* NAGR > 0 */
+
 	/*
 	 * Handle protocols that expect to have the Ethernet header
 	 * (and possibly FCS) intact.
@@ -814,7 +832,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 #endif
 
-		if (etype == ETHERTYPE_PPPOEDISC) 
+		if (etype == ETHERTYPE_PPPOEDISC)
 			inq = &ppoediscinq;
 		else
 			inq = &ppoeinq;
@@ -833,6 +851,42 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 		return;
 #endif /* NPPPOE > 0 */
+	case ETHERTYPE_SLOWPROTOCOLS: {
+		uint8_t subtype;
+
+#if defined(DIAGNOSTIC)
+		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)) {
+			panic("ether_input: too short slow protocol packet");
+		}
+#endif
+		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
+		switch (subtype) {
+#if NAGR > 0
+		case SLOWPROTOCOLS_SUBTYPE_LACP:
+			if (ifp->if_agrprivate) {
+				ieee8023ad_lacp_input(ifp, m);
+				return;
+			}
+			break;
+
+		case SLOWPROTOCOLS_SUBTYPE_MARKER:
+			if (ifp->if_agrprivate) {
+				ieee8023ad_marker_input(ifp, m);
+				return;
+			}
+			break;
+#endif /* NAGR > 0 */
+		default:
+			if (subtype == 0 || subtype > 10) {
+				/* illegal value */
+				m_freem(m);
+				return;
+			}
+			/* unknown subtype */
+			break;
+		}
+		/* FALLTHROUGH */
+	}
 	default:
 		if (m->m_flags & M_PROMISC) {
 			m_freem(m);
@@ -911,7 +965,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				if (l->llc_ssap != LLC_SNAP_LSAP) {
 					goto dropanyway;
 				}
-	    
+
 				if (Bcmp(&(l->llc_snap_org_code)[0],
 				    at_org_code, sizeof(at_org_code)) == 0 &&
 				    ntohs(l->llc_snap_ether_type) ==
@@ -931,14 +985,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 					aarpinput(ifp, m); /* XXX */
 				    return;
 				}
-		    
+
 			default:
 				goto dropanyway;
 			}
 			break;
 #endif /* NETATALK */
 #ifdef	ISO
-		case LLC_ISO_LSAP: 
+		case LLC_ISO_LSAP:
 			switch (l->llc_control) {
 			case LLC_UI:
 				/* LLC_UI_P forbidden in class 1 service */
@@ -963,7 +1017,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 					break;
 				}
 				goto dropanyway;
-				
+
 			case LLC_XID:
 			case LLC_XID_P:
 				if(m->m_len < 6)
@@ -990,9 +1044,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				sa.sa_len = sizeof(sa);
 				eh2 = (struct ether_header *)sa.sa_data;
 				for (i = 0; i < 6; i++) {
-					eh2->ether_shost[i] = c = 
+					eh2->ether_shost[i] = c =
 					    eh->ether_dhost[i];
-					eh2->ether_dhost[i] = 
+					eh2->ether_dhost[i] =
 					    eh->ether_dhost[i] =
 					    eh->ether_shost[i];
 					eh->ether_shost[i] = c;
@@ -1015,7 +1069,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			if (m == 0)
 				return;
 			if ( !sdl_sethdrif(ifp, eh->ether_shost, LLC_X25_LSAP,
-					    eh->ether_dhost, LLC_X25_LSAP, 6, 
+					    eh->ether_dhost, LLC_X25_LSAP, 6,
 					    mtod(m, struct sdl_hdr *)))
 				panic("ETHER cons addr failure");
 			mtod(m, struct sdl_hdr *)->sdlhdr_len = etype;

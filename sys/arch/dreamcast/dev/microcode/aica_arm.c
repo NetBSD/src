@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm.c,v 1.1 2003/08/24 17:33:30 marcus Exp $	*/
+/*	$NetBSD: aica_arm.c,v 1.1.12.1 2005/03/19 08:32:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -28,26 +28,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-typedef	unsigned char	u_int8_t;
-typedef	unsigned short	u_int16_t;
-typedef	unsigned long	u_int32_t;
+typedef	unsigned char	uint8_t;
+typedef	unsigned short	uint16_t;
+typedef	unsigned long	uint32_t;
 
 #include <arch/dreamcast/dev/g2/aicavar.h>
 
 #define	DC_REG_ADDR	0x00800000
 
 #define	REG_READ_1(off)		\
-	(*(volatile u_int8_t *)(DC_REG_ADDR + (off)))
+	(*(volatile uint8_t *)(DC_REG_ADDR + (off)))
 #define	REG_READ_2(off)		\
-	(*(volatile u_int16_t *)(DC_REG_ADDR + (off)))
+	(*(volatile uint16_t *)(DC_REG_ADDR + (off)))
 #define	REG_READ_4(off)		\
-	(*(volatile u_int32_t *)(DC_REG_ADDR + (off)))
+	(*(volatile uint32_t *)(DC_REG_ADDR + (off)))
 #define	REG_WRITE_1(off,val)	\
-	((*(volatile u_int8_t *)(DC_REG_ADDR + (off))) = (val))
+	((*(volatile uint8_t *)(DC_REG_ADDR + (off))) = (val))
 #define	REG_WRITE_2(off,val)	\
-	((*(volatile u_int16_t *)(DC_REG_ADDR + (off))) = (val))
+	((*(volatile uint16_t *)(DC_REG_ADDR + (off))) = (val))
 #define	REG_WRITE_4(off,val)	\
-	((*(volatile u_int32_t *)((DC_REG_ADDR)+(off))) = (val))
+	((*(volatile uint32_t *)((DC_REG_ADDR)+(off))) = (val))
 
 #define	CH_READ_1(ch,off)	REG_READ_1(((ch) << 7) + (off))
 #define	CH_READ_2(ch,off)	REG_READ_2(((ch) << 7) + (off))
@@ -61,7 +61,7 @@ __inline int in_first_half(unsigned int);
 __inline int in_second_half(unsigned int);
 void bzero_4(void *, unsigned int);
 void bzero(void *, unsigned int);
-u_int32_t rate2reg(unsigned int);
+uint32_t rate2reg(unsigned int);
 void aica_stop(void);
 void aica_main(void);
 
@@ -124,7 +124,7 @@ in_second_half(unsigned int loophalf)
 void
 bzero_4(void *b, unsigned int len)
 {
-	u_int32_t *p;
+	uint32_t *p;
 
 	p = b;
 	len = (len + 3) & ~3;
@@ -135,7 +135,7 @@ bzero_4(void *b, unsigned int len)
 void
 bzero(void *b,unsigned int len)
 {
-	u_int8_t *p;
+	uint8_t *p;
 
 	p = b;
 	for (; len != 0; len--)
@@ -143,10 +143,10 @@ bzero(void *b,unsigned int len)
 }
 
 
-u_int32_t
+uint32_t
 rate2reg(unsigned int rate)
 {
-	u_int32_t base, fns;
+	uint32_t base, fns;
 	int oct;
 
 	base = 44100 << 7;
@@ -164,7 +164,7 @@ rate2reg(unsigned int rate)
 #else
 	/* avoid using udivsi3() */
 	{
-		u_int32_t tmp = (rate * 1024 + (base / 2));
+		uint32_t tmp = (rate * 1024 + (base / 2));
 		for (fns = 0; tmp >= base; tmp -= base, fns++)
 			;
 	}
@@ -208,7 +208,7 @@ aica_main()
 	int play_state;
 	unsigned int loopend = 0,loophalf = 0;
 	unsigned int blksize = 0, ratepitch;
-	u_int32_t cmd, serial;
+	uint32_t cmd, serial;
 
 	aica_init();
 
@@ -302,7 +302,7 @@ aica_main()
 							   right PAN */
 
 			{
-				u_int32_t mode, lparam, rparam;
+				uint32_t mode, lparam, rparam;
 
 				if (aicacmd->precision == 4)
 					mode = 3 << 7;	/* 4bit ADPCM */

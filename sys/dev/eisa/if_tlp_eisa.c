@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.12 2004/08/23 05:50:02 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.12.6.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,15 +43,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.12 2004/08/23 05:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.12.6.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -60,18 +60,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.12 2004/08/23 05:50:02 thorpej Exp
 #include <sys/device.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 
