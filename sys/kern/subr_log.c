@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.20 2000/05/28 18:31:13 jhawk Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.20.6.1 2001/09/08 04:07:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -209,6 +209,60 @@ logpoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_logrdetach(struct knote *kn)
+{
+	int s;
+
+	s = splhigh();
+	SLIST_REMOVE(&logsoftc.sc_selp.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_logread(struct knote *kn, long hint)
+{
+
+	if (msgbufp->msg_bufr == msgbufp->msg_bufx)
+		return (0);
+
+	if (msgbufp->msg_bufr < msgbufp->msg_bufx)
+		kn->kn_data = msgbufp->msg_bufx - msgbufp->msg_bufr;
+	else
+		kn->kn_data = (msgbufp->msg_bufs - msgbufp->msg_bufr) +
+		    msgbufp->msg_bufx;
+
+	return (1);
+}
+
+static const struct filterops logread_filtops =
+	{ 1, NULL, filt_logrdetach, filt_logread };
+
+int
+logkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &logsoftc.sc_selp.si_klist;
+		kn->kn_fop = &logread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = splhigh();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 void
 logwakeup()
 {
@@ -216,7 +270,7 @@ logwakeup()
 
 	if (!log_open)
 		return;
-	selwakeup(&logsoftc.sc_selp);
+	selnotify(&logsoftc.sc_selp, 0);
 	if (logsoftc.sc_state & LOG_ASYNC) {
 		if (logsoftc.sc_pgid < 0)
 			gsignal(-logsoftc.sc_pgid, SIGIO); 
