@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.12 1999/03/22 17:24:22 sommerfe Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.13 1999/03/25 13:05:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@ int	umap_strategy	__P((void *));
 int	umap_bwrite	__P((void *));
 int	umap_lock	__P((void *));
 int	umap_unlock	__P((void *));
+int	umap_open	__P((void *));
 int	umap_fsync	__P((void *));
 
 extern int  null_bypass __P((void *));
@@ -90,6 +91,9 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_inactive_desc, umap_inactive },
 	{ &vop_reclaim_desc, umap_reclaim },
 	{ &vop_print_desc, umap_print },
+
+	{ &vop_open_desc, umap_open }, /* mount option handling */
+
 	{ &vop_rename_desc, umap_rename },
 
 	{ &vop_strategy_desc, umap_strategy },
@@ -439,6 +443,25 @@ umap_getattr(v)
 		ap->a_vap->va_gid = (gid_t) NULLGROUP;
 	
 	return (0);
+}
+
+/* 
+ * We must handle open to be able to catch MNT_NODEV and friends.
+ */   
+int
+umap_open(v)
+        void *v;
+{
+        struct vop_open_args *ap = v;
+        struct vnode *vp = ap->a_vp;
+        enum vtype lower_type = UMAPVPTOLOWERVP(vp)->v_type;
+
+
+        if (((lower_type == VBLK) || (lower_type == VCHR)) &&
+            (vp->v_mount->mnt_flag & MNT_NODEV))
+                return ENXIO;
+
+        return umap_bypass(ap);
 }
 
 /*ARGSUSED*/

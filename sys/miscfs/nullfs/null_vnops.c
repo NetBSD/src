@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.14 1999/03/22 17:24:21 sommerfe Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.15 1999/03/25 13:05:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.14 1999/03/22 17:24:21 sommerfe Exp $
+ *	$Id: null_vnops.c,v 1.15 1999/03/25 13:05:41 bouyer Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -203,6 +203,7 @@ int	null_fsync __P((void *));
 int	null_lookup __P((void *));
 int	null_setattr __P((void *));
 int	null_access __P((void *));
+int	null_open __P((void *));
 
 
 /*
@@ -495,6 +496,24 @@ null_access(v)
 }
 
 /*
+ * We must handle open to be able to catch MNT_NODEV and friends.
+ */
+int
+null_open(v)
+	void *v;
+{
+	struct vop_open_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	enum vtype lower_type = NULLVPTOLOWERVP(vp)->v_type;
+
+	if (((lower_type == VBLK) || (lower_type == VCHR)) &&
+	    (vp->v_mount->mnt_flag & MNT_NODEV))
+		return ENXIO;
+
+	return null_bypass(ap);
+}
+
+/*
  * We need to process our own vnode lock and then clear the
  * interlock flag as it applies only to our vnode, not the
  * vnodes below us on the stack.
@@ -693,6 +712,8 @@ struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_inactive_desc, null_inactive },
 	{ &vop_reclaim_desc,  null_reclaim },
 	{ &vop_print_desc,    null_print },
+
+	{ &vop_open_desc,     null_open },	/* mount option handling */
 
 	{ &vop_strategy_desc, null_strategy },
 	{ &vop_bwrite_desc,   null_bwrite },
