@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.2 2003/01/01 00:46:15 thorpej Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.3 2003/05/03 05:19:00 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -139,7 +139,7 @@ s3c2800_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(iot, S3C2800_TIMER1_BASE,
 		S3C2800_TIMER_SIZE, 0, &sc->sc_tmr1_ioh))
-		FAIL("TIMER0");
+		FAIL("TIMER1");
 
 
 	printf("\n");
