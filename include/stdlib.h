@@ -31,12 +31,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.5 1993/10/07 19:55:05 brezak Exp $
+ *	$Id: stdlib.h,v 1.6 1993/10/11 19:08:26 jtc Exp $
  */
 
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
-#include <sys/types.h>
+#include <machine/ansi.h>
+
+#ifdef	_SIZE_T_
+typedef	_SIZE_T_	size_t;
+#undef	_SIZE_T_
+#endif
 
 #ifdef	_WCHAR_T_
 typedef	_WCHAR_T_	wchar_t;
@@ -114,6 +119,8 @@ int	 setenv __P((const char *, const char *, int));
 #endif /* not ANSI */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#include <sys/types.h>
+
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void  *alloca __P((int));     /* built-in for gcc */ 
 #else 
