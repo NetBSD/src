@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.22 2001/04/15 17:14:28 kleink Exp $
+# $NetBSD: md.mvme68k,v 1.23 2001/11/28 13:29:29 kleink Exp $
 ./usr/include/mvme68k	comp-c-include
 ./usr/include/mvme68k/_G_config.h	comp-c-include
 ./usr/include/mvme68k/ansi.h	comp-c-include
@@ -40,7 +40,6 @@
 ./usr/include/mvme68k/setjmp.h	comp-c-include
 ./usr/include/mvme68k/signal.h	comp-c-include
 ./usr/include/mvme68k/stdarg.h	comp-c-include
-./usr/include/mvme68k/svr4_machdep.h	comp-c-include
 ./usr/include/mvme68k/trap.h	comp-c-include
 ./usr/include/mvme68k/types.h	comp-c-include
 ./usr/include/mvme68k/varargs.h	comp-c-include
