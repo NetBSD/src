@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.23 1995/07/02 00:30:25 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.24 1995/07/02 00:49:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -368,14 +368,11 @@ grfmap(dev, addrp, p)
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
 #endif
-	len = gp->curr_mode.fbsize;
-	flags = MAP_SHARED;
-	if (*addrp)
-		flags |= MAP_FIXED;
-	else {
-		return 12;
-		*addrp = (caddr_t) 0x1000000;	/* XXX */
-	}
+	len = gp->curr_mode.fbsize + gp->curr_mode.fboff;
+	flags = MAP_SHARED | MAP_FIXED;
+
+	*addrp = NUBUS_VIRT_TO_PHYS((u_int) gp->curr_mode.fbbase);
+
 	vn.v_type = VCHR;	/* XXX */
 	vn.v_specinfo = &si;	/* XXX */
 	vn.v_rdev = dev;	/* XXX */
@@ -386,6 +383,11 @@ grfmap(dev, addrp, p)
 
 	/* Offset into page: */
 	*addrp += (unsigned long) gp->curr_mode.fboff & 0xfff;
+
+#ifdef DEBUG
+	if (grfdebug & GDB_MMAP)
+		printf("grfmap(%d): returning addr %x\n", p->p_pid, *addrp);
+#endif
 
 	return (error);
 }
