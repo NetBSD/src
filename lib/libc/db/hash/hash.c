@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.10 1996/11/07 06:48:01 jtc Exp $	*/
+/*	$NetBSD: hash.c,v 1.11 1997/07/13 18:52:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static char rcsid[] = "$NetBSD: hash.c,v 1.10 1996/11/07 06:48:01 jtc Exp $";
+__RCSID("$NetBSD: hash.c,v 1.11 1997/07/13 18:52:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -874,7 +875,7 @@ hash_realloc(p_ptr, oldsize, newsize)
 {
 	register void *p;
 
-	if (p = malloc(newsize)) {
+	if ((p = malloc(newsize)) != NULL) {
 		memmove(p, *p_ptr, oldsize);
 		memset((char *)p + oldsize, 0, newsize - oldsize);
 		free(*p_ptr);

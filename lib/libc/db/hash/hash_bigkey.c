@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.6 1996/05/03 21:43:49 cgd Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.7 1997/07/13 18:52:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-static char rcsid[] = "$NetBSD: hash_bigkey.c,v 1.6 1996/05/03 21:43:49 cgd Exp $";
+__RCSID("$NetBSD: hash_bigkey.c,v 1.7 1997/07/13 18:52:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -596,7 +597,7 @@ __big_split(hashp, op, np, big_keyp, addr, obucket, ret)
 		return (-1);
 	change = (__call_hash(hashp, key.data, key.size) != obucket);
 
-	if (ret->next_addr = __find_last_page(hashp, &big_keyp)) {
+	if ((ret->next_addr = __find_last_page(hashp, &big_keyp)) != NULL) {
 		if (!(ret->nextp =
 		    __get_buf(hashp, ret->next_addr, big_keyp, 0)))
 			return (-1);;
