@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.4 2000/05/23 00:44:38 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
 
 typedef struct RF_LayoutSW_s {
 	RF_ParityConfig_t parityConfig;
-	char   *configName;
+	const char *configName;
 
 #ifndef _KERNEL
 	/* layout-specific parsing */
