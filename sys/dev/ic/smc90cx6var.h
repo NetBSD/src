@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6reg.h,v 1.5 1998/09/02 22:32:08 is Exp $ */
+/*	$NetBSD: smc90cx6var.h,v 1.1 1998/09/02 22:32:08 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Ignatios Souvatzis
@@ -32,51 +32,43 @@
  */
 
 /*
- * chip offsets and bits for the SMC Arcnet chipset.
+ * BAH (SMC 8bit ARCnet chipset) k/dpi
+ *
+ * The SMC 8bit ARCnet chip family uses a register and a memory window, which
+ * we get passed via bus_space_tags and bus_space_handles.
+ * 
+ * As the reset functionality differs between the Amiga boards (using the
+ * 90c26 chip) and middle-aged ISA boards (using the 90c56 chip), we have
+ * a sc_reset callback function in the softc, which does a stop function
+ * (reset and leave dead) or a reset function depending on wether the 2nd
+ * parameter is 0 or 1.
  */
 
-#ifndef _SMC90CXVAR_H_
-#define _SMC90CXVAR_H_
+#ifndef _SMC90CX6VAR_H_
+#define _SMC90CX6VAR_H_
 
-/* register offsets */
+struct bah_softc {
+	struct	device		sc_dev;
+	struct	arccom		sc_arccom;	/* Common arcnet structures */
+	bus_space_tag_t		sc_bst_r, sc_bst_m;
+	bus_space_handle_t 	sc_regs, sc_mem;
+	void 	(*sc_reset)(struct bah_softc *, int);
+	void 	*sc_softcookie;
+	u_long	sc_recontime;		/* seconds only, I'm lazy */
+	u_long	sc_reconcount;		/* for the above */
+	u_long	sc_reconcount_excessive; /* for the above */
+#define ARC_EXCESSIVE_RECONS 20
+#define ARC_EXCESSIVE_RECONS_REWARN 400
+	u_char	sc_intmask;
+	u_char	sc_rx_act;		/* 2..3 */
+	u_char	sc_tx_act;		/* 0..1 */
+	u_char	sc_rx_fillcount;
+	u_char	sc_tx_fillcount;
+	u_char	sc_broadcast[2];	/* is it a broadcast packet? */
+	u_char	sc_retransmits[2];	/* unused at the moment */
+};
 
-#define BAHSTAT	0
-#define	BAHCMD	1
-
-/* memory offsets */
-#define BAHCHECKBYTE 0
-#define BAHMACOFF 1
-
-#define BAH_TXDIS	0x01
-#define BAH_RXDIS	0x02
-#define BAH_TX(x)	(0x03 | ((x)<<3))
-#define BAH_RX(x)	(0x04 | ((x)<<3))
-#define BAH_RXBC(x)	(0x84 | ((x)<<3))
-
-#define BAH_CONF(x)  	(0x05 | (x))
-#define CLR_POR		0x08
-#define CLR_RECONFIG	0x10
-
-#define BAH_CLR(x)	(0x06 | (x))
-#define CONF_LONG	0x08
-#define CONF_SHORT	0x00
-
-/* 
- * These are not in the COM90C65 docs. Derived from the arcnet.asm
- * packet driver by Philippe Prindeville and Russel Nelson. 
- */
-
-#define BAH_LDTST(x)	(0x07 | (x))
-#define TEST_ON		0x08
-#define TEST_OFF	0x00
-
-#define BAH_TA		1	/* int mask also */
-#define BAH_TMA		2	
-#define BAH_RECON	4	/* int mask also */
-#define BAH_TEST	8	/* not in the COM90C65 docs (see above) */
-#define BAH_POR		0x10	/* non maskable interrupt */
-#define BAH_ET1		0x20	/* timeout value bits, normally 1 */
-#define BAH_ET2		0x40	/* timeout value bits, normally 1 */
-#define BAH_RI		0x80	/* int mask also */
+void	bah_attach_subr __P((struct bah_softc *));
+int	bahintr __P((void *));
 
 #endif
