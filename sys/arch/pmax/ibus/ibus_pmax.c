@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.4 1999/11/19 01:28:08 nisimura Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.5 1999/11/19 02:11:47 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.4 1999/11/19 01:28:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.5 1999/11/19 02:11:47 simonb Exp $");
+
+#include "opt_dec_3100.h"
+#include "opt_dec_5100.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +56,9 @@ struct cfattach ibus_pmax_ca = {
 	sizeof(struct ibus_softc), ibus_pmax_match, ibus_pmax_attach
 };
 
-extern void dec_3100_intr_establish __P((void * cookie, int level,
-			 int (*handler) __P((void *)), void * arg));
-extern void dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
+extern void dec_3100_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
+extern void dec_3100_intr_disestablish __P((struct device *, void *));
 
 extern void dec_5100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
