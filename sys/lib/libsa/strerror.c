@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.5 1995/02/21 07:38:38 mycroft Exp $	*/
+/*	$NetBSD: strerror.c,v 1.6 1995/04/22 13:57:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,8 +33,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include "saerrno.h"
 
+size_t	strlen __P((const char *));				/* XXX */
+char	*strcpy __P((char *, const char *));			/* XXX */
 
 char *
 strerror(err)
