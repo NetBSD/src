@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.78 2000/12/14 17:47:26 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.79 2000/12/18 18:54:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -935,17 +935,6 @@ if_up(ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
-}
-
-/*
- * Flush an interface queue.
- */
-void
-if_qflush(ifq)
-	struct ifqueue *ifq;
-{
-
-	IFQ_PURGE(ifq);
 }
 
 /*

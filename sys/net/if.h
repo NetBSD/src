@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.57 2000/12/14 00:19:42 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.58 2000/12/18 18:54:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,14 @@
 #if !defined(_XOPEN_SOURCE)
 
 #include <sys/queue.h>
+
+/*
+ * Always include ALTQ glue here -- we use the ALTQ interface queue
+ * structure even when ALTQ is not configured into the kernel so that
+ * the size of struct ifnet does not changed based on the option.  The
+ * ALTQ queue structure is API-compatible with the legacy ifqueue.
+ */
+#include <altq/if_altq.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -259,17 +267,11 @@ struct ifnet {				/* and the entries */
 		__P((struct ifnet *));
 	void	(*if_drain)		/* routine to release resources */
 		__P((struct ifnet *));
-#if 0 /* ALTQ */
 	struct ifaltq if_snd;		/* output queue (includes altq) */
-#else
-	struct ifqueue if_snd;		/* output queue */
-#endif
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
-#if 1
 	void	*if_bridge;		/* bridge glue */
-#endif
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -712,7 +714,6 @@ void	if_attach __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
-void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));
 void	if_up __P((struct ifnet *));
 int	ifconf __P((u_long, caddr_t));
