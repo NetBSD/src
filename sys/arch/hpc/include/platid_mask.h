@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.1 2001/02/04 05:19:15 takemura Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.2 2001/02/09 18:34:03 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -112,6 +112,24 @@ extern platid_t platid_mask_CPU_SH_4_7750;
 #  define GENERIC_SH_4_7750 ((int)&platid_mask_CPU_SH_4_7750)
 #endif
 #endif /* hpcsh */
+#ifdef hpcarm
+extern platid_t platid_mask_CPU_ARM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM ((int)&platid_mask_CPU_ARM)
+#endif
+extern platid_t platid_mask_CPU_ARM_STRONGARM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_STRONGARM ((int)&platid_mask_CPU_ARM_STRONGARM)
+#endif
+extern platid_t platid_mask_CPU_ARM_STRONGARM_SA1100;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_STRONGARM_SA1100 ((int)&platid_mask_CPU_ARM_STRONGARM_SA1100)
+#endif
+extern platid_t platid_mask_CPU_ARM_STRONGARM_SA1110;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_STRONGARM_SA1110 ((int)&platid_mask_CPU_ARM_STRONGARM_SA1110)
+#endif
+#endif /* hpcarm */
 #ifdef hpcmips
 extern platid_t platid_mask_MACH_NEC;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -555,6 +573,18 @@ extern platid_t platid_mask_MACH_HP_JORNADA_690JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_690JP ((int)&platid_mask_MACH_HP_JORNADA_690JP)
 #endif
+extern platid_t platid_mask_MACH_HITACHI;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI ((int)&platid_mask_MACH_HITACHI)
+#endif
+extern platid_t platid_mask_MACH_HITACHI_PERSONA;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI_PERSONA ((int)&platid_mask_MACH_HITACHI_PERSONA)
+#endif
+extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI_PERSONA_HPW230JC ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW230JC)
+#endif
 extern platid_t platid_mask_MACH_LGE;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define LGE ((int)&platid_mask_MACH_LGE)
@@ -568,3 +598,25 @@ extern platid_t platid_mask_MACH_LGE_PHENOM_H220C;
 #  define LGE_PHENOM_H220C ((int)&platid_mask_MACH_LGE_PHENOM_H220C)
 #endif
 #endif /* hpcsh */
+#ifdef hpcarm
+extern platid_t platid_mask_MACH_HP;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP ((int)&platid_mask_MACH_HP)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA ((int)&platid_mask_MACH_HP_JORNADA)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_8XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_8XX ((int)&platid_mask_MACH_HP_JORNADA_8XX)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_820;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_820 ((int)&platid_mask_MACH_HP_JORNADA_820)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_820JP;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_820JP ((int)&platid_mask_MACH_HP_JORNADA_820JP)
+#endif
+#endif /* hpcarm */

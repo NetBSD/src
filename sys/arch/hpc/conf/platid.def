@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.1 2001/02/04 05:19:14 takemura Exp $	*/
+/*	$NetBSD: platid.def,v 1.2 2001/02/09 18:34:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -69,6 +69,15 @@ SH {
 	}
 }
 #endif /* hpcsh */
+
+#ifdef hpcarm
+ARM {
+	STRONGARM {
+		SA1100
+		SA1110
+	}
+}
+#endif /* hpcarm */
 
 /*
  *  MACHINE definitions
@@ -220,17 +229,24 @@ VADEM {
 HP {
 	LX {
 		CPU=SH_3_7709
-			620 --" HP620LX"
-			620JP --" HP620LX (Japanese)"
+			620 --"HP620LX"
+			620JP --"HP620LX (Japanese)"
 	}
 	JORNADA " Jornada" {
 		6XX {
 			CPU=SH_3_7709A 
 			680
-			680JP -"680 (Japanese)"
+			680JP -" 680 (Japanese)"
 			690
-			690JP -"690 (Japanese)"
+			690JP -" 690 (Japanese)"
 		}
+	}
+}
+
+HITACHI {
+	PERSONA {
+		CPU=SH_3_7709
+			HPW230JC
 	}
 }
 
@@ -241,3 +257,15 @@ LGE {
 	}
 }
 #endif /* hpcsh */
+
+#ifdef hpcarm
+HP {
+	JORNADA " Jornada" {
+		8XX {
+			CPU=ARM_STRONGARM_SA1100
+			820
+			820JP -" 820 (Japanese)"
+		}
+	}
+}
+#endif /* hpcarm */
