@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2003/07/10 10:34:24 lukem Exp $
+# $NetBSD: Makefile,v 1.28.2.1 2004/07/14 11:13:43 tron Exp $
 
 NOLINT=		# defined
 
@@ -161,6 +161,7 @@ MAN=						\
 	krb5_openlog.3				\
 	krb5_parse_name.3			\
 	krb5_principal_get_realm.3		\
+	krb5_set_password.3			\
 	krb5_set_default_realm.3		\
 	krb5_sname_to_principal.3		\
 	krb5_timeofday.3			\
@@ -314,6 +315,7 @@ MLINKS=									\
 	krb5_openlog.3			krb5_vlog.3			\
 	krb5_openlog.3			krb5_vlog_msg.3			\
 	krb5_principal_get_realm.3	krb5_principal_get_comp_string.3 \
+	krb5_set_password.3		krb5_change_password.3		\
 	krb5_set_default_realm.3	krb5_free_host_realm.3		\
 	krb5_set_default_realm.3	krb5_get_default_realm.3	\
 	krb5_set_default_realm.3	krb5_get_default_realms.3	\
