@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.16 2004/03/21 15:08:24 pk Exp $	*/
+/*	$NetBSD: sab.c,v 1.17 2004/06/10 12:11:19 seb Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.16 2004/03/21 15:08:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.17 2004/06/10 12:11:19 seb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,6 @@ int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
 void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
-void sabtty_abort(struct sabtty_softc *);
 
 CFATTACH_DECL(sab, sizeof(struct sab_softc),
     sab_match, sab_attach, NULL, NULL);
@@ -170,6 +169,8 @@ dev_type_ioctl(sabioctl);
 dev_type_stop(sabstop);
 dev_type_tty(sabtty);
 dev_type_poll(sabpoll);
+
+static struct cnm_state sabtty_cnm_state;
 
 const struct cdevsw sabtty_cdevsw = {
 	sabopen, sabclose, sabread, sabwrite, sabioctl,
@@ -445,6 +446,8 @@ sabtty_attach(parent, self, aux)
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
 			cn_tab->cn_dev = makedev(maj, self->dv_unit);
 			shutdownhook_establish(sabtty_shutdown, sc);
+			cn_init_magic(&sabtty_cnm_state);
+			cn_set_magic("\047\001"); /* default magic is BREAK */
 		}
 
 		if (sc->sc_flags & SABTTYF_CONS_OUT) {
@@ -493,11 +496,15 @@ sabtty_intr(sc, needsoftp)
 		clearfifo = 1;
 	}
 	if (len != 0) {
-		u_int8_t *ptr;
+		u_int8_t *ptr, b;
 
 		ptr = sc->sc_rput;
 		for (i = 0; i < len; i++) {
-			*ptr++ = SAB_READ(sc, SAB_RFIFO);
+			b = SAB_READ(sc, SAB_RFIFO);
+			if (i % 2 == 0) /* skip status byte */
+				cn_check_magic(sc->sc_tty->t_dev,
+					       b, sabtty_cnm_state);
+			*ptr++ = b;
 			if (ptr == sc->sc_rend)
 				ptr = sc->sc_rbuf;
 			if (ptr == sc->sc_rget) {
@@ -522,7 +529,8 @@ sabtty_intr(sc, needsoftp)
 	}
 
 	if (isr1 & SAB_ISR1_BRKT)
-		sabtty_abort(sc);
+		cn_check_magic(sc->sc_tty->t_dev,
+			       CNC_BREAK, sabtty_cnm_state);
 
 	if (isr1 & (SAB_ISR1_XPR | SAB_ISR1_ALLS)) {
 		if ((SAB_READ(sc, SAB_STAR) & SAB_STAR_XFW) &&
@@ -1327,20 +1335,6 @@ sabtty_console_flags(sc)
 
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_OUT;
-	}
-}
-
-void
-sabtty_abort(sc)
-	struct sabtty_softc *sc;
-{
-
-	if (sc->sc_flags & SABTTYF_CONS_IN) {
-#ifdef DDB
-		cn_trap();
-#else
-		callrom();
-#endif
 	}
 }
 
