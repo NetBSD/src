@@ -1,4 +1,8 @@
-/*	$NetBSD: esp.c,v 1.15 1996/09/27 20:21:38 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.16 1996/09/27 21:37:17 thorpej Exp $	*/
+
+#ifdef __sparc__
+#define	SPARC_DRIVER
+#endif
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -91,8 +95,12 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ void	esp_timeout	__P((void *arg));
 /*static*/ void	esp_abort	__P((struct esp_softc *, struct esp_ecb *));
 /*static*/ void esp_dequeue	__P((struct esp_softc *, struct esp_ecb *));
+void esp_sense __P((struct esp_softc *, struct esp_ecb *));
+void esp_free_ecb __P((struct esp_softc *, struct esp_ecb *, int));
+struct esp_ecb *esp_get_ecb __P((struct esp_softc *, int));
 static inline int esp_stp2cpb __P((struct esp_softc *, int));
 static inline int esp_cpb2stp __P((struct esp_softc *, int));
+static inline void esp_setsync __P((struct esp_softc *, struct esp_tinfo *));
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
@@ -2059,7 +2067,6 @@ esp_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-again:
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
