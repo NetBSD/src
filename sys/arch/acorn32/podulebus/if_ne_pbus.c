@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.7 2002/09/27 20:29:16 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.8 2002/10/02 02:23:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,9 +103,8 @@ struct ne_pbus_softc {
 static int  ne_pbus_probe	__P((struct device *, struct cfdata *, void *));
 static void ne_pbus_attach	__P((struct device *, struct device *, void *));
 
-const struct cfattach ne_pbus_ca = {
-	sizeof(struct ne_pbus_softc), ne_pbus_probe, ne_pbus_attach
-};
+CFATTACH_DECL(ne_pbus, sizeof(struct ne_pbus_softc),
+	ne_pbus_probe, ne_pbus_attach, NULL, NULL);
 
 /*
  * Prototypes for interface specific routines
