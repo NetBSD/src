@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.2 1996/09/07 21:44:59 mycroft Exp $	*/
+/*	$NetBSD: poll.h,v 1.3 1997/11/21 18:28:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_POLL_H_
 #define	_SYS_POLL_H_
+
+typedef u_int	nfds_t;
 
 struct pollfd {
 	int	fd;		/* file descriptor */
@@ -66,7 +68,7 @@ struct pollfd {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	poll __P((struct pollfd *, u_int, int));
+int	poll __P((struct pollfd *, nfds_t, int));
 __END_DECLS
 
 #endif /* _KERNEL */
