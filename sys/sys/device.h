@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.49.6.1 2002/03/22 18:24:34 eeh Exp $ */
+/* $NetBSD: device.h,v 1.49.6.2 2002/04/06 16:04:31 eeh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -243,8 +243,10 @@ struct pdevinit {
  * Macros to support new driver functionality.
  */
 #define	DEV_PRIVATE(d)			(d)->dv_private
-#define	DEV_CFA_DECL(n, s, m, a) \
-struct cfattach n = { -(s), m, a }
+#if 0
+#define	DEV_CFA_DECL(n, s, m, a, d, v) \
+struct cfattach n = { -(s), m, a, d, v }
+#endif
 
 #define	DEV_PROTECT(dev)
 #define	DEV_UNPROTECT(dev)
@@ -323,6 +325,9 @@ int dev_setprop(struct device *, const char *, void *, size_t, int, int);
 int dev_copyprops(struct device *, struct device *, int);
 size_t dev_getprop(struct device *, const char *, void *, size_t, int *, int);
 int dev_delprop(struct device *, const char *);
+#ifdef DEBUG
+void dev_dumprops(struct device *dev);
+#endif
 /* Declare the interface here */
 extern size_t dev_mdgetprop(struct device *dev, const char *name, void *val, 
 	size_t len, int *type);
