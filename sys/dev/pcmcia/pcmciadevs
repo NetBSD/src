@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp $
+$NetBSD: pcmciadevs,v 1.108 2001/01/10 23:47:56 ichiro Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015  RATOC System Inc.
+vendor EMTAC			0xc250	EMTAC Technology Corporation
 vendor ELSA			0xd601  Elsa 
 
 /*
@@ -256,6 +257,9 @@ product TELECOMDEVICE TCD_HPC100	0x0202 Telecom Device TCD-HPC100
 
 /* MACNICA */
 product MACNICA ME1_JEIDA	0x3300	MACNICA ME1 for JEIDA
+
+/* EMTAC */
+product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
