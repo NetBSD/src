@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.69 2001/04/03 20:25:22 ragge Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.70 2002/03/27 19:07:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -324,6 +324,8 @@ static const char *const dktypenames[] = {
 #define	FS_RAID		19		/* RAIDframe component */
 #define	FS_CCD		20		/* concatenated disk component */
 
+/* Adjust the FSMAXTYPES def below if you add something after CCD */
+
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
 	"unused",
@@ -350,6 +352,8 @@ static const char *const fstypenames[] = {
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
+#else
+#define FSMAXTYPES	(FS_CCD + 1)
 #endif
 
 #ifdef FSCKNAMES
