@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2000/12/23 09:35:52 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2001/02/17 18:34:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,8 +68,8 @@
 #endif
 
 #ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
