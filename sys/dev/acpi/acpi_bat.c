@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.7 2002/10/02 16:33:36 thorpej Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.8 2002/12/30 04:47:22 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.7 2002/10/02 16:33:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.8 2002/12/30 04:47:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	callout_reset(&sc->sc_callout, 60*hz, acpibat_tick, sc);
 
 	/* Display the current state. */
-	sc->sc_flags = ABAT_F_VERBOSE;
+	//sc->sc_flags = ABAT_F_VERBOSE;
 	acpibat_get_info(sc);
 	acpibat_get_status(sc);
 
@@ -200,9 +200,11 @@ acpibat_get_info(void *arg)
 		    p1->Type);
 		goto out;
 	}
-	if (p1->Package.Count < 13)
+	if (p1->Package.Count < 13) {
 		printf("%s: expected 13 elts, got %d\n",
 		    sc->sc_dev.dv_xname, p1->Package.Count);
+		goto out;
+	}
 
 	p2 = p1->Package.Elements;
 	if (p2[0].Integer.Value == 1)
