@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigsetops.3	6.2 (Berkeley) 4/19/91
-.\"	$Id: sigsetops.3,v 1.4 1994/01/10 23:09:09 jtc Exp $
+.\"	$Id: sigsetops.3,v 1.5 1994/08/12 05:01:23 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt SIGSETOPS 3
@@ -57,7 +57,10 @@
 .Sh DESCRIPTION
 These functions manipulate signal mask stored in a
 .Fa sigset_t .
-They are provided as macros, but actual functions are available
+.Fn sigemptyset 
+and
+.Fn sigfillset 
+are provided as macros, but actual functions are available
 if their names are undefined (with #undef
 .Em name ) .
 .Pp
@@ -97,7 +100,6 @@ A \-1 return value
 indicates an error occurred and the global variable
 .Va errno
 is set to indicated the reason.
-The current implementation does not detect any errors.
 .Sh ERRORS
 These functions could fail if one of the following occurs:
 .Bl -tag -width Er
@@ -113,6 +115,3 @@ has an invalid value.
 .Sh STANDARDS
 These functions are defined by
 .St -p1003.1-90 .
-.Sh HISTORY
-These functions are
-.Ud .
