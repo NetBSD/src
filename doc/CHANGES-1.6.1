@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.3 2002/09/30 13:55:50 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.4 2002/09/30 23:29:54 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -125,3 +125,8 @@ sys/nfs/nfs_serv.c				1.63,1.65
 	Improve various checks in nfsrv_commit() and nfs_commit().
 	Prevents DIAGNOSTIC panics with NVSv3 Linux clients.
 	[bouyer, ticket #880]
+
+sys/arch/macppc/conf/INSTALL			patch
+
+	Add uninorth* bus, so that this kernel can boot on
+	various newer systems.
