@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.74 2003/10/15 00:25:28 dbj Exp $	*/
+/*	$NetBSD: newfs.c,v 1.75 2003/11/01 17:43:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.74 2003/10/15 00:25:28 dbj Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.75 2003/11/01 17:43:03 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,8 @@ __RCSID("$NetBSD: newfs.c,v 1.74 2003/10/15 00:25:28 dbj Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <stdint.h>
+#include <limits.h>
 
 #include "mntopts.h"
 #include "dkcksum.h"
@@ -130,7 +132,7 @@ static struct disklabel *getdisklabel(char *, int);
 static void rewritelabel(char *, int, struct disklabel *);
 static gid_t mfs_group(const char *);
 static uid_t mfs_user(const char *);
-static int strsuftoi(const char *, const char *, int, int);
+static int64_t strsuftoi64(const char *, const char *, int64_t, int64_t, int *);
 static void usage(void);
 int main(int, char *[]);
 
@@ -150,12 +152,10 @@ int main(int, char *[]);
  */
 #define	SMALL_FSSIZE	(20*1024*2)
 #define	S_DFL_FRAGSIZE	512
-#define	S_DFL_BLKSIZE	4096
 #define	MEDIUM_FSSIZE	(1000*1024*2)
 #define	M_DFL_FRAGSIZE	1024
-#define	M_DFL_BLKSIZE	8192
 #define	L_DFL_FRAGSIZE	2048
-#define	L_DFL_BLKSIZE	16384
+#define	DFL_FRAG_BLK	8
 
 /* Apple requires the fragment size to be at least APPLEUFS_DIRBLKSIZ
  * but the block size cannot be larger than Darwin's PAGE_SIZE.  See
@@ -217,46 +217,37 @@ char	device[MAXPATHLEN];
 int
 main(int argc, char *argv[])
 {
-	struct partition *pp;
-	struct disklabel *lp;
-	struct disklabel mfsfakelabel;
+	struct partition *pp = NULL;
+	struct disklabel *lp = NULL;
 	struct partition oldpartition;
 	struct statfs *mp;
-	int ch, fsi, fso, len, maxpartitions, n, Fflag, Iflag, Zflag, Vflag;
-	char *cp, *endp, *s1, *s2, *special;
+	struct stat sb;
+	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
+	uint ptn = 0;	/* gcc -Wuninitialised */
+	char *cp, *s1, *s2, *special;
 	const char *opstring;
-	long long llsize = 0;
-	int llsizemult = 0;
-	int dfl_fragsize, dfl_blksize;
+	int byte_sized = 0;
 #ifdef MFS
 	char mountfromname[100];
 	pid_t pid, res;
 	struct statfs sf;
 	int status;
 #endif
-	mode_t mfsmode;
-	uid_t mfsuid;
-	gid_t mfsgid;
+	mode_t mfsmode = 01777;	/* default mode for a /tmp-type directory */
+	uid_t mfsuid = 0;	/* user root */
+	gid_t mfsgid = 0;	/* group wheel */
 
 	cp = NULL;
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
-	Vflag = 0;
 	if (strstr(getprogname(), "mfs")) {
 		mfs = 1;
-		mfsmode = 01777; /* default mode for a /tmp-type directory */
-		mfsuid = 0;	/* user root */
-		mfsgid = 0;	/* group wheel */
 		Nflag++;
 	}
 
-	maxpartitions = getmaxpartitions();
-	if (maxpartitions > 26)
-		errx(1, "insane maxpartitions value %d", maxpartitions);
-
 	opstring = mfs ?
-	    "NT:Va:b:c:d:e:f:g:h:i:m:n:o:p:s:u:" :
-	    "B:FINO:VS:T:Za:b:c:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
+	    "NT:a:b:c:d:e:f:g:h:i:m:n:o:p:s:u:" :
+	    "B:FINO:S:T:Za:b:c:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -281,69 +272,66 @@ main(int argc, char *argv[])
 			Nflag = 1;
 			break;
 		case 'O':
-			Oflag = strsuftoi("format", optarg, 0, 2);
+			Oflag = strsuftoi64("format", optarg, 0, 2, NULL);
 			break;
 		case 'S':
-			sectorsize = strsuftoi("sector size",
-			    optarg, 1, INT_MAX);
+			sectorsize = strsuftoi64("sector size",
+			    optarg, 1, INT_MAX, NULL);
 			break;
 #ifdef COMPAT
 		case 'T':
 			disktype = optarg;
 			break;
 #endif
-		case 'V':
-			Vflag = 1;
-			break;
 		case 'Z':
 			Zflag = 1;
 			break;
 		case 'a':
-			maxcontig = strsuftoi("maximum contiguous blocks",
-			    optarg, 1, INT_MAX);
+			maxcontig = strsuftoi64("maximum contiguous blocks",
+			    optarg, 1, INT_MAX, NULL);
 			break;
 		case 'b':
-			bsize = strsuftoi("block size",
-			    optarg, MINBSIZE, MAXBSIZE);
+			bsize = strsuftoi64("block size",
+			    optarg, MINBSIZE, MAXBSIZE, NULL);
 			break;
 		case 'c':	/* was cylinders per group... */
 			break;
 		case 'd':
-			maxbsize = strsuftoi("maximum extent size",
-			    optarg, 0, INT_MAX);
+			maxbsize = strsuftoi64("maximum extent size",
+			    optarg, 0, INT_MAX, NULL);
 			break;
 		case 'e':
-			maxbpg = strsuftoi(
+			maxbpg = strsuftoi64(
 			    "blocks per file in a cylinder group",
-			    optarg, 1, INT_MAX);
+			    optarg, 1, INT_MAX, NULL);
 			break;
 		case 'f':
-			fsize = strsuftoi("fragment size",
-			    optarg, 1, MAXBSIZE);
+			fsize = strsuftoi64("fragment size",
+			    optarg, 1, MAXBSIZE, NULL);
 			break;
 		case 'g':
 			if (mfs)
 				mfsgid = mfs_group(optarg);
 			else {
-				avgfilesize = strsuftoi("average file size",
-				    optarg, 1, INT_MAX);
+				avgfilesize = strsuftoi64("average file size",
+				    optarg, 1, INT_MAX, NULL);
 			}
 			break;
 		case 'h':
-			avgfpdir = strsuftoi("expected files per directory",
-			    optarg, 1, INT_MAX);
+			avgfpdir = strsuftoi64("expected files per directory",
+			    optarg, 1, INT_MAX, NULL);
 			break;
 		case 'i':
-			density = strsuftoi("bytes per inode",
-			    optarg, 1, INT_MAX);
+			density = strsuftoi64("bytes per inode",
+			    optarg, 1, INT_MAX, NULL);
 			break;
 		case 'm':
-			minfree = strsuftoi("free space %",
-			    optarg, 0, 99);
+			minfree = strsuftoi64("free space %",
+			    optarg, 0, 99, NULL);
 			break;
 		case 'n':
-			num_inodes = strsuftoi("number of inodes",
-			    optarg, 1, INT_MAX);
+			num_inodes = strsuftoi64("number of inodes",
+			    optarg, 1, INT_MAX, NULL);
 			break;
 		case 'o':
 			if (mfs)
@@ -367,36 +355,8 @@ main(int argc, char *argv[])
 				errx(1, "unknown option 'p'");
 			break;
 		case 's':
-			llsize = strtoll(optarg, &endp, 10);
-			if ((((llsize == LLONG_MIN) || (llsize == LLONG_MAX)) && (errno == ERANGE))
-			    || (llsize == 0) || (endp[0] != '\0' && endp[1] != '\0'))
-				llsizemult = -1;
-			else {
-				switch (tolower((unsigned char)endp[0])) {
-				case 'b':
-					llsizemult = 1;
-					break;
-				case 'k':
-					llsizemult = 1024;
-					break;
-				case 'm':
-					llsizemult = 1024 * 1024;
-					break;
-				case 'g':
-					llsizemult = 1024 * 1024 * 1024;
-					break;
-				case '\0':
-				case 's':
-					llsizemult = 0;
-					break;
-				default:
-					llsizemult = -1;
-				}
-			}
-			if (llsizemult < 0)
-				errx(1,
-			    "`%s' is not a valid number for file system size.",
-				    optarg);
+			fssize = strsuftoi64("file system size",
+			    optarg, INT64_MIN, INT64_MAX, &byte_sized);
 			break;
 		case 'u':
 			if (mfs)
@@ -424,94 +384,43 @@ main(int argc, char *argv[])
 	if (argc != 2 && (mfs || argc != 1))
 		usage();
 
+	memset(&oldpartition, 0, sizeof oldpartition);
+	memset(&sb, 0, sizeof sb);
 	special = argv[0];
 	if (Fflag || mfs) {
 		/*
-		 * it's a file system image or an MFS, so fake up a label.
-		 * XXX
+		 * It's a file system image or an MFS,
+		 * no label, use fixed default for sectorsize.
 		 */
-		if (!sectorsize)
+		if (sectorsize == 0)
 			sectorsize = DFL_SECSIZE;
 
-		if (Fflag) {
-			if (llsize <= 0)
-				errx(1, "need to specify positive size when using -F");
-			if (llsizemult)
-				fssize = llsize * llsizemult / sectorsize;
-			else
-				fssize = llsize;
-		}
-		if (Fflag && !Nflag) {	/* creating image in a regular file */
-			fso = open(special, O_RDWR | O_CREAT, 0777);
-			if (fso == -1)
-				err(1, "can't open file %s", special);
-			if ((fsi = dup(fso)) == -1)
-				err(1, "can't dup(2) image fd");
-		/* XXXLUKEM: only ftruncate() regular files ? */
-			if (ftruncate(fso, (off_t)fssize * sectorsize) == -1)
-				err(1, "can't resize %s to %lld",
-				    special, (long long)fssize);
-
-			if (Zflag) {	/* pre-zero (and de-sparce) the file */
-				char	*buf;
-				int	bufsize, i;
-				off_t	bufrem;
-				struct statfs sfs;
-
-				if (fstatfs(fso, &sfs) == -1) {
-					warn("can't fstatfs `%s'", special);
-					bufsize = 8192;
-				} else
-					bufsize = sfs.f_iosize;
-
-				if ((buf = calloc(1, bufsize)) == NULL)
-					err(1, "can't malloc buffer of %d",
-					bufsize);
-				bufrem = fssize * sectorsize;
-				printf(
-    "Creating file system image in `%s', size %lld bytes, in %d byte chunks.\n",
-				    special, (long long)bufrem, bufsize);
-				while (bufrem > 0) {
-					i = write(fso, buf,
-					    MIN(bufsize, bufrem));
-					if (i == -1)
-						err(1, "writing image");
-					bufrem -= i;
-				}
-				free(buf);
+		if (!mfs) {	/* creating image in a regular file */
+			int fl;
+			if (Nflag)
+				fl = O_RDONLY;
+			else {
+				if (fssize > 0)
+					fl = O_RDWR | O_CREAT;
+				else
+					fl = O_RDWR;
 			}
-
+			fsi = open(special, fl, 0777);
+			if (fsi == -1)
+				err(1, "can't open file %s", special);
+			if (fstat(fsi, &sb) == -1)
+				err(1, "can't fstat opened %s", special);
+			if (!Nflag)
+				fso = fsi;
 		}
-
-		memset(&mfsfakelabel, 0, sizeof(mfsfakelabel));
-		mfsfakelabel.d_secsize = sectorsize;
-		mfsfakelabel.d_nsectors = 64;	/* these 3 add up to 16MB */
-		mfsfakelabel.d_ntracks = 16;
-		mfsfakelabel.d_ncylinders = 16;
-		mfsfakelabel.d_secpercyl =
-		    mfsfakelabel.d_nsectors * mfsfakelabel.d_ntracks;
-		mfsfakelabel.d_secperunit = 
-		    mfsfakelabel.d_ncylinders * mfsfakelabel.d_secpercyl;
-		mfsfakelabel.d_rpm = 10000;
-		mfsfakelabel.d_interleave = 1;
-		mfsfakelabel.d_npartitions = 1;
-		mfsfakelabel.d_partitions[0].p_size = mfsfakelabel.d_secperunit;
-		mfsfakelabel.d_partitions[0].p_fsize = 1024;
-		mfsfakelabel.d_partitions[0].p_frag = 8;
-		mfsfakelabel.d_partitions[0].p_cpg = 16;
-
-		lp = &mfsfakelabel;
-		pp = &mfsfakelabel.d_partitions[0];
 	} else {	/* !Fflag && !mfs */
 		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
 		special = device;
-		if (fsi < 0)
+		if (fsi < 0 || fstat(fsi, &sb) == -1)
 			err(1, "%s: open for read", special);
 
-		if (Nflag) {
-			fso = -1;
-		} else {
-			fso = open(special, O_WRONLY);
+		if (!Nflag) {
+			fso = open(special, O_WRONLY, 0);
 			if (fso < 0)
 				err(1, "%s: open for write", special);
 
@@ -538,82 +447,125 @@ main(int argc, char *argv[])
 				++mp;
 			}
 		}
-		cp = strchr(argv[0], '\0') - 1;
-		if (*cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit(*cp)
-		    && !Vflag))
-			errx(1, "can't figure out file system partition");
+
 #ifdef COMPAT
 		if (disktype == NULL)
 			disktype = argv[1];
 #endif
 		lp = getdisklabel(special, fsi);
-		if (Vflag || isdigit(*cp))
-			pp = &lp->d_partitions[0];
-		else
-			pp = &lp->d_partitions[*cp - 'a'];
-		if (pp->p_size == 0)
-			errx(1, "`%c' partition is unavailable", *cp);
-		if (pp->p_fstype == FS_APPLEUFS)
-			isappleufs = 1;
-		if (isappleufs) {
-			if (!Iflag && (pp->p_fstype != FS_APPLEUFS))
-				errx(1, "`%c' partition type is not `Apple UFS'", *cp);
-		} else {
-			if (!Iflag && (pp->p_fstype != FS_BSDFFS))
-				errx(1, "`%c' partition type is not `4.2BSD'", *cp);
+		if (sectorsize == 0) {
+			sectorsize = lp->d_secsize;
+			if (sectorsize <= 0)
+				errx(1, "no default sector size");
+		}
+
+		ptn = strchr(special, '\0')[-1] - 'a';
+		if (ptn < lp->d_npartitions && ptn == DISKPART(sb.st_rdev)) {
+			/* Assume partition really does match the label */
+			pp = &lp->d_partitions[ptn];
+			oldpartition = *pp;
+			if (pp->p_size == 0)
+				errx(1, "`%c' partition is unavailable",
+					'a' + ptn);
+			if (pp->p_fstype == FS_APPLEUFS)
+				isappleufs = 1;
+			if (!Iflag) {
+				if (isappleufs) {
+					if (pp->p_fstype != FS_APPLEUFS)
+						errx(1, "`%c' partition type is not `Apple UFS'", 'a' + ptn);
+				} else {
+					if (pp->p_fstype != FS_BSDFFS)
+						errx(1, "`%c' partition type is not `4.2BSD'", 'a' + ptn);
+				}
+			}
 		}
 	}	/* !Fflag && !mfs */
 
-	if (sectorsize == 0) {
-		sectorsize = lp->d_secsize;
-		if (sectorsize <= 0)
-			errx(1, "no default sector size");
-	}
-	if (llsize <= 0)
-		fssize = pp->p_size;
-	else
-		fssize = 0;
-	if (llsizemult)
-		fssize += llsize * llsizemult / sectorsize;
-	else
-		fssize += llsize;
-	if (((fssize <= 0) || (fssize > pp->p_size)) && !mfs && !Fflag)
-		errx(1, "maximum file system size on the `%c' partition is %d",
-		    *cp, pp->p_size);
-
-	if (isappleufs) {
-		dfl_fragsize = APPLEUFS_DFL_FRAGSIZE;
-		dfl_blksize = APPLEUFS_DFL_BLKSIZE;
-	} else if (fssize < SMALL_FSSIZE) {
-		dfl_fragsize = S_DFL_FRAGSIZE;
-		dfl_blksize = S_DFL_BLKSIZE;
-	} else if (fssize < MEDIUM_FSSIZE) {
-		dfl_fragsize = M_DFL_FRAGSIZE;
-		dfl_blksize = M_DFL_BLKSIZE;
-	} else {
-		dfl_fragsize = L_DFL_FRAGSIZE;
-		dfl_blksize = L_DFL_BLKSIZE;
+	if (byte_sized)
+		fssize /= sectorsize;
+	if (fssize <= 0) {
+		if (sb.st_size != 0)
+			fssize += sb.st_size / sectorsize;
+		else
+			fssize += oldpartition.p_size;
+		if (fssize <= 0)
+			errx(1, "Unable to determine file system size");
 	}
 
+	if (pp != NULL && fssize > pp->p_size)
+		errx(1, "maximum file system size on `%s' is %d sectors",
+		    special, pp->p_size);
+
+	/* XXXLUKEM: only ftruncate() regular files ? (dsl: or at all?) */
+	if (Fflag && fso != -1
+	    && ftruncate(fso, (off_t)fssize * sectorsize) == -1)
+		err(1, "can't ftruncate %s to %" PRId64, special, fssize);
+
+	if (Zflag && fso != -1) {	/* pre-zero (and de-sparce) the file */
+		char	*buf;
+		int	bufsize, i;
+		off_t	bufrem;
+		struct statfs sfs;
+
+		if (fstatfs(fso, &sfs) == -1) {
+			warn("can't fstatfs `%s'", special);
+			bufsize = 8192;
+		} else
+			bufsize = sfs.f_iosize;
+
+		if ((buf = calloc(1, bufsize)) == NULL)
+			err(1, "can't malloc buffer of %d",
+			bufsize);
+		bufrem = fssize * sectorsize;
+		printf(
+    "Creating file system image in `%s', size %lld bytes, in %d byte chunks.\n",
+		    special, (long long)bufrem, bufsize);
+		while (bufrem > 0) {
+			i = write(fso, buf, MIN(bufsize, bufrem));
+			if (i == -1)
+				err(1, "writing image");
+			bufrem -= i;
+		}
+		free(buf);
+	}
+
+	/* Sort out fragment and block sizes */
 	if (fsize == 0) {
-		fsize = pp->p_fsize;
-		if (fsize <= 0)
-			fsize = MAX(dfl_fragsize, lp->d_secsize);
+		fsize = bsize / DFL_FRAG_BLK;
+		if (fsize == 0)
+			fsize = oldpartition.p_fsize;
+		if (fsize <= 0) {
+			if (isappleufs) {
+				fsize = APPLEUFS_DFL_FRAGSIZE;
+			} else {
+				if (fssize < SMALL_FSSIZE)
+					fsize = S_DFL_FRAGSIZE;
+				else if (fssize < MEDIUM_FSSIZE)
+					fsize = M_DFL_FRAGSIZE;
+				else
+					fsize = L_DFL_FRAGSIZE;
+				if (fsize < sectorsize)
+					fsize = sectorsize;
+			}
+		}
 	}
 	if (bsize == 0) {
-		bsize = pp->p_frag * pp->p_fsize;
-		if (bsize <= 0)
-			bsize = MIN(dfl_blksize, 8 * fsize);
+		bsize = oldpartition.p_frag * oldpartition.p_fsize;
+		if (bsize <= 0) {
+			if (isappleufs)
+				bsize = APPLEUFS_DFL_BLKSIZE;
+			else
+				bsize = DFL_FRAG_BLK * fsize;
+		}
 	}
 
 	if (isappleufs && (fsize < APPLEUFS_DFL_FRAGSIZE)) {
 		warnx("Warning: chosen fsize of %d is less than Apple UFS minimum of %d",
-			fsize,APPLEUFS_DFL_FRAGSIZE);
+			fsize, APPLEUFS_DFL_FRAGSIZE);
 	}
 	if (isappleufs && (bsize > APPLEUFS_DFL_BLKSIZE)) {
 		warnx("Warning: chosen bsize of %d is greater than Apple UFS maximum of %d",
-			bsize,APPLEUFS_DFL_BLKSIZE);
+			bsize, APPLEUFS_DFL_BLKSIZE);
 	}
 
 	/*
@@ -637,13 +589,14 @@ main(int argc, char *argv[])
 		else
 			maxbpg = MAXBLKPG_UFS2(bsize);
 	}
-	oldpartition = *pp;
 	mkfs(pp, special, fsi, fso, mfsmode, mfsuid, mfsgid);
-	if (!Nflag && memcmp(pp, &oldpartition, sizeof(oldpartition)) && !Fflag)
+	if (!Nflag && pp != NULL
+	    && memcmp(pp, &oldpartition, sizeof(oldpartition)))
 		rewritelabel(special, fso, lp);
-	if (!Nflag)
+	if (fsi != -1 && fsi != fso)
+		close(fsi);
+	if (fso != -1)
 		close(fso);
-	close(fsi);
 #ifdef MFS
 	if (mfs) {
 		struct mfs_args args;
@@ -729,8 +682,7 @@ const char lmsg[] = "%s: can't read disk label";
 #endif
 
 static struct disklabel *
-getdisklabel(char *s, volatile int fd)
-/* XXX why is fs volatile?! */
+getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -753,8 +705,7 @@ getdisklabel(char *s, volatile int fd)
 }
 
 static void
-rewritelabel(char *s, volatile int fd, struct disklabel *lp)
-/* XXX why is fd volatile?! */
+rewritelabel(char *s, int fd, struct disklabel *lp)
 {
 #ifdef COMPAT
 	if (unlabeled)
@@ -828,39 +779,49 @@ mfs_user(const char *uname)
 	return pp ? pp->pw_uid : atoi(uname);
 }
 
-static int
-strsuftoi(const char *desc, const char *arg, int min, int max)
+static int64_t
+strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max, int *num_suffix)
 {
-	long long result;
+	int64_t result, r1;
+	int shift = 0;
 	char	*ep;
 
 	errno = 0;
-	result = strtoll(arg, &ep, 10);
+	r1 = strtoll(arg, &ep, 10);
 	if (ep[0] != '\0' && ep[1] != '\0')
 		errx(1, "%s `%s' is not a valid number.", desc, arg);
-	switch (tolower((unsigned char)ep[0])) {
+	switch (ep[0]) {
 	case '\0':
-	case 'b':
+	case 's': case 'S':
+		if (num_suffix != NULL)
+			*num_suffix = 0;
 		break;
-	case 'k':
-		result <<= 10;
-		break;
-	case 'm':
-		result <<= 20;
-		break;
-	case 'g':
-		result <<= 30;
+	case 'g': case 'G':
+		shift += 10;
+		/* FALLTHROUGH */
+	case 'm': case 'M':
+		shift += 10;
+		/* FALLTHROUGH */
+	case 'k': case 'K':
+		shift += 10;
+		/* FALLTHROUGH */
+	case 'b': case 'B':
+		if (num_suffix != NULL)
+			*num_suffix = 1;
 		break;
 	default:
 		errx(1, "`%s' is not a valid suffix for %s.", ep, desc);
 	}
+	result = r1 << shift;
+	if (errno == ERANGE || result >> shift != r1)
+		errx(1, "%s `%s' is too large to convert.", desc, arg);
 	if (result < min)
-		errx(1, "%s `%s' (%lld) is less than minimum (%d).",
+		errx(1, "%s `%s' (%" PRId64 ") is less than the minimum (%" PRId64 ").",
 		    desc, arg, result, min);
 	if (result > max)
-		errx(1, "%s `%s' (%lld) is greater than maximum (%d).",
+		errx(1, "%s `%s' (%" PRId64 ") is greater than the maximum (%" PRId64 ").",
 		    desc, arg, result, max);
-	return ((int)result);
+	return result;
 }
 
 #define	NEWFS		1
@@ -876,17 +837,16 @@ struct help_strings {
 	{ NEWFS,	"-I \t\tdo not check that the file system type is '4.2BSD'" },
 	{ BOTH,		"-N \t\tdo not create file system, just print out "
 			    "parameters" },
-	{ NEWFS,	"-O N\t\tfilesystem format: 0 ==> 4.3BSD, 1 ==> FFS, 2==> UFS2" },
+	{ NEWFS,	"-O N\t\tfilesystem format: 0 ==> 4.3BSD, 1 ==> FFS, 2 ==> UFS2" },
 	{ NEWFS,	"-S secsize\tsector size" },
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },
 #endif
-	{ BOTH,		"-V \t\tignore partition for Vinum" },
-	{ NEWFS,	"-Z \t\tpre-zero the image file (with -F)" },
+	{ NEWFS,	"-Z \t\tpre-zero the image file" },
 	{ BOTH,		"-a maxcontig\tmaximum contiguous blocks" },
 	{ BOTH,		"-b bsize\tblock size" },
 	{ BOTH,		"-c blocks\tblocks per cylinder group" },
-	{ BOTH,		"-d maxbsize\t maximum extent size" },
+	{ BOTH,		"-d maxbsize\tmaximum extent size" },
 	{ BOTH,		"-e maxbpg\tmaximum blocks per file in a cylinder group"
 			    },
 	{ BOTH,		"-f fsize\tfrag size" },
@@ -895,7 +855,7 @@ struct help_strings {
 	{ BOTH,		"-h avgfpdir\taverage files per directory" },
 	{ BOTH,		"-i density\tnumber of bytes per inode" },
 	{ BOTH,		"-m minfree\tminimum free space %%" },
-	{ BOTH,		"-n inodes\tnumder of inodes" },
+	{ BOTH,		"-n inodes\tnumder of inodes (overrides -i density)" },
 	{ BOTH,		"-o optim\toptimization preference (`space' or `time')"
 			    },
 	{ MFS_MOUNT,	"-p perm\t\tpermissions (in octal)" },
@@ -920,7 +880,7 @@ usage(void)
 		    "usage: %s [ fsoptions ] special-device%s\n",
 		    getprogname(),
 #ifdef COMPAT
-		    " [device-type]");
+		    " [disk-type]");
 #else
 		    "");
 #endif
