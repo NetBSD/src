@@ -1,4 +1,5 @@
-#	@(#)Makefile	1.4 (Berkeley) 6/30/90
+#	from: @(#)Makefile	1.4 (Berkeley) 6/30/90
+#	$Id: Makefile,v 1.5 1993/07/31 15:33:44 mycroft Exp $
 
 DIR=	ps1/08.ipc
 DOC=	08.ipc

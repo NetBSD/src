@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.3 1993/07/31 15:34:13 mycroft Exp $
 
 # Missing: connectives, words
 

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.6.1.1 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.6.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.4 1993/07/31 15:28:23 mycroft Exp $
 
 # missing: term.0
 

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.7.1.1 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.7.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.5 1993/07/31 15:28:28 mycroft Exp $
 
 MAN5=	a.out.0 acct.0 core.0 dir.0 disktab.0 fs.0 fstab.0 \
 	group.0 hosts.0 networks.0 passwd.0 pcfs.0 phones.0 printcap.0 \

@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.2 (Berkeley) 6/30/90
+#	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
+#	$Id: Makefile,v 1.4 1993/07/31 15:32:41 mycroft Exp $
 
 DIR=	smm/04.quotas
 DOC=	04.quotas
