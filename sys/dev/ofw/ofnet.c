@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.5 1997/03/15 18:11:51 is Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.6 1997/04/16 23:41:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,6 +48,11 @@
 #include <netinet/if_inarp.h>
 #endif
 
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
+
 #include <dev/ofw/openfirm.h>
 
 #if NIPKDB_OFN > 0
@@ -61,7 +66,7 @@ struct cfattach ipkdb_ofn_ca = {
 static struct ipkdb_if *kifp;
 static struct ofn_softc *ipkdb_of;
 
-static int ipkdbprobe __P((void *, void *));
+static int ipkdbprobe __P((struct cfdata *, void *));
 #endif
 
 struct ofn_softc {
@@ -71,7 +76,7 @@ struct ofn_softc {
 	struct ethercom sc_ethercom;
 };
 
-static int ofnprobe __P((struct device *, void *, void *));
+static int ofnprobe __P((struct device *, struct cfdata *, void *));
 static void ofnattach __P((struct device *, struct device *, void *));
 
 struct cfattach ofnet_ca = {
@@ -94,7 +99,8 @@ static void ofnwatchdog __P((struct ifnet *));
 static int
 ofnprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct ofprobe *ofp = aux;
 	char type[32];
@@ -229,9 +235,9 @@ ofnread(of)
 			continue;
 		eh = mtod(head, struct ether_header *);
 
-#if	NBPFILTER > 0
-		if (ifp->if_bpf) {
-			bpf->mtap(ifp->if_bpf, m);
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 		m_adj(head, sizeof(struct ether_header));
 		ifp->if_ipackets++;
@@ -295,7 +301,12 @@ ofnstart(ifp)
 		if (!(m0->m_flags & M_PKTHDR))
 			panic("ofnstart: no header mbuf");
 		len = m0->m_pkthdr.len;
-		
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m0);
+#endif
+
 		if (len > ETHERMTU + sizeof(struct ether_header)) {
 			/* packet too large, toss it */
 			ifp->if_oerrors++;
@@ -303,10 +314,6 @@ ofnstart(ifp)
 			continue;
 		}
 
-#if NPBFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtab(ifp->if_bpf, m0);
-#endif
 		for (bufp = buf; m = m0;) {
 			bcopy(mtod(m, char *), bufp, m->m_len);
 			bufp += m->m_len;
@@ -421,15 +428,15 @@ ipkdbofsend(kip, buf, l)
 
 static int
 ipkdbprobe(match, aux)
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct ipkdb_if *kip = aux;
 	static char name[256];
 	int len;
 	int phandle;
 	
-	kip->unit = cf->cf_unit + 1;
+	kip->unit = match->cf_unit + 1;
 
 	if (!(kip->port = OF_open("net")))
 		return -1;
