@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.6 2002/10/02 02:09:17 thorpej Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.7 2002/10/02 03:10:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.6 2002/10/02 02:09:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.7 2002/10/02 03:10:46 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -108,7 +108,7 @@ struct fdc_isa_softc {
 };
 
 CFATTACH_DECL(fdc_isa, sizeof(struct fdc_isa_softc),
-	fdc_isa_probe, fdc_isa_attach, NULL, NULL);
+    fdc_isa_probe, fdc_isa_attach, NULL, NULL);
 
 #ifdef NEWCONFIG
 void	fdc_isa_forceintr(void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.21 2002/10/02 02:09:20 thorpej Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.22 2002/10/02 03:10:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.21 2002/10/02 02:09:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.22 2002/10/02 03:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void pcdisplay_init __P((struct pcdisplay_config *,
 static int pcdisplay_allocattr __P((void *, int, int, int, long *));
 
 CFATTACH_DECL(pcdisplay, sizeof(struct pcdisplay_softc),
-	pcdisplay_match, pcdisplay_attach, NULL, NULL);
+    pcdisplay_match, pcdisplay_attach, NULL, NULL);
 
 const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_cursor,
