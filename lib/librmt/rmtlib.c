@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.7 1997/10/09 11:58:19 lukem Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.8 1997/10/10 08:45:33 mrg Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -502,7 +502,8 @@ _rmt_lseek(fildes, offset, whence)
 {
 	char buffer[BUFMAGIC];
 
-	(void)snprintf(buffer, sizeof buffer, "L%qd\n%d\n", offset, whence);
+	(void)snprintf(buffer, sizeof buffer, "L%qd\n%d\n", (long long)offset,
+	    whence);
 	if (command(fildes, buffer) == -1)
 		return(-1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 1997/10/09 12:29:21 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 1997/10/10 08:45:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -98,6 +98,7 @@ extern unsigned char _etext, _eprol;
 
 void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
+int main __P((int, char **, char **));
 
 void
 __start(sp, cleanup, obj, ps_strings)
