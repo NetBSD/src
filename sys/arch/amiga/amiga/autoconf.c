@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2000/03/15 20:40:00 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.72 2000/03/30 20:58:39 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -228,6 +228,10 @@ mbmatch(pdp, cfp, auxp)
 	struct cfdata	*cfp;
 	void		*auxp;
 {
+#if 0	/*
+	 * XXX is this right? but we need to be found twice
+	 * (early console init hack)
+	 */
 	static int mainbus_matched = 0;
 
 	/* Allow only one instance. */
@@ -235,6 +239,7 @@ mbmatch(pdp, cfp, auxp)
 		return (0);
 
 	mainbus_matched = 1;
+#endif
 	return (1);
 }
 
