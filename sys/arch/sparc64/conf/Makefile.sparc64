@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.10 1999/07/09 09:53:00 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.11 1999/07/18 23:51:08 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -43,7 +43,8 @@ OS!=uname -s
 .if (${OS} == "NetBSD")
 USE_GENASSYM?=	no
 .else
-USE_GENASSYM?=	yes
+USE_GENASSYM?=	no
+AWK=nawk
 .endif
 
 .if exists(/usr/ccs/bin/ld)
