@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.7 1997/07/19 12:03:51 jonathan Exp $	*/
+/*	$NetBSD: ims332.c,v 1.7.6.1 1997/11/18 01:22:09 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -39,6 +39,9 @@
  * 	Author: Alessandro Forin, Carnegie Mellon University
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.7.6.1 1997/11/18 01:22:09 mellon Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -50,11 +53,19 @@
 
 #include <pmax/dev/ims332.h>
 
-static u_int ims332_read_register (struct fbinfo *, int);
-static void ims332_write_register (struct fbinfo *, int, unsigned int);
 
 #define	assert_ims332_reset_bit(r)	*r &= ~0x40
 #define	deassert_ims332_reset_bit(r)	*r |=  0x40
+
+
+/*
+ * local prototypes
+ */
+static u_int ims332_read_register (struct fbinfo *, int);
+static void ims332_write_register (struct fbinfo *, int, unsigned int);
+static __inline void ims332_cursor_off(struct fbinfo *fi);
+static __inline void ims332_cursor_on(struct fbinfo *fi);
+
 
 int
 ims332init(fi)
@@ -115,6 +126,7 @@ ims332init(fi)
 			       IMS332_BPP_8
 			       | IMS332_CSR_A_DMA_DISABLE
 			       | IMS332_CSR_A_VTG_ENABLE);
+	ims332_cursor_off(fi);
 
 	return (1);
 }
@@ -153,6 +165,42 @@ ims332_write_register(fi, regno, val)
 	*((volatile u_short *)(wptr)) = val;
 }
 
+
+/*
+ * Turn off hardware cursor sprite.
+ */
+static __inline void	
+ims332_cursor_off(fi)
+	register struct fbinfo *fi;
+{
+	register u_int csr;
+
+	csr = ims332_read_register (fi, IMS332_REG_CSR_A);
+	csr |= IMS332_CSR_A_DISABLE_CURSOR;
+	ims332_write_register (fi, IMS332_REG_CSR_A, csr);
+}
+
+
+/*
+ * Turn on hardware cursor. 
+ */
+static __inline void	
+ims332_cursor_on(fi)
+	register struct fbinfo *fi;
+{
+	register u_int csr;
+
+	csr = ims332_read_register (fi, IMS332_REG_CSR_A);
+	csr &= ~IMS332_CSR_A_DISABLE_CURSOR;
+	ims332_write_register (fi, IMS332_REG_CSR_A, csr);
+}
+
+/*
+ * Set screen colourmap to default state.
+ * For X11's benefit, the default sate entry is that 
+ * zero is black and all other entries are full white.
+ * The hardwaer cursor is turned off.
+ */
 void
 ims332InitColorMap(fi)
 	struct fbinfo *fi;
@@ -175,6 +223,7 @@ ims332InitColorMap(fi)
 		cursor_RGB[i + 3] = 0xff;
 	}
 	ims332RestoreCursorColor (fi);
+	ims332_cursor_off(fi);
 }
 
 /* Load color map entry(s). */
@@ -241,7 +290,6 @@ int
 ims332_video_off(fi)
 	struct fbinfo *fi;
 {
-	u_int csr;
 	u_char *cmap_bits;
 
 	if (fi -> fi_blanked)
@@ -254,9 +302,7 @@ ims332_video_off(fi)
 	ims332_write_register (fi, IMS332_REG_COLOR_MASK, 0);
 
 	/* cursor now */
-	csr = ims332_read_register (fi, IMS332_REG_CSR_A);
-	csr |= IMS332_CSR_A_DISABLE_CURSOR;
-	ims332_write_register (fi, IMS332_REG_CSR_A, csr);
+	ims332_cursor_off(fi);
 
 	fi -> fi_blanked = 1;
 	return 0;
@@ -267,7 +313,6 @@ ims332_video_on (fi)
 	struct fbinfo *fi;
 {
 	u_char *cmap;
-	u_int csr;
 
 	if (!fi -> fi_blanked)
 		return 0;
@@ -282,9 +327,7 @@ ims332_video_on (fi)
 	ims332_write_register (fi, IMS332_REG_COLOR_MASK, 0xffffffff);
 
 	/* cursor now */
-	csr = ims332_read_register (fi, IMS332_REG_CSR_A);
-	csr &= ~IMS332_CSR_A_DISABLE_CURSOR;
-	ims332_write_register (fi, IMS332_REG_CSR_A, csr);
+	ims332_cursor_on(fi);
 
 	fi -> fi_blanked = 0;
 	return 0;
@@ -391,5 +434,8 @@ ims332LoadCursor(fi, cursor)
 		ims332_write_register (fi, IMS332_REG_CURSOR_RAM + pos, 0);
 		pos++;
 	}
+
+	/*  The cursor pattern is loaded, so turn on the hardware sprite. */
+	ims332_cursor_on(fi);
 }
 
