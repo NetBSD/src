@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.30 2004/03/12 21:14:29 dsl Exp $	*/
+/*	$NetBSD: umount.c,v 1.31 2004/03/12 21:26:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.30 2004/03/12 21:14:29 dsl Exp $");
+__RCSID("$NetBSD: umount.c,v 1.31 2004/03/12 21:26:43 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,21 +68,19 @@ int	fake, fflag, verbose, raw;
 char	*nfshost;
 struct addrinfo *nfshost_ai = NULL;
 
-int	 checkvfsname __P((const char *, char **));
-char	*getmntname __P((char *, mntwhat, char **));
-char	**makevfslist __P((char *));
-int	 main __P((int, char *[]));
-int	 namematch __P((struct addrinfo *));
-int	 sacmp __P((struct sockaddr *, struct sockaddr *));
-int	 selected __P((int));
-int	 umountfs __P((char *, char **));
-void	 usage __P((void));
-int	 xdr_dir __P((XDR *, char *));
+int	 checkvfsname(char *, char **);
+char	*getmntname(const char *, mntwhat, char **);
+char	**makevfslist(char *);
+int	 main(int, char *[]);
+int	 namematch(const struct addrinfo *);
+int	 sacmp(const struct sockaddr *, const struct sockaddr *);
+int	 selected(int);
+int	 umountfs(char *, char **);
+void	 usage(void);
+int	 xdr_dir(XDR *, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int all, ch, errs, mnts;
 	char **typelist = NULL;
@@ -160,9 +158,7 @@ main(argc, argv)
 }
 
 int
-umountfs(name, typelist)
-	char *name;
-	char **typelist;
+umountfs(char *name, char **typelist)
 {
 	enum clnt_stat clnt_stat;
 	struct stat sb;
@@ -268,10 +264,7 @@ umountfs(name, typelist)
 }
 
 char *
-getmntname(name, what, type)
-	char *name;
-	mntwhat what;
-	char **type;
+getmntname(const char *name, mntwhat what, char **type)
 {
 	static struct statfs *mntbuf;
 	static int mntsize;
@@ -298,7 +291,7 @@ getmntname(name, what, type)
 }
 
 int
-sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
+sacmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 {
 	void *p1, *p2;
 	int len;
@@ -328,8 +321,7 @@ sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
 }
 
 int
-namematch(ai)
-	struct addrinfo *ai;
+namematch(const struct addrinfo *ai)
 {
 	struct addrinfo *aip;
 
@@ -353,15 +345,13 @@ namematch(ai)
  * xdr routines for mount rpc's
  */
 int
-xdr_dir(xdrsp, dirp)
-	XDR *xdrsp;
-	char *dirp;
+xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s\n       %s\n",
