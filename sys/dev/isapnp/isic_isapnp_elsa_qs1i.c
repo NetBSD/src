@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.9 2002/04/15 08:11:00 martin Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.9.20.1 2005/02/12 18:17:46 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.9 2002/04/15 08:11:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.9.20.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.9 2002/04/15 08:11:00 ma
 static void i4b_eq1i_clrirq(void* base);
 #else
 static void i4b_eq1i_clrirq(struct isic_softc *sc);
-void isic_attach_Eqs1pi __P((struct isic_softc *sc));
+void isic_attach_Eqs1pi(struct isic_softc *sc);
 static void elsa_command_req(struct isic_softc *sc, int command, void *data);
 static void elsa_led_handler(void *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_fms.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $	*/
+/*	$NetBSD: mpu_fms.c,v 1.8.6.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_fms.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_fms.c,v 1.8.6.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_fms.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
 #include <dev/ic/mpuvar.h>
 #include <dev/pci/fmsvar.h>
 
-static int	mpu_fms_match __P((struct device *, struct cfdata *, void *));
-static void	mpu_fms_attach __P((struct device *, struct device *, void *));
+static int	mpu_fms_match(struct device *, struct cfdata *, void *);
+static void	mpu_fms_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mpu_fms, sizeof (struct mpu_softc),
     mpu_fms_match, mpu_fms_attach, NULL, NULL);

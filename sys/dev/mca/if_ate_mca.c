@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.10 2003/02/23 04:11:51 simonb Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.10.12.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.10 2003/02/23 04:11:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.10.12.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.10 2003/02/23 04:11:51 simonb Exp $
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
 
-int	ate_mca_match __P((struct device *, struct cfdata *, void *));
-void	ate_mca_attach __P((struct device *, struct device *, void *));
-static void ate_mca_detect __P((bus_space_tag_t, bus_space_handle_t,
-    u_int8_t enaddr[ETHER_ADDR_LEN]));
+int	ate_mca_match(struct device *, struct cfdata *, void *);
+void	ate_mca_attach(struct device *, struct device *, void *);
+static void ate_mca_detect(bus_space_tag_t, bus_space_handle_t,
+    u_int8_t enaddr[ETHER_ADDR_LEN]);
 
 #define ATE_NPORTS 0x20
 
@@ -91,7 +91,7 @@ static const struct ate_mca_product {
 	{ 0, 	},
 };
 
-static const struct ate_mca_product *ate_mca_lookup __P((u_int32_t));
+static const struct ate_mca_product *ate_mca_lookup(u_int32_t);
 
 static const struct ate_mca_product *
 ate_mca_lookup(id)

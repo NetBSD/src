@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49 2004/11/10 17:54:05 christos Exp $
+# $NetBSD: GENERIC,v 1.49.6.1 2005/02/12 18:17:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.49.6.1 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -66,6 +66,8 @@ file-system 	CD9660
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options 	FFS_SNAPSHOT	# ffs snapshots
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
 options 	INET
@@ -126,6 +128,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	vnd 2
+pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

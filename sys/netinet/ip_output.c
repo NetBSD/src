@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.138 2004/12/15 04:25:19 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.138.4.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.138 2004/12/15 04:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.138.4.1 2005/02/12 18:17:54 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -139,6 +139,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.138 2004/12/15 04:25:19 thorpej Exp 
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
 #endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
@@ -147,10 +150,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.138 2004/12/15 04:25:19 thorpej Exp 
 #include <netipsec/xform.h>
 #endif	/* FAST_IPSEC*/
 
-static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
-static struct ifnet *ip_multicast_if __P((struct in_addr *, int *));
-static void ip_mloopback
-	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
+static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
+static struct ifnet *ip_multicast_if(struct in_addr *, int *);
+static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
@@ -183,6 +185,9 @@ ip_output(struct mbuf *m0, ...)
 	va_list ap;
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
+#ifdef IPSEC_NAT_T
+	int natt_frag = 0;
+#endif
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
@@ -504,6 +509,22 @@ sendit:
 	default:
 		printf("ip_output: Invalid policy found. %d\n", sp->policy);
 	}
+
+#ifdef IPSEC_NAT_T
+	/*
+	 * NAT-T ESP fragmentation: don't do IPSec processing now, 
+	 * we'll do it on each fragmented packet. 
+	 */
+	if (sp->req->sav &&
+	    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
+	     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
+		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+			natt_frag = 1;
+			mtu = sp->req->sav->esp_frag;
+			goto skip_ipsec;
+		}
+	}
+#endif /* IPSEC_NAT_T */
 
 	/*
 	 * ipsec4_output() expects ip_len and ip_off in network
@@ -829,11 +850,26 @@ spd_done:
 #ifdef IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
-#endif
-			KASSERT((m->m_pkthdr.csum_flags &
-			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = (*ifp->if_output)(ifp, m, sintosa(dst),
-			    ro->ro_rt);
+
+#ifdef IPSEC_NAT_T
+			/* 
+			 * If we get there, the packet has not been handeld by
+			 * IPSec whereas it should have. Now that it has been 
+			 * fragmented, re-inject it in ip_output so that IPsec
+			 * processing can occur.
+			 */
+			if (natt_frag) {
+				error = ip_output(m, opt, 
+				    ro, flags, imo, so, mtu_p);
+			} else 
+#endif /* IPSEC_NAT_T */
+#endif /* IPSEC */
+			{
+				KASSERT((m->m_pkthdr.csum_flags &
+				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+				error = (*ifp->if_output)(ifp, m, sintosa(dst),
+				    ro->ro_rt);
+			}
 		} else
 			m_freem(m);
 	}
@@ -1019,8 +1055,7 @@ in_delayed_cksum(struct mbuf *m)
  */
 
 u_int
-ip_optlen(inp)
-	struct inpcb *inp;
+ip_optlen(struct inpcb *inp)
 {
 	struct mbuf *m = inp->inp_options;
 
@@ -1037,10 +1072,7 @@ ip_optlen(inp)
  * as indicated by a non-zero in_addr at the start of the options.
  */
 static struct mbuf *
-ip_insertoptions(m, opt, phlen)
-	struct mbuf *m;
-	struct mbuf *opt;
-	int *phlen;
+ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 {
 	struct ipoption *p = mtod(opt, struct ipoption *);
 	struct mbuf *n;
@@ -1085,8 +1117,7 @@ ip_insertoptions(m, opt, phlen)
  * omitting those not copied during fragmentation.
  */
 int
-ip_optcopy(ip, jp)
-	struct ip *ip, *jp;
+ip_optcopy(struct ip *ip, struct ip *jp)
 {
 	u_char *cp, *dp;
 	int opt, optlen, cnt;
@@ -1130,11 +1161,8 @@ ip_optcopy(ip, jp)
  * IP socket option processing.
  */
 int
-ip_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+ip_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
@@ -1383,13 +1411,10 @@ ip_ctloutput(op, so, level, optname, mp)
  */
 int
 #ifdef notyet
-ip_pcbopts(optname, pcbopt, m)
-	int optname;
+ip_pcbopts(int optname, struct mbuf **pcbopt, struct mbuf *m)
 #else
-ip_pcbopts(pcbopt, m)
+ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 #endif
-	struct mbuf **pcbopt;
-	struct mbuf *m;
 {
 	int cnt, optlen;
 	u_char *cp;
@@ -1488,9 +1513,7 @@ bad:
  * following RFC1724 section 3.3, 0.0.0.0/8 is interpreted as interface index.
  */
 static struct ifnet *
-ip_multicast_if(a, ifindexp)
-	struct in_addr *a;
-	int *ifindexp;
+ip_multicast_if(struct in_addr *a, int *ifindexp)
 {
 	int ifindex;
 	struct ifnet *ifp = NULL;
@@ -1523,10 +1546,7 @@ ip_multicast_if(a, ifindexp)
  * Set the IP multicast options in response to user setsockopt().
  */
 int
-ip_setmoptions(optname, imop, m)
-	int optname;
-	struct ip_moptions **imop;
-	struct mbuf *m;
+ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 {
 	int error = 0;
 	u_char loop;
@@ -1768,10 +1788,7 @@ ip_setmoptions(optname, imop, m)
  * Return the IP multicast options in response to user getsockopt().
  */
 int
-ip_getmoptions(optname, imo, mp)
-	int optname;
-	struct ip_moptions *imo;
-	struct mbuf **mp;
+ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf **mp)
 {
 	u_char *ttl;
 	u_char *loop;
@@ -1819,8 +1836,7 @@ ip_getmoptions(optname, imo, mp)
  * Discard the IP multicast options.
  */
 void
-ip_freemoptions(imo)
-	struct ip_moptions *imo;
+ip_freemoptions(struct ip_moptions *imo)
 {
 	int i;
 
@@ -1838,10 +1854,7 @@ ip_freemoptions(imo)
  * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 static void
-ip_mloopback(ifp, m, dst)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr_in *dst;
+ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
 {
 	struct ip *ip;
 	struct mbuf *copym;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.54 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: pchb.c,v 1.54.6.1 2005/02/12 18:17:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.54 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.54.6.1 2005/02/12 18:17:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.54 2004/08/30 15:05:17 drochner Exp $");
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
-int	pchbmatch __P((struct device *, struct cfdata *, void *));
-void	pchbattach __P((struct device *, struct device *, void *));
+int	pchbmatch(struct device *, struct cfdata *, void *);
+void	pchbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);

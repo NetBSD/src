@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.6 2004/09/14 20:20:46 drochner Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.6.6.1 2005/02/12 18:17:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.6 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.6.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -76,8 +76,8 @@ struct atppc_isa_softc {
 };
 
 /* Probe and attach functions for a atppc device on the ISA bus. */
-static int atppc_isa_probe __P((struct device *, struct cfdata *, void *));
-static void atppc_isa_attach __P((struct device *, struct device *, void *));
+static int atppc_isa_probe(struct device *, struct cfdata *, void *);
+static void atppc_isa_attach(struct device *, struct device *, void *);
 
 static int atppc_isa_dma_start(struct atppc_softc *, void *, u_int,
 	u_int8_t);

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.709 2005/01/21 12:32:18 yamt Exp $
+#	$NetBSD: files,v 1.709.2.1 2005/02/12 18:17:42 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -440,7 +440,7 @@ defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
-file	dev/ic/isp_target.c		isp
+file	dev/ic/isp_target.c		isp & isp_target_mode
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #
@@ -620,6 +620,10 @@ file	dev/ic/mb89352.c		spc
 define	hd44780
 file	dev/ic/hd44780_subr.c		hd44780
 file	dev/ic/lcdkp_subr.c		hd44780
+
+# Matrix keypad
+define	matrixkp
+file	dev/ic/matrixkp_subr.c		matrixkp
 
 # Hitachi HD64570 serial controller
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.25 2003/08/07 16:34:16 agc Exp $	*/
+/*	$NetBSD: syslog.h,v 1.25.10.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -179,27 +179,27 @@ CODE facilitynames[] = {
 #include <sys/featuretest.h>
 
 __BEGIN_DECLS
-void	closelog __P((void));
-void	openlog __P((const char *, int, int));
-int	setlogmask __P((int));
-void	syslog __P((int, const char *, ...))
+void	closelog(void);
+void	openlog(const char *, int, int);
+int	setlogmask(int);
+void	syslog(int, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 #if defined(_NETBSD_SOURCE)
-void	vsyslog __P((int, const char *, _BSD_VA_LIST_))
+void	vsyslog(int, const char *, _BSD_VA_LIST_)
     __attribute__((__format__(__printf__,2,0)));
 #endif
 __END_DECLS
 
 #else /* !_KERNEL */
 
-void	logpri __P((int));
-void	log __P((int, const char *, ...))
+void	logpri(int);
+void	log(int, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	vlog __P((int, const char *, _BSD_VA_LIST_))
+void	vlog(int, const char *, _BSD_VA_LIST_)
     __attribute__((__format__(__printf__,2,0)));
-void	addlog __P((const char *, ...))
+void	addlog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	logwakeup __P((void));
+void	logwakeup(void);
 
 #endif /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.25 2005/01/21 12:19:25 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.25.2.1 2005/02/12 18:17:40 yamt Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -80,6 +80,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -197,3 +198,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	fss		4	# file system snapshot device

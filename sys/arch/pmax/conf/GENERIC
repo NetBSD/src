@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2004/11/10 17:54:06 christos Exp $
+# $NetBSD: GENERIC,v 1.122.6.1 2005/02/12 18:17:38 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include		"arch/pmax/conf/files.pmax_rcons"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.122 $"
+#ident		"GENERIC-$Revision: 1.122.6.1 $"
 
 maxusers	64
 
@@ -103,6 +103,8 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 # VNODE_OP_NOINLINE will produce smaller and possibly slightly faster kernels
 #options 	VNODE_OP_NOINLINE	# don't inline vnode op calls
 
@@ -260,6 +262,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		 4	# file system snapshot device
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 3	# up to 3 framebuffers

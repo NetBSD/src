@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.82 2004/11/24 20:49:20 bouyer Exp $
+# $NetBSD: INSTALL,v 1.82.6.1 2005/02/12 18:17:30 yamt Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -49,6 +49,7 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -341,3 +342,4 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	sl		1
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	fss		4	# file system snapshot device

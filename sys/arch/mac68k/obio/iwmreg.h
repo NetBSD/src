@@ -1,4 +1,4 @@
-/*	$NetBSD: iwmreg.h,v 1.5 2005/01/15 16:01:00 chs Exp $	*/
+/*	$NetBSD: iwmreg.h,v 1.5.4.1 2005/02/12 18:17:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
@@ -139,14 +139,6 @@ typedef struct cylCacheSlot cylCacheSlot_t;
 	.equ	o_wslots,	12
 	.equ	o_buf,		16
 
-	
-/*
- * I/O base addresses
- */
-	.global	_Via1Base		/* in machdep.c */
-	.global	_IOBase
-	.global	_IWMBase		/* in iwm_fd.c  */
-		
 /*
  * Offsets from IWM base address
  * Lines are set by any memory access to corresponding address (IM III-34/-44).

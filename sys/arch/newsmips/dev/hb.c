@@ -1,7 +1,7 @@
-/*	$NetBSD: hb.c,v 1.13 2003/07/15 02:59:29 lukem Exp $	*/
+/*	$NetBSD: hb.c,v 1.13.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.13 2003/07/15 02:59:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.13.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -13,10 +13,10 @@ __KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.13 2003/07/15 02:59:29 lukem Exp $");
 
 #include <newsmips/dev/hbvar.h>
 
-static int	hb_match __P((struct device *, struct cfdata *, void *));
-static void	hb_attach __P((struct device *, struct device *, void *));
-static int	hb_search __P((struct device *, struct cfdata *, void *));
-static int	hb_print __P((void *, const char *));
+static int	hb_match(struct device *, struct cfdata *, void *);
+static void	hb_attach(struct device *, struct device *, void *);
+static int	hb_search(struct device *, struct cfdata *, void *);
+static int	hb_print(void *, const char *);
 
 CFATTACH_DECL(hb, sizeof(struct device),
     hb_match, hb_attach, NULL, NULL);
@@ -27,10 +27,7 @@ extern struct cfdriver hb_cd;
 static struct newsmips_intr hbintr_tab[NLEVEL];
 
 static int
-hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -41,10 +38,7 @@ hb_match(parent, cf, aux)
 }
 
 static void
-hb_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hb_attach_args ha;
 	struct newsmips_intr *ip;
@@ -62,10 +56,7 @@ hb_attach(parent, self, aux)
 }
 
 static int
-hb_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+hb_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -84,9 +75,7 @@ hb_search(parent, cf, aux)
  * when there was no match found by config_found().
  */
 static int
-hb_print(args, name)
-	void *args;
-	const char *name;
+hb_print(void *args, const char *name)
 {
 	struct hb_attach_args *ha = args;
 
@@ -101,10 +90,8 @@ hb_print(args, name)
 }
 
 void *
-hb_intr_establish(level, mask, priority, func, arg)
-	int level, mask, priority;
-	int (*func) __P((void *));
-	void *arg;
+hb_intr_establish(int level, int mask, int priority, int (*func)(void *),
+    void *arg)
 {
 	struct newsmips_intr *ip;
 	struct newsmips_intrhand *ih, *curih;
@@ -142,9 +129,7 @@ hb_intr_establish(level, mask, priority, func, arg)
 }
 
 void
-hb_intr_dispatch(level, stat)
-	int level;
-	int stat;
+hb_intr_dispatch(int level, int stat)
 {
 	struct newsmips_intr *ip;
 	struct newsmips_intrhand *ih;

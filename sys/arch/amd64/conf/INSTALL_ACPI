@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.15 2005/01/18 10:30:11 scw Exp $
+# $NetBSD: INSTALL_ACPI,v 1.15.2.1 2005/02/12 18:17:30 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.15 $"
+#ident 		"INSTALL-$Revision: 1.15.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -93,6 +93,7 @@ file-system 	KERNFS		# /kern
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -600,6 +601,7 @@ include	"arch/amd64/conf/GENERIC.local"
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files

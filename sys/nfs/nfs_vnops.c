@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.217 2005/01/21 14:31:29 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.217.2.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.217 2005/01/21 14:31:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.217.2.1 2005/02/12 18:17:55 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2561,7 +2561,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	 * Should be called from buffer cache, so only amount of
 	 * NFS_DIRBLKSIZ will be requested.
 	 */
-	if (uiop->uio_iovcnt != 1 || (uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
+	if (uiop->uio_iovcnt != 1 || uiop->uio_resid != NFS_DIRBLKSIZ)
 		panic("nfs readdirrpc bad uio");
 #endif
 
@@ -2726,6 +2726,17 @@ nfs_readdirrpc(vp, uiop, cred)
 		if (!more_dirs) {
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			more_dirs = (fxdr_unsigned(int, *tl) == 0);
+
+			/*
+			 * kludge: if we got no entries, treat it as EOF.
+			 * some server sometimes send a reply without any
+			 * entries or EOF.
+			 * although it might mean the server has very long name,
+			 * we can't handle such entries anyway.
+			 */
+
+			if (uiop->uio_resid >= NFS_DIRBLKSIZ)
+				more_dirs = 0;
 		}
 		m_freem(mrep);
 	}
@@ -2748,8 +2759,10 @@ nfs_readdirrpc(vp, uiop, cred)
 	 * We are now either at the end of the directory or have filled the
 	 * block.
 	 */
-	if (bigenough)
+	if (bigenough) {
 		dnp->n_direofoffset = uiop->uio_offset;
+		dnp->n_flag |= NEOFVALID;
+	}
 nfsmout:
 	return (error);
 }
@@ -2783,7 +2796,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	struct nfs_fattr fattr, *fp;
 
 #ifdef DIAGNOSTIC
-	if (uiop->uio_iovcnt != 1 || (uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
+	if (uiop->uio_iovcnt != 1 || uiop->uio_resid != NFS_DIRBLKSIZ)
 		panic("nfs readdirplusrpc bad uio");
 #endif
 	ndp->ni_dvp = vp;
@@ -2963,6 +2976,13 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		if (!more_dirs) {
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			more_dirs = (fxdr_unsigned(int, *tl) == 0);
+
+			/*
+			 * kludge: see a comment in nfs_readdirrpc.
+			 */
+
+			if (uiop->uio_resid >= NFS_DIRBLKSIZ)
+				more_dirs = 0;
 		}
 		m_freem(mrep);
 	}
@@ -2985,8 +3005,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	 * We are now either at the end of the directory or have filled the
 	 * block.
 	 */
-	if (bigenough)
+	if (bigenough) {
 		dnp->n_direofoffset = uiop->uio_offset;
+		dnp->n_flag |= NEOFVALID;
+	}
 nfsmout:
 	if (newvp != NULLVP) {
 		if(newvp == vp)

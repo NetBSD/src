@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.18 2004/11/24 20:49:20 bouyer Exp $
+#	$NetBSD: SMDK2800,v 1.18.6.1 2005/02/12 18:17:31 yamt Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -56,6 +56,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -220,6 +221,7 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 #pseudo-device	bpfilter	4	# Berkeley packet filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.19 2004/03/19 16:05:25 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.19.10.1 2005/02/12 18:17:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.19 2004/03/19 16:05:25 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.19.10.1 2005/02/12 18:17:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ fbmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)(dev_t, off_t, int) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
@@ -338,7 +338,7 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 #ifdef RASTERCONSOLE
 #include <machine/kbd.h>
 
-static void fb_bell __P((int));
+static void fb_bell(int);
 
 static void
 fb_bell(on)

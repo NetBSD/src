@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.5 2005/01/11 00:59:35 joff Exp $ */
+/* $NetBSD: panel.c,v 1.5.4.1 2005/02/12 18:17:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.5 2005/01/11 00:59:35 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.5.4.1 2005/02/12 18:17:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,8 @@ panel_attach(parent, self, aux)
 			    1, &sc->sc_lcd.sc_iodr);
 
 	sc->sc_lcd.sc_dev_ok = 1;
-	sc->sc_lcd.sc_rows = 16;
-	sc->sc_lcd.sc_vrows = 40;
+	sc->sc_lcd.sc_cols = 16;
+	sc->sc_lcd.sc_vcols = 40;
 	sc->sc_lcd.sc_flags = HD_8BIT | HD_MULTILINE | HD_KEYPAD;
 
 	sc->sc_lcd.sc_writereg = panel_cbt_hdwritereg;

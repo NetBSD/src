@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.2 2004/12/06 02:59:23 christos Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.2.6.1 2005/02/12 18:17:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -121,9 +121,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2 2004/12/06 02:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2.6.1 2005/02/12 18:17:51 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.2 2004/06/08 13:14:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.3 2004/08/26 11:25:21 darrenr Exp";
 #endif
 #endif
 
@@ -267,7 +267,7 @@ u_32_t *passp;
 			RWLOCK_EXIT(&ipf_auth);
 			if (passp != NULL)
 				*passp = pass;
-			ATOMIC_INCL(fr_authstats.fas_hits);
+			ATOMIC_INC64(fr_authstats.fas_hits);
 			return fr;
 		}
 		i++;
@@ -276,7 +276,7 @@ u_32_t *passp;
 	}
 	fr_authstats.fas_miss++;
 	RWLOCK_EXIT(&ipf_auth);
-	ATOMIC_INCL(fr_authstats.fas_miss);
+	ATOMIC_INC64(fr_authstats.fas_miss);
 	return NULL;
 }
 

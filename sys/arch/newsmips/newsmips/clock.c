@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.10 2003/10/25 04:07:28 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.10.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2003/10/25 04:07:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,8 +59,7 @@ static	todr_chip_handle_t todr_handle;
  * Common parts of todclock autoconfiguration.
  */
 void
-todr_attach(handle)
-	todr_chip_handle_t handle;
+todr_attach(todr_chip_handle_t handle)
 {
 
 	if (todr_handle)
@@ -76,7 +75,7 @@ todr_attach(handle)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	if (todr_handle == NULL)
@@ -91,8 +90,7 @@ cpu_initclocks()
  * profhz == stathz == hz.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* nothing to do */
@@ -102,8 +100,7 @@ setstatclockrate(newhz)
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase, waszero;
 
@@ -153,7 +150,7 @@ inittodr(base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
 
 	if (time.tv_sec == 0)

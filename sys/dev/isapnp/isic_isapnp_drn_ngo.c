@@ -27,14 +27,14 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.4 2002/03/24 20:35:50 martin Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.4.20.1 2005/02/12 18:17:46 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.4 2002/03/24 20:35:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.4.20.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DRN_NGO
@@ -454,11 +454,11 @@ isic_attach_drnngo(struct isa_device *dev, unsigned int iobase2)
 
 #else
 
-static u_int8_t drnngo_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void drnngo_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void drnngo_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void drnngo_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
-void isic_attach_drnngo __P((struct isic_softc *sc));
+static u_int8_t drnngo_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void drnngo_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void drnngo_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void drnngo_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
+void isic_attach_drnngo(struct isic_softc *sc);
 
 /*
  * Mapping from "what" parameter to offsets into the io map

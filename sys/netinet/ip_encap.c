@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.21 2005/01/24 04:46:49 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.21.2.1 2005/02/12 18:17:54 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -130,25 +130,23 @@ struct pack6 {
 enum direction { INBOUND, OUTBOUND };
 
 #ifdef INET
-static struct encaptab *encap4_lookup __P((struct mbuf *, int, int,
-	enum direction));
+static struct encaptab *encap4_lookup(struct mbuf *, int, int, enum direction);
 #endif
 #ifdef INET6
-static struct encaptab *encap6_lookup __P((struct mbuf *, int, int,
-	enum direction));
+static struct encaptab *encap6_lookup(struct mbuf *, int, int, enum direction);
 #endif
-static int encap_add __P((struct encaptab *));
-static int encap_remove __P((struct encaptab *));
-static int encap_afcheck __P((int, const struct sockaddr *, const struct sockaddr *));
+static int encap_add(struct encaptab *);
+static int encap_remove(struct encaptab *);
+static int encap_afcheck(int, const struct sockaddr *, const struct sockaddr *);
 #ifdef USE_RADIX
-static struct radix_node_head *encap_rnh __P((int));
-static int mask_matchlen __P((const struct sockaddr *));
+static struct radix_node_head *encap_rnh(int);
+static int mask_matchlen(const struct sockaddr *);
 #endif
 #ifndef USE_RADIX
-static int mask_match __P((const struct encaptab *, const struct sockaddr *,
-		const struct sockaddr *));
+static int mask_match(const struct encaptab *, const struct sockaddr *,
+		const struct sockaddr *);
 #endif
-static void encap_fillarg __P((struct mbuf *, const struct encaptab *));
+static void encap_fillarg(struct mbuf *, const struct encaptab *);
 
 LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
 
@@ -158,7 +156,7 @@ struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
 #endif
 
 void
-encap_setkeylen()
+encap_setkeylen(void)
 {
 #ifdef USE_RADIX
 	if (sizeof(struct pack4) > max_keylen)
@@ -171,7 +169,7 @@ encap_setkeylen()
 }
 
 void
-encap_init()
+encap_init(void)
 {
 	static int initialized = 0;
 
@@ -204,11 +202,7 @@ encap_init()
 
 #ifdef INET
 static struct encaptab *
-encap4_lookup(m, off, proto, dir)
-	struct mbuf *m;
-	int off;
-	int proto;
-	enum direction dir;
+encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 {
 	struct ip *ip;
 	struct pack4 pack;
@@ -332,11 +326,7 @@ encap4_input(struct mbuf *m, ...)
 
 #ifdef INET6
 static struct encaptab *
-encap6_lookup(m, off, proto, dir)
-	struct mbuf *m;
-	int off;
-	int proto;
-	enum direction dir;
+encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 {
 	struct ip6_hdr *ip6;
 	struct pack6 pack;
@@ -408,10 +398,7 @@ encap6_lookup(m, off, proto, dir)
 }
 
 int
-encap6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp;
-	int proto;
+encap6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	const struct ip6protosw *psw;
@@ -437,8 +424,7 @@ encap6_input(mp, offp, proto)
 #endif
 
 static int
-encap_add(ep)
-	struct encaptab *ep;
+encap_add(struct encaptab *ep)
 {
 #ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(ep->af);
@@ -463,8 +449,7 @@ encap_add(ep)
 }
 
 static int
-encap_remove(ep)
-	struct encaptab *ep;
+encap_remove(struct encaptab *ep)
 {
 #ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(ep->af);
@@ -483,10 +468,7 @@ encap_remove(ep)
 }
 
 static int
-encap_afcheck(af, sp, dp)
-	int af;
-	const struct sockaddr *sp;
-	const struct sockaddr *dp;
+encap_afcheck(int af, const struct sockaddr *sp, const struct sockaddr *dp)
 {
 	if (sp && dp) {
 		if (sp->sa_len != dp->sa_len)
@@ -526,13 +508,10 @@ encap_afcheck(af, sp, dp)
  * Return value will be necessary as input (cookie) for encap_detach().
  */
 const struct encaptab *
-encap_attach(af, proto, sp, sm, dp, dm, psw, arg)
-	int af;
-	int proto;
-	const struct sockaddr *sp, *sm;
-	const struct sockaddr *dp, *dm;
-	const struct protosw *psw;
-	void *arg;
+encap_attach(int af, int proto,
+    const struct sockaddr *sp, const struct sockaddr *sm,
+    const struct sockaddr *dp, const struct sockaddr *dm,
+    const struct protosw *psw, void *arg)
 {
 	struct encaptab *ep;
 	int error;
@@ -665,12 +644,9 @@ fail:
 }
 
 const struct encaptab *
-encap_attach_func(af, proto, func, psw, arg)
-	int af;
-	int proto;
-	int (*func) __P((const struct mbuf *, int, int, void *));
-	const struct protosw *psw;
-	void *arg;
+encap_attach_func(int af, int proto,
+    int (*func)(const struct mbuf *, int, int, void *),
+    const struct protosw *psw, void *arg)
 {
 	struct encaptab *ep;
 	int error;
@@ -717,10 +693,7 @@ fail:
 
 #ifdef INET6
 void
-encap6_ctlinput(cmd, sa, d0)
-	int cmd;
-	struct sockaddr *sa;
-	void *d0;
+encap6_ctlinput(int cmd, struct sockaddr *sa, void *d0)
 {
 	void *d = d0;
 	struct ip6_hdr *ip6;
@@ -798,8 +771,7 @@ encap6_ctlinput(cmd, sa, d0)
 #endif
 
 int
-encap_detach(cookie)
-	const struct encaptab *cookie;
+encap_detach(const struct encaptab *cookie)
 {
 	const struct encaptab *ep = cookie;
 	struct encaptab *p;
@@ -824,8 +796,7 @@ encap_detach(cookie)
 
 #ifdef USE_RADIX
 static struct radix_node_head *
-encap_rnh(af)
-	int af;
+encap_rnh(int af)
 {
 
 	switch (af) {
@@ -841,8 +812,7 @@ encap_rnh(af)
 }
 
 static int
-mask_matchlen(sa)
-	const struct sockaddr *sa;
+mask_matchlen(const struct sockaddr *sa)
 {
 	const char *p, *ep;
 	int l;
@@ -862,10 +832,9 @@ mask_matchlen(sa)
 
 #ifndef USE_RADIX
 static int
-mask_match(ep, sp, dp)
-	const struct encaptab *ep;
-	const struct sockaddr *sp;
-	const struct sockaddr *dp;
+mask_match(const struct encaptab *ep,
+	   const struct sockaddr *sp,
+	   const struct sockaddr *dp)
 {
 	struct sockaddr_storage s;
 	struct sockaddr_storage d;
@@ -920,9 +889,7 @@ mask_match(ep, sp, dp)
 #endif
 
 static void
-encap_fillarg(m, ep)
-	struct mbuf *m;
-	const struct encaptab *ep;
+encap_fillarg(struct mbuf *m, const struct encaptab *ep)
 {
 	struct m_tag *mtag;
 
@@ -934,8 +901,7 @@ encap_fillarg(m, ep)
 }
 
 void *
-encap_getarg(m)
-	struct mbuf *m;
+encap_getarg(struct mbuf *m)
 {
 	void *p;
 	struct m_tag *mtag;

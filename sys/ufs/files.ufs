@@ -1,11 +1,11 @@
-#	$NetBSD: files.ufs,v 1.4 2005/01/23 19:37:05 rumble Exp $
+#	$NetBSD: files.ufs,v 1.4.2.1 2005/02/12 18:17:56 yamt Exp $
 
 deffs					FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX
 
-defflag	opt_ffs.h			FFS_EI APPLE_UFS FFS_SNAPSHOT
+defflag	opt_ffs.h			FFS_EI APPLE_UFS
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -22,9 +22,8 @@ file	ufs/ffs/ffs_alloc.c		ffs | mfs
 file	ufs/ffs/ffs_balloc.c		ffs | mfs
 file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
 file	ufs/ffs/ffs_inode.c		ffs | mfs
-file	ufs/ffs/ffs_snapshot.c		ffs & ffs_snapshot
-file	ufs/ffs/ffs_snapshot.stub.c	(ffs & !ffs_snapshot) |
-					    (!ffs & (lfs | mfs | ext2fs))
+file	ufs/ffs/ffs_snapshot.c		(ffs | mfs) & ffs_snapshot
+file	ufs/ffs/ffs_snapshot_stub.c	(ffs | mfs) & !ffs_snapshot
 file	ufs/ffs/ffs_softdep.c		ffs & softdep
 file	ufs/ffs/ffs_softdep.stub.c	(ffs & !softdep) |
 					    (!ffs & (lfs | mfs | ext2fs))

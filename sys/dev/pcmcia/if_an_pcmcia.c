@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.25 2004/08/10 20:47:17 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.25.6.1 2005/02/12 18:17:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.25 2004/08/10 20:47:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.25.6.1 2005/02/12 18:17:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.25 2004/08/10 20:47:17 mycroft Ex
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-static int an_pcmcia_match __P((struct device *, struct cfdata *, void *));
-static int an_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-static void an_pcmcia_attach __P((struct device *, struct device *, void *));
-static int an_pcmcia_detach __P((struct device *, int));
-static int an_pcmcia_enable __P((struct an_softc *));
-static void an_pcmcia_disable __P((struct an_softc *));
+static int an_pcmcia_match(struct device *, struct cfdata *, void *);
+static int an_pcmcia_validate_config(struct pcmcia_config_entry *);
+static void an_pcmcia_attach(struct device *, struct device *, void *);
+static int an_pcmcia_detach(struct device *, int);
+static int an_pcmcia_enable(struct an_softc *);
+static void an_pcmcia_disable(struct an_softc *);
 
 struct an_pcmcia_softc {
 	struct an_softc sc_an;			/* real "an" softc */

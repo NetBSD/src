@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.22 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.22.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.22 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.22.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,27 +93,27 @@ struct ec_softc {
 	void *sc_ih;			/* interrupt handle */
 };
 
-int	ec_probe __P((struct device *, struct cfdata *, void *));
-void	ec_attach __P((struct device *, struct device *, void *));
+int	ec_probe(struct device *, struct cfdata *, void *);
+void	ec_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ec, sizeof(struct ec_softc),
     ec_probe, ec_attach, NULL, NULL);
 
-int	ec_set_media __P((struct ec_softc *, int));
+int	ec_set_media(struct ec_softc *, int);
 
-void	ec_media_init __P((struct dp8390_softc *));
+void	ec_media_init(struct dp8390_softc *);
 
-int	ec_mediachange __P((struct dp8390_softc *));
-void	ec_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
+int	ec_mediachange(struct dp8390_softc *);
+void	ec_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
-void	ec_init_card __P((struct dp8390_softc *));
-int	ec_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-int	ec_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-void	ec_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-int	ec_fake_test_mem __P((struct dp8390_softc *));
-int	ec_test_mem __P((struct dp8390_softc *));
+void	ec_init_card(struct dp8390_softc *);
+int	ec_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+int	ec_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+int	ec_fake_test_mem(struct dp8390_softc *);
+int	ec_test_mem(struct dp8390_softc *);
 
-__inline void ec_readmem __P((struct ec_softc *, int, u_int8_t *, int));
+__inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
 
 static const int ec_iobase[] = {
 	0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.22 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: tropic.c,v 1.22.10.1 2005/02/12 18:17:44 yamt Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.22 2003/11/02 11:07:46 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.22.10.1 2005/02/12 18:17:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -85,24 +85,24 @@ __KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.22 2003/11/02 11:07:46 wiz Exp $");
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>
 
-static void tr_shutdown __P((void *));
-static void tr_reopen __P((void *));
+static void tr_shutdown(void *);
+static void tr_reopen(void *);
 
-void	tr_rint __P((struct tr_softc *));
-void	tr_xint __P((struct tr_softc *));
-void	tr_oldxint __P((struct tr_softc *));
-struct	mbuf *tr_get __P((struct tr_softc *, int, struct ifnet *));
-void	tr_opensap __P((struct tr_softc *, u_char));
-int	tr_mbcopy __P((struct tr_softc *, bus_size_t, struct mbuf *));
-void	tr_bcopy __P((struct tr_softc *, u_char *, int));
-void	tr_start __P((struct ifnet *));
-void	tr_oldstart __P((struct ifnet *));
-void	tr_watchdog __P((struct ifnet *));
-int	tr_mediachange __P((struct ifnet *));
-void	tr_mediastatus __P((struct ifnet *, struct ifmediareq *));
-int	tropic_mediachange __P((struct tr_softc *));
-void	tropic_mediastatus __P((struct tr_softc *, struct ifmediareq *));
-void	tr_reinit __P((void *));
+void	tr_rint(struct tr_softc *);
+void	tr_xint(struct tr_softc *);
+void	tr_oldxint(struct tr_softc *);
+struct	mbuf *tr_get(struct tr_softc *, int, struct ifnet *);
+void	tr_opensap(struct tr_softc *, u_char);
+int	tr_mbcopy(struct tr_softc *, bus_size_t, struct mbuf *);
+void	tr_bcopy(struct tr_softc *, u_char *, int);
+void	tr_start(struct ifnet *);
+void	tr_oldstart(struct ifnet *);
+void	tr_watchdog(struct ifnet *);
+int	tr_mediachange(struct ifnet *);
+void	tr_mediastatus(struct ifnet *, struct ifmediareq *);
+int	tropic_mediachange(struct tr_softc *);
+void	tropic_mediastatus(struct tr_softc *, struct ifmediareq *);
+void	tr_reinit(void *);
 
 /*
  * TODO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.43 2004/10/30 18:08:37 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.43.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.43 2004/10/30 18:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.43.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -95,39 +95,39 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.43 2004/10/30 18:08:37 thorpej Exp $");
 #include <dev/ic/hmereg.h>
 #include <dev/ic/hmevar.h>
 
-void		hme_start __P((struct ifnet *));
-void		hme_stop __P((struct hme_softc *));
-int		hme_ioctl __P((struct ifnet *, u_long, caddr_t));
-void		hme_tick __P((void *));
-void		hme_watchdog __P((struct ifnet *));
-void		hme_shutdown __P((void *));
-void		hme_init __P((struct hme_softc *));
-void		hme_meminit __P((struct hme_softc *));
-void		hme_mifinit __P((struct hme_softc *));
-void		hme_reset __P((struct hme_softc *));
-void		hme_setladrf __P((struct hme_softc *));
+void		hme_start(struct ifnet *);
+void		hme_stop(struct hme_softc *);
+int		hme_ioctl(struct ifnet *, u_long, caddr_t);
+void		hme_tick(void *);
+void		hme_watchdog(struct ifnet *);
+void		hme_shutdown(void *);
+void		hme_init(struct hme_softc *);
+void		hme_meminit(struct hme_softc *);
+void		hme_mifinit(struct hme_softc *);
+void		hme_reset(struct hme_softc *);
+void		hme_setladrf(struct hme_softc *);
 
 /* MII methods & callbacks */
-static int	hme_mii_readreg __P((struct device *, int, int));
-static void	hme_mii_writereg __P((struct device *, int, int, int));
-static void	hme_mii_statchg __P((struct device *));
+static int	hme_mii_readreg(struct device *, int, int);
+static void	hme_mii_writereg(struct device *, int, int, int);
+static void	hme_mii_statchg(struct device *);
 
-int		hme_mediachange __P((struct ifnet *));
-void		hme_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int		hme_mediachange(struct ifnet *);
+void		hme_mediastatus(struct ifnet *, struct ifmediareq *);
 
-struct mbuf	*hme_get __P((struct hme_softc *, int, int));
-int		hme_put __P((struct hme_softc *, int, struct mbuf *));
-void		hme_read __P((struct hme_softc *, int, int));
-int		hme_eint __P((struct hme_softc *, u_int));
-int		hme_rint __P((struct hme_softc *));
-int		hme_tint __P((struct hme_softc *));
+struct mbuf	*hme_get(struct hme_softc *, int, int);
+int		hme_put(struct hme_softc *, int, struct mbuf *);
+void		hme_read(struct hme_softc *, int, int);
+int		hme_eint(struct hme_softc *, u_int);
+int		hme_rint(struct hme_softc *);
+int		hme_tint(struct hme_softc *);
 
-static int	ether_cmp __P((u_char *, u_char *));
+static int	ether_cmp(u_char *, u_char *);
 
 /* Default buffer copy routines */
-void	hme_copytobuf_contig __P((struct hme_softc *, void *, int, int));
-void	hme_copyfrombuf_contig __P((struct hme_softc *, void *, int, int));
-void	hme_zerobuf_contig __P((struct hme_softc *, int, int));
+void	hme_copytobuf_contig(struct hme_softc *, void *, int, int);
+void	hme_copyfrombuf_contig(struct hme_softc *, void *, int, int);
+void	hme_zerobuf_contig(struct hme_softc *, int, int);
 
 
 void

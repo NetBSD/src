@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.24 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: autri.c,v 1.24.4.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.24 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.24.4.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include "midi.h"
 
@@ -1236,6 +1236,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 			else
 				ctrl |= AUTRI_CTRL_MUTEVOL;
 			attribute = 0;
+			cso = dmalen - 1;
 		}
 
 		eso = dmalen - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.18 2003/11/07 19:21:39 dsl Exp $	*/
+/*	$NetBSD: fb.c,v 1.18.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.18 2003/11/07 19:21:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.18.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ int fb_is_console(void);
 int fb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t fb_mmap(void *, off_t, int);
 int fb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
-		    int *, long *);
+    int *, long *);
 void fb_free_screen(void *, void *);
 int fb_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
 
@@ -110,10 +110,7 @@ struct wsscreen_list fb_screenlist = {
 static char *devname[8] = { "NWB-512", "NWB-518", "NWE-501" };	/* XXX ? */
 
 int
-fb_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+fb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -129,9 +126,7 @@ fb_match(parent, match, aux)
 }
 
 void
-fb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fb_softc *sc = (void *)self;
 	struct wsemuldisplaydev_attach_args waa;
@@ -148,8 +143,8 @@ fb_attach(parent, self, aux)
 		ri = &dc->dc_ri;
 		sc->sc_nscreens = 1;
 	} else {
-		dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
-		bzero(dc, sizeof(struct fb_devconfig));
+		dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 
 		dc->dc_fbbase = NWB253_VRAM;
 		fb_common_init(dc);
@@ -175,8 +170,7 @@ fb_attach(parent, self, aux)
 }
 
 int
-fb_common_init(dc)
-	struct fb_devconfig *dc;
+fb_common_init(struct fb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
 	volatile u_short *ctlreg = NWB253_CTLREG;
@@ -226,7 +220,7 @@ fb_common_init(dc)
 }
 
 int
-fb_is_console()
+fb_is_console(void)
 {
 	volatile u_int *dipsw = (void *)DIP_SWITCH;
 
@@ -237,12 +231,7 @@ fb_is_console()
 }
 
 int
-fb_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+fb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct fb_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
@@ -277,10 +266,7 @@ fb_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-fb_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+fb_mmap(void *v, off_t offset, int prot)
 {
 	struct fb_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
@@ -292,12 +278,8 @@ fb_mmap(v, offset, prot)
 }
 
 int
-fb_alloc_screen(v, scrdesc, cookiep, ccolp, crowp, attrp)
-	void *v;
-	const struct wsscreen_descr *scrdesc;
-	void **cookiep;
-	int *ccolp, *crowp;
-	long *attrp;
+fb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc, void **cookiep,
+    int *ccolp, int *crowp, long *attrp)
 {
 	struct fb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
@@ -316,9 +298,7 @@ fb_alloc_screen(v, scrdesc, cookiep, ccolp, crowp, attrp)
 }
 
 void
-fb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+fb_free_screen(void *v, void *cookie)
 {
 	struct fb_softc *sc = v;
 
@@ -329,18 +309,15 @@ fb_free_screen(v, cookie)
 }
 
 int
-fb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
+    void *cbarg)
 {
+
 	return 0;
 }
 
 void
-fb_cnattach()
+fb_cnattach(void)
 {
 	struct fb_devconfig *dc = &fb_console_dc;
 	struct rasops_info *ri = &dc->dc_ri;
@@ -356,7 +333,7 @@ fb_cnattach()
 	wsdisplay_cnattach(&fb_stdscreen, ri, 0, ri->ri_rows - 1, defattr);
 }
 
-static u_char
+static const uint8_t
 nwp512_data1[] = {
 	0x00, 0x44,
 	0x01, 0x33,
@@ -374,14 +351,14 @@ nwp512_data1[] = {
 	0x1b, 0x03
 };
 
-static u_char
+static const uint8_t
 nwp512_data2[] = {
 	0x1e, 0x08,
 	0x20, 0x08,
 	0x21, 0x0d
 };
 
-static u_char
+static const uint8_t
 nwp518_data1[] = {
 	0x00, 0x52,
 	0x01, 0x40,
@@ -399,14 +376,14 @@ nwp518_data1[] = {
 	0x1b, 0x04
 };
 
-static u_char
+static const uint8_t
 nwp518_data2[] = {
 	0x1e, 0x08,
 	0x20, 0x00,
 	0x21, 0x00
 };
 
-static u_char
+static const uint8_t
 nwe501_data1[] = {
 	0x00, 0x4b,
 	0x01, 0x40,
@@ -424,14 +401,14 @@ nwe501_data1[] = {
 	0x1b, 0x04
 };
 
-static u_char
+static const uint8_t
 nwe501_data2[] = {
 	0x1e, 0x08,
 	0x20, 0x00,
 	0x21, 0x00
 };
 
-static u_char
+static const uint8_t
 *crtc_data[3][2] = {
 	{ nwp512_data1, nwp512_data2 },
 	{ nwp518_data1, nwp518_data2 },
@@ -444,7 +421,7 @@ fb253_init(void)
 	volatile u_short *ctlreg = NWB253_CTLREG;
 	volatile u_short *crtreg = NWB253_CRTREG;
 	int id = (*ctlreg >> 8) & 0xf;
-	u_char *p;
+	const uint8_t *p;
 	int i;
 
 	*ctlreg = 0;			/* stop crtc */
@@ -475,15 +452,14 @@ static char fontarea16[96][32];
 static char fontarea24[96][96];
 
 void
-initfont(ri)
-	struct rasops_info *ri;
+initfont(struct rasops_info *ri)
 {
 	int c, x;
 
 	for (c = 0; c < 96; c++) {
 		x = ((c & 0x1f) | ((c & 0xe0) << 2)) << 7;
-		bcopy((char *)0xb8e00000 + x + 96, fontarea16 + c, 32);
-		bcopy((char *)0xb8e00000 + x, fontarea24 + c, 96);
+		memcpy(fontarea16 + c, (char *)0xb8e00000 + x + 96, 32);
+		memcpy(fontarea24 + c, (char *)0xb8e00000 + x, 96);
 	}		      
 
 	newsrom8x16.name = "rom8x16";

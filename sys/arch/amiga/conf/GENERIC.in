@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.28 2005/01/17 15:28:51 cube Exp $
+# $NetBSD: GENERIC.in,v 1.28.2.1 2005/02/12 18:17:30 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.28.2.1 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -171,7 +171,9 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 ', `m4_dnl
 options 	QUOTA		# User and group quotas in FFS
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
+options 	FFS_SNAPSHOT	# ffs snapshots
 ')m4_dnl
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -579,6 +581,11 @@ pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+m4_ifdef(`GENERIC_CONFIGURATION', `m4_dnl
+pseudo-device	fss		4	# file system snapshot device
+', `m4_dnl
+#pseudo-device	fss		4	# file system snapshot device
+')m4_dnl
 
 pseudo-device	view		4	# views (needed for grfcc)
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl

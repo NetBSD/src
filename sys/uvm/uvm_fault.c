@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.89 2005/01/01 09:14:49 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.89.4.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.89 2005/01/01 09:14:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.89.4.1 2005/02/12 18:17:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -561,7 +561,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot, check_prot;
 	boolean_t wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
-	vaddr_t startva, objaddr, currva;
+	vaddr_t startva, currva;
 	voff_t uoff;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -767,10 +767,9 @@ ReFault:
 
 		/* flush object? */
 		if (uobj) {
-			objaddr =
-			    (startva - ufi.entry->start) + ufi.entry->offset;
+			uoff = (startva - ufi.entry->start) + ufi.entry->offset;
 			simple_lock(&uobj->vmobjlock);
-			(void) (uobj->pgops->pgo_put)(uobj, objaddr, objaddr +
+			(void) (uobj->pgops->pgo_put)(uobj, uoff, uoff +
 				    (nback << PAGE_SHIFT), PGO_DEACTIVATE);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.115 2004/12/15 04:25:19 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.115.4.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.115 2004/12/15 04:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.115.4.1 2005/02/12 18:17:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -536,8 +536,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
  * Tcp output routine: figure out what should be sent and send it.
  */
 int
-tcp_output(tp)
-	struct tcpcb *tp;
+tcp_output(struct tcpcb *tp)
 {
 	struct socket *so;
 	struct route *ro;
@@ -1344,8 +1343,7 @@ out:
 }
 
 void
-tcp_setpersist(tp)
-	struct tcpcb *tp;
+tcp_setpersist(struct tcpcb *tp)
 {
 	int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2);
 	int nticks;

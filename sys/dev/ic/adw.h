@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.10 2003/07/08 10:06:30 itojun Exp $        */
+/*      $NetBSD: adw.h,v 1.10.10.1 2005/02/12 18:17:43 yamt Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -107,10 +107,10 @@ struct adw_control {
 
 /******************************************************************************/
 
-int adw_init __P((ADW_SOFTC *));
-void adw_attach __P((ADW_SOFTC *));
-int adw_intr __P((void *));
-ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_int32_t));
+int adw_init(ADW_SOFTC *);
+void adw_attach(ADW_SOFTC *);
+int adw_intr(void *);
+ADW_CCB *adw_ccb_phys_kv(ADW_SOFTC *, u_int32_t);
 
 /******************************************************************************/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: times.h,v 1.10 2003/08/07 16:34:19 agc Exp $	*/
+/*	$NetBSD: times.h,v 1.10.10.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,9 +58,9 @@ struct tms {
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
-clock_t	times __P((struct tms *));
+clock_t	times(struct tms *);
 #else
-clock_t times __P((struct tms *)) __RENAME(__times13);
+clock_t times(struct tms *) __RENAME(__times13);
 #endif
 __END_DECLS
 #endif

@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.20 2004/08/13 11:25:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.20.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -76,14 +76,14 @@ struct cfdriver daic_cd = {
 #endif
 
 /* local function prototypes */
-static char * cardtypename __P((int cardtype));
-static int daic_download __P((void *, int portcount, struct isdn_dr_prot *data));
-static int daic_diagnostic __P((void *, struct isdn_diagnostic_request *req));
+static char * cardtypename(int cardtype);
+static int daic_download(void *, int portcount, struct isdn_dr_prot *data);
+static int daic_diagnostic(void *, struct isdn_diagnostic_request *req);
 static void daic_connect_request(struct call_desc *cd);
 static void daic_connect_response(struct call_desc *cd, int, int);
 static void daic_disconnect_request(struct call_desc *cd, int);
-static int daic_reset __P((bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize));
-static int daic_handle_intr __P((struct daic_softc *sc, int port));
+static int daic_reset(bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize);
+static int daic_handle_intr(struct daic_softc *sc, int port);
 static void daic_register_port(struct daic_softc *sc, int port);
 static void daic_request(struct daic_softc *sc, int port, u_int req, u_int id, bus_size_t parmsize, const u_int8_t *parms);
 static u_int daic_assign(struct daic_softc *sc, int port, u_int instance, bus_size_t parmsize, const u_int8_t *parms);

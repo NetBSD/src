@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.6.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.6.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -59,18 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $");
 #define SONIC_APBUS_MEM_OFFSET	0x00020000
 #define SONIC_APBUS_CTL_OFFSET	(-0x00100000)
 
-static int	sn_ap_match __P((struct device *, struct cfdata *, void *));
-static void	sn_ap_attach __P((struct device *, struct device *, void *));
-static int	sn_ap_getaddr __P((struct sn_softc *, u_int8_t *));
+static int	sn_ap_match(struct device *, struct cfdata *, void *);
+static void	sn_ap_attach(struct device *, struct device *, void *);
+static int	sn_ap_getaddr(struct sn_softc *, uint8_t *);
 
 CFATTACH_DECL(sn_ap, sizeof(struct sn_softc),
     sn_ap_match, sn_ap_attach, NULL, NULL);
 
 static int
-sn_ap_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sn_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -84,13 +81,11 @@ sn_ap_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-sn_ap_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sn_ap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sn_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 	u_int intrmask;
 
 	sc->sc_hwbase = (caddr_t)apa->apa_hwbase;
@@ -119,15 +114,13 @@ sn_ap_attach(parent, self, aux)
 		NEWS5000_INT0_SONIC : SLOTTOMASK(apa->apa_slotno);
 
 	apbus_intr_establish(0, /* interrupt level (0 or 1) */
-			     intrmask,
-			     0, /* priority */
-			     snintr, sc, apa->apa_name, apa->apa_ctlnum);
+	    intrmask,
+	    0, /* priority */
+	    snintr, sc, apa->apa_name, apa->apa_ctlnum);
 }
 
 int
-sn_ap_getaddr(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+sn_ap_getaddr(struct sn_softc *sc, uint8_t *lladdr)
 {
 	u_int *p = (u_int *)(sc->sc_hwbase + SONIC_MACROM_OFFSET);
 	int i;
@@ -145,8 +138,7 @@ sn_ap_getaddr(sc, lladdr)
 #define	APSONIC_INT_REG(base)	(((u_long)(base) & 0xffc00000) | 0x00100000)
 
 void
-sn_md_init(sc)
-	struct sn_softc *sc;
+sn_md_init(struct sn_softc *sc)
 {
 	u_int *reg = (u_int *)APSONIC_INT_REG(sc->sc_hwbase);
 

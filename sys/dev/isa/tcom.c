@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.9 2004/09/14 20:20:49 drochner Exp $	*/
+/*	$NetBSD: tcom.c,v 1.9.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.9 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.9.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,9 @@ struct tcom_softc {
 	bus_space_handle_t sc_statusioh;
 };
 
-int tcomprobe __P((struct device *, struct cfdata *, void *));
-void tcomattach __P((struct device *, struct device *, void *));
-int tcomintr __P((void *));
+int tcomprobe(struct device *, struct cfdata *, void *);
+void tcomattach(struct device *, struct device *, void *);
+int tcomintr(void *);
 
 CFATTACH_DECL(tcom, sizeof(struct tcom_softc),
     tcomprobe, tcomattach, NULL, NULL);

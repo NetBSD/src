@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.23 2003/05/03 18:11:21 wiz Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.23.12.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23 2003/05/03 18:11:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23.12.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23 2003/05/03 18:11:21 wiz Exp $");
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-void	lsi64854_reset	__P((struct lsi64854_softc *));
-int	lsi64854_setup	__P((struct lsi64854_softc *, caddr_t *, size_t *,
-			     int, size_t *));
-int	lsi64854_setup_pp __P((struct lsi64854_softc *, caddr_t *, size_t *,
-			     int, size_t *));
+void	lsi64854_reset(struct lsi64854_softc *);
+int	lsi64854_setup(struct lsi64854_softc *, caddr_t *, size_t *,
+			     int, size_t *);
+int	lsi64854_setup_pp(struct lsi64854_softc *, caddr_t *, size_t *,
+			     int, size_t *);
 
 #ifdef DEBUG
 #define LDB_SCSI	1

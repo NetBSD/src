@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.21 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: puc.c,v 1.21.6.1 2005/02/12 18:17:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.21 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.21.6.1 2005/02/12 18:17:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,24 +90,24 @@ struct puc_softc {
 		struct device	*dev;
 
                 /* filled in by port attachments */
-                int             (*ihand) __P((void *));
+                int             (*ihand)(void *);
                 void            *ihandarg;
         } sc_ports[PUC_MAX_PORTS];
 };
 
-int	puc_match __P((struct device *, struct cfdata *, void *));
-void	puc_attach __P((struct device *, struct device *, void *));
-int	puc_print __P((void *, const char *));
-int	puc_submatch __P((struct device *, struct cfdata *,
-			  const locdesc_t *, void *));
+int	puc_match(struct device *, struct cfdata *, void *);
+void	puc_attach(struct device *, struct device *, void *);
+int	puc_print(void *, const char *);
+int	puc_submatch(struct device *, struct cfdata *,
+			  const locdesc_t *, void *);
 
 CFATTACH_DECL(puc, sizeof(struct puc_softc),
     puc_match, puc_attach, NULL, NULL);
 
 const struct puc_device_description *
-	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));
+	puc_find_description(pcireg_t, pcireg_t, pcireg_t, pcireg_t);
 static const char *
-	puc_port_type_name __P((int));
+	puc_port_type_name(int);
 
 int
 puc_match(parent, match, aux)

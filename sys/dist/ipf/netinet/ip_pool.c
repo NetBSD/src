@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.1.8.1 2005/02/12 18:17:52 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -79,7 +79,7 @@ static int rn_freenode __P((struct radix_node *, void *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.9 2004/06/13 23:45:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.11 2004/10/17 15:49:14 darrenr Exp";
 #endif
 
 #ifdef IPFILTER_LOOKUP
@@ -367,7 +367,7 @@ addrfamily_t *addr, *mask;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    ip_pool_search                                              */
-/* Returns:     int     - 0 == +ve match, -1 == error, 1 == -ve match       */
+/* Returns:     int     - 0 == +ve match, -1 == error, 1 == -ve/no match    */
 /* Parameters:  tptr(I)    - pointer to the pool to search                  */
 /*              version(I) - IP protocol version (4 or 6)                   */
 /*              dptr(I)    - pointer to address information                 */
@@ -390,7 +390,7 @@ void *dptr;
 	if (ipo == NULL)
 		return -1;
 
-	rv = -1;
+	rv = 1;
 	m = NULL;
 	addr = (i6addr_t *)dptr;
 	bzero(&v, sizeof(v));

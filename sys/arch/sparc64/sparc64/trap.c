@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.117 2004/08/28 17:53:02 jdolecek Exp $ */
+/*	$NetBSD: trap.c,v 1.117.6.1 2005/02/12 18:17:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2004/08/28 17:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117.6.1 2005/02/12 18:17:40 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -1168,6 +1168,19 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			goto kfault;
 		if (!(addr & TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
+#ifdef DIAGNOSTIC
+			/*
+			 * XXX We would panic later on anyway, but with no
+			 * meaningfull message and the details are sometims
+			 * hard to find, so better panic now with a helpfull
+			 * message.
+			 */
+			if (curlwp == NULL) {
+				panic("kernel data access fault accessing"
+				    " 0x%lx at pc 0x%lx\n",
+				    va, (long)tf->tf_pc);
+			}
+#endif
 			rv = uvm_fault(kernel_map, va, 0, access_type);
 #ifdef DEBUG
 			if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))

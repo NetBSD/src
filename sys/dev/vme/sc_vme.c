@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.9 2003/05/03 18:11:42 wiz Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.9.12.1 2005/02/12 18:17:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.9 2003/05/03 18:11:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.9.12.1 2005/02/12 18:17:51 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,9 +112,9 @@ __KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.9 2003/05/03 18:11:42 wiz Exp $");
 
 int sunsc_vme_options = 0;
 
-static int	sc_vme_match __P((struct device *, struct cfdata *, void *));
-static void	sc_vme_attach __P((struct device *, struct device *, void *));
-static int	sc_vme_intr __P((void *));
+static int	sc_vme_match(struct device *, struct cfdata *, void *);
+static void	sc_vme_attach(struct device *, struct device *, void *);
+static int	sc_vme_intr(void *);
 
 /* Auto-configuration glue. */
 CFATTACH_DECL(sc_vme, sizeof(struct sunscpal_softc),

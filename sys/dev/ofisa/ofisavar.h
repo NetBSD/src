@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.4 1999/03/19 03:30:35 cgd Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.4.52.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*
  * Copyright 1998
@@ -89,14 +89,14 @@ struct ofisa_dma_desc {
  */
 #include <machine/ofisa_machdep.h>
 
-int	ofisa_reg_count __P((int));
-int	ofisa_reg_get __P((int, struct ofisa_reg_desc *, int));
-void	ofisa_reg_print __P((struct ofisa_reg_desc *, int));
-int	ofisa_intr_count __P((int));
-int	ofisa_intr_get __P((int, struct ofisa_intr_desc *, int));
-void	ofisa_intr_print __P((struct ofisa_intr_desc *, int));
-int	ofisa_dma_count __P((int));
-int	ofisa_dma_get __P((int, struct ofisa_dma_desc *, int));
-void	ofisa_dma_print __P((struct ofisa_dma_desc *, int));
+int	ofisa_reg_count(int);
+int	ofisa_reg_get(int, struct ofisa_reg_desc *, int);
+void	ofisa_reg_print(struct ofisa_reg_desc *, int);
+int	ofisa_intr_count(int);
+int	ofisa_intr_get(int, struct ofisa_intr_desc *, int);
+void	ofisa_intr_print(struct ofisa_intr_desc *, int);
+int	ofisa_dma_count(int);
+int	ofisa_dma_get(int, struct ofisa_dma_desc *, int);
+void	ofisa_dma_print(struct ofisa_dma_desc *, int);
 
 #endif /* _DEV_OFISA_OFISAVAR_H_ */

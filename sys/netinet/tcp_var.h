@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.115 2004/12/21 05:51:31 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.115.4.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,6 +177,7 @@ struct tcpcb {
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
+	short	t_partialacks;		/* partials acks during fast rexmit */
 	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
 	u_short t_segsz;		/* current segment size in use */
@@ -217,6 +218,7 @@ struct tcpcb {
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
 	tcp_seq snd_recover;		/* for use in fast recovery */
+	tcp_seq	snd_high;		/* NewReno false fast rexmit seq */
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
@@ -793,7 +795,7 @@ int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 void	 tcp_slowtimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
-void	 tcp_trace(int, int, struct tcpcb *, struct mbuf *, int);
+void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
@@ -822,7 +824,8 @@ int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
 
-int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
+void	 tcp_reno_newack(struct tcpcb *, struct tcphdr *);
+void	 tcp_newreno_newack(struct tcpcb *, struct tcphdr *);
 
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);

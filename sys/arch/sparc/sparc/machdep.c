@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.251.6.1 2005/02/12 15:16:47 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.251.6.2 2005/02/12 18:17:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251.6.1 2005/02/12 15:16:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251.6.2 2005/02/12 18:17:40 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -871,7 +871,7 @@ cpu_getmcontext(l, mcp, flags)
 	 * registers into the pcb; we need them in the process's memory.
 	 */
 	write_user_windows();
-	if (rwindow_save(l))
+	if ((l->l_flag & L_SA_SWITCHING) == 0 && rwindow_save(l))
 		sigexit(l, SIGILL);
 
 	/*

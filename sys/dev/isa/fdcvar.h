@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.5 2003/09/25 19:06:19 mycroft Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.5.10.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ struct fdc_softc {
 	const struct fd_type *sc_knownfds[4];	/* drive info known fds */
 };
 
-int	out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
+int	out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x);
 
-void	fdcattach __P((struct fdc_softc *));
-int	fdcintr __P((void *));
+void	fdcattach(struct fdc_softc *);
+int	fdcintr(void *);

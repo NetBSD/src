@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.31 2004/12/09 22:57:12 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.31.4.1 2005/02/12 18:17:38 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -39,6 +39,9 @@ GENASSYM=	${POWERPC}/${PPCDIR}/genassym.cf
 ##
 CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
+.if ${PPCDIR} == "oea"
+CFLAGS+=	-mno-strict-align
+.endif
 CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
 AFLAGS+=	${AOPTS}
 

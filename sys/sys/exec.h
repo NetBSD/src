@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.105 2004/05/01 22:42:51 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.105.6.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -137,31 +137,28 @@ struct exec_package;
 struct vnode;
 struct ucred;
 
-typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
+typedef int (*exec_makecmds_fcn)(struct proc *, struct exec_package *);
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
 	exec_makecmds_fcn es_makecmds;	/* function to setup vmcmds */
 	union {				/* probe function */
-		int (*elf_probe_func) __P((struct proc *,
-			struct exec_package *, void *, char *, vaddr_t *));
-		int (*ecoff_probe_func) __P((struct proc *,
-			struct exec_package *));
-		int (*mach_probe_func) __P((char **));
+		int (*elf_probe_func)(struct proc *,
+			struct exec_package *, void *, char *, vaddr_t *);
+		int (*ecoff_probe_func)(struct proc *, struct exec_package *);
+		int (*mach_probe_func)(char **);
 	} u;
 	const struct  emul *es_emul;	/* os emulation */
 	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
-	int	(*es_copyargs) __P((struct proc *, struct exec_package *,
-			struct ps_strings *, char **, void *));
+	int	(*es_copyargs)(struct proc *, struct exec_package *,
+			struct ps_strings *, char **, void *);
 					/* Set registers before execution */
-	void	(*es_setregs) __P((struct lwp *, struct exec_package *,
-				   u_long));
+	void	(*es_setregs)(struct lwp *, struct exec_package *, u_long);
 					/* Dump core */
-	int	(*es_coredump) __P((struct lwp *, struct vnode *,
-				    struct ucred *));
-	int	(*es_setup_stack) __P((struct proc *, struct exec_package *));
+	int	(*es_coredump)(struct lwp *, struct vnode *, struct ucred *);
+	int	(*es_setup_stack)(struct proc *, struct exec_package *);
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
@@ -212,7 +209,7 @@ struct exec_package {
 #define	EXEC_HASES	0x0040		/* don't update exec switch pointer */
 
 struct exec_vmcmd {
-	int	(*ev_proc) __P((struct proc *, struct exec_vmcmd *));
+	int	(*ev_proc)(struct proc *, struct exec_vmcmd *);
 				/* procedure to run for region of vmspace */
 	u_long	ev_len;		/* length of the segment to map */
 	u_long	ev_addr;	/* address in the vmspace to place it at */
@@ -234,45 +231,43 @@ MALLOC_DECLARE(M_EXEC);
  * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.
  */
-void	kill_vmcmd		__P((struct exec_vmcmd **));
-int	exec_makecmds		__P((struct proc *, struct exec_package *));
-int	exec_runcmds		__P((struct proc *, struct exec_package *));
-void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
-void	kill_vmcmds		__P((struct exec_vmcmd_set *));
-int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
-int	copyargs		__P((struct proc *, struct exec_package *,
-    struct ps_strings *, char **, void *));
-void	setregs			__P((struct lwp *, struct exec_package *,
-				     u_long));
+void	kill_vmcmd		(struct exec_vmcmd **);
+int	exec_makecmds		(struct proc *, struct exec_package *);
+int	exec_runcmds		(struct proc *, struct exec_package *);
+void	vmcmdset_extend		(struct exec_vmcmd_set *);
+void	kill_vmcmds		(struct exec_vmcmd_set *);
+int	vmcmd_map_pagedvn	(struct proc *, struct exec_vmcmd *);
+int	vmcmd_map_readvn	(struct proc *, struct exec_vmcmd *);
+int	vmcmd_readvn		(struct proc *, struct exec_vmcmd *);
+int	vmcmd_map_zero		(struct proc *, struct exec_vmcmd *);
+int	copyargs		(struct proc *, struct exec_package *,
+				    struct ps_strings *, char **, void *);
+void	setregs			(struct lwp *, struct exec_package *, u_long);
 #ifdef VERIFIED_EXEC
-int	check_veriexec		__P((struct proc *, struct vnode *,
-				     struct exec_package *, int));
-int	check_exec		__P((struct proc *, struct exec_package *,
-				     int));
+int	check_veriexec		(struct proc *, struct vnode *,
+				     struct exec_package *, int);
+int	check_exec		(struct proc *, struct exec_package *, int);
 #else
-int	check_exec		__P((struct proc *, struct exec_package *));
+int	check_exec		(struct proc *, struct exec_package *);
 #endif
-int	exec_init		__P((int));
-int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
-    void *, size_t));
-int	exec_setup_stack	__P((struct proc *, struct exec_package *));
+int	exec_init		(int);
+int	exec_read_from		(struct proc *, struct vnode *, u_long off,
+				    void *, size_t);
+int	exec_setup_stack	(struct proc *, struct exec_package *);
 
 
 #ifdef LKM
-int	emul_register		__P((const struct emul *, int));
-int	emul_unregister		__P((const char *));
-const struct emul *emul_search	__P((const char *));
+int	emul_register		(const struct emul *, int);
+int	emul_unregister		(const char *);
+const struct emul *emul_search(const char *);
 
-int	exec_add		__P((struct execsw *, const char *));
-int	exec_remove		__P((const struct execsw *));
+int	exec_add		(struct execsw *, const char *);
+int	exec_remove		(const struct execsw *);
 #endif /* LKM */
 
-void	new_vmcmd __P((struct exec_vmcmd_set *,
-		    int (*) __P((struct proc *, struct exec_vmcmd *)),
-		    u_long, u_long, struct vnode *, u_long, u_int, int));
+void	new_vmcmd(struct exec_vmcmd_set *,
+		    int (*)(struct proc *, struct exec_vmcmd *),
+		    u_long, u_long, struct vnode *, u_long, u_int, int);
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \

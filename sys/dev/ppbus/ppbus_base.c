@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.7 2004/02/10 18:13:12 jdolecek Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.7.12.1 2005/02/12 18:17:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.7 2004/02/10 18:13:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.7.12.1 2005/02/12 18:17:50 yamt Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h" 
@@ -495,11 +495,11 @@ search_token(char *str, int slen, char *token)
 	if (slen == UNKNOWN_LENGTH)
 	       /* get string's length */
 	       for (slen = 0, p = str; *p != '\0'; p++)
-		       slen ++;
+		       slen++;
 
        /* get token's length */
        for (tlen = 0, p = token; *p != '\0'; p++)
-	       tlen ++;
+	       tlen++;
 
        if (tlen == 0) 
 	       return (str);

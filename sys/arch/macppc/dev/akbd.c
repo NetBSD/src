@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.31 2003/07/24 20:56:24 nathanw Exp $	*/
+/*	$NetBSD: akbd.c,v 1.31.10.1 2005/02/12 18:17:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.31 2003/07/24 20:56:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.31.10.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -611,7 +611,7 @@ akbd_cngetc(v, type, data)
 	KASSERT(adb_polling);
 
 	while (sc->sc_npolledkeys == 0) {
-		adb_intr();
+		adb_intr(NULL);
 		DELAY(10000);				/* XXX */
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.28 2004/01/05 00:35:53 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.28.10.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -260,11 +260,11 @@ struct flock {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	open __P((const char *, int, ...));
-int	creat __P((const char *, mode_t));
-int	fcntl __P((int, int, ...));
+int	open(const char *, int, ...);
+int	creat(const char *, mode_t);
+int	fcntl(int, int, ...);
 #if defined(_NETBSD_SOURCE)
-int	flock __P((int, int));
+int	flock(int, int);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 #endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.71 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: if_el.c,v 1.71.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.71 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.71.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -95,20 +95,20 @@ struct el_softc {
 /*
  * prototypes
  */
-int elintr __P((void *));
-void elinit __P((struct el_softc *));
-int elioctl __P((struct ifnet *, u_long, caddr_t));
-void elstart __P((struct ifnet *));
-void elwatchdog __P((struct ifnet *));
-void elreset __P((struct el_softc *));
-void elstop __P((struct el_softc *));
-static int el_xmit __P((struct el_softc *));
-void elread __P((struct el_softc *, int));
-struct mbuf *elget __P((struct el_softc *sc, int));
-static inline void el_hardreset __P((struct el_softc *));
+int elintr(void *);
+void elinit(struct el_softc *);
+int elioctl(struct ifnet *, u_long, caddr_t);
+void elstart(struct ifnet *);
+void elwatchdog(struct ifnet *);
+void elreset(struct el_softc *);
+void elstop(struct el_softc *);
+static int el_xmit(struct el_softc *);
+void elread(struct el_softc *, int);
+struct mbuf *elget(struct el_softc *sc, int);
+static inline void el_hardreset(struct el_softc *);
 
-int elprobe __P((struct device *, struct cfdata *, void *));
-void elattach __P((struct device *, struct device *, void *));
+int elprobe(struct device *, struct cfdata *, void *);
+void elattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(el, sizeof(struct el_softc),
     elprobe, elattach, NULL, NULL);

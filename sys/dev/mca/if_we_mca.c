@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.11 2004/09/08 19:09:43 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.11.6.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.11 2004/09/08 19:09:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.11.6.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.11 2004/09/08 19:09:43 jdolecek Exp 
 #define WD_8003		0x01
 #define WD_ELITE	0x02
 
-int we_mca_probe __P((struct device *, struct cfdata *, void *));
-void we_mca_attach __P((struct device *, struct device *, void *));
-void we_mca_init_hook __P((struct we_softc *));
+int we_mca_probe(struct device *, struct cfdata *, void *);
+void we_mca_attach(struct device *, struct device *, void *);
+void we_mca_init_hook(struct we_softc *);
 
 CFATTACH_DECL(we_mca, sizeof(struct we_softc),
     we_mca_probe, we_mca_attach, NULL, NULL);
@@ -129,7 +129,7 @@ static const int we_mca_irq[] = {
 	3, 4, 10, 15,
 };
 
-static const struct we_mca_product *we_mca_lookup __P((int));
+static const struct we_mca_product *we_mca_lookup(int);
 
 static const struct we_mca_product *
 we_mca_lookup(id)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.12 2003/07/15 02:59:29 lukem Exp $	*/
+/*	$NetBSD: if_le.c,v 1.12.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.12 2003/07/15 02:59:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.12.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.12 2003/07/15 02:59:29 lukem Exp $");
  * The real stuff is in dev/ic/am7990reg.h
  */
 struct lereg1 {
-	volatile u_int16_t	ler1_rdp;	/* data port */
-	volatile u_int16_t	ler1_rap;	/* register select port */
+	volatile uint16_t	ler1_rdp;	/* data port */
+	volatile uint16_t	ler1_rap;	/* register select port */
 };
 
 /*
@@ -87,8 +87,8 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-static int	le_match __P((struct device *, struct cfdata *, void *));
-static void	le_attach __P((struct device *, struct device *, void *));
+static int	le_match(struct device *, struct cfdata *, void *);
+static void	le_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le, sizeof(struct le_softc),
     le_match, le_attach, NULL, NULL);
@@ -105,38 +105,31 @@ CFATTACH_DECL(le, sizeof(struct le_softc),
 #define hide		static
 #endif
 
-hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));  
+hide void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+hide uint16_t lerdcsr(struct lance_softc *, uint16_t);  
 
 hide void
-lewrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
 }
 
-hide u_int16_t
-lerdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+hide uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	uint16_t val;
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
-	return (val);
+	return val;
 } 
 
 int
-le_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+le_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -150,9 +143,7 @@ le_match(parent, cf, aux)
 }
 
 void
-le_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
@@ -171,17 +162,17 @@ le_attach(parent, self, aux)
 
 	case LANCE_PORT:
 		sc->sc_mem = (void *)LANCE_MEMORY;
-		p = (u_char *)(ETHER_ID+16);
+		p = (u_char *)(ETHER_ID + 16);
 		intmask = INTST1_LANCE;
 		break;
 	case LANCE_PORT1:
 		sc->sc_mem = (void *)LANCE_MEMORY1;
-		p = (u_char *)(ETHER_ID1+16);
+		p = (u_char *)(ETHER_ID1 + 16);
 		intmask = INTST1_SLOT3; /* XXX not tested */
 		break;
 	case LANCE_PORT2:
 		sc->sc_mem = (void *)LANCE_MEMORY2;
-		p = (u_char *)(ETHER_ID2+16);
+		p = (u_char *)(ETHER_ID2 + 16);
 		intmask = INTST1_SLOT3; /* XXX not tested */
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.trans,v 1.9 2004/02/13 17:56:17 wiz Exp $	*/
+/*	$NetBSD: tp.trans,v 1.9.10.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /* NEW */
 /*-
@@ -618,7 +618,7 @@ SAME			<==		TP_CRSENT									TM_retrans
 				return ENOBUFS;
 		}
 
-		$P.tp_retrans --;
+		$P.tp_retrans--;
 		if( error = tp_emit(CR_TPDU_type, $P, 0, 0, data) ) {
 			$P.tp_sock->so_error = error;
 		}
@@ -960,7 +960,7 @@ SAME			<==		TP_AKWAIT									TM_retrans
 		struct mbuf *data = MCPY($P.tp_ucddata, M_WAIT);
 
 		IncStat(ts_retrans_cc);
-		$P.tp_retrans --;
+		$P.tp_retrans--;
 		$P.tp_cong_win = 1 * $P.tp_l_tpdusize;
 
 		if( error = tp_emit(CC_TPDU_type, $P, 0, 0, data) ) 
@@ -1025,7 +1025,7 @@ SAME			<==		TP_OPEN										TM_retrans
 				dump_mbuf(m, "XPD retrans emitting M");
 			ENDDEBUG
 			IncStat(ts_retrans_xpd);
-			$P.tp_retrans --;
+			$P.tp_retrans--;
 			shift = max($P.tp_Nretrans - $P.tp_retrans, 6);
 			(void) tp_emit(XPD_TPDU_type, $P, $P.tp_Xuna, 1, m);
 			tp_ctimeout($P, TM_retrans, ((int)$P.tp_dt_ticks) << shift);
@@ -1046,7 +1046,7 @@ SAME 			<==		TP_OPEN									TM_data_retrans
 SAME	 		<==		TP_CLOSING									TM_retrans
 	(	$P.tp_retrans > 0 )
 	{	
-		$P.tp_retrans --;
+		$P.tp_retrans--;
 		(void) tp_emit(DR_TPDU_type, $P, 0, E_TP_DR_NO_REAS, NULL);
 		IncStat(ts_retrans_dr);
 		tp_ctimeout($P, TM_retrans, (int)$P.tp_dr_ticks);

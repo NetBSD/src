@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.8 2003/11/02 11:07:45 wiz Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.8.10.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -118,14 +118,14 @@ struct clmpcc_softc {
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* Called to request a soft interrupt callback to clmpcc_softintr */
-	void		(*sc_softhook) __P((struct clmpcc_softc *));
+	void		(*sc_softhook)(struct clmpcc_softc *);
 	volatile int	sc_soft_running;
 #else
 	void		*sc_softintr_cookie;
 #endif
 
 	/* Called when an interrupt has to be acknowledged in polled mode. */
-	void		(*sc_iackhook) __P((struct clmpcc_softc *, int));
+	void		(*sc_iackhook)(struct clmpcc_softc *, int);
 
 	/*
 	 * No user-serviceable parts below
@@ -133,11 +133,11 @@ struct clmpcc_softc {
 	struct clmpcc_chan sc_chans[CLMPCC_NUM_CHANS];
 };
 
-extern void	clmpcc_attach	__P((struct clmpcc_softc *));
-extern int	clmpcc_cnattach	__P((struct clmpcc_softc *, int, int));
-extern int	clmpcc_rxintr	__P((void *));
-extern int	clmpcc_txintr	__P((void *));
-extern int	clmpcc_mdintr	__P((void *));
-extern void 	clmpcc_softintr	__P((void *));
+extern void	clmpcc_attach(struct clmpcc_softc *);
+extern int	clmpcc_cnattach(struct clmpcc_softc *, int, int);
+extern int	clmpcc_rxintr(void *);
+extern int	clmpcc_txintr(void *);
+extern int	clmpcc_mdintr(void *);
+extern void 	clmpcc_softintr(void *);
 
 #endif	/* __clmpccvar_h */

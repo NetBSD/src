@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.18 2004/08/02 19:14:28 mycroft Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.18.6.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.18 2004/08/02 19:14:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.18.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -98,12 +98,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.18 2004/08/02 19:14:28 mycroft 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
-static int fxp_cardbus_match __P((struct device *, struct cfdata *, void *));
-static void fxp_cardbus_attach __P((struct device *, struct device *, void *));
-static int fxp_cardbus_detach __P((struct device * self, int flags));
-static void fxp_cardbus_setup __P((struct fxp_softc * sc));
-static int fxp_cardbus_enable __P((struct fxp_softc * sc));
-static void fxp_cardbus_disable __P((struct fxp_softc * sc));
+static int fxp_cardbus_match(struct device *, struct cfdata *, void *);
+static void fxp_cardbus_attach(struct device *, struct device *, void *);
+static int fxp_cardbus_detach(struct device * self, int flags);
+static void fxp_cardbus_setup(struct fxp_softc * sc);
+static int fxp_cardbus_enable(struct fxp_softc * sc);
+static void fxp_cardbus_disable(struct fxp_softc * sc);
 
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;

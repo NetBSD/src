@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.35 2004/10/31 12:52:55 he Exp $ */
+/*	$NetBSD: kdb.c,v 1.35.6.1 2005/02/12 18:17:42 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.35 2004/10/31 12:52:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.35.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,14 +90,14 @@ struct	kdb_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-int	kdbmatch __P((struct device *, struct cfdata *, void *));
-void	kdbattach __P((struct device *, struct device *, void *));
-void	kdbreset __P((int));
-void	kdbintr __P((void *));
-void	kdbctlrdone __P((struct device *));
-int	kdbprint __P((void *, const char *));
-void	kdbsaerror __P((struct device *, int));
-void	kdbgo __P((struct device *, struct mscp_xi *));
+int	kdbmatch(struct device *, struct cfdata *, void *);
+void	kdbattach(struct device *, struct device *, void *);
+void	kdbreset(int);
+void	kdbintr(void *);
+void	kdbctlrdone(struct device *);
+int	kdbprint(void *, const char *);
+void	kdbsaerror(struct device *, int);
+void	kdbgo(struct device *, struct mscp_xi *);
 
 CFATTACH_DECL(kdb, sizeof(struct kdb_softc),
     kdbmatch, kdbattach, NULL, NULL);

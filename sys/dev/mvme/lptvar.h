@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.1 2002/02/12 20:38:45 scw Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.1.30.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -78,18 +78,18 @@ struct lpt_softc {
 
 
 struct lpt_funcs {
-	void	(*lf_open) __P((struct lpt_softc *, int));
-	void	(*lf_close) __P((struct lpt_softc *));
-	void	(*lf_iprime) __P((struct lpt_softc *));
-	void	(*lf_speed) __P((struct lpt_softc *, int));
-	int	(*lf_notrdy) __P((struct lpt_softc *, int));
-	void	(*lf_wrdata) __P((struct lpt_softc *, u_char));
+	void	(*lf_open)(struct lpt_softc *, int);
+	void	(*lf_close)(struct lpt_softc *);
+	void	(*lf_iprime)(struct lpt_softc *);
+	void	(*lf_speed)(struct lpt_softc *, int);
+	int	(*lf_notrdy)(struct lpt_softc *, int);
+	void	(*lf_wrdata)(struct lpt_softc *, u_char);
 };
 
 #define	LPT_STROBE_FAST	0
 #define LPT_STROBE_SLOW	1
 
-extern	void	lpt_attach_subr	__P((struct lpt_softc *));
-extern	int	lpt_intr	__P((struct lpt_softc *));
+extern	void	lpt_attach_subr(struct lpt_softc *);
+extern	int	lpt_intr(struct lpt_softc *);
 
 #endif	/* __mvme_lptvar_h */

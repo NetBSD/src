@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.82.2.1 2005/01/25 12:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.82.2.2 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.82.2.1 2005/01/25 12:58:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.82.2.2 2005/02/12 18:17:56 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -108,7 +108,7 @@ static void uvm_uarea_free(vaddr_t);
 /*
  * uvm_kernacc: can the kernel access a region of memory
  *
- * - called from malloc [DIAGNOSTIC], and /dev/kmem driver (mem.c)
+ * - used only by /dev/kmem driver (mem.c)
  */
 
 boolean_t

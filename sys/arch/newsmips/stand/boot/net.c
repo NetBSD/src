@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 2003/03/13 14:49:12 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.2.12.1 2005/02/12 18:17:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -75,8 +75,7 @@ static	int open_count;
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-net_open(pd)
-	struct romdev *pd;
+net_open(struct romdev *pd)
 {
 	int error = 0;
 
@@ -92,25 +91,24 @@ net_open(pd)
 	}
 	open_count++;
 bad:
-	return (error);
+	return error;
 }
 
 int
-net_close(pd)
-	struct romdev *pd;
+net_close(struct romdev *pd)
 {
 	/* On last close, do netif close, etc. */
 	if (open_count <= 0)
-		return (0);
+		return 0;
 
 	if (--open_count == 0)
 		netif_news_close(netdev_sock);
 
-	return (0);
+	return 0;
 }
 
 int
-net_mountroot()
+net_mountroot(void)
 {
 
 #ifdef DEBUG
@@ -165,5 +163,5 @@ net_mountroot()
 	if (nfs_mount(netdev_sock, rootip, rootpath) != 0)
 		return (errno);
 
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.55 2004/10/28 07:07:46 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.55.6.1 2005/02/12 18:17:51 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.55 2004/10/28 07:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.55.6.1 2005/02/12 18:17:51 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -212,24 +212,24 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.55 2004/10/28 07:07:46 yamt Exp $");
 extern int pil_to_vme[];	/* from obio.c */
 
 /* internals */
-int	xdc_cmd __P((struct xdc_softc *, int, int, int, int, int, char *, int));
-char   *xdc_e2str __P((int));
-int	xdc_error __P((struct xdc_softc *, struct xd_iorq *,
-		   struct xd_iopb *, int, int));
-int	xdc_ioctlcmd __P((struct xd_softc *, dev_t dev, struct xd_iocmd *));
-void	xdc_perror __P((struct xd_iorq *, struct xd_iopb *, int));
-int	xdc_piodriver __P((struct xdc_softc *, int, int));
-int	xdc_remove_iorq __P((struct xdc_softc *));
-int	xdc_reset __P((struct xdc_softc *, int, int, int, struct xd_softc *));
-inline void xdc_rqinit __P((struct xd_iorq *, struct xdc_softc *,
-			    struct xd_softc *, int, u_long, int,
-			    caddr_t, struct buf *));
-void	xdc_rqtopb __P((struct xd_iorq *, struct xd_iopb *, int, int));
-void	xdc_start __P((struct xdc_softc *, int));
-int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
-int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
-void	xdc_tick __P((void *));
-void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+int	xdc_cmd(struct xdc_softc *, int, int, int, int, int, char *, int);
+char   *xdc_e2str(int);
+int	xdc_error(struct xdc_softc *, struct xd_iorq *,
+		   struct xd_iopb *, int, int);
+int	xdc_ioctlcmd(struct xd_softc *, dev_t dev, struct xd_iocmd *);
+void	xdc_perror(struct xd_iorq *, struct xd_iopb *, int);
+int	xdc_piodriver(struct xdc_softc *, int, int);
+int	xdc_remove_iorq(struct xdc_softc *);
+int	xdc_reset(struct xdc_softc *, int, int, int, struct xd_softc *);
+inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *,
+			struct xd_softc *, int, u_long, int,
+			caddr_t, struct buf *);
+void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
+void	xdc_start(struct xdc_softc *, int);
+int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
+int	xdc_submit_iorq(struct xdc_softc *, int, int);
+void	xdc_tick(void *);
+void	xdc_xdreset(struct xdc_softc *, struct xd_softc *);
 int	xd_dmamem_alloc(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
 			int *, bus_size_t, caddr_t *, bus_addr_t *);
 void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
@@ -237,20 +237,20 @@ void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
 
 
 /* machine interrupt hook */
-int	xdcintr __P((void *));
+int	xdcintr(void *);
 
 /* autoconf */
-int	xdcmatch __P((struct device *, struct cfdata *, void *));
-void	xdcattach __P((struct device *, struct device *, void *));
-int	xdmatch __P((struct device *, struct cfdata *, void *));
-void	xdattach __P((struct device *, struct device *, void *));
-static	int xdc_probe __P((void *, bus_space_tag_t, bus_space_handle_t));
+int	xdcmatch(struct device *, struct cfdata *, void *);
+void	xdcattach(struct device *, struct device *, void *);
+int	xdmatch(struct device *, struct cfdata *, void *);
+void	xdattach(struct device *, struct device *, void *);
+static	int xdc_probe(void *, bus_space_tag_t, bus_space_handle_t);
 
-static	void xddummystrat __P((struct buf *));
-int	xdgetdisklabel __P((struct xd_softc *, void *));
+static	void xddummystrat(struct buf *);
+int	xdgetdisklabel(struct xd_softc *, void *);
 
 /* XXX - think about this more.. xd_machdep? */
-void xdc_md_setup __P((void));
+void xdc_md_setup(void);
 int	XDC_DELAY;
 
 #if defined(__sparc__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.31 2004/05/20 20:57:50 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.31.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.31 2004/05/20 20:57:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.31.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,24 +79,23 @@ __KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.31 2004/05/20 20:57:50 bouyer Exp $");
 /* number of cmd descriptors per block */
 #define SIOP_NCMDPB (PAGE_SIZE / sizeof(struct esiop_xfer))
 
-void	esiop_reset __P((struct esiop_softc *));
-void	esiop_checkdone __P((struct esiop_softc *));
-void	esiop_handle_reset __P((struct esiop_softc *));
-void	esiop_scsicmd_end __P((struct esiop_cmd *, int));
-void	esiop_unqueue __P((struct esiop_softc *, int, int));
-int	esiop_handle_qtag_reject __P((struct esiop_cmd *));
-static void	esiop_start __P((struct esiop_softc *, struct esiop_cmd *));
-void 	esiop_timeout __P((void *));
-void	esiop_scsipi_request __P((struct scsipi_channel *,
-			scsipi_adapter_req_t, void *));
-void	esiop_dump_script __P((struct esiop_softc *));
-void	esiop_morecbd __P((struct esiop_softc *));
-void	esiop_moretagtbl __P((struct esiop_softc *));
-void	siop_add_reselsw __P((struct esiop_softc *, int));
-void	esiop_target_register __P((struct esiop_softc *, u_int32_t));
+void	esiop_reset(struct esiop_softc *);
+void	esiop_checkdone(struct esiop_softc *);
+void	esiop_handle_reset(struct esiop_softc *);
+void	esiop_scsicmd_end(struct esiop_cmd *, int);
+void	esiop_unqueue(struct esiop_softc *, int, int);
+int	esiop_handle_qtag_reject(struct esiop_cmd *);
+static void	esiop_start(struct esiop_softc *, struct esiop_cmd *);
+void 	esiop_timeout(void *);
+void	esiop_scsipi_request(struct scsipi_channel *,
+			scsipi_adapter_req_t, void *);
+void	esiop_dump_script(struct esiop_softc *);
+void	esiop_morecbd(struct esiop_softc *);
+void	esiop_moretagtbl(struct esiop_softc *);
+void	siop_add_reselsw(struct esiop_softc *, int);
+void	esiop_target_register(struct esiop_softc *, u_int32_t);
 
-void    esiop_update_scntl3 __P((struct esiop_softc *,
-			struct siop_common_target *));
+void    esiop_update_scntl3(struct esiop_softc *, struct siop_common_target *);
 
 #ifdef SIOP_STATS
 static int esiop_stat_intr = 0;
@@ -106,13 +105,13 @@ static int esiop_stat_intr_done = 0;
 static int esiop_stat_intr_xferdisc = 0;
 static int esiop_stat_intr_lunresel = 0;
 static int esiop_stat_intr_qfull = 0;
-void esiop_printstats __P((void));
+void esiop_printstats(void);
 #define INCSTAT(x) x++
 #else
 #define INCSTAT(x)
 #endif
 
-static __inline__ void esiop_script_sync __P((struct esiop_softc *, int));
+static __inline__ void esiop_script_sync(struct esiop_softc *, int);
 static __inline__ void
 esiop_script_sync(sc, ops)
 	struct esiop_softc *sc;
@@ -123,7 +122,7 @@ esiop_script_sync(sc, ops)
 		    PAGE_SIZE, ops);
 }
 
-static __inline__ u_int32_t esiop_script_read __P((struct esiop_softc *, u_int));
+static __inline__ u_int32_t esiop_script_read(struct esiop_softc *, u_int);
 static __inline__ u_int32_t
 esiop_script_read(sc, offset)
 	struct esiop_softc *sc;
@@ -137,8 +136,8 @@ esiop_script_read(sc, offset)
 	}
 }
 
-static __inline__ void esiop_script_write __P((struct esiop_softc *, u_int,
-	u_int32_t));
+static __inline__ void esiop_script_write(struct esiop_softc *, u_int,
+	u_int32_t);
 static __inline__ void
 esiop_script_write(sc, offset, val)
 	struct esiop_softc *sc;

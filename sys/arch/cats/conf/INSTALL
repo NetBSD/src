@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42 2004/11/24 20:49:20 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.42.6.1 2005/02/12 18:17:31 yamt Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -54,6 +54,7 @@ file-system	KERNFS		# /kern
 #options 	NFSSERVER
 #options 	SOFTDEP		# FFS soft updates support
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -444,6 +445,7 @@ ds1687rtc0	at isa? port 0x72	# Dallas RTC
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 

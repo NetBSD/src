@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.75 2004/10/30 18:08:36 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.75.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.75 2004/10/30 18:08:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.75.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -88,38 +88,38 @@ int exdebug = 0;
 #endif
 
 /* ifmedia callbacks */
-int ex_media_chg __P((struct ifnet *ifp));
-void ex_media_stat __P((struct ifnet *ifp, struct ifmediareq *req));
+int ex_media_chg(struct ifnet *ifp);
+void ex_media_stat(struct ifnet *ifp, struct ifmediareq *req);
 
-void ex_probe_media __P((struct ex_softc *));
-void ex_set_filter __P((struct ex_softc *));
-void ex_set_media __P((struct ex_softc *));
-void ex_set_xcvr __P((struct ex_softc *, u_int16_t));
-struct mbuf *ex_get __P((struct ex_softc *, int));
-u_int16_t ex_read_eeprom __P((struct ex_softc *, int));
-int ex_init __P((struct ifnet *));
-void ex_read __P((struct ex_softc *));
-void ex_reset __P((struct ex_softc *));
-void ex_set_mc __P((struct ex_softc *));
-void ex_getstats __P((struct ex_softc *));
-void ex_printstats __P((struct ex_softc *));
-void ex_tick __P((void *));
+void ex_probe_media(struct ex_softc *);
+void ex_set_filter(struct ex_softc *);
+void ex_set_media(struct ex_softc *);
+void ex_set_xcvr(struct ex_softc *, u_int16_t);
+struct mbuf *ex_get(struct ex_softc *, int);
+u_int16_t ex_read_eeprom(struct ex_softc *, int);
+int ex_init(struct ifnet *);
+void ex_read(struct ex_softc *);
+void ex_reset(struct ex_softc *);
+void ex_set_mc(struct ex_softc *);
+void ex_getstats(struct ex_softc *);
+void ex_printstats(struct ex_softc *);
+void ex_tick(void *);
 
-void ex_power __P((int, void *));
+void ex_power(int, void *);
 
-static int ex_eeprom_busy __P((struct ex_softc *));
-static int ex_add_rxbuf __P((struct ex_softc *, struct ex_rxdesc *));
-static void ex_init_txdescs __P((struct ex_softc *));
+static int ex_eeprom_busy(struct ex_softc *);
+static int ex_add_rxbuf(struct ex_softc *, struct ex_rxdesc *);
+static void ex_init_txdescs(struct ex_softc *);
 
-static void ex_shutdown __P((void *));
-static void ex_start __P((struct ifnet *));
-static void ex_txstat __P((struct ex_softc *));
+static void ex_shutdown(void *);
+static void ex_start(struct ifnet *);
+static void ex_txstat(struct ex_softc *);
 
-int ex_mii_readreg __P((struct device *, int, int));
-void ex_mii_writereg __P((struct device *, int, int, int));
-void ex_mii_statchg __P((struct device *));
+int ex_mii_readreg(struct device *, int, int);
+void ex_mii_writereg(struct device *, int, int, int);
+void ex_mii_statchg(struct device *);
 
-void ex_probemedia __P((struct ex_softc *));
+void ex_probemedia(struct ex_softc *);
 
 /*
  * Structure to map media-present bits in boards to ifmedia codes and
@@ -162,8 +162,8 @@ struct ex_media ex_native_media[] = {
 /*
  * MII bit-bang glue.
  */
-u_int32_t ex_mii_bitbang_read __P((struct device *));
-void ex_mii_bitbang_write __P((struct device *, u_int32_t));
+u_int32_t ex_mii_bitbang_read(struct device *);
+void ex_mii_bitbang_write(struct device *, u_int32_t);
 
 const struct mii_bitbang_ops ex_mii_bitbang_ops = {
 	ex_mii_bitbang_read,
@@ -427,6 +427,7 @@ ex_config(sc)
 	ifp->if_stop = ex_stop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -697,6 +698,7 @@ ex_init(ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ex_start(ifp);
+	sc->sc_if_flags = ifp->if_flags;
 
 	GO_WINDOW(1);
 
@@ -1382,7 +1384,22 @@ ex_ioctl(ifp, cmd, data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->ex_mii.mii_media, cmd);
 		break;
-
+	case SIOCSIFFLAGS:
+		/* If the interface is up and running, only modify the receive
+		 * filter when setting promiscuous or debug mode.  Otherwise
+		 * fall through to ether_ioctl, which will reset the chip.
+		 */
+#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
+		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		    == (IFF_UP|IFF_RUNNING))
+		    && ((ifp->if_flags & (~RESETIGN))
+		    == (sc->sc_if_flags & (~RESETIGN)))) {
+			ex_set_mc(sc);
+			error = 0;
+			break;
+#undef RESETIGN
+		}
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -1397,6 +1414,7 @@ ex_ioctl(ifp, cmd, data)
 		break;
 	}
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -1569,6 +1587,7 @@ ex_stop(ifp, disable)
 		ex_disable(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 }
 

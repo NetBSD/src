@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160 2004/11/10 17:54:04 christos Exp $
+# $NetBSD: GENERIC,v 1.160.6.1 2005/02/12 18:17:32 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.160.6.1 $"
 
 maxusers	16
 
@@ -91,8 +91,10 @@ file-system 	UNION
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -636,6 +638,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
+pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

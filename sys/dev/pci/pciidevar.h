@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.26 2004/11/24 19:52:50 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.26.6.1 2005/02/12 18:17:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -108,7 +108,7 @@ struct pciide_softc {
 	/* for SiS */
 	u_int8_t sis_type;
 
-	/* For Silicon Image SATALink, and Promise SATA */
+	/* For Silicon Image SATALink, Artisea SATA and Promise SATA */
 	bus_space_tag_t sc_ba5_st;
 	bus_space_handle_t sc_ba5_sh;
 	int sc_ba5_en;
@@ -142,6 +142,10 @@ struct pciide_softc {
 		 */
 		uint8_t		idedma_cmd;
 	} pciide_channels[PCIIDE_MAX_CHANNELS];
+
+	/* Power management */
+	void			*sc_powerhook;
+	struct pci_conf_state	sc_pciconf; /* Restore buffer */
 };
 
 /* Given an ata_channel, get the pciide_softc. */
@@ -155,7 +159,7 @@ struct pciide_product_desc {
 	int ide_flags;
 	const char *ide_name;
 	/* map and setup chip, probe drives */
-	void (*chip_map) __P((struct pciide_softc*, struct pci_attach_args*));
+	void (*chip_map)(struct pciide_softc*, struct pci_attach_args*);
 };
 
 /* Flags for ide_flags */
@@ -163,10 +167,9 @@ struct pciide_product_desc {
 
 
 /* inlines for reading/writing 8-bit PCI registers */
-static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
-					      int));
-static __inline void pciide_pci_write __P((pci_chipset_tag_t, pcitag_t,
-					   int, u_int8_t));
+static __inline u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t, int);
+static __inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
+					   int, u_int8_t);
 
 static __inline u_int8_t
 pciide_pci_read(pc, pa, reg)
@@ -194,17 +197,17 @@ pciide_pci_write(pc, pa, reg, val)
 	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
 }
 
-void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void sata_setup_channel __P((struct ata_channel*));
+void default_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void sata_setup_channel(struct ata_channel*);
 
-void pciide_channel_dma_setup __P((struct pciide_channel *));
-int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
-int  pciide_dma_dmamap_setup __P((struct pciide_softc *, int, int,
-				void *, size_t, int));
-int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
-void pciide_dma_start __P((void*, int, int));
-int  pciide_dma_finish __P((void*, int, int, int));
-void pciide_irqack __P((struct ata_channel *));
+void pciide_channel_dma_setup(struct pciide_channel *);
+int  pciide_dma_table_setup(struct pciide_softc*, int, int);
+int  pciide_dma_dmamap_setup(struct pciide_softc *, int, int,
+				void *, size_t, int);
+int  pciide_dma_init(void*, int, int, void *, size_t, int);
+void pciide_dma_start(void*, int, int);
+int  pciide_dma_finish(void*, int, int, int);
+void pciide_irqack(struct ata_channel *);
 
 /*
  * Functions defined by machine-dependent code.
@@ -212,31 +215,30 @@ void pciide_irqack __P((struct ata_channel *));
 
 /* Attach compat interrupt handler, returning handle or NULL if failed. */
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
-void	*pciide_machdep_compat_intr_establish __P((struct device *,
-	    struct pci_attach_args *, int, int (*)(void *), void *));
+void	*pciide_machdep_compat_intr_establish(struct device *,
+	    struct pci_attach_args *, int, int (*)(void *), void *);
 #endif
 
 const struct pciide_product_desc* pciide_lookup_product
-	__P((u_int32_t, const struct pciide_product_desc *));
-void	pciide_common_attach
-	__P((struct pciide_softc *, struct pci_attach_args *,
-		const struct pciide_product_desc *));
+	(u_int32_t, const struct pciide_product_desc *);
+void	pciide_common_attach(struct pciide_softc *, struct pci_attach_args *,
+		const struct pciide_product_desc *);
 
-int	pciide_chipen __P((struct pciide_softc *, struct pci_attach_args *));
-void	pciide_mapregs_compat __P(( struct pci_attach_args *,
-	    struct pciide_channel *, int, bus_size_t *, bus_size_t*));
-void	pciide_mapregs_native __P((struct pci_attach_args *, 
+int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
+void	pciide_mapregs_compat(struct pci_attach_args *,
+	    struct pciide_channel *, int, bus_size_t *, bus_size_t*);
+void	pciide_mapregs_native(struct pci_attach_args *, 
 	    struct pciide_channel *, bus_size_t *, bus_size_t *,
-	    int (*pci_intr) __P((void *))));
-void	pciide_mapreg_dma __P((struct pciide_softc *,
-	    struct pci_attach_args *));
-int	pciide_chansetup __P((struct pciide_softc *, int, pcireg_t));
-void	pciide_mapchan __P((struct pci_attach_args *,
+	    int (*pci_intr)(void *));
+void	pciide_mapreg_dma(struct pciide_softc *,
+	    struct pci_attach_args *);
+int	pciide_chansetup(struct pciide_softc *, int, pcireg_t);
+void	pciide_mapchan(struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, bus_size_t *, bus_size_t *,
-	    int (*pci_intr) __P((void *))));
-void	pciide_map_compat_intr __P(( struct pci_attach_args *,
-	    struct pciide_channel *, int));
-int	pciide_compat_intr __P((void *));
-int	pciide_pci_intr __P((void *));
+	    int (*pci_intr)(void *));
+void	pciide_map_compat_intr(struct pci_attach_args *,
+	    struct pciide_channel *, int);
+int	pciide_compat_intr(void *);
+int	pciide_pci_intr(void *);
 
 #endif /* _DEV_PCI_PCIIDEVAR_H_ */

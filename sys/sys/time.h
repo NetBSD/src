@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.43 2004/11/14 03:30:08 atatat Exp $	*/
+/*	$NetBSD: time.h,v 1.43.6.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -209,22 +209,22 @@ struct	ptimers {
 	int pts_fired;
 };
 
-int	itimerfix __P((struct timeval *tv));
-int	itimerdecr __P((struct ptimer *, int));
-void	itimerfire __P((struct ptimer *));
-void	microtime __P((struct timeval *tv));
-int	settime __P((struct timeval *));
-int	ratecheck __P((struct timeval *, const struct timeval *));
-int	ppsratecheck __P((struct timeval *, int *, int));
-int	settimeofday1 __P((const struct timeval *, const struct timezone *, 
-	    struct proc *));
-int	adjtime1 __P((const struct timeval *, struct timeval *, struct proc *));
-int	clock_settime1 __P((clockid_t, const struct timespec *));
-void	timer_settime __P((struct ptimer *));
-void	timer_gettime __P((struct ptimer *, struct itimerval *));
-void	timers_alloc __P((struct proc *));
-void	timers_free __P((struct proc *, int));
-void	realtimerexpire __P((void *));
+int	itimerfix(struct timeval *tv);
+int	itimerdecr(struct ptimer *, int);
+void	itimerfire(struct ptimer *);
+void	microtime(struct timeval *tv);
+int	settime(struct timeval *);
+int	ratecheck(struct timeval *, const struct timeval *);
+int	ppsratecheck(struct timeval *, int *, int);
+int	settimeofday1(const struct timeval *, const struct timezone *, 
+	    struct proc *);
+int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
+int	clock_settime1(clockid_t, const struct timespec *);
+void	timer_settime(struct ptimer *);
+void	timer_gettime(struct ptimer *, struct itimerval *);
+void	timers_alloc(struct proc *);
+void	timers_free(struct proc *, int);
+void	realtimerexpire(void *);
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE
@@ -234,17 +234,16 @@ void	realtimerexpire __P((void *));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	adjtime __P((const struct timeval *, struct timeval *));
-int	futimes __P((int, const struct timeval [2]));
-int	getitimer __P((int, struct itimerval *));
-int	gettimeofday __P((struct timeval * __restrict,
-	    void * __restrict));
-int	lutimes __P((const char *, const struct timeval [2]));
-int	setitimer __P((int, const struct itimerval * __restrict,
-	    struct itimerval * __restrict));
-int	settimeofday __P((const struct timeval * __restrict,
-	    const void * __restrict));
-int	utimes __P((const char *, const struct timeval [2]));
+int	adjtime(const struct timeval *, struct timeval *);
+int	futimes(int, const struct timeval [2]);
+int	getitimer(int, struct itimerval *);
+int	gettimeofday(struct timeval * __restrict, void * __restrict);
+int	lutimes(const char *, const struct timeval [2]);
+int	setitimer(int, const struct itimerval * __restrict,
+	    struct itimerval * __restrict);
+int	settimeofday(const struct timeval * __restrict,
+	    const void * __restrict);
+int	utimes(const char *, const struct timeval [2]);
 __END_DECLS
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 

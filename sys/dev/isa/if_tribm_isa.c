@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.5 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.5.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.5 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.5.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.5 2004/09/14 20:20:48 drochner Ex
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>
 
-int	tribm_isa_probe __P((struct device *, struct cfdata *, void *));
-int	tr_isa_map_io __P((struct isa_attach_args *, bus_space_handle_t *,
-	    bus_space_handle_t *));
-void	tr_isa_unmap_io __P((struct isa_attach_args *, bus_space_handle_t,
-	    bus_space_handle_t));
+int	tribm_isa_probe(struct device *, struct cfdata *, void *);
+int	tr_isa_map_io(struct isa_attach_args *, bus_space_handle_t *,
+	    bus_space_handle_t *);
+void	tr_isa_unmap_io(struct isa_attach_args *, bus_space_handle_t,
+	    bus_space_handle_t);
 
 int
 tribm_isa_probe(parent, match, aux)

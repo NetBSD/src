@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.19 2004/07/24 18:59:16 christos Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.19.6.1 2005/02/12 18:17:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.19 2004/07/24 18:59:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.19.6.1 2005/02/12 18:17:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,50 +82,50 @@ const struct envsys_range lm_ranges[] = {	/* sc->sensors sub-intervals */
 };
 
 
-static void setup_fan __P((struct lm_softc *, int, int));
-static void setup_temp __P((struct lm_softc *, int, int));
-static void wb_setup_volt __P((struct lm_softc *));
+static void setup_fan(struct lm_softc *, int, int);
+static void setup_temp(struct lm_softc *, int, int);
+static void wb_setup_volt(struct lm_softc *);
 
-int lm_match __P((struct lm_softc *));
-int wb_match __P((struct lm_softc *));
-int itec_match __P((struct lm_softc *));
-int def_match __P((struct lm_softc *));
-void lm_common_match __P((struct lm_softc *));
-static int lm_generic_banksel __P((struct lm_softc *, int));
+int lm_match(struct lm_softc *);
+int wb_match(struct lm_softc *);
+int itec_match(struct lm_softc *);
+int def_match(struct lm_softc *);
+void lm_common_match(struct lm_softc *);
+static int lm_generic_banksel(struct lm_softc *, int);
 
-static void generic_stemp __P((struct lm_softc *, struct envsys_tre_data *));
-static void generic_svolt __P((struct lm_softc *, struct envsys_tre_data *,
-    struct envsys_basic_info *));
-static void generic_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
+static void generic_stemp(struct lm_softc *, struct envsys_tre_data *);
+static void generic_svolt(struct lm_softc *, struct envsys_tre_data *,
+    struct envsys_basic_info *);
+static void generic_fanrpm(struct lm_softc *, struct envsys_tre_data *);
 
-void lm_refresh_sensor_data __P((struct lm_softc *));
+void lm_refresh_sensor_data(struct lm_softc *);
 
-static void wb_svolt __P((struct lm_softc *));
-static void wb_stemp __P((struct lm_softc *, struct envsys_tre_data *, int));
-static void wb781_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
-static void wb_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
+static void wb_svolt(struct lm_softc *);
+static void wb_stemp(struct lm_softc *, struct envsys_tre_data *, int);
+static void wb781_fanrpm(struct lm_softc *, struct envsys_tre_data *);
+static void wb_fanrpm(struct lm_softc *, struct envsys_tre_data *);
 
-void wb781_refresh_sensor_data __P((struct lm_softc *));
-void wb782_refresh_sensor_data __P((struct lm_softc *));
-void wb697_refresh_sensor_data __P((struct lm_softc *));
+void wb781_refresh_sensor_data(struct lm_softc *);
+void wb782_refresh_sensor_data(struct lm_softc *);
+void wb697_refresh_sensor_data(struct lm_softc *);
 
-static void itec_svolt __P((struct lm_softc *, struct envsys_tre_data *,
-    struct envsys_basic_info *));
-static void itec_stemp __P((struct lm_softc *, struct envsys_tre_data *));
-static void itec_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
-void itec_refresh_sensor_data __P((struct lm_softc *));
+static void itec_svolt(struct lm_softc *, struct envsys_tre_data *,
+    struct envsys_basic_info *);
+static void itec_stemp(struct lm_softc *, struct envsys_tre_data *);
+static void itec_fanrpm(struct lm_softc *, struct envsys_tre_data *);
+void itec_refresh_sensor_data(struct lm_softc *);
 
-int lm_gtredata __P((struct sysmon_envsys *, struct envsys_tre_data *));
+int lm_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 
-int generic_streinfo_fan __P((struct lm_softc *, struct envsys_basic_info *,
-           int, struct envsys_basic_info *));
-int lm_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
-int wb781_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
-int wb782_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
-int itec_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
+int generic_streinfo_fan(struct lm_softc *, struct envsys_basic_info *,
+           int, struct envsys_basic_info *);
+int lm_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
+int wb781_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
+int wb782_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
+int itec_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 
 struct lm_chip {
-	int (*chip_match) __P((struct lm_softc *));
+	int (*chip_match)(struct lm_softc *);
 };
 
 struct lm_chip lm_chips[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.14 2003/08/07 16:31:21 agc Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.14.10.1 2005/02/12 18:17:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.14 2003/08/07 16:31:21 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.14.10.1 2005/02/12 18:17:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.14 2003/08/07 16:31:21 agc Exp $");
 static void rcons_belltmr(void *);
 
 static struct rconsole *mydevicep; /* XXX */
-static void rcons_output __P((struct tty *));
+static void rcons_output(struct tty *);
 
 void
 rcons_cnputc(c)

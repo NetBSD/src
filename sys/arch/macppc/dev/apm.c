@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.10 2004/04/15 11:03:15 aymeric Exp $	*/
+/*	$NetBSD: apm.c,v 1.10.6.1 2005/02/12 18:17:35 yamt Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10 2004/04/15 11:03:15 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10.6.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include "apm.h"
 
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10 2004/04/15 11:03:15 aymeric Exp $");
 #include <machine/apmvar.h>
 
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/adb_direct.h>
 #include <macppc/dev/pm_direct.h>
 
 #if defined(APMDEBUG)
@@ -177,7 +176,7 @@ apmmatch(parent, match, aux)
 	    aa->adbaddr != ADBADDR_APM)
 		return 0;
 
-	if (adbHardware != ADB_HW_PB)
+	if (adbHardware != ADB_HW_PMU)
 		return 0;
 
 	return 1;
@@ -352,13 +351,10 @@ apmioctl(dev, cmd, data, flag, p)
 			power->battery_life = 0;
 		} else if ((power->ac_state == APM_AC_ON) &&
 			   (batt.draw > 0)) {
-			power->minutes_left =
-			    (((batt.max_charge - batt.cur_charge) * 3600) /
-			    batt.draw) / 60;
+			power->minutes_left = batt.secs_remaining / 60;
 			power->battery_state = APM_BATT_CHARGING;
 		} else {
-			power->minutes_left = 
-			    ((batt.cur_charge * 3600) / (-batt.draw)) / 60;
+			power->minutes_left = batt.secs_remaining / 60;
 
 			/* XXX - Arbitrary */
 			if (power->battery_life > 60) {

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2005/01/17 15:28:52 cube Exp $
+# $NetBSD: GENERIC,v 1.58.2.1 2005/02/12 18:17:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.58.2.1 $"
 
 maxusers	8
 
@@ -102,6 +102,8 @@ options 	NFSSERVER	# nfs server support
 options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 options 	SOFTDEP		# ffs soft updates support
+options 	FFS_SNAPSHOT	# ffs snapshots
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
 options 	INET		# Internet protocols
@@ -232,6 +234,7 @@ pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 pseudo-device	sl		2	# SLIP interfaces
 pseudo-device	ppp		2	# PPP interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

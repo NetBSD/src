@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.6 2004/10/30 18:08:37 thorpej Exp $ */
+/* $NetBSD: mtd803.c,v 1.6.6.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.6 2004/10/30 18:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.6.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -116,28 +116,28 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.6 2004/10/30 18:08:37 thorpej Exp $");
 
 #define ETHER_CRC32(buf, len)	(ether_crc32_be((buf), (len)))
 
-int mtd_mii_readreg __P((struct device *, int, int));
-void mtd_mii_writereg __P((struct device *, int, int, int));
-void mtd_mii_statchg __P((struct device *));
+int mtd_mii_readreg(struct device *, int, int);
+void mtd_mii_writereg(struct device *, int, int, int);
+void mtd_mii_statchg(struct device *);
 
-void mtd_start __P((struct ifnet *));
-void mtd_stop __P((struct ifnet *, int));
-int mtd_ioctl __P((struct ifnet *, u_long, caddr_t));
-void mtd_setmulti __P((struct mtd_softc *));
-void mtd_watchdog __P((struct ifnet *));
-int mtd_mediachange __P((struct ifnet *));
-void mtd_mediastatus __P((struct ifnet *, struct ifmediareq *));
+void mtd_start(struct ifnet *);
+void mtd_stop(struct ifnet *, int);
+int mtd_ioctl(struct ifnet *, u_long, caddr_t);
+void mtd_setmulti(struct mtd_softc *);
+void mtd_watchdog(struct ifnet *);
+int mtd_mediachange(struct ifnet *);
+void mtd_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int mtd_init __P((struct ifnet *));
-void mtd_reset __P((struct mtd_softc *));
-void mtd_shutdown __P((void *));
-int mtd_init_desc __P((struct mtd_softc *));
-int mtd_put __P((struct mtd_softc *, int, struct mbuf *));
-struct mbuf *mtd_get __P((struct mtd_softc *, int, int));
+int mtd_init(struct ifnet *);
+void mtd_reset(struct mtd_softc *);
+void mtd_shutdown(void *);
+int mtd_init_desc(struct mtd_softc *);
+int mtd_put(struct mtd_softc *, int, struct mbuf *);
+struct mbuf *mtd_get(struct mtd_softc *, int, int);
 
-int mtd_rxirq __P((struct mtd_softc *));
-int mtd_txirq __P((struct mtd_softc *));
-int mtd_bufirq __P((struct mtd_softc *));
+int mtd_rxirq(struct mtd_softc *);
+int mtd_txirq(struct mtd_softc *);
+int mtd_bufirq(struct mtd_softc *);
 
 
 int

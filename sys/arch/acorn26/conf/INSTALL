@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.8 2004/11/10 17:54:02 christos Exp $
+# $NetBSD: INSTALL,v 1.8.6.1 2005/02/12 18:17:29 yamt Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -51,6 +51,7 @@ file-system	KERNFS		# /kern
 options 	FFS_EI		# FFS endianness-independence support
 #options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Make a smaller NFS
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Executable format options
 options 	EXEC_ELF32
@@ -195,6 +196,7 @@ wsdisplay0	at arcvideo0
 #pseudo-device	ccd		4
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
@@ -212,4 +214,3 @@ pseudo-device	wsmux			# keyboard/mouse multiplexor
 
 # rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
-

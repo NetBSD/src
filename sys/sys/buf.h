@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.78 2004/12/18 03:08:48 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.78.4.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct bio_ops {
  	void	(*io_start)(struct buf *);
  	void	(*io_complete)(struct buf *);
  	void	(*io_deallocate)(struct buf *);
- 	int	(*io_fsync)(struct vnode *);
+ 	int	(*io_fsync)(struct vnode *, int);
  	int	(*io_sync)(struct mount *);
 	void	(*io_movedeps)(struct buf *, struct buf *);
 	int	(*io_countdeps)(struct buf *, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: daicvar.h,v 1.6 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: daicvar.h,v 1.6.10.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -119,9 +119,9 @@ struct daic_softc {
 /*
  * functions exported from MI part
  */
-extern int daic_probe __P((bus_space_tag_t bus, bus_space_handle_t io));
-extern void daic_attach __P((struct device *self, struct daic_softc *sc));
-extern int daic_intr __P((struct daic_softc *));
+extern int daic_probe(bus_space_tag_t bus, bus_space_handle_t io);
+extern void daic_attach(struct device *self, struct daic_softc *sc);
+extern int daic_intr(struct daic_softc *);
 
 #endif
 #endif

@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.28 2004/11/24 20:49:19 bouyer Exp $
+# $NetBSD: BASIL,v 1.28.6.1 2005/02/12 18:17:29 yamt Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.28 $"
+#ident 		"BASIL-$Revision: 1.28.6.1 $"
 
 maxusers 64
 
@@ -55,6 +55,7 @@ file-system	FDESC		# File descriptor file system (/dev/fd)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -450,6 +451,7 @@ pseudo-device	bpfilter	16
 #pseudo-device	ccd		4
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1

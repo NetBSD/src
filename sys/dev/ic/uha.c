@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.33 2004/12/07 14:50:56 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.33.4.1 2005/02/12 18:17:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.33 2004/12/07 14:50:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.33.4.1 2005/02/12 18:17:44 yamt Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -98,14 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.33 2004/12/07 14:50:56 thorpej Exp $");
 
 #define	UHA_MAXXFER	((UHA_NSEG - 1) << PGSHIFT)
 
-integrate void uha_reset_mscp __P((struct uha_softc *, struct uha_mscp *));
-void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *));
-integrate int uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
-struct uha_mscp *uha_get_mscp __P((struct uha_softc *));
-void uhaminphys __P((struct buf *));
-void uha_scsipi_request __P((struct scsipi_channel *,
-	scsipi_adapter_req_t, void *));
-int uha_create_mscps __P((struct uha_softc *, struct uha_mscp *, int));
+integrate void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
+void uha_free_mscp(struct uha_softc *, struct uha_mscp *);
+integrate int uha_init_mscp(struct uha_softc *, struct uha_mscp *);
+struct uha_mscp *uha_get_mscp(struct uha_softc *);
+void uhaminphys(struct buf *);
+void uha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+int uha_create_mscps(struct uha_softc *, struct uha_mscp *, int);
 
 #define	UHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 

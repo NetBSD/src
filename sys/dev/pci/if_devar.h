@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.38 2002/10/01 01:39:38 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.38.16.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -1085,7 +1085,7 @@ extern struct cfdriver de_cd;
 #define	TULIP_PERFSTART(name) const tulip_cycle_t perfstart_ ## name = TULIP_PERFREAD();
 #define	TULIP_PERFEND(name)	do { \
 	    (sc)->tulip_curperfstats.perf_ ## name ## _cycles += TULIP_PERFDIFF(perfstart_ ## name, TULIP_PERFREAD()); \
-	    (sc)->tulip_curperfstats.perf_ ## name ++; \
+	    (sc)->tulip_curperfstats.perf_ ## name++; \
 	} while (0)
 #if defined(__i386__)
 typedef u_quad_t tulip_cycle_t;

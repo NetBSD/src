@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.20 2004/05/16 21:32:31 skd Exp $	*/
+/*	$NetBSD: rbus.c,v 1.20.6.1 2005/02/12 18:17:42 yamt Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.20 2004/05/16 21:32:31 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.20.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.20 2004/05/16 21:32:31 skd Exp $");
 
 
 
-static rbus_tag_t rbus_new_body __P((bus_space_tag_t bt, rbus_tag_t parent,
+static rbus_tag_t rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent,
 				    struct extent *ex, bus_addr_t start,
 				    bus_addr_t end, bus_addr_t offset,
-				    int flags));
+				    int flags);
 
 
 int

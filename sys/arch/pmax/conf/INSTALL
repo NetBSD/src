@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.53 2004/07/15 03:53:51 atatat Exp $
+# 	$NetBSD: INSTALL,v 1.53.6.1 2005/02/12 18:17:38 yamt Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -140,6 +140,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
+#pseudo-device	fss		 4	# file system snapshot device
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 1	# only 1 framebuffer supported

@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq31244,v 1.2 2003/05/22 05:52:18 thorpej Exp $
+#	$NetBSD: std.iq31244,v 1.2.12.1 2005/02/12 18:17:31 yamt Exp $
 #
 # standard NetBSD/evbarm for IQ31244 options
 
@@ -23,3 +23,6 @@ options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 
 # We need to configure the PCI bus.
 options 	PCI_NETBSD_CONFIGURE
+
+# Board has a 33.0MHz crystal, => 198MHz bus clock
+options 	COUNTS_PER_SEC=198000000

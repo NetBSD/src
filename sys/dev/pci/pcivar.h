@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.67 2004/09/13 12:22:53 drochner Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.67.6.1 2005/02/12 18:17:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -171,6 +171,10 @@ struct pci_softc {
 #define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
 };
 
+struct pci_conf_state {
+	pcireg_t reg[16];
+};
+
 extern struct cfdriver pci_cd;
 
 int pcibusprint(void *, const char *);
@@ -179,34 +183,33 @@ int pcibusprint(void *, const char *);
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
-int	pci_mapreg_probe __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t *));
-pcireg_t pci_mapreg_type __P((pci_chipset_tag_t, pcitag_t, int));
-int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
-	    bus_addr_t *, bus_size_t *, int *));
-int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
+int	pci_mapreg_probe(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
+pcireg_t pci_mapreg_type(pci_chipset_tag_t, pcitag_t, int);
+int	pci_mapreg_info(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
+	    bus_addr_t *, bus_size_t *, int *);
+int	pci_mapreg_map(struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
-	    bus_size_t *));
+	    bus_size_t *);
 
-int pci_get_capability __P((pci_chipset_tag_t, pcitag_t, int,
-			    int *, pcireg_t *));
+int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
 
 /*
  * Helper functions for autoconfiguration.
  */
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
-void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *, size_t));
-void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
-	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));
+void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
+void	pci_conf_print(pci_chipset_tag_t, pcitag_t,
+	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *));
 const struct pci_quirkdata *
-	pci_lookup_quirkdata __P((pci_vendor_id_t, pci_product_id_t));
+	pci_lookup_quirkdata(pci_vendor_id_t, pci_product_id_t);
 
 /*
  * Helper functions for user access to the PCI bus.
  */
 struct proc;
-int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
-	    int flag, struct proc *));
+int	pci_devioctl(pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
+	    int flag, struct proc *);
 
 /*
  * Power Management (PCI 2.2)
@@ -216,23 +219,24 @@ int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
 #define PCI_PWR_D1	1
 #define PCI_PWR_D2	2
 #define PCI_PWR_D3	3
-int	pci_powerstate __P((pci_chipset_tag_t, pcitag_t, const int *, int *));
+int	pci_powerstate(pci_chipset_tag_t, pcitag_t, const int *, int *);
 
 /*
  * Vital Product Data (PCI 2.2)
  */
-int	pci_vpd_read __P((pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *));
-int	pci_vpd_write __P((pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *));
+int	pci_vpd_read(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
+int	pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 
 /*
  * Misc.
  */
-const char *pci_findvendor __P((pcireg_t));
-const char *pci_findproduct __P((pcireg_t));
+const char *pci_findvendor(pcireg_t);
+const char *pci_findproduct(pcireg_t);
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
 int	pci_dma64_available(struct pci_attach_args *);
-
+void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
+void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.4.1 2005/02/12 18:17:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.4.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -421,8 +421,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	extern char *start;
-	extern char *etext;
 	int vers;
 	vaddr_t minaddr, maxaddr;
 	int delay;
@@ -477,19 +475,6 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 *
-	 * XXX I'd like this to be m68k_trunc_page(&kernel_text) instead
-	 * XXX of the reference to &start, but we have to keep the
-	 * XXX interrupt vectors and such writable for the Mac toolbox.
-	 */
-	if (uvm_map_protect(kernel_map,
-	    m68k_trunc_page(&start + (PAGE_SIZE - 1)), m68k_round_page(&etext),
-	    (UVM_PROT_READ | UVM_PROT_EXEC), TRUE) != 0)
-		panic("can't protect kernel text");
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.

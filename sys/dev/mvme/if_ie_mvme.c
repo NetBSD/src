@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.6 2003/07/14 15:47:19 lukem Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.6.10.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.6 2003/07/14 15:47:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.6.10.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.6 2003/07/14 15:47:19 lukem Exp $")
 #include <dev/mvme/pcctworeg.h>
 
 
-int ie_pcctwo_match __P((struct device *, struct cfdata *, void *));
-void ie_pcctwo_attach __P((struct device *, struct device *, void *));
+int ie_pcctwo_match(struct device *, struct cfdata *, void *);
+void ie_pcctwo_attach(struct device *, struct device *, void *);
 
 struct ie_pcctwo_softc {
 	struct ie_softc ps_ie;
@@ -84,17 +84,17 @@ extern struct cfdriver ie_cd;
 
 
 /* Functions required by the i82586 MI driver */
-static void ie_reset __P((struct ie_softc *, int));
-static int ie_intrhook __P((struct ie_softc *, int));
-static void ie_hwinit __P((struct ie_softc *));
-static void ie_atten __P((struct ie_softc *, int));
+static void ie_reset(struct ie_softc *, int);
+static int ie_intrhook(struct ie_softc *, int);
+static void ie_hwinit(struct ie_softc *);
+static void ie_atten(struct ie_softc *, int);
 
-static void ie_copyin __P((struct ie_softc *, void *, int, size_t));
-static void ie_copyout __P((struct ie_softc *, const void *, int, size_t));
+static void ie_copyin(struct ie_softc *, void *, int, size_t);
+static void ie_copyout(struct ie_softc *, const void *, int, size_t);
 
-static u_int16_t ie_read_16 __P((struct ie_softc *, int));
-static void ie_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void ie_write_24 __P((struct ie_softc *, int, int));
+static u_int16_t ie_read_16(struct ie_softc *, int);
+static void ie_write_16(struct ie_softc *, int, u_int16_t);
+static void ie_write_24(struct ie_softc *, int, int);
 
 /*
  * i82596 Support Routines for MVME1[67][27] and MVME187 Boards

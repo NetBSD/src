@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.49 2004/10/30 18:08:37 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.49.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.49 2004/10/30 18:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.49.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -173,50 +173,47 @@ __KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.49 2004/10/30 18:08:37 thorpej Exp $");
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 
-void	 	i82586_reset 	__P((struct ie_softc *, int));
-void 		i82586_watchdog	__P((struct ifnet *));
-int 		i82586_init 	__P((struct ifnet *));
-int 		i82586_ioctl 	__P((struct ifnet *, u_long, caddr_t));
-void 		i82586_start 	__P((struct ifnet *));
-void 		i82586_stop 	__P((struct ifnet *, int));
+void	 	i82586_reset(struct ie_softc *, int);
+void 		i82586_watchdog(struct ifnet *);
+int 		i82586_init(struct ifnet *);
+int 		i82586_ioctl(struct ifnet *, u_long, caddr_t);
+void 		i82586_start(struct ifnet *);
+void 		i82586_stop(struct ifnet *, int);
 
 
-int 		i82586_rint 	__P((struct ie_softc *, int));
-int 		i82586_tint 	__P((struct ie_softc *, int));
+int 		i82586_rint(struct ie_softc *, int);
+int 		i82586_tint(struct ie_softc *, int);
 
-int     	i82586_mediachange 	__P((struct ifnet *));
-void    	i82586_mediastatus 	__P((struct ifnet *,
-						struct ifmediareq *));
+int     	i82586_mediachange(struct ifnet *);
+void    	i82586_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int 	ie_readframe		__P((struct ie_softc *, int));
-static struct mbuf *ieget 		__P((struct ie_softc *, int, int));
-static int	i82586_get_rbd_list	__P((struct ie_softc *,
-					     u_int16_t *, u_int16_t *, int *));
-static void	i82586_release_rbd_list	__P((struct ie_softc *,
-					     u_int16_t, u_int16_t));
-static int	i82586_drop_frames	__P((struct ie_softc *));
-static int	i82586_chk_rx_ring	__P((struct ie_softc *));
+static int 	ie_readframe(struct ie_softc *, int);
+static struct mbuf *ieget(struct ie_softc *, int, int);
+static int	i82586_get_rbd_list(struct ie_softc *,
+					     u_int16_t *, u_int16_t *, int *);
+static void	i82586_release_rbd_list(struct ie_softc *,
+					     u_int16_t, u_int16_t);
+static int	i82586_drop_frames(struct ie_softc *);
+static int	i82586_chk_rx_ring(struct ie_softc *);
 
-static __inline__ void 	ie_ack 		__P((struct ie_softc *, u_int));
-static __inline__ void 	iexmit 		__P((struct ie_softc *));
-static void 		i82586_start_transceiver
-					__P((struct ie_softc *));
+static __inline__ void 	ie_ack(struct ie_softc *, u_int);
+static __inline__ void 	iexmit(struct ie_softc *);
+static void 		i82586_start_transceiver(struct ie_softc *);
 
-static void	i82586_count_errors	__P((struct ie_softc *));
-static void	i82586_rx_errors	__P((struct ie_softc *, int, int));
-static void 	i82586_setup_bufs	__P((struct ie_softc *));
-static void	setup_simple_command	__P((struct ie_softc *, int, int));
-static int 	ie_cfg_setup		__P((struct ie_softc *, int, int, int));
-static int	ie_ia_setup		__P((struct ie_softc *, int));
-static void 	ie_run_tdr		__P((struct ie_softc *, int));
-static int 	ie_mc_setup 		__P((struct ie_softc *, int));
-static void 	ie_mc_reset 		__P((struct ie_softc *));
-static int 	i82586_start_cmd 	__P((struct ie_softc *,
-					    int, int, int, int));
-static int	i82586_cmd_wait		__P((struct ie_softc *));
+static void	i82586_count_errors(struct ie_softc *);
+static void	i82586_rx_errors(struct ie_softc *, int, int);
+static void 	i82586_setup_bufs(struct ie_softc *);
+static void	setup_simple_command(struct ie_softc *, int, int);
+static int 	ie_cfg_setup(struct ie_softc *, int, int, int);
+static int	ie_ia_setup(struct ie_softc *, int);
+static void 	ie_run_tdr(struct ie_softc *, int);
+static int 	ie_mc_setup(struct ie_softc *, int);
+static void 	ie_mc_reset(struct ie_softc *);
+static int 	i82586_start_cmd(struct ie_softc *, int, int, int, int);
+static int	i82586_cmd_wait(struct ie_softc *);
 
 #if I82586_DEBUG
-void 		print_rbd 	__P((struct ie_softc *, int));
+void 		print_rbd(struct ie_softc *, int);
 #endif
 
 static char* padbuf = NULL;

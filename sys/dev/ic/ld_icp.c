@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.9 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.9.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.9 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.9.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "rnd.h"
 
@@ -133,13 +133,13 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_IOCTL, ICP_CACHE_DRV_INFO,
 	    sc->sc_hwunit, sizeof(struct icp_cdevinfo))) {
-		printf(": unable to retrieve device info\n");
+		aprint_error(": unable to retrieve device info\n");
 		ld->sc_flags = LDF_ENABLED;
 		goto out;
 	}
 	cdi = (struct icp_cdevinfo *)icp->icp_scr;
 
-	printf(": <%.8s>, ", cdi->ld_name);
+	aprint_normal(": <%.8s>, ", cdi->ld_name);
 	t = le32toh(cdi->ld_dtype) >> 16;
 
 	/*
@@ -156,7 +156,7 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 	else
 		str = "unknown type";
 
-	printf("type: %s, ", str);
+	aprint_normal("type: %s, ", str);
 
 	/*
 	 * Print device status.
@@ -173,7 +173,7 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 		ld->sc_flags = LDF_ENABLED;
 	}
 		
-	printf("status: %s\n", str);
+	aprint_normal("status: %s\n", str);
 
  out:
 	ldattach(ld);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.31 2004/08/10 22:49:12 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.31.6.1 2005/02/12 18:17:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.31 2004/08/10 22:49:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.31.6.1 2005/02/12 18:17:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,11 @@ struct aic_pcmcia_softc {
 #define	AIC_PCMCIA_ATTACHED	3
 };
 
-int	aic_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int	aic_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void	aic_pcmcia_attach __P((struct device *, struct device *, void *));
-int	aic_pcmcia_detach __P((struct device *, int));
-int	aic_pcmcia_enable __P((struct device *, int));
+int	aic_pcmcia_match(struct device *, struct cfdata *, void *);
+int	aic_pcmcia_validate_config(struct pcmcia_config_entry *);
+void	aic_pcmcia_attach(struct device *, struct device *, void *);
+int	aic_pcmcia_detach(struct device *, int);
+int	aic_pcmcia_enable(struct device *, int);
 
 CFATTACH_DECL(aic_pcmcia, sizeof(struct aic_pcmcia_softc),
     aic_pcmcia_match, aic_pcmcia_attach, aic_pcmcia_detach, aic_activate);

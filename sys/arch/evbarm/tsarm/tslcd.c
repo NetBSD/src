@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.3 2005/01/11 00:59:06 joff Exp $ */
+/* $NetBSD: tslcd.c,v 1.3.6.1 2005/02/12 18:17:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.3 2005/01/11 00:59:06 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.3.6.1 2005/02/12 18:17:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.3 2005/01/11 00:59:06 joff Exp $");
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wscons_callbacks.h>
+
 #include <arm/ep93xx/ep93xxreg.h>
 #include <dev/ic/hd44780reg.h>
 #include <dev/ic/hd44780var.h>
@@ -62,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.3 2005/01/11 00:59:06 joff Exp $");
 
 struct tslcd_softc {
 	struct device sc_dev;
-	struct hd44780_chip sc_lcd;
+	struct hd44780_chip sc_hlcd;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_gpioh;
 };
@@ -85,10 +89,28 @@ const struct cdevsw tslcd_cdevsw = {
 	nostop, notty, tslcdpoll, nommap,
 };
 
+extern const struct wsdisplay_emulops hlcd_emulops;
+extern const struct wsdisplay_accessops hlcd_accessops;
 extern struct cfdriver tslcd_cd;
 
 CFATTACH_DECL(tslcd, sizeof(struct tslcd_softc),
     tslcd_match, tslcd_attach, NULL, NULL);
+
+static const struct wsscreen_descr tslcd_stdscreen = {
+	"std_tslcd", 24, 2,
+	&hlcd_emulops,
+	5, 7,
+	0,
+};
+
+static const struct wsscreen_descr *_tslcd_scrlist[] = {
+	&tslcd_stdscreen,
+};
+
+static const struct wsscreen_list tslcd_screenlist = {
+	sizeof(_tslcd_scrlist) / sizeof(struct wsscreen_descr *),
+	_tslcd_scrlist,
+};
 
 static int
 tslcd_match(parent, match, aux)
@@ -119,20 +141,21 @@ tslcd_attach(parent, self, aux)
 {
 	struct tslcd_softc *sc = (void *)self;
 	struct tspld_attach_args *taa = aux;
+	struct wsemuldisplaydev_attach_args waa;
 
 	sc->sc_iot = taa->ta_iot;
 	if (bus_space_map(sc->sc_iot, EP93XX_APB_HWBASE + EP93XX_APB_GPIO,
 		EP93XX_APB_GPIO_SIZE, 0, &sc->sc_gpioh))
 		panic("tslcd_attach: couldn't map GPIO registers");
 
-	sc->sc_lcd.sc_dev_ok = 1;
-	sc->sc_lcd.sc_rows = 24;
-	sc->sc_lcd.sc_vrows = 40;
-	sc->sc_lcd.sc_flags = HD_8BIT | HD_MULTILINE;
-	sc->sc_lcd.sc_dev = self;
+	sc->sc_hlcd.sc_dev_ok = 1;
+	sc->sc_hlcd.sc_cols = 24;
+	sc->sc_hlcd.sc_vcols = 40;
+	sc->sc_hlcd.sc_flags = HD_8BIT | HD_MULTILINE;
+	sc->sc_hlcd.sc_dev = self;
 
-	sc->sc_lcd.sc_writereg = tslcd_writereg;
-	sc->sc_lcd.sc_readreg = tslcd_readreg;
+	sc->sc_hlcd.sc_writereg = tslcd_writereg;
+	sc->sc_hlcd.sc_readreg = tslcd_readreg;
 	
 	GPIO_SET(PADDR, 0);		/* Port A to inputs */
 	GPIO_SETBITS(PHDDR, 0x38);	/* Bits 3:5 of Port H to outputs */
@@ -140,7 +163,13 @@ tslcd_attach(parent, self, aux)
 
 	printf("\n");
 
-	hd44780_attach_subr(&sc->sc_lcd);
+	hd44780_attach_subr(&sc->sc_hlcd);
+
+	waa.console = 0;
+	waa.scrdata = &tslcd_screenlist;
+	waa.accessops = &hlcd_accessops;
+	waa.accesscookie = &sc->sc_hlcd.sc_screen;
+	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
 static void
@@ -242,8 +271,8 @@ tslcdopen(dev, flag, mode, p)
 {
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
 
-	if (sc->sc_lcd.sc_dev_ok == 0)
-		return hd44780_init(&sc->sc_lcd);
+	if (sc->sc_hlcd.sc_dev_ok == 0)
+		return hd44780_init(&sc->sc_hlcd);
 	else
 		return 0;
 }
@@ -276,7 +305,7 @@ tslcdwrite(dev, uio, flag)
 	struct hd44780_io io;
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
 
-	if (sc->sc_lcd.sc_dev_ok == 0)
+	if (sc->sc_hlcd.sc_dev_ok == 0)
 		return EIO;
 
 	io.dat = 0;
@@ -287,7 +316,7 @@ tslcdwrite(dev, uio, flag)
 	if ((error = uiomove((void*)io.buf, io.len, uio)) != 0)
 		return error;
 
-	hd44780_ddram_redraw(&sc->sc_lcd, &io);
+	hd44780_ddram_redraw(&sc->sc_hlcd, &io);
 	return 0;
 }
 
@@ -300,7 +329,7 @@ tslcdioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
-	return hd44780_ioctl_subr(&sc->sc_lcd, cmd, data);
+	return hd44780_ioctl_subr(&sc->sc_hlcd, cmd, data);
 }
 
 int

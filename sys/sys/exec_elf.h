@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.79 2004/12/28 00:07:31 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.79.4.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -835,9 +835,9 @@ int	elf64_read_from(struct proc *, struct vnode *, u_long, caddr_t, int);
 int	elf64_copyargs(struct proc *, struct exec_package *, 
 	    struct ps_strings *, char **, void *);
 
-int	coredump_elf64 __P((struct lwp *, struct vnode *, struct ucred *));
-int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
-	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
+int	coredump_elf64(struct lwp *, struct vnode *, struct ucred *);
+int	coredump_writenote_elf64(struct proc *, struct vnode *,
+	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *);
 
 int	elf64_check_header(Elf64_Ehdr *, int);
 #endif

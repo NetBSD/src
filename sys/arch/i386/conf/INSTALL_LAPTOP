@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.77 2005/01/11 18:43:42 skrll Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.77.4.1 2005/02/12 18:17:34 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -124,6 +124,7 @@ file-system 	KERNFS		# /kern
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -535,6 +536,7 @@ include	"arch/i386/conf/GENERIC.local"
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 

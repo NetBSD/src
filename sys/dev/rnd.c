@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.44 2004/11/29 13:33:37 yamt Exp $	*/
+/*	$NetBSD: rnd.c,v 1.44.6.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.44 2004/11/29 13:33:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.44.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -154,7 +154,7 @@ static rndsource_t rnd_source_no_collect = {
 
 struct callout rnd_callout = CALLOUT_INITIALIZER;
 
-void	rndattach __P((int));
+void	rndattach(int);
 
 dev_type_open(rndopen);
 dev_type_read(rndread);

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.21 2004/11/10 17:54:04 christos Exp $
+# 	$NetBSD: LROUTER,v 1.21.6.1 2005/02/12 18:17:32 yamt Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -78,6 +78,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -170,6 +171,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.1.8.1 2005/02/12 18:17:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170.2.5 2004/06/08 13:14:17 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.15 2005/01/08 14:26:18 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -232,10 +232,10 @@ typedef	struct	fr_ip	{
 #define	FI_BAD		0x0400
 #define	FI_OOW		0x0800	/* Out of state window, else match */
 #define	FI_ICMPERR	0x1000
-#define	FI_FRAGTAIL	0x2000
+#define	FI_FRAGBODY	0x2000
 #define	FI_BADSRC	0x4000
 #define	FI_LOWTTL	0x8000
-#define	FI_CMP		0xcff3	/* Not FI_FRAG,FI_FRAGTAIL */
+#define	FI_CMP		0xcfe3	/* Not FI_FRAG,FI_NATED,FI_FRAGTAIL */
 #define	FI_ICMPCMP	0x0003	/* Flags we can check for ICMP error packets */
 #define	FI_WITH		0xeffe	/* Not FI_TCPUDP */
 #define	FI_V6EXTHDR	0x10000
@@ -304,6 +304,9 @@ typedef	struct	fr_info	{
 #ifdef	MENTAT
 	mb_t	*fin_qfm;		/* pointer to mblk where pkt starts */
 	void	*fin_qpi;
+#endif
+#ifdef	__sgi
+	void	*fin_hbuf;
 #endif
 } fr_info_t;
 
@@ -624,6 +627,7 @@ typedef	struct	frentry {
 #define	FR_STSTRICT	0x200000	/* strict keep state */
 #define	FR_NEWISN	0x400000	/* new ISN for outgoing TCP */
 #define	FR_NOICMPERR	0x800000	/* do not match ICMP errors in state */
+#define	FR_STATESYNC	0x1000000	/* synchronize state to slave */
 #define	FR_NOMATCH	0x8000000	/* no match occured */
 		/*	0x10000000 	FF_LOGPASS */
 		/*	0x20000000 	FF_LOGBLOCK */
@@ -765,8 +769,8 @@ typedef	struct	ipflog	{
 #ifndef	IPFILTER_LOGSIZE
 # define	IPFILTER_LOGSIZE	DEFAULT_IPFLOGSIZE
 #else
-# if IPF_LOGSIZE < DEFAULT_IPFLOGSIZE
-#  error IPFILTER_LOGSISZE too small.  Must be >= DEFAULT_IPFLOGSIZE
+# if IPFILTER_LOGSIZE < DEFAULT_IPFLOGSIZE
+#  error IPFILTER_LOGSIZE too small.  Must be >= DEFAULT_IPFLOGSIZE
 # endif
 #endif
 
@@ -1036,6 +1040,7 @@ typedef	struct	ipftuneable	{
 	u_long		ipft_max;
 	int		ipft_sz;
 	int		ipft_flags;
+	struct ipftuneable *ipft_next;
 } ipftuneable_t;
 
 #define	ipft_addr	ipft_una.ipftp_void
@@ -1115,7 +1120,6 @@ extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 extern	void	m_freem __P((mb_t *));
 #else /* #ifndef _KERNEL */
-extern	void	*fr_pullup __P((mb_t *, fr_info_t *, int));
 # if defined(__NetBSD__) && defined(PFIL_HOOKS)
 extern	void	ipfilterattach __P((int));
 # endif
@@ -1133,12 +1137,14 @@ extern	int	iplioctl __P((dev_t, int, int *, int, cred_t *, int *));
 extern	int	iplopen __P((dev_t *, int, int, cred_t *));
 extern	int	iplclose __P((dev_t, int, int, cred_t *));
 extern	int	iplread __P((dev_t, uio_t *, cred_t *));
+extern	int	iplwrite __P((dev_t, uio_t *, cred_t *));
 #  endif
 #  ifdef __hpux
 extern	int	iplopen __P((dev_t, int, intptr_t, int));
 extern	int	iplclose __P((dev_t, int, int));
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 extern	int	iplread __P((dev_t, uio_t *));
+extern	int	iplwrite __P((dev_t, uio_t *));
 extern	int	iplselect __P((dev_t, int));
 #  endif
 extern	int	ipfsync __P((void));
@@ -1153,6 +1159,7 @@ extern	int	iplioctl __P((dev_t, int, caddr_t, int, cred_t *, int *));
 extern	int	iplopen __P((dev_t *, int, int, cred_t *));
 extern	int	iplclose __P((dev_t, int, int, cred_t *));
 extern	int	iplread __P((dev_t, uio_t *, cred_t *));
+extern	int	iplwrite __P((dev_t, uio_t *, cred_t *));
 extern	int	ipfsync __P((void));
 extern	int	ipfilter_sgi_attach __P((void));
 extern	void	ipfilter_sgi_detach __P((void));
@@ -1166,7 +1173,11 @@ extern	int	iplidentify __P((char *));
 #    if defined(__NetBSD__) || (_BSDI_VERSION >= 199701) || \
        defined(__OpenBSD__) || (__FreeBSD_version >= 300000)
 #     if (__FreeBSD_version >= 500024)
+#      if (__FreeBSD_version >= 502116)
+extern	int	iplioctl __P((struct cdev*, u_long, caddr_t, int, struct thread *));
+#      else
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct thread *));
+#      endif /* __FreeBSD_version >= 502116 */
 #     else
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 #     endif /* __FreeBSD_version >= 500024 */
@@ -1174,8 +1185,13 @@ extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
 #    endif
 #    if (__FreeBSD_version >= 500024)
+#      if (__FreeBSD_version >= 502116)
+extern	int	iplopen __P((struct cdev*, int, int, struct thread *));
+extern	int	iplclose __P((struct cdev*, int, int, struct thread *));
+#      else
 extern	int	iplopen __P((dev_t, int, int, struct thread *));
 extern	int	iplclose __P((dev_t, int, int, struct thread *));
+#      endif /* __FreeBSD_version >= 502116 */
 #    else
 extern	int	iplopen __P((dev_t, int, int, struct proc *));
 extern	int	iplclose __P((dev_t, int, int, struct proc *));
@@ -1190,8 +1206,13 @@ extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 #    endif
 #   endif /* (_BSDI_VERSION >= 199510) */
 #   if	BSD >= 199306
+#      if (__FreeBSD_version >= 502116)
+extern	int	iplread __P((struct cdev*, struct uio *, int));
+extern	int	iplwrite __P((struct cdev*, struct uio *, int));
+#      else
 extern	int	iplread __P((dev_t, struct uio *, int));
 extern	int	iplwrite __P((dev_t, struct uio *, int));
+#      endif /* __FreeBSD_version >= 502116 */
 #   else
 #    ifndef linux
 extern	int	iplread __P((dev_t, struct uio *));
@@ -1217,17 +1238,19 @@ extern	int	ipldetach __P((void));
 extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	copyinptr __P((void *, void *, size_t));
 extern	int	copyoutptr __P((void *, void *, size_t));
+extern	int	fr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
 extern	int	fr_inobj __P((void *, void *, int));
 extern	int	fr_inobjsz __P((void *, void *, int, int));
 extern	int	fr_ioctlswitch __P((int, void *, ioctlcmd_t, int));
 extern	int	fr_ipftune __P((ioctlcmd_t, void *));
 extern	int	fr_outobj __P((void *, void *, int));
 extern	int	fr_outobjsz __P((void *, void *, int, int));
-extern	int	fr_send_reset __P((fr_info_t *));
-extern	int	fr_send_icmp_err __P((int, fr_info_t *, int));
-extern	void	fr_resolvdest __P((struct frdest *, int));
+extern	void	*fr_pullup __P((mb_t *, fr_info_t *, int));
+extern	void	fr_resolvedest __P((struct frdest *, int));
 extern	int	fr_resolvefunc __P((void *));
-extern	int	fr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
+extern	void	*fr_resolvenic __P((char *, int));
+extern	int	fr_send_icmp_err __P((int, fr_info_t *, int));
+extern	int	fr_send_reset __P((fr_info_t *));
 #if  (__FreeBSD_version < 490000) || !defined(_KERNEL)
 extern	int	ppsratecheck __P((struct timeval *, int *, int));
 #endif
@@ -1250,8 +1273,11 @@ extern	int	fr_ifpfillv6addr __P((int, struct sockaddr_in6 *,
 				      struct in_addr *));
 #endif
 
+extern	int		fr_addipftune __P((ipftuneable_t *));
+extern	int		fr_delipftune __P((ipftuneable_t *));
+
 extern	int	frflush __P((minor_t, int, int));
-extern	void	frsync __P((void));
+extern	void	frsync __P((void *));
 extern	frgroup_t *fr_addgroup __P((char *, void *, u_32_t, minor_t, int));
 extern	int	fr_derefrule __P((frentry_t **));
 extern	void	fr_delgroup __P((char *, minor_t, int));
@@ -1274,6 +1300,7 @@ extern	void		fr_fixskip __P((frentry_t **, frentry_t *, int));
 extern	void		fr_forgetifp __P((void *));
 extern	frentry_t 	*fr_getrulen __P((int, char *, u_32_t));
 extern	void		fr_getstat __P((struct friostat *));
+extern	int		fr_icmp4errortype __P((int));
 extern	int		fr_ifpaddr __P((int, int, void *,
 				struct in_addr *, struct in_addr *));
 extern	int		fr_initialise __P((void));
@@ -1291,7 +1318,6 @@ extern	int		fr_tcpudpchk __P((fr_info_t *, frtuc_t *));
 extern	int		fr_verifysrc __P((fr_info_t *fin));
 extern	int		fr_zerostats __P((char *));
 
-extern	int	fr_unreach;
 extern	int	fr_running;
 extern	u_long	fr_frouteok[2];
 extern	int	fr_pass;
@@ -1308,6 +1334,7 @@ extern	int	ipl_suppress;
 extern	int	ipl_buffer_sz;
 extern	int	ipl_logmax;
 extern	int	ipl_logall;
+extern	int	ipl_logsize;
 extern	u_long	fr_ticks;
 extern	fr_info_t	frcache[2][8];
 extern	char	ipfilter_version[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.23 2004/08/02 19:26:51 mycroft Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.23.6.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.23 2004/08/02 19:26:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.23.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -125,9 +125,9 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-static int rtk_cardbus_match	__P((struct device *, struct cfdata *, void *));
-static void rtk_cardbus_attach	__P((struct device *, struct device *, void *));
-static int rtk_cardbus_detach	__P((struct device *, int));
+static int rtk_cardbus_match(struct device *, struct cfdata *, void *);
+static void rtk_cardbus_attach(struct device *, struct device *, void *);
+static int rtk_cardbus_detach(struct device *, int);
 
 struct rtk_cardbus_softc {
 	struct rtk_softc sc_rtk;	/* real rtk softc */ 
@@ -148,13 +148,13 @@ CFATTACH_DECL(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
     rtk_cardbus_match, rtk_cardbus_attach, rtk_cardbus_detach, rtk_activate);
 
 const struct rtk_type *rtk_cardbus_lookup
-	__P((const struct cardbus_attach_args *));
+	(const struct cardbus_attach_args *);
 
-void rtk_cardbus_setup		__P((struct rtk_cardbus_softc *));
+void rtk_cardbus_setup		(struct rtk_cardbus_softc *);
 
-int rtk_cardbus_enable		__P((struct rtk_softc *));
-void rtk_cardbus_disable	__P((struct rtk_softc *));
-void rtk_cardbus_power		__P((struct rtk_softc *, int));
+int rtk_cardbus_enable		(struct rtk_softc *);
+void rtk_cardbus_disable(struct rtk_softc *);
+void rtk_cardbus_power		(struct rtk_softc *, int);
 const struct rtk_type *
 rtk_cardbus_lookup(ca)
 	const struct cardbus_attach_args *ca;

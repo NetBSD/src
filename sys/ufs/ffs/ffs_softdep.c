@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.61 2004/12/15 07:11:51 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.61.4.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.61 2004/12/15 07:11:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.61.4.1 2005/02/12 18:17:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -202,7 +203,7 @@ static void softdep_trackbufs(struct inode *, int, boolean_t);
 static	void softdep_disk_io_initiation __P((struct buf *));
 static	void softdep_disk_write_complete __P((struct buf *));
 static	void softdep_deallocate_dependencies __P((struct buf *));
-static	int softdep_fsync __P((struct vnode *));
+static	int softdep_fsync __P((struct vnode *, int));
 static	int softdep_process_worklist __P((struct mount *));
 static	void softdep_move_dependencies __P((struct buf *, struct buf *));
 static	int softdep_count_dependencies __P((struct buf *bp, int));
@@ -4663,8 +4664,9 @@ merge_inode_lists(inodedep)
  * entries for the inode have been written after the inode gets to disk.
  */
 static int
-softdep_fsync(vp)
+softdep_fsync(vp, f)
 	struct vnode *vp;	/* the "in_core" copy of the inode */
+	int f;			/* Flags */
 {
 	struct diradd *dap;
 	struct inodedep *inodedep;
@@ -4679,6 +4681,7 @@ softdep_fsync(vp)
 	int error, flushparent;
 	ino_t parentino;
 	daddr_t lbn;
+	int l;
 
 	ip = VTOI(vp);
 	fs = ip->i_fs;
@@ -4777,6 +4780,14 @@ softdep_fsync(vp)
 			break;
 	}
 	FREE_LOCK(&lk);
+	if (f & FSYNC_CACHE) {
+		/*
+		 * If requested, make sure all of these changes don't
+		 * linger in disk caches
+		 */
+		l = 0;
+		VOP_IOCTL(ip->i_devvp, DIOCCACHESYNC, &l, FWRITE, p->p_ucred, p);
+	}
 	return (0);
 }
 

@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_log.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.8.1 2005/02/12 18:17:52 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.75.2.5 2004/07/13 14:25:36 darrenr Exp
+ * Id: ip_log.c,v 2.75.2.6 2004/10/16 07:59:27 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.1 2004/10/01 15:26:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.1.8.1 2005/02/12 18:17:52 yamt Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -161,6 +161,7 @@ int	ipl_buffer_sz;
 int	ipl_logmax = IPL_LOGMAX;
 int	ipl_logall = 0;
 int	ipl_log_init = 0;
+int	ipl_logsize = IPFILTER_LOGSIZE;
 int	ipl_magic[IPL_LOGSIZE] = { IPL_MAGIC, IPL_MAGIC_NAT, IPL_MAGIC_STATE,
 				   IPL_MAGIC, IPL_MAGIC, IPL_MAGIC,
 				   IPL_MAGIC, IPL_MAGIC };
@@ -459,7 +460,7 @@ int *types, cnt;
 		return -1;
 	SPL_NET(s);
 	MUTEX_ENTER(&ipl_mutex);
-	if ((iplused[dev] + len) > IPFILTER_LOGSIZE) {
+	if ((iplused[dev] + len) > ipl_logsize) {
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
 		KFREES(buf, len);
@@ -554,7 +555,7 @@ struct uio *uio;
 	if (uio->uio_resid == 0)
 		return 0;
 	if ((uio->uio_resid < sizeof(iplog_t)) ||
-	    (uio->uio_resid > IPFILTER_LOGSIZE))
+	    (uio->uio_resid > ipl_logsize))
 		return EINVAL;
 
 	/*

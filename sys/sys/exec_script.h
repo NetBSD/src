@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.h,v 1.10 2003/06/29 22:32:24 fvdl Exp $	*/
+/*	$NetBSD: exec_script.h,v 1.10.12.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
 #ifdef _KERNEL
 
 /* the shell script handler's entry in the exec switch */
-int	exec_script_makecmds __P((struct proc *, struct exec_package *));
+int	exec_script_makecmds(struct proc *, struct exec_package *);
 
 #endif /* _KERNEL */
 
