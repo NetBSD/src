@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.33 2000/02/20 17:07:01 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.34 2000/02/22 05:47:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -598,6 +598,8 @@ explore_fqdn(pai, hostname, servname, res)
 	return 0;
 
 free:
+	if (result)
+		freeaddrinfo(result);
 	return error;
 }
 
