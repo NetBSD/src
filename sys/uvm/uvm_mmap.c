@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.38 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.39 2000/03/28 18:45:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -403,6 +403,9 @@ sys_mmap(p, v, retval)
 		if (vp->v_type != VREG && vp->v_type != VCHR &&
 		    vp->v_type != VBLK)
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
+
+		if (vp->v_type == VREG && (pos + size) < pos)
+			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
 		if (vp->v_type == VCHR && iszerodev(vp->v_rdev)) {
