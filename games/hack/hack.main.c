@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.4 1997/10/19 16:58:11 christos Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.5 2000/03/02 18:19:06 kleink Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.4 1997/10/19 16:58:11 christos Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.5 2000/03/02 18:19:06 kleink Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -184,7 +184,9 @@ main(argc, argv)
 		locknum = MAX_NR_OF_PLAYERS;
 #endif
 #ifdef DEF_PAGER
-	if (!(catmore = getenv("HACKPAGER")) && !(catmore = getenv("PAGER")))
+	if (((catmore = getenv("HACKPAGER")) == NULL &&
+	    (catmore = getenv("PAGER")) == NULL) ||
+	    catmore[0] == '\0')
 		catmore = DEF_PAGER;
 #endif
 #ifdef MAIL
