@@ -300,11 +300,9 @@ nbsd_thread_fetch_registers (int regno)
       if ((val = td_thr_getregs (thread, 0, &gregs)) != 0)
 	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
 	       td_err_string (val));
-      if ((val = td_thr_getregs (thread, 1, &fpregs)) != 0)
-	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
-	       td_err_string (val));
       supply_gregset (&gregs);
-      supply_fpregset (&fpregs);
+      if ((val = td_thr_getregs (thread, 1, &fpregs)) == 0)
+	      supply_fpregset (&fpregs);
     }
   else
     {
