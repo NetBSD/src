@@ -1,6 +1,6 @@
-# $NetBSD: md.dreamcast,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.dreamcast,v 1.9 2004/02/27 23:02:45 uwe Exp $
 ./usr/include/dreamcast				comp-c-include
-./usr/include/dreamcast/_G_config.h		comp-c-include
+./usr/include/dreamcast/_G_config.h		comp-obsolete		obsolete
 ./usr/include/dreamcast/ansi.h			comp-c-include
 ./usr/include/dreamcast/aout_machdep.h		comp-c-include
 ./usr/include/dreamcast/asm.h			comp-c-include
