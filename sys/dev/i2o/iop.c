@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.2 2000/11/09 12:51:36 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.3 2000/11/09 17:20:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1270,7 +1270,7 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
 int
 iop_msg_send(struct iop_softc *sc, struct iop_msg *im, int timo)
 {
-	u_int32_t mfa, mask;
+	u_int32_t mfa;
 	int rv, status, i, s;
 
 #ifdef I2ODEBUG
