@@ -1,20 +1,15 @@
-#	$NetBSD: Makefile,v 1.8 2002/02/02 23:21:45 perry Exp $
-
-# Note that the order here is picked to look much like that in the
-# original Makefile.in in order to make it easier to visually compare
-# when updating to a new version of Postfix.
+#	$NetBSD: Makefile,v 1.9 2002/12/24 21:21:03 perry Exp $
 
 # The first four of these are libraries and have to be built first.
 
 .include <bsd.own.mk>
 
-SUBDIR= util global dns masterlib .WAIT master postfix \
-	sendmail error pickup cleanup smtpd local \
-	lmtp trivial-rewrite qmgr smtp bounce pipe \
-	showq postalias postcat postconf postdrop \
-        postkick postlock postlog postmap postqueue \
-        postsuper nqmgr spawn flush virtual man README_FILES \
-	# smtpstone qmqpd proto html 
+SUBDIR=	util global dns masterlib .WAIT \
+	README_FILES bounce cleanup error flush html \
+	lmtp local man master nqmgr pickup pipe postalias \
+	postcat postconf postdrop postfix postkick postlock \
+	postlog postmap postqueue postsuper qmgr sendmail \
+	showq smtp smtpd spawn trivial-rewrite virtual
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
@@ -27,8 +22,7 @@ SUBDIR+=conf
 # share/examples/postfix, and postfix-etc/Makefile (only called by
 # make distribution) installs a copy in /etc/postfix
 
-# also not built: smtpstone (unneeded)
-# and html (unsure what to do with it (yet))
+# also not built: smtpstone (unneeded), qmqpd (unneeded)
 
 # The distribution: target is invoked from the make distribution
 # target in src/etc/Makefile. It is there for building the /etc/
