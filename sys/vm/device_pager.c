@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.7 1993/11/03 14:49:22 cgd Exp $
+ *	$Id: device_pager.c,v 1.8 1993/11/10 08:11:47 cgd Exp $
  */
 
 /*
@@ -169,7 +169,7 @@ top:
 		pager->pg_handle = handle;
 		pager->pg_ops = &devicepagerops;
 		pager->pg_type = PG_DEVICE;
-		pager->pg_data = devp;
+		pager->pg_data = (caddr_t)devp;
 		queue_init(&devp->devp_pglist);
 		/*
 		 * Allocate object and associate it with the pager.
@@ -339,10 +339,29 @@ dev_pager_getfake(paddr)
 		}
 	}
 	queue_remove_first(&dev_pager_fakelist, m, vm_page_t, pageq);
-	m->busy = 1;
+
+        /*
+	 * in 4.4, there is 'flags'.  I HATE BIT-FIELDS!!!
+	 * this chunk is the translation from hibler's new code
+	 *	m->flags = PG_BUSY | PG_CLEAN | PG_FAKE | PG_FICTITIOUS;
+	 * to ours:
+	 */
+	m->absent = 0;		/* no analog in the 4.4 flags */
+	m->inactive = 0;
+	m->active = 0;
+	m->laundry = 0;
 	m->clean = 1;
-	m->fake = 1;
+	m->busy = 1;
+	m->wanted = 0;
+	m->tabled = 0;
+	m->copy_on_write = 0;
 	m->fictitious = 1;
+	m->fake = 1;
+#ifdef DEBUG
+	m->pagerowned = 0;
+	m->ptpage = 0;
+#endif /* DEBUG */
+
 	m->phys_addr = paddr;
 	m->wire_count = 1;
 	return(m);
