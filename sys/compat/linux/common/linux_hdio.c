@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.1.4.5 2002/05/29 21:32:38 nathanw Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.1.4.6 2002/07/08 21:03:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.1.4.5 2002/05/29 21:32:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.1.4.6 2002/07/08 21:03:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		if (error == 0)
 			break;
 		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
-		error = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
+		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			break;
