@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 13:27:48 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/19 00:36:09 matt Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -14,12 +14,20 @@ SRCS.bsd=	bsd_init.c bsd_io.c bsd_VTsw.c libc_wrapper.c std_kbdEv.c \
 		kmod_noop.c bsd_kbd.c bsd_KbdMap.c at_scancode.c
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/linux
+.if ${MACHINE} == "amd64"
+SRCS.bsd+=	pm_noop.c
+.endif
 .if ${MACHINE} == "i386"
-SRCS.bsd+=	i386_video.c stdResource.c bsd_apm.c lnx_agp.c ioperm_noop.c
+SRCS.bsd+=	bsd_apm.c
+.endif
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
+SRCS.bsd+=	i386_video.c stdResource.c lnx_agp.c ioperm_noop.c
 .for _FN in ${SRCS.bsd}
-CPPFLAGS.${_FN}=	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT \
-			-DHAS_APERTURE_DRV -DUSE_I386_IOPL -DUSESTDRES \
-			-DHAS_MTRR_BUILTIN -DHAVE_SYSV_IPC
+.if ${MACHINE} == "i386"
+CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DHAS_APERTURE_DRV \
+			-DHAS_MTRR_BUILTIN -DUSE_I386_IOPL 
+.endif
+CPPFLAGS.${_FN}+=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
@@ -33,7 +41,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bus
 SRCS.bus=	Pci.c
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 SRCS.bus+=	ix86Pci.c
 .endif
 
@@ -52,7 +60,7 @@ CPPFLAGS.IODelay.S=	-DUSE_GAS
 CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .endif
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "macppc"
 SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
