@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.2 2003/09/03 03:18:31 mycroft Exp $ */
+/*	$NetBSD: sscom.c,v 1.3 2003/10/05 06:57:20 bsh Exp $ */
 
 
 /*
@@ -74,8 +74,12 @@
 
 #include <sys/types.h>
 #include <arch/arm/s3c2xx0/s3c2xx0reg.h>
-#include <arch/arm/s3c2xx0/s3c24x0reg.h>
+#ifdef	CPU_S3C2410
 #include <arch/arm/s3c2xx0/s3c2410reg.h>
+#endif
+#ifdef	CPU_S3C2800
+#include <arch/arm/s3c2xx0/s3c2800reg.h>
+#endif
 #include <lib/libsa/stand.h>
 
 #include "board.h"
@@ -91,7 +95,7 @@
 
 #define	ISSET(t,f)	((t) & (f))
 
-long get_com_freq(void);
+static long get_com_freq(void);
 
 static int
 sscomspeed(long speed)
@@ -179,4 +183,44 @@ putchar(int c)
 	if (c == '\n')
 		iputchar('\r');
 	iputchar(c);
+}
+
+
+#define read_reg(addr)	(*(volatile uint32_t *)(addr))
+
+static long
+get_com_freq(void)
+{
+	long clk;
+#ifdef	CPU_S3C2800
+	uint32_t pllcon = read_reg(S3C2800_CLKMAN_BASE+CLKMAN_PLLCON);
+	uint32_t div = read_reg(S3C2800_CLKMAN_BASE+CLKMAN_CLKCON);
+#define	HDIV	CLKCON_HCLK
+#define PDIV	CLKCON_PCLK
+#endif
+#ifdef	CPU_S3C2410
+	uint32_t pllcon = read_reg(S3C2410_CLKMAN_BASE+CLKMAN_MPLLCON);
+	uint32_t div = read_reg(S3C2410_CLKMAN_BASE+CLKMAN_CLKDIVN);
+#define	HDIV	CLKDIVN_HDIVN
+#define PDIV	CLKDIVN_PDIVN
+#endif
+
+	int mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
+	int pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
+	int sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
+
+#if XTAL_CLK < 1000   /* in MHz */
+	clk = (XTAL_CLK * 1000000 * (8 + mdiv)) / ((pdiv + 2) << sdiv);
+#else /* in Hz */
+	clk = (XTAL_CLK * (8 + mdiv)) / ((pdiv + 2) << sdiv);
+#endif
+
+	/*printf( "M=%d P=%d S=%d\n", mdiv, pdiv, sdiv);*/
+
+	if (div & HDIV)
+		clk /= 2;
+	if (div & PDIV)
+		clk /= 2;
+
+	return clk;
 }
