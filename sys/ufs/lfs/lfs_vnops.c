@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.4 1994/12/13 20:16:25 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.5 1994/12/13 20:51:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -427,9 +427,12 @@ lfs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime = ip->i_atime;
-	vap->va_mtime = ip->i_mtime;
-	vap->va_ctime = ip->i_ctime;
+	vap->va_atime.ts_sec = ip->i_atime.ts_sec;
+	vap->va_atime.ts_nsec = ip->i_atime.ts_nsec;
+	vap->va_mtime.ts_sec = ip->i_mtime.ts_sec;
+	vap->va_mtime.ts_nsec = ip->i_mtime.ts_nsec;
+	vap->va_ctime.ts_sec = ip->i_ctime.ts_sec;
+	vap->va_ctime.ts_nsec = ip->i_ctime.ts_nsec;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
