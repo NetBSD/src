@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.8 1999/08/06 23:40:10 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.9 2000/01/24 00:00:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -159,7 +159,10 @@ main(argc, argv)
 
 	printf("    CHECKING RESIDENCY\n");
 
-	(void) check_residency(addr, npgs);
+	if (check_residency(addr, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
 
 	printf("    LOCKING ALL - CURRENT and FUTURE\n");
 
@@ -244,7 +247,14 @@ main(argc, argv)
 
 	memset(addr, 0, npgs * pgsize);
 
-	printf(">>> MADV_FREE'ING FIRST ANYMOUS REGION AGAIN <<<\n");
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != npgs) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	printf(">>> MADV_FREE'ING FIRST ANONYMOUS REGION AGAIN <<<\n");
 
 	if (madvise(addr, npgs * pgsize, MADV_FREE) == -1)
 		err(1, "madvise");
@@ -329,7 +339,15 @@ main(argc, argv)
 	if ((addr = shmat(shmid, NULL, 0)) == (void *) -1)
 		err(1, "shmat");
 
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
 	printf("    ZEROING SEGMENT\n");
+
 	memset(addr, 0, npgs * pgsize);
 
 	printf("    CHECKING RESIDENCY\n");
