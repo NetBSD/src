@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.99 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.100 2001/01/01 16:02:51 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -822,10 +822,14 @@ mi_switch(struct proc *p)
 	 */
 	rlim = &p->p_rlimit[RLIMIT_CPU];
 	if (s >= rlim->rlim_cur) {
+		/*
+		 * XXXSMP: we're inside the scheduler lock perimeter;
+		 * use sched_psignal.
+		 */
 		if (s >= rlim->rlim_max)
-			psignal(p, SIGKILL);
+			sched_psignal(p, SIGKILL);
 		else {
-			psignal(p, SIGXCPU);
+			sched_psignal(p, SIGXCPU);
 			if (rlim->rlim_cur < rlim->rlim_max)
 				rlim->rlim_cur += 5;
 		}
