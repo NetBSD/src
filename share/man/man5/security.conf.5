@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.14 2001/09/11 01:01:58 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.15 2001/10/01 03:02:34 atatat Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 25, 1998
+.Dd September 30, 2001
 .Dt SECURITY.CONF 5
 .Os
 .Sh NAME
@@ -96,6 +96,10 @@ and display any differences in those and the previous copies
 as per
 .Sy check_changelist
 below.
+.It Sy check_pkgs
+This stores a list of all installed pkgs into
+.Pa /var/backups/pkgs
+and checks it for any changes.
 .It Sy check_changelist
 This updates the list of files in
 .Pa /etc/changelist
@@ -119,6 +123,22 @@ is enabled, this determines the maximum permitted length of login names.
 .It Sy backup_dir
 Change the backup directory from
 .Pa /var/backup .
+.It Sy pkg_dbdir
+Change the pkg database directory from
+.Pa /var/db/pkg
+when
+.Sy check_pkgs
+is enabled.
+.It Sy backup_uses_rcs
+Use
+.Xr rcs 1
+for maintaining backup copies of files noted in
+.Sy check_devices ,
+.Sy check_disklabels ,
+.Sy check_pkgs ,
+and
+.Sy check_changelist
+instead of just keeping a current copy and a backup copy.
 .El
 .Sh FILES
 .Bl -tag -width /etc/security.local -compact
@@ -141,3 +161,9 @@ The
 .Sy check_disklabels
 functionality was added in
 .Nx 1.4 .
+The
+.Sy backup_uses_rcs
+and
+.Sy check_pkgs
+features were added in
+.Nx 1.6 .
