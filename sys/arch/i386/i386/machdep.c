@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.243 1997/08/14 16:21:49 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.244 1997/08/15 00:45:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1822,11 +1822,11 @@ cpu_reset()
 }
 
 int
-i386_memio_map(t, bpa, size, cacheable, bshp)
+i386_memio_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 	int error;
@@ -1835,9 +1835,11 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == I386_BUS_SPACE_IO)
+	if (t == I386_BUS_SPACE_IO) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	else if (t == I386_BUS_SPACE_MEM)
+	} else if (t == I386_BUS_SPACE_MEM)
 		ex = iomem_ex;
 	else
 		panic("i386_memio_map: bad bus space tag");
@@ -1863,7 +1865,8 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = i386_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = i386_mem_add_mapping(bpa, size,
+		(flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -1877,11 +1880,11 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-_i386_memio_map(t, bpa, size, cacheable, bshp)
+_i386_memio_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 
@@ -1889,6 +1892,8 @@ _i386_memio_map(t, bpa, size, cacheable, bshp)
 	 * For I/O space, just fill in the handle.
 	 */
 	if (t == I386_BUS_SPACE_IO) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
 		*bshp = bpa;
 		return (0);
 	}
@@ -1897,16 +1902,17 @@ _i386_memio_map(t, bpa, size, cacheable, bshp)
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	return (i386_mem_add_mapping(bpa, size, cacheable, bshp));
+	return (i386_mem_add_mapping(bpa, size,
+	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp));
 }
 
 int
-i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+i386_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
 	bus_size_t size, alignment, boundary;
-	int cacheable;
+	int flags;
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
@@ -1917,9 +1923,11 @@ i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == I386_BUS_SPACE_IO)
+	if (t == I386_BUS_SPACE_IO) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	else if (t == I386_BUS_SPACE_MEM)
+	} else if (t == I386_BUS_SPACE_MEM)
 		ex = iomem_ex;
 	else
 		panic("i386_memio_alloc: bad bus space tag");
@@ -1952,7 +1960,8 @@ i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = i386_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = i386_mem_add_mapping(bpa, size,
+	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
