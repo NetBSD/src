@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.26 1994/03/29 04:36:01 mycroft Exp $
+ *	$Id: if_is.c,v 1.27 1994/04/07 06:50:52 mycroft Exp $
  */
 
 /* TODO
@@ -80,6 +80,7 @@ char *chip_type[] = {"unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
  */
 struct is_softc {
 	struct	device sc_dev;
+	struct	intrhand sc_ih;
 
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
 	u_short	sc_iobase;		/* IO base address of card */
@@ -96,7 +97,7 @@ struct is_softc {
 	caddr_t sc_bpf;		      /* BPF "magic cookie" */
 };
 
-int isintr __P((int));	/* XXX can't be renamed till new interrupt code */
+int isintr __P((struct is_softc *));
 int is_ioctl __P((struct ifnet *, int, caddr_t));
 int is_start __P((struct ifnet *));
 int is_watchdog __P((/* short */));
@@ -338,6 +339,11 @@ isattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+	sc->sc_ih.ih_fun = isintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_NET;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 void
@@ -628,9 +634,9 @@ outloop:
  * Controller interrupt.
  */
 int
-isintr(unit)
+isintr(sc)
+	register struct is_softc *sc;
 {
-	register struct is_softc *sc = iscd.cd_devs[unit];
 	u_short isr;
 
 	isr = isrdcsr(sc, 0);

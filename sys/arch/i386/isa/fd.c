@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.35 1994/03/29 04:32:39 mycroft Exp $
+ *	$Id: fd.c,v 1.36 1994/04/07 06:50:32 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -297,13 +297,13 @@ fdcattach(parent, self, aux)
 	printf("\n");
 
 #ifdef NEWCONFIG
+	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
+#endif
 	fdc->sc_ih.ih_fun = fdcintr;
 	fdc->sc_ih.ih_arg = fdc;
-	intr_establish(ia->ia_irq, &fdc->sc_ih, DV_DISK);
-
-	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
-#endif
+	fdc->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &fdc->sc_ih);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
@@ -741,17 +741,6 @@ fdcpseudointr(fdc)
 	(void) fdcintr(fdc);
 	splx(s);
 }
-
-#ifndef NEWCONFIG
-int
-fdintr(unit)
-	int unit;
-{
-	struct fdc_softc *fdc = fdccd.cd_devs[unit];
-
-	return fdcintr(fdc);
-}
-#endif
 
 int
 fdcintr(fdc)

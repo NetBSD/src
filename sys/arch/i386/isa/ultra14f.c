@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.25 1994/03/29 04:30:26 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.26 1994/04/07 06:51:13 mycroft Exp $
  */
 
 /*
@@ -258,7 +258,7 @@ void uha_send_mbox __P((struct uha_softc *, struct mscp *));
 int uha_abort __P((struct uha_softc *, struct mscp *));
 int uha_poll __P((struct uha_softc *, int));
 u_int uha_adapter_info __P((struct uha_softc *));
-int uhaintr __P((int));
+int uhaintr __P((struct uha_softc *));
 void uha_done __P((struct uha_softc *, struct mscp *));
 void uha_free_mscp __P((struct uha_softc *, struct mscp *, int flags));
 struct mscp *uha_get_mscp __P((struct uha_softc *, int));
@@ -406,7 +406,7 @@ uha_poll(uha, wait)
 		return EIO;
 	}
 
-	uhaintr(uha->sc_dev.dv_unit);
+	uhaintr(uha);
 	return 0;
 }
 
@@ -495,11 +495,11 @@ uhaattach(parent, self, aux)
 
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
+#endif
 	uha->sc_ih.ih_fun = uhaintr;
 	uha->sc_ih.ih_arg = uha;
-	/* XXX and DV_TAPE, but either gives us splbio */
-	intr_establish(ia->ia_irq, &uha->sc_ih, DV_DISK);
-#endif
+	uha->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &uha->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -523,10 +523,9 @@ uha_adapter_info(uha)
  * Catch an interrupt from the adaptor
  */
 int
-uhaintr(unit)
-	int unit;
+uhaintr(uha)
+	struct uha_softc *uha;
 {
-	struct uha_softc *uha = uhacd.cd_devs[unit];
 	struct mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;
