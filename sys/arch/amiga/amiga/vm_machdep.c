@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 1999/07/08 18:05:23 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 1999/08/03 21:54:50 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -337,7 +337,7 @@ kvtop(addr)
 	paddr_t pa;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
-		panic("kvtop: zero page frame");
+		panic("kvtop: invalid page frame");
 	return (pa);
 }
 
