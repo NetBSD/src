@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.1 2001/10/11 07:07:42 leo Exp $	*/
+/*	$NetBSD: cread.c,v 1.2 2002/02/24 20:51:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -47,12 +47,15 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
+#define _CREAD_C	/* Turn of open/close/read redefines */
+
 #include <unistd.h>
 #include <string.h>
 #include <memory.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <zlib.h>
+#include <cread.h>
 
 #define __P(proto)		proto
 #define	SOPEN_MAX		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: libtos.h,v 1.4 2002/02/24 20:51:08 leo Exp $	*/
+/*	$NetBSD: biosrw.s,v 1.1 2002/02/24 20:51:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -30,55 +30,53 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LIBTOS_H
-#define _LIBTOS_H
+/* int	bios_read(buffer, offset, count, dev)	*/
 
-#ifdef __STDC__
-#define	PROTO(x)	x
-#define EXTERN
-#else
-#define	PROTO(x)	()
-#define	EXTERN		extern
-#endif
+	.globl	_bios_read
+	.text
+	.even
 
-#ifdef __GNUC__
-#if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 5))
-#define NORETURN	__attribute__((noreturn))
-#else
-#define	NORETURN
-#endif
-#endif
+_bios_read:
+	movml	d1-d2/a1-a2,sp@-
+	movl	sp@(24),sp@-		| offset
+	movw	sp@(38),sp@-		| device
+	movw	#-1,sp@-
+	movw	sp@(38),sp@-		| count
+	movl	sp@(30),sp@-		| buffer
+	movw	#8,sp@-			| read, physical mode
+	movw	#4,sp@-
+	trap	#13			| Rwabs()
+	lea	sp@(18),sp
+	movml	sp@+,d1-d2/a1-a2
+	rts
 
-#include <sys/types.h>
-#include <stdarg.h>
+/* int	bios_write(buffer, offset, count, dev)	*/
 
-#ifndef int8_t
-/*
- * My TOS/MiNT installation does not define these (Leo 09/10/2001).
- */
-typedef	unsigned char	u_int8_t;
-typedef	unsigned short	u_int16_t;
-typedef	unsigned long	u_int32_t;
-#endif /* int8_t */
+	.globl	_bios_write
+	.text
+	.even
 
-struct kparamb;
-struct osdsc;
+_bios_write:
+	movml	d1-d2/a1-a2,sp@-
+	movl	sp@(20),sp@-		| offset
+	movw	sp@(34),sp@-		| device
+	movw	#-1,sp@-
+	movw	sp@(34),sp@-		| count
+	movl	sp@(26),sp@-		| buffer
+	movw	#9,sp@-			| write, physical mode
+	movw	#4,sp@-
+	trap	#13			| Rwabs()
+	lea	sp@(18),sp
+	movml	sp@+,d1-d2/a1-a2
+	rts
 
-EXTERN int	aout_load	 PROTO((int, struct osdsc *, char **, int));
-EXTERN void	bsd_startup      PROTO((struct kparamb *)) NORETURN;
-EXTERN int	elf_load	 PROTO((int, struct osdsc *, char **, int));
-EXTERN int	eprintf          PROTO((char *, ...));
-EXTERN void	error            PROTO((int, char *, ...));
-EXTERN void	fatal            PROTO((int, char *, ...)) NORETURN;
-EXTERN void	init_toslib      PROTO((char *));
-EXTERN int	key_wait         PROTO((char *));
-EXTERN void	press_any_key    PROTO((void));
-EXTERN void	redirect_output  PROTO((char *));
-EXTERN void	set_wait_for_key PROTO((void));
-EXTERN void	sys_info	 PROTO((struct osdsc *));
-EXTERN int	veprintf         PROTO((char *, va_list));
-EXTERN void	xexit            PROTO((int)) NORETURN;
-EXTERN void *	xmalloc          PROTO((size_t));
-EXTERN void *	xrealloc         PROTO((void *, size_t));
+/* int	bios_critic(error)			*/
 
-#endif	/* !_LIBTOS_H */
+	.globl	_bios_critic
+	.text
+	.even
+
+_bios_critic:
+	movw	sp@(4),d0
+	extl	d0
+	rts

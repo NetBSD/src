@@ -1,7 +1,7 @@
-/*	$NetBSD: biosrw.s,v 1.1.1.1 1996/01/07 21:54:15 leo Exp $	*/
+/*	$NetBSD: ahdi.c,v 1.1 2002/02/24 20:51:07 leo Exp $	*/
 
 /*
- * Copyright (c) 1995 Waldi Ravens.
+ * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by Waldi Ravens.
+ *      This product includes software developed by
+ *			Leo Weppelman and Waldi Ravens.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,53 +31,62 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* int	bios_read(buffer, offset, count, dev)	*/
+#include <sys/types.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <xhdi.h>
+#include "libtos.h"
+#include "diskio.h"
+#include "ahdilbl.h"
 
-	.globl	_bios_read
-	.text
-	.even
+u_int
+ahdi_getparts(dd, ptable, rsec, esec)
+	disk_t			*dd;
+	ptable_t		*ptable;
+	u_int			rsec,
+				esec;
+{
+	struct ahdi_part	*part, *end;
+	struct ahdi_root	*root;
+	u_int			rv;
 
-_bios_read:
-	movml	d1-d2/a1-a2,sp@-
-	movl	sp@(24),sp@-		| offset
-	movw	sp@(38),sp@-		| device
-	movw	#-1,sp@-
-	movw	sp@(38),sp@-		| count
-	movl	sp@(30),sp@-		| buffer
-	movw	#8,sp@-			| read, physical mode
-	movw	#4,sp@-
-	trap	#13			| Rwabs()
-	lea	sp@(18),sp
-	movml	sp@+,d1-d2/a1-a2
-	rts
+	root = disk_read(dd, rsec, 1);
+	if (!root) {
+		rv = rsec + (rsec == 0);
+		goto done;
+	}
 
-/* int	bios_write(buffer, offset, count, dev)	*/
-
-	.globl	_bios_write
-	.text
-	.even
-
-_bios_write:
-	movml	d1-d2/a1-a2,sp@-
-	movl	sp@(20),sp@-		| offset
-	movw	sp@(34),sp@-		| device
-	movw	#-1,sp@-
-	movw	sp@(34),sp@-		| count
-	movl	sp@(26),sp@-		| buffer
-	movw	#9,sp@-			| write, physical mode
-	movw	#4,sp@-
-	trap	#13			| Rwabs()
-	lea	sp@(18),sp
-	movml	sp@+,d1-d2/a1-a2
-	rts
-
-/* int	bios_critic(error)			*/
-
-	.globl	_bios_critic
-	.text
-	.even
-
-_bios_critic:
-	movw	sp@(4),d0
-	extl	d0
-	rts
+	if (rsec == AHDI_BBLOCK)
+		end = &root->ar_parts[AHDI_MAXRPD];
+	else end = &root->ar_parts[AHDI_MAXARPD];
+	for (part = root->ar_parts; part < end; ++part) {
+		u_int	id = *((u_int32_t *)&part->ap_flg);
+		if (!(id & 0x01000000))
+			continue;
+		if ((id &= 0x00ffffff) == AHDI_PID_XGM) {
+			u_int	offs = part->ap_st + esec;
+			rv = ahdi_getparts(dd, ptable, offs,
+					esec == AHDI_BBLOCK ? offs : esec);
+			if (rv)
+				goto done;
+		} else {
+			part_t	*p;
+			u_int	i = ++ptable->nparts;
+			ptable->parts = xrealloc(ptable->parts,
+						i * sizeof *ptable->parts);
+			p = &ptable->parts[--i];
+			*((u_int32_t *)&p->id) = id << 8;
+			p->start = part->ap_st + rsec;
+			p->end   = p->start + part->ap_size - 1;
+			p->rsec  = rsec;
+			p->rent  = part - root->ar_parts;
+			p->mod   = 0;
+		}
+	}
+	rv = 0;
+done:
+	free(root);
+	return(rv);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.2 2001/10/13 19:50:36 leo Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.3 2002/02/24 20:51:08 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,9 @@
 #include <machine/cpu.h>
 #endif /* TOSTOOLS */
 
+#include "libtos.h"
 #include "tosdefs.h"
 #include "kparamb.h"
-#include "libtos.h"
 /*
  * Extract memory and cpu/fpu info from system.
  */
