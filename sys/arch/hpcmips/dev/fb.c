@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2 1999/09/26 10:22:10 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.3 1999/10/24 08:37:29 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -63,7 +63,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.2 1999/09/26 10:22:10 takemura Exp $";
+    "$Id: fb.c,v 1.3 1999/10/24 08:37:29 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -81,12 +81,12 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 
-#include <arch/hpcmips/dev/fbvar.h>
-
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <arch/hpcmips/dev/fbvar.h>
 
 #define FBDEBUG
 #ifdef FBDEBUG
@@ -157,7 +157,9 @@ struct wsdisplay_accessops fb_accessops = {
 	0 /* load_font */
 };
 
+static int fbconsole, fb_console_type;
 struct fb_devconfig fb_console_dc;
+struct wsscreen_descr fb_console_screen;
 
 /*
  *  function bodies
@@ -194,13 +196,11 @@ fbattach(parent, self, aux)
 	struct fb_softc *sc = (struct fb_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	struct wsemuldisplaydev_attach_args wa;
-	int console;
 
 	/* avoid warning */
-	console = (int)ma->ma_iot;
+	ma->ma_iot = ma->ma_iot;
 
-	console = 0;
-	if (console) {
+	if (fbconsole) {
 		sc->sc_dc = &fb_console_dc;
 		sc->nscreens = 1;
 	} else {
@@ -221,12 +221,55 @@ fbattach(parent, self, aux)
 
 	printf("\n");
 
-	wa.console = 0;
+	wa.console = fbconsole;
 	wa.scrdata = &fb_screenlist;
 	wa.accessops = &fb_accessops;
 	wa.accesscookie = sc;
 
 	config_found(self, &wa, wsemuldisplaydevprint);
+}
+
+int
+fb_cnattach(iot, memt, type, check)
+	bus_space_tag_t iot, memt;
+	int type, check;
+{
+	long defattr = 0;
+
+	/*
+	  We can't probe because we have no real device yet.
+
+	if (check && ! fb_probe(iot, memt))
+		return (ENXIO);
+	*/
+
+	bzero(&fb_console_dc, sizeof(struct fb_devconfig));
+	if (fb_getdevconfig(&fb_console_dc) != 0) {
+		return (ENXIO);
+	}
+
+	fb_console_screen = fb_stdscreen;
+	fb_console_screen.nrows = fb_console_dc.dc_rcons.rc_maxrow;
+	fb_console_screen.ncols = fb_console_dc.dc_rcons.rc_maxcol;
+
+	wsdisplay_cnattach(&fb_console_screen, &fb_console_dc.dc_rcons,
+			   0, 0, defattr);
+
+	fbconsole = 1;
+	fb_console_type = type;
+
+	return (0);
+}
+
+void fb_cons_test_xxx(char a);
+
+void
+fb_cons_test_xxx(char a)
+{
+	static int col = 0;
+	fb_console_screen.textops->putchar(&fb_console_dc.dc_rcons,
+					   0, col++, a, 0);
+
 }
 
 int
@@ -295,9 +338,6 @@ fb_getdevconfig(dc)
 	rcp->rc_ccolp = &rcp->rc_ccol;
 	rcons_init(rcp, 34, 80);
 
-	fb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
-	fb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
-
 	return (0);
 }
 
@@ -309,7 +349,16 @@ fb_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	DPRINTF(("%s(%d): fb_ioctl()\n", __FILE__, __LINE__));
+	switch (cmd) {
+	case WSKBDIO_BELL:
+		return (0);
+		break;
+
+	default:
+		DPRINTF(("%s(%d): fb_ioctl(%ld, %lx)\n",
+			 __FILE__, __LINE__, cmd, (u_long)data));
+		break;
+	}
 
 	return (-1);
 }

@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.3 1999/10/18 09:42:12 enami Exp $
+# 	$NetBSD: GENERIC,v 1.4 1999/10/24 08:37:28 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -86,7 +86,7 @@ options		WSDISPLAY_DEFAULTSCREENS=4
 # Workstation Console attachments
 fb*	at mainbus0
 wsdisplay*	at	fb?
-#wskbd*		at	pckbd? mux 1
+wskbd*		at	vrkiu? mux 1
 #wsmouse*	at	pms? mux 0
 
 
