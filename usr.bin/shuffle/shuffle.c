@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.9 2001/03/16 08:02:32 mycroft Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.10 2001/05/29 23:22:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.9 2001/03/16 08:02:32 mycroft Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.10 2001/05/29 23:22:42 perry Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -44,23 +44,23 @@ __RCSID("$NetBSD: shuffle.c,v 1.9 2001/03/16 08:02:32 mycroft Exp $");
 #include <errno.h>
 #include <sys/time.h>
 
-static void enomem __P((void));
-static void *emalloc __P((size_t));
-static void *erealloc __P((void *, size_t));
+static void enomem(void);
+static void *emalloc(size_t);
+static void *erealloc(void *, size_t);
 
-static size_t *get_shuffle __P((size_t));
-static void usage __P((void));
-static void get_lines __P((const char *, char ***, size_t *));
-static size_t get_number __P((const char *, int));
+static size_t *get_shuffle(size_t);
+static void usage(void);
+static void get_lines(const char *, char ***, size_t *);
+static size_t get_number(const char *, int);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 /*
  * enomem --
  *	die when out of memory.
  */
 static void
-enomem()
+enomem(void)
 {
 	errx(2, "Cannot allocate memory.");
 }
@@ -70,8 +70,7 @@ enomem()
  *	malloc, but die on error.
  */
 static void *
-emalloc(len)
-	size_t len;
+emalloc(size_t len)
 {
 	void *p;
 
@@ -85,9 +84,7 @@ emalloc(len)
  *	realloc, but die on error.
  */
 void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
+erealloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem();
@@ -99,8 +96,7 @@ erealloc(ptr, size)
  *	Construct a random shuffle array of t elements
  */
 static size_t *
-get_shuffle(t)
-	size_t t;
+get_shuffle(size_t t)
 {
 	size_t *shuffle;
 	size_t i, j, k, temp;
@@ -130,7 +126,7 @@ get_shuffle(t)
  *	Print a usage message and exit
  */
 static void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr,
@@ -145,10 +141,7 @@ usage()
  *	Return an array of lines read from input
  */
 static void
-get_lines(fname, linesp, nlinesp)
-	const char *fname;
-	char ***linesp;
-	size_t *nlinesp;
+get_lines(const char *fname, char ***linesp, size_t *nlinesp)
 {
 	FILE *fp;
 	char *line;
@@ -185,9 +178,7 @@ get_lines(fname, linesp, nlinesp)
  *	Return a number or exit on error
  */
 static size_t
-get_number(str, ch)
-	const char *str;
-	int ch;
+get_number(const char *str, int ch)
 {
 	char *estr;
 	long number = strtol(str, &estr, 0);
@@ -202,9 +193,7 @@ get_number(str, ch)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int i, nflag = 0, pflag = 0, ch;
 	char *fname = NULL;
