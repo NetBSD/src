@@ -206,49 +206,49 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 
-as.info: as.texinfo
-as.dvi: as.texinfo
-
-
-DVIPS = dvips
-
-.texi.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texi.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.texi:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.txi.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-.dvi.ps:
-	$(DVIPS) $< -o $@
+#  as.info: as.texinfo
+#  as.dvi: as.texinfo
+#  
+#  
+#  DVIPS = dvips
+#  
+#  .texi.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .texi:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .txi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  .dvi.ps:
+#  	$(DVIPS) $< -o $@
 
 install-info-am: $(INFO_DEPS)
 	@$(NORMAL_INSTALL)
@@ -445,18 +445,18 @@ installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
-asconfig.texi: $(CONFIG).texi
-	rm -f asconfig.texi
-	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
-
-#gasver.texi: Makefile
-#	rm -f $@
-#	echo '@set VERSION $(VERSION)' > $@
-
-#as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
-as.dvi: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#  asconfig.texi: $(CONFIG).texi
+#  	rm -f asconfig.texi
+#  	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+#  	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+#  	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+#  
+#  gasver.texi: Makefile
+#  	rm -f $@
+#  	echo '@set VERSION $(VERSION)' > $@
+#  
+#  as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#  as.dvi: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 
 # We want install to imply install-info as per GNU standards, despite the
 # cygnus option.
@@ -467,17 +467,17 @@ install: install-info
 # We need it for the taz target in ../../Makefile.in.
 info: $(MANS)
 
-# Build the man page from the texinfo file
-# The sed command removes the no-adjust Nroff command so that
-# the man output looks standard.
-#as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
-#	touch $@
-#	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
-#	-($(POD2MAN) as.pod | \
-#	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
-#	        mv -f $@.T$$$$ $@) || \
-#	        (rm -f $@.T$$$$ && exit 1)
-#	rm -f as.pod
+#  # Build the man page from the texinfo file
+#  # The sed command removes the no-adjust Nroff command so that
+#  # the man output looks standard.
+#  as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#  	touch $@
+#  	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
+#  	-($(POD2MAN) as.pod | \
+#  	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+#  	        mv -f $@.T$$$$ $@) || \
+#  	        (rm -f $@.T$$$$ && exit 1)
+#  	rm -f as.pod
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
