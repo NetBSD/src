@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2003/01/27 14:53:08 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135 2003/01/31 19:05:57 martin Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3050,6 +3050,7 @@ pmap_page_protect(pg, prot)
 	pv_check();
 }
 
+#ifdef PMAP_COUNT_DEBUG
 /*
  * count pages in pmap -- this can be slow.
  */
@@ -3086,6 +3087,11 @@ pmap_count_res(pm)
 		}
 	}
 	simple_unlock(&pm->pm_lock);
+
+	if (pm->pm_stats.resident_count != n) 
+		printf("pmap_count_resident: pm_stats = %ld, counted: %d\n", 
+		    pm->pm_stats.resident_count, n);
+
 	return n;
 }
 
@@ -3125,8 +3131,15 @@ pmap_count_wired(pm)
 		}
 	}
 	simple_unlock(&pm->pm_lock);
+
+	if (pm->pm_stats.wired_count != n) 
+		printf("pmap_count_wired: pm_stats = %ld, counted: %d\n", 
+		    pm->pm_stats.wired_count, n);
+
+
 	return n;
 }
+#endif	/* PMAP_COUNT_DEBUG */
 
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
