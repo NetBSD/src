@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/12/30 23:45:00 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2001/12/31 00:11:13 thorpej Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -19,7 +19,7 @@ COPTS+=		-fPIC
 
 .PATH:		${.CURDIR}/../common_elf
 
-OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o
+OBJS=		crt0.o gcrt0.o crtbegin.o crtbeginS.o crtend.o crtendS.o
 
 CLEANFILES+=	core a.out
 
@@ -43,16 +43,25 @@ crtbegin.o: crtbegin.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
+crtbeginS.o: crtbegin.c
+	@echo "${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
 crtend.o: crtend.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
+crtendS.o: crtend.c
+	@echo "${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
-
-LINKS=	${LIBDIR}/crtbegin.o ${LIBDIR}/crtbeginS.o \
-	${LIBDIR}/crtend.o ${LIBDIR}/crtendS.o
 
 .include <bsd.prog.mk>
