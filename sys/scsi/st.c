@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.46 1994/12/30 05:23:49 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.47 1995/03/25 18:41:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -139,6 +139,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	 */
 	{T_SEQUENTIAL, T_REMOV,
 	 "SANKYO  ", "CP525           ", "",     0, 0, {
+		ST_Q_FORCE_BLKSIZE, 512, 0,		/* minor 0-3 */
+		ST_Q_FORCE_BLKSIZE, 512, QIC_525,	/* minor 4-7 */
+		0, 0, QIC_150,				/* minor 8-11 */
+		0, 0, QIC_120				/* minor 12-15 */
+	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "ANRITSU ", "DMT780          ", "",     0, 0, {
 		ST_Q_FORCE_BLKSIZE, 512, 0,		/* minor 0-3 */
 		ST_Q_FORCE_BLKSIZE, 512, QIC_525,	/* minor 4-7 */
 		0, 0, QIC_150,				/* minor 8-11 */
