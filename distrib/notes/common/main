@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.134 2001/07/11 21:30:03 manu Exp $
+.\"	$NetBSD: main,v 1.135 2001/08/03 15:08:46 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1642,6 +1642,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jim Wise Ta Mt jwise@netbsd.org
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
+.It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
 .
