@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.5 1997/10/10 08:59:52 lukem Exp $	*/
+/*	$NetBSD: teach.c,v 1.6 1998/08/29 22:53:04 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.5 1997/10/10 08:59:52 lukem Exp $");
+__RCSID("$NetBSD: teach.c,v 1.6 1998/08/29 22:53:04 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -72,7 +72,7 @@ main(argc, argv)
 {
 	int     i;
 
-	signal(2, getout);
+	signal(SIGINT, getout);
 	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
 		errexit("teachgammon(gtty)");
 	noech = old;
