@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.20 1995/04/21 03:44:13 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.21 1995/04/29 20:23:39 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,28 +79,33 @@
 #define	iteoff(u,f)
 #endif
 
-static int	matchvideocard __P((/*struct device *parent, struct device *dev,
+static int	grf_match __P((/*struct device *parent, struct device *dev,
 				    void *aux*/));
 static void	grf_attach __P((struct device *parent, struct device *dev,
 				void *aux));
 
 static void	fake_internal __P((void));
-static int	grfprobe __P((struct nubus_hw *nu, int unit));
-static int	macvideo_init __P((struct grf_softc *gp, struct nubus_hw *nu));
-static int	macvideo_mode __P((struct grf_softc *gp, int cmd, void *arg));
+
+extern int	grfmv_probe __P((struct grf_softc *gp, nubus_slot *nu));
+extern int	grfmv_init __P((struct grf_softc *gp));
+extern int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+
+extern int	grfiv_probe __P((struct grf_softc *gp, nubus_slot *ignore));
+extern int	grfiv_init __P((struct grf_softc *gp));
+extern int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 
 struct cfdriver grfcd = {
-	NULL, "grf", matchvideocard, grf_attach, DV_DULL,
+	NULL, "grf", grf_match, grf_attach, DV_DULL,
 	sizeof(struct grf_softc)
 };
 
 struct grfdev grfdev[] = {
-	GID_MAC, GRFMAC, macvideo_init, macvideo_mode, "MacVideo",
+/* DrSW             (*gd_probe)() (*gd_init)() (*gd_mode)()  gd_desc */
+   NUBUS_DRSW_APPLE,  grfmv_probe,  grfmv_init,  grfmv_mode, "QD-compatible",
+               0xFF,  grfiv_probe,  grfiv_init,  grfiv_mode, "Internal video",
 };
 
 static int ngrfdev=(sizeof(grfdev) / sizeof(grfdev[0]));
-
-static int gNumGrfDev=0;
 
 #ifdef DEBUG
 static int grfdebug = 0xff;
@@ -110,119 +115,49 @@ static int grfdebug = 0xff;
 #define GDB_LOCK	0x08
 #endif
 
-/*
- * Normal init routine called by configure() code
- */
-grfprobe(nu, unit)
-	struct nubus_hw *nu;
-	int     unit;
-{
-	struct grf_softc *gp;
-
-	gp = grfcd.cd_devs[unit];
-
-	if ((gp->g_flags & GF_ALIVE) == 0 && !grfinit(nu, unit)) {
-		printf("\n");
-		return (0);
-	}
-	printf(": %d x %d ",
-		gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
-
-	if (gp->g_display.gd_colors == 2)
-		printf("monochrome");
-	else
-		printf("%d color", gp->g_display.gd_colors);
-
-	printf(" %s (%s) display\n",
-		grfdev[gp->g_type].gd_desc, nu->slot.name);
-
-	gp->g_data = (void *) &nu->slot;
-
-	return (1);
-}
-
 static int
-matchvideocard(parent, cf, aux)
-	struct device *parent;
-	struct device *cf;
-	void   *aux;
+grf_match(parent, match, aux)
+	struct	device *parent;
+	void	*match, *aux;
 {
-	struct nubus_hw *nu = (struct nubus_hw *) aux;
+	struct	grf_softc *sc = match;
+	nubus_slot *nu = (nubus_slot *) aux;
+	int	i, r;
 
-	return (nu->slot.type == NUBUS_VIDEO);
+	for (i = 0; i < ngrfdev; i++) {
+		if ((r = (*grfdev[i].gd_probe)(sc, nu)) > 0) {
+			sc->g_type = i;
+			bcopy(aux, &sc->sc_slot, sizeof(nubus_slot));
+			return r;
+		}
+	}
+	return 0;
 }
 
 static void
-grf_attach(parent, dev, aux)
-	struct device *parent, *dev;
+grf_attach(parent, self, aux)
+	struct device *parent, *self;
 	void   *aux;
 {
-	struct nubus_hw *nu = (struct nubus_hw *) aux;
+	struct grf_softc	*sc;
 
-	grfprobe(nu, dev->dv_unit);
-}
+	sc = (struct grf_softc *) self;
 
-int
-grfinit(nu, unit)
-	struct nubus_hw *nu;
-	int unit;
-{
-	struct grf_softc *gp;
-	struct grfreg *gr;
-	register struct grfdev *gd;
-
-	gp = grfcd.cd_devs[unit];
-
-	for (gd = grfdev; gd < &grfdev[ngrfdev]; gd++)
-		/* if (gd->gd_hardid == gr->gr_id2) */
-		break;
-	if (gd < &grfdev[ngrfdev] && (*gd->gd_init) (gp, nu)) {
-		gp->g_display.gd_id = gd->gd_softid;
-		gp->g_type = gd - grfdev;
-		gp->g_flags = GF_ALIVE;
-		return (1);
-	}
-	return (0);
-}
-
-static void 
-fake_internal()
-{
-	extern unsigned long int_video_start;
-	struct grf_softc *gp;
-	struct grfinfo *gi;
-	struct grfterm *gt;
-	struct grfmouse *gm;
-	int i, j;
-
-	if (int_video_start == 0) {
+	if ((*grfdev[sc->g_type].gd_init)(sc) == 0) {
+		printf("\n");
 		return;
 	}
-	for (i = 0; i < NGRF; i++) {
-		gp = grfcd.cd_devs[i];
-		if ((gp->g_flags & GF_ALIVE) == 0) {
-			break;
-		}
-	}
+	sc->g_flags = GF_ALIVE;
 
-	if (i == NGRF) {
-		printf("grf: not enough grf's to map internal video.\n");
-		return;
-	}
-	gp->g_type = 0;
-	gp->g_flags = GF_ALIVE;
+	printf(": %d x %d ", sc->curr_mode.width, sc->curr_mode.height);
 
-	gi = &(gp->g_display);
-	gi->gd_id = GRFMAC;
-	gi->gd_regsize = 0;
-	gi->gd_colors = 1;
-	gi->gd_planes = 1;
-	gi->gd_dwidth = gi->gd_fbwidth = 640;	/* XXX */
-	gi->gd_dheight = gi->gd_fbheight = 480;	/* XXX */
-	gi->gd_fbsize = gi->gd_dwidth * gi->gd_dheight;
-	gi->gd_fbrowbytes = 80;	/* XXX Hack */
-	gi->gd_fbaddr = (caddr_t) 0;
-	gp->g_fbkva = gi->gd_fbaddr;
+	if (sc->curr_mode.psize == 1)
+		printf("monochrome");
+	else
+		printf("%d color", 1 << sc->curr_mode.psize);
+
+	printf(" %s (%s) display\n",
+		grfdev[sc->g_type].gd_desc, sc->card_name);
 }
 
 /*ARGSUSED*/
@@ -233,19 +168,14 @@ grfopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	static int faked;	/* Whether we've faked internal video yet */
 	register struct grf_softc *gp;
 	int unit;
 	int error;
 
 	unit = GRFUNIT(dev);
 	gp = grfcd.cd_devs[unit];
-	if (!faked) {
-		fake_internal();
-		faked = 1;
-	}
 
-	if (unit >= NGRF || (gp->g_flags & GF_ALIVE) == 0)
+	if (unit >= grfcd.cd_ndevs || (gp->g_flags & GF_ALIVE) == 0)
 		return (ENXIO);
 
 	if ((gp->g_flags & (GF_OPEN | GF_EXCLUDE)) == (GF_OPEN | GF_EXCLUDE))
@@ -275,7 +205,6 @@ grfclose(dev, flag, mode, p)
 	gp = grfcd.cd_devs[GRFUNIT(dev)];
 
 	(void) grfoff(dev);
-	(void) grfunlock(gp);
 	gp->g_flags &= GF_ALIVE;
 
 	return (0);
@@ -291,17 +220,28 @@ grfioctl(dev, cmd, data, flag, p)
 {
 	register struct grf_softc *gp;
 	int     error;
+	int	unit = GRFUNIT(dev);
 
-	gp = grfcd.cd_devs[GRFUNIT(dev)];
+	gp = grfcd.cd_devs[unit];
 	error = 0;
 
 	switch (cmd) {
-	case OGRFIOCGINFO:
-		bcopy((caddr_t) & gp->g_display, data, sizeof(struct ogrfinfo));
+	case GRFIOCGINFO: /* XXX - This should go away as soon as X and	*/
+			  /*       dt are fixed to use GRFIOC*MODE*	*/
+		{ struct grfinfo *g;
+		  g = (struct grfinfo *) data;
+		  bzero(data, sizeof(struct grfinfo));
+		  g->gd_id = gp->curr_mode.mode_id;
+		  g->gd_fbaddr = gp->curr_mode.fbbase;
+		  g->gd_fbsize = gp->curr_mode.fbsize;
+		  g->gd_colors = 1 << (u_int32_t) gp->curr_mode.psize;
+		  g->gd_planes = gp->curr_mode.psize;
+		  g->gd_fbwidth = g->gd_dwidth = gp->curr_mode.width;
+		  g->gd_fbheight = g->gd_dheight = gp->curr_mode.height;
+		  g->gd_fbrowbytes = gp->curr_mode.rowbytes;
+		}
 		break;
-	case GRFIOCGINFO:
-		bcopy((caddr_t) & gp->g_display, data, sizeof(struct grfinfo));
-		break;
+
 	case GRFIOCON:
 		error = grfon(dev);
 		break;
@@ -314,6 +254,17 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCUNMAP:
 		error = grfunmap(dev, *(caddr_t *) data, p);
 		break;
+
+	case GRFIOCGETMODE:
+		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_CURRMODE, data);
+		break;
+	case GRFIOCSETMODE:
+		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_NEWMODE, data);
+		break;
+	case GRFIOCLISTMODES:
+		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_LISTMODES, data);
+		break;
+
 	default:
 		error = EINVAL;
 		break;
@@ -330,59 +281,6 @@ grfselect(dev, rw, p)
 	if (rw == FREAD)
 		return (0);
 	return (1);
-}
-
-int
-grflock(gp, block)
-	register struct grf_softc *gp;
-	int block;
-{
-	extern char devioc[];
-	struct proc *p = curproc;	/* XXX */
-	int error;
-
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): dev %x flags %x lockpid %x\n",
-		    p->p_pid, gp->sc_dev.dv_unit, gp->g_flags,
-		    gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_lockp) {
-		if (gp->g_lockp == p)
-			return (EBUSY);
-		if (!block)
-			return (EAGAIN);
-		do {
-			gp->g_flags |= GF_WANTED;
-			if (error = tsleep((caddr_t) & gp->g_flags,
-					   (PZERO + 1) | PCATCH, devioc, 0))
-				return (error);
-		} while (gp->g_lockp);
-	}
-	gp->g_lockp = p;
-	return (0);
-}
-
-int
-grfunlock(gp)
-	register struct grf_softc *gp;
-{
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
-		    curproc->p_pid, gp->sc_dev.dv_unit, gp->g_flags,
-		    gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_lockp != curproc)
-		return (EBUSY);
-
-	if (gp->g_flags & GF_WANTED) {
-		wakeup((caddr_t) & gp->g_flags);
-		gp->g_flags &= ~GF_WANTED;
-	}
-	gp->g_lockp = NULL;
-
-	return (0);
 }
 
 /*ARGSUSED*/
@@ -402,14 +300,15 @@ grfon(dev)
 	struct grf_softc *gp;
 
 	gp = grfcd.cd_devs[unit];
+
 	/*
 	 * XXX: iteoff call relies on devices being in same order
 	 * as ITEs and the fact that iteoff only uses the minor part
 	 * of the dev arg.
 	 */
 	iteoff(unit, 3);
-	return ((*grfdev[gp->g_type].gd_mode)
-	    (gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
+
+	return (*grfdev[gp->g_type].gd_mode) (gp, GM_GRFON, NULL);
 }
 
 int
@@ -421,11 +320,14 @@ grfoff(dev)
 	int     error;
 
 	gp = grfcd.cd_devs[unit];
+
 	(void) grfunmap(dev, (caddr_t) 0, curproc);
-	error = (*grfdev[gp->g_type].gd_mode)
-	    (gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
+
+	error = (*grfdev[gp->g_type].gd_mode) (gp, GM_GRFOFF, NULL);
+
 	/* XXX: see comment for iteoff above */
 	iteon(unit, 2);
+
 	return (error);
 }
 
@@ -434,16 +336,10 @@ grfaddr(gp, off)
 	struct grf_softc *gp;
 	register int off;
 {
-	register struct grfinfo *gi = &gp->g_display;
+	register struct grfmode *gm = &gp->curr_mode;
 
-	/* control registers */
-	if (off >= 0 && off < gi->gd_regsize)
-		return (((u_int) gi->gd_regaddr + off) >> PGSHIFT);
-
-	/* frame buffer */
-	if (off >= gi->gd_regsize && off < gi->gd_regsize + gi->gd_fbsize) {
-		off -= gi->gd_regsize;
-		return (((u_int) gi->gd_fbaddr + off) >> PGSHIFT);
+	if (off < gm->fbsize) {
+		return (((u_int) gm->fbbase + off) >> PGSHIFT);
 	}
 	/* bogus */
 	return (-1);
@@ -456,17 +352,17 @@ grfmap(dev, addrp, p)
 	struct proc *p;
 {
 	struct grf_softc *gp;
-	int     len, error;
-	struct vnode vn;
 	struct specinfo si;
-	int     flags;
+	struct vnode vn;
+	int len, error;
+	int flags;
 
 	gp = grfcd.cd_devs[GRFUNIT(dev)];
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
 #endif
-	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
+	len = gp->curr_mode.fbsize;
 	flags = MAP_SHARED;
 	if (*addrp)
 		flags |= MAP_FIXED;
@@ -483,7 +379,7 @@ grfmap(dev, addrp, p)
 	    0);
 
 	/* Offset into page: */
-	*addrp += (unsigned long) gp->g_display.gd_fbaddr & 0xfff;
+	*addrp += (unsigned long) gp->curr_mode.fbbase & 0xfff;
 
 	return (error);
 }
@@ -499,67 +395,18 @@ grfunmap(dev, addr, p)
 	int     rv;
 
 	gp = grfcd.cd_devs[GRFUNIT(dev)];
+
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfunmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
 #endif
+
 	if (addr == 0)
 		return (EINVAL);/* XXX: how do we deal with this? */
-	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
+
+	size = round_page(gp->curr_mode.fbsize);
+
 	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t) addr, size);
+
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);
-}
-
-static char zero = 0;
-
-static void
-macvideo_intr(unit, slot)
-	int unit, slot;
-{
-	struct grf_softc *gp;
-
-	((char *) (0xf0000000 | ((long) slot << 24)))[0xa0000] = zero;
-}
-
-static int
-macvideo_init(gp, nu)
-	struct grf_softc *gp;
-	struct nubus_hw *nu;
-{
-	struct grfinfo *gi;
-	struct imagedata *image;
-	struct imagedata imageSpace;
-	int i = 0;
-
-	/*
-	 * find out which nubus slot this guy is in, then get the video params
-	 */
-	image = (struct imagedata *) NUBUS_GetImageData(&(nu->slot), &imageSpace);
-
-	gi = &(gp->g_display);
-	gi->gd_regsize = 0;
-	gi->gd_colors = 1;
-	gi->gd_planes = 1;
-	gi->gd_dwidth = gi->gd_fbwidth = image->right;
-	gi->gd_dheight = gi->gd_fbheight = image->bottom;
-	gi->gd_fbsize = image->rowbytes * image->bottom;
-	gi->gd_fbrowbytes = image->rowbytes;
-	gi->gd_fbaddr = (caddr_t) ((u_long) image->offset + (u_long) nu->addr);
-	gp->g_fbkva = gi->gd_fbaddr;
-
-	add_nubus_intr((unsigned int) nu->addr & 0xFF000000, macvideo_intr,
-	    (gp->sc_dev.dv_unit));
-
-	gNumGrfDev++;
-
-	return 1;
-}
-
-static int
-macvideo_mode(gp, cmd, arg)
-	struct grf_softc *gp;
-	int cmd;
-	void *arg;
-{
-	return 0;
 }
