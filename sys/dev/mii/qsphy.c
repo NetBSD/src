@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.2 1998/08/12 20:46:47 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.3 1998/08/12 20:56:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -288,6 +288,12 @@ qsphy_status(sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
+	if ((bmcr & BMCR_AUTOEN) && (bmsr & BMSR_ACOMP) == 0) {
+		/* Erg, still trying, I guess... */
+		mii->mii_media_active |= IFM_NONE;
+		return;
+	}
+
 	pctl = QSPHY_READ(sc, MII_QSPHY_PCTL) | QSPHY_READ(sc, MII_QSPHY_PCTL);
 	switch (pctl & PCTL_OPMASK) {
 	case PCTL_10_T:
@@ -306,13 +312,9 @@ qsphy_status(sc)
 		mii->mii_media_active |= IFM_100_T4;
 		break;
 	default:
-		if (bmcr & BMCR_AUTOEN) {
-			/* Must still be in-progress. */
-			mii->mii_media_active |= IFM_AUTO;
-		} else {
-			/* Erg... this shouldn't happen. */
-			mii->mii_media_active |= IFM_NONE;
-		}
+		/* Erg... this shouldn't happen. */
+		mii->mii_media_active |= IFM_NONE;
+		break;
 	}
 }
 
