@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.9 2000/05/10 11:15:32 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.10 2000/05/10 14:25:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -383,7 +383,7 @@ leattach_ledma(parent, self, aux)
 	}
 
 	/* Allocate DMA buffer */
-	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, NBPG, LEDMA_BOUNDARY,
+	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, LEDMA_BOUNDARY,
 				 &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s @ ledma: DMA buffer alloc error %d\n",
 			self->dv_xname, error);
