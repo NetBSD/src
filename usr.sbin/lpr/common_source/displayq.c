@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
+/*	$NetBSD: displayq.c,v 1.22 2001/08/30 00:53:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.22 2001/08/30 00:53:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -366,8 +366,7 @@ inform(cf)
 			if (line[0] < 'a' || line[0] > 'z')
 				continue;
 			if (j == 0 || strcmp(file, line+1) != 0) {
-				(void)strncpy(file, line+1, sizeof(file) - 1);
-				file[sizeof(file) - 1] = '\0';
+				(void)strlcpy(file, line+1, sizeof(file));
 			}
 			j++;
 			continue;
