@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.23 2000/07/06 11:19:40 ad Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.24 2001/02/13 00:14:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.23 2000/07/06 11:19:40 ad Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.24 2001/02/13 00:14:58 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,6 @@ __RCSID("$NetBSD: yp_passwd.c,v 1.23 2000/07/06 11:19:40 ad Exp $");
 #ifndef _PASSWORD_LEN
 #define _PASSWORD_LEN PASS_MAX
 #endif
-
-extern	char *__progname;		/* from crt0.o */
 
 static	int yflag;
 
