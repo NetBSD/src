@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/gen.c,v 1.5 1993/12/06 19:29:19 jtc Exp $ */
+/* $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/gen.c,v 1.6 1993/12/09 19:06:16 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -48,6 +48,7 @@ static int indent_level = 0; /* each level is 8 spaces */
 /* *Everything* is done in terms of arrays starting at 1, so provide
  * a null entry for the zero element of all C arrays.
  */
+static char C_int_decl[] = "static const int %s[%d] =\n    {   0,\n";
 static char C_short_decl[] = "static const short int %s[%d] =\n    {   0,\n";
 static char C_long_decl[] = "static const long int %s[%d] =\n    {   0,\n";
 static char C_state_decl[] =
@@ -225,22 +226,17 @@ void genctbl()
 void genecs()
 	{
 	Char clower();
-	static char C_char_decl[] = "static const %s %s[%d] =\n    {   0,\n";
-					/* } so vi doesn't get confused */
 	register int i, j;
 	int numrows;
 
-	if ( numecs < csize )
-		printf( C_char_decl, "YY_CHAR", "yy_ec", csize );
-	else
-		printf( C_char_decl, "short", "yy_ec", csize );
+	printf( C_int_decl, "yy_ec", csize );
 
 	for ( i = 1; i < csize; ++i )
 		{
 		if ( caseins && (i >= 'A') && (i <= 'Z') )
 			ecgroup[i] = ecgroup[clower( i )];
 
-		ecgroup[i] = abs( ecgroup[i] );
+		ecgroup[i] = ABS( ecgroup[i] );
 		mkdata( ecgroup[i] );
 		}
 
@@ -477,14 +473,18 @@ void gen_next_match()
 	/* NOTE - changes in here should be reflected in gen_next_state() and
 	 * gen_NUL_trans().
 	 */
-	char *char_map = useecs ? "yy_ec[(unsigned int) *yy_cp]" : "*yy_cp";
-	char *char_map_2 =
-		useecs ? "yy_ec[(unsigned int) *++yy_cp]" : "*++yy_cp";
+	char *char_map = useecs ?
+				"yy_ec[YY_SC_TO_UI(*yy_cp)]" :
+				"YY_SC_TO_UI(*yy_cp)";
+
+	char *char_map_2 = useecs ?
+				"yy_ec[YY_SC_TO_UI(*++yy_cp)]" :
+				"YY_SC_TO_UI(*++yy_cp)";
 
 	if ( fulltbl )
 		{
 		indent_put2s(
-"while ( (yy_current_state = yy_nxt[yy_current_state][(unsigned int)%s]) > 0 )",
+	"while ( (yy_current_state = yy_nxt[yy_current_state][%s]) > 0 )",
 				char_map );
 
 		indent_up();
@@ -586,16 +586,17 @@ int worry_about_NULs;
 		{
 		if ( useecs )
 			(void) sprintf( char_map,
-				"(*yy_cp ? yy_ec[(unsigned int) *yy_cp] : %d)",
+				"(*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : %d)",
 					NUL_ec );
 		else
 			(void) sprintf( char_map,
-				"(*yy_cp ? *yy_cp : %d)", NUL_ec );
+				"(*yy_cp ? YY_SC_TO_UI(*yy_cp) : %d)", NUL_ec );
 		}
 
 	else
-		yy_strcpy( char_map,
-			useecs ? "yy_ec[(unsigned int) *yy_cp]" : "*yy_cp" );
+		yy_strcpy( char_map, useecs ?
+					"yy_ec[YY_SC_TO_UI(*yy_cp)]" :
+					"YY_SC_TO_UI(*yy_cp)" );
 
 	if ( worry_about_NULs && nultrans )
 		{
@@ -610,12 +611,12 @@ int worry_about_NULs;
 
 	if ( fulltbl )
 		indent_put2s(
-	"yy_current_state = yy_nxt[yy_current_state][(unsigned int) %s];", 
+			"yy_current_state = yy_nxt[yy_current_state][%s];", 
 				char_map );
 
 	else if ( fullspd )
 		indent_put2s(
-	"yy_current_state += yy_current_state[(unsigned int) %s].yy_nxt;",
+			"yy_current_state += yy_current_state[%s].yy_nxt;",
 				char_map );
 
 	else
@@ -786,7 +787,7 @@ void gentabs()
 		dfaacc[end_of_buffer_state].dfaacc_set = EOB_accepting_list;
 
 		printf( long_align ? C_long_decl : C_short_decl,
-			"yy_acclist", max( numas, 1 ) + 1 );
+			"yy_acclist", MAX( numas, 1 ) + 1 );
 
 		j = 1;	/* index into "yy_acclist" array */
 
@@ -904,15 +905,15 @@ void gentabs()
 		if ( trace )
 			fputs( "\n\nMeta-Equivalence Classes:\n", stderr );
 
-		printf( C_char_decl, "yy_meta", numecs + 1 );
+		printf( C_int_decl, "yy_meta", numecs + 1 );
 
 		for ( i = 1; i <= numecs; ++i )
 			{
 			if ( trace )
 				fprintf( stderr, "%d = %d\n",
-					i, abs( tecbck[i] ) );
+					i, ABS( tecbck[i] ) );
 
-			mkdata( abs( tecbck[i] ) );
+			mkdata( ABS( tecbck[i] ) );
 			}
 
 		dataend();

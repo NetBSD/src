@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/tblcmp.c,v 1.5 1993/12/06 19:29:35 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/tblcmp.c,v 1.6 1993/12/09 19:06:29 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -610,7 +610,7 @@ int numchars, statenum, deflink, totaltrans;
 		/* Ensure that the base address we eventually generate is
 		 * non-negative.
 		 */
-		baseaddr = max( tblend + 1, minec );
+		baseaddr = MAX( tblend + 1, minec );
 		}
 
 	tblbase = baseaddr - minec;
@@ -635,7 +635,7 @@ int numchars, statenum, deflink, totaltrans;
 		for ( ++firstfree; chk[firstfree] != 0; ++firstfree )
 			;
 
-	tblend = max( tblend, tbllast );
+	tblend = MAX( tblend, tbllast );
 	}
 
 

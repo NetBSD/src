@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/dfa.c,v 1.5 1993/12/06 19:29:06 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/dfa.c,v 1.6 1993/12/09 19:06:05 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -204,7 +204,7 @@ int state[];
 
 	for ( i = 0; i < csize; ++i )
 		{
-		ec = abs( ecgroup[i] );
+		ec = ABS( ecgroup[i] );
 		out_char_set[i] = state[ec];
 		}
 
@@ -978,7 +978,7 @@ int ds[], dsize, transsym, nset[];
 			{ /* do nothing */
 			}
 
-		else if ( abs( ecgroup[sym] ) == transsym )
+		else if ( ABS( ecgroup[sym] ) == transsym )
 			nset[++numstates] = tsp;
 
 		bottom: ;
