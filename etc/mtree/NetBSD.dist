@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.166 2001/08/23 01:35:36 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.167 2001/09/02 22:55:08 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1142,6 +1142,17 @@ ldscripts
 # ./usr/share/locale
 locale
 
+# ./usr/share/locale/cs
+cs
+
+# ./usr/share/locale/cs/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/cs/LC_MESSAGES
+..
+
+# ./usr/share/locale/cs
+..
+
 # ./usr/share/locale/cs_CZ.ISO8859-2
 cs_CZ.ISO8859-2
 # ./usr/share/locale/cs_CZ.ISO8859-2
@@ -1177,6 +1188,17 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/de
+..
+
+# ./usr/share/locale/de_AT
+de_AT
+
+# ./usr/share/locale/de_AT/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/de_AT/LC_MESSAGES
+..
+
+# ./usr/share/locale/de_AT
 ..
 
 # ./usr/share/locale/de_AT.ISO8859-1
@@ -1263,6 +1285,17 @@ en_US.ISO8859-15
 # ./usr/share/locale/en_US.UTF-8
 en_US.UTF-8
 # ./usr/share/locale/en_US.UTF-8
+..
+
+# ./usr/share/locale/eo
+eo
+
+# ./usr/share/locale/eo/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/eo/LC_MESSAGES
+..
+
+# ./usr/share/locale/eo
 ..
 
 # ./usr/share/locale/es
