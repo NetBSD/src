@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.94 1999/08/26 00:04:30 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.95 1999/09/10 03:24:14 simonb Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1856,7 +1856,7 @@ dodata:							/* XXX */
 
 	/*
 	 * Process the segment text, merging it into the TCP sequencing queue,
-	 * and arranging for acknowledgment of receipt if necessary.
+	 * and arranging for acknowledgement of receipt if necessary.
 	 * This process logically involves adjusting tp->rcv_wnd as data
 	 * is presented to the user (this happens in tcp_usrreq.c,
 	 * case PRU_RCVD).  If a FIN has already been received on this
