@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2003/01/20 05:30:02 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2003/02/02 20:43:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,8 +67,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pciconf.h>
 
-int setfault(faultbuf); /* defined in locore.S */
-
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -134,10 +132,10 @@ pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
-	faultbuf env, *oldfault;
+	struct faultbuf env, *oldfault;
 
 	oldfault = curpcb->pcb_onfault;
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = oldfault;
 		return 0;
 	}
@@ -154,10 +152,10 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	faultbuf env, *oldfault;
+	struct faultbuf env, *oldfault;
 
 	oldfault = curpcb->pcb_onfault;
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = oldfault;
 		return;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 2002/09/18 02:44:06 lukem Exp $
+#	$NetBSD: INSTALL,v 1.6 2003/02/02 20:43:21 matt Exp $
 #
 #	INSTALL
 #
@@ -43,7 +43,7 @@ options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=300000	# size for embedded symbol table
+options 	SYMTAB_SPACE=400000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 

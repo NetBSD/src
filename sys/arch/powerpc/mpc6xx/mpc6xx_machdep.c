@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.13 2003/01/24 21:26:08 kleink Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.14 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -92,11 +92,6 @@ struct vm_map *phys_map = NULL;
 /*
  * Global variables used here and there
  */
-#ifndef MULTIPROCESSOR
-struct pcb *curpcb;
-struct pmap *curpm;
-#endif
-
 extern struct user *proc0paddr;
 
 struct bat battable[512];
@@ -123,26 +118,25 @@ mpc6xx_init(void (*handler)(void))
 	extern int ipkdblow, ipkdbsize;
 #endif
 #ifdef ALTIVEC
-	int msr;
+	register_t msr;
 #endif
 	uintptr_t exc;
 	register_t scratch;
 	unsigned int cpuvers;
 	size_t size;
-#ifdef MULTIPROCESSOR
 	struct cpu_info * const ci = &cpu_info[0];
-#else
-	struct cpu_info * const ci = &cpu_info_store;
-#endif
 
-	__asm __volatile ("mtsprg 0,%0" :: "r"(ci));
+	mtspr(SPR_SPRG0, ci);
 	cpuvers = mfpvr() >> 16;
 
 
 	/*
 	 * Initialize proc0 and current pcb and pmap pointers.
 	 */
+	KASSERT(ci != NULL);
+	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
+	KASSERT(lwp0.l_cpu != NULL);
 	lwp0.l_addr = proc0paddr;
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
@@ -322,6 +316,8 @@ mpc6xx_init(void (*handler)(void))
 	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	KASSERT(curcpu() == ci);
 }
 
 void
@@ -557,6 +553,9 @@ mpc6xx_startup(const char *model)
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
+
+	KASSERT(curcpu() != NULL);
+	KASSERT(lwp0.l_cpu != NULL);
 
 	/*
 	 * If the msgbuf is not in segment 0, allocate KVA for it and access

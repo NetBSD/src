@@ -1,4 +1,4 @@
-#	$NetBSD: std.walnut,v 1.1 2002/12/09 12:15:53 scw Exp $
+#	$NetBSD: std.walnut,v 1.2 2003/02/02 20:43:18 matt Exp $
 #
 # Standard/required options for NetBSD/walnut.
 
@@ -15,6 +15,9 @@ options 	EXEC_SCRIPT	# shell script support
 makeoptions	TEXTADDR=0x25000
 makeoptions	BOARDTYPE="walnut"
 makeoptions	PPCDIR="ibm4xx"
+
+options 	INTSTK=8192
+options 	SPILLSTK=1024
 
 include		"arch/powerpc/conf/files.ibm4xx"
 include		"arch/evbppc/conf/files.walnut"

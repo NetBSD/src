@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2001/06/23 02:17:14 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2003/02/02 20:43:17 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcparam.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -54,9 +55,6 @@
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
-
-#define	INTSTK	(8*1024)	/* 8K interrupt stack */
-#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals
@@ -150,30 +148,19 @@ __start_cpu1_loop:
 __start_cpu0:
 
 /* compute end of kernel memory */
-	lis	8,_C_LABEL(end)@ha
-	addi	8,8,_C_LABEL(end)@l
 #if defined(DDB) || defined(KERNFS)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)
 	lis	7,_C_LABEL(endsym)@ha
 	addi	7,7,_C_LABEL(endsym)@l
-	stw	4,0(7)
-	mr	8,4			/* end of sysbol table */
+	stw	4,0(7)			/* end of symbol table */
+#else
+	lis	4,_C_LABEL(end)@ha
+	addi	4,4,_C_LABEL(end)@l
 #endif
-	li	9,PGOFSET
-	add	8,8,9
-	andc	8,8,9
-	addi	8,8,NBPG
-	lis	9,idle_u@ha
-	stw	8,idle_u@l(9)
-	addi	8,8,USPACE		/* space for idle_u */
-	lis	9,_C_LABEL(proc0paddr)@ha
-	stw	8,_C_LABEL(proc0paddr)@l(9)
-	addi	1,8,USPACE-FRAMELEN	/* stackpointer for proc0 */
-	mr	4,1			/* end of mem reserved for kernel */
-	xor	0,0,0
-	stwu	0,-16(1)		/* end of stack chain */
+
+	INIT_CPUINFO(4,1,9,0)
 	
 	lis	3,__start@ha
 	addi	3,3,__start@l
@@ -212,4 +199,3 @@ _C_LABEL(debug_led):
  * Pull in common trap vector code.
  */
 #include <powerpc/powerpc/trap_subr.S>
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2003/01/22 21:05:50 kleink Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -61,10 +61,6 @@ struct cache_info {
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 	struct device *ci_dev;		/* device of corresponding cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 
@@ -80,17 +76,22 @@ struct cpu_info {
 	u_long ci_lasttb;
 	int ci_tickspending;
 	int ci_cpl;
+	int ci_iactive;
 	int ci_ipending;
 	int ci_intrdepth;
 	char *ci_intstk;
 	char *ci_spillstk;
-	int ci_tempsave[8];
-	int ci_ddbsave[8];
-	int ci_ipkdbsave[8];
-	int ci_disisave[4];
+	register_t ci_tempsave[8];
+	register_t ci_ddbsave[8];
+	register_t ci_ipkdbsave[8];
+	register_t ci_disisave[4];
 	struct cache_info ci_ci;		
 	struct sysmon_envsys ci_sysmon;
 	struct envsys_tre_data ci_tau_info;
+	struct evcnt ci_ev_clock;	/* clock intrs */
+	struct evcnt ci_ev_softclock;	/* softclock intrs */
+	struct evcnt ci_ev_softnet;	/* softnet intrs */
+	struct evcnt ci_ev_softserial;	/* softserial intrs */
 	struct evcnt ci_ev_traps;	/* calls to trap() */
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
@@ -106,6 +107,10 @@ struct cpu_info {
 	struct evcnt ci_ev_vec;		/* Altivec traps */
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
 	struct evcnt ci_ev_umchk;	/* user MCHK events */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
 };
 
 #ifdef MULTIPROCESSOR
@@ -118,6 +123,26 @@ cpu_number(void)
 	return pir;
 }
 
+void	cpu_boot_secondary_processors(void);
+
+
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = &cpu_info[0]; cii < CPU_MAXNUM; cii++, ci++
+
+#else
+
+#define cpu_number()		0
+
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+
+#endif /* MULTIPROCESSOR */
+
+extern struct cpu_info cpu_info[];
+
 static __inline struct cpu_info *
 curcpu(void)
 {
@@ -127,36 +152,9 @@ curcpu(void)
 	return ci;
 }
 
-void	cpu_boot_secondary_processors(void);
-
-extern struct cpu_info cpu_info[];
-
-#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define curlwp			curcpu()->ci_curlwp
-#define curpcb			curcpu()->ci_curpcb
-#define curpm			curcpu()->ci_curpm
-#define want_resched		curcpu()->ci_want_resched
-#define astpending		curcpu()->ci_astpending
-#define	intr_depth		curcpu()->ci_intrdepth
-
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)					\
-	cii = 0, ci = &cpu_info[0]; cii < CPU_MAXNUM; cii++, ci++
-
-#else
-extern struct cpu_info cpu_info_store;
-extern volatile int want_resched;
-extern volatile int astpending;
-extern volatile int intr_depth;
-
-#define curcpu()		(&cpu_info_store)
-#define cpu_number()		0
-
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)					\
-	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
-
-#endif /* MULTIPROCESSOR */
+#define curlwp			(curcpu()->ci_curlwp)
+#define curpcb			(curcpu()->ci_curpcb)
+#define curpm			(curcpu()->ci_curpm)
 
 static __inline register_t
 mfmsr(void)
@@ -259,9 +257,9 @@ void icache_flush(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
-#define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
+#define	need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
+#define	signotify(p)		(curcpu()->ci_astpending = 1)
 
 #ifdef PPC_MPC6XX
 void mpc6xx_init(void (*)(void));

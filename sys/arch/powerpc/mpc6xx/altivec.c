@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.7 2003/01/18 06:23:31 thorpej Exp $	*/
+/*	$NetBSD: altivec.c,v 1.8 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -74,7 +74,7 @@ enable_vec()
 			vr->vreg[scratch][3] = 0x7FFFDEAD;
 		}
 		vr->vscr = 0;
-		vr->vrsave = tf->vrsave;
+		vr->vrsave = tf->tf_xtra[TF_VRSAVE];
 	}
 
 	/*
@@ -99,7 +99,7 @@ enable_vec()
 	/*
 	 * VRSAVE will be restored when trap frame returns
 	 */
-	tf->vrsave = vr->vrsave;
+	tf->tf_xtra[TF_VRSAVE] = vr->vrsave;
 
 #define	LVX(n,vr)	__asm /*__volatile*/("lvx %2,%0,%1" \
 	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
@@ -183,7 +183,7 @@ save_vec_cpu(void)
 	/*
 	 * Save VRSAVE
 	 */
-	vr->vrsave = tf->vrsave;
+	vr->vrsave = tf->tf_xtra[TF_VRSAVE];
 
 	/*
 	 * Note that we aren't using any CPU resources and stop any

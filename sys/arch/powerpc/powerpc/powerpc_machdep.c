@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.16 2003/01/18 23:43:24 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.17 2003/02/02 20:43:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -100,7 +100,7 @@ setregs(l, pack, stack)
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 #ifdef ALTIVEC
-	tf->vrsave = 0;
+	tf->tf_xtra[TF_VRSAVE] = 0;
 #endif
 	l->l_addr->u_pcb.pcb_flags = 0;
 }

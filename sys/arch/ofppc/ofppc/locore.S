@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 2002/07/14 20:56:12 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 2003/02/02 20:43:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcparam.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -50,13 +51,11 @@
 #endif
 
 #include <powerpc/spr.h>
+
 /*
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
-
-#define	INTSTK	(8*1024)	/* 8K interrupt stack */
-#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals
@@ -67,15 +66,10 @@ GLOBAL(endsym)
 	.long	0			/* end of symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-
-/*
- * File-scope for locore.S
- */
-	.data
-idle_u:
-	.long	0			/* fake uarea during idle after exit */
-OF_buffer:
-	.space	NBPG
+GLOBAL(intrnames)
+GLOBAL(eintrnames)
+GLOBAL(intrcnt)
+GLOBAL(eintrcnt)
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -127,31 +121,18 @@ __start:
 	lis	8,_C_LABEL(endsym)@ha
 	stw	9,_C_LABEL(endsym)@l(8)
 
-	mr	8,9			/* r8 = end of kernel + symbols */
+	mr	4,9			/* r8 = end of kernel + symbols */
 	b	2f
 1:
 #endif
-	lis	8,_C_LABEL(end)@ha
-	addi	8,8,_C_LABEL(end)@l
+	lis	4,_C_LABEL(end)@ha
+	addi	4,4,_C_LABEL(end)@l
 2:
-	li	9,PGOFSET
-	add	8,8,9
-	andc	8,8,9
 
-	lis	9,idle_u@ha
-	stw	8,idle_u@l(9)
-	addi	8,8,USPACE		/* space for idle_u */
-	lis	9,_C_LABEL(proc0paddr)@ha
-	stw	8,_C_LABEL(proc0paddr)@l(9)
-	addi	1,8,USPACE-FRAMELEN	/* stackpointer for proc0 */
-	mr	4,1			/* end of mem reserved for kernel */
-	xor	0,0,0
-	stwu	0,-16(1)		/* end of stack chain */
-	
-	lis	8,OF_buffer@ha
-	addi	8,8,OF_buffer@l
-	lis	9,_C_LABEL(OF_buf)@ha
-	stw	8,_C_LABEL(OF_buf)@l(9)
+	/*
+	 * Initialize cpu_info[0]
+	 */
+	INIT_CPUINFO(4,1,9,0)
 
 	lis	3,__start@ha
 	addi	3,3,__start@l

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28 2002/11/25 02:06:47 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.29 2003/02/02 20:43:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -33,7 +33,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_l2cr_config.h"
+#include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 #include "sysmon_envsys.h"
@@ -66,7 +66,7 @@ int ncpus;
 #ifdef MULTIPROCESSOR
 struct cpu_info cpu_info[CPU_MAXNUM];
 #else
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info[1];
 #endif
 
 int cpu_altivec;
@@ -134,9 +134,8 @@ cpu_attach_common(struct device *self, int id)
 	u_int pvr, vers;
 
 	ncpus++;
-#ifdef MULTIPROCESSOR
 	ci = &cpu_info[id];
-#else
+#ifndef MULTIPROCESSOR
 	/*
 	 * If this isn't the primary CPU, print an error message
 	 * and just bail out.
@@ -147,8 +146,6 @@ cpu_attach_common(struct device *self, int id)
 		    "not present in kernel\n", self->dv_xname);
 		return (NULL);
 	}
-
-	ci = &cpu_info_store;
 #endif
 
 	ci->ci_cpuid = id;
@@ -306,6 +303,14 @@ cpu_setup(self, ci)
 		cpu_tau_setup(ci);
 #endif
 
+	evcnt_attach_dynamic(&ci->ci_ev_clock, EVCNT_TYPE_INTR,
+		NULL, self->dv_xname, "clock");
+	evcnt_attach_dynamic(&ci->ci_ev_softclock, EVCNT_TYPE_INTR,
+		NULL, self->dv_xname, "soft clock");
+	evcnt_attach_dynamic(&ci->ci_ev_softnet, EVCNT_TYPE_INTR,
+		NULL, self->dv_xname, "soft net");
+	evcnt_attach_dynamic(&ci->ci_ev_softserial, EVCNT_TYPE_INTR,
+		NULL, self->dv_xname, "soft serial");
 	evcnt_attach_dynamic(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, self->dv_xname, "traps");
 	evcnt_attach_dynamic(&ci->ci_ev_kdsi, EVCNT_TYPE_TRAP,

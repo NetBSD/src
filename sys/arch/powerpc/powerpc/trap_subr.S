@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.32 2003/01/22 22:15:06 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.33 2003/02/02 20:43:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 #include "opt_altivec.h"
 
 #ifdef ALTIVEC
-#define	SAVE_VRSAVE(tf,b) 						\
+#define	SAVE_VRSAVE(tf,b)						\
 	mfspr	b,SPR_VRSAVE;						\
 	stw	b,FRAME_VRSAVE+8(tf);
 
@@ -72,8 +72,8 @@
  * User SRs are loaded through a pointer to the current pmap.
  */
 #define RESTORE_USER_SRS(pmap,sr) \
-	lis	pmap,_C_LABEL(curpm)@ha; \
-	lwz	pmap,_C_LABEL(curpm)@l(pmap); \
+	GET_CPUINFO(pmap); \
+	lwz	pmap,CI_CURPM(pmap); \
 	lwzu	sr,PM_SR(pmap); \
 	RESTORE_SRS(pmap,sr)
 
@@ -98,34 +98,17 @@
 	mtspr	SPR_MQ,b;
 
 /*
- * Data used during primary/secondary traps/interrupts
- */
-#define	tempsave	EXC_MCHK+0xe0 /* primary save area for trap handling */
-#define	disisave	EXC_DSI+0xe0  /* primary save area for dsi/isi traps */
-
-/*
- * XXX Interrupt and spill stacks need to be per-CPU.
- */
-	.data
-	.align	4
-intstk:
-	.space	INTSTK		/* interrupt stack */
-
-GLOBAL(intr_depth)
-	.long	-1		/* in-use marker */
-
-	.comm	spillstk,SPILLSTK,8
-
-/*
- * This code gets copied to all the trap vectors (except ISI/DSI, ALI, the
- * interrupts, and possibly the debugging traps when using IPKDB).
- * Note that it is 7 instructions long and can fit in the smallest vector.
+ * This code gets copied to all the trap vectors
+ * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
+ * traps when using IPKDB).
  */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
 _C_LABEL(trapcode):
 	mtsprg	1,1			/* save SP */
-	stmw	28,tempsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
+	mfsprg	1,1			/* restore SP */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 /* Test whether we already had PR set */
@@ -140,10 +123,12 @@ _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
 _C_LABEL(alitrap):
 	mtsprg	1,1			/* save SP */
-	stmw	28,tempsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mfdar	30
 	mfdsisr	31
-	stmw	30,tempsave+16(0)
+	stmw	30,CI_TEMPSAVE+16(1)
+	mfsprg	1,1			/* restore SP */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 /* Test whether we already had PR set */
@@ -159,7 +144,10 @@ _C_LABEL(alisize) = .-_C_LABEL(alitrap)
  */
 	.globl	_C_LABEL(dsitrap),_C_LABEL(dsisize)
 _C_LABEL(dsitrap):
-	stmw	28,disisave(0)		/* free r28-r31 */
+	mtsprg	1,1
+	GET_CPUINFO(1)
+	stmw	28,CI_DISISAVE(1)	/* free r28-r31 */
+	mfsprg	1,1
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
 	mtsprg	2,30			/* in SPRG2 */
@@ -191,7 +179,10 @@ _C_LABEL(dsitrap):
 	mfsprg	30,2			/* restore XER */
 	mtxer	30
 	mtcr	29			/* restore CR */
-	lmw	28,disisave(0)		/* restore r28-r31 */
+	mtsprg	1,1
+	GET_CPUINFO(1)
+	lmw	28,CI_DISISAVE(1)	/* restore r28-r31 */
+	mfsprg	1,1
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
@@ -206,7 +197,10 @@ _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
  */
 	.globl	_C_LABEL(dsi601trap),_C_LABEL(dsi601size)
 _C_LABEL(dsi601trap):
-	stmw	28,disisave(0)		/* free r28-r31 */
+	mtsprg	1,1
+	GET_CPUINFO(1)
+	stmw	28,CI_DISISAVE(1)	/* free r28-r31 */
+	mfsprg	1,1
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
 	mtsprg	2,30			/* in SPRG2 */
@@ -239,7 +233,10 @@ _C_LABEL(dsi601trap):
 	mfsprg	30,2			/* restore XER */
 	mtxer	30
 	mtcr	29			/* restore CR */
-	lmw	28,disisave(0)		/* restore r28-r31 */
+	mtsprg	1,1
+	GET_CPUINFO(1)
+	lmw	28,CI_DISISAVE(1)	/* restore r28-r31 */
+	mfsprg	1,1
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
@@ -253,15 +250,15 @@ _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 	.globl	_C_LABEL(extint),_C_LABEL(extsize)
 _C_LABEL(extint):
 	mtsprg	1,1			/* save SP */
-	stmw	28,tempsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l	/* this is really intr_depth! */
-	lwz	31,0(1)			/* were we already running on intstk? */
+	lwz	31,CI_INTRDEPTH(1)	/* were we already running on intstk? */
 	addic.	31,31,1
-	stw	31,0(1)
+	stw	31,CI_INTRDEPTH(1)
+	lwz	1,CI_INTSTK(1)		/* get interrupt stack */
 	beq	1f
 	mfsprg	1,1			/* yes, get old SP */
 1:
@@ -274,15 +271,15 @@ _C_LABEL(extsize) = .-_C_LABEL(extint)
 	.globl	_C_LABEL(decrint),_C_LABEL(decrsize)
 _C_LABEL(decrint):
 	mtsprg	1,1			/* save SP */
-	stmw	28,tempsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l
-	lwz	31,0(1)			/* were we already running on intstk? */
+	lwz	31,CI_INTRDEPTH(1)	/* were we already running on intstk? */
 	addic.	31,31,1
-	stw	31,0(1)
+	stw	31,CI_INTRDEPTH(1)
+	lwz	1,CI_INTSTK(1)		/* get interrupt stack */
 	beq	1f
 	mfsprg	1,1			/* yes, get old SP */
 1:
@@ -388,7 +385,7 @@ _C_LABEL(tlbdlmiss):
 	mfsrr1	3			/* get the saved cr0 bits */
 	mtcrf	0x80,3			/* and restore */
 	ori	1,1,0x100		/* set the reference bit */
-	mtspr	SPR_RPA,1			/* set the pte */
+	mtspr	SPR_RPA,1		/* set the pte */
 	srwi	1,1,8			/* get byte 7 of pte */
 	tlbld	0			/* load the dtlb */
 	stb	1,6(2)			/* update page table */
@@ -505,7 +502,8 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
 	mtsprg	1,1			/* save SP */
-	stmw	28,ddbsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_DDBSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	lis	1,ddbstk+INTSTK@ha	/* get new SP */
@@ -526,7 +524,8 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
 _C_LABEL(ipkdblow):
 	mtsprg	1,1			/* save SP */
-	stmw	28,ipkdbsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_IPKDBSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	lis	1,ipkdbstk+INTSTK@ha	/* get new SP */
@@ -570,28 +569,34 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
  *	savearea	r28-r31,DAR,DSISR	(DAR & DSISR only for DSI traps)
  *	28		LR
  *	29		CR
+ *	30		scratch
+ *	31		scratch
  *	1		kernel stack
  *	LR		trap type
  *	SRR0/1		as at start of trap
  */
 #define	FRAME_SETUP(savearea)						\
 /* Have to enable translation to allow access of kernel stack: */	\
+	GET_CPUINFO(31);						\
 	mfsrr0	30;							\
-	mfsrr1	31;							\
-	stmw	30,savearea+24(0);					\
+	stw	30,savearea+24(31);	/* save SRR0 */			\
+	mfsrr1	30;							\
+	stw	30,savearea+28(31);	/* save SRR1 */			\
 	mfmsr	30;							\
-	ori	30,30,(PSL_DR|PSL_IR);					\
-	mtmsr	30;							\
+	ori	30,30,(PSL_DR|PSL_IR);	/* turn on relocation */	\
+	mtmsr	30;			/* stack can be accesed now */	\
 	isync;								\
-	mfsprg	31,1;							\
-	stwu	31,-FRAMELEN(1);					\
-	stw	0,FRAME_0+8(1);						\
-	stw	31,FRAME_1+8(1);					\
+	mfsprg	31,1;			/* get saved SP */		\
+	stwu	31,-FRAMELEN(1);	/* save it in the callframe */	\
+	stw	0,FRAME_0+8(1);		/* save R0 in the trapframe */	\
+	stw	31,FRAME_1+8(1);	/* save SP in the trapframe */	\
+	stw	2,FRAME_2+8(1);		/* save R2 in the trapframe */	\
 	stw	28,FRAME_LR+8(1);					\
 	stw	29,FRAME_CR+8(1);					\
-	lmw	28,savearea(0);						\
-	stmw	2,FRAME_2+8(1);	 /* after this, r2-r31 can be used */	\
-	lmw	28,savearea+16(0);					\
+	GET_CPUINFO(2);							\
+	lmw	28,savearea(2);		/* get saved r28-r31 */		\
+	stmw	3,FRAME_3+8(1);		/* save r3-r31 */		\
+	lmw	28,savearea+16(2);	/* get DAR/DSISR/SRR0/SRR1 */	\
 	mfxer	3;							\
 	mfctr	4;							\
 	mflr	5;							\
@@ -613,11 +618,12 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	4,FRAME_CTR+8(1);					\
 	lwz	5,FRAME_XER+8(1);					\
 	lwz	6,FRAME_LR+8(1);					\
-	lwz	7,FRAME_CR+8(1);					\
 	RESTORE_MQ(1,8);						\
 	RESTORE_VRSAVE(1,9);						\
-	stw	2,savearea(0);						\
-	stw	3,savearea+4(0);					\
+	GET_CPUINFO(7);							\
+	stw	2,savearea(7);						\
+	stw	3,savearea+4(7);					\
+	lwz	7,FRAME_CR+8(1);					\
 	mtctr	4;							\
 	mtxer	5;							\
 	mtlr	6;							\
@@ -633,7 +639,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtmsr	2;							\
 	isync;								\
 /* Decide whether we return to user mode: */				\
-	lwz	3,savearea+4(0);					\
+	GET_CPUINFO(2);							\
+	lwz	3,savearea+4(2);					\
 	mtcr	3;							\
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
@@ -641,9 +648,10 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	RESTORE_USER_SRS(2,3);						\
 1:	mfsprg	2,1;			/* restore cr */		\
 	mtcr	2;							\
-	lwz	2,savearea(0);						\
-	lwz	3,savearea+4(0);					\
-	mtsrr0	2;							\
+	GET_CPUINFO(2);							\
+	lwz	3,savearea(2);						\
+	mtsrr0	3;							\
+	lwz	3,savearea+4(2);					\
 	mtsrr1	3;							\
 	mfsprg	2,2;			/* restore r2 & r3 */		\
 	mfsprg	3,3
@@ -652,13 +660,14 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
  * Preamble code for DSI/ISI traps
  */
 disitrap:
-	lmw	30,disisave(0)
-	stmw	30,tempsave(0)
-	lmw	30,disisave+8(0)
-	stmw	30,tempsave+8(0)
+	GET_CPUINFO(1)
+	lmw	30,CI_DISISAVE(1)
+	stmw	30,CI_TEMPSAVE(1)
+	lmw	30,CI_DISISAVE+8(1)
+	stmw	30,CI_TEMPSAVE+8(1)
 	mfdar	30
 	mfdsisr	31
-	stmw	30,tempsave+16(0)
+	stmw	30,CI_TEMPSAVE+16(1)
 	.globl	_C_LABEL(trapstart)
 _C_LABEL(trapstart):
 realtrap:
@@ -669,8 +678,8 @@ realtrap:
 					   overwritten) */
 s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
-	lis	1,_C_LABEL(curpcb)@ha
-	lwz	1,_C_LABEL(curpcb)@l(1)
+	GET_CPUINFO(1)
+	lwz	1,CI_CURPCB(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
 
 /*
@@ -681,7 +690,7 @@ s_trap:
 	CPU601_KERN_ENTRY(30,31)
 
 k_trap:
-	FRAME_SETUP(tempsave)
+	FRAME_SETUP(CI_TEMPSAVE)
 trapagain:
 /* Now we can recover interrupts again: */
 	mfmsr	7
@@ -701,15 +710,15 @@ trapexit:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(astpending)@ha
-	lwz	4,_C_LABEL(astpending)@l(3)
+	GET_CPUINFO(3)
+	lwz	4,CI_ASTPENDING(3)
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
 	stw	6,FRAME_EXC+8(1)
 	b	trapagain
 1:
-	FRAME_LEAVE(tempsave)
+	FRAME_LEAVE(CI_TEMPSAVE)
 	rfi
 
 /* 
@@ -719,19 +728,20 @@ trapexit:
 	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
 _C_LABEL(sctrap):
 	mtsprg	1,1			/* save SP */
-	stmw	28,tempsave(0)		/* free r28-r31 */
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	bla	s_sctrap
 	_C_LABEL(scsize) = .-_C_LABEL(sctrap)
 
 s_sctrap:
-	lis	1,_C_LABEL(curpcb)@ha
-	lwz	1,_C_LABEL(curpcb)@l(1)
+	GET_CPUINFO(1)
+	lwz	1,CI_CURPCB(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
 	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
 	CPU601_KERN_ENTRY(30,31)
-	FRAME_SETUP(tempsave)
+	FRAME_SETUP(CI_TEMPSAVE)
 /* Now we can recover interrupts again: */
 	mfmsr	7
 	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
@@ -739,10 +749,10 @@ s_sctrap:
 	isync
 	addi	3,1,8
 /* Call the appropriate syscall handler: */
-	lis	4,_C_LABEL(curlwp)@ha
-	lwz	4,_C_LABEL(curlwp)@l(4)
-	lwz	4,L_PROC@l(4)
-	lwz	4,P_MD_SYSCALL@l(4)
+	GET_CPUINFO(4)
+	lwz	4,CI_CURLWP(4)
+	lwz	4,L_PROC(4)
+	lwz	4,P_MD_SYSCALL(4)
 	mtctr	4
 	bctrl
 /* Disable interrupts: */
@@ -750,15 +760,15 @@ s_sctrap:
 	andi.	3,3,~PSL_EE@l
 	mtmsr	3
 /* Test AST pending: */
-	lis	3,_C_LABEL(astpending)@ha
-	lwz	4,_C_LABEL(astpending)@l(3)
+	GET_CPUINFO(3)
+	lwz	4,CI_ASTPENDING(3)
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
 	stw	6,FRAME_EXC+8(1)
 	b	trapagain
 1:
-	FRAME_LEAVE(tempsave)
+	FRAME_LEAVE(CI_TEMPSAVE)
 	rfi
 
 /*
@@ -783,10 +793,10 @@ s_sctrap:
 	stw	28,IFRAME_LR(1);	/* saved LR */			\
 	stw	29,IFRAME_CR(1);	/* saved CR */			\
 	stw	30,IFRAME_XER(1);	/* saved XER */			\
-	lmw	28,tempsave(0);		/* restore r28-r31 */		\
+	GET_CPUINFO(4);							\
+	lmw	28,CI_TEMPSAVE(4);	/* restore r28-r31 */		\
 	mfctr	6;							\
-	lis	5,_C_LABEL(intr_depth)@ha;				\
-	lwz	5,_C_LABEL(intr_depth)@l(5);				\
+	lwz	5,CI_INTRDEPTH(4);					\
 	mfsrr0	4;							\
 	mfsrr1	3;							\
 	stw	6,IFRAME_CTR(1);					\
@@ -830,20 +840,27 @@ intr_exit:
 	mtsrr0	5
 	mtctr	4
 	mtxer	3
+
+	GET_CPUINFO(5)
+	lwz	4,CI_INTRDEPTH(5)
+	addi	4,4,-1			/* adjust reentrancy count */
+	stw	4,CI_INTRDEPTH(5)
+
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
+
 	CPU601_KERN_LEAVE(3,4)
 	RESTORE_USER_SRS(3,4)
-	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
-	lwz	4,_C_LABEL(astpending)@l(3)
-	andi.	4,4,1
+	lwz	3,CI_ASTPENDING(5)	/* Test AST pending */
+	andi.	3,3,1
 	beq	1f
+
 /* Setup for entry to realtrap: */
 	lwz	3,IFRAME_R1(1)		/* get saved SP */
 	mtsprg	1,3
 	li	6,EXC_AST
-	stmw	28,tempsave(0)		/* establish tempsave again */
+	stmw	28,CI_TEMPSAVE(5)	/* establish tempsave again */
 	mtlr	6
 	lwz	28,IFRAME_LR(1)		/* saved LR */
 	lwz	29,IFRAME_CR(1)		/* saved CR */
@@ -852,10 +869,6 @@ intr_exit:
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
 	lwz	0,IFRAME_R0(1)
-	lis	30,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
-	lwz	31,_C_LABEL(intr_depth)@l(30)
-	addi	31,31,-1
-	stw	31,_C_LABEL(intr_depth)@l(30)
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
@@ -865,10 +878,6 @@ intr_exit:
 	mtlr	6
 	lwz	6,IFRAME_R6(1)
 	lwz	5,IFRAME_R5(1)
-	lis	3,_C_LABEL(intr_depth)@ha
-	lwz	4,_C_LABEL(intr_depth)@l(3)
-	addi	4,4,-1			/* adjust reentrancy count */
-	stw	4,_C_LABEL(intr_depth)@l(3)
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
 	lwz	0,IFRAME_R0(1)
@@ -896,7 +905,8 @@ _C_LABEL(ddb_trap):
 	andi.	3,3,~(PSL_EE|PSL_ME)@l
 	mtmsr	3			/* disable interrupts */
 	isync
-	stmw	28,ddbsave(0)
+	GET_CPUINFO(3)
+	stmw	28,CI_DDBSAVE(3)
 	mflr	28
 	li	29,EXC_BPT
 	mtlr	29
@@ -909,7 +919,7 @@ _C_LABEL(ddb_trap):
  * Now the ddb trap catching code.
  */
 ddbtrap:
-	FRAME_SETUP(ddbsave)
+	FRAME_SETUP(CI_DDBSAVE)
 /* Call C trap code: */
 	addi	3,1,8
 	bl	_C_LABEL(ddb_trap_glue)
@@ -917,17 +927,20 @@ ddbtrap:
 	bne	ddbleave
 /* This wasn't for DDB, so switch to real trap: */
 	lwz	3,FRAME_EXC+8(1)	/* save exception */
-	stw	3,ddbsave+8(0)
-	FRAME_LEAVE(ddbsave)
+	GET_CPUINFO(4)
+	stw	3,CI_DDBSAVE+8(4)
+	FRAME_LEAVE(CI_DDBSAVE)
 	mtsprg	1,1			/* prepare for entrance to realtrap */
-	stmw	28,tempsave(0)
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)
 	mflr	28
 	mfcr	29
-	lwz	31,ddbsave+8(0)
+	lwz	31,CI_DDBSAVE+8(1)
 	mtlr	31
+	mfsprg	1,1
 	b	realtrap
 ddbleave:
-	FRAME_LEAVE(ddbsave)
+	FRAME_LEAVE(CI_DDBSAVE)
 	rfi
 #endif /* DDB || KGDB */
 
@@ -943,7 +956,8 @@ _C_LABEL(ipkdb_trap):
 	andi.	3,3,~(PSL_EE|PSL_ME)@l
 	mtmsr	3			/* disable interrupts */
 	isync
-	stmw	28,ipkdbsave(0)
+	GET_CPUINFO(3)
+	stmw	28,CI_IPKDBSAVE(3)
 	mflr	28
 	li	29,EXC_BPT
 	mtlr	29
@@ -962,17 +976,20 @@ ipkdbtrap:
 	bne	ipkdbleave
 /* This wasn't for IPKDB, so switch to real trap: */
 	lwz	3,FRAME_EXC+8(1)	/* save exception */
-	stw	3,ipkdbsave+8(0)
-	FRAME_LEAVE(ipkdbsave)
+	GET_CPUINFO(4)
+	stw	3,CI_IPKDBSAVE+8(4)
+	FRAME_LEAVE(CI_IPKDBSAVE)
 	mtsprg	1,1			/* prepare for entrance to realtrap */
-	stmw	28,tempsave(0)
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)
 	mflr	28
 	mfcr	29
-	lwz	31,ipkdbsave+8(0)
+	lwz	31,CI_IPKDBSAVE+8(1)
 	mtlr	31
+	mfsprg	1,1
 	b	realtrap
 ipkdbleave:
-	FRAME_LEAVE(ipkdbsave)
+	FRAME_LEAVE(CI_IPKDBSAVE)
 	rfi
 
 ipkdbfault:

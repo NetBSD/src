@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 2003/01/22 21:44:56 kleink Exp $ */
+/*	$NetBSD: db_interface.c,v 1.27 2003/02/02 20:43:24 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -118,11 +118,13 @@ kdb_trap(type, v)
 	DDB_REGS->ctr = frame->ctr;
 	DDB_REGS->cr = frame->cr;
 	DDB_REGS->xer = frame->xer;
-	DDB_REGS->mq = frame->mq;
+#ifdef PPC_MPC6XX
+	DDB_REGS->mq = frame->tf_xtra[TF_MQ];
+#endif
 #ifdef PPC_IBM4XX
-	DDB_REGS->dear = frame->dear;
-	DDB_REGS->esr = frame->esr;
-	DDB_REGS->pid = frame->pid;
+	DDB_REGS->dear = frame->dar;
+	DDB_REGS->esr = frame->tf_xtra[TF_ESR];
+	DDB_REGS->pid = frame->tf_xtra[TF_PID];
 #endif
 
 #ifdef DDB
@@ -155,11 +157,13 @@ kdb_trap(type, v)
 	frame->ctr = DDB_REGS->ctr;
 	frame->cr = DDB_REGS->cr;
 	frame->xer = DDB_REGS->xer;
-	frame->mq = DDB_REGS->mq;
+#ifdef PPC_MPC6XX
+	frame->tf_xtra[TF_MQ] = DDB_REGS->mq;
+#endif
 #ifdef PPC_IBM4XX
-	frame->dear = DDB_REGS->dear;
-	frame->esr = DDB_REGS->esr;
-	frame->pid = DDB_REGS->pid;
+	frame->dar = DDB_REGS->dear;
+	frame->tf_xtra[TF_ESR] = DDB_REGS->esr;
+	frame->tf_xtra[TF_PID] = DDB_REGS->pid;
 #endif
 
 	return 1;
@@ -264,38 +268,38 @@ db_ppc4xx_tf(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (have_addr) {
 		f = (struct trapframe *)addr;
 
-		db_printf("r0-r3:  \t%8.8x %8.8x %8.8x %8.8x\n", 
+		db_printf("r0-r3:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n", 
 			f->fixreg[0], f->fixreg[1],
 			f->fixreg[2], f->fixreg[3]);
-		db_printf("r4-r7:  \t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r4-r7:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[4], f->fixreg[5],
 			f->fixreg[6], f->fixreg[7]);
-		db_printf("r8-r11: \t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r8-r11: \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[8], f->fixreg[9],
 			f->fixreg[10], f->fixreg[11]);
-		db_printf("r12-r15:\t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r12-r15:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[12], f->fixreg[13],
 			f->fixreg[14], f->fixreg[15]);
-		db_printf("r16-r19:\t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r16-r19:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[16], f->fixreg[17],
 			f->fixreg[18], f->fixreg[19]);
-		db_printf("r20-r23:\t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r20-r23:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[20], f->fixreg[21],
 			f->fixreg[22], f->fixreg[23]);
-		db_printf("r24-r27:\t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r24-r27:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[24], f->fixreg[25],
 			f->fixreg[26], f->fixreg[27]);
-		db_printf("r28-r31:\t%8.8x %8.8x %8.8x %8.8x\n",
+		db_printf("r28-r31:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			f->fixreg[28], f->fixreg[29],
 			f->fixreg[30], f->fixreg[31]);
 
-		db_printf("lr: %8.8x cr: %8.8x xer: %8.8x ctr: %8.8x\n",
+		db_printf("lr: %8.8lx cr: %8.8x xer: %8.8x ctr: %8.8lx\n",
 			f->lr, f->cr, f->xer, f->ctr);
-		db_printf("srr0(pc): %8.8x srr1(msr): %8.8x "
-			"dear: %8.8x esr: %8.8x\n",
-			f->srr0, f->srr1, f->dear, f->esr);
+		db_printf("srr0(pc): %8.8lx srr1(msr): %8.8lx "
+			"dear: %8.8lx esr: %8.8x\n",
+			f->srr0, f->srr1, f->dar, f->tf_xtra[TF_ESR]);
 		db_printf("exc: %8.8x pid: %8.8x\n",
-			f->exc, f->pid);
+			f->exc, f->tf_xtra[TF_PID]);
 	}
 	return;
 }

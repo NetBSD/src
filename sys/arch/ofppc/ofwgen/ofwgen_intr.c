@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.4 2002/09/18 01:43:08 chs Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.5 2003/02/02 20:43:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -182,7 +182,7 @@ do_pending_int(void)
 			 * Fake a clock interrupt frame
 			 */
 			frame.pri = new;
-			frame.depth = intr_depth + 1;
+			frame.depth = curcpu()->ci_intrdepth + 1;
 			frame.srr1 = 0;
 			frame.srr0 = (int)ofwgen_splx;
 			/*

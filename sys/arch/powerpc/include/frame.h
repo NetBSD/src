@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.12 2003/01/22 21:44:54 kleink Exp $	*/
+/*	$NetBSD: frame.h,v 1.13 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,12 +53,18 @@ struct trapframe {
 	register_t ctr;
 	register_t srr0;
 	register_t srr1;
-	register_t dar;			/* dar & dsisr are only filled on a DSI trap */
+	/*
+	 * DAR is the OEA name.  On IBM4xx is DAR is really DEAR.
+	 */
+	register_t dar;		/* dar & dsisr are only filled on a DSI trap */
 	int dsisr;
 	int exc;
-	uint32_t vrsave;
-	uint32_t mq;
+	int tf_xtra[2];
 };
+#define	TF_VRSAVE	0
+#define	TF_MQ		1
+#define	TF_ESR		0
+#define	TF_PID		1
 
 #if defined(_KERNEL) || defined(_LKM)
 #ifdef _LP64
@@ -88,7 +94,7 @@ struct trapframe32 {
 struct switchframe {
 	register_t sp;
 	int fill;
-	int user_sr;
+	int user_sr;	/* VSID on IBM4XX */
 	int cr;
 	register_t fixreg2;
 	register_t fixreg[19];		/* R13-R31 */
@@ -129,7 +135,7 @@ struct intrframe {
 	register_t srr0;		/* 12 */
 	int pri;			/* 16 */
 	int intrdepth;			/* 20 */
-	register_t vrsave;		/* 24 */
+	register_t pid;			/* 24 */
 	register_t ctr;			/* 28 */
 	register_t xer;			/* 32 */
 	register_t cr;			/* 36 */
