@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.18 2000/11/26 06:21:16 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.19 2000/12/03 13:43:40 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.18 2000/11/26 06:21:16 sato Exp $";
+    "$Id: hpcfb.c,v 1.19 2000/12/03 13:43:40 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,7 @@ hpcfb_init(fbconf, dc)
 	struct rasops_info *ri;
 	vaddr_t fbaddr;
 
-	fbaddr = (vaddr_t)fbconf->hf_baseaddr + fbconf->hf_offset;
+	fbaddr = (vaddr_t)fbconf->hf_baseaddr;
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
@@ -540,7 +540,7 @@ hpcfb_cmap_reorder(fbconf, dc)
 	struct rasops_info *ri = &dc->dc_rinfo;
 	int reverse = fbconf->hf_access_flags & HPCFB_ACCESS_REVERSE;
 	int *cmap = ri->ri_devcmap;
-	vaddr_t fbaddr = (vaddr_t)fbconf->hf_baseaddr + fbconf->hf_offset;
+	vaddr_t fbaddr = (vaddr_t)fbconf->hf_baseaddr;
 	int i, j, bg, fg, tmp;
 
 	/*
