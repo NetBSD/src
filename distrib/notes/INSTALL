@@ -564,6 +564,12 @@ Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
 Frank van der Linden	<fvdl@NetBSD.ORG>		(i386)
 Leo Weppelman		<leo@NetBSD.ORG>		(atari)
 
+The NetBSD _VER Release Engineering team:
+
+Ted Lemon		<mellon@NetBSD.ORG>
+Perry Metzger		<perry@NetBSD.ORG>
+Jason Thorpe		<thorpej@NetBSD.ORG>
+
 Supporting cast:
 Steve Allen		<wormey@eskimo.com>
 Lennart Augustsson	<augustss@NetBSD.ORG>
