@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.5 1994/02/10 02:06:05 cgd Exp $
+ *	$Id: modload.c,v 1.6 1994/03/31 20:29:58 ws Exp $
  */
 
 #include <stdio.h>
@@ -283,7 +283,8 @@ char	*av[];
 	/*
 	 * Calculate the size of the module
 	 */
- 	modsize = info_buf.a_text + info_buf.a_data;	/* amount to load*/
+ 	modsize = info_buf.a_text + info_buf.a_data	/* amount to load*/
+		  + info_buf.a_bss;
 
 
 	/*
@@ -352,22 +353,20 @@ char	*av[];
 	 * Transfer the relinked module to kernel memory in chunks of
 	 * MODIOBUF size at a time.
 	 */
- 	bytesleft = modsize;
-	for( i = 0; i < (modsize + MODIOBUF-1)/MODIOBUF; i++) {
+	for (bytesleft = info_buf.a_text + info_buf.a_data;
+	     bytesleft > 0;
+	     bytesleft -= sz) {
 		sz = MIN(bytesleft,MODIOBUF);
-		read( modfd, buf, sz);
+		read(modfd, buf, sz);
 		ldbuf.cnt = sz;
 		ldbuf.data = buf;
-		if( ioctl( devfd, LMLOADBUF, &ldbuf) == -1) {
+		if (ioctl( devfd, LMLOADBUF, &ldbuf) == -1) {
 			perror( "LMLOADBUF");
 			/* error*/
 			fprintf( stderr, "Error transferring buffer\n");
 			err = 11;
 			goto done;
 		}
-		bytesleft -= MODIOBUF;
-		if( bytesleft < 1)
-			break;
 	}
 
 	/*
