@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.11 2004/03/24 12:49:45 kochi Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.12 2004/03/24 13:02:23 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.11 2004/03/24 12:49:45 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.12 2004/03/24 13:02:23 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.11 2004/03/24 12:49:45 kochi Exp $")
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_madt.h>
 
 #ifdef ACPI_MADT_DEBUG
