@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.10 1994/08/30 23:06:48 chopps Exp $	*/
+/*	$NetBSD: advnops.c,v 1.11 1994/10/06 18:41:26 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -764,7 +764,7 @@ adosfs_access(sp)
 	if (mode & VWRITE)
 		mask |= S_IWOTH;
 found:
-	if ((adunixprot(ap->adprot) & mask) != mask)
+	if ((adunixprot(ap->adprot) & ap->amp->mask & mask) != mask)
 		error = EACCES;
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
