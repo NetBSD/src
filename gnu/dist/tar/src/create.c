@@ -1128,6 +1128,16 @@ dump_file (char *p, int top_level, dev_t parent_device)
     }
   else if (is_avoided_name (p))
     return;
+  else if (S_ISSOCK (current_stat.st_mode))
+    {
+      WARN ((0, 0, _("%s: socket ignored"), quotearg_colon (p)));
+      return;
+    }
+  else if (S_ISDOOR (current_stat.st_mode))
+    {
+      WARN ((0, 0, _("%s: door ignored"), quotearg_colon (p)));
+      return;
+    }
   else
     {
       /* Check for multiple links.
@@ -1507,16 +1517,6 @@ dump_file (char *p, int top_level, dev_t parent_device)
 	type = BLKTYPE;
       else if (S_ISFIFO (current_stat.st_mode))
 	type = FIFOTYPE;
-      else if (S_ISSOCK (current_stat.st_mode))
-	{
-	  WARN ((0, 0, _("%s: socket ignored"), quotearg_colon (p)));
-	  return;
-	}
-      else if (S_ISDOOR (current_stat.st_mode))
-	{
-	  WARN ((0, 0, _("%s: door ignored"), quotearg_colon (p)));
-	  return;
-	}
       else
 	goto unknown;
     }
