@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.34 2003/12/13 23:02:33 ad Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.35 2004/12/14 02:32:03 chs Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.34 2003/12/13 23:02:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.35 2004/12/14 02:32:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.34 2003/12/13 23:02:33 ad Exp $");
 #include <dev/dec/dzvar.h>
 
 #include "ioconf.h"
+#include "locators.h"
 #include "dzkbd.h"
 #include "dzms.h"
 #include "opt_cputype.h"
@@ -125,7 +126,7 @@ dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 #if VAX53 || VAX49 || VAXANY
 	if (vax_boardtype == VAX_BTYP_53 || vax_boardtype == VAX_BTYP_49)
-		if (cf->cf_loc[0] != 0x25000000)
+		if (cf->cf_loc[VSBUSCF_CSR] != 0x25000000)
 			return 0; /* Ugly */
 #endif
 

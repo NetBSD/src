@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2003/07/15 03:36:21 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2004/12/14 02:32:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2003/07/15 03:36:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2004/12/14 02:32:03 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2003/07/15 03:36:21 lukem Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+
+#include "locators.h"
 
 #include "scsibus.h"
 
@@ -223,20 +225,23 @@ int sun68k_bus_search(parent, cf, aux)
 	 * will pass to the device's match and attach functions.
 	 */
 #ifdef	DIAGNOSTIC
-#define BAD_LOCATOR(ma_loc, what) panic("sun68k_bus_search: %s %s for: %s%d", \
-				     map-> ma_loc == LOCATOR_REQUIRED ? "missing" : "unexpected", \
-				     what, cf->cf_name, cf->cf_unit)
+#define BAD_LOCATOR(ma_loc, what) \
+	panic("sun68k_bus_search: %s %s for: %s%d", \
+		map->ma_loc == LOCATOR_REQUIRED ? "missing" : "unexpected", \
+		what, cf->cf_name, cf->cf_unit)
 #else
 #define BAD_LOCATOR(ma_loc, what) return (0)
 #endif
+
 #define CHECK_LOCATOR(ma_loc, cf_loc, what) \
-	if ((map-> ma_loc == LOCATOR_FORBIDDEN && cf->cf_loc != -1) || \
-	    (map-> ma_loc == LOCATOR_REQUIRED && cf->cf_loc == -1)) \
+	if ((map->ma_loc == LOCATOR_FORBIDDEN && cf->cf_loc != -1) || \
+	    (map->ma_loc == LOCATOR_REQUIRED && cf->cf_loc == -1)) \
 		BAD_LOCATOR( ma_loc, what); \
 	else \
-		ma. ma_loc = cf->cf_loc
-	CHECK_LOCATOR(ma_paddr, cf_paddr, "address");
-	CHECK_LOCATOR(ma_pri, cf_intpri, "ipl");
+		ma.ma_loc = cf->cf_loc
+
+	CHECK_LOCATOR(ma_paddr, cf_loc[MBIOCF_ADDR], "address");
+	CHECK_LOCATOR(ma_pri, cf_loc[MBIOCF_IPL], "ipl");
 
 	/*
 	 * Note that this allows the match function to save
