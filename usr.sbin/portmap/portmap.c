@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.12.2.2 1999/01/25 05:26:12 cgd Exp $	*/
+/*	$NetBSD: portmap.c,v 1.12.2.3 1999/02/06 21:21:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.12.2.2 1999/01/25 05:26:12 cgd Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.12.2.3 1999/02/06 21:21:27 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,53 +87,22 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
  * Mountain View, California  94043
  */
 
-/* who to suid to if -s is given */
-#define RUN_AS	"daemon"
-
 #include <sys/types.h>
 #include <sys/time.h>
-#include <errno.h>
+#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
+#include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <rpc/rpc.h>
-#include <netdb.h>
-#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <netdb.h>
 
-#ifdef LIBWRAP
-# include <tcpd.h>
-#ifndef LIBWRAP_ALLOW_FACILITY
-# define LIBWRAP_ALLOW_FACILITY LOG_AUTH
-#endif
-#ifndef LIBWRAP_ALLOW_SEVERITY
-# define LIBWRAP_ALLOW_SEVERITY LOG_INFO
-#endif
-#ifndef LIBWRAP_DENY_FACILITY
-# define LIBWRAP_DENY_FACILITY LOG_AUTH
-#endif
-#ifndef LIBWRAP_DENY_SEVERITY
-# define LIBWRAP_DENY_SEVERITY LOG_WARNING
-#endif
-int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
-int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
-#endif
-
-#ifndef PORTMAP_LOG_FACILITY
-# define PORTMAP_LOG_FACILITY LOG_AUTH
-#endif
-#ifndef PORTMAP_LOG_SEVERITY
-# define PORTMAP_LOG_SEVERITY LOG_INFO
-#endif
-int log_severity = PORTMAP_LOG_FACILITY|PORTMAP_LOG_SEVERITY;
 
 struct encap_parms {
 	u_int arglen;
@@ -152,22 +121,15 @@ static void	callit __P((struct svc_req *, SVCXPRT *));
 static struct pmaplist *find_service __P((u_long, u_long, u_long));
 int		main __P((int, char *[]));
 void		reap __P((int));
-void		toggle_verboselog __P((int));
 void		reg_service __P((struct svc_req *, SVCXPRT *));
 static bool_t	xdr_encap_parms __P((XDR *, struct encap_parms *));
 static bool_t	xdr_len_opaque_parms __P((XDR *, struct rmtcallargs *));
 static bool_t	xdr_opaque_parms __P((XDR *, struct rmtcallargs *));
 static bool_t	xdr_rmtcall_args __P((XDR *, struct rmtcallargs *));
 static bool_t	xdr_rmtcall_result __P((XDR *, struct rmtcallargs *));
-void		logit __P((int, struct sockaddr_in *, u_long, u_long, char *));
-int		check_access __P((struct sockaddr_in *, u_long, u_long));
-int		is_loopback __P((struct sockaddr_in *));
-
 
 struct pmaplist *pmaplist;
 int debugging = 0;
-int runasdaemon = 0;
-int verboselog = 0;
 
 int
 main(argc, argv)
@@ -180,19 +142,11 @@ main(argc, argv)
 	int len = sizeof(struct sockaddr_in);
 	struct pmaplist *pml;
 
-	while ((c = getopt(argc, argv, "dls")) != -1) {
+	while ((c = getopt(argc, argv, "d")) != -1) {
 		switch (c) {
 
 		case 'd':
 			debugging = 1;
-			break;
-
-		case 'l':
-			verboselog = 1;
-			break;
-
-		case 's':
-			runasdaemon = 1;
 			break;
 
 		default:
@@ -261,25 +215,21 @@ main(argc, argv)
 	(void)svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE);
 
 	(void)signal(SIGCHLD, reap);
-	(void) signal(SIGUSR1, toggle_verboselog);
-
-	if (runasdaemon) {
-		struct passwd *p;
-
-		if((p = getpwnam(RUN_AS)) == NULL) {
-			syslog(LOG_ERR, "cannot get uid of daemon: %m");
-			exit(1);
-		}
-		if (setuid(p->pw_uid) == -1) {
-			syslog(LOG_ERR, "setuid to daemon failed: %m");
-			exit(1);
-		}
-	}
-
 	svc_run();
-	syslog(LOG_ERR, "svc_run returned unexpectedly");
+	syslog(LOG_ERR, "run_svc returned unexpectedly");
 	abort();
 }
+
+#ifndef lint
+/* need to override perror calls in rpc library */
+void
+perror(what)
+	const char *what;
+{
+
+	syslog(LOG_ERR, "%s: %m", what);
+}
+#endif
 
 static struct pmaplist *
 find_service(prog, vers, prot)
@@ -299,6 +249,9 @@ find_service(prog, vers, prot)
 	return (hit);
 }
 
+/* 
+ * 1 OK, 0 not
+ */
 void
 reg_service(rqstp, xprt)
 	struct svc_req *rqstp;
@@ -317,11 +270,10 @@ reg_service(rqstp, xprt)
 		/*
 		 * Null proc call
 		 */
-		check_access(svc_getcaller(xprt), rqstp->rq_proc, (u_long) 0);
-                if (!svc_sendreply(xprt, xdr_void, (caddr_t)0) && debugging) {
-                        abort();
-                }
-                break;
+		if (!svc_sendreply(xprt, xdr_void, (caddr_t)0) && debugging) {
+			abort();
+		}
+		break;
 
 	case PMAPPROC_SET:
 		/*
@@ -330,21 +282,12 @@ reg_service(rqstp, xprt)
 		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
 			svcerr_decode(xprt);
 		else {
-			if (verboselog)
-				logit(log_severity, svc_getcaller(xprt),
-				      rqstp->rq_proc, reg.pm_prog, "");
-			if(!is_loopback(svc_getcaller(xprt))) {
-				ans = 0;
-				goto done;
-			}
-
 			/*
 			 * check to see if already used
 			 * find_service returns a hit even if
 			 * the versions don't match, so check for it
 			 */
-			fnd = find_service(reg.pm_prog, reg.pm_vers,
-			    reg.pm_prot);
+			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
 			if (fnd && fnd->pml_map.pm_vers == reg.pm_vers) {
 				if (fnd->pml_map.pm_port == reg.pm_port) {
 					ans = 1;
@@ -388,13 +331,6 @@ reg_service(rqstp, xprt)
 			svcerr_decode(xprt);
 		else {
 			ans = 0;
-			if (verboselog)
-				logit(log_severity, svc_getcaller(xprt),
-				      rqstp->rq_proc, reg.pm_prog, "");
-			if(!is_loopback(svc_getcaller(xprt))) {
-				goto done;
-			}
-
 			for (prevpml = NULL, pml = pmaplist; pml != NULL; ) {
 				if ((pml->pml_map.pm_prog != reg.pm_prog) ||
 					(pml->pml_map.pm_vers != reg.pm_vers)) {
@@ -404,7 +340,7 @@ reg_service(rqstp, xprt)
 					continue;
 				}
 				/* found it; pml moves forward, prevpml stays */
-                                ans = 1;
+				ans = 1;
 				t = (caddr_t)pml;
 				pml = pml->pml_next;
 				if (prevpml == NULL)
@@ -428,18 +364,13 @@ reg_service(rqstp, xprt)
 		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
 			svcerr_decode(xprt);
 		else {
-			if (!check_access(svc_getcaller(xprt), rqstp->rq_proc, reg.pm_prog)) {
-				ans = 0;
-				/* this is a little bogus -- done is up above, under another case */
-				goto done;
-			}
-			fnd = find_service(reg.pm_prog, reg.pm_vers,
-			    reg.pm_prot);
+			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
 			if (fnd)
 				port = fnd->pml_map.pm_port;
 			else
 				port = 0;
-			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&port)) && debugging) {
+			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&port)) &&
+			    debugging) {
 				(void) fprintf(stderr, "svc_sendreply\n");
 				abort();
 			}
@@ -453,14 +384,8 @@ reg_service(rqstp, xprt)
 		if (!svc_getargs(xprt, xdr_void, NULL))
 			svcerr_decode(xprt);
 		else {
-			 struct pmaplist *p; 
-			 if (!check_access(svc_getcaller(xprt), rqstp->rq_proc, (u_long) 0)) {
-				p = 0;  /* send empty list */
-			 } else {
-				p = pmaplist;
-			 }
-
-			if ((!svc_sendreply(xprt, xdr_pmaplist, (caddr_t)&p)) && debugging) {
+			if ((!svc_sendreply(xprt, xdr_pmaplist,
+			    (caddr_t)&pmaplist)) && debugging) {
 				(void) fprintf(stderr, "svc_sendreply\n");
 				abort();
 			}
@@ -479,7 +404,6 @@ reg_service(rqstp, xprt)
 		break;
 
 	default:
-		check_access(svc_getcaller(xprt), rqstp->rq_proc, (u_long) 0);
 		svcerr_noproc(xprt);
 		break;
 	}
@@ -539,7 +463,7 @@ xdr_opaque_parms(xdrs, cap)
 }
 
 /*
- * This routine finds and sets the length of incoming opaque parameters
+ * This routine finds and sets the length of incoming opaque paraters
  * and then calls xdr_opaque_parms.
  */
 static bool_t
@@ -595,9 +519,6 @@ callit(rqstp, xprt)
 	a.rmt_args.args = buf;
 	if (!svc_getargs(xprt, xdr_rmtcall_args, (caddr_t)&a))
 		return;
-	/* host and service access control */
-	if (!check_access(svc_getcaller(xprt), rqstp->rq_proc, a.rmt_prog)) 
-		return;
 	if ((pml = find_service(a.rmt_prog, a.rmt_vers,
 	    (u_long)IPPROTO_UDP)) == NULL)
 		return;
@@ -649,106 +570,4 @@ reap(dummy)
 	while (wait3(NULL, WNOHANG, NULL) > 0)
 		;
 	errno = save_errno;
-}
-
-void
-toggle_verboselog(dummy)
-	int dummy;
-{
-	verboselog = !verboselog;
-}
-
-int 
-check_access(addr, proc, prog)
-	struct sockaddr_in *addr; 
-	u_long  proc; 
-	u_long  prog;
-{
-#ifdef LIBWRAP
-	struct request_info req;
-#endif
-
-#ifdef LIBWRAP
-	request_init(&req, RQ_DAEMON, "portmap", RQ_CLIENT_SIN, addr, 0);
-	sock_methods(&req);
-	if(!hosts_access(&req)) {
-		logit(deny_severity, addr, proc, prog, ": request from unauthorized host");
-		return 0;
-	}
-#endif
-	if (verboselog)
-		logit(log_severity, addr, proc, prog, "");
-    	return 1;
-}
-
-int
-is_loopback(addr)
-	struct sockaddr_in *addr;
-{
-        if (addr->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
-		return 1;
-	
-	return 0;
-}
-
-
-/* logit - report events of interest via the syslog daemon */
-void
-logit(severity, addr, procnum, prognum, text)
-	int severity;
-	struct sockaddr_in *addr;
-	u_long procnum;
-	u_long prognum; 
-	char *text;
-{
-    char   *procname;
-    char    procbuf[4 * sizeof(u_long)];
-    char   *progname;
-    char    progbuf[4 * sizeof(u_long)];
-    struct rpcent *rpc;
-    struct proc_map {
-        u_long  code;
-        char   *proc;
-    };  
-    struct proc_map *procp;
-    static struct proc_map procmap[] = {
-        {PMAPPROC_CALLIT, "callit"},
-        {PMAPPROC_DUMP, "dump"},
-        {PMAPPROC_GETPORT, "getport"}, 
-        {PMAPPROC_NULL, "null"},
-        {PMAPPROC_SET, "set"},
-        {PMAPPROC_UNSET, "unset"},
-        {0, 0}
-    };  
-   
-    /*
-     * Fork off a process or the portmap daemon might hang while
-     * getrpcbynumber() or syslog() does its thing.
-     */
-
-    if (fork() == 0) {
-
-        /* Try to map program number to name. */
-
-        if (prognum == 0) {
-            progname = "";
-        } else if ((rpc = getrpcbynumber((int) prognum))) {
-            progname = rpc->r_name;
-        } else {
-            snprintf(progname = progbuf, sizeof(progbuf), "%lu", prognum);
-        }
-
-        /* Try to map procedure number to name. */
-
-        for (procp = procmap; procp->proc && procp->code != procnum; procp++)
-             /* void */ ;
-        if ((procname = procp->proc) == 0)
-            snprintf(procname = procbuf, sizeof(procbuf), "%lu", (u_long) procnum);
-
-        /* Write syslog record. */
-
-        syslog(severity, "connect from %s to %s(%s)%s",
-            inet_ntoa(addr->sin_addr), procname, progname, text);
-		exit(0);
-	}
 }
