@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 1996/05/28 23:34:41 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30 1996/08/13 16:42:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.29 1996/05/28 23:34:41 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.30 1996/08/13 16:42:08 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,7 +333,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 					optind = 1;     /* - */
 				goto rearg;
 			}
-			(void)Lst_AtEnd(create, (ClientData)strdup(*argv));
+			(void)Lst_AtEnd(create, (ClientData)estrdup(*argv));
 		}
 }
 
@@ -1120,6 +1120,21 @@ emalloc(len)
 	void *p;
 
 	if ((p = malloc(len)) == NULL)
+		enomem();
+	return(p);
+}
+
+/*
+ * emalloc --
+ *	strdup, but die on error.
+ */
+char *
+estrdup(str)
+	const char *str;
+{
+	char *p;
+
+	if ((p = strdup(str)) == NULL)
 		enomem();
 	return(p);
 }

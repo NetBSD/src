@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.10 1996/05/28 23:34:44 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.11 1996/08/13 16:42:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@ void Punt __P((char *, ...));
 void DieHorribly __P((void));
 int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
+char *estrdup __P((const char *));
 void *emalloc __P((size_t));
 void *erealloc __P((void *, size_t));
 void enomem __P((void));

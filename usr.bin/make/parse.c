@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.23 1996/05/28 23:34:46 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.24 1996/08/13 16:42:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.23 1996/05/28 23:34:46 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.24 1996/08/13 16:42:13 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -539,7 +539,7 @@ ParseDoSrc (tOp, src, allsrc)
 	 * invoked if the user didn't specify a target on the command
 	 * line. This is to allow #ifmake's to succeed, or something...
 	 */
-	(void) Lst_AtEnd (create, (ClientData)strdup(src));
+	(void) Lst_AtEnd (create, (ClientData)estrdup(src));
 	/*
 	 * Add the name to the .TARGETS variable as well, so the user cna
 	 * employ that, if desired.
@@ -1635,7 +1635,7 @@ ParseDoInclude (file)
 	char	  *prefEnd, *Fname;
 
 	/* Make a temporary copy of this, to be safe. */
-	Fname = strdup(fname);
+	Fname = estrdup(fname);
 
 	prefEnd = strrchr (Fname, '/');
 	if (prefEnd != (char *)NULL) {
@@ -1643,7 +1643,7 @@ ParseDoInclude (file)
 	    
 	    *prefEnd = '\0';
 	    if (file[0] == '/')
-		newName = strdup(file);
+		newName = estrdup(file);
 	    else
 		newName = str_concat (Fname, file, STR_ADDSLASH);
 	    fullname = Dir_FindFile (newName, parseIncPath);
@@ -1760,7 +1760,7 @@ Parse_FromString(str)
     curPTR = (PTR *) emalloc (sizeof (PTR));
     curPTR->str = curPTR->ptr = str;
     lineno = 0;
-    fname = strdup(fname);
+    fname = estrdup(fname);
 }
 
 
