@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.13 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.14 1999/06/01 03:00:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ int lfs_balloc __P((struct vnode *, int, u_long, ufs_daddr_t, struct buf **));
 
 /* lfs_bio.c */
 int lfs_bwrite_ext __P((struct buf *, int));
+void lfs_flush_fs __P((struct mount *, int));
 void lfs_flush __P((struct lfs *, int));
 int lfs_check __P((struct vnode *, ufs_daddr_t, int));
 void lfs_freebuf __P((struct buf *));
