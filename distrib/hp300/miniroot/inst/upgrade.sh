@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.1 1995/11/14 09:53:15 thorpej Exp $
+#	$NetBSD: upgrade.sh,v 1.2 1995/11/28 23:57:19 jtc Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -35,7 +35,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.0A
+VERSION=1.1
 export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
 

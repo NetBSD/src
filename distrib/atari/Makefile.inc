@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1995/04/17 19:08:49 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1995/11/28 23:57:10 jtc Exp $
 
-# Revision is 1.0
-REV=	10
+# Revision is 1.1
+REV=	11

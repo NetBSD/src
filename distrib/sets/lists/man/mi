@@ -57,6 +57,7 @@
 ./usr/share/man/cat1/echo.0
 ./usr/share/man/cat1/ed.0
 ./usr/share/man/cat1/egrep.0
+./usr/share/man/cat1/eject.0
 ./usr/share/man/cat1/env.0
 ./usr/share/man/cat1/error.0
 ./usr/share/man/cat1/ex.0
@@ -470,6 +471,7 @@
 ./usr/share/man/cat8/rbootd.0
 ./usr/share/man/cat8/rc.0
 ./usr/share/man/cat8/rdate.0
+./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
 ./usr/share/man/cat8/reboot.0
 ./usr/share/man/cat8/renice.0

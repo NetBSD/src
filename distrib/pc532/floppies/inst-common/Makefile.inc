@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.4 1995/09/29 04:00:18 phil Exp $ 
+#	$NetBSD: Makefile.inc,v 1.5 1995/11/28 23:58:56 jtc Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -59,6 +59,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+	(cd ${COMMONDIR}; ${MAKE} download.o)
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
