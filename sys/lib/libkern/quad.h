@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.4 1995/10/07 09:26:42 mycroft Exp $	*/
+/*	$NetBSD: quad.h,v 1.5 1995/10/12 15:13:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,9 +93,9 @@ union uu {
  * and lower halves, and to reassemble a product as a quad_t, shifted left
  * (sizeof(long)*CHAR_BIT/2).
  */
-#define	HHALF(x)	((long)(x) >> HALF_BITS)
-#define	LHALF(x)	((long)(x) & (((long)1 << HALF_BITS) - 1))
-#define	LHUP(x)		((long)(x) << HALF_BITS)
+#define	HHALF(x)	((u_long)(x) >> HALF_BITS)
+#define	LHALF(x)	((u_long)(x) & (((long)1 << HALF_BITS) - 1))
+#define	LHUP(x)		((u_long)(x) << HALF_BITS)
 
 extern u_quad_t __qdivrem __P((u_quad_t u, u_quad_t v, u_quad_t *rem));
 
