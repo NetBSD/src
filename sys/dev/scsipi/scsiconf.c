@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.204 2003/05/02 12:27:49 fvdl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.205 2003/05/13 03:02:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.204 2003/05/02 12:27:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.205 2003/05/13 03:02:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,8 @@ scsibusattach(parent, self, aux)
 	sc->sc_channel = chan;
 	chan->chan_name = sc->sc_dev.dv_xname;
 
-	printf(": %d target%s, %d lun%s per target\n",
+	aprint_naive(": SCSI bus\n");
+	aprint_normal(": %d target%s, %d lun%s per target\n",
 	    chan->chan_ntargets,
 	    chan->chan_ntargets == 1 ? "" : "s",
 	    chan->chan_nluns,
@@ -190,10 +191,10 @@ scsibusattach(parent, self, aux)
 	TAILQ_INSERT_TAIL(&scsi_initq_head, scsi_initq, scsi_initq);
         config_pending_incr();
 	if (scsipi_channel_init(chan)) {
-		printf(": failed to init channel\n");
+		aprint_error("%s: failed to init channel\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-
 }
 
 void
@@ -209,7 +210,8 @@ scsibus_config(chan, arg)
 #endif
 	if ((chan->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
 	    SCSI_DELAY > 0) {
-		printf("%s: waiting %d seconds for devices to settle...\n",
+		aprint_normal(
+		    "%s: waiting %d seconds for devices to settle...\n",
 		    sc->sc_dev.dv_xname, SCSI_DELAY);
 		/* ...an identifier we know no one will use... */
 		(void) tsleep(scsibus_config, PRIBIO,
@@ -734,7 +736,8 @@ scsi_probe_device(sc, target, lun)
 	periph = scsipi_alloc_periph(M_NOWAIT);
 	if (periph == NULL) {
 #ifdef	DIAGNOSTIC
-		printf("%s: cannot allocate periph for target %d lun %d\n",
+		aprint_error(
+		    "%s: cannot allocate periph for target %d lun %d\n",
 		    sc->sc_dev.dv_xname, target, lun);
 #endif
 		return (ENOMEM);
@@ -950,7 +953,7 @@ scsi_probe_device(sc, target, lun)
 		(void) config_attach(&sc->sc_dev, cf, &sa, scsibusprint);
 	} else {
 		scsibusprint(&sa, sc->sc_dev.dv_xname);
-		printf(" not configured\n");
+		aprint_normal(" not configured\n");
 		goto bad;
 	}
 
