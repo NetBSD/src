@@ -1,4 +1,4 @@
-/* $NetBSD: hsearchtest.c,v 1.2 2001/02/14 05:32:19 cgd Exp $ */
+/* $NetBSD: hsearchtest.c,v 1.3 2001/02/14 06:03:37 cgd Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: hsearchtest.c,v 1.2 2001/02/14 05:32:19 cgd Exp $");
+__RCSID("$NetBSD: hsearchtest.c,v 1.3 2001/02/14 06:03:37 cgd Exp $");
 __COPYRIGHT(
 "@(#) Copyright (c) 2001 Christopher G. Demetriou.  All rights reserved.\n");
 #endif /* not lint */
@@ -89,6 +89,15 @@ main(int argc, char *argv[])
 
 	/* e.key should be constant from here on down. */
 	e.key = ch;
+
+	/* Basic lookups. */
+	for (i = 0; i < 26; i++) {
+		ch[0] = 'a' + i;
+		ep = hsearch(e, FIND);
+		TEST(ep != NULL);
+		TEST(strcmp(ep->key, ch) == 0);
+		TEST((long)ep->data == i);
+	}
 
 	/* Check duplicate entry.  Should _not_ overwrite existing data.  */
 	ch[0] = 'a';
