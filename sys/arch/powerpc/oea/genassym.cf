@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2003/02/03 17:10:09 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2003/08/03 21:26:27 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+include "opt_ppcarch.h"
+
 include <sys/param.h>
 include <sys/time.h>
 include <sys/proc.h>
@@ -47,6 +49,34 @@ define	FRAME_0		offsetof(struct trapframe, fixreg[0])
 define	FRAME_1		offsetof(struct trapframe, fixreg[1])
 define	FRAME_2		offsetof(struct trapframe, fixreg[2])
 define	FRAME_3		offsetof(struct trapframe, fixreg[3])
+define	FRAME_4		offsetof(struct trapframe, fixreg[4])
+define	FRAME_5		offsetof(struct trapframe, fixreg[5])
+define	FRAME_6		offsetof(struct trapframe, fixreg[6])
+define	FRAME_7		offsetof(struct trapframe, fixreg[7])
+define	FRAME_8		offsetof(struct trapframe, fixreg[8])
+define	FRAME_9		offsetof(struct trapframe, fixreg[9])
+define	FRAME_10	offsetof(struct trapframe, fixreg[10])
+define	FRAME_11	offsetof(struct trapframe, fixreg[11])
+define	FRAME_12	offsetof(struct trapframe, fixreg[12])
+define	FRAME_13	offsetof(struct trapframe, fixreg[13])
+define	FRAME_14	offsetof(struct trapframe, fixreg[14])
+define	FRAME_15	offsetof(struct trapframe, fixreg[15])
+define	FRAME_16	offsetof(struct trapframe, fixreg[16])
+define	FRAME_17	offsetof(struct trapframe, fixreg[17])
+define	FRAME_18	offsetof(struct trapframe, fixreg[18])
+define	FRAME_19	offsetof(struct trapframe, fixreg[19])
+define	FRAME_20	offsetof(struct trapframe, fixreg[20])
+define	FRAME_21	offsetof(struct trapframe, fixreg[21])
+define	FRAME_22	offsetof(struct trapframe, fixreg[22])
+define	FRAME_23	offsetof(struct trapframe, fixreg[23])
+define	FRAME_24	offsetof(struct trapframe, fixreg[24])
+define	FRAME_25	offsetof(struct trapframe, fixreg[25])
+define	FRAME_26	offsetof(struct trapframe, fixreg[26])
+define	FRAME_27	offsetof(struct trapframe, fixreg[27])
+define	FRAME_28	offsetof(struct trapframe, fixreg[28])
+define	FRAME_29	offsetof(struct trapframe, fixreg[29])
+define	FRAME_30	offsetof(struct trapframe, fixreg[30])
+define	FRAME_31	offsetof(struct trapframe, fixreg[31])
 define	FRAME_LR	offsetof(struct trapframe, lr)
 define	FRAME_CR	offsetof(struct trapframe, cr)
 define	FRAME_CTR	offsetof(struct trapframe, ctr)
@@ -82,9 +112,13 @@ define	IFRAME_R4		offsetof(struct intrframe, r4)
 define	IFRAME_R3		offsetof(struct intrframe, r3)
 define	IFRAME_R0		offsetof(struct intrframe, r0)
 
+ifdef PPC_OEA64
+define	PM_STEG		offsetof(struct pmap, pm_steg_table)
+else
 define	PM_SR		offsetof(struct pmap, pm_sr[0])
 define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
+endif
 
 define	CALLFRAMELEN	CALLFRAMELEN
 define	CFRAME_SP	offsetof(struct callframe, sp)
@@ -97,7 +131,25 @@ define	SFRAME_SP	offsetof(struct switchframe, sp)
 define	SFRAME_USER_SR	offsetof(struct switchframe, user_sr)
 define	SFRAME_CR	offsetof(struct switchframe, cr)
 define	SFRAME_R2	offsetof(struct switchframe, fixreg2)
-define	SFRAME_R19	offsetof(struct switchframe, fixreg[0])
+define	SFRAME_R13	offsetof(struct switchframe, fixreg[0])
+define	SFRAME_R14	offsetof(struct switchframe, fixreg[1])
+define	SFRAME_R15	offsetof(struct switchframe, fixreg[2])
+define	SFRAME_R16	offsetof(struct switchframe, fixreg[3])
+define	SFRAME_R17	offsetof(struct switchframe, fixreg[4])
+define	SFRAME_R18	offsetof(struct switchframe, fixreg[5])
+define	SFRAME_R19	offsetof(struct switchframe, fixreg[6])
+define	SFRAME_R20	offsetof(struct switchframe, fixreg[7])
+define	SFRAME_R21	offsetof(struct switchframe, fixreg[8])
+define	SFRAME_R22	offsetof(struct switchframe, fixreg[9])
+define	SFRAME_R23	offsetof(struct switchframe, fixreg[10])
+define	SFRAME_R24	offsetof(struct switchframe, fixreg[11])
+define	SFRAME_R25	offsetof(struct switchframe, fixreg[12])
+define	SFRAME_R26	offsetof(struct switchframe, fixreg[13])
+define	SFRAME_R27	offsetof(struct switchframe, fixreg[14])
+define	SFRAME_R28	offsetof(struct switchframe, fixreg[15])
+define	SFRAME_R29	offsetof(struct switchframe, fixreg[16])
+define	SFRAME_R30	offsetof(struct switchframe, fixreg[17])
+define	SFRAME_R31	offsetof(struct switchframe, fixreg[18])
 
 define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
@@ -131,11 +183,38 @@ define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
 
+define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
+define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)
+define	CPUSAVE_R30	CPUSAVE_R30*sizeof(register_t)
+define	CPUSAVE_R31	CPUSAVE_R31*sizeof(register_t)
+define	CPUSAVE_DAR	CPUSAVE_DAR*sizeof(register_t)
+define	CPUSAVE_DSISR	CPUSAVE_DSISR*sizeof(register_t)
+define	CPUSAVE_SRR0	CPUSAVE_SRR0*sizeof(register_t)
+define	CPUSAVE_SRR1	CPUSAVE_SRR1*sizeof(register_t)
+
 define	FB_PC		offsetof(struct faultbuf, fb_pc)
 define	FB_SP		offsetof(struct faultbuf, fb_sp)
 define	FB_R2		offsetof(struct faultbuf, fb_r2)
 define	FB_CR		offsetof(struct faultbuf, fb_cr)
-define	FB_FIXREG	offsetof(struct faultbuf, fb_fixreg)
+define	FB_R13		offsetof(struct faultbuf, fb_fixreg[0])
+define	FB_R14		offsetof(struct faultbuf, fb_fixreg[1])
+define	FB_R15		offsetof(struct faultbuf, fb_fixreg[2])
+define	FB_R16		offsetof(struct faultbuf, fb_fixreg[3])
+define	FB_R17		offsetof(struct faultbuf, fb_fixreg[4])
+define	FB_R18		offsetof(struct faultbuf, fb_fixreg[5])
+define	FB_R19		offsetof(struct faultbuf, fb_fixreg[6])
+define	FB_R20		offsetof(struct faultbuf, fb_fixreg[7])
+define	FB_R21		offsetof(struct faultbuf, fb_fixreg[8])
+define	FB_R22		offsetof(struct faultbuf, fb_fixreg[9])
+define	FB_R23		offsetof(struct faultbuf, fb_fixreg[10])
+define	FB_R24		offsetof(struct faultbuf, fb_fixreg[11])
+define	FB_R25		offsetof(struct faultbuf, fb_fixreg[12])
+define	FB_R26		offsetof(struct faultbuf, fb_fixreg[13])
+define	FB_R27		offsetof(struct faultbuf, fb_fixreg[14])
+define	FB_R28		offsetof(struct faultbuf, fb_fixreg[15])
+define	FB_R29		offsetof(struct faultbuf, fb_fixreg[16])
+define	FB_R30		offsetof(struct faultbuf, fb_fixreg[17])
+define	FB_R31		offsetof(struct faultbuf, fb_fixreg[18])
 
 define	CACHELINESIZE	CACHELINESIZE
 
