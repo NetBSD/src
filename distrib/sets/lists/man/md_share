@@ -282,6 +282,8 @@
 ./usr/share/man/cat8/vax/makedev.0
 ./usr/share/man/cat8/x68k/MAKEDEV.0
 ./usr/share/man/cat8/x68k/boot.0
+./usr/share/man/cat8/x68k/loadbsd.0
+./usr/share/man/cat8/x68k/loadbsd.x.0
 ./usr/share/man/cat8/x68k/makedev.0
 ./usr/share/man/cat8/x68k/poffd.0
 ./usr/share/man/cat8/x68k/rtcalarm.0
@@ -574,6 +576,8 @@
 ./usr/share/man/man8/vax/makedev.8
 ./usr/share/man/man8/x68k/MAKEDEV.8
 ./usr/share/man/man8/x68k/boot.8
+./usr/share/man/man8/x68k/loadbsd.8
+./usr/share/man/man8/x68k/loadbsd.x.8
 ./usr/share/man/man8/x68k/makedev.8
 ./usr/share/man/man8/x68k/poffd.8
 ./usr/share/man/man8/x68k/rtcalarm.8
