@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.29 1997/03/23 15:59:41 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.30 1997/04/04 06:27:32 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1182,6 +1182,7 @@ bah_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			bah_init(sc);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
