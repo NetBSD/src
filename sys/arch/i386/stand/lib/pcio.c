@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.11 2002/02/19 20:18:36 thorpej Exp $	 */
+/*	$NetBSD: pcio.c,v 1.12 2003/02/01 14:48:18 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -99,13 +99,14 @@ initio(dev)
 		for(i = 0; i < 3; i++) {
 			iodev = CONSDEV_COM0 + i;
 			btinfo_console.addr = getcomaddr(i);
-			if(!btinfo_console.addr) break;
+			if(!btinfo_console.addr)
+				break;
 			conputc('0' + i); /* to tell user what happens */
 			cominit(SERIAL_ARG);
 #ifdef DIRECT_SERIAL
 			/* check for:
 			 *  1. successful output
-			 *  2. optionally, keypress within 1s
+			 *  2. optionally, keypress within 7s
 			 */
 			if (	computc(':', SERIAL_ARG) &&
 				computc('-', SERIAL_ARG) &&
@@ -122,7 +123,7 @@ initio(dev)
 			 *  1. character output without error
 			 *  2. status bits for modem ready set
 			 *     (status seems only useful after character output)
-			 *  3. optionally, keypress within 1s
+			 *  3. optionally, keypress within 7s
 			 */
 			if (!(computc('@', SERIAL_ARG) & 0x80)
 			    && (comstatus(SERIAL_ARG) & 0x00b0)
@@ -142,7 +143,8 @@ ok:
 	    case CONSDEV_COM3:
 		iodev = dev;
 		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
-		if(!btinfo_console.addr) goto nocom;
+		if(!btinfo_console.addr)
+			goto nocom;
 		cominit(SERIAL_ARG);
 		break;
 	    case CONSDEV_COM0KBD:
@@ -152,13 +154,14 @@ ok:
 		iodev = dev - 4;
 		i = iodev - CONSDEV_COM0;
 		btinfo_console.addr = getcomaddr(i);
-		if(!btinfo_console.addr) goto nocom;
+		if(!btinfo_console.addr)
+			goto nocom;
 		conputc('0' + i); /* to tell user what happens */
 		cominit(SERIAL_ARG);
 #ifdef DIRECT_SERIAL
 			/* check for:
 			 *  1. successful output
-			 *  2. optionally, keypress within 1s
+			 *  2. optionally, keypress within 7s
 			 */
 			if (	computc(':', SERIAL_ARG) &&
 				computc('-', SERIAL_ARG) &&
@@ -175,7 +178,7 @@ ok:
 			 *  1. character output without error
 			 *  2. status bits for modem ready set
 			 *     (status seems only useful after character output)
-			 *  3. optionally, keypress within 1s
+			 *  3. optionally, keypress within 7s
 			 */
 			if (!(computc('@', SERIAL_ARG) & 0x80)
 			    && (comstatus(SERIAL_ARG) & 0x00b0)
@@ -317,7 +320,9 @@ awaitkey(timeout, tell)
 			/* flush input buffer */
 			while (iskey())
 				c = getchar();
-			goto out; /* XXX what happens if c == 0? */
+			if (c == 0)
+				c = -1;
+			goto out;
 		}
 		delay(1000000 / POLL_FREQ);
 		i--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.6 1999/08/23 08:24:38 kleink Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.7 2003/02/01 14:48:19 dsl Exp $	*/
 	
 /*
  * startup for DOS .COM programs
@@ -61,8 +61,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <machine/asm.h>
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
+
+
+CR0_PE		=	0x1
 
 	.data
 	.globl _C_LABEL(ourseg)
@@ -98,22 +99,22 @@ flatdataseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
 
-	/* boot code segment, will be patched */
+	/* boot code segment, base will be patched */
 bootcodeseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x9e, 0x40, 0
 
-	/* boot data segment, will be patched */
+	/* boot data segment, base will be patched */
 bootdataseg = . - gdt
 #ifdef HEAP_BELOW_64K
 	.word	0xffff, 0
 	.byte	0, 0x92, 0x00, 0
 #else
 	.word	0xffff, 0
-	.byte	0, 0x92, 0x0f, 0
+	.byte	0, 0x92, 0x4f, 0
 #endif
 
-	/* 16 bit real mode, will be patched */
+	/* 16 bit real mode, base will be patched */
 bootrealseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x9e, 0x00, 0
@@ -130,91 +131,101 @@ gdtarg:
 
 	.text
 ENTRY(start)
-	data32
+	.code16
+
+	# Check we are in real mode
+	movl	%cr0, %eax
+	testl	$CR0_PE, %eax
+	jz	2f
+	mov	$1f, %si
+	call	message
+	ret
+1:	.asciz	"must be in real mode\r\n"
+2:
+
 	xorl	%eax, %eax
-	movl	%cs, %ax
-	movl	%ax, %ds
-	movl	%ax, %es
-	addr32
-	data32
+	mov	%cs, %ax
+	mov	%ax, %ds
+	mov	%ax, %es
 	movl	%eax, _C_LABEL(ourseg)
-	data32
-	shll	$4, %eax
+#ifdef STACK_START
+	add	$STACK_START / 16, %ax
+	mov	%ax, %ss
+	mov	$0xfffc, %sp
+#endif
 
 	/* fix up GDT entries for bootstrap */
 #define FIXUP(gdt_index) \
-	addr32; \
-	movl	%eax, gdt+gdt_index+2;	/* actually movw %ax */ \
-	addr32; \
+	movw	%ax, gdt+gdt_index+2;	\
 	movb	%bl, gdt+gdt_index+4
 
-	data32
+	mov	%cs, %ax
+	shll	$4, %eax
 	shldl	$16, %eax, %ebx
 	FIXUP(bootcodeseg)
 	FIXUP(bootrealseg)
 	FIXUP(bootdataseg)
 
 	/* fix up GDT pointer */
-	data32
 	addl	$gdt, %eax
-	addr32
-	data32
 	movl	%eax, gdtarg+2
 
 	/* change to protected mode */
-	data32
-	call	_C_LABEL(real_to_prot)
+	calll	_C_LABEL(real_to_prot)
+	.code32
 
 	/* clear the bss */
 	movl	$_C_LABEL(edata), %edi
 	movl	$_C_LABEL(end), %ecx
 	subl	%edi, %ecx
-	subb	%al, %al
+	xorb	%al, %al
 	rep
 	stosb
 
 	call	_C_LABEL(doscommain)
 ENTRY(exit)
 	call	_C_LABEL(prot_to_real)
+	.code16
+ENTRY(exit16)
 	sti
-	movb	$0x4c,%ah /* return */
+	movb	$0x4c, %ah		/* return */
 	int	$0x21
-
-CR0_PE		=	0x1
 
 /*
  * real_to_prot()
  * 	transfer from real mode to protected mode.
  */
 ENTRY(real_to_prot)
+	.code16
+	pushl	%eax
 	# guarantee that interrupt is disabled when in prot mode
 	cli
 
 	# load the gdtr
-	addr32
-	data32
-	lgdt	gdtarg
+	lgdtl	%cs:gdtarg
 
 	# set the PE bit of CR0
 	movl	%cr0, %eax
-
-	data32
 	orl	$CR0_PE, %eax
 	movl	%eax, %cr0 
 
 	# make intrasegment jump to flush the processor pipeline and
 	# reload CS register
-	data32
 	ljmp	$bootcodeseg, $xprot
 
 xprot:
+	.code32
 	# we are in USE32 mode now
 	# set up the protected mode segment registers : DS, SS, ES
 	movl	$bootdataseg, %eax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
+	mov	%ax, %ds
+	mov	%ax, %es
+	mov	%ax, %ss
+#ifdef STACK_START
+	addl	$STACK_START, %esp
+#endif
 
+	popl	%eax
 	ret
 
 /*
@@ -222,6 +233,8 @@ xprot:
  * 	transfer from protected mode to real mode
  */
 ENTRY(prot_to_real)
+	.code32
+	pushl	%eax
 	# set up a dummy stack frame for the second seg change.
 	# Adjust the intersegment jump instruction following 
 	# the clearing of protected mode bit.
@@ -235,27 +248,47 @@ ENTRY(prot_to_real)
 	ljmp	$bootrealseg, $x16
 
 x16:
+	.code16
 	# clear the PE bit of CR0
 	movl	%cr0, %eax
-	data32
 	andl 	$~CR0_PE, %eax
 	movl	%eax, %cr0
+
 	# Here we have an 16 bits intersegment jump.
-	.byte 0xea
-	.word xreal
-	.word 0
+	ljmp	$0, $xreal		/* segment patched above */
 
 xreal:
 	# we are in real mode now
 	# set up the real mode segment registers : DS, SS, ES
-	movl	%cs, %ax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
+	mov	%cs, %ax
+	mov	%ax, %ds
+	mov	%ax, %es
+#ifdef STACK_START
+	add	$STACK_START / 16, %ax
+	mov	%ax, %ss
+	subl	$STACK_START, %esp
+#else
+	mov	%ax, %ss
+#endif
+	push	%bp
+	movw	%sp, %bp
+	/* check we are returning to an address below 64k */
+	movw	2/*bp*/ + 4/*eax*/ + 2(%bp), %ax	/* high bits ret addr */
+	test	%ax, %ax
+	jne	1f
+	pop	%bp
 
 	sti
-	data32
-	ret
+	popl	%eax
+	retl
+
+1:	movw	$2f, %si
+	call	message
+	movl	2/*bp*/ + 4/*eax*/(%bp), %eax		/*  return address */
+	call	dump_eax
+	jmp	exit16
+2:	.asciz  "prot_to_real can't return to "
+
 
 /**************************************************************************
 ___MAIN - Dummy to keep GCC happy
@@ -268,6 +301,7 @@ ENTRY(__main)
  *	where dst is a physical address and cnt is the length
  */
 ENTRY(pbzero)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%es
@@ -277,7 +311,7 @@ ENTRY(pbzero)
 
 	# set %es to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %es
+	mov	%ax, %es
 
 	movl	8(%ebp), %edi		# destination
 	movl	12(%ebp), %ecx		# count
@@ -296,6 +330,7 @@ ENTRY(pbzero)
  *	where src is a virtual address and dst is a physical address
  */
 ENTRY(vpbcopy)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%es
@@ -306,7 +341,7 @@ ENTRY(vpbcopy)
 
 	# set %es to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %es
+	mov	%ax, %es
 
 	movl	8(%ebp), %esi		# source
 	movl	12(%ebp), %edi		# destination
@@ -326,6 +361,7 @@ ENTRY(vpbcopy)
  *	where src is a physical address and dst is a virtual address
  */
 ENTRY(pvbcopy)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ds
@@ -336,7 +372,7 @@ ENTRY(pvbcopy)
 
 	# set %ds to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %ds
+	mov	%ax, %ds
 
 	movl	8(%ebp), %esi		# source
 	movl	12(%ebp), %edi		# destination
@@ -352,9 +388,86 @@ ENTRY(pvbcopy)
 	ret
 
 ENTRY(vtophys)
-	movl _C_LABEL(ourseg), %eax
+	.code32
+	movl	_C_LABEL(ourseg), %eax
 	shll	$4, %eax
-	addl 4(%esp), %eax
+	addl	4(%esp), %eax
+	ret
+
+message:
+	.code16
+	pushal
+message_1:
+	cld
+1:	lodsb
+	testb	%al, %al
+	jz	2f
+	movb	$0xe, %ah
+	movw	$1, %bx
+	int	$0x10
+	jmp	1b
+
+2:	movb	$0x86, %ah
+	mov	$16, %cx
+	int	$0x15			/* delay about a second */
+	popal
+	ret
+
+/* These are useful for debugging
+ */
+	.data
+eax_buf:
+	.long	0, 0, 0, 0
+	.text
+ENTRY(dump_eax)
+	.code16
+	pushal
+	movw	$eax_buf, %si
+	mov	%si, %di
+	movw	$8, %cx
+1:	roll	$4, %eax
+	mov	%ax, %bx
+	andb	$0x0f, %al
+	addb	$0x30, %al			/* 30..3f - clear AF */
+#if 1 /* 5 bytes to generate real hex... */
+	daa					/* 30..39, 40..45 */
+	addb	$0xc0, %al			/* f0..f9, 00..05 */
+	adcb	$0x40, %al			/* 30..39, 41..45 */
+#endif
+	movb	%al, (%di)			/* %es != %ds, so can't ... */
+	inc	%di				/* ... use stosb */
+	mov	%bx, %ax
+	loop	1b
+	movw	$0x20, %ax			/* space + null */
+	movw	%ax, (%di)
+	jmp	message_1
+
+	.globl	_C_LABEL(trace_word)
+_C_LABEL(trace_word):
+	.code32
+	movl	4(%esp), %edx
+
+	call	_C_LABEL(prot_to_real)
+	.code16
+	movl	%edx, %eax
+	call	dump_eax
+	calll	_C_LABEL(real_to_prot)
+	.code32
+	ret
+
+	.globl	_C_LABEL(trace_str)
+_C_LABEL(trace_str):
+	.code32
+	pushl	%esi
+
+	call	_C_LABEL(prot_to_real)
+	.code16
+	mov	%sp, %si
+	mov	8(%si), %si
+	call	message
+	calll	_C_LABEL(real_to_prot)
+	.code32
+	popl	%esi
 	ret
 
 #ifdef XMS
@@ -367,8 +480,9 @@ _C_LABEL(xmsdrv):
 
 	.text
 ENTRY(checkxms)
-	pushl %ebp
-	movl  %esp, %ebp
+	.code32
+	pushl	%ebp
+	movl	%esp, %ebp
 	pushl	%ebx
 	pushl	%edx
 	pushl	%es
@@ -376,36 +490,32 @@ ENTRY(checkxms)
 	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
-	.byte	0xb8	/* movw $0x4300,ax */
-	.word	0x4300
-	int	$0x2f	/* check if XMS installed */
+	movw	$0x4300, %ax
+	int	$0x2f			/* check if XMS installed */
 	cmpb	$0x80, %al
 	jnz	noxms
 
-	.byte	0xb8	/* movw $0x4310,ax */
-	.word	0x4310
-	int	$0x2f	/* get driver address */
+	movw	$0x4310, %ax
+	int	$0x2f			/* get driver address */
 
-	.byte	0x89,0x1e	/* save es:bx to _xmsdrv */
-	.word	_C_LABEL(xmsdrv)
-	.byte	0x8c,0x06
-	.word	_C_LABEL(xmsdrv)+2
+	movw	%bx, _C_LABEL(xmsdrv)	/* save es:bx to _xmsdrv */
+	movw	%es, _C_LABEL(xmsdrv) + 2
 
-	movb	$0x08, %ah	/* XMS: query free extended memory */
+	movb	$0x08, %ah		/* XMS: query free extended memory */
 #if 0
 	movb	$0x00, %bl
 #endif
-	.byte	0xff, 0x1e
-	.word	_C_LABEL(xmsdrv)  /* result in dx */
+	lcall	*_C_LABEL(xmsdrv)
 	jmp	xdone
 
 noxms:		/* no XMS manager found */
-	movl	$0, %edx /* comes out as movw ! */
+	mov	$0, %dx
 
 xdone:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xorl	%eax, %eax
 	movw	%dx, %ax
@@ -428,8 +538,9 @@ xdone:
 	Return value: a physical address.
 */
 ENTRY(xmsalloc)
-	pushl %ebp
-	movl  %esp, %ebp
+	.code32
+	pushl	%ebp
+	movl	%esp, %ebp
 	pushl	%ebx
 	pushl	%edx
 	pushl	%esi
@@ -438,16 +549,15 @@ ENTRY(xmsalloc)
 	movl	0x8(%ebp), %edx # Kbytes needed
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
-	movb	$0x09, %ah	# XMS allocate block
-	.byte 0xff,0x1e
-	.word _C_LABEL(xmsdrv)	# result: handle in %dx
-	movb	$0x0c, %ah	# XMS lock block
-	.byte 0xff,0x1e
-	.word _C_LABEL(xmsdrv)	# result: 32 bit physical address in DX:BX
+	movb	$0x09, %ah		# XMS allocate block
+	lcall	*_C_LABEL(xmsdrv)	# result: handle in %dx
+	movb	$0x0c, %ah		# XMS lock block
+	lcall	*_C_LABEL(xmsdrv)	# result: 32 bit physical addr in DX:BX
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	movl	%edx, %eax
 	shl	$16, %eax
@@ -465,6 +575,7 @@ ENTRY(xmsalloc)
  *	where src and dst are physical addresses
  */
 ENTRY(ppbcopy)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%es
@@ -475,7 +586,7 @@ ENTRY(ppbcopy)
 
 	# set %es to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %es
+	mov	%ax, %es
 
 	movl	8(%ebp), %esi		# source
 	movl	12(%ebp), %edi		# destination

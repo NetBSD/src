@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.9 2001/07/07 22:57:57 perry Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.10 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -85,13 +85,13 @@ void bi_getbiosgeom()
 #ifdef GEOM_DEBUG
 		printf("#%d: %x: C %d H %d S %d\n", nvalid,
 		    d.dev, d.cyl, d.head, d.sec);
+		printf("   sz %d fl %x cyl %d head %d sec %d totsec %lld sbytes %d\n",
+			ed.size, ed.flags, ed.cyl, ed.head, ed.sec,
+			ed.totsec, ed.sbytes);
 #endif
 
 		if (d.flags & BIOSDISK_EXT13) {
-			if (ed.flags & EXT13_GEOM_VALID)
-				bibg->disk[nvalid].totsec = ed.totsec;
-			else
-				bibg->disk[nvalid].totsec = 0;
+			bibg->disk[nvalid].totsec = ed.totsec;
 			bibg->disk[nvalid].flags |= BI_GEOM_EXTINT13;
 		}
 		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
