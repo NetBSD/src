@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.102 2003/05/21 13:27:19 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.103 2003/05/22 15:59:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.102 2003/05/21 13:27:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.103 2003/05/22 15:59:24 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -745,36 +745,40 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	/*
 	 * First wait for any other process doing a flush to complete.
 	 */
+	simple_lock(&vp->v_interlock);
 	while (np->n_flag & NFLUSHINPROG) {
 		np->n_flag |= NFLUSHWANT;
-		error = tsleep((caddr_t)&np->n_flag, PRIBIO + 2, "nfsvinval",
-			slptimeo);
-		if (error && intrflg && nfs_sigintr(nmp, NULL, p))
-			return (EINTR);
+		error = ltsleep(&np->n_flag, PRIBIO + 2, "nfsvinval",
+			slptimeo, &vp->v_interlock);
+		if (error && intrflg && nfs_sigintr(nmp, NULL, p)) {
+			simple_unlock(&vp->v_interlock);
+			return EINTR;
+		}
 	}
 
 	/*
 	 * Now, flush as required.
 	 */
 	np->n_flag |= NFLUSHINPROG;
+	simple_unlock(&vp->v_interlock);
 	error = vinvalbuf(vp, flags, cred, p, slpflag, 0);
 	while (error) {
 		if (intrflg && nfs_sigintr(nmp, NULL, p)) {
-			np->n_flag &= ~NFLUSHINPROG;
-			if (np->n_flag & NFLUSHWANT) {
-				np->n_flag &= ~NFLUSHWANT;
-				wakeup((caddr_t)&np->n_flag);
-			}
-			return (EINTR);
+			error = EINTR;
+			break;
 		}
 		error = vinvalbuf(vp, flags, cred, p, 0, slptimeo);
 	}
-	np->n_flag &= ~(NMODIFIED | NFLUSHINPROG);
+	simple_lock(&vp->v_interlock);
+	if (error == 0)
+		np->n_flag &= ~NMODIFIED;
+	np->n_flag &= ~NFLUSHINPROG;
 	if (np->n_flag & NFLUSHWANT) {
 		np->n_flag &= ~NFLUSHWANT;
-		wakeup((caddr_t)&np->n_flag);
+		wakeup(&np->n_flag);
 	}
-	return (0);
+	simple_unlock(&vp->v_interlock);
+	return error;
 }
 
 /*
