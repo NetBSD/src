@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.4 2000/07/25 20:47:44 mycroft Exp $
+#	$NetBSD: newvers.sh,v 1.5 2000/07/25 20:48:19 mycroft Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 u=${USER-root} h=`hostname` t=`date`
 r=`head -1 $1 | awk ' { print $3 } '`
 
-echo "char bootprog_name[] = \"NetBSD/hp300 ${2}\";" > vers.c
+echo "char bootprog_name[] = \"NetBSD/sparc64 ${2}\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
 echo "char bootprog_date[] = \"${t}\";" >> vers.c
 echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
