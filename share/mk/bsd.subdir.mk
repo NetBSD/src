@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.7 1994/06/30 05:31:23 cgd Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.8 1994/07/26 19:42:40 mycroft Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)
@@ -67,3 +67,5 @@ obj: _SUBDIRUSE
 .if !target(tags)
 tags: _SUBDIRUSE
 .endif
+
+.include <bsd.own.mk>
