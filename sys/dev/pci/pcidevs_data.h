@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.473 2002/09/24 09:25:48 pooka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.474 2002/10/05 17:04:29 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.471 2002/09/24 09:24:40 pooka Exp 
+ *	NetBSD: pcidevs,v 1.472 2002/10/05 17:01:50 kent Exp 
  */
 
 /*
@@ -1850,6 +1850,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5701 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM4401 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -7249,7 +7255,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97,
 	    0,
 	    "VIA Technologies",
-	    "VT8233 AC-97 Audio Controller",
+	    "VT8233/VT8235 AC-97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
@@ -7286,6 +7292,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8233A PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
+	    0,
+	    "VIA Technologies",
+	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
