@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.12 2002/04/10 23:51:08 martin Exp $ 
+ *	$Id: isic_pci.c,v 1.13 2002/04/13 10:28:37 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.12 2002/04/10 23:51:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.13 2002/04/13 10:28:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -296,10 +296,8 @@ isic_pci_isdn_attach(psc, pa, cardname)
 	psc->sc_pc = pc;
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/* ISAC setup */
-	
-	isic_isac_init(sc);
-
+	sc->sc_intr_valid = ISIC_INTR_DISABLED;
+ 
 	/* HSCX setup */
 
 	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
