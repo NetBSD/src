@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.1 1998/01/16 04:17:40 sakamoto Exp $	*/
+/*	$NetBSD: cons.c,v 1.2 1998/10/26 00:45:47 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,17 +45,32 @@
 #include <sys/param.h>
 #include "cons.h"
 
+#define	PCI_BASE	0xC0000000
+
+#ifdef CONS_BE
 void becnprobe(), becninit(), becnputchar();
 int becngetchar(), becnscan();
+#endif
+
+#ifdef CONS_VGA
+void vgacnprobe(), vgacninit(), vgacnputchar();
+int vgacngetchar(), vgacnscan();
+#endif
+
+#ifdef CONS_SERIAL
 void siocnprobe(), siocninit(), siocnputchar();
 int siocngetchar(), siocnscan();
+#endif
 
 struct consdev constab[] = {
+#ifdef CONS_BE
+	{ "be", becnprobe, becninit, becngetchar, becnputchar, becnscan },
+#endif
 #ifdef CONS_VGA
-	{ becnprobe, becninit, becngetchar, becnputchar, becnscan },
+	{ "vga", vgacnprobe, vgacninit, vgacngetchar, vgacnputchar, vgacnscan },
 #endif
 #ifdef CONS_SERIAL
-	{ siocnprobe, siocninit, siocngetchar, siocnputchar, siocnscan },
+	{ "com", siocnprobe, siocninit, siocngetchar, siocnputchar, siocnscan },
 #endif
 	{ 0 }
 };
@@ -63,6 +78,7 @@ struct consdev constab[] = {
 struct consdev *cn_tab;
 int noconsole;
 
+char *
 cninit()
 {
 	register struct consdev *cp;
@@ -78,7 +94,10 @@ cninit()
 	if (cn_tab) {
 		(*cn_tab->cn_init)(cn_tab);
 		noconsole = 0;
+		return cn_tab->cn_name;
 	}
+
+	return NULL;
 }
 
 cngetc()
@@ -102,7 +121,7 @@ cnscan()
 	return (0);
 }
 
-#ifdef CONS_VGA
+#ifdef CONS_BE
 /*
  * BeBox default console
  */
@@ -110,25 +129,23 @@ void
 becnprobe(cp)
 	struct consdev *cp;
 {
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_INTERNAL;
 }
 
 void
 becninit(cp)
 	struct consdev *cp;
 {
-#define PCI_BASE 0xC0000000
 	unsigned char *display_memory = (unsigned char *)PCI_BASE;
 
-	vga_init(display_memory);
-	CRT_init(display_memory);
+	video_init(display_memory);
 	kbdreset();
 }
 
 becngetchar(cp)
 	struct consdev *cp;
 {
-	return (CRT_getc());
+	return (kbd_getc());
 }
 
 void
@@ -136,7 +153,7 @@ becnputchar(cp, c)
 	struct consdev *cp;
 	register int c;
 {
-	CRT_putc(c);
+	video_putc(c);
 }
 
 becnscan(cp)
@@ -146,9 +163,52 @@ becnscan(cp)
 }
 #endif /* CONS_VGA */
 
+#ifdef CONS_VGA
+/*
+ * VGA console
+ */
+void
+vgacnprobe(cp)
+	struct consdev *cp;
+{
+	cp->cn_pri = CN_NORMAL;
+}
+
+void
+vgacninit(cp)
+	struct consdev *cp;
+{
+	unsigned char *display_memory = (unsigned char *)PCI_BASE;
+
+	vga_reset(display_memory);
+	vga_init(display_memory);
+	kbdreset();
+}
+
+vgacngetchar(cp)
+	struct consdev *cp;
+{
+	return (kbd_getc());
+}
+
+void
+vgacnputchar(cp, c)
+	struct consdev *cp;
+	register int c;
+{
+	vga_putc(c);
+}
+
+vgacnscan(cp)
+	struct consdev *cp;
+{
+	return (kbd(1));
+}
+#endif /* CONS_VGA */
+
 #ifdef CONS_SERIAL
 /*
- * BeBox serial console
+ * serial console
  */
 void
 siocnprobe(cp)

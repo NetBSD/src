@@ -1,4 +1,4 @@
-/*	$Id: boot.c,v 1.3 1998/10/05 01:58:03 sakamoto Exp $	*/
+/*	$Id: boot.c,v 1.4 1998/10/26 00:45:47 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,8 +37,15 @@
 #include <machine/cpu.h>
 #include <machine/param.h>
 #include <bebox/include/bootinfo.h>
+
 #ifdef CONS_SERIAL
-#include "ns16550.h"
+# include "ns16550.h"
+# ifndef COMPORT
+#  define COMPORT COM1
+# endif
+# ifndef COMSPEED
+#  define COMSPEED 9600
+# endif
 #endif /* CONS_SERIAL */
 
 #define NAMELEN	128
@@ -65,15 +72,27 @@ void
 main()
 {
 	int fd, n = 0;
+	char *cnname;
 	void *p;
 	void start_CPU1();
 	extern int CPU1_alive;
 	extern char bootprog_name[], bootprog_rev[],
 		bootprog_maker[], bootprog_date[];
+	extern char *cninit();
 
 	if (whichCPU() == 1)
 		cpu1();
 	resetCPU1();
+
+	/*
+	 * pci init
+	 */
+	pci_init();
+
+	/*
+	 * console init
+	 */
+	cnname = cninit();
 
 	/*
 	 * make bootinfo
@@ -86,21 +105,11 @@ main()
 
 	btinfo_console.common.next = sizeof (btinfo_console);
 	btinfo_console.common.type = BTINFO_CONSOLE;
-#ifdef CONS_VGA
-	strcpy(btinfo_console.devname, "vga");
-#endif /* CONS_VGA */
+	if (cnname)
+		strcpy(btinfo_console.devname, cnname);
 #ifdef CONS_SERIAL
-	strcpy(btinfo_console.devname, "com");
-# ifdef COMPORT
 	btinfo_console.addr = COMPORT;
-# else /* COMPORT */
-	btinfo_console.addr = COM1;
-# endif /* COMPORT */
-# ifdef COMSPEED
 	btinfo_console.speed = COMSPEED;
-# else /* COMSPEED */
-	btinfo_console.speed = 9600;
-# endif /* COMSPEED */
 #endif /* CONS_SERIAL */
 
 	btinfo_clock.common.next = 0;
@@ -113,11 +122,6 @@ main()
 	bcopy((void *)&btinfo_console, p, sizeof (btinfo_console));
 	p += sizeof (btinfo_console);
 	bcopy((void *)&btinfo_clock, p, sizeof (btinfo_clock));
-
-	/*
-	 * console init
-	 */
-	cninit();
 
 	/*
 	 * attached kernel check
