@@ -101,7 +101,7 @@ ffilename=/tmp/makeplist.files.$$
 dfilename=/tmp/makeplist.dirs.$$ 
 
 list_set_files $setname | \
-env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\./", "", $1); print $1}' | sort -u > $filename
+env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\\./", "", $1); print $1}' | sort -u > $filename
 
 SELECTDIRS="-maxdepth 0 -type d"
 SELECTNONDIRS="-maxdepth 0 ! -type d"
