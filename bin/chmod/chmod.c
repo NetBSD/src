@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chmod.c	5.21 (Berkeley) 1/27/92";*/
-static char rcsid[] = "$Id: chmod.c,v 1.7 1993/08/06 01:52:36 mycroft Exp $";
+static char rcsid[] = "$Id: chmod.c,v 1.8 1994/02/11 02:57:24 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,6 +82,12 @@ main(argc, argv)
 		case 'r':		/* "-[rwx]" are valid file modes */
 		case 'w':
 		case 'x':
+		case 'u':		/* as are -[ugo] */
+		case 'g':
+		case 'o':
+		case 'X':		/* -[Xts] valid but ignored later */
+		case 't':
+		case 's':
 			--optind;
 			goto done;
 		case '?':
