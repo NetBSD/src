@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/11/30 03:10:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2003/04/03 17:14:24 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -46,11 +46,13 @@
 
 #SITE			= SUNOS
 #SITE			= SOLARIS
-SITE			= NETBSD
+#SITE			= NETBSD
 #SITE			= CMUCS
+SITE			!= uname -s | tr '[a-z]' '[A-Z]'
 
+LINUX_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
 NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
-			    -DHAS_FPARSELN
+			    -DHAS_FPARSELN -DHAS_FGETLN -DHAS_VIS
 SOLARIS_DEFINES		= -UMACH -DVAR_TMP -DHAS_POSIX_DIR -DNEED_VSNPRINTF
 AFS_DEFINES		= -DAFS -I/usr/afsws/include
 OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF \
@@ -84,6 +86,7 @@ AFS_LIBPATH		= /usr/afs/lib
 AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
 
 NETBSD_LIBS		= -lcrypt
+LINUX_LIBS		= -lcrypt
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
 EXTRALIBS		= libextra.a
