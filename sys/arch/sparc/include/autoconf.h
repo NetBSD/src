@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 1996/04/10 20:33:38 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.17 1996/12/10 23:19:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 #define	RA_MAXVADDR	8		/* max (virtual) addresses per device */
 #define	RA_MAXREG	16		/* max # of register banks per device */
 #define	RA_MAXINTR	8		/* max interrupts per device */
-#define RA_MAXRANGE	10		/* max # of bus translations */
+#define RA_MAXRANGE	16		/* max # of bus translations */
 
 struct romaux {
 	const char *ra_name;		/* name from FORTH PROM */
@@ -163,7 +163,8 @@ int	romprop __P((struct romaux *ra, const char *name, int node));
  * a romaux structure suffices, for instance).
  */
 struct device;
-int	matchbyname __P((struct device *, void *cf, void *aux));
+struct cfdata;
+int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency
