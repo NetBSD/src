@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.188 2003/10/22 00:18:32 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.189 2003/11/07 15:58:59 hamajima Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1168,6 +1168,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega Ether PCC-TD",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_PCC_TL,
+	    PCMCIA_CIS_COREGA_ETHER_PCC_TL,
+	    0,
+	    "Corega K.K.",
+	    "Corega Ether PCC-TL",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD,

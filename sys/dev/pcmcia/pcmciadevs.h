@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.188 2003/10/22 00:18:32 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.189 2003/11/07 15:58:58 hamajima Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -744,6 +744,9 @@
 #define	PCMCIA_CIS_COREGA_ETHER_PCC_TD	{ "corega K.K.", "corega Ether PCC-TD", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD	-1
 #define	PCMCIA_STR_COREGA_ETHER_PCC_TD	"Corega Ether PCC-TD"
+#define	PCMCIA_CIS_COREGA_ETHER_PCC_TL	{ "corega K.K.", "corega Ether PCC-TL", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_TL	-1
+#define	PCMCIA_STR_COREGA_ETHER_PCC_TL	"Corega Ether PCC-TL"
 #define	PCMCIA_CIS_COREGA_ETHER_II_PCC_TD	{ "corega K.K.", "corega EtherII PCC-TD", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD	-1
 #define	PCMCIA_STR_COREGA_ETHER_II_PCC_TD	"Corega EtherII PCC-TD"

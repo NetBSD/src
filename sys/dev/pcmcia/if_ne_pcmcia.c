@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.106 2003/10/28 23:16:50 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.107 2003/11/07 15:58:57 hamajima Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.106 2003/10/28 23:16:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.107 2003/11/07 15:58:57 hamajima Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,6 +374,11 @@ static const struct ne2000dev {
     { PCMCIA_STR_COREGA_ETHER_PCC_TD,
       PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD,
       PCMCIA_CIS_COREGA_ETHER_PCC_TD,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_STR_COREGA_ETHER_PCC_TL,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_TL,
+      PCMCIA_CIS_COREGA_ETHER_PCC_TL,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_STR_COREGA_ETHER_II_PCC_T,
