@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.19 2000/11/01 07:16:02 garbled Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.20 2001/02/05 01:40:51 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.19 2000/11/01 07:16:02 garbled Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.20 2001/02/05 01:40:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -112,6 +112,7 @@ void usage(void);
 void parse_conf_file(void);
 void gen_outputs(void);
 
+extern char *crunched_skel[];
 
 int main(int argc, char **argv)
 {
@@ -710,7 +711,6 @@ void gen_output_makefile(void)
 
 void gen_output_cfile(void)
 {
-    extern char *crunched_skel[];
     char **cp;
     FILE *outcf;
     prog_t *p;

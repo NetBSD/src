@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.13 2000/04/14 06:11:07 simonb Exp $");
+__RCSID("$NetBSD: env.c,v 1.14 2001/02/05 01:41:51 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -53,12 +53,13 @@ __RCSID("$NetBSD: env.c,v 1.13 2000/04/14 06:11:07 simonb Exp $");
 int	main __P((int, char **));
 static void usage __P((void));
 
+extern char **environ;
+
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char **environ;
 	char **ep, *p;
 	char *cleanenv[1];
 	int ch;

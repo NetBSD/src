@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.10 1997/10/17 11:36:59 lukem Exp $	*/
+/*	$NetBSD: cksum.c,v 1.11 2001/02/05 01:39:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.10 1997/10/17 11:36:59 lukem Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.11 2001/02/05 01:39:27 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -70,6 +70,8 @@ int	md5_digest_file __P((char *));
 void	requiremd5 __P((const char *));
 void	usage __P((void));
 
+extern char *__progname;
+
 int
 main(argc, argv)
 	int argc;
@@ -80,7 +82,6 @@ main(argc, argv)
 	char *fn;
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
-	extern char *__progname;
 
 	cfncn = NULL;
 	pfncn = NULL;
