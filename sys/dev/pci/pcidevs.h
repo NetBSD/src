@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.353 2001/08/27 08:03:37 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.354 2001/08/27 14:10:20 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.348 2001/08/27 08:02:52 ad Exp 
+ *	NetBSD: pcidevs,v 1.349 2001/08/27 14:04:47 enami Exp 
  */
 
 /*
@@ -1187,6 +1187,7 @@
 #define	PCI_PRODUCT_INTEL_82452	0x1000		/* PRO/1000 Gigabit Ethernet (i82452) */
 #define	PCI_PRODUCT_INTEL_82453	0x1001		/* PRO/1000 Gigabit Ethernet (i82453) */
 #define	PCI_PRODUCT_INTEL_82453_SC	0x1003		/* PRO/1000 Gigabit Ethernet (i82453-SC) */
+#define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_0	0x1033		/* PRO/100 VM Network Controller */
@@ -1205,16 +1206,6 @@
 #define	PCI_PRODUCT_INTEL_82815_FULL_HUB	0x1130		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_FULL_AGP	0x1131		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_FULL_GRAPH	0x1132		/* 82815 Graphics */
-#define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
-#define	PCI_PRODUCT_INTEL_82815_01	0x1101		/* 82815 (Solano) PCI to AGP Bridge */
-#define	PCI_PRODUCT_INTEL_82815_02	0x1102		/* 82815 (Solano) Internal GUI Accelerator */
-#define	PCI_PRODUCT_INTEL_82815_10	0x1110		/* 82815 (Solano) Host to Hub Bridge, AGP Not Implemented */
-#define	PCI_PRODUCT_INTEL_82815_12	0x1112		/* 82815 (Solano) Internal GUI Accelerator */
-#define	PCI_PRODUCT_INTEL_82815_20	0x1120		/* 82815 (Solano) Host to Hub Bridge, AGP Implemented */
-#define	PCI_PRODUCT_INTEL_82815_21	0x1121		/* 82815 (Solano) PCI to AGP Bridge */
-#define	PCI_PRODUCT_INTEL_82815_30	0x1130		/* 82815 (Solano) Host to Hub Bridge (Fully featured chipset) */
-#define	PCI_PRODUCT_INTEL_82815_31	0x1131		/* 82815 (Solano) PCI to AGP Bridge */
-#define	PCI_PRODUCT_INTEL_82815_32	0x1132		/* 82815 (Solano) Interal GUI Accelerator */
 #define	PCI_PRODUCT_INTEL_82806AA	0x1161		/* 82806AA PCI64 Hub Advanced Programmable Interrupt Controller */
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
