@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.8 1998/09/13 15:21:32 christos Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.9 2000/02/02 08:06:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ void ns_ifscrub __P((struct ifnet *, struct ns_ifaddr *));
 int ns_ifinit __P((struct ifnet *, struct ns_ifaddr *, struct sockaddr_ns *,
 		   int));
 struct ns_ifaddr *ns_iaonnetof __P((struct ns_addr *));
+void ns_purgeaddr __P((struct ifaddr *, struct ifnet *));
 
 /* ns_cksum.c */
 u_int16_t ns_cksum __P((struct mbuf *, int));
