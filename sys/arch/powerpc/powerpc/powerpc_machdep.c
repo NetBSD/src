@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.12 2002/04/01 07:42:08 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.13 2002/04/01 23:12:13 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@ setregs(l, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
+	struct proc *p = l->l_proc;
 	struct trapframe *tf = trapframe(l);
 	struct ps_strings arginfo;
 
