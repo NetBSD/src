@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.93 2003/06/30 00:15:12 itojun Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.94 2003/08/15 08:11:09 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -124,7 +124,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.93 2003/06/30 00:15:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.94 2003/08/15 08:11:09 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
@@ -1938,17 +1938,18 @@ frdest_t *fdp;
 	frentry_t *fr;
 	int error;
 
-	ifp = NULL;
 	ro = &ip6route;
 	fr = fin->fin_fr;
 	bzero((caddr_t)ro, sizeof(*ro));
 	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 	dst6->sin6_family = AF_INET6;
 	dst6->sin6_len = sizeof(struct sockaddr_in6);
-	dst6->sin6_addr = fin->fin_fi.fi_src.in6;
+	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
 
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
+	else
+		ifp = fin->fin_ifp;
 
 	if ((fr != NULL) && (fin->fin_rev != 0)) {
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
