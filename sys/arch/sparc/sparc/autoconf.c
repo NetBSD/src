@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.118 1999/04/30 09:26:16 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.119 1999/05/27 14:20:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1273,7 +1273,7 @@ makememarr(ap, max, which)
 		int	addr;
 		int	len;
 	} v2rmi[200];		/* version 2 rom meminfo layout */
-#define	MAXMEMINFO (sizeof(v2rmi) / sizeof(*v2rmi))
+#define	MAXMEMINFO ((int)sizeof(v2rmi) / (int)sizeof(*v2rmi))
 	void *p;
 
 	struct v0mlist *mp;
