@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.2 2002/07/10 19:15:43 drochner Exp $ */
+/* $NetBSD: vesabios.c,v 1.3 2002/07/11 10:02:21 drochner Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,8 @@ vesabios_attach(parent, dev, aux)
 		res = kvm86_bioscall(0x10, &tf);
 		if (res || tf.tf_eax != 0x004f) {
 			printf("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
-			break;
+			printf("error getting info for mode %04x\n", modes[i]);
+			continue;
 		}
 		mi = (struct modeinfoblock *)buf;
 #ifdef VESABIOSVERBOSE
@@ -243,7 +244,8 @@ vesabios_attach(parent, dev, aux)
 			printf(", text %dx%d\n",
 			       mi->XResolution, mi->YResolution);
 #endif
-			textmodes[ntextmodes++] = modes[i];
+			if (!(mi->ModeAttributes & 0x20)) /* VGA compatible */
+				textmodes[ntextmodes++] = modes[i];
 		}
 	}
 	kvm86_bios_delpage(0x2000, buf);
