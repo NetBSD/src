@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.5 2000/12/20 00:01:56 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.6 2000/12/20 10:59:32 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.5 2000/12/20 00:01:56 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.6 2000/12/20 10:59:32 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -130,8 +130,6 @@ static void eh_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 static int eh_match(struct device *, struct cfdata *, void *);
 static void eh_attach(struct device *, struct device *, void *);
 
-static int ether_sscanf(char *, u_int8_t *);
-
 struct cfattach eh_ca = {
 	sizeof(struct eh_softc), eh_match, eh_attach
 };
@@ -176,7 +174,8 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	int *media, defmedia;
 	int mediaset, nmedia;
 	int i;
-	char eatext[18];
+	char *ptr;
+	u_int8_t *myaddr;
 
 	/* Canonicalise card type. */
 	switch (pa->pa_product) {
@@ -280,50 +279,35 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	nmedia = media_switch[mediaset].nmedia;
 	printf("\n");
 
+	/* i-cubed put everything behind the loader. */
+	podulebus_initloader(pa);
+
 	/*
-	 * XXX This is really, really evil.
-	 * Unfortunately, the right way to do it seems to involve using
-	 * the RISC OS loader, since some of the layout of the ROM seems
-	 * to be encoded in it.  Fun.
+	 * Get the Ethernet address from the device description string.
+	 * This code is stolen from if_ea.c.  It should be shared.
 	 */
-#define GIVEUP (0x200 - 18)
-	for (i = 0; i < GIVEUP; i++)
-		if (bus_space_read_1(pa->pa_sync_t, pa->pa_sync_h, i) == '(') {
-			bus_space_read_region_1(pa->pa_sync_t, pa->pa_sync_h,
-			    i+1, (u_int8_t *)eatext, 17);
-			eatext[17] = '\0';
-			if (ether_sscanf(eatext, dsc->sc_enaddr))
-				break;
-		}
-	if (i == GIVEUP) {
-		printf("%s: Ethernet address not found in ROM\n",
-		    self->dv_xname);
+	myaddr = dsc->sc_enaddr;
+	if (pa->pa_descr == NULL) {
+		printf(": No description for Ethernet address\n");
 		return;
+	}
+	ptr = strchr(pa->pa_descr, '(');
+	if (ptr == NULL) {
+		printf(": Ethernet address not found in description\n");
+		return;
+	}
+	ptr++;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		myaddr[i] = strtoul(ptr, &ptr, 16);
+		if (*ptr++ != (i == ETHER_ADDR_LEN - 1 ? ')' : ':')) {
+			printf(": Bad Ethernet address found in "
+			       "description\n");
+			return;
+		}
 	}
 
 	dp8390_config(dsc, media, nmedia, media[0]);
 	dp8390_stop(dsc);
-
-#if 0
-	printf("%s: CR=%02x CLDA0=%02x CLDA1=%02x BNRY=%02x TSR=%02x "
-	    "NCR=%02x FIFO=%02x ISR=%02x\n", self->dv_xname,
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CLDA0),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CLDA1),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_BNRY),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_TSR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_NCR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_FIFO),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_ISR));
-	printf("%s: CRDA0=%02x CRDA1=%02x RSR=%02x CNTR0=%02x CNTR1=%02x "
-	    "CNTR2=%02x\n", self->dv_xname,
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CRDA0),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CRDA1),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_RSR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CNTR0),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CNTR1),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CNTR2));
-#endif
 
 	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
 					    IPL_NET, dp8390_intr, self);
@@ -332,19 +316,6 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		       self->dv_xname, irq_string(sc->sc_ih));
 	sc->sc_ctrl |= EH_CTRL_IE;
 	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
-}
-
-static int
-ether_sscanf(char *ptr, u_int8_t *ea)
-{
-	int i;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		ea[i] = strtoul(ptr, &ptr, 16);
-		if (*ptr++ != (i == ETHER_ADDR_LEN - 1 ? '\0' : ':'))
-			return 0;
-	}
-	return 1;
 }
 
 static void
