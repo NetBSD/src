@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.2 2000/02/09 22:27:20 aymeric Exp $	*/
+/*	$NetBSD: wdc_amiga.c,v 1.3 2000/02/10 15:51:59 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ wdc_amiga_attach(parent, self, aux)
 	if (is_a4000()) {
 		sc->iot.base = (u_long)ztwomap(0xdd2020 + 2);
 		sc->sc_intreg = (u_char *)ztwomap(0xdd2020 + 0x1000);
+		sc->sc_a1200 = 0;
 	} else {
 		sc->iot.base = (u_long)ztwomap(0xda0000 + 2);
 		sc->sc_a1200 = 1;
@@ -116,7 +117,7 @@ wdc_amiga_attach(parent, self, aux)
 	    sc->wdc_channel.cmd_ioh, 0x406, 1, &sc->wdc_channel.ctl_ioh))
 		return;
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
@@ -144,11 +145,13 @@ wdc_amiga_intr(arg)
 	void *arg;
 {
 	struct wdc_amiga_softc *sc = (struct wdc_amiga_softc *)arg;
+	int ret = 0;
 
-	if ((*sc->sc_intreg & 0x80) == 0)
-		return 0;
-	wdcintr(&sc->wdc_channel);
-	if (sc->sc_a1200)
-		*sc->sc_intreg = 0x7c | (*sc->sc_intreg & 0x03);
-	return(1);
+	if (*sc->sc_intreg & 0x80) {
+		ret = wdcintr(&sc->wdc_channel);
+		if (sc->sc_a1200)
+			*sc->sc_intreg = 0x7c | (*sc->sc_intreg & 0x03);
+	}
+
+	return ret;
 }
