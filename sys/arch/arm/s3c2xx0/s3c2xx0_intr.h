@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.4 2003/08/04 12:34:08 bsh Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.5 2003/09/21 19:32:38 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -216,5 +216,4 @@ struct s3c2xx0_intr_dispatch {
 /* used by s3c2{80,40,41}0 interrupt handler */
 void s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch *, int );
 
-#endif _S3C2XX0_INTR_H_
-
+#endif /* _S3C2XX0_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.3 2003/01/03 00:41:20 thorpej Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.4 2003/09/21 19:32:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -128,4 +128,4 @@ void	_setsoftintr(int);
 
 #endif /* _LOCORE */
 
-#endif _I80321_INTR_H_
+#endif /* _I80321_INTR_H_ */
