@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.8 2003/02/23 17:28:48 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.9 2003/02/23 21:54:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -416,9 +416,9 @@ smbfs_setattr(v)
 		if (isreadonly)
 			return EROFS;
 		doclose = 0;
-		uvm_vnp_setsize(vp, (u_long)vap->va_size);
  		tsize = np->n_size;
  		np->n_size = vap->va_size;
+		uvm_vnp_setsize(vp, vap->va_size);
 		if (np->n_opencount == 0) {
 			error = smbfs_smb_open(np, SMB_AM_OPENRW, &scred);
 			if (error == 0)
@@ -430,8 +430,8 @@ smbfs_setattr(v)
 			smbfs_smb_close(ssp, np->n_fid, NULL, &scred);
 		if (error) {
 			np->n_size = tsize;
-			uvm_vnp_setsize(vp, (u_long)tsize);
-			return error;
+			uvm_vnp_setsize(vp, tsize);
+			return (error);
 		}
   	}
 	mtime = atime = NULL;
