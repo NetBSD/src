@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.59.2.6 1997/11/17 03:44:36 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.59.2.7 1997/11/24 01:40:33 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -47,6 +47,11 @@ options 	MATH_EMULATE	# floating point emulation
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
+
+# Some i486 PCI chipsets have bugs in them that cause problems when using
+# memory-mapped device access.  Therefore, PCI mem space is disabled by
+# default on 486-class CPUs.  This option allows re-enables it.
+#options 	I486_PCI_MEM_ENABLED
 
 # Standard system options
 

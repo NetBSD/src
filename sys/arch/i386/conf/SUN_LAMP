@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.91 1997/10/08 10:09:43 mycroft Exp $
+#	$NetBSD: SUN_LAMP,v 1.91.2.1 1997/11/24 01:40:36 thorpej Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -19,6 +19,11 @@ options 	I486_CPU
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
+
+# Some i486 PCI chipsets have bugs in them that cause problems when using
+# memory-mapped device access.  Therefore, PCI mem space is disabled by
+# default on 486-class CPUs.  This option allows re-enables it.
+#options 	I486_PCI_MEM_ENABLED
 
 options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE
