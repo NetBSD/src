@@ -4,7 +4,7 @@
 |	Written by Yasha (ITOH Yasufumi)
 |	This code is in the public domain
 |
-| $Id: chkfmt.s,v 1.1 1996/05/28 17:01:36 oki Exp $
+|	$NetBSD: chkfmt.s,v 1.2 1997/10/13 14:23:01 lukem Exp $
 
 /* FDC address */
 #define FDC_STATUS		0xE94001	/* status register */

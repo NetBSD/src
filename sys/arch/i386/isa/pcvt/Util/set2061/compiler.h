@@ -1,3 +1,4 @@
+/*	$NetBSD: compiler.h,v 1.3 1997/10/13 14:22:29 lukem Exp $	*/
 /* $XFree86: mit/server/ddx/x386/common/compiler.h,v 2.3 1993/10/03 14:55:28 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -19,8 +20,6 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- *
- * $Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/set2061/Attic/compiler.h,v 1.2 1995/10/07 21:45:50 jtc Exp $
  */
 
 

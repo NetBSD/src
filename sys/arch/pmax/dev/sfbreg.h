@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfbreg.h,v 1.1 1995/09/11 08:14:16 jonathan Exp $
+ *      $NetBSD: sfbreg.h,v 1.2 1997/10/13 14:22:41 lukem Exp $
  */
 
 #define	SFB_OFFSET_VRAM		0x201000	/* from module's base */

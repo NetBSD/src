@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
- *	$Id: bsd_audiovar.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+ *	$NetBSD: bsd_audiovar.h,v 1.2 1997/10/13 14:22:51 lukem Exp $
  */
 
 #define DEFBLKSIZE 1024

@@ -1,4 +1,5 @@
 %{
+/*	$NetBSD: lex.l,v 1.4 1997/10/13 14:22:32 lukem Exp $	*/
 /*
  * Copyright (c) 1994,1995 Joerg Wunsch
  *
@@ -32,8 +33,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ident "$Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/vgaio/Attic/lex.l,v 1.3 1995/10/07 21:46:00 jtc Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
