@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.42 2001/04/05 04:39:02 thorpej Exp $	*/
+/*	$NetBSD: stand.h,v 1.43 2001/09/02 07:04:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -232,6 +232,7 @@ __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
+void	*memmove __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void *, size_t));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));
