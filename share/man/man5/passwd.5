@@ -1,7 +1,8 @@
-.\"	$NetBSD: passwd.5,v 1.3 1994/11/30 19:31:24 jtc Exp $
+.\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\" Portions Copyright (c) 1994, Jason Downs.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -33,7 +34,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd July 18, 1995
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -154,16 +155,64 @@ If there is nothing in the
 field, the Bourne shell
 .Pq Pa /bin/sh
 is assumed.
+.Sh YP SUPPORT
+If YP is active, the
+.Nm
+file also supports standard YP exclusions and inclusions, based on user
+names and netgroups.
+.Pp
+Lines beginning with a ``-'' (minus sign) are entries marked as being excluded
+from any following inclusions, which are marked with a ``+'' (plus sign).
+.Pp
+If the second character of the line is a ``@'' (at sign), the operation
+involves the user fields of all entries in the netgroup specified by the
+remaining characters of the
+.Ar name
+field.
+Otherwise, the remainder of the
+.Ar name
+field is assumed to be a specific user name.
+.Pp
+The ``+'' token may also be alone in the
+.Ar name
+field, which causes all users from the
+.Pa passwd.byname
+and
+.Pa passwd.byuid
+YP maps to be included.
+.Pp
+If the entry contains non-empty
+.Ar uid
+or
+.Ar gid
+fields, the specified numbers will override the information retrieved
+from the YP maps. As well, if the
+.Ar gecos,
+.Ar dir
+or
+.Ar shell
+entries contain text, it will override the information included via YP.
+On some systems, the
+.Ar passwd
+field may also be overriden.
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr login 1 ,
 .Xr passwd 1 ,
 .Xr getpwent 3 ,
+.Xr netgroup 5 ,
 .Xr adduser 8 ,
 .Xr pwd_mkdb 8 ,
-.Xr vipw 8
+.Xr vipw 8 ,
+.Xr yp 8
+.Pp
+.%T "Managing NFS and NIS"
+(O'Reilly & Associates)
 .Sh BUGS
 User information should (and eventually will) be stored elsewhere.
+.Pp
+Placing YP exclusions in the file after any inclusions will have
+unexpected results.
 .Sh COMPATIBILITY
 The password file format has changed since 4.3BSD.
 The following awk script can be used to convert your old-style password
@@ -186,3 +235,5 @@ A
 .Nm
 file format appeared in
 .At v6 .
+.Pp
+YP file format first appeared in SunOS.
