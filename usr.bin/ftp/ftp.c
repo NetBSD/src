@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.69 1999/09/28 07:51:06 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.70 1999/09/29 00:44:01 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.69 1999/09/28 07:51:06 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.70 1999/09/29 00:44:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,8 +102,6 @@ __RCSID("$NetBSD: ftp.c,v 1.69 1999/09/28 07:51:06 lukem Exp $");
 #endif
 
 #include "ftp_var.h"
-
-extern int h_errno;
 
 int	data = -1;
 int	abrtflag = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67 1999/09/28 09:12:06 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.68 1999/09/29 00:44:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.67 1999/09/28 09:12:06 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.68 1999/09/29 00:44:01 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -98,6 +98,7 @@ __RCSID("$NetBSD: util.c,v 1.67 1999/09/28 09:12:06 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
