@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.13 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.14 1999/08/16 13:11:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.13 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.14 1999/08/16 13:11:45 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -328,7 +328,6 @@ dec_3max_intr(mask, pc, status, cause)
 }
 
 
-
 /*
  * Handle Memory error.   3max, 3maxplus has ECC.
  * Correct single-bit error, panic on  double-bit error.
@@ -337,14 +336,15 @@ dec_3max_intr(mask, pc, status, cause)
 static void
 dec_3max_errintr()
 {
-	u_int erradr, errsyn;
+	u_int32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
-	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
+	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
-	*(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	wbflush();
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
-	dec_mtasic_err(erradr, errsyn);
+	dec_mtasic_err(erradr, errsyn, csr & KN02_CSR_BNK32M);
 }
