@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.48 1998/11/12 22:31:02 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.49 1999/02/12 01:37:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -528,9 +528,9 @@ tryagain:
 			     */
 			    if (auio.uio_resid != sizeof (u_int32_t))
 			      log(LOG_INFO,
-				 "short receive (%d/%d) from nfs server %s\n",
-				 sizeof(u_int32_t) - auio.uio_resid,
-				 sizeof(u_int32_t),
+				 "short receive (%lu/%lu) from nfs server %s\n",
+				 (u_long)sizeof(u_int32_t) - auio.uio_resid,
+				 (u_long)sizeof(u_int32_t),
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			    error = EPIPE;
 			}
@@ -559,8 +559,8 @@ tryagain:
 			if (!error && auio.uio_resid > 0) {
 			    if (len != auio.uio_resid)
 			      log(LOG_INFO,
-				"short receive (%d/%d) from nfs server %s\n",
-				len - auio.uio_resid, len,
+				"short receive (%lu/%d) from nfs server %s\n",
+				(u_long)len - auio.uio_resid, len,
 				rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			    error = EPIPE;
 			}
