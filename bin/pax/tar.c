@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.60 2004/10/17 18:51:29 dsl Exp $	*/
+/*	$NetBSD: tar.c,v 1.61 2005/02/20 07:35:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.60 2004/10/17 18:51:29 dsl Exp $");
+__RCSID("$NetBSD: tar.c,v 1.61 2005/02/20 07:35:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,6 +373,7 @@ tar_id(char *blk, int size)
 {
 	HD_TAR *hd;
 	HD_USTAR *uhd;
+	static int is_ustar = -1;
 
 	if (size < BLKMULT)
 		return(-1);
@@ -388,8 +389,16 @@ tar_id(char *blk, int size)
 	 */
 	if (hd->name[0] == '\0')
 		return(-1);
-	if (strncmp(uhd->magic, TMAGIC, TMAGLEN - 1) == 0)
-		return(-1);
+	if (strncmp(uhd->magic, TMAGIC, TMAGLEN - 1) == 0) {
+		if (is_ustar == -1) {
+			is_ustar = 1;
+			return(-1);
+		} else
+			tty_warn(0,
+			    "Busted tar archive: has both ustar and old tar "
+			    "records");
+	} else
+		is_ustar = 0; 
 	return check_sum(hd->chksum, sizeof(hd->chksum), blk, BLKMULT, 1);
 }
 
