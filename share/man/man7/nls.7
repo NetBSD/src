@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.2 2003/02/12 18:48:14 wiz Exp $
+.\"     $NetBSD: nls.7,v 1.3 2003/04/14 06:47:12 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,31 +119,17 @@ rules and symbols for formatting time and date information
 .Pp
 Localization of the system is achieved by setting appropriate values
 in environment variables to identify which locale should be used.
-The following environment variables are used:
+The environment variables have the same names as their respective
+locale categories.  Additionally, the
 .Ev LANG ,
 .Ev LC_ALL ,
-.Ev LC_COLLATE ,
-.Ev LC_CTYPE ,
-.Ev LC_MESSAGES ,
-.Ev LC_MONETARY ,
-.Ev LC_NUMERIC ,
-.Ev LC_TIME ,
 and
-.Ev NLSPATH .
+.Ev NLSPATH
+environment variables are used.
 The
 .Ev NLSPATH
 environment variable specifies a colon-separated list of directory names
 where the message catalog files of the NLS database are located.
-The
-.Ev LC_COLLATE ,
-.Ev LC_CTYPE ,
-.Ev LC_MONETARY ,
-.Ev LC_NUMERIC ,
-.Ev LC_TIME ,
-and
-.Ev LC_MESSAGES
-environment variables determine the current values for their respective
-categories.
 The
 .Ev LC_ALL
 and
@@ -170,27 +156,11 @@ If the
 .Ev LC_ALL
 environment variable is set, all six categories use the locale it
 specifies.
-For example, if the
-.Ev LC_ALL
-environment variable is set to en_US and the
-.Ev LANG
-environment variable is set to fr_FR,
-each of the six categories is defined as the en_US locale.
 .It
 If the
 .Ev LC_ALL
 environment variable is not set, each individual category uses the
 locale specified by its corresponding environment variable.
-For example, if the
-.Ev LC_ALL
-environment variable is not set, the
-.Ev LC_COLLATE
-environment variable is set to de_DE, and the
-.Ev LC_TIME
-environment variable is set to fr_CA, then the LC_COLLATE category is
-defined as de_DE and the LC_TIME category is defined as fr_CA.
-Neither environment variable has precedence over the other in this
-situation.
 .It
 If the
 .Ev LC_ALL
@@ -198,24 +168,13 @@ environment variable is not set, and a value for a particular
 .Ev LC_*
 environment variable is not set, the value of the
 .Ev LANG
-environment variable determines the definition for that specific
-category.
-For example, if the
-.Ev LC_ALL
-environment variable is not set, the
-.Ev LC_CTYPE
-environment variable is set to en_US, the
-.Ev LC_NUMERIC
-environment variable is not set, and the
+environment variable specifies the default locale for all categories.
+Only the
 .Ev LANG
-environment variable is set to is_IS, then the LC_CTYPE category is
-defined as en_US and the LC_NUMERIC category to defined as is_IS.
-The
-.Ev LANG
-environment variable specifies the locale for only those categories not
-previously determined by an
+environment variable should be set in /etc/profile, since it makes it
+most easy for the user to override the system default using the individual
 .Ev LC_*
-environment variable.
+variables.
 .It
 If the
 .Ev LC_ALL
@@ -227,16 +186,6 @@ environment variable is not set, the locale for that specific
 category defaults to the C locale.
 The C or POSIX locale assumes the 7-bit ASCII character set and defines
 information for the six categories.
-For example, if the
-.Ev LC_ALL
-environment variable is not set, the
-.Ev LC_MONETARY
-environment variable is set to sv_SE, the
-.Ev LC_TIME
-environment variable is not set, and the
-.Ev LANG
-environment variable is not set, then the LC_MONETARY category is defined
-as sv_SE and the LC_TIME category as C.
 .El
 .Ss Code Sets
 A character is any symbol used for the organization, control, or
