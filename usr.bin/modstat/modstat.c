@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.9 1997/05/07 16:35:34 mrg Exp $	*/
+/*	$NetBSD: modstat.c,v 1.10 1997/10/19 05:17:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -30,23 +30,33 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$NetBSD: modstat.c,v 1.9 1997/05/07 16:35:34 mrg Exp $
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: modstat.c,v 1.10 1997/10/19 05:17:30 lukem Exp $");
+#endif
+
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/lkm.h>
+#include <sys/mount.h>
+
+#include <a.out.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
 #include <string.h>
-#include <a.out.h>
-#include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/conf.h>
-#include <sys/mount.h>
-#include <sys/lkm.h>
-#include <sys/file.h>
-#include <errno.h>
+#include <unistd.h>
 #include "pathnames.h"
+
+void	cleanup __P((void));
+int	dostat __P((int, int, char *));
+int	main __P((int, char **));
+void	usage __P((void));
 
 void
 usage()
@@ -95,14 +105,14 @@ dostat(devfd, modnum, modname)
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf("%-7s %3d %3d %08x %04x %8x %3d %s\n",
+	printf("%-7s %3d %3ld %08lx %04lx %8lx %3ld %s\n",
 	    type_names[sbuf.type],
 	    sbuf.id,		/* module id */
-	    sbuf.offset,	/* offset into modtype struct */
-	    sbuf.area,		/* address module loaded at */
-	    sbuf.size,		/* size in pages(K) */
-	    sbuf.private,	/* kernel address of private area */
-	    sbuf.ver,		/* Version; always 1 for now */
+	    (long)sbuf.offset,	/* offset into modtype struct */
+	    (long)sbuf.area,	/* address module loaded at */
+	    (long)sbuf.size,	/* size in pages(K) */
+	    (long)sbuf.private,	/* kernel address of private area */
+	    (long)sbuf.ver,	/* Version; always 1 for now */
 	    sbuf.name		/* name from private area */
 	);
 
@@ -130,7 +140,7 @@ main(argc, argv)
 	int modnum = -1;
 	char *modname = NULL;
 
-	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
 			modnum = atoi(optarg);
