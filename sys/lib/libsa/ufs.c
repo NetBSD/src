@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.1 1994/01/26 02:04:01 brezak Exp $
+ *	$Id: ufs.c,v 1.2 1994/06/20 07:50:20 glass Exp $
  */
 
 /*
@@ -70,15 +70,10 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#if 0	/* BSD44 */
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
-#else
-#include <ufs/fs.h>
-#include <ufs/dinode.h>
-#include <ufs/dir.h>
-#endif
+
 #include "stand.h"
 
 /*
