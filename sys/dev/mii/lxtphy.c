@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.12 1999/11/03 22:30:32 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.13 1999/11/12 18:13:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -232,6 +232,10 @@ lxtphy_service(sc, mii, cmd)
 		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
