@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 1994/09/19 23:51:14 deraadt Exp $
+# $Id: Makefile,v 1.4 1995/01/07 23:08:36 mycroft Exp $
 
 LIB=		bfd
 NOPROFILE=
@@ -16,7 +16,7 @@ SRCS=		archive.c archures.c bfd.c cache.c coffgen.c core.c ctor.c \
 .include "arch/$(MACHINE_ARCH)/Makefile.inc"
 
 targets.o archures.o: $(.CURDIR)/$(.TARGET:S/.o$/.c/)
-	$(CC) $(CFLAGS) $(VECTORS) -c -o $(.TARGET) $(.IMPSRC)
+	${COMPILE.c} $(VECTORS) -o $(.TARGET) $(.IMPSRC)
 
 
 install:

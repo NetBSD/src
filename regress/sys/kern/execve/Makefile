@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/01/14 05:24:33 cgd Exp $
+#	$Id: Makefile,v 1.2 1995/01/07 23:14:00 mycroft Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
@@ -44,7 +44,7 @@ test-scriptarg-nospace: ${PROG} ${TD}/scriptarg-nospace
 	${RP} ${TD}/scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
 
 goodaout: ${TD}/goodaout.c
-	${CC} ${LDFLAGS} ${LDSTATIC} ${CFLAGS} -o ${.TARGET} ${TD}/goodaout.c
+	${LINK.c} ${LDSTATIC} -o ${.TARGET} ${TD}/goodaout.c ${LDLIBS}
 
 test-goodaout: ${PROG} goodaout
 	${RP} ${.OBJDIR}/goodaout | diff - ${OD}/goodaout

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.8 1994/10/17 18:36:57 brezak Exp $
+#	$Id: Makefile,v 1.9 1995/01/07 23:14:51 mycroft Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
@@ -27,4 +27,4 @@ BINMODE=4555
 .include <bsd.prog.mk>
 
 getpwent.o: getpwent.c
-	${CC} ${CFLAGS} -UYP -c ${.IMPSRC}
+	${COMPILE.c} -UYP ${.IMPSRC}

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1994/09/19 06:47:16 mycroft Exp $
+#	$Id: Makefile,v 1.10 1995/01/07 23:07:03 mycroft Exp $
 
 LIB=	gcc
 NOPROFILE=
@@ -30,19 +30,19 @@ OBJS= ${LIB1OBJS} ${LIB2OBJS}
 LIB2SOBJS=${LIB2OBJS:.o=.so}
 
 #${LIB1OBJS}: libgcc1.c
-#	${CC} -c ${CFLAGS} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc1.c
+#	${COMPILE.c} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc1.c
 #	@${LD} -x -r ${.TARGET}
 #	@mv a.out ${.TARGET}
 
 ${LIB2OBJS}: libgcc2.c
-	${CC} -c ${CFLAGS} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc2.c
+	${COMPILE.c} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc2.c
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 #${LIB1SOBJS}: libgcc1.c
-#	${CC} -c -fpic ${CFLAGS} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc1.c
+#	${COMPILE.c} -fpic -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc1.c
 
 ${LIB2SOBJS}: libgcc2.c
-	${CC} -c -fpic ${CFLAGS} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc2.c
+	${COMPILE.c} -fpic -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc2.c
 
 .include <bsd.lib.mk>
