@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.6 1995/06/26 23:43:06 jtc Exp $	*/
+/*	$NetBSD: chpass.c,v 1.7 1995/07/28 07:01:32 phil Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.6 1995/06/26 23:43:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.7 1995/07/28 07:01:32 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ main(argc, argv)
 		if (uid)
 			baduser();
 		pw = &lpw;
-		if (!pw_scan(arg, pw))
+		if (!pw_scan(arg, pw, (int *)NULL))
 			exit(1);
 	}
 
