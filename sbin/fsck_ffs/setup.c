@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.70 2004/03/21 20:01:41 dsl Exp $	*/
+/*	$NetBSD: setup.c,v 1.70.2.1 2004/04/27 17:51:53 jdc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.70 2004/03/21 20:01:41 dsl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.70.2.1 2004/04/27 17:51:53 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,11 +191,29 @@ setup(dev)
 		sblock->fs_old_flags |= FS_FLAGS_UPDATED;
 		/* Disable the postbl tables */
 		sblock->fs_old_cpc = 0;
-		sblock->fs_old_nrpos = 0;
+		sblock->fs_old_nrpos = 1;
 		sblock->fs_old_trackskew = 0;
 		/* The other fields have already been updated by
 		 * sb_oldfscompat_read
 		 */
+		sbdirty();
+	}
+	if (!is_ufs2 && cvtlevel == 3 &&
+	    (sblock->fs_old_flags & FS_FLAGS_UPDATED)) {
+		if (preen)
+			pwarn("DOWNGRADING TO OLD SUPERBLOCK LAYOUT\n");
+		else if (!reply("DOWNGRADE TO OLD SUPERBLOCK LAYOUT"))
+			return(0);
+		sblock->fs_old_flags &= ~FS_FLAGS_UPDATED;
+		sb_oldfscompat_write(sblock, sblock);
+		sblock->fs_old_flags &= ~FS_FLAGS_UPDATED; /* just in case */
+		/* Leave postbl tables disabled, but blank its superblock region anyway */
+		sblock->fs_old_postblformat = FS_DYNAMICPOSTBLFMT;
+		sblock->fs_old_cpc = 0;
+		sblock->fs_old_nrpos = 1;
+		sblock->fs_old_trackskew = 0;
+		memset(&sblock->fs_old_postbl_start, 0xff, 256);
+		sb_oldfscompat_read(sblock, &sblocksave);
 		sbdirty();
 	}
 	/*
