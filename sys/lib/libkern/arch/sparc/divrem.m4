@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.2 1994/10/26 06:39:56 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 #ifdef notdef
 	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: divrem.m4,v 1.2 1994/10/26 06:39:56 cgd Exp $"
+	.asciz "$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -140,7 +140,9 @@ ifelse(S, `true',
 `	! compute sign of result; if neither is negative, no problem
 	orcc	divisor, dividend, %g0	! either negative?
 	bge	2f			! no, go do the divide
-	xor	divisor, dividend, SIGN	! compute sign in any case
+	ifelse(OP, `div',
+		`xor	divisor, dividend, SIGN',
+		`mov	dividend, SIGN')	! compute sign in any case
 	tst	divisor
 	bge	1f
 	tst	dividend
