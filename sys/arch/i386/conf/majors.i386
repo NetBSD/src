@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.17 2003/10/05 08:04:25 jdolecek Exp $
+#	$NetBSD: majors.i386,v 1.18 2003/10/10 03:51:58 grog Exp $
 #
 # Device majors for i386
 #
@@ -107,6 +107,7 @@ device-major	ppi		char 104		ppi
 device-major	rd		char 105 block 22	rd
 device-major	ct		char 106 block 23	ct
 device-major	mt		char 107 block 24	mt
+device-major	vinum		char 108 block 25	vinum
 device-major	pf		char 108		pf
 device-major	crypto		char 109		opencrypto
 
