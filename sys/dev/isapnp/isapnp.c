@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.2 1997/01/24 21:58:34 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.3 1997/02/09 18:36:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -220,8 +220,10 @@ isapnp_alloc_pin(i)
 		i->num = 0;
 	else
 		for (b = 0; b < 16; b++)
-			if (i->bits & (1 << b))
+			if (i->bits & (1 << b)) {
 				i->num = b;
+				break;
+			}
 	return 0;
 }
 
