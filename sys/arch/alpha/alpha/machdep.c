@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.179 1999/08/10 23:35:44 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.180 1999/08/16 02:59:22 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 1999/08/10 23:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 1999/08/16 02:59:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1714,7 +1714,7 @@ sendsig(catcher, sig, mask, code)
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
+ * psl to gain improper privileges or to cause
  * a machine fault.
  */
 /* ARGSUSED */

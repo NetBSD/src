@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.8 1998/07/06 07:03:29 mrg Exp $	*/
+/*	$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.8 1998/07/06 07:03:29 mrg Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: lprm.c,v 1.8 1998/07/06 07:03:29 mrg Exp $");
  *
  * Using information in the lock file, lprm will kill the
  * currently active daemon (if necessary), remove the associated files,
- * and startup a new daemon.  Priviledged users may remove anyone's spool
+ * and startup a new daemon.  Privileged users may remove anyone's spool
  * entries, otherwise one can only remove their own.
  */
 
