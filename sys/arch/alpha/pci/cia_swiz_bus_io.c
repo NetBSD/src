@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_swiz_bus_io.c,v 1.3 1996/06/10 00:04:53 cgd Exp $	*/
+/*	$NetBSD: cia_swiz_bus_io.c,v 1.4 1996/06/11 21:25:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,8 +36,28 @@
 #include <machine/bus.h>
 
 #include <alpha/pci/ciareg.h>
+#include <alpha/pci/ciavar.h>
 
 #define	CHIP		cia
-#define	CHIP_IO_BASE	CIA_PCI_SIO1
+
+/* IO region 1 */
+#define CHIP_IO_W1_START(v)						\
+	    HAE_IO_REG1_START(((struct cia_config *)(v))->cc_hae_io)
+#define CHIP_IO_W1_END(v)						\
+	    (CHIP_IO_W1_START(v) + HAE_IO_REG1_MASK)
+#define CHIP_IO_W1_BASE(v)						\
+	    CIA_PCI_SIO1
+#define CHIP_IO_W1_MASK(v)						\
+	    HAE_IO_REG1_MASK
+
+/* IO region 2 */
+#define CHIP_IO_W2_START(v)						\
+	    HAE_IO_REG2_START(((struct cia_config *)(v))->cc_hae_io)
+#define CHIP_IO_W2_END(v)						\
+	    (CHIP_IO_W2_START(v) + HAE_IO_REG2_MASK)
+#define CHIP_IO_W2_BASE(v)						\
+	    CIA_PCI_SIO2
+#define CHIP_IO_W2_MASK(v)						\
+	    HAE_IO_REG2_MASK
 
 #include "pcs_bus_io_common.c"
