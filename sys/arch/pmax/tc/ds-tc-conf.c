@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-tc-conf.c,v 1.6 1996/01/11 05:59:23 jonathan Exp $	*/
+/*	$NetBSD: ds-tc-conf.c,v 1.7 1996/01/29 22:52:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -17,28 +17,15 @@
  */
 
 #define C(x)	((void *)(u_long)x)
-#if 0
+
 #define TC_SCSI  "PMAZ-AA "
 #define TC_ETHER "PMAD-AA "
-#else
-#define TC_SCSI NULL
-#define TC_ETHER NULL
-#endif
-
-struct confargs tc3_devs[4] = {
-	/* name	       slot  offset intpri */
-	{ "IOCTL   ",     3,  0x0,   -1,   },	/* IOCTL asic, builtin */
-	{ NULL, 	  2,  0x0,    2,   },	/* option slot 2 */
-	{ NULL, 	  1,  0x0,    1,   },	/* option slot 1 */
-	{ NULL, 	  0,  0x0,    0,   }	/* option slot 0 */
-
-};
 
 /*
  * The only builtin Turbonchannel device on the kn03 and kmin
  * is the IOCTL asic, which is mapped into TC slot 3.
  */
-struct tc_builtin tc_kn03_builtins[] = {
+const struct tc_builtin tc_kn03_builtins[] = {
 	{ "IOCTL   ",	3, 0x0, C(3), /*C(3)*/ }
 };
 
@@ -54,14 +41,12 @@ int tc_kn03_nslots =
 
 
 /* 3MAXPLUS turbochannel autoconfiguration table */
-struct tc_cpu_desc kn03_tc_desc =
+struct tc_attach_args kn03_tc_desc =
 {
-	tc_kn03_slots, KN03_TC_NSLOTS,
-	tc3_devs, KN03_TC_NSLOTS, /*XXX*/
-	tc_ds_ioasic_intr_setup,
+	KN03_TC_NSLOTS, tc_kn03_slots,
+	1, tc_kn03_builtins,
 	tc_ds_ioasic_intr_establish,
-	tc_ds_ioasic_intr_disestablish,
-	(void*)-1
+	tc_ds_ioasic_intr_disestablish
 };
 
 /************************************************************************/
@@ -78,67 +63,50 @@ int tc_kmin_nslots =
     sizeof(tc_kmin_slots) / sizeof(tc_kmin_slots[0]);
 
 /* 3MIN turbochannel autoconfiguration table */
-struct tc_cpu_desc kmin_tc_desc =
+struct tc_attach_args kmin_tc_desc =
 {
-	tc_kmin_slots,  KMIN_TC_NSLOTS,
-	tc3_devs, KMIN_TC_NSLOTS, /*XXX*/
-	tc_ds_ioasic_intr_setup,
+	KMIN_TC_NSLOTS, tc_kmin_slots,
+	1, tc_kn03_builtins, /*XXX*/
 	tc_ds_ioasic_intr_establish,
-	tc_ds_ioasic_intr_disestablish,
-	/*kmin_intr*/ (void*) -1
+	tc_ds_ioasic_intr_disestablish
 };
 
 /************************************************************************/
 
-/* MAXINE  turbochannel slots  */
-struct confargs xine_devs[4] = {
-	/* name	       slot  offset intpri  */
-	{ "PMAG-DV ",	  3,  0x0,    3,   },	/* xcfb */
-	{ "IOCTL   ",  	  2,  0x0,   -1,   },
-	{ NULL, 	  1,  0x0,    1,   },
-	{ NULL, 	  0,  0x0,    0,   }
+/*
+ * The builtin Turbonchannel devices on the MAXINE
+ * is the IOCTL asic, which is mapped into TC slot 3, and the PMAG-DV
+ * xcfb framebuffer, which is built into the baseboard.
+ */
+const struct tc_builtin tc_xine_builtins[] = {
+	{ "IOCTL   ",	3, 0x0, C(3), /*C(3)*/ },
+	{ "PMAG-DV ",	4, 0x0, C(4), /*C(4)*/ }
 };
 
 /* MAXINE slot addreseses */
 static struct tc_slotdesc tc_xine_slots [4] = {
        	{ KV(XINE_PHYS_TC_0_START), C(0) },   /* slot 0 - tc option slot 0 */
 	{ KV(XINE_PHYS_TC_1_START), C(1) },   /* slot 1 - tc option slot 1 */
-		/* physical space for ``slot 2'' is reserved */
-	{ KV(XINE_PHYS_TC_3_START), C(8) },   /* slot 2 - IO asic on b'board */
-	{ KV(XINE_PHYS_CFB_START), C(-1) }    /* slot 3 - fb on b'board */
+	/*{ KV(-1), C(-1) },*/  /* physical space for ``slot 2'' is reserved */
+	{ KV(XINE_PHYS_TC_3_START), C(2) },   /* slot 2 - IO asic on b'board */
+	{ KV(XINE_PHYS_CFB_START), C(3) }    /* slot 3 - fb on b'board */
 };
 
 int tc_xine_nslots =
     sizeof(tc_xine_slots) / sizeof(tc_xine_slots[0]);
 
-struct tc_cpu_desc xine_tc_desc =
+struct tc_attach_args xine_tc_desc =
 {
-	tc_xine_slots, XINE_TC_NSLOTS,
-	xine_devs, 4, /*XXX*/ 
-	tc_ds_ioasic_intr_setup,
+	XINE_TC_NSLOTS, tc_xine_slots,
+	2, tc_xine_builtins,
 	tc_ds_ioasic_intr_establish,
-	tc_ds_ioasic_intr_disestablish,
-	/*xine_intr*/ (void *) -1
+	tc_ds_ioasic_intr_disestablish
 };
 
 
 /************************************************************************/
 
 /* 3MAX (kn02) turbochannel slots  */
-struct confargs kn02_devs[8] = {
-   /* The 3max  supposedly has "KN02    " at 0xbffc0410 */
-
-	/* name        slot  offset intpri  */
-	{ KN02_ASIC_NAME, 7,  0x0,   -1,   },	/* System CSR and subslots */
-	{ TC_ETHER, 	  6,  0x0,    6,   },	/* slot 6: Ether on cpu board*/
-	{ TC_SCSI, 	  5,  0x0,    5,   },	/* slot 5: SCSI on cpu board */
-/*XXX*/	{ NULL, 	  4,   -1,    0,   },	/* slot 4 reserved */
-/*XXX*/	{ NULL, 	  3,   -1,    0,   },	/* slot 3 reserved */
-	{ NULL, 	  2,  0x0,    2,   },	/* slot 2 - TC option slot 2 */
-	{ NULL, 	  1,  0x0,    1,   },	/* slot 1 - TC option slot 1 */
-	{ NULL, 	  0,  0x0,    0,   }	/* slot 0 - TC option slot 0 */
-};
-
 /* slot addreseses */
 static struct tc_slotdesc tc_kn02_slots [8] = {
        	{ KV(KN02_PHYS_TC_0_START), C(0)},	/* slot 0 - tc option slot 0 */
@@ -148,8 +116,7 @@ static struct tc_slotdesc tc_kn02_slots [8] = {
 	{ KV(KN02_PHYS_TC_4_START), C(4), },	/* slot 4 - reserved */
 	{ KV(KN02_PHYS_TC_5_START), C(5), },	/* slot 5 - SCSI on b`board */
 	{ KV(KN02_PHYS_TC_6_START), C(6), },	/* slot 6 - b'board Ether */
-	{ KV(KN02_PHYS_TC_7_START), C(7), }	/* slot 7 - system devices */
-
+	{ KV(KN02_PHYS_TC_7_START), C(7), }	/* slot 7 - system CSR, etc. */
 };
 
 int tc_kn02_nslots =
@@ -161,19 +128,17 @@ int tc_kn02_nslots =
 #define TC_KN02_DEV_ETHER	6
 #define TC_KN02_DEV_SCSI	5
 
-struct tc_builtin tc_kn02_builtins[] = {
+const struct tc_builtin tc_kn02_builtins[] = {
 	{ KN02_ROM_NAME,7, 0x0, C(TC_KN02_DEV_IOASIC) /* C(7)*/ },
 	{ TC_ETHER,	6, 0x0, C(TC_KN02_DEV_ETHER)  /* C(6)*/ },
-	{ TC_SCSI,	5, 0x0, C(TC_KN02_DEV_SCSI)   /* C(5)*/ },
+	{ TC_SCSI,	5, 0x0, C(TC_KN02_DEV_SCSI)   /* C(5)*/ }
 };
 
 
-struct tc_cpu_desc kn02_tc_desc =
+struct tc_attach_args kn02_tc_desc =
 {
-	tc_kn02_slots, KN02_TC_NSLOTS,
-	kn02_devs, 8, /*XXX*/
-	tc_ds_ioasic_intr_setup,
+	8, tc_kn02_slots,
+	3, tc_kn02_builtins,	/*XXX*/
 	tc_ds_ioasic_intr_establish,
-	tc_ds_ioasic_intr_disestablish,
-	/*kn02_intr*/ (void*) -1 
+	tc_ds_ioasic_intr_disestablish
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.5 1995/09/29 21:55:19 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.6 1996/01/29 22:52:42 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -65,12 +65,6 @@
  *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
  */
 
-/*
- * Old, non-rcons Pmax console-redirection won't compile on Alphas.
- */
-#ifdef pmax
-#define TK_NOTYET
-#endif
 
 #include <scc.h>
 #if NSCC > 0
@@ -106,8 +100,6 @@
 #include <dev/ic/z8530reg.h>
 #include <pmax/dev/lk201.h>
 
-#include <machine/autoconf.h>
-
 #ifdef pmax
 #include <machine/machConst.h>
 #include <pmax/pmax/cons.h>
@@ -118,14 +110,16 @@
 #include <pmax/dev/sccvar.h>	/* XXX */
 #endif
 
-
 #ifdef alpha
 #include <alpha/tc/sccreg.h>
 #include <alpha/tc/sccvar.h>
 #include <machine/rpb.h>
-#include <alpha/tc/asic.h>
-#include <alpha/tc/tc.h>
+#include <alpha/tc/ioasicreg.h>
 #endif
+
+#include <machine/autoconf.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
 extern void ttrstrt	__P((void *));
 
@@ -135,11 +129,12 @@ extern void ttrstrt	__P((void *));
 #endif
 
 /*
- * Support old-style pmax console redirection, with
- * macros that also work on Alphas with serial consoles.
- * (Should be replaced with rcons?)
+ * rcons glass-tty console (as used on pmax and sparc) won't compile on Alphas.
  */
-
+#ifdef pmax
+#define HAVE_RCONS
+#include <machine/ioasic_machdep.h>
+#endif
 
 /*
  * True iff the console unit is diverted throught this SCC device.
@@ -296,12 +291,9 @@ sccmatch(parent, match, aux)
 	struct confargs *ca = aux;
 	void *sccaddr;
 
-	extern struct cfdriver ioasiccd;
-
-
 	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
 		/* Make sure that we're looking for this type of device. */
-		if (!BUS_MATCHNAME(ca, "scc"))
+		if (!TC_BUS_MATCHNAME(ca, "scc"))
 			return (0);
 	}
 	else {
@@ -317,7 +309,7 @@ sccmatch(parent, match, aux)
 		return (0);
 
 	/* Get the address, and check it for validity. */
-	sccaddr = BUS_CVTADDR(ca);
+	sccaddr = (caddr_t)ca->ca_addr;
 #ifdef alpha
 	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
 #endif /*alpha*/
@@ -334,20 +326,20 @@ scc_alphaintr(onoff)
 	int onoff;
 {
 	if (onoff) {
-		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |=
-		    ASIC_INTR_SCC_1 | ASIC_INTR_SCC_0;
+		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) |=
+		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
 #if !defined(DEC_3000_300) && defined(SCC_DMA)
-		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
-		    ASIC_CSR_DMAEN_T1 | ASIC_CSR_DMAEN_R1 |
-		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2;
+		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) |=
+		    IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
+		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2;
 #endif
 	} else {
-		*(volatile u_int *)ASIC_REG_IMSK(asic_base) &=
-		    ~(ASIC_INTR_SCC_1 | ASIC_INTR_SCC_0);
+		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) &=
+		    ~(IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0);
 #if !defined(DEC_3000_300) && defined(SCC_DMA)
-		*(volatile u_int *)ASIC_REG_CSR(asic_base) &=
-		    ~(ASIC_CSR_DMAEN_T1 | ASIC_CSR_DMAEN_R1 |
-		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2);
+		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) &=
+		    ~(IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
+		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
 #endif
 	}
 	wbflush();
@@ -377,19 +369,39 @@ sccattach(parent, self, aux)
 	unit = sc->sc_dv.dv_unit;
 	flags = sc->sc_dv.dv_cfdata->cf_flags;
 
-	sccaddr = (void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+	/* serial console debugging */
+#if defined(DEBUG) && defined(HAVE_RCONS) && 0
+	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
+		printf("\nattaching scc%d, currently PROM console\n", unit);
+#endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
+
+	sccaddr = (void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 #ifdef alpha
 	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
 #endif	/*alpha*/
 
 	/* Register the interrupt handler. */
-	BUS_INTR_ESTABLISH(ca, sccintr, (void *)sc);
+#ifdef notyet /*FIXME*/
+	ioasic_intr_establish(parent, ca->ca_cookie, TC_IPL_TTY,
+		sccintr, (void *)sc);
+#endif /*FIXME*/
+
+	BUS_INTR_ESTABLISH(ca, sccintr, sc);
+
+
+	/* serial console debugging */
+#if defined(DEBUG) && defined(HAVE_RCONS) && 0 /*XXX*/
+	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE)) {
+		DELAY(10000);
+		printf("(attached interrupt, delaying)\n");
+	}
+#endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
 		DELAY(10000);
 #else
@@ -418,7 +430,7 @@ sccattach(parent, self, aux)
 	/*
 	 * Special handling for consoles.
 	 */
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 	if ((cn_tab->cn_getc == LKgetc)) {
 		/* XXX test below may be too inclusive ? */
 		if (1 /*CONSOLE_ON_UNIT(unit)*/ ) {
@@ -430,7 +442,7 @@ sccattach(parent, self, aux)
 #ifdef pmax
 				/* XXX -- why on pmax, not on Alpha? */
 				cterm.c_cflag |= CLOCAL;
-#endif
+#endif /* pmax */
 				cterm.c_ospeed = cterm.c_ispeed = 4800;
 				(void) sccparam(&ctty, &cterm);
 				DELAY(10000);
@@ -441,7 +453,7 @@ sccattach(parent, self, aux)
 				 * works ok without it.
 				 */
 				KBDReset(ctty.t_dev, sccPutc);
-#endif
+#endif /* notyet */
 				DELAY(10000);
 				splx(s);
 			} else if (unit == 0) {
@@ -450,7 +462,7 @@ sccattach(parent, self, aux)
 				cterm.c_cflag = CS8 | PARENB | PARODD;
 				cterm.c_ospeed = cterm.c_ispeed = 4800;
 				(void) sccparam(&ctty, &cterm);
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 				DELAY(10000);
 				MouseInit(ctty.t_dev, sccPutc, sccGetc);
 				DELAY(10000);
@@ -459,7 +471,7 @@ sccattach(parent, self, aux)
 			}
 		}
 	} else
-#endif /* TK_NOTYET */
+#endif /* HAVE_RCONS */
 	 if (SCCUNIT(cn_tab->cn_dev) == unit)
 	 {
 		s = spltty();
@@ -478,7 +490,7 @@ sccattach(parent, self, aux)
 		cterm.c_ospeed = cterm.c_ispeed = 9600;
 		(void) sccparam(&ctty, &cterm);
 		DELAY(1000);
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 		/*cn_tab.cn_disabled = 0;*/ /* FIXME */
 #endif
 		splx(s);
@@ -652,7 +664,7 @@ sccclose(dev, flag, mode, p)
 {
 	register struct scc_softc *sc =  scccd.cd_devs[SCCUNIT(dev)];
 	register struct tty *tp;
-	register int bit, line;
+	register int line;
 
 	tp = scc_tty[minor(dev)];
 	line = SCCLINE(dev);
@@ -791,7 +803,7 @@ sccparam(tp, t)
 	/*
 	 * Handle console specially.
 	 */
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 	if (cn_tab->cn_getc == LKgetc) {
 		if (minor(tp->t_dev) == SCCKBD_PORT) {
 			cflag = CS8;
@@ -801,7 +813,7 @@ sccparam(tp, t)
 			ospeed = ttspeedtab(4800, sccspeedtab);
 		}
 	} else if (tp->t_dev == cn_tab->cn_dev)
-#endif /*TK_NOTYET*/
+#endif /*HAVE_RCONS*/
 	{
 		cflag = CS8;
 		ospeed = ttspeedtab(9600, sccspeedtab);
@@ -1028,7 +1040,7 @@ sccintr(xxxsc)
 				(*sccDivertXInput)(cc);
 				continue;
 			}
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 			if ((cc = kbdMapChar(cc)) < 0)
 				continue;
 #endif

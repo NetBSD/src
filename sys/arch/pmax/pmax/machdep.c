@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1996/01/04 22:22:40 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1996/01/29 22:52:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -402,7 +402,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
 		Mach_spltty = Mach_spl2;
-		Mach_splimp = Mach_spl2;
+		Mach_splimp = splhigh; /*XXX Mach_spl1(), if not for malloc()*/
 		Mach_splclock = Mach_spl3;
 		Mach_splstatclock = Mach_spl3;
 		Mach_clock_addr = (volatile struct chiptime *)
@@ -1175,6 +1175,84 @@ dumpsys()
 	}
 }
 
+
+
+
+/*
+ * Read a high-resolution clock, if one is available, and return
+ * the current microsecond offset from time-of-day.
+ */
+
+#ifndef DS5000_240
+# define clkread() (0)
+#else
+
+/*
+ * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
+ */
+u_long latched_cycle_cnt;
+
+/*
+ * On a Decstation 5000/240,  use the turbochannel bus-cycle counter
+ * to interpolate micro-seconds since the  last RTC clock tick.
+ * The interpolation base is the copy of the bus cycle-counter taken
+ * by the RTC interrupt handler.
+ * XXX on XINE, use the microsecond free-running counter.
+ *
+ */
+static inline u_long
+clkread()
+{
+
+	register u_long usec, cycles;	/* really 32 bits? */
+
+	/* only support 5k/240 TC bus counter */
+	if (pmax_boardtype != DS_3MAXPLUS) {
+		return (0);
+	}
+
+	cycles = *(u_long*)ASIC_REG_CTR(asic_base);
+
+	/* Compute difference in cycle count from last hardclock() to now */
+#if 1
+	/* my code, using u_ints */
+	cycles = cycles - latched_cycle_cnt;
+#else
+	/* Mills code, using (signed) ints */
+	if (cycles >= latched_cycle_cnt)
+		cycles = cycles - latched_cycle_cnt;
+	else
+		cycles = latched_cycle_cnt - cycles;
+#endif
+
+	/*
+	 * Scale from 40ns to microseconds.
+	 * Avoid a kernel FP divide (by 25) using the approximation 
+	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
+	 */
+	usec = cycles + (cycles << 3) + (cycles << 5);
+	usec = usec >> 10;
+
+#ifdef CLOCK_DEBUG
+	if (usec > 3906 +4) {
+		 addlog("clkread: usec %d, counter=%lx\n",
+			 usec, latched_cycle_cnt);
+		stacktrace();
+	}
+#endif /*CLOCK_DEBUG*/
+	return usec;
+}
+
+#if 0
+void
+microset()
+{
+		latched_cycle_cnt = *(u_long*)(ASIC_REG_CTR(asic_base));
+}
+#endif
+#endif /*DS5000_240*/
+
+
 /*
  * Return the best possible estimate of the time in the timeval
  * to which tvp points.  Unfortunately, we can't read the hardware registers.
@@ -1191,42 +1269,11 @@ microtime(tvp)
 
 
 	*tvp = time;
-#ifdef notdef
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
+	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
 	}
-#endif
-	/*
-	 * if there's a turbochannel cycle counter, use that to
-	 * interpolate micro-seconds since the  last RTC clock tick,
-	 * using the software copy of the bus cycle-counter taken by
-	 * the RTC interrupt handler.
-	 */
-#ifdef DS5000_240
-	if (pmax_boardtype == DS_3MAXPLUS) {
-		usec = *(u_int*)ASIC_REG_CTR(asic_base);
-		/* subtract cycle count a last  tick */
-		if (usec >= latched_cycle_cnt)
-			usec = usec - latched_cycle_cnt;
-		else
-			usec = latched_cycle_cnt - usec;
-
-		/*
-		 * scale from 40ns to microseconds.
-		 * avoid a kernel FP divide (by 25) using
-		 * an approximation 1/25 = 40/1000 =~ 41/ 1024.
-		 */
-		usec = usec + (usec << 3) + (usec << 5);
-		usec = usec >> 10;
-		tvp-> tv_usec += usec;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-#endif
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
@@ -1388,8 +1435,8 @@ kn02_enable_intr(slotno, handler, sc, on)
 	int s;
 
 #if 0
-	printf("3MAX enable_intr: imask %x, %sabling slot %d, unit %d\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit);
+	printf("3MAX enable_intr: imask %x, %sabling slot %d, sc %p\n",
+	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc);
 #endif
 
 	if (slotno > TC_MAX_LOGICAL_SLOTS)

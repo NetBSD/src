@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.9 1995/09/25 21:12:33 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.10 1996/01/29 22:52:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -224,7 +224,7 @@ dtopmatch(parent, match, aux)
 
 	static int nunits = 0;
 
-	if (!BUS_MATCHNAME(ca, "dtop"))
+	if (strcmp(ca->ca_name, "dtop") != 0)
 		return (0);
 
 	/*
@@ -247,7 +247,7 @@ dtopattach(parent, self, aux)
 {
 	register struct confargs *ca = aux;
 
-	(void) dtop_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+	(void) dtop_doprobe((void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr),
 			   self->dv_unit, ca->ca_slot);
 
 	/* tie pseudo-slot to device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.10 1995/11/25 10:39:57 mellon Exp $	*/
+/*	$NetBSD: pm.c,v 1.11 1996/01/29 22:52:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,10 +113,6 @@ extern void pmScreenInit __P((struct fbinfo *fi));
 static void pmLoadCursor __P((struct fbinfo *fi, u_short *ptr));
 void pmPosCursor __P((struct fbinfo *fi, int x, int y));
 
-#ifdef notyet /* these should be removed */
-static void pmRestoreCursorColor __P(());
-
-#endif
 void bt478CursorColor __P((struct fbinfo *fi, u_int *color));
 void bt478InitColorMap __P((struct fbinfo *fi));
 
@@ -189,11 +185,10 @@ pmmatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	static int npms = 1;
-	caddr_t pmaddr = BUS_CVTADDR(ca);
-
+	caddr_t pmaddr = (caddr_t)ca->ca_addr;
 
 	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "pm"))
+	if (strcmp(ca->ca_name, "pm") != 0)
 		return (0);
 
 	if (badaddr(pmaddr, 4))
@@ -214,7 +209,7 @@ pmattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	caddr_t pmaddr = BUS_CVTADDR(ca);
+	caddr_t pmaddr = (caddr_t)ca->ca_addr;
 
 	if (!pminit(&pmfi, 0, 0))
 		return;
@@ -226,8 +221,8 @@ pmattach(parent, self, aux)
 
 
 /*
- * Test to see if device is present.
- * Return true if found and initialized ok.
+ * pmax FB initialization.  This is abstracted out from pmbattch() so
+ * that a console framebuffer can be initialized early in boot.
  */
 pminit(fi, unit, silent)
 	struct fbinfo *fi;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1995/12/28 16:22:41 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 1996/01/29 22:52:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -876,7 +876,6 @@ interrupt(statusReg, causeReg, pc)
 			clnlintr();
 		}
 #endif
-#include "ppp.h"
 #if NPPP > 0
 		if (netisr & (1 << NETISR_PPP)) {
 			netisr &= ~(1 << NETISR_PPP);
@@ -916,6 +915,7 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
+		intrcnt[6]++;
 
 		/* keep clock interrupts enabled */
 		causeReg &= ~MACH_INT_MASK_3;
@@ -930,6 +930,13 @@ kn01_intr(mask, pc, statusReg, causeReg)
 #endif
 #if NLE > 0
 	if (mask & MACH_INT_MASK_1) {
+
+		/* 
+		 * tty interrupts were disabled by the splx() call
+		 * that re-enables clock interrupts.  A slip or ppp driver
+		 * manipulating if queues should have called splimp(),
+		 * which would mask out MACH_INT_MASK_1.
+		 */
 		intrcnt[3]++;
 		leintr(lecd.cd_devs[0]);
 	}
@@ -982,6 +989,7 @@ kn02_intr(mask, pc, statusReg, causeReg)
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
+		intrcnt[6]++;
 
 		/* keep clock interrupts enabled */
 		causeReg &= ~MACH_INT_MASK_1;
@@ -1075,6 +1083,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 			cf.pc = pc;
 			cf.sr = statusReg;
 			hardclock(&cf);
+			intrcnt[6]++;
 		}
 	
 		if ((intr & KMIN_INTR_SCC_0) &&
@@ -1156,10 +1165,12 @@ xine_intr(mask, pc, statusReg, causeReg)
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
+		intrcnt[6]++;
 		causeReg &= ~MACH_INT_MASK_1;
-		/* reenable clock interrupts */
-		splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
 	}
+	/* reenable clock interrupts */
+	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
 	if (mask & MACH_INT_MASK_3) {
 		intr = *intrp;
 		/* masked interrupts are still observable */
@@ -1270,6 +1281,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 	struct clockframe cf;
 	int temp;
 	static int user_warned = 0;
+	register u_long old_buscycle = latched_cycle_cnt;
 
 	old_mask = *imaskp & kn03_tc3_imask;
 	*imaskp = kn03_tc3_imask;
@@ -1282,13 +1294,33 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		temp = c->regc;	/* XXX clear interrupt bits */
 		cf.pc = pc;
 		cf.sr = statusReg;
-		intrcnt[6]++;
-		hardclock(&cf);
 		latched_cycle_cnt = *(u_long*)(ASIC_REG_CTR(asic_base));
+		hardclock(&cf);
+		intrcnt[6]++;
+		old_buscycle = latched_cycle_cnt - old_buscycle;
 		causeReg &= ~MACH_INT_MASK_1;
-		/* reenable clock interrupts */
-		splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
 	}
+	/* reenable clock interrupts */
+	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/*
+	 * Check for late clock interrupts (allow 10% slop). Be careful
+	 * to do so only after calling hardclock(), due to logging cost.
+	 * Even then, logging dropped ticks just causes more clock
+	 * ticks to be missed.
+	 */
+#ifdef notdef
+	if ((mask & MACH_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
+		extern int msgbufmapped;
+  		if(msgbufmapped && 0)
+			 addlog("kn03: clock intr %d usec late\n",
+				 old_buscycle/25);
+	}
+#endif
+	/*
+	 * IOCTL asic DMA-related interrupts should be checked here,
+	 * and DMA pointers serviced as soon as possible.
+	 */
 
 	if (mask & MACH_INT_MASK_0) {
 		intr = *intrp;
@@ -1302,6 +1334,18 @@ kn03_intr(mask, pc, statusReg, causeReg)
 #endif
 		}
 	
+	/*
+	 * XXX
+	 * DMA and non-DMA  interrupts from the IOCTl asic all use the
+	 * single interrupt request line from the IOCTL asic.
+	 * Disabling IOASIC interrupts while servicing network or
+	 * disk-driver interrupts causes DMA overruns. NON-dma IOASIC
+	 * interrupts should be disabled in the ioasic, and
+	 * interrupts from the IOASIC itself should be re-enabled.
+	 * DMA interrupts can then be serviced whilst still servicing
+	 * non-DMA interrupts from ioctl devices or TC options.
+	 */
+
 		if (intr & (KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E))
 			*intrp &= ~(KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E);
 

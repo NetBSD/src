@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.9 1995/10/09 01:45:26 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.10 1996/01/29 22:52:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,6 +101,7 @@ xcfb needs dtop device
 #include <vm/vm.h>
 
 #include <sys/device.h>
+#include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
@@ -190,8 +191,9 @@ xcfbmatch(parent, match, aux)
 	struct confargs *ca = aux;
 	static int nxcfbs = 1;
 
-	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAG-DV ") && !BUS_MATCHNAME(ca, "xcfb"))
+	/* Make sure that it's an xcfb. */
+	if (!TC_BUS_MATCHNAME(ca, "PMAG-DV ")  &&
+	    strcmp(ca->ca_name, "xcfb") != 0)
 		return (0);
 
 #ifdef notyet
@@ -210,7 +212,7 @@ xcfbattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 
-	if (!xcfbinit(NULL, BUS_CVTADDR(ca), self->dv_unit, 0));
+	if (!xcfbinit(NULL, ca->ca_addr, self->dv_unit, 0));
 		return;
 
 	/* no interrupts for XCFB */
