@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.50 1999/07/02 04:53:24 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.51 1999/07/03 15:09:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.50 1999/07/02 04:53:24 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.51 1999/07/03 15:09:51 kleink Exp $");
 #endif
 
 #include <stdio.h>
@@ -617,7 +617,7 @@ main(int argc, char *argv[])
 	if (tcgetattr (0, &ts) != -1) {
 		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
 		ts.c_lflag |= NOKERNINFO;
-		tcsetattr (0, TCSANOW, &ts);
+		tcsetattr (STDIN_FILENO, TCSANOW, &ts);
 	}
 #endif
 
@@ -1308,7 +1308,7 @@ finish(int s)
 
 	if (reset_kerninfo && tcgetattr (0, &ts) != -1) {
 		ts.c_lflag &= ~NOKERNINFO;
-		tcsetattr (0, TCSANOW, &ts);
+		tcsetattr (STDIN_FILENO, TCSANOW, &ts);
 	}
 	(void)signal(SIGINFO, SIG_IGN);
 #else
