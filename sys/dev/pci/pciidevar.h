@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.10 2003/03/20 04:22:50 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.11 2003/09/23 09:11:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,6 @@ struct pciide_softc {
 	struct pciide_channel {			/* per-channel data */
 		struct channel_softc wdc_channel; /* generic part */
 		char		*name;
-		int		hw_ok;	/* hardware mapped & OK? */
 		int		compat;	/* is it compat? */
 		void		*ih;	/* compat or pci handle */
 		bus_space_handle_t ctl_baseioh; /* ctrl regs blk, native mode */
