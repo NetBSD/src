@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.2.2.4 2002/10/18 02:39:30 nathanw Exp $ */
+/* $NetBSD: opb.c,v 1.2.2.5 2003/01/03 16:50:08 thorpej Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -161,12 +161,12 @@ opb_print(void *aux, const char *pnp)
 	struct opb_attach_args *oaa = aux;
 
 	if (pnp)
-		printf("%s at %s", oaa->opb_name, pnp);
+		aprint_normal("%s at %s", oaa->opb_name, pnp);
 
 	if (oaa->opb_addr != OPBCF_ADDR_DEFAULT)
-		printf(" addr 0x%08lx", oaa->opb_addr);
+		aprint_normal(" addr 0x%08lx", oaa->opb_addr);
 	if (oaa->opb_irq != OPBCF_IRQ_DEFAULT)
-		printf(" irq %d", oaa->opb_irq);
+		aprint_normal(" irq %d", oaa->opb_irq);
 
 	return (UNCONF);
 }

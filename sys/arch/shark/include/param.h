@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2.2.2 2002/02/28 04:11:47 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.2.2.3 2003/01/03 16:50:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -37,10 +37,6 @@
 
 #define	_MACHINE	shark
 #define	MACHINE		"shark"
-#ifndef __ELF__
-#define	_MACHINE_ARCH	arm32
-#define	MACHINE_ARCH	"arm32"
-#endif /* ! __ELF__ */
 
 #include <arm/arm32/param.h>
 

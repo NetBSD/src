@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.3.14.3 2002/10/18 02:39:42 nathanw Exp $	*/
+/*	$NetBSD: macepci.c,v 1.3.14.4 2003/01/03 16:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -161,9 +161,9 @@ macepci_print(aux, pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp != 0)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 	else
-		printf(" bus %d", pba->pba_bus);
+		aprint_normal(" bus %d", pba->pba_bus);
 
 	/* Mega XXX */
 	*(volatile u_int32_t *)0xb4000034 = 0;	/* prime timer */

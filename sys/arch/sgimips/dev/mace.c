@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.3.4.3 2002/10/18 02:39:38 nathanw Exp $	*/
+/*	$NetBSD: mace.c,v 1.3.4.4 2003/01/03 16:50:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -115,12 +115,12 @@ mace_print(aux, pnp)
 		return QUIET;
 
 	if (maa->maa_offset != MACECF_OFFSET_DEFAULT)
-		printf(" offset 0x%lx", maa->maa_offset);
+		aprint_normal(" offset 0x%lx", maa->maa_offset);
 	if (maa->maa_intr != MACECF_INTR_DEFAULT)
-		printf(" intr %d", maa->maa_intr);
+		aprint_normal(" intr %d", maa->maa_intr);
 #if 0
 	if (maa->maa_offset != MACECF_STRIDE_DEFAULT)
-		printf(" stride 0x%lx", maa->maa_stride);
+		aprint_normal(" stride 0x%lx", maa->maa_stride);
 #endif
 
 	return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6.2.2 2002/10/18 03:17:59 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.6.2.3 2003/01/03 16:50:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,15 +118,15 @@ obio_print(void *args, const char *name)
 	struct obio_attach_args *oa = args;
 
 	if (oa->oa_iosize)
-		printf(" port 0x%x", oa->oa_iobase);
+		aprint_normal(" port 0x%x", oa->oa_iobase);
 	if (oa->oa_iosize > 1)
-		printf("-0x%x", oa->oa_iobase + oa->oa_iosize - 1);
+		aprint_normal("-0x%x", oa->oa_iobase + oa->oa_iosize - 1);
 	if (oa->oa_msize)
-		printf(" mem 0x%x", oa->oa_maddr);
+		aprint_normal(" mem 0x%x", oa->oa_maddr);
 	if (oa->oa_msize > 1)
-		printf("-0x%x", oa->oa_maddr + oa->oa_msize - 1);
+		aprint_normal("-0x%x", oa->oa_maddr + oa->oa_msize - 1);
 	if (oa->oa_irq != IRQUNK)
-		printf(" irq %d", oa->oa_irq);
+		aprint_normal(" irq %d", oa->oa_irq);
 	return (UNCONF);
 }
 
