@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2002/10/20 02:37:26 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2002/11/03 19:56:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2002/10/20 02:37:26 chs Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2002/11/03 19:56:28 chs Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -363,7 +363,7 @@ void
 pmap_procwr(p, va, len)
 	struct proc *p;
 	vaddr_t va;
-	u_long len;
+	size_t len;
 {
 
 	(void)cachectl1(0x80000004, va, len, p);
@@ -905,7 +905,7 @@ pmap_remove(pmap, sva, eva)
 	needcflush = FALSE;
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
-		nssva = hp300_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 
@@ -1058,7 +1058,7 @@ pmap_protect(pmap, sva, eva, prot)
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
 	while (sva < eva) {
-		nssva = hp300_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -1477,7 +1477,7 @@ pmap_kremove(va, len)
 	firstpage = TRUE;
 	needcflush = FALSE;
 	while (sva < eva) {
-		nssva = hp300_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 

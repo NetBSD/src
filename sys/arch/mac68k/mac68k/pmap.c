@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2002/10/28 00:55:16 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2002/11/03 19:56:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -353,7 +353,7 @@ void
 pmap_procwr(p, va, len)
 	struct proc *p;
 	vaddr_t va;
-	u_long len;
+	size_t len;
 {
 
 	(void)cachectl1(0x80000004, va, len, p);
@@ -905,7 +905,7 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
-		nssva = mac68k_trunc_seg(sva) + MAC_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 
@@ -1015,7 +1015,7 @@ pmap_protect(pmap, sva, eva, prot)
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
 	while (sva < eva) {
-		nssva = mac68k_trunc_seg(sva) + MAC_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*

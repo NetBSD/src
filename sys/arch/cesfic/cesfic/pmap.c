@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2002/10/20 02:37:23 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2002/11/03 19:56:27 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -322,7 +322,7 @@ void
 pmap_procwr(p, va, len)
 	struct proc *p;
 	vaddr_t va;
-	u_long len;
+	size_t len;
 {
 
 	(void)cachectl1(0x80000004, va, len, p);
@@ -870,7 +870,7 @@ pmap_remove(pmap, sva, eva)
 	needcflush = FALSE;
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
-		nssva = hp300_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 
@@ -1023,7 +1023,7 @@ pmap_protect(pmap, sva, eva, prot)
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
 	while (sva < eva) {
-		nssva = hp300_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -2262,10 +2262,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				if (active_user_pmap(ptpmap))
 					PMAP_ACTIVATE(ptpmap, 1);
 			}
-#ifdef DEBUG
-			else if (ptpmap->pm_sref < 0)
-				panic("remove: sref < 0");
-#endif
 		}
 #if 0
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2002/10/20 02:37:31 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2002/11/03 19:56:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -355,7 +355,7 @@ void
 pmap_procwr(p, va, len)
 	struct proc *p;
 	vaddr_t va;
-	u_long len;
+	size_t len;
 {
 
 	(void)cachectl1(0x80000004, va, len, p);
@@ -1881,46 +1881,6 @@ pmap_zero_page(phys)
 #endif
 
 	splx(s);
-}
-
-/*
- * pmap_zero_page_uncached:
- *
- *	Same as above, except uncached.  Used in uvm_pageidlezero,
- *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
- *	was zero'd, FALSE if we aborted.
- */
-boolean_t
-pmap_zero_page_uncached(phys)
-	paddr_t phys;
-{
-	int s, npte;
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
-
-#if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
-		DCPP(phys);
-	}
-#endif
-
-	npte = phys | PG_V | PG_CI;
-
-	s = splvm();
-
-	*caddr1_pte = npte;
-	TBIS((vaddr_t)CADDR1);
-
-	zeropage(CADDR1);
-
-#ifdef DEBUG
-	*caddr1_pte = PG_NV;
-	TBIS((vaddr_t)CADDR1);
-#endif
-
-	splx(s);
-
-	return TRUE;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2002/10/14 05:18:51 chs Exp $        */
+/*	$NetBSD: pmap.c,v 1.81 2002/11/03 19:56:31 chs Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1754,47 +1754,6 @@ pmap_zero_page(phys)
 }
 
 /*
- * pmap_zero_page_uncached:
- *
- *	Same as above, except uncached.  Used in uvm_pageidlezero,
- *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
- *	was zero'd, FALSE if we aborted.
- */
-boolean_t
-pmap_zero_page_uncached(phys)
-	paddr_t phys;
-{
-	int s, npte;
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
-
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-#endif
-		DCPP_40(phys);	/* Works on 060 too */
-#endif
-
-	npte = phys | PG_V | PG_CI;
-
-	s = splvm();
-
-	*caddr1_pte = npte;
-	TBIS((vaddr_t)CADDR1);
-
-	zeropage(CADDR1);
-
-#ifdef DEBUG
-	*caddr1_pte = PG_NV;
-	TBIS((vaddr_t)CADDR1);
-#endif
-
-	splx(s);
-
-	return (TRUE);
-}
-
-/*
  * pmap_copy_page:		[ INTERFACE ]
  *
  *	Copy the specified (machine independent) page by mapping the page
@@ -2218,10 +2177,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				if (active_user_pmap(ptpmap))
 					PMAP_ACTIVATE(ptpmap, 1);
 			}
-#ifdef DEBUG
-			else if (ptpmap->pm_sref < 0)
-				panic("remove: sref < 0");
-#endif
 		}
 #if 0
 		/*
