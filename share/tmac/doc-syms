@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-syms,v 1.31 1998/02/05 19:43:08 perry Exp $
+.\"	$NetBSD: doc-syms,v 1.32 1998/02/06 05:17:24 perry Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -96,6 +96,22 @@
 .				if "\\*(A\\n(jj"tahoe" \{\
 .					nr aP \\n(aP+1
 .					as b1 \&\-Tahoe
+.				\}
+.				if "\\*(A\\n(jj"Lite" \{\
+.					nr aP \\n(aP+1
+.					as b1 \&\-\\*(A\\n(jj
+.				\}
+.				if "\\*(A\\n(jj"lite" \{\
+.					nr aP \\n(aP+1
+.					as b1 \&\-Lite
+.				\}
+.				if "\\*(A\\n(jj"Lite2" \{\
+.					nr aP \\n(aP+1
+.					as b1 \&\-\\*(A\\n(jj
+.				\}
+.				if "\\*(A\\n(jj"lite2" \{\
+.					nr aP \\n(aP+1
+.					as b1 \&\-Lite2
 .				\}
 .				ie \\n(aC>\\n(aP \{\
 .					nr aP \\n(aP+1
