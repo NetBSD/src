@@ -27,7 +27,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: insque.c,v 1.2 1993/08/13 12:54:10 brezak Exp $";
+static char *rcsid = "$Id: insque.c,v 1.3 1993/08/26 00:44:48 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 struct qelem {
