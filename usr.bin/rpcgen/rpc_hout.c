@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.14 2000/10/11 14:46:17 is Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.15 2001/03/21 00:30:39 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.14 2000/10/11 14:46:17 is Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.15 2001/03/21 00:30:39 mycroft Exp $");
 #endif
 #endif
 
@@ -56,7 +56,6 @@ static void pdefine __P((char *, char *));
 static void puldefine __P((char *, char *));
 static int define_printed __P((proc_list *, version_list *));
 static void pprogramdef __P((definition *));
-static void parglist __P((proc_list *, char *));
 static void penumdef __P((definition *));
 static void ptypedef __P((definition *));
 static int undefined2 __P((char *, char *));
@@ -329,9 +328,17 @@ pprocdef(proc, vp, addargtype, server_p, mode)
 	int     server_p;
 	int     mode;
 {
+	decl_list *dl;
 
-	ptype(proc->res_prefix, proc->res_type, 1);
-	f_print(fout, "* ");
+	if (Mflag) {
+		if (server_p)
+			f_print(fout, "bool_t ");
+		else
+			f_print(fout, "enum clnt_stat ");
+	} else {
+		ptype(proc->res_prefix, proc->res_type, 1);
+		f_print(fout, "*");
+	}
 	if (server_p)
 		pvname_svc(proc->proc_name, vp->vers_num);
 	else
@@ -340,39 +347,34 @@ pprocdef(proc, vp, addargtype, server_p, mode)
 	/*
 	 * mode  0 == cplusplus, mode  1 = ANSI-C, mode 2 = old style C
 	 */
-	if (mode == 0 || mode == 1)
-		parglist(proc, addargtype);
+	if (mode == 0 || mode == 1) {
+		f_print(fout, "(");
+		if (proc->arg_num < 2 && newstyle &&
+		    streq(proc->args.decls->decl.type, "void")) {
+			/* 0 argument in new style:  do nothing */
+		} else {
+			for (dl = proc->args.decls; dl != NULL; dl = dl->next) {
+				ptype(dl->decl.prefix, dl->decl.type, 1);
+				if (!newstyle)
+					f_print(fout, "*");
+				f_print(fout, ", ");
+			}
+		}
+		if (Mflag) {
+			if (streq(proc->res_type, "void"))
+				f_print(fout, "char");
+			else
+				ptype(proc->res_prefix, proc->res_type, 0);
+			if (!isvectordef(proc->res_type, REL_ALIAS))
+				f_print(fout, "*");
+			f_print(fout, ", ");
+		}
+		f_print(fout, "%s);\n", addargtype);
+	}
 	else
 		f_print(fout, "();\n");
 }
 
-
-/* print out argument list of procedure */
-static void
-parglist(proc, addargtype)
-	proc_list *proc;
-	char   *addargtype;
-{
-	decl_list *dl;
-
-	f_print(fout, "(");
-
-	if (proc->arg_num < 2 && newstyle &&
-	    streq(proc->args.decls->decl.type, "void")) {
-		/* 0 argument in new style:  do nothing */
-	} else {
-		for (dl = proc->args.decls; dl != NULL; dl = dl->next) {
-			ptype(dl->decl.prefix, dl->decl.type, 1);
-			if (!newstyle)
-				f_print(fout, "*");	/* old style passes by
-							 * reference */
-
-			f_print(fout, ", ");
-		}
-	}
-
-	f_print(fout, "%s);\n", addargtype);
-}
 
 static void
 penumdef(def)

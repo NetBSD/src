@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.5 1997/10/18 10:54:01 lukem Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.6 2001/03/21 00:30:39 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_sample.c,v 1.5 1997/10/18 10:54:01 lukem Exp $");
+__RCSID("$NetBSD: rpc_sample.c,v 1.6 2001/03/21 00:30:39 mycroft Exp $");
 #endif
 #endif
 
@@ -95,28 +95,24 @@ write_sample_client(program_name, vp)
 	f_print(fout, "\n\nvoid\n");
 	pvname(program_name, vp->vers_num);
 	if (Cflag)
-		f_print(fout, "( char* host )\n{\n");
+		f_print(fout, "(char *host)\n{\n");
 	else
-		f_print(fout, "(host)\nchar *host;\n{\n");
+		f_print(fout, "(host)\n\tchar *host;\n{\n");
 	f_print(fout, "\tCLIENT *clnt;\n");
 
 	i = 0;
 	for (proc = vp->procs; proc != NULL; proc = proc->next) {
-		f_print(fout, "\t");
-		ptype(proc->res_prefix, proc->res_type, 1);
-		f_print(fout, " *result_%d;\n", ++i);
 		/* print out declarations for arguments */
 		if (proc->arg_num < 2 && !newstyle) {
 			f_print(fout, "\t");
-			if (!streq(proc->args.decls->decl.type, "void"))
-				ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
+			if (streq(proc->args.decls->decl.type, "void"))
+				f_print(fout, "char");	/* cannot have "void"
+							 * type */
 			else
-				f_print(fout, "char* ");	/* cannot have "void"
-								 * type */
-			f_print(fout, " ");
+				ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
 			pvname(proc->proc_name, vp->vers_num);
 			f_print(fout, "_arg;\n");
-		} else
+		} else {
 			if (!streq(proc->args.decls->decl.type, "void")) {
 				for (l = proc->args.decls; l != NULL; l = l->next) {
 					f_print(fout, "\t");
@@ -127,7 +123,20 @@ write_sample_client(program_name, vp)
 /*	  pdeclaration(proc->args.argname, &l->decl, 1, ";\n" );*/
 				}
 			}
+		}
+		/* print out declarations for results */
+		f_print(fout, "\t");
+		if (streq(proc->res_type, "void"))
+			f_print(fout, "char");	/* cannot have "void"
+						 * type */
+		else
+			ptype(proc->res_prefix, proc->res_type, 1);
+		if (!Mflag)
+			f_print(fout, "*");
+		pvname(proc->proc_name, vp->vers_num);
+		f_print(fout, "_res;\n");
 	}
+	f_print(fout, "\n");
 
 	/* generate creation of client handle */
 	f_print(fout, "\tclnt = clnt_create(host, %s, %s, \"%s\");\n",
@@ -137,18 +146,23 @@ write_sample_client(program_name, vp)
 	f_print(fout, "\t\texit(1);\n\t}\n");
 
 	/* generate calls to procedures */
-	i = 0;
 	for (proc = vp->procs; proc != NULL; proc = proc->next) {
-		f_print(fout, "\tresult_%d = ", ++i);
+		if (Mflag)
+			f_print(fout, "\tif (");
+		else {
+			f_print(fout, "\t");
+			pvname(proc->proc_name, vp->vers_num);
+			f_print(fout, "_res = ");
+		}
 		pvname(proc->proc_name, vp->vers_num);
 		if (proc->arg_num < 2 && !newstyle) {
 			f_print(fout, "(");
 			if (streq(proc->args.decls->decl.type, "void"))	/* cast to void* */
-				f_print(fout, "(void*)");
+				f_print(fout, "(void *)");
 			f_print(fout, "&");
 			pvname(proc->proc_name, vp->vers_num);
-			f_print(fout, "_arg, clnt);\n");
-		} else
+			f_print(fout, "_arg, ");
+		} else {
 			if (streq(proc->args.decls->decl.type, "void")) {
 				f_print(fout, "(clnt);\n");
 			} else {
@@ -157,14 +171,22 @@ write_sample_client(program_name, vp)
 					pvname(proc->proc_name, vp->vers_num);
 					f_print(fout, "_%s, ", l->decl.name);
 				}
-				f_print(fout, "clnt);\n");
 			}
-		f_print(fout, "\tif (result_%d == NULL) {\n", i);
+		}
+		if (Mflag) {
+			f_print(fout, "&");
+			pvname(proc->proc_name, vp->vers_num);
+			f_print(fout, "_res, clnt) != RPC_SUCCESS)\n");
+		} else {
+			f_print(fout, "clnt);\n");
+			f_print(fout, "\tif (");
+			pvname(proc->proc_name, vp->vers_num);
+			f_print(fout, "_res == NULL)\n", i);
+		}
 		f_print(fout, "\t\tclnt_perror(clnt, \"call failed:\");\n");
-		f_print(fout, "\t}\n");
 	}
 
-	f_print(fout, "\tclnt_destroy( clnt );\n");
+	f_print(fout, "\tclnt_destroy(clnt);\n");
 	f_print(fout, "}\n");
 }
 
@@ -178,34 +200,40 @@ write_sample_server(def)
 	for (vp = def->def.pr.versions; vp != NULL; vp = vp->next) {
 		for (proc = vp->procs; proc != NULL; proc = proc->next) {
 			f_print(fout, "\n");
-/*			if( Cflag )
-			  f_print( fout, "extern \"C\"{\n");
-*/
-			return_type(proc);
-			f_print(fout, "*\n");
+			if (Mflag)
+				f_print(fout, "bool_t\n");
+			else {
+				return_type(proc);
+				f_print(fout, "*\n");
+			}
 			if (Cflag)
 				pvname_svc(proc->proc_name, vp->vers_num);
 			else
 				pvname(proc->proc_name, vp->vers_num);
-			printarglist(proc, RQSTP, "struct svc_req *");
+			printarglist(proc, "result", RQSTP, "struct svc_req *");
 
 			f_print(fout, "{\n");
-			f_print(fout, "\n\tstatic ");
-			if (!streq(proc->res_type, "void"))
-				return_type(proc);
-			else
-				f_print(fout, "char*");	/* cannot have void type */
-			f_print(fout, " result;\n");
+			if (Mflag) {
+				f_print(fout, "\tbool_t retval;\n");
+			} else {
+				f_print(fout, "\tstatic ");
+				if (streq(proc->res_type, "void"))
+					f_print(fout, "char");	/* cannot have void type */
+				else
+					return_type(proc);
+				f_print(fout, " result;\n");
+			}
 			f_print(fout,
 			    "\n\t/*\n\t * insert server code here\n\t */\n\n");
-			if (!streq(proc->res_type, "void"))
-				f_print(fout, "\treturn(&result);\n}\n");
-			else	/* cast back to void * */
-				f_print(fout, "\treturn((void*) &result);\n}\n");
-/*			if( Cflag)
-			  f_print( fout, "};\n");
-*/
-
+			if (Mflag) {
+				f_print(fout, "\treturn (retval);\n");
+			} else {
+				if (streq(proc->res_type, "void"))
+					f_print(fout, "\treturn ((void *)&result);\n");
+				else
+					f_print(fout, "\treturn (&result);\n");
+			}
+			f_print(fout, "}\n");
 		}
 	}
 }
@@ -236,12 +264,12 @@ write_sample_clnt_main()
 
 	f_print(fout, "\n\n");
 	if (Cflag)
-		f_print(fout, "main( int argc, char* argv[] )\n{\n");
+		f_print(fout, "int\nmain(int argc, char *argv[])\n{\n");
 	else
-		f_print(fout, "main(argc, argv)\nint argc;\nchar *argv[];\n{\n");
+		f_print(fout, "int\nmain(argc, argv)\n\tint argc;\n\tchar *argv[];\n{\n");
 
 	f_print(fout, "\tchar *host;");
-	f_print(fout, "\n\n\tif(argc < 2) {");
+	f_print(fout, "\n\n\tif (argc < 2) {");
 	f_print(fout, "\n\t\tprintf(\"usage: %%s server_host\\n\", argv[0]);\n");
 	f_print(fout, "\t\texit(1);\n\t}");
 	f_print(fout, "\n\thost = argv[1];\n");
@@ -254,8 +282,9 @@ write_sample_clnt_main()
 		for (vp = def->def.pr.versions; vp != NULL; vp = vp->next) {
 			f_print(fout, "\t");
 			pvname(def->def_name, vp->vers_num);
-			f_print(fout, "( host );\n");
+			f_print(fout, "(host);\n");
 		}
 	}
+	f_print(fout, "\texit(0);\n");
 	f_print(fout, "}\n");
 }

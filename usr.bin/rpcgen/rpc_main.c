@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.18 2001/02/21 00:11:12 cgd Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.19 2001/03/21 00:30:39 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.18 2001/02/21 00:11:12 cgd Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.19 2001/03/21 00:30:39 mycroft Exp $");
 #endif
 #endif
 
@@ -129,6 +129,7 @@ int     exitnow;		/* If started by port monitors, exit after the
 int     timerflag;		/* TRUE if !indefinite && !exitnow */
 int     newstyle;		/* newstyle of passing arguments (by value) */
 int     Cflag = 0;		/* ANSI C syntax */
+int	Mflag = 0;		/* multithread safe */
 static int allfiles;		/* generate all files */
 int     tirpcflag = 1;		/* generating code for tirpc, by default */
 
@@ -1005,6 +1006,9 @@ parseargs(argc, argv, cmd)
 				case 'I':
 					inetdflag = 1;
 					break;
+				case 'M':
+					Mflag = 1;
+					break;
 				case 'N':
 					newstyle = 1;
 					break;
@@ -1128,9 +1132,9 @@ static void
 usage()
 {
 	f_print(stderr, "usage:  %s infile\n", cmdname);
-	f_print(stderr, "\t%s [-a][-b][-C][-Dname[=value]] -i size  [-I [-K seconds]] [-A][-L][-M toolkit][-N][-T] infile\n",
+	f_print(stderr, "\t%s [-a][-b][-C][-Dname[=value]] -i size [-I [-K seconds]] [-A] [-M] [-N] [-T] infile\n",
 	    cmdname);
-	f_print(stderr, "\t%s [-c | -h | -l | -m | -t | -Sc | -Ss] [-o outfile] [infile]\n",
+	f_print(stderr, "\t%s [-L] [-M] [-c | -h | -l | -m | -t | -Sc | -Ss] [-o outfile] [infile]\n",
 	    cmdname);
 	f_print(stderr, "\t%s [-s nettype]* [-o outfile] [infile]\n", cmdname);
 	f_print(stderr, "\t%s [-n netid]* [-o outfile] [infile]\n", cmdname);
@@ -1155,6 +1159,7 @@ options_usage()
 	f_print(stderr, "-l\t\tgenerate client side stubs\n");
 	f_print(stderr, "-L\t\tserver errors will be printed to syslog\n");
 	f_print(stderr, "-m\t\tgenerate server side stubs\n");
+	f_print(stderr, "-M\t\tgenerate thread-safe stubs\n");
 	f_print(stderr, "-n netid\tgenerate server code that supports named netid\n");
 	f_print(stderr, "-N\t\tsupports multiple arguments and call-by-value\n");
 	f_print(stderr, "-o outfile\tname of the output file\n");
