@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cp.h	5.2 (Berkeley) 4/3/91
- *
- *	$Header: /cvsroot/src/bin/cp/Attic/cp.h,v 1.3 1993/03/23 00:23:45 cgd Exp $
+ *	from: @(#)cp.h	5.2 (Berkeley) 4/3/91
+ *	$Id: cp.h,v 1.4 1993/08/01 19:01:03 mycroft Exp $
  */
 
 typedef struct {

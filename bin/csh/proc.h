@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)proc.h	5.6 (Berkeley) 6/25/91
- *
- *	$Header: /cvsroot/src/bin/csh/proc.h,v 1.3 1993/03/23 00:25:17 cgd Exp $
+ *	from: @(#)proc.h	5.6 (Berkeley) 6/25/91
+ *	$Id: proc.h,v 1.4 1993/08/01 19:00:54 mycroft Exp $
  */
 
 /*
