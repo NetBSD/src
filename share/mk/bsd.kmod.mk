@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.30 1999/03/10 06:34:19 ross Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.30.2.1 1999/09/10 22:53:18 he Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -62,7 +62,7 @@ kmodinstall:: ${DESTDIR}${KMODDIR}/${PROG}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${KMODDIR}/${PROG}
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${KMODDIR}/${PROG}: .MADE
 .endif
 
