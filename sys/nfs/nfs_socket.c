@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.64 2000/12/27 16:35:37 bjh21 Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.65 2000/12/27 22:01:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -1481,7 +1481,7 @@ nfs_sigintr(nmp, rep, p)
 	if (p) {
 		sigpending1(p, &ss);
 #if 0
-		sigminusset(&p->p_sigignore, &ss);
+		sigminusset(&p->p_sigctx.ps_sigignore, &ss);
 #endif
 		if (sigismember(&ss, SIGINT) || sigismember(&ss, SIGTERM) ||
 		    sigismember(&ss, SIGKILL) || sigismember(&ss, SIGHUP) ||
