@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.5 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.6 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-typedef struct usb_block_dma {
+typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
         caddr_t kaddr;
@@ -47,11 +47,11 @@ typedef struct usb_block_dma {
         size_t size;
         size_t align;
 	int fullblock;
-	LIST_ENTRY(usb_block_dma) next;
+	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
 typedef struct {
-	usb_dma_block_t *block;
+	struct usb_dma_block *block;
 	u_int offs;
 } usb_dma_t;
 

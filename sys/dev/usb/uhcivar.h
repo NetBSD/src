@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.9 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.10 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,10 +96,6 @@ struct uhci_soft_qh {
 };
 #define UHCI_QH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
 
-/* Only used for buffer free list. */
-struct uhci_buffer {
-	struct uhci_buffer *next;
-};
 #define UHCI_BUFFER_SIZE 64
 #define UHCI_BUFFER_CHUNK 64 	/*(PAGE_SIZE / UHCI_BUFFER_SIZE)*/
 
@@ -136,7 +132,6 @@ typedef struct uhci_softc {
 
 	uhci_soft_td_t *sc_freetds;
 	uhci_soft_qh_t *sc_freeqhs;
-	struct uhci_buffer *sc_freebuffers;
 
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */

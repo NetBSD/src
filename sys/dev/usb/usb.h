@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.28 1999/08/19 19:50:42 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.29 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -509,6 +509,7 @@ struct usb_device_stats {
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
+#define USB_SET_TIMEOUT		_IOW ('U', 114, int)
 
 /* Modem device */
 #define USB_GET_CM_OVER_DATA	_IOR ('U', 130, int)
