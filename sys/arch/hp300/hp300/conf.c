@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.6 1994/02/15 16:25:04 mycroft Exp $
+ *	$Id: conf.c,v 1.7 1994/05/11 10:19:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -131,15 +131,15 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 /* open, read, write, ioctl, strategy */
 #define	cdev_disk_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,open), (dev_type_close((*))) nullop, rawread, rawrite, \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
 	dev_init(c,n,strategy) }
 
 /* open, close, read, write, ioctl, strategy */
 #define	cdev_tape_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,open), dev_init(c,n,close), rawread, rawwrite, \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
 	dev_init(c,n,strategy) }
 
@@ -273,8 +273,8 @@ cdev_decl(clock);
 cdev_decl(vn);
 /* open, read, write, ioctl -- XXX should be a disk */
 #define	cdev_vn_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,open), (dev_type_close((*))) nullop, rawread, rawwrite, \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
 	0 }
 

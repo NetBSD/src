@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vn.c 1.1 91/04/30
  *	from: @(#)vn.c	7.6 (Berkeley) 6/21/91
- *	$Id: vn.c,v 1.5 1994/01/11 17:19:44 mycroft Exp $
+ *	$Id: vn.c,v 1.6 1994/05/11 10:16:24 mycroft Exp $
  */
 
 /*
@@ -272,36 +272,6 @@ vniodone(bp)
 	else
 		vntab[unit].b_active--;
 	splx(s);
-}
-
-vnread(dev, uio, flags, p)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-	struct proc *p;
-{
-	register int unit = vnunit(dev);
-
-#ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnread(%x, %x, %x, %x)\n", dev, uio, flags, p);
-#endif
-	return(physio(vnstrategy, &vnbuf[unit], dev, B_READ, minphys, uio));
-}
-
-vnwrite(dev, uio, flags, p)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-	struct proc *p;
-{
-	register int unit = vnunit(dev);
-
-#ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnwrite(%x, %x, %x, %x)\n", dev, uio, flags, p);
-#endif
-	return(physio(vnstrategy, &vnbuf[unit], dev, B_WRITE, minphys, uio));
 }
 
 /* ARGSUSED */

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: rd.c 1.38 90/10/12
  *	from: @(#)rd.c	7.9 (Berkeley) 5/7/91
- *	$Id: rd.c,v 1.6 1994/05/05 10:10:38 mycroft Exp $
+ *	$Id: rd.c,v 1.7 1994/05/11 10:16:16 mycroft Exp $
  */
 
 /*
@@ -1011,28 +1011,6 @@ rderror(unit)
 	printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
 	printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
 	return(1);
-}
-
-int
-rdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	register int unit = rdunit(dev);
-
-	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
-}
-
-int
-rdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	register int unit = rdunit(dev);
-
-	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
