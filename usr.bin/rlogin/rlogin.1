@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.17 2003/05/26 10:18:40 lukem Exp $
+.\"	$NetBSD: rlogin.1,v 1.18 2003/07/04 08:13:59 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,14 +138,14 @@ utilization, but provides increased security.
 .El
 .Pp
 A line of the form
-.Dq \*[Lt]escape char\*[Gt].
+.Dq Ao escape char Ac Ns \&.
 disconnects from the remote host.
 Similarly, the line
-.Dq \*[Lt]escape char\*[Gt]^Z
+.Dq Ao escape char Ac Ns ^Z
 will suspend the
 .Nm
 session, and
-.Dq \*[Lt]escape char\*[Gt]\*[Lt]delayed-suspend char\*[Gt]
+.Dq Ao escape char Ac Ns Aq delayed-suspend char
 suspends the
 send portion of the rlogin, but allows output from the remote system.
 By default, the tilde
