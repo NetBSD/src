@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.14 2003/12/05 13:37:48 lukem Exp $	*/
+/*	$NetBSD: test.c,v 1.15 2003/12/08 12:03:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.14 2003/12/05 13:37:48 lukem Exp $");
+__RCSID("$NetBSD: test.c,v 1.15 2003/12/08 12:03:01 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 			continue;
 
 		ac = cc = co = 0;
-		ncontinuation = tok_LineInfo(tok, li, &ac, &av, &cc, &co);
+		ncontinuation = tok_line(tok, li, &ac, &av, &cc, &co);
 		if (ncontinuation < 0) {
 			(void) fprintf(stderr, "Internal error\n");
 			continuation = 0;
