@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1998/08/05 16:08:38 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1998/08/22 14:38:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,7 +130,7 @@ vm_map_t buffer_map;
 #endif
 
 #if defined(MACHINE_NEW_NONCONTIG)
-extern vm_offset_t avail_start;
+extern paddr_t avail_start;
 #endif
 
 #ifdef MACHINE_NONCONTIG
@@ -138,7 +138,7 @@ extern int numranges;
 extern u_long low[8];
 extern u_long high[8];
 #else
-extern vm_offset_t avail_end;
+extern paddr_t avail_end;
 #endif
 
 /*
@@ -230,7 +230,7 @@ consinit()
 #if defined(UVM)
 #ifdef MACHINE_NONCONTIG
 	for (i = 0; i < numranges; i++) {
-		vm_offset_t startmem = i == 0 ? avail_start : low[i];
+		paddr_t startmem = i == 0 ? avail_start : low[i];
 
 		uvm_page_physload(atop(startmem), atop(high[i]),
 				atop(startmem), atop(high[i]),
@@ -244,7 +244,7 @@ consinit()
 #else	/* not UVM */
 #ifdef MACHINE_NONCONTIG
 	for (i = 0; i < numranges; i++) {
-		vm_offset_t startmem = i == 0 ? avail_start : low[i];
+		paddr_t startmem = i == 0 ? avail_start : low[i];
 
 		vm_page_physload(atop(startmem), atop(high[i]),
 				atop(startmem), atop(high[i]));
@@ -267,8 +267,8 @@ cpu_startup()
 	unsigned i;
 	caddr_t v, firstaddr;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -283,10 +283,10 @@ cpu_startup()
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 #ifdef MACHINE_NONCONTIG
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
 #else
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 #endif
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
@@ -376,7 +376,7 @@ again:
 	 * End of first pass, size has been calculated so allocate memory
 	 */
 	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
+		size = (vsize_t)(v - firstaddr);
 #if defined(UVM)
 		firstaddr = (caddr_t) uvm_km_zalloc(kernel_map, round_page(size));
 #else
@@ -389,7 +389,7 @@ again:
 	/*
 	 * End of second pass, addresses have been assigned
 	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	if ((vsize_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
 	/*
 	 * Now allocate buffers proper.  They are different than the above
@@ -397,17 +397,17 @@ again:
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif /* UVM */
@@ -421,8 +421,8 @@ again:
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -431,7 +431,7 @@ again:
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vsize_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -449,8 +449,8 @@ again:
 			curbufsize -= PAGE_SIZE;
 		}
 #else /* ! UVM */
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -459,7 +459,7 @@ again:
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -491,10 +491,10 @@ again:
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
@@ -800,25 +800,25 @@ cpu_dumpconf()
  * the auto-restart code.
  */
 #define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
-static vm_offset_t dumpspace;
+static vaddr_t dumpspace;
 
-vm_offset_t	reserve_dumppages __P((vm_offset_t));
+vaddr_t	reserve_dumppages __P((vaddr_t));
 
-vm_offset_t
+vaddr_t
 reserve_dumppages(p)
-	vm_offset_t p;
+	vaddr_t p;
 {
 	dumpspace = p;
 	return (p + BYTES_PER_DUMP);
 }
 
 #ifdef MACHINE_NONCONTIG
-static int find_range __P((vm_offset_t));
-static int find_next_range __P((vm_offset_t));
+static int find_range __P((paddr_t));
+static int find_next_range __P((paddr_t));
 
 static int
 find_range(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int i;
 
@@ -831,7 +831,7 @@ find_range(pa)
 
 static int
 find_next_range(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int     i, near, best, t;
 

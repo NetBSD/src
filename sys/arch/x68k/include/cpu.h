@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 1998/02/13 07:42:01 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 1998/08/22 14:38:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -178,17 +178,17 @@ void	ICIA __P((void));
 void	ICPA __P((void));
 void	PCIA __P((void));
 void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
+void	TBIS __P((vaddr_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
 #if defined(M68040) || defined(M68060)
 void	DCFA __P((void));
-void	DCFP __P((vm_offset_t));
-void	DCFL __P((vm_offset_t));
-void	DCPL __P((vm_offset_t));
-void	DCPP __P((vm_offset_t));
-void	ICPL __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
+void	DCFP __P((vaddr_t));
+void	DCFL __P((vaddr_t));
+void	DCPL __P((vaddr_t));
+void	DCPP __P((vaddr_t));
+void	ICPL __P((vaddr_t));
+void	ICPP __P((vaddr_t));
 #endif
 
 /* sys_machdep.c functions */

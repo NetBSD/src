@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.22 1998/08/15 04:22:46 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.23 1998/08/22 14:38:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ static void fd_do_eject __P((int));
 void fd_mountroot_hook __P((struct device *));
 
 /* dma transfer routines */
-__inline static void fdc_dmastart __P((int, caddr_t, int));
+__inline static void fdc_dmastart __P((int, caddr_t, vsize_t));
 void fdcdmaintr __P((void));
 void fdcdmaerrintr __P((void));
 
@@ -287,13 +287,13 @@ __inline static void
 fdc_dmastart(read, addr, count)
 	int read;
 	caddr_t addr;
-	int count;
+	vsize_t count;
 {
 	volatile struct dmac *dmac = &IODEVbase->io_dma[DRQ];
 
 	DPRINTF(("fdc_dmastart: (%s, addr = %p, count = %d\n",
-		 read ? "read" : "write", addr, count));
-	if (dmarangecheck((vm_offset_t)addr, count)) {
+		 read ? "read" : "write", (caddr_t) addr, count));
+	if (dmarangecheck((vaddr_t)addr, count)) {
 		dma_bouncebytes[DRQ] = count;
 		dma_dataaddr[DRQ] = addr;
 		if (!(read)) {

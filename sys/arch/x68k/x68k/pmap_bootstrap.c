@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 1998/06/30 11:59:13 msaitoh Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 1998/08/22 14:38:40 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -57,23 +57,24 @@ extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int maxmem, physmem;
-extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
-extern vm_size_t mem_size;
+extern paddr_t avail_start, avail_end;
+extern vaddr_t virtual_avail, virtual_end;
+extern psize_t mem_size;
 #if !defined(MACHINE_NEW_NONCONTIG)
 extern int avail_range;
-extern vm_offset_t avail_next;
-extern vm_size_t avail_remaining;
+extern paddr_t avail_next;
+extern psize_t avail_remaining;
 #endif
 extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
 
-void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+void	pmap_bootstrap __P((paddr_t, paddr_t));
 
 #ifdef MACHINE_NONCONTIG
 static int mem_exists __P((caddr_t, u_long));
-static void setmemrange __P((vm_offset_t));
+static void setmemrange __P((paddr_t));
 
 /*
  * These are used to map the non-contiguous memory.
@@ -107,10 +108,10 @@ extern caddr_t	msgbufaddr;
  */
 void
 pmap_bootstrap(nextpa, firstpa)
-	vm_offset_t nextpa;
-	vm_offset_t firstpa;
+	paddr_t nextpa;
+	paddr_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -443,18 +444,18 @@ pmap_bootstrap(nextpa, firstpa)
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
 	 */
-	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) =
+	RELOC(avail_start, paddr_t) = nextpa;
+	RELOC(avail_end, paddr_t) =
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
 			- m68k_round_page(MSGBUFSIZE);
 #if !defined(MACHINE_NEW_NONCONTIG)
-	RELOC(avail_next, vm_offset_t) = nextpa;
+	RELOC(avail_next, paddr_t) = nextpa;
 #endif
 #ifdef MACHINE_NONCONTIG
 	{
 		int i;
-		vm_size_t av_rem = 0;
+		psize_t av_rem = 0;
 		int av_rng = -1;
 		int nranges = RELOC(numranges, int);
 		u_long *l = RELOCA(low, u_long *);
@@ -478,22 +479,22 @@ pmap_bootstrap(nextpa, firstpa)
 			h[nranges - 1] -= l[nranges] - h[nranges];
 		}
 		av_rem = m68k_trunc_page(av_rem);
-		RELOC(avail_end, vm_offset_t) = nextpa + av_rem;
+		RELOC(avail_end, paddr_t) = nextpa + av_rem;
 #if !defined(MACHINE_NEW_NONCONTIG)
 		RELOC(avail_range, int) = av_rng;
-		RELOC(avail_remaining, vm_size_t) = m68k_btop(av_rem);
+		RELOC(avail_remaining, vsize_t) = m68k_btop(av_rem);
 #endif
 	}
 #else
 #if !defined(MACHINE_NEW_NONCONTIG)
-	RELOC(avail_remaining, vm_size_t) = 0;
+	RELOC(avail_remaining, psize_t) = 0;
 	RELOC(avail_range, int) = -1;
 #endif
 #endif
-	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
-	RELOC(virtual_avail, vm_offset_t) =
+	RELOC(mem_size, psize_t) = m68k_ptob(RELOC(physmem, int));
+	RELOC(virtual_avail, vaddr_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
-	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
+	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
 #ifdef M68K_MMU_HP
 	/*
@@ -566,7 +567,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
+		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
 		va += NBPG;
@@ -576,15 +577,15 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
-		RELOC(virtual_avail, vm_offset_t) = va;
+		RELOC(virtual_avail, vaddr_t) = va;
 	}
 }
 
 #ifdef MACHINE_NONCONTIG
 static struct memlist {
 	caddr_t base;
-	vm_size_t min;
-	vm_size_t max;
+	psize_t min;
+	psize_t max;
 } memlist[] = {
 	(caddr_t)0x01000000, 0x01000000, 0x01000000, /* TS-6BE16 16MB memory */
 	(caddr_t)0x10000000, 0x00400000, 0x08000000, /* 060turbo SIMM slot (4--128MB) */
@@ -698,10 +699,10 @@ asm("end_check_mem:");
 
 static void
 setmemrange(firstpa)
-	vm_offset_t firstpa;
+	paddr_t firstpa;
 {
 	int i;
-	vm_size_t s, min, max;
+	psize_t s, min, max;
 	u_long *l = RELOCA(low, u_long *);
 	u_long *h = RELOCA(high, u_long *);
 	struct memlist *mlist = RELOCA(memlist, struct memlist *);

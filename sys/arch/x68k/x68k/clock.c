@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1997/10/12 06:41:45 oki Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1998/08/22 14:38:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -276,7 +276,7 @@ clockmmap(dev, addrp, p)
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			PAGE_SIZE, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
 	return(error);
 }
@@ -290,7 +290,7 @@ clockunmmap(dev, addr, p)
 
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, PAGE_SIZE);
+	rv = vm_deallocate(p->p_vmspace->vm_map, (vaddr_t)addr, PAGE_SIZE);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 

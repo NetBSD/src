@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.6 1998/08/04 16:51:52 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.7 1998/08/22 14:38:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -1635,14 +1635,14 @@ mha_dataio_dma(dw, cw, sc, p, n)
   vaddr = p;
   paddr = (char *)kvtop(vaddr);
 #if MHA_DMA_SHORT_BUS_CYCLE == 1
-  if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((vm_offset_t)paddr >> 19)))
+  if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
     dw &= ~(1 << 3);
 #endif
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
   if (mmutype == MMU_68040)
 #endif
-    DCFP((vm_offset_t)paddr);	/* XXX */
+    DCFP((paddr_t)paddr);	/* XXX */
 #endif
   for (ts = (NBPG - ((long)vaddr & PGOFSET));
        ts < n && (char *)kvtop(vaddr + ts + 4) == paddr + ts + 4;
@@ -1651,7 +1651,7 @@ mha_dataio_dma(dw, cw, sc, p, n)
 #if defined(M68020) || defined(M68030)
     if (mmutype == MMU_68040)
 #endif
-      DCFP((vm_offset_t)paddr + ts);
+      DCFP((paddr_t)paddr + ts);
 #else
     ;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 1997/10/16 15:43:54 oki Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 1998/08/22 14:38:39 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <ddb/db_access.h>
 
-static void	db_write_text __P((vm_offset_t, size_t, char *));
+static void	db_write_text __P((db_addr_t, size_t, char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -76,9 +76,9 @@ static void	db_write_text __P((vm_offset_t, size_t, char *));
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	size_t	size;
-	char	*data;
+	db_addr_t	addr;
+	size_t		size;
+	char		*data;
 {
 	char	*src = (char*)addr;
 
@@ -105,13 +105,13 @@ db_read_bytes(addr, size, data)
  */
 static void
 db_write_text(addr, size, data)
-	vm_offset_t addr;
+	db_addr_t addr;
 	size_t size;
 	char *data;
 {
 	char *dst, *odst;
 	pt_entry_t *pte, oldpte, tmppte;
-	vm_offset_t pgva;
+	vaddr_t pgva;
 	int limit;
 
 	if (size == 0)
@@ -166,7 +166,7 @@ db_write_text(addr, size, data)
 
 		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
 		*pte = tmppte;
-		TBIS((vm_offset_t)odst);
+		TBIS((vaddr_t)odst);
 
 		/*
 		 * Page is now writable.  Do as much access as we
@@ -179,7 +179,7 @@ db_write_text(addr, size, data)
 		 * Restore the old PTE.
 		 */
 		*pte = oldpte;
-		TBIS((vm_offset_t)odst);
+		TBIS((vaddr_t)odst);
 	} while (size != 0);
 
 	/*
@@ -195,9 +195,9 @@ db_write_text(addr, size, data)
 extern char	kernel_text[], etext[];
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	size_t	size;
-	char	*data;
+	db_addr_t	addr;
+	size_t		size;
+	char		*data;
 {
 	char	*dst = (char *)addr;
 
