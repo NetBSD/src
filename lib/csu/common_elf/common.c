@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.5 2000/02/07 21:40:40 scottb Exp $	*/
+/*	$NetBSD: common.c,v 1.6 2000/02/08 16:23:00 scottb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -134,7 +134,7 @@ dlerror()
 }
 
 int
-dladdr(void *addr, Dl_info *dli)
+dladdr(const void *addr, Dl_info *dli)
 {
 
 	if (__mainprog_obj == NULL)
