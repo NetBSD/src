@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2000/07/28 16:43:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2000/08/02 17:04:23 thorpej Exp $
 
 .include <bsd.own.mk>
 
-.include "${.CURDIR}/Makefile.inc"
+#SSHDIST=${.CURDIR}/../../crypto/dist/ssh
 
 .if defined(SSHDIST)
 SUBDIR=	libssh ssh sshd ssh-add ssh-keygen ssh-agent scp
