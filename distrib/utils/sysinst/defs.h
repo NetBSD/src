@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.74 2003/01/10 20:00:27 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.75 2003/01/12 21:49:50 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,7 @@
 /* System includes needed for this. */
 #include <sys/types.h>
 #include <sys/disklabel.h>
+extern const char * const fstypenames[];
 
 #include "msg_defs.h"
 

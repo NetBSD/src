@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.1 2003/01/11 19:44:05 christos Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.2 2003/01/12 21:49:50 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.1 2003/01/11 19:44:05 christos Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.2 2003/01/12 21:49:50 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: savenewlabel.c,v 1.1 2003/01/11 19:44:05 christos Exp $");
 #include <unistd.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
-#define FSTYPENAMES
-#include <sys/disklabel.h>
 
 #include "defs.h"
 #include "msg_defs.h"
