@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.13 1996/03/01 04:08:43 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.14 1996/03/17 00:53:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -249,8 +249,12 @@ pasconf(int model, int sbbase, int sbirq, int sbdrq)
 int	pasprobe __P((struct device *, void *, void *));
 void	pasattach __P((struct device *, struct device *, void *));
 
-struct cfdriver pascd = {
-	NULL, "pas", pasprobe, pasattach, DV_DULL, sizeof(struct pas_softc)
+struct cfattach pas_ca = {
+	sizeof(struct pas_softc), pasprobe, pasattach
+};
+
+struct cfdriver pas_cd = {
+	NULL, "pas", DV_DULL
 };
 
 /*
@@ -452,10 +456,10 @@ pasopen(dev, flags)
     struct pas_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= pascd.cd_ndevs)
+    if (unit >= pas_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = pascd.cd_devs[unit];
+    sc = pas_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

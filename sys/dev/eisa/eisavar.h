@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.4 1996/03/08 20:25:22 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.5 1996/03/17 00:47:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -90,7 +90,7 @@ struct eisa_attach_args {
  * what bus they're on.
  */
 
-extern struct cfdriver eisacd;
+extern struct cfdriver eisa_cd;
 
 /*
  * XXX interrupt attachment, etc., is done by using the ISA interfaces.

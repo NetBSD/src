@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1996/03/07 10:26:29 leo Exp $	*/
+/*	$NetBSD: md.c,v 1.6 1996/03/17 00:43:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -103,9 +103,13 @@ struct rd_softc {
 static int  rd_match (struct device *, void *self, void *);
 static void rd_attach(struct device *, struct device *self, void *);
 
-struct cfdriver rdcd = {
-	NULL, "rd", rd_match, rd_attach,
-	DV_DULL, sizeof(struct rd_softc), NULL, 0 };
+struct cfattach rd_ca = {
+	sizeof(struct rd_softc), rd_match, rd_attach
+};
+
+struct cfdriver rd_cd = {
+	NULL, "rd", DV_DULL, NULL, 0
+};
 
 void rdstrategy __P((struct buf *bp));
 
@@ -183,9 +187,9 @@ int rdsize(dev_t dev)
 
 	/* Disallow control units. */
 	unit = minor(dev);
-	if (unit >= rdcd.cd_ndevs)
+	if (unit >= rd_cd.cd_ndevs)
 		return 0;
-	sc = rdcd.cd_devs[unit];
+	sc = rd_cd.cd_devs[unit];
 	if (sc == NULL)
 		return 0;
 
@@ -205,9 +209,9 @@ int rdopen(dev, flag, fmt, proc)
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
-	if (unit >= rdcd.cd_ndevs)
+	if (unit >= rd_cd.cd_ndevs)
 		return ENXIO;
-	sc = rdcd.cd_devs[unit];
+	sc = rd_cd.cd_devs[unit];
 	if (sc == NULL)
 		return ENXIO;
 
@@ -245,7 +249,7 @@ int rdclose(dev, flag, fmt, proc)
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
-	sc = rdcd.cd_devs[unit];
+	sc = rd_cd.cd_devs[unit];
 
 	if (RD_IS_CTRL(md))
 		return 0;
@@ -287,7 +291,7 @@ rdstrategy(bp)
 
 	md = minor(bp->b_dev);
 	unit = RD_UNIT(md);
-	sc = rdcd.cd_devs[unit];
+	sc = rd_cd.cd_devs[unit];
 
 	switch (sc->sc_type) {
 #if RAMDISK_SERVER
@@ -349,7 +353,7 @@ rdioctl(dev, cmd, data, flag, proc)
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
-	sc = rdcd.cd_devs[unit];
+	sc = rd_cd.cd_devs[unit];
 
 	/* If this is not the control device, punt! */
 	if (RD_IS_CTRL(md) == 0)

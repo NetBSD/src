@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.22 1996/03/10 09:01:20 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.23 1996/03/17 00:53:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -60,8 +60,12 @@ int astprobe();
 void astattach();
 int astintr __P((void *));
 
-struct cfdriver astcd = {
-	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
+struct cfattach ast_ca = {
+	sizeof(struct ast_softc), astprobe, astattach
+};
+
+struct cfdriver ast_cd = {
+	NULL, "ast", DV_TTY
 };
 
 int

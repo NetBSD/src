@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.10 1996/03/01 04:08:31 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.11 1996/03/17 00:53:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -457,8 +457,12 @@ STATIC void	gusics_cd_mute __P((struct ics2101_softc *, int));
 int	gusprobe __P((struct device *, void *, void *));
 void	gusattach __P((struct device *, struct device *, void *));
 
-struct cfdriver guscd = {
-	NULL, "gus", gusprobe, gusattach, DV_DULL, sizeof(struct gus_softc)
+struct cfattach gus_ca = {
+	sizeof(struct gus_softc), gusprobe, gusattach,
+};
+
+struct cfdriver gus_cd = {
+	NULL, "gus", DV_DULL
 };
 
 
@@ -973,9 +977,9 @@ gusopen(dev, flags)
 
 	DPRINTF(("gusopen() called\n"));
 
-	if (unit >= guscd.cd_ndevs)
+	if (unit >= gus_cd.cd_ndevs)
 		return ENXIO;
-	sc = guscd.cd_devs[unit];
+	sc = gus_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 

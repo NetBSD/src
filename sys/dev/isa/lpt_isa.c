@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.32 1996/03/08 22:17:58 cgd Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.33 1996/03/17 00:53:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -111,8 +111,12 @@ int lptprobe __P((struct device *, void *, void *));
 void lptattach __P((struct device *, struct device *, void *));
 int lptintr __P((void *));
 
-struct cfdriver lptcd = {
-	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
+struct cfattach lpt_ca = {
+	sizeof(struct lpt_softc), lptprobe, lptattach
+};
+
+struct cfdriver lpt_cd = {
+	NULL, "lpt", DV_TTY
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
@@ -281,9 +285,9 @@ lptopen(dev, flag)
 	int error;
 	int spin;
 
-	if (unit >= lptcd.cd_ndevs)
+	if (unit >= lpt_cd.cd_ndevs)
 		return ENXIO;
-	sc = lptcd.cd_devs[unit];
+	sc = lpt_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -390,7 +394,7 @@ lptclose(dev, flag)
 	int flag;
 {
 	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lptcd.cd_devs[unit];
+	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 
@@ -479,7 +483,7 @@ lptwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	struct lpt_softc *sc = lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.56 1996/03/17 00:26:12 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.57 1996/03/17 00:53:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -403,8 +403,12 @@ int	btprobe __P((struct device *, void *, void *));
 void	btattach __P((struct device *, struct device *, void *));
 int	btprint __P((void *, char *));
 
-struct cfdriver btcd = {
-	NULL, "bt", btprobe, btattach, DV_DULL, sizeof(struct bt_softc)
+struct cfattach bt_ca = {
+	sizeof(struct bt_softc), btprobe, btattach
+};
+
+struct cfdriver bt_cd = {
+	NULL, "bt", DV_DULL
 };
 
 #define BT_RESET_TIMEOUT 1000

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.7 1996/03/14 04:02:58 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.8 1996/03/17 00:47:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -51,8 +51,12 @@
 int	eisamatch __P((struct device *, void *, void *));
 void	eisaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver eisacd = {
-        NULL, "eisa", eisamatch, eisaattach, DV_DULL, sizeof(struct device)
+struct cfattach eisa_ca = {
+	sizeof(struct device), eisamatch, eisaattach
+};
+
+struct cfdriver eisa_cd = {
+        NULL, "eisa", DV_DULL
 };
 
 int	eisasubmatch __P((struct device *, void *, void *));
@@ -102,7 +106,7 @@ eisasubmatch(parent, match, aux)
 	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&
 	    cf->eisacf_slot != ea->ea_slot)
 		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.32 1996/03/16 04:00:09 jtk Exp $	*/
+/*	$NetBSD: sb.c,v 1.33 1996/03/17 00:53:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -74,8 +74,18 @@ struct sb_softc {
 int	sbprobe __P((struct device *, void *, void *));
 void	sbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver sbcd = {
-	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sbdsp_softc)
+struct cfattach sb_ca = {
+	sizeof(struct sbdsp_softc), sbprobe, sbattach
+};
+
+struct cfdriver sb_cd = {
+	NULL, "sb", DV_DULL
+};
+
+struct audio_device sb_device = {
+	"SoundBlaster",
+	"x",
+	"sb"
 };
 
 int	sbopen __P((dev_t, int));
@@ -284,10 +294,10 @@ sbopen(dev, flags)
     struct sbdsp_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= sbcd.cd_ndevs)
+    if (unit >= sb_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = sbcd.cd_devs[unit];
+    sc = sb_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     
