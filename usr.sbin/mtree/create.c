@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.18 1998/10/10 07:50:28 mrg Exp $	*/
+/*	$NetBSD: create.c,v 1.19 1998/11/03 15:14:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.18 1998/10/10 07:50:28 mrg Exp $");
+__RCSID("$NetBSD: create.c,v 1.19 1998/11/03 15:14:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,11 +190,11 @@ statf(p)
 	(void)putchar('\n');
 }
 
-#define	MAXGID	5000
-#define	MAXUID	5000
-#define	MAXMODE	MBITS + 1
-#define	MAXFLAGS 256
-#define	MAXS 16
+#define	MTREE_MAXGID	5000
+#define	MTREE_MAXUID	5000
+#define	MTREE_MAXMODE	MBITS + 1
+#define	MTREE_MAXFLAGS 256
+#define	MTREE_MAXS 16
 
 static int
 statd(t, parent, puid, pgid, pmode, pflags)
@@ -217,7 +217,8 @@ statd(t, parent, puid, pgid, pmode, pflags)
 	mode_t savemode;
 	u_long saveflags;
 	u_short maxgid, maxuid, maxmode, maxflags;
-	u_short g[MAXGID], u[MAXUID], m[MAXMODE], f[MAXFLAGS];
+	u_short g[MTREE_MAXGID], u[MTREE_MAXUID],
+		m[MTREE_MAXMODE], f[MTREE_MAXFLAGS];
 
 	savegid = 0;
 	saveuid = 0;
@@ -237,17 +238,17 @@ statd(t, parent, puid, pgid, pmode, pflags)
 	maxuid = maxgid = maxmode = maxflags = 0;
 	for (; p; p = p->fts_link) {
 		smode = p->fts_statp->st_mode & MBITS;
-		if (smode < MAXMODE && ++m[smode] > maxmode) {
+		if (smode < MTREE_MAXMODE && ++m[smode] > maxmode) {
 			savemode = smode;
 			maxmode = m[smode];
 		}
 		sgid = p->fts_statp->st_gid;
-		if (sgid < MAXGID && ++g[sgid] > maxgid) {
+		if (sgid < MTREE_MAXGID && ++g[sgid] > maxgid) {
 			savegid = sgid;
 			maxgid = g[sgid];
 		}
 		suid = p->fts_statp->st_uid;
-		if (suid < MAXUID && ++u[suid] > maxuid) {
+		if (suid < MTREE_MAXUID && ++u[suid] > maxuid) {
 			saveuid = suid;
 			maxuid = u[suid];
 		}
@@ -259,7 +260,7 @@ statd(t, parent, puid, pgid, pmode, pflags)
 #define FLAGS2IDX(f) ((f & 0xf) | ((f >> 12) & 0xf0))
 
 		sflags = p->fts_statp->st_flags;
-		if (FLAGS2IDX(sflags) < MAXFLAGS &&
+		if (FLAGS2IDX(sflags) < MTREE_MAXFLAGS &&
 		    ++f[FLAGS2IDX(sflags)] > maxflags) {
 			saveflags = sflags;
 			maxflags = u[FLAGS2IDX(sflags)];
