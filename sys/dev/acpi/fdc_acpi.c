@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.9 2003/06/18 08:58:34 drochner Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.10 2003/08/15 17:22:23 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9 2003/06/18 08:58:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.10 2003/08/15 17:22:23 kochi Exp $");
 
 #include "rnd.h"
 
@@ -69,6 +69,7 @@ struct fdc_acpi_softc {
 	struct fdc_softc sc_fdc;
 	bus_space_handle_t sc_baseioh;
 	struct acpi_devnode *sc_node;	/* ACPI devnode */
+	struct acpi_resources res;
 };
 
 static int	fdc_acpi_enumerate(struct fdc_acpi_softc *);
@@ -122,7 +123,6 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct fdc_acpi_softc *asc = (struct fdc_acpi_softc *)self;
 	struct fdc_softc *sc = &asc->sc_fdc;
 	struct acpi_attach_args *aa = aux;
-	struct acpi_resources res;
 	struct acpi_io *io, *ctlio;
 	struct acpi_irq *irq;
 	struct acpi_drq *drq;
@@ -134,7 +134,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_node = aa->aa_node;
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &res,
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &asc->res,
 	    &acpi_resource_parse_ops_default);
 	if (rv != AE_OK) {
 		printf("%s: unable to parse resources\n", sc->sc_dev.dv_xname);
@@ -142,7 +142,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* find our i/o registers */
-	io = acpi_res_io(&res, 0);
+	io = acpi_res_io(&asc->res, 0);
 	if (io == NULL) {
 		printf("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
@@ -150,7 +150,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* find our IRQ */
-	irq = acpi_res_irq(&res, 0);
+	irq = acpi_res_irq(&asc->res, 0);
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
@@ -158,7 +158,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* find our DRQ */
-	drq = acpi_res_drq(&res, 0);
+	drq = acpi_res_drq(&asc->res, 0);
 	if (drq == NULL) {
 		printf("%s: unable to find drq resource\n",
 		    sc->sc_dev.dv_xname);
@@ -195,7 +195,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * omitting the controller I/O port. (One has to exist for there to
 	 * be a working fdc). Just try and force the mapping in.
 	 */
-	ctlio = acpi_res_io(&res, 1);
+	ctlio = acpi_res_io(&asc->res, 1);
 	if (ctlio == NULL) {
 		if (bus_space_map(sc->sc_iot, io->ar_base + io->ar_length + 1,
 		    1, 0, &sc->sc_fdctlioh)) {
