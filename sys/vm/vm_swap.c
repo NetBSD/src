@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.6 1997/05/08 00:13:09 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.7 1997/05/08 00:23:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -363,10 +363,9 @@ swap_on(p, sdp)
 	struct swapdev *sdp;
 {
 	static int count = 0;
-	extern int dmmax;
 	struct vnode *vp = sdp->swd_vp;
 	int error, nblks, size;
-	long blk, addr;
+	long addr;
 #define SWAP_TO_FILES
 #ifdef SWAP_TO_FILES
 	struct vattr va;
@@ -419,23 +418,15 @@ swap_on(p, sdp)
 	sdp->swd_flags |= SWF_INUSE;
 	sdp->swd_nblks = nblks;
 
-#if 0
-	/* XXX should redo the dmmax stuff here and in swap_pager.c */
-	for (blk = 0; blk < nblks; blk += dmmax)
-		;
-#else
-	blk = nblks;
-#endif
-
 	/*
 	 * skip over first cluster of a device in case of labels or
 	 * boot blocks.
 	 */
 	if (vp->v_type == VBLK) {
-		size = (int)(blk - ctod(CLSIZE));
+		size = (int)(nblks - ctod(CLSIZE));
 		addr = (long)ctod(CLSIZE);
 	} else {
-		size = (int)blk;
+		size = (int)nblks;
 		addr = (long)0;
 	}
 
