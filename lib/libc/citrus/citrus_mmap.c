@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mmap.c,v 1.2 2004/10/17 22:21:43 christos Exp $	*/
+/*	$NetBSD: citrus_mmap.c,v 1.3 2005/01/19 00:52:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mmap.c,v 1.2 2004/10/17 22:21:43 christos Exp $");
+__RCSID("$NetBSD: citrus_mmap.c,v 1.3 2005/01/19 00:52:37 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,6 +60,10 @@ _citrus_map_file(struct _citrus_region * __restrict r,
 
 	if ((fd = open(path, O_RDONLY)) == -1)
 		return errno;
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		ret = errno;
+		goto error;
+	}
 
 	if (fstat(fd, &st)  == -1) {
 		ret = errno;
