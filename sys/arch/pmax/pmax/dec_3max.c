@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.6 1999/03/18 07:27:28 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.7 1999/05/11 06:43:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.6 1999/03/18 07:27:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.7 1999/05/11 06:43:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.6 1999/03/18 07:27:28 nisimura Ex
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 #include <pmax/pmax/clockreg.h>
 
-#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
+#include <dev/tc/tcvar.h>
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn02.h>
-#include <pmax/pmax/dec_3max_subr.h>
+#include <pmax/pmax/memc.h>
 
 #include "wsdisplay.h"
 
@@ -350,6 +350,34 @@ dec_3max_memerr()
 	dec_mtasic_err(erradr, errsyn);
 }
 
+#define	KV(x)	MIPS_PHYS_TO_KSEG1(x)
+#define	C(x)	(void *)(x)
+
+static struct tc_slotdesc tc_kn02_slots[] = {
+    { KV(KN02_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(KN02_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(KN02_PHYS_TC_2_START), C(SYS_DEV_OPT2),  },	/* 2 - opt slot 2 */
+    { KV(KN02_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - unused */
+    { KV(KN02_PHYS_TC_4_START), C(SYS_DEV_BOGUS), },	/* 4 - unused */
+    { KV(KN02_PHYS_TC_5_START), C(SYS_DEV_SCSI),  },	/* 5 - b`board SCSI */
+    { KV(KN02_PHYS_TC_6_START), C(SYS_DEV_LANCE), },	/* 6 - b`board LANCE */
+    { KV(KN02_PHYS_TC_7_START), C(SYS_DEV_BOGUS), },	/* 7 - system CSRs */
+};
+
+static struct tc_builtin tc_kn02_builtins[] = {
+	{ "KN02SYS ",	7, 0x0, C(SYS_DEV_BOGUS), },
+	{ "PMAD-AA ",	6, 0x0, C(SYS_DEV_LANCE), },
+	{ "PMAZ-AA ",	5, 0x0, C(SYS_DEV_SCSI), },
+};
+
+struct tcbus_attach_args kn02_tc_desc = {
+	"tc", 0,
+	TC_SPEED_25_MHZ,
+	3, tc_kn02_slots,
+	3, tc_kn02_builtins,
+	kn02_intr_establish, kn02_intr_disestablish
+};
+
 struct {
 	int cookie;
 	int intrbit;
@@ -360,6 +388,11 @@ struct {
 	{ SYS_DEV_OPT0,  KN02_IP_SLOT0 },
 	{ SYS_DEV_OPT1,  KN02_IP_SLOT1 },
 	{ SYS_DEV_OPT2,  KN02_IP_SLOT2 },
+};
+
+static struct ibus_attach_args kn02sys_devs[] = {
+	{ "mc146818",	KV(KN02_SYS_CLOCK), C(SYS_DEV_BOGUS), },
+	{ "dc",  	KV(KN02_SYS_DZ), C(SYS_DEV_SCC0), },
 };
 
 void
@@ -405,14 +438,6 @@ struct cfattach kn02sys_ca = {
         sizeof(struct ibus_softc), kn02sys_match, kn02sys_attach,
 };
 
-#define	KV(x)	MIPS_PHYS_TO_KSEG1(x)
-#define	C(x)	(void *)(x)
-
-static struct ibus_attach_args kn02sys_devs[] = {
-	{ "mc146818",	KV(KN02_SYS_CLOCK), C(SYS_DEV_BOGUS), },
-	{ "dc",  	KV(KN02_SYS_DZ), C(SYS_DEV_SCC0), },
-};
-
 int
 kn02sys_match(parent, cfdata, aux)
         struct device *parent;
@@ -442,7 +467,7 @@ kn02sys_attach(parent, self, aux)
 	ibd.ibd_ndevs = sizeof(kn02sys_devs)/sizeof(kn02sys_devs[0]);
 	ibd.ibd_establish = kn02_intr_establish;
 	ibd.ibd_disestablish = kn02_intr_disestablish;
-	ibus_devattach(self, &ibd);
+	ibus_attach_devs(self, &ibd);
 }
 
 /*

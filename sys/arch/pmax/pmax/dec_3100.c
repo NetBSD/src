@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6.2.6 1999/05/07 02:33:30 nisimura Exp $ */
+/*	$NetBSD: dec_3100.c,v 1.6.2.7 1999/05/11 06:43:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.6 1999/05/07 02:33:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.7 1999/05/11 06:43:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.6 1999/05/07 02:33:30 nisimura Ex
 #include "wsdisplay.h"
 
 void dec_3100_init __P((void));
-void dec_3100_os_init __P((void));
 void dec_3100_bus_reset __P((void));
 void dec_3100_cons_init __P((void));
 void dec_3100_device_register __P((struct device *, void *));
@@ -128,23 +127,18 @@ dec_3100_init()
 {
 	platform.iobus = "ibus";
 
-	platform.os_init = dec_3100_os_init;
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;
 	platform.device_register = dec_3100_device_register;
 
-	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
-
-	dec_3100_os_init();
-}
-
-void
-dec_3100_os_init()
-{
 	/*
 	 * Set up interrupt handling and I/O addresses.
 	 */
 	mips_hardware_intr = dec_3100_intr;
+	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
 
 #ifdef NEWSPL
 	__spl = &spl_3100;
@@ -156,12 +150,9 @@ dec_3100_os_init()
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
 #endif
-
-	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
+	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
 }
 
 /*
