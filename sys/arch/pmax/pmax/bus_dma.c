@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 1998/05/26 18:21:10 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 1998/05/27 01:16:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -395,7 +395,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset");
+		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
+		      offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad length");
 #endif
@@ -451,10 +452,21 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			 * each segment until we have exhausted the
 			 * length.
 			 */
-			minlen = len < map->dm_segs[i].ds_len ?
-			    len : map->dm_segs[i].ds_len;
+			minlen = len < map->dm_segs[i].ds_len - offset ?
+			    len : map->dm_segs[i].ds_len - offset;
 
-			MachFlushDCache(map->dm_segs[i].ds_addr, minlen);
+#ifdef DEBUG
+			printf("bus_dmamap_sync: flushing segment %d (0x%lx..0x%lx) ...",
+				i, map->dm_segs[i].ds_addr + offset, 
+				map->dm_segs[i].ds_addr + offset + minlen - 1);
+#endif
+			MachFlushDCache(
+			    MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
+			    minlen);
+#ifdef DEBUG
+			printf("\n");
+#endif
+			offset = 0;
 			len -= minlen;
 		}
 		return;
@@ -473,6 +485,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		 * XXX however, just nail the entire cache.
 		 */
 		MachFlushCache();
+		return;
 	}
 #endif
 
