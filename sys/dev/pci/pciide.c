@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.184 2003/03/18 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.185 2003/03/18 01:41:54 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.184 2003/03/18 01:13:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.185 2003/03/18 01:41:54 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -119,6 +119,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_hpt_reg.h>
 #include <dev/pci/pciide_acard_reg.h>
 #include <dev/pci/pciide_sl82c105_reg.h>
+#include <dev/pci/pciide_i31244_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 #include "opt_pciide.h"
