@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.27 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.28 2000/07/27 22:14:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -207,14 +207,17 @@ nsphy_service(sc, mii, cmd)
 		 */
 		reg |= PCR_FLINK100;
 
-#if 0
 		/*
 		 * Mystery bits which are supposedly `reserved',
 		 * but we seem to need to set them when the PHY
-		 * is connected to some interfaces!
+		 * is connected to some interfaces:
+		 *
+		 * 0x0400 is needed for fxp
+		 *        (Intel EtherExpress Pro 10+/100B, 82557 chip)
+		 *        (nsphy with a DP83840 chip)
+		 * 0x0100 may be needed for some other card
 		 */
 		reg |= 0x0100 | 0x0400;
-#endif
 
 		PHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
