@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 2001/12/12 01:50:17 tv Exp $
+#	$NetBSD: Makefile,v 1.15 2001/12/12 12:06:49 lukem Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/miscfs/procfs ${.CURDIR}/../.. $S/arch/${MACHINE}/${MACHINE} \
 	$S/arch/${MACHINE_CPU}/${MACHINE_CPU}
-
-NOMAN=	# defined
 
 KMOD=	procfs
 

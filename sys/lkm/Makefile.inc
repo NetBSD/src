@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/03/21 11:45:56 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2001/12/12 12:06:45 lukem Exp $
 
 .if !defined(__SYS_LKM_MAKEFILE_INC)
 __SYS_LKM_MAKEFILE_INC=	1
+
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:50:17 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 12:06:49 lukem Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/miscfs/portal ${.CURDIR}/../..
-
-NOMAN=	# defined
 
 KMOD=	portal
 
