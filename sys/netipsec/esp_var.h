@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_var.h,v 1.1 2003/08/13 20:06:49 jonathan Exp $	*/
+/*	$NetBSD: esp_var.h,v 1.2 2004/05/07 00:55:14 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/esp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_esp.h,v 1.37 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -49,27 +49,27 @@
 #define	ESP_ALG_MAX	256		/* NB: could be < but skipjack is 249 */
 
 struct espstat {
-	u_int32_t	esps_hdrops;	/* Packet shorter than header shows */
-	u_int32_t	esps_nopf;	/* Protocol family not supported */
-	u_int32_t	esps_notdb;
-	u_int32_t	esps_badkcr;
-	u_int32_t	esps_qfull;
-	u_int32_t	esps_noxform;
-	u_int32_t	esps_badilen;
-	u_int32_t	esps_wrap;	/* Replay counter wrapped around */
-	u_int32_t	esps_badenc;	/* Bad encryption detected */
-	u_int32_t	esps_badauth;	/* Only valid for transforms with auth */
-	u_int32_t	esps_replay;	/* Possible packet replay detected */
-	u_int32_t	esps_input;	/* Input ESP packets */
-	u_int32_t	esps_output;	/* Output ESP packets */
-	u_int32_t	esps_invalid;	/* Trying to use an invalid TDB */
+	u_int64_t	esps_hdrops;	/* Packet shorter than header shows */
+	u_int64_t	esps_nopf;	/* Protocol family not supported */
+	u_int64_t	esps_notdb;
+	u_int64_t	esps_badkcr;
+	u_int64_t	esps_qfull;
+	u_int64_t	esps_noxform;
+	u_int64_t	esps_badilen;
+	u_int64_t	esps_wrap;	/* Replay counter wrapped around */
+	u_int64_t	esps_badenc;	/* Bad encryption detected */
+	u_int64_t	esps_badauth;	/* Only valid for transforms with auth */
+	u_int64_t	esps_replay;	/* Possible packet replay detected */
+	u_int64_t	esps_input;	/* Input ESP packets */
+	u_int64_t	esps_output;	/* Output ESP packets */
+	u_int64_t	esps_invalid;	/* Trying to use an invalid TDB */
 	u_int64_t	esps_ibytes;	/* Input bytes */
 	u_int64_t	esps_obytes;	/* Output bytes */
-	u_int32_t	esps_toobig;	/* Packet got larger than IP_MAXPACKET */
-	u_int32_t	esps_pdrops;	/* Packet blocked due to policy */
-	u_int32_t	esps_crypto;	/* Crypto processing failure */
-	u_int32_t	esps_tunnel;	/* Tunnel sanity check failure */
-	u_int32_t	esps_hist[ESP_ALG_MAX];	/* Per-algorithm op count */
+	u_int64_t	esps_toobig;	/* Packet got larger than IP_MAXPACKET */
+	u_int64_t	esps_pdrops;	/* Packet blocked due to policy */
+	u_int64_t	esps_crypto;	/* Crypto processing failure */
+	u_int64_t	esps_tunnel;	/* Tunnel sanity check failure */
+	u_int64_t	esps_hist[ESP_ALG_MAX];	/* Per-algorithm op count */
 };
 
 #ifdef _KERNEL

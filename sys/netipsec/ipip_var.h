@@ -1,4 +1,4 @@
-/*	$NetBSD: ipip_var.h,v 1.1 2003/08/13 20:06:50 jonathan Exp $	*/
+/*	$NetBSD: ipip_var.h,v 1.2 2004/05/07 00:55:14 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipip_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.h,v 1.5 2002/06/09 16:26:10 itojun Exp $ */
 /*
@@ -47,16 +47,16 @@
 
 struct ipipstat
 {
-    u_int32_t	ipips_ipackets;		/* total input packets */
-    u_int32_t	ipips_opackets;		/* total output packets */
-    u_int32_t	ipips_hdrops;		/* packet shorter than header shows */
-    u_int32_t	ipips_qfull;
+    u_int64_t	ipips_ipackets;		/* total input packets */
+    u_int64_t	ipips_opackets;		/* total output packets */
+    u_int64_t	ipips_hdrops;		/* packet shorter than header shows */
+    u_int64_t	ipips_qfull;
     u_int64_t   ipips_ibytes;
     u_int64_t   ipips_obytes;
-    u_int32_t	ipips_pdrops;		/* packet dropped due to policy */
-    u_int32_t	ipips_spoof;		/* IP spoofing attempts */
-    u_int32_t   ipips_family;		/* Protocol family mismatch */
-    u_int32_t   ipips_unspec;            /* Missing tunnel endpoint address */
+    u_int64_t	ipips_pdrops;		/* packet dropped due to policy */
+    u_int64_t	ipips_spoof;		/* IP spoofing attempts */
+    u_int64_t   ipips_family;		/* Protocol family mismatch */
+    u_int64_t   ipips_unspec;            /* Missing tunnel endpoint address */
 };
 
 #ifdef _KERNEL

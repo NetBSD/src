@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_var.h,v 1.1 2003/08/13 20:06:50 jonathan Exp $	*/
+/*	$NetBSD: ipcomp_var.h,v 1.2 2004/05/07 00:55:14 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipcomp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
@@ -43,22 +43,22 @@
 #define	IPCOMP_ALG_MAX	8
 
 struct ipcompstat {
-	u_int32_t	ipcomps_hdrops;	/* Packet shorter than header shows */
-	u_int32_t	ipcomps_nopf;	/* Protocol family not supported */
-	u_int32_t	ipcomps_notdb;
-	u_int32_t	ipcomps_badkcr;
-	u_int32_t	ipcomps_qfull;
-	u_int32_t	ipcomps_noxform;
-	u_int32_t	ipcomps_wrap;
-	u_int32_t	ipcomps_input;	/* Input IPcomp packets */
-	u_int32_t	ipcomps_output;	/* Output IPcomp packets */
-	u_int32_t	ipcomps_invalid;/* Trying to use an invalid TDB */
+	u_int64_t	ipcomps_hdrops;	/* Packet shorter than header shows */
+	u_int64_t	ipcomps_nopf;	/* Protocol family not supported */
+	u_int64_t	ipcomps_notdb;
+	u_int64_t	ipcomps_badkcr;
+	u_int64_t	ipcomps_qfull;
+	u_int64_t	ipcomps_noxform;
+	u_int64_t	ipcomps_wrap;
+	u_int64_t	ipcomps_input;	/* Input IPcomp packets */
+	u_int64_t	ipcomps_output;	/* Output IPcomp packets */
+	u_int64_t	ipcomps_invalid;/* Trying to use an invalid TDB */
 	u_int64_t	ipcomps_ibytes;	/* Input bytes */
 	u_int64_t	ipcomps_obytes;	/* Output bytes */
-	u_int32_t	ipcomps_toobig;	/* Packet got > IP_MAXPACKET */
-	u_int32_t	ipcomps_pdrops;	/* Packet blocked due to policy */
-	u_int32_t	ipcomps_crypto;	/* "Crypto" processing failure */
-	u_int32_t	ipcomps_hist[IPCOMP_ALG_MAX];/* Per-algorithm op count */
+	u_int64_t	ipcomps_toobig;	/* Packet got > IP_MAXPACKET */
+	u_int64_t	ipcomps_pdrops;	/* Packet blocked due to policy */
+	u_int64_t	ipcomps_crypto;	/* "Crypto" processing failure */
+	u_int64_t	ipcomps_hist[IPCOMP_ALG_MAX];/* Per-algorithm op count */
 };
 
 #ifdef _KERNEL
