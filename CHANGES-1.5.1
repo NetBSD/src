@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.60 2001/04/28 07:05:58 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.61 2001/05/01 16:48:56 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -34,7 +34,7 @@ crypto/dist/krb4/lib/krb/extra.c		1.2
 libexec/ftpd/cmds.c				1.9
 libexec/ftpd/version.h				patch
 
-  Fix a one-byte buffer overrun.
+  Fix a one-byte buffer overrun.  Fixes SA2000-018.
 
 sys/netinet/udp_usrreq.c			1.73-1.74
 
@@ -88,7 +88,7 @@ libexec/telnetd/sys_term.c			1.20 via patch
 
   Fix buffer overflow and environment passing problems, and only
   accept a limites set of environment variables and non-filename
-  TERMCAP variables.
+  TERMCAP variables.  Fixes SA#2000-017.
 
 sys/arch/mac68k/nubus/nubus.h			1.52
 
@@ -450,7 +450,7 @@ share/man/man4/vlan.4				1.7
 
 sys/arch/i386/i386/sys_machdep.c                1.55
 
-  Validate gate targets correctly.
+  Validate gate targets correctly.  Fixes SA#2001-002.
 
 sys/dev/ic/rtl81x9.c				1.12, 1.21-1.24 via patch
 sys/dev/ic/rtl81x9var.h				1.6-1.7
@@ -811,7 +811,7 @@ dist/bind/man/nsupdate.8			1.3
 usr.sbin/bind/Makefile				1.9
 usr.sbin/bind/lib/Makefile			1.11 via patch
 
-  Upgrade to BIND version 8.2.3.
+  Upgrade to BIND version 8.2.3.  Fixes SA#2001-001.
 
 crypto/dist/ssh/ssh.conf			1.3
 
@@ -1396,7 +1396,7 @@ distrib/sets/lists/base/mi			patch
 
   Update SSH to version found on trunk as of 26 Feb 2001.
   Note that /dev/random is now mandatory for ssh.
-  Added sftp, sftp-server, and ssh-keyscan.
+  Added sftp, sftp-server, and ssh-keyscan.  Fixes SA#2001-003.
 
 share/man/man4/an.4				1.1-1.6 (new, via patch)
 share/man/man4/Makefile				patch
@@ -2119,11 +2119,12 @@ libexec/ftpd/popen.c				1.23-1.25
 libexec/ftpd/version.h				1.28
 
   Summary of user-visible changes;
-  o fix glob denial of service by using GLOB_LIMIT
-  o add ftpd.conf directives `advertise', `maxfilesize', `sanenames'
-  o add flags: -P dataport, -X - wuftpd style log entries,
-    -q/-Q - (en|dis)able pidfiles, -u/-U - (en|dis)able utmp,
-    -w/-W - (en|dis)able wtmp
+   o fix glob denial of service by using GLOB_LIMIT
+   o add ftpd.conf directives `advertise', `maxfilesize', `sanenames'
+   o add flags: -P dataport, -X - wuftpd style log entries,
+     -q/-Q - (en|dis)able pidfiles, -u/-U - (en|dis)able utmp,
+     -w/-W - (en|dis)able wtmp
+  Fixes SA#2001-005.
 
 sbin/mount_procfs/mount_procfs.c		1.12 via patch
 sys/arch/i386/conf/files.i386			1.180
@@ -2480,7 +2481,7 @@ usr.sbin/dhcp/server/stables.c			1.1.1.6
 dist/ntp/ntpd/ntp_control.c			1.2
 
   Fix a DoS attack (and possibly, but not confirmed, a root exploit)
-  in ntpd.
+  in ntpd.  Fixes SA#2001-004.
 
 sbin/route/route.c				1.40
 
@@ -3915,7 +3916,7 @@ distrib/sets/lists/base/md.sparc		patch
 distrib/utils/sysinst/arch/bebox/md.c		1.23
 distrib/utils/sysinst/arch/bebox/msg.md.en	1.11
 
-  Remove duplicate definition of "nobiosgeom"
+  Remove duplicate definition of "nobiosgeom".
   Update to "new" edit_mbr() and define a basic md_bios_info().
 
 usr.bin/top/top.c				1.7
@@ -4199,3 +4200,225 @@ sys/netinet6/icmp6.c				1.55 via patch (partial)
   Correct source address selection in icmp6_reflect().
   Fixes two problems: kernel may fail to send icmp6 messages, and
   there would be a way for user programs to cause a panic.
+
+sys/kern/makesyscalls.sh			1.46 via patch
+sys/compat/linux/common/linux_misc.c		1.87 via patch
+sys/compat/linux/arch/alpha/syscalls.conf	1.3 via patch
+sys/compat/linux/arch/alpha/syscalls.master	1.32
+sys/compat/linux/arch/i386/syscalls.conf	1.4 via patch
+sys/compat/linux/arch/i386/syscalls.master	1.55
+sys/compat/linux/arch/m68k/syscalls.conf	1.2
+sys/compat/linux/arch/m68k/syscalls.master	1.30
+sys/compat/linux/arch/alpha/linux_syscall.h	regenerate
+sys/compat/linux/arch/alpha/linux_syscallargs.h	regenerate
+sys/compat/linux/arch/alpha/linux_sysent.c	regenerate
+sys/compat/linux/arch/alpha/linux_syscalls.c	regenerate
+sys/compat/linux/arch/i386/linux_syscall.h	regenerate
+sys/compat/linux/arch/i386/linux_syscallargs.h	regenerate
+sys/compat/linux/arch/i386/linux_sysent.c	regenerate
+sys/compat/linux/arch/i386/linux_syscalls.c	regenerate
+sys/compat/linux/arch/m68k/linux_syscall.h	regenerate
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regenerate
+sys/compat/linux/arch/m68k/linux_sysent.c	regenerate
+sys/compat/linux/arch/m68k/linux_syscalls.c	regenerate
+
+  Make it possible to use a different function for unimplemented
+  syscalls than sys_nosys(), so that the Linux emulation can avoid
+  posting SIGSYS and instead just return ENOSYS.  Fixes PR#12503.
+
+sys/dev/pci/eap.c				1.45
+
+  Work around race condition by relatching the interrupt.  Makes
+  the eap driver not hang on certain occasions.
+
+sys/net/if_stf.c				1.10 via patch
+sys/netinet/in_gif.c				1.16 via patch
+sys/netinet6/in6_gif.c				1.15
+share/man/man4/gif.4				1.14
+share/man/man4/stf.4				1.9 via patch
+
+  Make it possible to turn off ingress filter on gif/stf tunnel
+  egress by using IFF_LINK2.  Fixes (part of) PR#11163.
+
+sys/arch/m68k/060sp/Makefile.inc		1.6
+
+  Pass assembler files through $(CC) instead of $(AS).
+  Fixes build problem.
+
+lib/libc/stdio/printf.3				1.17
+
+  Correct description of the ``l'' length modifier.
+
+sys/arch/vax/vax/ka650.c			1.25
+
+  Enable the cache on KA640.
+
+include/netdb.h					1.19
+sys/sys/socket.h				1.58 via patch
+
+  Avoid traditional CPP recursion in definition of socklen_t.
+  Fixes PR#12761.
+
+sys/arch/i386/i386/conf.c			1.137
+sys/arch/atari/atari/conf.c			1.44 via patch
+sys/arch/amiga/amiga/conf.c			1.60 via patch
+sys/arch/alpha/alpha/conf.c			1.55
+
+  Add ioctl entry to cdevsw for i4b raw B-channel devices.
+
+usr.sbin/pkg_install/add/pkg_add.1		1.26-1.27
+usr.sbin/pkg_install/README			1.5
+usr.sbin/pkg_install/admin/pkg_admin.1		1.13
+usr.sbin/pkg_install/create/pkg_create.1	1.27
+usr.sbin/pkg_install/delete/pkg_delete.1	1.20
+usr.sbin/pkg_install/info/pkg_info.1		1.24
+usr.sbin/pkg_install/lib/ftpio.c		1.29
+
+  Changes to catch up with recent fixes:
+   o Add examples section, and whitespace fixes.
+   o Document what to do when changing the pkg_install package.
+   o Fix date, improve markup.
+   o Replace ``exit(-x)'' with ``exit(x)''.
+
+usr.sbin/pkg_install/lib/str.c			1.29
+usr.sbin/pkg_install/lib/lib.h			1.34
+usr.sbin/pkg_install/lib/ftpio.c		1.31
+
+  Fix pkg_add so that it works via ftp for >= dependencies.
+
+sbin/ifconfig/ifconfig.c			1.107 via patch
+sbin/ifconfig/ifconfig.8			1.49
+
+  Make ``-A'' the default, so that IPv4 aliases are printed.
+  Always print mac address.
+
+sys/dev/DEVNAMES				1.43
+sys/dev/microcode/yds/yds_hwmcode.h		1.1 (new)
+sys/dev/pci/files.pci				1.127
+sys/dev/pci/mpu_yds.c				1.1 (new)
+sys/dev/pci/opl_yds.c				1.1 (new)
+sys/dev/pci/yds.c				1.1-1.3 (new) via patch
+sys/dev/pci/ydsreg.h				1.1 (new)
+sys/dev/pci/ydsvar.h				1.1 (new)
+share/man/man4/Makefile				1.188
+share/man/man4/audio.4				1.38
+share/man/man4/mpu.4				1.5
+share/man/man4/opl.4				1.14
+share/man/man4/pci.4				1.45 via patch
+share/man/man4/yds.4				1.1 (new) via patch
+sys/arch/i386/conf/GENERIC			1.402
+sys/arch/i386/conf/GENERIC_LAPTOP		1.13 via patch
+distrib/sets/lists/man/mi			1.331 via patch
+
+  Add Yamaha YMF724/740/744/745-based sound driver and
+  its subordinates.
+
+sys/net/if_stf.c				1.14 partial, via patch
+
+  Fix outbound outer IPv4 destination address selection.
+
+sys/sys/exec_elf.h				1.45
+libexec/ld.elf_so/headers.c			1.9
+libexec/ld.elf_so/reloc.c			1.35
+libexec/ld.elf_so/rtld.h			1.30
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.9
+libexec/ld.elf_so/arch/sparc/mdreloc.c		1.10
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.5
+libexec/ld.elf_so/arch/sparc64/rtld_start.S	1.3
+
+  Rename ElfNN_RelA to ElfNN_Rela, which is what SVR4 ABIs and the
+  rest of the world uses.  Fixes PR#12274.
+
+usr.sbin/mountd/mountd.c			1.77
+usr.sbin/rpcbind/util.c				1.6-1.7
+
+  Fix some minor security-related issues.
+
+etc/etc.i386/MAKEDEV				1.132
+sys/arch/i386/include/disklabel.h		1.9
+sys/arch/i386/include/types.h			1.27 via patch
+sys/sys/disklabel.h				1.64-1.67
+sys/sys/dkio.h					1.5
+sys/dev/ccd.c					1.70-1.71
+sys/dev/vnd.c					1.70-1.71
+sys/dev/ata/wd.c				1.211-1.212
+sys/dev/isa/fd.c				1.11-1.12
+sys/dev/isa/mcd.c				1.68-1.69
+sys/dev/mscp/mscp_disk.c			1.26-1.27
+sys/dev/ofw/ofdisk.c				1.14-1.15
+sys/dev/qbus/rl.c				1.6-1.7
+sys/dev/raidframe/rf_netbsdkintf.c		1.102-1.103
+sys/dev/scsipi/cd.c				1.142-1.143
+sys/dev/scsipi/sd.c				1.167-1.168
+sys/dev/vme/xd.c				1.33-1.34
+sys/dev/vme/xy.c				1.31-1.32
+
+  Increase the number of BSD disklabel partitions on i386 to 16.
+
+sys/arch/i386/conf/GENERIC_TINY			1.25
+
+  Counter the recent bump of default NMBCLUSTERS, to be friendlier
+  on small-memory machines.
+
+usr.sbin/arp/arp.c				1.30 via patch
+usr.sbin/arp/arp.8				1.12
+
+  Make it possible to erase all arp entries in one invocation.
+
+sys/arch/powerpc/include/pcb.h			1.8 via patch
+
+  Avoid nesting structure declarations, to be friendly to C++ code.
+
+sys/dev/pci/pccbb.c				1.46,1.48
+
+  Deal correctly with 16-bit pcmcia cards.  Fixes PR#12736 and
+  PR#12737.
+
+distrib/notes/common/main			patch
+
+  Add a few more entries to the "Major changes from 1.5 to 1.5.1" section.
+
+sys/arch/alpha/conf/ALPHA			1.135,1.139
+sys/arch/alpha/conf/GENERIC			1.171,1.175
+sys/arch/alpha/conf/TCWSCONS			1.15,1.17 via patch
+sys/arch/amiga/conf/AMIGA			regenerate
+sys/arch/amiga/conf/DRACO			regenerate
+sys/arch/amiga/conf/GENERIC			1.152
+sys/arch/amiga/conf/INSTALL			regenerate
+sys/arch/arc/conf/GENERIC			1.40
+sys/arch/arm26/conf/GENERIC			1.14-1.15
+sys/arch/arm32/conf/GENERIC			1.75 via patch
+sys/arch/atari/conf/ATARITT			patch
+sys/arch/atari/conf/FALCON			patch
+sys/arch/atari/conf/GENERIC			1.74-1.75
+sys/arch/atari/conf/HADES			patch
+sys/arch/bebox/conf/GENERIC			1.35 via patch
+sys/arch/cobalt/conf/GENERIC			1.14
+sys/arch/hp300/conf/GENERIC			1.62-1.63
+sys/arch/hpcmips/conf/GENERIC			1.73
+sys/arch/i386/conf/GENERIC			1.386
+sys/arch/i386/conf/GENERIC_LAPTOP		1.8
+sys/arch/luna68k/conf/GENERIC			1.14-1.15
+sys/arch/mac68k/conf/GENERIC			1.109
+sys/arch/macppc/conf/GENERIC			1.87 via patch
+sys/arch/mmeye/conf/GENERIC			1.21 via patch
+sys/arch/mvme68k/conf/GENERIC			1.23 via patch
+sys/arch/news68k/conf/GENERIC			1.16
+sys/arch/newsmips/conf/GENERIC			1.28,1.34
+sys/arch/next68k/conf/GENERIC			1.37-1.38
+sys/arch/ofppc/conf/GENERIC			1.35 via patch
+sys/arch/pc532/conf/GENERIC			1.16
+sys/arch/pmax/conf/GENERIC			1.86
+sys/arch/prep/conf/GENERIC			1.15
+sys/arch/sparc/conf/GENERIC			1.119
+sys/arch/sun3/conf/GENERIC			1.75-1.76
+sys/arch/sun3/conf/GENERIC3X			1.36-1.37
+sys/arch/vax/conf/GENERIC			1.83-1.84
+sys/arch/x68k/conf/GENERIC			1.54
+
+  Add pseudo-device vlan.
+  Make sure "rnd is EXPERIMENTAL" comment is removed.
+
+sys/arch/i386/conf/CARDBUS			1.29 partial, via patch
+
+  Add pseudo-device vlan, and an* at pcmcia.
