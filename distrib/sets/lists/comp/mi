@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.491 2002/10/13 04:37:03 elric Exp $
+#	$NetBSD: mi,v 1.492 2002/10/14 02:11:09 takemura Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -118,6 +118,9 @@
 ./usr/include/ctype.h			comp-c-include
 ./usr/include/curses.h			comp-c-include
 ./usr/include/db.h			comp-c-include
+./usr/include/dev/apm			comp-c-include
+./usr/include/dev/apm/apmbios.h		comp-c-include
+./usr/include/dev/apm/apmio.h		comp-c-include
 ./usr/include/dev/ata			comp-c-include
 ./usr/include/dev/ata/atareg.h		comp-c-include
 ./usr/include/dev/ata/atavar.h		comp-c-include
