@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.22 2000/10/19 15:08:01 ad Exp $	*/
+/*	$NetBSD: md.h,v 1.23 2000/10/20 14:40:25 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,23 +70,30 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern",	1, "ag", "Kernel       : "},
-    {"base",	1, "bw", "Base         : "},
-    {"etc",	1, "aa", "System (/etc): "},
-    {"comp",	1, "bl", "Compiler     : "},
-    {"games",	1, "am", "Games        : "},
-    {"man",	1, "ar", "Manuals      : "},
-    {"misc",	1, "aj", "Miscellaneous: "},
-    {"text",	1, "af", "Text tools   : "},
-
-    /* XXX no X11 on floppies, what sets are they?*/
-    {"xbase",	1, "al", "X11 clients  : "},
-    {"xfont",	1, "az", "X11 fonts    : "},
-    {"xserver",	1, "cr", "X11 servers  : "},
-    {"xcontrib",1, "aa", "X11 contrib  : "},
-    {"xcomp",	1, "ah", "X programming: "},
-    {"xmisc",   1, NULL, "X11 Misc.    : "},
+    {"kern",	1, "aj", "Generic Kernel: "},
+    {"base",	1, "cr", "Base          : "},
+    {"etc",	1, "aa", "System (/etc) : "},
+    {"comp",	1, "ca", "Compiler      : "},
+    {"games",	1, "am", "Games         : "},
+    {"man",	1, "ax", "Manuals       : "},
+    {"misc",	1, "aj", "Miscellaneous : "},
+    {"text",	1, "af", "Text tools    : "},
+    {"xbase",	1, "al", "X11 clients   : "},
+    {"xfont",	1, "az", "X11 fonts     : "},
+    {"xserver",	1, "cr", "X11 servers   : "},
+    {"xcontrib",1, "aa", "X11 contrib   : "},
+    {"xcomp",	1, "ah", "X programming : "},
+    {"xmisc",   1, NULL, "X11 Misc.     : "},
     {NULL, 0, NULL, NULL }
+}
+#endif
+;
+
+EXTERN distinfo special_kernel_list[]
+#ifdef MAIN
+= {
+    {"kern-laptop",	1, "ah", "Laptop Kernel : "},
+    {"kern-tiny",	1, "ac", "Small Kernel  : "},
 }
 #endif
 ;
