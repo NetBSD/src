@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/06/23 09:45:19 veego Exp $
+#	$NetBSD: Makefile,v 1.17 1997/06/23 22:16:56 veego Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .if	(${MACHINE} != "arm32")  && \
@@ -40,6 +40,5 @@ MLINKS+=kvm_dump.3 kvm_dump_inval.3
 	(${MACHINE} != "x68k")
 .include <bsd.lib.mk>
 .else
-.include <bsd.own.mk>
-.include <bsd.man.mk>
+.include <bsd.prog.mk>
 .endif
