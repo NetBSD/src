@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.118 2003/05/03 18:07:42 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.119 2003/05/07 16:18:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.118 2003/05/03 18:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.119 2003/05/07 16:18:53 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1502,6 +1502,8 @@ nfs_init()
 #ifdef NFS
 	/* Initialize the kqueue structures */
 	nfs_kqinit();
+	/* Initialize the iod structures */
+	nfs_iodinit();
 #endif
 }
 
