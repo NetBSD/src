@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.22 2000/06/13 01:21:53 simonb Exp $	*/
+/*	$NetBSD: math.h,v 1.23 2001/01/05 23:36:38 christos Exp $	*/
 
 /*
  * ====================================================
@@ -183,7 +183,9 @@ double	scalbn __P((double, int));
 /*
  * BSD math library entry points
  */
+#ifndef __MATH_PRIVATE__
 double	cabs __P((/* struct complex { double r; double i; } */));
+#endif
 double	drem __P((double, double));
 
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
@@ -272,7 +274,9 @@ float	scalbnf __P((float, int));
 /*
  * float versions of BSD math library entry points
  */
+#ifndef __MATH_PRIVATE__
 float	cabsf __P((/* struct complex { float r; float i; } */));
+#endif
 float	dremf __P((float, float));
 float	expm1f __P((float));
 float	log1pf __P((float));
