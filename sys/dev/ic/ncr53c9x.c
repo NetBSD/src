@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.67 2000/12/19 14:08:17 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.68 2000/12/20 03:19:34 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1685,6 +1685,9 @@ gotit:
 		break;
 	}
 
+	/* if we have more messages to send set ATN */
+	if (sc->sc_msgpriq) NCRCMD(sc, NCRCMD_SETATN);
+
 	/* Ack last message byte */
 	NCRCMD(sc, NCRCMD_MSGOK);
 
@@ -1719,7 +1722,7 @@ ncr53c9x_msgout(sc)
 		if (sc->sc_prevphase != MESSAGE_OUT_PHASE) {
 		new:
 			NCRCMD(sc, NCRCMD_FLUSH);
-			DELAY(1);
+/*			DELAY(1); */
 			sc->sc_msgoutq = 0;
 			sc->sc_omlen = 0;
 		}
@@ -2047,7 +2050,7 @@ again:
 			sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
 		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 			NCRCMD(sc, NCRCMD_FLUSH);
-			DELAY(1);
+/*			DELAY(1); */
 		}
 		/*
 		 * This command must (apparently) be issued within
@@ -2496,7 +2499,7 @@ msgin:
 			ecb->cmd.cmd.opcode, ecb->clen));
 		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 			NCRCMD(sc, NCRCMD_FLUSH);
-			DELAY(1);
+/*			DELAY(1);*/
 		}
 		if (ncr53c9x_dmaselect) {
 			size_t size;
@@ -2615,9 +2618,22 @@ shortcut:
 	 * The delay is a heuristic. It is 2 when at 20Mhz, 2 at 25Mhz and 1
 	 * at 40Mhz. This needs testing.
 	 */
-	DELAY(50/sc->sc_freq);
-	if (NCRDMA_ISINTR(sc))
-		goto again;
+	{ 
+		struct timeval wait, cur;
+
+		microtime(&wait);
+		wait.tv_usec += 50/sc->sc_freq;
+		if (wait.tv_usec > 1000000) {
+			wait.tv_sec++;
+			wait.tv_usec -= 1000000;
+		}
+		do {
+			if (NCRDMA_ISINTR(sc))
+				goto again;
+			microtime(&cur);
+		} while (cur.tv_sec <= wait.tv_sec && 
+			 cur.tv_usec <= wait.tv_usec);
+	}
 	goto out;
 }
 
