@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.21 2003/08/07 11:15:22 agc Exp $	*/
+/*	$NetBSD: unix.c,v 1.22 2005/03/04 03:57:48 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.21 2003/08/07 11:15:22 agc Exp $");
+__RCSID("$NetBSD: unix.c,v 1.22 2005/03/04 03:57:48 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ unixdomainpr(so, soaddr)
 		first = 0;
 	}
 	printf("%8lx %-6.6s %6ld %6ld %8lx %8lx %8lx %8lx",
-	    (u_long) soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
+	    (u_long) so->so_pcb, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
 	    (u_long) unp.unp_vnode, (u_long) unp.unp_conn,
 	    (u_long) unp.unp_refs, (u_long) unp.unp_nextref);
 	if (unp.unp_addr)
