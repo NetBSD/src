@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2001/08/22 06:59:44 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2001/08/22 08:23:09 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -124,24 +124,6 @@ extern struct splvec splvec;
  */
 extern u_long intrcnt[];
 
-#if 0
-#define	SOFTCLOCK_INTR	0
-#define	SOFTNET_INTR	1
-#define	SERIAL0_INTR	2
-#define	SERIAL1_INTR	3
-#define	LANCE_INTR	4
-#define	SCSI_INTR	5
-#define	ERROR_INTR	6
-#define	HARDCLOCK	7
-#define	FPU_INTR	8
-#define	SLOT0_INTR	9
-#define	SLOT1_INTR	10
-#define	SLOT2_INTR	11
-#define	DTOP_INTR	12
-#define	ISDN_INTR	13
-#define	FLOPPY_INTR	14
-#define	STRAY_INTR	15
-#else
 #define	SERIAL0_INTR	0
 #define	SERIAL1_INTR	1
 #define	LANCE_INTR	2
@@ -154,7 +136,6 @@ extern u_long intrcnt[];
 #define	ISDN_INTR	9
 #define	FLOPPY_INTR	10
 #define	STRAY_INTR	11
-#endif
 
 struct intrhand {
 	int	(*ih_func) __P((void *));
