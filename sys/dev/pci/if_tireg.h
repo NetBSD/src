@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.5 2001/06/03 03:29:44 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.6 2001/06/30 14:16:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1020,8 +1020,6 @@ struct ti_ring_data {
 	u_int32_t		ti_pad1[6];
 	struct ti_producer	ti_tx_considx_r;
 	u_int32_t		ti_pad2[6];
-	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
-	struct ti_cmd_desc	*ti_cmd_ring;	/* pointer to shared mem */
 	struct ti_gib		ti_info;
 };
 
@@ -1085,6 +1083,7 @@ struct ti_softc {
 	u_int8_t		ti_copper;	/* 1000baseTX card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	struct ti_ring_data	*ti_rdata;	/* rings */
+	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
 	struct ti_chain_data	ti_cdata;	/* mbufs */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
 #define ti_return_prodidx	ti_rdata->ti_return_prodidx_r
