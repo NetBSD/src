@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.5 1996/11/06 20:19:58 cgd Exp $	*/
+/*	$NetBSD: Locore.c,v 1.6 1996/12/31 00:35:21 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -35,23 +35,23 @@
  *	@(#)Locore.c	7.4 (Berkeley) 5/7/91
  */
 
-#include "../include/pte.h"
-#include "../includecpu.h"
+#include <machine/pte.h>
+#include <machinecpu.h>
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/user.h"
-#include "sys/vm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/buf.h"
-#include "sys/msgbuf.h"
-#include "sys/mbuf.h"
-#include "sys/protosw.h"
-#include "sys/domain.h"
-#include "sys/map.h"
-#include "sys/dkbad.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/user.h>
+#include <sys/vm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/msgbuf.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
+#include <sys/map.h>
+#include <sys/dkbad.h>
 
 /*
  * Pseudo file for lint to show what is used/defined in locore.s.
