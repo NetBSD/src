@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.17 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.newsmips,v 1.18 2003/01/18 17:50:27 thorpej Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/newsmips/locore.h	comp-c-include
 ./usr/include/newsmips/machConst.h	comp-c-include
 ./usr/include/newsmips/math.h	comp-c-include
+./usr/include/newsmips/mcontext.h	comp-c-include
 ./usr/include/newsmips/mips_opcode.h	comp-c-include
 ./usr/include/newsmips/param.h	comp-c-include
 ./usr/include/newsmips/pcb.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.news68k,v 1.16 2002/08/07 21:20:58 briggs Exp $
+# $NetBSD: md.news68k,v 1.17 2003/01/18 17:50:27 thorpej Exp $
 ./usr/include/news68k	comp-c-include
 ./usr/include/news68k/_G_config.h	comp-c-include
 ./usr/include/news68k/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/news68k/limits.h	comp-c-include
 ./usr/include/news68k/lock.h	comp-c-include
 ./usr/include/news68k/math.h	comp-c-include
+./usr/include/news68k/mcontext.h	comp-c-include
 ./usr/include/news68k/param.h	comp-c-include
 ./usr/include/news68k/pcb.h	comp-c-include
 ./usr/include/news68k/pmap.h	comp-c-include

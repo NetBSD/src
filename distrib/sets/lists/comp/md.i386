@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.66 2002/11/23 05:33:12 lha Exp $
+# $NetBSD: md.i386,v 1.67 2003/01/18 17:50:25 thorpej Exp $
 ./lib/libm387.so			base-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
@@ -40,6 +40,7 @@
 ./usr/include/i386/limits.h		comp-c-include
 ./usr/include/i386/lock.h		comp-c-include
 ./usr/include/i386/math.h		comp-c-include
+./usr/include/i386/mcontext.h		comp-c-include
 ./usr/include/i386/mouse.h		comp-c-include
 ./usr/include/i386/mtrr.h		comp-c-include
 ./usr/include/i386/npx.h		comp-c-include

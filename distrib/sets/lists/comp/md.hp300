@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.47 2002/08/07 21:20:55 briggs Exp $
+# $NetBSD: md.hp300,v 1.48 2003/01/18 17:50:24 thorpej Exp $
 ./usr/include/hp300		comp-c-include
 ./usr/include/hp300/_G_config.h		comp-c-include
 ./usr/include/hp300/ansi.h		comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/hp300/limits.h		comp-c-include
 ./usr/include/hp300/lock.h		comp-c-include
 ./usr/include/hp300/math.h		comp-c-include
+./usr/include/hp300/mcontext.h		comp-c-include
 ./usr/include/hp300/param.h		comp-c-include
 ./usr/include/hp300/pcb.h		comp-c-include
 ./usr/include/hp300/pmap.h		comp-c-include

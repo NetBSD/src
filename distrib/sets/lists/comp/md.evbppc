@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.1 2002/12/09 14:08:04 scw Exp $
+# $NetBSD: md.evbppc,v 1.2 2003/01/18 17:50:23 thorpej Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/evbppc			comp-c-include
 ./usr/include/evbppc/_G_config.h	comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/evbppc/limits.h		comp-c-include
 ./usr/include/evbppc/lock.h		comp-c-include
 ./usr/include/evbppc/math.h		comp-c-include
+./usr/include/evbppc/mcontext.h		comp-c-include
 ./usr/include/evbppc/param.h		comp-c-include
 ./usr/include/evbppc/pcb.h		comp-c-include
 ./usr/include/evbppc/pio.h		comp-c-include

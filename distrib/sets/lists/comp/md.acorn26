@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn26,v 1.3 2002/08/07 21:20:51 briggs Exp $
+# $NetBSD: md.acorn26,v 1.4 2003/01/18 17:50:20 thorpej Exp $
 ./usr/include/acorn26			comp-c-include
 ./usr/include/acorn26/_G_config.h	comp-c-include
 ./usr/include/acorn26/ansi.h		comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/acorn26/limits.h		comp-c-include
 ./usr/include/acorn26/lock.h		comp-c-include
 ./usr/include/acorn26/math.h		comp-c-include
+./usr/include/acorn26/mcontext.h		comp-c-include
 ./usr/include/acorn26/param.h		comp-c-include
 ./usr/include/acorn26/pcb.h		comp-c-include
 ./usr/include/acorn26/pmap.h		comp-c-include

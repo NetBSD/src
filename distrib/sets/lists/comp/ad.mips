@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.25 2002/08/07 21:20:50 briggs Exp $
+# $NetBSD: ad.mips,v 1.26 2003/01/18 17:50:20 thorpej Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips			comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/mips/lock.h		comp-c-include
 ./usr/include/mips/locore.h		comp-c-include
 ./usr/include/mips/math.h		comp-c-include
+./usr/include/mips/mcontext.h		comp-c-include
 ./usr/include/mips/mips1_pte.h		comp-c-include
 ./usr/include/mips/mips3_pte.h		comp-c-include
 ./usr/include/mips/mips_opcode.h		comp-c-include
