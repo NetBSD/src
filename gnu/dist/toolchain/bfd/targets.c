@@ -1,5 +1,6 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+   2000, 2001
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -564,6 +565,8 @@ extern const bfd_target bfd_elf64_ia64_big_vec;
 extern const bfd_target bfd_elf64_ia64_little_vec;
 extern const bfd_target bfd_elf64_little_generic_vec;
 extern const bfd_target bfd_elf64_littlemips_vec;
+extern const bfd_target bfd_elf64_tradbigmips_vec;
+extern const bfd_target bfd_elf64_tradlittlemips_vec;
 extern const bfd_target bfd_elf64_sparc_vec;
 extern const bfd_target bfd_elf64_x86_64_vec;
 extern const bfd_target bfd_powerpc_pe_vec;
@@ -768,18 +771,21 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_m68hc12_vec,
 	&bfd_elf32_m68k_vec,
 	&bfd_elf32_m88k_vec,
-	&bfd_elf32_sparc_vec,
 	&bfd_elf32_pj_vec,
 	&bfd_elf32_pjl_vec,
 	&bfd_elf32_powerpc_vec,
 	&bfd_elf32_powerpcle_vec,
+	&bfd_elf32_sparc_vec,
 	&bfd_elf32_v850_vec,
 	&bfd_elf32_fr30_vec,
 	&bfd_elf32_mcore_big_vec,
 	&bfd_elf32_mcore_little_vec,
 	&bfd_elf32_tradbigmips_vec,
 	&bfd_elf32_tradlittlemips_vec,
-#ifdef BFD64			/* No one seems to use this.  */
+#ifdef BFD64
+	&bfd_elf64_tradbigmips_vec,
+	&bfd_elf64_tradlittlemips_vec,
+	/* No one seems to use this.  */
 	&bfd_elf64_big_generic_vec,
 	&bfd_elf64_little_generic_vec,
 #endif
@@ -993,7 +999,7 @@ const bfd_target *bfd_default_vector[] = {
 /* When there is an ambiguous match, bfd_check_format_matches puts the
    names of the matching targets in an array.  This variable is the maximum
    number of entries that the array could possibly need.  */
-const size_t _bfd_target_vector_entries = sizeof(_bfd_target_vector)/sizeof(*_bfd_target_vector);
+const size_t _bfd_target_vector_entries = sizeof (_bfd_target_vector)/sizeof (*_bfd_target_vector);
 
 /* This array maps configuration triplets onto BFD vectors.  */
 

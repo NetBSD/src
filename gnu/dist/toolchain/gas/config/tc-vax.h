@@ -1,5 +1,5 @@
 /* tc-vax.h -- Header file for tc-vax.c.
-   Copyright (C) 1987, 91, 92, 93, 95, 96, 97, 2000
+   Copyright 1987, 1991, 1992, 1993, 1995, 1996, 1997, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
