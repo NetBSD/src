@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.8 1997/05/14 15:57:07 gwr Exp $
-#	from: @(#)Makefile	5.4 (Berkeley) 3/12/91
+#	$NetBSD: Makefile,v 1.9 1997/10/19 05:50:26 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	ranlib
 SRCS=	archive.c build.c misc.c ranlib.c touch.c
