@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.255 2001/04/29 04:54:53 garbled Exp $
+# $NetBSD: mi,v 1.256 2001/05/04 12:13:27 drochner Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1611,6 +1611,7 @@
 ./usr/share/wscons/fonts/vt220l.814			base-util-share
 ./usr/share/wscons/fonts/vt220l.816			base-util-share
 ./usr/share/wscons/keymaps			base-util-share
+./usr/share/wscons/keymaps/pckbd.sv.svascii	base-util-share
 ./usr/share/zoneinfo			base-sys-share
 ./usr/share/zoneinfo/Africa		base-sys-share
 ./usr/share/zoneinfo/Africa/Abidjan		base-sys-share
