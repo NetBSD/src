@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.7 1997/07/18 04:55:59 thorpej Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.7 1997/07/18 04:55:59 thorpej Exp $");
+__RCSID("$NetBSD: ns_ntoa.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,17 +92,18 @@ spectHex(p0)
 	int ok = 0;
 	int nonzero = 0;
 	register char *p = p0;
-	for (; *p; p++) switch (*p) {
-
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-		*p += ('A' - 'a');
-		/* fall into . . . */
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-		ok = 1;
-	case '1': case '2': case '3': case '4': case '5':
-	case '6': case '7': case '8': case '9':
-		nonzero = 1;
-	}
+	for (; *p; p++)
+		switch (*p) {
+		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+			*p += ('A' - 'a');
+			/* FALLTHROUGH */
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+			ok = 1;
+			/* FALLTHROUGH */
+		case '1': case '2': case '3': case '4': case '5':
+		case '6': case '7': case '8': case '9':
+			nonzero = 1;
+		}
 	if (nonzero && !ok) { *p++ = 'H'; *p = 0; }
 	return (p);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.8 1998/11/13 15:46:53 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.8 1998/11/13 15:46:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -409,7 +409,7 @@ getanswer(answer, anslen, qname, qtype)
 				buflen -= nn;
 			}
 
-			bp += sizeof(align) - ((u_long)bp % sizeof(align));
+			bp += sizeof(align) - (size_t)((u_long)bp % sizeof(align));
 
 			if (bp + n >= &hostbuf[sizeof hostbuf]) {
 				dprintf("size (%d) too big\n", n);
@@ -676,7 +676,7 @@ gethostbyaddr(addr, len, af)
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
 			qp += sprintf(qp, "%x.%x.",
 				       uaddr[n] & 0xf,
-				       (uaddr[n] >> 4) & 0xf);
+				       ((u_int32_t)uaddr[n] >> 4) & 0xf);
 		}
 		strcpy(qp, "ip6.int");
 		break;
@@ -697,7 +697,7 @@ gethostbyaddr(addr, len, af)
 			break;
 #endif
 		case 'b':
-			n = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf,
+			n = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
 			    sizeof(buf));
 			if (n < 0) {
 				dprintf("res_query failed (%d)\n", n);
@@ -898,7 +898,7 @@ map_v4v6_hostent(hp, bpp, lenp)
 	hp->h_addrtype = AF_INET6;
 	hp->h_length = IN6ADDRSZ;
 	for (ap = hp->h_addr_list; *ap; ap++) {
-		int i = sizeof(align) - ((u_long)*bpp % sizeof(align));
+		int i = sizeof(align) - (size_t)((u_long)*bpp % sizeof(align));
 
 		if (*lenp < (i + IN6ADDRSZ)) {
 			/* Out of memory.  Truncate address list here.  XXX */
@@ -929,7 +929,7 @@ addrsort(ap, num)
 	for (i = 0; i < num; i++, p++) {
 	    for (j = 0 ; (unsigned)j < _res.nsort; j++)
 		if (_res.sort_list[j].addr.s_addr == 
-		    (((struct in_addr *)(*p))->s_addr & _res.sort_list[j].mask))
+		    (((struct in_addr *)(void *)(*p))->s_addr & _res.sort_list[j].mask))
 			break;
 	    aval[i] = j;
 	    if (needsort == 0 && i > 0 && j < aval[i-1])
@@ -1040,7 +1040,7 @@ nextline:
 	}
 	*cp++ = '\0';
 
-	*hap++ = (char *)buf;
+	*hap++ = (char *)(void *)buf;
 	(void) inet_aton(p, buf++);
 
 	while (*cp == ' ' || *cp == '\t')
@@ -1083,6 +1083,7 @@ done:
 	return (&host);
 }
 
+/* ARGSUSED */
 struct hostent *
 _yp_gethtbyaddr(addr, len, type)
 	const char *addr;
@@ -1106,7 +1107,7 @@ _yp_gethtbyaddr(addr, len, type)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
 	r = yp_match(__ypdomain, "hosts.byaddr", name,
-		strlen(name), &__ypcurrent, &__ypcurrentlen);
+		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
 		hp = _yphostent(__ypcurrent);
 	if (hp==NULL)
@@ -1130,7 +1131,7 @@ _yp_gethtbyname(name)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
 	r = yp_match(__ypdomain, "hosts.byname", name,
-		strlen(name), &__ypcurrent, &__ypcurrentlen);
+		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
 		hp = _yphostent(__ypcurrent);
 	if (hp==NULL)

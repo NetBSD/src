@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.14 1998/10/14 19:33:50 kleink Exp $	*/
+/*	$NetBSD: res_send.c,v 1.15 1998/11/13 15:46:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.14 1998/10/14 19:33:50 kleink Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.15 1998/11/13 15:46:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -228,7 +228,7 @@ res_nameinquery(name, type, class, buf, eom)
 	const u_char *buf, *eom;
 {
 	register const u_char *cp = buf + HFIXEDSZ;
-	int qdcount = ntohs(((HEADER*)buf)->qdcount);
+	int qdcount = ntohs(((const HEADER*)(const void *)buf)->qdcount);
 
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
@@ -265,9 +265,9 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 	const u_char *buf2, *eom2;
 {
 	register const u_char *cp = buf1 + HFIXEDSZ;
-	int qdcount = ntohs(((HEADER*)buf1)->qdcount);
+	int qdcount = ntohs(((const HEADER *)(const void *)buf1)->qdcount);
 
-	if (qdcount != ntohs(((HEADER*)buf2)->qdcount))
+	if (qdcount != ntohs(((const HEADER *)(const void *)buf2)->qdcount))
 		return (0);
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
@@ -292,8 +292,8 @@ res_send(buf, buflen, ans, anssiz)
 	u_char *ans;
 	int anssiz;
 {
-	HEADER *hp = (HEADER *) buf;
-	HEADER *anhp = (HEADER *) ans;
+	const HEADER *hp = (const HEADER *)(void *)buf;
+	HEADER *anhp = (HEADER *)(void *)ans;
 	int gotsomewhere, connreset, terrno, try, v_circuit, resplen, ns;
 	register int n;
 	u_int badns;	/* XXX NSMAX can't exceed #/bits in this var */
@@ -379,7 +379,7 @@ res_send(buf, buflen, ans, anssiz)
 					return (-1);
 				}
 				errno = 0;
-				if (connect(s, (struct sockaddr *)nsap,
+				if (connect(s, (struct sockaddr *)(void *)nsap,
 					    sizeof(struct sockaddr)) < 0) {
 					terrno = errno;
 					Aerror(stderr, "connect/vc",
@@ -393,10 +393,11 @@ res_send(buf, buflen, ans, anssiz)
 			/*
 			 * Send length & message
 			 */
-			putshort((u_short)buflen, (u_char*)&len);
-			iov[0].iov_base = (caddr_t)&len;
+			putshort((u_short)buflen, (u_char*)(void *)&len);
+			iov[0].iov_base = &len;
 			iov[0].iov_len = INT16SZ;
-			iov[1].iov_base = (caddr_t)buf;
+			/* LINTED write does not affect base */
+			iov[1].iov_base = (void *)buf;
 			iov[1].iov_len = buflen;
 			if (writev(s, iov, 2) != (INT16SZ + buflen)) {
 				terrno = errno;
@@ -411,9 +412,10 @@ res_send(buf, buflen, ans, anssiz)
 read_len:
 			cp = ans;
 			len = INT16SZ;
-			while ((n = read(s, (char *)cp, (int)len)) > 0) {
+			while ((n = read(s, (char *)cp, (size_t)len)) > 0) {
 				cp += n;
-				if ((len -= n) <= 0)
+				/* len is unsigned, no need to compare < 0 */
+				if ((len -= n) == 0)
 					break;
 			}
 			if (n <= 0) {
@@ -448,7 +450,7 @@ read_len:
 				len = resplen;
 			cp = ans;
 			while (len != 0 &&
-			       (n = read(s, (char *)cp, (int)len)) > 0) {
+			       (n = read(s, cp, (size_t)len)) > 0) {
 				cp += n;
 				len -= n;
 			}
@@ -471,7 +473,7 @@ read_len:
 					n = (len > sizeof(junk)
 					     ? sizeof(junk)
 					     : len);
-					if ((n = read(s, junk, n)) > 0)
+					if ((n = read(s, junk, (size_t)n)) > 0)
 						len -= n;
 					else
 						break;
@@ -535,8 +537,9 @@ read_len:
 				 * receive a response from another server.
 				 */
 				if (!connected) {
-					if (connect(s, (struct sockaddr *)nsap,
-						    sizeof(struct sockaddr)
+					if (connect(s,
+					    (struct sockaddr *)(void *)nsap,
+					    sizeof(struct sockaddr)
 						    ) < 0) {
 						Aerror(stderr,
 						       "connect(dg)",
@@ -547,7 +550,7 @@ read_len:
 					}
 					connected = 1;
 				}
-				if (send(s, (char*)buf, buflen, 0) != buflen) {
+				if (send(s, buf, buflen, 0) != buflen) {
 					Perror(stderr, "send", errno);
 					badns |= (1 << ns);
 					res_close();
@@ -566,9 +569,8 @@ read_len:
 					no_addr.sin_addr.s_addr = INADDR_ANY;
 					no_addr.sin_port = 0;
 					(void) connect(s,
-						       (struct sockaddr *)
-						        &no_addr,
-						       sizeof(no_addr));
+					    (struct sockaddr *)(void *)&no_addr,
+					    sizeof(no_addr));
 #else
 					int s1 = socket(PF_INET, SOCK_DGRAM,0);
 					if (s1 < 0)
@@ -581,8 +583,8 @@ read_len:
 					connected = 0;
 					errno = 0;
 				}
-				if (sendto(s, (char*)buf, buflen, 0,
-					   (struct sockaddr *)nsap,
+				if (sendto(s, buf, (size_t)buflen, 0,
+					   (struct sockaddr *)(void *)nsap,
 					   sizeof(struct sockaddr))
 				    != buflen) {
 					Aerror(stderr, "sendto", errno, *nsap);
@@ -603,7 +605,7 @@ read_len:
 			dsfd.fd = s;
 			dsfd.events = POLLIN;
 wait:
-			n = poll(&dsfd, 1, seconds * 1000);
+			n = poll(&dsfd, 1, (int)(seconds * 1000));
 			if (n < 0) {
 				if (errno == EINTR)
 					goto wait;
@@ -623,8 +625,8 @@ wait:
 			}
 			errno = 0;
 			fromlen = sizeof(struct sockaddr_in);
-			resplen = recvfrom(s, (char*)ans, anssiz, 0,
-					   (struct sockaddr *)&from, &fromlen);
+			resplen = recvfrom(s, ans, anssiz, 0,
+			    (struct sockaddr *)(void *)&from, &fromlen);
 			if (resplen <= 0) {
 				Perror(stderr, "recvfrom", errno);
 				res_close();

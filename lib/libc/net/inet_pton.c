@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.8 1998/10/13 21:03:31 kleink Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.9 1998/11/13 15:46:54 christos Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.8 1998/10/13 21:03:31 kleink Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.9 1998/11/13 15:46:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -293,7 +293,7 @@ inet_addr(cp)
 {
 	struct in_addr val;
 
-	if (inet_pton4(cp, (u_char *) &val.s_addr))
+	if (inet_pton4(cp, (u_char *)(void *)&val.s_addr))
 		return (val.s_addr);
 	return (INADDR_NONE);
 }
@@ -310,5 +310,5 @@ inet_aton(cp, addr)
 	register const char *cp;
 	struct in_addr *addr;
 {
-	return inet_pton4(cp, (u_char *) &addr->s_addr);
+	return inet_pton4(cp, (u_char *)(void *)&addr->s_addr);
 }

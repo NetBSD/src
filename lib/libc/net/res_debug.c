@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.21 1998/10/15 10:22:24 kleink Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.22 1998/11/13 15:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.21 1998/10/15 10:22:24 kleink Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.22 1998/11/13 15:46:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,7 +107,7 @@ static char *dewks __P((int));
 static const char *deproto __P((int));
 static const u_char *do_rrset __P((const u_char *, int, const u_char *,
     int, int, FILE *, const char *));
-static const char *precsize_ntoa __P((u_int8_t));
+static const char *precsize_ntoa __P((u_int32_t));
 static u_int8_t precsize_aton __P((const char **));
 static u_int32_t latlon2ul __P((const char **, int *));
 
@@ -231,7 +231,7 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	/*
 	 * Print answer records.
 	 */
-	sflag = (_res.pfcode & pflag);
+	sflag = (int)(_res.pfcode & pflag);
 	if ((n = ntohs(cnt)) != 0) {
 		if ((!_res.pfcode) || ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
 			fprintf(file, hs);
@@ -244,7 +244,7 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 				cp += sizeof(u_int16_t);
 				cp += sizeof(u_int16_t);
 				cp += sizeof(u_int32_t);
-				dlen = _getshort((u_char*)cp);
+				dlen = _getshort((const u_char *)cp);
 				cp += sizeof(u_int16_t);
 				cp += dlen;
 			}
@@ -307,7 +307,7 @@ __fp_nquery(msg, len, file)
 	/*
 	 * Print header fields.
 	 */
-	hp = (HEADER *)msg;
+	hp = (const HEADER *)(const void *)msg;
 	cp = msg + HFIXEDSZ;
 	endMark = msg + len;
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX) || hp->rcode) {
@@ -361,25 +361,25 @@ __fp_nquery(msg, len, file)
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				cp = p_cdnname(cp, msg, len, file);
 			else {
-				int n;
+				int nn;
 				char name[MAXDNAME];
 
-				if ((n = dn_expand(msg, msg+len, cp, name,
+				if ((nn = dn_expand(msg, msg+len, cp, name,
 						sizeof name)) < 0)
 					cp = NULL;
 				else
-					cp += n;
+					cp += nn;
 			}
 			ErrorTest(cp);
 			TruncTest(cp);
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				fprintf(file, ", type = %s",
-					__p_type(_getshort((u_char*)cp)));
+					__p_type(_getshort((const u_char*)cp)));
 			cp += INT16SZ;
 			TruncTest(cp);
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				fprintf(file, ", class = %s\n",
-					__p_class(_getshort((u_char*)cp)));
+					__p_class(_getshort((const u_char*)cp)));
 			cp += INT16SZ;
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				putc('\n', file);
@@ -680,17 +680,17 @@ __p_rr(cp, msg, file)
 		break;
 
 	case T_AAAA: {
-		char t[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+		char tt[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
 
-		fprintf(file, "\t%s", inet_ntop(AF_INET6, cp, t, sizeof t));
+		fprintf(file, "\t%s", inet_ntop(AF_INET6, cp, tt, sizeof tt));
 		cp += dlen;
 		break;
 	    }
 
 	case T_LOC: {
-		char t[255];
+		char tt[255];
 
-		fprintf(file, "\t%s", loc_ntoa(cp, t));
+		fprintf(file, "\t%s", loc_ntoa(cp, tt));
 		cp += dlen;
 		break;
 	    }
@@ -742,7 +742,7 @@ __p_rr(cp, msg, file)
 
 	case T_UINFO:
 		putc('\t', file);
-		fputs(cp, file);
+		fputs((char *)cp, file);
 		cp += dlen;
 		break;
 
@@ -791,7 +791,7 @@ __p_rr(cp, msg, file)
 		fprintf(file," %u", *cp++);	/* protocol */
 		fprintf(file," %u (", *cp++);	/* algorithm */
 
-		n = b64_ntop(cp, (cp1 + dlen) - cp,
+		n = b64_ntop(cp, (size_t)((cp1 + dlen) - cp),
 			     base64_key, sizeof base64_key);
 		for (c = 0; c < n; ++c) {
 			if (0 == (c & 0x3F))
@@ -807,7 +807,7 @@ __p_rr(cp, msg, file)
 		break;
 
 	case T_SIG:
-	        type = _getshort((u_char*)cp);
+	        type = _getshort((const u_char *)cp);
 		cp += INT16SZ;
 		fprintf(file, " %s", p_type(type));
 		fprintf(file, "\t%d", *cp++);	/* algorithm */
@@ -818,23 +818,24 @@ __p_rr(cp, msg, file)
 			fprintf(file, "\t; LABELS WRONG (%d should be %d)\n\t",
 				n, c);
 		/* orig ttl */
-		n = _getlong((u_char*)cp);
+		n = _getlong((const u_char *)cp);
 		if (n != tmpttl)
 			fprintf(file, " %u", n);
 		cp += INT32SZ;
 		/* sig expire */
 		fprintf(file, " (\n\t%s",
-				     __p_secstodate(_getlong((u_char*)cp)));
+		    __p_secstodate(_getlong((const u_char *)cp)));
 		cp += INT32SZ;
 		/* time signed */
-		fprintf(file, " %s", __p_secstodate(_getlong((u_char*)cp)));
+		fprintf(file, " %s",
+		    __p_secstodate(_getlong((const u_char *)cp)));
 		cp += INT32SZ;
 		/* sig footprint */
-		fprintf(file," %u ", _getshort((u_char*)cp));
+		fprintf(file," %u ", _getshort((const u_char *)cp));
 		cp += INT16SZ;
 		/* signer's name */
 		cp = p_fqname(cp, msg, file);
-		n = b64_ntop(cp, (cp1 + dlen) - cp,
+		n = b64_ntop(cp, (size_t)((cp1 + dlen) - cp),
 			     base64_key, sizeof base64_key);
 		for (c = 0; c < n; c++) {
 			if (0 == (c & 0x3F))
@@ -1072,7 +1073,8 @@ __p_time(value)
 	u_int32_t value;
 {
 	static char nbuf[40];
-	int secs, mins, hours, days, len = sizeof nbuf;
+	int secs, mins, hours, days;
+	size_t len = sizeof nbuf;
 	register char *p;
 
 	if (value == 0) {
@@ -1136,7 +1138,7 @@ static const unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
 /* takes an XeY precision/size value, returns a string representation. */
 static const char *
 precsize_ntoa(prec)
-	u_int8_t prec;
+	u_int32_t prec;
 {
 	static char retbuf[sizeof "90000000.00"];
 	unsigned long val;
@@ -1157,11 +1159,11 @@ precsize_aton(strptr)
 	const char **strptr;
 {
 	u_int8_t retval = 0;
-	char *cp;
+	const char *cp;
 	int exponent = 0;
 	int mantissa = 0;
 
-	cp = (char *)*strptr;
+	cp = (const char *)*strptr;
 	while (isdigit(*cp)) {
 		if (mantissa == 0)
 			mantissa = *cp - '0';
@@ -1416,7 +1418,7 @@ loc_ntoa(binary, ascii)
 	const u_char *binary;
 	char *ascii;
 {
-	static const char *const error = "?";
+	static char *error = "?";
 	register const u_char *cp = binary;
 
 	int latdeg, latmin, latsec, latsecfrac;
@@ -1430,7 +1432,7 @@ loc_ntoa(binary, ascii)
 	u_int32_t templ;
 	u_int8_t sizeval, hpval, vpval, versionval;
     
-	const char *sizestr, *hpstr, *vpstr;
+	char *sizestr, *hpstr, *vpstr;
 
 	versionval = *cp++;
 
@@ -1504,11 +1506,11 @@ loc_ntoa(binary, ascii)
 		altmeters, altfrac, sizestr, hpstr, vpstr);
 
 	if (sizestr != error)
-		free((char *)sizestr);
+		free(sizestr);
 	if (hpstr != error)
-		free((char *)hpstr);
+		free(hpstr);
 	if (vpstr != error)
-		free((char *)vpstr);
+		free(vpstr);
 
 	return (ascii);
 }
@@ -1551,14 +1553,14 @@ __p_secstodate (secs)
 	unsigned long secs;
 {
 	static char output[15];		/* YYYYMMDDHHMMSS and null */
-	time_t clock = secs;
-	struct tm time;
+	time_t clk = secs;
+	struct tm tim;
 	
-	(void)gmtime_r(&clock, &time);
-	time.tm_year += 1900;
-	time.tm_mon += 1;
+	(void)gmtime_r(&clk, &tim);
+	tim.tm_year += 1900;
+	tim.tm_mon += 1;
 	sprintf(output, "%04d%02d%02d%02d%02d%02d",
-		time.tm_year, time.tm_mon, time.tm_mday,
-		time.tm_hour, time.tm_min, time.tm_sec);
+		tim.tm_year, tim.tm_mon, tim.tm_mday,
+		tim.tm_hour, tim.tm_min, tim.tm_sec);
 	return (output);
 }

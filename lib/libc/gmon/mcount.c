@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.10 1998/03/26 23:52:38 cgd Exp $	*/
+/*	$NetBSD: mcount.c,v 1.11 1998/11/13 15:47:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.10 1998/03/26 23:52:38 cgd Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.11 1998/11/13 15:47:09 christos Exp $");
 #endif
 #endif
 
@@ -99,11 +99,13 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 #if (HASHFRACTION & (HASHFRACTION - 1)) == 0
 	if (p->hashfraction == HASHFRACTION)
 		frompcindex =
-		    &p->froms[frompc / (HASHFRACTION * sizeof(*p->froms))];
+		    &p->froms[
+		    (size_t)(frompc / (HASHFRACTION * sizeof(*p->froms)))];
 	else
 #endif
 		frompcindex =
-		    &p->froms[frompc / (p->hashfraction * sizeof(*p->froms))];
+		    &p->froms[
+		    (size_t)(frompc / (p->hashfraction * sizeof(*p->froms)))];
 	toindex = *frompcindex;
 	if (toindex == 0) {
 		/*
@@ -114,14 +116,14 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 			/* halt further profiling */
 			goto overflow;
 
-		*frompcindex = toindex;
-		top = &p->tos[toindex];
+		*frompcindex = (u_short)toindex;
+		top = &p->tos[(size_t)toindex];
 		top->selfpc = selfpc;
 		top->count = 1;
 		top->link = 0;
 		goto done;
 	}
-	top = &p->tos[toindex];
+	top = &p->tos[(size_t)toindex];
 	if (top->selfpc == selfpc) {
 		/*
 		 * arc at front of chain; usual case.
@@ -147,11 +149,11 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 			if (toindex >= p->tolimit)
 				goto overflow;
 
-			top = &p->tos[toindex];
+			top = &p->tos[(size_t)toindex];
 			top->selfpc = selfpc;
 			top->count = 1;
 			top->link = *frompcindex;
-			*frompcindex = toindex;
+			*frompcindex = (u_short)toindex;
 			goto done;
 		}
 		/*
@@ -169,7 +171,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 			toindex = prevtop->link;
 			prevtop->link = top->link;
 			top->link = *frompcindex;
-			*frompcindex = toindex;
+			*frompcindex = (u_short)toindex;
 			goto done;
 		}
 		

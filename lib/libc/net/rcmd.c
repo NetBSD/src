@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.27 1998/10/18 14:22:05 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.28 1998/11/13 15:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.27 1998/10/18 14:22:05 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.28 1998/11/13 15:46:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,12 +71,12 @@ __RCSID("$NetBSD: rcmd.c,v 1.27 1998/10/18 14:22:05 christos Exp $");
 
 #include "pathnames.h"
 
-int	orcmd __P((char **, u_short, const char *, const char *, const char *,
+int	orcmd __P((char **, u_int, const char *, const char *, const char *,
 	    int *));
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
-static	int rshrcmd __P((char **, u_short, const char *, const char *,
+static	int rshrcmd __P((char **, u_int32_t, const char *, const char *,
 	    const char *, int *, const char *));
-static	int hprcmd __P((struct hostent *, char **, u_short, const char *,
+static	int hprcmd __P((struct hostent *, char **, u_int32_t, const char *,
 	    const char *, const char *, int *));
 static	int __icheckhost __P((u_int32_t, const char *));
 static	char *__gethostloop __P((u_int32_t));
@@ -119,7 +119,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 int
 orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	char **ahost;
-	u_short rport;
+	u_int rport;
 	const char *locuser, *remuser, *cmd;
 	int *fd2p;
 {
@@ -139,7 +139,7 @@ static int
 hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 	struct hostent *hp;
 	char **ahost;
-	u_short rport;
+	u_int32_t rport;
 	const char *locuser, *remuser, *cmd;
 	int *fd2p;
 {
@@ -172,8 +172,9 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 #endif
 		sin.sin_family = hp->h_addrtype;
 		sin.sin_port = rport;
-		memmove(&sin.sin_addr, hp->h_addr_list[0], hp->h_length);
-		if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
+		memmove(&sin.sin_addr,
+		    hp->h_addr_list[0], (size_t)hp->h_length);
+		if (connect(s, (struct sockaddr *)(void *)&sin, sizeof(sin)) >= 0)
 			break;
 		(void)close(s);
 		if (errno == EADDRINUSE) {
@@ -181,7 +182,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			continue;
 		}
 		if (errno == ECONNREFUSED && timo <= 16) {
-			(void)sleep(timo);
+			(void)sleep((unsigned int)timo);
 			timo *= 2;
 			continue;
 		}
@@ -194,7 +195,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			perror(0);
 			hp->h_addr_list++;
 			memmove(&sin.sin_addr, hp->h_addr_list[0],
-			    hp->h_length);
+			    (size_t)hp->h_length);
 			(void)fprintf(stderr, "Trying %s...\n",
 			    inet_ntoa(sin.sin_addr));
 			continue;
@@ -235,7 +236,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			(void)close(s2);
 			goto bad;
 		}
-		s3 = accept(s2, (struct sockaddr *)&from, &len);
+		s3 = accept(s2, (struct sockaddr *)(void *)&from, &len);
 		(void)close(s2);
 		if (s3 < 0) {
 			warn("rcmd: accept");
@@ -281,10 +282,11 @@ bad:
 /*
  * based on code written by Chris Siebenmann <cks@utcc.utoronto.ca>
  */
+/* ARGSUSED */
 static int
 rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	char  	**ahost;
-	u_short	rport;
+	u_int32_t	rport;
 	const	char *locuser, *remuser, *cmd;
 	int	*fd2p;
 	const	char *rshcmd;
@@ -671,7 +673,8 @@ __ivaliduser(hostf, raddr, luser, ruser)
 				break;
 
 			default:
-				userok = -(strcmp(ruser, &auser[1]) == 0);
+				userok =
+				    -(strcmp(ruser, &auser[1]) == 0 ? 1 : 0);
 				break;
 			}
 		else
@@ -734,7 +737,7 @@ __gethostloop(raddr)
 	struct hostent *hp;
 	struct in_addr in;
 
-	hp = gethostbyaddr((char *) &raddr, sizeof(raddr), AF_INET);
+	hp = gethostbyaddr((char *)(void *)&raddr, sizeof(raddr), AF_INET);
 	if (hp == NULL)
 		return (NULL);
 
@@ -749,7 +752,7 @@ __gethostloop(raddr)
 		return (NULL);
 
 	for (; hp->h_addr_list[0] != NULL; hp->h_addr_list++)
-		if (!memcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
+		if (!memcmp(hp->h_addr_list[0], &raddr, sizeof(raddr)))
 			return (remotehost);
 
 	/*

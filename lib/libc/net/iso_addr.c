@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,7 +107,7 @@ iso_ntoa(isoa)
 {
 	static char obuf[64];
 	register char *out = obuf; 
-	register int i;
+	register size_t i;
 	register u_char *in = (u_char *)isoa->isoa_genaddr;
 	u_char *inlim = in + isoa->isoa_len;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.10 1998/11/13 12:31:53 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.11 1998/11/13 15:49:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: vis.c,v 1.10 1998/11/13 12:31:53 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.11 1998/11/13 15:49:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -127,8 +127,8 @@ vis(dst, c, flag, nextc)
 	}
 	if (((c & 0177) == ' ') || (flag & VIS_OCTAL)) {	
 		*dst++ = '\\';
-		*dst++ = ((u_char)(((u_char)c) >> 6) & 07) + '0';
-		*dst++ = ((u_char)(((u_char)c) >> 3) & 07) + '0';
+		*dst++ = ((((u_int32_t)c) >> 6) & 07) + '0';
+		*dst++ = ((((u_int32_t)c) >> 3) & 07) + '0';
 		*dst++ = (((u_char)c) & 07) + '0';
 		goto done;
 	}

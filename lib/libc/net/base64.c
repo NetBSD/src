@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.3 1997/07/13 19:57:30 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.4 1998/11/13 15:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: base64.c,v 1.3 1997/07/13 19:57:30 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.4 1998/11/13 15:46:52 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -153,9 +153,11 @@ b64_ntop(src, srclength, target, targsize)
 		input[2] = *src++;
 		srclength -= 3;
 
-		output[0] = input[0] >> 2;
-		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
-		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
+		output[0] = (u_int32_t)input[0] >> 2;
+		output[1] = ((u_int32_t)(input[0] & 0x03) << 4) +
+		    ((u_int32_t)input[1] >> 4);
+		output[2] = ((u_int32_t)(input[1] & 0x0f) << 2) +
+		    ((u_int32_t)input[2] >> 6);
 		output[3] = input[2] & 0x3f;
 		Assert(output[0] < 64);
 		Assert(output[1] < 64);
@@ -177,9 +179,11 @@ b64_ntop(src, srclength, target, targsize)
 		for (i = 0; i < srclength; i++)
 			input[i] = *src++;
 	
-		output[0] = input[0] >> 2;
-		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
-		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
+		output[0] = (u_int32_t)input[0] >> 2;
+		output[1] = ((u_int32_t)(input[0] & 0x03) << 4) +
+		    ((u_int32_t)input[1] >> 4);
+		output[2] = ((u_int32_t)(input[1] & 0x0f) << 2) +
+		    ((u_int32_t)input[2] >> 6);
 		Assert(output[0] < 64);
 		Assert(output[1] < 64);
 		Assert(output[2] < 64);
@@ -242,7 +246,8 @@ b64_pton(src, target, targsize)
 			if (target) {
 				if (tarindex + 1 >= targsize)
 					return (-1);
-				target[tarindex]   |=  (pos - Base64) >> 4;
+				target[tarindex] |= 
+				    (u_int32_t)(pos - Base64) >> 4;
 				target[tarindex+1]  = ((pos - Base64) & 0x0f)
 							<< 4 ;
 			}
@@ -253,8 +258,9 @@ b64_pton(src, target, targsize)
 			if (target) {
 				if (tarindex + 1 >= targsize)
 					return (-1);
-				target[tarindex]   |=  (pos - Base64) >> 2;
-				target[tarindex+1]  = ((pos - Base64) & 0x03)
+				target[tarindex] |= 
+					(u_int32_t)(pos - Base64) >> 2;
+				target[tarindex+1] = ((pos - Base64) & 0x03)
 							<< 6;
 			}
 			tarindex++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntoa.c,v 1.6 1997/07/21 14:08:07 jtc Exp $	*/
+/*	$NetBSD: inet_ntoa.c,v 1.7 1998/11/13 15:46:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_ntoa.c,v 1.6 1997/07/21 14:08:07 jtc Exp $");
+__RCSID("$NetBSD: inet_ntoa.c,v 1.7 1998/11/13 15:46:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ inet_ntoa(in)
 	static char b[18];
 	register char *p;
 
-	p = (char *)&in;
+	p = (char *)(void *)&in;
 #define	UC(b)	(((int)b)&0xff)
 	(void)snprintf(b, sizeof(b),
 	    "%d.%d.%d.%d", UC(p[0]), UC(p[1]), UC(p[2]), UC(p[3]));

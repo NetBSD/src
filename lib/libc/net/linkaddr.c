@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.8 1998/10/15 10:22:23 kleink Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.9 1998/11/13 15:46:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.8 1998/10/15 10:22:23 kleink Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.9 1998/11/13 15:46:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,7 +64,7 @@ link_addr(addr, sdl)
 	register struct sockaddr_dl *sdl;
 {
 	register char *cp = sdl->sdl_data;
-	char *cplim = sdl->sdl_len + (char *)sdl;
+	char *cplim = sdl->sdl_len + (char *)(void *)sdl;
 	register int byte = 0, state = NAMING;
 	register int newaddr = 0;	/* pacify gcc */
 
@@ -122,7 +122,7 @@ link_addr(addr, sdl)
 		break;
 	} while (cp < cplim); 
 	sdl->sdl_alen = cp - LLADDR(sdl);
-	newaddr = cp - (char *)sdl;
+	newaddr = cp - (char *)(void *)sdl;
 	if (newaddr > sizeof(*sdl))
 		sdl->sdl_len = newaddr;
 	return;
@@ -136,7 +136,7 @@ link_ntoa(sdl)
 {
 	static char obuf[64];
 	register char *out = obuf; 
-	register int i;
+	register size_t i;
 	register u_char *in = (u_char *)LLADDR(sdl);
 	u_char *inlim = in + sdl->sdl_alen;
 	int firsttime = 1;
