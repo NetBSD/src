@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.10 2001/05/01 07:33:29 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.11 2001/05/03 17:54:30 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ static struct pcctwo_device mcchip_devices[] = {
 	{"zsc", MCCHIP_ZS0_OFF},
 	{"zsc", MCCHIP_ZS1_OFF},
 	{"ie", PCCTWO_IE_OFF},
-	{"ncrsc", PCCTWO_NCRSC_OFF},
+	{"osiop", PCCTWO_NCRSC_OFF},
 	{"nvram", PCCTWO_NVRAM_OFF},
 	{NULL, 0}
 };
