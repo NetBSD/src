@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.18 2004/06/06 04:53:14 christos Exp $	*/
+/*	$NetBSD: xstr.c,v 1.19 2004/06/06 07:09:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.18 2004/06/06 04:53:14 christos Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.19 2004/06/06 07:09:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,6 @@ gotc:
 out:
 	*cpp = --cp;
 	*dp = '\0';
-	fprintf(stderr, ">%s<\n", dbuf);
 	hash = hashit(dbuf, 1);
 	free(dbuf);
 	return hash;
