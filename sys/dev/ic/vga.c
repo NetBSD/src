@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.7 1998/06/26 21:05:20 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.8 1998/07/24 16:20:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,6 +59,8 @@ struct vgascreen {
 	int fontset;
 	/* font data */
 	/* palette */
+
+	int mindispoffset, maxdispoffset;
 };
 
 struct vga_config {
@@ -84,6 +86,7 @@ void vga_init __P((struct vga_config *, bus_space_tag_t,
 		   bus_space_tag_t));
 
 static int	vga_alloc_attr __P((void *, int, int, int, long *));
+void	vga_copyrows __P((void *, int, int, int));
 
 const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
@@ -91,7 +94,7 @@ const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_putchar,
 	pcdisplay_copycols,
 	pcdisplay_erasecols,
-	pcdisplay_copyrows,
+	vga_copyrows,
 	pcdisplay_eraserows,
 	vga_alloc_attr
 };
@@ -261,13 +264,15 @@ vga_init_screen(vc, scr, type, existing, attrp)
 	int existing;
 	long *attrp;
 {
-	int cpos = 0;
+	int cpos;
 	int res;
 
 	scr->cfg = vc;
 	scr->pcs.hdl = (struct pcdisplay_handle *)&vc->hdl;
 	scr->pcs.type = type;
 	scr->pcs.active = 0;
+	scr->mindispoffset = 0;
+	scr->maxdispoffset = 0x8000 - type->nrows * type->ncols * 2;
 
 	if (existing) {
 		cpos = vga_6845_read(&vc->hdl, cursorh) << 8;
@@ -276,6 +281,17 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		/* make sure we have a valid cursor position */
 		if (cpos < 0 || cpos >= type->nrows * type->ncols)
 			cpos = 0;
+
+		scr->pcs.dispoffset = vga_6845_read(&vc->hdl, startadrh) << 9;
+		scr->pcs.dispoffset |= vga_6845_read(&vc->hdl, startadrl) << 1;
+
+		/* make sure we have a valid memory offset */
+		if (scr->pcs.dispoffset < scr->mindispoffset ||
+		    scr->pcs.dispoffset > scr->maxdispoffset)
+			scr->pcs.dispoffset = scr->mindispoffset;
+	} else {
+		cpos = 0;
+		scr->pcs.dispoffset = scr->mindispoffset;
 	}
 
 	scr->pcs.vc_crow = cpos / type->ncols;
@@ -549,7 +565,7 @@ vga_show_screen(v, cookie)
 
 	for (i = 0; i < oldtype->ncols * oldtype->nrows; i++)
 		oldscr->pcs.mem[i] = bus_space_read_2(vh->vh_memt, vh->vh_memh,
-						      i * 2);
+						oldscr->pcs.dispoffset + i * 2);
 
 	if (oldtype != type)
 		vga_setscreentype(vh, type);
@@ -557,9 +573,16 @@ vga_show_screen(v, cookie)
 		vga_setfontset(vh, scr->fontset);
 	/* swich colours */
 
+	scr->pcs.dispoffset = scr->mindispoffset;
+	if (scr->pcs.dispoffset != oldscr->pcs.dispoffset) {
+		vga_6845_write(vh, startadrh, scr->pcs.dispoffset >> 9);
+		vga_6845_write(vh, startadrl, scr->pcs.dispoffset >> 1);
+	}
+
 	for (i = 0; i < type->ncols * type->nrows; i++)
 		bus_space_write_2(vh->vh_memt, vh->vh_memh,
-				  i * 2, scr->pcs.mem[i]);
+				  scr->pcs.dispoffset + i * 2,
+				  scr->pcs.mem[i]);
 
 	scr->pcs.active = 1;
 	vc->active = scr;
@@ -620,4 +643,46 @@ vga_alloc_attr(id, fg, bg, flags, attrp)
 	if (flags & WSATTR_BLINK)
 		*attrp |= FG_BLINK;
 	return (0);
+}
+
+void
+vga_copyrows(id, srcrow, dstrow, nrows)
+	void *id;
+	int srcrow, dstrow, nrows;
+{
+	struct vgascreen *scr = id;
+	bus_space_tag_t memt = scr->pcs.hdl->ph_memt;
+	bus_space_handle_t memh = scr->pcs.hdl->ph_memh;
+	int ncols = scr->pcs.type->ncols;
+	bus_size_t srcoff, dstoff;
+
+	srcoff = srcrow * ncols + 0;
+	dstoff = dstrow * ncols + 0;
+
+	if (scr->pcs.active) {
+		if (dstrow == 0 && (srcrow + nrows == scr->pcs.type->nrows)) {
+			/* scroll up whole screen */
+			if ((scr->pcs.dispoffset + srcrow * ncols * 2)
+			    <= scr->maxdispoffset) {
+				scr->pcs.dispoffset += srcrow * ncols * 2;
+			} else {
+				bus_space_copy_region_2(memt, memh,
+					scr->pcs.dispoffset + srcoff * 2,
+					memh, scr->mindispoffset,
+					nrows * ncols);
+				scr->pcs.dispoffset = scr->mindispoffset;
+			}
+			vga_6845_write(&scr->cfg->hdl, startadrh,
+				       scr->pcs.dispoffset >> 9);
+			vga_6845_write(&scr->cfg->hdl, startadrl,
+				       scr->pcs.dispoffset >> 1);
+		} else {
+			bus_space_copy_region_2(memt, memh,
+					scr->pcs.dispoffset + srcoff * 2,
+					memh, scr->pcs.dispoffset + dstoff * 2,
+					nrows * ncols);
+		}
+	} else
+		bcopy(&scr->pcs.mem[srcoff], &scr->pcs.mem[dstoff],
+		      nrows * ncols * 2);
 }
