@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.7 1996/08/02 11:21:53 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.8 1997/03/15 13:04:24 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -78,6 +78,10 @@ unsigned        opendev, boothowto, bootset;
 extern unsigned *bootregs;
 extern struct	rpb *rpb;
 
+/*
+ * The boot block are used by 11/750, 8200, MicroVAX II/III, VS2000,
+ * VS3100/??, VS4000 and VAX6000/???, and only when booting from disk.
+ */
 Xmain()
 {
 	int io;
@@ -89,7 +93,6 @@ Xmain()
 
         case VAX_78032:
         case VAX_650:
-		bootdev = rpb->devtyp;
 
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
@@ -101,6 +104,7 @@ Xmain()
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
 		rpb->iovec = (int)bqo;
 		bootregs[11] = (int)rpb;
+		bootdev = rpb->devtyp;
 
                 break;
 	case VAX_8200:
@@ -169,8 +173,9 @@ shread:
 
 getbootdev()
 {
-	int	i, major, adaptor, controller, unit, partition;
+	int i, adaptor, controller, unit, partition, retval;
 
+	adaptor = controller = unit = partition = 0;
 
 	switch (vax_cputype) {
 	case VAX_78032:
@@ -188,39 +193,28 @@ getbootdev()
 		break;
 	}
 
-	partition = 0;
-
-	switch (bootdev) {
-	case BDEV_MBA:			/* massbuss boot */
-		major = 0;	/* hp / ...  */
+	switch (B_TYPE(bootdev)) {
+	case BDEV_HP:			/* massbuss boot */
 		adaptor = (bootregs[1] & 0x6000) >> 17;
 		break;
 
 	case BDEV_UDA:		/* UDA50 boot */
-		major = 9;	/* ra / mscp  */
 		if (vax_cputype == VAX_750)
 			adaptor = (bootregs[1] & 0x40000 ? 0 : 1);
 		break;
 
-	case BDEV_TK50:		/* TK50 boot */
-		major = 15;	/* tms / tmscp  */
-		break;
-
-	case 36:		/* VS2000/KA410 ST506 disk */
-	case 37:                /* VS2000/KA410 SCSI tape */
-	case 42:                /* VS3100/76 SCSI-floppy(?) */
-		major = 17;     /* 17 is assigned to the ROM-drivers */
-		break;
-
-	case BDEV_CONSOLE:
-		major = 8;
+	case BDEV_TK:		/* TK50 boot */
+	case BDEV_CNSL:		/* Console storage boot */
+	case BDEV_SCSI:		/* SCSI on MV2000 */
+	case BDEV_RD:		/* RD/RX on MV2000 */
+		controller = 0; /* They are always on ctlr 0 */
 		break;
 
 	default:
 		printf("Unsupported boot device %d, trying anyway.\n", bootdev);
 		boothowto |= (RB_SINGLE | RB_ASKNAME);
 	}
-	return MAKEBOOTDEV(major, adaptor, controller, unit, partition);
+	return MAKEBOOTDEV(bootdev, adaptor, controller, unit, partition);
 }
 
 struct devsw    devsw[] = {
@@ -263,7 +257,7 @@ devopen(f, fname, file)
 	if (vax_cputype == VAX_78032 || vax_cputype == VAX_650) {
 		switch (bootdev) {
 		case BDEV_UDA:	/* MSCP */
-		case BDEV_TK50:	/* TMSCP */
+		case BDEV_TK:	/* TMSCP */
 			csr = (struct udadevice *)rpb->csrphy;
 
 			csr->udaip = 0; /* Start init */
@@ -280,7 +274,7 @@ devopen(f, fname, file)
 			    (int) &uda.uda_rsp.mscp_cmdref;
 			uda.uda_ca.ca_cmddsc =
 			    (int) &uda.uda_cmd.mscp_cmdref;
-			if (bootdev == BDEV_TK50)
+			if (bootdev == BDEV_TK)
 				uda.uda_cmd.mscp_vcid = 1;
 			command(M_OP_SETCTLRC, 0);
 			uda.uda_cmd.mscp_unit = rpb->unit;
@@ -294,7 +288,7 @@ devopen(f, fname, file)
 	 * Actually disklabel is only needed when using hp disks,
 	 * but it doesn't hurt to always get it.
 	 */
-	if ((bootdev != BDEV_TK50) && (bootdev != BDEV_CONSOLE)) {
+	if ((bootdev != BDEV_TK) && (bootdev != BDEV_CNSL)) {
 		msg = getdisklabel((void *)LABELOFFSET + RELOC, &lp);
 		if (msg)
 			printf("getdisklabel: %s\n", msg);
@@ -345,7 +339,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 			command(M_OP_READ, 0);
 			break;
 
-		case BDEV_TK50: /* TMSCP */
+		case BDEV_TK: /* TMSCP */
 			if (dblk < curblock) {
 				uda.uda_cmd.mscp_seq.seq_bytecount =
 				    curblock - dblk;
@@ -365,8 +359,8 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 				command(M_OP_READ, 0);
 			}
 			break;
-		case 36:
-		case 37:
+		case BDEV_RD:
+		case BDEV_SCSI:
 		default:
 			romread_uvax(block, size, buf, bootregs);
 			break;
@@ -376,7 +370,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 
 	case VAX_8200:
 	case VAX_750:
-		if (bootdev != BDEV_MBA) {
+		if (bootdev != BDEV_HP) {
 			while (size > 0) {
 				while ((read750(block, bootregs) & 0x01) == 0)
 					printf("Retrying read bn# %d\n", block);
