@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.9 1995/06/13 05:41:43 mycroft Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.10 1995/06/13 09:07:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -73,7 +73,7 @@ int tp_incoming();
 #include <netiso/iso_var.h>
 #endif
 
-struct llinfo_x25 llinfo_x25 = {&llinfo_x25, &llinfo_x25};
+LIST_HEAD(, llinfo_x25) llinfo_x25;
 #ifndef _offsetof
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
 #endif
@@ -113,11 +113,12 @@ register struct rtentry *rt;
 	lx->lx_rt = rt;
 	lx->lx_family = dst->sa_family;
 	rt->rt_refcnt++;
-	if (rt->rt_llinfo)
-		insque(lx, (struct llinfo_x25 *)rt->rt_llinfo);
-	else {
+	if (rt->rt_llinfo) {
+		LIST_INSERT_AFTER(
+		    (struct llinfo_x25 *)rt->rt_llinfo, lx, lx_list);
+	} else {
 		rt->rt_llinfo = (caddr_t)lx;
-		insque(lx, &llinfo_x25);
+		LIST_INSERT_HEAD(&llinfo_x25, lx, lx_list);
 	}
 	for (ifa = rt->rt_ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next) {
@@ -141,7 +142,7 @@ register struct llinfo_x25 *lx;
 	else
 		rt->rt_llinfo = 0;
 	RTFREE(rt);
-	remque(lx);
+	LIST_REMOVE(lx, lx_list);
 	FREE(lx, M_PCB);
 }
 /*
