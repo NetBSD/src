@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.54 2000/05/01 10:35:17 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.55 2000/05/29 14:57:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -102,12 +102,14 @@
 
 struct sockaddr;
 struct tm;
+struct addrinfo;
 
 void	abort_remote(FILE *);
 void	abort_squared(int);
 void	abortpt(int);
 void	abortxfer(int);
 void	account(int, char **);
+void	ai_unmapped(struct addrinfo *);
 void	alarmtimer(int);
 int	another(int *, char ***, const char *);
 int	auto_fetch(int, char **);
