@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2000/02/04 18:29:15 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2000/02/08 20:02:13 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -167,10 +167,14 @@ canonicalize_bootpath()
 			strcat(cbootpath, p);
 	}
 
-	if ((p = strchr(cbootpath, ':')) != NULL) {
+	if ((p = strrchr(cbootpath, ':')) != NULL) {
 		*p++ = 0;
 		/* booted_partition = *p - '0';		XXX correct? */
 	}
+
+	/* XXX Does this belong here, or device_register()? */
+	if ((p = strrchr(cbootpath, ',')) != NULL)
+		*p = 0;
 }
 
 #define DEVICE_IS(dev, name) \
