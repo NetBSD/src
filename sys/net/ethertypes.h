@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.9 1999/05/21 00:25:48 augustss Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.10 1999/09/29 23:00:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -222,7 +222,8 @@
 #define	ETHERTYPE_AARP		0x80F3	/* AppleTalk AARP */
 		    /* 0x80F4 - 0x80F5	   Kinetics */
 #define	ETHERTYPE_APOLLO	0x80F7	/* Apollo Computer */
-		    /* 0x80FF - 0x8101	   Wellfleet Communications */
+#define ETHERTYPE_VLAN		0x8100	/* IEEE 802.1Q VLAN tagging (XXX conflicts) */
+		    /* 0x80FF - 0x8101	   Wellfleet Communications (XXX conflicts) */
 #define	ETHERTYPE_BOFL		0x8102	/* Wellfleet; BOFL (Breath OF Life) pkts [every 5-10 secs.] */
 #define	ETHERTYPE_WELLFLEET	0x8103	/* Wellfleet Communications */
 		    /* 0x8107 - 0x8109	   Symbolics Private */
