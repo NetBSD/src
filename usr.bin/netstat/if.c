@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.53 2003/04/15 08:07:10 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.54 2003/05/14 23:36:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.53 2003/04/15 08:07:10 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.54 2003/05/14 23:36:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ intpr(interval, ifnetaddr, pfunc)
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
 	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
 #ifdef INET6
-#ifdef KAME_SCOPEID
+#ifdef NI_WITHSCOPEID
 	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
 #else
 	const int niflag = NI_NUMERICHOST;
@@ -241,7 +241,7 @@ intpr(interval, ifnetaddr, pfunc)
 #ifdef INET6
 			case AF_INET6:
 				sin6 = (struct sockaddr_in6 *)sa;
-#ifdef KAME_SCOPEID
+#ifdef __KAME__
 				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 					sin6->sin6_scope_id =
 						ntohs(*(u_int16_t *)
@@ -286,7 +286,7 @@ intpr(interval, ifnetaddr, pfunc)
 						sin6.sin6_len = sizeof(struct sockaddr_in6);
 						sin6.sin6_family = AF_INET6;
 						sin6.sin6_addr = inm.in6m_addr;
-#ifdef KAME_SCOPEID
+#ifdef __KAME__
 						if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) {
 							sin6.sin6_scope_id =
 							    ntohs(*(u_int16_t *)
