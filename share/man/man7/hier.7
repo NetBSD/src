@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)hier.7	6.3 (Berkeley) 7/23/91
-.\"	$Id: hier.7,v 1.4 1993/08/01 07:35:04 mycroft Exp $
+.\"	$Id: hier.7,v 1.5 1994/03/31 01:14:22 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt HIER 7
@@ -82,6 +82,8 @@ see
 named configuration files;
 see
 .Xr named 8
+.It Li uucp/
+UUCP configuration files;
 .El
 .It Li /mnt/
 empty directory commonly used by
@@ -155,11 +157,6 @@ C include files for UFS (The U-word File System)
 .Pp
 .It Li lib/
 archive libraries
-.Pp
-.Bl -tag -width Fl -compact
-.It Li uucp/
-UUCP configuration files (historically placed; to be moved)
-.El
 .It Li libdata/
 misc. utility data files
 .It Li libexec/
@@ -204,7 +201,7 @@ see
 .It Li doc/
 misc documentation;
 src for most of the printed
-.Bx BSD
+.Bx 4.3
 manuals (available
 from the
 .Tn USENIX
