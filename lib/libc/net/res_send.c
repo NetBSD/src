@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.32 2001/01/04 15:04:19 lukem Exp $	*/
+/*	$NetBSD: res_send.c,v 1.33 2001/02/12 09:27:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.32 2001/01/04 15:04:19 lukem Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.33 2001/02/12 09:27:46 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -256,10 +256,9 @@ res_isourserver(inp)
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
 			    srv6->sin6_scope_id == in6p->sin6_scope_id &&
-			    (memcmp(&srv6->sin6_addr, &in6addr_any,
-				    sizeof(struct in6_addr)) == 0 ||
-			     memcmp(&srv6->sin6_addr, &in6p->sin6_addr,
-				    sizeof(struct in6_addr)) == 0)) {
+			    (IN6_IS_ADDR_UNSPECIFIED(&srv6->sin6_addr) ||
+			     IN6_ARE_ADDR_EQUAL(&srv6->sin6_addr,
+			     &in6p->sin6_addr))) {
 				ret++;
 				break;
 			}
