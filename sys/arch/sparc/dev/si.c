@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.51 1999/03/17 23:20:16 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.52 1999/06/30 15:18:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@
 #include <vm/vm.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -295,9 +296,8 @@ si_match(parent, cf, aux)
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-        bus_space_tag_t		bt = va->vma_bustag;
-        vme_mod_t		mod; 
+	vme_chipset_tag_t	ct = va->va_vct;
+        vme_am_t		mod; 
         vme_addr_t		vme_addr;
 
 
@@ -306,9 +306,10 @@ si_match(parent, cf, aux)
 		return (0);
 
 	/* Make sure there is something there... */
-	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	vme_addr = va->vma_reg[0];
-	if (vme_bus_probe(ct, bt, vme_addr, 1, 1, mod, NULL, 0) == 0)
+	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	vme_addr = va->r[0].offset;
+
+	if (vme_probe(ct, vme_addr, 1, mod, VME_D8, NULL, 0) != 0)
 		return (0);
 
 	/*
@@ -317,8 +318,7 @@ si_match(parent, cf, aux)
 	 * be determined using the fact that the "sc" board occupies
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
-	vme_addr = va->vma_reg[0];
-	return (vme_bus_probe(ct, bt, vme_addr, 0x801, 1, mod, NULL, 0) == 0);
+	return (vme_probe(ct, vme_addr + 0x801, 1, mod, VME_D8, NULL, 0) != 0);
 }
 
 static void
@@ -327,23 +327,24 @@ si_attach(parent, self, aux)
 	void		*aux;
 {
 	struct si_softc		*sc = (struct si_softc *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
+	vme_chipset_tag_t	ct = va->va_vct;
+	bus_space_tag_t		bt;
 	bus_space_handle_t	bh;
+	vme_mapresc_t resc;
 	vme_intr_handle_t	ih;
-	vme_mod_t		mod;
+	vme_am_t		mod;
 
-	sc->sc_dmatag = va->vma_dmatag;
+	sc->sc_dmatag = va->va_bdt;
 
-	mod = VMEMOD_A24 | VMEMOD_D | VMEMOD_S;
+	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
 
-	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct si_regs),
-			mod, bt, &bh) != 0)
-		panic("%s: vme_bus_map", ncr_sc->sc_dev.dv_xname);
+	if (vme_space_map(ct, va->r[0].offset, sizeof(struct si_regs),
+			  mod, VME_D8, 0, &bt, &bh, &resc) != 0)
+		panic("%s: vme_space_map", ncr_sc->sc_dev.dv_xname);
 
-	sc->sc_regs = (struct si_regs *)bh;
+	sc->sc_regs = (struct si_regs *)bh; /* XXX */
 
 	sc->sc_options = si_options;
 	reset_adapter = si_reset_adapter;
@@ -354,12 +355,12 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_dma_eop   = si_vme_dma_stop;
 	ncr_sc->sc_dma_stop  = si_vme_dma_stop;
 
-	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
-	vme_intr_establish(ct, ih, si_intr, sc);
+	vme_intr_map(ct, va->ilevel, va->ivector, &ih);
+	vme_intr_establish(ct, ih, IPL_BIO, si_intr, sc);
 
-	printf(" pri %d\n", va->vma_pri);
+	printf("\n");
 
-	sc->sc_adapter_iv_am = (mod << 8) | (va->vma_vec & 0xFF);
+	sc->sc_adapter_iv_am = (mod << 8) | (va->ivector & 0xFF);
 
 	si_attach_common(parent, sc);
 
@@ -380,7 +381,7 @@ sw_attach(parent, self, aux)
 	void		*aux;
 {
 	struct si_softc *sc = (struct si_softc *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_handle_t bh;
