@@ -1,4 +1,4 @@
-/*	$NetBSD: srtbegin.S,v 1.1 2002/02/23 05:41:14 thorpej Exp $	*/
+/*	$NetBSD: srtbegin.S,v 1.2 2002/02/23 18:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 #include <machine/asm.h>
 #include <arm/armreg.h>
 
+#define	STACKSIZE	1024
+
 ENTRY(start)
 	/*
 	 * We assume we've been loaded VA==PA, or that the MMU
@@ -52,6 +54,23 @@ ENTRY(start)
 	nop
 	nop
 
+	/*
+	 * Check to see if &_etext == &__data_start.  If not,
+	 * we're most likely built for running from flash,
+	 * and must copy the data segment out to RAM.
+	 */
+	add	r1, pc, #(Ldata - . - 8)
+	ldmia	r1, {r1-r3}
+	cmp	r1, r2			/* &_etext == &__data_start? */
+	beq	2f			/* yes, in RAM */
+
+	/* Copy data segment from ROM to RAM */
+1:	ldrb	r0, [r1], #0x01
+	strb	r0, [r2], #0x01
+	cmp	r2, r3			/* copy done? */
+	bne	1b
+
+2:
 	/* Clear the BSS. */
 	add	r1, pc, #(Lbss - . - 8)
 	ldmia	r1, {r1, r2}
@@ -63,13 +82,21 @@ ENTRY(start)
 	bgt	1b
 
 	/* Set the stack pointer */
-	add	sp, pc, #(Lstack - . - 8)	/* XXX for now */
+	add	r1, pc, #(Lstack - . - 8)
+	ldr	r1, [r1]
+	add	sp, r1, #STACKSIZE
 
 	b	_C_LABEL(main)
+
+Ldata:
+	.word	_C_LABEL(_etext)
+	.word	_C_LABEL(__data_start)
 
 Lbss:
 	.word	_C_LABEL(_edata)
 	.word	_C_LABEL(_end)
 
 Lstack:
-	.space	1024				/* XXX for now */
+	.word	Lstackspace
+
+	.comm	Lstackspace, STACKSIZE

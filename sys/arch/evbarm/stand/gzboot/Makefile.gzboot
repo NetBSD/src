@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.1 2002/02/23 05:41:14 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.2 2002/02/23 18:19:09 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -77,7 +77,7 @@ cleandir distclean: cleanlibdir
 cleanlibdir:
 	rm -rf lib
 
-LDFLAGS= -M -N -e start
+LDFLAGS= -M -e start -T ${LDSCRIPT}
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
@@ -87,7 +87,7 @@ vers.c: ${VERSIONFILE}
 	    ${NEWVERSWHAT}
 
 ${PROG}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x${RELOC} ${STARTFILE} \
+	${LD} -o ${BASE}.sym ${LDFLAGS} ${STARTFILE} \
 	    ${OBJS} ${LIBLIST} > ${BASE}.list
 
 .include <bsd.prog.mk>
