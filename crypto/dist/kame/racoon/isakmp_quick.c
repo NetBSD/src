@@ -1946,7 +1946,7 @@ get_proposal_r(iph2)
 		}
 	}
 
-#undef _XIDT(d)
+#undef _XIDT
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"get a src address from ID payload "
