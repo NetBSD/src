@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.59 1996/02/14 21:47:49 christos Exp $	*/
+/*	$NetBSD: st.c,v 1.60 1996/02/17 16:00:22 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -487,6 +487,7 @@ stopen(dev, flags, mode, p)
 				     SCSI_IGNORE_MEDIA_CHANGE |
 				     (stmode == CTLMODE ?
 					SCSI_IGNORE_NOT_READY : 0));
+	if (error)
 		goto bad;
 
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
@@ -1741,10 +1742,6 @@ st_interpret_sense(xs)
 			return 0;
 		}
 		if (sense->extended_flags & SSD_ILI) {
-#ifdef notdef
-			/*
-			 * info is unsigned 
-			 */
 			if (info < 0) {
 				/*
 				 * the record was bigger than the read
@@ -1755,7 +1752,6 @@ st_interpret_sense(xs)
 					    xs->datalen - info);
 				return EIO;
 			}
-#endif
 			xs->resid = info;
 			if (bp)
 				bp->b_resid = info;
