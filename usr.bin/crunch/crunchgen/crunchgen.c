@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.53 2003/12/08 23:57:13 dmcmahill Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.54 2003/12/27 22:28:38 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.53 2003/12/08 23:57:13 dmcmahill Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.54 2003/12/27 22:28:38 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -95,6 +95,7 @@ char line[MAXLINELEN];
 char confname[MAXPATHLEN], infilename[MAXPATHLEN];
 char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
 char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
+char curdir[MAXPATHLEN];
 char topdir[MAXPATHLEN];
 char libdir[MAXPATHLEN] = "/usr/lib";
 char dbg[MAXPATHLEN] = "-Os";
@@ -183,6 +184,7 @@ int main(int argc, char **argv)
      */
 
     strcpy(infilename, argv[0]);
+    getcwd(curdir, MAXPATHLEN);
 
     /* confname = `basename infilename .conf` */
 
@@ -327,10 +329,13 @@ void add_srcdirs(int argc, char **argv)
     char tmppath[MAXPATHLEN];
 
     for(i=1;i<argc;i++) {
-	if (argv[i][0] == '/' || topdir[0] == '\0')
+	if (argv[i][0] == '/')
 		strcpy(tmppath, argv[i]);
 	else {
-		strcpy(tmppath, topdir);
+		if (topdir[0] == '\0')
+		    strcpy(tmppath, curdir);
+		else
+		    strcpy(tmppath, topdir);
 		strcat(tmppath, "/");
 		strcat(tmppath, argv[i]);
 	}
@@ -425,12 +430,15 @@ void add_special(int argc, char **argv)
     }
     else if(!strcmp(argv[2], "srcdir")) {
 	if(argc != 4) goto argcount;
-	if (argv[3][0] == '/' || topdir[0] == '\0') {
+	if (argv[3][0] == '/') {
 	    if((p->srcdir = strdup(argv[3])) == NULL)
 		out_of_memory();
 	} else {
 	    char tmppath[MAXPATHLEN];
-	    strcpy(tmppath, topdir);
+	    if (topdir[0] == '\0')
+	        strcpy(tmppath, curdir);
+	    else
+	        strcpy(tmppath, topdir);
 	    strcat(tmppath, "/");
 	    strcat(tmppath, argv[3]);
 	    if((p->srcdir = strdup(tmppath)) == NULL)
@@ -540,8 +548,22 @@ void fillin_program(prog_t *p)
 	srcparent = dir_search(p->name);
 	if(srcparent) {
 	    (void)snprintf(path, sizeof(path), "%s/%s", srcparent, p->name);
-	    if(is_dir(path))
-		p->srcdir = strdup(path);
+	    if(is_dir(path)) {
+		if (path[0] == '/') {
+                    if((p->srcdir = strdup(path)) == NULL)
+			out_of_memory();
+		} else {
+		    char tmppath[MAXPATHLEN];
+		    if (topdir[0] == '\0')
+			strcpy(tmppath, curdir);
+		    else
+			strcpy(tmppath, topdir);
+		    strcat(tmppath, "/");
+		    strcat(tmppath, path);
+		    if((p->srcdir = strdup(tmppath)) == NULL)
+			out_of_memory();
+		}
+	    }
 	}
     }
     if(!p->objdir && p->srcdir && useobjs) {
