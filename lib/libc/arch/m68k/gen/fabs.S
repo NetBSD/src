@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.6 1999/10/25 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: fabs.S,v 1.7 2001/05/18 15:13:04 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,10 +38,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: fabs.S,v 1.6 1999/10/25 23:48:10 thorpej Exp $")
+RCSID("$NetBSD: fabs.S,v 1.7 2001/05/18 15:13:04 fredette Exp $")
 
 ENTRY(fabs)
-#ifdef __SVR4_ABI__
+#if defined(__SVR4_ABI__) && defined(__HAVE_68881__)
 	bclr	#31,%sp@(4)
 	fmoved	%sp@(4),%fp0
 #else
