@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.9 2000/12/03 01:54:48 minoura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ include a minimal Block0 definition, a Partition Map allowing for up to
 and a minimal MacOS HFS partition. The rest of the disk will be marked
 as available for use.  The disk driver partitions will not be initialized
 so the volume will not be MacOS bootable.  If you choose to proceed from
-this point with the installation you may edit this new partiton map to
+this point with the installation you may edit this new partition map to
 suit your NetBSD needs.  The Map will not be written to the disk until
 you have completed your partition setups.
 
