@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.78 2004/06/03 19:04:58 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.79 2004/07/20 20:28:20 heas Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.78 2004/06/03 19:04:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.79 2004/07/20 20:28:20 heas Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -84,6 +84,7 @@ struct wsscreen {
 #define SCR_OPEN 1		/* is it open? */
 #define SCR_WAITACTIVE 2	/* someone waiting on activation */
 #define SCR_GRAPHICS 4		/* graphics mode, no text (emulation) output */
+#define	SCR_DUMBFB 8		/* in use as a dumb fb (iff SCR_GRAPHICS) */
 	const struct wscons_syncops *scr_syncops;
 	void *scr_synccookie;
 
@@ -1047,21 +1048,28 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	switch (cmd) {
 	case WSDISPLAYIO_GMODE:
-		*(u_int *)data = (scr->scr_flags & SCR_GRAPHICS ?
-				  WSDISPLAYIO_MODE_MAPPED :
-				  WSDISPLAYIO_MODE_EMUL);
+		if (scr->scr_flags & SCR_GRAPHICS) {
+			if (scr->scr_flags & SCR_DUMBFB)
+				*(u_int *)data = WSDISPLAYIO_MODE_DUMBFB;
+			else
+				*(u_int *)data = WSDISPLAYIO_MODE_MAPPED;
+		} else
+			*(u_int *)data = WSDISPLAYIO_MODE_EMUL;
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
 		if (d != WSDISPLAYIO_MODE_EMUL &&
-		    d != WSDISPLAYIO_MODE_MAPPED)
+		    d != WSDISPLAYIO_MODE_MAPPED &&
+		    d != WSDISPLAYIO_MODE_DUMBFB)
 			return (EINVAL);
 
 	    if (WSSCREEN_HAS_EMULATOR(scr)) {
 		    scr->scr_flags &= ~SCR_GRAPHICS;
-		    if (d == WSDISPLAYIO_MODE_MAPPED)
-			    scr->scr_flags |= SCR_GRAPHICS;
+		    if (d == WSDISPLAYIO_MODE_MAPPED ||
+			d == WSDISPLAYIO_MODE_DUMBFB)
+			    scr->scr_flags |= SCR_GRAPHICS |
+				    ((d == WSDISPLAYIO_MODE_DUMBFB) ? SCR_DUMBFB : 0);
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
 
