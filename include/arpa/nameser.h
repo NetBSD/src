@@ -31,11 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nameser.h	5.25 (Berkeley) 4/3/91
- *	$Id: nameser.h,v 1.3 1993/08/01 18:46:21 mycroft Exp $
+ *	$Id: nameser.h,v 1.4 1993/10/27 00:10:40 mycroft Exp $
  */
 
 #ifndef _NAMESER_H_
 #define	_NAMESER_H_
+
+#include <machine/endian.h>
 
 /*
  * Define constants based on rfc883
@@ -116,7 +118,6 @@
 /*
  * Values for class field
  */
-
 #define C_IN		1		/* the arpa internet */
 #define C_CHAOS		3		/* for chaos net at MIT */
 #define C_HS		4		/* for Hesiod name server at MIT */
@@ -132,34 +133,12 @@
 #define CONV_BADCKSUM -3
 #define CONV_BADBUFLEN -4
 
-#ifndef BYTE_ORDER
-#define	LITTLE_ENDIAN	1234	/* least-significant byte first (vax) */
-#define	BIG_ENDIAN	4321	/* most-significant byte first (IBM, net) */
-#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long (pdp) */
-
-#if defined(vax) || defined(ns32000) || defined(sun386) || defined(i386) || \
-    defined(MIPSEL) || defined(BIT_ZERO_ON_RIGHT)
-#define BYTE_ORDER	LITTLE_ENDIAN
-
-#endif
-#if defined(sel) || defined(pyr) || defined(mc68000) || defined(sparc) || \
-    defined(is68k) || defined(tahoe) || defined(ibm032) || defined(ibm370) || \
-    defined(MIPSEB) || defined (BIT_ZERO_ON_LEFT)
-#define BYTE_ORDER	BIG_ENDIAN
-#endif
-#endif /* BYTE_ORDER */
-
-#ifndef BYTE_ORDER
-	/* you must determine what the correct bit order is for your compiler */
-	UNDEFINED_BIT_ORDER;
-#endif
 /*
  * Structure for query header, the order of the fields is machine and
  * compiler dependent, in our case, the bits within a byte are assignd 
  * least significant first, while the order of transmition is most 
  * significant first.  This requires a somewhat confusing rearrangement.
  */
-
 typedef struct {
 	u_short	id;		/* query identification number */
 #if BYTE_ORDER == BIG_ENDIAN
