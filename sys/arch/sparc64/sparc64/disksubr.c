@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: disksubr.c,v 1.2 1998/06/20 05:58:05 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,9 +44,10 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/cpu.h>
+#include <dev/sun/disklabel.h>
+
 #include <machine/autoconf.h>
-#include <machine/sun_disklabel.h>
+#include <machine/cpu.h>
 #if defined(SUN4)
 #include <machine/oldmon.h>
 #endif
@@ -318,7 +319,7 @@ bad:
 
 /************************************************************************
  *
- * The rest of this was taken from arch/sparc64/scsi/sun_disklabel.c
+ * The rest of this was taken from arch/sparc/scsi/sun_disklabel.c
  * and then substantially rewritten by Gordon W. Ross
  *
  ************************************************************************/
@@ -475,52 +476,6 @@ disklabel_bsd_to_sun(lp, cp)
 		cksum ^= *sp1++;
 	sl->sl_cksum = cksum;
 
-	return (0);
-}
-
-/* move this to compat/sunos */
-int
-sun_dkioctl(dk, cmd, data, partition)
-	struct disk *dk;
-	u_long cmd;
-	caddr_t data;
-	int partition;
-{
-	register struct partition *p;
-
-	switch (cmd) {
-	case DKIOCGGEOM:
-#define geom	((struct sun_dkgeom *)data)
-		bzero(data, sizeof(*geom));
-		geom->sdkc_ncylinders = dk->dk_label->d_ncylinders;
-		geom->sdkc_acylinders = dk->dk_label->d_acylinders;
-		geom->sdkc_ntracks = dk->dk_label->d_ntracks;
-		geom->sdkc_nsectors = dk->dk_label->d_nsectors;
-		geom->sdkc_interleave = dk->dk_label->d_interleave;
-		geom->sdkc_sparespercyl = dk->dk_label->d_sparespercyl;
-		geom->sdkc_rpm = dk->dk_label->d_rpm;
-		geom->sdkc_pcylinders =
-			dk->dk_label->d_ncylinders + dk->dk_label->d_acylinders;
-#undef geom
-		break;
-	case DKIOCINFO:
-		/* Homey don't do DKIOCINFO */
-		bzero(data, sizeof(struct sun_dkctlr));
-		break;
-	case DKIOCGPART:
-		if (dk->dk_label->d_secpercyl == 0)
-			return (ERANGE);	/* XXX */
-		p = &dk->dk_label->d_partitions[partition];
-		if (p->p_offset % dk->dk_label->d_secpercyl != 0)
-			return (ERANGE);	/* XXX */
-#define part	((struct sun_dkpart *)data)
-		part->sdkp_cyloffset = p->p_offset / dk->dk_label->d_secpercyl;
-		part->sdkp_nsectors = p->p_size;
-#undef part
-		break;
-	default:
-		return (-1);
-	}
 	return (0);
 }
 
