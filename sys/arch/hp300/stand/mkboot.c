@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,44 +30,75 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mkboot.c	7.2 (Berkeley) 12/16/90
- *	$Id: mkboot.c,v 1.2 1993/05/22 07:59:12 cgd Exp $
+ * from: @(#)mkboot.c	8.1 (Berkeley) 7/15/93
+ *	$Id: mkboot.c,v 1.3 1994/01/26 02:38:50 brezak Exp $
  */
 
 #ifndef lint
-char copyright[] =
-"Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90"; */
-static char rcsid[] = "$Id: mkboot.c,v 1.2 1993/05/22 07:59:12 cgd Exp $";
+/* from:
+   static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90"; */
+static char rcsid[] = "$Id: mkboot.c,v 1.3 1994/01/26 02:38:50 brezak Exp $";
 #endif /* not lint */
 
-#include "../include/param.h"
-#include "volhdr.h"
+#include <a.out.h>
+#include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/file.h>
+
+#include "volhdr.h"
+
 #include <stdio.h>
 #include <ctype.h>
+
+#define LIF_NUMDIR	8
+
+#define LIF_VOLSTART	0
+#define LIF_VOLSIZE	sizeof(struct lifvol)
+#define LIF_DIRSTART	512
+#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct lifdir))
+#define LIF_FILESTART	8192
+
+#define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
+#define lifstob(s)	((s) * SECTSIZE)
 
 int lpflag;
 int loadpoint;
 struct load ld;
 struct lifvol lifv;
-struct lifdir lifd[8];
+struct lifdir lifd[LIF_NUMDIR];
 struct exec ex;
 char buf[10240];
 
+/*
+ * Old Format:
+ *	sector 0:	LIF volume header (40 bytes)
+ *	sector 1:	<unused>
+ *	sector 2:	LIF directory (8 x 32 == 256 bytes)
+ *	sector 3-:	LIF file 0, LIF file 1, etc.
+ * where sectors are 256 bytes.
+ *
+ * New Format:
+ *	sector 0:	LIF volume header (40 bytes)
+ *	sector 1:	<unused>
+ *	sector 2:	LIF directory (8 x 32 == 256 bytes)
+ *	sector 3:	<unused>
+ *	sector 4-31:	disklabel (~300 bytes right now)
+ *	sector 32-:	LIF file 0, LIF file 1, etc.
+ */
 main(argc, argv)
 	char **argv;
 {
 	int ac;
 	char **av;
-	int from1, from2, to;
+	int from1, from2, from3, to;
 	register int n;
-	char *n1, *n2, *lifname();
+	char *n1, *n2, *n3, *lifname();
 
 	ac = --argc;
 	av = ++argv;
@@ -95,7 +126,7 @@ main(argc, argv)
 	ac--;
 	if (ac == 0)
 		usage();
-	if (ac == 2) {
+	if (ac > 1) {
 		from2 = open(av[0], O_RDONLY, 0);
 		if (from2 < 0) {
 			perror("open");
@@ -104,15 +135,26 @@ main(argc, argv)
 		n2 = av[0];
 		av++;
 		ac--;
+		if (ac > 1) {
+			from3 = open(av[0], O_RDONLY, 0);
+			if (from3 < 0) {
+				perror("open");
+				exit(1);
+			}
+			n3 = av[0];
+			av++;
+			ac--;
+		} else
+			from3 = -1;
 	} else
-		from2 = -1;
+		from2 = from3 = -1;
 	to = open(av[0], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 	if (to < 0) {
 		perror("open");
 		exit(1);
 	}
 	/* clear possibly unused directory entries */
-	strncpy(lifd[1].dir_name, "          ", 10);
+	strncpy(lifd[1].dir_name, "	     ", 10);
 	lifd[1].dir_type = -1;
 	lifd[1].dir_addr = 0;
 	lifd[1].dir_length = 0;
@@ -122,39 +164,55 @@ main(argc, argv)
 	/* record volume info */
 	lifv.vol_id = VOL_ID;
 	strncpy(lifv.vol_label, "BOOT43", 6);
-	lifv.vol_addr = 2;
+	lifv.vol_addr = btolifs(LIF_DIRSTART);
 	lifv.vol_oct = VOL_OCT;
-	lifv.vol_dirsize = 1;
+	lifv.vol_dirsize = btolifs(LIF_DIRSIZE);
 	lifv.vol_version = 1;
 	/* output bootfile one */
-	lseek(to, 3 * SECTSIZE, 0);
+	lseek(to, LIF_FILESTART, 0);
 	putfile(from1, to);
-	n = (ld.count + sizeof(ld) + (SECTSIZE - 1)) / SECTSIZE;
+	n = btolifs(ld.count + sizeof(ld));
 	strcpy(lifd[0].dir_name, lifname(n1));
 	lifd[0].dir_type = DIR_TYPE;
-	lifd[0].dir_addr = 3;
+	lifd[0].dir_addr = btolifs(LIF_FILESTART);
 	lifd[0].dir_length = n;
+	bcddate(from1, lifd[0].dir_toc);
 	lifd[0].dir_flag = DIR_FLAG;
 	lifd[0].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
 	lifv.vol_length = lifd[0].dir_addr + lifd[0].dir_length;
 	/* if there is an optional second boot program, output it */
 	if (from2 >= 0) {
-		lseek(to, (3 + n) * SECTSIZE, 0);
+		lseek(to, LIF_FILESTART+lifstob(n), 0);
 		putfile(from2, to);
-		n = (ld.count + sizeof(ld) + (SECTSIZE - 1)) / SECTSIZE;
+		n = btolifs(ld.count + sizeof(ld));
 		strcpy(lifd[1].dir_name, lifname(n2));
 		lifd[1].dir_type = DIR_TYPE;
-		lifd[1].dir_addr = 3 + lifd[0].dir_length;
+		lifd[1].dir_addr = lifv.vol_length;
 		lifd[1].dir_length = n;
+		bcddate(from2, lifd[1].dir_toc);
 		lifd[1].dir_flag = DIR_FLAG;
 		lifd[1].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
 		lifv.vol_length = lifd[1].dir_addr + lifd[1].dir_length;
 	}
+	/* ditto for three */
+	if (from3 >= 0) {
+		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n), 0);
+		putfile(from3, to);
+		n = btolifs(ld.count + sizeof(ld));
+		strcpy(lifd[2].dir_name, lifname(n3));
+		lifd[2].dir_type = DIR_TYPE;
+		lifd[2].dir_addr = lifv.vol_length;
+		lifd[2].dir_length = n;
+		bcddate(from3, lifd[2].dir_toc);
+		lifd[2].dir_flag = DIR_FLAG;
+		lifd[2].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
+		lifv.vol_length = lifd[2].dir_addr + lifd[2].dir_length;
+	}
 	/* output volume/directory header info */
-	lseek(to, 0 * SECTSIZE, 0);
-	write(to, &lifv, sizeof(lifv));
-	lseek(to, 2 * SECTSIZE, 0);
-	write(to, lifd, sizeof(lifd));
+	lseek(to, LIF_VOLSTART, 0);
+	write(to, &lifv, LIF_VOLSIZE);
+	lseek(to, LIF_DIRSTART, 0);
+	write(to, lifd, LIF_DIRSIZE);
 	exit(0);
 }
 
@@ -167,11 +225,11 @@ putfile(from, to)
 		fprintf(stderr, "error reading file header\n");
 		exit(1);
 	}
-	if (ex.a_magic == OMAGIC) {
+	if (N_GETMAGIC(ex) == OMAGIC) {
 		tcnt = ex.a_text;
 		dcnt = ex.a_data;
 	}
-	else if (ex.a_magic == NMAGIC) {
+	else if (N_GETMAGIC(ex) == NMAGIC) {
 		tcnt = (ex.a_text + PGOFSET) & ~PGOFSET;
 		dcnt = ex.a_data;
 	}
@@ -225,7 +283,7 @@ putfile(from, to)
 usage()
 {
 	fprintf(stderr,
-		"usage:  mkboot [-l loadpoint] prog1 [ prog2 ] outfile\n");
+		"usage:	 mkboot [-l loadpoint] prog1 [ prog2 ] outfile\n");
 	exit(1);
 }
 
@@ -248,4 +306,30 @@ lifname(str)
 	for ( ; i < 10; i++)
 		lname[i] = '\0';
 	return(lname);
+}
+
+#include <sys/stat.h>
+#include <time.h>	/* XXX */
+
+bcddate(fd, toc)
+	int fd;
+	char *toc;
+{
+	struct stat statb;
+	struct tm *tm;
+
+	fstat(fd, &statb);
+	tm = localtime(&statb.st_ctime);
+	*toc = ((tm->tm_mon+1) / 10) << 4;
+	*toc++ |= (tm->tm_mon+1) % 10;
+	*toc = (tm->tm_mday / 10) << 4;
+	*toc++ |= tm->tm_mday % 10;
+	*toc = (tm->tm_year / 10) << 4;
+	*toc++ |= tm->tm_year % 10;
+	*toc = (tm->tm_hour / 10) << 4;
+	*toc++ |= tm->tm_hour % 10;
+	*toc = (tm->tm_min / 10) << 4;
+	*toc++ |= tm->tm_min % 10;
+	*toc = (tm->tm_sec / 10) << 4;
+	*toc |= tm->tm_sec % 10;
 }

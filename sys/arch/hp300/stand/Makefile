@@ -1,66 +1,95 @@
-#	from: @(#)Makefile	7.8 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.3 1993/07/31 15:26:42 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
+#	     $Id: Makefile,v 1.4 1994/01/26 02:38:16 brezak Exp $
 
 DESTDIR=
-STAND=	../../stand
-INCPATH=-I. -I${STAND} -I../../sys -I..
-VPATH=	${STAND}
 
-CC=	cc -fpcc-struct-return
-AS=as
-
-# RELOC=FFF80000 allows for boot prog up to 7F000 (520192) bytes long
-RELOC=	FFF80000
+# RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
+RELOC=	FFF00000
 
 CONS= -DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
-DEFS= -DSTANDALONE ${CONS} # -DROMPRF
+DEFS= -DSTANDALONE -DCOMPAT_NOLABEL ${CONS} # -DROMPRF
 CFLAGS=	-O ${INCPATH} ${DEFS}
 
-DRIVERS=autoconf.c cons.c ct.c dca.c dcm.c fhpib.c hil.c hpib.c ite.c \
-	ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c nhpib.c rd.c \
-	scsi.c sd.c
-SRCS=	conf.c machdep.c prf.c ${DRIVERS}
-LIBS=	libsa/libsa.a libdrive.a ${DESTDIR}/usr/lib/libc.a
+SRCS=   autoconf.c cons.c ct.c devopen.c dca.c dcm.c fhpib.c hil.c hpib.c \
+	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c \
+	nhpib.c rd.c scsi.c sd.c
+SRCS+=	conf.c machdep.c prf.c tgets.c
 
-ALL=	dboot nboot tboot tcopy
+S=	${.CURDIR}/../../..
+
+.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
+.PATH: ${S}/lib/libsa
+
+INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+.include "$S/lib/libsa/Makefile.inc"
+LIBSA=	${SA_LIB}
+
+LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
+	${LIBKERN} ${LIBSA} 
+
+BOOTS=	pboot dboot nboot dcopy tboot tcopy cat #ls
+ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
 
-dboot nboot tboot tcopy: ${LIBS}
+${BOOTS}: ${LIBS}
 
-libsa/libsa.a::
-	cd libsa; make
-
-libdrive.a: conf.o machdep.o prf.o ${DRIVERS:.c=.o}
+OBJS=	${SRCS:N*.h:R:S/$/.o/g}
+${.OBJDIR}/libdrive.a: ${OBJS}
 	ar crv $@ $?
 	ranlib $@
 
-${DRIVERS}: samachdep.h
+# depend on DEFS
+
+devopen.o machdep.o srt0.o: Makefile
+cons.o dca.o hil.o: Makefile
+ite.o ite_subr.o ite_dv.o ite_gb.o ite_hy.o ite_rb.o ite_tc.o: Makefile
 
 # startups
 
-srt0.o: srt0.c
-	${CC} -E ${INCPATH} ${DEFS} srt0.c | ${AS} -o srt0.o
+srt0.o: ${.CURDIR}/srt0.s
+	${CC} ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.s
 
-tpsrt0.o: srt0.c
-	${CC} -E ${INCPATH} ${DEFS} -DTP srt0.c | ${AS} -o tpsrt0.o
+tpsrt0.o: ${.CURDIR}/srt0.s
+	${CC} ${INCPATH} ${DEFS} -DTP -c ${.CURDIR}/srt0.s -o tpsrt0.o
+
+# new boot
+pboot:	pboot.o srt0.o ${LIBS}
+	ld -N -T ${RELOC} -e begin srt0.o pboot.o ${LIBS} -o $@
+	@size pboot
+	@echo pboot total size should not exceed 1044480 bytes
+
+ls:	ls.o srt0.o ${LIBS}
+	ld -N -T ${RELOC} -e begin srt0.o ls.o ${LIBS} -o $@
+	@size ls
+	@echo ls total size should not exceed 1044480 bytes
+
+cat:	cat.o srt0.o ${LIBS}
+	ld -N -T ${RELOC} -e begin srt0.o cat.o ${LIBS} -o $@
+	@size cat
+	@echo cat total size should not exceed 1044480 bytes
 
 # bootable from tape
 
 tboot:	tboot.o srt0.o ${LIBS}
 	ld -N -T ${RELOC} -e begin srt0.o tboot.o ${LIBS} -o $@
 	@size tboot
-	@echo tboot total size should not exceed 520192 bytes
+	@echo tboot total size should not exceed 1044480 bytes
 
-tboot.o: boot.o
-	cp boot.c tboot.c; chmod +w tboot.c
-	${CC} -c -O ${INCPATH} -DJUSTASK tboot.c
+tboot.o: boot.c
+	cp ${.CURDIR}/boot.c tboot.c; chmod +w tboot.c
+	${CC} -c ${CFLAGS} -DJUSTASK tboot.c
 	rm -f tboot.c
 
 tcopy:	copy.o tpsrt0.o ${LIBS}
 	ld -N -T ${RELOC} -e begin tpsrt0.o copy.o ${LIBS} -o $@
 	@size tcopy
-	@echo tcopy total size should not exceed 520192 bytes
+	@echo tcopy total size should not exceed 1044480 bytes
 
 # bootable from floppy or real disks
 
@@ -68,62 +97,67 @@ dboot:	boot.o srt0.o bootconf.o ${LIBS}
 	ld -N -T ${RELOC} -e begin srt0.o boot.o bootconf.o ${LIBS} -o $@ 
 	@size dboot
 	@echo dboot text+data size should not exceed 57344 bytes
-	@echo dboot total size should not exceed 520192 bytes
+	@echo dboot total size should not exceed 1044480 bytes
 
-bootconf.o: conf.o
+bootconf.o: ${.CURDIR}/conf.c
 	rm -f bootconf.c
-	ln -s conf.c bootconf.c
-	${CC} -c ${INCPATH} -DBOOT bootconf.c
+	ln -s ${.CURDIR}/conf.c bootconf.c
+	${CC} -c ${CFLAGS} -DBOOT bootconf.c
 	rm -f bootconf.c
 
-# non-secure boot
+# non-secure boot (allows booting non-root owned or world writable kernels)
 
 nboot:	nboot.o srt0.o bootconf.o ${LIBS}
 	ld -N -T ${RELOC} -e begin -o nboot srt0.o nboot.o bootconf.o ${LIBS}
 	@size nboot
 	@echo nboot text+data size should not exceed 57344 bytes
-	@echo nboot total size should not exceed 520192 bytes
+	@echo nboot total size should not exceed 1044480 bytes
 
-nboot.o: boot.o
+nboot.o: ${.CURDIR}/boot.c
 	rm -f nboot.c
-	ln -s boot.c nboot.c
-	${CC} -c -O ${INCPATH} -DINSECURE ${DEFS} nboot.c
+	ln -s ${.CURDIR}/boot.c nboot.c
+	${CC} -c ${CFLAGS} -DINSECURE nboot.c
 	rm -f nboot.c
 
-dcopy: copy.o srt0.o conf.o ${LIBS}
+dcopy:	copy.o srt0.o conf.o ${LIBS}
 	ld -N -T ${RELOC} -e begin -o dcopy srt0.o copy.o conf.o ${LIBS}
 
-mkboot: mkboot.c
-	${CC} ${CFLAGS} -o mkboot mkboot.c
+mkboot: ${.CURDIR}/mkboot.c
+	${CC} ${CFLAGS} -o mkboot ${.CURDIR}/mkboot.c
 
 installboot: installboot.c
 	${CC} ${CFLAGS} -o installboot installboot.c
 
 # utilities
 
-clean:
+clean cleandir:
 	rm -f *.o *.exe *.i errs make.out
-	rm -f a.out boot cat tpboot tpcopy copy tpformat
+	rm -f a.out pboot cat ls tboot tcopy
 	rm -f boot[a-z]? boot[a-wyz][a-z].c conf[a-wyz][a-z].c
-	rm -f format drtest core sboot bootconf.c nboot.c
-	rm -f libdrive.a mkboot tboot tcopy dboot nboot installboot *.lif
-	cd libsa; make cleandir
-
-lint:
-	lint ${INCPATH} -hxbn boot.c ${SRCS} | \
-	    grep -v 'possible pointer alignment' | \
-	    grep -v 'struct/union .* never defined'
+	rm -f core sboot bootconf.c nboot.c
+	rm -f libdrive.a mkboot dboot dcopy nboot installboot *.lif
 
 install: mkboot installboot ${ALL}
-	mkboot dboot diskboot.lif
-	mkboot nboot ndiskboot.lif
-	mkboot tboot tcopy tapeboot.lif
-	install -c -s installboot ${DESTDIR}/usr/mdec
-	install -c -m 644 diskboot.lif ${DESTDIR}/usr/mdec/bootrd
+	./mkboot pboot netbsdboot.lif
+	./mkboot dboot diskboot.lif
+	./mkboot nboot ndiskboot.lif
+	./mkboot tboot tcopy tapeboot.lif
+	install -c -o bin -g bin -m 555 installboot ${DESTDIR}/usr/mdec
+	install -c -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/usr/mdec/rdboot
+	rm -f ${DESTDIR}/usr/mdec/bootrd
+	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/bootrd
+	rm -f ${DESTDIR}/usr/mdec/sdboot
+	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/sdboot
 	rm -f ${DESTDIR}/usr/mdec/bootsd
-	ln ${DESTDIR}/usr/mdec/bootrd ${DESTDIR}/usr/mdec/bootsd
-	install -c -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
-	mv diskboot.lif ndiskboot.lif tapeboot.lif ${DESTDIR}/sys/hpdist/tp
+	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
+	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
+	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
+	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
+	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
+	install -o bin -g bin -m 444 diskboot.lif ${DESTDIR}/sys/hpdist/tp
+	install -o bin -g bin -m 444 ndiskboot.lif ${DESTDIR}/sys/hpdist/tp
 
-depend: ${SRCS}
-	mkdep ${INCPATH} -DSTANDALONE ${SRCS}
+.include <bsd.dep.mk>
+.include <bsd.obj.mk>
+
+FRC:

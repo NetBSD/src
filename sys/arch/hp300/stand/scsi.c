@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory and the Systems
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: scsi.c 1.3 90/01/27
- *	from: @(#)scsi.c	7.4 (Berkeley) 5/7/91
- *	$Id: scsi.c,v 1.3 1993/08/01 19:25:20 mycroft Exp $
+ * from: Utah $Hdr: scsi.c 1.3 90/01/27$
+ * from: @(#)scsi.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: scsi.c,v 1.4 1994/01/26 02:38:58 brezak Exp $
  */
 
 /*
@@ -46,21 +47,19 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include "../dev/device.h"
-#include "../dev/scsireg.h"
+#include <hp300/dev/device.h>
+#define _IOCTL_
+#include <hp300/dev/scsireg.h>
 #include "scsivar.h"
 
-#include "saio.h"
+#include "stand.h"
 #include "samachdep.h"
 
 struct	scsi_softc scsi_softc[NSCSI];
 
-#define	scsiunit(x)	((x) >> 3)
-#define	scsislave(x)	((x) & 7)
-
 void scsireset();
-int scsi_cmd_wait = 500;
-int scsi_data_wait = 300000;
+int scsi_cmd_wait = 50000;	/* use the "real" driver init_wait value */
+int scsi_data_wait = 50000;	/* use the "real" driver init_wait value */
 
 scsiinit()
 {
@@ -68,7 +67,7 @@ scsiinit()
 	register struct hp_hw *hw;
 	register struct scsi_softc *hs;
 	register int i, addr;
-	static int first = 1;
+	static int waitset = 0;
 	
 	i = 0;
 	for (hw = sc_table; i < NSCSI && hw < &sc_table[MAXCTLRS]; hw++) {
@@ -79,23 +78,23 @@ scsiinit()
 		scsireset(i);
 		if (howto & RB_ASKNAME)
 			printf("scsi%d at sc%d\n", i, hw->hw_sc);
-		/*
-		 * Adjust devtype on first call.  This routine assumes that
-		 * adaptor is in the high byte of devtype.
-		 */
-		if (first && ((devtype >> 24) & 0xff) == hw->hw_sc) {
-			devtype = (devtype & 0x00ffffff) | (i << 24);
-			first = 0;
-		}
+		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
 		hs->sc_alive = 1;
 		i++;
+	}
+	/*
+	 * Adjust the wait values
+	 */
+	if (!waitset) {
+		scsi_cmd_wait *= cpuspeed;
+		scsi_data_wait *= cpuspeed;
+		waitset = 1;
 	}
 }
 
 scsialive(unit)
 	register int unit;
 {
-	unit = scsiunit(unit);
 	if (unit >= NSCSI || scsi_softc[unit].sc_alive == 0)
 		return (0);
 	return (1);
@@ -109,7 +108,6 @@ scsireset(unit)
 	register struct scsi_softc *hs;
 	u_int i;
 
-	unit = scsiunit(unit);
 	hs = &scsi_softc[unit];
 	hd = (struct scsidevice *)hs->sc_addr;
 	hd->scsi_id = 0xFF;
@@ -152,8 +150,10 @@ scsiabort(hs, hd)
 	register struct scsi_softc *hs;
 	volatile register struct scsidevice *hd;
 {
-	printf("scsi error: scsiabort\n");
-	return (0);
+	printf("scsi%d error: scsiabort\n", hs - scsi_softc);
+
+	scsireset(hs - scsi_softc);
+	DELAY(1000000);
 }
 
 static int
@@ -182,10 +182,15 @@ static int
 wait_for_select(hd)
 	volatile register struct scsidevice *hd;
 {
+	register int wait;
 	u_char ints;
 
-	while ((ints = hd->scsi_ints) == 0)
+	wait = scsi_data_wait;
+	while ((ints = hd->scsi_ints) == 0) {
+		if (--wait < 0)
+			return (1);
 		DELAY(1);
+	}
 	hd->scsi_ints = ints;
 	return (!(hd->scsi_ssts & SSTS_INITIATOR));
 }
@@ -269,19 +274,19 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 {
 	volatile register struct scsidevice *hd =
 				(struct scsidevice *)hs->sc_addr;
-	int i;
 	u_char phase, ints;
 	register int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
 	if (issue_select(hd, target, hs->sc_scsi_addr))
-		return (0);
+		return (-2);
 	if (wait_for_select(hd))
-		return (0);
+		return (-2);
 	/*
 	 * Wait for a phase change (or error) then let the device
 	 * sequence us through the various SCSI phases.
 	 */
+	hs->sc_stat = -1;
 	phase = CMD_PHASE;
 	while (1) {
 		wait = scsi_cmd_wait;
@@ -332,12 +337,22 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 			break;
 
 		case BUS_FREE_PHASE:
-			return (1);
+			goto out;
 
 		default:
-			printf("unexpected scsi phase %d\n", phase);
+			printf("scsi%d: unexpected scsi phase %d\n",
+			       hs - scsi_softc, phase);
 			goto abort;
 		}
+#ifdef SLOWSCSI
+		/*
+		 * XXX we have wierd transient problems with booting from
+		 * slow scsi disks on fast machines.  I have never been
+		 * able to pin the problem down, but a large delay here
+		 * seems to always work.
+		 */
+		DELAY(1000);
+#endif
 		/* wait for last command to complete */
 		while ((ints = hd->scsi_ints) == 0) {
 			if (--wait < 0)
@@ -348,73 +363,64 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 		if (ints & INTS_SRV_REQ)
 			phase = hd->scsi_psns & PHASE;
 		else if (ints & INTS_DISCON)
-			return (1);
-		else if ((ints & INTS_CMD_DONE) == 0) {
+			goto out;
+		else if ((ints & INTS_CMD_DONE) == 0)
 			goto abort;
-		}
 	}
 abort:
 	scsiabort(hs, hd);
-	return (0);
+out:
+	return (hs->sc_stat);
 }
 
 int
-scsi_test_unit_rdy(unit)
+scsi_test_unit_rdy(ctlr, slave)
+	int ctlr, slave;
 {
-	int ctlr = scsiunit(unit);
-	int slave = scsislave(unit);
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
 
-	if (scsiicmd(hs, slave, &cdb, sizeof(cdb), (u_char *)0, 0,
-		     STATUS_PHASE) == 0)
-		return (0);
-		
-	return (hs->sc_stat == 0);
+	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), (u_char *)0, 0,
+			 STATUS_PHASE));
 }
 
 int
-scsi_request_sense(unit, buf, len)
-	int unit;
+scsi_request_sense(ctlr, slave, buf, len)
+	int ctlr, slave;
 	u_char *buf;
 	unsigned len;
 {
-	int ctlr = scsiunit(unit);
-	int slave = scsislave(unit);
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
 
 	cdb.len = len;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_IN_PHASE));
+	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
+			 DATA_IN_PHASE));
 }
 
 int
-scsi_read_capacity(unit, buf, len)
-	int unit;
+scsi_read_capacity(ctlr, slave, buf, len)
+	int ctlr, slave;
 	u_char *buf;
 	unsigned len;
 {
-	int ctlr = scsiunit(unit);
-	int slave = scsislave(unit);
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb10 cdb = { CMD_READ_CAPACITY };
 
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_IN_PHASE));
+	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
+			 DATA_IN_PHASE));
 }
 
 int
-scsi_tt_read(unit, buf, len, blk, nblk)
-	int unit;
+scsi_tt_read(ctlr, slave, buf, len, blk, nblk)
+	int ctlr, slave;
 	u_char *buf;
 	u_int len;
 	daddr_t blk;
 	u_int nblk;
 {
-	int ctlr = scsiunit(unit);
-	int slave = scsislave(unit);
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
-	int stat;
 
 	bzero(&cdb, sizeof(cdb));
 	cdb.cmd = CMD_READ_EXT;
@@ -424,25 +430,20 @@ scsi_tt_read(unit, buf, len, blk, nblk)
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	stat = scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_IN_PHASE);
-	if (stat == 0)
-		return (1);
-	return (hs->sc_stat);
+	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
+			 DATA_IN_PHASE));
 }
 
 int
-scsi_tt_write(unit, buf, len, blk, nblk)
-	int unit;
+scsi_tt_write(ctlr, slave, buf, len, blk, nblk)
+	int ctlr, slave;
 	u_char *buf;
 	u_int len;
 	daddr_t blk;
 	u_int nblk;
 {
-	int ctlr = scsiunit(unit);
-	int slave = scsislave(unit);
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
-	int stat;
 
 	bzero(&cdb, sizeof(cdb));
 	cdb.cmd = CMD_WRITE_EXT;
@@ -452,8 +453,6 @@ scsi_tt_write(unit, buf, len, blk, nblk)
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	stat = scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_OUT_PHASE);
-	if (stat == 0)
-		return (1);
-	return (hs->sc_stat);
+	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
+			 DATA_OUT_PHASE));
 }
