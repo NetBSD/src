@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/20 04:28:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/24 09:01:16 lukem Exp $
 
 .PATH:	${.CURDIR}/../lint1
 
@@ -7,6 +7,6 @@ PROGNAME= lint
 SRCS=	xlint.c mem.c
 MAN=	lint.1
 
-CFLAGS+=-I${.CURDIR}/../lint1
+CPPFLAGS+=-I${.CURDIR}/../lint1
 
 .include <bsd.prog.mk>

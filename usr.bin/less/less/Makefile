@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/19 03:52:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/24 09:00:37 lukem Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
 
 PROG=	less
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../lesskey
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../lesskey
 SRCS=	brac.c ch.c charset.c cmdbuf.c command.c decode.c edit.c \
 	filename.c forwback.c help.c ifile.c input.c jump.c line.c \
 	linenum.c lsystem.c main.c mark.c optfunc.c option.c opttbl.c \
