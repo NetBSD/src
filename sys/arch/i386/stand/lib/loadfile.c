@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.3 1999/01/29 18:44:09 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.4 1999/01/30 17:51:52 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center and by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
