@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.1 1999/09/05 01:26:02 soren Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.2 1999/09/07 19:29:52 soren Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,9 +106,12 @@ tqphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TSC &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_TSC_78Q2120)
-		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TSC)
+		switch MII_MODEL(ma->mii_id2) {
+		case MII_MODEL_TSC_78Q2120:
+		/* case MII_MODEL_TSC_78Q2121: */
+			return (10);
+	}
 
 	return (0);
 }
