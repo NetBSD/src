@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.71 2002/04/02 20:19:59 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.72 2002/04/02 23:56:17 rafal Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.71 2002/04/02 20:19:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.72 2002/04/02 23:56:17 rafal Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -509,8 +509,7 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_AOUT_AUX_ARGSIZ,
 	  linux_aout_copyargs,
 	  NULL,
-	  coredump_netbsd,
-	  sysctl_linux },
+	  coredump_netbsd },
 #endif
 
 #ifdef COMPAT_IBCS2
