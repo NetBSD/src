@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2000/07/19 10:20:09 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.26 2000/07/19 15:41:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -615,6 +615,8 @@ clockintr(cap)
 	return (1);
 }
 
+int poll_console = 0;
+
 /*
  * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
  * console input, we need to check for that here as well, and generate
@@ -640,10 +642,8 @@ tickintr(cap)
 	splx(s);
 
 	hardclock((struct clockframe *)cap);
-#if	NKBD > 0
-	if (rom_console_input && cnrom())
+	if (poll_console)
 		setsoftint();
-#endif
 
 	return (1);
 }
