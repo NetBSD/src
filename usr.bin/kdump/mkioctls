@@ -1,5 +1,5 @@
-#!/bin/sh -
-#	$NetBSD: mkioctls,v 1.13 2003/08/27 20:35:42 thorpej Exp $
+#!/bin/sh
+#	$NetBSD: mkioctls,v 1.14 2004/04/22 22:31:18 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -34,20 +34,32 @@
 #
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
+echo "#define const" 	# XXX: timepps lossage
+echo "struct ap_control { int _xxx; };" # XXX: ip_nat.h lossage
+echo "#define COMPAT_43"
+echo "struct lwp;"
+echo "#include <sys/types.h>"
+echo "#include <sys/param.h>"
+echo "#include <sys/disk.h>"
+echo "#include <sys/mount.h>"
+echo "#include <sys/termios.h>"
+echo "#include <net/if.h>"
+echo "#include <net/route.h>"
+echo "#include <net/ppp_defs.h>"
+echo "#include <netinet/in.h>"
+echo "#include <netinet/in_systm.h>"
+echo "#include <netinet/ip.h>"
+echo "#include <netinet/ip_mroute.h>"
+echo "#include <netinet/ip_compat.h>"
+echo "#include <net80211/ieee80211.h>"
+echo "#include <netiso/iso.h>"
+for i
+do
+	echo "#include <$i>"
+done | sed -e "s,${DESTDIR}/usr/include/,,g"
+
 ${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
 BEGIN {
-	print "#include <sys/param.h>"
-	print "#include <sys/socket.h>"
-	print "#include <sys/sockio.h>"
-	print "#include <sys/socketvar.h>"
-	print "#include <net/route.h>"
-	print "#include <net/if.h>"
-	print "#include <netinet/in.h>"
-	print "#include <netinet/ip_mroute.h>"
-	print "#include <sys/termios.h>"
-	print "#define COMPAT_43"
-	print "#include <sys/ioctl.h>"
-	print "#include <crypto/cryptodev.h>"
 	print ""
 	print "char *ioctlname __P((long));"
 	print ""
