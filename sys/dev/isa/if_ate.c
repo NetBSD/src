@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.25 2001/03/31 00:26:54 jdolecek Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.26 2001/03/31 00:30:22 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -378,7 +378,7 @@ ate_attach(parent, self, aux)
 	sc->sc_bst = iot;
 	sc->sc_bsh = ioh;
 
-	/* Determine the card type and get ehternet address. */
+	/* Determine the card type and get ethernet address. */
 	type = ate_detect(iot, ioh, myea);
 	switch (type) {
 	case FE_TYPE_AT1700T:
