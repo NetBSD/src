@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.1.1.1 2004/03/28 08:55:42 martti Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.1.1.2 2004/07/23 05:34:00 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -69,8 +69,9 @@ struct file;
 #include "netinet/ip_fil.h"
 #include "netinet/ip_pool.h"
 
-#if defined(_KERNEL) && !defined(__osf__) && !defined(__hpux) && \
-    !(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#if defined(IPFILTER_LOOKUP) && defined(_KERNEL) && \
+      ((BSD >= 198911) && !defined(__osf__) && \
+      !defined(__hpux) && !defined(__sgi))
 static int rn_freenode __P((struct radix_node *, void *));
 #endif
 
@@ -78,10 +79,17 @@ static int rn_freenode __P((struct radix_node *, void *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.5 2004/03/23 12:44:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.9 2004/06/13 23:45:18 darrenr Exp";
 #endif
 
 #ifdef IPFILTER_LOOKUP
+
+# ifndef RADIX_NODE_HEAD_LOCK
+#  define RADIX_NODE_HEAD_LOCK(x)	;
+# endif
+# ifndef RADIX_NODE_HEAD_UNLOCK
+#  define RADIX_NODE_HEAD_UNLOCK(x)	;
+# endif
 
 ip_pool_stat_t ipoolstat;
 ipfrwlock_t ip_poolrw;
@@ -333,9 +341,9 @@ char *name;
 /* ------------------------------------------------------------------------ */
 /* Function:    ip_pool_findeq                                              */
 /* Returns:     int     - 0 = success, else error                           */
-/* Parameters:  ipo(I)    - pointer to the pool getting the new node.       */
-/*              inaddr(I) - pointer to address information to delete        */
-/*              inmask(I) -                                                 */
+/* Parameters:  ipo(I)  - pointer to the pool getting the new node.         */
+/*              addr(I) - pointer to address information to delete          */
+/*              mask(I) -                                                   */
 /*                                                                          */
 /* Searches for an exact match of an entry in the pool.                     */
 /* ------------------------------------------------------------------------ */
@@ -344,8 +352,15 @@ ip_pool_t *ipo;
 addrfamily_t *addr, *mask;
 {
 	struct radix_node *n;
+#ifdef USE_SPL
+	int s;
 
+	SPL_NET(s);
+#endif
+	RADIX_NODE_HEAD_LOCK(ipo->ipo_head);
 	n = ipo->ipo_head->rnh_lookup(addr, mask, ipo->ipo_head);
+	RADIX_NODE_HEAD_UNLOCK(ipo->ipo_head);
+	SPL_X(s);
 	return (ip_pool_node_t *)n;
 }
 
@@ -394,9 +409,11 @@ void *dptr;
 
 	READ_ENTER(&ip_poolrw);
 
+	RADIX_NODE_HEAD_LOCK(ipo->ipo_head);
 	rn = ipo->ipo_head->rnh_matchaddr(&v, ipo->ipo_head);
+	RADIX_NODE_HEAD_UNLOCK(ipo->ipo_head);
 
-	if (rn != NULL) {
+	if ((rn != NULL) && ((rn->rn_flags & RNF_ROOT) == 0)) {
 		m = (ip_pool_node_t *)rn;
 		ipo->ipo_hits++;
 		m->ipn_hits++;
@@ -444,8 +461,10 @@ int info;
 	bcopy(mask, &x->ipn_mask.adf_addr, sizeof(*mask));
 	x->ipn_mask.adf_len = sizeof(x->ipn_mask);
 
+	RADIX_NODE_HEAD_LOCK(ipo->ipo_head);
 	rn = ipo->ipo_head->rnh_addaddr(&x->ipn_addr, &x->ipn_mask,
 					ipo->ipo_head, x->ipn_nodes);
+	RADIX_NODE_HEAD_UNLOCK(ipo->ipo_head);
 #ifdef	DEBUG_POOL
 	printf("Added %p at %p\n", x, rn);
 #endif
@@ -575,8 +594,10 @@ ip_pool_node_t *ipe;
 	if (n == NULL)
 		return ENOENT;
 
+	RADIX_NODE_HEAD_LOCK(ipo->ipo_head);
 	ipo->ipo_head->rnh_deladdr(&n->ipn_addr, &n->ipn_mask,
 				   ipo->ipo_head);
+	RADIX_NODE_HEAD_UNLOCK(ipo->ipo_head);
 	KFREE(n);
 
 	ipoolstat.ipls_nodes--;
@@ -675,6 +696,7 @@ ip_pool_t *ipo;
 {
 	ip_pool_node_t *n;
 
+	RADIX_NODE_HEAD_LOCK(ipo->ipo_head);
 	while ((n = ipo->ipo_list) != NULL) {
 		ipo->ipo_head->rnh_deladdr(&n->ipn_addr, &n->ipn_mask,
 					   ipo->ipo_head);
@@ -687,6 +709,7 @@ ip_pool_t *ipo;
 
 		ipoolstat.ipls_nodes--;
 	}
+	RADIX_NODE_HEAD_UNLOCK(ipo->ipo_head);
 
 	ipo->ipo_list = NULL;
 	if (ipo->ipo_next != NULL)
@@ -741,6 +764,7 @@ rn_freehead(rnh)
       struct radix_node_head *rnh;
 {
 
+	RADIX_NODE_HEAD_LOCK(rnh);
 	(*rnh->rnh_walktree)(rnh, rn_freenode, rnh);
 
 	rnh->rnh_addaddr = NULL;
@@ -748,6 +772,7 @@ rn_freehead(rnh)
 	rnh->rnh_matchaddr = NULL;
 	rnh->rnh_lookup = NULL;
 	rnh->rnh_walktree = NULL;
+	RADIX_NODE_HEAD_UNLOCK(rnh);
 
 	Free(rnh);
 }

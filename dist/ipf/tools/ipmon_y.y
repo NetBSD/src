@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon_y.y,v 1.1.1.1 2004/03/28 08:56:34 martti Exp $	*/
+/*	$NetBSD: ipmon_y.y,v 1.1.1.2 2004/07/23 05:34:51 martti Exp $	*/
 
 %{
 #include "ipf.h"
@@ -57,7 +57,7 @@ static	ipmon_action_t	*alist = NULL;
 %type	<addr> ipv4
 %type	<opt> direction dstip dstport every execute group interface
 %type	<opt> protocol result rule srcip srcport logtag matching
-%type	<opt> matchopt nattag type doopt doing save syslog nothing execute
+%type	<opt> matchopt nattag type doopt doing save syslog nothing
 %type	<num> saveopts saveopt typeopt
 
 %%
@@ -70,6 +70,7 @@ file:	line
 line:	IPM_MATCH '{' matching '}' IPM_DO '{' doing '}' ';'
 					{ build_action($3); resetlexer(); }
 	| IPM_COMMENT
+	| YY_COMMENT
 	;
 
 assign:	YY_STR assigning YY_STR ';'		{ set_variable($1, $3);
@@ -242,6 +243,7 @@ ipv4:   YY_NUMBER '.' YY_NUMBER '.' YY_NUMBER '.' YY_NUMBER
 static	struct	wordtab	yywords[] = {
 	{ "body",	IPM_BODY },
 	{ "direction",	IPM_DIRECTION },
+	{ "do",		IPM_DO },
 	{ "dstip",	IPM_DSTIP },
 	{ "dstport",	IPM_DSTPORT },
 	{ "every",	IPM_EVERY },
@@ -303,6 +305,7 @@ int type;
 	o->o_line = yylineNum;
 	o->o_num = 0;
 	o->o_str = (char *)0;
+	o->o_next = NULL;
 	return o;
 }
 
@@ -661,6 +664,13 @@ char *file;
 {
 	ipmon_action_t *a;
 	FILE *fp;
+	char *s;
+
+	s = getenv("YYDEBUG");
+	if (s != NULL)
+		yydebug = atoi(s);
+	else
+		yydebug = 0;
 
 	while ((a = alist) != NULL) {
 		alist = a->ac_next;
