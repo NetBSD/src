@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2004/04/17 12:56:27 cl Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2004/04/17 12:56:27 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include "vesabios.h"
 #include "xenc.h"
 #include "xennet.h"
+#include "xbd.h"
 #include "npx.h"
 
 #include "opt_mpacpi.h"
@@ -102,6 +103,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include <machine/if_xennetvar.h>
 #endif
 
+#if NXBD > 0
+#include <sys/buf.h>
+#include <sys/disk.h>
+#include <dev/dkvar.h>
+#include <machine/xbdvar.h>
+#endif
+
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -138,8 +146,8 @@ union mainbus_attach_args {
 #if NXENNET > 0
 	struct xennet_attach_args mba_xennet;
 #endif
-#if NXENDISK > 0
-	struct xendisk_attach_args mba_xendisk;
+#if NXBD > 0
+	struct xbd_attach_args mba_xbd;
 #endif
 #if NNPX > 0
 	struct xen_npx_attach_args mba_xennpx;
@@ -387,6 +395,10 @@ mainbus_attach(parent, self, aux)
 #if NXENNET > 0
 	mba.mba_xennet.xa_busname = "xennet";
 	xennet_scan(self, &mba.mba_xennet, mainbus_print);
+#endif
+#if NXBD > 0
+	mba.mba_xbd.xa_busname = "xbd";
+	xbd_scan(self, &mba.mba_xbd, mainbus_print);
 #endif
 #if NNPX > 0
 	mba.mba_xennpx.xa_busname = "npx";

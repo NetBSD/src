@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.1 2004/03/11 21:44:08 cl Exp $
+# $NetBSD: XEN,v 1.2 2004/04/17 12:56:27 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -70,8 +70,8 @@ options 	COMPAT_16	# NetBSD 1.6
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
-#file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 #file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
@@ -109,6 +109,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
 config		netbsd	root on ? type ?
+#config		netbsd	root on xbd0a type ffs
 #config		netbsd	root on xennet0 type nfs
 
 mainbus0 at root
@@ -119,12 +120,13 @@ npx0	at mainbus?		# x86 math coprocessor
 
 xenc*	at mainbus?		# Xen virtual console
 xennet*	at mainbus?		# Xen virtual network interface
+xbd*	at mainbus?		# Xen virtual block device
 
 
 include	"arch/xen/conf/GENERIC.local"
 
 
-#pseudo-device	ccd		4	# concatenated/striped disk devices
+pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files

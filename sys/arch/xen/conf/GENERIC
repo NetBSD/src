@@ -1,5 +1,5 @@
-# $NetBSD: GENERIC,v 1.1 2004/03/11 21:44:08 cl Exp $
-# NetBSD: GENERIC,v 1.594 2004/02/25 18:56:26 perry Exp 
+# $NetBSD: GENERIC,v 1.2 2004/04/17 12:56:27 cl Exp $
+# NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -130,13 +130,13 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 # File systems
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -187,7 +187,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
-#config		netbsd	root on xennet0 type nfs
+#config		netbsd	root on xbd0a type ffs
 #config		netbsd	root on ? type nfs
 
 #
@@ -202,6 +202,7 @@ npx0	at mainbus?		# x86 math coprocessor
 
 xenc*	at mainbus?		# Xen virtual console
 xennet*	at mainbus?		# Xen virtual network interface
+xbd*	at mainbus?		# Xen virtual block device
 
 
 # Pull in optional local configuration

@@ -1,4 +1,4 @@
-/*	$NetBSD: block.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: block.h,v 1.2 2004/04/17 12:56:27 cl Exp $	*/
 
 /*
  *
@@ -33,6 +33,8 @@
 
 #ifndef __BLOCK_H__
 #define __BLOCK_H__
+
+typedef u64 xen_sector_t;
 
 /*
  *
@@ -75,6 +77,19 @@ typedef struct blk_ring_resp_entry
     unsigned short  operation;            /* copied from request          */
     unsigned long   status;               /* cuurently boolean good/bad   */
 } blk_ring_resp_entry_t;
+
+/*
+ * We use a special capitalised type name because it is _essential_ that all 
+ * arithmetic on indexes is done on an integer type of the correct size.
+ */
+typedef unsigned int BLK_RING_IDX;
+
+/*
+ * Ring indexes are 'free running'. That is, they are not stored modulo the
+ * size of the ring buffer. The following macro converts a free-running counter
+ * into a value that can directly index a ring-buffer array.
+ */
+#define MASK_BLK_IDX(_i) ((_i)&(BLK_RING_SIZE-1))
 
 typedef struct blk_ring_st 
 {

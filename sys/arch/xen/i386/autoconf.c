@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2004/04/17 12:56:27 cl Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2004/04/17 12:56:27 cl Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -529,6 +529,13 @@ device_register(struct device *dev, void *aux)
 #endif
 			goto found;
 		}
+	}
+	if (dev->dv_class == DV_DISK) {
+		char bootdev[16]; /* sizeof(dv_xname) */
+
+		xen_parse_cmdline(bootdev, NULL);
+		if (strncmp(bootdev, dev->dv_xname, 16) == 0)
+			goto found;
 	}
 #endif
 	if (dev->dv_class == DV_IFNET) {
