@@ -1,4 +1,4 @@
-/*	$NetBSD: udiv.S,v 1.1 2002/02/24 00:08:23 matt Exp $	*/
+/*	$NetBSD: udiv.S,v 1.2 2002/02/24 00:12:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,29 +47,29 @@
  */
 
 
-#define	DIVIDEND	4(ap)
-#define	DIVISOR		8(ap)
+#define	DIVIDEND	4(%ap)
+#define	DIVISOR		8(%ap)
 
 #ifdef __ELF__
 ENTRY(__udiv, 0)
 #else
 ASENTRY(udiv, 0)
 #endif
-	movl	DIVISOR,r2
+	movl	DIVISOR,%r2
 	jlss	Leasy		# big divisor: settle by comparison
-	movl	DIVIDEND,r0
+	movl	DIVIDEND,%r0
 	jlss	Lhard		# big dividend: extended division
-	divl2	r2,r0		# small divisor and dividend: signed division
+	divl2	%r2,%r0		# small divisor and dividend: signed division
 	ret
 Lhard:
-	clrl	r1
-	ediv	r2,r0,r0,r1
+	clrl	%r1
+	ediv	%r2,%r0,%r0,%r1
 	ret
 Leasy:
-	cmpl	DIVIDEND,r2
+	cmpl	DIVIDEND,%r2
 	jgequ	Lone		# if dividend is as big or bigger, return 1
-	clrl	r0		# else return 0
+	clrl	%r0		# else return 0
 	ret
 Lone:
-	movl	$1,r0
+	movl	$1,%r0
 	ret
