@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.13 1996/10/12 21:58:44 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.13.6.1 1997/03/12 21:26:22 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,8 +52,6 @@
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-
-extern u_long nextgennumber;
 
 static daddr_t	ffs_alloccg __P((struct inode *, int, daddr_t, int));
 static daddr_t	ffs_alloccgblk __P((struct fs *, struct cg *, daddr_t));
@@ -563,9 +561,7 @@ ffs_valloc(v)
 	/*
 	 * Set up a new generation number for this inode.
 	 */
-	if (++nextgennumber < (u_long)time.tv_sec)
-		nextgennumber = time.tv_sec;
-	ip->i_gen = nextgennumber;
+	ip->i_gen++;
 	return (0);
 noinodes:
 	ffs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");

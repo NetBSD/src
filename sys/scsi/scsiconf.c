@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.73 1996/12/14 10:50:32 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.73.6.1 1997/03/12 21:25:47 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -387,10 +387,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
-	{{T_OPTICAL, T_REMOV,
-	 "FUJITSU", "M2513A",		 "0800"}, SDEV_NOMODESENSE},
-	{{T_OPTICAL, T_REMOV,
-	 "DELTIS  ", "MOS321          ", "3.30"}, SDEV_NOMODESENSE},
 
 	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},

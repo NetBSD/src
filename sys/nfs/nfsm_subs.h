@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.11 1996/10/25 23:14:14 cgd Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.11.4.1 1997/03/12 21:25:27 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,9 +92,11 @@
 		mb->m_len += (s); \
 		bpos += (s); }
 
+#define nfsm_aligned(p) ALIGNED_POINTER(p,u_int32_t)
+
 #define	nfsm_dissect(a, c, s) \
 		{ t1 = mtod(md, caddr_t)+md->m_len-dpos; \
-		if (t1 >= (s)) { \
+		if (t1 >= (s) && nfsm_aligned(dpos)) { \
 			(a) = (c)(dpos); \
 			dpos += (s); \
 		} else if ((t1 = nfsm_disct(&md, &dpos, (s), t1, &cp2)) != 0){ \

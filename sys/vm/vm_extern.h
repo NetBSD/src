@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.23 1997/02/05 08:09:45 mrg Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.23.4.1 1997/03/12 21:26:51 is Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,6 +139,7 @@ struct vmspace	*vmspace_fork __P((struct vmspace *));
 void		 vmspace_free __P((struct vmspace *));
 void		 vmtotal __P((struct vmtotal *));
 void		 vnode_pager_setsize __P((struct vnode *, u_long));
+void		 vnode_pager_sync __P((struct mount *));
 void		 vnode_pager_umount __P((struct mount *));
 boolean_t	 vnode_pager_uncache __P((struct vnode *));
 void		 vslock __P((caddr_t, u_int));

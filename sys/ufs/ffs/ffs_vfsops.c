@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.23 1997/01/31 03:05:31 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.23.4.1 1997/03/12 21:26:25 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -79,8 +79,6 @@ struct vfsops ffs_vfsops = {
 	ffs_init,
 	ffs_mountroot,
 };
-
-extern u_long nextgennumber;
 
 /*
  * Called by main() when ufs is going to be mounted as root.
@@ -847,17 +845,6 @@ ffs_vget(mp, ino, vpp)
 	 */
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
-	/*
-	 * Set up a generation number for this inode if it does not
-	 * already have one. This should only happen on old filesystems.
-	 */
-	if (ip->i_gen == 0) {
-		if (++nextgennumber < (u_long)time.tv_sec)
-			nextgennumber = time.tv_sec;
-		ip->i_gen = nextgennumber;
-		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
-			ip->i_flag |= IN_MODIFIED;
-	}
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.

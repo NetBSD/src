@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.70 1996/12/05 01:06:46 cgd Exp $	*/
+/*	$NetBSD: st.c,v 1.70.6.1 1997/03/12 21:25:55 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -957,6 +957,7 @@ ststart(v)
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
+			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
 		}

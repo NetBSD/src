@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.37 1997/01/11 05:21:11 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.37.4.1 1997/03/12 21:24:47 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -46,6 +46,7 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -53,10 +54,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif /* PFIL_HOOKS */
 
 #ifdef vax
 #include <machine/mtpr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.44 1997/01/11 05:21:10 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.44.4.1 1997/03/12 21:24:42 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -54,6 +54,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -62,10 +63,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif /* PFIL_HOOKS */
 
 /* XXX should really put this in libkern.h */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
@@ -81,7 +78,10 @@
 #define	IPSENDREDIRECTS	1
 #endif
 #ifndef IPFORWSRCRT
-#define	IPFORWSRCRT	1	/* allow source-routed packets */
+#define	IPFORWSRCRT	1	/* forward source-routed packets */
+#endif
+#ifndef IPALLOWSRCRT
+#define	IPALLOWSRCRT	1	/* allow source-routed packets */
 #endif
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -99,6 +99,7 @@ int	ipsendredirects = IPSENDREDIRECTS;
 int	ip_defttl = IPDEFTTL;
 int	ip_forwsrcrt = IPFORWSRCRT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
+int	ip_allowsrcrt = IPALLOWSRCRT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -714,6 +715,11 @@ ip_dooptions(m)
 		 */
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
+			if (ip_allowsrcrt == 0) {
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_NET_PROHIB;
+				goto bad;
+			}
 			if ((off = cp[IPOPT_OFFSET]) < IPOPT_MINOFF) {
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
 				goto bad;
@@ -1251,16 +1257,19 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
 #endif
 	case IPCTL_FORWSRCRT:
-		/*
-		 * Don't allow this to change in a secure environment.
-		 */
+		/* Don't allow this to change in a secure environment.  */
 		if (securelevel > 0)
-			return (EPERM);
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip_forwsrcrt));
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    ip_forwsrcrt));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &ip_forwsrcrt));
 	case IPCTL_DIRECTEDBCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_directedbcast));
+	case IPCTL_ALLOWSRCRT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_allowsrcrt));
 	default:
 		return (EOPNOTSUPP);
 	}
