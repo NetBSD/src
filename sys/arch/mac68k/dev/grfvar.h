@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.18 1997/08/03 06:25:59 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.19 1997/08/03 06:52:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,5 +159,5 @@ int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
 
 void	grf_establish __P((struct grfbus_softc *, nubus_slot *,
 	    int (*)(struct grf_softc *, int, void *),
-	    caddr_t (*)(struct grf_softc *, vm_offset_t)));
+	    caddr_t (*)(struct grf_softc *)));
 int	grfbusprint __P((void *, const char *));
