@@ -1,0 +1,9 @@
+#	$Id: A-UX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-D_POSIX_SOURCE')
+define(`confLIBS', `-ldbm -lposix -lUTIL')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `sys')

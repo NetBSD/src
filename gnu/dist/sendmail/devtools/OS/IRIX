@@ -1,0 +1,11 @@
+#	$Id: IRIX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confENVDEF', `-DIRIX')
+define(`confLIBS', `-lmld -lmalloc -lsun')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/bsd')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `sys')
+define(`confINSTALL', `${BUILDBIN}/install.sh')
+define(`confDEPEND_TYPE', `CC-M')

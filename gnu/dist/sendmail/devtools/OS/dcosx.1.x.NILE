@@ -1,0 +1,6 @@
+#	$Id: dcosx.1.x.NILE,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+define(`confENVDEF', `-D__svr4__ -DDCOSx')
+define(`confLIBS', `-lsocket -lnsl -lelf')
+define(`confHFDIR', `/usr/share/lib/mail')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confSBINGRP', `sys')

@@ -1,0 +1,13 @@
+#	$Id: UXPDS.V10,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+define(`confCC', `/usr/ccs/bin/cc')
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confENVDEF', `-DUXPDS=10')
+APPENDDEF(`confINCDIRS', `-I/usr/include -I/usr/ucbinclude')
+define(`confLIBS', `/usr/ucblib/libdbm.a /usr/ucblib/libucb.a -lsocket -lnsl -lelf')
+define(`confMBINDIR', `/usr/ucblib')
+define(`confSBINDIR', `/usr/ucbetc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/ucblib')
+define(`confSBINGRP', `mail')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confMANROOT', `/usr/local/man/man')
