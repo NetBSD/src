@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.10 1999/12/11 03:29:26 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.11 1999/12/16 09:46:56 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.10 1999/12/11 03:29:26 takemura Exp $";
+    "$Id: fb.c,v 1.11 1999/12/16 09:46:56 sato Exp $";
 
 
 #include <sys/param.h>
@@ -434,14 +434,39 @@ fb_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	struct fb_softc *sc = v;
+	struct fb_devconfig *dc = sc->sc_dc;
+	struct wsdisplay_fbinfo *wdf;
+
 	switch (cmd) {
 	case WSKBDIO_BELL:
 		return (0);
 		break;
 
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;	/* XXX ? */
+		return 0;
+
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+#ifdef USE_RASTERCONS
+		wdf->height = dc->dc_raster.height;
+		wdf->width = dc->dc_raster.width;
+		wdf->depth = dc->dc_raster.depth;
+		wdf->cmsize = 256;	/* XXXX */
+#else /* USE_RASTERCONS */
+		wdf->height = dc->dc_rinfo.ri_height;
+		wdf->width = dc->dc_rinfo.ri_width;
+		wdf->depth = dc->dc_rinfo.ri_depth;
+		wdf->cmsize = 256;	/* XXXX */
+#endif /* USE_RASTERCONS */
+		return 0;		
+
 	default:
-		DPRINTF(("%s(%d): fb_ioctl(%ld, %lx)\n",
-			 __FILE__, __LINE__, cmd, (u_long)data));
+		if (IOCGROUP(cmd) != 't')
+			DPRINTF(("%s(%d): fb_ioctl(%lx, %lx) grp=%c num=%ld\n",
+			 __FILE__, __LINE__,
+			 cmd, (u_long)data, (char)IOCGROUP(cmd), cmd&0xff));
 		break;
 	}
 
@@ -454,9 +479,14 @@ fb_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-	DPRINTF(("%s(%d): fb_mmap()\n", __FILE__, __LINE__));
 
-	return (-1);
+	struct fb_softc *sc = v;
+	struct fb_devconfig *dc = sc->sc_dc;
+
+	if (offset >= (dc->dc_rowbytes * dc->dc_height) || offset < 0)
+		return -1;
+
+	return dc->dc_fbaddr + offset;
 }
 
 int
@@ -495,7 +525,8 @@ fb_free_screen(v, cookie)
 {
 	struct fb_softc *sc = v;
 
-	DPRINTF(("%s(%d): fb_free_screen()\n", __FILE__, __LINE__));
+	if (sc->sc_dc == &fb_console_dc)
+		panic("fb_free_screen: console");
 
 	sc->nscreens--;
 }
