@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2002/07/05 14:05:58 scw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2002/07/12 20:43:12 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -131,6 +131,7 @@
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +143,9 @@
 #include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <machine/cpu.h>
@@ -159,6 +163,11 @@ syscall_intern(struct proc *p)
 
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+		p->p_md.md_syscall = syscall_fancy;
+	else
+#endif
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
 		p->p_md.md_syscall = syscall_fancy;
 	else
 #endif
@@ -328,13 +337,8 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 
 	args += hidden;
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, args);
-#endif
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_caller.r3;
@@ -360,14 +364,7 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval)
-#endif
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
+	trace_exit(p, code, args, rval, error);
 }
 
 int
