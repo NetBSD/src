@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.29 2003/08/07 16:33:29 agc Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.30 2003/08/22 20:49:03 jonathan Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -266,7 +266,8 @@ void	ip6_forward __P((struct mbuf *, int));
 void	ip6_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *));
 int	ip6_output __P((struct mbuf *, struct ip6_pktopts *,
 			struct route_in6 *, int,
-			struct ip6_moptions *, struct ifnet **));
+			struct ip6_moptions *, struct in6pcb *,
+			struct ifnet **));
 int	ip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_raw_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_setpktoptions __P((struct mbuf *, struct ip6_pktopts *, int));
