@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.5 1994/05/08 12:16:13 paulus Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.6 1994/05/30 01:18:44 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -59,11 +59,7 @@ static char rcsid[] = "$Id: auth.c,v 1.5 1994/05/08 12:16:13 paulus Exp $";
 
 #if defined(sun) && defined(sparc)
 #include <alloca.h>
-#ifndef __GNUC__
-/* why alloca.h doesn't define what alloca() returns is a mystery */
-/* char *alloca __ARGS((int)); */
-#endif /*__GNUC__*/
-#endif /*sun&sparc*/
+#endif /*sparc*/
 
 /* Used for storing a sequence of words.  Usually malloced. */
 struct wordlist {
@@ -280,6 +276,7 @@ auth_withpeer_success(unit, protocol)
     default:
 	syslog(LOG_WARNING, "auth_peer_success: unknown protocol %x",
 	       protocol);
+	bit = 0;
     }
 
     /*
@@ -643,6 +640,7 @@ get_secret(unit, client, server, secret, secret_len, save_addrs)
     char *server;
     char *secret;
     int *secret_len;
+    int save_addrs;
 {
     FILE *f;
     int ret, len;
@@ -696,6 +694,10 @@ auth_ip_addr(unit, addr)
     struct hostent *hp;
     struct wordlist *addrs;
 
+    /* don't allow loopback or multicast address */
+    if (bad_ip_adrs(addr))
+	return 0;
+
     if ((addrs = addresses[unit]) == NULL)
 	return 1;		/* no restriction */
 
@@ -715,6 +717,20 @@ auth_ip_addr(unit, addr)
 	    return 1;
     }
     return 0;			/* not in list => can't have it */
+}
+
+/*
+ * bad_ip_adrs - return 1 if the IP address is one we don't want
+ * to use, such as an address in the loopback net or a multicast address.
+ * addr is in network byte order.
+ */
+int
+bad_ip_adrs(addr)
+    u_long addr;
+{
+    addr = ntohl(addr);
+    return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
+	|| IN_MULTICAST(addr) || IN_BADCLASS(addr);
 }
 
 /*
@@ -843,7 +859,7 @@ scan_authfile(f, client, server, secret, addrs, filename)
 	 */
 	if (addr_list)
 	    free_wordlist(addr_list);
-	addr_list = NULL;
+	addr_list = addr_last = NULL;
 	for (;;) {
 	    if (!getword(f, word, &newline, filename) || newline)
 		break;

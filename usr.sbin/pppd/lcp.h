@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.h,v 1.4 1994/05/08 12:16:23 paulus Exp $
+ * $Id: lcp.h,v 1.5 1994/05/30 01:18:50 paulus Exp $
  */
 
 /*
@@ -54,7 +54,7 @@ typedef struct lcp_options {
     int neg_accompression : 1;	/* HDLC Address/Control Field Compression? */
     int neg_lqr : 1;		/* Negotiate use of Link Quality Reports */
     u_short mru;		/* Value of MRU */
-    char chap_mdtype;		/* which MD type (hashing algorithm) */
+    u_char chap_mdtype;		/* which MD type (hashing algorithm) */
     u_long asyncmap;		/* Value of async map */
     u_long magicnumber;
     int numloops;		/* Number of loops during magic number neg. */
