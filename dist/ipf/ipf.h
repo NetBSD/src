@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.8 2005/02/08 07:01:52 martti Exp $	*/
+/*	$NetBSD: ipf.h,v 1.9 2005/02/19 21:30:24 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.71.2.4 2004/11/02 11:15:35 darrenr Exp
+ * Id: ipf.h,v 2.71.2.5 2005/02/01 02:44:34 darrenr Exp
  */
 
 #ifndef	__IPF_H__
@@ -250,8 +250,8 @@ extern void printaps __P((ap_session_t *, int));
 extern void printbuf __P((char *, int, int));
 extern void printfr __P((struct frentry *, ioctlfunc_t));
 extern void printtunable __P((ipftune_t *));
-extern struct iphtable_s *printhash __P((struct iphtable_s *,
-					 copyfunc_t, int));
+extern struct iphtable_s *printhash __P((struct iphtable_s *, copyfunc_t,
+					 char *, int));
 extern struct iphtent_s *printhashnode __P((struct iphtable_s *,
 					    struct iphtent_s *,
 					    copyfunc_t, int));
@@ -262,7 +262,8 @@ extern void printlookup __P((i6addr_t *addr, i6addr_t *mask));
 extern void printmask __P((u_32_t *));
 extern void printpacket __P((struct ip *));
 extern void printpacket6 __P((struct ip *));
-extern struct ip_pool_s *printpool __P((struct ip_pool_s *, copyfunc_t, int));
+extern struct ip_pool_s *printpool __P((struct ip_pool_s *, copyfunc_t,
+					char *, int));
 extern struct ip_pool_node *printpoolnode __P((struct ip_pool_node *, int));
 extern void printportcmp __P((int, struct frpcmp *));
 extern void optprint __P((u_short *, u_long, u_long));
