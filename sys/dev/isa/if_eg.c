@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.27 1996/08/03 02:12:46 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.28 1996/08/03 02:23:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -245,7 +245,7 @@ egwritePCB(sc)
 	}
 
 	bus_io_write_1(bc, ioh, EG_CONTROL,
-	    (inb(EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_DONE);
+	    (bus_io_read_1(bc, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_DONE);
 
 	egoutPCB(sc, len);
 
@@ -271,7 +271,7 @@ egreadPCB(sc)
 	if (egreadPCBready(sc))
 		return 1;
 
-	sc->eg_pcb[0] = inb(EG_COMMAND);
+	sc->eg_pcb[0] = bus_io_read_1(bc, ioh, EG_COMMAND);
 
 	if (egreadPCBready(sc))
 		return 1;
