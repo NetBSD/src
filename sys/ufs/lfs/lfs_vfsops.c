@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.169 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.170 2005/04/06 04:30:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.169 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.170 2005/04/06 04:30:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -126,6 +126,11 @@ static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
+
+/* From uvm/uvm_pager.c */
+extern struct vm_map *pager_map;
+extern struct simplelock pager_map_wanted_lock;
+extern boolean_t pager_map_wanted;
 
 pid_t lfs_writer_daemon = 0;
 int lfs_do_flush = 0;
@@ -190,6 +195,7 @@ lfs_writerd(void *arg)
 {
 	struct mount *mp, *nmp;
 	struct lfs *fs;
+	int loopcount;
 
 	lfs_writer_daemon = curproc->p_pid;
 
@@ -232,6 +238,7 @@ lfs_writerd(void *arg)
 		 * If global state wants a flush, flush everything.
 		 */
 		simple_lock(&lfs_subsys_lock);
+		loopcount = 0;
 		while (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
@@ -250,6 +257,19 @@ lfs_writerd(void *arg)
 
 			lfs_flush(NULL, SEGM_WRITERD, 0);
 			lfs_do_flush = 0;
+			if (++loopcount > 10) {
+				printf("lfs_writer_daemon: livelock: "
+					"lqc = %lld (of %lld), "
+					"lqb = %lld (of %lld), "
+					"lsp = %lld (of %lld)\n",
+					(long long)locked_queue_count,
+					(long long)LFS_MAX_BUFS,
+					(long long)locked_queue_bytes,
+					(long long)LFS_MAX_BYTES,
+					(long long)lfs_subsys_pages,
+					(long long)LFS_MAX_PAGES);
+				break;
+			}
 		}
 	}
 	/* NOTREACHED */
@@ -1919,7 +1939,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	int i, s, error, run;
 	int fs_bshift;
 	vaddr_t kva;
-	off_t eof, offset, startoffset;
+	off_t eof, offset, startoffset = 0;
 	size_t bytes, iobytes, skipbytes;
 	daddr_t lbn, blkno;
 	struct vm_page *pg;
@@ -1969,13 +1989,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	error = 0;
 	pg = pgs[0];
 	startoffset = pg->offset;
-	bytes = MIN(npages << PAGE_SHIFT, eof - startoffset);
+	if (startoffset >= eof) {
+		goto tryagain;
+	} else
+		bytes = MIN(npages << PAGE_SHIFT, eof - startoffset);
 	skipbytes = 0;
 
-	/* KASSERT(bytes != 0); */
-	if (bytes == 0)
-		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d bytes == 0 offset %"
-		      PRId64 "\n", VTOI(vp)->i_number, pgs[0]->offset));
+	KASSERT(bytes != 0);
 
 	/* Swap PG_DELWRI for PG_PAGEOUT */
 	for (i = 0; i < npages; i++)
@@ -2005,10 +2025,38 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	}
 
 	/*
-	 * XXX We can deadlock here on pager_map with UVMPAGER_MAPIN_WAITOK.
+	 * We could deadlock here on pager_map with UVMPAGER_MAPIN_WAITOK.
+	 * If we would, write what we have and try again.  If we don't
+	 * have anything to write, we'll have to sleep.
 	 */
-	kva = uvm_pagermapin(pgs, npages,
-	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
+	while ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
+				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
+				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
+		int version;
+
+		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
+                simple_lock(&pager_map_wanted_lock);
+                pager_map_wanted = TRUE;
+                simple_unlock(&pager_map_wanted_lock);
+		lfs_updatemeta(sp);
+
+		version = sp->fip->fi_version;
+		(void) lfs_writeseg(fs, sp);
+
+		sp->fip->fi_version = version;
+		sp->fip->fi_ino = ip->i_number;
+		/* Add the current file to the segment summary. */
+		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+		sp->sum_bytes_left -= FINFOSIZE;
+
+                simple_lock(&pager_map_wanted_lock);
+		if (pager_map_wanted == TRUE) {
+                	UVMHIST_LOG(maphist, "  SLEEPING on pager_map",0,0,0,0);
+                	UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock,
+					    FALSE, "pager_map", 0);
+		} else
+			simple_unlock(&pager_map_wanted_lock);
+	}
 
 	s = splbio();
 	simple_lock(&global_v_numoutput_slock);
@@ -2144,6 +2192,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		DLOG((DLOG_PAGE, "lfs_gop_write: clean pages dirtied\n"));
 	else if ((pgs[0]->offset & fs->lfs_bmask) != 0)
 		DLOG((DLOG_PAGE, "lfs_gop_write: not on block boundary\n"));
+	else if (startoffset >= eof)
+		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
+		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
+		      pgs[0]->offset, eof, npages));
 	else
 		DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
 
@@ -2158,6 +2210,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		}
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+		DLOG((DLOG_PAGE, "pg[%d] = %p\n", i, pg));
 		DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));
 		DLOG((DLOG_PAGE, "pg[%d]->pqflags = %x\n", i, pg->pqflags));
 		DLOG((DLOG_PAGE, "pg[%d]->uanon = %p\n", i, pg->uanon));
