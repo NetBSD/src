@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.173 2002/08/25 16:05:43 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.174 2002/08/25 17:55:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2089,29 +2089,3 @@ bootinfo_relocate(newloc)
 	kernel_top = (char *)newloc + ALIGN(bi_size);
 }
 #endif
-
-#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
-/*
- * Generic routine to translate an address using OpenPROM `ranges'.
- */
-int
-bus_translate_address_generic(struct openprom_range *ranges, int nranges,
-    bus_addr_t addr, bus_addr_t *addrp)
-{
-	int i, space = BUS_ADDR_IOSPACE(addr);
-
-	for (i = 0; i < nranges; i++) {
-		struct openprom_range *rp = &ranges[i];
-
-		if (rp->or_child_space != space)
-			continue;
-
-		/* We've found the connection to the parent bus. */
-		*addrp = BUS_ADDR(rp->or_parent_space,
-		    rp->or_parent_base + BUS_ADDR_PADDR(addr));
-		return (0);
-	}
-
-	return (EINVAL);
-}
-#endif /* SUN4C || SUN4M || SUN4D */
