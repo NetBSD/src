@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.5 2002/12/08 21:31:37 leo Exp $
+#	$NetBSD: HADES.in,v 1.6 2003/02/02 18:26:23 thomas Exp $
 #
 # Medusa-Hades
 #
@@ -30,6 +30,10 @@ grfet2		at grfbus0
 ite2		at grfet2
 pcib0		at mainbus0	# PCI-bus
 pci0		at pcib0
+# wsdisplay/keybd: if used, remove grfbus* grfet* and ite*
+#vga0		at pci? dev ? function ? # a PCI VGA card
+#wsdisplay*	at vga? console ?	# as a wscons console
+#wskbd0		at kbd0 console ?	# Keyboard
 avmebus0	at mainbus0	# VME bus
 vme0		at avmebus0
 le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
