@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
+.\"	$NetBSD: fsck_ext2fs.8,v 1.2 1997/07/09 05:48:34 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -35,11 +35,11 @@
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
 .Dd November 29, 1994
-.Dt FSCK_FFS 8
-.Os BSD 4
+.Dt FSCK_EXT2FS 8
+.Os NetBSD
 .Sh NAME
 .Nm fsck_ext2fs
-.Nd Fast File System consistency check and interactive repair
+.Nd EXT2 File System consistency check and interactive repair
 .Sh SYNOPSIS
 .Nm fsck_ext2fs
 .Op Fl b Ar block#
@@ -227,7 +227,7 @@ are fully enumerated and explained in Appendix A of
 .Sh SEE ALSO
 .Xr fstab 5 ,
 .Xr fs 5 ,
+.Xr fsck 8 ,
 .Xr fsdb 8 ,
 .Xr newfs 8 ,
-.Xr reboot 8 ,
-.Xr fsck 8
+.Xr reboot 8
