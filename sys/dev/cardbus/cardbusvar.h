@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.9 1999/11/08 20:21:24 joda Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.10 1999/12/11 00:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -415,6 +415,9 @@ int cardbus_restore_bar __P((cardbus_devfunc_t));
 
 int cardbus_function_enable __P((struct cardbus_softc *, int function));
 int cardbus_function_disable __P((struct cardbus_softc *, int function));
+
+int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
+	cardbustag_t, int, int *, cardbusreg_t *));
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)

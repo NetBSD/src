@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.15 1999/11/18 16:57:41 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.16 1999/12/11 00:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -753,9 +753,49 @@ cardbus_function_disable(sc, func)
 }
 
 
+/*
+ * int cardbus_get_capability(cardbus_chipset_tag_t cc,
+ *	cardbus_function_tag_t cf, cardbustag_t tag, int capid, int *offset,
+ *	cardbusreg_t *value)
+ *
+ *	Find the specified PCI capability.
+ */
+int
+cardbus_get_capability(cc, cf, tag, capid, offset, value)
+	cardbus_chipset_tag_t cc;
+	cardbus_function_tag_t cf;
+	cardbustag_t tag;
+	int capid;
+	int *offset;
+	cardbusreg_t *value;
+{
+	cardbusreg_t reg;
+	unsigned int ofs;
 
+	reg = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
+	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
+		return (0);
 
+	ofs = PCI_CAPLIST_PTR(cardbus_conf_read(cc, cf, tag,
+	    PCI_CAPLISTPTR_REG));
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < 0x40))
+			panic("cardbus_get_capability");
+#endif
+		reg = cardbus_conf_read(cc, cf, tag, ofs);
+		if (PCI_CAPLIST_CAP(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return (1);
+		}
+		ofs = PCI_CAPLIST_NEXT(reg);
+	}
 
+	return (0);
+}
 
 
 /*
