@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.24 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.25 2002/12/23 03:57:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.24 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.25 2002/12/23 03:57:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -184,13 +184,21 @@ epic_pci_attach(parent, self, aux)
 	pcireg_t reg;
 	int pmreg, ioh_valid, memh_valid;
 
+	epp = epic_pci_lookup(pa);
+	if (epp == NULL) {
+		printf("\n");
+		panic("epic_pci_attach: impossible");
+	}
+
+	printf(": %s, rev. %d\n", epp->epp_name, PCI_REVISION(pa->pa_class));
+
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
+			printf("%s: waking up from power state D%d\n",
+			    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
@@ -200,8 +208,8 @@ epic_pci_attach(parent, self, aux)
 			 * IO and MEM are disabled. We can't enable
 			 * the card because the BARs might be invalid.
 			 */
-			printf(": unable to wake up from power state D3, "
-			       "reboot required.\n");
+			printf("%s: unable to wake up from power state D3, "
+			    "reboot required.\n", sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
@@ -226,19 +234,12 @@ epic_pci_attach(parent, self, aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf(": unable to map device registers\n");
+		printf("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	epp = epic_pci_lookup(pa);
-	if (epp == NULL) {
-		printf("\n");
-		panic("epic_pci_attach: impossible");
-	}
-
-	printf(": %s, rev. %d\n", epp->epp_name, PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
