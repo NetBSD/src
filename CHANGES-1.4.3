@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.53 2000/08/26 19:36:01 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.54 2000/09/09 16:25:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1246,3 +1246,46 @@ distrib/sets/lists/man/obsolete.mi		1.9 via patch
 distrib/notes/common/main			1.75 via patch
 
   Add new developers.
+
+bin/ls/ls.c					1.37
+
+  Exit with non-zero status if an error was encountered.  Fixes
+  PR#7514.
+
+lib/libc/gen/sysconf.3	 			1.15
+
+  Correct description of _SC_OPEN_MAX: it sets the limit per process,
+  not per user id.
+
+share/man/man8/compat_osf1.8			1.2-1.4
+
+  Update documentation of our OSF/1 compat on alpha.  Fixes PR#9060.
+
+sys/compat/common/compat_util.c			1.16
+sys/compat/hpux/hpux_file.c			1.14
+sys/compat/ibcs2/ibcs2_misc.c			1.52
+sys/compat/ibcs2/ibcs2_stat.c			1.16
+sys/compat/linux/common/linux_file.c		1.29
+sys/compat/linux/common/linux_misc_notalpha.c	1.58
+sys/compat/svr4/svr4_stat.c			1.40
+sys/compat/svr4/svr4_stream.c			1.40-1.41
+
+  More carefully check length of user-supplied data, in particular
+  make sure we don't overrun the available stack gap in stack gap
+  allocations.
+
+sys/arch/amiga/dev/aucc.c			1.26
+
+  Use the correct DMA pointer for the second channel on 14-bit
+  byte-swapped conversion.  Fixes NULL pointer reference crash
+  when playing 16-bit little-endian audio.
+
+sys/uvm/uvm_unix.c				1.16 via patch
+
+  In uvm_coredump(), avoid dumping parts of the stack multiple
+  times while skipping parts of the stack that hasn't been used.
+
+lib/libc/arch/i386/sys/ptrace.S			1.12
+
+  Update old syscall stubs to match the new cerror interface.
+  Fixes PR#10789 and PR#9664.
