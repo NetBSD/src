@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.11 2002/06/06 21:28:50 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.12 2002/06/06 21:42:43 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.11 2002/06/06 21:28:50 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.12 2002/06/06 21:42:43 itojun Exp $");
 #endif
 #endif
 
@@ -210,7 +210,7 @@ struct host_info *host;
 	    freeaddrinfo(res0);
 	}
 	/* name is bad, clobber it */
-	(void)strncpy(host->name, paranoid, sizeof(host->name) - 1);
+	(void)strlcpy(host->name, paranoid, sizeof(host->name));
     }
 }
 
@@ -220,13 +220,13 @@ static void sock_sink(fd)
 int     fd;
 {
     char    buf[BUFSIZ];
-    struct sockaddr_storage sst;
-    int     size = sizeof(sst);
+    struct sockaddr_storage ss;
+    int     size = sizeof(ss);
 
     /*
      * Eat up the not-yet received datagram. Some systems insist on a
      * non-zero source address argument in the recvfrom() call below.
      */
 
-    (void) recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *) & sst, &size);
+    (void) recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *) & ss, &size);
 }
