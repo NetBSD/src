@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.15 2000/08/13 21:13:56 jhawk Exp $	*/
+/*	$NetBSD: apmd.c,v 1.16 2001/01/11 01:35:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -400,9 +400,9 @@ main(int argc, char *argv[])
 	(void)err(1, "cannot open device file `%s'", fname);
     } 
     if (debug) {
-	openlog(__progname, LOG_CONS, LOG_LOCAL1);
+	openlog("apmd", 0, LOG_LOCAL1);
     } else {
-	openlog(__progname, LOG_CONS, LOG_DAEMON);
+	openlog("apmd", 0, LOG_DAEMON);
 	setlogmask(LOG_UPTO(LOG_NOTICE));
 	daemon(0, 0);
 	pidfile(NULL);

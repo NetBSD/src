@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.3 2001/01/10 07:59:43 lukem Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.4 2001/01/11 01:34:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -171,7 +171,7 @@ enable_user(const char *name, u_int period)
 		err(1, "open %s", _PATH_WATCHDOG);
 
 	/* ...so we can log failures to tickle the timer. */
-	openlog(__progname, LOG_PERROR|LOG_PID, LOG_DAEMON);
+	openlog("wdogctl", LOG_PERROR|LOG_PID, LOG_DAEMON);
 
 	/*
 	 * We fork a child process which detaches from the controlling
