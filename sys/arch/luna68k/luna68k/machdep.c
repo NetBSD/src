@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2000/01/15 10:06:21 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2000/01/15 10:06:21 nisimura Exp $");
 
 #include "opt_ddb.h"
 
@@ -224,8 +224,10 @@ consinit()
 		if (i++ >= sizeof(bootarg))
 			break;
 	}
+#if 0 /* overload 1:sw1, which now means 'go ROM monitor' after poweron */
 	if (boothowto == 0)
 		boothowto = (sw1 & 0x1) ? RB_SINGLE : 0;
+#endif
 
 	if (sysconsole == 0)
 		syscnattach(0);
@@ -941,7 +943,7 @@ microtime(tvp)
 	splx(s);
 }
 
-#ifndef ROMCONS
+#if 1
 
 struct consdev *cn_tab = &syscons;
 
@@ -964,27 +966,65 @@ struct consdev romcons = {
 };
 struct consdev *cn_tab = &romcons;
 
-extern int romcall __P((int, int));
+#define __		((int **)0x41000000)
+#define GETC()		(*(int (*)())__[6])()
+#define PUTC(x)		(*(void (*)())__[7])(x)
 
-#define	ROMGETC()	romcall(6, 0)
-#define	ROMPUTC(x)	romcall(7, x)
+#define ROMPUTC(x) \
+({					\
+	register _r;			\
+	asm volatile ("			\
+		movc	vbr,%0		; \
+		movel	%0,sp@-		; \
+		clrl	%0		; \
+		movc	%0,vbr"		\
+		: "=r" (_r));		\
+	PUTC(x);			\
+	asm volatile ("			\
+		movel	sp@+,%0		; \
+		movc	%0,vbr"		\
+		: "=r" (_r));		\
+})
+
+#define ROMGETC() \
+({					\
+	register _r, _c;		\
+	asm volatile ("			\
+		movc	vbr,%0		; \
+		movel	%0,sp@-		; \
+		clrl	%0		; \
+		movc	%0,vbr"		\
+		: "=r" (_r));		\
+	_c = GETC();			\
+	asm volatile ("			\
+		movel	sp@+,%0		; \
+		movc	%0,vbr"		\
+		: "=r" (_r));		\
+	_c;				\
+})
 
 void
 romcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
+	int s;
+
+	s = splhigh();
 	ROMPUTC(c);
+	splx(s);
 }
 
 int
 romcngetc(dev)
 	dev_t dev;
 {
-	int c;
+	int s, c;
 
 	do {
+		s = splhigh();
 		c = ROMGETC();
+		splx(s);
 	} while (c == -1);
 	return c;
 }
