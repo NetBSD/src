@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152 2004/01/06 09:38:20 petrov Exp $	*/
+/*	$NetBSD: pmap.c,v 1.153 2004/01/09 08:49:42 chs Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2004/01/06 09:38:20 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2004/01/09 08:49:42 chs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1543,6 +1543,7 @@ pmap_destroy(pm)
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
+	ctx_free(pm);
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
