@@ -1,2 +1,2 @@
-# $NetBSD: md.arc,v 1.1 2000/03/03 16:31:21 soda Exp $
-./sbin/fdisk
+# $NetBSD: md.arc,v 1.2 2001/01/25 08:29:19 jwise Exp $
+./sbin/fdisk		base-sysutil-root
