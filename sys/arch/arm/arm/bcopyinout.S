@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.10 2003/05/24 05:31:04 thorpej Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.11 2003/10/13 21:22:40 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,7 +41,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.10 2003/05/24 05:31:04 thorpej Exp $")	
+#ifdef __XSCALE__
+#include "bcopyinout_xscale.S"
+#else
+
+RCSID("$NetBSD: bcopyinout.S,v 1.11 2003/10/13 21:22:40 scw Exp $")	
 
 	.text
 	.align	0
@@ -707,3 +711,4 @@ ENTRY(kcopy)
 	RESTORE_REGS
 
 	mov	pc, lr
+#endif	/* !__XSCALE__ */
