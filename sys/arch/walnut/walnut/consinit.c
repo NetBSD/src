@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2002/08/13 04:57:50 simonb Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2002/08/13 05:43:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -107,7 +107,7 @@ consinit(void)
 	initted = 1;
 
 #if (NCOM > 0)
-	tag = galaxy_make_bus_space_tag(0, 0);
+	tag = ibm4xx_make_bus_space_tag(0, 0);
 
 	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ*6,
 	    comcnmode))
@@ -125,7 +125,7 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = galaxy_make_bus_space_tag(0, 2);
+		bus_space_tag_t tag = ibm4xx_make_bus_space_tag(0, 2);
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ * 6,
 		    comkgdbmode);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2002/08/13 05:25:40 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2002/08/13 05:43:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/bus.h>
@@ -89,11 +89,11 @@ pci_attach_hook(struct device *parent, struct device *self,
 
 #ifdef PCI_CONFIGURE_VERBOSE
 	printf("pci_attach_hook\n");
-	galaxy_show_pci_map();
+	ibm4xx_show_pci_map();
 #endif
-	galaxy_setup_pci();
+	ibm4xx_setup_pci();
 #ifdef PCI_CONFIGURE_VERBOSE
-	galaxy_show_pci_map();
+	ibm4xx_show_pci_map();
 #endif
 }
 
