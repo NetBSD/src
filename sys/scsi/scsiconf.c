@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.71 1996/12/05 01:06:41 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.72 1996/12/10 21:06:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -167,10 +167,27 @@ scsibusattach(parent, self, aux)
 {
 	struct scsibus_softc *sb = (struct scsibus_softc *)self;
 	struct scsi_link *sc_link_proto = aux;
+	size_t nbytes;
+	int i;
 
 	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
-	printf("\n");
+	sb->sc_maxtarget = sc_link_proto->max_target;
+	printf(": %d targets\n", sb->sc_maxtarget + 1);
+
+	nbytes = sb->sc_maxtarget * sizeof(struct scsi_link **);
+	sb->sc_link = (struct scsi_link ***)malloc(nbytes, M_DEVBUF,
+	   M_NOWAIT);
+	if (sb->sc_link == NULL)
+		panic("scsibusattach: can't allocate target links");
+
+	nbytes = 8 * sizeof(struct scsi_link *);
+	for (i = 0; i <= sb->sc_maxtarget; i++) {
+		sb->sc_link[i] = (struct scsi_link **)malloc(nbytes,
+		    M_DEVBUF, M_NOWAIT);
+		if (sb->sc_link[i] == NULL)
+			panic("scsibusattach: can't allocate lun links");
+	}
 
 #if defined(SCSI_DELAY) && SCSI_DELAY > 2
 	printf("%s: waiting for scsi devices to settle\n",
@@ -252,10 +269,10 @@ scsi_probe_bus(bus, target, lun)
 	scsi_addr = scsi->adapter_link->adapter_target;
 
 	if (target == -1) {
-		maxtarget = 7;
+		maxtarget = scsi->sc_maxtarget;
 		mintarget = 0;
 	} else {
-		if (target < 0 || target > 7)
+		if (target < 0 || target > scsi->sc_maxtarget)
 			return EINVAL;
 		maxtarget = mintarget = target;
 	}

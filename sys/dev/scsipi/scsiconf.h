@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.33 1996/10/23 07:25:42 matthias Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.34 1996/12/10 21:06:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -163,6 +163,8 @@ struct scsi_link {
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
+	int	max_target;		/* XXX max target supported by
+					   adapter */
 };
 
 /*
@@ -198,7 +200,8 @@ struct scsi_inquiry_pattern {
 struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
-	struct scsi_link *sc_link[8][8];
+	struct scsi_link ***sc_link;		/* dynamically allocated */
+	int	sc_maxtarget;
 	u_int8_t moreluns;
 };
 
