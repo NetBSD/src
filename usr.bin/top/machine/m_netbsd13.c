@@ -32,7 +32,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.2.2.1 1999/04/26 15:32:25 perry Exp $
+ * $Id: m_netbsd13.c,v 1.2.2.2 1999/07/02 17:17:38 perry Exp $
  */
 #define UVM
 
@@ -403,8 +403,10 @@ get_system_info(si)
 	memory_stats[5] = dbtob(totalsize) / 1024 - memory_stats[4];
 	/*  Free here, before we malloc again in the next
 	 *  iteration of this loop.  */
-	if (seporig)
+	if (seporig) {
 		free(seporig);
+		seporig = NULL;
+	}
     } while (0);
     /*  Catch the case where we malloc'd, but then exited the
      *  loop due to nswap != rnswap.  */
