@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.17 2001/04/26 19:25:12 kleink Exp $
+.\"	$NetBSD: printf.3,v 1.18 2001/04/28 15:41:29 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 26, 2001
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -334,6 +334,26 @@ conversion corresponds to a pointer to a
 argument.
 .It
 The optional character
+.Cm j ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to an
+.Em intmax_t
+or
+.Em uintmax_t
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+.Em intmax_t
+argument.
+.It
+The optional character
 .Cm l
 (ell) specifying that a following
 .Cm d ,
@@ -374,6 +394,47 @@ argument, or that a following
 .Cm n
 conversion corresponds to a pointer to a
 .Em quad_t
+argument.
+.It
+The optional character
+.Cm t ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to a
+.Em ptrdiff_t
+or
+the corresponding unsigned integer type
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+.Em ptrdiff_t
+argument.
+.It
+The optional character
+.Cm z ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to a
+.Em size_t
+or
+the corresponding signed integer type
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+signed integer type correspoinding to
+.Em ptrdiff_t
 argument.
 .It
 The character

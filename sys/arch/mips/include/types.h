@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.27 2001/01/16 06:01:26 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.28 2001/04/28 15:41:32 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #define	_MACHTYPES_H_
 
 #include <sys/cdefs.h>
-#include <machine/int_types.h>
+#include <mips/int_types.h>
 
 /*
  * Note that mips_reg_t is distinct from the register_t defined
@@ -83,21 +83,7 @@ typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
 
-/*
- * Basic integral types.  Omit the typedef if
- * not possible for a machine/compiler combination.
- */
-#define	__BIT_TYPES_DEFINED__
-typedef	__int8_t	   int8_t;
-typedef	__uint8_t	 u_int8_t;
-typedef	__int16_t	  int16_t;
-typedef	__uint16_t	u_int16_t;
-typedef	__int32_t	  int32_t;
-typedef	__uint32_t	u_int32_t;
-typedef	__int64_t	  int64_t;
-typedef	__uint64_t	u_int64_t;
-
-typedef int32_t			register_t;
+typedef int		register_t;
 
 #define	__SWAP_BROKEN
 

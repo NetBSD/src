@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2000/12/11 21:05:14 itojun Exp $
+#	$NetBSD: Makefile,v 1.26 2001/04/28 15:41:30 kleink Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -17,17 +17,17 @@ INCS=	acct.h ansi.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h \
 	pool.h proc.h protosw.h ptrace.h queue.h reboot.h resource.h \
 	resourcevar.h rnd.h scanio.h sched.h scsiio.h select.h sem.h sha1.h \
 	shm.h signal.h signalvar.h socket.h socketvar.h sockio.h stat.h \
-	syscall.h syscallargs.h sysctl.h swap.h syslimits.h syslog.h systm.h \
-	tablet.h termios.h time.h timeb.h timepps.h times.h timex.h \
+	syscall.h syscallargs.h sysctl.h stdint.h swap.h syslimits.h syslog.h \
+	systm.h tablet.h termios.h time.h timeb.h timepps.h times.h timex.h \
 	tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h ttydev.h \
 	types.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h \
 	vadvise.h vmmeter.h vnode.h vnode_if.h wait.h wdog.h
 
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
-	sys/inttypes.h /usr/include/inttypes.h \
 	sys/poll.h /usr/include/poll.h \
 	sys/sha1.h /usr/include/sha1.h \
+	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h
 
