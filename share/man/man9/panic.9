@@ -1,0 +1,35 @@
+.Dd August 11, 1995
+.Dt PANIC 9
+.Os
+.Sh NAME
+.Nm panic
+.Nd Bring down system on fatal error
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/systm.h>
+.Ft void
+.Fn panic "const char *fmt, ..."
+.Sh DESCRIPTION
+The
+.Fn panic
+function terminate the NetBSD system.  The message
+.Fa fmt
+is a
+.Xr printf 3
+style format string.  The message is printed to the console and the location
+.Fa panicstr 
+is set to the address of the message text for retrival from the OS
+core dump.
+.Pp
+If the kernel debugger is installed control is passed to it, otherwise
+an attempt to save a core dump of the OS to a configured dump device
+is made.
+.Pp
+If
+.Fn panic
+is called twice (from the disk sync routines, for example) the system is
+rebooted without syncing the disks.
+.Sh RETURN VALUES
+The
+.Fn panic
+function does not return.
