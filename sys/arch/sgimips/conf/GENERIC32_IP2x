@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.13 2004/06/28 21:07:49 bouyer Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.14 2004/07/06 23:59:48 sekiya Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.13 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -209,6 +209,9 @@ hpc2 		at gio? addr 0x1f980000
 newport*	at gio? slot ?
 wsdisplay* 	at newport? console ?
 
+#grtwo*		at gio? slot ?
+#wsdisplay*	at grtwo? console ?
+
 # HPC devices
 sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
@@ -220,6 +223,7 @@ pckbc*		at hpc0 offset ?
 pckbd*  	at pckbc?
 pms* 		at pckbc?
 wskbd* 		at pckbd? console ?
+#wskbd*		at zskbd? console ?
 wsmouse* 	at pms? mux 0
 
 # I/O Controller -- IP22/24
@@ -233,8 +237,8 @@ zsc0 		at hpc0 offset ?
 zstty*		at zsc0 channel ?
 
 zsc1 		at hpc0 offset ?	# IP20 keyboard/mouse
-#zskbd0		at zs1 channel 0
-#zsms0		at zs1 channel 1
+#zskbd0		at zsc1 channel 0
+#zsms0		at zs11 channel 1
 
 scsibus*	at scsi?		# HPC SCSI
 audio*          at audiobus?
