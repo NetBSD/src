@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2003/03/06 05:25:19 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2003/03/06 20:15:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct powerpc_bus_space ev64260_pci1_mem_bs_tag = {
 };
 struct powerpc_bus_space ev64260_pci1_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00800000, 0x01000000,
+	0x88000000, 0x00000000, 0x00800000,
 	NULL,
 	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
