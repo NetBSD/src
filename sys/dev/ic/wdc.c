@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.135 2003/10/06 21:51:31 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.136 2003/10/08 08:47:58 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.135 2003/10/06 21:51:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.136 2003/10/08 08:47:58 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -542,31 +542,6 @@ wdc_channel_attach(chp)
 			chp->ch_drive[i].drive_flags = 0;
 		else
 			chp->ch_drive[i].state = 0;
-	}
-
-	/*
-	 * Reset channel. The probe, with some combinations of ATA/ATAPI
-	 * devices keep it in a mostly working, but strange state (with busy
-	 * led on)
-	 */
-	if ((chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
-		delay(50);
-		wdcreset(chp, VERBOSE);
-		/*
-		 * Read status registers to avoid spurious interrupts.
-		 */
-		for (i = 1; i >= 0; i--) {
-			if (chp->ch_drive[i].drive_flags & DRIVE) {
-				if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
-					chp->wdc->select(chp,i);
-				bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
-				    wd_sdh, WDSD_IBM | (i << 4));
-				if (wait_for_unbusy(chp, 10000) < 0)
-					aprint_error("%s:%d:%d: device busy\n",
-					    chp->wdc->sc_dev.dv_xname,
-					    chp->channel, i);
-			}
-		}
 	}
 
 	if (chp->wdc->cap & WDC_CAPABILITY_MODE) {
