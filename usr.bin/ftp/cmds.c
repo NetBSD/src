@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.96 2002/05/06 14:36:41 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.97 2002/05/07 02:04:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.96 2002/05/06 14:36:41 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.97 2002/05/07 02:04:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -540,14 +540,14 @@ void
 reget(int argc, char *argv[])
 {
 
-	(void)getit(argc, argv, 1, "r+w");
+	(void)getit(argc, argv, 1, "r+");
 }
 
 void
 get(int argc, char *argv[])
 {
 
-	(void)getit(argc, argv, 0, restart_point ? "r+w" : "w" );
+	(void)getit(argc, argv, 0, restart_point ? "r+" : "w" );
 }
 
 /*
@@ -713,7 +713,7 @@ mget(int argc, char *argv[])
 			else
 				warn("stat %s", tp);
 		}
-		recvrequest("RETR", tp, cp, restart_point ? "r+w" : "w",
+		recvrequest("RETR", tp, cp, restart_point ? "r+" : "w",
 		    tp != cp || !interactive, 1);
 		restart_point = 0;
 		if (!mflag && fromatty) {
@@ -751,7 +751,7 @@ fget(int argc, char *argv[])
 	}
 
 	argv[0] = "get";
-	mode = restart_point ? "r+w" : "w";
+	mode = restart_point ? "r+" : "w";
 
 	for (;
 	    (buf = fparseln(fp, NULL, NULL, "\0\0\0", 0)) != NULL;
@@ -2550,7 +2550,7 @@ page(int argc, char *argv[])
 	orestart_point = restart_point;
 	overbose = verbose;
 	hash = restart_point = verbose = 0;
-	recvrequest("RETR", pager, argv[1], "r+w", 1, 0);
+	recvrequest("RETR", pager, argv[1], "r+", 1, 0);
 	hash = ohash;
 	restart_point = orestart_point;
 	verbose = overbose;
