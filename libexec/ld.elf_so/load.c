@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.27 2003/11/25 14:36:49 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.28 2004/07/05 11:50:07 cube Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -179,6 +179,7 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed, int 
 	bool got = false;
 	union {
 		int i;
+		u_quad_t q;
 		char s[16];
 	} val;
 
@@ -187,22 +188,24 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed, int 
 		if (strcmp(x->name, name) != 0)
 			continue;
 
-		i = sizeof(val);
-
-		if (sysctl(x->ctl, x->ctlmax, &val, &i, NULL, 0) == -1) {
-			xwarnx(_PATH_LD_HINTS ": unknown sysctl for %s", name);
+		j = sizeof(val);
+		if ((i = _rtld_sysctl(x->ctlname, &val, &j)) == -1) {
+			xwarnx(_PATH_LD_HINTS ": invalid/unknown sysctl for %s (%d)",
+			    name, errno);
 			break;
 		}
 
-		switch (x->ctltype[x->ctlmax - 1]) {
+		switch (i) {
+		case CTLTYPE_QUAD:
+			xsnprintf(val.s, sizeof(val.s), "%" PRIu64, val.q);
+			break;
 		case CTLTYPE_INT:
 			xsnprintf(val.s, sizeof(val.s), "%d", val.i);
 			break;
 		case CTLTYPE_STRING:
 			break;
 		default:
-			xwarnx("unsupported sysctl type %d",
-			    x->ctltype[x->ctlmax - 1]);
+			xwarnx("unsupported sysctl type %d", (int)i);
 			break;
 		}
 
