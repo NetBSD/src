@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.32 1997/10/18 21:18:33 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.32.2.1 1997/11/08 06:31:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -224,8 +224,9 @@ tcp_newtcpcb(inp)
 		return ((struct tcpcb *)0);
 	bzero((caddr_t)tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
-	tp->t_maxseg = tcp_mssdflt;
+	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
+	tp->t_segsz = tcp_mssdflt;
 
 	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
@@ -341,10 +342,10 @@ tcp_close(tp)
 			 * convert the limit from user data bytes to
 			 * packets then to packet data bytes.
 			 */
-			i = (i + tp->t_maxseg / 2) / tp->t_maxseg;
+			i = (i + tp->t_segsz / 2) / tp->t_segsz;
 			if (i < 2)
 				i = 2;
-			i *= (u_long)(tp->t_maxseg + sizeof (struct tcpiphdr));
+			i *= (u_long)(tp->t_segsz + sizeof (struct tcpiphdr));
 			if (rt->rt_rmx.rmx_ssthresh)
 				rt->rt_rmx.rmx_ssthresh =
 				    (rt->rt_rmx.rmx_ssthresh + i) / 2;
@@ -462,7 +463,7 @@ tcp_quench(inp, errno)
 	struct tcpcb *tp = intotcpcb(inp);
 
 	if (tp)
-		tp->snd_cwnd = tp->t_maxseg;
+		tp->snd_cwnd = tp->t_segsz;
 }
 
 /*
@@ -489,6 +490,8 @@ tcp_mtudisc(inp, errno)
 				if ((rt = in_pcbrtentry(inp)) == 0)
 					return;
 			}
+			if (rt->rt_rmx.rmx_mtu != 0)
+				tp->snd_cwnd = rt->rt_rmx.rmx_mtu;
 		}
 	    
 		/* Resend unacknowledged packets: */
@@ -583,7 +586,8 @@ tcp_mss_from_peer(tp, offer)
 			bufsize = sb_max;
 		(void) sbreserve(&so->so_snd, bufsize);
 	}
-	tp->t_maxseg = mss;
+	tp->t_peermss = mss;
+	tp->t_segsz = mss;
 
 	/* Initialize the initial congestion window. */
 	tp->snd_cwnd = mss;
