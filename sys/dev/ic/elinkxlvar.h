@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.7 2000/08/24 08:54:31 haya Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.8 2000/09/19 01:15:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,8 +83,12 @@ struct ex_softc {
 #define EX_CONF_MII		0x0001	/* has MII bus */
 #define EX_CONF_INTPHY		0x0002	/* has internal PHY */
 #define EX_CONF_90XB		0x0004	/* is 90xB */
-#define EX_CONF_INV_LED_POLARITY	0x0010	/* CardBus: LED polarity */
-#define EX_CONF_PHY_POWER	0x0020	/* CardBus: controllable PHY power */
+#define EX_CONF_INV_LED_POLARITY 0x0010	/* CardBus & MiniPCI: LED polarity */
+#define EX_CONF_PHY_POWER	0x0020	/* CardBus & MiniPCI: PHY power */
+#define EX_CONF_EEPROM_OFF	0x0040	/* EEPROM is offset by 0x30 */
+#define EX_CONF_EEPROM_8BIT	0x0080	/* 8 bit EEPROM */
+#define EX_CONF_PCI_FUNCREG	0x0100	/* Has PCI function registers */
+#define EX_CONF_RESETHACK	0x0200	/* Hack to make reset work on 556B */
 
 
 	/*
