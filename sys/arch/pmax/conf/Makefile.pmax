@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.61.2.3 1998/12/06 21:13:02 drochner Exp $
+#	$NetBSD: Makefile.pmax,v 1.61.2.4 1999/01/18 20:21:19 drochner Exp $
 
 # Makefile for NetBSD
 #
@@ -49,7 +49,8 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-D__pmax__ -Dpmax ${GP}
 #	-Wno-uninitialized avoids bogus warnings in cpu_reboot()
-CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
+CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
