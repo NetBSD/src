@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 1999/12/21 12:34:14 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2000/01/26 18:48:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -192,6 +192,10 @@ void	child_return __P((void *));
 /* consinit.c */
 void consinit __P((void));
 void kgdb_port_init __P((void));
+
+/* bus_machdep.c */
+void i386_bus_space_init __P((void));
+void i386_bus_space_mallocok __P((void));
 
 #endif /* _KERNEL */
 

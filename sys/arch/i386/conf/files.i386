@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.145 1999/12/21 12:34:13 drochner Exp $
+#	$NetBSD: files.i386,v 1.146 2000/01/26 18:47:59 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -42,6 +42,7 @@ defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE PCIBIOS_INTR_FIXUP
 	PCIINTR_DEBUG PCIBIOS_BUS_FIXUP
 
 file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/bus_machdep.c
 file	arch/i386/i386/conf.c
 file	arch/i386/i386/consinit.c
 file	arch/i386/i386/db_dbgreg.s	ddb
