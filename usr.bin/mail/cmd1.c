@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.11 1997/10/19 14:12:27 mrg Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.12 1999/02/09 04:51:30 dean Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.11 1997/10/19 14:12:27 mrg Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.12 1999/02/09 04:51:30 dean Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ scroll(v)
 	case 0:
 	case '+':
 		s++;
-		if (s * size > msgCount) {
+		if (s * size >= msgCount) {
 			printf("On last screenful of messages\n");
 			return(0);
 		}
