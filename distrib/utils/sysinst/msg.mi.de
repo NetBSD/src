@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.7 2004/05/22 18:06:14 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.8 2004/06/05 15:35:51 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -630,7 +630,7 @@ message net_defroute
 {IPv4 Gateway}
 
 message net_media
-{Der Medientyp (Art der Netzwerkverbindung) Ihres Netzwerkadapters}
+{Art der Netzwerkverbindung}
 
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen. Sind diese OK?
