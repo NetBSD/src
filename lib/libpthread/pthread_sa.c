@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.5 2003/01/30 01:04:50 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.6 2003/02/15 04:37:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <lwp.h>
@@ -51,8 +50,6 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
-
-#define PTHREAD_SA_DEBUG
 
 #ifdef PTHREAD_SA_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -197,21 +194,21 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		/* We don't send ourselves one of these. */
 	default:
 		/*CONSTCOND*/
-		assert(0);
+		pthread__assert(0);
 	}
 
 	/*
 	 * At this point everything on our list should be scheduled
 	 * (or was an upcall).
 	 */
-	assert(self->pt_spinlocks == 0);
+	pthread__assert(self->pt_spinlocks == 0);
 	next = pthread__next(self);
 	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
 	    self, next, next->pt_uc, pthread__uc_pc(next->pt_uc)));
 	pthread__upcall_switch(self, next);
 	/*NOTREACHED*//*CONSTCOND*/
-	assert(0);
+	pthread__assert(0);
 }
 
 /*
@@ -254,7 +251,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 				for ( ; victim->pt_parent != NULL; 
 				      victim = victim->pt_parent) {
 					SDPRINTF((" parent %p", victim->pt_parent));
-					assert(victim->pt_parent != victim);
+					pthread__assert(victim->pt_parent != victim);
 				}
 			}
 		} else {
@@ -273,7 +270,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 					for ( ; victim->pt_parent != NULL; 
 					      victim = victim->pt_parent) {
 						SDPRINTF((" parent %p", victim->pt_parent));
-						assert(victim->pt_parent != victim);
+						pthread__assert(victim->pt_parent != victim);
 					}
 
 
@@ -291,7 +288,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 					for ( ; victim->pt_parent != NULL; 
 					      victim = victim->pt_parent) {
 						SDPRINTF((" parent %p", victim->pt_parent));
-						assert(victim->pt_parent != victim);
+						pthread__assert(victim->pt_parent != victim);
 					}
 				} else if (victim->pt_flags & PT_FLAG_IDLED) {
 					/*
@@ -309,7 +306,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 					
 			}
 		}
-		assert (victim != self);
+		pthread__assert (victim != self);
 		victim->pt_parent = self;
 		victim->pt_next = next;
 		next = victim;
@@ -459,7 +456,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			}
 
 			if (switchto) {
-				assert(switchto->pt_spinlocks == 0);
+				pthread__assert(switchto->pt_spinlocks == 0);
 				/*
 				 * Threads can have switchto set to themselves
 				 * if they hit new_preempt. Don't put them
@@ -549,7 +546,7 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 				printf("ret: %d  threshold: %d\n",
 				    ret, recycle_threshold);
 				/*CONSTCOND*/
-				assert(0);
+				pthread__assert(0);
 			}
 		}
 	}
@@ -591,7 +588,7 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 		SDPRINTF(("(recycle %p) recycled %d stacks\n", new, recycle_threshold));
 		if (ret != recycle_threshold) {
 			/*CONSTCOND*/
-			assert(0);
+			pthread__assert(0);
 		}
 	}
 }
