@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.4 1998/06/15 17:48:33 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.5 1998/07/21 09:17:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -122,8 +122,8 @@ struct wskbd_keyrepeat_data {
 #define		WSKBD_LED_SCROLL	0x04
 #define		WSKBD_LED_COMPOSE	0x08
 
-#define	WSKBDIO_SETLEDS		_IOR('W', 11, int)
-#define	WSKBDIO_GETLEDS		_IOW('W', 12, int)
+#define	WSKBDIO_SETLEDS		_IOW('W', 11, int)
+#define	WSKBDIO_GETLEDS		_IOR('W', 12, int)
 
 /* Manipulate keysym groups. */
 struct wskbd_map_data {
