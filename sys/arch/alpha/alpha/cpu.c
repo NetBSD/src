@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.29 1998/09/26 00:00:33 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.30 1998/09/28 21:50:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 1998/09/26 00:00:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 1998/09/28 21:50:32 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -352,7 +352,7 @@ cpu_run_spinup_queue()
 			continue;
 		}
 		memset(sc->sc_idle_stack, 0, USPACE);
-#if 1
+#if 0
 		printf("%s: idle stack = %p\n", sc->sc_dev.dv_xname,
 		    sc->sc_idle_stack);
 #endif
@@ -369,9 +369,11 @@ cpu_run_spinup_queue()
 		pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
 		pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
 		memcpy(pcsp->pcs_hwpcb, &pcb->pcb_hw, sizeof(pcb->pcb_hw));
-#if 1
+#if 0
 		printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
 		    pcb->pcb_hw.apcb_ksp);
+		printf("%s: hwpcb ptbr = 0x%lx\n", sc->sc_dev.dv_xname,
+		    pcb->pcb_hw.apcb_ptbr);
 #endif
 
 		/*
@@ -387,8 +389,19 @@ cpu_run_spinup_queue()
 		 * the primary CPU's PALcode revision info to the secondary
 		 * CPUs PCS.
 		 */
+
+		/*
+		 * XXX Until I can update the boot block on my test system.
+		 * XXX --thorpej
+		 */
+#if 0
 		memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
 		    sizeof(pcsp->pcs_pal_rev));
+#else
+		memcpy(&pcsp->pcs_pal_rev,
+		    &pcsp->pcs_palrevisions[PALvar_OSF1],
+		    sizeof(pcsp->pcs_pal_rev));
+#endif
 		pcsp->pcs_flags |= (PCS_CV|PCS_RC);
 		pcsp->pcs_flags &= ~PCS_BIP;
 
