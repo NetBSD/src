@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.26 2002/12/06 02:38:28 junyoung Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.27 2002/12/11 13:50:14 joda Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -121,7 +121,7 @@
 #define	CPUID_SS	0x08000000	/* self-snoop */
 #define	CPUID_HTT	0x10000000	/* Hyper-Threading Technology */
 #define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
-#define	CPUID_B30	0x40000000	/* reserved */
+#define	CPUID_IA64	0x40000000	/* IA-64 architecture */
 #define	CPUID_SBF	0x80000000	/* signal break on FERR */
 
 #define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
@@ -130,7 +130,7 @@
 #define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN\24CFLUSH" \
 			    "\25B20\26DS\27ACPI\30MMX"
 #define CPUID_MASK2	0x00ffe000
-#define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37B30\40SBF"
+#define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37IA64\40SBF"
 #define CPUID_MASK3	0xff000000
 
 /*
