@@ -11,13 +11,8 @@
 ./usr/bin/vttest
 ./usr/lib/libg2c.so.0.0
 ./usr/lib/libi386.so.0.2
-./usr/lib/libkeycap.a
-./usr/lib/libkeycap_p.a
-./usr/lib/libkeycap_pic.a
-./usr/lib/libkeycap.so.0.0
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libstdc++.so.2.0
-./usr/libdata/lint/llib-lkeycap.ln
 ./usr/libexec/ld.so
 ./usr/lkm/cd9660.o
 ./usr/lkm/fdesc.o
