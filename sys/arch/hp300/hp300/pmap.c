@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.5 1994/04/24 07:00:12 mycroft Exp $
+ *	$Id: pmap.c,v 1.6 1994/04/24 11:48:50 mycroft Exp $
  */
 
 /*
@@ -215,7 +215,6 @@ vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 vm_offset_t	vm_first_phys;	/* PA of first managed page */
 vm_offset_t	vm_last_phys;	/* PA just past last managed page */
-int		hppagesperpage;	/* PAGE_SIZE / HP_PAGE_SIZE */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 char		*pmap_attributes;	/* reference and modify bits */
@@ -266,7 +265,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	mem_size = physmem << PGSHIFT;
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
-	hppagesperpage = PAGE_SIZE / HP_PAGE_SIZE;
 
 	/*
 	 * Determine VA aliasing distance if any
@@ -308,7 +306,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	 * Allocate all the submaps we need
 	 */
 #define	SYSMAP(c, p, v, n)	\
-	v = (c)va; va += ((n)*HP_PAGE_SIZE); p = pte; pte += (n);
+	v = (c)va; va += ((n)*NBPG); p = pte; pte += (n);
 
 	va = virtual_avail;
 	pte = pmap_pte(kernel_pmap, va);
@@ -423,7 +421,7 @@ bogons:
 	kpt_pages = &((struct kpt_page *)addr2)[npg];
 	kpt_free_list = (struct kpt_page *) 0;
 	do {
-		addr2 -= HP_PAGE_SIZE;
+		addr2 -= NBPG;
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
@@ -486,8 +484,8 @@ pmap_map(virt, start, end, prot)
 #endif
 	while (start < end) {
 		pmap_enter(kernel_pmap, virt, start, prot, FALSE);
-		virt += PAGE_SIZE;
-		start += PAGE_SIZE;
+		virt += NBPG;
+		start += NBPG;
 	}
 	return(virt);
 }
@@ -642,7 +640,6 @@ pmap_remove(pmap, sva, eva)
 	register vm_offset_t pa, va;
 	register pt_entry_t *pte;
 	register pv_entry_t pv, npv;
-	register int ix;
 	pmap_t ptpmap;
 	int *ste, s, bits;
 	boolean_t firstpage = TRUE;
@@ -660,7 +657,7 @@ pmap_remove(pmap, sva, eva)
 #ifdef DEBUG
 	remove_stats.calls++;
 #endif
-	for (va = sva; va < eva; va += PAGE_SIZE) {
+	for (va = sva; va < eva; va += NBPG) {
 		/*
 		 * Weed out invalid mappings.
 		 * Note: we assume that the segment table is always allocated.
@@ -669,7 +666,7 @@ pmap_remove(pmap, sva, eva)
 			/* XXX: avoid address wrap around */
 			if (va >= hp300_trunc_seg((vm_offset_t)-1))
 				break;
-			va = hp300_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = hp300_round_seg(va + NBPG) - NBPG;
 			continue;
 		}
 		pte = pmap_pte(pmap, va);
@@ -702,8 +699,7 @@ pmap_remove(pmap, sva, eva)
 		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_REMOVE)
-			printf("remove: invalidating %x ptes at %x\n",
-			       hppagesperpage, pte);
+			printf("remove: invalidating pte at %x\n", pte);
 #endif
 		/*
 		 * Flush VAC to ensure we get the correct state of any
@@ -718,12 +714,9 @@ pmap_remove(pmap, sva, eva)
 			remove_stats.sflushes++;
 #endif
 		}
-		bits = ix = 0;
-		do {
-			bits |= *(int *)pte & (PG_U|PG_M);
-			*(int *)pte++ = PG_NV;
-			TBIS(va + ix * HP_PAGE_SIZE);
-		} while (++ix != hppagesperpage);
+		bits = *(int *)pte & (PG_U|PG_M);
+		*(int *)pte = PG_NV;
+		TBIS(va);
 
 		/*
 		 * For user mappings decrement the wiring count on
@@ -933,7 +926,7 @@ pmap_page_protect(pa, prot)
 				panic("pmap_page_protect: bad mapping");
 #endif
 			pmap_remove(pv->pv_pmap, pv->pv_va,
-				    pv->pv_va + PAGE_SIZE);
+				    pv->pv_va + NBPG);
 		}
 		splx(s);
 		break;
@@ -952,7 +945,6 @@ pmap_protect(pmap, sva, eva, prot)
 {
 	register pt_entry_t *pte;
 	register vm_offset_t va;
-	register int ix;
 	int hpprot;
 	boolean_t firstpage = TRUE;
 
@@ -972,7 +964,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 	pte = pmap_pte(pmap, sva);
 	hpprot = pte_prot(pmap, prot) == PG_RO ? 1 : 0;
-	for (va = sva; va < eva; va += PAGE_SIZE) {
+	for (va = sva; va < eva; va += NBPG) {
 		/*
 		 * Page table page is not allocated.
 		 * Skip it, we don't want to force allocation
@@ -982,9 +974,9 @@ pmap_protect(pmap, sva, eva, prot)
 			/* XXX: avoid address wrap around */
 			if (va >= hp300_trunc_seg((vm_offset_t)-1))
 				break;
-			va = hp300_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = hp300_round_seg(va + NBPG) - NBPG;
 			pte = pmap_pte(pmap, va);
-			pte += hppagesperpage;
+			pte++;
 			continue;
 		}
 		/*
@@ -992,7 +984,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * Should we do this?  Or set protection anyway?
 		 */
 		if (!pmap_pte_v(pte)) {
-			pte += hppagesperpage;
+			pte++;
 			continue;
 		}
 		/*
@@ -1003,12 +995,9 @@ pmap_protect(pmap, sva, eva, prot)
 			firstpage = FALSE;
 			DCIS();
 		}
-		ix = 0;
-		do {
-			/* clear VAC here if PG_RO? */
-			pmap_pte_set_prot(pte++, hpprot);
-			TBIS(va + ix * HP_PAGE_SIZE);
-		} while (++ix != hppagesperpage);
+		/* clear VAC here if PG_RO? */
+		pmap_pte_set_prot(pte++, hpprot);
+		TBIS(va);
 	}
 #ifdef DEBUG
 	if (hpprot && (pmapvacflush & PVF_PROTECT)) {
@@ -1043,7 +1032,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t wired;
 {
 	register pt_entry_t *pte;
-	register int npte, ix;
 	vm_offset_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
@@ -1126,7 +1114,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if (pmapdebug & PDB_ENTER)
 			printf("enter: removing old mapping %x\n", va);
 #endif
-		pmap_remove(pmap, va, va + PAGE_SIZE);
+		pmap_remove(pmap, va, va + NBPG);
 #ifdef DEBUG
 		enter_stats.mchange++;
 #endif
@@ -1287,13 +1275,8 @@ validate:
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: new pte value %x\n", npte);
 #endif
-	ix = 0;
-	do {
-		*(int *)pte++ = npte;
-		TBIS(va);
-		npte += HP_PAGE_SIZE;
-		va += HP_PAGE_SIZE;
-	} while (++ix != hppagesperpage);
+	*(int *)pte = npte;
+	TBIS(va);
 	/*
 	 * The following is executed if we are entering a second
 	 * (or greater) mapping for a physical page and the mappings
@@ -1322,10 +1305,8 @@ validate:
 		else
 			DCIU();
 	}
-	if ((pmapdebug & PDB_WIRING) && pmap != kernel_pmap) {
-		va -= PAGE_SIZE;
+	if ((pmapdebug & PDB_WIRING) && pmap != kernel_pmap)
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
-	}
 #endif
 }
 
@@ -1343,7 +1324,6 @@ pmap_change_wiring(pmap, va, wired)
 	boolean_t	wired;
 {
 	register pt_entry_t *pte;
-	register int ix;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1383,10 +1363,7 @@ pmap_change_wiring(pmap, va, wired)
 	 * Wiring is not a hardware characteristic so there is no need
 	 * to invalidate TLB.
 	 */
-	ix = 0;
-	do {
-		pmap_pte_set_w(pte++, wired);
-	} while (++ix != hppagesperpage);
+	pmap_pte_set_w(pte, wired);
 }
 
 /*
@@ -1491,7 +1468,7 @@ pmap_collect(pmap)
 	kpt_stats.collectscans++;
 #endif
 	s = splimp();
-	for (pa = vm_first_phys; pa < vm_last_phys; pa += PAGE_SIZE) {
+	for (pa = vm_first_phys; pa < vm_last_phys; pa += NBPG) {
 		register struct kpt_page *kpt, **pkpt;
 
 		/*
@@ -1517,7 +1494,7 @@ pmap_collect(pmap)
 		continue;
 ok:
 #endif
-		pte = (int *)(pv->pv_va + HP_PAGE_SIZE);
+		pte = (int *)(pv->pv_va + NBPG);
 		while (--pte >= (int *)pv->pv_va && *pte == PG_NV)
 			;
 		if (pte >= (int *)pv->pv_va)
@@ -1539,7 +1516,7 @@ ok:
 		 * and Sysptmap entries.
 		 */
 		kpa = pmap_extract(pmap, pv->pv_va);
-		pmap_remove(pmap, pv->pv_va, pv->pv_va + HP_PAGE_SIZE);
+		pmap_remove(pmap, pv->pv_va, pv->pv_va + NBPG);
 		/*
 		 * Use the physical address to locate the original
 		 * (kmem_alloc assigned) address for the page and put
@@ -1599,17 +1576,13 @@ pmap_activate(pmap, pcbp)
 pmap_zero_page(phys)
 	register vm_offset_t	phys;
 {
-	register int ix;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%x)\n", phys);
 #endif
 	phys >>= PG_SHIFT;
-	ix = 0;
-	do {
-		clearseg(phys++);
-	} while (++ix != hppagesperpage);
+	clearseg(phys);
 }
 
 /*
@@ -1621,7 +1594,6 @@ pmap_zero_page(phys)
 pmap_copy_page(src, dst)
 	register vm_offset_t	src, dst;
 {
-	register int ix;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1629,10 +1601,7 @@ pmap_copy_page(src, dst)
 #endif
 	src >>= PG_SHIFT;
 	dst >>= PG_SHIFT;
-	ix = 0;
-	do {
-		physcopyseg(src++, dst++);
-	} while (++ix != hppagesperpage);
+	physcopyseg(src, dst);
 }
 
 
@@ -1668,7 +1637,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 *	- we are called with only one page at a time
 	 *	- PT pages have only one pv_table entry
 	 */
-	if (pmap == kernel_pmap && pageable && sva + PAGE_SIZE == eva) {
+	if (pmap == kernel_pmap && pageable && sva + NBPG == eva) {
 		register pv_entry_t pv;
 		register vm_offset_t pa;
 
@@ -1823,7 +1792,7 @@ pmap_testbit(pa, bit)
 	int bit;
 {
 	register pv_entry_t pv;
-	register int *pte, ix;
+	register int *pte;
 	int s;
 
 	if (pa < vm_first_phys || pa >= vm_last_phys)
@@ -1850,13 +1819,10 @@ pmap_testbit(pa, bit)
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			pte = (int *) pmap_pte(pv->pv_pmap, pv->pv_va);
-			ix = 0;
-			do {
-				if (*pte++ & bit) {
-					splx(s);
-					return(TRUE);
-				}
-			} while (++ix != hppagesperpage);
+			if (*pte & bit) {
+				splx(s);
+				return(TRUE);
+			}
 		}
 	}
 	splx(s);
@@ -1870,7 +1836,7 @@ pmap_changebit(pa, bit, setem)
 	boolean_t setem;
 {
 	register pv_entry_t pv;
-	register int *pte, npte, ix;
+	register int *pte, npte;
 	vm_offset_t va;
 	int s;
 	boolean_t firstpage = TRUE;
@@ -1923,19 +1889,14 @@ pmap_changebit(pa, bit, setem)
 				firstpage = FALSE;
 				DCIS();
 			}
-			ix = 0;
-			do {
-				if (setem)
-					npte = *pte | bit;
-				else
-					npte = *pte & ~bit;
-				if (*pte != npte) {
-					*pte = npte;
-					TBIS(va);
-				}
-				va += HP_PAGE_SIZE;
-				pte++;
-			} while (++ix != hppagesperpage);
+			if (setem)
+				npte = *pte | bit;
+			else
+				npte = *pte & ~bit;
+			if (*pte != npte) {
+				*pte = npte;
+				TBIS(va);
+			}
 		}
 #ifdef DEBUG
 		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
@@ -2024,7 +1985,7 @@ pmap_enter_ptpage(pmap, va)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		bzero(kpt->kpt_va, HP_PAGE_SIZE);
+		bzero(kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
@@ -2137,7 +2098,7 @@ pmap_check_wiring(str, va)
 		return;
 	}
 	count = 0;
-	for (pte = (int *)va; pte < (int *)(va+PAGE_SIZE); pte++)
+	for (pte = (int *)va; pte < (int *)(va + NBPG); pte++)
 		if (*pte)
 			count++;
 	if (entry->wired_count != count)
