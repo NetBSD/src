@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.2 2002/04/22 15:53:39 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.3 2002/04/22 20:47:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.2 2002/04/22 15:53:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.3 2002/04/22 20:47:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.2 2002/04/22 15:53:39 bouyer Exp $");
 #include "opt_siop.h"
 
 #ifndef DEBUG
-#undef DEBUG
+#define DEBUG
 #endif
 #undef SIOP_DEBUG
 #undef SIOP_DEBUG_DR
@@ -308,14 +308,14 @@ esiop_reset(sc)
 
 #ifdef SIOP_SYMLED
 		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
-		    Ent_led_on1, siop_led_on,
-		    sizeof(siop_led_on) / sizeof(siop_led_on[0]));
+		    Ent_led_on1, esiop_led_on,
+		    sizeof(esiop_led_on) / sizeof(esiop_led_on[0]));
 		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
-		    Ent_led_on2, siop_led_on,
-		    sizeof(siop_led_on) / sizeof(siop_led_on[0]));
+		    Ent_led_on2, esiop_led_on,
+		    sizeof(esiop_led_on) / sizeof(esiop_led_on[0]));
 		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
-		    Ent_led_off, siop_led_off,
-		    sizeof(siop_led_off) / sizeof(siop_led_off[0]));
+		    Ent_led_off, esiop_led_off,
+		    sizeof(esiop_led_off) / sizeof(esiop_led_off[0]));
 #endif
 	} else {
 		for (j = 0;
@@ -337,20 +337,20 @@ esiop_reset(sc)
 
 #ifdef SIOP_SYMLED
 		for (j = 0;
-		    j < (sizeof(siop_led_on) / sizeof(siop_led_on[0])); j++)
+		    j < (sizeof(esiop_led_on) / sizeof(esiop_led_on[0])); j++)
 			sc->sc_c.sc_script[
-			    Ent_led_on1 / sizeof(siop_led_on[0]) + j
-			    ] = htole32(siop_led_on[j]);
+			    Ent_led_on1 / sizeof(esiop_led_on[0]) + j
+			    ] = htole32(esiop_led_on[j]);
 		for (j = 0;
-		    j < (sizeof(siop_led_on) / sizeof(siop_led_on[0])); j++)
+		    j < (sizeof(esiop_led_on) / sizeof(esiop_led_on[0])); j++)
 			sc->sc_c.sc_script[
-			    Ent_led_on2 / sizeof(siop_led_on[0]) + j
-			    ] = htole32(siop_led_on[j]);
+			    Ent_led_on2 / sizeof(esiop_led_on[0]) + j
+			    ] = htole32(esiop_led_on[j]);
 		for (j = 0;
-		    j < (sizeof(siop_led_off) / sizeof(siop_led_off[0])); j++)
+		    j < (sizeof(esiop_led_off) / sizeof(esiop_led_off[0])); j++)
 			sc->sc_c.sc_script[
-			   Ent_led_off / sizeof(siop_led_off[0]) + j
-			   ] = htole32(siop_led_off[j]);
+			   Ent_led_off / sizeof(esiop_led_off[0]) + j
+			   ] = htole32(esiop_led_off[j]);
 #endif
 	}
 	/* get base of scheduler ring */
@@ -439,6 +439,7 @@ esiop_intr(v)
 	int need_reset = 0;
 	int offset, target, lun, tag;
 	u_int32_t tflags;
+	u_int32_t addr;
 	int freetarget = 0;
 	int restart = 0;
 	int slot;
@@ -511,6 +512,8 @@ again:
 			goto none;
 		}
 #endif
+		esiop_table_sync(esiop_cmd,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	} else {
 none:
 		xs = NULL;
@@ -664,11 +667,10 @@ none:
 			/*
 			 * SCRATCHC has not been loaded yet, we have to find
 			 * params by ourselve. scratchE0 should point to
-			 * the next slot.
+			 * the slot.
 			 */
 			slot = bus_space_read_1(sc->sc_c.sc_rt,
 			    sc->sc_c.sc_rh, SIOP_SCRATCHE);
-			slot =  (slot == 0) ? A_ncmd_slots : slot - 1;
 			esiop_script_sync(sc,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			target = esiop_script_read(sc,
@@ -677,6 +679,27 @@ none:
 			esiop_cmd = esiop_cmd_find(sc, target,
 			    esiop_script_read(sc,
 				sc->sc_shedoffset + slot * 2) & ~0x3);
+			/*
+			 * mark this slot as free, and advance to next slot
+			 */
+			esiop_script_write(sc, sc->sc_shedoffset + slot * 2,
+			    A_f_cmd_free);
+			addr = bus_space_read_4(sc->sc_c.sc_rt,
+				    sc->sc_c.sc_rh, SIOP_SCRATCHD);
+			if (slot < (A_ncmd_slots - 1)) {
+				bus_space_write_1(sc->sc_c.sc_rt,
+				    sc->sc_c.sc_rh, SIOP_SCRATCHE, slot + 1);
+				addr = addr + 8;
+			} else {
+				bus_space_write_1(sc->sc_c.sc_rt,
+				    sc->sc_c.sc_rh, SIOP_SCRATCHE, 0);
+				addr = sc->sc_c.sc_scriptaddr +
+				    sc->sc_shedoffset * sizeof(u_int32_t);
+			}
+			bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
+			    SIOP_SCRATCHD, addr);
+			esiop_script_sync(sc,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			if (esiop_cmd) {
 				xs = esiop_cmd->cmd_c.xs;
 				esiop_target = (struct esiop_target *)
@@ -690,7 +713,11 @@ none:
 				goto end;
 			} else {
 				printf("%s: selection timeout without "
-				    "command\n", sc->sc_c.sc_dev.dv_xname);
+				    "command, target %d (sdid 0x%x), "
+				    "slot %d\n",
+				    sc->sc_c.sc_dev.dv_xname, target,
+				    bus_space_read_1(sc->sc_c.sc_rt,
+				    sc->sc_c.sc_rh, SIOP_SDID), slot);
 				need_reset = 1;
 			}
 		}
@@ -1061,7 +1088,7 @@ end:
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
 		
-	goto again;
+	return retval;
 }
 
 void
@@ -1146,6 +1173,9 @@ esiop_checkdone(sc)
 				continue;
 			esiop_cmd = esiop_lun->active;
 			if (esiop_cmd) {
+				esiop_table_sync(esiop_cmd,
+				    BUS_DMASYNC_POSTREAD |
+				    BUS_DMASYNC_POSTWRITE);
 				status = le32toh(esiop_cmd->cmd_tables->status);
 				if (status == SCSI_OK) {
 					/* Ok, this command has been handled */
@@ -1158,6 +1188,9 @@ esiop_checkdone(sc)
 				esiop_cmd = esiop_lun->tactive[tag];
 				if (esiop_cmd == NULL)
 					continue;
+				esiop_table_sync(esiop_cmd,
+				    BUS_DMASYNC_POSTREAD |
+				    BUS_DMASYNC_POSTWRITE);
 				status = le32toh(esiop_cmd->cmd_tables->status);
 				if (status == SCSI_OK) {
 					/* Ok, this command has been handled */
@@ -1190,7 +1223,7 @@ esiop_unqueue(sc, target, lun)
 		if (esiop_lun->tactive[tag] == NULL) 
 			continue;
 		esiop_cmd = esiop_lun->tactive[tag];
-		for (slot = 0; slot <= A_ncmd_slots; slot++) {
+		for (slot = 0; slot < A_ncmd_slots; slot++) {
 			slotdsa = esiop_script_read(sc,
 			    sc->sc_shedoffset + slot * 2);
 			if (slotdsa & A_f_cmd_free)
@@ -1912,7 +1945,7 @@ esiop_update_scntl3(sc, _siop_target)
 	    esiop_target->target_c.id);
 	id  = esiop_target->target_c.id & 0x00ff0000;
 	/* There may be other commands waiting in the scheduler. handle them */
-	for (slot = 0; slot <= A_ncmd_slots; slot++) {
+	for (slot = 0; slot < A_ncmd_slots; slot++) {
 		slotid =
 		    esiop_script_read(sc, sc->sc_shedoffset + slot * 2 + 1);
 		if ((slotid & 0x00ff0000) == id)
