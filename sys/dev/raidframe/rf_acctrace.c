@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.5 2001/10/04 15:58:51 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.6 2001/10/05 15:41:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -106,10 +106,6 @@ rf_LogTraceRec(raid, rec)
 	RF_AccTraceEntry_t *rec;
 {
 	RF_AccTotals_t *acc = &raid->acc_totals;
-#if 0
-	RF_Etimer_t timer;
-	int     i, n;
-#endif
 
 	if (rf_stopCollectingTraces || ((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
 		return;

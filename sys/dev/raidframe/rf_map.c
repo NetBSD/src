@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.7 2001/10/04 15:58:54 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.8 2001/10/05 15:41:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -880,11 +880,6 @@ rf_ASMCheckStatus(
 					asm_p->numParityFailed++;
 				else {
 					asm_p->numDataFailed++;
-#if 0
-					/* XXX Do we really want this spewing
-					 * out on the console? GO */
-					printf("DATA_FAILED!\n");
-#endif
 				}
 				asm_p->failedPDAs[asm_p->numFailedPDAs] = pda_p;
 				asm_p->numFailedPDAs++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.6 2001/10/04 15:58:54 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.7 2001/10/05 15:41:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -128,15 +128,9 @@ struct RF_AccessStripeMap_s {
 				 * or 1) */
 	int     numQFailed;	/* number of failed Q units accessed (0 or 1) */
 	RF_AccessStripeMapFlags_t flags;	/* various flags */
-#if 0
-	RF_PhysDiskAddr_t *failedPDA;	/* points to the PDA that has failed */
-	RF_PhysDiskAddr_t *failedPDAtwo;	/* points to the second PDA
-						 * that has failed, if any */
-#else
 	int     numFailedPDAs;	/* number of failed phys addrs */
 	RF_PhysDiskAddr_t *failedPDAs[RF_MAX_FAILED_PDA];	/* array of failed phys
 								 * addrs */
-#endif
 	RF_PhysDiskAddr_t *physInfo;	/* a list of PhysDiskAddr structs */
 	RF_PhysDiskAddr_t *parityInfo;	/* list of physical addrs for the
 					 * parity (P of P + Q ) */
