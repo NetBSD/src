@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.12 2000/06/14 17:24:56 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.12.2.1 2000/07/26 23:02:11 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -60,8 +60,8 @@ __start:
 	clr	%fp
 	add	%sp, 8*16 + 0x7ff, %o0		! start of stack
 	mov	%g1, %o1			! Cleanup routine
-	clr	%o1				! XXXX
-	clr	%o2				! obj
+	mov	%g3, %o1			! XXXX our rtld uses %g3
+	mov	%g2, %o2			! XXXX obj from rtld.
 	ba,pt	%icc, ___start			! XXXX jump over the retl egcs 2.96 inserts
 	mov	%g1, %o3			! ps_strings XXXX
 ");
@@ -79,7 +79,11 @@ ___start(sp, cleanup, obj, ps_strings)
 	long argc;
 	char **argv, *namep;
 
-	argc = *(int *)sp;
+	argc = *(long *)sp;
+#ifdef __sparc_v9__
+	/* XXX Temporary hack for argc format conversion. */
+	argc = (argc >> 32) | (argc & 0xffffffff);
+#endif
 	argv = sp + 1;
 	environ = sp + 2 + argc;		/* 2: argc + NULL ending argv */
 
@@ -106,6 +110,7 @@ ___start(sp, cleanup, obj, ps_strings)
 
 	atexit(_fini);
 	_init();
+
 	exit(main(argc, argv, environ));
 }
 
@@ -113,7 +118,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.12 2000/06/14 17:24:56 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.12.2.1 2000/07/26 23:02:11 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
