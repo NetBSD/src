@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.4.2 2002/06/20 03:40:33 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.3.4.3 2002/06/20 22:57:13 nathanw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,13 +105,14 @@ define	PM_SR		offsetof(struct pmap, pm_sr[0])
 define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 
-define	P_FORW		offsetof(struct proc, p_forw)
-define	P_BACK		offsetof(struct proc, p_back)
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_CPU		offsetof(struct proc, p_cpu)
+define	L_FORW		offsetof(struct lwp, l_forw)
+define	L_BACK		offsetof(struct lwp, l_back)
+define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_STAT		offsetof(struct lwp, l_stat)
+define	L_CPU		offsetof(struct lwp, l_cpu)
+define	L_PRIORITY	offsetof(struct lwp, l_priority)
 
-define	SONPROC		SONPROC
+define	LSONPROC		LSONPROC
 
 define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
