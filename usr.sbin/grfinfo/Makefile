@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/06/23 04:51:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 1997/11/08 15:11:38 lukem Exp $
 
 .if ${MACHINE} == "hp300"
 PROG=	grfinfo
-CFLAGS+= -I${.CURDIR}/../../sys/arch/hp300
+CPPFLAGS+= -I${.CURDIR}/../../sys/arch/hp300
 .endif
 
 MAN=	grfinfo.1

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.5 1997/10/17 14:34:38 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5.2.1 1997/11/08 15:12:55 lukem Exp $
 
 WARNS?=	0
-CFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
+CPPFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
 LDADD += -lntp
 DPADD += ${LIBNTP}
 

@@ -1,10 +1,10 @@
 # bootpef/Makefile
-# $NetBSD: Makefile,v 1.6 1997/10/18 04:37:09 lukem Exp $
+# $NetBSD: Makefile,v 1.6.2.1 1997/11/08 15:11:19 lukem Exp $
 
 WARNS?=	0
 PROG=	bootpef
 SRCDIR= ${.CURDIR}/../bootpd
-CFLAGS+= -DETC_ETHERS -DDEBUG -I${SRCDIR}
+CPPFLAGS+= -DETC_ETHERS -DDEBUG -I${SRCDIR}
 .PATH: ${SRCDIR}
 
 SRCS=	bootpef.c dovend.c readfile.c hash.c dumptab.c \
