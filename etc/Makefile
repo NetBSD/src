@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 1999/02/18 19:42:51 fair Exp $
+#	$NetBSD: Makefile,v 1.104 1999/02/19 05:58:40 itohy Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -207,7 +207,7 @@ snapshot snap_pre:
 release snapshot: distribution snap_pre snap_md snap_kern 
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
-.ifndef EXPORTABLE_SYSTEM
+.if exists(../domestic) && !defined(EXPORTABLE_SYSTEM)
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/security secr
 	(cd ${RELEASEDIR}/binary/security && \
@@ -221,12 +221,13 @@ release snapshot: distribution snap_pre snap_md snap_kern
 		cksum *.tgz >CKSUM && \
 		cksum -m *.tgz >MD5 && \
 		cksum -o 2 *.tgz >SYSVSUM )
-	(cd ${RELEASEDIR}/binary/kernel && if [ -r *.gz ]; then \
+.ifdef EXTRA_KERNELS
+	(cd ${RELEASEDIR}/binary/kernel && \
 		cksum -o 1 *.gz >BSDSUM && \
 		cksum *.gz >CKSUM && \
 		cksum -m *.gz >MD5 && \
-		cksum -o 2 *.gz >SYSVSUM \
-		; fi )
+		cksum -o 2 *.gz >SYSVSUM )
+.endif
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
