@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#	$Id: Makefile.hp300,v 1.17.2.1 1994/07/18 07:36:59 cgd Exp $
+#	$Id: Makefile.hp300,v 1.17.2.2 1994/10/06 04:46:49 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -128,7 +128,7 @@ assym.s: Makefile
 assym.s: genassym
 	./genassym >assym.s
 
-genassym:
+genassym: ${HP300}/hp300/genassym.c
 	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dhp300 -o genassym \
 	    ${HP300}/hp300/genassym.c
 

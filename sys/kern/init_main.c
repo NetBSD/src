@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.61.2.1 1994/07/17 23:52:19 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.61.2.2 1994/10/06 04:18:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -255,6 +255,7 @@ main(framep)
 	/* Mount the root file system. */
 	if ((*mountroot)())
 		panic("cannot mount root");
+	mountlist.tqh_first->mnt_op->vfs_refcount++;
 
 	/* Get the vnode for '/'.  Set fdp->fd_fd.fd_cdir to reference it. */
 	if (VFS_ROOT(mountlist.tqh_first, &rootvnode))
@@ -326,6 +327,7 @@ start_init(p, framep)
 	vm_offset_t addr;
 	struct execve_args args;
 	int options, i, retval[2], error;
+	char flags[4] = "-", *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1;
 
 	initproc = p;
@@ -349,32 +351,45 @@ start_init(p, framep)
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
-		/*
-		 * Move out the boot flag argument.
-		 */
-		options = 0;
 		ucp = (char *)(addr + PAGE_SIZE);
-		(void)subyte(--ucp, 0);		/* trailing zero */
+
+		/*
+		 * Construct the boot flag argument.
+		 */
+		flagsp = flags + 1;
+		options = 0;
 		if (boothowto & RB_SINGLE) {
-			(void)subyte(--ucp, 's');
+			*flagsp++ = 's';
 			options = 1;
 		}
 #ifdef notyet
 		if (boothowto & RB_FASTBOOT) {
-			(void)subyte(--ucp, 'f');
+			*flagsp++ = 'f';
 			options = 1;
 		}
 #endif
-		if (options == 0)
-			(void)subyte(--ucp, '-');
-		(void)subyte(--ucp, '-');		/* leading hyphen */
-		arg1 = ucp;
+
+		/*
+		 * Move out the flags (arg 1), if necessary.
+		 */
+		if (options != 0) {
+			*flagsp++ = '\0';
+			i = flagsp - flags;
+#ifdef DEBUG
+			printf("init: copying out flags `%s' %d\n", flags, i);
+#endif
+			(void)copyout((caddr_t)flags, (caddr_t)(ucp -= i), i);
+			arg1 = ucp;
+		}
 
 		/*
 		 * Move out the file name (also arg 0).
 		 */
-		for (i = strlen(path) + 1; i >= 0; i--)
-			(void)subyte(--ucp, path[i]);
+		i = strlen(path) + 1;
+#ifdef DEBUG
+		printf("init: copying out path `%s' %d\n", path, i);
+#endif
+		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
 		arg0 = ucp;
 
 		/*
@@ -382,8 +397,9 @@ start_init(p, framep)
 		 */
 		uap = (char **)((int)ucp & ~(NBPW-1));
 		(void)suword((caddr_t)--uap, 0);	/* terminator */
-		(void)suword((caddr_t)--uap, (int)arg1);
-		(void)suword((caddr_t)--uap, (int)arg0);
+		if (options != 0)
+			(void)suword((caddr_t)--uap, (long)arg1);
+		(void)suword((caddr_t)--uap, (long)arg0);
 
 		/*
 		 * Point at the arguments.

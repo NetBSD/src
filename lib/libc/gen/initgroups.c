@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,57 +32,27 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)initgroups.c	5.7 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: initgroups.c,v 1.4 1994/03/30 03:51:32 cgd Exp $";
+/*static char sccsid[] = "from: @(#)initgroups.c	8.1 (Berkeley) 6/4/93";*/
+static char *rcsid = "$Id: initgroups.c,v 1.4.2.1 1994/10/06 04:25:29 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-/*
- * initgroups
- */
 #include <sys/param.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <grp.h>
 
-struct group *getgrent();
+#include <stdio.h>
 
 int
 initgroups(uname, agroup)
 	const char *uname;
 	int agroup;
 {
-	gid_t groups[NGROUPS];
-	int ngroups = 0;
-	register struct group *grp;
-	register int i;
+	int groups[NGROUPS], ngroups;
 
-	/*
-	 * If installing primary group, duplicate it;
-	 * the first element of groups is the effective gid
-	 * and will be overwritten when a setgid file is executed.
-	 */
-	if (agroup >= 0) {
-		groups[ngroups++] = agroup;
-		groups[ngroups++] = agroup;
-	}
-	setgrent();
-	while (grp = getgrent()) {
-		if (grp->gr_gid == agroup)
-			continue;
-		for (i = 0; grp->gr_mem[i]; i++)
-			if (!strcmp(grp->gr_mem[i], uname)) {
-				if (ngroups == NGROUPS) {
-fprintf(stderr, "initgroups: %s is in too many groups\n", uname);
-					goto toomany;
-				}
-				groups[ngroups++] = grp->gr_gid;
-			}
-	}
-toomany:
-	endgrent();
+	ngroups = NGROUPS;
+	if (getgrouplist(uname, agroup, groups, &ngroups) < 0)
+		warnx("%s is in too many groups, using first %d",
+		    uname, ngroups);
 	if (setgroups(ngroups, groups) < 0) {
-		perror("setgroups");
+		warn("setgroups");
 		return (-1);
 	}
 	return (0);
