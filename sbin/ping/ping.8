@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.40 2002/10/01 13:40:48 wiz Exp $
+.\"	$NetBSD: ping.8,v 1.41 2002/10/26 12:06:04 jdolecek Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,7 @@ packets to network hosts
 .Op Fl T Ar ttl
 .Ek
 .Bk -words
-.Op Fl w Ar maxwait
+.Op Fl w Ar deadline
 .Ek
 .Ar host
 .Sh DESCRIPTION
@@ -235,10 +235,9 @@ Verbose output.
 packets other than
 .Tn ECHO_RESPONSE
 that are received are listed.
-.It Fl w Ar maxwait
-Specifies the number of seconds to wait for a response to a packet
-before transmitting the next one.
-The default is 10.0.
+.It Fl w Ar deadline
+Specifies a timeout, in seconds, before ping exits regardless of
+how many packets have been sent or received.
 .El
 .Pp
 When using
