@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.10 1997/06/17 18:56:48 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.11 1997/06/18 15:23:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -842,10 +842,9 @@ register struct stat *statp;
 			vnotify ("SUP Would create directory %s\n",t->Tname);
 			return (FALSE);
 		}
-		(void) mkdir (t->Tname,0755);
-		if (stat (t->Tname,statp) < 0) {
-			notify ("SUP: Can't create directory %s\n",t->Tname);
-			return (TRUE);
+		if (makedir(t->Tname, 0755, statp) == -1) {
+			vnotify ("SUP: Can't create directory %s\n", t->Tname);
+			return TRUE;
 		}
 	}
 	if ((t->Tflags&FNOACCT) == 0) {
