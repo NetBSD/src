@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.3 1996/05/26 23:50:37 cgd Exp $	*/
+/*	$NetBSD: gencode.c,v 1.4 1996/05/29 04:05:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -25,7 +25,7 @@ static char rcsid[] =
     "@(#) Header: gencode.c,v 1.55 94/06/20 19:07:53 leres Exp (LBL)";
 #endif
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -163,8 +163,8 @@ newchunk(n)
 	struct chunk *cp;
 	int k, size;
 
-	/* XXX Round up to nearest "instruction." */
-	n = (n + sizeof(int32_t) - 1) & ~(sizeof(int32_t) - 1);
+	/* XXX Round to structure boundary. */
+	n = ALIGN(n);
 
 	cp = &chunks[cur_chunk];
 	if (n > cp->n_left) {
