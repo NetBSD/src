@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.48 2004/08/11 17:49:27 mycroft Exp $	*/
+/*	$NetBSD: atavar.h,v 1.49 2004/08/12 04:57:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -220,7 +220,7 @@ struct ata_bio {
  * A separate interface is needed for read/write or ATAPI packet commands
  * (which need multiple interrupts per commands).
  */
-struct wdc_command {
+struct ata_command {
 	u_int8_t r_command;	/* Parameters to upload to registers */
 	u_int8_t r_head;
 	u_int16_t r_cyl;
@@ -267,7 +267,7 @@ struct ata_bustype {
 #define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
 
 	int	(*ata_exec_command)(struct ata_drive_datas *,
-				    struct wdc_command *);
+				    struct ata_command *);
 
 #define	WDC_COMPLETE	0x01
 #define	WDC_QUEUED	0x02

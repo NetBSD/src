@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.191 2004/08/11 18:41:46 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.192 2004/08/12 04:57:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.191 2004/08/11 18:41:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.192 2004/08/12 04:57:19 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1703,7 +1703,7 @@ wdc_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 }
 
 int
-wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
+wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 {
 	struct wdc_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
@@ -1715,20 +1715,20 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 	    DEBUG_FUNCS);
 
 	/* set up an xfer and queue. Wait for completion */
-	xfer = wdc_get_xfer(wdc_c->flags & AT_WAIT ? WDC_CANSLEEP :
+	xfer = wdc_get_xfer(ata_c->flags & AT_WAIT ? WDC_CANSLEEP :
 	    WDC_NOSLEEP);
 	if (xfer == NULL) {
 		return WDC_TRY_AGAIN;
 	 }
 
 	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
-		wdc_c->flags |= AT_POLL;
-	if (wdc_c->flags & AT_POLL)
+		ata_c->flags |= AT_POLL;
+	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->c_drive = drvp->drive;
-	xfer->c_databuf = wdc_c->data;
-	xfer->c_bcount = wdc_c->bcount;
-	xfer->c_cmd = wdc_c;
+	xfer->c_databuf = ata_c->data;
+	xfer->c_bcount = ata_c->bcount;
+	xfer->c_cmd = ata_c;
 	xfer->c_start = __wdccommand_start;
 	xfer->c_intr = __wdccommand_intr;
 	xfer->c_kill_xfer = __wdccommand_kill_xfer;
@@ -1736,16 +1736,16 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 	s = splbio();
 	wdc_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
-	if ((wdc_c->flags & AT_POLL) != 0 &&
-	    (wdc_c->flags & AT_DONE) == 0)
+	if ((ata_c->flags & AT_POLL) != 0 &&
+	    (ata_c->flags & AT_DONE) == 0)
 		panic("wdc_exec_command: polled command not done");
 #endif
-	if (wdc_c->flags & AT_DONE) {
+	if (ata_c->flags & AT_DONE) {
 		ret = WDC_COMPLETE;
 	} else {
-		if (wdc_c->flags & AT_WAIT) {
-			while ((wdc_c->flags & AT_DONE) == 0) {
-				tsleep(wdc_c, PRIBIO, "wdccmd", 0);
+		if (ata_c->flags & AT_WAIT) {
+			while ((ata_c->flags & AT_DONE) == 0) {
+				tsleep(ata_c, PRIBIO, "wdccmd", 0);
 			}
 			ret = WDC_COMPLETE;
 		} else {
@@ -1761,7 +1761,7 @@ __wdccommand_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 {   
 	struct wdc_softc *wdc = chp->ch_wdc;
 	int drive = xfer->c_drive;
-	struct wdc_command *wdc_c = xfer->c_cmd;
+	struct ata_command *ata_c = xfer->c_cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
@@ -1771,28 +1771,28 @@ __wdccommand_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wdc->select(chp,drive);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (drive << 4));
-	switch(wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ,
-	    wdc_c->r_st_bmask, wdc_c->timeout, wdc_c->flags)) {
+	switch(wdcwait(chp, ata_c->r_st_bmask | WDCS_DRQ,
+	    ata_c->r_st_bmask, ata_c->timeout, ata_c->flags)) {
 	case WDCWAIT_OK:
 		break;
 	case WDCWAIT_TOUT:
-		wdc_c->flags |= AT_TIMEOU;
+		ata_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
 		return;
 	case WDCWAIT_THR:
 		return;
 	}
-	if (wdc_c->flags & AT_POLL) {
+	if (ata_c->flags & AT_POLL) {
 		/* polled command, disable interrupts */
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT | WDCTL_IDS);
 	}
-	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
-	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_features);
+	wdccommand(chp, drive, ata_c->r_command, ata_c->r_cyl, ata_c->r_head,
+	    ata_c->r_sector, ata_c->r_count, ata_c->r_features);
 
-	if ((wdc_c->flags & AT_POLL) == 0) {
+	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, wdc_c->timeout / 1000 * hz,
+		callout_reset(&chp->ch_callout, ata_c->timeout / 1000 * hz,
 		    wdctimeout, chp);
 		return;
 	}
@@ -1808,12 +1808,12 @@ static int
 __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
-	struct wdc_command *wdc_c = xfer->c_cmd;
-	int bcount = wdc_c->bcount;
-	char *data = wdc_c->data;
+	struct ata_command *ata_c = xfer->c_cmd;
+	int bcount = ata_c->bcount;
+	char *data = ata_c->data;
 	int wflags;
 
-	if ((wdc_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
+	if ((ata_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
 		/* both wait and poll, we can tsleep here */
 		wflags = AT_WAIT | AT_POLL;
 	} else {
@@ -1832,32 +1832,32 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 	 */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
-	if ((wdc_c->flags & AT_XFDONE) != 0) {
+	if ((ata_c->flags & AT_XFDONE) != 0) {
 		/*
 		 * We have completed a data xfer. The drive should now be
 		 * in its initial state
 		 */
-		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ,
-		    wdc_c->r_st_bmask, (irq == 0)  ? wdc_c->timeout : 0,
+		if (wdcwait(chp, ata_c->r_st_bmask | WDCS_DRQ,
+		    ata_c->r_st_bmask, (irq == 0)  ? ata_c->timeout : 0,
 		    wflags) ==  WDCWAIT_TOUT) {
 			if (irq && (xfer->c_flags & C_TIMEOU) == 0) 
 				return 0; /* IRQ was not for us */
-			wdc_c->flags |= AT_TIMEOU;
+			ata_c->flags |= AT_TIMEOU;
 		}
 		goto out;
 	}
-	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
-	     (irq == 0)  ? wdc_c->timeout : 0, wflags) == WDCWAIT_TOUT) {
+	if (wdcwait(chp, ata_c->r_st_pmask, ata_c->r_st_pmask,
+	     (irq == 0)  ? ata_c->timeout : 0, wflags) == WDCWAIT_TOUT) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0) 
 			return 0; /* IRQ was not for us */
-		wdc_c->flags |= AT_TIMEOU;
+		ata_c->flags |= AT_TIMEOU;
 		goto out;
 	}
 	if (wdc->cap & WDC_CAPABILITY_IRQACK)
 		wdc->irqack(chp);
-	if (wdc_c->flags & AT_READ) {
+	if (ata_c->flags & AT_READ) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
-			wdc_c->flags |= AT_TIMEOU;
+			ata_c->flags |= AT_TIMEOU;
 			goto out;
 		}
 		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
@@ -1869,11 +1869,11 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		if (bcount > 0)
 			wdc->datain_pio(chp, DRIVE_NOSTREAM, data, bcount);
 		/* at this point the drive should be in its initial state */
-		wdc_c->flags |= AT_XFDONE;
+		ata_c->flags |= AT_XFDONE;
 		/* XXX should read status register here ? */
-	} else if (wdc_c->flags & AT_WRITE) {
+	} else if (ata_c->flags & AT_WRITE) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
-			wdc_c->flags |= AT_TIMEOU;
+			ata_c->flags |= AT_TIMEOU;
 			goto out;
 		}
 		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
@@ -1884,11 +1884,11 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		}
 		if (bcount > 0)
 			wdc->dataout_pio(chp, DRIVE_NOSTREAM, data, bcount);
-		wdc_c->flags |= AT_XFDONE;
-		if ((wdc_c->flags & AT_POLL) == 0) {
+		ata_c->flags |= AT_XFDONE;
+		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
 			callout_reset(&chp->ch_callout,
-			    wdc_c->timeout / 1000 * hz, wdctimeout, chp);
+			    ata_c->timeout / 1000 * hz, wdctimeout, chp);
 			return 1;
 		} else {
 			goto again;
@@ -1903,7 +1903,7 @@ static void
 __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
-	struct wdc_command *wdc_c = xfer->c_cmd;
+	struct ata_command *ata_c = xfer->c_cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
@@ -1911,32 +1911,32 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 
 
 	if (chp->ch_status & WDCS_DWF)
-		wdc_c->flags |= AT_DF;
+		ata_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
-		wdc_c->flags |= AT_ERROR;
-		wdc_c->r_error = chp->ch_error;
+		ata_c->flags |= AT_ERROR;
+		ata_c->r_error = chp->ch_error;
 	}
-	if ((wdc_c->flags & AT_READREG) != 0 &&
+	if ((ata_c->flags & AT_READREG) != 0 &&
 	    (wdc->sc_dev.dv_flags & DVF_ACTIVE) != 0 &&
-	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
-		wdc_c->r_head = bus_space_read_1(chp->cmd_iot,
+	    (ata_c->flags & (AT_ERROR | AT_DF)) == 0) {
+		ata_c->r_head = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_sdh], 0);
-		wdc_c->r_count = bus_space_read_1(chp->cmd_iot,
+		ata_c->r_count = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_seccnt], 0);
-		wdc_c->r_sector = bus_space_read_1(chp->cmd_iot,
+		ata_c->r_sector = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_sector], 0);
-		wdc_c->r_cyl |= bus_space_read_1(chp->cmd_iot,
+		ata_c->r_cyl |= bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_cyl_lo], 0);
-		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot,
+		ata_c->r_cyl = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_cyl_hi], 0) << 8;
-		wdc_c->r_error = bus_space_read_1(chp->cmd_iot,
+		ata_c->r_error = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_error], 0);
-		wdc_c->r_features = bus_space_read_1(chp->cmd_iot,
+		ata_c->r_features = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_features], 0);
 	}
 	callout_stop(&chp->ch_callout);
 	chp->ch_queue->active_xfer = NULL;
-	if (wdc_c->flags & AT_POLL) {
+	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT);
@@ -1953,14 +1953,14 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 static void
 __wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
-	struct wdc_command *wdc_c = xfer->c_cmd;
+	struct ata_command *ata_c = xfer->c_cmd;
 
-	wdc_c->flags |= AT_DONE;
+	ata_c->flags |= AT_DONE;
 	wdc_free_xfer(chp, xfer);
-	if (wdc_c->flags & AT_WAIT)
-		wakeup(wdc_c);
-	else if (wdc_c->callback)
-		wdc_c->callback(wdc_c->callback_arg);
+	if (ata_c->flags & AT_WAIT)
+		wakeup(ata_c);
+	else if (ata_c->callback)
+		ata_c->callback(ata_c->callback_arg);
 	wdcstart(chp);
 	return;
 }
@@ -1969,14 +1969,14 @@ static void
 __wdccommand_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
-	struct wdc_command *wdc_c = xfer->c_cmd;
+	struct ata_command *ata_c = xfer->c_cmd;
 
 	switch (reason) {
 	case KILL_GONE:
-		wdc_c->flags |= AT_GONE;
+		ata_c->flags |= AT_GONE;
 		break;                
 	case KILL_RESET:
-		wdc_c->flags |= AT_RESET;
+		ata_c->flags |= AT_RESET;
 		break;
 	default:
 		printf("__wdccommand_kill_xfer: unknown reason %d\n",
