@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.2 1998/09/02 05:51:37 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.3 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -272,7 +272,39 @@
 #define SFSR_FV			0x00001	/* Fault is valid */
 #define SFSR_FT	(SFSR_FT_VA_OOR_2|SFSR_FT_VA_OOR_1|SFSR_FT_NFO|SFSR_ILL_ASI|SFSR_FT_IO_ATOMIC|SFSR_FT_ILL_NF|SFSR_FT_PRIV)
 
+#if 0
+/* Old bits */
 #define SFSR_BITS "\40\16VAT\15VAD\14NFO\13ASI\12A\11NF\10PRIV\7E\6NUCLEUS\5SECONDCTX\4PRIV\3W\2OW\1FV"
+#else
+/* New bits */
+#define SFSR_BITS "\177\20" \
+	"f\20\30ASI\0" "b\16VAT\0" "b\15VAD\0" "b\14NFO\0" "b\13ASI\0" "b\12A\0" "b\11NF\0" "b\10PRIV\0" \
+	 "b\7E\0" "b\6NUCLEUS\0" "b\5SECONDCTX\0" "b\4PRIV\0" "b\3W\0" "b\2OW\0" "b\1FV\0"
+#endif
+
+/* ASFR bits */
+#define ASFR_ME			0x100000000LL
+#define ASFR_PRIV		0x080000000LL
+#define ASFR_ISAP		0x040000000LL
+#define ASFR_ETP		0x020000000LL
+#define ASFR_IVUE		0x010000000LL
+#define ASFR_TO			0x008000000LL
+#define ASFR_BERR		0x004000000LL
+#define ASFR_LDP		0x002000000LL
+#define ASFR_CP			0x001000000LL
+#define ASFR_WP			0x000800000LL
+#define ASFR_EDP		0x000400000LL
+#define ASFR_UE			0x000200000LL
+#define ASFR_CE			0x000100000LL
+#define ASFR_ETS		0x0000f0000LL
+#define ASFT_P_SYND		0x00000ffffLL
+
+#define AFSR_BITS "\177\20" \
+        "b\40ME\0"      "b\37PRIV\0"    "b\36ISAP\0"    "b\35ETP\0" \
+        "b\34IVUE\0"    "b\33TO\0"      "b\32BERR\0"    "b\31LDP\0" \
+        "b\30CP\0"      "b\27WP\0"      "b\26EDP\0"     "b\25UE\0" \
+        "b\24CE\0"      "f\20\4ETS\0"   "f\0\20P_SYND\0"
+
 /*  
  * Here's the spitfire TSB control register bits.
  * 
@@ -528,16 +560,16 @@
 #ifdef _LP64
 /* read 64-bit %tick register */
 #define	tick() ({ \
-	register long _tick_tmp; \
+	register u_long _tick_tmp; \
 	__asm __volatile("rdpr %%tick, %0" : "=r" (_tick_tmp) :); \
 	_tick_tmp; \
 })
 #else
 /* native load 64-bit int from alternate address space w/32-bit compiler*/
 #define	tick() ({ \
-	volatile register long _tick_tmp = 0; \
-	volatile int64_t _tick_v; \
-	volatile int64_t *_tick_a = &_tick_v; \
+	volatile register u_long _tick_tmp = 0; \
+	volatile u_int64_t _tick_v; \
+	volatile u_int64_t *_tick_a = &_tick_v; \
 	__asm __volatile("rdpr %%tick, %0; stx %0,[%1]; membar #StoreLoad" : "=r" (_tick_tmp) : \
 	    "r" ((long)(_tick_a))); \
 	_tick_v; \

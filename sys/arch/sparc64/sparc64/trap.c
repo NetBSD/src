@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1998/09/02 05:51:40 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.11 1998/09/05 23:57:29 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -71,7 +71,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <sparc64/sparc64/asm.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/trap.h>
@@ -155,7 +154,7 @@ int	rwindow_debug = RW_64|RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = 0|TDB_FOLLOW|TDB_STOPSIG|TDB_STOPCPIO;
+int	trapdebug = 0|TDB_STOPSIG|TDB_STOPCPIO/*|TDB_FOLLOW*/;
 /* #define __inline */
 #endif
 
@@ -997,8 +996,8 @@ data_access_fault(type, addr, pc, tf)
 /*	if (cpcb->pcb_nsaved > 6) trapdebug |= TDB_NSAVED; */
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
 		printf("%ld: data_access_fault(%lx, %p, %p, %p) nsaved=%d\n",
-		       (long)(curproc?curproc->p_pid:-1), (long)type, (void*)addr, (void*)pc, (void*)tf, 
-		       (int)cpcb->pcb_nsaved);
+		       (long)(curproc?curproc->p_pid:-1), (long)type, (void*)addr, 
+		       (void*)pc, (void*)tf, (int)cpcb->pcb_nsaved);
 		if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved)) Debugger();
 	}
 	if (trapdebug & TDB_FRAME) {
@@ -1137,7 +1136,7 @@ kfault:
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x\n",
+				printf("data fault: pc=%lx addr=%x\n",
 				    pc, addr);
 				DEBUGGER(type, tf);
 				panic("kernel fault");
@@ -1145,7 +1144,7 @@ kfault:
 			}
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
-				printf("data_access_fault: copyin/out fault -- recover\n");
+				printf("data_access_fault: copyin/out of %p fault -- recover\n", addr);
 				Debugger();
 			}
 #endif
@@ -1191,7 +1190,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register u_long afsr;
 	register struct trapframe *tf;
 {
-	register int pc;
+	register u_long pc;
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
@@ -1208,25 +1207,25 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
-		printf("%d: data_access_error(%x, %x, %x, %x) %s=%d\n",
+		printf("%d: data_access_error(%x, %lx, %lx, %lx) %s=%d\n",
 		       curproc?curproc->p_pid:-1, type, sfva, afva, tf, 
 		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-		printf("%d data_access_error(%x, %x, %x, %x)=%x:%x @ %x %b\n",
-		       curproc?curproc->p_pid:-1, 
-		       type, sfva, afva, tf, (long)(tf->tf_tstate>>32), 
-		       (long)tf->tf_tstate, (long)tf->tf_pc, sfsr, SFSR_BITS); 
+		printf("%ld data_access_error(%lx, %lx, %lx, %p)=%lx @ %p %lx %%qb\n",
+		       (long)curproc?curproc->p_pid:-1, 
+		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
+		       (long)tf->tf_pc, (long)sfsr, SFSR_BITS); 
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d tl %d data_access_error(%x, %x, %x, %x)=%x:%x @ %x %b\n",
-		       curproc?curproc->p_pid:-1, tl(),
-		       type, sfva, afva, tf, (long)(tf->tf_tstate>>32), 
-		       (long)tf->tf_tstate, (long)tf->tf_pc, sfsr, SFSR_BITS); 
+		printf("%ld tl %ld data_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %%qb\n",
+		       (long)curproc?curproc->p_pid:-1, (long)tl(),
+		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
+		       (long)tf->tf_pc, (long)sfsr, SFSR_BITS); 
 		Debugger();
 	}
 	if (trapdebug&TDB_STOPCALL) { 
@@ -1266,6 +1265,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 		printf("data memory error type %x sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
 		       type, sfsr, sfva, afsr, afva, tf);
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+DEBUGGER(type, tf);
 			/* User fault -- Berr */
 			trapsignal(p, SIGBUS, (u_long)sfva);
 		} else {
@@ -1395,8 +1395,8 @@ kfault:
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x sfsr=%b\n",
-				    pc, sfva, sfsr, SFSR_BITS);
+				printf("data fault: pc=%lx addr=%lx sfsr=%%qb\n",
+				    (u_long)pc, (long)sfva, (long)sfsr, SFSR_BITS);
 				DEBUGGER(type, tf);
 				panic("kernel fault");
 				/* NOTREACHED */
@@ -1585,25 +1585,25 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
-		printf("%d: text_access_error(%x, %x, %x, %x) %s=%d\n",
-		       curproc?curproc->p_pid:-1, type, sfsr, afsr, tf, 
+		printf("%ld: text_access_error(%lx, %lx, %lx, %lx) %s=%d\n",
+		       (long)curproc?curproc->p_pid:-1, (long)type, (long)sfsr, (long)afsr, tf, 
 		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
-		printf("%d text_access_error(%x, %x, %x, %x)=%x:%x @ %x %b\n",
-		       curproc?curproc->p_pid:-1, 
-		       type, pc, afva, tf, (long)(tf->tf_tstate>>32), 
-		       (long)tf->tf_tstate, (long)tf->tf_pc, sfsr, SFSR_BITS); 
+		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %%qb\n",
+		       (long)curproc?curproc->p_pid:-1, 
+		       (long)type, pc, (long)afva, tf, (long)tf->tf_tstate, 
+		       (long)tf->tf_pc, (long)sfsr, SFSR_BITS); 
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d tl %d text_access_error(%x, %x, %x, %x)=%x:%x @ %x %b\n",
-		       curproc?curproc->p_pid:-1, tl(),
-		       type, pc, afva, tf, (long)(tf->tf_tstate>>32), 
-		       (long)tf->tf_tstate, (long)tf->tf_pc, sfsr, SFSR_BITS); 
+		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %%qb\n",
+		       (long)curproc?curproc->p_pid:-1, (long)tl(),
+		       (long)type, (long)pc, (long)afva, tf, 
+		       (long)tf->tf_tstate, (long)tf->tf_pc, (long)sfsr, SFSR_BITS); 
 		Debugger();
 	}
 	if (trapdebug&TDB_STOPCALL) { 
@@ -1661,8 +1661,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	ftype = VM_PROT_READ;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		(void) splhigh();
-		printf("text error: pc=%x sfsr=%b\n", pc,
-		       sfsr, SFSR_BITS, pc);
+		printf("text error: pc=%lx sfsr=%%qb\n", pc, (long)sfsr, SFSR_BITS);
 		DEBUGGER(type, tf);
 		panic("kernel fault");
 		/* NOTREACHED */
@@ -1696,7 +1695,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 		 */
 		if (tstate & TSTATE_PRIV) {
 			(void) splhigh();
-			printf("text error: pc=%x sfsr=%b\n",
+			printf("text error: pc=%lx sfsr=%%qb\n",
 			       pc, sfsr, SFSR_BITS);
 			DEBUGGER(type, tf);
 			panic("kernel fault");

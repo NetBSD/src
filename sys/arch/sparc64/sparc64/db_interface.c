@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 1998/09/02 05:51:38 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.7 1998/09/05 23:57:27 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -53,7 +53,6 @@
 #include <machine/openfirm.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
-#include <sparc64/sparc64/asm.h>
 
 extern void OF_enter __P((void));
 
@@ -193,6 +192,8 @@ kdb_trap(type, tf)
 	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
 /*	if (tf->tf_tstate & TSTATE_PRIV) { */
 	
+#if 0
+	/* make sure this is not causing ddb problems. */
 	if (tf->tf_out[6] & 1) {
 		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
 			ddb_regs.ddb_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
@@ -214,6 +215,7 @@ kdb_trap(type, tf)
 		ddb_regs.ddb_fr.fr_fp = (long)tfr.fr_fp;
 		ddb_regs.ddb_fr.fr_pc = tfr.fr_pc;
 	}
+#endif
 
 	db_active++;
 	cnpollc(TRUE);
@@ -221,8 +223,8 @@ kdb_trap(type, tf)
 	s = splhigh();
 	tl = savetstate(ts);
 	for (i=0; i<tl; i++) {
-		printf("%d tt=%x tstate=%lx tpc=%p tnpc=%p\n",
-		       i+1, (int)ts[i].tt, (u_long)ts[i].tstate,
+		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
+		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
 		       (void*)ts[i].tpc, (void*)ts[i].tnpc);
 	}
 	db_trap(type, 0/*code*/);
@@ -315,10 +317,10 @@ db_dump_dtlb(addr, have_addr, count, modif)
 
 	if (have_addr) {
 		int i;
-		int* p = (int*)addr;
+		long* p = (long*)addr;
 		for (i=0; i<64;) {
-			db_printf("%2d:%08x:%08x %08x:%08x ", i++, *p++, *p++, *p++, *p++);
-			db_printf("%2d:%08x:%08x %08x:%08x\n", i++, *p++, *p++, *p++, *p++);
+			db_printf("%2d:%016.16lx %016.16lx ", i++, *p++, *p++);
+			db_printf("%2d:%016.16lx %016.16lx\n", i++, *p++, *p++);
 		}
 	} else
 		print_dtlb();
@@ -341,8 +343,8 @@ db_pload_cmd(addr, have_addr, count, modif)
 		db_printf("no address\n");
 		return;
 	}
-	db_printf("%08.8lx%08.8lx:\t%08.8lx\n", (long)(oldaddr>>32),
-		  (long)oldaddr, (long)lda(oldaddr, ASI_PHYS_CACHED));
+	db_printf("%016.16lx:\t%08.8lx\n", (long)oldaddr, 
+		  (long)lda(oldaddr, ASI_PHYS_CACHED));
 }
 
 int64_t pseg_get __P((struct pmap *, vaddr_t));
@@ -359,24 +361,22 @@ struct pmap* pm;
 	n = 0;
 	for (i=0; i<STSZ; i++) {
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
-			db_printf("pdir %d at %x:\n", i, (long)pdir);
+			db_printf("pdir %ld at %xl:\n", i, (long)pdir);
 			for (k=0; k<PDSZ; k++) {
 				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
-					db_printf("ptable %d:%d at %x:\n", i, k, (long)ptbl);
+					db_printf("ptable %ld:%ld at %xl:\n", i, k, (long)ptbl);
 					for (j=0; j<PTSZ; j++) {
 						int64_t data0, data1;
 						data0 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						j++;
 						data1 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data0 || data1) {
-							db_printf("%p: %x:%x\t",
+							db_printf("%p: %lx\t",
 								  (i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
-								  (int)(data0>>32),
-								  (int)(data0));
-							db_printf("%p: %x:%x\n",
+								  (u_long)(data0));
+							db_printf("%p: %lx\n",
 								  (i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT),
-								  (int)(data1>>32),
-								  (int)(data1));
+								  (u_long)(data1));
 						}
 					}
 				}
@@ -406,11 +406,10 @@ db_pmap_kernel(addr, have_addr, count, modif)
 		/* lookup an entry for this VA */
 		
 		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
-			db_printf("pmap_kernel(%p)->pm_segs[%x][%x][%x]=>%x:%x\n",
-				  (void *)addr, (int)va_to_seg(addr), 
-				  (int)va_to_dir(addr), (int)va_to_pte(addr),
-				  (int)(data>>32),
-				  (int)(data));
+			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%lx\n",
+				  (void *)addr, (u_long)va_to_seg(addr), 
+				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
+				  (u_long)data);
 		} else {
 			db_printf("No mapping for %p\n", addr);
 		}

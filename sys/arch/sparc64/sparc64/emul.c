@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.2 1998/09/05 15:28:09 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.3 1998/09/05 23:57:27 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ fixalign(p, tf)
 
 	union instr code;
 	size_t size;
-	int32_t rs1, rs2;
+	int64_t rs1, rs2;
 	int error;
 
 	/* fetch and check the instruction that caused the fault */
@@ -396,7 +396,7 @@ fixalign(p, tf)
  */
 int
 emulinstr(pc, tf)
-	int pc;
+	vaddr_t pc;
 	struct trapframe *tf;
 {
 	union instr code;

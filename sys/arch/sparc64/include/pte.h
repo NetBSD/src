@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 1998/08/13 02:10:45 eeh Exp $ */
+/*	$NetBSD: pte.h,v 1.3 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -207,6 +207,14 @@ extern void tlb_flush_ctx __P((int ctx));
 #define TTE_P			0x0000000000000004
 #define TTE_W			0x0000000000000002
 #define TTE_G			0x0000000000000001
+
+#define TTE_DATA_BITS	"\177\20" \
+        "b\77V\0" "f\75\2SIZE\0" "b\77V\0" "f\75\2SIZE\0" \
+        "=\0008K\0" "=\00164K\0" "=\002512K\0" "=\0034M\0" \
+        "b\74NFO\0"     "b\73IE\0"      "f\62\10SOFT2\0" \
+        "f\51\10DIAG\0" "f\15\33PA<40:13>\0" "f\7\5SOFT\0" \
+        "b\6L\0"        "b\5CP\0"       "b\4CV\0" \
+        "b\3E\0"        "b\2P\0"        "b\1W\0"        "b\0G\0"
 
 #define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid) \
 (((valid)?TLB_V:0LL)|(sz)|(((u_int64_t)(pa))&TLB_PA_MASK)|\

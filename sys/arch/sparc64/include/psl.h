@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.4 1998/08/30 15:32:17 eeh Exp $ */
+/*	$NetBSD: psl.h,v 1.5 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,10 +96,10 @@
  *
  */
 
-#define ICC_C	0x01
-#define ICC_V	0x02
-#define ICC_Z	0x04
-#define ICC_N	0x08
+#define ICC_C	0x01L
+#define ICC_V	0x02L
+#define ICC_Z	0x04L
+#define ICC_N	0x08L
 #define XCC_SHIFT	4
 #define XCC_C	(ICC_C<<XCC_SHIFT)
 #define XCC_V	(ICC_V<<XCC_SHIFT)

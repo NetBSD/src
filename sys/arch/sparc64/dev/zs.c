@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 1998/09/02 05:51:37 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.5 1998/09/05 23:57:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ int zs_major = 12;
 # error "no suitable software interrupt bit"
 #endif
 
-#define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
+#define	ZS_DELAY()		(0)
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
@@ -256,6 +256,9 @@ zs_match_obio(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+#ifdef SUN4U
+	return 0;
+#else
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
 
@@ -271,6 +274,7 @@ zs_match_obio(parent, cf, aux)
 	oba = &uoba->uoba_oba4;
 	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
 			        1, 0, 0, NULL, NULL));
+#endif
 }
 
 static void
@@ -279,6 +283,9 @@ zs_attach_mainbus(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+#ifdef SUN4U
+	return 0;
+#else
 	struct zsc_softc *zsc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
 	int zs_unit = zsc->zsc_dev.dv_unit;
@@ -289,9 +296,10 @@ zs_attach_mainbus(parent, self, aux)
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zs_unit] == NULL)
 		zsaddr[zs_unit] = findzs(zs_unit);
-	if ((void*)zsaddr[zs_unit] != (void*)(long)ma->ma_address[0])
+	if ((void*)zsaddr[zs_unit] != (void*)(u_long)ma->ma_address[0])
 		panic("zsattach_mainbus");
 	zs_attach(zsc, ma->ma_pri);
+#endif
 }
 
 
@@ -320,6 +328,7 @@ zs_attach_obio(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+#ifndef SUN4U
 	struct zsc_softc *zsc = (void *) self;
 	union obio_attach_args *uoba = aux;
 	int zs_unit = zsc->zsc_dev.dv_unit;
@@ -339,6 +348,7 @@ zs_attach_obio(parent, self, aux)
 		zsc->zsc_dmatag = oba->oba_dmatag;
 		zs_attach(zsc, oba->oba_pri);
 	}
+#endif
 }
 /*
  * Attach a found zs.
@@ -815,7 +825,7 @@ zs_putc(arg, c)
 static void zscninit __P((struct consdev *));
 static int  zscngetc __P((dev_t));
 static void zscnputc __P((dev_t, int));
-
+static void zscnpollc __P((dev_t, int));
 /*
  * Console table shared by ttya, ttyb
  */
@@ -824,7 +834,7 @@ struct consdev consdev_tty = {
 	zscninit,
 	zscngetc,
 	zscnputc,
-	nullcnpollc,
+	zscnpollc,
 };
 
 static void
@@ -852,6 +862,24 @@ zscnputc(dev, c)
 	int c;
 {
 	zs_putc(zs_conschan, c);
+}
+
+int swallow_zsintrs;
+
+static void
+zscnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+	/* 
+	 * Need to tell zs driver to acknowledge all interrupts or we get
+	 * annoying spurious interrupt messages.  This is because mucking
+	 * with spl() levels during polling does not prevent interrupts from
+	 * being generated.
+	 */
+
+	if (on) swallow_zsintrs++;
+	else swallow_zsintrs--;
 }
 
 /*****************************************************************/

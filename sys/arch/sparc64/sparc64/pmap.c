@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1998/09/02 05:51:39 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 1998/09/05 23:57:29 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -1348,7 +1348,7 @@ void
 pmap_collect(pm)
 	struct pmap *pm;
 {
-#if 0
+#if 1
 	int i, j, k, n, m;
 	paddr_t *pdir, *ptbl;
 	/* This is a good place to scan the pmaps for page tables with
@@ -1358,7 +1358,7 @@ pmap_collect(pm)
 		if ((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			m = 0;
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t)ldxa(&pdir[k], ASI_PHYS_CACHED)) {
+				if ((ptbl = (paddr_t)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					m++;
 					n = 0;
 					for (j=0; j<PTSZ; j++) {
@@ -2188,15 +2188,15 @@ pmap_extract(pm, va)
 		if (pmapdebug & PDB_EXTRACT) {
 			paddr_t pa;
 			pa = ldxa(&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
-			printf("pmap_extract: va=%p segs[%d]=%lx", va, (int)va_to_seg(va), (long)pa);
+			printf("pmap_extract: va=%p segs[%ld]=%lx", va, (long)va_to_seg(va), (long)pa);
 			if (pa) {
 				pa = ldxa(&((paddr_t*)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
-				printf(" segs[%d][%d]=%lx", va_to_seg(va), (int)va_to_dir(va), (long)pa);
+				printf(" segs[%ld][%ld]=%lx", va_to_seg(va), (long)va_to_dir(va), (long)pa);
 			}
 			if (pa)	{
 				pa = ldxa(&((paddr_t*)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
-				printf(" segs[%d][%d][%d]=%lx", (int)va_to_seg(va), 
-				       (int)va_to_dir(va), (int)va_to_pte(va), (long)pa);
+				printf(" segs[%ld][%ld][%ld]=%lx", (long)va_to_seg(va), 
+				       (long)va_to_dir(va), (long)va_to_pte(va), (long)pa);
 			}
 			db_printf(" pseg_get: %lx\n", (long)pa);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.5 1998/09/02 05:51:39 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.6 1998/09/05 23:57:29 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -499,6 +499,7 @@ OF_write(handle, addr, len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
+if (len>1024) { prom_printf("OF_write() > 1024\n"); Debugger(); }
 	for (; len > 0; len -= l, addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
@@ -669,6 +670,9 @@ void OF_sym2val(cells)
 	db_sym_t symbol;
 	db_expr_t value;
 
+	/* Set data segment pointer */
+	__asm __volatile("clr %%g4" : :); 
+
 	/* No args?  Nothing to do. */
 	if (!args->nargs || 
 	    !args->nreturns) return;
@@ -700,6 +704,9 @@ void OF_val2sym(cells)
 	db_sym_t symbol;
 	db_expr_t value;
 	db_expr_t offset;
+
+	/* Set data segment pointer */
+	__asm __volatile("clr %%g4" : :);
 
 	/* No args?  Nothing to do. */
 	if (!args->nargs || 

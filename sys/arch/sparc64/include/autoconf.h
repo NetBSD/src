@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.4 1998/09/05 16:23:09 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.5 1998/09/05 23:57:25 eeh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <machine/bus.h>
 #include <sparc64/dev/upavar.h>
-#include <sparc64/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 
 /* This is used to map device classes to IPLs */
 struct intrmap {
@@ -113,8 +113,8 @@ struct mainbus_attach_args {
 	bus_dma_tag_t	ma_dmatag;
 	char		*ma_name;	/* PROM node name */
 	struct upa_reg	*ma_reg;	/* "reg" properties */
-	int		*ma_address;	/* "address" properties -- 32 bits */
-	int		*ma_interrupts;	/* "interrupts" properties */
+	u_int		*ma_address;	/* "address" properties -- 32 bits */
+	u_int		*ma_interrupts;	/* "interrupts" properties */
 	struct bootpath *ma_bp;		/* used for locating boot device */
 	int		ma_node;	/* PROM handle */
 	int		ma_nreg;	/* Counts for those properties */
@@ -122,34 +122,6 @@ struct mainbus_attach_args {
 	int		ma_ninterrupts;
 	int		ma_pri;		/* priority (IPL) */
 };
-
-/* Attach arguments presented to devices by obio_attach() (sun4 only) */
-struct obio4_attach_args {
-	int		oba_placeholder;/* obio/sbus attach args sharing */
-	bus_space_tag_t	oba_bustag;	/* parent bus tag */
-	bus_dma_tag_t	oba_dmatag;
-	bus_addr_t	oba_paddr;	/* register physical address */
-	int		oba_pri;	/* interrupt priority (IPL) */
-	struct bootpath *oba_bp;	/* used for locating boot device */
-};
-
-union obio_attach_args {
-	/* sun4m obio space is treated like an sbus slot */
-	int				uoba_isobio4;
-	struct sbus_attach_args		uoba_sbus;	/* Sbus view */
-	struct obio4_attach_args	uoba_oba4;	/* sun4 on-board view */
-};
-
-#define obio_bus_map(t, a, o, s, f, v, hp)		\
-	bus_space_map2(t, 0, (long)(a) + o, s, f, (vaddr_t)v, hp)
-
-/* obio specific bus flag */
-#define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
-
-/* obio bus helper that finds ROM mappings; exported for autoconf.c */
-int	obio_find_rom_map __P((bus_addr_t, int,
-				bus_space_handle_t *));
-
 
 /*
  * length; the others convert or make some other guarantee.
