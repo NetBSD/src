@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.31 2001/10/18 04:45:41 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.32 2001/10/22 07:07:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,19 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.31 2001/10/18 04:45:41 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.32 2001/10/22 07:07:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
 #include <md5.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -377,45 +376,6 @@ typeerr:		LABEL;
 		(void)printf("%slink ref (%s, %s)\n", tab, cp, s->slink);
 	}
 	return (label);
-}
-
-const char *
-inotype(u_int type)
-{
-
-	return (nodetype(type & S_IFMT));
-}
-
-const char *
-nodetype(u_int type)
-{
-
-	switch(type) {
-	case F_BLOCK:
-	case S_IFBLK:
-		return ("block");
-	case F_CHAR:
-	case S_IFCHR:
-		return ("char");
-	case F_DIR:
-	case S_IFDIR:
-		return ("dir");
-	case F_FIFO:
-	case S_IFIFO:
-		return ("fifo");
-	case F_FILE:
-	case S_IFREG:
-		return ("file");
-	case F_LINK:
-	case S_IFLNK:
-		return ("link");
-	case F_SOCK:
-	case S_IFSOCK:
-		return ("socket");
-	default:
-		return ("unknown");
-	}
-	/* NOTREACHED */
 }
 
 const char *
