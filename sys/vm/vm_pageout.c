@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.19 1995/01/09 01:33:17 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.20 1995/05/05 03:35:42 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -119,10 +119,9 @@ vm_pageout_scan()
 	simple_unlock(&vm_page_queue_free_lock);
 	splx(s);
 
+#ifndef BROKEN_SWAP					/* XXX */
 	if (free < cnt.v_free_target) {
-#ifdef OMIT					/* XXX */
 		swapout_threads();
-#endif	/* OMIT*/
 
 		/*
 		 *	Be sure the pmap system is updated so
@@ -131,6 +130,7 @@ vm_pageout_scan()
 
 		pmap_update();
 	}
+#endif							/* XXX */
 
 	/*
 	 *	Acquire the resident page system lock,
