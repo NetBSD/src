@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.10 1996/02/17 18:48:56 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.11 1996/03/02 13:45:40 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -212,9 +212,9 @@ ka750_mchk(cmcf)
 	mtpr(0xf, PR_MCESR);
 	if (type == MC750_TBERR && (mcf->mc5_mcesr&0xe) == MC750_TBPAR) {
 		printf("tbuf par: flushing and returning\n");
-		return (0);
+		return (MCHK_RECOVERED);
 	}
-	return (-1);
+	return (MCHK_PANIC);
 }
 
 ka750_steal_pages()

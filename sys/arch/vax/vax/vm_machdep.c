@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.22 1996/02/24 15:17:37 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.23 1996/03/02 13:45:49 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -78,8 +78,8 @@ pagemove(from, to, size)
 }
 
 #define VIRT2PHYS(x) \
-	(((*(int *)((((((int)x)&0x7fffffff)>>9)*4)+ \
-		(unsigned int)Sysmap))&0x1fffff)<<9)
+	(((*(int *)((((((int)x) & 0x7fffffff) >> 9) * 4) + \
+		(unsigned int)Sysmap)) & 0x1fffff) << 9)
 
 /*
  * cpu_fork() copies parent process trapframe directly into child PCB
@@ -121,7 +121,7 @@ cpu_fork(p1, p2)
 	nyproc->P0LR = opmap->pm_pcb->P0LR;
 	nyproc->P1LR = opmap->pm_pcb->P1LR;
 #else
-	nyproc->P0BR = (void *)0;
+	nyproc->P0BR = (void *)0x80000000;
 	nyproc->P1BR = (void *)0x80000000;
 	nyproc->P0LR = AST_PCB;
 	nyproc->P1LR = 0x200000;
@@ -265,7 +265,7 @@ found:
 	if (curproc)
 		(u_int)curpcb = VIRT2PHYS(&curproc->p_addr->u_pcb);
 	else
-		(u_int)curpcb = scratch;
+		(u_int)curpcb = scratch & 0x7fffffff;
 	(u_int)nypcb = VIRT2PHYS(&p->p_addr->u_pcb);
 
 	if (p == 0)

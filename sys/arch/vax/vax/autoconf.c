@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.7 1996/02/02 18:59:36 mycroft Exp $      */
+/*      $NetBSD: autoconf.c,v 1.8 1996/03/02 13:45:34 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -62,8 +62,12 @@ struct bp_conf {
 extern int cold;
 
 int	cpu_notsupp(),cpu_notgen();
+#ifdef VAX780
+int	ka780_mchk(), ka780_memerr(), ka780_clock(), ka780_conf();
+int	ka780_steal_pages();
+#endif
 #ifdef	VAX750
-int	ka750_mchk(),ka750_memerr(),ka750_clock(),ka750_conf();
+int	ka750_mchk(), ka750_memerr(), ka750_clock(), ka750_conf();
 int	ka750_steal_pages();
 int	nexty750[]={ NEX_MEM16,	NEX_MEM16,	NEX_MEM16,	NEX_MEM16,
 		NEX_MBA,	NEX_MBA, 	NEX_MBA,	NEX_MBA,
@@ -90,17 +94,17 @@ struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 		/* Type 0,noexist */
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #ifdef	VAX780	/* Type 1, 11/{780,782,785} */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+	ka780_steal_pages, ka780_clock, ka780_mchk, ka780_memerr, ka780_conf,
 #else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+	cpu_notsupp, cpu_notsupp, cpu_notsupp, cpu_notsupp, cpu_notsupp,
 #endif
 #ifdef  VAX750	/* Type 2, 11/750 */
-	ka750_steal_pages,ka750_clock,ka750_mchk,ka750_memerr,ka750_conf,
+	ka750_steal_pages, ka750_clock, ka750_mchk, ka750_memerr, ka750_conf,
 #else
-	cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,
+	cpu_notgen, cpu_notgen, cpu_notgen, cpu_notgen, cpu_notgen,
 #endif
 #ifdef	VAX730	/* Type 3, 11/{730,725}, ceauciesco-vax */
-	ka730_steal_pages,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+	ka730_steal_pages, cpu_notsupp, cpu_notsupp, cpu_notsupp, cpu_notsupp,
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
@@ -182,8 +186,9 @@ printut(aux, hej)
 	void *aux;
 	char *hej;
 {
+	struct bp_conf *bp = aux;
 	if (hej)
-		printf("printut %s\n",hej);
+		printf("printut %s %s %d\n",hej, bp->type, bp->num);
 	return (UNSUPP);
 }
 
@@ -214,6 +219,7 @@ backplane_attach(parent, self, hej)
 	case VAX_750:
 	case VAX_650:
 	case VAX_78032:
+	case VAX_780:
 		cmem = cbi = 0;
 		ccpu = csbi = 1;
 		break;
@@ -254,10 +260,12 @@ cpu_match(parent, cf, aux)
 		return 0;
 
 	switch (cpunumber) {
-#if VAX750 || VAX630 || VAX650
+#if VAX750 || VAX630 || VAX650 || VAX780 || VAX8600
 	case VAX_750:
 	case VAX_78032:
 	case VAX_650:
+	case VAX_780:
+	case VAX_8600:
 		if(cf->cf_unit == 0 && bp->partyp == BACKPLANE)
 			return 1;
 		break;
@@ -286,12 +294,36 @@ mem_match(parent, cf, aux)
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
 	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
-		return 0; /* memory doesn't match spec's */
+		return 0;
+
 	switch (sa->type) {
+	case NEX_MEM4:
+	case NEX_MEM4I:
 	case NEX_MEM16:
-		return 1;
+	case NEX_MEM16I:
+		sa->nexinfo = M780C;
+		break;
+
+	case NEX_MEM64I:
+	case NEX_MEM64L:
+	case NEX_MEM64LI:
+	case NEX_MEM256I:
+	case NEX_MEM256L:
+	case NEX_MEM256LI:
+		sa->nexinfo = M780EL;
+		break;
+
+	case NEX_MEM64U:
+	case NEX_MEM64UI:
+	case NEX_MEM256U:
+	case NEX_MEM256UI:
+		sa->nexinfo = M780EU;
+		break;
+
+	default:
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 void
@@ -299,12 +331,22 @@ mem_attach(parent, self, aux)
 	struct  device  *parent, *self;
 	void    *aux;
 {
-	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	mem_softc *sc = (void *)self;
+
+	sc->sc_memaddr = sa->nexaddr;
+	sc->sc_memtype = sa->nexinfo;
+	sc->sc_memnr = sa->type;
 
 	switch (cpunumber) {
 #ifdef VAX750
 	case VAX_750:
-		ka750_memenable(sa, self);
+		ka750_memenable(sa, sc);
+		break;
+#endif
+#ifdef VAX780
+	case VAX_780:
+		ka780_memenable(sa, sc);
 		break;
 #endif
 
@@ -323,6 +365,6 @@ struct	cfdriver cpucd =
 
 
 struct  cfdriver memcd =
-	{ 0, "mem", mem_match, mem_attach, DV_CPU, sizeof(struct device) };
+	{ 0, "mem", mem_match, mem_attach, DV_CPU, sizeof(struct mem_softc) };
 
 

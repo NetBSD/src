@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.22 1996/02/11 13:41:35 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.23 1996/03/02 13:45:45 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -198,16 +198,16 @@ pmap_bootstrap()
         p0pmap->pm_pcb = (struct pcb *)proc0paddr;
 
         p0pmap->pm_pcb->P1BR = (void *)0x80000000;
-        p0pmap->pm_pcb->P0BR = 0;
+        p0pmap->pm_pcb->P0BR = (void *)0x80000000;
         p0pmap->pm_pcb->P1LR = 0x200000;
         p0pmap->pm_pcb->P0LR = AST_PCB;
         mtpr(0x80000000, PR_P1BR);
-        mtpr(0, PR_P0BR);
+        mtpr(0x80000000, PR_P0BR);
         mtpr(0x200000, PR_P1LR);
         mtpr(AST_PCB, PR_P0LR);
-/*
- * Now everything should be complete, start virtual memory.
- */
+	/*
+	 * Now everything should be complete, start virtual memory.
+	 */
         mtpr(sysptsize, PR_SLR);
         mtpr(1, PR_MAPEN);
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.10 1996/02/02 18:08:49 mycroft Exp $  */
+/*      $NetBSD: clock.c,v 1.11 1996/03/02 13:45:36 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,7 +102,7 @@ inittodr(fs_time)
 {
 
 	unsigned long tmp_year, sluttid, year_ticks;
-	int clock_stopped;
+	int clock_stopped = 0;
 
 	sluttid = fs_time;
 	year = (fs_time / SEC_PER_DAY / 365) * 365 * SEC_PER_DAY;
@@ -121,6 +121,11 @@ inittodr(fs_time)
 #if VAX630 || VAX410
 	case VAX_78032:
 		year_ticks = uvaxII_gettodr(&clock_stopped);
+		break;
+#endif
+#if VAX780
+	case VAX_780:
+		year_ticks = mfpr(PR_TODR);
 		break;
 #endif
 	default:
@@ -189,21 +194,30 @@ resettodr()
 }
 
 /*
- * Unfortunately the 78032 cpu chip (MicroVAXII cpu) does not have a functional
- * todr register, so this function is necessary.
- * (the x and y variables are used to confuse the optimizer enough to ensure
- *  that the code actually loops:-)
+ * A delayloop that delays about the number of milliseconds that is
+ * given as argument.
  */
 void
 delay(i)
 	int i;
 {
-	volatile int n;
+	int	mul;
 
-	n = i;
+	switch (cpunumber) {
+	case VAX_750:
+	case VAX_78032:
+	case VAX_780:
+		mul = 1; /* <= 1 VUPS */
+		break;
 
-	while (--n)
-		;
+	case VAX_650:
+		mul = 3; /* <= 3 VUPS */
+		break;
 
-	return;
+	default:	/* Would be enough... */
+	case VAX_8600:
+		mul = 6; /* <= 6 VUPS */
+		break;
+	}
+	asm ("1: sobgtr %0, 1b" : : "r" (mul * i));
 }
