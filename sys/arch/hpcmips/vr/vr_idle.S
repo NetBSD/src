@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.2 2000/03/28 00:24:06 nisimura Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.3 2000/04/11 04:39:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ LEAF(vr_idle)
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
 1:
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
-	nop
+	#nop					# -slip-
 	bne	t0, zero, 1f
 	nop
 	.word	VR_OPCODE_STANDBY
