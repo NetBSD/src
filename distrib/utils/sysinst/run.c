@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.55 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.56 2004/05/15 21:51:30 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -169,8 +169,9 @@ collect(int kind, char **buffer, const char *name, ...)
 	struct stat st;		/* stat information. */
 	int ch;
 	FILE *f;
-	char fileorcmd [STRSIZE];
+	char fileorcmd[STRSIZE];
 	va_list ap;
+	char *cp;
 
 	va_start(ap, name);
 	vsnprintf(fileorcmd, STRSIZE, name, ap);
@@ -204,16 +205,16 @@ collect(int kind, char **buffer, const char *name, ...)
 		fbytes = BUFSIZE;
 	
 	/* Allocate the buffer size. */
-	*buffer = (char *)malloc(fbytes + 1);
-	if (!*buffer) 
-		return -1;
-
-	/* Read the buffer. */
-	nbytes = 0;
-	while (nbytes < fbytes && (ch = fgetc(f)) != EOF)
-		(*buffer)[nbytes++] = ch;
-
-	(*buffer)[nbytes] = 0;
+	*buffer = cp = malloc(fbytes + 1);
+	if (!cp)
+		nbytes =  -1;
+	else {
+		/* Read the buffer. */
+		nbytes = 0;
+		while (nbytes < fbytes && (ch = fgetc(f)) != EOF)
+			cp[nbytes++] = ch;
+		cp[nbytes] = 0;
+	}
 
 	if (kind == T_FILE)
 		fclose(f);
