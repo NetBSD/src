@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.17 2001/10/07 10:14:42 itohy Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.18 2001/11/13 05:32:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.18 2001/11/13 05:32:50 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
