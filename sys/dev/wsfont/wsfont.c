@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.29 2002/09/27 15:37:41 provos Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.30 2003/01/12 13:12:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.29 2002/09/27 15:37:41 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.30 2003/01/12 13:12:42 tsutsui Exp $");
 
 #include "opt_wsfont.h"
 
@@ -76,6 +76,16 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.29 2002/09/27 15:37:41 provos Exp $");
 #ifdef FONT_VT220L8x10
 #define HAVE_FONT 1
 #include <dev/wsfont/vt220l8x10.h>
+#endif
+
+#ifdef FONT_VT220L8x16
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220l8x16.h>
+#endif
+
+#ifdef FONT_VT220ISO8x16
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220iso8x16.h>
 #endif
 
 #ifdef FONT_SONY8x16
@@ -148,6 +158,12 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_VT220L8x10
 	{ { NULL }, &vt220l8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_VT220L8x16
+	{ { NULL }, &vt220l8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_VT220ISO8x16
+	{ { NULL }, &vt220iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_SONY8x16
 	{ { NULL }, &sony8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
