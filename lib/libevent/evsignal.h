@@ -1,3 +1,5 @@
+/*	$NetBSD: evsignal.h,v 1.2 2003/06/13 04:11:31 itojun Exp $	*/
+
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
