@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.booters,v 1.10 2003/02/27 20:38:34 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.11 2003/10/24 21:28:24 scw Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
 RELOC?=		0x3F0000
-COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes
+COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes \
+		-ffreestanding
 DEFS?= 
 STRIPFLAG?=
 CPPFLAGS+=	-D__daddr_t=int32_t
