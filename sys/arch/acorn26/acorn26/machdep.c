@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.11 2003/12/05 23:56:20 he Exp $ */
+/* $NetBSD: machdep.c,v 1.12 2003/12/30 12:33:13 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2003/12/05 23:56:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/12/30 12:33:13 pk Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -146,9 +146,7 @@ haltsys:
 void
 cpu_startup()
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	/* Stuff to do here: */
@@ -158,49 +156,8 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/* allocsys() is called from start() */
-
 	/* Various boilerplate memory allocations. */
-
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (void *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
+	minaddr = 0;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -224,13 +181,6 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 
 	curpcb = &lwp0.l_addr->u_pcb;
 

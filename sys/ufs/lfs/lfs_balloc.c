@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.46 2003/10/29 01:25:04 mycroft Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.47 2003/12/30 12:33:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.46 2003/10/29 01:25:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.47 2003/12/30 12:33:24 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -429,7 +429,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 
 	if (bpp) {
 		obufsize = (*bpp)->b_bufsize;
-		allocbuf(*bpp, nsize);
+		allocbuf(*bpp, nsize, 1);
 
 		/* Adjust locked-list accounting */
 		if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)

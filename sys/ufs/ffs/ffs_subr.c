@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.31 2003/12/02 04:40:43 dbj Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.32 2003/12/30 12:33:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.31 2003/12/02 04:40:43 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.32 2003/12/30 12:33:24 pk Exp $");
 
 #include <sys/param.h>
 
@@ -199,6 +199,7 @@ ffs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
+#if 0
 	struct buf *ebp, *ep;
 	daddr_t start, last;
 	struct vnode *vp;
@@ -225,6 +226,9 @@ ffs_checkoverlap(bp, ip)
 		    ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
 	}
+#else
+	printf("ffs_checkoverlap disabled due to buffer cache implementation changes\n");
+#endif
 }
 #endif /* _KERNEL && DIAGNOSTIC */
 

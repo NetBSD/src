@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2003/12/14 19:39:24 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.132 2003/12/30 12:33:19 pk Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2003/12/14 19:39:24 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2003/12/30 12:33:19 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -199,9 +199,7 @@ void free_ptp(paddr_t);
 static vsize_t
 calc_kvmsize(vsize_t usrptsize)
 {
-	extern u_int bufcache;
-	vsize_t kvmsize;
-	u_int n, bp, bc;
+	vsize_t kvmsize, bufsz;
 
 	/* All physical memory */
 	kvmsize = avail_end;
@@ -219,12 +217,10 @@ calc_kvmsize(vsize_t usrptsize)
 	/* Anon pool structures */
 	kvmsize += (physmem * sizeof(struct vm_anon));
 
-	/* allocated buffer space etc... This is a hack */
-	n = nbuf; bp = bufpages; bc = bufcache;
-	kvmsize += (u_int)allocsys(NULL, NULL);
-	/* Buffer space */
-	kvmsize += (MAXBSIZE * nbuf);
-	nbuf = n; bufpages = bp; bufcache = bc;
+	/* Buffer space - get size of buffer cache and set an upper limit */
+	bufsz = buf_memcalc();
+	buf_setvalimit(bufsz);
+	kvmsize += bufsz;
 
 	/* UBC submap space */
 	kvmsize += (UBC_NWINS << UBC_WINSHIFT);

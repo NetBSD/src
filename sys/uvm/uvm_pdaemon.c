@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.55 2003/09/26 04:03:39 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.56 2003/12/30 12:33:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.55 2003/09/26 04:03:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.56 2003/12/30 12:33:24 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -273,6 +273,7 @@ uvm_pageout(void *arg)
 		 * drain pool resources now that we're not holding any locks
 		 */
 
+		buf_drain(0);
 		pool_drain(0);
 	}
 	/*NOTREACHED*/
