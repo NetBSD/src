@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.6 1997/03/22 03:38:03 lukem Exp $	*/
+/*	$NetBSD: common.h,v 1.7 1997/11/22 22:27:12 augustss Exp $	*/
 
 #define DEBUGGING
 
@@ -48,7 +48,7 @@
 
 #define MAXHUNKSIZE 100000		/* is this enough lines? */
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
-#define MAXLINELEN 1024
+#define MAXLINELEN 10240
 #define BUFFERSIZE 1024
 
 #define SCCSPREFIX "s."
