@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.5 1997/10/20 03:06:48 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.6 2000/07/05 00:35:28 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.5 1997/10/20 03:06:48 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.6 2000/07/05 00:35:28 itohy Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -66,6 +66,7 @@ main(argc, argv)
 {
 	FILE *fp;
 	int ch;
+	int rval;
 
 	while ((ch = getopt(argc, argv, "nwctsobfF:ld")) != -1)
 		switch((char)ch) {
@@ -116,17 +117,22 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	rval = 0;
+
 	if (*argv)
 		while (*argv) {
-			if ((fp=fopen(*argv, "r")) != NULL)
+			if ((fp=fopen(*argv, "r")) != NULL) {
 				process(fp, *argv);
-			else
+				fclose(fp);
+			} else {
 				warn("%s", *argv);
+				rval = 1;
+			}
 			argv++;
 		}
 	else
 		process(stdin, "<stdin>");
-	exit(0);
+	exit(rval);
 }
 	
 void
