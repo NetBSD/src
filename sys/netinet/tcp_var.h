@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.84 2001/09/10 15:23:11 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.85 2001/09/10 20:15:15 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -694,8 +694,6 @@ void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
 struct mbuf *
 	 tcp_template __P((struct tcpcb *));
-struct tcpcb *
-	 tcp_timers __P((struct tcpcb *, int));
 void	 tcp_trace __P((int, int, struct tcpcb *, struct mbuf *, int));
 struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
