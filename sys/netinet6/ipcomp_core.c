@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_core.c,v 1.9.4.1 2000/09/29 06:42:42 itojun Exp $	*/
-/*	$KAME: ipcomp_core.c,v 1.22 2000/09/26 07:55:14 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.9.4.2 2002/03/20 23:18:38 he Exp $	*/
+/*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -33,6 +33,9 @@
 /*
  * RFC2393 IP payload compression protocol (IPComp).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.9.4.2 2002/03/20 23:18:38 he Exp $");
 
 #include "opt_inet.h"
 
@@ -211,13 +214,13 @@ do { \
 			      : deflate(&zs, Z_NO_FLUSH);
 
 		if (zerror == Z_STREAM_END)
-			; /*once more.*/
+			; /* once more. */
 		else if (zerror == Z_OK) {
 			/* inflate: Z_OK can indicate the end of decode */
 			if (mode && !p && zs.avail_out != 0)
 				goto terminate;
 			else
-				; /*once more.*/
+				; /* once more. */
 		} else {
 			if (zs.msg) {
 				ipseclog((LOG_ERR, "ipcomp_%scompress: "
@@ -246,14 +249,17 @@ do { \
 			MOREBLOCK();
 		}
 
-		zerror = mode ? inflate(&zs, Z_FINISH)
+		zerror = mode ? inflate(&zs, Z_SYNC_FLUSH)
 			      : deflate(&zs, Z_FINISH);
 
 		if (zerror == Z_STREAM_END)
 			break;
-		else if (zerror == Z_OK)
-			; /*once more.*/
-		else {
+		else if (zerror == Z_OK) {
+			if (mode && zs.avail_out != 0)
+				goto terminate;
+			else
+				; /* once more. */
+		} else {
 			if (zs.msg) {
 				ipseclog((LOG_ERR, "ipcomp_%scompress: "
 				    "%sflate(Z_FINISH): %s\n",
