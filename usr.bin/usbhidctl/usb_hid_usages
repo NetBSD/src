@@ -765,8 +765,8 @@
 	0x48	Top Corner Distortion Balance 
 	0x4A	Bottom Corner Distortion Control 
 	0x4C	Bottom Corner Distortion Balance 
-	0x56	Moiré Horizontal
-	0x58	Moiré Vertical
+	0x56	Moiré Horizontal
+	0x58	Moiré Vertical
 	0x5E	Input Level Select
 	0x60	Input Source Select
 	0x62	Stereo Mode
