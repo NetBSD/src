@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 2003/03/02 18:27:14 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 2003/03/04 01:07:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3 2003/03/02 18:27:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4 2003/03/04 01:07:36 fvdl Exp $");
 
 #define ISA_DMA_STATS
 
@@ -348,7 +348,7 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-	extern struct x86_isa_chipset i386_isa_chipset;
+	extern struct x86_isa_chipset x86_isa_chipset;
 	extern int isa_has_been_seen;
 
 	/*
@@ -364,7 +364,7 @@ isa_attach_hook(parent, self, iba)
 	 * statically allocated ISA chipset structure.  Pass it up
 	 * now.
 	 */
-	iba->iba_ic = &i386_isa_chipset;
+	iba->iba_ic = &x86_isa_chipset;
 }
 
 int
