@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.25 1994/02/13 05:44:39 mycroft Exp $
+ *	$Id: if_ed.c,v 1.26 1994/02/14 23:56:16 mycroft Exp $
  */
 
 #include "ed.h"
@@ -114,9 +114,7 @@ void ed_watchdog __P((short));
 void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
-
-u_long ds_crc __P((u_char *));
-void ds_getmcaf __P((struct ed_softc *, u_long *));
+void ed_getmcaf __P((struct arpcom *, u_long *));
 
 #define inline	/* XXX for debugging porpoises */
 
@@ -543,7 +541,7 @@ ed_probe_WD80x3(isa_dev)
 
 		for (i = 0; i < memsize; ++i)
 			if (sc->mem_start[i]) {
-		        	printf("ed%d: failed to clear shared memory at %x - check configuration\n",
+				printf("ed%d: failed to clear shared memory at %x - check configuration\n",
 				    isa_dev->id_unit, kvtop(sc->mem_start + i));
 
 				/* Disable 16 bit access to shared memory. */
@@ -815,7 +813,7 @@ ed_probe_3Com(isa_dev)
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->mem_start[i]) {
-	        	printf("ed%d: failed to clear shared memory at %x - check configuration\n",
+			printf("ed%d: failed to clear shared memory at %x - check configuration\n",
 			    isa_dev->id_unit, kvtop(sc->mem_start + i));
 			return 0;
 		}
@@ -1203,17 +1201,12 @@ ed_init(sc)
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
-	/* Set up multicast addresses and filter modes. */
+	/* Set up multicast addresses and filter modes if necessary. */
 	if (ifp->if_flags & (IFF_MULTICAST | IFF_PROMISC)) {
 		u_long mcaf[2];
 
-		if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
-			mcaf[0] = 0xffffffff;
-			mcaf[1] = 0xffffffff;
-		} else
-			ds_getmcaf(sc, mcaf);
-
 		/* Set multicast filter on chip. */
+		ed_getmcaf(&sc->arpcom, mcaf);
 		for (i = 0; i < 8; i++)
 		      outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 	}
@@ -2324,27 +2317,65 @@ ds_crc(ep)
  * need to listen to.
  */
 void
-ds_getmcaf(sc, mcaf)
-	struct ed_softc *sc;
-	u_long *mcaf;
+ed_getmcaf(ac, af)
+	struct arpcom *ac;
+	u_long *af;
 {
-	register u_int index;
-	register u_char *af = (u_char*)mcaf;
-	register struct ether_multi *enm;
-	register struct ether_multistep step;
+	struct ifnet *ifp = &ac->ac_if;
+	struct ether_multi *enm;
+	register u_char *cp, c;
+	register u_long crc;
+	register int i, len;
+	struct ether_multistep step;
 
-	mcaf[0] = 0;
-	mcaf[1] = 0;
+	/*
+	 * Set up multicast address filter by passing all multicast addresses
+	 * through a crc generator, and then using the high order 6 bits as an
+	 * index into the 64 bit logical address filter.  The high order bit
+	 * selects the word, while the rest of the bits select the bit within
+	 * the word.
+	 */
 
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
+		af[0] = af[1] = 0xffffffff;
+		return;
+	}
+
+	af[0] = af[1] = 0;
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			mcaf[0] = 0xffffffff;
-			mcaf[1] = 0xffffffff;
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    sizeof(enm->enm_addrlo)) != 0) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			af[0] = af[1] = 0xffffffff;
 			return;
 		}
-		index = ds_crc(enm->enm_addrlo) >> 26;
-		af[index >> 3] |= 1 << (index & 7);
+
+		cp = enm->enm_addrlo;
+		crc = 0xffffffff;
+		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
+			c = *cp++;
+			for (i = 8; --i >= 0;) {
+				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
+					crc <<= 1;
+					crc ^= 0x04c11db6 | 1;
+				} else
+					crc <<= 1;
+				c >>= 1;
+			}
+		}
+		/* Just want the 6 most significant bits. */
+		crc >>= 26;
+
+		/* Turn on the corresponding bit in the filter. */
+		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 24);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
