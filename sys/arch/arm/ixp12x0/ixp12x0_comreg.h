@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_comreg.h,v 1.2 2002/07/20 03:09:04 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_comreg.h,v 1.3 2002/12/02 14:10:13 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -44,14 +44,20 @@
 #define IXPCOMSPEED2BRD(b)	(IXPCOMSPEED(b) << 16)
 
 /* size of I/O space */
+#define IXPCOM_UART_SIZE	0x0c00U
+#define	IXPCOM_UART_BASE	0xf0003400UL
+#if 0
 #define	IXPCOM_UART_HWBASE	0x90000000UL
-#define IXPCOM_UART_SIZE	0x00004000
 
 /* Register base virtual addresses mapped by initarm() */
 #define	IXPCOM_UART_BASE	0xf0000000UL
+#endif
 
 /* UART control register */
+#if 0
 #define IXPCOM_CR	0x00003800UL
+#endif
+#define IXPCOM_CR	0x0400U
 #define CR_BRK		0x01	/* Break */
 #define CR_PE		0x02	/* Parity enable */
 #define CR_OES		0x04	/* Odd/even parity select */
@@ -73,7 +79,10 @@
 
 
 /* UART Status register */
+#if 0
 #define IXPCOM_SR	0x00003400
+#endif
+#define IXPCOM_SR	0x0000U
 #define SR_PRE		0x01	/* Parity error */
 #define SR_FRE		0x02	/* Framing error */
 #define	SR_TXR		0x04	/* Transmit FIFO Ready */
@@ -85,7 +94,10 @@
 
 
 /* UART data register */
+#if 0
 #define IXPCOM_DR	0x00003C00
+#endif
+#define IXPCOM_DR	0x0800U
 #define DR_PRE		0x100	/* Parity error */
 #define DR_FRE		0x200	/* Framing error */
 #define DR_ROR		0x400	/* Receiver overrun */
