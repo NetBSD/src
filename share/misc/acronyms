@@ -1,8 +1,8 @@
-$NetBSD: acronyms,v 1.138 2004/03/12 01:01:57 snj Exp $
+$NetBSD: acronyms,v 1.139 2004/03/26 12:45:39 keihan Exp $
 
+AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
-AFAIC	as far as I'm concerned
 AFAIK	as far as I know
 AFAIR	as far as I recall
 AFAIU	as far as I understand
@@ -106,8 +106,8 @@ ISAGN	I see a great need
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
-IYSS	if you say so
 IWBNI	it would be nice if
+IYSS	if you say so
 J/K	just kidding
 JHD	just hit ``delete''
 JIC	just in case
