@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.233 2001/04/19 00:21:08 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.234 2001/04/19 17:48:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2001/04/19 00:21:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2001/04/19 17:48:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,13 +773,17 @@ nobootinfo:
 #ifdef DDB
 	ddb_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
-	if (boothowto & RB_KDB)
+#endif
+
+	if (boothowto & RB_KDB) {
+#if defined(KGDB)
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+#elif defined(DDB)
 		Debugger();
 #endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
+	}
+
 	/*
 	 * Figure out our clock frequency, from RPB fields.
 	 */
