@@ -1,5 +1,5 @@
-# Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.15 2001/07/08 17:31:12 tv Exp $
+# Area Code : State/Province : City : State/Province Abbrev.
+#	$NetBSD: na.phone,v 1.16 2002/08/02 18:02:53 soren Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #	From: http://www.teltronics.com/nanp2.html
 201:New Jersey (USA):Hackensack, Morristown, Newark and Jersey City:NJ
