@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 2000/03/04 13:43:19 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.3 2000/03/05 04:34:07 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -52,6 +52,7 @@ struct vrisab_softc {
 	vrgiu_chipset_tag_t sc_gc;
 	vrgiu_function_tag_t sc_gf;
 	int sc_intr_map[MAX_GPIO_INOUT]; /* ISA <-> GIU inerrupt line mapping */
+	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
 struct cfattach vrisab_ca = {
@@ -98,9 +99,10 @@ vrisabattach(parent, self, aux)
     
 	sc->sc_gc = chipset = gpa->gpa_gc;
 	sc->sc_gf = gpa->gpa_gf;
+	sc->sc_isa_ic.ic_sc = sc;
 
 	iba.iba_busname = "isa";
-	iba.iba_ic	    = sc;
+	iba.iba_ic	= &sc->sc_isa_ic;
 	iba.iba_dmat    = 0; /* XXX not yet */
 
 	/* Allocate ISA memory space */
@@ -161,14 +163,14 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void*));
 	void *ih_arg;
 {
-	struct vrisab_softc *sc = (void*)ic;
-	int port, irq;
+	struct vrisab_softc *sc = ic->ic_sc;
+	int port, irq, mode;
 
 	/*
 	 * 'intr' encoding:
 	 *
 	 * 0x0000000f ISA IRQ#
-	 * 0x00ff0000 GPIO port# (if port# is 0xff, it means 'not specified')
+	 * 0x00ff0000 GPIO port#
 	 * 0x01000000 interrupt signal hold/through	(1:hold/0:though)
 	 * 0x02000000 interrupt detection level		(1:low /0:high	)
 	 * 0x04000000 interrupt detection trigger	(1:edge/0:level	)
@@ -176,8 +178,6 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 #define INTR_IRQ(i)	(((i)>> 0) & 0x0f)
 #define INTR_PORT(i)	(((i)>>16) & 0xff)
 #define INTR_MODE(i)	(((i)>>24) & 0x07)
-#define INTR_PORTISNULL(p)	((p) == 0xff)
-#define INTR_PORTNULL	0x00ff0000
 	static int intr_modes[8] = {
 		VRGIU_INTR_LEVEL_HIGH_THROUGH,
 		VRGIU_INTR_LEVEL_HIGH_HOLD,
@@ -203,24 +203,22 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	 * ISA IRQ <-> GPIO port mapping
 	 */
 	irq = INTR_IRQ(intr);
-	port = INTR_PORT(intr);
-	if (INTR_PORTISNULL(port)) {
-		/* GPIO port not specfied */
-		port = sc->sc_intr_map[irq]; /* Use Already mapped port */
+	if (sc->sc_intr_map[irq] != -1) {
+		/* already mapped */
+		intr = sc->sc_intr_map[irq];
 	} else {
-		/* GPIO port specified. */
-		if (sc->sc_intr_map[irq] != -1)
-			panic("isa_intr_establish: conflict GPIO line. %d <-> %d",
-			      port, sc->sc_intr_map[irq]);
-		sc->sc_intr_map[irq] = port; /* Register it */
-		printf("ISA IRQ %d -> GPIO port %d, %s\n",
-		       irq, port, intr_mode_names[INTR_MODE(intr)]);
+		/* not mapped yet */
+		sc->sc_intr_map[irq] = intr; /* Register it */
 	}
-	if (port == -1)
-		panic("isa_intr_establish: can't ISA IRQ to GIU port.");
+	mode = INTR_MODE(intr);
+	port = INTR_PORT(intr);
+
+	printf("ISA IRQ %d -> GPIO port %d, %s\n",
+	       irq, port, intr_mode_names[mode]);
+
 	/* Call Vr routine */
 	return sc->sc_gf->gf_intr_establish(sc->sc_gc, port,
-					    intr_modes[INTR_MODE(intr)],
+					    intr_modes[mode],
 					    level, ih_fun, ih_arg);
 }
 
@@ -229,7 +227,7 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	struct vrisab_softc *sc = (void*)ic;
+	struct vrisab_softc *sc = ic->ic_sc;
 	/* Call Vr routine */
 	sc->sc_gf->gf_intr_disestablish(sc->sc_gc, arg);
 }
@@ -244,7 +242,7 @@ isa_intr_alloc(ic, mask, type, irq)
 	/* XXX not coded yet. this is temporary XXX */
 	printf ("isa_intr_alloc:");
 	bitdisp32(mask);
-	*irq = ((ffs(mask) -1) | INTR_PORTNULL); /* XXX */
+	*irq = (ffs(mask) -1); /* XXX */
 	return 0;
 }
 
@@ -284,5 +282,3 @@ __find_pcic(void)
 	}
 }
 #endif
-
-	
