@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.206 2004/07/18 07:41:42 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.207 2004/07/20 22:00:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.206 2004/07/18 07:41:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.207 2004/07/20 22:00:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2948,11 +2948,9 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				    cp = cnp->cn_nameptr + cnp->cn_namelen;
 				    cnp->cn_hash =
 					namei_hash(cnp->cn_nameptr, &cp);
-				    if (cnp->cn_namelen <= NCHNAMLEN) {
-					cache_purge1(ndp->ni_dvp, cnp, 0);
+				    if (cnp->cn_namelen <= NCHNAMLEN)
 				        nfs_cache_enter(ndp->ni_dvp, ndp->ni_vp,
 						    cnp);
-				    }
 				}
 			   }
 			} else {
