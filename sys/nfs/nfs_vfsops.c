@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.122 2003/02/26 06:31:20 matt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.123 2003/03/28 12:33:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.122 2003/02/26 06:31:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.123 2003/03/28 12:33:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -243,7 +243,8 @@ nfs_fsinfo(nmp, vp, cred, p)
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_wtpref);
-		if (pref < nmp->nm_wsize && pref >= NFS_FABLKSIZE)
+		if ((nmp->nm_flag & NFSMNT_WSIZE) == 0 &&
+		    pref < nmp->nm_wsize && pref >= NFS_FABLKSIZE)
 			nmp->nm_wsize = (pref + NFS_FABLKSIZE - 1) &
 				~(NFS_FABLKSIZE - 1);
 		max = fxdr_unsigned(u_int32_t, fsp->fs_wtmax);
@@ -253,7 +254,8 @@ nfs_fsinfo(nmp, vp, cred, p)
 				nmp->nm_wsize = max;
 		}
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_rtpref);
-		if (pref < nmp->nm_rsize && pref >= NFS_FABLKSIZE)
+		if ((nmp->nm_flag & NFSMNT_RSIZE) == 0 &&
+		    pref < nmp->nm_rsize && pref >= NFS_FABLKSIZE)
 			nmp->nm_rsize = (pref + NFS_FABLKSIZE - 1) &
 				~(NFS_FABLKSIZE - 1);
 		max = fxdr_unsigned(u_int32_t, fsp->fs_rtmax);
