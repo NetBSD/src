@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.30 2002/11/02 07:25:23 perry Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.31 2002/11/26 18:44:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.30 2002/11/02 07:25:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.31 2002/11/26 18:44:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.30 2002/11/02 07:25:23 perry Exp $");
  */
 #define vfs_timestamp(tv)	(*(tv) = time)
 
-/* we call it si_klist */
-#define	si_note			si_klist
+/* we call it sel_klist */
+#define	sel_note		sel_klist
 
 #endif
 
@@ -567,7 +567,7 @@ pipeselwakeup(selp, sigp)
 	}
 	if (sigp && (sigp->pipe_state & PIPE_ASYNC) && sigp->pipe_sigio)
 		pgsigio(sigp->pipe_sigio, SIGIO, 0);
-	KNOTE(&selp->pipe_sel.si_note, 0);
+	KNOTE(&selp->pipe_sel.sel_note, 0);
 #endif
 
 #ifdef __NetBSD__
@@ -1834,7 +1834,7 @@ pipeclose(cpipe)
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
 #ifdef __FreeBSD__
-		KNOTE(&ppipe->pipe_sel.si_note, 0);
+		KNOTE(&ppipe->pipe_sel.sel_note, 0);
 #endif
 		ppipe->pipe_peer = NULL;
 	}
@@ -1891,7 +1891,7 @@ filt_pipedetach(struct knote *kn)
 #endif
 
 	PIPE_LOCK(cpipe);
-	SLIST_REMOVE(&cpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+	SLIST_REMOVE(&cpipe->pipe_sel.sel_note, kn, knote, kn_selnext);
 	PIPE_UNLOCK(cpipe);
 }
 
@@ -1969,7 +1969,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	kn->kn_hook = cpipe;
 
 	PIPE_LOCK(cpipe);
-	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_note, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&cpipe->pipe_sel.sel_note, kn, kn_selnext);
 	PIPE_UNLOCK(cpipe);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.65 2002/10/23 09:14:26 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.66 2002/11/26 18:44:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.65 2002/10/23 09:14:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.66 2002/11/26 18:44:35 christos Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -758,7 +758,7 @@ filt_ptcrdetach(struct knote *kn)
 
 	pti = kn->kn_hook;
 	s = spltty();
-	SLIST_REMOVE(&pti->pt_selr.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&pti->pt_selr.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -800,7 +800,7 @@ filt_ptcwdetach(struct knote *kn)
 
 	pti = kn->kn_hook;
 	s = spltty();
-	SLIST_REMOVE(&pti->pt_selw.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&pti->pt_selw.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -849,11 +849,11 @@ ptckqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &pti->pt_selr.si_klist;
+		klist = &pti->pt_selr.sel_klist;
 		kn->kn_fop = &ptcread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &pti->pt_selw.si_klist;
+		klist = &pti->pt_selw.sel_klist;
 		kn->kn_fop = &ptcwrite_filtops;
 		break;
 	default:
