@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.9 1994/12/28 09:25:21 chopps Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.10 1995/01/05 07:22:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -66,8 +66,6 @@ struct scsi_adapter gtsc_scsiswitch = {
 	sbic_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	sbic_adinfo,
-	"gtsc",
 };
 
 struct scsi_device gtsc_scsidev = {
@@ -75,8 +73,6 @@ struct scsi_device gtsc_scsidev = {
 	NULL,		/* have a queue served by this ??? */
 	NULL,		/* have no async handler ??? */
 	NULL,		/* Use default done routine */
-	"gtsc",
-	0,
 };
 
 int gtsc_maxdma = 0;	/* Maximum size per DMA transfer */
@@ -187,9 +183,10 @@ gtscattach(pdp, dp, auxp)
 	sbicreset(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &gtsc_scsiswitch;
 	sc->sc_link.device = &gtsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;

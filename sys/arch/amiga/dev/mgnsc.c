@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.8 1994/12/28 09:25:43 chopps Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.9 1995/01/05 07:22:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,8 +58,6 @@ struct scsi_adapter mgnsc_scsiswitch = {
 	siop_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	siop_adinfo,
-	"mgnsc",
 };
 
 struct scsi_device mgnsc_scsidev = {
@@ -67,8 +65,6 @@ struct scsi_device mgnsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"mgnsc",
-	0,
 };
 
 
@@ -120,9 +116,10 @@ mgnscattach(pdp, dp, auxp)
 	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &mgnsc_scsiswitch;
 	sc->sc_link.device = &mgnsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;
