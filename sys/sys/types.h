@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,40 +35,42 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)types.h	7.17 (Berkeley) 5/6/91
- *	$Id: types.h,v 1.13 1994/05/18 02:41:54 cgd Exp $
+ *	from: @(#)types.h	8.4 (Berkeley) 1/21/94
+ *	$Id: types.h,v 1.14 1994/05/21 07:11:52 cgd Exp $
  */
 
 #ifndef _SYS_TYPES_H_
-#define _SYS_TYPES_H_
+#define	_SYS_TYPES_H_
 
 /* Machine type dependent parameters. */
 #include <machine/endian.h>
 
+#ifndef _POSIX_SOURCE
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
 typedef	unsigned int	u_int;
 typedef	unsigned long	u_long;
 typedef	unsigned short	ushort;		/* Sys V compatibility */
+typedef	unsigned int	uint;		/* Sys V compatibility */
+#endif
 
 typedef	unsigned long long u_quad_t;	/* quads */
 typedef	long long	quad_t;
 typedef	quad_t *	qaddr_t;
 
-typedef	char *	caddr_t;		/* core address */
-typedef	long	daddr_t;		/* disk address */
-typedef	short	dev_t;			/* device number */
-typedef	u_long	ino_t;			/* inode number */
-typedef	quad_t	off_t;			/* file offset */
-typedef	u_short	nlink_t;		/* link count */
-typedef	long	swblk_t;		/* swap offset */
-typedef	long	segsz_t;		/* segment size */
-typedef	u_long	uid_t;			/* user id */
-typedef	u_long	gid_t;			/* group id */
-typedef	long	pid_t;			/* process id */
-typedef	u_short	mode_t;			/* permissions */
-typedef u_long	fixpt_t;		/* fixed point number */
-typedef int	ssize_t;		/* count of bytes or error indication */
+typedef	char *		caddr_t;	/* core address */
+typedef	long		daddr_t;	/* disk address */
+typedef	short		dev_t;		/* device number XXX */
+typedef unsigned long	fixpt_t;	/* fixed point number */
+typedef	unsigned long	gid_t;		/* group id */
+typedef	unsigned long	ino_t;		/* inode number */
+typedef	unsigned short	mode_t;		/* permissions */
+typedef	unsigned short	nlink_t;	/* link count */
+typedef	quad_t		off_t;		/* file offset */
+typedef	long		pid_t;		/* process id */
+typedef	long		segsz_t;	/* segment size */
+typedef	long		swblk_t;	/* swap offset */
+typedef	unsigned long	uid_t;		/* user id */
 
 /*
  * This belongs in unistd.h, but is placed here to ensure that programs
@@ -89,23 +91,26 @@ __END_DECLS
 #endif
 
 #include <machine/ansi.h>
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 #include <machine/types.h>
+
+#ifdef	_BSD_CLOCK_T_
+typedef	_BSD_CLOCK_T_	clock_t;
+#undef	_BSD_CLOCK_T_
 #endif
 
-#ifdef	_CLOCK_T_
-typedef	_CLOCK_T_	clock_t;
-#undef	_CLOCK_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
 #endif
 
-#ifdef	_TIME_T_
-typedef	_TIME_T_	time_t;
-#undef	_TIME_T_
+#ifdef	_BSD_TIME_T_
+typedef	_BSD_TIME_T_	time_t;
+#undef	_BSD_TIME_T_
 #endif
 
 #ifndef _POSIX_SOURCE
@@ -136,13 +141,13 @@ typedef	struct fd_set {
 #define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
 #define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
 #define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
-#define	FD_ZERO(p)	bzero((char *)(p), sizeof(*(p)))
+#define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
 
 #if defined(__STDC__) && defined(KERNEL)
 /*
- * Forward structure declarations for function prototypes.
- * We include the common structures that cross subsystem boundaries here;
- * others are mostly used in the same place that the structure is defined.
+ * Forward structure declarations for function prototypes.  We include the
+ * common structures that cross subsystem boundaries here; others are mostly
+ * used in the same place that the structure is defined.
  */
 struct	proc;
 struct	pgrp;
@@ -155,5 +160,4 @@ struct	uio;
 #endif
 
 #endif /* !_POSIX_SOURCE */
-
 #endif /* !_SYS_TYPES_H_ */
