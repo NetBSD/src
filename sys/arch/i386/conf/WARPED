@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.18 1997/02/04 04:32:06 perry Exp $
+#	$NetBSD: WARPED,v 1.19 1997/04/01 13:12:17 mycroft Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -173,7 +173,7 @@ fd*     at fdc? drive ?
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 #wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq ?
+#wdc1	at isa? port 0x170 irq 15
 #wd*	at wdc? drive ?
 
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
