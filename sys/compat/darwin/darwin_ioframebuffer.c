@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.27 2003/12/09 17:13:19 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.28 2003/12/09 19:51:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.27 2003/12/09 17:13:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.28 2003/12/09 19:51:51 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,6 +101,7 @@ struct mach_iokit_property darwin_ioframebuffer_properties_array[] = {
 	{ "IOFBConfig", darwin_iofbconfig },
 	{ "IOFBMemorySize", 
 	    "<integer size=\"32\" ID=\"0\">0x1000000</integer>"},
+	{ "AAPL,boot-display", ""}, 
 	{ NULL, 0}
 };
 
