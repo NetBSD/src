@@ -1,11 +1,11 @@
 #
-# $NetBSD: BOOT,v 1.54 2003/09/22 14:13:23 cl Exp $
+# $NetBSD: BOOT,v 1.55 2003/10/08 11:05:52 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
+#		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
 #		NetBSD: GENERIC.in,v 1.33 2003/09/22 14:11:16 cl Exp $
 
 #This configuration file is for a generic ATARI-Falcon
@@ -124,10 +124,11 @@ ite0		at grfcc0	# console
 nvr0		at mainbus0	# nvram driver
 
 wdc0		at mainbus0	# IDE-bus
-wd*		at wdc? channel ? drive ?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ?
 
  #ATAPI bus support
-atapibus* at wdc? channel ?
+atapibus* at atabus?
 
 #ATAPI devices
 cd*	at atapibus? drive ?	# ATAPI CD-ROM drives
