@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.94 2000/05/27 00:40:48 sommerfeld Exp $	*/
+/*	$NetBSD: proc.h,v 1.95 2000/05/27 05:00:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -383,7 +383,6 @@ void	remrunqueue __P((struct proc *));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
-void	sleep __P((void *chan, int pri));
 int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
