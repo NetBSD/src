@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.163 2003/06/29 22:30:45 fvdl Exp $ */
+/*	$NetBSD: st.c,v 1.163.4.1 2004/09/11 12:58:36 he Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163 2003/06/29 22:30:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.4.1 2004/09/11 12:58:36 he Exp $");
 
 #include "opt_scsi.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163 2003/06/29 22:30:45 fvdl Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
 #include <dev/scsipi/stvar.h>
+#include <dev/scsipi/scsipi_base.h>
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512
@@ -320,6 +321,7 @@ int	st_mount_tape __P((dev_t, int));
 void	st_unmount __P((struct st_softc *, boolean));
 int	st_decide_mode __P((struct st_softc *, boolean));
 void	ststart __P((struct scsipi_periph *));
+void	strestart __P((void *));
 void	stdone __P((struct scsipi_xfer *));
 int	st_read __P((struct st_softc *, char *, int, int));
 int	st_space __P((struct st_softc *, int, u_int, int));
@@ -378,6 +380,8 @@ stattach(parent, st, aux)
 	 * Set up the buf queue for this device
 	 */
 	bufq_alloc(&st->buf_queue, BUFQ_FCFS);
+
+	callout_init(&st->sc_callout);
 
 	/*
 	 * Check if the drive is a known criminal and take
@@ -443,6 +447,9 @@ stdetach(self, flags)
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&st_bdevsw);
 	cmaj = cdevsw_lookup_major(&st_cdevsw);
+
+	/* kill any pending restart */
+	callout_stop(&st->sc_callout);
 
 	s = splbio();
 
@@ -1181,6 +1188,7 @@ ststart(periph)
 	struct st_softc *st = (void *)periph->periph_dev;
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
+	struct scsipi_xfer *xs;
 	int flags, error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
@@ -1196,23 +1204,28 @@ ststart(periph)
 			return;
 		}
 
-		if ((bp = BUFQ_GET(&st->buf_queue)) == NULL)
-			return;
-
 		/*
 		 * If the device has been unmounted by the user
 		 * then throw away all requests until done.
 		 */
-		if ((st->flags & ST_MOUNTED) == 0 ||
-		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
-			/* make sure that one implies the other.. */
-			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-			bp->b_flags |= B_ERROR;
-			bp->b_error = EIO;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			continue;
+		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
+		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
+			if ((bp = BUFQ_GET(&st->buf_queue)) != NULL) {
+				/* make sure that one implies the other.. */
+				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
+				bp->b_flags |= B_ERROR;
+				bp->b_error = EIO;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
+				continue;
+			} else {
+				return;
+			}
 		}
+
+		if ((bp = BUFQ_PEEK(&st->buf_queue)) == NULL)
+			return;
+
 		/*
 		 * only FIXEDBLOCK devices have pending I/O or space operations.
 		 */
@@ -1230,12 +1243,14 @@ ststart(periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
+						BUFQ_GET(&st->buf_queue);
 						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;
 					}
 				} else {
+					BUFQ_GET(&st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					bp->b_flags &= ~B_ERROR;
@@ -1250,6 +1265,7 @@ ststart(periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
+			BUFQ_GET(&st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING) {
 				bp->b_error = EIO;
@@ -1292,16 +1308,47 @@ ststart(periph)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		error = scsipi_command(periph,
+		xs = scsipi_make_xs(periph,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    0, ST_IO_TIME, bp, flags);
-		if (error) {
-			printf("%s: not queued, error %d\n",
-			    st->sc_dev.dv_xname, error);
+		if (__predict_false(xs == NULL)) {
+			/*
+			 * out of memory. Keep this buffer in the queue, and
+			 * retry later.
+			 */
+			callout_reset(&st->sc_callout, hz / 2, strestart,
+			    periph);
+			return;
 		}
+		/*
+		 * need to dequeue the buffer before queuing the command,
+		 * because cdstart may be called recursively from the
+		 * HBA driver
+		 */
+#ifdef DIAGNOSTIC
+		if (BUFQ_GET(&st->buf_queue) != bp)
+			panic("ststart(): dequeued wrong buf");
+#else
+		BUFQ_GET(&st->buf_queue);
+#endif
+		error = scsipi_command(periph, xs,
+		    (struct scsipi_generic *)&cmd, sizeof(cmd),
+		    (u_char *)bp->b_data, bp->b_bcount,
+		    0, ST_IO_TIME, bp, flags);
+		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+		KASSERT(error == 0);
 	} /* go back and see if we can cram more work in.. */
 }
+
+void
+strestart(void *v)
+{
+	int s = splbio();
+	ststart((struct scsipi_periph *)v);
+	splx(s);
+}
+
 
 void
 stdone(xs)
@@ -1639,7 +1686,7 @@ st_read(st, buf, size, flags)
 		    cmd.len);
 	} else
 		_lto3b(size, cmd.len);
-	return (scsipi_command(st->sc_periph,
+	return (scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)buf, size, 0, ST_IO_TIME, NULL, flags | XS_CTL_DATA_IN));
 }
@@ -1677,7 +1724,7 @@ st_erase(st, full, flags)
 	if ((st->quirks & ST_Q_ERASE_NOIMM) == 0)
 		cmd.byte2 |= SE_IMMED;
 
-	return (scsipi_command(st->sc_periph,
+	return (scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, tmo, NULL, flags));
 }
@@ -1767,7 +1814,7 @@ st_space(st, number, what, flags)
 
 	st->flags &= ~ST_POSUPDATED;
 	st->last_ctl_resid = 0;
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, ST_SPC_TIME, NULL, flags);
 
@@ -1840,7 +1887,7 @@ st_write_filemarks(st, number, flags)
 		_lto3b(number, cmd.number);
 
 	/* XXX WE NEED TO BE ABLE TO GET A RESIDIUAL XXX */
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, ST_IO_TIME * 4, NULL, flags);
 	if (error == 0 && st->fileno != -1) {
@@ -1921,7 +1968,7 @@ st_load(st, type, flags)
 		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
 	if (error) {
@@ -1962,7 +2009,7 @@ st_rewind(st, immediate, flags)
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), 0, 0, ST_RETRIES,
 	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
 	if (error) {
@@ -2016,7 +2063,7 @@ st_rdpos(st, hard, blkptr)
 	if (hard)
 		cmd.byte1 = 1;
 
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
 	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -2060,7 +2107,7 @@ st_setpos(st, hard, blkptr)
 	if (hard)
 		cmd.byte2 = 1 << 2;
 	_lto4b(*blkptr, cmd.blkaddr);
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 		(struct scsipi_generic *)&cmd, sizeof(cmd),
 		NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
 	/*
