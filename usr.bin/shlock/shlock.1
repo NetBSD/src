@@ -1,4 +1,4 @@
-.\"	$NetBSD: shlock.1,v 1.6 2001/12/08 19:14:58 wiz Exp $
+.\"	$NetBSD: shlock.1,v 1.7 2002/10/02 10:02:01 wiz Exp $
 .\"
 .Dd June 29, 1997
 .Dt SHLOCK 1
@@ -99,8 +99,8 @@ else
 endif
 .Ed
 .Pp
-The examples assume that the filesystem where the lock file is to
-be created is writeable by the user, and has space available.
+The examples assume that the file system where the lock file is to
+be created is writable by the user, and has space available.
 .Sh HISTORY
 .Nm
 was written for the first Network News Transfer Protocol (NNTP)
@@ -110,7 +110,7 @@ from work he did on HoneyDanBer UUCP.
 .Sh AUTHORS
 .An Erik E. Fair Aq fair@clock.org
 .Sh BUGS
-Does not work on NFS or other network filesystem on different
+Does not work on NFS or other network file system on different
 systems because the disparate systems have disjoint PID spaces.
 .Pp
 Cannot handle the case where a lock file was not deleted, the
