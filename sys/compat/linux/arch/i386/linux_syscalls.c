@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.1 1998/10/01 02:05:33 erh Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.2 1998/10/03 20:17:39 christos Exp $	*/
 
 /*
  * System call names.
@@ -13,11 +13,11 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
-#include <compat/linux/linux_siginfo.h>
-#include <compat/linux/i386/linux_syscallargs.h>
-#include <compat/linux/linux_machdep.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/linux_syscallargs.h>
 #endif /* _KERNEL && ! _LKM */
 
 char *linux_syscallnames[] = {
