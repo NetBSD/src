@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_types.h,v 1.10 1998/09/04 19:54:41 christos Exp $	 */
+/*	$NetBSD: svr4_types.h,v 1.11 1998/09/11 12:34:46 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -71,12 +71,18 @@ typedef int		 svr4_key_t;
 
 typedef struct timespec  svr4_timestruc_t;
 
-#define svr4_to_bsd_odev_t(d) makedev((((d) & 0x7f00) >> 8), ((d) & 0xff))
-/* XXX: we limit the minor number to 0xff, instead of 0x3ffff */
-#define svr4_to_bsd_dev_t(d) makedev((((d) & 0xfffc0000) >> 18), ((d) & 0xff))
+#define	svr4_omajor(x)		((int32_t)((((x) & 0x7f00) >> 8)))
+#define	svr4_ominor(x)		((int32_t)((((x) & 0x00ff) >> 0)))
+#define	svr4_omakedev(x,y)	((svr4_o_dev_t)((((x) << 8) & 0x7f00) | \
+						(((y) << 0) & 0x00ff)))
+#define svr4_to_bsd_odev_t(d)	makedev(svr4_omajor(d), svr4_ominor(d))
+#define bsd_to_svr4_odev_t(d)	svr4_omakedev(major(d), minor(d))
 
-#define bsd_to_svr4_odev_t(d) (((major(d) & 0x7f) << 8)|(minor(d) & 0xff))
-#define bsd_to_svr4_dev_t(d) (((major(d) & 0x3fff) << 18)|(minor(d) & 0x3ffff))
-
+#define	svr4_major(x)		((int32_t)((((x) & 0xfffc0000) >> 18)))
+#define	svr4_minor(x)		((int32_t)((((x) & 0x0003ffff) >>  0)))
+#define	svr4_makedev(x,y)	((svr4_dev_t)((((x) << 18) & 0xfffc0000) | \
+					      (((y) <<  0) & 0x0003ffff)))
+#define svr4_to_bsd_dev_t(d)	makedev(svr4_major(d), svr4_minor(d))
+#define bsd_to_svr4_dev_t(d)	svr4_makedev(major(d), minor(d))
 
 #endif /* !_SVR4_TYPES_H_ */
