@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.63 2000/01/19 00:23:58 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.64 2000/02/01 17:46:17 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -301,8 +301,10 @@ usb_delay_ms(bus, ms)
 	usbd_bus_handle bus;
 	u_int ms;
 {
+	extern int cold;
+
 	/* Wait at least two clock ticks so we know the time has passed. */
-	if (bus->use_polling)
+	if (bus->use_polling || cold)
 		delay((ms+1) * 1000);
 	else
 		tsleep(&ms, PRIBIO, "usbdly", (ms*hz+999)/1000 + 1);
