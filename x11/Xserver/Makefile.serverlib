@@ -1,15 +1,27 @@
-#	$NetBSD: Makefile.serverlib,v 1.2 2003/12/21 03:07:01 rtr Exp $
+#	$NetBSD: Makefile.serverlib,v 1.3 2003/12/26 08:23:30 rtr Exp $
+
 
 NOLINT=         1
 NOPIC=          1
 NOPROFILE=      1
 
+.include <bsd.endian.mk>
+
 .if ${XMODULEDIR:U} == ""
 libinstall::
 .endif
 
-CPPFLAGS+=	${X11FLAGS.SERVER}
+.if ${TARGET_ENDIANNESS} == "1234"
+X_BYTE_ORDER=X_LITTLE_ENDIAN
+.elif ${TARGET_ENDIANNESS} == "4321"
+X_BYTE_ORDER=X_BIG_ENDIAN
+.else
+X_BYTE_ORDER=0
+.endif
+
+CPPFLAGS+=	${X11FLAGS.SERVER} -DX_BYTE_ORDER=${X_BYTE_ORDER}
 
 .if defined(XMODULEDIR)
 CPPFLAGS+=	${X11FLAGS.LOADABLE}
 .endif
+
