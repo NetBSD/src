@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)csh.c	8.2 (Berkeley) 10/12/93";*/
-static char *rcsid = "$Id: csh.c,v 1.9 1995/01/15 09:47:36 mycroft Exp $";
+static char *rcsid = "$Id: csh.c,v 1.10 1995/01/20 18:23:34 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1320,8 +1320,11 @@ defaultpath()
 
 #undef DIRAPPEND
 
+#if 0
     if (euid != 0 && uid != 0)
 	*blkp++ = Strsave(STRdot);
+#endif
+
     *blkp = NULL;
     return (blk);
 }
