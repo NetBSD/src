@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.16 2002/04/26 19:44:52 thorpej Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.17 2002/05/04 18:11:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.16 2002/04/26 19:44:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.17 2002/05/04 18:11:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR |
+	SF_CHIP_GEBUG |
 	SF_BUS_ULTRA3 | SF_BUS_WIDE,
 	7, 31, 0, 62, 8192
 	},
@@ -179,6 +180,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
+	SF_CHIP_GEBUG |
 	SF_BUS_ULTRA3 | SF_BUS_WIDE,
 	7, 62, 0, 62, 8192
 	},
