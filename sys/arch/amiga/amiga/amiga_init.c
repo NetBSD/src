@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.11 1994/03/20 10:02:28 chopps Exp $
+ *	$Id: amiga_init.c,v 1.12 1994/04/18 04:08:43 chopps Exp $
  */
 
 
@@ -48,9 +48,6 @@ extern u_int 	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg1;
 extern u_int	virtual_avail;
-
-extern int page_shift;
-extern vm_size_t page_size, page_mask;
 
 /* virtual addresses specific to the AMIGA */
 u_int CIAADDR, CUSTOMADDR; /* SCSIADDR;*/
@@ -219,9 +216,9 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
 /*  printf ("numCD=%d, end=0x%x, end_loaded=0x%x\n", num_ConfigDev, end, end_loaded);*/
 
   /* update these as soon as possible! */
-  page_size  = NBPG;
-  page_mask  = NBPG-1;
-  page_shift = PG_SHIFT;
+  PAGE_SIZE  = NBPG;
+  PAGE_MASK  = NBPG-1;
+  PAGE_SHIFT = PG_SHIFT;
 
   /* assume KVA_MIN == 0 */
   vend   = fastram_size;
