@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.72 2000/01/25 21:58:06 soren Exp $
+$NetBSD: pcmciadevs,v 1.73 2000/01/26 01:05:23 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product LEXARMEDIA COMPATFLASH	0x0100 Lexar Media CompactFlash
 
 /* Linksys corporation */
+product LINKSYS ETHERFAST	0x0230 Linksys Etherfast 10/100 Ethernet
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
