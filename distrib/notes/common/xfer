@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.1 1999/01/13 08:18:45 ross Exp $	
+.\"	$NetBSD: xfer,v 1.2 1999/03/18 19:40:49 perry Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,7 +205,7 @@ three SCSI drives, you should take care not to place the sets
 on the high numbered drives.
 .Pp
 At a bare minimum, you must upgrade the "base" binary
-distribution, and so must put the "base13" set somewhere in
+distribution, and so must put the "base" set somewhere in
 your file system.  If you wish, you can do the other sets, as
 well, but you should NOT upgrade the "etc" distribution; the
 "etc" distribution contains system configuration files that
