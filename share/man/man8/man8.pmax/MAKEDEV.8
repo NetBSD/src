@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.7 2001/06/26 02:11:59 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.8 2001/06/26 02:28:51 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,83 +99,83 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar tz#
 SCSI tapes, DEC TK50 cartridge tape, see
-.Xr t\&z 4
+.Xr \&tz 4
 . It Ar st#
 MI SCSI tape drives, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar rz#
 SCSI disks, see
-.Xr r\&z 4
+.Xr \&rz 4
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar cd#
 MI SCSI cdroms, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . It Ar sd#
 MI SCSI disks, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . El
 .It Terminal multiplexors:
 . Bl -tag -width 0123456789 -compact
 . It Ar dc#
 4 channel serial interface (keyboard, mouse, modem, printer), see
-.Xr d\&c 4
+.Xr \&dc 4
 . It Ar scc#
 82530 serial interface, see
-.Xr s\&cc 4
+.Xr \&scc 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar audio#
 Phone-quality audio on Personal DECstations, see
-.Xr a\&udio 4
+.Xr \&audio 4
 . It Ar bpf#
 Packet filter, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar ch#
 SCSI media changer, see
-.Xr c\&h 4
+.Xr \&ch 4
 . It Ar fd
 File descriptors (/dev/fd/*)
 . It Ar ipl
 IP packet filter
 . It Ar lkm
 Loadable kernel modules interface (unsupported in 1.3_ALPHA), see
-.Xr l\&km 4
+.Xr \&lkm 4
 . It Ar random
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr s\&csictl 8 ,
-.Xr s\&csi 4
+.Xr \&scsictl 8 ,
+.Xr \&scsi 4
 . It Ar ss#
 MI scsi scanners, see
-.Xr s\&s 4
+.Xr \&ss 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar uk#
 MI unknown scsi devices, see
-.Xr u\&k 4
+.Xr \&uk 4
 . El
 .It Platform-specific devices:
 . Bl -tag -width 0123456789 -compact
@@ -185,7 +185,7 @@ MI unknown scsi devices, see
 Generic framebuffer pseudo-device
 . It Ar px#
 PixelStamp Xserver access, see
-.Xr p\&x 4
+.Xr \&px 4
 . El
 .It The following names are reserved for future use:
 . Bl -tag -width 0123456789 -compact
