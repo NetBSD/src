@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.108 2002/10/05 15:24:43 grant Exp $
+# $NetBSD: mi,v 1.109 2002/10/09 14:55:53 elric Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -81,6 +81,7 @@
 ./etc/rc.d/bootconf.sh			etc-sys-rc
 ./etc/rc.d/bootparams			etc-bootserver-rc
 ./etc/rc.d/ccd				etc-sys-rc
+./etc/rc.d/cgd				etc-sys-rc
 ./etc/rc.d/cleartmp			etc-sys-rc
 ./etc/rc.d/cron				etc-cron-rc
 ./etc/rc.d/dhclient			etc-dhclient-rc
