@@ -1,7 +1,8 @@
-.\"	$NetBSD: whatis,v 1.13 2000/10/10 12:55:16 lukem Exp $
+.\"	$NetBSD: whatis,v 1.14 2000/10/14 22:27:41 lukem Exp $
 .
-This is the seventh public release of NetBSD for the Amiga and DraCo
-line of computers.
+This is the seventh major release of
+.Nx
+for the Amiga and DraCo line of computers.
 .Pp
 New port-specific features include:
 .(bullet

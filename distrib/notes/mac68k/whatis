@@ -1,34 +1,21 @@
-.\"	$NetBSD: whatis,v 1.14 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: whatis,v 1.15 2000/10/14 22:27:43 lukem Exp $
 .
 .Nx \*V
-is the fifth
-.Dq real
-release of
+is the sixth major release of
 .Nx
-for the 68k-based Macintosh.
+for the \*A-based Macintosh.
 .Pp
-For the mac68k port,
+For the \*M port,
 .Nx \*V
 brings a number of improvements:
 .(bullet
-A number of kernel changes enable support for several previously
-unsupported systems (such as the LC and Performa 470-series,
-570/580-series, and 630-series Macs).
+Serial console support on the Quadra 900/950.
 .It
-Support for 800 KB floppy drives has been added (i.e. machines that
-include the IWM or SWIM, but not the SWIM II or SWIM III)
-.It
-IBM-compatible MBR handling has been integrated to enable MS-DOS
-partition support
-.It
-The
-.Xr mac68k/adb 4
-driver has undergone a major revamp.
-.It
-A number of bugs affecting II-series systems have been fixed.
+wscons integration.
 .bullet)
+.Pp
 There is still a lot of work to be done and help is welcomed. Please jump in!
 .Nx \*V
-on mac68k is, as usual, also fully backward compatible with old
-.Nx
-mac68k binaries, so you don't need to recompile all of your local programs.
+on \*M is, as usual, also fully backward compatible with old
+.Nx*M
+binaries, so you don't need to recompile all of your local programs.

@@ -1,20 +1,25 @@
-.\"	$NetBSD: whatis,v 1.12 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: whatis,v 1.13 2000/10/14 22:27:43 lukem Exp $
 .
-As is usual between releases, the i386 port has had many improvements
+This is the eighth major release of
+.Nx
+for the \*M.
+.Pp
+As is usual between releases, the \*M port has had many improvements
 made to it - too many to detail all of them here.
 .Pp
-Numerous new drivers have been added. See the supported hardware list
-for details.
+Numerous new drivers have been added.
+See the supported hardware list for details.
 .Pp
-Some (but not all!) notable i386-specific improvements include:
+Some (but not all!) notable \*M-specific improvements include:
 .(bullet
 Migration to the ELF binary format from a.out.
 .It
 Preliminary support for MCA (MicroChannel Architecture)
 .bullet)
+.Pp
 .Nx \*V
-on i386 is, as usual, also fully backward compatible with old
-.Nx
-i386 binaries, so you don't need to recompile all your local programs
+on \*M is, as usual, also fully backward compatible with old
+.Nx*M
+binaries, so you don't need to recompile all your local programs
 provided you set the appropriate binary compatibility options in your
 kernel configuration.

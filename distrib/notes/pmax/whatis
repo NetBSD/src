@@ -1,7 +1,8 @@
-.\"	$NetBSD: whatis,v 1.8 2000/10/11 13:04:12 simonb Exp $
+.\"	$NetBSD: whatis,v 1.9 2000/10/14 22:27:44 lukem Exp $
 .
-This is the fifth public major release of NetBSD for the DECstation
-and DECsystem family of computers.
+This is the fifth major release of
+.Nx
+for the DECstation and DECsystem family of computers.
 Some pmax-specific changes from the previous major release include:
 .(bullet
 (Optional) use of the MI SCSI subsystem.
