@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.26 2004/04/08 06:20:29 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.27 2004/04/16 13:25:40 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.26 2004/04/08 06:20:29 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.27 2004/04/16 13:25:40 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -313,7 +313,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_setlen, 0, &hostname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_HEX,
 		       CTLTYPE_INT, "hostid",
 		       SYSCTL_DESCR("System host ID number"),
 		       sysctl_kern_hostid, 0, NULL, 0,
@@ -1087,7 +1087,7 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	hostid = inthostid;
+	hostid = (unsigned)inthostid;
 
 	return (0);
 }
