@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.4 2001/12/17 15:09:24 bjh21 Exp $
+# $NetBSD: ad.arm,v 1.5 2002/01/31 15:00:56 reinoud Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -50,6 +50,7 @@
 ./usr/include/arm/setjmp.h		comp-c-include
 ./usr/include/arm/signal.h		comp-c-include
 ./usr/include/arm/stdarg.h		comp-c-include
+./usr/include/arm/swi.h			comp-c-include
 ./usr/include/arm/sysarch.h		comp-c-include
 ./usr/include/arm/trap.h		comp-c-include
 ./usr/include/arm/types.h		comp-c-include
