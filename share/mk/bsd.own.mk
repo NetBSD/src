@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.116 1999/02/12 01:10:07 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.117 1999/02/12 12:38:45 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -186,6 +186,10 @@ MKLINKLIB=no
 .else
 MKLINKLIB?=yes
 .endif
+.if ${MKLINKLIB} == "no"
+MKPICINSTALL=no
+MKPROFILE=no
+.endif
 
 .if defined(NOLINT)
 MKLINT=no
@@ -197,6 +201,9 @@ MKLINT?=yes
 MKMAN=no
 .else
 MKMAN?=yes
+.endif
+.if ${MKMAN} == "no"
+MKCATPAGES=no
 .endif
 
 .if defined(NONLS)
@@ -233,6 +240,12 @@ MKPROFILE?=yes
 MKSHARE=no
 .else
 MKSHARE?=yes
+.endif
+.if ${MKSHARE} == "no"
+MKCATPAGES=no
+MKDOC=no
+MKMAN=no
+MKNLS=no
 .endif
 
 

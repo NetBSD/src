@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.148 1999/02/12 01:10:07 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.149 1999/02/12 12:38:45 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -185,7 +185,7 @@ _LIBS=lib${LIB}.a
 _LIBS=
 .endif
 
-.if ${MKPROFILE} != "no" && ${MKLINKLIB} != "no"
+.if ${MKPROFILE} != "no"
 _LIBS+=lib${LIB}_p.a
 .endif
 
@@ -287,7 +287,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 .endif
 
-.if ${MKPROFILE} != "no" && ${MKLINKLIB} != "no"
+.if ${MKPROFILE} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
@@ -300,7 +300,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
-.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no" && ${MKLINKLIB} != "no"
+.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
