@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.22 1998/12/19 23:00:18 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.22.2.1 2000/10/19 16:32:53 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.22 1998/12/19 23:00:18 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.22.2.1 2000/10/19 16:32:53 he Exp $");
 #endif /* not lint */
 
 /*
@@ -243,7 +243,7 @@ cucommon:
 	 *	internal data structures (variables)
 	 * so, fork one process for local side and one for remote.
 	 */
-	printf(cumode ? "Connected\r\n" : "\07connected\r\n");
+	printf("%s", cumode ? "Connected\r\n" : "\07connected\r\n");
 	switch (pid = fork()) {
 	default:
 		tipin();
