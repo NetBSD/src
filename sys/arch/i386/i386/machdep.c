@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.431 2001/04/14 06:49:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.432 2001/04/18 05:44:10 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1873,6 +1873,35 @@ init386(first_avail)
 			 */
 			seg_start = bim->entry[x].addr;
 			seg_end = bim->entry[x].addr + bim->entry[x].size;
+
+			/*
+			 * XXX: avoid Compatibility Holes
+			 *           PC-compatible frame buffer 0xa0000-0xbffff
+			 *           adapter ROM space          0xc0000-0xdffff
+			 *           system BIOS space          0xe0000-0xfffff
+			 */
+			if (seg_start >= 0xa0000) {
+				if (seg_end <= 0xfffff) {
+					printf("WARNING: skipping "
+					     "Compatibility Holes...\n ");
+					continue;
+				} else {
+					if (seg_start <= 0xfffff) {
+						seg_start = 0x100000;
+						seg_end = seg_start 
+						   + bim->entry[x].size;
+					}
+				}
+			} else {
+				if (seg_end >= 0xa0000 && seg_end <= 0xfffff) {
+					seg_end = 0x9ffff;
+				}
+				if (seg_end >= 0xfffff) {
+					seg_start = 0x100000;
+					seg_end = seg_start 
+						+ bim->entry[x].size;
+				}
+			}
 
 			if (seg_end > 0x100000000ULL) {
 				printf("WARNING: skipping large "
