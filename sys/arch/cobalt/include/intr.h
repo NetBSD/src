@@ -1,7 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2000/04/03 11:44:21 soda Exp $	*/
-
-#include <mips/cpuregs.h>
-#include <mips/intr.h>
+/*	$NetBSD: intr.h,v 1.5 2000/04/28 15:55:52 soren Exp $	*/
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
 #define	IPL_BIO		1	/* Disable block I/O interrupts. */
@@ -19,8 +16,17 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
+/* Soft interrupt masks. */
+#define SIR_CLOCK	31 
+#define SIR_NET		30 
+#define SIR_CLOCKMASK	((1 << SIR_CLOCK)) 
+#define SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
+#define SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK)
+
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+#include <mips/cpuregs.h>
 
 extern int		_splraise(int);
 extern int		_spllower(int);      
