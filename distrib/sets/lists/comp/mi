@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.242 2000/07/04 12:21:03 itojun Exp $
+#	$NetBSD: mi,v 1.243 2000/07/06 10:58:56 ad Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -868,6 +868,7 @@
 ./usr/include/protocols/timed.h		comp-c-include
 ./usr/include/pwd.h		comp-c-include
 ./usr/include/ranlib.h		comp-c-include
+./usr/include/rmd160.h		comp-c-include
 ./usr/include/re_comp.h		comp-c-include
 ./usr/include/readline.h		comp-c-include
 ./usr/include/regex.h		comp-c-include
