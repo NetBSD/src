@@ -2,32 +2,24 @@
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
  *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00092
- * --------------------         -----   ----------------------
- *
- * 15 Mar 93	J.T. Conklin		Added support for parens, string
- *					expressions that are numeric, and
- *					fixed division by zero.
- *					Enhanced performance and memory use.
+ * $Header: /cvsroot/src/bin/expr/expr.y,v 1.5 1993/06/05 22:25:44 cgd Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
+  
 enum valtype {
 	integer, string
 } ;
-    
+
 struct val {
 	enum valtype type;
 	union {
 		char *s;
 		int   i;
 	} u;
-};
+} ;
 
 struct val *result;
 struct val *op_or ();
@@ -96,7 +88,7 @@ int i;
 {
 	struct val *vp;
 
-	vp = malloc (sizeof (*vp));
+	vp = (struct val *) malloc (sizeof (*vp));
 	if (vp == NULL) {
 		fprintf (stderr, "expr: out of memory\n");
 		exit (2);
@@ -113,7 +105,7 @@ char *s;
 {
 	struct val *vp;
 
-	vp = malloc (sizeof (*vp));
+	vp = (struct val *) malloc (sizeof (*vp));
 	if (vp == NULL || ((vp->u.s = strdup (s)) == NULL)) {
 		fprintf (stderr, "expr: out of memory\n");
 		exit (2);
@@ -227,15 +219,15 @@ int
 is_zero_or_null (vp)
 struct val *vp;
 {
-	if (vp->type == integer) {
-		if (vp->u.i == 0)
-			return (1);
-	} else {
-		if (*vp->u.s == 0)
-			return (1);
-	}
+	/* Like most other versions of expr, this version will return
+	   false for a string value of multiple zeros.*/
 
-	return (0);
+	if (vp->type == integer) {
+		return (vp->u.i == 0);
+	} else {
+		return (*vp->u.s == 0 || strcmp (vp->u.s, "0") == 0);
+	}
+	/* NOTREACHED */
 }
 
 void
@@ -586,4 +578,12 @@ struct val *a, *b;
 	} else {
 		return (make_integer (0));
 	}
+}
+
+void
+regerror (s)
+const char *s;
+{
+	fprintf (stderr, "expr: %s\n", s);
+	exit (2);
 }
