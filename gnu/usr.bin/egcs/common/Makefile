@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/08/17 02:55:39 tv Exp $
+#	$NetBSD: Makefile,v 1.12 1998/08/17 02:57:04 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -32,7 +32,7 @@ SRCS=		${MACHINE_GNU_ARCH}.c toplev.c version.c tree.c print-tree.c \
 		insn-output.c insn-emit.c profile.c insn-attrtab.c getpwd.c \
 		convert.c dyn-string.c obstack.c
 
-.if defined(USE_HAIFA)
+.if defined(USE_EGCS_HAIFA)
 SRCS+=		haifa-sched.c
 .else
 SRCS+=		sched.c
