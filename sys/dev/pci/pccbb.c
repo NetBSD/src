@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.90 2003/06/19 10:48:58 msaitoh Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.91 2003/10/23 00:04:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90 2003/06/19 10:48:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.91 2003/10/23 00:04:03 briggs Exp $");
 
 /*
 #define CBB_DEBUG
@@ -187,7 +187,7 @@ STATIC void pccbb_pcmcia_socket_disable __P((pcmcia_chipset_handle_t));
 STATIC int pccbb_pcmcia_card_detect __P((pcmcia_chipset_handle_t pch));
 
 static void pccbb_pcmcia_do_io_map __P((struct pcic_handle *, int));
-static void pccbb_pcmcia_wait_ready __P((struct pcic_handle *));
+static int pccbb_pcmcia_wait_ready __P((struct pcic_handle *));
 static void pccbb_pcmcia_do_mem_map __P((struct pcic_handle *, int));
 static void pccbb_powerhook __P((int, void *));
 
@@ -1282,6 +1282,7 @@ pccbb_power(ct, command)
 		} else {
 			printf("%s: BAD voltage request: no 5 V card\n",
 			    sc->sc_dev.dv_xname);
+			return 0;
 		}
 		break;
 	case CARDBUS_VCC_3V:
@@ -1291,6 +1292,7 @@ pccbb_power(ct, command)
 		} else {
 			printf("%s: BAD voltage request: no 3.3 V card\n",
 			    sc->sc_dev.dv_xname);
+			return 0;
 		}
 		break;
 	case CARDBUS_VCC_0V:
@@ -2331,19 +2333,23 @@ pccbb_pcmcia_io_unmap(pch, win)
  * This function enables the card.  All information is stored in
  * the first argument, pcmcia_chipset_handle_t.
  */
-static void
+static int
 pccbb_pcmcia_wait_ready(ph)
 	struct pcic_handle *ph;
 {
+	u_char stat;
 	int i;
 
-	DPRINTF(("pccbb_pcmcia_wait_ready: status 0x%02x\n",
+	DPRINTF(("entering pccbb_pcmcia_wait_ready: status 0x%02x\n",
 	    Pcic_read(ph, PCIC_IF_STATUS)));
 
 	for (i = 0; i < 2000; i++) {
-		if (Pcic_read(ph, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY) {
-			return;
-		}
+		stat = Pcic_read(ph, PCIC_IF_STATUS);
+		if (stat & PCIC_IF_STATUS_READY)
+			return 1;
+		if ((stat & PCIC_IF_STATUS_CARDDETECT_MASK) !=
+		    PCIC_IF_STATUS_CARDDETECT_PRESENT)
+			return 0;
 		DELAY_MS(2, ph->ph_parent);
 #ifdef CBB_DEBUG
 		if ((i > 1000) && (i % 25 == 24))
@@ -2355,6 +2361,8 @@ pccbb_pcmcia_wait_ready(ph)
 	printf("pcic_wait_ready: ready never happened, status = %02x\n",
 	    Pcic_read(ph, PCIC_IF_STATUS));
 #endif
+
+	return 0;
 }
 
 /*
@@ -2418,7 +2426,15 @@ pccbb_pcmcia_socket_enable(pch)
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	power |= PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
-	pccbb_power(sc, voltage);
+
+	if (pccbb_power(sc, voltage) == 0) {
+		power &= PCIC_PWRCTL_OE;
+		Pcic_write(ph, PCIC_PWRCTL, power);
+		intr |= PCIC_INTR_RESET;
+		Pcic_write(ph, PCIC_INTR, intr);
+		pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+		return;
+	}
 
 	/* 
 	 * hold RESET at least 20 ms: the spec says only 10 us is
@@ -2445,7 +2461,11 @@ pccbb_pcmcia_socket_enable(pch)
 
 	/* wait for the chip to finish initializing */
 
-	pccbb_pcmcia_wait_ready(ph);
+	if (pccbb_pcmcia_wait_ready(ph) == 0) {
+		Pcic_write(ph, PCIC_ADDRWIN_ENABLE, 0);
+		pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+		return;
+	}
 
 	/* zero out the address windows */
 
@@ -2563,6 +2583,11 @@ pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
 #if rbus
 	rbus_tag_t rb;
 #endif
+
+	/* Check that the card is still there. */
+	if ((Pcic_read(ph, PCIC_IF_STATUS) & PCIC_IF_STATUS_CARDDETECT_MASK) !=
+		    PCIC_IF_STATUS_CARDDETECT_PRESENT)
+		return 1;
 
 	/* out of sc->memh, allocate as many pages as necessary */
 
@@ -2770,6 +2795,11 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t busaddr;
 	long card_offset;
 	int win;
+
+	/* Check that the card is still there. */
+	if ((Pcic_read(ph, PCIC_IF_STATUS) & PCIC_IF_STATUS_CARDDETECT_MASK) !=
+		    PCIC_IF_STATUS_CARDDETECT_PRESENT)
+		return 1;
 
 	for (win = 0; win < PCIC_MEM_WINS; ++win) {
 		if ((ph->memalloc & (1 << win)) == 0) {
