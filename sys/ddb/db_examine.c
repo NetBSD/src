@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.4 1994/06/29 06:31:05 cgd Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.5 1994/06/30 12:49:54 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -104,6 +104,7 @@ db_examine(addr, fmt, count)
 			break;
 		    default:
 			if (db_print_position() == 0) {
+#if 0
 			    /* If we hit a new symbol, print it */
 			    char *	name;
 			    db_expr_t	off;
@@ -113,6 +114,11 @@ db_examine(addr, fmt, count)
 				db_printf("%s:\t", name);
 			    else
 				db_printf("\t\t");
+#else
+			    /* Always print the address. */
+			    db_printsym(addr, DB_STGY_ANY);
+			    db_printf(":\t");
+#endif
 
 			    db_prev = addr;
 			}
