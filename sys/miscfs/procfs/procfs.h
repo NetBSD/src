@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.13 1995/03/29 22:08:30 briggs Exp $	*/
+/*	$NetBSD: procfs.h,v 1.14 1995/10/09 11:18:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -80,19 +80,8 @@ struct pfsnode {
 	 ((cnp)->cn_namelen == (len) && \
 	  (bcmp((s), (cnp)->cn_nameptr, (len)) == 0))
 
-/*
- * Format of a directory entry in /proc, ...
- * This must map onto struct dirent (see <dirent.h>)
- */
-#define PROCFS_NAMELEN 8
-struct pfsdent {
-	u_int32_t	d_fileno;
-	u_int16_t	d_reclen;
-	u_int8_t	d_type;
-	u_int8_t	d_namlen;
-	char		d_name[PROCFS_NAMELEN];
-};
-#define UIO_MX sizeof(struct pfsdent)
+#define UIO_MX 32
+
 #define PROCFS_FILENO(pid, type) \
 	(((type) < Pproc) ? \
 			((type) + 2) : \

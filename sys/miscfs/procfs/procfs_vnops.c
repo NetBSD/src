@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.33 1995/04/15 01:56:51 cgd Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.34 1995/10/09 11:18:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -642,7 +642,7 @@ procfs_validfile(p)
  * readdir returns directory entries from pfsnode (vp).
  *
  * the strategy here with procfs is to generate a single
- * directory entry at a time (struct pfsdent) and then
+ * directory entry at a time (struct dirent) and then
  * copy that out to userland using uiomove.  a more efficent
  * though more complex implementation, would try to minimize
  * the number of calls to uiomove().  for procfs, this is
@@ -661,32 +661,26 @@ procfs_readdir(ap)
 	} */ *ap;
 {
 	struct uio *uio = ap->a_uio;
-	struct pfsdent d;
-	struct pfsdent *dp = &d;
+	struct dirent d;
 	struct pfsnode *pfs;
-	int error;
-	int count;
+	off_t off;
 	int i;
-
-	/*
-	 * We don't allow exporting procfs mounts, and currently local
-	 * requests do not need cookies.
-	 */
-	if (ap->a_ncookies)
-		panic("procfs_readdir: not hungry");
+	int error;
+	u_long *cookies = ap->a_cookies;
+	int ncookies = ap->a_ncookies;
 
 	pfs = VTOPFS(ap->a_vp);
 
 	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
-	if (uio->uio_offset & (UIO_MX-1))
-		return (EINVAL);
-	if (uio->uio_offset < 0)
+	off = uio->uio_offset;
+	if (off & (UIO_MX - 1) || off < 0)
 		return (EINVAL);
 
 	error = 0;
-	count = 0;
-	i = uio->uio_offset / UIO_MX;
+	i = off / UIO_MX;
+	bzero((caddr_t)&d, UIO_MX);
+	d.d_reclen = UIO_MX;
 
 	switch (pfs->pfs_type) {
 	/*
@@ -707,18 +701,19 @@ procfs_readdir(ap)
 			if (pt->pt_valid && (*pt->pt_valid)(p) == 0)
 				continue;
 			
-			dp->d_reclen = UIO_MX;
-			dp->d_fileno = PROCFS_FILENO(pfs->pfs_pid, pt->pt_pfstype);
-			dp->d_namlen = pt->pt_namlen;
-			bcopy(pt->pt_name, dp->d_name, pt->pt_namlen + 1);
-			dp->d_type = pt->pt_type;
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, pt->pt_pfstype);
+			d.d_namlen = pt->pt_namlen;
+			bcopy(pt->pt_name, d.d_name, pt->pt_namlen + 1);
+			d.d_type = pt->pt_type;
 
-			if (error = uiomove((caddr_t)dp, UIO_MX, uio))
+			if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 				break;
+			if (ncookies-- > 0)
+				*cookies++ = (i + 1) * UIO_MX;
 		}
 
 	    	break;
-	    }
+	}
 
 	/*
 	 * this is for the root of the procfs filesystem
@@ -733,29 +728,28 @@ procfs_readdir(ap)
 #ifdef PROCFS_ZOMBIE
 		int doingzomb = 0;
 #endif
-		int pcnt = 0;
+		int pcnt = i;
 		volatile struct proc *p = allproc.lh_first;
 
+		if (pcnt > 3)
+			pcnt = 3;
 	again:
 		for (; p && uio->uio_resid >= UIO_MX; i++, pcnt++) {
-			bzero((char *) dp, UIO_MX);
-			dp->d_reclen = UIO_MX;
-
 			switch (i) {
 			case 0:		/* `.' */
 			case 1:		/* `..' */
-				dp->d_fileno = PROCFS_FILENO(0, Proot);
-				dp->d_namlen = i + 1;
-				bcopy("..", dp->d_name, dp->d_namlen);
-				dp->d_name[i + 1] = '\0';
-				dp->d_type = DT_DIR;
+				d.d_fileno = PROCFS_FILENO(0, Proot);
+				d.d_namlen = i + 1;
+				bcopy("..", d.d_name, d.d_namlen);
+				d.d_name[i + 1] = '\0';
+				d.d_type = DT_DIR;
 				break;
 
 			case 2:
-				dp->d_fileno = PROCFS_FILENO(0, Pcurproc);
-				dp->d_namlen = 7;
-				bcopy("curproc", dp->d_name, 8);
-				dp->d_type = DT_LNK;
+				d.d_fileno = PROCFS_FILENO(0, Pcurproc);
+				d.d_namlen = 7;
+				bcopy("curproc", d.d_name, 8);
+				d.d_type = DT_LNK;
 				break;
 
 			default:
@@ -765,16 +759,18 @@ procfs_readdir(ap)
 					if (!p)
 						goto done;
 				}
-				dp->d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
-				dp->d_namlen = sprintf(dp->d_name, "%ld",
+				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
+				d.d_namlen = sprintf(d.d_name, "%ld",
 				    (long)p->p_pid);
-				dp->d_type = DT_REG;
+				d.d_type = DT_REG;
 				p = p->p_list.le_next;
 				break;
 			}
 
-			if (error = uiomove((caddr_t)dp, UIO_MX, uio))
+			if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 				break;
+			if (ncookies-- > 0)
+				*cookies++ = (i + 1) * UIO_MX;
 		}
 	done:
 
@@ -788,15 +784,14 @@ procfs_readdir(ap)
 
 		break;
 
-	    }
+	}
 
 	default:
 		error = ENOTDIR;
 		break;
 	}
 
-	uio->uio_offset = i * UIO_MX;
-
+	uio->uio_offset = (i + 1) * UIO_MX;
 	return (error);
 }
 
