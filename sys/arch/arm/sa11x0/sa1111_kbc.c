@@ -1,8 +1,8 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.5 2004/04/06 01:16:34 bsh Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.6 2004/04/06 01:32:17 bsh Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
- * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
+ * Copyright (c) 2002, 2004  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.5 2004/04/06 01:16:34 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.6 2004/04/06 01:32:17 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,15 @@ struct sackbc_softc {
 
 	void	*ih_rx;			/* receive interrupt */
 	int	intr;			/* interrupt number */
+	int	slot;		/* KBD_SLOT or AUX_SLOT */
 
 	int	polling;	/* don't process data in interrupt handler */
 	int	poll_stat;	/* data read from inr handler if polling */
 	int	poll_data;	/* status read from intr handler if polling */
 
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 	pckbport_tag_t pt;
 };
 
@@ -167,12 +171,16 @@ sackbc_rxint(void *cookie)
 	if (stat & KBDSTAT_RXF) {
 		code = bus_space_read_4(sc->iot, sc->ioh, SACCKBD_DATA);
 
+#if NRND > 0
+		rnd_add_uint32(&sc->rnd_source, (stat<<8)|data);
+#endif
+
 		if (sc->polling) {
 			sc->poll_data = code;
 			sc->poll_stat = stat;
 		}
 		else
-			pckbportintr(sc->pt, PCKBPORT_KBD_SLOT, code);
+			pckbportintr(sc->pt, sc->slot, code);
 		return 1;
 	}
 
@@ -214,7 +222,7 @@ sackbc_attach(struct device *parent, struct device *self, void *aux)
 	struct sa1111_attach_args *aa = (struct sa1111_attach_args *)aux;
 	struct device *child;
 	uint32_t tmp, clock_bit;
-	int intr;
+	int intr, slot;
 
 	switch (aa->sa_addr) {
 	case SACC_KBD0: clock_bit = (1<<6); intr = 21; break;
@@ -260,13 +268,23 @@ sackbc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->pt = pckbport_attach(sc, &sackbc_ops);
 
-	child = pckbport_attach_slot(self, sc->pt, PCKBPORT_KBD_SLOT);
+	/*
+	 * Although there is no such thing as SLOT for SA1111 kbd
+	 * controller, pckbd and pms drivers require it.
+	 */
+	for (slot=PCKBPORT_KBD_SLOT; slot <= PCKBPORT_AUX_SLOT; ++slot) {
+		child = pckbport_attach_slot(self, sc->pt, slot);
 
-#if 0 && NRND > 0			/* XXX: not yet */
-	    if (child != NULL && (t->t_slotdata[slot] != NULL))
-		    rnd_attach_source(&t->t_slotdata[slot]->rnd_source,
-			child->dv_xname, RND_TYPE_TTY, 0);
+		if (child == NULL)
+			continue;
+		sc->slot = slot;
+#if NRND > 0
+		rnd_attach_source(&sc->rnd_source, child->dv_xname,
+		    RND_TYPE_TTY, 0);
 #endif
+		/* only one of KBD_SLOT or AUX_SLOT is used. */
+		break;			
+	}
 }
 
 
@@ -386,7 +404,7 @@ sackbc_set_poll(void *self, pckbport_slot_t slot, int on)
 			 * further interrupts.
 			 */
 			sackbc_rxint(sc);
-			sackbc_intr_establish(sc, PCKBPORT_KBD_SLOT);
+			sackbc_intr_establish(sc, sc->slot);
 		}
 	}
 	splx(s);
