@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1 1998/01/27 15:13:11 sakamoto Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.2 1998/02/23 03:23:05 mycroft Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -38,39 +38,40 @@
 #include <ddb/db_variables.h>
 
 struct db_variable db_regs[] = {
-	{ "r1",  (long *)&ddb_regs.r1,	FCN_NULL },
-	{ "r2",  (long *)&ddb_regs.r2,	FCN_NULL },
-	{ "r3",  (long *)&ddb_regs.r3,	FCN_NULL },
-	{ "r4",  (long *)&ddb_regs.r4,	FCN_NULL },
-	{ "r5",  (long *)&ddb_regs.r5,	FCN_NULL },
-	{ "r6",  (long *)&ddb_regs.r6,	FCN_NULL },
-	{ "r7",  (long *)&ddb_regs.r7,	FCN_NULL },
-	{ "r8",  (long *)&ddb_regs.r8,	FCN_NULL },
-	{ "r9",  (long *)&ddb_regs.r9,	FCN_NULL },
-	{ "r10", (long *)&ddb_regs.r10,	FCN_NULL },
-	{ "r11", (long *)&ddb_regs.r11,	FCN_NULL },
-	{ "r12", (long *)&ddb_regs.r12,	FCN_NULL },
-	{ "r13", (long *)&ddb_regs.r13,	FCN_NULL },
-	{ "r14", (long *)&ddb_regs.r13,	FCN_NULL },
-	{ "r15", (long *)&ddb_regs.r13,	FCN_NULL },
-	{ "r16", (long *)&ddb_regs.r13,	FCN_NULL },
-	{ "r17", (long *)&ddb_regs.r17,	FCN_NULL },
-	{ "r18", (long *)&ddb_regs.r18,	FCN_NULL },
-	{ "r19", (long *)&ddb_regs.r19,	FCN_NULL },
-	{ "r20", (long *)&ddb_regs.r20,	FCN_NULL },
-	{ "r21", (long *)&ddb_regs.r21,	FCN_NULL },
-	{ "r22", (long *)&ddb_regs.r22,	FCN_NULL },
-	{ "r23", (long *)&ddb_regs.r23,	FCN_NULL },
-	{ "r24", (long *)&ddb_regs.r24,	FCN_NULL },
-	{ "r25", (long *)&ddb_regs.r25,	FCN_NULL },
-	{ "r26", (long *)&ddb_regs.r26,	FCN_NULL },
-	{ "r27", (long *)&ddb_regs.r27,	FCN_NULL },
-	{ "r28", (long *)&ddb_regs.r28,	FCN_NULL },
-	{ "r29", (long *)&ddb_regs.r29,	FCN_NULL },
-	{ "r30", (long *)&ddb_regs.r30,	FCN_NULL },
-	{ "r31", (long *)&ddb_regs.r31,	FCN_NULL },
-	{ "r32", (long *)&ddb_regs.r32,	FCN_NULL },
-	{ "iar", (long *)&ddb_regs.iar,	FCN_NULL },
+	{ "r0",  (long *)&ddb_regs.r[0],  FCN_NULL },
+	{ "r1",  (long *)&ddb_regs.r[1],  FCN_NULL },
+	{ "r2",  (long *)&ddb_regs.r[2],  FCN_NULL },
+	{ "r3",  (long *)&ddb_regs.r[3],  FCN_NULL },
+	{ "r4",  (long *)&ddb_regs.r[4],  FCN_NULL },
+	{ "r5",  (long *)&ddb_regs.r[5],  FCN_NULL },
+	{ "r6",  (long *)&ddb_regs.r[6],  FCN_NULL },
+	{ "r7",  (long *)&ddb_regs.r[7],  FCN_NULL },
+	{ "r8",  (long *)&ddb_regs.r[8],  FCN_NULL },
+	{ "r9",  (long *)&ddb_regs.r[9],  FCN_NULL },
+	{ "r10", (long *)&ddb_regs.r[10], FCN_NULL },
+	{ "r11", (long *)&ddb_regs.r[11], FCN_NULL },
+	{ "r12", (long *)&ddb_regs.r[12], FCN_NULL },
+	{ "r13", (long *)&ddb_regs.r[13], FCN_NULL },
+	{ "r14", (long *)&ddb_regs.r[14], FCN_NULL },
+	{ "r15", (long *)&ddb_regs.r[15], FCN_NULL },
+	{ "r16", (long *)&ddb_regs.r[16], FCN_NULL },
+	{ "r17", (long *)&ddb_regs.r[17], FCN_NULL },
+	{ "r18", (long *)&ddb_regs.r[18], FCN_NULL },
+	{ "r19", (long *)&ddb_regs.r[19], FCN_NULL },
+	{ "r20", (long *)&ddb_regs.r[20], FCN_NULL },
+	{ "r21", (long *)&ddb_regs.r[21], FCN_NULL },
+	{ "r22", (long *)&ddb_regs.r[22], FCN_NULL },
+	{ "r23", (long *)&ddb_regs.r[23], FCN_NULL },
+	{ "r24", (long *)&ddb_regs.r[24], FCN_NULL },
+	{ "r25", (long *)&ddb_regs.r[25], FCN_NULL },
+	{ "r26", (long *)&ddb_regs.r[26], FCN_NULL },
+	{ "r27", (long *)&ddb_regs.r[27], FCN_NULL },
+	{ "r28", (long *)&ddb_regs.r[28], FCN_NULL },
+	{ "r29", (long *)&ddb_regs.r[29], FCN_NULL },
+	{ "r30", (long *)&ddb_regs.r[30], FCN_NULL },
+	{ "r31", (long *)&ddb_regs.r[31], FCN_NULL },
+	{ "iar", (long *)&ddb_regs.iar,   FCN_NULL },
+	{ "msr", (long *)&ddb_regs.msr,   FCN_NULL },
 };
 struct db_variable *db_eregs = db_regs + sizeof (db_regs)/sizeof (db_regs[0]);
 
@@ -108,7 +109,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	if (count == -1)
 		count = 65535;
 
-	frame = (db_addr_t)ddb_regs.r1;
+	frame = (db_addr_t)ddb_regs.r[1];
 	while ((frame = *(db_addr_t *)frame) && count--) {
 		lr = *(db_addr_t *)(frame + 4) - 4;
 		if (lr & 3) {
