@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.8 2002/11/15 14:32:33 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.9 2003/01/21 18:40:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ protected int		hist_init(EditLine *);
 protected void		hist_end(EditLine *);
 protected el_action_t	hist_get(EditLine *);
 protected int		hist_set(EditLine *, hist_fun_t, ptr_t);
-protected int		hist_list(EditLine *, int, const char **);
+protected int		hist_command(EditLine *, int, const char **);
 protected int		hist_enlargebuf(EditLine *, size_t, size_t);
 
 #endif /* _h_el_hist */

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.15 2002/03/18 16:00:56 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.16 2003/01/21 18:40:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.15 2002/03/18 16:00:56 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.16 2003/01/21 18:40:24 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,7 +69,7 @@ private const struct {
 	{ "bind",	map_bind	},
 	{ "echotc",	term_echotc	},
 	{ "edit",	el_editmode	},
-	{ "history",	hist_list	},
+	{ "history",	hist_command	},
 	{ "telltc",	term_telltc	},
 	{ "settc",	term_settc	},
 	{ "setty",	tty_stty	},
