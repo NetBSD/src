@@ -33,7 +33,7 @@
  *
  *	from: @(#)uba.c	7.10 (Berkeley) 12/16/90
  *      also from: @(#)autoconf.c  7.20 (Berkeley) 5/9/91
- *	$Id: uba.c,v 1.1 1994/08/02 20:21:22 ragge Exp $
+ *	$Id: uba.c,v 1.2 1994/10/08 15:46:15 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -603,25 +603,32 @@ ubasetup(int uban,struct buf *bp,int flags) {
 		temp |= UBAMR_BO;
 	if ((bp->b_flags & B_PHYS) == 0)
 		pte = kvtopte(bp->b_un.b_addr);
-/*	else if (bp->b_flags & B_PAGET)
-		pte = &Usrptmap[btokmx((struct pte *)bp->b_un.b_addr)]; */
-	else {
-		printf("bp->b_flags: %x\n",bp->b_flags);
-		printf("bp->b_un.b_addr: %x\n",bp->b_un.b_addr);
-		printf("bp->b_proc: %x\n",bp->b_proc);
-		printf("stopp.\n");
+	else if (bp->b_flags & B_PAGET) {
+		printf("B_PAGET\n");
 		asm("halt");
-		rp = bp->b_flags&B_DIRTY ? &pageproc[2] : bp->b_proc;
-		v = vax_btop(bp->b_un.b_addr);
-/*		if (bp->b_flags & B_UAREA)
-			pte = &rp->p_addr[v];
-		else
-			pte = vtopte(rp, v);
-*/
+/*		pte = &Usrptmap[btokmx((struct pte *)bp->b_un.b_addr)]; */
+	} else {
+		if( bp->b_flags&B_DIRTY){
+			rp=&pageproc[2];
+			printf("B_DIRTY\n");
+			asm("halt");
+		} else {
+			rp =bp->b_proc;
+		}
+		v = vax_btop(PxTOP0((u_int)bp->b_un.b_addr));
+		if (bp->b_flags & B_UAREA){
+			printf("B_UAREA\n");
+			asm("halt");
+/*			pte = &rp->p_addr[v]; */
+		} else {
+/*
+ * It may be better to use pmap_extract() here somewhere,
+ * but so far we do it "the hard way" :)
+ */
+			pte=&rp->p_vmspace->vm_pmap.pm_ptab[v];
+		}
 	}
 	io = &uh->uh_mr[reg];
-/*	printf("pte: %x\n",pte);
-	printf("npf: %x, reg: %x, io: %x\n",npf,reg,io); */
 	while (--npf > 0) {
 		pfnum = pte->pg_pfn;
 		if (pfnum == 0)
