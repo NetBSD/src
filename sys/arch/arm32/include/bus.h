@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 1998/06/27 02:16:23 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 1998/06/28 03:22:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -646,6 +646,15 @@ typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
  */
 
 struct arm32_bus_dma_tag {
+	/*
+	 * DMA range for this tag.  If the page doesn't fall within
+	 * one of these ranges, an error is returned.  The caller
+	 * may then decide what to do with the transfer.  If the
+	 * range pointer is NULL, it is ignored.
+	 */
+	bus_dma_segment_t *_ranges;
+	int _nranges;
+
 	/*
 	 * DMA mapping methods.
 	 */
