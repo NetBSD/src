@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.13 1995/10/05 00:33:23 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.14 1995/10/08 01:39:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,77 +149,29 @@ bwtwoattach(parent, self, args)
 
 	sc->sc_fb.fb_driver = &bwtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2BW;
+
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
-		sc->sc_fb.fb_type.fb_width = 1152;
-		sc->sc_fb.fb_type.fb_height = 900;
-		sc->sc_fb.fb_linebytes = 144;
 		nam = "bwtwo";
-
-#if defined(SUN4)
-		if (cputyp==CPU_SUN4) {
-			struct eeprom *eep = (struct eeprom *)eeprom_va;
-			if (eep != NULL) {
-				switch (eep->eeScreenSize) {
-				case EE_SCR_1152X900:
-					/* Handled above. */
-					break;
-
-				case EE_SCR_1024X1024:
-					sc->sc_fb.fb_type.fb_width = 1024;
-					sc->sc_fb.fb_type.fb_height = 1024;
-					sc->sc_fb.fb_linebytes = 128;
-					break;
-
-				case EE_SCR_1600X1280:
-					sc->sc_fb.fb_type.fb_width = 1600;
-					sc->sc_fb.fb_type.fb_height = 1280;
-					sc->sc_fb.fb_linebytes = 200;
-					break;
-
-				case EE_SCR_1440X1440:
-					sc->sc_fb.fb_type.fb_width = 1440;
-					sc->sc_fb.fb_type.fb_height = 1440;
-					sc->sc_fb.fb_linebytes = 180;
-					break;
-
-				default:
-					/*
-					 * XXX: Do nothing, I guess.
-					 * Should we print a warning about
-					 * an unknown value? --thorpej
-					 */
-					break;
-				}
-			}
-		}
-#endif
-#if defined(SUN4M)
-		if (cputyp==CPU_SUN4M) {
-			/* XXX: need code to find 4/600 vme screen size */
-		}
-#endif
-
 		break;
 
 	case BUS_SBUS:
-		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
-		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
-		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 144);
+#if defined(SUN4C) || defined(SUN4M)
 		nam = getpropstring(node, "model");
+#endif
 		break;
 	}
 
-	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
+
 	sc->sc_fb.fb_type.fb_depth = 1;
+	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
+	    1152, 900, node, ca->ca_bustype);
+
+	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
 	sc->sc_fb.fb_type.fb_cmsize = 0;
 	sc->sc_fb.fb_type.fb_size = ramsize;
 	printf(": %s, %d x %d", nam,

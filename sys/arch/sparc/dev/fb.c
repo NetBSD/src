@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.10 1995/10/05 13:16:57 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.11 1995/10/08 01:39:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,8 +54,12 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
+#include <machine/autoconf.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#if defined(SUN4)
+#include <machine/eeprom.h>
+#endif
 
 static struct fbdevice *devfb;
 
@@ -122,8 +126,92 @@ fbmmap(dev, off, prot)
 	return (map(dev, off, prot));
 }
 
+void
+fb_setsize(fb, depth, def_width, def_height, node, bustype)
+	struct fbdevice *fb;
+	int depth, def_width, def_height, node, bustype;
+{
+
+	/*
+	 * The defaults below match my screen, but are not guaranteed
+	 * to be correct as defaults go...
+	 */
+	switch (bustype) {
+	case BUS_VME16:
+	case BUS_VME32:
+	case BUS_OBIO:
+		/* Set up some defaults. */
+		fb->fb_type.fb_width = def_width;
+		fb->fb_type.fb_height = def_height;
+
+		/*
+		 * This is not particularly useful on Sun 4 VME framebuffers.
+		 * The EEPROM only contains info about the built-in.
+		 */
+		if (cputyp == CPU_SUN4 && (bustype == BUS_VME16 ||
+		    bustype == BUS_VME32))
+			goto donesize;
+
+#if defined(SUN4)
+		if (cputyp==CPU_SUN4) {
+			struct eeprom *eep = (struct eeprom *)eeprom_va;
+			if (eep != NULL) {
+				switch (eep->eeScreenSize) {
+				case EE_SCR_1152X900:
+					fb->fb_type.fb_width = 1152;
+					fb->fb_type.fb_height = 900;
+					break;
+
+				case EE_SCR_1024X1024:
+					fb->fb_type.fb_width = 1024;
+					fb->fb_type.fb_height = 1024;
+					break;
+
+				case EE_SCR_1600X1280:
+					fb->fb_type.fb_width = 1600;
+					fb->fb_type.fb_height = 1280;
+					break;
+
+				case EE_SCR_1440X1440:
+					fb->fb_type.fb_width = 1440;
+					fb->fb_type.fb_height = 1440;
+					break;
+
+				default:
+					/*
+					 * XXX: Do nothing, I guess.
+					 * Should we print a warning about
+					 * an unknown value? --thorpej
+					 */
+					break;
+				}
+			}
+		}
+#endif /* SUN4 */
+#if defined(SUN4M)
+		if (cputyp==CPU_SUN4M) {
+			/* XXX: need code to find 4/600 vme screen size */
+		}
+#endif /* SUN4M */
+
+ donesize:
+		fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
+		break;
+
+	case BUS_SBUS:
+		fb->fb_type.fb_width = getpropint(node, "width", 1152);
+		fb->fb_type.fb_height = getpropint(node, "height", 900);
+		fb->fb_linebytes = getpropint(node, "linebytes",
+		    (fb->fb_type.fb_width * depth) / 8);
+		break;
+
+	default:
+		panic("fb_setsize: inappropriate bustype");
+		/* NOTREACHED */
+	}
+}
+
 #ifdef RASTERCONSOLE
-#include <machine/autoconf.h>
 #include <machine/kbd.h>
 
 extern int (*v_putc) __P((int));
@@ -171,18 +259,30 @@ fbrcons_init(fb)
 
 #if defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT)
 	rc->rc_maxcol = rc->rc_width / rc->rc_font->width;
-	rc->rc_maxrow = rc->rc_height / rc->rc_font->height;
+	rc->rc_maxrow = rc->rc_height / rc->rc_font->height; 
 #else
+#if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
-		rc->rc_maxcol = 80;
-		rc->rc_maxrow = 34;
-	} else {
+		struct eeprom *eep = (struct eeprom *)eeprom_va;
+
+		if (eep == NULL) {
+			rc->rc_maxcol = 80;
+			rc->rc_maxrow = 34;
+		} else {
+			rc->rc_maxcol = eep->eeTtyCols;
+			rc->rc_maxrow = eep->eeTtyRows;
+		}
+	}
+#endif /* SUN4 */
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp != CPU_SUN4) {
 		rc->rc_maxcol =
 		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 		rc->rc_maxrow =
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
-#endif
+#endif /* SUN4C || SUN4M */
+#endif /* RASTERCONS_FULLSCREEN || RASTERCONS_SMALLFONT */
 
 #if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
 	/* Determine addresses of prom emulator row and column */

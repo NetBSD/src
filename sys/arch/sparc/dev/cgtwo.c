@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.4 1995/10/04 23:35:16 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.5 1995/10/08 01:39:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,72 +163,23 @@ cgtwoattach(parent, self, args)
 
 	sc->sc_fb.fb_driver = &cgtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2COLOR;
+
 	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
-		sc->sc_fb.fb_type.fb_width = 1152;
-		sc->sc_fb.fb_type.fb_height = 900;
-		sc->sc_fb.fb_linebytes = 1152;
 		nam = "cgtwo";
-
-#if defined(SUN4)
-		if (cputyp==CPU_SUN4) {
-			struct eeprom *eep = (struct eeprom *)eeprom_va;
-			if (eep != NULL) {
-				switch (eep->eeScreenSize) {
-				case EE_SCR_1152X900:
-					/* Handled above. */
-					break;
-
-				case EE_SCR_1024X1024:
-					sc->sc_fb.fb_type.fb_width = 1024;
-					sc->sc_fb.fb_type.fb_height = 1024;
-					sc->sc_fb.fb_linebytes = 128;
-					break;
-
-				case EE_SCR_1600X1280:
-					sc->sc_fb.fb_type.fb_width = 1600;
-					sc->sc_fb.fb_type.fb_height = 1280;
-					sc->sc_fb.fb_linebytes = 200;
-					break;
-
-				case EE_SCR_1440X1440:
-					sc->sc_fb.fb_type.fb_width = 1440;
-					sc->sc_fb.fb_type.fb_height = 1440;
-					sc->sc_fb.fb_linebytes = 180;
-					break;
-
-				default:
-					/*
-					 * XXX: Do nothing, I guess.
-					 * Should we print a warning about
-					 * an unknown value? --thorpej
-					 */
-					break;
-				}
-			}
-		}
-#endif
 		break;
-#if 0
-	case BUS_SBUS:
-		node = ca->ca_ra.ra_node;
-		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
-		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
-		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
-		nam = getpropstring(node, "model");
-		break;
-#endif
+
+	default:
+		panic("cgtwoattach: impossible bustype");
+		/* NOTREACHED */
 	}
 
 	sc->sc_fb.fb_type.fb_depth = 8;
+	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
+	    1152, 900, node, ca->ca_bustype);
+
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
 	printf(": %s, %d x %d", nam,
