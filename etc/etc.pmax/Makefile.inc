@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/02/09 09:27:20 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/05/02 15:09:47 lukem Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -7,8 +7,8 @@ KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL RAMDISK
 
-# Add any extra release directories to be made
-INSTALLATION_DIRS+=installation/diskimage installation/netboot
+INSTALLATION_DIRS+=	installation/diskimage	\
+			installation/netboot
 
 # location and name of the stripped down NFS install kernel
 NFSCONF=		INSTALL
