@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.1 2001/08/27 08:21:21 haya Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.2 2001/09/13 14:00:52 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -114,16 +114,14 @@
 int ali1543_getclink (pciintr_icu_handle_t, int, int *);
 int ali1543_get_intr (pciintr_icu_handle_t, int, int *);
 int ali1543_set_intr (pciintr_icu_handle_t, int, int);
-int ali1543_get_trigger (pciintr_icu_handle_t, int, int *);
-int ali1543_set_trigger (pciintr_icu_handle_t, int, int);
 
 
 const struct pciintr_icu ali1543_icu = {
 	ali1543_getclink,
 	ali1543_get_intr,
 	ali1543_set_intr,
-	ali1543_get_trigger,
-	ali1543_set_trigger,
+	piix_get_trigger,
+	piix_set_trigger,
 };
 
 
@@ -144,7 +142,6 @@ const static int ali1543_intr_shuffle_set[16] = {
 #define ALI1543_LEGAL_IRQ(irq)		((1 << (irq)) & ALI1543_IRQ_MASK)
 
 #define ALI1543_INTR_CFG_REG		0x48
-#define ALI1543_INTR_TRIG_REG		0x4c
 
 #define ALI1543_INTR_PIRQA_SHIFT	0
 #define ALI1543_INTR_PIRQA_MASK		0x0000000f
@@ -161,19 +158,6 @@ const static int ali1543_intr_shuffle_set[16] = {
 #define ALI1543_PIRQ(reg, clink)					\
 	ali1543_intr_shuffle_get[ALI1543_INTR_PIRQ_IRQ((reg), (clink))]
 
-#define ALI1543_INTR_TRIG_MASK		0x000000ff
-#define ALI1543_INTR_TRIG_LEVEL		0
-#define ALI1543_INTR_TRIG_EDGE		1
-#define ALI1543_INTR_TRIG_GET(reg, link)				\
-	(((reg) >> (link)) & 0x01)
-#define ALI1543_INTR_TRIG_SET(reg, link, val)				\
-	do {								\
-		(reg) &= ~(1 << (link));				\
-		(reg) |= (((val) & 0x01) << (link));			\
-	} while (/* CONSTCOND */0)
-		
-
-
 
 int
 ali1543_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
@@ -189,9 +173,6 @@ ali1543_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 	return (1);
 }
 
-
-
-
 int
 ali1543_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
@@ -203,9 +184,6 @@ ali1543_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 
 	return (1);
 }
-
-
-
 
 int
 ali1543_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
@@ -228,9 +206,6 @@ ali1543_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 	return (0);
 }
 
-
-
-
 int
 ali1543_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
@@ -248,80 +223,6 @@ ali1543_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 	reg |= (ali1543_intr_shuffle_set[irq] << shift);
 	pci_conf_write(ph->ph_pc, ph->ph_tag, ALI1543_INTR_CFG_REG, reg);
 	if (ali1543_get_intr(v, clink, &val) != 0 || val != irq)
-		return (1);
-
-	return (0);
-}
-
-
-
-int
-ali1543_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
-{
-	struct piix_handle *ph = v;
-	int i, error, check_consistency, pciirq, pcitrigger = IST_NONE;
-	pcireg_t reg;
-
-	if (ALI1543_LEGAL_IRQ(irq) == 0) {
-		return 1;
-	}
-
-	check_consistency = 0;
-	for (i = 0; i <= 7; i++) {
-		ali1543_get_intr(v, i, &pciirq);
-		if (pciirq == irq) {
-			reg = pci_conf_read(ph->ph_pc, ph->ph_tag,
-			    ALI1543_INTR_TRIG_REG);
-			if (ALI1543_INTR_TRIG_GET(reg, i) == ALI1543_INTR_TRIG_EDGE)
-				pcitrigger = IST_EDGE;
-			else
-				pcitrigger = IST_LEVEL;
-			check_consistency = 1;
-			break;
-		}
-	}
-
-	error = piix_get_trigger(v, irq, triggerp);
-	if (error == 0 && check_consistency && pcitrigger != *triggerp)
-		return (1);
-	return (error);
-}
-
-
-
-int
-ali1543_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
-{
-	struct piix_handle *ph = v;
-	int i, pciirq, testtrig;
-	pcireg_t reg;
-
-	if (ALI1543_LEGAL_IRQ(irq) == 0) {
-		return 1;
-	}
-
-	for (i = 0; i <= 7; i++) {
-		ali1543_get_intr(v, i, &pciirq);
-		if (pciirq == irq) {
-			reg = pci_conf_read(ph->ph_pc, ph->ph_tag,
-			    ALI1543_INTR_TRIG_REG);
-			if (trigger == IST_LEVEL) {
-				ALI1543_INTR_TRIG_SET(reg, i,
-				    ALI1543_INTR_TRIG_LEVEL);
-			} else {
-				ALI1543_INTR_TRIG_SET(reg, i,
-				    ALI1543_INTR_TRIG_EDGE);
-			}
-
-			pci_conf_write(ph->ph_pc, ph->ph_tag,
-			    ALI1543_INTR_TRIG_REG, reg);
-			break;
-		}
-	}
-
-	if (piix_set_trigger(v, irq, trigger) != 0 ||
-	    ali1543_get_trigger(v, irq, &testtrig) != 0 ||
-	    testtrig != trigger)
 		return (1);
 
 	return (0);
