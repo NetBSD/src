@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2002/06/17 05:14:11 lukem Exp $
+# $NetBSD: GENERIC,v 1.26 2002/07/22 15:25:12 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -64,6 +64,9 @@ options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Compatibility options
+#options 	BSDDISKLABEL_EI	# endian independent disklabel support
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
