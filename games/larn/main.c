@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1995/04/24 12:24:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/05/21 23:19:20 mrg Exp $";
 #endif /* not lint */
 
 /*	main.c		*/
@@ -48,6 +48,7 @@ main(argc,argv)
 	char *ptr=0,*ttype;
 	struct passwd *pwe;
 
+	setuid(getuid());	/* give up "games" if we have it */
 /*
  *	first task is to identify the player
  */
