@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.30 2003/09/07 22:11:23 mycroft Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.31 2003/09/08 01:27:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.30 2003/09/07 22:11:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.31 2003/09/08 01:27:08 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -63,7 +63,7 @@ void	cd_scsibus_attach __P((struct device *, struct device *, void *));
 CFATTACH_DECL(cd_scsibus, sizeof(struct cd_softc),
     cd_scsibus_match, cd_scsibus_attach, cddetach, cdactivate);
 
-struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
+const struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "",         "",                 ""},
 	{T_WORM, T_REMOV,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.49 2003/06/29 22:30:44 fvdl Exp $	*/
+/*	$NetBSD: ss.c,v 1.50 2003/09/08 01:27:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.49 2003/06/29 22:30:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.50 2003/09/08 01:27:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ const struct scsipi_periphsw ss_switch = {
 	NULL,
 };
 
-struct scsipi_inquiry_pattern ss_patterns[] = {
+const struct scsipi_inquiry_pattern ss_patterns[] = {
 	{T_SCANNER, T_FIXED,
 	 "",         "",                 ""},
 	{T_SCANNER, T_REMOV,

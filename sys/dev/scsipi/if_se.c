@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.44 2002/10/23 09:13:47 jdolecek Exp $	*/
+/*	$NetBSD: if_se.c,v 1.45 2003/09/08 01:27:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.44 2002/10/23 09:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.45 2003/09/08 01:27:09 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -263,7 +263,7 @@ const struct scsipi_periphsw se_switch = {
 	sedone,			/* deal with stats at interrupt time */
 };
 
-struct scsipi_inquiry_pattern se_patterns[] = {
+const struct scsipi_inquiry_pattern se_patterns[] = {
 	{T_PROCESSOR, T_FIXED,
 	 "CABLETRN",         "EA412",                 ""},
 	{T_PROCESSOR, T_FIXED,

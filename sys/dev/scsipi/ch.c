@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.57 2003/06/29 22:30:38 fvdl Exp $	*/
+/*	$NetBSD: ch.c,v 1.58 2003/09/08 01:27:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57 2003/06/29 22:30:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.58 2003/09/08 01:27:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ struct chquirk {
 	int	cq_settledelay;	/* settle delay, in seconds */
 };
 
-struct chquirk chquirks[] = {
+const struct chquirk chquirks[] = {
 	{{T_CHANGER, T_REMOV,
 	  "SPECTRA",	"9000",		"0200"},
 	 75},
