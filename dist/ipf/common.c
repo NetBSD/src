@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.2 2000/05/11 19:49:13 veego Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.3 2001/03/26 03:52:19 mike Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -54,8 +54,9 @@ extern	int	use_inet6;
 
 
 char	*proto = NULL;
-char	flagset[] = "FSRPAU";
-u_char	flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH, TH_ACK, TH_URG };
+char	flagset[] = "FSRPAUEC";
+u_char	flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH, TH_ACK, TH_URG,
+		    TH_ECN, TH_CWR };
 
 #ifdef	USE_INET6
 void fill6bits __P((int, u_32_t *));
@@ -276,7 +277,7 @@ int     linenum;
 		return 0;
 	if (!strcasecmp(**seg, "port") && *(*seg + 1) && *(*seg + 2)) {
 		(*seg)++;
-		if (isdigit(***seg) && *(*seg + 2)) {
+		if (isalnum(***seg) && *(*seg + 2)) {
 			if (portnum(**seg, pp, linenum) == 0)
 				return -1;
 			(*seg)++;
@@ -411,8 +412,12 @@ int    linenum;
 	if (s && *s == '0')
 		tcpfm = strtol(s, NULL, 0);
 
-	if (!tcpfm)
-		tcpfm = 0xff;
+	if (!tcpfm) {
+		if (tcpf == TH_SYN)
+			tcpfm = 0xff & ~(TH_ECN|TH_CWR);
+		else
+			tcpfm = 0xff & ~(TH_ECN);
+	}
 	*mask = tcpfm;
 	return tcpf;
 }
