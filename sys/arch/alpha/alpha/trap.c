@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.64 2000/12/13 00:38:20 mycroft Exp $ */
+/* $NetBSD: trap.c,v 1.65 2000/12/13 03:16:37 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -95,14 +95,12 @@
  */
 
 #include "opt_fix_unaligned_vax_fp.h"
-#include "opt_ktrace.h"
 #include "opt_compat_osf1.h"
 #include "opt_ddb.h"
-#include "opt_syscall_debug.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2000/12/13 00:38:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2000/12/13 03:16:37 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,9 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2000/12/13 00:38:20 mycroft Exp $");
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/buf.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -124,10 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2000/12/13 00:38:20 mycroft Exp $");
 #include <machine/db_machdep.h>
 #endif
 #include <alpha/alpha/db_instruction.h>		/* for handle_opdec() */
-
-#ifdef COMPAT_OSF1
-#include <compat/osf1/osf1_syscall.h>
-#endif
 
 void		userret __P((struct proc *));
 
@@ -612,171 +603,6 @@ dopanic:
 #endif
 
 	panic("trap");
-}
-
-/*
- * Process a system call.
- *
- * System calls are strange beasts.  They are passed the syscall number
- * in v0, and the arguments in the registers (as normal).  They return
- * an error flag in a3 (if a3 != 0 on return, the syscall had an error),
- * and the return value (if any) in v0.
- *
- * The assembly stub takes care of moving the call number into a register
- * we can get to, and moves all of the argument registers into their places
- * in the trap frame.  On return, it restores the callee-saved registers,
- * a3, and v0 from the frame before returning to the user process.
- */
-void
-syscall(code, framep)
-	u_int64_t code;
-	struct trapframe *framep;
-{
-	const struct sysent *callp;
-	struct proc *p;
-	int error, numsys;
-	u_int64_t rval[2];
-	u_int64_t args[10];					/* XXX */
-	u_int hidden, nargs;
-#ifdef COMPAT_OSF1
-	extern struct emul emul_osf1;
-#endif
-
-	p = curproc;
-
-	KERNEL_PROC_LOCK(p);
-
-	uvmexp.syscalls++;
-	p->p_md.md_tf = framep;
-
-	callp = p->p_emul->e_sysent;
-	numsys = p->p_emul->e_nsysent;
-
-#ifdef COMPAT_OSF1
-	if (p->p_emul == &emul_osf1) 
-		switch (code) {
-		case OSF1_SYS_syscall:
-			/* OSF/1 syscall() */
-			code = framep->tf_regs[FRAME_A0];
-			hidden = 1;
-			break;
-		default:
-			hidden = 0;
-		}
-	else
-#endif
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		/*
-		 * syscall() and __syscall() are handled the same on
-		 * the alpha, as everything is 64-bit aligned, anyway.
-		 */
-		code = framep->tf_regs[FRAME_A0];
-		hidden = 1;
-		break;
-	default:
-		hidden = 0;
-	}
-
-	if (code < numsys)
-		callp += code;
-	else
-		callp += p->p_emul->e_nosys;
-
-	nargs = callp->sy_narg + hidden;
-	switch (nargs) {
-	default:
-		if (nargs > 10)		/* XXX */
-			panic("syscall: too many args (%d)", nargs);
-		error = copyin((caddr_t)(alpha_pal_rdusp()), &args[6],
-		    (nargs - 6) * sizeof(u_int64_t));
-		if (error)
-			goto bad;
-	case 6:	
-		args[5] = framep->tf_regs[FRAME_A5];
-	case 5:	
-		args[4] = framep->tf_regs[FRAME_A4];
-	case 4:	
-		args[3] = framep->tf_regs[FRAME_A3];
-	case 3:	
-		args[2] = framep->tf_regs[FRAME_A2];
-	case 2:	
-		args[1] = framep->tf_regs[FRAME_A1];
-	case 1:	
-		args[0] = framep->tf_regs[FRAME_A0];
-	case 0:
-		break;
-	}
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args + hidden);
-#endif
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args + hidden);
-#endif
-
-	rval[0] = 0;
-	rval[1] = 0;
-	error = (*callp->sy_call)(p, args + hidden, rval);
-
-	switch (error) {
-	case 0:
-		framep->tf_regs[FRAME_V0] = rval[0];
-		framep->tf_regs[FRAME_A4] = rval[1];
-		framep->tf_regs[FRAME_A3] = 0;
-		break;
-	case ERESTART:
-		framep->tf_regs[FRAME_PC] -= 4;
-		break;
-	case EJUSTRETURN:
-		break;
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		framep->tf_regs[FRAME_V0] = error;
-		framep->tf_regs[FRAME_A3] = 1;
-		break;
-	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
-	KERNEL_PROC_UNLOCK(p);
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
-}
-
-/*
- * Process the tail end of a fork() for the child.
- */
-void
-child_return(arg)
-	void *arg;
-{
-	struct proc *p = arg;
-
-	/*
-	 * Return values in the frame set by cpu_fork().
-	 */
-
-	KERNEL_PROC_UNLOCK(p);
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
 }
 
 /*
