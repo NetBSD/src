@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.16 2001/06/18 10:26:33 lukem Exp $	*/
+/*	$NetBSD: session.c,v 1.17 2001/06/23 08:08:04 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -58,6 +58,8 @@ RCSID("$OpenBSD: session.c,v 1.75 2001/05/03 15:45:15 markus Exp $");
 #include "serverloop.h"
 #include "canohost.h"
 #include "session.h"
+
+#include <tzfile.h>
 
 /* types */
 
@@ -695,6 +697,19 @@ do_login(Session *s, const char *command)
 
 	if (check_quietlogin(s, command))
 		return;
+
+	if (pw->pw_expire || pw->pw_change) {
+		struct timeval tv;
+		const time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
+
+		(void)gettimeofday(&tv, (struct timezone *)NULL);
+		if (pw->pw_expire && pw->pw_expire - tv.tv_sec < pw_warntime)
+			printf("Warning: your account expires on %s",
+			    ctime(&pw->pw_expire));
+		if (pw->pw_change && pw->pw_change - tv.tv_sec < pw_warntime)
+			printf("Warning: your password expires on %s",
+			    ctime(&pw->pw_change));
+	}
 
 	if (options.print_lastlog && last_login_time != 0) {
 		time_string = ctime(&last_login_time);
