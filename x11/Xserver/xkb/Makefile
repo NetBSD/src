@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/12/22 14:07:08 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -37,6 +37,7 @@ CPPFLAGS.xkbInit.c=	-DXKB_BASE_DIRECTORY=\"${X11LIBDIR}/xkb\" \
 COPTS.XKBAlloc.c=	-Wno-error	# XXX gcc 3.3
 COPTS.XKBMAlloc.c=	-Wno-error	# XXX gcc 3.3
 COPTS.xkb.c=		-Wno-error	# XXX gcc 3.3
+COPTS.xkbUtils.c=	-Wno-error	# XXX gcc 3.3
 
 .for _S _T in	ddxKillSrv.c xf86KillSrv.c \
 		ddxVT.c xf86VT.c \
