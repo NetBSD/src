@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.61 1998/07/28 00:17:47 pk Exp $
+#	$NetBSD: files.sparc,v 1.62 1998/08/27 11:41:24 mrg Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -188,11 +188,6 @@ attach si at vme
 device sw: scsi, ncr5380sbc
 attach sw at obio
 file	arch/sparc/dev/si.c		si | sw
-
-# Qlogic ISP 10x0 (Sbus) family
-# device declaration in sys/conf/files
-attach isp at sbus with isp_sbus
-file	arch/sparc/dev/isp_sbus.c	isp_sbus
 
 #
 # Generic Sun stuff
