@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.224 2000/08/20 21:50:08 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.225 2000/09/07 18:46:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -596,11 +596,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%edx,%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-#ifdef DDB
-	orl	$(PG_V|PG_KW),%eax
-#else
 	orl	$(PG_V|PG_KR),%eax
-#endif
 	fillkpt
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
