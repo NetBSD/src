@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.17 1999/03/22 05:02:40 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.18 1999/08/19 13:30:01 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.17 1999/03/22 05:02:40 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.18 1999/08/19 13:30:01 agc Exp $");
 #endif
 #endif
 
@@ -55,9 +55,9 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     args[nargs++] = TAR_CMD;	/* argv[0] */
 
     if (*pkg == '/')
-	snprintf(tball, FILENAME_MAX, "%s.%s", pkg, suffix);
+	(void) snprintf(tball, sizeof(tball), "%s.%s", pkg, suffix);
     else
-	snprintf(tball, FILENAME_MAX, "%s/%s.%s", home, pkg, suffix);
+	(void) snprintf(tball, sizeof(tball), "%s/%s.%s", home, pkg, suffix);
 
     args[nargs++] = "-c";
     args[nargs++] = "-f";

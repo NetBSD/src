@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.33 1999/08/19 07:18:38 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.34 1999/08/19 13:29:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.33 1999/08/19 07:18:38 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.34 1999/08/19 13:29:59 agc Exp $");
 #endif
 #endif
 
@@ -319,7 +319,7 @@ pkg_do(char *pkg)
 		if (!isURL(pkg) && !getenv("PKG_ADD_BASE")) {
 		    /* install depending pkg from local disk */
 		    
-		    snprintf(path, FILENAME_MAX, "%s/%s.tgz", Home, p->name);
+		    (void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
 		    if (fexists(path))
 			cp = path;
 		    else
@@ -553,7 +553,7 @@ pkg_do(char *pkg)
 	FILE *fp;
 	char buf[BUFSIZ];
 
-	snprintf(buf, sizeof buf, "%s/%s", LogDir, p->name);
+	(void) snprintf(buf, sizeof(buf), "%s/%s", LogDir, p->name);
 	fp = fopen(buf, "r");
 	if (fp) {
 	    putc('\n', stdout);
