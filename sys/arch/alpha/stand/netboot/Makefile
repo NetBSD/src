@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
+# $NetBSD: Makefile,v 1.12 1997/05/09 07:50:28 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -32,9 +32,6 @@ ${PROG}.nosym: ${PROG}.sym
 ${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
 	dd if=${PROG}.nosym of=${PROG} \
 	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1
-
-# no lint here (yet?)
-lint:
 
 .include <bsd.prog.mk>
 

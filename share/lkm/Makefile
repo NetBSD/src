@@ -1,11 +1,9 @@
 #
-#	$Id: Makefile,v 1.12 1995/04/16 19:04:49 mycroft Exp $
+#	$Id: Makefile,v 1.13 1997/05/09 07:50:19 mycroft Exp $
 #
 
 FILES=	README syscall vfs misc
 NOOBJ=	noobj
-
-all clean cleandir depend lint tags:
 
 install:
 	find ${FILES} -follow -name CVS -prune -o -type f -print | \
