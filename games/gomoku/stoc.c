@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.3 1997/01/03 01:35:31 cgd Exp $	*/
+/*	$NetBSD: stoc.c,v 1.4 1997/10/10 13:36:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,16 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-static char rcsid[] = "$NetBSD: stoc.c,v 1.3 1997/01/03 01:35:31 cgd Exp $";
+__RCSID("$NetBSD: stoc.c,v 1.4 1997/10/10 13:36:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "gomoku.h"
 #include <ctype.h>
+#include <stdlib.h>
+#include "gomoku.h"
 
 char	*letters	= "<ABCDEFGHJKLMNOPQRST>";
 
@@ -54,10 +56,10 @@ struct mvstr {
 	char	*m_text;
 };
 static	struct	mvstr	mv[] = {
-	RESIGN,		"resign",
-	RESIGN,		"quit",
-	SAVE,		"save",
-	-1,		0
+	{ RESIGN,	"resign" }, 
+	{ RESIGN,	"quit" },
+	{ SAVE,		"save" },
+	{ -1,		0 }
 };
 
 /*
@@ -68,7 +70,7 @@ stoc(s)
 	int s;
 {
 	static char buf[32];
-	register int i;
+	int i;
 
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (s == mv[i].m_code)
@@ -80,10 +82,11 @@ stoc(s)
 /*
  * Turn the character form of a move into the spot number form.
  */
+int
 ctos(mp)
 	char *mp;
 {
-	register int i;
+	int i;
 
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (strcmp(mp, mv[i].m_text) == 0)
@@ -99,10 +102,11 @@ ctos(mp)
 /*
  * Turn a letter into a number.
  */
+int
 lton(c)
 	int c;
 {
-	register int i;
+	int i;
 
 	if (islower(c))
 		c = toupper(c);

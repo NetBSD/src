@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.3 1997/01/03 01:35:27 cgd Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.4 1997/10/10 13:36:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -39,6 +39,7 @@
  */
 
 #include <sys/types.h>
+#include <stdio.h>
 
 /* board dimensions */
 #define BSZ	19
@@ -261,8 +262,44 @@ extern	int	movelog[BSZ * BSZ];		/* history of moves */
 extern	int	movenum;
 extern	int	debug;
 
-extern	char    *copy();
-extern	char    *stoc();
-extern	char    *tail();
-
 #define ASSERT(x)
+
+void	bdinit __P((struct spotstr *));
+void	init_overlap __P((void));
+int	getline __P((char *, int));
+void	ask __P((char *));
+void	dislog __P((char *));
+void	bdump __P((FILE *));
+void	bdisp __P((void));
+void	bdisp_init __P((void));
+void	cursfini __P((void));
+void	cursinit __P((void));
+void	bdwho __P((int));
+void	panic __P((char *));
+void	log __P((char *));
+void	dlog __P((char *));
+void	quit __P((void));
+void	quitsig __P((int));
+void	whatsup __P((int));
+int	readinput __P((FILE *));
+char   *stoc __P((int));
+int	lton __P((int));
+int	ctos __P((char *));
+void	update_overlap __P((struct spotstr *));
+int	makemove __P((int, int));
+int	list_eq __P((struct combostr **, struct combostr **, int));
+void	clearcombo __P((struct combostr *, int));
+void	makeempty __P((struct combostr *));
+void	appendcombo __P((struct combostr *, int));
+void	updatecombo __P((struct combostr *, int));
+void	markcombo __P((struct combostr *));
+void	printcombo __P((struct combostr *, char *));
+void	makecombo __P((struct combostr *, struct spotstr *, int, int));
+void	makecombo2 __P((struct combostr *, struct spotstr *, int, int));
+int	sortcombo __P((struct combostr **, struct combostr **, struct combostr *));
+int	checkframes __P((struct combostr *, struct combostr *, struct spotstr *,
+int, struct ovlp_info *));
+void	addframes __P((int));
+void	scanframes __P((int));
+int	better __P((struct spotstr *, struct spotstr *, int));
+int	pickmove __P((int));
