@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: dc21040.h,v 1.21 1996/09/13 19:41:03 thomas Exp
+ * Id: dc21040.h,v 1.23 1997/03/15 17:28:19 thomas Exp
  */
 
 #if !defined(_DC21040_H)
@@ -327,7 +327,7 @@ typedef struct {
  * These are the defintitions used for the DEC 21140
  * evaluation board.
  */
-#define	TULIP_GP_EB_PINS		0x0000011F	/* General Purpose Pin directions */
+#define	TULIP_GP_EB_PINS		0x0000001F	/* General Purpose Pin directions */
 #define	TULIP_GP_EB_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
 #define	TULIP_GP_EB_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
 #define	TULIP_GP_EB_INIT		0x0000000B	/* No loopback --- point-to-point */
@@ -335,7 +335,7 @@ typedef struct {
 /*
  * These are the defintitions used for the SMC9332 (21140) board.
  */
-#define	TULIP_GP_SMC_9332_PINS		0x0000013F	/* General Purpose Pin directions */
+#define	TULIP_GP_SMC_9332_PINS		0x0000003F	/* General Purpose Pin directions */
 #define	TULIP_GP_SMC_9332_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
 #define	TULIP_GP_SMC_9332_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
 #define	TULIP_GP_SMC_9332_INIT		0x00000009	/* No loopback --- point-to-point */
@@ -348,7 +348,7 @@ typedef struct {
  * There are the definitions used for the DEC DE500
  * 10/100 family of boards
  */
-#define	TULIP_GP_DE500_PINS		0x0000011FL
+#define	TULIP_GP_DE500_PINS		0x0000001FL
 #define	TULIP_GP_DE500_LINK_PASS	0x00000080L
 #define	TULIP_GP_DE500_SYM_LINK		0x00000040L
 #define	TULIP_GP_DE500_SIGNAL_DETECT	0x00000020L
@@ -362,7 +362,7 @@ typedef struct {
  * These are the defintitions used for the Cogent EM100
  * 21140 board.
  */
-#define	TULIP_GP_EM100_PINS		0x0000013F	/* General Purpose Pin directions */
+#define	TULIP_GP_EM100_PINS		0x0000003F	/* General Purpose Pin directions */
 #define	TULIP_GP_EM100_INIT		0x00000009	/* No loopback --- point-to-point */
 #define	TULIP_OUI_COGENT_0		0x00
 #define	TULIP_OUI_COGENT_1		0x00
@@ -394,10 +394,10 @@ typedef struct {
 #define	TULIP_ZNYX_ID_ZX311		0x0D01
 #define	TULIP_ZNYX_ID_ZX346		0x0E01
 
-#define	TULIP_GP_ZX34X_PINS		0x0000011F	/* General Purpose Pin directions */
-#define	TULIP_GP_ZX344_PINS		0x0000010B	/* General Purpose Pin directions */
-#define	TULIP_GP_ZX345_PINS		0x00000103	/* General Purpose Pin directions */
-#define	TULIP_GP_ZX346_PINS		0x00000143	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX34X_PINS		0x0000001F	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX344_PINS		0x0000000B	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX345_PINS		0x00000003	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX346_PINS		0x00000043	/* General Purpose Pin directions */
 #define	TULIP_GP_ZX34X_LNKFAIL		0x00000080	/* 10Mb/s Link Failure */
 #define	TULIP_GP_ZX34X_SYMDET		0x00000040	/* 100Mb/s Symbol Detect */
 #define	TULIP_GP_ZX345_PHYACT		0x00000040	/* PHY Activity */
@@ -421,6 +421,16 @@ typedef struct {
 #define	TULIP_OUI_COMPEX_1		0x80
 #define	TULIP_OUI_COMPEX_2		0x48
 #define	TULIP_21041_COMPEX_XREGDATA	1
+
+/*
+ * Asante's OUI and stuff...
+ */
+#define TULIP_OUI_ASANTE_0		0x00
+#define TULIP_OUI_ASANTE_1		0x00
+#define TULIP_OUI_ASANTE_2		0x94
+#define TULIP_GP_ASANTE_PINS		0x000000bf	/* GP pin config */
+#define TULIP_GP_ASANTE_PHYRESET	0x00000008	/* Reset PHY */
+
 /*
  * SROM definitions for the 21140 and 21041.
  */
