@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.2 2002/02/25 03:19:15 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.3 2002/02/25 13:57:24 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
 #define	_PATH_LASTLOGX		"/var/log/lastlogx"
 #define	_PATH_UTMP_UPDATE	"/usr/libexec/utmp_update"
 
-#define _UTX_NAMESIZE	32
+#define _UTX_USERSIZE	32
 #define _UTX_LINESIZE	32
 #define	_UTX_IDSIZE	4
 #define _UTX_HOSTSIZE	256
 
 #ifndef _XOPEN_SOURCE
-#define UTX_NAMESIZE	_UTX_NAMESIZE
+#define UTX_USERSIZE	_UTX_USERSIZE
 #define UTX_LINESIZE	_UTX_LINESIZE
 #define	UTX_IDSIZE	_UTX_IDSIZE
 #define UTX_HOSTSIZE	_UTX_HOSTSIZE
@@ -79,7 +79,7 @@
  * entries using routines described in getutxent(3).
  */
 struct utmpx {
-	char ut_name[_UTX_NAMESIZE];	/* login name */
+	char ut_user[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
 	char ut_line[_UTX_LINESIZE];	/* tty name */
 	char ut_host[_UTX_HOSTSIZE];	/* host name */
