@@ -1,4 +1,4 @@
-#	$NetBSD: std.shark,v 1.2 2003/05/03 00:47:04 thorpej Exp $
+#	$NetBSD: std.shark,v 1.3 2003/05/22 05:52:20 thorpej Exp $
 #
 # standard NetBSD/shark options
 
@@ -11,8 +11,6 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 # XXX

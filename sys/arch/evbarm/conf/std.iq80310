@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.16 2003/04/19 21:52:04 thorpej Exp $
+#	$NetBSD: std.iq80310,v 1.17 2003/05/22 05:52:19 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -13,9 +13,6 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 
 makeoptions	BOARDTYPE="iq80310"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80310"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.integrator,v 1.10 2003/05/03 00:39:21 thorpej Exp $
+#	$NetBSD: std.integrator,v 1.11 2003/05/22 05:52:18 thorpej Exp $
 #
 # standard NetBSD/integrator options
 
@@ -14,8 +14,6 @@ options 	EXEC_ELF32
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 options		__OLD_INTERRUPT_CODE	# XXX for now

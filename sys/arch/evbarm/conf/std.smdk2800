@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2800,v 1.5 2003/05/03 00:39:21 thorpej Exp $
+#	$NetBSD: std.smdk2800,v 1.6 2003/05/22 05:52:19 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -14,8 +14,6 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 makeoptions	BOARDTYPE="smdk2800"
