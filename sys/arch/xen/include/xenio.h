@@ -68,7 +68,7 @@ typedef struct privcmd_blkmsg
  * Return: Value returned from execution of the specified hypercall.
  */
 #define IOCTL_PRIVCMD_HYPERCALL         \
-    _IOW('P', 0, privcmd_hypercall_t)
+    _IOWR('P', 0, privcmd_hypercall_t)
 
 /*
  * @cmd: IOCTL_PRIVCMD_INITDOMAIN_EVTCHN
@@ -89,7 +89,7 @@ typedef struct privcmd_blkmsg
 /* Interface to /dev/xenevt */
 /* EVTCHN_RESET: Clear and reinit the event buffer. Clear error condition. */
 #define EVTCHN_RESET  _IO('E', 1)
-/* EVTCHN_BIND: Bind to teh specified event-channel port. */
+/* EVTCHN_BIND: Bind to the specified event-channel port. */
 #define EVTCHN_BIND   _IOW('E', 2, unsigned long)
 /* EVTCHN_UNBIND: Unbind from the specified event-channel port. */
 #define EVTCHN_UNBIND _IOW('E', 3, unsigned long)
