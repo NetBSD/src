@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.13 2000/12/30 14:21:23 sommerfeld Exp $	*/
+/*	$NetBSD: job.h,v 1.14 2000/12/30 16:38:22 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -222,6 +222,8 @@ typedef struct Shell {
 }               Shell;
 
 extern int	job_pipe[2];	/* token pipe for jobs. */
+extern int	jobTokensRunning; /* tokens currently "out" */
+extern int	jobTokensFree;	/* tokens free but not yet released to pipe */
 
 #ifdef REMOTE
 extern char 	*targFmt;   	/* Format string for banner that separates

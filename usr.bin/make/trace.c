@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.1 2000/12/29 23:11:08 sommerfeld Exp $	*/
+/*	$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: trace.c,v 1.1 2000/12/29 23:11:08 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.1 2000/12/29 23:11:08 sommerfeld Exp $");
+__RCSID("$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $");
 #endif /* not lint */
 #endif
 
@@ -105,8 +105,9 @@ Trace_Log(event, job)
 
 	gettimeofday(&now, NULL);
 
-	fprintf(trfile, "%ld.%06d %s %d %s",
+	fprintf(trfile, "%ld.%06d %d %d %s %d %s",
 	    now.tv_sec, (int)now.tv_usec,
+	    jobTokensRunning, jobTokensFree,
 	    evname[event], trpid, trwd);
 	if (job != NULL) {
 		fprintf(trfile, " %s %d %x %x", job->node->name,

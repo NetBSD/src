@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.43 2000/12/30 15:58:34 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.44 2000/12/30 16:38:22 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.43 2000/12/30 15:58:34 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.44 2000/12/30 16:38:22 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.43 2000/12/30 15:58:34 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.44 2000/12/30 16:38:22 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3327,8 +3327,8 @@ void Job_ServerStart(maxproc)
 /*
  * this tracks the number of tokens currently "out" to build jobs.
  */
-static int tokensOutstanding = 0;
-static int tokensFree = 0;
+int jobTokensRunning = 0;
+int jobTokensFree = 0;
 /*-
  *-----------------------------------------------------------------------
  * Job_TokenReturn --
@@ -3340,11 +3340,11 @@ static int tokensFree = 0;
 void
 Job_TokenReturn()
 {
-    tokensOutstanding--;
-    if (tokensOutstanding < 0)
+    jobTokensRunning--;
+    if (jobTokensRunning < 0)
 	Punt("token botch");
-    if (tokensOutstanding)
-	tokensFree++;
+    if (jobTokensRunning)
+	jobTokensFree++;
 }
 
 /*-
@@ -3373,16 +3373,16 @@ Job_TokenWithdraw()
     if (aborting)
 	    return FALSE;
 
-    if (tokensOutstanding == 0) {
+    if (jobTokensRunning == 0) {
 	if (DEBUG(JOB))
 	    printf("first one's free\n");
-	tokensOutstanding++;
+	jobTokensRunning++;
 	wantToken = FALSE;
 	return TRUE;
     }
-    if (tokensFree > 0) {
-	tokensFree--;
-	tokensOutstanding++;
+    if (jobTokensFree > 0) {
+	jobTokensFree--;
+	jobTokensRunning++;
 	wantToken = FALSE;
 	return TRUE;
     }
@@ -3399,7 +3399,7 @@ Job_TokenWithdraw()
 	return FALSE;
     }
     wantToken = FALSE;
-    tokensOutstanding++;
+    jobTokensRunning++;
     if (DEBUG(JOB))
 	printf("withdrew token\n");
     return TRUE;
@@ -3418,8 +3418,9 @@ Job_TokenFlush()
 {
     if (compatMake) return;
 	
-    while (tokensFree-- > 0) {
+    while (jobTokensFree > 0) {
 	JobTokenAdd();
+	jobTokensFree--;
     }
 }
 
