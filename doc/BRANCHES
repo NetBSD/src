@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.9 2003/01/19 20:06:22 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.10 2003/07/26 17:24:45 salo Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -52,7 +52,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	netbsd-0-9-base
-Maintainer:	Release Engineering <releng@netbsd.org>
+Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree.
 Notes:		Subsidiary tags of: netbsd-0-9-ALPHA, netbsd-0-9-ALPHA2,
 		netbsd-0-9-BETA, netbsd-0-9-RELEASE.
@@ -64,7 +64,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	netbsd-1-0-base
-Maintainer:	Release Engineering <releng@netbsd.org>
+Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to release engineering.
@@ -75,7 +75,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	netbsd-1-1-base
-Maintainer:	Release Engineering <releng@netbsd.org>
+Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to release engineering.
@@ -86,7 +86,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	netbsd-1-2-base
-Maintainer:	Release Engineering <releng@netbsd.org>
+Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to release engineering.
@@ -97,7 +97,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	netbsd-1-3-base
-Maintainer:	Release Engineering <releng@netbsd.org>
+Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to release engineering.
@@ -108,7 +108,7 @@ Status:		Active
 Start Date:	1 Apr 2000
 End Date:
 Base Tag:	netbsd-1-4-base
-Maintainer:	1.4 Release Engineering <releng-1-4@netbsd.org>
+Maintainer:	1.4 Release Engineering <releng-1-4@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to release engineering.
@@ -119,7 +119,7 @@ Status:		Active
 Start Date:	20 Jun 2000
 End Date:
 Base Tag:	netbsd-1-5-base
-Maintainer:	1.5 Release Engineering <releng-1-5@netbsd.org>
+Maintainer:	1.5 Release Engineering <releng-1-5@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to release engineering.
@@ -130,7 +130,7 @@ Status:		Active
 Start Date:	22 May 2002
 End Date:
 Base Tag:	netbsd-1-6-base
-Maintainer:	1.6 Release Engineering <releng-1-6@netbsd.org>
+Maintainer:	1.6 Release Engineering <releng-1-6@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 		Commits restricted to Release Engineering.
@@ -145,7 +145,7 @@ Status:		Active
 Start Date:	18 Oct 2002
 End Date:
 Base Tag:	bjh21-hydra-base
-Maintainer:	Ben Harris <bjh21@netbsd.org>
+Maintainer:	Ben Harris <bjh21@NetBSD.org>
 Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code is on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
@@ -158,7 +158,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:
-Maintainer:	Manuel Bouyer <bouyer@netbsd.org>
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		kernel
 Notes:		Superseded by thorpej_scsipi
 
@@ -168,7 +168,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	chs-ubc-base
-Maintainer:	Chuck Silvers <chs@netbsd.org>
+Maintainer:	Chuck Silvers <chs@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -178,7 +178,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	chs-ubc2-base, chs-ubc2-newbase
-Maintainer:	Chuck Silvers <chs@netbsd.org>
+Maintainer:	Chuck Silvers <chs@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -188,7 +188,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:
-Maintainer:	Curt Sampson <cjs@netbsd.org>
+Maintainer:	Curt Sampson <cjs@NetBSD.org>
 Scope:		Entire tree.
 Notes:
 
@@ -198,7 +198,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	eeh-paddr_t-base
-Maintainer:	Eduardo Horvath <eeh@netbsd.org>
+Maintainer:	Eduardo Horvath <eeh@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -208,7 +208,7 @@ Status:		?Terminated
 Start Date:
 End Date:
 Base Tag:	fvdl-softdep-base
-Maintainer:	Frank van der Linden <fvdl@netbsd.org>
+Maintainer:	Frank van der Linden <fvdl@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -218,7 +218,7 @@ Status:		Terminated
 Start Date:	16 May 2002
 End Date:	6 Sep 2002
 Base Tag:	gehenna-devsw-base
-Maintainer:	MAEKAWA Masahide <gehenna@netbsd.org>
+Maintainer:	MAEKAWA Masahide <gehenna@NetBSD.org>
 Scope:		syssrc
 Notes:		The goal is to get rid of the existing device switch tables in
 		port-dependent conf.c and to generate them dynamically by
@@ -230,7 +230,7 @@ Status:		Active
 Start Date:	18 December 2002
 End Date:
 Base Tag:	gmcgarry_ctxsw_base
-Maintainer:	Gregory McGarry <gmcgarry@netbsd.org>
+Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
 Notes:		Removing knowledge of the schedular and its run queues
 		from the machine-dependent context switch code is the
@@ -245,7 +245,7 @@ Status:		Active
 Start Date:	18 December 2002
 End Date:
 Base Tag:	gmcgarry_ucred_base
-Maintainer:	Gregory McGarry <gmcgarry@netbsd.org>
+Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
 Notes:		merge pcred and ucred and poolify
 
@@ -255,7 +255,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	is-newarp-base
-Maintainer:	Ignatios Souvatzis <is@netbsd.org>
+Maintainer:	Ignatios Souvatzis <is@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -266,7 +266,7 @@ Status:		Dormant
 Start Date:	28 Jun 1999
 End Date:
 Base Tag:
-Maintainer:	Jun-ichiro itojun Hagino <itojun@netbsd.org>
+Maintainer:	Jun-ichiro itojun Hagino <itojun@NetBSD.org>
 Scope:		kernel
 Notes:		http://www.kame.net
 		Used for "reference" purposes for early part of KAME
@@ -279,7 +279,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	kenh-if-detach-base
-Maintainer:	Ken Hornstein <kenh@netbsd.org>
+Maintainer:	Ken Hornstein <kenh@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -304,7 +304,7 @@ Status:		Terminated; merged to -current
 Start Date:
 End Date:
 Base Tag:	marc-pcmcia-base, marc-pcmcia-bp
-Maintainer:	Marc Horowitz <marc@netbsd.org>
+Maintainer:	Marc Horowitz <marc@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -314,7 +314,7 @@ Status:		Terminated; merged to -current
 Start Date:	23 Dec 1998
 End Date:	16 Mar 1999
 Base Tag:	minoura_x68k_bus_h-base
-Maintainer:	Minoura Makoto <minoura@netbsd.org>
+Maintainer:	Minoura Makoto <minoura@NetBSD.org>
 Scope:		sys/arch/x68k
 Notes:
 
@@ -324,7 +324,7 @@ Status:		Terminated; (partly) merged to -current
 Start Date:	28 March 2000
 End Date:
 Base Tag:	minoura-xpg4dl-base
-Maintainer:	Minoura Makoto <minoura@netbsd.org>
+Maintainer:	Minoura Makoto <minoura@NetBSD.org>
 Scope:		basesrc, syssrc, sharesrc
 Notes:		Citrus Project is developing dynamically-loadable, codeset-
 		independent locale subsystem.  Part of the implementation
@@ -336,7 +336,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	?
-Maintainer:	Matthew R. Green <mrg@netbsd.org>
+Maintainer:	Matthew R. Green <mrg@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -346,7 +346,7 @@ Status:		Active
 Start Date:	5 March 2001
 End Date:	18 January 2003
 Base Tag:	nathanw_sa_base
-Maintainer:	Nathan Williams <nathanw@netbsd.org>
+Maintainer:	Nathan Williams <nathanw@NetBSD.org>
 Scope:		kernel, libc, libkvm, libpthread, libpthread_dbg, include, 
 		bin/ps usr.bin/systat usr.bin/top usr.bin/w
 		gnu/dist/toolchain/gdb gnu/usr.bin/gdb
@@ -382,7 +382,7 @@ Status:		Active
 Start Date:	March 9, 2002
 End Date:
 Base Tag:	newlock-base
-Maintainer:	Jason R. Thorpe <thorpej@netbsd.org>
+Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
 Scope:		Kernel
 
 Notes:		The goal is to replace the existing lockmgr() and
@@ -395,7 +395,7 @@ Status:		Terminated
 Start Date:	27 June 2001
 End Date:	16 July 2001
 Base Tag:	perseant-lfsv2-base
-Maintainer:	Konrad Schroder <perseant@netbsd.org>
+Maintainer:	Konrad Schroder <perseant@NetBSD.org>
 Scope:		basesrc/{sbin/*lfs,libexec/lfs_cleanerd,usr.sbin/dumplfs}, syssrc/sys/ufs
 Notes:		This branch should be short-lived, I expect to merge as soon
 		as the data structures required for unremove are in and tested.
@@ -406,7 +406,7 @@ Status:		Active
 Start Date:	22 July 2002
 End Date:
 Base Tag:	pkgviews
-Maintainer:	Alistair Crooks <agc@netbsd.org>
+Maintainer:	Alistair Crooks <agc@NetBSD.org>
 Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
@@ -418,7 +418,7 @@ Status:		Terminated; merged to -current
 Start Date:	21 Feb 2000
 End Date:	01 Oct 2002
 Base Tag:	sommerfeld_i386mpbase_1
-Maintainer:	Bill Sommerfeld <sommerfeld@netbsd.org>
+Maintainer:	Bill Sommerfeld <sommerfeld@NetBSD.org>
 Scope:		sys/arch/i386
 Notes:
 		Code committed to the branch has booted to multiuser 
@@ -450,7 +450,7 @@ Status:		Active
 Start Date:	Sep 6 2001
 End Date:
 Base Tag:	thorpej-devvp-base
-Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
 Scope:		syssrc
 Notes:		Kernels built from this branch are not expected
 		to function correctly at this time.
@@ -476,7 +476,7 @@ Notes:		This branch needs more debugging, testing, and more
 			  needs to be beat on a lot more to make
 			  sure it's working.
 
-			* R4000/R4400 (cache_r4k) -- mhitch@netbsd.org
+			* R4000/R4400 (cache_r4k) -- mhitch@NetBSD.org
 			  tracked down a bug, which has been fixed.
 
 			  Confirmed working on R4000-with-L2.
@@ -484,7 +484,7 @@ Notes:		This branch needs more debugging, testing, and more
 			  Confirmed working on R4400-no-L2 and
 			  R4400-with-L2.
 
-			* R4600/R5000 (cache_r5k) -- shin@netbsd.org
+			* R4600/R5000 (cache_r5k) -- shin@NetBSD.org
 			  has committed fixes to this code.
 
 			  Confirmed working on R4600 v2 (SGI IP-22 with
@@ -492,11 +492,11 @@ Notes:		This branch needs more debugging, testing, and more
 
 			  Confirmed working on RM5260 (Algorithmics P-5064).
 
-			* TX39 (cache_tx39) -- uch@netbsd.org has
+			* TX39 (cache_tx39) -- uch@NetBSD.org has
 			  committed fixes to this code.  Awaiting
 			  confirmation that it is working properly.
 
-			* R5900 (cache_r5900) -- uch@netbsd.org has
+			* R5900 (cache_r5900) -- uch@NetBSD.org has
 			  written this code and tested it on a
 			  PlayStation 2.
 
@@ -531,8 +531,8 @@ Status:		Terminated; merged to -current
 Start Date:
 End Date:	Apr 25 2001
 Base Tag:	thorpej_scsipi_base, thorpej_scsipi_nbase
-Maintainer:	Manuel Bouyer <bouyer@netbsd.org>,
-		Jason Thorpe <thorpej@netbsd.org>
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>,
+		Jason Thorpe <thorpej@NetBSD.org>
 Scope:		syssrc
 Notes:		When a change from -current is pulled up please move the
 		thorpej_scsipi_base tag to the revision you're syncing with.
@@ -547,7 +547,7 @@ Status:		?
 Start Date:
 End Date:
 Base Tag:	thorpej-signal-base
-Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -557,7 +557,7 @@ Status:		Terminated; merged to -current
 Start Date:
 End Date:
 Base Tag:
-Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
 Scope:		kernel
 Notes:
 
@@ -569,7 +569,7 @@ Status:		Terminated
 Start Date:	Aug or Sept 1999
 End Date:	1 Apr 2000
 Base tag:	wrstuden-devbsize-base
-Maintainer:	Bill Studenmund <wrstuden@netbsd.org>
+Maintainer:	Bill Studenmund <wrstuden@NetBSD.org>
 Scope:		kernel
 Notes:		No longer active due to lack of time, and introduction
 		of UBC. In terms of UBC, the primary cache for

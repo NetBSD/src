@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.126 2003/07/25 15:42:35 jwise Exp $
+#	$NetBSD: 3RDPARTY,v 1.127 2003/07/26 17:24:44 salo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -166,7 +166,7 @@ Current Vers:	1.11.6
 Maintainer:	cvshome
 Archive Site:	ftp://ftp.cvshome.org/pub/
 Mailing List:	bug-cvs@gnu.org
-Responsible:	Christos Zoulas <christos@netbsd.org>, wiz
+Responsible:	Christos Zoulas <christos@NetBSD.org>, wiz
 Notes:
 Use src/gnu/dist/cvs/cvs2netbsd for preparing the source tree
 for the import.
@@ -189,7 +189,7 @@ src/lib/libc/db/db2netbsd.
 Package:	dhcp
 Version:	3.0.1rc11
 Current Vers:	3.0pl2/3.0.1rc11
-Maintainer:	Ted Lemon <mellon@netbsd.org>
+Maintainer:	Ted Lemon <mellon@NetBSD.org>
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Mailing List:	dhcp-server@isc.org
 Mailing List:	dhcp-client@isc.org
@@ -566,7 +566,7 @@ Current Vers:	980911
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Mailing List:
-Responsible:	christos@netbsd.org
+Responsible:	christos@NetBSD.org
 Notes:
 We use err() and friends. We have changes for snprintf, extra
 formating in man pages, disallowing flood pinging, alignment fixes,
@@ -578,7 +578,7 @@ Current Vers:	2.0.13
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Mailing List:	postfix-users@postfix.org
-Responsible:	perry@netbsd.org, itojun@netbsd.org
+Responsible:	perry@NetBSD.org, itojun@NetBSD.org
 Notes:
 
 Package:	ppp
@@ -588,7 +588,7 @@ Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
 CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
 Mailing List:
-Responsible:	christos@netbsd.org
+Responsible:	christos@NetBSD.org
 Notes:
 BSD support was removed from 2.4.0; I added it back and removed
 some GPL pieces. Multilink support is missing. Repeated pings to
@@ -629,7 +629,7 @@ Current Vers:	2.27
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Mailing List:
-Responsible:	christos@netbsd.org
+Responsible:	christos@NetBSD.org
 Notes:
 We use the md5 code from libc
 We don't allow RIP_TRACEON and RIP_TRACEOFF
@@ -649,7 +649,7 @@ Current Vers:	8.12.9
 Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Mailing List:
-Responsible:	atatat@netbsd.org
+Responsible:	atatat@NetBSD.org
 Notes:
 use gnu/dist/sendmail/sendmail2netbsd to strip off RCS tags.
 local changes:
