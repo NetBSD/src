@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.49 2005/01/13 00:52:40 jmc Exp $
+#	$NetBSD: configure.ac,v 1.50 2005/03/02 18:08:44 wiz Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -121,11 +121,11 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	strsuftoll strtoll \
 	user_from_uid vasprintf vasnprintf vsnprintf)
 
-AC_CHECK_FUNCS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [
+AC_CHECK_FUNCS([htobe16 htobe32 htobe64 htole16 htole32 htole64 be16toh be32toh be64toh le16toh le32toh le64toh],,, [
 #include <sys/types.h>
 ])
 
-AC_CHECK_FUNCS([bswap16, bswap32, bswap64],,, [
+AC_CHECK_FUNCS([bswap16 bswap32 bswap64],,, [
 #include <machine/bswap.h>
 ])
 
