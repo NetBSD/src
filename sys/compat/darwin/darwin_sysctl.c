@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.12 2003/06/29 22:29:15 fvdl Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.13 2003/07/10 14:47:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.12 2003/06/29 22:29:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.13 2003/07/10 14:47:34 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.12 2003/06/29 22:29:15 fvdl Exp 
 #include <compat/darwin/darwin_syscallargs.h>
 
 pid_t darwin_init_pid = 0;
+static char *darwin_sysctl_hw_machine = "Power Macintosh";
 
 static int darwin_kern_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
@@ -319,6 +320,10 @@ darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	case DARWIN_HW_VECTORUNIT:
 		return sysctl_rdint(oldp, oldlenp, newp, 0);
 		break;
+	case DARWIN_HW_MACHINE:
+		return sysctl_rdstring(oldp, oldlenp, newp,
+		    darwin_sysctl_hw_machine);
+		break; 
 	default:
 		return EOPNOTSUPP;
 	}
