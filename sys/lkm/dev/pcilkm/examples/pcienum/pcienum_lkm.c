@@ -1,4 +1,4 @@
-/*	$NetBSD: pcienum_lkm.c,v 1.1 2004/07/02 13:26:41 cube Exp $	*/
+/*	$NetBSD: pcienum_lkm.c,v 1.2 2004/07/06 12:21:55 cube Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcienum_lkm.c,v 1.1 2004/07/02 13:26:41 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcienum_lkm.c,v 1.2 2004/07/06 12:21:55 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcienum_lkm.c,v 1.1 2004/07/02 13:26:41 cube Exp $")
 #include <sys/device.h>
 #include <sys/lkm.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <lkm/dev/pcilkm/pcilkm.h>
 
