@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.4 2001/11/14 01:00:05 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.5 2001/11/19 18:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas
@@ -52,6 +52,10 @@ Lblock_userspace_access:
 	mrc	p15, 0, r0, c2, c0, 0	/* arbitrary read of CP15 */	;\
 	mov	r0, r0			/* wait for it to complete */	;\
 	sub	pc, pc, #4		/* branch to next insn */
+
+ENTRY(xscale_cpwait)
+	CPWAIT
+	mov	pc, lr
 
 /*
  * We need a separate cpu_control() entry point, since we have to
