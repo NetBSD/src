@@ -1,13 +1,15 @@
-# $NetBSD: files.gio,v 1.1 2000/06/14 16:50:59 soren Exp $
+# $NetBSD: files.gio,v 1.2 2001/05/11 05:04:34 thorpej Exp $
 
 device  gio {[slot = -1], [addr = -1]}
 attach	gio at giobus
 
 file	arch/sgimips/gio/gio.c		gio needs-flag
 
-device	hpc {}
+device	hpc {[offset = -1]}
 attach	hpc at gio
-file	arch/sgimips/gio/hpc.c		hpc
+file	arch/sgimips/hpc/hpc.c		hpc
+
+include "arch/sgimips/hpc/files.hpc"
 
 # XL graphics
 #device	newport {}
