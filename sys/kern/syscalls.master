@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.121 2003/01/20 20:04:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.122 2003/01/20 20:24:21 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -517,27 +517,27 @@
 245	UNIMPL		sys_sigtimedwait
 246	UNIMPL		sys_sigqueue
 #ifdef P1003_1B_SEMAPHORE
-247	STD		{ int sys_ksem_init(unsigned int value, semid_t *idp); }
-248	STD		{ int sys_ksem_open(const char *name, int oflag, \
+247	STD		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
+248	STD		{ int sys__ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, semid_t *idp); }
-249	STD 		{ int sys_ksem_unlink(const char *name); }
-250	STD		{ int sys_ksem_close(semid_t id); }
-251	STD		{ int sys_ksem_post(semid_t id); }
-252	STD		{ int sys_ksem_wait(semid_t id); }
-253	STD		{ int sys_ksem_trywait(semid_t id); }
-254	STD		{ int sys_ksem_getvalue(semid_t id, \
+249	STD 		{ int sys__ksem_unlink(const char *name); }
+250	STD		{ int sys__ksem_close(semid_t id); }
+251	STD		{ int sys__ksem_post(semid_t id); }
+252	STD		{ int sys__ksem_wait(semid_t id); }
+253	STD		{ int sys__ksem_trywait(semid_t id); }
+254	STD		{ int sys__ksem_getvalue(semid_t id, \
 			    unsigned int *value); }
-255	STD		{ int sys_ksem_destroy(semid_t id); }
+255	STD		{ int sys__ksem_destroy(semid_t id); }
 #else
-247	EXCL		sys_ksem_init
-248	EXCL		sys_ksem_open
-249	EXCL 		sys_ksem_unlink
-250	EXCL		sys_ksem_close
-251	EXCL		sys_ksem_post
-252	EXCL		sys_ksem_wait
-253	EXCL		sys_ksem_trywait
-254	EXCL		sys_ksem_getvalue
-255	EXCL		sys_ksem_destroy
+247	EXCL		sys__ksem_init
+248	EXCL		sys__ksem_open
+249	EXCL 		sys__ksem_unlink
+250	EXCL		sys__ksem_close
+251	EXCL		sys__ksem_post
+252	EXCL		sys__ksem_wait
+253	EXCL		sys__ksem_trywait
+254	EXCL		sys__ksem_getvalue
+255	EXCL		sys__ksem_destroy
 #endif
 256	UNIMPL
 257	UNIMPL
