@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.11 2002/10/02 15:52:40 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.12 2002/10/05 17:01:51 chs Exp $       */
 
 /*
  * Copyright 1997
@@ -297,8 +297,13 @@ void                   pccnputc            __P((dev_t, char));
 int                    pccngetc            __P((dev_t));
 void                   pccnpollc           __P((dev_t, int));
 
+char *xinterpret(struct pc_softc *, u_char);
+
 #ifdef SHARK
 static void            force_vga_mode      __P((void));
+int get_shark_screen_ihandle(void);
+void shark_screen_cleanup(int);
+
 /*
 ** Definitions needed by getDisplayInfo
 */

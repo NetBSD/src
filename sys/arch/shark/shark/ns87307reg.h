@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307reg.h,v 1.1 2002/02/10 01:58:06 thorpej Exp $	*/
+/*	$NetBSD: ns87307reg.h,v 1.2 2002/10/05 17:01:51 chs Exp $	*/
 
 /*
  * Copyright 1997
@@ -383,13 +383,10 @@
 
 /* Functions to help configure the ns87307 logical devices.
 */
-int  i87307KbdConfig       __P((bus_space_tag_t  iot,
-				u_int            comBase, 
-				u_int            irqNum ));
-int  i87307MouseConfig     __P((bus_space_tag_t iot,
-				u_int           irqNum ));
+int i87307KbdConfig(bus_space_tag_t, u_int, u_int);
+int i87307MouseConfig(bus_space_tag_t, u_int);
+int i87307PrinterConfig(bus_space_tag_t, u_int);
 
-
-void nsioConfigPrint(bus_space_tag_t nsioIot, bus_space_handle_t  nsioIoh );                        
+void nsioConfigPrint(bus_space_tag_t, bus_space_handle_t);
 
 #endif /* _NS87307REG_H */
