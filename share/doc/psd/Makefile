@@ -12,13 +12,15 @@
 
 BINDIR=	/usr/share/doc/psd
 FILES=	00.contents Makefile Title
-.ifnmake install
-SUBDIR=	05.sysman 12.make 18.gprof 19.curses 20.ipctut 21.ipc
-.else
-TOP=	../../..
-SUBDIR=	05.sysman ${TOP}/usr.bin/make/PSD.doc \
-	${TOP}/usr.bin/gprof/PSD.doc ${TOP}/lib/libcurses/PSD.doc \
-	20.ipctut 21.ipc
+SUBDIR=	05.sysman 20.ipctut 21.ipc
+.if exists(12.make)
+SUBDIR+= 12.make
+.endif
+.if exists(18.gprof)
+SUBDIR+= 18.gprof
+.endif
+.if exists(19.curses)
+SUBDIR+= 19.curses
 .endif
 
 Title.ps: ${FILES}
