@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.54 2001/11/12 23:16:20 tv Exp $
+#	$NetBSD: bsd.doc.mk,v 1.55 2001/11/18 15:11:25 bjh21 Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -69,5 +69,6 @@ spell: ${SRCS}
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
+.include <bsd.sys.mk>
 
 ${TARGETS}:	# ensure existence
