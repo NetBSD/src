@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1997/02/11 00:58:33 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1997/02/11 19:06:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,6 +110,8 @@ L_high_code:
 | just before the start of the kernel text segment, so the
 | kernel can sanity-check the DDB symbols at [end...esym].
 | Pass the struct exec at tmpstk-32 to __bootstrap().
+| Also, make sure the initial frame pointer is zero so that
+| the backtrace algorithm used by KGDB terminates nicely.
 	lea	tmpstk-32, sp
 	movl	#0,a6
 	jsr	__bootstrap		| See _startup.c
@@ -156,9 +158,9 @@ L_high_code:
 	lea	_proc0,a0		| proc0.p_md.md_regs = 
 	movl	a1,a0@(P_MDREGS)	|   trapframe
 	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
-	pea	a1@			|
+	pea	a1@			| push &trapframe
 	jbsr	_main			| main(&trapframe)
-	addql	#4,sp			| help backtrace work
+	addql	#4,sp			| help DDB backtrace
 	trap	#15			| should not get here
 
 | This is used by cpu_fork() to return to user mode.
@@ -1053,7 +1055,7 @@ Lswnofpsave:
 	/* Our pmap does not need pmap_activate() */
 	/* Just load the new CPU Root Pointer (MMU) */
 	/* XXX - Skip if oldproc has same pm_a_tbl? */
-	movl	a0@(P_VMSPACE),a0	| vm = p->p_vmspace
+	movl	a0@(P_VMSPACE),a0	| a0 = vm = p->p_vmspace
 	lea	a0@(VM_PMAP_MMUCRP),a0	| a0 = &vm->vm_pmap.pm_mmucrp
 
 	movl	#CACHE_CLR,d0
