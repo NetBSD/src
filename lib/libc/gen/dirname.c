@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.6 2002/10/17 02:06:04 thorpej Exp $	*/
+/*	$NetBSD: dirname.c,v 1.7 2002/10/17 11:36:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.6 2002/10/17 02:06:04 thorpej Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.7 2002/10/17 11:36:39 tron Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -57,7 +57,7 @@ dirname(path)
 {
 	static char singledot[] = ".";
 	static char result[PATH_MAX];
-	char *p, *lastp;
+	char *lastp;
 	size_t len;
 
 	/*
