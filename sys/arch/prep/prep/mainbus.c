@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2002/10/02 15:52:30 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2003/01/01 02:03:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -171,9 +171,9 @@ mainbus_print(aux, pnp)
 	union mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
+		aprint_normal("%s at %s", mba->mba_busname, pnp);
 	if (!strcmp(mba->mba_busname, "pci"))
-		printf(" bus %d", mba->mba_pba.pba_bus);
+		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
 
 	return (UNCONF);
 }
