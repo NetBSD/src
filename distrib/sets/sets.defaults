@@ -1,5 +1,8 @@
 #!/bin/sh
 
+oIFS=$IFS
+IFS="
+"
 for x in $(
 ${MAKE:-make} -B -f- all <<EOF
 .include <bsd.own.mk>
@@ -13,6 +16,7 @@ all:
 	@echo toolchain_missing=\${TOOLCHAIN_MISSING}
 	@echo use_tools_toolchain=\${USE_TOOLS_TOOLCHAIN}
 	@echo have_gcc3=\${HAVE_GCC3}
+	@echo lists=\'base comp etc games man misc text\'
 .if defined(USE_XF86_4) && (\${USE_XF86_4} != no)
 	@echo x11_version=4
 .else
@@ -23,3 +27,4 @@ EOF
 ); do
 	eval $x
 done
+IFS=$oIFS
