@@ -1,10 +1,10 @@
-/*	$NetBSD: ah_core.c,v 1.17 2000/03/21 23:53:30 itojun Exp $	*/
-/*	$KAME: ah_core.c,v 1.29 2000/03/11 09:20:21 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.18 2000/06/02 18:20:15 itojun Exp $	*/
+/*	$KAME: ah_core.c,v 1.34 2000/05/29 08:05:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -96,30 +96,30 @@
 static int ah_sumsiz_1216 __P((struct secasvar *));
 static int ah_sumsiz_zero __P((struct secasvar *));
 static int ah_none_mature __P((struct secasvar *));
-static void ah_none_init __P((struct ah_algorithm_state *,
+static int ah_none_init __P((struct ah_algorithm_state *,
 	struct secasvar *));
 static void ah_none_loop __P((struct ah_algorithm_state *, caddr_t, size_t));
 static void ah_none_result __P((struct ah_algorithm_state *, caddr_t));
 static int ah_keyed_md5_mature __P((struct secasvar *));
-static void ah_keyed_md5_init __P((struct ah_algorithm_state *,
+static int ah_keyed_md5_init __P((struct ah_algorithm_state *,
 	struct secasvar *));
 static void ah_keyed_md5_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_keyed_md5_result __P((struct ah_algorithm_state *, caddr_t));
 static int ah_keyed_sha1_mature __P((struct secasvar *));
-static void ah_keyed_sha1_init __P((struct ah_algorithm_state *,
+static int ah_keyed_sha1_init __P((struct ah_algorithm_state *,
 	struct secasvar *));
 static void ah_keyed_sha1_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_keyed_sha1_result __P((struct ah_algorithm_state *, caddr_t));
 static int ah_hmac_md5_mature __P((struct secasvar *));
-static void ah_hmac_md5_init __P((struct ah_algorithm_state *,
+static int ah_hmac_md5_init __P((struct ah_algorithm_state *,
 	struct secasvar *));
 static void ah_hmac_md5_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_hmac_md5_result __P((struct ah_algorithm_state *, caddr_t));
 static int ah_hmac_sha1_mature __P((struct secasvar *));
-static void ah_hmac_sha1_init __P((struct ah_algorithm_state *,
+static int ah_hmac_sha1_init __P((struct ah_algorithm_state *,
 	struct secasvar *));
 static void ah_hmac_sha1_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
@@ -177,12 +177,13 @@ ah_none_mature(sav)
 	return 0;
 }
 
-static void
+static int
 ah_none_init(state, sav)
 	struct ah_algorithm_state *state;
 	struct secasvar *sav;
 {
 	state->foo = NULL;
+	return 0;
 }
 
 static void
@@ -208,34 +209,34 @@ ah_keyed_md5_mature(sav)
 	return 0;
 }
 
-static void
+static int
 ah_keyed_md5_init(state, sav)
 	struct ah_algorithm_state *state;
 	struct secasvar *sav;
 {
+	size_t padlen;
+	size_t keybitlen;
+	u_int8_t buf[32];
+
 	if (!state)
 		panic("ah_keyed_md5_init: what?");
 
 	state->sav = sav;
 	state->foo = (void *)malloc(sizeof(MD5_CTX), M_TEMP, M_NOWAIT);
 	if (state->foo == NULL)
-		panic("ah_keyed_md5_init: what?");
+		return ENOBUFS;
+
 	MD5Init((MD5_CTX *)state->foo);
 	if (state->sav) {
-		MD5Update((MD5_CTX *)state->foo, 
+		MD5Update((MD5_CTX *)state->foo,
 			(u_int8_t *)_KEYBUF(state->sav->key_auth),
 			(u_int)_KEYLEN(state->sav->key_auth));
 
-	    {
 		/*
 		 * Pad after the key.
 		 * We cannot simply use md5_pad() since the function
 		 * won't update the total length.
 		 */
-		size_t padlen;
-		size_t keybitlen;
-		u_int8_t buf[32];
-
 		if (_KEYLEN(state->sav->key_auth) < 56)
 			padlen = 64 - 8 - _KEYLEN(state->sav->key_auth);
 		else
@@ -261,8 +262,9 @@ ah_keyed_md5_init(state, sav)
 		buf[2] = (keybitlen >> 16) & 0xff;
 		buf[3] = (keybitlen >> 24) & 0xff;
 		MD5Update((MD5_CTX *)state->foo, buf, 8);
-	    }
 	}
+
+	return 0;
 }
 
 static void
@@ -288,7 +290,7 @@ ah_keyed_md5_result(state, addr)
 		panic("ah_keyed_md5_result: what?");
 
 	if (state->sav) {
-		MD5Update((MD5_CTX *)state->foo, 
+		MD5Update((MD5_CTX *)state->foo,
 			(u_int8_t *)_KEYBUF(state->sav->key_auth),
 			(u_int)_KEYLEN(state->sav->key_auth));
 	}
@@ -319,12 +321,15 @@ ah_keyed_sha1_mature(sav)
 	return 0;
 }
 
-static void
+static int
 ah_keyed_sha1_init(state, sav)
 	struct ah_algorithm_state *state;
 	struct secasvar *sav;
 {
 	SHA1_CTX *ctxt;
+	size_t padlen;
+	size_t keybitlen;
+	u_int8_t buf[32];
 
 	if (!state)
 		panic("ah_keyed_sha1_init: what?");
@@ -332,7 +337,7 @@ ah_keyed_sha1_init(state, sav)
 	state->sav = sav;
 	state->foo = (void *)malloc(sizeof(SHA1_CTX), M_TEMP, M_NOWAIT);
 	if (!state->foo)
-		panic("ah_keyed_sha1_init: what?");
+		return ENOBUFS;
 
 	ctxt = (SHA1_CTX *)state->foo;
 	SHA1Init(ctxt);
@@ -341,14 +346,9 @@ ah_keyed_sha1_init(state, sav)
 		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sav->key_auth),
 			(u_int)_KEYLEN(state->sav->key_auth));
 
-	    {
 		/*
 		 * Pad after the key.
 		 */
-		size_t padlen;
-		size_t keybitlen;
-		u_int8_t buf[32];
-
 		if (_KEYLEN(state->sav->key_auth) < 56)
 			padlen = 64 - 8 - _KEYLEN(state->sav->key_auth);
 		else
@@ -374,8 +374,9 @@ ah_keyed_sha1_init(state, sav)
 		buf[2] = (keybitlen >> 16) & 0xff;
 		buf[3] = (keybitlen >> 24) & 0xff;
 		SHA1Update(ctxt, buf, 8);
-	    }
 	}
+
+	return 0;
 }
 
 static void
@@ -437,7 +438,7 @@ ah_hmac_md5_mature(sav)
 	return 0;
 }
 
-static void
+static int
 ah_hmac_md5_init(state, sav)
 	struct ah_algorithm_state *state;
 	struct secasvar *sav;
@@ -456,7 +457,7 @@ ah_hmac_md5_init(state, sav)
 	state->sav = sav;
 	state->foo = (void *)malloc(64 + 64 + sizeof(MD5_CTX), M_TEMP, M_NOWAIT);
 	if (!state->foo)
-		panic("ah_hmac_md5_init: what?");
+		return ENOBUFS;
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
@@ -486,6 +487,8 @@ ah_hmac_md5_init(state, sav)
 
 	MD5Init(ctxt);
 	MD5Update(ctxt, ipad, 64);
+
+	return 0;
 }
 
 static void
@@ -553,7 +556,7 @@ ah_hmac_sha1_mature(sav)
 	return 0;
 }
 
-static void
+static int
 ah_hmac_sha1_init(state, sav)
 	struct ah_algorithm_state *state;
 	struct secasvar *sav;
@@ -573,7 +576,7 @@ ah_hmac_sha1_init(state, sav)
 	state->foo = (void *)malloc(64 + 64 + sizeof(SHA1_CTX),
 			M_TEMP, M_NOWAIT);
 	if (!state->foo)
-		panic("ah_hmac_sha1_init: what?");
+		return ENOBUFS;
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
@@ -603,6 +606,8 @@ ah_hmac_sha1_init(state, sav)
 
 	SHA1Init(ctxt);
 	SHA1Update(ctxt, ipad, 64);
+
+	return 0;
 }
 
 static void
@@ -704,9 +709,10 @@ ah_update_mbuf(m, off, len, algo, algos)
  * Don't use m_copy(), it will try to share cluster mbuf by using refcnt.
  */
 int
-ah4_calccksum(m, ahdat, algo, sav)
+ah4_calccksum(m, ahdat, len, algo, sav)
 	struct mbuf *m;
 	caddr_t ahdat;
+	size_t len;
 	struct ah_algorithm *algo;
 	struct secasvar *sav;
 {
@@ -727,7 +733,9 @@ ah4_calccksum(m, ahdat, algo, sav)
 
 	off = 0;
 
-	(algo->init)(&algos, sav);
+	error = (algo->init)(&algos, sav);
+	if (error)
+		return error;
 
 	advancewidth = 0;	/*safety*/
 
@@ -894,6 +902,11 @@ again:
 	if (off < m->m_pkthdr.len)
 		goto again;
 
+	if (len < (*algo->sumsiz)(sav)) {
+		error = EINVAL;
+		goto fail;
+	}
+
 	(algo->result)(&algos, &sumbuf[0]);
 	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
 
@@ -916,9 +929,10 @@ fail:
  * Don't use m_copy(), it will try to share cluster mbuf by using refcnt.
  */
 int
-ah6_calccksum(m, ahdat, algo, sav)
+ah6_calccksum(m, ahdat, len, algo, sav)
 	struct mbuf *m;
 	caddr_t ahdat;
+	size_t len;
 	struct ah_algorithm *algo;
 	struct secasvar *sav;
 {
@@ -933,7 +947,9 @@ ah6_calccksum(m, ahdat, algo, sav)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		return EINVAL;
 
-	(algo->init)(&algos, sav);
+	error = (algo->init)(&algos, sav);
+	if (error)
+		return error;
 
 	off = 0;
 	proto = IPPROTO_IPV6;
@@ -1110,6 +1126,11 @@ ah6_calccksum(m, ahdat, algo, sav)
 		proto = nxt;
 		off = newoff;
 		goto again;
+	}
+
+	if (len < (*algo->sumsiz)(sav)) {
+		error = EINVAL;
+		goto fail;
 	}
 
 	(algo->result)(&algos, &sumbuf[0]);
