@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.396 2003/04/09 20:17:07 jmmv Exp $
+# $NetBSD: mi,v 1.397 2003/04/11 11:07:15 jmmv Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1470,6 +1470,7 @@
 ./usr/share/me				base-groff-share
 ./usr/share/misc			base-groff-share
 ./usr/share/misc/acronyms		base-reference-share
+./usr/share/misc/acronyms.comp		base-reference-share
 ./usr/share/misc/airport		base-reference-share
 ./usr/share/misc/ascii			base-reference-share
 ./usr/share/misc/birthtoken		base-reference-share
