@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.1 1998/04/10 10:37:12 leo Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.1.2.1 1998/06/04 16:53:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <machine/mfp.h>
 #include <machine/dma.h>
 
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 #include <m68k/asm_single.h>
@@ -60,7 +61,7 @@ static void	free_hw __P((void *));
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
-	struct wdc_attachment_data sc_ad;
+	struct  channel_softc wdc_channel;
 	void	*sc_ih;
 };
 
@@ -78,16 +79,16 @@ wdc_mb_probe(parent, cfp, aux)
 	void *aux;
 {
 #if 0 /* XXX memset */
-	struct wdc_attachment_data ad = { 0 };
+	struct channel_softc ch = { 0 };
 #else /* XXX memset */
-	struct wdc_attachment_data ad;
+	struct channel_softc ch;
 #endif /* XXX memset */
 	int	result = 0;
 	u_char	sv_ierb;
 
 #if 0 /* XXX memset */
 #else /* XXX memset */
-	bzero(&ad, sizeof ad);
+	bzero(&ch, sizeof ch);
 #endif /* XXX memset */
 
 	if ((machineid & ATARI_TT) || strcmp("wdc", aux) || cfp->cf_unit != 0)
@@ -95,15 +96,15 @@ wdc_mb_probe(parent, cfp, aux)
 	if (!atari_realconfig)
 		return 0;
 
-	ad.iot = ad.auxiot = mb_alloc_bus_space_tag();
-	if (ad.iot == NULL)
+	ch.cmd_iot = ch.ctl_iot = mb_alloc_bus_space_tag();
+	if (ch.cmd_iot == NULL)
 		return 0;
-	ad.iot->stride = 2;
-	ad.iot->wo_1   = 1;
+	ch.cmd_iot->stride = 2;
+	ch.cmd_iot->wo_1   = 1;
 
-	if (bus_space_map(ad.iot, 0xfff00000, 0x40, 0, &ad.ioh))
+	if (bus_space_map(ch.cmd_iot, 0xfff00000, 0x40, 0, &ch.cmd_ioh))
 		return 0;
-	if (bus_space_subregion(ad.iot, ad.ioh, 0x38, 1, &ad.auxioh))
+	if (bus_space_subregion(ch.cmd_iot, ch.cmd_ioh, 0x38, 1, &ch.ctl_ioh))
 		return 0;
 
 	/*
@@ -118,12 +119,12 @@ wdc_mb_probe(parent, cfp, aux)
 	if (machineid & ATARI_FALCON)
 		ym2149_ser2(0);
 
-	result = wdcprobe(&ad);
+	result = wdcprobe(&ch);
 
 	MFP->mf_ierb = sv_ierb;
 
-	bus_space_unmap(ad.iot, ad.ioh, 0x40);
-	mb_free_bus_space_tag(ad.iot);
+	bus_space_unmap(ch.cmd_iot,  ch.cmd_ioh, 0x40);
+	mb_free_bus_space_tag(ch.cmd_iot);
 
 	return (result);
 }
@@ -137,17 +138,18 @@ wdc_mb_attach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_ad.iot = sc->sc_ad.auxiot = mb_alloc_bus_space_tag();
-	sc->sc_ad.iot->stride = 2;
-	sc->sc_ad.iot->wo_1   = 1;
-	if (bus_space_map(sc->sc_ad.iot, 0xfff00000, 0x40, 0,
-			  &sc->sc_ad.ioh)) {
+	sc->wdc_channel.cmd_iot = sc->wdc_channel.ctl_iot =
+	    mb_alloc_bus_space_tag();
+	sc->wdc_channel.cmd_iot->stride = 2;
+	sc->wdc_channel.cmd_iot->wo_1   = 1;
+	if (bus_space_map(sc->wdc_channel.cmd_iot, 0xfff00000, 0x40, 0,
+			  &sc->wdc_channel.cmd_ioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
-	if (bus_space_subregion(sc->sc_ad.iot, sc->sc_ad.ioh, 0x38, 1,
-				&sc->sc_ad.auxioh))
+	if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+	    sc->wdc_channel.cmd_ioh, 0x38, 1, &sc->wdc_channel.ctl_ioh))
 		return;
 
 	/*
@@ -160,13 +162,25 @@ wdc_mb_attach(parent, self, aux)
 	/*
 	 * XXX: Is this true on all atari's??
 	 */
-	sc->sc_wdcdev.sc_flags |= WDCF_SINGLE;
+	/* sc->sc_wdcdev.sc_flags |= WDCF_SINGLE; *//* XXX why is this here ? */
 
-	sc->sc_ad.cap |= WDC_CAPABILITY_HWLOCK;
-	sc->sc_ad.claim_hw = &claim_hw;
-	sc->sc_ad.free_hw  = &free_hw;
-
-	wdcattach(&sc->sc_wdcdev, &sc->sc_ad);
+	sc->wdc_channel.cap |= WDC_CAPABILITY_HWLOCK;
+	sc->sc_wdcdev.pio_mode = 0;
+	sc->wdc_channel.claim_hw = &claim_hw;
+	sc->wdc_channel.free_hw  = &free_hw;
+	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->sc_wdcdev.nchannels = 1;
+	sc->wdc_channel.channel = 0;
+	sc->wdc_channel.ch_drive[0].ctrl_softc = 
+	    sc->wdc_channel.ch_drive[1].ctrl_softc  = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->wdc_channel.ch_queue == NULL) {
+	    printf("%s: can't allocate memory for command queue",
+		sc->sc_wdcdev.sc_dev.dv_xname);
+	    return;
+	}
+	wdcattach(&sc->wdc_channel);
 
 	/*
 	 * Setup & enable disk related interrupts.
