@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.28 2000/03/13 01:46:44 sato Exp $ */
+/* $NetBSD: wsconsio.h,v 1.29 2000/05/13 12:13:45 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -85,6 +85,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_NEXT		6	/* NeXT keyboard */
 #define		WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
 #define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
+#define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -160,6 +161,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_MMS	5	/* Microsoft InPort mouse */
 #define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
 #define 	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
+#define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOR('W', 33, u_int)
@@ -215,6 +217,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_PXG	14	/* DEC TC PXG */
 #define		WSDISPLAY_TYPE_TX	15	/* DEC TC TX */
 #define		WSDISPLAY_TYPE_HPCFB	16	/* Handheld/PalmSize PC */
+#define		WSDISPLAY_TYPE_VIDC	17	/* Acorn/ARM VIDC */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
