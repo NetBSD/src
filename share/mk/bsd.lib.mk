@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.224 2003/07/22 06:53:22 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.225 2003/07/27 14:49:22 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -12,7 +12,7 @@ clean:		cleanlib
 
 ##### Build and install rules
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
-CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++}
+CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
@@ -195,30 +195,30 @@ FFLAGS+=	${FOPTS}
 
 .cc.o .cpp.o .cxx.o .C.o:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} ${.IMPSRC}
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 .else
-	@echo ${COMPILE.cc:Q} ${.IMPSRC}
-	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	@${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
 
 .cc.po .cpp.po .cxx.o .C.po:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
 .else
-	@echo ${COMPILE.cc:Q} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.cc} -${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
 
 .cc.so .cpp.so .cxx.so .C.so:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .else
-	@echo ${COMPILE.cc:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
