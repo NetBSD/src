@@ -1,6 +1,6 @@
-.\" $NetBSD: umass.4,v 1.11 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: umass.4,v 1.12 2001/12/24 13:53:27 augustss Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -44,6 +44,7 @@
 .Cd "umass*     at uhub?"
 .Cd "atapibus*  at umass? channel ?"
 .Cd "scsibus*   at umass? channel ?"
+.Cd "wd*        at umass?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,10 +62,14 @@ Devices known to work with this driver include:
 .It Tn SanDisk ImageMate SDDR-31
 .It Tn Y-E Data FlashBuster floppy
 .El
+.Pp
+The driver also supports certain adapters from In-System Design that use
+the (non-standardized) ATA protocol over Bulk-Only.
 .Sh SEE ALSO
 .Xr atapi 4 ,
 .Xr scsi 4 ,
-.Xr usb 4
+.Xr usb 4 ,
+.Xr wd
 .Sh HISTORY
 The
 .Nm
