@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.59 1998/03/18 19:27:46 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.60 1998/03/18 21:57:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.59 1998/03/18 19:27:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.60 1998/03/18 21:57:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1738,6 +1738,11 @@ pmap_activate(p)
 
 	/* XXX Allocate an ASN. */
 
+	/*
+	 * Mark the pmap in use by this processor.
+	 */
+	pmap->pm_cpus |= (1UL << alpha_pal_whami());
+
 	PMAP_ACTIVATE(pmap, p);
 }
 
@@ -1751,13 +1756,17 @@ void
 pmap_deactivate(p)
 	struct proc *p;
 {
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_deactivate(%p)\n", p);
 #endif
 
-	/* XXX Free the ASN. */
+	/*
+	 * Mark the pmap no longer in use by this processor.
+	 */
+	pmap->pm_cpus &= ~(1UL << alpha_pal_whami());
 }
 
 /*
