@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_machdep.h,v 1.4 2000/08/02 11:32:41 msaitoh Exp $	*/
+/*	$NetBSD: coff_machdep.h,v 1.5 2002/03/17 17:55:24 uch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -48,7 +48,7 @@
 
 #define COFF_LDPGSZ 4096
 
-#define COFF_SEGMENT_ALIGNMENT(fp, ap) \
+#define COFF_SEGMENT_ALIGNMENT(fp, ap)					\
     (((fp)->f_flags & COFF_F_EXEC) == 0 ? 4 : 16)
 
 #ifndef _BYTE_ORDER

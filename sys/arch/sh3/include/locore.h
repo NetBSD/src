@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.3 2002/03/17 14:02:04 uch Exp $	*/
+/*	$NetBSD: locore.h,v 1.4 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #define MOV(x, r)	mov.l _L./**/x, r
 #define	REG_SYMBOL(x)	_L./**/x:	.long	SH4_/**/x
 #define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(sh4_/**/x)
-#endif
+#endif /* SH3 && SH4 */
 
 /*
  * BANK1 r7 contains kernel stack top address.
@@ -230,4 +230,4 @@ void sh4_switch_setup(struct proc *);
 void sh3_switch_resume(struct proc *);
 void sh4_switch_resume(struct proc *);
 extern void (*__sh_switch_resume)(struct proc *);
-#endif /* _LOCORE */
+#endif /* !_LOCORE */

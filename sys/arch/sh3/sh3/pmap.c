@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2002/03/08 20:48:34 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2002/03/17 17:55:25 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3458,17 +3458,15 @@ vtophys(vaddr_t va)
 
 	if (CPU_IS_SH3) {
 		if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
-			return va;
+			return va; //XXX
 	} else {
 		cacheflush();
 		if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
-			return (va|SH3_P1234SEG_SIZE);
+			return (va | 0x20000000); //XXX
 	}
 
-	/* XXX P4SEG? */
-
 	return CPU_IS_SH3 ? (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) :
-	    (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | SH3_P1234SEG_SIZE;
+	    (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | 0x20000000; //XXX
 }
 
 /*

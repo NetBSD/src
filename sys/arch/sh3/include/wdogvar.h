@@ -1,4 +1,4 @@
-/* $NetBSD: wdogvar.h,v 1.4 2002/02/12 15:26:48 uch Exp $ */
+/*	$NetBSD: wdogvar.h,v 1.5 2002/03/17 17:55:25 uch Exp $	*/
 
 #ifndef _SH3_WDOGVAR_H_
 #define _SH3_WDOGVAR_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.33 2002/03/17 14:02:03 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.34 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -109,16 +109,11 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 #include <sh3/clock.h>
 #include <sh3/locore.h>
 
-char cpu_model[120];
-
-/* 
- * if PCLOCK isn't defined in config file, use this.
- */
-int cpu_arch;
-int cpu_product;
-
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
+int cpu_arch;
+int cpu_product;
+char cpu_model[120];
 
 struct vm_map *exec_map;
 struct vm_map *mb_map;
@@ -144,8 +139,8 @@ extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
  * These variables are needed by /sbin/savecore
  */
 u_int32_t dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
+int dumpsize;			/* pages */
+long dumplo;	 		/* blocks */
 
 void
 sh_cpu_init(int arch, int product)
@@ -282,12 +277,10 @@ sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
 }
 
 void
-sh3_startup()
+sh_startup()
 {
-	unsigned i;
 	caddr_t v;
-	int sz;
-	int base, residual;
+	int i, sz, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 2002/02/19 17:09:48 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2002/03/17 17:55:25 uch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -164,25 +164,6 @@ mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 			break;
 		}
 	}
-
-#ifdef COMPAT_386BSD_MBRPART
-	/* didn't find it -- look for 386BSD partition */
-	if (!ourdp) {
-		for (i = 0; i < NMBRPART; i++) {
-			if (dp[i].mbrp_typ == MBR_PTYPE_386BSD) {
-				printf("WARNING: old BSD partition ID!\n");
-				ourdp = &dp[i];
- 				/*
-				 * If more than one matches, take last,
-				 * as NetBSD install tool does.
-				 */
-#if 0
-				break;
-#endif
-			}
-		}
-	}
-#endif	/* COMPAT_386BSD_MBRPART */
 
 	return (ourdp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.3 2002/03/17 14:02:03 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.4 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ _C_LABEL(sh3_vector_tlbmiss):
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 #if !defined(P1_STACK)
-	/* Load kerne stack */
+	/* Load kernel stack */
 	mov.l	_L.TEA, r1
 	mov.l	@r1,	r0	/* r0 = va */
 	mov.l	_L.VPN_MASK, r1
