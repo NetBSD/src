@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)union_vnops.c	8.15 (Berkeley) 6/4/94
- *	$Id: union_vnops.c,v 1.2 1994/06/15 23:08:04 mycroft Exp $
+ *	$Id: union_vnops.c,v 1.3 1994/06/17 15:21:39 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -241,6 +241,14 @@ union_lookup(ap)
 		}
 	} else {
 		lerror = ENOENT;
+		if ((cnp->cn_flags & ISDOTDOT) && dun->un_pvp != NULLVP) {
+			lowervp = LOWERVP(dun->un_pvp);
+			if (lowervp != NULLVP) {
+				VREF(lowervp);
+				VOP_LOCK(lowervp);
+				lerror = 0;
+			}
+		}
 	}
 
 	if (!lockparent)
@@ -597,7 +605,7 @@ union_getattr(ap)
 	if ((vap != ap->a_vap) && (vap->va_type == VDIR))
 		ap->a_vap->va_nlink += vap->va_nlink;
 
-	vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
+	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
 	return (0);
 }
 
