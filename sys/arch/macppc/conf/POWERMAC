@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.28 2000/11/27 08:55:42 soren Exp $
+#	$NetBSD: POWERMAC,v 1.29 2001/05/27 23:52:41 wiz Exp $
 #
 # POWERMAC config file
 #
@@ -9,6 +9,7 @@ maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing via ktrace(1)
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
