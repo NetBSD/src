@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.6 2000/05/15 06:16:04 tron Exp $
+# $NetBSD: sendmail,v 1.7 2000/05/31 16:00:36 itojun Exp $
 #
 
 # PROVIDE: mail
@@ -19,7 +19,9 @@ required_files="/etc/mail/${name}.cf"
 
 load_rc_config $name
 
-# die if there's pre-8.10 configuration file
+# Die if there's pre-8.10 configuration file.  This check is mandatory
+# for smooth upgrade.  See NetBSD PR 10100 for details.
+#
 if checkyesno sendmail && [ -f "/etc/${name}.cf" ]; then
 	err 1 "${name} was not started, move /etc/${name}.cf to /etc/mail."
 fi
