@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.1.1.1 1997/01/14 20:57:03 gwr Exp $	*/
+/*	$NetBSD: vme.c,v 1.2 1997/10/16 15:50:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,58 +41,63 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-/* #include <machine/vme.h> */
-
-static int  vmes_match __P((struct device *, struct cfdata *, void *));
-static int  vmel_match __P((struct device *, struct cfdata *, void *));
-
-static void vme_attach __P((struct device *, struct device *, void *));
-
-struct cfattach vmes_ca = {
-	sizeof(struct device), vmes_match, vme_attach
-};
-
-struct cfdriver vmes_cd = {
-	NULL, "vmes", DV_DULL
-};
-
-struct cfattach vmel_ca = {
-	sizeof(struct device), vmel_match, vme_attach
-};
-
-struct cfdriver vmel_cd = {
-	NULL, "vmel", DV_DULL
-};
-
+#include <machine/vme.h>
 
 /* Does this machine have a VME bus? */
 extern int cpu_has_vme;
 
+static int  vme_match __P((struct device *, struct cfdata *, void *));
+static void vme_attach __P((struct device *, struct device *, void *));
+
+struct cfattach vme_ca = {
+	sizeof(struct device), vme_match, vme_attach
+};
+
+struct cfdriver vme_cd = {
+	NULL, "vme", DV_DULL
+};
+
+/*
+ * Convert vme unit number to bus type.
+ * (See autoconf.h and vme.h)
+ */
+static const int
+vme_bustypes[VME_UNITS] = {
+	BUS_VME32D32,
+	BUS_VME24D32,
+	BUS_VME24D16,
+	BUS_VME16D32,
+	BUS_VME16D16 };
+
 static int
-vmes_match(parent, cf, aux)
+vme_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
 	struct confargs *ca = aux;
+	int bustype, unit;
 
-	if (ca->ca_bustype != BUS_VME16)
+	if (cpu_has_vme == 0)
 		return (0);
-	return (cpu_has_vme);
+
+	unit = cf->cf_unit;
+	if (unit >= VME_UNITS)
+		return (0);
+	bustype = vme_bustypes[unit];
+	if (ca->ca_bustype != bustype)
+		return (0);
+
+	return (1);
 }
 
-static int
-vmel_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct confargs *ca = aux;
-
-	if (ca->ca_bustype != BUS_VME32)
-		return (0);
-	return (cpu_has_vme);
-}
+static const char
+vme_busnames[VME_UNITS][8] = {
+	"A32/D32",
+	"A24/D32",
+	"A24/D16",
+	"A16/D32",
+	"A16/D16" };
 
 static void
 vme_attach(parent, self, args)
@@ -100,7 +105,10 @@ vme_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	printf("\n");
+	char *name;
+
+	name = vme_busnames[self->dv_unit];
+	printf(": (%s)\n", name);
 
 	/* We know ca_bustype == BUS_VMExx */
 	(void) config_search(bus_scan, self, args);
