@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,8 +41,8 @@
 
 
 message md_hello
-{Wenn Ihre Maschine nur 4MB oder weniger an Arbeitsspeicher verfügt, wird
-sysinst nicht richtig arbeiten.
+{Wenn Ihre Maschine nur über 4MB oder weniger Arbeitsspeicher verfügt, wird
+sysinst fehlschlagen, bitte installieren Sie in diesem Fall manuell.
 
 }
 
@@ -51,10 +51,10 @@ message dobootblks
 }
 
 message newdisk
-{Es scheint als ist Ihre Disk, %s, nicht als X86K Disk markiert; sysinst ist
-dabei dies zu tun. 
-Beachten Sie, dass, wenn Sie planen eine Partition der Disk %s von Human68k
-aus zu nutzen, Sie hier abbrechen sollten, um die Disk mit dem Human68k
+{Ihre Disk, %s, scheint nicht als X86K Disk markiert zu sein; sysinst
+wird dies nun tun. 
+Falls Sie planen eine Partition der Disk %s mit Human68k zu nutzen,
+sollten Sie hier unbeding abbrechen und die Disk mit dem Human68k
 format.x Werkzeug zu formatieren. 
 }
 
@@ -63,7 +63,7 @@ message ordering
 
 message emptypart
 {Nach der oder den leeren Partition(en) besteht eine gültige Partition %c.
-Bitte editieren Sie erneut die Partitionstabelle.}
+Bitte editieren Sie die Partitionstabelle noch einmal.}
 
 message set_kernel_1
 {Kernel (GENERIC)}
@@ -81,6 +81,6 @@ Mindestens 2 freie Partitionen (für das Root Dateisystem und Swap) sind nötig.
 
 message notfirst
 {NetBSD/hp300 muss im ersten Abschnitt der Bootdisk installiert werden.
-Dieser Teil ist bei %s nicht frei.
+Dieser Teil ist auf %s nicht frei.
 }
 .endif

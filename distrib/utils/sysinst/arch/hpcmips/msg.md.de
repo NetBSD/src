@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,8 @@
 /* MD Message catalog -- German, hpcmips version */
 
 message md_hello
-{Wenn Sie von einer Diskette gebootet haben, so können Sie diese jetzt
-entnehmen.
+{Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
+entfernen.
 
 }
 
@@ -49,12 +49,12 @@ message dobad144
 }
 
 message getboottype
-{Möchten Sie das normale Set der Bootblöcke oder serielle Bootblöcke 
+{Möchten Sie normale Bootblöcke oder Bootblöcke für serielle Konsolen
 installieren?
 
 Normale Bootblöcke benutzen die BIOS Konsolenschnittstelle als die Konsole
 (meistens der Montior und die Tastatur). Serielle Bootblöcke benutzen den
-ersten seriellen Anschluss als die Konsole.
+ersten seriellen Anschluss als Konsole.
 }
 
 message dobootblks
@@ -92,9 +92,9 @@ message pickdisk
 
 
 message partabovechs
-{Der NetBSD Teil der Disk liegt ausserhalb der vom BIOS dieser Maschine
-adressierbaren Bereich. Davon zu booten mag nicht möglich sein. Sind Sie
-sicher, dass sie fortfahren möchten?
+{Der NetBSD Teil der Disk liegt ausserhalb des vom BIOS dieser Maschine
+adressierbaren Bereichs. Eventuell ist es nicht möglich, von dieser
+Partition zu booten. Sind Sie sicher, dass sie fortfahren möchten?
 
 (Antworten Sie mit 'nein' werden sie zum Menü der Partitioneneditierung
 zurückbefördert.)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,11 +82,10 @@ message pickdisk
 
 message partabovechs
 {Der NetBSD Teil der Disk liegt ausserhalb der vom BIOS dieser Maschine
-adressierbaren Bereich. Davon zu booten mag nicht möglich sein. Sind Sie
-sicher, dass sie fortfahren möchten?
+adressierbaren Bereich. Eventuell könne Sie von dieser Partition nicht
+booten. Sind Sie sicher, dass Sie fortfahren möchten?
 
-(Antworten Sie mit 'nein', so werden Sie zum Menü der Partitioneneditierung
-zurückbefördert.)}
+(Antworten sie mit 'nein' um die Partitionen erneut zu editieren.)}
 
 message set_kernel_1
 {Kernel (GENERIC)}

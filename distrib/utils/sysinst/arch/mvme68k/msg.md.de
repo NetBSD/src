@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,8 +41,8 @@
 
 
 message md_hello
-{Wenn Ihre Maschine nur 4MB oder weniger an Arbeitsspeicher verfügt, wird
-sysinst nicht richtig arbeiten.
+{Wenn Ihre Maschine nur über 4MB oder weniger Arbeitsspeicher verfügt, wird
+sysinst fehlschlagen. Bitte installieren Sie in diesem Fall manuell.
 
 }
 
@@ -51,8 +51,8 @@ message dobootblks
 }
 
 message newdisk
-{Es scheint als ist Ihre Disk, %s, ohne mvme68k Disklabel ausgestattet. Sysinst
-ist dabei eines zu erstellen.
+{Ihre Disk, %s, hat noch kein mvme68k Disklabel. Sysinst
+wird ein neues erstellen.
 }
 
 message ordering
@@ -60,8 +60,8 @@ message ordering
 
 
 message emptypart
-{Nach der oder den leeren Partitionen besteht eine gültige Partition %c.
-Bitte editieren sie erneut die Partitionstabelle.}
+{Nach der oder den leeren Partition(en) besteht eine gültige Partition %c.
+Bitte editieren Sie die Partitionstabelle noch einmal.}
 
 
 message set_kernel_1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/06/27 22:20:18 dsl Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/04 15:26:02 martin Exp $
 #
 # Makefile for prep
 #
@@ -12,6 +12,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 
 MENUS_MD=       menus.md.${SYSINSTLANG} menus.mbr
 MSG_MD=         msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
-LANGUAGES=	en pl
+LANGUAGES=	en pl de
 
 .include "../../Makefile.inc"
