@@ -1,4 +1,4 @@
-#	$NetBSD: Make.tags.inc,v 1.6 1998/11/15 20:36:31 perry Exp $
+#	$NetBSD: Make.tags.inc,v 1.7 1999/02/12 04:58:18 cjs Exp $
 #
 #	from: @(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
 
@@ -13,5 +13,6 @@
 # the arch directories. Traditionally, COMM would have been an explicit list.
 # This promises to be easier to maintain, considering how often the directory
 # structure of the kernel sources has been changing recently.
-COMM!=	find -H /sys ! -path "/sys/arch*" -name "*.[ch]" | \
+SYSDIR?= /sys
+COMM!=	find -H ${SYSDIR} ! -path "/sys/arch*" -name "*.[ch]" | \
 		sed "s@[^/]*\..*@*.\[ch\]@" | sort -t / -u
