@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.78 2001/04/30 13:58:32 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.79 2001/05/18 12:57:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -897,12 +897,10 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		ti->period = 0;
 		ti->offset = 0;
 
-#if 0 /* commands timeout */
 		if ((sc->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
 		    (xm->xm_mode & PERIPH_CAP_TQING))
 			ti->flags |= T_TAG;
 		else
-#endif
 			ti->flags &= ~T_TAG;
 
 		if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0) {
