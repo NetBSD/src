@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.13 1997/06/05 16:10:46 mrg Exp $	*/
+/*	$NetBSD: rcp.c,v 1.14 1997/06/07 07:11:34 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.13 1997/06/05 16:10:46 mrg Exp $";
+static char rcsid[] = "$NetBSD: rcp.c,v 1.14 1997/06/07 07:11:34 jeremy Exp $";
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ toremote(targ, argc, argv)
 					err(1, NULL);
 				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
-				if ((name = strdup(name)) != NULL)
+				if ((name = strdup(pwd->pw_name)) == NULL)
 					err(1, NULL);
 #ifdef KERBEROS
 				if (use_kerberos)
